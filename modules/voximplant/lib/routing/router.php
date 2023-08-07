@@ -56,7 +56,7 @@ class Router
 		$seenNodes = [];
 		while($currentNode = $currentNode->getNext())
 		{
-			if($seenNodes[$currentNode->getId()])
+			if($seenNodes[$currentNode->getId()] ?? null)
 			{
 				break;
 			}
@@ -91,7 +91,7 @@ class Router
 
 		do
 		{
-			if($seenIds[$currentStage->getId()])
+			if($seenIds[$currentStage->getId()] ?? null)
 			{
 				return false;
 			}

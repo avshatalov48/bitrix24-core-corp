@@ -552,21 +552,16 @@
 
 	BX.ready(function ()
 	{
-		var initTextPanel = function(){
-			if(Application.getApiVersion() >= 30)
-			{
-				var originalCallback = window.BX.MobileUI.TextField.defaultParams.callback;
-				window.BX.MobileUI.TextField.defaultParams.callback = function(data){
-					console.log("arguments task input", arguments);
-					if(data["event"] === "getFocus")
-					{
-						BXMobileApp.Events.postToComponent("onTabSelect", {tab: "commentTab"}, "tasks.view");
-					}
-
-					originalCallback.apply(null, arguments);
-				};
-			}
-
+		var initTextPanel = function() {
+			var originalCallback = window.BX.MobileUI.TextField.defaultParams.callback;
+			window.BX.MobileUI.TextField.defaultParams.callback = function(data) {
+				console.log("arguments task input", arguments);
+				if (data["event"] === "getFocus")
+				{
+					BXMobileApp.Events.postToComponent("onTabSelect", {tab: "commentTab"}, "tasks.view");
+				}
+				originalCallback.apply(null, arguments);
+			};
 			window.BX.MobileUI.TextField.show();
 		};
 

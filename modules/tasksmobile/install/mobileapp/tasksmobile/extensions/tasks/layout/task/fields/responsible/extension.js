@@ -2,9 +2,9 @@
  * @module tasks/layout/task/fields/responsible
  */
 jn.define('tasks/layout/task/fields/responsible', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {Type} = require('type');
-	const {UserField} = require('layout/ui/fields/user');
+	const { Loc } = require('loc');
+	const { Type } = require('type');
+	const { UserField } = require('layout/ui/fields/user');
 
 	class Responsible extends LayoutComponent
 	{
@@ -59,7 +59,7 @@ jn.define('tasks/layout/task/fields/responsible', (require, exports, module) => 
 								imageUrl: (
 									!Type.isString(this.state.responsible.icon)
 									|| !Type.isStringFilled(this.state.responsible.icon)
-									|| this.state.responsible.icon.indexOf('default_avatar.png') >= 0
+									|| this.state.responsible.icon.includes('default_avatar.png')
 										? null
 										: this.state.responsible.icon
 								),
@@ -68,6 +68,7 @@ jn.define('tasks/layout/task/fields/responsible', (require, exports, module) => 
 								},
 							},
 						],
+						selectorTitle: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_RESPONSIBLE'),
 						canUnselectLast: false,
 						reloadEntityListFromProps: true,
 						parentWidget: this.props.parentWidget,
@@ -82,7 +83,7 @@ jn.define('tasks/layout/task/fields/responsible', (require, exports, module) => 
 								icon: responsibleData[0].imageUrl,
 								workPosition: responsibleData[0].customData.position,
 							};
-							this.setState({responsible});
+							this.setState({ responsible });
 							this.props.onChange(responsible);
 						}
 					},
@@ -91,5 +92,5 @@ jn.define('tasks/layout/task/fields/responsible', (require, exports, module) => 
 		}
 	}
 
-	module.exports = {Responsible};
+	module.exports = { Responsible };
 });

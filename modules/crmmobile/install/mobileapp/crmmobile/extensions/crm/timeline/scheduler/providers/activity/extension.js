@@ -117,7 +117,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 			};
 		}
 
-		static isSupported()
+		static isSupported(context = {})
 		{
 			return true;
 		}

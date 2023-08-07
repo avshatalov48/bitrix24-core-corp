@@ -1,7 +1,7 @@
 <?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 
-/** @var CAllMain $APPLICATION */
+/** @var CMain $APPLICATION */
 $APPLICATION->IncludeComponent(
 	"bitrix:crm.exclusion",
 	".default",

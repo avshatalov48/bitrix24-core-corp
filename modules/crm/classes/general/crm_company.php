@@ -9,6 +9,7 @@ use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\Integration\Catalog\Contractor;
 use Bitrix\Crm\Integrity\DuplicateBankDetailCriterion;
 use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
@@ -48,7 +49,7 @@ class CAllCrmCompany
 	private static ?\Bitrix\Crm\Entity\Compatibility\Adapter $lastActivityAdapter = null;
 
 	private ?Crm\Entity\Compatibility\Adapter $compatibilityAdapter = null;
-	private static ?Crm\Entity\Compatibility\Adapter $contentTypeIdAdapter = null;
+	private static ?Crm\Entity\Compatibility\Adapter $commentsAdapter = null;
 
 	function __construct($bCheckPermission = true)
 	{
@@ -143,14 +144,14 @@ class CAllCrmCompany
 		return self::$lastActivityAdapter;
 	}
 
-	private static function getContentTypeIdAdapter(): Crm\Entity\Compatibility\Adapter\ContentTypeId
+	private static function getCommentsAdapter(): Crm\Entity\Compatibility\Adapter\Comments
 	{
-		if (!self::$contentTypeIdAdapter)
+		if (!self::$commentsAdapter)
 		{
-			self::$contentTypeIdAdapter = new Crm\Entity\Compatibility\Adapter\ContentTypeId(\CCrmOwnerType::Company);
+			self::$commentsAdapter = new Crm\Entity\Compatibility\Adapter\Comments(\CCrmOwnerType::Company);
 		}
 
-		return self::$contentTypeIdAdapter;
+		return self::$commentsAdapter;
 	}
 
 	// Service -->
@@ -1384,6 +1385,7 @@ class CAllCrmCompany
 			//endregion
 
 			self::getLastActivityAdapter()->performAdd($arFields, $options);
+			self::getCommentsAdapter()->normalizeFields(null, $arFields);
 
 			$beforeEvents = GetModuleEvents('crm', 'OnBeforeCrmCompanyAdd');
 			while ($arEvent = $beforeEvents->Fetch())
@@ -1553,7 +1555,7 @@ class CAllCrmCompany
 			)->build($ID, ['checkExist' => true]);
 			//endregion
 
-			self::getContentTypeIdAdapter()->performAdd($arFields, $options);
+			self::getCommentsAdapter()->performAdd($arFields, $options);
 
 			if(isset($options['REGISTER_SONET_EVENT']) && $options['REGISTER_SONET_EVENT'] === true)
 			{
@@ -1803,6 +1805,7 @@ class CAllCrmCompany
 		$bResult = false;
 
 		$arOptions['CURRENT_FIELDS'] = $arRow;
+		$arOptions['FIELD_CHECK_OPTIONS']['CATEGORY_ID'] = $categoryId;
 		if (!$this->CheckFields($arFields, $ID, $arOptions))
 		{
 			$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
@@ -1887,6 +1890,10 @@ class CAllCrmCompany
 			}
 
 			self::getLastActivityAdapter()->performUpdate((int)$ID, $arFields, $arOptions);
+			self::getCommentsAdapter()
+				->setPreviousFields((int)$ID, $arRow)
+				->normalizeFields((int)$ID, $arFields)
+			;
 
 			$sonetEventData = [];
 			if ($bCompare)
@@ -1969,6 +1976,11 @@ class CAllCrmCompany
 						}
 					}
 				}
+			}
+
+			if(isset($arFields['TITLE']) && $arFields['TITLE'] !== $arRow['TITLE'])
+			{
+				CCrmActivity::ResetEntityCommunicationSettings(CCrmOwnerType::Company, $ID);
 			}
 
 			if(isset($arFields['HAS_EMAIL']))
@@ -2150,7 +2162,7 @@ class CAllCrmCompany
 				);
 			}
 
-			self::getContentTypeIdAdapter()
+			self::getCommentsAdapter()
 				->setPreviousFields((int)$ID, $arRow)
 				->performUpdate((int)$ID, $arFields, $arOptions)
 			;
@@ -2600,7 +2612,7 @@ class CAllCrmCompany
 				EntityAddress::unregister(CCrmOwnerType::Company, $ID, EntityAddressType::Registered);
 				\Bitrix\Crm\Timeline\TimelineEntry::deleteByOwner(CCrmOwnerType::Company, $ID);
 
-				self::getContentTypeIdAdapter()->performDelete((int)$ID, $arOptions);
+				self::getCommentsAdapter()->performDelete((int)$ID, $arOptions);
 
 				$requisite = new \Bitrix\Crm\EntityRequisite();
 				$requisite->deleteByEntity(CCrmOwnerType::Company, $ID);
@@ -2785,7 +2797,8 @@ class CAllCrmCompany
 							!$isUpdate
 							|| array_key_exists($fieldName, $fieldsToCheck)
 							|| (
-								is_array($fieldsToCheck['FM'])
+								isset($fieldsToCheck['FM'])
+								&& is_array($fieldsToCheck['FM'])
 								&& array_key_exists($fieldName, $fieldsToCheck['FM'])
 							)
 						)
@@ -2983,8 +2996,8 @@ class CAllCrmCompany
 			$arMsg[] = Array(
 				'ENTITY_FIELD' => 'COMMENTS',
 				'EVENT_NAME' => GetMessage('CRM_FIELD_COMPARE_COMMENTS'),
-				'EVENT_TEXT_1' => !empty($arFieldsOrig['COMMENTS'])? $arFieldsOrig['COMMENTS']: GetMessage('CRM_FIELD_COMPARE_EMPTY'),
-				'EVENT_TEXT_2' => !empty($arFieldsModif['COMMENTS'])? $arFieldsModif['COMMENTS']: GetMessage('CRM_FIELD_COMPARE_EMPTY'),
+				'EVENT_TEXT_1' => !empty($arFieldsOrig['COMMENTS'])? TextHelper::convertBbCodeToHtml($arFieldsOrig['COMMENTS']): GetMessage('CRM_FIELD_COMPARE_EMPTY'),
+				'EVENT_TEXT_2' => !empty($arFieldsModif['COMMENTS'])? TextHelper::convertBbCodeToHtml($arFieldsModif['COMMENTS']): GetMessage('CRM_FIELD_COMPARE_EMPTY'),
 			);
 
 		if (isset($arFieldsOrig['IS_MY_COMPANY']) && isset($arFieldsModif['IS_MY_COMPANY'])

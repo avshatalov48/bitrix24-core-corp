@@ -292,6 +292,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 
 		if ($this->gridOptions->getViewMode() === FolderListOptions::VIEW_MODE_TILE)
 		{
+			$isEnabledObjectLock = Configuration::isEnabledObjectLock();
 			$this->arResult['TILE_ITEMS'] = [];
 			foreach ($this->arResult['GRID']['ROWS'] as $row)
 			{
@@ -310,10 +311,10 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 					'name' => $object->getName(),
 					'isFolder' => $object instanceof Folder,
 					'isFile' => $object instanceof File,
-					'canAdd' => $object instanceof Folder && $object->canAdd($securityContext),
+					'canAdd' => ($object instanceof Folder) && $object->canAdd($securityContext),
 					'link' => $row['data']['OPEN_URL'],
 					'isSymlink' => !empty($row['data']['SHARED']) || $object->isLink(),
-					'isLocked' => $object instanceof File && $object->getLock(),
+					'isLocked' => $isEnabledObjectLock && ($object instanceof File) && $object->getLock(),
 					'isDraggable' => !$this->isTrashMode(),
 					'isDroppable' => !$this->isTrashMode() && ($object instanceof Folder),
 					'formattedSize' => $row['columns']['FORMATTED_SIZE'],
@@ -430,7 +431,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 
 		$possibleToDownloadArchive = ZipNginx\Configuration::isEnabled();
 		$nowTime = time() + CTimeZone::getOffset();
-		$fullFormatWithoutSec = preg_replace('/:s$/', '', CAllDatabase::dateFormatToPHP(CSite::GetDateFormat("FULL")));
+		$fullFormatWithoutSec = preg_replace('/:s$/', '', CDatabase::dateFormatToPHP(CSite::GetDateFormat("FULL")));
 
 		$onlyRead = true;
 
@@ -448,7 +449,12 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		}
 
 		$parameters = [
-			'select' => ['*', 'FILE_CONTENT_TYPE' => 'FILE_CONTENT.CONTENT_TYPE'],
+			'select' => [
+				'*',
+				'FILE_CONTENT_TYPE' => 'FILE_CONTENT.CONTENT_TYPE',
+				'FILE_WIDTH' => 'FILE_CONTENT.WIDTH',
+				'FILE_HEIGHT' => 'FILE_CONTENT.HEIGHT',
+			],
 			'with' => $this->buildWithByVisibleColumns($visibleColumns),
 			'filter' => [
 				'@ID' => $objectIds?: [0],
@@ -525,7 +531,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_open.svg',
 						'className' => 'disk-folder-list-context-menu-item',
 						'href' => $exportData['OPEN_URL'],
-						'onclick' => "BX.Disk['FolderListClass_{$this->componentId}'].openFolderContextMenu(this, event, {$objectId}, {
+						'onclick' => "BX.Disk['FolderListClass_{$this->componentId}'].openFolderByContextMenu(this, event, {$objectId}, {
 							id: {$objectId},
 							name: '" . CUtil::JSEscape($name) . "'
 						});",
@@ -536,10 +542,11 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 					$exportData['OPEN_URL'] = $urlManager->encodeUrn($detailPageFile);
 					$openAction = array(
 						'id' => 'open',
-						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_DETAILS'),
+						'text' => Loc::getMessage('DISK_FOLDER_LIST_ACT_DETAILS'),
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_open.svg',
 						'className' => 'disk-folder-list-context-menu-item',
-						"href" => $exportData['OPEN_URL'],
+						'href' => $exportData['OPEN_URL'],
+						'onclick' => "BX.SidePanel.Instance.open('" . CUtil::JSEscape($exportData['OPEN_URL']) . "'); event.preventDefault();",
 					);
 				}
 
@@ -904,7 +911,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 							<td style=\"width: 45px;\">
 								<div data-object-id=\"{$objectId}\" class=\"js-disk-grid-open-folder bx-file-icon-container-small {$iconClass}\"></div>
 							</td>
-							<td><a class=\"bx-disk-folder-title js-disk-grid-folder\" id=\"disk_obj_{$objectId}\" href=\"{$exportData['OPEN_URL']}\" data-object-id=\"{$objectId}\" data-can-add=\"{$object->canAdd($securityContext)}\">{$nameSpecialChars}</a></td>
+							<td><a class=\"bx-disk-folder-title js-disk-grid-folder\" id=\"disk_obj_{$objectId}\" href=\"{$exportData['OPEN_URL']}\" data-object-id=\"{$objectId}\" data-can-add=\"{$object->canAdd($securityContext)}\" onclick=\"BX.Disk['FolderListClass_{$this->componentId}'].openFolderByAnchor(this, event);\">{$nameSpecialChars}</a></td>
 					</tr></table>
 				";
 			}
@@ -914,6 +921,8 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				$fileData = [
 					'ID' => $object->getFileId(),
 					'CONTENT_TYPE' => $row['FILE_CONTENT_TYPE'],
+					'WIDTH' => $row['FILE_WIDTH'],
+					'HEIGHT' => $row['FILE_HEIGHT'],
 					'ORIGINAL_NAME' => $object->getName(),
 					'FILE_SIZE' => $object->getSize(),
 				];

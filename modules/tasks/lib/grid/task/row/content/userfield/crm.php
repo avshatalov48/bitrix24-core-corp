@@ -62,7 +62,7 @@ class Crm extends UserField
 				if ($typeId !== $previousTypeId)
 				{
 					$factory = Container::getInstance()->getFactory($typeId);
-					$typeTitle = ($factory ? $factory->getEntityDescription() : '');
+					$typeTitle = htmlspecialcharsbx($factory ? $factory->getEntityDescription() : '');
 					$html[] = "<span class='tasks-list-crm-div-type'>{$typeTitle}:</span>";
 				}
 				$html[] = implode(', ', $items);

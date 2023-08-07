@@ -1599,7 +1599,10 @@ elseif($action == 'SAVE_EMAIL')
 	$isNew = $ID <= 0;
 
 	$userID = $curUser->GetID();
-	if ($userID <= 0)
+	$responsibleId = (int) $userID;
+	$mailboxOwnerId = null;
+
+	if ($responsibleId <= 0)
 		__CrmActivityEditorEndResponse(array('ERROR' => getMessage('CRM_ACTIVITY_RESPONSIBLE_NOT_FOUND')));
 
 	$now = convertTimeStamp(time() + \CTimeZone::getOffset(), 'FULL', $siteID);
@@ -2109,18 +2112,22 @@ elseif($action == 'SAVE_EMAIL')
 			__CrmActivityEditorEndResponse(array('ERROR' => getMessage('CRM_ACTIVITY_INVALID_EMAIL', array('#VALUE#' => $from))));
 		}
 
+		$mailboxHelper = null;
+
 		if (\CModule::includeModule('mail'))
 		{
-			foreach (\Bitrix\Mail\MailboxTable::getUserMailboxes() as $mailbox)
+			/**
+			 * @todo Explicitly enter the ID. This will increase the productivity of selection.
+			 */
+			$mailboxHelper = \Bitrix\Mail\Helper\Mailbox::findBy(null, $fromEmail);
+
+			if (!empty($mailboxHelper))
 			{
-				if ($fromEmail == $mailbox['EMAIL'])
-				{
-					$userImap = $mailbox;
-				}
+				$mailboxOwnerId = $mailboxHelper->getMailboxOwnerId();
 			}
 		}
 
-		if (empty($userImap))
+		if (empty($mailboxHelper))
 		{
 			if ($crmEmail != '' && $crmEmail != $fromEmail)
 			{
@@ -2214,7 +2221,7 @@ elseif($action == 'SAVE_EMAIL')
 		$arBindings
 	);
 
-	$arFields = array(
+	$arFields = [
 		'OWNER_ID' => $ownerID,
 		'OWNER_TYPE_ID' => $ownerTypeID,
 		'TYPE_ID' =>  CCrmActivityType::Email,
@@ -2222,7 +2229,9 @@ elseif($action == 'SAVE_EMAIL')
 		'START_TIME' => $now,
 		'END_TIME' => $now,
 		'COMPLETED' => 'Y',
-		'RESPONSIBLE_ID' => $userID,
+		'AUTHOR_ID' => $mailboxOwnerId,
+		'RESPONSIBLE_ID' => $responsibleId,
+		'EDITOR_ID' => $responsibleId,
 		'PRIORITY' => !empty($data['important']) ? \CCrmActivityPriority::High : \CCrmActivityPriority::Medium,
 		'DESCRIPTION' => ($description = $messageHtml),
 		'DESCRIPTION_TYPE' => \CCrmContentType::Html,
@@ -2232,7 +2241,7 @@ elseif($action == 'SAVE_EMAIL')
 		'BINDINGS' => array_values($arBindings),
 		'COMMUNICATIONS' => $arComms,
 		'PARENT_ID' => $parentId,
-	);
+	];
 
 	$storageTypeID = isset($data['storageTypeID']) ? intval($data['storageTypeID']) : CCrmActivityStorageType::Undefined;
 	if($storageTypeID === CCrmActivityStorageType::Undefined
@@ -2625,7 +2634,7 @@ elseif($action == 'SAVE_EMAIL')
 
 	addEventToStatFile('crm', 'send_email_message', $_REQUEST['context'], trim(trim($messageId), '<>'));
 
-	$needUpload = !empty($userImap);
+	$needUpload = !empty($mailboxHelper);
 
 	if ($context->getSmtp() && in_array(mb_strtolower($context->getSmtp()->getHost()), array('smtp.gmail.com', 'smtp.office365.com')))
 	{
@@ -2649,7 +2658,6 @@ elseif($action == 'SAVE_EMAIL')
 			)
 		));
 
-		$mailboxHelper = Bitrix\Mail\Helper\Mailbox::createInstance($userImap['ID']);
 		$mailboxHelper->uploadMessage($outgoing);
 	}
 

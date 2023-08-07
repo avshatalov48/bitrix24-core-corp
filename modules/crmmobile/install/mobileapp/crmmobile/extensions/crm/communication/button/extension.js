@@ -7,7 +7,7 @@ jn.define('crm/communication/button', (require, exports, module) => {
 	const { PhoneType, ImType, EmailType, isExistContacts } = require('communication/connection');
 	const { CommunicationMenu } = require('communication/menu');
 	const { Loc } = require('loc');
-	const { get, mergeImmutable } = require('utils/object');
+	const { get, isObjectLike, mergeImmutable } = require('utils/object');
 	const { TypeName } = require('crm/type');
 
 	const connections = [PhoneType, EmailType, ImType];
@@ -146,7 +146,7 @@ jn.define('crm/communication/button', (require, exports, module) => {
 
 			if (!this.showHighlighted())
 			{
-				return null;
+				return;
 			}
 
 			this.communicationMenu = new CommunicationMenu({
@@ -186,12 +186,18 @@ jn.define('crm/communication/button', (require, exports, module) => {
 
 		hasPermissionsForAdd()
 		{
-			return Object.values(this.permissions).some(({ add = false }) => Boolean(add));
+			return Object.values(this.permissions)
+				.filter((item) => isObjectLike(item))
+				.some(({ add = false }) => Boolean(add))
+			;
 		}
 
 		hasPermissionsForEdit()
 		{
-			return Object.values(this.permissions).some(({ update = false }) => Boolean(update));
+			return Object.values(this.permissions)
+				.filter((item) => isObjectLike(item))
+				.some(({ update = false }) => Boolean(update))
+			;
 		}
 
 		hasConnections()
@@ -241,22 +247,49 @@ jn.define('crm/communication/button', (require, exports, module) => {
 
 		onClickTelegramConnection()
 		{
-			const openLinesAccess = get(this.permissions, 'openLinesAccess', false);
-
-			if (openLinesAccess)
+			if (!this.telegramConnectorManager)
 			{
-				this.telegramConnectorManager.openEditor();
-				return Promise.resolve();
+				this.showTelegramConnectionAccessDeniedError();
+				resolve({ closeMenu: false });
 			}
 
+			const openLinesAccess = get(this.permissions, 'openLinesAccess', null);
+
+			const promise = openLinesAccess === null
+				? this.telegramConnectorManager.hasAccess(env.userId)
+				: Promise.resolve()
+			;
+
+			return new Promise((resolve) => {
+				promise
+					.then((data) => {
+						if (openLinesAccess === true || (data && data.canEditConnector))
+						{
+							resolve();
+							this.telegramConnectorManager.openEditor();
+						}
+						else
+						{
+							this.showTelegramConnectionAccessDeniedError();
+							resolve({ closeMenu: false });
+						}
+					})
+					.catch(() => {
+						this.showTelegramConnectionAccessDeniedError();
+						resolve({ closeMenu: false });
+					})
+				;
+			});
+		}
+
+		showTelegramConnectionAccessDeniedError()
+		{
 			Alert.alert(
 				Loc.getMessage('MCRM_COMMUNICATION_BUTTON_TELEGRAM_CONNECT_ACCESS_DENIED_TITLE'),
 				Loc.getMessage('MCRM_COMMUNICATION_BUTTON_TELEGRAM_CONNECT_ACCESS_DENIED_DESCRIPTION'),
 				null,
 				Loc.getMessage('MCRM_COMMUNICATION_BUTTON_TELEGRAM_CONNECT_ACCESS_DENIED_CONFIRM'),
 			);
-
-			return Promise.resolve({ closeMenu: false });
 		}
 
 		styles()

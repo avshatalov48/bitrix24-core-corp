@@ -116,10 +116,7 @@ class ContactController extends BaseController
 		}
 
 		$slots = [
-			'FIELDS' => Crm\Entity\FieldContentType::enrichRecycleBinFields(
-				new Crm\ItemIdentifier($this->getEntityTypeID(), $entityID),
-				array_intersect_key($fields, array_flip(self::getFieldNames())),
-			),
+			'FIELDS' => array_intersect_key($fields, array_flip(self::getFieldNames())),
 		];
 
 		if(isset($fields['LEAD_ID']) && $fields['LEAD_ID'] > 0)
@@ -372,7 +369,6 @@ class ContactController extends BaseController
 			array(
 				'IS_RESTORATION' => true,
 				'DISABLE_USER_FIELD_CHECK' => true,
-				'PRESERVE_CONTENT_TYPE' => true,
 			)
 		);
 		if($newEntityID <= 0)

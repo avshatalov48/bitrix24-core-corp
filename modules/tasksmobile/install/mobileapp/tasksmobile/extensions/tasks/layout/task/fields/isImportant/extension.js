@@ -2,8 +2,8 @@
  * @module tasks/layout/task/fields/isImportant
  */
 jn.define('tasks/layout/task/fields/isImportant', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {BooleanField, BooleanMode} = require('layout/ui/fields/boolean');
+	const { Loc } = require('loc');
+	const { BooleanField, BooleanMode } = require('layout/ui/fields/boolean');
 
 	class IsImportant extends LayoutComponent
 	{
@@ -53,7 +53,7 @@ jn.define('tasks/layout/task/fields/isImportant', (require, exports, module) => 
 					},
 					testId: 'isImportant',
 					onChange: (value) => {
-						this.setState({isImportant: value});
+						this.setState({ isImportant: value });
 						this.props.onChange(value);
 					},
 				}),
@@ -61,5 +61,5 @@ jn.define('tasks/layout/task/fields/isImportant', (require, exports, module) => 
 		}
 	}
 
-	module.exports = {IsImportant};
+	module.exports = { IsImportant };
 });

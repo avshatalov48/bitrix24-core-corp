@@ -81,6 +81,7 @@ jn.define('crm/product-grid/menu/product-context-menu', (require, exports, modul
 					this.props[eventName]();
 				}
 			});
+
 			return Promise.resolve();
 		}
 

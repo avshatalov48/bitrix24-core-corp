@@ -3,7 +3,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 if ($arParams['FORUM_ID'] > 0)
 {
-	if ($arParams['MINIMAL'])
+	if (isset($arParams['MINIMAL']))
 	{
 		?><script type="text/javascript">
 			if (!window.onForumImageLoad)
@@ -33,7 +33,7 @@ if ($arParams['FORUM_ID'] > 0)
 		"EDITOR_CODE_DEFAULT" => "N",
 		"SHOW_MODERATION" => "Y",
 		"SHOW_AVATAR" => "Y",
-		"SHOW_RATING" => $arParams['MINIMAL'] ? "N" : "Y",
+		"SHOW_RATING" => ($arParams['MINIMAL'] ?? null) ? "N" : "Y",
 		"SHOW_MINIMIZED" => "N",
 		"USE_CAPTCHA" => "N",
 		"PREORDER" => "N",
@@ -41,10 +41,10 @@ if ($arParams['FORUM_ID'] > 0)
 		"SHOW_SUBSCRIBE" => "N",
 		"FILES_COUNT" => 10,
 //		"AJAX_MODE" => 'Y',
-		"AJAX_OPTION_HISTORY" => $arParams['MINIMAL'] ? "N" : "Y",
+		"AJAX_OPTION_HISTORY" => ($arParams['MINIMAL'] ?? null) ? "N" : "Y",
 		"AJAX_OPTION_ADDITIONAL" => "MEETING_ITEM_".$arResult['ITEM']['ID']."_".$arParams['COMMENTS'],
-		"SHOW_WYSIWYG_EDITOR" => $arParams['MINIMAL'] ? "N" : "Y",
-		"AUTOSAVE" => $arParams['MINIMAL'] ? false : true,
+		"SHOW_WYSIWYG_EDITOR" => ($arParams['MINIMAL'] ?? null) ? "N" : "Y",
+		"AUTOSAVE" => ($arParams['MINIMAL'] ?? null) ? false : true,
 		"PERMISSION" => "M",
 		"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
 		"BIND_VIEWER" => "Y",

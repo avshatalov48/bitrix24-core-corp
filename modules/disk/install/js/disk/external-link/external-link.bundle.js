@@ -149,10 +149,10 @@ this.BX = this.BX || {};
 	    babelHelpers.defineProperty(this, "data", {});
 	    this.bindEvents();
 	    if (main_core.Type.isPlainObject(objectId)) {
-	      this.objectId = parseInt(objectId['objectId']);
+	      this.objectId = parseInt(objectId.objectId, 10);
 	      this.setData(objectId, false);
 	    } else {
-	      this.objectId = parseInt(objectId);
+	      this.objectId = parseInt(objectId, 10);
 	      this.setData(data, false);
 	    }
 	  }
@@ -160,10 +160,9 @@ this.BX = this.BX || {};
 	    key: "setData",
 	    value: function setData(data) {
 	      var fireEvent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
-	      console.log('data: ', data);
 	      if (data && main_core.Type.isPlainObject(data)) {
 	        this.data = Object.assign(this.data, data);
-	        this.data['id'] = this.data['id'] === null ? this.data['id'] : parseInt(this.data['id']);
+	        this.data.id = this.data.id === null ? this.data.id : parseInt(this.data.id, 10);
 	      } else {
 	        this.data = {
 	          id: null,
@@ -201,10 +200,10 @@ this.BX = this.BX || {};
 	        this.getPasswordContainer().innerHTML = this.data.hasPassword ? main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_WITH_PASSWORD') : main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_WITHOUT_PASSWORD');
 	        this.getDeathTimeContainer().innerHTML = this.data.hasDeathTime ? main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_BEFORE').replace('#deathTime#', BX.Main.Date.format(BX.Main.Date.convertBitrixFormat(main_core.Loc.getMessage('FORMAT_DATETIME').replace(':SS', '')), new Date(this.data.deathTimeTimestamp * 1000))) : main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_FOREVER');
 	        if (this.data.availableEdit === true) {
-	          this.getRightsContainer().innerHTML = ', ' + (this.data.canEditDocument ? main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_RIGHTS_CAN_EDIT') : main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_RIGHTS_CAN_READ'));
-	          this.getRightsContainer().style.display = '';
+	          this.getRightsContainer().innerHTML = ", ".concat(this.data.canEditDocument ? main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_RIGHTS_CAN_EDIT') : main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_RIGHTS_CAN_READ'));
+	          main_core.Dom.style(this.getRightsContainer(), 'display', '');
 	        } else {
-	          this.getRightsContainer().style.display = 'none';
+	          main_core.Dom.style(this.getRightsContainer(), 'display', 'none');
 	        }
 	      }
 	    }
@@ -242,7 +241,7 @@ this.BX = this.BX || {};
 	        var tune = function tune() {
 	          return _this2.constructor.showPopup(_this2.objectId, _this2.data);
 	        };
-	        return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"disk-control-external-link-block", "\">\n\t\t\t\t\t<div class=\"disk-control-external-link\">\n\t\t\t\t\t\t<div class=\"disk-control-external-link-btn\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"disk-control-external-link-main\">\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-link-box\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-subtitle\" onclick=\"", "\">", "<span>, </span>", "", "</div>\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-text\">", "</div>\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-skeleton\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t"])), _this2.data.id !== null ? ' disk-control-external-link-block--active' : '', _this2.getSwitcher().getNode(), _this2.getLinkContainer(), copyButton, tune, _this2.getDeathTimeContainer(), _this2.getPasswordContainer(), _this2.getRightsContainer(), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_IS_NOT_PUBLISHED'));
+	        return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"disk-control-external-link-block", "\">\n\t\t\t\t\t<div class=\"disk-control-external-link\">\n\t\t\t\t\t\t<div class=\"disk-control-external-link-btn\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"disk-control-external-link-main\">\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-link-box\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-subtitle\" onclick=\"", "\">", "<span>, </span>", "", "</div>\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-text\">", "</div>\n\t\t\t\t\t\t\t<div class=\"disk-control-external-link-skeleton\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), _this2.data.id === null ? '' : ' disk-control-external-link-block--active', _this2.getSwitcher().getNode(), _this2.getLinkContainer(), copyButton, tune, _this2.getDeathTimeContainer(), _this2.getPasswordContainer(), _this2.getRightsContainer(), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_IS_NOT_PUBLISHED'));
 	      });
 	    }
 	  }, {
@@ -302,7 +301,7 @@ this.BX = this.BX || {};
 	      var target = _ref2.target;
 	      if (target.isChecked()) {
 	        this.showLoader();
-	        this.getBackend().generateExternalLink(this.objectId).then(function (_ref3) {
+	        void this.getBackend().generateExternalLink(this.objectId).then(function (_ref3) {
 	          var externalLink = _ref3.data.externalLink;
 	          _this5.setData(externalLink);
 	          _this5.hideLoader();
@@ -317,14 +316,14 @@ this.BX = this.BX || {};
 	    value: function showChecked() {
 	      var baseClassName = this.getContainer().classList.item(0);
 	      var activeClassName = [baseClassName, '--active'].join('');
-	      this.getContainer().classList.add(activeClassName);
+	      main_core.Dom.addClass(this.getContainer(), activeClassName);
 	    }
 	  }, {
 	    key: "showUnchecked",
 	    value: function showUnchecked() {
 	      var baseClassName = this.getContainer().classList.item(0);
 	      var activeClassName = [baseClassName, '--active'].join('');
-	      this.getContainer().classList.remove(activeClassName);
+	      main_core.Dom.removeClass(this.getContainer(), activeClassName);
 	    }
 	  }, {
 	    key: "showLoader",
@@ -755,10 +754,9 @@ this.BX = this.BX || {};
 
 	var InputExtendedForTrackedObject = /*#__PURE__*/function (_InputExtended) {
 	  babelHelpers.inherits(InputExtendedForTrackedObject, _InputExtended);
-	  function InputExtendedForTrackedObject(objectId, data) {
+	  function InputExtendedForTrackedObject() {
 	    babelHelpers.classCallCheck(this, InputExtendedForTrackedObject);
-	    console.log('InputExtendedForTrackedObject!!!');
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(InputExtendedForTrackedObject).call(this, objectId, data));
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(InputExtendedForTrackedObject).apply(this, arguments));
 	  }
 	  babelHelpers.createClass(InputExtendedForTrackedObject, [{
 	    key: "getBackend",
@@ -792,5 +790,5 @@ this.BX = this.BX || {};
 	exports.ExternalLink = InputSimple;
 	exports.ExternalLinkForTrackedObject = InputSimpleForTrackedObject;
 
-}((this.BX.Disk = this.BX.Disk || {}),BX,BX,BX,BX,BX.UI,BX,BX.Event,BX.Main,BX.UI,BX.Main));
+}((this.BX.Disk = this.BX.Disk || {}),BX,BX,BX,BX.UI,BX.UI,BX,BX.Event,BX.Main,BX.UI,BX.Main));
 //# sourceMappingURL=external-link.bundle.js.map

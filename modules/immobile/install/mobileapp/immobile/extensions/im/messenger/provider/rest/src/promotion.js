@@ -1,11 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/provider/rest/promotion
  */
 jn.define('im/messenger/provider/rest/promotion', (require, exports, module) => {
-
 	const { RestMethod } = require('im/messenger/const');
 
 	/**

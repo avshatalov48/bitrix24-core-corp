@@ -15,10 +15,10 @@ if (!CModule::IncludeModule('meeting'))
 
 if (isset($_REQUEST['fileId']))
 {
-	$fileId = (int)$_REQUEST['fileId'];
-	$meetingId = (int)$_REQUEST['meetingId'];
-	$itemId = (int)$_REQUEST['itemId'];
-	$reportId = (int)$_REQUEST['reportId'];
+	$fileId = (int)($_REQUEST['fileId'] ?? null);
+	$meetingId = (int)($_REQUEST['meetingId'] ?? null);
+	$itemId = (int)($_REQUEST['itemId'] ?? null);
+	$reportId = (int)($_REQUEST['reportId'] ?? null);
 
 	$checkedFileId = 0;
 
@@ -87,7 +87,7 @@ if (isset($_REQUEST['fileId']))
 	die();
 }
 
-$MEETING_ID = (int)$_REQUEST['MEETING_ID'];
+$MEETING_ID = (int)($_REQUEST['MEETING_ID'] ?? null);
 
 if ($MEETING_ID > 0)
 {
@@ -96,7 +96,7 @@ if ($MEETING_ID > 0)
 	{
 		if ($ACCESS === CMeeting::ROLE_OWNER || $ACCESS === CMeeting::ROLE_KEEPER)
 		{
-			$new_state = $_REQUEST['STATE'];
+			$new_state = ($_REQUEST['STATE'] ?? null);
 			if ($new_state && check_bitrix_sessid())
 			{
 				$arFields = array(
@@ -151,9 +151,9 @@ if ($MEETING_ID > 0)
 elseif(isset($_REQUEST['PLACE_ID']))
 {
 	$arPlace = CMeeting::CheckPlace($_REQUEST['PLACE_ID']);
-	if(is_array($arPlace) && $arPlace['ROOM_IBLOCK'] > 0 && $arPlace['ROOM_ID'] > 0)
+	if(is_array($arPlace) && ($arPlace['ROOM_IBLOCK'] ?? null) > 0 && ($arPlace['ROOM_ID'] ?? null) > 0)
 	{
-		$eventId = (int)$_REQUEST['EVENT_ID'];
+		$eventId = (int)($_REQUEST['EVENT_ID'] ?? null);
 
 		$eventStart = CMeeting::MakeDateTime($_REQUEST['DATE_START_DATE'], $_REQUEST['DATE_START_TIME']);
 		$eventFinish = CMeeting::MakeDateTime($_REQUEST['DATE_START_DATE'], $_REQUEST['DATE_START_TIME'], $_REQUEST['DURATION']);

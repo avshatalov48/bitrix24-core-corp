@@ -4,7 +4,9 @@
 jn.define('crm/entity-detail/component/floating-button-provider', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { PlanRestriction } = require('layout/ui/plan-restriction');
+	const { ImageAfterTypes } = require('layout/ui/context-menu/item');
 	const { FloatingMenuItem } = require('layout/ui/detail-card/floating-button/menu/item');
+	const { get } = require('utils/object');
 	const { getActionToConversion } = require('crm/entity-actions/conversion');
 	const { TimelineSchedulerDocumentProvider } = require('crm/timeline/scheduler/providers/document');
 
@@ -60,7 +62,7 @@ jn.define('crm/entity-detail/component/floating-button-provider', (require, expo
 					},
 				}),
 				actionHandler: (detailCard, result) => new Promise(() => {
-					result.forEach(({ value: menu }) => {
+					result.forEach(({ value: conversion }) => {
 						if (!isAvailableConversion)
 						{
 							PlanRestriction.open({ title: conversionTitle });
@@ -68,16 +70,16 @@ jn.define('crm/entity-detail/component/floating-button-provider', (require, expo
 							return null;
 						}
 
-						if (menu instanceof ContextMenu)
+						if (!conversion)
 						{
-							return menu.show();
+							throw new Error('Conversion not found', result);
 						}
 
-						throw new Error('Context menu not found', result);
+						return conversion();
 					});
 				}),
 				icon: svgIcon,
-				iconAfter: !isAvailableConversion && { type: ContextMenuItem.ImageAfterTypes.LOCK },
+				iconAfter: !isAvailableConversion && { type: ImageAfterTypes.LOCK },
 				showArrow: isAvailableConversion,
 			}),
 			new FloatingMenuItem({
@@ -85,13 +87,9 @@ jn.define('crm/entity-detail/component/floating-button-provider', (require, expo
 				title: Loc.getMessage('M_CRM_DETAIL_MENU_ITEM_DOCUMENT'),
 				isSupported: true,
 				isAvailable: (detailCard) => {
-					const { isDocumentPreviewerAvailable } = detailCard.getComponentParams();
-					if (!isDocumentPreviewerAvailable)
-					{
-						return false;
-					}
-
-					return !detailCard.isNewEntity() && !detailCard.isReadonly();
+					return !detailCard.isNewEntity()
+						&& !detailCard.isReadonly()
+						&& get(detailCard.getComponentParams(), 'isDocumentGenerationEnabled', false)
 				},
 				position: 600,
 				actionHandler: (detailCard) => {

@@ -617,7 +617,13 @@ BX.CTimeMan.prototype._showCalendarField = function(calendars)
 
 BX.CTimeMan.prototype.Open = function()
 {
-	if (this.WND.Show())
+	if (this.WND.isShown())
+	{
+		this.WND.Hide();
+
+		return;
+	}
+	else
 	{
 		// todo http://jabber.bx/view.php?id=165797
 		this.Query('check_module', {}, function (data) {
@@ -625,7 +631,10 @@ BX.CTimeMan.prototype.Open = function()
 			{
 				return;
 			}
-			this.Update(true);
+			if (this.WND.Show())
+			{
+				this.Update(true);
+			}
 		}.bind(this), true);
 	}
 }

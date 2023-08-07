@@ -24,10 +24,26 @@ class ResetEntityCommunicationSettingsInActivities extends Operation\Action
 		);
 
 		if (
-			$difference->isChanged(Item::FIELD_NAME_NAME)
-			|| $difference->isChanged(Item::FIELD_NAME_SECOND_NAME)
-			|| $difference->isChanged(Item::FIELD_NAME_LAST_NAME)
-			|| $difference->isChanged(Item::FIELD_NAME_HONORIFIC)
+			(
+				$item->hasField(Item::FIELD_NAME_NAME)
+				&& $difference->isChanged(Item::FIELD_NAME_NAME)
+			)
+			|| (
+				$item->hasField(Item::FIELD_NAME_SECOND_NAME)
+				&& $difference->isChanged(Item::FIELD_NAME_SECOND_NAME)
+			)
+			|| (
+				$item->hasField(Item::FIELD_NAME_LAST_NAME)
+				&& $difference->isChanged(Item::FIELD_NAME_LAST_NAME)
+			)
+			|| (
+				$item->hasField(Item::FIELD_NAME_HONORIFIC)
+				&& $difference->isChanged(Item::FIELD_NAME_HONORIFIC)
+			)
+			|| (
+				$item->hasField(Item::FIELD_NAME_TITLE)
+				&& $difference->isChanged(Item::FIELD_NAME_TITLE)
+			)
 		)
 		{
 			\CCrmActivity::ResetEntityCommunicationSettings($item->getEntityTypeId(), $item->getId());

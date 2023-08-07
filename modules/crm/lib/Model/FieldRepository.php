@@ -4,7 +4,9 @@ namespace Bitrix\Crm\Model;
 
 use Bitrix\Crm\CompanyTable;
 use Bitrix\Crm\Currency;
+use Bitrix\Crm\Entity\CommentsHelper;
 use Bitrix\Crm\FieldMultiTable;
+use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Observer\Entity\ObserverTable;
 use Bitrix\Crm\ProductRowTable;
@@ -488,8 +490,21 @@ final class FieldRepository
 			(new TextField($fieldName))
 				->configureNullable()
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_COMMENTS'))
-				->addSaveDataModifier($this->getHtmlNormalizer())
+				->addSaveDataModifier($this->getCommentsNormalizer())
 		;
+	}
+
+	/**
+	 * Returns save data modifier that normalizes value for fields with text content. As they are used to be html,
+	 * and now - bb, html -> bb conversion is implemented for backwards compatibility.
+	 *
+	 * @return callable
+	 */
+	public function getCommentsNormalizer(): callable
+	{
+		return static function ($value): string {
+			return CommentsHelper::normalizeComment($value);
+		};
 	}
 
 	/**
@@ -500,7 +515,7 @@ final class FieldRepository
 	public function getHtmlNormalizer(): callable
 	{
 		return static function ($value): string {
-			return \Bitrix\Crm\Format\TextHelper::sanitizeHtml($value);
+			return TextHelper::sanitizeHtml($value);
 		};
 	}
 

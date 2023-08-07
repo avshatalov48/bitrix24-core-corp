@@ -39,7 +39,12 @@ abstract class BaseObject extends Internals\Engine\Controller
 		return $defaultPostFilters;
 	}
 
-	protected function rename(Disk\BaseObject $object, $newName, $autoCorrect = false)
+	protected function rename(
+		Disk\BaseObject $object,
+		string $newName,
+		bool $autoCorrect = false,
+		bool $generateUniqueName = false
+	)
 	{
 		$securityContext = $object->getStorage()->getSecurityContext($this->getCurrentUser()->getId());
 		if (!$object->canRename($securityContext))
@@ -54,7 +59,7 @@ abstract class BaseObject extends Internals\Engine\Controller
 			$newName = Disk\Ui\Text::correctFilename($newName);
 		}
 
-		if (!$object->rename($newName))
+		if (!$object->rename($newName, $generateUniqueName))
 		{
 			$this->addErrors($object->getErrors());
 

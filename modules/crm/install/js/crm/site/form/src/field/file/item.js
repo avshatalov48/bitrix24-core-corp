@@ -1,10 +1,14 @@
 import * as Util from '../../util/registry';
 import {Item as BaseItem} from '../base/item';
 
-type FileData = {
+export type FileData = {
 	name: String,
 	size: ?Number,
-	content: String
+	content: String,
+	isContentFull: Boolean,
+	token: String,
+	file: ?File,
+	type: String,
 };
 
 type Options = {

@@ -19,6 +19,5 @@ return [
 		'./src/recent',
 		'./src/search',
 		'./src/dialog',
-
 	],
 ];

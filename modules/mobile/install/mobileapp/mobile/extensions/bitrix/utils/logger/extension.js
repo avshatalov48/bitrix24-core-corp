@@ -2,31 +2,31 @@
  * @module utils/logger
  */
 jn.define('utils/logger', (require, exports, module) => {
+	const LogType = {
+		LOG: 'log',
+		INFO: 'info',
+		WARN: 'warn',
+		ERROR: 'error',
+		TRACE: 'trace',
+	};
 
-	/**
-	 * @class Logger
-	 */
 	class Logger
 	{
-		constructor()
+		static getSupportedLogTypes()
+		{
+			return Object.values(LogType);
+		}
+
+		static isSupportedLogType(type)
+		{
+			return Logger.getSupportedLogTypes().includes(type);
+		}
+
+		constructor(enabledLogTypes = [])
 		{
 			this.enabledLogTypes = new Set();
-		}
 
-		getSupportedLogTypes()
-		{
-			return [
-				'log',
-				'info',
-				'warn',
-				'error',
-				'trace',
-			];
-		}
-
-		isSupportedLogType(type)
-		{
-			return this.getSupportedLogTypes().includes(type);
+			enabledLogTypes.forEach((type) => this.enable(type));
 		}
 
 		isEnabledLogType(type)
@@ -36,7 +36,7 @@ jn.define('utils/logger', (require, exports, module) => {
 
 		enable(type)
 		{
-			if (!this.isSupportedLogType(type))
+			if (!Logger.isSupportedLogType(type))
 			{
 				return false;
 			}
@@ -48,7 +48,7 @@ jn.define('utils/logger', (require, exports, module) => {
 
 		disable(type)
 		{
-			if (!this.isSupportedLogType(type))
+			if (!Logger.isSupportedLogType(type))
 			{
 				return false;
 			}
@@ -60,44 +60,49 @@ jn.define('utils/logger', (require, exports, module) => {
 
 		log(...params)
 		{
-			if (this.isEnabledLogType('log'))
+			if (this.isEnabledLogType(LogType.LOG))
 			{
+				// eslint-disable-next-line no-console
 				console.log(...params);
 			}
 		}
 
 		info(...params)
 		{
-			if (this.isEnabledLogType('info'))
+			if (this.isEnabledLogType(LogType.INFO))
 			{
+				// eslint-disable-next-line no-console
 				console.info(...params);
 			}
 		}
 
 		warn(...params)
 		{
-			if (this.isEnabledLogType('warn'))
+			if (this.isEnabledLogType(LogType.WARN))
 			{
+				// eslint-disable-next-line no-console
 				console.warn(...params);
 			}
 		}
 
 		error(...params)
 		{
-			if (this.isEnabledLogType('error'))
+			if (this.isEnabledLogType(LogType.ERROR))
 			{
+				// eslint-disable-next-line no-console
 				console.error(...params);
 			}
 		}
 
 		trace(...params)
 		{
-			if (this.isEnabledLogType('trace'))
+			if (this.isEnabledLogType(LogType.TRACE))
 			{
+				// eslint-disable-next-line no-console
 				console.trace(...params);
 			}
 		}
 	}
 
-	module.exports = { Logger };
+	module.exports = { Logger, LogType };
 });

@@ -87,6 +87,8 @@ class Dictionary
 				['id' => 'audio/*', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_AUDIO')],
 				['id' => 'video/*', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_VIDEO')],
 			],
+			'defaultMaxFileFieldSizeMbValue' => Main\Config\Option::get('crm', '~webform_default_max_file_field_size_mb', 1000),
+			'dailyFileLimitSizeMbValue' => WebForm\Limitations\DailyFileUploadLimit::instance()->getLimit(),
 			'integration' => $this->getIntegration(),
 			'scenarios' => Main\DI\ServiceLocator::getInstance()->get('crm.service.webform.scenario')->getScenarioList(),
 			'scenarioCategories' => Main\DI\ServiceLocator::getInstance()->get('crm.service.webform.scenario')->getScenarioCategoryList(),

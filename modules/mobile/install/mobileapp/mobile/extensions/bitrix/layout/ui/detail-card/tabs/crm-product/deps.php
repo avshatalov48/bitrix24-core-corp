@@ -4,7 +4,7 @@ return [
 	'extensions' => [
 		'layout/ui/detail-card/tabs',
 		'utils/error-notifier',
-		'catalog/barcode-scanner',
+		'catalog:barcode-scanner',
 		'loc',
 		'notify',
 		'helpers/component',

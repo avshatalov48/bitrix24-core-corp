@@ -2,9 +2,9 @@
  * @module crm/category-permissions
  */
 jn.define('crm/category-permissions', (require, exports, module) => {
-	const { CategoryListView } = require('crm/category-list-view');
-	const { getEntityMessage } = require('crm/loc');
 	const { Type } = require('crm/type');
+	const { getEntityMessage } = require('crm/loc');
+	const { ImageAfterTypes } = require('layout/ui/context-menu/item');
 
 	const ACCESS = {
 		ALL_FOR_ALL: 'X',
@@ -200,7 +200,7 @@ jn.define('crm/category-permissions', (require, exports, module) => {
 					data: {
 						svgIcon: svgImages.customAccess,
 						svgIconAfter: {
-							type: ContextMenuItem.ImageAfterTypes.WEB,
+							type: ImageAfterTypes.WEB,
 						},
 					},
 					onClickCallback: this.openOnDesktop.bind(this),
@@ -245,8 +245,10 @@ jn.define('crm/category-permissions', (require, exports, module) => {
 			}
 		}
 
-		openCategoryList({ parentWidget })
+		async openCategoryList({ parentWidget })
 		{
+			const { CategoryListView } = await requireLazy('crm:category-list-view');
+
 			return new Promise((resolve, reject) => {
 				const { entityTypeId, categoryId } = this.props;
 

@@ -220,17 +220,41 @@ class File extends BaseObject
 		}
 
 		$previewFileData = $this->request->getFile('previewFile');
-		if ($previewFileData && \CFile::isImage($previewFileData['name'], $previewFileData['type']))
+		if (is_array($previewFileData))
 		{
-			$previewFileData['MODULE_ID'] = 'main';
-			$previewId = \CFile::saveFile($previewFileData, 'main_preview', true, true);
-			if ($previewId)
-			{
-				(new Main\UI\Viewer\PreviewManager())->setPreviewImageId($file->getFileId(), $previewId);
-			}
+			$file->attachImagePreview($previewFileData);
 		}
 
 		return $this->getAction($file);
+	}
+
+	public function attachPreviewAction(Disk\File $file): array
+	{
+		$currentUserId = $this->getCurrentUser()->getId();
+		$securityContext = $file->getStorage()->getSecurityContext($currentUserId);
+		if (!$file->canUpdate($securityContext))
+		{
+			$this->addError(new Error(Loc::getMessage('DISK_ERROR_MESSAGE_DENIED')));
+
+			return [];
+		}
+
+		$previewFileData = $this->request->getFile('previewFile');
+		if (!is_array($previewFileData))
+		{
+			$this->addError(new Error('Could not find preview file in request'));
+
+			return [];
+		}
+
+		$result = $file->attachImagePreview($previewFileData);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+		}
+
+		return [];
 	}
 
 	public function showImageAction(Disk\File $file, $width = 0, $height = 0, $exact = null)
@@ -243,7 +267,7 @@ class File extends BaseObject
 			return null;
 		}
 
-		$isImage = TypeFile::isImage($fileName);
+		$isImage = TypeFile::isImage($file);
 		if (!$isImage)
 		{
 			return $this->downloadAction($file);

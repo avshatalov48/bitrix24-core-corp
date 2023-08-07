@@ -4,7 +4,6 @@
  * @module im/messenger/provider/pull/base
  */
 jn.define('im/messenger/provider/pull/base', (require, exports, module) => {
-
 	const { core } = require('im/messenger/core');
 
 	/**

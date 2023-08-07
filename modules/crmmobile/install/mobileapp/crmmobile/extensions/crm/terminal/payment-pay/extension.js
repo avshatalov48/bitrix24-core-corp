@@ -95,19 +95,12 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 
 		renderPayment()
 		{
-			return ScrollView(
+			return View(
 				{
-					style: styles.paymentContainer,
+					style: styles.paymentContainer(this.isStep(Steps.loading)),
 				},
-				View(
-					{
-						style: {
-							opacity: this.isStep(Steps.loading) ? 0.3 : 1,
-						},
-					},
-					this.renderPaymentFields(),
-					this.renderPaymentContent(),
-				),
+				this.renderPaymentFields(),
+				this.renderPaymentContent(),
 			);
 		}
 
@@ -154,7 +147,12 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 				return this.renderPaymentQr();
 			}
 
-			return this.renderPaymentMethods();
+			return ScrollView(
+				{
+					style: styles.paymentMethodsContainer,
+				},
+				this.renderPaymentMethods(),
+			);
 		}
 
 		renderPaymentLoader()
@@ -184,28 +182,24 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 		renderPaymentQr()
 		{
 			return View(
-				{},
+				{
+					style: styles.paymentQrContainer,
+				},
+				Text({
+					id: 'TerminalPaymentPayScanQrText',
+					style: styles.paymentQrText,
+					text: Loc.getMessage('M_CRM_TL_PAYMENT_PAY_SCAN_QR'),
+				}),
 				View(
 					{
-						style: styles.paymentQrContainer,
+						style: styles.paymentQrImageContainer,
 					},
-					Text({
-						id: 'TerminalPaymentPayScanQrText',
-						style: styles.paymentQrText,
-						text: Loc.getMessage('M_CRM_TL_PAYMENT_PAY_SCAN_QR'),
+					Image({
+						testId: 'TerminalPaymentPayQrCode',
+						style: styles.paymentQrImage,
+						base64: this.state.qrCode,
 					}),
-					View(
-						{
-							style: styles.paymentQrImageContainer,
-						},
-						Image({
-							testId: 'TerminalPaymentPayQrCode',
-							style: styles.paymentQrImage,
-							base64: this.state.qrCode,
-						}),
-					),
 				),
-
 				View(
 					{
 						testId: 'TerminalPaymentPayBackToPaymentMethodsButton',
@@ -234,9 +228,7 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 		renderPaymentMethods()
 		{
 			return View(
-				{
-					style: styles.paymentMethodsContainer,
-				},
+				{},
 				...this.state.paymentSystems.map((paymentSystem, index) => {
 					return View(
 						{
@@ -403,6 +395,7 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 				.then(() => this.psCreationOauthAction.run(this.getActionProviderData('oauth')))
 				.then(() => {
 					this.setStep(Steps.loading);
+
 					return Promise.resolve();
 				})
 				.then(() => this.psCreationBeforeAction.run(this.getActionProviderData('before')))
@@ -426,6 +419,7 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 				if (this.state.paymentMethod.paymentSystem.connected === true)
 				{
 					resolve();
+
 					return;
 				}
 
@@ -446,6 +440,7 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 									message: Loc.getMessage('M_CRM_TL_PAYMENT_PAY_PAYMENT_SYSTEM_CREATION_ERROR_MESSAGE'),
 								},
 							});
+
 							return;
 						}
 
@@ -553,7 +548,7 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 			if (this.layout)
 			{
 				this.layout.enableNavigationBarBorder(false);
-				this.layout.setBottomSheetHeight(PaymentPay.getHeight());
+				this.layout.setBottomSheetHeight(this.getHeight());
 			}
 
 			this.customEventEmitter.on(
@@ -649,11 +644,37 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 			return `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/terminal/payment-pay/images/${image}.png`;
 		}
 
-		static getHeight()
+		getHeight()
 		{
-			return 660;
+			const buttonsCount = this.payment.paymentSystems.length + 1;
+
+			const result = TITLE_HEIGHT
+				+ FIELDS_HEIGHT
+				+ PAYMENT_METHODS_CONTAINER_MARGIN_TOP
+				+ PAYMENT_METHODS_CONTAINER_MARGIN_BOTTOM
+				+ buttonsCount * PaymentButton.getHeight()
+				+ (buttonsCount - 1) * PAYMENT_BUTTON_MARGIN_TOP;
+
+			if (result < PaymentPay.getMinHeight())
+			{
+				return PaymentPay.getMinHeight();
+			}
+
+			return result;
+		}
+
+		static getMinHeight()
+		{
+			return MIN_HEIGHT;
 		}
 	}
+
+	const MIN_HEIGHT = 630;
+	const TITLE_HEIGHT = 55;
+	const FIELDS_HEIGHT = 245;
+	const PAYMENT_METHODS_CONTAINER_MARGIN_TOP = 50;
+	const PAYMENT_METHODS_CONTAINER_MARGIN_BOTTOM = 25;
+	const PAYMENT_BUTTON_MARGIN_TOP = 16;
 
 	const Steps = {
 		view: 'view',
@@ -674,13 +695,14 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 
 	const styles = {
 		container: {
-			flexDirection: 'column',
-			flexGrow: 1,
+			flex: 1,
 		},
-		paymentContainer: {
-			flexDirection: 'column',
-			flexGrow: 1,
-			backgroundColor: '#EEF2F4',
+		paymentContainer: (isLoading) => {
+			return {
+				flex: 1,
+				opacity: isLoading ? 0.3 : 1,
+				backgroundColor: '#EEF2F4',
+			};
 		},
 		fieldsContainer: {
 			backgroundColor: '#FFFFFF',
@@ -707,9 +729,10 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 			color: '#333333',
 		},
 		paymentQrContainer: {
-			marginTop: 24,
-			backgroundColor: '#EEF2F4',
+			flex: 1,
+			justifyContent: 'space-evenly',
 			alignItems: 'center',
+			backgroundColor: '#EEF2F4',
 		},
 		paymentQrText: {
 			marginHorizontal: 30,
@@ -721,7 +744,6 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 		paymentQrImageContainer: {
 			width: 218,
 			height: 218,
-			marginTop: 24,
 			backgroundColor: '#FFFFFF',
 			borderRadius: 12,
 			flexDirection: 'row',
@@ -737,10 +759,9 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 			flexDirection: 'row',
 			alignItems: 'center',
 			justifyContent: 'center',
-			marginHorizontal: 46,
+			paddingHorizontal: 14,
 			paddingTop: 9,
 			paddingBottom: 9,
-			marginTop: 28,
 			borderRadius: 6,
 			borderWidth: 1,
 			borderColor: '#828B95',
@@ -763,13 +784,14 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 			fontWeight: '400',
 		},
 		paymentMethodsContainer: {
-			marginTop: 77,
-			marginLeft: 46,
-			marginRight: 46,
+			flex: 1,
+			marginTop: PAYMENT_METHODS_CONTAINER_MARGIN_TOP,
+			marginBottom: PAYMENT_METHODS_CONTAINER_MARGIN_BOTTOM,
+			marginHorizontal: 46,
 		},
 		paymentMethodContainer: (isFirst) => {
 			return {
-				marginTop: isFirst ? 0 : 16,
+				marginTop: isFirst ? 0 : PAYMENT_BUTTON_MARGIN_TOP,
 			};
 		},
 	};

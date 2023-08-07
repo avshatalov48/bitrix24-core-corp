@@ -2,12 +2,55 @@
  * @module tasks/layout/task/fields/taskResultList/taskResult
  */
 jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {ProfileView} = require('user/profile');
-	const {inAppUrl} = require('in-app-url');
+	const { Loc } = require('loc');
+	const { ProfileView } = require('user/profile');
+	const { inAppUrl } = require('in-app-url');
+	const { FileAttachment } = require('layout/ui/file-attachment');
 
 	class TaskResult extends LayoutComponent
 	{
+		static getImageUrl(imageUrl)
+		{
+			let result = imageUrl;
+
+			if (result.indexOf(currentDomain) !== 0)
+			{
+				result = result.replace(`${currentDomain}`, '');
+				result = (result.indexOf('http') === 0 ? result : `${currentDomain}${result}`);
+			}
+
+			return encodeURI(result);
+		}
+
+		static getFileType({ type, name })
+		{
+			return UI.File.getType(UI.File.getFileMimeType(type, name));
+		}
+
+		static openFileViewer({ fileType, url, name })
+		{
+			if (!url)
+			{
+				return;
+			}
+
+			switch (fileType)
+			{
+				case 'video':
+					viewer.openVideo(url);
+					break;
+
+				case 'image':
+					viewer.openImage(url, name);
+					break;
+
+				default:
+					viewer.openDocument(url, name);
+					break;
+			}
+		}
+
+		// eslint-disable-next-line no-useless-constructor
 		constructor(props)
 		{
 			super(props);
@@ -66,7 +109,10 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 									horizontalSwipeAllowed: false,
 								},
 							})
-							.then(list => ProfileView.open({userId: result.createdBy, isBackdrop: true}, list))
+							.then((list) => {
+								ProfileView.open({ userId: result.createdBy, isBackdrop: true }, list);
+							})
+							.catch(() => {})
 						;
 					},
 				},
@@ -77,7 +123,7 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 						borderRadius: 12,
 						alignSelf: 'center',
 					},
-					uri: this.getImageUrl(author.avatar),
+					uri: TaskResult.getImageUrl(author.avatar),
 				}),
 				Text({
 					style: {
@@ -111,13 +157,13 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 		renderText()
 		{
 			return BBCodeText({
-				onLinkClick: ({url}) => {
+				onLinkClick: ({ url }) => {
 					const fileMatch = url.match(/\/\?openFile&fileId=(\d+)/);
 					if (fileMatch && this.props.taskResult.fileInfo[fileMatch[1]])
 					{
 						const file = this.props.taskResult.fileInfo[fileMatch[1]];
 						file.fileType = UI.File.getType(UI.File.getFileMimeType(file.type, file.name));
-						this.openFileViewer(file);
+						TaskResult.openFileViewer(file);
 
 						return;
 					}
@@ -133,14 +179,6 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 						return;
 					}
 
-					const diskMatch = url.match(/\/bitrix\/tools\/disk\/focus.php\?.*(folderId|objectId)=(\d+)/i);
-					if (diskMatch)
-					{
-						BX.postComponentEvent('onDiskFolderOpen', [{folderId: diskMatch[2]}], 'background');
-
-						return;
-					}
-
 					inAppUrl.open(url);
 				},
 				value: this.props.taskResult.parsedText,
@@ -149,16 +187,16 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 
 		renderFiles()
 		{
-			if (!Object.keys(this.props.taskResult.fileInfo).length)
+			if (Object.keys(this.props.taskResult.fileInfo).length === 0)
 			{
-				return View({style: {display: 'none'}});
+				return View({ style: { display: 'none' } });
 			}
 
 			const images = [];
 			const otherFiles = [];
 
 			Object.values(this.props.taskResult.fileInfo).forEach((file) => {
-				if (this.getFileType(file) === 'image')
+				if (TaskResult.getFileType(file) === 'image')
 				{
 					images.push(file);
 				}
@@ -181,8 +219,8 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 
 		renderImages(images)
 		{
-			images = images.map(image => ({...image, imageUri: image.url}));
-			images = images.map(image => UI.File({...image, files: images}));
+			let preparedImages = images.map((image) => ({ ...image, imageUri: image.url }));
+			preparedImages = preparedImages.map((image) => UI.File({ ...image, files: images }));
 
 			return View(
 				{
@@ -192,27 +230,27 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 						marginLeft: -9,
 					},
 				},
-				...images,
+				...preparedImages,
 			);
 		}
 
 		renderOtherFiles(files)
 		{
-			if (!files.length)
+			if (files.length === 0)
 			{
-				return View({style: {display: 'none'}});
+				return View({ style: { display: 'none' } });
 			}
 
-			files = files.map(file => ({...file, imageUri: file.url}));
+			const preparedFiles = files.map((file) => ({ ...file, imageUri: file.url }));
 
 			const filesToShowCount = 3;
 			const filesToShow = [];
 
 			for (let i = 0; i < filesToShowCount; i++)
 			{
-				if (files.length)
+				if (preparedFiles.length > 0)
 				{
-					filesToShow.push(files.shift());
+					filesToShow.push(preparedFiles.shift());
 				}
 			}
 
@@ -222,14 +260,14 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 						marginTop: 8,
 					},
 				},
-				...filesToShow.map(file => UI.File({...file, isInLine: true})),
-				(files.length && View(
+				...filesToShow.map((file) => UI.File({ ...file, isInLine: true })),
+				(preparedFiles.length > 0 && View(
 					{
 						style: {
 							marginTop: 8,
 							alignItems: 'flex-end',
 						},
-						onClick: () => this.openFilesList(files),
+						onClick: () => this.openFilesList(preparedFiles),
 					},
 					Text({
 						style: {
@@ -239,59 +277,20 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 						},
 						text: Loc.getMessage(
 							'TASKSMOBILE_LAYOUT_TASK_FIELDS_TASK_RESULT_FILES_MORE',
-							{'#COUNT#': files.length}
+							{ '#COUNT#': preparedFiles.length },
 						),
 					}),
 				)),
 			);
 		}
 
-		getFileType({type, name})
-		{
-			return UI.File.getType(UI.File.getFileMimeType(type, name));
-		}
-
-		getImageUrl(imageUrl)
-		{
-			if (imageUrl.indexOf(currentDomain) !== 0)
-			{
-				imageUrl = imageUrl.replace(`${currentDomain}`, '');
-				imageUrl = (imageUrl.indexOf('http') !== 0 ? `${currentDomain}${imageUrl}` : imageUrl);
-			}
-
-			return encodeURI(imageUrl);
-		}
-
-		openFileViewer({fileType, url, name})
-		{
-			if (!url)
-			{
-				return;
-			}
-
-			switch (fileType)
-			{
-				case 'video':
-					viewer.openVideo(url);
-					break;
-
-				case 'image':
-					viewer.openImage(url, name);
-					break;
-
-				default:
-					viewer.openDocument(url, name);
-					break;
-			}
-		}
-
-		openWebViewer({type, id})
+		openWebViewer({ type, id })
 		{
 			PageManager.openPage({
 				url: `${env.siteDir}mobile/tasks/snmrouter/?routePage=fragmentrenderer&FRAGMENT_TYPE=${type}&FRAGMENT_ID=${id}&TASK_ID=${this.props.taskId}&RESULT_ID=${this.props.taskResult.id}`,
 				title: Loc.getMessage(
 					`TASKSMOBILE_LAYOUT_TASK_FIELDS_TASK_RESULT_CONTENT_${type.toUpperCase()}`,
-					{'#INDEX#': Number(id)}
+					{ '#INDEX#': Number(id) },
 				),
 				backdrop: {
 					bounceEnable: false,
@@ -310,7 +309,7 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 				{
 					title: Loc.getMessage(
 						'TASKSMOBILE_LAYOUT_TASK_FIELDS_TASK_RESULT_FILES_MORE',
-						{'#COUNT#': files.length}
+						{ '#COUNT#': files.length },
 					),
 					useLargeTitleMode: true,
 					modal: false,
@@ -324,7 +323,7 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 						const imageSize = (screenWidth > 375 ? fileMeasure : screenWidth * fileMeasure / 375);
 
 						layoutWidget.showComponent(
-							new UI.FileAttachment({
+							new FileAttachment({
 								attachments: files,
 								layoutWidget,
 								showName: true,
@@ -358,5 +357,5 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 		}
 	}
 
-	module.exports = {TaskResult};
+	module.exports = { TaskResult };
 });

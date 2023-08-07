@@ -2878,16 +2878,13 @@ class Session
 		if ($sessionData)
 		{
 			$userId = (int)$userId;
-			if ($userId > 0)
+			if (!$userId)
 			{
-				$configManager = new \Bitrix\ImOpenLines\Config();
-				$resultPermissions = $configManager->canVoteAsHead($sessionData['CONFIG_ID']);
-			}
-			else
-			{
-				$resultPermissions = true;
 				$userId = $GLOBALS['USER']->GetId();
 			}
+
+			$configManager = new \Bitrix\ImOpenLines\Config();
+			$resultPermissions = $configManager->canVoteAsHead($sessionData['CONFIG_ID']);
 
 			if ($resultPermissions)
 			{

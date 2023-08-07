@@ -10,6 +10,8 @@ return [
 		'utils/object',
 		'utils/string',
 		'utils/type',
+		'utils/random',
+		'utils/prop',
 		'assets/common',
 	],
 ];

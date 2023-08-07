@@ -1308,13 +1308,16 @@ a.crm-timeline__card-title:hover {
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	overflow: hidden;
-	flex-direction: row;
+	flex-direction: column;
 	align-items: flex-start;
 	max-width: 100%;
 }
 
+.crm-timeline__file-list-btn-icon.--upended {
+	transform: rotate(180deg);
+}
+
 .crm-timeline__file-list-wrapper .crm-timeline__file-list-title-container {
-	width: 100px;
 	display: flex;
 	flex-direction: row;
 	align-items: flex-start;
@@ -1323,6 +1326,14 @@ a.crm-timeline__card-title:hover {
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
+}
+
+.crm-timeline__file-list-footer {
+	margin-top: 5px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
 }
 
 .crm-timeline__file-list-wrapper .crm-timeline__file-list-title-container .crm-timeline__file-list-title {
@@ -1345,15 +1356,14 @@ a.crm-timeline__card-title:hover {
 }
 
 .crm-timeline__file-list-wrapper .crm-timeline__file-list-container {
-	margin-top: 4px;
-	margin-left: 10px;
+	max-width: 100%;
 	overflow: hidden;
 	zoom: 1;
 }
 
 .crm-timeline__file-list-wrapper .crm-timeline__file-list-container .crm-timeline__file-container {
 	display: block;
-	padding-bottom: 8px;
+	padding-bottom: 10px;
 	font-size: var(--ui-font-size-md, 14px);
 	line-height: var(--ui-font-line-height-lg, 1.5);
 	margin: 0;
@@ -1373,17 +1383,85 @@ a.crm-timeline__card-title:hover {
 .crm-timeline__file_icon {
 	display: inline-block;
 	width: 18px;
-	margin-right: 7px;
+	margin-right: 10px;
 }
 
 .crm-timeline__file_icon svg {
-	width: 18px;
+	width: 21px;
 }
 
 .crm-timeline__file .crm-timeline__card_link {
 	max-width: 100%;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+.crm-timeline__file_audio-player {
+	margin-left: var(--ui-space-inline-xs);
+}
+
+.crm-timeline__file-list-btn-container:not(:last-child) {
+	margin-right: var(--ui-space-inline-sm);
+}
+
+.crm-timeline__file-list-btn {
+	--crm-timeline__file-list-btn-color-rgb: var(--ui-color-base-solid-rgb);
+	display: flex;
+	padding: 0;
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-2xs);
+	color: rgba(var(--crm-timeline__file-list-btn-color-rgb), 0.6);
+	border: none;
+	background-color: transparent;
+	transition: 0.2s linear border-bottom-color;
+	cursor: pointer;
+}
+
+.crm-timeline__file-list-btn.--disabled,
+.crm-timeline__file-list-btn.--disabled:hover{
+	color: rgba(var(--crm-timeline__file-list-btn-color-rgb), 0.4);
+	border-bottom-color: rgba(var(--crm-timeline__file-list-btn-color-rgb), 0.3);
+}
+
+.crm-timeline__file-list-btn:hover {
+	border-bottom-color: rgba(var(--crm-timeline__file-list-btn-color-rgb), 0.6);
+	transition-duration: 0s;
+}
+
+.crm-timeline__file_title {
+	display: flex;
+}
+
+.crm-timeline__file_title span {
+	display: inline-block;
+	white-space: pre;
+}
+
+.crm-timeline__file_title span:first-child {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.crm-timeline__file-list-btn-text {
+	display: inline-block;
+	border-bottom: var(--ui-border-width-thin) dashed rgba(var(--crm-timeline__file-list-btn-color-rgb), 0.36);
+}
+
+.crm-timeline__file-list-btn:hover .crm-timeline__file-list-btn-text {
+	border-bottom-color: rgba(var(--crm-timeline__file-list-btn-color-rgb), 0.6);
+	transition-duration: 0s;
+}
+
+.crm-timeline__file-list-btn-icon {
+	--ui-icon-set__icon-color: rgba(var(--ui-color-base-solid-rgb), 0.3);
+
+	width: 18px;
+	height: 18px;
+}
+
+.crm-timeline__file-list-btn:hover .crm-timeline__file-list-btn-icon {
+	--ui-icon-set__icon-color: rgba(var(--ui-color-base-solid-rgb), 0.6);
 }
 
 .crm-timeline__card-market {
@@ -1480,11 +1558,18 @@ a.crm-timeline__card-title:hover {
 	justify-content: center;
 }
 
+.crm-timeline__audioplayer-contianer.--mini {
+	padding: 0;
+	height: auto;
+}
+
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-controls-container {
 	width: auto;
 	height: auto;
 	min-width: auto;
 	min-height: auto;
+	max-width: -webkit-max-content;
+	max-width: max-content;
 }
 
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-control {
@@ -1503,10 +1588,38 @@ a.crm-timeline__card-title:hover {
 	transition-timing-function: var(--crm-timeline__audioplayer_transition-timing-function);
 }
 
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control,
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control:hover {
+	width: 40px;
+	height: 20px;
+	border-radius: 512px;
+	background-color: var(--ui-color-background-primary);
+	border: var(--ui-border-width-thin) solid var(--ui-color-palette-blue-40);
+}
+
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control:hover {
+	border-color: var(--ui-color-palette-blue-60);
+}
+
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause {
 	transition-duration: var(--crm-timeline__audioplayer_transition-duration);
-	background: var(--ui-color-palette-blue-30, #c1eefd);
-	fill: var(--ui-color-primary, #2fc6f6);
+}
+
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause,
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause:hover {
+	transition-duration: var(--crm-timeline__audioplayer_transition-duration);
+	background-color: var(--ui-color-background-primary);
+	border-color: var(--ui-color-base-40);
+	fill: var(--ui-color-base-solid-rgb);
+}
+
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause svg,
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause:hover svg {
+	fill: var(--ui-color-base-solid-rgb);
+}
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause:hover {
+	border-color: var(--ui-color-base-60);
+	transition-duration: 0s;
 }
 
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-control:hover {
@@ -1517,7 +1630,10 @@ a.crm-timeline__card-title:hover {
 
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause:hover {
 	fill: var(--ui-color-palette-blue-60, #1aa9d6);
-	background: var(--ui-color-palette-blue-30, #c1eefd);
+}
+
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control-loader {
+	animation: none;
 }
 
 
@@ -1525,6 +1641,10 @@ a.crm-timeline__card-title:hover {
 	margin-left: 2px;
 	fill: var(--ui-color-on-primary, #fff);
 	transition-duration: var(--crm-timeline__audioplayer_transition-duration);
+}
+
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control-icon {
+	fill: var(--ui-color-primary);
 }
 
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-control:hover .ui-vue-audioplayer-control-icon {
@@ -1536,6 +1656,10 @@ a.crm-timeline__card-title:hover {
 	height: auto;
 	margin-left: calc(var(--ui-space-inline-md, 16px));
 	padding-left: 0;
+}
+
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-timeline-container {
+	margin-left: var(--ui-space-inline-xs);
 }
 
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-track-container {
@@ -1595,7 +1719,7 @@ a.crm-timeline__card-title:hover {
 }
 
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-time-current {
-	position: static;
+	position: relative;
 	top: 0;
 	left: 0;
 	transition: color var(--crm-timeline__audioplayer_transition-duration) var(--crm-timeline__audioplayer_transition-timing-function);
@@ -1605,10 +1729,15 @@ a.crm-timeline__card-title:hover {
 	color: var(--ui-color-primary, #2FC6F6);
 }
 
-.crm-timeline__audioplayer-contianer .ui-vue-audioplayer-time {
-	font: 10px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-regular, 400);
-	color: var(--ui-color-base-50, #a8adb4);
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-time-current.--is-playing {
+	color: var(--ui-color-text-secondary);
+}
+
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-time-divider {
+	color: var(--ui-color-base-30);
+	font-size: inherit;
+	line-height: inherit;
+	font-family: inherit;
 }
 
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-total-time {
@@ -1617,6 +1746,14 @@ a.crm-timeline__card-title:hover {
 	justify-content: space-between;
 	align-items: center;
 	margin-top: 12px;
+	color: var(--ui-color-base-50);
+	font: 10px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
+}
+
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-total-time {
+	margin-top: 0;
+	font-size: var(--ui-font-size-3xs);
 }
 
 .ui-vue-audioplayer-total-time.--hidden {

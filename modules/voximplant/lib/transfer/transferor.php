@@ -54,7 +54,9 @@ class Transferor
 			'CALLER_ID' => static::createCallerId($targetType, $targetId),
 			'ACCESS_URL' => $parentCall->getAccessUrl(),
 			'STATUS' => CallTable::STATUS_WAITING,
-			'DATE_CREATE' => new DateTime()
+			'DATE_CREATE' => new DateTime(),
+			'LAST_PING' => null,
+			'QUEUE_ID' => null,
 		]);
 
 

@@ -186,6 +186,7 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 						handleChange(field);
 					}
 				},
+				onClick: () => this.notifyDiscountDisabled(),
 				rightBlock: (field) => DiscountTypeSwitch({
 					disabled,
 					text: discountType === DiscountType.PERCENTAGE ? '%' : moneyStub.formattedCurrency,
@@ -410,6 +411,18 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 			}
 		}
 
+		notifyDiscountDisabled()
+		{
+			if (!this.productRow.isDiscountEditable())
+			{
+				const title = Loc.getMessage('PRODUCT_GRID_CONTROL_PRICING_FIELD_CHANGE_NOT_PERMITTED_TITLE');
+				const message = Loc.getMessage('PRODUCT_GRID_CONTROL_PRICING_FIELD_CHANGE_NOT_PERMITTED_BODY');
+				const seconds = 5;
+
+				notify({ title, message, seconds });
+			}
+		}
+
 		/**
 		 * @return {boolean}
 		 */
@@ -441,6 +454,7 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 		normalizeMoneyFieldValue(raw)
 		{
 			const val = String(raw).replace(',', '.').trim();
+
 			return Number(val);
 		}
 	}
@@ -458,6 +472,7 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 				marginLeft: index === 0 ? 0 : horizontalGap,
 				marginRight: index === maxIndex ? 0 : horizontalGap,
 			};
+
 			return View({ style }, columnContent);
 		});
 

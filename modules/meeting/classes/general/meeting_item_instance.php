@@ -14,11 +14,15 @@ abstract class CAllMeetingInstance
 		while ($a = $e->Fetch())
 		{
 			if (false === ExecuteModuleEventEx($a, array(&$arFields)))
+			{
 				return false;
+			}
 		}
 
 		if (!self::CheckFields('ADD', $arFields))
+		{
 			return false;
+		}
 
 		$ID = $DB->Add('b_meeting_instance', $arFields);
 		if ($ID > 0)
@@ -31,7 +35,7 @@ abstract class CAllMeetingInstance
 				self::SetResponsible($arFields, $arFields['RESPONSIBLE'], false);
 			}
 
-			if (is_array($arFields['REPORTS']))
+			if (isset($arFields['REPORTS']) && is_array($arFields['REPORTS']))
 			{
 				foreach ($arFields['REPORTS'] as $arReport)
 				{
@@ -45,7 +49,9 @@ abstract class CAllMeetingInstance
 
 			$e = GetModuleEvents('meeting', 'OnAfterMeetingInstanceAdd');
 			while ($a = $e->Fetch())
+			{
 				ExecuteModuleEventEx($a, array($arFields));
+			}
 		}
 
 		return $ID;
@@ -106,7 +112,7 @@ abstract class CAllMeetingInstance
 
 		if ($bClear)
 		{
-			$DB->Query("DELETE FROM b_meeting_instance_users WHERE INSTANCE_ID='".intval($arInstance['INSTANCE_ID'])."'");
+			$DB->Query("DELETE FROM b_meeting_instance_users WHERE INSTANCE_ID='".(int)$arInstance['INSTANCE_ID']."'");
 		}
 
 		$cnt = 0;
@@ -114,11 +120,13 @@ abstract class CAllMeetingInstance
 		{
 			foreach ($arUsers as $USER_ID)
 			{
-				$USER_ID = intval($USER_ID);
+				$USER_ID = (int)$USER_ID;
 				if ($USER_ID <= 0)
+				{
 					continue;
+				}
 
-				if ($DB->Query("INSERT INTO b_meeting_instance_users (USER_ID, INSTANCE_ID, ITEM_ID, MEETING_ID) VALUES ('".$USER_ID."', '".intval($arInstance['INSTANCE_ID'])."', '".intval($arInstance['ITEM_ID'])."', '".intval($arInstance['MEETING_ID'])."')", true))
+				if ($DB->Query("INSERT INTO b_meeting_instance_users (USER_ID, INSTANCE_ID, ITEM_ID, MEETING_ID) VALUES ('".$USER_ID."', '". (int)$arInstance['INSTANCE_ID'] . "', '". (int)$arInstance['ITEM_ID'] . "', '" . (int)$arInstance['MEETING_ID'] . "')", true))
 				{
 					$cnt++;
 				}

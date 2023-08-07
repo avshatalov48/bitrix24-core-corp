@@ -216,10 +216,6 @@ this.BX = this.BX || {};
 	    key: "openChat",
 	    value: function openChat() {
 	      var _this3 = this;
-	      if (this.entityType === 'workgroup') {
-	        im_public_iframe.Messenger.openChat('sg' + this.entityId);
-	        return;
-	      }
 	      this.showLoader();
 	      main_core.ajax.runAction('intranet.controlbutton.getChat', {
 	        data: {
@@ -248,10 +244,6 @@ this.BX = this.BX || {};
 	    key: "startVideoCall",
 	    value: function startVideoCall() {
 	      var _this4 = this;
-	      if (this.entityType === 'workgroup') {
-	        im_public_iframe.Messenger.startVideoCall('sg' + this.entityId);
-	        return;
-	      }
 	      this.showLoader();
 	      main_core.ajax.runAction('intranet.controlbutton.getVideoCallChat', {
 	        data: {

@@ -13,9 +13,9 @@ use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Crm\UtmTable;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\StringHelper;
-use Bitrix\Main\Loader;
 
 class ItemDataProvider extends EntityDataProvider
 {
@@ -180,6 +180,19 @@ class ItemDataProvider extends EntityDataProvider
 				'displayGrid' => false,
 				'displayFilter' => true,
 				'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_COMPANY_TITLE'),
+			];
+		}
+
+		if ($this->factory->isObserversEnabled())
+		{
+			$fields[Item::FIELD_NAME_OBSERVERS] = [
+				'type' => static::TYPE_USER,
+				'displayGrid' => true,
+				'displayFilter' => true,
+				'defaultGrid' => false,
+				'defaultFilter' => false,
+				'sortField' => null,
+				'filterOptionPreset' => static::PRESET_ENTITY_SELECTOR,
 			];
 		}
 
@@ -706,12 +719,13 @@ class ItemDataProvider extends EntityDataProvider
 		)
 		{
 			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($this->getEntityTypeId());
+			$referenceClass = ($factory ? $factory->getDataClass() : null);
 
 			$params = [
 				'fieldName' => $fieldID,
 				'entityTypeId' => $this->getEntityTypeId(),
 				'module' => 'crm',
-				'referenceClass' => ($factory ? $factory->getDataClass() : null),
+				'referenceClass' => $fieldID !== Item::FIELD_NAME_OBSERVERS ? $referenceClass : null,
 			];
 
 			if ($factory->isCountersEnabled() && $fieldID === Item::FIELD_NAME_ASSIGNED)

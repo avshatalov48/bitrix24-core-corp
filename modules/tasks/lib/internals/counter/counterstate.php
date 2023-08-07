@@ -8,6 +8,8 @@
 
 namespace Bitrix\Tasks\Internals\Counter;
 
+use Bitrix\Main\Application;
+use Bitrix\Main\Data\Cache;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Registry\UserRegistry;
 
@@ -27,6 +29,10 @@ class CounterState implements \Iterator
 
 	private $flagCounted;
 	private $flagCleared = 0;
+
+	private const CACHE_PREFIX = 'tasks_scorer_cache_';
+	private const CACHE_TTL = 10 * 60;
+	private const CACHE_DIR = '/tasks/counterstate';
 
 	/**
 	 * @param int $userId
@@ -68,6 +74,15 @@ class CounterState implements \Iterator
 	{
 		$this->userId = $userId;
 		$this->loadCounters();
+	}
+
+	/**
+	 * @return void
+	 */
+	public function resetCache(): void
+	{
+		$cache = Cache::createInstance();
+		$cache->clean($this->getCacheTag(), $this->getCacheDir());
 	}
 
 	/**
@@ -270,18 +285,37 @@ class CounterState implements \Iterator
 	 */
 	private function loadFlags(): ?array
 	{
-		$query = CounterTable::query()
-			->setSelect([
-				'VALUE',
-				'TASK_ID',
-				'GROUP_ID',
-				'TYPE'
-			])
-			->where('USER_ID', $this->userId)
-			->whereIn('TYPE', [CounterDictionary::COUNTER_FLAG_COUNTED, CounterDictionary::COUNTER_FLAG_CLEARED])
-			->setLimit(2);
+		$cache = Cache::createInstance();
 
-		$rows = $query->exec()->fetchAll();
+		if ($cache->initCache(self::CACHE_TTL, $this->getCacheTag(), $this->getCacheDir()))
+		{
+			$rows = $cache->getVars();
+		}
+		else
+		{
+			$rows = CounterTable::query()
+				->setSelect([
+					'VALUE',
+					'TASK_ID',
+					'GROUP_ID',
+					'TYPE'
+				])
+				->where('USER_ID', $this->userId)
+				->whereIn('TYPE', [CounterDictionary::COUNTER_FLAG_COUNTED, CounterDictionary::COUNTER_FLAG_CLEARED])
+				->setLimit(2)
+				->fetchAll();
+
+			if (!empty($rows))
+			{
+				$taggedCache = Application::getInstance()->getTaggedCache();
+				$taggedCache->StartTagCache($this->getCacheDir());
+				$taggedCache->RegisterTag($this->getCacheTag());
+
+				$cache->startDataCache();
+				$cache->endDataCache($rows);
+				$taggedCache->EndTagCache();
+			}
+		}
 
 		foreach ($rows as $row)
 		{
@@ -297,6 +331,16 @@ class CounterState implements \Iterator
 		}
 
 		return $rows ? $rows : null;
+	}
+
+	private function getCacheDir(): string
+	{
+		return self::CACHE_DIR . '/' . substr(md5($this->userId),2,2) . '/';
+	}
+
+	private function getCacheTag(): string
+	{
+		return self::CACHE_PREFIX . $this->userId;
 	}
 
 	/**

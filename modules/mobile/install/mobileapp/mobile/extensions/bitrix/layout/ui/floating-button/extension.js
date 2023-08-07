@@ -1,5 +1,4 @@
 (() => {
-
 	const { Haptics } = jn.require('haptics');
 	const { HideOnScrollAnimator } = jn.require('animation/hide-on-scroll');
 

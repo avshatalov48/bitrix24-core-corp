@@ -2,8 +2,8 @@
  * @module tasks/layout/task/fields/timeTracking
  */
 jn.define('tasks/layout/task/fields/timeTracking', (require, exports, module) => {
-	const {TimeTrackingIs} = require('tasks/layout/task/fields/timeTrackingIs');
-	const {TimeTrackingTime} = require('tasks/layout/task/fields/timeTrackingTime');
+	const { TimeTrackingIs } = require('tasks/layout/task/fields/timeTrackingIs');
+	const { TimeTrackingTime } = require('tasks/layout/task/fields/timeTrackingTime');
 
 	class TimeTracking extends LayoutComponent
 	{
@@ -61,13 +61,13 @@ jn.define('tasks/layout/task/fields/timeTracking', (require, exports, module) =>
 					onChange: (value) => {
 						this.timeTrackingBlockRef.animate({
 							duration: 200,
-							height: (!value ? 0 : 66),
+							height: (value ? 66 : 0),
 						});
 						this.timeTrackingBlockRef.animate({
 							duration: 600,
-							opacity: (!value ? 0 : 1),
+							opacity: (value ? 1 : 0),
 						});
-						this.props.onChange({allowTimeTracking: (value ? 'Y' : 'N')});
+						this.props.onChange({ allowTimeTracking: (value ? 'Y' : 'N') });
 					},
 				}),
 				View(
@@ -76,21 +76,23 @@ jn.define('tasks/layout/task/fields/timeTracking', (require, exports, module) =>
 							height: (this.state.isTimeTracking ? 66 : 0),
 							opacity: (this.state.isTimeTracking ? 1 : 0),
 						},
-						ref: ref => this.timeTrackingBlockRef = ref,
+						ref: (ref) => {
+							this.timeTrackingBlockRef = ref;
+						},
 					},
-					this.renderWithTopBorder(
+					TimeTracking.renderWithTopBorder(
 						new TimeTrackingTime({
 							readOnly: this.state.readOnly,
 							timeEstimate: this.state.timeEstimate,
 							deepMergeStyles: this.getDeepMergeStyles(),
-							onChange: timeEstimate => this.props.onChange({timeEstimate}),
-						})
+							onChange: (timeEstimate) => this.props.onChange({ timeEstimate }),
+						}),
 					),
 				),
 			);
 		}
 
-		renderWithTopBorder(field)
+		static renderWithTopBorder(field)
 		{
 			return View(
 				{},
@@ -105,5 +107,5 @@ jn.define('tasks/layout/task/fields/timeTracking', (require, exports, module) =>
 		}
 	}
 
-	module.exports = {TimeTracking};
+	module.exports = { TimeTracking };
 });

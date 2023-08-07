@@ -1,11 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/provider/rest/message
  */
 jn.define('im/messenger/provider/rest/message', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { RestMethod } = require('im/messenger/const');
 
@@ -43,7 +39,7 @@ jn.define('im/messenger/provider/rest/message', (require, exports, module) => {
 
 			if (!Type.isNumber(options.messageId))
 			{
-				throw new Error('DialogRest: options.messageId is invalid.');
+				throw new TypeError('DialogRest: options.messageId is invalid.');
 			}
 
 			const messageLikeParams = {

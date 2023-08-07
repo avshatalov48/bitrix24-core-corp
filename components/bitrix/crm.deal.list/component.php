@@ -19,6 +19,7 @@ global $USER_FIELD_MANAGER, $APPLICATION, $DB;
 use Bitrix\Crm;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Field;
 use Bitrix\Crm\Settings\HistorySettings;
@@ -152,7 +153,15 @@ $isInCalendarMode = isset($arParams['CALENDAR_MODE']) && ($arParams['CALENDAR_MO
 
 $CCrmDeal = new CCrmDeal(false);
 $CCrmBizProc = new CCrmBizProc('DEAL');
-$fieldRestrictionManager = new FieldRestrictionManager(FieldRestrictionManager::MODE_GRID);
+$fieldRestrictionManager = new FieldRestrictionManager(
+	FieldRestrictionManager::MODE_GRID,
+	[
+		FieldRestrictionManagerTypes::CLIENT,
+		FieldRestrictionManagerTypes::OBSERVERS,
+		FieldRestrictionManagerTypes::ACTIVITY
+	],
+	\CCrmOwnerType::Deal
+);
 
 $userID = CCrmSecurityHelper::GetCurrentUserID();
 $isAdmin = CCrmPerms::IsAdmin();
@@ -794,79 +803,422 @@ if ($arParams['IS_RECURRING'] === 'Y')
 {
 	$arResult['HEADERS'] = array_merge(
 		$arResult['HEADERS'],
-		array(
-			array('id' => 'DEAL_CLIENT', 'name' => Loc::getMessage('CRM_COLUMN_CLIENT'), 'sort' => 'deal_client', 'default' => true, 'editable' => false),
-			array('id' => 'CRM_DEAL_RECURRING_ACTIVE', 'name' => Loc::getMessage('CRM_COLUMN_RECURRING_ACTIVE_TITLE'), 'sort' => 'active', 'default' => true, 'editable' => false, 'type'=>'checkbox'),
-			array('id' => 'CRM_DEAL_RECURRING_COUNTER_REPEAT', 'name' => Loc::getMessage('CRM_COLUMN_RECURRING_COUNTER_REPEAT'), 'sort' => 'counter_repeat', 'default' => true, 'editable' => false),
-			array('id' => 'CRM_DEAL_RECURRING_NEXT_EXECUTION', 'name' => Loc::getMessage('CRM_COLUMN_RECURRING_NEXT_EXECUTION'), 'sort' => 'next_execution', 'default' => true, 'editable' => false),
+		[
+			[
+				'id' => 'DEAL_CLIENT',
+				'name' => Loc::getMessage('CRM_COLUMN_CLIENT'),
+				'sort' => 'deal_client',
+				'default' => true,
+				'editable' => false,
+			],
+			[
+				'id' => Crm\Item::FIELD_NAME_OBSERVERS,
+				'name' => Loc::getMessage('CRM_COLUMN_OBSERVERS'),
+				'sort' => false,
+				'editable' => false,
+			],
+			[
+				'id' => 'CRM_DEAL_RECURRING_ACTIVE',
+				'name' => Loc::getMessage('CRM_COLUMN_RECURRING_ACTIVE_TITLE'),
+				'sort' => 'active',
+				'default' => true,
+				'editable' => false,
+				'type' => 'checkbox',
+			],
+			[
+				'id' => 'CRM_DEAL_RECURRING_COUNTER_REPEAT',
+				'name' => Loc::getMessage('CRM_COLUMN_RECURRING_COUNTER_REPEAT'),
+				'sort' => 'counter_repeat',
+				'default' => true,
+				'editable' => false,
+			],
+			[
+				'id' => 'CRM_DEAL_RECURRING_NEXT_EXECUTION',
+				'name' => Loc::getMessage('CRM_COLUMN_RECURRING_NEXT_EXECUTION'),
+				'sort' => 'next_execution',
+				'default' => true,
+				'editable' => false,
+			],
 
-			array('id' => 'CRM_DEAL_RECURRING_START_DATE', 'name' => Loc::getMessage('CRM_COLUMN_START_DATE'), 'sort' => 'start_date', 'editable' => false),
-			array('id' => 'CRM_DEAL_RECURRING_LIMIT_DATE', 'name' => Loc::getMessage('CRM_COLUMN_LIMIT_DATE'), 'sort' => 'limit_date', 'editable' => false),
-			array('id' => 'CRM_DEAL_RECURRING_LIMIT_REPEAT', 'name' => Loc::getMessage('CRM_COLUMN_LIMIT_REPEAT'), 'sort' => 'limit_repeat', 'editable' => false),
+			[
+				'id' => 'CRM_DEAL_RECURRING_START_DATE',
+				'name' => Loc::getMessage('CRM_COLUMN_START_DATE'),
+				'sort' => 'start_date',
+				'editable' => false,
+			],
+			[
+				'id' => 'CRM_DEAL_RECURRING_LIMIT_DATE',
+				'name' => Loc::getMessage('CRM_COLUMN_LIMIT_DATE'),
+				'sort' => 'limit_date',
+				'editable' => false,
+			],
+			[
+				'id' => 'CRM_DEAL_RECURRING_LIMIT_REPEAT',
+				'name' => Loc::getMessage('CRM_COLUMN_LIMIT_REPEAT'),
+				'sort' => 'limit_repeat',
+				'editable' => false,
+			],
 
-			array('id' => 'PROBABILITY', 'name' => Loc::getMessage('CRM_COLUMN_PROBABILITY'), 'sort' => 'probability', 'first_order' => 'desc', 'editable' => true, 'align' => 'right'),
-			array('id' => 'SUM', 'name' => Loc::getMessage('CRM_COLUMN_SUM'), 'sort' => 'opportunity_account', 'first_order' => 'desc', 'default' => true, 'editable' => false, 'align' => 'right'),
-			array('id' => 'PAYMENT_STAGE', 'name' => Loc::getMessage('CRM_COLUMN_PAYMENT_STAGE'), 'sort' => false, 'editable' => false),
-			array('id' => 'DELIVERY_STAGE', 'name' => Loc::getMessage('CRM_COLUMN_DELIVERY_STAGE'), 'sort' => false, 'editable' => false),
-			array('id' => 'ASSIGNED_BY', 'name' => Loc::getMessage('CRM_COLUMN_ASSIGNED_BY'), 'sort' => 'assigned_by', 'default' => true, 'editable' => false, 'class' => 'username'),
-			array('id' => 'ORIGINATOR_ID', 'name' => Loc::getMessage('CRM_COLUMN_BINDING'), 'sort' => false, 'editable' => array('items' => $arResult['EXTERNAL_SALES']), 'type' => 'list'),
+			[
+				'id' => 'PROBABILITY',
+				'name' => Loc::getMessage('CRM_COLUMN_PROBABILITY'),
+				'sort' => 'probability',
+				'first_order' => 'desc',
+				'editable' => true,
+				'align' => 'right',
+			],
+			[
+				'id' => 'SUM',
+				'name' => Loc::getMessage('CRM_COLUMN_SUM'),
+				'sort' => 'opportunity_account',
+				'first_order' => 'desc',
+				'default' => true,
+				'editable' => false,
+				'align' => 'right',
+			],
+			[
+				'id' => 'PAYMENT_STAGE',
+				'name' => Loc::getMessage('CRM_COLUMN_PAYMENT_STAGE'),
+				'sort' => false,
+				'editable' => false,
+			],
+			[
+				'id' => 'DELIVERY_STAGE',
+				'name' => Loc::getMessage('CRM_COLUMN_DELIVERY_STAGE'),
+				'sort' => false,
+				'editable' => false,
+			],
+			[
+				'id' => 'ASSIGNED_BY',
+				'name' => Loc::getMessage('CRM_COLUMN_ASSIGNED_BY'),
+				'sort' => 'assigned_by',
+				'default' => true,
+				'editable' => false,
+				'class' => 'username',
+			],
+			[
+				'id' => 'ORIGINATOR_ID',
+				'name' => Loc::getMessage('CRM_COLUMN_BINDING'),
+				'sort' => false,
+				'editable' => ['items' => $arResult['EXTERNAL_SALES']],
+				'type' => 'list',
+			],
 
-			array('id' => 'TITLE', 'name' => Loc::getMessage('CRM_COLUMN_TITLE'), 'sort' => 'title', 'editable' => true),
-			array('id' => 'TYPE_ID', 'name' => Loc::getMessage('CRM_COLUMN_TYPE_ID'), 'sort' => 'type_id', 'editable' => array('items' => CCrmStatus::GetStatusList('DEAL_TYPE')), 'type' => 'list'),
-			array('id' => 'OPPORTUNITY', 'name' => Loc::getMessage('CRM_COLUMN_OPPORTUNITY'), 'sort' => 'opportunity', 'first_order' => 'desc', 'editable' => true, 'align' => 'right'),
-			array('id' => 'CURRENCY_ID', 'name' => Loc::getMessage('CRM_COLUMN_CURRENCY_ID'), 'sort' => 'currency_id', 'editable' => array('items' => CCrmCurrencyHelper::PrepareListItems()), 'type' => 'list'),
-			array('id' => 'COMPANY_ID', 'name' => Loc::getMessage('CRM_COLUMN_COMPANY_ID'), 'sort' => 'company_id', 'editable' => false),
-			array('id' => 'CONTACT_ID', 'name' => Loc::getMessage('CRM_COLUMN_CONTACT_ID'), 'sort' => 'contact_full_name', 'editable' => false),
+			[
+				'id' => 'TITLE',
+				'name' => Loc::getMessage('CRM_COLUMN_TITLE'),
+				'sort' => 'title',
+				'editable' => true,
+			],
+			[
+				'id' => 'TYPE_ID',
+				'name' => Loc::getMessage('CRM_COLUMN_TYPE_ID'),
+				'sort' => 'type_id',
+				'editable' => ['items' => CCrmStatus::GetStatusList('DEAL_TYPE')],
+				'type' => 'list',
+			],
+			[
+				'id' => 'OPPORTUNITY',
+				'name' => Loc::getMessage('CRM_COLUMN_OPPORTUNITY'),
+				'sort' => 'opportunity',
+				'first_order' => 'desc',
+				'editable' => true,
+				'align' => 'right',
+			],
+			[
+				'id' => 'CURRENCY_ID',
+				'name' => Loc::getMessage('CRM_COLUMN_CURRENCY_ID'),
+				'sort' => 'currency_id',
+				'editable' => ['items' => CCrmCurrencyHelper::PrepareListItems()],
+				'type' => 'list',
+			],
+			[
+				'id' => 'COMPANY_ID',
+				'name' => Loc::getMessage('CRM_COLUMN_COMPANY_ID'),
+				'sort' => 'company_id',
+				'editable' => false,
+			],
+			[
+				'id' => 'CONTACT_ID',
+				'name' => Loc::getMessage('CRM_COLUMN_CONTACT_ID'),
+				'sort' => 'contact_full_name',
+				'editable' => false,
+			],
 
-			array('id' => 'DATE_CREATE', 'name' => Loc::getMessage('CRM_COLUMN_DATE_CREATE'), 'sort' => 'date_create', 'first_order' => 'desc', 'default' => false, 'class' => 'date'),
-			array('id' => 'CREATED_BY', 'name' => Loc::getMessage('CRM_COLUMN_CREATED_BY'), 'sort' => 'created_by', 'editable' => false, 'class' => 'username'),
-			array('id' => 'DATE_MODIFY', 'name' => Loc::getMessage('CRM_COLUMN_DATE_MODIFY'), 'sort' => 'date_modify', 'first_order' => 'desc', 'class' => 'date'),
-			array('id' => 'MODIFY_BY', 'name' => Loc::getMessage('CRM_COLUMN_MODIFY_BY'), 'sort' => 'modify_by', 'editable' => false, 'class' => 'username'),
-			array('id' => 'BEGINDATE', 'name' => Loc::getMessage('CRM_COLUMN_BEGINDATE_1'), 'sort' => 'begindate', 'editable' => true, 'type' => 'date', 'class' => 'date'),
-			array('id' => 'PRODUCT_ID', 'name' => Loc::getMessage('CRM_COLUMN_PRODUCT_ID'), 'sort' => false, 'default' => $isInExportMode, 'editable' => false, 'type' => 'list'),
-			array('id' => 'COMMENTS', 'name' => Loc::getMessage('CRM_COLUMN_COMMENTS'), 'sort' => false /*because of MSSQL*/, 'editable' => false)
-		)
+			[
+				'id' => 'DATE_CREATE',
+				'name' => Loc::getMessage('CRM_COLUMN_DATE_CREATE'),
+				'sort' => 'date_create',
+				'first_order' => 'desc',
+				'default' => false,
+				'class' => 'date',
+			],
+			[
+				'id' => 'CREATED_BY',
+				'name' => Loc::getMessage('CRM_COLUMN_CREATED_BY'),
+				'sort' => 'created_by',
+				'editable' => false,
+				'class' => 'username',
+			],
+			[
+				'id' => 'DATE_MODIFY',
+				'name' => Loc::getMessage('CRM_COLUMN_DATE_MODIFY'),
+				'sort' => 'date_modify',
+				'first_order' => 'desc',
+				'class' => 'date',
+			],
+			[
+				'id' => 'MODIFY_BY',
+				'name' => Loc::getMessage('CRM_COLUMN_MODIFY_BY'),
+				'sort' => 'modify_by',
+				'editable' => false,
+				'class' => 'username',
+			],
+			[
+				'id' => 'BEGINDATE',
+				'name' => Loc::getMessage('CRM_COLUMN_BEGINDATE_1'),
+				'sort' => 'begindate',
+				'editable' => true,
+				'type' => 'date',
+				'class' => 'date',
+			],
+			[
+				'id' => 'PRODUCT_ID',
+				'name' => Loc::getMessage('CRM_COLUMN_PRODUCT_ID'),
+				'sort' => false,
+				'default' => $isInExportMode,
+				'editable' => false,
+				'type' => 'list',
+			],
+			[
+				'id' => 'COMMENTS',
+				'name' => Loc::getMessage('CRM_COLUMN_COMMENTS'),
+				'sort' => false /*because of MSSQL*/,
+				'editable' => false,
+			]
+		]
 	);
 }
 else
 {
 	$arResult['HEADERS'] = array_merge(
 		$arResult['HEADERS'],
-		array(
-			array('id' => 'DEAL_CLIENT', 'name' => Loc::getMessage('CRM_COLUMN_CLIENT'), 'sort' => 'deal_client', 'default' => true, 'editable' => false),
-			array('id' => 'PROBABILITY', 'name' => Loc::getMessage('CRM_COLUMN_PROBABILITY'), 'sort' => 'probability', 'first_order' => 'desc', 'editable' => true, 'align' => 'right'),
-			array('id' => 'SUM', 'name' => Loc::getMessage('CRM_COLUMN_SUM'), 'sort' => 'opportunity_account', 'first_order' => 'desc', 'default' => true, 'editable' => false, 'align' => 'right'),
-			array('id' => 'PAYMENT_STAGE', 'name' => Loc::getMessage('CRM_COLUMN_PAYMENT_STAGE'), 'sort' => false, 'editable' => false),
-			array('id' => 'DELIVERY_STAGE', 'name' => Loc::getMessage('CRM_COLUMN_DELIVERY_STAGE'), 'sort' => false, 'editable' => false),
-			array('id' => 'ASSIGNED_BY', 'name' => Loc::getMessage('CRM_COLUMN_ASSIGNED_BY'), 'sort' => 'assigned_by', 'default' => true, 'editable' => false, 'class' => 'username'),
-			array('id' => 'ORIGINATOR_ID', 'name' => Loc::getMessage('CRM_COLUMN_BINDING'), 'sort' => false, 'editable' => array('items' => $arResult['EXTERNAL_SALES']), 'type' => 'list'),
+		[
+			[
+				'id' => 'DEAL_CLIENT',
+				'name' => Loc::getMessage('CRM_COLUMN_CLIENT'),
+				'sort' => 'deal_client',
+				'default' => true,
+				'editable' => false,
+			],
+			[
+				'id' => Crm\Item::FIELD_NAME_OBSERVERS,
+				'name' => Loc::getMessage('CRM_COLUMN_OBSERVERS'),
+				'sort' => false,
+				'editable' => false,
+			],
+			[
+				'id' => 'PROBABILITY',
+				'name' => Loc::getMessage('CRM_COLUMN_PROBABILITY'),
+				'sort' => 'probability',
+				'first_order' => 'desc',
+				'editable' => true,
+				'align' => 'right',
+			],
+			[
+				'id' => 'SUM',
+				'name' => Loc::getMessage('CRM_COLUMN_SUM'),
+				'sort' => 'opportunity_account',
+				'first_order' => 'desc',
+				'default' => true,
+				'editable' => false,
+				'align' => 'right',
+			],
+			[
+				'id' => 'PAYMENT_STAGE',
+				'name' => Loc::getMessage('CRM_COLUMN_PAYMENT_STAGE'),
+				'sort' => false,
+				'editable' => false,
+			],
+			[
+				'id' => 'DELIVERY_STAGE',
+				'name' => Loc::getMessage('CRM_COLUMN_DELIVERY_STAGE'),
+				'sort' => false,
+				'editable' => false,
+			],
+			[
+				'id' => 'ASSIGNED_BY',
+				'name' => Loc::getMessage('CRM_COLUMN_ASSIGNED_BY'),
+				'sort' => 'assigned_by',
+				'default' => true,
+				'editable' => false,
+				'class' => 'username',
+			],
+			[
+				'id' => 'ORIGINATOR_ID',
+				'name' => Loc::getMessage('CRM_COLUMN_BINDING'),
+				'sort' => false,
+				'editable' => ['items' => $arResult['EXTERNAL_SALES']],
+				'type' => 'list',
+			],
 
-			array('id' => 'TITLE', 'name' => Loc::getMessage('CRM_COLUMN_TITLE'), 'sort' => 'title', 'editable' => true),
-			array('id' => 'TYPE_ID', 'name' => Loc::getMessage('CRM_COLUMN_TYPE_ID'), 'sort' => 'type_id', 'editable' => array('items' => CCrmStatus::GetStatusList('DEAL_TYPE')), 'type' => 'list'),
-			array('id' => 'SOURCE_ID', 'name' => Loc::getMessage('CRM_COLUMN_SOURCE'), 'sort' => 'source_id', 'editable' => array('items' => CCrmStatus::GetStatusList('SOURCE')), 'type' => 'list'),
-			array('id' => 'SOURCE_DESCRIPTION', 'name' => Loc::getMessage('CRM_COLUMN_SOURCE_DESCRIPTION'), 'sort' => false, 'default' => false, 'editable' => false),
+			[
+				'id' => 'TITLE',
+				'name' => Loc::getMessage('CRM_COLUMN_TITLE'),
+				'sort' => 'title',
+				'editable' => true,
+			],
+			[
+				'id' => 'TYPE_ID',
+				'name' => Loc::getMessage('CRM_COLUMN_TYPE_ID'),
+				'sort' => 'type_id',
+				'editable' => ['items' => CCrmStatus::GetStatusList('DEAL_TYPE')],
+				'type' => 'list',
+			],
+			[
+				'id' => 'SOURCE_ID',
+				'name' => Loc::getMessage('CRM_COLUMN_SOURCE'),
+				'sort' => 'source_id',
+				'editable' => ['items' => CCrmStatus::GetStatusList('SOURCE')],
+				'type' => 'list',
+			],
+			[
+				'id' => 'SOURCE_DESCRIPTION',
+				'name' => Loc::getMessage('CRM_COLUMN_SOURCE_DESCRIPTION'),
+				'sort' => false,
+				'default' => false,
+				'editable' => false,
+			],
 
-			array('id' => 'OPPORTUNITY', 'name' => Loc::getMessage('CRM_COLUMN_OPPORTUNITY'), 'sort' => 'opportunity', 'first_order' => 'desc', 'editable' => true, 'align' => 'right'),
-			array('id' => 'CURRENCY_ID', 'name' => Loc::getMessage('CRM_COLUMN_CURRENCY_ID'), 'sort' => 'currency_id', 'editable' => array('items' => CCrmCurrencyHelper::PrepareListItems()), 'type' => 'list'),
-			array('id' => 'COMPANY_ID', 'name' => Loc::getMessage('CRM_COLUMN_COMPANY_ID'), 'sort' => 'company_id', 'editable' => false),
-			array('id' => 'CONTACT_ID', 'name' => Loc::getMessage('CRM_COLUMN_CONTACT_ID'), 'sort' => 'contact_full_name', 'editable' => false),
+			[
+				'id' => 'OPPORTUNITY',
+				'name' => Loc::getMessage('CRM_COLUMN_OPPORTUNITY'),
+				'sort' => 'opportunity',
+				'first_order' => 'desc',
+				'editable' => true,
+				'align' => 'right',
+			],
+			[
+				'id' => 'CURRENCY_ID',
+				'name' => Loc::getMessage('CRM_COLUMN_CURRENCY_ID'),
+				'sort' => 'currency_id',
+				'editable' => ['items' => CCrmCurrencyHelper::PrepareListItems()],
+				'type' => 'list',
+			],
+			[
+				'id' => 'COMPANY_ID',
+				'name' => Loc::getMessage('CRM_COLUMN_COMPANY_ID'),
+				'sort' => 'company_id',
+				'editable' => false,
+			],
+			[
+				'id' => 'CONTACT_ID',
+				'name' => Loc::getMessage('CRM_COLUMN_CONTACT_ID'),
+				'sort' => 'contact_full_name',
+				'editable' => false,
+			],
 
-			array('id' => 'CLOSED', 'name' => Loc::getMessage('CRM_COLUMN_CLOSED'), 'sort' => 'closed', 'align' => 'center', 'editable' => array('items' => array('' => '', 'Y' => Loc::getMessage('MAIN_YES'), 'N' => Loc::getMessage('MAIN_NO'))), 'type' => 'list'),
-			array('id' => 'DATE_CREATE', 'name' => Loc::getMessage('CRM_COLUMN_DATE_CREATE'), 'sort' => 'date_create', 'first_order' => 'desc', 'default' => true, 'class' => 'date'),
-			array('id' => 'CREATED_BY', 'name' => Loc::getMessage('CRM_COLUMN_CREATED_BY'), 'sort' => 'created_by', 'editable' => false, 'class' => 'username'),
-			array('id' => 'DATE_MODIFY', 'name' => Loc::getMessage('CRM_COLUMN_DATE_MODIFY'), 'sort' => 'date_modify', 'first_order' => 'desc', 'class' => 'date'),
-			array('id' => 'MODIFY_BY', 'name' => Loc::getMessage('CRM_COLUMN_MODIFY_BY'), 'sort' => 'modify_by', 'editable' => false, 'class' => 'username'),
-			array('id' => 'BEGINDATE', 'name' => Loc::getMessage('CRM_COLUMN_BEGINDATE_1'), 'sort' => 'begindate', 'editable' => true, 'type' => 'date', 'class' => 'date'),
-			array('id' => 'CLOSEDATE', 'name' => Loc::getMessage('CRM_COLUMN_CLOSEDATE'), 'sort' => 'closedate', 'editable' => true, 'type' => 'date'),
-			array('id' => 'PRODUCT_ID', 'name' => Loc::getMessage('CRM_COLUMN_PRODUCT_ID'), 'sort' => false, 'default' => $isInExportMode, 'editable' => false, 'type' => 'list'),
-			array('id' => 'COMMENTS', 'name' => Loc::getMessage('CRM_COLUMN_COMMENTS'), 'sort' => false /*because of MSSQL*/, 'editable' => false),
-			array('id' => 'EVENT_DATE', 'name' => Loc::getMessage('CRM_COLUMN_EVENT_DATE'), 'sort' => 'event_date', 'default' => false),
-			array('id' => 'EVENT_ID', 'name' => Loc::getMessage('CRM_COLUMN_EVENT_ID'), 'sort' => 'event_id', 'editable' => array('items' => CCrmStatus::GetStatusList('EVENT_TYPE')), 'type' => 'list'),
-			array('id' => 'EVENT_DESCRIPTION', 'name' => Loc::getMessage('CRM_COLUMN_EVENT_DESCRIPTION'), 'sort' => false, 'editable' => false),
-			array('id' => 'WEBFORM_ID', 'name' => Loc::getMessage('CRM_COLUMN_WEBFORM'), 'sort' => 'webform_id', 'type' => 'list')
-		)
+			[
+				'id' => 'CLOSED',
+				'name' => Loc::getMessage('CRM_COLUMN_CLOSED'),
+				'sort' => 'closed',
+				'align' => 'center',
+				'editable' => [
+					'items' => [
+						'' => '',
+						'Y' => Loc::getMessage('MAIN_YES'),
+						'N' => Loc::getMessage('MAIN_NO')
+					]
+				],
+				'type' => 'list',
+			],
+			[
+				'id' => 'DATE_CREATE',
+				'name' => Loc::getMessage('CRM_COLUMN_DATE_CREATE'),
+				'sort' => 'date_create',
+				'first_order' => 'desc',
+				'default' => true,
+				'class' => 'date',
+			],
+			[
+				'id' => 'CREATED_BY',
+				'name' => Loc::getMessage('CRM_COLUMN_CREATED_BY'),
+				'sort' => 'created_by',
+				'editable' => false,
+				'class' => 'username',
+			],
+			[
+				'id' => 'DATE_MODIFY',
+				'name' => Loc::getMessage('CRM_COLUMN_DATE_MODIFY'),
+				'sort' => 'date_modify',
+				'first_order' => 'desc',
+				'class' => 'date',
+			],
+			[
+				'id' => 'MODIFY_BY',
+				'name' => Loc::getMessage('CRM_COLUMN_MODIFY_BY'),
+				'sort' => 'modify_by',
+				'editable' => false,
+				'class' => 'username',
+			],
+			[
+				'id' => 'BEGINDATE',
+				'name' => Loc::getMessage('CRM_COLUMN_BEGINDATE_1'),
+				'sort' => 'begindate',
+				'editable' => true,
+				'type' => 'date',
+				'class' => 'date',
+			],
+			[
+				'id' => 'CLOSEDATE',
+				'name' => Loc::getMessage('CRM_COLUMN_CLOSEDATE'),
+				'sort' => 'closedate',
+				'editable' => true,
+				'type' => 'date',
+			],
+			[
+				'id' => 'PRODUCT_ID',
+				'name' => Loc::getMessage('CRM_COLUMN_PRODUCT_ID'),
+				'sort' => false,
+				'default' => $isInExportMode,
+				'editable' => false,
+				'type' => 'list',
+			],
+			[
+				'id' => 'COMMENTS',
+				'name' => Loc::getMessage('CRM_COLUMN_COMMENTS'),
+				'sort' => false /*because of MSSQL*/,
+				'editable' => false,
+			],
+			[
+				'id' => 'EVENT_DATE',
+				'name' => Loc::getMessage('CRM_COLUMN_EVENT_DATE'),
+				'sort' => 'event_date',
+				'default' => false,
+			],
+			[
+				'id' => 'EVENT_ID',
+				'name' => Loc::getMessage('CRM_COLUMN_EVENT_ID'),
+				'sort' => 'event_id',
+				'editable' => ['items' => CCrmStatus::GetStatusList('EVENT_TYPE')],
+				'type' => 'list',
+			],
+			[
+				'id' => 'EVENT_DESCRIPTION',
+				'name' => Loc::getMessage('CRM_COLUMN_EVENT_DESCRIPTION'),
+				'sort' => false,
+				'editable' => false,
+			],
+			[
+				'id' => 'WEBFORM_ID',
+				'name' => Loc::getMessage('CRM_COLUMN_WEBFORM'),
+				'sort' => 'webform_id',
+				'type' => 'list',
+			]
+		]
 	);
 }
+
 if ($arParams['IS_RECURRING'] !== 'Y')
 {
 	Tracking\UI\Grid::appendColumns($arResult['HEADERS']);
@@ -952,7 +1304,7 @@ if ($isBizProcInstalled)
 	}
 }
 
-$userDataProvider = new Bitrix\Crm\Component\EntityList\UserDataProvider();
+$userDataProvider = new Bitrix\Crm\Component\EntityList\UserDataProvider\RelatedUsers(CCrmOwnerType::Deal);
 
 $contactDataProvider = new \Bitrix\Crm\Component\EntityList\ClientDataProvider\GridDataProvider(CCrmOwnerType::Contact);
 $contactDataProvider
@@ -963,6 +1315,8 @@ $companyDataProvider = new \Bitrix\Crm\Component\EntityList\ClientDataProvider\G
 $companyDataProvider
 	->setExportMode($isInExportMode)
 	->setGridId($arResult['GRID_ID']);
+
+$observersDataProvider = new \Bitrix\Crm\Component\EntityList\UserDataProvider\Observers(CCrmOwnerType::Deal);
 
 $arResult['HEADERS'] = array_values($arResult['HEADERS']);
 
@@ -990,12 +1344,11 @@ if (!$bInternal)
 }
 
 //region Check and fill fields restriction
-$restrictedFields = $fieldRestrictionManager->fetchRestrictedFields(
+$arResult['RESTRICTED_FIELDS_ENGINE'] = $fieldRestrictionManager->fetchRestrictedFieldsEngine(
 	$arResult['GRID_ID'] ?? '',
-		$arResult['HEADERS'] ?? [],
-		$entityFilter ?? null
+	$arResult['HEADERS'] ?? [],
+	$entityFilter ?? null
 );
-$arResult = array_merge($arResult, $restrictedFields);
 //endregion
 
 // list all fields for export
@@ -2140,6 +2493,7 @@ if (in_array('ACTIVITY_ID', $arSelect, true)) // Remove ACTIVITY_ID from $arSele
 }
 
 $userDataProvider->prepareSelect($arSelect);
+$observersDataProvider->prepareSelect($arSelect);
 if (!$bInternal)
 {
 	$contactDataProvider->prepareSelect($arSelect);
@@ -2645,6 +2999,7 @@ if (!$bInternal)
 	$companyDataProvider->appendResult($arResult['DEAL']);
 }
 $userDataProvider->appendResult($arResult['DEAL']);
+$observersDataProvider->appendResult($arResult['DEAL']);
 
 $parentFieldValues = Crm\Service\Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
 	\CCrmOwnerType::Deal,
@@ -2917,6 +3272,15 @@ foreach($arResult['DEAL'] as &$arDeal)
 			: '';
 
 		$arDeal['ORIGINATOR_NAME'] = htmlspecialcharsbx($arDeal['~ORIGINATOR_NAME']);
+	}
+
+	if (!empty($arDeal['OBSERVERS']))
+	{
+		$arDeal['~OBSERVERS'] = $arDeal['OBSERVERS'];
+		$arDeal['OBSERVERS'] = implode(
+			"\n",
+			array_column($arDeal['~OBSERVERS'], 'OBSERVER_USER_FORMATTED_NAME')
+		);
 	}
 
 	if ($arResult['ENABLE_TASK'])

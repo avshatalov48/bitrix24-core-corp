@@ -282,10 +282,7 @@ final class ProviderDecorator implements ReturnsEditorFields
 					$field['title'] = Loc::getMessage('MOBILE_UI_EDITOR_OPPORTUNITY_TITLE');
 				}
 
-				$field['data']['isReceivePaymentAvailable'] =
-					$field['type'] === 'moneyPay'
-					&& \Bitrix\Main\Config\Option::get('crmmobile', 'release-spring-2023', true)
-				;
+				$field['data']['isReceivePaymentAvailable'] = $field['type'] === 'moneyPay';
 				$field['type'] = self::OPPORTUNITY_FIELD;
 			}
 

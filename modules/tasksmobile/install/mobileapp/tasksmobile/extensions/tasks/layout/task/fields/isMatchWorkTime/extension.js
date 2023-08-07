@@ -2,8 +2,8 @@
  * @module tasks/layout/task/fields/isMatchWorkTime
  */
 jn.define('tasks/layout/task/fields/isMatchWorkTime', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {BooleanField, BooleanMode} = require('layout/ui/fields/boolean');
+	const { Loc } = require('loc');
+	const { BooleanField, BooleanMode } = require('layout/ui/fields/boolean');
 
 	class IsMatchWorkTime extends LayoutComponent
 	{
@@ -52,7 +52,7 @@ jn.define('tasks/layout/task/fields/isMatchWorkTime', (require, exports, module)
 					},
 					testId: 'isMatchWorkTime',
 					onChange: (value) => {
-						this.setState({isMatchWorkTime: value});
+						this.setState({ isMatchWorkTime: value });
 						this.props.onChange(value);
 						this.props.datesResolver.setIsMatchWorkTime(value);
 					},
@@ -61,5 +61,5 @@ jn.define('tasks/layout/task/fields/isMatchWorkTime', (require, exports, module)
 		}
 	}
 
-	module.exports = {IsMatchWorkTime};
+	module.exports = { IsMatchWorkTime };
 });

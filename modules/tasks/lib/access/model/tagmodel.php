@@ -11,16 +11,16 @@ class TagModel implements AccessibleTag
 	private int $id;
 	private static array $cache = [];
 
-	public static function createFromId(int $tagId): self
+	public static function createFromId(int $itemId): self
 	{
-		if (!array_key_exists($tagId, self::$cache))
+		if (!array_key_exists($itemId, self::$cache))
 		{
 			$model = new self();
-			$model->setId($tagId);
-			self::$cache[$tagId] = $model;
+			$model->setId($itemId);
+			self::$cache[$itemId] = $model;
 		}
 
-		return self::$cache[$tagId];
+		return self::$cache[$itemId];
 	}
 
 	public function getId(): int

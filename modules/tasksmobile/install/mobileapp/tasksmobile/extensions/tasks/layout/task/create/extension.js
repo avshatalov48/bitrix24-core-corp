@@ -2,35 +2,36 @@
  * @module tasks/layout/task/create
  */
 jn.define('tasks/layout/task/create', (require, exports, module) => {
-	const {CheckList} = require('tasks/layout/task/fields/checkList');
-	const {Responsible} = require('tasks/layout/task/fields/responsible');
-	const {Accomplices} = require('tasks/layout/task/fields/accomplices');
-	const {Auditors} = require('tasks/layout/task/fields/auditors');
-	const {Title} = require('tasks/layout/task/fields/title');
-	const {Deadline} = require('tasks/layout/task/fields/deadline');
-	const {Description} = require('tasks/layout/task/fields/description');
-	const {Project} = require('tasks/layout/task/fields/project');
-	const {IsImportant} = require('tasks/layout/task/fields/isImportant');
-	const {Tags} = require('tasks/layout/task/fields/tags');
-	const {Files} = require('tasks/layout/task/fields/files');
-	const {CanChangeDeadline} = require('tasks/layout/task/fields/canChangeDeadline');
-	const {IsMatchWorkTime} = require('tasks/layout/task/fields/isMatchWorkTime');
-	const {IsTaskControl} = require('tasks/layout/task/fields/isTaskControl');
-	const {IsResultRequired} = require('tasks/layout/task/fields/isResultRequired');
-	const {TimeTracking} = require('tasks/layout/task/fields/timeTracking');
-	const {DatePlan} = require('tasks/layout/task/fields/datePlan');
-	const {Crm} = require('tasks/layout/task/fields/crm');
-	const {ParentTask} = require('tasks/layout/task/fields/parentTask');
-	const {BottomPanel} = require('tasks/layout/task/create/bottomPanel');
+	const { CheckList } = require('tasks/layout/task/fields/checkList');
+	const { Responsible } = require('tasks/layout/task/fields/responsible');
+	const { Accomplices } = require('tasks/layout/task/fields/accomplices');
+	const { Auditors } = require('tasks/layout/task/fields/auditors');
+	const { Title } = require('tasks/layout/task/fields/title');
+	const { Deadline } = require('tasks/layout/task/fields/deadline');
+	const { Description } = require('tasks/layout/task/fields/description');
+	const { Project } = require('tasks/layout/task/fields/project');
+	const { IsImportant } = require('tasks/layout/task/fields/isImportant');
+	const { Tags } = require('tasks/layout/task/fields/tags');
+	const { Files } = require('tasks/layout/task/fields/files');
+	const { CanChangeDeadline } = require('tasks/layout/task/fields/canChangeDeadline');
+	const { IsMatchWorkTime } = require('tasks/layout/task/fields/isMatchWorkTime');
+	const { IsTaskControl } = require('tasks/layout/task/fields/isTaskControl');
+	const { IsResultRequired } = require('tasks/layout/task/fields/isResultRequired');
+	const { TimeTracking } = require('tasks/layout/task/fields/timeTracking');
+	const { DatePlan } = require('tasks/layout/task/fields/datePlan');
+	const { Crm } = require('tasks/layout/task/fields/crm');
+	const { ParentTask } = require('tasks/layout/task/fields/parentTask');
+	const { BottomPanel } = require('tasks/layout/task/create/bottomPanel');
 
-	const {CalendarSettings} = require('tasks/task/calendar');
-	const {DatesResolver} = require('tasks/task/datesResolver');
-	const {CheckListTree} = require('tasks/checklist');
+	const { CalendarSettings } = require('tasks/task/calendar');
+	const { DatesResolver } = require('tasks/task/datesResolver');
+	const { CheckListTree } = require('tasks/checklist');
 
-	const {Alert} = require('alert');
-	const {Haptics} = require('haptics');
-	const {Loc} = require('loc');
-	const {Type} = require('type');
+	const { Alert } = require('alert');
+	const { Haptics } = require('haptics');
+	const { Loc } = require('loc');
+	const { Type } = require('type');
+	const { AnalyticsLabel } = require('analytics-label');
 
 	const fieldHeight = 66;
 
@@ -74,10 +75,80 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 		{
 			function s4()
 			{
-				return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+				return Math.floor((1 + Math.random()) * 0x10000).toString(16).slice(1);
 			}
 
 			return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
+		}
+
+		static getImageUrl(imageUrl)
+		{
+			let result = imageUrl;
+
+			if (result.indexOf(currentDomain) !== 0)
+			{
+				result = result.replace(`${currentDomain}`, '');
+				result = (result.indexOf('http') === 0 ? result : `${currentDomain}${result}`);
+			}
+
+			return encodeURI(result);
+		}
+
+		static getDeadlinesCachedOption()
+		{
+			const storage = Application.sharedStorage('tasksTaskList');
+			const optionsCache = storage.get('options');
+
+			if (Type.isString(optionsCache))
+			{
+				return JSON.parse(optionsCache).deadlines;
+			}
+
+			return null;
+		}
+
+		static updateDeadlinesCachedOption(value)
+		{
+			const storage = Application.sharedStorage('tasksTaskList');
+			const optionsCache = storage.get('options');
+			const currentOption = (Type.isString(optionsCache) ? JSON.parse(optionsCache) : {});
+			currentOption.deadlines = value;
+			storage.set('options', JSON.stringify(currentOption));
+		}
+
+		static getStyleForField(name = '')
+		{
+			const fullBorderedFields = [
+				TaskCreate.field.description,
+				TaskCreate.field.datePlan,
+				TaskCreate.field.timeTracking,
+			];
+			const style = {
+				marginHorizontal: 16,
+			};
+
+			if (fullBorderedFields.includes(name))
+			{
+				style.marginHorizontal = 6;
+				style.borderWidth = 1;
+				style.borderColor = '#e6e7e9';
+				style.borderRadius = 7;
+			}
+
+			return style;
+		}
+
+		static getDeepMergeStylesForField(isExpandable = false)
+		{
+			return {
+				externalWrapper: {
+					height: (isExpandable ? undefined : fieldHeight),
+					minHeight: (isExpandable ? fieldHeight : undefined),
+					justifyContent: 'center',
+					paddingTop: 10,
+					paddingBottom: 10,
+				},
+			};
 		}
 
 		static open(data = {})
@@ -104,7 +175,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 			}).then((layoutWidget) => {
 				layoutWidget.showComponent(taskCreate);
 				taskCreate.layoutWidget = layoutWidget;
-			});
+			}).catch(() => {});
 		}
 
 		constructor(props)
@@ -124,7 +195,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 			this.initialTaskData = props.initialTaskData;
 			this.fillDeadlines(
 				props.deadlines
-				|| (this.getDeadlinesCachedOption() ? this.getDeadlinesCachedOption().value : null)
+				|| (TaskCreate.getDeadlinesCachedOption() ? TaskCreate.getDeadlinesCachedOption().value : null),
 			);
 
 			this.state = {
@@ -143,7 +214,10 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 				this.getDeadlines(),
 				this.getDiskFolderId(),
 				CalendarSettings.loadSettings(),
-			]).then(() => this.doFinalInitAction());
+			])
+				.then(() => this.doFinalInitAction())
+				.catch(() => {})
+			;
 		}
 
 		doFinalInitAction()
@@ -166,8 +240,8 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 			});
 
 			this.bindEvents();
-			this.setState({showLoading: false});
-			setTimeout(() => this.setState({focus: null}));
+			this.setState({ showLoading: false });
+			setTimeout(() => this.setState({ focus: null }));
 		}
 
 		getCurrentUserData()
@@ -175,14 +249,17 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 			return new Promise((resolve) => {
 				if (this.currentUser && this.currentUser.id)
 				{
-					return resolve();
+					resolve();
+
+					return;
 				}
-				(new RequestExecutor('tasksmobile.User.getUsersData', {userIds: [env.userId]}))
+				(new RequestExecutor('tasksmobile.User.getUsersData', { userIds: [env.userId] }))
 					.call()
 					.then((response) => {
 						this.currentUser = response.result[env.userId];
 						resolve();
 					})
+					.catch(() => {})
 				;
 			});
 		}
@@ -193,33 +270,32 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 				const now = new Date();
 				if (
 					this.deadlines.length > 0
-					&& this.getDeadlinesCachedOption()
-					&& now.getDate() === (new Date(this.getDeadlinesCachedOption().lastTime)).getDate()
+					&& TaskCreate.getDeadlinesCachedOption()
+					&& now.getDate() === (new Date(TaskCreate.getDeadlinesCachedOption().lastTime)).getDate()
 				)
 				{
-					return resolve();
+					resolve();
+
+					return;
 				}
 				(new RequestExecutor('mobile.tasks.deadlines.get'))
 					.call()
 					.then((response) => {
 						this.fillDeadlines(response.result);
-						this.updateDeadlinesCachedOption({
+						TaskCreate.updateDeadlinesCachedOption({
 							lastTime: now.getTime(),
 							value: response.result,
 						});
 						resolve();
 					})
+					.catch(() => {})
 				;
 			});
 		}
 
 		fillDeadlines(values = {})
 		{
-			if (!values)
-			{
-				this.deadlines = [];
-			}
-			else
+			if (values)
 			{
 				this.deadlines = Object.entries(Task.deadlines).map(([key, value]) => {
 					return {
@@ -228,28 +304,10 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					};
 				});
 			}
-		}
-
-		getDeadlinesCachedOption()
-		{
-			const storage = Application.sharedStorage('tasksTaskList');
-			const optionsCache = storage.get('options');
-
-			if (Type.isString(optionsCache))
+			else
 			{
-				return JSON.parse(optionsCache).deadlines;
+				this.deadlines = [];
 			}
-
-			return null;
-		}
-
-		updateDeadlinesCachedOption(value)
-		{
-			const storage = Application.sharedStorage('tasksTaskList');
-			const optionsCache = storage.get('options');
-			const currentOption = (Type.isString(optionsCache) ? JSON.parse(optionsCache) : {});
-			currentOption.deadlines = value;
-			storage.set('options', JSON.stringify(currentOption));
 		}
 
 		getDiskFolderId()
@@ -257,7 +315,9 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 			return new Promise((resolve) => {
 				if (this.diskFolderId)
 				{
-					return resolve();
+					resolve();
+
+					return;
 				}
 				(new RequestExecutor('mobile.disk.getUploadedFilesFolder'))
 					.call()
@@ -265,6 +325,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 						this.diskFolderId = Number(response.result);
 						resolve();
 					})
+					.catch(() => {})
 				;
 			});
 		}
@@ -305,46 +366,6 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 			});
 		}
 
-		getStyleForField(name = '')
-		{
-			const fullBorderedFields = [
-				TaskCreate.field.description,
-				TaskCreate.field.datePlan,
-				TaskCreate.field.timeTracking,
-			];
-			const style = {
-				marginHorizontal: 16,
-			};
-
-			if (fullBorderedFields.includes(name))
-			{
-				style.marginHorizontal = 6;
-				style.borderWidth = 1;
-				style.borderColor = '#e6e7e9';
-				style.borderRadius = 7;
-			}
-
-			return style;
-		}
-
-		getDeepMergeStylesForField(isExpandable = false)
-		{
-			const deepMergeStyles = {
-				externalWrapper: (isExpandable) => ({
-					height: (isExpandable ? undefined : fieldHeight),
-					minHeight: (isExpandable ? fieldHeight : undefined),
-					justifyContent: 'center',
-					paddingTop: 10,
-					paddingBottom: 10,
-				}),
-			};
-
-			return Object.entries(deepMergeStyles).reduce((result, [key, value]) => {
-				result[key] = (Type.isFunction(value) ? value(isExpandable) : value);
-				return result;
-			}, {});
-		}
-
 		render()
 		{
 			if (this.state.showLoading)
@@ -376,7 +397,9 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 				},
 				ScrollView(
 					{
-						ref: (ref) => this.scrollViewRef = ref,
+						ref: (ref) => {
+							this.scrollViewRef = ref;
+						},
 						style: {
 							flex: 1,
 							borderRadius: 12,
@@ -390,7 +413,9 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					View({}, ...this.renderSections()),
 				),
 				(!this.state.isFullForm && new BottomPanel({
-					ref: ref => this.bottomPanelRef = ref,
+					ref: (ref) => {
+						this.bottomPanelRef = ref;
+					},
 					pathToImages: this.pathToImages,
 					onCreateButtonClick: () => this.save(),
 					onExpandButtonClick: () => this.expandToFullForm(),
@@ -438,12 +463,13 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 				},
 			};
 
-			delete sections[(this.state.isFullForm ? TaskCreate.section.main : TaskCreate.section.common)].fields[TaskCreate.field.files];
+			const sectionToDeleteFilesFrom = (this.state.isFullForm ? TaskCreate.section.main : TaskCreate.section.common);
+			delete sections[sectionToDeleteFilesFrom].fields[TaskCreate.field.files];
 
 			return Object.entries(sections).map(([name, data]) => {
 				if (!this.state.isFullForm && name !== TaskCreate.section.main)
 				{
-					return;
+					return null;
 				}
 
 				return View(
@@ -491,7 +517,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 				{},
 				View({
 					style: {
-						...this.getStyleForField(),
+						...TaskCreate.getStyleForField(),
 						height: 0.5,
 						backgroundColor: '#e6e7e9',
 					},
@@ -507,9 +533,11 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 
 			return View(
 				{
-					ref: ref => this.sectionMoreRef = ref,
+					ref: (ref) => {
+						this.sectionMoreRef = ref;
+					},
 					style: {
-						...this.getStyleForField(),
+						...TaskCreate.getStyleForField(),
 						flexDirection: 'row',
 						height: 54,
 						justifyContent: 'space-between',
@@ -518,7 +546,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					testId: `taskCreateSection_${TaskCreate.section.more}_header`,
 					onClick: () => {
 						this.setState(
-							{isMoreExpanded: !this.state.isMoreExpanded},
+							{ isMoreExpanded: !this.state.isMoreExpanded },
 							() => {
 								if (
 									this.state.isMoreExpanded
@@ -532,7 +560,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 										animated: true,
 									});
 								}
-							}
+							},
 						);
 					},
 				},
@@ -549,7 +577,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 							height: 24,
 							marginRight: 8,
 						},
-						uri: this.getImageUrl(`${this.pathToImages}/tasksmobile-layout-task-section-more-icon.png`),
+						uri: TaskCreate.getImageUrl(`${this.pathToImages}/tasksmobile-layout-task-section-more-icon.png`),
 					}),
 					Text({
 						style: {
@@ -566,7 +594,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 						width: 24,
 						height: 24,
 					},
-					uri: this.getImageUrl(arrowUri),
+					uri: TaskCreate.getImageUrl(arrowUri),
 				}),
 			);
 		}
@@ -578,18 +606,20 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					readOnly: this.state.readOnly,
 					title: this.task.title,
 					focus: this.state.focus,
-					style: this.getStyleForField(TaskCreate.field.title),
-					deepMergeStyles: this.getDeepMergeStylesForField(true),
-					onViewRef: ref => this.titleViewRef = ref,
-					onChange: title => this.task.updateData({title}),
+					style: TaskCreate.getStyleForField(TaskCreate.field.title),
+					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(true),
+					onViewRef: (ref) => {
+						this.titleViewRef = ref;
+					},
+					onChange: (title) => this.task.updateData({ title }),
 				}),
 				[TaskCreate.field.responsible]: new Responsible({
 					readOnly: this.state.readOnly,
 					responsible: this.task.responsible,
 					parentWidget: this.layoutWidget,
-					style: this.getStyleForField(TaskCreate.field.responsible),
-					deepMergeStyles: this.getDeepMergeStylesForField(),
-					onChange: responsible => this.task.updateData({responsible}),
+					style: TaskCreate.getStyleForField(TaskCreate.field.responsible),
+					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(),
+					onChange: (responsible) => this.task.updateData({ responsible }),
 				}),
 				[TaskCreate.field.deadline]: new Deadline({
 					readOnly: this.state.readOnly,
@@ -597,11 +627,13 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					taskState: this.task.getState(),
 					deadlines: this.deadlines,
 					showBalloonDate: true,
-					style: this.getStyleForField(TaskCreate.field.deadline),
-					deepMergeStyles: this.getDeepMergeStylesForField(),
+					style: TaskCreate.getStyleForField(TaskCreate.field.deadline),
+					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(),
 					pathToImages: this.pathToImages,
 					datesResolver: this.datesResolver,
-					ref: ref => this.deadlineRef = ref,
+					ref: (ref) => {
+						this.deadlineRef = ref;
+					},
 				}),
 				[TaskCreate.field.checklist]: new CheckList({
 					checkList: this.checkList,
@@ -618,7 +650,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					onFieldFocus: (ref) => {
 						if (this.scrollViewRef && ref)
 						{
-							const {y} = this.scrollViewRef.getPosition(ref);
+							const { y } = this.scrollViewRef.getPosition(ref);
 							if (y > this.scrollY + device.screen.height * 0.4)
 							{
 								this.scrollViewRef.scrollTo({
@@ -634,10 +666,10 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					groupId: this.task.groupId,
 					groupData: this.task.group,
 					parentWidget: this.layoutWidget,
-					style: this.getStyleForField(TaskCreate.field.project),
-					deepMergeStyles: this.getDeepMergeStylesForField(),
+					style: TaskCreate.getStyleForField(TaskCreate.field.project),
+					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(),
 					onChange: (groupId, group) => {
-						this.task.updateData({groupId, group});
+						this.task.updateData({ groupId, group });
 						if (this.tagsRef)
 						{
 							this.tagsRef.updateState({
@@ -651,9 +683,9 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 				[TaskCreate.field.description]: new Description({
 					readOnly: this.state.readOnly,
 					description: this.task.description,
-					style: this.getStyleForField(TaskCreate.field.description),
-					deepMergeStyles: this.getDeepMergeStylesForField(true),
-					onChange: description => this.task.updateData({description}),
+					style: TaskCreate.getStyleForField(TaskCreate.field.description),
+					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(true),
+					onChange: (description) => this.task.updateData({ description }),
 				}),
 				[TaskCreate.field.files]: new Files({
 					readOnly: this.state.readOnly,
@@ -661,12 +693,16 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					taskId: 0,
 					files: [...(this.task.files || []), ...(this.task.uploadedFiles || [])],
 					isAlwaysShowed: this.state.isFullForm,
-					showAddButton: false,
+					showAddButton: true,
 					parentWidget: this.layoutWidget,
-					style: this.getStyleForField(TaskCreate.field.files),
-					deepMergeStyles: this.getDeepMergeStylesForField(true),
-					onInnerRef: ref => this.filesInnerRef = ref,
-					onViewRef: ref => this.filesViewRef = ref,
+					style: TaskCreate.getStyleForField(TaskCreate.field.files),
+					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(true),
+					onInnerRef: (ref) => {
+						this.filesInnerRef = ref;
+					},
+					onViewRef: (ref) => {
+						this.filesViewRef = ref;
+					},
 					onChange: (files) => {
 						const uploadedFiles = [];
 						const existingFiles = [];
@@ -696,63 +732,80 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 				}),
 				[TaskCreate.field.accomplices]: new Accomplices({
 					readOnly: this.state.readOnly,
-					accomplices: this.task.accomplices,
+					accomplices: (this.task.accomplices || []),
 					parentWidget: this.layoutWidget,
-					style: this.getStyleForField(TaskCreate.field.accomplices),
-					deepMergeStyles: this.getDeepMergeStylesForField(true),
+					style: TaskCreate.getStyleForField(TaskCreate.field.accomplices),
+					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(true),
 					checkList: this.checkList,
-					onChange: accomplicesData => this.task.updateData({accomplicesData}),
+					onChange: (accomplicesData) => this.task.updateData({ accomplicesData }),
 				}),
 				[TaskCreate.field.auditors]: new Auditors({
 					readOnly: this.state.readOnly,
-					auditors: this.task.auditors,
+					auditors: (this.task.auditors || []),
 					parentWidget: this.layoutWidget,
-					style: this.getStyleForField(TaskCreate.field.auditors),
-					deepMergeStyles: this.getDeepMergeStylesForField(true),
+					style: TaskCreate.getStyleForField(TaskCreate.field.auditors),
+					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(true),
 					checkList: this.checkList,
-					onChange: auditorsData => this.task.updateData({auditorsData}),
+					onChange: (auditorsData) => this.task.updateData({ auditorsData }),
 				}),
 				[TaskCreate.field.datePlan]: new DatePlan({
 					readOnly: this.state.readOnly,
 					isDatePlan: this.isDatePlan,
 					startDatePlan: this.task.startDatePlan,
 					endDatePlan: this.task.endDatePlan,
-					style: this.getStyleForField(TaskCreate.field.datePlan),
-					deepMergeStyles: this.getDeepMergeStylesForField(),
+					style: TaskCreate.getStyleForField(TaskCreate.field.datePlan),
+					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(),
 					datesResolver: this.datesResolver,
-					ref: ref => this.datePlanRef = ref,
-					onDatePlanIsRef: ref => this.datePlanIsRef = ref,
-					onDatePlanStartRef: ref => this.datePlanStartRef = ref,
-					onDatePlanEndRef: ref => this.datePlanEndRef = ref,
-					onDatePlanDurationRef: ref => this.datePlanDurationRef = ref,
-					onChange: isDatePlan => this.isDatePlan = isDatePlan,
+					ref: (ref) => {
+						this.datePlanRef = ref;
+					},
+					onDatePlanIsRef: (ref) => {
+						this.datePlanIsRef = ref;
+					},
+					onDatePlanStartRef: (ref) => {
+						this.datePlanStartRef = ref;
+					},
+					onDatePlanEndRef: (ref) => {
+						this.datePlanEndRef = ref;
+					},
+					onDatePlanDurationRef: (ref) => {
+						this.datePlanDurationRef = ref;
+					},
+					onChange: (isDatePlan) => {
+						this.isDatePlan = isDatePlan;
+					},
 				}),
 				[TaskCreate.field.timeTracking]: new TimeTracking({
 					readOnly: this.state.readOnly,
 					isTimeTracking: this.task.allowTimeTracking,
 					timeEstimate: this.task.timeEstimate,
 					style: {
-						...this.getStyleForField(TaskCreate.field.timeTracking),
+						...TaskCreate.getStyleForField(TaskCreate.field.timeTracking),
 						marginTop: 6,
 					},
-					deepMergeStyles: this.getDeepMergeStylesForField(),
-					onChange: values => this.task.updateData(values),
+					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(),
+					onChange: (values) => this.task.updateData(values),
 				}),
 				[TaskCreate.field.isImportant]: new IsImportant({
 					readOnly: this.state.readOnly,
 					isImportant: (this.task.priority === Task.priority.important),
-					style: this.getStyleForField(TaskCreate.field.isImportant),
-					deepMergeStyles: this.getDeepMergeStylesForField(),
+					style: TaskCreate.getStyleForField(TaskCreate.field.isImportant),
+					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(),
 					pathToImages: this.pathToImages,
-					onChange: value => this.task.updateData({priority: (value ? Task.priority.important : Task.priority.none)}),
+					onChange: (value) => {
+						this.task.updateData({ priority: (value ? Task.priority.important : Task.priority.none) });
+					},
 				}),
 				[TaskCreate.field.crm]: new Crm({
 					readOnly: this.state.readOnly,
 					crm: this.task.crm,
 					parentWidget: this.layoutWidget,
-					style: this.getStyleForField(TaskCreate.field.crm),
-					deepMergeStyles: this.getDeepMergeStylesForField(true),
-					onChange: crm => this.task.updateData({crm}),
+					style: TaskCreate.getStyleForField(TaskCreate.field.crm),
+					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(true),
+					onChange: (crm) => {
+						this.task.updateData({ crm });
+						AnalyticsLabel.send({ scenario: 'task_add_crm_field' });
+					},
 				}),
 				[TaskCreate.field.tags]: new Tags({
 					readOnly: this.state.readOnly,
@@ -760,55 +813,58 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					taskId: 0,
 					groupId: this.task.groupId,
 					parentWidget: this.layoutWidget,
-					style: this.getStyleForField(TaskCreate.field.tags),
-					deepMergeStyles: this.getDeepMergeStylesForField(true),
-					ref: ref => this.tagsRef = ref,
-					onChange: tags => this.task.updateData({tags}),
+					style: TaskCreate.getStyleForField(TaskCreate.field.tags),
+					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(true),
+					ref: (ref) => {
+						this.tagsRef = ref;
+					},
+					onChange: (tags) => this.task.updateData({ tags }),
 				}),
 				[TaskCreate.field.parentTask]: new ParentTask({
 					parentTask: this.task.parentTask,
 					canOpenEntity: false,
-					style: this.getStyleForField(TaskCreate.field.parentTask),
-					deepMergeStyles: this.getDeepMergeStylesForField(true),
+					style: TaskCreate.getStyleForField(TaskCreate.field.parentTask),
+					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(true),
 				}),
 				[TaskCreate.field.canChangeDeadline]: new CanChangeDeadline({
 					readOnly: this.state.readOnly,
 					canChangeDeadline: this.task.allowChangeDeadline,
-					style: this.getStyleForField(TaskCreate.field.canChangeDeadline),
-					deepMergeStyles: this.getDeepMergeStylesForField(true),
-					onChange: value => this.task.updateData({allowChangeDeadline : (value ? 'Y' : 'N')}),
+					style: TaskCreate.getStyleForField(TaskCreate.field.canChangeDeadline),
+					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(true),
+					onChange: (value) => this.task.updateData({ allowChangeDeadline: (value ? 'Y' : 'N') }),
 				}),
 				[TaskCreate.field.isMatchWorkTime]: new IsMatchWorkTime({
 					readOnly: this.state.readOnly,
 					isMatchWorkTime: this.task.isMatchWorkTime,
-					style: this.getStyleForField(TaskCreate.field.isMatchWorkTime),
-					deepMergeStyles: this.getDeepMergeStylesForField(true),
+					style: TaskCreate.getStyleForField(TaskCreate.field.isMatchWorkTime),
+					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(true),
 					datesResolver: this.datesResolver,
-					onChange: value => this.task.updateData({matchWorkTime: (value ? 'Y' : 'N')}),
+					onChange: (value) => this.task.updateData({ matchWorkTime: (value ? 'Y' : 'N') }),
 				}),
 				[TaskCreate.field.isTaskControl]: new IsTaskControl({
 					readOnly: this.state.readOnly,
 					isTaskControl: this.task.allowTaskControl,
-					style: this.getStyleForField(TaskCreate.field.isTaskControl),
-					deepMergeStyles: this.getDeepMergeStylesForField(true),
-					onChange: value => this.task.updateData({taskControl: (value ? 'Y' : 'N')}),
+					style: TaskCreate.getStyleForField(TaskCreate.field.isTaskControl),
+					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(true),
+					onChange: (value) => this.task.updateData({ taskControl: (value ? 'Y' : 'N') }),
 				}),
 				[TaskCreate.field.isResultRequired]: new IsResultRequired({
 					readOnly: this.state.readOnly,
 					isResultRequired: this.task.isResultRequired,
-					style: this.getStyleForField(TaskCreate.field.isResultRequired),
-					deepMergeStyles: this.getDeepMergeStylesForField(true),
-					onChange: value => this.task.updateData({taskRequireResult: (value ? 'Y' : 'N')}),
+					style: TaskCreate.getStyleForField(TaskCreate.field.isResultRequired),
+					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(true),
+					onChange: (value) => this.task.updateData({ taskRequireResult: (value ? 'Y' : 'N') }),
 				}),
 			};
 		}
 
 		expandToFullForm()
 		{
-			this.setState({isFullForm: true}, () => {
+			this.setState({ isFullForm: true }, () => {
 				this.layoutWidget.expandBottomSheet();
 				this.layoutWidget.setBackButtonHandler(() => {
 					this.showConfirmOnFormClosing();
+
 					return true;
 				});
 				this.layoutWidget.setLeftButtons([
@@ -825,7 +881,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 						callback: () => this.save(),
 					},
 				]);
-				this.layoutWidget.setTitle({text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_CREATE_TITLE')});
+				this.layoutWidget.setTitle({ text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_CREATE_TITLE') });
 			});
 		}
 
@@ -858,19 +914,25 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 			this.isSaving = true;
 			Notify.showIndicatorLoading();
 
-			this.task.save().then(
-				() => {
-					if (this.checkList.isActive())
-					{
-						this.checkList.save(this.task.id, 'TASK_ADD');
-					}
-					this.layoutWidget.close();
-				},
-				() => {
+			this.task.save()
+				.then(
+					() => {
+						if (this.checkList.isActive())
+						{
+							this.checkList.save(this.task.id, 'TASK_ADD');
+						}
+						this.layoutWidget.close();
+					},
+					() => {
+						Notify.hideCurrentIndicator();
+						this.isSaving = false;
+					},
+				)
+				.catch(() => {
 					Notify.hideCurrentIndicator();
 					this.isSaving = false;
-				}
-			);
+				})
+			;
 		}
 
 		checkCanSave()
@@ -912,18 +974,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 
 			return true;
 		}
-
-		getImageUrl(imageUrl)
-		{
-			if (imageUrl.indexOf(currentDomain) !== 0)
-			{
-				imageUrl = imageUrl.replace(`${currentDomain}`, '');
-				imageUrl = (imageUrl.indexOf('http') !== 0 ? `${currentDomain}${imageUrl}` : imageUrl);
-			}
-
-			return encodeURI(imageUrl);
-		}
 	}
 
-	module.exports = {TaskCreate};
+	module.exports = { TaskCreate };
 });

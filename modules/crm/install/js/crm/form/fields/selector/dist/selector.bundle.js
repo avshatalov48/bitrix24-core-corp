@@ -160,9 +160,13 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	var _getOptions$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOptions");
 	var _onChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onChange");
 	var _getCheckbox = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCheckbox");
+	var _isDisabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDisabled");
 	class ListItem extends main_core_events.EventEmitter {
 	  constructor(_options) {
 	    super();
+	    Object.defineProperty(this, _isDisabled, {
+	      value: _isDisabled2
+	    });
 	    Object.defineProperty(this, _getCheckbox, {
 	      value: _getCheckbox2
 	    });
@@ -196,15 +200,16 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _getCheckbox)[_getCheckbox]().checked;
 	  }
 	  getLayout() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].remember('layout', () => {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].remember(`layout`, () => {
+	      const fieldDisabledClassName = 'crm-form-fields-selector-field--disabled';
 	      return main_core.Tag.render(_t$1 || (_t$1 = _$1`
-				<div class="crm-form-fields-selector-field">
+				<div class="crm-form-fields-selector-field${0}">
 					<label class="ui-ctl ui-ctl-checkbox crm-form-fields-selector-field-checkbox">
 						${0}
 						<div class="ui-ctl-label-text">${0}</div>
 					</label>
 				</div>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _getCheckbox)[_getCheckbox](), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _getOptions$1)[_getOptions$1]().field.caption));
+			`), babelHelpers.classPrivateFieldLooseBase(this, _isDisabled)[_isDisabled]() ? " " + fieldDisabledClassName : '', babelHelpers.classPrivateFieldLooseBase(this, _getCheckbox)[_getCheckbox](), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _getOptions$1)[_getOptions$1]().field.caption));
 	    });
 	  }
 	  renderTo(targetContainer) {
@@ -238,6 +243,10 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 			`), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _getOptions$1)[_getOptions$1]().type), babelHelpers.classPrivateFieldLooseBase(this, _onChange)[_onChange].bind(this), babelHelpers.classPrivateFieldLooseBase(this, _getOptions$1)[_getOptions$1]().selected ? 'checked' : '');
 	  });
 	}
+	function _isDisabled2() {
+	  var _babelHelpers$classPr;
+	  return (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _getOptions$1)[_getOptions$1]().disabled) != null ? _babelHelpers$classPr : false;
+	}
 	ListItem.Type = {
 	  CHECKBOX: 'checkbox',
 	  RADIO: 'radio'
@@ -261,7 +270,6 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	var _applyCategoriesFilter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applyCategoriesFilter");
 	var _applyFieldsFilter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applyFieldsFilter");
 	var _applySearchFilter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applySearchFilter");
-	var _getFieldsList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFieldsList");
 	var _load = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("load");
 	var _setIsLeadEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setIsLeadEnabled");
 	var _isLeadEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isLeadEnabled");
@@ -276,6 +284,8 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	var _setSelectedFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setSelectedFields");
 	var _isMultiple = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isMultiple");
 	var _renderCategoryFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderCategoryFields");
+	var _getDisabledFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDisabledFields");
+	var _isFieldDisabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isFieldDisabled");
 	var _onListItemChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onListItemChange");
 	var _onSidebarItemClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSidebarItemClick");
 	var _onBackendError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onBackendError");
@@ -359,6 +369,12 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	    Object.defineProperty(this, _onListItemChange, {
 	      value: _onListItemChange2
 	    });
+	    Object.defineProperty(this, _isFieldDisabled, {
+	      value: _isFieldDisabled2
+	    });
+	    Object.defineProperty(this, _getDisabledFields, {
+	      value: _getDisabledFields2
+	    });
 	    Object.defineProperty(this, _renderCategoryFields, {
 	      value: _renderCategoryFields2
 	    });
@@ -401,9 +417,6 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	    Object.defineProperty(this, _load, {
 	      value: _load2
 	    });
-	    Object.defineProperty(this, _getFieldsList, {
-	      value: _getFieldsList2
-	    });
 	    Object.defineProperty(this, _applySearchFilter, {
 	      value: _applySearchFilter2
 	    });
@@ -432,6 +445,23 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	    this.setEventNamespace('BX.Crm.Form.Fields.Selector');
 	    this.subscribeFromOptions(_options.events);
 	    babelHelpers.classPrivateFieldLooseBase(this, _setOptions$2)[_setOptions$2](_options);
+	  }
+	  getFieldsList() {
+	    const fieldsList = babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].get('fieldsList', {});
+	    const filter = babelHelpers.classPrivateFieldLooseBase(this, _getFilter)[_getFilter]();
+	    if (main_core.Type.isPlainObject(filter)) {
+	      const query = babelHelpers.classPrivateFieldLooseBase(this, _getSearch)[_getSearch]().getValue();
+	      return babelHelpers.classPrivateFieldLooseBase(this, _applySearchFilter)[_applySearchFilter](babelHelpers.classPrivateFieldLooseBase(this, _applyFieldsFilter)[_applyFieldsFilter](babelHelpers.classPrivateFieldLooseBase(this, _applyCategoriesFilter)[_applyCategoriesFilter](fieldsList, filter), filter), query);
+	    }
+	    if (main_core.Type.isFunction(filter)) {
+	      const defaultFilter = main_core.Runtime.clone(babelHelpers.classPrivateFieldLooseBase(Selector, _defaultFilter)[_defaultFilter]);
+	      if (!babelHelpers.classPrivateFieldLooseBase(this, _isLeadEnabled)[_isLeadEnabled]()) {
+	        defaultFilter['-categories'].push('LEAD');
+	      }
+	      const prefilteredFieldsList = babelHelpers.classPrivateFieldLooseBase(this, _applyFieldsFilter)[_applyFieldsFilter](babelHelpers.classPrivateFieldLooseBase(this, _applyCategoriesFilter)[_applyCategoriesFilter](fieldsList, defaultFilter), filter);
+	      return filter(main_core.Runtime.clone(prefilteredFieldsList));
+	    }
+	    return fieldsList;
 	  }
 	  hide() {
 	    const SidePanel = main_core.Reflection.getClass('BX.SidePanel');
@@ -570,23 +600,6 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	  }
 	  return fieldsList;
 	}
-	function _getFieldsList2() {
-	  const fieldsList = babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].get('fieldsList', {});
-	  const filter = babelHelpers.classPrivateFieldLooseBase(this, _getFilter)[_getFilter]();
-	  if (main_core.Type.isPlainObject(filter)) {
-	    const query = babelHelpers.classPrivateFieldLooseBase(this, _getSearch)[_getSearch]().getValue();
-	    return babelHelpers.classPrivateFieldLooseBase(this, _applySearchFilter)[_applySearchFilter](babelHelpers.classPrivateFieldLooseBase(this, _applyFieldsFilter)[_applyFieldsFilter](babelHelpers.classPrivateFieldLooseBase(this, _applyCategoriesFilter)[_applyCategoriesFilter](fieldsList, filter), filter), query);
-	  }
-	  if (main_core.Type.isFunction(filter)) {
-	    const defaultFilter = main_core.Runtime.clone(babelHelpers.classPrivateFieldLooseBase(Selector, _defaultFilter)[_defaultFilter]);
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isLeadEnabled)[_isLeadEnabled]()) {
-	      defaultFilter['-categories'].push('LEAD');
-	    }
-	    const prefilteredFieldsList = babelHelpers.classPrivateFieldLooseBase(this, _applyFieldsFilter)[_applyFieldsFilter](babelHelpers.classPrivateFieldLooseBase(this, _applyCategoriesFilter)[_applyCategoriesFilter](fieldsList, defaultFilter), filter);
-	    return filter(main_core.Runtime.clone(prefilteredFieldsList));
-	  }
-	  return fieldsList;
-	}
 	function _load2() {
 	  const {
 	    controllerOptions = {}
@@ -614,7 +627,7 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].get('isAllowedCreateField', false);
 	}
 	function _getSidebarItems2() {
-	  return Object.entries(babelHelpers.classPrivateFieldLooseBase(this, _getFieldsList)[_getFieldsList]()).map(([categoryId, category]) => {
+	  return Object.entries(this.getFieldsList()).map(([categoryId, category]) => {
 	    return {
 	      label: category.CAPTION,
 	      id: categoryId,
@@ -672,7 +685,7 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	}
 	function _renderCategoryFields2(categoryId) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _cleanFieldsList)[_cleanFieldsList]();
-	  const fields = babelHelpers.classPrivateFieldLooseBase(this, _getFieldsList)[_getFieldsList]()[categoryId].FIELDS;
+	  const fields = this.getFieldsList()[categoryId].FIELDS;
 	  if (main_core.Type.isArrayFilled(fields)) {
 	    fields.forEach(field => {
 	      void new ListItem({
@@ -684,10 +697,22 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	        selected: babelHelpers.classPrivateFieldLooseBase(this, _getSelectedFields)[_getSelectedFields]().some(selectedField => {
 	          return selectedField.name === field.name;
 	        }),
-	        type: babelHelpers.classPrivateFieldLooseBase(this, _isMultiple)[_isMultiple]() ? ListItem.Type.CHECKBOX : ListItem.Type.RADIO
+	        type: babelHelpers.classPrivateFieldLooseBase(this, _isMultiple)[_isMultiple]() ? ListItem.Type.CHECKBOX : ListItem.Type.RADIO,
+	        disabled: babelHelpers.classPrivateFieldLooseBase(this, _isFieldDisabled)[_isFieldDisabled](field)
 	      });
 	    });
 	  }
+	}
+	function _getDisabledFields2() {
+	  var _babelHelpers$classPr;
+	  return (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _getOptions$2)[_getOptions$2]().disabledFields) != null ? _babelHelpers$classPr : null;
+	}
+	function _isFieldDisabled2(field) {
+	  const disabledFields = babelHelpers.classPrivateFieldLooseBase(this, _getDisabledFields)[_getDisabledFields]();
+	  if (main_core.Type.isNull(disabledFields)) {
+	    return false;
+	  }
+	  return disabledFields.some(fieldRule => main_core.Type.isString(fieldRule) && field.name === fieldRule || main_core.Type.isFunction(fieldRule) && fieldRule(field));
 	}
 	function _onListItemChange2(event) {
 	  const listItem = event.getTarget();
@@ -791,7 +816,7 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	}
 	function _getPreparedCategoryId2(categoryId) {
 	  if (categoryId.startsWith('DYNAMIC_')) {
-	    const fieldsList = babelHelpers.classPrivateFieldLooseBase(this, _getFieldsList)[_getFieldsList]();
+	    const fieldsList = this.getFieldsList();
 	    if (main_core.Type.isPlainObject(fieldsList[categoryId])) {
 	      return fieldsList[categoryId].DYNAMIC_ID;
 	    }
@@ -799,9 +824,9 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	  return `CRM_${categoryId}`;
 	}
 	function _getFieldsFactoryTypesFilter2() {
-	  var _babelHelpers$classPr, _babelHelpers$classPr2;
+	  var _babelHelpers$classPr2, _babelHelpers$classPr3;
 	  const defaultFilter = main_core.Runtime.clone(babelHelpers.classPrivateFieldLooseBase(Selector, _defaultFieldsFactoryFilter)[_defaultFieldsFactoryFilter]);
-	  const customFilter = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _getOptions$2)[_getOptions$2]()) == null ? void 0 : (_babelHelpers$classPr2 = _babelHelpers$classPr.fieldsFactory) == null ? void 0 : _babelHelpers$classPr2.filter;
+	  const customFilter = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _getOptions$2)[_getOptions$2]()) == null ? void 0 : (_babelHelpers$classPr3 = _babelHelpers$classPr2.fieldsFactory) == null ? void 0 : _babelHelpers$classPr3.filter;
 	  if (main_core.Type.isPlainObject(customFilter)) {
 	    if (main_core.Type.isArrayFilled(customFilter['-types'])) {
 	      customFilter['-types'] = [...defaultFilter['-types'], ...customFilter['-types']];

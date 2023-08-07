@@ -68,6 +68,7 @@ jn.define('crm/payment-system/creation/actions/oauth', (require, exports, module
 									Feature.showDefaultUnsupportedWidget({}, this.menu.getActionParentWidget());
 									reject();
 									menuClickResolve({ closeMenu: false });
+
 									return;
 								}
 

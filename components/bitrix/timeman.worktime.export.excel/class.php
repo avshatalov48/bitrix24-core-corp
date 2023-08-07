@@ -31,8 +31,6 @@ class TimemanWorktimeExportExcel extends TimemanWorktimeGridComponent
 			return null;
 		}
 
-		$this->prepareDataToExcel();
-
 		$this->includeComponentTemplate();
 
 		return [
@@ -88,16 +86,5 @@ class TimemanWorktimeExportExcel extends TimemanWorktimeGridComponent
 	{
 		return !empty($this->arParams['STEXPORT_PAGE_SIZE']) ?
 			$this->arParams['STEXPORT_PAGE_SIZE'] : $this->getGrid()->getNavigation()->getPageSize();
-	}
-
-	private function prepareDataToExcel()
-	{
-		foreach ($this->arResult['ROWS'] as &$row)
-		{
-			foreach ($row['columns'] as &$value)
-			{
-				$value = strip_tags($value);
-			}
-		}
 	}
 }

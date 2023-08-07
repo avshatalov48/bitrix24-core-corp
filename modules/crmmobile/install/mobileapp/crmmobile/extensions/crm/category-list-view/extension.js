@@ -11,6 +11,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 	const { StageListView } = require('crm/stage-list-view');
 	const { PlanRestriction } = require('layout/ui/plan-restriction');
 	const { throttle } = require('utils/function');
+	const { TypeId } = require('crm/type/id');
 
 	const DEAL_CATEGORY_LIMIT_RESTRICTION_NAME = 'crm_clr_cfg_deal_category';
 
@@ -193,7 +194,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 				onCreateCategory: this.createCategoryHandler,
 				onEditCategory: this.editCategoryHandler,
 				canUserEditCategory: this.canUserEditCategory(),
-				canUserAddCategory: !this.hasDealCategoryLimitRestriction(),
+				canUserAddCategory: !this.hasCategoryLimitRestriction(),
 				readOnly,
 				selectAction,
 				onSelectCategory,
@@ -265,7 +266,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 		{
 			const sort = categories[categories.length - 1].sort + 100;
 
-			if (this.hasDealCategoryLimitRestriction())
+			if (this.hasCategoryLimitRestriction())
 			{
 				PlanRestriction.open(
 					{
@@ -302,11 +303,16 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 			);
 		}
 
-		hasDealCategoryLimitRestriction()
+		hasCategoryLimitRestriction()
 		{
-			const dealCategoryLimitRestriction = this.getDealCategoryLimitRestriction();
+			if (this.props.entityTypeId !== TypeId.Deal)
+			{
+				return false;
+			}
 
-			return !dealCategoryLimitRestriction || dealCategoryLimitRestriction.isExceeded;
+			const categoryLimitRestriction = this.getDealCategoryLimitRestriction();
+
+			return !categoryLimitRestriction || categoryLimitRestriction.isExceeded;
 		}
 	}
 

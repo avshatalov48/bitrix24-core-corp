@@ -59,8 +59,8 @@ class CatalogStore implements Tabable {
 		return [
 			'name' => 'JSStackComponent',
 			'title' => $this->getTitle(),
-			'componentCode' => "catalog.store.document.list",
-			'scriptPath' => Manager::getComponentPath('catalog.store.document.list'),
+			'componentCode' => "catalog:catalog.store.document.list",
+			'scriptPath' => Manager::getComponentPath('catalog:catalog.store.document.list'),
 			'rootWidget' => [
 				'name' => 'layout',
 				'settings' => [
@@ -110,5 +110,10 @@ class CatalogStore implements Tabable {
 	public function setContext($context)
 	{
 		$this->context = $context;
+	}
+
+	public function getIconId(): string
+	{
+		return $this->getId();
 	}
 }

@@ -531,7 +531,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 		</tr>
 
 	<!-- im general chat right-->
-		<?php if (COption::GetOptionString("im", "im_general_chat_new_rights") !== 'Y'): ?>
+		<?php if (!method_exists('\Bitrix\Im\V2\Chat\GeneralChat', 'getRightsForIntranetConfig')): ?>
 			<?
 			$imAllow = COption::GetOptionString("im", "allow_send_to_general_chat_all");
 			?>
@@ -570,7 +570,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 				</td>
 				<td class="content-edit-form-field-error"></td>
 			</tr>
-		<?php else: ?>
+		<?php elseif (isset($arResult['generalChatCanPostList'])): ?>
 			<tr>
 				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="allow_general_chat_toall"><?=GetMessage('CONFIG_IM_CHAT_RIGHTS')?></label></td>
 				<td class="content-edit-form-field-input">
@@ -588,10 +588,6 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 			<tr id="chat_rights_all" style="display: <?= ($arResult["generalChatCanPost"] === $arResult["generalChatShowManagersList"]) ? "table-row" : "none" ?>;">
 				<td class="content-edit-form-field-name content-edit-form-field-name-left">&nbsp;</td>
 				<td class="content-edit-form-field-input">
-					<!--
-					<?php print_r($arResult['generalChatManagersList']); ?>
-					-->
-
 					<?php
 					$APPLICATION->IncludeComponent(
 						"bitrix:main.user.selector",
@@ -618,16 +614,18 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 			</tr>
 		<?php endif ?>
 
-		<tr>
-			<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="general_chat_message_join"><?=GetMessage('CONFIG_IM_GENERSL_CHAT_MESSAGE_JOIN')?></label></td>
-			<td class="content-edit-form-field-input"><input type="checkbox" name="general_chat_message_join" id="general_chat_message_join" <?if (COption::GetOptionString("im", "general_chat_message_join")):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
-			<td class="content-edit-form-field-error"></td>
-		</tr>
-		<tr>
-			<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="general_chat_message_leave"><?=GetMessage('CONFIG_IM_GENERSL_CHAT_MESSAGE_LEAVE')?></label></td>
-			<td class="content-edit-form-field-input"><input type="checkbox" name="general_chat_message_leave" id="general_chat_message_leave" <?if (COption::GetOptionString("im", "general_chat_message_leave")):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
-			<td class="content-edit-form-field-error"></td>
-		</tr>
+		<?php if (isset($arResult['arChatToAllRights']) || isset($arResult['generalChatCanPostList'])): ?>
+			<tr>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="general_chat_message_join"><?=GetMessage('CONFIG_IM_GENERSL_CHAT_MESSAGE_JOIN')?></label></td>
+				<td class="content-edit-form-field-input"><input type="checkbox" name="general_chat_message_join" id="general_chat_message_join" <?if (COption::GetOptionString("im", "general_chat_message_join")):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+			<tr>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="general_chat_message_leave"><?=GetMessage('CONFIG_IM_GENERSL_CHAT_MESSAGE_LEAVE')?></label></td>
+				<td class="content-edit-form-field-input"><input type="checkbox" name="general_chat_message_leave" id="general_chat_message_leave" <?if (COption::GetOptionString("im", "general_chat_message_leave")):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+		<?php endif ?>
 
 		<?if ($arResult["IS_BITRIX24"]):?>
 			<tr>

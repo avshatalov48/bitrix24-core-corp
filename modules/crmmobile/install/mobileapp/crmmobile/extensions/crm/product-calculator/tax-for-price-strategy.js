@@ -107,6 +107,7 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 
 			const discount = productRow.getBasePrice() - value;
 			productRow.setField('DISCOUNT_TYPE_ID', DiscountType.MONETARY);
+
 			return this.calculateDiscount(discount, productRow);
 		}
 

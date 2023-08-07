@@ -93,6 +93,18 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 	}
 
 	/**
+	 * Create product entity.
+	 *
+	 * @param array $data
+	 *
+	 * @return Product
+	 */
+	protected function createProduct(array $data): Product
+	{
+		return new Product($data);
+	}
+
+	/**
 	 * @return Product[]
 	 */
 	public function loadProducts()
@@ -106,7 +118,7 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 				foreach($productsData as $productData)
 				{
 					DocumentGeneratorManager::getInstance()->getProductLoader()->addRow($productData);
-					$product = new Product($productData);
+					$product = $this->createProduct($productData);
 					$product->setParentProvider($this);
 					$products[] = $product;
 				}
@@ -236,7 +248,7 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 		$currencyID = $this->getCurrencyId();
 		if(empty($this->products))
 		{
-			$sum = $this->data['OPPORTUNITY'];
+			$sum = $this->data['OPPORTUNITY'] ?? 0;
 			$this->data['TOTAL_RAW'] = $this->data['TOTAL_SUM'] = $sum;
 			return;
 		}
@@ -406,7 +418,7 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 	 */
 	public function getCurrencyId()
 	{
-		if(!$this->data['CURRENCY_ID'])
+		if(empty($this->data['CURRENCY_ID']))
 		{
 			$this->data['CURRENCY_ID'] = \CCrmCurrency::GetBaseCurrencyID();
 		}

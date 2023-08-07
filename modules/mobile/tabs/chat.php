@@ -399,4 +399,9 @@ class Chat implements Tabable
 	{
 		return \Bitrix\Main\Config\Option::get('immobile', 'IS_DEVELOPMENT_ENVIRONMENT', 'N') === 'Y';
 	}
+
+	public function getIconId(): string
+	{
+		return 'chat';
+	}
 }

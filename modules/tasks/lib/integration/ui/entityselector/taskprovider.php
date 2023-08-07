@@ -132,7 +132,7 @@ class TaskProvider extends BaseProvider
 		];
 		$select = ['ID', 'TITLE'];
 
-		$tasksResult = \CTasks::GetList($order, $filter, [], $parameters, $select);
+		$tasksResult = \CTasks::GetList($order, $filter, $select, $parameters);
 		while ($task = $tasksResult->Fetch())
 		{
 			$tasks[$task['ID']] = Emoji::decode($task['TITLE']);

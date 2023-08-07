@@ -34,11 +34,17 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 						swipeContentAllowed: false,
 						navigationBarColor: '#eef2f4',
 					},
+					titleParams: {
+						svg: {
+							content: CategorySvg.funnelForTitle(),
+						},
+					},
 				};
 
 				parentWidget
 					.openWidget('layout', mergeImmutable(params, widgetParams))
 					.then((layout) => {
+						layout.enableNavigationBarBorder(false);
 						layout.showComponent(new this({ ...props, layout }));
 						resolve(layout);
 					})

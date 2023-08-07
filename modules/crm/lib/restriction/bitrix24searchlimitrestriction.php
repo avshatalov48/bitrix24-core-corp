@@ -1,17 +1,22 @@
 <?php
+
 namespace Bitrix\Crm\Restriction;
 
+use Bitrix\Crm\Integration\Bitrix24Manager;
+use Bitrix\Crm\Order\Manager;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main;
-use Bitrix\Crm;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\UI\Util;
+use CCrmOwnerType;
+use CIMNotify;
+use CUserOptions;
 
 Loc::loadMessages(__FILE__);
 
 class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 {
-	private const CACHE_DIR = '/crm/entity_count/';
-	private const CACHE_TTL = 60*60; // 1 hour
-
 	public function __construct($name = '', $limit = 0)
 	{
 		$htmlInfo = null;
@@ -20,102 +25,106 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 			'TITLE' => Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_TITLE'),
 			'CONTENT' => Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_LIMIT_CONTENT')
 		);
+
 		parent::__construct($name, $limit, $htmlInfo, $popupInfo);
 	}
 
-	public function isExceeded($entityTypeID)
+	public function isExceeded($entityTypeId): bool
 	{
 		$limit = $this->getQuantityLimit();
-		if($limit <= 0)
+		if ($limit <= 0)
 		{
 			return false;
 		}
 
-		$count = $this->getCount($entityTypeID);
-		return ($count > $limit);
+		$count = $this->getCount($entityTypeId);
+
+		return $count > $limit;
 	}
 
-	public function getCount($entityTypeID)
+	public function getCount($entityTypeId): int
 	{
-		$cache = Main\Application::getInstance()->getCache();
-		$cacheId = 'crm_search_restriction_count_' . $entityTypeID;
-		if ($cache->initCache(self::CACHE_TTL, $cacheId, self::CACHE_DIR))
-		{
-			return (int)$cache->getVars()['count'];
-		}
-		$cache->startDataCache();
+		$cacheId = 'crm_search_restriction_count_' . $entityTypeId;
 
-		if($entityTypeID === \CCrmOwnerType::Lead)
+		if ($this->cache->initCache(self::CACHE_TTL, $cacheId, self::CACHE_DIR))
+		{
+			return (int)$this->cache->getVars()['count'];
+		}
+
+		$this->cache->startDataCache();
+
+		if ($entityTypeId === CCrmOwnerType::Lead)
 		{
 			$count = \CCrmLead::GetTotalCount();
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Deal)
+		elseif ($entityTypeId === CCrmOwnerType::Deal)
 		{
 			$count = \CCrmDeal::GetTotalCount();
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Company)
+		elseif ($entityTypeId === CCrmOwnerType::Company)
 		{
 			$count = \CCrmCompany::GetTotalCount();
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Contact)
+		elseif ($entityTypeId === CCrmOwnerType::Contact)
 		{
 			$count = \CCrmContact::GetTotalCount();
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Quote)
+		elseif ($entityTypeId === CCrmOwnerType::Quote)
 		{
 			$count = \CCrmQuote::GetTotalCount();
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Invoice)
+		elseif ($entityTypeId === CCrmOwnerType::Invoice)
 		{
 			$count = \CCrmInvoice::GetTotalCount();
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Order)
+		elseif ($entityTypeId === CCrmOwnerType::Order)
 		{
-			$count = \Bitrix\Crm\Order\Manager::countTotal();
+			$count = Manager::countTotal();
 		}
 		else
 		{
-			$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeID);
+			$factory = Container::getInstance()->getFactory($entityTypeId);
 			if ($factory)
 			{
 				$count = $factory->getItemsCount();
 			}
-			elseif (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeID))
+			elseif (CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 			{
 				return 0;
 			}
 			else
 			{
-				$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
-				throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
+				$entityTypeName = CCrmOwnerType::ResolveName($entityTypeId);
+
+				throw new NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
 			}
 		}
-		$cache->endDataCache(['count' => $count]);
+		
+		$this->cache->endDataCache(['count' => $count]);
 
 		return $count;
 	}
 
-	/**
-	 * @param array|null $params
-	 * @return array|null
-	 */
 	public function prepareStubInfo(array $params = null)
 	{
-		if($params === null)
+		if ($params === null)
 		{
-			$params = array();
+			$params = [];
 		}
 
-		if(!isset($params['REPLACEMENTS']))
+		if (!isset($params['REPLACEMENTS']))
 		{
-			$params['REPLACEMENTS'] = array();
+			$params['REPLACEMENTS'] = [];
 		}
 		$params['REPLACEMENTS']['#LIMIT#'] = $this->getQuantityLimit();
 
-		$entityTypeName = isset($params['ENTITY_TYPE_ID']) ? \CCrmOwnerType::ResolveName($params['ENTITY_TYPE_ID']) : '';
-		if($entityTypeName !== '')
+		$entityTypeName = isset($params['ENTITY_TYPE_ID'])
+			? CCrmOwnerType::ResolveName($params['ENTITY_TYPE_ID'])
+			: '';
+
+		if ($entityTypeName !== '')
 		{
-			$params['TITLE'] = Loc::getMessage("CRM_B24_SEARCH_LIMIT_RESTRICTION_FILTER_TITLE");
+			$params['TITLE'] = Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_FILTER_TITLE');
 			/*
 			 * CRM_B24_SEARCH_LIMIT_RESTRICTION_FILTER_LEAD_CONTENT
 			 * CRM_B24_SEARCH_LIMIT_RESTRICTION_FILTER_DEAL_CONTENT
@@ -127,18 +136,19 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 			 * CRM_B24_SEARCH_LIMIT_RESTRICTION_FILTER_DYNAMIC_CONTENT
 			 */
 			$helpdeskLink = '';
-			if (\CCrmOwnerType::isPossibleDynamicTypeId((int)$params['ENTITY_TYPE_ID']))
+			if (CCrmOwnerType::isPossibleDynamicTypeId((int)$params['ENTITY_TYPE_ID']))
 			{
 				$entityTypeName = 'DYNAMIC';
 			}
-			if (Main\Loader::includeModule('ui'))
+
+			if (Loader::includeModule('ui'))
 			{
-				$helpdeskUrl = \Bitrix\UI\Util::getArticleUrlByCode('9745327');
+				$helpdeskUrl = Util::getArticleUrlByCode('9745327');
 				$helpdeskLink = '<a href="'.$helpdeskUrl.'">' . Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_HELPDESK_LINK').'</a>';
 			}
 			$content = Loc::getMessage("CRM_B24_SEARCH_LIMIT_RESTRICTION_FILTER_{$entityTypeName}_CONTENT");
 			$content .= '<br><br>';
-			$content .= Loc::getMessage("CRM_B24_SEARCH_LIMIT_RESTRICTION_FILTER_CONTENT2", [
+			$content .= Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_FILTER_CONTENT', [
 				'#HELPDESK_LINK#' => $helpdeskLink
 			]);
 
@@ -149,6 +159,7 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 				$params['ANALYTICS_LABEL'] = 'CRM_' . $entityTypeName . '_FILTER_LIMITS';
 			}
 		}
+
 		return $this->restrictionInfo->prepareStubInfo($params);
 	}
 
@@ -156,7 +167,7 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 	{
 		if ($userId === null)
 		{
-			$userId = \CCrmSecurityHelper::GetCurrentUserID();
+			$userId = Container::getInstance()->getContext()->getUserId();
 		}
 
 		if (!$userId)
@@ -166,13 +177,14 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 
 		$this->setUserNotifiedCount($entityTypeId, $warningCount, $userId);
 
-		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
+		$entityTypeName = CCrmOwnerType::ResolveName($entityTypeId);
 		if (
-			Main\Loader::includeModule("im") &&
-			Main\Loader::includeModule("ui") &&
-			$entityTypeName !== '')
+			Loader::includeModule('im')
+			&& Loader::includeModule('ui')
+			&& $entityTypeName !== ''
+		)
 		{
-			$helpdeskUrl = \Bitrix\UI\Util::getArticleUrlByCode('9745327');
+			$helpdeskUrl = Util::getArticleUrlByCode('9745327');
 
 			$message =
 				Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_'.$entityTypeName.'_WARNING_TEXT1', [
@@ -188,27 +200,27 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 				Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_'.$entityTypeName.'_WARNING_TEXT1', [
 					'#COUNT#' => $warningCount,
 					'#LIMIT#' => $this->getQuantityLimit(),
-				]).
-				' '.
-				Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_'.$entityTypeName.'_WARNING_TEXT2', [
+				])
+				. ' '
+				. Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_'.$entityTypeName.'_WARNING_TEXT2', [
 					'#HELPDESK_LINK#' => '('.Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_HELPDESK_LINK').': '.$helpdeskUrl.')'
-				]);
+				])
+			;
 
-			$notificationFields = array(
-				"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
-				"TO_USER_ID" => $userId,
-				"NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
-				"NOTIFY_MODULE" => "crm",
-				"NOTIFY_EVENT" => "other",
-				"NOTIFY_TAG" => "CRM|SEARCH_LIMIT_WARNING|".$entityTypeName,
-				"NOTIFY_MESSAGE" => $message,
-				"NOTIFY_MESSAGE_OUT" => $messageOut
-			);
-			\CIMNotify::Add($notificationFields);
+			CIMNotify::Add([
+				'MESSAGE_TYPE' => IM_MESSAGE_SYSTEM,
+				'TO_USER_ID' => $userId,
+				'NOTIFY_TYPE' => IM_NOTIFY_SYSTEM,
+				'NOTIFY_MODULE' => 'crm',
+				'NOTIFY_EVENT' => 'other',
+				'NOTIFY_TAG' => 'CRM|SEARCH_LIMIT_WARNING|' . $entityTypeName,
+				'NOTIFY_MESSAGE' => $message,
+				'NOTIFY_MESSAGE_OUT' => $messageOut
+			]);
 		}
 	}
 
-	public function notifyIfLimitAlmostExceed(int $entityTypeId, int $userId = null)
+	public function notifyIfLimitAlmostExceed(int $entityTypeId, int $userId = null): void
 	{
 		$limitWarningValue = $this->getLimitWarningValue($entityTypeId, $userId);
 		if ($limitWarningValue > 0)
@@ -221,7 +233,7 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 	{
 		if ($userId === null)
 		{
-			$userId = \CCrmSecurityHelper::GetCurrentUserID();
+			$userId = Container::getInstance()->getContext()->getUserId();
 		}
 
 		if (!$userId)
@@ -230,12 +242,12 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 		}
 
 		$limit = $this->getQuantityLimit();
-		if($limit <= 0)
+		if ($limit <= 0)
 		{
 			return 0;
 		}
 
-		if (\Bitrix\Crm\Integration\Bitrix24Manager::hasPurchasedLicense())
+		if (Bitrix24Manager::hasPurchasedLicense())
 		{
 			return 0;
 		}
@@ -253,6 +265,7 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 		{
 			return 0;
 		}
+
 		$thresholds = [50, 100];
 		if ($notifiedCount < $count)
 		{
@@ -276,11 +289,22 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 
 	protected function getUserNotifiedCount(int $entityTypeId, int $userId): int
 	{
-		return (int)\CUserOptions::GetOption('crm', 'crm_entity_search_limit_notification_'.$entityTypeId, 0, $userId);
+		return (int)CUserOptions::GetOption(
+			'crm',
+			'crm_entity_search_limit_notification_' . $entityTypeId,
+			0,
+			$userId
+		);
 	}
 
 	protected function setUserNotifiedCount(int $entityTypeId, int $count, int $userId): void
 	{
-		\CUserOptions::SetOption('crm', 'crm_entity_search_limit_notification_'.$entityTypeId, $count, false, $userId);
+		CUserOptions::SetOption(
+			'crm',
+			'crm_entity_search_limit_notification_' . $entityTypeId,
+			$count,
+			false,
+			$userId
+		);
 	}
 }

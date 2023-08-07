@@ -521,7 +521,10 @@ this.BX = this.BX || {};
 	            return {
 	              id: code,
 	              title: main_core.Loc.getMessage('NEW_CRM_COUNTER_TYPE_OTHER_' + item.TYPE_NAME),
-	              value: value,
+	              value: {
+	                value: value,
+	                order: -1
+	              },
 	              color: color === 'THEME' ? 'GRAY' : color,
 	              // override color to correct display on different themes
 	              parentId: parentItemId
@@ -533,7 +536,10 @@ this.BX = this.BX || {};
 	        otherUsersItems = [{
 	          id: parentItemId,
 	          title: main_core.Loc.getMessage('NEW_CRM_COUNTER_TYPE_OTHER_TITLE'),
-	          value: parentTotal,
+	          value: {
+	            value: parentTotal,
+	            order: -1
+	          },
 	          isRestricted: isRestricted,
 	          color: 'THEME'
 	        }].concat(otherUsersItems);
@@ -589,7 +595,7 @@ this.BX = this.BX || {};
 	function _onActivateItem2(event) {
 	  var item = event.getData();
 	  if (!_classPrivateMethodGet$2(this, _processItemSelection, _processItemSelection2).call(this, item)) {
-	    return BX.PreventDefault(event);
+	    return event.preventDefault();
 	  }
 	}
 	function _onDeactivateItem2(event) {
@@ -613,7 +619,6 @@ this.BX = this.BX || {};
 	  _classPrivateMethodGet$2(this, _markCounters, _markCounters2).call(this);
 	}
 	function _onRecalculate2() {
-	  var isNoSliders = BX.SidePanel.Instance.getTopSlider() === null;
 	  var data = babelHelpers.classPrivateFieldGet(this, _counterManager).getCounterData();
 	  var parentItem = this.getItemById(EntityCounterPanel.getMenuParentItemId(babelHelpers.classPrivateFieldGet(this, _codes$1)));
 	  for (var code in data) {
@@ -643,9 +648,6 @@ this.BX = this.BX || {};
 	        }
 	        BX.userOptions.save('crm', babelHelpers.classPrivateFieldGet(this, _filterLastPresetId), '', JSON.stringify(babelHelpers.classPrivateFieldGet(this, _filterLastPreset)));
 	      }
-
-	      // BX.onCustomEvent(window, 'BX.CrmEntityCounterPanel:applyFilter', [this, eventArgs]);
-
 	      var userId = isOtherUsersFilter ? EntityCounterFilterManager.FILTER_OTHER_USERS : babelHelpers.classPrivateFieldGet(this, _userId).toString();
 	      var userName = isOtherUsersFilter ? main_core.Loc.getMessage('NEW_CRM_COUNTER_TYPE_OTHER') : babelHelpers.classPrivateFieldGet(this, _userName);
 	      var counterTypeId = _classPrivateMethodGet$2(this, _prepareFilterTypeId, _prepareFilterTypeId2).call(this, typeId);

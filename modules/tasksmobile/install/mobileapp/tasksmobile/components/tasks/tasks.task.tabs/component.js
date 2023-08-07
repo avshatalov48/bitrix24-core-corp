@@ -1,7 +1,7 @@
 (() => {
 	const { Loc } = jn.require('loc');
-	const {TaskView} = jn.require('tasks/layout/task/view');
-	const {EventEmitter} = jn.require('event-emitter');
+	const { TaskView } = jn.require('tasks/layout/task/view');
+	const { EventEmitter } = jn.require('event-emitter');
 
 	class Pull
 	{
@@ -28,7 +28,7 @@
 		{
 			BX.PULL.subscribe({
 				moduleId: 'tasks',
-				callback: data => this.executePullEvent(data),
+				callback: (data) => this.executePullEvent(data),
 			});
 		}
 
@@ -36,11 +36,11 @@
 		{
 			const has = Object.prototype.hasOwnProperty;
 			const eventHandlers = this.getEventHandlers();
-			const {command, params} = data;
+			const { command, params } = data;
 
 			if (has.call(eventHandlers, command))
 			{
-				const {method, context} = eventHandlers[command];
+				const { method, context } = eventHandlers[command];
 				if (method)
 				{
 					method.apply(context, [params]);
@@ -57,7 +57,7 @@
 					Loc.getMessage('TASKSMOBILE_TASKS_TASK_TABS_TASK_REMOVED_NOTIFICATION'),
 					{
 						time: 5,
-					}
+					},
 				);
 				this.tabs.close();
 			}
@@ -74,12 +74,19 @@
 			};
 		}
 
+		static createGuid()
+		{
+			const s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).slice(1);
+
+			return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
+		}
+
 		constructor(tabs)
 		{
 			this.tabs = tabs;
 			this.userId = parseInt(BX.componentParameters.get('USER_ID', 0), 10);
 			this.taskId = parseInt(BX.componentParameters.get('TASK_ID', 0), 10);
-			this.guid = (BX.componentParameters.get('GUID') || this.createGuid());
+			this.guid = (BX.componentParameters.get('GUID') || TaskTabs.createGuid());
 
 			this.pull = new Pull(this.tabs, this.taskId, this.userId);
 			this.pull.subscribe();
@@ -93,16 +100,9 @@
 			});
 		}
 
-		createGuid()
-		{
-			const s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-
-			return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
-		}
-
 		bindEvents()
 		{
-			this.tabs.on('onTabSelected', (tab, changed, options) => this.onTabSelected(tab,  changed, options));
+			this.tabs.on('onTabSelected', (tab, changed) => this.onTabSelected(tab, changed));
 
 			this.eventEmitter.on('tasks.task.view:updateTitle', (data) => {
 				this.tabs.setTitle({
@@ -132,7 +132,7 @@
 			this.eventEmitter.on('tasks.task.view:close', () => this.tabs.close());
 		}
 
-		onTabSelected(tab, changed, options)
+		onTabSelected(tab, changed)
 		{
 			if (changed)
 			{
@@ -140,11 +140,6 @@
 					guid: this.guid,
 					tab: tab.id,
 				});
-
-				if (tab.id === TaskTabs.tabNames.comments && options)
-				{
-					analytics.send('tasks.task.commentTab.open', {action: options.action});
-				}
 			}
 		}
 
@@ -155,7 +150,7 @@
 			const taskObject = BX.componentParameters.get('TASK_OBJECT');
 			if (!taskObject)
 			{
-				this.tabs.setTitle({useProgress: true}, true);
+				this.tabs.setTitle({ useProgress: true }, true);
 			}
 
 			TaskView.open({

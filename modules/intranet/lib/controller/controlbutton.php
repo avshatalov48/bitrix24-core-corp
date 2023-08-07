@@ -15,6 +15,8 @@ use Bitrix\Main\Application;
 use Bitrix\Intranet;
 use Bitrix\Main\Security\Sign\Signer;
 use Bitrix\Main\Web\Json;
+use Bitrix\Socialnetwork\Integration\Im\Chat\Workgroup;
+use Bitrix\Socialnetwork\UserToGroupTable;
 
 class ControlButton extends \Bitrix\Main\Engine\Controller
 {
@@ -292,6 +294,40 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		return $chatId;
 	}
 
+	private function getWorkgroupChat($groupId, $entityData = [])
+	{
+		$chatId = '';
+
+		if (
+			!Loader::includeModule('socialnetwork')
+			|| !Loader::includeModule('im')
+		)
+		{
+			return $chatId;
+		}
+
+		$chatData = Workgroup::getChatData(
+			[
+				'group_id' => $groupId,
+				'skipAvailabilityCheck' => true,
+			]
+		);
+		if (!empty($chatData[$groupId]) && intval($chatData[$groupId]) > 0)
+		{
+			$chatId = $chatData[$groupId];
+		}
+		else
+		{
+			$chatId = Workgroup::createChat(
+				[
+					'group_id' => $groupId,
+				]
+			);
+		}
+
+		return $chatId;
+	}
+
 	public function getChatAction($entityType, $entityId, $entityData = [])
 	{
 		if (!$entityType || !$entityId)
@@ -315,6 +351,10 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		elseif ($entityType === 'calendar_event')
 		{
 			$chatId = $this->getCalendarChat($entityId, $entityData);
+		}
+		elseif ($entityType === 'workgroup')
+		{
+			$chatId = $this->getWorkgroupChat($entityId, $entityData);
 		}
 
 		return $chatId;
@@ -346,6 +386,10 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 			$calendarData = $this->getCalendarData($entityId, $entityData);
 			$userCount = count($calendarData['USER_IDS']);
 		}
+		elseif ($entityType === 'workgroup' && Loader::includeModule('socialnetwork'))
+		{
+			$userCount = Workgroup::getNumberOfMembers($entityId);
+		}
 
 		if ($userCount > \Bitrix\Im\Call\Call::getMaxParticipants())
 		{
@@ -358,6 +402,7 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 			$this->addError(new Error(Loc::getMessage('INTRANET_CONTROL_BUTTON_VIDEOCALL_SELF_ERROR')));
 			return null;
 		}
+
 		return $this->getChatAction($entityType, $entityId);
 	}
 

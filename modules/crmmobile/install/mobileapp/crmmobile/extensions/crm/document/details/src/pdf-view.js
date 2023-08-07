@@ -8,7 +8,7 @@ jn.define('crm/document/details/pdf-view', (require, exports, module) => {
 	const isAndroid = Application.getPlatform() === 'android';
 	const isPdfViewSupported = typeof PDFView !== 'undefined';
 
-	const CrmDocumentDetailsPdfView = ({ uri, onChangePage }) => View(
+	const CrmDocumentDetailsPdfView = ({ uri }) => View(
 		{
 			style: {
 				flex: 1,
@@ -35,7 +35,6 @@ jn.define('crm/document/details/pdf-view', (require, exports, module) => {
 				Loc.getMessage('M_CRM_DOCUMENT_DETAILS_PDF_ERROR_TITLE'),
 				Loc.getMessage('M_CRM_DOCUMENT_DETAILS_PDF_ERROR_BODY'),
 			),
-			onChange: (args) => onChangePage(args),
 		}),
 	);
 

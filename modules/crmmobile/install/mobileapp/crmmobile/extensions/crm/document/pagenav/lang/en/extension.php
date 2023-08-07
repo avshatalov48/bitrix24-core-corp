@@ -1,2 +1,0 @@
-<?php
-$MESS["M_CRM_DOCUMENT_PAGE_NAVIGATION"] = "Page #CURRENT# out of #TOTAL#";

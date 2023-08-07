@@ -141,6 +141,7 @@ jn.define('crm/timeline', (require, exports, module) => {
 				new FadeView({
 					visible: false,
 					fadeInOnMount: true,
+					notVisibleOpacity: 0.5,
 					style: {
 						flexGrow: 1,
 					},
@@ -222,6 +223,7 @@ jn.define('crm/timeline', (require, exports, module) => {
 					});
 				case 'DateDivider':
 					const moment = new Moment(props.date);
+
 					return DateDivider({
 						moment,
 						onLayout: ({ y }) => StickyDate.registerBreakpoint(y, moment),
@@ -259,10 +261,12 @@ jn.define('crm/timeline', (require, exports, module) => {
 			{
 				return this.pinnedStream.renderItem(props.id, index);
 			}
+
 			if (type.startsWith('TimelineItem:scheduled'))
 			{
 				return this.scheduledStream.renderItem(props.id, index);
 			}
+
 			if (type.startsWith('TimelineItem:history'))
 			{
 				return this.historyStream.renderItem(props.id, index);

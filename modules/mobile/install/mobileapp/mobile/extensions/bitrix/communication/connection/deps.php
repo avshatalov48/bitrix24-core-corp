@@ -7,7 +7,4 @@ return [
 		'utils/object',
 		'utils/string',
 	],
-	'bundle' => [
-		'./item',
-	],
 ];

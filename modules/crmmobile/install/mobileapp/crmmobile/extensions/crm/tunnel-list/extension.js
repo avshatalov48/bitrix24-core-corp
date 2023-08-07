@@ -5,7 +5,6 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 	const { TunnelListItem } = require('crm/tunnel-list/item');
 	const { CategorySelectActions } = require('crm/category-list/actions');
 	const { Robot } = require('crm/tunnel-list/item/robot');
-	const { CategoryListView } = require('crm/category-list-view');
 	const { throttle } = require('utils/function');
 	const { clone } = require('utils/object');
 
@@ -226,8 +225,10 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 			);
 		}
 
-		openCategoryList()
+		async openCategoryList()
 		{
+			const { CategoryListView } = await requireLazy('crm:category-list-view');
+
 			void CategoryListView.open({
 				entityTypeId: this.props.entityTypeId,
 				categoryId: this.props.categoryId,

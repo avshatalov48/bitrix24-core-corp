@@ -185,6 +185,9 @@ final class Fields
 					];
 					$gotoNextField = true;
 					break;
+				case 'file':
+					$options['maxSizeMb'] = $field['SETTINGS_DATA']['MAX_SIZE_MB'] ?? null;
+					break;
 
 				default:
 					$type = isset(WebForm\Internals\FieldTable::getTypeList()[$type])
@@ -700,12 +703,24 @@ final class Fields
 			$data['SETTINGS_DATA']['BIG_PIC'] = ($options['bigPic'] ?? false) ? 'Y' : 'N';
 			$multipleOriginal = true;
 		}
-		if($data['TYPE'] == 'file' && !self::isFieldFileImage($options['name']))
+
+		if($data['TYPE'] == 'file')
 		{
-			$data['SETTINGS_DATA']['CONTENT_TYPES'] = is_array($options['contentTypes'] ?? null)
-				? $options['contentTypes']
-				: []
+			if (!self::isFieldFileImage($options['name']))
+			{
+				$data['SETTINGS_DATA']['CONTENT_TYPES'] = is_array($options['contentTypes'] ?? null)
+					? $options['contentTypes']
+					: []
+				;
+			}
+			$data['SETTINGS_DATA']['MAX_SIZE_MB'] = is_numeric($options['maxSizeMb'] ?? null)
+				? max(intval($options['maxSizeMb']), 0)
+				: null
 			;
+			if ($options['maxSizeMb'] === '')
+			{
+				$data['SETTINGS_DATA']['MAX_SIZE_MB'] = -1;
+			}
 		}
 		if($data['TYPE'] === 'rq')
 		{

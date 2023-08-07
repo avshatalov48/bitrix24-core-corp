@@ -87,7 +87,7 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 		$urlManager = $driver->getUrlManager();
 
 		$this->nowTime = time() + CTimeZone::getOffset();
-		$this->fullFormatWithoutSec = preg_replace('/:s$/', '', CAllDatabase::dateFormatToPHP(CSite::GetDateFormat("FULL")));
+		$this->fullFormatWithoutSec = preg_replace('/:s$/', '', CDatabase::dateFormatToPHP(CSite::GetDateFormat("FULL")));
 
 		/* @var Disk\File $file */
 		foreach ($files as $file)
@@ -99,7 +99,7 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 			$timestampUpdate = $file->getUpdateTime()->toUserTime()->getTimestamp();
 
 			$fileId = $file->getId();
-			$item = array(
+			$item = [
 				'ID' => $file->getExtra()->get('TRACKED_OBJECT_ID'),
 				'NAME' => $file->getName(),
 				'SIZE' => $file->getSize(),
@@ -119,19 +119,22 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 				'CREATE_TIME' => $this->getRelativeTime($timestampCreate),
 				'UPDATE_TIME' => $this->getRelativeTime($timestampUpdate),
 				'ACTIVITY_TIME' => $this->getRelativeTime($timestampActivity),
-				'FILE_CONTENT_TYPE' => $file->getExtra()->get('FILE_CONTENT_TYPE'),
+				'CONTENT_TYPE' => $file->getExtra()->get('FILE_CONTENT_TYPE'),
+				'WIDTH' => $file->getExtra()->get('FILE_WIDTH'),
+				'HEIGHT' => $file->getExtra()->get('FILE_HEIGHT'),
 				'EXT' => $file->getExtension(),
 				'TYPE' => $file->getType(),
-				'PREVIEW_URL' => TypeFile::isImage($file) ? $urlManager->getUrlForShowFile($file) : null,
-				'ATTRIBUTES' => [],
 				'object' => $file,
-			);
+			];
+
 			$sourceUri = new Main\Web\Uri($urlManager->getUrlForDownloadFile($file));
 			if ($fileId && !empty($item['FILE_CONTENT_TYPE']))
 			{
 				$attr = Disk\Ui\FileAttributes::buildByFileData([
 					'ID' => $file->getFileId(),
-					'CONTENT_TYPE' => $item['FILE_CONTENT_TYPE'],
+					'CONTENT_TYPE' => $item['CONTENT_TYPE'],
+					'WIDTH' => $item['WIDTH'],
+					'HEIGHT' => $item['HEIGHT'],
 					'ORIGINAL_NAME' => $item['NAME'],
 					'FILE_SIZE' => $item['FILE_SIZE'],
 				], $sourceUri);
@@ -199,6 +202,8 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 			'select' => [
 				'*',
 				'FILE_CONTENT_TYPE' => 'FILE_CONTENT.CONTENT_TYPE',
+				'FILE_WIDTH' => 'FILE_CONTENT.WIDTH',
+				'FILE_HEIGHT' => 'FILE_CONTENT.HEIGHT',
 				'TRACKED_OBJECT_ID' => 'TRACKED_OBJECT.ID',
 				'ATTACHED_OBJECT_ID' => 'TRACKED_OBJECT.ATTACHED_OBJECT_ID',
 				'ACTIVITY_TIME' => 'TRACKED_OBJECT.UPDATE_TIME',
@@ -228,6 +233,8 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 			}
 			$model = Disk\File::buildFromRow($row, $aliases);
 			$model->getExtra()->set('FILE_CONTENT_TYPE', $row['FILE_CONTENT_TYPE']);
+			$model->getExtra()->set('FILE_WIDTH', $row['FILE_WIDTH']);
+			$model->getExtra()->set('FILE_HEIGHT', $row['FILE_HEIGHT']);
 			$model->getExtra()->set('TRACKED_OBJECT_ID', $row['TRACKED_OBJECT_ID']);
 			$model->getExtra()->set('ATTACHED_OBJECT_ID', $row['ATTACHED_OBJECT_ID']);
 			$model->getExtra()->set('ACTIVITY_TIME', $row['ACTIVITY_TIME'] ?: new Main\Type\DateTime(0));

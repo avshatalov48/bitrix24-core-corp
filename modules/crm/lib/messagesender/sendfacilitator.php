@@ -71,11 +71,13 @@ abstract class SendFacilitator
 	 * Use it if you want to get some additional info in 'message sent' and 'message delivered' events.
 	 *
 	 * @param array $additionalFields
-	 * @return void
+	 * @return SendFacilitator
 	 */
-	public function setAdditionalFields(array $additionalFields): void
+	public function setAdditionalFields(array $additionalFields): self
 	{
 		$this->additionalFields = $additionalFields;
+
+		return $this;
 	}
 
 	abstract protected function getActivityProviderTypeId(): string;

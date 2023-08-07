@@ -10,6 +10,7 @@ import {Basket} from "./basket";
 import * as Components from "./components/registry";
 import * as Util from "../util/registry";
 import Event from "../util/event";
+import Uploader from './uploader';
 
 const DefaultOptions: Type.Options = {
 	view: 'inline',
@@ -36,6 +37,7 @@ class Controller extends Event
 	analytics: Analytics;
 	recaptcha: ReCaptcha;
 	abuse: Type.Abuse;
+	uploader: Uploader;
 
 	title: string;
 	buttonCaption: string;
@@ -78,6 +80,7 @@ class Controller extends Event
 	constructor(options: Type.Options = DefaultOptions)
 	{
 		super(options);
+
 		this.setGlobalEventNamespace('b24:form');
 		this.messages = new Messages.Storage();
 		this.design = new Design.Model();
@@ -89,6 +92,9 @@ class Controller extends Event
 		this.emit(Type.EventTypes.initBefore, options);
 
 		options = this.adjust(options);
+
+		this.uploader = new Uploader(this);
+
 		this.#id = options.id || (
 			Math.random().toString().split('.')[1]
 			+
@@ -233,17 +239,27 @@ class Controller extends Event
 			return true;
 		}
 
+		if (this.uploader.hasFilesToSend())
+		{
+			promise = promise.then(() => {
+				return this.uploader.upload();
+			});
+		}
+
 		let consents = this.agreements.reduce((acc, field) => {
 			acc[field.name] = field.value();
 			return acc;
 		}, {});
 
 		let formData = new FormData();
-		formData.set('values', JSON.stringify(this.values()));
 		formData.set('properties', JSON.stringify(this.#properties));
 		formData.set('consents', JSON.stringify(consents));
 		formData.set('recaptcha', this.recaptcha.getResponse());
 		formData.set('timeZoneOffset', new Date().getTimezoneOffset());
+
+		promise.then(() => {
+			formData.set('values', JSON.stringify(this.values()));
+		})
 
 		if (typeof this.provider.submit === 'string')
 		{

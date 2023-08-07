@@ -8,6 +8,7 @@ use Bitrix\Crm\CustomerType;
 use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\Integration\Channel\LeadChannelBinding;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
@@ -36,7 +37,7 @@ class CAllCrmLead
 	protected $checkExceptions = array();
 
 	private static ?\Bitrix\Crm\Entity\Compatibility\Adapter $lastActivityAdapter = null;
-	private static ?Crm\Entity\Compatibility\Adapter $contentTypeIdAdapter = null;
+	private static ?Crm\Entity\Compatibility\Adapter $commentsAdapter = null;
 
 	/** @var \Bitrix\Crm\Entity\Compatibility\Adapter */
 	private $compatibilityAdapter;
@@ -151,14 +152,14 @@ class CAllCrmLead
 		return self::$lastActivityAdapter;
 	}
 
-	private static function getContentTypeIdAdapter(): Crm\Entity\Compatibility\Adapter\ContentTypeId
+	private static function getCommentsAdapter(): Crm\Entity\Compatibility\Adapter\Comments
 	{
-		if (!self::$contentTypeIdAdapter)
+		if (!self::$commentsAdapter)
 		{
-			self::$contentTypeIdAdapter = new Crm\Entity\Compatibility\Adapter\ContentTypeId(\CCrmOwnerType::Lead);
+			self::$commentsAdapter = new Crm\Entity\Compatibility\Adapter\Comments(\CCrmOwnerType::Lead);
 		}
 
-		return self::$contentTypeIdAdapter;
+		return self::$commentsAdapter;
 	}
 
 	// Service -->
@@ -709,7 +710,21 @@ class CAllCrmLead
 			$sender->GetTableAlias()
 		);
 
-		$result = array();
+		if (isset($arFilter['OBSERVER_IDS']))
+		{
+			$observerIds = is_array($arFilter['OBSERVER_IDS']) ? $arFilter['OBSERVER_IDS'] : [];
+			$observersFilter = CCrmEntityHelper::prepareObserversFieldFilter(
+				CCrmOwnerType::Lead,
+				$sender->GetTableAlias(),
+				$observerIds
+			);
+			if (!empty($observersFilter))
+			{
+				$sqlData['WHERE'][] = $observersFilter;
+			}
+		}
+
+		$result = [];
 		if(!empty($sqlData['SELECT']))
 		{
 			$result['SELECT'] = ", ".implode(', ', $sqlData['SELECT']);
@@ -1475,6 +1490,7 @@ class CAllCrmLead
 		}
 
 		self::getLastActivityAdapter()->performAdd($arFields, $options);
+		self::getCommentsAdapter()->normalizeFields(null, $arFields);
 
 		$permissionTypeId = (
 			$this->bCheckPermission
@@ -1811,7 +1827,7 @@ class CAllCrmLead
 		if(!empty($contactBindings))
 		{
 			LeadContactTable::bindContacts($ID, $contactBindings);
-			if(isset($GLOBALS['USER']))
+			if(isset($GLOBALS['USER']) && !empty($contactIDs))
 			{
 				CUserOptions::SetOption(
 					'crm',
@@ -1840,7 +1856,7 @@ class CAllCrmLead
 		)->build($ID, ['checkExist' => true]);
 		//endregion
 
-		self::getContentTypeIdAdapter()->performAdd($arFields, $options);
+		self::getCommentsAdapter()->performAdd($arFields, $options);
 
 		if(isset($options['REGISTER_SONET_EVENT']) && $options['REGISTER_SONET_EVENT'] === true)
 		{
@@ -2347,6 +2363,10 @@ class CAllCrmLead
 			//endregion
 
 			self::getLastActivityAdapter()->performUpdate((int)$ID, $arFields, $options);
+			self::getCommentsAdapter()
+				->setPreviousFields((int)$ID, $arRow)
+				->normalizeFields((int)$ID, $arFields)
+			;
 
 			//
 			$sonetEventData = array();
@@ -2389,7 +2409,7 @@ class CAllCrmLead
 						}
 					}
 
-					if ($arEvent['ENTITY_FIELD'] !== 'CONTACT_ID' && $arEvent['ENTITY_FIELD'] !== 'COMPANY_ID')
+					if (($arEvent['ENTITY_FIELD'] ?? null) !== 'CONTACT_ID' && ($arEvent['ENTITY_FIELD'] ?? null) !== 'COMPANY_ID')
 					{
 						$CCrmEvent = new CCrmEvent();
 						$eventID = $CCrmEvent->Add($arEvent, $this->bCheckPermission);
@@ -2453,6 +2473,16 @@ class CAllCrmLead
 							break;
 					}
 				}
+			}
+
+			if((isset($arFields['NAME']) && $arFields['NAME'] !== $arRow['NAME'])
+				|| (isset($arFields['SECOND_NAME']) && $arFields['SECOND_NAME'] !== $arRow['SECOND_NAME'])
+				|| (isset($arFields['LAST_NAME']) && $arFields['LAST_NAME'] !== $arRow['LAST_NAME'])
+				|| (isset($arFields['HONORIFIC']) && $arFields['HONORIFIC'] !== $arRow['HONORIFIC'])
+				|| (isset($arFields['TITLE']) && $arFields['TITLE'] !== $arRow['TITLE'])
+			)
+			{
+				CCrmActivity::ResetEntityCommunicationSettings(CCrmOwnerType::Lead, $ID);
 			}
 
 			if (isset($arFields['BIRTHDAY_SORT']))
@@ -2801,7 +2831,7 @@ class CAllCrmLead
 				\Bitrix\Crm\Counter\Monitor::getInstance()->onEntityUpdate(CCrmOwnerType::Lead, $arRow, $currentFields);
 			}
 
-			self::getContentTypeIdAdapter()
+			self::getCommentsAdapter()
 				->setPreviousFields((int)$ID, $arRow)
 				->performUpdate((int)$ID, $arFields, $options)
 			;
@@ -3002,7 +3032,7 @@ class CAllCrmLead
 			}
 			//endregion
 
-			$statusSemanticsId = $arFields['STATUS_SEMANTIC_ID'] ?: $arRow['STATUS_SEMANTIC_ID'];
+			$statusSemanticsId = $arFields['STATUS_SEMANTIC_ID'] ?? $arRow['STATUS_SEMANTIC_ID'] ?? \Bitrix\Crm\PhaseSemantics::PROCESS;
 			if(Crm\Ml\Scoring::isMlAvailable() && !Crm\PhaseSemantics::isFinal($statusSemanticsId))
 			{
 				Crm\Ml\Scoring::queuePredictionUpdate(CCrmOwnerType::Lead, $ID, [
@@ -3251,7 +3281,7 @@ class CAllCrmLead
 				Crm\Observer\ObserverManager::deleteByOwner(CCrmOwnerType::Lead, $ID);
 				Crm\Ml\Scoring::onEntityDelete(CCrmOwnerType::Lead, $ID);
 
-				self::getContentTypeIdAdapter()->performDelete((int)$ID, $arOptions);
+				self::getCommentsAdapter()->performDelete((int)$ID, $arOptions);
 
 				Crm\Integration\Im\Chat::deleteChat(
 					array(
@@ -3334,7 +3364,7 @@ class CAllCrmLead
 		if (($ID == false || isset($arFields['TITLE'])) && empty($arFields['TITLE']))
 			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_IS_MISSING', array('%FIELD_NAME%' => GetMessage('CRM_LEAD_FIELD_TITLE')))."<br />";
 
-		if(is_string($arFields['OPPORTUNITY']) && $arFields['OPPORTUNITY'] !== '')
+		if(isset($arFields['OPPORTUNITY']) && is_string($arFields['OPPORTUNITY']) && $arFields['OPPORTUNITY'] !== '')
 		{
 			$arFields['OPPORTUNITY'] = str_replace(array(',', ' '), array('.', ''), $arFields['OPPORTUNITY']);
 			//HACK: MSSQL returns '.00' for zero value
@@ -3458,7 +3488,7 @@ class CAllCrmLead
 					$ID,
 					$fieldsToCheck,
 					Crm\Attribute\FieldOrigin::UNDEFINED,
-					is_array($options['FIELD_CHECK_OPTIONS']) ? $options['FIELD_CHECK_OPTIONS'] : array()
+					is_array($options['FIELD_CHECK_OPTIONS'] ?? null) ? $options['FIELD_CHECK_OPTIONS'] : []
 				);
 
 				$requiredSystemFields = isset($requiredFields[Crm\Attribute\FieldOrigin::SYSTEM])
@@ -3665,8 +3695,8 @@ class CAllCrmLead
 			$arMsg[] = Array(
 				'ENTITY_FIELD' => 'COMMENTS',
 				'EVENT_NAME' => GetMessage('CRM_FIELD_COMPARE_COMMENTS'),
-				'EVENT_TEXT_1' => !empty($arFieldsOrig['COMMENTS'])? $arFieldsOrig['COMMENTS']: GetMessage('CRM_FIELD_COMPARE_EMPTY'),
-				'EVENT_TEXT_2' => !empty($arFieldsModif['COMMENTS'])? $arFieldsModif['COMMENTS']: GetMessage('CRM_FIELD_COMPARE_EMPTY'),
+				'EVENT_TEXT_1' => !empty($arFieldsOrig['COMMENTS'])? TextHelper::convertBbCodeToHtml($arFieldsOrig['COMMENTS']): GetMessage('CRM_FIELD_COMPARE_EMPTY'),
+				'EVENT_TEXT_2' => !empty($arFieldsModif['COMMENTS'])? TextHelper::convertBbCodeToHtml($arFieldsModif['COMMENTS']): GetMessage('CRM_FIELD_COMPARE_EMPTY'),
 			);
 
 		if(isset($arFieldsOrig['STATUS_DESCRIPTION']) && isset($arFieldsModif['STATUS_DESCRIPTION'])

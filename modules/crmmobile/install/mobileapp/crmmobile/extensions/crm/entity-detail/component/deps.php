@@ -23,7 +23,6 @@ return [
 		'pull/client/events',
 
 		'crm:assets/entity',
-		'crm:category-list-view',
 		'crm:storage/category',
 		'crm:loc',
 		'crm:required-fields',
@@ -38,6 +37,7 @@ return [
 		'crm:entity-detail/component/floating-button-provider',
 		'crm:entity-detail/component/right-buttons-provider',
 		'crm:entity-detail/component/aha-moments-manager',
+		'crm:entity-detail/component/smart-activity-menu-item',
 		'crm:document/list',
 		'crm:receive-payment/mode-selection',
 		'crm:entity-document',
@@ -57,7 +57,6 @@ return [
 		'./on-model-ready',
 		'./set-available-tabs',
 		'./payment-automation-menu-item',
-		'./smart-activity-menu-item',
 		'./timeline-push-processor',
 		'./open-lines-menu-items',
 	],

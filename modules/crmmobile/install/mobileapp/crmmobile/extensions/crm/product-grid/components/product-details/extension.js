@@ -17,7 +17,6 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 	const { NumberField, NumberPrecision } = require('layout/ui/fields/number');
 	const { SelectField } = require('layout/ui/fields/select');
 	const { StringField } = require('layout/ui/fields/string');
-	const { notify } = require('layout/ui/product-grid/components/hint');
 	const { debounce } = require('utils/function');
 	const { isObjectLike, isArray, clone } = require('utils/object');
 	const { BannerButton } = require('layout/ui/banners');
@@ -186,6 +185,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 				readOnly: !this.isCatalogProductFieldEditable(),
 				required: true,
 				onChange: (newVal) => this.setField('PRODUCT_NAME', newVal),
+				onContentClick: () => this.notifyProductDisabled(),
 			});
 		}
 
@@ -218,6 +218,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 					}));
 					this.setField('SECTIONS', newVal); // @todo use setSections method on product model?
 				},
+				onContentClick: () => this.notifyProductDisabled(),
 			});
 		}
 
@@ -233,6 +234,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 				onChange: (newVal) => {
 					this.setField('BARCODE', newVal);
 				},
+				onContentClick: () => this.notifyProductDisabled(),
 			});
 		}
 
@@ -244,6 +246,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 				if (photo.id && Number.isInteger(parseInt(photo.id)))
 				{
 					galleryInfo[photo.id] = clone(photo);
+
 					return photo.id;
 				}
 
@@ -284,6 +287,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 
 					this.setField('GALLERY', preparedValue);
 				},
+				onContentClick: () => this.notifyProductDisabled(),
 			});
 		}
 
@@ -390,6 +394,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 							type: NumberPrecision.DOUBLE,
 							precision: 2,
 						},
+						onContentClick: () => this.notifyDiscountDisabled(),
 					},
 					secondaryField: {
 						id: 'discountType',
@@ -403,6 +408,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 								{ name: '%', value: DiscountType.PERCENTAGE },
 							],
 						},
+						onContentClick: () => this.notifyDiscountDisabled(),
 					},
 				},
 			});
@@ -429,11 +435,14 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 
 			const vatIdByRate = (rate) => {
 				const vatRate = vatRates.find((item) => item.value === rate);
+
 				return vatRate ? String(vatRate.id) : '';
 			};
+
 			const vatRateById = (id) => {
 				id = Number(id);
 				const vatRate = vatRates.find((item) => item.id === id);
+
 				return vatRate ? vatRate.value : 0;
 			};
 
@@ -496,6 +505,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 				onChange: (newVal) => {
 					this.recalculate((calc) => calc.calculateRowSum(newVal.amount));
 				},
+				onContentClick: () => this.notifyDiscountDisabled(),
 			});
 		}
 
@@ -651,16 +661,37 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 			});
 		}
 
+		notifyProductDisabled()
+		{
+			if (!this.getProps().permissions.catalog_product_edit)
+			{
+				this.notifyFieldDisabled();
+			}
+		}
+
 		notifyPriceDisabled()
 		{
 			if (!this.productRow.isPriceEditable())
 			{
-				const title = Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_CHANGE_NOT_PERMITTED_TITLE');
-				const message = Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_CHANGE_NOT_PERMITTED_BODY');
-				const seconds = 5;
-
-				notify({ title, message, seconds });
+				this.notifyFieldDisabled();
 			}
+		}
+
+		notifyDiscountDisabled()
+		{
+			if (!this.productRow.isDiscountEditable())
+			{
+				this.notifyFieldDisabled();
+			}
+		}
+
+		notifyFieldDisabled()
+		{
+			const title = Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_CHANGE_NOT_PERMITTED_TITLE');
+			const message = Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_CHANGE_NOT_PERMITTED_BODY');
+			const time = 5;
+
+			Notify.showUniqueMessage(message, title, { time });
 		}
 
 		/**

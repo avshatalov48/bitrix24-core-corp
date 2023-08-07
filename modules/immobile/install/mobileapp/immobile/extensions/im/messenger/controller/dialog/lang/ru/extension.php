@@ -9,3 +9,10 @@ $MESS['IMMOBILE_MESSENGER_DIALOG_MESSAGE_EDIT_FIELD'] = 'Редактирова�
 $MESS['IMMOBILE_MESSENGER_DIALOG_MESSAGE_FIELD_VOICE'] = 'Голосовое сообщение';
 
 $MESS['IMMOBILE_MESSENGER_DIALOG_QUOTE_DEFAULT_TITLE'] = 'Системное сообщение';
+
+$MESS['IMMOBILE_MESSENGER_DIALOG_DOWNLOAD_PHOTO_TO_GALLERY_SUCCESS'] = 'Изображение сохранено в галерею';
+$MESS['IMMOBILE_MESSENGER_DIALOG_DOWNLOAD_VIDEO_TO_GALLERY_SUCCESS'] = 'Видео сохранено в галерею';
+$MESS['IMMOBILE_MESSENGER_DIALOG_DOWNLOAD_PHOTO_TO_DISK_SUCCESS'] = 'Изображение сохранено на ваш Диск';
+$MESS['IMMOBILE_MESSENGER_DIALOG_DOWNLOAD_VIDEO_TO_DISK_SUCCESS'] = 'Видео сохранено на ваш Диск';
+
+$MESS['IMMOBILE_MESSENGER_DIALOG_CREATE_CALL_BETA'] = 'Видеозвонок HD (beta)';

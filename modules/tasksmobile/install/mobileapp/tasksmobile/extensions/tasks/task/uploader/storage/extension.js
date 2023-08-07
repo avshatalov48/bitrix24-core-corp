@@ -33,7 +33,7 @@
 
 		addFiles(files)
 		{
-			files.forEach(file => Application.storage.updateObject(this.name, {[file.id]: file}));
+			files.forEach((file) => Application.storage.updateObject(this.name, { [file.id]: file }));
 			this.files = null;
 		}
 
@@ -41,7 +41,7 @@
 		{
 			const files = this.getFiles();
 
-			filesIds.forEach(id => delete files[id]);
+			filesIds.forEach((id) => delete files[id]);
 			this.setFiles(files);
 		}
 

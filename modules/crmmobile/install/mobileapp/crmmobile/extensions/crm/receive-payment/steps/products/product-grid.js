@@ -30,6 +30,16 @@ jn.define('crm/receive-payment/steps/products/product-grid', (require, exports, 
 			this.menu.analytics.entityTypeName = `receive_payment_${this.menu.analytics.entityTypeName}`;
 		}
 
+		getSummaryComponents()
+		{
+			return {
+				summary: true,
+				amount: true,
+				discount: true,
+				taxes: false,
+			};
+		}
+
 		getEmptyScreenTitle()
 		{
 			return Loc.getMessage('M_CRM_RECEIVE_PAYMENT_PRODUCT_GRID_PICK_UP_PRODUCTS');

@@ -4,17 +4,18 @@ IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Crm\Activity\Provider\Tasks\Task;
 use Bitrix\Crm\Comparer\ComparerBase;
+use Bitrix\Crm\Entity\MessageBuilder;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Settings;
-use Bitrix\Main\Config\Option;
-use Bitrix\Main\Web\Uri;
 use Bitrix\Main;
 use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Objectify\Values;
+use Bitrix\Main\Web\Uri;
 
 class CCrmLiveFeedEntity
 {
@@ -3707,7 +3708,7 @@ class CCrmLiveFeed
 		}
 
 		if (
-			$arLogFields["LOG_ID"] > 0
+			($arLogFields["LOG_ID"] ?? 0) > 0
 			&& in_array(
 				$arLogFields["EVENT_ID"],
 				array_merge($blogPostEventIdList, array("crm_lead_message", "crm_deal_message", "crm_contact_message", "crm_company_message")))
@@ -4041,6 +4042,9 @@ class CCrmLiveFeed
 								break;
 
 						}
+						$activityType = null;
+						$entityName = null;
+						$notifyTag = null;
 
 						switch ($arActivity["TYPE_ID"])
 						{
@@ -4827,17 +4831,15 @@ class CCrmLiveFeed
 		{
 			$params['LOGO_ID'] = $item->get(Item\Company::FIELD_NAME_LOGO);
 		}
-
+		
 		$liveFeedFields = [
 			'USER_ID' => $item->getCreatedBy(),
 			'ENTITY_TYPE_ID' => $item->getEntityTypeId(),
 			'ENTITY_ID' => $item->getId(),
-			'TITLE' => Loc::getMessage(
-				'CRM_LF_EVENT_ADD',
-				[
-					'#ENTITY_TYPE_CAPTION#' => htmlspecialcharsbx(\CCrmOwnerType::GetDescription($item->getEntityTypeId())),
-				],
-			),
+			'TITLE' => (new MessageBuilder\ProcessEntity($item->getEntityTypeId()))
+				->setType(MessageBuilder\ProcessEntity::PROCESS_ADD)
+				->getMessage()
+			,
 			'PARAMS' => $params,
 			'PARENTS' => static::prepareParentRelations($item),
 		];
@@ -4882,15 +4884,13 @@ class CCrmLiveFeed
 		}
 
 		$entityTypeName = \CCrmOwnerType::ResolveName($item->getEntityTypeId());
-
-		$message = Loc::getMessage(
-			'CRM_LF_EVENT_BECOME_RESPONSIBLE',
-			[
-				'#ENTITY_TYPE_CAPTION#' => htmlspecialcharsbx(\CCrmOwnerType::GetDescription($item->getEntityTypeId())),
+		$message = (new MessageBuilder\ProcessEntityResponsible($item->getEntityTypeId()))
+			->setType(MessageBuilder\ProcessEntityResponsible::BECOME_RESPONSIBLE)
+			->getMessage([
 				'#TITLE#' => htmlspecialcharsbx($item->getHeading()),
 				'#URL#' => '#URL#',
-			],
-		);
+			])
+		;
 
 		$url = Container::getInstance()->getRouter()->getItemDetailUrl($item->getEntityTypeId(), $item->getId());
 
@@ -5219,14 +5219,13 @@ class CCrmLiveFeed
 
 			$notificationToNewAssigned['TO_USER_ID'] = $currentAssigned;
 
-			$message = Loc::getMessage(
-				'CRM_LF_EVENT_BECOME_RESPONSIBLE',
-				[
-					'#ENTITY_TYPE_CAPTION#' => htmlspecialcharsbx(\CCrmOwnerType::GetDescription($item->getEntityTypeId())),
+			$message = (new MessageBuilder\ProcessEntityResponsible($item->getEntityTypeId()))
+				->setType(MessageBuilder\ProcessEntityResponsible::BECOME_RESPONSIBLE)
+				->getMessage([
 					'#TITLE#' => htmlspecialcharsbx($item->getHeading()),
 					'#URL#' => '#URL#',
-				],
-			);
+				])
+			;
 
 			$notificationToNewAssigned['NOTIFY_MESSAGE'] = str_replace('#URL#', $url, $message);
 			$notificationToNewAssigned['NOTIFY_MESSAGE_OUT'] = str_replace('#URL#', static::transformRelativeUrlToAbsolute($url), $message);
@@ -5240,14 +5239,13 @@ class CCrmLiveFeed
 
 			$notificationToPreviousAssigned['TO_USER_ID'] = $previousAssigned;
 
-			$message = Loc::getMessage(
-				'CRM_LF_EVENT_NO_LONGER_RESPONSIBLE',
-				[
-					'#ENTITY_TYPE_CAPTION#' => htmlspecialcharsbx(\CCrmOwnerType::GetDescription($item->getEntityTypeId())),
+			$message = (new MessageBuilder\ProcessEntityResponsible($item->getEntityTypeId()))
+				->setType(MessageBuilder\ProcessEntityResponsible::NO_LONGER_RESPONSIBLE)
+				->getMessage([
 					'#TITLE#' => htmlspecialcharsbx($item->getHeading()),
 					'#URL#' => '#URL#',
-				],
-			);
+				])
+			;
 
 			$notificationToPreviousAssigned['NOTIFY_MESSAGE'] = str_replace('#URL#', $url, $message);
 			$notificationToPreviousAssigned['NOTIFY_MESSAGE_OUT'] = str_replace('#URL#', static::transformRelativeUrlToAbsolute($url), $message);
@@ -5267,21 +5265,18 @@ class CCrmLiveFeed
 		if ($item->getAssignedById() !== $item->getUpdatedBy())
 		{
 			$entityTypeName = \CCrmOwnerType::ResolveName($item->getEntityTypeId());
-
 			$previousStage = $factory->getStage($itemBeforeSave->remindActual(Item::FIELD_NAME_STAGE_ID));
 			$currentStage = $factory->getStage($item->getStageId());
 
-			$message = Loc::getMessage(
-				'CRM_LF_EVENT_STAGE_CHANGED',
-				[
-					'#ENTITY_TYPE_CAPTION#' => htmlspecialcharsbx(\CCrmOwnerType::GetDescription($item->getEntityTypeId())),
+			$message = (new MessageBuilder\ProcessEntityStage($item->getEntityTypeId()))
+				->getMessage([
 					'#TITLE#' => htmlspecialcharsbx($item->getHeading()),
 					'#START_STAGE_CAPTION#' => $previousStage ? htmlspecialcharsbx($previousStage->getName()) : '',
 					'#FINAL_STAGE_CAPTION#' => $currentStage ? htmlspecialcharsbx($currentStage->getName()) : '',
 					'#URL#' => '#URL#',
-				],
-			);
-
+				])
+			;
+			
 			$url = Container::getInstance()->getRouter()->getItemDetailUrl($item->getEntityTypeId(), $item->getId());
 
 			\CIMNotify::Add([

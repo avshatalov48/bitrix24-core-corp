@@ -132,4 +132,9 @@ class OpenLines implements Tabable
 	{
 		return "ol";
 	}
+
+	public function getIconId(): string
+	{
+		return $this->getId();
+	}
 }

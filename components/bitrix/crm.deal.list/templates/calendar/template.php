@@ -35,15 +35,6 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 
 Extension::load('ui.fonts.opensans');
 
-if (
-	!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])
-	|| !empty($arResult['OBSERVERS_FIELD_RESTRICTIONS'])
-	|| !empty($arResult['ACTIVITY_FIELD_RESTRICTIONS'])
-)
-{
-	Extension::load(['crm.restriction.filter-fields']);
-}
-
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
@@ -612,37 +603,16 @@ $APPLICATION->IncludeComponent("bitrix:calendar.interface.grid", "", Array(
 			}
 		});
 	});
-
 	//endregion
 </script>
 
-<?if (!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])):?>
-	<script type="text/javascript">
-		BX.ready(
-			function()
-			{
-				new BX.Crm.Restriction.FilterFieldsRestriction(
-					<?=CUtil::PhpToJSObject($arResult['CLIENT_FIELDS_RESTRICTIONS'])?>
-				);
-			}
-		);
-	</script>
-<?endif;?>
-<?if (!empty($arResult['OBSERVERS_FIELD_RESTRICTIONS'])):?>
-	<script type="text/javascript">
-		BX.ready(
-			function()
-			{
-				new BX.Crm.Restriction.FilterFieldsRestriction(
-					<?=CUtil::PhpToJSObject($arResult['OBSERVERS_FIELD_RESTRICTIONS'])?>
-				);
-			}
-		);
-	</script>
-<?endif;?>
-
 <?php
 
-echo $arResult['ACTIVITY_FIELD_RESTRICTIONS'] ?? '';
+if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))
+{
+	Extension::load(['crm.restriction.filter-fields']);
+
+	echo $arResult['RESTRICTED_FIELDS_ENGINE'];
+}
 
 \Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated();

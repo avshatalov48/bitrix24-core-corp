@@ -1,6 +1,3 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/lib/element/dialog/message-menu/action
  */
@@ -31,6 +28,28 @@ jn.define('im/messenger/lib/element/dialog/message-menu/action', (require, expor
 		type: ActionType.button,
 		text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_MENU_COPY_V2'),
 		imageUrl: imagePath + 'copy.png',
+		style: {
+			fontColor: '#333333',
+		},
+	};
+
+	const DownloadToDeviceAction = {
+		id: 'download-to-device',
+		testId: 'MESSAGE_MENU_ACTION_DOWNLOAD_TO_DEVICE',
+		type: ActionType.button,
+		text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_DEVICE'),
+		imageUrl: imagePath + 'download.png',
+		style: {
+			fontColor: '#333333',
+		},
+	};
+
+	const DownloadToDiskAction = {
+		id: 'download-to-disk',
+		testId: 'MESSAGE_MENU_ACTION_DOWNLOAD_TO_DISK',
+		type: ActionType.button,
+		text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_DISK'),
+		imageUrl: imagePath + 'disk.png',
 		style: {
 			fontColor: '#333333',
 		},
@@ -88,6 +107,8 @@ jn.define('im/messenger/lib/element/dialog/message-menu/action', (require, expor
 		ActionType,
 		ReplyAction,
 		CopyAction,
+		DownloadToDeviceAction,
+		DownloadToDiskAction,
 		QuoteAction,
 		ProfileAction,
 		EditAction,

@@ -80,6 +80,7 @@ jn.define('crm/entity-document/base-document', (require, exports, module) => {
 		loadProducts()
 		{
 			const action = this.getLoadDocumentDataAction();
+
 			return new Promise(() => {
 				const data = {
 					entityId: this.entityId,
@@ -169,8 +170,6 @@ jn.define('crm/entity-document/base-document', (require, exports, module) => {
 				new EntityDocumentProductGrid({
 					...this.grid,
 					showFloatingButton: false,
-					showSummaryAmount: false,
-					showSummaryTax: false,
 					discountCaption: Loc.getMessage('M_CRM_ENTITY_DOCUMENT_SUMMARY_TOTAL_DISCOUNT'),
 					totalSumCaption: Loc.getMessage('M_CRM_ENTITY_DOCUMENT_SUMMARY_TOTAL'),
 					additionalSummary: this.renderAdditionalSummary(),

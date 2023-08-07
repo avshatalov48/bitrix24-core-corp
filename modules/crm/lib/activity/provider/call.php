@@ -290,7 +290,7 @@ class Call extends Base
 			)
 		);
 
-		$callId = mb_strpos($activity['ORIGIN_ID'], 'VI_') === false? null : mb_substr($activity['ORIGIN_ID'], 3);
+		$callId = mb_strpos($activity['ORIGIN_ID'] ?? '', 'VI_') === false ? null : mb_substr($activity['ORIGIN_ID'], 3);
 		$callInfo = VoxImplantManager::getCallInfo($callId);
 		if ($callInfo)
 		{
@@ -323,7 +323,7 @@ class Call extends Base
 	public static function postForm(array &$activity, array $formData)
 	{
 		$result = new Main\Result();
-		if ($formData['comment'])
+		if ($formData['comment'] ?? null)
 		{
 			$activityId = $formData['id'];
 			$activityFields = CCrmActivity::GetByID($activityId, false);

@@ -17,6 +17,7 @@ $smartInvoice = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\SmartInvo
 $storeDocumentStoreAdjustment = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\StoreDocumentStoreAdjustment';
 $storeDocumentArrival = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\StoreDocumentArrival';
 $storeDocumentMoving = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\StoreDocumentMoving';
+$storeDocumentDeduct = \Bitrix\Crm\Integration\DocumentGenerator\DataProvider\StoreDocumentDeduct::class;
 $shipmentDocumentRealization = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\ShipmentDocumentRealization';
 $invoiceAndDeal = [$deal, $invoice, $smartInvoice];
 $quoteAndDeal = [$deal, $quote];
@@ -173,6 +174,17 @@ return [
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/store_doc_moving_ru.docx',
 		'PROVIDERS' => [$storeDocumentMoving],
+		'PRODUCTS_TABLE_VARIANT' => Model\TemplateTable::PRODUCTS_TABLE_VARIANT_GOODS
+	],
+	[
+		'REGION' => 'ru',
+		'NAME' => Loc::getMessage('DOCGEN_TEMPLATE_STORE_DOC_DEDUCT_RU_NAME'),
+		'CODE' => 'STORE_DOC_DEDUCT',
+		'SORT' => 1450,
+		'MODULE_ID' => 'crm',
+		'BODY_TYPE' => Docx::class,
+		'FILE' => '/bitrix/modules/documentgenerator/data/templates/store_doc_deduct_ru.docx',
+		'PROVIDERS' => [$storeDocumentDeduct],
 		'PRODUCTS_TABLE_VARIANT' => Model\TemplateTable::PRODUCTS_TABLE_VARIANT_GOODS
 	],
 	[

@@ -2,7 +2,6 @@
  * @module im/messenger/lib/promotion
  */
 jn.define('im/messenger/lib/promotion', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { restManager } = require('im/messenger/lib/rest-manager');
 	const { RestMethod } = require('im/messenger/const');
@@ -64,7 +63,7 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 
 			spotlight.setTarget(options.target);
 			spotlight.setHint({
-				text: options.text
+				text: options.text,
 			});
 
 			spotlight.show();
@@ -94,7 +93,7 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 
 		deleteActivePromo(id)
 		{
-			this.activePromoList = this.activePromoList.filter(activePromoListId => activePromoListId !== id);
+			this.activePromoList = this.activePromoList.filter((activePromoListId) => activePromoListId !== id);
 		}
 
 		read(id)

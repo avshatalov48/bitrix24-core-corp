@@ -40,7 +40,7 @@ jn.define('crm/in-app-url/routes/open-actions', (require, exports, module) => {
 	 * @param {string} entityId
 	 * @param {object} [options]
 	 */
-	const openEntityDetail = (
+	const openEntityDetail = async (
 		entityTypeId,
 		entityId,
 		{
@@ -66,18 +66,14 @@ jn.define('crm/in-app-url/routes/open-actions', (require, exports, module) => {
 			widgetParams.titleParams = { text: linkText };
 		}
 
-		jn.import('crm:entity-detail/opener')
-			.then(() => {
-				const { EntityDetailOpener } = require('crm/entity-detail/opener');
+		const { EntityDetailOpener } = await requireLazy('crm:entity-detail/opener');
 
-				EntityDetailOpener.open(
-					payload,
-					widgetParams,
-					parentWidget || null,
-					canOpenInDefault,
-				);
-			})
-			.catch(console.error);
+		EntityDetailOpener.open(
+			payload,
+			widgetParams,
+			parentWidget || null,
+			canOpenInDefault,
+		);
 	};
 
 	/**

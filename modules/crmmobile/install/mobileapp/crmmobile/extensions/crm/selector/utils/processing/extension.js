@@ -43,17 +43,19 @@ jn.define('crm/selector/utils/processing', (require, exports, module) => {
 					catch (e)
 					{
 						console.error(e);
+
 						return [];
 					}
 				});
 
 			if (multiFields.length > 0)
 			{
-				multiFields.forEach(({ TYPE_ID, VALUE_FORMATTED, COMPLEX_NAME, VALUE_TYPE }) => {
+				multiFields.forEach(({ TITLE = '', TYPE_ID, VALUE_TYPE, COMPLEX_NAME, VALUE_FORMATTED }) => {
 					const key = TYPE_ID.toLowerCase();
 					if (TYPE_ADVANCED_INFO.has(TYPE_ID) && VALUE_FORMATTED)
 					{
 						const fieldValue = {
+							title: TITLE,
 							value: VALUE_FORMATTED,
 							complexName: COMPLEX_NAME,
 							valueType: VALUE_TYPE,

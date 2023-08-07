@@ -2,12 +2,13 @@
  * @module layout/ui/entity-editor/control/client
  */
 jn.define('layout/ui/entity-editor/control/client', (require, exports, module) => {
+	const { EntitySelectorFactoryType } = require('selector/widget/factory');
 
-	const { get } = require('utils/object');
-	const { CRM_COMPANY, CRM_CONTACT } = EntitySelectorFactory.Type;
+	const { get, isEmpty } = require('utils/object');
+	const { CRM_COMPANY, CRM_CONTACT } = EntitySelectorFactoryType;
 	const { EntityEditorField } = require('layout/ui/entity-editor/control/field');
 
-	let SelectorProcessing;
+	let SelectorProcessing = null;
 
 	try
 	{
@@ -48,9 +49,16 @@ jn.define('layout/ui/entity-editor/control/client', (require, exports, module) =
 		getModelDataByType(type)
 		{
 			const entityInfoName = this.getDataParam('info', `${this.id}_INFO`);
-			const entityInfo = get(this.model, ['data', entityInfoName, `${type.toUpperCase()}_DATA`], []);
+			const modelData = this.model?.data;
 
-			return entityInfo.map(SelectorProcessing.prepareContact);
+			if (isEmpty(modelData))
+			{
+				return [];
+			}
+
+			const entityInfo = get(modelData, [entityInfoName, `${type.toUpperCase()}_DATA`], []);
+
+			return entityInfo.map((data) => SelectorProcessing.prepareContact(data));
 		}
 
 		getValuesToSave()
@@ -62,7 +70,6 @@ jn.define('layout/ui/entity-editor/control/client', (require, exports, module) =
 
 			const result = {};
 			const compound = this.getDataParam('compound', []);
-
 			for (const entity of compound)
 			{
 				const { name, type, entityTypeName } = entity;
@@ -80,7 +87,7 @@ jn.define('layout/ui/entity-editor/control/client', (require, exports, module) =
 			const entityIds = Array.isArray(entityValue)
 				? entityValue
 					.filter(({ deleted = false }) => !deleted)
-					.map(({ id }) => (Number(id)))
+					.map(({ id }) => Number(id))
 				: [];
 
 			let isMultiple = true;
@@ -104,7 +111,7 @@ jn.define('layout/ui/entity-editor/control/client', (require, exports, module) =
 				return entityIds;
 			}
 
-			return entityIds.length ? entityIds[0] : '';
+			return entityIds.length > 0 ? entityIds[0] : '';
 		}
 
 		getValueFromModel(defaultValue = '')
@@ -132,10 +139,8 @@ jn.define('layout/ui/entity-editor/control/client', (require, exports, module) =
 				[CRM_COMPANY]: companies,
 			} = this.getValue();
 
-			return (
-				Array.isArray(contacts) && contacts.length
-				|| Array.isArray(companies) && companies.length
-			);
+			return (Array.isArray(contacts) && contacts.length > 0)
+				|| (Array.isArray(companies) && companies.length > 0);
 		}
 
 		getSolidBorderContainerColor()
@@ -150,5 +155,4 @@ jn.define('layout/ui/entity-editor/control/client', (require, exports, module) =
 	}
 
 	module.exports = { EntityEditorClient };
-
 });

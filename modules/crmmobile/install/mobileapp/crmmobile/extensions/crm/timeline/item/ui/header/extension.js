@@ -198,6 +198,7 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 						defaultFormat: (moment) => {
 							const day = moment.format(dateFormat);
 							const time = moment.format(shortTime).toLocaleLowerCase(env.languageId);
+
 							return `${day}, ${time}`;
 						},
 						showTime: true,

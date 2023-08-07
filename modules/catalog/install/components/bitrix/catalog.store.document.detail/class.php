@@ -19,6 +19,7 @@ use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\StoreDocumentArrival;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\StoreDocumentStoreAdjustment;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\StoreDocumentMoving;
+use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\StoreDocumentDeduct;
 use Bitrix\Catalog\v2\Contractor;
 use Bitrix\Crm\Settings\EntityEditSettings;
 
@@ -174,6 +175,7 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 			StoreDocumentTable::TYPE_ARRIVAL => StoreDocumentArrival::class,
 			StoreDocumentTable::TYPE_STORE_ADJUSTMENT => StoreDocumentStoreAdjustment::class,
 			StoreDocumentTable::TYPE_MOVING => StoreDocumentMoving::class,
+			StoreDocumentTable::TYPE_DEDUCT => StoreDocumentDeduct::class,
 		];
 
 		$isDocumentButtonAvailable = (
@@ -1160,6 +1162,7 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 			'BASE_PRICE' => 'floatval',
 			'BASE_PRICE_EXTRA' => 'floatval',
 			'BASE_PRICE_EXTRA_RATE' => 'strval',
+			'COMMENT' => 'strval',
 		];
 
 		foreach ($checkedFields as $name => $typeCallback)
@@ -1208,6 +1211,7 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 				'BASE_PRICE' => $product['BASE_PRICE'],
 				'BASE_PRICE_EXTRA' => $product['BASE_PRICE_EXTRA'],
 				'BASE_PRICE_EXTRA_RATE' => $product['BASE_PRICE_EXTRA_RATE'],
+				'COMMENT' => $product['COMMENT'],
 			];
 
 			if (isset($product['DOC_BARCODE']) && !empty($product['DOC_BARCODE']))

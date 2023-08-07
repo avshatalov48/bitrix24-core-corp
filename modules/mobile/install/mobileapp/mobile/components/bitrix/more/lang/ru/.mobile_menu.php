@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["MB_LIVE_FEED"] = "Живая лента";
 $MESS["MB_MESSAGES"] = "Чаты";
 $MESS["MB_COMPANY"] = "Сотрудники";
@@ -19,6 +19,7 @@ $MESS["MB_CRM_DEAL"] = "Сделки";
 $MESS["MB_CRM_LEAD"] = "Лиды";
 $MESS["MB_CRM_INVOICE"] = "Счета";
 $MESS["MB_CRM_QUOTE"] = "Предложения";
+$MESS["MB_CRM_DYNAMIC_CUSTOM_SECTION"] = "Цифровые рабочие места";
 $MESS["MB_CRM_PRODUCT"] = "Товары";
 $MESS["MB_CRM_STAGE_LIST"] = "Список стадий";
 $MESS["MB_CRM_CATEGORY_LIST"] = "Список направлений";

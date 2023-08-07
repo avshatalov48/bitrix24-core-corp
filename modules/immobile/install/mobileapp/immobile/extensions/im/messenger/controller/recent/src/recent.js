@@ -1,11 +1,9 @@
 /* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
 
 /**
  * @module im/messenger/controller/recent/recent
  */
 jn.define('im/messenger/controller/recent/recent', (require, exports, module) => {
-
 	const { clone } = require('utils/object');
 	const { core } = require('im/messenger/core');
 	const { Counters } = require('im/messenger/lib/counters');
@@ -99,16 +97,16 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 			restManager.on(
 				RestMethod.imRecentList,
 				{ SKIP_OPENLINES: 'Y' },
-				this.handleFirstPage.bind(this)
+				this.handleFirstPage.bind(this),
 			);
 
 			restManager.once(
 				RestMethod.imDepartmentColleaguesGet,
 				{
 					USER_DATA: 'Y',
-					LIMIT: 50
+					LIMIT: 50,
 				},
-				this.handleDepartmentColleaguesGet.bind(this)
+				this.handleDepartmentColleaguesGet.bind(this),
 			);
 		}
 
@@ -164,7 +162,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 
 				return;
 			}
-			
+
 			this.openDialog(recentItem.id);
 		}
 
@@ -175,11 +173,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 
 		onLoadNextPage()
 		{
-			const canLoadNextPage =
-				!this.pageNavigation.isPageLoading
-				&& this.pageNavigation.hasNextPage
-			;
-
+			const canLoadNextPage = !this.pageNavigation.isPageLoading && this.pageNavigation.hasNextPage;
 			if (!canLoadNextPage)
 			{
 				return;
@@ -204,12 +198,12 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 		onReadAll()
 		{
 			DialogRest.readAllMessages()
-				.then(result => {
+				.then((result) => {
 					Logger.log('DialogRest.readAllMessages result:', result);
 
 					this.store.dispatch('recentModel/clearAllCounters');
 				})
-				.catch(error => {
+				.catch((error) => {
 					Logger.error('DialogRest.readAllMessages error:', error);
 				})
 			;
@@ -231,7 +225,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 		{
 			Calls.joinCall(callId);
 		}
-		
+
 		addCall(call, callStatus)
 		{
 			if (
@@ -250,10 +244,11 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 
 		saveCall(call)
 		{
-			const elementIndex = this.callList.findIndex(element => element.id === call.id);
+			const elementIndex = this.callList.findIndex((element) => element.id === call.id);
 			if (elementIndex >= 0)
 			{
 				this.callList[elementIndex] = call;
+
 				return;
 			}
 
@@ -262,7 +257,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 
 		getCallById(callId)
 		{
-			return this.callList.find(call => call.id === callId);
+			return this.callList.find((call) => call.id === callId);
 		}
 
 		drawCall(callItem)
@@ -271,16 +266,17 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 				if (item)
 				{
 					this.view.updateItem({ id: callItem.id }, callItem);
+
 					return;
 				}
 
-				this.view.addItems([ callItem ]);
+				this.view.addItems([callItem]);
 			});
 		}
 
 		removeCallById(id)
 		{
-			this.view.removeItem({ id: 'call' + id });
+			this.view.removeItem({ id: `call${id}` });
 		}
 
 		/* endregion Events */
@@ -395,7 +391,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 		drawCacheItems()
 		{
 			let firstPage = clone(
-				this.store.getters['recentModel/getRecentPage'](1, this.pageNavigation.itemsPerPage)
+				this.store.getters['recentModel/getRecentPage'](1, this.pageNavigation.itemsPerPage),
 			);
 
 			if (firstPage.length === 0)
@@ -419,7 +415,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 			const recentList = [];
 			const payload = clone(mutation.payload);
 
-			payload.forEach(item => recentList.push(item.fields));
+			payload.forEach((item) => recentList.push(item.fields));
 
 			this.renderer.do('add', recentList);
 			if (!this.pageNavigation.hasNextPage && this.view.isLoaderShown)
@@ -451,7 +447,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 		{
 			this.renderer.removeFromQueue(mutation.payload.id);
 
-			this.view.removeItem({'params.id' : mutation.payload.id});
+			this.view.removeItem({ 'params.id': mutation.payload.id });
 			if (!this.pageNavigation.hasNextPage && this.view.isLoaderShown)
 			{
 				this.view.hideLoader();
@@ -465,19 +461,20 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 			const result = {
 				users: [],
 				dialogues: [],
-				recent: []
+				recent: [],
 			};
 
-			items.forEach(item => {
+			items.forEach((item) => {
 				if (item.user && item.user.id > 0)
 				{
 					result.users.push(item.user);
 				}
+
 				if (item.chat)
 				{
 					result.dialogues.push({
 						...item.chat,
-						...{ dialogId: item.id },
+						dialogId: item.id,
 					});
 				}
 
@@ -488,7 +485,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 						avatar: item.user.avatar,
 						color: item.user.color,
 						name: item.user.name,
-						type: DialogType.user
+						type: DialogType.user,
 					});
 				}
 
@@ -513,7 +510,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 			if (this.pageNavigation.currentPage === 1)
 			{
 				const recentIndex = [];
-				modelData.recent.forEach(item => recentIndex.push(item.id.toString()));
+				modelData.recent.forEach((item) => recentIndex.push(item.id.toString()));
 
 				const idListForDeleteFromCache = [];
 				this.store.getters['recentModel/getCollection']
@@ -524,7 +521,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 						}
 					});
 
-				idListForDeleteFromCache.forEach(id => {
+				idListForDeleteFromCache.forEach((id) => {
 					this.store.dispatch('recentModel/delete', { id });
 				});
 
@@ -604,9 +601,9 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 			const recentDialogIdList = Object.keys(this.store.getters['recentModel/getCollection']);
 			const listUpdate = [];
 
-			recentDialogIdList.forEach(dialogId => {
+			recentDialogIdList.forEach((dialogId) => {
 				const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
-				if(
+				if (
 					!recentItem
 					|| recentItem.type !== 'user'
 				)
@@ -619,7 +616,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 				{
 					recentItem.user.status = currentStatus;
 
-					this.store.dispatch('recentModel/set', [ recentItem ]);
+					this.store.dispatch('recentModel/set', [recentItem]);
 					listUpdate.push(recentItem);
 				}
 			});

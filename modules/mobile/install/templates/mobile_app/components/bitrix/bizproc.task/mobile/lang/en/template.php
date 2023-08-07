@@ -12,4 +12,4 @@ $MESS["MB_BP_DETAIL_PULLDOWN_DOWN"] = "Release to refresh";
 $MESS["MB_BP_DETAIL_PULLDOWN_LOADING"] = "Updating data...";
 $MESS["MB_BP_DETAIL_PULLDOWN_PULL"] = "Pull down to refresh";
 $MESS["MB_BP_DETAIL_REQUEST_ERROR"] = "Error sending request while performing task.";
-$MESS["MB_BP_SKIP_MSGVER_1"] = "Assignment can only be competed in web version. Please log in to your account from your computer.";
+$MESS["MB_BP_SKIP_MSGVER_1"] = "Assignment can only be completed in web version. Please log in to your account from your computer.";

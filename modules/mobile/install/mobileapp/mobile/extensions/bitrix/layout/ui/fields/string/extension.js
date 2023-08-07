@@ -3,6 +3,7 @@
  */
 jn.define('layout/ui/fields/string', (require, exports, module) => {
 
+	const { inAppUrl } = require('in-app-url');
 	const { BaseField } = require('layout/ui/fields/base');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
 	const { debounce } = require('utils/function');
@@ -192,28 +193,30 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 			const params = this.getReadOnlyRenderParams();
 
 			const getContent = (readOnlyElementType) => {
-				switch (readOnlyElementType)
+				const value = this.getValue();
+
+				if (readOnlyElementType === 'TextInput')
 				{
-					case 'BBCodeText':
-						return BBCodeText({
-							...params,
-							value: this.getValue(),
-							onLinkClick: this.getConfig().onLinkClick,
-						});
-
-					case 'TextInput':
-						return TextInput({
-							...params,
-							value: this.getValue(),
-							enable: false,
-						});
-
-					default:
-						return Text({
-							...params,
-							text: this.getValue(),
-						});
+					return TextInput({
+						...params,
+						value,
+						enable: false,
+					});
 				}
+
+				if (readOnlyElementType === 'BBCodeText')
+				{
+					return BBCodeText({
+						...params,
+						value,
+						onLinkClick: this.getOnLinkClick(),
+					});
+				}
+
+				return Text({
+					...params,
+					text: value,
+				});
 			};
 
 			return View(
@@ -284,13 +287,20 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 				onBlur: () => this.removeFocus(),
 				onChangeText: this.debouncedChangeText,
 				onSubmitEditing: () => FocusManager.blurFocusedFieldIfHas(),
-				onLinkClick: this.getConfig().onLinkClick,
+				onLinkClick: this.getOnLinkClick(),
 			};
 		}
 
 		getPlaceholder()
 		{
 			return this.props.placeholder || BX.message('FIELDS_INLINE_FIELD_EMPTY_STRING_PLACEHOLDER');
+		}
+
+		getOnLinkClick()
+		{
+			const defaultOnLinkClick = ({ url }) => inAppUrl.open(url);
+
+			return BX.prop.getFunction(this.getConfig(), 'onLinkClick', defaultOnLinkClick);
 		}
 
 		changeText(currentText)

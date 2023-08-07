@@ -68,7 +68,23 @@ final class FieldContentTypeTable extends \Bitrix\Main\ORM\Data\DataManager
 		return self::loadForItem($item)[$fieldName] ?? \CCrmContentType::Undefined;
 	}
 
+	/**
+	 * Default content type for new items
+	 *
+	 * @return int
+	 */
 	public static function getDefaultContentTypeId(): int
+	{
+		return \CCrmContentType::BBCode;
+	}
+
+	/**
+	 * If an item field has no content type specified (no entry in db),
+	 * then we agree that this field has this content type.
+	 *
+	 * @return int
+	 */
+	public static function getContentTypeIdForAbsentEntry(): int
 	{
 		return \CCrmContentType::Html;
 	}

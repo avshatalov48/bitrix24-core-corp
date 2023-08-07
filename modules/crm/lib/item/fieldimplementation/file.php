@@ -124,84 +124,166 @@ final class File implements FieldImplementation
 	{
 		foreach ($this->fileFields as $field)
 		{
-			// replacement for isset($value), since null is also a valid case
-			$isValueProvided = false;
-
-			if (array_key_exists($field->getName(), $externalValues))
+			if ($field->isMultiple())
 			{
-				$isValueProvided = true;
-				$value = $externalValues[$field->getName()];
-
-				if (is_array($value))
-				{
-					$internalizedValue = $this->internalizeArrayValue($field, $value);
-					if (is_null($internalizedValue))
-					{
-						continue;
-					}
-
-					$value = $internalizedValue;
-				}
+				$this->internalizeMultipleField($field, $externalValues);
 			}
-
-			$entityFieldName = $this->fieldsMap[$field->getName()] ?? $field->getName();
-			$deleteKey = $entityFieldName . '_del';
-			if (array_key_exists($deleteKey, $externalValues))
+			else
 			{
-				$fileIdToDelete = $externalValues[$deleteKey];
-				if (is_numeric($fileIdToDelete))
-				{
-					$fileIdToDelete = (int)$fileIdToDelete;
-					$this->fileUploader->deleteFilePersistently($fileIdToDelete);
-
-					if (
-						($isValueProvided && $fileIdToDelete === (int)$value)
-						|| (!$isValueProvided && $fileIdToDelete === (int)$this->get($field->getName()))
-					)
-					{
-						$value = 0;
-						$isValueProvided = true;
-					}
-				}
-			}
-
-			if ($isValueProvided)
-			{
-				$this->set($field->getName(), $value);
+				$this->internalizeSingleField($field, $externalValues);
 			}
 		}
 	}
 
-	/**
-	 * @param Field $field
-	 * @param array $externalValue
-	 * @return int|int[]|null - returns null if something went wrong
-	 */
-	private function internalizeArrayValue(Field $field, array $externalValue)
+	private function internalizeMultipleField(Field $field, array $externalValues): void
 	{
-		if (!$field->isMultiple())
-		{
-			return $this->fileArrayToFileId($field, $externalValue);
-		}
+		$newValue = null;
 
-		$files = [];
-		foreach ($externalValue as $singleValue)
+		$toDelete = $this->extractFileIdsMarkedToBeDeleted($field, $externalValues);
+
+		if (isset($externalValues[$field->getName()]) && is_array($externalValues[$field->getName()]))
 		{
-			if (is_numeric($singleValue))
+			if (empty($externalValues[$field->getName()]))
 			{
-				$files[] = (int)$singleValue;
+				// they want to delete all files
+				$newValue = [];
 			}
-			elseif (is_array($singleValue))
+			else
 			{
-				$fileId = $this->fileArrayToFileId($field, $singleValue);
-				if ($fileId > 0)
+				foreach ($externalValues[$field->getName()] as $singleValue)
 				{
-					$files[] = $fileId;
+					if (is_numeric($singleValue) && (int)$singleValue > 0)
+					{
+						$newValue[] = $singleValue;
+					}
+					elseif (is_array($singleValue))
+					{
+						$fileId = $this->fileArrayToFileId($field, $singleValue);
+						if ($fileId > 0)
+						{
+							$newValue[] = $fileId;
+						}
+					}
 				}
 			}
 		}
 
-		return $files;
+		if (is_array($newValue))
+		{
+			$this->set($field->getName(), array_diff($newValue, $toDelete));
+		}
+		elseif (!empty($toDelete))
+		{
+			$currentFiles = array_filter((array)$this->get($field->getName()));
+
+			$this->set($field->getName(), array_diff($currentFiles, $toDelete));
+		}
+	}
+
+	private function internalizeSingleField(Field $field, array $externalValues): void
+	{
+		$isNewValueProvided = false;
+		$newValue = null;
+
+		$toDelete = $this->extractFileIdsMarkedToBeDeleted($field, $externalValues);
+
+		if (array_key_exists($field->getName(), $externalValues))
+		{
+			$isNewValueProvided = true;
+			$newValue = $externalValues[$field->getName()];
+
+			if (is_array($newValue))
+			{
+				$fileId = $this->fileArrayToFileId($field, $newValue);
+				if ($fileId > 0)
+				{
+					$newValue = $fileId;
+				}
+				else
+				{
+					$isNewValueProvided = false;
+					$newValue = null;
+				}
+			}
+		}
+
+		if ($isNewValueProvided)
+		{
+			if (in_array($newValue, $toDelete, true))
+			{
+				$newValue = 0;
+			}
+
+			$this->set($field->getName(), $newValue);
+		}
+		elseif (!empty($toDelete))
+		{
+			$this->set($field->getName(), 0);
+		}
+	}
+
+	private function extractFileIdsMarkedToBeDeleted(Field $field, array $externalValues): array
+	{
+		$fieldName = $this->fieldsMap[$field->getName()] ?? $field->getName();
+
+		$toDelete = [];
+
+		if (isset($externalValues[$fieldName]))
+		{
+			$value = $externalValues[$fieldName];
+			if (!$field->isMultiple())
+			{
+				$value = [$value];
+			}
+
+			if (is_array($value))
+			{
+				foreach ($value as $singleValue)
+				{
+					if (
+						isset($singleValue['del'])
+						&& $singleValue['del'] === true
+						&& isset($singleValue['old_id'])
+						&& is_numeric($singleValue['old_id'])
+						&& $this->isFileBoundToItem($field, (int)$singleValue['old_id'])
+					)
+					{
+						$toDelete[] = (int)$singleValue['old_id'];
+					}
+				}
+			}
+		}
+
+		$entityFieldName = $this->fieldsMap[$field->getName()] ?? $field->getName();
+		$deleteKey = $entityFieldName . '_del';
+		if (array_key_exists($deleteKey, $externalValues))
+		{
+			$deleteValue = $externalValues[$deleteKey];
+			if (is_numeric($deleteValue))
+			{
+				// $toDelete is fileId
+				$deleteValue = (int)$deleteValue;
+
+				if ($this->isFileBoundToItem($field, $deleteValue))
+				{
+					$toDelete[] = $deleteValue;
+				}
+			}
+			// delete current file
+			elseif ($deleteValue === 'Y' && !$field->isMultiple())
+			{
+				$toDelete[] = (int)$this->get($field->getName());
+			}
+		}
+
+		return $toDelete;
+	}
+
+	private function isFileBoundToItem(Field $field, int $fileId): bool
+	{
+		$ids = array_filter((array)$this->get($field->getName()));
+
+		return in_array($fileId, $ids, true);
 	}
 
 	private function fileArrayToFileId(Field $field, array $value): ?int

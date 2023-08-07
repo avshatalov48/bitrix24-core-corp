@@ -1,12 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-pseudo-private */
-
 /**
  * @module im/messenger/provider/service/classes/message/load
  */
 jn.define('im/messenger/provider/service/classes/message/load', (require, exports, module) => {
-
 	const { Logger } = require('im/messenger/lib/logger');
 	const { UserManager } = require('im/messenger/lib/user-manager');
 	const { RestMethod } = require('im/messenger/const/rest');
@@ -35,7 +30,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 
 		loadUnread()
 		{
-			if (this.isLoading || !this._getDialog().hasNextPage)
+			if (this.isLoading || !this.getDialog().hasNextPage)
 			{
 				return Promise.resolve(false);
 			}
@@ -45,6 +40,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			if (!lastUnreadMessageId)
 			{
 				Logger.warn('LoadService: no lastUnreadMessageId, cant load unread');
+
 				return Promise.resolve(false);
 			}
 
@@ -57,28 +53,28 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				},
 				order: {
 					id: 'ASC',
-				}
+				},
 			};
 
-			return runAction(RestMethod.imV2ChatMessageTail, { data: query }).then(result => {
+			return runAction(RestMethod.imV2ChatMessageTail, { data: query }).then((result) => {
 				Logger.warn('LoadService: loadUnread result', result);
 				this.preparedUnreadMessages = result.messages;
 
-				return this._updateModels(result);
+				return this.updateModels(result);
 			}).then(() => {
 				this.drawPreparedUnreadMessages();
 				this.isLoading = false;
 
 				return true;
-			}).catch(error => {
-				console.error('LoadService: loadUnread error:', error);
+			}).catch((error) => {
+				Logger.error('LoadService: loadUnread error:', error);
 				this.isLoading = false;
 			});
 		}
 
 		loadHistory()
 		{
-			if (this.isLoading || !this._getDialog().hasPrevPage)
+			if (this.isLoading || !this.getDialog().hasPrevPage)
 			{
 				return Promise.resolve(false);
 			}
@@ -88,6 +84,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			if (!lastHistoryMessageId)
 			{
 				Logger.warn('LoadService: no lastHistoryMessageId, cant load unread');
+
 				return Promise.resolve();
 			}
 
@@ -100,23 +97,23 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				},
 				order: {
 					id: 'DESC',
-				}
+				},
 			};
 
-			return runAction(RestMethod.imV2ChatMessageTail, { data: query }).then(result => {
+			return runAction(RestMethod.imV2ChatMessageTail, { data: query }).then((result) => {
 				Logger.warn('LoadService: loadHistory result', result);
 				this.preparedHistoryMessages = result.messages;
 				const hasPrevPage = result.hasNextPage;
-				const rawData = {...result, hasPrevPage, hasNextPage: null};
+				const rawData = { ...result, hasPrevPage, hasNextPage: null };
 
-				return this._updateModels(rawData);
+				return this.updateModels(rawData);
 			}).then(() => {
 				this.drawPreparedHistoryMessages();
 				this.isLoading = false;
 
 				return true;
-			}).catch(error => {
-				console.error('LoadService: loadHistory error:', error);
+			}).catch((error) => {
+				Logger.error('LoadService: loadHistory error:', error);
 				this.isLoading = false;
 			});
 		}
@@ -163,21 +160,24 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			});
 		}
 
-		_updateModels(rawData)
+		/**
+		 * @private
+		 */
+		updateModels(rawData)
 		{
 			const {
 				files,
 				users,
 				hasPrevPage,
-				hasNextPage
+				hasNextPage,
 			} = rawData;
 
 			const dialogPromise = this.store.dispatch('dialoguesModel/update', {
-				dialogId: this._getDialog().dialogId,
+				dialogId: this.getDialog().dialogId,
 				fields: {
 					hasPrevPage,
-					hasNextPage
-				}
+					hasNextPage,
+				},
 			});
 			const usersPromise = this.userManager.setUsersToModel(users);
 			const filesPromise = this.store.dispatch('filesModel/set', files);
@@ -185,11 +185,14 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			return Promise.all([
 				dialogPromise,
 				filesPromise,
-				usersPromise
+				usersPromise,
 			]);
 		}
 
-		_getDialog()
+		/**
+		 * @private
+		 */
+		getDialog()
 		{
 			return this.store.getters['dialoguesModel/getByChatId'](this.chatId);
 		}

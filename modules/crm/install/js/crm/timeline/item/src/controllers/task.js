@@ -43,7 +43,7 @@ export class Task extends Base
 				break;
 
 			case 'Task:ChangeDeadline':
-				this.changeDeadline(actionData);
+				this.changeDeadline(item, actionData);
 				break;
 
 			case 'Task:View':
@@ -87,7 +87,7 @@ export class Task extends Base
 		});
 	}
 
-	changeDeadline(actionData): void
+	changeDeadline(item: ConfigurableItem, actionData): void
 	{
 		if (!actionData.taskId || !actionData.value)
 		{
@@ -105,7 +105,17 @@ export class Task extends Base
 					}
 				},
 			},
-		);
+		).catch(response => {
+			const errors = response.errors ??  null;
+			if (errors.length > 0)
+			{
+				UI.Notification.Center.notify({
+					content: errors[0].message,
+					autoHideDelay: 3000,
+				});
+				item.forceRefreshLayout();
+			}
+		});
 	}
 
 	view(actionData): void

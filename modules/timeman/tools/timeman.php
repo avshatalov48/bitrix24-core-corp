@@ -1868,8 +1868,16 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 									}
 									else
 									{
-										$db1 = CIBlockSection::GetNavChain($iblockId, $arRes['ID']);
-										while ($sect = $db1->Fetch())
+										$sects = CIBlockSection::GetNavChain(
+											$iblockId,
+											$arRes['ID'],
+											[
+												'ID',
+												'NAME',
+											],
+											true
+										);
+										foreach ($sects as $sect)
 										{
 											$arRes['CHAIN'][] = [
 												'ID' => $sect['ID'],

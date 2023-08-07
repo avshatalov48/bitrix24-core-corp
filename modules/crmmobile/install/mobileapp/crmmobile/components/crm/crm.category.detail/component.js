@@ -153,6 +153,7 @@
 					}
 
 					reject();
+
 					return;
 				}
 
@@ -580,6 +581,7 @@
 			{
 				return STAGE_TYPE.FAILED_STAGES;
 			}
+
 			if (semantics === SEMANTICS.SUCCESS)
 			{
 				return STAGE_TYPE.SUCCESS_STAGES;

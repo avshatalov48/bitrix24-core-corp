@@ -541,12 +541,6 @@ elseif($action === 'SAVE')
 				);
 			}
 
-			$fields = Crm\Entity\FieldContentType::prepareFieldsFromDetailsToSave(
-				\CCrmOwnerType::Lead,
-				$ID,
-				$fields
-			);
-
 			Tracking\UI\Details::appendEntityFieldValue($fields, $_POST);
 
 			if ($enableProductRows)
@@ -592,17 +586,14 @@ elseif($action === 'SAVE')
 
 				$fields['EXCH_RATE'] = CCrmCurrency::GetExchangeRate($fields['CURRENCY_ID']);
 
-				$options = array_merge(
-					Crm\Entity\FieldContentType::prepareSaveOptionsForDetails(\CCrmOwnerType::Lead, $ID),
-					[
-						'REGISTER_SONET_EVENT' => true,
-						'FIELD_CHECK_OPTIONS' => $fieldCheckOptions,
-						'ITEM_OPTIONS' => [
-							'VIEW_MODE' => $viewMode,
-							'STATUS_ID' => $fields['STATUS_ID'],
-						],
+				$options = [
+					'REGISTER_SONET_EVENT' => true,
+					'FIELD_CHECK_OPTIONS' => $fieldCheckOptions,
+					'ITEM_OPTIONS' => [
+						'VIEW_MODE' => $viewMode,
+						'STATUS_ID' => $fields['STATUS_ID'],
 					],
-				);
+				];
 
 				if(!$enableRequiredUserFieldCheck)
 				{
@@ -657,7 +648,10 @@ elseif($action === 'SAVE')
 					unset($fields['STATUS_ID']);
 				}
 
-				$options = array('REGISTER_SONET_EVENT' => true, 'FIELD_CHECK_OPTIONS' => $fieldCheckOptions);
+				$options = [
+					'REGISTER_SONET_EVENT' => true,
+					'FIELD_CHECK_OPTIONS' => $fieldCheckOptions,
+				];
 				if(!$enableRequiredUserFieldCheck)
 				{
 					$options['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
@@ -711,7 +705,13 @@ elseif($action === 'SAVE')
 			__CrmLeadDetailsEndJsonResponse($responseData);
 		}
 
-		if(!$isExternal && $enableProductRows && (!$isNew || !empty($productRows)))
+		if (
+			!$isExternal
+			&& $enableProductRows
+			&& (!$isNew || !empty($productRows))
+			// if factory was used, product rows were saved already on lead save
+			&& !Crm\Settings\LeadSettings::getCurrent()->isFactoryEnabled()
+		)
 		{
 			if(!\CCrmLead::SaveProductRows($ID, $productRows, true, true, false))
 			{

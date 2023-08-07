@@ -3,8 +3,10 @@
  */
 jn.define('crm/entity-name', (require, exports, module) => {
 	const { TextAreaField } = require('layout/ui/fields/textarea');
+	const { PureComponent } = require('layout/pure-component');
+	const { useCallback } = require('utils/function');
 
-	class EntityName extends LayoutComponent
+	class EntityName extends PureComponent
 	{
 		constructor(props)
 		{
@@ -14,7 +16,7 @@ jn.define('crm/entity-name', (require, exports, module) => {
 				name: BX.prop.getString(this.props, 'name', ''),
 			};
 
-			this.onChangeHandler = this.onChangeHandler.bind(this);
+			this.onChangeHandler = this.onChange.bind(this);
 
 			/** @type {TextAreaField} */
 			this.textAreaField = null;
@@ -67,7 +69,7 @@ jn.define('crm/entity-name', (require, exports, module) => {
 					},
 				},
 				TextAreaField({
-					ref: (ref) => this.textAreaField = ref,
+					ref: useCallback((ref) => this.textAreaField = ref),
 					title: this.title,
 					value: this.state.name,
 					placeholder: this.placeholder,
@@ -79,7 +81,7 @@ jn.define('crm/entity-name', (require, exports, module) => {
 			);
 		}
 
-		onChangeHandler(name)
+		onChange(name)
 		{
 			this.setState({ name }, () => this.onAfterChange(name));
 		}

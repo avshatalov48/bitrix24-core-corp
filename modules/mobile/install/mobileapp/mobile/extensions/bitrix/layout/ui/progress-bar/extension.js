@@ -36,7 +36,6 @@ jn.define('layout/ui/progress-bar', (require, exports, module) => {
 			this.captionRef = null;
 
 			const { value, maxValue, color } = props;
-			this.checkInitParams(value, maxValue);
 
 			this.config = {
 				value: Number(value) || 0,
@@ -154,6 +153,11 @@ jn.define('layout/ui/progress-bar', (require, exports, module) => {
 		{
 			const { showCaption } = this.props;
 			const { value, maxValue } = this.config;
+
+			if (!this.checkInitParams(value, maxValue))
+			{
+				return null;
+			}
 
 			return View(
 				{

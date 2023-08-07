@@ -329,12 +329,20 @@ class EntityActivityCounter
 
 	public function getDeadlinesCount(int $entityId): int
 	{
-		return is_array($this->deadlines[$entityId]) ? count($this->deadlines[$entityId]) : 0;
+		return (
+			(isset($this->deadlines[$entityId]) && is_array($this->deadlines[$entityId]))
+				? count($this->deadlines[$entityId])
+				: 0
+		);
 	}
 
 	public function getIncomingCount(int $entityId): int
 	{
-		return is_array($this->incoming[$entityId]) ? count($this->incoming[$entityId]) : 0;
+		return (
+			(isset($this->incoming[$entityId]) && is_array($this->incoming[$entityId]))
+				? count($this->incoming[$entityId])
+				: 0
+		);
 	}
 
 	public function getIncoming(): array

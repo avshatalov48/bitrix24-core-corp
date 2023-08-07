@@ -10,6 +10,7 @@ $MESS["MB_CRM_CATEGORY_LIST"] = "Pipelines";
 $MESS["MB_CRM_COMPANY"] = "Companies";
 $MESS["MB_CRM_CONTACT"] = "Contacts";
 $MESS["MB_CRM_DEAL"] = "Deals";
+$MESS["MB_CRM_DYNAMIC_CUSTOM_SECTION"] = "Automated solutions";
 $MESS["MB_CRM_INVOICE"] = "Invoices";
 $MESS["MB_CRM_LEAD"] = "Leads";
 $MESS["MB_CRM_PRODUCT"] = "Products";

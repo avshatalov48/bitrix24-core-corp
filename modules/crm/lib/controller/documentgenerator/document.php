@@ -137,17 +137,10 @@ class Document extends Base
 		{
 			if(isset($filter['entityTypeId']))
 			{
-				$filterMap = array_map(function($item)
-				{
-					return mb_strtolower($item);
-				}, $providersMap);
-				$filter['=provider'] = str_ireplace(
-					array_reverse(
-						array_keys($providersMap)
-					),
-					array_reverse($filterMap),
-					$filter['entityTypeId']
-				);
+				$filter['=provider'] = isset($providersMap[(int)$filter['entityTypeId']])
+					? mb_strtolower($providersMap[(int)$filter['entityTypeId']])
+					: $filter['entityTypeId'];
+
 				unset($filter['entityTypeId']);
 			}
 			if(isset($filter['entityId']))

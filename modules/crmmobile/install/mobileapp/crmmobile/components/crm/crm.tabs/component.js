@@ -2,7 +2,6 @@
 	const require = (ext) => jn.require(ext);
 
 	const { PureComponent } = require('layout/pure-component');
-	const { PlanRestriction } = require('layout/ui/plan-restriction');
 	const {
 		clone,
 		get,
@@ -20,6 +19,8 @@
 
 	const TAB_BIG_LABEL = '99+';
 
+	let featureCounter = 0;
+
 	/**
 	 * @class CrmTabs
 	 */
@@ -32,7 +33,13 @@
 			this.kanbanTabRef = null;
 			this.listTabRef = null;
 			this.searchRef = null;
-			this.tabsCacheName = `crm:crm.tabs.list.${env.userId}.v2`;
+
+			const tabsCacheName = `crm:crm.tabs.list.${env.userId}.v2`;
+			this.tabsCacheName = (
+				props.customSectionId
+					? `${tabsCacheName}.customSection.${props.customSectionId}`
+					: tabsCacheName
+			);
 			this.tabViewRef = null;
 			this.pullUnsubscribe = null;
 
@@ -56,7 +63,6 @@
 				permissions,
 				connectors,
 				restrictions,
-				isProgress: false,
 			};
 
 			this.currentMoneyFormats = Money.formats;
@@ -73,7 +79,6 @@
 			this.updateCounters = this.updateCounters.bind(this);
 			this.setActiveTab = this.setActiveTab.bind(this);
 			this.updateEntityTypeData = this.updateEntityTypeData.bind(this);
-			this.onLoadingProgress = this.onLoadingProgress.bind(this);
 
 			this.scrollOnTop = throttle(this.scrollOnTop, 500, this);
 		}
@@ -122,7 +127,6 @@
 			BX.addCustomEvent('Money::onLoad', this.onMoneyLoad);
 			BX.addCustomEvent('CrmTabs::loadTabs', this.loadTabs);
 			BX.addCustomEvent('CrmTabs::reloadKanbanTab', this.reloadKanbanTab);
-			BX.addCustomEvent('CrmTabs::onLoadingProgress', this.onLoadingProgress);
 
 			ActivityCountersStoreManager
 				.subscribe('activityCountersModel/setCounters', this.updateCounters)
@@ -145,7 +149,6 @@
 			BX.removeCustomEvent('Money::onLoad', this.onMoneyLoad);
 			BX.removeCustomEvent('CrmTabs::loadTabs', this.loadTabs);
 			BX.removeCustomEvent('CrmTabs::reloadKanbanTab', this.reloadKanbanTab);
-			BX.removeCustomEvent('CrmTabs::onLoadingProgress', this.onLoadingProgress);
 
 			ActivityCountersStoreManager
 				.unsubscribe('activityCountersModel/setCounters', this.updateCounters)
@@ -247,35 +250,9 @@
 			Application.storage.setObject(cacheName, cache);
 		}
 
-		onLoadingProgress(params)
-		{
-			const { isProgress: stateIsProgress } = this.state;
-			const { isProgress, progress } = params;
-
-			if (isProgress !== stateIsProgress)
-			{
-				this.setState({
-					isProgress,
-					progressParams: progress,
-				});
-			}
-		}
-
-		getProgressLayout()
-		{
-			const { progressParams, isProgress } = this.state;
-
-			if (!isProgress)
-			{
-				return null;
-			}
-
-			return new LoadingProgressBar(progressParams);
-		}
-
 		render()
 		{
-			const { isProgress, activeTabTypeName, tabs } = this.state;
+			const { activeTabTypeName, tabs } = this.state;
 			const activeTab = this.getActiveTab();
 			if (!activeTab && tabs[0])
 			{
@@ -283,7 +260,7 @@
 
 				if (hasRestrictions)
 				{
-					PlanRestriction.open({ title });
+					void this.showPlanRestriction(title);
 				}
 				else
 				{
@@ -331,8 +308,15 @@
 						}
 					},
 				}),
-				isProgress && this.getProgressLayout(),
+				new LoadingProgressBar(),
 			);
+		}
+
+		async showPlanRestriction(title)
+		{
+			const { PlanRestriction } = await requireLazy('layout/ui/plan-restriction');
+
+			PlanRestriction.open({ title });
 		}
 
 		getActiveTab()
@@ -365,6 +349,8 @@
 		{
 			if (changed)
 			{
+				featureCounter = 0;
+
 				this.rightButtonsIsSetted = false;
 				const typeId = this.getTabByTypeName(tab.id).id;
 
@@ -420,7 +406,7 @@
 
 				if (desiredTab.hasRestrictions)
 				{
-					PlanRestriction.open({ title: tab.title });
+					void this.showPlanRestriction(tab.title);
 				}
 				else
 				{
@@ -433,6 +419,23 @@
 			else
 			{
 				this.scrollOnTop();
+				this.countFeatureToggle();
+			}
+		}
+
+		countFeatureToggle()
+		{
+			featureCounter++;
+
+			if (featureCounter >= 10)
+			{
+				featureCounter = 0;
+
+				const storage = Application.storageById('crm/entity-detail/feature/');
+				const feature = storage.getBoolean('backdropEnabled', false);
+
+				storage.setBoolean('backdropEnabled', !feature);
+				console.info('Feature updated', !feature);
 			}
 		}
 
@@ -470,7 +473,10 @@
 
 		loadTabs(params = {})
 		{
-			new RunActionExecutor(result.actions.loadTabs)
+			const { customSectionId } = this.props;
+			const ajaxParams = { customSectionId };
+
+			new RunActionExecutor(result.actions.loadTabs, ajaxParams)
 				.setCacheId(this.tabsCacheName)
 				.setCacheHandler((response) => this.setTabs({ ...response, ...params }))
 				.setHandler((response) => this.setTabs({ ...response, ...params }))
@@ -479,17 +485,15 @@
 
 		setTabs(response)
 		{
-			const { tabs, permissions, isProgress: stateIsProgress, connectors } = this.state;
-			const { data, isProgress = false } = response;
-			const isChangeViewProgress = isProgress !== stateIsProgress;
+			const { tabs, permissions, connectors } = this.state;
+			const { data } = response;
 
-			if ((data.tabs && !isEqual(data.tabs, tabs)) || isChangeViewProgress)
+			if (data.tabs && !isEqual(data.tabs, tabs))
 			{
 				this.prepareTabs(this.props, data.tabs);
 				const tab = data.tabs.find((item) => item.active);
 
 				this.setState({
-					isProgress,
 					tabs: data.tabs,
 					activeTabTypeName: tab.typeName,
 					activeTabId: tab.id,
@@ -501,7 +505,6 @@
 			else if (data.permissions && !isEqual(data.permissions, permissions))
 			{
 				this.setState({
-					isProgress,
 					permissions: data.permissions,
 				});
 			}
@@ -765,6 +768,7 @@
 		layout.enableNavigationBarBorder(false);
 		layout.showComponent(new CrmTabs({
 			activeTabName: BX.componentParameters.get('activeTabName', null),
+			customSectionId: BX.componentParameters.get('customSectionId', null),
 		}));
 	});
 })();

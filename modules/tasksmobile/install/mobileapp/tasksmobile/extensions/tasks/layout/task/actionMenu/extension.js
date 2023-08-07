@@ -2,9 +2,9 @@
  * @module tasks/layout/task/actionMenu
  */
 jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {TaskCreate} = require('tasks/layout/task/create');
-	const {EventEmitter} = require('event-emitter');
+	const { Loc } = require('loc');
+	const { TaskCreate } = require('tasks/layout/task/create');
+	const { EventEmitter } = require('event-emitter');
 
 	class ActionMenu
 	{
@@ -50,19 +50,19 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 				},
 				actions:
 					this.actions
-						.filter(action => this.task.actions[action.id])
-						.filter(action => !this.possibleActions || this.possibleActions.includes(action.id))
-						.filter(action => action.id !== ActionMenu.action.complete || !this.task.actions[ActionMenu.action.approve])
-						.map(action => ({
+						.filter((action) => this.task.actions[action.id])
+						.filter((action) => !this.possibleActions || this.possibleActions.includes(action.id))
+						// eslint-disable-next-line max-len
+						.filter((action) => action.id !== ActionMenu.action.complete || !this.task.actions[ActionMenu.action.approve])
+						.map((action) => ({
 							...action,
 							onClickCallback: () => new Promise((resolve) => {
 								contextMenu.close(() => {
 									action.onClickCallback();
-									resolve({closeMenu: false});
+									resolve({ closeMenu: false });
 								});
 							}),
-						}))
-				,
+						})),
 				testId: 'taskViewActionMenu',
 			});
 			void contextMenu.show();
@@ -117,7 +117,9 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 					data: {
 						imgUri: `${imagePrefix}favoriteAdd.png`,
 					},
-					onClickCallback: () => void this.task.addToFavorite(),
+					onClickCallback: () => {
+						void this.task.addToFavorite();
+					},
 				},
 				{
 					id: ActionMenu.action.removeFromFavorite,
@@ -125,7 +127,9 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 					data: {
 						imgUri: `${imagePrefix}favoriteDelete.png`,
 					},
-					onClickCallback: () => void this.task.removeFromFavorite(),
+					onClickCallback: () => {
+						void this.task.removeFromFavorite();
+					},
 				},
 				{
 					id: ActionMenu.action.startTimer,
@@ -292,13 +296,19 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 											},
 										});
 										this.eventEmitter.emit('tasks.task.actionMenu:delegate');
-										this.task.delegate().then(
-											() => {},
-											() => {
-												this.task.updateData({responsible: oldResponsible});
+										this.task.delegate()
+											.then(
+												() => {},
+												() => {
+													this.task.updateData({ responsible: oldResponsible });
+													this.eventEmitter.emit('tasks.task.actionMenu:delegate');
+												},
+											)
+											.catch(() => {
+												this.task.updateData({ responsible: oldResponsible });
 												this.eventEmitter.emit('tasks.task.actionMenu:delegate');
-											}
-										);
+											})
+										;
 									}
 								},
 							},
@@ -343,17 +353,20 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 									onClickCallback: () => new Promise((resolve) => {
 										setTimeout(() => Notify.showIndicatorLoading(), 500);
 										removeContextMenu.close();
-										resolve({closeMenu: false});
+										resolve({ closeMenu: false });
 
-										this.task.remove().then(
-											(response) => {
-												if (response.result.task === true)
-												{
-													this.eventEmitter.emit('tasks.task.actionMenu:remove');
-												}
-											},
-											() => Notify.hideCurrentIndicator()
-										);
+										this.task.remove()
+											.then(
+												(response) => {
+													if (response.result.task === true)
+													{
+														this.eventEmitter.emit('tasks.task.actionMenu:remove');
+													}
+												},
+												() => Notify.hideCurrentIndicator(),
+											)
+											.catch(() => Notify.hideCurrentIndicator())
+										;
 									}),
 								},
 								{
@@ -361,17 +374,17 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 									title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_ACTION_MENU_ACTION_REMOVE_CONFIRM_NO'),
 									onClickCallback: () => new Promise((resolve) => {
 										removeContextMenu.close();
-										resolve({closeMenu: false});
+										resolve({ closeMenu: false });
 									}),
 								},
 							],
 						});
 						void removeContextMenu.show(this.layoutWidget);
-					}
+					},
 				},
 			];
 		}
 	}
 
-	module.exports = {ActionMenu};
+	module.exports = { ActionMenu };
 });

@@ -2,16 +2,15 @@
  * @module im/messenger/lib/ui/base/item/style
  */
 jn.define('im/messenger/lib/ui/base/item/style', (require, exports, module) => {
-
-	//region ItemContainerStyles
+	// region ItemContainerStyles
 	/**
 	 * @typedef {Object} ItemContainerStyle
 	 * @property {string} flexDirection
 	 * @property {number} paddingTop
 	 * @property {number} paddingLeft
 	 */
-	//endregion
-	//region itemInfoStyles
+	// endregion
+	// region itemInfoStyles
 	/**
 	 * @typedef {Object} Title
 	 * @property {number} marginBottom
@@ -36,11 +35,12 @@ jn.define('im/messenger/lib/ui/base/item/style', (require, exports, module) => {
 	 * @typedef {Object} ItemInfoStyle
 	 * @property {MainContainer} mainContainer
 	 * @property {Title} title
+	 * @property {isYouTitle} isYouTitle
 	 * @property {SubTitle} subtitle
 	 */
 
-	//endregion
-	//region AvatarStyles
+	// endregion
+	// region AvatarStyles
 	/**
 	 * @typedef {Object} Icon
 	 * @property {number|string} width
@@ -48,9 +48,9 @@ jn.define('im/messenger/lib/ui/base/item/style', (require, exports, module) => {
 	 * @property {number} borderRadius
 	 * @property {number} marginBottom
 	 */
-	//endregion
+	// endregion
 
-	//region ItemStyle
+	// region ItemStyle
 	/**
 	 * @typedef {Object} ItemSizeStyle
 	 * @property {ItemContainerStyle} itemContainer
@@ -63,11 +63,14 @@ jn.define('im/messenger/lib/ui/base/item/style', (require, exports, module) => {
 	 * @property {ItemSizeStyle} medium
 	 * @property {ItemSizeStyle} large
 	 */
-	//endregion
+	// endregion
 
 	/** @type{ItemStyles} */
 	const styles = {
 		medium: {
+			parentView: {
+				backgroundColor: '#FFFFFF',
+			},
 			itemContainer: {
 				flexDirection: 'row',
 				marginLeft: 20,
@@ -77,12 +80,18 @@ jn.define('im/messenger/lib/ui/base/item/style', (require, exports, module) => {
 				mainContainer: {
 					marginLeft: 13,
 					flexGrow: 2,
-					maxWidth: '80%'
+					maxWidth: '80%',
 				},
 				title: {
 					marginBottom: 2,
 					fontSize: 15,
 					fontWeight: '500',
+				},
+				isYouTitle: {
+					marginLeft: 4,
+					marginBottom: 2,
+					color: '#80333333',
+					fontSize: 15,
 				},
 				subtitle: {
 					color: '#80333333',
@@ -91,6 +100,9 @@ jn.define('im/messenger/lib/ui/base/item/style', (require, exports, module) => {
 			},
 		},
 		large: {
+			parentView: {
+				backgroundColor: '#FFFFFF',
+			},
 			itemContainer: {
 				flexDirection: 'row',
 				marginLeft: 20,
@@ -107,19 +119,25 @@ jn.define('im/messenger/lib/ui/base/item/style', (require, exports, module) => {
 					marginBottom: 2,
 					fontSize: 16,
 				},
+				isYouTitle: {
+					marginLeft: 4,
+					marginBottom: 2,
+					fontSize: 16,
+					color: '#80333333',
+				},
 				subtitle: {
 					color: '#80333333',
 					fontSize: 14,
 				},
 			},
-		}
+		},
 	};
 
 	const selectedItemStyles = {
 		selectColor: '#e9e9e9',
-		unselectColor: '#ffffff'
+		unselectColor: '#ffffff',
 
 	};
 
-	module.exports = {styles, selectedItemStyles}
+	module.exports = { styles, selectedItemStyles };
 });

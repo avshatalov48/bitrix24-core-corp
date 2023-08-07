@@ -171,7 +171,7 @@ class CountableActivitySynchronizer
 				continue;
 			}
 			$key = $entityTypeId . '-' . $entityId;
-			if ($processedBindings[$key])
+			if ($processedBindings[$key] ?? false)
 			{
 				continue;
 			}

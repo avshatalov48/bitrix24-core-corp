@@ -369,6 +369,7 @@ var FormItemDateType = {
 			this.subtitle = subtitle;
 			this.sectionCode = sectionCode;
 
+			this.testId = null;
 			this.value = null;
 			this.enabled = null;
 			this.imageUrl = null;
@@ -383,6 +384,24 @@ var FormItemDateType = {
 		getId()
 		{
 			return this.id;
+		}
+
+		/**
+		 *
+		 * @param {string} testId
+		 * @returns {FormItem}
+		 */
+		setTestId(testId = '')
+		{
+			if (typeof testId !== 'string')
+			{
+				console.warn(`%cForm.setTestId: testId is not a string, action skipped. (%c${typeof testId}%c)`, "color: black;", "font-weight: bold; color: red", "color: black");
+				return this;
+			}
+
+			this.testId = testId;
+
+			return this;
 		}
 
 		/**
@@ -724,7 +743,7 @@ var FormItemDateType = {
 				params: {}
 			};
 
-			['value', 'enabled', 'imageUrl'].forEach((code) =>
+			['value', 'enabled', 'imageUrl', 'testId'].forEach((code) =>
 			{
 				if (this[code] !== null)
 				{

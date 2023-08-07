@@ -66,7 +66,7 @@ jn.define('crm/receive-payment/steps/send-message', (require, exports, module) =
 		{
 			return new ProgressBarNumber({
 				number: '3',
-				isCompleted: !!this.currentSenderCode,
+				isCompleted: Boolean(this.currentSenderCode),
 			});
 		}
 
@@ -164,6 +164,7 @@ jn.define('crm/receive-payment/steps/send-message', (require, exports, module) =
 					),
 				);
 			}
+
 			if (this.currentSenderCode === SenderCodes.SMS_PROVIDER)
 			{
 				const smsProviderData = this.senders.find((sender) => sender.code === SenderCodes.SMS_PROVIDER);
@@ -267,6 +268,7 @@ jn.define('crm/receive-payment/steps/send-message', (require, exports, module) =
 			{
 				return null;
 			}
+
 			if (this.currentSenderCode === SenderCodes.SMS_PROVIDER)
 			{
 				return new EditButton({

@@ -23,7 +23,11 @@ class ControllerTask
 					}
 				},
 				{
-					arParams: context.arParams
+					arParams: context.arParams,
+					navigation: {
+						pageNumber: context.getPageNumber(),
+						pageSize: context.getPageSize(),
+					},
 				}
 			)
 				.then(() =>

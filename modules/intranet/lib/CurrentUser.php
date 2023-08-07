@@ -11,7 +11,20 @@ namespace Bitrix\Intranet;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\UserAccessTable;
 
+/**
+ * @method int|null getId()
+ * @method mixed getLogin()
+ * @method mixed getEmail()
+ * @method mixed getFullName()
+ * @method mixed getFirstName()
+ * @method mixed getLastName()
+ * @method mixed getSecondName()
+ * @method array getUserGroups()
+ * @method string getFormattedName()
+ * @method bool canDoOperation(string $operationName)
+ */
 class CurrentUser
 {
 	private Main\Engine\CurrentUser $currentUser;
@@ -34,7 +47,12 @@ class CurrentUser
 
 	public function __call($name, $arguments)
 	{
-		return call_user_func_array(array($this->currentUser, $name), $arguments);
+		return call_user_func_array([$this->currentUser, $name], $arguments);
+	}
+
+	public function isAuthorized(): bool
+	{
+		return $this->getId() > 0;
 	}
 
 	public function isAdmin(): bool
@@ -60,5 +78,15 @@ class CurrentUser
 	{
 		return isset($this->userFields['DATE_REGISTER']) ? DateTime::createFromText($this->userFields['DATE_REGISTER'])
 			: null;
+	}
+
+	public function getPersonalPhotoId(): ?int
+	{
+		return isset($this->userFields['PERSONAL_PHOTO']) ? (int)$this->userFields['PERSONAL_PHOTO'] : null;
+	}
+
+	public function getWorkPosition(): ?string
+	{
+		return isset($this->userFields['WORK_POSITION']) ? (string)$this->userFields['WORK_POSITION'] : null;
 	}
 }

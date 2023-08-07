@@ -24,7 +24,10 @@ class State
 	 */
 	public static function getExceedingProductLimit(?int $iblockId = null): ?array
 	{
-		if ($iblockId === null)
+		if (
+			$iblockId === null
+			&& Loader::includeModule('catalog')
+		)
 		{
 			$iblockId = Crm\Product\Catalog::getDefaultId();
 		}
@@ -45,6 +48,39 @@ class State
 		}
 
 		return self::checkIblockLimit($iblockId);
+	}
+
+	public static function getProductLimitState(?int $iblockId = null): ?array
+	{
+		if (
+			$iblockId === null
+			&& Loader::includeModule('catalog')
+		)
+		{
+
+			$iblockId = Crm\Product\Catalog::getDefaultId();
+		}
+
+		if ($iblockId === null || $iblockId <= 0)
+		{
+			return null;
+		}
+
+		if (!ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			return null;
+		}
+
+		if (!self::checkIblockId($iblockId))
+		{
+			return null;
+		}
+
+		return [
+			'LIMIT_NAME' => Feature::getProductLimitVariable(),
+			'LIMIT_VALUE' => Feature::getProductLimit(),
+			'CURRENT_VALUE' => self::getElementCount($iblockId),
+		];
 	}
 
 	/**
@@ -127,14 +163,16 @@ class State
 		}
 		if (!isset(self::$iblockList[$iblockId]))
 		{
-			$result = true;
-			if (!ModuleManager::isModuleInstalled('bitrix24'))
+			$result = false;
+			if (
+				ModuleManager::isModuleInstalled('bitrix24')
+				&& Loader::includeModule('catalog')
+			)
 			{
-				$result = false;
-			}
-			if ($iblockId !== (int)Crm\Product\Catalog::getDefaultId())
-			{
-				$result = false;
+				if ($iblockId === (int)Crm\Product\Catalog::getDefaultId())
+				{
+					$result = true;
+				}
 			}
 			self::$iblockList[$iblockId] = $result;
 		}

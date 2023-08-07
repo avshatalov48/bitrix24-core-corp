@@ -526,6 +526,11 @@ BX.CRM.Kanban.Item.prototype = {
 						? this.data.fields[i].value.join(delimiter)
 						: this.data.fields[i].value
 					;
+
+					if (params['html'].includes('<b>'))
+					{
+						params.props.className = params.props.className + ' --normal-weight';
+					}
 				}
 				else
 				{

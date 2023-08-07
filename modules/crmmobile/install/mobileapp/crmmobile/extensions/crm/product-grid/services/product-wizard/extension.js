@@ -31,7 +31,7 @@ jn.define('crm/product-grid/services/product-wizard', (require, exports, module)
 		open(productId, productName)
 		{
 			ComponentHelper.openLayout({
-				name: 'catalog.product.wizard',
+				name: 'catalog:catalog.product.wizard',
 				componentParams: {
 					mode: WizardMode.EXISTED,
 					type: WizardType.CRM,
@@ -74,6 +74,7 @@ jn.define('crm/product-grid/services/product-wizard', (require, exports, module)
 		on(eventName, callback)
 		{
 			BX.addCustomEvent(eventName, callback);
+
 			return this;
 		}
 	}

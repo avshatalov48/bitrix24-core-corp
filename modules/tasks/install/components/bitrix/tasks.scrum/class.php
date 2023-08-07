@@ -1601,6 +1601,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		$entityId = (is_numeric($post['entityId'] ?? null) ? (int) $post['entityId'] : 0);
 		$pageNumber = (is_numeric($post['pageNumber'] ?? null) ? (int) $post['pageNumber'] : 1);
 		$pageSize = (is_numeric($post['pageSize'] ?? null) ? (int) $post['pageSize'] : 1);
+		$withoutNav = (isset($post['withoutNav']) && $post['withoutNav'] === 'Y');
 
 		$entityService = new EntityService();
 
@@ -1617,11 +1618,9 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			return null;
 		}
 
-		return $this->getEntityItems(
-			$groupId,
-			[$entityId],
-			$this->getNavToItems($entityId, $pageNumber, $pageSize)
-		);
+		$nav = $withoutNav ? null : $this->getNavToItems($entityId, $pageNumber, $pageSize);
+
+		return $this->getEntityItems($groupId, [$entityId], $nav);
 	}
 
 	public function getEntityCountersAction()

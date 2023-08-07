@@ -462,12 +462,18 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 				'IS_MEETING' => true,
 				'MEETING_HOST' => $arFields['OWNER_ID'],
 				'MEETING' => array(
-					'HOST_NAME' => CCalendar::GetUserName($arFields['OWNER_ID'])
+					'HOST_NAME' => CCalendar::GetUserName($arFields['OWNER_ID']),
+					'ALLOW_INVITE' => null,
+					'HIDE_GUESTS' => null,
+					'MEETING_CREATOR' => null,
 				),
 				'ATTENDEES' => array_keys($arFields['USERS']),
+				'SKIP_TIME' => null,
+				'TZ_FROM' => null,
+				'DT_SKIP_TIME' => 'N',
 			);
 
-			if($arFields['CURRENT_STATE'] == CMeeting::STATE_CLOSED)
+			if(($arFields['CURRENT_STATE'] ?? null) == CMeeting::STATE_CLOSED)
 			{
 				$arEventFields['DT_TO'] = MakeTimeStamp($arFields['DATE_FINISH']) > MakeTimeStamp($arFields['DATE_START']) ? $arFields['DATE_FINISH'] : $arEventFields['DT_TO'];
 			}
@@ -610,8 +616,10 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 		if (self::IsNewCalendar())
 		{
 			$arEvent = CCalendarEvent::GetByID($eventId);
-			if ($arEvent['LOCATION'])
+			if (is_array($arEvent) && $arEvent['LOCATION'])
+			{
 				$arEvent['LOCATION'] = CCalendar::ParseLocation($arEvent['LOCATION']);
+			}
 			return $arEvent;
 		}
 	}
@@ -695,15 +703,15 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 				if (is_array($arFrom))
 				{
 					$fileLink = '/bitrix/tools/ajax_meeting.php?fileId='.$arFile['ID'];
-					if ($arFrom['REPORT'])
+					if ($arFrom['REPORT'] ?? null)
 					{
 						$fileLink .= '&reportId=' . (int)$arFrom['REPORT'];
 					}
-					elseif ($arFrom['ITEM'])
+					elseif ($arFrom['ITEM'] ?? null)
 					{
 						$fileLink .= '&itemId=' . (int)$arFrom['ITEM'];
 					}
-					elseif ($arFrom['MEETING'])
+					elseif ($arFrom['MEETING'] ?? null)
 					{
 						$fileLink .= '&meetingId=' . (int)$arFrom['MEETING'];
 					}

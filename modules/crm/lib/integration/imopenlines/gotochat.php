@@ -2,7 +2,7 @@
 
 namespace Bitrix\Crm\Integration\ImOpenLines;
 
-use Bitrix\Bizproc\Error;
+use Bitrix\Main\Error;
 use Bitrix\Crm\Integration\NotificationsManager;
 use Bitrix\Crm\Integration\SmsManager;
 use Bitrix\Crm\MessageSender\Channel;
@@ -54,12 +54,13 @@ class GoToChat
 			return $result;
 		}
 
+		$url = $this->getUrl($lineId, $to);
 		$senderChannelId = $channel->getSender()::getSenderCode();
 
 		if ($senderChannelId === SmsManager::getSenderCode())
 		{
 			$facilitator = (new \Bitrix\Crm\MessageSender\SendFacilitator\Sms($channel))
-				->setMessageBody($this->getSmsText($lineId, $to))
+				->setMessageBody($this->getSmsText($url))
 			;
 		}
 		elseif ($senderChannelId === NotificationsManager::getSenderCode())
@@ -67,7 +68,7 @@ class GoToChat
 			$facilitator = (new \Bitrix\Crm\MessageSender\SendFacilitator\Notifications($channel))
 				->setTemplateCode(self::NOTIFICATIONS_MESSAGE_CODE)
 				->setPlaceholders([
-					'URL' => $this->getUrl($lineId, $to),
+					'URL' => $url,
 				])
 			;
 		}
@@ -81,16 +82,19 @@ class GoToChat
 		return $facilitator
 			->setFrom($from)
 			->setTo($to)
+			->setAdditionalFields([
+				'HIGHLIGHT_URL' => $url,
+			])
 			->send()
 		;
 	}
 
-	private function getSmsText(string $lineId, Channel\Correspondents\To $to): string
+	private function getSmsText(string $url): string
 	{
-		return Loc::getMessage('CRM_IMOL_INVITATION_TEXT', ['#URL#' => $this->getUrl($lineId, $to)]);
+		return Loc::getMessage('CRM_IMOL_INVITATION_TEXT', ['#URL#' => $url]);
 	}
 
-	private function getUrl(string $lineId,Channel\Correspondents\To $to): string
+	private function getUrl(string $lineId, Channel\Correspondents\To $to): string
 	{
 		$bindings = [];
 		$bindings[] = $to->getRootSource()->toArray();

@@ -89,12 +89,12 @@ abstract class Disk extends Base
 
 	/**
 	 * Checks $user is current user or not.
-	 * @param mixed $user User for check (may be userId, \CAllUser).
+	 * @param mixed $user User for check (may be userId, \CUser).
 	 * @return bool
 	 */
 	private function isCurrentUser($user)
 	{
 		global $USER;
-		return $USER instanceof \CAllUser && $USER->getId() && $USER->getId() == UserModel::resolveUserId($user);
+		return $USER instanceof \CUser && $USER->getId() && $USER->getId() == UserModel::resolveUserId($user);
 	}
 }

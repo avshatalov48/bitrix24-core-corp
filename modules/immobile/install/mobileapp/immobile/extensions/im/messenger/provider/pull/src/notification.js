@@ -1,11 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/provider/pull/notification
  */
 jn.define('im/messenger/provider/pull/notification', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 	const { PullHandler } = require('im/messenger/provider/pull/base');
@@ -34,14 +30,14 @@ jn.define('im/messenger/provider/pull/notification', (require, exports, module) 
 				const message = params.originalTag.split('|');
 				const dialogType = message[2];
 				const chatId = message[3];
-				const dialogId = dialogType === 'P' ? chatId : 'chat' + chatId;
+				const dialogId = dialogType === 'P' ? chatId : `chat${chatId}`;
 
 				const isSameDialog = dialogId === dialog.data.DIALOG_ID.toString();
 				if (isSameDialog)
 				{
 					BX.postComponentEvent('chatbackground::task::action', [
 						'readNotification',
-						'readNotification|' + params.id,
+						`readNotification|${params.id}`,
 						{
 							action: 'Y',
 							id: params.id,
@@ -64,7 +60,7 @@ jn.define('im/messenger/provider/pull/notification', (require, exports, module) 
 				Notifier.notify({
 					dialogId: 'notify',
 					title: Loc.getMessage('IMMOBILE_PULL_HANDLER_NOTIFICATION_TITLE'),
-					text: (userName ? userName + ': ' : '') + purifiedNotificationText,
+					text: (userName ? `${userName}: ` : '') + purifiedNotificationText,
 					avatar: params.userAvatar ? params.userAvatar : '',
 				});
 			}

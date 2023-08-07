@@ -78,7 +78,7 @@ $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? \Bitrix\Tasks\U
 // in the middle of the paleozoic era we could get tasks with description in HTML format. now we have to live with that
 $bbCode = isset($arResult['DATA']['TASK']['DESCRIPTION_IN_BBCODE']) ? $arResult['DATA']['TASK']['DESCRIPTION_IN_BBCODE'] == 'Y' : true;
 
-$description = (string) $arResult['DATA']['TASK']['DESCRIPTION'] != '' ? $arResult['DATA']['TASK']['DESCRIPTION'] : '';
+$description = (string) ($arResult['DATA']['TASK']['DESCRIPTION'] ?? null) != '' ? $arResult['DATA']['TASK']['DESCRIPTION'] : '';
 /*
 if(!$bbCode && $description != '')
 {
@@ -90,7 +90,7 @@ if(!$bbCode && $description != '')
 // make pictures inserted to the text visible
 $editorProps = array();
 $ufCode = \Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode();
-if(is_array($arResult['AUX_DATA']['USER_FIELDS'][$ufCode]))
+if(is_array($arResult['AUX_DATA']['USER_FIELDS'][$ufCode] ?? null))
 {
 	$editorProps[$ufCode] = $arResult['AUX_DATA']['USER_FIELDS'][$ufCode];
 }
@@ -103,6 +103,12 @@ $buttons = array(
 	//(($arResult["allowVideo"] == "Y") ? "InputVideo" : ""),
 	//"InputTag",
 );
+
+$htmlButtons = [
+	"Checklist" => '<span data-bx-id="task-edit-toggler" data-target="checklist">'.Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_CHECKLIST').'</span>',
+	"ToCheckList" => '<span data-bx-id="task-edit-to-checklist">' . Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_TO_CHECKLIST') . '</span>',
+];
+
 if($bbCode)
 {
 	$buttons[] = "Quote";
@@ -112,7 +118,7 @@ $buttons[] = "Checklist";
 $buttons[] = "ToCheckList";
 
 $arResult['AUX_TEMPLATE_DATA']['EDITOR_PARAMETERS'] = array(
-	"FORM_ID" => 'task-form-'.$arResult['TEMPLATE_DATA']['ID'],
+	"FORM_ID" => 'task-form',
 	"SHOW_MORE" => "N",
 	"PARSER" => array("Bold", "Italic", "Underline", "Strike", "ForeColor",
 		"FontList", "FontSizeList", "RemoveFormat", "Quote", "Code",
@@ -130,10 +136,7 @@ $arResult['AUX_TEMPLATE_DATA']['EDITOR_PARAMETERS'] = array(
 		"MentionUser",
 	),
 	"BUTTONS" => $buttons,
-	"BUTTONS_HTML" => array(
-		"Checklist" => '<span data-bx-id="task-edit-toggler" data-target="checklist">'.Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_CHECKLIST').'</span>',
-		"ToCheckList" => '<span data-bx-id="task-edit-to-checklist">' . Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_TO_CHECKLIST') . '</span>',
-	),
+	"BUTTONS_HTML" => $htmlButtons,
 	"FILES" => Array(
 		"VALUE" => array(),
 		"DEL_LINK" => '',
@@ -176,7 +179,7 @@ $arResult['AUX_TEMPLATE_DATA']['EDITOR_PARAMETERS'] = array(
 	//"ALLOW_EMAIL_INVITATION" => ($arResult["ALLOW_EMAIL_INVITATION"] ? 'Y' : 'N')
 );
 
-if(is_array($arResult['AUX_DATA']['USER_FIELDS']))
+if(is_array($arResult['AUX_DATA']['USER_FIELDS'] ?? null))
 {
 	foreach($arResult['AUX_DATA']['USER_FIELDS'] as &$uf)
 	{
@@ -264,7 +267,7 @@ if ($arParams["SET_NAVCHAIN"])
 {
 	if ($taskType == "user")
 	{
-		$APPLICATION->AddChainItem(CUser::FormatName($arParams["NAME_TEMPLATE"], $arResult['DATA']['USER'][$arParams["USER_ID"]]), CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_PROFILE"], array("user_id" => $arParams["USER_ID"])));
+		$APPLICATION->AddChainItem(CUser::FormatName($arParams["NAME_TEMPLATE"], $arResult['DATA']['USER'][$arParams["USER_ID"]] ?? null), CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_PROFILE"], array("user_id" => $arParams["USER_ID"])));
 		$APPLICATION->AddChainItem($sTitle);
 	}
 	else
@@ -491,14 +494,14 @@ if(Type::isIterable($arResult['DATA']['TASK'][$code] ?? null))
 unset($item);
 
 // current user
-$arResult['AUX_DATA']['USER']['DATA'] = \Bitrix\Tasks\Util\User::extractPublicData($arResult['AUX_DATA']['USER']['DATA']);
+$arResult['AUX_DATA']['USER']['DATA'] = \Bitrix\Tasks\Util\User::extractPublicData($arResult['AUX_DATA']['USER']['DATA'] ?? null);
 
 $arResult['DATA']['CURRENT_TASKS'] = [
 	'DEPENDS' => [],
 	'PREVIOUS' => [],
 	'PARENT' => []
 ];
-$relatedTasks = $arResult['DATA']['RELATED_TASK'];
+$relatedTasks = $arResult['DATA']['RELATED_TASK'] ?? null;
 
 if (
 	isset($arResult['DATA']['TASK']['SE_RELATEDTASK'])

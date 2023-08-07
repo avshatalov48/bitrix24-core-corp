@@ -5,6 +5,7 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 	const { AudioPlayer: Player } = require('native/media');
 	const { PlayButton } = require('layout/ui/audio-player/play-button');
 	const { SpeedButton } = require('layout/ui/audio-player/speed-button');
+	const { AudioPlayerTimings } = require('layout/ui/audio-player/timings');
 	const { EventEmitter } = require('event-emitter');
 	const { RangeSlider } = require('layout/ui/range-slider');
 
@@ -32,6 +33,7 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 			this.handleExternalChangePlay = this.handleExternalEvent(this.handleExternalChangePlay);
 			this.handleExternalCancel = this.handleExternalEvent(this.handleExternalCancel);
 			this.handleExternalSetSeek = this.handleExternalEvent(this.handleExternalSetSeek);
+			this.handleExternalChangeSpeed = this.handleExternalEvent(this.handleExternalChangeSpeed);
 			this.onPlay = this.onPlay.bind(this);
 			this.onLoadAudio = this.onLoadAudio.bind(this);
 		}
@@ -62,6 +64,7 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 			this.customEventEmitter.on('TopPanelAudioPlayer::onChangePlay', this.handleExternalChangePlay);
 			this.customEventEmitter.on('TopPanelAudioPlayer::onCancel', this.handleExternalCancel);
 			this.customEventEmitter.on('TopPanelAudioPlayer::onSetSeek', this.handleExternalSetSeek);
+			this.customEventEmitter.on('TopPanelAudioPlayer::onChangeSpeed', this.handleExternalChangeSpeed);
 		}
 
 		/**
@@ -110,6 +113,11 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 			currentTime = Math.max(currentTime, 0);
 
 			this.player.setSeek(currentTime);
+		}
+
+		handleExternalChangeSpeed({ speed })
+		{
+			this.player.setSpeed(speed);
 		}
 
 		onPlayerReady(duration)
@@ -172,20 +180,56 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 
 		render()
 		{
+			return this.props.compact ? this.renderCompactLayout() : this.renderDefaultLayout();
+		}
+
+		renderCompactLayout()
+		{
 			const { duration, play, isLoading } = this.state;
 
 			return View(
 				{
 					style: {
 						flexDirection: 'row',
+						alignItems: 'center',
+						height: 24,
 					},
+					onClick: this.onPlay,
 				},
 				PlayButton({
 					play,
-					onClick: this.onPlay,
-					onLoadAudio: this.onLoadAudio,
 					isLoading,
 					duration,
+					compact: true,
+					onClick: this.onPlay,
+					onLoadAudio: this.onLoadAudio,
+				}),
+				this.player && new AudioPlayerTimings({
+					play,
+					duration,
+					currentTime: this.currentTime,
+					player: this.player,
+					onClick: this.onPlay,
+				}),
+			);
+		}
+
+		renderDefaultLayout()
+		{
+			const { duration, play, isLoading } = this.state;
+
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+					}
+				},
+				PlayButton({
+					play,
+					isLoading,
+					duration,
+					onClick: this.onPlay,
+					onLoadAudio: this.onLoadAudio,
 				}),
 				new RangeSlider({
 					uid: this.uid,

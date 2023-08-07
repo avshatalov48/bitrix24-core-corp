@@ -74,6 +74,10 @@ class Comment extends Activity
 		$model = $this->getAssociatedEntityModel();
 		$data = $model->get('SETTINGS');
 		$task = TaskObject::getObject($data['TASK_ID'], true);
+		if (is_null($task))
+		{
+			return null;
+		}
 
 		return [
 			'Open' => $this->getOpenButton($model, $task)

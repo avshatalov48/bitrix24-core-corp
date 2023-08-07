@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Activity\Mail;
 
+use Bitrix\Crm\ActivityTable;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main;
@@ -118,13 +119,17 @@ class Message
 
 	protected static function getSenderList(): array
 	{
-		$mailboxes = \Bitrix\Main\Mail\Sender::prepareUserMailboxes(null, true);
+		$mailboxes = \Bitrix\Main\Mail\Sender::prepareUserMailboxes();
 		$senders = [];
 
 		foreach ($mailboxes as $sender)
 		{
-			$sender['isUser'] = true;
-			$senders[] = self::buildContact($sender);
+			$senders[] = self::buildContact([
+				'email' => $sender['email'] ?? '',
+				'name' => $sender['name'] ?? '',
+				'id' => $sender['userId'] ?? 0,
+				'isUser' => true,
+			]);
 		}
 
 		/*
@@ -258,7 +263,42 @@ class Message
 		return false;
 	}
 
-	public static function getHeader(array $activity, $convertContactsTypeForBinding = true): Main\Result
+	public static function getSubjectById(int $id): string
+	{
+		$activity = ActivityTable::getList([
+			'select' => [
+				'SUBJECT'
+			],
+			'filter' => [
+				'=ID' => $id
+			],
+			'limit' => 1,
+		])->fetch();
+
+		if (isset($activity['SUBJECT']))
+		{
+			return $activity['SUBJECT'];
+		}
+
+		return '';
+	}
+
+	public static function getAssociatedUser(array $activity)
+	{
+		$header = static::getHeader($activity)->getData();
+		$employeeEmails = $header['employeeEmails'];
+
+		if (isset($employeeEmails[0]['email']))
+		{
+			return $employeeEmails[0];
+		}
+
+		return [
+			'id' => 0,
+		];
+	}
+
+	public static function getHeader(array $activity, $showPortalContactNames = true): Main\Result
 	{
 		$header = [];
 		$headerResult = new Main\Result();
@@ -289,39 +329,34 @@ class Message
 			self::getSenderList()
 		);
 
-		$communicationList = \CCrmActivity::GetCommunicationList(
-			[],
-			['ACTIVITY_ID' => $activity['ID']],
-			false,
-			[],
-		);
-
-		while ($item = $communicationList->fetch())
+		if ($showPortalContactNames)
 		{
-			$item['ENTITY_SETTINGS'] = isset($item['ENTITY_SETTINGS']) && $item['ENTITY_SETTINGS'] !== ''
-				? unserialize($item['ENTITY_SETTINGS'], ['allowed_classes' => false]) : [];
-			\CAllCrmActivity::PrepareCommunicationInfo($item, null, false);
-			$contacts[$item['VALUE']] = $item;
+			$communicationList = \CCrmActivity::GetCommunicationList(
+				[],
+				['ACTIVITY_ID' => $activity['ID']],
+				false,
+				[],
+			);
+
+			while ($item = $communicationList->fetch())
+			{
+				$item['ENTITY_SETTINGS'] = isset($item['ENTITY_SETTINGS']) && $item['ENTITY_SETTINGS'] !== ''
+					? unserialize($item['ENTITY_SETTINGS'], ['allowed_classes' => false]) : [];
+				\CAllCrmActivity::PrepareCommunicationInfo($item, null, false);
+				$contacts[$item['VALUE']] = $item;
+			}
 		}
 
-		if (isset($activity['SETTINGS']['EMAIL_META']) && !empty($activity['SETTINGS']['EMAIL_META']))
+		if (!empty($activity['SETTINGS']['EMAIL_META']))
 		{
 			$activityEmailMeta = $activity['SETTINGS']['EMAIL_META'];
 			$ownerEmail = false;
-
 			if (isset($activityEmailMeta['__email']))
 			{
 				$ownerEmail = trim($activityEmailMeta['__email']);
+			}
 
-				/* @TODO: replace with: the message owner's mailbox
-				 * Since clearing the fields when forwarding a letter is required only of  the owner's mailbox
-				 */
-				$header['employeeEmails'] = self::parseContacts($ownerEmail, $contacts);
-			}
-			else
-			{
-				$header['employeeEmails'] = [];
-			}
+			$foundContacts = [];
 
 			foreach ($activityEmailMeta as $key => $value)
 			{
@@ -385,10 +420,45 @@ class Message
 					}
 				}
 				$header[$key] = $contactsFromField;
+				if (!empty($contactsFromField))
+				{
+					$foundContacts[] = $contactsFromField;
+				}
+			}
+
+			if (isset($activityEmailMeta['__email']))
+			{
+				$ownerEmail = trim($activityEmailMeta['__email']);
+
+				$header['employeeEmails'] = self::parseContacts(
+					$ownerEmail,
+					array_merge(
+						$contacts,
+						static::convertContactListToAssociativeList(
+							array_map(function($item) {
+								return $item[0];
+							}, $foundContacts)
+						)
+					)
+				);
+			}
+			else
+			{
+				$header['employeeEmails'] = [];
 			}
 		}
 
 		$headerResult->setData($header);
 		return $headerResult;
+	}
+
+	/*
+		Example:
+		Input data: '[['email'=> name@example.com, name='James',...],...]
+		Output data: ['name@example.com'=>['email'=> name@example.com, name='James',...],...]
+	*/
+	private static function convertContactListToAssociativeList($array): array
+	{
+		return empty($array) ? [] : array_combine(array_column($array, 'email'), $array);
 	}
 }

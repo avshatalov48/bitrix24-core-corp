@@ -386,7 +386,7 @@ final class Diag
 	}
 
 	/**
-	 * @return array|bool|\CAllUser|\CUser
+	 * @return array|bool|\CUser
 	 */
 	private function getUser()
 	{

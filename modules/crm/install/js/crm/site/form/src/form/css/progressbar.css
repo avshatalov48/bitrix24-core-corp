@@ -1,0 +1,43 @@
+.b24-form-loader-progress-wrapper {
+	width: 100%;
+	height: 100%;
+}
+
+.b24-form-loader-progress {
+	position: absolute;
+	display: flex;
+	width: 80px;
+	top: 50%;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+.b24-form-loader-progress-value {
+	display: flex;
+	flex-flow: row nowrap;
+	align-items: center;
+	margin: 0 auto;
+	color: var(--b24-primary-color);
+	font-weight: bolder;
+	font-size: 30px;
+	transform: translateY(-50%);
+}
+
+.b24-form-loader-progress-value::after {
+	content: "%";
+	font-size: 20px;
+}
+
+.b24-form-loader-progress-time-left {
+	position: absolute;
+	display: flex;
+	top: 75%;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+.b24-form-loader-progress-time-left-value {
+	margin: 0 auto;
+	color: lightgrey;
+	font-weight: bold;
+}

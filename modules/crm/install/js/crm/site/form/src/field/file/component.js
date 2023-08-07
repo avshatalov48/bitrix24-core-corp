@@ -7,6 +7,7 @@ const FieldFileItem = {
 	{
 		return {
 			errorTextTypeFile: null,
+			isLoading: false,
 		};
 	},
 	template: `
@@ -25,13 +26,22 @@ const FieldFileItem = {
 					<div style="display: none;" class="b24-form-control-file-item-preview-image-popup">
 						<img>
 					</div>
+					<span hidden="hidden" v-show="file.size" :v-bind="file.size" class="b24-form-control-file-item-size-text">
+						{{ fileSize }} {{ field.messages.get('fieldFileSizeUnitMb') }}
+					</span>
 				</div>
 				<div @click.prevent="removeFile" class="b24-form-control-file-item-remove"></div>
+			</div>
+			<div
+				class="b24-form-control-file-item-empty"
+				v-show="isLoading"
+			>
+				<span class="b24-form-control-string">{{ field.messages.get('fieldFileLoading') }}...</span>
 			</div>
 			<div 
 				class="b24-form-control-file-item-empty"
 				:class="{'b24-form-control-alert': !!errorTextTypeFile}"
-				v-show="!file.content" 
+				v-show="!file.content && !isLoading" 
 			>
 				<label class="b24-form-control">
 					{{ field.messages.get('fieldFileChoose') }}
@@ -77,7 +87,7 @@ const FieldFileItem = {
 		},
 		hasIcon ()
 		{
-			return this.file.type.split('/')[0] === 'image';
+			return this.file.type.split('/')[0] === 'image' && this.file.isContentFull;
 		},
 		fileIcon ()
 		{
@@ -86,6 +96,13 @@ const FieldFileItem = {
 					: null
 			);
 		},
+		fileSize()
+		{
+			const kb = this.file.size / 1024;
+			const mb = kb / 1024;
+
+			return mb.toFixed(2);
+		}
 	},
 	methods: {
 		setFiles()
@@ -98,10 +115,20 @@ const FieldFileItem = {
 				return;
 			}
 
+			const fileSize = file.size;
+			if (typeof this.field.maxSizeMb == "number" && this.field.maxSizeMb > 0)
+			{
+				if (this.field.getSummaryFilesSize() + fileSize > this.field.maxSizeMb * (1024 * 1024))
+				{
+					this.errorTextTypeFile = this.field.messages.get('fieldSummaryFilesSizeExceeded').replace('%summaryMaxFileSize%', this.field.maxSizeMb);
+					return;
+				}
+			}
+
 			const fileType = file.type || '';
 			const fileExt = (file.name || '').split('.').pop();
 
-			let acceptTypes = this.field.getAcceptTypes()
+			let acceptTypes = this.field.getAcceptTypes();
 			acceptTypes = acceptTypes ? acceptTypes.split(',') : [];
 			if (file && acceptTypes.length > 0)
 			{
@@ -143,22 +170,49 @@ const FieldFileItem = {
 			else
 			{
 				let reader = new FileReader();
+
+				const newValue = {
+					name: file.name,
+					size: file.size,
+					file,
+				};
+
 				reader.onloadend = () => {
 					const result = reader.result.split(';');
+
 					this.value = {
-						name: file.name,
-						size: file.size,
+						...newValue,
 						type: result[0].split(':')[1],
 						content: result[1].split(',')[1],
 					};
 					this.$refs.inputFiles.value = null;
+					this.isLoading = false;
+					this.field.refresh();
 				};
-				reader.readAsDataURL(file);
+
+				this.isLoading = true;
+
+				const chunkSize = 30 * 1024 * 1024;
+
+				// Reading only first chunk
+				if(file.size > chunkSize)
+				{
+					newValue.isContentFull = false;
+
+					const blob = file.slice(0, chunkSize);
+					reader.readAsDataURL(blob);
+				}
+				else
+				{
+					newValue.isContentFull = true;
+					reader.readAsDataURL(file);
+				}
 			}
 		},
 		removeFile() {
 			this.value = null;
 			this.field.removeItem(this.itemIndex);
+			this.field.refresh();
 			this.$refs.inputFiles.value = null;
 		}
 	}
@@ -174,6 +228,11 @@ const FieldFile = {
 			<div class="b24-form-control-label">
 				{{ field.label }}
 				<span v-show="field.required" class="b24-form-control-required">*</span>
+				<div hidden="hidden" v-show="field.maxSizeMb && field.summarySize >= 0" :v-bind="field.summarySize" class="b24-form-control-field-file-summary-size">
+					<span class="b24-form-control-field-file-summary-size-text">
+						{{ summarySize }} / {{field.maxSizeMb}} {{ field.messages.get('fieldFileSizeUnitMb') }}
+					</span>
+				</div>
 			</div>
 			<div class="b24-form-control-filelist">
 				<field-file-item
@@ -197,7 +256,10 @@ const FieldFile = {
 		}
 	},
 	computed: {
-
+		summarySize() {
+			const summary = this.field.summarySize;
+			return (summary / (1024 * 1024)).toFixed(2);
+		}
 	},
 	methods: {
 

@@ -193,7 +193,6 @@ class EpicSelectorProvider extends BaseProvider
 			'avatarOptions' => [
 				'bgColor' => $epic->getColor(),
 				'bgImage' => 'none',
-				'borderRadius' => '12px',
 			],
 		]);
 	}

@@ -1339,6 +1339,10 @@ a.crm-kanban-sidepanel:hover {
 	word-break: break-word;
 }
 
+.crm-kanban-item-fields-item-value.--normal-weight{
+	font-weight: var(--ui-font-weight-normal);
+}
+
 .bx-firefox .crm-kanban-item-fields-item-value {
 	max-height: 51px;
 	position: relative;
@@ -1600,10 +1604,6 @@ a.crm-kanban-sidepanel:hover {
 .crm-kanban-item-fields-item-value .fields.date,
 .crm-kanban-item-fields-item-value .fields.datetime {
 	display: inline;
-}
-
-.crm-kanban-item-label-uppercase{
-	text-transform: uppercase;
 }
 
 .crm-kanban-popup-field{

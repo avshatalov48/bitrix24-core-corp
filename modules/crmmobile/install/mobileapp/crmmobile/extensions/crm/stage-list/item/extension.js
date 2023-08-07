@@ -284,6 +284,7 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 		render()
 		{
 			const { stage } = this.props;
+
 			return View(
 				{
 					style: styles.wrapper(this.isStageEnabled()),

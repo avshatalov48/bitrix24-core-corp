@@ -1,17 +1,14 @@
-/* eslint-disable bitrix-rules/no-pseudo-private */
-
 /**
  * @module im/messenger/lib/user-manager
  */
 jn.define('im/messenger/lib/user-manager', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { DialogType, UserExternalType } = require('im/messenger/const');
 
 	const AVAILABLE_EXTERNAL_AUTH_IDS = new Set([
 		UserExternalType.default,
 		UserExternalType.bot,
-		UserExternalType.call
+		UserExternalType.call,
 	]);
 
 	/**
@@ -31,7 +28,7 @@ jn.define('im/messenger/lib/user-manager', (require, exports, module) => {
 				avatar: user.avatar,
 				color: user.color,
 				name: user.name,
-				type: DialogType.user
+				type: DialogType.user,
 			};
 		}
 
@@ -44,7 +41,7 @@ jn.define('im/messenger/lib/user-manager', (require, exports, module) => {
 
 			const filteredUsers = this.filterUsers(users);
 			const dialogues = [];
-			filteredUsers.forEach(user => {
+			filteredUsers.forEach((user) => {
 				dialogues.push(UserManager.getDialogForUser(user));
 			});
 
@@ -56,7 +53,7 @@ jn.define('im/messenger/lib/user-manager', (require, exports, module) => {
 
 		filterUsers(users)
 		{
-			return users.filter(user => {
+			return users.filter((user) => {
 				const userExternalAuthId = user.externalAuthId || user.external_auth_id;
 
 				return AVAILABLE_EXTERNAL_AUTH_IDS.has(userExternalAuthId);

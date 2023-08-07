@@ -24,7 +24,7 @@ jn.define('crm/timeline/action', (require, exports, module) => {
 		{
 			const { type } = params;
 			const factory = this;
-			const props = { ...params, factory};
+			const props = { ...params, factory };
 
 			if (SupportedActions[type])
 			{
@@ -37,6 +37,7 @@ jn.define('crm/timeline/action', (require, exports, module) => {
 		static execute(params = {})
 		{
 			const action = TimelineAction.make(params);
+
 			return action.execute();
 		}
 	}

@@ -66,11 +66,6 @@ final class Controller extends FactoryBasedController
 		return self::$instance;
 	}
 
-	public function onTaskUpdated(Bindings $bindings, array $timelineParams): void
-	{
-		$this->handleTaskEvent(CategoryType::TASK_UPDATED, $bindings, $timelineParams);
-	}
-
 	public function onTaskCommentDeleted(Bindings $bindings, array $timelineParams): void
 	{
 		$this->refreshCommentActivity($bindings, $timelineParams);
@@ -100,6 +95,17 @@ final class Controller extends FactoryBasedController
 		}
 
 		$this->handleTaskEvent(CategoryType::DESCRIPTION_CHANGED, $bindings, $timelineParams);
+	}
+
+	public function onTaskPriorityChanged(Bindings $bindings, array $timelineParams): void
+	{
+		[$bindings, $timelineParams] = $this->prepareParams($bindings, $timelineParams);
+		if ($bindings->isEmpty())
+		{
+			return;
+		}
+
+		$this->handleTaskEvent(CategoryType::PRIORITY_CHANGED, $bindings, $timelineParams);
 	}
 
 	public function onTaskDisapproved(Bindings $bindings, array $timelineParams): void

@@ -608,7 +608,10 @@ class Connector
 				'ID' => $messageId,
 				'TEXT' => $messageData['MESSAGE'],
 			];
-			if (Loader::includeModule('im'))
+			if (
+				!empty($messageData['MESSAGE'])
+				&& Loader::includeModule('im')
+			)
 			{
 				$message['PLAIN_TEXT'] = Text::removeBbCodes($messageData['MESSAGE']);
 			}

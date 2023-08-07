@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Integration\Main\UISelector;
 
 use Bitrix\Crm\Filter\ItemDataProvider;
 use Bitrix\Crm\Filter\ItemSettings;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Item\Dynamic;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\DB;
@@ -131,6 +132,11 @@ class CrmDynamics extends CrmEntity
 			$parameters = [
 				'order' => ['ID' => 'DESC'],
 				'limit' => 10,
+				'select' => [
+					Item::FIELD_NAME_ID,
+					Item::FIELD_NAME_TITLE,
+					Item::FIELD_NAME_CREATED_TIME,
+				]
 			];
 			if (!empty($itemIds))
 			{

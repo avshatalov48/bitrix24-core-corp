@@ -17,14 +17,14 @@ jn.define('im/messenger/controller/search/base', (require, exports, module) => {
 		{
 			if (!Type.isFunction(collectionView.setItems))
 			{
-				throw new Error('The passed object has no setItems method');
+				throw new TypeError('The passed object has no setItems method');
 			}
 			this.collectionView = collectionView;
 			this.adapter = this.getAdapter();
 			this.selector = new DialogSelector({
 				view: this.adapter,
 				entities: this.getSearchEntities(),
-				onRecentResult: () => {}
+				onRecentResult: () => {},
 			});
 		}
 
@@ -49,16 +49,15 @@ jn.define('im/messenger/controller/search/base', (require, exports, module) => {
 		 */
 		setSearchText(text)
 		{
-			text = text.trim();
-			if (text === '')
+			const searchText = text.trim();
+			if (searchText === '')
 			{
 				return;
 			}
 
-			this.adapter.onUserTypeText({text: text});
+			this.adapter.onUserTypeText({ text: searchText });
 		}
 	}
-
 
 	module.exports = { BaseSearchController };
 });

@@ -1286,7 +1286,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 		$this->arResult['arToAllRights'] = \IntranetConfigsComponent::processOldAccessCodes($arToAllRights);
 
 		// im
-		if (COption::GetOptionString("im", "im_general_chat_new_rights") !== 'Y')
+		if (!method_exists('\Bitrix\Im\V2\Chat\GeneralChat', 'getRightsForIntranetConfig'))
 		{
 			$arChatToAllRights = [];
 			$imAllowRights = COption::GetOptionString("im", "allow_send_to_general_chat_rights");
@@ -1295,23 +1295,15 @@ final class IntranetConfigsComponent extends CBitrixComponent
 				$arChatToAllRights = explode(",", $imAllowRights);
 			}
 			$this->arResult['arChatToAllRights'] = \IntranetConfigsComponent::processOldAccessCodes($arChatToAllRights);
-
 		}
 		else
 		{
 			$generalChat = \Bitrix\Im\V2\Chat\ChatFactory::getInstance()->getGeneralChat();
-			$this->arResult['generalChatCanPostList'] = \Bitrix\Im\V2\Chat::getCanPostList();
-			$this->arResult['generalChatCanPost'] = $generalChat->getCanPost();
-			$this->arResult['generalChatShowManagersList'] = \Bitrix\Im\V2\Chat::MANAGE_RIGHTS_MANAGERS;
-			$managerIds = $generalChat->getRelations([
-				'FILTER' => [
-					'MANAGER' => 'Y'
-				]
-			])->getUserIds();
-			$managers = array_map(function ($managerId) {
-				return 'U' . $managerId;
-			}, $managerIds);
-			$this->arResult['generalChatManagersList'] = \IntranetConfigsComponent::processOldAccessCodes($managers);
+			if ($generalChat)
+			{
+				$generalChatRights = $generalChat->getRightsForIntranetConfig();
+				$this->arResult = array_merge($this->arResult, $generalChatRights);
+			}
 		}
 		//end im
 

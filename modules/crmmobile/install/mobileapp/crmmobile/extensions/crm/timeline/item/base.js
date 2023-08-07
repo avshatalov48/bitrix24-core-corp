@@ -15,6 +15,7 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 	const { EventEmitter } = require('event-emitter');
 
 	/**
+	 * @abstract
 	 * @class TimelineItemBase
 	 */
 	class TimelineItemBase extends LayoutComponent
@@ -215,6 +216,7 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 			{
 				return false;
 			}
+
 			return Boolean(this.backgroundLayerRef);
 		}
 

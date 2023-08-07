@@ -10,7 +10,7 @@ use Bitrix\Main\Localization\Loc;
 
 CJSCore::Init(["socnetlogdest", "voximplant.common", "sidepanel", "ui.hint", "ui.buttons"]);
 
-if ($arResult['ERROR'])
+if ($arResult['ERROR'] ?? null)
 {
 	ShowError($arResult['ERROR']);
 }

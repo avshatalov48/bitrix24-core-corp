@@ -2,9 +2,8 @@
  * @module tasks/layout/task/fields/crm
  */
 jn.define('tasks/layout/task/fields/crm', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {CrmElementField} = require('layout/ui/fields/crm-element');
-	const { AnalyticsLabel } = require('analytics-label');
+	const { Loc } = require('loc');
+	const { CrmElementField } = require('layout/ui/fields/crm-element');
 
 	class Crm extends LayoutComponent
 	{
@@ -50,8 +49,9 @@ jn.define('tasks/layout/task/fields/crm', (require, exports, module) => {
 				CrmElementField({
 					readOnly: this.state.readOnly,
 					showEditIcon: true,
+					hasHiddenEmptyView: true,
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_CRM'),
-					value: values.map(item => item.id),
+					value: values.map((item) => item.id),
 					multiple: true,
 					config: {
 						deepMergeStyles: this.props.deepMergeStyles,
@@ -65,37 +65,28 @@ jn.define('tasks/layout/task/fields/crm', (require, exports, module) => {
 					},
 					testId: 'crm',
 					onChange: (crmIds, crmData) => {
-						const crm = crmData.reduce((result, item) => ({
-							...result,
-							[`${item.type}_${item.id}`]: {
-								id: item.id,
-								title: item.title,
-								subtitle: item.subtitle,
-								type: item.type,
-							},
-						}), {});
+						const crm = Object.fromEntries(crmData.map((item) => [`${item.type}_${item.id}`, {
+							id: item.id,
+							title: item.title,
+							subtitle: item.subtitle,
+							type: item.type,
+						}]));
 						const newCrm = Object.keys(crm);
-						const oldCrm = values.map(item => `${item.type}_${item.id}`);
-						const difference =
-							newCrm
-								.filter(id => !oldCrm.includes(id))
-								.concat(oldCrm.filter(id => !newCrm.includes(id)))
-						;
-						if (difference.length)
+						const oldCrm = values.map((item) => `${item.type}_${item.id}`);
+						const difference = [
+							...newCrm.filter((id) => !oldCrm.includes(id)),
+							...oldCrm.filter((id) => !newCrm.includes(id)),
+						];
+						if (difference.length > 0)
 						{
-							this.setState({crm: crmData});
+							this.setState({ crm: crmData });
 							this.props.onChange(crm);
 						}
-
-						AnalyticsLabel.send({
-							event: 'onCrmFieldChange',
-							scenario: 'task_add',
-						});
 					},
 				}),
 			);
 		}
 	}
 
-	module.exports = {Crm};
+	module.exports = { Crm };
 });

@@ -27,6 +27,11 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		FileEmojiType,
 	} = require('im/messenger/const/file-type');
 	const { Color } = require('im/messenger/const/color');
+	const {
+		Path,
+	} = require('im/messenger/const/path');
+
+	const { DraftType } = require('im/messenger/const/draft');
 
 	module.exports = {
 		EventType,
@@ -43,5 +48,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		FileEmojiType,
 		UserExternalType,
 		Color,
+		Path,
+		DraftType,
 	};
 });

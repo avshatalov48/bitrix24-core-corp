@@ -17,6 +17,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (requi
 			super(props);
 
 			this.showClientSelector = this.showClientSelector.bind(this);
+			this.showSelector = this.showSelector.bind(this);
 		}
 
 		render()
@@ -59,8 +60,8 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (requi
 					},
 					BBCodeText({
 						style: styles.client,
-						value: `[COLOR="#828B95"][URL="#"]${name}[/URL][/COLOR]`,
-						onLinkClick: this.showClientSelector,
+						value: `[C type=dot textColor=#828B95 lineColor=#828B95][COLOR="#828B95"][URL="#"]${name}[/URL][/COLOR][/C]`,
+						onLinkClick: this.showSelector,
 						linksUnderline: false,
 						numberOfLines: 1,
 						ellipsize: 'end',
@@ -70,15 +71,53 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (requi
 			);
 		}
 
+		showSelector()
+		{
+			if (this.getCountCommunicationsWithPhones() > 0)
+			{
+				this.showClientSelector();
+
+				return;
+			}
+
+			this.showClientWithoutPhonesSelector();
+		}
+
 		hasCommunicationsSelection()
 		{
-			const { communications, ownerInfo, typeId } = this.props;
+			return (this.hasManyClientWithPhones() || this.hasOnlyManyClientsWithoutPhones());
+		}
 
-			return CommunicationSelector.hasActions({
-				communications,
-				ownerInfo,
-				typeId,
+		hasManyClientWithPhones()
+		{
+			const withPhones = this.getCountCommunicationsWithPhones();
+
+			return (withPhones > 1);
+		}
+
+		hasOnlyManyClientsWithoutPhones()
+		{
+			const { communications } = this.props;
+
+			const total = communications.length;
+			const withPhones = this.getCountCommunicationsWithPhones();
+
+			return (total > 1 && total - withPhones > 1);
+		}
+
+		getCountCommunicationsWithPhones()
+		{
+			const { communications } = this.props;
+
+			let clientsWithPhones = 0;
+			communications.forEach((communication) => {
+				if (Array.isArray(communication.phones) && communication.phones.length > 0)
+				{
+					clientsWithPhones++;
+				}
 			});
+
+			return clientsWithPhones;
 		}
 
 		renderAddPhoneLink()
@@ -93,7 +132,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (requi
 
 			return BBCodeText({
 				style: styles.addPhone,
-				value: `[COLOR="#C48300"][URL="#"]${addPhoneTitle}[/URL][/COLOR]`,
+				value: `[C type=dot textColor=#C48300 lineColor=#C48300][COLOR="#C48300"][URL="#"]${addPhoneTitle}[/URL][/COLOR][/C]`,
 				onLinkClick: showAddPhoneToContactDrawer,
 				linksUnderline: false,
 			});
@@ -125,6 +164,59 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (requi
 			});
 		}
 
+		showClientWithoutPhonesSelector()
+		{
+			const menu = new ContextMenu(this.getMenuConfig());
+
+			void menu.show(this.props.layout);
+		}
+
+		getMenuConfig()
+		{
+			return {
+				testId: 'TimelineGoToChatClientWithoutPhonesSelector',
+				actions: this.getClientWithoutPhonesMenuActions(),
+				params: {
+					shouldResizeContent: true,
+					showCancelButton: true,
+					title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_GTC_CLIENTS_SELECTOR_TITLE'),
+				},
+			};
+		}
+
+		getClientWithoutPhonesMenuActions()
+		{
+			const {
+				communications,
+				selectedClient: {
+					entityTypeId,
+					entityId,
+				},
+				onClientWithoutPhoneSelectCallback,
+			} = this.props;
+
+			const items = [];
+			communications.forEach((communication) => {
+				const {
+					entityTypeId: communicationEntityTypeId,
+					entityId: communicationEntityId,
+					caption: title,
+				} = communication;
+
+				items.push({
+					id: `client-${communicationEntityTypeId}-${communicationEntityId}`,
+					title,
+					isSelected: (
+						entityTypeId === communicationEntityTypeId
+						&& entityId === communicationEntityId
+					),
+					onClickCallback: () => onClientWithoutPhoneSelectCallback(communication),
+				});
+			});
+
+			return items;
+		}
+
 		renderArrow()
 		{
 			return Image({
@@ -154,14 +246,11 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (requi
 			flexDirection: 'row',
 			alignItems: 'center',
 			flexWrap: 'no-wrap',
+			marginRight: 10,
 		},
 		clientContainer: (hasCommunicationsSelection) => ({
-			borderBottomWidth: 1,
-			borderBottomColor: '#828b95',
-			borderStyle: 'dash',
-			borderDashSegmentLength: 3,
-			borderDashGapLength: 3,
 			marginRight: hasCommunicationsSelection ? 12 : 4,
+			color: '#828B95',
 		}),
 		client: {
 			fontSize: 14,
@@ -170,11 +259,6 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (requi
 		addPhone: {
 			fontSize: 14,
 			color: '#c48300',
-			borderBottomWidth: 1,
-			borderBottomColor: '#c48300',
-			borderStyle: 'dash',
-			borderDashSegmentLength: 3,
-			borderDashGapLength: 3,
 		},
 		arrow: {
 			width: 10,

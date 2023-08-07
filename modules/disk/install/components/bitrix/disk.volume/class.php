@@ -3320,7 +3320,7 @@ class CDiskVolumeComponent extends BaseComponent
 				if (!is_null($updateTime))
 				{
 					$nowTime = time() + \CTimeZone::getOffset();
-					$fullFormatWithoutSec = preg_replace('/:s$/', '', \CAllDatabase::dateFormatToPHP(\CSite::GetDateFormat('FULL')));
+					$fullFormatWithoutSec = preg_replace('/:s$/', '', CDatabase::dateFormatToPHP(\CSite::GetDateFormat('FULL')));
 					$row['UPDATE_TIME'] = formatDate($fullFormatWithoutSec, $updateTime->getTimestamp(), $nowTime);
 				}
 			}

@@ -3,12 +3,12 @@
  */
 jn.define('crm/state-storage', (require, exports, module) => {
 	const { createStore } = require('statemanager/vuex');
-
-	const { categoryCountersModel } = require('crm/state-storage/model/category-counters');
-	const { CategoryCountersStoreManager } = require('crm/state-storage/manager/category-counters');
-
-	const { activityCountersModel } = require('crm/state-storage/model/activity-counters');
-	const { ActivityCountersStoreManager } = require('crm/state-storage/manager/activity-counters');
+	const stateModels = require('crm/state-storage/model');
+	const {
+		CategoryCountersStoreManager,
+		ActivityCountersStoreManager,
+		ConversionWizardStoreManager,
+	} = require('crm/state-storage/manager');
 
 	/**
 	 * @class StateStorage
@@ -18,10 +18,7 @@ jn.define('crm/state-storage', (require, exports, module) => {
 		constructor()
 		{
 			this.store = createStore({
-				modules: {
-					categoryCountersModel,
-					activityCountersModel,
-				},
+				modules: stateModels,
 			});
 		}
 
@@ -37,5 +34,6 @@ jn.define('crm/state-storage', (require, exports, module) => {
 		StateStorage: stateStorage,
 		CategoryCountersStoreManager: new CategoryCountersStoreManager(stateStorage),
 		ActivityCountersStoreManager: new ActivityCountersStoreManager(stateStorage),
+		ConversionWizardStoreManager: new ConversionWizardStoreManager(stateStorage),
 	};
 });

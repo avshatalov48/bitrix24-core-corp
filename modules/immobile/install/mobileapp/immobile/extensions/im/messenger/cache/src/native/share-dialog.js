@@ -4,7 +4,6 @@
  * @module im/messenger/cache/share-dialog
  */
 jn.define('im/messenger/cache/share-dialog', (require, exports, module) => {
-
 	const { clone } = require('utils/object');
 	const { throttle } = require('utils/function');
 	const { utils } = require('native/im');
@@ -24,7 +23,9 @@ jn.define('im/messenger/cache/share-dialog', (require, exports, module) => {
 			return new Promise((resolve, reject) => {
 				if (!FeatureFlag.native.imUtilsModuleSupported)
 				{
-					return reject(new Error('imUtilsModule not supported by the current app version'));
+					reject(new Error('imUtilsModule not supported by the current app version'));
+
+					return;
 				}
 
 				recentItemList = recentItemList.map((item) => {

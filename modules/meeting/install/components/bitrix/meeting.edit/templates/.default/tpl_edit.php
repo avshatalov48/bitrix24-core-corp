@@ -1,7 +1,7 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
 $bHasTitle = true;
-if ($arResult['MEETING']['TITLE'] == '')
+if (($arResult['MEETING']['TITLE'] ?? null) == '')
 {
 	$arResult['MEETING']['TITLE'] = GetMessage('ME_TITLE_DEFAULT');
 	$bHasTitle = false;
@@ -41,7 +41,7 @@ $this->SetViewTarget('pagetitle', 100);
 		<span class="webform-small-button-text"><?=GetMessage('ME_LIST_TITLE')?></span>
 	</a>
 <?
-if ($arResult['MEETING']['ID']):
+if (isset($arResult['MEETING']['ID'])):
 ?>
 	<a href="<?=$arParams['MEETING_URL']?>" class="webform-small-button webform-small-button-blue webform-small-button-back">
 		<span class="webform-small-button-icon"></span>
@@ -94,7 +94,7 @@ function UpdateMembersList(arUsers)
 	BX('meeting_members').innerHTML = h;
 }
 
-window.meeting_owner = <?=$arResult['MEETING']['OWNER_ID'] > 0 ? $arResult['MEETING']['OWNER_ID'] : $USER->GetID()?>;
+window.meeting_owner = <?=($arResult['MEETING']['OWNER_ID'] ?? null) > 0 ? $arResult['MEETING']['OWNER_ID'] : $USER->GetID()?>;
 window.meeting_owner_data = null;
 window.meeting_keeper = <?=$keeper?>;
 function UpdateKeepersList(arUsers)
@@ -148,7 +148,7 @@ BX.addCustomEvent('onMembersListChange', UpdateKeepersList);
 <div class="meetings-content">
 	<form action="<?=POST_FORM_ACTION_URI?>" name="meeting_edit" method="POST" enctype="multipart/form-data">
 		<?=bitrix_sessid_post()?>
-		<input type="hidden" name="MEETING_ID" value="<?=$arResult['MEETING']['ID']?>" />
+		<input type="hidden" name="MEETING_ID" value="<?=($arResult['MEETING']['ID'] ?? null)?>" />
 		<input type="hidden" name="edit" value="Y" />
 <?
 if ($arParams['COPY']):
@@ -221,9 +221,9 @@ endif;
 				</div>
 				<div class="meeting-new-meeting-plase">
 					<span class="meeting-new-meeting-plase-text"><?=GetMessage('ME_PLACE')?></span>
-					<input type="text" name="PLACE" value="<?=$arResult['MEETING']['PLACE']?>" autocomplete="off" onchange="onMeetingRoomChange()" />
-					<input type="hidden" name="PLACE_ID" value="<?=htmlspecialcharsbx($arResult['MEETING']['PLACE_ID'])?>">
-					<span id="meeting_room_flag" class="meeting-room-flag meeting-rm-free" style="display:<?=$arResult['MEETING']['PLACE_ID']==''?'none':'inline-block'?>"><span class="meeting-rm-icon"></span><span class="meeting-room-flag-text"><?=GetMessage('ME_MR_FREE')?></span></span>
+					<input type="text" name="PLACE" value="<?=($arResult['MEETING']['PLACE'] ?? null)?>" autocomplete="off" onchange="onMeetingRoomChange()" />
+					<input type="hidden" name="PLACE_ID" value="<?=htmlspecialcharsbx(($arResult['MEETING']['PLACE_ID'] ?? null))?>">
+					<span id="meeting_room_flag" class="meeting-room-flag meeting-rm-free" style="display:<?=($arResult['MEETING']['PLACE_ID'] ?? null) ==''?'none':'inline-block'?>"><span class="meeting-rm-icon"></span><span class="meeting-room-flag-text"><?=GetMessage('ME_MR_FREE')?></span></span>
 <?
 if (is_array($arResult['MEETING_ROOMS_LIST']) && count($arResult['MEETING_ROOMS_LIST']) > 0):
 ?>
@@ -256,7 +256,7 @@ function checkMeetingRoom()
 	{
 		var queryData = {
 			PLACE_ID: document.forms.meeting_edit.PLACE_ID.value,
-			EVENT_ID: <?=intval($arResult['MEETING']['EVENT_ID'])?>,
+			EVENT_ID: <?=(int)($arResult['MEETING']['EVENT_ID'] ?? null)?>,
 			DATE_START_DATE: document.forms.meeting_edit.DATE_START_DATE.value,
 			DATE_START_TIME: document.forms.meeting_edit.DATE_START_TIME.value,
 			DURATION: parseInt(document.forms.meeting_edit.DURATION.value) * parseInt(document.forms.meeting_edit.DURATION_COEF.value)
@@ -323,10 +323,10 @@ if ($arResult['IS_NEW_CALENDAR']):
 ?>
 				<div class="meeting-event-options-block">
 					<div class="meeting-event-option">
-						<input type="hidden" name="EVENT_NOTIFY" value="N" /><input type="checkbox" name="EVENT_NOTIFY" id="EVENT_NOTIFY" value="Y"<?=$arResult['MEETING']['EVENT']['MEETING']['NOTIFY'] ? ' checked="checked"' : ''?> /><label for="EVENT_NOTIFY"><?=GetMessage('ME_EVENT_NOTIFY');?></label>
+						<input type="hidden" name="EVENT_NOTIFY" value="N" /><input type="checkbox" name="EVENT_NOTIFY" id="EVENT_NOTIFY" value="Y"<?=($arResult['MEETING']['EVENT']['MEETING']['NOTIFY'] ?? null) ? ' checked="checked"' : ''?> /><label for="EVENT_NOTIFY"><?=GetMessage('ME_EVENT_NOTIFY');?></label>
 					</div>
 <?
-	if ($arResult['MEETING']['ID'] > 0):
+	if (($arResult['MEETING']['ID'] ?? null) > 0):
 ?>
 					<div class="meeting-event-option">
 						<input type="hidden" name="EVENT_REINVITE" value="N" /><input type="checkbox" name="EVENT_REINVITE" id="EVENT_REINVITE" value="Y" /><label for="EVENT_REINVITE"><?=GetMessage('ME_EVENT_REINVITE');?></label>
@@ -347,7 +347,7 @@ endif;
 				<div id="meeting-new-add-description-form" class="meeting-new-add-description-form">
 <?
 $APPLICATION->IncludeComponent('bitrix:fileman.light_editor', '', array(
-	'CONTENT' => $arResult['MEETING']['~DESCRIPTION'],
+	'CONTENT' => ($arResult['MEETING']['~DESCRIPTION'] ?? null),
 	'INPUT_NAME' => 'DESCRIPTION',
 	'RESIZABLE' => 'Y',
 	'AUTO_RESIZE' => 'Y',
@@ -376,7 +376,7 @@ $APPLICATION->IncludeComponent('bitrix:main.file.input', '', array(
 if (IsModuleInstalled('socialnetwork')):
 
 	$APPLICATION->IncludeComponent('bitrix:socialnetwork.group.selector', '', array(
-		'SELECTED' => $arResult['MEETING']['GROUP_ID'],
+		'SELECTED' => ($arResult['MEETING']['GROUP_ID'] ?? null),
 		'BIND_ELEMENT' => 'ingroup_link',
 		'ON_SELECT' => 'BXOnGroupChange'
 	), null, array('HIDE_ICONS' => 'Y'))
@@ -400,7 +400,7 @@ function BXOnGroupChange(group)
 }
 </script>
 					<span class="meeting-new-ingroup-wrap">
-						<span class="meeting-dash-link meeting-new-ingroup" id="ingroup_link" onclick="groupsPopup.show()"><?=GetMessage('ME_GROUP')?></span><span class="meeting-del-icon" onclick="BXOnGroupChange()" style="visibility: <?=$arResult['MEETING']['GROUP_ID'] > 0 ? 'visible' : 'hidden'?>"></span><input type="hidden" name="GROUP_ID" value="<?=$arResult['MEETING']['GROUP_ID']?>" />
+						<span class="meeting-dash-link meeting-new-ingroup" id="ingroup_link" onclick="groupsPopup.show()"><?=GetMessage('ME_GROUP')?></span><span class="meeting-del-icon" onclick="BXOnGroupChange()" style="visibility: <?=($arResult['MEETING']['GROUP_ID'] ?? null) > 0 ? 'visible' : 'hidden'?>"></span><input type="hidden" name="GROUP_ID" value="<?=($arResult['MEETING']['GROUP_ID'] ?? null)?>" />
 					</span>
 <?
 endif;
@@ -411,7 +411,7 @@ endif;
 		<div class="meeting-new-agenda-wrap">
 			<span class="meeting-new-agenda-title"><?=GetMessage('ME_AGENDA')?></span>
 <?
-if ($arResult['MEETING']['PARENT_ID']):
+if (isset($arResult['MEETING']['PARENT_ID'])):
 ?>
 			<div class="meeting-new-agenda-block">
 				<div class="meeting-new-ag-bl-title" onclick="BX.toggle(BX('parent_agenda'))"><?=GetMessage('ME_AGENDA_EX')?></div>
@@ -439,8 +439,8 @@ require($_SERVER['DOCUMENT_ROOT'].$this->GetFolder().'/agenda.php');
 
 		<div class="meeting-new-select-but-wrap">
 			<a href="javascript:void(0)" onclick="BX.submit(document.forms.meeting_edit)" class="webform-button webform-button-create" id="meeting_save_button">
-				<span class="webform-button-left"></span><span class="webform-button-text"><?=$arResult['MEETING']['ID'] > 0 ? GetMessage('ME_SAVE'): GetMessage('ME_CREATE')?></span><span class="webform-button-right"></span>
-			</a><a href="<?=$arResult['MEETING']['ID'] > 0 ? $arParams['MEETING_URL'] : $arParams['LIST_URL']?>" class="webform-button-link webform-button-link-cancel"><?=GetMessage('ME_CANCEL')?></a>
+				<span class="webform-button-left"></span><span class="webform-button-text"><?=($arResult['MEETING']['ID'] ?? null) > 0 ? GetMessage('ME_SAVE'): GetMessage('ME_CREATE')?></span><span class="webform-button-right"></span>
+			</a><a href="<?=($arResult['MEETING']['ID'] ?? null) > 0 ? $arParams['MEETING_URL'] : $arParams['LIST_URL']?>" class="webform-button-link webform-button-link-cancel"><?=GetMessage('ME_CANCEL')?></a>
 		</div>
 	</form>
 <?

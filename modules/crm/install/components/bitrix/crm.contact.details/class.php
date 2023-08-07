@@ -16,7 +16,6 @@ use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\Tracking;
-use Bitrix\Crm\UserField\Router;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
@@ -841,7 +840,7 @@ class CCrmContactDetailsComponent
 				'type' => 'text',
 				'editable' => true
 			),
-			Crm\Entity\FieldContentType::compileFieldDescriptionForDetails(\CCrmOwnerType::Contact, $this->entityID, 'COMMENTS'),
+			Crm\Entity\CommentsHelper::compileFieldDescriptionForDetails(\CCrmOwnerType::Contact, 'COMMENTS'),
 			array(
 				'name' => 'ASSIGNED_BY_ID',
 				'title' => Loc::getMessage('CRM_CONTACT_FIELD_ASSIGNED_BY_ID'),
@@ -1587,7 +1586,7 @@ class CCrmContactDetailsComponent
 				unset($this->entityData['PHOTO']);
 			}
 
-			$this->entityData = Crm\Entity\FieldContentType::prepareFieldsFromDetailsToView(
+			$this->entityData = Crm\Entity\CommentsHelper::prepareFieldsFromDetailsToView(
 				\CCrmOwnerType::Contact,
 				$this->entityID,
 				$this->entityData,
@@ -1968,7 +1967,7 @@ class CCrmContactDetailsComponent
 				$this->arResult['READ_ONLY'] = false;
 			}
 		}
-		elseif (\CCrmContact::CheckCreatePermission($this->userPermissions))
+		elseif (\CCrmContact::CheckCreatePermission($this->userPermissions, $this->arResult['CATEGORY_ID']))
 		{
 			$this->arResult['READ_ONLY'] = false;
 		}

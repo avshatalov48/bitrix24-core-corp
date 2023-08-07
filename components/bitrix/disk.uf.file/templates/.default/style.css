@@ -774,7 +774,13 @@
 .disk-uf-file-popup-settings .menu-popup-item-take .menu-popup-item-icon {
 	background: url("data:image/svg+xml,%3Csvg width='12' height='9' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.36 3.446L4.013 6.1 10.316 0l1.36 1.36-6.3 6.1-1.363 1.36-1.36-1.36L0 4.806z' fill='%232066B0' fill-rule='nonzero'/%3E%3C/svg%3E") center no-repeat;
 }
-
+.disk-uf-file-popup-settings .menu-popup-item-auto .menu-popup-item-icon:after {
+	content: "Auto";
+	display: inline-block;
+	width: 100%;
+	font-size: 70%;
+	text-align: center;
+}
 .menu-popup-item-storage .menu-popup-item-icon {
 	background: url("data:image/svg+xml,%3Csvg width='13' height='13' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.995 3.205v8.926H.011V3.205h12.984zM7.315.77l1.623 1.623H.01V.77h7.304z' fill='%239CA3AD' fill-rule='evenodd'/%3E%3C/svg%3E") center 0 no-repeat;
 }

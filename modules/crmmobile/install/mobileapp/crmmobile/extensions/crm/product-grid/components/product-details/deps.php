@@ -22,5 +22,6 @@ return [
 		'utils/function',
 		'crm:product-grid/model',
 		'crm:product-calculator',
+		'notify',
 	],
 ];

@@ -12,23 +12,38 @@ jn.define('crm/state-storage/manager/base', (require, exports, module) => {
 		constructor({ store })
 		{
 			this.store = store;
-			this.eventManager = new VuexManager(this.store)
-				// .enableMultiContext({
-				// 	storeName: 'crm.kanban.category-counters',
-				// })
-				.build()
-			;
+			this.eventManager = this.createVuexManager(store);
+		}
+
+		storeOptions()
+		{
+			return null;
+		}
+
+		createVuexManager(store)
+		{
+			const eventManager = new VuexManager(store);
+			const storeOptions = this.storeOptions();
+
+			if (storeOptions && storeOptions.storeName)
+			{
+				eventManager.enableMultiContext(storeOptions);
+			}
+
+			return eventManager.build();
 		}
 
 		subscribe(mutation, action)
 		{
 			this.eventManager.on(mutation, action);
+
 			return this;
 		}
 
 		unsubscribe(mutation, action)
 		{
 			this.eventManager.off(mutation, action);
+
 			return this;
 		}
 	}

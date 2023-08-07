@@ -77,7 +77,7 @@ class CBPCrmTimelineCommentAdd extends CBPActivity
 			$text = implode(', ', \CBPHelper::MakeArrayFlat($text));
 		}
 
-		return (string)$text;
+		return trim((string)$text);
 	}
 
 	public static function ValidateProperties($arTestProperties = array(), CBPWorkflowTemplateUser $user = null)

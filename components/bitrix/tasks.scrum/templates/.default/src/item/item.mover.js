@@ -597,28 +597,39 @@ export class ItemMover extends EventEmitter
 						if (first.getSort() < second.getSort()) return -1;
 					});
 
-					const sortedItemsIds = new Set();
-					sortedItems.forEach((groupModeItem: Item) => {
-						sortedItemsIds.add(groupModeItem.getId());
-						if (groupModeItem.isParentTask() && groupModeItem.isShownSubTasks())
-						{
-							groupModeItem.hideSubTasks();
-						}
-						this.moveItemToDown(groupModeItem, entity.getListItemsNode(), false);
-						groupModeItem.activateBlinking();
-					});
-
-					this.scroller.scrollToItem(sortedItems.values().next().value);
-
-					this.requestSender.updateItemSort({
-						sortInfo: this.calculateSort(entity.getListItemsNode(), sortedItemsIds)
-					}).catch((response) => {
-						this.requestSender.showErrorAlert(response);
-					});
-
-					entity.deactivateGroupMode();
+					this.fadeOutEntity(entity);
 
 					menuItem.getMenuWindow().close();
+
+					this.loadEntityList(entity, !entity.isWaitingLoadItems())
+						.then(() => {
+							this.fadeInEntity(entity);
+
+							const sortedItemsIds = new Set();
+							sortedItems.forEach((groupModeItem: Item) => {
+								sortedItemsIds.add(groupModeItem.getId());
+								if (groupModeItem.isParentTask() && groupModeItem.isShownSubTasks())
+								{
+									groupModeItem.hideSubTasks();
+								}
+								this.moveItemToDown(groupModeItem, entity.getListItemsNode(), false);
+								groupModeItem.activateBlinking();
+							});
+
+							this.scroller.scrollToItem(sortedItems.values().next().value);
+
+							const containerPosition = Dom.getPosition(this.planBuilder.getScrumContainer());
+							window.scrollTo({ top: containerPosition.top, behavior: 'smooth' });
+
+							this.requestSender.updateItemSort({
+								sortInfo: this.calculateSort(entity.getListItemsNode(), sortedItemsIds)
+							}).catch((response) => {
+								this.requestSender.showErrorAlert(response);
+							});
+
+							entity.deactivateGroupMode();
+						})
+					;
 				}
 			});
 		}
@@ -787,7 +798,7 @@ export class ItemMover extends EventEmitter
 		}
 	}
 
-	moveToWithGroupMode(entityFrom: Entity, entityTo: Entity, item?: Item, after = true, update = true)
+	moveToWithGroupMode(entityFrom: Entity, entityTo: Entity, item?: Item, moveToEnd = true, update = true)
 	{
 		const groupModeItems = entityFrom.getGroupModeItems();
 
@@ -797,7 +808,7 @@ export class ItemMover extends EventEmitter
 		}
 
 		const sortedItems = [...groupModeItems.values()].sort((first: Item, second: Item) => {
-			if (after)
+			if (moveToEnd)
 			{
 				if (first.getSort() > second.getSort()) return 1;
 				if (first.getSort() < second.getSort()) return -1;
@@ -809,37 +820,56 @@ export class ItemMover extends EventEmitter
 			}
 		});
 
-		const sortedItemsIds = new Set();
+		const updateVisibilitySprints = (
+			entityTo.isBacklog()
+				? Promise.resolve()
+				: this.planBuilder.updateVisibilitySprints(entityTo)
+		);
 
-		sortedItems.forEach((groupModeItem: Item) => {
-			this.moveTo(entityFrom, entityTo, groupModeItem, after, update);
-			sortedItemsIds.add(groupModeItem.getId());
-			groupModeItem.activateBlinking();
+		updateVisibilitySprints.then(() => {
+
+			this.fadeOutEntity(entityTo);
+
+			const immediately = (!moveToEnd || !entityTo.isWaitingLoadItems());
+
+			this.loadEntityList(entityTo, immediately)
+				.then(() => {
+					this.fadeInEntity(entityTo);
+
+					const sortedItemsIds = new Set();
+
+					sortedItems.forEach((groupModeItem: Item) => {
+						this.moveTo(entityFrom, entityTo, groupModeItem, moveToEnd, update);
+						sortedItemsIds.add(groupModeItem.getId());
+						groupModeItem.activateBlinking();
+					});
+
+					this.scroller.scrollToItem(sortedItems.values().next().value);
+
+					this.requestSender.updateItemSort({
+						entityId: entityTo.getId(),
+						itemIds: Array.from(sortedItemsIds),
+						sortInfo: {
+							...this.calculateSort(entityTo.getListItemsNode(), sortedItemsIds, true),
+							...this.calculateSort(entityFrom.getListItemsNode(), new Set(), true)
+						}
+					})
+						.then(() => {
+							this.updateEntityCounters(entityFrom, entityTo);
+						})
+						.catch((response) => {
+							this.requestSender.showErrorAlert(response);
+						})
+					;
+
+					entityFrom.deactivateGroupMode();
+					entityTo.deactivateGroupMode();
+				})
+			;
 		});
-
-		this.scroller.scrollToItem(sortedItems.values().next().value);
-
-		this.requestSender.updateItemSort({
-			entityId: entityTo.getId(),
-			itemIds: Array.from(sortedItemsIds),
-			sortInfo: {
-				...this.calculateSort(entityTo.getListItemsNode(), sortedItemsIds, true),
-				...this.calculateSort(entityFrom.getListItemsNode(), new Set(), true)
-			}
-		})
-			.then(() => {
-				this.updateEntityCounters(entityFrom, entityTo);
-			})
-			.catch((response) => {
-				this.requestSender.showErrorAlert(response);
-			})
-		;
-
-		entityFrom.deactivateGroupMode();
-		entityTo.deactivateGroupMode();
 	}
 
-	moveTo(entityFrom: Entity, entityTo: Entity, item: Item, after = true, update = true)
+	moveTo(entityFrom: Entity, entityTo: Entity, item: Item, moveToEnd = true, update = true)
 	{
 		const itemNode = item.getNode();
 		const entityListNode = entityTo.getListItemsNode();
@@ -849,7 +879,7 @@ export class ItemMover extends EventEmitter
 			item.hideSubTasks();
 		}
 
-		if (after)
+		if (moveToEnd)
 		{
 			Dom.insertBefore(itemNode, entityListNode.lastElementChild);
 		}
@@ -1044,5 +1074,33 @@ export class ItemMover extends EventEmitter
 		{
 			this.moveToSprintMenu.getPopupWindow().close();
 		}
+	}
+
+	loadEntityList(entity: Entity, immediately: boolean = false): Promise
+	{
+		return new Promise((resolve) => {
+			if (immediately)
+			{
+				resolve();
+			}
+			else
+			{
+				this.planBuilder.loadAllItems(entity).then(() => resolve());
+			}
+		});
+	}
+
+	fadeOutEntity(entity: Entity)
+	{
+		entity.fadeOut();
+
+		entity.showListLoader();
+	}
+
+	fadeInEntity(entity: Entity)
+	{
+		entity.hideListLoader();
+
+		entity.fadeIn();
 	}
 }

@@ -2,9 +2,9 @@
  * @module im/messenger/lib/element
  */
 jn.define('im/messenger/lib/element', (require, exports, module) => {
-
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { UserStatus } = require('im/messenger/lib/element/user-status');
 
 	const {
 		MessageAlign,
@@ -34,6 +34,8 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 		ActionType,
 		ReplyAction,
 		CopyAction,
+		DownloadToDeviceAction,
+		DownloadToDiskAction,
 		QuoteAction,
 		ProfileAction,
 		EditAction,
@@ -45,6 +47,7 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 	module.exports = {
 		ChatAvatar,
 		ChatTitle,
+		UserStatus,
 		TextMessage,
 		DeletedMessage,
 		ImageMessage,
@@ -62,6 +65,8 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 		MessageMenu,
 		ReplyAction,
 		CopyAction,
+		DownloadToDeviceAction,
+		DownloadToDiskAction,
 		QuoteAction,
 		ProfileAction,
 		EditAction,

@@ -17,6 +17,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 class CBPCrmUpdateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 {
+	use \Bitrix\Bizproc\Activity\Mixins\EntityFilter;
+
 	protected static $requiredModules = ['crm'];
 
 	public function __construct($name)
@@ -59,117 +61,17 @@ class CBPCrmUpdateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 
 	protected function findEntityId(): int
 	{
-		$filter = ['LOGIC' => 'OR'];
-
 		$conditionGroup = new ConditionGroup($this->DynamicFilterFields);
 		$conditionGroup->internalizeValues($this->getDocumentType());
-		$fieldsMap = Document\Dynamic::getEntityFields($this->DynamicTypeId);
-		$i = 0;
 
-		/**@var \Bitrix\Bizproc\Automation\Engine\Condition $condition*/
-		foreach ($conditionGroup->getItems() as [$condition, $joiner])
-		{
-			$value = $this->convertToDocumentValue($fieldsMap[$condition->getField()], $condition->getValue());
-			switch ($condition->getOperator())
-			{
-				case 'empty':
-					$operator = '=';
-					$value = '';
-					break;
-
-				case '!empty':
-					$operator = '!=';
-					$value = '';
-					break;
-
-				case 'in':
-					$operator = '@';
-					break;
-
-				case '!in':
-					$operator = '!@';
-					break;
-
-				case 'contain':
-					$operator = '%';
-					break;
-
-				case '!contain':
-					$operator = '!%';
-					break;
-
-				case '>':
-				case '>=':
-				case '<':
-				case '<=':
-				case '=':
-				case '!=':
-					$operator = $condition->getOperator();
-					break;
-
-				default:
-					$operator = '';
-					break;
-			}
-
-			if (!$operator)
-			{
-				continue;
-			}
-
-			if ($joiner === ConditionGroup::JOINER_AND)
-			{
-				$filter[$i][$operator . $condition->getField()] = $value;
-			}
-			else
-			{
-				$filter[++$i][$operator . $condition->getField()] = $value;
-			}
-		}
-
+		$targetDocumentType = CCrmBizProcHelper::ResolveDocumentType($this->DynamicTypeId);
 		$factory = Container::getInstance()->getFactory($this->DynamicTypeId);
 		$items = $factory->getItems([
 			'select' => ['ID'],
-			'filter' => $filter,
+			'filter' => $this->getOrmFilter($conditionGroup, $targetDocumentType),
 		]);
 
 		return $items ? $items[0]->getId() : 0;
-	}
-
-	protected function convertToDocumentValue(array $fieldInfo, $fieldValue)
-	{
-		if (is_array($fieldValue) && !$fieldInfo['Multiple'])
-		{
-			$fieldValue = reset($fieldValue);
-		}
-
-		if (is_array($fieldValue))
-		{
-			foreach ($fieldValue as $key => $value)
-			{
-				$fieldValue[$key] = $this->convertToDocumentValue($fieldInfo, $value);
-			}
-
-			return $fieldValue;
-		}
-
-		switch ($fieldInfo['Type'])
-		{
-			case FieldType::BOOL:
-				return CBPHelper::getBool($fieldValue);
-
-			case FieldType::USER:
-				return CBPHelper::extractUsers($fieldValue, $this->getDocumentId(), !$fieldInfo['Multiple']) ?? 0;
-
-			case FieldType::INT:
-				return (int)$fieldValue;
-
-			case FieldType::DOUBLE:
-				return (float)$fieldValue;
-
-			default:
-				return $fieldValue;
-		}
 	}
 
 	protected function checkProperties(): \Bitrix\Main\ErrorCollection
@@ -284,7 +186,7 @@ class CBPCrmUpdateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			$currentValues = $result->getData();
 			$entityTypeId = (int)$currentValues['DynamicTypeId'];
 
-			$extractingFilterResult = static::extractFieldsConditions($dialog, $fieldsMap);
+			$extractingFilterResult = static::extractFilterFromProperties($dialog, $fieldsMap);
 			if ($extractingFilterResult->isSuccess())
 			{
 				$currentValues['DynamicFilterFields'] = $extractingFilterResult->getData();
@@ -321,34 +223,6 @@ class CBPCrmUpdateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 				$result->addErrors($extractingFieldsResult->getErrors());
 			}
 		}
-
-		return $result;
-	}
-
-	protected static function extractFieldsConditions(PropertiesDialog $dialog, array $fieldsMap): Result
-	{
-		$currentValues = $dialog->getCurrentValues();
-		$prefix = $fieldsMap['DynamicFilterFields']['FieldName'] . '_';
-
-		$conditionGroup = ['items' => []];
-
-		foreach ($currentValues[$prefix . 'field'] ?? [] as $index => $fieldName)
-		{
-			$conditionGroup['items'][] = [
-				// condition
-				[
-					'object' => $currentValues[$prefix . 'object'][$index],
-					'field' => $currentValues[$prefix . 'field'][$index],
-					'operator' => $currentValues[$prefix . 'operator'][$index],
-					'value' => $currentValues[$prefix . 'value'][$index],
-				],
-				// joiner
-				$currentValues[$prefix . 'joiner'][$index],
-			];
-		}
-
-		$result = new Result();
-		$result->setData($conditionGroup);
 
 		return $result;
 	}

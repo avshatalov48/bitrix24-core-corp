@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,landing_ui_panel_fieldspanel,ui_notification,ui_draganddrop_draggable,ui_sidepanel_layout,ui_buttons,main_loader,main_core_events,ui_forms,_ui_layoutForm,main_core) {
+(function (exports,ui_notification,ui_draganddrop_draggable,ui_sidepanel_layout,ui_buttons,main_loader,main_core_events,ui_forms,_ui_layoutForm,main_core,crm_form_fields_selector) {
 	'use strict';
 
 	let _ = t => t,
@@ -505,11 +505,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      return acc;
 	    }, '');
 	  }
-	  showFieldsPanel(panelOptions) {
-	    const fieldsPanel = landing_ui_panel_fieldspanel.FieldsPanel.getInstance();
-	    main_core.Dom.append(fieldsPanel.layout, window.top.document.body);
-	    return fieldsPanel.show(panelOptions);
-	  }
 	  onAddFieldClick(event) {
 	    event.preventDefault();
 	    const fieldsPanelOptions = {
@@ -518,8 +513,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        return field.name;
 	      })
 	    };
-	    this.showFieldsPanel(fieldsPanelOptions).then(result => {
-	      this.setFieldsDictionary(landing_ui_panel_fieldspanel.FieldsPanel.getInstance().getCrmFields());
+	    const selector = new crm_form_fields_selector.Selector(fieldsPanelOptions);
+	    selector.show().then(result => {
+	      this.setFieldsDictionary(selector.getFieldsList());
 	      return result;
 	    }).then(result => {
 	      result.forEach(fieldName => {
@@ -686,5 +682,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Backend = Backend;
 	exports.ListEditor = ListEditor;
 
-}((this.BX.Crm.Field = this.BX.Crm.Field || {}),BX.Landing.UI.Panel,BX,BX.UI.DragAndDrop,BX.UI.SidePanel,BX.UI,BX,BX.Event,BX,BX,BX));
+}((this.BX.Crm.Field = this.BX.Crm.Field || {}),BX,BX.UI.DragAndDrop,BX.UI.SidePanel,BX.UI,BX,BX.Event,BX,BX,BX,BX.Crm.Form.Fields));
 //# sourceMappingURL=list-editor.bundle.js.map

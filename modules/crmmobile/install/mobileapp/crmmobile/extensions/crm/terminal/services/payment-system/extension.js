@@ -28,6 +28,7 @@ jn.define('crm/terminal/services/payment-system', (require, exports, module) => 
 					if (response.data.id)
 					{
 						resolve(response.data.id);
+
 						return;
 					}
 					reject();

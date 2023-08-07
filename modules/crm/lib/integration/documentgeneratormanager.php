@@ -215,6 +215,7 @@ class DocumentGeneratorManager
 					DataProvider\StoreDocumentArrival::class,
 					DataProvider\StoreDocumentStoreAdjustment::class,
 					DataProvider\StoreDocumentMoving::class,
+					DataProvider\StoreDocumentDeduct::class,
 					DataProvider\ShipmentDocumentRealization::class,
 				];
 				if (InvoiceSettings::getCurrent()->isOldInvoicesEnabled())

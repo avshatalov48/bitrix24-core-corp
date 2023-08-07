@@ -29,7 +29,7 @@ export class AddingPopup
 
 		this.#eventEmitter = new EventEmitter;
 		this.#eventEmitter.setEventNamespace('Crm.Activity.AddingPopup');
-		
+
 		if (!Type.isPlainObject(params))
 		{
 			params = {};
@@ -92,7 +92,10 @@ export class AddingPopup
 				}),
 			]);
 
-			popup.subscribeOnce('onFirstShow', () => this.#todoEditor.show());
+			popup.subscribeOnce('onFirstShow', (event) => {
+				event.target.getZIndexComponent().setZIndex(1400);
+				this.#todoEditor.show();
+			});
 			popup.subscribe('onAfterShow', () => {
 				this.#actualizePopupLayout(this.#todoEditor.getDescription());
 				this.#todoEditor.setFocused();

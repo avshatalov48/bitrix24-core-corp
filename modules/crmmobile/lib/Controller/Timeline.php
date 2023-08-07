@@ -50,8 +50,6 @@ class Timeline extends Controller
 				'detailPageUrl' => \CCrmOwnerType::GetDetailsUrl($entity->getEntityTypeId(), $entity->getId()),
 				'isEditable' => $this->isEntityEditable($entity),
 				'documentGeneratorProvider' => $this->getDocumentGeneratorProvider($entity->getEntityTypeId()),
-				'isDocumentPreviewerAvailable' => Option::get('crmmobile', 'release-spring-2023', true),
-				'isGoToChatAvailable' => Option::get('crmmobile', 'release-spring-2023', true),
 			],
 			'scheduled' => $scheduled,
 			'pinned' => $pinned,

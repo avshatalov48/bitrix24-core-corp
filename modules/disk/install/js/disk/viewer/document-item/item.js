@@ -77,7 +77,6 @@
 
 			if (this.justErrorInGoogle)
 			{
-				console.log('this.justErrorInGoogle', this.justErrorInGoogle);
 				promise.reject({
 					item: this,
 					type: 'error'
@@ -222,7 +221,6 @@
 			setTimeout(function () {
 				if (this.iframeNode && this.iframeNode.contentDocument && this.iframeNode.contentDocument.URL === 'about:blank')
 				{
-					console.log('google 204Checker');
 					this.controller.reload(this, {
 						justErrorInGoogle: true
 					});

@@ -961,7 +961,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      this.panelRect = this.panelConfirmBtn.getBoundingClientRect();
 	      this.btnWidth = Math.ceil(this.panelRect.width);
 	      this.arrowWidth = Math.ceil(this.arrowRect.width);
-	      this.delta = (this.btnWidth - this.arrowWidth) / 2;
 	      this.sliderContentRect = this.sliderContent.getBoundingClientRect();
 	      this.bodyHeight = this.body.getBoundingClientRect().height - this.buttonPanelRect.height + this.sliderHeaderHeight;
 	      this.contentHeight = this.arrowHeight + this.sliderContentRect.height + this.buttonPanelRect.height + this.sliderHeaderHeight - 65;
@@ -977,10 +976,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "setSetupArrow",
 	    value: function setSetupArrow() {
 	      this.getSetupArrow();
-	      this.arrowBox.style.left = this.panelRect.left - this.delta + 'px';
+	      var btnPadding = 40;
+	      this.arrowBox.style.left = this.panelRect.left + this.btnWidth / 2 - this.arrowWidth / 2 - btnPadding + 'px';
 	      this.contentHeight > this.bodyHeight ? this.body.classList.add('js-intranet-invitation-arrow-hide') : this.body.classList.remove('js-intranet-invitation-arrow-hide');
 	      window.addEventListener('resize', function () {
-	        this.arrowBox.style.left = this.panelRect.left - this.delta + 'px';
+	        if (window.innerWidth <= 1100) {
+	          this.arrowBox.style.left = this.panelRect.left + this.btnWidth / 2 - this.arrowWidth / 2 - btnPadding + 'px';
+	        }
 	        this.getSetupArrow();
 	        this.updateArrow();
 	      }.bind(this));

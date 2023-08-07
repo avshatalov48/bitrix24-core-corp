@@ -1,13 +1,9 @@
-/* eslint-disable bitrix-rules/no-pseudo-private */
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-bx-message */
+/* eslint-disable promise/catch-or-return */
 
 /**
  * @module im/messenger/provider/pull/dialog
  */
 jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
-
 	const { clone } = require('utils/object');
 	const { PullHandler } = require('im/messenger/provider/pull/base');
 	const { EventType } = require('im/messenger/const');
@@ -47,6 +43,7 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 			if (params.lines)
 			{
 				Logger.info('DialogPullHandler.handleChatMuteNotify skip openline mute', params);
+
 				return;
 			}
 
@@ -63,9 +60,11 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 				muteList.delete(MessengerParams.getUserId());
 			}
 
-			//TODO remove after RecentConverter implementation, only the dialoguesModel should change
+			// TODO remove after RecentConverter implementation, only the dialoguesModel should change
 			const recentMuteList = {};
-			muteList.forEach(userId => recentMuteList[userId] = true);
+			muteList.forEach((userId) => {
+				recentMuteList[userId] = true;
+			});
 			recentItem.chat.mute_list = recentMuteList;
 			this.store.dispatch('recentModel/set', [recentItem])
 				.then(() => Counters.update())
@@ -73,8 +72,13 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 
 			this.store.dispatch('dialoguesModel/set', [{
 				dialogId: params.dialogId,
-				muteList: Array.from(muteList),
+				muteList: [...muteList],
 			}]);
+
+			this.store.dispatch('sidebarModel/changeMute', {
+				dialogId: params.dialogId,
+				isMute: params.muted,
+			});
 		}
 
 		handleChatHide(params, extra, command)
@@ -90,7 +94,7 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 		{
 			Logger.info('DialogPullHandler.handleChatRename', params);
 
-			const dialogId = 'chat' + params.chatId;
+			const dialogId = `chat${params.chatId}`;
 			const name = params.name;
 
 			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
@@ -121,7 +125,7 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 		{
 			Logger.info('DialogPullHandler.handleGeneralChatId', params);
 
-			//TODO: Remove after converter implementation
+			// TODO: Remove after converter implementation
 			if (ChatDataConverter)
 			{
 				ChatDataConverter.generalChatId = params.id;
@@ -155,6 +159,15 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 			}]).then(() => Counters.update());
 		}
 
+		handleChatUserAdd(params, extra, command)
+		{
+			Logger.info('DialogPullHandler.handleChatUserAdd', params, extra);
+			const dialogId = params.dialogId;
+
+			this.store.dispatch('usersModel/set', Object.values(params.users));
+			this.store.dispatch('dialoguesModel/addParticipants', { dialogId, participants: params.newUsers });
+		}
+
 		handleChatUserLeave(params, extra, command)
 		{
 			Logger.info('DialogPullHandler.handleChatUserLeave', params);
@@ -169,16 +182,15 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 				this.store.dispatch('recentModel/delete', { id: dialogId })
 					.then(() => Counters.update())
 				;
-
-				this.store.dispatch('dialoguesModel/delete', { id: dialogId });
 			}
+			this.store.dispatch('dialoguesModel/removeParticipants', { dialogId, participants: [params.userId] });
 		}
 
 		handleChatAvatar(params, extra, command)
 		{
 			Logger.info('DialogPullHandler.handleChatAvatar', params);
 
-			const dialogId = 'chat' + params.chatId;
+			const dialogId = `chat${params.chatId}`;
 
 			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
 			if (!recentItem)
@@ -189,14 +201,15 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 			recentItem.avatar = params.avatar;
 			recentItem.chat.avatar = params.avatar;
 
-			this.store.dispatch('recentModel/set', [ recentItem ]);
+			this.store.dispatch('recentModel/set', [recentItem]);
+			this.store.dispatch('dialoguesModel/update', { dialogId, fields: { avatar: recentItem.avatar } });
 		}
 
 		handleChatChangeColor(params, extra, command)
 		{
 			Logger.info('DialogPullHandler.handleChatChangeColor', params);
 
-			const dialogId = 'chat' + params.chatId;
+			const dialogId = `chat${params.chatId}`;
 
 			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
 			if (!recentItem)
@@ -207,7 +220,7 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 			recentItem.color = params.color;
 			recentItem.chat.color = params.color;
 
-			this.store.dispatch('recentModel/set', [ recentItem ]);
+			this.store.dispatch('recentModel/set', [recentItem]);
 		}
 	}
 

@@ -81,9 +81,9 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 
 		$this->fieldRestrictionManager = new FieldRestrictionManager(
 			FieldRestrictionManager::MODE_GRID,
-			[FieldRestrictionManagerTypes::ACTIVITY]
+			[FieldRestrictionManagerTypes::OBSERVERS, FieldRestrictionManagerTypes::ACTIVITY],
+			$this->entityTypeId
 		);
-
 	}
 
 	public function executeComponent()
@@ -152,12 +152,11 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$this->arResult['categoryId'] = $this->category ? $this->category->getId() : 0;
 		$this->arResult['entityTypeDescription'] = $this->factory->getEntityDescription();
 
-		$restrictedFields = $this->fieldRestrictionManager->fetchRestrictedFields(
+		$this->arResult['RESTRICTED_FIELDS_ENGINE'] = $this->fieldRestrictionManager->fetchRestrictedFieldsEngine(
 			$this->getGridId() ?? '',
 			[],
-				$this->filter
+			$this->filter
 		);
-		$this->arResult = array_merge($this->arResult, $restrictedFields);
 
 		$this->includeComponentTemplate();
 	}
@@ -790,6 +789,11 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 				else
 				{
 					$displayField = Display\Field::createFromBaseField($baseField->getName(), $baseField->toArray());
+
+					if ($fieldName === Item::FIELD_NAME_OBSERVERS)
+					{
+						$displayField->setIsMultiple(true);
+					}
 				}
 
 				$displayField->setContext($context);

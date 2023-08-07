@@ -195,9 +195,9 @@ this.BX = this.BX || {};
 	      var wrapper;
 
 	      if (user.url) {
-	        wrapper = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a href=\"", "\" class=\"disk-active-user-popup-item\">\n\t\t\t\t</a>>\n\t\t\t"])), user['url']);
+	        wrapper = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a href=\"", "\" class=\"disk-active-user-popup-item\">\n\t\t\t\t</a>\n\t\t\t"])), user['url']);
 	      } else {
-	        wrapper = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"disk-active-user-popup-item\">\n\t\t\t\t</div>>\n\t\t\t"])));
+	        wrapper = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"disk-active-user-popup-item\">\n\t\t\t\t</div>\n\t\t\t"])));
 	      }
 
 	      var userRow = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-icon ui-icon-common-user disk-active-user-popup-icon\">\n\t\t\t\t<i ", ">\n\t\t\t\t</i>\n\t\t\t</div>\n\t\t\t<div class=\"disk-active-user-popup-name\">", "</div>\n\t\t"])), user['avatar'] ? "style=\"background: url('".concat(encodeURI(main_core.Text.encode(user['avatar'])), "') no-repeat center; background-size: cover;\" ") : '', main_core.Text.encode(user['name']));

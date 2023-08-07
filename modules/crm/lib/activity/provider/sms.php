@@ -132,10 +132,7 @@ class Sms extends BaseMessage
 		}
 		else if (in_array($statusId, [MessageStatus::SENT, MessageStatus::DELIVERED], true))
 		{
-			static::unBindBadge(
-				Badge\Type\SmsStatus::SENDING_SMS_ERROR_VALUE,
-				$bindings,
-			);
+			static::unBindBadge($bindings);
 		}
 	}
 

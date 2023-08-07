@@ -39,6 +39,7 @@ Class mobile extends CModule
 			"tasks",
 			"calendar",
 			"imconnector",
+			"catalog",
 		];
 	}
 

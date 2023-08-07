@@ -69,6 +69,7 @@ class TaskFilterBuilder
 	private const CAST_FULLTEXT = 'fulltext';
 	private const CAST_STRING_EQ = 'string_equal';
 	private const CAST_DATE = 'date';
+	private const CAST_DATE_STRING = 'date_string';
 	private const CAST_LEFT_EXIST = 'left_existence';
 
 	/**
@@ -135,13 +136,18 @@ class TaskFilterBuilder
 	 */
 	private function translateFilter(array $filter): ?ConditionTree
 	{
+		$connection = \Bitrix\Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
+
+        $filterFields = $this->getFilteredFields($filter);
+
 		if (
 			array_key_exists('ONLY_ROOT_TASKS', $filter)
 			&& $filter['ONLY_ROOT_TASKS'] === 'Y'
 			&&
 			(
-				array_key_exists('FULL_SEARCH_INDEX', $filter)
-				|| array_key_exists('COMMENT_SEARCH_INDEX', $filter)
+				in_array('FULL_SEARCH_INDEX', $filterFields)
+				|| in_array('COMMENT_SEARCH_INDEX', $filterFields)
 			)
 		)
 		{
@@ -224,7 +230,10 @@ class TaskFilterBuilder
 			switch ($field)
 			{
 				case "META::ID_OR_NAME":
-					if (empty($val))
+					if (
+                        empty($val)
+                        || !is_scalar($val)
+                    )
 					{
 						break;
 					}
@@ -312,6 +321,10 @@ class TaskFilterBuilder
 
 				case 'GUID':
 				case 'TITLE':
+                    if (!is_scalar($val))
+                    {
+                        break;
+                    }
 					if ($this->query->needTitleEscape())
 					{
 						$val = $this->escapeStencilCharacters($val);
@@ -622,7 +635,8 @@ class TaskFilterBuilder
 						',
 						[$field, "CREATED_DATE"]
 					);
-					$subFilter = $this->createSubfilter($field, $val, $operation, self::CAST_DATE);
+
+					$subFilter = $this->createSubfilter($field, $val, $operation, self::CAST_DATE_STRING);
 					if ($subFilter)
 					{
 						$conditionTree->where($subFilter);
@@ -1027,10 +1041,7 @@ class TaskFilterBuilder
 					break;
 
 				case 'WITH_COMMENT_COUNTERS':
-					$types = array_merge(
-						array_values(CounterDictionary::MAP_COMMENTS),
-						array_values(CounterDictionary::MAP_MUTED_COMMENTS)
-					);
+					$types = array_values(CounterDictionary::MAP_COMMENTS);
 					$conditionTree->where(
 						Query::filter()
 							->whereNotNull(TaskQueryBuilder::ALIAS_TASK_COUNTERS.'.ID')
@@ -1581,6 +1592,7 @@ class TaskFilterBuilder
 					break;
 
 				case self::CAST_DATE:
+				case self::CAST_DATE_STRING:
 					if (empty($value))
 					{
 						($operation === self::OPERATION_NOT)
@@ -1593,9 +1605,12 @@ class TaskFilterBuilder
 					if (
 						is_string($field)
 						&& array_key_exists($field, $entityFields)
-						&& (is_a($entityFields[$field], DateTimeField::class)
+						&&
+						(
+							is_a($entityFields[$field], DateTimeField::class)
 							|| is_a($entityFields[$field], \Bitrix\Main\ORM\Fields\DatetimeField::class)
-						) && is_string($value)
+						)
+						&& is_string($value)
 					)
 					{
 						$value = DateTime::createFromUserTime($value);
@@ -1612,6 +1627,14 @@ class TaskFilterBuilder
 					elseif (is_string($value))
 					{
 						$value = DateTime::createFromUserTime($value)->format('Y-m-d H:i:s');
+					}
+
+					if (
+						$cast === self::CAST_DATE_STRING
+						&& $value instanceof \Bitrix\Tasks\Util\Type\DateTime
+					)
+					{
+						$value = $value->format('Y-m-d H:i:s');
 					}
 
 					$subFilter = Query::filter()
@@ -1725,6 +1748,11 @@ class TaskFilterBuilder
 			{
 				$field = mb_substr($key, mb_strlen($operation));
 			}
+            else
+            {
+                $field = $key;
+            }
+
 			if (!empty($field))
 			{
 				$filteredFields[] = $field;
@@ -2255,46 +2283,60 @@ class TaskFilterBuilder
 	}
 
 	/**
-	 * @param string $field
-	 * @param string $operation
-	 * @param array $uf
-	 * @param bool $needEscape
-	 * @return Condition
 	 * @throws ObjectException
 	 */
 	private function translateUfFilter(string $field, string $operation, array $uf, bool $needEscape = true): array
 	{
-		$value = $uf['value'];
-		if ($uf['type'] === 'datetime')
+		$conditions = [];
+		$values = $uf['value'];
+		if (!is_array($values))
 		{
-			$value = new Date($value);
+			$values = [$values];
 		}
 
-		if (is_null($value))
+		foreach ($values as $value)
 		{
-			return [new Condition($field, '=', 0), new Condition($field, '=', null)];
-		}
-
-		if (in_array($operation, [self::OPERATION_LESS, self::OPERATION_LESS_EQ, self::OPERATION_GREAT, self::OPERATION_GREAT_EQ]))
-		{
-			return [new Condition($field, $operation, $value)];
-		}
-
-		if ($operation === self::OPERATION_LIKE)
-		{
-			if ($needEscape)
+			if ($uf['type'] === 'datetime')
 			{
-				$value = $this->escapeStencilCharacters($value);
+				$value = new Date($value);
 			}
-			return [new Condition($field, 'like', '%' . $value . '%')];
+
+			if (is_null($value))
+			{
+				$conditions[] = new Condition($field, '=', 0);
+				$conditions[] = new Condition($field, '=', null);
+				break;
+			}
+
+			if (in_array($operation, [self::OPERATION_LESS, self::OPERATION_LESS_EQ, self::OPERATION_GREAT, self::OPERATION_GREAT_EQ]))
+			{
+				$conditions[] = new Condition($field, $operation, $value);
+				break;
+			}
+
+			if ($operation === self::OPERATION_LIKE)
+			{
+				if (
+					$needEscape
+					&& is_scalar($value)
+				)
+				{
+					$value = $this->escapeStencilCharacters($value);
+				}
+				$conditions[] = new Condition($field, 'like', '%' . $value . '%');
+				break;
+			}
+
+			if ($operation === self::OPERATION_NOT)
+			{
+				$conditions[] = new Condition($field, '!=', $value);
+				break;
+			}
+
+			$conditions[] = new Condition($field, '=', $value);
 		}
 
-		if ($operation === self::OPERATION_NOT)
-		{
-			return [new Condition($field, '!=', $value)];
-		}
-
-		return [new Condition($field, '=', $value)];
+		return $conditions;
 	}
 
 	/**
@@ -2322,7 +2364,7 @@ class TaskFilterBuilder
 			switch ($filterKey)
 			{
 				case 'META::ID_OR_NAME':
-					$filter[$filterKey] = '%' . $this->prepareForSprintf($field) . '%';
+					$filter[$filterKey] = '%' . $this->prepareForSprintf((string)$field) . '%';
 					break;
 
 				case '::SUBFILTER-TITLE':
@@ -2331,11 +2373,11 @@ class TaskFilterBuilder
 						$operation = $this->parseOperation($fieldKey);
 						if ($operation === self::OPERATION_LIKE)
 						{
-							$filter[$filterKey][$fieldKey] = '%' . $this->prepareForSprintf($fieldValue) . '%';
+							$filter[$filterKey][$fieldKey] = '%' . $this->prepareForSprintf((string)$fieldValue) . '%';
 						}
 						else
 						{
-							$filter[$filterKey][$fieldKey] = $this->prepareForSprintf($fieldValue);
+							$filter[$filterKey][$fieldKey] = $this->prepareForSprintf((string)$fieldValue);
 						}
 					}
 					break;
@@ -2350,7 +2392,7 @@ class TaskFilterBuilder
 						}
 						foreach ($fieldValue as $tag)
 						{
-							$tags[] = $this->prepareForSprintf($tag);
+							$tags[] = $this->prepareForSprintf((string)$tag);
 						}
 						$filter[$filterKey][$fieldKey] = $tags;
 					}
@@ -2361,12 +2403,12 @@ class TaskFilterBuilder
 					{
 						if ($operation === self::OPERATION_LIKE)
 						{
-							$filter[$operation . $filterKey] = '%' . $this->prepareForSprintf($field['value']) . '%';
+							$filter[$operation . $filterKey] = '%' . $this->prepareForSprintf((string)$field['value']) . '%';
 
 						}
 						else
 						{
-							$filter[$operation . $filterKey] = $this->prepareForSprintf($field['value']);
+							$filter[$operation . $filterKey] = $this->prepareForSprintf((string)$field['value']);
 						}
 					}
 			}
@@ -2379,7 +2421,7 @@ class TaskFilterBuilder
 	 * @param string $value
 	 * @return string
 	 */
-	public function escapeStencilCharacters(string $value): string
+	private function escapeStencilCharacters(string $value): string
 	{
 		return str_replace(['!', '_', '%'], ['\!', '\_', '\%'], $value);
 	}
@@ -2390,6 +2432,10 @@ class TaskFilterBuilder
 
 		foreach ($filter as $key => $val)
 		{
+			// if ($this->isSubFilter($key))
+			// {
+			// 	return $this->prepareFilter($val);
+			// }
 			$field = ltrim($key);
 			$operation = $this->parseOperation($field);
 			if ($operation !== self::OPERATION_DEFAULT)
@@ -2398,10 +2444,17 @@ class TaskFilterBuilder
 			}
 			if (strpos($field, 'UF_') === 0)
 			{
-				$filter[$key] = [
-					'value' => $val,
-					'type' => $userFieldsType[$field],
-				];
+				// if (isset($userFieldsType[$field]))
+				// {
+					$filter[$key] = [
+						'value' => $val,
+						'type' => $userFieldsType[$field],
+					];
+				// }
+				// else
+				// {
+				// 	unset($filter[$key]);
+				// }
 			}
 
 		}

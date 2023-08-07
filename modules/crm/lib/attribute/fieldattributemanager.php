@@ -648,7 +648,7 @@ class FieldAttributeManager
 			}
 			else
 			{
-				$categoryID = (int)$entityData['CATEGORY_ID'];
+				$categoryID = (int)($entityData['CATEGORY_ID'] ?? 0);
 				$options['CATEGORY_ID'] = $categoryID;
 			}
 

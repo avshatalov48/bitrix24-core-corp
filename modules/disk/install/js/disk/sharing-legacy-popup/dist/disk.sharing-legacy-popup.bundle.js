@@ -552,6 +552,7 @@ this.BX.Disk = this.BX.Disk || {};
 	babelHelpers.defineProperty(SharingControlType, "WITHOUT_EDIT", 'without-edit');
 	babelHelpers.defineProperty(SharingControlType, "WITH_CHANGE_RIGHTS", 'with-change-rights');
 	babelHelpers.defineProperty(SharingControlType, "WITH_SHARING", 'with-sharing');
+	babelHelpers.defineProperty(SharingControlType, "BLOCKED_BY_FEATURE", 'blocked-by-feature');
 
 	exports.LegacyPopup = LegacyPopup;
 	exports.SharingControlType = SharingControlType;

@@ -174,7 +174,7 @@ trait CalendarSharing
 	public function getLinkUrl(): ?Uri
 	{
 		$result = null;
-		$linkHash = $this->getModel()->getSettings()['LINK_HASH'];
+		$linkHash = $this->getModel()->getSettings()['LINK_HASH'] ?? null;
 
 		if (!$linkHash)
 		{

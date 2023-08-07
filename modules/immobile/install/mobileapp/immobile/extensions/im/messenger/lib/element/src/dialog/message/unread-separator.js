@@ -1,12 +1,9 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/lib/element/dialog/message/unread-separator
  */
 jn.define('im/messenger/lib/element/dialog/message/unread-separator', (require, exports, module) => {
-
 	const { Loc } = require('loc');
+
 	const {
 		MessageAlign,
 		MessageTextAlign,
@@ -18,10 +15,15 @@ jn.define('im/messenger/lib/element/dialog/message/unread-separator', (require, 
 	 */
 	class UnreadSeparatorMessage extends Message
 	{
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @param {CreateMessageOptions} options
+		 */
 		constructor(modelMessage = {}, options = {})
 		{
 			if (!modelMessage.id)
 			{
+				// eslint-disable-next-line no-param-reassign
 				modelMessage.id = UnreadSeparatorMessage.getDefaultId();
 			}
 
@@ -35,13 +37,13 @@ jn.define('im/messenger/lib/element/dialog/message/unread-separator', (require, 
 			this.setMessageAlign(MessageAlign.center);
 			this.setTextAlign(MessageTextAlign.center);
 			this.setFontColor('#FFFFFF');
-			this.setBackgroundColor('#525C69');
+			this.setBackgroundColor('#525C6966');
 			this.setRoundedCorners(false);
 		}
 
 		getType()
 		{
-			return 'text';
+			return 'system-text';
 		}
 
 		static getDefaultId()

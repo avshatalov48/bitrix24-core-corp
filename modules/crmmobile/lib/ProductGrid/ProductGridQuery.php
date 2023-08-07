@@ -15,13 +15,14 @@ use Bitrix\CrmMobile\ProductGrid\Enricher\EnricherContract;
 use Bitrix\CrmMobile\ProductGrid\Enricher\UpdateFieldsForTaxMode;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
-use Bitrix\Mobile\Integration\Catalog\Catalog;
-use Bitrix\Mobile\Integration\Catalog\PermissionsProvider;
-use Bitrix\Mobile\Integration\Catalog\Repository\MeasureRepository;
+use Bitrix\CatalogMobile\Catalog;
+use Bitrix\CatalogMobile\PermissionsProvider;
+use Bitrix\CatalogMobile\Repository\MeasureRepository;
 use Bitrix\Mobile\Query;
 
 Loader::requireModule('crm');
 Loader::requireModule('catalog');
+Loader::requireModule('catalogmobile');
 
 class ProductGridQuery extends Query
 {

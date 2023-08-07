@@ -10,6 +10,7 @@ use Bitrix\Main\Web\Uri;
 final class CustomizationBuilder
 {
 	public const REVIEW_DISPLAY_MARKUP = 'markup';
+	public const REVIEW_DISPLAY_SIMPLE = 'simple';
 	public const REVIEW_DISPLAY_FINAL = 'final';
 	public const REVIEW_DISPLAY_ORIGINAL = 'original';
 
@@ -59,8 +60,9 @@ final class CustomizationBuilder
 				'imageEmbedded' => $this->buildUrlToImage('disk_doceditor_logo_embed.png?1'),
 				'url' => 'https://bitrix24.com',
 			],
-			'reviewDisplay' => self::REVIEW_DISPLAY_MARKUP,
-			'chat' => false,
+			'review' => [
+				'reviewDisplay' => self::REVIEW_DISPLAY_MARKUP,
+			],
 			'goback' => false,
 			'plugins' => false,
 			// 'loaderName' => 'Bitrix24',

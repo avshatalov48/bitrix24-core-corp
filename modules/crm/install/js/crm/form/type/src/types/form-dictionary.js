@@ -192,4 +192,6 @@ export type FormDictionary = {
 		},
 	};
 	contentTypes: Array<EnumString>;
+	defaultMaxFileFieldSizeMbValue: number;
+	dailyFileLimitSizeMbValue: number;
 };

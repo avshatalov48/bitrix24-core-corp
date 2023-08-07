@@ -10,6 +10,7 @@ class Tabs extends \Bitrix\Main\Engine\Controller
 	public function setConfigAction(array $config = [])
 	{
 		$manager = new Manager();
+
 		return $manager->setCustomConfig($config);
 	}
 
@@ -29,25 +30,30 @@ class Tabs extends \Bitrix\Main\Engine\Controller
 		$activeTabs = $manager->getActiveTabs();
 		$result["tabs"]["current"] = array_reduce(
 			array_keys($activeTabs),
-			function ($result, $tabId) use ($manager, $activeTabs) {
+			static function ($result, $tabId) use ($manager, $activeTabs) {
+				$tabInstance = $manager->getTabInstance($tabId);
 				$result[$tabId] = [
-					"sort" => $activeTabs[$tabId],
-					"title" => $manager->getTabInstance($tabId)->getTitle(),
-					"canBeRemoved" => $manager->getTabInstance($tabId)->canBeRemoved(),
-					"canChangeSort" =>$manager->getTabInstance($tabId)->canChangeSort(),
+					'sort' => $activeTabs[$tabId],
+					'title' => $tabInstance->getTitle(),
+					'canBeRemoved' => $tabInstance->canBeRemoved(),
+					'canChangeSort' => $tabInstance->canChangeSort(),
+					'iconId' => $tabInstance->getIconId(),
 				];
+
 				return $result;
 			}, []);
 
 		$result["tabs"]["list"] = array_reduce(
 			$manager->getAllTabIDs(),
-			function ($result, $tabId) use ($manager)
+			static function ($result, $tabId) use ($manager)
 			{
 				$instance = $manager->getTabInstance($tabId);
 				$result[$tabId] = [
-					"title" => $instance->getTitle(),
-					"shortTitle" => $instance->getShortTitle(),
+					'title' => $instance->getTitle(),
+					'shortTitle' => $instance->getShortTitle(),
+					'iconId' => $instance->getIconId(),
 				];
+
 				return $result;
 			}, []);
 

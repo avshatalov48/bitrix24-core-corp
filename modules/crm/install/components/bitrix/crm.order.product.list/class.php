@@ -252,9 +252,8 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 			return [];
 		}
 
-		$context = Application::getInstance()->getContext();
+		$request = Application::getInstance()->getContext()->getRequest();
 		$session = Application::getInstance()->getSession();
-		$request = $context->getRequest();
 		$parentId = (int)($request->get('parent_id') ?? 0);
 
 		$productId = null;
@@ -325,8 +324,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 
 	private function getProductsFields($visibleColumns)
 	{
-		$context = Application::getInstance()->getContext();
-		$request = $context->getRequest();
+		$request = Application::getInstance()->getContext()->getRequest();
 
 		$rows = [];
 		$flippedVisibleColumns = array_flip($visibleColumns);
@@ -653,9 +651,8 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 
 	private function preparePagination()
 	{
-		$context = Application::getInstance()->getContext();
+		$request = Application::getInstance()->getContext()->getRequest();
 		$session = Application::getInstance()->getSession();
-		$request = $context->getRequest();
 		$pageNum = 0;
 		$navParams = array(
 			'nPageSize' => $this->arParams['ORDER_PRODUCT_COUNT']
@@ -702,7 +699,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 		}
 		else
 		{
-			if ( $request->get('clear_nav') !== 'Y'	&& $session->has('CRM_PAGINATION_DATA'))
+			if ($request->get('clear_nav') !== 'Y' && $session->has('CRM_PAGINATION_DATA'))
 			{
 				$allPaginationData =
 					$session->has('CRM_PAGINATION_DATA')

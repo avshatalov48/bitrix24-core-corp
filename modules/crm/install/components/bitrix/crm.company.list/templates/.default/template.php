@@ -37,7 +37,6 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 Bitrix\Main\UI\Extension::load(
 	[
 		'crm.merger.batchmergemanager',
-		'crm.restriction.filter-fields',
 		'ui.icons.b24',
 		'ui.fonts.opensans',
 	]
@@ -556,7 +555,7 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 		$resultItem['columns']
 	);
 
-	$resultItem['columns'] = \Bitrix\Crm\Entity\FieldContentType::enrichGridRow(
+	$resultItem['columns'] = \Bitrix\Crm\Entity\CommentsHelper::enrichGridRow(
 		\CCrmOwnerType::Company,
 		$fieldContentTypeMap[$arCompany['ID']] ?? [],
 		$arCompany,
@@ -1482,4 +1481,9 @@ if ($arResult['NEED_TO_SHOW_DUP_VOL_DATA_PREPARE'])
 	</script><?
 }
 
-echo $arResult['ACTIVITY_FIELD_RESTRICTIONS'] ?? '';
+if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))
+{
+	Bitrix\Main\UI\Extension::load(['crm.restriction.filter-fields']);
+
+	echo $arResult['RESTRICTED_FIELDS_ENGINE'];
+}

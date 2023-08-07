@@ -74,26 +74,25 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 			return 500;
 		}
 
-		static isSupported(context = {})
-		{
-			if (!context.detailCard)
-			{
-				return false;
-			}
-			const detailCardParams = context.detailCard.getComponentParams();
-
-			return Boolean(get(detailCardParams, 'isGoToChatAvailable', false));
-		}
-
 		static isAvailableInMenu(context = {})
 		{
 			if (!context.detailCard)
 			{
 				return false;
 			}
-			const detailCardParams = context.detailCard.getComponentParams();
 
-			return Boolean(get(detailCardParams, 'isGoToChatAvailable', false));
+			const detailCardParams = context.detailCard.getComponentParams();
+			const entityTypeId = get(detailCardParams, 'entityTypeId', 0);
+			const isCompany = entityTypeId === TypeId.Company;
+			const isContact = entityTypeId === TypeId.Contact;
+			const isClientEnabled = get(detailCardParams, 'isClientEnabled', false);
+
+			return isCompany || isContact || isClientEnabled;
+		}
+
+		static isSupported(context = {})
+		{
+			return true;
 		}
 
 		static getBackdropParams()
@@ -148,6 +147,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 			this.manager = new TelegramConnectorManager();
 
 			this.onChangeClientCallback = this.onChangeClientCallback.bind(this);
+			this.onChangeClientWithoutPhoneCallback = this.onChangeClientWithoutPhoneCallback.bind(this);
 			this.onChangeProviderCallback = this.onChangeProviderCallback.bind(this);
 			this.onChangeProviderPhoneCallback = this.onChangeProviderPhoneCallback.bind(this);
 			this.showAddPhoneToContactDrawer = this.showAddPhoneToContactDrawer.bind(this);
@@ -448,6 +448,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 			const { layout, entity: { typeId, id } } = this.props;
 			const ownerInfo = {
 				ownerId: id,
+				ownerTypeId: typeId,
 				ownerTypeName: CrmType.resolveNameById(typeId),
 			};
 
@@ -464,6 +465,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 				contactCenterUrl,
 				showShimmer: !this.isFetchedConfig,
 				onChangeClientCallback: this.onChangeClientCallback,
+				onChangeClientWithoutPhoneCallback: this.onChangeClientWithoutPhoneCallback,
 				onChangeProviderCallback: this.onChangeProviderCallback,
 				onChangeProviderPhoneCallback: this.onChangeProviderPhoneCallback,
 				showAddPhoneToContactDrawer: this.showAddPhoneToContactDrawer,
@@ -693,6 +695,19 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 			});
 
 			return Promise.resolve();
+		}
+
+		onChangeClientWithoutPhoneCallback({ entityId, entityTypeId, caption: toName })
+		{
+			return new Promise((resolve) => {
+				this.setState({
+					toName,
+					selectedClient: {
+						entityId,
+						entityTypeId,
+					},
+				}, resolve);
+			});
 		}
 
 		onChangeProviderCallback({ sender, phoneId })

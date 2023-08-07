@@ -136,6 +136,7 @@ jn.define('crm/storage/category', (require, exports, module) => {
 						if (response.errors && response.errors.length > 0)
 						{
 							reject(response);
+
 							return;
 						}
 
@@ -168,6 +169,7 @@ jn.define('crm/storage/category', (require, exports, module) => {
 						if (response.errors && response.errors.length > 0)
 						{
 							reject(response);
+
 							return;
 						}
 
@@ -226,6 +228,7 @@ jn.define('crm/storage/category', (require, exports, module) => {
 						if (response.errors && response.errors.length > 0)
 						{
 							reject(response);
+
 							return;
 						}
 

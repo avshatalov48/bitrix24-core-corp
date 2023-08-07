@@ -104,6 +104,7 @@ class Comment extends Configurable
 		$content = CommentController::convertToHtml(
 			TimelineEntry::getByID($this->getModel()->getId()) ?? []
 		)['COMMENT'] ?? '';
+		$content = htmlspecialcharsbx($content);
 
 		return (new CommentContent())
 			->setText($content)

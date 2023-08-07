@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'require-lazy',
 		'loc',
 		'alert',
 		'utils/array',
@@ -10,10 +11,10 @@ return [
 		'layout/ui/fields/entity-selector',
 		'layout/ui/fields/client/elements',
 		'crm:selector/utils/processing',
-		'crm:entity-detail/opener',
 		'crm:type',
 		'crm:loc',
 		'layout/ui/buttons/add-button',
 		'assets/common',
+		'selector/widget/factory'
 	],
 ];

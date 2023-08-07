@@ -2,11 +2,8 @@
 
 namespace Bitrix\UI\FileUploader;
 
-use Bitrix\Main\File\Image;
-use Bitrix\Main\File\Image\Rectangle;
 use Bitrix\Main\ORM\Objectify\State;
 use Bitrix\Main\Security\Sign\Signer;
-use Bitrix\Main\Web\Json;
 use Bitrix\UI\FileUploader\Contracts\CustomFingerprint;
 use Bitrix\UI\FileUploader\Contracts\CustomLoad;
 use Bitrix\UI\FileUploader\Contracts\CustomRemove;
@@ -463,9 +460,19 @@ class Uploader
 			$fileInfo->setDownloadUrl($downloadUrl);
 			if ($fileInfo->isImage())
 			{
-				$rectangle = PreviewImage::getSize($fileInfo);
-				$previewUrl = (string)UrlManager::getPreviewUrl($this->getController(), $fileInfo);
-				$fileInfo->setPreviewUrl($previewUrl, $rectangle->getWidth(), $rectangle->getHeight());
+				$config = $this->getController()->getConfiguration();
+				if ($config->shouldTreatOversizeImageAsFile())
+				{
+					$treatImageAsFile = $config->shouldTreatImageAsFile($fileInfo);
+					$fileInfo->setTreatImageAsFile($treatImageAsFile);
+				}
+
+				if (!$fileInfo->shouldTreatImageAsFile())
+				{
+					$rectangle = PreviewImage::getSize($fileInfo);
+					$previewUrl = (string)UrlManager::getPreviewUrl($this->getController(), $fileInfo);
+					$fileInfo->setPreviewUrl($previewUrl, $rectangle->getWidth(), $rectangle->getHeight());
+				}
 			}
 		}
 

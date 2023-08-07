@@ -2,13 +2,13 @@
 
 namespace Bitrix\Crm\Service;
 
+use Bitrix\Crm\Activity\Provider\ProviderManager;
 use Bitrix\Crm\Activity\TodoCreateNotification;
 use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Cleaning\CleaningManager;
 use Bitrix\Crm\Conversion\EntityConversionConfig;
 use Bitrix\Crm\Counter\EntityCounterSettings;
 use Bitrix\Crm\Currency;
-use Bitrix\Crm\Entity\FieldContentType;
 use Bitrix\Crm\EO_Status;
 use Bitrix\Crm\EO_Status_Collection;
 use Bitrix\Crm\Field;
@@ -86,7 +86,6 @@ abstract class Factory
 			$settings += UtmTable::getUtmFieldsInfo();
 		}
 		$settings += Container::getInstance()->getParentFieldManager()->getParentFieldsInfo($this->getEntityTypeId());
-		$settings += FieldContentType::compileFieldsInfo($settings);
 
 		foreach ($settings as $name => &$field)
 		{
@@ -198,14 +197,13 @@ abstract class Factory
 		$flexibleContentTypeFields = [];
 		foreach ($this->getFieldsCollection()->getFieldsByType(Field::TYPE_TEXT) as $field)
 		{
-			$isFlexibleContentType = $field->getSettings()['isFlexibleContentType'] ?? false;
-			if ($isFlexibleContentType === true)
+			if ($field->getValueType() === Field::VALUE_TYPE_BB)
 			{
 				$flexibleContentTypeFields[] = $field;
 			}
 		}
 		$item->addImplementation(
-			new Item\FieldImplementation\ContentTypeId($item, new Field\Collection($flexibleContentTypeFields)),
+			new Item\FieldImplementation\Comments($item, $entityObject, new Field\Collection($flexibleContentTypeFields)),
 		);
 	}
 
@@ -619,8 +617,6 @@ abstract class Factory
 
 	protected function prepareSelect(array $select): array
 	{
-		$select = array_filter($select, fn(string $fieldName) => !FieldContentType::isContentTypeIdFieldName($fieldName));
-
 		if (in_array('*', $select, true))
 		{
 			$select[] = 'UF_*';
@@ -1396,6 +1392,8 @@ abstract class Factory
 		{
 			$settings->disableDeferredCleaning();
 		}
+
+		$settings->setActivityProvidersToAutocomplete(ProviderManager::getCompletableProviderIdFlatList());
 
 		return $settings;
 	}

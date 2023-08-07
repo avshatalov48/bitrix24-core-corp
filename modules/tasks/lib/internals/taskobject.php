@@ -246,6 +246,16 @@ class TaskObject extends EO_Task
 
 	public function getResponsibleMemberId(): ?int
 	{
+		return $this->getMemberId(RoleDictionary::ROLE_RESPONSIBLE);
+	}
+
+	public function getCreatedByMemberId(): ?int
+	{
+		return $this->getMemberId(RoleDictionary::ROLE_DIRECTOR);
+	}
+
+	private function getMemberId(string $role): ?int
+	{
 		$members = $this->getMemberList();
 
 		if (is_null($members))
@@ -266,7 +276,7 @@ class TaskObject extends EO_Task
 
 		foreach ($members as $member)
 		{
-			if ($member->getType() === RoleDictionary::ROLE_RESPONSIBLE)
+			if ($member->getType() === $role)
 			{
 				return $member->getUserId();
 			}

@@ -8,6 +8,8 @@ use Bitrix\Main\UI\Filter;
 
 abstract class FieldRestrictionManagerBase
 {
+	protected int $entityTypeId;
+
 	/**
 	 * Is field(s) has restriction
 	 *
@@ -28,6 +30,13 @@ abstract class FieldRestrictionManagerBase
 	 * @return bool
 	 */
 	abstract protected function isFieldRestricted(string $fieldName): bool;
+
+	public function setEntityTypeId(int $entityTypeId): self
+	{
+		$this->entityTypeId = $entityTypeId;
+
+		return $this;
+	}
 
 	/**
 	 * Remove contact/company fields from filter
@@ -138,15 +147,5 @@ abstract class FieldRestrictionManagerBase
 		}
 
 		return $result;
-	}
-
-	/**
-	 * Allows return BX.Crm.Restriction.FilterFieldsRestriction component  right away
-	 *
-	 * @return bool
-	 */
-	public function returnJsComponent(): bool
-	{
-		return false;
 	}
 }

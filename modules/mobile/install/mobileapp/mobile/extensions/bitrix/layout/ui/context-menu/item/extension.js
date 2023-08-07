@@ -1,13 +1,15 @@
-(() => {
-	const require = (ext) => jn.require(ext);
+/**
+ * @module layout/ui/context-menu/item
+ */
+jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 
+	const { Type } = require('type');
 	const { AnalyticsLabel } = require('analytics-label');
 	const { CounterView } = require('layout/ui/counter-view');
 	const { chevronRight } = require('assets/common');
 	const { Badge } = require('layout/ui/context-menu/item/badge');
 	const { get, mergeImmutable } = require('utils/object');
 	const { changeFillColor } = require('utils/svg');
-	const { Type } = require('type');
 
 	const TINT_COLOR = '#6a737f';
 
@@ -212,6 +214,11 @@
 			return BX.prop.getObject(this.props, 'analyticsLabel', null);
 		}
 
+		get isRawIcon()
+		{
+			return BX.prop.getBoolean(this.props, 'isRawIcon', false);
+		}
+
 		render()
 		{
 			if (!this.isActive)
@@ -234,9 +241,33 @@
 			);
 		}
 
+		onClickSelected(callback)
+		{
+			return callback(
+				this.id,
+				this.parentId,
+				{
+					parentWidget: this.getParentWidget ? this.getParentWidget() : null,
+					parent: this.parent || null,
+				},
+			);
+		}
+
+		sendAnalytics()
+		{
+			if (Type.isPlainObject(this.analyticsLabel))
+			{
+				AnalyticsLabel.send({
+					event: 'context-menu-click',
+					id: this.id,
+					...this.analyticsLabel,
+				});
+			}
+		}
+
 		handleSelectItem()
 		{
-			if (this.state.isProcessing || this.isTypeLayout())
+			if (this.isProcessing() || this.isTypeLayout())
 			{
 				return;
 			}
@@ -245,37 +276,25 @@
 			{
 				if (this.onDisableClick)
 				{
-					this.onDisableClick(
-						this.id,
-						this.parentId,
-						{
-							parentWidget: this.getParentWidget ? this.getParentWidget() : null,
-							parent: this.parent || null,
-						},
-					);
+					this.onClickSelected(this.onDisableClick);
 				}
 
 				return;
 			}
 
-			this.setState({ isProcessing: true }, () => {
-				let promise = this.onClickCallback(
-					this.id,
-					this.parentId,
-					{
-						parentWidget: this.getParentWidget ? this.getParentWidget() : null,
-						parent: this.parent || null,
-					},
-				);
+			const { needProcessing = true } = this.props;
 
-				if (Type.isPlainObject(this.analyticsLabel))
-				{
-					AnalyticsLabel.send({
-						event: 'context-menu-click',
-						id: this.id,
-						...this.analyticsLabel,
-					});
-				}
+			if (!needProcessing)
+			{
+				this.onClickSelected(this.onClickCallback);
+				this.sendAnalytics();
+
+				return;
+			}
+
+			this.setState({ isProcessing: true }, () => {
+				let promise = this.onClickSelected(this.onClickCallback);
+				this.sendAnalytics();
 
 				if (!(promise instanceof Promise))
 				{
@@ -425,7 +444,7 @@
 						Image({
 							uri: imgUri,
 							style: styles.icon(this.largeIcon),
-							resizeMode: imgUri ? 'contain' : 'center',
+							resizeMode: this.getImageResizeMode(imgUri),
 							tintColor,
 							svg: { content: svgIcon },
 						}),
@@ -579,6 +598,21 @@
 					),
 				),
 			];
+		}
+
+		getImageResizeMode(imgUri)
+		{
+			if (this.isRawIcon)
+			{
+				return 'cover';
+			}
+
+			if (imgUri)
+			{
+				return 'contain';
+			}
+
+			return 'center';
 		}
 
 		isProcessing()
@@ -746,6 +780,5 @@
 		},
 	};
 
-	this.ContextMenuItem = ContextMenuItem;
-	this.ContextMenuItem.ImageAfterTypes = ImageAfterTypes;
-})();
+	module.exports = { ContextMenuItem, ImageAfterTypes };
+});

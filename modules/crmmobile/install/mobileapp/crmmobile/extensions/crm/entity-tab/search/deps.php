@@ -9,6 +9,7 @@ return [
 		'utils/function',
 		'layout/ui/plan-restriction',
 		'crm:loc',
+		'crm:type',
 	],
 	'bundle' => [
 		'./src/base-item',

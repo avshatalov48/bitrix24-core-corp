@@ -70,6 +70,7 @@ jn.define('crm/category-list/item', (require, exports, module) => {
 		renderFunnelIcon()
 		{
 			const hasTunnelsToRender = this.hasTunnelsToRender();
+
 			return View(
 				{
 					style: {

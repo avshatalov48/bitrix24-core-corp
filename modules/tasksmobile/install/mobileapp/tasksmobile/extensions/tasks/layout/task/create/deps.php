@@ -15,5 +15,6 @@ return [
 		'tasks:layout/task/fields/*',
 		'type',
 		'utils/object',
+		'analytics-label',
 	],
 ];

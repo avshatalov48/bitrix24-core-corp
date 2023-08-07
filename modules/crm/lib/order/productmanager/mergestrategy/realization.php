@@ -13,7 +13,7 @@ class Realization extends Base
 
 		foreach ($dealProducts as $dealProduct)
 		{
-			$index = static::searchProduct($dealProduct, $orderProducts);
+			$index = $this->searchProduct($dealProduct, $orderProducts);
 			if ($index === false)
 			{
 				$basketItem = $this->getBasketItemByEntityProduct($dealProduct, $foundProducts);

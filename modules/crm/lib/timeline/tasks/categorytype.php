@@ -24,4 +24,5 @@ class CategoryType
 	public const BINDINGS_UPDATED = 18;
 	public const TITLE_UPDATED = 19;
 	public const DATE_PLAN__UPDATED = 20;
+	public const PRIORITY_CHANGED = 21;
 }

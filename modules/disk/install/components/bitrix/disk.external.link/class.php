@@ -402,7 +402,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 		$parameters['offset'] = $pageSize * ($pageNumber - 1);
 
 		$nowTime = time() + CTimeZone::getOffset();
-		$fullFormatWithoutSec = preg_replace('/:s$/', '', CAllDatabase::dateFormatToPHP(CSite::GetDateFormat("FULL")));
+		$fullFormatWithoutSec = preg_replace('/:s$/', '', CDatabase::dateFormatToPHP(CSite::GetDateFormat("FULL")));
 
 		$urlManager = $driver->getUrlManager();
 		$rows = array();
@@ -642,7 +642,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 
 		$result = array(
 			'ID' => $file->getId(),
-			'IS_IMAGE' => TypeFile::isImage($file->getName()),
+			'IS_IMAGE' => TypeFile::isImage($file),
 			'IS_DOCUMENT' => TypeFile::isDocument($file->getName()),
 			'ICON_CLASS' => Icon::getIconClassByObject($file),
 			'UPDATE_TIME' => $file->getUpdateTime(),
@@ -938,25 +938,25 @@ class CDiskExternalLinkComponent extends DiskComponent
 		$this->sendJsonSuccessResponse($documentPreviewData);
 	}
 
-	protected function processActionDownload($showFile = false, $runResize = false)
+	protected function processActionDownload($showFile = false, $runResize = false): void
 	{
 		$file = $this->externalLink->getFile();
-		if(!$file)
+		if (!$file)
 		{
 			$this->showNotFoundPage();
 
-			return false;
+			return;
 		}
 
 		$this->externalLink->incrementDownloadCount();
-		if($this->externalLink->isSpecificVersion())
+		if ($this->externalLink->isSpecificVersion())
 		{
 			$version = $file->getVersion($this->externalLink->getVersionId());
-			if(!$version)
+			if (!$version)
 			{
 				$this->showNotFoundPage();
 
-				return false;
+				return;
 			}
 			$fileData = $version->getFile();
 		}
@@ -965,22 +965,21 @@ class CDiskExternalLinkComponent extends DiskComponent
 			$fileData = $file->getFile();
 		}
 
-		if(!$fileData)
+		if (!$fileData)
 		{
 			$this->showNotFoundPage();
 
-			return false;
+			return;
 		}
 
-		if($runResize && TypeFile::isImage($fileData['ORIGINAL_NAME']))
+		if ($runResize && TypeFile::isImage($fileData['ORIGINAL_NAME']) && !TypeFile::shouldTreatImageAsFile($fileData))
 		{
-
-			$tmpFile = \CFile::resizeImageGet($fileData, array("width" => 1920, "height" => 1080), BX_RESIZE_IMAGE_PROPORTIONAL, true, false, true);
-			$fileData["FILE_SIZE"] = $tmpFile["size"];
-			$fileData["SRC"] = $tmpFile["src"];
+			$tmpFile = \CFile::resizeImageGet($fileData, ['width' => 1920, 'height' => 1080], BX_RESIZE_IMAGE_PROPORTIONAL, true, false, true);
+			$fileData['FILE_SIZE'] = $tmpFile['size'];
+			$fileData['SRC'] = $tmpFile['src'];
 		}
 
-		CFile::viewByUser($fileData, array('force_download' => !$showFile, 'attachment_name' => $file->getName()));
+		CFile::viewByUser($fileData, ['force_download' => !$showFile, 'attachment_name' => $file->getName()]);
 	}
 
 	protected function getTargetFile($path, $fileId)

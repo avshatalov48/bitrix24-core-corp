@@ -37,7 +37,6 @@ class IntranetAiCenter extends \CBitrixComponent
 	{
 		if ($this->arParams["SET_TITLE"])
 		{
-			/**@var \CAllMain*/
 			$GLOBALS["APPLICATION"]->setTitle(Loc::getMessage("INTRANET_AI_CENTER_PAGE_TITLE"));
 		}
 

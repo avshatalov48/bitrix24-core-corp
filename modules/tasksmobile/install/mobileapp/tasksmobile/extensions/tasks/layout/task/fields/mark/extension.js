@@ -2,8 +2,8 @@
  * @module tasks/layout/task/fields/mark
  */
 jn.define('tasks/layout/task/fields/mark', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {MenuSelectField} = require('layout/ui/fields/menu-select');
+	const { Loc } = require('loc');
+	const { MenuSelectField } = require('layout/ui/fields/menu-select');
 
 	class Mark extends LayoutComponent
 	{
@@ -50,13 +50,11 @@ jn.define('tasks/layout/task/fields/mark', (require, exports, module) => {
 				},
 				MenuSelectField({
 					readOnly: this.state.readOnly,
+					showEditIcon: true,
+					hasHiddenEmptyView: true,
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_MARK_MSGVER_1'),
 					value: this.state.mark,
-					emptyValue: (
-						this.state.readOnly
-							? Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_MARK_NO_VALUE')
-							: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_TO_MARK_THE_TASK')
-					),
+					emptyValue: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_MARK_NO_VALUE'),
 					config: {
 						parentWidget: this.props.parentWidget,
 						deepMergeStyles: this.props.deepMergeStyles,
@@ -88,7 +86,7 @@ jn.define('tasks/layout/task/fields/mark', (require, exports, module) => {
 						const mark = (id === 'noValue' ? Task.mark.none : id);
 						if (mark !== this.state.mark)
 						{
-							this.setState({mark});
+							this.setState({ mark });
 							this.props.onChange(mark);
 						}
 					},
@@ -97,5 +95,5 @@ jn.define('tasks/layout/task/fields/mark', (require, exports, module) => {
 		}
 	}
 
-	module.exports = {Mark};
+	module.exports = { Mark };
 });

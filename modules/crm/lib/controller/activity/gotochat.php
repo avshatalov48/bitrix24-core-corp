@@ -82,7 +82,7 @@ class GoToChat extends Base
 
 		if (!$fromCorrespondent)
 		{
-			$this->addError(new Error(Loc::getMessage('CRM_INVITATION_WRONG_FROM')));
+			$result->addError(new Error(Loc::getMessage('CRM_INVITATION_WRONG_FROM')));
 
 			return $result;
 		}
@@ -279,14 +279,17 @@ class GoToChat extends Base
 					];
 				}
 
-				$company = $item->getCompany();
-				if ($company)
+				if ($item->hasField(Item::FIELD_NAME_COMPANY))
 				{
-					$communications[] = [
-						'entityId' => $company->getId(),
-						'entityTypeId' => \CCrmOwnerType::Company,
-						'caption' => $company->getTitle(),
-					];
+					$company = $item->getCompany();
+					if ($company)
+					{
+						$communications[] = [
+							'entityId' => $company->getId(),
+							'entityTypeId' => \CCrmOwnerType::Company,
+							'caption' => $company->getTitle(),
+						];
+					}
 				}
 			}
 		}
@@ -312,9 +315,15 @@ class GoToChat extends Base
 			return $result;
 		}
 
-		if(is_null($factory->getItem($entityId)))
+		$item = $factory->getItem($entityId);
+		if($item === null)
 		{
 			$result->addError(ErrorCode::getNotFoundError());
+		}
+
+		if (!Container::getInstance()->getUserPermissions()->canReadItem($item))
+		{
+			$result->addError(ErrorCode::getAccessDeniedError());
 		}
 
 		return $result;

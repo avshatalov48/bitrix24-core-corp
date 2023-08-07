@@ -52,6 +52,10 @@
 	white-space:nowrap;
 }
 .bx-crm-interface-product-section-crumbs-item-current{
+	display: inline-block;
+	overflow: hidden;
+	max-width: 100%;
+	text-overflow: ellipsis;
 	margin-right:3px;
 	color:#535c69;
 	border:none;

@@ -7,6 +7,7 @@ use Bitrix\Crm\ActivityTable;
 use Bitrix\Crm\Automation\Trigger\TaskStatusTrigger;
 use Bitrix\Crm\Badge;
 use Bitrix\Crm\EO_Activity;
+use Bitrix\Crm\Integration\Tasks\Task2ActivityPriority;
 use Bitrix\Crm\Integration\Tasks\Task2ActivityStatus;
 use Bitrix\Crm\Integration\Tasks\TaskAccessController;
 use Bitrix\Crm\Integration\Tasks\TaskHandler;
@@ -41,6 +42,7 @@ final class Task extends Base
 	private const PROVIDER_TYPE_ID = 'TASKS_TASK';
 	private const SUBJECT = 'TASK';
 	private const TASK_CRM_FIELD = 'UF_CRM_TASK';
+	private const UPDATE_OPTIONS = ['SKIP_ASSOCIATED_ENTITY' => true, 'REGISTER_SONET_EVENT' => true];
 
 	public static array $cache = [];
 
@@ -135,6 +137,7 @@ final class Task extends Base
 			'DESCRIPTION' => $task->getDescription(),
 			'START_TIME' => is_null($task->getStartDatePlan()) ? '' : $task->getStartDatePlan()->toString(),
 			'END_TIME' => is_null($task->getEndDatePlan()) ? '' : $task->getEndDatePlan()->toString(),
+			'PRIORITY' => Task2ActivityPriority::getPriority((int)$task->getPriority()),
 			'COMPLETED' => $status === TaskActivityStatus::TASKS_STATE_COMPLETED || $status === TaskActivityStatus::TASKS_STATE_SUPPOSEDLY_COMPLETED,
 		];
 
@@ -240,6 +243,11 @@ final class Task extends Base
 		if ($activity->getSubject() !== $task->getTitle())
 		{
 			$updateData['SUBJECT'] = $task->getTitle();
+		}
+
+		if ($activity->getPriority() !== (int)$task->getPriority())
+		{
+			$updateData['PRIORITY'] = Task2ActivityPriority::getPriority((int)$task->getPriority());
 		}
 
 		if (!empty($updateData))
@@ -504,15 +512,7 @@ final class Task extends Base
 
 	public function complete(EO_Activity $activity): void
 	{
-		CCrmActivity::Complete(
-			$activity->getId(),
-			true,
-			[
-				'SKIP_ASSOCIATED_ENTITY' => true,
-				'REGISTER_SONET_EVENT' => true
-			]
-		);
-
+		CCrmActivity::Complete($activity->getId(), true, self::UPDATE_OPTIONS);
 		self::invalidateAll();
 	}
 
@@ -731,16 +731,7 @@ final class Task extends Base
 
 	public function update(int $activityId, array $fields): void
 	{
-		CCrmActivity::Update(
-			$activityId,
-			$fields,
-			false,
-			true,
-			[
-				'SKIP_ASSOCIATED_ENTITY' => true,
-				'REGISTER_SONET_EVENT' => true
-			]
-		);
+		CCrmActivity::Update($activityId, $fields, false, true, self::UPDATE_OPTIONS);
 	}
 
 	public function getIdsToDelete(Bindings $toRemove, int $taskId): array
@@ -883,7 +874,12 @@ final class Task extends Base
 			]);
 
 			$activity = self::prepareQuery($taskId)->exec()->fetchObject();
-			$result->setData(['entityId' => is_null($activity) ? 0 : $activity->getId()]);
+
+			$provider = new self();
+			$provider->deleteLogEntry((int)$activity?->getId(), $taskId);
+			$provider->update((int)$activity?->getId(), ['STORAGE_ELEMENT_IDS' => $activityFields['STORAGE_ELEMENT_IDS']]);
+
+			$result->setData(['entityId' => (int)$activity?->getId()]);
 		}
 		catch (\Exception $exception)
 		{
@@ -1046,8 +1042,7 @@ final class Task extends Base
 			self::legacySetBindings($task, $activity);
 			if (isset($activity['BINDINGS']) && count($activity['BINDINGS']) > 0)
 			{
-				\CCrmActivity::update($activity['ID'], $activity, false, true,
-					['SKIP_ASSOCIATED_ENTITY' => true, 'REGISTER_SONET_EVENT' => true]);
+				\CCrmActivity::update($activity['ID'], $activity, false, true, self::UPDATE_OPTIONS);
 				\CCrmLiveFeed::syncTaskEvent($activity, $task);
 				$taskBindings = $activity['BINDINGS'];
 			}
@@ -1187,5 +1182,45 @@ final class Task extends Base
 		}
 
 		return 0;
+	}
+
+	public static function onAfterUpdate(
+		int $id,
+		array $changedFields,
+		array $oldFields,
+		array $newFields,
+		array $params = null
+	)
+	{
+		$taskId = $newFields['ASSOCIATED_ENTITY_ID'] ?? 0;
+		if ($taskId <= 0)
+		{
+			return;
+		}
+
+		$task = TaskObject::getObject($taskId);
+		if (is_null($task))
+		{
+			return;
+		}
+
+		$bindings = $newFields['BINDINGS'] ?? [];
+		if (empty($bindings))
+		{
+			return;
+		}
+		$taskCrmFields = $task->getCrmFields();
+		$crmFields = array_unique(array_merge($taskCrmFields, self::prepareBindingsToTask($bindings)));
+		if (
+			empty(array_diff($crmFields, $taskCrmFields))
+			&& empty(array_diff($taskCrmFields, $crmFields))
+		)
+		{
+			return;
+		}
+
+		TaskHandler::getHandler()->update($taskId,[
+			self::TASK_CRM_FIELD => $crmFields
+		]);
 	}
 }

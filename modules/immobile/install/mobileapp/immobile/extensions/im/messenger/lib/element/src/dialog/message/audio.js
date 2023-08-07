@@ -1,11 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/lib/element/dialog/message/audio
  */
 jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
 
@@ -14,13 +10,36 @@ jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, mo
 	 */
 	class AudioMessage extends Message
 	{
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @param {CreateMessageOptions} options
+		 * @param {FilesModelState} file
+		 */
 		constructor(modelMessage = {}, options = {}, file = {})
 		{
 			super(modelMessage, options);
+
+			/* region deprecated properties */
 			this.audioUrl = null;
-			this.isPlaying = modelMessage.audioPlaying;
+			this.isPlaying = null;
+			this.localAudioUrl = null;
+			this.size = null;
+			this.playingTime = null;
+			/* end region */
+
+			this.audio = {
+				localUrl: null,
+				url: null,
+				size: null,
+				isPlaying: null,
+				playingTime: null,
+			};
+
 			this.setAudioUrl(file.urlShow);
+			this.setLocalAudioUrl(file.localUrl);
 			this.setPlayingTime(modelMessage.playingTime);
+			this.setSize(file.size);
+			this.setIsPlaying(modelMessage.audioPlaying);
 
 			if (modelMessage.text !== '')
 			{
@@ -43,6 +62,18 @@ jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, mo
 			}
 
 			this.audioUrl = audioUrl;
+			this.audio.url = audioUrl;
+		}
+
+		setLocalAudioUrl(localUrl)
+		{
+			if (!Type.isStringFilled(localUrl))
+			{
+				return;
+			}
+
+			this.localAudioUrl = localUrl;
+			this.audio.localUrl = localUrl;
 		}
 
 		setPlayingTime(playingTime)
@@ -53,6 +84,24 @@ jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, mo
 			}
 
 			this.playingTime = playingTime;
+			this.audio.playingTime = playingTime;
+		}
+
+		setSize(size)
+		{
+			if (!Type.isNumber(size))
+			{
+				return;
+			}
+
+			this.size = size;
+			this.audio.size = size;
+		}
+
+		setIsPlaying(audioPlaying)
+		{
+			this.isPlaying = Boolean(audioPlaying);
+			this.audio.isPlaying = Boolean(audioPlaying);
 		}
 	}
 

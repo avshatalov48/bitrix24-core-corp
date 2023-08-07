@@ -127,7 +127,7 @@ class CCrmEntityEditorComponent extends UIFormComponent
 				&& (!isset($field['data']['fieldInfo']['MULTIPLE'])
 					|| $field['data']['fieldInfo']['MULTIPLE'] === 'N'))
 			{
-				if (!is_array($field['data']['options']))
+				if (!is_array($field['data']['options'] ?? null))
 				{
 					$this->arResult['ENTITY_FIELDS'][$index]['data']['options'] = [];
 				}
@@ -171,7 +171,12 @@ class CCrmEntityEditorComponent extends UIFormComponent
 					continue;
 				}
 
-				if (!empty($this->arResult['ENTITY_DATA'][$name]['IS_EMPTY']))
+				if (
+					isset($this->arResult['ENTITY_DATA'][$name])
+					&& is_array($this->arResult['ENTITY_DATA'][$name])
+					&& isset($this->arResult['ENTITY_DATA'][$name]['IS_EMPTY'])
+					&& $this->arResult['ENTITY_DATA'][$name]['IS_EMPTY']
+				)
 				{
 					$hasEmptyRequiredFields = true;
 				}

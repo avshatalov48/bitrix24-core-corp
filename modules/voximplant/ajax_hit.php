@@ -18,7 +18,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL", $_RE
 
 		IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/voximplant/ajax_hit.php');
 
-		$chatId = intval($_POST['CHAT_ID']);
+//		$chatId = intval($_POST['CHAT_ID']);
 		$userId = intval($USER->GetId());
 
 		if ($_POST['COMMAND'] == 'authorize')

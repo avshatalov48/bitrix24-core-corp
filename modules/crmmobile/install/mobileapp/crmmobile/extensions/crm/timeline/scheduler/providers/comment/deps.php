@@ -2,6 +2,8 @@
 
 return [
 	'extensions' => [
+		'feature',
+		'haptics',
 		'loc',
 		'crm:timeline/scheduler/providers/base',
 		'crm:timeline/ui/toolbar',

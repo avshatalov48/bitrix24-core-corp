@@ -25,6 +25,11 @@ if (
 		return;
 	}
 
+	if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']) && preg_match("/Crm-Webform-Cors/i", $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
+	{
+		return;
+	}
+
 	if (preg_match("/(bitrix|coredav|iphone|davkit|dataaccess|sunbird|lightning|cfnetwork|zideone|webkit|khtml|ical4ol|ios\\/([5-9]|\d{2})|mac\\sos|mac_os_x|carddavbitrix24|caldavbitrix24|mac\+?os\+?x?\/(x|\d{2}))/i", $_SERVER['HTTP_USER_AGENT']))
 	{
 		CHTTP::SetStatus("302 Found");

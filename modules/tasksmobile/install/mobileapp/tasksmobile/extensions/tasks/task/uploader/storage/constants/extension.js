@@ -3,7 +3,10 @@
  */
 (() => {
 	/** @class TaskUploaderStorageConstants */
-	jnexport([{
-		STORAGE_NAME: 'taskUploadFiles',
-	}, 'TaskUploaderStorageConstants']);
+	jnexport([
+		{
+			STORAGE_NAME: 'taskUploadFiles',
+		},
+		'TaskUploaderStorageConstants',
+	]);
 })();

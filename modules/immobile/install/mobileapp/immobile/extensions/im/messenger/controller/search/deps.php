@@ -6,6 +6,7 @@ return [
 		'im:messenger/core',
 		'im:messenger/lib/element',
 		'type',
+		'im:messenger/lib/utils',
 	],
 	'bundle' => [
 		'./src/base',

@@ -2,8 +2,8 @@
 
 return [
 	'extensions' => [
+		'require-lazy',
 		'crm:tunnel-list/item',
-		'crm:category-list-view',
 		'layout/ui/buttons',
 		'utils/object',
 	]

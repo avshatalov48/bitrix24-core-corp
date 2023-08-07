@@ -301,6 +301,9 @@ export default class OnlyOffice
 					object: this.context.object
 				});
 				break;
+			case SharingControlType.BLOCKED_BY_FEATURE:
+				BX.UI.InfoHelper.show('limit_office_files_access_permissions');
+				break;
 		}
 	}
 

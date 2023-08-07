@@ -44,6 +44,14 @@ final class Feature
 	}
 
 	/**
+	 * @return string
+	 */
+	public static function getProductLimitVariable(): string
+	{
+		return self::PRODUCT_LIMIT_VARIABLE;
+	}
+
+	/**
 	 * Returns url description for help article about product limits.
 	 *
 	 * @return array|null

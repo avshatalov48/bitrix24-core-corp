@@ -41,6 +41,8 @@ export type UploaderOptions = {
 	imageMaxHeight?: number,
 	imageMaxFileSize?: number,
 	imageMinFileSize?: number,
+	ignoreUnknownImageTypes?: boolean,
+	treatOversizeImageAsFile?: boolean,
 
 	imageResizeWidth?: number,
 	imageResizeHeight?: number,

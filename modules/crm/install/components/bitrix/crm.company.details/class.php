@@ -7,17 +7,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true){
 use Bitrix\Crm;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Category\EditorHelper;
-use Bitrix\Crm\Conversion\LeadConversionWizard;
 use Bitrix\Crm\CompanyAddress;
 use Bitrix\Crm\Component\EntityDetails\Traits;
 use Bitrix\Crm\Controller\Action\Entity\SearchAction;
+use Bitrix\Crm\Conversion\LeadConversionWizard;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Format\AddressFormatter;
-use Bitrix\Crm\Integrity\DuplicateControl;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\Tracking;
-use Bitrix\Crm\UserField\Router;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
@@ -883,7 +881,7 @@ class CCrmCompanyDetailsComponent
 					"formattedWithCurrency" => "FORMATTED_REVENUE_WITH_CURRENCY"
 				)
 			),
-			Crm\Entity\FieldContentType::compileFieldDescriptionForDetails(\CCrmOwnerType::Company, $this->entityID, 'COMMENTS'),
+			Crm\Entity\CommentsHelper::compileFieldDescriptionForDetails(\CCrmOwnerType::Company, 'COMMENTS'),
 			array(
 				'name' => 'OPENED',
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_OPENED'),
@@ -1460,11 +1458,6 @@ class CCrmCompanyDetailsComponent
 		if ($this->conversionWizard !== null)
 		{
 			$this->entityData = [];
-			if($this->entityID > 0)
-			{
-				$this->entityData = $this->loadEntityData();
-			}
-
 			$mappedUserFields = [];
 			\Bitrix\Crm\Entity\EntityEditor::prepareConvesionMap(
 				$this->conversionWizard,
@@ -1582,7 +1575,7 @@ class CCrmCompanyDetailsComponent
 				unset($this->entityData['LOGO']);
 			}
 
-			$this->entityData = Crm\Entity\FieldContentType::prepareFieldsFromDetailsToView(
+			$this->entityData = Crm\Entity\CommentsHelper::prepareFieldsFromDetailsToView(
 				\CCrmOwnerType::Company,
 				$this->entityID,
 				$this->entityData,
@@ -2028,7 +2021,7 @@ class CCrmCompanyDetailsComponent
 				$this->arResult['READ_ONLY'] = false;
 			}
 		}
-		elseif (\CCrmCompany::CheckCreatePermission($this->userPermissions))
+		elseif (\CCrmCompany::CheckCreatePermission($this->userPermissions, $this->arResult['CATEGORY_ID']))
 		{
 			$this->arResult['READ_ONLY'] = false;
 		}

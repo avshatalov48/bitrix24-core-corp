@@ -645,7 +645,7 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 	 * @param string $newName New name.
 	 * @return bool
 	 */
-	public function rename($newName, bool $generateUniqueName = false)
+	public function rename(string $newName, bool $generateUniqueName = false)
 	{
 		$success = $this->renameInternal($newName, $generateUniqueName);
 		if($success)
@@ -1366,7 +1366,7 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 		$suffix = array_pop($mainParts);
 
 		//name with a few dots like "example.tar.gz"
-		if ($partsCount > 2 && preg_match('/^[a-zA-Z0-9]{1,3}$/', $mainParts[$partsCount - 2]))
+		if ($partsCount > 2 && preg_match('/^[a-zA-Z][a-zA-Z0-9]{1,2}$/', $mainParts[$partsCount - 2]))
 		{
 			$suffix = array_pop($mainParts)  . '.' . $suffix;
 		}

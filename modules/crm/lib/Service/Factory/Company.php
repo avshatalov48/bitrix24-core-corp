@@ -192,10 +192,9 @@ final class Company extends Service\Factory
 			],
 			Item::FIELD_NAME_COMMENTS => [
 				'TYPE' => Field::TYPE_TEXT,
+				'VALUE_TYPE' => Field::VALUE_TYPE_BB,
 				'ATTRIBUTES' => [],
-				'SETTINGS' => [
-					'isFlexibleContentType' => true,
-				],
+				'CLASS' => Field\Comments::class,
 			],
 			Item::FIELD_NAME_HAS_PHONE => [
 				'TYPE' => Field::TYPE_BOOLEAN,
@@ -402,6 +401,10 @@ final class Company extends Service\Factory
 					'crm_entity_name_' . $this->getEntityTypeId() . '_',
 					[Item::FIELD_NAME_TITLE],
 				)
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\ResetEntityCommunicationSettingsInActivities(),
 			)
 		;
 

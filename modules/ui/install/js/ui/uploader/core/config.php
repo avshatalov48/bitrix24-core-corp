@@ -31,6 +31,7 @@ $defaultChunkSize = 10 * $megabyte;
 $defaultChunkSize = isset($settings['defaultChunkSize']) ? Ini::unformatInt($settings['defaultChunkSize']) : $defaultChunkSize;
 $defaultChunkSize = min(max($chunkMinSize, $defaultChunkSize), $chunkMaxSize);
 
+\Bitrix\Main\Loader::includeModule('ui');
 $defaultConfig = new Configuration();
 
 return [

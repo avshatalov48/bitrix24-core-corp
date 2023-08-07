@@ -11,6 +11,7 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockWithTitle;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Mail\ContactList;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
 use Bitrix\Crm\Service\Timeline\Layout\Body\Logo;
 use Bitrix\Crm\Service\Timeline\Layout\Footer\Button;
@@ -103,7 +104,7 @@ class Email extends Activity
 		return $header;
 	}
 
-	private function buildContactBlock($title, $contact): ?ContentBlock
+	private function buildContactBlock($contact): ?LineOfTextBlocks
 	{
 		$name = $contact['name'];
 		$email = $contact['email'];
@@ -111,6 +112,7 @@ class Email extends Activity
 		$id = (int)$contact['id'];
 		$typeNameId = $contact['typeNameId'];
 
+		$url = null;
 		if ($isUser)
 		{
 			if ($id !== 0)
@@ -136,44 +138,59 @@ class Email extends Activity
 					->setFontSize(Text::FONT_SIZE_SM));
 		}
 
-		return (new ContentBlockWithTitle())->setInline()
-			->setTitle($title)
-			->setContentBlock($lineOfTextBlock->addContentBlock('email',
+		return $lineOfTextBlock->addContentBlock('email',
 				(new Text())->setValue($email)
 					->setColor(ContentBlock\Text::COLOR_BASE_70)
 					->setFontWeight(Text::FONT_WEIGHT_NORMAL)
-					->setFontSize(Text::FONT_SIZE_SM))
-			);
+					->setFontSize(Text::FONT_SIZE_SM));
 	}
 
-	private function buildRecipientBlock(): ?ContentBlock
+	private function buildContactsBlock($title, $contactsListData, $withWrapper = true): ?ContentBlock
+	{
+		$contactList = new ContactList();
+
+		// @todo To write a list of contacts for the web version, to lead to a single set of parameters
+		$contactList->setContactList($contactsListData);
+		$contactList->setTitle($title);
+
+		foreach ($contactsListData as $contact)
+		{
+			$contactList->addListItem($this->buildContactBlock($contact));
+		}
+
+		if ($withWrapper)
+		{
+			return ((new ContentBlockWithTitle())->setInline()->setWordWrap(true)->setTitle($title)
+				->setContentBlock($contactList));
+		}
+		else
+		{
+			return $contactList;
+		}
+	}
+
+	private function buildRecipientBlock($withWrapper = true): ?ContentBlock
 	{
 		$header = $this->getHeader() ?? [];
-		$to = $header['to'] ?? [];
 
-		if (!isset($to[0]))
+		if (empty($header['to']))
 		{
 			return null;
 		}
 
-		$recipient = $to[0];
-		
-		return $this->buildContactBlock(Loc::getMessage("CRM_TIMELINE_BLOCK_EMAIL_TITLE_RECIPIENT"), $recipient);
+		return $this->buildContactsBlock(Loc::getMessage("CRM_TIMELINE_BLOCK_EMAIL_TITLE_RECIPIENT"), $header['to'], $withWrapper);
 	}
 
-	private function buildSenderBlock(): ?ContentBlock
+	private function buildSenderBlock($withWrapper = true): ?ContentBlock
 	{
 		$header = $this->getHeader() ?? [];
-		$from = $header['from'] ?? [];
 
-		if (!isset($from[0]))
+		if (empty($header['from']))
 		{
 			return null;
 		}
 
-		$sender = $from[0];
-
-		return $this->buildContactBlock(Loc::getMessage("CRM_TIMELINE_BLOCK_EMAIL_TITLE_SENDER"), $sender);
+		return $this->buildContactsBlock(Loc::getMessage("CRM_TIMELINE_BLOCK_EMAIL_TITLE_SENDER"), $header['from'], $withWrapper);
 	}
 
 	private function buildSubjectBlock(): ?ContentBlock
@@ -201,16 +218,29 @@ class Email extends Activity
 			$result['subject'] = $subjectBlock;
 		}
 
+		// @todo To write a list of contacts for the web version, to lead to a single set of parameters
 		$recipientBlock = $this->buildRecipientBlock();
 		if (isset($recipientBlock))
 		{
-			$result['recipient'] = $recipientBlock;
+			$result['recipient'] = $recipientBlock->setScopeWeb();
+		}
+
+		$recipientBlock = $this->buildRecipientBlock(false);
+		if (isset($recipientBlock))
+		{
+			$result['recipientMob'] = $recipientBlock->setScopeMobile();
 		}
 
 		$senderBlock = $this->buildSenderBlock();
 		if (isset($senderBlock))
 		{
-			$result['sender'] = $senderBlock;
+			$result['sender'] = $senderBlock->setScopeWeb();
+		}
+
+		$senderBlock = $this->buildSenderBlock(false);
+		if (isset($senderBlock))
+		{
+			$result['senderMob'] = $senderBlock->setScopeMobile();
 		}
 
 		return $result;
@@ -252,11 +282,11 @@ class Email extends Activity
 	{
 		$items = parent::getMenuItems();
 
-		if ($items['edit'])
+		if (isset($items['edit']))
 		{
 			$items['edit']->setScopeWeb();
 		}
-		if ($items['view'])
+		if (isset($items['view']))
 		{
 			$items['view']->setScopeWeb();
 		}

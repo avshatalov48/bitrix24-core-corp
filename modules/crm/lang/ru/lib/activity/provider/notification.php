@@ -3,4 +3,7 @@ $MESS['CRM_ACTIVITY_PROVIDER_NOTIFICATION_INCOMING'] = 'Входящее соо�
 $MESS['CRM_ACTIVITY_PROVIDER_NOTIFICATION_OUTGOING'] = 'Исходящее сообщение';
 $MESS['CRM_ACTIVITY_PROVIDER_NOTIFICATION_NAME'] = 'Сообщение (ЕЦУ)';
 $MESS['CRM_ACTIVITY_PROVIDER_NOTIFICATION_SALESCENTER_PAYMENT_SENT_NAME'] = 'Сообщение об отправке оплаты';
+$MESS['CRM_ACTIVITY_PROVIDER_NOTIFICATION_SALESCENTER_TERMINAL_PAYMENT_PAID_NAME'] = 'Сообщение с информацией об оплате';
 $MESS['CRM_ACTIVITY_PROVIDER_NOTIFICATION_SALESCENTER_DELIVERY_NAME'] = 'Сообщение о доставке товаров';
+$MESS['CRM_ACTIVITY_PROVIDER_NOTIFICATION_CRM_ORDER_COMPLETED_NAME'] = 'Сообщение об оформлении заказа';
+$MESS['CRM_ACTIVITY_PROVIDER_NOTIFICATION_CRM_ORDER_PAID_NAME'] = 'Сообщение об успешной оплате';

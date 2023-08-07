@@ -854,13 +854,20 @@ class DocumentController extends Internals\Controller
 		$oldName = $this->file->getName();
 		//rename in cloud service
 		$renameInCloud = $fileData->getName() && $fileData->getName() != $this->file->getName();
-		if($newNameFileAfterConvert || $renameInCloud)
+		if ($newNameFileAfterConvert && $renameInCloud)
 		{
-			if($newNameFileAfterConvert && $renameInCloud)
-			{
-				$newNameFileAfterConvert = getFileNameWithoutExtension($fileData->getName()) . '.' . getFileExtension($newNameFileAfterConvert);
-			}
+			$newNameFileAfterConvert = getFileNameWithoutExtension($fileData->getName())
+				. '.'
+				. getFileExtension($newNameFileAfterConvert);
+		}
+
+		if ($newNameFileAfterConvert)
+		{
 			$this->file->rename($newNameFileAfterConvert);
+		}
+		elseif ($renameInCloud)
+		{
+			$this->file->rename($fileData->getName());
 		}
 
 		$fileArray = \CFile::makeFileArray($tmpFile);

@@ -2,8 +2,8 @@
  * @module tasks/layout/task/fields/subTasks
  */
 jn.define('tasks/layout/task/fields/subTasks', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {TaskField} = require('tasks/layout/task/fields/tasks');
+	const { Loc } = require('loc');
+	const { TaskField } = require('tasks/layout/task/fields/tasks');
 
 	class SubTasks extends LayoutComponent
 	{
@@ -30,7 +30,6 @@ jn.define('tasks/layout/task/fields/subTasks', (require, exports, module) => {
 			});
 		}
 
-
 		render()
 		{
 			return View(
@@ -45,7 +44,7 @@ jn.define('tasks/layout/task/fields/subTasks', (require, exports, module) => {
 					config: {
 						parentWidget: this.props.parentWidget,
 						deepMergeStyles: this.props.deepMergeStyles,
-						entityList: Object.entries(this.state.subTasks).map(([id, title]) => ({id, title})),
+						entityList: Object.entries(this.state.subTasks).map(([id, title]) => ({ id, title })),
 						reloadEntityListFromProps: true,
 					},
 					testId: 'subTasks',
@@ -54,5 +53,5 @@ jn.define('tasks/layout/task/fields/subTasks', (require, exports, module) => {
 		}
 	}
 
-	module.exports = {SubTasks};
+	module.exports = { SubTasks };
 });

@@ -17,7 +17,7 @@
 			}
 		}
 
-		handlePingCreatedMessage(message)
+		async handlePingCreatedMessage(message)
 		{
 			const activeTab = TabType.TIMELINE;
 			const { payload = {} } = message;
@@ -26,18 +26,14 @@
 			entityTypeId = parseInt(entityTypeId, 10);
 			entityId = parseInt(entityId, 10);
 
-			jn.import('crm:entity-detail/opener')
-				.then(() => {
-					const { EntityDetailOpener } = require('crm/entity-detail/opener');
+			const { EntityDetailOpener } = await requireLazy('crm:entity-detail/opener');
 
-					EntityDetailOpener.open(
-						{ entityId, entityTypeId, activeTab },
-						{},
-						null,
-						true,
-					);
-				})
-				.catch(console.error);
+			EntityDetailOpener.open(
+				{ entityId, entityTypeId, activeTab },
+				{},
+				null,
+				true,
+			);
 		}
 	}
 

@@ -93,6 +93,7 @@ jn.define('crm/timeline/services/activity-viewer', (require, exports, module) =>
 			if (typeof Task === 'undefined' || taskId <= 0)
 			{
 				this.openDesktop(data);
+
 				return;
 			}
 

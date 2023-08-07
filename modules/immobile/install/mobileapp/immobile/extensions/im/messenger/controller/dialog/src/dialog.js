@@ -1,25 +1,25 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/controller/dialog/dialog
  */
 jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) => {
-
 	/* region import */
+
+	const { Filesystem, utils } = require('native/filesystem');
 
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 	const { getPressedColor } = require('utils/color');
 	const { clone, isEqual } = require('utils/object');
+	const { Uuid } = require('utils/uuid');
+	const { withCurrentDomain } = require('utils/url');
 	const { Haptics } = require('haptics');
 	const { inAppUrl } = require('in-app-url');
+	const { NotifyManager } = require('notify-manager');
 	include('InAppNotifier');
 
 	const {
 		EventType,
 		FeatureFlag,
-		DialogType,
 		MessageType,
 		ReactionType,
 		FileType,
@@ -30,10 +30,9 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 	const {
 		ChatService,
 		MessageService,
+		DiskService,
 	} = require('im/messenger/provider/service');
 	const {
-		ChatAvatar,
-		ChatTitle,
 		MessageMenu,
 		LikeReaction,
 		KissReaction,
@@ -47,34 +46,32 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 		ProfileAction,
 		EditAction,
 		DeleteAction,
+		DownloadToDeviceAction,
+		DownloadToDiskAction,
 	} = require('im/messenger/lib/element');
-
+	const { core } = require('im/messenger/core');
 	const { ReplyManager } = require('im/messenger/controller/dialog/reply-manager');
+	const { DraftManager } = require('im/messenger/controller/dialog/draft-manager');
 	const { MessageRenderer } = require('im/messenger/controller/dialog/message-renderer');
-
+	const { HeaderTitle } = require('im/messenger/controller/dialog/header/title');
+	const { HeaderButtons } = require('im/messenger/controller/dialog/header/buttons');
 	const {
 		DialogView,
 		AfterScrollMessagePosition,
 	} = require('im/messenger/view/dialog');
-	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { Logger } = require('im/messenger/lib/logger');
-	const { Uuid } = require('utils/uuid');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { Counters } = require('im/messenger/lib/counters');
 	const { AudioMessagePlayer } = require('im/messenger/controller/dialog/audio-player');
 	const { WebDialog } = require('im/messenger/controller/dialog/web');
 	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
-	const { HeaderMenu } = require('im/messenger/controller/dialog/header/menu');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { UserProfile } = require('im/messenger/controller/user-profile');
 	const { backgroundCache } = require('im/messenger/lib/background-cache');
 	const { parser } = require('im/messenger/lib/parser');
 	const { DialogConverter } = require('im/messenger/lib/converter');
-	const {
-		uploader,
-		UploadTask,
-	} = require('im/messenger/lib/uploader');
+	const { FileDownloadMenu } = require('im/messenger/controller/file-download-menu');
 
 	/* endregion import */
 
@@ -83,71 +80,156 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 	 */
 	class Dialog
 	{
-		constructor({ storeManager } = {})
+		constructor()
 		{
-			if (storeManager)
-			{
-				this.store = storeManager.store;
-				this.storeManager = storeManager;
-			}
-			else
-			{
-				throw new Error('DialogList: options.storeManager is required');
-			}
-
+			/**
+			 * @private
+			 * @type {MessengerCoreStore}
+			 */
+			this.store = core.getStore();
+			/**
+			 * @private
+			 * @type {MessengerCoreStoreManager}
+			 */
+			this.storeManager = core.getStoreManager();
+			/**
+			 * @private
+			 * @type {string || number}
+			 */
 			this.dialogId = 0;
+			/**
+			 * @private
+			 * @type {DialogHeaderTitleParams}
+			 */
 			this.titleParams = null;
-
-			this.chatService = new ChatService(this.store);
+			/**
+			 * @private
+			 * @type {ChatService}
+			 */
+			this.chatService = new ChatService();
+			/**
+			 * @private
+			 * @type {DiskService}
+			 */
+			this.diskService = new DiskService();
+			/**
+			 * @private
+			 * @type {MessageService}
+			 */
 			this.messageService = null;
+			/**
+			 * @private
+			 * @type {MessageRenderer}
+			 */
 			this.messageRenderer = null;
+			/**
+			 * @private
+			 * @type {HeaderTitle}
+			 */
+			this.headerTitle = null;
+			/**
+			 * @private
+			 * @type {HeaderButtons}
+			 */
+			this.headerButtons = null;
+			/**
+			 * @private
+			 * @type {DraftManager}
+			 */
+			this.draftManager = null;
+			/**
+			 * @private
+			 * @type {AudioMessagePlayer}
+			 */
 			this.audioMessagePlayer = new AudioMessagePlayer(this.store);
 
 			/* region View event handlers */
 
+			/** @private */
 			this.submitHandler = this.sendMessage.bind(this);
+			/** @private */
 			this.attachTapHandler = this.onAttachTap.bind(this);
+			/** @private */
 			this.resendHandler = this.resendMessage.bind(this);
+			/** @private */
 			this.loadTopPageHandler = this.loadTopPage.bind(this);
+			/** @private */
 			this.loadBottomPageHandler = this.loadBottomPage.bind(this);
+			/** @private */
 			this.scrollBeginHandler = this.onScrollBegin.bind(this);
+			/** @private */
 			this.scrollEndHandler = this.onScrollEnd.bind(this);
 			this.likeHandler = this.onLike.bind(this);
 			this.replyHandler = this.onReply.bind(this);
+			/** @private */
 			this.readyToReplyHandler = this.onReadyToReply.bind(this);
+			/** @private */
 			this.quoteTapHandler = this.onQuoteTap.bind(this);
+			/** @private */
 			this.cancelReplyHandler = this.onCancelReply.bind(this);
-			this.viewableMessagesChangedHandler = this.onViewableMessagesChanged.bind(this);
+			/** @private */
+			this.visibleMessagesChangedHandler = this.onVisibleMessagesChanged.bind(this);
+			/** @private */
 			this.messageReadHandler = this.onReadMessage.bind(this);
+			/** @private */
 			this.scrollToNewMessagesHandler = this.onScrollToNewMessages.bind(this);
+			/** @private */
 			this.playAudioButtonTapHandler = this.onAudioButtonTap.bind(this);
+			/** @private */
 			this.playbackCompletedHandler = this.onPlaybackCompleted.bind(this);
+			/** @private */
 			this.urlTapHandler = this.onUrlTap.bind(this);
+			/** @private */
+			this.audioRecordingStartHandler = this.onAudioRecordingStart.bind(this);
+			/** @private */
+			this.audioRecordingFinishHandler = this.onAudioRecordingFinish.bind(this);
+			/** @private */
+			this.submitAudioHandler = this.sendAudio.bind(this);
+			/** @private */
 			this.mentionTapHandler = this.onMentionTap.bind(this);
+			/** @private */
 			this.messageTapHandler = this.onMessageTap.bind(this);
+			/** @private */
 			this.messageAvatarTapHandler = this.onMessageAvatarTap.bind(this);
+			/** @private */
 			this.messageQuoteTapHandler = this.onMessageQuoteTap.bind(this);
+			/** @private */
 			this.messageLongTapHandler = this.onMessageLongTap.bind(this);
+			/** @private */
 			this.messageDoubleTapHandler = this.onMessageDoubleTap.bind(this);
+			/** @private */
 			this.messageMenuReactionTapHandler = this.onLike.bind(this);
 			this.messageMenuActionTapHandler = this.onMessageMenuAction.bind(this);
+			/** @private */
+			this.messageFileDownloadTapHandler = this.onMessageFileDownloadTap.bind(this);
+			/** @private */
+			this.messageFileUploadCancelTapHandler = this.onMessageFileUploadCancelTap.bind(this);
+			/** @private */
 			this.closeHandler = this.onClose.bind(this);
+
+			/** @private */
+			this.scrollToBottomHandler = this.onScrollToBottom.bind(this);
 
 			/* endregion View event handlers */
 
-			//render functions
+			// render functions
+			/** @private */
 			this.storeHandler = this.drawMessageList.bind(this);
+			/** @private */
 			this.updateHandler = this.redrawMessage.bind(this);
+			this.deleteHandler = this.deleteMessage.bind(this);
+			/** @private */
 			this.dialogUpdateHandler = this.redrawHeader.bind(this);
 			this.dialogDeleteHandler = () => {};
 
 			if (FeatureFlag.dialog.nativeSupported)
 			{
-				//TODO: generalize the approach to background caching
+				// TODO: generalize the approach to background caching
 				Dialog.preloadAssets();
 			}
 		}
 
+		/** @private */
 		static preloadAssets()
 		{
 			backgroundCache.downloadImages([
@@ -156,6 +238,8 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				ProfileAction.imageUrl,
 				EditAction.imageUrl,
 				DeleteAction.imageUrl,
+				DownloadToDeviceAction.imageUrl,
+				DownloadToDiskAction.imageUrl,
 			]);
 
 			backgroundCache.downloadLottieAnimations([
@@ -169,6 +253,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			]);
 		}
 
+		/** @private */
 		subscribeViewEvents()
 		{
 			this.view
@@ -184,12 +269,15 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				.on(EventType.dialog.readyToReply, this.readyToReplyHandler)
 				.on(EventType.dialog.quoteTap, this.quoteTapHandler)
 				.on(EventType.dialog.cancelReply, this.cancelReplyHandler)
-				.on(EventType.dialog.viewableMessagesChanged, this.viewableMessagesChangedHandler)
+				.on(EventType.dialog.visibleMessagesChanged, this.visibleMessagesChangedHandler)
 				.on(EventType.dialog.messageRead, this.messageReadHandler)
 				.on(EventType.dialog.scrollToNewMessages, this.scrollToNewMessagesHandler)
 				.on(EventType.dialog.playAudioButtonTap, this.playAudioButtonTapHandler)
 				.on(EventType.dialog.playbackCompleted, this.playbackCompletedHandler)
 				.on(EventType.dialog.urlTap, this.urlTapHandler)
+				.on(EventType.dialog.audioRecordingStart, this.audioRecordingStartHandler)
+				.on(EventType.dialog.audioRecordingFinish, this.audioRecordingFinishHandler)
+				.on(EventType.dialog.submitAudio, this.submitAudioHandler)
 				.on(EventType.dialog.mentionTap, this.mentionTapHandler)
 				.on(EventType.dialog.messageTap, this.messageTapHandler)
 				.on(EventType.dialog.messageAvatarTap, this.messageAvatarTapHandler)
@@ -198,45 +286,93 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				.on(EventType.dialog.messageDoubleTap, this.messageDoubleTapHandler)
 				.on(EventType.dialog.messageMenuReactionTap, this.messageMenuReactionTapHandler)
 				.on(EventType.dialog.messageMenuActionTap, this.messageMenuActionTapHandler)
+				.on(EventType.dialog.messageFileDownloadTap, this.messageFileDownloadTapHandler)
+				.on(EventType.dialog.messageFileUploadCancelTap, this.messageFileUploadCancelTapHandler)
+				.on(EventType.dialog.changeText, this.draftManager.changeTextHandler)
+				.on(EventType.view.barButtonTap, this.headerButtons.tapHandler)
+				.on(EventType.view.barButtonLongTap, this.headerButtons.longTapHandler)
 				.on(EventType.view.close, this.closeHandler)
 			;
+
+			this.view.ui.on('titleClick', () => {
+				MessengerEmitter.emit(EventType.messenger.openSidebar, {
+					dialogId: this.dialogId,
+				});
+			});
 		}
 
+		/** @private */
 		unsubscribeViewEvents()
 		{
 			this.view.removeAll();
 		}
 
+		/** @private */
 		subscribeStoreEvents()
 		{
 			this.storeManager
 				.on('messagesModel/store', this.storeHandler)
 				.on('messagesModel/update', this.updateHandler)
 				.on('messagesModel/updateWithId', this.updateHandler)
+				.on('messagesModel/delete', this.deleteHandler)
 				.on('dialoguesModel/add', this.dialogUpdateHandler)
 				.on('dialoguesModel/update', this.dialogUpdateHandler)
 				.on('dialoguesModel/delete', this.dialogDeleteHandler)
+				.on('usersModel/set', this.dialogUpdateHandler)
 			;
 		}
 
+		/** @private */
 		unsubscribeStoreEvents()
 		{
 			this.storeManager
 				.off('messagesModel/store', this.storeHandler)
 				.off('messagesModel/update', this.updateHandler)
 				.off('messagesModel/updateWithId', this.updateHandler)
+				.off('messagesModel/delete', this.deleteHandler)
 				.off('dialoguesModel/add', this.dialogUpdateHandler)
 				.off('dialoguesModel/update', this.dialogUpdateHandler)
 				.off('dialoguesModel/delete', this.dialogDeleteHandler)
+				.off('usersModel/set', this.dialogUpdateHandler)
 			;
 		}
 
+		/** @private */
+		subscribeExternalEvents()
+		{
+			BX.addCustomEvent(EventType.dialog.external.scrollToBottom, this.scrollToBottomHandler);
+		}
+
+		/** @private */
+		unsubscribeExternalEvents()
+		{
+			BX.removeCustomEvent(EventType.dialog.external.scrollToBottom, this.scrollToBottomHandler);
+		}
+
+		/** @private */
 		initManagers()
 		{
+			/**
+			 * @private
+			 * @type {ReplyManager}
+			 */
 			this.replyManager = new ReplyManager({
 				store: this.store,
 				dialogView: this.view,
 			});
+
+			/**
+			 * @private
+			 * @type {DraftManager}
+			 */
+			this.draftManager = new DraftManager({
+				store: this.store,
+				view: this.view,
+				dialogId: this.getDialogId(),
+				replyManager: this.replyManager,
+			});
+
+			this.replyManager.setDraftManager(this.draftManager);
 		}
 
 		open(options)
@@ -298,6 +434,9 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			return this.dialogId;
 		}
 
+		/**
+		 * @return {DialoguesModelState|{}}
+		 */
 		getDialog()
 		{
 			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
@@ -316,32 +455,41 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			return 0;
 		}
 
+		/** @private */
 		createWidget(titleParams = null)
 		{
 			if (!titleParams)
 			{
-				titleParams = this.createTitleParams();
+				titleParams = HeaderTitle.createTitleParams(this.getDialogId(), this.store);
 			}
-
-			this.titleParams = titleParams;
+			this.headerButtons = new HeaderButtons({
+				store: this.store,
+				dialogId: this.getDialogId(),
+			});
 			PageManager.openWidget(
 				'chat.dialog',
 				{
-					titleParams: this.titleParams,
+					dialogId: this.getDialogId(),
+					titleParams,
+					rightButtons: this.headerButtons.getButtons(),
 				},
 			)
 				.then(this.onWidgetReady.bind(this))
-				.catch(error => Logger.error(error))
+				.catch((error) => Logger.error(error))
 			;
 		}
 
+		/**
+		 * @private
+		 * @param widget
+		 */
 		onWidgetReady(widget)
 		{
 			this.createView(widget);
-			this.drawHeaderButtons();
+			this.initManagers();
 			this.subscribeViewEvents();
 			this.subscribeStoreEvents();
-			this.initManagers();
+			this.subscribeExternalEvents();
 
 			let savedMessages = [];
 			if (this.getChatId() > 0)
@@ -369,10 +517,15 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 					chatId: this.getChatId(),
 				});
 
-				this._redrawHeader();
+				this.headerTitle.renderTitle();
+				this.headerButtons.render(this.view);
 			});
 		}
 
+		/**
+		 * @private
+		 * @param widget
+		 */
 		createView(widget)
 		{
 			this.view = new DialogView({
@@ -388,106 +541,28 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				chatId: this.getChatId(),
 			});
 
+			this.headerTitle = new HeaderTitle({
+				store: this.store,
+				view: this.view,
+				dialogId: this.getDialogId(),
+			});
+
+			this.headerTitle.startRender();
+
 			this.view.setInputPlaceholder(Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_INPUT_PLACEHOLDER_TEXT'));
 		}
-		createTitleParams()
-		{
-			const dialogId = this.getDialogId();
-			const avatar = ChatAvatar.createFromDialogId(dialogId);
-			const title = ChatTitle.createFromDialogId(dialogId);
 
-			return {
-				...avatar.getTitleParams(),
-				...title.getTitleParams(),
-				//callback: '1',
-			};
-		}
-
-		drawHeaderButtons()
-		{
-			const isDialogWithUser = !DialogHelper.isDialogId(this.getDialogId());
-			if (isDialogWithUser)
-			{
-				this.drawUserHeaderButtons();
-				return;
-			}
-
-			this.drawDialogHeaderButtons();
-		}
-
-		drawUserHeaderButtons()
-		{
-			const dialogId = this.getDialogId();
-			const userData = this.store.getters['usersModel/getUserById'](dialogId);
-			if (!userData)
-			{
-				return;
-			}
-
-			if (
-				!userData
-				|| userData.bot
-				|| userData.network
-				|| MessengerParams.getUserId() === Number(dialogId)
-			)
-			{
-				return;
-			}
-
-			this.view.setRightButtons([
-				{
-					type: 'call_video',
-					badgeCode: 'call_video',
-					testId: 'DIALOG_HEADER_VIDEO_CALL_BUTTON',
-					callback: this.createVideoCall.bind(this),
-				},
-			]);
-		}
-
-		drawDialogHeaderButtons()
-		{
-			const dialogId = this.getDialogId();
-			const dialogData = this.store.getters['dialoguesModel/getById'](dialogId);
-			if (!dialogData)
-			{
-				return;
-			}
-
-			const maxParticipants = 24;
-			if (
-				dialogData.userCounter > maxParticipants
-				|| dialogData.entityType === 'VIDEOCONF' && dialogData.entityData1 === 'BROADCAST'
-			)
-			{
-				if (dialogData.type === DialogType.call)
-				{
-					return;
-				}
-
-				this.view.setRightButtons([{
-					type: 'user_plus',
-					callback: () => {},
-				}]);
-
-				return;
-			}
-
-			this.view.setRightButtons([
-				{
-					type: 'call_video',
-					badgeCode: 'call_video',
-					testId: 'DIALOG_HEADER_VIDEO_CALL_BUTTON',
-					callback: this.createVideoCall.bind(this),
-				},
-			]);
-		}
-
+		/**
+		 * @private
+		 */
 		onClose()
 		{
 			const dialogId = this.getDialogId();
+			this.unsubscribeExternalEvents();
 			this.unsubscribeStoreEvents();
 			this.unsubscribeViewEvents();
 			this.audioMessagePlayer.stop();
+			this.headerTitle.stopRender();
 
 			this.store.dispatch('applicationModel/closeDialogId', dialogId)
 				.then(() => {
@@ -496,14 +571,16 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			;
 		}
 
-		onViewableMessagesChanged(indexList = [], messageList = [])
+		/**
+		 * @private
+		 */
+		onVisibleMessagesChanged({ indexList = [], messageList = [] })
 		{
 			if (!this.view.scrollToFirstUnreadCompleted)
 			{
 				return;
 			}
 
-			//TODO: refactor
 			const date = this.store.getters['messagesModel/getMessageById'](this.view.getTopMessage().id).date;
 			if (date)
 			{
@@ -511,17 +588,11 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 
 				this.view.setFloatingText(dateText);
 			}
-
-			if (indexList.includes(0))
-			{
-				this.view.hideScrollToNewMessagesButton();
-
-				return;
-			}
-
-			this.view.showScrollToNewMessagesButton();
 		}
 
+		/**
+		 * @private
+		 */
 		onReadMessage(messageId)
 		{
 			if (!this.view.scrollToFirstUnreadCompleted)
@@ -532,21 +603,48 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			this.chatService.readMessage(this.getChatId(), messageId);
 		}
 
+		/**
+		 * @private
+		 */
 		onScrollToNewMessages()
 		{
 			this.view.scrollToBottomSmoothly();
 		}
 
+		/**
+		 * @private
+		 */
 		onScrollBegin()
 		{
 			this.view.showFloatingText();
 		}
 
+		/**
+		 * @private
+		 */
 		onScrollEnd()
 		{
 			this.view.hideFloatingText();
 		}
 
+		/**
+		 * @private
+		 */
+		onScrollToBottom(options)
+		{
+			const { chatId } = options;
+			if (this.getChatId() !== chatId)
+			{
+				return;
+			}
+
+			Logger.log('EventType.dialog.external.scrollToBottom', options);
+			this.view.scrollToBottomSmoothly();
+		}
+
+		/**
+		 * @private
+		 */
 		onAudioButtonTap(index, message, isPlaying, playingTime)
 		{
 			const shouldPlayAudio = !isPlaying;
@@ -560,6 +658,9 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			}
 		}
 
+		/**
+		 * @private
+		 */
 		onPlaybackCompleted()
 		{
 			this.audioMessagePlayer.playNext();
@@ -572,11 +673,49 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			inAppUrl.open(url);
 		}
 
+		/**
+		 * @private
+		 */
+		onAudioRecordingStart()
+		{
+			if (this.view.checkIsScrollToNewMessageButtonVisible())
+			{
+				this.view.hideScrollToNewMessagesButton();
+			}
+		}
+
+		/**
+		 * @private
+		 */
+		onAudioRecordingFinish()
+		{}
+
+		/**
+		 * @private
+		 */
+		sendAudio(audioFile)
+		{
+			const file = {
+				url: audioFile.localAudioUrl,
+			};
+
+			MessengerEmitter.emit(EventType.messenger.uploadFiles, {
+				dialogId: this.getDialogId(),
+				fileList: [file],
+			});
+		}
+
+		/**
+		 * @private
+		 */
 		onMentionTap(userId)
 		{
 			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: userId.toString() });
 		}
 
+		/**
+		 * @private
+		 */
 		onMessageTap(index, message)
 		{
 			const modelMessage = this.store.getters['messagesModel/getMessageById'](Number(message.id));
@@ -602,6 +741,9 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			}
 		}
 
+		/**
+		 * @private
+		 */
 		onMessageAvatarTap(index, message)
 		{
 			const messageId = Number(message.id);
@@ -624,6 +766,9 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			}
 		}
 
+		/**
+		 * @private
+		 */
 		onMessageLongTap(index, message)
 		{
 			const messageId = Number(message.id);
@@ -635,22 +780,34 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			const isSystemMessage = modelMessage.authorId === 0;
 			const isDeletedMessage = modelMessage.params.IS_DELETED === 'Y';
 			const isMessageHasText = modelMessage.text !== '';
+			let isImageMessage = false;
+			let isVideoMessage = false;
+
+			const file = this.store.getters['filesModel/getById'](modelMessage.files[0]);
+			if (file && file.type === FileType.image)
+			{
+				isImageMessage = true;
+			}
+
+			if (file && file.type === FileType.video)
+			{
+				isVideoMessage = true;
+			}
 
 			if (!isRealMessage)
 			{
 				return;
 			}
 
-			const menu =
-				MessageMenu
-					.create()
-					.addReaction(LikeReaction)
-					.addReaction(KissReaction)
-					.addReaction(LaughReaction)
-					.addReaction(WonderReaction)
-					.addReaction(CryReaction)
-					.addReaction(AngryReaction)
-					.addReaction(FacepalmReaction)
+			const menu = MessageMenu
+				.create()
+				.addReaction(LikeReaction)
+				.addReaction(KissReaction)
+				.addReaction(LaughReaction)
+				.addReaction(WonderReaction)
+				.addReaction(CryReaction)
+				.addReaction(AngryReaction)
+				.addReaction(FacepalmReaction)
 			;
 
 			menu.addAction(QuoteAction);
@@ -658,6 +815,21 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			if (isMessageHasText)
 			{
 				menu.addAction(CopyAction);
+			}
+
+			if (
+				(
+					isImageMessage
+					|| isVideoMessage
+				)
+				&& FeatureFlag.native.utilsSaveToLibrarySupported
+				&& !isDeletedMessage
+			)
+			{
+				menu
+					.addAction(DownloadToDeviceAction)
+					.addAction(DownloadToDiskAction)
+				;
 			}
 
 			if (!isYourMessage && !isSystemMessage)
@@ -678,6 +850,9 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			Haptics.impactMedium();
 		}
 
+		/**
+		 * @private
+		 */
 		onMessageDoubleTap(index, message)
 		{
 			if (!message.showReaction)
@@ -691,6 +866,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 		sendMessage(text)
 		{
 			this.view.clearInput();
+			this.draftManager.saveDraft('');
 
 			let shouldScrollToBottom = true;
 			if (this.replyManager.isEditInProcess)
@@ -729,6 +905,8 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				sending: true,
 			};
 
+			this.draftManager.saveDraft('');
+
 			this.store.dispatch('messagesModel/add', message).then(() => {
 				if (shouldScrollToBottom)
 				{
@@ -746,20 +924,22 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			});
 		}
 
+		/**
+		 * @private
+		 */
 		onAttachTap()
 		{
-			this.showComingSoonNotification();
-			return;
-
 			this.view.showAttachPicker((fileList) => {
-				fileList.forEach((file) => {
-					// const task = UploadTask.createFromFile(file);
-					//
-					// uploader.addTask(task);
+				MessengerEmitter.emit(EventType.messenger.uploadFiles, {
+					dialogId: this.getDialogId(),
+					fileList,
 				});
 			});
 		}
 
+		/**
+		 * @private
+		 */
 		_sendMessage(message)
 		{
 			Logger.log('Dialog._sendMessage', message);
@@ -813,6 +993,9 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			}
 		}
 
+		/**
+		 * @private
+		 */
 		onMessageMenuAction(actionId, message)
 		{
 			const messageId = Number(message.id);
@@ -821,6 +1004,12 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			{
 				return;
 			}
+
+			const file = this.store.getters['filesModel/getById'](modelMessage.files[0]);
+			const hasFile = Boolean(file);
+			const isImageMessage = hasFile && file.type === FileType.image;
+			const isVideoMessage = hasFile && file.type === FileType.video;
+			const isImageOrVideo = isImageMessage || isVideoMessage;
 
 			switch (actionId)
 			{
@@ -848,9 +1037,96 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				case DeleteAction.id:
 					this.messageService.delete(modelMessage.id);
 					break;
+
+				case DownloadToDeviceAction.id:
+					if (!isImageOrVideo || !FeatureFlag.native.utilsSaveToLibrarySupported)
+					{
+						return;
+					}
+
+					NotifyManager.showLoadingIndicator();
+					Filesystem.downloadFile(withCurrentDomain(file.urlDownload)).then((localPath) => {
+						utils.saveToLibrary(localPath)
+							.then(() => {
+								const successMessage = isImageMessage
+									? Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_DOWNLOAD_PHOTO_TO_GALLERY_SUCCESS')
+									: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_DOWNLOAD_VIDEO_TO_GALLERY_SUCCESS')
+								;
+
+								InAppNotifier.showNotification({
+									title: successMessage,
+									time: 3,
+								});
+							})
+							.finally(() => {
+								NotifyManager.hideLoadingIndicatorWithoutFallback();
+							});
+					});
+					break;
+				case DownloadToDiskAction.id:
+					if (!isImageOrVideo)
+					{
+						return;
+					}
+
+					this.diskService.save(file.id)
+						.then(() => {
+							const successMessage = isImageMessage
+								? Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_DOWNLOAD_PHOTO_TO_DISK_SUCCESS')
+								: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_DOWNLOAD_VIDEO_TO_DISK_SUCCESS')
+							;
+
+							InAppNotifier.showNotification({
+								title: successMessage,
+								time: 3,
+							});
+						})
+					;
+					break;
 			}
 		}
 
+		/**
+		 * @private
+		 */
+		onMessageFileDownloadTap(index, message)
+		{
+			Logger.log('Dialog.onMessageFileDownloadTap: ', index, message);
+
+			const fileList = this.store.getters['messagesModel/getMessageFiles'](message.id);
+			if (!Type.isArrayFilled(fileList))
+			{
+				return;
+			}
+
+			FileDownloadMenu
+				.createByFileId(fileList[0].id)
+				.open()
+			;
+		}
+
+		/**
+		 * @private
+		 */
+		onMessageFileUploadCancelTap(index, message)
+		{
+			Logger.log('Dialog.onMessageFileUploadCancelTap: ', index, message);
+
+			const modelMessage = this.store.getters['messagesModel/getMessageById'](message.id);
+			if (!modelMessage || !modelMessage.id || !modelMessage.files || !modelMessage.files[0])
+			{
+				return;
+			}
+
+			MessengerEmitter.emit(EventType.messenger.cancelFileUpload, {
+				messageId: modelMessage.id,
+				fileId: modelMessage.files[0],
+			});
+		}
+
+		/**
+		 * @private
+		 */
 		onReply(index, message)
 		{
 			if (
@@ -864,11 +1140,17 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			this.replyManager.startQuotingMessage(message);
 		}
 
+		/**
+		 * @private
+		 */
 		onReadyToReply()
 		{
 			Haptics.impactMedium();
 		}
 
+		/**
+		 * @private
+		 */
 		onQuoteTap(message)
 		{
 			const messageId = message.id;
@@ -879,23 +1161,29 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			}
 
 			this.view.scrollToMessageById(messageId, true, () => {
-				//TODO: temporary solution for highlight message after scroll, generalize and refactor
-				let viewMessage = DialogConverter.createMessageList([ modelMessage ])[0];
+				// TODO: temporary solution for highlight message after scroll, generalize and refactor
+				let viewMessage = DialogConverter.createMessageList([modelMessage])[0];
 				viewMessage.style.backgroundColor = getPressedColor('#ffffff');
 				this.view.updateMessageById(messageId, viewMessage);
 
 				setTimeout(() => {
-					viewMessage = DialogConverter.createMessageList([ modelMessage ])[0];
+					viewMessage = DialogConverter.createMessageList([modelMessage])[0];
 					this.view.updateMessageById(messageId, viewMessage);
 				}, 500);
 			}, AfterScrollMessagePosition.center);
 		}
 
+		/**
+		 * @private
+		 */
 		onMessageQuoteTap()
 		{
 			this.showComingSoonNotification();
 		}
 
+		/**
+		 * @private
+		 */
 		onCancelReply()
 		{
 			if (this.replyManager.isEditInProcess)
@@ -926,7 +1214,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			const messageList = clone(mutation.payload.messages);
 
 			const currentDialogMessageList = [];
-			messageList.forEach(message => {
+			messageList.forEach((message) => {
 				if (message.chatId !== this.getChatId())
 				{
 					return;
@@ -946,8 +1234,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 		redrawMessage(mutation)
 		{
 			let messageId = mutation.payload.id;
-			const isSendError = mutation.payload.fields.error;
-			if (isSendError === false && Uuid.isV4(messageId))
+			if (Uuid.isV4(messageId))
 			{
 				messageId = mutation.payload.fields.id;
 			}
@@ -958,34 +1245,46 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				return;
 			}
 
-			this.messageRenderer.render([ message ]);
+			this.messageRenderer.render([message]);
 		}
 
+		deleteMessage(mutation)
+		{
+			const messageId = mutation.payload.id;
+
+			this.messageRenderer.delete([messageId]);
+		}
+
+		/**
+		 * @private
+		 * @param {Object} mutation
+		 * @param {MessengerStoreMutation} mutation.type
+		 * @param {any} mutation.payload
+		 */
 		redrawHeader(mutation)
 		{
-			const dialogId = mutation.payload.dialogId;
-			if (dialogId !== this.getDialogId())
+			switch (mutation.type)
 			{
-				return;
+				case 'usersModel/set': {
+					const opponent = mutation.payload.find((user) => user.id.toString() === this.getDialogId().toString());
+
+					if (opponent)
+					{
+						this.headerTitle.renderTitle();
+					}
+
+					return;
+				}
+
+				default: {
+					const dialogId = mutation.payload.dialogId;
+
+					if (dialogId === this.getDialogId())
+					{
+						this.headerTitle.renderTitle();
+					}
+				}
 			}
-
-			this._redrawHeader();
-		}
-
-		_redrawHeader()
-		{
-			const actualTitleParams = this.createTitleParams();
-			const isTitleParamsActual = isEqual(actualTitleParams, this.titleParams);
-			if (isTitleParamsActual)
-			{
-				Logger.info('Dialog._redrawHeader: header is up-to-date, redrawing is cancelled.');
-
-				return;
-			}
-
-			Logger.info('Dialog._redrawHeader: before: ', this.titleParams, ' after: ', actualTitleParams);
-			this.view.setTitle(this.createTitleParams());
-			this.titleParams = actualTitleParams;
 		}
 
 		deleteCurrentDialog()
@@ -999,10 +1298,10 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 
 		openWebDialog(options)
 		{
-			return new Promise(resolve => {
+			return new Promise((resolve) => {
 				if (Type.isStringFilled(options.userCode))
 				{
-					WebDialog.getOpenlineDialogByUserCode(options.userCode).then(dialog => {
+					WebDialog.getOpenlineDialogByUserCode(options.userCode).then((dialog) => {
 						options.dialogId = dialog.dialog_id;
 						WebDialog.open(options);
 					});
@@ -1029,7 +1328,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 		{
 			const {
 				userCode,
-				dialogTitleParams
+				dialogTitleParams,
 			} = options;
 
 			return WebDialog.getOpenLineParams(userCode, dialogTitleParams);

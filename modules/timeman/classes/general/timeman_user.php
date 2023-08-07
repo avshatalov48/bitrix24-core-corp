@@ -25,6 +25,8 @@ class CTimeManUser
 	protected static $instance = null;
 	protected static $LAST_ENTRY = [];
 
+	private static array $currentRecordStatus = [];
+
 	public static function instance()
 	{
 		if (!self::$instance)
@@ -461,6 +463,40 @@ class CTimeManUser
 	public function GetCurrentInfo($clear = false)
 	{
 		return $this->_GetLastData($clear);
+	}
+
+	/**
+	 * The method returns the status value of the last shift.
+	 *
+	 * @return string
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function getCurrentRecordStatus(): string
+	{
+		if (isset(self::$currentRecordStatus[$this->USER_ID]))
+		{
+			return self::$currentRecordStatus[$this->USER_ID];
+		}
+
+		$queryObject = WorktimeRecordTable::query()
+			->addSelect('CURRENT_STATUS')
+			->where('USER_ID', $this->USER_ID)
+			->setOrder(['DATE_START' => 'DESC'])
+			->setLimit(1)
+			->exec()
+		;
+		if ($data = $queryObject->fetch())
+		{
+			self::$currentRecordStatus[$this->USER_ID] = $data['CURRENT_STATUS'];
+		}
+		else
+		{
+			self::$currentRecordStatus[$this->USER_ID] = 'CLOSED';
+		}
+
+		return self::$currentRecordStatus[$this->USER_ID];
 	}
 
 	public function State()

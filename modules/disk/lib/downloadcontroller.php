@@ -282,18 +282,18 @@ class DownloadController extends Internals\Controller
 		$this->sendJsonSuccessResponse($result);
 	}
 
-	protected function processActionShowFile()
+	protected function processActionShowFile(): void
 	{
 		$fileName = $this->file->getName();
 		$fileData = $this->file->getFile();
 
-		if(!$fileData)
+		if (!$fileData)
 		{
 			$this->end();
 		}
 
-		$isImage = TypeFile::isImage($fileData['ORIGINAL_NAME']) || TypeFile::isImage($fileName);
-		$cacheTime = $isImage? 86400 : Configuration::DEFAULT_CACHE_TIME;
+		$isImage = TypeFile::isImage($this->file);
+		$cacheTime = $isImage ? 86400 : Configuration::DEFAULT_CACHE_TIME;
 
 		$this->showFileByArray($fileName, $fileData, $cacheTime);
 	}
@@ -313,9 +313,9 @@ class DownloadController extends Internals\Controller
 		$this->showFileByArray($fileName, $fileData, $cacheTime);
 	}
 
-	private function showFileByArray($fileName, $fileData = array(), $cacheTime = 86400, $forceDownload = false)
+	private function showFileByArray($fileName, $fileData = array(), $cacheTime = 86400, $forceDownload = false): void
 	{
-		if (empty($fileName) || !is_array($fileData) || empty($fileData))
+		if (empty($fileName) || !\is_array($fileData) || empty($fileData))
 		{
 			$this->end();
 		}
@@ -325,7 +325,11 @@ class DownloadController extends Internals\Controller
 			$fileData = $this->resizeImage($fileData, $this->file->getId());
 		}
 
-		\CFile::viewByUser($fileData, array('force_download' => $forceDownload, 'cache_time' => $cacheTime, 'attachment_name' => $fileName));
+		\CFile::viewByUser($fileData, [
+			'force_download' => $forceDownload,
+			'cache_time' => $cacheTime,
+			'attachment_name' => $fileName
+		]);
 	}
 
 	protected function processActionDownloadVersion()

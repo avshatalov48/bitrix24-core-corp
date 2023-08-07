@@ -11,6 +11,7 @@ namespace Bitrix\Intranet;
 use Bitrix\Bitrix24\Integrator;
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -292,48 +293,16 @@ class Util
 
 	public static function isIntranetUser(int $userId = null): bool
 	{
-		global $USER;
-		if (is_null($userId) || $userId == $USER->GetID())
+		try
 		{
-			$userId = $USER->GetID();
-			if ($userId <= 0)
-			{
-				return false;
-			}
+			$userId ??= CurrentUser::get()->getId();
 
-			if ($USER->IsAdmin())
-			{
-				return true;
-			}
-
-			$accessManager = new \CAccess;
-			$accessManager->UpdateCodes();
-
-			$codes = $USER->GetAccessCodes();
+			return (new User($userId))->isIntranet();
 		}
-		else
+		catch (ArgumentOutOfRangeException $e)
 		{
-			if ($userId <= 0)
-			{
-				return false;
-			}
-
-			$accessManager = new \CAccess;
-			$accessManager->UpdateCodes(['USER_ID' => $userId]);
-
-			$codes = \CAccess::GetUserCodesArray($userId);
+			return false;
 		}
-
-		foreach ($codes as $code)
-		{
-			if (preg_match('/^D[0-9]+$/', $code))
-			{
-				return true;
-			}
-		}
-
-
-		return false;
 	}
 
 	public static function isExtranetUser(int $userId = null): bool
@@ -606,7 +575,7 @@ class Util
 		{
 			return false;
 		}
-		
+
 		$userData = \Bitrix\Main\UserTable::getList(array(
 			'select' => [ 'ID', 'UF_DEPARTMENT', 'ACTIVE' ],
 			'filter' => [
@@ -814,6 +783,32 @@ class Util
 		}
 
 		return $status;
+	}
+
+	public static function getAppsInstallationConfig(int $userId): array
+	{
+		$result = [];
+		$appActivity = [
+			'APP_WINDOWS_INSTALLED' => \CUserOptions::GetOption('im', 'WindowsLastActivityDate', '', $userId),
+			'APP_MAC_INSTALLED' => \CUserOptions::GetOption('im', 'MacLastActivityDate', '', $userId),
+			'APP_IOS_INSTALLED' => \CUserOptions::GetOption('mobile', 'iOsLastActivityDate', '', $userId),
+			'APP_ANDROID_INSTALLED' => \CUserOptions::GetOption('mobile', 'AndroidLastActivityDate', '', $userId),
+			'APP_LINUX_INSTALLED' => \CUserOptions::GetOption('im', 'LinuxLastActivityDate', '', $userId),
+		];
+
+		foreach ($appActivity as $key => $lastActivity)
+		{
+			if ((int)$lastActivity <= 0 || $lastActivity < time() - 6 * 30 * 24 * 60 * 60)
+			{
+				$result[$key] = false;
+			}
+			else
+			{
+				$result[$key] = true;
+			}
+		}
+
+		return $result;
 	}
 }
 

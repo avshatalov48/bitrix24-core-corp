@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Kanban\Entity;
 
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\Filter;
 use Bitrix\Crm\Filter\ItemDataProvider;
 use Bitrix\Crm\Item;
@@ -12,8 +14,8 @@ use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Error;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Main\UI\Filter\Options;
 
 class Dynamic extends Kanban\Entity
 {
@@ -257,7 +259,7 @@ class Dynamic extends Kanban\Entity
 
 	public function prepareItemCommonFields(array $item): array
 	{
-		$item['PRICE'] = $item[Item::FIELD_NAME_OPPORTUNITY_ACCOUNT];
+		$item['PRICE'] = $item[Item::FIELD_NAME_OPPORTUNITY_ACCOUNT] ?? null;
 		$item['ASSIGNED_BY'] = $item[Item::FIELD_NAME_ASSIGNED];
 		$item['DATE'] = $item['CREATED_TIME'];
 		$item['DATE_CREATE'] = $item['CREATED_TIME'];
@@ -384,6 +386,37 @@ class Dynamic extends Kanban\Entity
 		}
 
 		return $result;
+	}
+
+	public function getFilterOptions(): Options
+	{
+		$options = parent::getFilterOptions();
+		
+		$dynamicFieldRestrictionManager = new FieldRestrictionManager(
+			FieldRestrictionManager::MODE_KANBAN,
+			[FieldRestrictionManagerTypes::OBSERVERS],
+			$this->factory->getEntityTypeId()
+		);
+		$dynamicFieldRestrictionManager->removeRestrictedFields($options);
+
+		return $options;
+	}
+
+	public function getFieldsRestrictionsEngine(): string
+	{
+		$parentFieldsRestrictions = parent::getFieldsRestrictionsEngine();
+		$dynamicFieldRestrictionManager = new FieldRestrictionManager(
+			FieldRestrictionManager::MODE_KANBAN,
+			[FieldRestrictionManagerTypes::OBSERVERS],
+			$this->factory->getEntityTypeId()
+		);
+		$dynamicFieldsRestrictions = $dynamicFieldRestrictionManager->fetchRestrictedFieldsEngine(
+			$this->getGridId(),
+			[],
+			$this->getFilter()
+		);
+
+		return implode("\n", [$parentFieldsRestrictions, $dynamicFieldsRestrictions]);
 	}
 
 	protected function getPopupFieldsBeforeUserFields(): array

@@ -7,7 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Text\HtmlFilter;
 ?>
 
-<title><?=HtmlFilter::encode($arResult['Title'])?></title>
+<title><?=HtmlFilter::encode($arResult['Title'] ?? '')?></title>
 <meta http-equiv="Content-Type" content="text/html; charset='<?=LANG_CHARSET?>">
 
 <table border="1">

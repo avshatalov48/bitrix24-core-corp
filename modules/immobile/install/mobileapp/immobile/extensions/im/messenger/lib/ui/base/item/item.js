@@ -2,7 +2,6 @@
  * @module im/messenger/lib/ui/base/item/item
  */
 jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
-
 	const { Avatar } = require('im/messenger/lib/ui/base/avatar');
 	const { ItemInfo } = require('im/messenger/lib/ui/base/item/item-info');
 	const { styles: itemStyles } = require('im/messenger/lib/ui/base/item/style');
@@ -20,7 +19,6 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 
 	class Item extends LayoutComponent
 	{
-
 		/**
 		 * @param {ItemData}props
 		 */
@@ -31,13 +29,18 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 
 		getStyleBySize()
 		{
+			if (this.props.isCustomStyle)
+			{
+				return this.props.data.style;
+			}
+
 			const size = this.props.size === 'L' ? 'L' : 'M';
 			if (size === 'L')
 			{
 				return itemStyles.large;
 			}
 
-			return itemStyles.medium
+			return itemStyles.medium;
 		}
 
 		render()
@@ -48,20 +51,24 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 				{
 					style: {
 						flexDirection: 'column',
+						backgroundColor: style.parentView.backgroundColor,
 					},
 					clickable: true,
 					onClick: () => {
-						const openDialogData = {
-							dialogId: this.props.data.id,
-							dialogTitleParams: {
-								name: this.props.data.title,
-								description: this.props.data.description,
-								avatar: this.props.data.avatarUri,
-								color: this.props.data.avatarColor
-							}
-						};
-						this.props.onClick(openDialogData);
-					}
+						if (this.props.onClick)
+						{
+							const openDialogData = {
+								dialogId: this.props.data.id,
+								dialogTitleParams: {
+									name: this.props.data.title,
+									description: this.props.data.description,
+									avatar: this.props.data.avatarUri,
+									color: this.props.data.avatarColor,
+								},
+							};
+							this.props.onClick(openDialogData);
+						}
+					},
 				},
 				View(
 					{
@@ -69,10 +76,10 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 					},
 					View(
 						{
-							style: {
+							style: style.avatarContainer || {
 								marginBottom: 6,
 								marginTop: 6,
-							}
+							},
 						},
 						new Avatar({
 							text: this.props.data.title,
@@ -80,10 +87,11 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 							color: this.props.data.avatarColor,
 							size: this.props.size,
 						}),
+						this.renderStatusInAvatar(),
 					),
 					View(
 						{
-							style: {
+							style: style.itemInfoContainer || {
 								flexDirection: 'row',
 								borderBottomWidth: 1,
 								borderBottomColor: '#e9e9e9',
@@ -92,20 +100,59 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 								marginBottom: 6,
 								marginTop: 6,
 								height: '100%',
-							}
+							},
 						},
 						new ItemInfo(
-						{
-							title: this.props.data.title,
-							subtitle: this.props.data.subtitle,
-							size: this.props.data.size,
-							style: style.itemInfo,
-							status: this.props.data.status,
-						}
+							{
+								title: this.props.data.title,
+								isYouTitle: this.props.data.isYouTitle,
+								subtitle: this.props.data.subtitle,
+								size: this.props.data.size,
+								style: style.itemInfo,
+								status: this.props.data.status,
+							},
 						),
 						this.getArrowRightImage(),
 					),
 				),
+			);
+		}
+
+		renderStatusInAvatar()
+		{
+			if (!this.props.isCustomStyle)
+			{
+				return null;
+			}
+
+			return View(
+				{
+					style: {
+						position: 'absolute',
+						zIndex: 2,
+						flexDirection: 'column',
+						alignSelf: 'flex-end',
+					},
+				},
+				this.props.data.crownStatus
+					? Image({
+						style: {
+							width: 18,
+							height: 18,
+							marginBottom: 14,
+						},
+						svg: { content: this.props.data.crownStatus },
+						onFailure: (e) => Logger.error(e),
+					})
+					: null,
+				Image({
+					style: {
+						width: 18,
+						height: 18,
+					},
+					svg: { content: this.props.data.status },
+					onFailure: (e) => Logger.error(e),
+				}),
 			);
 		}
 
@@ -127,16 +174,17 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 					},
 				},
 				Image({
-					style:{
+					style: {
 						width: 9,
 						height: 12,
 					},
 					svg: {
 						content: arrowRight(),
 					},
-				})
+				}),
 			);
 		}
 	}
+
 	module.exports = { Item };
 });

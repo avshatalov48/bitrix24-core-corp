@@ -1156,6 +1156,16 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 			$quantity = (float)$product['AMOUNT'] > 0 ? (float)$product['AMOUNT'] : 1;
 			$storeId = (int)$product['STORE_FROM'];
 
+			$barcode = null;
+			if (isset($product['DOC_BARCODE']) && !empty($product['DOC_BARCODE']))
+			{
+				$barcode = $product['DOC_BARCODE'];
+			}
+			elseif (isset($product['BARCODE']) && !empty($product['BARCODE']))
+			{
+				$barcode = $product['BARCODE'];
+			}
+
 			$item = [
 				'QUANTITY' => $quantity,
 				'AMOUNT' => $quantity,
@@ -1168,7 +1178,7 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 						'QUANTITY' => $quantity,
 						'BARCODE' => [
 							[
-								'VALUE' => $product['BARCODE'],
+								'VALUE' => $barcode,
 							],
 						],
 					],

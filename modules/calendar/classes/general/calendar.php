@@ -439,6 +439,8 @@ class CCalendar
 			'showAfterSyncAccent' => isset($_GET['googleAuthSuccess']) && $_GET['googleAuthSuccess'] === 'y',
 			'isExtranetUser' => $isExtranetUser,
 			'sharingFeatureLimitEnable' => Bitrix24Manager::isFeatureEnabled('calendar_sharing'),
+			'isGoogleApplicationRefused' => COption::GetOptionString('calendar', 'isGoogleApplicationRefused', 'N'),
+			'showGoogleApplicationRefused' => CUserOptions::getOption('calendar', 'showGoogleApplicationRefused', 'Y'),
 		);
 
 		if (self::$type === 'user' && (int)self::$userId !== (int)self::$ownerId)

@@ -1,6 +1,5 @@
 import {EventEmitter, BaseEvent} from 'main.core.events';
 import {Cache, Dom, Text, Loc, Tag, Type, Runtime, Event} from 'main.core';
-import {FieldsPanel} from 'landing.ui.panel.fieldspanel';
 import {Notification} from 'ui.notification';
 import {Draggable} from 'ui.draganddrop.draggable';
 import {Layout} from 'ui.sidepanel.layout';
@@ -8,7 +7,7 @@ import {SaveButton} from 'ui.buttons';
 import {Loader} from 'main.loader';
 import {Item} from './item/item';
 import {Backend} from './backend/backend';
-import 'landing.master';
+import {Selector} from "crm.form.fields.selector";
 
 import type {ListEditorOptions} from './types/list-editor-options';
 import type {ListEditorItemOptions} from './types/list-editor-item-options';
@@ -343,13 +342,6 @@ export class ListEditor extends EventEmitter
 		}, '');
 	}
 
-	showFieldsPanel(panelOptions): Promise<Array<string>>
-	{
-		const fieldsPanel = FieldsPanel.getInstance();
-		Dom.append(fieldsPanel.layout, window.top.document.body);
-		return fieldsPanel.show(panelOptions);
-	}
-
 	onAddFieldClick(event: MouseEvent)
 	{
 		event.preventDefault();
@@ -361,15 +353,13 @@ export class ListEditor extends EventEmitter
 			}),
 		};
 
-		this.showFieldsPanel(fieldsPanelOptions)
+		const selector = new Selector(fieldsPanelOptions);
+		selector.show()
 			.then((result) => {
-				this.setFieldsDictionary(
-					FieldsPanel.getInstance().getCrmFields(),
-				);
-
+				this.setFieldsDictionary(selector.getFieldsList());
 				return result;
 			})
-			.then((result) => {
+			.then((result: Array<string>) => {
 				result.forEach((fieldName) => {
 					const fieldData = this.getFieldByName(fieldName);
 					if (!Type.isString(fieldData.label) && Type.isString(fieldData.caption))

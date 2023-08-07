@@ -2,7 +2,13 @@
 return [
 	'controllers' => [
 		'value' => [
+			'namespaces' => [
+				'\\Bitrix\\ImOpenLines\\V2\\Controller' => 'v2',
+			],
 			'defaultNamespace' => '\\Bitrix\\ImOpenLines\\Controller',
+			'restIntegration' => [
+				'enabled' => true,
+			]
 		],
 		'readonly' => true,
 	],

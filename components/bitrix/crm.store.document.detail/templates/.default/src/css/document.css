@@ -508,12 +508,6 @@ input.pagetitle-item {
 	transition: .2s;
 }
 
-.document-status-label {
-	vertical-align: middle;
-	text-transform: uppercase;
-	margin-left: 5px;
-}
-
 .catalog-title-buttons-wrapper {
 	display: inline-flex;
 	align-items: center;

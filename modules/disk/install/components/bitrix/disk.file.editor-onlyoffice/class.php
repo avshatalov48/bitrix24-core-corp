@@ -404,6 +404,11 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 			return null;
 		}
 
+		if (!Bitrix24Manager::isFeatureEnabled('disk_file_sharing'))
+		{
+			return 'blocked-by-feature';
+		}
+
 		$currentUser = CurrentUser::get();
 		if (!$documentSession->canUserChangeRights($currentUser) && !$documentSession->canUserShare($currentUser))
 		{

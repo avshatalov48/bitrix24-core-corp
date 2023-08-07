@@ -405,7 +405,7 @@ export class PullItem
 		this.listIdsToSkipSorting.add(tmpId);
 	}
 
-	externalAdd(itemId: number): boolean
+	externalAdd(itemId: number): Promise
 	{
 		return new Promise((resolve, reject) => {
 			setTimeout(() => (this.isDelayedAdd(itemId) ? resolve() : reject()), 3000);

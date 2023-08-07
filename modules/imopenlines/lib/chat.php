@@ -147,15 +147,20 @@ class Chat
 	{
 		$isSession = true;
 
-		if(self::parseLinesChatEntityId($chat['ENTITY_ID'])['connectorId'] === 'telegrambot')
+		if (self::parseLinesChatEntityId($chat['ENTITY_ID'])['connectorId'] === 'telegrambot')
 		{
-			$isSession = (bool)SessionTable::getList([
+			$session = SessionTable::getList([
 				'select' => ['ID'],
 				'filter' => [
 					'=CHAT_ID' => $chat['ID'],
 				],
 				'limit' => 1
 			])->fetch();
+
+			if ($session === false)
+			{
+				$isSession = false;
+			}
 		}
 
 		if ($isSession === false)
@@ -3078,7 +3083,7 @@ class Chat
 			return false;
 		}
 
-		$chat = ChatTable::getByPrimary($chatId, ['select' => ['TYPE', 'ENTITY_TYPE', 'ENTITY_DATA_1']])->fetch();
+		$chat = ChatTable::getByPrimary($chatId, ['select' => ['TYPE', 'ENTITY_ID', 'ENTITY_TYPE', 'ENTITY_DATA_1']])->fetch();
 		if (!$chat)
 		{
 			return false;
@@ -3091,6 +3096,9 @@ class Chat
 		{
 			return false;
 		}
+
+		$parsedUserCode = Session\Common::parseUserCode($chat['ENTITY_ID']);
+		$lineId = $parsedUserCode['CONFIG_ID'];
 
 		$crmEntityType = null;
 		$crmEntityId = null;
@@ -3105,7 +3113,7 @@ class Chat
 			}
 		}
 
-		return Config::canJoin($chatId, $crmEntityType, $crmEntityId);
+		return Config::canJoin($lineId, $crmEntityType, $crmEntityId);
 	}
 
 	public static function getChatIdBySession(int $sessionId)

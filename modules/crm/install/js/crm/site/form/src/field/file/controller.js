@@ -8,6 +8,8 @@ type Options = BaseField.Options;
 class Controller extends BaseField.Controller
 {
 	contentTypes: Array<string> = [];
+	maxSizeMb: Number | null = null;
+	summarySize: Number = 0;
 
 	static type(): string
 	{
@@ -28,6 +30,7 @@ class Controller extends BaseField.Controller
 	{
 		super(options);
 		this.contentTypes = (Array.isArray(options.contentTypes) ? options.contentTypes: []) || [];
+		this.maxSizeMb = Number.isInteger(options.maxSizeMb) ? options.maxSizeMb : null;
 	}
 
 	getAcceptTypes(): string
@@ -93,6 +96,21 @@ class Controller extends BaseField.Controller
 			})
 			.join(',')
 		;
+	}
+
+	getSummaryFilesSize(): number
+	{
+		let size = 0;
+		this.items.forEach((item) => {
+			size += item.value?.size || 0;
+		});
+
+		return size;
+	}
+
+	refresh(): void
+	{
+		this.summarySize = this.getSummaryFilesSize();
 	}
 }
 

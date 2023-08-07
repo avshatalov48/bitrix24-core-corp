@@ -26,6 +26,7 @@ use Bitrix\Tasks\Integration\CRM\Timeline\Event\OnTaskExpired;
 use Bitrix\Tasks\Integration\CRM\Timeline\Event\OnTaskFilesUpdated;
 use Bitrix\Tasks\Integration\CRM\Timeline\Event\OnTaskGroupChanged;
 use Bitrix\Tasks\Integration\CRM\Timeline\Event\OnTaskPingSent;
+use Bitrix\Tasks\Integration\CRM\Timeline\Event\OnTaskPriorityChanged;
 use Bitrix\Tasks\Integration\CRM\Timeline\Event\OnTaskRenew;
 use Bitrix\Tasks\Integration\CRM\Timeline\Event\OnTaskResponsibleChanged;
 use Bitrix\Tasks\Integration\CRM\Timeline\Event\OnTaskResultAdded;
@@ -218,6 +219,11 @@ class TimeLineManager
 		)
 		{
 			$this->eventsController->addEvent(new OnTaskDatePlanUpdated($this->taskRepository->getTask(), $this->userId));
+		}
+
+		if ((int)$this->taskRepository->getTask()->getPriority() !== (int)$taskBeforeUpdate->getPriority())
+		{
+			$this->eventsController->addEvent(new OnTaskPriorityChanged($this->taskRepository->getTask(), $this->userId));
 		}
 
 		return $this;

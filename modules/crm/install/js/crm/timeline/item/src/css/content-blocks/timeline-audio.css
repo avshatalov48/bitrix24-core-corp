@@ -14,11 +14,17 @@
 	justify-content: center;
 }
 
+.crm-timeline__audioplayer-contianer.--mini {
+	padding: 0;
+	height: auto;
+}
+
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-controls-container {
 	width: auto;
 	height: auto;
 	min-width: auto;
 	min-height: auto;
+	max-width: max-content;
 }
 
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-control {
@@ -37,10 +43,38 @@
 	transition-timing-function: var(--crm-timeline__audioplayer_transition-timing-function);
 }
 
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control,
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control:hover {
+	width: 40px;
+	height: 20px;
+	border-radius: 512px;
+	background-color: var(--ui-color-background-primary);
+	border: var(--ui-border-width-thin) solid var(--ui-color-palette-blue-40);
+}
+
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control:hover {
+	border-color: var(--ui-color-palette-blue-60);
+}
+
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause {
 	transition-duration: var(--crm-timeline__audioplayer_transition-duration);
-	background: var(--ui-color-palette-blue-30, #c1eefd);
-	fill: var(--ui-color-primary, #2fc6f6);
+}
+
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause,
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause:hover {
+	transition-duration: var(--crm-timeline__audioplayer_transition-duration);
+	background-color: var(--ui-color-background-primary);
+	border-color: var(--ui-color-base-40);
+	fill: var(--ui-color-base-solid-rgb);
+}
+
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause svg,
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause:hover svg {
+	fill: var(--ui-color-base-solid-rgb);
+}
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause:hover {
+	border-color: var(--ui-color-base-60);
+	transition-duration: 0s;
 }
 
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-control:hover {
@@ -51,7 +85,10 @@
 
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause:hover {
 	fill: var(--ui-color-palette-blue-60, #1aa9d6);
-	background: var(--ui-color-palette-blue-30, #c1eefd);
+}
+
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control-loader {
+	animation: none;
 }
 
 
@@ -59,6 +96,10 @@
 	margin-left: 2px;
 	fill: var(--ui-color-on-primary, #fff);
 	transition-duration: var(--crm-timeline__audioplayer_transition-duration);
+}
+
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-control-icon {
+	fill: var(--ui-color-primary);
 }
 
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-control:hover .ui-vue-audioplayer-control-icon {
@@ -70,6 +111,10 @@
 	height: auto;
 	margin-left: calc(var(--ui-space-inline-md, 16px));
 	padding-left: 0;
+}
+
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-timeline-container {
+	margin-left: var(--ui-space-inline-xs);
 }
 
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-track-container {
@@ -129,7 +174,7 @@
 }
 
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-time-current {
-	position: static;
+	position: relative;
 	top: 0;
 	left: 0;
 	transition: color var(--crm-timeline__audioplayer_transition-duration) var(--crm-timeline__audioplayer_transition-timing-function);
@@ -139,10 +184,15 @@
 	color: var(--ui-color-primary, #2FC6F6);
 }
 
-.crm-timeline__audioplayer-contianer .ui-vue-audioplayer-time {
-	font: 10px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-regular, 400);
-	color: var(--ui-color-base-50, #a8adb4);
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-time-current.--is-playing {
+	color: var(--ui-color-text-secondary);
+}
+
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-time-divider {
+	color: var(--ui-color-base-30);
+	font-size: inherit;
+	line-height: inherit;
+	font-family: inherit;
 }
 
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-total-time {
@@ -151,6 +201,14 @@
 	justify-content: space-between;
 	align-items: center;
 	margin-top: 12px;
+	color: var(--ui-color-base-50);
+	font: 10px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
+}
+
+.crm-timeline__audioplayer-contianer.--mini .ui-vue-audioplayer-total-time {
+	margin-top: 0;
+	font-size: var(--ui-font-size-3xs);
 }
 
 .ui-vue-audioplayer-total-time.--hidden {

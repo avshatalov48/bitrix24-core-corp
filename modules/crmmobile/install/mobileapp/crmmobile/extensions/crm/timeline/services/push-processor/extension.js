@@ -127,6 +127,7 @@ jn.define('crm/timeline/services/push-processor', (require, exports, module) => 
 			if (this.queue.length === 0)
 			{
 				this.queueProcessingInProgress = false;
+
 				return;
 			}
 
@@ -314,6 +315,7 @@ jn.define('crm/timeline/services/push-processor', (require, exports, module) => 
 		withStream(name, fn)
 		{
 			const stream = this.getStream(name);
+
 			return stream ? fn(stream) : Promise.resolve();
 		}
 
@@ -345,7 +347,7 @@ jn.define('crm/timeline/services/push-processor', (require, exports, module) => 
 		{
 			const context = this;
 
-			return function ()
+			return function()
 			{
 				setTimeout(() => fn.apply(context, arguments), timeout);
 			};

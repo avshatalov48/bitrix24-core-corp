@@ -1,12 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-pseudo-private */
-
 /**
  * @module im/messenger/lib/counters/counter
  */
 jn.define('im/messenger/lib/counters/counter', (require, exports, module) => {
-
 	const { Type } = require('type');
 
 	/**
@@ -30,7 +25,7 @@ jn.define('im/messenger/lib/counters/counter', (require, exports, module) => {
 			count = Number(count);
 			if (!Type.isNumber(count))
 			{
-				throw new Error('Counter: count is not a number');
+				throw new TypeError('Counter: count is not a number');
 			}
 
 			this._value = count;
@@ -53,7 +48,7 @@ jn.define('im/messenger/lib/counters/counter', (require, exports, module) => {
 
 		update()
 		{
-			Object.keys(this.detail).forEach(dialogId => {
+			Object.keys(this.detail).forEach((dialogId) => {
 				this.value += this.detail[dialogId];
 			});
 		}

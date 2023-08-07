@@ -850,7 +850,7 @@ class CIntranetStructureListComponent extends CBitrixComponent
 	}
 
 	/**
-	 * @return CAllUser
+	 * @return CUser
 	 */
 	public function getUser()
 	{
@@ -860,7 +860,7 @@ class CIntranetStructureListComponent extends CBitrixComponent
 	}
 
 	/**
-	 * @return CAllMain
+	 * @return CMain
 	 */
 	public function getApplication()
 	{

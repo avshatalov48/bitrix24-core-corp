@@ -1,11 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/provider/rest/dialog
  */
 jn.define('im/messenger/provider/rest/dialog', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { RestMethod } = require('im/messenger/const');
@@ -87,7 +83,7 @@ jn.define('im/messenger/provider/rest/dialog', (require, exports, module) => {
 
 			if (!Type.isNumber(messageId))
 			{
-				throw new Error('DialogRest: options.dialogId is invalid.');
+				throw new TypeError('DialogRest: options.dialogId is invalid.');
 			}
 
 			const messageReadParams = {
@@ -112,7 +108,7 @@ jn.define('im/messenger/provider/rest/dialog', (require, exports, module) => {
 
 			if (!Type.isNumber(messageId))
 			{
-				throw new Error('DialogRest: options.dialogId is invalid.');
+				throw new TypeError('DialogRest: options.dialogId is invalid.');
 			}
 
 			const messageReadParams = {

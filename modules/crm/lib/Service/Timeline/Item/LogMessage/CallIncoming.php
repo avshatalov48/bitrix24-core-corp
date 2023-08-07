@@ -2,11 +2,12 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\LogMessage;
 
-use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Client;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Main\Localization\Loc;
 
 class CallIncoming extends LogMessage
@@ -28,7 +29,7 @@ class CallIncoming extends LogMessage
 
 	public function getContentBlocks(): ?array
 	{
-		$clientBlock = $this->buildClientBlock(self::BLOCK_WITH_FORMATTED_VALUE);
+		$clientBlock = $this->buildClientBlock(Client::BLOCK_WITH_FORMATTED_VALUE);
 		if (isset($clientBlock))
 		{
 			return [

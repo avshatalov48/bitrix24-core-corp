@@ -1,13 +1,17 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+use Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Main\Errorable;
 use Bitrix\Main\Grid;
+use Bitrix\Main\Grid\MessageType;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter;
+use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
 use Bitrix\Recyclebin\Internals\UI;
 use Bitrix\Recyclebin\Internals\User;
@@ -17,9 +21,11 @@ Loc::loadMessages(__FILE__);
 
 CBitrixComponent::includeComponentClass("bitrix:recyclebin.base");
 
-class RecyclebinListComponent extends RecyclebinBaseComponent
+class RecyclebinListComponent extends RecyclebinBaseComponent implements Errorable, Controllerable
 {
-	protected $pageSizes = [
+	private const FILTER_ID = 'RECYCLEBIN_LIST';
+
+	protected array $pageSizes = [
 		["NAME" => "5", "VALUE" => "5"],
 		["NAME" => "10", "VALUE" => "10"],
 		["NAME" => "20", "VALUE" => "20"],
@@ -27,16 +33,19 @@ class RecyclebinListComponent extends RecyclebinBaseComponent
 		["NAME" => "100", "VALUE" => "100"],
 	];
 
-	private static function getRequest($unEscape = false)
+	public function __construct($component = null)
 	{
-		$request = Context::getCurrent()->getRequest();
+		parent::__construct($component);
+		$this->init();
+	}
 
-		if ($unEscape)
+	private function init(): void
+	{
+		if (!Loader::includeModule('recyclebin'))
 		{
-			$request->addFilter(new \Bitrix\Main\Web\PostDecodeFilter);
+			return;
 		}
-
-		return $request->getPostList();
+		$this->setTotalCountHtml();
 	}
 
 	protected function doPreActions()
@@ -71,18 +80,15 @@ class RecyclebinListComponent extends RecyclebinBaseComponent
 				}
 			}
 		}
-		else
+		elseif ((!isset($this->arParams['ENTITY_TYPE']) || ($this->arParams['ENTITY_TYPE'] ?? null) === '') && $modules)
 		{
-			if (!$this->arParams['ENTITY_TYPE'] && $modules)
+			$moduleId = $this->arParams['MODULE_ID'];
+			foreach ($modules[$moduleId]['LIST'] as $typeId => $typeData)
 			{
-				$moduleId = $this->arParams['MODULE_ID'];
-				foreach ($modules[$moduleId]['LIST'] as $typeId => $typeData)
-				{
-					$this->arResult['ENTITY_TYPES'][$typeId] = $typeData['NAME'];
-					$this->arResult['ENTITY_MESSAGES'][$typeId] = $typeData['HANDLER']::getNotifyMessages();
-					$this->arResult['ENTITY_ADDITIONAL_DATA'][$typeId] = $additionalData[$moduleId]['ADDITIONAL_DATA'][$typeId];
-					$this->arResult['ENTITY_ADDITIONAL_DATA'][$typeId]['MODULE_ID'] = $moduleId;
-				}
+				$this->arResult['ENTITY_TYPES'][$typeId] = $typeData['NAME'];
+				$this->arResult['ENTITY_MESSAGES'][$typeId] = $typeData['HANDLER']::getNotifyMessages();
+				$this->arResult['ENTITY_ADDITIONAL_DATA'][$typeId] = $additionalData[$moduleId]['ADDITIONAL_DATA'][$typeId] ?? null;
+				$this->arResult['ENTITY_ADDITIONAL_DATA'][$typeId]['MODULE_ID'] = $moduleId;
 			}
 		}
 
@@ -91,64 +97,68 @@ class RecyclebinListComponent extends RecyclebinBaseComponent
 
 		$this->arResult['FILTER']['FIELDS'] = $this->getFilterFields();
 		$this->arResult['FILTER']['PRESETS'] = $this->getFilterPresets();
+		$this->arResult['FILTER']['USE_LIVE_SEARCH'] = 'N';
+		$this->arResult['ENTITY_MESSAGES'] = $this->arResult['ENTITY_MESSAGES'] ?? [];
+		$this->arResult['ENTITY_TYPES'] = $this->arResult['ENTITY_TYPES'] ?? [];
+		$this->arResult['ENTITY_ADDITIONAL_DATA'] = $this->arResult['ENTITY_ADDITIONAL_DATA'] ?? [];
 	}
 
 	private function getGridHeaders()
 	{
 		$list = [
 			[
-				'id'       => 'ENTITY_ID',
-				'name'     => GetMessage('RECYCLEBIN_COLUMN_ENTITY_ID'),
+				'id' => 'ENTITY_ID',
+				'name' => GetMessage('RECYCLEBIN_COLUMN_ENTITY_ID'),
 				'editable' => false,
-				'default'  => true,
-				'shift'    => true,
-				'sort'     => false,
+				'default' => true,
+				'shift' => true,
+				'sort' => false,
 			],
 			[
-				'id'       => 'NAME',
-				'name'     => GetMessage('RECYCLEBIN_COLUMN_NAME'),
+				'id' => 'NAME',
+				'name' => GetMessage('RECYCLEBIN_COLUMN_NAME'),
 				'editable' => false,
-				'default'  => true,
-				'sort'     => 'NAME',
+				'default' => true,
+				'sort' => 'NAME',
 			],
 			[
-				'id'       => 'TIMESTAMP',
-				'name'     => GetMessage('RECYCLEBIN_COLUMN_TIMESTAMP'),
+				'id' => 'TIMESTAMP',
+				'name' => GetMessage('RECYCLEBIN_COLUMN_TIMESTAMP'),
 				'editable' => false,
-				'default'  => true,
-				'sort'     => 'TIMESTAMP',
-			]
+				'default' => true,
+				'sort' => 'TIMESTAMP',
+			],
 		];
 
 		if (User::isSuper())
 		{
 			$list[] = [
-				'id'       => 'USER_ID',
-				'name'     => GetMessage('RECYCLEBIN_COLUMN_USER_ID'),
+				'id' => 'USER_ID',
+				'name' => GetMessage('RECYCLEBIN_COLUMN_USER_ID'),
 				'editable' => false,
-				'default'  => true
+				'default' => true,
 			];
 		}
 
 		if (!$this->arParams['MODULE_ID'])
 		{
 			$list[] = [
-				'id'       => 'MODULE_ID',
-				'name'     => GetMessage('RECYCLEBIN_COLUMN_MODULE_ID'),
+				'id' => 'MODULE_ID',
+				'name' => GetMessage('RECYCLEBIN_COLUMN_MODULE_ID'),
 				'editable' => false,
-				'default'  => false,
-				'sort'     => 'MODULE_ID',
+				'default' => false,
+				'sort' => 'MODULE_ID',
 			];
 		}
 
-		if (!$this->arParams['ENTITY_TYPE'])
+		if ((!$this->arParams['ENTITY_TYPE']) ?? null)
 		{
 			$list[] = [
-				'id'       => 'ENTITY_TYPE',
-				'name'     => GetMessage('RECYCLEBIN_COLUMN_ENTITY_TYPE'),
+				'id' => 'ENTITY_TYPE',
+				'name' => GetMessage('RECYCLEBIN_COLUMN_ENTITY_TYPE'),
 				'editable' => false,
-				'default'  => true,
-				'sort'     => 'ENTITY_TYPE',
+				'default' => true,
+				'sort' => 'ENTITY_TYPE',
 			];
 		}
 
@@ -157,86 +167,59 @@ class RecyclebinListComponent extends RecyclebinBaseComponent
 
 	private function getGridData()
 	{
-		$nav = new \Bitrix\Main\UI\PageNavigation("page");
-		$nav->allowAllRecords(false)->setPageSize($this->getPageSize())->initFromUri();
+		$nav = new PageNavigation('page');
+		$nav
+			->allowAllRecords(false)
+			->setPageSize($this->getPageSize())
+			->initFromUri()
+		;
 
-		$select = array_column($this->getGridHeaders(), 'id');
-		$select[] = 'ID';
+		$limit = $nav->getLimit();
+		$offset = $nav->getOffset();
 
-		$select['USER_NAME'] = 'USER.NAME';
-		$select['USER_LAST_NAME'] = 'USER.LAST_NAME';
-		$select['USER_SECOND_NAME'] = 'USER.SECOND_NAME';
-		$select['USER_TITLE'] = 'USER.TITLE';
-		$select['USER_LOGIN'] = 'USER.LOGIN';
-		$select['USER_PERSONAL_PHOTO'] = 'USER.PERSONAL_PHOTO';
-
-        if (Loader::includeModule('crm'))
-        {
-            $select['USER_UF_USER_CRM_ENTITY'] = 'USER.UF_USER_CRM_ENTITY';
-        }
-
-		$select['USER_EXTERNAL_AUTH_ID'] = 'USER.EXTERNAL_AUTH_ID';
-
-		$getListParameters = array(
+		$getListParameters = [
+			'select' => $this->prepareSelect(),
+			'filter' => $this->prepareFilter(),
+			'limit' => $limit > 0 ? $limit + 1 : 0,
+			'offset' => $offset,
 			'order' => $this->getOrder(),
+		];
 
-			'count_total' => true,
-
-			'select' => $select,
-			'filter' => $this->processFilter(),
-
-			'offset' => $nav->getOffset(),
-			'limit'  => $nav->getLimit(),
-		);
-
-		$this->arResult['TOTAL_RECORD_COUNT'] = 0;
+		$result = [];
+		$this->arResult['MESSAGES'] = [];
 
 		try
 		{
 			$list = RecyclebinTable::getList($getListParameters);
-			$nav->setRecordCount($list->getCount());
-			$this->arResult['TOTAL_RECORD_COUNT'] = $list->getCount();
-
-			$list = $list->fetchAll();
-
-			foreach ($list as &$row)
+			$rowsCount = 0;
+			while ($row = $list->fetch())
 			{
-				$row['USER_DISPLAY_NAME'] = User::formatName(
-					[
-						'NAME'        => $row['USER_NAME'],
-						'LAST_NAME'   => $row['USER_LAST_NAME'],
-						'SECOND_NAME' => $row['USER_SECOND_NAME'],
-						'TITLE'       => $row['USER_TITLE'],
-						'LOGIN'       => $row['USER_LOGIN'],
-					]
-				);
-				$row['USER_PROFILE_URL'] = CComponentEngine::MakePathFromTemplate(
-					$this->arParams['PATH_TO_USER_PROFILE'],
-					["user_id" => $row["USER_ID"]]
-				);
-				$row['USER_AVATAR'] = UI::getAvatar($row['USER_PERSONAL_PHOTO'], 100, 100);
-				$row['USER_IS_EXTERNAL'] = User::isExternalUser($row['USER_ID']);
-				$row['USER_IS_CRM'] = Loader::includeModule('crm') && array_key_exists('USER_UF_USER_CRM_ENTITY', $row) &&
-									  !empty($row['USER_UF_USER_CRM_ENTITY']);
-			}
-		}
-		catch (\Exception $e)
-		{
-			$list = [];
+				++$rowsCount;
+				if ($limit > 0 && $rowsCount > $limit)
+				{
+					break;
+				}
 
-			$this->arResult['MESSAGES'] = array(
-				"TYPE" => \Bitrix\Main\Grid\MessageType::ERROR,
-				"TEXT" => $e->getMessage()
-			);
+				$result[] = array_merge($row, $this->prepareUserData($row));
+			}
+
+			$nav->setRecordCount($offset + $rowsCount);
+		}
+		catch (Exception $e)
+		{
+			$result = [];
+			$this->arResult['MESSAGES'] = [
+				'TYPE' => MessageType::ERROR,
+				'TEXT' => $e->getMessage(),
+			];
 		}
 
 		//region NAV
 		$this->arResult['NAV_OBJECT'] = $nav;
 		$this->arResult['PAGE_SIZES'] = $this->pageSizes;
-
 		//endregion
 
-		return $list;
+		return $result;
 	}
 
 	private function getPageSize()
@@ -275,7 +258,7 @@ class RecyclebinListComponent extends RecyclebinBaseComponent
 		return $gridSort;
 	}
 
-	private function processFilter()
+	private function prepareFilter()
 	{
 		static $filter = [];
 
@@ -286,17 +269,17 @@ class RecyclebinListComponent extends RecyclebinBaseComponent
 				$filter['*%NAME'] = $this->getFilterFieldData('FIND');
 			}
 
-			if ($this->arParams['MODULE_ID'])
+			if (!empty($this->arParams['MODULE_ID']))
 			{
 				$filter['=MODULE_ID'] = $this->arParams['MODULE_ID'];
 			}
 
-			if ($this->arParams['ENTITY_TYPE'])
+			if (!empty($this->arParams['ENTITY_TYPE']))
 			{
 				$filter['=ENTITY_TYPE'] = $this->arParams['ENTITY_TYPE'];
 			}
 
-			if ($this->arParams['USER_ID'] && !User::isSuper())
+			if (!empty($this->arParams['USER_ID']) && !User::isSuper())
 			{
 				$filter['=USER_ID'] = $this->arParams['USER_ID'];
 			}
@@ -437,25 +420,25 @@ class RecyclebinListComponent extends RecyclebinBaseComponent
 			];
 		}
 
-		if (!$this->arParams['MODULE_ID'])
+		if (!isset($this->arParams['MODULE_ID']))
 		{
 			$list['MODULE_ID'] = [
 				'id'     => 'MODULE_ID',
 				'name'   => Loc::getMessage('RECYCLEBIN_COLUMN_MODULE_ID'),
 				'params' => ['multiple' => 'Y'],
 				'type'   => 'list',
-				'items'  => $this->arResult['MODULES_LIST']
+				'items'  => $this->arResult['MODULES_LIST'] ?? null,
 			];
 		}
 
-		if (!$this->arParams['ENTITY_TYPE'])
+		if (!($this->arParams['ENTITY_TYPE'] ?? null))
 		{
 			$list['ENTITY_TYPE'] = [
 				'id'     => 'ENTITY_TYPE',
 				'name'   => Loc::getMessage('RECYCLEBIN_COLUMN_ENTITY_TYPE'),
 				'params' => ['multiple' => 'Y'],
 				'type'   => 'list',
-				'items'  => $this->arResult['ENTITY_TYPES']
+				'items'  => $this->arResult['ENTITY_TYPES'] ?? [],
 			];
 		}
 
@@ -512,5 +495,117 @@ class RecyclebinListComponent extends RecyclebinBaseComponent
 		}
 
 		return $presets;
+	}
+
+	private function prepareUserData(array $row): array
+	{
+		$formatted = [];
+		$formatted['USER_DISPLAY_NAME'] = User::formatName(
+			[
+				'NAME' => $row['USER_NAME'],
+				'LAST_NAME' => $row['USER_LAST_NAME'],
+				'SECOND_NAME' => $row['USER_SECOND_NAME'],
+				'TITLE' => $row['USER_TITLE'],
+				'LOGIN' => $row['USER_LOGIN'],
+			]
+		);
+		$formatted['USER_PROFILE_URL'] = CComponentEngine::MakePathFromTemplate(
+			$this->arParams['PATH_TO_USER_PROFILE'],
+			[
+				'user_id' => $row['USER_ID'] ?? null,
+			]
+		);
+
+		$formatted['USER_AVATAR'] = UI::getAvatar(
+			$row['USER_PERSONAL_PHOTO'],
+			100,
+			100
+		);
+
+		$formatted['USER_IS_EXTERNAL'] = User::isExternalUser($row['USER_ID'] ?? null);
+
+		$formatted['USER_IS_CRM'] = false;
+
+		if (
+			Loader::includeModule('crm')
+			&& array_key_exists('USER_UF_USER_CRM_ENTITY', $row)
+			&& !empty($row['USER_UF_USER_CRM_ENTITY'])
+		)
+		{
+			$formatted['USER_IS_CRM'] = true;
+		}
+
+		return $formatted;
+	}
+
+	private function prepareSelect(): array
+	{
+		$select = array_column($this->getGridHeaders(), 'id');
+		$select[] = 'ID';
+
+		if (!in_array('ENTITY_TYPE', $select, true))
+		{
+			$select[] = 'ENTITY_TYPE';
+		}
+		$select['USER_NAME'] = 'USER.NAME';
+		$select['USER_LAST_NAME'] = 'USER.LAST_NAME';
+		$select['USER_SECOND_NAME'] = 'USER.SECOND_NAME';
+		$select['USER_TITLE'] = 'USER.TITLE';
+		$select['USER_LOGIN'] = 'USER.LOGIN';
+		$select['USER_PERSONAL_PHOTO'] = 'USER.PERSONAL_PHOTO';
+
+		if (Loader::includeModule('crm'))
+		{
+			$select['USER_UF_USER_CRM_ENTITY'] = 'USER.UF_USER_CRM_ENTITY';
+		}
+
+		$select['USER_EXTERNAL_AUTH_ID'] = 'USER.EXTERNAL_AUTH_ID';
+
+		return $select;
+	}
+
+	private function setTotalCountHtml(): void
+	{
+		$this->arResult['TOTAL_ROWS_COUNT_HTML'] = '
+			<div id="recyclebin_row_count_wrapper" class="recyclebin-list-row-count-wrapper">'
+				. Loc::getMessage('RECYCLEBIN_TOTAL_COUNT') .
+				'<a id="recyclebin_row_count" onclick="BX.Recyclebin.getTotalCount()">'
+				. Loc::getMessage('RECYCLEBIN_SHOW_TOTAL_COUNT') .
+				'</a>
+				<svg class="recyclebin-circle-loader-circular" viewBox="25 25 50 50">
+					<circle class="recyclebin-circle-loader-path" cx="50" cy="50" r="20" fill="none" stroke-width="1" stroke-miterlimit="10">
+					</circle>
+				</svg>
+			</div>
+		';
+	}
+
+	public function getTotalCountAction(): int
+	{
+		try
+		{
+			$result = RecyclebinTable::getCount($this->prepareFilter());
+		}
+		catch (Exception $exception)
+		{
+			$result = 0;
+		}
+
+		return $result;
+	}
+
+	public function configureActions()
+	{
+		return [];
+	}
+
+	public function getErrors()
+	{
+		return [];
+	}
+
+	public function getErrorByCode($code)
+	{
+		// TODO: Implement getErrorByCode() method.
 	}
 }

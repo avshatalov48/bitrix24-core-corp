@@ -166,40 +166,11 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 	{
 		$entityTypeId = static::GetDocumentInfo($parentDocumentId)['TYPE_ID'];
 
-		$documentFieldsMap = static::getEntityFields($entityTypeId);
-		$compatibleFields = [];
-
 		$factory = Container::getInstance()->getFactory($entityTypeId);
 		$newItem = $factory->createItem([]);
 
-		static::prepareContactFields($fields);
-		self::prepareStageFields($factory, $fields);
-
-		foreach ($fields as $fieldId => $fieldValue)
-		{
-			if (array_key_exists($fieldId, $documentFieldsMap))
-			{
-				$field = $documentFieldsMap[$fieldId];
-
-				$documentFieldId = static::convertFieldId($fieldId, self::CONVERT_TO_DOCUMENT);
-
-				$documentFieldValue = static::convertToDocumentValue(
-					$factory,
-					[
-						'fieldId' => $fieldId,
-						'Description' => $field,
-						'bpValue' => $fieldValue,
-					],
-					$newItem
-				);
-
-				if ($newItem->hasField($documentFieldId))
-				{
-					$newItem->set($documentFieldId, $documentFieldValue);
-				}
-				$compatibleFields[$documentFieldId] = $documentFieldValue;
-			}
-		}
+		$fieldsCaster = new Crm\Automation\Fields\ItemFieldsCaster($newItem, static::getEntityFields($entityTypeId));
+		$compatibleFields = $fieldsCaster->externalize($fields);
 
 		$userId = $compatibleFields[Crm\Item::FIELD_NAME_CREATED_BY] ?? 0;
 		$newItem->setFromCompatibleData($compatibleFields);
@@ -233,39 +204,8 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 			throw new ArgumentException($errorMessage);
 		}
 
-		$fieldsMap = static::getEntityFields($entityTypeId);
-
-		static::prepareContactFields($fields);
-		static::prepareStageFields($factory, $fields);
-
-		$documentFieldValues = [];
-		foreach ($fields as $fieldId => $fieldValue)
-		{
-			if (!array_key_exists($fieldId, $fieldsMap))
-			{
-				continue;
-			}
-
-			$field = $fieldsMap[$fieldId];
-
-			$documentFieldId = static::convertFieldId($fieldId, static::CONVERT_TO_DOCUMENT);
-			$documentFieldValues[$documentFieldId] = static::convertToDocumentValue(
-				$factory,
-				[
-					'fieldId' => $fieldId,
-					'Description' => $field,
-					'bpValue' => $fieldValue,
-				],
-				$item
-			);
-		}
-
-		if (isset($documentFieldValues['OPPORTUNITY']))
-		{
-			$documentFieldValues['IS_MANUAL_OPPORTUNITY'] = $documentFieldValues['OPPORTUNITY'] > 0 ? 'Y' : 'N';
-		}
-
-		$item->setFromCompatibleData($documentFieldValues);
+		$fieldCaster = new Crm\Automation\Fields\ItemFieldsCaster($item, static::getEntityFields($entityTypeId));
+		$item->setFromCompatibleData($fieldCaster->externalize($fields));
 
 		$updateOperation = $factory->getUpdateOperation($item, static::getContext($modifiedBy));
 
@@ -275,104 +215,9 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		return $result->isSuccess() ?: end($errorMessages);
 	}
 
-	protected static function convertToDocumentValue(
-		Crm\Service\Factory $factory,
-		array $fieldInfo,
-		Crm\Item $item
-	)
-	{
-		if (static::isUserField($fieldInfo['fieldId']) && $fieldInfo['Description']['Type'] === FieldType::SELECT)
-		{
-			$documentValue = [$fieldInfo['fieldId'] => $fieldInfo['bpValue']];
-			static::InternalizeEnumerationField(
-				$factory->getUserFieldEntityId(),
-				$documentValue,
-				$fieldInfo['fieldId']
-			);
-
-			return $documentValue[$fieldInfo['fieldId']];
-		}
-
-		if (is_array($fieldInfo['bpValue']))
-		{
-			$converter = function ($value) use ($factory, $fieldInfo, $item)
-			{
-				$fieldInfo['bpValue'] = $value;
-				return static::convertToDocumentValue($factory, $fieldInfo, $item);
-			};
-
-			return
-				$fieldInfo['Description']['Multiple']
-					? array_map($converter, $fieldInfo['bpValue'])
-					: $converter(array_values($fieldInfo['bpValue'])[0] ?? null)
-			;
-		}
-
-		switch ($fieldInfo['Description']['Type'])
-		{
-			case FieldType::BOOL:
-				return \CBPHelper::getBool($fieldInfo['bpValue']);
-
-			case FieldType::USER:
-				$documentId = \CCrmBizProcHelper::ResolveDocumentId($item->getEntityTypeId(), $item->getId());
-				if (mb_strpos($fieldInfo['bpValue'], 'user_') === 0)
-				{
-					return (int)mb_substr($fieldInfo['bpValue'], mb_strlen('user_'));
-				}
-				else
-				{
-					$group = \CBPHelper::convertToSimpleGroups([$fieldInfo['bpValue']])[0] ?? null;
-					$userIds = static::GetUsersFromUserGroup($group, $documentId[2]);
-
-					return $fieldInfo['Description']['Multiple'] ? $userIds : $userIds[0];
-				}
-
-			case FieldType::FILE:
-				$file = false;
-				\CCrmFileProxy::TryResolveFile($fieldInfo['bpValue'], $file, ['ENABLE_ID' => true]);
-
-				return $file;
-
-			case FieldType::DATETIME:
-				if ($fieldInfo['bpValue'] && is_string($fieldInfo['bpValue']))
-				{
-					return new DateTime($fieldInfo['bpValue']);
-				}
-
-			default:
-				return $fieldInfo['bpValue'];
-		}
-	}
-
 	protected static function isUserField(string $fieldId): bool
 	{
 		return mb_substr($fieldId, 0, 3) === 'UF_';
-	}
-
-	protected static function prepareContactFields(array& $fieldsValues): void
-	{
-		if (isset($fieldsValues[Crm\Item::FIELD_NAME_CONTACT_ID]))
-		{
-			if (!isset($fieldsValues['CONTACT_IDS']) || !is_array($fieldsValues['CONTACT_IDS']))
-			{
-				$fieldsValues['CONTACT_IDS'] = [];
-			}
-			$fieldsValues['CONTACT_IDS'][] = $fieldsValues[Crm\Item::FIELD_NAME_CONTACT_ID];
-			unset($fieldsValues[Crm\Item::FIELD_NAME_CONTACT_ID]);
-		}
-	}
-
-	protected static function prepareStageFields(Crm\Service\Factory $factory, array& $fields): void
-	{
-		if (
-			isset($fields[Crm\Item::FIELD_NAME_STAGE_ID])
-			&& $factory->isCategoriesSupported()
-			&& !isset($fields[Crm\Item::FIELD_NAME_CATEGORY_ID])
-		)
-		{
-			$stage = $factory->getStage($fields[Crm\Item::FIELD_NAME_STAGE_ID]);
-			$fields[Crm\Item::FIELD_NAME_CATEGORY_ID] = $stage['CATEGORY_ID'];
-		}
 	}
 
 	public static function DeleteDocument($documentId)
@@ -485,13 +330,7 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 
 	public static function prepareCompatibleData(array $compatibleData): array
 	{
-		$result = [];
-		foreach ($compatibleData as $fieldId => $fieldValue)
-		{
-			$result[static::convertFieldId($fieldId)] = $fieldValue;
-		}
-
-		return $result;
+		return Crm\Automation\Fields\ItemFieldsCaster::internalizeFieldsIds($compatibleData);
 	}
 
 	public static function getEntityFields($entityTypeId)

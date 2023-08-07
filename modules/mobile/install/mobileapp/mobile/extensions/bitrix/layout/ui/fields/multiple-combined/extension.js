@@ -325,8 +325,8 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 				},
 				wrapper: {
 					...styles.wrapper,
-					paddingTop: this.isEmpty() ? 12 : 8,
-					paddingBottom: this.isEmpty() ? 18 : 12,
+					paddingTop: this.isEmptyEditable() && !this.state.focus ? 12 : 8,
+					paddingBottom: this.isEmptyEditable() && !this.state.focus ? 18 : 12,
 				},
 			};
 		}

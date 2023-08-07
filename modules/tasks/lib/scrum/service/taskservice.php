@@ -1176,7 +1176,7 @@ class TaskService implements Errorable
 			)
 			|| (
 				isset($fields['UF_TASK_WEBDAV_FILES'])
-				&& (array_filter($fields['UF_TASK_WEBDAV_FILES']) != $previousFields['UF_TASK_WEBDAV_FILES'])
+				&& (array_filter($fields['UF_TASK_WEBDAV_FILES']) != ($previousFields['UF_TASK_WEBDAV_FILES'] ?? null))
 			)
 		);
 		$isCompleteAction = (

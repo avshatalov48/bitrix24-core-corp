@@ -34,6 +34,7 @@ jn.define('crm/timeline/item/ui/body/blocks/with-title', (require, exports, modu
 		renderInnerContent()
 		{
 			const { rendererName, properties } = this.props.contentBlock;
+
 			return this.factory.make(rendererName, properties);
 		}
 	}

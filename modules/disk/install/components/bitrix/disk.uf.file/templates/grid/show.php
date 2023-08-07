@@ -247,7 +247,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 							)
 							{
 								?>
-								<span class="disk-ui-file-thumbnails-web-grid-number">+<?=($count-4)?></span>
+								<span class="disk-ui-file-thumbnails-web-grid-number">+<?=($count-3)?></span>
 								<?
 							}
 							?>

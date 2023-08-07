@@ -4,7 +4,6 @@
  * @module im/messenger/cache/base
  */
 jn.define('im/messenger/cache/base', (require, exports, module) => {
-
 	const { Type } = require('type');
 
 	class Cache
@@ -18,10 +17,10 @@ jn.define('im/messenger/cache/base', (require, exports, module) => {
 
 			if (!Type.isString(options.name))
 			{
-				throw new Error('Cache: options.storageId must be a string value');
+				throw new TypeError('Cache: options.storageId must be a string value');
 			}
 
-			const namespace = 'im/messenger/cache/v1.2/';
+			const namespace = 'im/messenger/cache/v1.3/';
 			const name = options.name;
 
 			this.storageId = namespace + name;
@@ -42,8 +41,7 @@ jn.define('im/messenger/cache/base', (require, exports, module) => {
 
 		save(state)
 		{
-			return new Promise((resolve, reject) =>
-			{
+			return new Promise((resolve, reject) => {
 				this.storage.setObject('state', { state });
 
 				resolve();
@@ -52,8 +50,7 @@ jn.define('im/messenger/cache/base', (require, exports, module) => {
 
 		clear()
 		{
-			return new Promise((resolve, reject) =>
-			{
+			return new Promise((resolve, reject) => {
 				this.storage.clear();
 
 				resolve();

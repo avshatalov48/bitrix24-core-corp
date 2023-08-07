@@ -1,13 +1,15 @@
-(() => {
-	const require = ext => jn.require(ext);
-
+/**
+ * @module layout/ui/file-attachment
+ */
+jn.define('layout/ui/file-attachment', (require, exports, module) => {
 	const { clip } = require('assets/common');
 	const { transparent } = require('utils/color');
 	const { throttle } = require('utils/function');
 	const { Loc } = require('loc');
+	const { GridViewAdapter } = require('layout/ui/file-attachment/grid-view-adapter');
 
 	/**
-	 * @class UI.FileAttachment
+	 * @class FileAttachment
 	 */
 	class FileAttachment extends LayoutComponent
 	{
@@ -21,7 +23,9 @@
 
 			this.layoutWidget = props.layoutWidget;
 			this.serverName = props.serverName;
-			this.gridViewRef = null;
+
+			/** @type {GridViewAdapter|null} */
+			this.gridViewAdapter = null;
 
 			this.throttledOnAddButtonClick = throttle(this.onAddButtonClick, 500, this);
 		}
@@ -43,16 +47,6 @@
 
 		render()
 		{
-			const { attachments } = this.state;
-
-			const items = attachments.map((item) => ({
-				type: 'default',
-				key: item.id,
-				...item,
-			}));
-
-			const rowsCount = 4;
-
 			return View(
 				{
 					style: {
@@ -61,63 +55,64 @@
 					},
 					safeArea: { bottom: true }
 				},
-				GridView({
-					style: {
-						flex: 1,
-						paddingTop: 12,
-					},
-					ref: (ref) => this.gridViewRef = ref,
-					params: { orientation: 'vertical', rows: rowsCount },
-					data: [{ items }],
-					renderItem: (file) => View(
-						{
-							style: {
-								width: document.device.screen.width / rowsCount,
-								flex: 1,
-								alignItems: 'center',
-							}
-						},
-						this.renderFile(file),
-					),
-				}),
+				this.renderFilesGrid(),
+				this.renderEmptyState(),
 				this.renderAddButton(),
 			);
 		}
 
-		renderFile(file)
+		renderFilesGrid()
 		{
-			let uri = '';
-			if (file.previewUrl)
+			const { attachments } = this.state;
+			if (attachments.length === 0)
 			{
-				uri = file.previewUrl;
-			}
-			else if (file.dataAttributes && file.dataAttributes.IMAGE)
-			{
-				uri = this.serverName + file.dataAttributes.IMAGE;
-			}
-			else if (file.url)
-			{
-				uri = file.url;
+				return null;
 			}
 
-			const onDeleteFile = () => this.onDeleteFile(file.id);
-			const onDeleteAttachmentItem = this.props.onDeleteAttachmentItem ? onDeleteFile : null;
+			const rowsCount = 4;
+			const itemWidth = document.device.screen.width / rowsCount;
 
-			return UI.File({
-				onDeleteAttachmentItem,
-				id: file.id,
-				url: file.url,
-				imageUri: uri,
-				type: file.type,
-				name: file.name,
-				isLoading: file.isUploading || false,
-				hasError: file.hasError || false,
-				attachmentCloseIcon: this.props.attachmentCloseIcon,
-				attachmentFileIconFolder: this.props.attachmentFileIconFolder,
-				styles: this.props.styles,
-				files: this.state.attachments,
-				showName: this.props.showName,
+			return new GridViewAdapter({
+				rowsCount,
+				items: attachments,
+				ref: (ref) => this.gridViewAdapter = ref,
+				renderItem: (file) => View(
+					{
+						style: {
+							width: itemWidth,
+							flex: 1,
+							alignItems: 'center',
+						}
+					},
+					this.renderFile(file),
+				),
 			});
+		}
+
+		renderEmptyState()
+		{
+			const { attachments } = this.state;
+			if (attachments.length > 0)
+			{
+				return null;
+			}
+
+			return View(
+				{
+					style: {
+						flex: 1,
+						alignItems: 'center',
+						justifyContent: 'center',
+					}
+				},
+				Text({
+					text: Loc.getMessage('UI_FILE_ATTACHMENT_NO_FILES'),
+					style: {
+						color: '#828B95',
+						fontSize: 18,
+					}
+				})
+			);
 		}
 
 		renderAddButton()
@@ -192,6 +187,42 @@
 			);
 		}
 
+		renderFile(file)
+		{
+			let uri = '';
+			if (file.previewUrl)
+			{
+				uri = file.previewUrl;
+			}
+			else if (file.dataAttributes && file.dataAttributes.IMAGE)
+			{
+				uri = this.serverName + file.dataAttributes.IMAGE;
+			}
+			else if (file.url)
+			{
+				uri = file.url;
+			}
+
+			const onDeleteFile = () => this.onDeleteFile(file.id);
+			const onDeleteAttachmentItem = this.props.onDeleteAttachmentItem ? onDeleteFile : null;
+
+			return UI.File({
+				onDeleteAttachmentItem,
+				id: file.id,
+				url: file.url,
+				imageUri: uri,
+				type: file.type,
+				name: file.name,
+				isLoading: file.isUploading || false,
+				hasError: file.hasError || false,
+				attachmentCloseIcon: this.props.attachmentCloseIcon,
+				attachmentFileIconFolder: this.props.attachmentFileIconFolder,
+				styles: this.props.styles,
+				files: this.state.attachments,
+				showName: this.props.showName,
+			});
+		}
+
 		onAddButtonClick()
 		{
 			if (this.props.onAddButtonClick)
@@ -204,10 +235,8 @@
 		{
 			const index = this.state.attachments.findIndex(item => item.id === id);
 
-			this.withGridView()
-				.then(gridView => new Promise(resolve => {
-					gridView.deleteRow(0, index, 'automatic', resolve);
-				}))
+			this.useGridViewAdapter()
+				.then((adapter) => adapter.deleteRow(index))
 				.finally(() => {
 					if (this.props.onDeleteAttachmentItem)
 					{
@@ -217,19 +246,12 @@
 		}
 
 		/**
-		 * @return {Promise}
+		 * @return {Promise<GridViewAdapter>}
 		 */
-		withGridView()
+		useGridViewAdapter()
 		{
 			return new Promise((resolve, reject) => {
-				if (this.gridViewRef)
-				{
-					resolve(this.gridViewRef);
-				}
-				else
-				{
-					reject();
-				}
+				return this.gridViewAdapter ? resolve(this.gridViewAdapter) : reject();
 			});
 		}
 
@@ -238,11 +260,7 @@
 		 */
 		scrollToBottom()
 		{
-			const section = 0;
-			const index = this.state.attachments.length - 1;
-			const animate = true;
-
-			this.withGridView().then(gridView => gridView.scrollTo(section, index, animate));
+			this.useGridViewAdapter().then((adapter) => adapter.scrollToBottom());
 		}
 
 		get showAddButton()
@@ -251,6 +269,7 @@
 		}
 	}
 
-	this.UI = this.UI || {};
-	this.UI.FileAttachment = FileAttachment;
-})();
+	module.exports = {
+		FileAttachment,
+	};
+});

@@ -880,7 +880,7 @@ abstract class Item extends LazyAccess
 
 		$cache =& static::getCache();
 
-		if(!is_array($cache['INSTANCES']))
+		if(!is_array($cache['INSTANCES'] ?? null))
 		{
 			$cache['INSTANCES'] = array();
 		}

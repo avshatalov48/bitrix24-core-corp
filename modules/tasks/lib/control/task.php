@@ -973,17 +973,16 @@ class Task
 		}
 
 		$notificationFields = array_merge($fields, ['CHANGED_BY' => $this->getOccurUserId()]);
-
-		$statusChanged =
-			($status = (int)($this->fullTaskData['STATUS'] ?? null))
-			&& $status >= \CTasks::STATE_NEW
-			&& $status <= \CTasks::STATE_DECLINED
-			&& $status !== (int)$this->sourceTaskData['STATUS']
-		;
+		$statusChanged = $this->fullTaskData['STATUS_CHANGED'] ?? false;
 
 		if ($statusChanged)
 		{
-			\CTaskNotifications::SendStatusMessage($this->sourceTaskData, $status, $notificationFields);
+			$status = (int)$this->fullTaskData['REAL_STATUS'] ?? null;
+			\CTaskNotifications::SendStatusMessage(
+				$this->sourceTaskData,
+				$status,
+				$notificationFields
+			);
 		}
 
 		\CTaskNotifications::SendUpdateMessage(
@@ -1008,16 +1007,22 @@ class Task
 			return $fields;
 		}
 
+		$currentStatus = (int)$this->fullTaskData['REAL_STATUS'];
+		$prevStatus = (int)$this->sourceTaskData['REAL_STATUS'];
 		$statusChanged =
-			($status = (int)($fields['STATUS'] ?? null))
-			&& $status >= \CTasks::STATE_NEW
-			&& $status <= \CTasks::STATE_DECLINED
-			&& $status !== (int)$this->fullTaskData['STATUS']
+			$currentStatus !== $prevStatus
+			&& $currentStatus >= \CTasks::STATE_NEW
+			&& $currentStatus <= \CTasks::STATE_DECLINED
 		;
 
-		if ($statusChanged && $status === \CTasks::STATE_DECLINED)
+		if ($statusChanged)
 		{
-			$this->fullTaskData['DECLINE_REASON'] = $fields['DECLINE_REASON'];
+			$this->fullTaskData['STATUS_CHANGED'] = true;
+
+			if ($currentStatus === \CTasks::STATE_DECLINED)
+			{
+				$this->fullTaskData['DECLINE_REASON'] = $fields['DECLINE_REASON'];
+			}
 		}
 
 		$fields['ID'] = $this->taskId;

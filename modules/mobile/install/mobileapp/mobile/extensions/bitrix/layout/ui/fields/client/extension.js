@@ -2,7 +2,6 @@
  * @module layout/ui/fields/client
  */
 jn.define('layout/ui/fields/client', (require, exports, module) => {
-
 	const { Alert } = require('alert');
 	const { magnifier } = require('assets/common');
 	const { EventEmitter } = require('event-emitter');
@@ -12,17 +11,16 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 	const { uniqBy, mergeBy, replaceBy } = require('utils/array');
 	const { get, isEqual, isEmpty, mergeImmutable } = require('utils/object');
 	const { stringify } = require('utils/string');
+	const { EntitySelectorFactory, EntitySelectorFactoryType } = require('selector/widget/factory');
 
-	let SelectorProcessing;
-	let EntityDetailOpener;
-	let Type;
-	let TypeId;
-	let TypeName;
+	let SelectorProcessing = null;
+	let Type = null;
+	let TypeId = null;
+	let TypeName = null;
 
 	try
 	{
 		SelectorProcessing = require('crm/selector/utils/processing').SelectorProcessing;
-		EntityDetailOpener = require('crm/entity-detail/opener').EntityDetailOpener;
 		Type = require('crm/type').Type;
 		TypeId = require('crm/type').TypeId;
 		TypeName = require('crm/type').TypeName;
@@ -37,7 +35,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 	const COMPANY_LAYOUT_NUMBER = 2;
 	const CREATE = 'create';
 
-	const { CRM_COMPANY, CRM_CONTACT } = EntitySelectorFactory.Type;
+	const { CRM_COMPANY, CRM_CONTACT } = EntitySelectorFactoryType;
 
 	const SELECTOR_TYPES_BY_ID = {
 		[TypeId.Contact]: CRM_CONTACT,
@@ -95,15 +93,17 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 				? [companyCompound, contactCompound]
 				: [contactCompound, companyCompound];
 
-			this.parentCustomEventEmitter.emit('UI.Fields.Client::onUpdate', [{
-				uid: this.uid,
-				isEmpty: this.isEmpty(),
-				canAdd: this.isShowClientAdd(),
-				isMyCompany: this.isMyCompany(),
-				value: this.getValue(),
-				compound: compoundWithLayoutOrder.filter(Boolean),
-				permissions,
-			}]);
+			this.parentCustomEventEmitter.emit('UI.Fields.Client::onUpdate', [
+				{
+					uid: this.uid,
+					isEmpty: this.isEmpty(),
+					canAdd: this.isShowClientAdd(),
+					isMyCompany: this.isMyCompany(),
+					value: this.getValue(),
+					compound: compoundWithLayoutOrder.filter(Boolean),
+					permissions,
+				},
+			]);
 		}
 
 		getConfig()
@@ -112,14 +112,14 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 
 			return {
 				...config,
-				...{
-					categoryParams: BX.prop.getObject(config, 'categoryParams', {}),
-					showClientInfo: BX.prop.getBoolean(config, 'showClientInfo', false),
-					showClientAdd: BX.prop.getBoolean(config, 'showClientAdd', false),
-					enableMyCompanyOnly: BX.prop.getBoolean(config, 'enableMyCompanyOnly', false),
-					compound: BX.prop.getArray(config, 'compound', []),
-					selectorTitle: '',
-				},
+
+				categoryParams: BX.prop.getObject(config, 'categoryParams', {}),
+				showClientInfo: BX.prop.getBoolean(config, 'showClientInfo', false),
+				showClientAdd: BX.prop.getBoolean(config, 'showClientAdd', false),
+				enableMyCompanyOnly: BX.prop.getBoolean(config, 'enableMyCompanyOnly', false),
+				compound: BX.prop.getArray(config, 'compound', []),
+				selectorTitle: ''
+				,
 			};
 		}
 
@@ -204,7 +204,8 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 				return this.renderEmptyContent();
 			}
 
-			return View({
+			return View(
+				{
 					style: {
 						flex: 1,
 						flexShrink: 2,
@@ -379,41 +380,45 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 		{
 			if (!queryText)
 			{
-				return;
+				return null;
 			}
 
-			const emailMatch = queryText.match(/[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,63}/i);
+			const emailMatch = queryText.match(/[\w%.-]+@[\d.a-z-]+\.[a-z]{2,63}/i);
 			if (emailMatch)
 			{
 				const email = stringify(emailMatch[0]).trim();
 				if (email !== '')
 				{
 					return {
-						EMAIL: [{
-							id: 'n' + Math.round(Math.random() * 1000),
-							value: {
-								VALUE: email,
-								VALUE_TYPE: 'WORK',
+						EMAIL: [
+							{
+								id: `n${Math.round(Math.random() * 1000)}`,
+								value: {
+									VALUE: email,
+									VALUE_TYPE: 'WORK',
+								},
 							},
-						}],
+						],
 					};
 				}
 			}
 
-			const phoneMatch = queryText.match(/^[+\d()]{6,}$/i);
+			const phoneMatch = queryText.match(/^[\d()+]{6,}$/i);
 			if (phoneMatch)
 			{
 				const phone = stringify(phoneMatch[0]).trim();
 				if (phone !== '')
 				{
 					return {
-						PHONE: [{
-							id: 'n' + Math.round(Math.random() * 1000),
-							value: {
-								VALUE: phone,
-								VALUE_TYPE: 'WORK',
+						PHONE: [
+							{
+								id: `n${Math.round(Math.random() * 1000)}`,
+								value: {
+									VALUE: phone,
+									VALUE_TYPE: 'WORK',
+								},
 							},
-						}],
+						],
 					};
 				}
 			}
@@ -423,16 +428,15 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 			return {
 				[entityName]: queryText,
 			};
-
 		}
 
-		handleOnOpenBackDrop(params, method)
+		async handleOnOpenBackDrop(params, method)
 		{
 			const type = params.type;
 			this.isCreateContact = method === CREATE;
 			if (!Type.existsByName(type) && !this.isReadOnly())
 			{
-				return false;
+				return;
 			}
 
 			const { id, entityId, title, queryText = '' } = params;
@@ -451,6 +455,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 				};
 			}
 
+			const { EntityDetailOpener } = await requireLazy('crm:entity-detail/opener');
 			const openerConfig = BX.prop.getObject(this.getConfig(), 'entityDetailOpener', {});
 
 			EntityDetailOpener.open(
@@ -487,7 +492,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 				return;
 			}
 
-			const isUpdateNeeded = clientList.some(({ id }) => parseInt(id) === parseInt(entityId));
+			const isUpdateNeeded = clientList.some(({ id }) => parseInt(id, 10) === parseInt(entityId, 10));
 			if (isUpdateNeeded)
 			{
 				this.handleUpdateEntity({ entityTypeId, entityId });
@@ -508,7 +513,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 				.then((entityData) => {
 					const { [selectorName]: prevEntityList } = this.getValue();
 
-					let entityList;
+					let entityList = [];
 
 					if (
 						Array.isArray(prevEntityList)
@@ -756,7 +761,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 				.getSecondaryEntityInfos(...companyIds)
 				.then(({ ENTITY_INFOS }) => {
 					const { [CRM_CONTACT]: prevContacts } = this.getValue();
-					const contacts = ENTITY_INFOS.length
+					const contacts = ENTITY_INFOS.length > 0
 						? ENTITY_INFOS.map(SelectorProcessing.prepareContact)
 						: [];
 
@@ -765,7 +770,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 						[CRM_COMPANY]: companies,
 					};
 
-					if (prevContacts.length && this.isContainInStateContacts(contacts))
+					if (prevContacts.length > 0 && this.isContainInStateContacts(contacts))
 					{
 						this.showConfirmUpdateContacts(
 							() => this.handleOnChange(clientData),
@@ -786,7 +791,10 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 
 		showConfirmUpdateContacts(onSuccess, onFailed, contactsCount)
 		{
-			let title, text, buttonTextOk, buttonTextCancel;
+			let title = '';
+			let text = '';
+			let buttonTextOk = '';
+			let buttonTextCancel = '';
 
 			if (contactsCount > 0)
 			{
@@ -881,8 +889,9 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 		isContainInStateContacts(contacts)
 		{
 			const { [CRM_CONTACT]: prevContacts } = this.getValue();
-			const contactsIds = contacts.map(({ id }) => id);
-			const differenceArr = prevContacts.filter(({ id }) => !contactsIds.includes(id));
+			const contactsIds = new Set(contacts.map(({ id }) => id));
+			const differenceArr = prevContacts.filter(({ id }) => !contactsIds.has(id));
+
 			return differenceArr.length;
 		}
 
@@ -931,7 +940,11 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 				return false;
 			}
 
-			const permissions = get(this.getConfig(), ['permissions', entityTypeName.toUpperCase(), permissionType], false);
+			const permissions = get(
+				this.getConfig(),
+				['permissions', entityTypeName.toUpperCase(), permissionType],
+				false,
+			);
 
 			return Boolean(permissions);
 		}
@@ -985,5 +998,4 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 		ClientType: 'client',
 		ClientField: (props) => new ClientField(props),
 	};
-
 });

@@ -11,11 +11,14 @@ use Bitrix\Crm\ContactTable;
 use Bitrix\Crm\Conversion\Entity\EntityConversionMapTable;
 use Bitrix\Crm\EntityBankDetail;
 use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\Field;
 use Bitrix\Crm\Format\PersonNameFormatter;
+use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Requisite\EntityLink;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Timeline\DocumentController;
 use Bitrix\Crm\Timeline\DocumentEntry;
 use Bitrix\Crm\Timeline\TimelineType;
@@ -268,7 +271,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 					}
 					else
 					{
-						$this->userFieldDescriptions[$placeholder] = $this->fields[$placeholder]['DESCRIPTION'];
+						$this->userFieldDescriptions[$placeholder] = $this->fields[$placeholder]['DESCRIPTION'] ?? '';
 						unset($this->fields[$placeholder]['DESCRIPTION']);
 					}
 				}
@@ -276,6 +279,49 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		}
 
 		return $this->fields;
+	}
+
+	protected function fetchData()
+	{
+		$wasAlreadyLoaded = $this->isLoaded();
+
+		parent::fetchData();
+
+		if (!$wasAlreadyLoaded)
+		{
+			$this->convertBBFieldsToHtml();
+		}
+	}
+
+	/**
+	 * @internal
+	 *
+	 * @todo support bb code rendering in \Bitrix\DocumentGenerator\Document::process
+	 */
+	final protected function convertBBFieldsToHtml(): void
+	{
+		if (!\CCrmOwnerType::isUseFactoryBasedApproach($this->getCrmOwnerType()))
+		{
+			return;
+		}
+
+		$factory = Container::getInstance()->getFactory($this->getCrmOwnerType());
+
+		if ($factory)
+		{
+			foreach ($factory->getFieldsCollection()->getFieldsByType(Field::TYPE_TEXT) as $field)
+			{
+				if ($field->getValueType() === Field::VALUE_TYPE_BB)
+				{
+					$fieldName = $factory->getEntityFieldNameByMap($field->getName());
+
+					if (!empty($this->data[$fieldName]))
+					{
+						$this->data[$fieldName] = TextHelper::convertBbCodeToHtml($this->data[$fieldName]);
+					}
+				}
+			}
+		}
 	}
 
 	protected function isEnableMyCompany(): bool
@@ -496,8 +542,16 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 				)
 				{
 					$parts = explode('_', $field['VALUE']);
-					$field['VALUE'] = $parts[1];
-					$ownerTypeId = \CCrmOwnerType::ResolveID($parts[0]);
+					if (count($parts) === 2)
+					{
+						$field['VALUE'] = $parts[1];
+						$ownerTypeId = \CCrmOwnerType::ResolveID($parts[0]);
+					}
+					else
+					{
+						$field['VALUE'] = 0;
+						$ownerTypeId = '';
+					}
 				}
 				else
 				{
@@ -1097,7 +1151,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 				else
 				{
 					$linkData = $this->getLinkData();
-					if($linkData['REQUISITE_ID'] > 0)
+					if(is_array($linkData) && $linkData['REQUISITE_ID'] > 0)
 					{
 						$requisiteId = $linkData['REQUISITE_ID'];
 					}
@@ -1182,6 +1236,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		{
 			if($this->isLoaded())
 			{
+				$bankDetailId = null;
 				if(isset($this->data['BANK_DETAIL']) && $this->data['BANK_DETAIL'] instanceof DataProvider)
 				{
 					$bankDetail = $this->data['BANK_DETAIL'];
@@ -1195,7 +1250,10 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 				else
 				{
 					$linkData = $this->getLinkData();
-					$bankDetailId = $linkData['BANK_DETAIL_ID'];
+					if (is_array($linkData))
+					{
+						$bankDetailId = $linkData['BANK_DETAIL_ID'];
+					}
 				}
 
 				$requisiteId = DataProviderManager::getInstance()->getValueFromList($this->getRequisiteId(), true);
@@ -1459,7 +1517,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		$defaultMyCompanyId = intval($defaultMyCompanyId);
 		if(!$defaultMyCompanyId)
 		{
-			$defaultMyCompanyId = $this->getLinkData()['MYCOMPANY_ID'];
+			$defaultMyCompanyId = $this->getLinkData()['MYCOMPANY_ID'] ?? null;
 		}
 		if(!$defaultMyCompanyId)
 		{

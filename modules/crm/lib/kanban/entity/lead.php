@@ -2,18 +2,32 @@
 
 namespace Bitrix\Crm\Kanban\Entity;
 
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\Filter;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Settings\LeadSettings;
-use Bitrix\Main\Error;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Main\UI\Filter\Options;
 use PHPUnit\TextUI\TestRunnerTest;
 
 class Lead extends Entity
 {
+	private FieldRestrictionManager $leadFieldRestrictionManager;
+
+	public function __construct()
+	{
+		parent::__construct();
+
+		$this->leadFieldRestrictionManager = new FieldRestrictionManager(
+			FieldRestrictionManager::MODE_KANBAN,
+			[FieldRestrictionManagerTypes::OBSERVERS],
+			\CCrmOwnerType::Lead
+		);
+	}
+
 	public function getTypeName(): string
 	{
 		return \CCrmOwnerType::LeadName;
@@ -48,6 +62,27 @@ class Lead extends Entity
 				],
 			]
 		);
+	}
+
+	public function getFilterOptions(): Options
+	{
+		$options = parent::getFilterOptions();
+
+		$this->leadFieldRestrictionManager->removeRestrictedFields($options);
+
+		return $options;
+	}
+
+	public function getFieldsRestrictionsEngine(): string
+	{
+		$parentFieldsRestrictions = parent::getFieldsRestrictionsEngine();
+		$leadFieldsRestrictions = $this->leadFieldRestrictionManager->fetchRestrictedFieldsEngine(
+			$this->getGridId(),
+			[],
+			$this->getFilter()
+		);
+
+		return implode("\n", [$parentFieldsRestrictions, $leadFieldsRestrictions]);
 	}
 
 	public function getItemsSelectPreset(): array
@@ -162,8 +197,9 @@ class Lead extends Entity
 
 	public function prepareItemCommonFields(array $item): array
 	{
-		$item['PRICE'] = $item['OPPORTUNITY'];
+		$item['PRICE'] = $item['OPPORTUNITY'] ?? null;
 		$item['DATE'] = $item['DATE_CREATE'];
+		$item['OBSERVER'] = $item['OBSERVER'] ?? null;
 
 		$item = parent::prepareItemCommonFields($item);
 

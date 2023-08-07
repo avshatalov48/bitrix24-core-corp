@@ -199,6 +199,8 @@ class CVoxImplantOutgoing
 				'ACCESS_URL' => $params['ACCESS_URL'],
 				'DATE_CREATE' => new FieldType\DateTime(),
 				'PORTAL_NUMBER' => $config['SEARCH_ID'],
+				'LAST_PING' => null,
+				'QUEUE_ID' => null,
 			]);
 		}
 		$call->addUsers([$params['USER_ID']], VI\Model\CallUserTable::ROLE_CALLER, VI\Model\CallUserTable::STATUS_CONNECTED);
@@ -333,6 +335,8 @@ class CVoxImplantOutgoing
 			'ACCESS_URL' => $result->access_url,
 			'STATUS' => VI\Model\CallTable::STATUS_WAITING,
 			'DATE_CREATE' => new FieldType\DateTime(),
+			'LAST_PING' => null,
+			'QUEUE_ID' => null
 		);
 
 		if(isset($params['SRC_ACTIVITY_ID']))
@@ -586,6 +590,8 @@ class CVoxImplantOutgoing
 				'customData' => $customData,
 				'redialAttempt' => $redialAttempt,
 			),
+			'LAST_PING' => null,
+			'QUEUE_ID' => null,
 		);
 
 		if(isset($customData['CRM_ENTITY_TYPE']) && isset($customData['CRM_ENTITY_ID']))

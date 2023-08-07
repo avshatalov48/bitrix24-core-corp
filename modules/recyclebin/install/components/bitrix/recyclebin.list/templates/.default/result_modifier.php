@@ -8,15 +8,16 @@ use Bitrix\Bitrix24\Feature;
 use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Recyclebin\Internals\User;
 
 function getUserName($row)
 {
 	static $cache = [];
 
-	if (array_key_exists($row['USER_ID'], $cache))
+	if (array_key_exists($row['USER_ID'] ?? null, $cache))
 	{
-		return $cache[$row['USER_ID']];
+		return $cache[$row['USER_ID'] ?? null];
 	}
 
 	$userIcon = '';
@@ -40,7 +41,7 @@ function getUserName($row)
 	}
 
 	$userName = '<span class="recyclebin-grid-avatar  '.$userAvatar.' '.$userIcon.'" 
-			'.($row['USER_AVATAR'] ? 'style="background-image: url(\''.$row['USER_AVATAR'].'\')"' : '').'></span>';
+			'.($row['USER_AVATAR'] ? 'style="background-image: url(\''.Uri::urnEncode($row['USER_AVATAR']).'\')"' : '').'></span>';
 
 	$userName .= '<span class="recyclebin-grid-username-inner '.
 				 $userIcon.
@@ -48,13 +49,13 @@ function getUserName($row)
 				 htmlspecialcharsbx($row['USER_DISPLAY_NAME']).
 				 '</span>';
 
-	$cache[$row['USER_ID']] = '<div class="recyclebin-grid-username-wrapper"><a href="'.
+	$cache[$row['USER_ID'] ?? null] = '<div class="recyclebin-grid-username-wrapper"><a href="'.
 							  htmlspecialcharsbx($row['USER_PROFILE_URL']).
 							  '" class="recyclebin-grid-username">'.
 							  $userName.
 							  '</a></div>';
 
-	return $cache[$row['USER_ID']];
+	return $cache[$row['USER_ID'] ?? null];
 }
 
 /**
@@ -120,7 +121,7 @@ function prepareActionsColumn($row, $restoreDisablingOptions)
 	$list = [];
 
 	$entityId = (int)$row['ID'];
-	$entityType = $row['ENTITY_TYPE'];
+	$entityType = $row['ENTITY_TYPE'] ?? null;
 
 	$list[] = [
 		"text" => GetMessageJS('RECYCLEBIN_CONTEXT_MENU_TITLE_RESTORE'),
@@ -154,7 +155,7 @@ function getRestoreDisablingOptions($entityTypes, $entityAdditionalData)
 
 	foreach ($entityTypes as $typeId => $type)
 	{
-		$entityLimitData = $entityAdditionalData[$typeId]['LIMIT_DATA'];
+		$entityLimitData = $entityAdditionalData[$typeId]['LIMIT_DATA'] ?? null;
 		if (isset($entityLimitData['RESTORE']['DISABLE']))
 		{
 			$restoreDisablingExists = true;
@@ -288,9 +289,9 @@ if (!empty($arResult['GRID']['DATA']))
 			'columns' => [
 				'ID' => $row['ID'],
 				'ENTITY_ID' => $row['ENTITY_ID'],
-				'ENTITY_TYPE' => $arResult['ENTITY_TYPES'][$row['ENTITY_TYPE']],
+				'ENTITY_TYPE' => $arResult['ENTITY_TYPES'][$row['ENTITY_TYPE']] ?? null,
 				'NAME' => htmlspecialcharsbx($row['NAME']),
-				'MODULE_ID' => $arResult['MODULES_LIST'][$row['MODULE_ID']],
+				'MODULE_ID' => isset($row['MODULE_ID']) ? $arResult['MODULES_LIST'][$row['MODULE_ID']] : null,
 				'TIMESTAMP' => formatDateRecycle($row['TIMESTAMP']),
 				'USER_ID' => getUserName($row),
 			],

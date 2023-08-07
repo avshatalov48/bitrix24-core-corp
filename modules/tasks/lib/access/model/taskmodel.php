@@ -9,13 +9,13 @@
 namespace Bitrix\Tasks\Access\Model;
 
 use Bitrix\Main\Access\AccessibleItem;
+use Bitrix\Tasks\Access\AccessibleTask;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Registry\GroupRegistry;
 
-class TaskModel
-	implements \Bitrix\Tasks\Access\AccessibleTask
+class TaskModel implements AccessibleTask
 {
 	private static $cache = [];
 

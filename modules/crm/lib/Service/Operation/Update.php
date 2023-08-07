@@ -151,7 +151,7 @@ class Update extends Operation
 
 	protected function autocompleteActivities(): Result
 	{
-		if ($this->wasItemMovedToFinalStage())
+		if ($this->wasItemMovedToFinalStage() && !empty($this->getActivityProvidersToAutocomplete()))
 		{
 			$authorId = $this->getContext()->getUserId();
 			if ($authorId <= 0)

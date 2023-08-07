@@ -109,7 +109,6 @@
 								useLargeTitleMode: true,
 								emptyListMode: true,
 							},
-							...WorkgroupUtil.getTaskInputPanelParams(currentUserId, siteDir),
 						},
 						name: 'tasks.list',
 					},
@@ -137,51 +136,6 @@
 				}
 			};
 		}
-
-		static getTaskInputPanelParams(currentUserId, siteDir)
-		{
-			if (Application.getApiVersion() >= 40)
-			{
-				return {
-					inputPanel: {
-						action: 0,
-						callback: 0,
-						useImageButton: true,
-						useAudioMessages: true,
-						smileButton: [],
-						message: {
-							placeholder: BX.message('MOBILE_PROJECT_TAB_TASKS_INPUT_PANEL_PLACEHOLDER'),
-						},
-						attachButton: {
-							items: [
-								{
-									id: 'disk',
-									name: BX.message('MOBILE_PROJECT_TAB_TASKS_INPUT_PANEL_DISK'),
-									dataSource: {
-										multiple: true,
-										url: `${siteDir}mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${currentUserId}`,
-									},
-								},
-							],
-						},
-						attachFileSettings: {
-							resize: {
-								targetWidth: -1,
-								targetHeight: -1,
-								sourceType: 1,
-								encodingType: 0,
-								mediaType: 2,
-								allowsEdit: false,
-								saveToPhotoAlbum: true,
-								cameraDirection: 0,
-							},
-							maxAttachedFilesCount: 100,
-						},
-					},
-				};
-			}
-		}
-
 
 		static getDiskTab(params)
 		{

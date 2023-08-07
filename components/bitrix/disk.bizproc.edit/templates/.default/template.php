@@ -22,7 +22,14 @@ $APPLICATION->AddHeadScript('/bitrix/js/main/popup_menu.js');
 $APPLICATION->AddHeadScript('/bitrix/js/main/admin_tools.js');
 CUtil::InitJSCore(array("window", "ajax", "bp_selector"));
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/interface/admin_lib.php");
-\Bitrix\Main\UI\Extension::load(['bizproc.globals']);
+\Bitrix\Main\UI\Extension::load([
+	'bizproc.globals',
+	'ui.icon-set.main',
+	'ui.icon-set.actions',
+	'ui.buttons',
+	'main.popup',
+	'ui.design-tokens',
+]);
 //////////////////////////////////////////////////////////////////////////////
 
 $ID = $arResult["ID"];
@@ -247,52 +254,102 @@ if($arParams['SHOW_TOOLBAR']=='Y'):
 <?endif?>
 
 <style>
-div#bx_admin_form table.edit-tab td div.edit-tab-inner {height: 310px;}
-a.activitydel, a.activityset, a.activitymin {width:11px; height: 11px; float: right; cursor: pointer; margin: 4px;}
-.activity a.activitydel {background: url(/bitrix/images/bizproc/act_button_del.gif) 50% center no-repeat;}
-.activity a.activityset {background: url(/bitrix/images/bizproc/act_button_sett.gif) 50% center no-repeat;}
-.activity a.activitymin {background: url(/bitrix/images/bizproc/act_button_min.gif) 50% center no-repeat;}
+	div#bx_admin_form table.edit-tab td div.edit-tab-inner {
+		height: 310px;
+	}
+	a.activitydel, a.activityset, a.activitymin {
+		width:14px;
+		height: 14px;
+		float: right;
+		cursor: pointer;
+		margin: 2px;
+	}
 
-a.activitydel:hover {border: 1px #999999 solid; margin: 3px;}
-a.activityset:hover {border: 1px #999999 solid; margin: 3px;}
-a.activitymin:hover {border: 1px #999999 solid; margin: 3px;}
+	.activity a.activitydel {
+		background: url(/bitrix/images/bizproc/act_button_del.gif) 50% center no-repeat;
+	}
+	.activity a.activityset {
+		background: url(/bitrix/images/bizproc/act_button_sett.gif) 50% center no-repeat;
+	}
+	.activity a.activitymin {
+		background: url(/bitrix/images/bizproc/act_button_min.gif) 50% center no-repeat;
+	}
 
-.parallelcontainer {position: relative; top: -12px;}
+	a.activitydel:hover {
+		border: 1px #999999 solid;
+		margin: 3px;
+	}
+	a.activityset:hover {
+		border: 1px #999999 solid;
+		margin: 3px;
+	}
+	a.activitymin:hover {
+		border: 1px #999999 solid;
+		margin: 3px;
+	}
 
-.btn_settings {background-image:url(/bitrix/images/bizproc/settings.gif);}
-.btn_list {background-image:url(/bitrix/images/bizproc/list.gif);}
-.btn_new {background-image:url(/bitrix/images/bizproc/new.gif);}
+	.parallelcontainer {position: relative; top: -12px;}
 
-td.statdel, td.statset {width:20px; height: 10px; cursor: pointer; margin-top: 7px; margin-right: 7px;}
-td.statdel {background: url(/bitrix/images/bizproc/stat_del.gif) 50% center no-repeat;}
-td.statset {background: url(/bitrix/images/bizproc/stat_sett.gif) 50% center no-repeat;}
+	.btn_settings {background-image:url(/bitrix/images/bizproc/settings.gif);}
+	.btn_list {background-image:url(/bitrix/images/bizproc/list.gif);}
+	.btn_new {background-image:url(/bitrix/images/bizproc/new.gif);}
 
-.activity {
-	position: relative;
-}
-.activity-modern {
-	border: 2px #bebabb solid;
-	border-radius: 3px;
-}
-.activity .activity-comment {
-	position: absolute;
-	top: -5px;
-	right: -24px;
-}
-.activity .activityhead {background: url(/bitrix/images/bizproc/act_h.gif) left top repeat-x; height: 17px; overflow-y: hidden; background-color: #fec260;}
-.activity.activity-modern .activityhead {background-image: none; background-color: #f9cf82; padding-bottom: 1px}
-.activity .activityheadr {background: url(/bitrix/images/bizproc/act_hr.gif) right top no-repeat;}
-.activity .activityheadl {background: url(/bitrix/images/bizproc/act_hl.gif) left top no-repeat; height:17px; padding-left: 3px;}
+	td.statdel, td.statset {width:20px; height: 10px; cursor: pointer; margin-top: 7px; margin-right: 7px;}
+	td.statdel {background: url(/bitrix/images/bizproc/stat_del.gif) 50% center no-repeat;}
+	td.statset {background: url(/bitrix/images/bizproc/stat_sett.gif) 50% center no-repeat;}
 
-.activityerr {}
-.activityerr .activityhead {background: url(/bitrix/images/bizproc/err_act_h.gif) left top repeat-x; height: 17px; overflow-y: hidden; background-color: #ffb3b3;}
-.activityerr.activity-modern .activityhead {background-image: none; background-color: #ffb3b3;}
-.activityerr .activityheadr {background: url(/bitrix/images/bizproc/err_act_hr.gif) right top no-repeat;}
-.activityerr .activityheadl {background: url(/bitrix/images/bizproc/err_act_hl.gif) left top no-repeat; height:17px; padding-left: 3px;}
+	.activity {
+		position: relative;
+	}
+	.activity-modern {
+		border: 1px #C0C1C3 solid;
+		border-radius: var(--ui-border-radius-xs);
+	}
+	.activity .activity-comment {
+		position: absolute;
+		top: -3px;
+		right: -24px;
+	}
 
-.activityerr a.activitydel {background: url(/bitrix/images/bizproc/err_act_button_del.gif) 50% center no-repeat;}
-.activityerr a.activityset {background: url(/bitrix/images/bizproc/err_act_button_sett.gif) 50% center no-repeat;}
+	.activity .activityhead {background: url(/bitrix/images/bizproc/act_h.gif) left top repeat-x; height: 17px; overflow-y: hidden; background-color: #fec260;}
+	.activity.activity-modern .activityhead {
+		background-image: none;
+		background-color: #f9cf82;
+		padding-bottom: 1px;
+		border-top-right-radius: var(--ui-border-radius-xs);
+		border-top-left-radius: var(--ui-border-radius-xs);
+	}
+	.activity .activityheadr {background: url(/bitrix/images/bizproc/act_hr.gif) right top no-repeat;}
+	.activity .activityheadl {background: url(/bitrix/images/bizproc/act_hl.gif) left top no-repeat; height:17px; padding-left: 3px;}
 
+	.activity.activity-modern .activityhead.--deactivated {
+		background-color: #D2D3D3;
+	}
+
+	.activityerr {}
+	.activityerr .activityhead {background: url(/bitrix/images/bizproc/err_act_h.gif) left top repeat-x; height: 17px; overflow-y: hidden; background-color: #ffb3b3;}
+	.activityerr.activity-modern .activityhead {background-image: none; background-color: #ffb3b3;}
+	.activityerr .activityheadr {background: url(/bitrix/images/bizproc/err_act_hr.gif) right top no-repeat;}
+	.activityerr .activityheadl {background: url(/bitrix/images/bizproc/err_act_hl.gif) left top no-repeat; height:17px; padding-left: 3px;}
+
+	.activityerr a.activitydel {background: url(/bitrix/images/bizproc/err_act_button_del.gif) 50% center no-repeat;}
+	.activityerr a.activityset {background: url(/bitrix/images/bizproc/err_act_button_sett.gif) 50% center no-repeat;}
+	.activityerr a.activitymin {background: url(/bitrix/images/bizproc/act_button_min.gif) 50% center no-repeat;}
+
+	.activityerr a.ui-icon-set.activitydel, .activityerr a.ui-icon-set.activityset, .activityerr a.ui-icon-set.activitymin,
+	a.ui-icon-set.activitydel, a.ui-icon-set.activityset, a.ui-icon-set.activitymin {
+		--ui-icon-set__icon-size: 14px;
+		--ui-icon-set__icon-color: var(--ui-color-base-70);
+		background: var(--ui-color-base-70);
+	}
+
+	.activityerr a.ui-icon-set.activitydel:hover, .activityerr a.ui-icon-set.activityset:hover, .activityerr a.ui-icon-set.activitymin:hover,
+	a.ui-icon-set.activitydel:hover, a.ui-icon-set.activityset:hover, a.ui-icon-set.activitymin:hover {
+		--ui-icon-set__icon-color: var(--ui-color-base-80);
+		background: var(--ui-color-base-80);
+		margin: 2px;
+		border: none;
+	}
 </style>
 <script src="/bitrix/js/main/public_tools.js"></script>
 <script src="/bitrix/js/bizproc/bizproc.js"></script>

@@ -16,9 +16,9 @@ Bitrix\Main\UI\Extension::load("ui.tooltip");
 global $APPLICATION, $USER;
 
 // PARSE PARAMS
-$arResult['PATH_TO_FULL_VIEW'] = $arParams['PATH_TO_FULL_VIEW'] = CrmCheckPath('PATH_TO_FULL_VIEW', $arParams['PATH_TO_FULL_VIEW'], COption::GetOptionString('crm', 'path_to_activity_list'));
-$arParams['PATH_TO_ACTIVITY_LIST'] = CrmCheckPath('PATH_TO_ACTIVITY_LIST', $arParams['PATH_TO_ACTIVITY_LIST'], COption::GetOptionString('crm', 'path_to_activity_list'));
-$arParams['PATH_TO_ACTIVITY_WIDGET'] = CrmCheckPath('PATH_TO_ACTIVITY_WIDGET', $arParams['PATH_TO_ACTIVITY_WIDGET'], $APPLICATION->GetCurPage().'?widget');
+$arResult['PATH_TO_FULL_VIEW'] = $arParams['PATH_TO_FULL_VIEW'] = CrmCheckPath('PATH_TO_FULL_VIEW', $arParams['PATH_TO_FULL_VIEW'] ?? null, COption::GetOptionString('crm', 'path_to_activity_list'));
+$arParams['PATH_TO_ACTIVITY_LIST'] = CrmCheckPath('PATH_TO_ACTIVITY_LIST', $arParams['PATH_TO_ACTIVITY_LIST'] ?? null, COption::GetOptionString('crm', 'path_to_activity_list'));
+$arParams['PATH_TO_ACTIVITY_WIDGET'] = CrmCheckPath('PATH_TO_ACTIVITY_WIDGET', $arParams['PATH_TO_ACTIVITY_WIDGET'] ?? null, $APPLICATION->GetCurPage().'?widget');
 $bindings = (isset($arParams['BINDINGS']) && is_array($arParams['BINDINGS'])) ? $arParams['BINDINGS'] : array();
 // Check show mode
 $showMode = isset($arParams['SHOW_MODE'])? mb_strtoupper(strval($arParams['SHOW_MODE'])) : 'ALL';
@@ -42,7 +42,7 @@ $arResult['FORM_URI'] = isset($arParams['FORM_URI']) ? $arParams['FORM_URI'] : '
 
 $currentUserPermissions = CCrmPerms::GetCurrentUserPermissions();
 $currentUserID = $arResult['CURRENT_USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
-$currentUserName = $arResult['CURRENT_USER_NAME'] = CCrmViewHelper::GetFormattedUserName($currentUserID, $arParams['NAME_TEMPLATE']);
+$currentUserName = $arResult['CURRENT_USER_NAME'] = CCrmViewHelper::GetFormattedUserName($currentUserID, $arParams['NAME_TEMPLATE'] ?? null);
 
 $filterFieldPrefix = $arResult['FILTER_FIELD_PREFIX'] = $arResult['TAB_ID'] !== '' ? mb_strtoupper($arResult['TAB_ID']).'_' : '';
 $tabParamName = $arResult['FORM_ID'] !== '' ? $arResult['FORM_ID'].'_active_tab' : 'active_tab';
@@ -53,9 +53,8 @@ $arFilter = array();
 $arResult['OWNER_UID'] = '';
 
 $arBindingFilter = array();
-for($i = count($bindings); $i >= 0; $i--)
+foreach($bindings as $binding)
 {
-	$binding = $bindings[$i];
 	$ownerTypeID = isset($binding['TYPE_ID']) ? intval($binding['TYPE_ID']) : 0;
 	if($ownerTypeID <= 0)
 	{
@@ -193,7 +192,7 @@ elseif($showMode === 'NOT_COMPLETED_OR_RECENT_CHANGED')
 	);
 }
 
-if (intval($arParams['ITEM_COUNT']) <= 0)
+if (intval($arParams['ITEM_COUNT'] ?? 0) <= 0)
 {
 	$arParams['ITEM_COUNT'] = 20;
 }
@@ -683,7 +682,7 @@ if (empty($arSelectMap))
 {
 	foreach ($arResult['HEADERS'] as $arHeader)
 	{
-		if ($arHeader['default'])
+		if ($arHeader['default'] ?? false)
 		{
 			$arSelectMap[$arHeader['id']] = true;
 		}
@@ -1361,4 +1360,4 @@ if(isset($_REQUEST['bxajaxid']))
 	$APPLICATION->SetTitle('');
 }
 $this->IncludeComponentTemplate();
-return $arResult['ROWS_COUNT'];
+return ($arResult['ROWS_COUNT'] ?? null);

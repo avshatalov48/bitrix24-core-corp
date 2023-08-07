@@ -130,6 +130,7 @@ jn.define('crm/entity-detail/component/communication-button/contact-info', (requ
 	};
 
 	const prepareConnectionData = (data) => ({
+		title: data.TITLE,
 		value: data.VALUE,
 		complexName: data.COMPLEX_NAME,
 		valueType: data.VALUE_TYPE,

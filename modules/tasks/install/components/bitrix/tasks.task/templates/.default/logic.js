@@ -342,9 +342,20 @@ BX.namespace('Tasks.Component');
 					BX.delegate(this.onProjectSelected, this)
 				);
 
+
+				BX.Event.EventEmitter.subscribe('OnEditorInitedBefore', function (event) {
+					const [ editor ] = event.getData();
+					this.addAiButtons(editor);
+				}.bind(this));
+
 				BX.Event.EventEmitter.subscribe(
 					'BX.Tasks.MemberSelector:projectDeselected',
 					BX.delegate(this.onProjectDeselected, this)
+				);
+
+				BX.Event.EventEmitter.subscribe(
+					'BX.Main.User.SelectorController:itemRendered',
+					BX.delegate(this.onItemRendered, this)
 				);
 
 				var instance = BX.Tasks.Component.TasksWidgetMemberSelector.getInstance(this.sys.id + '-project');
@@ -580,6 +591,12 @@ BX.namespace('Tasks.Component');
 				this.showScrumFields(event.data.ID);
 			},
 
+			onItemRendered: function(event)
+			{
+				const node = document.querySelector('input.tasks-task-temporary-crm-input');
+				node && node.remove();
+			},
+
 			onProjectDeselected: function(event)
 			{
 				var unChosenContainer = this.control('unchosen-blocks');
@@ -748,6 +765,89 @@ BX.namespace('Tasks.Component');
 							this.setState('BLOCKS', blockName, 'C', !stateBlock.C);
 						}
 					}
+				}
+			},
+
+			addAiButtons: function(editor)
+			{
+				if (Boolean(this.option('canShowAITextButton')))
+				{
+					editor.AddButton({
+						id: 'ai-text-generator',
+						name: 'text',
+						iconClassName: 'tasks-task-editor-btn-ai-text',
+						disabledForTextarea: false,
+						toolbarSort: 402,
+						handler: () => {
+							const aiTextPicker = new BX.AI.Picker({
+								moduleId: 'tasks',
+								contextId: 'tasks_ai_text_' + this.getUser().DATA.ID,
+								analyticLabel: 'tasks_ai_text',
+								history: true,
+								onSelect: (message) => {
+									const text = message.data;
+									if (editor.bbCode && editor.synchro.IsFocusedOnTextarea())
+									{
+										editor.textareaView.WrapWith(false, false, text);
+										editor.textareaView.Focus();
+									}
+									else
+									{
+										editor.action.actions.insertHTML.exec('insertHTML', text);
+										editor.Focus();
+									}
+								},
+							});
+							aiTextPicker.setLangSpace(BX.AI.Picker.LangSpace.text);
+							aiTextPicker.text();
+						}
+					});
+				}
+
+				if (Boolean(this.option('canShowAIImageButton')))
+				{
+					editor.AddButton({
+						id: 'ai-image-generator',
+						name: 'image',
+						iconClassName: 'tasks-task-editor-btn-ai-image',
+						disabledForTextarea: false,
+						toolbarSort: 401,
+						handler: () => {
+							const aiImagePicker = new BX.AI.Picker({
+								moduleId: 'tasks',
+								contextId: 'tasks_ai_image_' + this.getUser().DATA.ID,
+								analyticLabel: 'tasks_ai_image',
+								history: true,
+								onSelect: (imageURL) => {
+									BX.ajax.runAction('bitrix:tasks.task.ai.image.save', {
+										data: {
+											image: imageURL,
+										}
+									})
+										.then(response => {
+											const fileId = response.data.fileId;
+											const userFieldControl = BX.Disk.Uploader.UserFieldControl.getById('task-form');
+											const uploader = userFieldControl.getUploader();
+											uploader.addFile(fileId, {
+												events: {
+													onLoadComplete: (event) => {
+														const file = event.getTarget();
+														const item = userFieldControl.getItem(file.getId());
+														userFieldControl.getMainPostForm().getParser().insertFile(item);
+														userFieldControl.showUploaderPanel();
+													}
+												}
+											});
+										})
+										.catch(error => {
+											console.log(error);
+										})
+								},
+							});
+							aiImagePicker.setLangSpace(BX.AI.Picker.LangSpace.image);
+							aiImagePicker.image();
+						}
+					});
 				}
 			},
 
@@ -1560,5 +1660,4 @@ BX.namespace('Tasks.Component');
 			}
 		}
 	});
-
 }).call(this);

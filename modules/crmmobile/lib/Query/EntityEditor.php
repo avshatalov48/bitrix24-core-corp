@@ -21,6 +21,7 @@ final class EntityEditor extends Query
 	{
 		$this->factory = $factory;
 		$this->entity = $entity;
+
 		$this->params = $params;
 	}
 

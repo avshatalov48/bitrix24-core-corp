@@ -33,6 +33,10 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 	"TITLE_HTML" => Loc::getMessage("VOX_CONFIG_TELEPHONY_24") . "<span class=\"logo-color\"> 24</span>"
 ));
 $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
+$arResult["ERROR"] ??= '';
+/**
+ * @var CBitrixComponentTemplate $this
+ */
 ?>
 
 <div id="vi-editor-root" class="voximplant-config-root">
@@ -641,7 +645,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 												'ALLOW_UPLOAD' => 'F',
 												'ALLOW_UPLOAD_EXT' => 'mp3'
 											),
-											$this->component,
+											$component,
 											array("HIDE_ICONS" => true)
 										); ?>
 										<div id="<?= $id ?>span" class="voximplant-melody">
@@ -904,7 +908,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 												'ALLOW_UPLOAD' => 'F',
 												'ALLOW_UPLOAD_EXT' => 'mp3'
 											),
-											$this->component,
+											$component,
 											array("HIDE_ICONS" => true)
 										); ?>
 										<div id="<?= $id ?>span" class="voximplant-melody">

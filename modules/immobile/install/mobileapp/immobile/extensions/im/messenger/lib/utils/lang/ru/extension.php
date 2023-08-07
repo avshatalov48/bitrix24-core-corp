@@ -1,0 +1,28 @@
+<?php
+$MESS["IMMOBILE_STATUS_ONLINE"] = "Онлайн";
+$MESS["IMMOBILE_STATUS_BOT"] = "Чат-бот";
+$MESS["IMMOBILE_STATUS_NETWORK"] = "Битрикс24.Network";
+$MESS["IMMOBILE_STATUS_OFFLINE"] = "Не в сети";
+$MESS["IMMOBILE_STATUS_BREAK"] = "Перерыв";
+$MESS["IMMOBILE_STATUS_AWAY"] = "Отсутствую";
+$MESS["IMMOBILE_STATUS_AWAY_TITLE"] = "Отсутствует #TIME#";
+$MESS["IMMOBILE_STATUS_DND"] = "Не беспокоить";
+$MESS["IMMOBILE_STATUS_MOBILE"] = "Онлайн, с телефона";
+$MESS["IMMOBILE_STATUS_NA"] = "Недоступен";
+$MESS["IMMOBILE_STATUS_GUEST"] = "Недоступен";
+$MESS["IMMOBILE_STATUS_LINES-ONLINE"] = "Пользователь Открытых линий";
+$MESS["IMMOBILE_STATUS_VACATION"] = "В отпуске";
+$MESS["IMMOBILE_STATUS_VACATION_TITLE"] = "В отпуске до #DATE#";
+
+$MESS["IMMOBILE_STATUS_TEXT_ONLINE"] = "Онлайн";
+$MESS["IMMOBILE_STATUS_TEXT_OFFLINE"] = "Офлайн";
+$MESS["IMMOBILE_STATUS_TEXT_MOBILE-ONLINE"] = "Онлайн, с телефона";
+$MESS["IMMOBILE_STATUS_TEXT_AWAY"] = "Отсутствую";
+$MESS["IMMOBILE_STATUS_TEXT_IDLE"] = "Отсутствую";
+$MESS["IMMOBILE_STATUS_TEXT_DND"] = "Не беспокоить";
+$MESS["IMMOBILE_STATUS_TEXT_BREAK"] = "Перерыв";
+
+$MESS["IMMOBILE_LAST_SEEN_M"] = "Был #DATE# в #TIME#";
+$MESS["IMMOBILE_LAST_SEEN_F"] = "Была #DATE# в #TIME#";
+$MESS["IMMOBILE_LAST_SEEN_SHORT_M"] = "Был #LAST_SEEN#";
+$MESS["IMMOBILE_LAST_SEEN_SHORT_F"] = "Была #LAST_SEEN#";

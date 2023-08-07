@@ -299,8 +299,8 @@ class CCrmActivity extends CAllCrmActivity
 			{
 				unset($arComm['ID']);
 			}
-			$arComm['TYPE'] = (string)$arComm['TYPE'];
-			$arComm['VALUE'] = (string)$arComm['VALUE'];
+			$arComm['TYPE'] = (string)($arComm['TYPE'] ?? '');
+			$arComm['VALUE'] = (string)($arComm['VALUE'] ?? '');
 
 			$data = $DB->PrepareInsert(self::COMMUNICATION_TABLE_NAME, $arComm);
 			if($bulkColumns == '')

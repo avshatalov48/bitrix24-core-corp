@@ -2,8 +2,8 @@
  * @module tasks/layout/task/fields/canChangeDeadline
  */
 jn.define('tasks/layout/task/fields/canChangeDeadline', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {BooleanField, BooleanMode} = require('layout/ui/fields/boolean');
+	const { Loc } = require('loc');
+	const { BooleanField, BooleanMode } = require('layout/ui/fields/boolean');
 
 	class CanChangeDeadline extends LayoutComponent
 	{
@@ -52,7 +52,7 @@ jn.define('tasks/layout/task/fields/canChangeDeadline', (require, exports, modul
 					},
 					testId: 'canChangeDeadline',
 					onChange: (value) => {
-						this.setState({canChangeDeadline: value});
+						this.setState({ canChangeDeadline: value });
 						this.props.onChange(value);
 					},
 				}),
@@ -60,5 +60,5 @@ jn.define('tasks/layout/task/fields/canChangeDeadline', (require, exports, modul
 		}
 	}
 
-	module.exports = {CanChangeDeadline};
+	module.exports = { CanChangeDeadline };
 });

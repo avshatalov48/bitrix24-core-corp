@@ -846,7 +846,7 @@ class CIntranetUtils
 
 		$arSections = self::$SECTIONS_SETTINGS_CACHE['TREE'][$section_id] ?? null;
 
-		if (is_array($arSections) && count($arSections) > 0)
+		if (is_array($arSections) && !empty($arSections))
 		{
 			if ($bFlat)
 			{
@@ -1306,7 +1306,7 @@ class CIntranetUtils
 				}
 			}
 
-			if ($bRecursive && count($arSections) > 0)
+			if ($bRecursive && !empty($arSections))
 			{
 				foreach ($arSections as $section_id)
 				{

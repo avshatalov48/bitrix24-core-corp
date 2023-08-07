@@ -100,11 +100,6 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 
 	private function getUrlAuto(): ?string
 	{
-		if (!Main\Loader::includeModule('salescenter'))
-		{
-			return null;
-		}
-
 		[$entityTypeId, $entityId] = CCrmBizProcHelper::resolveEntityId($this->getDocumentId());
 
 		switch ($entityTypeId)
@@ -133,6 +128,11 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 				break;
 			default:
 				return null;
+		}
+
+		if (empty($buildData['PRODUCT']))
+		{
+			return null;
 		}
 
 		$payment = $this->createPayment($buildData);
@@ -182,7 +182,10 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 
 	private function getBuilderDataBySmartInvoice(Item\SmartInvoice $invoice): array
 	{
+		$order = $this->findOrderForEntity(\CCrmOwnerType::Deal, $invoice->getId());
+
 		return [
+			'ID' => $order ? $order->getId() : 0,
 			'CURRENCY' => $invoice->getCurrencyId(),
 			'SITE_ID' => SITE_ID,
 			'OWNER_ID' => $invoice->getId(),
@@ -197,7 +200,10 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 
 	private function getBuilderDataByDeal(array $deal): array
 	{
+		$order = $this->findOrderForEntity(\CCrmOwnerType::Deal, $deal['ID']);
+
 		return [
+			'ID' => $order ? $order->getId() : 0,
 			'CURRENCY' => $deal['CURRENCY_ID'],
 			'SITE_ID' => SITE_ID,
 			'OWNER_ID' => $deal['ID'],
@@ -210,14 +216,49 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 		];
 	}
 
-	private function getBuilderProductData(int $ownerTypeId, int $dealId): array
+	private function getBuilderProductData(int $ownerTypeId, int $ownerId): array
 	{
-		$manager = new Order\ProductManager($ownerTypeId, $dealId);
+		$manager = new Order\ProductManager($ownerTypeId, $ownerId);
+
+		$order = $this->findOrderForEntity($ownerTypeId, $ownerId);
+		if ($order)
+		{
+			$manager->setOrder($order);
+		}
 
 		$products = $manager->getPayableItems();
 		$products = $this->fillProductsProperties($products);
 		// re-index the products array by the 'BASKET_CODE' key
 		return array_combine(array_column($products, 'BASKET_CODE'), $products);
+	}
+
+	private function findOrderForEntity(int $ownerTypeId, int $ownerId) : ?Order\Order
+	{
+		static $entityToOrderMap = [];
+
+		$key = $ownerTypeId.'_'.$ownerId;
+
+		if (!array_key_exists($key, $entityToOrderMap))
+		{
+			$entityToOrderMap[$key] = null;
+
+			$dbRes = Order\EntityBinding::getList([
+				'select' => ['ORDER_ID'],
+				'filter' => [
+					'=OWNER_ID' => $ownerId,
+					'=OWNER_TYPE_ID' => $ownerTypeId
+				],
+				'order' => ['ORDER_ID' => 'DESC'],
+				'limit' => 1
+			]);
+
+			if ($row = $dbRes->fetch())
+			{
+				$entityToOrderMap[$key] = Order\Order::load($row['ORDER_ID']);
+			}
+		}
+
+		return $entityToOrderMap[$key];
 	}
 
 	private function fillProductsProperties(array $products): array

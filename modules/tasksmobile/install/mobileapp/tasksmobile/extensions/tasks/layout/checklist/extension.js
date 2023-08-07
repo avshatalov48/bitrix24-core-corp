@@ -266,7 +266,7 @@ jn.define('tasks/layout/checklist', (require, exports, module) => {
 						}),
 					),
 					Text({
-						text: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_STUB_TEXT'),
+						text: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_STUB_CREATE_CHECKLIST'),
 						style: {
 							marginLeft: 6,
 							fontSize: 16,

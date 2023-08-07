@@ -76,12 +76,10 @@ jn.define('crm/entity-detail/component/custom-events', (require, exports, module
 			 * @param document
 			 */
 			(detailCard, document) => {
-				const { isAvailableReceivePayment } = detailCard.getComponentParams();
 				PaymentDocument.open({
 					document,
 					entityModel: detailCard.entityModel,
 					uid: detailCard.uid,
-					isAvailableReceivePayment,
 				});
 			},
 		],

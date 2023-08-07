@@ -90,6 +90,7 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 				new FadeView({
 					visible: false,
 					fadeInOnMount: true,
+					notVisibleOpacity: 0.5,
 					style: {
 						flexGrow: 1,
 					},
@@ -189,11 +190,24 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 				},
 				...props,
 				additionalSummary: this.additionalSummary,
-				showSummaryAmount: this.showSummaryAmount,
-				showSummaryTax: this.showSummaryTax,
+				componentsForDisplay: this.getSummaryComponents(),
 				discountCaption: this.discountCaption,
 				totalSumCaption: this.totalSumCaption,
 			});
+		}
+
+		/**
+		 * Returns the parts that should be rendered in the summary
+		 * @returns {{summary: boolean, discount: boolean, taxes: boolean}}
+		 */
+		getSummaryComponents()
+		{
+			return {
+				summary: true,
+				amount: true,
+				discount: true,
+				taxes: true,
+			};
 		}
 
 		/**
@@ -242,22 +256,6 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 		get showFloatingButton()
 		{
 			return BX.prop.getBoolean(this.props, 'showFloatingButton', true);
-		}
-
-		/**
-		 * @return {boolean}
-		 */
-		get showSummaryAmount()
-		{
-			return BX.prop.getBoolean(this.props, 'showSummaryAmount', true);
-		}
-
-		/**
-		 * @return {boolean}
-		 */
-		get showSummaryTax()
-		{
-			return BX.prop.getBoolean(this.props, 'showSummaryTax', true);
 		}
 
 		/**
@@ -371,14 +369,14 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 
 			this.delayedSummaryUpdater = null;
 
-			this.customEventEmitter.emit(CatalogStoreEvents.ProductList.StartUpdateSummary);
+			this.customEventEmitter.emit('StoreEvents.ProductList.StartUpdateSummary');
 
 			this.summaryRef
 				.fadeOut()
 				.then(() => fetcher())
 				.then(data => {
 					this.summaryRef.fadeIn(data);
-					this.customEventEmitter.emit(CatalogStoreEvents.ProductList.FinishUpdateSummary);
+					this.customEventEmitter.emit('StoreEvents.ProductList.FinishUpdateSummary');
 				})
 			;
 		}

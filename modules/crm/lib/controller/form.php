@@ -887,6 +887,38 @@ class Form extends Main\Engine\JsonController
 		return $this->getCaptchaAction();
 	}
 
+	public function getFileLimitAction(): array
+	{
+		if (!$this->checkFormAccess())
+		{
+			return [];
+		}
+
+		$limitMb = WebForm\Limitations\DailyFileUploadLimit::instance()->getLimit();
+		$currentBytes =  WebForm\Limitations\DailyFileUploadLimit::instance()->getCurrent();
+
+		return [
+			'limitMb' => $limitMb,
+			'currentBytes' => $currentBytes,
+			'canChange' => $this->getFormAccess(true),
+		];
+	}
+
+	public function setFileLimitAction(?int $limitMb): array
+	{
+		if (!$this->checkFormAccess(true))
+		{
+			return [];
+		}
+
+		if ($limitMb > 0 || $limitMb === null)
+		{
+			WebForm\Limitations\DailyFileUploadLimit::instance()->setLimit($limitMb);
+		}
+
+		return $this->getFileLimitAction();
+	}
+
 	protected function checkFormAccess($write = false)
 	{
 		if(!$this->getFormAccess($write))

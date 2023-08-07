@@ -6,17 +6,8 @@ jn.define('crm/timeline/scheduler/providers/task', (require, exports, module) =>
 	const { TimelineSchedulerBaseProvider } = require('crm/timeline/scheduler/providers/base');
 	const { Type } = require('crm/type');
 	const { AnalyticsLabel } = require('analytics-label');
-
-	let TaskCreate;
-
-	try
-	{
-		TaskCreate = require('tasks/layout/task/create').TaskCreate;
-	}
-	catch (e)
-	{
-		console.warn(e);
-	}
+	const { get } = require('utils/object');
+	const { TaskCreate } = require('tasks/layout/task/create');
 
 	/**
 	 * @class TimelineSchedulerTaskProvider
@@ -53,31 +44,46 @@ jn.define('crm/timeline/scheduler/providers/task', (require, exports, module) =>
 			return 300;
 		}
 
-		static isSupported()
+		static isAvailableInMenu(context = {})
 		{
-			return Boolean(TaskCreate);
+			if (!context.detailCard)
+			{
+				return false;
+			}
+
+			const detailCardParams = context.detailCard.getComponentParams();
+
+			return get(detailCardParams, 'linkedUserFields.TASKS_TASK|UF_CRM_TASK', false);
 		}
 
-		static open(data)
+		static isSupported(context = {})
+		{
+			return true;
+		}
+
+		static async open(data)
 		{
 			const { entity } = data.scheduler;
 
-			TaskCreate.open({
-				initialTaskData: {
-					crm: {
-						[`${entity.typeId}_${entity.id}`]: {
-							id: entity.id,
-							title: entity.title,
-							type: Type.resolveNameById(entity.typeId).toLowerCase(),
+			if (TaskCreate)
+			{
+				TaskCreate.open({
+					initialTaskData: {
+						crm: {
+							[`${entity.typeId}_${entity.id}`]: {
+								id: entity.id,
+								title: entity.title,
+								type: Type.resolveNameById(entity.typeId).toLowerCase(),
+							},
 						},
 					},
-				},
-			});
+				});
 
-			AnalyticsLabel.send({
-				event: 'onTaskAdd',
-				scenario: 'task_add',
-			});
+				AnalyticsLabel.send({
+					event: 'onTaskAdd',
+					scenario: 'task_add',
+				});
+			}
 		}
 	}
 

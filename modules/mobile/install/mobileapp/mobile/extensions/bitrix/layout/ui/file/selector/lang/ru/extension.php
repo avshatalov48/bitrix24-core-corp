@@ -3,4 +3,3 @@
 $MESS['UI_FILE_SELECTOR_DEFAULT_TITLE'] = 'Файлы (#NUM#)';
 $MESS['UI_FILE_SELECTOR_SAVE_BUTTON'] = 'Сохранить';
 $MESS['UI_FILE_SELECTOR_SAVE_BUTTON_LOADING'] = 'Сохраняем...';
-$MESS['UI_FILE_SELECTOR_EMPTY_LIST'] = 'Ничего не выбрано';

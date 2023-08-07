@@ -78,6 +78,7 @@ class VoximplantStartAjaxController extends \Bitrix\Main\Engine\Controller
 	{
 		CBitrixComponent::includeComponentClass("bitrix:voximplant.start");
 		$component = new VoximplantStartComponent();
+		$component->arParams = $component->onPrepareComponentParams([]);
 
 		$arResult = $component->prepareResult();
 

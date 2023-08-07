@@ -226,7 +226,7 @@ class CrmControlPanel extends CBitrixComponent
 
 			$result[] = [
 				$item['NAME'] ?? $item['TEXT'],
-				$item['URL'],
+				$item['URL'] ?? '',
 				[],
 				[
 					'DEPTH_LEVEL' => $depthLevel,
@@ -371,8 +371,8 @@ class CrmControlPanel extends CBitrixComponent
 	protected function prepareItem(array $item)
 	{
 		$itemActions = isset($item['ACTIONS']) ? [
-			'CLASS' => $item['ACTIONS'][0]['ID'] === 'CREATE' ? 'crm-menu-plus-btn' : '',
-			'URL' => $item['ACTIONS'][0]['URL'],
+			'CLASS' => ($item['ACTIONS'][0]['ID'] ?? null) === 'CREATE' ? 'crm-menu-plus-btn' : '',
+			'URL' => $item['ACTIONS'][0]['URL'] ?? '',
 		] : false;
 
 		unset($item['ACTIONS']);

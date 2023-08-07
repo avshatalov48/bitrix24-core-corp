@@ -2,8 +2,8 @@
  * @module tasks/layout/task/fields/datePlanEnd
  */
 jn.define('tasks/layout/task/fields/datePlanEnd', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {DateTimeField} = require('layout/ui/fields/datetime');
+	const { Loc } = require('loc');
+	const { DateTimeField } = require('layout/ui/fields/datetime');
 
 	class DatePlanEnd extends LayoutComponent
 	{
@@ -46,10 +46,10 @@ jn.define('tasks/layout/task/fields/datePlanEnd', (require, exports, module) => 
 					dateFormat: 'd MMMM, HH:mm',
 				},
 				testId: 'datePlanEnd',
-				onChange: date => this.props.datesResolver.updateEndDate(date),
+				onChange: (date) => this.props.datesResolver.updateEndDate(date),
 			});
 		}
 	}
 
-	module.exports = {DatePlanEnd};
+	module.exports = { DatePlanEnd };
 });

@@ -310,6 +310,11 @@ final class AttachedObject extends Internals\Model
 		return $this->allowEdit;
 	}
 
+	public function changeAllowEdit(bool $allowEdit)
+	{
+		return $this->update(['ALLOW_EDIT' => $allowEdit ? 1 : 0]);
+	}
+
 	/**
 	 * Returns value of allow auto comment property.
 	 * @return boolean

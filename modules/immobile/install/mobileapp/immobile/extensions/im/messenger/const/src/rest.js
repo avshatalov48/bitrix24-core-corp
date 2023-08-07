@@ -2,7 +2,6 @@
  * @module im/messenger/const/rest
  */
 jn.define('im/messenger/const/rest', (require, exports, module) => {
-
 	const RestMethod = Object.freeze({
 		imMessageAdd: 'im.message.add',
 		imMessageUpdate: 'im.message.update',
@@ -36,6 +35,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imChatCalendarAdd: 'im.chat.calendar.add',
 		imChatCalendarDelete: 'im.chat.calendar.delete',
 		imChatUserDelete: 'im.chat.user.delete',
+		imChatUserAdd: 'im.chat.user.add',
 
 		imV2ChatRead: 'im.v2.Chat.read',
 		imV2ChatReadAll: 'im.v2.Chat.readAll',
@@ -44,6 +44,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatMessageTail: 'im.v2.Chat.Message.tail',
 		imV2ChatMessageRead: 'im.v2.Chat.Message.read',
 		imV2ChatMessageMark: 'im.v2.Chat.Message.mark',
+		imV2ChatMessageDelete: 'im.v2.Chat.Message.delete',
 
 		imDialogGet: 'im.dialog.get',
 		imDialogMessagesGet: 'im.dialog.messages.get',
@@ -58,6 +59,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imUserGet: 'im.user.get',
 		imUserListGet: 'im.user.list.get',
 		imUserStatusSet: 'im.user.status.set',
+		imUserGetDepartment: 'im.v2.User.getDepartment',
 
 		imDiskFolderGet: 'im.disk.folder.get',
 		imDiskFolderListGet: 'im.disk.folder.list.get',

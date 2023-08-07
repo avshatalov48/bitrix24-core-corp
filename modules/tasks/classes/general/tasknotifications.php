@@ -9,17 +9,15 @@
 
 IncludeModuleLangFile(__FILE__);
 
-use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
-use Bitrix\Tasks\Integration\CRM\Timeline;
+use Bitrix\Socialnetwork\Helper\Workgroup;
 use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Integration\SocialNetwork;
-use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Counter\Template\TaskCounter;
 use Bitrix\Tasks\Internals\Notification\Task\ThrottleTable;
-use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\UI;
@@ -2183,7 +2181,10 @@ class CTaskNotifications
 								$push = self::placeLinkAnchor($pushTemplate, $path, 'NONE');
 								$push = self::placeUserName($push, $authorId);
 
-								$tag = static::formatImNotificationTag($userId, $taskIds, 'TASKS');
+								$imNotificationTag = (new \Bitrix\Tasks\Integration\IM\Notification\Tag())
+									->setTasksIds($taskIds)
+									->setUserId($userId)
+									->setEntityCode('TASKS');
 
 								$arMessageFields = array(
 									"TO_USER_ID" => $userId,
@@ -2193,7 +2194,7 @@ class CTaskNotifications
 									"NOTIFY_EVENT" => $event,
 									"NOTIFY_MESSAGE" => $instant,
 									"NOTIFY_MESSAGE_OUT" => $email,
-									"NOTIFY_TAG" => $tag,
+									"NOTIFY_TAG" => $imNotificationTag->getNameWithSignature(),
 
 									// push
 									"PUSH_MESSAGE" => mb_substr($push, 0, self::PUSH_MESSAGE_MAX_LENGTH),
@@ -2257,15 +2258,18 @@ class CTaskNotifications
 				$userId = $message['TO_USER_IDS'][0]; // it may have changed on event
 
 				// make IM parameters
+				$actionName = ((string)($message['EVENT_DATA']['ACTION'] ?? null) !== '' ? $message['EVENT_DATA']['ACTION'] : 'TASK_UPDATE');
 
-				// todo make tag format more suitable
-				$entityIds = array();
+				$imNotificationTag = (new \Bitrix\Tasks\Integration\IM\Notification\Tag())
+					->setTasksIds(array($taskId))
+					->setUserId($userId)
+					->setEntityCode($message['ENTITY_CODE'])
+					->setActionName($actionName);
+
 				if('COMMENT' == $message['ENTITY_CODE'])
 				{
-					$entityIds = array(intval($message['EVENT_DATA']['MESSAGE_ID']));
+					$imNotificationTag->setEntityId(intval($message['EVENT_DATA']['MESSAGE_ID']));
 				}
-				$tag = static::formatImNotificationTag($userId, array($taskId), $message['ENTITY_CODE'], $entityIds);
-				$type = ((string)($message['EVENT_DATA']['ACTION'] ?? null) !== '' ? $message['EVENT_DATA']['ACTION'] : 'TASK_UPDATE');
 
 				$arMessageFields = array(
 					"TO_USER_ID" => $userId,
@@ -2273,8 +2277,8 @@ class CTaskNotifications
 					"NOTIFY_TYPE" => isset($message['NOTIFY_TYPE']) ? $message['NOTIFY_TYPE'] : IM_NOTIFY_FROM,
 					"NOTIFY_MODULE" => "tasks",
 					"NOTIFY_EVENT" => $message['NOTIFY_EVENT'],
-					"NOTIFY_TAG" => $tag,
-					"NOTIFY_SUB_TAG" => $tag."|".$type,
+					"NOTIFY_TAG" => $imNotificationTag->getName(),
+					"NOTIFY_SUB_TAG" => $imNotificationTag->getSubName(),
 					"NOTIFY_MESSAGE" => $message['MESSAGE']['INSTANT'],
 					"NOTIFY_MESSAGE_OUT" => $message['MESSAGE']['EMAIL'],
 					"PARAMS" => array(
@@ -2392,11 +2396,9 @@ class CTaskNotifications
 
 	private static function preparePushData(int $taskId, int $userId, array $taskData): array
 	{
-		unset($taskData['ACTIVITY_DATE']);
-
 		$pushData = [
 			'id' => (string)$taskId,
-			'newCommentsCount' => Counter::getInstance($userId)->getCommentsCount([$taskId])[$taskId],
+			'counter' => (new TaskCounter($userId))->getMobileRowCounter($taskId),
 		];
 
 		$data = self::getTaskData($taskId);
@@ -2413,21 +2415,29 @@ class CTaskNotifications
 		{
 			$pushData['deadline'] = self::prepareDate($userId, $taskData['DEADLINE']);
 		}
-		if (array_key_exists('STATUS', $taskData))
+		if (
+			array_key_exists('REAL_STATUS', $taskData)
+			|| array_key_exists('STATUS', $taskData)
+		)
 		{
-			$pushData['status'] = $taskData['STATUS'];
+			$pushData['status'] = ($taskData['REAL_STATUS'] ?? $taskData['STATUS']);
 		}
 		if (array_key_exists('GROUP_ID', $taskData))
 		{
 			$groupId = $taskData['GROUP_ID'];
-			$groupData = self::getGroupData($groupId);
 
 			$pushData['groupId'] = $groupId;
-			$pushData['group'] = [
-				'id' => $taskData['GROUP_ID'],
-				'name' => $groupData['NAME'],
-				'image' => $groupData['IMAGE'],
-			];
+			$pushData['group'] = [];
+
+			if ($groupId > 0)
+			{
+				$groupData = self::getGroupData($groupId);
+				$pushData['group'] = [
+					'id' => $groupId,
+					'name' => $groupData['NAME'],
+					'image' => $groupData['IMAGE'],
+				];
+			}
 		}
 		if (array_key_exists('CREATED_BY', $taskData))
 		{
@@ -2458,7 +2468,6 @@ class CTaskNotifications
 			'deadline' => 3,
 			'activityDate' => 4,
 			'status' => 5,
-			'newCommentsCount' => 6,
 
 			'groupId' => 20,
 			'group' => 21,
@@ -2471,6 +2480,15 @@ class CTaskNotifications
 
 			'accomplices' => 41,
 			'auditors' => 42,
+
+			'counter' => 50,
+			'counters' => 51,
+			'color' => 52,
+			'value' => 53,
+			'expired' => 54,
+			'new_comments' => 55,
+			'project_expired' => 56,
+			'project_new_comments' => 57,
 		];
 		$pushData = self::convertFields($pushData, $map);
 
@@ -2565,23 +2583,30 @@ class CTaskNotifications
 
 		if (!array_key_exists($groupId, $cache))
 		{
-			if (!$groupId)
-			{
-				$cache[$groupId] = [
-					'NAME' => '',
-					'IMAGE' => '',
-				];
-			}
-			else
-			{
-				$groupsData = SocialNetwork\Group::getData([$groupId], ['IMAGE_ID']);
-				$group = $groupsData[$groupId];
+			$avatarTypes = (Loader::includeModule('socialnetwork') ? Workgroup::getAvatarTypes() : []);
+			$groupsData = SocialNetwork\Group::getData([$groupId], ['IMAGE_ID', 'AVATAR_TYPE']);
+			$group = $groupsData[$groupId];
 
-				$cache[$groupId] = [
-					'NAME' => $group['NAME'],
-					'IMAGE' => (is_array($file = \CFile::GetFileArray($group['IMAGE_ID'])) ? $file['SRC'] : ''),
-				];
+			$imageUrl = '';
+			if (
+				(int)$group['IMAGE_ID'] > 0
+				&& is_array($file = \CFile::GetFileArray($group['IMAGE_ID']))
+			)
+			{
+				$imageUrl = $file['SRC'];
 			}
+			else if (
+				!empty($group['AVATAR_TYPE'])
+				&& isset($avatarTypes[$group['AVATAR_TYPE']])
+			)
+			{
+				$imageUrl = $avatarTypes[$group['AVATAR_TYPE']]['mobileUrl'];
+			}
+
+			$cache[$groupId] = [
+				'NAME' => $group['NAME'],
+				'IMAGE' => $imageUrl,
+			];
 		}
 
 		return $cache[$groupId];
@@ -2916,18 +2941,6 @@ class CTaskNotifications
 		}
 
 		return ($name);
-	}
-
-	private static function formatImNotificationTag($userId, array $taskIds, $entityCode, array $entityIds = array())
-	{
-		$tag = "TASKS|".$entityCode."|".implode(':', $taskIds)."|".intval($userId);
-
-		if(!empty($entityIds))
-		{
-			$tag .= '|'.implode(':', $entityIds);
-		}
-
-		return $tag;
 	}
 
 	private static function parseImNotificationTag($tag)

@@ -31,6 +31,9 @@ return [
 		'loader',
 		'crm.timeline.editors.comment-editor',
 		'calendar.sharing.interface',
+		'ui.icon-set.api.vue',
+		'ui.icon-set.actions',
+		'ui.icon-set.main',
 	],
 	'skip_core' => false,
 ];

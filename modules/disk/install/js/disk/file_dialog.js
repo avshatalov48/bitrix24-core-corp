@@ -448,7 +448,7 @@ BX.DiskFileDialog.loadItems = function(oTarget, name)
 								BX.message('DISK_JS_FILE_DIALOG_OAUTH_NOTICE').replace('#SERVICE#', oTarget.name) +
 							'</div>' +
 							'<div class="bx-file-dialog-content-wrap-text">' +
-								BX.message('DISK_JS_FILE_DIALOG_OAUTH_NOTICE_DETAIL').replace('#HELP_URL#', BX.message('DISK_JS_FILE_DIALOG_OAUTH_NOTICE_DETAIL_HELP_URL')) +
+								BX.message('DISK_JS_FILE_DIALOG_OAUTH_NOTICE_DETAIL') +
 							'</div>' +
 						'</div>' +
 					'</div>';
@@ -957,7 +957,7 @@ BX.DiskFileDialog.showWait = function(timeout, name)
 	}
 
 	var content = BX('bx-file-dialog-content-'+name);
-	BX.DiskFileDialog.popupWaitWindow = new BX.PopupWindow('DiskFileDialogWait', content, {
+	BX.DiskFileDialog.popupWaitWindow = new BX.PopupWindow(null, content, {
 		autoHide: false,
 		lightShadow: true,
 		zIndex: 100,

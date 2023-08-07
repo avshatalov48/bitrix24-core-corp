@@ -12,6 +12,7 @@ class VoximplantNumbersComponent extends \CBitrixComponent
 	protected $gridId = "vox_numbers_grid";
 	protected $filterId = "vox_numbers_filter";
 	protected $userPermissions;
+	private CGridOptions $gridOptions;
 
 	public function __construct($component = null)
 	{
@@ -141,7 +142,7 @@ class VoximplantNumbersComponent extends \CBitrixComponent
 
 		$possibleNumbers = [];
 		$searchString = "";
-		if($filter['FIND'] != '')
+		if(($filter['FIND'] ?? null) != '')
 		{
 			$tokens = explode(' ', $filter['FIND']);
 

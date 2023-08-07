@@ -30,8 +30,16 @@ class CrmField extends BaseLinkedEntitiesField
 			if ($this->needExplodeValue($value))
 			{
 				$valueParts = explode('_', $value);
-				$entityType = ElementType::getLongEntityType($valueParts[0]);
-				$entityId = (int)$valueParts[1];
+				if (count($valueParts) === 2)
+				{
+					$entityType = ElementType::getLongEntityType($valueParts[0]);
+					$entityId = (int)$valueParts[1];
+				}
+				else
+				{
+					$entityType = '';
+					$entityId = 0;
+				}
 			}
 			else
 			{
@@ -79,7 +87,7 @@ class CrmField extends BaseLinkedEntitiesField
 			}
 
 			$entityTypeName = \CCrmOwnerTypeAbbr::ResolveName($entityTypePrefix);
-			$entityValue = $linkedEntitiesValues[$entityTypeName][$entityElementId];
+			$entityValue = $linkedEntitiesValues[$entityTypeName][$entityElementId] ?? null;
 			if (!$entityValue)
 			{
 				continue;
@@ -249,6 +257,11 @@ class CrmField extends BaseLinkedEntitiesField
 
 		foreach ($fieldValue as $entityElement)
 		{
+			if ($entityElement === null)
+			{
+				continue;
+			}
+
 			[$entityTypePrefix, $entityElementId] = $this->explodeEntityElement((string)$entityElement);
 
 			if ($entityTypePrefix === null)

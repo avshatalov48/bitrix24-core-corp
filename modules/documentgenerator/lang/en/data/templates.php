@@ -58,6 +58,7 @@ $MESS["DOCGEN_TEMPLATE_SALES_ORDER_PL_NAME"] = "Order confirmation (Poland)";
 $MESS["DOCGEN_TEMPLATE_SALES_ORDER_UK_NAME"] = "Order confirmation (UK)";
 $MESS["DOCGEN_TEMPLATE_SHIPMENT_DOC_REALIZATION_RU_NAME"] = "Sales of goods (Russia)";
 $MESS["DOCGEN_TEMPLATE_STORE_DOC_ARRIVAL_RU_NAME"] = "Shipping manifest (Russia)";
+$MESS["DOCGEN_TEMPLATE_STORE_DOC_DEDUCT_RU_NAME"] = "Goods write-off (Russia)";
 $MESS["DOCGEN_TEMPLATE_STORE_DOC_MOVING_RU_NAME"] = "Stock transfer manifest (Russia)";
 $MESS["DOCGEN_TEMPLATE_STORE_DOC_STORE_ADJUSTMENT_RU_NAME"] = "Stock adjustment receipt (Russia)";
 $MESS["DOCGEN_TEMPLATE_TTN_BY_NAME"] = "Shipment manifest (Belarus)";

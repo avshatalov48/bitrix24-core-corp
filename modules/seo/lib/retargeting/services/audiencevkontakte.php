@@ -108,9 +108,9 @@ class AudienceVkontakte extends Audience
 
 			if (is_array($data['items']))
 			{
-				$list = array_filter($data['items'], function ($item) {
+				$list = array_values(array_filter($data['items'], function ($item) {
 					return $item['type'] === self::USER_LIST_TYPE_HUMAN;
-				});
+				}));
 			}
 			$result->setData($list);
 		}

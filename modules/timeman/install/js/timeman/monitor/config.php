@@ -18,6 +18,7 @@ return [
 		'timeman.timeformatter',
 		'pull.client',
 		'main.core',
+		'im.v2.lib.desktop-api',
 	],
 	'skip_core' => false,
 ];

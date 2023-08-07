@@ -192,7 +192,7 @@ class CVoxImplantEvent
 				}
 			}
 
-			if ($arFields["ACTIVE"] === 'N' && CVoximplantUser::GetPhoneActive($arFields['ID']))
+			if (($arFields["ACTIVE"] ?? null) === 'N' && CVoximplantUser::GetPhoneActive($arFields['ID']))
 			{
 				$viUser = new CVoximplantUser();
 				$viUser->UpdateUserPassword($arFields['ID'], CVoxImplantUser::MODE_PHONE);

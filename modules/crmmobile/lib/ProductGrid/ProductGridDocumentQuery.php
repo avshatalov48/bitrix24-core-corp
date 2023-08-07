@@ -3,18 +3,22 @@
 namespace Bitrix\CrmMobile\ProductGrid;
 
 use Bitrix\Catalog\VatTable;
+use Bitrix\CatalogMobile\Catalog;
+use Bitrix\CatalogMobile\PermissionsProvider;
+use Bitrix\CatalogMobile\ProductGrid\SkuDataProvider;
+use Bitrix\CatalogMobile\Repository\MeasureRepository;
 use Bitrix\Crm;
 use Bitrix\Crm\Service\Accounting;
 use Bitrix\Crm\Service\Container;
 use Bitrix\CrmMobile\Dto\VatRate;
 use Bitrix\Main\Config\Option;
-use Bitrix\Mobile\Integration\Catalog\Catalog;
-use Bitrix\Mobile\Integration\Catalog\PermissionsProvider;
-use Bitrix\Mobile\Integration\Catalog\ProductGrid\SkuDataProvider;
-use Bitrix\Mobile\Integration\Catalog\Repository\MeasureRepository;
+use Bitrix\Main\Loader;
 use Bitrix\Mobile\UI\File;
 use Bitrix\Sale\Repository\PaymentRepository;
 use Bitrix\Sale\Tax\VatCalculator;
+
+Loader::requireModule('crm');
+Loader::requireModule('catalogmobile');
 
 final class ProductGridDocumentQuery
 {

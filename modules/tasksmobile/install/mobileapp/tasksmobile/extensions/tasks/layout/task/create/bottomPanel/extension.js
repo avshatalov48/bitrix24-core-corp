@@ -2,13 +2,26 @@
  * @module tasks/layout/task/create/bottomPanel
  */
 jn.define('tasks/layout/task/create/bottomPanel', (require, exports, module) => {
-	const {Loc} = require('loc');
+	const { Loc } = require('loc');
 
 	class BottomPanel extends LayoutComponent
 	{
 		static getPanelHeight()
 		{
 			return 52;
+		}
+
+		static getImageUrl(imageUrl)
+		{
+			let result = imageUrl;
+
+			if (result.indexOf(currentDomain) !== 0)
+			{
+				result = result.replace(`${currentDomain}`, '');
+				result = (result.indexOf('http') === 0 ? result : `${currentDomain}${result}`);
+			}
+
+			return encodeURI(result);
 		}
 
 		constructor(props)
@@ -56,7 +69,7 @@ jn.define('tasks/layout/task/create/bottomPanel', (require, exports, module) => 
 								width: 28,
 								height: 28,
 							},
-							uri: this.getImageUrl(`${this.props.pathToImages}/tasksmobile-layout-task-toolbar-attach-file.png`),
+							uri: BottomPanel.getImageUrl(`${this.props.pathToImages}/tasksmobile-layout-task-toolbar-attach-file.png`),
 						}),
 						this.renderAttachmentButtonCounter(),
 					),
@@ -146,21 +159,10 @@ jn.define('tasks/layout/task/create/bottomPanel', (require, exports, module) => 
 						color: '#ffffff',
 					},
 					text: String(this.state.attachmentCount),
-				})
+				}),
 			);
-		}
-
-		getImageUrl(imageUrl)
-		{
-			if (imageUrl.indexOf(currentDomain) !== 0)
-			{
-				imageUrl = imageUrl.replace(`${currentDomain}`, '');
-				imageUrl = (imageUrl.indexOf('http') !== 0 ? `${currentDomain}${imageUrl}` : imageUrl);
-			}
-
-			return encodeURI(imageUrl);
 		}
 	}
 
-	module.exports = {BottomPanel};
+	module.exports = { BottomPanel };
 });

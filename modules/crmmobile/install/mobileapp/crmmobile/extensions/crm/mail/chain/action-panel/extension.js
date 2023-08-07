@@ -14,21 +14,13 @@ jn.define('crm/mail/chain/action-panel', (require, exports, module) => {
 			content: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.2049 5.28594C14.2049 5.02617 13.8972 4.88918 13.7042 5.063L6.95366 11.1415C6.77721 11.3004 6.77721 11.5771 6.95366 11.736L13.7042 17.8145C13.8972 17.9883 14.2049 17.8513 14.2049 17.5915V13.7843C17.5917 14.2667 20.438 16.6215 21.6843 17.808C21.8977 18.0111 22.2486 17.834 22.1843 17.5465C21.6752 15.2706 19.853 9.61904 14.2049 8.74667V5.28594ZM10.155 17.5929V16.0857L5.32587 11.7374C5.14942 11.5785 5.14942 11.3017 5.32587 11.1429L10.155 6.79448V5.28732C10.155 5.02755 9.84729 4.89055 9.65425 5.06438L2.90376 11.1429C2.7273 11.3017 2.7273 11.5785 2.90375 11.7374L9.65424 17.8158C9.84728 17.9897 10.155 17.8527 10.155 17.5929Z" fill="#00A2E8"/></svg>',
 		},
 		forwardButton: {
-			content: `<svg width="31" height="30" viewBox="0 0 31 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<path d="M24.6954 14.7227L14.9727 5V11.25H9V18.75H14.9727V24.4454L24.6954 14.7227Z" fill="#00A2E8"/>
-				</svg>`,
+			content: '<svg width="31" height="30" viewBox="0 0 31 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24.6954 14.7227L14.9727 5V11.25H9V18.75H14.9727V24.4454L24.6954 14.7227Z" fill="#00A2E8"/></svg>',
 		},
 		moreButton: {
-			content: `<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<path d="M7.5 17.5C8.88071 17.5 10 16.3807 10 15C10 13.6193 8.88071 12.5 7.5 12.5C6.11929 12.5 5 13.6193 5 15C5 16.3807 6.11929 17.5 7.5 17.5Z" fill="#00A2E8"/>
-				<path d="M15 17.5C16.3807 17.5 17.5 16.3807 17.5 15C17.5 13.6193 16.3807 12.5 15 12.5C13.6193 12.5 12.5 13.6193 12.5 15C12.5 16.3807 13.6193 17.5 15 17.5Z" fill="#00A2E8"/>
-				<path d="M25 15C25 16.3807 23.8807 17.5 22.5 17.5C21.1193 17.5 20 16.3807 20 15C20 13.6193 21.1193 12.5 22.5 12.5C23.8807 12.5 25 13.6193 25 15Z" fill="#00A2E8"/>
-				</svg>`,
+			content: '<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 17.5C8.88071 17.5 10 16.3807 10 15C10 13.6193 8.88071 12.5 7.5 12.5C6.11929 12.5 5 13.6193 5 15C5 16.3807 6.11929 17.5 7.5 17.5Z" fill="#00A2E8"/><path d="M15 17.5C16.3807 17.5 17.5 16.3807 17.5 15C17.5 13.6193 16.3807 12.5 15 12.5C13.6193 12.5 12.5 13.6193 12.5 15C12.5 16.3807 13.6193 17.5 15 17.5Z" fill="#00A2E8"/><path d="M25 15C25 16.3807 23.8807 17.5 22.5 17.5C21.1193 17.5 20 16.3807 20 15C20 13.6193 21.1193 12.5 22.5 12.5C23.8807 12.5 25 13.6193 25 15Z" fill="#00A2E8"/></svg>',
 		},
 		attachmentsButton: {
-			content: `<svg width="30" height="30" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<path fill="#00A2E8" d="m24.021021,12.708223c0.162148,0.162218 0.162148,0.425219 0,0.587425l-1.088606,1.088548c-0.162148,0.162206 -0.425242,0.162206 -0.58739,0l-6.410173,-6.410162c-1.843561,-1.843561 -4.860296,-1.843561 -6.703868,0c-1.843561,1.843561 -1.843561,4.860308 0,6.703868l7.863641,7.8637c1.156139,1.156139 3.033794,1.156139 4.189932,0c1.156139,-1.156139 1.156139,-3.033794 0,-4.189932l-7.025667,-7.025702c-0.469408,-0.469408 -1.206565,-0.469408 -1.675973,0c-0.469396,0.469408 -0.469396,1.206565 0,1.675973l5.572175,5.57214c0.162265,0.162265 0.162265,0.425242 0,0.587507l-1.088489,1.088489c-0.162265,0.162265 -0.425266,0.162265 -0.587472,0l-5.572175,-5.572175c-1.391188,-1.391188 -1.391188,-3.636719 0,-5.027895c1.391188,-1.391188 3.636719,-1.391188 5.027895,0l7.025702,7.025667c2.077907,2.077907 2.077907,5.464018 0,7.541925c-2.077907,2.07779 -5.464018,2.07779 -7.541855,0l-7.863677,-7.863759c-2.765341,-2.765318 -2.765341,-7.290426 0,-10.055767c2.765341,-2.765353 7.290461,-2.765353 10.055826,0l6.410173,6.41015z" clip-rule="evenodd" fill-rule="evenodd"/>
-				</svg>`,
+			content: '<svg width="30" height="30" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="#00A2E8" d="m24.021021,12.708223c0.162148,0.162218 0.162148,0.425219 0,0.587425l-1.088606,1.088548c-0.162148,0.162206 -0.425242,0.162206 -0.58739,0l-6.410173,-6.410162c-1.843561,-1.843561 -4.860296,-1.843561 -6.703868,0c-1.843561,1.843561 -1.843561,4.860308 0,6.703868l7.863641,7.8637c1.156139,1.156139 3.033794,1.156139 4.189932,0c1.156139,-1.156139 1.156139,-3.033794 0,-4.189932l-7.025667,-7.025702c-0.469408,-0.469408 -1.206565,-0.469408 -1.675973,0c-0.469396,0.469408 -0.469396,1.206565 0,1.675973l5.572175,5.57214c0.162265,0.162265 0.162265,0.425242 0,0.587507l-1.088489,1.088489c-0.162265,0.162265 -0.425266,0.162265 -0.587472,0l-5.572175,-5.572175c-1.391188,-1.391188 -1.391188,-3.636719 0,-5.027895c1.391188,-1.391188 3.636719,-1.391188 5.027895,0l7.025702,7.025667c2.077907,2.077907 2.077907,5.464018 0,7.541925c-2.077907,2.07779 -5.464018,2.07779 -7.541855,0l-7.863677,-7.863759c-2.765341,-2.765318 -2.765341,-7.290426 0,-10.055767c2.765341,-2.765353 7.290461,-2.765353 10.055826,0l6.410173,6.41015z" clip-rule="evenodd" fill-rule="evenodd"/></svg>',
 		},
 	};
 
@@ -49,7 +41,7 @@ jn.define('crm/mail/chain/action-panel', (require, exports, module) => {
 				style: {
 					alignSelf: 'center',
 					fontSize: 13,
-					color: '#828B95',
+					color: '#828b95',
 				},
 				text,
 			});
@@ -61,6 +53,7 @@ jn.define('crm/mail/chain/action-panel', (require, exports, module) => {
 	function Button(props)
 	{
 		const {
+			circleWrap,
 			buttonKey,
 		} = props;
 
@@ -70,26 +63,62 @@ jn.define('crm/mail/chain/action-panel', (require, exports, module) => {
 
 		action = throttle(action, 500, this);
 
-		return View(
-			{
-				testId: (`mail-action-panel-button-${buttonKey}`),
-				onClick: () => {
-					action();
+		let wrapStyle = {};
+
+		let shadowProps = {};
+
+		if (circleWrap)
+		{
+			const circleDiameter = 53;
+
+			wrapStyle = {
+				alignSelf: 'center',
+				justifyContent: 'center',
+				paddingBottom: 3,
+				borderRadius: 100,
+				width: circleDiameter,
+				height: circleDiameter,
+			};
+
+			shadowProps = {
+				radius: 2,
+				color: '#e8e8e8',
+				offset: {
+					x: 0,
+					y: 1,
 				},
 				style: {
-					marginLeft: 5,
-					marginRight: 5,
+					width: circleDiameter,
+					height: circleDiameter,
+					borderRadius: 100,
 				},
-			},
-			Image({
-				style: {
-					alignSelf: 'center',
-					width: 30,
-					height: 30,
+			};
+		}
+
+		return Shadow(
+			shadowProps,
+			View(
+				{
+					testId: (`mail-action-panel-button-${buttonKey}`),
+					onClick: () => {
+						action();
+					},
+					style: {
+						...wrapStyle,
+						marginLeft: 5,
+						marginRight: 5,
+					},
 				},
-				svg: svgIcons[buttonKey],
-			}),
-			TitleButton(titles.buttons[buttonKey]),
+				Image({
+					style: {
+						alignSelf: 'center',
+						width: 30,
+						height: 30,
+					},
+					svg: svgIcons[buttonKey],
+				}),
+				TitleButton(titles.buttons[buttonKey]),
+			),
 		);
 	}
 
@@ -158,6 +187,7 @@ jn.define('crm/mail/chain/action-panel', (require, exports, module) => {
 
 			const buttons = Object.entries(this.actions).map(([key, value]) => {
 				return Button({
+					circleWrap: this.props.withoutStyles,
 					buttonKey: key,
 					action: value,
 				});
@@ -168,6 +198,28 @@ jn.define('crm/mail/chain/action-panel', (require, exports, module) => {
 			if (buttons.length >= 4)
 			{
 				justifyContent = 'space-around';
+			}
+
+			if (this.props.withoutStyles)
+			{
+				return View(
+					{
+						safeArea: {
+							bottom: true,
+							top: false,
+							left: false,
+							right: false,
+						},
+						style: {
+							right: 0,
+							bottom: 0,
+							marginRight: 6,
+							marginBottom: 10,
+							position: 'absolute',
+						},
+					},
+					...buttons,
+				);
 			}
 
 			return View(

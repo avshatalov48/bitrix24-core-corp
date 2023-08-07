@@ -81,9 +81,12 @@ class Manager
 
 			if (class_exists($class))
 			{
-				if (array_search("\\Bitrix\\Mobile\\Tab\\Tabable", class_implements($class)) !== false)
+				$interfaces = class_implements($class);
+				if (!$this->isTabable($interfaces) && !$this->isFactoryTabable($interfaces))
 				{
-					throw new SystemException("Tab class '{$class}' not implements \\Bitrix\\Mobile\\Tab\\Tabable");
+					throw new SystemException(
+						"Tab class '{$class}' not implements \\Bitrix\\Mobile\\Tab\\Tabable or \\Bitrix\\Mobile\\Tab\\FactoryTabable"
+					);
 				}
 			}
 			else
@@ -91,18 +94,33 @@ class Manager
 				continue;
 			}
 
-			/**
-			 * @var Tabable $instance
-			 */
 			$instance = new $class();
 			$instance->setContext($this->context);
-			$this->tabList[$tabData["code"]] = $instance;
+
+			if ($this->isFactoryTabable($interfaces))
+			{
+				$this->tabList = array_merge($this->tabList, $instance->getTabsList());
+			}
+			else
+			{
+				$this->tabList[$tabData['code']] = $instance;
+			}
 		}
 
 		if ($savedConfig = $this->getUserPresetConfig())
 		{
 			$this->config["presets"]["manual"] = $savedConfig;
 		}
+	}
+
+	private function isTabable(array $interfaces): bool
+	{
+		return in_array('Bitrix\\Mobile\\Tab\\Tabable', $interfaces, true);
+	}
+
+	private function isFactoryTabable(array $interfaces): bool
+	{
+		return in_array('Bitrix\\Mobile\\Tab\\FactoryTabable', $interfaces, true);
 	}
 
 	/**

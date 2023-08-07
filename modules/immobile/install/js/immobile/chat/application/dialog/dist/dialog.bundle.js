@@ -787,7 +787,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    window.imDialogMessagesTasks = [];
 	    this.messagesSet = false;
 
-	    //alert('Pause: open console for debug');
+	    // alert('Pause: open console for debug');
 
 	    this.initCore().then(function () {
 	      return _this.subscribeToEvents();
@@ -930,7 +930,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 	      return this.controller.createVue(this, {
 	        el: this.rootNode,
-	        template: "<bx-mobile-im-component-dialog/>"
+	        template: '<bx-mobile-im-component-dialog/>'
 	      }).then(function (vue) {
 	        _this5.template = vue;
 	        return new Promise(function (resolve, reject) {
@@ -954,7 +954,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      console.log('5. initMobileEnvironment');
 	      BXMobileApp.UI.Page.Scroll.setEnabled(false);
 	      BXMobileApp.UI.Page.captureKeyboardEvents(true);
-	      BX.addCustomEvent("onKeyboardWillShow", function () {
+	      BX.addCustomEvent('onKeyboardWillShow', function () {
 	        // EventEmitter.emit(EventType.dialog.beforeMobileKeyboard);
 	        _this6.controller.getStore().dispatch('application/set', {
 	          mobile: {
@@ -962,7 +962,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 	        });
 	      });
-	      BX.addCustomEvent("onKeyboardDidShow", function () {
+	      BX.addCustomEvent('onKeyboardDidShow', function () {
 	        console.log('Keyboard was showed');
 	        main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
 	          chatId: _this6.controller.application.getChatId(),
@@ -970,7 +970,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          cancelIfScrollChange: true
 	        });
 	      });
-	      BX.addCustomEvent("onKeyboardWillHide", function () {
+	      BX.addCustomEvent('onKeyboardWillHide', function () {
 	        clearInterval(_this6.keyboardOpeningInterval);
 	        _this6.controller.getStore().dispatch('application/set', {
 	          mobile: {
@@ -990,15 +990,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 	        });
 	      };
-	      BXMobileApp.addCustomEvent("CallEvents::viewOpened", function () {
+	      BXMobileApp.addCustomEvent('CallEvents::viewOpened', function () {
 	        console.warn('CallView show - disable read message');
 	        ui_vue.Vue.event.$emit('bitrixmobile:controller:blur');
 	      });
-	      BXMobileApp.addCustomEvent("CallEvents::viewClosed", function () {
+	      BXMobileApp.addCustomEvent('CallEvents::viewClosed', function () {
 	        console.warn('CallView hide - enable read message');
 	        checkWindowFocused();
 	      });
-	      BX.addCustomEvent("onAppActive", function () {
+	      BX.addCustomEvent('onAppActive', function () {
 	        checkWindowFocused();
 	        BXMobileApp.UI.Page.isVisible({
 	          callback: function callback(data) {
@@ -1019,26 +1019,26 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 	        });
 	      });
-	      BX.addCustomEvent("onAppPaused", function () {
+	      BX.addCustomEvent('onAppPaused', function () {
 	        _this6.windowFocused = false;
 	        ui_vue.Vue.event.$emit('bitrixmobile:controller:blur');
-	        //app.closeController();z
+	        // app.closeController();z
 	      });
 
-	      BX.addCustomEvent("onOpenPageAfter", checkWindowFocused);
-	      BX.addCustomEvent("onHidePageBefore", function () {
+	      BX.addCustomEvent('onOpenPageAfter', checkWindowFocused);
+	      BX.addCustomEvent('onHidePageBefore', function () {
 	        _this6.windowFocused = false;
 	        ui_vue.Vue.event.$emit('bitrixmobile:controller:blur');
 	      });
-	      BXMobileApp.addCustomEvent("chatbackground::task::status::success", function (params) {
+	      BXMobileApp.addCustomEvent('chatbackground::task::status::success', function (params) {
 	        var action = params.taskId.toString().split('|')[0];
 	        _this6.executeBackgroundTaskSuccess(action, params);
 	      });
-	      BXMobileApp.addCustomEvent("chatbackground::task::status::failure", function (params) {
+	      BXMobileApp.addCustomEvent('chatbackground::task::status::failure', function (params) {
 	        var action = params.taskId.toString().split('|')[0];
 	        _this6.executeBackgroundTaskFailure(action, params);
 	      });
-	      BXMobileApp.addCustomEvent("chatrecent::push::get", function (params) {
+	      BXMobileApp.addCustomEvent('chatrecent::push::get', function (params) {
 	        mobile_pull_client.PULL.emit({
 	          type: mobile_pull_client.PullClient.SubscriptionType.Server,
 	          moduleId: _this6.pullMobileHandler.getModuleId(),
@@ -1068,7 +1068,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 	        });
 	      }, 500);
-	      if (!im_lib_utils.Utils.dialog.isChatId(this.controller.application.getDialogId())) {
+	      if (im_lib_utils.Utils.dialog.isChatId(this.controller.application.getDialogId())) {
+	        this.chatShowUserCounter = false;
+	        setTimeout(function () {
+	          _this6.chatShowUserCounter = true;
+	          _this6.redrawHeader();
+	        }, 1500);
+	      } else {
 	        this.userShowWorkPosition = true;
 	        setTimeout(function () {
 	          _this6.userShowWorkPosition = false;
@@ -1077,12 +1083,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        setInterval(function () {
 	          _this6.redrawHeader();
 	        }, 60000);
-	      } else {
-	        this.chatShowUserCounter = false;
-	        setTimeout(function () {
-	          _this6.chatShowUserCounter = true;
-	          _this6.redrawHeader();
-	        }, 1500);
 	      }
 	      this.redrawHeader();
 	      this.widgetCache = new ChatWidgetCache(this.controller.getUserId(), this.controller.getLanguageId());
@@ -1096,7 +1096,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var _this7 = this;
 	      console.log('7. initPullClient');
 	      if (this.storedEvents && this.storedEvents.length > 0 && this.controller.application.isUnreadMessagesLoaded()) {
-	        //sort events and get first 50 (to match unread messages cache size)
+	        // sort events and get first 50 (to match unread messages cache size)
 	        this.storedEvents = this.storedEvents.sort(function (a, b) {
 	          return a.message.id - b.message.id;
 	        });
@@ -1143,10 +1143,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      });
 	      this.inited = true;
 	      this.initPromise.resolve(this);
-	      BXMobileApp.Events.postToComponent("chatdialog::init::complete", [{
+	      BXMobileApp.Events.postToComponent('chatdialog::init::complete', [{
 	        dialogId: this.controller.application.getDialogId()
 	      }, true], 'im.recent');
-	      BXMobileApp.Events.postToComponent("chatdialog::init::complete", [{
+	      BXMobileApp.Events.postToComponent('chatdialog::init::complete', [{
 	        dialogId: this.controller.application.getDialogId()
 	      }, true], 'im.messenger');
 	      return this.requestData();
@@ -1226,9 +1226,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (this.requestDataSend) {
 	        return this.requestDataSend;
 	      }
-	      this.timer.start('data', 'load', .5, function () {
-	        console.warn("ChatDialog.requestData: slow connection show progress icon");
-	        app.titleAction("setParams", {
+	      this.timer.start('data', 'load', 0.5, function () {
+	        console.warn('ChatDialog.requestData: slow connection show progress icon');
+	        app.titleAction('setParams', {
 	          useProgress: true,
 	          useLetterImage: false
 	        });
@@ -1287,7 +1287,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          _this10.redrawHeader();
 	          var dialogMessagesGetResult = response[im_const.RestMethodHandler.imDialogMessagesGetInit];
 	          if (dialogMessagesGetResult.error()) ; else {
-	            app.titleAction("setParams", {
+	            app.titleAction('setParams', {
 	              useProgress: false,
 	              useLetterImage: true
 	            });
@@ -1321,56 +1321,81 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "executeUploaderEvent",
 	    value: function executeUploaderEvent(eventName, eventData, taskId) {
 	      if (eventName !== BX.MobileUploaderConst.FILE_UPLOAD_PROGRESS) {
-	        console.log("ChatDialog.disk.eventRouter: ", eventName, taskId, eventData);
+	        console.log('ChatDialog.disk.eventRouter:', eventName, taskId, eventData);
 	      }
-	      if (eventName === BX.MobileUploaderConst.FILE_UPLOAD_PROGRESS) {
-	        if (eventData.percent > 95) {
-	          eventData.percent = 95;
-	        }
-	        this.fileUpdateProgress(eventData.file.params.chatId, eventData.file.params.file.id, eventData.percent, eventData.byteTotal);
-	      } else if (eventName === BX.MobileUploaderConst.FILE_CREATED) {
-	        if (eventData.result.status === 'error') {
-	          this.fileError(eventData.file.params.chatId, eventData.file.params.file.id, eventData.file.params.id);
-	          console.error('File upload error', eventData.result.errors[0].message);
-	        } else {
-	          this.controller.getStore().dispatch('files/update', {
-	            chatId: eventData.file.params.chatId,
-	            id: eventData.file.params.file.id,
-	            fields: {
-	              status: im_const.FileStatus.wait,
-	              progress: 95
+	      switch (eventName) {
+	        case BX.MobileUploaderConst.FILE_UPLOAD_PROGRESS:
+	          {
+	            if (eventData.percent > 95) {
+	              eventData.percent = 95;
 	            }
-	          });
-	        }
-	      } else if (eventName === 'onimdiskmessageaddsuccess') {
-	        console.info('ChatDialog.disk.eventRouter: DISK_MESSAGE_ADD_SUCCESS: ', eventData, taskId);
-	        var file = eventData.result.FILES['upload' + eventData.result.DISK_ID[0]];
-	        this.controller.getStore().dispatch('files/update', {
-	          chatId: eventData.file.params.chatId,
-	          id: eventData.file.params.file.id,
-	          fields: {
-	            status: im_const.FileStatus.upload,
-	            progress: 100,
-	            id: file.id,
-	            size: file.size,
-	            urlDownload: file.urlDownload,
-	            urlPreview: file.urlPreview,
-	            urlShow: file.urlShow
+	            this.fileUpdateProgress(eventData.file.params.chatId, eventData.file.params.file.id, eventData.percent, eventData.byteTotal);
+	            break;
 	          }
-	        });
-	      } else if (eventName === 'onimdiskmessageaddfail') {
-	        console.error('ChatDialog.disk.eventRouter: DISK_MESSAGE_ADD_FAIL: ', eventData, taskId);
-	        this.fileError(eventData.file.params.chatId, eventData.file.params.file.id, eventData.file.params.id);
-	      } else if (eventName === BX.MobileUploaderConst.TASK_CANCELLED || eventName === BX.MobileUploaderConst.TASK_NOT_FOUND) {
-	        this.cancelUploadFile(eventData.file.params.file.id);
-	      } else if (eventName === BX.MobileUploaderConst.FILE_CREATED_FAILED || eventName === BX.MobileUploaderConst.FILE_UPLOAD_FAILED || eventName === BX.MobileUploaderConst.FILE_READ_ERROR || eventName === BX.MobileUploaderConst.TASK_STARTED_FAILED) {
-	        var _eventData$error, _eventData$error$erro;
-	        console.error('ChatDialog.disk.eventRouter: ', eventName, eventData, taskId);
-	        // show file error only if it is not internet connection error
-	        if ((eventData === null || eventData === void 0 ? void 0 : (_eventData$error = eventData.error) === null || _eventData$error === void 0 ? void 0 : (_eventData$error$erro = _eventData$error.error) === null || _eventData$error$erro === void 0 ? void 0 : _eventData$error$erro.code) !== NO_INTERNET_CONNECTION_ERROR_CODE) {
-	          this.fileError(eventData.file.params.chatId, eventData.file.params.file.id, eventData.file.params.id);
-	        }
+	        case BX.MobileUploaderConst.FILE_CREATED:
+	          {
+	            if (eventData.result.status === 'error') {
+	              this.fileError(eventData.file.params.chatId, eventData.file.params.file.id, eventData.file.params.id);
+	              console.error('File upload error', eventData.result.errors[0].message);
+	            } else {
+	              this.controller.getStore().dispatch('files/update', {
+	                chatId: eventData.file.params.chatId,
+	                id: eventData.file.params.file.id,
+	                fields: {
+	                  status: im_const.FileStatus.wait,
+	                  progress: 95
+	                }
+	              });
+	            }
+	            break;
+	          }
+	        case 'onimdiskmessageaddsuccess':
+	          {
+	            console.info('ChatDialog.disk.eventRouter: DISK_MESSAGE_ADD_SUCCESS:', eventData, taskId);
+	            var file = eventData.result.FILES["upload".concat(eventData.result.DISK_ID[0])];
+	            this.controller.getStore().dispatch('files/update', {
+	              chatId: eventData.file.params.chatId,
+	              id: eventData.file.params.file.id,
+	              fields: {
+	                status: im_const.FileStatus.upload,
+	                progress: 100,
+	                id: file.id,
+	                size: file.size,
+	                urlDownload: file.urlDownload,
+	                urlPreview: file.urlPreview,
+	                urlShow: file.urlShow
+	              }
+	            });
+	            break;
+	          }
+	        case 'onimdiskmessageaddfail':
+	          {
+	            console.error('ChatDialog.disk.eventRouter: DISK_MESSAGE_ADD_FAIL:', eventData, taskId);
+	            this.fileError(eventData.file.params.chatId, eventData.file.params.file.id, eventData.file.params.id);
+	            break;
+	          }
+	        case BX.MobileUploaderConst.TASK_CANCELLED:
+	        case BX.MobileUploaderConst.TASK_NOT_FOUND:
+	          {
+	            this.cancelUploadFile(eventData.file.params.file.id);
+	            break;
+	          }
+	        case BX.MobileUploaderConst.FILE_CREATED_FAILED:
+	        case BX.MobileUploaderConst.FILE_UPLOAD_FAILED:
+	        case BX.MobileUploaderConst.FILE_READ_ERROR:
+	        case BX.MobileUploaderConst.TASK_STARTED_FAILED:
+	          {
+	            var _eventData$error, _eventData$error$erro;
+	            console.error('ChatDialog.disk.eventRouter:', eventName, eventData, taskId);
+	            // show file error only if it is not internet connection error
+	            if ((eventData === null || eventData === void 0 ? void 0 : (_eventData$error = eventData.error) === null || _eventData$error === void 0 ? void 0 : (_eventData$error$erro = _eventData$error.error) === null || _eventData$error$erro === void 0 ? void 0 : _eventData$error$erro.code) !== NO_INTERNET_CONNECTION_ERROR_CODE) {
+	              this.fileError(eventData.file.params.chatId, eventData.file.params.file.id, eventData.file.params.id);
+	            }
+	            break;
+	          }
+	        // No default
 	      }
+
 	      return true;
 	    }
 	  }, {
@@ -1378,10 +1403,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function prepareFileData(files) {
 	      var prepareFunction = function prepareFunction(file) {
 	        if (file.urlPreview && file.urlPreview.startsWith('file://')) {
-	          file.urlPreview = 'bx' + file.urlPreview;
+	          file.urlPreview = "bx".concat(file.urlPreview);
 	        }
 	        if (file.urlShow && file.urlShow.startsWith('file://')) {
-	          file.urlShow = 'bx' + file.urlShow;
+	          file.urlShow = "bx".concat(file.urlShow);
 	        }
 	        if (file.type !== im_const.FileType.image) {
 	          return file;
@@ -1400,13 +1425,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	        return file;
 	      };
-	      if (files instanceof Array) {
-	        return files.map(function (file) {
-	          return prepareFunction(file);
-	        });
-	      } else {
-	        return prepareFunction(files);
-	      }
+	      return Array.isArray(files) ? files.map(function (file) {
+	        return prepareFunction(file);
+	      }) : prepareFunction(files);
 	    }
 	    /* endregion 01. Initialize and store data */
 	    /* region 02. Mobile environment methods */
@@ -1441,7 +1462,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (headerProperties.avatar) {
 	        BXMobileApp.UI.Page.TopBar.title.setImage(headerProperties.avatar);
 	      } else if (headerProperties.color) {
-	        //BXMobileApp.UI.Page.TopBar.title.setImageColor(dialog.color);
+	        // BXMobileApp.UI.Page.TopBar.title.setImageColor(dialog.color);
 	        BXMobileApp.UI.Page.TopBar.title.params.imageColor = headerProperties.color;
 	      }
 	      return true;
@@ -1453,10 +1474,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return false;
 	      }
 	      var getScrollElement = function getScrollElement() {
-	        return document.getElementsByClassName("bx-im-dialog-list")[0];
+	        return document.getElementsByClassName('bx-im-dialog-list')[0];
 	      };
 	      var setTopInset = function setTopInset(scrollElement) {
-	        scrollElement.style.paddingTop = window.safeAreaInsets.top + "px";
+	        scrollElement.style.paddingTop = "".concat(window.safeAreaInsets.top, "px");
 	      };
 	      var onScrollChange = function onScrollChange() {
 	        var scrollElement = getScrollElement();
@@ -1465,7 +1486,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	        if (scrollElement.scrollTop <= window.safeAreaInsets.top) {
 	          setTopInset(scrollElement);
-	          scrollElement.removeEventListener("scroll", onScrollChange);
+	          scrollElement.removeEventListener('scroll', onScrollChange);
 	        }
 	      };
 	      if (this.iosInsetEventSetted) {
@@ -1480,11 +1501,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (window.safeAreaInsets && scrollElement.scrollTop <= window.safeAreaInsets.top) {
 	          setTopInset(scrollElement);
 	        } else {
-	          scrollElement.removeEventListener("scroll", onScrollChange);
-	          scrollElement.addEventListener("scroll", onScrollChange);
+	          scrollElement.removeEventListener('scroll', onScrollChange);
+	          scrollElement.addEventListener('scroll', onScrollChange);
 	        }
 	      }, 100);
-	      BXMobileApp.addCustomEvent("onInsetsChanged", onInsetsChanged);
+	      BXMobileApp.addCustomEvent('onInsetsChanged', onInsetsChanged);
 	      setTimeout(onInsetsChanged, 1000);
 	      return true;
 	    }
@@ -1496,10 +1517,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return false;
 	      }
 	      var result = {
-	        'name': null,
-	        'desc': null,
-	        'avatar': null,
-	        'color': null
+	        name: null,
+	        desc: null,
+	        avatar: null,
+	        color: null
 	      };
 	      if (user.avatar) {
 	        result.avatar = user.avatar;
@@ -1513,14 +1534,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 	      if (showLastDate) {
 	        result.desc = showLastDate;
+	      } else if (user.extranet) {
+	        result.desc = this.getLocalize('IM_LIST_EXTRANET');
+	      } else if (user.workPosition) {
+	        result.desc = user.workPosition;
 	      } else {
-	        if (user.extranet) {
-	          result.desc = this.getLocalize('IM_LIST_EXTRANET');
-	        } else if (user.workPosition) {
-	          result.desc = user.workPosition;
-	        } else {
-	          result.desc = this.getLocalize('MOBILE_HEADER_MENU_CHAT_TYPE_USER');
-	        }
+	        result.desc = this.getLocalize('MOBILE_HEADER_MENU_CHAT_TYPE_USER');
 	      }
 	      return result;
 	    }
@@ -1532,10 +1551,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return false;
 	      }
 	      var result = {
-	        'name': null,
-	        'desc': null,
-	        'avatar': null,
-	        'color': null
+	        name: null,
+	        desc: null,
+	        avatar: null,
+	        color: null
 	      };
 	      if (dialog.avatar) {
 	        result.avatar = dialog.avatar;
@@ -1543,18 +1562,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        result.color = dialog.color;
 	      }
 	      if (dialog.entityType === 'GENERAL') {
-	        result.avatar = encodeURI(this.controller.getHost() + "/bitrix/mobileapp/immobile/components/im/messenger/images/avatar_general_x3.png");
+	        result.avatar = encodeURI("".concat(this.controller.getHost(), "/bitrix/mobileapp/immobile/components/im/messenger/images/avatar_general_x3.png"));
 	      }
 	      result.name = dialog.name;
 	      var chatTypeTitle = this.getLocalize('MOBILE_HEADER_MENU_CHAT_TYPE_CHAT_NEW');
-	      if (this.chatShowUserCounter && this.getLocalize()['MOBILE_HEADER_MENU_CHAT_USER_COUNT']) {
+	      if (this.chatShowUserCounter && this.getLocalize().MOBILE_HEADER_MENU_CHAT_USER_COUNT) {
 	        chatTypeTitle = this.getLocalize('MOBILE_HEADER_MENU_CHAT_USER_COUNT').replace('#COUNT#', dialog.userCounter);
-	      } else if (this.getLocalize()['MOBILE_HEADER_MENU_CHAT_TYPE_' + dialog.type.toUpperCase() + '_NEW']) {
-	        chatTypeTitle = this.getLocalize('MOBILE_HEADER_MENU_CHAT_TYPE_' + dialog.type.toUpperCase() + '_NEW');
+	      } else if (this.getLocalize()["MOBILE_HEADER_MENU_CHAT_TYPE_".concat(dialog.type.toUpperCase(), "_NEW")]) {
+	        chatTypeTitle = this.getLocalize("MOBILE_HEADER_MENU_CHAT_TYPE_".concat(dialog.type.toUpperCase(), "_NEW"));
 	      }
 	      result.desc = chatTypeTitle;
 	      if (dialog.entityType === 'SUPPORT24_QUESTION') {
-	        result.avatar = encodeURI(this.controller.getHost() + "/bitrix/mobileapp/immobile/components/im/messenger/images/avatar_24_question_x3.png");
+	        result.avatar = encodeURI("".concat(this.controller.getHost(), "/bitrix/mobileapp/immobile/components/im/messenger/images/avatar_24_question_x3.png"));
 	        result.desc = '';
 	      }
 	      console.warn(result);
@@ -1602,17 +1621,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        var maxParticipants = this.controller.application.getData().call.maxParticipants;
 	        if (dialogData.userCounter > maxParticipants || !isAvailableChatCall || dialogData.entityType === 'VIDEOCONF' && dialogData.entityData1 === 'BROADCAST') {
 	          if (dialogData.type !== im_const.DialogType.call && dialogData.restrictions.extend) {
-	            app.exec("setRightButtons", {
+	            app.exec('setRightButtons', {
 	              items: [{
-	                type: "user_plus",
+	                type: 'user_plus',
 	                callback: function callback() {
-	                  fabric.Answers.sendCustomEvent("vueChatAddUserButton", {});
+	                  fabric.Answers.sendCustomEvent('vueChatAddUserButton', {});
 	                  _this12.openAddUserDialog();
 	                }
 	              }]
 	            });
 	          } else {
-	            app.exec("setRightButtons", {
+	            app.exec('setRightButtons', {
 	              items: []
 	            });
 	          }
@@ -1620,7 +1639,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          return true;
 	        }
 	        if (!dialogData.restrictions.call) {
-	          app.exec("setRightButtons", {
+	          app.exec('setRightButtons', {
 	            items: []
 	          });
 	          this.callMenuSetted = true;
@@ -1632,49 +1651,49 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          return false;
 	        }
 	        if (!userData || userData.bot || userData.network || this.controller.application.getUserId() === parseInt(this.controller.application.getDialogId())) {
-	          app.exec("setRightButtons", {
+	          app.exec('setRightButtons', {
 	            items: []
 	          });
 	          this.callMenuSetted = true;
 	          return true;
 	        }
 	      }
-	      app.exec("setRightButtons", {
+	      app.exec('setRightButtons', {
 	        items: [{
-	          type: "call_audio",
+	          type: 'call_audio',
 	          callback: function callback() {
 	            if (im_lib_utils.Utils.dialog.isChatId(_this12.controller.application.getDialogId())) {
-	              BXMobileApp.Events.postToComponent("onCallInvite", {
+	              BXMobileApp.Events.postToComponent('onCallInvite', {
 	                dialogId: _this12.controller.application.getDialogId(),
 	                video: false,
 	                chatData: _this12.controller.application.getDialogData()
-	              }, "calls");
+	              }, 'calls');
 	            } else {
 	              var _userData = _this12.controller.getStore().getters['users/get'](_this12.controller.application.getDialogId(), true);
-	              BXMobileApp.Events.postToComponent("onCallInvite", {
+	              BXMobileApp.Events.postToComponent('onCallInvite', {
 	                userId: _this12.controller.application.getDialogId(),
 	                video: false,
 	                userData: babelHelpers.defineProperty({}, _userData.id, _userData)
-	              }, "calls");
+	              }, 'calls');
 	            }
 	          }
 	        }, {
-	          type: "call_video",
-	          badgeCode: "call_video",
+	          type: 'call_video',
+	          badgeCode: 'call_video',
 	          callback: function callback() {
-	            fabric.Answers.sendCustomEvent("vueChatCallVideoButton", {});
+	            fabric.Answers.sendCustomEvent('vueChatCallVideoButton', {});
 	            if (im_lib_utils.Utils.dialog.isChatId(_this12.controller.application.getDialogId())) {
-	              BXMobileApp.Events.postToComponent("onCallInvite", {
+	              BXMobileApp.Events.postToComponent('onCallInvite', {
 	                dialogId: _this12.controller.application.getDialogId(),
 	                video: true,
 	                chatData: _this12.controller.application.getDialogData()
-	              }, "calls");
+	              }, 'calls');
 	            } else {
-	              BXMobileApp.Events.postToComponent("onCallInvite", {
+	              BXMobileApp.Events.postToComponent('onCallInvite', {
 	                dialogId: _this12.controller.application.getDialogId(),
 	                video: true,
 	                userData: babelHelpers.defineProperty({}, _this12.controller.application.getDialogId(), _this12.controller.getStore().getters['users/get'](_this12.controller.application.getDialogId(), true))
-	              }, "calls");
+	              }, 'calls');
 	            }
 	          }
 	        }]
@@ -1696,25 +1715,25 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        backdrop = _params$backdrop === void 0 ? true : _params$backdrop;
 	      var settings = {
 	        title: title,
-	        objectName: "ChatUserListInterface"
+	        objectName: 'ChatUserListInterface'
 	      };
 	      if (backdrop) {
 	        settings.backdrop = {};
 	      }
-	      app.exec("openComponent", {
-	        name: "JSStackComponent",
+	      app.exec('openComponent', {
+	        name: 'JSStackComponent',
 	        componentCode: 'im.dialog.list',
-	        scriptPath: "/mobileapp/jn/im:im.chat.user.list/?version=" + BX.componentParameters.get('WIDGET_CHAT_USERS_VERSION', '1.0.0'),
+	        scriptPath: "/mobileapp/jn/im:im.chat.user.list/?version=".concat(BX.componentParameters.get('WIDGET_CHAT_USERS_VERSION', '1.0.0')),
 	        params: {
-	          "DIALOG_ID": this.controller.application.getDialogId(),
-	          "DIALOG_OWNER_ID": this.controller.application.getDialogData().ownerId,
-	          "USER_ID": this.controller.application.getUserId(),
-	          "LIST_TYPE": listType,
-	          "USERS": users,
-	          "IS_BACKDROP": true
+	          DIALOG_ID: this.controller.application.getDialogId(),
+	          DIALOG_OWNER_ID: this.controller.application.getDialogData().ownerId,
+	          USER_ID: this.controller.application.getUserId(),
+	          LIST_TYPE: listType,
+	          USERS: users,
+	          IS_BACKDROP: true
 	        },
 	        rootWidget: {
-	          name: "list",
+	          name: 'list',
 	          settings: settings
 	        }
 	      }, false);
@@ -1723,19 +1742,19 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "openCallMenu",
 	    value: function openCallMenu() {
 	      var _this13 = this;
-	      fabric.Answers.sendCustomEvent("vueChatCallAudioButton", {});
+	      fabric.Answers.sendCustomEvent('vueChatCallAudioButton', {});
 	      var userData = this.controller.getStore().getters['users/get'](this.controller.application.getDialogId(), true);
 	      if (userData.phones.personalMobile || userData.phones.workPhone || userData.phones.personalPhone || userData.phones.innerPhone) {
-	        BackdropMenu.create('im.dialog.menu.call|' + this.controller.application.getDialogId()).setItems([BackdropMenuItem.create('audio').setTitle(this.getLocalize('MOBILE_HEADER_MENU_AUDIO_CALL')), BackdropMenuItem.create('personalMobile').setTitle(userData.phones.personalMobile).setSubTitle(this.getLocalize('MOBILE_MENU_CALL_MOBILE')).skip(!userData.phones.personalMobile), BackdropMenuItem.create('workPhone').setTitle(userData.phones.workPhone).setSubTitle(this.getLocalize('MOBILE_MENU_CALL_WORK')).skip(!userData.phones.workPhone), BackdropMenuItem.create('personalPhone').setTitle(userData.phones.personalPhone).setSubTitle(this.getLocalize('MOBILE_MENU_CALL_PHONE')).skip(!userData.phones.personalPhone), BackdropMenuItem.create('innerPhone').setTitle(userData.phones.innerPhone).setSubTitle(this.getLocalize('MOBILE_MENU_CALL_PHONE')).skip(!userData.phones.innerPhone)]).setVersion(BX.componentParameters.get('WIDGET_BACKDROP_MENU_VERSION', '1.0.0')).setEventListener(function (name, params, user, backdrop) {
+	        BackdropMenu.create("im.dialog.menu.call|".concat(this.controller.application.getDialogId())).setItems([BackdropMenuItem.create('audio').setTitle(this.getLocalize('MOBILE_HEADER_MENU_AUDIO_CALL')), BackdropMenuItem.create('personalMobile').setTitle(userData.phones.personalMobile).setSubTitle(this.getLocalize('MOBILE_MENU_CALL_MOBILE')).skip(!userData.phones.personalMobile), BackdropMenuItem.create('workPhone').setTitle(userData.phones.workPhone).setSubTitle(this.getLocalize('MOBILE_MENU_CALL_WORK')).skip(!userData.phones.workPhone), BackdropMenuItem.create('personalPhone').setTitle(userData.phones.personalPhone).setSubTitle(this.getLocalize('MOBILE_MENU_CALL_PHONE')).skip(!userData.phones.personalPhone), BackdropMenuItem.create('innerPhone').setTitle(userData.phones.innerPhone).setSubTitle(this.getLocalize('MOBILE_MENU_CALL_PHONE')).skip(!userData.phones.innerPhone)]).setVersion(BX.componentParameters.get('WIDGET_BACKDROP_MENU_VERSION', '1.0.0')).setEventListener(function (name, params, user, backdrop) {
 	          if (name !== 'selected') {
 	            return false;
 	          }
 	          if (params.id === 'audio') {
-	            BXMobileApp.Events.postToComponent("onCallInvite", {
+	            BXMobileApp.Events.postToComponent('onCallInvite', {
 	              userId: _this13.controller.application.getDialogId(),
 	              video: false,
 	              userData: babelHelpers.defineProperty({}, user.id, user)
-	            }, "calls");
+	            }, 'calls');
 	          } else if (params.id === 'innerPhone') {
 	            BX.MobileTools.phoneTo(user.phones[params.id], {
 	              callMethod: 'telephony'
@@ -1746,8 +1765,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            });
 
 	            // items options
-	            //.setType(BackdropMenuItemType.menu)
-	            //.disableClose(BX.MobileTools.canUseTelephony())
+	            // .setType(BackdropMenuItemType.menu)
+	            // .disableClose(BX.MobileTools.canUseTelephony())
 	            // if (!BX.MobileTools.canUseTelephony())
 	            // {
 	            // 	BX.MobileTools.phoneTo(user.phones[params.id], {callMethod: 'device'});
@@ -1781,11 +1800,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 	        }).setCustomParams(userData).show();
 	      } else {
-	        BXMobileApp.Events.postToComponent("onCallInvite", {
+	        BXMobileApp.Events.postToComponent('onCallInvite', {
 	          userId: this.controller.application.getDialogId(),
 	          video: false,
 	          userData: babelHelpers.defineProperty({}, this.controller.application.getDialogId(), userData)
-	        }, "calls");
+	        }, 'calls');
 	      }
 	    }
 	  }, {
@@ -1820,22 +1839,22 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "openAddUserDialog",
 	    value: function openAddUserDialog() {
 	      var listUsers = this.getItemsForAddUserDialog();
-	      app.exec("openComponent", {
-	        name: "JSStackComponent",
-	        componentCode: "im.chat.user.selector",
-	        scriptPath: "/mobileapp/jn/im:im.chat.user.selector/?version=" + BX.componentParameters.get('WIDGET_CHAT_RECIPIENTS_VERSION', '1.0.0'),
+	      app.exec('openComponent', {
+	        name: 'JSStackComponent',
+	        componentCode: 'im.chat.user.selector',
+	        scriptPath: "/mobileapp/jn/im:im.chat.user.selector/?version=".concat(BX.componentParameters.get('WIDGET_CHAT_RECIPIENTS_VERSION', '1.0.0')),
 	        params: {
-	          "DIALOG_ID": this.controller.application.getDialogId(),
-	          "USER_ID": this.controller.application.getUserId(),
-	          "LIST_USERS": listUsers,
-	          "LIST_DEPARTMENTS": [],
-	          "SKIP_LIST": [],
-	          "SEARCH_MIN_SIZE": BX.componentParameters.get('SEARCH_MIN_TOKEN_SIZE', 3)
+	          DIALOG_ID: this.controller.application.getDialogId(),
+	          USER_ID: this.controller.application.getUserId(),
+	          LIST_USERS: listUsers,
+	          LIST_DEPARTMENTS: [],
+	          SKIP_LIST: [],
+	          SEARCH_MIN_SIZE: BX.componentParameters.get('SEARCH_MIN_TOKEN_SIZE', 3)
 	        },
 	        rootWidget: {
-	          name: "chat.recipients",
+	          name: 'chat.recipients',
 	          settings: {
-	            objectName: "ChatUserSelectorInterface",
+	            objectName: 'ChatUserSelectorInterface',
 	            title: BX.message('MOBILE_HEADER_MENU_USER_ADD'),
 	            limit: 100,
 	            items: listUsers.map(function (element) {
@@ -1843,10 +1862,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            }),
 	            scopes: [{
 	              title: BX.message('MOBILE_SCOPE_USERS'),
-	              id: "user"
+	              id: 'user'
 	            }, {
 	              title: BX.message('MOBILE_SCOPE_DEPARTMENTS'),
-	              id: "department"
+	              id: 'department'
 	            }],
 	            backdrop: {
 	              showOnTop: true
@@ -1915,10 +1934,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	      return items;
 	    }
-	  }, {
-	    key: "eventStoreInteraction",
 	    /* endregion 02. Mobile environment methods */
 	    /* region 02. Push & Pull */
+	  }, {
+	    key: "eventStoreInteraction",
 	    value: function eventStoreInteraction(data) {
 	      var _this15 = this;
 	      if (data.type === 'dialogues/update' && data.payload && data.payload.fields) {
@@ -1932,11 +1951,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          this.redrawHeader();
 	        }
 	        if (typeof data.payload.fields.counter !== 'undefined' && typeof data.payload.dialogId !== 'undefined') {
-	          BXMobileApp.Events.postToComponent("chatdialog::counter::change", [{
+	          BXMobileApp.Events.postToComponent('chatdialog::counter::change', [{
 	            dialogId: data.payload.dialogId,
 	            counter: data.payload.fields.counter
 	          }, true], 'im.recent');
-	          BXMobileApp.Events.postToComponent("chatdialog::counter::change", [{
+	          BXMobileApp.Events.postToComponent('chatdialog::counter::change', [{
 	            dialogId: data.payload.dialogId,
 	            counter: data.payload.fields.counter
 	          }, true], 'im.messenger');
@@ -1946,11 +1965,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (dialog.dialogId !== _this15.controller.application.getDialogId()) {
 	            return;
 	          }
-	          BXMobileApp.Events.postToComponent("chatdialog::counter::change", [{
+	          BXMobileApp.Events.postToComponent('chatdialog::counter::change', [{
 	            dialogId: dialog.dialogId,
 	            counter: dialog.counter
 	          }, true], 'im.recent');
-	          BXMobileApp.Events.postToComponent("chatdialog::counter::change", [{
+	          BXMobileApp.Events.postToComponent('chatdialog::counter::change', [{
 	            dialogId: dialog.dialogId,
 	            counter: dialog.counter
 	          }, true], 'im.messenger');
@@ -2025,8 +2044,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        useImageButton: true,
 	        useAudioMessages: true,
 	        mentionDataSource: {
-	          outsection: "NO",
-	          url: siteDir + "mobile/index.php?mobile_action=get_user_list&use_name_format=Y&with_bots"
+	          outsection: 'NO',
+	          url: "".concat(siteDir, "mobile/index.php?mobile_action=get_user_list&use_name_format=Y&with_bots")
 	        },
 	        attachFileSettings: {
 	          previewMaxWidth: 640,
@@ -2049,35 +2068,35 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        },
 	        attachButton: {
 	          items: [{
-	            id: "disk",
-	            name: this.getLocalize("MOBILE_CHAT_PANEL_UPLOAD_DISK"),
+	            id: 'disk',
+	            name: this.getLocalize('MOBILE_CHAT_PANEL_UPLOAD_DISK'),
 	            dataSource: {
 	              multiple: false,
-	              url: siteDir + "mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=" + this.controller.application.getUserId(),
+	              url: "".concat(siteDir, "mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=").concat(this.controller.application.getUserId()),
 	              TABLE_SETTINGS: {
 	                searchField: true,
 	                showtitle: true,
 	                modal: true,
-	                name: this.getLocalize("MOBILE_CHAT_PANEL_UPLOAD_DISK_FILES")
+	                name: this.getLocalize('MOBILE_CHAT_PANEL_UPLOAD_DISK_FILES')
 	              }
 	            }
 	          }, {
-	            id: "mediateka",
-	            name: this.getLocalize("MOBILE_CHAT_PANEL_UPLOAD_GALLERY")
+	            id: 'mediateka',
+	            name: this.getLocalize('MOBILE_CHAT_PANEL_UPLOAD_GALLERY')
 	          }, {
-	            id: "camera",
-	            name: this.getLocalize("MOBILE_CHAT_PANEL_UPLOAD_CAMERA")
+	            id: 'camera',
+	            name: this.getLocalize('MOBILE_CHAT_PANEL_UPLOAD_CAMERA')
 	          }]
 	        },
 	        action: function action(data) {
-	          if (typeof data === "string") {
+	          if (typeof data === 'string') {
 	            data = {
 	              text: data,
 	              attachedFiles: []
 	            };
 	          }
 	          var text = data.text.toString().trim();
-	          var attachedFiles = data.attachedFiles instanceof Array ? data.attachedFiles : [];
+	          var attachedFiles = Array.isArray(data.attachedFiles) ? data.attachedFiles : [];
 	          if (attachedFiles.length <= 0) {
 	            _this17.clearText();
 	            _this17.hideSmiles();
@@ -2091,7 +2110,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            attachedFiles.forEach(function (file) {
 	              // disk
 	              if (typeof file.dataAttributes !== 'undefined') {
-	                fabric.Answers.sendCustomEvent("vueChatFileDisk", {});
+	                fabric.Answers.sendCustomEvent('vueChatFileDisk', {});
 	                return _this17.uploadFile({
 	                  source: 'disk',
 	                  name: file.name,
@@ -2107,10 +2126,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	              // audio
 	              if (file.type === 'audio/mp4') {
-	                fabric.Answers.sendCustomEvent("vueChatFileAudio", {});
+	                fabric.Answers.sendCustomEvent('vueChatFileAudio', {});
 	                return _this17.uploadFile({
 	                  source: 'audio',
-	                  name: 'mobile_audio_' + new Date().toJSON().slice(0, 19).replace('T', '_').split(':').join('-') + '.mp3',
+	                  name: "mobile_audio_".concat(new Date().toJSON().slice(0, 19).replace('T', '_').split(':').join('-'), ".mp3"),
 	                  type: 'mp3',
 	                  preview: null,
 	                  uploadLink: file.url
@@ -2119,18 +2138,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              var filename = file.name;
 	              var fileType = im_model.FilesModel.getType(file.name);
 	              if (fileType === im_const.FileType.video) {
-	                fabric.Answers.sendCustomEvent("vueChatFileVideo", {});
+	                fabric.Answers.sendCustomEvent('vueChatFileVideo', {});
 	              } else if (fileType === im_const.FileType.image) {
-	                fabric.Answers.sendCustomEvent("vueChatFileImage", {});
+	                fabric.Answers.sendCustomEvent('vueChatFileImage', {});
 	              } else {
-	                fabric.Answers.sendCustomEvent("vueChatFileOther", {});
+	                fabric.Answers.sendCustomEvent('vueChatFileOther', {});
 	              }
 	              if (fileType === im_const.FileType.image || fileType === im_const.FileType.video) {
 	                var extension = file.name.split('.').slice(-1)[0].toLowerCase();
 	                if (file.type === 'image/heic') {
 	                  extension = 'jpg';
 	                }
-	                filename = 'mobile_file_' + new Date().toJSON().slice(0, 19).replace('T', '_').split(':').join('-') + '.' + extension;
+	                filename = "mobile_file_".concat(new Date().toJSON().slice(0, 19).replace('T', '_').split(':').join('-'), ".").concat(extension);
 	              }
 
 	              // file
@@ -2138,11 +2157,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	                source: 'gallery',
 	                name: filename,
 	                type: file.type.toString().toLowerCase(),
-	                preview: !file.previewUrl ? null : {
+	                preview: file.previewUrl ? {
 	                  url: file.previewUrl,
 	                  width: file.previewWidth,
 	                  height: file.previewHeight
-	                },
+	                } : null,
 	                uploadLink: file.url
 	              });
 	            });
@@ -2153,7 +2172,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (!data.event) {
 	            return false;
 	          }
-	          if (data.event === "onKeyPress") {
+	          if (data.event === 'onKeyPress') {
 	            var text = data.text.toString();
 	            if (text.trim().length > 2) {
 	              _this17.controller.application.startWriting();
@@ -2168,10 +2187,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	                message: text
 	              });
 	            }
-	          } else if (data.event === "onSmileSelect") {
+	          } else if (data.event === 'onSmileSelect') {
 	            _this17.controller.showSmiles();
-	          } else if (Application.getPlatform() !== "android") {
-	            if (data.event === "getFocus") {
+	          } else if (Application.getPlatform() !== 'android') {
+	            if (data.event === 'getFocus') {
 	              if (im_lib_utils.Utils.platform.isIos() && im_lib_utils.Utils.platform.getIosVersion() > 12) {
 	                main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
 	                  chatId: _this17.controller.application.getChatId(),
@@ -2179,7 +2198,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	                  cancelIfScrollChange: true
 	                });
 	              }
-	            } else if (data.event === "removeFocus") ;
+	            } else if (data.event === 'removeFocus') ;
 	          }
 	        }
 	      };
@@ -2205,11 +2224,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          var files = this.controller.getStore().getters['files/getList'](this.controller.application.getChatId());
 	          var message = [];
 	          message.push('-'.repeat(54));
-	          message.push((user && user.name ? user.name : this.getLocalize('MOBILE_CHAT_SYSTEM_MESSAGE')) + ' [' + im_lib_utils.Utils.date.format(quoteMessage.date, null, this.getLocalize()) + ']');
+	          message.push("".concat(user && user.name ? user.name : this.getLocalize('MOBILE_CHAT_SYSTEM_MESSAGE'), " [").concat(im_lib_utils.Utils.date.format(quoteMessage.date, null, this.getLocalize()), "]"));
 	          message.push(im_lib_utils.Utils.text.quote(quoteMessage.text, quoteMessage.params, files, this.getLocalize()));
-	          message.push('-'.repeat(54));
-	          message.push(text);
-	          text = message.join("\n");
+	          message.push('-'.repeat(54), text);
+	          text = message.join('\n');
 	          this.quoteMessageClear();
 	        }
 	      }
@@ -2282,14 +2300,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        type: im_model.FilesModel.getType(file.name),
 	        extension: file.name.split('.').splice(-1)[0],
 	        size: 0,
-	        image: !file.preview ? false : {
+	        image: file.preview ? {
 	          width: file.preview.width,
 	          height: file.preview.height
-	        },
+	        } : false,
 	        status: file.source === 'disk' ? im_const.FileStatus.wait : im_const.FileStatus.upload,
 	        progress: 0,
 	        authorName: this.controller.application.getCurrentUser().name,
-	        urlPreview: !file.preview ? '' : file.preview.url
+	        urlPreview: file.preview ? file.preview.url : ''
 	      })).then(function (fileId) {
 	        return _this19.addMessage(text, _objectSpread$2({
 	          id: fileId
@@ -2321,7 +2339,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      }
 	      if (element) {
-	        BX.MobileUploadProvider.cancelTasks(['imDialogFileUpload|' + fileId]);
+	        BX.MobileUploadProvider.cancelTasks(["imDialogFileUpload|".concat(fileId)]);
 	        this.controller.getStore().dispatch('messages/delete', {
 	          chatId: element.chatId,
 	          id: element.id
@@ -2382,13 +2400,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              fileId: element.file.id,
 	              fileType: im_model.FilesModel.getType(element.file.name)
 	            }, element);
+	          } else if (_this22.controller.application.getDiskFolderId()) {
+	            _this22.sendMessageWithFile(element);
 	          } else {
-	            if (_this22.controller.application.getDiskFolderId()) {
-	              _this22.sendMessageWithFile(element);
-	            } else {
-	              element.sending = false;
-	              _this22.requestDiskFolderId();
-	            }
+	            element.sending = false;
+	            _this22.requestDiskFolderId();
 	          }
 	        } else {
 	          element.sending = true;
@@ -2406,15 +2422,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "sendMessage",
 	    value: function sendMessage(message) {
-	      message.text = message.text.replace(/^([-]{21}\n)/gm, '-'.repeat(54) + '\n');
+	      message.text = message.text.replace(/^(-{21}\n)/gm, "".concat('-'.repeat(54), "\n"));
 	      this.controller.application.stopWriting(message.dialogId);
 	      window.imDialogMessagesTasks.push({
-	        taskId: 'sendMessage|' + message.id
+	        taskId: "sendMessage|".concat(message.id)
 	      });
-	      BXMobileApp.Events.postToComponent('chatbackground::task::add', ['sendMessage|' + message.id, [im_const.RestMethod.imMessageAdd, {
-	        'TEMPLATE_ID': message.id,
-	        'DIALOG_ID': message.dialogId,
-	        'MESSAGE': message.text
+	      BXMobileApp.Events.postToComponent('chatbackground::task::add', ["sendMessage|".concat(message.id), [im_const.RestMethod.imMessageAdd, {
+	        TEMPLATE_ID: message.id,
+	        DIALOG_ID: message.dialogId,
+	        MESSAGE: message.text
 	      }], message], 'background');
 	    }
 	  }, {
@@ -2425,7 +2441,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var attachPreviewFile = fileType !== im_const.FileType.image && message.file.preview;
 	      var needConvert = fileType === im_const.FileType.image && message.file.type !== 'image/gif' || fileType === im_const.FileType.video;
 	      window.imDialogUploadTasks.push({
-	        taskId: 'imDialogFileUpload|' + message.file.id
+	        taskId: "imDialogFileUpload|".concat(message.file.id)
 	      });
 	      BX.MobileUploadProvider.addTasks([{
 	        url: message.file.uploadLink,
@@ -2433,14 +2449,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        name: message.file.name,
 	        type: fileExtension,
 	        mimeType: fileType === im_const.FileType.audio ? 'audio/mp4' : null,
-	        resize: !needConvert ? null : {
-	          "quality": 80,
-	          "width": 1920,
-	          "height": 1080
-	        },
+	        resize: needConvert ? {
+	          quality: 80,
+	          width: 1920,
+	          height: 1080
+	        } : null,
 	        previewUrl: attachPreviewFile ? message.file.preview.url : '',
 	        folderId: this.controller.application.getDiskFolderId(),
-	        taskId: 'imDialogFileUpload|' + message.file.id,
+	        taskId: "imDialogFileUpload|".concat(message.file.id),
 	        onDestroyEventName: 'onimdiskmessageaddsuccess'
 	      }]);
 	    }
@@ -2478,7 +2494,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      } else if (params.diskId) {
 	        queryParams.disk_id = params.diskId;
 	      }
-	      BXMobileApp.Events.postToComponent('chatbackground::task::add', ['uploadFileFromDisk|' + message.id, [im_const.RestMethod.imDiskFileCommit, queryParams], message], 'background');
+	      BXMobileApp.Events.postToComponent('chatbackground::task::add', ["uploadFileFromDisk|".concat(message.id), [im_const.RestMethod.imDiskFileCommit, queryParams], message], 'background');
 	    }
 	  }, {
 	    key: "requestDiskFolderId",
@@ -2506,10 +2522,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var _this24 = this;
 	      var limit = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.controller.application.getRequestMessageLimit();
 	      this.controller.restClient.callMethod(im_const.RestMethod.imDialogMessagesGet, {
-	        'CHAT_ID': this.controller.application.getChatId(),
-	        'LAST_ID': lastId,
-	        'LIMIT': limit,
-	        'CONVERT_TEXT': 'Y'
+	        CHAT_ID: this.controller.application.getChatId(),
+	        LAST_ID: lastId,
+	        LIMIT: limit,
+	        CONVERT_TEXT: 'Y'
 	      }).then(function (result) {
 	        _this24.controller.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGet, result);
 	        // this.controller.application.emit(EventType.dialog.requestHistoryResult, {count: result.data().messages.length});
@@ -2542,9 +2558,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        skipAjax: true
 	      }).then(function () {
 	        var _query2;
-	        _this25.timer.start('data', 'load', .5, function () {
-	          console.warn("ChatDialog.requestData: slow connection show progress icon");
-	          app.titleAction("setParams", {
+	        _this25.timer.start('data', 'load', 0.5, function () {
+	          console.warn('ChatDialog.requestData: slow connection show progress icon');
+	          app.titleAction('setParams', {
 	            useProgress: true,
 	            useLetterImage: false
 	          });
@@ -2571,25 +2587,24 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            _this25.controller.executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult);
 	          }
 	          var dialogMessageUnread = response[im_const.RestMethodHandler.imDialogMessagesGetUnread];
-	          if (!dialogMessageUnread.error()) {
-	            dialogMessageUnread = dialogMessageUnread.data();
-	            _this25.controller.getStore().dispatch('users/set', dialogMessageUnread.users);
-	            _this25.controller.getStore().dispatch('files/set', _this25.controller.application.prepareFilesBeforeSave(dialogMessageUnread.files));
-	            _this25.controller.getStore().dispatch('messages/setAfter', dialogMessageUnread.messages).then(function () {
-	              app.titleAction("setParams", {
-	                useProgress: false,
-	                useLetterImage: true
-	              });
-	              _this25.timer.stop('data', 'load', true);
-	              _this25.promiseGetDialogUnread.fulfill(response);
-	              _this25.promiseGetDialogUnreadWait = false;
-	              return true;
-	            });
-	          } else {
+	          if (dialogMessageUnread.error()) {
 	            _this25.promiseGetDialogUnread.reject();
 	            _this25.promiseGetDialogUnreadWait = false;
 	            return false;
 	          }
+	          dialogMessageUnread = dialogMessageUnread.data();
+	          _this25.controller.getStore().dispatch('users/set', dialogMessageUnread.users);
+	          _this25.controller.getStore().dispatch('files/set', _this25.controller.application.prepareFilesBeforeSave(dialogMessageUnread.files));
+	          _this25.controller.getStore().dispatch('messages/setAfter', dialogMessageUnread.messages).then(function () {
+	            app.titleAction('setParams', {
+	              useProgress: false,
+	              useLetterImage: true
+	            });
+	            _this25.timer.stop('data', 'load', true);
+	            _this25.promiseGetDialogUnread.fulfill(response);
+	            _this25.promiseGetDialogUnreadWait = false;
+	            return true;
+	          });
 	        }, false, false, im_lib_utils.Utils.getLogTrackingParams({
 	          name: im_const.RestMethodHandler.imDialogMessagesGetUnread,
 	          dialog: _this25.controller.application.getDialogData()
@@ -2622,14 +2637,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "openProfile",
 	    value: function openProfile(userId) {
-	      BXMobileApp.Events.postToComponent("onUserProfileOpen", [userId, {
+	      BXMobileApp.Events.postToComponent('onUserProfileOpen', [userId, {
 	        backdrop: true
 	      }], 'communication');
 	    }
 	  }, {
 	    key: "openDialog",
 	    value: function openDialog(dialogId) {
-	      BXMobileApp.Events.postToComponent("onOpenDialog", [{
+	      BXMobileApp.Events.postToComponent('onOpenDialog', [{
 	        dialogId: dialogId
 	      }, true], 'im.recent');
 	      BXMobileApp.Events.postToComponent('ImMobile.Messenger.Dialog:open', [{
@@ -2660,7 +2675,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var currentUser = this.controller.application.getCurrentUser();
 	      var dialog = this.controller.application.getDialogData();
 	      var messageUser = message.authorId > 0 ? this.controller.getStore().getters['users/get'](message.authorId, true) : null;
-	      this.messageMenuInstance = BackdropMenu.create('im.dialog.menu.mess|' + this.controller.application.getDialogId()).setTestId('im-dialog-menu-mess').setItems([BackdropMenuItem.create('reply').setTitle(this.getLocalize('MOBILE_MESSAGE_MENU_REPLY')).setIcon(BackdropMenuIcon.reply).skip(function (message) {
+	      this.messageMenuInstance = BackdropMenu.create("im.dialog.menu.mess|".concat(this.controller.application.getDialogId())).setTestId('im-dialog-menu-mess').setItems([BackdropMenuItem.create('reply').setTitle(this.getLocalize('MOBILE_MESSAGE_MENU_REPLY')).setIcon(BackdropMenuIcon.reply).skip(function (message) {
 	        var dialog = _this26.controller.application.getDialogData();
 	        if (dialog.type === 'announcement' && !dialog.managerList.includes(_this26.controller.application.getUserId())) {
 	          return true;
@@ -2681,9 +2696,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }), BackdropMenuItem.create('edit').setTitle(this.getLocalize('MOBILE_MESSAGE_MENU_EDIT')).setIcon(BackdropMenuIcon.edit).skip(function (message) {
 	        return message.authorId !== _this26.controller.application.getUserId() || message.params.IS_DELETED === 'Y';
 	      }), BackdropMenuItem.create('share').setType(BackdropMenuItemType.menu).setIcon(BackdropMenuIcon.circle_plus).setTitle(this.getLocalize('MOBILE_MESSAGE_MENU_SHARE_MENU')).disableClose().skip(currentUser.extranet || dialog.type === 'announcement'), BackdropMenuItem.create('profile').setTitle(this.getLocalize('MOBILE_MESSAGE_MENU_PROFILE')).setIcon(BackdropMenuIcon.user).skip(function (message) {
-	        if (message.authorId <= 0 || !messageUser) return true;
-	        if (!im_lib_utils.Utils.dialog.isChatId(_this26.controller.application.getDialogId())) return true;
-	        if (message.authorId === _this26.controller.application.getUserId()) return true;
+	        if (message.authorId <= 0 || !messageUser) {
+	          return true;
+	        }
+	        if (!im_lib_utils.Utils.dialog.isChatId(_this26.controller.application.getDialogId())) {
+	          return true;
+	        }
+	        if (message.authorId === _this26.controller.application.getUserId()) {
+	          return true;
+	        }
 	        if (messageUser.externalAuthId === 'imconnector' || messageUser.externalAuthId === 'call') {
 	          return true;
 	        }
@@ -2697,114 +2718,198 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (name !== 'selected') {
 	          return false;
 	        }
-	        if (params.id === 'reply') {
-	          _this26.replyToUser(message.authorId);
-	        } else if (params.id === 'copy') {
-	          _this26.copyMessage(message.id);
-	        } else if (params.id === 'quote') {
-	          _this26.quoteMessageClear();
-	          _this26.quoteMessage(message.id);
-	        } else if (params.id === 'edit') {
-	          _this26.quoteMessageClear();
-	          _this26.editMessage(message.id);
-	        } else if (params.id === 'delete') {
-	          _this26.deleteMessage(message.id);
-	        } else if (params.id === 'unread') {
-	          _this26.unreadMessage(message.id);
-	        } else if (params.id === 'read') {
-	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.readMessage, {
-	            id: message.id
-	          });
-	        } else if (params.id === 'share') {
-	          var _dialog = _this26.controller.application.getDialogData();
-	          var subMenu = BackdropMenu.create('im.dialog.menu.mess.submenu|' + _this26.controller.application.getDialogId()).setTestId('im-dialog-menu-mess-submenu-share').setItems([BackdropMenuItem.create('share_task').setIcon(BackdropMenuIcon.task).setTitle(_this26.getLocalize('MOBILE_MESSAGE_MENU_SHARE_TASK')), BackdropMenuItem.create('share_post').setIcon(BackdropMenuIcon.lifefeed).setTitle(_this26.getLocalize('MOBILE_MESSAGE_MENU_SHARE_POST_NEWS')), BackdropMenuItem.create('share_chat').setIcon(BackdropMenuIcon.chat).setTitle(_this26.getLocalize('MOBILE_MESSAGE_MENU_SHARE_CHAT'))]).setEventListener(function (name, params, options, backdrop) {
-	            if (name !== 'selected') {
-	              return false;
+	        switch (params.id) {
+	          case 'reply':
+	            {
+	              _this26.replyToUser(message.authorId);
+	              break;
 	            }
-	            if (params.id === 'share_task') {
-	              _this26.shareMessage(message.id, 'TASK');
-	            } else if (params.id === 'share_post') {
-	              _this26.shareMessage(message.id, 'POST');
-	            } else if (params.id === 'share_chat') {
-	              _this26.shareMessage(message.id, 'CHAT');
+	          case 'copy':
+	            {
+	              _this26.copyMessage(message.id);
+	              break;
 	            }
-	          });
-	          backdrop.showSubMenu(subMenu);
-	        } else if (params.id === 'profile') {
-	          _this26.openProfile(message.authorId);
-	        } else {
-	          console.warn('BackdropMenuItem is not implemented', params);
+	          case 'quote':
+	            {
+	              _this26.quoteMessageClear();
+	              _this26.quoteMessage(message.id);
+	              break;
+	            }
+	          case 'edit':
+	            {
+	              _this26.quoteMessageClear();
+	              _this26.editMessage(message.id);
+	              break;
+	            }
+	          case 'delete':
+	            {
+	              _this26.deleteMessage(message.id);
+	              break;
+	            }
+	          case 'unread':
+	            {
+	              _this26.unreadMessage(message.id);
+	              break;
+	            }
+	          case 'read':
+	            {
+	              main_core_events.EventEmitter.emit(im_const.EventType.dialog.readMessage, {
+	                id: message.id
+	              });
+	              break;
+	            }
+	          case 'share':
+	            {
+	              var _dialog = _this26.controller.application.getDialogData();
+	              var subMenu = BackdropMenu.create("im.dialog.menu.mess.submenu|".concat(_this26.controller.application.getDialogId())).setTestId('im-dialog-menu-mess-submenu-share').setItems([BackdropMenuItem.create('share_task').setIcon(BackdropMenuIcon.task).setTitle(_this26.getLocalize('MOBILE_MESSAGE_MENU_SHARE_TASK')), BackdropMenuItem.create('share_post').setIcon(BackdropMenuIcon.lifefeed).setTitle(_this26.getLocalize('MOBILE_MESSAGE_MENU_SHARE_POST_NEWS')), BackdropMenuItem.create('share_chat').setIcon(BackdropMenuIcon.chat).setTitle(_this26.getLocalize('MOBILE_MESSAGE_MENU_SHARE_CHAT'))]).setEventListener(function (name, params, options, backdrop) {
+	                if (name !== 'selected') {
+	                  return false;
+	                }
+	                switch (params.id) {
+	                  case 'share_task':
+	                    {
+	                      _this26.shareMessage(message.id, 'TASK');
+	                      break;
+	                    }
+	                  case 'share_post':
+	                    {
+	                      _this26.shareMessage(message.id, 'POST');
+	                      break;
+	                    }
+	                  case 'share_chat':
+	                    {
+	                      _this26.shareMessage(message.id, 'CHAT');
+	                      break;
+	                    }
+	                  // No default
+	                }
+	              });
+
+	              backdrop.showSubMenu(subMenu);
+	              break;
+	            }
+	          case 'profile':
+	            {
+	              _this26.openProfile(message.authorId);
+	              break;
+	            }
+	          default:
+	            {
+	              console.warn('BackdropMenuItem is not implemented', params);
+	            }
 	        }
 	      });
 	      this.messageMenuInstance.setCustomParams(message).show();
-	      fabric.Answers.sendCustomEvent("vueChatOpenDropdown", {});
+	      fabric.Answers.sendCustomEvent('vueChatOpenDropdown', {});
 	    }
 	  }, {
 	    key: "openHeaderMenu",
 	    value: function openHeaderMenu() {
 	      var _this27 = this;
-	      fabric.Answers.sendCustomEvent("vueChatOpenHeaderMenu", {});
+	      fabric.Answers.sendCustomEvent('vueChatOpenHeaderMenu', {});
 	      if (!this.headerMenu) {
 	        this.headerMenu = HeaderMenu.create().setUseNavigationBarColor().setEventListener(function (name, params, customParams) {
 	          if (name !== 'selected') {
 	            return false;
 	          }
-	          if (params.id === 'profile') {
-	            _this27.openProfile(_this27.controller.application.getDialogId());
-	          } else if (params.id === 'user_list') {
-	            _this27.openUserList({
-	              listType: 'USERS',
-	              title: _this27.getLocalize('MOBILE_HEADER_MENU_USER_LIST'),
-	              backdrop: true
-	            });
-	          } else if (params.id === 'user_add') {
-	            _this27.openAddUserDialog();
-	          } else if (params.id === 'leave') {
-	            _this27.leaveChat();
-	          } else if (params.id === 'notify') {
-	            _this27.controller.application.muteDialog();
-	          } else if (params.id === 'call_chat_call') {
-	            BX.MobileTools.phoneTo(_this27.controller.application.getDialogData().entityId);
-	          } else if (params.id === 'goto_crm') {
-	            var crmData = _this27.controller.application.getDialogCrmData();
-	            var openWidget = BX.MobileTools.resolveOpenFunction('/crm/' + crmData.entityType + '/details/' + crmData.entityId + '/');
-	            if (openWidget) {
-	              openWidget();
-	            }
-	          } else if (params.id === 'reload') {
-	            new BXMobileApp.UI.NotificationBar({
-	              message: _this27.getLocalize('MOBILE_HEADER_MENU_RELOAD_WAIT'),
-	              color: "#d920b0ff",
-	              textColor: "#ffffff",
-	              groupId: "refresh",
-	              useLoader: true,
-	              maxLines: 1,
-	              align: "center",
-	              hideOnTap: true
-	            }, "copy").show();
-	            _this27.controller.getStoreBuilder().clearDatabase();
-	            reload();
+	          switch (params.id) {
+	            case 'profile':
+	              {
+	                _this27.openProfile(_this27.controller.application.getDialogId());
+	                break;
+	              }
+	            case 'user_list':
+	              {
+	                _this27.openUserList({
+	                  listType: 'USERS',
+	                  title: _this27.getLocalize('MOBILE_HEADER_MENU_USER_LIST'),
+	                  backdrop: true
+	                });
+	                break;
+	              }
+	            case 'user_add':
+	              {
+	                _this27.openAddUserDialog();
+	                break;
+	              }
+	            case 'leave':
+	              {
+	                _this27.leaveChat();
+	                break;
+	              }
+	            case 'notify':
+	              {
+	                _this27.controller.application.muteDialog();
+	                break;
+	              }
+	            case 'call_chat_call':
+	              {
+	                BX.MobileTools.phoneTo(_this27.controller.application.getDialogData().entityId);
+	                break;
+	              }
+	            case 'goto_crm':
+	              {
+	                var crmData = _this27.controller.application.getDialogCrmData();
+	                var openWidget = BX.MobileTools.resolveOpenFunction("/crm/".concat(crmData.entityType, "/details/").concat(crmData.entityId, "/"));
+	                if (openWidget) {
+	                  openWidget();
+	                }
+	                break;
+	              }
+	            case 'reload':
+	              {
+	                new BXMobileApp.UI.NotificationBar({
+	                  message: _this27.getLocalize('MOBILE_HEADER_MENU_RELOAD_WAIT'),
+	                  color: '#d920b0ff',
+	                  textColor: '#ffffff',
+	                  groupId: 'refresh',
+	                  useLoader: true,
+	                  maxLines: 1,
+	                  align: 'center',
+	                  hideOnTap: true
+	                }, 'copy').show();
+	                _this27.controller.getStoreBuilder().clearDatabase();
+	                reload();
+	                break;
+	              }
+	            // No default
 	          }
 	        });
 	      }
+
 	      if (im_lib_utils.Utils.dialog.isChatId(this.controller.application.getDialogId())) {
 	        var dialogData = this.controller.application.getDialogData();
-	        var notifyToggleText = !this.controller.application.isDialogMuted() ? this.getLocalize('MOBILE_HEADER_MENU_NOTIFY_DISABLE') : this.getLocalize('MOBILE_HEADER_MENU_NOTIFY_ENABLE');
-	        var notifyToggleIcon = !this.controller.application.isDialogMuted() ? HeaderMenuIcon.notify : HeaderMenuIcon.notify_off;
+	        var notifyToggleText = this.controller.application.isDialogMuted() ? this.getLocalize('MOBILE_HEADER_MENU_NOTIFY_ENABLE') : this.getLocalize('MOBILE_HEADER_MENU_NOTIFY_DISABLE');
+	        var notifyToggleIcon = this.controller.application.isDialogMuted() ? HeaderMenuIcon.notify_off : HeaderMenuIcon.notify;
 	        var gotoCrmLocalize = '';
 	        if (dialogData.type === im_const.DialogType.call || dialogData.type === im_const.DialogType.crm) {
 	          var crmData = this.controller.application.getDialogCrmData();
 	          if (crmData.enabled) {
-	            if (crmData.entityType === im_const.DialogCrmType.lead) {
-	              gotoCrmLocalize = this.getLocalize('MOBILE_GOTO_CRM_LEAD');
-	            } else if (crmData.entityType === im_const.DialogCrmType.company) {
-	              gotoCrmLocalize = this.getLocalize('MOBILE_GOTO_CRM_COMPANY');
-	            } else if (crmData.entityType === im_const.DialogCrmType.contact) {
-	              gotoCrmLocalize = this.getLocalize('MOBILE_GOTO_CRM_CONTACT');
-	            } else if (crmData.entityType === im_const.DialogCrmType.deal) {
-	              gotoCrmLocalize = this.getLocalize('MOBILE_GOTO_CRM_DEAL');
-	            } else {
-	              gotoCrmLocalize = this.getLocalize('MOBILE_GOTO_CRM');
+	            switch (crmData.entityType) {
+	              case im_const.DialogCrmType.lead:
+	                {
+	                  gotoCrmLocalize = this.getLocalize('MOBILE_GOTO_CRM_LEAD');
+	                  break;
+	                }
+	              case im_const.DialogCrmType.company:
+	                {
+	                  gotoCrmLocalize = this.getLocalize('MOBILE_GOTO_CRM_COMPANY');
+	                  break;
+	                }
+	              case im_const.DialogCrmType.contact:
+	                {
+	                  gotoCrmLocalize = this.getLocalize('MOBILE_GOTO_CRM_CONTACT');
+	                  break;
+	                }
+	              case im_const.DialogCrmType.deal:
+	                {
+	                  gotoCrmLocalize = this.getLocalize('MOBILE_GOTO_CRM_DEAL');
+	                  break;
+	                }
+	              default:
+	                {
+	                  gotoCrmLocalize = this.getLocalize('MOBILE_GOTO_CRM');
+	                }
 	            }
 	          }
 	        }
@@ -2888,35 +2993,35 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function copyMessage(id) {
 	      var quoteMessage = this.controller.getStore().getters['messages/getMessage'](this.controller.application.getChatId(), id);
 	      var text = '';
-	      if (quoteMessage.params.FILE_ID && quoteMessage.params.FILE_ID.length) {
+	      if (quoteMessage.params.FILE_ID && quoteMessage.params.FILE_ID.length > 0) {
 	        text = quoteMessage.params.FILE_ID.map(function (fileId) {
-	          return '[DISK=' + fileId + ']';
-	        }).join(" ");
+	          return "[DISK=".concat(fileId, "]");
+	        }).join(' ');
 	      }
 	      if (quoteMessage.text) {
 	        if (text) {
 	          text += '\n';
 	        }
-	        text += quoteMessage.text.replace(/^([-]{54}\n)/gm, '-'.repeat(21) + '\n');
+	        text += quoteMessage.text.replace(/^(-{54}\n)/gm, "".concat('-'.repeat(21), "\n"));
 	      }
-	      text = text.replace(/\[url](.*?)\[\/url]/ig, function (whole, link) {
+	      text = text.replace(/\[url](.*?)\[\/url]/gi, function (whole, link) {
 	        return link;
 	      });
-	      app.exec("copyToClipboard", {
+	      app.exec('copyToClipboard', {
 	        text: text
 	      });
 	      new BXMobileApp.UI.NotificationBar({
-	        message: BX.message("MOBILE_MESSAGE_MENU_COPY_SUCCESS"),
-	        color: "#af000000",
-	        textColor: "#ffffff",
-	        groupId: "clipboard",
+	        message: BX.message('MOBILE_MESSAGE_MENU_COPY_SUCCESS'),
+	        color: '#af000000',
+	        textColor: '#ffffff',
+	        groupId: 'clipboard',
 	        maxLines: 1,
-	        align: "center",
+	        align: 'center',
 	        isGlobal: true,
 	        useCloseButton: true,
 	        autoHideTimeout: 1500,
 	        hideOnTap: true
-	      }, "copy").show();
+	      }, 'copy').show();
 	    }
 	  }, {
 	    key: "quoteMessage",
@@ -2993,8 +3098,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "editMessageSend",
 	    value: function editMessageSend(id, text) {
 	      this.controller.restClient.callMethod(im_const.RestMethod.imMessageUpdate, {
-	        'MESSAGE_ID': id,
-	        'MESSAGE': text
+	        MESSAGE_ID: id,
+	        MESSAGE: text
 	      }, null, null, im_lib_utils.Utils.getLogTrackingParams({
 	        name: im_const.RestMethod.imMessageUpdate,
 	        data: {
@@ -3010,10 +3115,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var message = this.controller.getStore().getters['messages/getMessage'](this.controller.application.getChatId(), id);
 	      var files = this.controller.getStore().getters['files/getList'](this.controller.application.getChatId());
 	      var messageText = im_lib_utils.Utils.text.purify(message.text, message.params, files, this.getLocalize());
-	      messageText = messageText.length > 50 ? messageText.substr(0, 47) + '...' : messageText;
+	      messageText = messageText.length > 50 ? "".concat(messageText.slice(0, 47), "...") : messageText;
 	      app.confirm({
 	        title: this.getLocalize('MOBILE_MESSAGE_MENU_DELETE_CONFIRM'),
-	        text: messageText ? '"' + messageText + '"' : '',
+	        text: messageText ? "\"".concat(messageText, "\"") : '',
 	        buttons: [this.getLocalize('MOBILE_MESSAGE_MENU_DELETE_YES'), this.getLocalize('MOBILE_MESSAGE_MENU_DELETE_NO')],
 	        callback: function callback(button) {
 	          if (button === 1) {
@@ -3027,7 +3132,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "deleteMessageSend",
 	    value: function deleteMessageSend(id) {
 	      this.controller.restClient.callMethod(im_const.RestMethod.imMessageDelete, {
-	        'MESSAGE_ID': id
+	        MESSAGE_ID: id
 	      }, null, null, im_lib_utils.Utils.getLogTrackingParams({
 	        name: im_const.RestMethod.imMessageDelete,
 	        data: {},
@@ -3040,7 +3145,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var _this31 = this;
 	      BXMobileApp.UI.Page.TextPanel.getText(function (text) {
 	        text = text.toString().trim();
-	        text = text ? text + ' ' + params.text : params.text;
+	        text = text ? "".concat(text, " ").concat(params.text) : params.text;
 	        _this31.setText(text);
 	        _this31.setTextFocus();
 	      });
@@ -3058,7 +3163,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      this.setTextareaMessage({
 	        message: text
 	      });
-	      console.log('Set new text in textarea', text ? text : '-- empty --');
+	      console.log('Set new text in textarea', text || '-- empty --');
 	    }
 	  }, {
 	    key: "clearText",
@@ -3075,13 +3180,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "isBackground",
 	    value: function isBackground() {
-	      if ((typeof BXMobileAppContext === "undefined" ? "undefined" : babelHelpers["typeof"](BXMobileAppContext)) !== "object") {
+	      if ((typeof BXMobileAppContext === "undefined" ? "undefined" : babelHelpers["typeof"](BXMobileAppContext)) !== 'object') {
 	        return false;
 	      }
-	      if (typeof BXMobileAppContext.isAppActive === "function" && !BXMobileAppContext.isAppActive()) {
+	      if (typeof BXMobileAppContext.isAppActive === 'function' && !BXMobileAppContext.isAppActive()) {
 	        return true;
 	      }
-	      if (typeof BXMobileAppContext.isBackground === "function") {
+	      if (typeof BXMobileAppContext.isBackground === 'function') {
 	        return BXMobileAppContext.isBackground();
 	      }
 	      return false;
@@ -3113,12 +3218,23 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      };
 	      console.log('Dialog.executeBackgroundTaskSuccess', action, _data);
-	      if (action === 'sendMessage') {
-	        this.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, successObject, _data.extra);
-	      } else if (action === 'readMessage') {
-	        this.processMarkReadMessages();
-	      } else if (action === 'uploadFileFromDisk') {
-	        this.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, successObject, _data.extra);
+	      switch (action) {
+	        case 'sendMessage':
+	          {
+	            this.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, successObject, _data.extra);
+	            break;
+	          }
+	        case 'readMessage':
+	          {
+	            this.processMarkReadMessages();
+	            break;
+	          }
+	        case 'uploadFileFromDisk':
+	          {
+	            this.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, successObject, _data.extra);
+	            break;
+	          }
+	        // No default
 	      }
 	    }
 	  }, {
@@ -3142,10 +3258,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	      // Handle an error only for API error when server status is 200.
 	      // Otherwise we don't want to draw errors, because background queue will resend messages.
-	      if (data.status === HTTP_OK_STATUS_CODE) {
-	        if (action === 'sendMessage' || action === 'uploadFileFromDisk') {
-	          this.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, errorObject, data.extra);
-	        }
+	      if (data.status === HTTP_OK_STATUS_CODE && (action === 'sendMessage' || action === 'uploadFileFromDisk')) {
+	        this.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, errorObject, data.extra);
 	      }
 	    }
 	    /* endregion 05. Interaction and utils */

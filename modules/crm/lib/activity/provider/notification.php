@@ -124,10 +124,7 @@ class Notification extends BaseMessage
 		}
 		else if (in_array($statusId, [MessageStatus::DELIVERED, MessageStatus::READ], true))
 		{
-			static::unBindBadge(
-				Badge\Type\SmsStatus::SENDING_NOTIFICATION_ERROR_VALUE,
-				$bindings
-			);
+			static::unBindBadge($bindings);
 		}
 	}
 

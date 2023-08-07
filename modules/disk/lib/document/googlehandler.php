@@ -712,7 +712,7 @@ class GoogleHandler extends DocumentHandler implements IViewer, FileCreatable, C
 
 		if(
 			$http->get(
-				self::API_URL_V3 . "/files?q='{$folderId}'+in+parents+and+trashed=false&" . http_build_query(array(
+				self::API_URL_V3 . "/files?q='{$folderId}'+in+parents+and+trashed=false+and+(mimeType+contains+'application/vnd.google-apps.folder'+or+not+mimeType+contains+'application/vnd.google-apps.')&" . http_build_query(array(
 					'fields' => 'files/id,files/mimeType,files/webViewLink,files/size,files/name,files/version,files/modifiedTime'
 				))
 			) === false

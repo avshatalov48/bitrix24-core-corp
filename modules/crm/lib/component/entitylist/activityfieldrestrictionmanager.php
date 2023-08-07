@@ -16,11 +16,6 @@ class ActivityFieldRestrictionManager extends FieldRestrictionManagerBase
 		return RestrictionManager::getActivityFieldRestriction()->prepareInfoHelperScript();
 	}
 
-	final public function returnJsComponent(): bool
-	{
-		return true;
-	}
-
 	final protected function isFieldRestricted(string $fieldName): bool
 	{
 		return $fieldName === 'ACTIVITY_COUNTER';

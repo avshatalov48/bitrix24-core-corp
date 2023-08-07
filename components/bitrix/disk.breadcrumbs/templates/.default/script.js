@@ -32,7 +32,7 @@ BX.Disk.BreadcrumbsClass = (function ()
 			e.preventDefault();
 		}.bind(this));
 
-		BX.bindDelegate(this.container, "click", {className: 'js-disk-breadcrumbs-folder-link'}, this.onClickBreadcrumb.bind(this));
+		BX.bindDelegate(this.container, "click", {className: 'js-disk-breadcrumbs-folder-link'}, this.onClickBreadcrumbInRow.bind(this));
 
 		BX.addCustomEvent("Disk.FolderListClass:onFolderOpen", this.onOpenGridFolder.bind(this));
 		BX.addCustomEvent("Disk.FolderListComponent:onFolderOpen", this.onOpenGridFolder.bind(this));
@@ -94,6 +94,7 @@ BX.Disk.BreadcrumbsClass = (function ()
 
 					var crumb = BX.findParent(item.menuWindow.bindElement, {className: 'js-disk-breadcrumbs-folder'});
 					this.removeRightSidedCrumbs(crumb);
+					this.handleCommonClickOnBreadcrumb(item.layout.item, event)
 
 				}.bind(this)
 			};
@@ -123,21 +124,35 @@ BX.Disk.BreadcrumbsClass = (function ()
 		);
 	};
 
-	BreadcrumbsClass.prototype.onClickBreadcrumb = function(event)
+	BreadcrumbsClass.prototype.onClickBreadcrumbInRow = function(event)
 	{
-		var crumb = event.target || event.srcElement;
-		if(BX.hasClass(crumb, 'js-disk-breadcrumbs-arrow'))
+		const crumb = event.target || event.srcElement;
+		if (BX.hasClass(crumb, 'js-disk-breadcrumbs-arrow'))
 		{
 			return;
 		}
 
-		if(!BX.hasClass(crumb, 'js-disk-breadcrumbs-folder'))
+		this.handleCommonClickOnBreadcrumb(crumb, event);
+	};
+
+	BreadcrumbsClass.prototype.handleCommonClickOnBreadcrumb = function(anchor, event)
+	{
+		if (anchor.nodeName !== 'A')
 		{
-			crumb = BX.findParent(crumb, {className: 'js-disk-breadcrumbs-folder'});
+			return;
 		}
 
-		this.removeRightSidedCrumbs(crumb);
-		this.hideArrow(crumb);
+		BX.onCustomEvent("Disk.Breadcrumbs:onClickBreadcrumb", [anchor, event]);
+
+		if (!BX.hasClass(anchor, 'js-disk-breadcrumbs-folder'))
+		{
+			anchor = BX.findParent(anchor, {className: 'js-disk-breadcrumbs-folder'});
+		}
+		if (BX.hasClass(anchor, 'js-disk-breadcrumbs-folder'))
+		{
+			this.removeRightSidedCrumbs(anchor);
+			this.hideArrow(anchor);
+		}
 	};
 
 	BreadcrumbsClass.prototype.removeRightSidedCrumbs = function(crumbNode)
@@ -313,14 +328,14 @@ BX.Disk.BreadcrumbsClass = (function ()
 				showOnlyDeleted: this.showOnlyDeleted? 1 : 0,
 				isRoot: isRoot? 1 : 0
 			},
-			onsuccess: BX.delegate(function (data)
-			{
-				if (!data) {
+			onsuccess: function (data) {
+				if (!data)
+				{
 					return;
 				}
 
 				this.expand(crumb, arrowTarget, data.items);
-			}, this)
+			}.bind(this)
 		});
 
 

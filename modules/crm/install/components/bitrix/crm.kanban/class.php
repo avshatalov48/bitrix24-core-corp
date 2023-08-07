@@ -500,8 +500,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 			return $this->arResult;
 		}
 
-		$this->arResult = array_merge($this->arResult, $this->getEntity()->getFieldsRestrictions());
-		
+		$this->arResult['RESTRICTED_FIELDS_ENGINE'] = $this->getEntity()->getFieldsRestrictionsEngine();
 		$this->arResult['SORT_SETTINGS'] = $this->getEntity()->getSortSettings();
 		$this->arResult['IS_LAST_ACTIVITY_ENABLED'] = $this->getEntity()->isLastActivityEnabled();
 		$GLOBALS['APPLICATION']->setTitle($this->getEntity()->getTitle());

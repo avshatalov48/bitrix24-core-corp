@@ -385,6 +385,8 @@ final class UserFieldManager implements IErrorable
 			'with' => ['OBJECT'],
 			'extra' => [
 				'FILE_CONTENT_TYPE' => 'OBJECT.FILE_CONTENT.CONTENT_TYPE',
+				'FILE_WIDTH' => 'OBJECT.FILE_CONTENT.WIDTH',
+				'FILE_HEIGHT' => 'OBJECT.FILE_CONTENT.HEIGHT',
 				'FILE_SIZE' => 'OBJECT.FILE_CONTENT.FILE_SIZE',
 			],
 		]);
@@ -450,6 +452,8 @@ final class UserFieldManager implements IErrorable
 				],
 				'extra' => [
 					'FILE_CONTENT_TYPE' => 'OBJECT.FILE_CONTENT.CONTENT_TYPE',
+					'FILE_WIDTH' => 'OBJECT.FILE_CONTENT.WIDTH',
+					'FILE_HEIGHT' => 'OBJECT.FILE_CONTENT.HEIGHT',
 					'FILE_SIZE' => 'OBJECT.FILE_CONTENT.FILE_SIZE',
 				],
 			]

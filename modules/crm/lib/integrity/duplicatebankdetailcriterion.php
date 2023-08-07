@@ -193,16 +193,16 @@ class DuplicateBankDetailCriterion extends DuplicateCriterion
 			}
 			if ($countryId > 0)
 			{
-				if (is_array($bdFieldsMap[$countryId]))
+				if (is_array($bdFieldsMap[$countryId] ?? null))
 				{
 					foreach ($bdFieldsMap[$countryId] as $bdFieldName)
 					{
 						if (isset($bankDetailFields[$bdFieldName]) && !empty($bankDetailFields[$bdFieldName]))
 						{
-							if (!is_array($result[$countryId]))
-								$result[$countryId] = array();
-							if (!is_array($result[$countryId][$bdFieldName]))
-								$result[$countryId][$bdFieldName] = array();
+							if (!is_array($result[$countryId] ?? null))
+								$result[$countryId] = [];
+							if (!is_array($result[$countryId][$bdFieldName] ?? null))
+								$result[$countryId][$bdFieldName] = [];
 							$result[$countryId][$bdFieldName][] = $bankDetailFields[$bdFieldName];
 						}
 					}
@@ -340,12 +340,12 @@ class DuplicateBankDetailCriterion extends DuplicateCriterion
 		foreach (self::getFieldsMap() as $countryId => $fields)
 		{
 			$scope = EntityBankDetail::formatDuplicateCriterionScope($countryId);
-			if (is_array($effectiveData[$countryId]) && !empty($effectiveData[$countryId]))
+			if (is_array($effectiveData[$countryId] ?? null) && !empty($effectiveData[$countryId]))
 			{
 				foreach ($fields as $fieldName)
 				{
 					$typeID = DuplicateIndexType::resolveID($fieldName);
-					if (is_array($effectiveData[$countryId][$fieldName])
+					if (is_array($effectiveData[$countryId][$fieldName] ?? null)
 						&& !empty($effectiveData[$countryId][$fieldName]))
 					{
 						DuplicateEntityMatchHash::unregisterEntity($entityTypeID, $entityID, $typeID, $scope);
@@ -364,16 +364,20 @@ class DuplicateBankDetailCriterion extends DuplicateCriterion
 					}
 					else
 					{
-						if (!is_array($typesToUnregister[$scope]))
-							$typesToUnregister[$scope] = array();
+						if (!is_array($typesToUnregister[$scope] ?? null))
+						{
+							$typesToUnregister[$scope] = [];
+						}
 						$typesToUnregister[$scope][] = $typeID;
 					}
 				}
 			}
 			else
 			{
-				if (!is_array($scopesToUnregister[$scope]))
-					$scopesToUnregister[$scope] = array();
+				if (!is_array($scopesToUnregister[$scope] ?? null))
+				{
+					$scopesToUnregister[$scope] = [];
+				}
 				foreach ($fields as $fieldName)
 				{
 					$typeID = DuplicateIndexType::resolveID($fieldName);

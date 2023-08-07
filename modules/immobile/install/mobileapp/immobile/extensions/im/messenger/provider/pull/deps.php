@@ -23,6 +23,7 @@ return [
 		'./src/base',
 		'./src/dialog',
 		'./src/message',
+		'./src/file',
 		'./src/user',
 		'./src/desktop',
 		'./src/notification',

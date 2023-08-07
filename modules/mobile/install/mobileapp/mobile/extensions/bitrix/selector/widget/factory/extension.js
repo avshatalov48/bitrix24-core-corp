@@ -1,19 +1,20 @@
 (() => {
+	const require = (ext) => jn.require(ext);
 
-	const { ProjectSelector } = jn.require('selector/widget/entity/socialnetwork/project');
-	const { TaskTagSelector } = jn.require('selector/widget/entity/tasks/task-tag');
+	const { ProjectSelector } = require('selector/widget/entity/socialnetwork/project');
+	const { TaskTagSelector } = require('selector/widget/entity/tasks/task-tag');
 
-	let CrmContactSelector;
-	let CrmCompanySelector;
-	let CrmElementSelector;
-	let DocumentGeneratorTemplateSelector;
+	let CrmContactSelector = null;
+	let CrmCompanySelector = null;
+	let CrmElementSelector = null;
+	let DocumentGeneratorTemplateSelector = null;
 
 	try
 	{
-		CrmContactSelector = jn.require('crm/selector/entity/contact').CrmContactSelector;
-		CrmCompanySelector = jn.require('crm/selector/entity/company').CrmCompanySelector;
-		CrmElementSelector = jn.require('crm/selector/entity/element').CrmElementSelector;
-		DocumentGeneratorTemplateSelector = jn.require('crm/selector/documentgenerator/template').DocumentGeneratorTemplateSelector;
+		CrmContactSelector = require('crm/selector/entity/contact').CrmContactSelector;
+		CrmCompanySelector = require('crm/selector/entity/company').CrmCompanySelector;
+		CrmElementSelector = require('crm/selector/entity/element').CrmElementSelector;
+		DocumentGeneratorTemplateSelector = require('crm/selector/documentgenerator/template').DocumentGeneratorTemplateSelector;
 	}
 	catch (e)
 	{
@@ -124,3 +125,13 @@
 	this.EntitySelectorFactory = EntitySelectorFactory;
 	this.EntitySelectorFactory.Type = Type;
 })();
+
+/**
+ * @module selector/widget/factory
+ */
+jn.define('selector/widget/factory', (require, exports, module) => {
+	module.exports = {
+		EntitySelectorFactory: this.EntitySelectorFactory,
+		EntitySelectorFactoryType: this.EntitySelectorFactory.Type,
+	};
+});

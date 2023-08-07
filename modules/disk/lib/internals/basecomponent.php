@@ -33,7 +33,7 @@ abstract class BaseComponent extends \CBitrixComponent implements Errorable
 	protected $realActionName;
 	/** @var  ErrorCollection */
 	protected $errorCollection;
-	/** @var \CAllMain|\CMain */
+	/** @var \CMain */
 	protected $application;
 	protected $componentId = '';
 	protected static $alreadyWrappedForSidepanel = false;
@@ -491,7 +491,7 @@ abstract class BaseComponent extends \CBitrixComponent implements Errorable
 	/**
 	 * @internal
 	 * @deprecated
-	 * @return \CAllMain|\CMain
+	 * @return \CMain
 	 */
 	protected function getApplication()
 	{
@@ -499,7 +499,7 @@ abstract class BaseComponent extends \CBitrixComponent implements Errorable
 	}
 
 	/**
-	 * @return array|bool|\CAllUser|\CUser
+	 * @return array|bool|\CUser
 	 */
 	protected function getUser()
 	{

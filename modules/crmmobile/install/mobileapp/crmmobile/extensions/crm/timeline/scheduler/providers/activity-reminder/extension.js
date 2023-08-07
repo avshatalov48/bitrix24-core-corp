@@ -48,7 +48,7 @@ jn.define('crm/timeline/scheduler/providers/activity-reminder', (require, export
 				onCancel: () => this.focus(),
 				params: {
 					title: getEntityMessage(
-						'M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_SKIP_TITLE',
+						'M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_SKIP_TITLE2',
 						this.entity.typeId,
 					),
 					showCancelButton: true,

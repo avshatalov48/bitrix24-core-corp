@@ -66,7 +66,7 @@ abstract class Controller extends JsonController implements FallbackActionInterf
 	{
 		foreach ($this->getSourceParametersList() as $list)
 		{
-			if (isset($list[$key]))
+			if (is_array($list) && array_key_exists($key, $list))
 			{
 				return $list[$key];
 			}

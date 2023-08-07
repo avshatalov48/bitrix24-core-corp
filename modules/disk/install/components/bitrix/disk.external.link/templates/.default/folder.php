@@ -49,7 +49,7 @@ switch(mb_strtolower($langId))
 	<meta http-equiv="Content-Type" content="text/html; charset=<?=SITE_CHARSET?>" />
 	<? if(!$arResult['PROTECTED_BY_PASSWORD']){ ?>
 		<meta content="<?= $arResult['FOLDER']['VIEW_URL'] ?>" property="og:url"/>
-		<meta content="<?= $arResult['SITE_NAME'] ?>" property="og:site_name"/>
+		<meta content="<?= htmlspecialcharsbx($arResult['SITE_NAME']) ?>" property="og:site_name"/>
 		<meta content="<?= htmlspecialcharsbx($arResult['FOLDER']['NAME']) ?>" property="og:title"/>
 		<meta content="website" property="og:type"/>
 		<meta content="<?= $component->getMessage('DISK_EXT_LINK_OPEN_FOLDER_GRAPH_MADE_BY_B24') ?>" property="og:description"/>

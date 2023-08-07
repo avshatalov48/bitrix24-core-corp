@@ -30,7 +30,7 @@ CJSCore::Init([
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss("/bitrix/components/bitrix/voximplant.statistic.detail/player/skins/audio/audio.css");
 
-ShowError($arResult["ERROR_TEXT"]);
+ShowError($arResult["ERROR_TEXT"] ?? '');
 if (!$arResult["ENABLE_EXPORT"])
 {
 	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", [], $component);
@@ -45,7 +45,7 @@ if($isBitrix24Template)
 	?><div class="pagetitle-container pagetitle-flexible-space"><?
 }
 
-$inReportSlider = ($arResult['IS_EXTERNAL_FILTER'] && $arResult['REPORT_PARAMS']['from_analytics'] === 'Y');
+$inReportSlider = (($arResult['IS_EXTERNAL_FILTER'] ?? null) && $arResult['REPORT_PARAMS']['from_analytics'] === 'Y');
 
 if ($inReportSlider)
 {
@@ -71,7 +71,7 @@ $APPLICATION->IncludeComponent(
 		"GRID_ID" => $arResult["GRID_ID"],
 		"FILTER_ID" => $arResult["FILTER_ID"],
 		"FILTER" => $arResult["FILTER"],
-		"FILTER_PRESETS" => $arResult["FILTER_PRESETS"],
+		"FILTER_PRESETS" => $arResult["FILTER_PRESETS"] ?? null,
 		"ENABLE_LIVE_SEARCH" => false,
 		"DISABLE_SEARCH" => $inReportSlider,
 		"ENABLE_LABEL" => true
@@ -201,7 +201,7 @@ $totalContainer = '
 			exportAllowed: <?= $arResult["ENABLE_EXPORT"] ? 'true' : 'false' ?>,
 			exportParams: <?= CUtil::PhpToJSObject($arResult['EXPORT_PARAMS'])?>,
 			exportType: 'excel',
-			reportParams: <?= CUtil::PhpToJSObject($arResult['REPORT_PARAMS'])?>
+			reportParams: <?= CUtil::PhpToJSObject($arResult['REPORT_PARAMS'] ?? null)?>
 		});
 	});
 </script>

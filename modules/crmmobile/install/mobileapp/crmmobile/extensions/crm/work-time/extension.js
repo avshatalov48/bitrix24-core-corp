@@ -40,6 +40,7 @@ jn.define('crm/work-time', (require, exports, module) => {
 		isHoliday()
 		{
 			const day = this.moment.format('d.MM');
+
 			return this.calendar.HOLIDAYS.includes(day);
 		}
 
@@ -50,6 +51,7 @@ jn.define('crm/work-time', (require, exports, module) => {
 		isDayOff()
 		{
 			const day = this.moment.format('E', 'en').toUpperCase().slice(0, 2);
+
 			return this.calendar.DAY_OFF.includes(day);
 		}
 
@@ -86,6 +88,7 @@ jn.define('crm/work-time', (require, exports, module) => {
 			const startTimeMinutes = startTime[1] ? Number(startTime[1]) : 0;
 
 			moment.date.setHours(startTimeHours, startTimeMinutes, 0, 0);
+
 			return new WorkTimeMoment(moment);
 		}
 
@@ -101,6 +104,7 @@ jn.define('crm/work-time', (require, exports, module) => {
 			const endTimeMinutes = endTime[1] ? Number(endTime[1]) : 0;
 
 			moment.date.setHours(endTimeHours, endTimeMinutes, 0, 0);
+
 			return new WorkTimeMoment(moment);
 		}
 

@@ -15,7 +15,7 @@ return [
 		'livefeed',
 		'livefeed/publicationqueue',
 		'comments/uploadqueue',
-		'catalog/background/barcodescanner',
+		'catalog:background/barcodescanner',
 		'push/listener',
 		'crm:in-app-url/background',
 		'crm:background/timeline-notifications',

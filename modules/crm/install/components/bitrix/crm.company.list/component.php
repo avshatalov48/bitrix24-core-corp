@@ -481,7 +481,7 @@ $gridOptions = new \Bitrix\Main\Grid\Options($arResult['GRID_ID'], $arResult['FI
 $filterOptions = new \Bitrix\Crm\Filter\UiFilterOptions($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
 
 //region Navigation Params
-if ($arParams['COMPANY_COUNT'] <= 0)
+if (($arParams['COMPANY_COUNT'] ?? 0) <= 0)
 {
 	$arParams['COMPANY_COUNT'] = 20;
 }
@@ -788,12 +788,11 @@ if ($isBizProcInstalled)
 }
 
 //region Check and fill fields restriction
-$restrictedFields = $fieldRestrictionManager->fetchRestrictedFields(
+$arResult['RESTRICTED_FIELDS_ENGINE'] = $fieldRestrictionManager->fetchRestrictedFieldsEngine(
 	$arResult['GRID_ID'] ?? '',
 	$arResult['HEADERS'] ?? [],
 	$entityFilter ?? null
 );
-$arResult = array_merge($arResult, $restrictedFields);
 //endregion
 
 // list all filds for export
@@ -1479,7 +1478,7 @@ if (empty($arSelectMap))
 {
 	foreach ($arResult['HEADERS'] as $arHeader)
 	{
-		if ($arHeader['default'])
+		if ($arHeader['default'] ?? false)
 		{
 			$arSelectMap[$arHeader['id']] = true;
 		}

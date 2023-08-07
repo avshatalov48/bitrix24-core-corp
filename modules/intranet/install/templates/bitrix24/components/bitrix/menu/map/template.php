@@ -19,7 +19,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 		$link = $item['PARAMS']['real_link'] ?? $item['LINK'];
 		$link = htmlspecialcharsbx($link, ENT_COMPAT, false);
-		$link = $link === '' ? '#' : $link;
 
 		$title = htmlspecialcharsbx($item['TEXT'], ENT_COMPAT, false);
 		$depthLevel = $item['DEPTH_LEVEL'];
@@ -32,9 +31,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			?><?=str_repeat('</div></div>', ($previousLevel - $depthLevel))?><?
 		endif;
 
+		$tag = $link === '' ? 'span' : 'a';
+
 		if ($depthLevel === 1):
 			?><div class="sitemap-section"><?
-				?><a class="sitemap-section-title" href="<?=$link?>" target="_top"><?=$title?></a><?
+				?><<?=$tag?> class="sitemap-section-title" href="<?=$link?>" target="_top"><?=$title?></<?=$tag?>><?
 				if ($hasChildren):
 					?><div class="sitemap-section-items"><?
 				else:
@@ -42,7 +43,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 				endif;
 		else:
 			?><div class="sitemap-section-item<? if ($hasChildren): ?> --has-children<? endif ?>"><?
-				?><a
+				?><<?=$tag?>
 					class="sitemap-section-item-title"
 					<? if ($hasChildren): ?>
 						onclick="BX.Dom.toggleClass(this.parentNode, '--open')"
@@ -54,7 +55,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 							onclick="return invokeSiteMapItemOnClick(event, this)"
 						<? endif ?>
 					<? endif ?>
-				><?=$title?></a><?
+				><?=$title?></<?=$tag?>><?
 
 				if ($hasChildren):
 					?><div class="sitemap-section-item-children"><?

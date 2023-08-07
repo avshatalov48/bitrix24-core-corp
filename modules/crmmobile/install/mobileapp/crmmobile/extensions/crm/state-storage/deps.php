@@ -1,18 +1,11 @@
 <?php
 return [
 	'extensions' => [
-		'statemanager/vuex',
-		'statemanager/vuex-manager',
-		'utils/object',
 		'crm:ajax',
-	],
-	'bundle' => [
-		'./manager/base',
+		'crm:state-storage/model',
+		'crm:state-storage/manager',
 
-		'./model/category-counters',
-		'./manager/category-counters',
-
-		'./model/activity-counters',
-		'./manager/activity-counters',
+		'utils/object',
+		'statemanager/vuex',
 	],
 ];

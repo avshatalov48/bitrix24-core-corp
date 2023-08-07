@@ -1,5 +1,6 @@
+/* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_buttons,main_core_event,main_core,main_popup,main_core_events,ui_dialogs_messagebox) {
+(function (exports,ui_buttons,main_core_event,im_v2_lib_desktopApi,main_core,main_popup,main_core_events,ui_dialogs_messagebox) {
 	'use strict';
 
 	var Options = /*#__PURE__*/function () {
@@ -2339,9 +2340,8 @@ this.BX = this.BX || {};
 	          babelHelpers.classPrivateFieldSet(this, _updateCountersLastValue, babelHelpers.classPrivateFieldGet(this, _updateCountersLastValue) + (countersDynamic['hide'] !== undefined ? countersDynamic['hide'] : 0));
 	        }
 	        var visibleValue = babelHelpers.classPrivateFieldGet(this, _updateCountersLastValue) > 99 ? '99+' : babelHelpers.classPrivateFieldGet(this, _updateCountersLastValue) < 0 ? '0' : babelHelpers.classPrivateFieldGet(this, _updateCountersLastValue);
-	        var desktop = main_core.Reflection.getClass('BXIM.desktop');
-	        if (desktop) {
-	          desktop.setBrowserIconBadge(visibleValue);
+	        if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
+	          im_v2_lib_desktopApi.DesktopApi.setBrowserIconBadge(visibleValue);
 	        }
 	      }
 	    }
@@ -4171,5 +4171,5 @@ this.BX = this.BX || {};
 
 	exports.Menu = Menu;
 
-}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI,BX,BX,BX.Main,BX.Event,BX.UI.Dialogs));
+}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI,BX,BX.Messenger.v2.Lib,BX,BX.Main,BX.Event,BX.UI.Dialogs));
 //# sourceMappingURL=script.js.map

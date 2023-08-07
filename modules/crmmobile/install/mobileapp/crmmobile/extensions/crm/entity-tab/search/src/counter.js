@@ -53,7 +53,7 @@ jn.define('crm/entity-tab/search/counter', (require, exports, module) => {
 
 			const content = [
 				Text({
-					style: this.styles.title,
+					style: this.styles.title(),
 					text: this.getTitle(),
 					ellipsize: 'middle',
 				}),
@@ -92,6 +92,7 @@ jn.define('crm/entity-tab/search/counter', (require, exports, module) => {
 			}
 
 			const config = this.getCounterConfig();
+
 			return (this.counter.excludeUsers ? config.titleOtherUsers : config.title);
 		}
 

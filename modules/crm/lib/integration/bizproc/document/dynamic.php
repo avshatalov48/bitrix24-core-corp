@@ -19,7 +19,10 @@ class Dynamic extends Item
 
 	protected static function GetDocumentInfo($documentId)
 	{
-		[$typePrefix, $entityTypeId, $entityId] = explode('_', $documentId);
+		$documentIdParts = explode('_', $documentId);
+		$typePrefix = $documentIdParts[0] ?? null;
+		$entityTypeId = $documentIdParts[1] ?? null;
+		$entityId = $documentIdParts[2] ?? null;
 
 		if (is_null($entityTypeId))
 		{

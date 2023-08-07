@@ -2,7 +2,6 @@
  * @module im/messenger/controller/dialog-selector
  */
 jn.define('im/messenger/controller/dialog-selector', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 	const { clone } = require('utils/object');
@@ -50,7 +49,7 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 				context: 'IM_CHAT_SEARCH',
 				ui: this.view,
 				providerOptions: {
-					minSearchSize : MessengerParams.get('MIN_SEARCH_SIZE', 3),
+					minSearchSize: MessengerParams.get('MIN_SEARCH_SIZE', 3),
 				},
 				entities: this.entities,
 				isNetworkSearchAvailable: MessengerParams.get('IS_NETWORK_SEARCH_AVAILABLE', false),
@@ -73,8 +72,8 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 				.open()
 			;
 
-			//hack to work on old android clients
-			this.selector.onResult = chat => {
+			// hack to work on old android clients
+			this.selector.onResult = (chat) => {
 				this.selector.resolve(chat);
 
 				Logger.info('Chat selected', chat);
@@ -85,19 +84,19 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 						description: chat.description,
 						avatar: chat.avatar,
 						color: chat.color,
-					}
+					},
 				};
 
-				if (chat.customData['imChat'])
+				if (chat.customData.imChat)
 				{
-					data.dialogTitleParams.chatType = chat.customData['imChat'].TYPE;
+					data.dialogTitleParams.chatType = chat.customData.imChat.TYPE;
 
 					// TODO: delete when the mobile chat learns about open lines, call chats and others.
 					if (data.dialogTitleParams.chatType === 'lines')
 					{
 						data.dialogTitleParams.description = Loc.getMessage('MOBILE_EXT_CHAT_SELECTOR_LINES_SUBTITLE');
 					}
-					else if (chat.customData['imChat'].TYPE === 'open')
+					else if (chat.customData.imChat.TYPE === 'open')
 					{
 						data.dialogTitleParams.description = Loc.getMessage('MOBILE_EXT_CHAT_SELECTOR_CHANNEL_SUBTITLE');
 					}
@@ -108,7 +107,7 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 				}
 
 				MessengerEmitter.emit(EventType.messenger.openDialog, data);
-			}
+			};
 		}
 
 		getUserCarouselItem()
@@ -120,7 +119,7 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 			const userItems = [];
 			if (Type.isArrayFilled(recentUserList))
 			{
-				recentUserList.forEach(recentUserChat => {
+				recentUserList.forEach((recentUserChat) => {
 					if (
 						recentUserChat.user.id === MessengerParams.getUserId()
 						|| recentUserChat.user.bot
@@ -138,7 +137,7 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 				});
 			}
 
-			const colleaguesList = clone(this.store.getters['usersModel/getUserList']);
+			const colleaguesList = clone(this.store.getters['usersModel/getUserList']());
 			if (Type.isArrayFilled(colleaguesList))
 			{
 				colleaguesList.forEach((user) => {

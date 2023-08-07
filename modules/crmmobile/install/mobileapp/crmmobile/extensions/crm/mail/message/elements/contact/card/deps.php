@@ -2,8 +2,8 @@
 
 return [
 	'extensions' => [
+		'require-lazy',
 		'layout/pure-component',
-		'crm:entity-detail/opener',
 		'user/profile',
 	],
 ];

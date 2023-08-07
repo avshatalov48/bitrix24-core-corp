@@ -3,6 +3,9 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+\Bitrix\Main\UI\Extension::load([
+	'ui.icon-set.main'
+]);
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -35,9 +38,10 @@ if ($isCompositeMode)
 					<td class="bx-layout-inner-left" id="layout-left-column-bottom"></td>
 					<td class="bx-layout-inner-center">
 						<div id="footer">
-							<span id="copyright"><?
-								if ($isBitrix24Cloud):
-									?><a id="bitrix24-logo" target="_blank" class="bitrix24-logo-<?=(LANGUAGE_ID == "ua") ? LANGUAGE_ID : Loc::getDefaultLang(LANGUAGE_ID)?>" href="<?=GetMessage("BITRIX24_URL")?>"></a><?
+							<span id="copyright">
+                                <?if ($isBitrix24Cloud):?>
+									<a id="bitrix24-logo" target="_blank" class="bitrix24-logo-<?=(LANGUAGE_ID == "ua") ? LANGUAGE_ID : Loc::getDefaultLang(LANGUAGE_ID)?>" href="<?=GetMessage("BITRIX24_URL")?>"></a>
+									<?
 									$b24Languages = [];
 									include($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/languages.php");
 									if (!\Bitrix\Main\Application::getInstance()->isUtfMode())
@@ -46,6 +50,31 @@ if ($isCompositeMode)
 											$lang["NAME"] = mb_convert_encoding($lang["NAME"], "HTML-ENTITIES", "UTF-8");
 										});
 									}
+									if (!\Bitrix\Main\Loader::includeModule('bitrix24') && false)
+									{
+										$cultures = Bitrix\Main\Localization\LanguageTable::getList([
+											'select' => [
+												'NAME',
+                                                'LID',
+											],
+											'filter' => [
+												'=ACTIVE' => 'Y'
+											]
+										]);
+										$languages = [];
+										while ($culture = $cultures->fetch())
+										{
+											if (in_array($culture['LID'], array_keys($b24Languages)))
+											{
+												$languages[$culture['LID']] = [
+													"NAME" => $b24Languages[$culture['LID']]['NAME'] ?? $culture['NAME'],
+													"IS_BETA" => false
+												];
+											}
+										}
+										$b24Languages = $languages;
+										unset($languages);
+									}
 									?>
 									<span class="bx-lang-btn <?=LANGUAGE_ID?>" id="bx-lang-btn" onclick="B24.openLanguagePopup(this)">
 										<span class="bx-lang-btn-icon"><?=$b24Languages[LANGUAGE_ID]["NAME"]?></span>
@@ -53,28 +82,36 @@ if ($isCompositeMode)
 
 									$numLanguages = count($b24Languages);
 									$numRowItems = ceil($numLanguages/3);
-
-									?><div style="display: none" id="b24LangPopupContent">
-										<table><?
-											for ($i=1; $i<=$numRowItems; $i++):
-											?><tr><?
-												for ($j=1; $j<=3; $j++):
-													?><td class="bx-lang-popup-item" onclick="B24.changeLanguage('<?=key($b24Languages)?>');">
-														<span><?
+									?>
+									<div style="display: none" id="b24LangPopupContent">
+										<?php if (!\Bitrix\Main\Loader::includeModule('bitrix24')): ?>
+										<div class="bx-lang-help-btn" onclick="BX.Helper.show('redirect=detail&code=17526250');">
+											<div class="ui-icon-set --help" style="--ui-icon-set__icon-size: 20px;"></div>
+										</div>
+										<?php endif; ?>
+										<table>
+											<?for ($i=1; $i<=$numRowItems; $i++): ?>
+											<tr>
+												<?for ($j=1; $j<=3; $j++): ?>
+													<td class="bx-lang-popup-item" onclick="B24.changeLanguage('<?=key($b24Languages)?>');">
+														<span>
+															<?
 															$lang = array_shift($b24Languages);
 															echo $lang["NAME"].($lang["IS_BETA"] ? ", beta" : "");
-														?></span>
-													</td><?
-
+															?>
+														</span>
+													</td>
+													<?
 													if (empty($b24Languages))
 														break 2;
-
-												endfor;
-											?></tr><?
-											endfor;
-										?></table>
-									</div><?
-								endif;
+													?>
+												<?endfor?>
+											</tr>
+											<?endfor?>
+										</table>
+									</div>
+								<?
+                                endif;
 								?><span class="bitrix24-copyright"><?=GetMessage("BITRIX24_COPYRIGHT2", array("#CURRENT_YEAR#" => date("Y")))?></span><?
 								if (Bitrix\Main\Loader::includeModule('bitrix24'))
 								{
@@ -139,39 +176,7 @@ $isBitrix24Cloud ? $APPLICATION->IncludeComponent('bitrix:bitrix24.notify.panel'
 
 $APPLICATION->IncludeComponent("bitrix:intranet.placement", "", array());
 $APPLICATION->IncludeComponent('bitrix:bizproc.debugger', '', []);
-$APPLICATION->IncludeComponent('bitrix:intranet.bitrix24.release', '', []); // remove after May 12 2023
 
-if (
-	preg_match("/(MSIE|Trident)/i", $_SERVER["HTTP_USER_AGENT"]) &&
-	CUserOptions::getOption("intranet", "ie11_warning_2", "N") === "N"
-):
-?><script type="text/javascript">
-	BX.ready(function() {
-			setTimeout(function() {
-				BX.UI.Notification.Center.notify({
-					width: 750,
-					content: "<?=GetMessage("BITRIX24_IE_SUPPORT")?>",
-					position: "top-center",
-					autoHide: false,
-					actions: [{
-						title: "<?=GetMessage("BX24_CLOSE_BUTTON")?>",
-						events: {
-							click: function(event, balloon) {
-								balloon.close();
-							}
-						}
-					}],
-					events: {
-						onClose: function() {
-							BX.userOptions.save("intranet", "ie11_warning_2", null, "Y");
-							BX.userOptions.send(null);
-						}
-					}
-				});
-			}, 5000);
-	});
-</script><?
-endif;
 ?><script>
 	BX.message({
 		"BITRIX24_CS_ONLINE" : "<?=GetMessageJS("BITRIX24_CS_ONLINE")?>",

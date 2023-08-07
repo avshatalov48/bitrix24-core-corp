@@ -2,6 +2,7 @@
 
 namespace Bitrix\Intranet\Component;
 
+use Bitrix\Intranet\Util;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -328,32 +329,9 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		$this->setUserStatus($user);
 		$this->checkVoximplantPhone($user);
 		$this->prepareSubordination($user);
-		$this->checkAppsInstallation($user);
+		$user += Util::getAppsInstallationConfig($this->arParams['ID']);
 
 		return $user;
-	}
-
-	protected function checkAppsInstallation(&$user)
-	{
-		$appActivity = [
-			"APP_WINDOWS_INSTALLED" => \CUserOptions::GetOption('im', 'WindowsLastActivityDate', "", $this->arParams["ID"]),
-			"APP_MAC_INSTALLED" => \CUserOptions::GetOption('im', 'MacLastActivityDate', "", $this->arParams["ID"]),
-			"APP_IOS_INSTALLED" => \CUserOptions::GetOption('mobile', 'iOsLastActivityDate', "", $this->arParams["ID"]),
-			"APP_ANDROID_INSTALLED" => \CUserOptions::GetOption('mobile', 'AndroidLastActivityDate', "", $this->arParams["ID"]),
-			"APP_LINUX_INSTALLED" => \CUserOptions::GetOption('im', 'LinuxLastActivityDate', "", $this->arParams["ID"]),
-		];
-
-		foreach ($appActivity as $key => $lastActivity)
-		{
-			if ((int)$lastActivity <= 0 || $lastActivity < time() - 6*30*24*60*60)
-			{
-				$user[$key] = false;
-			}
-			else
-			{
-				$user[$key] = true;
-			}
-		}
 	}
 
 	protected function isCurrentUserAdmin()

@@ -12,6 +12,11 @@ class TaskPing extends LogMessage\Ping
 {
 	use LogMessageTrait;
 
+	public function getType(): string
+	{
+		return 'TasksTaskModification';
+	}
+
 	public function buildContentBlocks(): array
 	{
 		$taskId = (int)$this->entityModel->get('SETTINGS')['TASK_ID'] ?? null;

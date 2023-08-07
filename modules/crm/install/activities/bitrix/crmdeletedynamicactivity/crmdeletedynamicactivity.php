@@ -142,7 +142,7 @@ class CBPCrmDeleteDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		}
 
 		$context = $dialog->getContext() ?? [];
-		if ($context['addMenuGroup'] === 'digitalWorkplace')
+		if (isset($context['addMenuGroup']) && $context['addMenuGroup'] === 'digitalWorkplace')
 		{
 			return true;
 		}

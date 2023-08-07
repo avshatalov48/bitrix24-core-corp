@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'require-lazy',
 		'utils',
 		'utils/color',
 		'utils/function',
@@ -16,7 +17,6 @@ return [
 		'crm:type',
 		'crm:assets/stage',
 		'crm:storage/category',
-		'crm:stage-list-view',
 		'crm:entity-actions/check-change-stage',
 	],
 ];

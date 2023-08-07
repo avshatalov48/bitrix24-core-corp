@@ -21,6 +21,7 @@ use \Bitrix\Main\Entity;
  */
 class ProjectsTable extends Entity\DataManager
 {
+	private const DEFAULT_ORDER = 'asc';
 	/**
 	 * Returns DB table name for entity.
 	 * @return string
@@ -74,5 +75,17 @@ class ProjectsTable extends Entity\DataManager
 	public static function onSocNetGroupDelete($groupId)
 	{
 		self::delete($groupId);
+	}
+
+	public static function getOrder(int $groupId): string
+	{
+		$query = static::query();
+		$query
+			->setSelect(['ID', 'ORDER_NEW_TASK'])
+			->where('ID', $groupId);
+
+		$order = $query->exec()->fetchObject()?->getOrderNewTask();
+
+		return $order ?? static::DEFAULT_ORDER;
 	}
 }

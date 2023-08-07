@@ -2,9 +2,6 @@
  * @module im/messenger/const/feature-flag
  */
 jn.define('im/messenger/const/feature-flag', (require, exports, module) => {
-
-	const { Type } = require('type');
-
 	const FeatureFlag = Object.freeze({
 		isDevelopmentEnvironment: (
 			Application.getApiVersion() >= 44
@@ -16,6 +13,7 @@ jn.define('im/messenger/const/feature-flag', (require, exports, module) => {
 			imUtilsModuleSupported: Application.getApiVersion() >= 43,
 			mediaModuleSupported: Application.getApiVersion() >= 43,
 			openWebComponentParentWidgetSupported: Application.getApiVersion() >= 45,
+			utilsSaveToLibrarySupported: Application.getApiVersion() >= 50,
 		},
 		list: {
 			itemWillDisplaySupported: Application.getApiVersion() >= 43,

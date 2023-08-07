@@ -1,10 +1,7 @@
-/* eslint-disable bitrix-rules/no-pseudo-private */
-
 /**
  * @module im/messenger/lib/date-formatter
  */
 jn.define('im/messenger/lib/date-formatter', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 
@@ -21,7 +18,7 @@ jn.define('im/messenger/lib/date-formatter', (require, exports, module) => {
 		shortTime: 'shortTime',
 	});
 
-	const DAY_IN_MILLISECONDS = 86400000;
+	const DAY_IN_MILLISECONDS = 86_400_000;
 
 	/**
 	 * @class DateFormatter
@@ -34,7 +31,7 @@ jn.define('im/messenger/lib/date-formatter', (require, exports, module) => {
 			this.formatCollection = {};
 
 			this.setLocale(Application.getLang());
-			this.setFormatCollection(jnExtensionData.get('messenger/lib/date-formatter')['formatCollection']);
+			this.setFormatCollection(jnExtensionData.get('messenger/lib/date-formatter').formatCollection);
 		}
 
 		setLocale(locale)
@@ -76,7 +73,7 @@ jn.define('im/messenger/lib/date-formatter', (require, exports, module) => {
 				)
 			)
 			{
-				throw new Error('DateFormatter.format: Invalid date ' + date);
+				throw new TypeError(`DateFormatter.format: Invalid date ${date}`);
 			}
 
 			if (!this.isSupported(format))
@@ -205,8 +202,8 @@ jn.define('im/messenger/lib/date-formatter', (require, exports, module) => {
 
 		isToday(date)
 		{
-			const todayCode = this._getDateCode(new Date());
-			const dateCode = this._getDateCode(date);
+			const todayCode = this.getDateCode(new Date());
+			const dateCode = this.getDateCode(date);
 
 			return dateCode === todayCode;
 		}
@@ -214,15 +211,18 @@ jn.define('im/messenger/lib/date-formatter', (require, exports, module) => {
 		isYesterday(date)
 		{
 			const yesterday = new Date(Date.now() - DAY_IN_MILLISECONDS);
-			const yesterdayCode = this._getDateCode(yesterday);
-			const dateCode = this._getDateCode(date);
+			const yesterdayCode = this.getDateCode(yesterday);
+			const dateCode = this.getDateCode(date);
 
 			return dateCode === yesterdayCode;
 		}
 
-		_getDateCode(date)
+		/**
+		 * @private
+		 */
+		getDateCode(date)
 		{
-			return date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate();
+			return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 		}
 	}
 

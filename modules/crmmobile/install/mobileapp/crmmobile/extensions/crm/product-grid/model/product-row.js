@@ -29,6 +29,7 @@ jn.define('crm/product-grid/model/product-row', (require, exports, module) => {
 				calculator.setCalculationStrategy(strategy);
 			}
 			const recalculatedFields = calculator.recalculateAll();
+
 			return new ProductRow(recalculatedFields);
 		}
 
@@ -43,6 +44,7 @@ jn.define('crm/product-grid/model/product-row', (require, exports, module) => {
 				const strategy = new TaxForSumStrategy(calculator);
 				calculator.setCalculationStrategy(strategy);
 			}
+
 			return calculator;
 		}
 
@@ -54,6 +56,7 @@ jn.define('crm/product-grid/model/product-row', (require, exports, module) => {
 		{
 			const calculator = this.getCalculator();
 			const result = calculationFn(calculator);
+
 			return this.setFields(result);
 		}
 
@@ -234,6 +237,7 @@ jn.define('crm/product-grid/model/product-row', (require, exports, module) => {
 		getPhotos()
 		{
 			const gallery = this.props.GALLERY || [];
+
 			return gallery.map((picture) => picture.previewUrl);
 		}
 

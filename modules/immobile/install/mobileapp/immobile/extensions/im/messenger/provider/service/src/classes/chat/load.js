@@ -1,7 +1,3 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-pseudo-private */
-
 /**
  * @module im/messenger/provider/service/classes/chat/load
  */
@@ -23,6 +19,7 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 			this.store = store;
 			this.restManager = new RestManager();
 		}
+
 		loadChatWithMessages(dialogId)
 		{
 			if (!Type.isStringFilled(dialogId))
@@ -54,19 +51,22 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 
 			return this.restManager.callBatch()
 				.then((response) => {
-					return this._updateModels(response);
+					return this.updateModels(response);
 				})
 				.then(() => {
 					return this.store.dispatch('dialoguesModel/update', {
 						dialogId,
 						fields: {
-							inited: true
-						}
+							inited: true,
+						},
 					});
-			});
+				});
 		}
 
-		_updateModels(response)
+		/**
+		 * @private
+		 */
+		updateModels(response)
 		{
 			const extractor = new RestDataExtractor(response);
 			extractor.extractData();
@@ -77,13 +77,13 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 			const messagesPromise = [
 				this.store.dispatch('messagesModel/setChatCollection', {
 					messages: extractor.getMessages(),
-					clearCollection: true
+					clearCollection: true,
 				}),
 				this.store.dispatch('messagesModel/store', extractor.getMessagesToStore()),
 				this.store.dispatch('messagesModel/setPinned', {
 					chatId: extractor.getChatId(),
 					pinnedMessages: extractor.getPinnedMessages(),
-				})
+				}),
 			];
 
 			return Promise.all([

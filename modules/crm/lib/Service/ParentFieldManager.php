@@ -282,8 +282,11 @@ class ParentFieldManager
 			$parentEntityTypeId = (int)$relation['SRC_ENTITY_TYPE_ID'];
 			$childrenEntityId = (int)$relation['DST_ENTITY_ID'];
 
-			$element = $this->parents[$parentEntityTypeId][$parentEntityId];
-			$parents[$childrenEntityId][$parentEntityTypeId] = $element;
+			$element = $this->parents[$parentEntityTypeId][$parentEntityId] ?? null;
+			if ($element)
+			{
+				$parents[$childrenEntityId][$parentEntityTypeId] = $element;
+			}
 		}
 
 		$this->parents = $parents;

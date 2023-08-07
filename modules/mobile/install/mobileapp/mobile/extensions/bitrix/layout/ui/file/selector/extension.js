@@ -2,9 +2,9 @@
  * @module layout/ui/file/selector
  */
 jn.define('layout/ui/file/selector', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { FileField } = require('layout/ui/fields/file');
+	const { FileAttachment } = require('layout/ui/file-attachment');
 	const { WidgetHeaderButton } = require('layout/ui/widget-header-button');
 
 	/**
@@ -30,7 +30,7 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 			/** @type {FileField|null} */
 			this.fileFieldRef = null;
 
-			/** @type {UI.FileAttachment|null} */
+			/** @type {FileAttachment|null} */
 			this.fileListRef = null;
 
 			this.layout.enableNavigationBarBorder(false);
@@ -155,7 +155,6 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 						},
 					},
 					this.renderFileField(),
-					this.renderEmptyList(),
 					this.renderFileList(),
 				)
 			);
@@ -204,7 +203,7 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 
 		renderFileList()
 		{
-			if (!this.fileFieldRef || !this.state.files.length)
+			if (!this.fileFieldRef)
 			{
 				return null;
 			}
@@ -215,7 +214,7 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 				? FILE_PREVIEW_MEASURE
 				: device.screen.width * FILE_PREVIEW_MEASURE / MAX_RESIZABLE_SCREEN_WIDTH;
 
-			return new UI.FileAttachment({
+			return new FileAttachment({
 				ref: (ref) => this.fileListRef = ref,
 				attachments: this.fileFieldRef.getFilesInfo(this.fileFieldRef.getValue()),
 				layoutWidget: this.layout,
@@ -252,31 +251,6 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 				showAddButton: true,
 				onAddButtonClick: () => this.onAddButtonClick(),
 			});
-		}
-
-		renderEmptyList()
-		{
-			if (this.state.files.length)
-			{
-				return null;
-			}
-
-			return View(
-				{
-					style: {
-						flex: 1,
-						alignItems: 'center',
-						justifyContent: 'center',
-					}
-				},
-				Text({
-					text: Loc.getMessage('UI_FILE_SELECTOR_EMPTY_LIST'),
-					style: {
-						color: '#828B95',
-						fontSize: 18,
-					}
-				})
-			);
 		}
 
 		onDeleteFile(index)

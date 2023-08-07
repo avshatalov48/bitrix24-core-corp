@@ -4,6 +4,7 @@ import {TaskCollection} from "tasks.task-model";
 class ControllerTaskRepository
 {
 	#repository = {
+		collectionNear: new Map(),
 		collectionGrid: new Map(),
 		collection: new TaskCollection(),
 		collectionSiftThroughFilter: new TaskCollection(),
@@ -38,6 +39,14 @@ class ControllerTaskRepository
 					id: fields.id,
 				},
 				params: params.arParams
+			},
+			collectionNear: {
+				cmd: 'tasks.task.getNearTasks',
+				filter: {
+					id: fields.id,
+				},
+				navigation: params.navigation,
+				params: params.arParams,
 			}
 		};
 
@@ -53,10 +62,12 @@ class ControllerTaskRepository
 					}
 					break;
 				case 'collectionGrid':
+				case 'collectionNear':
 					result[type] = {
 						cmd: item.cmd,
 						param: {
-							taskIds: Type.isArrayFilled(item.filter.id) ? item.filter.id: [item.filter.id],
+							taskIds: Type.isArrayFilled(item.filter.id) ? item.filter.id : [item.filter.id],
+							navigation: Type.isUndefined(item?.navigation) ? null : item.navigation,
 							arParams: item.params
 						},
 					}
@@ -89,12 +100,13 @@ class ControllerTaskRepository
 				case 'collectionSiftThroughFilter':
 					this.#repository[type].init(items.tasks)
 					break;
+				case 'collectionNear':
 				case 'collectionGrid':
 					Object.keys(items).forEach((id) =>
 					{
 						if (id > 0)
 						{
-							let row = {};
+							const row = {};
 							row[id] = items[id];
 
 							this.#repository[type].set(

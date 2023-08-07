@@ -18,3 +18,7 @@
 .ui-counter-panel__item-head {
 	padding-right: 5px;
 }
+
+.ui-counter-panel__popup-item .ui-counter-panel__item-value {
+	margin: auto 6px auto 7px;
+}

@@ -72,7 +72,9 @@ BX.namespace("BX.Intranet.Bitrix24.ImBar");
 
 		BX.bind(BX("bx-im-btn-call"), "click", function(e){
 			if (typeof(BXIM) == 'undefined') return false;
-			BXIM.webrtc.openKeyPad(e);
+			BXIM.webrtc.openKeyPad({
+				bindElement: BX("bx-im-btn-call")
+			});
 		});
 
 		BX.bind(window, "scroll", function(){

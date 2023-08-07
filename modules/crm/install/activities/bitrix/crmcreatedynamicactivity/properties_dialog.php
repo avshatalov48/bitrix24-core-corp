@@ -33,31 +33,37 @@ $entitiesFields = $dialog->getMap()['DynamicEntitiesFields']['Map'];
 
 <tr>
 	<td colspan="2">
-		<?php foreach ($entitiesFields as $entityTypeId => $fields): ?>
-			<table
-				id="ccda-fields-map-<?= $entityTypeId ?>"
-				<?= $entityTypeId !== $chosenEntityTypeId ? 'hidden' : ''?>
-				border="0"
-				cellpadding="2"
-				cellspacing="2"
-			>
-				<?php foreach ($fields as $fieldId => $field): ?>
-					<tr>
-						<td align="right" width="40%"><?=htmlspecialcharsbx($field['Name'])?>:</td>
-						<td width="60%">
-							<?=
-							$dialog->renderFieldControl(
-								$field,
-								$dialog->getCurrentValue($field, $chosenEntityValues[$fieldId]),
-								true,
-								\Bitrix\Bizproc\FieldType::RENDER_MODE_DESIGNER
-							);
-							?>
-						</td>
-					</tr>
-				<?php endforeach; ?>
-			</table>
-		<?php endforeach; ?>
+		<?php
+			$originalDocType = $dialog->getDocumentType();
+			foreach ($entitiesFields as $entityTypeId => $fields):
+				$dialog->setDocumentType(\CCrmBizProcHelper::ResolveDocumentType($entityTypeId));
+			?>
+				<table
+					id="ccda-fields-map-<?= $entityTypeId ?>"
+					<?= $entityTypeId !== $chosenEntityTypeId ? 'hidden' : ''?>
+					border="0"
+					cellpadding="2"
+					cellspacing="2"
+				>
+					<?php foreach ($fields as $fieldId => $field): ?>
+						<tr>
+							<td align="right" width="40%"><?=htmlspecialcharsbx($field['Name'])?>:</td>
+							<td width="60%">
+								<?=
+								$dialog->renderFieldControl(
+									$field,
+									$dialog->getCurrentValue($field, $chosenEntityValues[$fieldId]),
+									true,
+									\Bitrix\Bizproc\FieldType::RENDER_MODE_DESIGNER
+								);
+								?>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				</table>
+			<?php endforeach;
+			$dialog->setDocumentType($originalDocType);
+			?>
 	</td>
 </tr>
 

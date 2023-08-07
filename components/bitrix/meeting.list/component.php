@@ -9,7 +9,7 @@ $arParams['MEETING_ADD_URL'] = $arParams['MEETING_ADD_URL'] ? $arParams['MEETING
 $arParams['MEETING_EDIT_URL'] = $arParams['MEETING_EDIT_URL'] ? $arParams['MEETING_EDIT_URL'] : 'meeting.php?MEETING_ID=#MEETING_ID#&edit=Y';
 $arParams['MEETING_COPY_URL'] = $arParams['MEETING_COPY_URL'] ? $arParams['MEETING_COPY_URL'] : 'meeting.php?MEETING_ID=#MEETING_ID#&COPY=Y';
 
-$arParams['MEETINGS_COUNT'] = (int)$arParams['MEETINGS_COUNT'];
+$arParams['MEETINGS_COUNT'] = (int)($arParams['MEETINGS_COUNT'] ?? null);
 if ($arParams['MEETINGS_COUNT'] <= 0)
 {
 	$arParams['MEETINGS_COUNT'] = 20;
@@ -20,7 +20,7 @@ if (!$arParams["NAME_TEMPLATE"])
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
 }
 
-$arParams['PAGER_TITLE'] = trim($arParams['PAGER_TITLE']);
+$arParams['PAGER_TITLE'] = trim(($arParams['PAGER_TITLE'] ?? ''));
 if (!$arParams['PAGER_TITLE'])
 {
 	$arParams['PAGER_TITLE'] = GetMessage('ML_PAGER_TITLE');
@@ -51,11 +51,11 @@ $arResult['IS_HEAD'] = count($arSubIDs) > 0;
 $arFilter = ["USER_ID" => $arParams['USER_ID']];
 $arResult['FILTER'] = ['MY' => true];
 
-if ($_REQUEST['FILTER'])
+if (isset($_REQUEST['FILTER']))
 {
 	$arFilterValues = $_REQUEST['FILTER'];
 
-	if ($arResult['IS_HEAD'] && !isset($arFilterValues['MY']))
+	if (isset($arResult['IS_HEAD']) && !isset($arFilterValues['MY']))
 	{
 		$arResult['FILTER'] = [];
 		$arFilter['USER_ID'] = [];
@@ -165,7 +165,7 @@ while ($arRes = $dbRes->GetNext())
 
 $title = GetMessage('ML_LIST_TITLE'.((int)$arParams['USER_ID'] === (int)$USER->GetID() ? '' : '_NOT_MINE'));
 $APPLICATION->SetTitle($title);
-if ($arParams['SET_NAVCHAIN'] !== 'N')
+if (($arParams['SET_NAVCHAIN'] ?? null) !== 'N')
 {
 	$APPLICATION->AddChainItem($title, $arParams['LIST_URL']);
 }

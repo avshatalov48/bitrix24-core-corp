@@ -7,7 +7,7 @@ import { sharpen, shouldSharpen } from './sharpen';
 import type { ResizeImageMimeType, ResizeImageOptions } from '../types/resize-image-options';
 
 const createImagePreview = (imageData: ImageBitmap | HTMLImageElement, options: ResizeImageOptions): Promise => {
-	const { targetWidth, targetHeight} = getResizedImageSize(imageData, options);
+	const { targetWidth, targetHeight } = getResizedImageSize(imageData, options);
 
 	const canvas: HTMLCanvasElement = createImagePreviewCanvas(imageData, targetWidth, targetHeight);
 	if (shouldSharpen(imageData, targetWidth, targetHeight))

@@ -133,4 +133,9 @@ class Projects implements Tabable
 			],
 		];
 	}
+
+	public function getIconId(): string
+	{
+		return $this->getId();
+	}
 }

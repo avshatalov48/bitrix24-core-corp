@@ -2,8 +2,8 @@
  * @module tasks/layout/task/fields/datePlanIs
  */
 jn.define('tasks/layout/task/fields/datePlanIs', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {BooleanField, BooleanMode} = require('layout/ui/fields/boolean');
+	const { Loc } = require('loc');
+	const { BooleanField, BooleanMode } = require('layout/ui/fields/boolean');
 
 	class DatePlanIs extends LayoutComponent
 	{
@@ -54,12 +54,12 @@ jn.define('tasks/layout/task/fields/datePlanIs', (require, exports, module) => {
 				},
 				testId: 'datePlanIs',
 				onChange: (value) => {
-					this.setState({isDatePlan: value});
+					this.setState({ isDatePlan: value });
 					this.props.onChange(value);
 				},
 			});
 		}
 	}
 
-	module.exports = {DatePlanIs};
+	module.exports = { DatePlanIs };
 });

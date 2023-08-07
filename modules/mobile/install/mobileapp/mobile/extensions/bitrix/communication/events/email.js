@@ -7,23 +7,7 @@ jn.define('communication/events/email', (require, exports, module) => {
 	const { openEmailMenu } = require('communication/email-menu');
 	const { inAppUrl } = require('in-app-url');
 	const { Type } = require('type');
-	const { get } = require('utils/object');
 	const { stringify } = require('utils/string');
-
-	const getMailOpener = () => {
-		try
-		{
-			const { MailOpener } = require('crm/mail/opener');
-
-			return MailOpener;
-		}
-		catch (e)
-		{
-			console.log(e, 'MailOpener not found');
-
-			return null;
-		}
-	};
 
 	class EmailEvent extends BaseEvent
 	{
@@ -54,16 +38,18 @@ jn.define('communication/events/email', (require, exports, module) => {
 			return { email, params };
 		}
 
-		open()
+		async open()
 		{
 			if (this.isEmpty())
 			{
 				return;
 			}
 
-			if (this.isBitrixMailActive())
+			const isActive = await this.isBitrixMailActive();
+
+			if (isActive)
 			{
-				this.openSendingForm();
+				void this.openSendingForm();
 			}
 			else
 			{
@@ -71,14 +57,13 @@ jn.define('communication/events/email', (require, exports, module) => {
 			}
 		}
 
-		openSendingForm()
+		async openSendingForm()
 		{
-			const { email, params } = this.getValue();
-
-			const MailOpener = getMailOpener();
+			const { MailOpener } = await requireLazy('crm:mail/opener') || {};
 
 			if (MailOpener)
 			{
+				const { email, params } = this.getValue();
 				const {
 					ownerId,
 					ownerType,
@@ -99,9 +84,9 @@ jn.define('communication/events/email', (require, exports, module) => {
 			inAppUrl.open(`mailto:${email}`);
 		}
 
-		isBitrixMailActive()
+		async isBitrixMailActive()
 		{
-			const MailOpener = getMailOpener();
+			const { MailOpener } = await requireLazy('crm:mail/opener') || {};
 
 			return MailOpener && MailOpener.isActiveMail();
 		};

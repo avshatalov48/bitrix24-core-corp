@@ -25,6 +25,8 @@ type Settings = {}
 const MODE_EDIT = 'EDIT';
 const MODE_SET = 'SET';
 
+const enableImageInputCache = new Map();
+
 export class Row
 {
 	static CATALOG_PRICE_CHANGING_DISABLED = 'CATALOG_PRICE_CHANGING_DISABLED';
@@ -318,6 +320,8 @@ export class Row
 	#initSelector()
 	{
 		const id = 'crm_grid_' + this.getId();
+		const enableImageInput = this.editor.getSettingValue('enableSelectProductImageInput', true);
+
 		this.mainSelector = ProductSelector.getById(id);
 		if (!this.mainSelector)
 		{
@@ -329,7 +333,7 @@ export class Row
 				config: {
 					ENABLE_SEARCH: true,
 					IS_ALLOWED_CREATION_PRODUCT: true,
-					ENABLE_IMAGE_INPUT: true,
+					ENABLE_IMAGE_INPUT: enableImageInput,
 					ROLLBACK_INPUT_AFTER_CANCEL: true,
 					ENABLE_INPUT_DETAIL_LINK: true,
 					ROW_ID: this.getId(),
@@ -347,7 +351,18 @@ export class Row
 		else
 		{
 			this.mainSelector.subscribeEvents();
+
+			if (enableImageInput !== enableImageInputCache[id])
+			{
+				this.mainSelector.setConfig('ENABLE_IMAGE_INPUT', enableImageInput);
+				if (enableImageInput)
+				{
+					this.mainSelector.layoutImage();
+				}
+			}
 		}
+
+		enableImageInputCache[id] = enableImageInput;
 
 		if (this.isRestrictedStoreInfo())
 		{
@@ -1342,19 +1357,19 @@ export class Row
 				fields,
 			});
 
-			const imageInfo = Type.isStringFilled(fields['IMAGE_INFO']) ? JSON.parse(fields['IMAGE_INFO']) : null
-
-			if (Type.isObject(imageInfo))
-			{
-				this.model.getImageCollection().setPreview(imageInfo['preview']);
-				this.model.getImageCollection().setEditInput(imageInfo['input']);
-				this.model.getImageCollection().setMorePhotoValues(imageInfo['values']);
-			}
-
 			if (!Type.isNil(fields['DETAIL_URL']))
 			{
 				this.model.setDetailPath(fields['DETAIL_URL']);
 			}
+		}
+
+		// fill after change setting show pictures.
+		const imageInfo = Type.isStringFilled(fields['IMAGE_INFO']) ? JSON.parse(fields['IMAGE_INFO']) : null
+		if (Type.isObject(imageInfo))
+		{
+			this.model.getImageCollection().setPreview(imageInfo['preview']);
+			this.model.getImageCollection().setEditInput(imageInfo['input']);
+			this.model.getImageCollection().setMorePhotoValues(imageInfo['values']);
 		}
 
 		if (this.#isReserveEqualProductQuantity())

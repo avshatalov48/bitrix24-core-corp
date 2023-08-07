@@ -108,6 +108,7 @@ jn.define('crm/kanban/toolbar/entities/base', (require, exports, module) => {
 			BX.addCustomEvent('UI.SimpleList::onDeleteItem', this.onItemDeletedHandler);
 			BX.addCustomEvent('UI.Kanban::onItemMoved', this.onItemMovedHandler);
 			BX.addCustomEvent('UI.SimpleList::onRefresh', this.onSimpleListRefreshHandler);
+			BX.addCustomEvent('Crm.Item::onChangePipeline', this.props.onChangeItemCategory);
 
 			layout.enableNavigationBarBorder(false);
 		}
@@ -126,6 +127,7 @@ jn.define('crm/kanban/toolbar/entities/base', (require, exports, module) => {
 			BX.removeCustomEvent('UI.SimpleList::onDeleteItem', this.onItemDeletedHandler);
 			BX.removeCustomEvent('UI.Kanban::onItemMoved', this.onItemMovedHandler);
 			BX.removeCustomEvent('UI.SimpleList::onRefresh', this.onSimpleListRefreshHandler);
+			BX.removeCustomEvent('Crm.Item::onChangePipeline', this.props.onChangeItemCategory);
 
 			CategoryStorage.unsubscribe('crm.dealToolbar');
 
@@ -482,12 +484,14 @@ jn.define('crm/kanban/toolbar/entities/base', (require, exports, module) => {
 
 		render()
 		{
-			const { entityTypeId } = this.props;
+			const { entityTypeId, params } = this.props;
 			const { activeStageId, category, showValues } = this.state;
 
 			const styles = this.getStyles();
 
-			const money = this.getTotalMoney();
+			const isShowSum = params && params.showSum;
+
+			const money = isShowSum ? this.getTotalMoney() : null;
 			const currencyText = money && money.formattedCurrency ? `, ${money.formattedCurrency}` : '';
 
 			return View(
@@ -523,7 +527,7 @@ jn.define('crm/kanban/toolbar/entities/base', (require, exports, module) => {
 								},
 							}),
 						),
-						View(
+						isShowSum && View(
 							{
 								style: styles.moneyWrapper,
 							},

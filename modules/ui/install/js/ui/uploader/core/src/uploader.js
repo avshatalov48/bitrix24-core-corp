@@ -319,12 +319,15 @@ export default class Uploader extends EventEmitter
 
 				this.#loadNext();
 			},
+			[FileEvent.VALIDATE_FILE_ASYNC]: (event: BaseEvent) => {
+				const file: UploaderFile = event.getData().file;
+
+				return this.#applyFilters(FilterType.VALIDATION, file);
+			},
 			[FileEvent.PREPARE_FILE_ASYNC]: (event: BaseEvent) => {
-				const file: UploaderFile  = event.getData().file;
-				return (
-					this.#applyFilters(FilterType.VALIDATION, file)
-						.then(() => this.#applyFilters(FilterType.PREPARATION, file))
-				);
+				const file: UploaderFile = event.getData().file;
+
+				return this.#applyFilters(FilterType.PREPARATION, file);
 			},
 		});
 	}
@@ -811,8 +814,6 @@ export default class Uploader extends EventEmitter
 
 	#handlePaste(clipboardEvent: ClipboardEvent): void
 	{
-		clipboardEvent.preventDefault();
-
 		const clipboardData: DataTransfer = clipboardEvent.clipboardData;
 		if (!clipboardData)
 		{
@@ -828,6 +829,8 @@ export default class Uploader extends EventEmitter
 
 		if (isFilePasted(clipboardData))
 		{
+			clipboardEvent.preventDefault();
+
 			getFilesFromDataTransfer(clipboardData).then((files: File[]): void => {
 				this.addFiles(files);
 			});

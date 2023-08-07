@@ -6447,7 +6447,7 @@ class EntityRequisite
 					$countryId = (int)$row['PRESET_COUNTRY_ID'];
 					$requisiteCountries[$requisiteId] = $countryId;
 
-					if (!is_array($rqFieldTypeInfo[$countryId]))
+					if (!is_array($rqFieldTypeInfo[$countryId] ?? null))
 						$rqFieldTypeInfo[$countryId] = EntityRequisite::getFormFieldsInfo($countryId);
 
 					if (isset($countryFieldMap[$countryId]))
@@ -6459,8 +6459,8 @@ class EntityRequisite
 								$fieldName = $selectInfo[$fieldString]['FIELD_NAME'];
 								$fieldCountryId = $selectInfo[$fieldString]['COUNTRY_ID'];
 
-								if (!is_array($resultData[$entityId][$fieldString]))
-									$resultData[$entityId][$fieldString] = array();
+								if (!is_array($resultData[$entityId][$fieldString] ?? null))
+									$resultData[$entityId][$fieldString] = [];
 
 								if ($countryId === $fieldCountryId)
 								{
@@ -6539,8 +6539,8 @@ class EntityRequisite
 						$fieldName = $selectInfo[$fieldString]['FIELD_NAME'];
 						$fieldCountryId = $selectInfo[$fieldString]['COUNTRY_ID'];
 
-						$valueData = is_array($resultData[$entityId][$fieldString]) ?
-							$resultData[$entityId][$fieldString] : array();
+						$valueData = is_array($resultData[$entityId][$fieldString] ?? null) ?
+							$resultData[$entityId][$fieldString] : [];
 						$entityFields['~'.$fieldString] = $valueData;
 
 						$valueIsSet = false;

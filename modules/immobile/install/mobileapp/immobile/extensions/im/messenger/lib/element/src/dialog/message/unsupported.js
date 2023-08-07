@@ -1,11 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/lib/element/dialog/message/unsupported
  */
 jn.define('im/messenger/lib/element/dialog/message/unsupported', (require, exports, module) => {
-
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
 
 	/**
@@ -13,6 +9,10 @@ jn.define('im/messenger/lib/element/dialog/message/unsupported', (require, expor
 	 */
 	class UnsupportedMessage extends Message
 	{
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @param {CreateMessageOptions} options
+		 */
 		constructor(modelMessage = {}, options = {})
 		{
 			super(modelMessage, options);

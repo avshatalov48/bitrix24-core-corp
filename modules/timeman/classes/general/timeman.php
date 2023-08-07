@@ -135,7 +135,18 @@ class CTimeMan
 			}
 		}
 
-		$info['PLANNER'] = CIntranetPlanner::getData(SITE_ID, $bFull);
+		$planner = CIntranetPlanner::getData(SITE_ID, $bFull);
+		$plannerData = $planner['DATA'];
+
+		$eventsLimit = 50;
+		if (is_array($plannerData['EVENTS']) && count($plannerData['EVENTS']) > $eventsLimit)
+		{
+			$plannerData['EVENTS'] = self::limitEvents($eventsLimit, $plannerData['EVENTS']);
+
+			$planner['DATA'] = $plannerData;
+		}
+
+		$info['PLANNER'] = $planner;
 
 		$info["FULL"] = $bFull;
 
@@ -794,6 +805,11 @@ class CTimeMan
 		}
 
 		return array_unique($arHeads);
+	}
+
+	private static function limitEvents(int $limit, array $listEvents): array
+	{
+		return array_slice($listEvents, 0, $limit);
 	}
 }
 

@@ -492,7 +492,7 @@ class Common
 	}
 
 	/**
-	 * @param $activityId
+	 * @param int $activityId
 	 * @return Result
 	 */
 	public static function hasAccessToEntitiesBindingActivity($activityId)
@@ -500,20 +500,20 @@ class Common
 		$result = new Result();
 		$result->setResult(false);
 
-		if(Loader::includeModule('crm'))
+		if (Loader::includeModule('crm'))
 		{
-			if(self::hasAccessToEntity(\CCrmOwnerType::ActivityName,$activityId))
+			if (self::hasAccessToEntity(\CCrmOwnerType::ActivityName, $activityId))
 			{
 				$result->setResult(true);
 			}
 
-			if($result->getResult() == false)
+			if ($result->getResult() == false)
 			{
 				$bindings = self::getActivityBindings($activityId);
 
 				foreach ($bindings as $typeEntity => $idEntity)
 				{
-					if($result->getResult() == false && self::hasAccessToEntity($typeEntity, $idEntity))
+					if ($result->getResult() == false && self::hasAccessToEntity($typeEntity, $idEntity))
 					{
 						$result->setResult(true);
 					}

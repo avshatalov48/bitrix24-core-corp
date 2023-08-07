@@ -8,6 +8,7 @@ use Bitrix\Sale\Delivery\Requests\Manager;
 use Bitrix\Sale\Delivery\Requests\Message;
 use Bitrix\Sale\Repository\ShipmentRepository;
 use Bitrix\Crm\Activity;
+use Bitrix\Crm\Activity\Provider\BaseMessage;
 
 /**
  * Class DeliveryRequest
@@ -59,14 +60,14 @@ final class DeliveryRequest
 
 		$sendersOptions = [
 			Crm\Integration\SmsManager::getSenderCode() => [
-				'ACTIVITY_PROVIDER_TYPE_ID' => Crm\Activity\Provider\Sms::PROVIDER_TYPE_SALESCENTER_DELIVERY,
+				'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_SALESCENTER_DELIVERY,
 				'MESSAGE_BODY' => $message->getBodyForHtml(),
 			]
 		];
 		if ($message->getType() === Message\Message::TYPE_SHIPMENT_PICKUPED)
 		{
 			$sendersOptions[Crm\Integration\NotificationsManager::getSenderCode()] = [
-				'ACTIVITY_PROVIDER_TYPE_ID' => Activity\Provider\Notification::PROVIDER_TYPE_NOTIFICATION,
+				'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_SALESCENTER_DELIVERY,
 				'TEMPLATE_CODE' => 'ORDER_IN_TRANSIT',
 				'PLACEHOLDERS' => [
 					'NAME' => $entityCommunication->getCustomerName(),

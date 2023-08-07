@@ -1,12 +1,9 @@
 /* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-pseudo-private */
 
 /**
  * @module im/messenger/controller/dialog/message-renderer
  */
 jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { clone, isEqual } = require('utils/object');
 	const { Logger } = require('im/messenger/lib/logger');
@@ -32,14 +29,14 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 			this.messageList = [];
 			this.viewMessageCollection = {};
 			this.messageIdCollection = new Set();
-			this._unreadSeparatorAdded = false;
+			this.unreadSeparatorAdded = false;
 		}
 
 		render(messageList)
 		{
 			if (this.messageList.length === 0)
 			{
-				this._setMessageList(messageList);
+				this.setMessageList(messageList);
 
 				return;
 			}
@@ -47,7 +44,7 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 			const newMessageList = [];
 			const updateMessageList = [];
 
-			messageList.forEach(message => {
+			messageList.forEach((message) => {
 				const updateRealMessage = this.messageIdCollection.has(message.id);
 				const updateTemplateMessage = this.messageIdCollection.has(message.uuid);
 				if (updateRealMessage || updateTemplateMessage)
@@ -62,34 +59,53 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 
 			if (newMessageList.length > 0)
 			{
-				this._addMessageList(newMessageList);
+				this.addMessageList(newMessageList);
 			}
 
 			if (updateMessageList.length > 0)
 			{
-				this._updateMessageList(updateMessageList);
+				this.updateMessageList(updateMessageList);
 			}
 		}
 
-		_setMessageList(messageList)
+		delete(messageIdList)
 		{
-			Logger.info('MessageRenderer._setMessageList:', messageList);
+			Logger.info('MessageRenderer.delete:', messageIdList);
+
+			messageIdList.forEach((id) => {
+				delete this.viewMessageCollection[id];
+				this.messageIdCollection.delete(id);
+				this.messageList = this.messageList.filter((message) => message.id !== id);
+			});
+
+			this.view.removeMessagesByIds(messageIdList);
+		}
+
+		/**
+		 * @private
+		 */
+		setMessageList(messageList)
+		{
+			Logger.info('MessageRenderer.setMessageList:', messageList);
 			this.messageList = messageList.reverse();
 
-			this._updateMessageIndex(this.messageList);
+			this.updateMessageIndex(this.messageList);
 
 			const viewMessageList = DialogConverter.createMessageList(clone(messageList));
-			const viewMessageListWithTemplate = this._addTemplateMessagesToList(viewMessageList);
-			this.view.unreadSeparatorAdded = this._unreadSeparatorAdded;
+			const viewMessageListWithTemplate = this.addTemplateMessagesToList(viewMessageList);
+			this.view.unreadSeparatorAdded = this.unreadSeparatorAdded;
 			this.view.setMessages(viewMessageListWithTemplate);
-			viewMessageListWithTemplate.forEach(message => {
+			viewMessageListWithTemplate.forEach((message) => {
 				this.viewMessageCollection[message.id] = message;
 			});
 		}
 
-		_addMessageList(messageList)
+		/**
+		 * @private
+		 */
+		addMessageList(messageList)
 		{
-			//TODO: refactor
+			// TODO: refactor
 			const isHistoryList = (
 				Type.isNumber(this.messageList[0].id)
 				&& Type.isNumber(messageList[0].id)
@@ -99,60 +115,70 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 			const isTemplateMessage = Uuid.isV4(messageList[0].id);
 			if (isHistoryList)
 			{
-				this._addMessageListBefore(messageList);
+				this.addMessageListBefore(messageList);
 			}
 			else if (isTemplateMessage)
 			{
-				this._addMessageListAfter(messageList);
+				this.addMessageListAfter(messageList);
 			}
 			else
 			{
-				this._addMessageListAfter(messageList);
+				this.addMessageListAfter(messageList);
 			}
 		}
 
-		_addMessageListBefore(messageList)
+		/**
+		 * @private
+		 */
+		addMessageListBefore(messageList)
 		{
-			Logger.info('MessageRenderer._addMessageListBefore:', messageList);
+			Logger.info('MessageRenderer.addMessageListBefore:', messageList);
+			// eslint-disable-next-line no-param-reassign
 			messageList = messageList.reverse();
 
 			this.messageList.push(...messageList);
-			this._updateMessageIndex(messageList);
+			this.updateMessageIndex(messageList);
 
 			const viewMessageList = DialogConverter.createMessageList(clone(messageList));
-			const viewMessageListWithTemplate = this._addTemplateMessagesToList(viewMessageList);
+			const viewMessageListWithTemplate = this.addTemplateMessagesToList(viewMessageList);
 			this.view.pushMessages(viewMessageListWithTemplate);
-			viewMessageListWithTemplate.forEach(message => {
+			viewMessageListWithTemplate.forEach((message) => {
 				this.viewMessageCollection[message.id] = message;
 			});
 		}
 
-		_addMessageListAfter(messageList)
+		/**
+		 * @private
+		 */
+		addMessageListAfter(messageList)
 		{
-			Logger.info('MessageRenderer._addMessageListAfter:', messageList);
+			Logger.info('MessageRenderer.addMessageListAfter:', messageList);
 
 			this.messageList.push(...messageList);
-			this._updateMessageIndex(messageList);
+			this.updateMessageIndex(messageList);
 
 			const viewMessageList = DialogConverter.createMessageList(clone(messageList));
-			const viewMessageListWithTemplate = this._addTemplateMessagesToList(viewMessageList.reverse());
+			const viewMessageListWithTemplate = this.addTemplateMessagesToList(viewMessageList.reverse());
 			this.view.addMessages(viewMessageListWithTemplate);
-			viewMessageListWithTemplate.forEach(message => {
+			viewMessageListWithTemplate.forEach((message) => {
 				this.viewMessageCollection[message.id] = message;
 			});
 		}
 
-		_updateMessageList(messageList)
+		/**
+		 * @private
+		 */
+		updateMessageList(messageList)
 		{
-			Logger.info('MessageRenderer._updateMessageList:', messageList);
+			Logger.info('MessageRenderer.updateMessageList:', messageList);
 
-			messageList.forEach(message => {
+			messageList.forEach((message) => {
 				if (this.messageIdCollection.has(message.uuid))
 				{
 					this.messageIdCollection.delete(message.uuid);
 					this.messageIdCollection.add(message.id);
 
-					this.messageList = this.messageList.map(listMessage => {
+					this.messageList = this.messageList.map((listMessage) => {
 						if (listMessage.id === message.uuid)
 						{
 							return message;
@@ -181,19 +207,25 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 
 				if (!isMessageChanged)
 				{
-					Logger.log('MessageRenderer._updateMessageList: Nothing changed');
+					Logger.log('MessageRenderer.updateMessageList: Nothing changed');
 				}
 			});
 		}
 
-		_updateMessageIndex(messageList)
+		/**
+		 * @private
+		 */
+		updateMessageIndex(messageList)
 		{
-			messageList.forEach(message => {
+			messageList.forEach((message) => {
 				this.messageIdCollection.add(message.id);
 			});
 		}
 
-		_addTemplateMessagesToList(messageList)
+		/**
+		 * @private
+		 */
+		addTemplateMessagesToList(messageList)
 		{
 			const messageListWithTemplate = [];
 
@@ -201,16 +233,16 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 				const isOldestMessage = index === 0;
 				if (isOldestMessage)
 				{
-					const oldestMessage = this._getMessage(message.id);
+					const oldestMessage = this.getMessage(message.id);
 					if (!oldestMessage)
 					{
 						return;
 					}
 
-					if (oldestMessage.unread && this._unreadSeparatorAdded === false)
+					if (oldestMessage.unread && this.unreadSeparatorAdded === false)
 					{
 						messageListWithTemplate.push(new UnreadSeparatorMessage());
-						this._unreadSeparatorAdded = true;
+						this.unreadSeparatorAdded = true;
 					}
 
 					messageListWithTemplate.push(message);
@@ -221,24 +253,24 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 				const isNewestMessage = index === messageList.length - 1;
 				if (isNewestMessage)
 				{
-					const previousMessage = this._getMessage(messageList[index - 1].id);
-					const newestMessage = this._getMessage(messageList[index].id);
+					const previousMessage = this.getMessage(messageList[index - 1].id);
+					const newestMessage = this.getMessage(messageList[index].id);
 					if (!previousMessage || !newestMessage)
 					{
 						return;
 					}
 
-					const previousMessageDate = this._toDateCode(previousMessage.date);
-					const newestMessageDate = this._toDateCode(newestMessage.date);
+					const previousMessageDate = this.toDateCode(previousMessage.date);
+					const newestMessageDate = this.toDateCode(newestMessage.date);
 					if (previousMessageDate !== newestMessageDate)
 					{
-						messageListWithTemplate.push(this._getSeparator(newestMessage.date));
+						messageListWithTemplate.push(this.getSeparator(newestMessage.date));
 					}
 
-					if (newestMessage.unread && this._unreadSeparatorAdded === false)
+					if (newestMessage.unread && this.unreadSeparatorAdded === false)
 					{
 						messageListWithTemplate.push(new UnreadSeparatorMessage());
-						this._unreadSeparatorAdded = true;
+						this.unreadSeparatorAdded = true;
 					}
 
 					messageListWithTemplate.push(message);
@@ -246,24 +278,24 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 					return;
 				}
 
-				const previousMessage = this._getMessage(messageList[index - 1].id);
-				const currentMessage = this._getMessage(messageList[index].id);
+				const previousMessage = this.getMessage(messageList[index - 1].id);
+				const currentMessage = this.getMessage(messageList[index].id);
 				if (!previousMessage || !currentMessage)
 				{
 					return;
 				}
 
-				if (!previousMessage.unread && currentMessage.unread && this._unreadSeparatorAdded === false)
+				if (!previousMessage.unread && currentMessage.unread && this.unreadSeparatorAdded === false)
 				{
 					messageListWithTemplate.push(new UnreadSeparatorMessage());
-					this._unreadSeparatorAdded = true;
+					this.unreadSeparatorAdded = true;
 				}
 
-				const previousMessageDate = this._toDateCode(previousMessage.date);
-				const currentMessageDate = this._toDateCode(currentMessage.date);
+				const previousMessageDate = this.toDateCode(previousMessage.date);
+				const currentMessageDate = this.toDateCode(currentMessage.date);
 				if (previousMessageDate !== currentMessageDate)
 				{
-					messageListWithTemplate.push(this._getSeparator(currentMessage.date));
+					messageListWithTemplate.push(this.getSeparator(currentMessage.date));
 				}
 
 				messageListWithTemplate.push(message);
@@ -272,19 +304,28 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 			return messageListWithTemplate.reverse();
 		}
 
-		_getMessage(messageId)
+		/**
+		 * @private
+		 */
+		getMessage(messageId)
 		{
 			return this.store.getters['messagesModel/getMessageById'](messageId);
 		}
 
-		_toDateCode(date)
+		/**
+		 * @private
+		 */
+		toDateCode(date)
 		{
-			return date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate();
+			return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 		}
 
-		_getSeparator(date)
+		/**
+		 * @private
+		 */
+		getSeparator(date)
 		{
-			const id = 'template-separator-' + this._toDateCode(date);
+			const id = `template-separator-${this.toDateCode(date)}`;
 
 			return new DateSeparatorMessage(id, date);
 		}

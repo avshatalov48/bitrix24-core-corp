@@ -30,8 +30,13 @@ jn.define('layout/ui/wizard/backdrop', (require, exports, module) => {
 		getStep(stepId)
 		{
 			const { steps } = this.props;
+			const stepParams = steps.find(({ id }) => id === stepId);
+			if (!stepParams)
+			{
+				return null;
+			}
 
-			return steps.find(({ id }) => id === stepId).step;
+			return stepParams.step;
 		}
 
 		/**

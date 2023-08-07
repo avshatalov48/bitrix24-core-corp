@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,ui_forms,ui_layoutForm,ui_vuex,ui_vue_components_hint,ui_dialogs_messagebox,ui_icons,ui_fonts_opensans,timeman_component_timeline,timeman_timeformatter,timeman_monitor,ui_vue_portal,ui_notification,main_core,ui_vue,timeman_const,timeman_dateformatter,main_popup,main_loader) {
     'use strict';
@@ -27,7 +28,6 @@ this.BX = this.BX || {};
         this.minStart.setMilliseconds(0);
         this.maxFinish.setSeconds(0);
         this.maxFinish.setMilliseconds(0);
-
         if (this.createDateFromTimeString(this.finish) > this.saveMaxFinish) {
           this.finish = this.getTime(this.saveMaxFinish);
         }
@@ -47,18 +47,15 @@ this.BX = this.BX || {};
           var currentDateTime = new Date();
           currentDateTime.setSeconds(0);
           currentDateTime.setMilliseconds(0);
-
           if (safeMaxFinish > currentDateTime) {
             safeMaxFinish = currentDateTime;
           }
-
           return safeMaxFinish;
         },
         canAddInterval: function canAddInterval() {
           if (this.title.trim() === '' || !this.start || !this.finish) {
             return false;
           }
-
           var start = this.createDateFromTimeString(this.start);
           var finish = this.createDateFromTimeString(this.finish);
           var isStartError = start < this.minStart;
@@ -72,7 +69,6 @@ this.BX = this.BX || {};
           if (!this.canAddInterval) {
             return;
           }
-
           var start = this.createDateFromTimeString(this.start);
           var finish = this.createDateFromTimeString(this.finish);
           this.$store.dispatch('monitor/addHistory', {
@@ -99,20 +95,16 @@ this.BX = this.BX || {};
         },
         inputStart: function inputStart(value) {
           var start = this.createDateFromTimeString(this.start);
-
           if (start < this.minStart || value === '') {
             this.start = this.getTime(this.minStart);
             return;
           }
-
           if (start < this.minStart) {
             this.start = this.getTime(this.minStart);
             return;
           }
-
           if (this.finish) {
             var finish = this.createDateFromTimeString(this.finish);
-
             if (start >= finish || start >= this.getTime(this.saveMaxFinish)) {
               start.setHours(this.saveMaxFinish.getHours());
               start.setMinutes(this.saveMaxFinish.getMinutes() - 1);
@@ -120,20 +112,16 @@ this.BX = this.BX || {};
               return;
             }
           }
-
           this.start = value;
         },
         inputFinish: function inputFinish(value) {
           var finish = this.createDateFromTimeString(this.finish);
-
           if (finish > this.saveMaxFinish || value === '') {
             this.finish = this.getTime(this.saveMaxFinish);
             return;
           }
-
           if (this.start) {
             var start = this.createDateFromTimeString(this.start);
-
             if (finish <= start || finish <= this.getTime(this.minStart)) {
               finish.setHours(start.getHours());
               finish.setMinutes(start.getMinutes() + 1);
@@ -141,18 +129,15 @@ this.BX = this.BX || {};
               return;
             }
           }
-
           this.finish = value;
         },
         getTime: function getTime(date) {
           if (!main_core.Type.isDate(date)) {
             date = new Date(date);
           }
-
           var addZero = function addZero(num) {
             return num >= 0 && num <= 9 ? '0' + num : num;
           };
-
           var hour = addZero(date.getHours());
           var min = addZero(date.getMinutes());
           return hour + ':' + min;
@@ -184,11 +169,9 @@ this.BX = this.BX || {};
           var currentDateTime = new Date();
           currentDateTime.setSeconds(0);
           currentDateTime.setMilliseconds(0);
-
           if (safeFinish > currentDateTime) {
             safeFinish = currentDateTime;
           }
-
           return safeFinish;
         }
       },
@@ -253,26 +236,20 @@ this.BX = this.BX || {};
           } else if (seconds < 60) {
             return this.$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_MIXIN_TIME_LESS_THAN_MINUTE');
           }
-
           var hours = Math.floor(seconds / 3600);
           var minutes = Math.round(seconds / 60 % 60);
-
           if (minutes === 60) {
             hours += 1;
             minutes = 0;
           }
-
           if (hours > 0) {
             hours = hours + ' ' + this.$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_MIXIN_TIME_HOUR_SHORT');
-
             if (minutes > 0) {
               minutes = minutes + ' ' + this.$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_MIXIN_TIME_MINUTES_SHORT');
               return hours + ' ' + minutes;
             }
-
             return hours;
           }
-
           return minutes + ' ' + this.$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_MIXIN_TIME_MINUTES_SHORT');
         },
         calculateEntryTime: function calculateEntryTime(entry) {
@@ -293,7 +270,6 @@ this.BX = this.BX || {};
     };
 
     function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
     function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
     var Item = ui_vue.BitrixVue.localComponent('bx-timeman-monitor-report-group-item', {
       mixins: [Time],
@@ -327,31 +303,25 @@ this.BX = this.BX || {};
         },
         removePersonal: function removePersonal(privateCode) {
           var _this = this;
-
           if (this.type === timeman_const.EntityType.absence && this.comment.trim() === '') {
             this.action = function () {
               return _this.$store.dispatch('monitor/removePersonal', _this.privateCode);
             };
-
             this.onCommentClick();
             return;
           }
-
           this.$store.dispatch('monitor/removePersonal', privateCode);
           this.onIntervalUnselected();
         },
         addToStrictlyWorking: function addToStrictlyWorking(privateCode) {
           var _this2 = this;
-
           if (this.type === timeman_const.EntityType.absence && this.comment.trim() === '') {
             this.action = function () {
               return _this2.$store.dispatch('monitor/addToStrictlyWorking', privateCode);
             };
-
             this.onCommentClick();
             return;
           }
-
           this.$store.dispatch('monitor/addToStrictlyWorking', privateCode);
         },
         removeFromStrictlyWorking: function removeFromStrictlyWorking(privateCode) {
@@ -388,24 +358,19 @@ this.BX = this.BX || {};
         },
         onIntervalSelected: function onIntervalSelected() {
           var _this3 = this;
-
           this.$emit('intervalSelected', this.privateCode);
-
           if (this.readOnly) {
             return;
           }
-
           this.selectIntervalTimeout = setTimeout(function () {
             _this3.selected = true;
           }, 500);
         },
         onIntervalUnselected: function onIntervalUnselected() {
           this.$emit('intervalUnselected');
-
           if (this.readOnly) {
             return;
           }
-
           clearTimeout(this.selectIntervalTimeout);
           this.selected = false;
         }
@@ -463,7 +428,6 @@ this.BX = this.BX || {};
       methods: {
         onCommentClick: function onCommentClick(event) {
           var _this = this;
-
           this.isCommentPopup = true;
           this.popupContent.privateCode = event.content.privateCode;
           this.popupContent.title = event.content.title;
@@ -471,12 +435,10 @@ this.BX = this.BX || {};
           this.popupContent.type = event.content.type;
           this.popupContent.onSaveComment = event.onSaveComment;
           this.comment = event.content.comment;
-
           if (this.popupInstance !== null) {
             this.popupInstance.destroy();
             this.popupInstance = null;
           }
-
           var popup = main_popup.PopupManager.create({
             id: "bx-timeman-pwt-external-data",
             targetContainer: document.body,
@@ -491,24 +453,22 @@ this.BX = this.BX || {};
                 _this.popupInstance = null;
               }
             }
-          }); //little hack for correct open several popups in a row.
+          });
 
+          //little hack for correct open several popups in a row.
           this.$nextTick(function () {
             return _this.popupInstance = popup;
           });
         },
         onReportCommentClick: function onReportCommentClick() {
           var _this2 = this;
-
           this.isReportCommentPopup = true;
           this.popupContent.title = this.$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_GROUP_REPORT_COMMENT');
           this.comment = this.reportComment;
-
           if (this.popupInstance !== null) {
             this.popupInstance.destroy();
             this.popupInstance = null;
           }
-
           var popup = main_popup.PopupManager.create({
             id: "bx-timeman-pwt-external-data",
             targetContainer: document.body,
@@ -523,26 +483,24 @@ this.BX = this.BX || {};
                 _this2.popupInstance = null;
               }
             }
-          }); //little hack for correct open several popups in a row.
+          });
 
+          //little hack for correct open several popups in a row.
           this.$nextTick(function () {
             return _this2.popupInstance = popup;
           });
         },
         onDetailClick: function onDetailClick(event) {
           var _this3 = this;
-
           this.isDetailPopup = true;
           this.popupContent.privateCode = event.content.privateCode;
           this.popupContent.title = event.content.title;
           this.popupContent.time = event.content.time;
           this.popupContent.detail = event.content.detail;
-
           if (this.popupInstance !== null) {
             this.popupInstance.destroy();
             this.popupInstance = null;
           }
-
           var popup = main_popup.PopupManager.create({
             id: "bx-timeman-pwt-external-data",
             targetContainer: document.body,
@@ -557,8 +515,9 @@ this.BX = this.BX || {};
                 _this3.popupInstance = null;
               }
             }
-          }); //little hack for correct open several popups in a row.
+          });
 
+          //little hack for correct open several popups in a row.
           this.$nextTick(function () {
             return _this3.popupInstance = popup;
           });
@@ -567,16 +526,13 @@ this.BX = this.BX || {};
           if (this.comment.trim() === '' && this.popupContent.type === timeman_const.EntityType.absence) {
             return;
           }
-
           this.$store.dispatch('monitor/setComment', {
             privateCode: privateCode,
             comment: this.comment
           });
-
           if (typeof this.popupContent.onSaveComment === 'function') {
             this.popupContent.onSaveComment();
           }
-
           this.popupInstance.destroy();
         },
         saveReportComment: function saveReportComment() {
@@ -590,7 +546,6 @@ this.BX = this.BX || {};
           if (!this.hasIntervalsToAdd) {
             return;
           }
-
           this.$emit('selectIntervalClick', event);
         },
         onIntervalSelected: function onIntervalSelected(privateCode) {
@@ -674,7 +629,6 @@ this.BX = this.BX || {};
           if (this.selectedPrivateCode) {
             return this.$store.getters['monitor/getOverChartData'](this.selectedPrivateCode);
           }
-
           return [];
         },
         legendData: function legendData() {
@@ -775,17 +729,14 @@ this.BX = this.BX || {};
     });
 
     var _templateObject;
-
     var Viewer = /*#__PURE__*/function () {
       function Viewer() {
         babelHelpers.classCallCheck(this, Viewer);
       }
-
       babelHelpers.createClass(Viewer, [{
         key: "open",
         value: function open(event) {
           var _this = this;
-
           this.report = null;
           var data = event.currentTarget.dataset;
           var userId = data.user;
@@ -808,11 +759,9 @@ this.BX = this.BX || {};
                 _this.loadReport(userId, dateLog).then(function (response) {
                   if (response.status === 'success') {
                     _this.report = response.data;
-
                     if (!timeman_dateformatter.DateFormatter.isInit()) {
                       timeman_dateformatter.DateFormatter.init(_this.report.info.date.format);
                     }
-
                     _this.createApp(_this.report);
                   }
                 })["catch"](function (response) {
@@ -890,14 +839,12 @@ this.BX = this.BX || {};
                 if (!main_core.Type.isArrayFilled(this.report.info.reportComment)) {
                   return null;
                 }
-
                 return this.report.info.reportComment[0].TEXT;
               },
               chartData: function chartData() {
                 if (this.report.timeline === null) {
                   return [];
                 }
-
                 return this.report.timeline.data.map(function (interval) {
                   interval.start = new Date(interval.start);
                   interval.finish = new Date(interval.finish);
@@ -908,14 +855,12 @@ this.BX = this.BX || {};
                 if (this.report.report === null) {
                   return [];
                 }
-
                 return this.report.report.data;
               },
               workingTime: function workingTime() {
                 if (this.report.report === null) {
                   return [];
                 }
-
                 return this.report.report.data.reduce(function (sum, entity) {
                   return sum + entity.time;
                 }, 0);
@@ -937,7 +882,6 @@ this.BX = this.BX || {};
               },
               getReport: function getReport(dateLog) {
                 var _this2 = this;
-
                 if (this.reports[dateLog]) {
                   this.dateLog = dateLog;
                 } else {
@@ -972,29 +916,22 @@ this.BX = this.BX || {};
       }]);
       return Viewer;
     }();
-
     var viewer = new Viewer();
 
     var _templateObject$1;
-
     function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
     function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-
     var MonitorReport = /*#__PURE__*/function () {
       function MonitorReport() {
         babelHelpers.classCallCheck(this, MonitorReport);
       }
-
       babelHelpers.createClass(MonitorReport, [{
         key: "open",
         value: function open(store) {
           var _this = this;
-
           if (this.isReportOpen) {
             return;
           }
-
           BX.SidePanel.Instance.open("timeman:pwt-report", {
             contentCallback: function contentCallback() {
               return _this.getAppPlaceholder();
@@ -1005,6 +942,9 @@ this.BX = this.BX || {};
             title: main_core.Loc.getMessage('TIMEMAN_PWT_REPORT_DAY'),
             events: {
               onOpen: function onOpen() {
+                if (!BXIM || !BXIM.desktop) {
+                  return;
+                }
                 if (main_core.Type.isFunction(BXIM.desktop.setPreventEsc)) {
                   BXIM.desktop.setPreventEsc(true);
                 }
@@ -1017,11 +957,12 @@ this.BX = this.BX || {};
               },
               onCloseComplete: function onCloseComplete() {
                 _this.isReportOpen = false;
-
                 if (timeman_monitor.Monitor.shouldShowGrantingPermissionWindow()) {
                   timeman_monitor.Monitor.showGrantingPermissionLater();
                 }
-
+                if (!BXIM || !BXIM.desktop) {
+                  return;
+                }
                 if (main_core.Type.isFunction(BXIM.desktop.setPreventEsc)) {
                   BXIM.desktop.setPreventEsc(false);
                 }
@@ -1038,11 +979,9 @@ this.BX = this.BX || {};
         key: "openPreview",
         value: function openPreview(store) {
           var _this2 = this;
-
           if (this.isReportPreviewOpen) {
             return;
           }
-
           BX.SidePanel.Instance.open("timeman:pwt-report-preview", {
             contentCallback: function contentCallback() {
               return _this2.getAppPlaceholder();
@@ -1130,15 +1069,12 @@ this.BX = this.BX || {};
               },
               pausedUntil: function pausedUntil() {
                 var pausedUntil = this.$store.state.monitor.config.pausedUntil;
-
                 if (!pausedUntil) {
                   return '';
                 }
-
                 if (pausedUntil.getDay() - new Date().getDay() !== 0) {
                   return this.$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_TOMORROW');
                 }
-
                 return timeman_timeformatter.TimeFormatter.toShort(pausedUntil);
               },
               isWindows: function isWindows() {
@@ -1154,7 +1090,6 @@ this.BX = this.BX || {};
                 if (this.isMac) {
                   return this.hasActivityOtherThanBitrix24;
                 }
-
                 return true;
               },
               hasIntervalsToAdd: function hasIntervalsToAdd() {
@@ -1182,12 +1117,10 @@ this.BX = this.BX || {};
               },
               pauseClick: function pauseClick(event) {
                 var _this3 = this;
-
                 if (this.popupInstance != null) {
                   this.popupInstance.destroy();
                   this.popupInstance = null;
                 }
-
                 var popup = main_popup.PopupManager.create({
                   id: 'bx-timeman-pwt-editor-pause-popup',
                   targetContainer: document.body,
@@ -1212,8 +1145,9 @@ this.BX = this.BX || {};
                   }
                 });
                 this.popupIdSelector = "#bx-timeman-pwt-editor-pause-popup";
-                this.popupId = 'PausePopup'; //little hack for correct open several popups in a row.
+                this.popupId = 'PausePopup';
 
+                //little hack for correct open several popups in a row.
                 this.$nextTick(function () {
                   _this3.popupInstance = popup;
                 });
@@ -1223,7 +1157,6 @@ this.BX = this.BX || {};
               },
               play: function play() {
                 var _this4 = this;
-
                 timeman_monitor.Monitor.play();
                 this.showPlayAlert = true;
                 setTimeout(function () {
@@ -1235,7 +1168,6 @@ this.BX = this.BX || {};
               },
               selectInterval: function selectInterval(privateCode) {
                 var _this5 = this;
-
                 this.selectIntervalTimeout = setTimeout(function () {
                   _this5.selectedPrivateCode = privateCode;
                 }, 500);
@@ -1249,12 +1181,10 @@ this.BX = this.BX || {};
               },
               openSkipConfirm: function openSkipConfirm() {
                 var _this6 = this;
-
                 if (this.popupInstance != null) {
                   this.popupInstance.destroy();
                   this.popupInstance = null;
                 }
-
                 var popup = main_popup.PopupManager.create({
                   id: 'bx-timeman-pwt-skip-report-confirm-popup',
                   targetContainer: BX('pwt-report-container-editor'),
@@ -1268,18 +1198,17 @@ this.BX = this.BX || {};
                   }
                 });
                 this.popupIdSelector = "#bx-timeman-pwt-skip-report-confirm-popup";
-                this.popupId = 'SkipReportPopup'; //little hack for correct open several popups in a row.
+                this.popupId = 'SkipReportPopup';
 
+                //little hack for correct open several popups in a row.
                 this.$nextTick(function () {
                   _this6.popupInstance = popup;
                 });
               },
               skipReport: function skipReport() {
                 var _this7 = this;
-
                 this.$store.dispatch('monitor/clearStorageBeforeDate', this.$store.state.monitor.reportState.dateLog).then(function () {
                   var notifyText = _this7.$Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_NOTIFICATION_REPORT_SKIPPED').replace('#DATE#', _this7.dateLog);
-
                   _this7.$store.dispatch('monitor/refreshDateLog').then(function () {
                     ui_notification.UI.Notification.Center.notify({
                       content: notifyText,
@@ -1300,6 +1229,7 @@ this.BX = this.BX || {};
                 // 	this.openHelpdesk('');
                 // 	return;
                 // }
+
                 this.openPermissionHelp();
               },
               openHelpdesk: function openHelpdesk(code) {
@@ -1352,7 +1282,6 @@ this.BX = this.BX || {};
       }]);
       return MonitorReport;
     }();
-
     var monitorReport = new MonitorReport();
 
     exports.MonitorReport = monitorReport;

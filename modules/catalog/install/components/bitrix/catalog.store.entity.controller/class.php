@@ -43,6 +43,7 @@ class CatalogStoreEntityController extends CBitrixComponent
 	{
 		return [
 			'list' => '',
+			'uf' => 'user-fields/',
 			'details' => 'details/#ID#/',
 		];
 	}

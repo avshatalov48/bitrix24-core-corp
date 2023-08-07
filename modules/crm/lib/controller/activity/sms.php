@@ -72,14 +72,17 @@ class Sms extends Base
 					];
 				}
 
-				$company = $item->getCompany();
-				if ($company)
+				if ($item->hasField(Item::FIELD_NAME_COMPANY))
 				{
-					$config['communications'][] = [
-						'entityId' => $company->getId(),
-						'entityTypeId' => \CCrmOwnerType::Company,
-						'caption' => $company->getTitle(),
-					];
+					$company = $item->getCompany();
+					if ($company)
+					{
+						$config['communications'][] = [
+							'entityId' => $company->getId(),
+							'entityTypeId' => \CCrmOwnerType::Company,
+							'caption' => $company->getTitle(),
+						];
+					}
 				}
 			}
 		}

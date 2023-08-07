@@ -121,8 +121,6 @@ class CVoxImplantCrmHelper
 			return false;
 		}
 
-		$dealStatuses = CCrmViewHelper::GetDealStageInfos();
-
 		if ($userId > 0)
 		{
 			$findParams = array('USER_ID'=> $userId);
@@ -200,10 +198,14 @@ class CVoxImplantCrmHelper
 					$arResult['DEALS'][$deal['ID']] = Array(
 						'ID' => $deal['ID'],
 						'TITLE' => $deal['TITLE'],
-						'STAGE' => $dealStatuses[$deal['STAGE_ID']]['NAME'],
-						'STAGE_COLOR' => $dealStatuses[$deal['STAGE_ID']]['COLOR']? $dealStatuses[$deal['STAGE_ID']]['COLOR']: "#5fa0ce",
+						'STAGE' => $deal['STAGE_NAME'],
+						'STAGE_COLOR' => $deal['STAGE_COLOR'] ? $deal['STAGE_COLOR'] : "#5fa0ce",
 						'OPPORTUNITY' => $opportunity,
+						'OPPORTUNITY_VALUE' => $deal['OPPORTUNITY'],
+						'CURRENCY_ID' => $deal['CURRENCY_ID'],
 						'URL' => $deal['SHOW_URL'],
+						'REPEATED_TEXT' => $deal['REPEATED_TEXT'],
+						'CREATED_TIME' => $deal['CREATED_TIME'],
 					);
 				}
 				if (!empty($arResult['DEALS']))
@@ -219,10 +221,12 @@ class CVoxImplantCrmHelper
 			$userPermissions = CCrmPerms::GetUserPermissions($userId);
 			if (CCrmLead::CheckCreatePermission($userPermissions))
 			{
+				$arResult['CAN_CREATE_LEAD'] = self::isLeadEnabled();
 				$arResult['LEAD_URL'] = CCrmOwnerType::GetEditUrl(CCrmOwnerType::Lead, 0);
 				if($arResult['LEAD_URL'] !== '')
 				{
 					$arResult['LEAD_URL'] = CCrmUrlUtil::AddUrlParams($arResult['LEAD_URL'], array("phone" => (string)$phone, 'origin_id' => 'VI_'.$callId));
+					$arResult['ORIGIN_ID'] = 'VI_'.$callId;
 				}
 			}
 			if (CCrmContact::CheckCreatePermission($userPermissions))
@@ -231,6 +235,7 @@ class CVoxImplantCrmHelper
 				if($arResult['CONTACT_URL'] !== '')
 				{
 					$arResult['CONTACT_URL'] = CCrmUrlUtil::AddUrlParams($arResult['CONTACT_URL'], array("phone" => (string)$phone, 'origin_id' => 'VI_'.$callId));
+					$arResult['ORIGIN_ID'] = 'VI_'.$callId;
 				}
 			}
 		}
@@ -1298,7 +1303,10 @@ class CVoxImplantCrmHelper
 			'COMPANY' => array(),
 			'ACTIVITIES' => array(),
 			'DEALS' => array(),
-			'RESPONSIBILITY' => array()
+			'LEAD' => null,
+			'RESPONSIBILITY' => array(),
+			'STATUS_TEXT' => null,
+			'STATUS_COLOR' => null,
 		);
 
 		switch ($entityType)
@@ -1376,17 +1384,40 @@ class CVoxImplantCrmHelper
 			}
 		}
 
+		if (isset($entityData['LEAD']))
+		{
+			$result['LEAD'] = $entityData['LEAD'];
+		}
+
+		if (isset($entityData['STATUS_TEXT']))
+		{
+			$result['STATUS_TEXT'] = $entityData['STATUS_TEXT'];
+		}
+
+		if (isset($entityData['STATUS_COLOR']))
+		{
+			$result['STATUS_COLOR'] = $entityData['STATUS_COLOR'];
+		}
+
 		if (isset($entityData['SHOW_URL']))
+		{
 			$result['SHOW_URL'] = $entityData['SHOW_URL'];
+		}
 
 		if (isset($entityData['ACTIVITY_LIST_URL']))
+		{
 			$result['ACTIVITY_URL'] = $entityData['ACTIVITY_LIST_URL'];
+		}
 
 		if (isset($entityData['INVOICE_LIST_URL']))
+		{
 			$result['INVOICE_URL'] = $entityData['INVOICE_LIST_URL'];
+		}
 
 		if (isset($entityData['DEAL_LIST_URL']))
+		{
 			$result['DEAL_URL'] = $entityData['DEAL_LIST_URL'];
+		}
 
 		return $result;
 	}
@@ -1473,6 +1504,10 @@ class CVoxImplantCrmHelper
 		{
 			foreach ($params['CRM_BINDINGS'] as $binding)
 			{
+				if (!is_array($binding))
+				{
+					continue;
+				}
 				$correctBinding = [];
 				if($binding['OWNER_TYPE_ID'])
 				{

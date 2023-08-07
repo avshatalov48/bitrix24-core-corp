@@ -31,10 +31,7 @@ return [
 		'layout/ui/fields/combined-v2',
 		'layout/ui/fields/multiple-combined',
 		'layout/ui/fields/crm-element',
-		'layout/ui/fields/crm-element',
 		'layout/ui/fields/client',
-		'layout/ui/fields/client',
-		'layout/ui/fields/crm-stage',
 		'layout/ui/fields/crm-stage',
 	],
 ];

@@ -121,10 +121,10 @@ final class RightSetupSessionTable extends DataManager
 		$connection = Application::getConnection();
 		$connection->queryExecute("
 			UPDATE b_disk_right_setup_session s
-				INNER JOIN b_disk_right_setup_session s1 ON s1.PARENT_ID=s.ID
-				INNER JOIN b_disk_right_setup_session s2 ON s2.PARENT_ID=s1.ID
+			INNER JOIN b_disk_right_setup_session s1 ON s1.PARENT_ID=s.ID
+			INNER JOIN b_disk_right_setup_session s2 ON s2.PARENT_ID=s1.ID
 			SET s2.STATUS = {$badStatus}
-			WHERE s2.STATUS = {$startedStatus} 		
+			WHERE s2.STATUS = {$startedStatus}
 		");
 
 		$badIds = $connection->query(

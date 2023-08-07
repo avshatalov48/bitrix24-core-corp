@@ -3,5 +3,6 @@
 return [
 	'extensions' => [
 		'layout/ui/fields/textarea',
+		'notify',
 	],
 ];

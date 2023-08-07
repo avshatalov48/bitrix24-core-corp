@@ -25,6 +25,7 @@ final class ConfigBuilder
 	public const DOCUMENT_TYPE_SLIDE = 'slide';
 
 	public const REVIEW_DISPLAY_MARKUP = CustomizationBuilder::REVIEW_DISPLAY_MARKUP;
+	public const REVIEW_DISPLAY_SIMPLE = CustomizationBuilder::REVIEW_DISPLAY_SIMPLE;
 	public const REVIEW_DISPLAY_FINAL = CustomizationBuilder::REVIEW_DISPLAY_FINAL;
 	public const REVIEW_DISPLAY_ORIGINAL = CustomizationBuilder::REVIEW_DISPLAY_ORIGINAL;
 
@@ -284,6 +285,7 @@ final class ConfigBuilder
 				'owner' => '',
 				'uploaded' => '',
 				'permissions' => [
+					'chat' => false,
 					'print' => $this->supportPrint(),
 					'download' => $this->permissions['download'] ?? true,
 					'copy' => true,

@@ -35,7 +35,7 @@ $arVariables = array();
 if($arParams["SEF_MODE"] == "Y")
 {
 	$arUrlTemplates = CComponentEngine::MakeComponentUrlTemplates($arDefaultUrlTemplates404, $arParams["SEF_URL_TEMPLATES"]);
-	$arVariableAliases = CComponentEngine::MakeComponentVariableAliases($arDefaultVariableAliases404, $arParams["VARIABLE_ALIASES"]);
+	$arVariableAliases = CComponentEngine::MakeComponentVariableAliases($arDefaultVariableAliases404, ($arParams["VARIABLE_ALIASES"] ?? null));
 
 	$componentPage = CComponentEngine::ParseComponentPath(
 		$arParams["SEF_FOLDER"],
@@ -87,7 +87,7 @@ $arParams["MEETING_COPY_URL"] = CComponentEngine::MakePathFromTemplate($arParams
 
 $arParams["ITEM_URL"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arParams["SEF_URL_TEMPLATES"]["item"], $arVariables);
 
-if ($componentPage != 'list' && $arParams['SET_NAVCHAIN'] !== 'N')
+if ($componentPage != 'list' && ($arParams['SET_NAVCHAIN'] ?? null) !== 'N')
 {
 	\Bitrix\Main\Localization\Loc::loadLanguageFile(__DIR__."/.description.php");
 	$APPLICATION->AddChainItem(GetMessage('MEETINGS_NAME'), $arParams['LIST_URL']);

@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Crm\Activity\Mail\Message;
+use Bitrix\Crm\Activity\Provider\Email;
 use Bitrix\Main\Config;
 use Bitrix\Main\Localization\Loc;
 
@@ -243,36 +245,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 		}
 		else
 		{
-			if (\CCrmActivityDirection::Incoming == $activity['__parent']['DIRECTION'])
-			{
-				$from = reset($activity['COMMUNICATIONS']);
-				static::prepareCommunication($from);
-				$from = $from['TITLE'];
-			}
-			else if ($USER->getId() == $activity['__parent']['AUTHOR_ID'])
-			{
-				$from = $this->arParams['USER_FULL_NAME'];
-			}
-			else
-			{
-				$authorFields = \Bitrix\Main\UserTable::getList(array(
-					'select' => array('ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN'),
-					'filter' => array('=ID' => $activity['__parent']['AUTHOR_ID']),
-				))->fetch();
-				$from = \CUser::formatName($siteNameFormat, $authorFields, true, false);
-			}
-
-			$activity['DESCRIPTION_HTML'] = sprintf(
-				'<br><br>%s, %s:<br><blockquote style="margin: 0 0 0 5px; padding: 5px 5px 5px 8px; border-left: 4px solid #e2e3e5; ">%s</blockquote>',
-				formatDate(
-					preg_replace('/[\/.,\s:][s]/', '', $GLOBALS['DB']->dateFormatToPhp(FORMAT_DATETIME)),
-					makeTimestamp($activity['__parent']['START_TIME']),
-					time()+\CTimeZone::getOffset()
-				),
-				htmlspecialcharsbx($from),
-				$this->arParams['~ACTIVITY']['DESCRIPTION_HTML']
-			);
-
+			$activity['DESCRIPTION_HTML'] = Email::getMessageQuote($activity['__parent'], $this->arParams['~ACTIVITY']['DESCRIPTION_HTML']);
 			$activity['__message_type'] = !empty($activity['__message_type'])? mb_strtoupper($activity['__message_type']) : '';
 			switch ($activity['__message_type'])
 			{
@@ -448,14 +421,20 @@ class CrmActivityEmailComponent extends CBitrixComponent
 		if (empty($activity))
 			return;
 
+		$authorId = Message::getAssociatedUser($activity)['id'];
 		$userId = $USER->getId();
+		//To display a photo of the current user in the form of a reply to a message
+		$authIds = [$userId];
+		if ($authorId !== 0)
+		{
+			$authIds[] = $authorId;
+		}
 
 		$pageSize = (int) $this->arParams['PAGE_SIZE'];
 		if ($pageSize < 1 || $pageSize > 100)
 			$this->arParams['PAGE_SIZE'] = ($pageSize = 5);
 
 		$actIds  = array();
-		$authIds = array($userId, $activity['AUTHOR_ID'], $activity['RESPONSIBLE_ID']);
 
 		$res = \CCrmActivity::getList(
 			array(
@@ -468,7 +447,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 				'<=START_TIME' => $activity['START_TIME'],
 			),
 			false, false,
-			array('ID', 'SUBJECT', 'START_TIME', 'DIRECTION', 'COMPLETED', 'AUTHOR_ID', 'RESPONSIBLE_ID', 'SETTINGS'),
+			array('ID', 'OWNER_TYPE_ID', 'OWNER_ID', 'SUBJECT', 'START_TIME', 'DIRECTION', 'COMPLETED', 'SETTINGS'),
 			array('QUERY_OPTIONS' => array('OFFSET' => 0, 'LIMIT' => $pageSize))
 		);
 
@@ -483,8 +462,11 @@ class CrmActivityEmailComponent extends CBitrixComponent
 			}
 			else
 			{
-				$authIds[] = $item['AUTHOR_ID'];
-				$authIds[] = $item['RESPONSIBLE_ID'];
+				$itemAuthorId = Message::getAssociatedUser($item)['id'];
+				if ($itemAuthorId !== 0)
+				{
+					$authIds[] = $itemAuthorId;
+				}
 			}
 		}
 
@@ -499,7 +481,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 				'>START_TIME' => $activity['START_TIME'],
 			),
 			false, false,
-			array('ID', 'SUBJECT', 'START_TIME', 'DIRECTION', 'COMPLETED', 'AUTHOR_ID', 'RESPONSIBLE_ID', 'SETTINGS'),
+			array('ID', 'OWNER_TYPE_ID', 'OWNER_ID', 'SUBJECT', 'START_TIME', 'DIRECTION', 'COMPLETED', 'SETTINGS'),
 			array('QUERY_OPTIONS' => array('OFFSET' => 0, 'LIMIT' => $pageSize))
 		);
 
@@ -514,8 +496,11 @@ class CrmActivityEmailComponent extends CBitrixComponent
 			}
 			else
 			{
-				$authIds[] = $item['AUTHOR_ID'];
-				$authIds[] = $item['RESPONSIBLE_ID'];
+				$itemAuthorId = Message::getAssociatedUser($item)['id'];
+				if ($itemAuthorId !== 0)
+				{
+					$authIds[] = $itemAuthorId;
+				}
 			}
 		}
 
@@ -569,20 +554,20 @@ class CrmActivityEmailComponent extends CBitrixComponent
 				}
 				else
 				{
-					$authorId = !empty($authors[$item['AUTHOR_ID']]) ? $item['AUTHOR_ID'] : $item['RESPONSIBLE_ID'];
+					$itemAuthorId = Message::getAssociatedUser($item)['id'];
 
-					if (!empty($authors[$authorId]) && !array_key_exists('IMAGE_URL', $authors[$authorId]))
+					if (!empty($authors[$itemAuthorId]) && !array_key_exists('IMAGE_URL', $authors[$itemAuthorId]))
 					{
 						$preview = \CFile::resizeImageGet(
-							$authors[$authorId]['PERSONAL_PHOTO'], array('width' => 38, 'height' => 38),
+							$authors[$itemAuthorId]['PERSONAL_PHOTO'], array('width' => 38, 'height' => 38),
 							BX_RESIZE_IMAGE_EXACT, false
 						);
 
-						$authors[$authorId]['IMAGE_URL'] = $preview['src'];
+						$authors[$itemAuthorId]['IMAGE_URL'] = $preview['src'];
 					}
 
-					$item['LOG_TITLE'] = $authors[$authorId]['NAME_FORMATTED'] ?: $item['SETTINGS']['EMAIL_META']['__email'];
-					$item['LOG_IMAGE'] = $authors[$authorId]['IMAGE_URL'];
+					$item['LOG_TITLE'] = $authors[$itemAuthorId]['NAME_FORMATTED'] ?: $item['SETTINGS']['EMAIL_META']['__email'];
+					$item['LOG_IMAGE'] = $authors[$itemAuthorId]['IMAGE_URL'];
 				}
 
 				$item['__trackable'] = isset($item['SETTINGS']['IS_BATCH_EMAIL']) && !$item['SETTINGS']['IS_BATCH_EMAIL'];
@@ -591,8 +576,6 @@ class CrmActivityEmailComponent extends CBitrixComponent
 				$this->arResult['LOG'][$k][$i] = $item;
 			}
 		}
-
-		$authorId = !empty($authors[$activity['AUTHOR_ID']]) ? $activity['AUTHOR_ID'] : $activity['RESPONSIBLE_ID'];
 
 		foreach (array($authorId, $userId) as $uid)
 		{

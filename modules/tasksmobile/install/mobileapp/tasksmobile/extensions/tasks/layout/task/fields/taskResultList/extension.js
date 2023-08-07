@@ -2,8 +2,8 @@
  * @module tasks/layout/task/fields/taskResultList
  */
 jn.define('tasks/layout/task/fields/taskResultList', (require, exports, module) => {
-	const {TaskResult} = require('tasks/layout/task/fields/taskResultList/taskResult');
-	const {Loc} = require('loc');
+	const { TaskResult } = require('tasks/layout/task/fields/taskResultList/taskResult');
+	const { Loc } = require('loc');
 
 	class TaskResultList extends LayoutComponent
 	{
@@ -34,9 +34,9 @@ jn.define('tasks/layout/task/fields/taskResultList', (require, exports, module) 
 
 		render()
 		{
-			if (!this.state.resultList || !this.state.resultList.length)
+			if (!this.state.resultList || this.state.resultList.length === 0)
 			{
-				return View({style: {display: 'none'}});
+				return View({ style: { display: 'none' } });
 			}
 
 			const isMore = (this.state.resultList.length > 1);
@@ -59,7 +59,7 @@ jn.define('tasks/layout/task/fields/taskResultList', (require, exports, module) 
 				...(
 					this.state.showAll
 						? this.state.resultList.map((taskResult, index) => {
-							return (index === 0 ? null : new TaskResult({taskResult, taskId, parentWidget}));
+							return (index === 0 ? null : new TaskResult({ taskResult, taskId, parentWidget }));
 						})
 						: []
 				),
@@ -76,7 +76,7 @@ jn.define('tasks/layout/task/fields/taskResultList', (require, exports, module) 
 							paddingHorizontal: 12,
 							paddingVertical: 4,
 						},
-						onClick: () => this.setState({showAll: !this.state.showAll}),
+						onClick: () => this.setState({ showAll: !this.state.showAll }),
 					},
 					Text({
 						style: {
@@ -89,7 +89,7 @@ jn.define('tasks/layout/task/fields/taskResultList', (require, exports, module) 
 								? Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_TASK_RESULT_LIST_HIDE')
 								: Loc.getMessage(
 									'TASKSMOBILE_LAYOUT_TASK_FIELDS_TASK_RESULT_LIST_MORE',
-									{'#NUMBER#': this.state.resultList.length - 1}
+									{ '#NUMBER#': this.state.resultList.length - 1 },
 								)
 						),
 					}),
@@ -98,5 +98,5 @@ jn.define('tasks/layout/task/fields/taskResultList', (require, exports, module) 
 		}
 	}
 
-	module.exports = {TaskResultList};
+	module.exports = { TaskResultList };
 });

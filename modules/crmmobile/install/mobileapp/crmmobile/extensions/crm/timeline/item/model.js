@@ -50,6 +50,7 @@ jn.define('crm/timeline/item/model', (require, exports, module) => {
 			{
 				const isoString = this.props.CREATED_SERVER.replace(' ', 'T');
 				const date = new Date(isoString);
+
 				return isValidDateObject(date) ? new Moment(date) : null;
 			}
 
@@ -67,11 +68,13 @@ jn.define('crm/timeline/item/model', (require, exports, module) => {
 				{
 					const entityTypeId = BX.prop.getInteger(this.props, 'ASSOCIATED_ENTITY_TYPE_ID', 0);
 					const entityId = BX.prop.getInteger(this.props, 'ASSOCIATED_ENTITY_ID', 0);
+
 					return `${Type.resolveNameById(entityTypeId)}_${entityId}`;
 				}
 
 				return BX.prop.getInteger(this.props, 'ID', 0);
 			}
+
 			return this.props.id;
 		}
 
@@ -104,7 +107,7 @@ jn.define('crm/timeline/item/model', (require, exports, module) => {
 		 */
 		get isCompatible()
 		{
-			return !Object.keys(SupportedTypes).includes(this.type);
+			return !SupportedTypes.includes(this.type);
 		}
 
 		/**
@@ -121,6 +124,7 @@ jn.define('crm/timeline/item/model', (require, exports, module) => {
 		get needsAttention()
 		{
 			const counterType = get(this.layout, 'icon.counterType', null);
+
 			return counterType === CounterTypes.DANGER;
 		}
 
@@ -130,6 +134,7 @@ jn.define('crm/timeline/item/model', (require, exports, module) => {
 		get isIncomingChannel()
 		{
 			const counterType = get(this.layout, 'icon.counterType', null);
+
 			return counterType === CounterTypes.SUCCESS;
 		}
 

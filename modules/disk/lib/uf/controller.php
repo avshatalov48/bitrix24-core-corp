@@ -22,6 +22,7 @@ use Bitrix\Disk\Security\ParameterSigner;
 use Bitrix\Disk\Storage;
 use Bitrix\Disk\TypeFile;
 use Bitrix\Disk\ProxyType;
+use Bitrix\Disk\Uf\Integration\DiskUploaderController;
 use Bitrix\Disk\Ui\Text;
 use Bitrix\Disk\User;
 use Bitrix\Disk\ZipNginx;
@@ -179,7 +180,7 @@ class Controller extends Internals\Controller
 		$cachePath = "/disk/uf/{$userId}";
 		if($cache->initCache($cacheTtl, 'group_storage_list_' . SITE_ID . '_' . $userId, $cachePath))
 		{
-			list($currentUserGroups) = $cache->getVars();
+			[$currentUserGroups] = $cache->getVars();
 		}
 		else
 		{
@@ -476,9 +477,12 @@ class Controller extends Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 
+		$fileInfos = DiskUploaderController::getFileInfo([FileUserType::NEW_FILE_PREFIX . $file->getId()]);
+
 		$this->sendJsonSuccessResponse(array(
 			'file' => array(
 				'id' => $file->getId(),
+				'fileInfo' => $fileInfos[0] ?? [],
 				'ufId' => FileUserType::NEW_FILE_PREFIX . $file->getId(),
 				'name' => $file->getName(),
 				'size' => $file->getSize(),
@@ -1221,21 +1225,26 @@ class Controller extends Internals\Controller
 		$attachedModel = $this->getAttachedModel();
 
 		$file = $attachedModel->getFile();
+		if (!$file)
+		{
+			$this->sendJsonErrorResponse();
+		}
+
 		$fileName = $file->getName();
 		$fileData = $file->getFile();
 
 		$version = $attachedModel->getVersion();
-
-		if($version)
+		if ($version)
 		{
 			$fileName = $version->getName();
 			$fileData = $version->getFile();
 		}
 
 		$isImage = TypeFile::isImage($fileData['ORIGINAL_NAME']) || TypeFile::isImage($fileName);
-		$cacheTime = $isImage? 86400 : Configuration::DEFAULT_CACHE_TIME;
+		$isImage = $isImage && !TypeFile::shouldTreatImageAsFile($fileData);
+		$cacheTime = $isImage ? 86400 : Configuration::DEFAULT_CACHE_TIME;
 
-		if($isImage)
+		if ($isImage)
 		{
 			$fileData = $this->resizeImage($fileData, $attachedModel->getId());
 		}
@@ -1574,7 +1583,7 @@ class Controller extends Internals\Controller
 						'storage' => $storage->getProxyType()->getTitleForCurrentUser() . ' / ' . $folder->getName(),
 						'canChangeName' => true,
 					),
-					(TypeFile::isImage($name) ? [
+					(TypeFile::isImage($fileModel) ? [
 						'previewUrl' => $urlManager->getUrlForShowFile(
 							$fileModel,
 							array_merge([
@@ -1621,7 +1630,7 @@ class Controller extends Internals\Controller
 				array("files" =>
 					array("default" =>
 						$this->request->getFile("disk_file")));
-			if ($this->processActionHandleFile(
+			if ($this ->processActionHandleFile(
 				$hash = "",
 				$file,
 				$package = array(),
@@ -1648,68 +1657,67 @@ class Controller extends Internals\Controller
 		}
 	}
 
-	protected function processActionDownloadFile()
+	protected function processActionDownloadFile(): void
 	{
-		$this->checkRequiredGetParams(array('attachedId'));
+		$this->checkRequiredGetParams(['attachedId']);
 
-		if($this->errorCollection->hasErrors())
+		if ($this->errorCollection->hasErrors())
 		{
 			$this->sendJsonErrorResponse();
 		}
-		$fileModel = null;
 
-		list($type, $realValue) = FileUserType::detectType($this->request->getQuery('attachedId'));
-
-		if ($type == FileUserType::TYPE_NEW_OBJECT)
+		[$type, $realValue] = FileUserType::detectType($this->request->getQuery('attachedId'));
+		if ($type === FileUserType::TYPE_NEW_OBJECT)
 		{
-			/** @var File $fileModel */
-			$fileModel = File::loadById((int)$realValue, array('STORAGE'));
-			if(!$fileModel)
+			$fileModel = File::loadById((int)$realValue, ['STORAGE']);
+			if (!$fileModel)
 			{
-				$this->errorCollection->add(array(new Error("Could not find file")));
+				$this->addError(new Error('Could not find file'));
 				$this->sendJsonErrorResponse();
 			}
-			if(!$fileModel->canRead($fileModel->getStorage()->getCurrentUserSecurityContext()))
+			if (!$fileModel->canRead($fileModel->getStorage()->getCurrentUserSecurityContext()))
 			{
-				$this->errorCollection->add(array(new Error("Bad permission. Could not read this file")));
+				$this->addError(new Error("Bad permission. Could not read this file"));
 				$this->sendJsonErrorResponse();
 			}
 
 			$fileName = $fileModel->getName();
 			$fileData = $fileModel->getFile();
 
-			if(!$fileData)
+			if (!$fileData)
 			{
 				$this->end();
 			}
 
 			$cacheTime = 0;
 
-			$width = $this->request->getQuery('width');
-			$height = $this->request->getQuery('height');
-			if ((TypeFile::isImage($fileData['ORIGINAL_NAME']) || TypeFile::isImage($fileName)) && ($width > 0 || $height > 0))
+			$width = (int)$this->request->getQuery('width');
+			$height = (int)$this->request->getQuery('height');
+			$isImage = TypeFile::isImage($fileData['ORIGINAL_NAME']) || TypeFile::isImage($fileName);
+			$isImage = $isImage && !TypeFile::shouldTreatImageAsFile($fileData);
+			if ($isImage && ($width > 0 || $height > 0))
 			{
 				$signature = $this->request->getQuery('signature');
-				if(!$signature)
+				if (!$signature)
 				{
 					$this->sendJsonInvalidSignResponse('Empty signature');
 				}
-				if(!ParameterSigner::validateImageSignature($signature, $fileModel->getId(), $width, $height))
+				if (!ParameterSigner::validateImageSignature($signature, $fileModel->getId(), $width, $height))
 				{
 					$this->sendJsonInvalidSignResponse('Invalid signature');
 				}
 
-
-				$tmpFile = \CFile::resizeImageGet($fileData, array("width" => $width, "height" => $height), ($this->request->getQuery('exact') == "Y" ? BX_RESIZE_IMAGE_EXACT : BX_RESIZE_IMAGE_PROPORTIONAL), true, false, true);
-				$fileData["FILE_SIZE"] = $tmpFile["size"];
-				$fileData["SRC"] = $tmpFile["src"];
+				$resizeType = $this->request->getQuery('exact') === 'Y' ? BX_RESIZE_IMAGE_EXACT : BX_RESIZE_IMAGE_PROPORTIONAL;
+				$tmpFile = \CFile::resizeImageGet($fileData, ['width' => $width, 'height' => $height], $resizeType, true, false, true);
+				$fileData['FILE_SIZE'] = $tmpFile['size'];
+				$fileData['SRC'] = $tmpFile['src'];
 				$cacheTime = 86400;
 			}
-			\CFile::viewByUser($fileData, array("force_download" => false, "cache_time" => $cacheTime, 'attachment_name' => $fileName));
+			\CFile::viewByUser($fileData, ['force_download' => false, 'cache_time' => $cacheTime, 'attachment_name' => $fileName]);
 		}
 		else
 		{
-			$this->errorCollection->add(array(new Error('Could not find attached object')));
+			$this->addError(new Error('Could not find attached object'));
 			$this->sendJsonErrorResponse();
 		}
 	}
@@ -1721,7 +1729,7 @@ class Controller extends Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 
-		list($type, $realValue) = FileUserType::detectType($attachedId);
+		[$type, $realValue] = FileUserType::detectType($attachedId);
 
 		if ($type == FileUserType::TYPE_NEW_OBJECT)
 		{
@@ -1869,7 +1877,7 @@ class Controller extends Internals\Controller
 		{
 			$this->sendJsonErrorResponse();
 		}
-		list($type, $objectId) = FileUserType::detectType($this->request->getPost('attachedId'));
+		[$type, $objectId] = FileUserType::detectType($this->request->getPost('attachedId'));
 		if($type != FileUserType::TYPE_NEW_OBJECT || !$objectId)
 		{
 			$this->errorCollection->add(array(new Error('Could not move attached file')));
@@ -1919,7 +1927,7 @@ class Controller extends Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 
-		list($type, $realValue) = FileUserType::detectType($this->request->getPost('attachedId'));
+		[$type, $realValue] = FileUserType::detectType($this->request->getPost('attachedId'));
 
 		if ($type == FileUserType::TYPE_NEW_OBJECT)
 		{
@@ -2038,8 +2046,14 @@ class Controller extends Internals\Controller
 		));
 	}
 
-	protected function runProcessingIfUserNotAuthorized()
+	protected function runProcessingIfUserNotAuthorized(): void
 	{
+		$action = $this->getAction();
+		if (\in_array($action, ['download', 'show']))
+		{
+			return;
+		}
 
+		parent::runProcessingIfUserNotAuthorized();
 	}
 }

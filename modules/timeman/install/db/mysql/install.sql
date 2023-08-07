@@ -39,7 +39,8 @@ create table if not exists b_timeman_entries
 	INDEX ix_b_timeman_entries_2 (LAT_OPEN, LON_OPEN),
 	INDEX ix_b_timeman_entries_3 (LAT_CLOSE, LON_CLOSE),
 	INDEX ix_b_timeman_entries_4 (ACTIVE, DATE_START, DATE_FINISH, USER_ID),
-	INDEX ix_b_timeman_entries_5 (DATE_START, DATE_FINISH, USER_ID)
+	INDEX ix_b_timeman_entries_5 (DATE_START, DATE_FINISH, USER_ID),
+	INDEX ix_b_timeman_entries_6 (USER_ID, RECORDED_START_TIMESTAMP)
 );
 
 create table if not exists b_timeman_reports
@@ -192,7 +193,8 @@ CREATE TABLE IF NOT EXISTS b_timeman_work_shift_plan (
 	DELETED_AT INT(10) UNSIGNED NOT NULL DEFAULT '0',
 	MISSED_SHIFT_AGENT_ID INT(10) UNSIGNED NOT NULL DEFAULT '0',
 	PRIMARY KEY (ID),
-	UNIQUE INDEX SHIFT_ID_USER_ID_DATE_ASSIGNED (SHIFT_ID, USER_ID, DATE_ASSIGNED)
+	UNIQUE INDEX SHIFT_ID_USER_ID_DATE_ASSIGNED (SHIFT_ID, USER_ID, DATE_ASSIGNED),
+	INDEX IX_B_TIMEMAN_WORK_SHIFT_PLAN_1 (USER_ID, DELETED, DATE_ASSIGNED)
 );
 
 CREATE TABLE IF NOT EXISTS b_timeman_work_time_event_log (

@@ -4,6 +4,7 @@
 jn.define('crm/communication/communication-selector', (require, exports, module) => {
 	const { CommunicationMenu } = require('communication/menu');
 	const { PhoneType } = require('communication/connection');
+	const { Type } = require('crm/type');
 	const { getEntityMessage } = require('crm/loc');
 
 	/**
@@ -62,24 +63,25 @@ jn.define('crm/communication/communication-selector', (require, exports, module)
 			}
 
 			this.communications.forEach((communication) => {
+				const type = Type.resolveNameById(communication.entityTypeId).toLowerCase();
+				if (!result[type])
+				{
+					result[type] = [];
+				}
+
+				let phone = [];
 				if (Array.isArray(communication.phones) && communication.phones.length > 0)
 				{
-					const type = communication.entityTypeName.toLowerCase();
-					if (!result[type])
-					{
-						result[type] = [];
-					}
-
-					const phone = this.getCommunicationPhones(communication.phones);
-
-					result[type].push({
-						hidden: false,
-						id: communication.entityId,
-						title: communication.caption,
-						type,
-						phone,
-					});
+					phone = this.getCommunicationPhones(communication.phones);
 				}
+
+				result[type].push({
+					hidden: false,
+					id: communication.entityId,
+					title: communication.caption,
+					type,
+					phone,
+				});
 			});
 
 			return result;

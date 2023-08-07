@@ -322,38 +322,19 @@ class Register
 				elseif (
 					(
 						(string)$arUser["CONFIRM_CODE"] !== ''
-						|| $returnExistingUsers
+						|| ($returnExistingUsers && !static::isIntranetUser($arUser))
 					)
 					&& (
 						!$bExtranetInstalled
 						|| ( // both intranet
-							isset($item["UF_DEPARTMENT"], $arUser["UF_DEPARTMENT"])
+							isset($item["UF_DEPARTMENT"])
 							&& !empty($item["UF_DEPARTMENT"])
-							&& (
-								(
-									is_array($arUser["UF_DEPARTMENT"])
-									&& (int)$arUser["UF_DEPARTMENT"][0] > 0
-								)
-								|| (
-									!is_array($arUser["UF_DEPARTMENT"])
-									&& (int)$arUser["UF_DEPARTMENT"] > 0
-								)
-							)
+							&& static::isIntranetUser($arUser)
 						)
 						||
 						(	// both extranet
 							(!isset($item["UF_DEPARTMENT"]) || empty($item["UF_DEPARTMENT"]))
-							&& (
-								!isset($arUser["UF_DEPARTMENT"])
-								|| (
-									is_array($arUser["UF_DEPARTMENT"])
-									&& (int)$arUser["UF_DEPARTMENT"][0] <= 0
-								)
-								|| (
-									!is_array($arUser["UF_DEPARTMENT"])
-									&& (int)$arUser["UF_DEPARTMENT"] <= 0
-								)
-							)
+							&& static::isExtranetUser($arUser)
 						)
 					)
 				)
@@ -393,6 +374,36 @@ class Register
 			"EMAIL_EXIST" => $arEmailExist,
 			"EMAIL_TO_REGISTER" => $arEmailToRegister,
 		];
+	}
+
+	private static function isIntranetUser(array $user): bool
+	{
+		return isset($user["UF_DEPARTMENT"])
+		&& (
+			(
+				is_array($user["UF_DEPARTMENT"])
+				&& (int)$user["UF_DEPARTMENT"][0] > 0
+			)
+			|| (
+				!is_array($user["UF_DEPARTMENT"])
+				&& (int)$user["UF_DEPARTMENT"] > 0
+			)
+		);
+	}
+
+	private static function isExtranetUser(array $user): bool
+	{
+		return (
+			!isset($user["UF_DEPARTMENT"])
+			|| (
+				is_array($user["UF_DEPARTMENT"])
+				&& (int)$user["UF_DEPARTMENT"][0] <= 0
+			)
+			|| (
+				!is_array($user["UF_DEPARTMENT"])
+				&& (int)$user["UF_DEPARTMENT"] <= 0
+			)
+		);
 	}
 
 	public static function transferUser($usersForTransfer, &$errors)

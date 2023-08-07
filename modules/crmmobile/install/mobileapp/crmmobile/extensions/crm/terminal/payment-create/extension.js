@@ -298,6 +298,7 @@ jn.define('crm/terminal/payment-create', (require, exports, module) => {
 			if (!isActive)
 			{
 				Haptics.notifyWarning();
+
 				return;
 			}
 

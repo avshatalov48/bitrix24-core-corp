@@ -40,15 +40,6 @@ Extension::load(
 	]
 );
 
-if (
-	!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])
-	|| !empty($arResult['OBSERVERS_FIELD_RESTRICTIONS'])
-	|| !empty($arResult['ACTIVITY_FIELD_RESTRICTIONS'])
-)
-{
-	Extension::load(['crm.restriction.filter-fields']);
-}
-
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
@@ -538,6 +529,7 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 							'USER_PROFILE_URL' => $arDeal['PATH_TO_USER_MODIFIER']
 						)
 					) : '',
+				'OBSERVERS' => CCrmViewHelper::renderObservers(\CCrmOwnerType::Deal, $arDeal['ID'], $arDeal['~OBSERVERS'] ?? []),
 			) + (is_array($arResult['DEAL_UF'][$sKey]) ? $arResult['DEAL_UF'][$sKey] : [])
 	);
 
@@ -617,7 +609,7 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 		$resultItem['columns']
 	);
 
-	$resultItem['columns'] = \Bitrix\Crm\Entity\FieldContentType::enrichGridRow(
+	$resultItem['columns'] = \Bitrix\Crm\Entity\CommentsHelper::enrichGridRow(
 		\CCrmOwnerType::Deal,
 		$fieldContentTypeMap[$arDeal['ID']] ?? [],
 		$arDeal,
@@ -1374,30 +1366,6 @@ if (!$isInternal):
 		);
 	</script>
 <?endif;?>
-<?if (!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])):?>
-	<script type="text/javascript">
-		BX.ready(
-			function()
-			{
-				new BX.Crm.Restriction.FilterFieldsRestriction(
-					<?=CUtil::PhpToJSObject($arResult['CLIENT_FIELDS_RESTRICTIONS'])?>
-				);
-			}
-		);
-	</script>
-<?endif;?>
-<?if (!empty($arResult['OBSERVERS_FIELD_RESTRICTIONS'])):?>
-	<script type="text/javascript">
-		BX.ready(
-			function()
-			{
-				new BX.Crm.Restriction.FilterFieldsRestriction(
-					<?=CUtil::PhpToJSObject($arResult['OBSERVERS_FIELD_RESTRICTIONS'])?>
-				);
-			}
-		);
-	</script>
-<?endif;?>
 <?if (!empty($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'])):?>
 	<script type="text/javascript">
 		BX.ready(
@@ -1586,6 +1554,11 @@ if (!$isInternal):
 
 <?php
 
-echo $arResult['ACTIVITY_FIELD_RESTRICTIONS'] ?? '';
+if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))
+{
+	Extension::load(['crm.restriction.filter-fields']);
+
+	echo $arResult['RESTRICTED_FIELDS_ENGINE'];
+}
 
 \Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated();

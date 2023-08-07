@@ -32,12 +32,7 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 	CBitrix24::initLicenseInfoPopupJS();
 }
 
-Bitrix\Main\UI\Extension::load(
-	[
-		'crm.restriction.filter-fields',
-		'ui.fonts.opensans'
-	]
-);
+Bitrix\Main\UI\Extension::load(['ui.fonts.opensans']);
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
@@ -412,7 +407,12 @@ $APPLICATION->IncludeComponent("bitrix:calendar.interface.grid", "", Array(
 ));
 //endregion
 
-echo $arResult['ACTIVITY_FIELD_RESTRICTIONS'] ?? '';
+if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))
+{
+	Bitrix\Main\UI\Extension::load(['crm.restriction.filter-fields']);
+
+	echo $arResult['RESTRICTED_FIELDS_ENGINE'];
+}
 
 ?>
 

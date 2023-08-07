@@ -1,13 +1,9 @@
-/* eslint-disable bitrix-rules/no-pseudo-private */
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-bx-message */
+/* eslint-disable promise/catch-or-return */
 
 /**
  * @module im/messenger/provider/pull/user
  */
 jn.define('im/messenger/provider/pull/user', (require, exports, module) => {
-
 	const { PullHandler } = require('im/messenger/provider/pull/base');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { RecentConverter } = require('im/messenger/lib/converter');

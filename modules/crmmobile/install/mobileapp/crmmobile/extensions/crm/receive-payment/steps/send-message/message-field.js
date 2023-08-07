@@ -101,8 +101,8 @@ jn.define('crm/receive-payment/steps/send-message/message-field', (require, expo
 
 			if (this.currentSenderCode === SenderCodes.SMS_PROVIDER)
 			{
-				return this.state.value.replace(
-					/#LINK#/g,
+				return this.state.value.replaceAll(
+					'#LINK#',
 					`[color="#0b66c3"]${this.orderPublicUrl}[/color][color="#959ca4"]xxxxx[/color]`,
 				);
 			}

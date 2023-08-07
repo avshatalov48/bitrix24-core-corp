@@ -1472,51 +1472,32 @@ BX(function() {
 			}
 		},
 
-		placeToNearTasks: function(taskId, taskData, parameters, repository) {
-			var queryParams = {
-				taskId: taskId,
-				navigation: {
-					pageNumber: this.getPageNumber(),
-					pageSize: this.getPageSize(),
-				},
-				arParams: this.arParams,
-			};
+		placeToNearTasks: function(taskId, taskData, parameters, repository)
+		{
+			var item = repository.collectionNear.get(BX.Text.toNumber(taskId));
 
-			BX.ajax.runComponentAction('bitrix:tasks.task.list', 'getNearTasks', {
-				mode: 'class',
-				data: queryParams,
-			}).then(
-				function(response) {
-					if (response.data)
-					{
-						var before = response.data.before;
-						var after = response.data.after;
+			if (item[taskId])
+			{
+				var rowData = item[taskId];
+				var before = rowData.before;
+				var after = rowData.after;
 
-						if ((before && this.isRowExist(before)) || (after && this.isRowExist(after)))
-						{
-							var params = {
-								before: before,
-								after: after,
-							};
-							Object.keys(parameters).forEach(function(key) {
-								params[key] = parameters[key];
-							});
-							this.updateItem(taskId, taskData, params, repository);
-						}
-						else
-						{
-							this.removeItem(taskId);
-						}
-					}
-				}.bind(this),
-			).catch(
-				function(response) {
-					if (response.errors)
-					{
-						BX.Tasks.alert(response.errors);
-					}
-				}.bind(this),
-			);
+				if ((before && this.isRowExist(before)) || (after && this.isRowExist(after)))
+				{
+					var params = {
+						before: before,
+						after: after,
+					};
+					Object.keys(parameters).forEach(function(key) {
+						params[key] = parameters[key];
+					});
+					this.updateItem(taskId, taskData, params, repository);
+				}
+				else
+				{
+					this.removeItem(taskId);
+				}
+			}
 		},
 
 		checkComment: function(data) {
@@ -1622,7 +1603,7 @@ BX(function() {
 			{
 				if (parameters.action === this.actions.taskUpdate)
 				{
-					this.placeToNearTasks(taskId, taskData, parameters);
+					this.placeToNearTasks(taskId, taskData, parameters, repository);
 				}
 				else
 				{
@@ -2827,6 +2808,7 @@ this.BX = this.BX || {};
 	    _classPrivateFieldInitSpec$1(this, _repository, {
 	      writable: true,
 	      value: {
+	        collectionNear: new Map(),
 	        collectionGrid: new Map(),
 	        collection: new tasks_taskModel.TaskCollection(),
 	        collectionSiftThroughFilter: new tasks_taskModel.TaskCollection()
@@ -2890,6 +2872,14 @@ this.BX = this.BX || {};
 	        id: fields.id
 	      },
 	      params: params.arParams
+	    },
+	    collectionNear: {
+	      cmd: 'tasks.task.getNearTasks',
+	      filter: {
+	        id: fields.id
+	      },
+	      navigation: params.navigation,
+	      params: params.arParams
 	    }
 	  };
 	  Object.keys(items).forEach(function (type) {
@@ -2903,10 +2893,12 @@ this.BX = this.BX || {};
 	        };
 	        break;
 	      case 'collectionGrid':
+	      case 'collectionNear':
 	        result[type] = {
 	          cmd: item.cmd,
 	          param: {
 	            taskIds: main_core.Type.isArrayFilled(item.filter.id) ? item.filter.id : [item.filter.id],
+	            navigation: main_core.Type.isUndefined(item === null || item === void 0 ? void 0 : item.navigation) ? null : item.navigation,
 	            arParams: item.params
 	          }
 	        };
@@ -2931,6 +2923,7 @@ this.BX = this.BX || {};
 	      case 'collectionSiftThroughFilter':
 	        babelHelpers.classPrivateFieldGet(this, _repository)[type].init(items.tasks);
 	        break;
+	      case 'collectionNear':
 	      case 'collectionGrid':
 	        Object.keys(items).forEach(function (id) {
 	          if (id > 0) {
@@ -2962,7 +2955,11 @@ this.BX = this.BX || {};
 	            groupId: context.groupId
 	          }
 	        }, {
-	          arParams: context.arParams
+	          arParams: context.arParams,
+	          navigation: {
+	            pageNumber: context.getPageNumber(),
+	            pageSize: context.getPageSize()
+	          }
 	        }).then(function () {
 	          var repository = taskRepository.get();
 	          main_core_events.EventEmitter.emit('BX.Tasks.ControllerTask:onGetRepository', {

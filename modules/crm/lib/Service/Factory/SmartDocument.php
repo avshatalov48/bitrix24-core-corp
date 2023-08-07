@@ -82,6 +82,7 @@ class SmartDocument extends Dynamic
 				->setIsAutomationEnabled(true)
 				->setIsBizProcEnabled(true)
 				->setIsPaymentsEnabled(false)
+				->setIsSetOpenPermissions(false)
 		;
 
 		/** @var AddResult $result */

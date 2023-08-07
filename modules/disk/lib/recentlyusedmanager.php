@@ -27,7 +27,7 @@ final class RecentlyUsedManager
 
 	/**
 	 * Push in recently used new object.
-	 * @param mixed|int|User|\CAllUser $user User.
+	 * @param mixed|int|User|\CUser $user User.
 	 * @param int|\Bitrix\Disk\Internals\Model $object Object id.
 	 * @return bool
 	 */
@@ -113,7 +113,7 @@ final class RecentlyUsedManager
 
 	/**
 	 * Fixes cold start, when we don't have any data in RecentlyUsedTable.
-	 * @param mixed|int|User|\CAllUser $user User.
+	 * @param mixed|int|User|\CUser $user User.
 	 * @return bool
 	 * @throws \Bitrix\Main\ArgumentException
 	 */
@@ -173,7 +173,7 @@ final class RecentlyUsedManager
 
 	/**
 	 * Returns list of recently files by user.
-	 * @param mixed|int|User|\CAllUser $user User.
+	 * @param mixed|int|User|\CUser $user User.
 	 * @param array                    $filter Filter.
 	 * @return File[]
 	 * @internal

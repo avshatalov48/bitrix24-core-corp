@@ -7,7 +7,6 @@ use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Component\ComponentError;
 use Bitrix\Crm\Component\EntityDetails\Traits;
 use Bitrix\Crm\Controller\Entity;
-use Bitrix\Crm\Entity\FieldContentType;
 use Bitrix\Crm\EO_Status;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Format\Money;
@@ -82,8 +81,8 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 
 	public function onPrepareComponentParams($arParams): array
 	{
-		$arParams['ENTITY_TYPE_ID'] = (int) $arParams['ENTITY_TYPE_ID'];
-		$arParams['ENTITY_ID'] = (int) $arParams['ENTITY_ID'];
+		$arParams['ENTITY_TYPE_ID'] = (int)($arParams['ENTITY_TYPE_ID'] ?? \CCrmOwnerType::Undefined);
+		$arParams['ENTITY_ID'] = (int)($arParams['ENTITY_ID'] ?? 0);
 
 		$this->fillParameterFromRequest('categoryId', $arParams);
 		$this->fillParameterFromRequest('parentId', $arParams);
@@ -115,7 +114,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 
 	public function getEntityTypeID(): int
 	{
-		return (int) $this->arParams['ENTITY_TYPE_ID'];
+		return (int)($this->arParams['ENTITY_TYPE_ID'] ?? \CCrmOwnerType::Undefined);
 	}
 
 	public function setEntityID($entityID): void
@@ -183,7 +182,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 		{
 			if($this->item->isNew())
 			{
-				$categoryId = $this->arParams['categoryId'];
+				$categoryId = $this->arParams['categoryId'] ?? $this->categoryId;
 				if($categoryId > 0)
 				{
 					$this->category = $this->factory->getCategory($categoryId);
@@ -1471,11 +1470,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 			$setData[$name] = $value;
 		}
 
-		return FieldContentType::prepareFieldsFromDetailsToSave(
-			$this->item->getEntityTypeId(),
-			$this->item->getId(),
-			$setData,
-		);
+		return $setData;
 	}
 
 	public function compatibleAction(int $entityTypeId, int $entityId): ?Json
@@ -1564,19 +1559,13 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 	{
 		if($this->operation === null)
 		{
-			$context = clone Container::getInstance()->getContext();
-			$context->setItemOption(
-				'PRESERVE_CONTENT_TYPE',
-				FieldContentType::shouldPreserveContentTypeInDetails($this->item->getEntityTypeId(), $this->item->getId()),
-			);
-
 			if($this->item->getId() > 0)
 			{
-				$this->operation = $this->factory->getUpdateOperation($this->item, $context);
+				$this->operation = $this->factory->getUpdateOperation($this->item);
 			}
 			else
 			{
-				$this->operation = $this->factory->getAddOperation($this->item, $context);
+				$this->operation = $this->factory->getAddOperation($this->item);
 			}
 		}
 

@@ -1357,8 +1357,9 @@ class CTasksReportHelper extends CReportHelper
 				WHEN EXISTS
 					(SELECT 'x'
 					FROM b_utm_user BUF3
+					INNER JOIN b_tasks_member DSTM ON DSTM.USER_ID = BUF3.VALUE_ID
 					WHERE BUF3.FIELD_ID = {$fieldId}
-					AND EXISTS(SELECT 'x' FROM b_tasks_member DSTM WHERE DSTM.TASK_ID = `tasks_task`.ID AND DSTM.USER_ID = BUF3.VALUE_ID)
+					AND DSTM.TASK_ID = `tasks_task`.ID
 					AND BUF3.VALUE_INT IN ({$departmentIds})
 				) THEN 1
 			ELSE 0

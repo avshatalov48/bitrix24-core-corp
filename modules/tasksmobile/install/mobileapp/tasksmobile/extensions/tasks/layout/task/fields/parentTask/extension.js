@@ -2,8 +2,8 @@
  * @module tasks/layout/task/fields/parentTask
  */
 jn.define('tasks/layout/task/fields/parentTask', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {TaskField} = require('tasks/layout/task/fields/tasks');
+	const { Loc } = require('loc');
+	const { TaskField } = require('tasks/layout/task/fields/tasks');
 
 	class ParentTask extends LayoutComponent
 	{
@@ -30,12 +30,11 @@ jn.define('tasks/layout/task/fields/parentTask', (require, exports, module) => {
 			});
 		}
 
-
 		render()
 		{
-			if (!this.state.parentTask.id)
+			if (!this.state.parentTask || !this.state.parentTask.id)
 			{
-				return View({style: {display: 'none'}});
+				return View({ style: { display: 'none' } });
 			}
 
 			return View(
@@ -60,5 +59,5 @@ jn.define('tasks/layout/task/fields/parentTask', (require, exports, module) => {
 		}
 	}
 
-	module.exports = {ParentTask};
+	module.exports = { ParentTask };
 });

@@ -3,7 +3,6 @@
 namespace Bitrix\Crm\Restriction;
 
 use Bitrix\Crm\Integration\Bitrix24Manager;
-use Bitrix\Main\Application;
 use Bitrix\Main\NotSupportedException;
 use CCrmDeal;
 use CCrmOwnerType;
@@ -12,8 +11,6 @@ class ClientFieldsRestriction extends Bitrix24QuantityRestriction
 {
 	protected int $entityTypeId;
 
-	private const CACHE_DIR = '/crm/entity_count/';
-	private const CACHE_TTL = 60*60; // 1 hour
 	private const RESTRICTION_SLIDER_CODE = 'limit_crm_filter_deals';
 	private const MAX_RESTRICTION_SLIDER_CODE = 'limit_crm_filter_50000_fields';
 
@@ -48,19 +45,18 @@ class ClientFieldsRestriction extends Bitrix24QuantityRestriction
 
 	public function getCount(int $entityTypeId): int
 	{
-		$cache = Application::getInstance()->getCache();
 		$cacheId = 'crm_client_fields_restriction_count_' . $entityTypeId;
 
-		if ($cache->initCache(self::CACHE_TTL, $cacheId, self::CACHE_DIR))
+		if ($this->cache->initCache(self::CACHE_TTL, $cacheId, self::CACHE_DIR))
 		{
-			return (int)$cache->getVars()['count'];
+			return (int)$this->cache->getVars()['count'];
 		}
 
 		if ($entityTypeId === CCrmOwnerType::Deal)
 		{
-			$cache->startDataCache();
+			$this->cache->startDataCache();
 			$count = CCrmDeal::GetTotalCount();
-			$cache->endDataCache(['count' => $count]);
+			$this->cache->endDataCache(['count' => $count]);
 
 			return $count;
 		}

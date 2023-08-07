@@ -2,7 +2,6 @@
  * @module im/messenger/lib/ui/base/carousel
  */
 jn.define('im/messenger/lib/ui/base/carousel', (require, exports, module) => {
-
 	const { CarouselItem } = require('im/messenger/lib/ui/base/carousel/carousel-item');
 	const { Type } = require('type');
 	class Carousel extends LayoutComponent
@@ -18,9 +17,9 @@ jn.define('im/messenger/lib/ui/base/carousel', (require, exports, module) => {
 		{
 			super(props);
 			this.currentItemKey = 1;
-			this.itemList = this.prepareItemListForRender(props.itemList);
+			this.state.itemList = this.prepareItemListForRender(props.itemList);
 			this.gridViewRef = null;
-			this.state.isVisible = this.itemList.length > 0;
+			this.state.isVisible = this.state.itemList.length > 0;
 			if (props.ref && Type.isFunction(props.ref))
 			{
 				props.ref(this);
@@ -32,40 +31,49 @@ jn.define('im/messenger/lib/ui/base/carousel', (require, exports, module) => {
 			return GridView({
 				style: {
 					height: this.state.isVisible === true ? 100 : 0,
+					backgroundColor: '#F5F7F8',
 				},
 				params: {
-					orientation: "horizontal",
+					orientation: 'horizontal',
 					rows: 1,
 				},
 				showsHorizontalScrollIndicator: true,
 				isScrollable: true,
-				data: [{items: this.itemList}],
+				data: [{ items: this.state.itemList }],
 				renderItem: (props) => {
 					return new CarouselItem({
 						...props,
-						onClick: itemData => {
+						onClick: (itemData) => {
 							this.removeItem(itemData);
 							this.props.onItemSelected(itemData);
-						}
+						},
 					});
 				},
-				ref: ref => this.gridViewRef = ref,
+				ref: (ref) => {
+					this.gridViewRef = ref;
+				},
 			});
 		}
 
 		addItem(itemData)
 		{
-			if (this.itemList.length === 0)
+			if (this.state.itemList.length === 0)
 			{
-				let animator = this.gridViewRef.animate(
+				const animator = this.gridViewRef.animate(
 					{
 						duration: 200,
 						height: 100,
 						option: 'linear',
 					},
 					() => {
-						this.setState({isVisible : true}, () => {
-							this.addItemToGrid(itemData);
+						const item = {
+							data: itemData,
+							parentEmitter: this.emitter,
+						};
+
+						this.setState({
+							isVisible: true,
+							itemList: [this.prepareItemForRender(item)],
 						});
 					},
 				);
@@ -78,7 +86,7 @@ jn.define('im/messenger/lib/ui/base/carousel', (require, exports, module) => {
 
 		addItemToGrid(itemData)
 		{
-			let item = this.itemList.find(currentItem => currentItem.data.id === itemData.id);
+			let item = this.state.itemList.find((currentItem) => currentItem.data.id === itemData.id);
 			if (!Type.isUndefined(item))
 			{
 				return;
@@ -89,25 +97,25 @@ jn.define('im/messenger/lib/ui/base/carousel', (require, exports, module) => {
 				parentEmitter: this.emitter,
 			};
 			item = this.prepareItemForRender(item);
-			this.itemList = [...this.itemList, item];
+			this.state.itemList = [...this.state.itemList, item];
 
 			if (Application.getPlatform() === 'ios' && Application.getApiVersion() < 49)
 			{
 				this.gridViewRef.appendRows([item], 'fade');
-				this.gridViewRef.scrollTo(0, (this.itemList.length - 1), true);
+				this.gridViewRef.scrollTo(0, (this.state.itemList.length - 1), true);
 
 				return;
 			}
 
 			this.gridViewRef
 				.appendRows([item], 'fade')
-				.then(() => this.gridViewRef.scrollTo(0, (this.itemList.length - 1), true))
+				.then(() => this.gridViewRef.scrollTo(0, (this.state.itemList.length - 1), true))
 			;
 		}
-		
+
 		removeItem(itemData)
 		{
-			const item = this.itemList.find(currentItem => currentItem.data.id === itemData.id);
+			const item = this.state.itemList.find((currentItem) => currentItem.data.id === itemData.id);
 			if (Type.isUndefined(item))
 			{
 				return;
@@ -115,16 +123,16 @@ jn.define('im/messenger/lib/ui/base/carousel', (require, exports, module) => {
 
 			const { section, index } = this.gridViewRef.getElementPosition(item.key);
 			this.gridViewRef.deleteRow(section, index, 'fade', () => {
-				this.itemList = this.itemList.filter(currentItem => currentItem.data.id !== itemData.id);
-				if (this.itemList.length === 0)
+				this.state.itemList = this.state.itemList.filter((currentItem) => currentItem.data.id !== itemData.id);
+				if (this.state.itemList.length === 0)
 				{
-					let animator = this.gridViewRef.animate(
+					const animator = this.gridViewRef.animate(
 						{
 							duration: 100,
 							height: 0,
 							option: 'linear',
 						},
-						() => this.setState({isVisible : false}),
+						() => this.setState({ isVisible: false }),
 					);
 					animator.start();
 				}
@@ -138,20 +146,23 @@ jn.define('im/messenger/lib/ui/base/carousel', (require, exports, module) => {
 				return [];
 			}
 
-			return itemList.map(item => this.prepareItemForRender(item));
+			return itemList.map((item) => this.prepareItemForRender(item));
 		}
 
 		prepareItemForRender(item)
 		{
-			if (!item.key)
-			{
-				item.key = (this.currentItemKey++).toString();
-			}
-			return {
+			const result = {
 				...item,
 				type: 'carousel',
 				size: this.props.size === 'L' ? 'L' : 'M',
 			};
+
+			if (!item.key)
+			{
+				result.key = (this.currentItemKey++).toString();
+			}
+
+			return result;
 		}
 	}
 

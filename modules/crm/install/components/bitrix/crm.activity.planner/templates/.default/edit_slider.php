@@ -86,23 +86,23 @@ $pageAsset->addCss('/bitrix/js/calendar/planner-style.css');
 		<?else:?>
 		<form data-role="form">
 			<div class="crm-activity-planner-slider-header crm-activity-planner-slider-header-icon crm-activity-planner-slider-header-icon-<?=$arResult['TYPE_ICON']?>">
-				<div class="crm-activity-planner-slider-header-title"><?=htmlspecialcharsbx($provider::getTypeName($activity['PROVIDER_TYPE_ID'], $activity['DIRECTION'])) ?></div>
+				<div class="crm-activity-planner-slider-header-title"><?=htmlspecialcharsbx($provider::getTypeName($activity['PROVIDER_TYPE_ID'], $activity['DIRECTION'] ?? null)) ?></div>
 				<div class="crm-activity-planner-slider-header-control-block">
 					<? $APPLICATION->showViewContent('planner_slider_header') ?>
 					<div class="crm-activity-planner-slider-header-control-item crm-activity-planner-slider-header-control-important crm-activity-planner-slider-header-icon-flame-active">
 						<div class="crm-activity-popup-timeline-checkbox-container">
 							<label class="crm-activity-popup-timeline-checkbox-block">
-								<input type="checkbox" name="completed" value="Y" class="crm-activity-popup-timeline-checkbox" <?if ($activity['COMPLETED'] == 'Y'):?>checked<?endif?>>
+								<input type="checkbox" name="completed" value="Y" class="crm-activity-popup-timeline-checkbox" <?if (($activity['COMPLETED'] ?? 'N') == 'Y'):?>checked<?endif?>>
 								<span class="crm-activity-popup-timeline-checkbox-text"><?=GetMessage('CRM_ACTIVITY_PLANNER_COMPLETED_SLIDER')?></span>
 							</label>
 							<label class="crm-activity-popup-timeline-checkbox-block">
-								<input type="checkbox" name="important" value="Y" class="crm-activity-popup-timeline-checkbox" data-role="priority-switcher" <?if ($activity['PRIORITY'] == CCrmActivityPriority::High):?>checked<?endif?>>
+								<input type="checkbox" name="important" value="Y" class="crm-activity-popup-timeline-checkbox" data-role="priority-switcher" <?if (($activity['PRIORITY'] ?? null) == CCrmActivityPriority::High):?>checked<?endif?>>
 								<span class="crm-activity-popup-timeline-checkbox-text"><?=GetMessage('CRM_ACTIVITY_PLANNER_IMPORTANT_SLIDER')?></span>
 								<svg class="crm-activity-popup-timeline-checkbox-flame" viewBox="0 0 12 17" version="1.1">
 									<g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
 										<g transform="translate(-489.000000, -341.000000)">
 											<g transform="translate(489.000000, 341.000000)">
-												<path class="crm-activity-flame <?if ($activity['PRIORITY'] == CCrmActivityPriority::High):?>crm-activity-popup-container-open<?endif?>" d="M6.99737834,5.68434189e-14 C4.48779883,1.21921125 -1.13686838e-13,5.48917695 -1.13686838e-13,10.0533128 C-1.13686838e-13,14.6177213 4.28414257,16.0853005 4.28414257,16.0853005 L7.71167473,16.0853005 C7.71167473,16.0853005 11.9958173,14.7055089 11.9958173,10.8076861 C11.9958173,5.31551023 6.52190776,4.21298556 6.99737834,5.68434189e-14" fill="#A6ACB3" data-role="priority-flame"></path>
+												<path class="crm-activity-flame <?if (($activity['PRIORITY'] ?? null) == CCrmActivityPriority::High):?>crm-activity-popup-container-open<?endif?>" d="M6.99737834,5.68434189e-14 C4.48779883,1.21921125 -1.13686838e-13,5.48917695 -1.13686838e-13,10.0533128 C-1.13686838e-13,14.6177213 4.28414257,16.0853005 4.28414257,16.0853005 L7.71167473,16.0853005 C7.71167473,16.0853005 11.9958173,14.7055089 11.9958173,10.8076861 C11.9958173,5.31551023 6.52190776,4.21298556 6.99737834,5.68434189e-14" fill="#A6ACB3" data-role="priority-flame"></path>
 												<path d="M3,12.9755379 C3,15.605875 5.33680504,16.4515986 5.33680504,16.4515986 L7.20636804,16.4515986 C7.20636804,16.4515986 8.99790865,15.6564644 8.99790865,13.4102615 C8.99790865,10.2452788 6.54431789,10.4536899 5.99895433,8 C4.63009278,8.70259631 3,10.3453579 3,12.9755379 Z" fill="#EEF2F4"></path>
 											</g>
 										</g>
@@ -116,13 +116,13 @@ $pageAsset->addCss('/bitrix/js/calendar/planner-style.css');
 
 			<div data-role="wrapper-container" data-title="<?=htmlspecialcharsbx($provider::getPlannerTitle($activity))?>">
 
-					<input type="hidden" name="id" value="<?=(int)$activity['ID']?>" data-role="field-id">
+					<input type="hidden" name="id" value="<?=(int)($activity['ID'] ?? 0)?>" data-role="field-id">
 					<input type="hidden" name="type" value="<?=(int)$activity['TYPE_ID']?>" data-role="field-type-id">
 					<input type="hidden" name="providerId" value="<?=htmlspecialcharsbx($activity['PROVIDER_ID'])?>" data-role="field-provider-id">
 					<input type="hidden" name="providerTypeId" value="<?=htmlspecialcharsbx($activity['PROVIDER_TYPE_ID'])?>" data-role="field-provider-type-id">
-					<input type="hidden" name="direction" value="<?=(int)$activity['DIRECTION']?>" data-role="field-custom-type-id">
-					<input type="hidden" name="startTime" value="<?=htmlspecialcharsbx($activity['START_TIME'])?>" data-role="field-start-time">
-					<input type="hidden" name="endTime" value="<?=htmlspecialcharsbx($activity['END_TIME'])?>" data-role="field-end-time">
+					<input type="hidden" name="direction" value="<?=(int)($activity['DIRECTION'] ?? 0)?>" data-role="field-custom-type-id">
+					<input type="hidden" name="startTime" value="<?=htmlspecialcharsbx($activity['START_TIME'] ?? '')?>" data-role="field-start-time">
+					<input type="hidden" name="endTime" value="<?=htmlspecialcharsbx($activity['END_TIME'] ?? '')?>" data-role="field-end-time">
 					<input type="hidden" name="notifyValue" value="<?=(int)$activity['NOTIFY_VALUE']?>" data-role="field-notify-value">
 					<input type="hidden" name="notifyType" value="<?=(int)$activity['NOTIFY_TYPE']?>" data-role="field-notify-type">
 					<input type="hidden" name="ownerType" value="<?=CCrmOwnerType::ResolveName($activity['OWNER_TYPE_ID'])?>" data-role="field-owner-type">
@@ -221,7 +221,7 @@ $pageAsset->addCss('/bitrix/js/calendar/planner-style.css');
 										<span class="crm-activity-popup-info-location-text"><?=htmlspecialcharsbx($field['LABEL'])?>:</span>
 										<input type="text" name="<?= mb_strtolower($name)?>" value="<?=\CModule::IncludeModule('calendar')
 											? htmlspecialcharsbx(CCalendar::GetTextLocation($field['VALUE']))
-											: htmlspecialcharsbx($field['VALUE'])?>" class="crm-activity-popup-info-location" <?if($field['PLACEHOLDER'] != ''):?>placeholder="<?=htmlspecialcharsbx($field['PLACEHOLDER'])?>"<?endif?> data-role="focus-on-show">
+											: htmlspecialcharsbx($field['VALUE'])?>" class="crm-activity-popup-info-location" <?if(($field['PLACEHOLDER'] ?? '') != ''):?>placeholder="<?=htmlspecialcharsbx($field['PLACEHOLDER'])?>"<?endif?> data-role="focus-on-show">
 										</div><?
 										break;
 									case 'TEXTAREA':?>
@@ -254,7 +254,7 @@ $pageAsset->addCss('/bitrix/js/calendar/planner-style.css');
 											case 'DESCRIPTION': ?>
 												<div class="crm-activity-popup-info-person-detail-description">
 												<label class="crm-activity-popup-info-person-detail-description-name"><?=GetMessage('CRM_ACTIVITY_PLANNER_DESCRIPTION')?>:</label>
-												<textarea name="description" class="crm-activity-popup-info-person-detail-description-input"><?=htmlspecialcharsbx($activity['DESCRIPTION'])?></textarea>
+												<textarea name="description" class="crm-activity-popup-info-person-detail-description-input"><?=htmlspecialcharsbx($activity['DESCRIPTION'] ?? '')?></textarea>
 												</div><?
 												break;
 											case 'PROVIDER_TYPE':

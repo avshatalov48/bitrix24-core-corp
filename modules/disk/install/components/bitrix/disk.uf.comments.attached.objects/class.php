@@ -188,14 +188,6 @@ class CDiskUfCommentsAttachesComponent extends BaseComponent
 
 			$data['CURRENT_USER_IS_OWNER'] = $attachedObject->getCreatedBy() == $this->getUser()->getId();
 			$data['ALLOW_AUTO_COMMENT'] = $attachedObject->getAllowAutoComment();
-			$data['ATTRIBUTES_FOR_VIEWER'] = Ui\Viewer::getAttributesByAttachedObject($attachedObject, array(
-				'canUpdate' => $data['CAN_UPDATE'],
-				'canFakeUpdate' => true,
-				'showStorage' => false,
-				'externalId' => false,
-				'relativePath' => false,
-			));
-
 			$sourceUri = new \Bitrix\Main\Web\Uri($urlManager->getUrlUfController('download', array('attachedId' => $id)));
 			$attr = FileAttributes::buildByFileId($file->getFileId(), $sourceUri)
 				->setObjectId($attachedObject->getObjectId())

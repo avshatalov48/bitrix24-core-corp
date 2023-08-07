@@ -44,26 +44,21 @@ jn.define('crm/timeline/scheduler/providers/document', (require, exports, module
 			return 800;
 		}
 
-		static isSupported(context = {})
-		{
-			if (!context.detailCard)
-			{
-				return false;
-			}
-			const detailCardParams = context.detailCard.getComponentParams();
-
-			return Boolean(get(detailCardParams, 'isDocumentPreviewerAvailable', false));
-		}
-
 		static isAvailableInMenu(context = {})
 		{
 			if (!context.detailCard)
 			{
 				return false;
 			}
+
 			const detailCardParams = context.detailCard.getComponentParams();
 
-			return Boolean(get(detailCardParams, 'isDocumentPreviewerAvailable', false));
+			return get(detailCardParams, 'isDocumentGenerationEnabled', false);
+		}
+
+		static isSupported(context = {})
+		{
+			return true;
 		}
 
 		/**
@@ -81,7 +76,7 @@ jn.define('crm/timeline/scheduler/providers/document', (require, exports, module
 				provider: {
 					options: {
 						providerClassName,
-						entityId: entity.id,
+						value: entity.id,
 					},
 				},
 				widgetParams: {
@@ -134,7 +129,7 @@ jn.define('crm/timeline/scheduler/providers/document', (require, exports, module
 		 */
 		static askAboutUsingPreviousDocumentNumber(provider, templateId, entityId, onSuccess, onDecline)
 		{
-			provider = provider.replace(/\\/g, '\\\\');
+			provider = provider.replaceAll('\\', '\\\\');
 			BX.ajax.runAction('documentgenerator.api.document.list', {
 				data: {
 					select: ['id', 'number'],

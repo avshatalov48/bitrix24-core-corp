@@ -212,6 +212,57 @@ BX.namespace('Recyclebin');
 		return p;
 	};
 
+	BX.Recyclebin.getTotalCount = function() {
+		if (this.getTotalCountProceed)
+		{
+			return;
+		}
+		this.getTotalCountProceed = true;
+		var container = document.getElementById('recyclebin_row_count_wrapper');
+
+		var button = container.querySelector('a');
+		if (button)
+		{
+			button.style.display = 'none';
+		}
+
+		var loader = container.querySelector('.recyclebin-circle-loader-circular');
+		if (loader)
+		{
+			loader.style.display = 'inline';
+		}
+
+		BX.ajax.runComponentAction('bitrix:recyclebin.list', 'getTotalCount', {
+			mode: 'class',
+			data: {},
+		}).then(function(response) {
+				var loader = container.querySelector('.recyclebin-circle-loader-circular');
+				if (loader)
+				{
+					loader.style.display = 'none';
+				}
+				if (response.data)
+				{
+					response.data = (typeof response.data == 'number') ? response.data : 0;
+					var button = container.querySelector('a');
+					if (button)
+					{
+						button.remove();
+					}
+					container.append(response.data);
+				}
+				this.getTotalCountProceed = false;
+			}.bind(this),
+		).catch(
+			function(response) {
+				if (response.errors)
+				{
+					alert(response.errors);
+				}
+				this.getTotalCountProceed = false;
+			}.bind(this),
+		);
+	};
 }).call(this);
 
 if (typeof(BX.FilterEntitySelector) === "undefined")

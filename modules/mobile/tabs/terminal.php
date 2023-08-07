@@ -113,4 +113,9 @@ class Terminal implements Tabable {
 	{
 		$this->context = $context;
 	}
+
+	public function getIconId(): string
+	{
+		return $this->getId();
+	}
 }

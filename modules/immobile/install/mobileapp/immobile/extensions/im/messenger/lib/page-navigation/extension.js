@@ -1,11 +1,7 @@
-/* eslint-disable bitrix-rules/no-pseudo-private */
-/* eslint-disable flowtype/require-return-type */
-
 /**
  * @module im/messenger/lib/page-navigation
  */
 jn.define('im/messenger/lib/page-navigation', (require, exports, module) => {
-
 	const { Type } = require('type');
 
 	class PageNavigation

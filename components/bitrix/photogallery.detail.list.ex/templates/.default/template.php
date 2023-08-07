@@ -19,7 +19,7 @@ CJSCore::Init(array('window', 'ajax', 'tooltip', 'popup'));
 				Input params
 ********************************************************************/
 // PICTURE
-$temp = array("STRING" => preg_replace("/[^0-9]/is", "/", $arParams["THUMBNAIL_SIZE"]));
+$temp = array("STRING" => preg_replace("/[^0-9]/is", "/", $arParams["THUMBNAIL_SIZE"] ?? ''));
 $explodeResult = explode("/", $temp["STRING"]);
 $temp["WIDTH"] = $explodeResult[0] ?? 0;
 $temp["HEIGHT"] = $explodeResult[1] ?? 0;
@@ -170,7 +170,7 @@ if (($_REQUEST["return_array"] ?? '') == "Y" && $_REQUEST["UCID"] == $arParams["
 		itemsCount: '<?= intval($arResult["ALL_ELEMENTS_CNT"])?>',
 		pageCount: '<?= intval($arResult["NAV_RESULT_NavPageCount"])?>'
 	};
-	<?if($_REQUEST['get_elements_html']):?>
+	<?if ($_REQUEST['get_elements_html'] ?? null):?>
 		window.bxphres.elementsHTML = '<?= CUtil::JSEscape(trim($elementsHTML))?>';
 	<?endif;?>
 	</script><?
@@ -190,7 +190,7 @@ BX.ready(function(){
 	top.oBXPhotoList['<?= $ucid?>'] = new window.BXPhotoList({
 		uniqueId: '<?= $ucid?>',
 		actionUrl: '<?= CUtil::JSEscape($arParams["ACTION_URL"])?>',
-		actionPostUrl: <?= ($arParams['CHECK_ACTION_URL'] == 'Y' ? 'false' : 'true')?>,
+		actionPostUrl: <?= (($arParams['CHECK_ACTION_URL'] ?? null) == 'Y' ? 'false' : 'true')?>,
 		itemsCount: '<?= intval($arResult["ALL_ELEMENTS_CNT"])?>',
 		itemsPageSize: '<?= intval($arResult["NAV_RESULT_NavPageSize"])?>',
 		navName: 'PAGEN_<?= intval($arResult["NAV_RESULT_NavNum"])?>',
@@ -212,7 +212,7 @@ BX.ready(function(){
 		userSettings: <?= CUtil::PhpToJSObject($arParams["USER_SETTINGS"])?>,
 		actionUrl: '<?= CUtil::JSEscape($arParams["ACTION_URL"])?>',
 		responderUrl: '/bitrix/components/bitrix/photogallery.detail.list.ex/responder.php?analyticsLabel[action]=viewPhoto',
-		actionPostUrl: <?= ($arParams['CHECK_ACTION_URL'] == 'Y' ? 'false' : 'true')?>,
+		actionPostUrl: <?= (($arParams['CHECK_ACTION_URL'] ?? null) == 'Y' ? 'false' : 'true')?>,
 		sections: <?= CUtil::PhpToJSObject(array(array(
 				"ID" => $arResult['SECTION']["ID"],
 				"NAME" => $arResult['SECTION']['NAME']
@@ -226,7 +226,7 @@ BX.ready(function(){
 		showViewsCont: '<?= $arParams["SHOW_SHOWS"]?>',
 		commentsCount: '<?= $arParams["COMMENTS_COUNT"]?>',
 		pElementsCont: pPhotoCont<?=$ucid?>,
-		reloadItemsOnload: <?= ($arResult["MIN_ID"] > 0 ? $arResult["MIN_ID"] : 'false')?>,
+		reloadItemsOnload: <?= (($arResult["MIN_ID"] ?? 0) > 0 ? $arResult["MIN_ID"] : 'false')?>,
 		itemUrl: '<?= CUtil::JSEscape($arParams["DETAIL_ITEM_URL"])?>',
 		itemUrlHash: 'photo_<?=$arParams['SECTION_ID']?>_#ELEMENT_ID#',
 		sectionUrl: '<?= CUtil::JSEscape($arParams["ALBUM_URL"])?>',
@@ -235,8 +235,8 @@ BX.ready(function(){
 				view: '<?= $arParams["PERMISSION"] >= 'R'?>',
 				edit:  '<?= $arParams["PERMISSION"] >= 'U'?>',
 				moderate:  '<?= $arParams["PERMISSION"] >= 'X'?>',
-				viewComment: <?= $arParams["COMMENTS_PERM_VIEW"] == "Y" ? 'true' : 'false'?>,
-				addComment: <?= $arParams["COMMENTS_PERM_ADD"] == "Y" ? 'true' : 'false'?>
+				viewComment: <?= ($arParams["COMMENTS_PERM_VIEW"] ?? null) == "Y" ? 'true' : 'false'?>,
+				addComment: <?= ($arParams["COMMENTS_PERM_ADD"] ?? null) == "Y" ? 'true' : 'false'?>
 			},
 		userUrl: '<?= $arParams["PATH_TO_USER"]?>',
 		showTooltipOnUser: 'N',

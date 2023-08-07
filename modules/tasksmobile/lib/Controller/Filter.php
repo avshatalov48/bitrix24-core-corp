@@ -21,7 +21,15 @@ class Filter extends Controller
 	{
 		/** @var \Bitrix\Tasks\Helper\Filter $filterInstance */
 		$filterInstance = \Bitrix\Tasks\Helper\Filter::getInstance($this->getCurrentUser()->getId(), $groupId);
+		$filterOptions = $filterInstance->getOptions();
 		$presets = $filterInstance->getAllPresets();
+
+		foreach (array_keys($presets) as $id)
+		{
+			$filterSettings = ($filterOptions->getFilterSettings($id) ?? $filterOptions->getDefaultPresets()[$id]);
+			$sourceFields = $filterInstance->getFilters();
+			$presets[$id]['preparedFields'] = Options::fetchFieldValuesFromFilterSettings($filterSettings, [], $sourceFields);
+		}
 
 		return $this->preparePresetsForOutput($presets);
 	}
@@ -51,6 +59,7 @@ class Filter extends Controller
 			static fn ($key) => [
 				'id' => $key,
 				'name' => $presets[$key]['name'],
+				'fields' => ($presets[$key]['preparedFields'] ?? []),
 			],
 			array_keys($presets)
 		);

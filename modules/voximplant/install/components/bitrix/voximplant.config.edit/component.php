@@ -26,7 +26,7 @@ if (!$permissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_LI
  * Input params
  ********************************************************************/
 /***************** BASE ********************************************/
-$arParams["ID"] = (int)$arParams["ID"] ?: (int)$_REQUEST["ID"];
+$arParams["ID"] = (int)($arParams["ID"] ?? $_REQUEST["ID"]);
 /********************************************************************
  * /Input params
  ********************************************************************/
@@ -50,7 +50,7 @@ $arResult = array(
 		true
 	),
 );
-$melodies = array("MELODY_WELCOME", "MELODY_WAIT", "MELODY_HOLD", "MELODY_VOICEMAIL", "WORKTIME_DAYOFF_MELODY", "MELODY_RECORDING", "MELODY_VOTE", "MELODY_VOTE_END", "MELODY_ENQUEUE");
+$melodies = ["MELODY_WELCOME", "MELODY_WAIT", "MELODY_HOLD", "MELODY_VOICEMAIL", "WORKTIME_DAYOFF_MELODY", "MELODY_RECORDING", "MELODY_VOTE", "MELODY_VOTE_END", "MELODY_ENQUEUE"];
 if ($arResult["ITEM"])
 {
 	$name = $arResult["ITEM"]["PHONE_NAME"] ?: CVoxImplantConfig::GetDefaultPhoneName($arResult["ITEM"]);
@@ -139,6 +139,64 @@ $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 if ($request->isPost() && check_bitrix_sessid())
 {
 	$post = $request->getPostList()->toArray();
+
+	$post['SIP']['PHONE_NAME'] ??= null;
+	$post['SIP']['SERVER'] ??= null;
+	$post['SIP']['LOGIN'] ??= null;
+	$post['SIP']['PASSWORD'] ??= null;
+	$post['SIP']['NEED_UPDATE'] ??= null;
+	$post['SIP']['DETECT_LINE_NUMBER'] ??= null;
+	$post['SIP']['LINE_DETECT_HEADER_ORDER'] ??= null;
+	$post['SIP']['AUTH_USER'] ??= null;
+	$post['SIP']['OUTBOUND_PROXY'] ??= null;
+	$post['SIP']['LINE_DETECT_HEADER_ORDER'] ??= null;
+	$post['SIP']['LINE_DETECT_HEADER_ORDER'] ??= null;
+	$post['CAN_BE_SELECTED'] ??= null;
+	$post['TRANSCRIBE'] ??= null;
+	$post['TRANSCRIBE_LANG'] ??= null;
+	$post['TRANSCRIBE_PROVIDER'] ??= null;
+	$post['CAN_BE_SELECTED'] ??= null;
+	$post['USE_SPECIFIC_BACKUP_NUMBER'] ??= null;
+	$post['BACKUP_NUMBER'] ??= null;
+	$post['IVR_ID'] ??= null;
+	$post['IVR'] ??= null;
+	$post['DIRECT_CODE'] ??= null;
+	$post['DIRECT_CODE_RULE'] ??= null;
+	$post['CRM'] ??= null;
+	$post['CRM_RULE'] ??= null;
+	$post['CRM_CREATE'] ??= null;
+	$post['CRM_CREATE_CALL_TYPE'] ??= null;
+	$post['CRM_FORWARD'] ??= null;
+	$post['CRM_TRANSFER_CHANGE'] ??= null;
+	$post['CRM_SOURCE'] ??= null;
+	$post['TIMEMAN'] ??= null;
+	$post['QUEUE_ID'] ??= null;
+	$post['FORWARD_LINE_ENABLED'] ??= null;
+	$post['FORWARD_LINE'] ??= null;
+	$post['RECORDING'] ??= null;
+	$post['RECORDING_NOTICE'] ??= null;
+	$post['RECORDING_STEREO'] ??= null;
+	$post['VOTE'] ??= null;
+	$post['MELODY_LANG'] ??= null;
+	$post['MELODY_WELCOME_ENABLE'] ??= null;
+	$post['WORKTIME_HOLIDAYS'] ??= null;
+	$post['WORKTIME_ENABLE'] ??= null;
+	$post['WORKTIME_TIMEZONE'] ??= null;
+	$post['WORKTIME_DAYOFF'] ??= null;
+	$post['WORKTIME_FROM'] ??= null;
+	$post['WORKTIME_TO'] ??= null;
+	$post['WORKTIME_DAYOFF_RULE'] ??= null;
+	$post['WORKTIME_DAYOFF_NUMBER'] ??= null;
+	$post['WORKTIME_DAYOFF_MELODY'] ??= null;
+	$post['USE_SIP_TO'] ??= null;
+	$post['CALLBACK_REDIAL'] ??= null;
+	$post['CALLBACK_REDIAL_ATTEMPTS'] ??= null;
+	$post['CALLBACK_REDIAL_PERIOD'] ??= null;
+	$post['LINE_PREFIX'] ??= null;
+	$post['BACKUP_LINE'] ??= null;
+	$post['REDIRECT_WITH_CLIENT_NUMBER'] ??= null;
+	$post['IFRAME'] ??= null;
+	$post['LINE_ACCESS'] ??= [];
 
 	$skipSaving = false;
 	$arFieldsSip = Array();
@@ -289,6 +347,7 @@ if ($request->isPost() && check_bitrix_sessid())
 		$post["BACKUP_NUMBER"] = "";
 	}
 
+	$normalizedBackupNumber = null;
 	if ($post["BACKUP_NUMBER"] != "")
 	{
 		$normalizedBackupNumber = CVoxImplantPhone::Normalize($post["BACKUP_NUMBER"], 1);
@@ -357,7 +416,7 @@ if ($request->isPost() && check_bitrix_sessid())
 	{
 		foreach ($melodies as $melody)
 		{
-			$arFields[$melody] = $post[$melody];
+			$arFields[$melody] = $post[$melody] ?? null;
 			if (isset($post[$melody."_del"]))
 			{
 				CFile::Delete($post[$melody]);

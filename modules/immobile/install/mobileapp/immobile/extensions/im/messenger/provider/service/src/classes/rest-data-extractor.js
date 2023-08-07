@@ -1,11 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/provider/service/classes/rest-data-extractor
  */
 jn.define('im/messenger/provider/service/classes/rest-data-extractor', (require, exports, module) => {
-
 	const { RestMethod } = require('im/messenger/const/rest');
 	const { UserManager } = require('im/messenger/lib/user-manager');
 
@@ -29,11 +25,13 @@ jn.define('im/messenger/provider/service/classes/rest-data-extractor', (require,
 			this.messagesToStore = {};
 			this.pinnedMessageIds = [];
 
-			Object.keys(response).forEach(restManagerResponseKey => {
+			Object.keys(response).forEach((restManagerResponseKey) => {
 				const restMethod = restManagerResponseKey.split('|')[0];
 				const ajaxResult = response[restManagerResponseKey];
 
+				// eslint-disable-next-line no-param-reassign
 				delete response[restManagerResponseKey];
+				// eslint-disable-next-line no-param-reassign
 				response[restMethod] = ajaxResult.data();
 			});
 
@@ -104,6 +102,7 @@ jn.define('im/messenger/provider/service/classes/rest-data-extractor', (require,
 			if (soloUser)
 			{
 				this.rawUsers = [soloUser];
+
 				return;
 			}
 
@@ -137,7 +136,7 @@ jn.define('im/messenger/provider/service/classes/rest-data-extractor', (require,
 			this.dialogues[this.dialogId] = {
 				...this.dialogues[this.dialogId],
 				hasPrevPage,
-				hasNextPage
+				hasNextPage,
 			};
 		}
 
@@ -160,12 +159,12 @@ jn.define('im/messenger/provider/service/classes/rest-data-extractor', (require,
 				return;
 			}
 
-			const {list = [], users = [], files: pinnedFiles = []} = pinMessageList;
+			const { list = [], users = [], files: pinnedFiles = [] } = pinMessageList;
 			this.rawUsers = [...this.rawUsers, ...users];
-			pinnedFiles.forEach(file => {
+			pinnedFiles.forEach((file) => {
 				this.files[file.id] = file;
 			});
-			list.forEach(pinnedItem => {
+			list.forEach((pinnedItem) => {
 				this.pinnedMessageIds.push(pinnedItem.messageId);
 				this.messagesToStore[pinnedItem.message.id] = pinnedItem.message;
 			});
@@ -173,11 +172,11 @@ jn.define('im/messenger/provider/service/classes/rest-data-extractor', (require,
 
 		extractMessages(data)
 		{
-			const {messages, users, files} = data;
-			files.forEach(file => {
+			const { messages, users, files } = data;
+			files.forEach((file) => {
 				this.files[file.id] = file;
 			});
-			messages.forEach(message => {
+			messages.forEach((message) => {
 				this.messages[message.id] = message;
 			});
 
@@ -186,14 +185,17 @@ jn.define('im/messenger/provider/service/classes/rest-data-extractor', (require,
 
 		fillChatsForUsers()
 		{
-			this.rawUsers.forEach(user => {
-				if (!this.dialogues[user.id])
+			this.rawUsers.forEach((user) => {
+				if (this.dialogues[user.id])
 				{
-					this.dialogues[user.id] = UserManager.getDialogForUser(user);
+					this.dialogues[user.id] = {
+						...this.dialogues[user.id],
+						...UserManager.getDialogForUser(user),
+					};
 				}
 				else
 				{
-					this.dialogues[user.id] = {...this.dialogues[user.id], ...UserManager.getDialogForUser(user)};
+					this.dialogues[user.id] = UserManager.getDialogForUser(user);
 				}
 			});
 		}

@@ -7,9 +7,7 @@ use Bitrix\ImOpenLines\Im;
 use	Bitrix\ImOpenLines\Session;
 use Bitrix\ImOpenLines\Widget\FormHandler;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
 
-Loc::loadMessages(__FILE__);
 
 /**
  * Class Welcome
@@ -52,7 +50,8 @@ class Welcome
 		$isBotAnswered = $this->session['JOIN_BOT'] ?? false;
 
 		$isAllowedAutomaticMessage = $isInboundCall && !$isBotAnswered;
-		$isNeededAutomaticMessage = $this->chat->isNowCreated()
+		$isNeededAutomaticMessage =
+			$this->chat->isNowCreated()
 			|| $this->isTextAfterWelcomeFormIsNeeded()
 			|| ($isNewSession && $sendWelcomeEachSession);
 
@@ -78,18 +77,16 @@ class Welcome
 
 	/**
 	 * Send a welcome message.
-	 *
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public function sendMessage()
 	{
 		$result = false;
 
 		if (
-			$this->config['WELCOME_MESSAGE'] == 'Y' &&
-			isset($this->config['WELCOME_MESSAGE_TEXT']) &&
-			$this->session['SOURCE'] != 'network' &&
-			$this->sessionManager->isEnableSendSystemMessage()
+			$this->config['WELCOME_MESSAGE'] == 'Y'
+			&& isset($this->config['WELCOME_MESSAGE_TEXT'])
+			&& $this->session['SOURCE'] != Connector::TYPE_NETWORK
+			&& $this->sessionManager->isEnableSendSystemMessage()
 		)
 		{
 			$result = Im::addAutomaticSystemMessage(
@@ -119,7 +116,7 @@ class Welcome
 		}
 
 		$welcomeForm = new \Bitrix\Crm\WebForm\Form($this->config['WELCOME_FORM_ID']);
-		if (!$welcomeForm || !$welcomeForm->isActive())
+		if (!$welcomeForm->isActive())
 		{
 			return false;
 		}
@@ -159,9 +156,10 @@ class Welcome
 	private function isWelcomeFormNeeded(): bool
 	{
 		if (
-			$this->session['SOURCE'] !== Connector::TYPE_LIVECHAT ||
-			$this->config['USE_WELCOME_FORM'] !== 'Y' ||
-			$this->config['WELCOME_FORM_DELAY'] !== 'Y')
+			$this->session['SOURCE'] !== Connector::TYPE_LIVECHAT
+			|| $this->config['USE_WELCOME_FORM'] !== 'Y'
+			|| $this->config['WELCOME_FORM_DELAY'] !== 'Y'
+		)
 		{
 			return false;
 		}
@@ -171,6 +169,7 @@ class Welcome
 			$clientChatId = Chat::parseLinesChatEntityId($this->session['USER_CODE'])['connectorChatId'];
 			$this->clientChat = new Chat($clientChatId);
 		}
+
 		$isFormNeeded =
 			$this->clientChat->getFieldData(Chat::FIELD_LIVECHAT)['WELCOME_FORM_NEEDED'] === 'Y'
 			&& $this->chat->isNowCreated();

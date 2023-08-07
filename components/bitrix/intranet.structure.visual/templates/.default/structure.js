@@ -476,7 +476,7 @@ BX.IntranetVSBlock.prototype._showNext = function (data) {
 				clearTimeout(this.HIDE_TIMEOUT);
 				this.HIDE_TIMEOUT = null;
 			}
-			return BX.PreventDefault(e);
+			return e.preventDefault();
 		}, this));
 
 		if (BX.type.isFunction(this._showNextCallback))

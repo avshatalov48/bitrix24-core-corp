@@ -1996,9 +1996,15 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			}
 
 			if (isset($arParams['nPageTop']))
+			{
 				$arParamsOut['nPageTop'] = $arParams['nPageTop'];
+			}
 			elseif (isset($arParams['NAV_PARAMS']))
+			{
 				$arParamsOut['NAV_PARAMS'] = $arParams['NAV_PARAMS'];
+			}
+
+			$arParamsOut['DISTINCT'] = $arParams['DISTINCT'] ?? false;
 
 			$arFilter['CHECK_PERMISSIONS'] = 'Y';	// Always check permissions
 

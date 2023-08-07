@@ -15,6 +15,8 @@ return [
 		'./src/shared-storage/messages',
 		'./src/shared-storage/users',
 		'./src/shared-storage/files',
+		'./src/shared-storage/draft',
 		'./src/native/share-dialog',
+		'./src/simple-wrapper/map-cache',
 	],
 ];

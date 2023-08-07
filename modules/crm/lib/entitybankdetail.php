@@ -456,7 +456,7 @@ class EntityBankDetail
 
 		foreach ($fields as $fieldName => $fieldValue)
 		{
-			if (is_array($validationMap[$fieldName]))
+			if (isset($validationMap[$fieldName]) && is_array($validationMap[$fieldName]))
 			{
 				foreach ($validationMap[$fieldName] as $validateInfo)
 				{

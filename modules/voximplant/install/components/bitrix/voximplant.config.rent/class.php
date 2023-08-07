@@ -25,7 +25,7 @@ class CVoxImplantComponentConfigRent extends \CBitrixComponent
 	protected function prepareData()
 	{
 		$this->arResult['CAN_RENT_NUMBER'] = Limits::canRentNumber();
-		$this->arResult['RENT_PACKET_SIZE'] = (int)$_REQUEST['PACKET_SIZE'] ?: 1;
+		$this->arResult['RENT_PACKET_SIZE'] = (int)($_REQUEST['PACKET_SIZE'] ?? 1);
 
 		$account = new CVoxImplantAccount();
 		$this->arResult['CURRENT_BALANCE'] = $account->GetAccountBalance();

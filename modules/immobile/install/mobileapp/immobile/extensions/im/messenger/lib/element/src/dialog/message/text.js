@@ -1,11 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/lib/element/dialog/message/text
  */
 jn.define('im/messenger/lib/element/dialog/message/text', (require, exports, module) => {
-
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
 
 	/**
@@ -13,6 +9,10 @@ jn.define('im/messenger/lib/element/dialog/message/text', (require, exports, mod
 	 */
 	class TextMessage extends Message
 	{
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @param {CreateMessageOptions} options
+		 */
 		constructor(modelMessage = {}, options = {})
 		{
 			super(modelMessage, options);

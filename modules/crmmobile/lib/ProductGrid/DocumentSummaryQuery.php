@@ -2,11 +2,16 @@
 
 namespace Bitrix\CrmMobile\ProductGrid;
 
+use Bitrix\CatalogMobile\Catalog;
 use Bitrix\Crm\Order\BasketItem;
+use Bitrix\Crm\Order\PayableShipmentItem;
 use Bitrix\Crm\Order\Shipment;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Mobile\Integration\Catalog\Catalog;
+use Bitrix\Main\Loader;
 use Bitrix\Sale\Repository\PaymentRepository;
+
+Loader::requireModule('crm');
+Loader::requireModule('catalogmobile');
 
 final class DocumentSummaryQuery extends BaseSummaryQuery
 {
@@ -35,8 +40,13 @@ final class DocumentSummaryQuery extends BaseSummaryQuery
 		{
 			/**
 			 * @var Shipment $entity
+			 * @var PayableShipmentItem $delivery
 			 */
 			$entity = $delivery->getEntityObject();
+			if (!$entity)
+			{
+				continue;
+			}
 			$deliveryCost += $entity->getPrice();
 		}
 		$productCost = 0;

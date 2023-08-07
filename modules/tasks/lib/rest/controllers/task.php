@@ -828,23 +828,13 @@ final class Task extends Base
 			if (
 				isset($fields[$fieldName])
 				&& ($date = $fields[$fieldName])
+				&& is_string($date)
 			)
 			{
 				$timestamp = strtotime($date);
 				if ($timestamp !== false)
 				{
-					if (
-						isset($params['skipTimeZoneOffset'])
-						&& $params['skipTimeZoneOffset'] === $fieldName
-					)
-					{
-						$timestamp -= DateTime::createFromTimestamp($timestamp)->getSecondGmt();
-
-					}
-					else
-					{
-						$timestamp += \CTimeZone::GetOffset() - DateTime::createFromTimestamp($timestamp)->getSecondGmt();
-					}
+					$timestamp += \CTimeZone::GetOffset() - DateTime::createFromTimestamp($timestamp)->getSecondGmt();
 					$fields[$fieldName] = ConvertTimeStamp($timestamp, 'FULL');
 				}
 			}
@@ -1149,6 +1139,7 @@ final class Task extends Base
 		$params['PUBLIC_MODE'] = 'Y'; // VERY VERY BAD HACK! DONT REPEAT IT !
 		$params['USE_MINIMAL_SELECT_LEGACY'] = 'N'; // VERY VERY BAD HACK! DONT REPEAT IT !
 		$params['RETURN_ACCESS'] = ($params['RETURN_ACCESS'] ?? 'N'); // VERY VERY BAD HACK! DONT REPEAT IT !.. too late
+		$params['DISTINCT'] = true;
 
 		try
 		{
@@ -1208,7 +1199,7 @@ final class Task extends Base
 			'tasks',
 			$tasks,
 			static function() use ($result) {
-				return $result['AUX']['OBJ_RES']->nSelectedCount;
+				 return $result['AUX']['OBJ_RES']->NavRecordCount;
 			}
 		);
 	}
@@ -1351,7 +1342,10 @@ final class Task extends Base
 		foreach ($filter as $fieldName => $fieldData)
 		{
 			preg_match('#(\w+)#', $fieldName, $m);
-			if (array_key_exists($m[1], $dateFields) && $fieldData)
+			if (
+				array_key_exists($m[1], $dateFields)
+				&& is_string($fieldData)
+			)
 			{
 				$filter[$fieldName] = DateTime::createFromTimestamp(strtotime($fieldData));
 			}
@@ -1614,7 +1608,6 @@ final class Task extends Base
 			$this->addError(new Error($exception->getMessage()));
 			return null;
 		}
-
 
 		return false;
 	}
@@ -2288,11 +2281,25 @@ final class Task extends Base
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	public function getGridRowsAction(array $taskIds = [], array $arParams = []): array
+	public function getGridRowsAction(array $taskIds = [], array $navigation = [], array $arParams = []): array
 	{
 		/** @var \TasksTaskListComponent $componentClassName */
 		$componentClassName = \CBitrixComponent::includeComponentClass("bitrix:tasks.task.list");
 		return $componentClassName::getGridRows($taskIds, $arParams);
+	}
+
+	/**
+	 * @param $taskId
+	 * @param array $navigation
+	 * @param array $arParams
+	 * @return array
+	 * @throws Main\LoaderException
+	 */
+	public function getNearTasksAction(array $taskIds, array $navigation, array $arParams = []): array
+	{
+		/** @var \TasksTaskListComponent $componentClassName */
+		$componentClassName = \CBitrixComponent::includeComponentClass("bitrix:tasks.task.list");
+		return $componentClassName::getNearTasks($taskIds, $navigation, $arParams);
 	}
 
 	private function processScenario(array $fields, array $params): array

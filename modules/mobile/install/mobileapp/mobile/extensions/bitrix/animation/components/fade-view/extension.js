@@ -27,6 +27,11 @@ jn.define('animation/components/fade-view', (require, exports, module) => {
 			};
 		}
 
+		get notVisibleOpacity()
+		{
+			return BX.prop.getInteger(this.props, 'notVisibleOpacity', 0);
+		}
+
 		componentDidMount()
 		{
 			const fadeInOnMount = BX.prop.getBoolean(this.props, 'fadeInOnMount', false);
@@ -51,7 +56,7 @@ jn.define('animation/components/fade-view', (require, exports, module) => {
 				{
 					ref: (ref) => this.containerRef = ref,
 					style: {
-						opacity: this.isVisible() ? 1 : 0,
+						opacity: this.isVisible() ? 1 : this.notVisibleOpacity,
 						...this.props.style,
 					},
 					clickable: false,
@@ -89,7 +94,7 @@ jn.define('animation/components/fade-view', (require, exports, module) => {
 		 */
 		fadeOut(animationSettings = {})
 		{
-			const options = { opacity: 0, ...animationSettings };
+			const options = { opacity: this.notVisibleOpacity, ...animationSettings };
 			const disableVisibility = () => this.visible = false;
 
 			return this.animate(options, disableVisibility);

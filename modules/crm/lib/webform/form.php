@@ -889,6 +889,28 @@ class Form
 		return is_array($this->params['FIELDS']) ? $this->params['FIELDS'] : [];
 	}
 
+	public function getFieldsByType(string $type): array
+	{
+		return array_filter(
+			$this->getFields(),
+			function ($value) use ($type) {
+				return $value['TYPE'] === $type;
+			}
+		);
+	}
+
+	public function hasField(string $code): bool
+	{
+		 return !empty(
+			 array_filter(
+				$this->getFields(),
+				function ($value) use ($code) {
+					return $value['CODE'] === $code;
+				}
+			 )
+		);
+	}
+
 	public function getAllowedEntitySchemes()
 	{
 		//TODO: fields checker

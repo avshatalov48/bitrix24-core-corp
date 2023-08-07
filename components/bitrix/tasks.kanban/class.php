@@ -50,6 +50,7 @@ use Bitrix\Tasks\TourGuide;
 
 class TasksKanbanComponent extends \CBitrixComponent
 {
+	private const ORDER_OPTION = 'order_new_task_v2';
 	const TASK_TYPE_USER = 'user';
 	const TASK_TYPE_GROUP = 'group';
 
@@ -2039,7 +2040,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		}
 		else
 		{
-			return \CUserOptions::getOption('tasks', 'order_new_task_v2', 'actual');
+			return \CUserOptions::getOption('tasks', static::ORDER_OPTION, 'actual');
 		}
 	}
 
@@ -2530,6 +2531,9 @@ class TasksKanbanComponent extends \CBitrixComponent
 				if ($scrumProject)
 				{
 					$this->updateScrumItem($params['SPRINT_ID'], $newId, $fields);
+
+					$taskObject = new \CTasks;
+					$taskObject->update($newId, ['STAGE_ID' => $columnId]);
 				}
 
 				// output
@@ -2917,12 +2921,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 			$isScrum = $this->request('isScrum') === 'Y';
 			if ($isScrum)
 			{
-				[$taskId] = $this->sortTaskIdsByScrumFilter(
+				$taskIds = $this->sortTaskIdsByScrumFilter(
 					[$taskId],
 					(int) $this->request('parentId'),
 					$this->arParams['GROUP_ID'],
 					$this->arParams['USER_ID']
 				);
+				$taskId = empty($taskIds) ? null : current($taskIds);
 				if (!$taskId)
 				{
 					return [];
@@ -3330,7 +3335,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 			}
 			else
 			{
-				\CUserOptions::setOption('tasks', 'order_new_task_v2', $order);
+				\CUserOptions::setOption('tasks', static::ORDER_OPTION, $order);
 			}
 		}
 
@@ -4008,17 +4013,18 @@ class TasksKanbanComponent extends \CBitrixComponent
 	): array
 	{
 		$isChildScrumGrid = $parentId !== 0;
+
+		$taskService = new TaskService($userId);
+
 		if ($isChildScrumGrid)
 		{
-			$taskService = new TaskService($userId);
-
 			$subTaskIds = $taskService->getSubTaskIds($groupId, $parentId, false);
 
 			return array_intersect($inputTaskIds, $subTaskIds);
 		}
 		else
 		{
-			$kanbanService = new KanbanService();
+			$itemService = new ItemService();
 			$sprintService = new SprintService();
 
 			$sprint = $sprintService->getActiveSprintByGroupId($groupId);
@@ -4029,6 +4035,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 
 			$taskIds = [];
 
+			$scrumManager = new ScrumManager($groupId);
+
+			$mapOfExistenceOfSubtasks = $scrumManager->buildMapOfExistenceOfSubtasks(
+				$sprint->getId(),
+				$itemService->getTaskIdsByEntityId($sprint->getId())
+			);
+
 			$queryObject = TaskTable::getList([
 				'filter' => [
 					'@ID' => $inputTaskIds,
@@ -4038,11 +4051,34 @@ class TasksKanbanComponent extends \CBitrixComponent
 			]);
 			while ($data = $queryObject->fetch())
 			{
-				if (
-					!$data['PARENT_ID']
-					|| !$kanbanService->isTaskInKanban($sprint->getId(), $data['PARENT_ID']))
+				$isChildTask = ((int) $data['PARENT_ID']) > 0;
+				if ($isChildTask)
 				{
-					$taskIds[] = (int) $data['ID'];
+					$hasParentTaskInCurrentSprint = !empty($mapOfExistenceOfSubtasks[$data['PARENT_ID']]);
+					if (!$hasParentTaskInCurrentSprint)
+					{
+						$taskIds[] = (int) $data['ID'];
+					}
+				}
+				else
+				{
+					$isParentTaskInCurrentSprint = !empty($mapOfExistenceOfSubtasks[$data['ID']]);
+					if ($isParentTaskInCurrentSprint)
+					{
+						$scrumItem = current($itemService->getItemsBySourceIds([$data['ID']]));
+						$isParentTaskInProcess = (
+							$scrumItem
+							&& !$scrumItem->getInfo()->isVisibilitySubtasks()
+						);
+						if ($isParentTaskInProcess)
+						{
+							$taskIds[] = (int) $data['ID'];
+						}
+					}
+					else
+					{
+						$taskIds[] = (int) $data['ID'];
+					}
 				}
 			}
 

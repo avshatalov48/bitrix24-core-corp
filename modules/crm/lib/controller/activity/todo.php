@@ -498,7 +498,7 @@ class ToDo extends Base
 			$activityId,
 			$ownerTypeId,
 			$ownerId,
-			$todo->getSubject(),
+			trim($todo->getSubject()),
 			$options
 		);
 		if (!isset($message, $messageOut))
@@ -566,7 +566,7 @@ class ToDo extends Base
 			$phaseCodeSuffix = 'NO_LONGER';
 		}
 
-		if (empty($subject))
+		if ($subject === '')
 		{
 			// CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE
 			// CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE
@@ -589,12 +589,12 @@ class ToDo extends Base
 				$item = $factory->getItem($ownerId);
 				if ($item)
 				{
-					$entityName = $item->getHeading();
+					$entityName = trim($item->getHeading());
 				}
 			}
 		}
 		
-		if (empty($entityName))
+		if ($entityName === '')
 		{
 			// CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE_EX
 			// CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE_EX

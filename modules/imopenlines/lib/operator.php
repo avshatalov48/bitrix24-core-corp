@@ -199,6 +199,7 @@ class Operator
 		}
 		if ($this->userId == $params['TRANSFER_ID'])
 		{
+			$this->error = new BasicError(__METHOD__, 'SELF_TRANSFER_FAIL', 'SELF_TRANSFER_FAIL');
 			return false;
 		}
 
@@ -208,12 +209,18 @@ class Operator
 		}
 
 		$chat = new Chat($this->chatId);
-		$chat->transfer([
+
+		$transferResult = $chat->transfer([
 			'FROM' => $this->userId,
 			'TO' => $params['TRANSFER_ID']
 		]);
 
-		return true;
+		if (!$transferResult)
+		{
+			$this->error = new BasicError(__METHOD__, 'TRANSFER_FAIL', 'TRANSFER_FAIL');
+		}
+
+		return $transferResult;
 	}
 
 	public function setSilentMode($active = true)
@@ -410,7 +417,9 @@ class Operator
 	public function openChat($userCode)
 	{
 		if (\Bitrix\Im\User::getInstance($this->userId)->isExtranet())
+		{
 			return false;
+		}
 
 		$chat = new Chat();
 		$result = $chat->load(Array(
@@ -426,7 +435,7 @@ class Operator
 				$sessionField = $chat->getFieldData(Chat::FIELD_SESSION);
 				$sessionCrmField = $chat->getFieldData(Chat::FIELD_CRM);
 				$result = false;
-				if(empty($sessionCrmField))
+				if (empty($sessionCrmField))
 				{
 					if (\Bitrix\ImOpenLines\Config::canJoin($lineId, $sessionField['CRM_ENTITY_TYPE'], $sessionField['CRM_ENTITY_ID']))
 					{
@@ -440,6 +449,7 @@ class Operator
 						if (\Bitrix\ImOpenLines\Config::canJoin($lineId, $crmEntityType, $crmEntityId))
 						{
 							$result = true;
+							break;
 						}
 					}
 				}
@@ -450,18 +460,22 @@ class Operator
 		{
 			return $chat->getData();
 		}
-		else
-		{
-			$this->error = new BasicError(__METHOD__, 'ACCESS_DENIED', Loc::getMessage('IMOL_OPERATOR_ERROR_ACCESS_DENIED'));
-			return false;
-		}
+
+		$this->error = new BasicError(__METHOD__, 'ACCESS_DENIED', Loc::getMessage('IMOL_OPERATOR_ERROR_ACCESS_DENIED'));
+
+		return false;
 	}
 
 	public function voteAsHead($sessionId, $rating = null, $comment = null)
 	{
-		Session::voteAsHead($sessionId, $rating, $comment);
+		$result = Session::voteAsHead($sessionId, $rating, $comment);
 
-		return true;
+		if (!$result)
+		{
+			$this->error = new BasicError(__METHOD__, 'ACCESS_DENIED', Loc::getMessage('IMOL_OPERATOR_ERROR_ACCESS_DENIED'));
+		}
+
+		return $result;
 	}
 
 	public function startSession()
@@ -505,6 +519,11 @@ class Operator
 	public function saveToQuickAnswers($messageId)
 	{
 		$message = \CIMMessenger::GetById($messageId);
+		if (!$this->checkAccess()['RESULT'])
+		{
+			return false;
+		}
+
 		if($message)
 		{
 			$lineId = Session\Common::getConfigIdByChatId($this->chatId);
@@ -566,8 +585,9 @@ class Operator
 				Helper::getCurrentUserId(),
 				$permission->getPermission(Permissions::ENTITY_HISTORY, Permissions::ACTION_VIEW)
 			);
-			if (is_array($allowedUserIds) && !in_array($session['OPERATOR_ID'], $allowedUserIds) &&
-				\Bitrix\ImOpenLines\Crm\Common::hasAccessToEntitiesBindingActivity($session['CRM_ACTIVITY_ID'])->getResult() == false
+			if (
+				(is_array($allowedUserIds) && !in_array($session['OPERATOR_ID'], $allowedUserIds))
+				&& \Bitrix\ImOpenLines\Crm\Common::hasAccessToEntitiesBindingActivity($session['CRM_ACTIVITY_ID'])->getResult() == false
 			)
 			{
 				$this->error = new BasicError(__METHOD__, 'ACCESS_DENIED', Loc::getMessage('IMOL_OPERATOR_ERROR_ACCESS_DENIED'));

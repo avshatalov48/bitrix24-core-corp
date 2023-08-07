@@ -2,7 +2,7 @@
  * @module crm/entity-tab/type/entities/base
  */
 jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
-	const { TimelineScheduler } = require('crm/timeline/scheduler');
+	const { Loc } = require('loc');
 
 	/**
 	 * @class Base
@@ -45,18 +45,16 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 
 		/**
 		 * @return {{
-		 * 	image: ImageProps,
-		 * 	title: string|Function,
-		 * 	description: string|Function,
+		 * image: ImageProps,
+		 * title: string|Function,
+		 * description: string|Function,
 		 * }}
 		 */
 		getEmptyEntityScreenConfig()
 		{
 			const image = this.getEmptyImage();
 			const text = this.getEmptyEntityScreenDescriptionText();
-			const entityTypeName = (this.getName() || 'COMMON');
-
-			const title = BX.message(`M_CRM_ENTITY_TAB_ENTITY_EMPTY_TITLE_${entityTypeName}`);
+			const title = this.getEmptyScreenTitle();
 
 			return {
 				image,
@@ -81,30 +79,64 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 			};
 		}
 
+		getEmptyScreenTitle()
+		{
+			const entityTypeName = (this.getName() || 'COMMON');
+
+			return Loc.getMessage(`M_CRM_ENTITY_TAB_ENTITY_EMPTY_TITLE2_${entityTypeName}`);
+		}
+
 		getEmptyColumnScreenConfig(data)
 		{
-			const entityTypeName = this.getName();
 			const screenConfig = {
-				title: BX.message(`M_CRM_ENTITY_TAB_COLUMN_EMPTY_${entityTypeName}_TITLE`),
+				title: this.getEmptyColumnScreenTitle(),
 				image: this.getEmptyImage(),
 			};
 
 			const { column } = data;
 			if (column && column.semantics === 'P')
 			{
-				screenConfig.description = BX.message(`M_CRM_ENTITY_TAB_COLUMN_EMPTY_${entityTypeName}_DESCRIPTION`);
+				screenConfig.description = this.getEmptyColumnScreenDescription();
 			}
 
 			return screenConfig;
 		}
 
+		getEmptyColumnScreenTitle()
+		{
+			const entityTypeName = this.getName();
+
+			return Loc.getMessage(`M_CRM_ENTITY_TAB_COLUMN_EMPTY_${entityTypeName}_TITLE`);
+		}
+
+		getEmptyColumnScreenDescription()
+		{
+			const entityTypeName = this.getName();
+
+			return Loc.getMessage(`M_CRM_ENTITY_TAB_COLUMN_EMPTY_${entityTypeName}_DESCRIPTION`);
+		}
+
 		getUnsuitableStageScreenConfig(data)
 		{
 			return {
-				title: BX.message(`M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_${this.getName()}`),
-				description: BX.message(`M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_DESCRIPTION_${this.getName()}`),
+				title: this.getColumnUnsuitableForFilterTitle(),
+				description: this.getColumnUnsuitableForFilterDescription(),
 				image: this.getEmptyImage(),
 			};
+		}
+
+		getColumnUnsuitableForFilterTitle()
+		{
+			const entityTypeName = this.getName();
+
+			return Loc.getMessage(`M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_${entityTypeName}`);
+		}
+
+		getColumnUnsuitableForFilterDescription()
+		{
+			const entityTypeName = this.getName();
+
+			return Loc.getMessage(`M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_DESCRIPTION_${entityTypeName}`);
 		}
 
 		getEmptyImage()
@@ -120,7 +152,12 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 
 		getPathToIcon()
 		{
-			return `${this.getPathToImages() + this.getName().toLowerCase()}.png`;
+			return `${this.getPathToImages() + this.getIconName()}.png`;
+		}
+
+		getIconName()
+		{
+			return 'common';
 		}
 
 		/**
@@ -155,30 +192,25 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 			];
 		}
 
-		addActivity(action, itemId, { parentWidget } = {})
+		async addActivity(action, itemId, { parentWidget } = {})
 		{
-			let promise = Promise.resolve();
+			const { TimelineScheduler } = await requireLazy('crm:timeline/scheduler');
 
 			if (parentWidget)
 			{
-				promise = promise.then(() => new Promise((resolve) => {
+				await new Promise((resolve) => {
 					parentWidget.close(resolve);
-				}));
+				});
 			}
 
-			promise
-				.then(() => {
-					(new TimelineScheduler({
-						entity: {
-							id: itemId,
-							typeId: this.getId(),
-							categoryId: this.getCategoryId(),
-						},
-						user: this.getUserInfo(),
-					})).openActivityEditor();
-				})
-				.catch(console.error)
-			;
+			await (new TimelineScheduler({
+				entity: {
+					id: itemId,
+					typeId: this.getId(),
+					categoryId: this.getCategoryId(),
+				},
+				user: this.getUserInfo(),
+			})).openActivityEditor();
 		}
 
 		showForbiddenActionNotification()
@@ -191,16 +223,15 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 
 		/**
 		 * @return {{
-		 * 	image: ImageProps,
-		 * 	title: string|Function,
-		 * 	description: string|Function,
+		 * image: ImageProps,
+		 * title: string|Function,
+		 * description: string|Function,
 		 * }}
 		 */
 		getEmptySearchScreenConfig()
 		{
 			const image = this.getEmptyImage();
-			const entityTypeName = (this.getName() || 'COMMON');
-			const title = BX.message(`M_CRM_ENTITY_TAB_SEARCH_EMPTY_${entityTypeName}_TITLE`);
+			const title = this.getEmptySearchScreenTitle();
 			const description = BX.message('M_CRM_ENTITY_TAB_SEARCH_EMPTY_DESCRIPTION');
 
 			return {
@@ -208,6 +239,13 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 				title,
 				description,
 			};
+		}
+
+		getEmptySearchScreenTitle()
+		{
+			const entityTypeName = (this.getName() || 'COMMON');
+
+			return Loc.getMessage(`M_CRM_ENTITY_TAB_SEARCH_EMPTY_${entityTypeName}_TITLE2`);
 		}
 
 		/**
@@ -220,17 +258,26 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 
 		getEmptyEntityScreenDescriptionText()
 		{
-			const url = this.getCommunicationChannelsRedirectUrl();
-			const entityTypeName = (this.getName() || 'COMMON');
-			const manyEntityTypeTitle = BX.message(`M_CRM_ENTITY_TAB_ENTITY_EMPTY_MANY_${entityTypeName}`);
-			const singleEntityTypeTitle = BX.message(`M_CRM_ENTITY_TAB_ENTITY_EMPTY_SINGLE_${entityTypeName}`);
-
 			return (
 				BX.message('M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION')
-					.replace('#URL#', url)
-					.replace('#MANY_ENTITY_TYPE_TITLE#', manyEntityTypeTitle)
-					.replace('#SINGLE_ENTITY_TYPE_TITLE#', singleEntityTypeTitle)
+					.replace('#URL#', this.getCommunicationChannelsRedirectUrl())
+					.replace('#MANY_ENTITY_TYPE_TITLE#', this.getManyEntityTypeTitle())
+					.replace('#SINGLE_ENTITY_TYPE_TITLE#', this.getSingleEntityTypeTitle())
 			);
+		}
+
+		getManyEntityTypeTitle()
+		{
+			const entityTypeName = (this.getName() || 'COMMON');
+
+			return Loc.getMessage(`M_CRM_ENTITY_TAB_ENTITY_EMPTY_MANY_${entityTypeName}`);
+		}
+
+		getSingleEntityTypeTitle()
+		{
+			const entityTypeName = (this.getName() || 'COMMON');
+
+			return Loc.getMessage(`M_CRM_ENTITY_TAB_ENTITY_EMPTY_SINGLE_${entityTypeName}`);
 		}
 
 		getMenuActions()

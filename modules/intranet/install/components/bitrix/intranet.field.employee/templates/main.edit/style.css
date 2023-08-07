@@ -1,0 +1,29 @@
+.feed-add-destination-link {
+    border-bottom: 1px solid transparent;
+    color: #2067b0;
+    cursor: pointer;
+    display: inline-block;
+    font-weight: var(--ui-font-weight-bold);
+    font-size: 13px;
+    margin: 7px 7px 7px 18px;
+    line-height: 17px;
+    vertical-align: top;
+    position: relative;
+
+    -webkit-transition: border-bottom-color 0.2s linear;
+    transition: border-bottom-color 0.2s linear;
+}
+
+.feed-add-destination-link:before {
+    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAH0lEQVQoz2NgQAIK6Rv+gzADLkCeApggLkxYAe0dCQDF5T3p5/14OgAAAABJRU5ErkJggg==) no-repeat center;
+    content: '';
+    height: 8px;
+    left: -14px;
+    position: absolute;
+    top: 5px;
+    width: 8px;
+}
+
+.feed-add-destination-link:hover {
+    border-bottom: 1px solid;
+}

@@ -26,6 +26,7 @@ jn.define('crm/receive-payment/steps/payment-systems', (require, exports, module
 			this.progressBarNumberRef = null;
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 			this.customEventEmitter.on('ReceivePayment::onPreparedPaySystems', this.handleUpdatePaySystems.bind(this));
+			this.firstLayout = false;
 		}
 
 		handleUpdatePaySystems({ paySystems })
@@ -109,7 +110,7 @@ jn.define('crm/receive-payment/steps/payment-systems', (require, exports, module
 
 		isNeedToSkip()
 		{
-			return this.isNeedToSkipPaymentSystems;
+			return this.isNeedToSkipPaymentSystems || (!this.firstLayout && this.props.resendMessageMode);
 		}
 
 		getTitle()
@@ -119,6 +120,8 @@ jn.define('crm/receive-payment/steps/payment-systems', (require, exports, module
 
 		createLayout(props)
 		{
+			this.firstLayout = true;
+
 			return ScrollView(
 				{
 					style: {

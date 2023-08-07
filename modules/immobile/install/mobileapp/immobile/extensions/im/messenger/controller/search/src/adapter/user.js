@@ -2,10 +2,10 @@
  * @module im/messenger/controller/search/adapter/user
  */
 jn.define('im/messenger/controller/search/adapter/user', (require, exports, module) => {
-
 	const { core } = require('im/messenger/core');
 	const { SelectorDialogListAdapter } = require('im/chat/selector/adapter/dialog-list');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
+	const { ObjectUtils } = require('im/messenger/lib/utils');
 
 	class UserAdapter extends SelectorDialogListAdapter
 	{
@@ -37,19 +37,14 @@ jn.define('im/messenger/controller/search/adapter/user', (require, exports, modu
 		}
 
 		setTitle(title)
-		{
-
-		}
+		{}
 
 		setScopes(scopes)
-		{
-
-		}
+		{}
 
 		setItems(items)
 		{
-
-			const filteredItems = items.filter(item => {
+			const filteredItems = items.filter((item) => {
 				if (item.type !== 'info' || item.id === 'loading')
 				{
 					return false;
@@ -63,12 +58,11 @@ jn.define('im/messenger/controller/search/adapter/user', (require, exports, modu
 				return true;
 			});
 
-			const itemsData = filteredItems.map(item => ChatUtils.objectKeysToLowerCase(item.params.customData.imUser));
+			const itemsData = filteredItems.map((item) => ObjectUtils.convertKeysToCamelCase(item.params.customData.imUser));
 			this.store.dispatch('usersModel/set', itemsData);
 
 			const renderingItems = this.prepareItems(itemsData);
-			const loaderItem = items.find(item => item.id === 'loading');
-
+			const loaderItem = items.find((item) => item.id === 'loading');
 
 			const withLoader = typeof loaderItem !== 'undefined';
 
@@ -88,24 +82,16 @@ jn.define('im/messenger/controller/search/adapter/user', (require, exports, modu
 		}
 
 		setSelected(items)
-		{
-
-		}
+		{}
 
 		allowMultipleSelection(allow)
-		{
-
-		}
+		{}
 
 		setSections(sections)
-		{
-
-		}
+		{}
 
 		searchSectionButtonClick(data)
-		{
-
-		}
+		{}
 
 		prepareItems(items)
 		{
@@ -124,7 +110,7 @@ jn.define('im/messenger/controller/search/adapter/user', (require, exports, modu
 
 		prepareItem(item)
 		{
-			const chatTitle = ChatTitle.createFromDialogId(item.id, {showItsYou: true});
+			const chatTitle = ChatTitle.createFromDialogId(item.id, { showItsYou: true });
 			const chatAvatar = ChatAvatar.createFromDialogId(item.id);
 
 			return {
@@ -138,7 +124,7 @@ jn.define('im/messenger/controller/search/adapter/user', (require, exports, modu
 				type: 'chats',
 				selected: false,
 				disable: false,
-			}
+			};
 		}
 	}
 

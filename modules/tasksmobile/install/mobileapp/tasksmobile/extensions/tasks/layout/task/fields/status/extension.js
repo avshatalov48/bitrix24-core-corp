@@ -2,13 +2,41 @@
  * @module tasks/layout/task/fields/status
  */
 jn.define('tasks/layout/task/fields/status', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {ActionMenu} = require('tasks/layout/task/actionMenu');
-	const {ActionButton} = require('tasks/layout/task/fields/status/actionButton');
-	const {BaseField} = require('layout/ui/fields/base');
+	const { Loc } = require('loc');
+	const { ActionMenu } = require('tasks/layout/task/actionMenu');
+	const { ActionButton } = require('tasks/layout/task/fields/status/actionButton');
+	const { BaseField } = require('layout/ui/fields/base');
 
 	class Status extends LayoutComponent
 	{
+		static getStatusItems()
+		{
+			const locPrefix = 'TASKSMOBILE_LAYOUT_TASK_FIELDS_STATUS';
+
+			return {
+				[Task.statusList.pending]: {
+					title: Loc.getMessage(`${locPrefix}_PENDING`),
+					backgroundColor: '#55d0e0',
+				},
+				[Task.statusList.inprogress]: {
+					title: Loc.getMessage(`${locPrefix}_IN_PROGRESS`),
+					backgroundColor: '#9dcf00',
+				},
+				[Task.statusList.waitCtrl]: {
+					title: Loc.getMessage(`${locPrefix}_SUPPOSEDLY_COMPLETED`),
+					backgroundColor: '#ffa900',
+				},
+				[Task.statusList.completed]: {
+					title: Loc.getMessage(`${locPrefix}_COMPLETED`),
+					backgroundColor: '#a8adb4',
+				},
+				[Task.statusList.deferred]: {
+					title: Loc.getMessage(`${locPrefix}_DEFERRED`),
+					backgroundColor: '#a8adb4',
+				},
+			};
+		}
+
 		constructor(props)
 		{
 			super(props);
@@ -80,7 +108,7 @@ jn.define('tasks/layout/task/fields/status', (require, exports, module) => {
 					value: this.state.status,
 					config: {
 						deepMergeStyles: this.props.deepMergeStyles,
-						statusItem: this.getStatusItems()[this.state.status],
+						statusItem: Status.getStatusItems()[this.state.status],
 						task: this.props.task,
 						isTimerExisting: this.state.isTimerExisting,
 						isTimerRunning: this.state.isTimerRunning,
@@ -98,38 +126,23 @@ jn.define('tasks/layout/task/fields/status', (require, exports, module) => {
 				}),
 			);
 		}
-
-		getStatusItems()
-		{
-			const locPrefix = 'TASKSMOBILE_LAYOUT_TASK_FIELDS_STATUS';
-
-			return {
-				[Task.statusList.pending]: {
-					title: Loc.getMessage(`${locPrefix}_PENDING`),
-					backgroundColor: '#55d0e0',
-				},
-				[Task.statusList.inprogress]: {
-					title: Loc.getMessage(`${locPrefix}_IN_PROGRESS`),
-					backgroundColor: '#9dcf00',
-				},
-				[Task.statusList.waitCtrl]: {
-					title: Loc.getMessage(`${locPrefix}_SUPPOSEDLY_COMPLETED`),
-					backgroundColor: '#ffa900',
-				},
-				[Task.statusList.completed]: {
-					title: Loc.getMessage(`${locPrefix}_COMPLETED`),
-					backgroundColor: '#a8adb4',
-				},
-				[Task.statusList.deferred]: {
-					title: Loc.getMessage(`${locPrefix}_DEFERRED`),
-					backgroundColor: '#a8adb4',
-				},
-			};
-		}
 	}
 
 	class StatusField extends BaseField
 	{
+		static getImageUrl(imageUrl)
+		{
+			let result = imageUrl;
+
+			if (result.indexOf(currentDomain) !== 0)
+			{
+				result = result.replace(`${currentDomain}`, '');
+				result = (result.indexOf('http') === 0 ? result : `${currentDomain}${result}`);
+			}
+
+			return encodeURI(result);
+		}
+
 		renderContent()
 		{
 			const config = this.getConfig();
@@ -159,7 +172,7 @@ jn.define('tasks/layout/task/fields/status', (require, exports, module) => {
 							alignSelf: 'center',
 							marginLeft: 2,
 						},
-						uri: this.getImageUrl(this.getConfig().balloonArrowDownUri),
+						uri: StatusField.getImageUrl(this.getConfig().balloonArrowDownUri),
 					})),
 				),
 				new ActionButton({
@@ -172,31 +185,6 @@ jn.define('tasks/layout/task/fields/status', (require, exports, module) => {
 					timeEstimate: config.timeEstimate,
 				}),
 			);
-		}
-
-		renderEditIcon()
-		{
-			return Image({
-				style: {
-					width: 24,
-					height: 24,
-					marginLeft: 12,
-				},
-				svg: {
-					content: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M6 14C7.10457 14 8 13.1046 8 12C8 10.8954 7.10457 10 6 10C4.89543 10 4 10.8954 4 12C4 13.1046 4.89543 14 6 14Z" fill="#DFE0E3"/><path d="M12 14C13.1046 14 14 13.1046 14 12C14 10.8954 13.1046 10 12 10C10.8954 10 10 10.8954 10 12C10 13.1046 10.8954 14 12 14Z" fill="#DFE0E3"/><path d="M20 12C20 13.1046 19.1046 14 18 14C16.8954 14 16 13.1046 16 12C16 10.8954 16.8954 10 18 10C19.1046 10 20 10.8954 20 12Z" fill="#DFE0E3"/></svg>',
-				},
-			});
-		}
-
-		getImageUrl(imageUrl)
-		{
-			if (imageUrl.indexOf(currentDomain) !== 0)
-			{
-				imageUrl = imageUrl.replace(`${currentDomain}`, '');
-				imageUrl = (imageUrl.indexOf('http') !== 0 ? `${currentDomain}${imageUrl}` : imageUrl);
-			}
-
-			return encodeURI(imageUrl);
 		}
 
 		getDefaultStyles()
@@ -229,5 +217,5 @@ jn.define('tasks/layout/task/fields/status', (require, exports, module) => {
 		}
 	}
 
-	module.exports = {Status};
+	module.exports = { Status };
 });

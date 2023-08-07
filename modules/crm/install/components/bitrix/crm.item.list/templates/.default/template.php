@@ -9,13 +9,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 
-Extension::load(
-	[
-		'ui.dialogs.messagebox',
-		'crm_common',
-		'crm.restriction.filter-fields',
-	]
-);
+Extension::load(['ui.dialogs.messagebox', 'crm_common']);
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
@@ -84,7 +78,12 @@ $this->getComponent()->addToolbar($this);
 <?php
 $messages = array_merge(Container::getInstance()->getLocalization()->loadMessages(), Loc::loadLanguageFile(__FILE__));
 
-echo $arResult['ACTIVITY_FIELD_RESTRICTIONS'] ?? '';
+if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))
+{
+	Extension::load(['crm.restriction.filter-fields']);
+
+	echo $arResult['RESTRICTED_FIELDS_ENGINE'];
+}
 ?>
 
 <script>

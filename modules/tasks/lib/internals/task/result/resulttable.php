@@ -114,7 +114,7 @@ class ResultTable extends DataManager
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 */
-	public static function getByTaskId(int $taskId)
+	public static function getByTaskId(int $taskId): EO_Result_Collection
 	{
 		$query = self::query();
 		$query
@@ -124,6 +124,17 @@ class ResultTable extends DataManager
 		;
 
 		return $query->exec()->fetchCollection();
+	}
+
+	public static function getByCommentId(int $commentId): Result
+	{
+		$query = self::query();
+		$query
+			->setSelect(['ID', 'COMMENT_ID'])
+			->where('COMMENT_ID', $commentId)
+		;
+
+		return $query->exec()->fetchObject();
 	}
 
 	/**

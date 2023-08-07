@@ -4,15 +4,14 @@ this.BX.Crm = this.BX.Crm || {};
 	'use strict';
 
 	let _ = t => t,
-	    _t,
-	    _t2,
-	    _t3,
-	    _t4,
-	    _t5,
-	    _t6,
-	    _t7,
-	    _t8;
-
+	  _t,
+	  _t2,
+	  _t3,
+	  _t4,
+	  _t5,
+	  _t6,
+	  _t7,
+	  _t8;
 	/**
 	 * @namespace BX.Crm.Requisite
 	 */
@@ -25,23 +24,21 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.setOptions(options);
 	    main_core.Event.bind(options.bindElement, 'click', this.onBindElementClick.bind(this));
 	  }
-
 	  setData(data) {
 	    this.cache.set('data', data);
 	  }
-
 	  getData() {
 	    return this.cache.get('data', {});
 	  }
-
 	  load() {
 	    return new Promise(resolve => {
+	      var _fieldListEditorOptio, _fieldListEditorOptio2;
 	      const {
 	        entityTypeId,
 	        entityId,
 	        fieldListEditorOptions
 	      } = this.getOptions();
-	      const presetId = fieldListEditorOptions ? fieldListEditorOptions.fieldsPanelOptions ? fieldListEditorOptions.fieldsPanelOptions.presetId : null : null;
+	      const presetId = (_fieldListEditorOptio = fieldListEditorOptions == null ? void 0 : (_fieldListEditorOptio2 = fieldListEditorOptions.fieldsPanelOptions) == null ? void 0 : _fieldListEditorOptio2.presetId) != null ? _fieldListEditorOptio : null;
 	      BX.ajax.runAction('crm.api.fieldset.load', {
 	        json: {
 	          entityTypeId,
@@ -53,16 +50,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	    });
 	  }
-
 	  setOptions(options) {
-	    this.cache.set('options', { ...options
+	    this.cache.set('options', {
+	      ...options
 	    });
 	  }
-
 	  getOptions() {
 	    return this.cache.get('options');
 	  }
-
 	  getPopup() {
 	    return this.cache.remember('popup', () => {
 	      const options = this.getOptions();
@@ -85,42 +80,36 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	    });
 	  }
-
 	  setIsChanged(value) {
 	    this.cache.set('isChanged', main_core.Text.toBoolean(value));
 	  }
-
 	  getIsChanged() {
 	    return this.cache.get('isChanged', false);
 	  }
-
 	  getLoader() {
 	    return this.cache.remember('loader', () => {
 	      return new main_loader.Loader();
 	    });
 	  }
-
 	  show() {
 	    const popup = this.getPopup();
 	    main_core.Dom.clean(popup.getContentContainer());
 	    void this.getLoader().show(popup.getContentContainer());
 	    this.load().then(result => {
-	      this.setData({ ...result
+	      this.setData({
+	        ...result
 	      });
 	      popup.setContent(this.createPopupContent(result));
 	    });
 	    popup.show();
 	  }
-
 	  hide() {
 	    this.getPopup().close();
 	  }
-
 	  onBindElementClick(event) {
 	    event.preventDefault();
 	    this.show();
 	  }
-
 	  createPopupContent(data) {
 	    return main_core.Tag.render(_t || (_t = _`
 			<div class="crm-requisite-fieldset-viewer-content">
@@ -131,22 +120,17 @@ this.BX.Crm = this.BX.Crm || {};
 			</div>
 		`), this.createBannerLayout(data), this.createListLayout(data), this.getFooterLayout(), this.createCloseButton());
 	  }
-
 	  createBannerLayout(data) {
 	    const title = main_core.Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER_BANNER_TITLE').replace('{{requisite}}', ` <strong>${main_core.Text.encode(data == null ? void 0 : data.title)}</strong>`);
-
 	    const description = (() => {
 	      let text = main_core.Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER_BANNER_DESCRIPTION');
-
 	      if (main_core.Type.isStringFilled(data == null ? void 0 : data.more)) {
 	        text += ` <a class="ui-link" href="${main_core.Text.encode(data == null ? void 0 : data.more)}">
 						${main_core.Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER_BANNER_MORE_LINK_LABEL')}
 					</a>`;
 	      }
-
 	      return text;
 	    })();
-
 	    return main_core.Tag.render(_t2 || (_t2 = _`
 			<div class="crm-requisite-fieldset-viewer-banner">
 				<div class="crm-requisite-fieldset-viewer-banner-text">
@@ -160,7 +144,6 @@ this.BX.Crm = this.BX.Crm || {};
 			</div>
 		`), title, description);
 	  }
-
 	  createListLayout(data) {
 	    return main_core.Tag.render(_t3 || (_t3 = _`
 			<div class="crm-requisite-fieldset-viewer-list">
@@ -168,7 +151,6 @@ this.BX.Crm = this.BX.Crm || {};
 			</div>
 		`), this.createListContainer(data.fields));
 	  }
-
 	  createListContainer(fields) {
 	    return main_core.Tag.render(_t4 || (_t4 = _`
 			<div class="crm-requisite-fieldset-viewer-list-container">
@@ -178,15 +160,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.createListItem(options);
 	    }));
 	  }
-
 	  createListItem(options) {
 	    const editButton = (() => {
 	      var _options$editing;
-
 	      if (main_core.Type.isStringFilled(options == null ? void 0 : (_options$editing = options.editing) == null ? void 0 : _options$editing.url)) {
 	        const onEditButtonClick = () => {
 	          var _options$editing2;
-
 	          BX.SidePanel.Instance.open(options == null ? void 0 : (_options$editing2 = options.editing) == null ? void 0 : _options$editing2.url, {
 	            cacheable: false,
 	            events: {
@@ -197,7 +176,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          });
 	          this.setIsChanged(true);
 	        };
-
 	        return main_core.Tag.render(_t5 || (_t5 = _`
 					<span 
 						class="ui-btn ui-btn-link" 
@@ -206,10 +184,8 @@ this.BX.Crm = this.BX.Crm || {};
 					</span>
 				`), onEditButtonClick, main_core.Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER_LIST_ITEM_VALUE_LINK_LABEL'));
 	      }
-
 	      return '';
 	    })();
-
 	    return main_core.Tag.render(_t6 || (_t6 = _`
 			<div class="crm-requisite-fieldset-viewer-list-item">
 				<div class="crm-requisite-fieldset-viewer-list-item-left">
@@ -222,13 +198,11 @@ this.BX.Crm = this.BX.Crm || {};
 			</div>
 		`), main_core.Text.encode(options == null ? void 0 : options.label), main_core.Text.encode(options == null ? void 0 : options.value), editButton);
 	  }
-
 	  createCloseButton() {
 	    return this.cache.remember('closeButton', () => {
 	      const onCloseClick = () => {
 	        this.hide();
 	      };
-
 	      return main_core.Tag.render(_t7 || (_t7 = _`
 				<div 
 					class="crm-requisite-fieldset-viewer-close-button"
@@ -237,7 +211,6 @@ this.BX.Crm = this.BX.Crm || {};
 			`), onCloseClick);
 	    });
 	  }
-
 	  getFieldListEditor() {
 	    return this.cache.remember('fieldListEditor', () => {
 	      const options = this.getOptions();
@@ -267,7 +240,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	    });
 	  }
-
 	  getEditButton() {
 	    return this.cache.remember('editButton', () => {
 	      return new ui_buttons.Button({
@@ -282,12 +254,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	    });
 	  }
-
 	  onEditButtonClick() {
 	    this.getFieldListEditor().showSlider();
 	    this.setIsChanged(true);
 	  }
-
 	  getFooterLayout() {
 	    return this.cache.remember('footerLayout', () => {
 	      return main_core.Tag.render(_t8 || (_t8 = _`
@@ -297,7 +267,6 @@ this.BX.Crm = this.BX.Crm || {};
 			`), this.getEditButton().render());
 	    });
 	  }
-
 	}
 
 	exports.FieldsetViewer = FieldsetViewer;

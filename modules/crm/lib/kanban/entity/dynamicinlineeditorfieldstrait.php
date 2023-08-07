@@ -15,13 +15,29 @@ trait DynamicInlineEditorFieldsTrait
 		}
 
 		$entityConfig = $component->getInlineEditorEntityConfig();
-		foreach ($entityConfig as $section)
+		foreach ($entityConfig as $sections)
 		{
-			foreach ($section as $element)
+			if (isset($sections['elements']))
 			{
-				if (isset($element['name']))
+				foreach ($sections['elements'] as $element)
 				{
-					$fields[$element['name']] = '';
+					if (isset($element['name']))
+					{
+						$fields[$element['name']] = '';
+					}
+				}
+			}
+			else
+			{
+				foreach ($sections as $section)
+				{
+					foreach ($section as $element)
+					{
+						if (isset($element['name']))
+						{
+							$fields[$element['name']] = '';
+						}
+					}
 				}
 			}
 		}

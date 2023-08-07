@@ -5,6 +5,7 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Timeline;
+use Bitrix\Main\Type\Collection;
 
 class CCrmEntityHelper
 {
@@ -348,10 +349,6 @@ class CCrmEntityHelper
 		{
 			$context->setEventId($options['eventId']);
 		}
-		if (isset($options['PRESERVE_CONTENT_TYPE']) && is_bool($options['PRESERVE_CONTENT_TYPE']))
-		{
-			$context->setItemOption('PRESERVE_CONTENT_TYPE', $options['PRESERVE_CONTENT_TYPE']);
-		}
 		$operation->setContext($context);
 
 		if (!$checkPermissions)
@@ -415,14 +412,16 @@ class CCrmEntityHelper
 			$operation->disableDuplicatesIndexInvalidation();
 		}
 
-		$autocompleteActivities = (bool)($options['ENABLE_ACTIVITY_COMPLETION'] ?? true);
-		if ($autocompleteActivities)
+		if (isset($options['ENABLE_ACTIVITY_COMPLETION']) && is_bool($options['ENABLE_ACTIVITY_COMPLETION']))
 		{
-			$operation->enableActivitiesAutocompletion();
-		}
-		else
-		{
-			$operation->disableActivitiesAutocompletion();
+			if ($options['ENABLE_ACTIVITY_COMPLETION'])
+			{
+				$operation->enableActivitiesAutocompletion();
+			}
+			else
+			{
+				$operation->disableActivitiesAutocompletion();
+			}
 		}
 
 		$processBizProc = (bool)($options['PROCESS_BIZPROC'] ?? true);
@@ -442,13 +441,19 @@ class CCrmEntityHelper
 	 */
 	public static function transformOperationErrorsToCheckExceptions(array $errors): array
 	{
+		static $fieldNameAliases = [
+			\Bitrix\Crm\Item::FIELD_NAME_OBSERVERS => 'OBSERVER',
+		];
+
 		$messages = [];
 		foreach ($errors as $error)
 		{
 			if ($error->getCode() === Bitrix\Crm\Field::ERROR_CODE_REQUIRED_FIELD_ATTRIBUTE)
 			{
+				$fieldName = $error->getCustomData()['fieldName'] ?? '';
+
 				$messages[] = [
-					'id' => $error->getCustomData()['fieldName'] ?? '',
+					'id' => $fieldNameAliases[$fieldName] ?? $fieldName,
 					'text' => $error->getMessage(),
 				];
 			}
@@ -500,5 +505,27 @@ class CCrmEntityHelper
 		}
 
 		unset($filterFactory, $provider);
+	}
+
+	public static function prepareObserversFieldFilter(int $entityTypeId, string $tableAlias, array $observerIds): string
+	{
+		if (!\CCrmOwnerType::IsDefined($entityTypeId))
+		{
+			return '';
+		}
+
+		Collection::normalizeArrayValuesByInt($observerIds);
+		if (empty($observerIds))
+		{
+			return '';
+		}
+
+		$observerIds = implode(',', $observerIds);
+
+		return "{$tableAlias}.ID IN (
+			SELECT obr.entity_id
+			FROM b_crm_observer obr
+			WHERE obr.entity_type_id = {$entityTypeId} and obr.user_id IN ({$observerIds})
+		)";
 	}
 }

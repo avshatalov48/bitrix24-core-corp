@@ -9,12 +9,13 @@ use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Accounting;
 use Bitrix\CrmMobile\ProductGrid\ProductRowViewModel;
 use Bitrix\Main\Loader;
-use Bitrix\Mobile\Integration\Catalog\PermissionsProvider;
-use Bitrix\Mobile\Integration\Catalog\ProductGrid\SkuDataProvider;
+use Bitrix\CatalogMobile\PermissionsProvider;
+use Bitrix\CatalogMobile\ProductGrid\SkuDataProvider;
 use Bitrix\Mobile\UI\File;
 
 Loader::requireModule('iblock');
 Loader::requireModule('catalog');
+Loader::requireModule('catalogmobile');
 
 final class CompleteExtraFields implements EnricherContract
 {

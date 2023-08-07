@@ -1,8 +1,7 @@
 <?php
 $MESS["MOBILE_EXT_LAYOUT_POSTFORM_PANEL_ITEM_SELECTOR_VALUE_ALL"] = "Всем сотрудникам";
 $MESS["MOBILE_EXT_LAYOUT_POSTFORM_DIALOG_MENTION_TITLE"] = "Упомянуть";
-$MESS["MOBILE_EXT_LAYOUT_POSTFORM_TITLE_PLACEHOLDER"] = "Введите заголовок новости";
-$MESS["MOBILE_EXT_LAYOUT_POSTFORM_TITLE_PLACEHOLDER2"] = "Введите заголовок, если нужно";
+$MESS["MOBILE_EXT_LAYOUT_POSTFORM_TITLE_PLACEHOLDER_MSGVER_1"] = "Введите заголовок новости";
 $MESS["MOBILE_EXT_LAYOUT_POSTFORM_CHANGETYPE_CONFIRM_TITLE"] = "Предупреждение";
 $MESS["MOBILE_EXT_LAYOUT_POSTFORM_CHANGETYPE_MEDAL_CONFIRM_MESSAGE"] = "Вы собираетесь изменить тип сообщения и потеряете данные о награждении";
 $MESS["MOBILE_EXT_LAYOUT_POSTFORM_CHANGETYPE_IMPORTANT_CONFIRM_MESSAGE"] = "Вы собираетесь изменить тип сообщения и потеряете данные о важности сообщении";

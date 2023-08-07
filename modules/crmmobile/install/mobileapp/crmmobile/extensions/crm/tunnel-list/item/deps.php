@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'require-lazy',
 		'alert',
 		'layout/ui/context-menu',
 		'qrauth/utils',
@@ -10,6 +11,5 @@ return [
 		'selector/widget/factory',
 		'crm:tunnel-list/item/robot',
 		'crm:category-list/actions',
-		'crm:category-list-view',
 	],
 ];

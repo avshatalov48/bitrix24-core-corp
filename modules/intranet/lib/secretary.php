@@ -23,10 +23,7 @@ class Secretary
 
 		$chat = new \CIMChat(0);
 		$chatFields = [
-			'TITLE' => Loc::getMessage(
-				'INTRANET_CONTROL_BUTTON_CALENDAR_CHAT_TITLE',
-				['#EVENT_TITLE#' => $calendarData['TITLE']]
-			),
+			'TITLE' => $calendarData['TITLE'],
 			'TYPE' => IM_MESSAGE_CHAT,
 			'ENTITY_TYPE' => \CCalendar::CALENDAR_CHAT_ENTITY_TYPE,
 			'ENTITY_ID' => $calendarData['ID'],
@@ -74,7 +71,7 @@ class Secretary
 				'checkPermission' => false,
 				'userId' => $calendarData['CREATED_BY']
 			]);
-			
+
 			if ($parentCalendarData)
 			{
 				$parentCalendarData['MEETING']['CHAT_ID'] = $chatId;
@@ -103,10 +100,7 @@ class Secretary
 
 		$chat = new \CIMChat(0);
 		$chatFields = [
-			'TITLE' => Loc::getMessage(
-				'INTRANET_CONTROL_BUTTON_TASK_CHAT_TITLE',
-				['#TASK_TITLE#' => $taskData['TITLE']]
-			),
+			'TITLE' => $taskData['TITLE'],
 			'TYPE' => IM_MESSAGE_CHAT,
 			'ENTITY_TYPE' => 'TASKS',
 			'ENTITY_ID' => $taskData['ID'],
@@ -160,10 +154,7 @@ class Secretary
 
 		$chat = new \CIMChat(0);
 		$chatFields = [
-			'TITLE' => Loc::getMessage(
-				'INTRANET_CONTROL_BUTTON_MAIL_CHAT_TITLE',
-				['#MAIL_TITLE#' => $messageData['SUBJECT']]
-			),
+			'TITLE' => $messageData['SUBJECT'],
 			'TYPE' => IM_MESSAGE_CHAT,
 			'ENTITY_TYPE' => 'MAIL',
 			'ENTITY_ID' => $messageData['ID'],
@@ -272,7 +263,7 @@ class Secretary
 		{
 			return $chatId;
 		}
-		
+
 		return null;
 	}
 

@@ -1,12 +1,19 @@
-import {Cache, Type, Dom, Text, Tag, Loc, Runtime} from 'main.core';
-import {EventEmitter} from 'main.core.events';
+import {
+	Cache,
+	Type,
+	Dom,
+	Text,
+	Tag,
+	Loc,
+} from 'main.core';
+import { EventEmitter } from 'main.core.events';
 import 'ui.design-tokens';
 import 'ui.fonts.opensans';
 import 'clipboard';
 import 'ui.switcher';
 import 'ui.layout-form';
 import 'main.date';
-import {Backend} from './backend';
+import { Backend } from './backend';
 
 type exportLinkType = {
 	id: ?number,
@@ -31,24 +38,22 @@ export default class Input
 		this.bindEvents();
 		if (Type.isPlainObject(objectId))
 		{
-			this.objectId = parseInt(objectId['objectId']);
+			this.objectId = parseInt(objectId.objectId, 10);
 			this.setData(objectId, false);
 		}
 		else
 		{
-			this.objectId = parseInt(objectId);
+			this.objectId = parseInt(objectId, 10);
 			this.setData(data, false);
 		}
 	}
 
-	setData(data, fireEvent: boolean = true)
+	setData(data, fireEvent: boolean = true): void
 	{
-		console.log('data: ', data);
-
 		if (data && Type.isPlainObject(data))
 		{
 			this.data = Object.assign(this.data, data);
-			this.data['id'] = this.data['id'] === null ? this.data['id'] : parseInt(this.data['id']);
+			this.data.id = this.data.id === null ? this.data.id : parseInt(this.data.id, 10);
 		}
 		else
 		{
@@ -72,12 +77,12 @@ export default class Input
 			EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'Disk:ExternalLink:HasChanged', {
 				objectId: this.objectId,
 				data: this.data,
-				target: this
+				target: this,
 			});
 		}
 	}
 
-	adjustData()
+	adjustData(): void
 	{
 		if (this.data.id === null)
 		{
@@ -102,53 +107,62 @@ export default class Input
 						'#deathTime#',
 						BX.Main.Date.format(
 							BX.Main.Date.convertBitrixFormat(Loc.getMessage('FORMAT_DATETIME').replace(':SS', '')),
-							new Date(this.data.deathTimeTimestamp * 1000)
-						)
+							new Date(this.data.deathTimeTimestamp * 1000),
+						),
 					)
 				: Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_FOREVER');
 
 			if (this.data.availableEdit === true)
 			{
-				this.getRightsContainer().innerHTML = ', ' + (this.data.canEditDocument
+				this.getRightsContainer().innerHTML = `, ${this.data.canEditDocument
 					? Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_RIGHTS_CAN_EDIT')
-					: Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_RIGHTS_CAN_READ'));
-				this.getRightsContainer().style.display = '';
+					: Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_RIGHTS_CAN_READ')}`;
+
+				Dom.style(this.getRightsContainer(), 'display', '');
 			}
 			else
 			{
-				this.getRightsContainer().style.display = 'none';
+				Dom.style(this.getRightsContainer(), 'display', 'none');
 			}
 		}
 	}
 
-	bindEvents()
+	bindEvents(): void
 	{
-		EventEmitter.subscribe(EventEmitter.GLOBAL_TARGET, 'Disk:ExternalLink:HasChanged',
-			({data: {objectId, data, target}}: BaseEvent) => {
+		EventEmitter.subscribe(
+			EventEmitter.GLOBAL_TARGET,
+			'Disk:ExternalLink:HasChanged',
+			({ data: { objectId, data, target } }: BaseEvent) => {
 				if (objectId !== this.objectId || Object.is(target, this))
 				{
 					return;
 				}
 				this.setData(data, false);
-			}
+			},
 		);
 	}
 
-	getBackend()
+	getBackend(): Backend
 	{
 		return Backend;
 	}
 
-	getContainer()
+	getContainer(): HTMLElement
 	{
 		return this.cache.remember('main', () => {
 			const copyButton = Tag.render`<div class="disk-control-external-link-link-icon"></div>`;
-			BX.clipboard.bindCopyClick(copyButton, {text: () => { return this.data.link; }});
+			BX.clipboard.bindCopyClick(copyButton, {
+				text: () => {
+					return this.data.link;
+				},
+			});
 
-			const tune = () => { return this.constructor.showPopup(this.objectId, this.data); };
+			const tune = () => {
+				return this.constructor.showPopup(this.objectId, this.data);
+			};
 
 			return Tag.render`
-				<div class="disk-control-external-link-block${this.data.id !== null ? ' disk-control-external-link-block--active' : ''}">
+				<div class="disk-control-external-link-block${this.data.id === null ? '' : ' disk-control-external-link-block--active'}">
 					<div class="disk-control-external-link">
 						<div class="disk-control-external-link-btn">
 							${this.getSwitcher().getNode()}
@@ -164,62 +178,62 @@ export default class Input
 						</div>
 					</div>
 				</div>
-				`;
+			`;
 		});
 	}
 
-	getSwitcher()
+	getSwitcher(): HTMLElement
 	{
 		return this.cache.remember('switcher', () => {
 			const switcherNode = document.createElement('span');
 			switcherNode.className = 'ui-switcher';
-			let switcher = new BX.UI.Switcher({
+			const switcher = new BX.UI.Switcher({
 				node: switcherNode,
 				checked: this.data.id !== null,
 				inputName: 'ACTIVE',
 				color: 'green',
 			});
-			switcher.handlers = {toggled: this.toggle.bind(this, {target: switcher})};
+			switcher.handlers = { toggled: this.toggle.bind(this, { target: switcher }) };
 
 			return switcher;
 		});
 	}
 
-	getLinkContainer()
+	getLinkContainer(): HTMLElement
 	{
 		return this.cache.remember('link', () => {
 			return Tag.render`<a href="${Text.encode(this.data.link)}" class="disk-control-external-link-link" target="_blank">${Text.encode(this.data.link)}</a>`;
 		});
 	}
 
-	getRightsContainer()
+	getRightsContainer(): HTMLElement
 	{
 		return this.cache.remember('rights', () => {
 			return document.createElement('span');
 		});
 	}
 
-	getDeathTimeContainer()
+	getDeathTimeContainer(): HTMLElement
 	{
 		return this.cache.remember('deathTime', () => {
 			return document.createElement('span');
 		});
 	}
 
-	getPasswordContainer()
+	getPasswordContainer(): HTMLElement
 	{
 		return this.cache.remember('password', () => {
 			return document.createElement('span');
 		});
 	}
 
-	toggle({target}: BaseEvent)
+	toggle({ target }: BaseEvent): void
 	{
 		if (target.isChecked())
 		{
 			this.showLoader();
-			this.getBackend().generateExternalLink(this.objectId)
-				.then(({data: {externalLink}}) => {
+			void this.getBackend().generateExternalLink(this.objectId)
+				.then(({ data: { externalLink } }) => {
 					this.setData(externalLink);
 					this.hideLoader();
 				});
@@ -231,35 +245,36 @@ export default class Input
 		}
 	}
 
-	showChecked()
+	showChecked(): void
 	{
 		const baseClassName = this.getContainer().classList.item(0);
 		const activeClassName = [baseClassName, '--active'].join('');
-		this.getContainer().classList.add(activeClassName);
+		Dom.addClass(this.getContainer(), activeClassName);
 	}
 
-	showUnchecked()
+	showUnchecked(): void
 	{
 		const baseClassName = this.getContainer().classList.item(0);
 		const activeClassName = [baseClassName, '--active'].join('');
-		this.getContainer().classList.remove(activeClassName);
+		Dom.removeClass(this.getContainer(), activeClassName);
 	}
 
-	showLoader()
+	showLoader(): void
 	{
 		Dom.addClass(this.getContainer(), 'disk-control-external-link-skeleton--active');
 	}
 
-	hideLoader()
+	hideLoader(): void
 	{
 		Dom.removeClass(this.getContainer(), 'disk-control-external-link-skeleton--active');
 	}
 
-	reload()
+	reload(): Promise<void>
 	{
 		this.showLoader();
+
 		return this.getBackend().getExternalLink(this.objectId)
-			.then(({data}) => {
+			.then(({ data }) => {
 				this.setData(data && data.externalLink ? data.externalLink : null);
 				this.hideLoader();
 			});

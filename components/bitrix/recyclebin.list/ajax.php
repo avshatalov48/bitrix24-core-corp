@@ -1,7 +1,12 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
 	die();
-define('STOP_STATISTICS', true);
+}
+if(!defined('STOP_STATISTICS'))
+{
+	define('STOP_STATISTICS', true);
+}
 define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
 
@@ -23,7 +28,7 @@ class RecyclebinListAjaxController extends \Bitrix\Main\Engine\Controller
 {
 	public function restoreAction($recyclebinId, $isAll = false)
 	{
-		return self::doAction('restore', $recyclebinId, $isAll);
+		return $this->doAction('restore', $recyclebinId, $isAll);
 	}
 
 	public function removeAction($recyclebinId, $isAll = false)
@@ -34,7 +39,7 @@ class RecyclebinListAjaxController extends \Bitrix\Main\Engine\Controller
 		)
 			return false;
 
-		return self::doAction('remove', $recyclebinId, $isAll);
+		return $this->doAction('remove', $recyclebinId, $isAll);
 	}
 
 	private function doAction($action, $recyclebinId, $isAll = false)

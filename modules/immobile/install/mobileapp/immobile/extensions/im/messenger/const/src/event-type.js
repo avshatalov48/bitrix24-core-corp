@@ -2,7 +2,6 @@
  * @module im/messenger/const/event-type
  */
 jn.define('im/messenger/const/event-type', (require, exports, module) => {
-
 	const EventType = Object.freeze({
 		/** Application events */
 		app: {
@@ -13,10 +12,16 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		},
 		view: {
 			close: 'onViewRemoved',
+			show: 'onViewShown',
+			hidden: 'onViewHidden',
+			titleClick: 'titleClick ',
+			barButtonTap: 'barButtonTap',
+			barButtonLongTap: 'barButtonLongTap',
 		},
 		/** Messenger component events */
 		messenger: {
 			openDialog: 'ImMobile.Messenger.Dialog:open',
+			openSidebar: 'ImMobile.Messenger.Sidebar:open',
 			getOpenDialogParams: 'ImMobile.Messenger.Dialog:getOpenParams',
 			openDialogParams: 'ImMobile.Messenger.Dialog:openParams',
 			openLine: 'ImMobile.Messenger.Openlines:open',
@@ -29,6 +34,9 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			afterRefreshSuccess: 'ImMobile.Messenger:afterRefreshSuccess',
 			renderRecent: 'ImMobile.Messenger:renderRecent',
 			closeDialog: 'ImMobile.Messenger:closeDialog',
+			uploadFiles: 'ImMobile.Messenger:uploadFiles',
+			uploadFileError: 'ImMobile.Messenger:uploadFileError',
+			cancelFileUpload: 'ImMobile.Messenger:cancelFileUpload',
 		},
 		/** Extension events */
 		recent: {
@@ -50,8 +58,8 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		dialog: {
 			submit: 'submit',
 			attachTap: 'attachTap',
-			onTopReached: 'onTopReached',
-			onBottomReached: 'onBottomReached',
+			topReached: 'topReached',
+			bottomReached: 'bottomReached',
 			like: 'like',
 			whoLikes: 'whoLikes',
 			resend: 'resend',
@@ -59,12 +67,15 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			quoteTap: 'quoteTap',
 			readyToReply: 'readyToReply',
 			cancelReply: 'cancelInputQuote',
-			viewableMessagesChanged: 'viewableMessagesChanged',
+			viewAreaMessagesChanged: 'viewableMessagesChanged',
 			scrollToNewMessages: 'scrollToNewMessages',
 			playAudioButtonTap: 'playTap',
 			playbackCompleted: 'playbackCompleted',
-			scrollBegin: 'onScrollBegin',
-			scrollEnd: 'onScrollEnd',
+			audioRecordingStart: 'audioRecordingStart',
+			audioRecordingFinish: 'audioRecordingFinish',
+			submitAudio: 'submitAudio',
+			scrollBegin: 'scrollBegin',
+			scrollEnd: 'scrollEnd',
 			messageTap: 'messageTap',
 			messageAvatarTap: 'avatarTap',
 			messageDoubleTap: 'messageDoubleTap',
@@ -72,12 +83,20 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			messageQuoteTap: 'messageQuoteTap',
 			messageMenuReactionTap: 'messageMenuReactionTap',
 			messageMenuActionTap: 'messageMenuActionTap',
-			quoteRemoveAnimationEnd: 'onQuoteRemoveAnimationEnd',
+			messageFileDownloadTap: 'messageFileDownloadTap',
+			messageFileUploadCancelTap: 'messageFileUploadCancelTap',
+			quoteRemoveAnimationEnd: 'quoteRemoveAnimationEnd',
 			urlTap: 'urlTap',
 			mentionTap: 'mentionTap',
+			visibleMessagesChanged: 'custom:visibleMessagesChanged',
 			loadTopPage: 'custom:loadTopPage',
 			loadBottomPage: 'custom:loadBottomPage',
 			messageRead: 'custom:messageRead',
+			changeText: 'changeText',
+			input: 'input',
+			external: {
+				scrollToBottom: 'ImMobile.Messenger.Dialog:scrollToBottom',
+			},
 		},
 		/** Integration (other components events) */
 		chatDialog: {

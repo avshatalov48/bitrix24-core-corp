@@ -173,6 +173,7 @@ jn.define('crm/timeline/ui/text-editor', (require, exports, module) => {
 		{
 			return View(
 				{
+					testId: 'TimelineTextEditorClearIcon',
 					onClick: () => this.clear(),
 					style: {
 						position: 'absolute',
@@ -242,8 +243,10 @@ jn.define('crm/timeline/ui/text-editor', (require, exports, module) => {
 				{
 					throw new TypeError('Timeline text editor: onBeforeSave hook must return Promise');
 				}
+
 				return promise;
 			}
+
 			return Promise.resolve();
 		}
 

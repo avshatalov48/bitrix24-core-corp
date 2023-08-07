@@ -1,13 +1,7 @@
-/* eslint-disable bitrix-rules/no-pseudo-private */
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-bx-message */
-
 /**
  * @module im/messenger/provider/pull/online
  */
 jn.define('im/messenger/provider/pull/online', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
 	const { PullHandler } = require('im/messenger/provider/pull/base');
@@ -38,6 +32,12 @@ jn.define('im/messenger/provider/pull/online', (require, exports, module) => {
 			this.updateOnline(params, extra, command);
 		}
 
+		/**
+		 *
+		 * @param {OnlineUpdateParams} params
+		 * @param extra
+		 * @param command
+		 */
 		updateOnline(params, extra, command)
 		{
 			if (extra.server_time_ago > 30)
@@ -49,7 +49,7 @@ jn.define('im/messenger/provider/pull/online', (require, exports, module) => {
 
 			const userCollection = params.users;
 
-			Object.keys(userCollection).forEach(userId => {
+			Object.keys(userCollection).forEach((userId) => {
 				let recentItem = clone(this.store.getters['recentModel/getById'](userId));
 				if (!recentItem)
 				{
@@ -61,36 +61,46 @@ jn.define('im/messenger/provider/pull/online', (require, exports, module) => {
 				});
 
 				this.store.dispatch('recentModel/set', [recentItem]);
+				this.store.dispatch('usersModel/update', userCollection[userId]);
 			});
+
+			this.store.dispatch('usersModel/update', Object.values(userCollection));
 		}
 
+		/**
+		 * @param {OnlineUpdateParamsState} user
+		 * @return {*}
+		 */
 		getUserDataFormat(user)
 		{
-			user = ChatDataConverter.getUserDataFormat(user);
+			const userData = ChatDataConverter.getUserDataFormat(user);
 
-			if (user.id === 0)
+			if (userData.id === 0)
 			{
-				return user;
-			}
-
-			if (!Type.isUndefined(user.name))
-			{
-				user.name = ChatUtils.htmlspecialcharsback(user.name);
-			}
-			if (!Type.isUndefined(user.last_name))
-			{
-				user.last_name = ChatUtils.htmlspecialcharsback(user.last_name);
-			}
-			if (!Type.isUndefined(user.first_name))
-			{
-				user.first_name = ChatUtils.htmlspecialcharsback(user.first_name);
-			}
-			if (!Type.isUndefined(user.work_position))
-			{
-				user.work_position = ChatUtils.htmlspecialcharsback(user.work_position);
+				return userData;
 			}
 
-			return user;
+			if (!Type.isUndefined(userData.name))
+			{
+				userData.name = ChatUtils.htmlspecialcharsback(userData.name);
+			}
+
+			if (!Type.isUndefined(userData.last_name))
+			{
+				userData.last_name = ChatUtils.htmlspecialcharsback(userData.last_name);
+			}
+
+			if (!Type.isUndefined(userData.first_name))
+			{
+				userData.first_name = ChatUtils.htmlspecialcharsback(userData.first_name);
+			}
+
+			if (!Type.isUndefined(userData.work_position))
+			{
+				userData.work_position = ChatUtils.htmlspecialcharsback(userData.work_position);
+			}
+
+			return userData;
 		}
 	}
 

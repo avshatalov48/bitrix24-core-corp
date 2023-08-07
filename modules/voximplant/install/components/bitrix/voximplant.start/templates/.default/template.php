@@ -30,7 +30,7 @@ $voxStartRentOrLink =
 ;
 ?>
 
-<? if ($arResult['ERROR_MESSAGE']): ?>
+<? if ($arResult['ERROR_MESSAGE'] ?? null): ?>
 	<div class="ui-alert ui-alert-danger ui-alert-icon-danger">
 		<span class="ui-alert-message"><?= htmlspecialcharsbx($arResult['ERROR_MESSAGE'])?></span>
 	</div>

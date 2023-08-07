@@ -410,7 +410,7 @@ class CrmTerminalPaymentDetail extends \CBitrixComponent
 	{
 		if ($this->isPaid())
 		{
-			return '<span class="ui-label ui-label-lightgreen label-uppercase ui-label-fill">'
+			return '<span class="ui-label ui-label-lightgreen ui-label-fill">'
 				. '<span class="ui-label-inner">'
 				. Main\Localization\Loc::getMessage('CRM_TERMINAL_PAYMENT_DETAIL_COMPONENT_PAYMENT_PAID_Y')
 				. '</span>'
@@ -420,7 +420,7 @@ class CrmTerminalPaymentDetail extends \CBitrixComponent
 
 		if ($this->payment->isMarked())
 		{
-			return '<span class="ui-label ui-label-danger label-uppercase ui-label-fill">'
+			return '<span class="ui-label ui-label-danger ui-label-fill">'
 				. '<span class="ui-label-inner">'
 				. Main\Localization\Loc::getMessage('CRM_TERMINAL_PAYMENT_DETAIL_COMPONENT_PAYMENT_PAID_N_M')
 				. '</span>'
@@ -428,7 +428,7 @@ class CrmTerminalPaymentDetail extends \CBitrixComponent
 			;
 		}
 
-		return '<span class="ui-label ui-label-lightorange label-uppercase ui-label-fill">'
+		return '<span class="ui-label ui-label-lightorange ui-label-fill">'
 			. '<span class="ui-label-inner">'
 			. Main\Localization\Loc::getMessage('CRM_TERMINAL_PAYMENT_DETAIL_COMPONENT_PAYMENT_PAID_N')
 			. '</span>'

@@ -7,6 +7,7 @@ use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\Error\IErrorable;
 use Bitrix\Disk\Security\ParameterSigner;
+use Bitrix\Disk\TypeFile;
 use Bitrix\Main\Application;
 use Bitrix\Main\Context;
 use Bitrix\Main\EventResult;
@@ -178,7 +179,7 @@ abstract class Controller implements IErrorable
 
 	/**
 	 * Gets current user.
-	 * @return array|bool|\CAllUser|\CUser
+	 * @return array|bool|\CUser
 	 */
 	protected function getUser()
 	{
@@ -330,6 +331,13 @@ abstract class Controller implements IErrorable
 	public function getErrorByCode($code)
 	{
 		return $this->errorCollection->getErrorByCode($code);
+	}
+
+	protected function addError(Error $error): static
+	{
+		$this->errorCollection[] = $error;
+
+		return $this;
 	}
 
 	/**
@@ -660,7 +668,7 @@ abstract class Controller implements IErrorable
 
 	/**
 	 * Get application instance.
-	 * @return Application|\Bitrix\Main\HttpApplication|\CAllMain|\CMain
+	 * @return Application|\Bitrix\Main\HttpApplication|\CMain
 	 */
 	protected function getApplication()
 	{
@@ -752,25 +760,37 @@ abstract class Controller implements IErrorable
 		return $this->request->isAjaxRequest();
 	}
 
-	protected function resizeImage($fileData, $objectId)
+	protected function resizeImage($fileData, $objectId): array
 	{
+		if (TypeFile::shouldTreatImageAsFile($fileData))
+		{
+			return $fileData;
+		}
+
 		$width = $this->request->getQuery('width');
 		$height = $this->request->getQuery('height');
 
 		if ($width > 0 || $height > 0)
 		{
 			$signature = $this->request->getQuery('signature');
-			if(!$signature)
+			if (!$signature)
 			{
 				$this->sendJsonInvalidSignResponse('Empty signature');
 			}
-			if(!ParameterSigner::validateImageSignature($signature, $objectId, $width, $height))
+			if (!ParameterSigner::validateImageSignature($signature, $objectId, $width, $height))
 			{
 				$this->sendJsonInvalidSignResponse('Invalid signature');
 			}
 
-
-			$tmpFile = \CFile::resizeImageGet($fileData, array('width' => $width, 'height' => $height), ($this->request->getQuery('exact') === 'Y' ? BX_RESIZE_IMAGE_EXACT : BX_RESIZE_IMAGE_PROPORTIONAL), true, false, true);
+			$resizeType = $this->request->getQuery('exact') === 'Y' ? BX_RESIZE_IMAGE_EXACT : BX_RESIZE_IMAGE_PROPORTIONAL;
+			$tmpFile = \CFile::resizeImageGet(
+				$fileData,
+				['width' => $width, 'height' => $height],
+				$resizeType,
+				true,
+				false,
+				true
+			);
 			$fileData['FILE_SIZE'] = $tmpFile['size'];
 			$fileData['SRC'] = $tmpFile['src'];
 		}

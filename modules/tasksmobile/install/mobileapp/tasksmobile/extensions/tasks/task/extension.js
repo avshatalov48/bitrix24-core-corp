@@ -3,10 +3,19 @@
  */
 
 (() => {
-	const {Loc} = jn.require('loc');
-	const {Type} = jn.require('type');
-	const {Entry} = jn.require('tasks/entry');
+	const { Loc } = jn.require('loc');
+	const { Type } = jn.require('type');
+	const { Entry } = jn.require('tasks/entry');
+
 	const pathToExtension = '/bitrix/mobileapp/tasksmobile/extensions/tasks/task/';
+
+	class Console
+	{
+		static log()
+		{
+			console.log(...arguments);
+		}
+	}
 
 	class Counter
 	{
@@ -41,14 +50,7 @@
 			};
 		}
 
-		constructor(task)
-		{
-			this.task = task;
-
-			this.set(this.getDefault());
-		}
-
-		getDefault()
+		static getDefaultData()
 		{
 			return {
 				counters: {
@@ -60,6 +62,16 @@
 				color: Counter.colors.gray,
 				value: 0,
 			};
+		}
+
+		/**
+		 * @param {Task} task
+		 */
+		constructor(task)
+		{
+			this.task = task;
+
+			this.set(Counter.getDefaultData());
 		}
 
 		get()
@@ -153,19 +165,7 @@
 			};
 		}
 
-		/**
-		 * @param {Task} task
-		 */
-		constructor(task)
-		{
-			this.task = task;
-			this.counter = task._counter;
-			this.fieldChangesTracker = task._fieldChangesTracker;
-
-			this.set(this.getDefault());
-		}
-
-		getDefault()
+		static getDefaultData()
 		{
 			return {
 				[Action.types.changeDeadline]: false,
@@ -184,6 +184,18 @@
 				[Action.types['favorite.add']]: false,
 				[Action.types['favorite.delete']]: false,
 			};
+		}
+
+		/**
+		 * @param {Task} task
+		 */
+		constructor(task)
+		{
+			this.task = task;
+			this.counter = task._counter;
+			this.fieldChangesTracker = task._fieldChangesTracker;
+
+			this.set(Action.getDefaultData());
 		}
 
 		get()
@@ -246,58 +258,72 @@
 			{
 				this.canChangeDeadline = actions.canChangeDeadline;
 			}
+
 			if (has.call(actions, 'canDelegate'))
 			{
 				this.canDelegate = actions.canDelegate;
 			}
+
 			if (has.call(actions, 'canStartTimer'))
 			{
 				this.canStartTimer = actions.canStartTimer;
 			}
+
 			if (has.call(actions, 'canPauseTimer'))
 			{
 				this.canPauseTimer = actions.canPauseTimer;
 			}
+
 			if (has.call(actions, 'canStart'))
 			{
 				this.canStart = actions.canStart;
 			}
+
 			if (has.call(actions, 'canPause'))
 			{
 				this.canPause = actions.canPause;
 			}
+
 			if (has.call(actions, 'canComplete'))
 			{
 				this.canComplete = actions.canComplete;
 			}
+
 			if (has.call(actions, 'canRenew'))
 			{
 				this.canRenew = actions.canRenew;
 			}
+
 			if (has.call(actions, 'canApprove'))
 			{
 				this.canApprove = actions.canApprove;
 			}
+
 			if (has.call(actions, 'canDisapprove'))
 			{
 				this.canDisapprove = actions.canDisapprove;
 			}
+
 			if (has.call(actions, 'canDefer'))
 			{
 				this.canDefer = actions.canDefer;
 			}
+
 			if (has.call(actions, 'canEdit'))
 			{
 				this.canEdit = actions.canEdit;
 			}
+
 			if (has.call(actions, 'canRemove'))
 			{
 				this.canRemove = actions.canRemove;
 			}
+
 			if (has.call(actions, 'canAddToFavorite'))
 			{
 				this.canAddToFavorite = actions.canAddToFavorite;
 			}
+
 			if (has.call(actions, 'canRemoveFromFavorite'))
 			{
 				this.canRemoveFromFavorite = actions.canRemoveFromFavorite;
@@ -356,7 +382,7 @@
 
 		add()
 		{
-			console.log('Create task');
+			Console.log('Create task');
 
 			return new Promise((resolve, reject) => {
 				(new RequestExecutor('tasks.task.add', {
@@ -371,9 +397,9 @@
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 
-							const {task} = response.result;
+							const { task } = response.result;
 							this.task.isNewRecord = false;
 							this.task.id = task.id;
 							this.set(task.action);
@@ -381,28 +407,29 @@
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							Notify.showMessage(
-								response.error.description.replace(/<\/?[^>]+(>|$)/g, ""),
+								response.error.description.replace(/<\/?[^>]+(>|$)/g, ''),
 								'',
 								{
 									time: 5,
-								}
+								},
 							);
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
 
 		update()
 		{
-			console.log('Update task');
+			Console.log('Update task');
 
 			return new Promise((resolve, reject) => {
 				const fieldsToSave = this.getFieldsToSave();
-				if (!Object.keys(fieldsToSave).length)
+				if (Object.keys(fieldsToSave).length === 0)
 				{
 					resolve();
 				}
@@ -413,18 +440,19 @@
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 
-							const {task} = response.result;
+							const { task } = response.result;
 							this.task.updateData(task);
 
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -432,40 +460,47 @@
 		getFieldsToSave()
 		{
 			const fieldsValueGetters = {
-				[Task.fields.title]: () => ({TITLE: this.task.title}),
-				[Task.fields.description]: () => ({DESCRIPTION: this.task.description}),
-				[Task.fields.status]: () => ({STATUS: this.task.status}),
-				[Task.fields.group]: () => ({GROUP_ID: (this.task.groupId || 0)}),
-				[Task.fields.priority]: () => ({PRIORITY: this.task.priority}),
-				[Task.fields.timeEstimate]: () => ({TIME_ESTIMATE: this.task.timeEstimate}),
+				[Task.fields.title]: () => (Type.isUndefined(this.task.title) ? {} : { TITLE: this.task.title }),
+				[Task.fields.description]: () => (Type.isUndefined(this.task.description) ? {} : { DESCRIPTION: this.task.description }),
+				[Task.fields.status]: () => (Type.isUndefined(this.task.status) ? {} : { STATUS: this.task.status }),
+				[Task.fields.group]: () => (Type.isUndefined(this.task.groupId) ? {} : { GROUP_ID: (this.task.groupId || 0) }),
+				[Task.fields.priority]: () => (Type.isUndefined(this.task.priority) ? {} : { PRIORITY: this.task.priority }),
+				[Task.fields.timeEstimate]: () => (Type.isUndefined(this.task.timeEstimate) ? {} : { TIME_ESTIMATE: this.task.timeEstimate }),
 
-				[Task.fields.creator]: () => ({CREATED_BY: this.task.creator.id}),
-				[Task.fields.responsible]: () => ({RESPONSIBLE_ID: this.task.responsible.id}),
-				[Task.fields.accomplices]: () => ({ACCOMPLICES: Object.keys(this.task.accomplices)}),
-				[Task.fields.auditors]: () => ({AUDITORS: Object.keys(this.task.auditors)}),
+				[Task.fields.creator]: () => (Type.isUndefined(this.task.creator) ? {} : { CREATED_BY: this.task.creator.id }),
+				[Task.fields.responsible]: () => (Type.isUndefined(this.task.responsible) ? {} : { RESPONSIBLE_ID: this.task.responsible.id }),
+				[Task.fields.accomplices]: () => (Type.isUndefined(this.task.accomplices) ? {} : { ACCOMPLICES: Object.keys(this.task.accomplices) }),
+				[Task.fields.auditors]: () => (Type.isUndefined(this.task.auditors) ? {} : { AUDITORS: Object.keys(this.task.auditors) }),
 
-				[Task.fields.deadline]: () => ({DEADLINE: (this.task.deadline ? (new Date(this.task.deadline)).toISOString() : '')}),
-				[Task.fields.startDatePlan]: () => ({START_DATE_PLAN: (this.task.startDatePlan ? (new Date(this.task.startDatePlan)).toISOString() : '')}),
-				[Task.fields.endDatePlan]: () => ({END_DATE_PLAN: (this.task.endDatePlan ? (new Date(this.task.endDatePlan)).toISOString() : '')}),
+				[Task.fields.deadline]: () => (Type.isUndefined(this.task.deadline) ? {} : { DEADLINE: (this.task.deadline ? (new Date(this.task.deadline)).toISOString() : '') }),
+				[Task.fields.startDatePlan]: () => (Type.isUndefined(this.task.startDatePlan) ? {} : { START_DATE_PLAN: (this.task.startDatePlan ? (new Date(this.task.startDatePlan)).toISOString() : '') }),
+				[Task.fields.endDatePlan]: () => (Type.isUndefined(this.task.endDatePlan) ? {} : { END_DATE_PLAN: (this.task.endDatePlan ? (new Date(this.task.endDatePlan)).toISOString() : '') }),
 
-				[Task.fields.allowChangeDeadline]: () => ({ALLOW_CHANGE_DEADLINE: (this.task.allowChangeDeadline ? 'Y' : 'N')}),
-				[Task.fields.isMatchWorkTime]: () => ({MATCH_WORK_TIME: (this.task.isMatchWorkTime ? 'Y' : 'N')}),
-				[Task.fields.allowTaskControl]: () => ({TASK_CONTROL: (this.task.allowTaskControl ? 'Y' : 'N')}),
-				[Task.fields.allowTimeTracking]: () => ({ALLOW_TIME_TRACKING: (this.task.allowTimeTracking ? 'Y' : 'N')}),
+				[Task.fields.allowChangeDeadline]: () => (Type.isUndefined(this.task.allowChangeDeadline) ? {} : { ALLOW_CHANGE_DEADLINE: (this.task.allowChangeDeadline ? 'Y' : 'N') }),
+				[Task.fields.isMatchWorkTime]: () => (Type.isUndefined(this.task.isMatchWorkTime) ? {} : { MATCH_WORK_TIME: (this.task.isMatchWorkTime ? 'Y' : 'N') }),
+				[Task.fields.allowTaskControl]: () => (Type.isUndefined(this.task.allowTaskControl) ? {} : { TASK_CONTROL: (this.task.allowTaskControl ? 'Y' : 'N') }),
+				[Task.fields.allowTimeTracking]: () => (Type.isUndefined(this.task.allowTimeTracking) ? {} : { ALLOW_TIME_TRACKING: (this.task.allowTimeTracking ? 'Y' : 'N') }),
 
-				[Task.fields.isResultRequired]: () => ({
-					SE_PARAMETER: [
-						{
-							CODE: Task.parameterCodes.isResultRequired,
-							VALUE: (this.task.isResultRequired ? 'Y' : 'N'),
-						},
-					],
-				}),
+				[Task.fields.isResultRequired]: () => {
+					if (!Type.isUndefined(this.task.isResultRequired))
+					{
+						return {
+							SE_PARAMETER: [
+								{
+									CODE: Task.parameterCodes.isResultRequired,
+									VALUE: (this.task.isResultRequired ? 'Y' : 'N'),
+								},
+							],
+						};
+					}
 
-				[Task.fields.mark]: () => (!Type.isUndefined(this.task.mark) ? {MARK: (this.task.mark === Task.mark.none ? '' : this.task.mark)} : {}),
-				[Task.fields.tags]: () => (!Type.isUndefined(this.task.tags) ? {TAGS: Object.values(this.task.tags).map(tag => tag.title)} : {}),
-				[Task.fields.crm]: () => (!Type.isUndefined(this.task.crm) ? {CRM: (Object.keys(this.task.crm).length > 0 ? this.task.crm : [])} : {}),
-				[Task.fields.uploadedFiles]: () => (!Type.isUndefined(this.task.uploadedFiles) ? {UPLOADED_FILES: this.task.uploadedFiles.map(file => file.token)} : {}),
+					return {};
+				},
+
+				[Task.fields.mark]: () => (Type.isUndefined(this.task.mark) ? {} : { MARK: (this.task.mark === Task.mark.none ? '' : this.task.mark) }),
+				[Task.fields.tags]: () => (Type.isUndefined(this.task.tags) ? {} : { TAGS: Object.values(this.task.tags).map((tag) => tag.title) }),
+				[Task.fields.crm]: () => (Type.isUndefined(this.task.crm) ? {} : { CRM: (Object.keys(this.task.crm).length > 0 ? this.task.crm : []) }),
+				[Task.fields.uploadedFiles]: () => (Type.isUndefined(this.task.uploadedFiles) ? {} : { UPLOADED_FILES: this.task.uploadedFiles.map((file) => file.token) }),
 				[Task.fields.files]: () => {
 					const filesFields = {};
 					if (!Type.isUndefined(this.task.diskFiles))
@@ -474,11 +509,12 @@
 					}
 					else if (!Type.isUndefined(this.task.files))
 					{
-						filesFields.UF_TASK_WEBDAV_FILES = this.task.files.map(file => file.id);
+						filesFields.UF_TASK_WEBDAV_FILES = this.task.files.map((file) => file.id);
 					}
+
 					return filesFields;
 				},
-				[Task.fields.parentTask]: () => (!Type.isUndefined(this.task.parentId) ? {PARENT_ID: (this.task.parentId || 0)} : {}),
+				[Task.fields.parentTask]: () => (Type.isUndefined(this.task.parentId) ? {} : { PARENT_ID: (this.task.parentId || 0) }),
 			};
 			const fieldsToSave = (
 				this.fieldChangesTracker.isEnabled
@@ -486,7 +522,9 @@
 					: Object.values(Task.fields)
 			);
 
-			return fieldsToSave.reduce((result, field) => {
+			return fieldsToSave.reduce((accumulator, field) => {
+				let result = accumulator;
+
 				if (Object.keys(fieldsValueGetters).includes(field))
 				{
 					result = {
@@ -494,6 +532,7 @@
 						...fieldsValueGetters[field](),
 					};
 				}
+
 				return result;
 			}, {});
 		}
@@ -501,18 +540,19 @@
 		remove()
 		{
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.task.delete', {taskId: this.task.id}))
+				(new RequestExecutor('tasks.task.delete', { taskId: this.task.id }))
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -529,14 +569,15 @@
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -554,19 +595,20 @@
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 
-							const {task} = response.result;
+							const { task } = response.result;
 							this.task.auditors = task.auditors;
 							this.set(task.action);
 
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -574,19 +616,21 @@
 		stopWatch()
 		{
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.task.stopWatch', {taskId: this.task.id}))
+				(new RequestExecutor('tasks.task.stopWatch', { taskId: this.task.id }))
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							this.set(response.result.task.action);
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							reject(response);
-						}
-					);
+						},
+					)
+					.catch((response) => reject(response))
+				;
 			});
 		}
 
@@ -595,33 +639,34 @@
 			this.task.isTimerRunningForCurrentUser = true;
 
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.task.startTimer', {taskId: this.task.id}))
+				(new RequestExecutor('tasks.task.startTimer', { taskId: this.task.id }))
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 
-							const {task} = response.result;
+							const { task } = response.result;
 							this.task.isTimerRunningForCurrentUser = (task.timerIsRunningForCurrentUser === 'Y');
-							this.set(response.result.task.action);
+							this.set(task.action);
 
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 
 							Notify.showMessage(
-								response.error.description.replace(/<\/?[^>]+(>|$)/g, ""),
+								response.error.description.replace(/<\/?[^>]+(>|$)/g, ''),
 								'',
 								{
 									time: 5,
-								}
+								},
 							);
 							this.task.isTimerRunningForCurrentUser = false;
 
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -631,33 +676,34 @@
 			this.task.isTimerRunningForCurrentUser = false;
 
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.task.pauseTimer', {taskId: this.task.id}))
+				(new RequestExecutor('tasks.task.pauseTimer', { taskId: this.task.id }))
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 
-							const {task} = response.result;
+							const { task } = response.result;
 							this.task.isTimerRunningForCurrentUser = (task.timerIsRunningForCurrentUser === 'Y');
-							this.set(response.result.task.action);
+							this.set(task.action);
 
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 
 							Notify.showMessage(
-								response.error.description.replace(/<\/?[^>]+(>|$)/g, ""),
+								response.error.description.replace(/<\/?[^>]+(>|$)/g, ''),
 								'',
 								{
 									time: 5,
-								}
+								},
 							);
 							this.task.isTimerRunningForCurrentUser = true;
 
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -667,19 +713,20 @@
 			this.task.status = Task.statusList.inprogress;
 
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.task.start', {taskId: this.task.id}))
+				(new RequestExecutor('tasks.task.start', { taskId: this.task.id }))
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							this.set(response.result.task.action);
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -689,19 +736,20 @@
 			this.task.status = Task.statusList.pending;
 
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.task.pause', {taskId: this.task.id}))
+				(new RequestExecutor('tasks.task.pause', { taskId: this.task.id }))
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							this.set(response.result.task.action);
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -722,26 +770,27 @@
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							this.set(response.result.task.action);
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							Notify.showMessage(
-								response.error.description.replace(/<\/?[^>]+(>|$)/g, ""),
+								response.error.description.replace(/<\/?[^>]+(>|$)/g, ''),
 								'',
 								{
 									time: 5,
-								}
+								},
 							);
 							if (this.task.isResultRequired && !this.task.isOpenResultExists)
 							{
 								this.task.status = oldStatus;
 							}
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -760,15 +809,16 @@
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							this.set(response.result.task.action);
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -778,19 +828,20 @@
 			this.task.status = Task.statusList.completed;
 
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.task.approve', {taskId: this.task.id}))
+				(new RequestExecutor('tasks.task.approve', { taskId: this.task.id }))
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							this.set(response.result.task.action);
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -800,19 +851,20 @@
 			this.task.status = Task.statusList.pending;
 
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.task.disapprove', {taskId: this.task.id}))
+				(new RequestExecutor('tasks.task.disapprove', { taskId: this.task.id }))
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							this.set(response.result.task.action);
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -822,20 +874,21 @@
 			this.task.isPinned = true;
 
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.task.pin', {taskId: this.task.id}))
+				(new RequestExecutor('tasks.task.pin', { taskId: this.task.id }))
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							this.task.isPinned = true;
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							this.task.isPinned = false;
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -845,20 +898,21 @@
 			this.task.isPinned = false;
 
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.task.unpin', {taskId: this.task.id}))
+				(new RequestExecutor('tasks.task.unpin', { taskId: this.task.id }))
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							this.task.isPinned = false;
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							this.task.isPinned = true;
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -868,20 +922,21 @@
 			this.task.isMuted = true;
 
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.task.mute', {taskId: this.task.id}))
+				(new RequestExecutor('tasks.task.mute', { taskId: this.task.id }))
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							this.task.isMuted = true;
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							this.task.isMuted = false;
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -891,20 +946,22 @@
 			this.task.isMuted = false;
 
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.task.unmute', {taskId: this.task.id}))
+				(new RequestExecutor('tasks.task.unmute', { taskId: this.task.id }))
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							this.task.isMuted = false;
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							this.task.isMuted = true;
 							reject(response);
-						}
-					);
+						},
+					)
+					.catch((response) => reject(response))
+				;
 			});
 		}
 
@@ -918,18 +975,19 @@
 			this.pseudoRead();
 
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.task.view.update', {taskId: this.task.id}))
+				(new RequestExecutor('tasks.task.view.update', { taskId: this.task.id }))
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -937,18 +995,19 @@
 		ping()
 		{
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.task.ping', {taskId: this.task.id}))
+				(new RequestExecutor('tasks.task.ping', { taskId: this.task.id }))
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -959,22 +1018,23 @@
 			this.canRemoveFromFavorite = true;
 
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.task.favorite.add', {taskId: this.task.id}))
+				(new RequestExecutor('tasks.task.favorite.add', { taskId: this.task.id }))
 					.call()
 					.then(
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							this.canAddToFavorite = false;
 							this.canRemoveFromFavorite = true;
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							this.canAddToFavorite = true;
 							this.canRemoveFromFavorite = false;
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -985,66 +1045,42 @@
 			this.canRemoveFromFavorite = false;
 
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.task.favorite.remove', {taskId: this.task.id}))
+				(new RequestExecutor('tasks.task.favorite.remove', { taskId: this.task.id }))
 					.call()
 					.then(
-						(response) =>  {
-							console.log(response);
+						(response) => {
+							Console.log(response);
 							this.canAddToFavorite = true;
 							this.canRemoveFromFavorite = false;
 							resolve(response);
 						},
 						(response) => {
-							console.log(response);
+							Console.log(response);
 							this.canAddToFavorite = false;
 							this.canRemoveFromFavorite = true;
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
 
 		open(parentWidget)
 		{
-			if (Application.getApiVersion() < 31)
-			{
-				const defaultPathToTaskAdd = `${env.siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`;
-				const pathToTaskAdd =
-					BX.componentParameters.get('PATH_TO_TASK_ADD', defaultPathToTaskAdd)
-						.replace('#action#', 'view')
-						.replace('#taskId#', this.task.id)
-				;
+			const taskId = this.task.id;
+			const taskData = {
+				taskId,
+				id: taskId,
+				title: (this.task.title || 'TASK'),
+			};
+			const params = {
+				parentWidget,
+				userId: this.task.currentUser.id,
+				taskObject: (this.task.canSendMyselfOnOpen ? this.task.exportProperties() : null),
+			};
 
-				PageManager.openPage({
-					backdrop: {
-						showOnTop: true,
-						forceDismissOnSwipeDown: true,
-					},
-					url: pathToTaskAdd,
-					cache: false,
-					modal: false,
-					title: (this.task.title || null),
-				});
-			}
-			else
-			{
-				const taskId = this.task.id;
-				const taskData = {
-					taskId,
-					id: taskId,
-					title: 'TASK',
-					taskInfo: this.task.getTaskInfo(),
-				};
-				const params = {
-					parentWidget,
-					userId: this.task.currentUser.id,
-					taskObject: (this.task.canSendMyselfOnOpen ? this.task.exportProperties() : null),
-				};
-				delete taskData.taskInfo.project;
-
-				(new Entry()).openTask(taskData, params);
-			}
+			Entry.openTask(taskData, params);
 		}
 	}
 
@@ -1095,7 +1131,7 @@
 		{
 			const statePrefix = 'MOBILE_TASKS_TASK_CARD_DEADLINE_STATE';
 			const deadline = new Date(this.task.deadline);
-			const deadlineTime = deadline.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+			const deadlineTime = deadline.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 			return {
 				isCompleted: {
@@ -1127,6 +1163,7 @@
 					backgroundColor: '#FF6864',
 				},
 				isToday: {
+					// eslint-disable-next-line sonarjs/no-nested-template-literals
 					message: `${Loc.getMessage(`${statePrefix}_TODAY`)} ${deadlineTime}`,
 					fontColor: '#FFFFFF',
 					backgroundColor: '#F9B933',
@@ -1189,15 +1226,15 @@
 			const expiredStatePrefix = 'MOBILE_TASKS_TASK_CARD_DEADLINE_STATE_EXPIRED';
 			const extensions = {
 				year: {
-					value: 31536000,
+					value: 31_536_000,
 					message: Loc.getMessage(`${expiredStatePrefix}_YEAR`),
 				},
 				month: {
-					value: 2592000,
+					value: 2_592_000,
 					message: Loc.getMessage(`${expiredStatePrefix}_MONTH`),
 				},
 				week: {
-					value: 604800,
+					value: 604_800,
 					message: Loc.getMessage(`${expiredStatePrefix}_WEEK`),
 				},
 				day: {
@@ -1223,6 +1260,7 @@
 				if (!expiredTime && value >= 1)
 				{
 					expiredTime = extensions[key].message.replace('#TIME#', value);
+
 					return;
 				}
 				delta -= value * extensions[key].value;
@@ -1309,6 +1347,11 @@
 
 	class FieldChangesTracker
 	{
+		static isValidField(field)
+		{
+			return Object.values(Task.fields).includes(field);
+		}
+
 		/**
 		 * @param {Task} task
 		 */
@@ -1322,13 +1365,10 @@
 
 		addChangedFields(fields)
 		{
-			if (!Type.isArray(fields))
-			{
-				fields = [fields];
-			}
+			const arrayedFields = (Type.isArray(fields) ? fields : [fields]);
 
-			fields.forEach((field) => {
-				if (this.isValidField(field) && !this.changedFields.has(field))
+			arrayedFields.forEach((field) => {
+				if (FieldChangesTracker.isValidField(field) && !this.changedFields.has(field))
 				{
 					this.changedFields.add(field);
 				}
@@ -1337,12 +1377,9 @@
 
 		removeChangedFields(fields)
 		{
-			if (!Type.isArray(fields))
-			{
-				fields = [fields];
-			}
+			const arrayedFields = (Type.isArray(fields) ? fields : [fields]);
 
-			fields.forEach((field) => {
+			arrayedFields.forEach((field) => {
 				if (this.isFieldChanged(field))
 				{
 					this.changedFields.delete(field);
@@ -1352,22 +1389,17 @@
 
 		isFieldChanged(field)
 		{
-			return (this.isValidField(field) && this.changedFields.has(field));
+			return (FieldChangesTracker.isValidField(field) && this.changedFields.has(field));
 		}
 
 		getChangedFields()
 		{
-			return Array.from(this.changedFields);
+			return [...this.changedFields];
 		}
 
 		clearChangedFields()
 		{
 			this.changedFields.clear();
-		}
-
-		isValidField(field)
-		{
-			return Object.values(Task.fields).includes(field);
 		}
 
 		get isEnabled()
@@ -1430,6 +1462,7 @@
 		static get actions()
 		{
 			const titlePrefix = 'MOBILE_TASKS_TASK_CARD_VIEW_ACTION';
+
 			return {
 				more: {
 					identifier: 'more',
@@ -1451,6 +1484,7 @@
 		static get deadlines()
 		{
 			const statePrefix = 'MOBILE_TASKS_TASK_CARD_DEADLINE_STATE';
+
 			return {
 				today: {
 					name: Loc.getMessage(`${statePrefix}_TODAY`),
@@ -1479,6 +1513,8 @@
 				changeDeadline: 'deadline',
 				approve: 'approve',
 				disapprove: 'disapprove',
+				startTimer: 'start',
+				pauseTimer: 'pause',
 				start: 'start',
 				pause: 'pause',
 				renew: 'renew',
@@ -1507,7 +1543,7 @@
 		{
 			return {
 				important: '2',
-				none : '1',
+				none: '1',
 			};
 		}
 
@@ -1532,6 +1568,7 @@
 				timeEstimate: 'timeEstimate',
 				commentsCount: 'commentsCount',
 				serviceCommentsCount: 'serviceCommentsCount',
+
 				status: 'status',
 				subStatus: 'subStatus',
 				priority: 'priority',
@@ -1586,35 +1623,29 @@
 
 		setDefaultData()
 		{
-			this.id = `tmp-id-${(new Date()).getTime()}`;
-			this.guid = '';
+			this.id = `tmp-id-${Date.now()}`;
+			this.guid = undefined;
+			this.title = undefined;
+			this.description = undefined;
+			this.parsedDescription = undefined;
+			this.groupId = undefined;
+			this.group = undefined;
+			this.timeElapsed = undefined;
+			this.timeEstimate = undefined;
+			this.commentsCount = undefined;
+			this.serviceCommentsCount = undefined;
 
-			this.title = '';
-			this.description = '';
-			this.parsedDescription = '';
-			this.groupId = 0;
-			this.group = {
-				id: 0,
-				name: '',
-				image: '',
-			};
-			this.timeElapsed = 0;
-			this.timeEstimate = 0;
-			this.commentsCount = 0;
-			this.serviceCommentsCount = 0;
-
-			this.status = Task.statusList.pending;
-			this.subStatus = Task.statusList.pending;
-			this.priority = Task.priority.none;
+			this.status = undefined;
+			this.subStatus = undefined;
+			this.priority = undefined;
 			this.mark = undefined;
 
-			this.creator = {};
-			this.responsible = {};
-			this.accomplices = {};
-			this.auditors = {};
-
-			this.relatedTasks = {};
-			this.subTasks = {};
+			this.creator = undefined;
+			this.responsible = undefined;
+			this.accomplices = undefined;
+			this.auditors = undefined;
+			this.relatedTasks = undefined;
+			this.subTasks = undefined;
 
 			this.crm = undefined;
 			this.tags = undefined;
@@ -1622,288 +1653,279 @@
 			this.diskFiles = undefined;
 			this.uploadedFiles = undefined;
 			this.parentId = undefined;
-			this.parentTask = {
-				id: this.parentId,
-				title: '',
-			};
+			this.parentTask = undefined;
+
+			this.isMuted = undefined;
+			this.isPinned = undefined;
+			this.isResultRequired = undefined;
+			this.isResultExists = undefined;
+			this.isOpenResultExists = undefined;
+			this.isMatchWorkTime = undefined;
+			this.allowChangeDeadline = undefined;
+			this.allowTimeTracking = undefined;
+			this.allowTaskControl = undefined;
+			this.isTimerRunningForCurrentUser = undefined;
+
+			this.deadline = undefined;
+			this.activityDate = undefined;
+			this.startDatePlan = undefined;
+			this.endDatePlan = undefined;
 
 			this.counter = {};
 			this.actions = {};
-
-			this.isMuted = false;
-			this.isPinned = false;
-			this.isResultRequired = false;
-			this.isResultExists = false;
-			this.isOpenResultExists = false;
-			this.isMatchWorkTime = false;
-			this.allowChangeDeadline = false;
-			this.allowTimeTracking = false;
-			this.allowTaskControl = false;
-			this.isTimerRunningForCurrentUser = false;
-
-			this.deadline = null;
-			this.activityDate = null;
-			this.startDatePlan = null;
-			this.endDatePlan = null;
 
 			this.canSendMyselfOnOpen = true;
 		}
 
 		setData(row)
 		{
-			this.id = row.id;
-			this.title = row.title;
-			this.description = row.description;
-			this.parsedDescription = row.parsedDescription;
-			this.groupId = row.groupId;
-			this.group = (this.groupId > 0 && row.group ? row.group : {id: 0, name: '', image: ''});
-			this.timeElapsed = Number(row.timeElapsed);
-			this.timeEstimate = Number(row.timeEstimate);
-			this.commentsCount = Number(row.commentsCount);
-			this.serviceCommentsCount = Number(row.serviceCommentsCount);
+			const fieldMap = {
+				id: () => row.id,
+				title: () => row.title,
+				description: () => row.description,
+				parsedDescription: () => row.parsedDescription,
+				groupId: () => row.groupId,
+				group: () => row.group,
+				timeElapsed: () => Number(row.timeElapsed),
+				timeEstimate: () => Number(row.timeEstimate),
+				commentsCount: () => Number(row.commentsCount),
+				serviceCommentsCount: () => Number(row.serviceCommentsCount),
+				status: () => Number(row.status),
+				subStatus: () => Number(row.subStatus),
+				priority: () => row.priority,
+				mark: () => (row.mark === '' ? Task.mark.none : row.mark),
+				creator: () => {
+					this.tryUpdateCurrentUserIcon(row.creator);
 
-			this.status = row.status;
-			this.subStatus = (row.subStatus || this.status);
-			this.priority = row.priority;
-			if (!Type.isUndefined(row.mark))
-			{
-				this.mark = (row.mark === '' ? Task.mark.none : row.mark);
-			}
+					return row.creator;
+				},
+				responsible: () => {
+					this.tryUpdateCurrentUserIcon(row.responsible);
 
-			this.creator = row.creator;
-			this.responsible = row.responsible;
-			this.accomplices = (Type.isArray(row.accomplicesData) ? {} : row.accomplicesData);
-			this.auditors = (Type.isArray(row.auditorsData) ? {} : row.auditorsData);
+					return row.responsible;
+				},
+				accomplices: {
+					checker: () => !Type.isUndefined(row.accomplicesData),
+					getter: () => (Type.isArray(row.accomplicesData) ? {} : row.accomplicesData),
+				},
+				auditors: {
+					checker: () => !Type.isUndefined(row.auditorsData),
+					getter: () => (Type.isArray(row.auditorsData) ? {} : row.auditorsData),
+				},
+				relatedTasks: () => (Type.isArray(row.relatedTasks) ? {} : row.relatedTasks),
+				subTasks: () => (Type.isArray(row.subTasks) ? {} : row.subTasks),
+				crm: () => (Type.isArray(row.crm) ? {} : row.crm),
+				tags: () => (Type.isArray(row.tags) ? {} : row.tags),
+				files: () => (row.files || []),
+				uploadedFiles: () => (row.uploadedFiles || []),
+				parentId: () => (Number(row.parentId) || 0),
+				parentTask: () => row.parentTask,
+				isMuted: () => (row.isMuted === 'Y'),
+				isPinned: () => (row.isPinned === 'Y'),
+				isResultRequired: {
+					checker: () => !Type.isUndefined(row.taskRequireResult),
+					getter: () => (row.taskRequireResult === 'Y'),
+				},
+				isResultExists: {
+					checker: () => !Type.isUndefined(row.taskHasResult),
+					getter: () => (row.taskHasResult === 'Y'),
+				},
+				isOpenResultExists: {
+					checker: () => !Type.isUndefined(row.taskHasOpenResult),
+					getter: () => (row.taskHasOpenResult === 'Y'),
+				},
+				isMatchWorkTime: {
+					checker: () => !Type.isUndefined(row.matchWorkTime),
+					getter: () => (row.matchWorkTime === 'Y'),
+				},
+				allowChangeDeadline: () => (row.allowChangeDeadline === 'Y'),
+				allowTaskControl: {
+					checker: () => !Type.isUndefined(row.taskControl),
+					getter: () => (row.taskControl === 'Y'),
+				},
+				allowTimeTracking: () => (row.allowTimeTracking === 'Y'),
+				isTimerRunningForCurrentUser: {
+					checker: () => !Type.isUndefined(row.timerIsRunningForCurrentUser),
+					getter: () => (row.timerIsRunningForCurrentUser === 'Y'),
+				},
+				deadline: () => (Date.parse(row.deadline) || null),
+				activityDate: () => (Date.parse(row.activityDate) || null),
+				startDatePlan: () => (Date.parse(row.startDatePlan) || null),
+				endDatePlan: () => (Date.parse(row.endDatePlan) || null),
+				counter: () => row.counter,
+				actions: {
+					checker: () => !Type.isUndefined(row.action),
+					getter: () => row.action,
+				},
+			};
+			const baseChecker = (value) => !Type.isUndefined(value);
 
-			this.relatedTasks = (Type.isArray(row.relatedTasks) ? {} : row.relatedTasks);
-			this.subTasks = (Type.isArray(row.subTasks) ? {} : row.subTasks);
+			Object.entries(fieldMap).forEach(([field, value]) => {
+				const getter = (Type.isFunction(value) ? value : value.getter);
+				const checker = (!Type.isFunction(value) && Type.isFunction(value.checker) ? value.checker : baseChecker);
 
-			if (!Type.isUndefined(row.crm))
-			{
-				this.crm = (Type.isArray(row.crm) ? {} : row.crm);
-			}
-			if (!Type.isUndefined(row.tags))
-			{
-				this.tags = (Type.isArray(row.tags) ? {} : row.tags);
-			}
-			if (!Type.isUndefined(row.files))
-			{
-				this.files = (row.files || []);
-			}
-			if (!Type.isUndefined(row.uploadedFiles))
-			{
-				this.uploadedFiles = (row.uploadedFiles || []);
-			}
-			if (!Type.isUndefined(row.parentId))
-			{
-				this.parentId = (Number(row.parentId) || 0);
-				this.parentTask = (this.parentId > 0 && row.parentTask ? row.parentTask : {id: this.parentId, title: ''});
-			}
-
-			this.counter = row.counter;
-			this.actions = row.action;
-
-			this.isMuted = (row.isMuted === 'Y');
-			this.isPinned = (row.isPinned === 'Y');
-			this.isResultRequired = (row.taskRequireResult === 'Y');
-			this.isResultExists = (row.taskHasResult === 'Y');
-			this.isOpenResultExists = (row.taskHasOpenResult === 'Y');
-			this.isMatchWorkTime = (row.matchWorkTime === 'Y');
-			this.allowChangeDeadline = (row.allowChangeDeadline === 'Y');
-			this.allowTaskControl = (row.taskControl === 'Y');
-			this.allowTimeTracking = (row.allowTimeTracking === 'Y');
-			this.isTimerRunningForCurrentUser = (row.timerIsRunningForCurrentUser === 'Y');
-
-			this.deadline = (Date.parse(row.deadline) || null);
-			this.activityDate = (Date.parse(row.activityDate) || null);
-			this.startDatePlan = (Date.parse(row.startDatePlan) || null);
-			this.endDatePlan = (Date.parse(row.endDatePlan) || null);
-
-			this.tryUpdateCurrentUserIcon(row.creator);
-			this.tryUpdateCurrentUserIcon(row.responsible);
+				if (checker(row[field]))
+				{
+					this[field] = getter();
+				}
+			});
 		}
 
 		updateData(row)
 		{
 			const has = Object.prototype.hasOwnProperty;
+			const fieldMap = {
+				id: () => row.id,
+				title: () => row.title,
+				description: () => row.description,
+				parsedDescription: () => row.parsedDescription,
+				groupId: () => row.groupId,
+				group: () => row.group,
+				timeElapsed: () => Number(row.timeElapsed),
+				timeEstimate: () => Number(row.timeEstimate),
+				commentsCount: () => Number(row.commentsCount),
+				serviceCommentsCount: () => Number(row.serviceCommentsCount),
+				status: () => Number(row.status),
+				subStatus: () => Number(row.subStatus),
+				priority: () => row.priority,
+				mark: () => (row.mark === '' ? Task.mark.none : row.mark),
+				creator: () => {
+					const { creator } = row;
+					if (this.creator && this.creator.id === creator.id)
+					{
+						creator.name = (creator.name || this.creator.name);
+						creator.icon = (creator.icon || this.creator.icon);
+						creator.link = (creator.link || this.creator.link);
+						creator.workPosition = (creator.workPosition || this.creator.workPosition);
+					}
+					this.tryUpdateCurrentUserIcon(creator);
 
-			if (has.call(row, 'id'))
-			{
-				this.id = row.id;
-			}
-			if (has.call(row, 'title'))
-			{
-				this.title = row.title;
-			}
-			if (has.call(row, 'description'))
-			{
-				this.description = row.description;
-			}
-			if (has.call(row, 'parsedDescription'))
-			{
-				this.parsedDescription = row.parsedDescription;
-			}
-			if (has.call(row, 'groupId'))
-			{
-				this.groupId = row.groupId;
-			}
-			if (has.call(row, 'group'))
-			{
-				this.group = (this.groupId > 0 && row.group ? row.group : {id: 0, name: '', image: ''});
-			}
-			if (has.call(row, 'timeElapsed'))
-			{
-				this.timeElapsed = Number(row.timeElapsed);
-			}
-			if (has.call(row, 'timeEstimate'))
-			{
-				this.timeEstimate = Number(row.timeEstimate);
-			}
-			if (has.call(row, 'commentsCount'))
-			{
-				this.commentsCount = Number(row.commentsCount);
-			}
-			if (has.call(row, 'serviceCommentsCount'))
-			{
-				this.serviceCommentsCount = Number(row.serviceCommentsCount);
-			}
+					return creator;
+				},
+				responsible: () => {
+					const { responsible } = row;
+					if (this.responsible && this.responsible.id === responsible.id)
+					{
+						responsible.name = (responsible.name || this.responsible.name);
+						responsible.icon = (responsible.icon || this.responsible.icon);
+						responsible.link = (responsible.link || this.responsible.link);
+						responsible.workPosition = (responsible.workPosition || this.responsible.workPosition);
+					}
+					this.tryUpdateCurrentUserIcon(responsible);
 
-			if (has.call(row, 'status'))
-			{
-				this.status = row.status;
-			}
-			if (has.call(row, 'subStatus'))
-			{
-				this.subStatus = row.subStatus;
-			}
-			if (has.call(row, 'priority'))
-			{
-				this.priority = row.priority;
-			}
-			if (has.call(row, 'mark'))
-			{
-				this.mark = (row.mark === '' ? Task.mark.none : row.mark);
-			}
+					return responsible;
+				},
+				accomplices: {
+					checker: () => has.call(row, 'accomplicesData'),
+					getter: () => {
+						if (Type.isArray(row.accomplicesData))
+						{
+							return {};
+						}
 
-			if (has.call(row, 'creator'))
-			{
-				this.creator = row.creator;
-				this.tryUpdateCurrentUserIcon(row.creator);
-			}
-			if (has.call(row, 'responsible'))
-			{
-				this.responsible = row.responsible;
-				this.tryUpdateCurrentUserIcon(row.responsible);
-			}
-			if (has.call(row, 'accomplicesData'))
-			{
-				this.accomplices = (Type.isArray(row.accomplicesData) ? {} : row.accomplicesData);
-			}
-			if (has.call(row, 'auditorsData'))
-			{
-				this.auditors = (Type.isArray(row.auditorsData) ? {} : row.auditorsData);
-			}
+						const accomplices = {};
+						Object.entries(row.accomplicesData).forEach(([id, user]) => {
+							accomplices[id] = {	id, ...user };
+							if (this.accomplices && this.accomplices[id])
+							{
+								const currentUserData = this.accomplices[id];
+								accomplices[id] = {
+									id,
+									name: (user.name || currentUserData.name),
+									icon: (user.icon || currentUserData.icon),
+									link: (user.link || currentUserData.link),
+									workPosition: (user.workPosition || currentUserData.workPosition),
+								};
+							}
+						});
 
-			if (has.call(row, 'relatedTasks'))
-			{
-				this.relatedTasks = (Type.isArray(row.relatedTasks) ? {} : row.relatedTasks);
-			}
-			if (has.call(row, 'subTasks'))
-			{
-				this.subTasks = (Type.isArray(row.subTasks) ? {} : row.subTasks);
-			}
+						return accomplices;
+					},
+				},
+				auditors: {
+					checker: () => has.call(row, 'auditorsData'),
+					getter: () => {
+						if (Type.isArray(row.auditorsData))
+						{
+							return {};
+						}
 
-			if (has.call(row, 'crm'))
-			{
-				this.crm = (Type.isArray(row.crm) ? {} : row.crm);
-			}
-			if (has.call(row, 'tags'))
-			{
-				this.tags = (Type.isArray(row.tags) ? {} : row.tags);
-			}
-			if (has.call(row, 'files'))
-			{
-				this.files = row.files;
-			}
-			if (has.call(row, 'uploadedFiles'))
-			{
-				this.uploadedFiles = row.uploadedFiles;
-			}
-			if (has.call(row, 'parentId'))
-			{
-				this.parentId = Number(row.parentId);
-			}
-			if (has.call(row, 'parentTask'))
-			{
-				this.parentTask = (this.parentId > 0 && row.parentTask ? row.parentTask : {id: this.parentId, title: ''});
-			}
+						const auditors = {};
+						Object.entries(row.auditorsData).forEach(([id, user]) => {
+							auditors[id] = { id, ...user };
+							if (this.auditors && this.auditors[id])
+							{
+								const currentUserData = this.auditors[id];
+								auditors[id] = {
+									id,
+									name: (user.name || currentUserData.name),
+									icon: (user.icon || currentUserData.icon),
+									link: (user.link || currentUserData.link),
+									workPosition: (user.workPosition || currentUserData.workPosition),
+								};
+							}
+						});
 
-			if (has.call(row, 'counter'))
-			{
-				this.counter = row.counter;
-			}
-			if (has.call(row, 'action'))
-			{
-				this.actions = row.action;
-			}
+						return auditors;
+					},
+				},
+				relatedTasks: () => (Type.isArray(row.relatedTasks) ? {} : row.relatedTasks),
+				subTasks: () => (Type.isArray(row.subTasks) ? {} : row.subTasks),
+				crm: () => (Type.isArray(row.crm) ? {} : row.crm),
+				tags: () => (Type.isArray(row.tags) ? {} : row.tags),
+				files: () => (row.files || []),
+				uploadedFiles: () => (row.uploadedFiles || []),
+				parentId: () => (Number(row.parentId) || 0),
+				parentTask: () => row.parentTask,
+				isMuted: () => (row.isMuted === 'Y'),
+				isPinned: () => (row.isPinned === 'Y'),
+				isResultRequired: {
+					checker: () => has.call(row, 'taskRequireResult'),
+					getter: () => (row.taskRequireResult === 'Y'),
+				},
+				isResultExists: {
+					checker: () => has.call(row, 'taskHasResult'),
+					getter: () => (row.taskHasResult === 'Y'),
+				},
+				isOpenResultExists: {
+					checker: () => has.call(row, 'taskHasOpenResult'),
+					getter: () => (row.taskHasOpenResult === 'Y'),
+				},
+				isMatchWorkTime: {
+					checker: () => has.call(row, 'matchWorkTime'),
+					getter: () => (row.matchWorkTime === 'Y'),
+				},
+				allowChangeDeadline: () => (row.allowChangeDeadline === 'Y'),
+				allowTaskControl: {
+					checker: () => has.call(row, 'taskControl'),
+					getter: () => (row.taskControl === 'Y'),
+				},
+				allowTimeTracking: () => (row.allowTimeTracking === 'Y'),
+				isTimerRunningForCurrentUser: {
+					checker: () => has.call(row, 'timerIsRunningForCurrentUser'),
+					getter: () => (row.timerIsRunningForCurrentUser === 'Y'),
+				},
+				deadline: () => (Date.parse(row.deadline) || null),
+				activityDate: () => (Date.parse(row.activityDate) || null),
+				startDatePlan: () => (Date.parse(row.startDatePlan) || null),
+				endDatePlan: () => (Date.parse(row.endDatePlan) || null),
+				counter: () => row.counter,
+				actions: {
+					checker: () => has.call(row, 'action'),
+					getter: () => row.action,
+				},
+			};
+			const baseChecker = (field) => has.call(row, field);
 
-			if (has.call(row, 'isMuted'))
-			{
-				this.isMuted = (row.isMuted === 'Y');
-			}
-			if (has.call(row, 'isPinned'))
-			{
-				this.isPinned = (row.isPinned === 'Y');
-			}
-			if (has.call(row, 'taskRequireResult'))
-			{
-				this.isResultRequired = (row.taskRequireResult === 'Y');
-			}
-			if (has.call(row, 'taskHasResult'))
-			{
-				this.isResultExists = (row.taskHasResult === 'Y');
-			}
-			if (has.call(row, 'taskHasOpenResult'))
-			{
-				this.isOpenResultExists = (row.taskHasOpenResult === 'Y');
-			}
-			if (has.call(row, 'matchWorkTime'))
-			{
-				this.isMatchWorkTime = (row.matchWorkTime === 'Y');
-			}
-			if (has.call(row, 'allowChangeDeadline'))
-			{
-				this.allowChangeDeadline = (row.allowChangeDeadline === 'Y');
-			}
-			if (has.call(row, 'taskControl'))
-			{
-				this.allowTaskControl = (row.taskControl === 'Y');
-			}
-			if (has.call(row, 'allowTimeTracking'))
-			{
-				this.allowTimeTracking = (row.allowTimeTracking === 'Y');
-			}
-			if (has.call(row, 'timerIsRunningForCurrentUser'))
-			{
-				this.isTimerRunningForCurrentUser = (row.timerIsRunningForCurrentUser === 'Y');
-			}
+			Object.entries(fieldMap).forEach(([field, value]) => {
+				const getter = (Type.isFunction(value) ? value : value.getter);
+				const checker = (!Type.isFunction(value) && Type.isFunction(value.checker) ? value.checker : baseChecker);
 
-			if (has.call(row, 'deadline'))
-			{
-				this.deadline = (Date.parse(row.deadline) || null);
-			}
-			if (has.call(row, 'activityDate'))
-			{
-				this.activityDate = (Date.parse(row.activityDate) || null);
-			}
-			if (has.call(row, 'startDatePlan'))
-			{
-				this.startDatePlan = (Date.parse(row.startDatePlan) || null);
-			}
-			if (has.call(row, 'endDatePlan'))
-			{
-				this.endDatePlan = (Date.parse(row.endDatePlan) || null);
-			}
+				if (checker(field))
+				{
+					this[field] = getter();
+				}
+			});
 		}
 
 		exportProperties()
@@ -1914,8 +1936,6 @@
 
 				_id: this._id,
 				_guid: this._guid,
-				_status: this._status,
-				_subStatus: this._subStatus,
 
 				title: this.title,
 				description: this.description,
@@ -1927,6 +1947,8 @@
 				commentsCount: this.commentsCount,
 				serviceCommentsCount: this.serviceCommentsCount,
 
+				status: this.status,
+				subStatus: this.subStatus,
 				priority: this.priority,
 				mark: this.mark,
 
@@ -2028,7 +2050,7 @@
 		{
 			function s4()
 			{
-				return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+				return Math.floor((1 + Math.random()) * 0x10000).toString(16).slice(1);
 			}
 
 			if (!this._guid)
@@ -2042,26 +2064,6 @@
 		set guid(value)
 		{
 			this._guid = value;
-		}
-
-		get status()
-		{
-			return this._status;
-		}
-
-		set status(status)
-		{
-			this._status = Number(status);
-		}
-
-		get subStatus()
-		{
-			return this._subStatus;
-		}
-
-		set subStatus(subStatus)
-		{
-			this._subStatus = Number(subStatus);
 		}
 
 		isCreator(userId = null)
@@ -2132,11 +2134,14 @@
 			return !this.deadline;
 		}
 
+		get isExpiredSoon()
+		{
+			return (!this.isWoDeadline && this.deadline - Date.now() < 86_400_000);
+		}
+
 		get isExpired()
 		{
-			const date = new Date();
-
-			return (Boolean(this.deadline) && this.deadline <= date.getTime());
+			return (!this.isWoDeadline && this.deadline <= Date.now());
 		}
 
 		// counters
@@ -2392,7 +2397,7 @@
 				unpin: {
 					identifier: Action.types.unpin,
 					title: Loc.getMessage(`${titlePrefix}_UNPIN`),
-					iconName: `action_unpin`,
+					iconName: 'action_unpin',
 					color: '#468EE5',
 					position: 'left',
 				},
@@ -2408,12 +2413,7 @@
 
 			if (this.actions[Action.types.changeResponsible] && this.actions[Action.types.delegate])
 			{
-				currentActions.splice(currentActions.findIndex(item => item.identifier === Action.types.delegate), 1);
-			}
-
-			if (Application.getApiVersion() < 34)
-			{
-				currentActions.splice(currentActions.findIndex(item => item.identifier === Action.types.share), 1);
+				currentActions.splice(currentActions.findIndex((item) => item.identifier === Action.types.delegate), 1);
 			}
 
 			return currentActions;

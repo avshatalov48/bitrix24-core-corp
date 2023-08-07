@@ -27,6 +27,9 @@ abstract class BaseMessage extends Base
 	public const PROVIDER_TYPE_SALESCENTER_TERMINAL_PAYMENT_PAID = 'SALESCENTER_TERMINAL_PAYMENT_PAID';
 	public const PROVIDER_TYPE_SALESCENTER_DELIVERY = 'SALESCENTER_DELIVERY';
 
+	public const PROVIDER_TYPE_CRM_ORDER_COMPLETED = 'CRM_ORDER_COMPLETED';
+	public const PROVIDER_TYPE_CRM_ORDER_PAID = 'CRM_ORDER_PAID';
+
 	public const MESSAGE_FAILURE = 0;
 	public const MESSAGE_SUCCESS = 1;
 	public const MESSAGE_READ = 2;
@@ -189,6 +192,8 @@ abstract class BaseMessage extends Base
 			static::PROVIDER_TYPE_SALESCENTER_PAYMENT_SENT,
 			static::PROVIDER_TYPE_SALESCENTER_TERMINAL_PAYMENT_PAID,
 			static::PROVIDER_TYPE_SALESCENTER_DELIVERY,
+			static::PROVIDER_TYPE_CRM_ORDER_COMPLETED,
+			static::PROVIDER_TYPE_CRM_ORDER_PAID,
 		];
 		foreach ($availableProviderTypeIds as $providerTypeId)
 		{
@@ -435,6 +440,11 @@ abstract class BaseMessage extends Base
 			];
 		}
 
+		if (isset($additionalFields['HIGHLIGHT_URL']))
+		{
+			$result['HIGHLIGHT_URL'] = $additionalFields['HIGHLIGHT_URL'];
+		}
+
 		return $result;
 	}
 
@@ -454,7 +464,7 @@ abstract class BaseMessage extends Base
 		}
 	}
 
-	protected static function unBindBadge(string $badgeItemValue, array $bindings): void
+	protected static function unBindBadge(array $bindings, string $badgeItemValue = null): void
 	{
 		foreach ($bindings as $singleBinding)
 		{

@@ -1770,7 +1770,7 @@ class CCrmFieldMulti
 
 		$countryCode = isset($input['VALUE_EXTRA']['VALUE_COUNTRY_CODE'])
 			? mb_strtoupper(trim($input['VALUE_EXTRA']['VALUE_COUNTRY_CODE']))
-			: mb_strtoupper(trim($input['VALUE_COUNTRY_CODE']));
+			: mb_strtoupper(trim($input['VALUE_COUNTRY_CODE'] ?? ''));
 		if (in_array($countryCode, self::$allowedCountryCodes, true))
 		{
 			return $countryCode; // valid code

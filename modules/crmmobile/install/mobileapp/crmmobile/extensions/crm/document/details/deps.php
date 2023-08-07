@@ -26,7 +26,6 @@ return [
 	'bundle' => [
 		'./src/download-link',
 		'./src/loading-screen',
-		'./src/title-bar',
 		'./src/error-panel',
 		'./src/bottom-toolbar',
 		'./src/pdf-view',

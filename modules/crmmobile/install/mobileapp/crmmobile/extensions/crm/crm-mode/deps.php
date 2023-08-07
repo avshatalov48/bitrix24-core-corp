@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'require-lazy',
 		'loc',
 		'notify',
 		'haptics',
@@ -13,7 +14,6 @@ return [
 		'crm:type',
 		'crm:conversion/utils',
 		'crm:storage/category',
-		'crm:entity-detail/opener',
 		'crm:crm-mode/wizard/steps',
 	],
 ];

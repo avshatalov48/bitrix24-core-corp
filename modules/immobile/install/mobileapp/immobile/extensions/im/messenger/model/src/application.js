@@ -1,10 +1,9 @@
-/* eslint-disable flowtype/require-return-type */
+/* eslint-disable no-param-reassign */
 
 /**
  * @module im/messenger/model/application
  */
 jn.define('im/messenger/model/application', (require, exports, module) => {
-
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { Logger } = require('im/messenger/lib/logger');
 
@@ -16,7 +15,7 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 				idList: [],
 			},
 			common: {
-				host: currentDomain + '/',
+				host: `${currentDomain}/`,
 			},
 		}),
 		getters: {
@@ -32,7 +31,7 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 				}
 
 				const page = PageManager.getNavigator().getVisible();
-				if (page.type === 'Web' && page.pageId === 'im-' + state.dialog.currentId)
+				if (page.type === 'Web' && page.pageId === `im-${state.dialog.currentId}`)
 				{
 					return state.dialog.currentId;
 				}
@@ -47,11 +46,11 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 		},
 		actions: {
 			/** @function applicationModel/openDialogId */
-			openDialogId: (store, payload) =>
-			{
+			openDialogId: (store, payload) => {
 				if (DialogHelper.isDialogId(payload))
 				{
 					store.commit('openDialogId', payload);
+
 					return;
 				}
 
@@ -62,11 +61,11 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 			},
 
 			/** @function applicationModel/closeDialogId */
-			closeDialogId: (store, payload) =>
-			{
+			closeDialogId: (store, payload) => {
 				if (DialogHelper.isDialogId(payload))
 				{
 					store.commit('closeDialogId', payload);
+
 					return;
 				}
 
@@ -102,7 +101,7 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 
 				state.dialog.currentId = state.dialog.idList[state.dialog.idList.length - 1];
 			},
-		}
+		},
 	};
 
 	module.exports = { applicationModel };

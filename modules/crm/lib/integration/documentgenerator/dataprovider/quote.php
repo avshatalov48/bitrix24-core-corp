@@ -4,7 +4,6 @@ namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
 use Bitrix\Crm\Binding\QuoteContactTable;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
-use Bitrix\Crm\Item;
 use Bitrix\Crm\QuoteTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
@@ -88,6 +87,7 @@ class Quote extends ProductsDataProvider
 			if($data)
 			{
 				$this->data = $data;
+				$this->convertBBFieldsToHtml();
 			}
 		}
 		if(!$this->isLightMode())

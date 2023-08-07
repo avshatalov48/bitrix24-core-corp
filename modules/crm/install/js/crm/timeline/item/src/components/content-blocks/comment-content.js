@@ -108,10 +108,12 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 
 		saveContent(): void
 		{
-			if (
-				this.saveTextButtonState === ButtonState.DISABLED
-				|| this.saveTextButtonState === ButtonState.LOADING || !this.isEdit
-			)
+			const isSaveDisabled = this.saveTextButtonState === ButtonState.LOADING
+				|| !this.isEdit
+				|| !this.saveAction
+			;
+
+			if (isSaveDisabled)
 			{
 				return;
 			}
@@ -149,16 +151,6 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 
 		executeSaveAction(content: String, attachmentList: Array): Promise
 		{
-			if (!this.saveAction)
-			{
-				return;
-			}
-
-			if (!this.value)
-			{
-				return;
-			}
-
 			// to avoid unintended props mutation
 			const actionDescription = Runtime.clone(this.saveAction);
 

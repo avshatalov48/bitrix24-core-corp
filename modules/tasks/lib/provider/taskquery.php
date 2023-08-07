@@ -23,7 +23,8 @@ class TaskQuery
 	private $skipAccessCheck = false;
 	private bool $skipUfEscape = false;
 	private bool $skipTitleEscape = false;
-	private bool $distinct = true;
+	private bool $makeAccessFilter = false;
+	private bool $distinct = false;
 	private $params = [];
 
 	private
@@ -82,6 +83,12 @@ class TaskQuery
 		return false;
 	}
 
+	public function needMakeAccessFilter(): self
+	{
+		$this->makeAccessFilter = true;
+		return $this;
+	}
+
 	/**
 	 * @return bool
 	 */
@@ -102,14 +109,17 @@ class TaskQuery
 			return true;
 		}
 
-		$runtimeOptions = CTasks::makeAccessFilterRuntimeOptions($this->where, [
-			'USER_ID' => $this->userId,
-			'VIEWED_USER_ID' =>  $this->behalfUser,
-		]);
-
-		if (!CTasks::checkAccessSqlBuilding($runtimeOptions))
+		if ($this->makeAccessFilter)
 		{
-			return false;
+			$runtimeOptions = CTasks::makeAccessFilterRuntimeOptions($this->where, [
+				'USER_ID' => $this->userId,
+				'VIEWED_USER_ID' =>  $this->behalfUser,
+			]);
+
+			if (!CTasks::checkAccessSqlBuilding($runtimeOptions))
+			{
+				return false;
+			}
 		}
 
 		return true;

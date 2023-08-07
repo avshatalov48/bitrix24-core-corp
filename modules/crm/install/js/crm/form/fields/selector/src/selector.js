@@ -199,7 +199,7 @@ export class Selector extends EventEmitter
 		return fieldsList;
 	}
 
-	#getFieldsList(): FieldsList
+	getFieldsList(): FieldsList
 	{
 		const fieldsList = this.#cache.get('fieldsList', {});
 
@@ -270,7 +270,7 @@ export class Selector extends EventEmitter
 	#getSidebarItems(): {[key: string]: any}
 	{
 		return Object
-			.entries(this.#getFieldsList())
+			.entries(this.getFieldsList())
 			.map(([categoryId, category]) => {
 				return {
 					label: category.CAPTION,
@@ -371,7 +371,7 @@ export class Selector extends EventEmitter
 	{
 		this.#cleanFieldsList();
 
-		const fields = this.#getFieldsList()[categoryId].FIELDS;
+		const fields = this.getFieldsList()[categoryId].FIELDS;
 		if (Type.isArrayFilled(fields))
 		{
 			fields.forEach((field) => {
@@ -385,10 +385,30 @@ export class Selector extends EventEmitter
 						return selectedField.name === field.name;
 					}),
 					type: this.#isMultiple() ? ListItem.Type.CHECKBOX : ListItem.Type.RADIO,
+					disabled: this.#isFieldDisabled(field),
 				});
 			});
 		}
 	}
+
+	#getDisabledFields(): SelectorOptions['disabledFields'] | null
+	{
+		return this.#getOptions().disabledFields ?? null;
+	}
+
+	#isFieldDisabled(field: Field): boolean
+	{
+		const disabledFields = this.#getDisabledFields();
+		if (Type.isNull(disabledFields))
+		{
+			return false;
+		}
+
+		return disabledFields.some(fieldRule =>
+			(Type.isString(fieldRule) && field.name === fieldRule)
+			|| (Type.isFunction(fieldRule) && fieldRule(field)),
+		);
+	};
 
 	#onListItemChange(event: BaseEvent)
 	{
@@ -532,7 +552,7 @@ export class Selector extends EventEmitter
 	{
 		if (categoryId.startsWith('DYNAMIC_'))
 		{
-			const fieldsList = this.#getFieldsList();
+			const fieldsList = this.getFieldsList();
 			if (Type.isPlainObject(fieldsList[categoryId]))
 			{
 				return fieldsList[categoryId].DYNAMIC_ID;

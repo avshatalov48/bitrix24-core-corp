@@ -39,8 +39,8 @@ jn.define('layout/ui/entity-editor/controller/product', (require, exports, modul
 		bindEvents()
 		{
 			this.customEventEmitter
-				.on(CatalogStoreEvents.ProductList.ListChanged, this.onChangeProduct)
-				.on(CatalogStoreEvents.ProductList.TotalChanged, this.onProductTotalChanged)
+				.on('StoreEvents.ProductList.ListChanged', this.onChangeProduct)
+				.on('StoreEvents.ProductList.TotalChanged', this.onProductTotalChanged)
 				.on('UI.EntityEditor.Field::onChangeState', this.onChangeFieldValue)
 				.on('EntityDetails::onChangeManualOpportunity', this.handleChangeManualOpportunity)
 			;
@@ -51,8 +51,8 @@ jn.define('layout/ui/entity-editor/controller/product', (require, exports, modul
 		unbindEvents()
 		{
 			this.customEventEmitter
-				.off(CatalogStoreEvents.ProductList.ListChanged, this.onChangeProduct)
-				.off(CatalogStoreEvents.ProductList.TotalChanged, this.onProductTotalChanged)
+				.off('StoreEvents.ProductList.ListChanged', this.onChangeProduct)
+				.off('StoreEvents.ProductList.TotalChanged', this.onProductTotalChanged)
 				.off('UI.EntityEditor.Field::onChangeState', this.onChangeFieldValue)
 				.off('EntityDetails::onChangeManualOpportunity', this.handleChangeManualOpportunity)
 			;

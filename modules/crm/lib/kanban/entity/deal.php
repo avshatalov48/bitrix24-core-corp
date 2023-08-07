@@ -32,7 +32,8 @@ class Deal extends Entity
 
 		$this->dealFieldRestrictionManager = new FieldRestrictionManager(
 			FieldRestrictionManager::MODE_KANBAN,
-			[FieldRestrictionManagerTypes::CLIENT, FieldRestrictionManagerTypes::OBSERVERS]
+			[FieldRestrictionManagerTypes::CLIENT, FieldRestrictionManagerTypes::OBSERVERS],
+			\CCrmOwnerType::Deal
 		);
 	}
 
@@ -95,16 +96,16 @@ class Deal extends Entity
 		return $options;
 	}
 
-	public function getFieldsRestrictions(): array
+	public function getFieldsRestrictionsEngine(): string
 	{
-		$parentFieldsRestrictions = parent::getFieldsRestrictions();
-		$fieldsRestrictions = $this->dealFieldRestrictionManager->fetchRestrictedFields(
+		$parentFieldsRestrictions = parent::getFieldsRestrictionsEngine();
+		$dealFieldsRestrictions = $this->dealFieldRestrictionManager->fetchRestrictedFieldsEngine(
 			$this->getGridId(),
 			[],
 			$this->getFilter()
 		);
 
-		return array_merge($parentFieldsRestrictions, $fieldsRestrictions);
+		return implode("\n", [$parentFieldsRestrictions, $dealFieldsRestrictions]);
 	}
 
 	protected function getFilter(): Filter\Filter
@@ -210,8 +211,9 @@ class Deal extends Entity
 
 	public function prepareItemCommonFields(array $item): array
 	{
-		$item['PRICE'] = $item['OPPORTUNITY'];
+		$item['PRICE'] = $item['OPPORTUNITY'] ?? null;
 		$item['DATE'] = $item['DATE_CREATE'] ?? null;
+		$item['OBSERVER'] = $item['OBSERVER'] ?? null;
 
 		$item = parent::prepareItemCommonFields($item);
 

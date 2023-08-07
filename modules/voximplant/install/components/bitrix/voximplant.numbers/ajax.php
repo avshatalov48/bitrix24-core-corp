@@ -62,7 +62,7 @@ class VoximplantNumbersAjaxController extends \Bitrix\Main\Engine\Controller
 
 		$changedFields = [];
 
-		if($options['extension'] != $userRow['UF_PHONE_INNER'])
+		if(($options['extension'] ?? null) != $userRow['UF_PHONE_INNER'])
 		{
 			$changedFields['UF_PHONE_INNER'] = trim($options['extension']);
 		}

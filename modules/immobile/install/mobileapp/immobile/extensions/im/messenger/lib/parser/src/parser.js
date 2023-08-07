@@ -28,6 +28,11 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 	const parser = {
 		decodeMessageFromText(text)
 		{
+			if (!Type.isStringFilled(text))
+			{
+				return [];
+			}
+
 			//TODO: support bb code [context]
 			text = text.replace(
 				/\[context=(chat\d+|\d+:\d+)\/(\d+)](.*?)\[\/context]/gi,
@@ -57,8 +62,8 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 
 			return this.simplify({
 				text: modelMessage.text,
-				attach: modelMessage.params.ATTACH || false,
-				files: messageFiles
+				attach: modelMessage.params && modelMessage.params.ATTACH ? modelMessage.params.ATTACH : false,
+				files: messageFiles,
 			});
 		},
 

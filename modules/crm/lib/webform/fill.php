@@ -8,7 +8,10 @@
 namespace Bitrix\Crm\WebForm;
 
 use Bitrix\Crm\Entity\Identificator;
-use Bitrix\Crm\Tracking;
+use Bitrix\Crm\FileUploader\SiteFormFileUploaderController;
+
+use Bitrix\Crm\WebForm\Limitations;
+use Bitrix\UI;
 
 /*
  * Fill class.
@@ -165,30 +168,60 @@ class Fill
 	private function getFilledFields()
 	{
 		$fields = $this->form->getFieldsMap();
-		foreach($fields as $fieldKey => $field)
+		$fileFieldsSizeMap = $this->getFilledFileFieldsSize();
+		foreach ($fields as $fieldKey => $field)
 		{
 			$fieldName = $field['name'];
 			$fieldValues = isset($this->values[$fieldName]) ? $this->values[$fieldName] : [];
-			if(!is_array($fieldValues))
+			if (!is_array($fieldValues))
 			{
 				$fieldValues = [$fieldValues];
 			}
 
-			if($field['type'] == 'file')
+			if ($field['type'] == 'file')
 			{
 				$files = [];
+
+				$fileController = new SiteFormFileUploaderController([
+					'formId' => strval($this->form->getId()),
+					'secCode' => $this->form->get()['SECURITY_CODE'] ?? "",
+					'fieldId' => $fieldName,
+					'fieldsSize' => $fileFieldsSizeMap
+				]);
+				$uploader = new UI\FileUploader\Uploader($fileController);
+
 				foreach ($fieldValues as $fileData)
 				{
-					if (empty($fileData['content']))
+					if (!empty($fileData['token']))
 					{
-						continue;
+						$pendingFiles = $uploader->getPendingFiles([$fileData['token']]);
+						$pendingFile = $pendingFiles->getAll()[$fileData['token']] ?? null;
+
+						if (!$pendingFile)
+						{
+							continue;
+						}
+
+						$pendingFiles->makePersistent();
+						$file = \CFile::MakeFileArray($pendingFile->getFileId());
+					}
+					else
+					{
+						$file = \CRestUtil::saveFile($fileData['content'], $fileData['name']);
 					}
 
-					$files[] = \CRestUtil::saveFile($fileData['content'], $fileData['name']);
+					$dailyLimiter = Limitations\DailyFileUploadLimit::instance();
+					if ($dailyLimiter->isUsed())
+					{
+						$dailyLimiter->incrementByValue((int) $file['size'] ?? 0);
+					}
+
+					$files[] = $file;
 				}
+
 				$fieldValues = $files;
 			}
-			elseif($field['type'] == 'phone')
+			elseif ($field['type'] == 'phone')
 			{
 				$fieldValues = array_map(
 					function ($value)
@@ -198,7 +231,7 @@ class Fill
 					$fieldValues
 				);
 			}
-			elseif($field['type'] === 'email')
+			elseif ($field['type'] === 'email')
 			{
 				$fieldValues = array_filter(
 					$fieldValues,
@@ -224,5 +257,41 @@ class Fill
 		}
 
 		return $fields;
+	}
+
+	private function getFilledFileFieldsSize(): array
+	{
+		$fieldsSizeMap = [];
+
+		$fields = array_filter(
+			$this->form->getFieldsMap(),
+			function ($field) {
+				return $field['type'] == 'file';
+			}
+		);
+
+		foreach ($fields as $fieldKey => $field)
+		{
+			$fieldName = $field['name'];
+			$fieldValues = $this->values[$fieldName] ?? [];
+			if (!is_array($fieldValues))
+			{
+				$fieldValues = [$fieldValues];
+			}
+
+			$summaryFieldSize = array_reduce(
+				$fieldValues,
+				function ($sum, $value) {
+					return $sum + $value['size'] ?? 0;
+				},
+				0
+			);
+			if ($summaryFieldSize > 0)
+			{
+				$fieldsSizeMap[$fieldName] = $summaryFieldSize;
+			}
+		}
+
+		return $fieldsSizeMap;
 	}
 }

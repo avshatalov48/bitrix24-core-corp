@@ -4,7 +4,7 @@
 jn.define('utils/skeleton', (require, exports, module) => {
 	const { ShimmerView } = require('layout/polyfill');
 
-	function line(width, height, marginTop = 0, marginBottom = 0)
+	function line(width, height, marginTop = 0, marginBottom = 0, borderRadius = null)
 	{
 		const viewStyles = {
 			width,
@@ -21,10 +21,15 @@ jn.define('utils/skeleton', (require, exports, module) => {
 			viewStyles.marginBottom = marginBottom;
 		}
 
+		if (borderRadius === null)
+		{
+			borderRadius = height / 2;
+		}
+
 		const lineStyles = {
 			width,
 			height,
-			borderRadius: height / 2,
+			borderRadius,
 			backgroundColor: '#dfe0e3',
 		};
 

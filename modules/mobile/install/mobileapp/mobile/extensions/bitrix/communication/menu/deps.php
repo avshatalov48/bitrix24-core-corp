@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'require-lazy',
 		'assets/communication/menu',
 		'communication/connection',
 		'communication/events',
@@ -13,7 +14,7 @@ return [
 		'utils/object',
 		'utils/phone',
 		'utils/string',
-		'crm:multi-field-drawer',
+		'crm:assets/entity',
 		'crm:type',
 	],
 ];

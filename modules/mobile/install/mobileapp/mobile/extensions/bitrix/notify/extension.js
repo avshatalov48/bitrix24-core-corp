@@ -67,7 +67,7 @@
 		static showIndicatorLoading(options = {}, delay = 0)
 		{
 			options.type = "loading";
-			Notify.showIndicator(options, delay);
+			return Notify.showIndicator(options, delay);
 		}
 
 		static showIndicatorError(options, delay = 0)
@@ -89,14 +89,26 @@
 
 		static showIndicator(options = { type: "loading" }, delay = 0)
 		{
-			if (delay > 0)
-			{
-				setTimeout(() => dialogs.showLoadingIndicator(options), delay);
-			}
-			else
-			{
+			const show = (resolve) => {
 				dialogs.showLoadingIndicator(options);
-			}
+				setTimeout(() => {
+					resolve();
+				}, 150);
+
+			};
+
+			return new Promise((resolve) => {
+				if (delay > 0)
+				{
+					setTimeout(() => {
+						show(resolve);
+					}, delay);
+				}
+				else
+				{
+					show(resolve);
+				}
+			});
 		}
 
 		static hideCurrentIndicator()

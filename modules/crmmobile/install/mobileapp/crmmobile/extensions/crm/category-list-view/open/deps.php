@@ -2,8 +2,8 @@
 
 return [
 	'extensions' => [
+		'require-lazy',
 		'alert',
 		'loc',
-		'crm:category-list-view',
 	],
 ];

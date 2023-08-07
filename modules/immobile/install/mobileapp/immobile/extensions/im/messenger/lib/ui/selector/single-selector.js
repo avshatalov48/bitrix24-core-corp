@@ -2,7 +2,6 @@
  * @module im/messenger/lib/ui/selector/single-selector
  */
 jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, module) => {
-
 	const { ButtonSection } = require('im/messenger/lib/ui/selector/button-section');
 	const { FullScreenShadow } = require('im/messenger/lib/ui/base/full-screen-shadow');
 	const { SearchInput } = require('im/messenger/lib/ui/search/input');
@@ -10,7 +9,6 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 
 	class SingleSelector extends LayoutComponent
 	{
-
 		/**
 		 *
 		 * @param {Object} props
@@ -38,15 +36,13 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 			}
 		}
 
-
 		render()
 		{
-
 			if (this.state.isSearchActive && this.props.searchMode === 'overlay')
 			{
 				return View(
 					{
-						clickable: false
+						clickable: false,
 					},
 					this.createSearchWrapper(),
 				);
@@ -56,6 +52,7 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 				{
 					style: {
 						flexDirection: 'column',
+						flex: 1,
 					},
 					clickable: false,
 				},
@@ -77,8 +74,8 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 		{
 			return new List({
 				itemList: this.props.itemList,
-				onItemSelected: itemData => this.props.onItemSelected(itemData),
-				ref: ref => {
+				onItemSelected: (itemData) => this.props.onItemSelected(itemData),
+				ref: (ref) => {
 					this.listRef = ref;
 					if (this.props.searchMode === 'inline')
 					{
@@ -97,7 +94,7 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 		{
 			if (Array.isArray(this.props.buttons) && this.props.buttons.length > 0)
 			{
-				return new ButtonSection({buttons: this.props.buttons});
+				return new ButtonSection({ buttons: this.props.buttons });
 			}
 
 			return null;
@@ -106,7 +103,7 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 		createShadow()
 		{
 			return new FullScreenShadow({
-				ref: ref => this.shadowRef = ref,
+				ref: (ref) => this.shadowRef = ref,
 			});
 		}
 
@@ -132,9 +129,9 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 					{
 						onChangeText: (text) => this.props.onChangeText(text),
 						onSearchShow: () => this.props.onSearchShow(),
-						ref: ref => this.searchInputRef = ref,
-					}
-				)
+						ref: (ref) => this.searchInputRef = ref,
+					},
+				),
 			);
 		}
 
@@ -149,8 +146,8 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 			{
 				return new List({
 					itemList: [],
-					onItemSelected: itemData => this.props.onSearchItemSelected(itemData),
-					ref: ref => this.searchWrapperRef = ref,
+					onItemSelected: (itemData) => this.props.onSearchItemSelected(itemData),
+					ref: (ref) => this.searchWrapperRef = ref,
 				});
 			}
 		}
@@ -175,12 +172,13 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 			if (this.props.searchMode === 'inline')
 			{
 				this.getList().setItems(this.itemList, false);
+
 				return;
 			}
 
 			if (this.state.isSearchActive === true)
 			{
-				this.setState({isSearchActive: false},() => {
+				this.setState({ isSearchActive: false }, () => {
 					if (withShadow)
 					{
 						this.enableShadow();
@@ -207,7 +205,6 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 
 			this.getSearchWrapper().setItems(items, withLoader);
 		}
-
 	}
 
 	module.exports = { SingleSelector };

@@ -1,10 +1,9 @@
-/* eslint-disable flowtype/require-return-type */
+/* eslint-disable no-param-reassign */
 
 /**
  * @module im/messenger/model/recent
  */
 jn.define('im/messenger/model/recent', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { ChatTypes, MessageStatus } = require('im/messenger/const');
 	const { RecentCache } = require('im/messenger/cache');
@@ -39,7 +38,10 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			index: {},
 		}),
 		getters: {
-			/** @function recentModel/getRecentPage */
+			/**
+			 * @function recentModel/getRecentPage
+			 * @return {RecentModelState[]}
+			 */
 			getRecentPage: (state) => (pageNumber, itemsPerPage) => {
 				const list = [...state.collection];
 
@@ -49,49 +51,54 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 				;
 			},
 
-			/** @function recentModel/getTitleById */
-			getTitleById: (state) => (id) => {
-				return state.collection.find((item) => item.id == id).title;
-			},
-
-			/** @function recentModel/getById */
+			/**
+			 * @function recentModel/getById
+			 * @return {RecentModelState}
+			 */
 			getById: (state) => (id) => {
 				return state.collection.find((item) => item.id == id);
 			},
 
-			/** @function recentModel/getUserList */
+			/**
+			 * @function recentModel/getUserList
+			 * @return {RecentModelState[]}
+			 */
 			getUserList: (state) => {
-				return state.collection.filter(recentItem => recentItem.type === 'user').sort(sortListByMessageDate);
+				return state.collection.filter((recentItem) => recentItem.type === 'user').sort(sortListByMessageDate);
 			},
 
-			/** @function recentModel/getCollection */
+			/**
+			 * @function recentModel/getCollection
+			 * @return {RecentModelState[]}
+			 */
 			getCollection: (state) => {
 				return state.collection;
 			},
 
-			/** @function recentModel/isEmpty */
+			/**
+			 * @function recentModel/isEmpty
+			 * @return {boolean}
+			 */
 			isEmpty: (state) => {
 				return state.collection.length === 0;
 			},
 		},
 		actions: {
 			/** @function recentModel/setState */
-			setState: (store, payload) =>
-			{
+			setState: (store, payload) => {
 				if (Type.isPlainObject(payload) && Type.isArrayFilled(payload.collection))
 				{
-					payload.collection =
-						payload.collection
-							.map(item => {
-								item.writing = false;
-								item.liked = false;
+					payload.collection = payload.collection
+						.map((item) => {
+							item.writing = false;
+							item.liked = false;
 
-								return {
-									...elementState,
-									...validate(item),
-								}
-							})
-							.filter(item => item.id !== 0)
+							return {
+								...elementState,
+								...validate(item),
+							};
+						})
+						.filter((item) => item.id !== 0)
 					;
 
 					store.commit('setState', payload);
@@ -99,13 +106,12 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			},
 
 			/** @function recentModel/set */
-			set: (store, payload) =>
-			{
+			set: (store, payload) => {
 				let result = [];
 
 				if (Type.isArray(payload))
 				{
-					result = payload.map(recentItem => {
+					result = payload.map((recentItem) => {
 						return {
 							...elementState,
 							...validate(recentItem),
@@ -121,12 +127,18 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 				const newItems = [];
 				const existingItems = [];
 
-				payload.forEach(recentItem => {
+				payload.forEach((recentItem) => {
 					const existingItem = findItemById(store, recentItem.id);
 					if (existingItem)
 					{
-						// if we already got chat - we should not update it with default user chat (unless it's an accepted invitation)
-						const defaultUserElement = recentItem.options && recentItem.options.default_user_record && !recentItem.invited;
+						// if we already got chat - we should not update it
+						// with default user chat (unless it's an accepted invitation)
+						const defaultUserElement = (
+							recentItem.options
+							&& recentItem.options.default_user_record
+							&& !recentItem.invited
+						);
+
 						if (defaultUserElement)
 						{
 							return;
@@ -154,6 +166,8 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 				{
 					store.commit('update', existingItems);
 				}
+
+				return true;
 			},
 
 			/** @function recentModel/like */
@@ -181,8 +195,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			},
 
 			/** @function recentModel/delete */
-			delete: (store, payload) =>
-			{
+			delete: (store, payload) => {
 				const existingItem = findItemById(store, payload.id);
 				if (!existingItem)
 				{
@@ -193,11 +206,12 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 					index: existingItem.index,
 					id: payload.id,
 				});
+
+				return true;
 			},
 
 			/** @function recentModel/clearAllCounters */
-			clearAllCounters: (store, payload) =>
-			{
+			clearAllCounters: (store, payload) => {
 				const updatedItems = [];
 
 				store.state.collection.forEach((recentItem, index) => {
@@ -208,7 +222,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 						index,
 						fields: recentItem,
 					});
-				})
+				});
 
 				store.commit('update', updatedItems);
 			},
@@ -217,10 +231,11 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			setState: (state, payload) => {
 				state.collection = payload.collection;
 
-				payload.collection.forEach(item => {
+				payload.collection.forEach((item) => {
 					if (!state.index[item.id])
 					{
 						state.index[item.id] = 1;
+
 						return;
 					}
 
@@ -228,20 +243,21 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 				});
 			},
 			add: (state, payload) => {
-				payload.forEach(item => {
+				payload.forEach((item) => {
 					state.collection.push(item.fields);
 
 					if (!state.index[item.fields.id])
 					{
 						state.index[item.fields.id] = 1;
+
 						return;
 					}
 
 					state.index[item.fields.id]++;
 				});
 
-				//TODO: Crutch, remove when we figure out why the chats were duplicated and remove
-				state.collection = state.collection.filter(item => {
+				// TODO: Crutch, remove when we figure out why the chats were duplicated and remove
+				state.collection = state.collection.filter((item) => {
 					if (state.index[item.id] !== 1)
 					{
 						state.index[item.id]--;
@@ -255,7 +271,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 				RecentCache.save(state);
 			},
 			update: (state, payload) => {
-				payload.forEach(item => {
+				payload.forEach((item) => {
 					state.collection[item.index] = {
 						...state.collection[item.index],
 						...item.fields,
@@ -271,7 +287,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 
 				RecentCache.save(state);
 			},
-		}
+		},
 	};
 
 	function validate(fields)
@@ -330,14 +346,14 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 
 		result.date_update = DateHelper.cast(fields.date_update);
 
-		//TODO: move part to file model
+		// TODO: move part to file model
 		result.message = fields.message || { id: 0 };
 		if (result.message.id > 0)
 		{
 			result.message.date = DateHelper.cast(result.message.date);
 		}
 
-		//TODO: move to user and dialog model
+		// TODO: move to user and dialog model
 		result.chat = fields.chat || { id: 0 };
 		if (result.chat.id > 0)
 		{
@@ -394,6 +410,8 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 
 			return timestampB - timestampA;
 		}
+
+		return 0;
 	}
 
 	function sortListByMessageDateWithPinned(a, b)
@@ -415,6 +433,8 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 
 			return timestampB - timestampA;
 		}
+
+		return 0;
 	}
 
 	module.exports = { recentModel };

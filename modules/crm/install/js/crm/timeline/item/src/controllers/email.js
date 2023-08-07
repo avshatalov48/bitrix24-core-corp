@@ -1,6 +1,7 @@
 import { Base } from './base';
 import { Type } from 'main.core';
 import ConfigurableItem from '../configurable-item';
+import ContactList from "../components/content-blocks/mail/contact-list";
 
 export class Email extends Base
 {
@@ -61,8 +62,15 @@ export class Email extends Base
 		this.#viewActivity(actionData.threadId);
 	}
 
+	getContentBlockComponents(Item: ConfigurableItem): Object
+	{
+		return {
+			ContactList,
+		};
+	}
+
 	static isItemSupported(item: ConfigurableItem): boolean
 	{
-		return (item.getType() === 'Activity:Email');
+		return (item.getType() === 'ContactList' || item.getType() === 'Activity:Email' || item.getType() === 'EmailActivitySuccessfullyDelivered');
 	}
 }

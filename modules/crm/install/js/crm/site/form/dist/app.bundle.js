@@ -3798,14 +3798,17 @@ var Vue = exports.Vue;
       return Item$$1;
     }(Item);
 
+    function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+    function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
     var FieldFileItem = {
       props: ['field', 'itemIndex', 'item'],
       data: function data() {
         return {
-          errorTextTypeFile: null
+          errorTextTypeFile: null,
+          isLoading: false
         };
       },
-      template: "\n\t\t<div>\n\t\t\t<div v-if=\"file.content\" class=\"b24-form-control-file-item\">\n\t\t\t\t<div class=\"b24-form-control-file-item-preview\">\n\t\t\t\t\t<img class=\"b24-form-control-file-item-preview-image\" \n\t\t\t\t\t\t:src=\"fileIcon\"\n\t\t\t\t\t\tv-if=\"hasIcon\"\n\t\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"b24-form-control-file-item-name\">\n\t\t\t\t\t<span class=\"b24-form-control-file-item-name-text\">\n\t\t\t\t\t\t{{ file.name }}\n\t\t\t\t\t</span>\n\t\t\t\t\t<div style=\"display: none;\" class=\"b24-form-control-file-item-preview-image-popup\">\n\t\t\t\t\t\t<img>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div @click.prevent=\"removeFile\" class=\"b24-form-control-file-item-remove\"></div>\n\t\t\t</div>\n\t\t\t<div \n\t\t\t\tclass=\"b24-form-control-file-item-empty\"\n\t\t\t\t:class=\"{'b24-form-control-alert': !!errorTextTypeFile}\"\n\t\t\t\tv-show=\"!file.content\" \n\t\t\t>\n\t\t\t\t<label class=\"b24-form-control\">\n\t\t\t\t\t{{ field.messages.get('fieldFileChoose') }}\n\t\t\t\t\t<input type=\"file\" style=\"display: none;\"\n\t\t\t\t\t\tref=\"inputFiles\"\n\t\t\t\t\t\t:accept=\"field.getAcceptTypes()\"\n\t\t\t\t\t\t@change=\"setFiles\"\n\t\t\t\t\t\t@blur=\"$emit('input-blur')\"\n\t\t\t\t\t\t@focus=\"$emit('input-focus')\"\n\t\t\t\t\t>\n\t\t\t\t</label>\n\t\t\t\t<div class=\"b24-form-control-alert-message\"\n\t\t\t\t\t@click=\"errorTextTypeFile = null\"\n\t\t\t\t>{{errorTextTypeFile}}</div>\n\t\t\t</div>\n\t\t</div>\n\t",
+      template: "\n\t\t<div>\n\t\t\t<div v-if=\"file.content\" class=\"b24-form-control-file-item\">\n\t\t\t\t<div class=\"b24-form-control-file-item-preview\">\n\t\t\t\t\t<img class=\"b24-form-control-file-item-preview-image\" \n\t\t\t\t\t\t:src=\"fileIcon\"\n\t\t\t\t\t\tv-if=\"hasIcon\"\n\t\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"b24-form-control-file-item-name\">\n\t\t\t\t\t<span class=\"b24-form-control-file-item-name-text\">\n\t\t\t\t\t\t{{ file.name }}\n\t\t\t\t\t</span>\n\t\t\t\t\t<div style=\"display: none;\" class=\"b24-form-control-file-item-preview-image-popup\">\n\t\t\t\t\t\t<img>\n\t\t\t\t\t</div>\n\t\t\t\t\t<span hidden=\"hidden\" v-show=\"file.size\" :v-bind=\"file.size\" class=\"b24-form-control-file-item-size-text\">\n\t\t\t\t\t\t{{ fileSize }} {{ field.messages.get('fieldFileSizeUnitMb') }}\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div @click.prevent=\"removeFile\" class=\"b24-form-control-file-item-remove\"></div>\n\t\t\t</div>\n\t\t\t<div\n\t\t\t\tclass=\"b24-form-control-file-item-empty\"\n\t\t\t\tv-show=\"isLoading\"\n\t\t\t>\n\t\t\t\t<span class=\"b24-form-control-string\">{{ field.messages.get('fieldFileLoading') }}...</span>\n\t\t\t</div>\n\t\t\t<div \n\t\t\t\tclass=\"b24-form-control-file-item-empty\"\n\t\t\t\t:class=\"{'b24-form-control-alert': !!errorTextTypeFile}\"\n\t\t\t\tv-show=\"!file.content && !isLoading\" \n\t\t\t>\n\t\t\t\t<label class=\"b24-form-control\">\n\t\t\t\t\t{{ field.messages.get('fieldFileChoose') }}\n\t\t\t\t\t<input type=\"file\" style=\"display: none;\"\n\t\t\t\t\t\tref=\"inputFiles\"\n\t\t\t\t\t\t:accept=\"field.getAcceptTypes()\"\n\t\t\t\t\t\t@change=\"setFiles\"\n\t\t\t\t\t\t@blur=\"$emit('input-blur')\"\n\t\t\t\t\t\t@focus=\"$emit('input-focus')\"\n\t\t\t\t\t>\n\t\t\t\t</label>\n\t\t\t\t<div class=\"b24-form-control-alert-message\"\n\t\t\t\t\t@click=\"errorTextTypeFile = null\"\n\t\t\t\t>{{errorTextTypeFile}}</div>\n\t\t\t</div>\n\t\t</div>\n\t",
       computed: {
         value: {
           get: function get() {
@@ -3829,10 +3832,15 @@ var Vue = exports.Vue;
           return this.item.value || {};
         },
         hasIcon: function hasIcon() {
-          return this.file.type.split('/')[0] === 'image';
+          return this.file.type.split('/')[0] === 'image' && this.file.isContentFull;
         },
         fileIcon: function fileIcon() {
           return this.hasIcon ? 'data:' + this.file.type + ';base64,' + this.file.content : null;
+        },
+        fileSize: function fileSize() {
+          var kb = this.file.size / 1024;
+          var mb = kb / 1024;
+          return mb.toFixed(2);
         }
       },
       methods: {
@@ -3842,6 +3850,13 @@ var Vue = exports.Vue;
           var file = this.$refs.inputFiles.files[0];
           if (!file) {
             return;
+          }
+          var fileSize = file.size;
+          if (typeof this.field.maxSizeMb == "number" && this.field.maxSizeMb > 0) {
+            if (this.field.getSummaryFilesSize() + fileSize > this.field.maxSizeMb * (1024 * 1024)) {
+              this.errorTextTypeFile = this.field.messages.get('fieldSummaryFilesSizeExceeded').replace('%summaryMaxFileSize%', this.field.maxSizeMb);
+              return;
+            }
           }
           var fileType = file.type || '';
           var fileExt = (file.name || '').split('.').pop();
@@ -3875,22 +3890,39 @@ var Vue = exports.Vue;
             this.value = null;
           } else {
             var reader = new FileReader();
+            var newValue = {
+              name: file.name,
+              size: file.size,
+              file: file
+            };
             reader.onloadend = function () {
               var result = reader.result.split(';');
-              _this.value = {
-                name: file.name,
-                size: file.size,
+              _this.value = _objectSpread$1(_objectSpread$1({}, newValue), {}, {
                 type: result[0].split(':')[1],
                 content: result[1].split(',')[1]
-              };
+              });
               _this.$refs.inputFiles.value = null;
+              _this.isLoading = false;
+              _this.field.refresh();
             };
-            reader.readAsDataURL(file);
+            this.isLoading = true;
+            var chunkSize = 30 * 1024 * 1024;
+
+            // Reading only first chunk
+            if (file.size > chunkSize) {
+              newValue.isContentFull = false;
+              var blob = file.slice(0, chunkSize);
+              reader.readAsDataURL(blob);
+            } else {
+              newValue.isContentFull = true;
+              reader.readAsDataURL(file);
+            }
           }
         },
         removeFile: function removeFile() {
           this.value = null;
           this.field.removeItem(this.itemIndex);
+          this.field.refresh();
           this.$refs.inputFiles.value = null;
         }
       }
@@ -3900,13 +3932,18 @@ var Vue = exports.Vue;
       components: {
         'field-file-item': FieldFileItem
       },
-      template: "\n\t\t<div class=\"b24-form-control-container\">\n\t\t\t<div class=\"b24-form-control-label\">\n\t\t\t\t{{ field.label }}\n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-control-filelist\">\n\t\t\t\t<field-file-item\n\t\t\t\t\tv-for=\"(item, itemIndex) in field.items\"\n\t\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\t\tv-bind:field=\"field\"\n\t\t\t\t\tv-bind:itemIndex=\"itemIndex\"\n\t\t\t\t\tv-bind:item=\"item\"\n\t\t\t\t\t@input-blur=\"$emit('input-blur')\"\n\t\t\t\t\t@input-focus=\"$emit('input-focus')\"\n\t\t\t\t></field-file-item>\n\t\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t\t</div>\n\t\t</div>\n\t",
+      template: "\n\t\t<div class=\"b24-form-control-container\">\n\t\t\t<div class=\"b24-form-control-label\">\n\t\t\t\t{{ field.label }}\n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t\t<div hidden=\"hidden\" v-show=\"field.maxSizeMb && field.summarySize >= 0\" :v-bind=\"field.summarySize\" class=\"b24-form-control-field-file-summary-size\">\n\t\t\t\t\t<span class=\"b24-form-control-field-file-summary-size-text\">\n\t\t\t\t\t\t{{ summarySize }} / {{field.maxSizeMb}} {{ field.messages.get('fieldFileSizeUnitMb') }}\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-control-filelist\">\n\t\t\t\t<field-file-item\n\t\t\t\t\tv-for=\"(item, itemIndex) in field.items\"\n\t\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\t\tv-bind:field=\"field\"\n\t\t\t\t\tv-bind:itemIndex=\"itemIndex\"\n\t\t\t\t\tv-bind:item=\"item\"\n\t\t\t\t\t@input-blur=\"$emit('input-blur')\"\n\t\t\t\t\t@input-focus=\"$emit('input-focus')\"\n\t\t\t\t></field-file-item>\n\t\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t\t</div>\n\t\t</div>\n\t",
       created: function created() {
         if (this.field.multiple) {
           this.field.addSingleEmptyItem();
         }
       },
-      computed: {},
+      computed: {
+        summarySize: function summarySize() {
+          var summary = this.field.summarySize;
+          return (summary / (1024 * 1024)).toFixed(2);
+        }
+      },
       methods: {}
     };
 
@@ -4066,7 +4103,10 @@ var Vue = exports.Vue;
         babelHelpers.classCallCheck(this, Controller$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "contentTypes", []);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "maxSizeMb", null);
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "summarySize", 0);
         _this.contentTypes = (Array.isArray(options.contentTypes) ? options.contentTypes : []) || [];
+        _this.maxSizeMb = Number.isInteger(options.maxSizeMb) ? options.maxSizeMb : null;
         return _this;
       }
       babelHelpers.createClass(Controller$$1, [{
@@ -4088,6 +4128,21 @@ var Vue = exports.Vue;
                 return item;
             }
           }).join(',');
+        }
+      }, {
+        key: "getSummaryFilesSize",
+        value: function getSummaryFilesSize() {
+          var size = 0;
+          this.items.forEach(function (item) {
+            var _item$value;
+            size += ((_item$value = item.value) === null || _item$value === void 0 ? void 0 : _item$value.size) || 0;
+          });
+          return size;
+        }
+      }, {
+        key: "refresh",
+        value: function refresh() {
+          this.summarySize = this.getSummaryFilesSize();
         }
       }]);
       return Controller$$1;
@@ -5758,8 +5813,8 @@ var Vue = exports.Vue;
     }();
 
     var _OppositeActionTypes;
-    function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-    function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+    function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+    function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
     function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
     function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var ConditionEvents = {
@@ -5863,13 +5918,13 @@ var Vue = exports.Vue;
           }
           dep.condition.operation = ConditionOperations.indexOf(dep.condition.operation) > 0 ? dep.condition.operation : Operations.equal;
           var item = {
-            condition: _objectSpread$1({
+            condition: _objectSpread$2({
               target: '',
               event: '',
               value: '',
               operation: ''
             }, dep.condition),
-            action: _objectSpread$1({
+            action: _objectSpread$2({
               target: '',
               type: '',
               value: ''
@@ -5944,7 +5999,7 @@ var Vue = exports.Vue;
                   return;
                 }
               }
-              _this2.runAction(_objectSpread$1(_objectSpread$1({}, dep.action), {}, {
+              _this2.runAction(_objectSpread$2(_objectSpread$2({}, dep.action), {}, {
                 type: actionType
               }), field);
             });
@@ -7157,6 +7212,55 @@ var Vue = exports.Vue;
       }
     };
 
+    var ProgressBar = {
+      props: ['uploadingProgress', 'timeLeft', 'messages'],
+      data: function data() {
+        return {
+          displayProgress: 0,
+          interval: false
+        };
+      },
+      mounted: function mounted() {},
+      watch: {
+        uploadingProgress: function uploadingProgress() {
+          var _this = this;
+          clearInterval(this.interval);
+          var normalizedProgress = this.uploadingProgress * 100;
+          if (normalizedProgress === Math.ceil(this.displayProgress)) {
+            return;
+          }
+          this.interval = window.setInterval(function () {
+            if (_this.displayProgress !== Math.ceil(normalizedProgress)) {
+              var delta = (normalizedProgress - _this.displayProgress) / 10;
+              delta = delta >= 0 ? Math.ceil(delta) : Math.floor(delta);
+              _this.displayProgress = _this.displayProgress + delta;
+            }
+          }, 20);
+        }
+      },
+      template: "\n\t\t<div class=\"b24-form-loader-progress-wrapper\">\n\t\t\t<div class=\"b24-form-loader-progress-time-left\"\n\t\t\t\t v-show=\"this.timeLeft\"\n\t\t\t>\n\t\t\t\t<span class=\"b24-form-loader-progress-time-left-value\">{{ normalizedTime }}</span>\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-loader-progress\">\n\t\t\t\t<span class=\"b24-form-loader-progress-value\">{{ normalizedProgress }}</span>\n\t\t\t</div>\n\t\t</div>\n\t",
+      computed: {
+        normalizedProgress: function normalizedProgress() {
+          return Math.round(this.displayProgress);
+        },
+        normalizedTime: function normalizedTime() {
+          var message = '';
+          if (this.timeLeft >= 60) {
+            var _this$messages;
+            message = (_this$messages = this.messages) === null || _this$messages === void 0 ? void 0 : _this$messages.get('filesLoadingTimeLeftFewMinutes');
+          } else if (this.timeLeft > 30) {
+            var _this$messages2;
+            message = (_this$messages2 = this.messages) === null || _this$messages2 === void 0 ? void 0 : _this$messages2.get('filesLoadingTimeLeftLessThanMinute');
+          } else {
+            var _this$messages3;
+            message = (_this$messages3 = this.messages) === null || _this$messages3 === void 0 ? void 0 : _this$messages3.get('filesLoadingTimeLeftFewSeconds');
+          }
+          return message;
+        }
+      },
+      methods: {}
+    };
+
     var StateBlock = {
       props: ['form'],
       data: function data() {
@@ -7167,9 +7271,12 @@ var Vue = exports.Vue;
       mounted: function mounted() {
         this.isSmallHeight = this.$el.parentElement.offsetHeight >= 1000;
       },
-      template: "\n\t\t<div class=\"b24-form-state-container\" :class=\"{'b24-form-state--sticky': isSmallHeight}\">\n\t\t\t\t<transition name=\"b24-a-fade\">\n\t\t\t\t\t<div v-show=\"form.loading\" class=\"b24-form-loader\">\n\t\t\t\t\t\t<div class=\"b24-form-loader-icon\">\n\t\t\t\t\t\t\t<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 263 174\">\n\t\t\t\t\t\t\t\t<g transform=translate(52.5,16.5)>\n\t\t\t\t\t\t\t\t\t<path class=\"bx-sun-lines-animate\" id=\"bxSunLines\" d=\"M79,0 C80.6568542,0 82,1.34314575 82,3 L82,22 C82,23.6568542 80.6568542,25 79,25 C77.3431458,25 76,23.6568542 76,22 L76,3 C76,1.34314575 77.3431458,0 79,0 Z M134.861,23.139 C136.032146,24.3104996 136.032146,26.2095004 134.861,27.381 L121.426,40.816 C120.248863,41.9529166 118.377746,41.9366571 117.220544,40.7794557 C116.063343,39.6222543 116.047083,37.7511367 117.184,36.574 L130.619,23.139 C131.7905,21.9678542 133.6895,21.9678542 134.861,23.139 L134.861,23.139 Z M158,79 C158,80.6568542 156.656854,82 155,82 L136,82 C134.343146,82 133,80.6568542 133,79 C133,77.3431458 134.343146,76 136,76 L155,76 C156.656854,76 158,77.3431458 158,79 Z M134.861,134.861 C133.6895,136.032146 131.7905,136.032146 130.619,134.861 L117.184,121.426 C116.40413,120.672777 116.091362,119.557366 116.365909,118.508478 C116.640455,117.45959 117.45959,116.640455 118.508478,116.365909 C119.557366,116.091362 120.672777,116.40413 121.426,117.184 L134.861,130.619 C136.032146,131.7905 136.032146,133.6895 134.861,134.861 Z M79,158 C77.3431458,158 76,156.656854 76,155 L76,136 C76,134.343146 77.3431458,133 79,133 C80.6568542,133 82,134.343146 82,136 L82,155 C82,156.656854 80.6568542,158 79,158 Z M23.139,134.861 C21.9678542,133.6895 21.9678542,131.7905 23.139,130.619 L36.574,117.184 C37.3272234,116.40413 38.4426337,116.091362 39.491522,116.365909 C40.5404103,116.640455 41.3595451,117.45959 41.6340915,118.508478 C41.9086378,119.557366 41.5958698,120.672777 40.816,121.426 L27.381,134.861 C26.2095004,136.032146 24.3104996,136.032146 23.139,134.861 Z M0,79 C0,77.3431458 1.34314575,76 3,76 L22,76 C23.6568542,76 25,77.3431458 25,79 C25,80.6568542 23.6568542,82 22,82 L3,82 C1.34314575,82 0,80.6568542 0,79 L0,79 Z M23.139,23.139 C24.3104996,21.9678542 26.2095004,21.9678542 27.381,23.139 L40.816,36.574 C41.5958698,37.3272234 41.9086378,38.4426337 41.6340915,39.491522 C41.3595451,40.5404103 40.5404103,41.3595451 39.491522,41.6340915 C38.4426337,41.9086378 37.3272234,41.5958698 36.574,40.816 L23.139,27.381 C21.9678542,26.2095004 21.9678542,24.3104996 23.139,23.139 Z\" fill=\"#FFD110\"></path>\n\t\t\t\t\t\t\t\t</g>\n\t\t\t\t\t\t\t\t<g fill=\"none\" fill-rule=\"evenodd\">\n\t\t\t\t\t\t\t\t\t<path d=\"M65.745 160.5l.245-.005c13.047-.261 23.51-10.923 23.51-23.995 0-13.255-10.745-24-24-24-3.404 0-6.706.709-9.748 2.062l-.47.21-.196-.477A19.004 19.004 0 0 0 37.5 102.5c-10.493 0-19 8.507-19 19 0 1.154.103 2.295.306 3.413l.108.6-.609-.01A17.856 17.856 0 0 0 18 125.5C8.335 125.5.5 133.335.5 143s7.835 17.5 17.5 17.5h47.745zM166.5 85.5h69v-.316l.422-.066C251.14 82.73 262.5 69.564 262.5 54c0-17.397-14.103-31.5-31.5-31.5-.347 0-.694.006-1.04.017l-.395.013-.103-.382C226.025 9.455 214.63.5 201.5.5c-15.014 0-27.512 11.658-28.877 26.765l-.047.515-.512-.063a29.296 29.296 0 0 0-3.564-.217c-16.016 0-29 12.984-29 29 0 15.101 11.59 27.643 26.542 28.897l.458.039v.064z\" stroke-opacity=\".05\" stroke=\"#000\" fill=\"#000\"></path>\n\t\t\t\t\t\t\t\t\t<circle stroke=\"#FFD110\" stroke-width=\"6\" cx=\"131.5\" cy=\"95.5\" r=\"44.5\" class=\"b24-form-loader-icon-sun-ring\"></circle>\n\t\t\t\t\t\t\t\t</g>\n\t\t\t\t\t\t  </svg>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</transition>\n\t\t\t\t\n\t\t\t\t<div v-show=\"form.sent\" class=\"b24-form-state b24-form-success\">\n\t\t\t\t\t<div class=\"b24-form-state-inner\">\n\t\t\t\t\t\t<div class=\"b24-form-state-icon b24-form-success-icon\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-state-text\">\n\t\t\t\t\t\t\t<p v-if=\"!form.stateText\">{{ form.messages.get('stateSuccessTitle') }}</p>\n\t\t\t\t\t\t\t<p>{{ form.stateText }}</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<button class=\"b24-form-btn b24-form-btn-border b24-form-btn-tight\"\n\t\t\t\t\t\t\tv-if=\"form.stateButton.text\" \n\t\t\t\t\t\t\t@click=\"form.stateButton.handler\" \n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ form.stateButton.text }}\t\t\t\t\t\t\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-inner-box\"></div>\n\t\t\t\t</div>\n\t\t\t\n\t\t\t\t<div v-show=\"form.error\" class=\"b24-form-state b24-form-error\">\n\t\t\t\t\t<div class=\"b24-form-state-inner\">\n\t\t\t\t\t\t<div class=\"b24-form-state-icon b24-form-error-icon\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-state-text\">\n\t\t\t\t\t\t\t<p>{{ form.stateText }}</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<button class=\"b24-form-btn b24-form-btn-border b24-form-btn-tight\"\n\t\t\t\t\t\t\t@click=\"form.submit()\" \n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ form.messages.get('stateButtonResend') }}\t\t\t\t\t\t\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-inner-box\"></div>\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t\t<div v-show=\"form.disabled\" class=\"b24-form-state b24-form-warning\">\n\t\t\t\t\t<div class=\"b24-form-state-inner\">\n\t\t\t\t\t\t<div class=\"b24-form-state-icon b24-form-warning-icon\">\n\t\t\t\t\t\t\t<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" viewBox=\"0 0 169 169\"><defs><circle id=\"a\" cx=\"84.5\" cy=\"84.5\" r=\"65.5\"/><filter x=\"-.8%\" y=\"-.8%\" width=\"101.5%\" height=\"101.5%\" filterUnits=\"objectBoundingBox\" id=\"b\"><feGaussianBlur stdDeviation=\".5\" in=\"SourceAlpha\" result=\"shadowBlurInner1\"/><feOffset dx=\"-1\" dy=\"-1\" in=\"shadowBlurInner1\" result=\"shadowOffsetInner1\"/><feComposite in=\"shadowOffsetInner1\" in2=\"SourceAlpha\" operator=\"arithmetic\" k2=\"-1\" k3=\"1\" result=\"shadowInnerInner1\"/><feColorMatrix values=\"0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0886691434 0\" in=\"shadowInnerInner1\" result=\"shadowMatrixInner1\"/><feGaussianBlur stdDeviation=\".5\" in=\"SourceAlpha\" result=\"shadowBlurInner2\"/><feOffset dx=\"1\" dy=\"1\" in=\"shadowBlurInner2\" result=\"shadowOffsetInner2\"/><feComposite in=\"shadowOffsetInner2\" in2=\"SourceAlpha\" operator=\"arithmetic\" k2=\"-1\" k3=\"1\" result=\"shadowInnerInner2\"/><feColorMatrix values=\"0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.292285839 0\" in=\"shadowInnerInner2\" result=\"shadowMatrixInner2\"/><feMerge><feMergeNode in=\"shadowMatrixInner1\"/><feMergeNode in=\"shadowMatrixInner2\"/></feMerge></filter></defs><g fill=\"none\" fill-rule=\"evenodd\"><circle stroke-opacity=\".05\" stroke=\"#000\" fill-opacity=\".07\" fill=\"#000\" cx=\"84.5\" cy=\"84.5\" r=\"84\"/><use fill=\"#FFF\" xlink:href=\"#a\"/><use fill=\"#000\" filter=\"url(#b)\" xlink:href=\"#a\"/><path d=\"M114.29 99.648L89.214 58.376c-1.932-3.168-6.536-3.168-8.427 0L55.709 99.648c-1.974 3.25.41 7.352 4.234 7.352h50.155c3.782 0 6.166-4.103 4.193-7.352zM81.404 72.756c0-1.828 1.48-3.29 3.33-3.29h.452c1.85 0 3.33 1.462 3.33 3.29v12.309c0 1.827-1.48 3.29-3.33 3.29h-.453c-1.85 0-3.33-1.463-3.33-3.29V72.756zm7.77 23.886c0 2.274-1.892 4.143-4.194 4.143s-4.193-1.869-4.193-4.143c0-2.275 1.891-4.144 4.193-4.144 2.302 0 4.193 1.869 4.193 4.144z\" fill=\"#000\" opacity=\".4\"/></g></svg>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-state-text\">\n\t\t\t\t\t\t\t<p>{{ form.messages.get('stateDisabled') }}</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-inner-box\"></div>\n\t\t\t\t</div>\n\t\t</div>\n\t",
+      template: "\n\t\t<div class=\"b24-form-state-container\" :class=\"{'b24-form-state--sticky': isSmallHeight}\">\n\t\t\t\t<transition name=\"b24-a-fade\">\n\t\t\t\t\t<div v-show=\"form.loading\" class=\"b24-form-loader\">\n\t\t\t\t\t\t<ProgressBar\n\t\t\t\t\t\t\tv-if=\"form.loading && form.uploader.running\"\n\t\t\t\t\t\t\t:uploadingProgress=\"form.uploader.progressToShow\"\n\t\t\t\t\t\t\t:timeLeft=\"form.uploader.timeLeft\"\n\t\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<div class=\"b24-form-loader-icon\">\n\t\t\t\t\t\t\t<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 263 174\">\n\t\t\t\t\t\t\t\t<g transform=translate(52.5,7)>\n\t\t\t\t\t\t\t\t\t<path class=\"bx-sun-lines-animate\" id=\"bxSunLines\" d=\"M79,0 C80.6568542,0 82,1.34314575 82,3 L82,22 C82,23.6568542 80.6568542,25 79,25 C77.3431458,25 76,23.6568542 76,22 L76,3 C76,1.34314575 77.3431458,0 79,0 Z M134.861,23.139 C136.032146,24.3104996 136.032146,26.2095004 134.861,27.381 L121.426,40.816 C120.248863,41.9529166 118.377746,41.9366571 117.220544,40.7794557 C116.063343,39.6222543 116.047083,37.7511367 117.184,36.574 L130.619,23.139 C131.7905,21.9678542 133.6895,21.9678542 134.861,23.139 L134.861,23.139 Z M158,79 C158,80.6568542 156.656854,82 155,82 L136,82 C134.343146,82 133,80.6568542 133,79 C133,77.3431458 134.343146,76 136,76 L155,76 C156.656854,76 158,77.3431458 158,79 Z M134.861,134.861 C133.6895,136.032146 131.7905,136.032146 130.619,134.861 L117.184,121.426 C116.40413,120.672777 116.091362,119.557366 116.365909,118.508478 C116.640455,117.45959 117.45959,116.640455 118.508478,116.365909 C119.557366,116.091362 120.672777,116.40413 121.426,117.184 L134.861,130.619 C136.032146,131.7905 136.032146,133.6895 134.861,134.861 Z M79,158 C77.3431458,158 76,156.656854 76,155 L76,136 C76,134.343146 77.3431458,133 79,133 C80.6568542,133 82,134.343146 82,136 L82,155 C82,156.656854 80.6568542,158 79,158 Z M23.139,134.861 C21.9678542,133.6895 21.9678542,131.7905 23.139,130.619 L36.574,117.184 C37.3272234,116.40413 38.4426337,116.091362 39.491522,116.365909 C40.5404103,116.640455 41.3595451,117.45959 41.6340915,118.508478 C41.9086378,119.557366 41.5958698,120.672777 40.816,121.426 L27.381,134.861 C26.2095004,136.032146 24.3104996,136.032146 23.139,134.861 Z M0,79 C0,77.3431458 1.34314575,76 3,76 L22,76 C23.6568542,76 25,77.3431458 25,79 C25,80.6568542 23.6568542,82 22,82 L3,82 C1.34314575,82 0,80.6568542 0,79 L0,79 Z M23.139,23.139 C24.3104996,21.9678542 26.2095004,21.9678542 27.381,23.139 L40.816,36.574 C41.5958698,37.3272234 41.9086378,38.4426337 41.6340915,39.491522 C41.3595451,40.5404103 40.5404103,41.3595451 39.491522,41.6340915 C38.4426337,41.9086378 37.3272234,41.5958698 36.574,40.816 L23.139,27.381 C21.9678542,26.2095004 21.9678542,24.3104996 23.139,23.139 Z\" fill=\"#FFD110\"></path>\n\t\t\t\t\t\t\t\t</g>\n\t\t\t\t\t\t\t\t<g fill=\"none\" fill-rule=\"evenodd\">\n\t\t\t\t\t\t\t\t\t<path d=\"M65.745 160.5l.245-.005c13.047-.261 23.51-10.923 23.51-23.995 0-13.255-10.745-24-24-24-3.404 0-6.706.709-9.748 2.062l-.47.21-.196-.477A19.004 19.004 0 0 0 37.5 102.5c-10.493 0-19 8.507-19 19 0 1.154.103 2.295.306 3.413l.108.6-.609-.01A17.856 17.856 0 0 0 18 125.5C8.335 125.5.5 133.335.5 143s7.835 17.5 17.5 17.5h47.745zM166.5 85.5h69v-.316l.422-.066C251.14 82.73 262.5 69.564 262.5 54c0-17.397-14.103-31.5-31.5-31.5-.347 0-.694.006-1.04.017l-.395.013-.103-.382C226.025 9.455 214.63.5 201.5.5c-15.014 0-27.512 11.658-28.877 26.765l-.047.515-.512-.063a29.296 29.296 0 0 0-3.564-.217c-16.016 0-29 12.984-29 29 0 15.101 11.59 27.643 26.542 28.897l.458.039v.064z\" stroke-opacity=\".05\" stroke=\"#000\" fill=\"#000\"></path>\n\t\t\t\t\t\t\t\t\t<circle stroke=\"#FFD110\" stroke-width=\"6\" cx=\"131.5\" cy=\"86.5\" r=\"44.5\" class=\"b24-form-loader-icon-sun-ring\"></circle>\n\t\t\t\t\t\t\t\t</g>\n\t\t\t\t\t\t  </svg>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</transition>\n\t\t\t\t\n\t\t\t\t<div v-show=\"form.sent\" class=\"b24-form-state b24-form-success\">\n\t\t\t\t\t<div class=\"b24-form-state-inner\">\n\t\t\t\t\t\t<div class=\"b24-form-state-icon b24-form-success-icon\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-state-text\">\n\t\t\t\t\t\t\t<p v-if=\"!form.stateText\">{{ form.messages.get('stateSuccessTitle') }}</p>\n\t\t\t\t\t\t\t<p>{{ form.stateText }}</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<button class=\"b24-form-btn b24-form-btn-border b24-form-btn-tight\"\n\t\t\t\t\t\t\tv-if=\"form.stateButton.text\" \n\t\t\t\t\t\t\t@click=\"form.stateButton.handler\" \n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ form.stateButton.text }}\t\t\t\t\t\t\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-inner-box\"></div>\n\t\t\t\t</div>\n\t\t\t\n\t\t\t\t<div v-show=\"form.error\" class=\"b24-form-state b24-form-error\">\n\t\t\t\t\t<div class=\"b24-form-state-inner\">\n\t\t\t\t\t\t<div class=\"b24-form-state-icon b24-form-error-icon\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-state-text\">\n\t\t\t\t\t\t\t<p>{{ form.stateText }}</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<button class=\"b24-form-btn b24-form-btn-border b24-form-btn-tight\"\n\t\t\t\t\t\t\t@click=\"form.submit()\" \n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ form.messages.get('stateButtonResend') }}\t\t\t\t\t\t\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-inner-box\"></div>\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t\t<div v-show=\"form.disabled\" class=\"b24-form-state b24-form-warning\">\n\t\t\t\t\t<div class=\"b24-form-state-inner\">\n\t\t\t\t\t\t<div class=\"b24-form-state-icon b24-form-warning-icon\">\n\t\t\t\t\t\t\t<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" viewBox=\"0 0 169 169\"><defs><circle id=\"a\" cx=\"84.5\" cy=\"84.5\" r=\"65.5\"/><filter x=\"-.8%\" y=\"-.8%\" width=\"101.5%\" height=\"101.5%\" filterUnits=\"objectBoundingBox\" id=\"b\"><feGaussianBlur stdDeviation=\".5\" in=\"SourceAlpha\" result=\"shadowBlurInner1\"/><feOffset dx=\"-1\" dy=\"-1\" in=\"shadowBlurInner1\" result=\"shadowOffsetInner1\"/><feComposite in=\"shadowOffsetInner1\" in2=\"SourceAlpha\" operator=\"arithmetic\" k2=\"-1\" k3=\"1\" result=\"shadowInnerInner1\"/><feColorMatrix values=\"0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0886691434 0\" in=\"shadowInnerInner1\" result=\"shadowMatrixInner1\"/><feGaussianBlur stdDeviation=\".5\" in=\"SourceAlpha\" result=\"shadowBlurInner2\"/><feOffset dx=\"1\" dy=\"1\" in=\"shadowBlurInner2\" result=\"shadowOffsetInner2\"/><feComposite in=\"shadowOffsetInner2\" in2=\"SourceAlpha\" operator=\"arithmetic\" k2=\"-1\" k3=\"1\" result=\"shadowInnerInner2\"/><feColorMatrix values=\"0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.292285839 0\" in=\"shadowInnerInner2\" result=\"shadowMatrixInner2\"/><feMerge><feMergeNode in=\"shadowMatrixInner1\"/><feMergeNode in=\"shadowMatrixInner2\"/></feMerge></filter></defs><g fill=\"none\" fill-rule=\"evenodd\"><circle stroke-opacity=\".05\" stroke=\"#000\" fill-opacity=\".07\" fill=\"#000\" cx=\"84.5\" cy=\"84.5\" r=\"84\"/><use fill=\"#FFF\" xlink:href=\"#a\"/><use fill=\"#000\" filter=\"url(#b)\" xlink:href=\"#a\"/><path d=\"M114.29 99.648L89.214 58.376c-1.932-3.168-6.536-3.168-8.427 0L55.709 99.648c-1.974 3.25.41 7.352 4.234 7.352h50.155c3.782 0 6.166-4.103 4.193-7.352zM81.404 72.756c0-1.828 1.48-3.29 3.33-3.29h.452c1.85 0 3.33 1.462 3.33 3.29v12.309c0 1.827-1.48 3.29-3.33 3.29h-.453c-1.85 0-3.33-1.463-3.33-3.29V72.756zm7.77 23.886c0 2.274-1.892 4.143-4.194 4.143s-4.193-1.869-4.193-4.143c0-2.275 1.891-4.144 4.193-4.144 2.302 0 4.193 1.869 4.193 4.144z\" fill=\"#000\" opacity=\".4\"/></g></svg>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-state-text\">\n\t\t\t\t\t\t\t<p>{{ form.messages.get('stateDisabled') }}</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-inner-box\"></div>\n\t\t\t\t</div>\n\t\t</div>\n\t",
       computed: {},
-      methods: {}
+      methods: {},
+      components: {
+        ProgressBar: ProgressBar
+      }
     };
 
     var PagerBlock = {
@@ -7479,10 +7586,545 @@ var Vue = exports.Vue;
       'b24-form-widget': Widget$1
     };
 
-    function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-    function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
     function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$8(obj, privateMap); privateMap.set(obj, value); }
     function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    var _data = /*#__PURE__*/new WeakMap();
+    var _offset = /*#__PURE__*/new WeakMap();
+    var Chunk = /*#__PURE__*/function () {
+      function Chunk(data, offset) {
+        babelHelpers.classCallCheck(this, Chunk);
+        _classPrivateFieldInitSpec$6(this, _data, {
+          writable: true,
+          value: null
+        });
+        _classPrivateFieldInitSpec$6(this, _offset, {
+          writable: true,
+          value: 0
+        });
+        babelHelpers.classPrivateFieldSet(this, _data, data);
+        babelHelpers.classPrivateFieldSet(this, _offset, offset);
+      }
+      babelHelpers.createClass(Chunk, [{
+        key: "getData",
+        value: function getData() {
+          return babelHelpers.classPrivateFieldGet(this, _data);
+        }
+      }, {
+        key: "getOffset",
+        value: function getOffset() {
+          return babelHelpers.classPrivateFieldGet(this, _offset);
+        }
+      }, {
+        key: "getSize",
+        value: function getSize() {
+          return this.getData().size;
+        }
+      }]);
+      return Chunk;
+    }();
+
+    function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$9(obj, privateSet); privateSet.add(obj); }
+    function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$9(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$9(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+    var _file = /*#__PURE__*/new WeakMap();
+    var _fileData = /*#__PURE__*/new WeakMap();
+    var _fieldId = /*#__PURE__*/new WeakMap();
+    var _chunkOffset = /*#__PURE__*/new WeakMap();
+    var _fileToken = /*#__PURE__*/new WeakMap();
+    var _identification = /*#__PURE__*/new WeakMap();
+    var _controller = /*#__PURE__*/new WeakMap();
+    var _action = /*#__PURE__*/new WeakMap();
+    var _currentChunk = /*#__PURE__*/new WeakMap();
+    var _started = /*#__PURE__*/new WeakMap();
+    var _uploaded = /*#__PURE__*/new WeakMap();
+    var _chunkOptions = /*#__PURE__*/new WeakMap();
+    var _additionalControllerOptions = /*#__PURE__*/new WeakMap();
+    var _getNextChunk = /*#__PURE__*/new WeakSet();
+    var _uploadChunk = /*#__PURE__*/new WeakSet();
+    var _postChunk = /*#__PURE__*/new WeakSet();
+    var FileUploader = /*#__PURE__*/function (_Event) {
+      babelHelpers.inherits(FileUploader, _Event);
+      function FileUploader(options) {
+        var _this;
+        babelHelpers.classCallCheck(this, FileUploader);
+        _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(FileUploader).call(this));
+        _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _postChunk);
+        _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _uploadChunk);
+        _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _getNextChunk);
+        _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _file, {
+          writable: true,
+          value: void 0
+        });
+        _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _fileData, {
+          writable: true,
+          value: void 0
+        });
+        _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _fieldId, {
+          writable: true,
+          value: void 0
+        });
+        _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _chunkOffset, {
+          writable: true,
+          value: null
+        });
+        _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _fileToken, {
+          writable: true,
+          value: null
+        });
+        _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _identification, {
+          writable: true,
+          value: void 0
+        });
+        _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _controller, {
+          writable: true,
+          value: 'crm.fileUploader.siteFormFileUploaderController'
+        });
+        _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _action, {
+          writable: true,
+          value: 'crm.site.fileUploader.upload'
+        });
+        _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _currentChunk, {
+          writable: true,
+          value: void 0
+        });
+        _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _started, {
+          writable: true,
+          value: false
+        });
+        _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _uploaded, {
+          writable: true,
+          value: false
+        });
+        _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _chunkOptions, {
+          writable: true,
+          value: void 0
+        });
+        _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _additionalControllerOptions, {
+          writable: true,
+          value: []
+        });
+        babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _identification, options.identification);
+        var serverOptions = window.b24form.common.properties.uploader || {};
+        babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _chunkOptions, {
+          minSize: serverOptions.chunkMinSize || 1024 * 1024,
+          defaultSize: serverOptions.chunkDefaultSize || 5 * 1024 * 1024
+        });
+        return _this;
+      }
+      babelHelpers.createClass(FileUploader, [{
+        key: "upload",
+        value: function upload(fileData) {
+          var _this2 = this;
+          if (babelHelpers.classPrivateFieldGet(this, _chunkOffset) !== null) {
+            return;
+          }
+          babelHelpers.classPrivateFieldSet(this, _uploaded, false);
+          babelHelpers.classPrivateFieldSet(this, _fileData, fileData);
+          babelHelpers.classPrivateFieldSet(this, _file, fileData.file);
+          var uploadingPromise = Promise.resolve();
+          var nextChunk = _classPrivateMethodGet$3(this, _getNextChunk, _getNextChunk2).call(this);
+          babelHelpers.classPrivateFieldSet(this, _currentChunk, nextChunk);
+          if (nextChunk) {
+            uploadingPromise = uploadingPromise.then(function () {
+              return _classPrivateMethodGet$3(_this2, _uploadChunk, _uploadChunk2).call(_this2, nextChunk);
+            });
+          }
+          return uploadingPromise.then(function () {
+            return {
+              'uploaded': babelHelpers.classPrivateFieldGet(_this2, _uploaded),
+              'token': babelHelpers.classPrivateFieldGet(_this2, _fileToken)
+            };
+          });
+        }
+      }, {
+        key: "continueUpload",
+        value: function continueUpload() {
+          var _this3 = this;
+          var uploadingPromise = Promise.resolve();
+          if (!babelHelpers.classPrivateFieldGet(this, _currentChunk) || !babelHelpers.classPrivateFieldGet(this, _started) || babelHelpers.classPrivateFieldGet(this, _uploaded)) {
+            return uploadingPromise;
+          }
+          uploadingPromise = uploadingPromise.then(function () {
+            return _classPrivateMethodGet$3(_this3, _uploadChunk, _uploadChunk2).call(_this3, babelHelpers.classPrivateFieldGet(_this3, _currentChunk));
+          });
+          return uploadingPromise.then(function () {
+            return {
+              'uploaded': babelHelpers.classPrivateFieldGet(_this3, _uploaded),
+              'token': babelHelpers.classPrivateFieldGet(_this3, _fileToken)
+            };
+          });
+        }
+      }, {
+        key: "isStarted",
+        value: function isStarted() {
+          return babelHelpers.classPrivateFieldGet(this, _started);
+        }
+      }, {
+        key: "onUploadProgress",
+        value: function onUploadProgress(uploadedBytes) {
+          var leftToSent = babelHelpers.classPrivateFieldGet(this, _currentChunk).getSize() - uploadedBytes;
+          var uploadedDataBytes = babelHelpers.classPrivateFieldGet(this, _chunkOffset) - leftToSent;
+          this.progress = Math.floor(uploadedDataBytes / babelHelpers.classPrivateFieldGet(this, _file).size * 1000) / 10;
+          this.emit('onChunkUploaded', uploadedDataBytes / babelHelpers.classPrivateFieldGet(this, _file).size);
+        }
+      }, {
+        key: "onChunkUploaded",
+        value: function onChunkUploaded() {
+          this.progress = Math.floor(babelHelpers.classPrivateFieldGet(this, _chunkOffset) / babelHelpers.classPrivateFieldGet(this, _file).size * 1000) / 10;
+          this.emit('onChunkUploaded', babelHelpers.classPrivateFieldGet(this, _chunkOffset) / babelHelpers.classPrivateFieldGet(this, _file).size);
+        }
+      }, {
+        key: "onDone",
+        value: function onDone() {
+          babelHelpers.classPrivateFieldGet(this, _fileData).token = babelHelpers.classPrivateFieldGet(this, _fileToken);
+          babelHelpers.classPrivateFieldGet(this, _fileData).content = '';
+          babelHelpers.classPrivateFieldSet(this, _uploaded, true);
+          this.refresh();
+        }
+      }, {
+        key: "refresh",
+        value: function refresh() {
+          babelHelpers.classPrivateFieldSet(this, _file, null);
+          babelHelpers.classPrivateFieldSet(this, _fileData, null);
+          babelHelpers.classPrivateFieldSet(this, _fileToken, null);
+          babelHelpers.classPrivateFieldSet(this, _chunkOffset, null);
+          babelHelpers.classPrivateFieldSet(this, _started, false);
+        }
+      }, {
+        key: "getChunkSize",
+        value: function getChunkSize() {
+          return babelHelpers.classPrivateFieldGet(this, _chunkOptions).defaultSize;
+        }
+      }, {
+        key: "getFile",
+        value: function getFile() {
+          return babelHelpers.classPrivateFieldGet(this, _file);
+        }
+      }, {
+        key: "setToken",
+        value: function setToken(token) {
+          babelHelpers.classPrivateFieldSet(this, _fileToken, token);
+        }
+      }, {
+        key: "getChunkOffset",
+        value: function getChunkOffset() {
+          return babelHelpers.classPrivateFieldGet(this, _chunkOffset);
+        }
+      }, {
+        key: "setFieldId",
+        value: function setFieldId(fieldId) {
+          babelHelpers.classPrivateFieldSet(this, _fieldId, fieldId);
+        }
+      }, {
+        key: "getFieldId",
+        value: function getFieldId() {
+          return babelHelpers.classPrivateFieldGet(this, _fieldId) || null;
+        }
+      }, {
+        key: "addControllerOption",
+        value: function addControllerOption(parameter) {
+          babelHelpers.classPrivateFieldGet(this, _additionalControllerOptions).push(parameter);
+        }
+      }]);
+      return FileUploader;
+    }(Event);
+    function _getNextChunk2() {
+      if (this.getChunkOffset() !== null && this.getChunkOffset() >= this.getFile().size) {
+        // End of File
+        return null;
+      }
+      if (this.getChunkOffset() === null) {
+        // First call
+        babelHelpers.classPrivateFieldSet(this, _chunkOffset, 0);
+      }
+      var chunk;
+      if (this.getChunkOffset() === 0 && this.getFile().size <= this.getChunkSize()) {
+        chunk = new Chunk(this.getFile(), this.getChunkOffset());
+        babelHelpers.classPrivateFieldSet(this, _chunkOffset, this.getFile().size);
+      } else {
+        var currentChunkSize = Math.min(this.getChunkSize(), this.getFile().size - this.getChunkOffset());
+        var nextOffset = this.getChunkOffset() + currentChunkSize;
+        var fileRange = this.getFile().slice(this.getChunkOffset(), nextOffset);
+        chunk = new Chunk(fileRange, this.getChunkOffset());
+        babelHelpers.classPrivateFieldSet(this, _chunkOffset, nextOffset);
+      }
+      return chunk;
+    }
+    function _uploadChunk2(chunk) {
+      babelHelpers.classPrivateFieldSet(this, _started, true);
+      babelHelpers.classPrivateFieldSet(this, _currentChunk, chunk);
+      var totalSize = this.getFile().size;
+      var isOnlyOneChunk = chunk.getOffset() === 0 && totalSize === chunk.getSize();
+      var fileName = this.getFile().name;
+      if (fileName.normalize) {
+        fileName = fileName.normalize();
+      }
+      var headers = new Headers({
+        'Content-Type': this.getFile().type || 'application/octet-stream',
+        'X-Upload-Content-Name': encodeURIComponent(fileName),
+        'Crm-Webform-Cors': 'Y'
+      });
+      if (!isOnlyOneChunk) {
+        var rangeStart = chunk.getOffset();
+        var rangeEnd = chunk.getOffset() + chunk.getSize() - 1;
+        var rangeHeader = "bytes ".concat(rangeStart, "-").concat(rangeEnd, "/").concat(totalSize);
+        headers.append('Content-Range', rangeHeader);
+      }
+      return _classPrivateMethodGet$3(this, _postChunk, _postChunk2).call(this, {
+        data: chunk.getData(),
+        headers: headers,
+        address: babelHelpers.classPrivateFieldGet(this, _identification).address + "/bitrix/services/main/ajax.php?action=".concat(babelHelpers.classPrivateFieldGet(this, _action))
+      });
+    }
+    function _postChunk2(config) {
+      var _this4 = this;
+      var controllerOptions = {
+        'formId': babelHelpers.classPrivateFieldGet(this, _identification).id,
+        'secCode': babelHelpers.classPrivateFieldGet(this, _identification).sec,
+        'fieldId': this.getFieldId()
+      };
+      babelHelpers.classPrivateFieldGet(this, _additionalControllerOptions).forEach(function (parameter) {
+        controllerOptions[parameter.key] = parameter.value;
+      });
+      var getParameters = "&controller=".concat(babelHelpers.classPrivateFieldGet(this, _controller)) + "&token=".concat(babelHelpers.classPrivateFieldGet(this, _fileToken) || 0) + "&controllerOptions=".concat(JSON.stringify(controllerOptions));
+      config.address += getParameters;
+      return new Promise(function (resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', config.address);
+        xhr.withCredentials = true;
+        config.headers.forEach(function (value, key) {
+          xhr.setRequestHeader(key, value);
+        });
+        xhr.upload.onprogress = function (event) {
+          if (event.lengthComputable) {
+            _this4.onUploadProgress(event.loaded);
+          }
+        };
+        xhr.onload = function () {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(xhr.response);
+          } else {
+            reject(xhr.response);
+          }
+        };
+        xhr.onerror = function () {
+          return reject(xhr.statusText);
+        };
+        xhr.send(config.data);
+      }).then(function (response) {
+        return JSON.parse(response);
+      }).then(function (response) {
+        if (response.status === "error") {
+          response.errors[0] = response.errors[0] || {
+            message: 'Unknown error'
+          };
+          throw new Error(response.errors[0].message);
+        }
+        if (response.data.token) {
+          _this4.setToken(response.data.token);
+          var promise = Promise.resolve();
+          if (!response.data.done) {
+            // Upload next chunk
+            var nextChunk = _classPrivateMethodGet$3(_this4, _getNextChunk, _getNextChunk2).call(_this4);
+            if (nextChunk) {
+              promise = promise.then(function () {
+                return _classPrivateMethodGet$3(_this4, _uploadChunk, _uploadChunk2).call(_this4, nextChunk);
+              });
+            }
+          } else {
+            _this4.onDone();
+          }
+          return promise;
+        } else {
+          throw new Error('Chunk not Uploaded');
+        }
+      });
+    }
+
+    function _classPrivateMethodInitSpec$4(obj, privateSet) { _checkPrivateRedeclaration$a(obj, privateSet); privateSet.add(obj); }
+    function _classPrivateFieldInitSpec$8(obj, privateMap, value) { _checkPrivateRedeclaration$a(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$a(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+    var _form$2 = /*#__PURE__*/new WeakMap();
+    var _files = /*#__PURE__*/new WeakMap();
+    var _fileUploader = /*#__PURE__*/new WeakMap();
+    var _filesControllers = /*#__PURE__*/new WeakMap();
+    var _currentFileIndex = /*#__PURE__*/new WeakMap();
+    var _summarySize = /*#__PURE__*/new WeakMap();
+    var _allProgress = /*#__PURE__*/new WeakMap();
+    var _lastUpdateTime = /*#__PURE__*/new WeakMap();
+    var _uploadNext = /*#__PURE__*/new WeakSet();
+    var _getCurrentUploadingFile = /*#__PURE__*/new WeakSet();
+    var Uploader = /*#__PURE__*/function () {
+      function Uploader(form) {
+        babelHelpers.classCallCheck(this, Uploader);
+        _classPrivateMethodInitSpec$4(this, _getCurrentUploadingFile);
+        _classPrivateMethodInitSpec$4(this, _uploadNext);
+        _classPrivateFieldInitSpec$8(this, _form$2, {
+          writable: true,
+          value: void 0
+        });
+        _classPrivateFieldInitSpec$8(this, _files, {
+          writable: true,
+          value: void 0
+        });
+        _classPrivateFieldInitSpec$8(this, _fileUploader, {
+          writable: true,
+          value: void 0
+        });
+        _classPrivateFieldInitSpec$8(this, _filesControllers, {
+          writable: true,
+          value: void 0
+        });
+        _classPrivateFieldInitSpec$8(this, _currentFileIndex, {
+          writable: true,
+          value: 0
+        });
+        _classPrivateFieldInitSpec$8(this, _summarySize, {
+          writable: true,
+          value: 0
+        });
+        _classPrivateFieldInitSpec$8(this, _allProgress, {
+          writable: true,
+          value: 0
+        });
+        _classPrivateFieldInitSpec$8(this, _lastUpdateTime, {
+          writable: true,
+          value: null
+        });
+        babelHelpers.defineProperty(this, "progressToShow", 0);
+        babelHelpers.defineProperty(this, "timeLeft", null);
+        babelHelpers.defineProperty(this, "alreadyStarted", false);
+        babelHelpers.defineProperty(this, "running", false);
+        babelHelpers.classPrivateFieldSet(this, _form$2, form);
+        babelHelpers.classPrivateFieldSet(this, _fileUploader, new FileUploader({
+          identification: babelHelpers.classPrivateFieldGet(this, _form$2).identification || ""
+        }));
+        babelHelpers.classPrivateFieldGet(this, _fileUploader).subscribe('onChunkUploaded', this.updateProgress.bind(this));
+      }
+      babelHelpers.createClass(Uploader, [{
+        key: "upload",
+        value: function upload() {
+          var _this = this;
+          this.alreadyStarted = true;
+          var uploadingPromise = Promise.resolve();
+          uploadingPromise = uploadingPromise.then(function () {
+            return _classPrivateMethodGet$4(_this, _uploadNext, _uploadNext2).call(_this);
+          });
+          return uploadingPromise;
+        }
+      }, {
+        key: "onFileUploaded",
+        value: function onFileUploaded() {
+          var _this$currentFileInde, _this$currentFileInde2;
+          babelHelpers.classPrivateFieldSet(this, _currentFileIndex, (_this$currentFileInde = babelHelpers.classPrivateFieldGet(this, _currentFileIndex), _this$currentFileInde2 = _this$currentFileInde++, _this$currentFileInde)), _this$currentFileInde2;
+          babelHelpers.classPrivateFieldSet(this, _allProgress, this.progressToShow);
+          babelHelpers.classPrivateFieldSet(this, _lastUpdateTime, null);
+        }
+      }, {
+        key: "updateProgress",
+        value: function updateProgress(currentFileProgress) {
+          var cur = _classPrivateMethodGet$4(this, _getCurrentUploadingFile, _getCurrentUploadingFile2).call(this).fileData;
+          var currentProgress = babelHelpers.classPrivateFieldGet(this, _allProgress) + currentFileProgress * cur.size / this.getSummarySize();
+          if (babelHelpers.classPrivateFieldGet(this, _lastUpdateTime)) {
+            var timePassed = new Date() - babelHelpers.classPrivateFieldGet(this, _lastUpdateTime);
+            var progressDelta = currentProgress - this.progressToShow;
+            var speed = progressDelta / timePassed; // uploading progress per millisecond
+
+            this.timeLeft = Math.round((1 - currentProgress) / (1000 * speed));
+          }
+          this.progressToShow = currentProgress;
+          babelHelpers.classPrivateFieldSet(this, _lastUpdateTime, new Date());
+        }
+      }, {
+        key: "hasFilesToSend",
+        value: function hasFilesToSend() {
+          if (this.alreadyStarted) {
+            return babelHelpers.classPrivateFieldGet(this, _files).length > 0;
+          }
+          babelHelpers.classPrivateFieldSet(this, _filesControllers, babelHelpers.classPrivateFieldGet(this, _form$2).getFields().filter(function (e) {
+            return e.type === 'file' && e.values().length > 0;
+          }));
+          babelHelpers.classPrivateFieldSet(this, _files, babelHelpers.classPrivateFieldGet(this, _filesControllers).reduce(function (ar, e) {
+            e.values().forEach(function (value) {
+              var item = {
+                fieldId: e.id,
+                fileData: value
+              };
+              ar.push(item);
+            });
+            return ar;
+          }, []));
+          var fieldsSizeMap = {};
+          babelHelpers.classPrivateFieldGet(this, _files).forEach(function (value) {
+            if (value.fieldId in fieldsSizeMap) {
+              fieldsSizeMap[value.fieldId] += value.fileData.size;
+            } else {
+              fieldsSizeMap[value.fieldId] = value.fileData.size;
+            }
+          });
+          var option = {
+            value: fieldsSizeMap,
+            key: 'fieldsSize'
+          };
+          babelHelpers.classPrivateFieldGet(this, _fileUploader).addControllerOption(option);
+          babelHelpers.classPrivateFieldSet(this, _currentFileIndex, 0);
+          this.refreshSummarySize();
+          return babelHelpers.classPrivateFieldGet(this, _files).length > 0;
+        }
+      }, {
+        key: "refreshSummarySize",
+        value: function refreshSummarySize() {
+          babelHelpers.classPrivateFieldSet(this, _summarySize, babelHelpers.classPrivateFieldGet(this, _files).reduce(function (ac, e) {
+            return ac + e.fileData.size;
+          }, 0));
+        }
+      }, {
+        key: "getSummarySize",
+        value: function getSummarySize() {
+          return babelHelpers.classPrivateFieldGet(this, _summarySize);
+        }
+      }]);
+      return Uploader;
+    }();
+    function _uploadNext2() {
+      var _this2 = this;
+      var promise = Promise.resolve();
+      if (babelHelpers.classPrivateFieldGet(this, _currentFileIndex) < babelHelpers.classPrivateFieldGet(this, _files).length) {
+        promise = promise.then(function () {
+          var currentFile = babelHelpers.classPrivateFieldGet(_this2, _files)[babelHelpers.classPrivateFieldGet(_this2, _currentFileIndex)];
+          _this2.running = true;
+          if (babelHelpers.classPrivateFieldGet(_this2, _fileUploader).isStarted()) {
+            return babelHelpers.classPrivateFieldGet(_this2, _fileUploader).continueUpload();
+          } else {
+            babelHelpers.classPrivateFieldGet(_this2, _fileUploader).setFieldId(currentFile.fieldId);
+            return babelHelpers.classPrivateFieldGet(_this2, _fileUploader).upload(currentFile.fileData);
+          }
+        }).then(function (response) {
+          if (response.uploaded) {
+            _this2.onFileUploaded();
+            return _classPrivateMethodGet$4(_this2, _uploadNext, _uploadNext2).call(_this2);
+          } else {
+            throw new Error('file not uploaded');
+          }
+        });
+        this.running = false;
+      }
+      promise["catch"](function (err) {
+        _this2.running = false;
+        throw err;
+      });
+      return promise;
+    }
+    function _getCurrentUploadingFile2() {
+      return babelHelpers.classPrivateFieldGet(this, _files)[babelHelpers.classPrivateFieldGet(this, _currentFileIndex)];
+    }
+
+    function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+    function _objectSpread$3(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$3(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+    function _classPrivateFieldInitSpec$9(obj, privateMap, value) { _checkPrivateRedeclaration$b(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$b(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var DefaultOptions$4 = {
       view: 'inline'
     };
@@ -7500,7 +8142,7 @@ var Vue = exports.Vue;
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions$4;
         babelHelpers.classCallCheck(this, Controller$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
-        _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _id$2, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _id$2, {
           writable: true,
           value: void 0
         });
@@ -7512,15 +8154,15 @@ var Vue = exports.Vue;
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "analyticsHandler", {});
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "languages", []);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "language", 'en');
-        _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _fields$1, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _fields$1, {
           writable: true,
           value: []
         });
-        _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _dependence, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _dependence, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _properties, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _properties, {
           writable: true,
           value: {}
         });
@@ -7536,7 +8178,7 @@ var Vue = exports.Vue;
           title: '$',
           format: '$#'
         });
-        _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _personalisation, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _personalisation, {
           writable: true,
           value: {
             title: '',
@@ -7554,7 +8196,7 @@ var Vue = exports.Vue;
           text: '',
           handler: null
         });
-        _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _vue, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _vue, {
           writable: true,
           value: void 0
         });
@@ -7567,6 +8209,7 @@ var Vue = exports.Vue;
         _this.abuse = options.abuse;
         _this.emit(EventTypes.initBefore, options);
         options = _this.adjust(options);
+        _this.uploader = new Uploader(babelHelpers.assertThisInitialized(_this));
         babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _id$2, options.id || Math.random().toString().split('.')[1] + Math.random().toString().split('.')[1]);
         _this.provider = options.provider || {};
         _this.analyticsHandler = options.analyticsHandler || {};
@@ -7669,16 +8312,23 @@ var Vue = exports.Vue;
             this.loading = false;
             return true;
           }
+          if (this.uploader.hasFilesToSend()) {
+            promise = promise.then(function () {
+              return _this3.uploader.upload();
+            });
+          }
           var consents = this.agreements.reduce(function (acc, field) {
             acc[field.name] = field.value();
             return acc;
           }, {});
           var formData = new FormData();
-          formData.set('values', JSON.stringify(this.values()));
           formData.set('properties', JSON.stringify(babelHelpers.classPrivateFieldGet(this, _properties)));
           formData.set('consents', JSON.stringify(consents));
           formData.set('recaptcha', this.recaptcha.getResponse());
           formData.set('timeZoneOffset', new Date().getTimezoneOffset());
+          promise.then(function () {
+            formData.set('values', JSON.stringify(_this3.values()));
+          });
           if (typeof this.provider.submit === 'string') {
             promise = promise.then(function () {
               return window.fetch(_this3.provider.submit, {
@@ -7821,7 +8471,7 @@ var Vue = exports.Vue;
             this.visible = !!options.visible;
           }
           if (typeof options.design !== 'undefined') {
-            this.design.adjust(_objectSpread$2({
+            this.design.adjust(_objectSpread$3({
               proxy: options.proxy
             }, options.design));
           }
@@ -8230,18 +8880,18 @@ var Vue = exports.Vue;
         applyOldenLoaderData: applyOldenLoaderData
     });
 
-    function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$9(obj, privateMap); privateMap.set(obj, value); }
-    function _checkPrivateRedeclaration$9(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _classPrivateFieldInitSpec$a(obj, privateMap, value) { _checkPrivateRedeclaration$c(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$c(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var _forms = /*#__PURE__*/new WeakMap();
     var _userProviderPromise = /*#__PURE__*/new WeakMap();
     var Application = /*#__PURE__*/function () {
       function Application() {
         babelHelpers.classCallCheck(this, Application);
-        _classPrivateFieldInitSpec$7(this, _forms, {
+        _classPrivateFieldInitSpec$a(this, _forms, {
           writable: true,
           value: []
         });
-        _classPrivateFieldInitSpec$7(this, _userProviderPromise, {
+        _classPrivateFieldInitSpec$a(this, _userProviderPromise, {
           writable: true,
           value: void 0
         });

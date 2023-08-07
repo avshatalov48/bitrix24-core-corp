@@ -363,12 +363,11 @@ if (
 unset($factory);
 
 //region Check and fill fields restriction
-$restrictedFields = $fieldRestrictionManager->fetchRestrictedFields(
+$arResult['RESTRICTED_FIELDS_ENGINE'] = $fieldRestrictionManager->fetchRestrictedFieldsEngine(
 	$arResult['GRID_ID'] ?? '',
 	$arResult['HEADERS'] ?? [],
 	$entityFilter ?? null
 );
-$arResult = array_merge($arResult, $restrictedFields);
 //endregion
 
 // list all filds for export

@@ -15,8 +15,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var CBitrixComponent $component
  */
 
-use \Bitrix\Crm\Category\DealCategory;
-use \Bitrix\Crm\Conversion\EntityConverter;
+use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Conversion\EntityConverter;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
@@ -39,8 +39,6 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
-
-Extension::load(['crm.restriction.filter-fields']);
 
 ?><div id="rebuildMessageWrapper"><?
 
@@ -301,7 +299,7 @@ $prefixLC = mb_strtolower($arResult['GRID_ID']);
 			$resultItem['columns']
 		);
 
-		$resultItem['columns'] = \Bitrix\Crm\Entity\FieldContentType::enrichGridRow(
+		$resultItem['columns'] = \Bitrix\Crm\Entity\CommentsHelper::enrichGridRow(
 			\CCrmOwnerType::Quote,
 			$fieldContentTypeMap[$arQuote['ID']] ?? [],
 			$arQuote,
@@ -882,4 +880,9 @@ if ($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arRe
 	</script>
 <?endif;
 
-echo $arResult['ACTIVITY_FIELD_RESTRICTIONS'] ?? '';
+if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))
+{
+	Extension::load(['crm.restriction.filter-fields']);
+
+	echo $arResult['RESTRICTED_FIELDS_ENGINE'];
+}

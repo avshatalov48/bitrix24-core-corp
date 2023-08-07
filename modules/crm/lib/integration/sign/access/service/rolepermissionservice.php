@@ -35,8 +35,8 @@ abstract class RolePermissionService
 	{
 		foreach ($permissionSettings as &$setting)
 		{
-			$roleId = (int) $setting['id'];
-			$roleTitle = (string) $setting['title'];
+			$roleId = (int) ($setting['id'] ?? 0);
+			$roleTitle = (string) ($setting['title'] ?? '');
 			$setting['accessRights'] ??= [];
 			if($roleId > 0 && !$this->roleRelationService->validateRoleId($roleId))
 			{
@@ -208,24 +208,32 @@ abstract class RolePermissionService
 	private function fillPermissionSet(&$setting, $entity): array
 	{
 		$permissionSet = CCrmRole::getDefaultPermissionSet();
-		if (empty($setting['accessRights'])) {
-			foreach ($permissionSet as &$permission) {
-				$permission['-'] = '';
+
+		if ($entity !== 'CONTACT' || empty($setting['accessRights']))
+		{
+			foreach ($permissionSet as &$perm)
+			{
+				$perm['-'] = '';
 			}
 		}
-		
-		foreach ($setting['accessRights'] as $key => $permission) {
+
+		foreach ($setting['accessRights'] as $key => $permission)
+		{
 			$permissionCode = $this->getPermissionCode($permission['id']);
 			$permissionId = explode('_', $permissionCode);
 			$action = array_pop($permissionId);
 			array_shift($permissionId);
 			array_shift($permissionId);
-			
-			if (!$this->validatePermission($permissionSet, $action, $permission)) {
+
+			if (!$this->validatePermission($permissionSet, $action, $permission))
+			{
+				$permissionSet[$action] = ['-' => CCrmPerms::PERM_NONE];
+				unset($setting['accessRights'][$key]);
 				continue;
 			}
-			
-			if (mb_strpos($entity, implode('_', $permissionId)) === 0) {
+
+			if (mb_strpos($entity, implode('_', $permissionId)) === 0)
+			{
 				$permissionSet[$action] = ['-' => $permission['value'] ?: CCrmPerms::PERM_NONE];
 				unset($setting['accessRights'][$key]);
 			}
@@ -249,7 +257,6 @@ abstract class RolePermissionService
 					'value' => $permission['VALUE'],
 					'type' => PermissionDictionary::TYPE_VARIABLES,
 					'enableSearch' => true,
-					'variables' => $this->getAbleOptions(),
 				];
 			}
 		}

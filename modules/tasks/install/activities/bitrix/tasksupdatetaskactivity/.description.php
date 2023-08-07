@@ -18,6 +18,12 @@ $arActivityDescription = [
 		'OWN_ID' => 'tasks',
 		'OWN_NAME' => Loc::getMessage('TASKS_UTA_CATEGORY'),
 	],
+	'RETURN' => [
+		'ErrorMessage' => [
+			'NAME' => GetMessage('TASKS_UTA_ERROR_MESSAGE'),
+			'TYPE' => 'string',
+		],
+	],
 	'FILTER' => [
 		'INCLUDE' => [
 			['tasks'],

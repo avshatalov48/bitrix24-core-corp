@@ -83,7 +83,7 @@ jn.define('crm/timeline/scheduler/providers/mail', (require, exports, module) =>
 			return 700;
 		}
 
-		static isSupported()
+		static isSupported(context = {})
 		{
 			return true;
 		}

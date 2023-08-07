@@ -8,6 +8,7 @@ use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\Tracking;
@@ -39,7 +40,7 @@ class CAllCrmQuote
 	protected $lastErrors;
 
 	private static ?Crm\Entity\Compatibility\Adapter $lastActivityAdapter = null;
-	private static ?Crm\Entity\Compatibility\Adapter $contentTypeIdAdapter = null;
+	private static ?Crm\Entity\Compatibility\Adapter $commentsAdapter = null;
 
 	/** @var \Bitrix\Crm\Entity\Compatibility\Adapter */
 	private $compatibiltyAdapter;
@@ -130,14 +131,14 @@ class CAllCrmQuote
 		return self::$lastActivityAdapter;
 	}
 
-	private static function getContentTypeIdAdapter(): Crm\Entity\Compatibility\Adapter\ContentTypeId
+	private static function getCommentsAdapter(): Crm\Entity\Compatibility\Adapter\Comments
 	{
-		if (!self::$contentTypeIdAdapter)
+		if (!self::$commentsAdapter)
 		{
-			self::$contentTypeIdAdapter = new Crm\Entity\Compatibility\Adapter\ContentTypeId(\CCrmOwnerType::Quote);
+			self::$commentsAdapter = new Crm\Entity\Compatibility\Adapter\Comments(\CCrmOwnerType::Quote);
 		}
 
-		return self::$contentTypeIdAdapter;
+		return self::$commentsAdapter;
 	}
 
 	public function __construct($bCheckPermission = true)
@@ -328,6 +329,7 @@ class CAllCrmQuote
 			//endregion
 
 			self::getLastActivityAdapter()->performAdd($arFields, $options);
+			self::getCommentsAdapter()->normalizeFields(null, $arFields);
 
 			//region Rise BeforeAdd event
 			foreach (GetModuleEvents('crm', 'OnBeforeCrmQuoteAdd', true) as $arEvent)
@@ -424,7 +426,7 @@ class CAllCrmQuote
 			Bitrix\Crm\Search\SearchContentBuilderFactory::create(CCrmOwnerType::Quote)->build($ID);
 			//endregion
 
-			self::getContentTypeIdAdapter()->performAdd($arFields, $options);
+			self::getCommentsAdapter()->performAdd($arFields, $options);
 
 			//region Rise AfterAdd event
 			foreach (GetModuleEvents('crm', 'OnAfterCrmQuoteAdd', true) as $arEvent)
@@ -892,6 +894,10 @@ class CAllCrmQuote
 			}
 
 			self::getLastActivityAdapter()->performUpdate((int)$ID, $arFields, $options);
+			self::getCommentsAdapter()
+				->setPreviousFields((int)$ID, $arRow)
+				->normalizeFields((int)$ID, $arFields)
+			;
 
 			foreach (GetModuleEvents('crm', 'OnBeforeCrmQuoteUpdate', true) as $arEvent)
 			{
@@ -1010,7 +1016,7 @@ class CAllCrmQuote
 			// Responsible user sync
 			//CCrmActivity::Synchronize(CCrmOwnerType::Quote, $ID);
 
-			self::getContentTypeIdAdapter()
+			self::getCommentsAdapter()
 				->setPreviousFields((int)$ID, $arRow)
 				->performUpdate((int)$ID, $arFields, $options)
 			;
@@ -1130,7 +1136,7 @@ class CAllCrmQuote
 			/*CCrmActivity::DeleteByOwner(CCrmOwnerType::Quote, $ID);*/
 			\Bitrix\Crm\Requisite\EntityLink::unregister(CCrmOwnerType::Quote, $ID);
 
-			self::getContentTypeIdAdapter()->performDelete((int)$ID, $options);
+			self::getCommentsAdapter()->performDelete((int)$ID, $options);
 
 			// delete utm fields
 			UtmTable::deleteEntityUtm(CCrmOwnerType::Quote, $ID);
@@ -1711,8 +1717,8 @@ class CAllCrmQuote
 				$arMsg[] = Array(
 					'ENTITY_FIELD' => 'COMMENTS',
 					'EVENT_NAME' => GetMessage('CRM_QUOTE_FIELD_COMPARE_COMMENTS'),
-					'EVENT_TEXT_1' => !empty($origComments) ? $origComments : GetMessage('CRM_QUOTE_FIELD_COMPARE_EMPTY'),
-					'EVENT_TEXT_2' => !empty($modifComments) ? $modifComments : GetMessage('CRM_QUOTE_FIELD_COMPARE_EMPTY')
+					'EVENT_TEXT_1' => !empty($origComments) ? TextHelper::convertBbCodeToHtml($origComments) : GetMessage('CRM_QUOTE_FIELD_COMPARE_EMPTY'),
+					'EVENT_TEXT_2' => !empty($modifComments) ? TextHelper::convertBbCodeToHtml($modifComments) : GetMessage('CRM_QUOTE_FIELD_COMPARE_EMPTY')
 				);
 			unset($origComments, $modifComments);
 		}
@@ -1725,8 +1731,8 @@ class CAllCrmQuote
 				$arMsg[] = Array(
 					'ENTITY_FIELD' => 'CONTENT',
 					'EVENT_NAME' => GetMessage('CRM_QUOTE_FIELD_COMPARE_CONTENT'),
-					'EVENT_TEXT_1' => !empty($origContent)? $origContent : GetMessage('CRM_QUOTE_FIELD_COMPARE_EMPTY'),
-					'EVENT_TEXT_2' => !empty($modifContent)? $modifContent : GetMessage('CRM_QUOTE_FIELD_COMPARE_EMPTY')
+					'EVENT_TEXT_1' => !empty($origContent)? TextHelper::convertBbCodeToHtml($origContent) : GetMessage('CRM_QUOTE_FIELD_COMPARE_EMPTY'),
+					'EVENT_TEXT_2' => !empty($modifContent)? TextHelper::convertBbCodeToHtml($modifContent) : GetMessage('CRM_QUOTE_FIELD_COMPARE_EMPTY')
 				);
 			unset($origContent, $modifContent);
 		}
@@ -1739,8 +1745,8 @@ class CAllCrmQuote
 				$arMsg[] = Array(
 					'ENTITY_FIELD' => 'TERMS',
 					'EVENT_NAME' => GetMessage('CRM_QUOTE_FIELD_COMPARE_TERMS'),
-					'EVENT_TEXT_1' => !empty($origTerms)? $origTerms : GetMessage('CRM_QUOTE_FIELD_COMPARE_EMPTY'),
-					'EVENT_TEXT_2' => !empty($modifTerms)? $modifTerms : GetMessage('CRM_QUOTE_FIELD_COMPARE_EMPTY'),
+					'EVENT_TEXT_1' => !empty($origTerms)? TextHelper::convertBbCodeToHtml($origTerms) : GetMessage('CRM_QUOTE_FIELD_COMPARE_EMPTY'),
+					'EVENT_TEXT_2' => !empty($modifTerms)? TextHelper::convertBbCodeToHtml($modifTerms) : GetMessage('CRM_QUOTE_FIELD_COMPARE_EMPTY'),
 				);
 			unset($origTerms, $modifTerms);
 		}
@@ -3593,6 +3599,15 @@ class CAllCrmQuote
 
 		CCrmQuote::RewriteClientFields($arQuote, false);
 
+		if (isset($arQuote['TERMS']) && !empty($arQuote['TERMS']))
+		{
+			$arQuote['TERMS'] = TextHelper::convertBbCodeToHtml($arQuote['TERMS']);
+		}
+		if (isset($arQuote['CONTENT']) && !empty($arQuote['CONTENT']))
+		{
+			$arQuote['CONTENT'] = TextHelper::convertBbCodeToHtml($arQuote['CONTENT']);
+		}
+
 		$fieldMap = self::GetSaleOrderMap();
 		$order = array();
 		foreach($fieldMap as $orderFileldID => $fileldID)
@@ -3677,7 +3692,7 @@ class CAllCrmQuote
 
 		if (CModule::IncludeModule('iblock'))
 		{
-			if ($calculatedOrder['BASKET_ITEMS'])
+			if (isset($calculatedOrder['BASKET_ITEMS']) && $calculatedOrder['BASKET_ITEMS'])
 			{
 				$productProps = array();
 				$productIds = array();
@@ -4272,7 +4287,7 @@ class CAllCrmQuote
 		return array(
 			'ORDER' => $order,
 			'PROPERTIES' => $properties,
-			'CART_ITEMS' => $calculatedOrder['BASKET_ITEMS'],
+			'CART_ITEMS' => $calculatedOrder['BASKET_ITEMS'] ?? null,
 			'TAX_LIST' => $taxList,
 			'REQUISITE' => $requisiteValues,
 			'BANK_DETAIL' => $bankDetailValues,

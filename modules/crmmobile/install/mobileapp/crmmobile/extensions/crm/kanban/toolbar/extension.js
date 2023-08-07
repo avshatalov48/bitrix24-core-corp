@@ -3,11 +3,12 @@
  */
 jn.define('crm/kanban/toolbar', (require, exports, module) => {
 	const { ToolbarFactory: BaseToolbarFactory } = require('layout/ui/kanban/toolbar');
-	const { TypeName } = require('crm/type');
+	const { TypeName, Type } = require('crm/type');
 	const { DealToolbar } = require('crm/kanban/toolbar/entities/deal');
 	const { LeadToolbar } = require('crm/kanban/toolbar/entities/lead');
 	const { SmartInvoiceToolbar } = require('crm/kanban/toolbar/entities/smart-invoice');
 	const { QuoteToolbar } = require('crm/kanban/toolbar/entities/quote');
+	const { DynamicToolbar } = require('crm/kanban/toolbar/entities/dynamic');
 
 	const AVAILABLE_TYPES = new Set([
 		TypeName.Deal,
@@ -24,7 +25,7 @@ jn.define('crm/kanban/toolbar', (require, exports, module) => {
 		 */
 		has(type)
 		{
-			return AVAILABLE_TYPES.has(type);
+			return (AVAILABLE_TYPES.has(type) || Type.isDynamicTypeByName(type));
 		}
 
 		create(type, data)
@@ -47,6 +48,11 @@ jn.define('crm/kanban/toolbar', (require, exports, module) => {
 			if (type === TypeName.Quote)
 			{
 				return new QuoteToolbar(data);
+			}
+
+			if (Type.isDynamicTypeByName(type))
+			{
+				return new DynamicToolbar(data);
 			}
 
 			throw new Error(`Toolbar entity ${type} not found.`);

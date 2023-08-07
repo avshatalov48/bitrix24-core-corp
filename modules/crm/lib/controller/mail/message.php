@@ -203,7 +203,7 @@ class Message extends Controller
 		return false;
 	}
 
-	private function getMessageAsQuote($activityId)
+	private function getMessageAsQuote($activityId): string
 	{
 		if (!$this->checkModules())
 		{
@@ -216,9 +216,15 @@ class Message extends Controller
 			],
 			self::SUPPORTED_ACTIVITY_TYPE,
 			[
-				'DESCRIPTION',
+				'ID',
+				'SUBJECT',
+				'OWNER_ID',
+				'SETTINGS',
 				'START_TIME',
-			]
+				'DESCRIPTION',
+				'OWNER_TYPE_ID',
+			],
+			limit: 1,
 		);
 
 		if (!$this->checkActivityPermission(self::PERMISSION_READ, $activities))
@@ -228,22 +234,12 @@ class Message extends Controller
 
 		$activity = $activities[0];
 
-		Email::uncompressActivity($activity);
-
 		if (!$activity)
 		{
 			return '';
 		}
 
-		return sprintf(
-			'<br><br>%s<br><blockquote style="margin: 0 0 0 5px; padding: 5px 5px 5px 8px; border-left: 4px solid #e2e3e5; ">%s</blockquote>',
-			formatDate(
-				preg_replace('/[\/.,\s:][s]/', '', $GLOBALS['DB']->dateFormatToPhp(FORMAT_DATETIME)),
-				makeTimestamp($activity['START_TIME']),
-				time() + \CTimeZone::getOffset()
-			),
-			\Bitrix\Mail\Helper\Message::sanitizeHtml($activity['DESCRIPTION'])
-		);
+		return Email::getMessageQuote($activity, $activity['DESCRIPTION']);
 	}
 
 	/**
@@ -274,6 +270,8 @@ class Message extends Controller
 		$isNew = $ID <= 0;
 
 		$userID = \CCrmSecurityHelper::GetCurrentUser()->GetID();
+		$responsibleId = (int) $userID;
+		$mailboxOwnerId = null;
 
 		if ($userID <= 0)
 		{
@@ -789,16 +787,18 @@ class Message extends Controller
 
 			if (\CModule::includeModule('mail'))
 			{
-				foreach (\Bitrix\Mail\MailboxTable::getUserMailboxes() as $mailbox)
+				/**
+				 * @todo Explicitly enter the ID. This will increase the productivity of selection.
+				 */
+				$mailboxHelper = \Bitrix\Mail\Helper\Mailbox::findBy(null, $fromEmail);
+
+				if (!empty($mailboxHelper))
 				{
-					if ($fromEmail == $mailbox['EMAIL'])
-					{
-						$userImap = $mailbox;
-					}
+					$mailboxOwnerId = $mailboxHelper->getMailboxOwnerId();
 				}
 			}
 
-			if (empty($userImap))
+			if (empty($mailboxHelper))
 			{
 				if ($crmEmail != '' && $crmEmail != $fromEmail)
 				{
@@ -832,7 +832,7 @@ class Message extends Controller
 
 			if (\CCrmContentType::Html == $contentType)
 			{
-				$messageBody = \Bitrix\Mail\Helper\Message::sanitizeHtml($messageBody);
+				$messageBody = Helper\Message::sanitizeHtml($messageBody);
 			}
 			else
 			{
@@ -889,7 +889,7 @@ class Message extends Controller
 			$arBindings
 		);
 
-		$arFields = array(
+		$arFields = [
 			'OWNER_ID' => $ownerID,
 			'OWNER_TYPE_ID' => $ownerTypeID,
 			'TYPE_ID' =>  \CCrmActivityType::Email,
@@ -897,7 +897,9 @@ class Message extends Controller
 			'START_TIME' => $now,
 			'END_TIME' => $now,
 			'COMPLETED' => 'Y',
-			'RESPONSIBLE_ID' => $userID,
+			'AUTHOR_ID' => $mailboxOwnerId,
+			'RESPONSIBLE_ID' => $responsibleId,
+			'EDITOR_ID' => $responsibleId,
 			'PRIORITY' => !empty($data['important']) ? \CCrmActivityPriority::High : \CCrmActivityPriority::Medium,
 			'DESCRIPTION' => ($description = $messageHtml),
 			'DESCRIPTION_TYPE' => \CCrmContentType::Html,
@@ -907,7 +909,7 @@ class Message extends Controller
 			'BINDINGS' => array_values($arBindings),
 			'COMMUNICATIONS' => $arComms,
 			'PARENT_ID' => $parentId,
-		);
+		];
 
 		$arFileIDs = [];
 		$storageTypeID = \CCrmActivityStorageType::Disk;
@@ -1279,7 +1281,7 @@ class Message extends Controller
 
 		addEventToStatFile('crm', 'send_email_message', $_REQUEST['context'], trim(trim($messageId), '<>'));
 
-		$needUpload = !empty($userImap);
+		$needUpload = !empty($mailboxHelper);
 
 		if ($context->getSmtp() && in_array(mb_strtolower($context->getSmtp()->getHost()), array('smtp.gmail.com', 'smtp.office365.com')))
 		{
@@ -1303,7 +1305,6 @@ class Message extends Controller
 				)
 			));
 
-			$mailboxHelper = \Bitrix\Mail\Helper\Mailbox::createInstance($userImap['ID']);
 			$mailboxHelper->uploadMessage($outgoing);
 		}
 
@@ -1893,13 +1894,17 @@ class Message extends Controller
 
 	protected function getSenderList(): array
 	{
-		$mailboxes = \Bitrix\Main\Mail\Sender::prepareUserMailboxes(null, true);
+		$mailboxes = \Bitrix\Main\Mail\Sender::prepareUserMailboxes();
 		$senders = [];
 
 		foreach ($mailboxes as $sender)
 		{
-			$sender['isUser'] = true;
-			$senders[] = $this->buildContact($sender);
+			$senders[] = $this->buildContact([
+				'email' => $sender['email'] ?? '',
+				'name' => $sender['name'] ?? '',
+				'id' => $sender['userId'] ?? 0,
+				'isUser' => true,
+			]);
 		}
 
 		/*
@@ -1940,7 +1945,8 @@ class Message extends Controller
 			self::SUPPORTED_ACTIVITY_TYPE,
 			[
 				'THREAD_ID',
-			]
+			],
+			limit: 1
 		);
 
 		if (count($activities) === 0 || !$this->checkActivityPermission(self::PERMISSION_READ, $activities))
@@ -1963,6 +1969,11 @@ class Message extends Controller
 			'START_TIME' => 'DESC',
 		];
 
+		/*
+			We need to make two selections and sort the messages by date
+			in order to limit the number of messages in long chains(in the future)
+			while preserving the open email in the middle of the chain.
+		 */
 		$messageBeforeCurrent = $this->getActivities(
 			[
 				'=THREAD_ID' => $threadId,
@@ -1985,6 +1996,14 @@ class Message extends Controller
 
 		$chainActivities = array_merge($messageBeforeCurrent, $messageAfterCurrent);
 
+		/*
+			We need to sort the messages by time again.
+			For example, message number 5 may be a response to the first message, not the fourth.
+		*/
+		usort($chainActivities, function($a, $b) {
+			return $a['START_TIME']->getTimestamp() <=> $b['START_TIME']->getTimestamp();
+		});
+
 		$chain = [];
 
 		$lastIncomingId = null;
@@ -2006,7 +2025,7 @@ class Message extends Controller
 				'DIRECTION' => $item['DIRECTION'],
 			];
 
-			if (is_null($lastIncomingId) && $item['DIRECTION'] === strval(\CCrmActivityDirection::Incoming))
+			if ($item['DIRECTION'] === strval(\CCrmActivityDirection::Incoming))
 			{
 				$lastIncomingId = $item['ID'];
 				$lastIncomingKey = $key;

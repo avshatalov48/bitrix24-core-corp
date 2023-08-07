@@ -135,6 +135,7 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 			{
 				return true;
 			}
+
 			return false;
 		}
 
@@ -177,6 +178,7 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 			const itemsBefore = this.exportToListView();
 			fn();
 			const itemsAfter = this.exportToListView();
+
 			return new Patch(itemsBefore, itemsAfter);
 		}
 
@@ -195,6 +197,7 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 
 			const addItems = () => mapPromise(patch.getAddedItems(), (item) => {
 				const position = this.itemPositionCalculator.calculateByKey(item.key);
+
 				return (position < 0)
 					? Promise.resolve()
 					: this.listViewRef.insertRows([item], 0, position, animationType);
@@ -249,12 +252,15 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 					if (patch.isItemMoved(key))
 					{
 						const newPosition = this.itemPositionCalculator.calculateByKey(key);
+
 						return this.listViewRef.moveRow(exportedItem, 0, newPosition, animated);
 					}
+
 					return Promise.resolve();
 				})
 				.then(() => {
 					const itemRef = this.findItemRef(item.id);
+
 					return itemRef ? itemRef.blink() : Promise.resolve();
 				});
 		}
@@ -412,6 +418,7 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 					onAction: this.onItemAction.bind(this),
 				});
 			}
+
 			return null;
 		}
 

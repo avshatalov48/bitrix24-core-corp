@@ -6,6 +6,8 @@ use CIBlockSection;
 
 class DepartmentRepository
 {
+	static $depTreeFlat = null;
+
 	public function findDepartmentsChain($depId)
 	{
 		if (!\Bitrix\Main\Loader::includeModule('iblock'))
@@ -62,10 +64,14 @@ class DepartmentRepository
 
 	public function getDirectParentIdsByDepartmentId($departmentId)
 	{
-		$depTreeFlat = $this->getDepartmentTreeFlat();
+		$this->getDepartmentTreeFlat();
+		if (!is_array(self::$depTreeFlat))
+		{
+			return [];
+		}
 
 		$res = [];
-		foreach ($depTreeFlat as $parentDepId => $depIds)
+		foreach (self::$depTreeFlat as $parentDepId => $depIds)
 		{
 			foreach ($depIds as $nestedDepId)
 			{
@@ -78,31 +84,36 @@ class DepartmentRepository
 		return array_unique($res);
 	}
 
-	private function getDepartmentTreeFlat()
+	private function getDepartmentTreeFlat(): void
 	{
-		static $depTreeFlat;
-		if (!$depTreeFlat)
+		if (self::$depTreeFlat === null)
 		{
-			$depTreeFlat = \CIntranetUtils::getDeparmentsTree(null, false);
+			self::$depTreeFlat = \CIntranetUtils::getDeparmentsTree(null);
 		}
-		return $depTreeFlat;
 	}
 
 	public function getAllParentDepartmentsIds($depId)
 	{
-		$depTreeFlat = $this->getDepartmentTreeFlat();
+		$this->getDepartmentTreeFlat();
+		if (!is_array(self::$depTreeFlat))
+		{
+			return [];
+		}
 
 		$res = [];
-		foreach ($depTreeFlat as $parentDepId => $depIds)
+		foreach (self::$depTreeFlat as $parentDepId => $depIds)
 		{
 			foreach ($depIds as $nestedDepId)
 			{
 				if ($nestedDepId == $depId)
 				{
 					$res = array_merge($this->getAllParentDepartmentsIds($parentDepId), [$parentDepId]);
+
+					break;
 				}
 			}
 		}
+
 		return $res;
 	}
 

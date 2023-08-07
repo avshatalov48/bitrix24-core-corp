@@ -2,9 +2,11 @@
 
 return [
 	'extensions' => [
-		'layout/ui/fields/base',
 		'haptics',
+		'animation',
 		'utils/function',
+		'layout/ui/switcher',
+		'layout/ui/fields/base',
 		'animation/components/blink-view',
 	],
 ];

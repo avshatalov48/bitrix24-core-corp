@@ -4,8 +4,8 @@ return [
 	'extensions' => [
 		'layout/ui/menu',
 		'layout/pure-component',
-		'layout/ui/plan-restriction',
 		'layout/ui/stateful-list',
+		'require-lazy',
 		'qrauth/utils',
 		'rest',
 		'utils/object',

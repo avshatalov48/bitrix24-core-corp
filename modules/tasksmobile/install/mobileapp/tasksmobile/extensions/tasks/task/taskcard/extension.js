@@ -3,7 +3,6 @@ include('InAppNotifier');
 
 (() => {
 	const pathToExtension = '/bitrix/mobileapp/tasksmobile/extensions/tasks/task/taskcard/';
-	const apiVersion = Application.getApiVersion();
 	const platform = Application.getPlatform();
 
 	class Request
@@ -689,19 +688,14 @@ include('InAppNotifier');
 				title: BX.message('TASKS_TASK_DETAIL_DEADLINE_DATE_PICKER'),
 				type: 'datetime',
 				value: this.task.deadline,
+				items: [],
 			};
-
-			if (apiVersion >= 34)
-			{
-				pickerParams.items = [];
-
-				Object.keys(Task.deadlines).forEach((key) => {
-					pickerParams.items.push({
-						name: Task.deadlines[key].name,
-						value: this.deadlines[key] * 1000,
-					});
+			Object.keys(Task.deadlines).forEach((key) => {
+				pickerParams.items.push({
+					name: Task.deadlines[key].name,
+					value: this.deadlines[key] * 1000,
 				});
-			}
+			});
 
 			dialogs.showDatePicker(
 				pickerParams,
@@ -971,36 +965,29 @@ include('InAppNotifier');
 
 		openTaskPage(url, guid, title, taskId)
 		{
-			if (Application.getApiVersion() >= 33)
-			{
-				PageManager.openComponent('JSStackComponent', {
-					componentCode: 'tasks.edit',
-					scriptPath: availableComponents['tasks:tasks.view'].publicUrl,
-					rootWidget: {
-						name: 'web',
-						settings: {
-							objectName: 'taskcard',
-							modal: true,
-							cache: false,
-							page: {
-								url,
-								titleParams: {text: title},
-							},
+			PageManager.openComponent('JSStackComponent', {
+				componentCode: 'tasks.edit',
+				scriptPath: availableComponents['tasks:tasks.view'].publicUrl,
+				rootWidget: {
+					name: 'web',
+					settings: {
+						objectName: 'taskcard',
+						modal: true,
+						cache: false,
+						page: {
+							url,
+							titleParams: {text: title},
 						},
 					},
-					params: {
-						MODE: 'edit',
-						COMPONENT_CODE: 'tasks.view',
-						USER_ID: this.userId || 0,
-						TASK_ID: taskId,
-						GUID: guid,
-					},
-				});
-			}
-			else
-			{
-				PageManager.openPage({url, cache: false, modal: true});
-			}
+				},
+				params: {
+					MODE: 'edit',
+					COMPONENT_CODE: 'tasks.view',
+					USER_ID: this.userId || 0,
+					TASK_ID: taskId,
+					GUID: guid,
+				},
+			});
 		}
 
 		onAddToFavoriteAction()

@@ -3,8 +3,8 @@
 namespace Bitrix\Disk\Controller;
 
 use Bitrix\Disk;
+use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\ZipNginx;
-use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
@@ -87,24 +87,24 @@ class Folder extends BaseObject
 		return $this->getAllowedOperationsRights($folder);
 	}
 
-	public function downloadArchiveAction(Disk\Folder $folder)
+	public function downloadArchiveAction(Disk\Folder $folder): ?ZipNginx\Archive
 	{
 		if (!ZipNginx\Configuration::isEnabled())
 		{
-			$this->addError(new Disk\Internals\Error\Error('Work with mod_zip is disabled in module settings.'));
+			$this->addError(new Error('Work with mod_zip is disabled in module settings.'));
 
-			return;
+			return null;
 		}
 
 		$storage = $folder->getStorage();
 		if (!$storage)
 		{
-			$this->addError(new Disk\Internals\Error\Error("Could not find storage for folder."));
+			$this->addError(new Error('Could not find storage for folder.'));
 
-			return;
+			return null;
 		}
 
-		$securityContext = $storage->getSecurityContext($this->getCurrentUser()->getId());
+		$securityContext = $storage->getSecurityContext($this->getCurrentUser()?->getId());
 
 		return ZipNginx\Archive::createFromFolder($folder, $securityContext);
 	}

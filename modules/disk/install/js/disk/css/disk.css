@@ -1371,13 +1371,16 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 }
 
 .bx-disk-info-popup-btn-text {
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: center;
 	background: url(/bitrix/images/disk/sprite.png?2234) no-repeat 500px 500px;
-	color: #888b90;
-	display: block;
-	font-size: 22px;
+	color: var(--ui-color-text-subtle);
+	font-size: var(--ui-font-size-2xl);
 	font-weight: var(--ui-font-weight-bold);
-	height: 41px;
-	line-height: 38px;
+	min-height: 39px;
+	line-height: var(--ui-font-line-height-3xs);
 	padding-left: 63px;
 	position: relative;
 	margin-top: 15px;
@@ -1386,7 +1389,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 .bx-disk-info-popup-btn-text:before {
 	background: url(/bitrix/images/disk/sprite.png?2234) no-repeat 500px 500px;
 	content: '';
-	height: 40px;
+	height: 39px;
 	left: 0;
 	opacity: 0;
 	position: absolute;
@@ -1437,9 +1440,9 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 }
 
 .bx-disk-info-popup-btn-descript {
-	color: #2a2e33;
+	color: var(--ui-color-text-primary);
 	display: block;
-	font-size: 13px;
+	font-size: var(--ui-font-size-sm);
 	text-align: left;
 	margin-top: 10px;
 }

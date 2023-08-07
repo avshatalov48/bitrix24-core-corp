@@ -142,7 +142,7 @@ class DealScoring extends Base
 			$rows[$row["STAGE_SEMANTIC_ID"]] = (int)$row["CNT"];
 		}
 
-		$cache[$this->name] = [$rows["S"], $rows["F"]];
+		$cache[$this->name] = [$rows["S"] ?? 0, $rows["F"] ?? 0];
 		return $cache[$this->name];
 	}
 

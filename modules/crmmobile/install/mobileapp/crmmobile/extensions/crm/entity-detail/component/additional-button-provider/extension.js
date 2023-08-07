@@ -24,11 +24,10 @@ jn.define('crm/entity-detail/component/additional-button-provider', (require, ex
 		}
 
 		const hasTelegramConnector = get(detailCard.getComponentParams(), 'connectors.telegram', false);
-		const isGoToChatAvailable = get(detailCard.getComponentParams(), 'isGoToChatAvailable', false);
-		const openLinesAccess = get(detailCard.getComponentParams(), 'permissions.openLinesAccess', false);
+		const openLinesAccess = get(detailCard.getComponentParams(), 'permissions.openLinesAccess', null);
 
 		const button = new CommunicationFloatingButton({
-			showTelegramConnection: (!hasTelegramConnector && isGoToChatAvailable),
+			showTelegramConnection: !hasTelegramConnector,
 		});
 		button.setPermissions({ openLinesAccess });
 		const { customEventEmitter } = detailCard;

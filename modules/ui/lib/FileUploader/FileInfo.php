@@ -4,15 +4,11 @@ namespace Bitrix\UI\FileUploader;
 
 use Bitrix\Main\Type\Dictionary;
 
-class FileInfo implements \JsonSerializable
+class FileInfo extends FileData implements \JsonSerializable
 {
 	protected $id;
-	protected string $contentType;
-	protected string $name;
-	protected int $size;
 	protected int $fileId = 0;
-	protected int $width = 0;
-	protected int $height = 0;
+	protected bool $treatImageAsFile = false;
 	protected ?string $downloadUrl = null;
 	protected ?string $previewUrl = null;
 	protected int $previewWidth = 0;
@@ -27,10 +23,8 @@ class FileInfo implements \JsonSerializable
 	 */
 	public function __construct($id, string $name, string $contentType, int $size)
 	{
+		parent::__construct($name, $contentType, $size);
 		$this->id = $id;
-		$this->contentType = $contentType;
-		$this->name = $name;
-		$this->size = $size;
 	}
 
 	public static function createFromBFile(int $id): ?FileInfo
@@ -100,49 +94,14 @@ class FileInfo implements \JsonSerializable
 		$this->fileId = $fileId;
 	}
 
-	public function getContentType(): string
+	public function shouldTreatImageAsFile(): bool
 	{
-		return $this->contentType;
+		return $this->treatImageAsFile;
 	}
 
-	public function getName(): string
+	public function setTreatImageAsFile(bool $flag): void
 	{
-		return $this->name;
-	}
-
-	public function setName(string $name): void
-	{
-		$this->name = $name;
-	}
-
-	public function getSize(): int
-	{
-		return $this->size;
-	}
-
-	public function getWidth(): int
-	{
-		return $this->width;
-	}
-
-	public function setWidth(int $width): void
-	{
-		$this->width = $width;
-	}
-
-	public function getHeight(): int
-	{
-		return $this->height;
-	}
-
-	public function setHeight(int $height): void
-	{
-		$this->height = $height;
-	}
-
-	public function isImage(): bool
-	{
-		return \CFile::isImage($this->getName()) && $this->getWidth() > 0 && $this->getHeight() > 0;
+		$this->treatImageAsFile = $flag;
 	}
 
 	public function getDownloadUrl(): ?string
@@ -207,6 +166,7 @@ class FileInfo implements \JsonSerializable
 			'size' => $this->getSize(),
 			'width' => $this->getWidth(),
 			'height' => $this->getHeight(),
+			'treatImageAsFile' => $this->isImage() && $this->shouldTreatImageAsFile(),
 			'downloadUrl' => $this->getDownloadUrl(),
 			'serverPreviewUrl' => $this->getPreviewUrl(),
 			'serverPreviewWidth' => $this->getPreviewWidth(),

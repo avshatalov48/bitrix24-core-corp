@@ -4,14 +4,12 @@ var REVISION = 19; // API revision - sync with im/lib/revision.php
 /* region Environment variables */
 
 // use in immobile/install/mobileapp/immobile/extensions/im/chat/messengercommon/extension.js:532
-// eslint-disable-next-line bitrix-rules/no-bx-message
 BX.message.LIMIT_ONLINE = BX.componentParameters.get('LIMIT_ONLINE', 1380);
 
 /* endregion Environment variables */
 
 /* region Clearing session variables after script reload */
 
-// eslint-disable-next-line bitrix-rules/no-typeof
 if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructor !== 'undefined')
 {
 	window.messenger.destructor();
@@ -21,7 +19,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 (() => {
 	/* region import */
-	const require = ext => jn.require(ext); //for IDE hints
+	const require = (ext) => jn.require(ext); // for IDE hints
 
 	const { Type } = require('type');
 	const { Loc } = require('loc');
@@ -31,6 +29,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 	const {
 		MessagePullHandler,
+		FilePullHandler,
 		DialogPullHandler,
 		UserPullHandler,
 		DesktopPullHandler,
@@ -43,6 +42,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		RestMethod,
 		FeatureFlag,
 	} = require('im/messenger/const');
+	const {
+		SendingService,
+	} = require('im/messenger/provider/service');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { SoftLoader } = require('im/messenger/lib/helper');
@@ -59,6 +61,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { PushHandler } = require('im/messenger/provider/push');
 	const { SelectorDialogListAdapter } = require('im/chat/selector/adapter/dialog-list');
 	const { DialogCreator } = require('im/messenger/controller/dialog-creator');
+	const { SidebarController } = require('im/messenger/controller/sidebar/sidebar-controller');
+	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	/* endregion import */
 
 	class Messenger
@@ -97,14 +101,18 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.refreshAfterErrorInterval = 10000;
 			this.refreshErrorNoticeFlag = false;
 
+			this.visibilityManager = VisibilityManager.getInstance();
+
 			this.store = null;
 			this.storeManager = null;
+			this.sendingService = null;
 
 			this.recent = null;
 			this.dialog = null;
 			this.dialogSelector = null;
 			this.chatCreator = null;
 			this.dialogCreator = null;
+			this.sidebar = null;
 			this.communication = new Communication();
 			this.loader = new SoftLoader({
 				safeDisplayTime: 500,
@@ -134,13 +142,18 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 						this.initComponents();
 						this.subscribeEvents();
 						this.initPullHandlers();
+						this.sendingService = SendingService.getInstance();
 
 						EntityReady.wait('im.navigation')
 							.then(() => this.executeStoredPullEvents())
+							.catch((error) => Logger.error(error))
 						;
 
 						this.refresh();
 					});
+				})
+				.catch((error) => {
+					Logger.error(error);
 				})
 			;
 		}
@@ -174,7 +187,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			if (FeatureFlag.dialog.nativeSupported)
 			{
-				//TODO: generalize the approach to background caching
+				// TODO: generalize the approach to background caching
 				Dialog.preloadAssets();
 			}
 		}
@@ -188,6 +201,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		subscribeMessengerEvents()
 		{
 			BX.addCustomEvent(EventType.messenger.openDialog, this.openDialog.bind(this));
+			BX.addCustomEvent(EventType.messenger.openSidebar, this.openSidebar.bind(this));
 			BX.addCustomEvent(EventType.messenger.openLine, this.openLine.bind(this));
 			BX.addCustomEvent(EventType.messenger.getOpenDialogParams, this.getOpenDialogParams.bind(this));
 			BX.addCustomEvent(EventType.messenger.getOpenLineParams, this.getOpenLineParams.bind(this));
@@ -196,6 +210,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.addCustomEvent(EventType.messenger.openNotifications, this.openNotifications.bind(this));
 			BX.addCustomEvent(EventType.messenger.refresh, this.refresh.bind(this));
 			BX.addCustomEvent(EventType.messenger.closeDialog, this.closeDialog.bind(this));
+			BX.addCustomEvent(EventType.messenger.uploadFiles, this.uploadFiles.bind(this));
+			BX.addCustomEvent(EventType.messenger.cancelFileUpload, this.cancelFileUpload.bind(this));
 		}
 
 		subscribeExternalEvents()
@@ -220,6 +236,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		initPullHandlers()
 		{
 			BX.PULL.subscribe(new MessagePullHandler());
+			BX.PULL.subscribe(new FilePullHandler());
 			BX.PULL.subscribe(new DialogPullHandler());
 			BX.PULL.subscribe(new UserPullHandler());
 			BX.PULL.subscribe(new DesktopPullHandler());
@@ -285,17 +302,17 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 				if (firstError.ex.error === 'REQUEST_CANCELED')
 				{
 					Logger.error('Messenger.afterRefreshError', firstError.ex);
+
 					return;
 				}
 			}
 
 			const secondsBeforeRefresh = this.refreshAfterErrorInterval / 1000;
-			Logger.error('Messenger: refresh error. Try again in ' + secondsBeforeRefresh + ' seconds.');
+			Logger.error(`Messenger: refresh error. Try again in ${secondsBeforeRefresh} seconds.`);
 
 			clearTimeout(this.refreshTimeout);
 
-			this.refreshTimeout = setTimeout(() =>
-			{
+			this.refreshTimeout = setTimeout(() => {
 				if (!this.refreshErrorNoticeFlag && !Application.isBackground())
 				{
 					const notifyRefreshError = () => {
@@ -313,7 +330,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 				Logger.warn('Messenger.refresh after error');
 				this.refresh();
-
 			}, this.refreshAfterErrorInterval);
 		}
 
@@ -334,21 +350,21 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 		/* endregion initiation */
 
-
 		/* region event handlers */
 
 		openDialog(options = {})
 		{
 			Logger.info('EventType.messenger.openDialog', options);
-			if (options.dialogId)
+			const openDialogOptions = options;
+			if (openDialogOptions.dialogId)
 			{
-				options.dialogId = options.dialogId.toString();
+				openDialogOptions.dialogId = openDialogOptions.dialogId.toString();
 			}
 
-			//TODO: transfer the list of calls to the model and transfer the work with calls to the integration class
-			if (options.callId && !options.dialogId)
+			// TODO: transfer the list of calls to the model and transfer the work with calls to the integration class
+			if (openDialogOptions.callId && !openDialogOptions.dialogId)
 			{
-				const call = this.recent.getCallById('call' + options.callId);
+				const call = this.recent.getCallById(`call${openDialogOptions.callId}`);
 				if (!call)
 				{
 					return;
@@ -360,14 +376,35 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					return;
 				}
 
-				options.dialogId = String(dialogId);
+				openDialogOptions.dialogId = String(dialogId);
 			}
 
-			this.dialog = new Dialog({
-				storeManager: this.storeManager,
-			});
+			PageManager.getNavigator().makeTabActive();
+			this.visibilityManager.checkIsDialogVisible(openDialogOptions.dialogId)
+				.then((isVisible) => {
+					if (isVisible)
+					{
+						return;
+					}
 
-			this.dialog.open(options);
+					this.dialog = new Dialog();
+					this.dialog.open(openDialogOptions);
+				})
+				.catch((error) => {
+					Logger.error(error);
+				})
+			;
+		}
+
+		/**
+		 * desc Handler call open sidebar event
+		 * @param {{dialogId: string|number}} params
+		 */
+		openSidebar(params)
+		{
+			Logger.info('EventType.messenger.openSidebar', params);
+			this.sidebar = new SidebarController(params);
+			this.sidebar.open();
 		}
 
 		closeDialog(dialogId)
@@ -379,10 +416,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			Logger.info('EventType.messenger.openLine', options);
 
-			this.dialog = new Dialog({
-				storeManager: this.storeManager,
-			});
-
+			this.dialog = new Dialog();
 			this.dialog.openLine(options);
 		}
 
@@ -415,7 +449,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 			this.chatCreator.open();
 		}
-
 
 		onNotificationOpen()
 		{
@@ -454,19 +487,64 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 		getOpenDialogParams(options = {})
 		{
-			const openDialogParamsResponseEvent = EventType.messenger.openDialogParams + '::' + options.dialogId;
+			const openDialogParamsResponseEvent = `${EventType.messenger.openDialogParams}::${options.dialogId}`;
 
 			const params = Dialog.getOpenDialogParams(options);
-			BX.postComponentEvent(openDialogParamsResponseEvent, [ params ]);
+			BX.postComponentEvent(openDialogParamsResponseEvent, [params]);
 		}
 
 		getOpenLineParams(options = {})
 		{
-			const openLineParamsResponseEvent = EventType.messenger.openLineParams + '::' + options.userCode;
+			const openLineParamsResponseEvent = `${EventType.messenger.openLineParams}::${options.userCode}`;
 
-			Dialog.getOpenLineParams(options).then(params => {
-				BX.postComponentEvent(openLineParamsResponseEvent, [ params ]);
+			Dialog.getOpenLineParams(options)
+				.then((params) => {
+					BX.postComponentEvent(openLineParamsResponseEvent, [params]);
+				})
+				.catch((error) => {
+					Logger.error(error);
+				})
+			;
+		}
+
+		uploadFiles(options)
+		{
+			Logger.log('EventType.messenger.uploadFiles', options);
+
+			const { dialogId, fileList } = options;
+			const deviceFileList = [];
+			const diskFileList = [];
+			fileList.forEach((file) => {
+				if (file.dataAttributes)
+				{
+					diskFileList.push(file);
+
+					return;
+				}
+
+				deviceFileList.push(file);
 			});
+
+			if (dialogId && Type.isArrayFilled(deviceFileList))
+			{
+				this.sendingService.sendFilesFromDevice(dialogId, deviceFileList);
+			}
+
+			if (dialogId && Type.isArrayFilled(diskFileList))
+			{
+				this.sendingService.sendFilesFromDisk(dialogId, diskFileList);
+			}
+		}
+
+		cancelFileUpload(options)
+		{
+			Logger.log('EventType.messenger.cancelFileUpload', options);
+
+			const { messageId, fileId } = options;
+			if (Type.isStringFilled(messageId) && Type.isStringFilled(fileId))
+			{
+				this.sendingService.cancelFileUpload(messageId, fileId);
+			}
 		}
 
 		/* region legacy dialog integration */
@@ -490,7 +568,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 			recentItem.counter = event.counter;
 
-			this.store.dispatch('recentModel/set', [ recentItem ]);
+			this.store.dispatch('recentModel/set', [recentItem]);
 		}
 
 		onChatDialogAccessError()
@@ -522,7 +600,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			});
 		}
 
-		//TODO: Remove after database manager implementation
+		// TODO: Remove after database manager implementation
 		initCache()
 		{
 			const recentState = RecentCache.get();
@@ -556,7 +634,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			{
 				Logger.error('Messenger.checkRevision', error);
 
-				return;
+				return true;
 			}
 
 			const actualRevision = response.data().mobile;
@@ -571,7 +649,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 				'Messenger.checkRevision: reload scripts because revision up',
 				REVISION,
 				' -> ',
-				actualRevision
+				actualRevision,
 			);
 
 			reloadAllScripts();
@@ -583,6 +661,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			BX.listeners = {};
 
+			// eslint-disable-next-line no-console
 			console.warn('Messenger: Garbage collection after refresh complete');
 		}
 	}

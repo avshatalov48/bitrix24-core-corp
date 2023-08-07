@@ -17,6 +17,8 @@ use Bitrix\Main\Result;
 
 class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 {
+	use \Bitrix\Bizproc\Activity\Mixins\EntityFilter;
+
 	protected static $requiredModules = ['crm'];
 
 	public function __construct($name)
@@ -50,128 +52,21 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 
 	protected function findEntityId(): int
 	{
-		$filter = ['LOGIC' => 'OR'];
-
 		$conditionGroup = new ConditionGroup($this->DynamicFilterFields);
 		$conditionGroup->internalizeValues($this->getDocumentType());
 
-		$complexDocumentType = CCrmBizProcHelper::ResolveDocumentType($this->DynamicTypeId);
-		$fieldsMap = static::getDocumentService()->GetDocumentFields($complexDocumentType);
-		$i = 0;
-
-		/**@var \Bitrix\Bizproc\Automation\Engine\Condition $condition*/
-		foreach ($conditionGroup->getItems() as [$condition, $joiner])
-		{
-			if (!isset($fieldsMap[$condition->getField()]))
-			{
-				continue;
-			}
-
-			$value = $this->convertToDocumentValue($fieldsMap[$condition->getField()], $condition->getValue());
-			switch ($condition->getOperator())
-			{
-				case 'empty':
-					$operator = '=';
-					$value = '';
-					break;
-
-				case '!empty':
-					$operator = '!=';
-					$value = '';
-					break;
-
-				case 'in':
-					$operator = '@';
-					break;
-
-				case '!in':
-					$operator = '!@';
-					break;
-
-				case 'contain':
-					$operator = '%';
-					break;
-
-				case '!contain':
-					$operator = '!%';
-					break;
-
-				case '>':
-				case '>=':
-				case '<':
-				case '<=':
-				case '=':
-				case '!=':
-					$operator = $condition->getOperator();
-					break;
-
-				default:
-					$operator = '';
-					break;
-			}
-
-			if (!$operator)
-			{
-				continue;
-			}
-
-			if ($joiner === ConditionGroup::JOINER_AND)
-			{
-				$filter[$i][$operator . $condition->getField()] = $value;
-			}
-			else
-			{
-				$filter[++$i][$operator . $condition->getField()] = $value;
-			}
-		}
-
+		$targetDocumentType = CCrmBizProcHelper::ResolveDocumentType($this->DynamicTypeId);
 		$factory = Container::getInstance()->getFactory($this->DynamicTypeId);
 		$items = [];
 		if (isset($factory))
 		{
 			$items = $factory->getItems([
 				'select' => ['ID'],
-				'filter' => $filter,
+				'filter' => $this->getOrmFilter($conditionGroup, $targetDocumentType),
 			]);
 		}
 
 		return $items ? $items[0]->getId() : 0;
-	}
-
-	protected function convertToDocumentValue(array $fieldInfo, $fieldValue)
-	{
-		if (is_array($fieldValue) && !$fieldInfo['Multiple'])
-		{
-			$fieldValue = reset($fieldValue);
-		}
-
-		if (is_array($fieldValue))
-		{
-			foreach ($fieldValue as $key => $value)
-			{
-				$fieldValue[$key] = $this->convertToDocumentValue($fieldInfo, $value);
-			}
-
-			return $fieldValue;
-		}
-
-		switch ($fieldInfo['Type'])
-		{
-			case FieldType::BOOL:
-				return CBPHelper::getBool($fieldValue);
-
-			case FieldType::USER:
-				return CBPHelper::extractUsers($fieldValue, $this->getDocumentId(), !$fieldInfo['Multiple']) ?? 0;
-
-			case FieldType::INT:
-				return (int)$fieldValue;
-
-			case FieldType::DOUBLE:
-				return (float)$fieldValue;
-
-			default:
-				return $fieldValue;
-		}
 	}
 
 	protected function checkProperties(): \Bitrix\Main\ErrorCollection
@@ -222,7 +117,7 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			$currentValues = $result->getData();
 			$entityTypeId = (int)$currentValues['DynamicTypeId'];
 
-			$currentValues['DynamicFilterFields'] = static::extractFieldsConditions($dialog, $fieldsMap);
+			$currentValues['DynamicFilterFields'] = static::extractFilterFromProperties($dialog, $fieldsMap)->getData();
 			$currentValues['ReturnFields'] = $dialog->getCurrentValue('return_fields', []);
 
 			$returnFieldsMap = static::getReturnFieldsMap($entityTypeId);
@@ -238,31 +133,6 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		}
 
 		return $result;
-	}
-
-	protected static function extractFieldsConditions(PropertiesDialog $dialog, array $fieldsMap): array
-	{
-		$currentValues = $dialog->getCurrentValues();
-		$prefix = $fieldsMap['DynamicFilterFields']['FieldName'] . '_';
-
-		$conditionGroup = ['items' => []];
-
-		foreach ($currentValues[$prefix . 'field'] ?? [] as $index => $fieldName)
-		{
-			$conditionGroup['items'][] = [
-				// condition
-				[
-					'object' => $currentValues[$prefix . 'object'][$index],
-					'field' => $currentValues[$prefix . 'field'][$index],
-					'operator' => $currentValues[$prefix . 'operator'][$index],
-					'value' => $currentValues[$prefix . 'value'][$index],
-				],
-				// joiner
-				$currentValues[$prefix . 'joiner'][$index],
-			];
-		}
-
-		return $conditionGroup;
 	}
 
 	public static function GetPropertiesDialog(
@@ -435,7 +305,7 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		}
 
 		$context = $dialog->getContext() ?? [];
-		if ($context['addMenuGroup'] === 'digitalWorkplace')
+		if (isset($context['addMenuGroup']) && $context['addMenuGroup'] === 'digitalWorkplace')
 		{
 			return true;
 		}

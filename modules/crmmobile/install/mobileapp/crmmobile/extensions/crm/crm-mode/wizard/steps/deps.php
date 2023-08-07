@@ -7,7 +7,7 @@ return [
 		'layout/ui/wizard/step',
 
 		'crm:crm-mode/wizard/layouts',
-		'crm:conversion/wizard/landing',
+		'crm:conversion/wizard/layouts',
 	],
 	'bundle' => [
 		'./mode',

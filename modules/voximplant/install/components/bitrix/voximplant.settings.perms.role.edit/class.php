@@ -40,6 +40,8 @@ class CVoximplantRoleEditComponent extends CBitrixComponent
 
 	protected function prepareData()
 	{
+		$this->initKeysArResult();
+
 		if($this->errors->isEmpty())
 		{
 			$role = Model\RoleTable::getById($this->id)->fetch();
@@ -72,6 +74,18 @@ class CVoximplantRoleEditComponent extends CBitrixComponent
 		{
 			$this->arResult['TRIAL'] = CVoxImplantMain::GetSecurityTrialText();
 		}
+	}
+
+	protected function initKeysArResult(): void
+	{
+		$this->arResult['NAME'] = null;
+		$this->arResult['ID'] = null;
+		$this->arResult['PERMISSION_MAP'] = null;
+		$this->arResult['PERMISSIONS'] = null;
+		$this->arResult['PERMISSIONS_URL'] = null;
+		$this->arResult['ERRORS'] = null;
+		$this->arResult['CAN_EDIT'] = null;
+		$this->arResult['TRIAL'] = null;
 	}
 
 	protected function save()

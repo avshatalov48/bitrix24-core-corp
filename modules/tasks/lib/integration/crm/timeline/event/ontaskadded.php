@@ -26,7 +26,7 @@ class OnTaskAdded implements TimeLineEvent
 			'TASK_FILE_IDS' => $this->getFiles($this->task->getId(), Task::class),
 			'TASK_ID' => $this->task->getId(),
 			'DEADLINE' => $this->task->getDeadline(),
-			'AUTHOR_ID' => $this->userId,
+			'AUTHOR_ID' => $this->task->getCreatedBy() ?? $this->userId,
 			'RESPONSIBLE_ID' => $this->task->getResponsibleId(),
 			'REFRESH_TASK_ACTIVITY' => false,
 			'TASK_RESTORED' => $this->restored,

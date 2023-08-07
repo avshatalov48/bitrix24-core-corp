@@ -390,9 +390,9 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 
 	private function isUserWorking(int $userId): bool
 	{
-		$tmUser = new CTimeManUser($userId);
-		$tmUser->getCurrentInfo(true); //clear cache
+		$schedule = $this->workflow->getRuntime()->getUserService()->getUserSchedule($userId);
+		$status = $schedule->getWorkDayStatus();
 
-		return ($tmUser->State() === 'OPENED' || $tmUser->State() === 'PAUSED');
+		return ($status === 'OPENED' || $status === 'PAUSED');
 	}
 }

@@ -40,6 +40,7 @@ this.BX.UI = this.BX.UI || {};
 	  REMOVE_CONTROLLER_INIT: 'onRemoveControllerInit',
 	  STATE_CHANGE: 'onStateChange',
 	  STATUS_CHANGE: 'onStatusChange',
+	  VALIDATE_FILE_ASYNC: 'onValidateFileAsync',
 	  PREPARE_FILE_ASYNC: 'onPrepareFileAsync'
 	};
 
@@ -416,6 +417,7 @@ this.BX.UI = this.BX.UI || {};
 	var _type = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("type");
 	var _width = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("width");
 	var _height = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("height");
+	var _treatImageAsFile = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("treatImageAsFile");
 	var _clientPreview = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clientPreview");
 	var _clientPreviewUrl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clientPreviewUrl");
 	var _clientPreviewWidth = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clientPreviewWidth");
@@ -471,6 +473,10 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _height, {
 	      writable: true,
 	      value: null
+	    });
+	    Object.defineProperty(this, _treatImageAsFile, {
+	      writable: true,
+	      value: false
 	    });
 	    Object.defineProperty(this, _clientPreview, {
 	      writable: true,
@@ -598,9 +604,22 @@ this.BX.UI = this.BX.UI || {};
 	    if (event.isDefaultPrevented()) {
 	      return;
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _setStatus)[_setStatus](FileStatus.UPLOADING);
-	    this.emit(FileEvent.UPLOAD_START);
-	    babelHelpers.classPrivateFieldLooseBase(this, _uploadController)[_uploadController].upload(this);
+	    const prepareEvent = new main_core_events.BaseEvent({
+	      data: {
+	        file: this
+	      }
+	    });
+	    this.emitAsync(FileEvent.PREPARE_FILE_ASYNC, prepareEvent).then(() => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _setStatus)[_setStatus](FileStatus.UPLOADING);
+	      this.emit(FileEvent.UPLOAD_START);
+	      babelHelpers.classPrivateFieldLooseBase(this, _uploadController)[_uploadController].upload(this);
+	    }).catch(prepareError => {
+	      const error = this.addError(prepareError);
+	      babelHelpers.classPrivateFieldLooseBase(this, _setStatus)[_setStatus](FileStatus.UPLOAD_FAILED);
+	      this.emit(FileEvent.UPLOAD_ERROR, {
+	        error
+	      });
+	    });
 	  }
 	  remove(options) {
 	    if (this.getStatus() === FileStatus.INIT) {
@@ -730,20 +749,34 @@ this.BX.UI = this.BX.UI || {};
 	      });
 	      babelHelpers.classPrivateFieldLooseBase(this, _loadController)[_loadController].subscribeOnce('onLoad', event => {
 	        if (this.getOrigin() === FileOrigin.CLIENT) {
-	          const event = new main_core_events.BaseEvent({
+	          const validationEvent = new main_core_events.BaseEvent({
 	            data: {
 	              file: this
 	            }
 	          });
-	          this.emitAsync(FileEvent.PREPARE_FILE_ASYNC, event).then(() => {
+	          this.emitAsync(FileEvent.VALIDATE_FILE_ASYNC, validationEvent).then(() => {
 	            if (this.isUploadable()) {
 	              babelHelpers.classPrivateFieldLooseBase(this, _setStatus)[_setStatus](FileStatus.PENDING);
+	              this.emit(FileEvent.LOAD_COMPLETE);
 	            } else {
-	              babelHelpers.classPrivateFieldLooseBase(this, _setStatus)[_setStatus](FileStatus.COMPLETE);
+	              const preparationEvent = new main_core_events.BaseEvent({
+	                data: {
+	                  file: this
+	                }
+	              });
+	              this.emitAsync(FileEvent.PREPARE_FILE_ASYNC, preparationEvent).then(() => {
+	                babelHelpers.classPrivateFieldLooseBase(this, _setStatus)[_setStatus](FileStatus.COMPLETE);
+	                this.emit(FileEvent.LOAD_COMPLETE);
+	              }).catch(preparationError => {
+	                const error = this.addError(preparationError);
+	                babelHelpers.classPrivateFieldLooseBase(this, _setStatus)[_setStatus](FileStatus.LOAD_FAILED);
+	                this.emit(FileEvent.LOAD_ERROR, {
+	                  error
+	                });
+	              });
 	            }
-	            this.emit(FileEvent.LOAD_COMPLETE);
-	          }).catch(error => {
-	            error = this.addError(error);
+	          }).catch(validationError => {
+	            const error = this.addError(validationError);
 	            babelHelpers.classPrivateFieldLooseBase(this, _setStatus)[_setStatus](FileStatus.LOAD_FAILED);
 	            this.emit(FileEvent.LOAD_ERROR, {
 	              error
@@ -842,6 +875,7 @@ this.BX.UI = this.BX.UI || {};
 	      this.setServerFileId(options.serverFileId);
 	      this.setWidth(options.width);
 	      this.setHeight(options.height);
+	      this.setTreatImageAsFile(options.treatImageAsFile);
 	      this.setClientPreview(options.clientPreview, options.clientPreviewWidth, options.clientPreviewHeight);
 	      this.setServerPreview(options.serverPreviewUrl, options.serverPreviewWidth, options.serverPreviewHeight);
 	      this.setDownloadUrl(options.downloadUrl);
@@ -960,6 +994,18 @@ this.BX.UI = this.BX.UI || {};
 	      });
 	    }
 	  }
+	  setTreatImageAsFile(flag) {
+	    if (main_core.Type.isBoolean(flag)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _treatImageAsFile)[_treatImageAsFile] = flag;
+	      this.emit(FileEvent.STATE_CHANGE, {
+	        property: 'treatImageAsFile',
+	        value: flag
+	      });
+	    }
+	  }
+	  shouldTreatImageAsFile() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _treatImageAsFile)[_treatImageAsFile];
+	  }
 	  getPreviewUrl() {
 	    return this.getClientPreview() ? this.getClientPreviewUrl() : this.getServerPreviewUrl();
 	  }
@@ -1042,7 +1088,12 @@ this.BX.UI = this.BX.UI || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _serverPreviewHeight)[_serverPreviewHeight];
 	  }
 	  isImage() {
-	    return isResizableImage(this.getName(), this.getType());
+	    if (this.shouldTreatImageAsFile()) {
+	      return false;
+	    }
+
+	    // return isResizableImage(this.getName(), this.getType());
+	    return this.getWidth() > 0 && this.getHeight() > 0 && isResizableImage(this.getName(), this.getType());
 	  }
 	  getProgress() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _progress)[_progress];
@@ -1973,6 +2024,7 @@ this.BX.UI = this.BX.UI || {};
 	var _maxTotalFileSize = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("maxTotalFileSize");
 	var _imageMaxFileSize = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("imageMaxFileSize");
 	var _imageMinFileSize = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("imageMinFileSize");
+	var _treatOversizeImageAsFile = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("treatOversizeImageAsFile");
 	class FileSizeFilter extends Filter {
 	  constructor(uploader, filterOptions = {}) {
 	    super(uploader);
@@ -1996,6 +2048,10 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: 0
 	    });
+	    Object.defineProperty(this, _treatOversizeImageAsFile, {
+	      writable: true,
+	      value: false
+	    });
 	    const settings = main_core.Extension.getSettings('ui.uploader.core');
 	    babelHelpers.classPrivateFieldLooseBase(this, _maxFileSize)[_maxFileSize] = settings.get('maxFileSize', babelHelpers.classPrivateFieldLooseBase(this, _maxFileSize)[_maxFileSize]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _minFileSize)[_minFileSize] = settings.get('minFileSize', babelHelpers.classPrivateFieldLooseBase(this, _minFileSize)[_minFileSize]);
@@ -2003,11 +2059,12 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _imageMaxFileSize)[_imageMaxFileSize] = settings.get('imageMaxFileSize', babelHelpers.classPrivateFieldLooseBase(this, _imageMaxFileSize)[_imageMaxFileSize]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _imageMinFileSize)[_imageMinFileSize] = settings.get('imageMinFileSize', babelHelpers.classPrivateFieldLooseBase(this, _imageMinFileSize)[_imageMinFileSize]);
 	    const options = main_core.Type.isPlainObject(filterOptions) ? filterOptions : {};
-	    this.setMaxFileSize(options['maxFileSize']);
-	    this.setMinFileSize(options['minFileSize']);
-	    this.setMaxTotalFileSize(options['maxTotalFileSize']);
-	    this.setImageMaxFileSize(options['imageMaxFileSize']);
-	    this.setImageMinFileSize(options['imageMinFileSize']);
+	    this.setMaxFileSize(options.maxFileSize);
+	    this.setMinFileSize(options.minFileSize);
+	    this.setMaxTotalFileSize(options.maxTotalFileSize);
+	    this.setImageMaxFileSize(options.imageMaxFileSize);
+	    this.setImageMinFileSize(options.imageMinFileSize);
+	    this.setTreatOversizeImageAsFile(options.treatOversizeImageAsFile);
 	  }
 	  apply(file) {
 	    return new Promise((resolve, reject) => {
@@ -2025,30 +2082,36 @@ this.BX.UI = this.BX.UI || {};
 	        }));
 	        return;
 	      }
-	      if (file.isImage()) {
+	      if (isResizableImage(file.getName(), file.getType())) {
 	        if (this.getImageMaxFileSize() !== null && file.getSize() > this.getImageMaxFileSize()) {
-	          reject(new UploaderError('IMAGE_MAX_FILE_SIZE_EXCEEDED', {
-	            imageMaxFileSize: formatFileSize(this.getImageMaxFileSize()),
-	            imageMaxFileSizeInBytes: this.getImageMaxFileSize()
-	          }));
-	          return;
+	          if (this.shouldTreatOversizeImageAsFile()) {
+	            file.setTreatImageAsFile(true);
+	          } else {
+	            reject(new UploaderError('IMAGE_MAX_FILE_SIZE_EXCEEDED', {
+	              imageMaxFileSize: formatFileSize(this.getImageMaxFileSize()),
+	              imageMaxFileSizeInBytes: this.getImageMaxFileSize()
+	            }));
+	            return;
+	          }
 	        }
 	        if (file.getSize() < this.getImageMinFileSize()) {
-	          reject(new UploaderError('IMAGE_MIN_FILE_SIZE_EXCEEDED', {
-	            imageMinFileSize: formatFileSize(this.getImageMinFileSize()),
-	            imageMinFileSizeInBytes: this.getImageMinFileSize()
-	          }));
-	          return;
+	          if (this.shouldTreatOversizeImageAsFile()) {
+	            file.setTreatImageAsFile(true);
+	          } else {
+	            reject(new UploaderError('IMAGE_MIN_FILE_SIZE_EXCEEDED', {
+	              imageMinFileSize: formatFileSize(this.getImageMinFileSize()),
+	              imageMinFileSizeInBytes: this.getImageMinFileSize()
+	            }));
+	            return;
+	          }
 	        }
 	      }
-	      if (this.getMaxTotalFileSize() !== null) {
-	        if (this.getUploader().getTotalSize() > this.getMaxTotalFileSize()) {
-	          reject(new UploaderError('MAX_TOTAL_FILE_SIZE_EXCEEDED', {
-	            maxTotalFileSize: formatFileSize(this.getMaxTotalFileSize()),
-	            maxTotalFileSizeInBytes: this.getMaxTotalFileSize()
-	          }));
-	          return;
-	        }
+	      if (this.getMaxTotalFileSize() !== null && this.getUploader().getTotalSize() > this.getMaxTotalFileSize()) {
+	        reject(new UploaderError('MAX_TOTAL_FILE_SIZE_EXCEEDED', {
+	          maxTotalFileSize: formatFileSize(this.getMaxTotalFileSize()),
+	          maxTotalFileSizeInBytes: this.getMaxTotalFileSize()
+	        }));
+	        return;
 	      }
 	      resolve();
 	    });
@@ -2092,6 +2155,14 @@ this.BX.UI = this.BX.UI || {};
 	    if (main_core.Type.isNumber(value) && value >= 0) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _imageMinFileSize)[_imageMinFileSize] = value;
 	    }
+	  }
+	  setTreatOversizeImageAsFile(value) {
+	    if (main_core.Type.isBoolean(value)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _treatOversizeImageAsFile)[_treatOversizeImageAsFile] = value;
+	    }
+	  }
+	  shouldTreatOversizeImageAsFile() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _treatOversizeImageAsFile)[_treatOversizeImageAsFile];
 	  }
 	}
 
@@ -2463,6 +2534,7 @@ this.BX.UI = this.BX.UI || {};
 	var _imageMaxWidth = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("imageMaxWidth");
 	var _imageMaxHeight = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("imageMaxHeight");
 	var _ignoreUnknownImageTypes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("ignoreUnknownImageTypes");
+	var _treatOversizeImageAsFile$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("treatOversizeImageAsFile");
 	class ImageSizeFilter extends Filter {
 	  constructor(uploader, filterOptions = {}) {
 	    super(uploader);
@@ -2486,21 +2558,26 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: false
 	    });
+	    Object.defineProperty(this, _treatOversizeImageAsFile$1, {
+	      writable: true,
+	      value: false
+	    });
 	    const settings = main_core.Extension.getSettings('ui.uploader.core');
 	    babelHelpers.classPrivateFieldLooseBase(this, _imageMinWidth)[_imageMinWidth] = settings.get('imageMinWidth', babelHelpers.classPrivateFieldLooseBase(this, _imageMinWidth)[_imageMinWidth]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _imageMinHeight)[_imageMinHeight] = settings.get('imageMinHeight', babelHelpers.classPrivateFieldLooseBase(this, _imageMinHeight)[_imageMinHeight]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _imageMaxWidth)[_imageMaxWidth] = settings.get('imageMaxWidth', babelHelpers.classPrivateFieldLooseBase(this, _imageMaxWidth)[_imageMaxWidth]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _imageMaxHeight)[_imageMaxHeight] = settings.get('imageMaxHeight', babelHelpers.classPrivateFieldLooseBase(this, _imageMaxHeight)[_imageMaxHeight]);
 	    const options = main_core.Type.isPlainObject(filterOptions) ? filterOptions : {};
-	    this.setImageMinWidth(options['imageMinWidth']);
-	    this.setImageMinHeight(options['imageMinHeight']);
-	    this.setImageMaxWidth(options['imageMaxWidth']);
-	    this.setImageMaxHeight(options['imageMaxHeight']);
-	    this.setIgnoreUnknownImageTypes(options['ignoreUnknownImageTypes']);
+	    this.setImageMinWidth(options.imageMinWidth);
+	    this.setImageMinHeight(options.imageMinHeight);
+	    this.setImageMaxWidth(options.imageMaxWidth);
+	    this.setImageMaxHeight(options.imageMaxHeight);
+	    this.setIgnoreUnknownImageTypes(options.ignoreUnknownImageTypes);
+	    this.setTreatOversizeImageAsFile(options.treatOversizeImageAsFile);
 	  }
 	  apply(file) {
 	    return new Promise((resolve, reject) => {
-	      if (!file.isImage()) {
+	      if (!isResizableImage(file.getName(), file.getType())) {
 	        resolve();
 	        return;
 	      }
@@ -2511,20 +2588,31 @@ this.BX.UI = this.BX.UI || {};
 	        file.setWidth(width);
 	        file.setHeight(height);
 	        if (width < this.getImageMinWidth() || height < this.getImageMinHeight()) {
-	          reject(new UploaderError('IMAGE_IS_TOO_SMALL', {
-	            minWidth: this.getImageMinWidth(),
-	            minHeight: this.getImageMinHeight()
-	          }));
+	          if (this.shouldTreatOversizeImageAsFile()) {
+	            file.setTreatImageAsFile(true);
+	            resolve();
+	          } else {
+	            reject(new UploaderError('IMAGE_IS_TOO_SMALL', {
+	              minWidth: this.getImageMinWidth(),
+	              minHeight: this.getImageMinHeight()
+	            }));
+	          }
 	        } else if (width > this.getImageMaxWidth() || height > this.getImageMaxHeight()) {
-	          reject(new UploaderError('IMAGE_IS_TOO_BIG', {
-	            maxWidth: this.getImageMaxWidth(),
-	            maxHeight: this.getImageMaxHeight()
-	          }));
+	          if (this.shouldTreatOversizeImageAsFile()) {
+	            file.setTreatImageAsFile(true);
+	            resolve();
+	          } else {
+	            reject(new UploaderError('IMAGE_IS_TOO_BIG', {
+	              maxWidth: this.getImageMaxWidth(),
+	              maxHeight: this.getImageMaxHeight()
+	            }));
+	          }
 	        } else {
 	          resolve();
 	        }
 	      }).catch(error => {
 	        if (this.getIgnoreUnknownImageTypes()) {
+	          file.setTreatImageAsFile(true);
 	          resolve();
 	        } else {
 	          if (error) {
@@ -2574,6 +2662,14 @@ this.BX.UI = this.BX.UI || {};
 	    if (main_core.Type.isBoolean(value)) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _ignoreUnknownImageTypes)[_ignoreUnknownImageTypes] = value;
 	    }
+	  }
+	  setTreatOversizeImageAsFile(value) {
+	    if (main_core.Type.isBoolean(value)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _treatOversizeImageAsFile$1)[_treatOversizeImageAsFile$1] = value;
+	    }
+	  }
+	  shouldTreatOversizeImageAsFile() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _treatOversizeImageAsFile$1)[_treatOversizeImageAsFile$1];
 	  }
 	}
 
@@ -2859,9 +2955,10 @@ this.BX.UI = this.BX.UI || {};
 
 	const canvasPrototype = window.HTMLCanvasElement && window.HTMLCanvasElement.prototype;
 	const hasToBlobSupport = window.HTMLCanvasElement && canvasPrototype.toBlob;
+	const canUseOffscreenCanvas = !main_core.Type.isUndefined(window.OffscreenCanvas);
 	const convertCanvasToBlob = (canvas, type, quality) => {
 	  return new Promise((resolve, reject) => {
-	    if (canvas instanceof OffscreenCanvas) {
+	    if (canUseOffscreenCanvas && canvas instanceof OffscreenCanvas) {
 	      canvas.convertToBlob({
 	        type,
 	        quality
@@ -2994,10 +3091,10 @@ this.BX.UI = this.BX.UI || {};
 	const getResizedImageSizeSource = getResizedImageSize.toString();
 	const sharpenSource = sharpen.toString();
 	const shouldSharpenSource = shouldSharpen.toString();
-	const canUseOffscreenCanvas = canCreateImageBitmap && !main_core.Type.isUndefined(OffscreenCanvas);
+	const canUseOffscreenCanvas$1 = canCreateImageBitmap && !main_core.Type.isUndefined(window.OffscreenCanvas);
 	const resizeImage = (source, options) => {
 	  return new Promise((resolve, reject) => {
-	    if (canUseOffscreenCanvas) {
+	    if (canUseOffscreenCanvas$1) {
 	      const resizeWorker = createWorker(ResizeWorker);
 	      const type = getCanvasToBlobType(source, options);
 	      resizeWorker.post({
@@ -3247,21 +3344,22 @@ this.BX.UI = this.BX.UI || {};
 	      value: null
 	    });
 	    const options = main_core.Type.isPlainObject(filterOptions) ? filterOptions : {};
-	    this.setImagePreviewWidth(options['imagePreviewWidth']);
-	    this.setImagePreviewHeight(options['imagePreviewHeight']);
-	    this.setImagePreviewQuality(options['imagePreviewQuality']);
-	    this.setImagePreviewUpscale(options['imagePreviewUpscale']);
-	    this.setImagePreviewResizeMode(options['imagePreviewResizeMode']);
-	    this.setImagePreviewMimeType(options['imagePreviewMimeType']);
-	    this.setImagePreviewMimeTypeMode(options['imagePreviewMimeTypeMode']);
-	    this.setImagePreviewFilter(options['imagePreviewFilter']);
+	    this.setImagePreviewWidth(options.imagePreviewWidth);
+	    this.setImagePreviewHeight(options.imagePreviewHeight);
+	    this.setImagePreviewQuality(options.imagePreviewQuality);
+	    this.setImagePreviewUpscale(options.imagePreviewUpscale);
+	    this.setImagePreviewResizeMode(options.imagePreviewResizeMode);
+	    this.setImagePreviewMimeType(options.imagePreviewMimeType);
+	    this.setImagePreviewMimeTypeMode(options.imagePreviewMimeTypeMode);
+	    this.setImagePreviewFilter(options.imagePreviewFilter);
 	  }
 	  apply(file) {
-	    return new Promise((resolve, reject) => {
-	      if (isResizableImage(file.getBinary())) {
+	    return new Promise(resolve => {
+	      if (!file.shouldTreatImageAsFile() && isResizableImage(file.getBinary())) {
 	        const result = this.invokeFilter(file);
 	        if (result === false) {
-	          return resolve();
+	          resolve();
+	          return;
 	        }
 	        const resizeOptions = main_core.Type.isPlainObject(result) ? result : {};
 
@@ -3271,7 +3369,7 @@ this.BX.UI = this.BX.UI || {};
 	          width,
 	          height
 	        }) => {
-	          //console.log(`resizeImage took ${performance.now() - start} milliseconds.`);
+	          // console.log(`resizeImage took ${performance.now() - start} milliseconds.`);
 	          file.setClientPreview(preview, width, height);
 	          resolve();
 	        }).catch(error => {
@@ -3421,25 +3519,28 @@ this.BX.UI = this.BX.UI || {};
 	      value: null
 	    });
 	    const options = main_core.Type.isPlainObject(filterOptions) ? filterOptions : {};
-	    this.setResizeWidth(options['imageResizeWidth']);
-	    this.setResizeHeight(options['imageResizeHeight']);
-	    this.setResizeMode(options['imageResizeMode']);
-	    this.setResizeMimeType(options['imageResizeMimeType']);
-	    this.setResizeMimeTypeMode(options['imageResizeMimeTypeMode']);
-	    this.setResizeQuality(options['imageResizeQuality']);
-	    this.setResizeFilter(options['imageResizeFilter']);
+	    this.setResizeWidth(options.imageResizeWidth);
+	    this.setResizeHeight(options.imageResizeHeight);
+	    this.setResizeMode(options.imageResizeMode);
+	    this.setResizeMimeType(options.imageResizeMimeType);
+	    this.setResizeMimeTypeMode(options.imageResizeMimeTypeMode);
+	    this.setResizeQuality(options.imageResizeQuality);
+	    this.setResizeFilter(options.imageResizeFilter);
 	  }
 	  apply(file) {
-	    return new Promise((resolve, reject) => {
+	    return new Promise(resolve => {
 	      if (this.getResizeWidth() === null && this.getResizeHeight() === null) {
-	        return resolve();
+	        resolve();
+	        return;
 	      }
-	      if (!isResizableImage(file.getBinary())) {
-	        return resolve();
+	      if (file.shouldTreatImageAsFile() || !isResizableImage(file.getBinary())) {
+	        resolve();
+	        return;
 	      }
 	      const result = this.invokeFilter(file);
 	      if (result === false) {
-	        return resolve();
+	        resolve();
+	        return;
 	      }
 	      const overrides = main_core.Type.isPlainObject(result) ? result : {};
 	      const options = {
@@ -4497,9 +4598,13 @@ this.BX.UI = this.BX.UI || {};
 	      }
 	      babelHelpers.classPrivateFieldLooseBase(this, _loadNext)[_loadNext]();
 	    },
+	    [FileEvent.VALIDATE_FILE_ASYNC]: event => {
+	      const file = event.getData().file;
+	      return babelHelpers.classPrivateFieldLooseBase(this, _applyFilters)[_applyFilters](FilterType.VALIDATION, file);
+	    },
 	    [FileEvent.PREPARE_FILE_ASYNC]: event => {
 	      const file = event.getData().file;
-	      return babelHelpers.classPrivateFieldLooseBase(this, _applyFilters)[_applyFilters](FilterType.VALIDATION, file).then(() => babelHelpers.classPrivateFieldLooseBase(this, _applyFilters)[_applyFilters](FilterType.PREPARATION, file));
+	      return babelHelpers.classPrivateFieldLooseBase(this, _applyFilters)[_applyFilters](FilterType.PREPARATION, file);
 	    }
 	  });
 	}
@@ -4676,7 +4781,6 @@ this.BX.UI = this.BX.UI || {};
 	  event.preventDefault();
 	}
 	function _handlePaste2(clipboardEvent) {
-	  clipboardEvent.preventDefault();
 	  const clipboardData = clipboardEvent.clipboardData;
 	  if (!clipboardData) {
 	    return;
@@ -4691,6 +4795,7 @@ this.BX.UI = this.BX.UI || {};
 	    return;
 	  }
 	  if (isFilePasted(clipboardData)) {
+	    clipboardEvent.preventDefault();
 	    getFilesFromDataTransfer(clipboardData).then(files => {
 	      this.addFiles(files);
 	    });

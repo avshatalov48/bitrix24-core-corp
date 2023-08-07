@@ -1,11 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/lib/element/dialog/message-menu/menu
  */
 jn.define('im/messenger/lib/element/dialog/message-menu/menu', (require, exports, module) => {
-
 	const { SeparatorAction } = require('im/messenger/lib/element/dialog/message-menu/action');
 
 	/**
@@ -18,6 +14,7 @@ jn.define('im/messenger/lib/element/dialog/message-menu/menu', (require, exports
 			this.reactionList = [];
 			this.actionList = [];
 		}
+
 		static create()
 		{
 			return new this();

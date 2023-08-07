@@ -19,5 +19,7 @@ return [
 		'./src/users',
 		'./src/dialogues',
 		'./src/files',
+		'./src/sidebar',
+		'./src/draft',
 	],
 ];

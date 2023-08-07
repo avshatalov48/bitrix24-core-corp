@@ -2,11 +2,13 @@
  * @module layout/ui/fields/boolean
  */
 jn.define('layout/ui/fields/boolean', (require, exports, module) => {
-	const { BlinkView } = require('animation/components/blink-view');
 	const { Haptics } = require('haptics');
-	const { BaseField } = require('layout/ui/fields/base');
-	const { FocusManager } = require('layout/ui/fields/focus-manager');
+	const { animate } = require('animation');
 	const { throttle } = require('utils/function');
+	const { Switcher } = require('layout/ui/switcher');
+	const { BaseField } = require('layout/ui/fields/base');
+	const { BlinkView } = require('animation/components/blink-view');
+	const { FocusManager } = require('layout/ui/fields/focus-manager');
 
 	const Mode = {
 		SWITCHER: 'switcher',
@@ -15,7 +17,6 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 
 	const COLORS = {
 		TEXT_DEFAULT: '#333333',
-		BACKGROUND_DEFAULT: '#ffffff',
 
 		DEFAULT_TOGGLE: '#d5d7db',
 		ACTIVE_TOGGLE: '#2fc6f6',
@@ -33,11 +34,14 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 		{
 			super(props);
 
+			this.iconRef = null;
+			this.blinkViewRef = null;
+			this.handleOnChange = throttle(this.handleOnChange, 500, this);
 			this.throttleToggleValue = throttle(this.toggleValue, 500, this);
 
 			if (!this.isReadOnly())
 			{
-				this.customContentClickHandler = this.throttleToggleValue;
+				this.customContentClickHandler = this.handleOnChange;
 			}
 		}
 
@@ -87,47 +91,15 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 
 		toggleValue()
 		{
-			Haptics.impactLight();
-
 			const doToggleValue = () => {
 				const wasChecked = this.getValue();
-				const animations = [];
-
-				if (this.isSwitcherMode())
-				{
-					animations.push(
-						new Promise((resolve) => {
-							this.switcherRef.animate({
-								duration: 200,
-								left: (wasChecked ? 3 : 23),
-							}, resolve);
-						}),
-					);
-					animations.push(
-						new Promise((resolve) => {
-							this.switcherContainerRef.animate({
-								duration: 200,
-								backgroundColor: (wasChecked ? this.defaultToggleColor : this.activeToggleColor),
-							}, resolve);
-						}),
-					);
-				}
-				else if (this.isIconMode())
-				{
-					animations.push(
-						new Promise((resolve) => {
-							this.iconRef.animate({
-								duration: 400,
-								backgroundColor: (wasChecked ? this.defaultIconColor : this.activeIconColor),
-							}, resolve);
-						}),
-					);
-				}
-
-				if (this.showBooleanFieldDescription && this.isBlinkable())
-				{
-					animations.push(this.blinkViewRef.blink(!wasChecked));
-				}
+				const animations = [
+					animate(this.iconRef, {
+						duration: 400,
+						backgroundColor: wasChecked ? this.defaultIconColor : this.activeIconColor,
+					}),
+					...this.getBlinkAnimation(!wasChecked),
+				];
 
 				return Promise.all(animations).then(() => this.handleChange(!wasChecked));
 			};
@@ -137,6 +109,16 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 					.then(() => FocusManager.blurFocusedFieldIfHas(this))
 					.then(() => doToggleValue())
 			);
+		}
+
+		getBlinkAnimation(checked)
+		{
+			if (this.blinkViewRef && this.showBooleanFieldDescription && this.isBlinkable())
+			{
+				return [this.blinkViewRef.blink(checked)];
+			}
+
+			return [];
 		}
 
 		canFocusTitle()
@@ -163,7 +145,9 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 						minHeight: 21,
 					},
 				},
-				(this.isIconMode() ? this.renderIcon() : (config.showSwitcher && this.renderSwitcher())),
+				this.isIconMode()
+					? this.renderIcon()
+					: config.showSwitcher && this.renderSwitcher(),
 				(
 					this.isBlinkable()
 						? Text({
@@ -178,6 +162,25 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 			);
 		}
 
+		handleOnChange()
+		{
+			Haptics.impactLight();
+
+			if (this.isSwitcherMode())
+			{
+				const wasChecked = this.getValue();
+
+				this.onBeforeHandleChange()
+					.then(() => FocusManager.blurFocusedFieldIfHas(this))
+					.then(() => this.handleChange(!wasChecked))
+					.catch(console.error);
+			}
+			else
+			{
+				this.throttleToggleValue();
+			}
+		}
+
 		renderEditableContent()
 		{
 			return View(
@@ -188,9 +191,9 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 						alignItems: 'center',
 						minHeight: 21,
 					},
-					onClick: this.throttleToggleValue,
+					onClick: this.handleOnChange,
 				},
-				(this.isIconMode() ? this.renderIcon() : this.renderSwitcher()),
+				this.isIconMode() ? this.renderIcon() : this.renderSwitcher(),
 				this.renderBooleanFieldDescription(),
 			);
 		}
@@ -199,7 +202,9 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 		{
 			return View(
 				{
-					ref: ref => this.iconRef = ref,
+					ref: (ref) => {
+						this.iconRef = ref;
+					},
 					style: this.styles.booleanIconContainer,
 				},
 				Image({
@@ -213,18 +218,15 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 		{
 			const checked = this.getValue();
 
-			return View(
-				{
-					ref: ref => this.switcherContainerRef = ref,
-					style: this.styles.switcherContainer(checked),
+			return new Switcher({
+				checked,
+				animations: this.getBlinkAnimation(),
+				disabled: this.isReadOnly(),
+				trackColor: {
+					true: this.activeToggleColor,
+					false: this.defaultToggleColor,
 				},
-				View(
-					{
-						ref: ref => this.switcherRef = ref,
-						style: this.styles.switcher(checked),
-					},
-				),
-			);
+			});
 		}
 
 		renderBooleanFieldDescription()
@@ -235,7 +237,6 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 			}
 
 			const config = this.getConfig();
-			const { description: descriptionStyle } = this.getStyles();
 
 			if (!this.isBlinkable())
 			{
@@ -248,7 +249,9 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 			}
 
 			return new BlinkView({
-				ref: ref => this.blinkViewRef = ref,
+				ref: (ref) => {
+					this.blinkViewRef = ref;
+				},
 				data: this.getValue(),
 				slot: (checked) => {
 					return Text({
@@ -272,7 +275,7 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 
 		isSwitcherMode()
 		{
-			return (this.getConfig().mode === Mode.SWITCHER);
+			return this.getConfig().mode === Mode.SWITCHER;
 		}
 
 		isIconMode()
@@ -291,12 +294,13 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 			);
 		}
 
-		getImageUrl(imageUrl)
+		getImageUrl(url)
 		{
+			let imageUrl = url;
 			if (imageUrl.indexOf(currentDomain) !== 0)
 			{
 				imageUrl = imageUrl.replace(`${currentDomain}`, '');
-				imageUrl = (imageUrl.indexOf('http') !== 0 ? `${currentDomain}${imageUrl}` : imageUrl);
+				imageUrl = (imageUrl.indexOf('http') === 0 ? imageUrl : `${currentDomain}${imageUrl}`);
 			}
 
 			return encodeURI(imageUrl);
@@ -327,23 +331,6 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 
 			return {
 				...styles,
-				switcherContainer: (checked) => ({
-					borderRadius: 14,
-					backgroundColor: (checked ? this.activeToggleColor : this.defaultToggleColor),
-					width: 37,
-					height: 17,
-					marginRight: 8,
-					opacity: (this.isReadOnly() ? 0.5 : 1),
-				}),
-				switcher: (checked) => ({
-					width: 11,
-					height: 11,
-					backgroundColor: COLORS.BACKGROUND_DEFAULT,
-					borderRadius: 8,
-					position: 'absolute',
-					top: 3,
-					left: (checked ? 23 : 3),
-				}),
 				description: {
 					flexShrink: 2,
 					color: COLORS.TEXT_DEFAULT,
@@ -357,7 +344,7 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 					alignItems: 'center',
 					marginRight: 8,
 					borderRadius: 12,
-					backgroundColor: (this.getValue() ? this.activeIconColor : this.defaultIconColor),
+					backgroundColor: this.getValue() ? this.activeIconColor : this.defaultIconColor,
 				},
 				booleanIcon: {
 					width: 12,
@@ -404,6 +391,6 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 	module.exports = {
 		BooleanType: 'boolean',
 		BooleanMode: Mode,
-		BooleanField: props => new BooleanField(props),
+		BooleanField: (props) => new BooleanField(props),
 	};
 });

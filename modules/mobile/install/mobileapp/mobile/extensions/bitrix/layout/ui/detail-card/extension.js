@@ -5,6 +5,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 	const { Alert } = require('alert');
 	const { AnalyticsLabel } = require('analytics-label');
 	const { EventEmitter } = require('event-emitter');
+	const { Feature } = require('feature');
 	const { Haptics } = require('haptics');
 	const { NotifyManager } = require('notify-manager');
 	const { ActionsPanel } = require('layout/ui/detail-card/toolbar/actions-panel');
@@ -144,6 +145,13 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			this.customEventEmitter.emit('DetailCard::didMount');
 			this.mounted = true;
 
+			const { backdropEnabled = false } = this.getComponentParams();
+			if (backdropEnabled && Feature.isPreventBottomSheetDismissSupported())
+			{
+				this.layout.preventBottomSheetDismiss(true);
+				this.layout.on('preventDismiss', () => this.handleExitFromEntity());
+			}
+
 			this.bindEvents();
 			this.checkToolbarPanel();
 
@@ -256,7 +264,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 				this.layout.setRightButtons(this.rightButtons);
 			}
 
-			if (!this.readOnly && this.isActionsPanelVisible())
+			if (this.isActionsPanelVisible())
 			{
 				this.showActionsPanel();
 			}

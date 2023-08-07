@@ -38,6 +38,7 @@ type Options = {
 	design: ?Design.Model;
 	size: ?Size;
 	contentTypes: ?Array<string>;
+	maxSizeMb: ?Number;
 };
 
 let DefaultOptions: Options = {

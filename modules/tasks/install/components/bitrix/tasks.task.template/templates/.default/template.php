@@ -180,7 +180,7 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 			<?//////// TOP ///////////////////////////////////////////////?>
 
 			<?ob_start();?>
-			<input class="js-id-task-template-edit-title" type="text" name="<?=$inputPrefix?>[TITLE]" value="<?=htmlspecialcharsbx($template['TITLE'])?>" placeholder="<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_WHAT_TO_BE_DONE')?>"/>
+			<input class="js-id-task-template-edit-title" type="text" name="<?=$inputPrefix?>[TITLE]" value="<?=htmlspecialcharsbx($template['TITLE'])?>" placeholder="<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_WHAT_TO_BE_DONE_MSGVER_1')?>"/>
 			<?
 			$blocks['HEAD_TOP_LEFT'] = array(
 				'HTML' => ob_get_clean(),

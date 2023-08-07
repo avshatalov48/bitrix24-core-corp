@@ -4,11 +4,14 @@ return [
 	'extensions' => [
 		'loc',
 		'in-app-url',
+		'utils/array',
+		'utils/random',
+		'utils/object',
 		'in-app-url/url',
 		'event-emitter',
-		'utils/object',
 		'notify-manager',
 		'layout/ui/context-menu',
+		'layout/ui/wizard/backdrop',
 
 		'crm:loc',
 		'crm:type',
@@ -16,7 +19,6 @@ return [
 		'crm:conversion/utils',
 		'crm:conversion/wizard',
 		'crm:conversion/menu',
-		'crm:category-list-view',
 		'crm:selector/entity/element',
 	],
 	'bundle' => [

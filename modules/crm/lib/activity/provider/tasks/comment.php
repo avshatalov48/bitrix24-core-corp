@@ -16,7 +16,6 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Integration\CRM\Timeline\Bindings;
-use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use CCrmActivity;
 
 final class Comment extends Base
@@ -170,7 +169,7 @@ final class Comment extends Base
 			return self::$cache[$key];
 		}
 
-		$task = TaskRegistry::getInstance()->getObject($taskId);
+		$task = TaskObject::getObject($taskId);
 		if (is_null($task))
 		{
 			return null;

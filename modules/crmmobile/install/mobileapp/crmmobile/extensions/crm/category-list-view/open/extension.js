@@ -4,7 +4,6 @@
 jn.define('crm/category-list-view/open', (require, exports, module) => {
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
-	const { CategoryListView } = require('crm/category-list-view');
 
 	/**
 	 * @param {Number} props.entityTypeId
@@ -13,7 +12,7 @@ jn.define('crm/category-list-view/open', (require, exports, module) => {
 	 * @param {Function} props.onChangeCategory
 	 * @param {Number} props.categoryId
 	 */
-	const openCategoryListView = (props) => {
+	const openCategoryListView = async (props) => {
 		const {
 			entityTypeId,
 			parentWidget,
@@ -22,6 +21,8 @@ jn.define('crm/category-list-view/open', (require, exports, module) => {
 			onChangeCategory,
 			categoryId: currentCategoryId,
 		} = props;
+
+		const { CategoryListView } = await requireLazy('crm:category-list-view');
 
 		return CategoryListView.open(
 			{

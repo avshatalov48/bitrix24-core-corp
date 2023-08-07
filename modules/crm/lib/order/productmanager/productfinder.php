@@ -7,6 +7,8 @@ use Bitrix\Crm\Order\OrderDealSynchronizer\Products\ProductRowXmlId;
 
 trait ProductFinder
 {
+	protected array $foundProducts = [];
+
 	abstract protected function getOrder(): ?Crm\Order\Order;
 
 	/**
@@ -69,24 +71,22 @@ trait ProductFinder
 	 * @param array $productList
 	 * @return false|int|string
 	 */
-	protected static function searchProduct(array $searchableProduct, array $productList)
+	protected function searchProduct(array $searchableProduct, array $productList)
 	{
 		if ((int)$searchableProduct['PRODUCT_ID'] === 0)
 		{
 			return false;
 		}
 
-		static $foundProducts = [];
-
 		foreach ($productList as $index => $item)
 		{
 			if (
 				(int)$searchableProduct['PRODUCT_ID'] === (int)$item['PRODUCT_ID']
 				&& $searchableProduct['MODULE'] === $item['MODULE']
-				&& !in_array($item['BASKET_CODE'], $foundProducts, true)
+				&& !in_array($item['BASKET_CODE'], $this->foundProducts, true)
 			)
 			{
-				$foundProducts[] = $item['BASKET_CODE'];
+				$this->foundProducts[] = $item['BASKET_CODE'];
 				return $index;
 			}
 		}

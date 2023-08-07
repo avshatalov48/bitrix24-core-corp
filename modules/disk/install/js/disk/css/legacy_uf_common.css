@@ -817,6 +817,7 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 	color: #2067b0;
 	cursor: pointer;
 	font-weight: var(--ui-font-weight-bold);
+	line-height: normal;
 	text-decoration: none;
 	white-space: nowrap;
 	text-overflow: ellipsis;

@@ -318,10 +318,18 @@
 				},
 				{
 					resolveFunction: BX.MobileTools.diskFileKnowledge,
-					openFunction: function(fileId) {
+					openFunction: function(data) {
+						const fileId = data['fileId'];
+						const scope = data['scope'];
+						const landingId = data['landingId'];
+						const path = '/bitrix/services/main/ajax.php?action=landing.api.diskFile.info&fileId='
+							+ fileId
+							+ '&scope='
+							+ scope
+							+ '&landingId='
+							+ landingId;
 
-						BX.ajax.get("/bitrix/services/main/ajax.php?action=landing.api.diskFile.info&fileId=" + fileId, function(data)
-						{
+						BX.ajax.get(path, function(data) {
 							if (typeof data === 'string')
 							{
 								data = JSON.parse(data);
@@ -350,19 +358,15 @@
 						}
 					}
 				},
-			];
-
-			if (Application.getApiVersion() >= 41)
-			{
-				resolveList.push({
+				{
 					resolveFunction: BX.MobileTools.projectIdFromUrl,
 					openFunction: function(data) {
 						data.siteId = BX.message('SITE_ID');
 						data.siteDir = BX.message('SITE_DIR');
 						BXMobileApp.Events.postToComponent('projectbackground::project::action', data, 'background');
 					},
-				})
-			}
+				},
+			];
 
 			if (Application.getApiVersion() >= 45)
 			{
@@ -609,13 +613,22 @@
 		},
 		diskFileKnowledge:function(url)
 		{
-			let result = url.match(/(file:)?#diskFile(\d+)/i);
-			if (result)
-			{
-				return result[2];
-			}
+			const data = [];
+			const landingId = document.body.getAttribute('data-landing-id');
+			const scope = document.body.getAttribute('data-scope');
+			const result = url.match(/(file:)?#diskFile(\d+)/i);
 
-			return null;
+			if (scope && landingId && result)
+			{
+				data['scope'] = scope;
+				data['landingId'] = landingId;
+				data['fileId'] = result[2];
+				return data;
+			}
+			else
+			{
+				return null;
+			}
 		},
 		blockLinkKnowledge:function(url)
 		{

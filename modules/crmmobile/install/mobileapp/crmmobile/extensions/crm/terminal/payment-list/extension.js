@@ -167,8 +167,8 @@ jn.define('crm/terminal/payment-list', (require, exports, module) => {
 				},
 				backgroundColor: '#eef2f4',
 				backdrop: {
-					onlyMediumPosition: false,
-					mediumPositionHeight: PaymentPay.getHeight(),
+					onlyMediumPosition: true,
+					mediumPositionHeight: PaymentPay.getMinHeight(),
 					navigationBarColor: '#EEF2F4',
 					swipeAllowed: true,
 					swipeContentAllowed: false,
@@ -389,6 +389,7 @@ jn.define('crm/terminal/payment-list', (require, exports, module) => {
 			data.params.items.map((item) => {
 				item.data = item.mobileData;
 				delete item.mobileData;
+
 				return item;
 			});
 		}

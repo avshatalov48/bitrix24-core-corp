@@ -216,21 +216,27 @@ BX.Disk.InformationPopups = (function ()
 				'</div>' +
 				'<div class="bx-disk-info-popup-btn-wrap">' +
 					'<span data-service="l" id="bx-disk-info-popup-btn-local" class="bx-disk-info-popup-btn bx-disk-info-popup-btn-local ' + (currentSelection === 'l' ? 'bx-disk-info-popup-btn-active' : '') + ' ">' +
-						'<span class="bx-disk-info-popup-btn-text">' + BX.message('DISK_JS_SERVICE_LOCAL_TITLE') + '</span>' +
+						'<span class="bx-disk-info-popup-btn-text">' +
+							'<span>' + BX.message('DISK_JS_SERVICE_LOCAL_TITLE') + '</span>'+
+						'</span>' +
 						'<span class="bx-disk-info-popup-btn-descript">' +
 							BX.message('DISK_JS_SERVICE_LOCAL_TEXT') +
 						'</span>' +
 						'<span class="bx-disk-info-popup-btn-check"></span>' +
 					'</span>' +
 					'<span data-service="gdrive" id="bx-disk-info-popup-btn-cloud" class="bx-disk-info-popup-btn bx-disk-info-popup-btn-cloud ' + (currentServiceIsCloud ? 'bx-disk-info-popup-btn-active' : '') + ' ">' +
-						'<span class="bx-disk-info-popup-btn-text">' + BX.message('DISK_JS_SERVICE_CLOUD_TITLE') + '</span>' +
+						'<span class="bx-disk-info-popup-btn-text">' +
+							'<span>'+ BX.message('DISK_JS_SERVICE_CLOUD_TITLE') + '</span>' +
+						'</span>' +
 						'<span class="bx-disk-info-popup-btn-descript">' +
 							BX.message('DISK_JS_SERVICE_CLOUD_TEXT') +
 						'</span>' +
 						'<span class="bx-disk-info-popup-btn-check"></span>' +
 					'</span>' +
 					'<span data-service="onlyoffice" ' + (BX.Disk.isAvailableOnlyOffice()? '' : 'style="display:none;"') +' id="bx-disk-info-popup-btn-b24" class="bx-disk-info-popup-btn bx-disk-info-popup-btn-b24 ' + (currentSelection === 'onlyoffice'? 'bx-disk-info-popup-btn-active' : '') + ' ">' +
-						'<span class="bx-disk-info-popup-btn-text">' + BX.message('DISK_JS_SERVICE_B24_DOCS_TITLE') + '</span>' +
+					'<span class="bx-disk-info-popup-btn-text">' +
+						'<span>'+ BX.message('DISK_JS_SERVICE_B24_DOCS_TITLE') + '</span>' +
+					'</span>' +
 						'<span class="bx-disk-info-popup-btn-descript">' +
 							BX.message('DISK_JS_SERVICE_B24_DOCS_TEXT') +
 						'</span>' +

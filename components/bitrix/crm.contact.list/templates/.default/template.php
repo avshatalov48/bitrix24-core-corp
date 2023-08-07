@@ -30,7 +30,14 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
-Bitrix\Main\UI\Extension::load(['crm.merger.batchmergemanager', 'ui.fonts.opensans']);
+Bitrix\Main\UI\Extension::load(
+	[
+		'crm.merger.batchmergemanager',
+		'ui.fonts.opensans',
+		'ui.progressbar',
+		'ui.icons.b24',
+	]
+);
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
@@ -39,14 +46,6 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_deletion.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
-
-Bitrix\Main\UI\Extension::load(
-	[
-		'ui.progressbar',
-		'ui.icons.b24',
-		'crm.restriction.filter-fields',
-	]
-);
 
 ?><div id="batchDeletionWrapper"></div><?
 
@@ -515,7 +514,7 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 		$resultItem['columns']
 	);
 
-	$resultItem['columns'] = \Bitrix\Crm\Entity\FieldContentType::enrichGridRow(
+	$resultItem['columns'] = \Bitrix\Crm\Entity\CommentsHelper::enrichGridRow(
 		\CCrmOwnerType::Contact,
 		$fieldContentTypeMap[$arContact['ID']] ?? [],
 		$arContact,
@@ -1432,4 +1431,9 @@ if($arResult['NEED_TO_SHOW_DUP_VOL_DATA_PREPARE'])
 	</script><?
 }
 
-echo $arResult['ACTIVITY_FIELD_RESTRICTIONS'] ?? '';
+if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))
+{
+	Bitrix\Main\UI\Extension::load(['crm.restriction.filter-fields']);
+
+	echo $arResult['RESTRICTED_FIELDS_ENGINE'];
+}

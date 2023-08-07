@@ -46,6 +46,8 @@ interface Tabable
 
 	public function getId();
 
+	public function getIconId(): string;
+
 	/**
 	 * @param Context $context
 	 * @return void

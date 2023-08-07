@@ -51,6 +51,7 @@ jn.define('crm/timeline/item/ui/body/blocks/player-alert', (require, exports, mo
 		renderInnerContent(color)
 		{
 			const blocks = BX.prop.getObject(this.props, 'blocks', {});
+
 			return Object.values(blocks).map(({ rendererName, properties }) => this.factory.make(
 				rendererName,
 				{
@@ -74,6 +75,7 @@ jn.define('crm/timeline/item/ui/body/blocks/player-alert', (require, exports, mo
 		get(code)
 		{
 			code = stringify(code);
+
 			return this[code] || this['ui-alert-default'];
 		},
 	};

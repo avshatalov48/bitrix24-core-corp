@@ -324,6 +324,8 @@ jn.define('selector/widget', (require, exports, module) => {
 
 			this.setSelected(items);
 
+			this.handleOnEventsCallback('onSelectedChanged', this.getEntityItems());
+
 			if (this.closeOnSelect)
 			{
 				void this.close();
@@ -662,11 +664,7 @@ jn.define('selector/widget', (require, exports, module) => {
 			if (this.widget !== null)
 			{
 				this.widget = null;
-
-				if (this.events.onViewHidden)
-				{
-					this.events.onViewHidden();
-				}
+				this.handleOnEventsCallback('onViewHidden');
 			}
 		}
 
@@ -681,9 +679,15 @@ jn.define('selector/widget', (require, exports, module) => {
 		onViewRemoved()
 		{
 			this.widget = null;
-			if (this.events.onViewRemoved)
+			this.handleOnEventsCallback('onViewRemoved');
+		}
+
+		handleOnEventsCallback(callbackName, ...params)
+		{
+			const callbackEvent = this.events[callbackName];
+			if (callbackEvent)
 			{
-				this.events.onViewRemoved();
+				callbackEvent(...params);
 			}
 		}
 
@@ -694,19 +698,13 @@ jn.define('selector/widget', (require, exports, module) => {
 				this.provider.prepareResult(this.currentSelectedItems);
 			}
 
-			if (this.events.onClose)
-			{
-				this.events.onClose(this.extractEntityItems(this.currentSelectedItems));
-			}
+			this.handleOnEventsCallback('onClose', this.getEntityItems());
 		}
 
 		onWidgetClosed()
 		{
 			this.widget = null;
-			if (this.events.onWidgetClosed)
-			{
-				this.events.onWidgetClosed(this.extractEntityItems(this.currentSelectedItems));
-			}
+			this.handleOnEventsCallback('onWidgetClosed', this.getEntityItems());
 		}
 
 		closeOnCreation(entity)
@@ -724,12 +722,17 @@ jn.define('selector/widget', (require, exports, module) => {
 			});
 		}
 
-		extractEntityItems(items)
+		getEntityItems()
 		{
-			return items.map((item) => ({
-				...item.params,
-				imageUrl: item.imageUrl,
-			}));
+			if (Array.isArray(this.currentSelectedItems))
+			{
+				return this.currentSelectedItems.map((item) => ({
+					...item.params,
+					imageUrl: item.imageUrl,
+				}));
+			}
+
+			return [];
 		}
 
 		getCreateButtonItem()

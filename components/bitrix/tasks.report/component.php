@@ -291,7 +291,7 @@ while($arSection = $rsSections->Fetch())
 		'<RIGHT_MARGIN' => $arSection['RIGHT_MARGIN'],
 		'!ID' => $arSection['ID']
 	);
-	$rsChildSections = CIBlockSection::GetList(array('left_margin' => asc), $arSubDepsFilter, false, array("ID", "NAME", "DEPTH_LEVEL"));
+	$rsChildSections = CIBlockSection::GetList(['left_margin' => 'ASC'], $arSubDepsFilter, false, ['ID', 'NAME', 'DEPTH_LEVEL']);
 	while ($arChildSection = $rsChildSections->GetNext())
 	{
 		$arResult["SUBORDINATE_DEPS"][] = $arChildSection;

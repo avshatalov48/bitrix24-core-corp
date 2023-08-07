@@ -45,6 +45,11 @@ class MonitorReport
 			events: {
 				onOpen: () =>
 				{
+					if (!BXIM || !BXIM.desktop)
+					{
+						return;
+					}
+
 					if (Type.isFunction(BXIM.desktop.setPreventEsc))
 					{
 						BXIM.desktop.setPreventEsc(true);
@@ -61,6 +66,11 @@ class MonitorReport
 					if (Monitor.shouldShowGrantingPermissionWindow())
 					{
 						Monitor.showGrantingPermissionLater();
+					}
+
+					if (!BXIM || !BXIM.desktop)
+					{
+						return;
 					}
 
 					if (Type.isFunction(BXIM.desktop.setPreventEsc))

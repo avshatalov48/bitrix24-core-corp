@@ -16,7 +16,7 @@ class Selling extends Base
 
 		foreach ($dealProducts as $product)
 		{
-			$index = static::searchProduct($product, $orderProducts);
+			$index = $this->searchProduct($product, $orderProducts);
 			if ($index === false)
 			{
 				$basketItem = $this->getBasketItemByEntityProduct($product, $foundProducts, true);
@@ -50,10 +50,7 @@ class Selling extends Base
 
 				$product['BASKET_CODE'] = $basketItem->getBasketCode();
 
-				if ($basketItem->getQuantity() !== $orderProducts[$index]['QUANTITY'])
-				{
-					$product['QUANTITY'] -= $orderProducts[$index]['QUANTITY'];
-				}
+				$product['QUANTITY'] = $orderProducts[$index]['QUANTITY'];
 			}
 
 			$result[] = $product;

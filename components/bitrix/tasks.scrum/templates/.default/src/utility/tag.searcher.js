@@ -81,8 +81,7 @@ export class TagSearcher extends EventEmitter
 			tabs: 'recents',
 			avatarOptions: {
 				bgColor: epic.color,
-				bgImage: 'none',
-				borderRadius: '12px'
+				bgImage: 'none'
 			}
 		};
 	}

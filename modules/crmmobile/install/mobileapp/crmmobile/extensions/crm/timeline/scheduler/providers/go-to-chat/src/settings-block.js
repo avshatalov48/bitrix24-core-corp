@@ -14,6 +14,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/settings-block', (require
 		{
 			const {
 				layout,
+				selectedClient,
 				name,
 				toPhoneId,
 				communications,
@@ -24,6 +25,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/settings-block', (require
 				currentChannelId,
 				showShimmer,
 				onChangeClientCallback: onPhoneSelectCallback,
+				onChangeClientWithoutPhoneCallback: onClientWithoutPhoneSelectCallback,
 				onChangeProviderCallback,
 				onChangeProviderPhoneCallback,
 				showAddPhoneToContactDrawer,
@@ -42,6 +44,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/settings-block', (require
 				},
 				new ClientsSelector({
 					layout,
+					selectedClient,
 					name,
 					toPhoneId,
 					communications,
@@ -50,6 +53,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/settings-block', (require
 					showShimmer,
 					onPhoneSelectCallback,
 					showAddPhoneToContactDrawer,
+					onClientWithoutPhoneSelectCallback,
 				}),
 				this.canShowProviderSelector() && new ProvidersSelector({
 					layout,

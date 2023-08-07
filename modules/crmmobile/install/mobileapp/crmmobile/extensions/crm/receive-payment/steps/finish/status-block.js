@@ -99,14 +99,17 @@ jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, mo
 			{
 				return this.renderLottieCloud();
 			}
+
 			if (this.state.sendingStatus === Statuses.FINISHING)
 			{
 				return this.renderSvgCloud('green-clouds.svg', true);
 			}
+
 			if (this.state.sendingStatus === Statuses.FINISHED)
 			{
 				return this.renderSvgCloud('green-clouds.svg');
 			}
+
 			if (this.state.sendingStatus === Statuses.ERROR)
 			{
 				return this.renderSvgCloud('error.svg', true);

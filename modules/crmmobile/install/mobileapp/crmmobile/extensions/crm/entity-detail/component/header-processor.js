@@ -23,7 +23,7 @@ jn.define('crm/entity-detail/component/header-processor', (require, exports, mod
 			if (header.imageUrl.indexOf(currentDomain) !== 0)
 			{
 				header.imageUrl = encodeURI(header.imageUrl);
-				header.imageUrl = header.imageUrl.replace(`${currentDomain}`, '');
+				header.imageUrl = header.imageUrl.replace(String(currentDomain), '');
 				header.imageUrl = (
 					header.imageUrl.indexOf('http') === 0
 						? header.imageUrl

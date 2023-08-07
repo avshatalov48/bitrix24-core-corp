@@ -24,6 +24,19 @@ jn.define('crm/in-app-url/routes', (require, exports, module) => {
 			);
 		}).name('crm:detailStaticEntityTypes');
 
+		inAppUrl.register('/page/:sectionName/:pageName/type/:entityTypeId/details/:id/', ({ id, entityTypeId }, { context, queryParams }) => {
+			if (!Type.isEntitySupportedById(entityTypeId))
+			{
+				return;
+			}
+
+			openEntityDetail(
+				entityTypeId,
+				id,
+				{ ...context, queryParams },
+			);
+		}).name('crm:detailStaticEntityDynamicTypes');
+
 		inAppUrl.register('/crm/type/:entityTypeId/details/:id/', ({ id, entityTypeId }, { context, queryParams }) => {
 			if (!Type.isEntitySupportedById(entityTypeId))
 			{

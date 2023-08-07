@@ -3,7 +3,7 @@
 namespace Bitrix\Crm\Order;
 
 use Bitrix\Crm;
-use Bitrix\Crm\Activity\Provider\Sms;
+use Bitrix\Crm\Activity\Provider\BaseMessage;
 use Bitrix\Sale;
 use Bitrix\Main;
 use Bitrix\Sale\TradingPlatform\Landing\Landing;
@@ -199,14 +199,14 @@ class Payment extends Sale\Payment
 			Crm\MessageSender\MessageSender::send(
 				[
 					Crm\Integration\NotificationsManager::getSenderCode() => [
-						'ACTIVITY_PROVIDER_TYPE_ID' => Activity\Provider\Notification::PROVIDER_TYPE_NOTIFICATION,
+						'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_CRM_ORDER_PAID,
 						'TEMPLATE_CODE' => 'ORDER_PAID',
 						'PLACEHOLDERS' => [
 							'NAME' => $entityCommunication->getCustomerName(),
 						],
 					],
 					Crm\Integration\SmsManager::getSenderCode() => [
-						'ACTIVITY_PROVIDER_TYPE_ID' => Sms::PROVIDER_TYPE_SALESCENTER_DELIVERY,
+						'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_CRM_ORDER_PAID,
 						'MESSAGE_BODY' => Main\Localization\Loc::getMessage(
 							'CRM_PAYMENT_ORDER_PAID',
 							[

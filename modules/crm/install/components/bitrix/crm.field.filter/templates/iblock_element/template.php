@@ -1,11 +1,15 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
 
 if(
-	$arParams["arUserField"]["ENTITY_VALUE_ID"] <= 0
-	&& $arParams["arUserField"]["SETTINGS"]["DEFAULT_VALUE"] > 0
+	($arParams["arUserField"]["ENTITY_VALUE_ID"] ?? 0) <= 0
+	&& ($arParams["arUserField"]["SETTINGS"]["DEFAULT_VALUE"] ?? 0) > 0
 )
 {
-	$arResult['VALUE'] = array($arParams["arUserField"]["SETTINGS"]["DEFAULT_VALUE"]);
+	$arResult['VALUE'] = [$arParams["arUserField"]["SETTINGS"]["DEFAULT_VALUE"]];
 }
 else
 {

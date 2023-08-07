@@ -85,6 +85,7 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 					changedPaidStage: true,
 				});
 			}
+
 			if (data.type === 'stageOnDeliveryFinished' && stage.statusId !== this.state.stageOnDeliveryFinished)
 			{
 				this.setState({
@@ -102,6 +103,7 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 				const stage = this.getStageByStatusId(this.state.stageOnOrderPaid);
 				activeStageId = stage.id;
 			}
+
 			if (data.type === 'stageOnDeliveryFinished')
 			{
 				const stage = this.getStageByStatusId(this.state.stageOnDeliveryFinished);
@@ -239,14 +241,12 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 
 			const category = CategoryStorage.getCategory(entityTypeId, categoryId);
 
-			const stages = [
+			return [
 				stayStageItem(false),
 				...category.processStages,
 				...category.successStages,
 				...category.failedStages,
 			];
-
-			return stages;
 		}
 
 		saveStages()
@@ -254,6 +254,7 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 			if (!this.state.changedDeliveryStage && !this.state.changedPaidStage)
 			{
 				this.layout.close();
+
 				return Promise.resolve();
 			}
 

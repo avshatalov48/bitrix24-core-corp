@@ -27,15 +27,27 @@ use Bitrix\Catalog;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 
+$isMenuMode = isset($arParams['MENU_MODE']) && $arParams['MENU_MODE'] === 'Y';
+$isGetResult = isset($arParams['GET_RESULT']) && $arParams['GET_RESULT'] === 'Y';
+$isShowOutput = ($isMenuMode || $isGetResult) === false;
+
 if (!CModule::IncludeModule('crm'))
 {
-	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
+	if ($isShowOutput)
+	{
+		ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
+	}
+
 	return;
 }
 
-if(!CCrmPerms::IsAccessEnabled())
+if (!CCrmPerms::IsAccessEnabled())
 {
-	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+	if ($isShowOutput)
+	{
+		ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+	}
+
 	return;
 }
 
@@ -1397,7 +1409,7 @@ if (!$options)
 }
 $arResult['IS_FIXED'] = isset($options['fixed']) && $options['fixed'] === 'Y';
 
-if (isset($arParams["MENU_MODE"]) && $arParams["MENU_MODE"] === "Y")
+if ($isMenuMode)
 {
 	$arResult['ITEMS'] = $this->createFileMenuItems($items);
 
@@ -1408,7 +1420,7 @@ else
 	$arResult['ITEMS'] = $this->prepareItems($items);
 	unset($items);
 
-	if (isset($arParams['GET_RESULT']) && $arParams['GET_RESULT'] === 'Y')
+	if ($isGetResult)
 	{
 		return $arResult;
 	}

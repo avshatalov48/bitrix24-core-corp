@@ -127,14 +127,14 @@ export default class Users {
 		{
 			wrapper = Tag.render`
 				<a href="${user['url']}" class="disk-active-user-popup-item">
-				</a>>
+				</a>
 			`;
 		}
 		else
 		{
 			wrapper = Tag.render`
 				<div class="disk-active-user-popup-item">
-				</div>>
+				</div>
 			`;
 		}
 

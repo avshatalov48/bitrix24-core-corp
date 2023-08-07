@@ -4,6 +4,7 @@
 jn.define('crm/receive-payment/steps/send-message/sms-service-selector', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { PureComponent } = require('layout/pure-component');
+	const { ImageAfterTypes } = require('layout/ui/context-menu/item');
 
 	/**
 	 * @class SmsServiceSelector
@@ -44,7 +45,7 @@ jn.define('crm/receive-payment/steps/send-message/sms-service-selector', (requir
 				title: Loc.getMessage('M_RP_SM_SMS_SERVICE_SETTINGS_TITLE'),
 				data: {
 					svgIconAfter: {
-						type: ContextMenuItem.ImageAfterTypes.WEB,
+						type: ImageAfterTypes.WEB,
 					},
 				},
 				onClickCallback: (itemId) => {

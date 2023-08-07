@@ -102,14 +102,18 @@ class CIntranetSharepoint extends CAllIntranetSharepoint
 
 	protected static function _ListNextQuery($limit)
 	{
-		return '
-SELECT IBLOCK_ID 
-FROM b_intranet_sharepoint 
-WHERE 
-	SYNC_PERIOD > 0 
-AND SYNC_ERRORS < 3 
-AND SYNC_DATE+INTERVAL SYNC_PERIOD SECOND < NOW() 
-ORDER BY SYNC_DATE
-LIMIT 0,'.intval($limit);
+		global $DB;
+		$connection = \Bitrix\Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
+
+		return $DB->TopSql('
+			SELECT IBLOCK_ID
+			FROM b_intranet_sharepoint
+			WHERE
+				SYNC_PERIOD > 0
+				AND SYNC_ERRORS < 3
+				AND SYNC_DATE < ' . $helper->addSecondsToDateTime('-SYNC_PERIOD') . '
+			ORDER BY SYNC_DATE
+		', $limit);
 	}
 }

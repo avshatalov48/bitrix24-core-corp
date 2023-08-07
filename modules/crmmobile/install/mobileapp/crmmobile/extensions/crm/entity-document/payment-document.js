@@ -11,28 +11,20 @@ jn.define('crm/entity-document/payment-document', (require, exports, module) => 
 	 */
 	class PaymentDocument extends BaseDocument
 	{
-		constructor(props)
-		{
-			super(props);
-			this.isAvailableReceivePayment = props.isAvailableReceivePayment;
-		}
-
 		componentDidMount()
 		{
 			this.layoutWidget.setTitle({
 				text: this.getDocumentTitle(),
 			});
-			if (this.isAvailableReceivePayment)
-			{
-				this.layoutWidget.setRightButtons([
-					{
-						name: Loc.getMessage('M_CRM_ENTITY_DOCUMENT_SEND'),
-						type: 'text',
-						color: '#2066b0',
-						callback: () => this.openSendMessageStep(),
-					},
-				]);
-			}
+
+			this.layoutWidget.setRightButtons([
+				{
+					name: Loc.getMessage('M_CRM_ENTITY_DOCUMENT_SEND'),
+					type: 'text',
+					color: '#2066b0',
+					callback: () => this.openSendMessageStep(),
+				},
+			]);
 		}
 
 		getDocumentTitle()

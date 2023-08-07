@@ -2,7 +2,6 @@
  * @module layout/ui/fields/crm-stage
  */
 jn.define('layout/ui/fields/crm-stage', (require, exports, module) => {
-	const { ShimmerView } = require('layout/polyfill');
 	const { BaseField } = require('layout/ui/fields/base');
 
 	let StageSelector, AnimationMode, CategoryStorage;

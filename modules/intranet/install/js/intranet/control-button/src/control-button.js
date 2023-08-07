@@ -266,12 +266,6 @@ export class ControlButton
 
 	openChat()
 	{
-		if (this.entityType === 'workgroup')
-		{
-			Messenger.openChat('sg' + this.entityId);
-			return;
-		}
-
 		this.showLoader();
 
 		ajax.runAction('intranet.controlbutton.getChat', {
@@ -307,12 +301,6 @@ export class ControlButton
 
 	startVideoCall()
 	{
-		if (this.entityType === 'workgroup')
-		{
-			Messenger.startVideoCall('sg' + this.entityId);
-			return;
-		}
-
 		this.showLoader();
 
 		ajax.runAction('intranet.controlbutton.getVideoCallChat', {

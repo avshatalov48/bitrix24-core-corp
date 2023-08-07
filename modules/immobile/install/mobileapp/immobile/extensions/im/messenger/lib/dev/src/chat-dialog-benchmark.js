@@ -63,7 +63,7 @@ jn.define('im/messenger/lib/dev/chat-dialog-benchmark', (require, exports, modul
 			this.showInstruction();
 			this.setMessages(this.getRandomMessages(50));
 
-			this.widget.on(EventType.dialog.viewableMessagesChanged, (indexList, messageList) => {
+			this.widget.on(EventType.dialog.viewAreaMessagesChanged, (indexList, messageList) => {
 				if (indexList.includes(0))
 				{
 					this.addMessages(this.getRandomMessages(50));

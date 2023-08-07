@@ -27,6 +27,7 @@
 				name,
 			};
 		});
+
 		return bindingsMap;
 	}
 
@@ -43,9 +44,10 @@
 		let cc = BX.componentParameters.get('cc', []);
 
 		const bindingsData = {
-			...buildContactMapForBindings(clients),
-			...buildContactMapForBindings(to),
 			...buildContactMapForBindings(cc),
+			...buildContactMapForBindings(to),
+			//The information from "clients" is given higher priority since, as a rule, it contains more comprehensive contact details.
+			...buildContactMapForBindings(clients),
 		};
 
 		to = to.length > 0 ? buildContactSetForFields(to) : [EMPTY_CONTACT];

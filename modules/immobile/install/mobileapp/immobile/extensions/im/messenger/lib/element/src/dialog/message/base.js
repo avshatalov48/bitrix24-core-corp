@@ -1,11 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/lib/element/dialog/message/base
  */
 jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 	const { core } = require('im/messenger/core');
@@ -29,6 +25,10 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	 */
 	class Message
 	{
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @param {CreateMessageOptions} options
+		 */
 		constructor(modelMessage = {}, options = {})
 		{
 			this.type = this.getType();
@@ -70,8 +70,8 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setStatus(modelMessage)
 				.setStatusText(modelMessage)
 				.setLikes(likeList)
-				.setShowUsername(options.showUsername)
-				.setShowAvatar(options.showAvatar)
+				.setShowUsername(modelMessage, options.showUsername)
+				.setShowAvatar(modelMessage, options.showAvatar)
 				.setFontColor(options.fontColor)
 				.setIsBackgroundOn(options.isBackgroundOn)
 				.setShowReaction(options.showReaction)
@@ -113,7 +113,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				)
 			)
 			{
-				this.testId = 'DIALOG_MESSAGE_' + id.toString();
+				this.testId = `DIALOG_MESSAGE_${id.toString()}`;
 
 				return this;
 			}
@@ -175,7 +175,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setMessage(text = '')
 		{
-			this.message = parser.decodeMessageFromText(text);
+			const message = parser.decodeMessageFromText(text);
+			if (Type.isArrayFilled(message))
+			{
+				this.message = message;
+			}
 		}
 
 		setTime(date)
@@ -210,26 +214,38 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			return this;
 		}
 
-		setShowUsername(shouldShowUserName)
+		setShowUsername(modelMessage, shouldShowUserName)
 		{
-			if (!Type.isBoolean(shouldShowUserName))
+			if (Type.isBoolean(shouldShowUserName))
 			{
+				this.showUsername = shouldShowUserName;
+
 				return this;
 			}
 
-			this.showUsername = shouldShowUserName;
+			const isYourMessage = modelMessage.authorId === core.getUserId();
+			if (isYourMessage)
+			{
+				this.showUsername = false;
+			}
 
 			return this;
 		}
 
-		setShowAvatar(shouldShowAvatar)
+		setShowAvatar(modelMessage, shouldShowAvatar)
 		{
-			if (!Type.isBoolean(shouldShowAvatar))
+			if (Type.isBoolean(shouldShowAvatar))
 			{
+				this.showAvatar = shouldShowAvatar;
+
 				return this;
 			}
 
-			this.showAvatar = shouldShowAvatar;
+			const isYourMessage = modelMessage.authorId === core.getUserId();
+			if (isYourMessage)
+			{
+				this.showAvatar = false;
+			}
 
 			return this;
 		}
@@ -298,7 +314,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		{
 			const availableAlign = [
 				MessageAlign.center,
-			]
+			];
 
 			if (availableAlign.includes(align))
 			{
@@ -313,7 +329,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			const availableTextAlign = [
 				MessageTextAlign.center,
 				MessageTextAlign.left,
-				MessageTextAlign.right
+				MessageTextAlign.right,
 			];
 
 			if (availableTextAlign.includes(align))
@@ -348,11 +364,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		{
 			if (showTail)
 			{
-				this._enableTail();
+				this.enableTail();
 			}
 			else
 			{
-				this._disableTail();
+				this.disableTail();
 			}
 
 			return this;
@@ -396,7 +412,10 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			return this;
 		}
 
-		_enableTail()
+		/**
+		 * @private
+		 */
+		enableTail()
 		{
 			if (this.me)
 			{
@@ -408,7 +427,10 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			}
 		}
 
-		_disableTail()
+		/**
+		 * @private
+		 */
+		disableTail()
 		{
 			delete this.style.leftTail;
 			delete this.style.rightTail;

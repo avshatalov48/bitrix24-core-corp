@@ -244,5 +244,31 @@ if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS'])
 				toolbarCountersRobots.classList.add('task-interface-toolbar--item--' + toolbarCountersItems.length);
 			}
 		}
+
+
+		if (document.location.hash === '#robots')
+		{
+			BX.Runtime.loadExtension('ui.tour').then(
+				(exports) =>
+				{
+					const {Guide} = exports;
+
+					const robotsBtn = document.querySelector('.--robots');
+					if (robotsBtn)
+					{
+						(new Guide({
+							steps: [
+								{
+									target: robotsBtn,
+									title: '<?= GetMessageJs('TASKS_TOOLBAR_COMPONENT_ROBOTS_GUIDE_TEXT') ?>',
+									text: '',
+								}
+							],
+							onEvents: true,
+						})).start();
+					}
+				}
+			);
+		}
 	});
 </script>

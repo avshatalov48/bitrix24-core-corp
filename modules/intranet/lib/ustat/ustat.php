@@ -124,43 +124,9 @@ class UStat
 		// get user departments
 		$allUDepts = static::getUsersDepartments();
 		$userDepts = $allUDepts[$userId];
-
-		// hourly department stats
-		foreach ($userDepts as $userDept)
-		{
-			$updResult = DepartmentHourTable::update(
-				array('DEPT_ID' => $userDept, 'HOUR' => $currentHour),
-				array($section => new SqlExpression('?# + 1', $section), 'TOTAL' => new SqlExpression('?# + 1', 'TOTAL'))
-			);
-
-			if (!$updResult->getAffectedRowsCount())
-			{
-				try
-				{
-					DepartmentHourTable::add(array('DEPT_ID' => $userDept, 'HOUR' => $currentHour, $section => 1, 'TOTAL' => 1));
-				}
-				catch (SqlException $e) {}
-			}
-		}
-
-
-		// daily department stats
-		foreach ($userDepts as $userDept)
-		{
-			$updResult = DepartmentDayTable::update(
-				array('DEPT_ID' => $userDept, 'DAY' => $currentHour),
-				array($section => new SqlExpression('?# + 1', $section), 'TOTAL' => new SqlExpression('?# + 1', 'TOTAL'))
-			);
-
-			if (!$updResult->getAffectedRowsCount())
-			{
-				try
-				{
-					DepartmentDayTable::add(array('DEPT_ID' => $userDept, 'DAY' => $currentHour, $section => 1, 'TOTAL' => 1));
-				}
-				catch (SqlException $e) {}
-			}
-		}
+		$departmentHitStat = new DepartmentHitStat($userDepts);
+		$departmentHitStat->hour($section, $currentHour);
+		$departmentHitStat->day($section, $currentHour);
 	}
 
 	/**

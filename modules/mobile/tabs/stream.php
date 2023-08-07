@@ -338,5 +338,10 @@ class Stream implements Tabable
 	{
 		return "news";
 	}
+
+	public function getIconId(): string
+	{
+		return 'stream';
+	}
 }
 

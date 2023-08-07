@@ -1,14 +1,9 @@
-/* eslint-disable bitrix-rules/no-pseudo-private */
 /* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-bx-message */
 
 /**
  * @module im/messenger/cache/files
  */
 jn.define('im/messenger/cache/files', (require, exports, module) => {
-
-	const { clone } = require('utils/object');
 	const { Cache } = require('im/messenger/cache/base');
 
 	/**

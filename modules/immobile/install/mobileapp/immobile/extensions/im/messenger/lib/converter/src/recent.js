@@ -1,5 +1,3 @@
-/* eslint-disable flowtype/require-return-type */
-
 /**
  * @module im/messenger/lib/converter/recent
  */
@@ -14,7 +12,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 	 */
 	class RecentConverter
 	{
-		//TODO: Migrate and refactor ChatDataConverter to new converters
+		// TODO: Migrate and refactor ChatDataConverter to new converters
 		constructor()
 		{
 			ChatDataConverter.init({

@@ -50,9 +50,8 @@ export class FieldsetViewer extends EventEmitter
 	{
 		return new Promise((resolve) => {
 			const {entityTypeId, entityId, fieldListEditorOptions} = this.getOptions();
-			const presetId = fieldListEditorOptions
-				? (fieldListEditorOptions.fieldsPanelOptions ? fieldListEditorOptions.fieldsPanelOptions.presetId : null)
-				: null;
+
+			const presetId = fieldListEditorOptions?.fieldsPanelOptions?.presetId ?? null;
 
 			BX.ajax
 				.runAction('crm.api.fieldset.load', {json: {entityTypeId, entityId, presetId}})

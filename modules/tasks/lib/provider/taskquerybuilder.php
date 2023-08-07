@@ -723,13 +723,18 @@ class TaskQueryBuilder
 				break;
 
 			case self::ALIAS_TASK_SORT:
+				$filter = $this->taskQuery->getWhere();
+				$groupId = $filter['GROUP_ID'] ?? null;
+				$joinOn = $groupId
+					? Join::on('this.ID', 'ref.TASK_ID')->where('ref.GROUP_ID', $groupId)
+					: Join::on('this.ID', 'ref.TASK_ID')->where('ref.USER_ID', $this->taskQuery->getBehalfUser());
+
 				$this->query->registerRuntimeField(
 					$alias,
 					(new ReferenceField(
 						$alias,
 						SortingTable::getEntity(),
-						Join::on('this.ID', 'ref.TASK_ID')
-							->where('ref.USER_ID', $this->taskQuery->getBehalfUser())
+						$joinOn
 					))->configureJoinType('left')
 				);
 				break;

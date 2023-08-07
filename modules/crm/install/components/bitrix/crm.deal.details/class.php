@@ -709,17 +709,17 @@ class CCrmDealDetailsComponent
 								'template' => '',
 								'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 									'INVOICE_COUNT' => '20',
-									'PATH_TO_COMPANY_SHOW' => $this->arResult['PATH_TO_COMPANY_SHOW'],
-									'PATH_TO_COMPANY_EDIT' => $this->arResult['PATH_TO_COMPANY_EDIT'],
-									'PATH_TO_CONTACT_EDIT' => $this->arResult['PATH_TO_CONTACT_EDIT'],
-									'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'],
-									'PATH_TO_INVOICE_EDIT' => $this->arResult['PATH_TO_INVOICE_EDIT'],
-									'PATH_TO_INVOICE_PAYMENT' => $this->arResult['PATH_TO_INVOICE_PAYMENT'],
+									'PATH_TO_COMPANY_SHOW' => $this->arResult['PATH_TO_COMPANY_SHOW'] ?? null,
+									'PATH_TO_COMPANY_EDIT' => $this->arResult['PATH_TO_COMPANY_EDIT'] ?? null,
+									'PATH_TO_CONTACT_EDIT' => $this->arResult['PATH_TO_CONTACT_EDIT'] ?? null,
+									'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'] ?? null,
+									'PATH_TO_INVOICE_EDIT' => $this->arResult['PATH_TO_INVOICE_EDIT'] ?? null,
+									'PATH_TO_INVOICE_PAYMENT' => $this->arResult['PATH_TO_INVOICE_PAYMENT'] ?? null,
 									'INTERNAL_FILTER' => array('UF_DEAL_ID' => $this->entityID),
 									'SUM_PAID_CURRENCY' => $currencyId,
 									'GRID_ID_SUFFIX' => 'DEAL_DETAILS',
 									'TAB_ID' => 'tab_invoice',
-									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
+									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? null,
 									'ENABLE_TOOLBAR' => 'Y',
 									'PRESERVE_HISTORY' => true,
 									'ADD_EVENT_NAME' => 'CrmCreateInvoiceFromDeal'
@@ -1329,7 +1329,7 @@ class CCrmDealDetailsComponent
 				"type" => "boolean",
 				"editable" => true
 			),
-			Crm\Entity\FieldContentType::compileFieldDescriptionForDetails(\CCrmOwnerType::Deal, $this->entityID, 'COMMENTS'),
+			Crm\Entity\CommentsHelper::compileFieldDescriptionForDetails(\CCrmOwnerType::Deal, 'COMMENTS'),
 			array(
 				'name' => 'CLIENT',
 				'title' => Loc::getMessage('CRM_DEAL_FIELD_CLIENT'),
@@ -1991,7 +1991,7 @@ class CCrmDealDetailsComponent
 			);
 			//endregion
 
-			$this->entityData = Crm\Entity\FieldContentType::prepareFieldsFromDetailsToView(
+			$this->entityData = Crm\Entity\CommentsHelper::prepareFieldsFromDetailsToView(
 				\CCrmOwnerType::Deal,
 				$this->entityID,
 				$this->entityData,

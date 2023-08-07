@@ -95,6 +95,7 @@ jn.define('crm/required-fields/required-backdrop', (require, exports, module) =>
 		renderEditor()
 		{
 			const { editorData } = this.props;
+
 			return EntityManager.create({
 				refCallback: (ref) => this.refEntityManager = ref,
 				componentId: 'crm.tabs',

@@ -127,4 +127,9 @@ class Notify implements Tabable
 	{
 		return "notify";
 	}
+
+	public function getIconId(): string
+	{
+		return $this->getId();
+	}
 }

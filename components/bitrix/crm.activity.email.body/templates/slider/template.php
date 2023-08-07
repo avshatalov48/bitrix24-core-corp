@@ -9,6 +9,11 @@ global $APPLICATION;
 
 \Bitrix\Main\UI\Extension::load('ui.viewer');
 
+if (IsModuleInstalled('disk'))
+{
+	\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/disk/css/legacy_uf_common.css');
+}
+
 $activity = $arParams['ACTIVITY'];
 
 $ownerUid = sprintf('CRM%s%u', \CCrmOwnerType::resolveName($activity['OWNER_TYPE_ID']), $activity['OWNER_ID']);
@@ -447,16 +452,7 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 				array(
 					'name'   => 'DATA[message]',
 					'type'   => 'editor',
-					'value'  => sprintf(
-						'<br><br>%s, %s:<br><blockquote style="margin: 0 0 0 5px; padding: 5px 5px 5px 8px; border-left: 4px solid #e2e3e5; ">%s</blockquote>',
-						formatDate(
-							preg_replace('/[\/.,\s:][s]/', '', $GLOBALS['DB']->dateFormatToPhp(FORMAT_DATETIME)),
-							makeTimestamp($activity['START_TIME']),
-							time()+\CTimeZone::getOffset()
-						),
-						htmlspecialcharsbx($activity['ITEM_FROM_TITLE']),
-						$quote
-					),
+					'value'  => $activity['MESSAGE_QUOTE'],
 					'height' => 100,
 				),
 				array(

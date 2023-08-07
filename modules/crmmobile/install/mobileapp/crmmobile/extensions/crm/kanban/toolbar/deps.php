@@ -18,5 +18,6 @@ return [
 		'./entities/lead',
 		'./entities/smart-invoice',
 		'./entities/quote',
+		'./entities/dynamic',
 	],
 ];

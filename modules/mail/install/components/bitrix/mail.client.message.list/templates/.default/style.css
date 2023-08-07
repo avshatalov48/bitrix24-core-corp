@@ -98,6 +98,12 @@
 	justify-content: space-between;
 }
 
+.mail-menu-popup-item-text-wrapper
+{
+	display: flex;
+	align-items: center;
+}
+
 .menu-popup-item-text .main-buttons-item-text {
 	overflow: hidden;
 	text-overflow: ellipsis;

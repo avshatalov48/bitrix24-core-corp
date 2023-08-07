@@ -330,7 +330,7 @@ class CIntranetSearchComponent extends CBitrixComponent
 	}
 
 	/**
-	 * @return CAllMain
+	 * @return CMain
 	 */
 	public function getApplication()
 	{

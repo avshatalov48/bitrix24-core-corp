@@ -81,7 +81,7 @@ class Sms extends Item
 			if ($extension)
 			{
 				$providersMap = $documentGeneratorManager->getCrmOwnerTypeProvidersMap();
-				$provider = $providersMap[$this->getEntityTypeId()];
+				$provider = $providersMap[$this->getEntityTypeId()] ?? null;
 				if(!$provider)
 				{
 					$isDocumentsEnabled = false;

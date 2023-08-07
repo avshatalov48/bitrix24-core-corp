@@ -9,6 +9,7 @@ use Bitrix\Crm\Integration\UI\EntitySelector\DynamicMultipleProvider;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Multifield\Type\Link;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\CrmMobile\ProductGrid\UpdateCatalogProductsCommand;
 use Bitrix\Main\Error;
@@ -34,14 +35,16 @@ final class SaveEntityCommand extends Command
 	private Factory $factory;
 	private Item $entity;
 	private array $data;
+	private ?Context $context;
 
 	private array $temporaryFiles = [];
 
-	public function __construct(Factory $factory, Item $entity, array $data)
+	public function __construct(Factory $factory, Item $entity, array $data, ?Context $context = null)
 	{
 		$this->factory = $factory;
 		$this->entity = $entity;
 		$this->data = $data;
+		$this->context = $context;
 	}
 
 	public function execute(): Result
@@ -167,7 +170,6 @@ final class SaveEntityCommand extends Command
 		if (isset($fields['COMMENTS']) && $fields['COMMENTS'] !== '')
 		{
 			$fields['COMMENTS'] = trim(strip_tags($fields['COMMENTS']));
-			$fields['COMMENTS'] = str_replace("\n", "<br>\n", $fields['COMMENTS']);
 		}
 	}
 
@@ -594,11 +596,11 @@ final class SaveEntityCommand extends Command
 		$isNew = $entityId === 0;
 		if ($isNew)
 		{
-			$operation = $this->factory->getAddOperation($this->entity);
+			$operation = $this->factory->getAddOperation($this->entity, $this->context);
 		}
 		else
 		{
-			$operation = $this->factory->getUpdateOperation($this->entity);
+			$operation = $this->factory->getUpdateOperation($this->entity, $this->context);
 		}
 
 		$productRows = $this->extractProductRowsData($fields);

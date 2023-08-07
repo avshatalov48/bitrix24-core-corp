@@ -54,8 +54,19 @@ class Rest extends \IRestService
 				'imopenlines.operator.spam' => [__CLASS__, 'operatorSpam'],
 				'imopenlines.operator.transfer' => [__CLASS__, 'operatorTransfer'],
 				'imopenlines.operator.finish' => [__CLASS__, 'operatorFinish'],
+				'imopenlines.operator.another.finish' => [__CLASS__, 'operatorFinishAnother'],
 
 				'imopenlines.session.intercept' => [__CLASS__, 'sessionIntercept'],
+				'imopenlines.session.open' => [__CLASS__, 'sessionOpen'],
+				'imopenlines.session.mode.silent' => [__CLASS__, 'sessionSilent'],
+				'imopenlines.session.mode.pin' => [__CLASS__, 'sessionPin'],
+				'imopenlines.session.head.vote' => [__CLASS__, 'sessionVoteAsHead'],
+				'imopenlines.session.join' => [__CLASS__, 'sessionJoin'],
+				'imopenlines.session.start' => [__CLASS__, 'sessionStart'],
+				'imopenlines.session.history.get' => [__CLASS__, 'sessionGetHistory'],
+
+				'imopenlines.message.session.start' => [__CLASS__, 'sessionStartByMessage'],
+				'imopenlines.message.quick.save' => [__CLASS__, 'messageSaveToQuickAnswer'],
 
 				'imopenlines.bot.session.operator' => [__CLASS__, 'botSessionOperator'],
 				'imopenlines.bot.session.send.message' => ['callback' => [__CLASS__, 'botSessionSendAutoMessage'], 'options' => ['private' => true]], // legacy
@@ -86,7 +97,8 @@ class Rest extends \IRestService
 				'imopenlines.config.delete' => [__CLASS__, 'configDelete'],
 
 				'imopenlines.crm.chat.user.add' => [__CLASS__, 'crmChatUserAdd'],
-				'imopenlines.crm.chat.getLastId' => [__CLASS__, 'crmLastChatIdGet']
+				'imopenlines.crm.chat.getLastId' => [__CLASS__, 'crmLastChatIdGet'],
+				'imopenlines.crm.lead.create' => [__CLASS__, 'crmCreateLead'],
 			],
 		];
 	}
@@ -326,6 +338,20 @@ class Rest extends \IRestService
 		return true;
 	}
 
+	public static function operatorFinishAnother($arParams, $n, \CRestServer $server)
+	{
+		$control = new Operator($arParams['CHAT_ID']);
+		$result = $control->closeDialogOtherOperator();
+		if (!$result->isSuccess())
+		{
+			$errors = $result->getErrors();
+			$error = current($errors);
+			throw new RestException($error->getMessage(), $error->getCode(), \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return true;
+	}
+
 	public static function operatorTransfer($arParams, $n, \CRestServer $server)
 	{
 		$arParams['CHAT_ID'] = (int)$arParams['CHAT_ID'];
@@ -405,6 +431,147 @@ class Rest extends \IRestService
 		return true;
 	}
 
+	public static function sessionOpen($arParams, $n, \CRestServer $server)
+	{
+		$control = new \Bitrix\ImOpenLines\Operator(0);
+		$userCode = $arParams['USER_CODE'];
+		$result = $control->openChat($userCode);
+
+		if (!$result)
+		{
+			throw new RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return self::objectEncode([
+			'CHAT_ID' => $result['ID']
+		]);
+	}
+
+	public static function sessionSilent($arParams, $n, \CRestServer $server)
+	{
+		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
+		$result = $control->setSilentMode($arParams['ACTIVATE'] === 'Y');
+
+		if (!$result)
+		{
+			throw new RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return true;
+	}
+
+	public static function sessionPin($arParams, $n, \CRestServer $server)
+	{
+		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
+		$result = $control->setPinMode($arParams['ACTIVATE'] === 'Y');
+
+		if (!$result->isSuccess())
+		{
+			throw new RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return true;
+	}
+
+	public static function sessionVoteAsHead($arParams, $n, \CRestServer $server)
+	{
+		$control = new \Bitrix\ImOpenLines\Operator(0);
+		$result = $control->voteAsHead(
+			$arParams['SESSION_ID'],
+			$arParams['RATING'],
+			$arParams['COMMENT'] ?: ''
+		);
+
+		if (!$result)
+		{
+			throw new RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return true;
+	}
+
+	public static function sessionJoin($arParams, $n, \CRestServer $server)
+	{
+		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
+		$result = $control->joinSession();
+
+		if (!$result)
+		{
+			throw new RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return true;
+	}
+
+	public static function sessionStart($arParams, $n, \CRestServer $server)
+	{
+		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
+		$result = $control->startSession();
+
+		if (!$result)
+		{
+			throw new RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return true;
+	}
+
+	public static function sessionStartByMessage($arParams, $n, \CRestServer $server)
+	{
+		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
+		$result = $control->startSessionByMessage((int)$arParams['MESSAGE_ID']);
+
+		if (!$result)
+		{
+			throw new RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return true;
+	}
+
+	public static function sessionGetHistory($arParams, $n, \CRestServer $server)
+	{
+		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
+		$result = $control->getSessionHistory($arParams['SESSION_ID']);
+
+		if (!$result)
+		{
+			throw new RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return self::objectEncode([
+			'CHAT_ID' => $result['chatId'],
+			'CAN_JOIN' => $result['canJoin'],
+			'CAN_VOTE_HEAD' => $result['canVoteAsHead'],
+			'SESSION_ID' => $result['sessionId'],
+			'SESSION_VOTE_HEAD' => $result['sessionVoteHead'],
+			'SESSION_COMMENT_HEAD' => $result['sessionCommentHead'],
+			'USER_ID' => 'chat'.$result['chatId'],
+			'MESSAGE' => isset($result['message']) ? $result['message'] : [],
+			'USERS_MESSAGE' => isset($result['message']) ? $result['usersMessage'] : [],
+			'USERS' => isset($result['users']) ? $result['users'] : [],
+			'OPENLINES' => isset($result['openlines']) ? $result['openlines'] : [],
+			'USER_IN_GROUP' => isset($result['userInGroup']) ? $result['userInGroup'] : [],
+			'WO_USER_IN_GROUP' => isset($result['woUserInGroup']) ? $result['woUserInGroup'] : [],
+			'CHAT' => isset($result['chat']) ? $result['chat'] : [],
+			'USER_BLOCK_CHAT' => isset($result['userChatBlockStatus']) ? $result['userChatBlockStatus'] : [],
+			'USER_IN_CHAT' => isset($result['userInChat']) ? $result['userInChat'] : [],
+			'FILES' => isset($result['files']) ? $result['files'] : [],
+		]);
+	}
+
+	public static function messageSaveToQuickAnswer($arParams, $n, \CRestServer $server)
+	{
+		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
+		$result = $control->saveToQuickAnswers((int)$arParams['MESSAGE_ID']);
+
+		if (!$result)
+		{
+			throw new RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return true;
+	}
 
 	public static function botSessionOperator($arParams, $n, \CRestServer $server)
 	{
@@ -1488,7 +1655,11 @@ class Rest extends \IRestService
 
 		if ($chatId > 0)
 		{
-			if (!Config::canJoin($chatId, $arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']))
+			$chat = Im\Model\ChatTable::getByPrimary($chatId, ['select' => ['ENTITY_ID']])->fetch();
+			$parsedUserCode = Session\Common::parseUserCode($chat['ENTITY_ID']);
+			$lineId = $parsedUserCode['CONFIG_ID'];
+
+			if (!Config::canJoin($lineId, $arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']))
 			{
 				throw new RestException('You don\'t have access to join user to chat', 'CHAT_JOIN_PERMISSION_DENIED', \CRestServer::STATUS_FORBIDDEN);
 			}
@@ -1536,6 +1707,21 @@ class Rest extends \IRestService
 		}
 
 		return $chatId;
+	}
+
+	public static function crmCreateLead($arParams, $n, \CRestServer $server): bool
+	{
+		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
+		$result = $control->createLead();
+
+		if (!$result->isSuccess())
+		{
+			$errors = $result->getErrors();
+			$error = current($errors);
+			throw new RestException($error->getMessage(), $error->getCode(), \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return true;
 	}
 
 	private static function getChatId(array $params)

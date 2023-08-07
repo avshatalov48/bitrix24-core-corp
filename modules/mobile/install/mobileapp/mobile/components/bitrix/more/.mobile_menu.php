@@ -1,12 +1,13 @@
 <?php
 
+use Bitrix\Crm\Integration\IntranetManager;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Intranet\AI;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Main\ModuleManager;
-use Bitrix\Mobile\Tab\Manager;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -69,7 +70,7 @@ $diskComponentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion(
 $calendarComponentPath = \Bitrix\MobileApp\Janative\Manager::getComponentPath("calendar:calendar.events");
 $calendarComponentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion("calendar:calendar.events");
 $workgroupsComponentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion("workgroups");
-$catalogStoreDocumentListComponentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion("catalog.store.document.list");
+$catalogStoreDocumentListComponentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion("catalog:catalog.store.document.list");
 
 $taskParams = json_encode([
 	"COMPONENT_CODE" => "tasks.list",
@@ -494,6 +495,75 @@ if (
 	];
 
 	$menuStructure[] = $crmMenuItems;
+
+	$customSectionsMenuItems = [
+		'title' => Loc::getMessage('MB_CRM_DYNAMIC_CUSTOM_SECTION'),
+		'sort' => 123,
+		'hidden' => false,
+		'items' => [],
+	];
+
+	if (IntranetManager::isCustomSectionsAvailable())
+	{
+		$customSections = IntranetManager::getCustomSections();
+		foreach ($customSections as $customSection)
+		{
+			$pages = $customSection->getPages();
+			if (empty($pages))
+			{
+				continue;
+			}
+
+			$hasPermissions = false;
+			foreach ($pages as $page)
+			{
+				$entityTypeId = IntranetManager::getEntityTypeIdByPageSettings($page->getSettings());
+				if (Container::getInstance()->getUserPermissions()->canReadType($entityTypeId))
+				{
+					$hasPermissions = true;
+					break;
+				}
+			}
+
+			if (!$hasPermissions)
+			{
+				continue;
+			}
+
+			$customSectionId = $customSection->getId();
+			$customSectionTitle = $customSection->getTitle();
+			$customSectionComponentText = CUtil::JSescape($customSectionTitle);
+
+			$customSectionsMenuItems['items'][] = [
+				'title' => $customSectionTitle,
+				'imageUrl' => $imageDir . 'crm/icon-crm-dynamic.png',
+				'color' => '#3BA7EF',
+				'hidden' => false,
+				'attrs' => [
+					'id' => 'dynamic_custom_section_' . $customSectionId,
+					'onclick' => <<<JS
+						ComponentHelper.openLayout({
+							widgetParams: {
+								titleParams: {
+									text: '$customSectionComponentText',
+								},
+							},
+							name: 'crm:crm.tabs',
+							canOpenInDefault: true,
+							componentParams: {
+								customSectionId: $customSectionId,
+							},
+						});
+JS,
+				],
+			];
+		}
+	}
+
+	if (!empty($customSectionsMenuItems['items']))
+	{
+		$menuStructure[] = $customSectionsMenuItems;
+	}
 }
 
 /**

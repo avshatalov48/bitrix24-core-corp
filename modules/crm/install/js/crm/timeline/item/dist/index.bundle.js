@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_cnt,rest_client,ui_label,ui_buttons,ui_vue3_components_audioplayer,main_popup,ui_alerts,ui_textcrop,crm_datetime,currency_currencyCore,ui_icons_generator,main_loader,ui_vue3,crm_timeline_editors_commentEditor,main_date,crm_timeline_tools,ui_infoHelper,ui_entitySelector,crm_activity_fileUploaderPopup,crm_activity_settingsPopup,crm_activity_todoEditor,ui_designTokens,main_core_events,crm_entityEditor_field_paymentDocuments,pull_client,crm_timeline_item,crm_router,calendar_sharing_interface,main_core,ui_notification,ui_dialogs_messagebox) {
+(function (exports,ui_cnt,rest_client,ui_label,ui_buttons,ui_vue3_components_audioplayer,main_popup,ui_alerts,ui_textcrop,crm_datetime,currency_currencyCore,ui_icons_generator,ui_iconSet_api_vue,ui_iconSet_main,ui_iconSet_actions,main_loader,ui_vue3,crm_timeline_editors_commentEditor,main_date,crm_timeline_tools,ui_infoHelper,ui_entitySelector,crm_activity_fileUploaderPopup,crm_activity_settingsPopup,crm_activity_todoEditor,ui_designTokens,main_core_events,crm_entityEditor_field_paymentDocuments,pull_client,crm_timeline_item,crm_router,calendar_sharing_interface,main_core,ui_notification,ui_dialogs_messagebox) {
 	'use strict';
 
 	var crm_timeline_item__default = 'default' in crm_timeline_item ? crm_timeline_item['default'] : crm_timeline_item;
@@ -2378,6 +2378,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _layoutApp = /*#__PURE__*/new WeakMap();
 	var _layout$1 = /*#__PURE__*/new WeakMap();
 	var _streamType = /*#__PURE__*/new WeakMap();
+	var _useAnchorNextSibling = /*#__PURE__*/new WeakSet();
 	var _initLayoutApp = /*#__PURE__*/new WeakSet();
 	var _getLayoutAppProps = /*#__PURE__*/new WeakSet();
 	var _onLayoutAppAction = /*#__PURE__*/new WeakSet();
@@ -2392,6 +2393,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onLayoutAppAction);
 	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _getLayoutAppProps);
 	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _initLayoutApp);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _useAnchorNextSibling);
 	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _container, {
 	      writable: true,
 	      value: null
@@ -2514,18 +2516,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: babelHelpers.classPrivateFieldGet(this, _itemClassName)
 	        }
 	      }));
-	      _classPrivateMethodGet$1(this, _initLayoutApp, _initLayoutApp2).call(this);
-	      if (this.needBindToContainer(options)) {
-	        const bindTo = this.getBindToNode(options);
-	        if (bindTo && bindTo.nextSibling) {
-	          main_core.Dom.insertBefore(this.getWrapper(), bindTo.nextSibling);
-	        } else {
-	          main_core.Dom.append(this.getWrapper(), babelHelpers.classPrivateFieldGet(this, _container));
-	        }
-	      }
-	      for (const controller of babelHelpers.classPrivateFieldGet(this, _controllers)) {
-	        controller.onAfterItemLayout(this, options);
-	      }
+	      this.initLayoutApp(options);
 	    }
 	  }, {
 	    key: "initWrapper",
@@ -2544,7 +2535,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      _classPrivateMethodGet$1(this, _initLayoutApp, _initLayoutApp2).call(this);
 	      if (this.needBindToContainer(options)) {
 	        const bindTo = this.getBindToNode(options);
-	        if (bindTo && bindTo.nextSibling) {
+	        if (bindTo && !_classPrivateMethodGet$1(this, _useAnchorNextSibling, _useAnchorNextSibling2).call(this, options)) {
+	          main_core.Dom.insertBefore(this.getWrapper(), bindTo);
+	        } else if (bindTo && bindTo.nextSibling) {
 	          main_core.Dom.insertBefore(this.getWrapper(), bindTo.nextSibling);
 	        } else {
 	          main_core.Dom.append(this.getWrapper(), babelHelpers.classPrivateFieldGet(this, _container));
@@ -2585,6 +2578,17 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    }
 	  }, {
+	    key: "forceRefreshLayout",
+	    value: function forceRefreshLayout() {
+	      var _this$getWrapper;
+	      const bindTo = (_this$getWrapper = this.getWrapper()) === null || _this$getWrapper === void 0 ? void 0 : _this$getWrapper.nextSibling;
+	      this.clearLayout();
+	      this.layout({
+	        anchor: bindTo,
+	        useAnchorNextSibling: false
+	      });
+	    }
+	  }, {
 	    key: "getLayoutContentBlockById",
 	    value: function getLayoutContentBlockById(id) {
 	      return babelHelpers.classPrivateFieldGet(this, _layoutComponent).getContentBlockById(id);
@@ -2621,6 +2625,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        controller.onBeforeItemClearLayout(this);
 	      }
 	      babelHelpers.classPrivateFieldGet(this, _layoutApp).unmount();
+	      babelHelpers.classPrivateFieldSet(this, _layoutApp, null);
+	      babelHelpers.classPrivateFieldSet(this, _layoutComponent, null);
 	      babelHelpers.get(babelHelpers.getPrototypeOf(ConfigurableItem.prototype), "clearLayout", this).call(this);
 	    }
 	  }, {
@@ -2693,7 +2699,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }, {
 	    key: "reloadFromServer",
-	    value: function reloadFromServer() {
+	    value: function reloadFromServer(forceRefreshLayout = false) {
 	      const data = {
 	        ownerTypeId: babelHelpers.classPrivateFieldGet(this, _ownerTypeId),
 	        ownerId: babelHelpers.classPrivateFieldGet(this, _ownerId)
@@ -2711,7 +2717,11 @@ this.BX.Crm = this.BX.Crm || {};
 	        Object.values(response.data).forEach(item => {
 	          if (item.id === this.getId()) {
 	            this.setData(item);
-	            this.refreshLayout();
+	            if (forceRefreshLayout) {
+	              this.forceRefreshLayout();
+	            } else {
+	              this.refreshLayout();
+	            }
 	          }
 	        });
 	        return true;
@@ -2730,6 +2740,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return ConfigurableItem;
 	}(Item);
+	function _useAnchorNextSibling2(options) {
+	  if (main_core.Type.isPlainObject(options)) {
+	    return main_core.Type.isBoolean(options['useAnchorNextSibling']) ? options['useAnchorNextSibling'] : true;
+	  }
+	  return true;
+	}
 	function _initLayoutApp2() {
 	  if (!babelHelpers.classPrivateFieldGet(this, _layoutApp)) {
 	    babelHelpers.classPrivateFieldSet(this, _layoutApp, ui_vue3.BitrixVue.createApp(Item$1, _classPrivateMethodGet$1(this, _getLayoutAppProps, _getLayoutAppProps2).call(this)));
@@ -3153,6 +3169,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      type: String,
 	      required: false,
 	      default: ''
+	    },
+	    mini: {
+	      type: Boolean,
+	      required: false,
+	      default: false
 	    }
 	  },
 	  data() {
@@ -3166,7 +3187,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    containerClassname() {
 	      return ['crm-timeline__audioplayer-contianer', 'ui-vue-audioplayer-container', {
 	        'ui-vue-audioplayer-container-dark': this.isDark,
-	        'ui-vue-audioplayer-container-mobile': this.isMobile
+	        'ui-vue-audioplayer-container-mobile': this.isMobile,
+	        '--mini': this.mini
 	      }];
 	    },
 	    controlClassname() {
@@ -3331,8 +3353,15 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.setProgress(this.seek / pixelPerPercent, this.seek);
 	      this.source().currentTime = this.timeTotal / 100 * this.progress;
 	    },
+	    setProgress(percent, pixel = -1) {
+	      if (this.mini) {
+	        return;
+	      }
+	      this.progress = percent;
+	      this.progressInPixel = pixel > 0 ? pixel : Math.round(this.$refs.track.offsetWidth / 100 * percent);
+	    },
 	    changeLogoIcon(icon) {
-	      if (!this.$parent) {
+	      if (!this.$parent || !this.$parent.getLogo) {
 	        return;
 	      }
 	      const logo = this.$parent.getLogo();
@@ -3358,18 +3387,33 @@ this.BX.Crm = this.BX.Crm || {};
 		>
 			<div class="ui-vue-audioplayer-controls-container">
 				<button :class="controlClassname" @click="clickToButton">
-					<svg v-if="state !== State.play" class="ui-vue-audioplayer-control-icon" width="9" height="12" viewBox="0 0 9 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<svg
+						v-if="state !== State.play"
+						class="ui-vue-audioplayer-control-icon"
+						width="9"
+						height="12"
+						viewBox="0 0 9 12"
+						fill="none"
+						xmlns="http://www.w3.org/2000/svg"
+					>
 						<path fill-rule="evenodd" clip-rule="evenodd" d="M8.52196 5.40967L1.77268 0.637568C1.61355 0.523473 1.40621 0.510554 1.23498 0.604066C1.06375 0.697578 0.957151 0.881946 0.958524 1.0822V10.6259C0.956507 10.8265 1.06301 11.0114 1.23449 11.105C1.40597 11.1987 1.61368 11.1854 1.77268 11.0706L8.52196 6.29847C8.66466 6.19871 8.75016 6.0322 8.75016 5.85407C8.75016 5.67593 8.66466 5.50942 8.52196 5.40967Z"/>
 					</svg>
-					<svg v-else width="8" height="10" viewBox="0 0 8 10" xmlns="http://www.w3.org/2000/svg">
-						<path d="M2.5625 0.333008H0.375V9.66634H2.5625V0.333008Z" fill="inherit" />
-						<path d="M7.25 0.333008H5.0625V9.66634H7.25V0.333008Z" fill="inherit" />
+					<svg
+						v-else
+                        class="ui-vue-audioplayer-control-icon"
+						width="8"
+						height="10"
+						viewBox="0 0 8 10"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<rect width="2" height="9" x="0%"></rect>
+						<rect width="2" height="9" x="55%"></rect>
 					</svg>
 				</button>
 			</div>
 			<div class="ui-vue-audioplayer-timeline-container">
-				<div class="ui-vue-audioplayer-record-name">{{ recordName }}</div>
-				<div class="ui-vue-audioplayer-track-container" @mousedown="startSeeking" ref="track">
+				<div v-if="!mini" class="ui-vue-audioplayer-record-name">{{ recordName }}</div>
+				<div v-if="!mini" class="ui-vue-audioplayer-track-container" @mousedown="startSeeking" ref="track">
 					<div class="ui-vue-audioplayer-track-mask"></div>
 					<div class="ui-vue-audioplayer-track" :style="progressPosition"></div>
 					<div @mousedown="startSeeking" class="ui-vue-audioplayer-track-seek" :style="seekPosition">
@@ -3378,11 +3422,22 @@ this.BX.Crm = this.BX.Crm || {};
 <!--					<div class="ui-vue-audioplayer-track-event" @mousemove="seeking"></div>-->
 				</div>
 				<div :class="totalTimeClassname">
-					<div :class="timeCurrentClassname">{{formatTimeCurrent}}</div>
+					<div
+						v-if="(mini && timeCurrent > 0) || !mini"
+						ref="currentTime"
+						:class="timeCurrentClassname"
+					>
+						<span style="position: absolute; right: 0; top: 0;">
+							{{formatTimeCurrent}}
+						</span>
+						<span style="opacity: 0;">{{formatTimeTotal}}</span>
+					</div>
+					<span class="ui-vue-audioplayer-time-divider" v-if="mini && timeCurrent > 0">&nbsp;/&nbsp;</span>
 					<div ref="totalTime" class="ui-vue-audioplayer-time">{{formatTimeTotal}}</div>
 				</div>
 			</div>
 			<div
+				v-if="!mini"
 				@click="showPlaybackRateMenu"
 				ref="playbackRateButtonContainer"
 				class="ui-vue-audioplayer_playback-speed-menu-container"
@@ -4511,15 +4566,33 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 
 	var File = {
+	  components: {
+	    TimelineAudio
+	  },
 	  props: {
+	    id: Number,
 	    text: String,
 	    href: String,
 	    size: Number,
-	    attributes: Object
+	    attributes: Object,
+	    hasAudioPlayer: {
+	      type: Boolean,
+	      required: false,
+	      default: false
+	    }
 	  },
 	  computed: {
 	    fileExtension() {
 	      return this.text.split('.').slice(-1)[0] || '';
+	    },
+	    titleFirstPart() {
+	      return this.text.slice(0, -this.titleLastPartSize);
+	    },
+	    titleLastPart() {
+	      return this.text.slice(-this.titleLastPartSize);
+	    },
+	    titleLastPartSize() {
+	      return 10;
 	    }
 	  },
 	  mounted() {
@@ -4529,25 +4602,31 @@ this.BX.Crm = this.BX.Crm || {};
 	    fileIcon.renderTo(this.$refs.icon);
 	  },
 	  template: `
-			<div class="crm-timeline__file">
-				<div ref="icon" class="crm-timeline__file_icon"></div>
-				<a
-					target="_blank"
-					class="crm-timeline__card_link"
-					v-if="href"
-					:title="text"
-					:href="href"
-					v-bind="attributes"
-				>
-					{{text}}
-				</a>
+		<div class="crm-timeline__file">
+			<div ref="icon" class="crm-timeline__file_icon"></div>
+			<a
+				target="_blank"
+				class="crm-timeline__file_title crm-timeline__card_link"
+				v-if="href"
+				:title="text"
+				:href="href"
+				v-bind="attributes"
+				ref="title"
+			>
+				<span>{{ titleFirstPart }}</span>
+				<span>{{ titleLastPart }}</span>
+			</a>
+			<div class="crm-timeline__file_audio-player" v-if="this.hasAudioPlayer">
+				<TimelineAudio :id="id" :mini="true" :src="href"></TimelineAudio>
 			</div>
+		</div>
 		`
 	};
 
 	const FileList = {
 	  components: {
-	    File
+	    File,
+	    BIcon: ui_iconSet_api_vue.BIcon
 	  },
 	  props: {
 	    title: {
@@ -4569,32 +4648,61 @@ this.BX.Crm = this.BX.Crm || {};
 	      type: Object,
 	      required: false,
 	      default: {}
+	    },
+	    visibleFilesNumber: {
+	      type: Number,
+	      required: false,
+	      default: 5
 	    }
 	  },
 	  inject: ['isReadOnly'],
+	  data() {
+	    return {
+	      visibleFilesAmount: this.visibleFilesNumber
+	    };
+	  },
 	  computed: {
-	    titleClassName() {
-	      return {
-	        'crm-timeline__file-list-title': true,
-	        '--editable': this.isEditable
-	      };
-	    },
-	    fileListTitleText() {
-	      const numberOfFiles = this.numberOfFiles > 0 ? `(${this.numberOfFiles})` : '';
-	      const title = this.title !== '' ? this.title : '';
-	      return `${title} ${numberOfFiles}`;
-	    },
 	    isEditable() {
 	      return Object.keys(this.updateParams).length > 0 && !this.isReadOnly;
+	    },
+	    visibleFiles() {
+	      return this.files.slice(0, this.visibleFilesAmount);
+	    },
+	    editFilesBtnClassname() {
+	      return ['crm-timeline__file-list-btn', {
+	        '--disabled': !this.isEditable
+	      }];
+	    },
+	    expandFileListBtnTitle() {
+	      return this.isAllFilesVisible ? this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_FILE_LIST_COLLAPSE') : this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_FILE_LIST_EXPAND');
+	    },
+	    editFilesBtnIcon() {
+	      return ui_iconSet_api_vue.Set.PENCIL_40;
+	    },
+	    addVisibleFilesBtnIcon() {
+	      return ui_iconSet_api_vue.Set.CHEVRON_DOWN;
+	    },
+	    isAllFilesVisible() {
+	      return this.visibleFilesAmount === this.numberOfFiles;
+	    },
+	    isShowExpandFileListBtn() {
+	      return this.numberOfFiles > this.visibleFilesNumber;
+	    },
+	    expandBtnIconClassname() {
+	      return ['crm-timeline__file-list-btn-icon', {
+	        '--upended': this.isAllFilesVisible
+	      }];
 	    }
 	  },
 	  methods: {
 	    fileProps(file) {
 	      return {
+	        id: file.id,
 	        text: file.name,
 	        href: file.viewUrl,
 	        size: file.size,
-	        attributes: file.attributes
+	        attributes: file.attributes,
+	        hasAudioPlayer: file.hasAudioPlayer
 	      };
 	    },
 	    showFileUploaderPopup() {
@@ -4603,34 +4711,63 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	      const popup = new crm_activity_fileUploaderPopup.FileUploaderPopup(this.updateParams);
 	      popup.show();
+	    },
+	    handleShowFilesBtnClick() {
+	      if (this.isAllFilesVisible) {
+	        this.collapseFileList();
+	      } else {
+	        this.expandFileList();
+	      }
+	    },
+	    expandFileList() {
+	      this.visibleFilesAmount = this.numberOfFiles;
+	    },
+	    collapseFileList() {
+	      this.visibleFilesAmount = this.visibleFilesNumber;
 	    }
 	  },
 	  template: `
 			<div class="crm-timeline__file-list-wrapper">
-				<div class="crm-timeline__file-list-title-container">
-					<span
-						v-if="title !== '' || numberOfFiles > 0"
-						@click="showFileUploaderPopup"
-						:class="titleClassName"
-					>
-						{{ fileListTitleText }}
-					</span>
-					<button
-						v-if="isEditable"
-						@click="showFileUploaderPopup"
-						class="crm-timeline__file-list-edit-btn"
-					>
-						<i class="crm-timeline__editable-text_edit-icon"></i>
-					</button>
-				</div>
 				<div class="crm-timeline__file-list-container">
 					<div
 						class="crm-timeline__file-container"
-						v-for="file in files"
+						v-for="file in visibleFiles"
 					>
 						<File :key="file.id" v-bind="fileProps(file)"></File>
 					</div>
 				</div>
+				<footer class="crm-timeline__file-list-footer">
+					<div
+						v-if="isShowExpandFileListBtn"
+						class="crm-timeline__file-list-btn-container"
+					>
+						<button
+							class="crm-timeline__file-list-btn"
+							@click="handleShowFilesBtnClick"
+						>
+							<span class="crm-timeline__file-list-btn-text">{{expandFileListBtnTitle}}</span>
+							<i :class="expandBtnIconClassname">
+								<BIcon :name="addVisibleFilesBtnIcon" :size="18"></BIcon>
+							</i>
+						</button>
+					</div>
+					<div
+						v-if="isEditable"
+						class="crm-timeline__file-list-btn-container"
+					>
+						<button
+							v-if="title !== '' || numberOfFiles > 0"
+							@click="showFileUploaderPopup"
+							:class="editFilesBtnClassname"
+						>
+							<span class="crm-timeline__file-list-btn-text">{{ title }}</span>
+							<i class="crm-timeline__file-list-btn-icon">
+								<BIcon :name="editFilesBtnIcon" :size="18"></BIcon>
+							</i>
+							<i ref="edit-icon" class="crm-timeline__file-list-btn-icon"></i>
+					</button>
+					</div>
+				</footer>
 			</div>
 		`
 	};
@@ -4730,7 +4867,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.parentCheckIsLongText() || this.hasInlineFiles;
 	    },
 	    saveContent() {
-	      if (this.saveTextButtonState === ButtonState.DISABLED || this.saveTextButtonState === ButtonState.LOADING || !this.isEdit) {
+	      const isSaveDisabled = this.saveTextButtonState === ButtonState.LOADING || !this.isEdit || !this.saveAction;
+	      if (isSaveDisabled) {
 	        return;
 	      }
 	      const content = this.editor.getContent();
@@ -4757,13 +4895,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    executeSaveAction(content, attachmentList) {
 	      var _actionDescription$ac;
-	      if (!this.saveAction) {
-	        return;
-	      }
-	      if (!this.value) {
-	        return;
-	      }
-
 	      // to avoid unintended props mutation
 	      const actionDescription = main_core.Runtime.clone(this.saveAction);
 	      (_actionDescription$ac = actionDescription.actionParams) !== null && _actionDescription$ac !== void 0 ? _actionDescription$ac : actionDescription.actionParams = {};
@@ -5764,21 +5895,11 @@ this.BX.Crm = this.BX.Crm || {};
 	  }).then(response => {
 	    var _response$data3;
 	    if ((response === null || response === void 0 ? void 0 : (_response$data3 = response.data) === null || _response$data3 === void 0 ? void 0 : _response$data3.ID) > 0) {
-	      _classPrivateMethodGet$6(this, _showMessage, _showMessage2).call(this, main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DO_USE_PREVIOUS_MSGVER_1', {
+	      _classPrivateMethodGet$6(this, _showMessage, _showMessage2).call(this, main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DO_USE_PREVIOUS_MSGVER_3', {
 	        '%TITLE%': '<b>' + (response.data.TITLE || '') + '</b>',
-	        '%CREATED_AT%': '<b>' + (response.data.CREATED_AT || '') + '</b>',
 	        '%INITIATOR%': '<b>' + (response.data.INITIATOR || '') + '</b>'
 	      }), [new BX.UI.Button({
-	        text: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_NEW_BUTTON_MSGVER_1'),
-	        className: "ui-btn ui-btn-md ui-btn-primary",
-	        events: {
-	          click: () => {
-	            convertDealAndStartSign(false);
-	            babelHelpers.classPrivateFieldGet(this, _popupConfirm).destroy();
-	          }
-	        }
-	      }), new BX.UI.Button({
-	        text: BX.message('CRM_TIMELINE_ITEM_ACTIVITY_OLD_BUTTON_MSGVER_1'),
+	        text: BX.message('CRM_TIMELINE_ITEM_ACTIVITY_OLD_BUTTON_MSGVER_2'),
 	        className: "ui-btn ui-btn-md ui-btn-primary",
 	        events: {
 	          click: () => {
@@ -5786,7 +5907,16 @@ this.BX.Crm = this.BX.Crm || {};
 	            babelHelpers.classPrivateFieldGet(this, _popupConfirm).destroy();
 	          }
 	        }
-	      })], main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_POPUP_TITLE_MSGVER_1'));
+	      }), new BX.UI.Button({
+	        text: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_NEW_BUTTON_MSGVER_3'),
+	        className: "ui-btn ui-btn-md ui-btn-info",
+	        events: {
+	          click: () => {
+	            convertDealAndStartSign(false);
+	            babelHelpers.classPrivateFieldGet(this, _popupConfirm).destroy();
+	          }
+	        }
+	      })], main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_POPUP_TITLE_MSGVER_2'));
 	    } else {
 	      convertDealAndStartSign(false);
 	    }
@@ -5812,7 +5942,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    titleBar: title,
 	    contentColor: 'white',
 	    className: 'bx-popup-document-activity-popup',
-	    maxWidth: 470
+	    maxWidth: 510
 	  }));
 	  babelHelpers.classPrivateFieldGet(this, _popupConfirm).show();
 	}
@@ -6512,6 +6642,19 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	}
 
+	var ContactList = {
+	  props: {
+	    contactBlocks: Array
+	  },
+	  template: `
+	  	<div class="crm-timeline-block-mail-contacts-wrapper">
+			<div class="crm-timeline-block-mail-contact" v-for="(block, index) in contactBlocks">
+			  <component :is="block.rendererName" v-bind="block.properties"></component>
+			</div>
+		</div>
+	`
+	};
+
 	function _classPrivateMethodInitSpec$c(obj, privateSet) { _checkPrivateRedeclaration$f(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$f(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$c(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
@@ -6549,10 +6692,17 @@ this.BX.Crm = this.BX.Crm || {};
 	        _classPrivateMethodGet$c(this, _schedule, _schedule2).call(this, actionData.activityId, actionData.scheduleDate);
 	      }
 	    }
+	  }, {
+	    key: "getContentBlockComponents",
+	    value: function getContentBlockComponents(Item) {
+	      return {
+	        ContactList
+	      };
+	    }
 	  }], [{
 	    key: "isItemSupported",
 	    value: function isItemSupported(item) {
-	      return item.getType() === 'Activity:Email';
+	      return item.getType() === 'ContactList' || item.getType() === 'Activity:Email' || item.getType() === 'EmailActivitySuccessfullyDelivered';
 	    }
 	  }]);
 	  return Email;
@@ -7291,7 +7441,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          this.ping(actionData);
 	          break;
 	        case 'Task:ChangeDeadline':
-	          this.changeDeadline(actionData);
+	          this.changeDeadline(item, actionData);
 	          break;
 	        case 'Task:View':
 	          this.view(actionData);
@@ -7328,7 +7478,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }, {
 	    key: "changeDeadline",
-	    value: function changeDeadline(actionData) {
+	    value: function changeDeadline(item, actionData) {
 	      if (!actionData.taskId || !actionData.value) {
 	        return;
 	      }
@@ -7341,6 +7491,16 @@ this.BX.Crm = this.BX.Crm || {};
 	          params: {
 	            skipTimeZoneOffset: 'DEADLINE'
 	          }
+	        }
+	      }).catch(response => {
+	        var _response$errors;
+	        const errors = (_response$errors = response.errors) !== null && _response$errors !== void 0 ? _response$errors : null;
+	        if (errors.length > 0) {
+	          ui_notification.UI.Notification.Center.notify({
+	            content: errors[0].message,
+	            autoHideDelay: 3000
+	          });
+	          item.forceRefreshLayout();
 	        }
 	      });
 	    }
@@ -7453,5 +7613,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.ControllerManager = ControllerManager;
 	exports.BaseController = Base;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.UI,BX,BX.UI,BX.UI,BX.Vue3.Components,BX.Main,BX.UI,BX.UI,BX.Crm.DateTime,BX.Currency,BX.UI.Icons.Generator,BX,BX.Vue3,BX.Crm.Timeline.Editors,BX.Main,BX.Crm.Timeline,BX,BX.UI.EntitySelector,BX.Crm.Activity,BX.Crm.Activity,BX.Crm.Activity,BX,BX.Event,BX.Crm,BX,BX.Crm.Timeline,BX.Crm,BX.Calendar.Sharing,BX,BX,BX.UI.Dialogs));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.UI,BX,BX.UI,BX.UI,BX.Vue3.Components,BX.Main,BX.UI,BX.UI,BX.Crm.DateTime,BX.Currency,BX.UI.Icons.Generator,BX.UI.IconSet,BX,BX,BX,BX.Vue3,BX.Crm.Timeline.Editors,BX.Main,BX.Crm.Timeline,BX,BX.UI.EntitySelector,BX.Crm.Activity,BX.Crm.Activity,BX.Crm.Activity,BX,BX.Event,BX.Crm,BX,BX.Crm.Timeline,BX.Crm,BX.Calendar.Sharing,BX,BX,BX.UI.Dialogs));
 //# sourceMappingURL=index.bundle.js.map

@@ -48,10 +48,12 @@ class CVoxImplantComponentDocuments extends CBitrixComponent
 
 		$addressVerification = new \Bitrix\VoxImplant\AddressVerification();
 		$verifications = $addressVerification->getVerifications();
-		if(is_array($verifications['VERIFIED_ADDRESS']))
+		if (isset($verifications['VERIFIED_ADDRESS']) && is_array($verifications['VERIFIED_ADDRESS']))
 		{
 			if(!is_array($this->arResult['DOCUMENTS']))
-				$this->arResult['DOCUMENTS'] = array();
+			{
+				$this->arResult['DOCUMENTS'] = [];
+			}
 
 			foreach($verifications['VERIFIED_ADDRESS'] as $verification)
 			{

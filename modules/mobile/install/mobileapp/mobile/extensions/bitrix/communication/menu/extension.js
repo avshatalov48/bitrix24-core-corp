@@ -2,7 +2,6 @@
  * @module communication/menu
  */
 jn.define('communication/menu', (require, exports, module) => {
-
 	const ConnectionTypeSvg = require('assets/communication/menu');
 	const { ImType, PhoneType, EmailType, isOpenLine, getOpenLineTitle } = require('communication/connection');
 	const { CommunicationEvents } = require('communication/events');
@@ -14,7 +13,6 @@ jn.define('communication/menu', (require, exports, module) => {
 	const { getFormattedNumber } = require('utils/phone');
 	const { stringify } = require('utils/string');
 
-	let MultiFieldDrawer;
 	let CrmType;
 	/** @var TypeName **/
 	let TypeName;
@@ -22,7 +20,6 @@ jn.define('communication/menu', (require, exports, module) => {
 
 	try
 	{
-		MultiFieldDrawer = require('crm/multi-field-drawer').MultiFieldDrawer;
 		CrmType = require('crm/type').Type;
 		TypeName = require('crm/type').TypeName;
 		EntitySvg = require('crm/assets/entity').EntitySvg;
@@ -247,11 +244,6 @@ jn.define('communication/menu', (require, exports, module) => {
 		 */
 		createStubItem(entityValue, connectionType)
 		{
-			if (!MultiFieldDrawer)
-			{
-				return null;
-			}
-
 			if (connectionType !== PhoneType && connectionType !== EmailType)
 			{
 				return null;
@@ -290,16 +282,21 @@ jn.define('communication/menu', (require, exports, module) => {
 				},
 				isSemitransparent: true,
 				isCustomIconColor: true,
-				onClickCallback: (action, itemId, { parentWidget }) => parentWidget.close(() => {
-					const description = Loc.getMessage(`M_CRM_COMMUNICATION_MENU_${connectionType.toUpperCase()}_DESCRIPTION`);
-					const multiFieldDrawer = new MultiFieldDrawer({
-						entityTypeId: CrmType.resolveIdByName(entityTypeName),
-						entityId,
-						fields: [connectionType.toUpperCase()],
-						warningBlock: { description },
-					});
+				onClickCallback: (action, itemId, { parentWidget }) => parentWidget.close(async () => {
+					const { MultiFieldDrawer } = await requireLazy('crm:multi-field-drawer') || {};
 
-					multiFieldDrawer.show(this.parentWidget);
+					if (MultiFieldDrawer)
+					{
+						const description = Loc.getMessage(`M_CRM_COMMUNICATION_MENU_${connectionType.toUpperCase()}_DESCRIPTION`);
+						const multiFieldDrawer = new MultiFieldDrawer({
+							entityTypeId: CrmType.resolveIdByName(entityTypeName),
+							entityId,
+							fields: [connectionType.toUpperCase()],
+							warningBlock: { description },
+						});
+
+						multiFieldDrawer.show(this.parentWidget);
+					}
 				}),
 			};
 		}
@@ -351,7 +348,7 @@ jn.define('communication/menu', (require, exports, module) => {
 				return null;
 			}
 
-			const title = this.getTitle(value, connectionType);
+			const title = this.getTitle(itemValue, connectionType);
 			if (!Type.isStringFilled(title))
 			{
 				return null;
@@ -389,11 +386,19 @@ jn.define('communication/menu', (require, exports, module) => {
 			return null;
 		}
 
-		getTitle(value, type)
+		getTitle(itemValue, type)
 		{
+			const { title, value } = itemValue;
 			const preparers = {
 				[PhoneType]: getFormattedNumber,
-				[ImType]: () => Loc.getMessage('M_CRM_COMMUNICATION_MENU_OPENLINE'),
+				[ImType]: () => {
+					if (isOpenLine(value) && BX.type.isNotEmptyString(title))
+					{
+						return title;
+					}
+
+					return Loc.getMessage('M_CRM_COMMUNICATION_MENU_OPENLINE');
+				},
 			};
 
 			if (preparers.hasOwnProperty(type))

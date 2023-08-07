@@ -2,7 +2,6 @@
  * @module im/messenger/const/recent
  */
 jn.define('im/messenger/const/recent', (require, exports, module) => {
-
 	const ChatTypes = Object.freeze({
 		chat: 'chat',
 		open: 'open',

@@ -385,15 +385,16 @@ class CIntranetInviteDialog
 
 		if (!empty($arFields["EMAIL"]) || !empty($arFields['PHONE']))
 		{
-			$isPhone = is_array($arFields['PHONE']) && !empty($arFields['PHONE']);
+			$isPhone = !empty($arFields['PHONE']) && is_array($arFields['PHONE']);
 			$phoneCountryList = [];
+			$arEmailOriginal = [];
 
-			if($isPhone)
+			if ($isPhone)
 			{
 				$arEmailOriginal = $arFields['PHONE'];
 				$phoneCountryList = $arFields['PHONE_COUNTRY'];
 			}
-			else
+			else if (!empty($arFields["EMAIL"]))
 			{
 				$arEmailOriginal = is_array($arFields["EMAIL"])
 					? $arFields["EMAIL"] : preg_split("/[\n\r\t\\,;\\ ]+/", trim($arFields["EMAIL"]));

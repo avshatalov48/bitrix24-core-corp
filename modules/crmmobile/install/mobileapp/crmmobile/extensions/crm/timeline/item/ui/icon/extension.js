@@ -145,6 +145,7 @@ jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
 				},
 			},
 			Text({
+				testId: `TimelineItemIconCounter_${color}`,
 				text: String(text),
 				style: {
 					color: '#ffffff',

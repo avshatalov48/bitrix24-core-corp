@@ -264,7 +264,10 @@ foreach($arResult['ROWS'] as $key => $row)
 				}
 				else
 				{
-					$arResult['ROWS'][$key]['data'][$column] = ($exportMode ? $userFields[$column] : htmlspecialcharsEx($userFields[$column]));
+					if ($userFields->entity->hasField($column))
+					{
+						$arResult['ROWS'][$key]['data'][$column] = ($exportMode ? $userFields[$column] : htmlspecialcharsEx($userFields[$column]));
+					}
 				}
 		}
 	}

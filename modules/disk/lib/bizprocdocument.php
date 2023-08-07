@@ -952,7 +952,7 @@ class BizProcDocument
 			//Crutch for Bitrix24 context (user group management is not supported)
 			if(ModuleManager::isModuleInstalled('bitrix24'))
 			{
-				$siteId = \CAllSite::getDefSite();
+				$siteId = \CSite::getDefSite();
 				$employeeGroup = \CGroup::getList('', '', array(
 					'STRING_ID' => 'EMPLOYEES_' . $siteId,
 					'STRING_ID_EXACT_MATCH' => 'Y'

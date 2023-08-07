@@ -25,6 +25,9 @@ final class Delay extends Dto
 	/** @var bool */
 	public $localTime;
 
+	/** @var string */
+	public $basisName;
+
 	public function getCasts(): array
 	{
 		return [
@@ -34,6 +37,7 @@ final class Delay extends Dto
 			'basis' => Type::string(),
 			'workTime' => Type::bool(),
 			'localTime' => Type::bool(),
+			'basisName' => Type::string(),
 		];
 	}
 }

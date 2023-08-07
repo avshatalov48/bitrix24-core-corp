@@ -964,6 +964,8 @@ namespace Bitrix\Tasks\Integration\Report\Internals {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Task_Collection merge(?EO_Task_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Task_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Integration\Report\Internals\TaskTable */
@@ -1792,6 +1794,8 @@ namespace Bitrix\Tasks\Internals {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Task_Collection merge(?EO_Task_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Task_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\TaskTable */
@@ -1997,6 +2001,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method TagCollection merge(?TagCollection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Label_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\LabelTable */
@@ -2177,6 +2183,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Member_Collection merge(?EO_Member_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Member_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\MemberTable */
@@ -2427,6 +2435,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_ElapsedTime_Collection merge(?EO_ElapsedTime_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_ElapsedTime_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\ElapsedTimeTable */
@@ -2615,6 +2625,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Sorting_Collection merge(?EO_Sorting_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Sorting_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\SortingTable */
@@ -2763,6 +2775,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Favorite_Collection merge(?EO_Favorite_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Favorite_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\FavoriteTable */
@@ -3011,6 +3025,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_ProjectDependence_Collection merge(?EO_ProjectDependence_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_ProjectDependence_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\ProjectDependenceTable */
@@ -3604,6 +3620,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Template_Collection merge(?EO_Template_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Template_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\TemplateTable */
@@ -3816,6 +3834,8 @@ namespace Bitrix\Tasks\Internals\Task\Template {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Dependence_Collection merge(?EO_Dependence_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Dependence_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\Template\DependenceTable */
@@ -4010,6 +4030,8 @@ namespace Bitrix\Tasks\Internals\Task\Template {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_CheckList_Collection merge(?EO_CheckList_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_CheckList_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\Template\CheckListTable */
@@ -4186,6 +4208,8 @@ namespace Bitrix\Tasks\Internals\Notification\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Throttle_Collection merge(?EO_Throttle_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Throttle_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Notification\Task\ThrottleTable */
@@ -4485,6 +4509,8 @@ namespace Bitrix\Tasks\Scrum\Internal {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Item_Collection merge(?EO_Item_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Item_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Scrum\Internal\ItemTable */
@@ -4697,6 +4723,8 @@ namespace Bitrix\Tasks\Scrum\Internal {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_TypeChecklist_Collection merge(?EO_TypeChecklist_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_TypeChecklist_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Scrum\Internal\TypeChecklistTable */
@@ -4885,6 +4913,8 @@ namespace Bitrix\Tasks\Scrum\Internal {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Epic_Collection merge(?EO_Epic_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Epic_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Scrum\Internal\EpicTable */
@@ -5063,6 +5093,8 @@ namespace Bitrix\Tasks\Scrum\Internal {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Type_Collection merge(?EO_Type_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Type_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Scrum\Internal\TypeTable */
@@ -5216,6 +5248,8 @@ namespace Bitrix\Tasks\Scrum\Internal {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_TypeParticipants_Collection merge(?EO_TypeParticipants_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_TypeParticipants_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Scrum\Internal\TypeParticipantsTable */
@@ -5350,6 +5384,8 @@ namespace Bitrix\Tasks\Scrum\Internal {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_TypeChecklistTree_Collection merge(?EO_TypeChecklistTree_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_TypeChecklistTree_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Scrum\Internal\TypeChecklistTreeTable */
@@ -5624,6 +5660,8 @@ namespace Bitrix\Tasks\Scrum\Internal {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Entity_Collection merge(?EO_Entity_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Entity_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Scrum\Internal\EntityTable */
@@ -5836,6 +5874,8 @@ namespace Bitrix\Tasks\Scrum\Internal {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_ItemChecklist_Collection merge(?EO_ItemChecklist_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_ItemChecklist_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Scrum\Internal\ItemChecklistTable */
@@ -5958,6 +5998,8 @@ namespace Bitrix\Tasks\Scrum\Internal {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Chat_Collection merge(?EO_Chat_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Chat_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Scrum\Internal\ChatTable */
@@ -6092,6 +6134,8 @@ namespace Bitrix\Tasks\Scrum\Internal {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_ItemChecklistTree_Collection merge(?EO_ItemChecklistTree_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_ItemChecklistTree_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Scrum\Internal\ItemChecklistTreeTable */
@@ -6220,6 +6264,8 @@ namespace Bitrix\Tasks {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Projects_Collection merge(?EO_Projects_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Projects_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\ProjectsTable */
@@ -6348,6 +6394,8 @@ namespace Bitrix\Tasks\Access\Role {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_TasksRole_Collection merge(?EO_TasksRole_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_TasksRole_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Access\Role\TasksRoleTable */
@@ -6488,6 +6536,8 @@ namespace Bitrix\Tasks\Access\Role {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_TasksRoleRelation_Collection merge(?EO_TasksRoleRelation_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_TasksRoleRelation_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Access\Role\TasksRoleRelationTable */
@@ -6640,6 +6690,8 @@ namespace Bitrix\Tasks\Access\Permission {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_TasksPermission_Collection merge(?EO_TasksPermission_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_TasksPermission_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Access\Permission\TasksPermissionTable */
@@ -6804,6 +6856,8 @@ namespace Bitrix\Tasks\Access\Permission {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_TasksTemplatePermission_Collection merge(?EO_TasksTemplatePermission_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_TasksTemplatePermission_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Access\Permission\TasksTemplatePermissionTable */
@@ -6956,6 +7010,8 @@ namespace Bitrix\Tasks\Integration\Intranet\Internals\Runtime {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_UtmUser_Collection merge(?EO_UtmUser_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_UtmUser_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Integration\Intranet\Internals\Runtime\UtmUserTable */
@@ -7084,6 +7140,8 @@ namespace Bitrix\Tasks\Integration\Intranet\Internals\Runtime {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_UtsIblockSection_Collection merge(?EO_UtsIblockSection_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_UtsIblockSection_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Integration\Intranet\Internals\Runtime\UtsIblockSectionTable */
@@ -7334,6 +7392,8 @@ namespace Bitrix\Tasks\Integration\Rest {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_ElapsedTime_Collection merge(?EO_ElapsedTime_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_ElapsedTime_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Integration\Rest\ElapsedTimeTable */
@@ -7534,6 +7594,8 @@ namespace Bitrix\Tasks\Internals {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_SystemLog_Collection merge(?EO_SystemLog_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_SystemLog_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\SystemLogTable */
@@ -7686,6 +7748,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_UserOption_Collection merge(?EO_UserOption_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_UserOption_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\UserOptionTable */
@@ -7912,6 +7976,8 @@ namespace Bitrix\Tasks\Internals\Task\Result {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Result_Collection merge(?EO_Result_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Result_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\Result\ResultTable */
@@ -8064,6 +8130,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_ProjectUserOption_Collection merge(?EO_ProjectUserOption_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_ProjectUserOption_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\ProjectUserOptionTable */
@@ -8278,6 +8346,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Reminder_Collection merge(?EO_Reminder_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Reminder_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\ReminderTable */
@@ -8418,6 +8488,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_UtsTasksTask_Collection merge(?EO_UtsTasksTask_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_UtsTasksTask_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\UtsTasksTaskTable */
@@ -8570,6 +8642,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_SearchIndex_Collection merge(?EO_SearchIndex_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_SearchIndex_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\SearchIndexTable */
@@ -8704,6 +8778,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_CheckListTree_Collection merge(?EO_CheckListTree_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_CheckListTree_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\CheckListTreeTable */
@@ -8870,6 +8946,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Tag_Collection merge(?EO_Tag_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Tag_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\TagTable */
@@ -8998,6 +9076,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Scenario_Collection merge(?EO_Scenario_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Scenario_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\ScenarioTable */
@@ -9150,6 +9230,8 @@ namespace Bitrix\Tasks\Internals\Task\Template {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Access_Collection merge(?EO_Access_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Access_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\Template\AccessTable */
@@ -9328,6 +9410,8 @@ namespace Bitrix\Tasks\Internals\Task\Template {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_TemplateMember_Collection merge(?EO_TemplateMember_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_TemplateMember_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\Template\TemplateMemberTable */
@@ -9506,6 +9590,8 @@ namespace Bitrix\Tasks\Internals\Task\Template {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_TemplateTag_Collection merge(?EO_TemplateTag_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_TemplateTag_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\Template\TemplateTagTable */
@@ -9659,6 +9745,8 @@ namespace Bitrix\Tasks\Internals\Task\Template {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_TemplateDependence_Collection merge(?EO_TemplateDependence_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_TemplateDependence_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\Template\TemplateDependenceTable */
@@ -9793,6 +9881,8 @@ namespace Bitrix\Tasks\Internals\Task\Template {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_CheckListTree_Collection merge(?EO_CheckListTree_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_CheckListTree_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\Template\CheckListTreeTable */
@@ -9921,6 +10011,8 @@ namespace Bitrix\Tasks\Internals\Task\Template {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Scenario_Collection merge(?EO_Scenario_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Scenario_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\Template\ScenarioTable */
@@ -10099,6 +10191,8 @@ namespace Bitrix\Tasks\Internals\Task\Template\CheckList {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Member_Collection merge(?EO_Member_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Member_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\Template\CheckList\MemberTable */
@@ -10245,6 +10339,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_ViewedGroup_Collection merge(?EO_ViewedGroup_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_ViewedGroup_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\ViewedGroupTable */
@@ -10373,6 +10469,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_ProjectLastActivity_Collection merge(?EO_ProjectLastActivity_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_ProjectLastActivity_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\ProjectLastActivityTable */
@@ -10525,6 +10623,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Timer_Collection merge(?EO_Timer_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Timer_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\TimerTable */
@@ -10659,6 +10759,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Dependence_Collection merge(?EO_Dependence_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Dependence_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\DependenceTable */
@@ -10781,6 +10883,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Related_Collection merge(?EO_Related_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Related_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\RelatedTable */
@@ -10947,6 +11051,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_TaskTag_Collection merge(?EO_TaskTag_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_TaskTag_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\TaskTagTable */
@@ -11161,6 +11267,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Log_Collection merge(?EO_Log_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Log_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\LogTable */
@@ -11386,6 +11494,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_CheckList_Collection merge(?EO_CheckList_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_CheckList_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\CheckListTable */
@@ -11478,6 +11588,16 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method bool isMembersFilled()
 	 * @method bool isMembersChanged()
 	 * @method \Bitrix\Tasks\Internals\Task\MemberObject fillMembers()
+	 * @method \boolean getIsRealView()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Viewed setIsRealView(\boolean|\Bitrix\Main\DB\SqlExpression $isRealView)
+	 * @method bool hasIsRealView()
+	 * @method bool isIsRealViewFilled()
+	 * @method bool isIsRealViewChanged()
+	 * @method \boolean remindActualIsRealView()
+	 * @method \boolean requireIsRealView()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Viewed resetIsRealView()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Viewed unsetIsRealView()
+	 * @method \boolean fillIsRealView()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -11534,6 +11654,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method \Bitrix\Tasks\Internals\Task\MemberObject[] getMembersList()
 	 * @method \Bitrix\Tasks\Internals\Task\EO_Viewed_Collection getMembersCollection()
 	 * @method \Bitrix\Tasks\Internals\Task\EO_Member_Collection fillMembers()
+	 * @method \boolean[] getIsRealViewList()
+	 * @method \boolean[] fillIsRealView()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -11559,6 +11681,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Viewed_Collection merge(?EO_Viewed_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Viewed_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\ViewedTable */
@@ -11711,6 +11835,8 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Parameter_Collection merge(?EO_Parameter_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Parameter_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\ParameterTable */
@@ -11889,6 +12015,8 @@ namespace Bitrix\Tasks\Internals\Task\CheckList {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Member_Collection merge(?EO_Member_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Member_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Task\CheckList\MemberTable */
@@ -12090,6 +12218,8 @@ namespace Bitrix\Tasks\Internals\Marketing {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Marketing_Collection merge(?EO_Marketing_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Marketing_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Marketing\MarketingTable */
@@ -12378,6 +12508,8 @@ namespace Bitrix\Tasks\Internals\Counter {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Effective_Collection merge(?EO_Effective_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Effective_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Counter\EffectiveTable */
@@ -12593,6 +12725,8 @@ namespace Bitrix\Tasks\Internals\Counter {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Counter_Collection merge(?EO_Counter_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Counter_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Counter\CounterTable */
@@ -12757,6 +12891,8 @@ namespace Bitrix\Tasks\Internals\Counter\Queue {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Queue_Collection merge(?EO_Queue_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Queue_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Counter\Queue\QueueTable */
@@ -12945,6 +13081,8 @@ namespace Bitrix\Tasks\Internals\Counter\Event {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Event_Collection merge(?EO_Event_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Event_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Internals\Counter\Event\EventTable */
@@ -13098,6 +13236,8 @@ namespace Bitrix\Tasks\Kanban {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_TaskStage_Collection merge(?EO_TaskStage_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_TaskStage_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Kanban\TaskStageTable */
@@ -13322,6 +13462,8 @@ namespace Bitrix\Tasks\Kanban {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Stages_Collection merge(?EO_Stages_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Stages_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Tasks\Kanban\StagesTable */

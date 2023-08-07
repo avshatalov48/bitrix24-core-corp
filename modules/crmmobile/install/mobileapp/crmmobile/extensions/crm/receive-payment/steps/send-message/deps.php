@@ -5,7 +5,7 @@ return [
 		'analytics-label',
 		'layout/ui/wizard/step',
 		'layout/pure-component',
-		'layout/ui/context-menu',
+		'layout/ui/context-menu/item',
 		'layout/ui/fields/focus-manager',
 		'crm:receive-payment/progress-bar-number',
 	],

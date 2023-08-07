@@ -9,6 +9,7 @@ use Bitrix\Disk\Document\GoogleViewerHandler;
 use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\TypeFile;
+use Bitrix\Disk\Uf\Integration\DiskUploaderController;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\UI\Viewer\ItemAttributes;
@@ -133,7 +134,16 @@ final class FileAttributes extends ItemAttributes
 			TypeFile::isImage($fileArray['ORIGINAL_NAME'])
 		)
 		{
-			return Renderer\Image::getJsType();
+			$type = Renderer\Image::getJsType();
+		}
+
+		if ($type === Renderer\Image::getJsType())
+		{
+			$treatImageAsFile = DiskUploaderController::shouldTreatImageAsFile($fileArray);
+			if ($treatImageAsFile)
+			{
+				$type = Renderer\Stub::getJsType();
+			}
 		}
 
 		return $type;

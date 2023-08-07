@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Bitrix\CrmMobile\Controller;
 
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
+use Bitrix\Crm\Conversion;
 use Bitrix\Crm\Engine\ActionFilter\CheckReadMyCompanyPermission;
 use Bitrix\Crm\Engine\ActionFilter\CheckReadPermission;
 use Bitrix\Crm\Engine\ActionFilter\CheckWritePermission;
@@ -23,6 +24,7 @@ use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Crm\UI\EntitySelector;
+use Bitrix\Crm\UserField\UserFieldManager;
 use Bitrix\CrmMobile\AhaMoments\GoToChat;
 use Bitrix\CrmMobile\Command\SaveEntityCommand;
 use Bitrix\CrmMobile\Controller\Filter\CheckRestrictions;
@@ -30,7 +32,6 @@ use Bitrix\CrmMobile\Entity\FactoryProvider;
 use Bitrix\CrmMobile\ProductGrid\ProductGridQuery;
 use Bitrix\CrmMobile\Query\EntityEditor;
 use Bitrix\ImOpenlines\Security\Permissions;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use Bitrix\Main\Engine\CurrentUser;
@@ -43,7 +44,6 @@ use Bitrix\Mobile\Helpers\ReadsApplicationErrors;
 use Bitrix\Mobile\UI\DetailCard\Configurator;
 use Bitrix\Mobile\UI\DetailCard\Controller;
 use Bitrix\Mobile\UI\DetailCard\Tabs;
-use Bitrix\Crm\Conversion;
 
 Loader::requireModule('crm');
 
@@ -267,14 +267,15 @@ class EntityDetails extends Controller
 					'timelinePushTag' => $this->subscribeToTimelinePushEvents($entity, $currentUser),
 					'todoNotificationParams' => $this->getTodoNotificationParams($factory, $entity, $permissions),
 					'isAutomationAvailable' => $this->getIsAutomationAvailable($entity->getEntityTypeId()),
-					'isDocumentPreviewerAvailable' => Option::get('crmmobile', 'release-spring-2023', true),
+					'isLinkWithProductsEnabled' => $this->isLinkWithProductsEnabled(),
+					'isDocumentGenerationEnabled' => $this->isDocumentGenerationEnabled(),
+					'isClientEnabled' => $this->isClientEnabled(),
+					'isCategoriesEnabled' => $this->isCategoriesEnabled(),
 					'documentGeneratorProvider' => $this->getDocumentGeneratorProvider($entity->getEntityTypeId()),
-					'shouldShowAutomationMenuItem' => Option::get('crmmobile', 'release-spring-2023', true),
-					'isAvailableReceivePayment' => Option::get('crmmobile', 'release-spring-2023', true),
-					'isGoToChatAvailable' => Option::get('crmmobile', 'release-spring-2023', true),
 					'ahaMoments' => [
 						'goToChat' => (GoToChat::getInstance())->canShow(),
 					],
+					'linkedUserFields' => $this->getLinkedUserFields(),
 				],
 			]
 		);
@@ -386,6 +387,39 @@ class EntityDetails extends Controller
 		return \Bitrix\Crm\Automation\Factory::isAutomationAvailable($entityTypeId);
 	}
 
+	private function isLinkWithProductsEnabled(): bool
+	{
+		return $this->getFactory()->isLinkWithProductsEnabled();
+	}
+
+	private function isDocumentGenerationEnabled(): bool
+	{
+		return $this->getFactory()->isDocumentGenerationEnabled();
+	}
+
+	private function isClientEnabled(): bool
+	{
+		return $this->getFactory()->isClientEnabled();
+	}
+
+	private function isCategoriesEnabled(): bool
+	{
+		$isCategoriesEnabled = $this->getFactory()->isCategoriesEnabled();
+		$entityTypeId = $this->getFactory()->getEntityTypeId();
+
+		if ($entityTypeId === \CCrmOwnerType::Deal)
+		{
+			return true;
+		}
+
+		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId) && $isCategoriesEnabled)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
 	private function getDocumentGeneratorProvider(int $entityTypeId): ?string
 	{
 		$manager = DocumentGeneratorManager::getInstance();
@@ -396,6 +430,19 @@ class EntityDetails extends Controller
 
 		$providersMap = $manager->getCrmOwnerTypeProvidersMap();
 		return $providersMap[$entityTypeId] ?? null;
+	}
+
+	private function getLinkedUserFields(): array
+	{
+		$entityTypeName = $this->getFactory()->getEntityName();
+
+		$result = [];
+		foreach (UserFieldManager::getLinkedUserFieldsMap() as $userFieldName => $userField)
+		{
+			$result[$userFieldName] = UserFieldManager::isEntityEnabledInUserField($userField, $entityTypeName);
+		}
+
+		return $result;
 	}
 
 	private function getPermissions(Item $entity): array
@@ -503,14 +550,17 @@ class EntityDetails extends Controller
 
 	public function loadTimelineAction(Factory $factory, Item $entity, CurrentUser $currentUser): array
 	{
-		return array_merge(
-			$this->forward(Timeline::class, 'loadTimeline'),
-			[
+		$result = $this->forward(Timeline::class, 'loadTimeline');
+		if (is_array($result))
+		{
+			return array_merge($result, [
 				'params' => [
 					'todoNotificationParams' => $this->getTodoNotificationParams($factory, $entity),
 				],
-			],
-		);
+			]);
+		}
+
+		return [];
 	}
 
 	/**
@@ -605,9 +655,14 @@ class EntityDetails extends Controller
 
 		$entityId = (int)$result->getData()['ID'];
 
-		if ($conversionWizard !== null && $isNeedAttachConversionItem)
+		if ($conversionWizard !== null)
 		{
-			$conversionWizard->attachNewlyCreatedEntity($entityTypeName, $entityId);
+			if ($isNeedAttachConversionItem)
+			{
+				$conversionWizard->attachNewlyCreatedEntity($entityTypeName, $entityId);
+			}
+
+			$this->clearConversionParams();
 		}
 
 		if ($isCreationFromSelector && $entityId)
@@ -618,15 +673,35 @@ class EntityDetails extends Controller
 		return $entityId;
 	}
 
+	private function clearConversionParams()
+	{
+		$conversionQueryParams = Conversion\EntityConversionWizard::getQueryParamSource();
+		$conversionParamList = [...self::STATIC_CONVERSION_QUERY_PARAMS, $conversionQueryParams['ENTITY_ID']];
+		$sourceParametersList = $this->getSourceParametersList();
+
+		foreach ($conversionParamList as $conversionParam)
+		{
+			foreach ($sourceParametersList as &$parameterList)
+			{
+				if (isset($parameterList[$conversionParam]))
+				{
+					$parameterList[$conversionParam] = null;
+				}
+			}
+		}
+
+		$this->setSourceParametersList($sourceParametersList);
+	}
+
 	private function getConversionParams(): ?array
 	{
 		$entityId = null;
 		$entityTypeId = null;
 		$conversionQueryParams = Conversion\EntityConversionWizard::getQueryParamSource();
 		$conversionParamList = [...self::STATIC_CONVERSION_QUERY_PARAMS, $conversionQueryParams['ENTITY_ID']];
-		foreach ($conversionParamList as $key)
+		foreach ($conversionParamList as $conversionParam)
 		{
-			$value = (int)($this->findInSourceParametersList($key) ?? 0);
+			$value = (int)($this->findInSourceParametersList($conversionParam) ?? 0);
 			if ($value > 0)
 			{
 				$entityId = $value;
@@ -636,19 +711,27 @@ class EntityDetails extends Controller
 				continue;
 			}
 
-			if ($key === $conversionQueryParams['ENTITY_ID'])
+			if ($conversionParam === $conversionQueryParams['ENTITY_ID'])
 			{
 				$entityTypeId = $this->findInSourceParametersList($conversionQueryParams['ENTITY_TYPE_ID']);
 			}
-			elseif ($key === Conversion\QuoteConversionWizard::QUERY_PARAM_SRC_ID || $key === 'quote_id')
+			elseif (
+				$conversionParam === Conversion\QuoteConversionWizard::QUERY_PARAM_SRC_ID
+				|| $conversionParam
+				=== 'quote_id'
+			)
 			{
 				$entityTypeId = \CCrmOwnerType::Quote;
 			}
-			elseif ($key === 'lead_id')
+			elseif ($conversionParam === 'lead_id')
 			{
 				$entityTypeId = \CCrmOwnerType::Lead;
 			}
-			elseif ($key === Conversion\DealConversionWizard::QUERY_PARAM_SRC_ID || $key === 'deal_id')
+			elseif (
+				$conversionParam === Conversion\DealConversionWizard::QUERY_PARAM_SRC_ID
+				|| $conversionParam
+				=== 'deal_id'
+			)
 			{
 				$entityTypeId = \CCrmOwnerType::Deal;
 			}

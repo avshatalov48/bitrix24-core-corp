@@ -41,6 +41,7 @@ jn.define('crm/timeline/item/ui/icon/calendar', (require, exports, module) => {
 					},
 				},
 				Text({
+					testId: 'TimelineItemIconCalendarDay',
 					text: day,
 					style: {
 						color: '#525C69',
@@ -49,6 +50,7 @@ jn.define('crm/timeline/item/ui/icon/calendar', (require, exports, module) => {
 					},
 				}),
 				Text({
+					testId: 'TimelineItemIconCalendarMonth',
 					text: month,
 					numberOfLines: 1,
 					ellipsize: 'end',
@@ -61,6 +63,7 @@ jn.define('crm/timeline/item/ui/icon/calendar', (require, exports, module) => {
 					},
 				}),
 				Text({
+					testId: 'TimelineItemIconCalendarTime',
 					text: time,
 					numberOfLines: 1,
 					ellipsize: 'start',

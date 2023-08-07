@@ -1,12 +1,33 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
+use Bitrix\Main\Localization\Loc;
+
 /**
  * Error handling class.
  * @package Bitrix\ImOpenLines
  */
 class Error extends \Bitrix\Main\Error
 {
+	public const
+		WRONG_TYPE = 'WRONG_MESSAGE_TYPE',
+		WRONG_PARAMETER = 'WRONG_PARAMETER',
+		WRONG_SENDER = 'WRONG_SENDER',
+		WRONG_RECIPIENT = 'WRONG_RECIPIENT',
+		WRONG_TARGET_CHAT = 'WRONG_TARGET_CHAT',
+		WRONG_COLOR = 'WRONG_COLOR',
+		WRONG_PARENT_CHAT = 'WRONG_PARENT_CHAT',
+		WRONG_PARENT_MESSAGE = 'WRONG_PARENT_MESSAGE',
+		WRONG_DISAPPEARING_DURATION = 'WRONG_DISAPPEARING_DURATION',
+		ALREADY_DISAPPEARING = 'ALREADY_DISAPPEARING',
+		ACCESS_DENIED = 'ACCESS_DENIED',
+		NOT_FOUND = 'NOT_FOUND',
+		BEFORE_SEND_EVENT = 'EVENT_MESSAGE_SEND',
+		FROM_OTHER_MODULE = 'FROM_OTHER_MODULE',
+		CREATION_ERROR = 'CREATION_ERROR',
+		ID_EMPTY_ERROR = 'ID_EMPTY_ERROR'
+	;
+
 	/** @var string */
 	protected $method;
 
@@ -57,5 +78,15 @@ class Error extends \Bitrix\Main\Error
 	public function getParams()
 	{
 		return $this->params;
+	}
+
+	protected function loadErrorMessage($code, $replacements): string
+	{
+		return Loc::getMessage("ERROR_OL_{$code}", $replacements) ?: '';
+	}
+
+	protected function loadErrorDescription($code, $replacements): string
+	{
+		return Loc::getMessage("ERROR_OL_{$code}_DESC", $replacements) ?: '';
 	}
 }

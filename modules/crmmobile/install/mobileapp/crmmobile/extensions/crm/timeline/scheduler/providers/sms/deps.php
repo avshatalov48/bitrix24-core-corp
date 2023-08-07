@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'feature',
 		'haptics',
 		'loc',
 		'type',
@@ -19,9 +20,9 @@ return [
 		'layout/ui/warning-block',
 		'utils/function',
 		'utils/object',
+		'utils/skeleton',
 	],
 	'bundle' => [
 		'./src/clients-selector',
-		'./src/skeleton',
 	],
 ];

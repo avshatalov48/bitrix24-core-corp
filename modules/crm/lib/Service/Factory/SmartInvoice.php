@@ -17,6 +17,7 @@ use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Crm\UserField\UserFieldManager;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\AddResult;
@@ -70,9 +71,8 @@ class SmartInvoice extends Dynamic
 
 		$settings[Item\SmartInvoice::FIELD_NAME_COMMENTS] = [
 			'TYPE' => Field::TYPE_TEXT,
-			'SETTINGS' => [
-				'isFlexibleContentType' => true,
-			],
+			'VALUE_TYPE' => Field::VALUE_TYPE_BB,
+			'CLASS' => Field\Comments::class,
 		];
 		$settings[Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER] = [
 			'TYPE' => Field::TYPE_STRING,
@@ -340,14 +340,19 @@ class SmartInvoice extends Dynamic
 	 */
 	public function getAdditionalTableFields(): array
 	{
+		$fieldRepo = ServiceLocator::getInstance()->get('crm.model.fieldRepository');
+
 		return [
-			(new Fields\TextField(Item\SmartInvoice::FIELD_NAME_COMMENTS))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_COMMENTS')),
+			$fieldRepo->getComments()
+				->configureNullable(false)
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_COMMENTS'))
+			,
 			(new Fields\StringField(Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER))
-				->configureTitle(Loc::getMessage('CRM_TYPE_SMART_INVOICE_FIELD_ACCOUNT_NUMBER')),
-			(new Fields\StringField(Item::FIELD_NAME_LOCATION_ID))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_LOCATION'))
-				->configureSize(100),
+				->configureTitle(Loc::getMessage('CRM_TYPE_SMART_INVOICE_FIELD_ACCOUNT_NUMBER'))
+			,
+			$fieldRepo->getLocationId()
+				->configureNullable(false)
+			,
 		];
 	}
 

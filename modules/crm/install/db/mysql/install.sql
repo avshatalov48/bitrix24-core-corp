@@ -3589,5 +3589,17 @@ CREATE TABLE IF NOT EXISTS b_crm_act_counter_light
 	LIGHT_COUNTER_AT datetime not null,
 	IS_LIGHT_COUNTER_NOTIFIED char default 'N' null,
 	PRIMARY KEY(ACTIVITY_ID),
-	INDEX IX_B_CRM_ACT_COUNTER_LIGHT_1 (LIGHT_COUNTER_AT)
+	INDEX IX_B_CRM_ACT_COUNTER_LIGHT_2 (IS_LIGHT_COUNTER_NOTIFIED, LIGHT_COUNTER_AT)
+);
+
+CREATE TABLE IF NOT EXISTS b_crm_webform_limit
+(
+	ID bigint unsigned not null auto_increment,
+	DATE_STAT timestamp not null,
+	TYPE varchar(25) not null,
+	CODE varchar(25) not null,
+	VALUE int(31) not null default 0,
+	NOTIFIED tinyint(1) not null default 0,
+	PRIMARY KEY (ID),
+	UNIQUE INDEX (DATE_STAT, TYPE, CODE)
 );

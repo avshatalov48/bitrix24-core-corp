@@ -2,9 +2,12 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Bitrix24\User;
+use Bitrix\Tasks\Integration\CRM\Fields\EmulationData;
+use Bitrix\Tasks\Integration\CRM\Fields\Emulator;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Type;
@@ -12,7 +15,12 @@ use Bitrix\Tasks\Component\Task\TasksTaskFormState;
 
 Loc::loadMessages(__FILE__);
 
-\Bitrix\Main\UI\Extension::load(["ui.design-tokens", "ui.fonts.opensans", "ui.alerts"]);
+Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'ui.alerts',
+	'ai.picker'
+]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
@@ -225,7 +233,7 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 					<label for="tasks-task-priority-cb"><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_PRIORITY')?></label>
 					<input data-bx-id="task-edit-priority" type="hidden" name="<?=htmlspecialcharsbx($inputPrefix)?>[PRIORITY]" value="<?=intval($taskData['PRIORITY'])?>" />
 				</div>
-				<div class="task-info-panel-title"><input data-bx-id="task-edit-title" type="text" name="<?=htmlspecialcharsbx($inputPrefix)?>[TITLE]" value="<?=htmlspecialcharsbx($taskData['TITLE'] ?? null)?>" placeholder="<?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_WHAT_TO_BE_DONE')?>"/></div>
+				<div class="task-info-panel-title"><input data-bx-id="task-edit-title" type="text" name="<?=htmlspecialcharsbx($inputPrefix)?>[TITLE]" value="<?=htmlspecialcharsbx($taskData['TITLE'] ?? null)?>" placeholder="<?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_WHAT_TO_BE_DONE_MSGVER_1')?>"/></div>
 			</div>
 			<div data-bx-id="task-edit-editor-container" class="task-info-editor">
 				<?php $APPLICATION->IncludeComponent(
@@ -810,8 +818,16 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 								<?php
 								$crmUf = $arResult['AUX_DATA']["USER_FIELDS"][$blockName] ?? [];
 								$crmUf['FIELD_NAME'] = $inputPrefix.'['.$blockName.']';
+								$handler = $editMode ? 'BX.Tasks.handleEditCrmDialog' : 'BX.Tasks.handleAddCrmDialog';
+								$crmParameters['CALLBACK_BEFORE'] = [
+									'openDialog' => $handler,
+									'context' => 'BX.Tasks',
+								];
 
-								\Bitrix\Tasks\Util\UserField\UI::showEdit($crmUf);
+								\Bitrix\Tasks\Util\UserField\UI::showEdit($crmUf, $crmParameters);
+
+								$emulator = new Emulator(new EmulationData($crmUf));
+								$emulator->render();
 								?>
 							</div>
 
@@ -1166,6 +1182,8 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 		'componentId' => $arResult['COMPONENT_DATA']['ID'],
 		'doInit' => !$arResult['TEMPLATE_DATA']['SHOW_SUCCESS_MESSAGE'],
 		'cancelActionIsEvent' => !!$arParams['CANCEL_ACTION_IS_EVENT'],
+		'canShowAITextButton' => $arResult['CAN_SHOW_AI_TEXT_BUTTON'],
+		'canShowAIImageButton' => $arResult['CAN_SHOW_AI_IMAGE_BUTTON'],
 	))?>;
 
 	<?php /*

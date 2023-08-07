@@ -6,6 +6,7 @@ jn.define('crm/entity-actions', (require, exports, module) => {
 	const { getActionChangeCrmMode } = require('crm/entity-actions/change-crm-mode');
 	const { getActionToChangeStage } = require('crm/entity-actions/change-stage');
 	const { getActionToCopyEntity } = require('crm/entity-actions/copy-entity');
+	const { getActionToConversion } = require('crm/entity-actions/conversion');
 	const { getActionToShare } = require('crm/entity-actions/share');
 
 	module.exports = {
@@ -13,6 +14,7 @@ jn.define('crm/entity-actions', (require, exports, module) => {
 		getActionToChangeStage,
 		getActionChangeCrmMode,
 		getActionToCopyEntity,
+		getActionToConversion,
 		getActionToShare,
 	};
 });

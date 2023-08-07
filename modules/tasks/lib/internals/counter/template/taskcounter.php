@@ -97,9 +97,9 @@ class TaskCounter
 	public function getMobileRowCounter(int $taskId): array
 	{
 		$result = [
-			'COUNTERS' => [],
-			'COLOR' => CounterStyle::STYLE_GRAY,
-			'VALUE' => 0,
+			'counters' => [],
+			'color' => CounterStyle::STYLE_GRAY,
+			'value' => 0,
 		];
 
 		if (!$taskId)
@@ -127,16 +127,16 @@ class TaskCounter
 			];
 		}
 
-		$result['COUNTERS'] = $counters;
-		$result['VALUE'] = array_sum($counters);
+		$result['counters'] = $counters;
+		$result['value'] = array_sum($counters);
 
 		if ($counters['new_comments'] > 0)
 		{
-			$result['COLOR'] = CounterStyle::STYLE_GREEN;
+			$result['color'] = CounterStyle::STYLE_GREEN;
 		}
 		if ($counters['expired'] > 0)
 		{
-			$result['COLOR'] = CounterStyle::STYLE_RED;
+			$result['color'] = CounterStyle::STYLE_RED;
 		}
 
 		return $result;

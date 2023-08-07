@@ -3,7 +3,7 @@
  */
 jn.define('crm/conversion/utils', (require, exports, module) => {
 	const { prepareConversionFields } = require('crm/conversion/utils/prepare-fields');
-	const { prepareConversionConfig } = require('crm/conversion/utils/prepare-config');
+	const { createConversionConfig } = require('crm/conversion/utils/prepare-config');
 
-	module.exports = { prepareConversionFields, prepareConversionConfig };
+	module.exports = { prepareConversionFields, createConversionConfig };
 });

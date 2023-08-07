@@ -295,7 +295,7 @@ $arResult['CanView']['general'] = (CSocNetFeatures::isActiveFeature(SONET_ENTITY
 
 $arResult["Title"]["chat"] = ((array_key_exists("chat", $arResult["ActiveFeatures"]) && $arResult["ActiveFeatures"]["chat"] <> '') ? $arResult["ActiveFeatures"]["chat"] : GetMessage("SONET_UM_CHAT"));
 $arResult["OnClicks"] = array(
-	"chat" => "top.BXIM.openMessenger('sg".$arResult["Group"]["ID"]."');"
+	"chat" => "BX.Socialnetwork.UI.Common.openMessenger('".$arResult["Group"]["ID"]."');"
 );
 
 uksort($arResult["CanView"], function($a, $b) use ($sampleKeysList) {

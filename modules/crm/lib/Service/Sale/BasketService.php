@@ -60,7 +60,7 @@ class BasketService
 		}
 
 		$productRelations = new ProductRelationsBuilder();
-		$orderFilter = [];
+		$orderFilters = [];
 
 		foreach ($rows as $row)
 		{
@@ -72,20 +72,28 @@ class BasketService
 				(string)$row['XML_ID']
 			);
 
-			if (empty($orderFilter))
+			$key = $row['OWNER_TYPE'] . $row['OWNER_ID'];
+			if (empty($orderFilters[$key]))
 			{
-				$orderFilter = [
+				$orderFilters[$key] = [
 					'=OWNER_TYPE_ID' => CCrmOwnerTypeAbbr::ResolveTypeID($row['OWNER_TYPE']),
 					'=OWNER_ID' => (int)$row['OWNER_ID'],
 				];
 			}
 		}
 
+		if (empty($orderFilters))
+		{
+			return [];
+		}
 		$rows = OrderEntityTable::getList([
 			'select' => [
 				'ORDER_ID',
 			],
-			'filter' => $orderFilter,
+			'filter' => [
+				'LOGIC' => 'OR',
+				...array_values($orderFilters),
+			],
 		]);
 
 		$orderIds = array_column($rows->fetchAll(), 'ORDER_ID');

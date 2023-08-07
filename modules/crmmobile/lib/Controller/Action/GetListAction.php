@@ -65,7 +65,16 @@ class GetListAction extends Action
 	protected function getUserPermissions(string $entityType, array $extra = []): array
 	{
 		$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
-		$categoryId = (int)($extra['filterParams']['CATEGORY_ID'] ?? 0);
+
+		if (isset($extra['filterParams']['CATEGORY_ID']))
+		{
+			$categoryId = (int) $extra['filterParams']['CATEGORY_ID'];
+		}
+		else
+		{
+			$defaultCategory = Container::getInstance()->getFactory($entityTypeId)->getDefaultCategory();
+			$categoryId = ($defaultCategory ? $defaultCategory->getId() : 0);
+		}
 
 		$userPermissions = Container::getInstance()->getUserPermissions();
 

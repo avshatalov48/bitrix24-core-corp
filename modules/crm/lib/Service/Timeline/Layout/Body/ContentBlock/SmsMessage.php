@@ -3,9 +3,12 @@
 namespace Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
+use Bitrix\Crm\Service\Timeline\Layout\Mixin\Actionable;
 
 class SmsMessage extends ContentBlock
 {
+	use Actionable;
+
 	protected ?string $text = null;
 
 	public function getRendererName(): string
@@ -28,6 +31,7 @@ class SmsMessage extends ContentBlock
 	{
 		return [
 			'text' => $this->getText(),
+			'action' => $this->getAction(),
 		];
 	}
 }

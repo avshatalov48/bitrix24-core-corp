@@ -2,8 +2,8 @@
 
 return [
 	'extensions' => [
+		'require-lazy',
 		'loc',
-		'crm:entity-detail/opener',
 		'crm:type',
 		'crm:document/shared-utils',
 	],

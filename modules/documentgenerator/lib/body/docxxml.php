@@ -814,29 +814,19 @@ class DocxXml extends Xml
 	protected function printValue($value, $placeholder, $modifier = '', array $params = []): string
 	{
 		$value = parent::printValue($value, $placeholder, $modifier);
-		if(empty($value))
+		if (empty($value))
 		{
 			return (string) $value;
 		}
-		if (ToUpper(SITE_CHARSET) !== 'UTF-8')
+
+		if (is_string($value))
 		{
-			if(is_array($value) || is_object($value))
-			{
-				$value = '';
-			}
-			elseif(!Encoding::detectUtf8($value))
-			{
-				$value = Encoding::convertEncoding($value, SITE_CHARSET, 'UTF-8');
-			}
-		}
-		if(is_string($value))
-		{
-			if($this->isImageValue($placeholder, $this->values))
+			if ($this->isImageValue($placeholder, $this->values))
 			{
 				return '';
 			}
 
-			if($this->isHtml($value))
+			if ($this->isHtml($value))
 			{
 				$context = [];
 				if(isset($params['currentNode']) && $params['currentNode'] instanceof \DOMElement)
@@ -848,6 +838,18 @@ class DocxXml extends Xml
 			else
 			{
 				$value = $this->prepareTextValue($value);
+			}
+		}
+
+		if (mb_strtoupper(SITE_CHARSET) !== 'UTF-8')
+		{
+			if (is_array($value) || is_object($value))
+			{
+				$value = '';
+			}
+			elseif (!Encoding::detectUtf8($value))
+			{
+				$value = Encoding::convertEncoding($value, SITE_CHARSET, 'UTF-8');
 			}
 		}
 

@@ -2,22 +2,33 @@
 
 namespace Bitrix\Crm\Component\EntityList;
 
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Restriction\RestrictionManager;
 
 class ObserversFieldRestrictionManager extends FieldRestrictionManagerBase
 {
 	final public function hasRestrictions(): bool
 	{
-		return RestrictionManager::getDealObserversFieldRestriction()->isExceeded();
+		if (!isset($this->entityTypeId))
+		{
+			return false;
+		}
+
+		return RestrictionManager::getObserversFieldRestriction($this->entityTypeId)->isExceeded();
 	}
 
 	final public function getJsCallback(): string
 	{
-		return RestrictionManager::getDealObserversFieldRestriction()->prepareInfoHelperScript();
+		if (!isset($this->entityTypeId))
+		{
+			return '';
+		}
+
+		return RestrictionManager::getObserversFieldRestriction($this->entityTypeId)->prepareInfoHelperScript();
 	}
 
 	final protected function isFieldRestricted(string $fieldName): bool
 	{
-		return $fieldName === 'OBSERVER_IDS';
+		return in_array($fieldName, ['OBSERVER_IDS', Item::FIELD_NAME_OBSERVERS], true);
 	}
 }

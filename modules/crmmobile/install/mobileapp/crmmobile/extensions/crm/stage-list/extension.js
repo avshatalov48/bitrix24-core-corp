@@ -82,6 +82,7 @@ jn.define('crm/stage-list', (require, exports, module) => {
 			const allStageItem = categoryCounters.reduce((acc, stage) => {
 				acc.count += stage.count;
 				acc.total += stage.total;
+
 				return acc;
 			}, {
 				count: 0,

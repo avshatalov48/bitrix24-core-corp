@@ -166,6 +166,6 @@ if ($this->__page == "show")
 	$arResult['FILES'] = $files;
 	$arResult['DELETED_FILES'] = $deletedFiles;
 	$arResult['IMAGES_COUNT'] = count($images);
-	$arResult['IMAGES_LIMIT'] = intval(floor(859 / 74)) * 1; // just one row
+	$arResult['IMAGES_LIMIT'] = 11; // Blocks with preview images. Including a block with a counter.
 }
 ?>

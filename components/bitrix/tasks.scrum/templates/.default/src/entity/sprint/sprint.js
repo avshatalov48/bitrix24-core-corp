@@ -730,6 +730,8 @@ export class Sprint extends Entity
 
 			this.emit('toggleVisibilityContent');
 		}
+
+		this.emit('transitionEnd');
 	}
 
 	toggleVisibilityContent(node: HTMLElement)
@@ -742,8 +744,6 @@ export class Sprint extends Entity
 		{
 			this.showContent(node);
 
-			Dom.addClass(this.node, '--open');
-
 			if (this.isCompleted())
 			{
 				if (this.getItems().size === 0)
@@ -755,12 +755,10 @@ export class Sprint extends Entity
 		else
 		{
 			this.hideContent(node);
-
-			Dom.removeClass(this.node, '--open');
 		}
 	}
 
-	showContent(node: HTMLElement)
+	showContent(node: HTMLElement): Promise
 	{
 		this.hideCont = false;
 
@@ -773,9 +771,15 @@ export class Sprint extends Entity
 		{
 			this.header.upTick();
 		}
+
+		Dom.addClass(this.node, '--open');
+
+		return new Promise((resolve) => {
+			Event.bindOnce(this.getContentContainer(), 'transitionend', () => resolve());
+		});
 	}
 
-	hideContent(node?: HTMLElement)
+	hideContent(node?: HTMLElement): Promise
 	{
 		this.hideCont = true;
 
@@ -792,6 +796,12 @@ export class Sprint extends Entity
 		{
 			this.header.downTick();
 		}
+
+		Dom.removeClass(this.node, '--open');
+
+		return new Promise((resolve) => {
+			Event.bindOnce(this.getContentContainer(), 'transitionend', () => resolve());
+		});
 	}
 
 	showSprint()

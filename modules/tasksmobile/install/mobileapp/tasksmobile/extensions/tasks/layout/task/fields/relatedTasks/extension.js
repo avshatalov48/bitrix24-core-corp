@@ -2,8 +2,8 @@
  * @module tasks/layout/task/fields/relatedTasks
  */
 jn.define('tasks/layout/task/fields/relatedTasks', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {TaskField} = require('tasks/layout/task/fields/tasks');
+	const { Loc } = require('loc');
+	const { TaskField } = require('tasks/layout/task/fields/tasks');
 
 	class RelatedTasks extends LayoutComponent
 	{
@@ -44,7 +44,7 @@ jn.define('tasks/layout/task/fields/relatedTasks', (require, exports, module) =>
 					config: {
 						parentWidget: this.props.parentWidget,
 						deepMergeStyles: this.props.deepMergeStyles,
-						entityList: Object.entries(this.state.relatedTasks).map(([id, title]) => ({id, title})),
+						entityList: Object.entries(this.state.relatedTasks).map(([id, title]) => ({ id, title })),
 						reloadEntityListFromProps: true,
 					},
 					testId: 'relatedTasks',
@@ -53,5 +53,5 @@ jn.define('tasks/layout/task/fields/relatedTasks', (require, exports, module) =>
 		}
 	}
 
-	module.exports = {RelatedTasks};
+	module.exports = { RelatedTasks };
 });

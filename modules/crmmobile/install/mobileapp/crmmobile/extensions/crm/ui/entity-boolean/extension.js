@@ -15,15 +15,19 @@ jn.define('crm/ui/entity-boolean', (require, exports, module) => {
 	};
 
 	const ENTITY_COLORS = {
-		[TypeId.Deal]: '#a77bde',
-		[TypeId.Company]: '#ffa900',
+		[TypeId.Deal]: '#8c78ef',
 		[TypeId.Contact]: '#9dcf00',
+		[TypeId.Company]: '#e89b06',
+		[TypeId.Quote]: '#00b4ac',
+		[TypeId.SmartInvoice]: '#1e6ec2',
 	};
 
 	const ENTITY_BACKGROUND_COLORS = {
 		[TypeId.Deal]: '#f2e9fe',
 		[TypeId.Company]: '#fff1d6',
 		[TypeId.Contact]: '#f1fbd0',
+		[TypeId.Quote]: '#d3f9f7',
+		[TypeId.SmartInvoice]: '#deeeff',
 	};
 
 	const DISABLED_COLOR = {
@@ -36,26 +40,9 @@ jn.define('crm/ui/entity-boolean', (require, exports, module) => {
 	 */
 	class EntityBoolean extends LayoutComponent
 	{
-		constructor(props)
-		{
-			super(props);
-
-			this.state = {
-				enable: props.enable,
-			};
-		}
-
-		componentWillReceiveProps(newProps)
-		{
-			this.state = {
-				enable: newProps.enable,
-			};
-		}
-
 		getBooleanFieldsProps()
 		{
-			const { entityTypeId, onChange, simple } = this.props;
-			const { enable } = this.state;
+			const { enable, entityTypeId, onChange, simple } = this.props;
 
 			const styles = simple ? {} : {
 				activeToggleColor: ENTITY_COLORS[entityTypeId],
@@ -78,23 +65,14 @@ jn.define('crm/ui/entity-boolean', (require, exports, module) => {
 				showTitle: false,
 				readOnly: false,
 				onChange: () => {
-					this.setState(
-						{ enable: !enable },
-						() => {
-							if (onChange)
-							{
-								onChange(entityTypeId, !enable);
-							}
-						},
-					);
+					onChange(entityTypeId, !enable);
 				},
 			};
 		}
 
 		renderText()
 		{
-			const { text, disabledText } = this.props;
-			const { enable } = this.state;
+			const { enable, text, disabledText } = this.props;
 			const color = enable ? '#333333' : '#bdc1c6';
 
 			return View(
@@ -151,16 +129,27 @@ jn.define('crm/ui/entity-boolean', (require, exports, module) => {
 
 		renderEntityBlock(booleanField)
 		{
-			const { entityTypeId } = this.props;
-			const { enable } = this.state;
+			const { enable, entityTypeId } = this.props;
 
-			return View({
-				style: {
-					paddingHorizontal: 16,
-					backgroundColor: enable ? ENTITY_BACKGROUND_COLORS[entityTypeId] : DISABLED_COLOR.backgroundColor,
-					borderRadius: 8,
+			return View(
+				{
+					style: {
+						paddingTop: 4,
+						paddingHorizontal: 16,
+						backgroundColor: enable ? ENTITY_BACKGROUND_COLORS[entityTypeId] : DISABLED_COLOR.backgroundColor,
+						borderRadius: 8,
+						...this.getStyles('block'),
+					},
 				},
-			}, booleanField);
+				booleanField,
+			);
+		}
+
+		getStyles(type)
+		{
+			const { styles = {} } = this.props;
+
+			return styles[type] || {};
 		}
 
 		render()
@@ -168,7 +157,14 @@ jn.define('crm/ui/entity-boolean', (require, exports, module) => {
 			const { simple } = this.props;
 			const booleanField = BooleanField(this.getBooleanFieldsProps());
 
-			return simple ? booleanField : this.renderEntityBlock(booleanField);
+			return View(
+				{
+					style: {
+						width: '100%',
+					},
+				},
+				simple ? booleanField : this.renderEntityBlock(booleanField),
+			);
 		}
 	}
 

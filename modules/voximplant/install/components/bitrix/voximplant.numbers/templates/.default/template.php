@@ -88,7 +88,7 @@ $APPLICATION->IncludeComponent(
 		"GRID_ID" => $arResult["GRID_ID"],
 		"FILTER_ID" => $arResult["FILTER_ID"],
 		"FILTER" => $arResult["FILTER"],
-		"FILTER_PRESETS" => $arResult["FILTER_PRESETS"],
+		"FILTER_PRESETS" => $arResult["FILTER_PRESETS"] ?? null,
 		"ENABLE_LIVE_SEARCH" => false,
 		"ENABLE_LABEL" => true
 	),

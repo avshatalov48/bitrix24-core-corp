@@ -2,8 +2,8 @@
  * @module tasks/layout/presetList
  */
 jn.define('tasks/layout/presetList', (require, exports, module) => {
-	const {Haptics} = require('haptics');
-	const {smallCross} = require('assets/common');
+	const { Haptics } = require('haptics');
+	const { smallCross } = require('assets/common');
 
 	class PresetList extends LayoutComponent
 	{
@@ -82,6 +82,7 @@ jn.define('tasks/layout/presetList', (require, exports, module) => {
 
 			return Object.values(this.state.presets).map((preset, index) => {
 				const isActive = (this.state.currentPreset === preset.id);
+
 				return View(
 					{
 						style: {
@@ -98,7 +99,7 @@ jn.define('tasks/layout/presetList', (require, exports, module) => {
 						onClick: () => {
 							Haptics.impactLight();
 							this.emit('presetSelected', [preset]);
-							this.setState({currentPreset: (isActive ? null : preset.id)});
+							this.setState({ currentPreset: (isActive ? null : preset.id) });
 						},
 						testId: `preset_${preset.id}`,
 					},
@@ -130,5 +131,5 @@ jn.define('tasks/layout/presetList', (require, exports, module) => {
 		}
 	}
 
-	module.exports = {PresetList};
+	module.exports = { PresetList };
 });

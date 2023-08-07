@@ -56,19 +56,23 @@ jn.define('crm/tunnel-list/item/condition-group', (require, exports, module) => 
 				{
 					this.setObject(params.object);
 				}
+
 				if (params.field)
 				{
 					this.setField(params.field);
 				}
+
 				if (params.operator)
 				{
 					this.setOperator(params.operator);
 				}
+
 				if ('value' in params)
 				{
 					this.setValue(params.value);
 				}
 			}
+
 			if (group)
 			{
 				this.parentGroup = group;

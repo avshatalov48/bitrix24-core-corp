@@ -63,7 +63,14 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			$this->showCallCost = false;
 		}
 
-		if ($this->arParams['STEXPORT_MODE'] === 'Y' && $this->arParams['EXPORT_TYPE'] === 'excel' && $this->enableExport)
+		$this->arParams['STEXPORT_MODE'] ??= null;
+		$this->arParams['EXPORT_TYPE'] ??= null;
+
+		if (
+			$this->arParams['STEXPORT_MODE'] === 'Y'
+			&& $this->arParams['EXPORT_TYPE'] === 'excel'
+			&& $this->enableExport
+		)
 		{
 			if($this->getLock())
 			{
@@ -250,12 +257,12 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			}
 		}
 
-		if ($filter["PHONE_NUMBER"] <> '')
+		if (($filter["PHONE_NUMBER"] ?? null) <> '')
 		{
 			$result["PHONE_NUMBER"] = CVoxImplantPhone::stripLetters($filter["PHONE_NUMBER"]);
 		}
 
-		if ($filter["START_DATE_from"] <> '')
+		if (($filter["START_DATE_from"] ?? null) <> '')
 		{
 			try
 			{
@@ -265,7 +272,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			}
 		}
 
-		if ($filter["START_DATE_to"] <> '')
+		if (($filter["START_DATE_to"] ?? null) <> '')
 		{
 			try
 			{
@@ -708,11 +715,11 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			{
 				$recordHtml = $this->getRecordHtml(
 					$row['data']['ID'],
-					$row['data']['CALL_RECORD_HREF'],
-					$row['data']['CALL_RECORD_DOWNLOAD_URL'],
-					$row['data']['TRANSCRIPT_ID'],
-					$row['data']['TRANSCRIPT_PENDING'],
-					$row['data']['CALL_ID']
+					$row['data']['CALL_RECORD_HREF'] ?? null,
+					$row['data']['CALL_RECORD_DOWNLOAD_URL'] ?? null,
+					$row['data']['TRANSCRIPT_ID'] ?? null,
+					$row['data']['TRANSCRIPT_PENDING'] ?? null,
+					$row['data']['CALL_ID'] ?? null
 				);
 			}
 
@@ -851,7 +858,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 		if ($userId > 0)
 		{
 			$userHtml = '<span class="tel-stat-user-name-container">';
-			if ($this->userData[$userId]["PHOTO"])
+			if ($this->userData[$userId]["PHOTO"] ?? null)
 			{
 				$userHtml .= '<span class="ui-icon ui-icon-sm"><i style="background: url(\'' . Uri::urnEncode($this->userData[$userId]["PHOTO"]) . '\') no-repeat center;\"></i></span>';
 			}

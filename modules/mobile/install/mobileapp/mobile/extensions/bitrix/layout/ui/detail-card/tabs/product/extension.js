@@ -7,6 +7,20 @@ jn.define('layout/ui/detail-card/tabs/product', (require, exports, module) => {
 	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
 	const { stringify } = require('utils/string');
 
+	/** @var StoreProductGrid */
+	let StoreProductList;
+
+	try
+	{
+		StoreProductList = require('catalog/store/product-list').StoreProductList;
+	}
+	catch (e)
+	{
+		console.warn(e);
+
+		return;
+	}
+
 	/**
 	 * @class ProductTab
 	 */
@@ -59,7 +73,7 @@ jn.define('layout/ui/detail-card/tabs/product', (require, exports, module) => {
 			return new Promise((resolve) => {
 				if (this.productsRef)
 				{
-					resolve({ PRODUCTS: this.productsRef.getItems() });
+					resolve({ PRODUCTS: this.productsRef.getItems().map((item) => item.getRawValues()) });
 				}
 				else
 				{
@@ -77,7 +91,8 @@ jn.define('layout/ui/detail-card/tabs/product', (require, exports, module) => {
 			{
 				const errors = [];
 
-				this.productsRef.getItems().map((item, index) => {
+				this.productsRef.getItems().map((row, index) => {
+					const item = row.getRawValues();
 					if (stringify(item.name) === '')
 					{
 						errors.push({

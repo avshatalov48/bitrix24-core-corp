@@ -16,7 +16,7 @@
 
 		render()
 		{
-			return View();
+			return View({});
 		}
 	}
 

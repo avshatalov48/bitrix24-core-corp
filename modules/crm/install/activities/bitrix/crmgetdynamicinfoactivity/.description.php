@@ -18,9 +18,20 @@ $arActivityDescription = [
 		'OWN_ID' => 'crm',
 		'OWN_NAME' => 'CRM',
 	],
+	'PRESETS' => [
+		[
+			'ID' => 'dynamic',
+			'NAME' => Loc::getMessage('CRM_GDIA_ROBOT_NAME_DIGITAL_WORKPLACE'),
+			'DESCRIPTION' => Loc::getMessage('CRM_GDIA_ROBOT_DESCRIPTION_DIGITAL_WORKPLACE_MSGVER_1'),
+			'PROPERTIES' => [
+				'OnlyDynamicEntities' => 'Y',
+			]
+		],
+	],
 	'FILTER' => [
 		'INCLUDE' => [
 			['crm'],
+			['lists'],
 		],
 	],
 	'ADDITIONAL_RESULT' => ['DynamicEntityFields'],

@@ -132,7 +132,7 @@ if(isset($arUserField['USER_TYPE']))
 
 		if(
 			($arUserField["MANDATORY"] != "Y")
-			&& ($arUserField["SETTINGS"]["DISPLAY"] != "CHECKBOX")
+			&& (($arUserField["SETTINGS"]["DISPLAY"] ?? '') != "CHECKBOX")
 		):
 			$enum = array(/*null=>GetMessage("MAIN_NO")*/);
 		endif;

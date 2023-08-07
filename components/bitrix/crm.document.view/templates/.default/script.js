@@ -338,34 +338,35 @@
 					}
 				}).then(function(response) {
 					if (response.data.ID > 0) {
-						this.showMessage(BX.Loc.getMessage('CRM_DOCUMENT_VIEW_SIGN_DO_USE_PREVIOUS',
+						this.showMessage(BX.Loc.getMessage('CRM_DOCUMENT_VIEW_SIGN_DO_USE_PREVIOUS_MSG_MSGVER_3',
 							{
 								'%TITLE%': '<b>' + (response.data.TITLE || '') + '</b>',
-								'%CREATED_AT%': '<b>' + (response.data.CREATED_AT  || '') + '</b>',
 								'%INITIATOR%': '<b>' + (response.data.INITIATOR || '') + '</b>',
 							})
 							, [
-							new BX.PopupWindowButton({
-								text: BX.message('CRM_DOCUMENT_VIEW_SIGN_NEW_BUTTON_MSGVER_1'),
-								className: "ui-btn ui-btn-md ui-btn-primary",
-								events: {
-									click: function () {
-										convertDealAndStartSign(false);
-										this.popupWindow.destroy();
+								new BX.PopupWindowButton({
+									text: BX.message('CRM_DOCUMENT_VIEW_SIGN_OLD_BUTTON_MSGVER_2'),
+									className: "ui-btn ui-btn-md ui-btn-primary",
+									events: {
+										click: function ()
+										{
+											convertDealAndStartSign(true);
+											this.popupWindow.destroy();
+										}
 									}
-								}
-							}),
-							new BX.PopupWindowButton({
-								text: BX.message('CRM_DOCUMENT_VIEW_SIGN_OLD_BUTTON_MSGVER_1'),
-								className: "ui-btn ui-btn-md ui-btn-primary",
-								events: {
-									click: function () {
-										convertDealAndStartSign(true);
-										this.popupWindow.destroy();
+								}),
+								new BX.PopupWindowButton({
+									text: BX.message('CRM_DOCUMENT_VIEW_SIGN_NEW_BUTTON_MSGVER_3'),
+									className: "ui-btn ui-btn-md ui-btn-info",
+									events: {
+										click: function ()
+										{
+											convertDealAndStartSign(false);
+											this.popupWindow.destroy();
+										}
 									}
-								}
-							})
-						], BX.message('CRM_DOCUMENT_VIEW_SIGN_POPUP_TITLE_MSGVER_1'), (function () {
+								})
+						], BX.message('CRM_DOCUMENT_VIEW_SIGN_POPUP_TITLE_MSGVER_2'), (function () {
 							this.sendedToSign = false;
 							this.rightPanelLoader.hide();
 						}).bind(this));
@@ -451,7 +452,6 @@
 				children : content,
 			}),
 			titleBar: title,
-			contentColor: 'white',
 			className : 'bx-popup-documentgenerator-popup',
 			maxWidth: 470
 		});

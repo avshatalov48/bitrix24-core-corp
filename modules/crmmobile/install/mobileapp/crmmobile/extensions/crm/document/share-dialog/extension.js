@@ -7,9 +7,9 @@ jn.define('crm/document/share-dialog', (require, exports, module) => {
 	const { Alert } = require('alert');
 	const { get } = require('utils/object');
 	const { TimelineSchedulerSmsProvider } = require('crm/timeline/scheduler/providers/sms');
-	const { MailOpener } = require('crm/mail/opener');
 	const { Type } = require('crm/type');
 	const { showTooltip } = require('crm/document/shared-utils');
+	const { copyToClipboard } = require('utils/copy');
 
 	let DialogOpener;
 
@@ -21,11 +21,6 @@ jn.define('crm/document/share-dialog', (require, exports, module) => {
 	{
 		console.warn('Cannot get DialogOpener module', err);
 	}
-
-	// todo probably it goes to 'feature' utility
-	const isAndroid = Application.getPlatform() === 'android';
-	const deviceVersion = parseInt(device.version, 10);
-	const automatedCopyToClipboardNotifications = isAndroid && deviceVersion > 11;
 
 	const allowOpenlines = false;
 
@@ -375,6 +370,7 @@ jn.define('crm/document/share-dialog', (require, exports, module) => {
 				if (attachment)
 				{
 					resolve(Loc.getMessage('M_CRM_DOCUMENT_SHARE_DIALOG_EMAIL_FILE_ATTACHED'));
+
 					return;
 				}
 				this.getPublicUrl()
@@ -389,7 +385,9 @@ jn.define('crm/document/share-dialog', (require, exports, module) => {
 					});
 			});
 
-			prepareBody().then((body) => {
+			prepareBody().then(async (body) => {
+				const { MailOpener } = await requireLazy('crm:mail/opener');
+
 				MailOpener.openSend({
 					subject,
 					body,
@@ -433,11 +431,7 @@ jn.define('crm/document/share-dialog', (require, exports, module) => {
 		{
 			return this.getPublicUrl()
 				.then((publicUrl) => {
-					Application.copyToClipboard(publicUrl);
-					if (!automatedCopyToClipboardNotifications)
-					{
-						showTooltip(Loc.getMessage('M_CRM_DOCUMENT_SHARE_DIALOG_COPY_LINK_DONE'));
-					}
+					copyToClipboard(publicUrl, Loc.getMessage('M_CRM_DOCUMENT_SHARE_DIALOG_COPY_LINK_DONE'));
 				})
 				.catch(() => {
 					Alert.alert('', Loc.getMessage('M_CRM_DOCUMENT_SHARE_DIALOG_COPY_LINK_ERROR'));
@@ -482,6 +476,7 @@ jn.define('crm/document/share-dialog', (require, exports, module) => {
 				// todo better use helpdesk article - but find article code first
 				// helpdesk.openHelpArticle(this.props.signingInfoHelperSliderCode);
 				showTooltip(Loc.getMessage('M_CRM_DOCUMENT_SHARE_DIALOG_TARIFF_RESTRICTION'));
+
 				return;
 			}
 
@@ -501,6 +496,7 @@ jn.define('crm/document/share-dialog', (require, exports, module) => {
 		{
 			/** @type {object[]} */
 			const channels = get(this.props, 'channelSelector.channels', []);
+
 			return channels.some((item) => item.type === 'PHONE' && item.isAvailable === true);
 		}
 
@@ -508,6 +504,7 @@ jn.define('crm/document/share-dialog', (require, exports, module) => {
 		{
 			/** @type {object[]} */
 			const channels = get(this.props, 'channelSelector.channels', []);
+
 			return channels.some((item) => item.type === 'EMAIL' && item.isAvailable === true);
 		}
 
@@ -515,6 +512,7 @@ jn.define('crm/document/share-dialog', (require, exports, module) => {
 		{
 			/** @type {object[]} */
 			const channels = get(this.props, 'channelSelector.channels', []);
+
 			return channels.some((item) => item.type === 'IM' && item.isAvailable === true);
 		}
 
@@ -522,6 +520,7 @@ jn.define('crm/document/share-dialog', (require, exports, module) => {
 		{
 			/** @type {object} */
 			const communications = get(this.props, 'channelSelector.communications', {});
+
 			return communications.hasOwnProperty('PHONE');
 		}
 
@@ -529,6 +528,7 @@ jn.define('crm/document/share-dialog', (require, exports, module) => {
 		{
 			/** @type {object} */
 			const communications = get(this.props, 'channelSelector.communications', {});
+
 			return communications.hasOwnProperty('EMAIL');
 		}
 

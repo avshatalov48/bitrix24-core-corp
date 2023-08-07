@@ -1,16 +1,19 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
 if (!CModule::IncludeModule("meeting"))
 {
 	return ShowError(GetMessage("ME_MODULE_NOT_INSTALLED"));
 }
 
-$arParams['MEETING_ID'] = (int)$arParams['MEETING_ID'];
-$arParams['COPY'] = $arParams['COPY'] === 'Y';
-$arParams['GROUP_ID'] = (int)$arParams['GROUP_ID'];
+$arParams['MEETING_ID'] = (int)($arParams['MEETING_ID'] ?? null);
+$arParams['COPY'] = ($arParams['COPY'] ?? null) === 'Y';
+$arParams['GROUP_ID'] = (int)($arParams['GROUP_ID'] ?? null);
 
 $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE'])
 	? CSite::GetNameFormat(false)
-	: str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"])
+	: str_replace(["#NOBR#","#/NOBR#"], ["",""], $arParams["NAME_TEMPLATE"])
 ;
 
 if ($arParams['MEETING_ID'] && !$arParams['COPY'])
@@ -20,7 +23,7 @@ if ($arParams['MEETING_ID'] && !$arParams['COPY'])
 
 //$arParams['CALENDAR_ID'] = intval($arParams['CALENDAR_ID']);
 
-$arParams['EDIT'] = $arParams['EDIT'] === 'Y' || $arParams['MEETING_ID'] <= 0 || $arParams['COPY'];
+$arParams['EDIT'] = ($arParams['EDIT'] ?? null) === 'Y' || $arParams['MEETING_ID'] <= 0 || $arParams['COPY'];
 
 $arResult['IS_NEW_CALENDAR'] = CMeeting::IsNewCalendar();
 
@@ -30,7 +33,7 @@ if ($arParams['MEETING_ID'] > 0)
 	$arResult['ACCESS'] = CMeeting::GetUserRole($arParams['MEETING_ID']);
 	if ($arResult['ACCESS'])
 	{
-		if ($_REQUEST['DELETE'] === 'Y' && $arResult['ACCESS'] === CMeeting::ROLE_OWNER)
+		if (($_REQUEST['DELETE'] ?? null) === 'Y' && $arResult['ACCESS'] === CMeeting::ROLE_OWNER)
 		{
 			if (check_bitrix_sessid())
 			{
@@ -42,7 +45,7 @@ if ($arParams['MEETING_ID'] > 0)
 			return ShowError(GetMessage("ME_MEETING_ACCESS_DENIED"));
 		}
 
-		$dbRes = CMeeting::GetList(array(), array('ID' => $arParams['MEETING_ID']), false, false, array('*'));
+		$dbRes = CMeeting::GetList([], ['ID' => $arParams['MEETING_ID']], false, false, ['*']);
 		if (!$arResult['MEETING'] = $dbRes->GetNext())
 		{
 			return ShowError(GetMessage("ME_MEETING_NOT_FOUND"));
@@ -60,7 +63,7 @@ if ($arParams['MEETING_ID'] > 0)
 			return ShowError(GetMessage("ME_MEETING_ACCESS_DENIED"));
 		}
 
-		$arResult['MEETING']['FILES'] = array();
+		$arResult['MEETING']['FILES'] = [];
 		$dbFiles = CMeeting::GetFiles($arParams['MEETING_ID']);
 		while ($arFile = $dbFiles->Fetch())
 		{
@@ -74,7 +77,7 @@ if ($arParams['MEETING_ID'] > 0)
 				$arResult['MEETING']['EVENT'] = CMeeting::GetEvent($arResult['MEETING']['EVENT_ID']);
 			}
 
-			$arResult['MEETING']['USERS_EVENT'] = array();
+			$arResult['MEETING']['USERS_EVENT'] = [];
 			$arGuests = CMeeting::GetEventGuests($arResult['MEETING']['EVENT_ID'], $USER->GetID());
 			foreach ($arGuests as $guest)
 			{
@@ -87,7 +90,7 @@ if ($arParams['MEETING_ID'] > 0)
 			|| $arResult['MEETING']['CURRENT_RIGHTS'] === CMeeting::ROLE_KEEPER
 		;
 
-		$arResult['MEETING']['AGENDA'] = array();
+		$arResult['MEETING']['AGENDA'] = [];
 
 		if (!$arParams['COPY'])
 		{
@@ -99,28 +102,28 @@ if ($arParams['MEETING_ID'] > 0)
 
 				$arRes['RESPONSIBLE'] = CMeetingInstance::GetResponsible($arRes['ID']);
 
-				$arRes['REPORTS'] = array();
-				$dbReports = CMeetingReports::GetList(array('ID' => 'ASC'), array('INSTANCE_ID' => $arRes['ID']));
+				$arRes['REPORTS'] = [];
+				$dbReports = CMeetingReports::GetList(['ID' => 'ASC'], ['INSTANCE_ID' => $arRes['ID']]);
 				while ($arReport = $dbReports->Fetch())
 				{
-					$arFiles = array();
+					$arFiles = [];
 					$dbFiles = CMeetingReports::GetFiles($arReport['ID']);
 					while ($arFile = $dbFiles->Fetch())
 					{
 						$arFiles[$arFile['FILE_ID']] = $arFile;
 					}
 
-					$arRes['REPORTS'][] = array(
+					$arRes['REPORTS'][] = [
 						'ID' => $arReport['ID'],
 						'REPORT' => $arReport['REPORT'],
 						'USER_ID' => $arReport['USER_ID'],
-						'FILES' => CMeeting::GetFilesData($arFiles, array(
+						'FILES' => CMeeting::GetFilesData($arFiles, [
 							"REPORT" => $arReport['ID']
-						)),
-					);
+						]),
+					];
 				}
 
-				$arRes['FILES'] = array();
+				$arRes['FILES'] = [];
 				if($arRes['ITEM_ID'] > 0)
 				{
 					$dbFiles = CMeetingItem::GetFiles($arRes['ITEM_ID']);
@@ -131,7 +134,7 @@ if ($arParams['MEETING_ID'] > 0)
 
 					if(count($arRes['FILES']) > 0)
 					{
-						$arRes['FILES'] = CMeeting::GetFilesData($arRes['FILES'], array("ITEM" => $arRes['ITEM_ID']));
+						$arRes['FILES'] = CMeeting::GetFilesData($arRes['FILES'], ["ITEM" => $arRes['ITEM_ID']]);
 					}
 				}
 
@@ -157,19 +160,19 @@ if ($arParams['MEETING_ID'] > 0)
 
 		if ($arResult['MEETING']['DATE_START'] && MakeTimeStamp($arResult['MEETING']['DATE_START'])>0)
 		{
-			$arFormats = array(
+			$arFormats = [
 				'ru' => 'j F',
 				'en' => 'F j',
 				'de' => 'j. F',
-			);
+			];
 
 			$dateFormat = $arFormats[LANGUAGE_ID] ?? $arFormats[LangSubst(LANGUAGE_ID)];
 
-			$APPLICATION->SetTitle(GetMessage('ME_MEETING_EDIT', array(
+			$APPLICATION->SetTitle(GetMessage('ME_MEETING_EDIT', [
 				'#ID#' => $arResult['MEETING']['ID'],
 				'#DATE#' => FormatDate($dateFormat, MakeTimeStamp($arResult['MEETING']['DATE_START'])),
 				'#TITLE#' => $arResult['MEETING']['TITLE'],
-			)));
+			]));
 
 //			$arResult['MEETING']['DATE_START'] = FormatDate($DB->DateFormatToPhp(FORMAT_DATE).' H:i', MakeTimeStamp($arResult['MEETING']['DATE_START']));
 //			$arResult['MEETING']['DATE_START'] = date($DB->DateFormatToPhp(FORMAT_DATE).((IsAmPmMode()) ? ' g:i a' : ' H:i'), MakeTimeStamp($arResult['MEETING']['DATE_START']));
@@ -188,9 +191,9 @@ if ($arParams['MEETING_ID'] > 0)
 	}
 }
 
-if ($arParams['SET_NAVCHAIN'] !== 'N')
+if (($arParams['SET_NAVCHAIN'] ?? null) !== 'N')
 {
-	$APPLICATION->AddChainItem($arResult['MEETING']['TITLE'] <> '' ? $arResult['MEETING']['TITLE'] : GetMessage('ME_MEETING_ADD'), $arParams['MEETING_URL']);
+	$APPLICATION->AddChainItem(($arResult['MEETING']['TITLE'] ?? null) != '' ? $arResult['MEETING']['TITLE'] : GetMessage('ME_MEETING_ADD'), $arParams['MEETING_URL']);
 }
 
 if ($arParams['COPY'])
@@ -225,20 +228,20 @@ else if ($arParams['MEETING_ID'] <= 0)
 	$t = time();
 	// default date - in 3 days at current time + 1 hour
 	$d = ConvertTimeStamp($t - $t%3600 + CTimeZone::GetOffset() + 3600, 'FULL');
-	$arResult['MEETING'] = array(
+	$arResult['MEETING'] = [
 		"DURATION" => 1200,
 		"DATE_START" => $d,
-		"USERS" => array($USER->GetID() => CMeeting::ROLE_OWNER),
-		"AGENDA" => array(),
-		"FILES" => array(),
-	);
+		"USERS" => [$USER->GetID() => CMeeting::ROLE_OWNER],
+		"AGENDA" => [],
+		"FILES" => [],
+	];
 	$arResult['CAN_EDIT'] = true;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResult['CAN_EDIT'] && check_bitrix_sessid())
 {
 	$bFromEditForm = $_POST['edit'] === 'Y';
-	$arParams['COPY'] = $_POST['COPY'] === 'Y';
+	$arParams['COPY'] = ($_POST['COPY'] ?? null) === 'Y';
 
 	$MEETING_ID = $arParams['MEETING_ID'];
 
@@ -251,16 +254,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 
 		$res = false;
 
-		$arFields = array(
-			'TITLE' => trim($_REQUEST['TITLE']),
-			'DESCRIPTION' => trim($_REQUEST['DESCRIPTION']),
+		$arFields = [
+			'TITLE' => trim(($_REQUEST['TITLE'] ?? '')),
+			'DESCRIPTION' => trim(($_REQUEST['DESCRIPTION'] ?? '')),
 			'DATE_START' => CMeeting::MakeDateTime($_REQUEST['DATE_START_DATE'], $_REQUEST['DATE_START_TIME']),
-			'DURATION' => $_REQUEST['DURATION'] * $_REQUEST['DURATION_COEF'],
+			'DURATION' => (int)$_REQUEST['DURATION'] * (int)$_REQUEST['DURATION_COEF'],
 			'PLACE' => $_REQUEST['PLACE'],
 			'GROUP_ID' => $_REQUEST['GROUP_ID'],
-		);
+		];
 
-		if($_REQUEST['PLACE_ID'])
+		if(($_REQUEST['PLACE_ID'] ?? null))
 		{
 			$arFields['PLACE'] = $_REQUEST['PLACE_ID'];
 		}
@@ -276,7 +279,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 
 		$arFields['FILES'] = \Bitrix\Main\UI\FileInputUtility::instance()->checkFiles(
 			'MEETING_DESCRIPTION',
-			$_REQUEST['FILES']
+			($_REQUEST['FILES'] ?? null)
 		);
 
 		$deletedFileList = \Bitrix\Main\UI\FileInputUtility::instance()->checkDeletedFiles('MEETING_DESCRIPTION');
@@ -284,7 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 		if ($arParams['COPY'])
 		{
 			$arResult['MEETING']['OWNER_ID'] = $USER->GetID();
-			$arFields['PARENT_ID'] = $_REQUEST['PARENT_ID'];
+			$arFields['PARENT_ID'] = ($_REQUEST['PARENT_ID'] ?? null);
 			$MEETING_ID = 0;
 		}
 
@@ -306,9 +309,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 	}
 	elseif (isset($_REQUEST['PROTOCOL_TEXT']))
 	{
-		$arFields = array(
+		$arFields = [
 			'PROTOCOL_TEXT' => trim($_REQUEST['PROTOCOL_TEXT'])
-		);
+		];
 		CMeeting::Update($MEETING_ID, $arFields);
 	}
 
@@ -316,16 +319,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 	{
 		$arEventParams = null;
 
-		$arUsers = $_REQUEST['USERS'];
+		$arUsers = ($_REQUEST['USERS'] ?? null);
 		if (!is_array($arUsers))
-			$arUsers = array();
-		$arKeepers = $_REQUEST['KEEPERS'];
+		{
+			$arUsers = [];
+		}
+		$arKeepers = ($_REQUEST['KEEPERS'] ?? null);
 		if (!is_array($arKeepers))
-			$arKeepers = array();
+		{
+			$arKeepers = [];
+		}
 
-		$USERS = array(
+		$USERS = [
 			$USER->GetID() => $arResult['ACCESS']
-		);
+		];
 
 		foreach ($arKeepers as $USER_ID)
 		{
@@ -343,7 +350,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 			}
 		}
 
-		if ($arResult['MEETING']['OWNER_ID'])
+		if (isset($arResult['MEETING']['OWNER_ID']))
 		{
 			$USERS[$arResult['MEETING']['OWNER_ID']] = CMeeting::ROLE_OWNER;
 		}
@@ -375,44 +382,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 			if ($bUpdateEvent)
 			{
 				CMeeting::SetUsers($MEETING_ID, $USERS, true);
-				$arEventParams = array(
+				$arEventParams = [
 					$MEETING_ID,
-					array(
+					[
 						'ID' => $MEETING_ID,
 						'USERS' => $USERS,
 						'OWNER_ID' => $arResult['MEETING']['OWNER_ID'] ?? $USER->GetID(),
-						'EVENT_ID' => $arFields['EVENT_ID'] ?? $arResult['MEETING']['EVENT_ID'],
-						'STATE' => $arResult['MEETING']['CURRENT_STATE'],
+						'EVENT_ID' => $arFields['EVENT_ID'] ?? $arResult['MEETING']['EVENT_ID'] ?? null,
+						'STATE' => $arResult['MEETING']['CURRENT_STATE'] ?? null,
 						'TITLE' => $arFields['TITLE'] ?? $arResult['MEETING']['TITLE'],
-						'DESCRIPTION' => $arFields['DESCRIPTION'] ?? $arResult['MEETING']['DESCRIPTION'],
+						'DESCRIPTION' => $arFields['DESCRIPTION'] ?? $arResult['MEETING']['DESCRIPTION'] ?? null,
 						'DATE_START' => $arFields['DATE_START'] ?? $arResult['MEETING']['DATE_START'],
-						'DATE_FINISH' => $arFields['DATE_FINISH'] ?? $arResult['MEETING']['DATE_FINISH'],
+						'DATE_FINISH' => $arFields['DATE_FINISH'] ?? $arResult['MEETING']['DATE_FINISH'] ?? null,
 						'DURATION' => $arFields['DURATION'] ?? $arResult['MEETING']['DURATION'],
 						'PLACE' => $arFields['PLACE'] ?? $arResult['MEETING']['PLACE'],
-					),
+					],
 					$arParams
-				);
+				];
 
 				if ($bFromEditForm && isset($_REQUEST['EVENT_NOTIFY']))
 				{
 					if (isset($_REQUEST['EVENT_REINVITE']))
+					{
 						$arEventParams[1]['REINVITE'] = $_REQUEST['EVENT_REINVITE'] == 'Y';
+					}
 
 					$arEventParams[1]['NOTIFY'] = $_REQUEST['EVENT_NOTIFY'] == 'Y';
 				}
-				elseif ($arResult['MEETING']['EVENT'])
+				elseif (($arResult['MEETING']['EVENT'] ?? null))
 				{
-					$arEventParams[1]['NOTIFY'] = $arResult['MEETING']['EVENT']['MEETING']['NOTIFY'];
+					$arEventParams[1]['NOTIFY'] = ($arResult['MEETING']['EVENT']['MEETING']['NOTIFY'] ?? null);
 				}
 			}
 		}
 
-		$arAgenda = $_REQUEST['AGENDA'];
+		$arAgenda = ($_REQUEST['AGENDA'] ?? null);
 		$bDeleted = false;
 		if (is_array($arAgenda))
 		{
-			$arNewAgendaMap = array();
-			$arNewAgendaTasks = array();
+			$arNewAgendaMap = [];
+			$arNewAgendaTasks = [];
 
 			if (isset($_REQUEST['AGENDA_TASK']) && CModule::IncludeModule('tasks'))
 			{
@@ -441,12 +450,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 					}
 				}
 
-				if ($_REQUEST['AGENDA_PARENT'][$key] && $_REQUEST['AGENDA_PARENT'][$key] == 'outside')
+				if (isset($_REQUEST['AGENDA_PARENT'][$key]) && $_REQUEST['AGENDA_PARENT'][$key] === 'outside')
 				{
 					$_REQUEST['AGENDA_PARENT'][$key] = 0;
 				}
 
-				if ($_REQUEST['AGENDA_PARENT'][$key] && intval($_REQUEST['AGENDA_PARENT'][$key]) <= 0)
+				if (
+					isset($_REQUEST['AGENDA_PARENT'][$key])
+					&& $_REQUEST['AGENDA_PARENT'][$key]
+					&& (int)$_REQUEST['AGENDA_PARENT'][$key] <= 0
+				)
 				{
 					if (
 					// if parent instance is new and we have inserted it
@@ -461,7 +474,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 					else if (!array_key_exists($key, $arNewAgendaMap))
 					{
 						// we make a note that we have already viewed it
-						$arNewAgendaMap[$key] = array(0);
+						$arNewAgendaMap[$key] = [0];
 						// and shift it to the end of the list
 						unset($arAgenda[$key]);
 						$arAgenda[$key] = $item;
@@ -476,40 +489,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 					}
 				}
 
-				$arFields = array('MEETING_ID' => $MEETING_ID);
+				$arFields = ['MEETING_ID' => $MEETING_ID];
 
 				if ($isNewAgengaItem)
 				{
 					$arFields['MEETING_ID'] = $MEETING_ID;
 
-					if ($_REQUEST['AGENDA_ITEM'][$key])
+					if (($_REQUEST['AGENDA_ITEM'][$key] ?? null))
 					{
 						$arFields['ITEM_ID'] = $_REQUEST['AGENDA_ITEM'][$key];
 					}
 				}
 
-				$arFields['SORT'] = $_REQUEST['AGENDA_SORT'][$key];
+				$arFields['SORT'] = $_REQUEST['AGENDA_SORT'][$key] ?? null;
 
 				if ($isNewAgengaItem || isset($arResult['MEETING']['AGENDA'][$key]) && $arResult['MEETING']['AGENDA'][$key]['EDITABLE'])
 				{
-					$arFields['TITLE'] = trim($_REQUEST['AGENDA_TITLE'][$key]);
+					$arFields['TITLE'] = trim(($_REQUEST['AGENDA_TITLE'][$key] ?? ''));
 
 					if ($isNewAgengaItem)
+					{
 						$arFields['ITEM_ID'] = $_REQUEST['AGENDA_ITEM'][$key];
+					}
 					else
+					{
 						$arFields['ITEM_ID'] = $arResult['MEETING']['AGENDA'][$key]['ITEM_ID'];
+					}
 
 					if ($arFields['TITLE'] == '' || $arFields['TITLE'] == GetMessage('ME_MEETING_TITLE_DEFAULT') || $arFields['TITLE'] == GetMessage('ME_MEETING_TITLE_DEFAULT_1'))
 					{
 						if ($isNewAgengaItem && !$arFields['ITEM_ID'])
+						{
 							continue;
-						else
-							unset($arFields['TITLE']);
+						}
+
+						unset($arFields['TITLE']);
 					}
 					//$arFields['DESCRIPTION'] = trim($_REQUEST['AGENDA_DESCRIPTION'][$key]);
 				}
 
-				if ($_REQUEST['AGENDA_DELETED'][$key])
+				if (isset($_REQUEST['AGENDA_DELETED'][$key]))
 				{
 					if (!$isNewAgengaItem)
 					{
@@ -520,8 +539,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 					continue;
 				}
 
-				$arFields['RESPONSIBLE'] = $_REQUEST['AGENDA_RESPONSIBLE'][$key];
-				$arFields['DEADLINE'] = $_REQUEST['AGENDA_DEADLINE'][$key];
+				$arFields['RESPONSIBLE'] = $_REQUEST['AGENDA_RESPONSIBLE'][$key] ?? null;
+				$arFields['DEADLINE'] = $_REQUEST['AGENDA_DEADLINE'][$key] ?? null;
 
 				if (isset($_REQUEST['AGENDA_TYPE'][$key]))
 				{
@@ -538,17 +557,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 				}
 
 				if (isset($_REQUEST['AGENDA_PARENT'][$key]))
-					$arFields['INSTANCE_PARENT_ID'] = intval($_REQUEST['AGENDA_PARENT'][$key]);
-
-				if ($_REQUEST['AGENDA_TASK'][$key] && !$arResult['MEETING']['AGENDA'][$key]['TASK_ID'])
 				{
-					$TASK_ID = intval($_REQUEST['AGENDA_TASK'][$key]);
+					$arFields['INSTANCE_PARENT_ID'] = (int)$_REQUEST['AGENDA_PARENT'][$key];
+				}
+
+				if (
+					($_REQUEST['AGENDA_TASK'][$key] ?? null)
+					&& !($arResult['MEETING']['AGENDA'][$key]['TASK_ID'] ?? null)
+				)
+				{
+					$TASK_ID = (int)$_REQUEST['AGENDA_TASK'][$key];
 					if ($TASK_ID <= 0)
 					{
 						if ($arEmplIDs === null)
 						{
-							$arEmplIDs = array();
-							$dbEmpl = CIntranetUtils::GetSubordinateEmployees($arResult['MEETING']['OWNER_ID'], true, 'Y', array('ID'));
+							$arEmplIDs = [];
+							$dbEmpl = CIntranetUtils::GetSubordinateEmployees(($arResult['MEETING']['OWNER_ID'] ?? null), true, 'Y', ['ID']);
 							while ($arEmpl = $dbEmpl->Fetch())
 							{
 								$arEmplIDs[$arEmpl['ID']] = true;
@@ -566,28 +590,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 						}
 
 						$responsibleId = $arFields['RESPONSIBLE'][0];
-						$arTaskFields = array(
+						$arTaskFields = [
 							'RESPONSIBLE_ID' => $responsibleId > 0 ? $responsibleId : $USER->GetID(),
-							'TITLE' => $arFields['TITLE'] <> '' ? $arFields['TITLE'] : $arResult['MEETING']['AGENDA'][$key]['TITLE'],
+							'TITLE' => ($arFields['TITLE'] ?? '') != '' ? $arFields['TITLE'] : ($arResult['MEETING']['AGENDA'][$key]['TITLE'] ?? ''),
 							'DEADLINE' => $taskDeadline,
-							'TAGS' => array(),
+							'TAGS' => [],
 							'STATUS' => 2,
 							'SITE_ID' => SITE_ID
-						);
+						];
 
-						if ($arResult['MEETING']['OWNER_ID'] && $arResult['MEETING']['OWNER_ID'] != $USER->GetID())
+						if (
+							($arResult['MEETING']['OWNER_ID'] ?? null)
+							&& $arResult['MEETING']['OWNER_ID'] != $USER->GetID()
+						)
 						{
 							$arTaskFields['CREATED_BY'] = $arResult['MEETING']['OWNER_ID'];
-							$arTaskFields['AUDITORS'] = array($USER->GetID());
+							$arTaskFields['AUDITORS'] = [$USER->GetID()];
 						}
 
-						if ($_REQUEST['GROUP_ID'] > 0)
+						if (($_REQUEST['GROUP_ID'] ?? null) > 0)
 						{
 							$arTaskFields['GROUP_ID'] = (int)$_REQUEST['GROUP_ID'];
 						}
 						elseif ($arParams['MEETING_ID'] > 0)
 						{
-							$rsTasks_rsMeetingData = CMeeting::GetList(array(), array('ID' => $arParams['MEETING_ID']));
+							$rsTasks_rsMeetingData = CMeeting::GetList([], ['ID' => $arParams['MEETING_ID']]);
 							if ($arTasks_arMeetingData = $rsTasks_rsMeetingData->Fetch())
 							{
 								if ($arTasks_arMeetingData['GROUP_ID'] > 0)
@@ -610,7 +637,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 
 				if ($isNewAgengaItem)
 				{
-					if (!$arFields['ITEM_ID'])
+					if (!($arFields['ITEM_ID'] ?? null))
 					{
 						$arFields['ITEM_ID'] = CMeetingItem::Add($arFields, true);
 						$INSTANCE_ID = CMeetingInstance::Add($arFields);
@@ -619,11 +646,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 					{
 						$INSTANCE_ID = CMeetingInstance::Add($arFields);
 					}
-					$arNewAgendaMap[$key] = array($INSTANCE_ID, $arFields['ITEM_ID']);
+					$arNewAgendaMap[$key] = [$INSTANCE_ID, $arFields['ITEM_ID']];
 				}
 				else
 				{
-					if ($arFields['TITLE'])
+					if ($arFields['TITLE'] ?? null)
 					{
 						CMeetingItem::Update($arFields['ITEM_ID'], $arFields);
 					}
@@ -634,7 +661,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 				if (isset($arFields['TASK_ID']))
 				{
 					if (!$arFields['ITEM_ID'])
-						$arFields['ITEM_ID'] = $arResult['MEETING']['AGENDA'][$key]['ITEM_ID'];
+					{
+						$arFields['ITEM_ID'] = ($arResult['MEETING']['AGENDA'][$key]['ITEM_ID'] ?? null);
+					}
 
 					CMeetingItem::AddTask($arFields['ITEM_ID'], $arFields['TASK_ID']);
 				}
@@ -651,7 +680,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 			CMeeting::AddEvent($arEventParams[0], $arEventParams[1], $arEventParams[2]);
 		}
 
-		if ($_REQUEST['save_type'] == 'BGSAVE')
+		if (($_REQUEST['save_type'] ?? null) === 'BGSAVE')
 		{
 			$APPLICATION->RestartBuffer();
 ?>
@@ -695,18 +724,18 @@ if (top.document.forms.meeting_edit)
 	}
 }
 
-if ($_REQUEST['AGENDA_EX'] && check_bitrix_sessid())
+if (isset($_REQUEST['AGENDA_EX']) && check_bitrix_sessid())
 {
 	$APPLICATION->RestartBuffer();
 
-	$arResult['POPUP'] = $_REQUEST['POPUP'] == 'Y';
+	$arResult['POPUP'] = ($_REQUEST['POPUP'] ?? null) === 'Y';
 
 	$this->IncludeComponentTemplate('agenda_ex');
 	die();
 }
 
-$arResult['USERS'] = array();
-$dbUsers = CUser::GetList('ID', 'ASC', array('ID' => implode('|', array_keys($arResult['MEETING']['USERS']))));
+$arResult['USERS'] = [];
+$dbUsers = CUser::GetList('ID', 'ASC', ['ID' => implode('|', array_keys($arResult['MEETING']['USERS']))]);
 while ($arUser = $dbUsers->GetNext())
 {
 	$arResult['USERS'][$arUser['ID']] = $arUser;
@@ -714,18 +743,20 @@ while ($arUser = $dbUsers->GetNext())
 
 if (CModule::IncludeModule('forum'))
 {
-	$obForumConnector = new CMeetingForumHandlers($arParams['FORUM_ID'], $arResult['MEETING']);
+	$obForumConnector = new CMeetingForumHandlers(($arParams['FORUM_ID'] ?? null), $arResult['MEETING']);
 	$arParams['FORUM_ID'] = $obForumConnector->GetForumID();
 
 	foreach ($arResult['MEETING']['AGENDA'] as &$arItem)
 	{
 		$arItem['COMMENTS_COUNT'] = intval(CForumTopic::GetMessageCount($arParams['FORUM_ID'], "MEETING_ITEM_".$arItem['ITEM_ID'], true));
 		if ($arItem['COMMENTS_COUNT'] > 0)
+		{
 			$arItem['COMMENTS_COUNT']--;
+		}
 	}
 }
 
-CJSCore::Init(array('ajax', 'popup', 'date', 'meeting'));
+CJSCore::Init(['ajax', 'popup', 'date', 'meeting']);
 
 if ($arResult['CAN_EDIT'])
 {
@@ -746,7 +777,7 @@ if ($arParams['EDIT'] && $arResult['CAN_EDIT'] || isset($arResult["MEETING"]["PL
 			$arResult['MEETING_ROOMS_LIST'][] = $room;
 
 			if (
-				$arResult["MEETING"]["PLACE_ID"]
+				isset($arResult["MEETING"]["PLACE_ID"])
 				&& $arResult["MEETING"]["PLACE_ID"] === $room['MEETING_ROOM_ID']
 			)
 			{
@@ -755,7 +786,7 @@ if ($arParams['EDIT'] && $arResult['CAN_EDIT'] || isset($arResult["MEETING"]["PL
 			}
 		}
 
-		if ($arResult["MEETING"]["PLACE_ID"] && !$roomExist)
+		if (isset($arResult["MEETING"]["PLACE_ID"]) && !$roomExist)
 		{
 			unset($arResult["MEETING"]["PLACE"], $arResult["MEETING"]["PLACE_ID"]);
 		}
@@ -763,12 +794,17 @@ if ($arParams['EDIT'] && $arResult['CAN_EDIT'] || isset($arResult["MEETING"]["PL
 	else if ($arParams['RESERVE_MEETING_IBLOCK_ID'] || $arParams['RESERVE_VMEETING_IBLOCK_ID'])
 	{
 		$dbMeetingsList = CIBlockSection::GetList(
-			array('IBLOCK_ID' => 'ASC', 'NAME' => 'ASC', 'ID' => 'DESC'),
-			array('IBLOCK_ID' =>
-				array((int)$arParams['RESERVE_MEETING_IBLOCK_ID'], (int)$arParams['RESERVE_VMEETING_IBLOCK_ID'])
-			),
+			[
+				'IBLOCK_ID' => 'ASC',
+				'NAME' => 'ASC',
+				'ID' => 'DESC'
+			],
+			[
+				'IBLOCK_ID' =>
+					[(int)$arParams['RESERVE_MEETING_IBLOCK_ID'], (int)$arParams['RESERVE_VMEETING_IBLOCK_ID']]
+			],
 			false,
-			array('ID', 'IBLOCK_ID', 'NAME', 'DESCRIPTION')
+			['ID', 'IBLOCK_ID', 'NAME', 'DESCRIPTION']
 		);
 		while ($arRoom = $dbMeetingsList->Fetch())
 		{
@@ -792,7 +828,7 @@ else
 {
 	if (is_array($arResult['MEETING']['FILES']) && count($arResult['MEETING']['FILES']) > 0)
 	{
-		$arResult['MEETING']['FILES'] = CMeeting::GetFilesData($arResult['MEETING']['FILES'], array('MEETING' => $arResult['MEETING']['ID']));
+		$arResult['MEETING']['FILES'] = CMeeting::GetFilesData($arResult['MEETING']['FILES'], ['MEETING' => $arResult['MEETING']['ID']]);
 	}
 
 	if ($arResult['MEETING']['GROUP_ID'] > 0 && CModule::IncludeModule('socialnetwork'))

@@ -2,12 +2,12 @@
  * @module layout/ui/fields/file
  */
 jn.define('layout/ui/fields/file', (require, exports, module) => {
-
 	const { Alert } = require('alert');
 	const { clip, pen } = require('assets/common');
 	const { Haptics } = require('haptics');
 	const { BaseField } = require('layout/ui/fields/base');
 	const { filePreview } = require('layout/ui/fields/file/file-preview');
+	const { FileAttachment } = require('layout/ui/file-attachment');
 	const { UploaderClient } = require('uploader/client');
 	const { Events } = require('uploader/const');
 	const { debounce, throttle } = require('utils/function');
@@ -40,7 +40,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			this.queuedValue = null;
 			this.displayedAlertsSet = new Set();
 
-			/** @type {UI.FileAttachment} */
+			/** @type {FileAttachment|null} */
 			this.fileAttachmentRef = null;
 			this.fileAttachmentWidget = null;
 
@@ -736,7 +736,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 						layoutWidget.enableNavigationBarBorder(false);
 
 						layoutWidget.showComponent(
-							new UI.FileAttachment({
+							new FileAttachment({
 								ref: (ref) => {
 									if (ref)
 									{

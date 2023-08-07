@@ -215,14 +215,14 @@ if (\Bitrix\Main\Loader::includeModule("ui"))
 		}
 	});
 	<?php
-	if ($enabledMessengerV2)
-	{
-		echo CIMMessenger::GetV2TemplateJS($arResult);
-	}
-	else
-	{
-		echo CIMMessenger::GetTemplateJS([], $arResult);
-	}
+		if ($enabledMessengerV2)
+		{
+			echo CIMMessenger::GetV2TemplateJS($arResult);
+		}
+		else
+		{
+			echo CIMMessenger::GetTemplateJS([], $arResult);
+		}
 	?>
 </script>
 <?$frame->end()?>

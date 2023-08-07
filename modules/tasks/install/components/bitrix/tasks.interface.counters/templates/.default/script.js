@@ -11,7 +11,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.bindEvents();
 	    this.updateFields();
 	  }
-
 	  babelHelpers.createClass(Filter, [{
 	    key: "bindEvents",
 	    value: function bindEvents() {
@@ -33,11 +32,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (!Object.keys(this.fields).includes(field)) {
 	        return false;
 	      }
-
 	      if (main_core.Type.isArray(this.fields[field])) {
 	        return this.fields[field].length > 0;
 	      }
-
 	      return this.fields[field] !== '';
 	    }
 	  }, {
@@ -49,17 +46,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "toggleByField",
 	    value: function toggleByField(field) {
 	      var _this = this;
-
 	      var name = Object.keys(field)[0];
 	      var value = field[name];
-
 	      if (!this.isFilteredByFieldValue(name, value)) {
 	        this.filterManager.getApi().extendFilter(babelHelpers.defineProperty({}, name, value), false, {
 	          COUNTER_TYPE: 'TASKS_COUNTER_TYPE_' + value
 	        });
 	        return;
 	      }
-
 	      this.filterManager.getFilterFields().forEach(function (field) {
 	        if (field.getAttribute('data-name') === name) {
 	          _this.filterManager.getFields().deleteField(field);
@@ -77,7 +71,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}();
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5;
-
 	var CountersItem = /*#__PURE__*/function () {
 	  function CountersItem(options) {
 	    babelHelpers.classCallCheck(this, CountersItem);
@@ -94,12 +87,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.$counter = null;
 	    this.bindEvents();
 	  }
-
 	  babelHelpers.createClass(CountersItem, [{
 	    key: "bindEvents",
 	    value: function bindEvents() {
 	      var _this = this;
-
 	      main_core_events.EventEmitter.subscribe('BX.Tasks.Counters:active', function (param) {
 	        _this !== param.data ? _this.unActive() : null;
 	      });
@@ -111,7 +102,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        var count = this.count > 99 ? '99+' : this.count;
 	        this.$counter = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-counters--item-counter-num ", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), this.getCounterColor(), this.getInnerCounter(count));
 	      }
-
 	      return this.$counter;
 	    }
 	  }, {
@@ -120,7 +110,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (!this.$innerContainer) {
 	        this.$innerContainer = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-counters--item-counter-num-text --stop --without-animate\">", "</div>\t\t\n\t\t\t"])), counter);
 	      }
-
 	      return this.$innerContainer;
 	    }
 	  }, {
@@ -129,23 +118,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (start > 99 && value > 99) {
 	        return;
 	      }
-
 	      if (value > 99) {
 	        value = '99+';
 	      }
-
 	      if (start > 99) {
 	        start = 99;
 	      }
-
 	      if (value === 0) {
 	        this.getContainer().classList.add('--fade');
 	      }
-
 	      if (value > 0) {
 	        this.getContainer().classList.remove('--fade');
 	      }
-
 	      main_core.Dom.clean(this.getCounter());
 	      this.getInnerCounter().innerHTML = value;
 	      this.getCounter().appendChild(this.getInnerCounter());
@@ -158,7 +142,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (!this.color) {
 	        return null;
 	      }
-
 	      return "--".concat(this.color);
 	    }
 	  }, {
@@ -174,7 +157,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (!this.$remove) {
 	        this.$remove = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-counters--item-counter-remove\"></div>\n\t\t\t"])));
 	      }
-
 	      return this.$remove;
 	    }
 	  }, {
@@ -220,14 +202,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function getContainer(param) {
 	      if (!this.$container) {
 	        this.$container = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-counters--item-counter ", "\">\n\t\t\t\t\t<div class=\"tasks-counters--item-counter-wrapper\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-counters--item-counter-title\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), Number(this.count) === 0 ? ' --fade' : '', this.getCounter(), this.name, this.getRemove());
-
 	        if (this.filter.isFilteredByFieldValue(this.filterField, this.filterValue)) {
 	          this.active(this.$container);
 	        }
-
 	        main_core.Event.bind(this.$container, 'click', this.adjustClick.bind(this));
 	      }
-
 	      return this.$container;
 	    }
 	  }]);
@@ -235,9 +214,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}();
 
 	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6, _templateObject7, _templateObject8, _templateObject9;
-
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var Counters = /*#__PURE__*/function () {
 	  babelHelpers.createClass(Counters, null, [{
@@ -252,7 +229,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      };
 	    }
 	  }]);
-
 	  function Counters(options) {
 	    babelHelpers.classCallCheck(this, Counters);
 	    this.userId = options.userId;
@@ -282,7 +258,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.setData(this.counters);
 	    this.initPull();
 	  }
-
 	  babelHelpers.createClass(Counters, [{
 	    key: "isMyTaskList",
 	    value: function isMyTaskList() {
@@ -307,7 +282,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "initPull",
 	    value: function initPull() {
 	      var _this = this;
-
 	      BX.PULL.subscribe({
 	        moduleId: 'tasks',
 	        callback: function callback(data) {
@@ -320,14 +294,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "extendWatch",
 	    value: function extendWatch() {
 	      var _this2 = this;
-
 	      if (this.isProjectsTaskList() || this.isProjectList()) {
 	        var tagId = 'TASKS_PROJECTS';
-
 	        if (this.isProjectsTaskList()) {
 	          tagId = "TASKS_PROJECTS_".concat(this.groupId);
 	        }
-
 	        BX.PULL.extendWatch(tagId, true);
 	        setTimeout(function () {
 	          return _this2.extendWatch();
@@ -343,11 +314,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      };
 	      var has = Object.prototype.hasOwnProperty;
 	      var command = data.command,
-	          params = data.params;
-
+	        params = data.params;
 	      if (has.call(eventHandlers, command)) {
 	        var method = eventHandlers[command];
-
 	        if (method) {
 	          method.apply(this, [params]);
 	        }
@@ -362,15 +331,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onFilterApply",
 	    value: function onFilterApply() {
 	      var _this3 = this;
-
 	      this.filter.updateFields();
-
 	      if (this.isRoleChanged()) {
 	        this.updateRole();
 	        this.updateCountersData();
 	      } else {
 	        var counters = _objectSpread(_objectSpread({}, this.myCounters), this.otherCounters);
-
 	        Object.values(counters).forEach(function (counter) {
 	          if (counter) {
 	            _this3.filter.isFilteredByFieldValue(counter.filterField, counter.filterValue) ? counter.active() : counter.unActive();
@@ -382,12 +348,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "updateCountersData",
 	    value: function updateCountersData() {
 	      var _this4 = this;
-
 	      if (Counters.updateTimeout) {
 	        Counters.needUpdate = true;
 	        return;
 	      }
-
 	      Counters.updateTimeout = true;
 	      Counters.needUpdate = false;
 	      main_core.ajax.runComponentAction('bitrix:tasks.interface.counters', 'getCounters', {
@@ -405,7 +369,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      });
 	      setTimeout(function () {
 	        Counters.updateTimeout = false;
-
 	        if (Counters.needUpdate) {
 	          this.updateCountersData();
 	        }
@@ -425,22 +388,17 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onUserCounter",
 	    value: function onUserCounter(data) {
 	      var _this5 = this;
-
 	      var has = Object.prototype.hasOwnProperty;
-
 	      if (!this.isUserTaskList() || !this.isMyTaskList() || !has.call(data, this.groupId) || this.userId !== Number(data.userId)) {
 	        return;
 	      }
-
 	      var newCommentsCount = 0;
 	      Object.entries(data[this.groupId][this.role]).forEach(function (_ref) {
 	        var _ref2 = babelHelpers.slicedToArray(_ref, 2),
-	            type = _ref2[0],
-	            value = _ref2[1];
-
+	          type = _ref2[0],
+	          value = _ref2[1];
 	        if (_this5.myCounters[type]) {
 	          _this5.myCounters[type].updateCount(value);
-
 	          if (Counters.counterTypes.comment.includes(type)) {
 	            newCommentsCount += value;
 	          }
@@ -448,7 +406,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          newCommentsCount += value;
 	        }
 	      });
-
 	      if (newCommentsCount > 0) {
 	        this.$readAllInner.classList.remove('--fade');
 	      }
@@ -459,7 +416,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (this.isUserTaskList()) {
 	        return;
 	      }
-
 	      this.updateCountersData();
 	    }
 	  }, {
@@ -488,20 +444,17 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "setData",
 	    value: function setData(counters) {
 	      var _this6 = this;
-
 	      this.myCounters = {};
 	      this.otherCounters = {};
 	      this.additionalCounters = {};
 	      var availableTypes = [].concat(babelHelpers.toConsumableArray(Counters.counterTypes.additional), babelHelpers.toConsumableArray(Counters.counterTypes.my), babelHelpers.toConsumableArray(Counters.counterTypes.other));
 	      Object.entries(counters).forEach(function (_ref3) {
 	        var _ref4 = babelHelpers.slicedToArray(_ref3, 2),
-	            type = _ref4[0],
-	            data = _ref4[1];
-
+	          type = _ref4[0],
+	          data = _ref4[1];
 	        if (!availableTypes.includes(type)) {
 	          return;
 	        }
-
 	        var counterItem = _this6.getCounterItem({
 	          type: type,
 	          name: _this6.getCounterNameByType(type),
@@ -510,7 +463,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          filterField: data.FILTER_FIELD,
 	          filterValue: data.FILTER_VALUE
 	        });
-
 	        if (Counters.counterTypes.additional.includes(type)) {
 	          _this6.additionalCounters[type] = counterItem;
 	        } else if (Counters.counterTypes.my.includes(type)) {
@@ -529,28 +481,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getReadAllBlock",
 	    value: function getReadAllBlock() {
 	      var _this7 = this;
-
 	      var counters = _objectSpread(_objectSpread(_objectSpread({}, this.myCounters), this.otherCounters), this.additionalCounters);
-
 	      var newCommentsCount = 0;
 	      Object.entries(counters).forEach(function (_ref5) {
 	        var _ref6 = babelHelpers.slicedToArray(_ref5, 2),
-	            type = _ref6[0],
-	            counter = _ref6[1];
-
+	          type = _ref6[0],
+	          counter = _ref6[1];
 	        if (Counters.counterTypes.comment.includes(type)) {
 	          newCommentsCount += counter.count;
 	        }
 	      });
 	      this.$readAllInner = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div data-role=\"tasks-counters--item-head-read-all\" class=\"tasks-counters--item-head\n\t\t\t\t\t\t", " \n\t\t\t\t\t\t--action \n\t\t\t\t\t\t--read-all\">\n\t\t\t\t<div class=\"tasks-counters--item-head-read-all--icon\"></div>\n\t\t\t\t<div class=\"tasks-counters--item-head-read-all--text\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), newCommentsCount === 0 ? '--fade' : '', main_core.Loc.getMessage('TASKS_COUNTER_READ_ALL'));
 	      var readAllClick = this.readAllForProjects.bind(this);
-
 	      if (this.isUserTaskList() || this.isProjectsTaskList() && this.role !== 'view_all') {
 	        readAllClick = this.readAllByRole.bind(this);
 	      } else if (this.myCounters['scrum_total_comments'] || this.otherCounters['scrum_foreign_comments']) {
 	        readAllClick = this.readAllForScrum.bind(this);
 	      }
-
 	      main_core.Event.bind(this.$readAllInner, 'click', readAllClick);
 	      main_core.Event.bind(this.$readAllInner, 'click', function () {
 	        return _this7.$readAllInner.classList.add('--fade');
@@ -571,12 +518,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "readAllForProjects",
 	    value: function readAllForProjects() {
 	      var allCounters = _objectSpread(_objectSpread({}, this.myCounters), this.otherCounters);
-
 	      Object.entries(allCounters).forEach(function (_ref7) {
 	        var _ref8 = babelHelpers.slicedToArray(_ref7, 2),
-	            type = _ref8[0],
-	            counter = _ref8[1];
-
+	          type = _ref8[0],
+	          counter = _ref8[1];
 	        if (Counters.counterTypes.comment.includes(type)) {
 	          counter.updateCount(0);
 	        }
@@ -589,12 +534,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "readAllForScrum",
 	    value: function readAllForScrum() {
 	      var allCounters = _objectSpread(_objectSpread({}, this.myCounters), this.otherCounters);
-
 	      Object.entries(allCounters).forEach(function (_ref9) {
 	        var _ref10 = babelHelpers.slicedToArray(_ref9, 2),
-	            type = _ref10[0],
-	            counter = _ref10[1];
-
+	          type = _ref10[0],
+	          counter = _ref10[1];
 	        if (Counters.counterTypes.comment.includes(type)) {
 	          counter.updateCount(0);
 	        }
@@ -607,7 +550,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getPopup",
 	    value: function getPopup() {
 	      var _this8 = this;
-
 	      var itemsNode = [];
 	      Object.values(this.otherCounters).forEach(function (counter) {
 	        var menuItem = new main_popup.MenuItem({
@@ -634,7 +576,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          },
 	          onPopupClose: function onPopupClose() {
 	            _this8.$more.classList.remove('--hover');
-
 	            _this8.popupMenu.destroy();
 	          }
 	        }
@@ -653,14 +594,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (!this.$moreArrow) {
 	        this.$moreArrow = main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-counters--item-counter-arrow\"></div>\n\t\t\t"])));
 	      }
-
 	      return this.$moreArrow;
 	    }
 	  }, {
 	    key: "getMore",
 	    value: function getMore() {
 	      var _this9 = this;
-
 	      var value = 0;
 	      Object.values(this.otherCounters).forEach(function (counter) {
 	        value += Number(counter.count);
@@ -679,7 +618,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (!this.$innerContainer) {
 	        this.$innerContainer = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-counters--item-counter-num-text --stop --without-animate\">", "</div>\t\t\n\t\t\t"])), counter);
 	      }
-
 	      return this.$innerContainer;
 	    }
 	  }, {
@@ -688,7 +626,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (Object.keys(this.otherCounters).length === 0) {
 	        return '';
 	      }
-
 	      var content = [];
 	      Object.values(this.otherCounters).forEach(function (counter) {
 	        return content.push(counter.getContainer());

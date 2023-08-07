@@ -456,6 +456,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var MODE_EDIT = 'EDIT';
 	var MODE_SET = 'SET';
+	var enableImageInputCache = new Map();
 	var _initActions = /*#__PURE__*/new WeakSet();
 	var _isEditableCatalogPrice = /*#__PURE__*/new WeakSet();
 	var _isSaveableCatalogPrice = /*#__PURE__*/new WeakSet();
@@ -1340,15 +1341,17 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          storeMap: (_fields$STORE_MAP = fields['STORE_MAP']) !== null && _fields$STORE_MAP !== void 0 ? _fields$STORE_MAP : {},
 	          fields: fields
 	        });
-	        var imageInfo = main_core.Type.isStringFilled(fields['IMAGE_INFO']) ? JSON.parse(fields['IMAGE_INFO']) : null;
-	        if (main_core.Type.isObject(imageInfo)) {
-	          this.model.getImageCollection().setPreview(imageInfo['preview']);
-	          this.model.getImageCollection().setEditInput(imageInfo['input']);
-	          this.model.getImageCollection().setMorePhotoValues(imageInfo['values']);
-	        }
 	        if (!main_core.Type.isNil(fields['DETAIL_URL'])) {
 	          this.model.setDetailPath(fields['DETAIL_URL']);
 	        }
+	      }
+
+	      // fill after change setting show pictures.
+	      var imageInfo = main_core.Type.isStringFilled(fields['IMAGE_INFO']) ? JSON.parse(fields['IMAGE_INFO']) : null;
+	      if (main_core.Type.isObject(imageInfo)) {
+	        this.model.getImageCollection().setPreview(imageInfo['preview']);
+	        this.model.getImageCollection().setEditInput(imageInfo['input']);
+	        this.model.getImageCollection().setMorePhotoValues(imageInfo['values']);
 	      }
 	      if (_classPrivateMethodGet$2(this, _isReserveEqualProductQuantity, _isReserveEqualProductQuantity2).call(this)) {
 	        if (!this.getModel().getField('DATE_RESERVE_END')) {
@@ -1976,6 +1979,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	}
 	function _initSelector2() {
 	  var id = 'crm_grid_' + this.getId();
+	  var enableImageInput = this.editor.getSettingValue('enableSelectProductImageInput', true);
 	  this.mainSelector = catalog_productSelector.ProductSelector.getById(id);
 	  if (!this.mainSelector) {
 	    var selectorOptions = {
@@ -1986,7 +1990,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      config: {
 	        ENABLE_SEARCH: true,
 	        IS_ALLOWED_CREATION_PRODUCT: true,
-	        ENABLE_IMAGE_INPUT: true,
+	        ENABLE_IMAGE_INPUT: enableImageInput,
 	        ROLLBACK_INPUT_AFTER_CANCEL: true,
 	        ENABLE_INPUT_DETAIL_LINK: true,
 	        ROW_ID: this.getId(),
@@ -2001,7 +2005,14 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    this.mainSelector = new catalog_productSelector.ProductSelector('crm_grid_' + this.getId(), selectorOptions);
 	  } else {
 	    this.mainSelector.subscribeEvents();
+	    if (enableImageInput !== enableImageInputCache[id]) {
+	      this.mainSelector.setConfig('ENABLE_IMAGE_INPUT', enableImageInput);
+	      if (enableImageInput) {
+	        this.mainSelector.layoutImage();
+	      }
+	    }
 	  }
+	  enableImageInputCache[id] = enableImageInput;
 	  if (this.isRestrictedStoreInfo()) {
 	    this.mainSelector.setMode(catalog_productSelector.ProductSelector.MODE_VIEW);
 	  }

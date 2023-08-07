@@ -87,11 +87,13 @@ class FileUploader
 
 		$fileId = $this->cfile::SaveFile($fileData, 'crm');
 
-		if ($fileId > 0)
+		if (is_numeric($fileId) && (int)$fileId > 0)
 		{
+			$fileId = (int)$fileId;
+
 			$this->registerFileId($field, $fileId);
 
-			return (int)$fileId;
+			return $fileId;
 		}
 
 		return null;

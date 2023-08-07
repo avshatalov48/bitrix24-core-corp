@@ -36,8 +36,10 @@ BX.Disk.ExternalLoader.NewItemClass = (function ()
 		};
 		this.cloudImport = {};
 		this.handlers = {
-			onFinish: parameters.onFinish,
-			onProgress: parameters.onProgress
+			onStart: BX.Type.isFunction(parameters.onStart) ? parameters.onStart : () => {},
+			onProgress: BX.Type.isFunction(parameters.onProgress) ? parameters.onProgress : () => {},
+			onFinish: BX.Type.isFunction(parameters.onFinish) ? parameters.onFinish : () => {},
+			onError: BX.Type.isFunction(parameters.onError) ? parameters.onError : () => {},
 		};
 
 		this.setEvents();
@@ -45,6 +47,11 @@ BX.Disk.ExternalLoader.NewItemClass = (function ()
 
 	NewItemClass.prototype.setEvents = function()
 	{};
+
+	NewItemClass.prototype.onStart = function()
+	{
+		this.handlers.onStart();
+	};
 
 	NewItemClass.prototype.onFinish = function(response)
 	{
@@ -57,7 +64,15 @@ BX.Disk.ExternalLoader.NewItemClass = (function ()
 		this.handlers.onProgress(progress);
 	};
 
+	NewItemClass.prototype.onError = function(error)
+	{
+		BX.onCustomEvent(this, "onFinish", [this]);
+		this.handlers.onError(error);
+	};
+
 	NewItemClass.prototype.start = function() {
+		this.onStart();
+
 		BX.Disk.ajax({
 			method: 'POST',
 			dataType: 'json',
@@ -66,14 +81,17 @@ BX.Disk.ExternalLoader.NewItemClass = (function ()
 				fileId: this.file.id,
 				service: this.file.service
 			},
-			onsuccess: BX.delegate(function (response) {
+			onsuccess: (response) => {
 				if(response.status != 'success')
 				{
 					response.errors = response.errors || [{}];
+					this.onError(response.errors);
+
 					BX.Disk.showModalWithStatusAction({
 						status: 'error',
 						message: response.errors.pop().message
 					});
+
 					return null;
 				}
 				this.cloudImport = {
@@ -81,7 +99,10 @@ BX.Disk.ExternalLoader.NewItemClass = (function ()
 				};
 
 				this.processChunkDownload();
-			}, this)
+			},
+			onfailure: (error) => {
+				this.onError([error]);
+			}
 		});
 	};
 
@@ -93,14 +114,18 @@ BX.Disk.ExternalLoader.NewItemClass = (function ()
 			data: {
 				cloudImportId: this.cloudImport.id
 			},
-			onsuccess: BX.delegate(function (response) {
+			onsuccess: (response) => {
 				if(response.status != 'success')
 				{
 					response.errors = response.errors || [{}];
+
+					this.onError(response.errors);
+
 					BX.Disk.showModalWithStatusAction({
 						status: 'error',
 						message: response.errors.pop().message
 					});
+
 					return null;
 				}
 
@@ -113,7 +138,10 @@ BX.Disk.ExternalLoader.NewItemClass = (function ()
 					this.processChunkDownload();
 				}
 
-			}, this)
+			},
+			onfailure: (error) => {
+				this.onError([error]);
+			},
 		});
 	};
 
@@ -125,10 +153,13 @@ BX.Disk.ExternalLoader.NewItemClass = (function ()
 			data: {
 				cloudImportId: this.cloudImport.id
 			},
-			onsuccess: BX.delegate(function (response) {
+			onsuccess: (response) => {
 				if(response.status != 'success')
 				{
 					response.errors = response.errors || [{}];
+
+					this.onError(response.errors);
+
 					BX.Disk.showModalWithStatusAction({
 						status: 'error',
 						message: response.errors.pop().message
@@ -137,7 +168,10 @@ BX.Disk.ExternalLoader.NewItemClass = (function ()
 				}
 
 				this.onFinish(response);
-			}, this)
+			},
+			onfailure: (error) => {
+				this.onError([error]);
+			}
 		});
 	};
 

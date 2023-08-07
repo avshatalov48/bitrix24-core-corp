@@ -47,6 +47,56 @@ final class AttachedObject extends Engine\Controller
 		return $defaultPreFilters;
 	}
 
+	/**
+	 * @param array $allowEditValues Array with key: attached object id => value for allow editing.
+	 * @param Main\Engine\CurrentUser $currentUser
+	 * @return array
+	 */
+	public function changeAllowEditAction(
+		array $allowEditValues,
+		Main\Engine\CurrentUser $currentUser
+	)
+	{
+		if (empty($allowEditValues))
+		{
+			return [];
+		}
+
+		$ids = \array_keys($allowEditValues);
+		$attachedObjects = Disk\Type\AttachedObjectCollection::createByIds(...$ids);
+
+		$changed = [];
+		foreach ($attachedObjects as $attachedObject)
+		{
+			if ((int)$attachedObject->getCreatedBy() !== (int)$currentUser->getId())
+			{
+				continue;
+			}
+
+			if (!$attachedObject->isEditable())
+			{
+				continue;
+			}
+
+			if (!$attachedObject->canRead($currentUser->getId()))
+			{
+				continue;
+			}
+
+			if (!isset($allowEditValues[$attachedObject->getId()]))
+			{
+				continue;
+			}
+
+			$attachedObject->changeAllowEdit((bool)$allowEditValues[$attachedObject->getId()]);
+			$changed[$attachedObject->getId()] = $attachedObject->getAllowEdit();
+		}
+
+		return [
+			'changedAttachedObjects' => $changed,
+		];
+	}
+
 	public function copyToMeAction(Disk\AttachedObject $attachedObject)
 	{
 		$currentUserId = $this->getCurrentUser()->getId();

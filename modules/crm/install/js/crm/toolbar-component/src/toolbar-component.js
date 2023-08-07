@@ -92,7 +92,7 @@ export default class ToolbarComponent extends EventEmitter
 					steps: [
 						{
 							target: robotsBtn,
-							title: Loc.getMessage('CRM_TOOLBAR_COMPONENT_ROBOTS_GUIDE_TEXT'),
+							title: Loc.getMessage('CRM_TOOLBAR_COMPONENT_ROBOTS_GUIDE_TEXT_1'),
 							text: ''
 						}
 					],

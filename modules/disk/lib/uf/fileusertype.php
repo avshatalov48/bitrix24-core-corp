@@ -26,6 +26,8 @@ final class FileUserType
 	const TYPE_ALREADY_ATTACHED = 3;
 	const NEW_FILE_PREFIX = 'n';
 
+	private static $templateTypeCache = [];
+
 	/** @var File[]  */
 	protected static $loadedFiles = [];
 	/** @var array */
@@ -47,7 +49,9 @@ final class FileUserType
 
 	public static function getDBColumnType($userField)
 	{
-		return 'int(11)';
+		$connection = \Bitrix\Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
+		return $helper->getColumnTypeByField(new \Bitrix\Main\ORM\Fields\IntegerField('x'));
 	}
 
 	public static function prepareSettings($userField)
@@ -137,6 +141,21 @@ final class FileUserType
 	public static function getAdminListEditHTMLMulty($userField, $htmlControl)
 	{
 		return "&nbsp;";
+	}
+
+	public static function getCustomData(array $userField, int $entityValueId): array
+	{
+		if ($entityValueId > 0)
+		{
+			return [
+				"PHOTO_TEMPLATE" => self::getTemplateType(['arUserField' => [
+					'ENTITY_ID' => $userField['ENTITY_ID'],
+					'ENTITY_VALUE_ID' => $entityValueId,
+				]]),
+			];
+		}
+
+		return [];
 	}
 
 	public static function onSearchIndex($userField)
@@ -249,9 +268,26 @@ final class FileUserType
 
 		$userFieldManager = Driver::getInstance()->getUserFieldManager();
 
-		if ($templateType = Application::getInstance()->getContext()->getRequest()->getPost(
-			$userFieldManager->getInputNameForTemplateView($userField['ENTITY_ID'])
-		))
+
+		$entityType = $userField['ENTITY_ID'];
+		$templateType = Application::getInstance()->getContext()->getRequest()->getPost(
+			$userFieldManager->getInputNameForTemplateView($entityType)
+		);
+
+		// Live Feed disguises forums comments as social network comments.
+		// When you add a new comment for a task/event,
+		// Live Feed creates a forum message and then creates a log entry.
+		// see CSocNetLogComments::Add,
+		// see CSocNetLogTools::AddComment_Tasks, CSocNetLogTools::AddComment_Forum
+		if ($templateType === null && ($entityType === 'FORUM_MESSAGE' || $entityType === 'SONET_COMMENT'))
+		{
+			$entityType = $entityType === 'FORUM_MESSAGE' ? 'SONET_COMMENT' : 'FORUM_MESSAGE';
+			$templateType = Application::getInstance()->getContext()->getRequest()->getPost(
+				$userFieldManager->getInputNameForTemplateView($entityType)
+			);
+		}
+
+		if ($templateType)
 		{
 			self::setTemplateType([
 				'ENTITY_ID' => $userField['ENTITY_ID'],
@@ -303,8 +339,8 @@ final class FileUserType
 					'type' => $userField['ENTITY_ID'],
 				],
 				[
-					'allowEdit' => $canUpdate,
-					'isEditable' => ($canUpdate && (int)self::getValueForAllowEdit($userField)),
+					'isEditable' => $canUpdate,
+					'allowEdit' => ($canUpdate && (int)self::getValueForAllowEdit($userField, $value)),
 					'createdBy' => $userId === false? self::getActivityUserId() : $userId,
 				]
 			);
@@ -315,6 +351,14 @@ final class FileUserType
 			}
 
 			return $attachedModel->getId();
+		}
+		else if ($type === self::TYPE_ALREADY_ATTACHED)
+		{
+			$allowEdit = self::getValueForAllowEdit($userField, $value);
+			if ($allowEdit !== null)
+			{
+				self::changeAllowEdit($realValue, $allowEdit);
+			}
 		}
 
 		return $realValue;
@@ -390,7 +434,7 @@ final class FileUserType
 		$attachedModel->delete();
 	}
 
-	public static function getPublicViewHTML($userField, $id, $params = "", $settings = array(), $matches)
+	public static function getPublicViewHTML($userField, $id, $params = "", $settings = array(), $matches = null)
 	{
 		$userFieldManager = Driver::getInstance()->getUserFieldManager();
 		$res = (is_array($matches) && is_string($matches[0]) ? $matches[0] : '');
@@ -631,7 +675,7 @@ final class FileUserType
 		self::$valuesAllowEditByEntityType[$entity] = (bool)$value;
 	}
 
-	private static function getValueForAllowEdit(array $userField)
+	private static function getValueForAllowEdit(array $userField, $id): ?bool
 	{
 		if (isset(self::$valuesAllowEditByEntityType[$userField['ENTITY_ID']]))
 		{
@@ -640,9 +684,70 @@ final class FileUserType
 
 		$userFieldManager = Driver::getInstance()->getUserFieldManager();
 
-		return Application::getInstance()->getContext()->getRequest()->getPost(
-			$userFieldManager->getInputNameForAllowEditByEntityType($userField['ENTITY_ID'])
+		$entityType = $userField['ENTITY_ID'];
+		$postValue = Application::getInstance()->getContext()->getRequest()->getPost(
+			$userFieldManager->getInputNameForAllowEditByEntityType($entityType)
 		);
+
+		// Live Feed disguises forums comments as social network comments.
+		// When you add a new comment for a task/event,
+		// Live Feed creates a forum message and then creates a log entry.
+		// see CSocNetLogComments::Add,
+		// see CSocNetLogTools::AddComment_Tasks, CSocNetLogTools::AddComment_Forum
+		if ($postValue === null && ($entityType === 'FORUM_MESSAGE' || $entityType === 'SONET_COMMENT'))
+		{
+			$entityType = $entityType === 'FORUM_MESSAGE' ? 'SONET_COMMENT' : 'FORUM_MESSAGE';
+			$postValue = Application::getInstance()->getContext()->getRequest()->getPost(
+				$userFieldManager->getInputNameForAllowEditByEntityType($entityType)
+			);
+		}
+
+		if ($postValue === null)
+		{
+			return null;
+		}
+		else if (is_array($postValue))
+		{
+			if (isset($postValue[$id]) && is_string($postValue[$id]))
+			{
+				return (bool)$postValue[$id];
+			}
+			else
+			{
+				return null;
+			}
+		}
+		else
+		{
+			return (bool)$postValue;
+		}
+	}
+
+	private static function changeAllowEdit(int $attachedObjectId, bool $allowEdit): void
+	{
+		$attachedObject = AttachedObject::getById($attachedObjectId);
+		if (!$attachedObject || (bool)$attachedObject->getAllowEdit() === $allowEdit)
+		{
+			return;
+		}
+
+		$currentUser = \Bitrix\Main\Engine\CurrentUser::get();
+		if ((int)$attachedObject->getCreatedBy() !== (int)$currentUser->getId())
+		{
+			return;
+		}
+
+		if (!$attachedObject->isEditable())
+		{
+			return;
+		}
+
+		if (!$attachedObject->canRead($currentUser->getId()))
+		{
+			return;
+		}
+
+		$attachedObject->changeAllowEdit($allowEdit);
 	}
 
 	public static function getItemsInfo($itemsList)
@@ -850,6 +955,9 @@ final class FileUserType
 				'ENTITY_ID' => $params['ENTITY_VALUE_ID'],
 				'VALUE' => $params['VALUE'],
 			]);
+
+			$cacheId = "{$params['ENTITY_ID']}.{$params['ENTITY_VALUE_ID']}";
+			self::$templateTypeCache[$cacheId] = $params['VALUE'];
 		}
 	}
 
@@ -872,17 +980,29 @@ final class FileUserType
 			&& !empty($params['ARUSERFIELD']['ENTITY_VALUE_ID'])
 		)
 		{
-			$res = AttachedViewTypeTable::getList([
-				'filter' => [
-					'=ENTITY_TYPE' => $params['ARUSERFIELD']['ENTITY_ID'],
-					'ENTITY_ID' => $params['ARUSERFIELD']['ENTITY_VALUE_ID']
-				],
-				'select' => [ 'VALUE' ]
-			]);
-			if ($paramFields = $res->fetch())
+			$cacheId = "{$params['ARUSERFIELD']['ENTITY_ID']}.{$params['ARUSERFIELD']['ENTITY_VALUE_ID']}";
+			if (array_key_exists($cacheId, self::$templateTypeCache))
 			{
-				$result = $paramFields['VALUE'];
+				$result = self::$templateTypeCache[$cacheId];
 			}
+			else
+			{
+				$res = AttachedViewTypeTable::getList([
+					'filter' => [
+						'=ENTITY_TYPE' => $params['ARUSERFIELD']['ENTITY_ID'],
+						'ENTITY_ID' => $params['ARUSERFIELD']['ENTITY_VALUE_ID']
+					],
+					'select' => [ 'VALUE' ]
+				]);
+
+				if ($paramFields = $res->fetch())
+				{
+					$result = $paramFields['VALUE'];
+				}
+
+				self::$templateTypeCache[$cacheId] = $result;
+			}
+
 		}
 
 		return $result;

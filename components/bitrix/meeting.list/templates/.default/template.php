@@ -17,7 +17,7 @@ $APPLICATION->IncludeComponent(
 	"bitrix:intranet.user.selector.new", ".default", array(
 		"MULTIPLE" => "N",
 		"NAME" => "OWNER",
-		"VALUE" => $arResult['FILTER']['OWNER_ID'],
+		"VALUE" => ($arResult['FILTER']['OWNER_ID'] ?? null),
 		"POPUP" => "Y",
 		"ON_CHANGE" => "BXOnFilterOwnerSelect",
 		"SITE_ID" => SITE_ID,
@@ -30,7 +30,7 @@ $APPLICATION->IncludeComponent(
 	"bitrix:intranet.user.selector.new", ".default", array(
 		"MULTIPLE" => "N",
 		"NAME" => "MEMBER",
-		"VALUE" => $arResult['FILTER']['MEMBER_ID'],
+		"VALUE" => ($arResult['FILTER']['MEMBER_ID'] ?? null),
 		"POPUP" => "Y",
 		"ON_CHANGE" => "BXOnFilterMemberSelect",
 		"SITE_ID" => SITE_ID,
@@ -50,7 +50,7 @@ $APPLICATION->IncludeComponent(
 		<div class="menu-filter-block">
 			<div class="filter-field filter-field-name">
 				<label class="filter-field-title" for="meeting-field-name"><?=GetMessage('ME_FILTER_TITLE')?></label>
-				<input type="text" name="FILTER[TITLE]" value="<?=htmlspecialcharsbx($arResult['FILTER']['TITLE'])?>" class="filter-textbox" id="meeting-field-name">
+				<input type="text" name="FILTER[TITLE]" value="<?=htmlspecialcharsbx(($arResult['FILTER']['TITLE'] ?? null))?>" class="filter-textbox" id="meeting-field-name">
 			</div>
 			<div class="filter-field filter-field-stage">
 				<label class="filter-field-title" for="meeting-field-stage"><?=GetMessage('ME_FILTER_CURRENT_STATE')?></label>
@@ -60,7 +60,7 @@ $APPLICATION->IncludeComponent(
 $ar = array(CMeeting::STATE_PREPARE, CMeeting::STATE_ACTION, CMeeting::STATE_CLOSED);
 foreach ($ar as $p):
 ?>
-					<option value="<?=$p?>"<?=$arResult['FILTER']['CURRENT_STATE'] == $p ? ' selected="selected"' : ''?>><?=GetMessage('ME_STATE_'.$p)?></option>
+					<option value="<?=$p?>"<?=($arResult['FILTER']['CURRENT_STATE'] ?? null) == $p ? ' selected="selected"' : ''?>><?=GetMessage('ME_STATE_'.$p)?></option>
 <?
 endforeach;
 ?>
@@ -128,7 +128,7 @@ function BXOnFilterOwnerSelect(users)
 if (IsModuleInstalled('socialnetwork')):
 
 	$APPLICATION->IncludeComponent('bitrix:socialnetwork.group.selector', '', array(
-		'SELECTED' => $arResult['FILTER']['GROUP_ID'],
+		'SELECTED' => ($arResult['FILTER']['GROUP_ID'] ?? null),
 		'BIND_ELEMENT' => 'meeting_group_name',
 		'ON_SELECT' => 'BXOnGroupChange'
 	), null, array('HIDE_ICONS' => 'Y'));
@@ -157,7 +157,7 @@ endif;
 if ($arResult['IS_HEAD']):
 ?>
 			<div class="filter-field filter-field-meeting-checkbox">
-				<input type="checkbox" class="meetings-filter-checkbox" name="FILTER[MY]" id="meeting-checkbox-sub" value="Y"<?=$arResult['FILTER']['MY']?' checked="checked"':''?> />
+				<input type="checkbox" class="meetings-filter-checkbox" name="FILTER[MY]" id="meeting-checkbox-sub" value="Y"<?=($arResult['FILTER']['MY'] ?? null)?' checked="checked"':''?> />
 				<label class="filter-field-title" for="meeting-checkbox-sub"><?=GetMessage('ME_FILTER_HEAD')?></label>
 			</div>
 <?
@@ -233,7 +233,7 @@ if (count($arResult['MEETINGS']) <= 0):
 else:
 	$arStateCSS = array(CMeeting::STATE_PREPARE => 'meeting-stage-not-started', CMeeting::STATE_ACTION => 'meeting-stage-goes', CMeeting::STATE_CLOSED => 'meeting-stage-completed');
 	foreach ($arResult['MEETINGS'] as $arMeeting):
-		$current_role = $arMeeting['USERS'][$USER->GetID()];
+		$current_role = ($arMeeting['USERS'][$USER->GetID()] ?? null);
 ?>
 	<script type="text/javascript">
 meetingMenuPopup[<?=$arMeeting["ID"]?>] = [

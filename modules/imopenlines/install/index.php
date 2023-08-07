@@ -114,7 +114,7 @@ final class imopenlines extends \CModule
 	public function InstallDB($params = [])
 	{
 		global $DB, $APPLICATION;
-
+		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = false;
 
 		if ($params['PUBLIC_URL'] <> '' && mb_strlen($params['PUBLIC_URL']) < 12)
@@ -126,9 +126,9 @@ final class imopenlines extends \CModule
 			$this->errors[] = Loc::getMessage('IMOPENLINES_CHECK_PUBLIC_PATH');
 		}
 
-		if (!$this->errors && !$DB->Query("SELECT 'x' FROM b_imopenlines_config", true))
+		if (!$this->errors && !$DB->TableExists('b_imopenlines_config'))
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/imopenlines/install/db/mysql/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/imopenlines/install/db/' . $connection->getType() . '/install.sql');
 		}
 
 		if ($this->errors !== false)
@@ -247,7 +247,7 @@ final class imopenlines extends \CModule
 		}
 
 		\Bitrix\Main\Loader::includeModule("imopenlines");
-		$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/db/mysql/install_ft.sql");
+		$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/imopenlines/install/db/' . $connection->getType() . '/install_ft.sql');
 		if ($errors === false)
 		{
 			\Bitrix\Imopenlines\Model\SessionIndexTable::getEntity()->enableFullTextIndex("SEARCH_CONTENT");
@@ -423,12 +423,12 @@ final class imopenlines extends \CModule
 	public function UnInstallDB($arParams = Array())
 	{
 		global $APPLICATION, $DB;
-
+		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = false;
 
 		if (!$arParams['savedata'])
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/imopenlines/install/db/mysql/uninstall.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/imopenlines/install/db/' . $connection->getType() . '/uninstall.sql');
 		}
 
 		if (is_array($this->errors))

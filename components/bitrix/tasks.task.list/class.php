@@ -256,58 +256,6 @@ class TasksTaskListComponent extends TasksBaseComponent
 		return $result;
 	}
 
-	/**
-	 * @param $taskId
-	 * @param array $navigation
-	 * @param array $arParams
-	 * @return bool[]
-	 */
-	public function getNearTasksAction($taskId, array $navigation, array $arParams = []): array
-	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
-		{
-			return [];
-		}
-
-		/** @var Filter $filter */
-		$filter = Filter::getInstance($arParams['USER_ID'], $arParams['GROUP_ID']);
-
-		$pageNumber = $navigation['pageNumber'];
-		$pageSize = $navigation['pageSize'];
-
-		$getListParameters = [
-			'select' => ['ID'],
-			'legacyFilter' => $filter->process(),
-			'order' => $arParams['GET_LIST_PARAMETERS']['order'],
-			'NAV_PARAMS' => [
-				'iNumPage' => $pageNumber,
-				'iNumPageSize' => ($pageNumber - 1) * $pageSize,
-				'nPageSize' => $pageSize,
-			],
-		];
-		$parameters = [
-			'RETURN_ACCESS' => 'N',
-			'USE_MINIMAL_SELECT_LEGACY' => 'N',
-			'MAKE_ACCESS_FILTER' => true,
-		];
-
-		$falseResult = [
-			'before' => false,
-			'after' => false,
-		];
-
-		$tasks = array_keys(Manager\Task::getList($arParams['USER_ID'], $getListParameters, $parameters)['DATA']);
-		if (empty($tasks) || ($index = array_search((int)$taskId, $tasks, true)) === false)
-		{
-			return $falseResult;
-		}
-
-		return [
-			'before' => ($index === count($tasks) - 1 ? false : $tasks[$index + 1]),
-			'after' => ($index === 0 ? false : $tasks[$index - 1]),
-		];
-	}
-
 	public function getTotalCountAction($userId, $groupId, $parameters)
 	{
 		$userId = (int) $userId;
@@ -432,6 +380,92 @@ class TasksTaskListComponent extends TasksBaseComponent
 	public function getGridRowsAction(array $taskIds = [], array $arParams = []): array
 	{
 		return self::getGridRows($taskIds, $arParams);
+	}
+
+	/**
+	 * returns information about element left and right
+	 * @param array $taskIds
+	 * @param array $navigation
+	 * @param array $arParams
+	 * @return array
+	 * @throws Main\LoaderException
+	 */
+	public static function getNearTasks(array $taskIds, array $navigation, array $arParams = []): array
+	{
+		$result = [];
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return [];
+		}
+
+		if (empty($taskIds))
+		{
+			return [];
+		}
+
+		/** @var Filter $filter */
+		$filter = Filter::getInstance($arParams['USER_ID'], $arParams['GROUP_ID']);
+
+		$pageNumber = $navigation['pageNumber'];
+		$pageSize = $navigation['pageSize'];
+
+		$getListParameters = [
+			'select' => ['ID'],
+			'legacyFilter' => $filter->process(),
+			'order' => $arParams['GET_LIST_PARAMETERS']['order'],
+			'NAV_PARAMS' => [
+				'iNumPage' => $pageNumber,
+				'iNumPageSize' => ($pageNumber - 1) * $pageSize,
+				'nPageSize' => $pageSize,
+			],
+		];
+		$parameters = [
+			'RETURN_ACCESS' => 'N',
+			'USE_MINIMAL_SELECT_LEGACY' => 'N',
+			'MAKE_ACCESS_FILTER' => true,
+		];
+
+		$falseResult = [
+			'before' => false,
+			'after' => false,
+		];
+
+		$tasks = array_keys(Manager\Task::getList($arParams['USER_ID'], $getListParameters, $parameters)['DATA']);
+
+		foreach ($taskIds as $taskId)
+		{
+			if (empty($tasks))
+			{
+				$result[$taskId] = $falseResult;
+			}
+			else
+			{
+				$index = array_search((int)$taskId, $tasks, true);
+
+				$result[$taskId] = $index === false
+					? $falseResult
+					: [
+						'before' => ($index === count($tasks) - 1 ? false : $tasks[$index + 1]),
+						'after' => ($index === 0 ? false : $tasks[$index - 1])
+					]
+				;
+			}
+		}
+	
+		return $result;
+	}
+
+	/**
+	 * @param $taskId
+	 * @param array $navigation
+	 * @param array $arParams
+	 * @return array
+	 * @throws Main\LoaderException
+	 */
+	public function getNearTasksAction($taskId, array $navigation, array $arParams = []): array
+	{
+		return self::getNearTasks([$taskId], $navigation, $arParams)[$taskId];
 	}
 
 	protected static function checkRequiredModules(

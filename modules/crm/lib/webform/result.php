@@ -331,7 +331,7 @@ class Result extends Model
 			{
 				if(is_array($value))
 				{
-					$values[] = htmlspecialcharsbx($value['title']);
+					$values[] = htmlspecialcharsbx($value['title'] ?? $value['name']);
 
 				}
 				else

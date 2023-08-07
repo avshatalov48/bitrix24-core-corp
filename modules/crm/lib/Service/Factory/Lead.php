@@ -278,9 +278,8 @@ final class Lead extends Service\Factory
 			],
 			Item::FIELD_NAME_COMMENTS => [
 				'TYPE' => Field::TYPE_TEXT,
-				'SETTINGS' => [
-					'isFlexibleContentType' => true,
-				],
+				'VALUE_TYPE' => Field::VALUE_TYPE_BB,
+				'CLASS' => Field\Comments::class,
 			],
 			Item::FIELD_NAME_HAS_PHONE => [
 				'TYPE' => Field::TYPE_BOOLEAN,
@@ -458,10 +457,8 @@ final class Lead extends Service\Factory
 		$providersToAutocomplete = [];
 
 		$completionConfig = LeadSettings::getCurrent()->getActivityCompletionConfig();
-		foreach (\Bitrix\Crm\Activity\Provider\ProviderManager::getCompletableProviderList() as $providerInfo)
+		foreach (\Bitrix\Crm\Activity\Provider\ProviderManager::getCompletableProviderIdFlatList() as $providerID)
 		{
-			$providerID = (string)$providerInfo['ID'];
-
 			$shouldBeAutocompleted = $completionConfig[$providerID] ?? true;
 			if ($shouldBeAutocompleted)
 			{
@@ -531,6 +528,10 @@ final class Lead extends Service\Factory
 					'crm_entity_name_' . $this->getEntityTypeId() . '_',
 					[Item::FIELD_NAME_TITLE]
 				)
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\ResetEntityCommunicationSettingsInActivities(),
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,

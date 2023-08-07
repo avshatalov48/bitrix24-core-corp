@@ -213,7 +213,7 @@ switch ($action)
 							'id' => $entry['ID'],
 							'dateFrom' => CCalendar::Date($fromTs, $entry['DT_SKIP_TIME'] != 'Y'),
 							'dateTo' => CCalendar::Date($toTs, $entry['DT_SKIP_TIME'] != 'Y'),
-							'type' => $entry['FROM_HR'] ? 'hr' : 'event',
+							'type' => ($entry['FROM_HR'] ?? false) ? 'hr' : 'event',
 							'title' => $entry['NAME']
 						];
 					}

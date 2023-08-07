@@ -34,6 +34,7 @@ $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_DISCOUNTS_DESC"] = "Описание дл
 $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_NEW_ROW_POSITION_TITLE"] = "Добавлять товар в начало списка";
 $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_WAREHOUSE_TITLE"] = "Включить складской учёт";
 $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_WAREHOUSE_HINT"] = "Складской учёт включён. Отключить Складской учёт можно в настройках";
+$MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_SHOW_PRODUCT_IMAGES_TITLE"] = "Показать картинки товара";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_INFO"] = "Склад резервации";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_INFO_HINT"] = "Выберите склад, на котором хотите зарезервировать товар";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_RESERVED"] = "В резерв";

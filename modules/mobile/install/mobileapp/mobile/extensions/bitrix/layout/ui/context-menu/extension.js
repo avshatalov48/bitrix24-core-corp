@@ -47,6 +47,7 @@
 	const require = (ext) => jn.require(ext);
 	const { ContextMenuBanner, BannerPositioning } = require('layout/ui/context-menu/banner');
 	const { Type } = require('type');
+	const { ContextMenuItem } = require('layout/ui/context-menu/item');
 
 	const ACTION_DELETE = 'delete';
 	const ACTION_CANCEL = 'cancel';
@@ -141,6 +142,11 @@
 			return BX.prop.getBoolean(this.params, 'isCustomIconColor', false);
 		}
 
+		get isRawIcon()
+		{
+			return BX.prop.getBoolean(this.params, 'isRawIcon', false);
+		}
+
 		get shouldResizeContent()
 		{
 			return BX.prop.getBoolean(this.params, 'shouldResizeContent', false);
@@ -194,6 +200,11 @@
 					action.isCustomIconColor = this.isCustomIconColor;
 				}
 
+				if (!action.hasOwnProperty('isRawIcon'))
+				{
+					action.isRawIcon = this.isRawIcon;
+				}
+
 				return action;
 			});
 		}
@@ -222,11 +233,11 @@
 				actionsBySections[sectionCode] = actionsBySections[sectionCode] || [];
 				actionsBySections[sectionCode].push({
 					...action,
-					isActive: (
+					isActive:
 						action.hasOwnProperty('onActiveCallback')
 							? action.onActiveCallback(action.id, action.parentId, action.parent)
 							: true
-					),
+					,
 				});
 			});
 
@@ -366,8 +377,7 @@
 		 * @public
 		 * @param {Function} callback
 		 */
-		close(callback = () => {
-		})
+		close(callback = () => {})
 		{
 			this.closedByApi = true;
 
@@ -467,7 +477,7 @@
 				},
 			};
 
-			Object.keys(widgetParams.backdrop).forEach(key => {
+			Object.keys(widgetParams.backdrop).forEach((key) => {
 				if (Type.isNil(widgetParams.backdrop[key]))
 				{
 					delete widgetParams.backdrop[key];
@@ -503,7 +513,7 @@
 			{
 				if (
 					Type.isStringFilled(this.titlesBySectionCode[sectionCode])
-					|| Type.isObject(this.titlesBySectionCode[sectionCode]) //BBCode case
+					|| Type.isObject(this.titlesBySectionCode[sectionCode]) // BBCode case
 				)
 				{
 					height += SECTION_TITLE_HEIGHT;
@@ -547,7 +557,7 @@
 			{
 				if (
 					Type.isStringFilled(this.titlesBySectionCode[sectionCode])
-					|| Type.isObject(this.titlesBySectionCode[sectionCode]) //BBCode case
+					|| Type.isObject(this.titlesBySectionCode[sectionCode]) // BBCode case
 				)
 				{
 					height += SECTION_TITLE_HEIGHT;
@@ -646,7 +656,7 @@
 
 		setSelectedActions(ids, showSelectedImage = true)
 		{
-			this.actions.map(action => {
+			this.actions.map((action) => {
 				if (ids.includes(action.id))
 				{
 					action.isSelected = true;

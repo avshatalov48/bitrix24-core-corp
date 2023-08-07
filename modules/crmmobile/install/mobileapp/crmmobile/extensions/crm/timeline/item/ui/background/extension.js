@@ -58,11 +58,13 @@ jn.define('crm/timeline/item/ui/background', (require, exports, module) => {
 
 			const start = () => {
 				this.animating = true;
+
 				return Promise.resolve();
 			};
 
 			const finish = () => {
 				this.animating = false;
+
 				return Promise.resolve();
 			};
 

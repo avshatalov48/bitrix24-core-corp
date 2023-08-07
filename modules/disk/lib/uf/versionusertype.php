@@ -10,11 +10,7 @@ use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\SystemUser;
 use Bitrix\Disk\Version;
 use Bitrix\Main\Application;
-use Bitrix\Main\DB\MssqlConnection;
-use Bitrix\Main\DB\MysqlCommonConnection;
-use Bitrix\Main\DB\OracleConnection;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\NotSupportedException;
 
 Loc::loadMessages(__FILE__);
 
@@ -43,20 +39,8 @@ final class VersionUserType
 	public static function getDBColumnType($userField)
 	{
 		$connection = Application::getConnection();
-		if($connection instanceof MysqlCommonConnection)
-		{
-			return 'int(11)';
-		}
-		if($connection instanceof OracleConnection)
-		{
-			return 'number(18)';
-		}
-		if($connection instanceof MssqlConnection)
-		{
-			return 'int';
-		}
-
-		throw new NotSupportedException("The '{$connection->getType()}' is not supported in current context");
+		$helper = $connection->getSqlHelper();
+		return $helper->getColumnTypeByField(new \Bitrix\Main\ORM\Fields\IntegerField('x'));
 	}
 
 	public static function prepareSettings($userField)
@@ -147,7 +131,11 @@ final class VersionUserType
 			}
 
 			$file = $version->getObject();
-			if($userId === false)
+			if (!$file)
+			{
+				return '';
+			}
+			if ($userId === false)
 			{
 				$securityContext = $file->getStorage()->getCurrentUserSecurityContext();
 			}
@@ -173,7 +161,6 @@ final class VersionUserType
 				}
 			}
 			$canUpdate = $canUpdate || $file->canUpdate($securityContext);
-			$allowEdit = $allowEdit || $canUpdate && (int)Application::getInstance()->getContext()->getRequest()->getPost($userFieldManager->getInputNameForAllowEditByEntityType($userField['ENTITY_ID']));
 			$attachedModel = AttachedObject::add(array(
 				'MODULE_ID' => $moduleId,
 				'OBJECT_ID' => $file->getId(),

@@ -148,6 +148,7 @@ jn.define('crm/product-calculator/product-calculator', (require, exports, module
 		{
 			const productRow = this.getProductRow();
 			this.strategy.updatePrice(productRow);
+
 			return productRow.getFields();
 		}
 
@@ -241,6 +242,7 @@ jn.define('crm/product-calculator/product-calculator', (require, exports, module
 		{
 			const result = calculationFn(this);
 			this.setFields(result);
+
 			return this;
 		}
 	}

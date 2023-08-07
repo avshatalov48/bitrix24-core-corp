@@ -147,7 +147,7 @@ class EntityLink
 		);
 		$parentFieldMap = self::getParentEntityFieldMap();
 		$parentFileds = [];
-		if ($getParentEntityFields && is_array($parentFieldMap[$entityTypeId]))
+		if ($getParentEntityFields && is_array($parentFieldMap[$entityTypeId] ?? null))
 		{
 			$parentFileds = array_values($parentFieldMap[$entityTypeId]);
 		}
@@ -1110,7 +1110,7 @@ class EntityLink
 		$result = [];
 
 		$parentEntityFieldMap = self::getParentEntityFieldMap();
-		if (is_array($parentEntityFieldMap[$entityTypeId]))
+		if (is_array($parentEntityFieldMap[$entityTypeId] ?? null))
 		{
 			foreach ($parentEntityFieldMap[$entityTypeId] as $parentEntityTypeId => $fieldName)
 			{

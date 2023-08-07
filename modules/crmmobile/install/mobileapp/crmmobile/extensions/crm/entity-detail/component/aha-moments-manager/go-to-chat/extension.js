@@ -71,13 +71,16 @@ jn.define('crm/entity-detail/component/aha-moments-manager/go-to-chat', (require
 		isVisible()
 		{
 			const { isClosed } = this.state;
-			const { ahaMoments } = this.detailCard.getComponentParams();
+			const { detailCard } = this;
+			const { ahaMoments } = detailCard.getComponentParams();
 
 			return (
-				this.detailCard.hasEntityModel()
+				detailCard.hasEntityModel()
 				&& !isClosed
 				&& ahaMoments
 				&& ahaMoments.goToChat
+				&& detailCard.floatingButtonRef
+				&& detailCard.floatingButtonRef.isVisible()
 			);
 		}
 

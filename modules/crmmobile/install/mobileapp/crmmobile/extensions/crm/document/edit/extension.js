@@ -147,10 +147,12 @@ jn.define('crm/document/edit', (require, exports, module) => {
 									field.group = [Loc.getMessage('M_CRM_DOCUMENT_EDIT_UNKNOWN_GROUP_NAME')];
 									field.sort = -10000 + field.sort; // ungrouped fields must go very first
 								}
+
 								if (isFieldWithMultipleValues(field))
 								{
 									field.value = extractMultipleValues(field);
 								}
+
 								return field;
 							})
 							.sort((a, b) => {
@@ -433,11 +435,13 @@ jn.define('crm/document/edit', (require, exports, module) => {
 		{
 			return Object.values(field.value);
 		}
+
 		return field.value;
 	};
 
 	const makeMemoizedSetter = () => {
 		const cache = {};
+
 		return (obj, path, value) => {
 			const key = path.join('.');
 			if (cache[key])
@@ -457,6 +461,7 @@ jn.define('crm/document/edit', (require, exports, module) => {
 				result.push(node[key]);
 			}
 		});
+
 		return result;
 	};
 

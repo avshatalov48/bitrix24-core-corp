@@ -6,6 +6,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Client;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\SmsMessage;
 use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Layout\Footer\Button;
@@ -26,17 +27,18 @@ abstract class Base extends Activity
 	public function getContentBlocks(): ?array
 	{
 		$result = [
-			'messageBlock' => (new SmsMessage())->setText($this->getMessageText()),
+			'messageBlock' => $this->getSmsMessageContentBlock(),
 			'messageSentViaBlock' => $this->getMessageSentViaContentBlock(),
 		];
 
-		$client = $this->buildClientBlock(self::BLOCK_WITH_FORMATTED_VALUE);
-		if ($client)
+		$client = $this->buildClientBlock(Client::BLOCK_WITH_FORMATTED_VALUE);
+		if (isset($client))
 		{
 			$result['client'] = $client;
 		}
+
 		$user = $this->buildUserContentBlock();
-		if ($user)
+		if (isset($user))
 		{
 			$result['user'] = $user;
 		}
@@ -48,10 +50,7 @@ abstract class Base extends Activity
 	{
 		$result = [];
 
-		$settings = $this->getAssociatedEntityModel()->get('SETTINGS');
-		$settings = is_array($settings) ? $settings : [];
-		$fields = isset($settings['FIELDS']) && is_array($settings['FIELDS']) ? $settings['FIELDS'] : [];
-
+		$fields = $this->getAssociatedEntityModelFields();
 		$orderId = $fields['ORDER_ID'] ?? null;
 		$paymentId = $fields['PAYMENT_ID'] ?? null;
 		$factory = Container::getInstance()->getFactory($this->getContext()->getEntityTypeId());
@@ -117,5 +116,27 @@ abstract class Base extends Activity
 	protected function buildUserContentBlock(): ?ContentBlock
 	{
 		return null;
+	}
+
+	protected function getAssociatedEntityModelFields(): array
+	{
+		$settings = $this->getAssociatedEntityModel()->get('SETTINGS');
+		$settings = is_array($settings) ? $settings : [];
+		return isset($settings['FIELDS']) && is_array($settings['FIELDS']) ? $settings['FIELDS'] : [];
+	}
+
+	protected function getSmsMessageContentBlock(): ContentBlock
+	{
+		$fields = $this->getAssociatedEntityModelFields();
+		$messageText = $this->getMessageText();
+		$clipboardContent = isset($fields['HIGHLIGHT_URL']) ? (string)$fields['HIGHLIGHT_URL'] : $messageText;
+		$copyToClipboardAction = (new JsEvent('Clipboard:Copy'))
+			->addActionParamString('content', $clipboardContent)
+			->addActionParamString('type', isset($fields['HIGHLIGHT_URL']) ? 'link' : 'text')
+		;
+		return (new SmsMessage())
+			->setText($messageText)
+			->setAction($copyToClipboardAction)
+		;
 	}
 }

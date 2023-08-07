@@ -24,6 +24,7 @@ jn.define('crm/timeline/stream/pinned', (require, exports, module) => {
 		{
 			const model = super.makeItemModel(props);
 			model.isPinned = true;
+
 			return model;
 		}
 

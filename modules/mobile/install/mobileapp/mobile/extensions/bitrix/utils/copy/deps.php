@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'feature',
 		'loc',
 	],
 ];

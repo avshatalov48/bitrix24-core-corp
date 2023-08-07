@@ -12,6 +12,7 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 	const { AnalyticsLabel } = require('analytics-label');
 	const { NotifyManager } = require('notify-manager');
 	const { PlanRestriction } = require('layout/ui/plan-restriction');
+	const { ImageAfterTypes } = require('layout/ui/context-menu/item');
 
 	/**
 	 * @class ModeSelectionMenu
@@ -125,7 +126,7 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 			if (this.isPaymentLimitReached || this.isOrderLimitReached)
 			{
 				paymentIconData.svgIconAfter = {
-					type: ContextMenuItem.ImageAfterTypes.LOCK,
+					type: ImageAfterTypes.LOCK,
 				};
 			}
 			const paymentTitle = Loc.getMessage('MOBILE_RECEIVE_PAYMENT_PAYMENT_MODE');
@@ -148,7 +149,7 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 					data: {
 						svgIcon: Icons.paymentDelivery,
 						svgIconAfter: {
-							type: ContextMenuItem.ImageAfterTypes.WEB,
+							type: ImageAfterTypes.WEB,
 						},
 					},
 					isDisabled: true,
@@ -162,7 +163,7 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 					data: {
 						svgIcon: Icons.delivery,
 						svgIconAfter: {
-							type: ContextMenuItem.ImageAfterTypes.WEB,
+							type: ImageAfterTypes.WEB,
 						},
 					},
 					isDisabled: true,
@@ -217,8 +218,10 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 						text: restrictionText,
 					});
 				});
+
 				return;
 			}
+
 			if (!this.contactHasPhone)
 			{
 				this.contextMenu.close(() => {

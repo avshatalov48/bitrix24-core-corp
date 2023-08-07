@@ -1,11 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/provider/rest/user
  */
 jn.define('im/messenger/provider/rest/user', (require, exports, module) => {
-
 	const { Type } = require('type');
 
 	/**
@@ -23,7 +19,7 @@ jn.define('im/messenger/provider/rest/user', (require, exports, module) => {
 
 			if (!Type.isNumber(Number(options.userId)))
 			{
-				throw new Error('UserRest.resendInvite: options.dialogId is invalid.');
+				throw new TypeError('UserRest.resendInvite: options.dialogId is invalid.');
 			}
 
 			methodParams.data.params.userId = options.userId;
@@ -41,7 +37,7 @@ jn.define('im/messenger/provider/rest/user', (require, exports, module) => {
 
 			if (!Type.isNumber(Number(options.userId)))
 			{
-				throw new Error('UserRest.resendInvite: options.dialogId is invalid.');
+				throw new TypeError('UserRest.resendInvite: options.dialogId is invalid.');
 			}
 
 			methodParams.data.params.userId = options.userId;

@@ -1,6 +1,6 @@
 import UserManager from "./user-manager";
-import SharingControlType from "./sharing-control-type";
 import OnlyOffice from "./onlyoffice";
+import {SharingControlType} from "disk.sharing-legacy-popup";
 
 export type WaitingOptions = {
 	targetNode: HTMLElement,

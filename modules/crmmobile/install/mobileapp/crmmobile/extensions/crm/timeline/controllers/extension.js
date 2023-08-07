@@ -5,6 +5,7 @@ jn.define('crm/timeline/controllers', (require, exports, module) => {
 	const { TimelineOpenlineController } = require('crm/timeline/controllers/openline');
 	const { TimelineActivityController } = require('crm/timeline/controllers/activity');
 	const { TimelineCallController } = require('crm/timeline/controllers/call');
+	const { TimelineCommentController } = require('crm/timeline/controllers/comment');
 	const { TimelineEmailController } = require('crm/timeline/controllers/email');
 	const { TimelineNoteController } = require('crm/timeline/controllers/note');
 	const { TimelineHelpdeskController } = require('crm/timeline/controllers/helpdesk');
@@ -14,12 +15,14 @@ jn.define('crm/timeline/controllers', (require, exports, module) => {
 	const { TimelineOrderCheckController } = require('crm/timeline/controllers/order-check');
 	const { TimelineCalendarSharingController } = require('crm/timeline/controllers/calendar-sharing');
 	const { TimelineTaskController } = require('crm/timeline/controllers/task');
+	const { TimelineClipboardController } = require('crm/timeline/controllers/clipboard');
 
 	module.exports = {
 		TimelineEmailController,
 		TimelineOpenlineController,
 		TimelineActivityController,
 		TimelineCallController,
+		TimelineCommentController,
 		TimelineNoteController,
 		TimelineHelpdeskController,
 		TimelineTodoController,
@@ -28,5 +31,6 @@ jn.define('crm/timeline/controllers', (require, exports, module) => {
 		TimelineOrderCheckController,
 		TimelineCalendarSharingController,
 		TimelineTaskController,
+		TimelineClipboardController,
 	};
 });

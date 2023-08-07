@@ -1,0 +1,61 @@
+.disk-user-field-rename-menu-item.menu-popup-item {
+	height: auto;
+	min-height: 36px;
+	cursor: default;
+}
+
+.disk-user-field-rename-menu-item .menu-popup-item-icon {
+	display: none;
+}
+
+.disk-user-field-rename-menu-item.menu-popup-item:hover{
+	background-color: transparent;
+}
+
+.disk-user-field-rename-form {
+	margin: 10px;
+}
+
+.disk-user-field-rename-textarea {
+	padding: 10px;
+	height: 90px;
+	margin: 0;
+	border: 1px solid #c6cdd3;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-text-primary);
+	box-sizing: border-box;
+	width: 100%;
+	border-radius: var(--ui-field-border-radius);
+}
+
+.disk-user-field-rename-buttons {
+	text-align: center;
+}
+
+
+.disk-user-field-rename-loading {
+	font-size: 20px;
+}
+
+.disk-user-field-rename-loading:after {
+	overflow: hidden;
+	display: inline-block;
+	vertical-align: bottom;
+	-webkit-animation: disk-user-field-rename-loading steps(4,end) 900ms infinite;
+	animation: disk-user-field-rename-loading steps(4,end) 900ms infinite;
+	content: "\2026";
+	width: 0;
+}
+
+@keyframes disk-user-field-rename-loading {
+	to {
+		width: 1.25em;
+	}
+}
+
+@-webkit-keyframes disk-user-field-rename-loading {
+	to {
+		width: 1.25em;
+	}
+}

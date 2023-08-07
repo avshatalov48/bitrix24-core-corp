@@ -130,9 +130,12 @@ final class SimpleRightTable extends DataManager
 		{
 			$pathTable = ObjectPathTable::getTableName();
 			$sql = "
-				DELETE sr FROM b_disk_simple_right sr
-					JOIN {$pathTable} path ON path.OBJECT_ID = sr.OBJECT_ID
-				WHERE path.PARENT_ID = {$objectId}
+				DELETE r FROM b_disk_simple_right r
+				WHERE r.OBJECT_ID IN (
+					SELECT p.OBJECT_ID
+					FROM {$pathTable} p
+					WHERE p.PARENT_ID = {$objectId}
+				)
 			";
 		}
 

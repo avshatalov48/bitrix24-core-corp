@@ -11,7 +11,6 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 	const { TypeId } = require('crm/type');
 	const { getEntityMessage } = require('crm/loc');
 	const { CategoryStorage } = require('crm/storage/category');
-	const { StageListView } = require('crm/stage-list-view');
 	const { actionCheckChangeStage } = require('crm/entity-actions/check-change-stage');
 
 	const STAGE_WIDTH = device.screen.width * 0.48;
@@ -145,9 +144,11 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 			return activeIndex * (-STAGE_WIDTH - STAGE_MARGIN) + FIRST_STAGE_VIEW_WIDTH + 2 * STAGE_MARGIN;
 		}
 
-		openStageList(activeStageId)
+		async openStageList(activeStageId)
 		{
 			const { entityTypeId, categoryId, data, isNewEntity } = this.props;
+
+			const { StageListView } = await requireLazy('crm:stage-list-view');
 
 			return StageListView.open({
 				entityTypeId,
@@ -465,6 +466,7 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 			{
 				return [this.state.category.processStages[this.state.category.processStages.length - 1], stages[activeIndex]];
 			}
+
 			if (stages[activeIndex + 1])
 			{
 				end = stages[activeIndex + 1].semantics === 'P' ? 3 : 2;

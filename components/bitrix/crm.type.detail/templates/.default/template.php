@@ -44,6 +44,7 @@ endif;
 
 $component->addJsRouter($this);
 
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'crm-type-head--modifier crm-type-hidden');
 $this->SetViewTarget('below_pagetitle');
 ?>
@@ -228,7 +229,7 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 		<div class="crm-type-presets">
 			<?php foreach ($arResult['presetCategories'] as $code => $category):?>
 				<div class="crm-type-presets-category">
-					<div class="crm-type-presets-category-title"><?= htmlspecialcharsbx($category['title']) ?></div>
+					<div class="crm-type-presets-category-title"><?= htmlspecialcharsbx($category['title'] ?? '') ?></div>
 					<div class="crm-type-presets-category-list">
 						<?php /** @var TypePreset $preset */
 						$categoryPresets = array_filter(
@@ -601,7 +602,5 @@ BX.ready(function()
 	component.init();
 	BX.UI.Hint.init(form);
 	BX.UI.Switcher.initByClassName();
-
-	console.log(BX.UI.Switcher.getList());
 });
 </script>

@@ -1,5 +1,4 @@
 (() => {
-
 	const require = (ext) => jn.require(ext);
 
 	const { ClientType } = require('layout/ui/fields/client');
@@ -72,7 +71,7 @@
 				View(
 					{
 						style: styles.item,
-						ref: ref => this.elementRef = ref,
+						ref: (ref) => this.elementRef = ref,
 					},
 					View(
 						{
@@ -171,6 +170,11 @@
 
 		renderDate(data)
 		{
+			if (data.date <= 0)
+			{
+				return null;
+			}
+
 			const moment = Moment.createFromTimestamp(data.date);
 			const defaultFormat = moment.inThisYear ? dayMonth() : longDate();
 
@@ -231,8 +235,9 @@
 		getClientName()
 		{
 			const itemData = (this.props.item.data || {});
+
 			return (itemData.contactName && itemData.companyName)
-				? itemData.companyName + ' (' + itemData.contactName + ')'
+				? `${itemData.companyName} (${itemData.contactName})`
 				: (itemData.contactName || itemData.companyName || '');
 		}
 
@@ -244,6 +249,7 @@
 		getMenuFilledColor(svg, counterValue)
 		{
 			const filledColor = this.hasCounter(counterValue) ? '#ff5752' : '#bdc1c6';
+
 			return svg.content.replace(/%color%/g, filledColor);
 		}
 
@@ -254,13 +260,14 @@
 
 		getStatuses(fieldStatuses = [])
 		{
-			if (!Array.isArray(fieldStatuses) || !fieldStatuses.length)
+			if (!Array.isArray(fieldStatuses) || fieldStatuses.length === 0)
 			{
 				return [];
 			}
 
 			const statuses = (this.params.statuses || {});
-			return fieldStatuses.map(id => {
+
+			return fieldStatuses.map((id) => {
 				return {
 					name: (statuses[id] ? statuses[id].title : '').toLocaleUpperCase(env.languageId),
 					backgroundColor: (statuses[id] ? statuses[id].backgroundColor : '#e3f3cc'),
@@ -309,7 +316,13 @@
 		renderConnectionComponent()
 		{
 			const { item } = this.props;
-			const ownerTypeName = this.params.entityTypeName;
+			const { isClientEnabled, entityTypeName: ownerTypeName } = this.params;
+
+			if (typeof isClientEnabled === 'boolean' && !isClientEnabled)
+			{
+				return null;
+			}
+
 			const hasTelegramConnection = get(this.params, 'connectors.telegram', true);
 			const openLinesAccess = get(this.params, 'entityPermissions.openLinesAccess', false);
 
@@ -367,9 +380,9 @@
 			}
 
 			const fields = [];
-			data[section].map(field => {
+			data[section].map((field) => {
 				const config = {
-					...(field.config || {}),
+					...field.config,
 					styles: this.getFieldStyle(field),
 					reloadEntityListFromProps: true,
 					ellipsize: true,
@@ -381,7 +394,7 @@
 					title: field.title,
 					value: field.value,
 					readOnly: (field.params && field.params.readOnly),
-					config: config,
+					config,
 					multiple: (field.multiple || false),
 					isShowAnimate: (field.isShowAnimate || false),
 				});
@@ -494,7 +507,7 @@
 
 		can(...params)
 		{
-			return params.every(param => {
+			return params.every((param) => {
 				return (this.options[param] || false);
 			});
 		}

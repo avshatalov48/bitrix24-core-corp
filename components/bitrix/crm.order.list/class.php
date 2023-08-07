@@ -2292,12 +2292,11 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			);
 		}
 
-		$restrictedFields = $this->fieldRestrictionManager->fetchRestrictedFields(
+		$this->arResult['RESTRICTED_FIELDS_ENGINE'] = $this->fieldRestrictionManager->fetchRestrictedFieldsEngine(
 			$this->arResult['GRID_ID'] ?? '',
 			$this->arResult['HEADERS'] ?? [],
 			$this->entityFilter
 		);
-		$this->arResult = array_merge($this->arResult, $restrictedFields);
 
 		$this->IncludeComponentTemplate();
 

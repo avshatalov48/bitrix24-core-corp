@@ -55,6 +55,7 @@ jn.define('crm/crm-mode/wizard/layouts/conversion/blocks/entity', (require, expo
 		render()
 		{
 			const { selectedIds } = this.state;
+
 			return View(
 				{
 					style: {

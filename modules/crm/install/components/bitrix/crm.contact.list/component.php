@@ -468,7 +468,7 @@ $gridOptions = new \Bitrix\Main\Grid\Options($arResult['GRID_ID'], $arResult['FI
 $filterOptions = new \Bitrix\Crm\Filter\UiFilterOptions($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
 
 //region Navigation Params
-if ($arParams['CONTACT_COUNT'] <= 0)
+if (($arParams['CONTACT_COUNT'] ?? 0) <= 0)
 {
 	$arParams['CONTACT_COUNT'] = 20;
 }
@@ -725,12 +725,11 @@ if ($isBizProcInstalled)
 }
 
 //region Check and fill fields restriction
-$restrictedFields = $fieldRestrictionManager->fetchRestrictedFields(
+$arResult['RESTRICTED_FIELDS_ENGINE'] = $fieldRestrictionManager->fetchRestrictedFieldsEngine(
 	$arResult['GRID_ID'] ?? '',
 	$arResult['HEADERS'] ?? [],
 	$entityFilter ?? null
 );
-$arResult = array_merge($arResult, $restrictedFields);
 //endregion
 
 // list all filds for export
@@ -1606,7 +1605,7 @@ if (empty($arSelectMap))
 {
 	foreach ($arResult['HEADERS'] as $arHeader)
 	{
-		if ($arHeader['default'])
+		if ($arHeader['default'] ?? false)
 		{
 			$arSelectMap[$arHeader['id']] = true;
 		}
@@ -1666,7 +1665,7 @@ else
 		$arSelectMap['TYPE_ID'] = true;
 	}
 
-	if($arSelectMap['ASSIGNED_BY'])
+	if(isset($arSelectMap['ASSIGNED_BY']) && $arSelectMap['ASSIGNED_BY'])
 	{
 		$arSelectMap['ASSIGNED_BY_LOGIN'] =
 			$arSelectMap['ASSIGNED_BY_NAME'] =
@@ -1793,7 +1792,7 @@ if(isset($arSort['full_name']))
 	unset($arSort['full_name']);
 }
 
-if($arSort['date_create'])
+if(isset($arSort['date_create']) && $arSort['date_create'])
 {
 	$arSort['id'] = $arSort['date_create'];
 	unset($arSort['date_create']);
@@ -2317,7 +2316,7 @@ foreach($arResult['CONTACT'] as &$arContact)
 	);
 	$arContact['PATH_TO_USER_PROFILE'] = CComponentEngine::MakePathFromTemplate(
 		$arParams['PATH_TO_USER_PROFILE'],
-		array('user_id' => $arContact['ASSIGNED_BY'])
+		array('user_id' => $arContact['ASSIGNED_BY'] ?? 0)
 	);
 	$arContact['~CONTACT_FORMATTED_NAME'] = CCrmContact::PrepareFormattedName(
 		array(
@@ -2413,7 +2412,7 @@ foreach($arResult['CONTACT'] as &$arContact)
 		$arContact['BIZPROC_STATUS'] = '';
 		$arContact['BIZPROC_STATUS_HINT'] = '';
 
-		$arDocumentStates = is_array($allDocumentStates["CONTACT_{$entityID}"]) ?
+		$arDocumentStates = is_array($allDocumentStates["CONTACT_{$entityID}"] ?? null) ?
 			$allDocumentStates["CONTACT_{$entityID}"] : [];
 
 		$arContact['PATH_TO_BIZPROC_LIST'] =  CHTTP::urlAddParams(
@@ -2638,8 +2637,8 @@ if (isset($arResult['CONTACT_ID']) && !empty($arResult['CONTACT_ID']))
 	$arContactAttr = CCrmPerms::GetEntityAttr('CONTACT', $arResult['CONTACT_ID']);
 	foreach ($arResult['CONTACT_ID'] as $iContactId)
 	{
-		$arResult['CONTACT'][$iContactId]['EDIT'] = $userPermissions->CheckEnityAccess('CONTACT', 'WRITE', $arContactAttr[$iContactId]);
-		$arResult['CONTACT'][$iContactId]['DELETE'] = $userPermissions->CheckEnityAccess('CONTACT', 'DELETE', $arContactAttr[$iContactId]);
+		$arResult['CONTACT'][$iContactId]['EDIT'] = $userPermissions->CheckEnityAccess('CONTACT', 'WRITE', $arContactAttr[$iContactId] ?? []);
+		$arResult['CONTACT'][$iContactId]['DELETE'] = $userPermissions->CheckEnityAccess('CONTACT', 'DELETE', $arContactAttr[$iContactId] ?? []);
 
 		$arResult['CONTACT'][$iContactId]['BIZPROC_LIST'] = array();
 

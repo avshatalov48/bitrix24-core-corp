@@ -10,8 +10,7 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 	const { NotifyManager } = require('notify-manager');
 	const { CategoryStorage } = require('crm/storage/category');
 	const { BackdropWizard } = require('layout/ui/wizard/backdrop');
-	const { EntityDetailOpener } = require('crm/entity-detail/opener');
-	const { prepareConversionFields, prepareConversionConfig } = require('crm/conversion/utils');
+	const { prepareConversionFields, createConversionConfig } = require('crm/conversion/utils');
 	const { wizardSteps, ModeStep, MODE, MODES, CONVERSION, FIELDS } = require('crm/crm-mode/wizard/steps');
 	const AJAX_ACTIONS = {
 		configCrmMode: 'crmmobile.Conversion.getConfigCrmMode',
@@ -129,7 +128,7 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 					props.getCategory = this.getCategory.bind(this);
 					break;
 				case FIELDS:
-					props.getFieldsData = this.getFieldsData.bind(this);
+					props.getFieldsConfig = this.getFieldsConfig.bind(this);
 					props.onFinish = this.runConversionLeads.bind(this);
 					break;
 			}
@@ -137,15 +136,15 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 			return props;
 		}
 
-		getFieldsData()
+		getFieldsConfig()
 		{
 			const { DATA } = this.conversionData;
-			const fieldsData = prepareConversionFields(DATA);
+			const fieldsConfig = prepareConversionFields(DATA);
 
-			return fieldsData.map(({ id, type, data: fields }) => ({
+			return fieldsConfig.map(({ id, type, data }) => ({
 				id,
 				type,
-				fields,
+				data,
 				onChange: (result) => {
 					this.handleOnChange(FIELDS, result);
 				},
@@ -206,13 +205,13 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 				});
 		}
 
-		prepareConversionLeads(entities)
+		prepareConversionLeads(entityTypeIds)
 		{
 			const { categoryId } = this.result[CONVERSION];
 
-			const config = prepareConversionConfig({
-				entities,
+			const config = createConversionConfig({
 				categoryId,
+				entityTypeIds,
 				additionalEntityConfig: {
 					[TypeId.Contact]: {
 						initData: { defaultName: Loc.getMessage('MCRM_CRM_MODE_CONTACT_DEFAULT_NAME') },
@@ -245,7 +244,7 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 			}
 
 			const { DATA } = this.conversionData;
-			const config = prepareConversionConfig({ entities: this.result[FIELDS], requiredConfig: DATA.CONFIG });
+			const config = createConversionConfig({ entityTypeIds: this.result[FIELDS], requiredConfig: DATA.CONFIG });
 
 			if (!this.isProgress)
 			{
@@ -309,34 +308,36 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 				TOTAL_ITEMS: maxValue,
 			} = result;
 
-			if (this.isProgress)
-			{
-				BX.postComponentEvent('Crm.LoadingProgress::updateProgress', [value]);
-			}
-			else
+			const progressParams = this.isProgress ? { value } : this.getProgressParams(value, maxValue);
+
+			BX.postComponentEvent('Crm.LoadingProgress::updateProgress', [progressParams]);
+
+			if (!this.isProgress)
 			{
 				this.isProgress = true;
-				BX.postComponentEvent('CrmTabs::onLoadingProgress', [{
-					isProgress: true,
-					progress: {
-						value,
-						maxValue,
-						title: Loc.getMessage('MCRM_CRM_MODE_PROGRESS_BAR_TITLE'),
-						description: Loc.getMessage('MCRM_CRM_MODE_PROGRESS_BAR_DESCRIPTION'),
-						button: {
-							text: Loc.getMessage('MCRM_CRM_MODE_PROGRESS_BAR_BUTTON'),
-							onClickEvent: BUTTON_CANCEL_EVENT,
-							style: {
-								marginTop: 30,
-								fontSize: 17,
-								paddingVertical: Application.getPlatform() === 'android' ? 2 : 8,
-								paddingHorizontal: 34,
-								backgroundColor: withPressed('#ffffff'),
-							},
-						},
-					},
-				}]);
 			}
+		}
+
+		getProgressParams(value, maxValue)
+		{
+			return {
+				value,
+				maxValue,
+				show: true,
+				title: Loc.getMessage('MCRM_CRM_MODE_PROGRESS_BAR_TITLE'),
+				description: Loc.getMessage('MCRM_CRM_MODE_PROGRESS_BAR_DESCRIPTION'),
+				button: {
+					text: Loc.getMessage('MCRM_CRM_MODE_PROGRESS_BAR_BUTTON'),
+					onClickEvent: BUTTON_CANCEL_EVENT,
+					style: {
+						marginTop: 30,
+						fontSize: 17,
+						paddingVertical: Application.getPlatform() === 'android' ? 2 : 8,
+						paddingHorizontal: 34,
+						backgroundColor: withPressed('#ffffff'),
+					},
+				},
+			};
 		}
 
 		showNotify()
@@ -367,6 +368,9 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 			this.isProgress = false;
 			this.reloadTabs(success);
 			this.unBindEvents();
+			BX.postComponentEvent('Crm.LoadingProgress::updateProgress', [{
+				show: false,
+			}]);
 		}
 
 		ajaxPromise({ url, data })
@@ -425,14 +429,16 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 
 				this.reloadTabs(success);
 				this.hapticsNotify(success);
-				this.loadEntities();
+				void this.loadEntities();
 
 				console.log(`change crm to to ${crmType} success`);
 			}
 		}
 
-		loadEntities()
+		async loadEntities()
 		{
+			const { EntityDetailOpener } = await requireLazy('crm:entity-detail/opener');
+
 			EntityDetailOpener.loadEntities();
 		}
 
@@ -461,6 +467,7 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 				if (categoryStorage)
 				{
 					resolve(categoryStorage);
+
 					return;
 				}
 

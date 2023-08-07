@@ -14,8 +14,8 @@ use Bitrix\Crm\Controller\Action\Entity\SearchAction;
 use Bitrix\Crm\Controller\Entity;
 use Bitrix\Crm\Conversion\EntityConversionWizard;
 use Bitrix\Crm\Currency;
+use Bitrix\Crm\Entity\CommentsHelper;
 use Bitrix\Crm\Entity\EntityEditor;
-use Bitrix\Crm\Entity\FieldContentType;
 use Bitrix\Crm\Entity\Traits\VisibilityConfig;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\EO_Status_Collection;
@@ -251,9 +251,8 @@ class EditorAdapter
 			);
 		}
 
-		$this->entityData = FieldContentType::prepareFieldsFromDetailsToView(
+		$this->entityData = CommentsHelper::prepareFieldsFromEditorAdapterToView(
 			$item->getEntityTypeId(),
-			$item->getId(),
 			$this->entityData,
 		);
 
@@ -528,9 +527,8 @@ class EditorAdapter
 		if ($isFlexibleContentType === true)
 		{
 			$field =
-				FieldContentType::compileFieldDescriptionForDetails(
+				CommentsHelper::compileFieldDescriptionForDetails(
 					$this->item->getEntityTypeId(),
-					$this->item->getId(),
 					$name,
 				)
 				+ $field
@@ -782,6 +780,10 @@ class EditorAdapter
 			if (isset($fieldDescription['VALUE_TYPE']) && $fieldDescription['VALUE_TYPE'] === Field::VALUE_TYPE_HTML)
 			{
 				return 'html';
+			}
+			if (isset($fieldDescription['VALUE_TYPE']) && $fieldDescription['VALUE_TYPE'] === Field::VALUE_TYPE_BB)
+			{
+				return 'bb';
 			}
 
 			return 'text';

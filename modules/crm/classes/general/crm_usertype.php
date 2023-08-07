@@ -1313,7 +1313,7 @@ class CCrmUserType
 			{
 				if ($arUserField['USER_TYPE']['USER_TYPE_ID'] == 'boolean')
 				{
-					$arVal = $values[$ID][$FIELD_NAME];
+					$arVal = $values[$ID][$FIELD_NAME] ?? '';
 					if (!is_array($arVal))
 					{
 						$arVal = [$arVal];

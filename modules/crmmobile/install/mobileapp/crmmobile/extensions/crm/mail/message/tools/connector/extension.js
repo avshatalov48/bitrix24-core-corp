@@ -2,7 +2,6 @@
  * @module crm/mail/message/tools/connector
  */
 jn.define('crm/mail/message/tools/connector', (require, exports, module) => {
-
 	function buildSender(email, senders)
 	{
 		let name = email;
@@ -11,6 +10,7 @@ jn.define('crm/mail/message/tools/connector', (require, exports, module) => {
 			if (value.email === email && value.name)
 			{
 				name = value.name;
+
 				return true;
 			}
 		});
@@ -47,6 +47,7 @@ jn.define('crm/mail/message/tools/connector', (require, exports, module) => {
 						entityType: 'contacts',
 					};
 				}
+
 				return JSON.stringify(augmentedContact);
 			}
 		}).filter(Boolean);

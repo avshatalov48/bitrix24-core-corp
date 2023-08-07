@@ -53,7 +53,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 				totalRows: count,
 			} = this.getSummary();
 
-			this.customEventEmitter.emit(CatalogStoreEvents.ProductList.TotalChanged, [{
+			this.customEventEmitter.emit('StoreEvents.ProductList.TotalChanged', [{
 				count,
 				total: { amount, currency },
 			}]);
@@ -308,13 +308,14 @@ jn.define('crm/product-grid', (require, exports, module) => {
 		{
 			if (this.getItems().length === 0)
 			{
-				this.customEventEmitter.emit(CatalogStoreEvents.ProductList.TotalChanged, [{
+				this.customEventEmitter.emit('StoreEvents.ProductList.TotalChanged', [{
 					count: 0,
 					total: {
 						amount: 0,
 						currency: this.state.currencyId,
 					},
 				}]);
+
 				return;
 			}
 
@@ -344,7 +345,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 							totalRows: count,
 						} = response.data;
 
-						this.customEventEmitter.emit(CatalogStoreEvents.ProductList.TotalChanged, [{
+						this.customEventEmitter.emit('StoreEvents.ProductList.TotalChanged', [{
 							count,
 							total: { amount, currency },
 						}]);
@@ -434,6 +435,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 					needUpdate = true;
 					const taxIncluded = source.isTaxIncluded() ? 'Y' : 'N';
 					const calculator = new ProductCalculator(item.getRawValues());
+
 					return item.setFields(calculator.calculateTaxIncluded(taxIncluded));
 				});
 
@@ -458,7 +460,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 		{
 			const { tabId } = this.getProps();
 
-			this.customEventEmitter.emit(CatalogStoreEvents.Document.TabChange, [tabId]);
+			this.customEventEmitter.emit('DetailCard::onTabChange', [tabId]);
 		}
 
 		/**

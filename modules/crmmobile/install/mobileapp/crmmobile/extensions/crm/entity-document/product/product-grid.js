@@ -21,6 +21,16 @@ jn.define('crm/entity-document/product/product-grid', (require, exports, module)
 			this.additionalSummary = props.additionalSummary;
 		}
 
+		getSummaryComponents()
+		{
+			return {
+				summary: true,
+				amount: false,
+				discount: true,
+				taxes: false,
+			};
+		}
+
 		initServices()
 		{
 			super.initServices();

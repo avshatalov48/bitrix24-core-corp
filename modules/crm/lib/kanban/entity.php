@@ -22,6 +22,7 @@ use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Field;
 use Bitrix\Crm\Statistics\StatisticEntryManager;
+use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main\Application;
 use Bitrix\Main\DI\ServiceLocator;
@@ -168,16 +169,22 @@ abstract class Entity
 	/**
 	 * Get ENTITY_ID identifier to StatusTable.
 	 *
-	 * @return string
+	 * @return null|string
 	 */
-	public function getStatusEntityId(): string
+	public function getStatusEntityId(): ?string
 	{
 		return $this->factory->getStagesEntityId($this->getCategoryId());
 	}
 
 	public function getStagesList(): array
 	{
-		return \Bitrix\Crm\StatusTable::getStatusesByEntityId($this->getStatusEntityId());
+		$statusEntityId = $this->getStatusEntityId();
+		if ($statusEntityId === null)
+		{
+			return [];
+		}
+
+		return StatusTable::getStatusesByEntityId($statusEntityId);
 	}
 
 	/**
@@ -2073,7 +2080,10 @@ abstract class Entity
 		$factory = Container::getInstance()->getFactory($this->getTypeId());
 		if ($factory && $factory->isObserversEnabled())
 		{
-			$result['OBSERVER'] =
+			$observerFieldCode = \CCrmOwnerType::isUseDynamicTypeBasedApproach($this->getTypeId())
+				? Item::FIELD_NAME_OBSERVERS
+				: 'OBSERVER';
+			$result[$observerFieldCode] =
 				(Field::createByType('user', 'OBSERVER'))
 					->setIsMultiple(true)
 			;
@@ -2179,9 +2189,9 @@ abstract class Entity
 		}
 	}
 
-	public function getFieldsRestrictions(): array
+	public function getFieldsRestrictionsEngine(): string
 	{
-		return $this->fieldRestrictionManager->fetchRestrictedFields(
+		return $this->fieldRestrictionManager->fetchRestrictedFieldsEngine(
 			$this->getGridId(),
 			[],
 			$this->getFilter()

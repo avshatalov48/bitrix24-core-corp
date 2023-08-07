@@ -12,12 +12,12 @@ use Bitrix\Crm\Component\EntityDetails\Traits;
 use Bitrix\Crm\Controller\Action\Entity\SearchAction;
 use Bitrix\Crm\Conversion\LeadConversionDispatcher;
 use Bitrix\Crm\Conversion\LeadConversionScheme;
-use Bitrix\Crm\Integrity\DuplicateControl;
-use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\CustomerType;
+use Bitrix\Crm\Integrity\DuplicateControl;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Crm\Service\ParentFieldManager;
+use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Tracking;
 use Bitrix\Currency;
 use Bitrix\Location\Entity\Address\AddressLinkCollection;
@@ -853,7 +853,7 @@ class CCrmLeadDetailsComponent
 				'type' => 'boolean',
 				'editable' => true
 			),
-			Crm\Entity\FieldContentType::compileFieldDescriptionForDetails(\CCrmOwnerType::Lead, $this->entityID, 'COMMENTS'),
+			Crm\Entity\CommentsHelper::compileFieldDescriptionForDetails(\CCrmOwnerType::Lead, 'COMMENTS'),
 			EditorAdapter::getProductRowSummaryField(
 				Loc::getMessage('CRM_LEAD_FIELD_PRODUCTS'),
 				'PRODUCT_ROW_SUMMARY'
@@ -1721,7 +1721,7 @@ class CCrmLeadDetailsComponent
 			);
 			//endregion
 
-			$this->entityData = Crm\Entity\FieldContentType::prepareFieldsFromDetailsToView(
+			$this->entityData = Crm\Entity\CommentsHelper::prepareFieldsFromDetailsToView(
 				\CCrmOwnerType::Lead,
 				$this->entityID,
 				$this->entityData,
@@ -2396,27 +2396,27 @@ class CCrmLeadDetailsComponent
 		global $APPLICATION;
 
 		$this->arResult['PATH_TO_USER_PROFILE'] = $this->arParams['PATH_TO_USER_PROFILE'] =
-			CrmCheckPath('PATH_TO_USER_PROFILE', $this->arParams['PATH_TO_USER_PROFILE'],
+			CrmCheckPath('PATH_TO_USER_PROFILE', $this->arParams['PATH_TO_USER_PROFILE'] ?? null,
 				'/company/personal/user/#user_id#/');
 
-		$this->arResult['NAME_TEMPLATE'] = empty($this->arParams['NAME_TEMPLATE'])
+		$this->arResult['NAME_TEMPLATE'] = empty($this->arParams['NAME_TEMPLATE'] ?? null)
 			? CSite::GetNameFormat(false)
-			: str_replace(["#NOBR#", "#/NOBR#"], ["", ""], $this->arParams['NAME_TEMPLATE']);
+			: str_replace(["#NOBR#", "#/NOBR#"], ["", ""], $this->arParams['NAME_TEMPLATE'] ?? '');
 
 		$this->arResult['PATH_TO_LEAD_SHOW'] = CrmCheckPath(
 			'PATH_TO_LEAD_SHOW',
-			$this->arParams['PATH_TO_LEAD_SHOW'],
+			$this->arParams['PATH_TO_LEAD_SHOW'] ?? null,
 			$APPLICATION->GetCurPage() . '?lead_id=#lead_id#&show'
 		);
 		$this->arResult['PATH_TO_LEAD_EDIT'] = CrmCheckPath(
 			'PATH_TO_LEAD_EDIT',
-			$this->arParams['PATH_TO_LEAD_EDIT'],
+			$this->arParams['PATH_TO_LEAD_EDIT'] ?? null,
 			$APPLICATION->GetCurPage() . '?lead_id=#lead_id#&edit'
 		);
 
 		$this->arResult['PATH_TO_PRODUCT_EDIT'] = CrmCheckPath(
 			'PATH_TO_PRODUCT_EDIT',
-			$this->arParams['PATH_TO_PRODUCT_EDIT'],
+			$this->arParams['PATH_TO_PRODUCT_EDIT'] ?? null,
 			$APPLICATION->GetCurPage() . '?product_id=#product_id#&edit'
 		);
 
@@ -2429,7 +2429,7 @@ class CCrmLeadDetailsComponent
 		{
 			$this->arResult['PATH_TO_PRODUCT_SHOW'] = CrmCheckPath(
 				'PATH_TO_PRODUCT_SHOW',
-				$this->arParams['PATH_TO_PRODUCT_SHOW'],
+				$this->arParams['PATH_TO_PRODUCT_SHOW'] ?? null,
 				$APPLICATION->GetCurPage() . '?product_id=#product_id#&show'
 			);
 		}

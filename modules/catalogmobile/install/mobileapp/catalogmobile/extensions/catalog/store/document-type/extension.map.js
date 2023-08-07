@@ -1,0 +1,1 @@
+{"version":3,"file":"extension.map.js","names":["jn","define","require","exports","module","DocumentType","Arrival","StoreAdjustment","Deduct","Moving"],"sources":["extension.js"],"mappings":"AAGAA,GAAGC,OAAO,+BAA+B,CAACC,EAASC,EAASC,KAI3D,MAAMC,EAAe,CACpBC,QAAS,IACTC,gBAAiB,IACjBC,OAAQ,IACRC,OAAQ,KAGTL,EAAOD,QAAU,CAAEE,eAAc"}

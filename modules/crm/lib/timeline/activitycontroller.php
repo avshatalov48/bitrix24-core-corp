@@ -334,6 +334,7 @@ class ActivityController extends EntityController
 						Activity\Provider\Zoom::getId(),
 						Activity\Provider\Tasks\Task::getId(),
 						Activity\Provider\Tasks\Comment::getId(),
+						Activity\Provider\OpenLine::getId(),
 					]
 				)
 			)
@@ -706,7 +707,7 @@ class ActivityController extends EntityController
 			'Y-m-d H:i:s',
 			$createdTimestamp
 		);
-		if ($data['IS_INCOMING_CHANNEL'] === 'Y')
+		if (($data['IS_INCOMING_CHANNEL'] ?? 'N') === 'Y')
 		{
 			// incoming channel activities have a negative timestamp because they must be first in the list
 			// and must be sorted in reverse order:

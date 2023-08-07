@@ -129,7 +129,7 @@ class LeadScoring extends Base
 			$rows[$row["STATUS_SEMANTIC_ID"]] = (int)$row["CNT"];
 		}
 
-		$cachedResult = [$rows["S"], $rows["F"]];
+		$cachedResult = [$rows["S"] ?? 0, $rows["F"] ?? 0];
 		return $cachedResult;
 	}
 

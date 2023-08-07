@@ -40,6 +40,7 @@ class Signaling
 		$lineConfig = $this->call->getConfig();
 		$isTransfer = $this->call->getParentCallId() != '';
 		$call = $isTransfer ? Call::load($this->call->getParentCallId()) : $this->call;
+		$externalNumber = '';
 
 		if ($lineConfig['PORTAL_MODE'] === \CVoxImplantConfig::MODE_SIP)
 		{

@@ -15,12 +15,10 @@
 	const { StatefulList } = require('layout/ui/stateful-list');
 	const { Type } = require('type');
 
-	let RequiredFields;
 	let CategoryStorage;
 
 	try
 	{
-		RequiredFields = require('crm/required-fields').RequiredFields;
 		CategoryStorage = require('crm/storage/category').CategoryStorage;
 	}
 	catch (e)
@@ -72,6 +70,7 @@
 			this.onUpdateItemHandler = this.onUpdateItem.bind(this);
 			this.onCreateItemHandler = this.onCreateItem.bind(this);
 			this.onAccessDeniedItemHandler = this.onAccessDeniedItem.bind(this);
+			this.onChangeItemCategoryHandler = this.onChangeItemCategory.bind(this);
 		}
 
 		initSlides(props = null)
@@ -435,8 +434,10 @@
 
 		errorProcessing(errors, params = {}, payload)
 		{
-			return new Promise((resolve, reject) => {
+			return new Promise(async (resolve, reject) => {
 				const { itemId } = payload;
+				const { RequiredFields } = await requireLazy('crm:required-fields') || {};
+
 				if (RequiredFields && RequiredFields.hasRequiredFields(errors))
 				{
 					const { columnId } = payload;
@@ -767,6 +768,7 @@
 					{
 						entityTypeName: this.props.entityTypeName,
 						entityTypeId: this.props.entityTypeId,
+						params: this.props.toolbarParams,
 						filter: this.filter,
 						filterParams: this.props.filterParams,
 						loadAction: this.actions.loadEntityStages,
@@ -776,6 +778,7 @@
 						changeItemStage: this.changeItemStageHandler,
 						blinkItem: this.blinkItemHandler,
 						layout: this.props.layout,
+						onChangeItemCategory: this.onChangeItemCategoryHandler,
 						ref: ref => {
 							if (ref)
 							{
@@ -789,6 +792,27 @@
 			console.warn('Toolbar factory not found.');
 
 			return null;
+		}
+
+		onChangeItemCategory(data)
+		{
+			const statefulList = this.getCurrentStatefulList();
+			const toolbar = this.refsContainer.getToolbar();
+
+			if (!statefulList || !toolbar)
+			{
+				return;
+			}
+
+			const { ids = [] } = data;
+
+			ids.forEach((id) => {
+				const item = statefulList.getItem(id);
+				if (item)
+				{
+					toolbar.removeFromStageCounters(item.data.columnId, item.data.price);
+				}
+			});
 		}
 
 		/**
@@ -1134,8 +1158,14 @@
 			{
 				return false;
 			}
-			// @todo maybe need use individual cache for all preset exclude 'tmp_filter'
-			return !(Boolean(this.filter.currentFilterId) || Boolean(this.filter.search));
+
+			const selectedNotDefaultPreset = this.filter.hasSelectedNotDefaultPreset();
+			if (selectedNotDefaultPreset)
+			{
+				return false;
+			}
+
+			return !Type.isStringFilled(this.filter.search);
 		}
 
 		/**

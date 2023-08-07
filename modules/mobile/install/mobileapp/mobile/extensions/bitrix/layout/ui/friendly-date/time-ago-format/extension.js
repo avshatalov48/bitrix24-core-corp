@@ -2,7 +2,6 @@
  * @module layout/ui/friendly-date/time-ago-format
  */
 jn.define('layout/ui/friendly-date/time-ago-format', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { shortTime } = require('utils/date/formats');
 
@@ -74,7 +73,7 @@ jn.define('layout/ui/friendly-date/time-ago-format', (require, exports, module) 
 		}
 
 		/**
-		 * @private
+		 * @protected
 		 * @param {Moment} moment
 		 * @return {string}
 		 */
@@ -84,7 +83,8 @@ jn.define('layout/ui/friendly-date/time-ago-format', (require, exports, module) 
 			{
 				return this.props.defaultFormat(moment);
 			}
-			else if (this.props.defaultFormat)
+
+			if (this.props.defaultFormat)
 			{
 				return moment.format(this.props.defaultFormat);
 			}
@@ -93,7 +93,7 @@ jn.define('layout/ui/friendly-date/time-ago-format', (require, exports, module) 
 		}
 
 		/**
-		 * @private
+		 * @protected
 		 * @param {Moment} moment
 		 * @return {string|null}
 		 */
@@ -123,7 +123,7 @@ jn.define('layout/ui/friendly-date/time-ago-format', (require, exports, module) 
 		}
 
 		/**
-		 * @private
+		 * @protected
 		 * @param {Moment} moment
 		 * @return {string|null}
 		 */
@@ -153,7 +153,7 @@ jn.define('layout/ui/friendly-date/time-ago-format', (require, exports, module) 
 		}
 
 		/**
-		 * @private
+		 * @protected
 		 * @param {Moment} moment
 		 * @return {string|null}
 		 */
@@ -183,13 +183,113 @@ jn.define('layout/ui/friendly-date/time-ago-format', (require, exports, module) 
 		}
 
 		/**
-		 * @private
+		 * @protected
+		 * @param {Moment} moment
+		 * @return {string|null}
+		 */
+		formatDays(moment)
+		{
+			const days = moment.daysFromNow;
+			if (days === 1)
+			{
+				const code = moment.inFuture
+					? 'MOBILE_UI_TIME_AGO_FUTURE_DAYS_EXACT_ONE'
+					: 'MOBILE_UI_TIME_AGO_DAYS_EXACT_ONE';
+
+				return this.getPhrase({
+					code,
+				});
+			}
+
+			const code = moment.inFuture
+				? 'MOBILE_UI_TIME_AGO_FUTURE_DAYS'
+				: 'MOBILE_UI_TIME_AGO_DAYS';
+
+			return this.getPhrase({
+				code,
+				value: days,
+				replacements: { '#NUM#': days },
+			});
+		}
+
+		/**
+		 * @protected
+		 * @param {Moment} moment
+		 * @return {string|null}
+		 */
+		formatMonths(moment)
+		{
+			const months = moment.monthsFromNow;
+			if (months === 1)
+			{
+				const code = moment.inFuture
+					? 'MOBILE_UI_TIME_AGO_FUTURE_MONTHS_EXACT_ONE'
+					: 'MOBILE_UI_TIME_AGO_MONTHS_EXACT_ONE';
+
+				return this.getPhrase({
+					code,
+				});
+			}
+
+			const code = moment.inFuture
+				? 'MOBILE_UI_TIME_AGO_FUTURE_MONTHS'
+				: 'MOBILE_UI_TIME_AGO_MONTHS';
+
+			return this.getPhrase({
+				code,
+				value: months,
+				replacements: { '#NUM#': months },
+			});
+		}
+
+		/**
+		 * @protected
+		 * @param {Moment} moment
+		 * @return {?string}
+		 */
+		formatYesterday(moment)
+		{
+			return this.getPhrase({
+				code: 'MOBILE_UI_TIME_AGO_YESTERDAY',
+				replacements: {
+					'#TIME#': moment.format(shortTime).toLocaleLowerCase(env.languageId),
+				},
+			});
+		}
+
+		/**
+		 * @protected
+		 * @param {Moment} moment
+		 * @return {?string}
+		 */
+		formatToday(moment)
+		{
+			return this.getPhrase({
+				code: 'MOBILE_UI_TIME_AGO_TODAY',
+				replacements: {
+					'#TIME#': moment.format(shortTime).toLocaleLowerCase(env.languageId),
+				},
+			});
+		}
+
+		/**
+		 * @protected
+		 * @param {?Moment} moment
+		 * @return {?string}
+		 */
+		formatMoreYear(moment)
+		{
+			return Loc.getMessage('MOBILE_UI_TIME_AGO_MORE_YEAR');
+		}
+
+		/**
+		 * @protected
 		 * @param {string} code
 		 * @param {any|null} value
 		 * @param {object} replacements
 		 * @return {string|null}
 		 */
-		getPhrase({code, value = null, replacements = {}})
+		getPhrase({ code, value = null, replacements = {} })
 		{
 			const phrase = value === null
 				? Loc.getMessage(code, replacements)
@@ -210,5 +310,4 @@ jn.define('layout/ui/friendly-date/time-ago-format', (require, exports, module) 
 	}
 
 	module.exports = { TimeAgoFormat };
-
 });

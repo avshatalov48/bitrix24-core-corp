@@ -159,6 +159,12 @@ BX.Disk.FolderListClass = (function (){
 		{
 			if (this.storage.bpListLink)
 			{
+				const currentUrl = new URL(window.location.href);
+				const params = new URLSearchParams(currentUrl.search);
+				params.delete('cmd');
+				currentUrl.search = params.toString();
+				window.history.replaceState(null, null, currentUrl.toString());
+
 				this.openSlider(this.storage.bpListLink);
 			}
 		}
@@ -187,45 +193,6 @@ BX.Disk.FolderListClass = (function (){
 		{
 			BX.bind(BX(this.layout.changeViewButtons[i]), 'click', this.changeView.bind(this));
 		}
-
-		BX.SidePanel.Instance.bindAnchors({
-			rules: [
-				{
-					condition: [
-						this.storage.link,
-						this.storage.trashLink
-					],
-					handler: function (event, link) {
-
-						if (BX.hasClass(link.anchor, 'main-ui-pagination-page') || BX.hasClass(link.anchor, 'main-ui-pagination-arrow'))
-						{
-							//skip link which used in grid navigation.
-							return;
-						}
-
-						if (this.onOpenFolderByAnchor(link.anchor))
-						{
-							event.preventDefault();
-						}
-
-					}.bind(this)
-				},
-				{
-					condition: [
-						this.storage.fileLinkPrefix,
-						this.storage.trashFileLinkPrefix
-					],
-					handler: function(event, link) {
-						if (!link.anchor.dataset.bxViewer && !link.anchor.dataset.viewer)
-						{
-							BX.SidePanel.Instance.open(link.url);
-							event.preventDefault();
-						}
-						//else we have BX.Viewer which bind in disk.folder.list/templates/.default/template.php
-					}
-				}
-			]
-		});
 
 		BX.addCustomEvent('SidePanel.Slider:onMessage', this.onSliderMessage.bind(this));
 		BX.addCustomEvent('Disk.OnlyOffice:onSaved', this.handleDocumentSaved.bind(this));
@@ -258,6 +225,8 @@ BX.Disk.FolderListClass = (function (){
 		BX.addCustomEvent("Disk.Page:onChangeFolder", this.onChangeFolder.bind(this));
 		BX.addCustomEvent("Disk.TileItem.Item:onItemDblClick", this.onItemDblClick.bind(this));
 		BX.addCustomEvent("Disk.TileItem.Item:onItemEnter", this.onItemDblClick.bind(this));
+		BX.addCustomEvent("Disk.TileItem.Item:onTitleClick", this.handleTitleClickOnTileItem.bind(this));
+		BX.addCustomEvent("Disk.Breadcrumbs:onClickBreadcrumb", this.handleClickOnBreadcrumb.bind(this));
 		BX.addCustomEvent(this.commonGrid.instance, "TileGrid.Grid:onItemRemove", this.handleItemRemoveByTileGrid.bind(this));
 		BX.addCustomEvent(this.commonGrid.instance, "TileGrid.Grid:onItemMove", this.onItemMove.bind(this));
 
@@ -623,6 +592,19 @@ BX.Disk.FolderListClass = (function (){
 			//BX.SidePanel.Instance.open(item.link);
 			BX.fireEvent(item.item.titleLink, 'click');
 		}
+	};
+
+	FolderListClass.prototype.handleTitleClickOnTileItem = function (item, event)
+	{
+		if (item.isFolder)
+		{
+			this.openFolderByAnchor(item.item.titleLink, event);
+		}
+	};
+
+	FolderListClass.prototype.handleClickOnBreadcrumb = function (breadcrumbLink, event)
+	{
+		this.openFolderByAnchor(breadcrumbLink, event);
 	};
 
 	FolderListClass.prototype.onChangeFolder = function (folder, newFolder)
@@ -1322,6 +1304,19 @@ BX.Disk.FolderListClass = (function (){
 		BX.fireEvent(a, 'click');
 	};
 
+	FolderListClass.prototype.openFolderByAnchor = function (anchor, event)
+	{
+		if (event.which !== 1 || event.ctrlKey || event.metaKey)
+		{
+			return;
+		}
+
+		if (this.onOpenFolderByAnchor(anchor))
+		{
+			event.preventDefault();
+		}
+	};
+
 	FolderListClass.prototype.onOpenFolderByAnchor = function(anchor)
 	{
 		var folder = {
@@ -1376,7 +1371,7 @@ BX.Disk.FolderListClass = (function (){
 		return true;
 	};
 
-	FolderListClass.prototype.openFolderContextMenu = function(anchor, event, folderId, folder)
+	FolderListClass.prototype.openFolderByContextMenu = function(anchor, event, folderId, folder)
 	{
 		event.preventDefault();
 
@@ -5370,6 +5365,9 @@ BX.Disk.FolderListClass = (function (){
 						 			title: this.title,
 									id: 'disk_obj_' + this.id
 						 		},
+								events: {
+									click: this.handleTitleClick.bind(this),
+								},
 						 		text: this.title,
 						 		dataset: BX.mergeEx({
 						 			objectId: this.id,
@@ -5380,6 +5378,11 @@ BX.Disk.FolderListClass = (function (){
 					})
 				]
 			})
+		},
+
+		handleTitleClick: function (event)
+		{
+			BX.onCustomEvent("Disk.TileItem.Item:onTitleClick", [this, event]);
 		},
 
 		getTitleInput: function()

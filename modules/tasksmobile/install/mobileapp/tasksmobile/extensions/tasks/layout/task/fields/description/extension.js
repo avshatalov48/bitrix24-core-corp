@@ -2,12 +2,35 @@
  * @module tasks/layout/task/fields/description
  */
 jn.define('tasks/layout/task/fields/description', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {TextAreaField} = require('layout/ui/fields/textarea');
-	const {inAppUrl} = require('in-app-url');
+	const { Loc } = require('loc');
+	const { TextAreaField } = require('layout/ui/fields/textarea');
+	const { inAppUrl } = require('in-app-url');
 
 	class Description extends LayoutComponent
 	{
+		static openFileViewer({ fileType, url, name })
+		{
+			if (!url)
+			{
+				return;
+			}
+
+			switch (fileType)
+			{
+				case 'video':
+					viewer.openVideo(url);
+					break;
+
+				case 'image':
+					viewer.openImage(url, name);
+					break;
+
+				default:
+					viewer.openDocument(url, name);
+					break;
+			}
+		}
+
 		constructor(props)
 		{
 			super(props);
@@ -65,12 +88,12 @@ jn.define('tasks/layout/task/fields/description', (require, exports, module) => 
 					config: {
 						deepMergeStyles: this.getDeepMergeStyles(),
 						readOnlyElementType: 'BBCodeText',
-						onLinkClick: ({url}) => this.onLinkClick(url),
+						onLinkClick: ({ url }) => this.onLinkClick(url),
 					},
 					value: (this.state.readOnly ? this.state.parsedDescription : this.state.description),
 					testId: 'description',
 					onChange: (text) => {
-						this.setState({description: text});
+						this.setState({ description: text });
 						this.props.onChange(text);
 					},
 				}),
@@ -79,9 +102,11 @@ jn.define('tasks/layout/task/fields/description', (require, exports, module) => 
 
 		onLinkClick(url)
 		{
-			const files = this.props.task.files.reduce((result, file) => {
+			const files = this.props.task.files.reduce((accumulator, file) => {
+				const result = accumulator;
 				result[file.id] = file;
 				result[`n${file.objectId}`] = file;
+
 				return result;
 			}, {});
 			const fileMatch = url.match(/\/\?openFile&fileId=(\d+)/);
@@ -89,7 +114,7 @@ jn.define('tasks/layout/task/fields/description', (require, exports, module) => 
 			{
 				const file = files[fileMatch[1]];
 				file.fileType = UI.File.getType(UI.File.getFileMimeType(file.type, file.name));
-				this.openFileViewer(file);
+				Description.openFileViewer(file);
 
 				return;
 			}
@@ -105,47 +130,16 @@ jn.define('tasks/layout/task/fields/description', (require, exports, module) => 
 				return;
 			}
 
-			const diskMatch = url.match(/\/bitrix\/tools\/disk\/focus.php\?.*(folderId|objectId)=(\d+)/i);
-			if (diskMatch)
-			{
-				BX.postComponentEvent('onDiskFolderOpen', [{folderId: diskMatch[2]}], 'background');
-
-				return;
-			}
-
 			inAppUrl.open(url);
 		}
 
-		openFileViewer({fileType, url, name})
-		{
-			if (!url)
-			{
-				return;
-			}
-
-			switch (fileType)
-			{
-				case 'video':
-					viewer.openVideo(url);
-					break;
-
-				case 'image':
-					viewer.openImage(url, name);
-					break;
-
-				default:
-					viewer.openDocument(url, name);
-					break;
-			}
-		}
-
-		openWebViewer({type, id})
+		openWebViewer({ type, id })
 		{
 			PageManager.openPage({
 				url: `${env.siteDir}mobile/tasks/snmrouter/?routePage=fragmentrenderer&FRAGMENT_TYPE=${type}&FRAGMENT_ID=${id}&TASK_ID=${this.props.task.id}`,
 				title: Loc.getMessage(
 					`TASKSMOBILE_LAYOUT_TASK_FIELDS_DESCRIPTION_CONTENT_${type.toUpperCase()}`,
-					{'#INDEX#': Number(id)}
+					{ '#INDEX#': Number(id) },
 				),
 				backdrop: {
 					bounceEnable: false,
@@ -159,13 +153,14 @@ jn.define('tasks/layout/task/fields/description', (require, exports, module) => 
 
 		copyDescription()
 		{
+			Notify.showMessage(
+				'',
+				Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_DESCRIPTION_COPIED'),
+				{ time: 1 },
+			);
 			Application.copyToClipboard(this.state.description);
-			Notify.showIndicatorSuccess({
-				text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_DESCRIPTION_COPIED'),
-				hideAfter: 1200,
-			});
 		}
 	}
 
-	module.exports = {Description};
+	module.exports = { Description };
 });

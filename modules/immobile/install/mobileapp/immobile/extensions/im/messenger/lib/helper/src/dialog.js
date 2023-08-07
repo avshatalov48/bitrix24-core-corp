@@ -1,10 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-
 /**
  * @module im/messenger/lib/helper/dialog
  */
 jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
-
 	const { Type } = require('type');
 
 	/**

@@ -193,7 +193,7 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 			$parameters['runtime'][] = static::getFullTextReferenceField();
 		}
 
-		$parameters['filter'] = static::replaceAssignedInFilter($parameters['filter']);
+		$parameters['filter'] = PrototypeItemFilter::replaceParameters($parameters['filter'], static::getEntityTypeId());
 
 		return $parameters;
 	}
@@ -259,37 +259,6 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 		}
 
 		return false;
-	}
-
-	protected static function replaceAssignedInFilter(array $filter): array
-	{
-		foreach ($filter as $index => $value)
-		{
-			if (is_array($value))
-			{
-				$filter[$index] = static::replaceAssignedInFilter($value);
-			}
-			elseif (mb_strpos($index, 'ASSIGNED_BY_ID') !== false)
-			{
-				$filter['@ID'] = static::getAssignedSqlExpression($index, $value);
-
-				unset($filter[$index]);
-			}
-		}
-
-		return $filter;
-	}
-
-	protected static function getAssignedSqlExpression(string $filterKey, $filterValue): Main\DB\SqlExpression
-	{
-		preg_match('/([=%><@!]*)ASSIGNED_BY_ID/', $filterKey, $pregResult);
-		$operation = $pregResult[1];
-
-		$subQuery = AssignedTable::query()->addSelect('ENTITY_ID')
-			->addFilter($operation.'ASSIGNED_BY', $filterValue)
-			->addFilter('ENTITY_TYPE_ID', static::getEntityTypeId());
-
-		return new Main\DB\SqlExpression($subQuery->getQuery());
 	}
 
 	/**

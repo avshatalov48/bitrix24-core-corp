@@ -2,7 +2,6 @@
  * @module im/messenger/view/base
  */
 jn.define('im/messenger/view/base', (require, exports, module) => {
-
 	class View
 	{
 		constructor(options = {})
@@ -30,7 +29,7 @@ jn.define('im/messenger/view/base', (require, exports, module) => {
 				throw new Error('View: You cannot send an unregistered event, use setCustomEvents(eventList).');
 			}
 
-			this.customUiEventEmitter.emit(eventName, [ eventData ]);
+			this.customUiEventEmitter.emit(eventName, [eventData]);
 		}
 
 		on(eventName, eventHandler)

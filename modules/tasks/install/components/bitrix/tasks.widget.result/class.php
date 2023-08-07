@@ -11,8 +11,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Forum\MessageTable;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\ResultAccessController;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
+use Bitrix\Tasks\Internals\Task\Result\ResultTable;
+use Bitrix\Tasks\Util\User;
 
 class TasksWidgetResult extends \CBitrixComponent
 	implements \Bitrix\Main\Errorable, \Bitrix\Main\Engine\Contract\Controllerable
@@ -33,7 +40,7 @@ class TasksWidgetResult extends \CBitrixComponent
 
 	public function configureActions()
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return [];
 		}
@@ -71,7 +78,7 @@ class TasksWidgetResult extends \CBitrixComponent
 		{
 			$this->init();
 
-			$access = \Bitrix\Tasks\Access\TaskAccessController::can($this->arParams['USER_ID'], \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_READ, $this->arParams['TASK_ID']);
+			$access = TaskAccessController::can($this->arParams['USER_ID'], ActionDictionary::ACTION_TASK_READ, $this->arParams['TASK_ID']);
 			if (!$access)
 			{
 				return;
@@ -104,16 +111,16 @@ class TasksWidgetResult extends \CBitrixComponent
 		}
 
 		if (
-			!\Bitrix\Main\Loader::includeModule('tasks')
-			|| !\Bitrix\Main\Loader::includeModule('forum')
+			!Loader::includeModule('tasks')
+			|| !Loader::includeModule('forum')
 		)
 		{
 			return null;
 		}
 
-		$userId = \Bitrix\Tasks\Util\User::getId();
+		$userId = User::getId();
 
-		$comment = \Bitrix\Forum\MessageTable::getById($commentId)->fetchObject();
+		$comment = MessageTable::getById($commentId)->fetchObject();
 		if (!$comment)
 		{
 			return null;
@@ -126,7 +133,7 @@ class TasksWidgetResult extends \CBitrixComponent
 				!\Bitrix\Tasks\Access\Model\UserModel::createFromId($userId)->isAdmin()
 				&& $comment->getAuthorId() !== $userId
 			)
-			|| !\Bitrix\Tasks\Access\TaskAccessController::can($userId, \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_READ, $taskId)
+			|| !TaskAccessController::can($userId, ActionDictionary::ACTION_TASK_READ, $taskId)
 		)
 		{
 			return null;
@@ -145,35 +152,32 @@ class TasksWidgetResult extends \CBitrixComponent
 		}
 
 		if (
-			!\Bitrix\Main\Loader::includeModule('tasks')
-			|| !\Bitrix\Main\Loader::includeModule('forum')
+			!Loader::includeModule('tasks')
+			|| !Loader::includeModule('forum')
 		)
 		{
 			return null;
 		}
 
-		$userId = \Bitrix\Tasks\Util\User::getId();
+		$userId = User::getId();
 
-		$comment = \Bitrix\Forum\MessageTable::getById($commentId)->fetchObject();
+		$comment = MessageTable::getById($commentId)->fetchObject();
 		if (!$comment)
 		{
 			return null;
 		}
 
 		$taskId = (int) str_replace('TASK_', '', $comment->getXmlId());
-
+		$result = ResultTable::getByCommentId($commentId);
 		if (
-			(
-				!\Bitrix\Tasks\Access\Model\UserModel::createFromId($userId)->isAdmin()
-				&& $comment->getAuthorId() !== $userId
-			)
-			|| !\Bitrix\Tasks\Access\TaskAccessController::can($userId, \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_READ, $taskId)
+			!TaskAccessController::can($userId, ActionDictionary::ACTION_TASK_READ, $taskId)
+			|| !ResultAccessController::can($userId, ActionDictionary::ACTION_TASK_REMOVE_RESULT, $result->getId())
 		)
 		{
 			return null;
 		}
 
-		(new ResultManager($userId))->deleteByComment($commentId, $userId);
+		(new ResultManager($userId))->deleteByComment($commentId);
 		return null;
 	}
 
@@ -191,15 +195,15 @@ class TasksWidgetResult extends \CBitrixComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
 
-		$this->arParams['USER_ID'] = \Bitrix\Tasks\Util\User::getId();
+		$this->arParams['USER_ID'] = User::getId();
 		$this->arParams['TASK_ID'] = $taskId;
 
-		$access = \Bitrix\Tasks\Access\TaskAccessController::can($this->arParams['USER_ID'], \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_READ, $taskId);
+		$access = TaskAccessController::can($this->arParams['USER_ID'], ActionDictionary::ACTION_TASK_READ, $taskId);
 		if (!$access)
 		{
 			return null;
@@ -228,12 +232,12 @@ class TasksWidgetResult extends \CBitrixComponent
 
 	public function disableTutorialAction()
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
 
-		$userId = \Bitrix\Tasks\Util\User::getId();
+		$userId = User::getId();
 		(new \Bitrix\Tasks\Internals\Marketing\OneOff\ResultTutorial($userId))->disable();
 	}
 
@@ -259,7 +263,7 @@ class TasksWidgetResult extends \CBitrixComponent
 	 */
 	private function init(): void
 	{
-		$this->arParams['USER_ID'] = \Bitrix\Tasks\Util\User::getId();
+		$this->arParams['USER_ID'] = User::getId();
 
 		$this->arParams['TASK_ID'] = (int)$this->arParams['TASK_ID'];
 		if (!$this->arParams['TASK_ID'])
@@ -303,7 +307,7 @@ class TasksWidgetResult extends \CBitrixComponent
 	private function loadUfInfo()
 	{
 		global $USER_FIELD_MANAGER;
-		$this->arResult['UF'] = $USER_FIELD_MANAGER->getUserFields(\Bitrix\Tasks\Internals\Task\Result\ResultTable::getUfId());
+		$this->arResult['UF'] = $USER_FIELD_MANAGER->getUserFields(ResultTable::getUfId());
 	}
 
 	/**
@@ -317,7 +321,7 @@ class TasksWidgetResult extends \CBitrixComponent
 			return;
 		}
 
-		$this->arResult['USERS'] = \Bitrix\Tasks\Util\User::getData(array_unique($userIds));
+		$this->arResult['USERS'] = User::getData(array_unique($userIds));
 
 		foreach ($this->arResult['USERS'] as $userId => $user)
 		{

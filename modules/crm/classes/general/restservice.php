@@ -1,5 +1,29 @@
 <?php
 
+use Bitrix\Catalog;
+use Bitrix\Crm\Binding\ContactCompanyTable;
+use Bitrix\Crm\Binding\DealContactTable;
+use Bitrix\Crm\Binding\EntityBinding;
+use Bitrix\Crm\Binding\LeadContactTable;
+use Bitrix\Crm\Binding\QuoteContactTable;
+use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\EntityBankDetail;
+use Bitrix\Crm\EntityPreset;
+use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\Integration\Bitrix24Manager;
+use Bitrix\Crm\Integration\DiskManager;
+use Bitrix\Crm\Integration\StorageFileType;
+use Bitrix\Crm\Integration\StorageType;
+use Bitrix\Crm\Requisite;
+use Bitrix\Crm\Rest;
+use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Crm\Service;
+use Bitrix\Crm\Settings\RestSettings;
+use Bitrix\Crm\Tracking;
+use Bitrix\Crm\WebForm;
+use Bitrix\Iblock;
 use Bitrix\Main;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
@@ -7,30 +31,6 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Rest\AccessException;
 use Bitrix\Rest\RestException;
 use Bitrix\Rest\UserFieldProxy;
-use Bitrix\Crm\Integration\StorageFileType;
-use Bitrix\Crm\Integration\StorageType;
-use Bitrix\Crm\Integration\DiskManager;
-use Bitrix\Crm\Integration\Bitrix24Manager;
-use Bitrix\Crm\Category\DealCategory;
-use Bitrix\Crm\Service;
-use Bitrix\Crm\Rest;
-use Bitrix\Crm\Tracking;
-use Bitrix\Crm\WebForm;
-use Bitrix\Crm\Settings\RestSettings;
-use Bitrix\Crm\EntityPreset;
-use Bitrix\Crm\EntityRequisite;
-use Bitrix\Crm\EntityBankDetail;
-use Bitrix\Crm\Requisite;
-use Bitrix\Crm\EntityAddress;
-use Bitrix\Crm\EntityAddressType;
-use Bitrix\Crm\Binding\EntityBinding;
-use Bitrix\Crm\Binding\DealContactTable;
-use Bitrix\Crm\Binding\LeadContactTable;
-use Bitrix\Crm\Binding\QuoteContactTable;
-use Bitrix\Crm\Binding\ContactCompanyTable;
-use Bitrix\Crm\Security\EntityAuthorization;
-use Bitrix\Iblock;
-use Bitrix\Catalog;
 
 if (!Loader::includeModule('rest'))
 {
@@ -2525,7 +2525,7 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 		$id = (int)($fields['ID'] ?? 0);
 		if ($id > 0 && \CCrmOwnerType::IsDefined($this->getOwnerTypeID()))
 		{
-			$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToRead(
+			$fields = \Bitrix\Crm\Entity\CommentsHelper::prepareFieldsFromCompatibleRestToRead(
 				$this->getOwnerTypeID(),
 				$id,
 				$fields,
@@ -5528,11 +5528,6 @@ class CCrmLeadRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(
-			\CCrmOwnerType::Lead,
-			$fields,
-		);
-
 		$entity = self::getEntity();
 		$options = [];
 		if(!$this->isRequiredUserFieldCheckEnabled())
@@ -5597,7 +5592,7 @@ class CCrmLeadRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		$result = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToRead(
+		$result = \Bitrix\Crm\Entity\CommentsHelper::prepareFieldsFromCompatibleRestToRead(
 			\CCrmOwnerType::Lead,
 			$ID,
 			$result,
@@ -5674,11 +5669,6 @@ class CCrmLeadRestProxy extends CCrmRestProxyBase
 			$errors[] = $diskQuotaRestriction->getErrorMessage();
 			return false;
 		}
-
-		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(
-			\CCrmOwnerType::Lead,
-			$fields,
-		);
 
 		$entity = self::getEntity();
 		$compare = true;
@@ -5949,8 +5939,6 @@ class CCrmDealRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(\CCrmOwnerType::Deal, $fields);
-
 		$defaultRequisiteLinkParams = Requisite\EntityLink::determineRequisiteLinkBeforeSave(
 			CCrmOwnerType::Deal, 0, Requisite\EntityLink::ENTITY_OPERATION_ADD, $fields
 		);
@@ -6034,7 +6022,7 @@ class CCrmDealRestProxy extends CCrmRestProxyBase
 		}
 		unset($ufData);
 
-		$result = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToRead(
+		$result = \Bitrix\Crm\Entity\CommentsHelper::prepareFieldsFromCompatibleRestToRead(
 			\CCrmOwnerType::Deal,
 			$ID,
 			$result,
@@ -6085,8 +6073,6 @@ class CCrmDealRestProxy extends CCrmRestProxyBase
 			$errors[] = $diskQuotaRestriction->getErrorMessage();
 			return false;
 		}
-
-		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(\CCrmOwnerType::Deal, $fields);
 
 		$entity = self::getEntity(false);
 		$compare = true;
@@ -7615,11 +7601,6 @@ class CCrmCompanyRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(
-			$this->getOwnerTypeID(),
-			$fields,
-		);
-
 		$entity = self::getEntity();
 		$options = [];
 		if(!$this->isRequiredUserFieldCheckEnabled())
@@ -7685,7 +7666,7 @@ class CCrmCompanyRestProxy extends CCrmRestProxyBase
 			static::$isMyCompany = true;
 		}
 
-		$result = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToRead(
+		$result = \Bitrix\Crm\Entity\CommentsHelper::prepareFieldsFromCompatibleRestToRead(
 			$this->getOwnerTypeID(),
 			$ID,
 			$result,
@@ -7758,11 +7739,6 @@ class CCrmCompanyRestProxy extends CCrmRestProxyBase
 			$errors[] = $diskQuotaRestriction->getErrorMessage();
 			return false;
 		}
-
-		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(
-			$this->getOwnerTypeID(),
-			$fields,
-		);
 
 		if(isset($fields['LOGO']) )
 		{
@@ -7937,11 +7913,6 @@ class CCrmContactRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(
-			$this->getOwnerTypeID(),
-			$fields,
-		);
-
 		$entity = self::getEntity();
 		$options = [];
 		if(!$this->isRequiredUserFieldCheckEnabled())
@@ -8002,7 +7973,7 @@ class CCrmContactRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		$result = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToRead(
+		$result = \Bitrix\Crm\Entity\CommentsHelper::prepareFieldsFromCompatibleRestToRead(
 			$this->getOwnerTypeID(),
 			$ID,
 			$result,
@@ -8075,11 +8046,6 @@ class CCrmContactRestProxy extends CCrmRestProxyBase
 			$errors[] = $diskQuotaRestriction->getErrorMessage();
 			return false;
 		}
-
-		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(
-			$this->getOwnerTypeID(),
-			$fields,
-		);
 
 		if(isset($fields['PHOTO']) )
 		{
@@ -11387,11 +11353,6 @@ class CCrmQuoteRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(
-			$this->getOwnerTypeID(),
-			$fields,
-		);
-
 		$defaultRequisiteLinkParams = Requisite\EntityLink::determineRequisiteLinkBeforeSave(
 			CCrmOwnerType::Quote, 0, Requisite\EntityLink::ENTITY_OPERATION_ADD, $fields
 		);
@@ -11447,7 +11408,7 @@ class CCrmQuoteRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		$result = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToRead(
+		$result = \Bitrix\Crm\Entity\CommentsHelper::prepareFieldsFromCompatibleRestToRead(
 			$this->getOwnerTypeID(),
 			$ID,
 			$result,
@@ -11497,11 +11458,6 @@ class CCrmQuoteRestProxy extends CCrmRestProxyBase
 			$errors[] = 'Quote is not found';
 			return false;
 		}
-
-		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(
-			$this->getOwnerTypeID(),
-			$fields,
-		);
 
 		$entity = self::getEntity();
 		$compare = true;

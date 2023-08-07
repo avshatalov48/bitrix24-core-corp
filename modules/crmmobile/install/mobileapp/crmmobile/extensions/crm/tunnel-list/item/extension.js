@@ -5,7 +5,6 @@ jn.define('crm/tunnel-list/item', (require, exports, module) => {
 	const { CategorySelectActions } = require('crm/category-list/actions');
 	const { Robot } = require('crm/tunnel-list/item/robot');
 	const { Alert } = require('alert');
-	const { CategoryListView } = require('crm/category-list-view');
 	const { trim } = require('utils/string');
 
 	const DEFAULT_STAGE_BACKGROUND_COLOR = '#c3f0ff';
@@ -205,13 +204,9 @@ jn.define('crm/tunnel-list/item', (require, exports, module) => {
 				const fieldSuffix = delay.type === DelayIntervalType.After
 					? BX.message('TUNNEL_MENU_DELAY_AFTER') : BX.message('TUNNEL_MENU_DELAY_BEFORE_1');
 
-				for (const basisField of basisFields)
+				if (delay.basisName)
 				{
-					if (delay.basis === basisField.systemExpression)
-					{
-						str += ` ${fieldSuffix} ${basisField.name}`;
-						break;
-					}
+					str += ` ${fieldSuffix} ${delay.basisName}`;
 				}
 			}
 
@@ -468,12 +463,12 @@ jn.define('crm/tunnel-list/item', (require, exports, module) => {
 		{
 			return {
 				'!empty': BX.message('TUNNEL_MENU_CONDITION_NOT_EMPTY'),
-				'empty': BX.message('TUNNEL_MENU_CONDITION_EMPTY'),
+				empty: BX.message('TUNNEL_MENU_CONDITION_EMPTY'),
 				'=': BX.message('TUNNEL_MENU_CONDITION_EQ'),
 				'!=': BX.message('TUNNEL_MENU_CONDITION_NE'),
-				'in': BX.message('TUNNEL_MENU_CONDITION_IN'),
+				in: BX.message('TUNNEL_MENU_CONDITION_IN'),
 				'!in': BX.message('TUNNEL_MENU_CONDITION_NOT_IN'),
-				'contain': BX.message('TUNNEL_MENU_CONDITION_CONTAIN'),
+				contain: BX.message('TUNNEL_MENU_CONDITION_CONTAIN'),
 				'!contain': BX.message('TUNNEL_MENU_CONDITION_NOT_CONTAIN'),
 				'>': BX.message('TUNNEL_MENU_CONDITION_GT'),
 				'>=': BX.message('TUNNEL_MENU_CONDITION_GTE'),
@@ -571,8 +566,10 @@ jn.define('crm/tunnel-list/item', (require, exports, module) => {
 			];
 		}
 
-		openCategoryList()
+		async openCategoryList()
 		{
+			const { CategoryListView } = await requireLazy('crm:category-list-view');
+
 			return CategoryListView.open({
 				entityTypeId: this.props.entityTypeId,
 				categoryId: this.props.categoryId,

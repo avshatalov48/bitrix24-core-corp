@@ -2,7 +2,6 @@
  * @module im/messenger/lib/integration/mobile/communication
  */
 jn.define('im/messenger/lib/integration/mobile/communication', (require, exports, module) => {
-
 	const { restManager } = require('im/messenger/lib/rest-manager');
 	const { RestMethod } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
@@ -34,7 +33,7 @@ jn.define('im/messenger/lib/integration/mobile/communication', (require, exports
 			const counters = response.data();
 			const time = response.time ? response.time() : null;
 
-			BX.postComponentEvent('onSetUserCounters', [ counters, time ], 'communication');
+			BX.postComponentEvent('onSetUserCounters', [counters, time], 'communication');
 		}
 
 		handleServerTime(response)

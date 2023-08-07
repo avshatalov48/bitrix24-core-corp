@@ -262,7 +262,7 @@ foreach($arResult['ITEMS'] as &$item)
 				'RESPONSIBLE_FULL_NAME' => $item['~RESPONSIBLE_FULL_NAME'] !== '' ?
 					'<a href="'.htmlspecialcharsbx($item['PATH_TO_RESPONSIBLE']).'" id="balloon_'.$arResult['GRID_ID'].'_'.$item['ID'].'" bx-tooltip-user-id="'.$item['RESPONSIBLE_ID'].'">'.htmlspecialcharsbx($item['~RESPONSIBLE_FULL_NAME']).'</a>'
 					: '',
-				'CREATED' => '<span class="crm-activity-date-time">'.FormatDate('SHORT', MakeTimeStamp($item['~CREATED'])).'</span>',
+				'CREATED' => isset($item['~CREATED']) ? '<span class="crm-activity-date-time">'.FormatDate('SHORT', MakeTimeStamp($item['~CREATED'])).'</span>' : '',
 				'START_TIME' => isset($item['~START_TIME']) && $item['~START_TIME'] !== '' ? '<span class="crm-activity-date-time">'.CCrmComponentHelper::TrimDateTimeString(FormatDate('FULL', MakeTimeStamp($item['~START_TIME'])), $dateTimeOptions).'</span>' : '',
 				'END_TIME' => isset($item['~END_TIME']) && $item['~END_TIME'] !== '' ? '<span class="crm-activity-date-time">'.CCrmComponentHelper::TrimDateTimeString(FormatDate('FULL', MakeTimeStamp($item['~END_TIME'])), $dateTimeOptions).'</span>' : '',
 				'DEADLINE' => isset($item['~DEADLINE']) && $item['~DEADLINE'] !== '' ? '<span class="crm-activity-date-time">'.CCrmComponentHelper::TrimDateTimeString(FormatDate('FULL', MakeTimeStamp($item['~DEADLINE'])), $dateTimeOptions).'</span>' : '',
@@ -359,18 +359,18 @@ foreach($arResult['ITEMS'] as &$item)
 		'descriptionBBCode' => isset($item['DESCRIPTION_BBCODE']) ? $item['DESCRIPTION_BBCODE'] : '',
 		'descriptionHtml' => isset($item['DESCRIPTION_HTML']) ? $item['DESCRIPTION_HTML'] : '',
 		'direction' => intval($item['~DIRECTION']),
-		'location' => $item['~LOCATION'],
+		'location' => $item['~LOCATION'] ?? null,
 		'start' => isset($item['~START_TIME']) ? ConvertTimeStamp(MakeTimeStamp($item['~START_TIME']), 'FULL', SITE_ID) : '',
 		'end' => isset($item['~END_TIME']) ? ConvertTimeStamp(MakeTimeStamp($item['~END_TIME']), 'FULL', SITE_ID) : '',
 		'deadline' => isset($item['~DEADLINE']) ? ConvertTimeStamp(MakeTimeStamp($item['~DEADLINE']), 'FULL', SITE_ID) : '',
 		'completed' => $item['~COMPLETED'] == 'Y',
-		'notifyType' => intval($item['~NOTIFY_TYPE']),
-		'notifyValue' => intval($item['~NOTIFY_VALUE']),
-		'priority' => intval($item['~PRIORITY']),
+		'notifyType' => intval($item['~NOTIFY_TYPE'] ?? 0),
+		'notifyValue' => intval($item['~NOTIFY_VALUE'] ?? 0),
+		'priority' => intval($item['~PRIORITY'] ?? 0),
 		'responsibleID' => $responsibleID,
 		'responsibleName' => isset($item['~RESPONSIBLE_FULL_NAME'][0]) ? $item['~RESPONSIBLE_FULL_NAME'] : GetMessage('CRM_UNDEFINED_VALUE'),
 		'responsibleUrl' =>  $responsibleUrl,
-		'storageTypeID' => intval($item['STORAGE_TYPE_ID']),
+		'storageTypeID' => intval($item['STORAGE_TYPE_ID'] ?? 0),
 		'files' => isset($item['FILES']) ? $item['FILES'] : array(),
 		'webdavelements' => isset($item['WEBDAV_ELEMENTS']) ? $item['WEBDAV_ELEMENTS'] : array(),
 		'diskfiles' => isset($item['DISK_FILES']) ? $item['DISK_FILES'] : array(),
@@ -505,7 +505,7 @@ if(!$isInternal && $isEditable)
 			'SHOW_EXTRANET_USERS' => 'NONE',
 			'POPUP' => 'Y',
 			'SITE_ID' => SITE_ID,
-			'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE']
+			'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE'] ?? null
 		),
 		null,
 		array('HIDE_ICONS' => 'Y')

@@ -2,7 +2,7 @@
 
 return [
 	'extensions' => [
-		'catalog/barcode-scanner',
+		'catalog:barcode-scanner',
 		'rest',
 		'utils/error-notifier',
 		'loc',

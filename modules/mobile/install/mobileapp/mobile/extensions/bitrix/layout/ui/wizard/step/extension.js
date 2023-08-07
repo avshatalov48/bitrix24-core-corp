@@ -142,9 +142,14 @@ jn.define('layout/ui/wizard/step', (require, exports, module) => {
 		 *
 		 * @returns {boolean|Promise}
 		 */
-		onMoveToNextStep()
+		onMoveToNextStep(stepId)
 		{
 			return true;
+		}
+
+		onMoveToBackStep(stepId)
+		{
+			return Promise.resolve(stepId);
 		}
 
 		/**

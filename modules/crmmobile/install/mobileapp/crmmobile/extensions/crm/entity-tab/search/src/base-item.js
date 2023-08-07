@@ -3,6 +3,7 @@
  */
 jn.define('crm/entity-tab/search/base-item', (require, exports, module) => {
 	const { Haptics } = require('haptics');
+	const { Loc } = require('loc');
 
 	/**
 	 * @class BaseItem
@@ -56,12 +57,62 @@ jn.define('crm/entity-tab/search/base-item', (require, exports, module) => {
 
 		onClick()
 		{
+			if (this.isDisabled())
+			{
+				Haptics.notifyWarning();
+				Notify.showUniqueMessage(
+					this.getUnsupportedFieldsNamesMessage(),
+					Loc.getMessage('M_CRM_ET_SEARCH_ITEM_IS_DISABLED_TITLE'),
+					{ time: 4 },
+				);
+
+				return;
+			}
+
 			Haptics.impactLight();
 
 			const params = this.getOnClickParams();
 			const active = !this.props.active;
 
 			this.props.onClick(params, active);
+		}
+
+		isDisabled()
+		{
+			return BX.prop.getBoolean(this.props, 'disabled', false);
+		}
+
+		isDefault()
+		{
+			return this.props.default;
+		}
+
+		getUnsupportedFieldsNamesMessage()
+		{
+			const fields = this.getUnsupportedFields();
+			if (fields.length === 0)
+			{
+				return '';
+			}
+
+			const fieldNameTemplate = Loc.getMessage('M_CRM_ET_SEARCH_ITEM_IS_DISABLED_MESSAGE_FILED_TEMPLATE');
+			const fieldNames = fields.map((field) => fieldNameTemplate.replace('#FIELD_NAME#', field.name));
+			const messageCode = (
+				fields.length === 1
+					? 'M_CRM_ET_SEARCH_ITEM_IS_DISABLED_MESSAGE_ONE_FIELD'
+					: 'M_CRM_ET_SEARCH_ITEM_IS_DISABLED_MESSAGE_MANY_FIELDS'
+			);
+
+			return Loc.getMessage(messageCode)
+				.replace('#FIELD_NAME_FORMATTED#', fieldNames.join(', '))
+			;
+		}
+
+		getUnsupportedFields()
+		{
+			const { unsupportedFields = [] } = this.props;
+
+			return unsupportedFields;
 		}
 
 		getOnClickParams()
@@ -93,11 +144,14 @@ jn.define('crm/entity-tab/search/base-item', (require, exports, module) => {
 				marginRight: (isLast && active) ? 8 : 0,
 			};
 		},
-		title: {
-			fontWeight: '500',
-			fontSize: 16,
-			lineHeight: 10,
-			maxWidth: 300,
+		title: (isDisabled = false) => {
+			return {
+				color: (isDisabled ? '#BDC1C6' : '#000000'),
+				fontWeight: '500',
+				fontSize: 16,
+				lineHeight: 10,
+				maxWidth: 300,
+			};
 		},
 		closeIcon: {
 			marginLeft: 13,

@@ -111,7 +111,9 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 								&& $arResult['IMAGES_COUNT'] > $arResult['IMAGES_LIMIT']
 							)
 							{
-								?><span class="disk-uf-file-value">+<?=($arResult['IMAGES_COUNT'] - $arResult['IMAGES_LIMIT'])?></span><?
+								?><span
+									class="disk-uf-file-value"
+								>+<?=($arResult['IMAGES_COUNT'] - $arResult['IMAGES_LIMIT'] + 1)?></span><?
 							}
 
 						?></span><?

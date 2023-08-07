@@ -2,7 +2,6 @@
  * @module im/messenger/provider/rest
  */
 jn.define('im/messenger/provider/rest', (require, exports, module) => {
-
 	const { DialogRest } = require('im/messenger/provider/rest/dialog');
 	const { ChatRest } = require('im/messenger/provider/rest/chat');
 	const { MessageRest } = require('im/messenger/provider/rest/message');

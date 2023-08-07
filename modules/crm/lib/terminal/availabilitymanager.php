@@ -3,7 +3,6 @@
 namespace Bitrix\Crm\Terminal;
 
 use Bitrix\Crm\Order\Permissions\Payment;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Application;
 
 final class AvailabilityManager
@@ -23,7 +22,6 @@ final class AvailabilityManager
 				],
 				true
 			)
-			&& Option::get('crmmobile', 'release-spring-2023', true)
 			&& Payment::checkReadPermission()
 		);
 	}

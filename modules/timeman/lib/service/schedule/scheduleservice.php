@@ -88,6 +88,8 @@ class ScheduleService extends BaseService
 
 			$this->safeRun($this->excludeSelectedDepartmentsFromOtherSchedules($schedule));
 
+			$this->cleanCache();
+
 			return $this->buildResultWithSchedule($schedule);
 		});
 	}
@@ -162,6 +164,8 @@ class ScheduleService extends BaseService
 			# calendar
 			$this->safeRun($this->saveCalendar($scheduleForm, $schedule));
 
+			$this->cleanCache();
+
 			return $this->buildResultWithSchedule($schedule);
 		});
 
@@ -222,12 +226,12 @@ class ScheduleService extends BaseService
 		}
 		return $this->wrapAction(function () use ($schedule) {
 			$schedule->markDeleted();
-			(ScheduleTable::getEntity())->cleanCache();
-			(ScheduleUserTable::getEntity())->cleanCache();
-			(ScheduleDepartmentTable::getEntity())->cleanCache();
 			$res = $this->safeRun($this->scheduleProvider->save($schedule));
 			$this->safeRun($this->shiftService->deleteFutureShiftPlans($schedule));
 			$this->violationRulesService->deletePeriodTimeLackAgents($schedule->getId());
+
+			$this->cleanCache();
+
 			return ScheduleServiceResult::createByResult($res);
 		});
 	}
@@ -399,28 +403,60 @@ class ScheduleService extends BaseService
 		return $res;
 	}
 
+	/**
+	 * @param $scheduleId
+	 * @param $userIds
+	 * @return BaseServiceResult
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public function addUserAssignments($scheduleId, $userIds)
 	{
-		return $this->assignmentsService->addUserAssignment($scheduleId, $userIds);
+		$result = $this->assignmentsService->addUserAssignment($scheduleId, $userIds);
+
+		$this->cleanCache();
+
+		return $result;
 	}
 
 	/**
 	 * @param $scheduleId
 	 * @param $userIds
-	 * @return BaseServiceResult
+	 * @return BaseServiceResult|ScheduleServiceResult
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\Db\SqlQueryException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function deleteUserAssignments($scheduleId, $userIds)
 	{
 		$result = $this->assignmentsService->deleteUserAssignments($scheduleId, $userIds);
+
 		if ($result->isSuccess())
 		{
-			return $this->shiftService->deleteFutureShiftPlans($result->getSchedule(), null, $userIds);
+			$result = $this->shiftService->deleteFutureShiftPlans($result->getSchedule(), null, $userIds);
 		}
+
+		$this->cleanCache();
+
 		return $result;
 	}
 
 	private function excludeDepartments($scheduleId, $depIds)
 	{
 		return $this->assignmentsService->excludeDepartments($scheduleId, $depIds);
+	}
+
+	/**
+	 * @return void
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function cleanCache()
+	{
+		(ScheduleTable::getEntity())->cleanCache();
+		(ScheduleUserTable::getEntity())->cleanCache();
+		(ScheduleDepartmentTable::getEntity())->cleanCache();
 	}
 }

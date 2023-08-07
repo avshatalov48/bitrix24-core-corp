@@ -40,7 +40,6 @@ Bitrix\Main\UI\Extension::load(
 	[
 		'crm.merger.batchmergemanager',
 		'crm.router',
-		'crm.restriction.filter-fields',
 		'ui.fonts.opensans',
 	]
 );
@@ -582,6 +581,7 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 					)
 				)
 				: '',
+			'OBSERVERS' => CCrmViewHelper::renderObservers(\CCrmOwnerType::Lead, $arLead['ID'], $arLead['~OBSERVERS'] ?? []),
 		) + CCrmViewHelper::RenderListMultiFields($arLead, "LEAD_{$arLead['ID']}_", array('ENABLE_SIP' => true, 'SIP_PARAMS' => array('ENTITY_TYPE' => 'CRM_'.CCrmOwnerType::LeadName, 'ENTITY_ID' => $arLead['ID']))) + $arResult['LEAD_UF'][$sKey]
 	);
 
@@ -591,7 +591,7 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 		$resultItem['columns']
 	);
 
-	$resultItem['columns'] = \Bitrix\Crm\Entity\FieldContentType::enrichGridRow(
+	$resultItem['columns'] = \Bitrix\Crm\Entity\CommentsHelper::enrichGridRow(
 		\CCrmOwnerType::Lead,
 		$fieldContentTypeMap[$arLead['ID']] ?? [],
 		$arLead,
@@ -1640,4 +1640,9 @@ if (isset($arResult['NEED_TO_SHOW_DUP_VOL_DATA_PREPARE']) && $arResult['NEED_TO_
 	</script><?
 }
 
-echo $arResult['ACTIVITY_FIELD_RESTRICTIONS'] ?? '';
+if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))
+{
+	Bitrix\Main\UI\Extension::load(['crm.restriction.filter-fields']);
+
+	echo $arResult['RESTRICTED_FIELDS_ENGINE'];
+}

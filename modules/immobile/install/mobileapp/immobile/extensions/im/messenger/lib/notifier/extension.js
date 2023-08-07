@@ -2,7 +2,6 @@
  * @module im/messenger/lib/notifier
  */
 jn.define('im/messenger/lib/notifier', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EventType } = require('im/messenger/const');
@@ -21,12 +20,13 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 			this.isInitialized = !Type.isUndefined(InAppNotifier);
 			if (this.isInitialized)
 			{
-				InAppNotifier.setHandler(data => {
+				InAppNotifier.setHandler((data) => {
 					if (data && data.dialogId)
 					{
 						if (data.dialogId === 'notify')
 						{
 							MessengerEmitter.emit(EventType.messenger.openNotifications);
+
 							return;
 						}
 
@@ -58,12 +58,10 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 			clearTimeout(this.delayShow[options.dialogId]);
 			if (delay !== false)
 			{
-				this.delayShow[options.dialogId] =
-					setTimeout(
-						() => this.notify(options, false),
-						1500
-					)
-				;
+				this.delayShow[options.dialogId] = setTimeout(
+					() => this.notify(options, false),
+					1500,
+				);
 
 				return true;
 			}
@@ -76,7 +74,7 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 					return false;
 				}
 
-				if (page.type === 'Web' && page.pageId === 'im-' + options.dialogId)
+				if (page.type === 'Web' && page.pageId === `im-${options.dialogId}`)
 				{
 					return false;
 				}
@@ -86,7 +84,7 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 				title: ChatUtils.htmlspecialcharsback(options.title),
 				backgroundColor: '#E6000000',
 				message: ChatUtils.htmlspecialcharsback(options.text),
-				data: options
+				data: options,
 			};
 
 			const avatar = ChatUtils.getAvatar(options.avatar);

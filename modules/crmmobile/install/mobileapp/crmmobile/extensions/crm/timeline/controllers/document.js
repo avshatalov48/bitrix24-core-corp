@@ -64,19 +64,21 @@ jn.define('crm/timeline/controllers/document', (require, exports, module) => {
 			const { pdfUrl, documentId, createdAt, title } = actionParams;
 			const filename = title ? `${title}.pdf` : 'document.pdf';
 
-			if (documentId && this.entity.isDocumentPreviewerAvailable)
+			if (documentId)
 			{
 				CrmDocumentDetails.open({
 					documentId,
 					createdAt,
 					title: title || filename,
 				});
+
 				return;
 			}
 
 			if (!pdfUrl)
 			{
 				this.notifyPdfNotReady();
+
 				return;
 			}
 
@@ -149,6 +151,7 @@ jn.define('crm/timeline/controllers/document', (require, exports, module) => {
 						),
 					],
 				);
+
 				return;
 			}
 

@@ -1,8 +1,9 @@
 <?php
+
 return [
 	'extensions' => [
+		'require-lazy',
 		'utils/object',
 		'animation/components/fade-view',
-		'crm:stage-list-view',
 	],
 ];

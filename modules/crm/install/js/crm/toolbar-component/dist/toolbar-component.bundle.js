@@ -231,7 +231,7 @@ this.BX = this.BX || {};
 	      guide = new ui_tour.Guide({
 	        steps: [{
 	          target: robotsBtn,
-	          title: main_core.Loc.getMessage('CRM_TOOLBAR_COMPONENT_ROBOTS_GUIDE_TEXT'),
+	          title: main_core.Loc.getMessage('CRM_TOOLBAR_COMPONENT_ROBOTS_GUIDE_TEXT_1'),
 	          text: ''
 	        }],
 	        onEvents: true

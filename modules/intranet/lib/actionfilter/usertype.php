@@ -56,7 +56,7 @@ class UserType extends Engine\ActionFilter\Base
 	protected function belongsCurrentUserToAllowedTypes(): bool
 	{
 		global $USER;
-		if (!($USER instanceof \CAllUser) || !$USER->getId())
+		if (!($USER instanceof \CUser) || !$USER->getId())
 		{
 			return false;
 		}

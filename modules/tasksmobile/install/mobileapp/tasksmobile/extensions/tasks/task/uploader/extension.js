@@ -111,6 +111,7 @@
 			{
 				this.unattachedFilesStorage.add(taskId, fileData);
 			}
+
 			return;
 		}
 		this.isAttaching = true;
@@ -123,8 +124,9 @@
 		};
 
 		BX.ajax.runAction('tasks.task.files.attach', config)
-			.then(response => this.onAjaxResponse(response, fileData, taskId))
-			.catch(response => this.onAjaxError(response, fileData, taskId));
+			.then((response) => this.onAjaxResponse(response, fileData, taskId))
+			.catch((response) => this.onAjaxError(response, fileData, taskId))
+		;
 	};
 
 	TaskUploader.onAjaxResponse = function(response, fileData, taskId)

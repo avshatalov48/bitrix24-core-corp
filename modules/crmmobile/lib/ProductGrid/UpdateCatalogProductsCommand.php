@@ -12,12 +12,13 @@ use Bitrix\Catalog\v2\Sku\BaseSku;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
 use Bitrix\Mobile\Command;
-use Bitrix\Mobile\Integration\Catalog\PermissionsProvider;
-use Bitrix\Mobile\Integration\Catalog\Repository\MeasureRepository;
+use Bitrix\CatalogMobile\PermissionsProvider;
+use Bitrix\CatalogMobile\Repository\MeasureRepository;
 use Bitrix\UI\FileUploader\PendingFileCollection;
 use Bitrix\UI\FileUploader\Uploader;
 
 Loader::requireModule('catalog');
+Loader::requireModule('catalogmobile');
 
 final class UpdateCatalogProductsCommand extends Command
 {

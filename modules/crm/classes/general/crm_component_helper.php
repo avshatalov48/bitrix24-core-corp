@@ -13,6 +13,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use \Bitrix\Crm\Integration\OpenLineManager;
 
 Loc::loadMessages(__FILE__);
 
@@ -678,14 +679,14 @@ class CCrmComponentHelper
 			if (
 				$typeID === 'PHONE'
 				|| $typeID === 'EMAIL'
-				|| ($typeID === 'IM' && preg_match('/^imol\|/', $value) === 1)
+				|| ($typeID === 'IM' && OpenLineManager::isImOpenLinesValue($value))
 			)
 			{
 				$formattedValue = $typeID === 'PHONE'
 					? Main\PhoneNumber\Parser::getInstance()->parse($value)->format()
 					: $value;
 
-				$entityData['MULTIFIELD_DATA'][$typeID][$entityKey][] = array(
+				$entityData['MULTIFIELD_DATA'][$typeID][$entityKey][] = [
 					'ID' => $ID,
 					'VALUE' => $value,
 					'VALUE_TYPE' => $valueTypeID,
@@ -695,7 +696,8 @@ class CCrmComponentHelper
 					'VALUE_FORMATTED' => $formattedValue,
 					'COMPLEX_ID' => $complexID,
 					'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($complexID, false),
-				);
+					'TITLE' => OpenLineManager::isImOpenLinesValue($value) ? OpenLineManager::getOpenLineTitle($value) : '',
+				];
 			}
 
 			if ($addToDataLevel)

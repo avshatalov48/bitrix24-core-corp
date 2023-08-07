@@ -32,7 +32,7 @@ jn.define('layout/ui/product-grid/services/barcode-scanner', (require, exports, 
 
 						// @todo separate controller
 						BX.ajax.runAction(
-							'mobile.catalog.storeDocumentProduct.findProductByBarCode',
+							'catalogmobile.StoreDocumentProduct.findProductByBarCode',
 							{data: {barcode}}
 						)
 							.then((response) => {

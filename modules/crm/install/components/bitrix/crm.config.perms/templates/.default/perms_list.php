@@ -68,10 +68,10 @@ endif;
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.config.perms.relation',
 	'',
-	Array(
-		'PATH_TO_ROLE_EDIT' => $arResult['FOLDER'].$arResult['URL_TEMPLATES']['role_edit'],
-		'PATH_TO_ENTITY_LIST' => $arResult['FOLDER'].$arResult['URL_TEMPLATES']['entity_list']
-	),
+	[
+		'PATH_TO_ROLE_EDIT' => $arResult['FOLDER'] . ($arResult['URL_TEMPLATES']['role_edit'] ?? ''),
+		'PATH_TO_ENTITY_LIST' => $arResult['FOLDER'] . ($arResult['URL_TEMPLATES']['entity_list'] ?? ''),
+	],
 	$component
 );
 

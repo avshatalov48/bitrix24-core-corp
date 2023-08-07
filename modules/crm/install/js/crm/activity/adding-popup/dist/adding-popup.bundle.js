@@ -122,7 +122,10 @@ this.BX.Crm = this.BX.Crm || {};
 	            click: () => popup.close()
 	          }
 	        })]);
-	        popup.subscribeOnce('onFirstShow', () => babelHelpers.classPrivateFieldGet(this, _todoEditor).show());
+	        popup.subscribeOnce('onFirstShow', event => {
+	          event.target.getZIndexComponent().setZIndex(1400);
+	          babelHelpers.classPrivateFieldGet(this, _todoEditor).show();
+	        });
 	        popup.subscribe('onAfterShow', () => {
 	          _classPrivateMethodGet(this, _actualizePopupLayout, _actualizePopupLayout2).call(this, babelHelpers.classPrivateFieldGet(this, _todoEditor).getDescription());
 	          babelHelpers.classPrivateFieldGet(this, _todoEditor).setFocused();

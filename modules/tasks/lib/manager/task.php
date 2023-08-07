@@ -848,6 +848,7 @@ final class Task extends \Bitrix\Tasks\Manager
 			$params['TARGET_USER_ID'] = $parameters['TARGET_USER_ID'];
 		}
 
+		$params['DISTINCT'] = $parameters['DISTINCT'] ?? false;
 		if (!array_key_exists('select', $listParameters) || !is_array($listParameters['select']))
 		{
 			$listParameters['select'] = [];

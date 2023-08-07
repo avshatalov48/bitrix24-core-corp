@@ -2,10 +2,10 @@
  * @module tasks/layout/task/fields/datePlanDuration
  */
 jn.define('tasks/layout/task/fields/datePlanDuration', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {CombinedField} = require('layout/ui/fields/combined');
-	const {NumberField, NumberPrecision} = require('layout/ui/fields/number');
-	const {SelectField} = require('layout/ui/fields/select');
+	const { Loc } = require('loc');
+	const { CombinedField } = require('layout/ui/fields/combined');
+	const { NumberField, NumberPrecision } = require('layout/ui/fields/number');
+	const { SelectField } = require('layout/ui/fields/select');
 
 	class DatePlanDuration extends LayoutComponent
 	{
@@ -95,17 +95,19 @@ jn.define('tasks/layout/task/fields/datePlanDuration', (require, exports, module
 					},
 				},
 				testId: 'datePlanDuration',
-				onChange: ({duration, durationType}) => {
-					duration = Number(duration);
-					if (duration !== this.state.duration)
+				onChange: ({ duration, durationType }) => {
+					if (Number(duration) !== this.state.duration)
 					{
 						if (this.timerId)
 						{
 							clearTimeout(this.timerId);
 							this.timerId = null;
 						}
-						this.timerId = setTimeout(() => this.props.datesResolver.updateDuration(duration), 1000);
+						this.timerId = setTimeout(() => {
+							this.props.datesResolver.updateDuration(Number(duration));
+						}, 1000);
 					}
+
 					if (durationType !== this.state.durationType)
 					{
 						this.props.datesResolver.updateDurationType(durationType);
@@ -115,5 +117,5 @@ jn.define('tasks/layout/task/fields/datePlanDuration', (require, exports, module
 		}
 	}
 
-	module.exports = {DatePlanDuration};
+	module.exports = { DatePlanDuration };
 });

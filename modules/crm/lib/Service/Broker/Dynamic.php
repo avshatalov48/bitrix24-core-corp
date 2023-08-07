@@ -121,7 +121,7 @@ class Dynamic extends Broker
 	protected function prepareCache(): void
 	{
 		$entityTypeName = $this->getEntityTypeName();
-		if (!is_array($this->cache[$entityTypeName]))
+		if (!is_array($this->cache[$entityTypeName] ?? null))
 		{
 			$this->cache[$entityTypeName] = [];
 		}

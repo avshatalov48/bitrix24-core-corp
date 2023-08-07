@@ -126,6 +126,8 @@ class VoximplantLinesComponent extends \CBitrixComponent
 			}
 		}
 
+		$result["NAV_OBJECT"] ??= null;
+		$result["ROWS_COUNT"] ??= null;
 		$result["ROWS"] = $rows;
 		$result["TOTAL_ROWS_COUNT"] = count($rows);
 		$result["SORT"] = $sorting["sort"];

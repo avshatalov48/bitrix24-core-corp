@@ -532,8 +532,15 @@ class CCrmSaleHelper
 		$groupId = self::getShopGroupIdByType($shopRole);
 		if ($groupId)
 		{
-			$queryObject = CUser::getByID($userId);
-			$user = $queryObject->fetch();
+			$user = UserTable::getRow([
+				'select' => [
+					'ID',
+					'EXTERNAL_AUTH_ID',
+				],
+				'filter' => [
+					'=ID' => $userId,
+				],
+			]);
 			if ($user && $user['EXTERNAL_AUTH_ID'] !== '__controller')
 			{
 				CUser::appendUserGroup($userId, [$groupId]);

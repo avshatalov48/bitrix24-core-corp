@@ -219,7 +219,11 @@ abstract class Operation
 			}
 		}
 
-		if ($result->isSuccess() && $this->isActivitiesAutocompletionEnabled())
+		if (
+			$result->isSuccess()
+			&& $this->isActivitiesAutocompletionEnabled()
+			&& !empty($this->getActivityProvidersToAutocomplete())
+		)
 		{
 			$autocompletionResult = $this->autocompleteActivities();
 			if (!$autocompletionResult->isSuccess())
@@ -466,16 +470,26 @@ abstract class Operation
 
 		if ($this->isCheckRequiredOnlyChanged())
 		{
-			$notChangedFields = [];
+			$changedFields = [];
 			foreach ($requiredFields as $fieldName)
 			{
-				if ($this->item->hasField($fieldName) && !$this->item->isChanged($fieldName))
+				if ($this->item->hasField($fieldName) && $this->item->isChanged($fieldName))
 				{
-					$notChangedFields[] = $fieldName;
+					$changedFields[] = $fieldName;
+				}
+				elseif (Multifield\TypeRepository::isTypeDefined($fieldName) && $this->item->hasField(Item::FIELD_NAME_FM))
+				{
+					$actualOfThisType = $this->item->remindActual(Item::FIELD_NAME_FM)->filterByType($fieldName);
+					$currentOfThisType = $this->item->getFm()->filterByType($fieldName);
+
+					if (!$currentOfThisType->isEqualTo($actualOfThisType))
+					{
+						$changedFields[] = $fieldName;
+					}
 				}
 			}
 
-			$requiredFields = array_diff($requiredFields, $notChangedFields);
+			$requiredFields = $changedFields;
 		}
 
 		$requiredFields = array_diff($requiredFields, $notDisplayedFields);
@@ -1044,7 +1058,7 @@ abstract class Operation
 
 	/**
 	 * Returns ids of activity providers that should be autocompleted.
-	 * Empty array as result means that specific ids were not given and all possible providers will be used.
+	 * Empty array as result means that no activities will be completed.
 	 *
 	 * @return string[]
 	 */
@@ -1278,6 +1292,13 @@ abstract class Operation
 		{
 			$requiredFields = $this->fieldAttributeManager::extractNamesOfAlwaysRequiredFields($fieldsData);
 		}
+
+		// for some reason field names returned from FieldAttributeManager can be different from those in item
+		static $aliases = [
+			'OBSERVER' => Item::FIELD_NAME_OBSERVERS,
+		];
+
+		$requiredFields = array_map(fn(string $fieldName) => $aliases[$fieldName] ?? $fieldName, $requiredFields);
 
 		return VisibilityManager::filterNotAccessibleFields(
 			$this->item->getEntityTypeId(),

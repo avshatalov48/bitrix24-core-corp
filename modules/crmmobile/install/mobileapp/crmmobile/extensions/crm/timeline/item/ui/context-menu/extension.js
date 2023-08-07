@@ -47,6 +47,7 @@ jn.define('crm/timeline/item/ui/context-menu', (require, exports, module) => {
 					{
 						item.menu = this.prepareItems(Object.values(item.menu.items));
 					}
+
 					return item;
 				});
 		}
@@ -106,10 +107,12 @@ jn.define('crm/timeline/item/ui/context-menu', (require, exports, module) => {
 							{
 								this.openItems(item.menu);
 							}
+
 							return;
 						}
 						this.onItemClick(item.action);
 					});
+
 					return Promise.resolve({ closeMenu: false });
 				},
 			}));

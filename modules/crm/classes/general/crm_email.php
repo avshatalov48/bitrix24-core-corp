@@ -1507,6 +1507,7 @@ class CCrmEMail
 			'COMPLETED'            => $completed,
 			'AUTHOR_ID'            => $mailbox['USER_ID'],
 			'RESPONSIBLE_ID'       => $userId,
+			'EDITOR_ID' => $userId,
 			'PRIORITY'             => \CCrmActivityPriority::Medium,
 			'DESCRIPTION'          => \Bitrix\Main\Text\Emoji::encode($descr),
 			'DESCRIPTION_TYPE'     => \CCrmContentType::Html,
@@ -2595,6 +2596,8 @@ class CCrmEMail
 		}
 
 		$userId = isset($activityFields['RESPONSIBLE_ID']) ? (int)$activityFields['RESPONSIBLE_ID'] : \CCrmSecurityHelper::GetCurrentUserID();
+		$authorId = isset($activityFields['AUTHOR_ID']) ? (int)$activityFields['AUTHOR_ID'] : $userId;
+		$editorId = isset($activityFields['EDITOR_ID']) ? (int)$activityFields['EDITOR_ID'] : $userId;
 
 		$now = convertTimeStamp(time() + \CTimeZone::getOffset(), 'FULL', SITE_ID);
 
@@ -2733,6 +2736,7 @@ class CCrmEMail
 		\CCrmActivity::addEmailSignature($body, \CCrmContentType::Html);
 
 		$activityFields = array(
+			'AUTHOR_ID' => $authorId,
 			'OWNER_ID' => $ownerId,
 			'OWNER_TYPE_ID' => $ownerTypeId,
 			'TYPE_ID' => \CCrmActivityType::Email,
@@ -2741,6 +2745,7 @@ class CCrmEMail
 			'END_TIME' => $now,
 			'COMPLETED' => 'Y',
 			'RESPONSIBLE_ID' => $userId,
+			'EDITOR_ID' => $editorId,
 			'PRIORITY' => !empty($messageFields['IMPORTANT']) && $messageFields['IMPORTANT'] ? \CCrmActivityPriority::High : \CCrmActivityPriority::Medium,
 			'DESCRIPTION' => $body,
 			'DESCRIPTION_TYPE' => \CCrmContentType::Html,
@@ -3098,11 +3103,18 @@ class CCrmEMail
 				),
 				false,
 				false,
-				array('ID', 'RESPONSIBLE_ID', 'SETTINGS')
+				array('ID', 'RESPONSIBLE_ID', 'SETTINGS', 'OWNER_TYPE_ID', 'OWNER_ID')
 			)->fetch();
 
 			if (!empty($activity) and empty($activity['SETTINGS']['READ_CONFIRMED']) || $activity['SETTINGS']['READ_CONFIRMED'] <= 0)
 			{
+				\Bitrix\Crm\Timeline\EmailActivityStatuses\Entry::create([
+					'ACTIVITY_ID' => $activity['ID'],
+					'AUTHOR_ID' => $activity['RESPONSIBLE_ID'],
+					'OWNER_TYPE_ID' => $activity['OWNER_TYPE_ID'],
+					'OWNER_ID' => $activity['OWNER_ID'],
+				]);
+
 				$activity['SETTINGS']['READ_CONFIRMED'] = time();
 				\CCrmActivity::update($activity['ID'], array('SETTINGS' => $activity['SETTINGS']), false, false);
 

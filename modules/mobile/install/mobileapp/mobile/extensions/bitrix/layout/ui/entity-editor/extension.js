@@ -162,6 +162,7 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 				new FadeView({
 					visible: false,
 					fadeInOnMount: true,
+					notVisibleOpacity: 0.5,
 					slot: () => {
 						return View(
 							{

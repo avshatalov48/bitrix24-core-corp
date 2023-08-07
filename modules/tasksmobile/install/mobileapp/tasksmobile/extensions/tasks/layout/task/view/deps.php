@@ -14,5 +14,6 @@ return [
 		'tasks:task/calendar',
 		'tasks:task/datesResolver',
 		'type',
+		'analytics-label',
 	],
 ];

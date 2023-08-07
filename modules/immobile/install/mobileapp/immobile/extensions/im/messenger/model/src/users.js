@@ -1,8 +1,9 @@
+/* eslint-disable no-param-reassign */
+
 /**
  * @module im/messenger/model/users
  */
 jn.define('im/messenger/model/users', (require, exports, module) => {
-
 	const { UsersCache } = require('im/messenger/cache');
 	const { Type } = require('type');
 	const { Logger } = require('im/messenger/lib/logger');
@@ -32,12 +33,13 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		absent: false,
 		isAbsent: false,
 		departments: [],
+		departmentName: '',
 		phones: {
 			workPhone: '',
 			personalMobile: '',
 			personalPhone: '',
 			innerPhone: '',
-		}
+		},
 	};
 
 	const usersModel = {
@@ -46,13 +48,19 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 			collection: {},
 		}),
 		getters: {
-			/** @function usersModel/getUserById */
+			/**
+			 * @function usersModel/getUserById
+			 * @return {UsersModelState|undefined}
+			 */
 			getUserById: (state) => (userId) => {
 				return state.collection[userId];
 			},
 
-			/** @function usersModel/getUserList */
-			getUserList: (state) => {
+			/**
+			 * @function usersModel/getUserList
+			 * @return {UsersModelState[]}
+			 */
+			getUserList: (state) => () => {
 				const userList = [];
 
 				Object.keys(state.collection).forEach((userId) => {
@@ -64,18 +72,16 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		},
 		actions: {
 			/** @function usersModel/setState */
-			setState: (store, payload) =>
-			{
+			setState: (store, payload) => {
 				store.commit('setState', payload);
 			},
 
 			/** @function usersModel/set */
-			set: (store, payload) =>
-			{
+			set: (store, payload) => {
 				let result = [];
 				if (Type.isArray(payload))
 				{
-					result = payload.map(user => {
+					result = payload.map((user) => {
 						return {
 							...elementState,
 							...validate(user),
@@ -89,11 +95,32 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 				}
 
 				store.commit('set', result);
+
+				return true;
+			},
+
+			/** @function usersModel/update */
+			update: (store, payload) => {
+				const result = [];
+				if (Type.isArray(payload))
+				{
+					payload.forEach((user) => {
+						const existingItem = store.state.collection[user.id];
+						if (existingItem)
+						{
+							result.push({
+								...store.state.collection[user.id],
+								...validate(user),
+							});
+						}
+					});
+				}
+
+				store.commit('set', result);
 			},
 
 			/** @function usersModel/delete */
-			delete: (store, payload) =>
-			{
+			delete: (store, payload) => {
 				const existingItem = store.state.collection[payload.id];
 				if (!existingItem)
 				{
@@ -101,6 +128,8 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 				}
 
 				store.commit('delete', { id: payload.id });
+
+				return true;
 			},
 		},
 		mutations: {
@@ -125,12 +154,11 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 
 				UsersCache.save(state);
 			},
-		}
+		},
 	};
 
-	function validate(rowFields)
+	function validate(fields)
 	{
-		const fields = ChatUtils.objectKeysToLowerCase(rowFields);
 		const result = {};
 
 		if (Type.isNumber(fields.id) || Type.isString(fields.id))
@@ -142,18 +170,22 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		{
 			fields.firstName = fields.first_name;
 		}
+
 		if (Type.isStringFilled(fields.last_name))
 		{
 			fields.lastName = fields.last_name;
 		}
+
 		if (Type.isStringFilled(fields.firstName))
 		{
 			result.firstName = ChatUtils.htmlspecialcharsback(fields.firstName);
 		}
+
 		if (Type.isStringFilled(fields.lastName))
 		{
 			result.lastName = ChatUtils.htmlspecialcharsback(fields.lastName);
 		}
+
 		if (Type.isStringFilled(fields.name))
 		{
 			fields.name = ChatUtils.htmlspecialcharsback(fields.name);
@@ -174,6 +206,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		{
 			fields.workPosition = fields.work_position;
 		}
+
 		if (Type.isStringFilled(fields.workPosition))
 		{
 			result.workPosition = ChatUtils.htmlspecialcharsback(fields.workPosition);
@@ -181,7 +214,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 
 		if (Type.isStringFilled(fields.gender))
 		{
-			result.gender = fields.gender === 'F'? 'F': 'M';
+			result.gender = fields.gender === 'F' ? 'F' : 'M';
 		}
 
 		if (Type.isStringFilled(fields.birthday))
@@ -213,6 +246,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		{
 			fields.externalAuthId = fields.external_auth_id;
 		}
+
 		if (Type.isStringFilled(fields.externalAuthId))
 		{
 			result.externalAuthId = fields.externalAuthId;
@@ -227,18 +261,22 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		{
 			result.idle = fields.idle;
 		}
+
 		if (!Type.isUndefined(fields.last_activity_date))
 		{
 			fields.lastActivityDate = fields.last_activity_date;
 		}
+
 		if (!Type.isUndefined(fields.lastActivityDate))
 		{
 			result.lastActivityDate = fields.lastActivityDate;
 		}
+
 		if (!Type.isUndefined(fields.mobile_last_date))
 		{
 			fields.mobileLastDate = fields.mobile_last_date;
 		}
+
 		if (!Type.isUndefined(fields.mobileLastDate))
 		{
 			result.mobileLastDate = fields.lastActivityDate;
@@ -246,20 +284,24 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 
 		if (!Type.isUndefined(fields.absent))
 		{
-			result.absent = fields.lastActivityDate;
+			result.absent = fields.absent;
 		}
 
 		if (Array.isArray(fields.departments))
 		{
 			result.departments = [];
-			fields.departments.forEach(departmentId =>
-			{
+			fields.departments.forEach((departmentId) => {
 				departmentId = Number.parseInt(departmentId, 10);
 				if (departmentId > 0)
 				{
 					result.departments.push(departmentId);
 				}
 			});
+		}
+
+		if (Type.isString(fields.departmentName))
+		{
+			result.departmentName = fields.departmentName;
 		}
 
 		if (Type.isPlainObject(fields.phones))
@@ -303,6 +345,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		{
 			phones.workPhone = phones.work_phone;
 		}
+
 		if (Type.isStringFilled(phones.workPhone) || Type.isNumber(phones.workPhone))
 		{
 			result.workPhone = phones.workPhone.toString();
@@ -312,6 +355,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		{
 			phones.personalMobile = phones.personal_mobile;
 		}
+
 		if (Type.isStringFilled(phones.personalMobile) || Type.isNumber(phones.personalMobile))
 		{
 			result.personalMobile = phones.personalMobile.toString();
@@ -321,6 +365,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		{
 			phones.personalPhone = phones.personal_phone;
 		}
+
 		if (Type.isStringFilled(phones.personalPhone) || Type.isNumber(phones.personalPhone))
 		{
 			result.personalPhone = phones.personalPhone.toString();
@@ -330,6 +375,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		{
 			phones.innerPhone = phones.inner_phone;
 		}
+
 		if (Type.isStringFilled(phones.innerPhone) || Type.isNumber(phones.innerPhone))
 		{
 			result.innerPhone = phones.innerPhone.toString();

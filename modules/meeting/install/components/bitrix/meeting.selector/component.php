@@ -19,10 +19,10 @@ $arFilter = array(
 if($skip > 0)
 	$arFilter['!ID'] = intval($skip);
 
-if ($_REQUEST['mode'] == 'selector_search')
+if (($_REQUEST['mode'] ?? null) == 'selector_search')
 	CUtil::JSPostUnEscape();
 
-if ($_REQUEST['FILTER'])
+if (isset($_REQUEST['FILTER']))
 {
 	$arFilterValues = $_REQUEST['FILTER'];
 	if (isset($arFilterValues['TITLE']) && trim($arFilterValues['TITLE']) <> '')
@@ -48,7 +48,7 @@ while ($arMeeting = $dbRes->GetNext())
 	$arResult['MEETINGS'][] = $arMeeting;
 }
 
-if ($_REQUEST['mode'] == 'selector_search'):
+if (($_REQUEST['mode'] ?? null) == 'selector_search'):
 	$APPLICATION->RestartBuffer();
 	echo CUtil::PhpToJsObject($arResult['MEETINGS'], false, true);
 	die();

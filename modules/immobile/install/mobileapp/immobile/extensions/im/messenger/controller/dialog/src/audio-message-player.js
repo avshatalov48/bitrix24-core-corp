@@ -1,10 +1,7 @@
-/* eslint-disable bitrix-rules/no-pseudo-private */
-
 /**
  * @module im/messenger/controller/dialog/audio-player
  */
 jn.define('im/messenger/controller/dialog/audio-player', (require, exports, module) => {
-
 	const {
 		FileType,
 	} = require('im/messenger/const');
@@ -43,7 +40,7 @@ jn.define('im/messenger/controller/dialog/audio-player', (require, exports, modu
 				return;
 			}
 
-			this.__setMessageIsPlaying(true, playingTime);
+			this.setMessageIsPlaying(true, playingTime);
 		}
 
 		playNext()
@@ -52,7 +49,7 @@ jn.define('im/messenger/controller/dialog/audio-player', (require, exports, modu
 
 			this.stop();
 
-			const nextMessageToPlay = this.__getNextMessageToPlay(previousMessageId);
+			const nextMessageToPlay = this.getNextMessageToPlay(previousMessageId);
 			if (!nextMessageToPlay)
 			{
 				return;
@@ -75,11 +72,14 @@ jn.define('im/messenger/controller/dialog/audio-player', (require, exports, modu
 				return;
 			}
 
-			this.__setMessageIsPlaying(false, playingTime);
+			this.setMessageIsPlaying(false, playingTime);
 			this.playingMessageId = null;
 		}
 
-		__setMessageIsPlaying(isPlaying, playingTime)
+		/**
+		 * @private
+		 */
+		setMessageIsPlaying(isPlaying, playingTime)
 		{
 			const message = this.store.getters['messagesModel/getMessageById'](this.playingMessageId);
 			if (!message)
@@ -96,7 +96,10 @@ jn.define('im/messenger/controller/dialog/audio-player', (require, exports, modu
 			});
 		}
 
-		__getNextMessageToPlay(previousMessageId)
+		/**
+		 * @private
+		 */
+		getNextMessageToPlay(previousMessageId)
 		{
 			const previousMessage = this.store.getters['messagesModel/getMessageById'](previousMessageId);
 			if (!previousMessage)
@@ -106,12 +109,14 @@ jn.define('im/messenger/controller/dialog/audio-player', (require, exports, modu
 
 			const chatMessageList = this.store.getters['messagesModel/getByChatId'](previousMessage.chatId);
 
-			return chatMessageList.find(message => {
-				if (message.id <= previousMessage.id || !message.files[0]) {
+			return chatMessageList.find((message) => {
+				if (message.id <= previousMessage.id || !message.files[0])
+				{
 					return false;
 				}
 
 				const file = this.store.getters['filesModel/getById'](message.files[0]);
+
 				return file && file.type === FileType.audio;
 			});
 		}

@@ -2,7 +2,7 @@
  * @module tasks/layout/task/fields/comments
  */
 jn.define('tasks/layout/task/fields/comments', (require, exports, module) => {
-	const {Loc} = require('loc');
+	const { Loc } = require('loc');
 
 	class Comments extends LayoutComponent
 	{
@@ -70,7 +70,7 @@ jn.define('tasks/layout/task/fields/comments', (require, exports, module) => {
 							this.renderAllCommentsBlock(),
 							this.renderNewCommentsBlock(),
 						),
-						this.renderRightArrow(),
+						Comments.renderRightArrow(),
 					),
 				),
 			});
@@ -168,7 +168,7 @@ jn.define('tasks/layout/task/fields/comments', (require, exports, module) => {
 			);
 		}
 
-		renderRightArrow()
+		static renderRightArrow()
 		{
 			return Image({
 				style: {
@@ -182,5 +182,5 @@ jn.define('tasks/layout/task/fields/comments', (require, exports, module) => {
 		}
 	}
 
-	module.exports = {Comments};
+	module.exports = { Comments };
 });

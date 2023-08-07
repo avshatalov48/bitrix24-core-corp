@@ -46,6 +46,7 @@ class Field
 	public const TYPE_CRM_MULTIFIELD = 'crm_multifield';
 
 	public const VALUE_TYPE_PLAIN_TEXT = 'text';
+	public const VALUE_TYPE_BB = 'bb';
 	public const VALUE_TYPE_HTML = 'html';
 	public const VALUE_TYPE_IMAGE = 'image';
 

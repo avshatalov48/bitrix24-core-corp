@@ -2,6 +2,7 @@
 
 namespace Bitrix\DocumentGenerator\Integration\UI\EntitySelector;
 
+use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Driver;
 use Bitrix\DocumentGenerator\Model\TemplateTable;
 use Bitrix\Main\Loader;
@@ -18,11 +19,22 @@ final class TemplateProvider extends BaseProvider
 		parent::__construct();
 
 		$this->options = [
-			'providerClassName' => $options['providerClassName'] ? (string)$options['providerClassName'] : null,
-			'entityId' => $options['entityId'] ? (int)$options['entityId'] : null,
+			'value' => $options['value'] ? (int)$options['value'] : null,
 		];
 
-		Loader::includeModule('crm');
+		// for now, we work only with crm data providers, but later this parameter should be passed with $options
+		$moduleId = 'crm';
+
+		$providerClassName = $options['providerClassName'] ? (string)$options['providerClassName'] : null;
+		if (!empty($providerClassName) && Loader::includeModule($moduleId))
+		{
+			if (!DataProviderManager::checkProviderName($providerClassName, $moduleId))
+			{
+				$providerClassName = null;
+			}
+		}
+
+		$this->options['providerClassName'] = $providerClassName;
 	}
 
 	public function isAvailable(): bool
@@ -104,12 +116,12 @@ final class TemplateProvider extends BaseProvider
 			return null;
 		}
 
-		$entityId = $this->getOption('entityId');
-		if (!$entityId)
+		$value = $this->getOption('value');
+		if (!$value)
 		{
-			$entityId = ' ';
+			$value = ' ';
 		}
 
-		return TemplateTable::prepareClassNameFilter((string)$className, $userId, $entityId);
+		return TemplateTable::prepareClassNameFilter((string)$className, $userId, $value);
 	}
 }

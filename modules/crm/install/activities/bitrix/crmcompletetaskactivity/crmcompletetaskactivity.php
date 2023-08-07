@@ -315,9 +315,10 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 			);
 		}
 
-		$errors = static::ValidateProperties(
+		$errors = static::validateDocumentProperties(
+			$dialog,
 			$properties,
-			new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser)
+			new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser),
 		);
 
 		if ($errors)
@@ -329,6 +330,34 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		$currentActivity['Properties'] = $properties;
 
 		return true;
+	}
+
+	public static function validateDocumentProperties(
+		PropertiesDialog $dialog,
+		array $testProperties = [],
+		?CBPWorkflowTemplateUser $user = null
+	): array
+	{
+		$errors = [];
+
+		$map = static::getPropertiesDialogMap($dialog);
+		$categoryField = $map['TargetCategory'];
+		if (
+			is_array($categoryField['Options'] ?? null)
+			&& $categoryField['Options']
+			&& CBPHelper::isEmptyValue($testProperties['TargetCategory'])
+		)
+		{
+			$errors[] = [
+				'code' => 'NotExist',
+				'parameter' => 'FieldValue',
+				'message' => Loc::getMessage('CRM_CTA_ERROR_EMPTY_REQUIRED_FIELD', [
+					'#PROPERTY#' => $categoryField['Name'],
+				]),
+			];
+		}
+
+		return array_merge($errors, static::ValidateProperties($testProperties, $user));
 	}
 
 	public static function ValidateProperties($testProperties = [], CBPWorkflowTemplateUser $user = null)
@@ -347,12 +376,16 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		return array_merge($errors, parent::ValidateProperties($testProperties, $user));
 	}
 
-	public static function getPropertiesDialogMap($dialog)
+	public static function getPropertiesDialogMap($dialog): array
 	{
 		$context = $dialog->getContext();
 		$categoryId = isset($context['DOCUMENT_CATEGORY_ID']) ? (int)$context['DOCUMENT_CATEGORY_ID'] : null;
 
 		$targetCategoryOptions = static::getPropertyCategoryOptions($dialog);
+		if (!isset($categoryId))
+		{
+			$categoryId = array_key_first($targetCategoryOptions);
+		}
 
 		return [
 			'TargetCategory' => [

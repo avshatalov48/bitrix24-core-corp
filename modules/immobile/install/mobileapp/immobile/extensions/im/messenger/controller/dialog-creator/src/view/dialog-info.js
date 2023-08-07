@@ -227,11 +227,11 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 						marginRight: 5,
 					},
 					onChangeText: (text) => {
-						if (text !== '')
+						if (text !== '' && this.state.isTextEmpty)
 						{
 							this.setState({isTextEmpty: false});
 						}
-						if (text === '')
+						if (text === '' && !this.state.isTextEmpty)
 						{
 							this.setState({isTextEmpty: true});
 						}

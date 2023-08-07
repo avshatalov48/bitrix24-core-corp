@@ -16,10 +16,11 @@ interface Recyclebinable
 
 	/**
 	 * @param Entity $entity
+	 * @param array $params
 	 *
 	 * @return boolean
 	 */
-	public static function removeFromRecyclebin(Entity $entity);
+	public static function removeFromRecyclebin(Entity $entity, array $params = []);
 
 	/**
 	 * @param Entity $entity

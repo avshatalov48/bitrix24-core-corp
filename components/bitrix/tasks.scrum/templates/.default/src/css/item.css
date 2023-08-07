@@ -45,8 +45,8 @@
 	background: var(--tasks_scrum-white);
 	overflow: hidden;
 	z-index: -1;
-	transition: .2s;
-	/*pointer-events: none;*/
+	transition: background-color .2s;
+	pointer-events: none;
 }
 
 .tasks-scrum__item.--item-backlog .tasks-scrum__item--bg {
@@ -64,6 +64,17 @@
 	top: 0;
 	background: var(--tasks_scrum-white);
 	z-index: 0;
+}
+
+.tasks-scrum__item.--blink .tasks-scrum__item--bg::before {
+	background: var(--tasks_scrum-blue-3);
+}
+
+.tasks-scrum__item.--blink .tasks-scrum__item--bg {
+	width: calc(100% - 2px);
+	height: calc(100% - 2px);
+	background: var(--tasks_scrum-blue-3);
+	border: 1px solid var(--tasks_scrum-blue);
 }
 
 .tasks-scrum__content-items .tasks-scrum__item:first-of-type {
@@ -693,11 +704,6 @@
 
 .tasks-scrum__item--drop-preview {
 	margin: 10px 0 10px 0;
-}
-
-.tasks-scrum__item.--blink::before {
-	background: var(--tasks_scrum-blue-3);
-	border: 1px solid var(--tasks_scrum-blue);
 }
 
 .tasks-scrum__item.--full-view {

@@ -86,3 +86,4 @@ $MESS["CRM_SET_STAGE_NOT_COMPLETED_TITLE"] = "Cannot move deals";
 $MESS["CRM_TASKS"] = "Tasks";
 $MESS["CRM_TASK_TAG"] = "crm";
 $MESS["CRM_TASK_TITLE_PREFIX"] = "CRM:";
+$MESS["CRM_COLUMN_OBSERVERS"] = "Observers";

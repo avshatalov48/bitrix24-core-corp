@@ -1,0 +1,24 @@
+.disk-user-field-create-document-by-service {
+	margin-top: 20px;
+	color: var(--ui-color-text-subtle);
+	font-size: var(--ui-font-size-md);
+}
+
+.disk-user-field-create-document {
+	display: inline-block;
+	margin-top: 20px;
+	font-size: var(--ui-font-size-md);
+}
+
+.disk-user-field-create-document,
+.disk-user-field-document-current-service {
+	cursor: pointer;
+	color: rgba(var(--ui-color-link-primary-base-rgb));
+	border-bottom-width: var(--ui-border-width-thin);
+	border-bottom-style: var(--ui-text-decoration-style-dashed);
+	border-bottom-color: rgba(var(--ui-color-link-primary-base-rgb), var(--ui-opacity-40));
+}
+
+.disk-user-field-document-current-service:hover {
+	border-bottom-color: rgba(var(--ui-color-link-primary-base-rgb), var(--ui-opacity-full));;
+}

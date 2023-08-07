@@ -32,6 +32,7 @@ export default class UploaderFile extends EventEmitter
 	#type: string = '';
 	#width: ?number = null;
 	#height: ?number = null;
+	#treatImageAsFile: boolean = false;
 
 	#clientPreview: ?Blob = null;
 	#clientPreviewUrl: ?string = null;
@@ -138,9 +139,19 @@ export default class UploaderFile extends EventEmitter
 			return;
 		}
 
-		this.#setStatus(FileStatus.UPLOADING);
-		this.emit(FileEvent.UPLOAD_START);
-		this.#uploadController.upload(this);
+		const prepareEvent: BaseEvent = new BaseEvent({ data: { file: this } });
+		this.emitAsync(FileEvent.PREPARE_FILE_ASYNC, prepareEvent)
+			.then((): void => {
+				this.#setStatus(FileStatus.UPLOADING);
+				this.emit(FileEvent.UPLOAD_START);
+				this.#uploadController.upload(this);
+			})
+			.catch((prepareError) => {
+				const error = this.addError(prepareError);
+				this.#setStatus(FileStatus.UPLOAD_FAILED);
+				this.emit(FileEvent.UPLOAD_ERROR, { error });
+			})
+		;
 	}
 
 	remove(options?: RemoveFileOptions): void
@@ -287,22 +298,32 @@ export default class UploaderFile extends EventEmitter
 			this.#loadController.subscribeOnce('onLoad', (event: BaseEvent): void => {
 				if (this.getOrigin() === FileOrigin.CLIENT)
 				{
-					const event: BaseEvent = new BaseEvent({ data: { file: this } });
-					this.emitAsync(FileEvent.PREPARE_FILE_ASYNC, event)
+					const validationEvent: BaseEvent = new BaseEvent({ data: { file: this } });
+					this.emitAsync(FileEvent.VALIDATE_FILE_ASYNC, validationEvent)
 						.then((): void => {
 							if (this.isUploadable())
 							{
 								this.#setStatus(FileStatus.PENDING);
+								this.emit(FileEvent.LOAD_COMPLETE);
 							}
 							else
 							{
-								this.#setStatus(FileStatus.COMPLETE);
+								const preparationEvent: BaseEvent = new BaseEvent({ data: { file: this } });
+								this.emitAsync(FileEvent.PREPARE_FILE_ASYNC, preparationEvent)
+									.then((): void => {
+										this.#setStatus(FileStatus.COMPLETE);
+										this.emit(FileEvent.LOAD_COMPLETE);
+									})
+									.catch((preparationError) => {
+										const error = this.addError(preparationError);
+										this.#setStatus(FileStatus.LOAD_FAILED);
+										this.emit(FileEvent.LOAD_ERROR, { error });
+									})
+								;
 							}
-
-							this.emit(FileEvent.LOAD_COMPLETE);
 						})
-						.catch(error => {
-							error = this.addError(error);
+						.catch((validationError) => {
+							const error = this.addError(validationError);
 							this.#setStatus(FileStatus.LOAD_FAILED);
 							this.emit(FileEvent.LOAD_ERROR, { error });
 						})
@@ -449,6 +470,7 @@ export default class UploaderFile extends EventEmitter
 			this.setServerFileId(options.serverFileId);
 			this.setWidth(options.width);
 			this.setHeight(options.height);
+			this.setTreatImageAsFile(options.treatImageAsFile);
 
 			this.setClientPreview(options.clientPreview, options.clientPreviewWidth, options.clientPreviewHeight);
 			this.setServerPreview(options.serverPreviewUrl, options.serverPreviewWidth, options.serverPreviewHeight);
@@ -604,6 +626,20 @@ export default class UploaderFile extends EventEmitter
 		}
 	}
 
+	setTreatImageAsFile(flag: boolean): void
+	{
+		if (Type.isBoolean(flag))
+		{
+			this.#treatImageAsFile = flag;
+			this.emit(FileEvent.STATE_CHANGE, { property: 'treatImageAsFile', value: flag });
+		}
+	}
+
+	shouldTreatImageAsFile(): boolean
+	{
+		return this.#treatImageAsFile;
+	}
+
 	getPreviewUrl(): ?string
 	{
 		return this.getClientPreview() ? this.getClientPreviewUrl() : this.getServerPreviewUrl();
@@ -699,7 +735,13 @@ export default class UploaderFile extends EventEmitter
 
 	isImage(): boolean
 	{
-		return isResizableImage(this.getName(), this.getType());
+		if (this.shouldTreatImageAsFile())
+		{
+			return false;
+		}
+
+		// return isResizableImage(this.getName(), this.getType());
+		return this.getWidth() > 0 && this.getHeight() > 0 && isResizableImage(this.getName(), this.getType());
 	}
 
 	getProgress(): number

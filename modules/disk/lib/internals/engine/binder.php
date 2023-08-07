@@ -28,14 +28,12 @@ class Binder extends \Bitrix\Main\Engine\Binder
 		);
 
 		static::registerParameterDependsOnName(
-			Type\ObjectCollection::class,
-			function($className, $id) {
-				/** @var Type\ObjectCollection $className */
+			Type\TypedCollection::class,
+			static function($className, $id) {
+				/** @var Type\TypedCollection $className */
 				return $className::createByIds(...$id);
 			},
-			function(\ReflectionParameter $parameter) {
-				return $parameter->getName();
-			}
+			static fn(\ReflectionParameter $parameter) => $parameter->getName()
 		);
 
 		static::registerParameterDependsOnName(

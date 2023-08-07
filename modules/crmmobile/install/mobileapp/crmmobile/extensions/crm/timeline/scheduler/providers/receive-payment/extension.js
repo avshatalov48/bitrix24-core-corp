@@ -45,12 +45,7 @@ jn.define('crm/timeline/scheduler/providers/receive-payment', (require, exports,
 
 		static isSupported(context = {})
 		{
-			if (!context.detailCard)
-			{
-				return false;
-			}
-			const detailCardParams = context.detailCard.getComponentParams();
-			return Boolean(get(detailCardParams, 'isAvailableReceivePayment', false));
+			return true;
 		}
 
 		static isAvailableInMenu(context = {})
@@ -59,11 +54,10 @@ jn.define('crm/timeline/scheduler/providers/receive-payment', (require, exports,
 			{
 				return false;
 			}
+
 			const detailCardParams = context.detailCard.getComponentParams();
-			return (
-				Boolean(get(detailCardParams, 'isAvailableReceivePayment', false))
-				&& get(detailCardParams, 'entityTypeId', 0) === TypeId.Deal
-			);
+
+			return get(detailCardParams, 'entityTypeId', 0) === TypeId.Deal;
 		}
 
 		static open(data)

@@ -11,6 +11,7 @@ import {TimeFormatter} from "timeman.timeformatter";
 import {PULL as Pull} from 'pull.client';
 import {CommandHandler} from './lib/commandhandler';
 import {Loc, Type} from 'main.core';
+import {DesktopApi} from 'im.v2.lib.desktop-api';
 
 class Monitor
 {
@@ -99,20 +100,23 @@ class Monitor
 		EventHandler.init(store);
 		Sender.init(store);
 
-		BX.desktop.addCustomEvent(
+		DesktopApi.subscribe(
 			'BXUserAway',
-			(away) => this.onAway(away)
+			(away) => this.onAway(away),
 		);
 
-		BX.MessengerWindow.addTab({
-			id: 'timeman-pwt',
-			title: Loc.getMessage('TIMEMAN_PWT_REPORT_SLIDER_TITLE'),
-			order: 540,
-			target: false,
-			events: {
-				open: () => this.openReport()
-			}
-		});
+		if (BX.MessengerWindow && BX.MessengerWindow.addTab)
+		{
+			BX.MessengerWindow.addTab({
+				id: 'timeman-pwt',
+				title: Loc.getMessage('TIMEMAN_PWT_REPORT_SLIDER_TITLE'),
+				order: 540,
+				target: false,
+				events: {
+					open: () => this.openReport(),
+				},
+			});
+		}
 
 		BX.desktop.addCustomEvent(
 			'BXProtocolUrl',
@@ -422,7 +426,7 @@ class Monitor
 
 	isTrackerEventsApiAvailable()
 	{
-		return (BX.desktop.getApiVersion() >= 55);
+		return (DesktopApi.getApiVersion() >= 55);
 	}
 
 	getStorage()

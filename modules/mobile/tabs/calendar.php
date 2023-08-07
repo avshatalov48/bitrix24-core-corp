@@ -96,7 +96,7 @@ class Calendar implements Tabable
 
 	public function getId(): string
 	{
-		return 'calandar';
+		return 'calendar';
 	}
 
 	private function getComponentParams(): array
@@ -126,5 +126,10 @@ class Calendar implements Tabable
 		}
 
 		return false;
+	}
+
+	public function getIconId(): string
+	{
+		return $this->getId();
 	}
 }

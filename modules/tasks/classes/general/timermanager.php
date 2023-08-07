@@ -54,31 +54,28 @@ final class CTaskTimerManager
 	}
 
 
-	public static function onBeforeTaskUpdate(/** @noinspection PhpUnusedParameterInspection */$id, $arFields, $arTask)
+	public static function onBeforeTaskUpdate($id, $fields, $task)
 	{
-		$userId = User::getId();
-
-		if ($userId)
+		if ($userId = User::getId())
 		{
 			$oTimer  = self::getInstance($userId);
 			$arTimer = $oTimer->getLastTimer();
 
+			$completeStatuses = [
+				CTasks::STATE_SUPPOSEDLY_COMPLETED,
+				CTasks::STATE_COMPLETED,
+				CTasks::STATE_DEFERRED,
+			];
+			$oldStatus = (int)($task['REAL_STATUS'] ?? null);
+			$newStatus = (int)($fields['STATUS'] ?? null);
+
 			// If task on timer & completed by logged in user, stop timer
 			if (
 				$arTimer
-				&& ($arTimer['TASK_ID'] == $arTask['ID'])
-				&& ($arTask['REAL_STATUS'] != CTasks::STATE_SUPPOSEDLY_COMPLETED)
-				&& ($arTask['REAL_STATUS'] != CTasks::STATE_COMPLETED)
-				&& ($arTask['REAL_STATUS'] != CTasks::STATE_DEFERRED)
-				&& (
-					($arFields['STATUS'] == CTasks::STATE_SUPPOSEDLY_COMPLETED)
-					|| ($arFields['STATUS'] == CTasks::STATE_COMPLETED)
-					|| ($arFields['STATUS'] == CTasks::STATE_DEFERRED)
-				)
-				&& (
-					($arTask['RESPONSIBLE_ID'] == $userId)
-					|| in_array($userId, (array) $arTask['ACCOMPLICES'])
-				)
+				&& $arTimer['TASK_ID'] == $task['ID']
+				&& !in_array($oldStatus, $completeStatuses, true)
+				&& in_array($newStatus, $completeStatuses, true)
+				&& ($userId == $task['RESPONSIBLE_ID'] || in_array($userId, (array)$task['ACCOMPLICES']))
 			)
 			{
 				$oTimer->stop();
@@ -87,28 +84,21 @@ final class CTaskTimerManager
 
 		// If users are not responsible or accomplices in task elsemore,
 		// stop they timers
-		$arPrevParticipants = array_unique(array_merge(
-			array($arTask['RESPONSIBLE_ID']),
-			$arTask['ACCOMPLICES']
-		));
+		$oldMembers = array_unique(
+			array_merge(
+				[$task['RESPONSIBLE_ID']],
+				$task['ACCOMPLICES']
+			)
+		);
+		$newMembers = array_unique(
+			array_merge(
+				[($fields['RESPONSIBLE_ID'] ?? $task['RESPONSIBLE_ID'])],
+				($fields['ACCOMPLICES'] ?? $task['ACCOMPLICES'])
+			)
+		);
+		$eliminatedMembers = array_diff($oldMembers, $newMembers);
 
-		$arNewParticipants = array();
-
-		if (isset($arFields['RESPONSIBLE_ID']))
-			$arNewParticipants[] = $arFields['RESPONSIBLE_ID'];
-		else
-			$arNewParticipants[] = $arTask['RESPONSIBLE_ID'];
-
-		if (isset($arFields['ACCOMPLICES']))
-			$arNewParticipants = array_merge($arNewParticipants, $arFields['ACCOMPLICES']);
-		else
-			$arNewParticipants = array_merge($arNewParticipants, $arTask['ACCOMPLICES']);
-
-		$arNewParticipants = array_unique($arNewParticipants);
-
-		$arEliminatedUsers = array_diff($arPrevParticipants, $arNewParticipants);
-
-		static::stopTimerForUsers($arTask['ID'], $arEliminatedUsers);
+		self::stopTimerForUsers($task['ID'], $eliminatedMembers);
 	}
 
 

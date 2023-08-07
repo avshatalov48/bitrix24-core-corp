@@ -321,17 +321,23 @@ if ($isBitrix24Cloud)
 							array('HIDE_ICONS' => 'Y')
 						);
 					?></div>
-					<div class="header-personal"><?
+					<div class="header-personal"><?php
 						$profileLink = $isExtranet ? SITE_DIR . 'contacts/personal' : SITE_DIR . 'company/personal';
 						$APPLICATION->IncludeComponent(
-							"bitrix:intranet.user.profile.button",
-							"",
+							'bitrix:intranet.user.profile.button',
+							'',
 							[
-								"PATH_TO_USER_PROFILE" => $profileLink."/user/#user_id#/",
-								"PATH_TO_USER_PROFILE_EDIT" => $profileLink."/user/#user_id#/edit/",
-								"PATH_TO_USER_STRESSLEVEL" => $profileLink."/user/#user_id#/stresslevel/",
-								"PATH_TO_USER_COMMON_SECURITY" => $profileLink."/user/#user_id#/common_security/",
+								'PATH_TO_USER_PROFILE' => $profileLink . '/user/#user_id#/',
+								'PATH_TO_USER_PROFILE_EDIT' => $profileLink . '/user/#user_id#/edit/',
+								'PATH_TO_USER_STRESSLEVEL' => $profileLink . '/user/#user_id#/stresslevel/',
+								'PATH_TO_USER_COMMON_SECURITY' => $profileLink . '/user/#user_id#/common_security/',
 							],
+							false
+						);
+						$APPLICATION->IncludeComponent(
+							'bitrix:intranet.helpdesk',
+							'',
+							[],
 							false
 						);
 						?><div class="header-item" id="header-buttons"><?

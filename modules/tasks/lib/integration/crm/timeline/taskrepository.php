@@ -36,7 +36,6 @@ class TaskRepository implements BackGroundJob
 
 	/**
 	 * @uses Controller::onTaskAdded
-	 * @uses Controller::onTaskUpdated
 	 * @uses Controller::onTaskDeleted
 	 * @uses Controller::onTaskExpired
 	 * @uses Controller::onTaskViewed
@@ -101,6 +100,7 @@ class TaskRepository implements BackGroundJob
 			'GROUP_ID',
 			'START_DATE_PLAN',
 			'END_DATE_PLAN',
+			'PRIORITY',
 		];
 
 		$query = (new TaskQuery($this->userId))

@@ -298,10 +298,7 @@ class DynamicController extends BaseController
 
 		$item = $this->createItem($fields);
 
-		$context = clone Crm\Service\Container::getInstance()->getContext();
-		$context->setItemOption('PRESERVE_CONTENT_TYPE', true);
-
-		$operation = $this->getFactory()->getRestoreOperation($item, $context);
+		$operation = $this->getFactory()->getRestoreOperation($item);
 		$operation
 			->disableAllChecks()
 		;

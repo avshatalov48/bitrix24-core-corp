@@ -15,7 +15,7 @@ final class FieldRestrictionManager
 	private string $mode;
 	private array $managers;
 
-	public function __construct(string $mode, array $types = [])
+	public function __construct(string $mode, array $types = [], int $entityTypeId = null)
 	{
 		$this->mode = $mode;
 
@@ -34,6 +34,11 @@ final class FieldRestrictionManager
 			$managerInstance = FieldRestrictionManagerTypes::createManagerByType($type);
 			if (isset($managerInstance))
 			{
+				if (isset($entityTypeId))
+				{
+					$managerInstance->setEntityTypeId($entityTypeId);
+				}
+
 				$this->managers[$type] = $managerInstance;
 			}
 		}
@@ -44,15 +49,16 @@ final class FieldRestrictionManager
 		}
 	}
 
-	public function fetchRestrictedFields(string $gridId, array $headers, ?CrmFilter $entityFilter): array
+	public function fetchRestrictedFieldsEngine(string $gridId, array $headers, ?CrmFilter $entityFilter): string
 	{
 		$result = [];
+
 		/** @var $manager FieldRestrictionManagerBase $manager */
-		foreach ($this->managers as $type => $manager)
+		foreach ($this->managers as $manager)
 		{
 			if ($manager->hasRestrictions())
 			{
-				$result[$type] = [
+				$config = [
 					'callback' => $manager->getJsCallback(),
 					'filterId' => $gridId,
 					'filterFields' =>
@@ -64,17 +70,14 @@ final class FieldRestrictionManager
 					'gridFields' => $manager->getRestrictedGridFields($headers)
 				];
 
-				if ($manager->returnJsComponent())
-				{
-					$result[$type] = '<script type="text/javascript">'
-						. 'BX.ready(function(){ new BX.Crm.Restriction.FilterFieldsRestriction( ' . CUtil::PhpToJSObject($result[$type]) . ' ); });'
-						. '</script>'
-					;
-				}
+				$result[] = '<script type="text/javascript">'
+					. 'BX.ready(function(){ new BX.Crm.Restriction.FilterFieldsRestriction( ' . CUtil::PhpToJSObject($config) . ' ); });'
+					. '</script>'
+				;
 			}
 		}
 
-		return $result;
+		return empty($result) ? '' : implode("\n", $result);
 	}
 
 	/**

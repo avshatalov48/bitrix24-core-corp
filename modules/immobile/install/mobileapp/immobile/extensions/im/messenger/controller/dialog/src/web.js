@@ -1,11 +1,9 @@
 /* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
 
 /**
  * @module im/messenger/controller/dialog/web
  */
 jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 	const { clone } = require('utils/object');
@@ -29,7 +27,7 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 			} = options;
 
 			const page = PageManager.getNavigator().getVisible();
-			if (page.type === 'Web' && page.pageId === 'im-' + dialogId)
+			if (page.type === 'Web' && page.pageId === `im-${dialogId}`)
 			{
 				if (!PageManager.getNavigator().isActiveTab())
 				{
@@ -73,7 +71,7 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 			backgroundConfig.url = currentDomain + backgroundConfig.url;
 
 			let titleParams = {};
-			const imagePath = component.path + 'images';
+			const imagePath = `${component.path}images`;
 			let dialogEntity = false;
 
 			const recentItem = clone(core.getStore().getters['recentModel/getById'](dialogId));
@@ -102,12 +100,12 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 
 					if (recentItem.chat.entity_type === 'GENERAL')
 					{
-						titleParams.imageUrl = imagePath + '/avatar_general_x3.png';
+						titleParams.imageUrl = `${imagePath}/avatar_general_x3.png`;
 					}
 
 					if (recentItem.chat.entity_type === 'SUPPORT24_QUESTION')
 					{
-						titleParams.imageUrl = imagePath + '/avatar_24_question_x3.png';
+						titleParams.imageUrl = `${imagePath}/avatar_24_question_x3.png`;
 						titleParams.detailText = '';
 					}
 
@@ -133,7 +131,7 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 			}
 
 			const openDialogParams = {
-				PAGE_ID: 'im-' + dialogId,
+				PAGE_ID: `im-${dialogId}`,
 				DIALOG_ID: dialogId,
 				DIALOG_ENTITY: dialogEntity,
 				USER_ID: MessengerParams.getUserId(),
@@ -141,7 +139,7 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 				SITE_DIR: env.siteDir,
 				LANGUAGE_ID: MessengerParams.get('LANGUAGE_ID', 'en'),
 				STORED_EVENTS: PushHandler.getStoredPullEvents(),
-				SEARCH_MIN_TOKEN_SIZE : MessengerParams.get('SEARCH_MIN_SIZE', 3),
+				SEARCH_MIN_TOKEN_SIZE: MessengerParams.get('SEARCH_MIN_SIZE', 3),
 				WIDGET_CHAT_USERS_VERSION: MessengerParams.get('WIDGET_CHAT_USERS_VERSION', '1.0.0'),
 				WIDGET_CHAT_RECIPIENTS_VERSION: MessengerParams.get('WIDGET_CHAT_RECIPIENTS_VERSION', '1.0.0'),
 				WIDGET_CHAT_TRANSFER_VERSION: MessengerParams.get('WIDGET_CHAT_TRANSFER_VERSION', '1.0.0'),
@@ -153,9 +151,9 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 				openDialogParams.DIALOG_TYPE = 'chat';
 
 				return {
-					page_id: 'im-' + dialogId,
+					page_id: `im-${dialogId}`,
 					data: openDialogParams,
-					url: '/mobile/web_mobile_component/im.dialog/?version=' + MessengerParams.get('COMPONENT_CHAT_DIALOG_VERSION', '1.0.0'),
+					url: `/mobile/web_mobile_component/im.dialog/?version=${MessengerParams.get('COMPONENT_CHAT_DIALOG_VERSION', '1.0.0')}`,
 					animated: true,
 					titleParams,
 					textPanelParams: {
@@ -165,7 +163,7 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 						placeholder: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_INPUT_PLACEHOLDER_TEXT'),
 						mentionDataSource: {
 							outsection: 'NO',
-							url: env.siteDir + '/mobile/index.php?mobile_action=get_user_list&use_name_format=Y&with_bots',
+							url: `${env.siteDir}/mobile/index.php?mobile_action=get_user_list&use_name_format=Y&with_bots`,
 						},
 					},
 				};
@@ -175,9 +173,9 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 			openDialogParams.DIALOG_TYPE = DialogHelper.isDialogId(dialogId) ? 'chat' : 'user';
 
 			return {
-				page_id: 'im-' + dialogId,
+				page_id: `im-${dialogId}`,
 				data: openDialogParams,
-				url: '/mobile/web_mobile_component/im.dialog.vue/?version=' + MessengerParams.get('COMPONENT_CHAT_DIALOG_VUE_VERSION', '1.0.0'),
+				url: `/mobile/web_mobile_component/im.dialog.vue/?version=${MessengerParams.get('COMPONENT_CHAT_DIALOG_VUE_VERSION', '1.0.0')}`,
 				customInsets: true,
 				titleParams,
 				animated: true,
@@ -190,16 +188,16 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 					placeholder: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_INPUT_PLACEHOLDER_TEXT'),
 					mentionDataSource: {
 						outsection: 'NO',
-						url: env.siteDir + '/mobile/index.php?mobile_action=get_user_list&use_name_format=Y&with_bots'
+						url: `${env.siteDir}/mobile/index.php?mobile_action=get_user_list&use_name_format=Y&with_bots`,
 					},
 				},
-				background: backgroundConfig
+				background: backgroundConfig,
 			};
 		}
 
 		static getOpenLineParams(userCode, dialogTitleParams = null)
 		{
-			return new Promise(resolve => {
+			return new Promise((resolve) => {
 				this.getOpenlineDialogByUserCode(userCode).then((dialog) => {
 					let titleParams;
 					if (dialogTitleParams)
@@ -229,9 +227,9 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 					}
 
 					const params = {
-						page_id: 'im-' + dialog.dialog_id,
+						page_id: `im-${dialog.dialog_id}`,
 						data: {
-							PAGE_ID: 'im-' + dialog.dialog_id,
+							PAGE_ID: `im-${dialog.dialog_id}`,
 							DIALOG_ENTITY: false,
 							USER_ID: MessengerParams.getUserId(),
 							DIALOG_ID: dialog.dialog_id,
@@ -246,9 +244,7 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 							WIDGET_CHAT_TRANSFER_VERSION: MessengerParams.get('WIDGET_CHAT_TRANSFER_VERSION', '1.0.0'),
 							WIDGET_BACKDROP_MENU_VERSION: MessengerParams.get('WIDGET_BACKDROP_MENU_VERSION', '1.0.0'),
 						},
-						url: '/mobile/web_mobile_component/im.dialog/?version='
-							+ MessengerParams.get('COMPONENT_CHAT_DIALOG_VERSION', '1.0.0')
-						,
+						url: `/mobile/web_mobile_component/im.dialog/?version=${MessengerParams.get('COMPONENT_CHAT_DIALOG_VERSION', '1.0.0')}`,
 						animated: true,
 						titleParams,
 						textPanelParams: {
@@ -258,7 +254,7 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 							placeholder: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_INPUT_PLACEHOLDER_TEXT'),
 							mentionDataSource: {
 								outsection: 'NO',
-								url: env.siteDir + '/mobile/index.php?mobile_action=get_user_list&use_name_format=Y&with_bots',
+								url: `${env.siteDir}/mobile/index.php?mobile_action=get_user_list&use_name_format=Y&with_bots`,
 							},
 						},
 					};
@@ -272,7 +268,7 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 		{
 			return new Promise((resolve) => {
 				OpenLinesRest.getByUserCode(userCode)
-					.then(response => {
+					.then((response) => {
 						resolve(response.data());
 					})
 					.catch(() => {

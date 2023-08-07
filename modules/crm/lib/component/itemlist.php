@@ -15,7 +15,6 @@ use Bitrix\Crm\Relation\EntityRelationTable;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
@@ -152,6 +151,7 @@ abstract class ItemList extends Base
 	protected function initCategory(): ?Category
 	{
 		$categoryId = (int) ($this->arParams['categoryId'] ?? null);
+		$optionName = 'current_' . mb_strtolower($this->factory->getEntityName()) . '_category';
 
 		if ($categoryId <= 0)
 		{
@@ -160,6 +160,8 @@ abstract class ItemList extends Base
 				return $this->factory->createDefaultCategoryIfNotExist();
 			}
 
+			\CUserOptions::DeleteOption('crm', $optionName);
+
 			return null;
 		}
 
@@ -167,9 +169,14 @@ abstract class ItemList extends Base
 
 		if (!$category)
 		{
+			\CUserOptions::DeleteOption('crm', $optionName);
+
 			$this->errorCollection[] = new Error(Loc::getMessage('CRM_TYPE_CATEGORY_NOT_FOUND_ERROR'));
+
 			return null;
 		}
+
+		\CUserOptions::SetOption('crm', $optionName, $categoryId);
 
 		return $category;
 	}

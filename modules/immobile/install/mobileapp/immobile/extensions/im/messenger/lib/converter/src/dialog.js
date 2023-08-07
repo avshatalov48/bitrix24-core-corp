@@ -1,12 +1,9 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/lib/converter/dialog
  */
 jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
-
 	const { Type } = require('type');
+
 	const { core } = require('im/messenger/core');
 	const {
 		FileType,
@@ -18,10 +15,10 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 		DeletedMessage,
 		ImageMessage,
 		AudioMessage,
-		VideoMessage,
+		// VideoMessage,
 		FileMessage,
 		SystemTextMessage,
-		UnsupportedMessage
+		UnsupportedMessage,
 	} = require('im/messenger/lib/element');
 
 	/**
@@ -29,6 +26,10 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 	 */
 	class DialogConverter
 	{
+		/**
+		 * @param {MessagesModelState[]} modelMessageList
+		 * @return {Message[]}
+		 */
 		static createMessageList(modelMessageList)
 		{
 			if (!Type.isArrayFilled(modelMessageList))
@@ -49,6 +50,11 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 			return modelMessageList.map((modelMessage) => DialogConverter.createMessage(modelMessage, options));
 		}
 
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @param {CreateMessageOptions}options
+		 * @return {Message}
+		 */
 		static createMessage(modelMessage = {}, options = {})
 		{
 			const isSystemMessage = modelMessage.authorId === 0;
@@ -64,6 +70,7 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 			}
 
 			const isMessageWithFile = modelMessage.files[0];
+			/** @type {FilesModelState || null} */
 			let file = null;
 			if (isMessageWithFile)
 			{
@@ -72,7 +79,12 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 
 			if (isMessageWithFile && file && file.type === FileType.image)
 			{
-				return new ImageMessage(modelMessage, options, file);
+				if (Type.isStringFilled(file.urlPreview))
+				{
+					return new ImageMessage(modelMessage, options, file);
+				}
+
+				return new FileMessage(modelMessage, options, file);
 			}
 
 			if (isMessageWithFile && file && file.type === FileType.audio)
@@ -82,7 +94,10 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 
 			if (isMessageWithFile && file && file.type === FileType.video)
 			{
-				return new VideoMessage(modelMessage, options, file);
+				// TODO: return after video player implementation
+				// return new VideoMessage(modelMessage, options, file);
+
+				return new FileMessage(modelMessage, options, file);
 			}
 
 			if (isMessageWithFile && file && file.type === FileType.file)
@@ -112,14 +127,14 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 				system: params.message.system,
 			};
 
-			if (modelMessage.authorId !== MessengerParams.getUserId())
+			if (modelMessage.authorId === MessengerParams.getUserId())
 			{
-				modelMessage.unread = true;
-				modelMessage.viewed = false;
+				modelMessage.unread = false;
 			}
 			else
 			{
-				modelMessage.unread = false;
+				modelMessage.unread = true;
+				modelMessage.viewed = false;
 			}
 
 			return modelMessage;

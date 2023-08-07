@@ -30,6 +30,7 @@ jn.define('crm/terminal/services/payment', (require, exports, module) => {
 						if (response.data.payment)
 						{
 							resolve(response.data.payment);
+
 							return;
 						}
 						reject();
@@ -91,6 +92,7 @@ jn.define('crm/terminal/services/payment', (require, exports, module) => {
 						if (response.data.qr)
 						{
 							resolve(response.data.qr);
+
 							return;
 						}
 						reject(response.errors || []);
@@ -128,6 +130,7 @@ jn.define('crm/terminal/services/payment', (require, exports, module) => {
 						if (payment.qr)
 						{
 							resolve(payment.qr);
+
 							return;
 						}
 						reject();

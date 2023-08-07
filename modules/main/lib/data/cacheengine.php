@@ -246,15 +246,6 @@ abstract class CacheEngine implements CacheEngineInterface, LocalStorage\Storage
 	}
 
 	/**
-	 * Return cache sid
-	 * @return string
-	 */
-	public function getSid() : string
-	{
-		return $this->sid;
-	}
-
-	/**
 	 * Returns true if cache can be read or written.
 	 * @return bool
 	 */

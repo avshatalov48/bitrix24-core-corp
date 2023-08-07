@@ -21,6 +21,16 @@ if (Main\Loader::includeModule('ui') && class_exists('\Bitrix\UI\Fonts\Proxy'))
 }
 
 $region = Main\Application::getInstance()->getLicense()->getRegion();
+
+$uploaderSettings = [];
+if (
+	Main\Loader::includeModule('crm')
+	&& class_exists('\Bitrix\Crm\FileUploader\SiteFormFileUploaderController')
+)
+{
+	$uploaderSettings = Crm\FileUploader\SiteFormFileUploaderController::getSettings();
+}
+
 return [
 	'js' => [
 		'crm.site.form.js',
@@ -55,10 +65,11 @@ return [
 				],
 				"abuse" => [
 					"link" => (Main\Loader::includeModule('bitrix24')
-						&& method_exists(\Bitrix\Bitrix24\Form\AbuseZoneMap::class, 'getLink'))
+							&& method_exists(\Bitrix\Bitrix24\Form\AbuseZoneMap::class, 'getLink'))
 							? \Bitrix\Bitrix24\Form\AbuseZoneMap::getLink($region)
 							: '',
-				]
+				],
+				"uploader" => $uploaderSettings
 			]
 		]
 	]

@@ -2,15 +2,15 @@
  * @module im/messenger/lib/ui/base/item/item-info
  */
 jn.define('im/messenger/lib/ui/base/item/item-info', (require, exports, module) => {
-
 	const { getStatus } = require('im/messenger/assets/common');
+
 	class ItemInfo extends LayoutComponent
 	{
-
 		/**
 		 *
 		 * @param {Object} props
 		 * @param {string} props.title
+		 * @param {string} [props.isYouTitle]
 		 * @param {string} props.subtitle
 		 * @param {string} props.size
 		 * @param {ItemInfoStyle} props.style
@@ -35,8 +35,9 @@ jn.define('im/messenger/lib/ui/base/item/item-info', (require, exports, module) 
 					uri: getStatus(this.props.status),
 				});
 			}
-			/** @type{ItemInfoStyle}*/
+			/** @type{ItemInfoStyle} */
 			const style = this.props.style;
+
 			return View(
 				{
 					style: style.mainContainer,
@@ -63,6 +64,12 @@ jn.define('im/messenger/lib/ui/base/item/item-info', (require, exports, module) 
 							ellipsize: 'end',
 							numberOfLines: 1,
 						}),
+						this.props.isYouTitle
+							? Text({
+								style: style.isYouTitle,
+								text: this.props.isYouTitle,
+							})
+							: null,
 					),
 					Text({
 						style: style.subtitle,
@@ -71,7 +78,7 @@ jn.define('im/messenger/lib/ui/base/item/item-info', (require, exports, module) 
 						numberOfLines: 1,
 					}),
 				),
-			)
+			);
 		}
 	}
 

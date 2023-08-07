@@ -1,6 +1,6 @@
 (() => {
-	const {EntityReady} = jn.require('entity-ready');
-	const {Entry} = jn.require('tasks/entry');
+	const { EntityReady } = jn.require('entity-ready');
+	const { Entry } = jn.require('tasks/entry');
 
 	const SITE_ID = BX.componentParameters.get('SITE_ID', 's1');
 
@@ -37,7 +37,7 @@
 		{
 			BX.PULL.subscribe({
 				moduleId: 'tasks',
-				callback: data => this.processPullEvent(data),
+				callback: (data) => this.processPullEvent(data),
 			});
 		}
 
@@ -58,10 +58,10 @@
 			return new Promise((resolve, reject) => {
 				const has = Object.prototype.hasOwnProperty;
 				const eventHandlers = this.getEventHandlers();
-				const {command, params} = data;
+				const { command, params } = data;
 				if (has.call(eventHandlers, command))
 				{
-					const {method, context} = eventHandlers[command];
+					const { method, context } = eventHandlers[command];
 					if (method)
 					{
 						method.apply(context, [params]).then(() => resolve(), () => reject()).catch(() => reject());
@@ -72,25 +72,30 @@
 
 		freeQueue()
 		{
-			const commonCommands = [
+			const commonCommands = new Set([
 				'user_efficiency_counter',
 				'user_counter',
-			];
-			this.queue = new Set([...this.queue].filter(event => commonCommands.includes(event.command)));
+			]);
+			this.queue = new Set([...this.queue].filter((event) => commonCommands.has(event.command)));
 
-			const clearDuplicates = (result, event) => {
+			const clearDuplicates = (accumulator, event) => {
+				const result = accumulator;
 				if (
-					typeof result[event.command] === 'undefined'
-					|| event.extra.server_time_ago < result[event.command].extra.server_time_ago
+					typeof accumulator[event.command] === 'undefined'
+					|| event.extra.server_time_ago < accumulator[event.command].extra.server_time_ago
 				)
 				{
 					result[event.command] = event;
 				}
+
 				return result;
 			};
-			this.queue = new Set(Object.values([...this.queue].reduce(clearDuplicates, {})));
+			this.queue = new Set(
+				Object.values([...this.queue].reduce((accumulator, event) => clearDuplicates(accumulator, event), {})),
+			);
 
-			const promises = [...this.queue].map(event => this.executePullEvent(event));
+			const promises = [...this.queue].map((event) => this.executePullEvent(event));
+
 			return Promise.allSettled(promises);
 		}
 
@@ -115,6 +120,7 @@
 				if (Number(data.userId) !== Number(this.userId))
 				{
 					resolve();
+
 					return;
 				}
 
@@ -147,17 +153,29 @@
 			};
 		}
 
+		static createGuid()
+		{
+			const s4 = function() {
+				return Math.floor((1 + Math.random()) * 0x10000).toString(16).slice(1);
+			};
+
+			return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
+		}
+
 		constructor(tabs)
 		{
 			this.tabs = tabs;
 			this.userId = parseInt(BX.componentParameters.get('USER_ID', 0), 10);
-			this.guid = this.createGuid();
+			this.guid = TasksTabs.createGuid();
 
 			this.pull = new Pull(this, this.userId);
 			this.pull.subscribe();
 
 			this.setDownMenuTasksCounter();
-			EntityReady.wait('chat').then(() => setTimeout(() => this.setDownMenuTasksCounter(), 1000));
+			EntityReady.wait('chat')
+				.then(() => setTimeout(() => this.setDownMenuTasksCounter(), 1000))
+				.catch(() => {})
+			;
 
 			BX.onViewLoaded(() => {
 				this.bindEvents();
@@ -165,18 +183,9 @@
 			});
 		}
 
-		createGuid()
-		{
-			const s4 = function() {
-				return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-			};
-
-			return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
-		}
-
 		bindEvents()
 		{
-			this.tabs.on('onTabSelected', (tab, changed) => this.onTabSelected(tab,  changed));
+			this.tabs.on('onTabSelected', (tab, changed) => this.onTabSelected(tab, changed));
 
 			BX.addCustomEvent('onAppActiveBefore', () => this.onAppActiveBefore());
 			BX.addCustomEvent('onAppActive', () => this.onAppActive());
@@ -188,7 +197,7 @@
 					this.updateTasksCounter(data.value);
 				}
 			});
-			BX.addCustomEvent('tasks.project.list:setVisualCounter', data => this.updateProjectsCounter(data.value));
+			BX.addCustomEvent('tasks.project.list:setVisualCounter', (data) => this.updateProjectsCounter(data.value));
 		}
 
 		onAppPaused()
@@ -238,8 +247,8 @@
 
 			if (changed)
 			{
-				BX.postComponentEvent('tasks.tabs:onTabSelected', [{tabId}], TasksTabs.tabNames.tasks);
-				BX.postComponentEvent('tasks.tabs:onTabSelected', [{tabId}], TasksTabs.tabNames.projects);
+				BX.postComponentEvent('tasks.tabs:onTabSelected', [{ tabId }], TasksTabs.tabNames.tasks);
+				BX.postComponentEvent('tasks.tabs:onTabSelected', [{ tabId }], TasksTabs.tabNames.projects);
 			}
 			else if (tabId === TasksTabs.tabNames.scrum)
 			{
@@ -251,7 +260,7 @@
 			}
 			else if (tabId === TasksTabs.tabNames.efficiency)
 			{
-				(new Entry()).openEfficiency({userId: this.userId});
+				Entry.openEfficiency({ userId: this.userId });
 			}
 		}
 
@@ -261,8 +270,8 @@
 
 			if (value >= 0)
 			{
-				Application.setBadges({tasks: value});
-				storage.set('filterCounters_0', JSON.stringify({counterValue: value}));
+				Application.setBadges({ tasks: value });
+				storage.set('filterCounters_0', JSON.stringify({ counterValue: value }));
 
 				return;
 			}
@@ -277,9 +286,9 @@
 					const counters = JSON.parse(cachedCounters)[SITE_ID];
 					counterValue = (counters.tasks_total || 0);
 
-					storage.set('filterCounters_0', JSON.stringify({counterValue}));
+					storage.set('filterCounters_0', JSON.stringify({ counterValue }));
 				}
-				catch (e)
+				catch
 				{
 					// do nothing
 				}
@@ -294,14 +303,14 @@
 						const counters = JSON.parse(cache);
 						counterValue = (counters.counterValue || 0);
 					}
-					catch (e)
+					catch
 					{
 						// do nothing
 					}
 				}
 			}
 
-			Application.setBadges({tasks: counterValue});
+			Application.setBadges({ tasks: counterValue });
 		}
 
 		updateCounters()
@@ -318,7 +327,7 @@
 						this.updateEfficiencyCounter(counters.tasks_effective);
 					}
 				}
-				catch (e)
+				catch
 				{
 					// do nothing
 				}
@@ -336,7 +345,7 @@
 						this.updateProjectsCounter(counters.counterValue);
 					}
 				}
-				catch (e)
+				catch
 				{
 					// do nothing
 				}
@@ -348,10 +357,11 @@
 					(response) => {
 						const counterValue = response.result;
 						this.updateProjectsCounter(counterValue);
-						projectCountersStorage.set('filterCounters', JSON.stringify({counterValue}));
+						projectCountersStorage.set('filterCounters', JSON.stringify({ counterValue }));
 					},
-					response => console.error(response)
+					(response) => console.error(response),
 				)
+				.catch((response) => console.error(response))
 			;
 		}
 

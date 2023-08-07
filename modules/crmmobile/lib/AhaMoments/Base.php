@@ -3,7 +3,6 @@
 namespace Bitrix\CrmMobile\AhaMoments;
 
 use Bitrix\Crm\Traits\Singleton;
-use Bitrix\Main\Config\Option;
 use CUserOptions;
 
 abstract class Base
@@ -25,10 +24,7 @@ abstract class Base
 
 	public function canShow(): bool
 	{
-		return (
-			!$this->isUserSeenTour()
-			&& Option::get('crmmobile', 'release-spring-2023', true)
-		);
+		return !$this->isUserSeenTour();
 	}
 
 	protected function isUserSeenTour(): bool

@@ -2,8 +2,8 @@
  * @module tasks/layout/task/fields/title
  */
 jn.define('tasks/layout/task/fields/title', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {TextAreaField} = require('layout/ui/fields/textarea');
+	const { Loc } = require('loc');
+	const { TextAreaField } = require('layout/ui/fields/textarea');
 
 	class Title extends LayoutComponent
 	{
@@ -20,8 +20,9 @@ jn.define('tasks/layout/task/fields/title', (require, exports, module) => {
 
 		componentDidUpdate(prevProps, prevState)
 		{
-			//temporary fix for bug with auto height
-			if (!this.flag) {
+			// temporary fix for bug with auto height
+			if (!this.flag)
+			{
 				this.flag = true;
 				this.setState({});
 			}
@@ -47,8 +48,9 @@ jn.define('tasks/layout/task/fields/title', (require, exports, module) => {
 		{
 			return View(
 				{
-					ref: ref => (this.props.onViewRef && this.props.onViewRef(ref)),
+					ref: (ref) => (this.props.onViewRef && this.props.onViewRef(ref)),
 					style: (this.props.style || {}),
+					onLongClick: (this.state.readOnly ? () => this.copyTitle() : () => {}),
 				},
 				TextAreaField({
 					readOnly: this.state.readOnly,
@@ -70,13 +72,23 @@ jn.define('tasks/layout/task/fields/title', (require, exports, module) => {
 					value: this.state.title,
 					testId: 'title',
 					onChange: (text) => {
-						this.setState({title: text});
+						this.setState({ title: text });
 						this.props.onChange(text);
 					},
 				}),
 			);
 		}
+
+		copyTitle()
+		{
+			Notify.showMessage(
+				'',
+				Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_TITLE_COPIED'),
+				{ time: 1 },
+			);
+			Application.copyToClipboard(this.state.title);
+		}
 	}
 
-	module.exports = {Title};
+	module.exports = { Title };
 });

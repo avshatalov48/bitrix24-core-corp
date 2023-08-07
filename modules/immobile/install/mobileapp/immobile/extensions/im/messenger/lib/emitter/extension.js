@@ -1,11 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/lib/emitter
  */
 jn.define('im/messenger/lib/emitter', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { MessengerParams } = require('im/messenger/lib/params');
 
@@ -21,10 +17,10 @@ jn.define('im/messenger/lib/emitter', (require, exports, module) => {
 		{
 			if (!Type.isStringFilled(eventName))
 			{
-				throw new Error('MessengerEvent: ' + eventName + 'is not a filled string');
+				throw new Error(`MessengerEvent: ${eventName}is not a filled string`);
 			}
 
-			BX.postComponentEvent(eventName, [ eventData ], MessengerParams.get('COMPONENT_CODE'));
+			BX.postComponentEvent(eventName, [eventData], MessengerParams.get('COMPONENT_CODE'));
 		}
 	}
 

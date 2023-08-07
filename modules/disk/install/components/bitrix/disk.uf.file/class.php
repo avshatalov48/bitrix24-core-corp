@@ -156,10 +156,11 @@ class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\
 
 	protected function processActionDefault()
 	{
-		$this->arResult = array(
+		$this->arResult = [
+			'DISABLE_LOCAL_EDIT' => $this->arParams['DISABLE_LOCAL_EDIT'],
 			'FILES' => $this->loadFilesData(),
 			'UID' => $this->getComponentId(),
-		);
+		];
 
 		$this->arResult['SIGNED_PARAMS'] = $this->getComponentSignedParameters();;
 
@@ -533,8 +534,10 @@ class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\
 				[
 					'ID' => $attachedObject->getFileId(),
 					'CONTENT_TYPE' => $attachedObject->getExtra()->get('FILE_CONTENT_TYPE'),
+					'WIDTH' => (int)$attachedObject->getExtra()->get('FILE_WIDTH'),
+					'HEIGHT' => (int)$attachedObject->getExtra()->get('FILE_HEIGHT'),
 					'ORIGINAL_NAME' => $attachedObject->getName(),
-					'FILE_SIZE' => $attachedObject->getExtra()->get('FILE_SIZE'),
+					'FILE_SIZE' => (int)$attachedObject->getExtra()->get('FILE_SIZE'),
 				],
 				$sourceUri
 			);

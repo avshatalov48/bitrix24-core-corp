@@ -372,7 +372,11 @@ class CVoxImplantUser
 			}
 
 			$userPassword = $result->result->user_password;
-			$phonePassword = $result->result->phone_password;
+			$phonePassword =
+				property_exists($result->result, 'phone_password')
+					? $result->result->phone_password
+					: null
+			;
 
 			global $USER_FIELD_MANAGER;
 			$USER_FIELD_MANAGER->Update("USER", $userId, Array('UF_VI_PASSWORD' => $userPassword, 'UF_VI_PHONE_PASSWORD' => $phonePassword));

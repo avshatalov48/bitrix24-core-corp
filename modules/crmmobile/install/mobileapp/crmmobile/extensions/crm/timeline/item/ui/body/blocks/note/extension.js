@@ -102,6 +102,7 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 								onLongClick: () => this.openEditor(),
 							},
 							Text({
+								testId: 'TimelineItemBodyNoteText',
 								text: this.state.text,
 								ellipsize: 'end',
 								numberOfLines: this.state.expanded ? MAX_NUMBER_OF_LINES : 10,

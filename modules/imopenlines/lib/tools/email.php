@@ -1,10 +1,7 @@
 <?php
 namespace Bitrix\ImOpenLines\Tools;
 
-use \Bitrix\Main\Loader;
-
-use \Bitrix\Crm\Communication\Validator as CrmValidator,
-	\Bitrix\Crm\Communication\Normalizer as CrmNormalizer;
+use Bitrix\Crm\Communication\Normalizer as CrmNormalizer;
 
 /**
  * Class Email
@@ -20,9 +17,7 @@ class Email
 	 */
 	public static function validate($email)
 	{
-		$result = check_email($email);
-
-		return $result;
+		return \check_email($email);
 	}
 
 	/**
@@ -30,11 +25,10 @@ class Email
 	 *
 	 * @param string $email Email.
 	 * @return string
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function normalize($email)
 	{
-		if(Loader::includeModule('crm'))
+		if (\Bitrix\Main\Loader::includeModule('crm'))
 		{
 			$result = CrmNormalizer::normalizeEmail($email);
 		}
@@ -47,45 +41,36 @@ class Email
 	}
 
 	/**
-	 * @param $email1
-	 * @param $email2
+	 * @param string $email1
+	 * @param string $email2
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public static function isSame($email1, $email2)
+	public static function isSame($email1, $email2): bool
 	{
-		$result = false;
-
-		if(self::normalize($email1) == self::normalize($email2))
-		{
-			$result = true;
-		}
-
-		return $result;
+		return self::normalize($email1) == self::normalize($email2);
 	}
 
 	/**
-	 * @param $text
+	 * @param string $text
 	 * @return array
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public static function parseText($text)
+	public static function parseText($text): array
 	{
 		$result = [];
 		$matchesEmails = [];
 
-		preg_match_all("/[^\s]+@[^\s]+/i", $text, $matchesEmails);
+		preg_match_all("/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i", $text, $matchesEmails);
 		if (!empty($matchesEmails[0]))
 		{
 			foreach ($matchesEmails[0] as $email)
 			{
-				if(self::validate($email))
+				if (self::validate($email))
 				{
 					$result[] = self::normalize($email);
 				}
 			}
 
-			if(!empty($result))
+			if (!empty($result))
 			{
 				$result = array_unique($result);
 			}
@@ -95,20 +80,19 @@ class Email
 	}
 
 	/**
-	 * @param $emails
-	 * @param $searchEmail
+	 * @param string[] $emails
+	 * @param string $searchEmail
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public static function isInArray($emails, $searchEmail)
+	public static function isInArray($emails, $searchEmail): bool
 	{
 		$result = false;
 
-		if(!empty($emails) && is_array($emails))
+		if (!empty($emails) && is_array($emails))
 		{
 			foreach ($emails as $email)
 			{
-				if(self::isSame($email, $searchEmail))
+				if (self::isSame($email, $searchEmail))
 				{
 					$result = true;
 					break;
@@ -120,19 +104,18 @@ class Email
 	}
 
 	/**
-	 * @param $emails
+	 * @param string[] $emails
 	 * @return array
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public static function getArrayUniqueValidate($emails)
+	public static function getArrayUniqueValidate($emails): array
 	{
 		$resultEmails = [];
 
-		if(!empty($emails) && is_array($emails))
+		if (!empty($emails) && is_array($emails))
 		{
 			foreach ($emails as $email)
 			{
-				if(self::validate($email) && !self::isInArray($resultEmails, $email))
+				if (self::validate($email) && !self::isInArray($resultEmails, $email))
 				{
 					$resultEmails[] = $email;
 				}

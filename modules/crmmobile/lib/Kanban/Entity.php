@@ -2,138 +2,194 @@
 
 namespace Bitrix\CrmMobile\Kanban;
 
-use Bitrix\Crm\Component\EntityList\GridId;
 use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
-use Bitrix\Crm\Kanban\EntityActivityCounter;
-use Bitrix\Crm\Security\Manager;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Settings\Crm;
-use Bitrix\Main\DI\ServiceLocator;
-use Bitrix\Main\Result;
-use Bitrix\Main\UI\Filter\Options;
-use Bitrix\Main\UI\PageNavigation;
-use Bitrix\CrmMobile\Kanban\Dto\Field;
+use Bitrix\Crm\Settings\CounterSettings;
+use Bitrix\CrmMobile\Kanban\ControllerStrategy\KanbanStrategy;
+use Bitrix\CrmMobile\Kanban\ControllerStrategy\ListStrategy;
+use Bitrix\CrmMobile\Kanban\ControllerStrategy\StrategyInterface;
 use Bitrix\CrmMobile\Kanban\Dto\Item;
 use Bitrix\CrmMobile\Kanban\Dto\ItemData;
-use Bitrix\CrmMobile\Kanban\Entity\EntityNotFoundException;
-use CCrmOwnerType;
+use Bitrix\CrmMobile\Kanban\ItemPreparer\Base;
+use Bitrix\CrmMobile\Kanban\ItemPreparer\CompanyPreparer;
+use Bitrix\CrmMobile\Kanban\ItemPreparer\ContactPreparer;
+use Bitrix\CrmMobile\Kanban\ItemPreparer\KanbanPreparer;
+use Bitrix\CrmMobile\Kanban\ItemPreparer\ListPreparer;
+use Bitrix\Main\Result;
+use Bitrix\Main\UI\PageNavigation;
 
 /**
  * Class Entity
  *
  * @package Bitrix\CrmMobile\Kanban
  */
-abstract class Entity
+final class Entity
 {
-	protected $params = [];
-	protected $pageNavigation = null;
+	protected StrategyInterface $controllerStrategy;
+	protected Base $itemPreparer;
 
-	protected const CRM_STATUS_FIELD_TYPE = 'crm_status';
-	protected const CRM_FIELD_TYPE = 'crm';
-	protected const IBLOCK_ELEMENT_FIELD_TYPE = 'iblock_element';
-	protected const IBLOCK_SECTION_FIELD_TYPE = 'iblock_section';
-	protected const TMP_FILTER_PRESET_ID = 'tmp_filter';
+	protected array $params = [];
+	protected ?PageNavigation $pageNavigation = null;
 
-	protected const EXCLUDED_FIELDS = [
-		'TITLE',
-		'OPPORTUNITY',
-		'DATE_CREATE',
+	protected const USE_ONLY_LIST_STRATEGY = [
+		\CCrmOwnerType::ContactName,
+		\CCrmOwnerType::CompanyName,
 	];
 
-	protected const DEFAULT_COUNT_WITH_RECKON_ACTIVITY = 1;
+	protected const USE_ONLY_KANBAN_STRATEGY = [
+		\CCrmOwnerType::LeadName,
+		\CCrmOwnerType::DealName,
+		\CCrmOwnerType::QuoteName,
+		\CCrmOwnerType::SmartInvoiceName,
+	];
 
-	/**
-	 * @param string $entityType
-	 * @return Entity
-	 * @throws EntityNotFoundException
-	 */
-	public static function getInstance(string $entityType): Entity
+	private string $entityTypeName;
+
+	public static function getInstance(string $entityTypeName): Entity
 	{
-		if ($entityType === \CCrmOwnerType::LeadName)
+		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+		if (in_array($entityTypeName, self::USE_ONLY_LIST_STRATEGY, true))
 		{
-			return ServiceLocator::getInstance()->get('crmmobile.kanban.entity.lead');
+			return self::getListInstance($entityTypeId);
 		}
 
-		if ($entityType === \CCrmOwnerType::DealName)
+		if (
+			in_array($entityTypeName, self::USE_ONLY_KANBAN_STRATEGY, true)
+			|| \CCrmOwnerType::isDynamicTypeBasedStaticEntity($entityTypeId)
+		)
 		{
-			return ServiceLocator::getInstance()->get('crmmobile.kanban.entity.deal');
-		}
-
-		if ($entityType === \CCrmOwnerType::QuoteName)
-		{
-			return ServiceLocator::getInstance()->get('crmmobile.kanban.entity.quote');
-		}
-
-		if ($entityType === \CCrmOwnerType::ContactName)
-		{
-			return ServiceLocator::getInstance()->get('crmmobile.kanban.entity.contact');
-		}
-
-		if ($entityType === \CCrmOwnerType::CompanyName)
-		{
-			return ServiceLocator::getInstance()->get('crmmobile.kanban.entity.company');
-		}
-
-		if ($entityType === \CCrmOwnerType::SmartInvoiceName)
-		{
-			return ServiceLocator::getInstance()->get('crmmobile.kanban.entity.smartInvoice');
-		}
-
-		$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
-
-		if (\CCrmOwnerType::isDynamicTypeBasedStaticEntity($entityTypeId))
-		{
-			$instance = ServiceLocator::getInstance()->get('crmmobile.kanban.entity.dynamicTypeBasedStatic');
-			$instance->setEntityType($entityType);
-			return $instance;
+			return self::getKanbanInstance($entityTypeId);
 		}
 
 		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
 		{
-			$instance = ServiceLocator::getInstance()->get('crmmobile.kanban.entity.dynamic');
-			$instance->setEntityType($entityType);
-			return $instance;
+			return self::getDynamicEntityInstance($entityTypeId);
 		}
 
-		throw new EntityNotFoundException('EntityType: ' . $entityType . ' unknown');
+		throw new EntityNotFoundException('EntityType: ' . $entityTypeName . ' unknown');
 	}
 
-	/**
-	 * @return int
-	 */
-	public function getEntityTypeId(): int
+	private static function getDynamicEntityInstance(int $entityTypeId): Entity
 	{
-		return \CCrmOwnerType::ResolveID($this->getEntityType());
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+
+		if ($factory)
+		{
+			if ($factory->isStagesEnabled())
+			{
+				return self::getKanbanInstance($entityTypeId);
+			}
+
+			return self::getListInstance($entityTypeId);
+		}
+
+		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
+
+		throw new EntityNotFoundException('EntityType: ' . $entityTypeName . ' unknown');
 	}
 
-	/**
-	 * @return string
-	 */
-	abstract public function getEntityType(): string;
-
-	/**
-	 * @return bool
-	 */
-	public function isUseColumns(): bool
+	private static function getKanbanInstance(int $entityTypeId): Entity
 	{
-		return false;
+		$strategy = new KanbanStrategy();
+		$preparer = new KanbanPreparer();
+
+		return self::createAndInitInstance(\CCrmOwnerType::ResolveName($entityTypeId), $strategy, $preparer);
 	}
 
-	/**
-	 * @param array $params
-	 * @return $this
-	 */
-	public function prepare(array $params): Entity
+	private static function getListInstance(int $entityTypeId): Entity
 	{
-		$this->params = $params;
+		$strategy = new ListStrategy();
+		if ($entityTypeId === \CCrmOwnerType::Company)
+		{
+			$preparer = new CompanyPreparer();
+		}
+		else if ($entityTypeId === \CCrmOwnerType::Contact)
+		{
+			$preparer = new ContactPreparer();
+		}
+		else
+		{
+			$preparer = new ListPreparer();
+		}
+
+		return self::createAndInitInstance(\CCrmOwnerType::ResolveName($entityTypeId), $strategy, $preparer);
+	}
+
+	private static function createAndInitInstance(
+		string $entityTypeName,
+		StrategyInterface $strategy,
+		Base $preparer
+	): self
+	{
+		return (new self())
+			->setEntityTypeName($entityTypeName)
+			->setControllerStrategy($strategy)
+			->setItemPreparer($preparer)
+		;
+	}
+
+	public function setEntityTypeName(string $entityTypeName): Entity
+	{
+		$this->entityTypeName = $entityTypeName;
+
 		return $this;
 	}
 
-	/**
-	 * @return array
-	 */
-	abstract public function getList(): array;
+	public function setControllerStrategy(StrategyInterface $strategy): Entity
+	{
+		$this->controllerStrategy = $strategy;
+
+		return $this;
+	}
+
+	public function setItemPreparer(Base $preparer): Entity
+	{
+		$this->itemPreparer = $preparer;
+
+		return $this;
+	}
+
+	public function getList(): array
+	{
+		$strategy = $this->getPreparedControllerStrategy();
+		$itemsList = $strategy->getList($this->pageNavigation);
+
+		$items = [];
+		$itemParams = $strategy->getItemParams($itemsList);
+
+		$itemPreparer = $this->itemPreparer
+			->setParams($this->params)
+			->setEntityTypeId($this->getEntityTypeId())
+		;
+
+		foreach ($itemsList as $item)
+		{
+			$preparedItem = $itemPreparer->execute($item, $itemParams);
+			$items[] = $this->buildItemDto($preparedItem);
+		}
+
+		return [
+			'items' => $items,
+		];
+	}
+
+	public function getEntityTypeId(): int
+	{
+		return \CCrmOwnerType::ResolveID($this->getEntityTypeName());
+	}
+
+	public function getEntityTypeName(): string
+	{
+		return $this->entityTypeName;
+	}
+
+	public function prepare(array $params): Entity
+	{
+		$this->params = $params;
+
+		return $this;
+	}
 
 	/**
 	 * @return array
@@ -143,61 +199,33 @@ abstract class Entity
 		return [];
 	}
 
-	/**
-	 * @return string
-	 */
-	protected function getGridId(): string
+	public function updateItemStage(int $id, int $stageId): Result
 	{
-		return (new GridId($this->getEntityTypeId()))->getValue();
+		return $this->getPreparedControllerStrategy()->updateItemStage($id, $stageId);
 	}
 
-	/**
-	 * @param array $presets
-	 * @param string|null $defaultPresetName
-	 * @return array
-	 */
-	protected function prepareFilterPresets(array $presets, ?string $defaultPresetName): array
+	public function deleteItem(int $id, array $params = []): Result
 	{
-		$results = [];
-
-		foreach ($presets as $id => $preset)
-		{
-			$name = html_entity_decode($preset['name'] ?? '', ENT_QUOTES);
-
-			if ($id === null || $id === 'default_filter' || $id === 'tmp_filter')
-			{
-				continue;
-			}
-
-			$default = ($id === $defaultPresetName);
-
-			$results[] = compact('id', 'name', 'default');
-		}
-
-		return $results;
+		return $this->getPreparedControllerStrategy()->deleteItem($id, $params);
 	}
 
-	/**
-	 * @param int $id
-	 * @param int $stageId
-	 * @return Result
-	 */
-	abstract public function updateItemStage(int $id, int $stageId): Result;
+	public function changeCategory(array $ids, int $categoryId): Result
+	{
+		return $this->getPreparedControllerStrategy()->changeCategory($ids, $categoryId);
+	}
 
-	/**
-	 * @param int $id
-	 * @param array $params
-	 * @return Result
-	 */
-	abstract public function deleteItem(int $id, array $params = []): Result;
+	protected function getPreparedControllerStrategy(): StrategyInterface
+	{
+		return $this->controllerStrategy
+			->setParams($this->params)
+			->setEntityTypeId($this->getEntityTypeId())
+		;
+	}
 
-	/**
-	 * @param PageNavigation $pageNavigation
-	 * @return $this
-	 */
 	public function setPageNavigation(PageNavigation $pageNavigation): Entity
 	{
 		$this->pageNavigation = $pageNavigation;
+
 		return $this;
 	}
 
@@ -209,335 +237,14 @@ abstract class Entity
 		return ($this->params['filterParams'] ?? []);
 	}
 
-	protected function getEntityAttributes(array $items, string $columnIdName = 'id'): ?array
-	{
-		if (empty($items))
-		{
-			return null;
-		}
-
-		$ids = array_column($items, $columnIdName);
-		$entityTypeName = $this->getEntityType();
-
-		return Manager::resolveController($entityTypeName)->getPermissionAttributes($entityTypeName, $ids);
-	}
-
-	/**
-	 * @param array $data
-	 * @return Item
-	 */
 	protected function buildItemDto(array $data): Item
 	{
 		$item = new Item([
 			'id' => $data['id'],
 		]);
 		$item->data = new ItemData($data['data']);
+
 		return $item;
-	}
-
-	/**
-	 * @param array $item
-	 * @param array $params
-	 * @return array
-	 */
-	protected function prepareItem(array $item, array $params = []): array
-	{
-		$id = $this->getItemId($item);
-		$entityAttributes = ($params['permissionEntityAttributes'] ?? null);
-
-		return [
-			'id' => $id,
-			'data' => [
-				'id' => $id,
-				'columnId' => $this->getColumnId($item),
-				'name' => $this->getItemName($item),
-				'date' => $this->getItemDate($item),
-				'dateFormatted' => $this->getItemDateFormatted($item),
-				'price' => $this->getItemPrice($item),
-				'fields' => $this->prepareFields($item, $params),
-				'badges' => $this->prepareBadges($item, $params),
-				'return' => $this->getItemReturn($item),
-				'returnApproach' => $this->getItemReturnApproach($item),
-				'subTitleText' => $this->getSubTitleText($item),
-				'descriptionRow' => $this->getDescriptionRow($item),
-				'money' => $this->getMoney($item),
-				'client' => $this->getClient($item, $params),
-				'permissions' => $this->getPermissions($id, $entityAttributes),
-				'counters' => $this->getItemCounters($item, $params),
-			],
-		];
-	}
-
-	/**
-	 * @param array $item
-	 * @return int
-	 */
-	protected function getItemId(array $item): int
-	{
-		return $item['ID'];
-	}
-
-	/**
-	 * In the future, we can add the necessary permission checks.
-	 * Now need to check permissions to edit an element in kanban
-	 *
-	 * @param int $id
-	 * @param array|null $entityAttributes
-	 * @return array
-	 */
-	protected function getPermissions(int $id, ?array $entityAttributes): array
-	{
-		$entityTypeName = $this->getPermissionEntityTypeName();
-
-		$params = [
-			$entityTypeName,
-			$id,
-			null,
-			$entityAttributes,
-		];
-
-		return [
-			'write' => \CCrmAuthorizationHelper::CheckUpdatePermission(...$params),
-			'delete' => \CCrmAuthorizationHelper::CheckDeletePermission(...$params),
-		];
-	}
-
-	protected function getPermissionEntityTypeName(): string
-	{
-		return $this->getEntityType();
-	}
-
-	protected function getItemCounters(array $item, array $params = []): array
-	{
-		$counters = [];
-
-		$activityCounterTotal = ($item['activityCounterTotal'] ?? 0);
-		$isCurrentUserAssigned = ((int)$this->params['userId'] === $this->getAssignedById($item));
-
-		if (!$isCurrentUserAssigned)
-		{
-			$counters[] = ItemCounter::getInstance()->getEmptyCounter($activityCounterTotal);
-		}
-		else
-		{
-			$isReckonActivityLessItems = $this->params['isReckonActivityLessItems'];
-			$activityErrorTotal = (int)($item['activityErrorTotal'] ?? 0);
-			$activityIncomingTotal = (int)($item['activityIncomingTotal'] ?? 0);
-
-			if ($activityErrorTotal)
-			{
-				$counters[] = ItemCounter::getInstance()->getErrorCounter($activityErrorTotal);
-			}
-
-			if ($activityIncomingTotal)
-			{
-				$counters[] = ItemCounter::getInstance()->getIncomingCounter($activityIncomingTotal);
-			}
-
-			if (empty($counters))
-			{
-				if ($isReckonActivityLessItems)
-				{
-					$counters[] = ItemCounter::getInstance()->getErrorCounter(self::DEFAULT_COUNT_WITH_RECKON_ACTIVITY);
-				}
-				else
-				{
-					$counters[] = ItemCounter::getInstance()->getEmptyCounter(0);
-				}
-			}
-		}
-
-		$indicator = null;
-		if (!$activityCounterTotal && !empty($item['activityProgress']))
-		{
-			$userId = (int)$this->params['userId'];
-
-			$activityProgressForCurrentUser = 0;
-			if (isset($item['activitiesByUser'][$userId]))
-			{
-				$activityProgressForCurrentUser = ($item['activitiesByUser'][$userId]['activityProgress'] ?? 0);
-			}
-
-			$indicatorInstance = ItemIndicator::getInstance();
-			$indicator = (
-				$activityProgressForCurrentUser
-					? $indicatorInstance->getOwnIndicator()
-					: $indicatorInstance->getSomeoneIndicator()
-			);
-		}
-
-		$renderLastActivityTime = ($params['renderLastActivityTime'] ?? false);
-
-		return [
-			'counters' => $counters,
-			'activityCounterTotal' => $activityCounterTotal,
-			'lastActivity' => $this->getLastActivityTimestamp($item),
-			'indicator' => $indicator,
-			'skipTimeRender' => !$renderLastActivityTime,
-		];
-	}
-
-	protected function getAssignedById(array $item): ?int
-	{
-		return null;
-	}
-
-	/**
-	 * @param array $item
-	 * @return string|null
-	 */
-	protected function getColumnId(array $item): ?string
-	{
-		return null;
-	}
-
-	protected function getLastActivityTimestamp(array $item): ?int
-	{
-		return null;
-	}
-
-	/**
-	 * @param array $item
-	 * @return bool
-	 */
-	protected function getItemReturn(array $item): bool
-	{
-		return false;
-	}
-
-	/**
-	 * @param array $item
-	 * @return bool
-	 */
-	protected function getItemReturnApproach(array $item): bool
-	{
-		return false;
-	}
-
-	/**
-	 * @param array $item
-	 * @return float|null
-	 */
-	protected function getItemPrice(array $item): ?float
-	{
-		return null;
-	}
-
-	/**
-	 * @param array $item
-	 * @return array|null
-	 */
-	protected function getMoney(array $item): ?array
-	{
-		return null;
-	}
-
-	/**
-	 * @param array $item
-	 * @return string
-	 */
-	protected function getSubTitleText(array $item): string
-	{
-		return '';
-	}
-
-	/**
-	 * @param array $item
-	 * @return array
-	 */
-	protected function getDescriptionRow(array $item): array
-	{
-		return [];
-	}
-
-	/**
-	 * @param array $item
-	 * @param array $params
-	 * @return array|null
-	 */
-	protected function getClient(array $item, array $params = []): ?array
-	{
-		return ($item['client'] ?? null);
-	}
-
-	/**
-	 * @param array $item
-	 * @return string
-	 */
-	protected function getItemName(array $item): string
-	{
-		return '';
-	}
-
-	/**
-	 * @param array $item
-	 * @return int
-	 */
-	protected function getItemDate(array $item): int
-	{
-		return $item['CREATED_TIME']->getTimestamp();
-	}
-
-	/**
-	 * @todo need to format date as date in desktop kanban object
-	 *
-	 * @param array $item
-	 * @return string
-	 */
-	protected function getItemDateFormatted(array $item): string
-	{
-		return '';
-	}
-
-	/**
-	 * @param array $item
-	 * @param array $params
-	 * @return mixed
-	 */
-	abstract protected function prepareFields(array $item = [], array $params = []): array;
-	abstract protected function prepareBadges(array $item = [], array $params = []): array;
-
-	/**
-	 * @param Field $field
-	 */
-	protected function prepareField(Field $field): void
-	{
-		$field->params['readOnly'] = true;
-
-		if (in_array(
-			$field->type,
-			[
-				self::CRM_FIELD_TYPE,
-				self::CRM_STATUS_FIELD_TYPE,
-				self::IBLOCK_ELEMENT_FIELD_TYPE,
-				self::IBLOCK_SECTION_FIELD_TYPE,
-			]
-		))
-		{
-			$field->params['styleName'] = 'field';
-		}
-	}
-
-	/**
-	 * @param string $fieldName
-	 * @return bool
-	 */
-	protected function isExcludedField(string $fieldName): bool
-	{
-		return in_array($fieldName, static::EXCLUDED_FIELDS, true);
-	}
-
-	protected function hasVisibleField(array $item, string $fieldName): bool
-	{
-		foreach ($item['fields'] as $field)
-		{
-			if ($field['code'] === $fieldName)
-			{
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	public function getSearchPresetsAndCounters(int $userId, ?int $currentCategoryId = null): array
@@ -553,16 +260,33 @@ abstract class Entity
 
 	private function getSearchPresets(int $currentCategoryId = 0): array
 	{
-		$entity = \Bitrix\Crm\Kanban\Entity::getInstance($this->getEntityType());
+		$entity = \Bitrix\Crm\Kanban\Entity::getInstance($this->getEntityTypeName());
+		if (!$entity)
+		{
+			return [];
+		}
+
 		$entity->setCategoryId($currentCategoryId);
 
+		$defaultPresets = $entity->getFilterPresets();
+
 		$filterOptions = new \Bitrix\Main\UI\Filter\Options(
-			$this->getGridId(),
-			$entity->getFilterPresets()
+			$this->getPreparedControllerStrategy()->getGridId(),
+			$defaultPresets
 		);
 
-		return $this->prepareFilterPresets(
-			$filterOptions->getPresets(),
+		$deletedPresets = $filterOptions->getOptions()['deleted_presets'] ?? [];
+		foreach ($defaultPresets as $presetId => $preset)
+		{
+			if (!empty($deletedPresets[$presetId]))
+			{
+				unset($defaultPresets[$presetId]);
+			}
+		}
+
+		return $this->getPreparedControllerStrategy()->prepareFilterPresets(
+			$entity,
+			array_merge($defaultPresets, $filterOptions->getPresets()),
 			$filterOptions->getDefaultFilterId()
 		);
 	}
@@ -608,8 +332,8 @@ abstract class Entity
 	public function getCounters(int $userId, ?int $categoryId): array
 	{
 		if (
-			method_exists(\Bitrix\Crm\Settings\CounterSettings::class, 'getInstance')
-			&& !\Bitrix\Crm\Settings\CounterSettings::getInstance()->isEnabled()
+			method_exists(CounterSettings::class, 'getInstance')
+			&& !CounterSettings::getInstance()->isEnabled()
 		)
 		{
 			return [];
@@ -691,67 +415,12 @@ abstract class Entity
 		}
 
 		$permissions = $uPermissions->getCrmPermissions()->GetPermType($permissionEntityType);
+
 		return $permissions >= $uPermissions::PERMISSION_ALL;
 	}
 
-	protected function setFilterPreset(string $presetId, Options $filterOptions): void
+	public function prepareFilter(\Bitrix\Crm\Kanban\Entity $entity):void
 	{
-		if ($presetId === 'default_filter')
-		{
-			$presetId = 'tmp_filter';
-		}
-
-		$presets = $filterOptions->getPresets();
-
-		if ($presetId !== self::TMP_FILTER_PRESET_ID && !empty($presets[$presetId]))
-		{
-			$preset = $presets[$presetId];
-
-			$data = [
-				'fields' => $preset['fields'] ?? [],
-				'preset_id' => $presetId,
-				'rows' => (empty($preset['fields']) || !is_array($preset['fields'])) ? [] : array_keys($preset['fields']),
-				'name' => $preset['name'],
-			];
-		}
-		elseif ($presetId === self::TMP_FILTER_PRESET_ID)
-		{
-			$tmpFilter = ($this->params['filter']['tmpFields'] ?? []);
-			$fields = [];
-			foreach ($tmpFilter as $fieldName => $field)
-			{
-				$fields[$fieldName] = $field;
-			}
-
-			$data = [
-				'fields' => $fields,
-				'preset_id' => self::TMP_FILTER_PRESET_ID,
-				'rows' => array_keys($fields),
-			];
-		}
-		else
-		{
-			return;
-		}
-
-		$filterOptions->setFilterSettings($presetId, $data);
-		$filterOptions->save();
-	}
-
-	protected function prepareActivityCounters(array &$items): void
-	{
-		if (empty($items))
-		{
-			return;
-		}
-
-		//@todo check activity counters supporting
-		$errors = [];
-		$entityActivityCounter = new EntityActivityCounter(
-			$this->getEntityTypeId(),
-			array_keys($items),
-			$errors,
-		);
-		$entityActivityCounter->appendToEntityItems($items);
+		$this->getPreparedControllerStrategy()->prepareFilter($entity);
 	}
 }

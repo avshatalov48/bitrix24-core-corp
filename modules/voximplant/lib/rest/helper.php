@@ -45,15 +45,15 @@ class Helper
 	 */
 	public static function getUserByPhone($phoneNumber)
 	{
-		$row = PhoneTable::getList(array(
-			'select' => array('USER_ID'),
-			'filter' => array(
+		$row = PhoneTable::getList([
+			'select' => ['USER_ID'],
+			'filter' => [
 				'=PHONE_NUMBER' => $phoneNumber,
 				'=PHONE_MNEMONIC' => 'UF_PHONE_INNER',
 				'=USER.ACTIVE' => 'Y',
 				'=USER.IS_REAL_USER' => 'Y'
-			)
-		))->fetch();
+			]
+		])->fetch();
 
 		return is_array($row) ? (int)$row['USER_ID'] : false;
 	}
@@ -87,7 +87,7 @@ class Helper
 		$callId = 'externalCall.'.md5(uniqid($fields['REST_APP_ID'].$fields['USER_ID'].$fields['PHONE_NUMBER'], true)).'.'.time();
 
 		$phoneNumber = \CVoxImplantPhone::stripLetters($fields['PHONE_NUMBER']);
-		if(!$phoneNumber)
+		if (!$phoneNumber)
 		{
 			$result->addError(new Error('Unsupported phone number format'));
 			return $result;
@@ -97,35 +97,35 @@ class Helper
 			'select' => ['ID'],
 			'filter' => ['=ID' => $fields['USER_ID'], '=ACTIVE' => 'Y', '=IS_REAL_USER' => 'Y']
 		]);
-		if(!$userCheck)
+		if (!$userCheck)
 		{
 			$result->addError(new Error('User is not found or is not active'));
 			return $result;
 		}
 
-		if(isset($fields['LINE_NUMBER']))
+		if (isset($fields['LINE_NUMBER']))
 		{
 			$fields['LINE_NUMBER'] = trim($fields['LINE_NUMBER']);
-			if($fields['LINE_NUMBER'] != '')
+			if ($fields['LINE_NUMBER'] != '')
 			{
 				$lineNumber = trim($fields['LINE_NUMBER']);
-				$row = ExternalLineTable::getRow(array(
-					'filter' => array(
+				$row = ExternalLineTable::getRow([
+					'filter' => [
 						'=NUMBER' => $lineNumber,
 						'=REST_APP_ID' => $fields['REST_APP_ID']
-					)
-				));
-				if($row)
+					]
+				]);
+				if ($row)
 				{
 					$lineId = $row['ID'];
 				}
 				else
 				{
-					$insertResult = ExternalLineTable::add(array(
+					$insertResult = ExternalLineTable::add([
 						'NUMBER' => $lineNumber,
 						'REST_APP_ID' => $fields['REST_APP_ID']
-					));
-					if($insertResult->isSuccess())
+					]);
+					if ($insertResult->isSuccess())
 					{
 						$lineId = $insertResult->getId();
 					}
@@ -133,22 +133,22 @@ class Helper
 			}
 		}
 
-		$initEventData = array(
+		$initEventData = [
 			'CALL_ID' => $callId,
 			'CALL_TYPE' => $fields['TYPE'],
 			'CALLER_ID' => $phoneNumber,
 			'REST_APP_ID' => $fields['REST_APP_ID']
-		);
+		];
 		$initEvent = new Event('voximplant', 'onCallInit', $initEventData);
 		$initEvent->send();
 		if ($initEvent->getResults() != null)
 		{
-			foreach($initEvent->getResults() as $eventResult)
+			foreach ($initEvent->getResults() as $eventResult)
 			{
-				if($eventResult->getType() === EventResult::SUCCESS)
+				if ($eventResult->getType() === EventResult::SUCCESS)
 				{
 					$eventResultData = $eventResult->getParameters();
-					if(isset($eventResultData['CALLER_ID']))
+					if (isset($eventResultData['CALLER_ID']))
 					{
 						$phoneNumber = $eventResultData['CALLER_ID'];
 					}
@@ -159,14 +159,14 @@ class Helper
 		// checking for the internal call
 		$portalCall = false;
 		$portalUserId = null;
-		$userData = PhoneTable::getList(array(
-			'select' => array('USER_ID'),
-			'filter' => array(
+		$userData = PhoneTable::getList([
+			'select' => ['USER_ID'],
+			'filter' => [
 				'=PHONE_NUMBER' => $phoneNumber,
 				'=PHONE_MNEMONIC' => 'UF_PHONE_INNER',
 				'=USER.ACTIVE' => 'Y'
-			),
-		))->fetch();
+			],
+		])->fetch();
 		if ($userData)
 		{
 			$portalCall = true;
@@ -180,11 +180,11 @@ class Helper
 			'>DATE_CREATE' => (new DateTime())->add('-T30M'),
 			'=REST_APP_ID' => $fields['REST_APP_ID'],
 		];
-		if($lineId)
+		if ($lineId)
 		{
 			$duplicateFilter['=EXTERNAL_LINE_ID'] = $lineId;
 		}
-		if(isset($fields['EXTERNAL_CALL_ID']))
+		if (isset($fields['EXTERNAL_CALL_ID']))
 		{
 			$duplicateFilter['=EXTERNAL_CALL_ID'] = $fields['EXTERNAL_CALL_ID'];
 		}
@@ -193,14 +193,14 @@ class Helper
 			'filter' => $duplicateFilter
 		]);
 
-		if($duplicateCall)
+		if ($duplicateCall)
 		{
 			$callId = $duplicateCall['CALL_ID'];
 			$call = Call::load($callId);
 
-			if($call)
+			if ($call)
 			{
-				if($fields['SHOW'])
+				if ($fields['SHOW'] ?? null)
 				{
 					self::showExternalCall([
 						'CALL_ID' => $callId
@@ -229,35 +229,37 @@ class Helper
 			}
 		}
 
-		$crmCreate = ($fields['CRM'] || $fields['CRM_CREATE']) && !$portalCall;
-		$callFields = array(
+		$crmCreate = (($fields['CRM'] ?? null) || $fields['CRM_CREATE']) && !$portalCall;
+		$callFields = [
 			'USER_ID' => $fields['USER_ID'],
 			'CALL_ID' => $callId,
 			'INCOMING' => $fields['TYPE'],
-			'DATE_CREATE' => ($fields['CALL_START_DATE'] ?: new DateTime()),
+			'DATE_CREATE' => (($fields['CALL_START_DATE'] ?? null) ?: new DateTime()),
 			'CALLER_ID' => $phoneNumber,
 			'PORTAL_USER_ID' => $portalUserId,
 			'CRM' => $portalCall ? 'N' : 'Y',
 			'REST_APP_ID' => $fields['REST_APP_ID'],
-			'EXTERNAL_LINE_ID' => isset($lineId) ? $lineId : null,
-			'PORTAL_NUMBER' => $lineNumber ?: \CVoxImplantConfig::MODE_REST_APP . ":" . $fields['REST_APP_ID']
-		);
+			'EXTERNAL_LINE_ID' => $lineId ?? null,
+			'PORTAL_NUMBER' => $lineNumber ?: \CVoxImplantConfig::MODE_REST_APP . ":" . $fields['REST_APP_ID'],
+			'LAST_PING' => null,
+			'QUEUE_ID' => null,
+		];
 
-		if(isset($fields['EXTERNAL_CALL_ID']))
+		if (isset($fields['EXTERNAL_CALL_ID']))
 		{
 			$callFields['EXTERNAL_CALL_ID'] = $fields['EXTERNAL_CALL_ID'];
 		}
-		if($fields['CALL_LIST_ID'] > 0)
+		if ($fields['CALL_LIST_ID'] > 0)
 		{
 			$callFields['CRM_CALL_LIST'] = (int)$fields['CALL_LIST_ID'];
 		}
-		if($fields['CRM_ACTIVITY_ID'] > 0)
+		if ($fields['CRM_ACTIVITY_ID'] > 0)
 		{
 			$callFields['CRM_ACTIVITY_ID'] = (int)$fields['CRM_ACTIVITY_ID'];
 		}
 
 		$call = Call::create($callFields);
-		if(isset($fields['CRM_ENTITY_TYPE']) && isset($fields['CRM_ENTITY_ID']))
+		if (isset($fields['CRM_ENTITY_TYPE'], $fields['CRM_ENTITY_ID']))
 		{
 			$call->addCrmEntities([
 				[
@@ -281,7 +283,7 @@ class Helper
 				$activityBindings = \CVoxImplantCrmHelper::getActivityBindings($call);
 			}
 
-			if(is_array($activityBindings))
+			if (is_array($activityBindings))
 			{
 				$call->updateCrmBindings($activityBindings);
 			}
@@ -291,45 +293,45 @@ class Helper
 			$crmData = \CVoxImplantCrmHelper::getCrmEntities($call);
 			$call->updateCrmEntities($crmData);
 			$activityBindings = \CVoxImplantCrmHelper::getActivityBindings($call);
-			if(is_array($activityBindings))
+			if (is_array($activityBindings))
 			{
 				$call->updateCrmBindings($activityBindings);
 			}
 		}
 
-		if($crmCreate)
+		if ($crmCreate)
 		{
 			$createResult = \CVoxImplantCrmHelper::registerCallInCrm(
 				$call,
-				array(
+				[
 					'CRM' => 'Y',
 					'CRM_CREATE' => \CVoxImplantConfig::CRM_CREATE_LEAD,
 					'CRM_CREATE_CALL_TYPE' => \CVoxImplantConfig::CRM_CREATE_CALL_TYPE_ALL,
 					'CRM_SOURCE' => $fields['CRM_SOURCE']
-				)
+				]
 			);
 
-			if(!$createResult)
+			if (!$createResult)
 			{
 				$leadCreationError = \CVoxImplantCrmHelper::$lastError;
 			}
 		}
 
-		if(\CVoxImplantConfig::GetLeadWorkflowExecution() == \CVoxImplantConfig::WORKFLOW_START_IMMEDIATE)
+		if (\CVoxImplantConfig::GetLeadWorkflowExecution() == \CVoxImplantConfig::WORKFLOW_START_IMMEDIATE)
 		{
 			\CVoxImplantCrmHelper::StartCallTrigger($call);
 		}
 
-		\CVoxImplantMain::sendCallStartEvent(array(
+		\CVoxImplantMain::sendCallStartEvent([
 			'CALL_ID' => $callId,
 			'USER_ID' => $fields['USER_ID']
-		));
+		]);
 
-		if($fields['SHOW'])
+		if ($fields['SHOW'])
 		{
-			self::showExternalCall(array(
+			self::showExternalCall([
 				'CALL_ID' => $callId
-			));
+			]);
 		}
 
 		$createdEntities = array_map(
@@ -343,16 +345,18 @@ class Helper
 			$call->getCreatedCrmEntities()
 		);
 
-		$resultData = array(
+		$resultData = [
 			'CALL_ID' => $call->getCallId(),
 			'CRM_CREATED_LEAD' => (int)$call->getCreatedCrmLead() ?: null,
 			'CRM_CREATED_ENTITIES' => $createdEntities,
 			'CRM_ENTITY_TYPE' => (string)$call->getPrimaryEntityType(),
 			'CRM_ENTITY_ID' => (int)$call->getPrimaryEntityId() ?: null,
-		);
+		];
 
-		if(isset($leadCreationError))
+		if (isset($leadCreationError))
+		{
 			$resultData['LEAD_CREATION_ERROR'] = $leadCreationError;
+		}
 
 		$result->setData($resultData);
 		return $result;
@@ -377,7 +381,7 @@ class Helper
 	{
 		$result = new Result();
 
-		if(!is_string($fields['CALL_ID']))
+		if (!is_string($fields['CALL_ID']))
 		{
 			$result->addError(new Error('CALL_ID must be a string'));
 
@@ -397,35 +401,35 @@ class Helper
 			)
 		));*/
 
-		if(!$call)
+		if (!$call)
 		{
 			$result->addError(new Error('Call is not found (call should be registered prior to finishing'));
 			return $result;
 		}
 
-		if(isset($fields['USER_ID']))
+		if (isset($fields['USER_ID']))
 		{
 			$userCheck = \Bitrix\Main\UserTable::getRow([
 				'select' => ['ID'],
 				'filter' => ['=ID' => $fields['USER_ID'], '=ACTIVE' => 'Y', '=IS_REAL_USER' => 'Y']
 			]);
-			if(!$userCheck)
+			if (!$userCheck)
 			{
 				$result->addError(new Error('User is not found or is not active'));
 				return $result;
 			}
 		}
 
-		self::hideExternalCall(array(
+		self::hideExternalCall([
 			'CALL_ID' => $call->getCallId(),
 			'USER_ID' => isset($fields['USER_ID']) ? (int)$fields['USER_ID'] : $call->getUserId()
-		));
+		]);
 
 		$fields['DURATION'] = (int)$fields['DURATION'];
 		$fields['STATUS_CODE'] = $fields['STATUS_CODE'] ?: ($fields['DURATION'] > 0 ? '200' : '304');
 		$fields['ADD_TO_CHAT'] = isset($fields['ADD_TO_CHAT']) ? (bool)$fields['ADD_TO_CHAT'] : true;
 
-		$statisticRecord = array(
+		$statisticRecord = [
 			'CALL_ID' => $call->getCallId(),
 			'EXTERNAL_CALL_ID' => $call->getExternalCallId(),
 			'PORTAL_USER_ID' => isset($fields['USER_ID']) ? (int)$fields['USER_ID'] : $call->getUserId(),
@@ -444,7 +448,7 @@ class Helper
 			'REST_APP_NAME' => self::getRestAppName($call->getRestAppId()),
 			'CRM_ACTIVITY_ID' => (int)$call->getCrmActivityId() ?: null,
 			'COMMENT' => $call->getComment(),
-		);
+		];
 
 		\CVoxImplantCrmHelper::updateCrmEntities(
 			$call->getCreatedCrmEntities(),
@@ -454,27 +458,30 @@ class Helper
 			$statisticRecord['PORTAL_USER_ID']
 		);
 
-		if($call->getPrimaryEntityType() != '' && $call->getPrimaryEntityId() > 0)
+		if ($call->getPrimaryEntityType() != '' && $call->getPrimaryEntityId() > 0)
 		{
 			$statisticRecord['CRM_ENTITY_TYPE'] = $call->getPrimaryEntityType();
 			$statisticRecord['CRM_ENTITY_ID'] = $call->getPrimaryEntityId();
 
 			$viMain = new \CVoxImplantMain($statisticRecord["PORTAL_USER_ID"]);
 			$dialogData = $viMain->GetDialogInfo($statisticRecord['PHONE_NUMBER'], '', false);
-			if(!$dialogData['UNIFIED'])
+			if (!$dialogData['UNIFIED'])
 			{
 				\CVoxImplantMain::UpdateChatInfo(
 					$dialogData['DIALOG_ID'],
-					array(
+					[
 						'CRM' => $call->isCrmEnabled() ? 'Y' : 'N',
 						'CRM_ENTITY_TYPE' => $call->getPrimaryEntityType(),
 						'CRM_ENTITY_ID' => $call->getPrimaryEntityId()
-					)
+					]
 				);
 			}
 		}
 
-		if($call->getCrmActivityId() && \CVoxImplantCrmHelper::shouldAttachCallToActivity($statisticRecord, $call->getCrmActivityId()))
+		if (
+			$call->getCrmActivityId()
+			&& \CVoxImplantCrmHelper::shouldAttachCallToActivity($statisticRecord, $call->getCrmActivityId())
+		)
 		{
 			\CVoxImplantCrmHelper::attachCallToActivity($statisticRecord, $call->getCrmActivityId());
 			$statisticRecord['CRM_ACTIVITY_ID'] = $call->getCrmActivityId();
@@ -484,27 +491,29 @@ class Helper
 			$statisticRecord['CRM_ACTIVITY_ID'] = \CVoxImplantCrmHelper::AddCall($statisticRecord, array(
 				'CRM_BINDINGS' => $call->getCrmBindings()
 			));
-			if(!$statisticRecord['CRM_ACTIVITY_ID'])
+			if (!$statisticRecord['CRM_ACTIVITY_ID'])
+			{
 				$activityCreationError = \CVoxImplantCrmHelper::$lastError;
+			}
 
-			if($call->getCrmActivityId() && \CVoxImplantCrmHelper::shouldCompleteActivity($statisticRecord))
+			if ($call->getCrmActivityId() && \CVoxImplantCrmHelper::shouldCompleteActivity($statisticRecord))
 			{
 				\CVoxImplantCrmHelper::completeActivity($call->getCrmActivityId());
 			}
 		}
 
-		if(\CVoxImplantConfig::GetLeadWorkflowExecution() == \CVoxImplantConfig::WORKFLOW_START_DEFERRED)
+		if (\CVoxImplantConfig::GetLeadWorkflowExecution() == \CVoxImplantConfig::WORKFLOW_START_DEFERRED)
 		{
 			\CVoxImplantCrmHelper::StartCallTrigger($call);
 		}
 
-		if($statisticRecord["CALL_FAILED_CODE"] == 304 && self::isIncomingCall($call))
+		if ($statisticRecord["CALL_FAILED_CODE"] == 304 && self::isIncomingCall($call))
 		{
 			\CVoxImplantCrmHelper::StartMissedCallTrigger($call);
 		}
 
 		$insertResult = StatisticTable::add($statisticRecord);
-		if(!$insertResult->isSuccess())
+		if (!$insertResult->isSuccess())
 		{
 			$result->addError(new Error('Unexpected database error'));
 			$result->addErrors($insertResult->getErrors());
@@ -526,7 +535,7 @@ class Helper
 			];
 
 			$insertMissedCallResult = StatisticMissedTable::add($missedCall);
-			if(!$insertMissedCallResult->isSuccess())
+			if (!$insertMissedCallResult->isSuccess())
 			{
 				$result->addError(new Error('Unexpected database error'));
 				$result->addErrors($insertMissedCallResult->getErrors());
@@ -560,9 +569,9 @@ class Helper
 		}
 
 		$hasRecord = ($fields['RECORD_URL'] != '');
-		if($hasRecord)
+		if ($hasRecord)
 		{
-			if(defined('BX_UTF') && !mb_check_encoding($fields['RECORD_URL'], 'UTF-8'))
+			if (defined('BX_UTF') && !mb_check_encoding($fields['RECORD_URL'], 'UTF-8'))
 			{
 				$result->addError(new Error('RECORD_URL contains invalid symbols for UTF-8 encoding'));
 				return $result;
@@ -571,32 +580,36 @@ class Helper
 			\CVoxImplantHistory::DownloadAgent($insertResult->getId(), $recordUrl, $call->isCrmEnabled());
 		}
 
-		if($fields['ADD_TO_CHAT'])
+		if ($fields['ADD_TO_CHAT'])
 		{
 			$chatMessage = \CVoxImplantHistory::GetMessageForChat($statisticRecord, $hasRecord);
-			if($chatMessage != '')
+			if ($chatMessage != '')
 			{
 				$attach = null;
 
-				if(\CVoxImplantConfig::GetChatAction() == \CVoxImplantConfig::INTERFACE_CHAT_APPEND)
+				if (\CVoxImplantConfig::GetChatAction() == \CVoxImplantConfig::INTERFACE_CHAT_APPEND)
 				{
 					$attach = \CVoxImplantHistory::GetAttachForChat($statisticRecord, $hasRecord);
 				}
 
-				if($attach)
+				if ($attach)
+				{
 					\CVoxImplantHistory::SendMessageToChat($statisticRecord["PORTAL_USER_ID"], $statisticRecord["PHONE_NUMBER"], $statisticRecord["INCOMING"], null, $attach);
+				}
 				else
+				{
 					\CVoxImplantHistory::SendMessageToChat($statisticRecord["PORTAL_USER_ID"], $statisticRecord["PHONE_NUMBER"], $statisticRecord["INCOMING"], $chatMessage);
+				}
 			}
 		}
 
-		if(\CVoxImplantConfig::GetLeadWorkflowExecution() == \CVoxImplantConfig::WORKFLOW_START_DEFERRED)
+		if (\CVoxImplantConfig::GetLeadWorkflowExecution() == \CVoxImplantConfig::WORKFLOW_START_DEFERRED)
 		{
 			$createdCrmEntities = $call->getCreatedCrmEntities();
 
 			foreach ($createdCrmEntities as $entity)
 			{
-				if($entity['ENTITY_TYPE'] === 'LEAD')
+				if ($entity['ENTITY_TYPE'] === 'LEAD')
 				{
 					\CVoxImplantCrmHelper::StartLeadWorkflow($entity['ENTITY_ID']);
 				}
@@ -607,7 +620,7 @@ class Helper
 
 		\CVoxImplantHistory::sendCallEndEvent($statisticRecord);
 		$resultData = $statisticRecord;
-		if(isset($activityCreationError))
+		if (isset($activityCreationError))
 		{
 			$resultData['ERRORS']['ACTIVITY_CREATION'] = $activityCreationError;
 		}
@@ -627,30 +640,33 @@ class Helper
 	{
 		$callId = $params['CALL_ID'];
 		$call = Call::load($callId);
-		if(!$call)
+		if (!$call)
 		{
 			return false;
 		}
 
-		if($call->getExternalLineId())
+		if ($call->getExternalLineId())
 		{
 			$externalLine = ExternalLineTable::getRowById($call->getExternalLineId());
 		}
 
 
-		if(isset($params['USER_ID']))
+		if (isset($params['USER_ID']))
 		{
-			if(is_array($params['USER_ID']))
+			if (is_array($params['USER_ID']))
+			{
 				$userId = $params['USER_ID'];
-			else
-				$userId = array((int)$params['USER_ID']);
+			}
+			else {
+				$userId = [(int)$params['USER_ID']];
+			}
 		}
 		else
 		{
-			$userId = array($call->getUserId());
+			$userId = [$call->getUserId()];
 		}
 
-		\CVoxImplantMain::SendPullEvent(array(
+		\CVoxImplantMain::SendPullEvent([
 			'COMMAND' => 'showExternalCall',
 			'CALL_ID' => $callId,
 			'USER_ID' => $userId,
@@ -663,13 +679,13 @@ class Helper
 			'CRM_ENTITY_ID' => $call->getPrimaryEntityId(),
 			'CRM_BINDINGS' => \CVoxImplantCrmHelper::resolveBindingNames($call->getCrmBindings()),
 			'CRM' => \CVoxImplantCrmHelper::GetDataForPopup($call->getCallId(), $call->getCallerId(), $userId),
-			'CONFIG' => array(
+			'CONFIG' => [
 				'CRM_CREATE' => 'none'
-			),
+			],
 			'PORTAL_CALL' => $call->isInternalCall() ? 'Y' : 'N',
 			'PORTAL_CALL_USER_ID' => $call->getPortalUserId(),
 			'PORTAL_CALL_DATA' => $call->isInternalCall() ? Im::getUserData(['ID' => [$call->getUserId(), $call->getPortalUserId()], 'DEPARTMENT' => 'N', 'HR_PHOTO' => 'Y']) : []
-		));
+		]);
 		return true;
 	}
 
@@ -684,26 +700,33 @@ class Helper
 	{
 		$callId = $params['CALL_ID'];
 		$call = CallTable::getByCallId($callId);
-		if(!$call)
+		if (!$call)
+		{
 			return false;
+		}
 
-		if(isset($params['USER_ID']))
+		if (isset($params['USER_ID']))
 		{
 			if(is_array($params['USER_ID']))
+			{
 				$userId = $params['USER_ID'];
+			}
 			else
-				$userId = array((int)$params['USER_ID']);
+			{
+				$userId = [(int)$params['USER_ID']];
+			}
 		}
 		else
 		{
-			$userId = array($call['USER_ID']);
+			$userId = [$call['USER_ID']];
 		}
 
-		\CVoxImplantMain::SendPullEvent(array(
+		\CVoxImplantMain::SendPullEvent([
 			'COMMAND' => 'hideExternalCall',
 			'USER_ID' => $userId,
 			'CALL_ID' => $callId
-		));
+		]);
+
 		return true;
 	}
 
@@ -714,22 +737,34 @@ class Helper
 	 */
 	public static function getRestAppName($clientId)
 	{
-		if(!Loader::includeModule('rest'))
+		if (!Loader::includeModule('rest'))
+		{
 			return false;
+		}
 
 		$row = AppTable::getByClientId($clientId);
 
-		if(!is_array($row))
+		if (!is_array($row))
+		{
 			return false;
+		}
 
 		if ($row['MENU_NAME'] != '')
+		{
 			$result = $row['MENU_NAME'];
+		}
 		else if ($row['MENU_NAME_DEFAULT'] != '')
+		{
 			$result = $row['MENU_NAME_DEFAULT'];
+		}
 		else if ($row['MENU_NAME_LICENSE'] != '')
+		{
 			$result = $row['MENU_NAME_LICENSE'];
+		}
 		else
+		{
 			$result = $row['APP_NAME'];
+		}
 
 		return $result;
 	}
@@ -752,34 +787,44 @@ class Helper
 
 	protected static function getEventSubscribers($eventName)
 	{
-		$result = array();
-		if(!Loader::includeModule('rest'))
+		$result = [];
+		if (!Loader::includeModule('rest'))
+		{
 			return $result;
+		}
 
-		$cursor = EventTable::getList(array(
-			'select' => array(
+		$cursor = EventTable::getList([
+			'select' => [
 				'APP_ID' => 'APP_ID',
 				'TITLE' => 'TITLE',
 				'APP_NAME' => 'REST_APP.APP_NAME',
 				'MENU_NAME' => 'REST_APP.LANG.MENU_NAME',
 				'DEFAULT_MENU_NAME' => 'REST_APP.LANG_DEFAULT.MENU_NAME'
-			),
-			'filter' => array(
+			],
+			'filter' => [
 				'=EVENT_NAME' => $eventName
-			)
-		));
+			]
+		]);
 
-		while($row = $cursor->fetch())
+		while ($row = $cursor->fetch())
 		{
 			$appId = $row['APP_ID'];
-			if($appId == 0)
+			if ($appId == 0)
+			{
 				$appName = $row['TITLE'];
+			}
 			else if ($row['MENU_NAME'] != '')
+			{
 				$appName = $row['MENU_NAME'];
+			}
 			else if ($row['DEFAULT_MENU_NAME'] != '')
+			{
 				$appName = $row['DEFAULT_MENU_NAME'];
+			}
 			else
+			{
 				$appName = $row['APP_NAME'];
+			}
 
 			$result[$appId] = $appName;
 		}
@@ -809,9 +854,9 @@ class Helper
 	 */
 	public static function startCall($number, $userId, $lineId = '', array $parameters = array())
 	{
-		$entityType = $parameters['ENTITY_TYPE'];
+		$entityType = $parameters['ENTITY_TYPE'] ?? '';
 		$entityId = $parameters['ENTITY_ID'];
-		if(mb_strpos($entityType, 'CRM_') === 0)
+		if (mb_strpos($entityType, 'CRM_') === 0)
 		{
 			$entityType = mb_substr($entityType, 4);
 		}
@@ -826,7 +871,7 @@ class Helper
 			$entityId = null;
 		}
 
-		if($lineId)
+		if ($lineId)
 		{
 			$line = \CVoxImplantConfig::GetLine($lineId);
 		}
@@ -834,7 +879,7 @@ class Helper
 		{
 			$line = self::getExternalCallHandler($userId);
 		}
-		if(!$line)
+		if (!$line)
 		{
 			$result = new Result();
 			return $result->addError(new Error("Outgoing line is not found", "LINE_NOT_FOUND"));
@@ -842,18 +887,18 @@ class Helper
 		$lineNumber = mb_substr($line['LINE_NUMBER'], 0, 8) === 'REST_APP' ? '' : $line['LINE_NUMBER'];
 
 		[$extensionSeparator, $extension] = Parser::getInstance()->stripExtension($number);
-		$eventFields = array(
+		$eventFields = [
 			'PHONE_NUMBER' => $number,
 			'PHONE_NUMBER_INTERNATIONAL' => Parser::getInstance()->parse($number)->format(Format::E164),
 			'EXTENSION' => $extension,
 			'USER_ID' => $userId,
-			'CALL_LIST_ID' => (int)$parameters['CALL_LIST_ID'],
+			'CALL_LIST_ID' => (int)($parameters['CALL_LIST_ID'] ?? null),
 			'APP_ID' => $line['REST_APP_ID'],
 			'LINE_NUMBER' => $lineNumber,
 			'IS_MOBILE' => $parameters['IS_MOBILE'] === true,
-		);
+		];
 
-		$registerResult = static::registerExternalCall(array(
+		$registerResult = static::registerExternalCall([
 			'USER_ID' => $userId,
 			'PHONE_NUMBER' => $number,
 			'LINE_NUMBER' => $lineNumber,
@@ -861,11 +906,11 @@ class Helper
 			'CRM_CREATE' => ($line['CRM_AUTO_CREATE'] ?? 'Y') === 'Y',
 			'CRM_ENTITY_TYPE' => $entityType,
 			'CRM_ENTITY_ID' => $entityId,
-			'CRM_ACTIVITY_ID' => (int)$parameters['SRC_ACTIVITY_ID'],
-			'CRM_BINDINGS' => is_array($parameters['BINDINGS']) ? $parameters['BINDINGS'] : null,
+			'CRM_ACTIVITY_ID' => (int)($parameters['SRC_ACTIVITY_ID'] ?? null),
+			'CRM_BINDINGS' => is_array(($parameters['BINDINGS'] ?? null)) ? $parameters['BINDINGS'] : null,
 			'REST_APP_ID' => $line['REST_APP_ID'],
-			'CALL_LIST_ID' => (int)$parameters['CALL_LIST_ID'],
-		));
+			'CALL_LIST_ID' => (int)($parameters['CALL_LIST_ID'] ?? null),
+		]);
 		if($registerResult->isSuccess())
 		{
 			$callData = $registerResult->getData();
@@ -893,7 +938,7 @@ class Helper
 	 */
 	public static function startCallBack(array $parameters)
 	{
-		$eventFields = array(
+		$eventFields = [
 			'PHONE_NUMBER' => $parameters['PHONE_NUMBER'],
 			'TEXT' => $parameters['TEXT'],
 			'VOICE' => $parameters['VOICE'],
@@ -901,7 +946,7 @@ class Helper
 			'CRM_ENTITY_ID' => $parameters['CRM_ENTITY_ID'],
 			'APP_ID' => $parameters['APP_ID'],
 			'LINE_NUMBER' => $parameters['LINE_NUMBER']
-		);
+		];
 
 		$event = new Event(
 			'voximplant',
@@ -924,29 +969,29 @@ class Helper
 		$result = new Result();
 
 		$statisticRecord = StatisticTable::getByCallId($callId);
-		if(!$statisticRecord)
+		if (!$statisticRecord)
 		{
 			$result->addError(new Error("Call is not found in the statistic table. Looks like it is not finished yet."));
 			return $result;
 		}
 
-		if($fileContent === null)
+		if ($fileContent === null)
 		{
-			$result->setData(array(
-				'uploadUrl' => \CRestUtil::getUploadUrl(array('callId' => $callId), $restServer),
+			$result->setData([
+				'uploadUrl' => \CRestUtil::getUploadUrl(['callId' => $callId], $restServer),
 				'fieldName' => static::FILE_FIELD
-			));
+			]);
 			return $result;
 		}
 
-		if($fileName == '')
+		if ($fileName == '')
 		{
 			$result->addError(new Error("File name is empty"));
 			return $result;
 		}
 
-		$allowedExtensions = array('wav', 'mp3');
-		if(!in_array(GetFileExtension($fileName), $allowedExtensions))
+		$allowedExtensions = ['wav', 'mp3'];
+		if (!in_array(GetFileExtension($fileName), $allowedExtensions))
 		{
 			$result->addError(new Error("Wrong file extension. Only wav and mp3 are allowed"));
 			return $result;
@@ -960,20 +1005,33 @@ class Helper
 			return $result;
 		}
 
-		if(is_null($fileArray))
+		if (is_null($fileArray))
 		{
 			$result->addError(new Error("File content is not properly encoded. Base64 encoding is expected."));
 			return $result;
 		}
 
-		if(!is_array($fileArray))
+		if (!is_array($fileArray))
 		{
 			$result->addError(new Error("Unknown error encountered while saving file."));
 			return $result;
 		}
 
-		$saveResult = static::saveFile($statisticRecord['CALL_START_DATE']->format("Y-m"), $fileName, $fileArray, $statisticRecord['PORTAL_USER_ID']);
-		if(!$saveResult->isSuccess())
+		$isCorrectFileResult = Security\RecordFile::isCorrectFromArray($fileArray);
+		if (!$isCorrectFileResult->isSuccess())
+		{
+			return $result->addErrors($isCorrectFileResult->getErrors());
+		}
+
+		$saveResult =
+			static::saveFile(
+				$statisticRecord['CALL_START_DATE']->format("Y-m"),
+				$fileName,
+				$fileArray,
+				$statisticRecord['PORTAL_USER_ID']
+			)
+		;
+		if (!$saveResult->isSuccess())
 		{
 			$result->addErrors($saveResult->getErrors());
 			return $result;
@@ -990,15 +1048,15 @@ class Helper
 		}
 
 		$attachResult = static::attachFile($callId, $file);
-		if(!$attachResult->isSuccess())
+		if (!$attachResult->isSuccess())
 		{
 			$result->addErrors($attachResult->getErrors());
 			return $result;
 		}
 
-		$result->setData(array(
+		$result->setData([
 			'FILE_ID' => $file->getId()
-		));
+		]);
 
 		return $result;
 	}
@@ -1015,7 +1073,7 @@ class Helper
 		$result = new Result();
 
 		$statisticRecord = StatisticTable::getByCallId($callId);
-		if(!$statisticRecord)
+		if (!$statisticRecord)
 		{
 			$result->addError(new Error("Call is not found in the statistic table. Looks like it is not finished yet."));
 			return $result;
@@ -1053,9 +1111,9 @@ class Helper
 			return $result;
 		}
 
-		$httpClient = HttpClientFactory::create(array(
+		$httpClient = HttpClientFactory::create([
 			"disableSslVerification" => true
-		));
+		]);
 
 		$httpClient->setOutputStream($handler);
 		$queryResult = $httpClient->query('GET', $recordUrl);
@@ -1065,7 +1123,7 @@ class Helper
 		if ($queryResult === false)
 		{
 			$httpClientErrors = $httpClient->getError();
-			if(!empty($httpClientErrors))
+			if (!empty($httpClientErrors))
 			{
 				foreach ($httpClientErrors as $code => $message)
 				{
@@ -1081,7 +1139,7 @@ class Helper
 
 		//check for http errors once more
 		$httpClientErrors = $httpClient->getError();
-		if(!empty($httpClientErrors))
+		if (!empty($httpClientErrors))
 		{
 			foreach ($httpClientErrors as $code => $message)
 			{
@@ -1090,8 +1148,15 @@ class Helper
 		}
 
 		$fileArray = \CFile::MakeFileArray($tempPath);
+
+		$isCorrectFileResult = Security\RecordFile::isCorrectFromArray($fileArray);
+		if (!$isCorrectFileResult->isSuccess())
+		{
+			return $result->addErrors($isCorrectFileResult->getErrors());
+		}
+
 		$saveResult = static::saveFile($statisticRecord['CALL_START_DATE']->format("Y-m"), $fileName, $fileArray, $statisticRecord['PORTAL_USER_ID']);
-		if(!$saveResult->isSuccess())
+		if (!$saveResult->isSuccess())
 		{
 			$result->addErrors($saveResult->getErrors());
 			return $result;
@@ -1107,16 +1172,16 @@ class Helper
 			);
 		}
 
-		$attachResult = static::attachFile($callId, $file);
-		if(!$attachResult->isSuccess())
+		$attachResult = static::attachFile($callId, $file, $recordUrl);
+		if (!$attachResult->isSuccess())
 		{
 			$result->addErrors($attachResult->getErrors());
 			return $result;
 		}
 
-		$result->setData(array(
+		$result->setData([
 			'FILE_ID' => $file->getId()
-		));
+		]);
 
 		return $result;
 	}
@@ -1130,7 +1195,7 @@ class Helper
 	public static function uploadRecord($callId)
 	{
 		$result = new Result();
-		if(!is_array($_FILES[self::FILE_FIELD]))
+		if (!is_array($_FILES[self::FILE_FIELD]))
 		{
 			$result->addError(new Error("Error: required parameter " . self::FILE_FIELD . " is not found"));
 			return $result;
@@ -1140,21 +1205,21 @@ class Helper
 		$fileName = $fileArray['name'];
 
 		$allowedExtensions = array('wav', 'mp3');
-		if(!in_array(GetFileExtension($fileName), $allowedExtensions))
+		if (!in_array(GetFileExtension($fileName), $allowedExtensions))
 		{
 			$result->addError(new Error("Wrong file extension. Only wav and mp3 are allowed"));
 			return $result;
 		}
 
 		$statisticRecord = \Bitrix\Voximplant\StatisticTable::getByCallId($callId);
-		if(!$statisticRecord)
+		if (!$statisticRecord)
 		{
 			$result->addError(new Error("Call is not found in the statistic table. Looks like it is not finished yet."));
 			return $result;
 		}
 
 		$saveResult = static::saveFile($statisticRecord['CALL_START_DATE']->format("Y-m"), $fileName, $fileArray, $statisticRecord['PORTAL_USER_ID']);
-		if(!$saveResult->isSuccess())
+		if (!$saveResult->isSuccess())
 		{
 			$result->addErrors($saveResult->getErrors());
 			return $result;
@@ -1163,15 +1228,15 @@ class Helper
 		$file = $saveResultData['FILE'];
 
 		$attachResult = static::attachFile($callId, $file);
-		if(!$attachResult->isSuccess())
+		if (!$attachResult->isSuccess())
 		{
 			$result->addErrors($attachResult->getErrors());
 			return $result;
 		}
 
-		$result->setData(array(
+		$result->setData([
 			'FILE_ID' => $file->getId()
-		));
+		]);
 
 		return $result;
 	}
@@ -1180,7 +1245,7 @@ class Helper
 	{
 		$result = new Result();
 
-		if(!Loader::includeModule('crm'))
+		if (!Loader::includeModule('crm'))
 		{
 			$result->addError(new Error('CRM is not installed.'));
 			return $result;
@@ -1189,23 +1254,23 @@ class Helper
 		$timeManInstalled = Loader::includeModule('timeman');
 
 		$userId = Security\Helper::getCurrentUserId();
-		$searchResult = \CCrmSipHelper::findByPhoneNumber($phoneNumber, array('USER_ID' => $userId));
+		$searchResult = \CCrmSipHelper::findByPhoneNumber($phoneNumber, ['USER_ID' => $userId]);
 		$resultData = [];
 		$userIds = [];
 		$entities = [];
 
-		$entityNames = array(\CCrmOwnerType::ContactName, \CCrmOwnerType::LeadName, \CCrmOwnerType::CompanyName);
+		$entityNames = [\CCrmOwnerType::ContactName, \CCrmOwnerType::LeadName, \CCrmOwnerType::CompanyName];
 		foreach ($entityNames as $entityName)
 		{
-			if(isset($searchResult[$entityName]))
+			if (isset($searchResult[$entityName]))
 			{
 				foreach ($searchResult[$entityName] as $entityData)
 				{
-					$resultData[] = array(
+					$resultData[] = [
 						'CRM_ENTITY_TYPE' => $entityName,
 						'CRM_ENTITY_ID' => $entityData['ID'],
 						'ASSIGNED_BY_ID' => $entityData['ASSIGNED_BY_ID']
-					);
+					];
 					$userIds[] = $entityData['ASSIGNED_BY_ID'];
 					$entities[] = [
 						'TYPE' => $entityName,
@@ -1219,29 +1284,29 @@ class Helper
 
 		foreach ($resultData as $k => $v)
 		{
-			if(isset($crmEntityFields[$v['CRM_ENTITY_TYPE'] . ':' . $v['CRM_ENTITY_ID']]))
+			if (isset($crmEntityFields[$v['CRM_ENTITY_TYPE'] . ':' . $v['CRM_ENTITY_ID']]))
 			{
 				$resultData[$k]['NAME'] = $crmEntityFields[$v['CRM_ENTITY_TYPE'] . ':' . $v['CRM_ENTITY_ID']]['NAME'];
 			}
 		}
 
-		$userCursor = UserTable::getList(array(
-			'select' => array('ID', 'UF_PHONE_INNER', 'WORK_PHONE', 'PERSONAL_PHONE' , 'PERSONAL_MOBILE'),
-			'filter' => array(
+		$userCursor = UserTable::getList([
+			'select' => ['ID', 'UF_PHONE_INNER', 'WORK_PHONE', 'PERSONAL_PHONE' , 'PERSONAL_MOBILE'],
+			'filter' => [
 				'=ID' => $userIds
-			)
-		));
+			]
+		]);
 
-		$userData = array();
+		$userData = [];
 		while ($row = $userCursor->fetch())
 		{
 			$userId = $row['ID'];
 			$userData[$userId] = $row;
 
-			if($timeManInstalled)
+			if ($timeManInstalled)
 			{
 				$tmUser = new \CTimeManUser($userId);
-				$tmSettings = $tmUser->GetSettings(Array('UF_TIMEMAN'));
+				$tmSettings = $tmUser->GetSettings(['UF_TIMEMAN']);
 				if (!$tmSettings['UF_TIMEMAN'])
 				{
 					$userData[$userId]['TIMEMAN_STATUS'] = 'UNAVAILABLE';
@@ -1260,17 +1325,17 @@ class Helper
 		foreach ($resultData as $k => $v)
 		{
 			$row = $userData[$v['ASSIGNED_BY_ID']];
-			$resultData[$k]['ASSIGNED_BY'] = array(
+			$resultData[$k]['ASSIGNED_BY'] = [
 				'ID' => $row['ID'],
 				'TIMEMAN_STATUS' => $row['TIMEMAN_STATUS'],
 				'USER_PHONE_INNER' => $row['UF_PHONE_INNER'],
 				'WORK_PHONE' => $row['WORK_PHONE'],
 				'PERSONAL_PHONE' => $row['PERSONAL_PHONE'],
 				'PERSONAL_MOBILE' => $row['PERSONAL_MOBILE'],
-			);
+			];
 		}
-
 		$result->setData($resultData);
+
 		return $result;
 	}
 
@@ -1283,7 +1348,7 @@ class Helper
 	{
 		$result = new Result();
 		$number = trim($externalLine['NUMBER']);
-		if($number == '')
+		if ($number == '')
 		{
 			$result->addError(new Error('NUMBER should not be empty'));
 			return $result;
@@ -1320,9 +1385,9 @@ class Helper
 			[],
 			Application::JOB_PRIORITY_LOW
 		);
-		$result->setData(array(
+		$result->setData([
 			'ID' => $insertResult->getId()
-		));
+		]);
 		return $result;
 	}
 
@@ -1330,20 +1395,20 @@ class Helper
 	{
 		$result = new Result();
 		$number = trim($number);
-		if($number == '')
+		if ($number == '')
 		{
 			$result->addError(new Error('NUMBER should not be empty'));
 			return $result;
 		}
 
-		$row = ExternalLineTable::getRow(array(
-			'filter' => array(
+		$row = ExternalLineTable::getRow([
+			'filter' => [
 				'=NUMBER' => $number,
 				'=REST_APP_ID' =>$restAppId
-			)
-		));
+			]
+		]);
 
-		if(!$row)
+		if (!$row)
 		{
 			$result->addError(new Error('Could not find line with number ' . $number));
 			return $result;
@@ -1351,7 +1416,7 @@ class Helper
 
 		$updateResult = ExternalLineTable::update($row['ID'], $updatingFields);
 
-		if(!$updateResult->isSuccess())
+		if (!$updateResult->isSuccess())
 		{
 			$result->addErrors($updateResult->getErrors());
 			return $result;
@@ -1363,9 +1428,10 @@ class Helper
 			Application::JOB_PRIORITY_LOW
 		);
 
-		$updateResult->setData(array(
+		$updateResult->setData([
 			'ID' => $updateResult->getId()
-		));
+		]);
+
 		return $updateResult;
 	}
 
@@ -1373,27 +1439,27 @@ class Helper
 	{
 		$result = new Result();
 		$number = trim($number);
-		if($number == '')
+		if ($number == '')
 		{
 			$result->addError(new Error('NUMBER should not be empty'));
 			return $result;
 		}
 
-		$row = ExternalLineTable::getRow(array(
-			'filter' => array(
+		$row = ExternalLineTable::getRow([
+			'filter' => [
 				'=NUMBER' => $number,
 				'=REST_APP_ID' =>$restAppId
-			)
-		));
+			]
+		]);
 
-		if(!$row)
+		if (!$row)
 		{
 			$result->addError(new Error('Could not find line with number ' . $number));
 			return $result;
 		}
 
 		$deleteResult = ExternalLineTable::delete($row['ID']);
-		if(!$deleteResult->isSuccess())
+		if (!$deleteResult->isSuccess())
 		{
 			$result->addErrors($deleteResult->getErrors());
 			return $result;
@@ -1448,19 +1514,19 @@ class Helper
 
 	public static function onRestAppDelete($params)
 	{
-		if(!\Bitrix\Main\Loader::includeModule('rest'))
+		if (!\Bitrix\Main\Loader::includeModule('rest'))
 		{
 			return;
 		}
 		$restAppId = $params['APP_ID'];
-		$externalNumberIds = array();
+		$externalNumberIds = [];
 
-		$cursor = ExternalLineTable::getList(array(
-			'select' => array('ID'),
-			'filter' => array(
+		$cursor = ExternalLineTable::getList([
+			'select' => ['ID'],
+			'filter' => [
 				'=REST_APP_ID' => $restAppId
-			)
-		));
+			]
+		]);
 		while ($row = $cursor->fetch())
 		{
 			$externalNumberIds[] = $row['ID'];
@@ -1497,40 +1563,40 @@ class Helper
 	protected static function saveFile($folderName, $fileName, $fileArray, $userId)
 	{
 		$result = new Result();
-		if(!Loader::includeModule('disk'))
+		if (!Loader::includeModule('disk'))
 		{
 			return $result->addError(new Error('Disk module is not installed'));
 		}
 
 		$uploadFolder = \CVoxImplantDiskHelper::GetRecordsFolder($folderName);
-		if(!$uploadFolder)
+		if (!$uploadFolder)
 		{
 			return $result->addError(new Error('Could not create shared folder for call records'));
 		}
 
-		$accessCodes = Array();
+		$accessCodes = [];
 		$rightsManager = \Bitrix\Disk\Driver::getInstance()->getRightsManager();
 		$fullAccessTaskId = $rightsManager->getTaskIdByName($rightsManager::TASK_FULL);
 
-		$accessCodes[] = Array(
+		$accessCodes[] = [
 			'ACCESS_CODE' => 'U'.intval($userId),
 			'TASK_ID' => $fullAccessTaskId,
-		);
+		];
 
 		$file = $uploadFolder->uploadFile(
 			$fileArray,
-			array(
+			[
 				'NAME' => $fileName,
 				'CREATED_BY' => $userId
-			),
+			],
 			$accessCodes
 		);
 
-		if($file)
+		if ($file)
 		{
-			$result->setData(array(
+			$result->setData([
 				'FILE' => $file
-			));
+			]);
 		}
 		else
 		{
@@ -1548,37 +1614,48 @@ class Helper
 	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Exception
 	 */
-	protected static function attachFile($callId, $file)
+	protected static function attachFile(string $callId, File $file, string $recordUrl = null): Result
 	{
 		$result = new Result();
 
-		if(!Loader::includeModule('crm'))
+		if (!Loader::includeModule('crm'))
+		{
 			return $result->addError(new Error("CRM is not installed"));
+		}
 
 		$statisticRecord = StatisticTable::getByCallId($callId);
-		if(!$statisticRecord)
-			return $result->addError(new Error("Call is not found in the statistic table. Looks like it is not finished yet."));
-
-		StatisticTable::update($statisticRecord['ID'], array(
-			'CALL_RECORD_ID' => $file->getFileId(),
-			'CALL_WEBDAV_ID' => $file->getId()
-		));
-
-		if($statisticRecord['CRM_ACTIVITY_ID'])
-			$activity = \CCrmActivity::GetByID($statisticRecord['CRM_ACTIVITY_ID'], false);
-		else
-			$activity = \CCrmActivity::GetByOriginID('VI_'.$statisticRecord['CALL_ID'], false);
-
-		if($activity)
+		if (!$statisticRecord)
 		{
-			$activityFields = array(
+			return $result->addError(new Error("Call is not found in the statistic table. Looks like it is not finished yet."));
+		}
+
+		StatisticTable::update($statisticRecord['ID'], [
+			'CALL_RECORD_ID' => $file->getFileId(),
+			'CALL_WEBDAV_ID' => $file->getId(),
+			'CALL_RECORD_URL' => $recordUrl,
+		]);
+
+		if ($statisticRecord['CRM_ACTIVITY_ID'])
+		{
+			$activity = \CCrmActivity::GetByID($statisticRecord['CRM_ACTIVITY_ID'], false);
+		}
+		else
+		{
+			$activity = \CCrmActivity::GetByOriginID('VI_' . $statisticRecord['CALL_ID'], false);
+		}
+
+		if ($activity)
+		{
+			$activityFields = [
 				'STORAGE_TYPE_ID' => StorageType::Disk,
-				'STORAGE_ELEMENT_IDS' => array($file->getId())
-			);
+				'STORAGE_ELEMENT_IDS' => [$file->getId()]
+			];
 
 			$updateResult = \CCrmActivity::Update($activity['ID'], $activityFields, false);
 			if(!$updateResult)
+			{
 				return $result->addError(new Error(\CCrmActivity::GetLastErrorMessage()));
+			}
 		}
 
 		return $result;

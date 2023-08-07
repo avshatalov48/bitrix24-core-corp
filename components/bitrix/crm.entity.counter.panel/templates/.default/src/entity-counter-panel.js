@@ -95,7 +95,7 @@ class EntityCounterPanel extends CounterPanel
 
 		if (!this.#processItemSelection(item))
 		{
-			return BX.PreventDefault(event);
+			return event.preventDefault()
 		}
 	}
 
@@ -131,7 +131,6 @@ class EntityCounterPanel extends CounterPanel
 	{
 		let isValueUpdated = false;
 
-		const isNoSliders = BX.SidePanel.Instance.getTopSlider() === null;
 		const data = this.#counterManager.getCounterData();
 		const parentItem = this.getItemById(EntityCounterPanel.getMenuParentItemId(this.#codes));
 
@@ -181,8 +180,6 @@ class EntityCounterPanel extends CounterPanel
 
 					BX.userOptions.save('crm', this.#filterLastPresetId, '', JSON.stringify(this.#filterLastPreset));
 				}
-
-				// BX.onCustomEvent(window, 'BX.CrmEntityCounterPanel:applyFilter', [this, eventArgs]);
 
 				const userId = isOtherUsersFilter ? EntityCounterFilterManager.FILTER_OTHER_USERS : this.#userId.toString();
 				const userName = isOtherUsersFilter ? Loc.getMessage('NEW_CRM_COUNTER_TYPE_OTHER') : this.#userName;
@@ -365,12 +362,15 @@ class EntityCounterPanel extends CounterPanel
 
 					parentTotal += value;
 
-					let color = EntityCounterPanel.detectCounterItemColor(item.TYPE_NAME, value);
+					const color = EntityCounterPanel.detectCounterItemColor(item.TYPE_NAME, value);
 
 					return {
 						id: code,
 						title: Loc.getMessage('NEW_CRM_COUNTER_TYPE_OTHER_' + item.TYPE_NAME),
-						value: value,
+						value: {
+							value: value,
+							order: -1
+						},
 						color: color === 'THEME' ? 'GRAY' : color, // override color to correct display on different themes
 						parentId: parentItemId
 					};
@@ -381,7 +381,10 @@ class EntityCounterPanel extends CounterPanel
 			otherUsersItems = [{
 				id: parentItemId,
 				title: Loc.getMessage('NEW_CRM_COUNTER_TYPE_OTHER_TITLE'),
-				value: parentTotal,
+				value: {
+					value: parentTotal,
+					order: -1
+				},
 				isRestricted: isRestricted,
 				color: 'THEME'
 			}].concat(otherUsersItems);

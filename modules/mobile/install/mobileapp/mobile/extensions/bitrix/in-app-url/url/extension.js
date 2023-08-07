@@ -55,6 +55,14 @@ jn.define('in-app-url/url', (require, exports, module) => {
 		/**
 		 * @return {boolean}
 		 */
+		get isPhoneNumber()
+		{
+			return this.value.startsWith('tel:');
+		}
+
+		/**
+		 * @return {boolean}
+		 */
 		get isBitrix24()
 		{
 			return this.value.startsWith('bitrix24://');

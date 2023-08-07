@@ -221,7 +221,7 @@ class CVoxImplantIncoming
 		global $USER;
 
 		$answer['COMMAND'] = $params['COMMAND'];
-		$answer['OPERATOR_ID'] = $params['OPERATOR_ID']? $params['OPERATOR_ID']: $USER->GetId();
+		$answer['OPERATOR_ID'] = $params['OPERATOR_ID'] ?? $USER->GetId();
 		if ($params['COMMAND'] == CVoxImplantIncoming::COMMAND_INVITE)
 		{
 		}
@@ -397,6 +397,8 @@ class CVoxImplantIncoming
 				'EXTERNAL_LINE_ID' => $externalLineId,
 				'SESSION_ID' => $params['SESSION_ID'],
 				'SIP_HEADERS' => is_array($params['SIP_HEADERS']) ? $params['SIP_HEADERS'] : [],
+				'LAST_PING'=> null,
+				'QUEUE_ID' => null,
 			]);
 		}
 

@@ -38,7 +38,7 @@ jn.define('crm/terminal/payment-pay/components/payment-button/button', (require,
 						flexDirection: 'row',
 						alignItems: 'center',
 						justifyContent: 'center',
-						height: 48,
+						height: PaymentButton.getHeight(),
 						...this.containerStyles,
 					},
 					onClick: this.onClick,
@@ -123,7 +123,14 @@ jn.define('crm/terminal/payment-pay/components/payment-button/button', (require,
 		{
 			return this.props.uid || this.randomUid;
 		}
+
+		static getHeight()
+		{
+			return HEIGHT;
+		}
 	}
+
+	const HEIGHT = 48;
 
 	module.exports = { PaymentButton };
 });

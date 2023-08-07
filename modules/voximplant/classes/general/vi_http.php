@@ -1,5 +1,6 @@
-<?
+<?php
 
+use Bitrix\Main\Application;
 use Bitrix\Voximplant\Result;
 use Bitrix\Main\Error;
 
@@ -31,8 +32,7 @@ class CVoxImplantHttp
 		}
 		else
 		{
-			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/update_client.php");
-			$this->licenceCode = md5("BITRIX".CUpdateClient::GetLicenseKey()."LICENCE");
+			$this->licenceCode = Application::getInstance()->getLicense()->getPublicHashKey();
 		}
 		$this->type = self::GetPortalType();
 		$this->domain = self::GetServerAddress();
@@ -292,7 +292,11 @@ class CVoxImplantHttp
 	 */
 	public function AttachPhoneNumber(array $params)
 	{
-		$request = Array(
+		if (is_array($params['number']))
+		{
+			$params['number'] = implode(';', $params['number']);
+		}
+		$request = [
 			'PHONE_CATEGORY_NAME' => $params['categoryName'],
 			'COUNTRY_CODE' => $params['countryCode'],
 			'PHONE_REGION_ID' => $params['regionId'],
@@ -301,7 +305,8 @@ class CVoxImplantHttp
 			'SINGLE_SUBSCRIPTION' => $params['singleSubscription'] ? 'Y' : 'N',
 			'COUNTRY_STATE' => $params['countryState'],
 			'ADDRESS_VERIFICATION' => $params['addressVerification']
-		);
+		];
+
 		$query = $this->Query(
 			'AttachPhoneNumber',
 			$request,
@@ -311,7 +316,14 @@ class CVoxImplantHttp
 		);
 		if (isset($query->error))
 		{
+			if (is_array($query->error))
+			{
+				$this->error = new CVoxImplantError(__METHOD__, $query->error['code'], $query->error['msg']);
+
+				return false;
+			}
 			$this->error = new CVoxImplantError(__METHOD__, $query->error->code, $query->error->msg);
+
 			return false;
 		}
 
@@ -760,13 +772,10 @@ class CVoxImplantHttp
 
 	public function GetDocumentAccess()
 	{
-		$query = $this->Query(
-			'GetDocumentAccess',
-			Array()
-		);
+		$query = $this->Query('GetDocumentAccess');
 		if (isset($query->error))
 		{
-			$this->error = new CVoxImplantError(__METHOD__, $query->error->code, $query->error->msg);
+			$this->error = new CVoxImplantError(__METHOD__, $query->error['code'], $query->error['msg']);
 			return false;
 		}
 

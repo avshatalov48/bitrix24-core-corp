@@ -349,14 +349,6 @@ this.BX.Disk = this.BX.Disk || {};
 	  return ClientCommandHandler;
 	}(BaseCommandHandler);
 
-	var SharingControlType = function SharingControlType() {
-	  babelHelpers.classCallCheck(this, SharingControlType);
-	};
-
-	babelHelpers.defineProperty(SharingControlType, "WITHOUT_EDIT", 'without-edit');
-	babelHelpers.defineProperty(SharingControlType, "WITH_CHANGE_RIGHTS", 'with-change-rights');
-	babelHelpers.defineProperty(SharingControlType, "WITH_SHARING", 'with-sharing');
-
 	var _templateObject, _templateObject2;
 
 	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
@@ -792,6 +784,10 @@ this.BX.Disk = this.BX.Disk || {};
 	          new disk_sharingLegacyPopup.LegacyPopup().showSharingDetailWithoutEdit({
 	            object: this.context.object
 	          });
+	          break;
+
+	        case disk_sharingLegacyPopup.SharingControlType.BLOCKED_BY_FEATURE:
+	          BX.UI.InfoHelper.show('limit_office_files_access_permissions');
 	          break;
 	      }
 	    }

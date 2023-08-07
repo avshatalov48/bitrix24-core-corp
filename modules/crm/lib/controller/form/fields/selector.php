@@ -46,8 +46,16 @@ class Selector extends Main\Engine\JsonController
 		{
 			$hiddenTypes[] = \CCrmOwnerType::SmartDocument;
 		}
+		if (isset($options['presetId']) && is_numeric($options['presetId']))
+		{
+			$presetId = (int)$options['presetId'];
+		}
+		else
+		{
+			$presetId = null;
+		}
 
-		$fields = EntityFieldProvider::getFieldsTree($hiddenTypes);
+		$fields = EntityFieldProvider::getFieldsTree($hiddenTypes, $presetId);
 		foreach ($fields as $key => $item)
 		{
 			if (strpos($key, 'DYNAMIC_') === 0)

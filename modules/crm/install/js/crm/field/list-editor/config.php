@@ -8,7 +8,6 @@ return [
 	'css' => 'dist/list-editor.bundle.css',
 	'js' => 'dist/list-editor.bundle.js',
 	'rel' => [
-		'landing.ui.panel.fieldspanel',
 		'ui.notification',
 		'ui.draganddrop.draggable',
 		'ui.sidepanel.layout',
@@ -17,7 +16,7 @@ return [
 		'main.core.events',
 		'ui.forms',
 		'main.core',
-		'landing.master',
+		'crm.form.fields.selector',
 	],
 	'skip_core' => false,
 ];

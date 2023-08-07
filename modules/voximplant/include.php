@@ -1,4 +1,4 @@
-<?
+<?php
 
 require_once __DIR__.'/autoload.php';
 
@@ -26,4 +26,3 @@ CJSCore::RegisterExt('voximplant_transcript', array(
 	'js' => '/bitrix/js/voximplant/transcript.js',
 	'lang' => '/bitrix/modules/voximplant/lang/'.LANGUAGE_ID.'/install/js/transcript.php',
 ));
-?>

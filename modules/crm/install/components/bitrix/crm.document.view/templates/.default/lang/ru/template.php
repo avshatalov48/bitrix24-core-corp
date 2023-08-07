@@ -32,8 +32,8 @@ $MESS["CRM_DOCUMENT_VIEW_SIGN_BUTTON"] = "Подписать";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_CLICKED"] = "Вы уже запустили подписание документа";
 
 $MESS["CRM_DOCUMENT_VIEW_SIGN_POPUP_CLOSE"] = "Закрыть";
-$MESS["CRM_DOCUMENT_VIEW_SIGN_POPUP_TITLE_MSGVER_1"] = "Подписание";
-$MESS["CRM_DOCUMENT_VIEW_SIGN_DO_USE_PREVIOUS"] = "Этот шаблон использовался %CREATED_AT% для сделки \"%TITLE%\", ответственный \"%INITIATOR%\". Использовать снова?";
-$MESS["CRM_DOCUMENT_VIEW_SIGN_OLD_BUTTON_MSGVER_1"] = "Использовать снова";
-$MESS["CRM_DOCUMENT_VIEW_SIGN_NEW_BUTTON_MSGVER_1"] = "Другой шаблон";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_POPUP_TITLE_MSGVER_2"] = "Использовать готовый шаблон?";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_DO_USE_PREVIOUS_MSG_MSGVER_3"] = "Шаблон с готовым текстом и настроенными полями уже использовался для сделки \"%TITLE%\", ответственный - \"%INITIATOR%\". Вы можете продолжить с этим шаблоном или создать новый.";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_OLD_BUTTON_MSGVER_2"] = "Использовать шаблон";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_NEW_BUTTON_MSGVER_3"] = "Создать новый";
 

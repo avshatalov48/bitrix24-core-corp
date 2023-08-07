@@ -1878,3 +1878,11 @@ select.task-options-inp {
 	padding-left: 15px;
 	padding-bottom: 10px;
 }
+
+.tasks-task-editor-btn-ai-text {
+	background: url(images/ai-text.svg) no-repeat center;
+}
+
+.tasks-task-editor-btn-ai-image {
+	background: url(images/ai-image.svg) no-repeat center;
+}

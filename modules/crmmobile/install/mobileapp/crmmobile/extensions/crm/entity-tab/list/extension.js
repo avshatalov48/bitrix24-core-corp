@@ -6,19 +6,13 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 	const { Filter } = require('crm/entity-tab/filter');
 	const { TypePull } = require('crm/entity-tab/pull-manager');
 	const { StatefulList } = require('layout/ui/stateful-list');
+	const { Type } = require('type');
 
 	/**
 	 * @class ListTab
 	 */
 	class ListTab extends EntityTab
 	{
-		componentWillReceiveProps(props)
-		{
-			super.componentWillReceiveProps(props);
-
-			this.entityTypeName = props.entityTypeName;
-		}
-
 		render()
 		{
 			return View(
@@ -37,19 +31,23 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 				actionParams: this.prepareActionParams(),
 				itemLayoutOptions: this.getItemLayoutOptions(),
 				itemActions: this.getItemActions(),
-				itemParams: this.props.itemParams,
+				itemParams: {
+					isClientEnabled: this.isClientEnabled(),
+					...this.props.itemParams,
+				},
 				getItemCustomStyles: this.getItemCustomStyles,
 				emptyListText: BX.message('M_CRM_LIST_EMPTY_LIST_TEXT'),
 				emptySearchText: BX.message('M_CRM_LIST_EMPTY_SEARCH_TEXT'),
 				layout: this.props.layout,
 				layoutOptions: this.getLayoutOptions(),
 				menuButtons: this.getMenuButtons(),
-				cacheName: this.props.cacheName,
+				cacheName: this.getCacheName(),
 				layoutMenuActions: this.getMenuActions(),
 				itemDetailOpenHandler: this.handleItemDetailOpen.bind(this),
 				itemCounterLongClickHandler: this.getCounterLongClickHandler(),
 				onDetailCardUpdateHandler: this.onDetailCardUpdate.bind(this),
 				onDetailCardCreateHandler: this.onDetailCardCreate.bind(this),
+				onNotViewableHandler: this.onNotViewable,
 				onPanListHandler: this.props.onPanList || null,
 				isShowFloatingButton: this.isShowFloatingButton(),
 				floatingButtonClickHandler: this.handleFloatingButtonClick.bind(this),
@@ -118,16 +116,6 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 			});
 		}
 
-		/**
-		 * @param {string} prefix
-		 * @returns {string}
-		 */
-		getPullCommand(prefix)
-		{
-			const { entityTypeName } = this.props;
-			return `${prefix}_${entityTypeName}_0`; // @todo need check this.getCurrentEntityType().isCategoriesSupported after support a smart-processes
-		}
-
 		getCurrentStatefulList()
 		{
 			return this.viewComponent;
@@ -160,6 +148,11 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 
 		reload(params = {})
 		{
+			if (this.changeCategoryIfViewNotFound())
+			{
+				return;
+			}
+
 			if (params.clearFilter)
 			{
 				this.filter = new Filter(this.getDefaultPresetId());
@@ -171,7 +164,9 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 			this.setState({
 				forceRenderSwitcher: !this.state.forceRenderSwitcher,
 			}, () => {
-				const canUseCache = !(Boolean(this.filter.currentFilterId) || Boolean(this.filter.search));
+				const selectedNotDefaultPreset = this.filter.hasSelectedNotDefaultPreset();
+				const canUseCache = !selectedNotDefaultPreset && !Type.isStringFilled(this.filter.search);
+
 				this.getViewComponent().reload(
 					{
 						forcedShowSkeleton: BX.prop.getBoolean(params, 'forcedShowSkeleton', false),
@@ -182,19 +177,6 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 					() => initMenu && this.getViewComponent().initMenu(),
 				);
 			});
-		}
-
-		prepareActionParams()
-		{
-			const actionParams = super.prepareActionParams();
-			actionParams.loadItems.extra = (actionParams.loadItems.extra || {});
-
-			const entityType = this.getCurrentEntityType();
-			const { presetId } = entityType.data;
-
-			this.filter.prepareActionParams(actionParams, presetId);
-
-			return actionParams;
 		}
 
 		scrollToTop()

@@ -99,25 +99,7 @@ export default class ConfigurableItem extends TimelineItem
 	layout(options): void
 	{
 		this.setWrapper(Dom.create({tag: 'div', attrs: {className: this.#itemClassName}}));
-		this.#initLayoutApp();
-
-		if (this.needBindToContainer(options))
-		{
-			const bindTo = this.getBindToNode(options);
-			if (bindTo && bindTo.nextSibling)
-			{
-				Dom.insertBefore(this.getWrapper(), bindTo.nextSibling);
-			}
-			else
-			{
-				Dom.append(this.getWrapper(), this.#container);
-			}
-		}
-
-		for (const controller of this.#controllers)
-		{
-			controller.onAfterItemLayout(this, options);
-		}
+		this.initLayoutApp(options);
 	}
 
 	initWrapper(): HTMLElement
@@ -134,7 +116,11 @@ export default class ConfigurableItem extends TimelineItem
 		if (this.needBindToContainer(options))
 		{
 			const bindTo = this.getBindToNode(options);
-			if (bindTo && bindTo.nextSibling)
+			if (bindTo && !this.#useAnchorNextSibling(options))
+			{
+				Dom.insertBefore(this.getWrapper(), bindTo);
+			}
+			else if (bindTo && bindTo.nextSibling)
 			{
 				Dom.insertBefore(this.getWrapper(), bindTo.nextSibling);
 			}
@@ -170,6 +156,16 @@ export default class ConfigurableItem extends TimelineItem
 		return null;
 	}
 
+	#useAnchorNextSibling(options): ?HTMLElement
+	{
+		if (Type.isPlainObject(options))
+		{
+			return Type.isBoolean(options['useAnchorNextSibling']) ? options['useAnchorNextSibling'] : true;
+		}
+
+		return true;
+	}
+
 	refreshLayout(): void
 	{
 		// try to refresh layout via vue reactivity, if possible:
@@ -186,6 +182,13 @@ export default class ConfigurableItem extends TimelineItem
 		{
 			super.refreshLayout();
 		}
+	}
+
+	forceRefreshLayout(): void
+	{
+		const bindTo = this.getWrapper()?.nextSibling;
+		this.clearLayout();
+		this.layout({anchor: bindTo, useAnchorNextSibling: false});
 	}
 
 	getLayoutContentBlockById(id: string): ?Object
@@ -225,6 +228,8 @@ export default class ConfigurableItem extends TimelineItem
 			controller.onBeforeItemClearLayout(this);
 		}
 		this.#layoutApp.unmount();
+		this.#layoutApp = null;
+		this.#layoutComponent = null;
 		super.clearLayout();
 	}
 
@@ -349,7 +354,7 @@ export default class ConfigurableItem extends TimelineItem
 		});
 	}
 
-	reloadFromServer(): Promise
+	reloadFromServer(forceRefreshLayout: boolean = false): Promise
 	{
 		const data = {
 			ownerTypeId: this.#ownerTypeId,
@@ -374,7 +379,14 @@ export default class ConfigurableItem extends TimelineItem
 					if (item.id === this.getId())
 					{
 						this.setData(item);
-						this.refreshLayout();
+						if (forceRefreshLayout)
+						{
+							this.forceRefreshLayout();
+						}
+						else
+						{
+							this.refreshLayout();
+						}
 					}
 				});
 				return true;

@@ -2,8 +2,8 @@
  * @module layout/ui/fields/menu-select
  */
 jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
-
 	const { BaseSelectField } = require('layout/ui/fields/base-select');
+	const { chevronDown } = require('assets/common');
 
 	/**
 	 * @class MenuSelectField
@@ -230,11 +230,7 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 				})),
 			});
 
-			return contextMenu.show(this.getParentWidget()).then(
-				() => this.setListeners(contextMenu.layoutWidget),
-				() => {
-				},
-			);
+			return contextMenu.show(this.getParentWidget()).then(() => this.setListeners(contextMenu.layoutWidget));
 		}
 
 		setListeners(contextMenuWidget)
@@ -263,7 +259,74 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 			super.removeFocus();
 		}
 
+		renderLeftIcons()
+		{
+			if (this.isEmptyEditable() && this.getConfig().emptyValueIcon)
+			{
+				return Image(
+					{
+						style: {
+							width: 24,
+							height: 24,
+							marginRight: 8,
+						},
+						svg: {
+							content: this.getConfig().emptyValueIcon,
+						},
+					},
+				);
+			}
+
+			return null;
+		}
+
+		renderEditIcon()
+		{
+			if (this.props.editIcon)
+			{
+				return this.props.editIcon;
+			}
+
+			if (this.isEmptyEditable())
+			{
+				return View(
+					{
+						style: {
+							justifyContent: 'center',
+							alignItems: 'center',
+							width: 16,
+							height: 16,
+							marginLeft: 2,
+						},
+					},
+					Image(
+						{
+							style: {
+								height: 5,
+								width: 7,
+							},
+							svg: {
+								content: chevronDown(this.getTitleColor()),
+							},
+						},
+					),
+				);
+			}
+		}
+
 		getDefaultStyles()
+		{
+			const styles = this.getChildFieldStyles();
+
+			if (this.hasHiddenEmptyView())
+			{
+				return this.getHiddenEmptyChildFieldStyles(styles);
+			}
+
+			return styles;
+		}
+
+		getChildFieldStyles()
 		{
 			const styles = super.getDefaultStyles();
 
@@ -290,6 +353,36 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 					width: 24,
 					height: 24,
 					alignSelf: 'center',
+				},
+			};
+		}
+
+		getHiddenEmptyChildFieldStyles(styles)
+		{
+			const isEmptyEditable = this.isEmptyEditable();
+			const hasErrorMessage = this.hasErrorMessage();
+			const isEmpty = this.isEmpty();
+			const paddingBottomWithoutError = (isEmpty ? 18 : 9);
+
+			return {
+				...styles,
+				title: {
+					...styles.title,
+					marginBottom: (isEmptyEditable ? 0 : styles.title.marginBottom),
+				},
+				innerWrapper: {
+					flex: (isEmptyEditable ? null : 1),
+					flexShrink: 2,
+				},
+				container: {
+					...styles.container,
+					height: (isEmptyEditable ? 0 : null),
+					width: (isEmptyEditable ? 0 : null),
+				},
+				wrapper: {
+					...styles.wrapper,
+					paddingTop: (isEmpty ? 12 : 8),
+					paddingBottom: (hasErrorMessage ? 5 : paddingBottomWithoutError),
 				},
 			};
 		}

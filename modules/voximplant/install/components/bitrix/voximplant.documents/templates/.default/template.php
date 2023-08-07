@@ -73,7 +73,7 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-con
 							<td class="tel-phones-list-th"><?=GetMessage('VI_DOCS_TABLE_COMMENT');?></td>
 							<td class="tel-phones-list-th"></td>
 						</tr>
-						<?if (is_array($verification['DOCUMENTS'])): ?>
+						<?if (isset($verification['DOCUMENTS']) && is_array($verification['DOCUMENTS'])): ?>
 							<?foreach ($verification['DOCUMENTS'] as $document):?>
 								<?
 								$tdColor = 'red';

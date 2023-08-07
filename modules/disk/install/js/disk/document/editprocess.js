@@ -234,7 +234,6 @@
 		save: function ()
 		{
 			return this.commit().then(function(response){
-				console.log('commit', response);
 				if (response.status !== 'success')
 				{
 					BX.UI.Viewer.Instance.close();
@@ -260,7 +259,6 @@
 
 		commit: function ()
 		{
-			console.log('commit');
 			var fakePromise = new BX.Promise();
 			var parameters = this.getDataForCommit() || {};
 			var idDoc = parameters.idDoc || parameters.id;
@@ -294,7 +292,6 @@
 
 		discard: function ()
 		{
-			console.log('discard');
 			var fakePromise = new BX.Promise();
 			var parameters = this.getDataForCommit() || {};
 			var idDoc = parameters.idDoc || parameters.id;
@@ -317,7 +314,6 @@
 					sessid: BX.bitrix_sessid()
 				},
 				onsuccess: function(response){
-					console.log('discard', response);
 				}
 			});
 		},
@@ -391,7 +387,6 @@
 								window.onbeforeunload = null;
 
 								this.save().then(function(){
-									console.log('actionModal.close');
 									actionModal.close();
 								});
 							}.bind(this)

@@ -1,12 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-pseudo-private */
-
 /**
  * @module im/messenger/provider/service/message
  */
 jn.define('im/messenger/provider/service/message', (require, exports, module) => {
-
 	const { LoadService } = require('im/messenger/provider/service/classes/message/load');
 	const { ReactionService } = require('im/messenger/provider/service/classes/message/reaction');
 	const { RestMethod } = require('im/messenger/const/rest');
@@ -21,7 +16,7 @@ jn.define('im/messenger/provider/service/message', (require, exports, module) =>
 			this.store = store;
 			this.chatId = chatId;
 
-			this._initServices();
+			this.initServices();
 		}
 
 		static getMessageRequestLimit()
@@ -72,19 +67,22 @@ jn.define('im/messenger/provider/service/message', (require, exports, module) =>
 		updateText(messageId, text)
 		{
 			return BX.rest.callMethod(RestMethod.imMessageUpdate, {
-				'MESSAGE_ID': messageId,
-				'MESSAGE': text
+				MESSAGE_ID: messageId,
+				MESSAGE: text,
 			});
 		}
 
 		delete(messageId)
 		{
-			return BX.rest.callMethod(RestMethod.imMessageDelete, {
-				'MESSAGE_ID': messageId,
+			return BX.rest.callMethod(RestMethod.imV2ChatMessageDelete, {
+				id: messageId,
 			});
 		}
 
-		_initServices()
+		/**
+		 * @private
+		 */
+		initServices()
 		{
 			this.loadService = new LoadService({
 				store: this.store,

@@ -8,6 +8,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 	const { Counter } = require('crm/entity-tab/search/counter');
 	const { PlanRestriction } = require('layout/ui/plan-restriction');
 	const { getEntityMessage } = require('crm/loc');
+	const { Type } = require('crm/type');
 
 	const MINIMAL_SEARCH_LENGTH = 3;
 	const DEFAULT_ICON_BACKGROUND = '#2fc6f6';
@@ -92,7 +93,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 
 		showHandler(params)
 		{
-			if (!this.state.visible)
+			if (!this.state.visible && params.entityTypeId === this.getEntityTypeId())
 			{
 				this.fetchPresetsAndCounters();
 
@@ -120,7 +121,24 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 				return;
 			}
 
-			this.setState({ visible: false }, () => BX.postComponentEvent('Crm.EntityTab::onSearchHide'));
+			this.setState(
+				{
+					visible: false,
+				},
+				() => BX.postComponentEvent(
+					'Crm.EntityTab::onSearchHide',
+					[
+						{
+							entityTypeId: this.getEntityTypeId(),
+						},
+					],
+				),
+			);
+		}
+
+		getEntityTypeId()
+		{
+			return Type.resolveIdByName(this.entityTypeName);
 		}
 
 		onDoneHandler()
@@ -143,6 +161,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 			}
 
 			const params = {
+				entityTypeId: this.getEntityTypeId(),
 				counter: {
 					id: newState.counterId,
 				},
@@ -162,7 +181,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 				return null;
 			}
 
-			const defaultPreset = this.state.presets.find((preset) => preset.default === true);
+			const defaultPreset = this.state.presets.find((preset) => (preset.default === true && preset.disabled !== true));
 
 			return (defaultPreset ? defaultPreset.id : null);
 		}
@@ -336,6 +355,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 			return counters.map((counter) => {
 				counter.active = (this.state.counterId === counter.code);
 				counter.onClick = this.onItemClick;
+
 				return new Counter(counter);
 			});
 		}
@@ -361,6 +381,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 				preset.active = (this.state.presetId === preset.id);
 				preset.onClick = this.onItemClick;
 				preset.last = (index === presets.length - 1);
+
 				return new Preset(preset);
 			});
 		}
@@ -438,6 +459,8 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 					params.data.background = this.state.iconBackground;
 				}
 			}
+
+			params.entityTypeId = this.getEntityTypeId();
 
 			this.setState(newState, () => BX.postComponentEvent('Crm.EntityTab::onSearch', [params]));
 		}

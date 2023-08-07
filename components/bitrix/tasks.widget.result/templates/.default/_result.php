@@ -17,7 +17,8 @@ use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Uri;
-use Bitrix\Tasks\Access\Model\UserModel;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\ResultAccessController;
 use Bitrix\Tasks\Internals\Task\Result\Result;
 use Bitrix\Tasks\Internals\Task\Result\ResultTable;
 use \Bitrix\Tasks\Util\User;
@@ -29,20 +30,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 Extension::load('ui.fonts.opensans');
 
-$author = $arResult['USERS'][$result->getCreatedBy()] ? $arResult['USERS'][$result->getCreatedBy()] : null;
-$userId = (int)CurrentUser::get()->getId();
-$userModel = UserModel::createFromId($userId);
-if (
-	$result->getCreatedBy() === $userId
-	|| $userModel->isAdmin()
-)
-{
-	$canRemove = true;
-}
-else
-{
-	$canRemove = false;
-}
+$author = $arResult['USERS'][$result->getCreatedBy()] ?: null;
 ?>
 
 <div
@@ -52,7 +40,7 @@ else
 >
 	<div class="tasks-widget-result__item--header">
 		<div class="tasks-widget-result__item--header-title"><?= Loc::getMessage('TASKS_RESULT_HEADER'); ?></div>
-			<?php if($canRemove): ?>
+			<?php if(ResultAccessController::can(CurrentUser::get()->getId(), ActionDictionary::ACTION_TASK_REMOVE_RESULT, $result->getId())): ?>
 			<div class="tasks-widget-result-remove" onclick="BX.Tasks.ResultAction.getInstance().deleteFromComment('<?= $result->getCommentId() ?>')"><?= Loc::getMessage('TASKS_RESULTS_REMOVE_RESULT') ?></div>
 			<?php endif;?>
 		</div>

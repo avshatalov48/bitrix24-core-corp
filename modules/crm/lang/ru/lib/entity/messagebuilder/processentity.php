@@ -1,0 +1,13 @@
+<?php
+$MESS['CRM_PROCESS_ENTITY_LEAD_ADD'] = 'Создан лид';
+$MESS['CRM_PROCESS_ENTITY_DEAL_ADD'] = 'Создана сделка';
+$MESS['CRM_PROCESS_ENTITY_RECURRING_DEAL_ADD'] = 'Создан шаблон сделки';
+$MESS['CRM_PROCESS_ENTITY_ORDER_ADD'] = 'Создан заказ';
+$MESS['CRM_PROCESS_ENTITY_ORDER_PAYMENT_ADD'] = 'Создана оплата';
+$MESS['CRM_PROCESS_ENTITY_ORDER_SHIPMENT_ADD'] = 'Создана отгрузка';
+$MESS['CRM_PROCESS_ENTITY_CONTACT_ADD'] = 'Создан контакт';
+$MESS['CRM_PROCESS_ENTITY_COMPANY_ADD'] = 'Создана компания';
+$MESS['CRM_PROCESS_ENTITY_SMART_INVOICE_ADD'] = 'Создан счёт';
+$MESS['CRM_PROCESS_ENTITY_QUOTE_ADD'] = 'Создано предложение';
+$MESS['CRM_PROCESS_ENTITY_DYNAMIC_ADD'] = 'Создан элемент смарт-процесса "#ENTITY_TYPE_CAPTION#"';
+$MESS['CRM_PROCESS_ENTITY_DEFAULT_ADD'] = 'Создан элемент типа "#ENTITY_TYPE_CAPTION#"';

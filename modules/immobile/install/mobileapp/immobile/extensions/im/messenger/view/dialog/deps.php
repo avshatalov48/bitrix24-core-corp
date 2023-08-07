@@ -9,6 +9,7 @@ return [
 		'im:messenger/const',
 		'im:messenger/params',
 		'im:messenger/lib/logger',
+		'im:messenger/lib/visibility-manager',
 	],
 	'bundle' => [
 		'./src/dialog',

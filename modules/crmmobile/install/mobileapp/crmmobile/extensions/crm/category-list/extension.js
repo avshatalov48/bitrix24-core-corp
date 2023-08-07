@@ -168,7 +168,7 @@ jn.define('crm/category-list', (require, exports, module) => {
 
 		onSelectCategory(category)
 		{
-			const { selectAction, openStageListHandler, uid, onSelectCategory } = this.props;
+			const { selectAction, openStageListHandler, uid, onSelectCategory, entityTypeId } = this.props;
 
 			if (onSelectCategory)
 			{
@@ -182,15 +182,16 @@ jn.define('crm/category-list', (require, exports, module) => {
 
 			if (selectAction)
 			{
+				const params = [category, entityTypeId];
 				switch (selectAction)
 				{
 					case CategorySelectActions.SelectCurrentCategory:
-						BX.postComponentEvent('Crm.CategoryList::onSelectedCategory', [category]);
+						BX.postComponentEvent('Crm.CategoryList::onSelectedCategory', params);
 						this.layout.close();
 						break;
 
 					case CategorySelectActions.CreateTunnel:
-						BX.postComponentEvent('Crm.TunnelList::selectCategoryOnCreateTunnel', [category]);
+						BX.postComponentEvent('Crm.TunnelList::selectCategoryOnCreateTunnel', params);
 						if (typeof openStageListHandler === 'function')
 						{
 							openStageListHandler(category);
@@ -198,7 +199,7 @@ jn.define('crm/category-list', (require, exports, module) => {
 						break;
 
 					case CategorySelectActions.SelectTunnelDestination:
-						BX.postComponentEvent(`Crm.TunnelListItem::selectTunnelDestinationCategory-${uid}`, [category]);
+						BX.postComponentEvent(`Crm.TunnelListItem::selectTunnelDestinationCategory-${uid}`, params);
 						if (typeof openStageListHandler === 'function')
 						{
 							openStageListHandler(category);

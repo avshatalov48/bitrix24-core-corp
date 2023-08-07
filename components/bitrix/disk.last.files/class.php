@@ -78,7 +78,7 @@ class CDiskLastFilesComponent extends DiskComponent
 
 		$urlManager = Driver::getInstance()->getUrlManager();
 		$files = array();
-		$fullFormatWithoutSec = preg_replace('/:s$/', '', CAllDatabase::dateFormatToPHP(CSite::GetDateFormat("FULL")));
+		$fullFormatWithoutSec = preg_replace('/:s$/', '', CDatabase::dateFormatToPHP(CSite::GetDateFormat("FULL")));
 		foreach(\Bitrix\Disk\File::getModelList($parameters) as $file)
 		{
 			$files[] = array(

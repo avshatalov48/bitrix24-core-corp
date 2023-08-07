@@ -87,7 +87,7 @@ FROM
 
 		if ($arSqls["ORDERBY"] <> '')
 			$strSql .= "ORDER BY ".$arSqls["ORDERBY"]." ";
-		if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"])<=0)
+		if (is_array($arNavStartParams) && (int)($arNavStartParams["nTopCount"] ?? null) <=0)
 		{
 			$strSql_tmp = "
 SELECT COUNT(DISTINCT M.ID) as CNT

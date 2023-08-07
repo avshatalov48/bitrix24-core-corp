@@ -11,5 +11,6 @@ return [
 	'bundle'=> [
 		'./play-button',
 		'./speed-button',
+		'./timings',
 	],
 ];

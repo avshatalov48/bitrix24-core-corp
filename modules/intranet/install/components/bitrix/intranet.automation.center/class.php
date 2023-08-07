@@ -37,7 +37,6 @@ class IntranetAutomationCenter extends \CBitrixComponent
 	{
 		if ($this->arParams['SET_TITLE'])
 		{
-			/**@var \CAllMain*/
 			$GLOBALS['APPLICATION']->setTitle(Loc::getMessage('INTRANET_AUTOMATION_CENTER_PAGE_TITLE'));
 		}
 

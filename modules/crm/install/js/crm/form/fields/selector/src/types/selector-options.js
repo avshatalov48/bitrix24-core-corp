@@ -35,4 +35,5 @@ export type SelectorOptions = {
 			| (Array<{[key: string]: any}>) => Array<{[key: string]: any}>
 		),
 	},
+	disabledFields?: Array<string | (Field) => boolean>
 };

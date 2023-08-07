@@ -40,23 +40,59 @@ jn.define('crm/timeline/services/file-selector-configs', (require, exports, modu
 				};
 
 				BX.ajax.runAction('crm.activity.todo.updateFiles', { data })
-					.then(() => {
-						Haptics.notifySuccess();
-						resolve();
-					})
-					.catch((err) => {
-						console.error(err);
-						Alert.alert(
-							Loc.getMessage('M_CRM_TIMELINE_COMMON_ERROR_TITLE'),
-							Loc.getMessage('M_CRM_TIMELINE_COMMON_ERROR_DESCRIPTION'),
-							resolve,
-						);
-					});
+					.then(() => successHandler(resolve))
+					.catch((err) => errorHandler(err, resolve));
 			}),
 		};
 
 		return mergeImmutable(defaults, options);
 	};
 
-	module.exports = { TodoActivityConfig };
+	const CommentConfig = (options) => {
+		assertRequired(options, ['entityTypeId', 'entityId']);
+
+		const defaults = {
+			focused: false,
+			required: false,
+			files: [],
+			controller: {
+				endpoint: 'crm.FileUploader.CommentUploaderController',
+				options: {
+					entityTypeId: options.entityTypeId,
+					entityId: options.entityId,
+				},
+			},
+			onSave: (selector) => new Promise((resolve) => {
+				const data = {
+					ownerTypeId: options.entityTypeId,
+					ownerId: options.entityId,
+					id: options.id,
+					files: selector.getFiles().map((file) => file.token || file.id),
+				};
+
+				BX.ajax.runAction('crm.timeline.comment.updateFiles', { data })
+					.then(() => successHandler(resolve))
+					.catch((err) => errorHandler(err, resolve));
+			}),
+		};
+
+		return mergeImmutable(defaults, options);
+	};
+
+	const successHandler = (callback) => {
+		Haptics.notifySuccess();
+		callback();
+	};
+
+	const errorHandler = (error, callback) => {
+		console.error(error);
+
+		Alert.alert(
+			Loc.getMessage('M_CRM_TIMELINE_COMMON_ERROR_TITLE'),
+			Loc.getMessage('M_CRM_TIMELINE_COMMON_ERROR_DESCRIPTION'),
+			callback,
+		);
+	};
+
+	module.exports = { TodoActivityConfig, CommentConfig };
 });

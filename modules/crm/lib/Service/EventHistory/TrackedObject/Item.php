@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Service\EventHistory\TrackedObject;
 
 use Bitrix\Crm\Comparer\MultifieldComparer;
 use Bitrix\Crm\Format\Money;
+use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\EventHistory\EventHistoryData;
 use Bitrix\Crm\Service\EventHistory\TrackedObject;
@@ -91,6 +92,12 @@ class Item extends TrackedObject
 		}
 
 		$factory = Container::getInstance()->getFactory($this->getEntityTypeId());
+
+		$field = $factory ? $factory->getFieldsCollection()->getField($fieldName) : null;
+		if ($field && $field->getType() === $field::TYPE_TEXT && $field->getValueType() === $field::VALUE_TYPE_BB)
+		{
+			return TextHelper::convertBbCodeToHtml($fieldValue);
+		}
 
 		return $factory ? $factory->getFieldValueCaption($fieldName, $fieldValue) : (string)$fieldValue;
 	}

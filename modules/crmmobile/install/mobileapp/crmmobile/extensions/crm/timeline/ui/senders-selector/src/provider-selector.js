@@ -2,7 +2,6 @@
  * @module crm/timeline/ui/senders-selector/provider-selector
  */
 jn.define('crm/timeline/ui/senders-selector/provider-selector', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 
 	/**
@@ -109,6 +108,11 @@ jn.define('crm/timeline/ui/senders-selector/provider-selector', (require, export
 		show(parentWidget = PageManager)
 		{
 			this.menu.show(parentWidget);
+		}
+
+		close()
+		{
+			this.menu.close();
 		}
 	}
 

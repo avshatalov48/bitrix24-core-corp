@@ -2,7 +2,9 @@ import {Dom, Event, Loc, Tag, Text, Type} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 
 import {EntityStorage} from '../../entity/entity.storage';
+import {Entity} from '../../entity/entity';
 import {Sprint, SprintParams} from '../../entity/sprint/sprint';
+import {Item, ItemParams} from '../../item/item';
 
 import {RequestSender} from '../../utility/request.sender';
 import {Scroller} from '../../utility/scroller';
@@ -17,7 +19,8 @@ type Params = {
 	displayPriority: string,
 	isShortView: 'Y' | 'N',
 	mandatoryExists: 'Y' | 'N',
-	isExactSearchApplied: 'Y' | 'N'
+	isExactSearchApplied: 'Y' | 'N',
+	pageSize: number
 }
 
 export class PlanBuilder extends EventEmitter
@@ -36,11 +39,14 @@ export class PlanBuilder extends EventEmitter
 		this.isShortView = params.isShortView;
 		this.mandatoryExists = params.mandatoryExists;
 		this.isExactSearchApplied = params.isExactSearchApplied === 'Y';
+		this.pageSize = parseInt(params.pageSize, 10);
 
 		this.scroller = new Scroller({
 			planBuilder: this,
 			entityStorage: this.entityStorage
 		});
+
+		this.loadItemsRepeatCounter = new Map();
 	}
 
 	renderTo(container: HTMLElement)
@@ -196,9 +202,11 @@ export class PlanBuilder extends EventEmitter
 
 				this.appendToPlannedContainer(sprint);
 
-				this.scroller.scrollToSprint(sprint);
+				this.updateVisibilitySprints(sprint).then(() => {
+					this.scroller.scrollToSprint(sprint);
 
-				this.emit('createSprint', sprint);
+					this.emit('createSprint', sprint);
+				});
 
 				return sprint;
 			})
@@ -382,5 +390,146 @@ export class PlanBuilder extends EventEmitter
 		{
 			this.completedSprints.hideFilteredSprints();
 		}
+	}
+
+	loadItems(entity: Entity): Promise
+	{
+		if (!this.loadItemsRepeatCounter.has(entity.getId()))
+		{
+			this.loadItemsRepeatCounter.set(entity.getId(), 0);
+		}
+
+		if (this.loadItemsRepeatCounter.get(entity.getId()) > 1)
+		{
+			entity.unbindItemsLoader();
+
+			return;
+		}
+
+		entity.setActiveLoadItems(true);
+
+		if (entity.getNumberItems() >= this.pageSize)
+		{
+			entity.getListItems().addScrollbar();
+		}
+
+		const requestData = {
+			entityId: entity.getId(),
+			pageNumber: entity.getPageNumberItems() + 1,
+			pageSize: this.pageSize
+		};
+
+		return this.requestSender.getItems(requestData)
+			.then((response) => {
+				const items = response.data;
+
+				entity.setActiveLoadItems(false);
+
+				if (entity.isHideContent())
+				{
+					return;
+				}
+
+				if (Type.isArray(items) && items.length)
+				{
+					entity.incrementPageNumberItems();
+
+					this.createItemsInEntity(entity, items);
+
+					if (entity.isGroupMode())
+					{
+						entity.activateGroupMode();
+					}
+
+					entity.bindItemsLoader();
+				}
+				else
+				{
+					if (entity.getNumberTasks() !== entity.getNumberItems())
+					{
+						this.loadItemsRepeatCounter.set(
+							entity.getId(),
+							this.loadItemsRepeatCounter.get(entity.getId()) + 1
+						);
+
+						entity.decrementPageNumberItems();
+
+						return this.loadItems(entity);
+					}
+					else
+					{
+						entity.unbindItemsLoader();
+					}
+				}
+
+				return true;
+			})
+			.catch((response) => {
+				entity.setActiveLoadItems(false);
+				this.requestSender.showErrorAlert(response);
+			})
+		;
+	}
+
+	loadAllItems(entity: Entity): Promise
+	{
+		const requestData = {
+			entityId: entity.getId(),
+			withoutNav: 'Y'
+		};
+
+		return this.requestSender.getItems(requestData)
+			.then((response) => {
+				const items = response.data;
+
+				if (Type.isArray(items) && items.length)
+				{
+					this.createItemsInEntity(entity, items);
+				}
+
+				entity.unbindItemsLoader();
+
+				return true;
+			})
+			.catch((response) => {
+				entity.setActiveLoadItems(false);
+				this.requestSender.showErrorAlert(response);
+			})
+		;
+	}
+
+	createItemsInEntity(entity: Entity, items: Array)
+	{
+		items.forEach((itemData: ItemParams) => {
+			const item = Item.buildItem(itemData);
+			item.setEntityType(entity.getEntityType());
+			if (!this.entityStorage.findItemByItemId(item.getId()))
+			{
+				item.setShortView(entity.getShortView());
+				entity.appendItemToList(item);
+				entity.setItem(item);
+			}
+		});
+	}
+
+	updateVisibilitySprints(sprint: Sprint): Promise
+	{
+		const results = [];
+
+		this.entityStorage.getSprintsAvailableForFilling(sprint)
+			.forEach((anotherSprint: Sprint) => {
+				if (!anotherSprint.isHideContent() && anotherSprint.isWaitingLoadItems())
+				{
+					results.push(anotherSprint.hideContent(anotherSprint.getContentContainer()));
+				}
+			})
+		;
+
+		if (sprint.isHideContent())
+		{
+			results.push(sprint.showContent(sprint.getContentContainer()));
+		}
+
+		return Promise.all(results);
 	}
 }

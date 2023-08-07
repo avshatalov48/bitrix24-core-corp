@@ -320,16 +320,13 @@
 					objectId = taskId[1];
 					taskId = taskId[0];
 				}
-				if (this.task['ID'] == taskId && objectId !== this.taskEditObj.vars["id"])
+				if (
+					this.task['ID'] == taskId
+					&& objectId !== this.taskEditObj.vars["id"]
+					&& !restricted
+				)
 				{
-					if (!restricted)
-					{
-						if (Application.getApiVersion() < 31)
-						{
-							window.app.showPopupLoader();
-						}
-						window.app.reload();
-					}
+					window.app.reload();
 				}
 			}, this));
 
@@ -862,11 +859,6 @@
 			else if (specify === true)
 			{
 				this.act('get', data);
-			}
-
-			if (Application.getApiVersion() < 31 && reset)
-			{
-				this.resetMenu(this.getDefaultMenu());
 			}
 		},
 		actFailure : function() {

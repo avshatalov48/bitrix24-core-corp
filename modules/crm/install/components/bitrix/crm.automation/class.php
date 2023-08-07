@@ -173,7 +173,10 @@ class CrmAutomationComponent extends \CBitrixComponent implements Main\Engine\Co
 				{
 					return ['value' => $line['LINE_NUMBER'], 'name' => $line['SHORT_NAME']];
 				},
-				\CVoxImplantConfig::GetLines(false, true)
+				CVoxImplantConfig::GetLinesEx([
+					'showRestApps' => true,
+					'showInboundOnly' => true,
+				]),
 			)),
 		];
 	}

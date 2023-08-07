@@ -206,7 +206,6 @@ class Epic extends Controller
 		}
 
 		$inputEpic->setDescription($post['description']);
-		$inputEpic->setCreatedBy($post['createdBy'] ?? $userId);
 		$inputEpic->setModifiedBy($post['modifiedBy'] ?? $userId);
 		$inputEpic->setColor($post['color']);
 

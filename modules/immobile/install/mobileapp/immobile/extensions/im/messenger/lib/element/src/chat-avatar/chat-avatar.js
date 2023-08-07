@@ -1,10 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-
 /**
  * @module im/messenger/lib/element/chat-avatar
  */
 jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => {
-
 	const { core } = require('im/messenger/core');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
@@ -43,7 +40,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 		static getImagePath()
 		{
-			return currentDomain + '/bitrix/mobileapp/immobile/extensions/im/messenger/lib/element/src/chat-avatar/images/';
+			return `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/lib/element/src/chat-avatar/images/`;
 		}
 
 		createDialogAvatar(dialogId)
@@ -56,13 +53,15 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 			if (dialog.chatId === MessengerParams.getGeneralChatId())
 			{
-				this.avatar = ChatAvatar.getImagePath() + 'avatar_general.png';
+				this.avatar = `${ChatAvatar.getImagePath()}avatar_general.png`;
+
 				return;
 			}
 
 			if (dialog.entityType === 'SUPPORT24_QUESTION')
 			{
-				this.avatar = ChatAvatar.getImagePath() + 'avatar_support_24.png';
+				this.avatar = `${ChatAvatar.getImagePath()}avatar_support_24.png`;
+
 				return;
 			}
 
@@ -88,6 +87,9 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			}
 		}
 
+		/**
+		 * @return {ChatAvatarTitleParams}
+		 */
 		getTitleParams()
 		{
 			const titleParams = {

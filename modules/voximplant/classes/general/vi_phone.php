@@ -61,6 +61,11 @@ class CVoxImplantPhone
 
 	public static function Normalize($number, $minLength = 10)
 	{
+		if (!$number)
+		{
+			return false;
+		}
+
 		if (mb_substr($number, 0, 2) == '+8')
 		{
 			$number = '008'.mb_substr($number, 2);
@@ -141,7 +146,7 @@ class CVoxImplantPhone
 				VI\PhoneTable::merge(Array('USER_ID' => intval($user['ID']), 'PHONE_NUMBER' => $user["PERSONAL_MOBILE"], 'PHONE_MNEMONIC' => "PERSONAL_MOBILE"));
 			}
 
-			$user["UF_PHONE_INNER"] = intval(preg_replace("/[^0-9]/i", "", $user["UF_PHONE_INNER"]));
+			$user["UF_PHONE_INNER"] = (int)preg_replace("/[^0-9]/i", "", $user["UF_PHONE_INNER"] ?? '');
 			if ($user["UF_PHONE_INNER"] > 0 && $user["UF_PHONE_INNER"] < 10000)
 			{
 				VI\PhoneTable::merge(Array('USER_ID' => intval($user['ID']), 'PHONE_NUMBER' => $user["UF_PHONE_INNER"], 'PHONE_MNEMONIC' => "UF_PHONE_INNER"));
@@ -364,9 +369,10 @@ class CVoxImplantPhone
 					'PHONE_COUNT' => $phoneCount,
 					'MONTH_PRICE' => $monthPrice,
 					'INSTALLATION_PRICE' => $installationPrice,
-					'REQUIRED_VERIFICATION' => $value->required_verification ?: '',
+					'REQUIRED_VERIFICATION' =>
+						property_exists($value, 'required_verification') ? $value->required_verification : '',
 					'IS_NEED_REGULATION_ADDRESS' => $value->is_need_regulation_address ?: false,
-					'REGULATION_ADDRESS_TYPE' => $value->regulation_address_type ?: '',
+					'REGULATION_ADDRESS_TYPE' => $value->regulation_address_type ?? '',
 				];
 			}
 		}
@@ -399,6 +405,11 @@ class CVoxImplantPhone
 		{
 			foreach ($apiResponse->result as $value)
 			{
+				$value->verification_status ??= null;
+				$value->phone_next_renewal ??= null;
+				$value->phone_number ??= null;
+				$value->unverified_hold_until ??= null;
+
 				$renewalDate = $renewalDateTs = '';
 				if ($value->phone_next_renewal)
 				{
@@ -408,6 +419,7 @@ class CVoxImplantPhone
 				}
 
 				$unverifiedHoldDate = $unverifiedHoldDateTs = '';
+
 				if ($value->verification_status != 'VERIFIED' && $value->unverified_hold_until)
 				{
 					$data = new Bitrix\Main\Type\DateTime($value->unverified_hold_until.' 00:00:00', 'Y-m-d H:i:s');
@@ -415,7 +427,7 @@ class CVoxImplantPhone
 					$unverifiedHoldDateTs = $data->getTimestamp();
 				}
 
-				$arResult[$value->phone_number] = Array(
+				$arResult[$value->phone_number] = [
 					'ACTIVE' => $value->deactivated? 'N': 'Y',
 					'NUMBER' => $value->phone_number,
 					'FORMATTED_NUMBER' => \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($value->phone_number)->format(),
@@ -430,7 +442,7 @@ class CVoxImplantPhone
 					'VERIFY_BEFORE_TS' => $unverifiedHoldDateTs,
 					'TO_DELETE' => $value->to_delete ? 'Y' : 'N',
 					'DATE_DELETE' => $value->delete_date != '' ? new \Bitrix\Main\Type\Date($value->delete_date, DATE_ATOM) : null,
-				);
+				];
 			}
 		}
 
@@ -477,7 +489,7 @@ class CVoxImplantPhone
 			{
 				$parsedNumber = \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($value->phone_number, $country);
 				$arResult[$value->phone_number] = Array(
-					'FULL_PRICE' => floatval($value->phone_price)+floatval($value->can_list_phone_numbers),
+					'FULL_PRICE' => (float)($value->phone_price ?? 0)+ (float)($value->can_list_phone_numbers ?? 0),
 					'INSTALLATION_PRICE' => $value->phone_installation_price,
 					'MONTH_PRICE' => $value->phone_price,
 					'PHONE_NUMBER' => $value->phone_number,
@@ -507,7 +519,7 @@ class CVoxImplantPhone
 		$arPhones = Array();
 		$viHttp = new CVoxImplantHttp();
 		$apiResult = $viHttp->AttachPhoneNumber($params);
-		if ($apiResult->result && !empty($apiResult->phone_numbers))
+		if ($apiResult && $apiResult->result && !empty($apiResult->phone_numbers))
 		{
 			foreach ($apiResult->phone_numbers as $number)
 			{
@@ -768,7 +780,7 @@ class CVoxImplantPhone
 		if(count($rentedPhones) === 1)
 		{
 			$firstPhone = array_keys($rentedPhones)[0];
-			return $rentedPhones[$firstPhone]['PHONE_NUMBER'];
+			return $rentedPhones[$firstPhone]['PHONE_NUMBER'] ?? null;
 		}
 		else
 		{

@@ -28,6 +28,13 @@ class VoximplantStartComponent extends \CBitrixComponent
 		}
 	}
 
+	public function onPrepareComponentParams($arParams)
+	{
+		$arParams['MARKETPLACE_DETAIL_URL_TPL'] ??= null;
+
+		return $arParams;
+	}
+
 	public function prepareResult()
 	{
 		$result = [];
@@ -48,6 +55,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 		$result['CRM_CALLBACK_FORM_CREATE_URL'] = $this->getCrmFormCreateUri();
 		$result['CRM_CALLBACK_FORM_LIST_URL'] = $this->getCrmFormListUri();
 		$result['IS_SHOWN_PRIVACY_POLICY'] = $this->isShownPrivacyPolicy();
+		$result['ERROR_MESSAGE'] = null;
 
 		if(!$this->isRestOnly())
 		{
@@ -514,10 +522,11 @@ class VoximplantStartComponent extends \CBitrixComponent
 				$cache->endDataCache($marketplaceItems);
 			}
 		}
+		$marketplaceItems["ITEMS"] ??= [];
 
-		if(!$marketplaceItems || !is_array($marketplaceItems["ITEMS"]))
+		if(!$marketplaceItems || empty($marketplaceItems["ITEMS"]))
 		{
-			return [];
+			return $marketplaceItems;
 		}
 
 		$installedApps = $this->getInstalledApps();
@@ -533,7 +542,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 	public function getAppIcon($appCode)
 	{
 		$marketplaceItems = $this->getPartnerApps();
-		if($marketplaceItems === null || !is_array($marketplaceItems["ITEMS"]))
+		if($marketplaceItems === null || empty($marketplaceItems["ITEMS"]))
 		{
 			return "";
 		}

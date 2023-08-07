@@ -3,7 +3,7 @@
 namespace Bitrix\Crm\Order;
 
 use Bitrix\Catalog\v2\Sku\BaseSku;
-use Bitrix\Crm\Activity\Provider\Sms;
+use Bitrix\Crm\Activity\Provider\BaseMessage;
 use Bitrix\Crm\Relation\EntityRelationTable;
 use Bitrix\Crm\Service\Timeline\Item\DealProductList\SkuConverter;
 use Bitrix\Main\EventResult;
@@ -40,7 +40,7 @@ class Order extends Sale\Order
 	 * @param $siteId
 	 * @param null $userId
 	 * @param null $currency
-	 * @return Sale\Order
+	 * @return static
 	 */
 	public static function create($siteId, $userId = null, $currency = null)
 	{
@@ -677,14 +677,14 @@ class Order extends Sale\Order
 			Crm\MessageSender\MessageSender::send(
 				[
 					Crm\Integration\NotificationsManager::getSenderCode() => [
-						'ACTIVITY_PROVIDER_TYPE_ID' => Crm\Activity\Provider\Notification::PROVIDER_TYPE_NOTIFICATION,
+						'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_CRM_ORDER_COMPLETED,
 						'TEMPLATE_CODE' => 'ORDER_COMPLETED',
 						'PLACEHOLDERS' => [
 							'NAME' => $entityCommunication->getCustomerName(),
 						],
 					],
 					Crm\Integration\SmsManager::getSenderCode() => [
-						'ACTIVITY_PROVIDER_TYPE_ID' => Sms::PROVIDER_TYPE_SALESCENTER_DELIVERY,
+						'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_CRM_ORDER_COMPLETED,
 						'MESSAGE_BODY' => Main\Localization\Loc::getMessage('CRM_ORDER_ORDER_CREATED')
 							. (
 							$feedbackPage

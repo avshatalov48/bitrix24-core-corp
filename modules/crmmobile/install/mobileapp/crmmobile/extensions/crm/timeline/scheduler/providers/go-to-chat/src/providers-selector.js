@@ -86,7 +86,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/providers-selector', (req
 					},
 					BBCodeText({
 						style: styles.provider,
-						value: `[COLOR="#828B95"][URL="#"]${this.currentChannel.shortName}[/URL][/COLOR]`,
+						value: `[C type=dot textColor=#828B95 lineColor=#828B95][COLOR="#828B95"][URL="#"]${this.currentChannel.shortName}[/URL][/COLOR][/C]`,
 						onLinkClick: this.showProviderSelector,
 						linksUnderline: false,
 						numberOfLines: 1,
@@ -123,6 +123,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/providers-selector', (req
 		container: {
 			marginTop: 7,
 			flexDirection: 'row',
+			alignItems: 'center',
 		},
 		label: {
 			fontSize: 14,
@@ -138,11 +139,6 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/providers-selector', (req
 			alignItems: 'center',
 		},
 		providerContainer: {
-			borderBottomWidth: 1,
-			borderBottomColor: '#828B95',
-			borderStyle: 'dash',
-			borderDashSegmentLength: 3,
-			borderDashGapLength: 3,
 			marginRight: 12,
 		},
 		provider: {

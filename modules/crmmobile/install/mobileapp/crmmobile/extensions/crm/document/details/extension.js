@@ -63,9 +63,6 @@ jn.define('crm/document/details', (require, exports, module) => {
 				channelSelector: null,
 			};
 
-			/** @type {CrmDocumentPageNav|null} */
-			this.pageNavRef = null;
-
 			/** @type {function|null} */
 			this.pushSubscriptionCancel = null;
 		}
@@ -195,12 +192,6 @@ jn.define('crm/document/details', (require, exports, module) => {
 				},
 				CrmDocumentDetailsPdfView({
 					uri: this.state.localPdfPath,
-					onChangePage: ({ currentPage, totalPage }) => {
-						if (this.pageNavRef)
-						{
-							this.pageNavRef.setData({ currentPage, totalPage });
-						}
-					},
 				}),
 				this.renderBottomPanel(),
 			));
@@ -300,6 +291,7 @@ jn.define('crm/document/details', (require, exports, module) => {
 						},
 						onClickCallback: () => {
 							menu.close(() => this.downloadPdf());
+
 							return Promise.resolve();
 						},
 					},
@@ -313,6 +305,7 @@ jn.define('crm/document/details', (require, exports, module) => {
 						},
 						onClickCallback: () => {
 							menu.close(() => this.downloadDocx());
+
 							return Promise.resolve();
 						},
 					},

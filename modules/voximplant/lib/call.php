@@ -71,7 +71,7 @@ class Call
 	 */
 	public static function load($callId)
 	{
-		if(static::$instances[$callId])
+		if(isset(static::$instances[$callId]))
 		{
 			return static::$instances[$callId];
 		}
@@ -147,7 +147,8 @@ class Call
 	{
 		static::checkFields($fields);
 
-		if($fields['CONFIG_ID'])
+		$config = null;
+		if($fields['CONFIG_ID'] ?? null)
 		{
 			$config = \CVoxImplantConfig::GetConfig($fields['CONFIG_ID']);
 		}
@@ -915,7 +916,7 @@ class Call
 			return;
 		}
 
-		if($additionalParams['externalHangup'])
+		if($additionalParams['externalHangup'] ?? null)
 		{
 			static::delete($this->callId);
 		}
@@ -1137,7 +1138,7 @@ class Call
 		$this->lastPingDate = array_key_exists('LAST_PING', $fields) ? $fields['LAST_PING'] : $this->lastPingDate;
 		$this->executionGraph = array_key_exists('EXECUTION_GRAPH', $fields) && ($fields['EXECUTION_GRAPH'] instanceof Node) ? $fields['EXECUTION_GRAPH'] : $this->executionGraph;
 
-		if($fields['CONFIG_ID'] && !$this->config)
+		if(isset($fields['CONFIG_ID']) && $fields['CONFIG_ID'] && !$this->config)
 		{
 			$this->config = \CVoxImplantConfig::GetConfig($fields['CONFIG_ID']);
 		}

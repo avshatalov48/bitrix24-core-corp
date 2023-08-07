@@ -111,18 +111,22 @@ class AddressVerification
 	{
 		$httpClient = new \CVoxImplantHttp();
 		$result = (array)$httpClient->GetVerifications($countryCode, $phoneCategoryName, $phoneRegionCode, $verified, $inProgress);
-		if($result)
+		if ($result)
 		{
-			if(is_array($result['VERIFIED_ADDRESS']))
+			if (isset($result['VERIFIED_ADDRESS']) && is_array($result['VERIFIED_ADDRESS']))
 			{
 				foreach ($result['VERIFIED_ADDRESS'] as &$address)
 				{
 					$address = (array)$address;
-					if(isset($address['COUNTRY_CODE']))
-						$address['COUNTRY'] = Loc::getMessage('VI_PHONE_CODE_'.$address['COUNTRY_CODE']);
+					if (isset($address['COUNTRY_CODE']))
+					{
+						$address['COUNTRY'] = Loc::getMessage('VI_PHONE_CODE_' . $address['COUNTRY_CODE']);
+					}
 
-					if(isset($address['STATUS']))
+					if (isset($address['STATUS']))
+					{
 						$address['STATUS_NAME'] = \CVoxImplantDocuments::GetStatusName($address['STATUS']);
+					}
 				}
 			}
 			return $result;

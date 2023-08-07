@@ -2,8 +2,7 @@
 
 return [
 	'extensions' => [
-		'crm:timeline/item/activity',
-		'crm:timeline/item/log',
+		'crm:timeline/item/custom-types',
 
 		'crm:timeline/item/ui/background',
 		'crm:timeline/item/ui/body',
@@ -30,6 +29,7 @@ return [
 		'./factory',
 		'./base',
 		'./compatible',
+		'./generic',
 		'./model',
 	],
 ];

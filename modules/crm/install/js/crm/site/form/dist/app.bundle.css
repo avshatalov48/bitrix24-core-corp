@@ -849,6 +849,66 @@ div.b24-form-loader {
 .b24-form-btn.b24-form-btn-tight {
 	width: initial;
 }
+.b24-form-loader-progress-wrapper {
+	width: 100%;
+	height: 100%;
+}
+
+.b24-form-loader-progress {
+	position: absolute;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	width: 80px;
+	top: 50%;
+	left: 50%;
+	-webkit-transform: translateX(-50%);
+	    -ms-transform: translateX(-50%);
+	        transform: translateX(-50%);
+}
+
+.b24-form-loader-progress-value {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: horizontal;
+	-webkit-box-direction: normal;
+	    -ms-flex-flow: row nowrap;
+	        flex-flow: row nowrap;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	margin: 0 auto;
+	color: var(--b24-primary-color);
+	font-weight: bolder;
+	font-size: 30px;
+	-webkit-transform: translateY(-50%);
+	    -ms-transform: translateY(-50%);
+	        transform: translateY(-50%);
+}
+
+.b24-form-loader-progress-value::after {
+	content: "%";
+	font-size: 20px;
+}
+
+.b24-form-loader-progress-time-left {
+	position: absolute;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	top: 75%;
+	left: 50%;
+	-webkit-transform: translateX(-50%);
+	    -ms-transform: translateX(-50%);
+	        transform: translateX(-50%);
+}
+
+.b24-form-loader-progress-time-left-value {
+	margin: 0 auto;
+	color: lightgrey;
+	font-weight: bold;
+}
 .b24-form-field {
 	margin-bottom: 15px;
 	-webkit-transition: 200ms linear margin-bottom;
@@ -2206,8 +2266,14 @@ div.b24-form-loader {
 }
 
 .b24-form-control-file .b24-form-control-label {
-	display: block;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
 	font-size: 13px;
+}
+
+.b24-form-control-field-file-summary-size {
+	margin-left: auto;
 }
 
 .b24-form-control-file .b24-form-control {
@@ -2347,6 +2413,10 @@ div.b24-form-loader {
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
+	-webkit-box-orient: horizontal;
+	-webkit-box-direction: normal;
+	    -ms-flex-flow: row;
+	        flex-flow: row;
 	-webkit-box-align: center;
 	-ms-flex-align: center;
 	align-items: center;
@@ -2354,6 +2424,9 @@ div.b24-form-loader {
 	position: relative;
 	color: #000;
 	color: var(--b24-text-color);
+}
+.b24-form-control-file-item-size-text {
+	margin-left: auto;
 }
 
 .b24-form-control-file-item-name-string {

@@ -63,7 +63,7 @@
 			}
 
 			let chatBetaOption = null;
-			if (Application.getPlatform() === 'ios' && Application.getApiVersion() >= 43 && Application.isBeta())
+			if (Application.getApiVersion() >= 43 && Application.isBeta())
 			{
 				const chatBetaEnableSwitch =
 					FormItem.create('chatBetaEnable', FormItemType.SWITCH, BX.message('SE_CHAT_BETA_ENABLE_TITLE'))

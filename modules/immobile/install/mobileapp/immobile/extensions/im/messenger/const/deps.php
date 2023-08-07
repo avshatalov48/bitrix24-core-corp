@@ -1,7 +1,9 @@
 <?php
 
 return [
-	'type',
+	'extensions' => [
+		'type',
+	],
 	'bundle' => [
 		'./src/event-type',
 		'./src/feature-flag',
@@ -14,5 +16,7 @@ return [
 		'./src/file-type',
 		'./src/file-status',
 		'./src/reaction-type',
+		'./src/path',
+		'./src/draft',
 	],
 ];

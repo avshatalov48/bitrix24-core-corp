@@ -53,9 +53,14 @@ class CommonActions extends BaseObject
 		return $this->get($object);
 	}
 
-	public function renameAction(Disk\BaseObject $object, $newName, $autoCorrect = false)
+	public function renameAction(
+		Disk\BaseObject $object,
+		string $newName,
+		bool $autoCorrect = false,
+		bool $generateUniqueName = false
+	)
 	{
-		return $this->rename($object, $newName, $autoCorrect);
+		return $this->rename($object, $newName, $autoCorrect, $generateUniqueName);
 	}
 
 	public function moveAction(Disk\BaseObject $object, Disk\Folder $toFolder)
@@ -145,21 +150,11 @@ class CommonActions extends BaseObject
 		];
 	}
 
-	public function downloadArchiveAction(Disk\Type\ObjectCollection $objectCollection)
+	public function downloadArchiveAction(Disk\Type\ObjectCollection $objectCollection): ZipNginx\Archive
 	{
-		$zipArchive = new ZipNginx\Archive('archive' . date('y-m-d') . '.zip');
-		foreach ($objectCollection as $object)
-		{
-			/** @var Disk\BaseObject $object */
-			if($object instanceof Disk\File)
-			{
-				$zipArchive->addEntry(
-					ZipNginx\ArchiveEntry::createFromFileModel($object)
-				);
-			}
-		}
+		$archiveName = 'archive' . date('y-m-d') . '.zip';
 
-		return $zipArchive;
+		return ZipNginx\Archive::createByObjects($archiveName, $objectCollection, $this->getCurrentUser()?->getId());
 	}
 
 	public function listRecentlyUsedAction()

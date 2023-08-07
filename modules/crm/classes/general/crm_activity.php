@@ -91,7 +91,7 @@ class CAllCrmActivity
 		{
 			$params['PRESERVE_CREATION_TIME'] = $options['PRESERVE_CREATION_TIME'];
 		}
-		if (!self::CheckFields('ADD', $arFields, 0, $params))
+		if (!self::rebuildFieldsForDataBase('ADD', $arFields, 0, $params))
 		{
 			return false;
 		}
@@ -252,7 +252,7 @@ class CAllCrmActivity
 		$deadline = isset($arFields['DEADLINE']) ? $arFields['DEADLINE'] : '';
 		if($completed && $deadline !== '')
 		{
-			$deadline = new \Bitrix\Main\Type\DateTime($deadline);
+			$deadline = \Bitrix\Main\Type\DateTime::createFromUserTime($deadline);
 			$deadline->setTime(0, 0, 0);
 			foreach($arBindings as $arBinding)
 			{
@@ -417,27 +417,6 @@ class CAllCrmActivity
 				ExecuteModuleEventEx($arEvent, array($ID, &$arFields));
 			}
 
-			if (\Bitrix\Main\Loader::includeModule('pull'))
-			{
-				\Bitrix\Pull\Event::add($arFields['RESPONSIBLE_ID'], array(
-								'module_id' => 'crm',
-								'command' => 'activity_add',
-								'params' => array(
-									'TYPE_ID' => $arFields['TYPE_ID'],
-									'SUBJECT' => $arFields['SUBJECT'],
-									'RESPONSIBLE_ID' => $arFields['RESPONSIBLE_ID'],
-									'PRIORITY' => $arFields['PRIORITY'],
-									'COMPLETED' => $arFields['COMPLETED'],
-									'START_TIME' => $arFields['START_TIME'],
-									'END_TIME' => $arFields['END_TIME'],
-									'OWNER_TYPE_ID' => $arFields['OWNER_TYPE_ID'],
-									'OWNER_TYPE_NAME' => CCrmOwnerType::ResolveName($arFields['OWNER_TYPE_ID']),
-									'OWNER_ID' => $arFields['OWNER_ID'],
-									'DEADLINE' => $arFields['DEADLINE']
-								),
-							));
-			}
-
 			if($arFields['COMPLETED'] === 'Y')
 			{
 				Crm\Ml\Scoring::queuePredictionUpdate($arFields['OWNER_TYPE_ID'], $arFields['OWNER_ID'], [
@@ -478,7 +457,7 @@ class CAllCrmActivity
 		{
 			$checkFieldParams['INITIATED_BY_CALENDAR'] = $options['INITIATED_BY_CALENDAR'];
 		}
-		if (!self::CheckFields('UPDATE', $arFields, $ID, $checkFieldParams))
+		if (!self::rebuildFieldsForDataBase('UPDATE', $arFields, $ID, $checkFieldParams))
 		{
 			return false;
 		}
@@ -748,7 +727,7 @@ class CAllCrmActivity
 			&& $prevDeadline
 			&& ($bindingsChanged || $prevCompletedForStatistics != $curCompletedForStatistics || $prevDeadline !== $curDeadline))
 		{
-			$deadline = new \Bitrix\Main\Type\DateTime($prevDeadline);
+			$deadline = \Bitrix\Main\Type\DateTime::createFromUserTime($prevDeadline);
 			$deadline->setTime(0, 0, 0);
 			foreach($arPrevBindings as $arBinding)
 			{
@@ -770,7 +749,7 @@ class CAllCrmActivity
 
 		if($curCompletedForStatistics && $curDeadline !== '')
 		{
-			$deadline = new \Bitrix\Main\Type\DateTime($curDeadline);
+			$deadline = \Bitrix\Main\Type\DateTime::createFromUserTime($curDeadline);
 			$deadline->setTime(0, 0, 0);
 			foreach($arBindings as $arBinding)
 			{
@@ -1047,8 +1026,8 @@ class CAllCrmActivity
 
 		if(($arFields['COMPLETED'] ?? null) === 'Y')
 		{
-			$ownerId = $arFields['OWNER_ID'] ?: $arPrevEntity['OWNER_ID'];
-			$ownerTypeId = $arFields['OWNER_TYPE_ID'] ?: $arPrevEntity['OWNER_TYPE_ID'];
+			$ownerId = $arFields['OWNER_ID'] ?? $arPrevEntity['OWNER_ID'];
+			$ownerTypeId = $arFields['OWNER_TYPE_ID'] ?? $arPrevEntity['OWNER_TYPE_ID'];
 			Crm\Ml\Scoring::queuePredictionUpdate($ownerTypeId, $ownerId, [
 				'EVENT_TYPE' => Crm\Ml\Scoring::EVENT_ACTIVITY,
 				'ASSOCIATED_ACTIVITY_ID'=> $ID
@@ -1213,7 +1192,7 @@ class CAllCrmActivity
 				$deadline = isset($ary['DEADLINE']) ? $ary['DEADLINE'] : '';
 				if($completed && $deadline)
 				{
-					$deadline = new \Bitrix\Main\Type\DateTime($deadline);
+					$deadline = \Bitrix\Main\Type\DateTime::createFromUserTime($deadline);
 					$deadline->setTime(0, 0, 0);
 					foreach($arBindings as $arBinding)
 					{
@@ -1672,8 +1651,8 @@ class CAllCrmActivity
 			self::Update($entityID, $arEntity, false, true);
 		}
 	}
-	//Check fields before ADD and UPDATE.
-	private static function CheckFields($action, &$fields, $ID, $params = null)
+
+	private static function rebuildFieldsForDataBase($action, &$fields, $ID, $params = null)
 	{
 		global $DB, $USER_FIELD_MANAGER, $APPLICATION;
 		self::ClearErrors();
@@ -1793,7 +1772,10 @@ class CAllCrmActivity
 				$fields['AUTHOR_ID'] = $currentUserId > 0 ? $currentUserId : $fields['RESPONSIBLE_ID'];
 			}
 
-			$fields['EDITOR_ID'] = $fields['AUTHOR_ID'];
+			if(!isset($fields['EDITOR_ID']))
+			{
+				$fields['EDITOR_ID'] = $fields['AUTHOR_ID'];
+			}
 
 			if (!isset($fields['~END_TIME']) && !isset($fields['END_TIME']) && isset($fields['START_TIME']))
 			{
@@ -5293,7 +5275,7 @@ class CAllCrmActivity
 		$descriptionType = isset($arRow['DESCRIPTION_TYPE']) ? (int)$arRow['DESCRIPTION_TYPE'] : CCrmContentType::PlainText;
 
 		$eventText = '';
-		if($subject !== '' && $providerId != \Bitrix\Crm\Activity\Provider\ToDo::getId())
+		if($subject !== '' && $providerID != \Bitrix\Crm\Activity\Provider\ToDo::getId())
 		{
 			$eventText .= GetMessage('CRM_ACTIVITY_SUBJECT').': '.$subject.PHP_EOL;
 		}

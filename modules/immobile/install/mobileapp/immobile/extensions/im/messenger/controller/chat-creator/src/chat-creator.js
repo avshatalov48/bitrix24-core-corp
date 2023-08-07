@@ -1,11 +1,9 @@
 /* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
 
 /**
  * @module im/messenger/controller/chat-creator/chat-creator
  */
 jn.define('im/messenger/controller/chat-creator/chat-creator', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 	const { clone } = require('utils/object');
@@ -28,48 +26,46 @@ jn.define('im/messenger/controller/chat-creator/chat-creator', (require, exports
 
 			PageManager.openComponent('JSStackComponent', {
 				componentCode: 'im.chat.create',
-				scriptPath: '/mobile/mobile_component/im:im.chat.create/?version='
-					+ MessengerParams.get('WIDGET_CHAT_CREATE_VERSION', '1.0.0')
-				,
+				scriptPath: `/mobile/mobile_component/im:im.chat.create/?version=${MessengerParams.get('WIDGET_CHAT_CREATE_VERSION', '1.0.0')}`,
 				params: {
-					'USER_ID': MessengerParams.getUserId(),
-					'SITE_ID': MessengerParams.get('SITE_ID', 's1'),
-					'LANGUAGE_ID': MessengerParams.get('LANGUAGE_ID', 'en'),
+					USER_ID: MessengerParams.getUserId(),
+					SITE_ID: MessengerParams.get('SITE_ID', 's1'),
+					LANGUAGE_ID: MessengerParams.get('LANGUAGE_ID', 'en'),
 
-					'LIST_USERS': userList,
-					'LIST_DEPARTMENTS': [],
-					'SKIP_LIST': [MessengerParams.getUserId()],
+					LIST_USERS: userList,
+					LIST_DEPARTMENTS: [],
+					SKIP_LIST: [MessengerParams.getUserId()],
 
-					'SEARCH_MIN_SIZE': MessengerParams.get('SEARCH_MIN_SIZE', 3),
+					SEARCH_MIN_SIZE: MessengerParams.get('SEARCH_MIN_SIZE', 3),
 
-					'INTRANET_INVITATION_CAN_INVITE': MessengerParams.get('INTRANET_INVITATION_CAN_INVITE', false),
-					'INTRANET_INVITATION_REGISTER_URL': MessengerParams.get('INTRANET_INVITATION_REGISTER_URL', ''),
-					'INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID': MessengerParams.get('INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID', 0),
-					'INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM': MessengerParams.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM', false),
-					'INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM_DISABLE': MessengerParams.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM_DISABLE', false),
-					'INTRANET_INVITATION_REGISTER_SHARING_MESSAGE': MessengerParams.get('INTRANET_INVITATION_REGISTER_SHARING_MESSAGE', ''),
-					'INTRANET_INVITATION_IS_ADMIN': MessengerParams.get('INTRANET_INVITATION_IS_ADMIN', false)
+					INTRANET_INVITATION_CAN_INVITE: MessengerParams.get('INTRANET_INVITATION_CAN_INVITE', false),
+					INTRANET_INVITATION_REGISTER_URL: MessengerParams.get('INTRANET_INVITATION_REGISTER_URL', ''),
+					INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID: MessengerParams.get('INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID', 0),
+					INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM: MessengerParams.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM', false),
+					INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM_DISABLE: MessengerParams.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM_DISABLE', false),
+					INTRANET_INVITATION_REGISTER_SHARING_MESSAGE: MessengerParams.get('INTRANET_INVITATION_REGISTER_SHARING_MESSAGE', ''),
+					INTRANET_INVITATION_IS_ADMIN: MessengerParams.get('INTRANET_INVITATION_IS_ADMIN', false),
 				},
 				rootWidget: {
 					name: 'chat.create',
 					settings: {
 						objectName: 'ChatCreateInterface',
 						title: Loc.getMessage('IMMOBILE_CHAT_CREATOR_CHAT_CREATE_TITLE'),
-						items: userList.map(element => ChatDataConverter.getListElementByUser(element)),
+						items: userList.map((element) => ChatDataConverter.getListElementByUser(element)),
 						scopes: [
 							{
 								title: Loc.getMessage('IMMOBILE_CHAT_CREATOR_SCOPE_USERS'),
-								id: ChatSearchScopes.TYPE_USER
+								id: ChatSearchScopes.TYPE_USER,
 							},
 							{
 								title: Loc.getMessage('IMMOBILE_CHAT_CREATOR_SCOPE_DEPARTMENTS'),
-								id: ChatSearchScopes.TYPE_DEPARTMENT
+								id: ChatSearchScopes.TYPE_DEPARTMENT,
 							},
 						],
 						backdrop: {
 							shouldResizeContent: true,
 							showOnTop: true,
-							topPosition: 100
+							topPosition: 100,
 						},
 						supportInvites: MessengerParams.get('INTRANET_INVITATION_CAN_INVITE', false),
 					},
@@ -85,14 +81,14 @@ jn.define('im/messenger/controller/chat-creator/chat-creator', (require, exports
 			const recentUserListIndex = {};
 			if (Type.isArrayFilled(recentUserList))
 			{
-				recentUserList.forEach(recentUserChat => {
+				recentUserList.forEach((recentUserChat) => {
 					recentUserListIndex[recentUserChat.user.id] = true;
 
 					userItems.push(recentUserChat.user);
 				});
 			}
 
-			const colleaguesList = clone(this.store.getters['usersModel/getUserList']);
+			const colleaguesList = clone(this.store.getters['usersModel/getUserList']());
 			if (Type.isArrayFilled(colleaguesList))
 			{
 				colleaguesList.forEach((user) => {

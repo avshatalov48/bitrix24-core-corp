@@ -3,9 +3,9 @@
 return [
 	'extensions' => [
 		'alert',
+		'loc',
 		'notify',
 		'crm:type',
-		'crm:timeline/scheduler',
 	],
 	'bundle' => [
 		'./entities/base',
@@ -15,6 +15,7 @@ return [
 		'./entities/company',
 		'./entities/smart-invoice',
 		'./entities/quote',
+		'./entities/dynamic',
 		'./traits/exclude-item',
 	],
 ];

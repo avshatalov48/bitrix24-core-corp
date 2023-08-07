@@ -2,7 +2,6 @@
  * @module im/messenger/lib/ui/base/avatar
  */
 jn.define('im/messenger/lib/ui/base/avatar', (require, exports, module) => {
-
 	const { avatarStyle } = require('im/messenger/lib/ui/base/avatar/style');
 
 	class Avatar extends LayoutComponent
@@ -11,19 +10,20 @@ jn.define('im/messenger/lib/ui/base/avatar', (require, exports, module) => {
 		 *
 		 * @param { Object } props
 		 * @param { string } props.uri
+		 * @param { object } props.svg
 		 * @param { string } props.color
 		 * @param { string } props.text
-		 * @param { string } props.size 'L' or 'M'. Default 'M'
+		 * @param { string } props.size 'L','M','XL'. Default 'M'
 		 */
 		constructor(props)
 		{
 			super(props);
-			this.state.showImageAvatar = !!props.uri;
+			this.state.showImageAvatar = !!props.uri || !!props.svg;
 		}
 
 		componentWillReceiveProps(props)
 		{
-			this.state.showImageAvatar = !!props.uri;
+			this.state.showImageAvatar = !!props.uri || !!props.svg;
 		}
 
 		/**
@@ -33,16 +33,17 @@ jn.define('im/messenger/lib/ui/base/avatar', (require, exports, module) => {
 		 */
 		getFirstLetters(text)
 		{
-			const specialSymbolsPattern = /[#$%^&*@!\[\],.<>`'"~?|\\\/;:(){}-]/;
+			const specialSymbolsPattern = /[!"#$%&'()*,./:;<>?@[\\\]^`{|}~-]/;
 			let initials = '';
 			const words = text.split(/[\s,]/);
-			for (let word of words)
+			for (const word of words)
 			{
 				if (initials.length === 2)
 				{
 					return initials;
 				}
-				for (let letter of word)
+
+				for (const letter of word)
 				{
 					if (
 						!specialSymbolsPattern.test(letter)
@@ -60,24 +61,24 @@ jn.define('im/messenger/lib/ui/base/avatar', (require, exports, module) => {
 
 		render()
 		{
-			const style = this.props.size === 'L' ? avatarStyle.large : avatarStyle.medium
+			const style = avatarStyle[this.props.size] || avatarStyle.M;
+
 			return View(
 				{
 					style: {
-						justifyContent: style.justifyContent
-					}
+						justifyContent: style.justifyContent,
+					},
 				},
 				this.state.showImageAvatar
-					?
-					Image({
+					? Image({
 						style: style.icon,
 						uri: this.props.uri,
+						svg: this.props.svg,
 						onFailure: () => {
-							this.setState({showImageAvatar: false});
-						}
+							this.setState({ showImageAvatar: false });
+						},
 					})
-					:
-					View(
+					: View(
 						{
 							style: {
 								backgroundColor: this.props.color,
@@ -86,8 +87,8 @@ jn.define('im/messenger/lib/ui/base/avatar', (require, exports, module) => {
 								borderRadius: style.defaultIcon.borderRadius,
 								alignContent: style.defaultIcon.alignContent,
 								justifyContent: style.defaultIcon.justifyContent,
-								marginBottom: style.defaultIcon.marginBottom
-							}
+								marginBottom: style.defaultIcon.marginBottom,
+							},
 						},
 						Text(
 							{
@@ -97,10 +98,10 @@ jn.define('im/messenger/lib/ui/base/avatar', (require, exports, module) => {
 									fontSize: style.defaultIcon.text.fontSize,
 								},
 								text: this.getFirstLetters(this.props.text).toUpperCase(),
-							}
-						)
-					)
-			)
+							},
+						),
+					),
+			);
 		}
 	}
 

@@ -75,3 +75,4 @@ $MESS["CRM_TASKS"] = "Tasks";
 $MESS["CRM_TASKS_TITLE"] = "View tasks";
 $MESS["CRM_TASK_TAG"] = "crm";
 $MESS["CRM_TASK_TITLE_PREFIX"] = "CRM:";
+$MESS["CRM_COLUMN_OBSERVERS"] = "Observers";

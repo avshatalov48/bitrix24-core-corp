@@ -15,6 +15,7 @@ return [
 		'crm:stage-list-view',
 		'crm:stage-list/actions',
 		'crm:storage/category',
+		'crm:type/id',
 	],
 	'components' => [
 		'crm:crm.category.detail',

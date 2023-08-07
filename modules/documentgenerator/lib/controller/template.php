@@ -362,7 +362,7 @@ class Template extends Base
 		}
 		if($result->isSuccess())
 		{
-			if($template['IS_DELETED'] === 'Y')
+			if(isset($template['IS_DELETED']) && $template['IS_DELETED'] === 'Y')
 			{
 				unset($template['ID']);
 			}
@@ -573,7 +573,7 @@ class Template extends Base
 	protected function add(array $templateData, array $providers = [], array $users = [])
 	{
 		$result = new Result();
-		$id = intval($templateData['ID']);
+		$id = intval($templateData['ID'] ?? 0);
 		if($id > 0 && !Driver::getInstance()->getUserPermissions()->canModifyTemplate($id))
 		{
 			$result->addError(new Error('You do not have permissions to modify this template'));

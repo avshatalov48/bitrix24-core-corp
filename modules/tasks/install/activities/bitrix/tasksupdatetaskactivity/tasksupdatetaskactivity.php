@@ -1,5 +1,9 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Tasks;
 
@@ -75,6 +79,7 @@ class CBPTasksUpdateTaskActivity extends CBPSetFieldActivity
 		if (!$canUpdate)
 		{
 			$this->WriteToTrackingService(GetMessage('TASKS_UTA_NO_PERMISSIONS'), 0, CBPTrackingType::Error);
+			$this->ErrorMessage = GetMessage('TASKS_UTA_NO_PERMISSIONS');
 		}
 		else
 		{
@@ -84,7 +89,16 @@ class CBPTasksUpdateTaskActivity extends CBPSetFieldActivity
 			}
 
 			$documentService = $this->workflow->GetService("DocumentService");
-			$documentService->UpdateDocument($documentId, $fieldValue, $this->ModifiedBy);
+
+			try
+			{
+				$documentService->UpdateDocument($documentId, $fieldValue, $this->ModifiedBy);
+			}
+			catch (Exception $e)
+			{
+				$this->writeToTrackingService($e->getMessage(), 0, CBPTrackingType::Error);
+				$this->ErrorMessage = $e->getMessage();
+			}
 		}
 
 		return CBPActivityExecutionStatus::Closed;

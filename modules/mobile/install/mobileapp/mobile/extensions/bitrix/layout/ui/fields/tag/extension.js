@@ -2,8 +2,7 @@
  * @module layout/ui/fields/tag
  */
 jn.define('layout/ui/fields/tag', (require, exports, module) => {
-	const {EntitySelectorFieldClass} = require('layout/ui/fields/entity-selector');
-	const {Type} = require('type');
+	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
 
 	/**
 	 * @class TagField
@@ -20,83 +19,23 @@ jn.define('layout/ui/fields/tag', (require, exports, module) => {
 			};
 		}
 
-		renderEmptyContent()
-		{
-			return this.renderEmptyTags();
-		}
-
-		renderEmptyEntity()
-		{
-			return this.renderEmptyTags();
-		}
-
-		renderEmptyTags()
+		renderEntity(tag, showPadding = false)
 		{
 			return View(
 				{
-					style: {
-						flex: 1,
-						flexDirection: 'row',
-					},
-				},
-				this.renderTag(),
-				View(
-					{
-						style: {
-							flexBasis: '40%',
-						},
-					},
-					this.renderTag(),
-				),
-				this.renderTag(),
-			);
-		}
-
-		renderEntity(tag = {}, showPadding = false)
-		{
-			return this.renderTag(tag);
-		}
-
-		renderTag(tag = null)
-		{
-			const isEmpty = Type.isNil(tag);
-
-			return View(
-				{
-					style: this.styles.tag(isEmpty),
+					style: this.styles.tag,
 				},
 				Text({
 					style: this.styles.numberSign,
 					text: '#',
 				}),
-				this.renderTagTitle(tag),
+				Text({
+					style: this.styles.tagTitle,
+					numberOfLines: 1,
+					ellipsize: 'end',
+					text: tag.title,
+				}),
 			);
-		}
-
-		renderTagTitle(tag)
-		{
-			const isEmpty = Type.isNil(tag);
-
-			if (isEmpty)
-			{
-				return View(
-					{
-						style: {
-							flex: 1,
-							height: 5,
-							borderRadius: 10,
-							backgroundColor: '#bdc1c6',
-						},
-					},
-				);
-			}
-
-			return Text({
-				style: this.styles.tagTitle,
-				numberOfLines: 1,
-				ellipsize: 'end',
-				text: tag.title,
-			});
 		}
 
 		shouldShowEditIcon()
@@ -115,18 +54,17 @@ jn.define('layout/ui/fields/tag', (require, exports, module) => {
 
 			return {
 				...styles,
-				tag: (isEmpty) => ({
-					flex: (isEmpty ? 1 : undefined),
+				tag: {
 					flexDirection: 'row',
 					alignItems: 'center',
 					height: 24,
 					borderRadius: 12,
-					backgroundColor: (isEmpty ? '#efefef' : '#e5f9ff'),
+					backgroundColor: '#e5f9ff',
 					paddingVertical: 3,
 					paddingHorizontal: 12,
 					marginRight: 4,
 					marginBottom: 5,
-				}),
+				},
 				numberSign: {
 					color: '#bdc1c6',
 					fontSize: 14,
@@ -149,6 +87,6 @@ jn.define('layout/ui/fields/tag', (require, exports, module) => {
 
 	module.exports = {
 		TagType: 'tag',
-		TagField: props => new TagField(props),
+		TagField: (props) => new TagField(props),
 	};
 });

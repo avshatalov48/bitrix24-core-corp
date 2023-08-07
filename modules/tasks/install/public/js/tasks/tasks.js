@@ -324,12 +324,23 @@ BX.mergeEx(BX.Tasks, {
 		return top;
 	},
 
-	handleOpenCrmDialog()
+	handleAddCrmDialog()
 	{
 		BX.ajax.runAction('tasks.analytics.hit', {
 				data: {},
 				analyticsLabel: {
-					scenario: 'task_add',
+					scenario: 'task_add_crm_field',
+				}
+			},
+		);
+	},
+
+	handleEditCrmDialog()
+	{
+		BX.ajax.runAction('tasks.analytics.hit', {
+				data: {},
+				analyticsLabel: {
+					scenario: 'task_edit_crm_field',
 				}
 			},
 		);

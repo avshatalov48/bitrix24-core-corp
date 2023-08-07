@@ -1,11 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/provider/rest/recent
  */
 jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { RestMethod } = require('im/messenger/const');
@@ -19,7 +15,7 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 		{
 			const methodParams = {};
 
-			if (options.hasOwnProperty('skipOpenlines') && Type.isBoolean(options.skipOpenlines))
+			if (Type.isBoolean(options.skipOpenlines))
 			{
 				methodParams.SKIP_OPENLINES = options.skipOpenlines ? 'Y' : 'N';
 			}
@@ -50,7 +46,7 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 
 			if (!Type.isBoolean(options.shouldPin))
 			{
-				throw new Error('RecentRest: options.shouldPin must be boolean value.');
+				throw new TypeError('RecentRest: options.shouldPin must be boolean value.');
 			}
 
 			methodParams.PIN = options.shouldPin ? 'Y' : 'N';
@@ -91,7 +87,7 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 
 			const dialogId = options.dialogId;
 
-			return BX.rest.callMethod(RestMethod.imRecentUnread, { 'DIALOG_ID': dialogId, 'ACTION': 'N' });
+			return BX.rest.callMethod(RestMethod.imRecentUnread, { DIALOG_ID: dialogId, ACTION: 'N' });
 		}
 
 		readChat(options = {})
@@ -109,8 +105,8 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 			const dialogId = options.dialogId;
 
 			const requestMethods = {
-				recentUnread: [RestMethod.imRecentUnread, { 'DIALOG_ID': dialogId, 'ACTION': 'N' }],
-				dialogRead: [RestMethod.imDialogRead, { 'DIALOG_ID': dialogId }],
+				recentUnread: [RestMethod.imRecentUnread, { DIALOG_ID: dialogId, ACTION: 'N' }],
+				dialogRead: [RestMethod.imDialogRead, { DIALOG_ID: dialogId }],
 			};
 
 			return new Promise((resolve, reject) => {
@@ -121,6 +117,7 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 					if (unreadError || dialogReadError)
 					{
 						reject(result);
+
 						return;
 					}
 

@@ -49,7 +49,7 @@ final class TrackedObjectManager
 
 	/**
 	 * Push in recently used new object.
-	 * @param mixed|int|User|\CAllUser $user User.
+	 * @param mixed|int|User|\CUser $user User.
 	 * @param Disk\File $object Object id.
 	 * @return void
 	 */

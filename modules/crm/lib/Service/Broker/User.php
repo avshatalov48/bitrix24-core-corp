@@ -83,6 +83,7 @@ class User extends Broker
 		$user['ID'] = (int)$user['ID'];
 		$user['FORMATTED_NAME'] = \CUser::FormatName($this->nameFormat, $user, false, false);
 		$user['SHOW_URL'] = $this->router->getUserPersonalUrl($user['ID']);
+		$user['PHOTO_URL'] = null;
 		if($user['PERSONAL_PHOTO'] > 0)
 		{
 			$photo = \CFile::ResizeImageGet($user['PERSONAL_PHOTO'], [

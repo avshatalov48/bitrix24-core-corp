@@ -63,30 +63,34 @@ jn.define('notify-manager', (require, exports, module) => {
 
 		static showLoadingIndicator(dismissKeyboard = true)
 		{
-			const showIndicator = () => {
-				if (loadingTimeout !== null)
+			return new Promise((resolve) => {
+				const showIndicator = () => {
+					if (loadingTimeout !== null)
+					{
+						clearTimeout(loadingTimeout);
+						loadingTimeout = null;
+					}
+
+					if (!loadingIndicatorIsShown)
+					{
+						Notify.showIndicatorLoading().then(() => {
+							resolve(true);
+						});
+					}
+
+					loadingIndicatorIsShown = true;
+				};
+
+				if (dismissKeyboard)
 				{
-					clearTimeout(loadingTimeout);
-					loadingTimeout = null;
+					Keyboard.dismiss();
+					loadingTimeout = setTimeout(() => showIndicator(), 50);
 				}
-
-				if (!loadingIndicatorIsShown)
+				else
 				{
-					Notify.showIndicatorLoading();
+					showIndicator();
 				}
-
-				loadingIndicatorIsShown = true;
-			};
-
-			if (dismissKeyboard)
-			{
-				Keyboard.dismiss();
-				loadingTimeout = setTimeout(() => showIndicator(), 50);
-			}
-			else
-			{
-				showIndicator();
-			}
+			});
 		}
 
 		static hideLoadingIndicatorWithoutFallback()

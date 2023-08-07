@@ -19,7 +19,7 @@
 
 		if (typeof source === 'object')
 		{
-			if (isArray(source))
+			if (Array.isArray(source))
 			{
 				newObject = [];
 				for (let i = 0, l = source.length; i < l; i++)
@@ -245,7 +245,7 @@
 		const bothObjects = valueIsObject && otherIsObject;
 		if (bothObjects)
 		{
-			const bothArrays = isArray(value) && isArray(other);
+			const bothArrays = Array.isArray(value) && Array.isArray(other);
 			if (bothArrays)
 			{
 				return arrayEquals(value, other);
@@ -268,7 +268,7 @@
 				return value.getTime() === other.getTime();
 			}
 
-			const oneIsArray = isArray(value) || isArray(other);
+			const oneIsArray = Array.isArray(value) || Array.isArray(other);
 			const oneIsMap = isMap(value) || isMap(other);
 			const oneIsSet = isSet(value) || isSet(other);
 			const oneIsDate = value instanceof Date || other instanceof Date;
@@ -349,7 +349,7 @@
 			return !value.size;
 		}
 
-		if (isArray(value) || typeof value === 'string')
+		if (Array.isArray(value) || typeof value === 'string')
 		{
 			return !value.length;
 		}
@@ -376,7 +376,7 @@
 
 		for (let i = 0; i < a.length; i++)
 		{
-			if (isArray(a[i]) && isArray(b[i]))
+			if (Array.isArray(a[i]) && Array.isArray(b[i]))
 			{
 				if (!arrayEquals(a[i], b[i]))
 				{
@@ -633,7 +633,7 @@
 			isMap,
 			isSet,
 			isEmpty,
-			isFunction
+			isFunction,
 		};
 
 	});

@@ -95,10 +95,8 @@ class RoleManager
 			]);
 			while($row = $cursor->fetch())
 			{
-				if(!static::$accessCodeToRole[$row['ACCESS_CODE']])
-				{
-					static::$accessCodeToRole[$row['ACCESS_CODE']] = [];
-				}
+				static::$accessCodeToRole[$row['ACCESS_CODE']] ??= [];
+
 				static::$accessCodeToRole[$row['ACCESS_CODE']][] = $row['ROLE_ID'];
 			}
 		}
@@ -158,7 +156,7 @@ class RoleManager
 	public static function getRolePermissions($roleId)
 	{
 		static::loadPermission();
-		return static::$permissions[$roleId] ? static::$permissions[$roleId] : [];
+		return static::$permissions[$roleId] ?? [];
 	}
 	
 	public static function setRolePermissions($roleId, array $permissions)

@@ -32,6 +32,7 @@ class OnTaskStatusChanged implements TimeLineEvent
 			'IGNORE_IN_LOGS' => $this->ignoreInLogs(),
 			'SHOW_RETURNED_BACK_TO_WORK_TITLE' => $this->showReturnedBackToWorkTitle(),
 			'REFRESH_TASK_ACTIVITY' => true,
+			'IS_EXPIRED' => $this->task->isExpired(),
 		];
 	}
 

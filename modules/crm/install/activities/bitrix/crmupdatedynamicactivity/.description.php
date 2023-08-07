@@ -21,6 +21,7 @@ $arActivityDescription = [
 	'FILTER' => [
 		'INCLUDE' => [
 			['crm'],
+			['lists'],
 		],
 	],
 	'ROBOT_SETTINGS' => [

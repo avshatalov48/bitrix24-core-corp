@@ -20,133 +20,143 @@ class CVoxImplantRestService extends IRestService
 
 	public static function OnRestServiceBuildDescription()
 	{
-		return array(
-			'telephony' => array(
-				'voximplant.url.get' => array('CVoxImplantRestService', 'urlGet'),
-				'voximplant.sip.get' => array('CVoxImplantRestService', 'sipGet'),
-				'voximplant.sip.add' => array('CVoxImplantRestService', 'sipAdd'),
-				'voximplant.sip.update' => array('CVoxImplantRestService', 'sipUpdate'),
-				'voximplant.sip.delete' => array('CVoxImplantRestService', 'sipDelete'),
-				'voximplant.sip.status' => array('CVoxImplantRestService', 'sipStatus'),
-				'voximplant.sip.connector.status' => array('CVoxImplantRestService', 'sipConnectorStatus'),
-				'voximplant.statistic.get' => array('CVoxImplantRestService', 'statisticGet'),
-				'voximplant.line.outgoing.set' => array('CVoxImplantRestService', 'lineOutgoingSet'),
-				'voximplant.line.outgoing.get' => array('CVoxImplantRestService', 'lineOutgoingGet'),
-				'voximplant.line.outgoing.sip.set' => array('CVoxImplantRestService', 'lineOutgoingSipSet'),
-				'voximplant.line.get' => array('CVoxImplantRestService', 'lineGet'),
-				'voximplant.tts.voices.get' => array('CVoxImplantRestService', 'getVoiceList'),
-				'voximplant.user.get' => array('CVoxImplantRestService', 'getUser'),
-				'voximplant.user.getDefaultLineId' => array('CVoxImplantRestService', 'getUserDefaultLineId'),
-				'voximplant.user.activatePhone' => array('CVoxImplantRestService', 'activatePhone'),
-				'voximplant.user.deactivatePhone' => array('CVoxImplantRestService', 'deactivatePhone'),
-				'voximplant.authorization.get' => array(
-					'callback' => array('CVoxImplantRestService', 'getAuthorization'),
-					'options' => array('private' => true)
-				),
-				'voximplant.authorization.signOneTimeKey' => array(
-					'callback' => array('CVoxImplantRestService', 'signOneTimeKey'),
-					'options' => array('private' => true)
-				),
-				'voximplant.authorization.onError' => array(
-					'callback' => array('CVoxImplantRestService', 'onAuthorizationError'),
-					'options' => array('private' => true)
-				),
-				'voximplant.call.init' => array( //not sure if this is still needed
-					'callback' => array('CVoxImplantRestService', 'initCall'),
-					'options' => array('private' => true)
-				),
-				'voximplant.call.startWithDevice' => array(
-					'callback' => array('CVoxImplantRestService', 'startCallWithDevice'),
-					'options' => array('private' => true)
-				),
-				'voximplant.call.hangupDevice' => array(
-					'callback' => array('CVoxImplantRestService', 'hangupDeviceCall'),
-					'options' => array('private' => true)
-				),
-				'voximplant.call.sendWait' => array(
-					'callback' => array('CVoxImplantRestService', 'sendWait'),
-					'options' => array('private' => true)
-				),
-				'voximplant.call.sendReady' => array(
-					'callback' => array('CVoxImplantRestService', 'sendReady'),
-					'options' => array('private' => true)
-				),
-				'voximplant.call.answer' => array(
-					'callback' => array('CVoxImplantRestService', 'answerCall'),
-					'options' => array('private' => true)
-				),
-				'voximplant.call.skip' => array(
-					'callback' => array('CVoxImplantRestService', 'skipCall'),
-					'options' => array('private' => true)
-				),
-				'voximplant.call.hold' => array(
-					'callback' => array('CVoxImplantRestService', 'holdCall'),
-					'options' => array('private' => true)
-				),
-				'voximplant.call.unhold' => array(
-					'callback' => array('CVoxImplantRestService', 'unholdCall'),
-					'options' => array('private' => true)
-				),
-				'voximplant.call.startViaRest' => array(
-					'callback' => array('CVoxImplantRestService', 'startCallViaRest'),
-					'options' => array('private' => true)
-				),
-				'voximplant.call.get' => array(
-					'callback' => array('CVoxImplantRestService', 'getCall'),
-					'options' => array('private' => true)
-				),
-				'voximplant.call.intercept' => array(
-					'callback' => array('CVoxImplantRestService', 'interceptCall'),
-					'options' => array('private' => true)
-				),
-				'voximplant.call.saveComment' => array(
-					'callback' => array('CVoxImplantRestService', 'saveCallComment'),
-					'options' => array('private' => true)
-				),
+		return [
+			'telephony' => [
+				'voximplant.url.get' => ['CVoxImplantRestService', 'urlGet'],
+				'voximplant.sip.get' => ['CVoxImplantRestService', 'sipGet'],
+				'voximplant.sip.add' => ['CVoxImplantRestService', 'sipAdd'],
+				'voximplant.sip.update' => ['CVoxImplantRestService', 'sipUpdate'],
+				'voximplant.sip.delete' => ['CVoxImplantRestService', 'sipDelete'],
+				'voximplant.sip.status' => ['CVoxImplantRestService', 'sipStatus'],
+				'voximplant.sip.connector.status' => ['CVoxImplantRestService', 'sipConnectorStatus'],
+				'voximplant.statistic.get' => ['CVoxImplantRestService', 'statisticGet'],
+				'voximplant.line.outgoing.set' => ['CVoxImplantRestService', 'lineOutgoingSet'],
+				'voximplant.line.outgoing.get' => ['CVoxImplantRestService', 'lineOutgoingGet'],
+				'voximplant.line.outgoing.sip.set' => ['CVoxImplantRestService', 'lineOutgoingSipSet'],
+				'voximplant.line.get' => ['CVoxImplantRestService', 'lineGet'],
+				'voximplant.tts.voices.get' => ['CVoxImplantRestService', 'getVoiceList'],
+				'voximplant.user.get' => ['CVoxImplantRestService', 'getUser'],
+				'voximplant.user.getDefaultLineId' => ['CVoxImplantRestService', 'getUserDefaultLineId'],
+				'voximplant.user.activatePhone' => ['CVoxImplantRestService', 'activatePhone'],
+				'voximplant.user.deactivatePhone' => ['CVoxImplantRestService', 'deactivatePhone'],
+				'voximplant.authorization.get' => [
+					'callback' => ['CVoxImplantRestService', 'getAuthorization'],
+					'options' => ['private' => true]
+				],
+				'voximplant.authorization.signOneTimeKey' => [
+					'callback' => ['CVoxImplantRestService', 'signOneTimeKey'],
+					'options' => ['private' => true]
+				],
+				'voximplant.authorization.onError' => [
+					'callback' => ['CVoxImplantRestService', 'onAuthorizationError'],
+					'options' => ['private' => true]
+				],
+				'voximplant.call.init' => [ //not sure if this is still needed
+					'callback' => ['CVoxImplantRestService', 'initCall'],
+					'options' => ['private' => true]
+				],
+				'voximplant.call.startWithDevice' => [
+					'callback' => ['CVoxImplantRestService', 'startCallWithDevice'],
+					'options' => ['private' => true]
+				],
+				'voximplant.call.hangupDevice' => [
+					'callback' => ['CVoxImplantRestService', 'hangupDeviceCall'],
+					'options' => ['private' => true]
+				],
+				'voximplant.call.sendWait' => [
+					'callback' => ['CVoxImplantRestService', 'sendWait'],
+					'options' => ['private' => true]
+				],
+				'voximplant.call.sendReady' => [
+					'callback' => ['CVoxImplantRestService', 'sendReady'],
+					'options' => ['private' => true]
+				],
+				'voximplant.call.answer' => [
+					'callback' => ['CVoxImplantRestService', 'answerCall'],
+					'options' => ['private' => true]
+				],
+				'voximplant.call.skip' => [
+					'callback' => ['CVoxImplantRestService', 'skipCall'],
+					'options' => ['private' => true]
+				],
+				'voximplant.call.hold' => [
+					'callback' => ['CVoxImplantRestService', 'holdCall'],
+					'options' => ['private' => true]
+				],
+				'voximplant.call.unhold' => [
+					'callback' => ['CVoxImplantRestService', 'unholdCall'],
+					'options' => ['private' => true]
+				],
+				'voximplant.call.startViaRest' => [
+					'callback' => ['CVoxImplantRestService', 'startCallViaRest'],
+					'options' => ['private' => true]
+				],
+				'voximplant.call.get' => [
+					'callback' => ['CVoxImplantRestService', 'getCall'],
+					'options' => ['private' => true]
+				],
+				'voximplant.call.intercept' => [
+					'callback' => ['CVoxImplantRestService', 'interceptCall'],
+					'options' => ['private' => true]
+				],
+				'voximplant.call.saveComment' => [
+					'callback' => ['CVoxImplantRestService', 'saveCallComment'],
+					'options' => ['private' => true]
+				],
 
-				'telephony.externalCall.searchCrmEntities' => array('CVoxImplantRestService', 'searchCrmEntities'),
-				'telephony.externalCall.register' => array('CVoxImplantRestService', 'registerExternalCall'),
-				'telephony.externalCall.finish' => array('CVoxImplantRestService', 'finishExternalCall'),
-				'telephony.externalCall.show' => array('CVoxImplantRestService', 'showExternalCall'),
-				'telephony.externalCall.hide' => array('CVoxImplantRestService', 'hideExternalCall'),
-				'telephony.externalCall.attachRecord' => array('CVoxImplantRestService', 'attachRecord'),
-				'telephony.call.attachTranscription' => array('CVoxImplantRestService', 'attachTranscription'),
-				'telephony.externalLine.add' => array('CVoxImplantRestService', 'addExternalLine'),
-				'telephony.externalLine.update' => array('CVoxImplantRestService', 'updateExternalLine'),
-				'telephony.externalLine.delete' => array('CVoxImplantRestService', 'deleteExternalLine'),
-				'telephony.externalLine.get' => array('CVoxImplantRestService', 'getExternalLines'),
-				CRestUtil::METHOD_UPLOAD => array('CVoxImplantRestService', 'uploadRecord'),
+				'telephony.externalCall.searchCrmEntities' => ['CVoxImplantRestService', 'searchCrmEntities'],
+				'telephony.externalCall.register' => ['CVoxImplantRestService', 'registerExternalCall'],
+				'telephony.externalCall.finish' => ['CVoxImplantRestService', 'finishExternalCall'],
+				'telephony.externalCall.show' => ['CVoxImplantRestService', 'showExternalCall'],
+				'telephony.externalCall.hide' => ['CVoxImplantRestService', 'hideExternalCall'],
+				'telephony.externalCall.attachRecord' => ['CVoxImplantRestService', 'attachRecord'],
+				'telephony.call.attachTranscription' => ['CVoxImplantRestService', 'attachTranscription'],
+				'telephony.externalLine.add' => ['CVoxImplantRestService', 'addExternalLine'],
+				'telephony.externalLine.update' => ['CVoxImplantRestService', 'updateExternalLine'],
+				'telephony.externalLine.delete' => ['CVoxImplantRestService', 'deleteExternalLine'],
+				'telephony.externalLine.get' => ['CVoxImplantRestService', 'getExternalLines'],
+				CRestUtil::METHOD_UPLOAD => ['CVoxImplantRestService', 'uploadRecord'],
 
-				CRestUtil::EVENTS => array(
-					'OnVoximplantCallInit' => array('voximplant', 'onCallInit', array(__CLASS__, 'onCallInit'), array("category" => \Bitrix\Rest\Sqs::CATEGORY_TELEPHONY)),
-					'OnVoximplantCallStart' => array('voximplant', 'onCallStart', array(__CLASS__, 'onCallStart'), array("category" => \Bitrix\Rest\Sqs::CATEGORY_TELEPHONY)),
-					'OnVoximplantCallEnd' => array('voximplant', 'onCallEnd', array(__CLASS__, 'onCallEnd'), array("category" => \Bitrix\Rest\Sqs::CATEGORY_TELEPHONY)),
-					Rest\Helper::EVENT_START_EXTERNAL_CALL => array('voximplant', 'onExternalCallStart', array(__CLASS__, 'filterApp'), array("category" => \Bitrix\Rest\Sqs::CATEGORY_TELEPHONY)),
-					Rest\Helper::EVENT_START_EXTERNAL_CALLBACK => array('voximplant', 'onExternalCallBackStart', array(__CLASS__, 'filterApp'), array("category" => \Bitrix\Rest\Sqs::CATEGORY_TELEPHONY)),
-				),
-				CRestUtil::PLACEMENTS => array(
-					Rest\Helper::PLACEMENT_CALL_CARD => array(),
-					Integration\Rest\AppPlacement::ANALYTICS_MENU => array()
-				)
-			),
-			'call' => array(
-				'voximplant.callback.start' => array('CVoxImplantRestService', 'startCallback'),
-				'voximplant.infocall.startwithtext' => array('CVoxImplantRestService', 'startInfoCallWithText'),
-				'voximplant.infocall.startwithsound' => array('CVoxImplantRestService', 'startInfoCallWithSound'),
-			)
-		);
+				CRestUtil::EVENTS => [
+					'OnVoximplantCallInit' => ['voximplant', 'onCallInit', [__CLASS__, 'onCallInit'], ["category" => \Bitrix\Rest\Sqs::CATEGORY_TELEPHONY]],
+					'OnVoximplantCallStart' => ['voximplant', 'onCallStart', [__CLASS__, 'onCallStart'], ["category" => \Bitrix\Rest\Sqs::CATEGORY_TELEPHONY]],
+					'OnVoximplantCallEnd' => ['voximplant', 'onCallEnd', [__CLASS__, 'onCallEnd'], ["category" => \Bitrix\Rest\Sqs::CATEGORY_TELEPHONY]],
+					Rest\Helper::EVENT_START_EXTERNAL_CALL => ['voximplant', 'onExternalCallStart', [__CLASS__, 'filterApp'], ["category" => \Bitrix\Rest\Sqs::CATEGORY_TELEPHONY]],
+					Rest\Helper::EVENT_START_EXTERNAL_CALLBACK => ['voximplant', 'onExternalCallBackStart', [__CLASS__, 'filterApp'], ["category" => \Bitrix\Rest\Sqs::CATEGORY_TELEPHONY]],
+				],
+				CRestUtil::PLACEMENTS => [
+					Rest\Helper::PLACEMENT_CALL_CARD => [],
+					Integration\Rest\AppPlacement::ANALYTICS_MENU => []
+				]
+			],
+			'call' => [
+				'voximplant.callback.start' => ['CVoxImplantRestService', 'startCallback'],
+				'voximplant.infocall.startwithtext' => ['CVoxImplantRestService', 'startInfoCallWithText'],
+				'voximplant.infocall.startwithsound' => ['CVoxImplantRestService', 'startInfoCallWithSound'],
+			]
+		];
 	}
 
 	public static function urlGet()
 	{
-		return Array(
+		return [
 			'detail_statistics' => CVoxImplantHttp::GetServerAddress().CVoxImplantMain::GetPublicFolder().'detail.php',
 			'buy_connector' => CVoxImplantHttp::GetServerAddress().'/settings/license_phone_sip.php',
 			'edit_config' => CVoxImplantHttp::GetServerAddress().CVoxImplantMain::GetPublicFolder().'edit.php?ID=#CONFIG_ID#',
 			'lines' => CVoxImplantHttp::GetServerAddress().CVoxImplantMain::GetPublicFolder().'lines.php',
-		);
+		];
 	}
 
+	/**
+	 * @param array{
+	 *     FILTER: ?array,
+	 *     SORT: string,
+	 *     ORDER: string
+	 * } $arParams
+	 * @param $nav
+	 * @param $server
+	 * @return array|Countable
+	 */
 	public static function sipGet($arParams, $nav, $server)
 	{
 		$permissions = Security\Permissions::createWithCurrentUser();
@@ -156,6 +166,9 @@ class CVoxImplantRestService extends IRestService
 		}
 
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
+		$arParams['FILTER'] ??= null;
+		$arParams['SORT'] ??= null;
+		$arParams['ORDER'] ??= null;
 
 		$sort = $arParams['SORT'];
 		$order = $arParams['ORDER'];
@@ -166,36 +179,36 @@ class CVoxImplantRestService extends IRestService
 		}
 		else
 		{
-			$arFilter = array();
+			$arFilter = [];
 		}
 		$arFilter['APP_ID'] = $server->getAppId();
 
-		$arReturn = array();
+		$arReturn = [];
 
-		$dbResCnt = \Bitrix\Voximplant\SipTable::getList(array(
+		$dbResCnt = \Bitrix\Voximplant\SipTable::getList([
 			'filter' => $arFilter,
-			'select' => array("CNT" => new Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)')),
-		));
+			'select' => ["CNT" => new Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)')],
+		]);
 		$arResCnt = $dbResCnt->fetch();
 		if ($arResCnt && $arResCnt["CNT"] > 0)
 		{
 			$arNavParams = self::getNavData($nav, true);
 
-			$arSort = array();
+			$arSort = [];
 			if ($sort && $order)
 			{
 				$arSort[$sort] = $order;
 			}
 
-			$dbRes = \Bitrix\Voximplant\SipTable::getList(array(
+			$dbRes = \Bitrix\Voximplant\SipTable::getList([
 				'order' => $arSort,
-				'select' => Array('*', 'TITLE'),
+				'select' => ['*', 'TITLE'],
 				'filter' => $arFilter,
 				'limit' => $arNavParams['limit'],
 				'offset' => $arNavParams['offset'],
-			));
+			]);
 
-			$result = array();
+			$result = [];
 			while ($arData = $dbRes->fetch())
 			{
 				unset($arData['ID']);
@@ -215,10 +228,10 @@ class CVoxImplantRestService extends IRestService
 
 			return self::setNavData(
 				$result,
-				array(
+				[
 					"count" => $arResCnt['CNT'],
 					"offset" => $arNavParams['offset']
-				)
+				]
 			);
 		}
 
@@ -234,26 +247,32 @@ class CVoxImplantRestService extends IRestService
 		}
 
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
+		$arParams['TYPE'] ??= null;
+		$arParams['TITLE'] ??= null;
+		$arParams['SERVER'] ??= null;
+		$arParams['LOGIN'] ??= null;
+		$arParams['PASSWORD'] ??= null;
+
 		if (!isset($arParams['TYPE']))
 		{
 			$arParams['TYPE'] = CVoxImplantSip::TYPE_CLOUD;
 		}
 
 		$viSip = new CVoxImplantSip();
-		$configId = $viSip->Add(Array(
+		$configId = $viSip->Add([
 			'TYPE' => mb_strtolower($arParams['TYPE']),
 			'PHONE_NAME' => $arParams['TITLE'],
 			'SERVER' => $arParams['SERVER'],
 			'LOGIN' => $arParams['LOGIN'],
 			'PASSWORD' => $arParams['PASSWORD'],
 			'APP_ID' => $server->getAppId()
-		));
+		]);
 		if (!$configId || $viSip->GetError()->error)
 		{
 			throw new Bitrix\Rest\RestException($viSip->GetError()->msg, $viSip->GetError()->code, CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$result = $viSip->Get($configId, Array('WITH_TITLE' => true));
+		$result = $viSip->Get($configId, ['WITH_TITLE' => true]);
 		unset($result['APP_ID']);
 		unset($result['REG_STATUS']);
 
@@ -269,14 +288,20 @@ class CVoxImplantRestService extends IRestService
 		}
 
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
+		$arParams['CONFIG_ID'] ??= null;
+		$arParams['TYPE'] ??= null;
+		$arParams['TITLE'] ??= null;
+		$arParams['SERVER'] ??= null;
+		$arParams['LOGIN'] ??= null;
+		$arParams['PASSWORD'] ??= null;
 
-		$dbResCnt = \Bitrix\Voximplant\SipTable::getList(array(
-			'filter' => Array(
+		$dbResCnt = \Bitrix\Voximplant\SipTable::getList([
+			'filter' => [
 				'CONFIG_ID' => $arParams["CONFIG_ID"],
 				'APP_ID' => $server->getAppId()
-			),
-			'select' => array("CNT" => new Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)')),
-		));
+			],
+			'select' => ["CNT" => new Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)')],
+		]);
 		$arResCnt = $dbResCnt->fetch();
 		if (!$arResCnt || $arResCnt["CNT"] <= 0)
 		{
@@ -288,18 +313,26 @@ class CVoxImplantRestService extends IRestService
 			$arParams['TYPE'] = CVoxImplantSip::TYPE_CLOUD;
 		}
 
-		$arUpdate = Array(
+		$arUpdate = [
 			'TYPE' => $arParams['TYPE'],
 			'NEED_UPDATE' => "Y",
-		);
+		];
 		if (isset($arParams['TITLE']))
+		{
 			$arUpdate['TITLE'] = $arParams['TITLE'];
+		}
 		if (isset($arParams['SERVER']))
+		{
 			$arUpdate['SERVER'] = $arParams['SERVER'];
+		}
 		if (isset($arParams['LOGIN']))
+		{
 			$arUpdate['LOGIN'] = $arParams['LOGIN'];
+		}
 		if (isset($arParams['PASSWORD']))
+		{
 			$arUpdate['PASSWORD'] = $arParams['PASSWORD'];
+		}
 
 		if (count($arUpdate) == 2)
 		{
@@ -325,14 +358,15 @@ class CVoxImplantRestService extends IRestService
 		}
 
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
+		$arParams["CONFIG_ID"] ??= null;
 
-		$dbResCnt = \Bitrix\Voximplant\SipTable::getList(array(
-			'filter' => Array(
+		$dbResCnt = \Bitrix\Voximplant\SipTable::getList([
+			'filter' => [
 				'CONFIG_ID' => $arParams["CONFIG_ID"],
 				'APP_ID' => $server->getAppId()
-			),
-			'select' => array("CNT" => new Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)')),
-		));
+			],
+			'select' => ["CNT" => new Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)')],
+		]);
 		$arResCnt = $dbResCnt->fetch();
 		if (!$arResCnt || $arResCnt["CNT"] <= 0)
 		{
@@ -358,6 +392,7 @@ class CVoxImplantRestService extends IRestService
 		}
 
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
+		$arParams['REG_ID'] ??= null;
 
 		$viSip = new CVoxImplantSip();
 		$result = $viSip->GetSipRegistrations($arParams['REG_ID']);
@@ -374,13 +409,13 @@ class CVoxImplantRestService extends IRestService
 			'successful' => $result->status_result === 'success'
 		]);
 
-		return Array(
+		return [
 			'REG_ID' => $result->reg_id,
 			'LAST_UPDATED' => $result->last_updated,
 			'ERROR_MESSAGE' => $result->error_message,
 			'STATUS_CODE' => $result->status_code,
 			'STATUS_RESULT' => $result->status_result,
-		);
+		];
 	}
 
 	public static function sipConnectorStatus()
@@ -398,10 +433,10 @@ class CVoxImplantRestService extends IRestService
 			throw new Bitrix\Rest\RestException($ViHttp->GetError()->msg, $ViHttp->GetError()->code, CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$result = array(
+		$result = [
 			'FREE_MINUTES' => intval($info->FREE),
 			'PAID' => $info->ACTIVE,
-		);
+		];
 
 		if ($info->ACTIVE)
 		{
@@ -438,20 +473,20 @@ class CVoxImplantRestService extends IRestService
 
 		$arNavParams = self::getNavData($start, true);
 
-		$arSort = array();
+		$arSort = [];
 		if ($sort && $order)
 		{
 			$arSort[$sort] = $order;
 		}
 
-		$dbRes = \Bitrix\Voximplant\StatisticTable::getList(array(
+		$dbRes = \Bitrix\Voximplant\StatisticTable::getList([
 			'order' => $arSort,
 			'filter' => $arFilter,
 			'limit' => $arNavParams['limit'],
 			'offset' => $arNavParams['offset'],
-		));
+		]);
 
-		$result = array();
+		$result = [];
 		while ($arData = $dbRes->fetch())
 		{
 			$arData['RECORD_FILE_ID'] = (int)$arData['CALL_WEBDAV_ID'] ?: null;
@@ -471,17 +506,19 @@ class CVoxImplantRestService extends IRestService
 
 		return self::setNavData(
 			$result,
-			array(
+			[
 				"count" => $totalCount,
 				"offset" => $arNavParams['offset']
-			)
+			]
 		);
 	}
 
 	public static function checkStatisticFilter($arFilter)
 	{
 		if (!is_array($arFilter))
-			return array();
+		{
+			return [];
+		}
 
 		$arFilter = array_change_key_case($arFilter, CASE_UPPER);
 
@@ -499,7 +536,7 @@ class CVoxImplantRestService extends IRestService
 					}
 				}
 
-				if(!$isPlainArray)
+				if (!$isPlainArray)
 				{
 					$subFilter = static::checkStatisticFilter($value);
 					if (!empty($subFilter) && is_array($subFilter))
@@ -541,13 +578,13 @@ class CVoxImplantRestService extends IRestService
 							}
 							break;
 					}
-					if($operation == '' && StatisticTable::getEntity()->hasField($field))
+					if ($operation == '' && StatisticTable::getEntity()->hasField($field))
 					{
 						$operation = '=';
 					}
 
 					$newKey = $operation . $field;
-					if($key != $newKey)
+					if ($key != $newKey)
 					{
 						unset($arFilter[$key]);
 					}
@@ -583,6 +620,7 @@ class CVoxImplantRestService extends IRestService
 		}
 
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
+		$arParams['CONFIG_ID'] ??= null;
 
 		$result = CVoxImplantConfig::SetPortalNumberByConfigId($arParams['CONFIG_ID']);
 		if (!$result)
@@ -602,6 +640,7 @@ class CVoxImplantRestService extends IRestService
 		}
 
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
+		$arParams['LINE_ID'] ??= null;
 
 		CVoxImplantConfig::SetPortalNumber($arParams['LINE_ID']);
 
@@ -637,9 +676,13 @@ class CVoxImplantRestService extends IRestService
 		}
 
 		if (is_array($params['USER_ID']))
+		{
 			$userIds = array_map('intval', $params['USER_ID']);
+		}
 		else
-			$userIds = array((int)$params['USER_ID']);
+		{
+			$userIds = [(int)$params['USER_ID']];
+		}
 
 		$permissions = Security\Permissions::createWithCurrentUser();
 		$allowedUserIds = Security\Helper::getAllowedUserIds(
@@ -648,10 +691,14 @@ class CVoxImplantRestService extends IRestService
 		);
 
 		if (is_array($allowedUserIds))
+		{
 			$userIds = array_intersect($userIds, $allowedUserIds);
+		}
 
 		if (empty($userIds))
+		{
 			throw new \Bitrix\Rest\AccessException('You have no permission to query selected users');
+		}
 
 		if (Integration\Bitrix24::isInstalled())
 		{
@@ -659,7 +706,7 @@ class CVoxImplantRestService extends IRestService
 		}
 		else
 		{
-			$admins = array();
+			$admins = [];
 			$cursor = \CAllGroup::GetGroupUserEx(1);
 			while ($row = $cursor->fetch())
 			{
@@ -668,7 +715,9 @@ class CVoxImplantRestService extends IRestService
 		}
 
 		if (isset($admins[Security\Helper::getCurrentUserId()]))
-			$admins = array(Security\Helper::getCurrentUserId());
+		{
+			$admins = [Security\Helper::getCurrentUserId()];
+		}
 
 		$server->requestConfirmation(
 			$admins,
@@ -678,29 +727,29 @@ class CVoxImplantRestService extends IRestService
 			)
 		);
 
-		$arExtParams = array(
-			'FIELDS' => array('ID'),
-			'SELECT' => array(
+		$arExtParams = [
+			'FIELDS' => ['ID'],
+			'SELECT' => [
 				'UF_VI_PASSWORD',
 				'UF_VI_BACKPHONE',
 				'UF_VI_PHONE',
 				'UF_VI_PHONE_PASSWORD',
 				'UF_PHONE_INNER',
-			)
-		);
+			]
+		];
 
 		$cursor = CUser::GetList(
 			'',
 			'',
-			array('ID' => join(' | ', $userIds)),
+			['ID' => join(' | ', $userIds)],
 			$arExtParams
 		);
-		$result = array();
+		$result = [];
 
 		$account = new CVoxImplantAccount();
 		while ($row = $cursor->Fetch())
 		{
-			$result[] = array(
+			$result[] = [
 				'ID' => $row['ID'],
 				'DEFAULT_LINE' => $row['UF_VI_BACKPHONE'],
 				'PHONE_ENABLED' => $row['UF_VI_PHONE'],
@@ -708,8 +757,9 @@ class CVoxImplantRestService extends IRestService
 				'SIP_LOGIN' => 'phone'.$row['ID'],
 				'SIP_PASSWORD' => $row['UF_VI_PHONE_PASSWORD'],
 				'INNER_NUMBER' => $row['UF_PHONE_INNER'],
-			);
+			];
 		}
+
 		return $result;
 	}
 
@@ -721,9 +771,10 @@ class CVoxImplantRestService extends IRestService
 	public static function getUserDefaultLineId($params, $n, $server)
 	{
 		$userId = static::getCurrentUserId();
-		return array(
+
+		return [
 			'defaultLineId' => CVoxImplantUser::getUserOutgoingLine($userId),
-		);
+		];
 	}
 
 	/**
@@ -733,13 +784,19 @@ class CVoxImplantRestService extends IRestService
 	 */
 	public static function activatePhone($params, $n, $server)
 	{
+		$params['USER_ID'] ??= null;
+
 		$userId = (int)$params['USER_ID'];
 		if ($userId === 0)
+		{
 			throw new \Bitrix\Rest\RestException('Parameter USER_ID is not set');
+		}
 
 		$permissions = Security\Permissions::createWithCurrentUser();
 		if (!CVoxImplantUser::canModify($userId, $permissions))
+		{
 			throw new \Bitrix\Rest\RestException('You are not allowed to modify user\'s settings');
+		}
 
 		$user = new CVoxImplantUser();
 		$user->SetPhoneActive($userId, true);
@@ -753,16 +810,23 @@ class CVoxImplantRestService extends IRestService
 	 */
 	public static function deactivatePhone($params, $n, $server)
 	{
+		$params['USER_ID'] ??= null;
+
 		$userId = (int)$params['USER_ID'];
 		if ($userId === 0)
+		{
 			throw new \Bitrix\Rest\RestException('Parameter USER_ID is not set');
+		}
 
 		$permissions = Security\Permissions::createWithCurrentUser();
 		if (!CVoxImplantUser::canModify($userId, $permissions))
+		{
 			throw new \Bitrix\Rest\RestException('You are not allowed to modify user\'s settings');
+		}
 
 		$user = new CVoxImplantUser();
 		$user->SetPhoneActive($userId, true);
+
 		return 1;
 	}
 
@@ -775,7 +839,7 @@ class CVoxImplantRestService extends IRestService
 	public static function getAuthorization($params, $n, $server)
 	{
 		$allowedAuthTypes = [\Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE => true];
-		if(Loader::includeModule('im') && class_exists('\Bitrix\Im\Call\Auth'))
+		if (Loader::includeModule('im') && class_exists('\Bitrix\Im\Call\Auth'))
 		{
 			$allowedAuthTypes[\Bitrix\Im\Call\Auth::AUTH_TYPE] = true;
 		}
@@ -788,16 +852,17 @@ class CVoxImplantRestService extends IRestService
 		$viUser = new CVoxImplantUser();
 
 		$result = $viUser->getAuthorizationInfo($userId, true);
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
 		{
 			$errors = $result->getErrors();
 			throw new Bitrix\Rest\RestException($errors[0]->getMessage(), $errors[0]->getCode());
 		}
 		$data = $result->getData();
-		return array(
+
+		return [
 			'SERVER' => $data['server'],
 			'LOGIN' => $data['login']
-		);
+		];
 	}
 
 	/**
@@ -808,7 +873,7 @@ class CVoxImplantRestService extends IRestService
 	public static function signOneTimeKey($params, $n, $server)
 	{
 		$allowedAuthTypes = [\Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE => true];
-		if(Loader::includeModule('im') && class_exists('\Bitrix\Im\Call\Auth'))
+		if (Loader::includeModule('im') && class_exists('\Bitrix\Im\Call\Auth'))
 		{
 			$allowedAuthTypes[\Bitrix\Im\Call\Auth::AUTH_TYPE] = true;
 		}
@@ -820,12 +885,14 @@ class CVoxImplantRestService extends IRestService
 		$voxMain = new CVoxImplantMain(static::getCurrentUserId());
 		$result = $voxMain->GetOneTimeKey($_POST['KEY']);
 		if (!$result)
+		{
 			throw new \Bitrix\Rest\RestException($voxMain->GetError()->msg, $voxMain->GetError()->code);
+		}
 
-		return array(
+		return [
 			'HASH' => $result,
 			'ERROR' => ''
-		);
+		];
 	}
 
 	/**
@@ -836,7 +903,7 @@ class CVoxImplantRestService extends IRestService
 	public static function onAuthorizationError($params, $n, $server)
 	{
 		$allowedAuthTypes = [\Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE => true];
-		if(Loader::includeModule('im') && class_exists('\Bitrix\Im\Call\Auth'))
+		if (Loader::includeModule('im') && class_exists('\Bitrix\Im\Call\Auth'))
 		{
 			$allowedAuthTypes[Bitrix\Im\Call\Auth::AUTH_TYPE] = true;
 		}
@@ -858,12 +925,16 @@ class CVoxImplantRestService extends IRestService
 	public static function initCall($params, $n, $server)
 	{
 		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
 			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 
 		$voxMain = new CVoxImplantMain(static::getCurrentUserId());
 		$result = $voxMain->GetDialogInfo($_POST['NUMBER']);
 		if (!$result)
+		{
 			throw new \Bitrix\Rest\RestException($voxMain->GetError()->msg, $voxMain->GetError()->code);
+		}
 
 		return $result;
 	}
@@ -876,14 +947,18 @@ class CVoxImplantRestService extends IRestService
 	public static function startCallWithDevice($params, $n, $server)
 	{
 		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
 			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 
 		$number = $params['NUMBER'];
 		$callParams = $params['PARAMS'];
 		$userId = static::getCurrentUserId();
 
 		if (!CVoxImplantUser::GetPhoneActive($userId))
+		{
 			throw new \Bitrix\Rest\RestException("User has no phone.", "NO_PHONE", \CRestServer::STATUS_NOT_FOUND);
+		}
 
 		return  CVoxImplantOutgoing::StartCall($userId, $number, $callParams);
 	}
@@ -896,12 +971,14 @@ class CVoxImplantRestService extends IRestService
 	public static function hangupDeviceCall($params, $n, $server)
 	{
 		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
 			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 
-		CVoxImplantIncoming::SendCommand(Array(
+		CVoxImplantIncoming::SendCommand([
 			'CALL_ID' => $params['CALL_ID'],
 			'COMMAND' => CVoxImplantIncoming::RULE_HUNGUP
-		));
+		]);
 
 		return 1;
 	}
@@ -916,32 +993,39 @@ class CVoxImplantRestService extends IRestService
 	public static function sendWait($params, $n, $server)
 	{
 		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
 			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 
 		$call = \Bitrix\Voximplant\Model\CallTable::getByCallId($params['CALL_ID']);
 		if (!$call)
+		{
 			throw new Bitrix\Rest\RestException("Call is not found, or already finished", Bitrix\Rest\RestException::ERROR_NOT_FOUND, CRestServer::STATUS_NOT_FOUND);
+		}
 
-		if($call['STATUS'] !== \Bitrix\Voximplant\Model\CallTable::STATUS_WAITING)
+		if ($call['STATUS'] !== \Bitrix\Voximplant\Model\CallTable::STATUS_WAITING)
+		{
 			throw new Bitrix\Rest\RestException("Call is already answered", "ERROR_WRONG_STATE");
+		}
 
 		$result = CVoxImplantIncoming::SendCommand(
-			array(
+			[
 				'CALL_ID' => $params['CALL_ID'],
 				'COMMAND' => CVoxImplantIncoming::RULE_WAIT,
 				'DEBUG_INFO' => $params['DEBUG_INFO']
-			),
+			],
 			true
 		);
 
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
 		{
 			$errors = $result->getErrors();
 			throw new Bitrix\Rest\RestException($errors[0]->getMessage(), $errors[0]->getCode());
 		}
-		return array(
+
+		return [
 			"SUCCESS" => true
-		);
+		];
 	}
 
 	/**
@@ -952,22 +1036,24 @@ class CVoxImplantRestService extends IRestService
 	public static function sendReady($params, $n, $server)
 	{
 		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
 			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 
 		$call = \Bitrix\Voximplant\Model\CallTable::getByCallId($params['CALL_ID']);
 
-		if($call)
+		if ($call)
 		{
-			\Bitrix\Voximplant\Model\CallTable::update($call['ID'], array(
+			\Bitrix\Voximplant\Model\CallTable::update($call['ID'], [
 				'STATUS' => \Bitrix\Voximplant\Model\CallTable::STATUS_CONNECTING
-			));
+			]);
 		}
 
-		CVoxImplantIncoming::SendCommand(Array(
+		CVoxImplantIncoming::SendCommand([
 			'CALL_ID' => $params['CALL_ID'],
 			'COMMAND' => CVoxImplantIncoming::RULE_USER,
 			'USER_ID' => static::getCurrentUserId()
-		));
+		]);
 	}
 
 	/**
@@ -978,40 +1064,46 @@ class CVoxImplantRestService extends IRestService
 	public static function answerCall($params, $n, $server)
 	{
 		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
 			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 
 		$callId = $params['CALL_ID'];
 		$userId = static::getCurrentUserId();
 		$call = \Bitrix\Voximplant\Model\CallTable::getByCallId($callId);
 		if (!$call)
+		{
 			throw new Bitrix\Rest\RestException("Call is not found, or already finished", Bitrix\Rest\RestException::ERROR_NOT_FOUND, CRestServer::STATUS_NOT_FOUND);
+		}
 
-		if($call['STATUS'] !== \Bitrix\Voximplant\Model\CallTable::STATUS_WAITING)
+		if ($call['STATUS'] !== \Bitrix\Voximplant\Model\CallTable::STATUS_WAITING)
+		{
 			throw new Bitrix\Rest\RestException("Call is already answered", "ERROR_WRONG_STATE");
+		}
 
 		$result = CVoxImplantIncoming::SendCommand(
-			array(
+			[
 				'CALL_ID' => $callId,
 				'COMMAND' => CVoxImplantIncoming::RULE_WAIT
-			),
+			],
 			true
 		);
 
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
 		{
 			$errors = $result->getErrors();
 			throw new Bitrix\Rest\RestException($errors[0]->getMessage(), $errors[0]->getCode());
 		}
 
-		CVoxImplantIncoming::SendPullEvent(Array(
+		CVoxImplantIncoming::SendPullEvent([
 			'COMMAND' => 'answer_self',
 			'USER_ID' => $userId,
 			'CALL_ID' => $callId,
-		));
+		]);
 
-		return array(
+		return [
 			"SUCCESS" => true
-		);
+		];
 	}
 
 	/**
@@ -1022,12 +1114,14 @@ class CVoxImplantRestService extends IRestService
 	public static function skipCall($params, $n, $server)
 	{
 		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
 			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 
-		CVoxImplantIncoming::SendCommand(array(
+		CVoxImplantIncoming::SendCommand([
 			'CALL_ID' => $params['CALL_ID'],
 			'COMMAND' => CVoxImplantIncoming::RULE_QUEUE
-		));
+		]);
 	}
 
 	/**
@@ -1038,11 +1132,13 @@ class CVoxImplantRestService extends IRestService
 	public static function holdCall($params, $n, $server)
 	{
 		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
 			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 
 		$userId = static::getCurrentUserId();
 		$call = \Bitrix\Voximplant\Call::load($params['CALL_ID']);
-		if($call)
+		if ($call)
 		{
 			$call->getSignaling()->sendHold($userId);
 			$call->getScenario()->sendHold($userId);
@@ -1057,11 +1153,13 @@ class CVoxImplantRestService extends IRestService
 	public static function unholdCall($params, $n, $server)
 	{
 		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
 			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 
 		$userId = static::getCurrentUserId();
 		$call = \Bitrix\Voximplant\Call::load($params['CALL_ID']);
-		if($call)
+		if ($call)
 		{
 			$call->getSignaling()->sendUnHold($userId);
 			$call->getScenario()->sendUnHold($userId);
@@ -1076,15 +1174,15 @@ class CVoxImplantRestService extends IRestService
 	public static function startCallViaRest($params, $n, $server)
 	{
 		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
 			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 
-		$callParams = is_array($params['PARAMS']) ? $params['PARAMS'] : array();
+		$callParams = is_array($params['PARAMS']) ? $params['PARAMS'] : [];
 		$userId = static::getCurrentUserId();
 		$isMobile = \Bitrix\Main\Context::getCurrent()->getRequest()->get('bx_mobile') === 'Y';
-		if($isMobile)
-		{
-			$callParams['IS_MOBILE'] = true;
-		}
+		$callParams['IS_MOBILE'] = $isMobile;
+
 		$startResult = \Bitrix\Voximplant\Rest\Helper::startCall(
 			$params['NUMBER'],
 			$userId,
@@ -1093,18 +1191,18 @@ class CVoxImplantRestService extends IRestService
 		);
 
 		$result = $startResult->toArray();
-		if($startResult->isSuccess())
+		if ($startResult->isSuccess())
 		{
 			$callId = $result['DATA']['CALL_ID'];
 
 			$result['DATA']['CRM'] = CVoxImplantCrmHelper::GetDataForPopup($callId, $params['NUMBER'], $userId);
 
-			if($params['SHOW'] === 'Y')
+			if ($params['SHOW'] === 'Y')
 			{
-				Rest\Helper::showExternalCall(array(
+				Rest\Helper::showExternalCall([
 					'USER_ID' => $userId,
 					'CALL_ID' => $callId
-				));
+				]);
 			}
 		}
 		return $result;
@@ -1118,12 +1216,16 @@ class CVoxImplantRestService extends IRestService
 	public static function getCall($params, $n, $server)
 	{
 		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
 			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 
 		$call = \Bitrix\Voximplant\Model\CallTable::getByCallId($params['CALL_ID']);
 
-		if(!$call)
+		if (!$call)
+		{
 			throw new \Bitrix\Rest\RestException("Call is not found, or finished", "NOT_FOUND", \CRestServer::STATUS_NOT_FOUND);
+		}
 
 		return $call;
 	}
@@ -1136,23 +1238,26 @@ class CVoxImplantRestService extends IRestService
 	public static function interceptCall($params, $n, $server)
 	{
 		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
 			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 
 		$interceptResult = false;
 		$userId = static::getCurrentUserId();
 		$callId = CVoxImplantIncoming::findCallToIntercept($userId);
-		if($callId)
+		if ($callId)
 		{
 			$interceptResult = CVoxImplantIncoming::interceptCall($userId, $callId);
 		}
 
-		$result =  array(
+		$result =  [
 			'FOUND' => $interceptResult ? 'Y' : 'N'
-		);
+		];
 		if (!$interceptResult)
 		{
 			$result['ERROR'] = GetMessage('VOX_CALL_FOR_INTERCEPT_NOT_FOUND');
 		}
+
 		return $result;
 	}
 
@@ -1164,25 +1269,36 @@ class CVoxImplantRestService extends IRestService
 	public static function saveCallComment($params, $n, $server)
 	{
 		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
 			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 
 		$callId = $params['CALL_ID'];
 		$comment = $params['COMMENT'];
 		$call = \Bitrix\Voximplant\Model\CallTable::getByCallId($callId);
-		if(!$call)
+		if (!$call)
+		{
 			throw new \Bitrix\Rest\RestException("Call is not found, or finished", "NOT_FOUND", \CRestServer::STATUS_NOT_FOUND);
+		}
 
-		\Bitrix\Voximplant\Model\CallTable::update($call['ID'], array(
+		\Bitrix\Voximplant\Model\CallTable::update($call['ID'], [
 			'COMMENT' => $comment
-		));
+		]);
+
 		return 1;
 	}
 
 	public static function startCallback($params, $n, $server)
 	{
 		$permissions = Security\Permissions::createWithCurrentUser();
-		if(!$permissions->canPerform(Security\Permissions::ENTITY_CALL, Security\Permissions::ACTION_PERFORM, Security\Permissions::PERMISSION_ANY))
+		if (!$permissions->canPerform(Security\Permissions::ENTITY_CALL, Security\Permissions::ACTION_PERFORM, Security\Permissions::PERMISSION_ANY))
+		{
 			throw new \Bitrix\Rest\AccessException();
+		}
+		$params['FROM_LINE'] ??= null;
+		$params['TO_NUMBER'] ??= null;
+		$params['TEXT_TO_PRONOUNCE'] ??= null;
+		$params['VOICE'] ??= null;
 
 		$fromLine = $params['FROM_LINE'];
 		$toNumber = $params['TO_NUMBER'];
@@ -1190,14 +1306,16 @@ class CVoxImplantRestService extends IRestService
 		$voice = $params['VOICE'];
 
 		$callbackResult = CVoxImplantOutgoing::startCallBack($fromLine, $toNumber, $textToPronounce, $voice);
-		if(!$callbackResult->isSuccess())
+		if (!$callbackResult->isSuccess())
+		{
 			throw new \Bitrix\Rest\RestException(implode('; ', $callbackResult->getErrorMessages()));
+		}
 
 		$callbackData = $callbackResult->getData();
-		$result = array (
+		$result = [
 			'RESULT' => true,
 			'CALL_ID' => $callbackData['CALL_ID']
-		);
+		];
 
 		return $result;
 	}
@@ -1205,10 +1323,15 @@ class CVoxImplantRestService extends IRestService
 	public static function startInfoCallWithText($params, $n, $server)
 	{
 		$permissions = Security\Permissions::createWithCurrentUser();
-		if(!$permissions->canPerform(Security\Permissions::ENTITY_CALL, Security\Permissions::ACTION_PERFORM, Security\Permissions::PERMISSION_ANY))
+		if (!$permissions->canPerform(Security\Permissions::ENTITY_CALL, Security\Permissions::ACTION_PERFORM, Security\Permissions::PERMISSION_ANY))
 		{
 			throw new \Bitrix\Rest\AccessException();
 		}
+
+		$params['FROM_LINE'] ??= null;
+		$params['TO_NUMBER'] ??= null;
+		$params['TEXT_TO_PRONOUNCE'] ??= null;
+		$params['VOICE'] ??= null;
 
 		$fromLine = $params['FROM_LINE'];
 		$toNumber = $params['TO_NUMBER'];
@@ -1216,14 +1339,16 @@ class CVoxImplantRestService extends IRestService
 		$voice = $params['VOICE'];
 
 		$infoCallResult = CVoxImplantOutgoing::StartInfoCallWithText($fromLine, $toNumber, $textToPronounce, $voice);
-		if(!$infoCallResult->isSuccess())
+		if (!$infoCallResult->isSuccess())
+		{
 			throw new \Bitrix\Rest\RestException(implode('; ', $infoCallResult->getErrorMessages()));
+		}
 
 		$infoCallData = $infoCallResult->getData();
-		$result = array (
+		$result = [
 			'RESULT' => true,
 			'CALL_ID' => $infoCallData['CALL_ID']
-		);
+		];
 
 		return $result;
 	}
@@ -1231,24 +1356,30 @@ class CVoxImplantRestService extends IRestService
 	public static function startInfoCallWithSound($params, $n, $server)
 	{
 		$permissions = Security\Permissions::createWithCurrentUser();
-		if(!$permissions->canPerform(Security\Permissions::ENTITY_CALL, Security\Permissions::ACTION_PERFORM, Security\Permissions::PERMISSION_ANY))
+		if (!$permissions->canPerform(Security\Permissions::ENTITY_CALL, Security\Permissions::ACTION_PERFORM, Security\Permissions::PERMISSION_ANY))
 		{
 			throw new \Bitrix\Rest\AccessException();
 		}
+
+		$params['FROM_LINE'] ??= null;
+		$params['TO_NUMBER'] ??= null;
+		$params['URL'] ??= null;
 
 		$fromLine = $params['FROM_LINE'];
 		$toNumber = $params['TO_NUMBER'];
 		$soundUrl = $params['URL'];
 
 		$infoCallResult = CVoxImplantOutgoing::StartInfoCallWithSound($fromLine, $toNumber, $soundUrl);
-		if(!$infoCallResult->isSuccess())
+		if (!$infoCallResult->isSuccess())
+		{
 			throw new \Bitrix\Rest\RestException(implode('; ', $infoCallResult->getErrorMessages()));
+		}
 
 		$infoCallData = $infoCallResult->getData();
-		$result = array (
+		$result = [
 			'RESULT' => true,
 			'CALL_ID' => $infoCallData['CALL_ID']
-		);
+		];
 
 		return $result;
 	}
@@ -1260,16 +1391,20 @@ class CVoxImplantRestService extends IRestService
 	 */
 	public static function searchCrmEntities($params, $n, $server)
 	{
+		$params['PHONE_NUMBER'] ??= null;
+
 		$phoneNumber = (string)$params['PHONE_NUMBER'];
 
-		if($phoneNumber == '')
+		if ($phoneNumber == '')
 		{
 			throw new \Bitrix\Rest\RestException('PHONE_NUMBER is empty');
 		}
 
 		$result = Rest\Helper::searchCrmEntities($phoneNumber);
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
+		{
 			throw new \Bitrix\Rest\RestException(implode('; ', $result->getErrorMessages()));
+		}
 
 		return $result->getData();
 	}
@@ -1281,10 +1416,22 @@ class CVoxImplantRestService extends IRestService
 	 */
 	public static function registerExternalCall($params, $n, $server)
 	{
-		if($server->getAuthType() !== Oauth\Auth::AUTH_TYPE && $server->getAuthType() !== APAuth\Auth::AUTH_TYPE)
+		if ($server->getAuthType() !== Oauth\Auth::AUTH_TYPE && $server->getAuthType() !== APAuth\Auth::AUTH_TYPE)
 		{
 			throw new \Bitrix\Rest\AuthTypeException();
 		}
+		$params['USER_PHONE_INNER'] ??= null;
+		$params['USER_ID'] ??= null;
+		$params['PHONE_NUMBER'] ??= null;
+		$params['CALL_START_DATE'] ??= null;
+		$params['CRM_CREATE'] ??= null;
+		$params['CRM_SOURCE'] ??= null;
+		$params['CRM_ENTITY_TYPE'] ??= null;
+		$params['CRM_ENTITY_ID'] ??= null;
+		$params['SHOW'] ??= null;
+		$params['CALL_LIST_ID'] ??= null;
+		$params['LINE_NUMBER'] ??= null;
+		$params['TYPE'] ??= null;
 
 		/*
 		$permissions = Security\Permissions::createWithCurrentUser();
@@ -1299,16 +1446,22 @@ class CVoxImplantRestService extends IRestService
 		$appId = $row['ID'];
 
 		$userId = (int)$params['USER_ID'];
-		if($userId == 0)
+		if ($userId == 0)
+		{
 			$userId = Rest\Helper::getUserByPhone($params['USER_PHONE_INNER']);
+		}
 
-		if(!$userId)
+		if (!$userId)
+		{
 			throw new \Bitrix\Rest\RestException('USER_ID or USER_PHONE_INNER should be set');
+		}
 
-		if(!in_array($params['TYPE'], CVoxImplantMain::getCallTypes()))
+		if (!in_array($params['TYPE'], CVoxImplantMain::getCallTypes()))
+		{
 			throw new \Bitrix\Rest\RestException('Unknown TYPE');
+		}
 
-		if(isset($params['CALL_START_DATE']) && $params['CALL_START_DATE'] !== '')
+		if (isset($params['CALL_START_DATE']) && $params['CALL_START_DATE'] !== '')
 		{
 			$parsedDate = CRestUtil::unConvertDateTime($params['CALL_START_DATE']);
 			if ($parsedDate === false)
@@ -1323,25 +1476,27 @@ class CVoxImplantRestService extends IRestService
 			$startDate = new \Bitrix\Main\Type\DateTime();
 		}
 
-		$result = Rest\Helper::registerExternalCall(array(
+		$result = Rest\Helper::registerExternalCall([
 			'USER_ID' => $userId,
-			'PHONE_NUMBER' => $params['PHONE_NUMBER'],
-			'LINE_NUMBER' => $params['LINE_NUMBER'],
+			'PHONE_NUMBER' => $params['PHONE_NUMBER'] ?? null,
+			'LINE_NUMBER' => $params['LINE_NUMBER'] ?? null,
 			'EXTERNAL_CALL_ID' => $params['EXTERNAL_CALL_ID'],
-			'TYPE' => $params['TYPE'],
+			'TYPE' => $params['TYPE'] ?? null,
 			'CALL_START_DATE' => $startDate,
-			'CRM' => $params['CRM'],
-			'CRM_CREATE' => $params['CRM_CREATE'],
-			'CRM_SOURCE' => $params['CRM_SOURCE'],
-			'CRM_ENTITY_TYPE' => $params['CRM_ENTITY_TYPE'],
-			'CRM_ENTITY_ID' => $params['CRM_ENTITY_ID'],
+			'CRM' => $params['CRM'] ?? null,
+			'CRM_CREATE' => $params['CRM_CREATE'] ?? null,
+			'CRM_SOURCE' => $params['CRM_SOURCE'] ?? null,
+			'CRM_ENTITY_TYPE' => $params['CRM_ENTITY_TYPE'] ?? null,
+			'CRM_ENTITY_ID' => $params['CRM_ENTITY_ID'] ?? null,
 			'REST_APP_ID' => $appId,
-			'ADD_TO_CHAT' => $params['ADD_TO_CHAT'],
+			'ADD_TO_CHAT' => $params['ADD_TO_CHAT'] ?? null,
 			'SHOW' => isset($params['SHOW']) ? (bool)$params['SHOW'] : true
-		));
+		]);
 
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
+		{
 			throw new \Bitrix\Rest\RestException(implode('; ', $result->getErrorMessages()));
+		}
 
 		$code = $row['CODE'] ? : 'webHook' . $server->getPasswordId();
 		if ($code)
@@ -1365,10 +1520,20 @@ class CVoxImplantRestService extends IRestService
 	 */
 	public static function finishExternalCall($params, $n, $server)
 	{
-		if($server->getAuthType() !== Oauth\Auth::AUTH_TYPE && $server->getAuthType() !== APAuth\Auth::AUTH_TYPE)
+		if ($server->getAuthType() !== Oauth\Auth::AUTH_TYPE && $server->getAuthType() !== APAuth\Auth::AUTH_TYPE)
 		{
 			throw new \Bitrix\Rest\AuthTypeException();
 		}
+		$params['CALL_ID'] ??= null;
+		$params['USER_ID'] ??= null;
+		$params['DURATION'] ??= null;
+		$params['COST'] ??= null;
+		$params['COST_CURRENCY'] ??= null;
+		$params['STATUS_CODE'] ??= null;
+		$params['FAILED_REASON'] ??= null;
+		$params['RECORD_URL'] ??= null;
+		$params['VOTE'] ??= null;
+		$params['ADD_TO_CHAT'] ??= null;
 
 		/*
 		$permissions = Security\Permissions::createWithCurrentUser();
@@ -1379,19 +1544,23 @@ class CVoxImplantRestService extends IRestService
 		*/
 
 		$userId = (int)$params['USER_ID'];
-		if($userId == 0)
+		if ($userId == 0)
+		{
 			$userId = Rest\Helper::getUserByPhone($params['USER_PHONE_INNER']);
+		}
 
-		if(!$userId)
+		if (!$userId)
+		{
 			throw new \Bitrix\Rest\RestException('USER_ID or USER_PHONE_INNER should be set');
+		}
 
 		$callId = $params['CALL_ID'];
-		if(!is_string($callId))
+		if (!is_string($callId))
 		{
 			throw new \Bitrix\Rest\RestException('CALL_ID must be a string', 'INVALID_ARGUMENT');
 		}
 
-		$result = Rest\Helper::finishExternalCall(array(
+		$result = Rest\Helper::finishExternalCall([
 			'CALL_ID' => $callId,
 			'USER_ID' => $userId,
 			'DURATION' => (int)$params['DURATION'],
@@ -1402,10 +1571,12 @@ class CVoxImplantRestService extends IRestService
 			'RECORD_URL' => (string)$params['RECORD_URL'],
 			'VOTE' => (int)$params['VOTE'],
 			'ADD_TO_CHAT' => $params['ADD_TO_CHAT'] != false,
-		));
+		]);
 
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
+		{
 			throw new \Bitrix\Rest\RestException(implode('; ', $result->getErrorMessages()));
+		}
 
 		return $result->getData();
 	}
@@ -1417,10 +1588,13 @@ class CVoxImplantRestService extends IRestService
 	 */
 	public static function showExternalCall($params, $n, $server)
 	{
-		return Rest\Helper::showExternalCall(array(
+		$params['USER_ID'] ??= null;
+		$params['CALL_ID'] ??= null;
+
+		return Rest\Helper::showExternalCall([
 			'CALL_ID' => (string)$params['CALL_ID'],
 			'USER_ID' => $params['USER_ID'],
-		));
+		]);
 	}
 
 	/**
@@ -1430,10 +1604,13 @@ class CVoxImplantRestService extends IRestService
 	 */
 	public static function hideExternalCall($params, $n, $server)
 	{
-		return Rest\Helper::hideExternalCall(array(
+		$params['USER_ID'] ??= null;
+		$params['CALL_ID'] ??= null;
+
+		return Rest\Helper::hideExternalCall([
 			'CALL_ID' => (string)$params['CALL_ID'],
 			'USER_ID' => $params['USER_ID']
-		));
+		]);
 	}
 
 	/**
@@ -1443,7 +1620,12 @@ class CVoxImplantRestService extends IRestService
 	 */
 	public static function attachRecord($params, $n, $server)
 	{
-		if(isset($params['RECORD_URL']))
+		$params['CALL_ID'] ??= null;
+		$params['RECORD_URL'] ??= null;
+		$params['FILENAME'] ??= null;
+		$params['FILE_CONTENT'] ??= null;
+
+		if (isset($params['RECORD_URL']))
 		{
 			$result = Rest\Helper::attachRecordWithUrl(
 				$params['CALL_ID'],
@@ -1451,7 +1633,7 @@ class CVoxImplantRestService extends IRestService
 				(string)$params['FILENAME']
 			);
 		}
-		else if(isset($params['FILENAME']))
+		else if (isset($params['FILENAME']))
 		{
 			$result = Rest\Helper::attachRecord(
 				$params['CALL_ID'],
@@ -1465,8 +1647,10 @@ class CVoxImplantRestService extends IRestService
 			throw new \Bitrix\Rest\RestException('Required parameters are not set. Request should contain or URL or FILENAME parameter');
 		}
 
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
+		{
 			throw new \Bitrix\Rest\RestException(implode('; ', $result->getErrorMessages()));
+		}
 
 		return $result->getData();
 	}
@@ -1478,31 +1662,36 @@ class CVoxImplantRestService extends IRestService
 	 */
 	public static function attachTranscription($params, $n, $server)
 	{
-		if(!isset($params['CALL_ID']))
+		$params['CALL_ID'] ??= null;
+		$params['COST'] ??= null;
+		$params['COST_CURRENCY'] ??= null;
+		$params['MESSAGES'] ??= null;
+
+		if (!isset($params['CALL_ID']))
 		{
 			throw new \Bitrix\Rest\RestException('CALL_ID should be set');
 		}
-		if(!is_array($params['MESSAGES']))
+		if (!is_array($params['MESSAGES']))
 		{
 			throw new \Bitrix\Rest\RestException('MESSAGES should be an array');
 		}
 		foreach ($params['MESSAGES'] as $k => $messageFields)
 		{
-			if($messageFields['SIDE'] !== \Bitrix\Voximplant\Transcript::SIDE_CLIENT && $messageFields['SIDE'] !== \Bitrix\Voximplant\Transcript::SIDE_USER)
+			if ($messageFields['SIDE'] !== \Bitrix\Voximplant\Transcript::SIDE_CLIENT && $messageFields['SIDE'] !== \Bitrix\Voximplant\Transcript::SIDE_USER)
 			{
-				throw new \Bitrix\Rest\RestException('MESSAGES['.$k.'][SIDE] should be either Client or User');
+				throw new \Bitrix\Rest\RestException('MESSAGES[' . $k . '][SIDE] should be either Client or User');
 			}
-			if((int)$messageFields['START_TIME'] < 0)
+			if ((int)$messageFields['START_TIME'] < 0)
 			{
-				throw new \Bitrix\Rest\RestException('MESSAGES['.$k.'][START_TIME] should be greater or equal to zero');
+				throw new \Bitrix\Rest\RestException('MESSAGES[' . $k . '][START_TIME] should be greater or equal to zero');
 			}
-			if((int)$messageFields['STOP_TIME'] <= 0)
+			if ((int)$messageFields['STOP_TIME'] <= 0)
 			{
-				throw new \Bitrix\Rest\RestException('MESSAGES['.$k.'][STOP_TIME] should be greater than zero');
+				throw new \Bitrix\Rest\RestException('MESSAGES[' . $k . '][STOP_TIME] should be greater than zero');
 			}
-			if($messageFields['MESSAGE'] == '')
+			if ($messageFields['MESSAGE'] == '')
 			{
-				throw new \Bitrix\Rest\RestException('MESSAGES['.$k.'][MESSAGE] is empty');
+				throw new \Bitrix\Rest\RestException('MESSAGES[' . $k . '][MESSAGE] is empty');
 			}
 		}
 
@@ -1513,14 +1702,14 @@ class CVoxImplantRestService extends IRestService
 			]
 		]);
 
-		if(!$callFields)
+		if (!$callFields)
 		{
 			throw new \Bitrix\Rest\RestException('Call ' . $callId . ' is not found. Is it finished?');
 		}
 
 		$transcript = \Bitrix\Voximplant\Transcript::createWithLines($params['MESSAGES']);
 		$transcript->setCallId($callId);
-		if($params['COST'])
+		if ($params['COST'])
 		{
 			$transcript->setCost((double)$params['COST']);
 			$transcript->setCostCurrency((string)$params['COST_CURRENCY']);
@@ -1548,14 +1737,20 @@ class CVoxImplantRestService extends IRestService
 			$params['callId']
 		);
 
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
+		{
 			throw new \Bitrix\Rest\RestException(implode('; ', $result->getErrorMessages()));
+		}
 
 		return $result->getData();
 	}
 
 	/**
-	 * @param array $params
+	 * @param array{
+	 * NUMBER: string,
+	 * NAME: ?string,
+	 * CRM_AUTO_CREATE: ?string
+	 * } $params
 	 * @param $n
 	 * @param CRestServer $server
 	 */
@@ -1576,7 +1771,7 @@ class CVoxImplantRestService extends IRestService
 			'CRM_AUTO_CREATE' => ($params['CRM_AUTO_CREATE'] ?? 'Y') === 'Y' ? 'Y' : 'N',
 		];
 		$result = Rest\Helper::addExternalLine($newExternalLine, $appId);
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
 		{
 			throw new \Bitrix\Rest\RestException(implode('; ', $result->getErrorMessages()));
 		}
@@ -1592,11 +1787,16 @@ class CVoxImplantRestService extends IRestService
 				'type' . $params['TYPE']
 			);
 		}
+
 		return $result->getData();
 	}
 
 	/**
-	 * @param array $params
+	 * @param array{
+	 * NUMBER: string,
+	 * NAME: ?string,
+	 * CRM_AUTO_CREATE: ?string
+	 * } $params
 	 * @param $n
 	 * @param CRestServer $server
 	 */
@@ -1627,7 +1827,7 @@ class CVoxImplantRestService extends IRestService
 		}
 
 		$result = Rest\Helper::updateExternalLine($params['NUMBER'], $updatingFields, $appId);
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
 		{
 			throw new \Bitrix\Rest\RestException(implode('; ', $result->getErrorMessages()));
 		}
@@ -1636,7 +1836,7 @@ class CVoxImplantRestService extends IRestService
 	}
 
 	/**
-	 * @param array $params
+	 * @param array{NUMBER: string} $params
 	 * @param $n
 	 * @param CRestServer $server
 	 */
@@ -1652,8 +1852,10 @@ class CVoxImplantRestService extends IRestService
 		$appId = $row['ID'];
 
 		$result = Rest\Helper::deleteExternalLine($params['NUMBER'], $appId);
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
+		{
 			throw new \Bitrix\Rest\RestException(implode('; ', $result->getErrorMessages()));
+		}
 
 		\CVoxImplantUser::clearCache();
 
@@ -1677,8 +1879,10 @@ class CVoxImplantRestService extends IRestService
 		$appId = $row['ID'];
 
 		$result = Rest\Helper::getExternalLines($appId);
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
+		{
 			throw new \Bitrix\Rest\RestException(implode('; ', $result->getErrorMessages()));
+		}
 
 		return $result->getData();
 	}
@@ -1688,7 +1892,7 @@ class CVoxImplantRestService extends IRestService
 	{
 		$arResult = $arParams[0];
 
-		if($arResult instanceof \Bitrix\Main\Event)
+		if ($arResult instanceof \Bitrix\Main\Event)
 		{
 			return $arResult->getParameters();
 		}
@@ -1699,6 +1903,7 @@ class CVoxImplantRestService extends IRestService
 	public static function onCallStart($arParams)
 	{
 		$arResult = $arParams[0];
+
 		return $arResult;
 	}
 
@@ -1748,15 +1953,13 @@ class CVoxImplantRestService extends IRestService
 			);
 		}
 
-		if($eventData['APP_ID'] == $arHandler['APP_ID'])
+		if ($eventData['APP_ID'] == $arHandler['APP_ID'])
 		{
 			unset($eventData['APP_ID']);
 			return $eventData;
 		}
-		else
-		{
-			throw new Exception('Wrong app!');
-		}
+
+		throw new Exception('Wrong app!');
 	}
 
 	protected static function getCurrentUserId()

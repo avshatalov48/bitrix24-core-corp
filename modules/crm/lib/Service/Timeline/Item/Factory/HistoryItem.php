@@ -145,6 +145,8 @@ class HistoryItem
 					return new Item\LogMessage\CalendarSharing\EventConfirmed($context, $model);
 				case LogMessageType::CALENDAR_SHARING_LINK_COPIED:
 					return new Item\LogMessage\CalendarSharing\LinkCopied($context, $model);
+				case LogMessageType::EMAIL_ACTIVITY_STATUS_SUCCESSFULLY_DELIVERED:
+					return new Item\LogMessage\EmailActivityStatuses\SuccessfullyDelivered($context, $model);
 			}
 		}
 

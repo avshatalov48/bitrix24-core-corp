@@ -10,15 +10,12 @@ jn.define('crm/entity-actions/check-change-stage', (require, exports, module) =>
 
 	const actionCheckChangeStage = (props) => new Promise((resolve, reject) => {
 		const {
-			uid,
 			category,
-			entityId,
 			entityTypeId,
 			activeStageId,
 			selectedStageId,
 		} = props;
 
-		const customEventEmitter = EventEmitter.createWithUid(uid);
 		const isLead = TypeId.Lead === entityTypeId;
 
 		if (!isLead)
@@ -26,25 +23,14 @@ jn.define('crm/entity-actions/check-change-stage', (require, exports, module) =>
 			return resolve();
 		}
 
-		const isFinalConvertedStage = (stageId) => category && category.successStages.find(({ id, statusId }) => id === stageId && statusId === 'CONVERTED');
+		const isFinalConvertedStage = (stageId) => category && category.successStages.find(({
+			id,
+			statusId,
+		}) => id === stageId && statusId === 'CONVERTED');
 
-		const { onAction } = getActionToConversion();
 		if (isFinalConvertedStage(selectedStageId))
 		{
-			onAction({
-				entityId,
-				entityTypeId,
-				onFinishConverted: () => {
-					customEventEmitter.emit('DetailCard::reloadTabs');
-					reject();
-
-					return Promise.resolve();
-				},
-			}).then((menu) => {
-				menu.show();
-			});
-
-			return;
+			return showConversion(props);
 		}
 
 		if (isFinalConvertedStage(activeStageId) && !isFinalConvertedStage(selectedStageId))
@@ -63,12 +49,33 @@ jn.define('crm/entity-actions/check-change-stage', (require, exports, module) =>
 					},
 				],
 			);
-
-			return;
 		}
 
 		return resolve();
 	});
+
+	const showConversion = async (props) => {
+		const { uid, entityTypeId, entityId } = props;
+		const customEventEmitter = EventEmitter.createWithUid(uid);
+
+		const { onAction } = getActionToConversion();
+
+		const conversionAction = await onAction({
+			entityId,
+			entityTypeId,
+			onFinishConverted: () => {
+				customEventEmitter.emit('DetailCard::reloadTabs');
+				customEventEmitter.emit('DetailCard::onUpdate', [{
+					entityId,
+					entityTypeId,
+				}]);
+
+				return Promise.resolve();
+			},
+		});
+
+		return conversionAction();
+	};
 
 	module.exports = { actionCheckChangeStage };
 });

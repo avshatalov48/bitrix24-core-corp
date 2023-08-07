@@ -74,7 +74,7 @@ final class Multifield implements FieldImplementation
 
 		if ($this->actual->isEqualTo($value))
 		{
-			unset($this->current);
+			$this->current = null;
 		}
 		else
 		{
@@ -100,12 +100,13 @@ final class Multifield implements FieldImplementation
 	{
 		$this->load();
 
-		unset($this->current);
+		$this->current = null;
 	}
 
 	public function unset(string $commonFieldName): void
 	{
-		unset($this->actual, $this->current);
+		$this->actual = null;
+		$this->current = null;
 	}
 
 	public function getDefaultValue(string $commonFieldName)

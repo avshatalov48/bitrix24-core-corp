@@ -5,6 +5,7 @@ return [
 		'alert',
 		'analytics-label',
 		'event-emitter',
+		'feature',
 
 		'layout/ui/detail-card/floating-button',
 		'layout/ui/detail-card/navigation',

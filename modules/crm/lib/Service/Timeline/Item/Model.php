@@ -25,7 +25,7 @@ class Model
 
 	public static function createFromScheduledActivityArray(array $data): self
 	{
-		$createdDate = $data['CREATED']
+		$createdDate = isset($data['CREATED'])
 			? DateTime::createFromUserTime($data['CREATED'])
 			: null
 		;
@@ -35,7 +35,7 @@ class Model
 			->setId(self::getScheduledActivityModelId((int)$data['ID']))
 			->setAssociatedEntityId((int)$data['ID'])
 			->setAssociatedEntityTypeId(\CCrmOwnerType::Activity)
-			->setAuthorId((int)$data['RESPONSIBLE_ID'])
+			->setAuthorId((int)($data['RESPONSIBLE_ID'] ?? 0))
 			->setDate($createdDate)
 			->setAssociatedEntityModel(AssociatedEntityModel::createFromArray($data))
 			->setNote(self::createNote($data))
@@ -51,15 +51,15 @@ class Model
 	{
 		return (new self())
 			->setId((string)$data['ID'])
-			->setAssociatedEntityId((int)$data['ASSOCIATED_ENTITY_ID'])
-			->setAssociatedEntityTypeId((int)$data['ASSOCIATED_ENTITY_TYPE_ID'])
-			->setAuthorId((int)$data['AUTHOR_ID'])
-			->setDate($data['CREATED'])
+			->setAssociatedEntityId((int)($data['ASSOCIATED_ENTITY_ID'] ?? 0))
+			->setAssociatedEntityTypeId((int)($data['ASSOCIATED_ENTITY_TYPE_ID'] ?? 0))
+			->setAuthorId((int)($data['AUTHOR_ID'] ?? 0))
+			->setDate($data['CREATED'] ?? null)
 			->setSettings((array)($data['SETTINGS'] ?? []))
 			->setAssociatedEntityModel(self::createAssociatedEntityModel($data))
 			->setHistoryItemModel(self::createHistoryItemModel($data))
-			->setTypeId((int)$data['TYPE_ID'])
-			->setTypeCategoryId((int)$data['TYPE_CATEGORY_ID'])
+			->setTypeId((int)($data['TYPE_ID'] ?? 0))
+			->setTypeCategoryId((int)($data['TYPE_CATEGORY_ID'] ?? 0))
 			->setNote(self::createNote($data))
 		;
 	}

@@ -9,6 +9,7 @@ use Bitrix\Catalog\StoreDocumentElementTable;
 use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Catalog\v2\IoC\ServiceContainer;
 use Bitrix\Catalog\v2\Sku\BaseSku;
+use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Store\Document\Element;
 use Bitrix\DocumentGenerator\DataProvider\User;
 use Bitrix\DocumentGenerator\Dictionary\ProductVariant;
 use Bitrix\DocumentGenerator\Nameable;
@@ -62,6 +63,11 @@ abstract class StoreDocument extends ProductsDataProvider implements Nameable
 			parent::getFields(),
 			$fields
 		);
+
+		if (isset($this->fields['PRODUCTS']))
+		{
+			$this->fields['PRODUCTS']['OPTIONS']['ITEM_PROVIDER'] = Element::class;
+		}
 
 		return $this->fields;
 	}
@@ -163,6 +169,18 @@ abstract class StoreDocument extends ProductsDataProvider implements Nameable
 	}
 
 	/**
+	 * @inheritDoc
+	 *
+	 * @param array $data
+	 *
+	 * @return Element
+	 */
+	protected function createProduct(array $data): Product
+	{
+		return new Element($data);
+	}
+
+	/**
 	 * @return array
 	 */
 	protected function loadProductsData()
@@ -175,6 +193,7 @@ abstract class StoreDocument extends ProductsDataProvider implements Nameable
 				'ELEMENT_ID',
 				'AMOUNT',
 				'PURCHASING_PRICE',
+				'COMMENT',
 			],
 			'filter' => [
 				'=DOC_ID' => $this->data['ID'],
@@ -200,6 +219,7 @@ abstract class StoreDocument extends ProductsDataProvider implements Nameable
 				'PRODUCT_VARIANT' => ProductVariant::GOODS,
 				'CUSTOMIZED' => 'Y',
 				'CURRENCY_ID' => $sku ? $this->getCurrencyBySku($sku) : null,
+				'COMMENT' => $documentElementRaw['COMMENT'],
 			];
 		}
 

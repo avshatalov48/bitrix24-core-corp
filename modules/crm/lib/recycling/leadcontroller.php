@@ -140,10 +140,7 @@ class LeadController extends BaseController
 		}
 
 		$slots = [
-			'FIELDS' => Crm\Entity\FieldContentType::enrichRecycleBinFields(
-				new Crm\ItemIdentifier($this->getEntityTypeID(), $entityID),
-				array_intersect_key($fields, array_flip(self::getFieldNames())),
-			),
+			'FIELDS' => array_intersect_key($fields, array_flip(self::getFieldNames())),
 		];
 
 		$companyID = isset($fields['COMPANY_ID']) ? (int)$fields['COMPANY_ID'] : 0;
@@ -357,7 +354,6 @@ class LeadController extends BaseController
 			array(
 				'IS_RESTORATION' => true,
 				'DISABLE_USER_FIELD_CHECK' => true,
-				'PRESERVE_CONTENT_TYPE' => true,
 			)
 		);
 		if($newEntityID <= 0)

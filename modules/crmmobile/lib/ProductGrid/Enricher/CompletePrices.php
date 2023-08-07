@@ -8,7 +8,10 @@ use Bitrix\Crm\Item;
 use Bitrix\Crm\ProductRow;
 use Bitrix\CrmMobile\ProductGrid\ProductRowViewModel;
 use Bitrix\CrmMobile\ProductGrid\TaxCalculator;
-use Bitrix\Mobile\Integration\Catalog\ProductGrid\SkuDataProvider;
+use Bitrix\CatalogMobile\ProductGrid\SkuDataProvider;
+use Bitrix\Main\Loader;
+
+Loader::requireModule('catalogmobile');
 
 final class CompletePrices implements EnricherContract
 {

@@ -81,5 +81,10 @@ class Menu implements Tabable
 	{
 		return "more";
 	}
+
+	public function getIconId(): string
+	{
+		return 'menu';
+	}
 }
 

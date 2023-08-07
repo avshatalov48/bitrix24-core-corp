@@ -46,6 +46,7 @@
 	text-decoration: none;
 	border-radius: 25px;
 	margin-bottom: 4px;
+	cursor: pointer;
 }
 
 .sitemap-section-item.--has-children > .sitemap-section-item-title {

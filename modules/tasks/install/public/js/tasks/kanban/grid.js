@@ -142,7 +142,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 
 		const tasksEventQueue = {
 			pull: new BX.Tasks.Runtime.DebouncedQueue({
-				timeout: 1000,
+				timeout: 3000,
 				events: {
 					onCommitAsync: (event) => {
 						this.getTaskDataFromQueueCollection(
@@ -155,7 +155,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 				}
 			}),
 			event: new BX.Tasks.Runtime.DebouncedQueue({
-				timeout: 10,
+				timeout: 100,
 				events: {
 					onCommitAsync: (event) => {
 						this.emitHandlersFromQueueCollection(

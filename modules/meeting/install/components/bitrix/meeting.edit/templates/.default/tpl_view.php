@@ -3,8 +3,10 @@
 $arUsers = array('O' => array(), 'K' => array(), 'M' => array(), 'R' => array());
 
 foreach ($arResult['MEETING']['USERS'] as $USER_ID => $USER_ROLE):
-	if($arResult['MEETING']['USERS_EVENT'][$USER_ID] == 'N')
+	if(($arResult['MEETING']['USERS_EVENT'][$USER_ID] ?? null) === 'N')
+	{
 		$USER_ROLE = 'R';
+	}
 
 	$arUsers[$USER_ROLE][] = $USER_ID;
 endforeach;
@@ -22,9 +24,9 @@ $this->EndViewTarget();
 <script type="text/javascript" bxrunfirst="true">
 window.bx_user_url_tpl = '<?=CUtil::JSEscape(COption::GetOptionString('intranet', 'path_user', '', SITE_ID))?>';
 window.arMembersList = [];
-window.meeting_owner = <?=intval($arUsers['O'][0])?>;
+window.meeting_owner = <?=(int)($arUsers['O'][0] ?? null)?>;
 window.meeting_owner_data = null;
-window.meeting_keeper = <?=intval($arUsers['K'][0])?>;
+window.meeting_keeper = <?=(int)($arUsers['K'][0] ?? null)?>;
 window.arRefuseList = <?=CUtil::PhpToJsObject($arUsers['R'])?>;
 
 function SetKeeper(u)
@@ -90,7 +92,7 @@ function UpdateAllUsersList(arUsers)
 			inputs.appendChild(BX.create('INPUT', {props: {type:'hidden',name:'KEEPERS[]',value:arUsers[i].id}}));
 
 		var url = getUserUrl(arUsers[i].id),
-			str = '<div class="meeting-detail-info-user"><a href="'+url+'" class="meeting-detail-info-user-avatar"'+(arUsers[i].photo ? ' style="background:url(\''+arUsers[i].photo+'\') no-repeat center center; background-size: cover;"' : '')+'></a><div class="meeting-detail-info-user-info"><div class="meeting-detail-info-user-name"><a href="'+url+'">'+BX.util.htmlspecialchars(arUsers[i].name)+'</a></div><div class="meeting-detail-info-user-position">'+BX.util.htmlspecialchars(arUsers[i].position)+'</div></div></div>';
+			str = '<div class="meeting-detail-info-user"><a href="'+url+'" class="meeting-detail-info-user-avatar"'+(arUsers[i].photo ? ' style="background:url(\''+encodeURI(arUsers[i].photo)+'\') no-repeat center center; background-size: cover;"' : '')+'></a><div class="meeting-detail-info-user-info"><div class="meeting-detail-info-user-name"><a href="'+url+'">'+BX.util.htmlspecialchars(arUsers[i].name)+'</a></div><div class="meeting-detail-info-user-position">'+BX.util.htmlspecialchars(arUsers[i].position)+'</div></div></div>';
 
 		h[s] += str;
 
@@ -203,7 +205,7 @@ endif;
 					<td class="meeting-detail-right-column" id="meeting_state_text"><?=GetMessage('MEETING_STATE_'.$arResult['MEETING']['CURRENT_STATE'])?></td>
 				</tr>
 <?
-if ($arResult['MEETING']['GROUP_NAME'] <> ''):
+if (($arResult['MEETING']['GROUP_NAME'] ?? null) <> ''):
 ?>
 				<tr>
 					<td class="meeting-detail-left-column" valign="top"><?=GetMessage('ME_GROUP')?>:</td>

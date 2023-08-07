@@ -14,10 +14,11 @@ use Bitrix\CrmMobile\ProductGrid\Enricher\CompletePrices;
 use Bitrix\CrmMobile\ProductGrid\Enricher\ConvertCurrency;
 use Bitrix\CrmMobile\ProductGrid\Enricher\EnricherContract;
 use Bitrix\Main\Loader;
-use Bitrix\Mobile\Integration\Catalog\PermissionsProvider;
+use Bitrix\CatalogMobile\PermissionsProvider;
 use Bitrix\Mobile\Query;
 
 Loader::requireModule('crm');
+Loader::requireModule('catalogmobile');
 
 class SingleProductQuery extends Query
 {

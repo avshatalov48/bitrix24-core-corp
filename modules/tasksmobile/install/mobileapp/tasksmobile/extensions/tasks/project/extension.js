@@ -32,15 +32,7 @@
 			};
 		}
 
-		constructor(project)
-		{
-			this.project = project;
-			this.members = project._members;
-
-			this.set(this.getDefault());
-		}
-
-		getDefault()
+		static getDefaultData()
 		{
 			return {
 				counters: {
@@ -53,6 +45,17 @@
 				value: 0,
 				isHidden: false,
 			};
+		}
+
+		/**
+		 * @param {Project} project
+		 */
+		constructor(project)
+		{
+			this.project = project;
+			this.members = project.members;
+
+			this.set(Counter.getDefaultData());
 		}
 
 		get()
@@ -105,18 +108,22 @@
 
 	class Member
 	{
-		constructor(project)
-		{
-			this.project = project;
-			this.set(this.getDefault());
-		}
-
-		getDefault()
+		static getDefaultData()
 		{
 			return {
 				heads: {},
 				members: {},
 			};
+		}
+
+		/**
+		 * @param {Project} project
+		 */
+		constructor(project)
+		{
+			this.project = project;
+
+			this.set(Member.getDefaultData());
 		}
 
 		get()
@@ -138,12 +145,12 @@
 			const icons = [];
 
 			Object.values(this.heads)
-				.filter(user => user.isOwner === 'N')
+				.filter((user) => user.isOwner === 'N')
 				.slice(0, 2)
-				.forEach(user => icons.push(user.photo))
+				.forEach((user) => icons.push(user.photo))
 			;
 
-			const owner = Object.values(this.heads).filter(user => user.isOwner === 'Y')[0];
+			const owner = Object.values(this.heads).find((user) => user.isOwner === 'Y');
 			if (owner)
 			{
 				icons.splice(0, 0, owner.photo);
@@ -157,9 +164,9 @@
 			const icons = [];
 
 			Object.values(this.members)
-				.filter(user => user.isAccessRequesting === 'N')
+				.filter((user) => user.isAccessRequesting === 'N')
 				.slice(0, 5)
-				.forEach(user => icons.push(user.photo))
+				.forEach((user) => icons.push(user.photo))
 			;
 
 			return icons;
@@ -172,25 +179,26 @@
 
 		getMemberCount()
 		{
-			return Object.values(this.members).filter(user => user.isAccessRequesting === 'N').length;
+			return Object.values(this.members).filter((user) => user.isAccessRequesting === 'N').length;
 		}
 
 		isOwner()
 		{
-			const owner = Object.values(this.heads).filter(user => user.isOwner === 'Y')[0];
+			const owner = Object.values(this.heads).find((user) => user.isOwner === 'Y');
+
 			return (owner && Number(owner.id) === Number(this.project.userId));
 		}
 
 		isHead()
 		{
-			return Object.values(this.heads).find(user => Number(user.id) === Number(this.project.userId));
+			return Object.values(this.heads).find((user) => Number(user.id) === Number(this.project.userId));
 		}
 
 		isMember()
 		{
 			return Object.values(this.members)
-				.filter(user => user.isAccessRequesting === 'N')
-				.find(user => user.id === this.project.userId)
+				.filter((user) => user.isAccessRequesting === 'N')
+				.find((user) => user.id === this.project.userId)
 			;
 		}
 
@@ -218,18 +226,7 @@
 			};
 		}
 
-		/**
-		 * @param {Project} project
-		 */
-		constructor(project)
-		{
-			this.project = project;
-			this.counter = project._counter;
-
-			this.set(this.getDefault());
-		}
-
-		getDefault()
+		static getDefaultData()
 		{
 			return {
 				[Action.types.edit]: false,
@@ -238,6 +235,17 @@
 				[Action.types.join]: false,
 				[Action.types.leave]: false,
 			};
+		}
+
+		/**
+		 * @param {Project} project
+		 */
+		constructor(project)
+		{
+			this.project = project;
+			this.counter = project.counter;
+
+			this.set(Action.getDefaultData());
 		}
 
 		get()
@@ -270,15 +278,16 @@
 			this.project.isPinned = true;
 
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.project.pin', {projectId: this.project.id}))
+				(new RequestExecutor('tasks.project.pin', { projectId: this.project.id }))
 					.call()
 					.then(
 						(response) => resolve(response),
 						(response) => {
 							console.error(response);
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -288,15 +297,16 @@
 			this.project.isPinned = false;
 
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.project.unpin', {projectId: this.project.id}))
+				(new RequestExecutor('tasks.project.unpin', { projectId: this.project.id }))
 					.call()
 					.then(
 						(response) => resolve(response),
 						(response) => {
 							console.error(response);
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -309,7 +319,7 @@
 				(new RequestExecutor('tasks.viewedGroup.project.markAsRead', {
 					fields: {
 						groupId: this.project.id,
-					}
+					},
 				}))
 					.call()
 					.then(
@@ -317,13 +327,14 @@
 						(response) => {
 							console.error(response);
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
 
-		join()
+		joinProject()
 		{
 			this.canJoin = false;
 			this.canLeave = true;
@@ -336,14 +347,15 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response)
+						(response) => resolve(response),
+						(response) => reject(response),
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
 
-		leave()
+		leaveProject()
 		{
 			this.canJoin = true;
 			this.canLeave = false;
@@ -356,9 +368,10 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response)
+						(response) => resolve(response),
+						(response) => reject(response),
 					)
+					.catch((response) => reject(response))
 				;
 			});
 		}
@@ -387,16 +400,16 @@
 		{
 			this.userId = userId;
 
-			this._members = new Member(this);
-			this._counter = new Counter(this);
-			this._actions = new Action(this);
+			this.members = new Member(this);
+			this.counter = new Counter(this);
+			this.actions = new Action(this);
 
 			this.setDefaultData();
 		}
 
 		setDefaultData()
 		{
-			this.id = `tmp-id-${(new Date()).getTime()}`;
+			this.id = `tmp-id-${Date.now()}`;
 			this.name = '';
 			this.image = '';
 
@@ -410,9 +423,9 @@
 			this.isVisible = false;
 			this.isExtranet = false;
 
-			this.members = {};
-			this.counter = {};
-			this.actions = {};
+			this.setMembers({});
+			this.setCounter({});
+			this.setActions({});
 
 			this.activityDate = null;
 
@@ -434,9 +447,9 @@
 			this.isVisible = (row.visible === 'Y');
 			this.isExtranet = (row.isExtranet === 'Y');
 
-			this.members = row.members;
-			this.counter = row.counter;
-			this.actions = row.actions;
+			this.setMembers(row.members);
+			this.setCounter(row.counter);
+			this.setActions(row.actions);
 
 			const activityDate = Date.parse(row.activityDate);
 			this.activityDate = (activityDate > 0 ? activityDate : null);
@@ -452,10 +465,12 @@
 			{
 				this.id = Number(row.id);
 			}
+
 			if (has.call(row, 'name'))
 			{
 				this.name = row.name;
 			}
+
 			if (has.call(row, 'image'))
 			{
 				this.image = row.image;
@@ -465,6 +480,7 @@
 			{
 				this.numberOfMembers = Number(row.numberOfMembers);
 			}
+
 			if (has.call(row, 'numberOfModerators'))
 			{
 				this.numberOfModerators = Number(row.numberOfModerators);
@@ -474,18 +490,22 @@
 			{
 				this.isPinned = (row.isPinned === 'Y');
 			}
+
 			if (has.call(row, 'closed'))
 			{
 				this.isClosed = (row.closed === 'Y');
 			}
+
 			if (has.call(row, 'opened'))
 			{
 				this.isOpened = (row.opened === 'Y');
 			}
+
 			if (has.call(row, 'visible'))
 			{
 				this.isVisible = (row.visible === 'Y');
 			}
+
 			if (has.call(row, 'isExtranet'))
 			{
 				this.isExtranet = (row.isExtranet === 'Y');
@@ -493,15 +513,17 @@
 
 			if (has.call(row, 'members'))
 			{
-				this.members = row.members;
+				this.setMembers(row.members);
 			}
+
 			if (has.call(row, 'counter'))
 			{
-				this.counter = row.counter;
+				this.setCounter(row.counter);
 			}
+
 			if (has.call(row, 'actions'))
 			{
-				this.actions = row.actions;
+				this.setActions(row.actions);
 			}
 
 			if (has.call(row, 'activityDate'))
@@ -544,14 +566,14 @@
 			return Project.types.secret;
 		}
 
-		get counter()
+		getCounter()
 		{
-			return this._counter.get();
+			return this.counter.get();
 		}
 
-		set counter(counter)
+		setCounter(counter)
 		{
-			this._counter.set(counter);
+			this.counter.set(counter);
 		}
 
 		getCounterValue()
@@ -591,82 +613,82 @@
 
 		getNewCommentsCount()
 		{
-			return this._counter.getNewCommentsCount();
+			return this.counter.getNewCommentsCount();
 		}
 
-		get actions()
+		getActions()
 		{
-			return this._actions.get();
+			return this.actions.get();
 		}
 
-		set actions(actions)
+		setActions(actions)
 		{
-			this._actions.set(actions);
+			this.actions.set(actions);
 		}
 
 		pin()
 		{
-			return this._actions.pin();
+			return this.actions.pin();
 		}
 
 		unpin()
 		{
-			return this._actions.unpin();
+			return this.actions.unpin();
 		}
 
 		read()
 		{
-			return this._actions.read();
+			return this.actions.read();
 		}
 
-		join()
+		joinProject()
 		{
-			return this._actions.join();
+			return this.actions.joinProject();
 		}
 
-		leave()
+		leaveProject()
 		{
-			return this._actions.leave();
+			return this.actions.leaveProject();
 		}
 
 		pseudoRead()
 		{
-			return this._counter.read();
+			return this.counter.read();
 		}
 
-		get members()
+		getMembers()
 		{
-			return this._members.get();
+			return this.members.get();
 		}
 
-		set members(members)
+		setMembers(members)
 		{
-			this._members.set(members);
+			this.members.set(members);
 		}
 
 		getHeadIcons()
 		{
-			return this._members.getHeadIcons();
+			return this.members.getHeadIcons();
 		}
 
 		getMemberIcons()
 		{
-			return this._members.getMemberIcons();
+			return this.members.getMemberIcons();
 		}
 
 		getHeadCount()
 		{
-			return this._members.getHeadCount();
+			return this.members.getHeadCount();
 		}
 
 		getMemberCount()
 		{
-			return this._members.getMemberCount();
+			return this.members.getMemberCount();
 		}
 
 		isOwner()
 		{
-			return this._members.isOwner();
+			return this.members.isOwner();
 		}
 	}
 

@@ -2,9 +2,9 @@
  * @module tasks/layout/task/fields/creator
  */
 jn.define('tasks/layout/task/fields/creator', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {Type} = require('type');
-	const {UserField} = require('layout/ui/fields/user');
+	const { Loc } = require('loc');
+	const { Type } = require('type');
+	const { UserField } = require('layout/ui/fields/user');
 
 	class Creator extends LayoutComponent
 	{
@@ -59,7 +59,7 @@ jn.define('tasks/layout/task/fields/creator', (require, exports, module) => {
 								imageUrl: (
 									!Type.isString(this.state.creator.icon)
 									|| !Type.isStringFilled(this.state.creator.icon)
-									|| this.state.creator.icon.indexOf('default_avatar.png') >= 0
+									|| this.state.creator.icon.includes('default_avatar.png')
 										? null
 										: this.state.creator.icon
 								),
@@ -68,6 +68,7 @@ jn.define('tasks/layout/task/fields/creator', (require, exports, module) => {
 								},
 							},
 						],
+						selectorTitle: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_CREATOR'),
 						canUnselectLast: false,
 						reloadEntityListFromProps: true,
 						parentWidget: this.props.parentWidget,
@@ -82,7 +83,7 @@ jn.define('tasks/layout/task/fields/creator', (require, exports, module) => {
 								icon: creatorData[0].imageUrl,
 								workPosition: creatorData[0].customData.position,
 							};
-							this.setState({creator});
+							this.setState({ creator });
 							this.props.onChange(creator);
 						}
 					},
@@ -91,5 +92,5 @@ jn.define('tasks/layout/task/fields/creator', (require, exports, module) => {
 		}
 	}
 
-	module.exports = {Creator};
+	module.exports = { Creator };
 });

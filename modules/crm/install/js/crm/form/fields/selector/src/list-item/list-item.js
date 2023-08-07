@@ -13,6 +13,7 @@ type ListItemOptions = {
 		onChange?: (event: BaseEvent) => void,
 	},
 	type: $Values<ListItem.Type>,
+	disabled?: boolean,
 };
 
 export default class ListItem extends EventEmitter
@@ -78,11 +79,17 @@ export default class ListItem extends EventEmitter
 		return this.#getCheckbox().checked;
 	}
 
+	#isDisabled(): boolean
+	{
+		return this.#getOptions().disabled ?? false;
+	}
+
 	getLayout(): HTMLDivElement
 	{
-		return this.#cache.remember('layout', () => {
+		return this.#cache.remember(`layout`, () => {
+			const fieldDisabledClassName = 'crm-form-fields-selector-field--disabled';
 			return Tag.render`
-				<div class="crm-form-fields-selector-field">
+				<div class="crm-form-fields-selector-field${this.#isDisabled() ? " " + fieldDisabledClassName : ''}">
 					<label class="ui-ctl ui-ctl-checkbox crm-form-fields-selector-field-checkbox">
 						${this.#getCheckbox()}
 						<div class="ui-ctl-label-text">${Text.encode(this.#getOptions().field.caption)}</div>

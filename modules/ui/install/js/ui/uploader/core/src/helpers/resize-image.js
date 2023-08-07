@@ -39,7 +39,7 @@ const createImagePreviewCanvasSource = createImagePreviewCanvas.toString();
 const getResizedImageSizeSource = getResizedImageSize.toString();
 const sharpenSource = sharpen.toString();
 const shouldSharpenSource = shouldSharpen.toString();
-const canUseOffscreenCanvas: boolean = canCreateImageBitmap && !Type.isUndefined(OffscreenCanvas);
+const canUseOffscreenCanvas: boolean = canCreateImageBitmap && !Type.isUndefined(window.OffscreenCanvas);
 
 const resizeImage = (source: Blob | File, options: ResizeImageOptions): Promise<ResizeImageResult> => {
 	return new Promise((resolve, reject) => {
@@ -123,7 +123,7 @@ const resizeImage = (source: Blob | File, options: ResizeImageOptions): Promise<
 					{
 						loadImageDataFallback();
 					}
-				}
+				},
 			);
 		}
 		else if (canCreateImageBitmap)

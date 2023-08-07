@@ -255,6 +255,7 @@ jn.define('crm/mail/chain', (require, exports, module) => {
 				defaultFormat: (moment) => {
 					const day = moment.format(dayShortMonth());
 					const time = moment.format(shortTime);
+
 					return `${day}\r\n${time}`;
 				},
 				useTimeAgo: true,
@@ -540,6 +541,7 @@ jn.define('crm/mail/chain', (require, exports, module) => {
 		clearFromEmployeeEmails(contacts, employeeContacts)
 		{
 			const employeeEmails = new Set(employeeContacts.map((item) => item.email));
+
 			return contacts.filter(({ email }) => !employeeEmails.has(email));
 		}
 

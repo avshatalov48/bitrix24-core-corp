@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'type',
+		'im:messenger/const',
 	],
 	'bundle' => [
 		'./src/dialog',

@@ -4,7 +4,6 @@
 jn.define('crm/document/context-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { get } = require('utils/object');
-	const { EntityDetailOpener } = require('crm/entity-detail/opener');
 	const { TypeId } = require('crm/type');
 
 	/**
@@ -145,6 +144,7 @@ jn.define('crm/document/context-menu', (require, exports, module) => {
 					title: Loc.getMessage('M_CRM_DOCUMENT_CONTEXT_MENU_REQUISITES_TITLE'),
 				});
 			}
+
 			return sections;
 		}
 
@@ -170,13 +170,14 @@ jn.define('crm/document/context-menu', (require, exports, module) => {
 			{
 				return;
 			}
+
 			if (menuItem.onClick)
 			{
 				menuItem.onClick();
 			}
 		}
 
-		openCompanyDetails({ entityId, entityTypeId, entityName })
+		async openCompanyDetails({ entityId, entityTypeId, entityName })
 		{
 			const payload = { entityId, entityTypeId };
 			const widgetParams = {};
@@ -187,6 +188,8 @@ jn.define('crm/document/context-menu', (require, exports, module) => {
 					text: entityName,
 				};
 			}
+
+			const { EntityDetailOpener } = await requireLazy('crm:entity-detail/opener');
 
 			EntityDetailOpener.open(payload, widgetParams, this.props.layoutWidget);
 		}

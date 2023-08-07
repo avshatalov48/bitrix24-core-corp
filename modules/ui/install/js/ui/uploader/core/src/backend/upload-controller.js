@@ -88,28 +88,28 @@ export default class UploadController extends AbstractUploadController
 
 		const controllerOptions = this.getServer().getControllerOptions();
 		Ajax.runAction('ui.fileuploader.upload', {
-				headers,
-				data: chunk.getData(),
-				preparePost: false,
-				getParameters: {
-					controller: this.getServer().getController(),
-					controllerOptions: controllerOptions ? JSON.stringify(controllerOptions) : null,
-					token: this.getToken() || '',
-				},
-				onrequeststart: (xhr): void => {
-					this.#xhr = xhr;
-					this.#aborted = false;
-				},
-				onprogressupload: (event: ProgressEvent): void => {
-					if (event.lengthComputable)
-					{
-						const size: number = this.getFile().getSize();
-						const uploadedBytes: number = Math.min(size, chunk.getOffset() + event.loaded);
-						const progress: number = size > 0 ? Math.floor(uploadedBytes / size * 100) : 100;
-						this.emit('onProgress', { progress });
-					}
-				},
-			})
+			headers,
+			data: chunk.getData(),
+			preparePost: false,
+			getParameters: {
+				controller: this.getServer().getController(),
+				controllerOptions: controllerOptions ? JSON.stringify(controllerOptions) : null,
+				token: this.getToken() || '',
+			},
+			onrequeststart: (xhr): void => {
+				this.#xhr = xhr;
+				this.#aborted = false;
+			},
+			onprogressupload: (event: ProgressEvent): void => {
+				if (event.lengthComputable)
+				{
+					const size: number = this.getFile().getSize();
+					const uploadedBytes: number = Math.min(size, chunk.getOffset() + event.loaded);
+					const progress: number = size > 0 ? Math.floor(uploadedBytes / size * 100) : 100;
+					this.emit('onProgress', { progress });
+				}
+			},
+		})
 			.then(response => {
 				if (response.data.token)
 				{

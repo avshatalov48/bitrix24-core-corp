@@ -177,7 +177,7 @@ class OpenLineManager
 
 	public static function getLineTitle(?string $code): ?string
 	{
-		if (!isset($code))
+		if (!isset($code) || !self::isEnabled())
 		{
 			return null;
 		}
@@ -189,6 +189,16 @@ class OpenLineManager
 		}
 
 		return (new Config())->get($lineId)['LINE_NAME'] ?? null;
+	}
+
+	public static function isImOpenLinesValue(string $value): bool
+	{
+		return preg_match('/^imol\|/', $value) === 1;
+	}
+
+	public static function getOpenLineTitle(string $value): ?string
+	{
+		return OpenLineManager::getLineTitle(mb_substr($value, 5));
 	}
 
 	public static function getChatTitle(?string $code): ?string

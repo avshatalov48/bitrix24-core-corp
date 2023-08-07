@@ -18,7 +18,7 @@ class CVoximplantQueueEditComponent extends \CBitrixComponent
 		if(!$this::checkAccess())
 			return false;
 
-		$action = $_REQUEST['action'];
+		$action = $_REQUEST['action'] ?? null;
 		switch ($action)
 		{
 			case 'save':
@@ -66,7 +66,7 @@ class CVoximplantQueueEditComponent extends \CBitrixComponent
 		$id = (int)$this->arParams['ID'];
 		$result = array();
 		$result['INLINE_MODE'] = (bool)$this->arParams['INLINE_MODE'];;
-		$result['EXTERNAL_REQUEST_ID'] = (string)$this->arParams['EXTERNAL_REQUEST_ID'];
+		$result['EXTERNAL_REQUEST_ID'] = (string)($this->arParams['EXTERNAL_REQUEST_ID'] ?? null);
 		$result['MAXIMUM_GROUP_MEMBERS'] = \Bitrix\Voximplant\Limits::getMaximumGroupMembers();
 
 		$userIds = array();
@@ -147,7 +147,10 @@ class CVoximplantQueueEditComponent extends \CBitrixComponent
 			'PHONE_NUMBER' => preg_replace('/\D/', '', $request['PHONE_NUMBER']),
 			'WAIT_TIME' => (int)$request['WAIT_TIME'],
 			'NO_ANSWER_RULE' => (string)$request['NO_ANSWER_RULE'],
-			'ALLOW_INTERCEPT' => ($request['ALLOW_INTERCEPT'] === 'Y' && \Bitrix\Voximplant\Limits::canInterceptCall() ? 'Y' : 'N'),
+			'ALLOW_INTERCEPT' => (
+				($request['ALLOW_INTERCEPT'] ?? null) === 'Y'
+				&& \Bitrix\Voximplant\Limits::canInterceptCall() ? 'Y' : 'N'
+			),
 		);
 
 		if($queueFields['NAME'] == '')

@@ -295,6 +295,35 @@ class File extends BaseObject
 		return $this->update(array('PREVIEW_ID' => $fileId));
 	}
 
+	public function attachImagePreview(array $previewFileData): Main\Result
+	{
+		$result = new Main\Result();
+		if (!\CFile::isImage($previewFileData['name'], $previewFileData['type']))
+		{
+			$result->addError(new Error('Preview is not an image'));
+
+			return $result;
+		}
+
+		$previewFileData['MODULE_ID'] = 'main';
+		$previewId = \CFile::saveFile($previewFileData, 'main_preview', true, true);
+		if (!$previewId)
+		{
+			$result->addError(new Error('Could not save preview to b_file'));
+
+			return $result;
+		}
+
+		$resultPreview = (new Main\UI\Viewer\PreviewManager())->setPreviewImageId($this->getFileId(), $previewId);
+		if (!$resultPreview->isSuccess())
+		{
+			$result->addErrors($resultPreview->getErrors());
+			\CFile::delete($previewId);
+		}
+
+		return $result;
+	}
+
 	/**
 	 * Returns id of view.
 	 * @return int|null
@@ -721,6 +750,7 @@ class File extends BaseObject
 			$lastVersion = $this->joinVersion();
 			if ($lastVersion)
 			{
+				$this->cleanVersionsOverLimitByTime($createdBy);
 				$this->tryToRunBizProcAfterEdit();
 
 				return $lastVersion;
@@ -739,7 +769,8 @@ class File extends BaseObject
 			return null;
 		}
 
-		$this->cleanVersionsOverLimit($createdBy);
+		$this->cleanVersionsOverLimitByCount($createdBy);
+		$this->cleanVersionsOverLimitByTime($createdBy);
 		if ($commentAttachedObjects)
 		{
 			$this->commentAttachedObjects($versionModel);
@@ -834,15 +865,55 @@ class File extends BaseObject
 		}
 	}
 
-	private function cleanVersionsOverLimit($createdBy)
+	private function cleanVersionsOverLimitByCount(int $createdBy): void
 	{
 		$versionLimitPerFile = Configuration::getVersionLimitPerFile();
 		if ($this->getGlobalContentVersion() > 1 && $versionLimitPerFile > 0)
 		{
-			foreach ($this->getVersions(array('offset' => $versionLimitPerFile, 'limit' => 100)) as $oldVersion)
+			foreach ($this->getVersions(['offset' => $versionLimitPerFile, 'limit' => 100]) as $oldVersion)
 			{
 				$oldVersion->delete($createdBy);
 			}
+		}
+	}
+
+	/**
+	 * @see \Bitrix\Disk\Internals\Cleaner::deleteVersionsByTtl()
+	 * @param int $createdBy
+	 * @return void
+	 * @throws Main\ArgumentException
+	 */
+	private function cleanVersionsOverLimitByTime(int $createdBy): void
+	{
+		$dayLimit = Configuration::getFileVersionTtl();
+		if ($dayLimit === -1)
+		{
+			return;
+		}
+
+		if ($this->getGlobalContentVersion() <= 1)
+		{
+			return;
+		}
+
+		if ($this->hasAttachedObjects())
+		{
+			return;
+		}
+
+		$versions = $this->getVersions([
+			'filter' => ['<CREATE_TIME' => DateTime::createFromTimestamp(time() - $dayLimit * 86400)],
+			'order' => ['ID' => 'ASC'],
+		]);
+
+		foreach ($versions as $oldVersion)
+		{
+			if ($oldVersion->isHead())
+			{
+				continue;
+			}
+
+			$oldVersion->delete($createdBy);
 		}
 	}
 

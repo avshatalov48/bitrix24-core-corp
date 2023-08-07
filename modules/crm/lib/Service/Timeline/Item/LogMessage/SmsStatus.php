@@ -6,6 +6,7 @@ use Bitrix\Crm\Activity\Provider\BaseMessage;
 use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
 use Bitrix\Crm\Service\Timeline\Item\Model;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Client;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
 use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
@@ -88,7 +89,7 @@ class SmsStatus extends LogMessage
 	{
 		$result = [];
 
-		$client = $this->buildClientBlock(self::BLOCK_WITH_FORMATTED_VALUE, Loc::getMessage('CRM_TIMELINE_LOG_SMS_STATUS_RECIPIENT'));
+		$client = $this->buildClientBlock(Client::BLOCK_WITH_FORMATTED_VALUE, Loc::getMessage('CRM_TIMELINE_LOG_SMS_STATUS_RECIPIENT'));
 		if ($client)
 		{
 			if ($client instanceof LineOfTextBlocks && $this->isSmsChannel)

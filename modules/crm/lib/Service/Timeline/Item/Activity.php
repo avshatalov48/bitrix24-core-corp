@@ -12,8 +12,6 @@ use CCrmOwnerType;
 
 abstract class Activity extends Configurable
 {
-	public const ALLOWED_AUDIO_EXTENSIONS = ['mp3', 'mp4', 'vp6', 'aac', 'wav'];
-
 	/**
 	 * Should return unique identifier of an activity template
 	 *

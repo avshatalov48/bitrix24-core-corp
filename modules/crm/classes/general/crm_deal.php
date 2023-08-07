@@ -9,11 +9,11 @@ use Bitrix\Crm\Category\DealCategoryChangeError;
 use Bitrix\Crm\CustomerType;
 use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
+use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\History\DealStageHistoryEntry;
 use Bitrix\Crm\Integration\Channel\DealChannelBinding;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Kanban\ViewMode;
-use Bitrix\Crm\Reservation\Compatibility\ProductRowReserves;
 use Bitrix\Crm\Settings\DealSettings;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Statistics\DealActivityStatisticEntry;
@@ -49,7 +49,7 @@ class CAllCrmDeal
 	private static $FIELD_INFOS = null;
 
 	private static ?Crm\Entity\Compatibility\Adapter $lastActivityAdapter = null;
-	private static ?Crm\Entity\Compatibility\Adapter $contentTypeIdAdapter = null;
+	private static ?Crm\Entity\Compatibility\Adapter $commentsAdapter = null;
 
 	/** @var \Bitrix\Crm\Entity\Compatibility\Adapter */
 	private $compatibilityAdapter;
@@ -146,14 +146,14 @@ class CAllCrmDeal
 		return self::$lastActivityAdapter;
 	}
 
-	private static function getContentTypeIdAdapter(): Crm\Entity\Compatibility\Adapter\ContentTypeId
+	private static function getCommentsAdapter(): Crm\Entity\Compatibility\Adapter\Comments
 	{
-		if (!self::$contentTypeIdAdapter)
+		if (!self::$commentsAdapter)
 		{
-			self::$contentTypeIdAdapter = new Crm\Entity\Compatibility\Adapter\ContentTypeId(\CCrmOwnerType::Deal);
+			self::$commentsAdapter = new Crm\Entity\Compatibility\Adapter\Comments(\CCrmOwnerType::Deal);
 		}
 
-		return self::$contentTypeIdAdapter;
+		return self::$commentsAdapter;
 	}
 
 	// Service -->
@@ -844,20 +844,14 @@ class CAllCrmDeal
 		if (isset($arFilter['OBSERVER_IDS']))
 		{
 			$observerIds = is_array($arFilter['OBSERVER_IDS']) ? $arFilter['OBSERVER_IDS'] : [];
-			if (!empty($observerIds))
+			$observersFilter = CCrmEntityHelper::prepareObserversFieldFilter(
+				CCrmOwnerType::Deal,
+				$sender->GetTableAlias(),
+				$observerIds
+			);
+			if (!empty($observersFilter))
 			{
-				$tableAlias = $sender->GetTableAlias();
-				$entityTypeId = CCrmOwnerType::Deal;
-				\Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($observerIds);
-				if (!empty($observerIds))
-				{
-					$observerIds = implode(',', $observerIds);
-					$sqlData['WHERE'][] = "{$tableAlias}.ID IN (
-						SELECT obr.entity_id
-						FROM b_crm_observer obr
-						WHERE obr.entity_type_id = {$entityTypeId} and obr.user_id IN ({$observerIds})
-					)";
-				}
+				$sqlData['WHERE'][] = $observersFilter;
 			}
 		}
 
@@ -1773,6 +1767,7 @@ class CAllCrmDeal
 			}
 
 			self::getLastActivityAdapter()->performAdd($arFields, $options);
+			self::getCommentsAdapter()->normalizeFields(null, $arFields);
 
 			//region Category
 			$categoryID = isset($arFields['CATEGORY_ID']) ? max((int)$arFields['CATEGORY_ID'], 0) : 0;
@@ -2060,7 +2055,7 @@ class CAllCrmDeal
 			if(!empty($contactBindings))
 			{
 				DealContactTable::bindContacts($ID, $contactBindings);
-				if (isset($GLOBALS['USER']))
+				if (isset($GLOBALS['USER']) && !empty($contactIDs))
 				{
 					CUserOptions::SetOption(
 						'crm',
@@ -2155,7 +2150,7 @@ class CAllCrmDeal
 			)->build($ID, ['checkExist' => true]);
 			//endregion
 
-			self::getContentTypeIdAdapter()->performAdd($arFields, $options);
+			self::getCommentsAdapter()->performAdd($arFields, $options);
 
 			if(isset($options['REGISTER_SONET_EVENT']) && $options['REGISTER_SONET_EVENT'] === true)
 			{
@@ -2990,6 +2985,10 @@ class CAllCrmDeal
 			//endregion
 
 			self::getLastActivityAdapter()->performUpdate((int)$ID, $arFields, $options);
+			self::getCommentsAdapter()
+				->setPreviousFields((int)$ID, $arRow)
+				->normalizeFields((int)$ID, $arFields)
+			;
 
 			$sonetEventData = array();
 			if ($bCompare)
@@ -3321,7 +3320,7 @@ class CAllCrmDeal
 			}
 			//endregion
 
-			self::getContentTypeIdAdapter()
+			self::getCommentsAdapter()
 				->setPreviousFields((int)$ID, $arRow)
 				->performUpdate((int)$ID, $arFields, $options)
 			;
@@ -3772,7 +3771,7 @@ class CAllCrmDeal
 				\Bitrix\Crm\Observer\ObserverManager::deleteByOwner(CCrmOwnerType::Deal, $ID);
 				\Bitrix\Crm\Ml\Scoring::onEntityDelete(CCrmOwnerType::Deal, $ID);
 
-				self::getContentTypeIdAdapter()->performDelete((int)$ID, $arOptions);
+				self::getCommentsAdapter()->performDelete((int)$ID, $arOptions);
 
 				Crm\Integration\Im\Chat::deleteChat(
 					array(
@@ -4018,8 +4017,8 @@ class CAllCrmDeal
 			$arMsg[] = Array(
 				'ENTITY_FIELD' => 'COMMENTS',
 				'EVENT_NAME' => GetMessage('CRM_FIELD_COMPARE_COMMENTS'),
-				'EVENT_TEXT_1' => !empty($arFieldsOrig['COMMENTS'])? $arFieldsOrig['COMMENTS']: GetMessage('CRM_FIELD_COMPARE_EMPTY'),
-				'EVENT_TEXT_2' => !empty($arFieldsModif['COMMENTS'])? $arFieldsModif['COMMENTS']: GetMessage('CRM_FIELD_COMPARE_EMPTY'),
+				'EVENT_TEXT_1' => !empty($arFieldsOrig['COMMENTS'])? TextHelper::convertBbCodeToHtml($arFieldsOrig['COMMENTS']): GetMessage('CRM_FIELD_COMPARE_EMPTY'),
+				'EVENT_TEXT_2' => !empty($arFieldsModif['COMMENTS'])? TextHelper::convertBbCodeToHtml($arFieldsModif['COMMENTS']): GetMessage('CRM_FIELD_COMPARE_EMPTY'),
 			);
 
 		$arCurrency = CCrmCurrencyHelper::PrepareListItems();

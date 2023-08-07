@@ -2,22 +2,20 @@
 
 return [
 	'extensions' => [
+		'require-lazy',
 		'loc',
 		'type',
 		'alert',
 		'notify-manager',
 
 		'crm:type',
-		'crm:crm-mode',
-		'crm:conversion',
 		'crm:storage/category',
-		'crm:category-list-view',
-		'crm:entity-detail/opener',
 		'crm:category-list-view/open',
+		'crm:entity-actions/change-crm-mode',
+		'crm:entity-actions/conversion',
 	],
 	'bundle' => [
 		'./change-pipeline',
-		'./change-crm-mode',
 		'./change-stage',
 		'./copy-entity',
 		'./public-errors',

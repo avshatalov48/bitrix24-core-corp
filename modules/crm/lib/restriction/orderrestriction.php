@@ -54,7 +54,8 @@ class OrderRestriction extends Bitrix24AccessRestriction
 			);
 		}
 
-		$validIdBound = Order\Order::getList($parameters)->fetch()['ID'];
+		$order = Order\Order::getList($parameters)->fetch();
+		$validIdBound = $order['ID'] ?? 0;
 		$this->validIdBound = (int)$validIdBound;
 	}
 

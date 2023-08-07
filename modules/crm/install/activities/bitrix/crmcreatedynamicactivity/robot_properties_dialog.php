@@ -24,13 +24,37 @@ $entitiesFields = $dialog->getMap()['DynamicEntitiesFields']['Map'];
 
 <?php foreach ($entitiesFields as $entityTypeId => $fields): ?>
 	<div id="ccda-fields-map-<?= $entityTypeId ?>" <?= $entityTypeId !== $chosenEntityTypeId ? 'hidden' : ''?>>
+		<?php $bindFieldId = "{$entityTypeId}_BindToCurrentElement"; ?>
 		<?php foreach ($fields as $fieldId => $field): ?>
-			<div class="bizproc-automation-popup-settings">
+			<?php if ($fieldId === $bindFieldId): ?>
+				<?php
+				$bindField = $field;
+				$bindFieldValue = CBPHelper::getBool($chosenEntityValues[$bindFieldId] ?? true);
+				?>
+				<div class="bizproc-automation-popup-settings">
+					<div class="bizproc-automation-popup-checkbox-item">
+						<input type="hidden" name="<?= htmlspecialcharsbx($bindField['FieldName']) ?>" value="N">
+						<label class="bizproc-automation-popup-chk-label">
+							<input
+								type="checkbox"
+								name="<?= htmlspecialcharsbx($bindField['FieldName']) ?>"
+								value="Y"
+								class="bizproc-automation-popup-chk"
+								<?= $bindFieldValue ? 'checked' : '' ?>
+							>
+							<?= htmlspecialcharsbx($bindField['Name']) ?>
+						</label>
+					</div>
+				</div>
+				<?php unset($fields[$bindFieldId]); ?>
+			<?php else: ?>
+				<div class="bizproc-automation-popup-settings">
 				<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete">
 					<?=htmlspecialcharsbx($field['Name'])?>:
 				</span>
-				<?=$dialog->renderFieldControl($field, $chosenEntityValues[$fieldId])?>
-			</div>
+					<?=$dialog->renderFieldControl($field, $chosenEntityValues[$fieldId])?>
+				</div>
+			<?php endif; ?>
 		<?php endforeach; ?>
 	</div>
 <?php endforeach; ?>

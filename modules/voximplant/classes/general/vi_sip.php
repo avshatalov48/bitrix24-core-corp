@@ -380,7 +380,7 @@ class CVoxImplantSip
 		}
 	}
 
-	public function Get($configId, $params = Array())
+	public function Get($configId, $params = [])
 	{
 		$configId = intval($configId);
 		if ($configId <= 0)
@@ -391,13 +391,13 @@ class CVoxImplantSip
 
 		if (!is_array($params))
 		{
-			$params = Array();
+			$params = [];
 		}
 
-		$result = VI\SipTable::getList(Array(
-			'select' => $params['WITH_TITLE']? Array('*', 'TITLE'): Array('*'),
-			'filter' => Array('=CONFIG_ID' => $configId)
-		));
+		$result = VI\SipTable::getList([
+			'select' => ($params['WITH_TITLE'] ?? null) ? ['*', 'TITLE'] : ['*'],
+			'filter' => ['=CONFIG_ID' => $configId]
+		]);
 		$row = $result->fetch();
 		if (!$row)
 		{

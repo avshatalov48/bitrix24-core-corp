@@ -12,6 +12,7 @@ export type UploaderFileOptions = {
 	size?: number,
 	width?: number,
 	height?: number,
+	treatImageAsFile?: boolean,
 	downloadUrl?: string,
 	clientPreview?: Blob,
 	clientPreviewWidth?: number,

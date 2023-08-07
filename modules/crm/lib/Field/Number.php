@@ -138,12 +138,16 @@ class Number extends Field
 				return null;
 			}
 			$numeratorSettings = Numerator\Numerator::getOneByType($numeratorType);
-			if (!$numeratorSettings)
+			if (!$numeratorSettings) // try to create if not found
 			{
 				$this->createNumeratorTemplateIfNotExists($numeratorType, $this->getByMaxNumber());
+				$numeratorSettings = Numerator\Numerator::getOneByType($numeratorType);
 			}
 
-			$this->numerator = Numerator\Numerator::load($numeratorSettings['id']);
+			if ($numeratorSettings)
+			{
+				$this->numerator = Numerator\Numerator::load($numeratorSettings['id']);
+			}
 		}
 
 		return $this->numerator;

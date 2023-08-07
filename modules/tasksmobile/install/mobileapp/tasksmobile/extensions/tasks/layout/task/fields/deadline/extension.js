@@ -2,8 +2,8 @@
  * @module tasks/layout/task/fields/deadline
  */
 jn.define('tasks/layout/task/fields/deadline', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {DateTimeFieldClass} = require('layout/ui/fields/datetime');
+	const { Loc } = require('loc');
+	const { DateTimeFieldClass } = require('layout/ui/fields/datetime');
 
 	class Deadline extends LayoutComponent
 	{
@@ -69,7 +69,7 @@ jn.define('tasks/layout/task/fields/deadline', (require, exports, module) => {
 						balloonArrowDownUri: `${this.props.pathToImages}/tasksmobile-layout-task-balloon-arrow-down.png`,
 					},
 					testId: 'deadline',
-					onChange: date => this.props.datesResolver.updateDeadline(date),
+					onChange: (date) => this.props.datesResolver.updateDeadline(date),
 				}),
 			);
 		}
@@ -88,13 +88,27 @@ jn.define('tasks/layout/task/fields/deadline', (require, exports, module) => {
 					{
 						this.props.datesResolver.updateDeadline(date / 1000, true);
 					}
-				}
+				},
 			);
 		}
 	}
 
 	class DeadlineField extends DateTimeFieldClass
 	{
+		static getImageUrl(imageUrl)
+		{
+			let result = imageUrl;
+
+			if (result.indexOf(currentDomain) !== 0)
+			{
+				result = result.replace(`${currentDomain}`, '');
+				result = (result.indexOf('http') === 0 ? result : `${currentDomain}${result}`);
+			}
+
+			return encodeURI(result);
+		}
+
+		// eslint-disable-next-line no-useless-constructor
 		constructor(props)
 		{
 			super(props);
@@ -102,7 +116,7 @@ jn.define('tasks/layout/task/fields/deadline', (require, exports, module) => {
 
 		renderContent()
 		{
-			const {counter} = this.getConfig();
+			const { counter } = this.getConfig();
 
 			return View(
 				{
@@ -136,13 +150,13 @@ jn.define('tasks/layout/task/fields/deadline', (require, exports, module) => {
 					alignSelf: 'center',
 					marginLeft: 2,
 				},
-				uri: this.getImageUrl(this.getConfig().balloonArrowDownUri),
+				uri: DeadlineField.getImageUrl(this.getConfig().balloonArrowDownUri),
 			});
 		}
 
 		renderCounter()
 		{
-			const {counter} = this.getConfig();
+			const { counter } = this.getConfig();
 
 			return View(
 				{
@@ -167,17 +181,6 @@ jn.define('tasks/layout/task/fields/deadline', (require, exports, module) => {
 					text: counter.value.toString(),
 				}),
 			);
-		}
-
-		getImageUrl(imageUrl)
-		{
-			if (imageUrl.indexOf(currentDomain) !== 0)
-			{
-				imageUrl = imageUrl.replace(`${currentDomain}`, '');
-				imageUrl = (imageUrl.indexOf('http') !== 0 ? `${currentDomain}${imageUrl}` : imageUrl);
-			}
-
-			return encodeURI(imageUrl);
 		}
 
 		getDefaultStyles()
@@ -214,5 +217,5 @@ jn.define('tasks/layout/task/fields/deadline', (require, exports, module) => {
 		}
 	}
 
-	module.exports = {Deadline};
+	module.exports = { Deadline };
 });

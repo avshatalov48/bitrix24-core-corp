@@ -3946,7 +3946,3 @@ span + .crm-entity-stream-content-delivery-phone-ext {
 .crm-entity-stream-section-planned-store-document .crm-entity-stream-content-detail-title {
 	margin-bottom: 10px;
 }
-.document-status-label {
-	text-transform: uppercase;
-	margin-right: 0;
-}

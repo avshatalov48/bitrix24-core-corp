@@ -10,9 +10,6 @@ use Bitrix\Crm\Service\Timeline\Item;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Redirect;
 use Bitrix\Crm\Service\Timeline\Layout\Action\RunAjaxAction;
-use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
-use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockWithTitle;
-use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Note;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
 use Bitrix\Crm\Service\Timeline\Layout\Converter;
@@ -22,15 +19,11 @@ use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItem;
 use Bitrix\Crm\Timeline\Entity\NoteTable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\PhoneNumber;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
 
 abstract class Configurable extends Item
 {
-	public const BLOCK_WITH_FORMATTED_VALUE = 1;
-	public const BLOCK_WITH_FIXED_TITLE = 2;
-
 	protected Layout $layout;
 
 	public function __construct(Context $context, Model $model)
@@ -495,49 +488,14 @@ abstract class Configurable extends Item
 	protected function buildClientBlock(int $options = 0, string $blockTitle = null): ?Layout\Body\ContentBlock
 	{
 		$communication = $this->getAssociatedEntityModel()->get('COMMUNICATION') ?? [];
-		$title = $communication['TITLE'] ?? null;
-		if (!$title)
+		if (empty($communication))
 		{
 			return null;
 		}
 
-		if (($options & self::BLOCK_WITH_FORMATTED_VALUE))
-		{
-			$source = empty($communication['SOURCE'])
-				? ''
-				: PhoneNumber\Parser::getInstance()->parse($communication['SOURCE'])->format();
-
-			$formattedValue = empty($communication['FORMATTED_VALUE'])
-				? $source
-				: $communication['FORMATTED_VALUE'];
-
-			$title = sprintf('%s %s', $title, $formattedValue);
-		}
-
-		$blockTitle = $blockTitle ?? Loc::getMessage("CRM_TIMELINE_CLIENT_TITLE");
-
-		$url = isset($communication['SHOW_URL'])
-			? new Uri($communication['SHOW_URL'])
-			: null;
-
-		$textOrLink = ContentBlockFactory::createTextOrLink($title, $url ? new Redirect($url) : null);
-		$textOrLink->setTitle($title);
-
-		if ($options & self::BLOCK_WITH_FIXED_TITLE)
-		{
-			return (new ContentBlockWithTitle())
-				->setTitle($blockTitle)
-				->setContentBlock($textOrLink->setIsBold(isset($url))->setColor(Text::COLOR_BASE_90))
-				->setInline()
-			;
-		}
-
-		return (new LineOfTextBlocks())
-			->addContentBlock(
-				'title',
-				ContentBlockFactory::createTitle($blockTitle)
-			)
-			->addContentBlock('data', $textOrLink->setIsBold(isset($url))->setColor(Text::COLOR_BASE_90))
+		return (new Layout\Body\ContentBlock\Client($communication, $options))
+			->setTitle($blockTitle ?? Loc::getMessage("CRM_TIMELINE_CLIENT_TITLE"))
+			->build()
 		;
 	}
 

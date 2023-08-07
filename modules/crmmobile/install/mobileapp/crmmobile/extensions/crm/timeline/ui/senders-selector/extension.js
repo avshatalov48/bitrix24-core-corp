@@ -104,6 +104,7 @@ jn.define('crm/timeline/ui/senders-selector', (require, exports, module) => {
 				subtitle: this.name,
 				onClickCallback: () => {
 					this.showProviderSelector();
+
 					return Promise.resolve({ closeMenu: false });
 				},
 			};
@@ -119,6 +120,7 @@ jn.define('crm/timeline/ui/senders-selector', (require, exports, module) => {
 				subtitle: get(phone, 'name', ''),
 				onClickCallback: () => {
 					this.showNumberSelector();
+
 					return Promise.resolve({ closeMenu: false });
 				},
 			};
@@ -132,6 +134,11 @@ jn.define('crm/timeline/ui/senders-selector', (require, exports, module) => {
 		show(parentWidget = PageManager)
 		{
 			void this.settingsMenu.show(parentWidget);
+		}
+
+		close()
+		{
+			void this.settingsMenu.close();
 		}
 
 		get layout()
@@ -161,7 +168,7 @@ jn.define('crm/timeline/ui/senders-selector', (require, exports, module) => {
 				}
 			}
 
-			if (Type.isStringFilled(phoneId))
+			if (Type.isStringFilled(phoneId) || Type.isNumber(phoneId))
 			{
 				needRerender = true;
 				this.currentPhoneId = phoneId;

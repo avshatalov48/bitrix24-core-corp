@@ -73,11 +73,11 @@ jn.define('im/messenger/lib/ui/search/input', (require, exports, module) => {
 							backgroundColor: '#00000000',
 						},
 						onChangeText: (text) => {
-							if (text !== '')
+							if (text !== '' && this.state.isTextEmpty)
 							{
 								this.setState({isTextEmpty: false});
 							}
-							if (text === '')
+							if (text === '' && !this.state.isTextEmpty)
 							{
 								this.setState({isTextEmpty: true});
 							}

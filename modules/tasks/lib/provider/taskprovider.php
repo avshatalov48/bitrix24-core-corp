@@ -17,7 +17,7 @@ class TaskProvider
 {
 	use UserProviderTrait;
 
-	private const USE_ORM_KEY = 'tasks_use_orm_list';
+	private const USE_LEGACY_KEY = 'tasks_use_legacy_list';
 
 	private $db;
 	private $userFieldManager;
@@ -137,24 +137,12 @@ class TaskProvider
 	 */
 	private function useOrm(): bool
 	{
-		$request = \Bitrix\Main\Context::getCurrent()->getRequest()->toArray();
-		if (array_key_exists(self::USE_ORM_KEY, $request))
+		if (Option::get('tasks', self::USE_LEGACY_KEY, 'null', '-') !== 'null')
 		{
-			\CUserOptions::setOption('tasks', self::USE_ORM_KEY, (int) $request[self::USE_ORM_KEY], false, $this->userId);
-			return $request[self::USE_ORM_KEY] > 0 ? true : false;
+			return false;
 		}
 
-		if ((int) \CUserOptions::getOption('tasks', self::USE_ORM_KEY, 0, $this->userId) > 0)
-		{
-			return true;
-		}
-
-		if (Option::get('tasks', self::USE_ORM_KEY, 'null', '-') !== 'null')
-		{
-			return true;
-		}
-
-		return false;
+		return true;
 	}
 
 	/**
@@ -204,7 +192,13 @@ class TaskProvider
 			->setOrder($arOrder)
 			->setGroupBy($arGroup)
 			->setWhere($arFilter)
+			->setDistinct((bool)($arParams['DISTINCT'] ?? null))
 		;
+
+		if ($this->arParams['MAKE_ACCESS_FILTER'] ?? null)
+		{
+			$query->needMakeAccessFilter();
+		}
 
 		if (
 			(isset($arParams['CHECK_PERMISSIONS']) && $arParams['CHECK_PERMISSIONS'] === 'N')
@@ -242,7 +236,7 @@ class TaskProvider
 			$page = $page > 0 ? (int)$page : (int)$this->arParams['NAV_PARAMS']['iNumPage'];
 			$page = $page > 0 ? $page : 1;
 			$cnt = $this->getCountOrm($this->arFilter, $this->arParams, $this->arGroup)->Fetch()['CNT'];
-			$pageSize = $this->arParams['NAV_PARAMS']['nPageSize'] ?? 10;
+			$pageSize = $this->arParams['NAV_PARAMS']['nPageSize'] ?? 0;
 		}
 
 		// this is a query with limit which used in \Bitrix\Tasks\Integration\UI\EntitySelector\TaskProvider etc

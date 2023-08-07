@@ -23,7 +23,7 @@ jn.define('crm/entity-tab/search/preset', (require, exports, module) => {
 		{
 			const content = [
 				Text({
-					style: this.styles.title,
+					style: this.styles.title(this.isDisabled()),
 					text: this.props.name,
 					ellipsize: 'middle',
 				}),

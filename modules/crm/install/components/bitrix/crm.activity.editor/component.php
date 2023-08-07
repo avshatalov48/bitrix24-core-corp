@@ -57,7 +57,7 @@ if ($arResult['ENABLE_EMAIL_ADD'])
 
 			if (!empty($mailbox['OPTIONS']['flags']) && in_array('crm_connect', $mailbox['OPTIONS']['flags']))
 			{
-				if ($mailbox['USER_ID'] > 0)
+				if (($mailbox['USER_ID'] ?? null) > 0)
 				{
 					if (mb_strpos($mailbox['LOGIN'], '@') > 0 && empty($arResult['USER_CRM_EMAIL']))
 						$arResult['USER_CRM_EMAIL'] = $mailbox['LOGIN'];

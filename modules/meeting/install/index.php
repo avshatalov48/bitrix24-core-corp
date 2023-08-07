@@ -12,9 +12,11 @@ Class meeting extends CModule
 	var $MODULE_CSS;
 	var $MODULE_GROUP_RIGHTS = "N";
 
+	private $errors;
+
 	public function __construct()
 	{
-		$arModuleVersion = array();
+		$arModuleVersion = [];
 
 		include(__DIR__.'/version.php');
 
@@ -25,7 +27,7 @@ Class meeting extends CModule
 		$this->MODULE_DESCRIPTION = GetMessage("MEETING_MODULE_DESCRIPTION");
 	}
 
-	function InstallDB($arParams = array())
+	function InstallDB($arParams = [])
 	{
 		global $DB, $APPLICATION;
 		$this->errors = false;
@@ -41,16 +43,14 @@ Class meeting extends CModule
 			$APPLICATION->ThrowException(implode("<br>", $this->errors));
 			return false;
 		}
-		else
-		{
-			RegisterModule("meeting");
 
-			RegisterModuleDependences("tasks", "OnTaskDelete", "meeting", "CMeetingEventHandlers", "OnTaskDelete");
-			RegisterModuleDependences("calendar", "OnAfterCalendarConvert", "meeting", "CMeetingEventHandlers", "OnAfterCalendarConvert");
-			RegisterModuleDependences("main", "OnBeforeUserDelete", "meeting", "CMeetingEventHandlers", "OnBeforeUserDelete");
+		RegisterModule("meeting");
 
-			return true;
-		}
+		RegisterModuleDependences("tasks", "OnTaskDelete", "meeting", "CMeetingEventHandlers", "OnTaskDelete");
+		RegisterModuleDependences("calendar", "OnAfterCalendarConvert", "meeting", "CMeetingEventHandlers", "OnAfterCalendarConvert");
+		RegisterModuleDependences("main", "OnBeforeUserDelete", "meeting", "CMeetingEventHandlers", "OnBeforeUserDelete");
+
+		return true;
 	}
 
 	function UnInstallDB($arParams = array())
@@ -103,7 +103,7 @@ Class meeting extends CModule
 
 	function InstallFiles($arParams = array())
 	{
-		if($_ENV["COMPUTERNAME"]!='BX')
+		if(($_ENV["COMPUTERNAME"] ?? null) !== 'BX')
 		{
 			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/meeting/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", True, True);
 			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/meeting/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js", True, True);
@@ -120,17 +120,21 @@ Class meeting extends CModule
 	function DoInstall()
 	{
 		global $DB, $APPLICATION, $USER, $step;
-		$step = intval($step);
+		$step = (int)$step;
 
-		if(!$USER->IsAdmin())
+		if (!$USER->IsAdmin())
+		{
 			return;
+		}
 
 		if (!check_bitrix_sessid())
+		{
 			$step = 1;
+		}
 
 		if(!CBXFeatures::IsFeatureEditable("Meeting"))
 		{
-			$this->errors = array(GetMessage("MAIN_FEATURE_ERROR_EDITABLE"));
+			$this->errors = [GetMessage("MAIN_FEATURE_ERROR_EDITABLE")];
 			$APPLICATION->ThrowException(implode("<br>", $this->errors));
 
 			$GLOBALS["errors"] = $this->errors;
@@ -162,7 +166,7 @@ Class meeting extends CModule
 		global $DB, $APPLICATION, $USER, $step;
 		if($USER->IsAdmin())
 		{
-			$step = intval($step);
+			$step = (int)$step;
 			if($step < 2)
 			{
 				$APPLICATION->IncludeAdminFile(GetMessage("MEETING_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/meeting/install/unstep1.php");
@@ -170,7 +174,7 @@ Class meeting extends CModule
 			elseif($step == 2)
 			{
 				$this->UnInstallDB(array(
-					"savedata" => $_REQUEST["savedata"],
+					"savedata" => ($_REQUEST["savedata"] ?? null),
 				));
 				$this->UnInstallFiles();
 				CBXFeatures::SetFeatureEnabled("Meeting", false);

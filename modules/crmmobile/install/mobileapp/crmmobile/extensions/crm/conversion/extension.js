@@ -2,15 +2,18 @@
  * @module crm/conversion
  */
 jn.define('crm/conversion', (require, exports, module) => {
-	const { get, isEmpty } = require('utils/object');
 	const { Url } = require('in-app-url/url');
-	const { EventEmitter } = require('event-emitter');
 	const { inAppUrl } = require('in-app-url');
+	const { unique } = require('utils/array');
+	const { EventEmitter } = require('event-emitter');
+	const { get, isEmpty } = require('utils/object');
 	const { NotifyManager } = require('notify-manager');
 	const { TypeId, TypeName } = require('crm/type');
-	const { ConversionMenu } = require('crm/conversion/menu');
+	const { BackdropWizard } = require('layout/ui/wizard/backdrop');
 	const { ConversionWizard } = require('crm/conversion/wizard');
-	const { prepareConversionFields, prepareConversionConfig } = require('crm/conversion/utils');
+	const { createConversionConfig } = require('crm/conversion/utils');
+
+	const AJAX_ACTION = 'crmmobile.Conversion.getConversionMenuItems';
 
 	const COMPONENT_MAP = {
 		[TypeId.Lead]: {
@@ -35,18 +38,46 @@ jn.define('crm/conversion', (require, exports, module) => {
 		constructor(props)
 		{
 			this.props = props;
+			this.layoutWidget = null;
 			this.isFinished = false;
 			this.openEntity = true;
 			this.convertParams = {
-				entities: [],
-				categoryId: null,
 				entityIds: {},
+				categoryId: null,
+				entityTypeIds: [],
+				requiredConfig: {},
 			};
 			this.uid = Random.getString();
 			this.parentEventEmitter = props.uid ? EventEmitter.createWithUid(props.uid) : null;
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 			this.customEventEmitter.on('DetailCard::onCreate', this.handleOnCreateEntity.bind(this));
 			this.customEventEmitter.on('DetailCard::onTabContentLoaded', this.validateDetailCard.bind(this));
+		}
+
+		getPermissions()
+		{
+			const { data } = this.props;
+
+			return data.permissions || {};
+		}
+
+		isReturnCustomer()
+		{
+			const { data } = this.props;
+
+			return data.isReturnCustomer || false;
+		}
+
+		getEntityItemIds()
+		{
+			const { data } = this.props;
+
+			if (!Array.isArray(data.items))
+			{
+				return [];
+			}
+
+			return unique(data.items.flatMap(({ entityTypeIds }) => entityTypeIds)).sort();
 		}
 
 		validateDetailCard(tabId)
@@ -61,9 +92,9 @@ jn.define('crm/conversion', (require, exports, module) => {
 
 		handleOnCreateEntity(params)
 		{
-			const { entities } = this.convertParams;
+			const { entityTypeIds } = this.convertParams;
 			const { entityTypeId } = this.props;
-			if (entities.length > 1)
+			if (entityTypeIds.length > 1)
 			{
 				this.closeEntityDetailCard();
 			}
@@ -104,78 +135,36 @@ jn.define('crm/conversion', (require, exports, module) => {
 			this.customEventEmitter.emit('DetailCard::close');
 		}
 
-		execute(params)
+		async execute(params)
 		{
-			NotifyManager.showLoadingIndicator();
-			const { close, categoryId } = params;
-			if (close)
+			try
 			{
-				this.hideLoading(false);
+				this.convertParams = params;
+				const data = await this.runConvert(params);
+				const conversionResult = await this.dataValidationForConversion(data);
 
-				return;
+				const result = conversionResult && conversionResult.DATA;
+				if (!result)
+				{
+					return null;
+				}
+
+				const errors = result.CHECK_ERRORS;
+				if (errors)
+				{
+					await this.errorProcessing(errors);
+
+					return this.execute(this.convertParams);
+				}
+
+				return result;
 			}
-			this.convertParams = params;
+			catch (error)
+			{
+				Conversion.showError(error);
+			}
 
-			this.runConvert(params)
-				.then((data) => this.dataValidationForConversion(data))
-				.then((result) => {
-					const data = result && result.DATA;
-					if (data)
-					{
-						const errors = data.CHECK_ERRORS;
-						if (errors)
-						{
-							this.errorProcessing(errors);
-
-							return;
-						}
-
-						this.openWizard(data, categoryId);
-					}
-				})
-				.catch((error) => {
-					NotifyManager.showDefaultError();
-					console.error(error);
-				});
-		}
-
-		openWizard(result, categoryId)
-		{
-			const { entityTypeId } = this.props;
-			let layoutMenu = null;
-			let finish = false;
-			ConversionWizard.open({
-				categoryId,
-				entityTypeId,
-				isLanding: true,
-				data: prepareConversionFields(result),
-				onFinish: (finishParams) => {
-					if (!layoutMenu)
-					{
-						return;
-					}
-
-					finish = true;
-					layoutMenu.close(() => {
-						const { entityIds } = this.convertParams;
-
-						this.execute({
-							entityIds,
-							requiredConfig: result.CONFIG,
-							enableSynchronization: true,
-							...finishParams,
-						});
-					});
-				},
-			}).then((menu) => {
-				layoutMenu = menu;
-				layoutMenu.setListener((eventName) => {
-					if (eventName === 'onViewRemoved' && !finish)
-					{
-						this.hideLoading(false);
-					}
-				});
-			});
+			return null;
 		}
 
 		hideLoading(success)
@@ -213,6 +202,7 @@ jn.define('crm/conversion', (require, exports, module) => {
 
 				return null;
 			}
+
 			const { categoryId } = this.convertParams;
 			const { URL, IS_FINISHED } = DATA;
 			this.isFinished = IS_FINISHED === 'Y';
@@ -249,9 +239,18 @@ jn.define('crm/conversion', (require, exports, module) => {
 			{
 				return;
 			}
-			const timeToSeeLoadingIndicator = 200;
 
-			setTimeout(() => inAppUrl.open(entityUrl), timeToSeeLoadingIndicator);
+			if (this.layoutWidget)
+			{
+				this.layoutWidget.close(() => {
+					this.layoutWidget = null;
+					inAppUrl.open(entityUrl);
+				});
+			}
+			else
+			{
+				inAppUrl.open(entityUrl);
+			}
 		}
 
 		handleOnFinishConverted(entityUrl)
@@ -260,7 +259,10 @@ jn.define('crm/conversion', (require, exports, module) => {
 
 			if (onFinishConverted)
 			{
-				onFinishConverted().then(() => this.openEntityUrl(entityUrl));
+				// eslint-disable-next-line promise/catch-or-return
+				onFinishConverted()
+					.catch(console.error)
+					.finally(() => this.openEntityUrl(entityUrl));
 			}
 			else
 			{
@@ -268,54 +270,82 @@ jn.define('crm/conversion', (require, exports, module) => {
 			}
 		}
 
-		runConvert(params)
+		getComponent()
+		{
+			const { entityTypeId } = this.props;
+			const component = COMPONENT_MAP[entityTypeId];
+
+			if (!component)
+			{
+				console.error(`Conversion is not supported for entity type ${entityTypeId}`);
+
+				return null;
+			}
+
+			return component;
+		}
+
+		getConversionConfig(params)
 		{
 			const { entityId, entityTypeId } = this.props;
+
 			const {
-				entities,
 				categoryId,
 				context = {},
 				entityIds = {},
 				requiredConfig,
+				entityTypeIds = [],
 				enableSynchronization = false,
 			} = params;
 
-			const config = prepareConversionConfig({ entities, categoryId, requiredConfig });
+			const conversionConfig = createConversionConfig({ entityTypeIds, categoryId, requiredConfig });
 
-			const entitiesParams = {};
-			Object.keys(config).forEach((entityTypeName) => {
-				entitiesParams[entityTypeName] = config[entityTypeName].active;
+			const entitiesParams = {
+				entityId,
+				entityTypeId,
+			};
+
+			Object.keys(conversionConfig).forEach((entityTypeName) => {
+				entitiesParams[entityTypeName] = conversionConfig[entityTypeName].active;
 
 				if (Array.isArray(entityIds[entityTypeName]) && entityIds[entityTypeName].length > 0)
 				{
 					context[entityTypeName] = entityIds[entityTypeName][0];
 				}
 			});
-			entitiesParams.entityId = entityId;
-			entitiesParams.entityTypeId = entityTypeId;
 
-			const component = COMPONENT_MAP[entityTypeId];
+			return {
+				...entitiesParams,
+				data: {
+					...entitiesParams,
+					ACTION: 'CONVERT',
+					MODE: 'CONVERT',
+					ENTITY_ID: entityId,
+					CONFIG: conversionConfig,
+					CONTEXT: context,
+					ENABLE_SYNCHRONIZATION: enableSynchronization ? 'Y' : 'N',
+				},
+			};
+		}
+
+		runConvert(params)
+		{
+			const component = this.getComponent();
+
 			if (!component)
 			{
-				console.error(`Conversion is not supported for entity type ${entityTypeId}`);
-				return null;
+				return Promise.reject();
 			}
+
+			const conversionConfig = this.getConversionConfig(params);
 
 			return BX.ajax.runComponentAction(
 				`bitrix:${component.name}`,
 				'convert',
 				{
 					mode: component.mode,
-					...entitiesParams,
-					data: {
-						...entitiesParams,
-						ACTION: 'CONVERT',
-						MODE: 'CONVERT',
-						ENTITY_ID: entityId,
-						CONFIG: config,
-						CONTEXT: context,
-						ENABLE_SYNCHRONIZATION: enableSynchronization ? 'Y' : 'N',
-					},
+					...conversionConfig,
+
 				},
 			);
 		}
@@ -332,24 +362,28 @@ jn.define('crm/conversion', (require, exports, module) => {
 				},
 			}));
 
-			jn.import('crm:required-fields').then(() => {
-				const { RequiredFields } = require('crm/required-fields');
+			return new Promise((resolve) => {
+				jn.import('crm:required-fields').then(() => {
+					const { RequiredFields } = require('crm/required-fields');
+					RequiredFields.show({
+						errors,
+						parentWidget: this.layoutWidget,
+						params: { entityId, entityTypeId },
+						onSave: () => {
+							if (this.parentEventEmitter)
+							{
+								this.parentEventEmitter.emit('DetailCard::reloadTabs');
+							}
 
-				RequiredFields.show({
-					errors,
-					params: { entityId, entityTypeId },
-					onSave: () => {
-						if (this.parentEventEmitter)
-						{
-							this.parentEventEmitter.emit('DetailCard::reloadTabs');
-						}
-
-						NotifyManager.showLoadingIndicator();
-						this.execute(this.convertParams);
-					},
-					onCancel: () => {
-						this.hideLoading(false);
-					},
+							resolve();
+						},
+						onCancel: () => {
+							this.hideLoading(false);
+						},
+					});
+				}).catch((error) => {
+					this.hideLoading(false);
+					console.error(error);
 				});
 			})
 				.catch((error) => {
@@ -358,19 +392,71 @@ jn.define('crm/conversion', (require, exports, module) => {
 				});
 		}
 
-		getMenuProps()
+		setLayoutWidget(layoutWidget)
 		{
-			return {
-				...this.props,
-				executeConversion: this.execute.bind(this),
-			};
+			this.layoutWidget = layoutWidget;
 		}
 
-		static createMenu(props)
+		static fetch(props)
 		{
-			const conversion = new Conversion(props);
+			const { entityTypeId, entityId } = props;
 
-			return ConversionMenu.create(conversion.getMenuProps());
+			return BX.ajax.runAction(AJAX_ACTION, {
+				json: { entityTypeId, entityId },
+			})
+				.then(({ data }) => data)
+				.catch(Conversion.showError);
+		}
+
+		static showError(error)
+		{
+			NotifyManager.showDefaultError();
+			console.error(error);
+		}
+
+		/**
+		 * @param {object} props
+		 * @param {string} props.entityTypeId
+		 * @param {string} props.entityId
+		 * @param {function} props.onFinishConverted
+		 * @return {Promise<*>}
+		 */
+		static async open(props)
+		{
+			const conversionWizard = await Conversion.createConversionWizard(props);
+
+			return Conversion.show(conversionWizard);
+		}
+
+		/**
+		 * @param {ConversionWizard} conversionWizard
+		 */
+		static async show(conversionWizard)
+		{
+			const steps = conversionWizard.getSteps();
+			const firstStep = steps[0].step;
+			const mediumPositionHeight = firstStep && firstStep.getMediumPositionHeight();
+			const { layoutWidget, wizard } = await BackdropWizard.open({ steps }, { mediumPositionHeight });
+
+			conversionWizard.setLayoutWidget(layoutWidget);
+			conversionWizard.setWizard(wizard);
+
+			return layoutWidget;
+		}
+
+		/**
+		 * @param {object} props
+		 * @param {string} props.entityTypeId
+		 * @param {string} props.entityId
+		 * @param {function} props.onFinishConverted
+		 * @return {Promise<*>}
+		 */
+		static async createConversionWizard(props)
+		{
+			const conversionData = await Conversion.fetch(props);
+			const conversion = new Conversion({ ...props, data: conversionData });
+
+			return new ConversionWizard({ conversion });
 		}
 	}
 

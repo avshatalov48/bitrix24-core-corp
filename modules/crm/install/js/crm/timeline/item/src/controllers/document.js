@@ -446,26 +446,14 @@ export class Document extends Base
 			{
 				if (response?.data?.ID > 0) {
 					this.#showMessage(
-						Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DO_USE_PREVIOUS_MSGVER_1',
+						Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DO_USE_PREVIOUS_MSGVER_3',
 							{
 								'%TITLE%': '<b>' + (response.data.TITLE || '') + '</b>',
-								'%CREATED_AT%': '<b>' + (response.data.CREATED_AT || '') + '</b>',
 								'%INITIATOR%': '<b>' + (response.data.INITIATOR || '') + '</b>',
 							}),
 						[
 							new BX.UI.Button({
-								text: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_NEW_BUTTON_MSGVER_1'),
-								className: "ui-btn ui-btn-md ui-btn-primary",
-								events: {
-									click: () =>
-									{
-										convertDealAndStartSign(false);
-										this.#popupConfirm.destroy();
-									}
-								}
-							}),
-							new BX.UI.Button({
-								text: BX.message('CRM_TIMELINE_ITEM_ACTIVITY_OLD_BUTTON_MSGVER_1'),
+								text: BX.message('CRM_TIMELINE_ITEM_ACTIVITY_OLD_BUTTON_MSGVER_2'),
 								className: "ui-btn ui-btn-md ui-btn-primary",
 								events: {
 									click: () =>
@@ -474,9 +462,20 @@ export class Document extends Base
 										this.#popupConfirm.destroy();
 									}
 								}
+							}),
+							new BX.UI.Button({
+								text: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_NEW_BUTTON_MSGVER_3'),
+								className: "ui-btn ui-btn-md ui-btn-info",
+								events: {
+									click: () =>
+									{
+										convertDealAndStartSign(false);
+										this.#popupConfirm.destroy();
+									}
+								}
 							})
 						],
-						Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_POPUP_TITLE_MSGVER_1')
+						Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_POPUP_TITLE_MSGVER_2')
 					);
 				} else {
 					convertDealAndStartSign(false);
@@ -511,7 +510,7 @@ export class Document extends Base
 						titleBar: title,
 						contentColor: 'white',
 						className : 'bx-popup-document-activity-popup',
-						maxWidth: 470
+						maxWidth: 510
 					}
 		);
 		this.#popupConfirm.show();

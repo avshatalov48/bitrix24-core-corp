@@ -8,6 +8,7 @@ use Bitrix\Main\Config;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Activity;
 use Bitrix\Crm\Activity\CommunicationStatistics;
+use Bitrix\Mail\Message;
 
 class Email extends Activity\Provider\Base
 {
@@ -47,6 +48,18 @@ class Email extends Activity\Provider\Base
 				'PROVIDER_TYPE_ID' => self::TYPE_EMAIL_COMPRESSED,
 			],
 		];
+	}
+
+	public static function getMessageQuote($activityFields, $quotedText): string
+	{
+		static::uncompressActivity($activityFields);
+		$header = Activity\Mail\Message::getHeader([
+			'OWNER_TYPE_ID' => (int)$activityFields['OWNER_TYPE_ID'],
+			'OWNER_ID' => (int)$activityFields['OWNER_ID'],
+			'ID' => $activityFields['ID'],
+			'SETTINGS' => $activityFields['SETTINGS'],
+		], false)->getData();
+		return Message::wrapTheMessageWithAQuote($quotedText, $activityFields['SUBJECT'], $activityFields['START_TIME'], $header['from'], $header['to'], $header['cc']);
 	}
 
 	public static function getName()

@@ -1,9 +1,9 @@
 (() => {
-	const {debounce} = jn.require('utils/function');
-	const {EntityReady} = jn.require('entity-ready');
-	const {Loc} = jn.require('loc');
-	const {magnifierWithMenuAndDot} = jn.require('assets/common');
-	const {PresetList} = jn.require('tasks/layout/presetList');
+	const { debounce } = jn.require('utils/function');
+	const { EntityReady } = jn.require('entity-ready');
+	const { Loc } = jn.require('loc');
+	const { magnifierWithMenuAndDot } = jn.require('assets/common');
+	const { PresetList } = jn.require('tasks/layout/presetList');
 
 	const apiVersion = Application.getApiVersion();
 	const platform = Application.getPlatform();
@@ -21,14 +21,9 @@
 			this.list = list.list;
 		}
 
-		isEnabled()
-		{
-			return (apiVersion >= 34);
-		}
-
 		showForList()
 		{
-			if (this.isEnabled() && !this.isShowedForList)
+			if (!this.isShowedForList)
 			{
 				dialogs.showSpinnerIndicator({
 					color: '#777777',
@@ -40,7 +35,7 @@
 
 		hideForList()
 		{
-			if (this.isEnabled() && this.isShowedForList)
+			if (this.isShowedForList)
 			{
 				dialogs.hideSpinnerIndicator();
 				this.isShowedForList = false;
@@ -76,29 +71,18 @@
 			this.list = list;
 		}
 
-		isEnabled()
-		{
-			return (apiVersion >= 40);
-		}
-
 		show()
 		{
-			if (this.isEnabled())
-			{
-				this.list.list.welcomeScreen.show({
-					upperText: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_WELCOME_SCREEN_TITLE'),
-					lowerText: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_WELCOME_SCREEN_SUBTITLE'),
-					iconName: 'ws_open_project',
-				});
-			}
+			this.list.list.welcomeScreen.show({
+				upperText: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_WELCOME_SCREEN_TITLE'),
+				lowerText: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_WELCOME_SCREEN_SUBTITLE'),
+				iconName: 'ws_open_project',
+			});
 		}
 
 		hide()
 		{
-			if (this.isEnabled())
-			{
-				this.list.list.welcomeScreen.hide();
-			}
+			this.list.list.welcomeScreen.hide();
 		}
 	}
 
@@ -137,17 +121,23 @@
 				foldable: false,
 				folded: false,
 				badgeValue: 0,
-				sortItemParams: {activityDate: 'desc'},
+				sortItemParams: { activityDate: 'desc' },
 				backgroundColor: '#ffffff',
-				styles: {title: {font: {size: 18}}},
+				styles: {
+					title: {
+						font: {
+							size: 18,
+						},
+					},
+				},
 			};
 
 			this.items = {
-				new: {...{id: SectionHandler.sections.new}, ...defaultSectionParams},
-				pinned: {...{id: SectionHandler.sections.pinned}, ...defaultSectionParams},
-				default: {...{id: SectionHandler.sections.default}, ...defaultSectionParams},
-				more: {...{id: SectionHandler.sections.more}, ...defaultSectionParams},
-				empty: {...{id: SectionHandler.sections.empty}, ...defaultSectionParams},
+				new: { id: SectionHandler.sections.new, ...defaultSectionParams },
+				pinned: { id: SectionHandler.sections.pinned, ...defaultSectionParams },
+				default: { id: SectionHandler.sections.default, ...defaultSectionParams },
+				more: { id: SectionHandler.sections.more, ...defaultSectionParams },
+				empty: { id: SectionHandler.sections.empty, ...defaultSectionParams },
 			};
 		}
 
@@ -194,7 +184,7 @@
 		{
 			const cache = this.storage.get(this.cacheKey);
 
-			if (typeof cache === "string")
+			if (typeof cache === 'string')
 			{
 				return JSON.parse(cache);
 			}
@@ -231,16 +221,6 @@
 		{
 			super(cacheKey);
 			this.init();
-		}
-
-		getInstance(id)
-		{
-			if (!caches.has(id))
-			{
-				caches.set(id, (new ProjectCache(id)));
-			}
-
-			return caches.get(id);
 		}
 
 		init()
@@ -295,8 +275,7 @@
 			}
 
 			Object.keys(projects).forEach((projectId) => {
-				const {project, projectItem} = projects[projectId];
-				const findCondition = (project) => Number(project.id) === Number(projectId);
+				const { project, projectItem } = projects[projectId];
 				const countersMap = {
 					[Filter.counterTypes.none]: true,
 					[Filter.counterTypes.sonetTotalExpired]: (project.getCounterMyExpiredCount() > 0),
@@ -307,19 +286,19 @@
 				Object.keys(countersMap).forEach((counter) => {
 					if (countersMap[counter])
 					{
-						const index = cache[counter].findIndex(findCondition);
-						if (index !== -1)
+						const index = cache[counter].findIndex((item) => Number(item.id) === Number(projectId));
+						if (index === -1)
 						{
-							cache[counter][index] = projectItem;
+							cache[counter].splice(0, 0, projectItem);
 						}
 						else
 						{
-							cache[counter].splice(0, 0, projectItem);
+							cache[counter][index] = projectItem;
 						}
 					}
 					else
 					{
-						const index = cache[counter].findIndex(findCondition);
+						const index = cache[counter].findIndex((item) => Number(item.id) === Number(projectId));
 						if (index !== -1)
 						{
 							cache[counter].splice(index, 1);
@@ -339,7 +318,7 @@
 			}
 
 			Object.keys(cache).forEach((counter) => {
-				const index = cache[counter].findIndex(project => Number(project.id) === Number(projectId));
+				const index = cache[counter].findIndex((project) => Number(project.id) === Number(projectId));
 				if (index !== -1)
 				{
 					cache[counter].splice(index, 1);
@@ -355,8 +334,14 @@
 		{
 			return {
 				activityDate: [
-					{field: 'ACTIVITY_DATE', direction: 'DESC'},
-					{field: 'ID', direction: 'DESC'},
+					{
+						field: 'ACTIVITY_DATE',
+						direction: 'DESC',
+					},
+					{
+						field: 'ID',
+						direction: 'DESC',
+					},
 				],
 			};
 		}
@@ -386,14 +371,14 @@
 			return order;
 		}
 
-		get order()
+		getOrder()
 		{
-			return this._order || 'activityDate';
+			return this.order;
 		}
 
-		set order(order)
+		setOrder(order)
 		{
-			this._order = order;
+			this.order = order;
 		}
 	}
 
@@ -436,14 +421,14 @@
 			this.cache = Cache.getInstance('filterCounters');
 			this.total = this.cache.get().counterValue || 0;
 
-			EntityReady.wait('chat').then(() => this.updateCounters());
+			EntityReady.wait('chat').then(() => this.updateCounters()).catch(() => {});
 		}
 
 		updateCounters()
 		{
 			console.log('ProjectList.Filter.updateCounters');
 
-			(new RequestExecutor('tasks.project.counter.getTotal', {userId: this.userId}))
+			(new RequestExecutor('tasks.project.counter.getTotal', { userId: this.userId }))
 				.call()
 				.then((response) => {
 					this.counters = {};
@@ -463,6 +448,7 @@
 					this.setVisualCounters();
 					this.saveCache();
 				})
+				.catch(() => {})
 			;
 		}
 
@@ -474,19 +460,17 @@
 			this.setVisualCounters();
 		}
 
-		setVisualCounters(value = null)
+		setVisualCounters()
 		{
-			value = (value || this.total);
-
 			Application.setBadges({
-				[`tasksProjectListMoreButton_${this.userId}`]: value,
+				[`tasksProjectListMoreButton_${this.userId}`]: this.total,
 			});
-			BX.postComponentEvent('tasks.project.list:setVisualCounter', [{value}], 'tasks.tabs');
+			BX.postComponentEvent('tasks.project.list:setVisualCounter', [{ value: this.total }], 'tasks.tabs');
 		}
 
 		saveCache()
 		{
-			this.cache.set({counterValue: this.total});
+			this.cache.set({ counterValue: this.total });
 		}
 
 		get()
@@ -500,7 +484,7 @@
 
 			if (this.isShowMine)
 			{
-				filter['MEMBER'] = this.userId;
+				filter.MEMBER = this.userId;
 			}
 
 			switch (this.counter)
@@ -598,7 +582,7 @@
 		show()
 		{
 			const menuItems = this.prepareItems();
-			const menuSections = this.prepareSections();
+			const menuSections = [{ id: SectionHandler.sections.default }];
 
 			if (!this.popupMenu)
 			{
@@ -613,18 +597,13 @@
 			this.popupMenu.show();
 		}
 
-		prepareSections()
-		{
-			return [{id: SectionHandler.sections.default}];
-		}
-
 		prepareItems()
 		{
 			let items = [
 				{
 					id: Filter.counterTypes.sonetTotalComments,
 					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_MY_NEW_COMMENTS'),
-					sectionCode: 'default',
+					sectionCode: SectionHandler.sections.default,
 					checked: (this.filter.getCounter() === Filter.counterTypes.sonetTotalComments),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetTotalComments),
 					counterStyle: {
@@ -634,7 +613,7 @@
 				{
 					id: Filter.counterTypes.sonetTotalExpired,
 					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_MY_EXPIRED'),
-					sectionCode: 'default',
+					sectionCode: SectionHandler.sections.default,
 					checked: (this.filter.getCounter() === Filter.counterTypes.sonetTotalExpired),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetTotalExpired),
 					counterStyle: {
@@ -644,7 +623,7 @@
 				{
 					id: Filter.counterTypes.sonetForeignComments,
 					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_OTHER_NEW_COMMENTS'),
-					sectionCode: 'default',
+					sectionCode: SectionHandler.sections.default,
 					checked: (this.filter.getCounter() === Filter.counterTypes.sonetForeignComments),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetForeignComments),
 					counterStyle: {
@@ -654,7 +633,7 @@
 				{
 					id: Filter.counterTypes.sonetForeignExpired,
 					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_OTHER_EXPIRED'),
-					sectionCode: 'default',
+					sectionCode: SectionHandler.sections.default,
 					checked: (this.filter.getCounter() === Filter.counterTypes.sonetForeignExpired),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetForeignExpired),
 					counterStyle: {
@@ -666,7 +645,7 @@
 					title: Loc.getMessage(
 						this.filter.getIsShowMine()
 							? 'MOBILE_TASKS_PROJECT_LIST_ACTION_SHOW_ALL'
-							: 'MOBILE_TASKS_PROJECT_LIST_ACTION_SHOW_MINE'
+							: 'MOBILE_TASKS_PROJECT_LIST_ACTION_SHOW_MINE',
 					),
 					sectionCode: SectionHandler.sections.default,
 					showTopSeparator: true,
@@ -706,12 +685,15 @@
 				case 'readAll':
 					this.onReadAllAction();
 					break;
+
+				default:
+					break;
 			}
 		}
 
-		onCounterChange(newCounter)
+		onCounterChange(counter)
 		{
-			newCounter = (this.filter.getCounter() === newCounter ? Filter.counterTypes.none : newCounter);
+			const newCounter = (this.filter.getCounter() === counter ? Filter.counterTypes.none : counter);
 			this.filter.setCounter(newCounter);
 
 			this.list.setTopButtons();
@@ -730,7 +712,7 @@
 		{
 			this.list.pseudoReadProjects([...this.list.projectList.keys()]);
 
-			(new RequestExecutor('tasks.viewedGroup.project.markAsRead', {fields: {groupId: 0}}))
+			(new RequestExecutor('tasks.viewedGroup.project.markAsRead', { fields: { groupId: 0 } }))
 				.call()
 				.then((response) => {
 					if (response.result === true)
@@ -741,6 +723,7 @@
 						});
 					}
 				})
+				.catch(() => {})
 			;
 		}
 	}
@@ -811,29 +794,32 @@
 			};
 		}
 
+		static fill(itemData, project)
+		{
+			const result = {
+				...itemData,
+				menuMode: (platform === 'ios' ? 'swipe' : 'dialog'),
+				actions: Object.values(Action.swipeActions).filter((action) => project.getActions()[action.identifier]),
+			};
+
+			if (!project.isOpened)
+			{
+				const joinActionIndex = result.actions.findIndex((action) => action.identifier === 'join');
+				if (joinActionIndex >= 0)
+				{
+					delete result.actions[joinActionIndex];
+				}
+			}
+
+			return result;
+		}
+
 		/**
 		 * @param {ProjectList} list
 		 */
 		constructor(list)
 		{
 			this.list = list;
-		}
-
-		fill(project, itemData)
-		{
-			itemData.menuMode = (platform !== 'ios' ? 'dialog' : 'swipe');
-			itemData.actions = Object.values(Action.swipeActions).filter(action => project.actions[action.identifier]);
-
-			if (!project.isOpened)
-			{
-				const joinActionIndex = itemData.actions.findIndex(action => action.identifier === 'join');
-				if (joinActionIndex >= 0)
-				{
-					delete itemData.actions[joinActionIndex];
-				}
-			}
-
-			return itemData;
 		}
 
 		onItemAction(event)
@@ -863,7 +849,7 @@
 					break;
 
 				case 'join':
-					this.onJoinAction({id: project.id});
+					this.onJoinAction(project);
 					break;
 
 				case 'leave':
@@ -877,27 +863,42 @@
 			this.list.updateItem(project.id);
 		}
 
+		/**
+		 * @param {Project} project
+		 */
 		onPinAction(project)
 		{
 			void project.pin();
 		}
 
+		/**
+		 * @param {Project} project
+		 */
 		onUnpinAction(project)
 		{
 			void project.unpin();
 		}
 
+		/**
+		 * @param {Project} project
+		 */
 		onReadAction(project)
 		{
 			this.list.filter.pseudoUpdateCounters(-project.getNewCommentsCount());
 			void project.read();
 		}
 
+		/**
+		 * @param {Project} project
+		 */
 		onAboutAction(project)
 		{
 			ProjectViewManager.open(this.list.userId, project.id);
 		}
 
+		/**
+		 * @param {Project} project
+		 */
 		onMembersAction(project)
 		{
 			PageManager.openWidget('list', {
@@ -914,36 +915,37 @@
 				onReady: (list) => {
 					new ProjectMemberList(list, this.list.userId, project.id, {
 						isOwner: project.isOwner(),
-						canInvite: project.actions.invite,
+						canInvite: project.getActions().invite,
 						minSearchSize: 3,
-					})
+					});
 				},
-				onError: error => console.log(error),
+				onError: (error) => console.log(error),
 			});
 		}
 
-		onJoinAction(event)
+		/**
+		 * @param {Project} project
+		 */
+		onJoinAction(project)
 		{
-			const projectId = String(event.id);
+			const projectId = String(project.id);
 
-			if (this.list.projectList.has(projectId))
+			if (project.isOpened)
 			{
-				const project = this.list.projectList.get(projectId);
+				project.joinProject().then(() => this.list.updateItem(projectId)).catch(() => {});
 
-				if (project.isOpened)
-				{
-					project.join().then(() => this.list.updateItem(projectId));
-
-					const projectItem = this.list.prepareListItem(project);
-					projectItem.joinButtonState = 'animated';
-					this.list.list.updateItem({id: projectId}, projectItem);
-				}
+				const projectItem = this.list.prepareListItem(project);
+				projectItem.joinButtonState = 'animated';
+				this.list.list.updateItem({ id: projectId }, projectItem);
 			}
 		}
 
+		/**
+		 * @param {Project} project
+		 */
 		onLeaveAction(project)
 		{
-			void project.leave();
+			void project.leaveProject();
 		}
 	}
 
@@ -975,7 +977,7 @@
 		{
 			return {
 				pinned: 2,
-			}
+			};
 		}
 
 		/**
@@ -993,7 +995,7 @@
 			this.canExecute = true;
 
 			this.extendWatch();
-			this.startWatch().then(() => this.subscribe());
+			this.startWatch().then(() => this.subscribe()).catch(() => {});
 		}
 
 		getEventHandlers()
@@ -1052,8 +1054,12 @@
 						(response) => {
 							console.error(response);
 							reject(response);
-						}
+						},
 					)
+					.catch((response) => {
+						console.error(response);
+						reject(response);
+					})
 				;
 			});
 		}
@@ -1068,7 +1074,7 @@
 		{
 			BX.PULL.subscribe({
 				moduleId: 'tasks',
-				callback: data => this.processPullEvent(data),
+				callback: (data) => this.processPullEvent(data),
 			});
 		}
 
@@ -1089,10 +1095,10 @@
 			return new Promise((resolve, reject) => {
 				const has = Object.prototype.hasOwnProperty;
 				const eventHandlers = this.getEventHandlers();
-				const {command, params} = data;
+				const { command, params } = data;
 				if (has.call(eventHandlers, command))
 				{
-					const {method, context} = eventHandlers[command];
+					const { method, context } = eventHandlers[command];
 					if (method)
 					{
 						method.apply(context, [params]).then(() => resolve(), () => reject()).catch(() => reject());
@@ -1103,21 +1109,25 @@
 
 		freeQueue()
 		{
-			const clearDuplicates = (result, event) => {
+			const clearDuplicates = (accumulator, event) => {
+				const result = accumulator;
 				if (
-					typeof result[event.command] === 'undefined'
-					|| event.extra.server_time_ago < result[event.command].extra.server_time_ago
+					typeof accumulator[event.command] === 'undefined'
+					|| event.extra.server_time_ago < accumulator[event.command].extra.server_time_ago
 				)
 				{
 					result[event.command] = event;
 				}
+
 				return result;
 			};
 
-			this.queue = new Set([...this.queue].filter(event => Pull.commonEvents.includes(event.command)));
-			this.queue = new Set(Object.values([...this.queue].reduce(clearDuplicates, {})));
+			this.queue = new Set([...this.queue].filter((event) => Pull.commonEvents.includes(event.command)));
+			this.queue = new Set(
+				Object.values([...this.queue].reduce((accumulator, event) => clearDuplicates(accumulator, event), {})),
+			);
 
-			const promises = [...this.queue].map(event => this.executePullEvent(event));
+			const promises = [...this.queue].map((event) => this.executePullEvent(event));
 
 			return Promise.allSettled(promises);
 		}
@@ -1134,7 +1144,7 @@
 			this.queue.forEach((event) => {
 				const has = Object.prototype.hasOwnProperty;
 				const eventHandlers = this.getEventHandlers();
-				const {command, params} = event;
+				const { command, params } = event;
 
 				if (has.call(eventHandlers, command))
 				{
@@ -1199,19 +1209,16 @@
 				if (Number(data.USER_ID) !== Number(this.userId))
 				{
 					resolve();
+
 					return;
 				}
-				switch (data.OPTION)
-				{
-					case Pull.userOptions.pinned:
-						this.onProjectPinChanged(String(data.PROJECT_ID), data.ADDED)
-							.then(() => resolve())
-							.catch(() => reject())
-						;
-						break;
 
-					default:
-						break;
+				if (data.OPTION === Pull.userOptions.pinned)
+				{
+					this.onProjectPinChanged(String(data.PROJECT_ID), data.ADDED)
+						.then(() => resolve())
+						.catch(() => reject())
+					;
 				}
 			});
 		}
@@ -1221,7 +1228,7 @@
 			return new Promise((resolve, reject) => {
 				if (this.list.projectList.has(projectId))
 				{
-					this.list.updateItem(projectId, {isPinned: (added ? 'Y' : 'N')});
+					this.list.updateItem(projectId, { isPinned: (added ? 'Y' : 'N') });
 					resolve();
 				}
 				else if (added)
@@ -1241,6 +1248,7 @@
 				if (userId > 0 && userId !== this.userId)
 				{
 					resolve();
+
 					return;
 				}
 
@@ -1297,7 +1305,7 @@
 		{
 			this.clear();
 			this.extendWatch();
-			this.startWatch().then(() => this.setCanExecute(true));
+			this.startWatch().then(() => this.setCanExecute(true)).catch(() => {});
 		}
 	}
 
@@ -1385,7 +1393,7 @@
 					this.reload(0, true);
 				},
 				500,
-				this
+				this,
 			);
 			this.getPresets();
 
@@ -1428,6 +1436,7 @@
 						});
 					}
 				})
+				.catch(() => {})
 			;
 		}
 
@@ -1462,7 +1471,7 @@
 					this.isSearchInit = true;
 
 					this.list.search.mode = 'layout';
-					this.list.search.on('textChanged', ({text}) => this.debounceSearch(text));
+					this.list.search.on('textChanged', ({ text }) => this.debounceSearch(text));
 					this.list.search.on('cancel', () => {
 						if (
 							this.filter.getSearchText()
@@ -1504,7 +1513,7 @@
 					this.isSearchInit = true;
 
 					this.list.search.mode = 'bar';
-					this.list.search.on('textChanged', ({text}) => this.debounceSearch(text));
+					this.list.search.on('textChanged', ({ text }) => this.debounceSearch(text));
 					this.list.search.on('cancel', () => {
 						if (
 							this.filter.getSearchText()
@@ -1527,23 +1536,14 @@
 
 		setFloatingButton()
 		{
-			this.getCanCreateProject().then(
-				response => this.renderFloatingButton(response),
-				response => console.error(response)
-			);
-		}
-
-		getCanCreateProject()
-		{
-			return new Promise((resolve, reject) => {
-				(new RequestExecutor('socialnetwork.api.workgroup.getCanCreate'))
-					.call()
-					.then(
-						response => resolve(response.result),
-						response => reject(response)
-					)
-				;
-			});
+			(new RequestExecutor('socialnetwork.api.workgroup.getCanCreate'))
+				.call()
+				.then(
+					(response) => this.renderFloatingButton(response.result),
+					(response) => console.error(response),
+				)
+				.catch((response) => console.error(response))
+			;
 		}
 
 		renderFloatingButton(isExist = false)
@@ -1605,7 +1605,7 @@
 
 		bindEvents()
 		{
-			BX.addCustomEvent('tasks.tabs:onTabSelected', eventData => this.onTabSelected(eventData));
+			BX.addCustomEvent('tasks.tabs:onTabSelected', (eventData) => this.onTabSelected(eventData));
 			BX.addCustomEvent('tasks.tabs:onAppActive', () => this.onAppActive());
 			BX.addCustomEvent('tasks.tabs:onAppPaused', () => this.onAppPaused());
 		}
@@ -1622,9 +1622,10 @@
 				cachedProjects = cache[counter] || [];
 			}
 
-			if (!Array.isArray(cachedProjects) || cachedProjects.length < 1)
+			if (!Array.isArray(cachedProjects) || cachedProjects.length === 0)
 			{
 				console.log('ProjectList.loadProjectsFromCache.empty');
+
 				return;
 			}
 
@@ -1659,7 +1660,7 @@
 					start: offset,
 					params,
 				},
-				response => this.onReloadSuccess(response, showLoading, offset)
+				(response) => this.onReloadSuccess(response, showLoading, offset),
 			);
 		}
 
@@ -1676,7 +1677,7 @@
 			}
 			this.updateSections(isFirstPage);
 
-			const {projects} = response.answer.result;
+			const { projects } = response.answer.result;
 			const items = [];
 			projects.forEach((row) => {
 				const project = new Project(this.userId);
@@ -1715,10 +1716,10 @@
 			}
 
 			sectionHandler.setSortItemParams(SectionHandler.sections.pinned, {
-				[this.order.order]: Order.sectionOrderFields[this.order.order],
+				[this.order.getOrder()]: Order.sectionOrderFields[this.order.getOrder()],
 			});
 			sectionHandler.setSortItemParams(SectionHandler.sections.default, {
-				[this.order.order]: Order.sectionOrderFields[this.order.order],
+				[this.order.getOrder()]: Order.sectionOrderFields[this.order.getOrder()],
 			});
 
 			this.list.setSections(sectionHandler.list);
@@ -1735,15 +1736,15 @@
 				title: project.name || '',
 				imageUrl: project.image || '',
 				date: project.activityDate / 1000,
-				messageCount: project.counter.value,
-				joinButtonState: (project.actions.join && project.isOpened ? 'showed' : 'hidden'),
+				messageCount: project.getCounter().value,
+				joinButtonState: (project.getActions().join && project.isOpened ? 'showed' : 'hidden'),
 				creatorIcons: project.getHeadIcons(),
 				creatorCount: project.getHeadCount(),
 				responsibleIcons: project.getMemberIcons(),
 				responsibleCount: project.getMemberCount(),
 				styles: {
 					counter: {
-						backgroundColor: ProjectList.counterColors[project.counter.color],
+						backgroundColor: ProjectList.counterColors[project.getCounter().color],
 					},
 					date: {
 						image: {
@@ -1751,6 +1752,11 @@
 						},
 						font: {
 							size: 13,
+						},
+					},
+					avatar: {
+						image: {
+							name: ProjectList.avatarTypes[project.getType()],
 						},
 					},
 				},
@@ -1762,26 +1768,20 @@
 				type: 'project',
 			};
 
-			if (project.counter.isHidden)
+			if (project.getCounter().isHidden)
 			{
 				itemData.messageCount = 0;
 			}
+
 			if (project.isPinned)
 			{
 				itemData.backgroundColor = ProjectList.backgroundColors.pinned;
 				itemData.sectionCode = SectionHandler.sections.pinned;
 			}
-			if (apiVersion >= 40)
-			{
-				itemData.styles.avatar = {
-					image: {
-						name: ProjectList.avatarTypes[project.getType()],
-					},
-				};
-			}
+
 			if (withActions)
 			{
-				itemData = this.action.fill(project, itemData);
+				itemData = Action.fill(itemData, project);
 			}
 
 			return itemData;
@@ -1801,6 +1801,7 @@
 			if (items.length <= 0)
 			{
 				this.welcomeScreen.show();
+
 				return;
 			}
 
@@ -1811,7 +1812,7 @@
 			}
 			else
 			{
-				this.list.removeItem({id: '-more-'});
+				this.list.removeItem({ id: '-more-' });
 				this.list.addItems(items);
 			}
 
@@ -1833,11 +1834,11 @@
 			if (projectId === '-more-')
 			{
 				this.list.updateItem(
-					{id: '-more-'},
+					{ id: '-more-' },
 					{
 						type: 'loading',
 						title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_LOADING'),
-					}
+					},
 				);
 				this.reload(this.start);
 			}
@@ -1866,10 +1867,10 @@
 					item: projectItem,
 					newsPathTemplate: this.newsPathTemplate,
 					calendarWebPathTemplate: this.calendarWebPathTemplate,
-					currentUserId: parseInt(this.userId || 0),
+					currentUserId: parseInt(this.userId || 0, 10),
 				};
 
-				BX.postComponentEvent('projectbackground::project::action', [ projectData ], 'background');
+				BX.postComponentEvent('projectbackground::project::action', [projectData], 'background');
 			}
 		}
 
@@ -1914,8 +1915,8 @@
 				project.updateData(projectData);
 
 				const projectItem = this.prepareListItem(project);
-				this.list.updateItem({id: projectId}, projectItem);
-				this.cache.updateProject({[projectId]: {project, projectItem}});
+				this.list.updateItem({ id: projectId }, projectItem);
+				this.cache.updateProject({ [projectId]: { project, projectItem } });
 			});
 		}
 
@@ -1923,7 +1924,7 @@
 		{
 			BX.onViewLoaded(() => {
 				this.projectList.delete(id);
-				this.list.removeItem({id});
+				this.list.removeItem({ id });
 				this.cache.removeProject(id);
 
 				if (this.projectList.size === 0)
@@ -1993,29 +1994,36 @@
 				if (projectIds.length > 15)
 				{
 					this.runOnAppActiveRepeatedActions();
+
 					return;
 				}
 
 				const promises = [
-					new Promise((resolve) => {
+					new Promise((resolve, reject) => {
 						this.pull.extendWatch();
-						this.pull.startWatch().then(() => {
-							this.pull.setCanExecute(true);
-							this.pull.freeQueue().then(() => resolve());
-						});
+						this.pull.startWatch()
+							.then(() => {
+								this.pull.setCanExecute(true);
+								this.pull.freeQueue().then(() => resolve()).catch(() => reject());
+							})
+							.catch(() => reject())
+						;
 					}),
 				];
-				if (projectIds.length)
+				if (projectIds.length > 0)
 				{
 					promises.push(
 						new Promise((resolve) => {
 							this.filter.updateCounters();
 							resolve();
-						})
+						}),
+						this.updateProjects(projectIds),
 					);
-					promises.push(this.updateProjects(projectIds));
 				}
-				Promise.allSettled(promises).then(() => this.loading.hideForTitle());
+				Promise.allSettled(promises)
+					.then(() => this.loading.hideForTitle())
+					.catch(() => this.loading.hideForTitle())
+				;
 			}, 1000);
 		}
 
@@ -2034,7 +2042,7 @@
 				}
 				(new RequestExecutor('tasks.project.list', {
 					select: ProjectList.select,
-					filter: {...this.filter.get(), ID: projectIds},
+					filter: { ...this.filter.get(), ID: projectIds },
 					params,
 				}))
 					.call()
@@ -2046,8 +2054,12 @@
 						(response) => {
 							console.error(response);
 							reject();
-						}
+						},
 					)
+					.catch((response) => {
+						console.error(response);
+						reject();
+					})
 				;
 			});
 		}
@@ -2055,13 +2067,17 @@
 		onUpdateProjectsSuccess(projectIds, projects)
 		{
 			projectIds.forEach((projectId) => {
-				const projectData = projects.find(project => Number(project.id) === Number(projectId));
+				const projectData = projects.find((project) => Number(project.id) === Number(projectId));
 				if (projectData)
 				{
-					this.projectList.has(projectId)
-						? this.updateItem(projectId, projectData)
-						: this.addItem(projectData)
-					;
+					if (this.projectList.has(projectId))
+					{
+						this.updateItem(projectId, projectData);
+					}
+					else
+					{
+						this.addItem(projectData);
+					}
 				}
 				else if (this.projectList.has(projectId))
 				{
@@ -2085,10 +2101,10 @@
 
 					const projectItem = this.prepareListItem(project);
 					items.push({
-						filter: {id: projectId},
+						filter: { id: projectId },
 						element: projectItem,
 					});
-					projects[projectId] = {project, projectItem};
+					projects[projectId] = { project, projectItem };
 				}
 			});
 			this.list.updateItems(items);
@@ -2097,8 +2113,12 @@
 		}
 	}
 
-	return new ProjectList(list, parseInt(BX.componentParameters.get('USER_ID', 0), 10), {
-		projectNewsPathTemplate: BX.componentParameters.get('PROJECT_NEWS_PATH_TEMPLATE', ''),
-		projectCalendarWebPathTemplate: BX.componentParameters.get('PROJECT_CALENDAR_WEB_PATH_TEMPLATE', ''),
-	});
+	return new ProjectList(
+		list,
+		parseInt(BX.componentParameters.get('USER_ID', 0), 10),
+		{
+			projectNewsPathTemplate: BX.componentParameters.get('PROJECT_NEWS_PATH_TEMPLATE', ''),
+			projectCalendarWebPathTemplate: BX.componentParameters.get('PROJECT_CALENDAR_WEB_PATH_TEMPLATE', ''),
+		},
+	);
 })();

@@ -96,6 +96,11 @@ class ProviderManager
 		return $results;
 	}
 
+	public static function getCompletableProviderIdFlatList(): array
+	{
+		return array_map(fn(array $provider) => $provider['ID'], self::getCompletableProviderList());
+	}
+
 	public static function transferOwnership($oldEntityTypeId, $oldEntityId, $newEntityTypeId, $newEntityId)
 	{
 		foreach(self::getProviders() as $provider)

@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\Integration\OpenLineManager;
 use Bitrix\Crm\Order\Order;
 use Bitrix\Crm\RequisiteAddress;
 use Bitrix\Crm\Service\Container;
@@ -251,7 +252,7 @@ class CCrmEntitySelectorHelper
 						if (
 							$arRes['TYPE_ID'] === 'PHONE'
 							|| $arRes['TYPE_ID'] === 'EMAIL'
-							|| ($arRes['TYPE_ID'] === 'IM' && preg_match('/^imol\|/', $arRes['VALUE']) === 1)
+							|| ($arRes['TYPE_ID'] === 'IM' && OpenLineManager::isImOpenLinesValue($arRes['VALUE']))
 						)
 						{
 							$formattedValue = $arRes['TYPE_ID'] === 'PHONE'
@@ -285,7 +286,8 @@ class CCrmEntitySelectorHelper
 								],
 								'VALUE_FORMATTED' => $formattedValue,
 								'COMPLEX_ID' => $arRes['COMPLEX_ID'],
-								'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($arRes['COMPLEX_ID'], false)
+								'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($arRes['COMPLEX_ID'], false),
+								'TITLE' => OpenLineManager::isImOpenLinesValue($arRes['VALUE']) ? OpenLineManager::getOpenLineTitle($arRes['VALUE']) : '',
 							];
 						}
 					}

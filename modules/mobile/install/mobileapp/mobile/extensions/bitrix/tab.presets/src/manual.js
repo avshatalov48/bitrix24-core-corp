@@ -3,7 +3,7 @@
  */
 jn.define("tab/presets/editor", (require, exports, module) => {
 
-	const {colors, styles, svg, getSvg} = jn.require('tab/settings/res');
+	const {colors, styles, getSvg} = jn.require('tab/settings/res');
 	const {Haptics} = jn.require('haptics');
 	const CellType = {
 		SECTION: "section",
@@ -168,7 +168,7 @@ jn.define("tab/presets/editor", (require, exports, module) => {
 			);
 		}
 
-		renderItem({title, type, id, canBeRemoved})
+		renderItem({ title, type, iconId })
 		{
 			if (type === CellType.ELEMENT_DRAG_PLACEHOLDER)
 			{
@@ -219,7 +219,7 @@ jn.define("tab/presets/editor", (require, exports, module) => {
 					Image({
 						style: {width: 24, height: 24},
 						svg: {
-							content: getSvg(id, iconTintColor)
+							content: getSvg(iconId, iconTintColor)
 						}
 					})
 				),
@@ -234,19 +234,17 @@ jn.define("tab/presets/editor", (require, exports, module) => {
 								borderBottomColor: colors.cellBorder
 							},
 					},
-					Text(
-						{
-							style:
-								{
-									marginLeft: 10,
-									color: type === CellType.ELEMENT_UNCHANGEABLE ? colors.cellTextUnreachable : colors.cellText,
-									fontWeight: '400',
-									fontSize: 18
-								},
-							text: title
-
-						}
-					),
+					Text({
+						style: {
+							marginLeft: 10,
+							color: type === CellType.ELEMENT_UNCHANGEABLE ? colors.cellTextUnreachable : colors.cellText,
+							fontWeight: '400',
+							fontSize: 18,
+						},
+						text: title,
+						numberOfLines: 1,
+						ellipsize: 'end',
+					}),
 				),
 			);
 		}
@@ -262,11 +260,13 @@ jn.define("tab/presets/editor", (require, exports, module) => {
 					return {
 						type: CellType.ELEMENT_INACTIVE,
 						id: key,
+						iconId: props.list[key].iconId,
 						key,
 						title: props.list[key].title,
 						canBeRemoved: true,
 					}
 				})
+			;
 
 			Object.keys(props.current)
 				.forEach(key => {
@@ -274,9 +274,10 @@ jn.define("tab/presets/editor", (require, exports, module) => {
 					const canBeRemoved = props.current[key]["canBeRemoved"]
 					const data = {
 						id: key,
+						iconId: props.current[key].iconId,
 						key,
 						title: props.current[key].title,
-						canBeRemoved: canBeRemoved,
+						canBeRemoved,
 					}
 					if (!isUnchangeable)
 					{

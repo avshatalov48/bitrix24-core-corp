@@ -2,7 +2,6 @@
  * @module im/messenger/const/reaction-type
  */
 jn.define('im/messenger/const/reaction-type', (require, exports, module) => {
-
 	const ReactionType = Object.freeze({
 		like: 'like',
 		kiss: 'kiss',

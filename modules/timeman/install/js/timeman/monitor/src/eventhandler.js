@@ -4,6 +4,7 @@ import {ActionTimer} from './lib/action-timer';
 import {Entity} from './model/entity';
 import {EntityType} from 'timeman.const';
 import {Loc} from 'main.core';
+import {DesktopApi} from 'im.v2.lib.desktop-api';
 
 class EventHandler
 {
@@ -180,14 +181,14 @@ class EventHandler
 
 		this.enabled = true;
 
-		BX.desktop.addCustomEvent(
+		DesktopApi.subscribe(
 			'BXUserApp',
-			(process, name, title, url) => this.catch(process, name, title, url)
+			(process, name, title, url) => this.catch(process, name, title, url),
 		);
 
-		BX.desktop.addCustomEvent(
+		DesktopApi.subscribe(
 			'BXExitApplication',
-			this.catchAppClose.bind(this)
+			this.catchAppClose.bind(this),
 		);
 
 		if (this.isTrackerGetActiveAppAvailable())

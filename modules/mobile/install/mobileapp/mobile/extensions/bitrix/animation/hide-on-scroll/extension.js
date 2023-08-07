@@ -2,7 +2,6 @@
  * @module animation/hide-on-scroll
  */
 jn.define('animation/hide-on-scroll', (require, exports, module) => {
-
 	const { inRange } = require('utils/number');
 
 	const SCROLL_DIRECTION = {
@@ -72,18 +71,21 @@ jn.define('animation/hide-on-scroll', (require, exports, module) => {
 			{
 				return SCROLL_DIRECTION.DOWN;
 			}
+
 			// is scrolled outside the ending point of content
-			else if (positionY + scrollViewHeight > contentHeight)
+			if (positionY + scrollViewHeight > contentHeight)
 			{
 				return SCROLL_DIRECTION.UP;
 			}
+
 			// is scrolled downside
-			else if (currentPositionY < positionY)
+			if (currentPositionY < positionY)
 			{
 				return SCROLL_DIRECTION.UP;
 			}
+
 			// is scrolled upside
-			else if (currentPositionY > positionY)
+			if (currentPositionY > positionY)
 			{
 				return SCROLL_DIRECTION.DOWN;
 			}
@@ -93,6 +95,11 @@ jn.define('animation/hide-on-scroll', (require, exports, module) => {
 
 		animate(ref, direction)
 		{
+			if (!ref)
+			{
+				return Promise.reject();
+			}
+
 			if (this.currentDirection === direction || this.animator)
 			{
 				return Promise.resolve();

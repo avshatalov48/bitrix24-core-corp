@@ -2,7 +2,7 @@
  * @module tasks/layout/task/fields/status/actionButton
  */
 jn.define('tasks/layout/task/fields/status/actionButton', (require, exports, module) => {
-	const {EventEmitter} = require('event-emitter');
+	const { EventEmitter } = require('event-emitter');
 
 	class ActionButton extends LayoutComponent
 	{
@@ -43,15 +43,16 @@ jn.define('tasks/layout/task/fields/status/actionButton', (require, exports, mod
 				{
 					this.timerId = setInterval(
 						() => {
-							this.setState({timeElapsed: this.state.timeElapsed + 1});
+							this.setState({ timeElapsed: this.state.timeElapsed + 1 });
 							this.eventEmitter.emit(
 								'actionButton:timeElapsedChanged',
-								[this.state.timeElapsed]
+								[this.state.timeElapsed],
 							);
 						},
-						1000
+						1000,
 					);
 				}
+
 				if (!this.state.isTimerRunning && this.timerId)
 				{
 					clearTimeout(this.timerId);
@@ -129,6 +130,7 @@ jn.define('tasks/layout/task/fields/status/actionButton', (require, exports, mod
 					fontWeight: '600',
 					color: (timeEstimate && timeElapsed > timeEstimate ? '#ff5752' : '#696c70'),
 				},
+				// eslint-disable-next-line sonarjs/no-nested-template-literals
 				text: `${elapsedHours}:${elapsedMinutes} ${(timeEstimate ? `/ ${estimateHours}:${estimateMinutes}` : '')}`,
 			});
 		}
@@ -138,7 +140,7 @@ jn.define('tasks/layout/task/fields/status/actionButton', (require, exports, mod
 			const timerHandler = () => {
 				if (this.state.isTimerRunning)
 				{
-					this.setState({isTimerRunning: false});
+					this.setState({ isTimerRunning: false });
 
 					const actions = this.props.task.exportActions();
 					this.props.task.updateActions({
@@ -146,17 +148,23 @@ jn.define('tasks/layout/task/fields/status/actionButton', (require, exports, mod
 						canPause: false,
 						canRenew: false,
 					});
-					this.props.task.pauseTimer().then(
-						() => this.setState({isTimerRunning: this.props.task.isTimerRunningForCurrentUser}),
-						() => {
+					this.props.task.pauseTimer()
+						.then(
+							() => this.setState({ isTimerRunning: this.props.task.isTimerRunningForCurrentUser }),
+							() => {
+								this.props.task.updateActions(actions);
+								this.setState({ isTimerRunning: this.props.task.isTimerRunningForCurrentUser });
+							},
+						)
+						.catch(() => {
 							this.props.task.updateActions(actions);
-							this.setState({isTimerRunning: this.props.task.isTimerRunningForCurrentUser});
-						}
-					);
+							this.setState({ isTimerRunning: this.props.task.isTimerRunningForCurrentUser });
+						})
+					;
 				}
 				else
 				{
-					this.setState({isTimerRunning: true});
+					this.setState({ isTimerRunning: true });
 
 					const actions = this.props.task.exportActions();
 					this.props.task.updateActions({
@@ -164,17 +172,24 @@ jn.define('tasks/layout/task/fields/status/actionButton', (require, exports, mod
 						canPause: true,
 						canRenew: false,
 					});
-					this.props.task.updateData({status: Task.statusList.inprogress});
-					this.props.task.startTimer().then(
-						() => this.setState({isTimerRunning: this.props.task.isTimerRunningForCurrentUser}),
-						() => {
+					this.props.task.updateData({ status: Task.statusList.inprogress });
+					this.props.task.startTimer()
+						.then(
+							() => this.setState({ isTimerRunning: this.props.task.isTimerRunningForCurrentUser }),
+							() => {
+								this.props.task.updateActions(actions);
+								this.setState({ isTimerRunning: this.props.task.isTimerRunningForCurrentUser });
+							},
+						)
+						.catch(() => {
 							this.props.task.updateActions(actions);
-							this.setState({isTimerRunning: this.props.task.isTimerRunningForCurrentUser});
-						}
-					);
+							this.setState({ isTimerRunning: this.props.task.isTimerRunningForCurrentUser });
+						})
+					;
 					this.eventEmitter.emit('tasks.task.actionMenu:start');
 				}
 			};
+
 			const renewHandler = () => {
 				this.props.task.updateActions({
 					canStart: true,
@@ -248,5 +263,5 @@ jn.define('tasks/layout/task/fields/status/actionButton', (require, exports, mod
 		}
 	}
 
-	module.exports = {ActionButton};
+	module.exports = { ActionButton };
 });

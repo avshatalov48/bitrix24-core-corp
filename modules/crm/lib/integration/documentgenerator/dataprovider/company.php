@@ -182,7 +182,7 @@ class Company extends CrmEntityDataProvider
 		}
 		if(!$this->revenue)
 		{
-			$this->revenue = $this->data['REVENUE'];
+			$this->revenue = $this->data['REVENUE'] ?? 0;
 			unset($this->data['REVENUE']);
 		}
 	}

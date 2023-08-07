@@ -181,7 +181,7 @@ if($action === 'SAVE')
 	Crm\Service\EditorAdapter::fillParentFieldFromContextEnrichedData($_POST);
 	foreach($fieldsInfo as $name => $info)
 	{
-		if(\CCrmFieldMulti::IsSupportedType($name) && is_array($_POST[$name]))
+		if(\CCrmFieldMulti::IsSupportedType($name) && isset($_POST[$name]) && is_array($_POST[$name]))
 		{
 			if(!isset($fields['FM']))
 			{
@@ -434,19 +434,10 @@ if($action === 'SAVE')
 				);
 			}
 
-			$fields = Crm\Entity\FieldContentType::prepareFieldsFromDetailsToSave(
-				\CCrmOwnerType::Company,
-				$ID,
-				$fields,
-			);
-
 			Tracking\UI\Details::appendEntityFieldValue($fields, $_POST);
 
 			$entity = new \CCrmCompany(false);
-			$saveOptions = array_merge(
-				Crm\Entity\FieldContentType::prepareSaveOptionsForDetails(\CCrmOwnerType::Company, $ID),
-				['REGISTER_SONET_EVENT' => true],
-			);
+			$saveOptions = ['REGISTER_SONET_EVENT' => true];
 			if($isNew)
 			{
 				if(!isset($fields['COMPANY_TYPE']))

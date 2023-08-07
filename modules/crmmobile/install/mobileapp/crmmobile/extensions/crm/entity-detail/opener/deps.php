@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'alert',
 		'notify-manager',
+		'feature',
 		'rest',
 		'type',
 		'helpers/component',

@@ -2038,11 +2038,11 @@ class CAllCrmInvoice
 
 				$pay = $cancel = 'N';
 				$marked = (isset($statusParams['REASON_MARKED']) || isset($statusParams['DATE_MARKED'])) ? 'Y' : 'N';
-				if (self::$INVOICE_STATUSES[$statusID]['SORT'] >= self::$INVOICE_STATUSES['P']['SORT'])
+				if ((self::$INVOICE_STATUSES[$statusID]['SORT'] ?? 0) >= (self::$INVOICE_STATUSES['P']['SORT'] ?? 0))
 				{
 					$pay = 'Y';
 				}
-				if (self::$INVOICE_STATUSES[$statusID]['SORT'] >= self::$INVOICE_STATUSES['D']['SORT'])
+				if ((self::$INVOICE_STATUSES[$statusID]['SORT'] ?? 0) >= (self::$INVOICE_STATUSES['D']['SORT'] ?? 0))
 				{
 					$pay = 'N';
 					$cancel = 'Y';

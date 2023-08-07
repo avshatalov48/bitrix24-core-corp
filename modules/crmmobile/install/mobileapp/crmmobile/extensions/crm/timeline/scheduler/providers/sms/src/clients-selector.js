@@ -41,7 +41,7 @@ jn.define('crm/timeline/scheduler/providers/sms/clients-selector', (require, exp
 			let content;
 			let onClick = () => {};
 
-			const { name, phone, onOpenSelector } = this.props;
+			const { name, phone, onOpenSelector, onOpenClientsWithoutPhonesSelector } = this.props;
 
 			if (Type.isStringFilled(name) && Type.isStringFilled(phone))
 			{
@@ -51,6 +51,11 @@ jn.define('crm/timeline/scheduler/providers/sms/clients-selector', (require, exp
 			else if (Type.isStringFilled(name))
 			{
 				content = this.renderEmptyPhone({ name });
+
+				if (this.hasOnlyManyClientsWithoutPhones)
+				{
+					onClick = onOpenClientsWithoutPhonesSelector;
+				}
 			}
 			else
 			{
@@ -142,9 +147,9 @@ jn.define('crm/timeline/scheduler/providers/sms/clients-selector', (require, exp
 						numberOfLines: 1,
 						ellipsize: 'end',
 						style: styles.emptyPhoneData,
-						text: `${name}`,
+						text: String(name),
 					}),
-					this.renderChevron(),
+					this.hasOnlyManyClientsWithoutPhones && this.renderChevron(true),
 				),
 				View(
 					{
@@ -158,6 +163,11 @@ jn.define('crm/timeline/scheduler/providers/sms/clients-selector', (require, exp
 					}),
 				),
 			];
+		}
+
+		get hasOnlyManyClientsWithoutPhones()
+		{
+			return BX.prop.getBoolean(this.props, 'hasOnlyManyClientsWithoutPhones', true);
 		}
 
 		renderChevron(clientWithEmptyPhone = false)

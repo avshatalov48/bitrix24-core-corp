@@ -4,7 +4,7 @@
 jn.define('layout/ui/product-grid/components/summary', (require, exports, module) => {
 
 	const { Loc } = require('loc');
-	const { clone, isEqual } = require('utils/object');
+	const { clone, isEqual, get } = require('utils/object');
 	const { DiscountPrice } = require('layout/ui/product-grid/components/discount-price');
 	const { animate, transition } = require('animation');
 
@@ -26,9 +26,8 @@ jn.define('layout/ui/product-grid/components/summary', (require, exports, module
 		 *     countCaption: (String|null),
 		 *     taxIncluded: (Boolean|null),
 		 *     taxPartlyIncluded: (Boolean|null),
+		 *     componentsForDisplay: Object,
 		 *     additionalSummary: (LayoutComponent),
-		 *     showSummaryAmount: (Boolean|null),
-		 *     showSummaryTax: (Boolean|null),
 		 *     discountCaption: (String|null),
 		 *     totalSumCaption: (String|null),
 		 * }} props
@@ -41,6 +40,17 @@ jn.define('layout/ui/product-grid/components/summary', (require, exports, module
 			this.state = clone(props);
 
 			this.containerRef = null;
+		}
+
+		getComponentsForDisplay()
+		{
+			return {
+				summary: true,
+				amount: true,
+				discount: true,
+				taxes: true,
+				...this.state.componentsForDisplay
+			}
 		}
 
 		componentWillReceiveProps(props)
@@ -71,12 +81,12 @@ jn.define('layout/ui/product-grid/components/summary', (require, exports, module
 						ref: (ref) => this.containerRef = ref,
 					},
 					this.state.additionalSummary,
-					Summary(
-						this.state.showSummaryAmount ? ItemsCount(this.state) : View(),
+					(get(this.getComponentsForDisplay(), 'summary', true)) && Summary(
+						(get(this.getComponentsForDisplay(), 'amount', true)) ? ItemsCount(this.state) : View(),
 						Sum(this.state),
 					),
-					Discount(this.state),
-					this.state.showSummaryTax && Taxes(this.state),
+					(get(this.getComponentsForDisplay(), 'discount', true)) && Discount(this.state),
+					(get(this.getComponentsForDisplay(), 'taxes', true)) && Taxes(this.state),
 				)
 			);
 		}

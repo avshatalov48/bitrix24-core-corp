@@ -123,10 +123,6 @@
 			}
 			if (selectedValue === this.shiftedScheduleTypeName)
 			{
-				if (this.convertFormattedTimeToSecs(this.breakTimeLink.value) === 3600)
-				{
-					this.setBreakSeconds(0);
-				}
 				this.showElement(this.nameBlock);
 				this.endNameEdit();
 				this.hideElement(this.workDaysBlock);

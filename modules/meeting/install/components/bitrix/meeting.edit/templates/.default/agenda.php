@@ -25,7 +25,7 @@ if ($bTask)
 <div class="webform-round-corners webform-additional-block webform-additional-block-topless">
 	<div class="webform-content" id="agenda_block">
 <?
-$display = (!$arParams['COPY'] && $arResult['MEETING']['CURRENT_STATE'] && $arResult['MEETING']['CURRENT_STATE'] !== CMeeting::STATE_PREPARE) ? 'block' : 'none';
+$display = (!$arParams['COPY'] && isset($arResult['MEETING']['CURRENT_STATE']) && $arResult['MEETING']['CURRENT_STATE'] !== CMeeting::STATE_PREPARE) ? 'block' : 'none';
 ?>
 		<div class="meeting-detail-tabs-wrap" id="switcher" style="display: <?=$display;?>">
 			<a class="meeting-detail-tab meeting-tab-active" id="switch_agenda" href="javascript:void(0)" onclick="switchView('agenda'); return false;">
@@ -61,7 +61,7 @@ if ($arResult['CAN_EDIT']):
 		"bitrix:meeting.selector",
 		".default",
 		array(
-			'MEETING_ID' => $arResult['MEETING']['ID'],
+			'MEETING_ID' => ($arResult['MEETING']['ID'] ?? null),
 			'CALLBACK_NAME' => 'showMeetingSelector',
 			'MEETING_URL_TPL' => $arParams['MEETING_URL_TPL'],
 		),
@@ -150,7 +150,7 @@ BX.addCustomEvent(window, 'LHE_OnInit', function(ed) {
 <?
 		$APPLICATION->IncludeComponent('bitrix:fileman.light_editor', '', array(
 			'ID' => $editor_id,
-			'CONTENT' => $arResult['MEETING']['~PROTOCOL_TEXT'],
+			'CONTENT' => ($arResult['MEETING']['~PROTOCOL_TEXT'] ?? null),
 			'INPUT_NAME' => 'PROTOCOL_TEXT',
 			'RESIZABLE' => 'Y',
 			'AUTO_RESIZE' => 'Y',

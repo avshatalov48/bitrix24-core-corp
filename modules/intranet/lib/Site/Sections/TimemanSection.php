@@ -343,7 +343,7 @@ class TimemanSection
 
 	public static function isBitrix24(): bool
 	{
-		return ModuleManager::isModuleInstalled('bitrix24');
+		return \Bitrix\Main\Loader::includeModule('bitrix24');
 	}
 
 	public static function isAvailable(): bool

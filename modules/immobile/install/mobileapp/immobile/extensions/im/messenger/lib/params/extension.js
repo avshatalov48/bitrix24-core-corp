@@ -1,6 +1,3 @@
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable flowtype/require-return-type */
-
 /**
  * @module im/messenger/lib/params
  */
@@ -17,7 +14,7 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		{
 			const configMessages = this.get('MESSAGES', {});
 
-			Object.keys(configMessages).forEach(messageId => {
+			Object.keys(configMessages).forEach((messageId) => {
 				Loc.setMessage(messageId, configMessages[messageId]);
 			});
 		}

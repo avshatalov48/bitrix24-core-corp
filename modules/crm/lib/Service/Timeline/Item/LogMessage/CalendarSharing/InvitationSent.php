@@ -2,18 +2,13 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\LogMessage\CalendarSharing;
 
-use Bitrix\Crm\Entity\Index\EO_Contact;
-use Bitrix\Crm\Service\Broker\Contact;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\Configurable;
 use Bitrix\Crm\Service\Timeline\Item\Mixin\CalendarSharing;
 use Bitrix\Crm\Service\Timeline\Layout;
-use Bitrix\Crm\Service\Timeline\Layout\Action\Redirect;
-use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Client;
 use Bitrix\Crm\Settings\WorkTime;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Web\Uri;
-use COption;
+use CCrmOwnerType;
 
 class InvitationSent extends Configurable
 {
@@ -43,8 +38,19 @@ class InvitationSent extends Configurable
 
 	public function getContentBlocks(): ?array
 	{
+		$communication = [
+			'TITLE' => $this->getContactNameFromHistoryModel(),
+			'SHOW_URL' => $this->getContactUrlFromHistoryModel(),
+			'FORMATTED_VALUE' => $this->getHistoryItemModel()->get('CONTACT_COMMUNICATION'),
+		];
+		$clientBlockOptions = Client::BLOCK_WITH_FORMATTED_VALUE | Client::BLOCK_WITH_FIXED_TITLE;
+		$guestContentBlock = (new Client($communication, $clientBlockOptions))
+			->setTitle($this->getMessage('CRM_TIMELINE_CALENDAR_SHARING_GUEST'))
+			->build()
+		;
+
 		return [
-			'guest' => $this->getGuestContentBlock(),
+			'guest' => $guestContentBlock,
 			'communicationChannel' => $this->getCommunicationChannelContentBlock(),
 			'accessibility' => $this->getAccessibilityContentBlock()->setScopeWeb(),
 		];
@@ -65,11 +71,11 @@ class InvitationSent extends Configurable
 
 			if ($contactData)
 			{
-				if ($contactTypeId === \CCrmOwnerType::Contact)
+				if ($contactTypeId === CCrmOwnerType::Contact)
 				{
 					$result = $contactData->getFullName();
 				}
-				else if ($contactTypeId === \CCrmOwnerType::Company)
+				else if ($contactTypeId === CCrmOwnerType::Company)
 				{
 					$result = $contactData->getTitle();
 				}
@@ -79,30 +85,22 @@ class InvitationSent extends Configurable
 		return $result ?: $this->getMessage('CRM_TIMELINE_CALENDAR_SHARING_GUEST');
 	}
 
-	private function getContactUrlFromHistoryModel(): ?Uri
+	private function getContactUrlFromHistoryModel(): ?string
 	{
-		$result = null;
-
 		$contactId = $this->getHistoryItemModel()->get('CONTACT_ID');
 		$contactTypeId = $this->getHistoryItemModel()->get('CONTACT_TYPE_ID');
-
 		if ($contactId && $contactTypeId)
 		{
-			$detailUrl = Container::getInstance()
+			return Container::getInstance()
 				->getRouter()
 				->getItemDetailUrl(
 					$this->getHistoryItemModel()->get('CONTACT_TYPE_ID'),
 					$this->getHistoryItemModel()->get('CONTACT_ID')
 				)
 			;
-			if ($detailUrl)
-			{
-				$result = new Uri($detailUrl);
-			}
-
 		}
 
-		return $result;
+		return null;
 	}
 
 	private function getChannelNameFromHistoryModel(): string
@@ -141,34 +139,6 @@ class InvitationSent extends Configurable
 	public function needShowNotes(): bool
 	{
 		return true;
-	}
-
-	private function getGuestContentBlock(): Layout\Body\ContentBlock
-	{
-		$contactName = $this->getContactNameFromHistoryModel();
-		$contactUrl = $this->getContactUrlFromHistoryModel();
-		$contactCommunication = $this->getHistoryItemModel()->get('CONTACT_COMMUNICATION');
-
-		return (new Layout\Body\ContentBlock\ContentBlockWithTitle())
-			->setInline()
-			->setTitle(
-				$this->getMessage('CRM_TIMELINE_CALENDAR_SHARING_GUEST')
-			)
-			->setContentBlock(
-				(new Layout\Body\ContentBlock\LineOfTextBlocks())
-					->addContentBlock(
-						'contactProfile',
-						ContentBlockFactory::createTextOrLink(
-							$contactName, $contactUrl ? new Redirect($contactUrl) : null
-						)
-					)
-					->addContentBlock(
-						'contactCommunication',
-						(new Layout\Body\ContentBlock\Text())
-							->setValue($contactCommunication)
-					)
-			)
-		;
 	}
 
 	private function getCommunicationChannelContentBlock(): Layout\Body\ContentBlock

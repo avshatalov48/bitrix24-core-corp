@@ -1,15 +1,14 @@
-/* eslint-disable bitrix-rules/no-pseudo-private */
-
 /**
  * @module im/messenger/view/dialog/dialog
  */
 jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { Loc } = require('loc');
+
 	const { core } = require('im/messenger/core');
 	const { View } = require('im/messenger/view/base');
 	const { EventType } = require('im/messenger/const');
+	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Logger } = require('im/messenger/lib/logger');
 	const {
@@ -43,62 +42,88 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				EventType.dialog.messageRead,
 				EventType.dialog.loadTopPage,
 				EventType.dialog.loadBottomPage,
+				EventType.dialog.visibleMessagesChanged,
 			]);
 
 			this.dialogId = options.dialogId;
 			this.chatId = options.chatId;
+			this.visibilityManager = VisibilityManager.getInstance();
 			this.messageListOnScreen = [];
 			this.messageIndexListOnScreen = [];
 			this.messagesCount = 0;
 			this.readingMessageId = 0;
 			this.shouldEmitMessageRead = false;
 			this.shouldShowScrollToNewMessagesButton = true;
+			this.isScrollToNewMessageButtonVisible = false;
 			this.unreadSeparatorAdded = false;
-			this._scrollToFirstUnreadCompleted = false;
+			this.scrollToFirstUnreadCompleted = false;
 
 			this.subscribeEvents();
-		}
-
-		get scrollToFirstUnreadCompleted()
-		{
-			return this._scrollToFirstUnreadCompleted;
 		}
 
 		/* region Events */
 
 		subscribeEvents()
 		{
-			this.ui.on(EventType.dialog.viewableMessagesChanged, this.onViewableMessagesChanged.bind(this));
-			this.ui.on(EventType.dialog.onTopReached, this.onTopReached.bind(this));
-			this.ui.on(EventType.dialog.onBottomReached, this.onBottomReached.bind(this));
+			this.ui
+				.on(EventType.dialog.viewAreaMessagesChanged, this.onViewAreaMessagesChanged.bind(this))
+				.on(EventType.dialog.topReached, this.onTopReached.bind(this))
+				.on(EventType.dialog.bottomReached, this.onBottomReached.bind(this))
+			;
 		}
 
-		onViewableMessagesChanged(indexList, messageList)
+		async onViewAreaMessagesChanged(indexList, messageList)
 		{
+			if (indexList.includes(0))
+			{
+				this.hideScrollToNewMessagesButton();
+			}
+			else
+			{
+				this.showScrollToNewMessagesButton();
+			}
+
 			this.messageListOnScreen = messageList;
 			this.messageIndexListOnScreen = indexList;
 
-			if (this._checkNeedToLoadTopPage())
+			if (this.checkNeedToLoadTopPage())
 			{
 				this.emitCustomEvent(EventType.dialog.loadTopPage);
 			}
 
-			if (this._checkNeedToLoadBottomPage())
+			if (this.checkNeedToLoadBottomPage())
 			{
 				this.emitCustomEvent(EventType.dialog.loadBottomPage);
 			}
+
+			const isDialogVisible = await this.visibilityManager.checkIsDialogVisible(this.dialogId);
+			if (!isDialogVisible)
+			{
+				return;
+			}
+
+			this.emitCustomEvent(
+				EventType.dialog.visibleMessagesChanged,
+				{
+					indexList,
+					messageList,
+				},
+			);
 
 			if (!this.shouldEmitMessageRead)
 			{
 				return;
 			}
 
-			this._readVisibleUnreadMessages(messageList);
+			this.readVisibleUnreadMessages(messageList);
 		}
 
-		_readVisibleUnreadMessages(messageList)
+		/**
+		 * @private
+		 */
+		readVisibleUnreadMessages(messageList)
 		{
-			messageList = messageList.filter(message => {
+			const unreadMessages = messageList.filter((message) => {
 				const messageId = Number(message.id);
 				const isRealMessage = Type.isNumber(messageId);
 				if (!isRealMessage)
@@ -107,18 +132,19 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				}
 
 				const modelMessage = core.getStore().getters['messagesModel/getMessageById'](messageId);
+
 				return (
 					modelMessage.unread === true
 					&& messageId > this.readingMessageId
 				);
 			});
 
-			if (messageList.length === 0)
+			if (unreadMessages.length === 0)
 			{
 				return;
 			}
 
-			this.readingMessageId = Number(messageList.shift().id);
+			this.readingMessageId = Number(unreadMessages.shift().id);
 
 			this.emitCustomEvent(EventType.dialog.messageRead, this.readingMessageId);
 		}
@@ -157,18 +183,21 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 			this.scrollToFirstUnreadMessage(
 				false,
-				() => this._afterSetMessages(true)
+				() => this.afterSetMessages(true),
 			);
 
 			if (!this.unreadSeparatorAdded)
 			{
-				this._afterSetMessages(false);
+				this.afterSetMessages(false);
 			}
 		}
 
-		_afterSetMessages(withScroll)
+		/**
+		 * @private
+		 */
+		afterSetMessages(withScroll)
 		{
-			this._scrollToFirstUnreadCompleted = true;
+			this.scrollToFirstUnreadCompleted = true;
 			this.shouldEmitMessageRead = true;
 
 			if (this.unreadSeparatorAdded)
@@ -180,16 +209,15 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				Logger.warn('DialogView: scrolling to the first unread is not required, everything is read');
 			}
 
-			//TODO: refactor temporary hack. Without it, extra messages are read, somehow connected with the scroll
+			// TODO: refactor temporary hack. Without it, extra messages are read, somehow connected with the scroll
 			setTimeout(() => {
 				const {
-					indexList,
-					messageList
+					messageList,
 				} = this.getViewableMessages();
 
-				Logger.warn('DialogView._afterSetMessages: visible messages ', messageList);
+				Logger.warn('DialogView.afterSetMessages: visible messages ', messageList);
 
-				this._readVisibleUnreadMessages(messageList);
+				this.readVisibleUnreadMessages(messageList);
 			}, 200);
 		}
 
@@ -208,8 +236,18 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 			if (this.messageIndexListOnScreen.includes(0))
 			{
-				this.scrollToBottomSmoothly(() => {
-					this.shouldShowScrollToNewMessagesButton = true;
+				this.visibilityManager.checkIsDialogVisible(this.dialogId).then((isDialogVisible) => {
+					if (!isDialogVisible)
+					{
+						this.shouldShowScrollToNewMessagesButton = true;
+						this.showScrollToNewMessagesButton();
+
+						return;
+					}
+
+					this.scrollToBottomSmoothly(() => {
+						this.shouldShowScrollToNewMessagesButton = true;
+					});
 				});
 
 				return;
@@ -230,11 +268,30 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.ui.updateMessageById(id, message);
 		}
 
+		removeMessagesByIds(idList)
+		{
+			if (!Type.isArrayFilled(idList))
+			{
+				Logger.warn('DialogView.removeMessagesByIds: idList is empty');
+
+				return false;
+			}
+
+			const removeIdList = idList.map((id) => String(id));
+			this.ui.removeMessagesByIds(removeIdList);
+
+			return true;
+		}
+
+		removeMessageById(id)
+		{
+			return this.removeMessagesByIds([id]);
+		}
+
 		isMessageWithIdOnScreen(id)
 		{
-			const messageIndex =
-				this.messageListOnScreen
-					.findIndex(message => String(message.id) === String(id))
+			const messageIndex = this.messageListOnScreen
+				.findIndex((message) => String(message.id) === String(id))
 			;
 
 			return messageIndex !== -1;
@@ -264,11 +321,11 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.ui.setInputPlaceholder(text);
 		}
 
-		setInputQuote(message, type)
+		setInputQuote(message, type, openKeyboard = true)
 		{
 			if (InputQuoteType[type])
 			{
-				this.ui.setInputQuote(message, type);
+				this.ui.setInputQuote(message, type, openKeyboard);
 			}
 			else
 			{
@@ -304,6 +361,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		hideScrollToNewMessagesButton()
 		{
 			this.ui.hideScrollToNewMessagesButton();
+			this.isScrollToNewMessageButtonVisible = false;
 		}
 
 		showScrollToNewMessagesButton()
@@ -311,14 +369,20 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			if (this.shouldShowScrollToNewMessagesButton)
 			{
 				this.ui.showScrollToNewMessagesButton();
+				this.isScrollToNewMessageButtonVisible = true;
 			}
+		}
+
+		checkIsScrollToNewMessageButtonVisible()
+		{
+			return this.isScrollToNewMessageButtonVisible;
 		}
 
 		scrollToMessageByIndex(
 			index,
 			withAnimation = false,
 			afterScrollEndCallback = () => {},
-			position = AfterScrollMessagePosition.bottom
+			position = AfterScrollMessagePosition.bottom,
 		)
 		{
 			this.ui.scrollToMessageByIndex(index, withAnimation, afterScrollEndCallback, position);
@@ -328,7 +392,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			id,
 			withAnimation = false,
 			afterScrollEndCallback = () => {},
-			position = AfterScrollMessagePosition.bottom
+			position = AfterScrollMessagePosition.bottom,
 		)
 		{
 			this.ui.scrollToMessageById(id, withAnimation, afterScrollEndCallback, position);
@@ -346,7 +410,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 		scrollToBottomSmoothly(
 			afterScrollEndCallback = () => {},
-			position = AfterScrollMessagePosition.bottom
+			position = AfterScrollMessagePosition.bottom,
 		)
 		{
 			this.ui.scrollToMessageByIndex(0, true, afterScrollEndCallback, position);
@@ -372,21 +436,6 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		setRightButtons(buttonList)
 		{
 			this.ui.setRightButtons(buttonList);
-		}
-
-		setCanLoadMore(canLoadMore)
-		{
-			this.ui.setCanLoadMore(canLoadMore);
-		}
-
-		setIsRefreshing(isRefreshing)
-		{
-			this.ui.setIsRefreshing(isRefreshing);
-		}
-
-		setCanRefreshing(canRefreshing)
-		{
-			this.ui.setCanRefreshing(canRefreshing);
 		}
 
 		setTitle(titleParams)
@@ -423,7 +472,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 					},
 					sendFileSeparately: true,
 					showAttachedFiles: true,
-					editingMediaFiles:false,
+					editingMediaFiles: false,
 					maxAttachedFilesCount: 100,
 					attachButton: {
 						items: [
@@ -451,17 +500,20 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 										modal: true,
 										name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_DISK_FILES')
 									},
-								}
+								},
 							},
-						]
-					}
-				}
+						],
+					},
+				},
 			};
 
 			dialogs.showImagePicker(imagePickerParams, selectedFilesHandler);
 		}
 
-		_checkNeedToLoadTopPage()
+		/**
+		 * @private
+		 */
+		checkNeedToLoadTopPage()
 		{
 			if (this.messagesCount < (messagesCountToPageLoad * 2))
 			{
@@ -469,14 +521,17 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			}
 
 			const topIndexToLoad = this.messagesCount - messagesCountToPageLoad;
-			const index = this.messageIndexListOnScreen.findIndex(index => {
-				return index >= topIndexToLoad;
+			const index = this.messageIndexListOnScreen.findIndex((messageIndex) => {
+				return messageIndex >= topIndexToLoad;
 			});
 
 			return index !== -1;
 		}
 
-		_checkNeedToLoadBottomPage()
+		/**
+		 * @private
+		 */
+		checkNeedToLoadBottomPage()
 		{
 			if (this.messagesCount < (messagesCountToPageLoad * 2))
 			{
@@ -484,8 +539,8 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			}
 
 			const bottomIndexToLoad = messagesCountToPageLoad;
-			const index = this.messageIndexListOnScreen.findIndex(index => {
-				return index <= bottomIndexToLoad;
+			const index = this.messageIndexListOnScreen.findIndex((messageIndex) => {
+				return messageIndex <= bottomIndexToLoad;
 			});
 
 			return index !== -1;

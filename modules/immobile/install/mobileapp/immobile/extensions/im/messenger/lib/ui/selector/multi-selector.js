@@ -2,22 +2,23 @@
  * @module im/messenger/lib/ui/selector/multi-selector
  */
 jn.define('im/messenger/lib/ui/selector/multi-selector', (require, exports, module) => {
-
-	const { Carousel} = require('im/messenger/lib/ui/base/carousel');
+	const { Type } = require('type');
+	const { Carousel } = require('im/messenger/lib/ui/base/carousel');
 	const { MultiSelectedList } = require('im/messenger/lib/ui/selector/multi-selected-list');
 	const { SingleSelector } = require('im/messenger/lib/ui/selector/single-selector');
 	class MultiSelector extends SingleSelector
 	{
-
 		/**
 		 *
 		 * @param {Object} props
 		 * @param {Array} props.itemList
 		 * @param {Function} props.onItemSelected
+		 * @param {Function} props.onItemUnselected
 		 * @param {string} props.searchMode 'inline' or 'overlay'
 		 * @param {Function} [props.onSearchItemSelected] with props.searchMode === 'overlay'
 		 * @param {Function} [props.onChangeText] with props.searchMode === 'inline'
 		 * @param {Function} [props.onSearchShow] with props.searchMode === 'inline'
+		 * @param {Function} [props.recentText]
 		 * @param {string} [props.carouselSize]
 		 * @param {Object} [props.listStyle]
 		 * @param {Array} [props.buttons]
@@ -45,11 +46,12 @@ jn.define('im/messenger/lib/ui/selector/multi-selector', (require, exports, modu
 			return new MultiSelectedList({
 				isShadow: this.state.isShadow,
 				itemList: this.itemList,
+				recentText: this.props.recentText,
 				onSelectItem: (itemData) => this.selectItem(itemData),
 				onUnselectItem: (itemData) => this.deleteItemInCarousel(itemData),
 				isCarouselEnabled: this.getSelectedItems().length > 0,
 				style: this.props.listStyle,
-				ref: ref => {
+				ref: (ref) => {
 					this.listRef = ref;
 
 					if (this.props.searchMode === 'inline')
@@ -66,8 +68,8 @@ jn.define('im/messenger/lib/ui/selector/multi-selector', (require, exports, modu
 				isShadow: this.state.isShadow,
 				itemList: this.selectedItems,
 				size: this.props.carouselSize,
-				onItemSelected: itemData => this.unselectItemInList(itemData),
-				ref: ref => this.carouselRef = ref,
+				onItemSelected: (itemData) => this.unselectItemInList(itemData),
+				ref: (ref) => this.carouselRef = ref,
 			});
 		}
 
@@ -78,7 +80,7 @@ jn.define('im/messenger/lib/ui/selector/multi-selector', (require, exports, modu
 
 		selectItem(itemData)
 		{
-			this.itemList.forEach(item => {
+			this.itemList.forEach((item) => {
 				if (itemData.id === item.data.id)
 				{
 					item.selected = true;
@@ -86,30 +88,42 @@ jn.define('im/messenger/lib/ui/selector/multi-selector', (require, exports, modu
 			});
 			this.selectedItems.push(itemData);
 			this.getCarousel().addItem(itemData);
+			if (Type.isFunction(this.props.onItemSelected))
+			{
+				this.props.onItemSelected(itemData);
+			}
 		}
 
 		unselectItemInList(itemData)
 		{
-			this.itemList.forEach(item => {
+			this.itemList.forEach((item) => {
 				if (itemData.id === item.data.id)
 				{
 					item.selected = false;
 				}
 			});
-			this.selectedItems = this.selectedItems.filter(currentItem => currentItem.id !== itemData.id);
+			this.selectedItems = this.selectedItems.filter((currentItem) => currentItem.id !== itemData.id);
 			this.getList().unselectItem(itemData);
+			if (Type.isFunction(this.props.onItemUnselected))
+			{
+				this.props.onItemUnselected();
+			}
 		}
 
 		deleteItemInCarousel(itemData)
 		{
-			this.itemList.forEach(item => {
+			this.itemList.forEach((item) => {
 				if (itemData.id === item.data.id)
 				{
 					item.selected = false;
 				}
 			});
-			this.selectedItems = this.selectedItems.filter(currentItem => currentItem.id !== itemData.id);
+			this.selectedItems = this.selectedItems.filter((currentItem) => currentItem.id !== itemData.id);
 			this.getCarousel().removeItem(itemData);
+			if (Type.isFunction(this.props.onItemUnselected))
+			{
+				this.props.onItemUnselected();
+			}
 		}
 
 		findSelectedItem(itemList)
@@ -119,7 +133,7 @@ jn.define('im/messenger/lib/ui/selector/multi-selector', (require, exports, modu
 				return [];
 			}
 
-			return itemList.filter(item => item.selected && item.selected === true);
+			return itemList.filter((item) => item.selected && item.selected === true);
 		}
 
 		getSelectedItems()
@@ -134,15 +148,15 @@ jn.define('im/messenger/lib/ui/selector/multi-selector', (require, exports, modu
 
 		setItems(items, withLoader = false)
 		{
-			items.forEach(item => {
+			items.forEach((item) => {
 				const id = item.data.id.toString().replace('user/', '');
-				const foundItem = this.selectedItems.find(selectedItem => selectedItem.id === id);
+				const foundItem = this.selectedItems.find((selectedItem) => selectedItem.id === id);
 
-				if(typeof foundItem !== 'undefined')
+				if (typeof foundItem !== 'undefined')
 				{
 					item.selected = true;
 				}
-			})
+			});
 			super.setItems(items, withLoader);
 		}
 	}

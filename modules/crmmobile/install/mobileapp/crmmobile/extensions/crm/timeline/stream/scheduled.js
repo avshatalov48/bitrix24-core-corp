@@ -25,6 +25,7 @@ jn.define('crm/timeline/stream/scheduled', (require, exports, module) => {
 		{
 			const model = super.makeItemModel(props);
 			model.isScheduled = true;
+
 			return model;
 		}
 

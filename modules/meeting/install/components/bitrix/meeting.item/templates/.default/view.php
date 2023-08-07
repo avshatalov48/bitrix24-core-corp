@@ -10,7 +10,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
  * @global CMain $APPLICATION
  */
 
-if ($arResult['INCLUDE_LANG'])
+if ($arResult['INCLUDE_LANG'] ?? null)
 {
 	\Bitrix\Main\Localization\Loc::loadLanguageFile(__DIR__."/template.php");
 }
@@ -18,7 +18,7 @@ if ($arResult['INCLUDE_LANG'])
 ?>
 				<div class="meeting-detail-title"><?=htmlspecialcharsbx($arResult['ITEM']['TITLE'])?></div>
 <?
-if ($arResult['ITEM']['DESCRIPTION'] <> ''):
+if (($arResult['ITEM']['DESCRIPTION'] ?? null) <> ''):
 ?>
 				<div id="meeting-detail-description" class="meeting-detail-description"><?=$arResult['ITEM']['DESCRIPTION']?></div>
 <?

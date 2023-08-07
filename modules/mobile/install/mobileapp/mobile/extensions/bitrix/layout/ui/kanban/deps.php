@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'require-lazy',
 		'layout/ui/kanban/counter',
 		'layout/ui/kanban/toolbar',
 		'layout/ui/pure-component',
@@ -14,7 +15,6 @@ return [
 		'utils/function',
 		'utils/object',
 
-		'crm:required-fields',
 		'crm:storage/category',
 	],
 	'bundle' => [

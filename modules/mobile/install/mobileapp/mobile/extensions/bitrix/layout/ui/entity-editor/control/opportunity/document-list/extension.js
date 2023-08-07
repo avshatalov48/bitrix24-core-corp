@@ -2,7 +2,6 @@
  * @module layout/ui/entity-editor/control/opportunity/document-list
  */
 jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require, exports, module) => {
-
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
 	const { EventEmitter } = require('event-emitter');
@@ -52,13 +51,15 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 						entityId: this.props.entityId,
 					},
 				})
-				.then(response => {
-					this.setState({
-						totalAmount: response.data.totalAmount,
-					});
-					this.currencyId = response.data.currencyId;
-				})
-			})
+					.then((response) => {
+						this.setState({
+							totalAmount: response.data.totalAmount,
+						});
+						this.currencyId = response.data.currencyId;
+						resolve();
+					})
+					.catch(reject);
+			});
 		}
 
 		updateDocuments()
@@ -70,14 +71,16 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 						entityId: this.props.entityId,
 					},
 				})
-				.then(response => {
-					this.setState({
-						documents: response.data.documents,
-						totalAmount: response.data.totalAmount,
-					});
-					this.currencyId = response.data.currencyId;
-				})
-			})
+					.then((response) => {
+						this.setState({
+							documents: response.data.documents,
+							totalAmount: response.data.totalAmount,
+						});
+						this.currencyId = response.data.currencyId;
+						resolve();
+					})
+					.catch(reject);
+			});
 		}
 
 		renderContent()
@@ -88,11 +91,11 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 					clickable: false,
 				},
 				this.renderTitle(),
-				...this.state.documents.map(document => this.renderDocumentItem(document)),
+				...this.state.documents.map((document) => this.renderDocumentItem(document)),
 				this.renderAddDocumentButton(),
 				this.renderSeparator(),
-				this.renderTotalSum()
-			)
+				this.renderTotalSum(),
+			);
 		}
 
 		renderTitle()
@@ -117,9 +120,9 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 					return this.renderShipmentDocument(document);
 				case 'SHIPMENT_DOCUMENT':
 					return this.renderRealizationDocument(document);
+				default:
+					return View();
 			}
-
-			return View();
 		}
 
 		getDocumentName(document)
@@ -127,17 +130,17 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 			if (document.TYPE === 'PAYMENT')
 			{
 				return Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_PAYMENT_DATE', {
-						'#DATE#': document.FORMATTED_DATE,
-						'#ACCOUNT_NUMBER#': document.ACCOUNT_NUMBER,
-					});
+					'#DATE#': document.FORMATTED_DATE,
+					'#ACCOUNT_NUMBER#': document.ACCOUNT_NUMBER,
+				});
 			}
 
 			if (document.TYPE === 'SHIPMENT')
 			{
 				return Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_SHIPMENT_DATE', {
-						'#DATE#': document.FORMATTED_DATE,
-						'#ACCOUNT_NUMBER#': document.ACCOUNT_NUMBER,
-					});
+					'#DATE#': document.FORMATTED_DATE,
+					'#ACCOUNT_NUMBER#': document.ACCOUNT_NUMBER,
+				});
 			}
 
 			if (document.TYPE === 'SHIPMENT_DOCUMENT')
@@ -155,28 +158,28 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 		{
 			const money = Money.create({
 				amount: document.SUM,
-				currency: document.CURRENCY
+				currency: document.CURRENCY,
 			});
 
 			let result = '(';
 
 			if (document.TYPE === 'SHIPMENT_DOCUMENT')
 			{
-				return result + Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_SUM', {
-					'#SUM#': money.formatted
+				return `${result + Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_SUM', {
+					'#SUM#': money.formatted,
 				})
-				+ ')';
+				})`;
 			}
 
 			if (document.DELIVERY_NAME)
 			{
-				result += document.DELIVERY_NAME + ', ';
+				result += `${document.DELIVERY_NAME}, `;
 			}
 
-			return result + Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_PAYMENT_AMOUNT', {
-					'#SUM#': money.formatted
-				})
-				+ ')';
+			return `${result + Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_PAYMENT_AMOUNT', {
+				'#SUM#': money.formatted,
+			})
+			})`;
 		}
 
 		renderPaymentDocument(document)
@@ -189,7 +192,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 				View(
 					{
 						style: styles.documentNameBlock,
-						onClick: () => this.customEventEmitter.emit('EntityPaymentDocument::Click', [ document ]),
+						onClick: () => this.customEventEmitter.emit('EntityPaymentDocument::Click', [document]),
 					},
 					Text({
 						style: styles.documentNameText,
@@ -245,7 +248,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 					this.renderBadge(document),
 					this.renderDots(document),
 				),
-			)
+			);
 		}
 
 		renderRealizationDocument(document)
@@ -282,7 +285,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 					this.renderBadge(document),
 					this.renderDots(document),
 				),
-			)
+			);
 		}
 
 		openDocumentMenu(document)
@@ -382,7 +385,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 
 			// Positive approach - render success first, then do actual query
 			const documents = this.state.documents;
-			const documentIndex = documents.findIndex(doc => doc.ID === document.ID);
+			const documentIndex = documents.findIndex((doc) => doc.ID === document.ID);
 			const previousPaidStatus = documents[documentIndex].PAID;
 			const previousPaymentStage = documents[documentIndex].STAGE;
 			const previousTotalAmount = this.state.totalAmount;
@@ -410,25 +413,25 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 					value: strPaid,
 				},
 			})
-			.then(() => {
-				const params = {
-					entityTypeId: this.props.entityTypeId,
-					entityId: this.props.entityId,
-					uid: this.uid,
-				}
-				this.customEventEmitter.emit('DetailCard::onUpdate', params);
-			})
-			.catch(response => {
-				documents[documentIndex].PAID = previousPaidStatus;
-				documents[documentIndex].STAGE = previousPaymentStage;
-				this.setState(
-					{
-						documents: documents,
-						totalAmount: previousTotalAmount,
-					},
-					() => handleErrors(response)
-				);
-			});
+				.then(() => {
+					const params = {
+						entityTypeId: this.props.entityTypeId,
+						entityId: this.props.entityId,
+						uid: this.uid,
+					};
+					this.customEventEmitter.emit('DetailCard::onUpdate', params);
+				})
+				.catch((response) => {
+					documents[documentIndex].PAID = previousPaidStatus;
+					documents[documentIndex].STAGE = previousPaymentStage;
+					this.setState(
+						{
+							documents: documents,
+							totalAmount: previousTotalAmount,
+						},
+						() => handleErrors(response),
+					);
+				});
 		}
 
 		setShipmentStatus(document, isShipped)
@@ -445,7 +448,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 
 			// Positive approach - render success first, then do actual query
 			const documents = this.state.documents;
-			const documentIndex = documents.findIndex(doc => doc.ID === document.ID);
+			const documentIndex = documents.findIndex((doc) => doc.ID === document.ID);
 			const previousDeductedStatus = documents[documentIndex].DEDUCTED;
 			documents[documentIndex].DEDUCTED = strShipped;
 			this.setState({ documents: documents });
@@ -462,21 +465,21 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 					value: strShipped,
 				},
 			})
-			.then(() => {
-				const params = {
-					entityTypeId: this.props.entityTypeId,
-					entityId: this.props.entityId,
-					uid: this.uid,
-				}
-				this.customEventEmitter.emit('DetailCard::onUpdate', params);
-			})
-			.catch(response => {
-				documents[documentIndex].DEDUCTED = previousDeductedStatus;
-				this.setState(
-					{ documents: documents },
-					() => handleErrors(response)
-				);
-			});
+				.then(() => {
+					const params = {
+						entityTypeId: this.props.entityTypeId,
+						entityId: this.props.entityId,
+						uid: this.uid,
+					};
+					this.customEventEmitter.emit('DetailCard::onUpdate', params);
+				})
+				.catch((response) => {
+					documents[documentIndex].DEDUCTED = previousDeductedStatus;
+					this.setState(
+						{ documents: documents },
+						() => handleErrors(response),
+					);
+				});
 		}
 
 		deleteDocument(document)
@@ -489,7 +492,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 
 			const data = {
 				documentId: document.ID,
-			}
+			};
 
 			if (document.TYPE === 'SHIPMENT_DOCUMENT')
 			{
@@ -498,46 +501,51 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 
 			// Positive approach - render success first, then do actual query
 			const documents = this.state.documents;
-			const filteredDocuments = documents.filter(element => element.ID !== document.ID && element.TYPE === document.TYPE);
+			const filteredDocuments = documents.filter((element) => {
+				return !(element.ID === document.ID && element.TYPE === document.TYPE);
+			});
 			this.setState({ documents: filteredDocuments });
 
 			BX.ajax.runAction(actionName, {
-				data: data
+				data: data,
 			})
-			.then(() => {
-				const params = {
-					entityTypeId: this.props.entityTypeId,
-					entityId: this.props.entityId,
-					uid: this.uid,
-				}
-				this.customEventEmitter.emit('DetailCard::onUpdate', params);
-			})
-			.catch(response => {
-				this.setState(
-					{ documents: documents },
-					() => handleErrors(response)
-				);
-			});
+				.then(() => {
+					const params = {
+						entityTypeId: this.props.entityTypeId,
+						entityId: this.props.entityId,
+						uid: this.uid,
+					};
+					this.customEventEmitter.emit('DetailCard::onUpdate', params);
+					this.updateDocuments();
+				})
+				.catch((response) => {
+					this.setState(
+						{ documents: documents },
+						() => handleErrors(response),
+					);
+				});
 		}
 
 		resolveRemoveDocumentActionName(documentType)
 		{
-			let action = '';
+			switch (documentType)
+			{
+				case 'PAYMENT': {
+					return 'crmmobile.Document.Payment.delete';
+				}
 
-			if (documentType === 'PAYMENT')
-			{
-				action = 'crmmobile.Document.Payment.delete';
-			}
-			else if (documentType === 'SHIPMENT')
-			{
-				action = 'crmmobile.Document.Shipment.delete';
-			}
-			else if (documentType === 'SHIPMENT_DOCUMENT')
-			{
-				action = 'crmmobile.Document.Realization.delete';
-			}
+				case 'SHIPMENT': {
+					return 'crmmobile.Document.Shipment.delete';
+				}
 
-			return action;
+				case 'SHIPMENT_DOCUMENT': {
+					return 'crmmobile.Document.Realization.delete';
+				}
+
+				default: {
+					return '';
+				}
+			}
 		}
 
 		getDocumentActions(document)
@@ -596,7 +604,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 								{ time: 3 },
 							);
 						},
-					}
+					},
 				];
 			}
 
@@ -702,7 +710,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 				showOnTop: true,
 				topPosition: 60,
 				navigationBarColor: '#eef2f4',
-			}
+			};
 
 			const componentParams = {
 				entityId: this.props.entityId,
@@ -711,7 +719,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 				uid: this.uid,
 				resendMessageMode: true,
 				document: document,
-			}
+			};
 
 			ComponentHelper.openLayout({
 				name: 'crm:salescenter.receive.payment',
@@ -746,8 +754,8 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 						color: '#525C69',
 					},
 					text: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_ADD'),
-				})
-			)
+				}),
+			);
 		}
 
 		renderSeparator()
@@ -756,7 +764,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 				{
 					style: styles.separator,
 				},
-			)
+			);
 		}
 
 		renderTotalSum()
@@ -772,12 +780,12 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 				},
 				Text({
 					style: styles.totalText,
-					text: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_TOTAL_SUM') + ': ',
+					text: `${Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_TOTAL_SUM')}: `,
 				}),
 				Text({
 					style: styles.totalSum,
 					text: money.formatted,
-				})
+				}),
 			);
 		}
 
@@ -804,7 +812,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 					bagdeColor = '#dfe0e3';
 					bagdeTextColor = '#828b95';
 				}
-				badgeText = Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_STAGE_' + document.STAGE);
+				badgeText = Loc.getMessage(`MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_STAGE_${document.STAGE}`);
 			}
 
 			if (document.TYPE === 'SHIPMENT')
@@ -847,8 +855,8 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 					style: styles.badgeText(bagdeTextColor),
 					text: badgeText.toUpperCase(),
 					ellipsize: 'end',
-				})
-			)
+				}),
+			);
 		}
 
 		renderDots(document)
@@ -978,16 +986,15 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 	};
 
 	const svgIcons = {
-		documentMenuDots: `<svg width="16" height="5" viewBox="0 0 16 5" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4.63977C3.10457 4.63977 4 3.74434 4 2.63977C4 1.5352 3.10457 0.639771 2 0.639771C0.89543 0.639771 0 1.5352 0 2.63977C0 3.74434 0.89543 4.63977 2 4.63977Z" fill="#C9CCD0"/><path d="M8 4.63977C9.10457 4.63977 10 3.74434 10 2.63977C10 1.5352 9.10457 0.639771 8 0.639771C6.89543 0.639771 6 1.5352 6 2.63977C6 3.74434 6.89543 4.63977 8 4.63977Z" fill="#C9CCD0"/><path d="M16 2.63977C16 3.74434 15.1046 4.63977 14 4.63977C12.8954 4.63977 12 3.74434 12 2.63977C12 1.5352 12.8954 0.639771 14 0.639771C15.1046 0.639771 16 1.5352 16 2.63977Z" fill="#C9CCD0"/></svg>`,
-		documentAddPlus: `<svg width="10" height="9" viewBox="0 0 10 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.83333 0.473104H4.16666V3.80644H0.833328V5.4731H4.16666V8.80644H5.83333V5.4731H9.16666V3.80644H5.83333V0.473104Z" fill="#A8ADB4"/></svg>`,
-		menuChangeStatus: `<svg width="31" height="31" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.77628 5.88513L17.2918 14.6801C17.4719 14.864 17.5798 15.1708 17.5798 15.4991C17.5798 15.8274 17.4719 16.1343 17.2918 16.3182L8.77628 25.1131C8.57566 25.3247 8.3136 25.3492 8.09725 25.1766C7.88089 25.004 7.74651 24.6633 7.74906 24.2937V6.70459C7.74733 6.33552 7.88183 5.99573 8.09786 5.82339C8.3139 5.65104 8.5755 5.67485 8.77628 5.88513ZM20.7292 14.6801L15.5555 9.33658V6.70459C15.5537 6.33552 15.6882 5.99573 15.9043 5.82339C16.1203 5.65104 16.3819 5.67485 16.5827 5.88513L25.0982 14.6801C25.2783 14.864 25.3862 15.1708 25.3862 15.4991C25.3862 15.8274 25.2783 16.1343 25.0982 16.3182L16.5827 25.1131C16.3821 25.3247 16.12 25.3492 15.9037 25.1766C15.6873 25.004 15.5529 24.6633 15.5555 24.2937V21.6617L20.7292 16.3182C20.9093 16.1343 21.0172 15.8274 21.0172 15.4991C21.0172 15.1708 20.9093 14.864 20.7292 14.6801Z" fill="#828B95"/></svg>`,
-		menuDelete: `<svg width="30" height="31" viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M15.6146 6.3716H12.8881V7.74245H8.93521C8.10678 7.74245 7.43521 8.41402 7.43521 9.24245V10.485H21.0675V9.24245C21.0675 8.41402 20.3959 7.74245 19.5675 7.74245H15.6146V6.3716ZM8.79843 11.8562H19.7042L18.6942 23.2859C18.6486 23.802 18.2163 24.1978 17.6981 24.1978H10.8045C10.2864 24.1978 9.85403 23.802 9.80842 23.2859L8.79843 11.8562Z" fill="#828B95"/></svg>`,
-		menuSendLink: `<svg width="30" height="31" viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M24.7407 15.19V7.85563L22.6329 9.96403C20.9168 7.85131 18.3045 6.49731 15.3695 6.49731C10.1935 6.49731 5.99762 10.6932 5.99762 15.8692C5.99762 21.0452 10.1935 25.2404 15.3695 25.2404C17.5772 25.2404 19.6023 24.4718 21.2043 23.1949L18.8294 20.2809C17.8758 21.0298 16.676 21.4807 15.3695 21.4807C12.2704 21.4807 9.75796 18.9682 9.75796 15.8692C9.75796 12.7701 12.2704 10.257 15.3695 10.257C17.2657 10.257 18.9411 11.1996 19.9564 12.6399L17.4063 15.19H24.7407Z" fill="#828B95"/></svg>`,
-		menuArrow: `<svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.00043 7.10789L13.7161 11.8236L14.9375 13L13.7161 14.1771L9.00043 18.8928L10.6645 20.5568L18.2209 13.0004L10.6645 5.444L9.00043 7.10789Z" fill="#A8ADB4"/></svg>`,
+		documentMenuDots: '<svg width="16" height="5" viewBox="0 0 16 5" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4.63977C3.10457 4.63977 4 3.74434 4 2.63977C4 1.5352 3.10457 0.639771 2 0.639771C0.89543 0.639771 0 1.5352 0 2.63977C0 3.74434 0.89543 4.63977 2 4.63977Z" fill="#C9CCD0"/><path d="M8 4.63977C9.10457 4.63977 10 3.74434 10 2.63977C10 1.5352 9.10457 0.639771 8 0.639771C6.89543 0.639771 6 1.5352 6 2.63977C6 3.74434 6.89543 4.63977 8 4.63977Z" fill="#C9CCD0"/><path d="M16 2.63977C16 3.74434 15.1046 4.63977 14 4.63977C12.8954 4.63977 12 3.74434 12 2.63977C12 1.5352 12.8954 0.639771 14 0.639771C15.1046 0.639771 16 1.5352 16 2.63977Z" fill="#C9CCD0"/></svg>',
+		documentAddPlus: '<svg width="10" height="9" viewBox="0 0 10 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.83333 0.473104H4.16666V3.80644H0.833328V5.4731H4.16666V8.80644H5.83333V5.4731H9.16666V3.80644H5.83333V0.473104Z" fill="#A8ADB4"/></svg>',
+		menuChangeStatus: '<svg width="31" height="31" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.77628 5.88513L17.2918 14.6801C17.4719 14.864 17.5798 15.1708 17.5798 15.4991C17.5798 15.8274 17.4719 16.1343 17.2918 16.3182L8.77628 25.1131C8.57566 25.3247 8.3136 25.3492 8.09725 25.1766C7.88089 25.004 7.74651 24.6633 7.74906 24.2937V6.70459C7.74733 6.33552 7.88183 5.99573 8.09786 5.82339C8.3139 5.65104 8.5755 5.67485 8.77628 5.88513ZM20.7292 14.6801L15.5555 9.33658V6.70459C15.5537 6.33552 15.6882 5.99573 15.9043 5.82339C16.1203 5.65104 16.3819 5.67485 16.5827 5.88513L25.0982 14.6801C25.2783 14.864 25.3862 15.1708 25.3862 15.4991C25.3862 15.8274 25.2783 16.1343 25.0982 16.3182L16.5827 25.1131C16.3821 25.3247 16.12 25.3492 15.9037 25.1766C15.6873 25.004 15.5529 24.6633 15.5555 24.2937V21.6617L20.7292 16.3182C20.9093 16.1343 21.0172 15.8274 21.0172 15.4991C21.0172 15.1708 20.9093 14.864 20.7292 14.6801Z" fill="#828B95"/></svg>',
+		menuDelete: '<svg width="30" height="31" viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M15.6146 6.3716H12.8881V7.74245H8.93521C8.10678 7.74245 7.43521 8.41402 7.43521 9.24245V10.485H21.0675V9.24245C21.0675 8.41402 20.3959 7.74245 19.5675 7.74245H15.6146V6.3716ZM8.79843 11.8562H19.7042L18.6942 23.2859C18.6486 23.802 18.2163 24.1978 17.6981 24.1978H10.8045C10.2864 24.1978 9.85403 23.802 9.80842 23.2859L8.79843 11.8562Z" fill="#828B95"/></svg>',
+		menuSendLink: '<svg width="30" height="31" viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M24.7407 15.19V7.85563L22.6329 9.96403C20.9168 7.85131 18.3045 6.49731 15.3695 6.49731C10.1935 6.49731 5.99762 10.6932 5.99762 15.8692C5.99762 21.0452 10.1935 25.2404 15.3695 25.2404C17.5772 25.2404 19.6023 24.4718 21.2043 23.1949L18.8294 20.2809C17.8758 21.0298 16.676 21.4807 15.3695 21.4807C12.2704 21.4807 9.75796 18.9682 9.75796 15.8692C9.75796 12.7701 12.2704 10.257 15.3695 10.257C17.2657 10.257 18.9411 11.1996 19.9564 12.6399L17.4063 15.19H24.7407Z" fill="#828B95"/></svg>',
+		menuArrow: '<svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.00043 7.10789L13.7161 11.8236L14.9375 13L13.7161 14.1771L9.00043 18.8928L10.6645 20.5568L18.2209 13.0004L10.6645 5.444L9.00043 7.10789Z" fill="#A8ADB4"/></svg>',
 	};
 
 	module.exports = {
-		DocumentList
+		DocumentList,
 	};
-
 });

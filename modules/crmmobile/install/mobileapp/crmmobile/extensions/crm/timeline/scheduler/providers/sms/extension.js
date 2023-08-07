@@ -16,9 +16,12 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 	const { MultiFieldDrawer, MultiFieldType } = require('crm/multi-field-drawer');
 	const { clone, get } = require('utils/object');
 	const { debounce } = require('utils/function');
+	const { line } = require('utils/skeleton');
 	const { Type } = require('type');
+	const { Feature } = require('feature');
 
 	const MAX_SMS_LENGTH = 200;
+	const MAX_HEIGHT = 1000;
 
 	/**
 	 * @class TimelineSchedulerSmsProvider
@@ -55,7 +58,23 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			return 400;
 		}
 
-		static isSupported()
+		static isAvailableInMenu(context = {})
+		{
+			if (!context.detailCard)
+			{
+				return false;
+			}
+
+			const detailCardParams = context.detailCard.getComponentParams();
+			const entityTypeId = get(detailCardParams, 'entityTypeId', 0);
+			const isCompany = entityTypeId === TypeId.Company;
+			const isContact = entityTypeId === TypeId.Contact;
+			const isClientEnabled = get(detailCardParams, 'isClientEnabled', false);
+
+			return isCompany || isContact || isClientEnabled;
+		}
+
+		static isSupported(context = {})
 		{
 			return true;
 		}
@@ -82,7 +101,8 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 				entityId: null,
 				communications: null,
 				sender: null,
-				maxHeight: 1000,
+				maxHeight: MAX_HEIGHT,
+				templateId: null,
 			};
 
 			this.textInputRef = null;
@@ -102,10 +122,15 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 
 			this.openContactsSelector = this.openContactsSelector.bind(this);
 			this.openSendersSelector = this.openSendersSelector.bind(this);
+			this.addTemplatesToSender = this.addTemplatesToSender.bind(this);
 			this.onChangeSenderCallback = this.onChangeSenderCallback.bind(this);
 			this.onChangePhoneCallback = this.onChangePhoneCallback.bind(this);
 			this.onPhoneSelectCallback = this.onPhoneSelectCallback.bind(this);
 			this.onPhoneAddedSuccessCallback = this.onPhoneAddedSuccessCallback.bind(this);
+			this.openTemplateSelector = this.openTemplateSelector.bind(this);
+			this.refreshSendButton = this.refreshSendButton.bind(this);
+			this.setDefaultConfig = this.setDefaultConfig.bind(this);
+			this.onKeyboardToggleHandler = this.onKeyboardToggle.bind(this);
 			this.debouncedTextChange = debounce((text) => this.onTextChange(text), 50, this);
 		}
 
@@ -116,6 +141,30 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			this.fetchSettings();
 			this.focus();
 			this.refreshSendButton();
+
+			if (Feature.isKeyboardEventsSupported())
+			{
+				Keyboard.on(Keyboard.Event.WillHide, this.onKeyboardToggleHandler);
+				Keyboard.on(Keyboard.Event.WillShow, this.onKeyboardToggleHandler);
+			}
+		}
+
+		componentWillUnmount()
+		{
+			if (Feature.isKeyboardEventsSupported())
+			{
+				Keyboard.off(Keyboard.Event.WillHide, this.onKeyboardToggleHandler);
+				Keyboard.off(Keyboard.Event.WillShow, this.onKeyboardToggleHandler);
+			}
+
+			super.componentWillUnmount();
+		}
+
+		onKeyboardToggle()
+		{
+			this.setState({
+				maxHeight: MAX_HEIGHT,
+			});
 		}
 
 		fetchSettings()
@@ -139,6 +188,58 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			;
 		}
 
+		fetchTemplatesList()
+		{
+			const { id: senderId } = this.state.sender;
+			const ajaxParameters = { senderId };
+
+			BX.ajax.runAction('crm.activity.sms.getTemplates', { data: ajaxParameters })
+				.then(({ data }) => {
+					if (data.templates.length === 0)
+					{
+						this.setState({
+							sender: this.getFirstAvailableNotTemplateBasedSender(),
+							templateId: null,
+						}, () => {
+							this.sendersSelector.close();
+							this.sendersSelector = null;
+
+							void ErrorNotifier.showError(Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_SMS_EMPTY_TEMPLATES_LIST'));
+						});
+					}
+					else
+					{
+						this.addTemplatesToSender(senderId, data.templates);
+					}
+				})
+				.catch((response) => {
+					void ErrorNotifier.showError(response.errors[0].message);
+				})
+			;
+		}
+
+		getFirstAvailableNotTemplateBasedSender()
+		{
+			return this.smsConfig.config.senders.find((sender) => sender.canUse && !sender.templatesBased);
+		}
+
+		addTemplatesToSender(senderId, templates)
+		{
+			const sender = this.findSenderById(senderId, this.smsConfig.config.senders);
+
+			this.setState({
+				sender: {
+					...sender,
+					templates,
+				},
+				templateId: 0,
+			}, () => {
+				sender.templates = templates;
+
+				this.refreshSendButton();
+			});
+		}
+
 		setDefaultConfig(smsConfig)
 		{
 			this.smsConfig = smsConfig;
@@ -149,6 +250,7 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			const newState = {
 				communications,
 				sender,
+				templateId: (this.isSenderTemplatesBased(sender) ? 0 : null),
 			};
 
 			this.appendDefaultFromPhoneId(newState, sender);
@@ -261,7 +363,7 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 							onLayout: ({ height }) => this.setMaxHeight(height),
 						},
 						this.renderSettingsSection(),
-						this.renderTextField(),
+						this.renderBody(),
 					),
 				),
 			);
@@ -310,6 +412,7 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			const { toName: name, toPhoneId: phoneId } = this.state;
 
 			const phone = this.getPhoneById(phoneId);
+			const hasOnlyManyClientsWithoutPhones = this.hasOnlyManyClientsWithoutPhones();
 
 			return View(
 				{
@@ -319,6 +422,8 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 					name,
 					phone: (phone ? phone.valueFormatted : null),
 					showSkeleton: !this.isFetchedConfig,
+					hasOnlyManyClientsWithoutPhones,
+					onOpenClientsWithoutPhonesSelector: this.openClientsWithoutPhonesSelector.bind(this),
 					onOpenSelector: this.openContactsSelector.bind(this),
 					onAddPhone: this.addPhoneToContact.bind(this),
 				}),
@@ -343,6 +448,82 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			});
 
 			return phones.find((item) => item.id === id);
+		}
+
+		hasOnlyManyClientsWithoutPhones()
+		{
+			const { communications } = this.state;
+
+			if (!communications)
+			{
+				return false;
+			}
+
+			let clientsWithPhones = 0;
+			communications.forEach((communication) => {
+				if (Array.isArray(communication.phones) && communication.phones.length > 0)
+				{
+					clientsWithPhones++;
+				}
+			});
+
+			const totalClients = communications.length;
+
+			return (totalClients > 1 && clientsWithPhones === 0);
+		}
+
+		openClientsWithoutPhonesSelector()
+		{
+			const menu = new ContextMenu(this.getMenuConfig());
+
+			void menu.show(this.props.layout);
+		}
+
+		getMenuConfig()
+		{
+			return {
+				testId: 'TimelineSmsClientWithoutPhonesSelector',
+				actions: this.getClientWithoutPhonesMenuActions(),
+				params: {
+					shouldResizeContent: true,
+					showCancelButton: true,
+					title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_SMS_CLIENTS_SELECTOR_TITLE'),
+				},
+			};
+		}
+
+		getClientWithoutPhonesMenuActions()
+		{
+			const { communications, entityTypeId, entityId } = this.state;
+
+			const items = [];
+			communications.forEach((communication) => {
+				const {
+					entityTypeId: communicationEntityTypeId,
+					entityId: communicationEntityId,
+					caption: title,
+				} = communication;
+
+				items.push({
+					id: `client-${communicationEntityTypeId}-${communicationEntityId}`,
+					title,
+					isSelected: (
+						entityTypeId === communicationEntityTypeId
+						&& entityId === communicationEntityId
+					),
+					onClickCallback: () => {
+						return new Promise((resolve) => {
+							this.setState({
+								entityTypeId: communicationEntityTypeId,
+								entityId: communicationEntityId,
+								toName: title,
+							}, resolve);
+						});
+					},
+				});
+			});
+
+			return items;
 		}
 
 		openContactsSelector()
@@ -394,7 +575,7 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			multiFieldDrawer.show(this.props.layout);
 		}
 
-		onPhoneAddedSuccessCallback({ entityTypeId, values }, multiFields)
+		onPhoneAddedSuccessCallback({ entityTypeId, entityId, values }, multiFields)
 		{
 			const phonesObject = BX.prop.getObject(values, 'PHONE', null);
 			if (phonesObject === null)
@@ -428,12 +609,16 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			);
 
 			const communications = clone(this.state.communications);
-			communications[0].entityTypeName = CrmType.resolveNameById(entityTypeId);
-			communications[0].phones = [phoneTypeInfo];
+			const communication = communications.find((item) => (
+				item.entityId === entityId && item.entityTypeId === entityTypeId
+			));
+
+			communication.phones = [phoneTypeInfo];
 
 			this.setState({
 				communications,
 				toPhoneId: phoneId,
+				toName: communication.caption,
 			});
 		}
 
@@ -461,17 +646,7 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 					{
 						style: styles.settingsIconContainer,
 					},
-					ShimmerView(
-						{ animating: true },
-						View({
-							style: {
-								height: 22,
-								width: 22,
-								borderRadius: 11,
-								backgroundColor: '#DFE0E3',
-							},
-						}),
-					),
+					line(22, 22),
 				);
 			}
 
@@ -516,9 +691,22 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 
 		onChangeSenderCallback({ sender, phoneId })
 		{
+			const isSenderTemplatesBased = this.isSenderTemplatesBased(sender);
+
 			this.setState({
 				sender,
 				fromPhoneId: phoneId,
+				templateId: isSenderTemplatesBased ? 0 : null,
+				maxHeight: MAX_HEIGHT,
+			}, () => {
+				if (isSenderTemplatesBased && !this.isSenderHasTemplates(sender))
+				{
+					this.fetchTemplatesList();
+				}
+				else
+				{
+					this.refreshSendButton();
+				}
 			});
 		}
 
@@ -529,13 +717,184 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			});
 		}
 
+		renderBody()
+		{
+			if (this.isSenderTemplatesBased())
+			{
+				if (this.isSenderHasTemplates())
+				{
+					return View(
+						{
+							style: styles.bodyContainer,
+						},
+						this.renderTemplate(),
+					);
+				}
+
+				return View(
+					{
+						style: styles.bodyContainer,
+					},
+					View(
+						{
+							style: styles.templateContainer,
+						},
+						line(120, 14),
+						line(160, 18, 10),
+						line('100%', 1, 8, 8, 12),
+						line('100%', 60, 0, 0, 12),
+					),
+				);
+			}
+
+			return this.renderTextField();
+		}
+
+		renderTemplate()
+		{
+			const template = this.getCurrentTemplate();
+
+			if (!template)
+			{
+				return null;
+			}
+
+			return View(
+				{
+					style: styles.templateContainer,
+				},
+				View(
+					{
+						style: styles.templateTitleContainer,
+					},
+					View(
+						{},
+						Text({
+							style: styles.templateTitleLabel,
+							text: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_SMS_CURRENT_TEMPLATE'),
+						}),
+						Text({
+							style: styles.templateTitle,
+							text: template.TITLE,
+							numberOfLines: 1,
+							ellipsize: 'end',
+						}),
+					),
+					Image({
+						style: styles.templateSelectorIcon,
+						svg: {
+							content: '<svg width="23" height="22" viewBox="0 0 23 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M4.66406 5.74707H6.4974V7.5804H4.66406V5.74707ZM8.33073 5.74707H19.3307V7.5804H8.33073V5.74707ZM8.33073 14.9137H19.3307V16.7471H8.33073V14.9137ZM4.66406 14.9137H6.4974V16.7471H4.66406V14.9137ZM8.33073 10.3304H19.3307V12.1637H8.33073V10.3304ZM4.66406 10.3304H6.4974V12.1637H4.66406V10.3304Z" fill="#959CA4"/></svg>',
+						},
+						onClick: this.openTemplateSelector,
+					}),
+				),
+				View(
+					{},
+					Text({
+						style: styles.templatePreview,
+						text: template.PREVIEW,
+					}),
+				),
+
+				// @todo use scrollView instead of view
+				/* ScrollView(
+					{
+						resizableByKeyboard: true,
+						showsVerticalScrollIndicator: true,
+						safeArea: {
+							bottom: true,
+							top: true,
+							left: true,
+							right: true,
+						},
+					},
+					View(
+						{},
+						Text({
+							style: styles.templatePreview,
+							text: template.PREVIEW,
+						}),
+					),
+				), */
+			);
+		}
+
+		getCurrentTemplate()
+		{
+			const { sender: { templates }, templateId } = this.state;
+
+			if (!this.isSenderTemplatesBased())
+			{
+				return null;
+			}
+
+			if (Array.isArray(templates) && templates[templateId])
+			{
+				return templates[templateId];
+			}
+
+			return null;
+		}
+
+		isSenderTemplatesBased(sender = null)
+		{
+			if (sender === null)
+			{
+				sender = this.state.sender;
+			}
+
+			return (sender && sender.isTemplatesBased);
+		}
+
+		isSenderHasTemplates(sender = null)
+		{
+			if (sender === null)
+			{
+				sender = this.state.sender;
+			}
+
+			return (sender && Array.isArray(sender.templates) && sender.templates.length > 0);
+		}
+
+		openTemplateSelector()
+		{
+			const { sender, templateId } = this.state;
+			const { templates } = sender;
+
+			const actions = [];
+			templates.forEach((template, index) => {
+				actions.push({
+					id: index,
+					title: template.TITLE,
+					subTitle: '',
+					onClickCallback: () => {
+						this.setState({
+							templateId: index,
+						});
+					},
+					isSelected: templateId === index,
+				});
+			});
+
+			const templateSelector = new ContextMenu({
+				testId: 'SMS_TEMPLATE_SELECTOR',
+				actions,
+				params: {
+					title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_SMS_TEMPLATE_SELECTOR_TITLE'),
+				},
+				layoutWidget: this.layout,
+			});
+
+			templateSelector.show(this.props.layout);
+		}
+
 		renderTextField()
 		{
 			const hasRemainingLetters = (this.remainingLetters >= 0);
 
 			return View(
 				{
-					style: styles.textFieldContainer,
+					style: styles.bodyContainer,
 				},
 				Image({
 					style: styles.textFieldCorner,
@@ -590,30 +949,37 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 		{
 			const { text, sender, toPhoneId, fromPhoneId } = this.state;
 
-			return (
-				Type.isStringFilled(text)
-				&& Type.isObjectLike(sender)
-				&& this.getPhoneById(toPhoneId)
-				&& Type.isStringFilled(fromPhoneId)
-			);
+			if (!Type.isObjectLike(sender) || !this.getPhoneById(toPhoneId))
+			{
+				return false;
+			}
+
+			if (this.isSenderTemplatesBased())
+			{
+				return (this.getCurrentTemplate() && Type.isNumber(fromPhoneId));
+			}
+
+			return 	(Type.isStringFilled(text) && Type.isStringFilled(fromPhoneId));
 		}
 
 		send()
 		{
 			return new Promise((resolve, reject) => {
-				const { text, sender, toPhoneId, fromPhoneId, entityTypeId, entityId } = this.state;
+				const { text, sender, toPhoneId, fromPhoneId, entityTypeId, entityId, templateId } = this.state;
 				const phone = this.getPhoneById(toPhoneId);
+				const template = this.getCurrentTemplate();
 
 				const data = {
 					ownerTypeId: this.entity.typeId,
 					ownerId: this.entity.id,
 					params: {
+						entityTypeId,
+						entityId,
 						senderId: sender.id,
 						from: fromPhoneId,
 						to: phone.value,
-						body: text,
-						entityTypeId,
-						entityId,
+						body: template ? template.PREVIEW : text,
+						template: template ? template.ID : null,
 					},
 				};
 
@@ -673,6 +1039,7 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			justifyContent: 'space-between',
 		},
 		clientSelector: {
+			paddingTop: 2,
 			paddingHorizontal: 4,
 			flex: 1,
 		},
@@ -688,10 +1055,45 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			width: 20,
 			height: 20,
 		},
-		textFieldContainer: {
+		bodyContainer: {
 			paddingTop: 9,
 			flex: 1,
 			marginHorizontal: 2,
+			paddingBottom: 9,
+		},
+		templateContainer: {
+			padding: 18,
+			borderWidth: 1.4,
+			borderRadius: 12,
+			borderColor: '#DFE0E3',
+		},
+		templateTitleContainer: {
+			flexDirection: 'row',
+			justifyContent: 'space-between',
+			alignContent: 'center',
+			borderBottomWidth: 1,
+			borderBottomColor: '#828B95',
+			paddingBottom: 10,
+			marginBottom: 10,
+		},
+		templateTitleLabel: {
+			fontSize: 14,
+			color: '#828B95',
+		},
+		templateTitle: {
+			fontSize: 18,
+			color: '#6A737F',
+			marginTop: 4,
+		},
+		templateSelectorIcon: {
+			marginRight: 4,
+			width: 23,
+			height: 22,
+			alignSelf: 'center',
+		},
+		templatePreview: {
+			color: '#828B95',
+			fontSize: 14,
 		},
 		textFieldCorner: {
 			width: 15,

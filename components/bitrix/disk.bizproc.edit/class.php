@@ -376,7 +376,7 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 			header("HTTP/1.1 200 OK");
 			header("Content-Type: application/force-download; name=\"bp-".$this->arResult['ID'].".bpt\"");
 			header("Content-Transfer-Encoding: binary");
-			header("Content-Length: ".(function_exists('mb_strlen')? mb_strlen($datum, 'ISO-8859-1') : mb_strlen($datum)));
+			header("Content-Length: " . strlen($datum));
 			header("Content-Disposition: attachment; filename=\"bp-".$this->arResult['ID'].".bpt\"");
 			header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
 			header("Expires: 0");

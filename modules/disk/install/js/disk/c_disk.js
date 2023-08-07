@@ -1,8 +1,7 @@
 BX.namespace("BX.Disk");
 if(!BX.Disk.pathToUser)
 {
-	BX.Disk = (function ()
-	{
+	(function () {
 		var firstButtonInModalWindow = null;
 		var entityToNewShared = {};
 		var moduleTasks = {};
@@ -171,7 +170,7 @@ if(!BX.Disk.pathToUser)
 			return config;
 		}
 
-		return	{
+		Object.assign(BX.Disk, {
 			apiVersion: 22,
 			pathToUser: '/company/personal/user/#user_id#/',
 			endEditSession: function(session)
@@ -987,7 +986,6 @@ if(!BX.Disk.pathToUser)
 					right: right
 				};
 
-				console.log('params', params);
 				function pseudoCompareTaskName(taskName1, taskName2)
 				{
 					var taskName1Pos;
@@ -1608,7 +1606,6 @@ if(!BX.Disk.pathToUser)
 					}
 				);
 			}
-		}
-
+		});
 	})();
 }

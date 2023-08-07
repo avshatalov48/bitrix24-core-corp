@@ -30,6 +30,7 @@ jn.define('crm/timeline/stream/utils/item-position-calculator', (require, export
 				}
 				offset += exported.length;
 			}
+
 			return -1;
 		}
 	}

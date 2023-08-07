@@ -4,7 +4,6 @@ use Bitrix\Disk\Document\OnlyOffice\Bitrix24Scenario;
 use Bitrix\Disk\Document\OnlyOffice\ExporterBitrix24Scenario;
 use Bitrix\Main\UI\Extension;
 
-
 \Bitrix\Main\Loader::registerAutoLoadClasses(
 	"disk",
 	array(
@@ -196,10 +195,17 @@ CJSCore::RegisterExt('disk_folder_tree', array(
 	'rel' => array('disk',),
 ));
 
-CJSCore::RegisterExt('disk_external_loader', array(
+CJSCore::RegisterExt('disk_external_loader', [
 	'js' => '/bitrix/js/disk/external_loader.js',
-	'rel' => array('core', 'disk', 'disk_queue'),
-));
+	'rel' => [
+		'core',
+		'disk',
+		'disk_queue',
+		// Some components add disk.uf.file/templates/.default/script.js directly
+		// script.js contains BX.Disk.UF.add - compatibility API
+		'ui.uploader.core',
+	],
+]);
 
 CJSCore::RegisterExt('disk_information_popups', array(
 	'js' => '/bitrix/js/disk/information_popups.js',

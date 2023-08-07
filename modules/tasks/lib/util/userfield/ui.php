@@ -39,10 +39,6 @@ abstract class UI
 	{
 		if(isset($field['EDIT_IN_LIST']) && $field['EDIT_IN_LIST'] === 'Y')
 		{
-			$parameters['CALLBACK_BEFORE'] = [
-				'openDialog' => 'BX.Tasks.handleOpenCrmDialog',
-				'context' => 'BX.Tasks',
-			];
 			static::showUI('bitrix:system.field.edit', $field, $parameters, $component);
 		}
 		else

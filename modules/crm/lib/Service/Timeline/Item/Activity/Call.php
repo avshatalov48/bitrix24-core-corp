@@ -3,22 +3,24 @@
 namespace Bitrix\Crm\Service\Timeline\Item\Activity;
 
 use Bitrix\Crm\Activity\StatisticsMark;
-use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Crm\Format\Duration;
+use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Timeline\Config;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
 use Bitrix\Crm\Service\Timeline\Layout;
-use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Redirect;
 use Bitrix\Crm\Service\Timeline\Layout\Action\ShowMenu;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Audio;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Client;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ClientMark;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockWithTitle;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Layout\Footer\Button;
 use Bitrix\Crm\Service\Timeline\Layout\Footer\IconButton;
 use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
@@ -185,7 +187,7 @@ class Call extends Activity
 			;
 		}
 
-		$clientBlockOptions = self::BLOCK_WITH_FORMATTED_VALUE | self::BLOCK_WITH_FIXED_TITLE;
+		$clientBlockOptions = Client::BLOCK_WITH_FORMATTED_VALUE | Client::BLOCK_WITH_FIXED_TITLE;
 		$clientBlock = $this->buildClientBlock($clientBlockOptions);
 		if (isset($clientBlock))
 		{
@@ -217,13 +219,13 @@ class Call extends Activity
 			$audio = (new Audio())->setId($this->getAssociatedEntityModel()->get('ID'))->setSource($recordUrls[0]);
 			if (isset($clientBlock))
 			{
-				$title = $clientBlock->getContentBlock() ? $clientBlock->getContentBlock()->getValue() : null;
-				if ($title !== null)
+				$communication = $this->getAssociatedEntityModel()->get('COMMUNICATION') ?? [];
+				$title = (new Client($communication, $clientBlockOptions))->getName();
+				if (!empty($title))
 				{
 					$audio->setTitle($title);
 				}
 
-				$communication = $this->getAssociatedEntityModel()->get('COMMUNICATION') ?? [];
 				if (isset($communication['ENTITY_TYPE_ID']) && $communication['ENTITY_TYPE_ID'] === CCrmOwnerType::Contact)
 				{
 					$photo = Container::getInstance()->getContactBroker()->getById($communication['ENTITY_ID'])['PHOTO'];
@@ -672,7 +674,7 @@ class Call extends Activity
 		return array_values(
 			array_filter(
 				$files,
-				fn($row) => in_array(GetFileExtension(mb_strtolower($row['NAME'])), self::ALLOWED_AUDIO_EXTENSIONS)
+				fn($row) => in_array(GetFileExtension(mb_strtolower($row['NAME'])), Config::ALLOWED_AUDIO_EXTENSIONS)
 			)
 		);
 	}

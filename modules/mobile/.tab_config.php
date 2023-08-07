@@ -1,7 +1,9 @@
 <?php
 
 use Bitrix\Main\EventManager;
+use Bitrix\Mobile\AppTabs\CrmCustomSectionFactory;
 use Bitrix\MobileApp\Mobile;
+
 Mobile::Init();
 
 $config = [
@@ -17,6 +19,7 @@ $config = [
 		['code' => 'catalog_store', 'class' => \Bitrix\Mobile\AppTabs\CatalogStore::class],
 		['code' => 'projects', 'class' => \Bitrix\Mobile\AppTabs\Projects::class],
 		['code' => 'calendar', 'class' => \Bitrix\Mobile\AppTabs\Calendar::class],
+		['code' => 'crmCustomSectionFactory', 'class' => CrmCustomSectionFactory::class],
 	],
 	'required' => [
 		'chat' => 100,

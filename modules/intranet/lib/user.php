@@ -8,9 +8,11 @@
 
 namespace Bitrix\Intranet;
 
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Entity\ExpressionField;
+use Bitrix\Main\UserAccessTable;
 
 /**
  * Class UserTable
@@ -158,5 +160,82 @@ class UserTable extends \Bitrix\Main\UserTable
 			"CASE WHEN %s = 'employee' THEN 1 ELSE 0 END",
 			'USER_TYPE_INNER'
 		));
+	}
+}
+
+class User
+{
+	private CurrentUser $currentUser;
+	private int $userId;
+	private ?array $fields;
+
+	/**
+	 * @throws ArgumentOutOfRangeException
+	 */
+	public function __construct(?int $userId)
+	{
+		if ($userId <= 0)
+		{
+			throw new ArgumentOutOfRangeException('userId', 1);
+		}
+		$this->currentUser = CurrentUser::get();
+		$this->userId = $userId;
+	}
+
+	public function isIntranet(): bool
+	{
+		if ($this->isAdmin())
+		{
+			return true;
+		}
+
+		return $this->hasAccessToDepartment();
+	}
+
+	public function hasAccessToDepartment(): bool
+	{
+		$accessManager = new \CAccess;
+		$accessManager->UpdateCodes(['USER_ID' => $this->userId]);
+
+		$accessResult = UserAccessTable::query()
+			->where('USER_ID', $this->userId)
+			->whereLike('ACCESS_CODE', 'D%')
+			->whereNotLike('ACCESS_CODE', 'DR%')
+			->setLimit(1)
+			->setCacheTtl(3600)
+			->fetch();
+
+		return !($accessResult === false);
+	}
+
+	public function isAdmin(): bool
+	{
+		if ($this->currentUser->getId() === $this->userId)
+		{
+			return (
+					Loader::includeModule('bitrix24')
+					&& \CBitrix24::IsPortalAdmin($this->userId)
+				)
+				|| $this->currentUser->isAdmin();
+		}
+		else
+		{
+			$groupIds = (new \CUser())->GetUserGroup($this->userId);
+
+			return in_array(1, $groupIds);
+		}
+	}
+
+	private function getFields(): array
+	{
+		if (is_array($this->fields))
+		{
+			return $this->fields;
+		}
+		else
+		{
+			$result = \CUser::GetById($this->userId)->fetch();
+			$this->fields = is_array($result) ? $result : null;
+		}
 	}
 }

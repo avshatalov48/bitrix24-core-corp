@@ -234,7 +234,11 @@ class Requisite extends BaseRequisite
 	 */
 	protected function getNameDataFromString($name)
 	{
-		[$lastName, $firstName, $secondName] = explode(' ', $name);
+		$nameParts = explode(' ', $name);
+		$lastName = $nameParts[0] ?? '';
+		$firstName = $nameParts[1] ?? '';
+		$secondName = $nameParts[2] ?? '';
+
 		if(!empty($firstName) && !empty($secondName))
 		{
 			return [

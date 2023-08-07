@@ -25,7 +25,7 @@ class EntityManagerRegistry
 	 */
 	public static function getWithCall(Call $call)
 	{
-		if(static::$instances[$call->getCallId()])
+		if(isset(static::$instances[$call->getCallId()]))
 		{
 			return static::$instances[$call->getCallId()];
 		}
@@ -64,8 +64,9 @@ class EntityManagerRegistry
 			$facilityInstance->getSelector()->appendPhoneCriterion($call->getCallerId());
 
 			$config = $call->getConfig();
+			$portalMode = $config['PORTAL_MODE'] ?? null;
 
-			if($config['PORTAL_MODE'] !== \CVoxImplantConfig::MODE_SIP)
+			if($portalMode !== \CVoxImplantConfig::MODE_SIP)
 			{
 				$portalNumber = $call->getPortalNumber();
 				if(mb_substr($portalNumber, 0, 1) != '+')

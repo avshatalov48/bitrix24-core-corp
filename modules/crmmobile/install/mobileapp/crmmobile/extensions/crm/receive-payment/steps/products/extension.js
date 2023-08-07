@@ -105,7 +105,6 @@ jn.define('crm/receive-payment/steps/products', (require, exports, module) => {
 				new ProductGrid({
 					...grid,
 					showFloatingButton: !resendMessageMode,
-					showSummaryTax: false,
 					uid: this.uid,
 					editable: !resendMessageMode,
 				}),

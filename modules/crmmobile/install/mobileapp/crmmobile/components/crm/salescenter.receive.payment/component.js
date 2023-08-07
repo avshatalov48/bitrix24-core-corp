@@ -151,6 +151,7 @@
 
 			if (this.resendMessageMode)
 			{
+				wizard.openStepWidget('paySystems');
 				wizard.openStepWidget('sendMessage');
 				if (this.document.TYPE === 'PAYMENT')
 				{

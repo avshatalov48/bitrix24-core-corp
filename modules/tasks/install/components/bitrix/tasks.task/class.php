@@ -2999,13 +2999,24 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			$itemService = new Tasks\Scrum\Service\ItemService();
 			$epicService = new Tasks\Scrum\Service\EpicService();
 
-			$scrumItem = $itemService->getItemBySourceId($this->task->getId());
-			if ($scrumItem->getId())
+			if ($this->formData !== false)
 			{
-				$epic = $epicService->getEpic($scrumItem->getEpicId());
+				$epic = $epicService->getEpic($data['DATA']['EPIC']);
 				if ($epic->getId())
 				{
 					$this->arResult['DATA']['SCRUM']['EPIC'] = $epic->toArray();
+				}
+			}
+			else
+			{
+				$scrumItem = $itemService->getItemBySourceId($this->task->getId());
+				if ($scrumItem->getId())
+				{
+					$epic = $epicService->getEpic($scrumItem->getEpicId());
+					if ($epic->getId())
+					{
+						$this->arResult['DATA']['SCRUM']['EPIC'] = $epic->toArray();
+					}
 				}
 			}
 		}
@@ -3332,6 +3343,8 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		$this->arResult['DATA']['TASK'] = $data['DATA'];
 		$this->arResult['CAN']['TASK'] = $data['CAN'];
 		$this->arResult['CAN_SHOW_MOBILE_QR_POPUP'] = $this->canShowMobileQrPopup($this->arResult['DATA']['TASK']);
+		$this->arResult['CAN_SHOW_AI_TEXT_BUTTON'] = $this->canShowAITextButton();
+		$this->arResult['CAN_SHOW_AI_IMAGE_BUTTON'] = $this->canShowAIImageButton();
 
 		$this->arResult['COMPONENT_DATA']['IM_CHAT_ID'] = 0;
 		$this->arResult['COMPONENT_DATA']['IM_MESSAGE_ID'] = 0;
@@ -4321,12 +4334,22 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		if (
 			isset($task['SCENARIO_NAME'])
 			&& $task['SCENARIO_NAME'] === Tasks\Internals\Task\ScenarioTable::SCENARIO_MOBILE
-			&& !(new Tasks\Provider\Mobile())->isMobileAppInstalled()
+			&& !(new UserOption\Mobile())->isMobileAppInstalled()
 		)
 		{
 			return true;
 		}
 
 		return false;
+	}
+
+	private function canShowAITextButton(): bool
+	{
+		return (new Integration\AI\Restriction\Text())->isAvailable();
+	}
+
+	private function canShowAIImageButton(): bool
+	{
+		return (new Integration\AI\Restriction\Image())->isAvailable();
 	}
 }

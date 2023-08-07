@@ -543,7 +543,7 @@ class Settings
 
 	/**
 	 * Returns ids of activity providers that should be autocompleted.
-	 * Empty array as result means that specific ids were not given and all possible providers will be used.
+	 * Empty array as result means that no activities will be completed.
 	 *
 	 * @return string[]
 	 */

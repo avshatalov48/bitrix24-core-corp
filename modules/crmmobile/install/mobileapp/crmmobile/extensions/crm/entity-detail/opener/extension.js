@@ -3,6 +3,7 @@
  */
 jn.define('crm/entity-detail/opener', (require, exports, module) => {
 	const { Alert } = require('alert');
+	const { Feature } = require('feature');
 	const { NotifyManager } = require('notify-manager');
 	const { EntitySvg } = require('crm/assets/entity');
 	const { getEntityMessage } = require('crm/loc');
@@ -37,6 +38,11 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 		{
 			widgetParams = mergeImmutable(this.getModalWidgetParams(), widgetParams);
 
+			if (EntityDetailOpener.isBackdropEnabled())
+			{
+				payload.backdropEnabled = true;
+			}
+
 			const { entityTypeId } = payload;
 
 			this
@@ -67,7 +73,7 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 		 */
 		static getModalWidgetParams()
 		{
-			return {
+			const params = {
 				modal: true,
 				backgroundColor: '#f5f7f8',
 				leftButtons: [{
@@ -78,6 +84,32 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 					isCloseButton: true,
 				}],
 			};
+
+			if (EntityDetailOpener.isBackdropEnabled())
+			{
+				params.backdrop = {
+					onlyMediumPosition: true,
+					forceDismissOnSwipeDown: true,
+					mediumPositionPercent: 90,
+					swipeAllowed: true,
+					swipeContentAllowed: false,
+					horizontalSwipeAllowed: false,
+					hideNavigationBar: false,
+					navigationBarColor: '#f5f7f8',
+				};
+			}
+
+			return params;
+		}
+
+		static isBackdropEnabled()
+		{
+			if (!Feature.isPreventBottomSheetDismissSupported())
+			{
+				return false;
+			}
+
+			return Application.storageById('crm/entity-detail/feature/').getBoolean('backdropEnabled', false);
 		}
 
 		/**
@@ -265,6 +297,7 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 						if (entity && entity.supported && !entity.restricted)
 						{
 							this.resolveEntity(entity, resolve, reject);
+
 							return;
 						}
 

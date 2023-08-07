@@ -5,6 +5,7 @@ jn.define('crm/communication/floating-button', (require, exports, module) => {
 	const { HideOnScrollAnimator } = require('animation/hide-on-scroll');
 	const { CommunicationButton } = require('crm/communication/button');
 	const { Feature } = require('feature');
+	const { Type } = require('crm/type');
 	const { isEmpty, isEqual } = require('utils/object');
 
 	const isIOS = Application.getPlatform() === 'ios';
@@ -35,6 +36,11 @@ jn.define('crm/communication/floating-button', (require, exports, module) => {
 			};
 		}
 
+		componentDidUpdate()
+		{
+			this.isShow();
+		}
+
 		componentDidMount()
 		{
 			if (isIOS && Feature.isKeyboardEventsSupported())
@@ -42,6 +48,8 @@ jn.define('crm/communication/floating-button', (require, exports, module) => {
 				Keyboard.on(Keyboard.Event.WillShow, () => this.hide(true));
 				Keyboard.on(Keyboard.Event.WillHide, () => this.show(true));
 			}
+
+			this.isShow();
 		}
 
 		setUid(uid)
@@ -168,13 +176,24 @@ jn.define('crm/communication/floating-button', (require, exports, module) => {
 			return deviceCenter - buttonCenter;
 		}
 
+		isShow()
+		{
+			const { ownerInfo, clientOptions } = this.state;
+			if (Type.isDynamicTypeByName(ownerInfo.ownerTypeName) && Object.keys(clientOptions).length === 0)
+			{
+				this.hide();
+			}
+		}
+
 		render()
 		{
 			const { value, ownerInfo, clientOptions } = this.state;
 
 			return new CommunicationButton({
 				...this.props,
-				viewRef: (ref) => this.buttonRef = ref,
+				viewRef: (ref) => {
+					this.buttonRef = ref;
+				},
 				testId,
 				value,
 				ownerInfo,

@@ -2,9 +2,9 @@
  * @module tasks/task/datesResolver
  */
 jn.define('tasks/task/datesResolver', (require, exports, module) => {
-	const {CalendarSettings} = require('tasks/task/calendar');
-	const {EventEmitter} = require('event-emitter');
-	const {Type} = require('type');
+	const { CalendarSettings } = require('tasks/task/calendar');
+	const { EventEmitter } = require('event-emitter');
+	const { Type } = require('type');
 
 	class DatesResolver
 	{
@@ -32,7 +32,7 @@ jn.define('tasks/task/datesResolver', (require, exports, module) => {
 			this.durationType = DatesResolver.durationType.days;
 
 			this.isSolving = false;
-			this.maxDuration = 2147483647;
+			this.maxDuration = 2_147_483_647;
 
 			this.eventEmitter = EventEmitter.createWithUid(this.guid);
 			this.setInitialDuration();
@@ -193,17 +193,18 @@ jn.define('tasks/task/datesResolver', (require, exports, module) => {
 		{
 			if (this.isMatchWorkTime && !this.calendar.isWorkTime(date))
 			{
-				date = this.calendar.getClosestWorkTime(date, true);
+				return this.calendar.getClosestWorkTime(date, true);
 			}
 
 			return date;
 		}
 
+		// eslint-disable-next-line sonarjs/no-identical-functions
 		fixStartDate(date)
 		{
 			if (this.isMatchWorkTime && !this.calendar.isWorkTime(date))
 			{
-				date = this.calendar.getClosestWorkTime(date, true);
+				return this.calendar.getClosestWorkTime(date, true);
 			}
 
 			return date;
@@ -213,7 +214,7 @@ jn.define('tasks/task/datesResolver', (require, exports, module) => {
 		{
 			if (this.isMatchWorkTime && !this.calendar.isWorkTime(date))
 			{
-				date = this.calendar.getClosestWorkTime(date, false);
+				return this.calendar.getClosestWorkTime(date, false);
 			}
 
 			return date;
@@ -225,10 +226,8 @@ jn.define('tasks/task/datesResolver', (require, exports, module) => {
 			{
 				return this.calendar.calculateStartDate(endDate, duration);
 			}
-			else
-			{
-				return new Date(endDate.getTime() - duration);
-			}
+
+			return new Date(endDate.getTime() - duration);
 		}
 
 		calculateEndDate(startDate, duration)
@@ -237,10 +236,8 @@ jn.define('tasks/task/datesResolver', (require, exports, module) => {
 			{
 				return this.calendar.calculateEndDate(startDate, duration);
 			}
-			else
-			{
-				return new Date(startDate.getTime() + duration);
-			}
+
+			return new Date(startDate.getTime() + duration);
 		}
 
 		calculateDuration(startDate, endDate)
@@ -495,11 +492,11 @@ jn.define('tasks/task/datesResolver', (require, exports, module) => {
 
 		getDurationInSeconds(durationType, durationByType)
 		{
-			durationByType = parseInt(durationByType, 10);
+			const numberedDurationByType = parseInt(durationByType, 10);
 
-			if (Type.isNumber(durationByType) && durationByType > 0)
+			if (Type.isNumber(numberedDurationByType) && numberedDurationByType > 0)
 			{
-				return (this.getMultiplier(durationType) * durationByType);
+				return (this.getMultiplier(durationType) * numberedDurationByType);
 			}
 
 			return 0;
@@ -523,5 +520,5 @@ jn.define('tasks/task/datesResolver', (require, exports, module) => {
 		}
 	}
 
-	module.exports = {DatesResolver};
+	module.exports = { DatesResolver };
 });

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Model;
 
+use Bitrix\Crm\Service\Timeline\Config;
 use Bitrix\Crm\Service\Timeline\Layout\Base;
 use Bitrix\Main\UI\Viewer\ItemAttributes;
 use Bitrix\Main\Web\Json;
@@ -73,6 +74,11 @@ class File extends Base
 		return $this->attributes;
 	}
 
+	public function isAudio(): bool
+	{
+		return in_array($this->extension, Config::ALLOWED_AUDIO_EXTENSIONS, true);
+	}
+
 	public function toArray(): array
 	{
 		return [
@@ -84,6 +90,7 @@ class File extends Base
 			'previewUrl' => $this->getPreviewUrl(),
 			'attributes' => $this->getAttributes(),
 			'extension' => $this->getExtension(),
+			'hasAudioPlayer' => $this->isAudio(),
 		];
 	}
 

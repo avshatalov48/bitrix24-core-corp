@@ -46,16 +46,16 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 				//user's department ('D') and all departments above ('DR')
 				$DB->Query("
 					INSERT INTO b_user_access (USER_ID, PROVIDER_ID, ACCESS_CODE)
-					SELECT ".$USER_ID.", '".$DB->ForSQL($this->id)."', ".$DB->Concat("T1.ROLE", ($DB->type == "MSSQL" ? "CAST(T1.ID as varchar(17))": "T1.ID"))."
+					SELECT ".$USER_ID.", '".$DB->ForSQL($this->id)."', ".$DB->Concat("T1.ROLE_X", ($DB->type == "MSSQL" ? "CAST(T1.ID as varchar(17))": "T1.ID"))."
 					FROM (
-						SELECT DISTINCT BS2.ID ID, (case when BS.ID = BS2.ID then 'D' else 'DR' end) ROLE
+						SELECT DISTINCT BS2.ID ID, (case when BS.ID = BS2.ID then 'D' else 'DR' end) ROLE_X
 						FROM b_iblock_section BS
 							LEFT JOIN b_iblock_section BS2 ON BS2.IBLOCK_ID = BS.IBLOCK_ID AND BS2.LEFT_MARGIN <= BS.LEFT_MARGIN AND BS2.RIGHT_MARGIN >= BS.RIGHT_MARGIN
 						WHERE BS.ID IN (".implode(",", $arDep).")
 							AND BS.IBLOCK_ID = ".$iblockId."
 							AND BS2.GLOBAL_ACTIVE = 'Y'
 						UNION
-						SELECT BS.ID ID, 'DR' ROLE
+						SELECT BS.ID ID, 'DR' ROLE_X
 						FROM b_iblock_section BS
 						WHERE BS.ID IN (".implode(",", $arDep).")
 							AND BS.IBLOCK_ID = ".$iblockId."

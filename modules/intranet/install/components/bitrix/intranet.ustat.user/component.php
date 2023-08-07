@@ -3,7 +3,7 @@
 use Bitrix\Main\Type;
 
 /** @var $arParams array */
-/** @var $USER CAllUser */
+/** @var $USER CUser */
 
 CModule::IncludeModule('intranet');
 

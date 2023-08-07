@@ -20,6 +20,7 @@ jn.define('crm/tunnel-list/item/delay-interval', (require, exports, module) => {
 		{
 			this.basis = DelayIntervalBasis.CurrentDateTime;
 			this.type = DelayIntervalType.After;
+			this.basisName = '';
 			this.value = 0;
 			this.valueType = 'i';
 			this.workTime = false;
@@ -54,6 +55,11 @@ jn.define('crm/tunnel-list/item/delay-interval', (require, exports, module) => {
 				if (params.localTime)
 				{
 					this.setLocalTime(params.localTime);
+				}
+
+				if (params.basisName)
+				{
+					this.setBasisName(params.basisName);
 				}
 			}
 		}
@@ -97,12 +103,17 @@ jn.define('crm/tunnel-list/item/delay-interval', (require, exports, module) => {
 
 		setWorkTime(flag)
 		{
-			this.workTime = !!flag;
+			this.workTime = Boolean(flag);
 		}
 
 		setLocalTime(flag)
 		{
-			this.localTime = !!flag;
+			this.localTime = Boolean(flag);
+		}
+
+		setBasisName(name)
+		{
+			this.basisName = name;
 		}
 	}
 

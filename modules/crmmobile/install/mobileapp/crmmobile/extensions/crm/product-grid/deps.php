@@ -26,8 +26,7 @@ return [
 		'loc',
 		'utils/error-notifier',
 		'rest',
-		'catalog/barcode-scanner',
-		'catalog/store/events',
+		'catalog:barcode-scanner',
 		'analytics-label',
 	],
 ];

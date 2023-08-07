@@ -211,3 +211,4 @@ DROP TABLE IF EXISTS b_crm_timeline_custom_icon;
 DROP TABLE IF EXISTS b_crm_timeline_custom_logo;
 DROP TABLE IF EXISTS b_crm_field_content_type;
 DROP TABLE IF EXISTS b_crm_act_counter_light;
+DROP TABLE IF EXISTS b_crm_webform_limit;

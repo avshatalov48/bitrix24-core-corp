@@ -819,15 +819,10 @@ elseif($action === 'SAVE')
 				);
 			}
 
-			$fields = Crm\Entity\FieldContentType::prepareFieldsFromDetailsToSave(\CCrmOwnerType::Deal, $ID, $fields);
-
 			Tracking\UI\Details::appendEntityFieldValue($fields, $_POST);
 
 			$entity = new \CCrmDeal(!CCrmPerms::IsAdmin());
-			$saveOptions = array_merge(
-				Crm\Entity\FieldContentType::prepareSaveOptionsForDetails(\CCrmOwnerType::Deal, $ID),
-				['REGISTER_SONET_EVENT' => true],
-			);
+			$saveOptions = ['REGISTER_SONET_EVENT' => true];
 			if(!$enableRequiredUserFieldCheck)
 			{
 				$saveOptions['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;

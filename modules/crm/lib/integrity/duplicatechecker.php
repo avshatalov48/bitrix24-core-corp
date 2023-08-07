@@ -298,7 +298,7 @@ abstract class DuplicateChecker
 			// gather values
 			foreach ($allRequisites as $requisiteFields)
 			{
-				if (is_array($requisiteFields['BD']) && !empty($requisiteFields['BD']))
+				if (isset($requisiteFields['BD']) && is_array($requisiteFields['BD']) && !empty($requisiteFields['BD']))
 				{
 					$presetId = 0;
 					if (isset($requisiteFields['PRESET_ID']) && $requisiteFields['PRESET_ID'] > 0)

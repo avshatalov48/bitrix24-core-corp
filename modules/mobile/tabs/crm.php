@@ -31,16 +31,7 @@ class Crm implements Tabable
 			return false;
 		}
 
-		$userPermissions = Container::getInstance()->getUserPermissions();
-
-		return (
-			$userPermissions->checkReadPermissions(\CCrmOwnerType::Lead)
-			|| $userPermissions->checkReadPermissions(\CCrmOwnerType::Deal)
-			|| $userPermissions->checkReadPermissions(\CCrmOwnerType::Contact, 0, 0)
-			|| $userPermissions->checkReadPermissions(\CCrmOwnerType::Company, 0, 0)
-			|| $userPermissions->checkReadPermissions(\CCrmOwnerType::Quote)
-			|| $userPermissions->checkReadPermissions(\CCrmOwnerType::SmartInvoice)
-		);
+		return \CCrmPerms::IsAccessEnabled();
 	}
 
 	public function getData(): ?array
@@ -131,5 +122,10 @@ class Crm implements Tabable
 	public function getId(): string
 	{
 		return 'crm';
+	}
+
+	public function getIconId(): string
+	{
+		return $this->getId();
 	}
 }

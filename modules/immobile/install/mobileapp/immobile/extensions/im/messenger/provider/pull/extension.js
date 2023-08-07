@@ -1,14 +1,9 @@
-/* eslint-disable bitrix-rules/no-pseudo-private */
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-bx-message */
-
 /**
  * @module im/messenger/provider/pull
  */
 jn.define('im/messenger/provider/pull', (require, exports, module) => {
-
 	const { MessagePullHandler } = require('im/messenger/provider/pull/message');
+	const { FilePullHandler } = require('im/messenger/provider/pull/file');
 	const { DialogPullHandler } = require('im/messenger/provider/pull/dialog');
 	const { UserPullHandler } = require('im/messenger/provider/pull/user');
 	const { DesktopPullHandler } = require('im/messenger/provider/pull/desktop');
@@ -17,6 +12,7 @@ jn.define('im/messenger/provider/pull', (require, exports, module) => {
 
 	module.exports = {
 		MessagePullHandler,
+		FilePullHandler,
 		DialogPullHandler,
 		UserPullHandler,
 		DesktopPullHandler,

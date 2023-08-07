@@ -1,25 +1,21 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-pseudo-private */
-
 /**
  * @module im/messenger/provider/service/chat
  */
 jn.define('im/messenger/provider/service/chat', (require, exports, module) => {
-
+	const { core } = require('im/messenger/core');
 	const { LoadService } = require('im/messenger/provider/service/classes/chat/load');
 	const { ReadService } = require('im/messenger/provider/service/classes/chat/read');
+	const { MuteService } = require('im/messenger/provider/service/classes/chat/mute');
 
 	/**
 	 * @class ChatService
 	 */
 	class ChatService
 	{
-		constructor(store)
+		constructor()
 		{
-			this.store = store;
-
-			this._initServices();
+			this.store = core.getStore();
+			this.initServices();
 		}
 
 		loadChatWithMessages(dialogId)
@@ -32,10 +28,24 @@ jn.define('im/messenger/provider/service/chat', (require, exports, module) => {
 			this.readService.readMessage(chatId, messageId);
 		}
 
-		_initServices()
+		muteChat(dialogId)
+		{
+			this.muteService.muteChat(dialogId);
+		}
+
+		unmuteChat(dialogId)
+		{
+			this.muteService.unmuteChat(dialogId);
+		}
+
+		/**
+		 * @private
+		 */
+		initServices()
 		{
 			this.loadService = new LoadService(this.store);
 			this.readService = new ReadService(this.store);
+			this.muteService = new MuteService(this.store);
 		}
 	}
 

@@ -7,6 +7,7 @@ import "../css/basket.css";
 import "../css/form.css";
 import "../css/state.css";
 import "../css/button.css";
+import "../css/progressbar.css"
 
 export {
 	Form,

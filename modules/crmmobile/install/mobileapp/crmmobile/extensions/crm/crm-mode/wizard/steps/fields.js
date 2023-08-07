@@ -4,7 +4,7 @@
 jn.define('crm/crm-mode/wizard/steps/fields', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { WizardStep } = require('layout/ui/wizard/step');
-	const { ConversionWizardLandingLayout } = require('crm/conversion/wizard/landing');
+	const { ConversionWizardFieldsLayout } = require('crm/conversion/wizard/layouts');
 	const FIELDS = 'fields';
 
 	/**
@@ -34,7 +34,7 @@ jn.define('crm/crm-mode/wizard/steps/fields', (require, exports, module) => {
 
 		createLayout()
 		{
-			return new ConversionWizardLandingLayout(this.props);
+			return new ConversionWizardFieldsLayout(this.props);
 		}
 	}
 

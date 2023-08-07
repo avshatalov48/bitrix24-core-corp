@@ -17,6 +17,7 @@ $MESS['DOCGEN_TEMPLATE_UPD_RU_NAME'] = 'Универсальный переда�
 $MESS['DOCGEN_TEMPLATE_STORE_DOC_STORE_ADJUSTMENT_RU_NAME'] = 'Акт об оприходовании запасов (Россия)';
 $MESS['DOCGEN_TEMPLATE_STORE_DOC_ARRIVAL_RU_NAME'] = 'Приходная накладная (Россия)';
 $MESS['DOCGEN_TEMPLATE_STORE_DOC_MOVING_RU_NAME'] = 'Накладная о внутреннем перемещении (Россия)';
+$MESS['DOCGEN_TEMPLATE_STORE_DOC_DEDUCT_RU_NAME'] = 'Акт о списании товаров (Россия)';
 $MESS['DOCGEN_TEMPLATE_SHIPMENT_DOC_REALIZATION_RU_NAME'] = 'Реализация товаров (Россия)';
 $MESS['DOCGEN_TEMPLATE_EDM_AGREEMENT_IND_RU_NAME'] = 'Соглашение ЭДО ФЛ (Россия)';
 $MESS['DOCGEN_TEMPLATE_EDM_AGREEMENT_ORG_RU_NAME'] = 'Соглашение ЭДО ЮЛ (Россия)';

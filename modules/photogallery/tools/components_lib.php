@@ -250,8 +250,8 @@ class CPGalleryInterface
 
 					$arUserFields = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFields("IBLOCK_".$this->IBlockID."_SECTION", $arSection["ID"], LANGUAGE_ID);
 					$arSection["USER_FIELDS"] = $arUserFields;
-					$arSection["DATE"] = $arSection["~DATE"] = $arUserFields["UF_DATE"];
-					$arSection["~PASSWORD"] = $arUserFields["UF_PASSWORD"];
+					$arSection["DATE"] = $arSection["~DATE"] = $arUserFields["UF_DATE"] ?? null;
+					$arSection["~PASSWORD"] = $arUserFields["UF_PASSWORD"] ?? null;
 					if (is_array($arSection["~PASSWORD"]))
 						$arSection["PASSWORD"] = $arSection["~PASSWORD"]["VALUE"];
 
@@ -262,7 +262,7 @@ class CPGalleryInterface
 					while ($res = $db_res->GetNext())
 					{
 						$arUserFields = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFields("IBLOCK_".$this->IBlockID."_SECTION", $res["ID"], LANGUAGE_ID);
-						$res["~PASSWORD"] = $arUserFields["UF_PASSWORD"];
+						$res["~PASSWORD"] = $arUserFields["UF_PASSWORD"] ?? null;
 						if (is_array($res["~PASSWORD"]))
 							$res["PASSWORD"] = $res["~PASSWORD"]["VALUE"];
 						$arSection["PATH"][$res["ID"]] = $res;
@@ -392,7 +392,7 @@ class CPGalleryInterface
 				if (empty($res["PASSWORD"]))
 					continue;
 
-				if ($res["PASSWORD"] != $_SESSION['PHOTOGALLERY']['SECTION'][$res["ID"]])
+				if ($res["PASSWORD"] != ($_SESSION['PHOTOGALLERY']['SECTION'][$res["ID"]] ?? null))
 				{
 					$password_checked = false;
 					if ($bOutput)

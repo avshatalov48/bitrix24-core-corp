@@ -159,7 +159,7 @@ jn.define('layout/ui/entity-editor/control/product-summary-section', (require, e
 
 		onProductTabContentLoaded()
 		{
-			setTimeout(() => this.customEventEmitter.emit('DetailCard::onAddProductsButtonClick'), 100);
+			setTimeout(() => this.customEventEmitter.emit('DetailCard::onAddProductsButtonClick'), 300);
 			this.customEventEmitter.off('DetailCard::onTabContentLoaded', this.onProductTabContentLoaded);
 		}
 

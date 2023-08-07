@@ -3379,4 +3379,27 @@ class CCrmViewHelper
 
 		return $userInfo;
 	}
+
+	public static function renderObservers(int $entityTypeId, int $entityId, ?array $input): string
+	{
+		if (empty($input))
+		{
+			return '';
+		}
+
+		$entityName = CCrmOwnerType::ResolveName($entityTypeId);
+
+		$result = [];
+		foreach ($input as $index => $row)
+		{
+			$result[] = static::PrepareUserBaloonHtml([
+				'PREFIX' => "{$entityName}_{$entityId}_OBSERVER_{$index}",
+				'USER_ID' => $row['OBSERVER_USER_ID'],
+				'USER_NAME'=> $row['OBSERVER_USER_FORMATTED_NAME'] ?? '',
+				'USER_PROFILE_URL' => $row['OBSERVER_USER_SHOW_URL'] ?? '',
+			]);
+		}
+
+		return implode("\n", $result);
+	}
 }

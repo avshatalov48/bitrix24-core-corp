@@ -53,7 +53,7 @@ class IntranetCustomSectionComponent extends \CBitrixComponent implements \Bitri
 		$this->includeComponentTemplate();
 	}
 
-	protected function getApplication(): \CAllMain
+	protected function getApplication(): CMain
 	{
 		global $APPLICATION;
 

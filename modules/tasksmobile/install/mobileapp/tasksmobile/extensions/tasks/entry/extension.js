@@ -1,13 +1,24 @@
+/**
+ * @module tasks/entry
+ */
 jn.define('tasks/entry', (require, exports, module) => {
-	const {Loc} = require('loc');
-
-	const apiVersion = Application.getApiVersion();
+	const { Loc } = require('loc');
 
 	class Entry
 	{
-		openEfficiency(data)
+		static getGuid()
 		{
-			const {userId, groupId} = data;
+			function s4()
+			{
+				return Math.floor((1 + Math.random()) * 0x10000).toString(16).slice(1);
+			}
+
+			return `${s4() + s4()}-${s4()}-${s4()}-${s4()}-${s4() + s4() + s4()}`;
+		}
+
+		static openEfficiency(data)
+		{
+			const { userId, groupId } = data;
 
 			PageManager.openPage({
 				url: `/mobile/tasks/snmrouter/?routePage=efficiency&USER_ID=${userId}&GROUP_ID=${groupId}`,
@@ -21,28 +32,12 @@ jn.define('tasks/entry', (require, exports, module) => {
 			});
 		}
 
-		openTask(data, params)
+		static openTask(data, params)
 		{
-			if (apiVersion >= 45)
-			{
-				this.openTaskTabsComponent(data, params);
-			}
-			else if (apiVersion >= 31)
-			{
-				this.openTaskComponent(data, params);
-			}
-			else
-			{
-				PageManager.openPage({url: `/mobile/tasks/snmrouter/?routePage=view&TASK_ID=${data.taskId}`});
-			}
-		}
-
-		openTaskTabsComponent(data, params)
-		{
-			const {taskId} = data;
-			const {taskObject, userId, parentWidget} = params;
+			const { taskObject, userId, parentWidget } = params;
+			const taskId = data.id || data.taskId;
 			const defaultTitle = Loc.getMessage('TASKSMOBILE_ENTRY_TASK_DEFAULT_TITLE');
-			const guid = this.getGuid();
+			const guid = Entry.getGuid();
 
 			PageManager.openComponent('JSStackComponent', {
 				name: 'JSStackComponent',
@@ -54,11 +49,11 @@ jn.define('tasks/entry', (require, exports, module) => {
 					settings: {
 						objectName: 'tabs',
 						modal: true,
-						title: (taskObject ? taskObject.title : (data.taskInfo ? data.taskInfo.title : defaultTitle)),
+						title: (taskObject?.title || data.title || data.taskInfo?.title || defaultTitle),
 						grabTitle: false,
 						grabButtons: true,
 						grabSearch: false,
-						tabs: this.getTaskTabs(taskId, guid, taskObject),
+						tabs: Entry.getTaskTabs(taskId, guid, taskObject),
 						leftButtons: [{
 							svg: {
 								content: '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.722 6.79175L10.9495 10.5643L9.99907 11.5L9.06666 10.5643L5.29411 6.79175L3.96289 8.12297L10.008 14.1681L16.0532 8.12297L14.722 6.79175Z" fill="#A8ADB4"/></svg>',
@@ -77,9 +72,9 @@ jn.define('tasks/entry', (require, exports, module) => {
 			}, (parentWidget || null));
 		}
 
-		getTaskTabs(taskId, guid, taskObject)
+		static getTaskTabs(taskId, guid, taskObject)
 		{
-			const tabCounterData = this.getTabCounterData(taskObject);
+			const tabCounterData = Entry.getTabCounterData(taskObject);
 
 			return {
 				items: [
@@ -127,7 +122,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 			};
 		}
 
-		getTabCounterData(task)
+		static getTabCounterData(task)
 		{
 			let expiredCounter = 0;
 			let newCommentsCounter = 0;
@@ -158,82 +153,37 @@ jn.define('tasks/entry', (require, exports, module) => {
 			};
 		}
 
-		openTaskComponent(data, params)
+		static openTaskList(data)
 		{
-			const {taskId, taskInfo} = data;
-			const {userId, taskObject, getTaskInfo} = params;
-			const defaultTitle = Loc.getMessage('TASKSMOBILE_ENTRY_TASK_DEFAULT_TITLE');
-			const guid = this.getGuid();
-
-			PageManager.openComponent('JSStackComponent', {
-				name: 'JSStackComponent',
-				componentCode: 'tasks.view',
-				scriptPath: availableComponents['tasks:tasks.view'].publicUrl,
-				canOpenInDefault: true,
-				rootWidget: {
-					name: 'taskcard',
-					settings: {
-						objectName: 'taskcard',
-						title: defaultTitle,
-						taskInfo,
-						page: {
-							url: `${env.siteDir}mobile/tasks/snmrouter/?routePage=view&TASK_ID=${taskId}&NEW_CARD=Y&GUID=${guid}`,
-							titleParams: {
-								text: defaultTitle,
-							},
-							autoHideLoading: false,
-						},
-					},
-				},
-				params: {
-					COMPONENT_CODE: 'tasks.view',
-					MODE: 'view',
-					TASK_ID: taskId,
-					USER_ID: (userId || env.userId),
-					FORM_ID: 'MOBILE_TASK_VIEW',
-					LANGUAGE_ID: env.languageId,
-					GUID: guid,
-					GET_TASK_INFO: (getTaskInfo || false),
-					TASK_OBJECT: taskObject,
-				},
-			});
-		}
-
-		openTaskList(data)
-		{
-			if (apiVersion < 31)
-			{
-				return;
-			}
-
-			const {siteId, siteDir, languageId, userId} = env;
-
-			data.groupId = (data.groupId || 0);
-			data.ownerId = (data.ownerId || userId);
-			data.getProjectData = (data.getProjectData || true);
+			const { siteId, siteDir, languageId, userId } = env;
+			const extendedData = {
+				...data,
+				groupId: data.groupId || 0,
+				ownerId: data.ownerId || userId,
+				getProjectData: data.getProjectData || true,
+			};
 
 			PageManager.openComponent('JSStackComponent', {
 				componentCode: 'tasks.list',
 				scriptPath: availableComponents['tasks:tasks.list'].publicUrl,
 				canOpenInDefault: true,
-				title: (data.groupName || ''),
+				title: (extendedData.groupName || ''),
 				rootWidget: {
 					name: 'tasks.list',
 					settings: {
-						...{
-							objectName: 'list',
-							useSearch: true,
-							useLargeTitleMode: true,
-							emptyListMode: true,
-						},
-						...this.getInputPanelParams(data.ownerId),
+
+						objectName: 'list',
+						useSearch: true,
+						useLargeTitleMode: true,
+						emptyListMode: true
+						,
 					},
 				},
 				params: {
 					COMPONENT_CODE: 'tasks.list',
-					GROUP_ID: data.groupId,
-					USER_ID: data.ownerId,
-					DATA: data,
+					GROUP_ID: extendedData.groupId,
+					USER_ID: extendedData.ownerId,
+					DATA: extendedData,
 					SITE_ID: siteId,
 					SITE_DIR: siteDir,
 					LANGUAGE_ID: languageId,
@@ -241,63 +191,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 				},
 			});
 		}
-
-		getInputPanelParams(userId)
-		{
-			if (apiVersion >= 40)
-			{
-				return {
-					inputPanel: {
-						action: 0,
-						callback: 0,
-						useImageButton: true,
-						useAudioMessages: true,
-						smileButton: [],
-						message: {
-							placeholder: Loc.getMessage('TASKSMOBILE_ENTRY_TASK_LIST_INPUT_PANEL_PLACEHOLDER'),
-						},
-						attachButton: {
-							items: [
-								{
-									id: 'disk',
-									name: Loc.getMessage('TASKSMOBILE_ENTRY_TASK_LIST_INPUT_PANEL_B24_DISK'),
-									dataSource: {
-										multiple: true,
-										url: `/mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${userId}`,
-									},
-								},
-							],
-						},
-						attachFileSettings: {
-							resize: {
-								targetWidth: -1,
-								targetHeight: -1,
-								sourceType: 1,
-								encodingType: 0,
-								mediaType: 2,
-								allowsEdit: false,
-								saveToPhotoAlbum: true,
-								cameraDirection: 0,
-							},
-							maxAttachedFilesCount: 100,
-						},
-					},
-				};
-			}
-
-			return {};
-		}
-
-		getGuid()
-		{
-			function s4()
-			{
-				return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-			}
-
-			return `${s4() + s4()}-${s4()}-${s4()}-${s4()}-${s4() + s4() + s4()}`;
-		}
 	}
 
-	module.exports = {Entry};
+	module.exports = { Entry };
 });

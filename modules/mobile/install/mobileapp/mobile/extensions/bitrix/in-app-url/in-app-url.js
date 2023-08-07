@@ -29,7 +29,7 @@ jn.define('in-app-url/in-app-url', (require, exports, module) => {
 		{
 			const route = new Route({ pattern, handler });
 			this.routes.push(route);
-			
+
 			return route;
 		}
 
@@ -62,7 +62,7 @@ jn.define('in-app-url/in-app-url', (require, exports, module) => {
 
 			const url = new Url(path);
 
-			if (url.isEmail)
+			if (url.isEmail || url.isPhoneNumber)
 			{
 				Application.openUrl(url.value);
 

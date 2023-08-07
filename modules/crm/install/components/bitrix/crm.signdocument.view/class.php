@@ -59,11 +59,12 @@ class CrmSignDocumentViewComponent extends Bitrix\Crm\Component\Base
 
 		$document = Bitrix\Sign\Document::getById($documentId);
 
-		if (!$document->getInitiatorMember())
+		if (!$document || !$document->getInitiatorMember())
 		{
 			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('CRM_SIGNDOCUMENT_TRY_AGAIN_LATER'));
 			return;
 		}
+
 		$documentHash = $document->getHash();
 		$memberHash = $this->arParams['memberHash'] ?? null;
 		$memberHash = $memberHash === 'undefined' ? null : $memberHash;

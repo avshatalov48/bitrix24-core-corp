@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Recyclebin;
 
 use Bitrix\Main\AccessDeniedException;
@@ -203,7 +204,7 @@ class Recyclebin
 			return null;
 		}
 
-		$result = call_user_func([$handler, 'removeFromRecyclebin'], $entity);
+		$result = call_user_func([$handler, 'removeFromRecyclebin'], $entity, $params);
 
 		if ($result)
 		{

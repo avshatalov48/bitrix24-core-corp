@@ -2,8 +2,8 @@
  * @module tasks/layout/task/fields/isResultRequired
  */
 jn.define('tasks/layout/task/fields/isResultRequired', (require, exports, module) => {
-	const {Loc} = require('loc');
-	const {BooleanField, BooleanMode} = require('layout/ui/fields/boolean');
+	const { Loc } = require('loc');
+	const { BooleanField, BooleanMode } = require('layout/ui/fields/boolean');
 
 	class IsResultRequired extends LayoutComponent
 	{
@@ -52,7 +52,7 @@ jn.define('tasks/layout/task/fields/isResultRequired', (require, exports, module
 					},
 					testId: 'isResultRequired',
 					onChange: (value) => {
-						this.setState({isResultRequired: value});
+						this.setState({ isResultRequired: value });
 						this.props.onChange(value);
 					},
 				}),
@@ -60,5 +60,5 @@ jn.define('tasks/layout/task/fields/isResultRequired', (require, exports, module
 		}
 	}
 
-	module.exports = {IsResultRequired};
+	module.exports = { IsResultRequired };
 });

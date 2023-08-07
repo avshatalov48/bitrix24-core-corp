@@ -1342,7 +1342,7 @@ class DiskStorage extends AbstractStorage
 	}
 
 	/**
-	 * @return array|bool|\CAllUser|\CUser
+	 * @return array|bool|\CUser
 	 */
 	protected function getUser()
 	{

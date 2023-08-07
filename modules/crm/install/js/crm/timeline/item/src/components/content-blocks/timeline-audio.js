@@ -1,4 +1,4 @@
-import {AudioPlayer, AudioPlayerState} from 'ui.vue3.components.audioplayer';
+import {AudioPlayer} from 'ui.vue3.components.audioplayer';
 import {BitrixVue} from 'ui.vue3';
 import {Menu} from 'main.popup';
 import {Dom, bind, unbind} from 'main.core';
@@ -23,6 +23,12 @@ export const TimelineAudio = BitrixVue.cloneComponent(AudioPlayer, {
 			required: false,
 			default: '',
 		},
+
+		mini: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
 	},
 	data() {
 		return {
@@ -38,6 +44,7 @@ export const TimelineAudio = BitrixVue.cloneComponent(AudioPlayer, {
 				'ui-vue-audioplayer-container', {
 				'ui-vue-audioplayer-container-dark': this.isDark,
 				'ui-vue-audioplayer-container-mobile': this.isMobile,
+				'--mini': this.mini,
 			}];
 		},
 		controlClassname() {
@@ -236,10 +243,20 @@ export const TimelineAudio = BitrixVue.cloneComponent(AudioPlayer, {
 			this.source().currentTime = this.timeTotal/100*this.progress;
 		},
 
+		setProgress(percent, pixel = -1)
+		{
+			if (this.mini)
+			{
+				return;
+			}
+
+			this.progress = percent;
+			this.progressInPixel = pixel > 0? pixel: Math.round(this.$refs.track.offsetWidth / 100 * percent);
+		},
 
 		changeLogoIcon(icon: String)
 		{
-			if (!this.$parent)
+			if (!this.$parent || !this.$parent.getLogo)
 			{
 				return;
 			}
@@ -268,6 +285,7 @@ export const TimelineAudio = BitrixVue.cloneComponent(AudioPlayer, {
 			}
 		}
 	},
+
 	template: `
 		<div
 			:class="containerClassname"
@@ -275,18 +293,33 @@ export const TimelineAudio = BitrixVue.cloneComponent(AudioPlayer, {
 		>
 			<div class="ui-vue-audioplayer-controls-container">
 				<button :class="controlClassname" @click="clickToButton">
-					<svg v-if="state !== State.play" class="ui-vue-audioplayer-control-icon" width="9" height="12" viewBox="0 0 9 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<svg
+						v-if="state !== State.play"
+						class="ui-vue-audioplayer-control-icon"
+						width="9"
+						height="12"
+						viewBox="0 0 9 12"
+						fill="none"
+						xmlns="http://www.w3.org/2000/svg"
+					>
 						<path fill-rule="evenodd" clip-rule="evenodd" d="M8.52196 5.40967L1.77268 0.637568C1.61355 0.523473 1.40621 0.510554 1.23498 0.604066C1.06375 0.697578 0.957151 0.881946 0.958524 1.0822V10.6259C0.956507 10.8265 1.06301 11.0114 1.23449 11.105C1.40597 11.1987 1.61368 11.1854 1.77268 11.0706L8.52196 6.29847C8.66466 6.19871 8.75016 6.0322 8.75016 5.85407C8.75016 5.67593 8.66466 5.50942 8.52196 5.40967Z"/>
 					</svg>
-					<svg v-else width="8" height="10" viewBox="0 0 8 10" xmlns="http://www.w3.org/2000/svg">
-						<path d="M2.5625 0.333008H0.375V9.66634H2.5625V0.333008Z" fill="inherit" />
-						<path d="M7.25 0.333008H5.0625V9.66634H7.25V0.333008Z" fill="inherit" />
+					<svg
+						v-else
+                        class="ui-vue-audioplayer-control-icon"
+						width="8"
+						height="10"
+						viewBox="0 0 8 10"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<rect width="2" height="9" x="0%"></rect>
+						<rect width="2" height="9" x="55%"></rect>
 					</svg>
 				</button>
 			</div>
 			<div class="ui-vue-audioplayer-timeline-container">
-				<div class="ui-vue-audioplayer-record-name">{{ recordName }}</div>
-				<div class="ui-vue-audioplayer-track-container" @mousedown="startSeeking" ref="track">
+				<div v-if="!mini" class="ui-vue-audioplayer-record-name">{{ recordName }}</div>
+				<div v-if="!mini" class="ui-vue-audioplayer-track-container" @mousedown="startSeeking" ref="track">
 					<div class="ui-vue-audioplayer-track-mask"></div>
 					<div class="ui-vue-audioplayer-track" :style="progressPosition"></div>
 					<div @mousedown="startSeeking" class="ui-vue-audioplayer-track-seek" :style="seekPosition">
@@ -295,11 +328,22 @@ export const TimelineAudio = BitrixVue.cloneComponent(AudioPlayer, {
 <!--					<div class="ui-vue-audioplayer-track-event" @mousemove="seeking"></div>-->
 				</div>
 				<div :class="totalTimeClassname">
-					<div :class="timeCurrentClassname">{{formatTimeCurrent}}</div>
+					<div
+						v-if="(mini && timeCurrent > 0) || !mini"
+						ref="currentTime"
+						:class="timeCurrentClassname"
+					>
+						<span style="position: absolute; right: 0; top: 0;">
+							{{formatTimeCurrent}}
+						</span>
+						<span style="opacity: 0;">{{formatTimeTotal}}</span>
+					</div>
+					<span class="ui-vue-audioplayer-time-divider" v-if="mini && timeCurrent > 0">&nbsp;/&nbsp;</span>
 					<div ref="totalTime" class="ui-vue-audioplayer-time">{{formatTimeTotal}}</div>
 				</div>
 			</div>
 			<div
+				v-if="!mini"
 				@click="showPlaybackRateMenu"
 				ref="playbackRateButtonContainer"
 				class="ui-vue-audioplayer_playback-speed-menu-container"

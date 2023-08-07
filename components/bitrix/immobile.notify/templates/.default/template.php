@@ -131,7 +131,6 @@ if(empty($arResult['NOTIFY'])):?>
 		<?endforeach;?>
 	</div>
 	<script type="text/javascript">
-		BX.ImLegacy.notifyLastId = <?=$maxId?>;
 		BitrixMobile.LazyLoad.registerImages([<?=$jsIds?>]);
 	</script>
 
@@ -154,10 +153,10 @@ if(empty($arResult['NOTIFY'])):?>
 		function _confirmRequest(el)
 		{
 			BX.remove(el.parentNode);
-			BX.ImLegacy.confirmRequest({
-				notifyId: el.getAttribute('data-notifyId'),
-				notifyValue: el.getAttribute('data-notifyValue')
-			})
+			BX.rest.callMethod('im.notify.confirm', {
+				ID: el.getAttribute('data-notifyId'),
+				NOTIFY_VALUE: el.getAttribute('data-notifyValue')
+			});
 		}
 
 		function urlValidation(el)

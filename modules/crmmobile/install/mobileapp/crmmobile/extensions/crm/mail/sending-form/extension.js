@@ -58,8 +58,10 @@ jn.define('crm/mail/sending-form', (require, exports, module) => {
 				if (file.id && Number.isInteger(parseInt(file.id, 10)))
 				{
 					galleryInfo[file.id] = clone(file);
+
 					return file.id;
 				}
+
 				return clone(file);
 			});
 
@@ -519,6 +521,7 @@ jn.define('crm/mail/sending-form', (require, exports, module) => {
 					if (failure && failure.hasError)
 					{
 						NotifyManager.hideLoadingIndicatorWithoutFallback();
+
 						return;
 					}
 

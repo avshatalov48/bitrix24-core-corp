@@ -1,12 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-pseudo-private */
-
 /**
  * @module im/messenger/lib/rest-manager/rest-manager
  */
 jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { Logger } = require('im/messenger/lib/logger');
 
@@ -38,6 +33,7 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 				if (this.methodCollection.size === 0)
 				{
 					Logger.log('RestManager.callBatch: No registered methods');
+
 					return;
 				}
 
@@ -47,7 +43,7 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 					this.methodCollection
 						.get(method)
 						.forEach((item, paramsKey) => {
-							const methodKey = method + '|' + paramsKey;
+							const methodKey = `${method}|${paramsKey}`;
 
 							batchMethodCollection[methodKey] = {
 								method,
@@ -59,7 +55,7 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 
 				Logger.info(
 					'RestManager.callBatch: ',
-					Object.keys(batchMethodCollection).map(methodKey => batchMethodCollection[methodKey])
+					Object.keys(batchMethodCollection).map((methodKey) => batchMethodCollection[methodKey]),
 				);
 
 				BX.rest.callBatch(batchMethodCollection, (result) => {
@@ -68,7 +64,7 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 					Object.keys(result).forEach((methodKey) => {
 						const { method, params } = batchMethodCollection[methodKey];
 
-						this._emit(method, params, result[methodKey]);
+						this.emit(method, params, result[methodKey]);
 
 						if (result[methodKey].error())
 						{
@@ -106,15 +102,15 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 
 			if (!Type.isObject(params))
 			{
-				throw new Error('RestManager: params must be an object');
+				throw new TypeError('RestManager: params must be an object');
 			}
 
 			if (!Type.isFunction(callback))
 			{
-				throw new Error('RestManager: callback must be a function');
+				throw new TypeError('RestManager: callback must be a function');
 			}
 
-			this._subscribe(method, params, callback);
+			this.subscribe(method, params, callback);
 
 			return this;
 		}
@@ -126,7 +122,7 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 		 * @param {object} params
 		 * @param {function} callback
 		 */
-		off(method, params= {}, callback)
+		off(method, params = {}, callback = () => {})
 		{
 			if (!Type.isStringFilled(method))
 			{
@@ -135,15 +131,15 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 
 			if (!Type.isObject(params))
 			{
-				throw new Error('RestManager: params must be an object');
+				throw new TypeError('RestManager: params must be an object');
 			}
 
 			if (!Type.isFunction(callback))
 			{
-				throw new Error('RestManager: callback must be a function');
+				throw new TypeError('RestManager: callback must be a function');
 			}
 
-			this._unsubscribe(method, params, callback);
+			this.unsubscribe(method, params, callback);
 
 			return this;
 		}
@@ -164,25 +160,28 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 
 			if (!Type.isObject(params))
 			{
-				throw new Error('RestManager: params must be an object');
+				throw new TypeError('RestManager: params must be an object');
 			}
 
 			if (!Type.isFunction(callback))
 			{
-				throw new Error('RestManager: callback must be a function');
+				throw new TypeError('RestManager: callback must be a function');
 			}
 
 			const onceCallback = (response) => {
 				callback(response);
-				this._unsubscribe(method, params, onceCallback);
+				this.unsubscribe(method, params, onceCallback);
 			};
 
-			this._subscribe(method, params, onceCallback);
+			this.subscribe(method, params, onceCallback);
 
 			return this;
 		}
 
-		_subscribe(method, params, callback)
+		/**
+		 * @private
+		 */
+		subscribe(method, params, callback)
 		{
 			const paramsKey = JSON.stringify(params);
 
@@ -202,7 +201,10 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 			this.methodCollection.get(method).get(paramsKey).handlerList.push(callback);
 		}
 
-		_unsubscribe(method, params, callback)
+		/**
+		 * @private
+		 */
+		unsubscribe(method, params, callback)
 		{
 			const paramsKey = JSON.stringify(params);
 
@@ -217,12 +219,11 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 				return;
 			}
 
-			this.methodCollection.get(method).get(paramsKey).handlerList =
-				this.methodCollection
-					.get(method)
-					.get(paramsKey)
-					.handlerList
-					.filter(handler => handler !== callback)
+			this.methodCollection.get(method).get(paramsKey).handlerList = this.methodCollection
+				.get(method)
+				.get(paramsKey)
+				.handlerList
+				.filter((handler) => handler !== callback)
 			;
 
 			if (this.methodCollection.get(method).get(paramsKey).handlerList.length === 0)
@@ -236,7 +237,10 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 			}
 		}
 
-		_emit(method, params, response)
+		/**
+		 * @private
+		 */
+		emit(method, params, response)
 		{
 			const paramsKey = JSON.stringify(params);
 
@@ -255,8 +259,40 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 				.get(method)
 				.get(paramsKey)
 				.handlerList
-				.forEach(handler => handler(response))
+				.forEach((handler) => handler(response))
 			;
+		}
+
+		/**
+		 * @desc Method call one request by name from the batch collection ( if it is )
+		 * @param {string} methodName
+		 * @void
+		 */
+		callByName(methodName)
+		{
+			let batchMethod = null;
+			this.methodCollection.forEach((paramCollection, method) => {
+				if (method === methodName)
+				{
+					this.methodCollection
+						.get(method)
+						.forEach((item) => {
+							batchMethod = {
+								method,
+								params: item.params,
+							};
+						});
+				}
+			});
+
+			if (!batchMethod)
+			{
+				return;
+			}
+			BX.rest.callMethod(batchMethod.method, batchMethod.params).then((result) => {
+				this.emit(batchMethod.method, batchMethod.params, result);
+				Logger.info('RestManager.callByName result: ', result);
+			}).catch((err) => Logger.error(err));
 		}
 	}
 

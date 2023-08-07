@@ -67,7 +67,7 @@ class ToDo extends Activity
 		$filesBlock = $this->buildFilesBlock();
 		if (isset($filesBlock))
 		{
-			$result = array_merge($result, $filesBlock);
+			$result['fileList'] = $filesBlock;
 		}
 
 		$baseActivityBlock = $this->buildBaseActivityBlock();
@@ -225,7 +225,7 @@ class ToDo extends Activity
 		return $editableDescriptionBlock;
 	}
 
-	private function buildFilesBlock(): ?array
+	private function buildFilesBlock(): ?ContentBlock
 	{
 		$storageFiles = $this->fetchStorageFiles();
 		if (empty($storageFiles))
@@ -233,10 +233,7 @@ class ToDo extends Activity
 			return null;
 		}
 
-		$audioRecordsCount = $this->getAudioFilesCount($storageFiles);
-
 		$files = [];
-		$audioRecords = [];
 		foreach ($storageFiles as $file)
 		{
 			$fileId = $file['ID']; // unique ID
@@ -246,27 +243,7 @@ class ToDo extends Activity
 			$viewUrl = (string)$file['VIEW_URL'];
 			$previewUrl = $file['PREVIEW_URL'] ? (string)$file['PREVIEW_URL'] : null;
 
-			$fileModel = new File($fileId, $sourceFileId, $fileName, $fileSize, $viewUrl, $previewUrl);
-
-			// fill audio records
-			if (in_array($fileModel->getExtension(), self::ALLOWED_AUDIO_EXTENSIONS, true))
-			{
-				$audioRecord = (new Audio())
-					->setId($fileId)
-					->setSource((string)$file['VIEW_URL'])
-					->setTitle($fileName)
-				;
-
-				if (!empty($fileName && $audioRecordsCount > 1))
-				{
-					$audioRecord->setRecordName($fileName);
-				}
-
-				$audioRecords["audio_{$fileId}"] = $audioRecord;
-
-			}
-
-			$files[] = $fileModel;
+			$files[] = new File($fileId, $sourceFileId, $fileName, $fileSize, $viewUrl, $previewUrl);
 		}
 
 		$fileListBlock = (new FileList())
@@ -284,8 +261,7 @@ class ToDo extends Activity
 			]);
 		}
 
-		// audio record(s) at the top
-		return array_merge($audioRecords, ['fileList' => $fileListBlock]);
+		return $fileListBlock;
 	}
 
 	private function buildBaseActivityBlock(): ?ContentBlock
@@ -327,20 +303,5 @@ class ToDo extends Activity
 		}
 
 		return null;
-	}
-
-	private function getAudioFilesCount(array $files): int
-	{
-		$result =  array_values(
-			array_filter(
-				$files,
-				static fn($row) => in_array(
-					GetFileExtension(mb_strtolower($row['NAME'])),
-					self::ALLOWED_AUDIO_EXTENSIONS
-				)
-			)
-		);
-
-		return count($result);
 	}
 }

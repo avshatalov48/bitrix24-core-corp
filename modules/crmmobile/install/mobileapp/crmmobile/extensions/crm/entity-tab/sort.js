@@ -91,6 +91,7 @@ jn.define('crm/entity-tab/sort', (require, exports, module) => {
 					if (response.errors.length > 0)
 					{
 						console.error(response);
+
 						return;
 					}
 

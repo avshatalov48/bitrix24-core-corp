@@ -1,20 +1,18 @@
 (() => {
-	const {Entry} = jn.require('tasks/entry');
+	const { Entry } = jn.require('tasks/entry');
 
 	class TaskBackgroundAction
 	{
-		constructor()
+		static bindEvents()
 		{
-			this.bindEvents();
+			BX.addCustomEvent('taskbackground::task::open', (data, params = {}) => Entry.openTask(data, params));
+			BX.addCustomEvent('taskbackground::taskList::open', (data) => Entry.openTaskList(data));
+			BX.addCustomEvent('taskbackground::efficiency::open', (data) => Entry.openEfficiency(data));
 		}
 
-		bindEvents()
+		constructor()
 		{
-			const entry = new Entry();
-
-			BX.addCustomEvent('taskbackground::task::open', (data, params = {}) => entry.openTask(data, params));
-			BX.addCustomEvent('taskbackground::taskList::open', data => entry.openTaskList(data));
-			BX.addCustomEvent('taskbackground::efficiency::open', data => entry.openEfficiency(data));
+			TaskBackgroundAction.bindEvents();
 		}
 	}
 

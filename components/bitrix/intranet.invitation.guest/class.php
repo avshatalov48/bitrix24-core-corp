@@ -86,7 +86,6 @@ class IntranetInvitationGuest extends \CBitrixComponent implements Controllerabl
 	{
 		if ($this->arParams['SET_TITLE'])
 		{
-			/**@var \CAllMain*/
 			$GLOBALS['APPLICATION']->setTitle(Loc::getMessage('INTRANET_INVITATION_GUEST_PAGE_TITLE'));
 		}
 

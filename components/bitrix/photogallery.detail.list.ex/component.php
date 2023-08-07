@@ -17,10 +17,10 @@ $arParams["ACTION_URL"] = CHTTP::urlDeleteParams($arParams["ACTION_URL"], array(
 $arParams["PROPERTY_CODE"] = (!is_array($arParams["PROPERTY_CODE"]) ? array() : $arParams["PROPERTY_CODE"]);
 $arParams["ELEMENT_SORT_FIELD"] = mb_strtoupper($arParams["ELEMENT_SORT_FIELD"]);
 $arParams["ELEMENT_SORT_FIELD1"] = mb_strtoupper($arParams["ELEMENT_SORT_FIELD1"]);
-$arParams["COMMENTS_TYPE"] = mb_strtoupper($arParams["COMMENTS_TYPE"]);
-$arParams["IS_SOCNET"] = ($arParams["IS_SOCNET"] == "Y" ? "Y" : "N");
+$arParams["COMMENTS_TYPE"] = mb_strtoupper($arParams["COMMENTS_TYPE"] ?? '');
+$arParams["IS_SOCNET"] = (($arParams["IS_SOCNET"] ?? null) == "Y" ? "Y" : "N");
 
-$arParams["USE_RATING"] = ($arParams["USE_RATING"] == "Y" || $arParams["SHOW_RATING"] == "Y") ? "Y" : "N";
+$arParams["USE_RATING"] = (($arParams["USE_RATING"] ?? null) == "Y" || $arParams["SHOW_RATING"] == "Y") ? "Y" : "N";
 $arParams["SHOW_TAGS"] = (($arParams["SHOW_TAGS"] ?? '') != "N" ? "Y" : "N");
 $arParams["MODERATION"] = (($arParams["MODERATION"] ?? '') == "Y" ? "Y" : "N");
 
@@ -75,7 +75,7 @@ $arParams["IBLOCK_TYPE"] = trim($arParams["IBLOCK_TYPE"]);
 $arParams["IBLOCK_ID"] = intval($arParams["IBLOCK_ID"]);
 $arParams["BEHAVIOUR"] = ($arParams["BEHAVIOUR"] == "USER" ? "USER" : "SIMPLE");
 $arParams["USER_ALIAS"] = preg_replace("/[^a-z0-9\_]+/is" , "", $arParams["USER_ALIAS"]);
-$arParams["PERMISSION_EXTERNAL"] = trim($arParams["PERMISSION"]);
+$arParams["PERMISSION_EXTERNAL"] = trim($arParams["PERMISSION"] ?? '');
 $arParams["SECTION_ID"] = intval($arParams["SECTION_ID"] > 0 ? $arParams["SECTION_ID"] : $_REQUEST["SECTION_ID"]);
 
 $ELEMENT_ID = 0;
@@ -139,8 +139,13 @@ $GLOBALS['bxph_list_id'] = intval($GLOBALS['bxph_list_id']);
 if (isset($_REQUEST["UCID"]) && mb_substr($_REQUEST["UCID"], 0, mb_strlen("bxfg_ucid_from_req_")) == "bxfg_ucid_from_req_")
 {
 	// include_subsection - used to include subsections by GET-params
-	if ($_REQUEST["include_subsection"] === 'Y' || $arParams["INCLUDE_SUBSECTIONS"] !== "N")
+	if (
+		($_REQUEST["include_subsection"] ?? null) === 'Y'
+		|| $arParams["INCLUDE_SUBSECTIONS"] !== "N"
+	)
+	{
 		$arParams["INCLUDE_SUBSECTIONS"] = "Y";
+	}
 	$arParams["~UNIQUE_COMPONENT_ID"] = preg_replace("/[^a-z0-9\_]+/is" , "", $_REQUEST["UCID"]);
 }
 
@@ -254,7 +259,7 @@ if ($arParams["USE_COMMENTS"] == "Y")
 	elseif (CModule::IncludeModule("blog"))
 	{
 		$arBlog = CBlog::GetByUrl($arParams["BLOG_URL"]);
-		if(intval($arBlog["ID"]) > 0)
+		if(intval($arBlog["ID"] ?? 0) > 0)
 		{
 			$blogComPerm = CBlog::GetBlogUserCommentPerms(intval($arBlog["ID"]), $USER->GetId());
 			$arParams["COMMENTS_PERM_VIEW"] = $blogComPerm >= "I" ? "Y" : "N";
@@ -298,7 +303,7 @@ $arParams["PAGE_NAVIGATE"] = mb_strtolower(isset($arParams["PAGE_NAVIGATE"]) && 
 
 $arParams["DATE_TIME_FORMAT"] = trim(!empty($arParams["DATE_TIME_FORMAT"]) ? $arParams["DATE_TIME_FORMAT"] :
 	$DB->DateFormatToPHP(CSite::GetDateFormat("FULL")));
-$arParams["SET_STATUS_404"] = ($arParams["SET_STATUS_404"] == "Y" ? "Y" : "N");
+$arParams["SET_STATUS_404"] = (($arParams["SET_STATUS_404"] ?? null) == "Y" ? "Y" : "N");
 
 // Additional sights
 $arParams["PICTURES"] = array();
@@ -538,7 +543,7 @@ if ($arParams["PERMISSION"] < "U")
 	$arFilter["ACTIVE"] = "Y";
 
 // Apply filter only for first loading in the list, but load all photos in the popup
-if ($arParams['SHOWN_PHOTOS'])
+if ($arParams['SHOWN_PHOTOS'] ?? null)
 {
 	$arShown = array();
 	foreach($arParams['SHOWN_PHOTOS'] as $id)
@@ -591,7 +596,10 @@ else
 }
 
 // ADDITIONAL FILTERS
-if ($arParams["ELEMENT_LAST_TYPE"] == "count" && $arParams["ELEMENTS_LAST_COUNT"] > 0)
+if (
+	($arParams["ELEMENT_LAST_TYPE"] ?? null) == "count"
+	&& $arParams["ELEMENTS_LAST_COUNT"] > 0
+)
 {
 	$db_res = CIBlockElement::GetList(array("ID" => "DESC"), $arFilter, false, array("nTopCount" => $arParams["ELEMENTS_LAST_COUNT"]), array("ID"));
 	$iLastID = 0;
@@ -600,11 +608,11 @@ if ($arParams["ELEMENT_LAST_TYPE"] == "count" && $arParams["ELEMENTS_LAST_COUNT"
 	while ($res = $db_res->Fetch())
 		$arFilter[">=ID"] = intval($res["ID"]);
 }
-elseif ($arParams["ELEMENT_LAST_TYPE"] == "time" && $arParams["ELEMENTS_LAST_TIME"] > 0)
+elseif (($arParams["ELEMENT_LAST_TYPE"] ?? null) == "time" && $arParams["ELEMENTS_LAST_TIME"] > 0)
 {
 	$arFilter[">=DATE_CREATE"] = date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", LANG)), (time()-($arParams["ELEMENTS_LAST_TIME"]*3600*24)+CTimeZone::GetOffset()));
 }
-elseif ($arParams["ELEMENT_LAST_TYPE"] == "period" && ($arParams["ELEMENTS_LAST_TIME_FROM"] <> '' || $arParams["ELEMENTS_LAST_TIME_TO"] <> ''))
+elseif (($arParams["ELEMENT_LAST_TYPE"] ?? null) == "period" && ($arParams["ELEMENTS_LAST_TIME_FROM"] <> '' || $arParams["ELEMENTS_LAST_TIME_TO"] <> ''))
 {
 	if ($arParams["ELEMENTS_LAST_TIME_FROM"] <> '')
 		$arFilter[">=DATE_CREATE"] = date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", LANG)), MakeTimeStamp($arParams["ELEMENTS_LAST_TIME_FROM"]));
@@ -997,7 +1005,7 @@ if (!is_array($arResult["ELEMENTS_LIST"]) || empty($arResult["ELEMENTS_LIST"]))
 				"NAV_RESULT_NavNum" => $arResult["NAV_RESULT_NavNum"],
 				"NAV_RESULT_NavPageNomer" => $arResult["NAV_RESULT_NavPageNomer"],
 				"NAV_RESULT_NavPageCount" => $arResult["NAV_RESULT_NavPageCount"],
-				"MIN_ID" => $arResult["MIN_ID"]
+				"MIN_ID" => $arResult["MIN_ID"] ?? null,
 			)
 		);
 	}
@@ -1080,7 +1088,7 @@ if (($arParams["RETURN_FORMAT"] ?? '') == "LIST")
 else
 {
 	$res = reset($arResult["ELEMENTS_LIST"]);
-	return $res["ID"];
+	return $res["ID"] ?? null;
 }
 /********************************************************************
 				/Standart

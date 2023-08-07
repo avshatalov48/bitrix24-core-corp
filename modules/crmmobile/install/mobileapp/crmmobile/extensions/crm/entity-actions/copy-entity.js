@@ -4,7 +4,6 @@
 jn.define('crm/entity-actions/copy-entity', (require, exports, module) => {
 	const { getEntityMessage } = require('crm/loc');
 	const { Type } = require('crm/type');
-	const { EntityDetailOpener } = require('crm/entity-detail/opener');
 
 	/**
 	 * @function getActionToCopyEntity
@@ -24,15 +23,17 @@ jn.define('crm/entity-actions/copy-entity', (require, exports, module) => {
 		 * @param {Object} params
 		 * @param {Number} params.entityId
 		 * @param {?Number} params.categoryId
-		 * @returns {void}
+		 * @returns {Promise}
 		 */
-		const onAction = ({ entityId, categoryId = null }) => {
+		const onAction = async ({ entityId, categoryId = null }) => {
 			if (!Type.existsById(entityTypeId) || !Number.isInteger(Number(entityId)))
 			{
-				return Promise.resolve();
+				return null;
 			}
 
-			EntityDetailOpener.open({
+			const { EntityDetailOpener } = await requireLazy('crm:entity-detail/opener');
+
+			return EntityDetailOpener.open({
 				entityTypeId,
 				entityId,
 				categoryId,

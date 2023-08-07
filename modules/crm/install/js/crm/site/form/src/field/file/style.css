@@ -11,8 +11,12 @@
 }
 
 .b24-form-control-file .b24-form-control-label {
-	display: block;
+	display: flex;
 	font-size: 13px;
+}
+
+.b24-form-control-field-file-summary-size {
+	margin-left: auto;
 }
 
 .b24-form-control-file .b24-form-control {
@@ -139,6 +143,7 @@
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
+	flex-flow: row;
 	-webkit-box-align: center;
 	-ms-flex-align: center;
 	align-items: center;
@@ -146,6 +151,9 @@
 	position: relative;
 	color: #000;
 	color: var(--b24-text-color);
+}
+.b24-form-control-file-item-size-text {
+	margin-left: auto;
 }
 
 .b24-form-control-file-item-name-string {

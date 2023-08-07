@@ -766,7 +766,7 @@
 	border-bottom: none;
 }
 
-.crm-entity-product-list-wrapper .catalog-product-field-inner {
+.crm-entity-product-list-wrapper .catalog-product-edit.--with-images .catalog-product-field-inner {
 	width: calc(100% - 80px);
 }
 
@@ -960,6 +960,16 @@ select.crm-entity-product-control-select-field:hover {
 
 .text--danger {
 	color: var(--ui-color-palette-red-70, #e92f2a);
+}
+
+.crm-entity-product-list-cell-no-width
+{
+	width: 0 !important;
+	min-width: 0 !important;
+}
+.crm-entity-product-list-cell-no-width .main-grid-cell-head-container
+{
+	padding: 0 !important;
 }
 
 :root {

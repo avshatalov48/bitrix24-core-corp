@@ -71,8 +71,6 @@
 	{
 		params = params || {};
 
-		console.log('runActionEdit', params);
-
 		if (BX.getClass('BX.UI.Viewer.Instance'))
 		{
 			var editButton = BX.UI.Viewer.Instance.actionPanel.getItemById('edit');

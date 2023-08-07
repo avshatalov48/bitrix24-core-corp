@@ -56,39 +56,11 @@ class CBPCrmControlNotifyActivity extends CBPActivity
 
 	private function getUserHead($userId)
 	{
+		$userId = (int)$userId;
+		$userService = $this->workflow->getRuntime()->getUserService();
+
 		$skipAbsent = CModule::IncludeModule('intranet');
-
-		$userDepartmentId = [];
-		$userIterator = CUser::GetByID($userId);
-		if ($user = $userIterator->Fetch())
-		{
-			if (isset($user["UF_DEPARTMENT"]))
-			{
-				if (!is_array($user["UF_DEPARTMENT"]))
-				{
-					$user["UF_DEPARTMENT"] = [$user["UF_DEPARTMENT"]];
-				}
-
-				foreach ($user["UF_DEPARTMENT"] as $v)
-				{
-					$userDepartmentId[] = $v;
-				}
-			}
-		}
-
-		$userDepartments = [];
-		$departmentIBlockId = COption::GetOptionInt('intranet', 'iblock_structure');
-		foreach ($userDepartmentId as $departmentId)
-		{
-			$ar = [];
-			$dbPath = CIBlockSection::GetNavChain($departmentIBlockId, $departmentId);
-			while ($arPath = $dbPath->GetNext())
-			{
-				$ar[] = $arPath["ID"];
-			}
-
-			$userDepartments[] = array_reverse($ar);
-		}
+		$userDepartments = $userService->getUserDepartmentChains($userId);
 
 		$heads = [];
 		$absentHeads = [];
@@ -102,38 +74,28 @@ class CBPCrmControlNotifyActivity extends CBPActivity
 					break;
 				}
 
-				$dbRes = CIBlockSection::GetList(
-					[],
-					[
-						'IBLOCK_ID' => $departmentIBlockId,
-						'ID' => $deptId,
-					],
-					false,
-					['ID', 'UF_HEAD']
-				);
-				while ($arRes = $dbRes->Fetch())
+				$departmentHead = $userService->getDepartmentHead($deptId);
+
+				if (!$departmentHead || $departmentHead === $userId)
 				{
-					if ($arRes["UF_HEAD"] == $userId || intval($arRes["UF_HEAD"]) <= 0)
+					$maxLevel++;
+					continue;
+				}
+
+				if ($skipAbsent && CIntranetUtils::IsUserAbsent($departmentHead))
+				{
+					if (!isset($absentHeads[$level]))
 					{
-						$maxLevel++;
-						continue;
+						$absentHeads[$level] = [];
 					}
 
-					if ($skipAbsent && CIntranetUtils::IsUserAbsent($arRes["UF_HEAD"]))
-					{
-						if (!isset($absentHeads[$level]))
-						{
-							$absentHeads[$level] = [];
-						}
-
-						$absentHeads[$level][] = $arRes["UF_HEAD"];
-						$maxLevel++;
-						continue;
-					}
-					if (!in_array($arRes["UF_HEAD"], $heads))
-					{
-						$heads[] = $arRes["UF_HEAD"];
-					}
+					$absentHeads[$level][] = $departmentHead;
+					$maxLevel++;
+					continue;
+				}
+				if (!in_array($departmentHead, $heads, true))
+				{
+					$heads[] = $departmentHead;
 				}
 			}
 		}

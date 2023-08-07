@@ -26,8 +26,6 @@ type TimelineEntityProps = {
 	isEditable: boolean,
 	pushTag: string | null,
 	documentGeneratorProvider: string | null,
-	isDocumentPreviewerAvailable: boolean,
-	isGoToChatAvailable: boolean,
 };
 
 type TimelineItemProps = {

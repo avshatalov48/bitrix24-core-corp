@@ -869,7 +869,15 @@ class Activity
 	{
 		$count = -1;
 
-		$query = $this->prepareQuery();
+		$filter = $this->getFilter();
+		if (empty($filter))
+		{
+			$query = Crm\ActivityTable::query();
+		}
+		else
+		{
+			$query = $this->prepareQuery();
+		}
 
 		if ($this->prepareFilter($query))
 		{
@@ -904,7 +912,15 @@ class Activity
 			return -1;
 		}
 
-		$query = $this->prepareQuery();
+		$filter = $this->getFilter();
+		if (empty($filter))
+		{
+			$query = Crm\ActivityTable::query();
+		}
+		else
+		{
+			$query = $this->prepareQuery();
+		}
 
 		$dropped = -1;
 

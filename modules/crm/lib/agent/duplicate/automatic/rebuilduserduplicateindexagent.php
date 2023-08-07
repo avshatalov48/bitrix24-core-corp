@@ -107,8 +107,8 @@ class RebuildUserDuplicateIndexAgent
 			;
 
 			// types and scope used in previous run:
-			$prevTypeIds = $progressData['TYPE_IDS'] ?: [];
-			$prevScope = $progressData['CURRENT_SCOPE'] ?: DuplicateIndexType::DEFAULT_SCOPE;
+			$prevTypeIds = $progressData['TYPE_IDS'] ?? [];
+			$prevScope = $progressData['CURRENT_SCOPE'] ?? DuplicateIndexType::DEFAULT_SCOPE;
 
 			$progressData = [
 				'PREV_TYPE_IDS' => $prevTypeIds,
@@ -186,11 +186,13 @@ class RebuildUserDuplicateIndexAgent
 		$isInProgress = $builder->build($buildData);
 		if (isset($buildData['PROCESSED_ITEM_COUNT']))
 		{
+			$progressData['PROCESSED_ITEMS'] = (int)($progressData['PROCESSED_ITEMS'] ?? 0);
 			$progressData['PROCESSED_ITEMS'] += $buildData['PROCESSED_ITEM_COUNT'];
 		}
 
 		if (isset($buildData['EFFECTIVE_ITEM_COUNT']))
 		{
+			$progressData['FOUND_CHANGED_ITEMS'] = (int)($progressData['FOUND_CHANGED_ITEMS'] ?? 0);
 			$progressData['FOUND_CHANGED_ITEMS'] += $buildData['EFFECTIVE_ITEM_COUNT'];
 		}
 
@@ -256,7 +258,7 @@ class RebuildUserDuplicateIndexAgent
 			$userSettings->calcAndSetNextExecTime();
 
 			$userSettings->setLastExecTime(
-				DateTime::createFromTimestamp($progressData['STARTED_TIMESTAMP'] ?: time())
+				DateTime::createFromTimestamp($progressData['STARTED_TIMESTAMP'] ?? time())
 			);
 			$userSettings->setCheckChangedOnly(true);
 

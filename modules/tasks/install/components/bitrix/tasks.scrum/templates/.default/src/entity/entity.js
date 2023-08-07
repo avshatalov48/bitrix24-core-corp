@@ -46,6 +46,7 @@ export class Entity extends EventEmitter
 		this.node = null;
 		this.listItems = null;
 
+		this.listLoader = null;
 		this.itemLoader = null;
 		this.itemsLoaderNode = null;
 
@@ -436,9 +437,18 @@ export class Entity extends EventEmitter
 	isLastItem(item: Item): boolean
 	{
 		const listItemsNode = this.getListItemsNode();
-		const itemNode = item.getNode();
 
-		return listItemsNode.lastElementChild.isEqualNode(itemNode);
+		const itemNode = item.getNode();
+		const loaderNode = this.getLoaderNode();
+
+		if (listItemsNode.lastElementChild.isEqualNode(loaderNode))
+		{
+			return loaderNode.previousElementSibling.isEqualNode(itemNode);
+		}
+		else
+		{
+			return listItemsNode.lastElementChild.isEqualNode(itemNode);
+		}
 	}
 
 	getFirstItemNode(input?: Input): ?HTMLElement
@@ -533,6 +543,8 @@ export class Entity extends EventEmitter
 			return;
 		}
 
+		this.waitingLoadItems = true;
+
 		Dom.addClass(this.itemsLoaderNode, '--waiting');
 
 		this.showItemsLoader();
@@ -567,6 +579,8 @@ export class Entity extends EventEmitter
 
 	unbindItemsLoader()
 	{
+		this.waitingLoadItems = false;
+
 		if (this.observerLoadItems)
 		{
 			this.observerLoadItems.disconnect();
@@ -580,6 +594,11 @@ export class Entity extends EventEmitter
 		}
 	}
 
+	isWaitingLoadItems(): boolean
+	{
+		return this.waitingLoadItems;
+	}
+
 	setActiveLoadItems(value: boolean)
 	{
 		this.activeLoadItems = Boolean(value);
@@ -588,6 +607,47 @@ export class Entity extends EventEmitter
 	isActiveLoadItems(): boolean
 	{
 		return this.activeLoadItems === true;
+	}
+
+	showListLoader(): Loader
+	{
+		if (this.listLoader)
+		{
+			this.listLoader.destroy();
+		}
+
+		const targetNode = this.getNode();
+
+		const position = Dom.getPosition(targetNode);
+
+		const offset = this.isBacklog()
+			? {
+				top: `${(position.top + (position.height / 2 - 55))}px`,
+				left: `${(position.left + (position.width / 2 - 55))}px`
+			}
+			: {
+				top: `${position.top}px`,
+				left: `${position.width / 2 - 55}px`,
+			}
+		;
+
+		this.listLoader = new Loader({
+			target: targetNode,
+			mode: 'custom',
+			offset: offset
+		});
+
+		this.listLoader.show();
+
+		return this.listLoader;
+	}
+
+	hideListLoader(): void
+	{
+		if (this.listLoader)
+		{
+			this.listLoader.hide();
+		}
 	}
 
 	showItemsLoader(): Loader

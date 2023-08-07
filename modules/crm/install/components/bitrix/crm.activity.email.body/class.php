@@ -2,6 +2,7 @@
 
 use Bitrix\Main\Config;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Activity\Provider\Email;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
@@ -29,7 +30,8 @@ class CrmActivityEmailBodyComponent extends CBitrixComponent
 			}
 		}
 
-		\CrmActivityEmailComponent::prepareActivityRcpt($activity);
+		$activity['MESSAGE_QUOTE'] = Email::getMessageQuote($activity, $activity['DESCRIPTION_HTML']);
+		CrmActivityEmailComponent::prepareActivityRcpt($activity);
 
 		$trackingAvailable = Config\Option::get('main', 'track_outgoing_emails_read', 'Y') == 'Y';
 

@@ -106,6 +106,7 @@ $editorConfig = [
 	'allowCatalogPriceEdit' => $arResult['ALLOW_CATALOG_PRICE_EDIT'],
 	'allowCatalogPriceSave' => $arResult['ALLOW_CATALOG_PRICE_SAVE'],
 	'enableEmptyProductError' => $arResult['CATALOG_ENABLE_EMPTY_PRODUCT_ERROR'],
+	'enableSelectProductImageInput' => $arResult['IS_SHOW_PRODUCT_IMAGES'],
 
 	'dataFieldName' => $arResult['PRODUCT_DATA_FIELD_NAME'],
 	'defaultDateReservation' => $arResult['DEFAULT_DATE_RESERVATION'],
@@ -326,7 +327,7 @@ foreach ($grid['ROWS'] as $product)
 						'SKU_ID' => $item['OFFER_ID'],
 						'BASE_PRICE_ID' => $item['BASE_PRICE_ID'],
 					],
-					'SKU_TREE' => $rawProduct['SKU_TREE'],
+					'SKU_TREE' => $rawProduct['SKU_TREE'] ?? null,
 					'MODE' => 'view',
 					'ENABLE_SEARCH' => false,
 					'ENABLE_IMAGE_CHANGE_SAVING' => false,

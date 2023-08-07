@@ -9,8 +9,8 @@ use Bitrix\Main\Localization\Loc;
 
 require_once 'smart_migration_webdav.php';
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
-/** @var CAllUser $USER */
-/** @var CAllMain $APPLICATION */
+/** @var CUser $USER */
+/** @var CMain $APPLICATION */
 global $USER, $APPLICATION;
 
 if (!$USER->IsAdmin())

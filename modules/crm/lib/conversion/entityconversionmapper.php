@@ -4,6 +4,7 @@ use Bitrix\Fileman\UserField\Types\AddressType;
 use Bitrix\Main;
 use \Bitrix\Main\Type\Date;
 use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
+use Bitrix\Main\UserField\Types\EnumType;
 
 abstract class EntityConversionMapper
 {
@@ -170,25 +171,38 @@ abstract class EntityConversionMapper
 				continue;
 			}
 
-			if($typeID === 'enumeration' && is_callable(array($userField['USER_TYPE']['CLASS_NAME'], 'GetList')))
+			if (
+				$typeID === EnumType::USER_TYPE_ID
+				&& is_callable([$userField['USER_TYPE']['CLASS_NAME'], 'GetList'])
+			)
 			{
-				$dbResult = call_user_func_array(
-					array($userField['USER_TYPE']['CLASS_NAME'], 'GetList'),
-					array($userField)
-				);
+				$dbResult = call_user_func([$userField['USER_TYPE']['CLASS_NAME'], 'GetList'], $userField);
 
-				$enumIDs = array();
+				$enumIds = [];
 				while($enum = $dbResult->Fetch())
 				{
-					if(isset($enum['DEF']) && $enum['DEF'] === 'Y')
+					$isDefault = (($enum['DEF'] ?? 'N') === 'Y');
+					if (!$isDefault)
 					{
-						$enumIDs[] = $enum['ID'];
+						continue;
+					}
+
+					$isMultiple = (($userField['MULTIPLE'] ?? 'N') === 'Y');
+					if ($isMultiple)
+					{
+						$enumIds[] = $enum['ID'];
+					}
+					else
+					{
+						$enumIds = $enum['ID'];
+
+						break;
 					}
 				}
 
-				if(!empty($enumIDs))
+				if(!empty($enumIds))
 				{
-					$fields[$name] = $enumIDs;
+					$fields[$name] = $enumIds;
 				}
 
 				continue;

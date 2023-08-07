@@ -21,6 +21,26 @@ use Bitrix\Tasks\Util\User;
 
 CUtil::InitJSCore(array("popup"));
 
+if (!function_exists('checkEffectiveRights'))
+{
+	function checkEffectiveRights($viewedUser)
+	{
+		//TODO move to tasks/security later
+		Loader::includeModule('tasks');
+		$currentUser = User::getId();
+
+		if (!$viewedUser)
+		{
+			return false;
+		}
+
+		return
+			$currentUser == $viewedUser ||
+			User::isSuper($currentUser) ||
+			User::isBossRecursively($currentUser, $viewedUser);
+	}
+}
+
 if (
 	!isset($arResult["User"]["ID"])
 	|| (
@@ -240,23 +260,6 @@ foreach($items as $key => $item)
 }
 
 $items = array_values($items);
-
-function checkEffectiveRights($viewedUser)
-{
-	//TODO move to tasks/security later
-	Loader::includeModule('tasks');
-	$currentUser = User::getId();
-
-	if (!$viewedUser)
-	{
-		return false;
-	}
-
-	return
-		$currentUser == $viewedUser ||
-		User::isSuper($currentUser) ||
-		User::isBossRecursively($currentUser, $viewedUser);
-}
 
 if (
 	is_array($arResult["CurrentUserPerms"])

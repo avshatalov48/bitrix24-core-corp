@@ -1159,20 +1159,20 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 
 	private function getCommunicationsData(array $communications)
 	{
-		$result = array();
+		$result = [];
 
 		foreach($communications as $arComm)
 		{
 			CCrmActivity::PrepareCommunicationInfo($arComm);
-			$result[] = array(
-				'id' => $arComm['ID'],
-				'type' => $arComm['TYPE'],
-				'value' => $arComm['VALUE'],
-				'entityId' => $arComm['ENTITY_ID'],
-				'entityType' => CCrmOwnerType::ResolveName($arComm['ENTITY_TYPE_ID']),
-				'entityTitle' => $arComm['TITLE'],
-				'entityUrl' => CCrmOwnerType::GetEntityShowPath($arComm['ENTITY_TYPE_ID'], $arComm['ENTITY_ID'])
-			);
+			$result[] = [
+				'id' => $arComm['ID'] ?? null,
+				'type' => $arComm['TYPE'] ?? null,
+				'value' => $arComm['VALUE'] ?? null,
+				'entityId' => $arComm['ENTITY_ID'] ?? null,
+				'entityType' => CCrmOwnerType::ResolveName($arComm['ENTITY_TYPE_ID'] ?? CCrmOwnerType::Undefined),
+				'entityTitle' => $arComm['TITLE'] ?? '',
+				'entityUrl' => CCrmOwnerType::GetEntityShowPath($arComm['ENTITY_TYPE_ID'] ?? CCrmOwnerType::Undefined, $arComm['ENTITY_ID'] ?? 0)
+			];
 		}
 
 		return $result;
@@ -1647,7 +1647,7 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 			$communications = array();
 			foreach ($data as $item)
 			{
-				$id = 'CRM' . $item['ENTITY_TYPE'] . $item['ENTITY_ID'].':'.hash('crc32b', $item['TYPE'] . ':' . $item['VALUE']);
+				$id = 'CRM' . $item['ENTITY_TYPE'] . $item['ENTITY_ID'].':'.hash('crc32b', $item['TYPE'] . ':' . ($item['VALUE'] ?? ''));
 				if (!array_key_exists($id, $communications))
 				{
 					$communications[$id] = $item;

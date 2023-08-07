@@ -25,10 +25,10 @@ class TypePreset implements \JsonSerializable
 	{
 		$this->setTitle($fields['title'])
 			->setId($fields['id'])
-			->setDisabled((bool)$fields['disabled'])
+			->setDisabled((bool)($fields['disabled'] ?? false))
 			->setCategory((string)$fields['category'])
-			->setDescription((string)$fields['description'])
-			->setIcon((string)$fields['icon'])
+			->setDescription((string)($fields['description'] ?? ''))
+			->setIcon((string)($fields['icon'] ?? ''))
 			->setData($data);
 	}
 

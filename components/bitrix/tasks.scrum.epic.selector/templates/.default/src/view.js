@@ -228,8 +228,7 @@ export class ViewSelector
 			tabs: 'recents',
 			avatarOptions: {
 				bgColor: epic.color,
-				bgImage: 'none',
-				borderRadius: '12px'
+				bgImage: 'none'
 			}
 		};
 	}

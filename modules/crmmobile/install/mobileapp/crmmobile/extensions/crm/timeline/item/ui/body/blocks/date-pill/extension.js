@@ -50,6 +50,7 @@ jn.define('crm/timeline/item/ui/body/blocks/date-pill', (require, exports, modul
 		{
 			return View(
 				{
+					testId: 'TimelineItemBodyDatePillContainer',
 					style: {
 						flexDirection: 'row',
 						justifyContent: 'flex-start',
@@ -73,6 +74,7 @@ jn.define('crm/timeline/item/ui/body/blocks/date-pill', (require, exports, modul
 						},
 					},
 					Text({
+						testId: 'TimelineItemBodyDatePillText',
 						text: this.formatDate(),
 						style: {
 							fontSize: 12,

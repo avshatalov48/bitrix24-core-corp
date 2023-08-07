@@ -4,6 +4,8 @@
 jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module) => {
 	include('InAppNotifier');
 
+	const { Feature } = require('feature');
+	const { Haptics } = require('haptics');
 	const { Loc } = require('loc');
 	const { TimelineSchedulerBaseProvider } = require('crm/timeline/scheduler/providers/base');
 	const {
@@ -13,7 +15,9 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 	} = require('crm/timeline/ui/toolbar');
 	const { Textarea } = require('crm/timeline/ui/textarea');
 	const { FileField } = require('layout/ui/fields/file');
-	const { isArray } = require('utils/object');
+	const { get } = require('utils/object');
+
+	const isAndroid = Application.getPlatform() === 'android';
 
 	/**
 	 * @class TimelineSchedulerCommentProvider
@@ -60,7 +64,7 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 
 		static getMenuIcon()
 		{
-			return `<svg width="30" height="31" viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.75227 6.85869H23.5113C24.3531 6.85869 25.0356 7.54116 25.0356 8.38302V18.916C25.0356 19.7579 24.3531 20.4404 23.5113 20.4404H15.6318L10.4074 25.6641V20.4404H7.75227C6.9104 20.4404 6.22794 19.7579 6.22794 18.916V8.38302C6.22794 7.54116 6.9104 6.85869 7.75227 6.85869Z" fill="#767C87"/></svg>`;
+			return '<svg width="31" height="31" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.702 8h17.596C25.238 8 26 8.653 26 9.459v10.082c0 .806-.762 1.459-1.702 1.459H15.5l-5.833 5v-5H6.702C5.762 21 5 20.347 5 19.54V9.46C5 8.653 5.762 8 6.702 8Z" fill="#767C87"/></svg>';
 		}
 
 		static getMenuPosition()
@@ -68,14 +72,21 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 			return 200;
 		}
 
-		static isSupported()
+		static isSupported(context = {})
 		{
-			return false;
+			const flag = get(
+				jnExtensionData.get('crm:timeline/scheduler/providers/comment'),
+				'isCommentAvailable',
+				false,
+			);
+
+			return Boolean(flag);
 		}
 
 		componentDidMount()
 		{
 			super.componentDidMount();
+
 			this.focus();
 		}
 
@@ -95,26 +106,46 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 				{
 					style: {
 						flexDirection: 'column',
+						flex: 1,
+						backgroundColor: '#eef2f4',
 					},
 					resizableByKeyboard: true,
 				},
-				this.renderTextField(),
-				this.renderAttachments(),
-				this.renderToolbar(),
+				View(
+					{
+						style: {
+							flex: 1,
+							backgroundColor: '#ffffff',
+							borderTopLeftRadius: 12,
+							borderTopRightRadius: 12,
+						},
+					},
+					this.renderTextField(),
+					this.renderAttachments(),
+					this.renderToolbar(),
+				),
 			);
 		}
 
 		renderTextField()
 		{
-			return Textarea({
-				ref: (ref) => this.textInputRef = ref,
-				text: this.state.text,
-				placeholder: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_COMMENT_PLACEHOLDER'),
-				onChange: (text) => {
-					this.state.text = text;
-					this.refreshSaveButton();
+			return View(
+				{
+					style: {
+						flex: 1,
+						paddingLeft: isAndroid ? 0 : 8,
+					},
 				},
-			});
+				Textarea({
+					ref: (ref) => this.textInputRef = ref,
+					text: this.state.text,
+					placeholder: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_COMMENT_PLACEHOLDER_2'),
+					onChange: (text) => {
+						this.state.text = text;
+						this.refreshSaveButton();
+					},
+				}),
+			);
 		}
 
 		renderAttachments()
@@ -124,6 +155,7 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 					style: {
 						paddingHorizontal: 20,
 						display: this.state.files.length === 0 ? 'none' : 'flex',
+						flexShrink: 1,
 					},
 				},
 				FileField({
@@ -137,17 +169,16 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 						mediaType: 'file',
 						parentWidget: this.layout,
 						controller: {
-							endpoint: 'crm.FileUploader.ActivityController',
+							endpoint: 'crm.FileUploader.CommentUploaderController',
 							options: {
 								entityTypeId: this.entity.typeId,
 								entityId: this.entity.id,
-								categoryId: this.entity.categoryId,
 							},
 						},
 					},
 					readOnly: false,
 					onChange: (files) => {
-						files = isArray(files) ? files : [];
+						files = Array.isArray(files) ? files : [];
 						this.setState({ files }, () => this.refreshSaveButton());
 					},
 				}),
@@ -169,13 +200,13 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 						style: { flexDirection: 'row' },
 					},
 					ToolbarIcon({
-						svg: '<svg width="17" height="19" viewBox="0 0 17 19" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.1313 7.48636C16.2696 7.62472 16.2696 7.84904 16.1313 7.98739L15.2028 8.91584C15.0645 9.05419 14.8401 9.05419 14.7018 8.91584L9.2344 3.44845C7.66198 1.87603 5.08893 1.87603 3.5165 3.44845C1.94408 5.02087 1.94408 7.59393 3.5165 9.16635L10.2236 15.8735C11.2097 16.8596 12.8112 16.8596 13.7973 15.8735C14.7834 14.8874 14.7834 13.2859 13.7973 12.2998L7.80493 6.3074C7.40456 5.90703 6.77582 5.90703 6.37545 6.3074C5.97509 6.70777 5.97509 7.33651 6.37545 7.73688L11.1281 12.4895C11.2665 12.6279 11.2665 12.8522 11.1281 12.9906L10.1997 13.919C10.0613 14.0574 9.83698 14.0574 9.69863 13.919L4.94598 9.16635C3.7594 7.97977 3.7594 6.0645 4.94598 4.87793C6.13256 3.69135 8.04783 3.69135 9.2344 4.87793L15.2268 10.8703C16.9991 12.6426 16.9991 15.5307 15.2268 17.303C13.4545 19.0752 10.5664 19.0752 8.79416 17.303L2.08703 10.5958C-0.271604 8.23719 -0.271604 4.37761 2.08703 2.01898C4.44566 -0.339659 8.30525 -0.339659 10.6639 2.01898L16.1313 7.48636Z" fill="#D5D7DB"/></svg>',
+						svg: '<svg width="17" height="19" viewBox="0 0 17 19" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.1313 7.48636C16.2696 7.62472 16.2696 7.84904 16.1313 7.98739L15.2028 8.91584C15.0645 9.05419 14.8401 9.05419 14.7018 8.91584L9.2344 3.44845C7.66198 1.87603 5.08893 1.87603 3.5165 3.44845C1.94408 5.02087 1.94408 7.59393 3.5165 9.16635L10.2236 15.8735C11.2097 16.8596 12.8112 16.8596 13.7973 15.8735C14.7834 14.8874 14.7834 13.2859 13.7973 12.2998L7.80493 6.3074C7.40456 5.90703 6.77582 5.90703 6.37545 6.3074C5.97509 6.70777 5.97509 7.33651 6.37545 7.73688L11.1281 12.4895C11.2665 12.6279 11.2665 12.8522 11.1281 12.9906L10.1997 13.919C10.0613 14.0574 9.83698 14.0574 9.69863 13.919L4.94598 9.16635C3.7594 7.97977 3.7594 6.0645 4.94598 4.87793C6.13256 3.69135 8.04783 3.69135 9.2344 4.87793L15.2268 10.8703C16.9991 12.6426 16.9991 15.5307 15.2268 17.303C13.4545 19.0752 10.5664 19.0752 8.79416 17.303L2.08703 10.5958C-0.271604 8.23719 -0.271604 4.37761 2.08703 2.01898C4.44566 -0.339659 8.30525 -0.339659 10.6639 2.01898L16.1313 7.48636Z" fill="#BDC1C6"/></svg>',
 						width: 17,
 						height: 19,
 						onClick: () => this.fileFieldRef && this.fileFieldRef.openFilePicker(),
 					}),
 					ToolbarIcon({
-						svg: '<svg width="14" height="20" viewBox="0 0 14 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.8209 8.6302C13.4064 8.61776 13.8912 9.08233 13.9036 9.66785C13.9607 12.3582 11.9789 15.5172 8.13976 16.039L8.13894 17.4335L8.59835 17.4339C9.12608 17.4339 9.55389 17.8617 9.55389 18.3894C9.55389 18.9171 9.12608 19.3449 8.59835 19.3449H5.40111C4.87338 19.3449 4.44557 18.9171 4.44557 18.3894C4.44557 17.8617 4.87338 17.4339 5.40111 17.4339L5.85906 17.4335L5.85898 16.0381C2.02549 15.5205 0.0658277 12.4368 0.0956103 9.67891C0.101934 9.0933 0.581793 8.62369 1.1674 8.62989C1.71398 8.63592 2.15949 9.05432 2.21132 9.58621L2.2163 9.70181C2.21036 10.2519 2.51762 11.3083 3.08472 12.1298C3.8989 13.3093 5.15055 13.9929 7.01102 13.9929C8.86116 13.9929 10.1084 13.2962 10.924 12.0939C11.4448 11.3263 11.7482 10.351 11.7806 9.82579L11.7833 9.71288C11.7708 9.12737 12.2354 8.64263 12.8209 8.6302ZM6.99973 0.29834C8.59695 0.29834 9.89175 1.59314 9.89175 3.19036V9.28705C9.89175 10.8843 8.59695 12.1791 6.99973 12.1791C5.40252 12.1791 4.10772 10.8843 4.10772 9.28705V3.19036C4.10772 1.59314 5.40252 0.29834 6.99973 0.29834Z" fill="#D5D7DB"/></svg>',
+						svg: '<svg width="14" height="20" viewBox="0 0 14 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.8209 8.6302C13.4064 8.61776 13.8912 9.08233 13.9036 9.66785C13.9607 12.3582 11.9789 15.5172 8.13976 16.039L8.13894 17.4335L8.59835 17.4339C9.12608 17.4339 9.55389 17.8617 9.55389 18.3894C9.55389 18.9171 9.12608 19.3449 8.59835 19.3449H5.40111C4.87338 19.3449 4.44557 18.9171 4.44557 18.3894C4.44557 17.8617 4.87338 17.4339 5.40111 17.4339L5.85906 17.4335L5.85898 16.0381C2.02549 15.5205 0.0658277 12.4368 0.0956103 9.67891C0.101934 9.0933 0.581793 8.62369 1.1674 8.62989C1.71398 8.63592 2.15949 9.05432 2.21132 9.58621L2.2163 9.70181C2.21036 10.2519 2.51762 11.3083 3.08472 12.1298C3.8989 13.3093 5.15055 13.9929 7.01102 13.9929C8.86116 13.9929 10.1084 13.2962 10.924 12.0939C11.4448 11.3263 11.7482 10.351 11.7806 9.82579L11.7833 9.71288C11.7708 9.12737 12.2354 8.64263 12.8209 8.6302ZM6.99973 0.29834C8.59695 0.29834 9.89175 1.59314 9.89175 3.19036V9.28705C9.89175 10.8843 8.59695 12.1791 6.99973 12.1791C5.40252 12.1791 4.10772 10.8843 4.10772 9.28705V3.19036C4.10772 1.59314 5.40252 0.29834 6.99973 0.29834Z" fill="#BDC1C6"/></svg>',
 						width: 14,
 						height: 20,
 						onClick: () => {
@@ -227,14 +258,15 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 
 		insertMention(users)
 		{
-			if (isArray(users) && users.length > 0)
+			if (Array.isArray(users) && users.length > 0)
 			{
 				const { id, title } = users[0];
-				const mention = `[URL=data://user=${id}][COLOR=#0B66C3][B]${title}[/B][/COLOR][/URL]`;
+				const mention = `[USER=${id}]${title}[/USER]`;
 
 				const text = this.endsWithWhitespace(this.state.text)
 					? `${this.state.text}${mention} `.trimStart()
-					: `${this.state.text} ${mention} `.trimStart();
+					: `${this.state.text} ${mention} `.trimStart()
+				;
 
 				this.setState({ text }, () => {
 					this.setCursorPosition(text.length);
@@ -246,6 +278,7 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 		endsWithWhitespace(str)
 		{
 			const trimmed = str.trimEnd();
+
 			return trimmed !== str;
 		}
 
@@ -290,22 +323,43 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 		save()
 		{
 			return new Promise((resolve, reject) => {
-				// @todo Replace with ajax call when backend will be ready
-				setTimeout(() => {
-					const users = [...this.state.text.matchAll(/\[URL=data:\/\/user=(\d+)]/g)]
-						.map((match) => Number(match[1]));
+				const data = {
+					fields: {
+						ENTITY_TYPE_ID: this.entity.typeId,
+						ENTITY_ID: this.entity.id,
+						COMMENT: this.comment,
+						//AUTHOR_ID:
+						FILES: this.files,
+					},
+				};
 
-					const data = {
-						text: this.state.text.trim(),
-						files: this.state.files.map((file) => file.token),
-						users: [...new Set(users)],
-					};
-					console.log('sending', data);
-					resolve();
-
-					this.layout.close();
-				}, 2000);
+				BX.ajax.runAction('crm.timeline.comment.add', { data })
+					.then((response) => {
+						resolve(response);
+						Haptics.notifySuccess();
+						this.onActivityCreate(response);
+						this.close();
+					})
+					.catch((response) => {
+						void ErrorNotifier.showError(response.errors[0].message);
+						reject(response);
+					});
 			});
+		}
+
+		get comment()
+		{
+			const { text } = this.state;
+
+			return text.replaceAll(
+				/\[URL=data:\/\/user=([0-9]+)]\[COLOR=#0B66C3]\[B](.*)\[\/B]\[\/COLOR]\[\/URL]/gm,
+				'[USER=$1]$2[/USER]'
+			);
+		}
+
+		get files()
+		{
+			return this.state.files.map((file) => file.token);
 		}
 	}
 

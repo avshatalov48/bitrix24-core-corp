@@ -11,6 +11,7 @@ use Bitrix\Crm\Service\Timeline\Layout\Action;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Animation;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Client;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ClientMark;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockWithTitle;
@@ -103,7 +104,7 @@ class OpenLine extends Activity
 			;
 		}
 
-		$clientBlock = $this->buildClientBlock(self::BLOCK_WITH_FIXED_TITLE);
+		$clientBlock = $this->buildClientBlock(Client::BLOCK_WITH_FIXED_TITLE);
 		if (isset($clientBlock))
 		{
 			$result['client'] = $clientBlock;

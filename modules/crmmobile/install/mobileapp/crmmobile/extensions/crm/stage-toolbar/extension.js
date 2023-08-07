@@ -3,7 +3,6 @@
  */
 jn.define('crm/stage-toolbar', (require, exports, module) => {
 	const { FadeView } = require('animation/components/fade-view');
-	const { StageListView } = require('crm/stage-list-view');
 	const { CategoryCountersStoreManager } = require('crm/state-storage');
 
 	/**
@@ -41,20 +40,22 @@ jn.define('crm/stage-toolbar', (require, exports, module) => {
 			return BX.prop.getBoolean(this.props.stageParams, 'showCount', false);
 		}
 
-		handleSelectorClick()
+		async handleSelectorClick()
 		{
 			if (!this.isSelectorEnabled())
 			{
 				return;
 			}
 
-			const { onStageSelect, onViewHidden, stageParams } = this.props;
+			const { onStageSelect, onViewHidden, stageParams, entityTypeId, category } = this.props;
 			const stages = CategoryCountersStoreManager.getStages();
 			const unsuitableStages = stages.filter((stage) => stage.dropzone).map((stage) => stage.id);
 
+			const { StageListView } = await requireLazy('crm:stage-list-view');
+
 			void StageListView.open({
-				entityTypeId: this.props.entityTypeId,
-				categoryId: this.props.category.id,
+				entityTypeId,
+				categoryId: category.id,
 				activeStageId: this.getActiveStageId(),
 				readOnly: true,
 				canMoveStages: false,
@@ -291,14 +292,17 @@ jn.define('crm/stage-toolbar', (require, exports, module) => {
 			if (activeStage)
 			{
 				const counters = CategoryCountersStoreManager.getStage(activeStage.id);
+
 				return (counters ? counters.count : null);
 			}
 
 			if (this.allStagesEnabled() && this.props.category)
 			{
 				const counters = CategoryCountersStoreManager.getStages();
+
 				return counters.reduce((count, stage) => {
 					count += stage.count;
+
 					return count;
 				}, 0);
 			}

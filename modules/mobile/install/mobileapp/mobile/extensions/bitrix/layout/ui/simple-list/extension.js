@@ -103,12 +103,14 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 			if (params.actionName === 'deleteEntity')
 			{
 				this.deleteItem(params.entityId);
+
 				return;
 			}
 
 			if (this.props.onDetailCardUpdateHandler)
 			{
 				this.props.onDetailCardUpdateHandler(params);
+
 				return;
 			}
 
@@ -120,6 +122,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 			if (this.props.onDetailCardCreateHandler)
 			{
 				this.props.onDetailCardCreateHandler(params);
+
 				return;
 			}
 
@@ -148,6 +151,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 			if (this.isForbiddenViewMode(newProps) && newProps.onNotViewableHandler && newProps.renderType === CONTEXT_AJAX)
 			{
 				this.props.onNotViewableHandler();
+
 				return false;
 			}
 
@@ -182,7 +186,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 				return;
 			}
 
-			this.pull.callback(data, this.props.context).then(response => {
+			this.pull.callback(data, this.props.context).then((response) => {
 				if (response.isBatchMode)
 				{
 					for (const eventName in response.data)
@@ -201,14 +205,14 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 		{
 			if (eventName === PULL_COMMAND_UPDATED)
 			{
-				items.map(item => {
+				items.map((item) => {
 					this.updateItemFromPull(item.id, item);
 				});
 			}
 
 			if (eventName === PULL_COMMAND_DELETED)
 			{
-				items.map(item => {
+				items.map((item) => {
 					this.deleteItem(item.id);
 				});
 			}
@@ -226,9 +230,10 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 		updateItemFromPull(id, item)
 		{
-			if (!this.items.size)
+			if (this.items.size === 0)
 			{
 				this.reloadList();
+
 				return;
 			}
 
@@ -244,6 +249,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 				this.setState({
 					isShowReloadListNotification,
 				});
+
 				return;
 			}
 
@@ -263,6 +269,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 					id,
 					params,
 				});
+
 				return;
 			}
 
@@ -278,7 +285,6 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 			}
 			else
 			{
-
 				// trying to protect against re-animating the update when the element was just added
 				const params = {
 					showAnimate: id !== this.lastElementIdAddedWithAnimation,
@@ -299,9 +305,10 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 		{
 			this.lastElementIdAddedWithAnimation = items[items.length - 1].id;
 
-			if (!this.items.size)
+			if (this.items.size === 0)
 			{
 				this.reloadList();
+
 				return;
 			}
 
@@ -341,25 +348,35 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 		animateItem(action, itemId, { showUpdated = true } = {})
 		{
-			return new Promise(resolve => {
+			return new Promise((resolve) => {
 				const item = this.getItemComponent(itemId);
 				if (!item)
 				{
 					resolve();
+
 					return;
 				}
 
-				if (action === animateActions.blink)
+				switch (action)
 				{
-					item.blink(resolve, showUpdated);
-				}
-				else if (action === animateActions.setLoading)
-				{
-					item.setLoading(resolve);
-				}
-				else if (action === animateActions.dropLoading)
-				{
-					item.dropLoading(resolve, showUpdated);
+					case animateActions.blink: {
+						item.blink(resolve, showUpdated);
+
+						break;
+					}
+
+					case animateActions.setLoading: {
+						item.setLoading(resolve);
+
+						break;
+					}
+
+					case animateActions.dropLoading: {
+						item.dropLoading(resolve, showUpdated);
+
+						break;
+					}
+				// No default
 				}
 			});
 		}
@@ -385,7 +402,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 			this.menu = new ContextMenu({
 				parent: this.items.get(itemId),
 				parentId: itemId,
-				id: 'SimpleList-' + itemId,
+				id: `SimpleList-${itemId}`,
 				testId: this.testId,
 				actions,
 				updateItemHandler: this.updateItemHandler,
@@ -406,7 +423,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 		getItems()
 		{
-			let items = Array.from(this.items.values());
+			let items = [...this.items.values()];
 
 			if (this.props.showEmptySpaceItem)
 			{
@@ -437,8 +454,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 		}
 
 		onLoadMoreDummy()
-		{
-		}
+		{}
 
 		render()
 		{
@@ -459,7 +475,6 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 						items: this.getItems(),
 					}],
 					renderItem: (item, section, row) => {
-
 						const customStyles = (
 							this.props.getItemCustomStyles
 								? this.props.getItemCustomStyles(item, section, row)
@@ -481,7 +496,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 								&& Array.isArray(this.props.itemActions)
 								&& this.props.itemActions.length
 							),
-							ref: ref => {
+							ref: (ref) => {
 								if (item.id)
 								{
 									const { id } = item;
@@ -497,7 +512,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 					},
 					isRefreshing: this.props.isRefreshing,
 					onLoadMore: (allItemsLoaded || this.props.items.size < MIN_ROWS_COUNT_FOR_LOAD_MORE) ? null : this.onLoadMoreDummy, // need for show the loader at the bottom of the list ))
-					onViewableItemsChanged: items => {
+					onViewableItemsChanged: (items) => {
 						if (allItemsLoaded)
 						{
 							return;
@@ -520,9 +535,8 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 							length: 1,
 						});
 					},
-					ref: ref => this.listView = ref,
+					ref: (ref) => this.listView = ref,
 				});
-
 			}
 
 			if (viewMode === ViewMode.empty)
@@ -593,10 +607,10 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 			if (this.props.allItemsLoaded)
 			{
-				return this.items.size ? ViewMode.list : ViewMode.empty;
+				return this.items.size > 0 ? ViewMode.list : ViewMode.empty;
 			}
 
-			if (!this.items.size)
+			if (this.items.size === 0)
 			{
 				return ViewMode.loading;
 			}
@@ -724,7 +738,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 							height: 16,
 						},
 						svg: {
-							content: `<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><defs><style>.cls-1 { fill: #fff; fill-rule: evenodd; }</style></defs><path class="cls-1" d="M8.094 13.558a5.558 5.558 0 1 1 3.414-9.944l-1.466 1.78 5.95.585L14.22.324l-1.146 1.39a7.99 7.99 0 1 0 .926 11.736l-1.744-1.726a5.62 5.62 0 0 1-4.16 1.834z"/></svg>`,
+							content: '<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><defs><style>.cls-1 { fill: #fff; fill-rule: evenodd; }</style></defs><path class="cls-1" d="M8.094 13.558a5.558 5.558 0 1 1 3.414-9.944l-1.466 1.78 5.95.585L14.22.324l-1.146 1.39a7.99 7.99 0 1 0 .926 11.736l-1.744-1.726a5.62 5.62 0 0 1-4.16 1.834z"/></svg>',
 						},
 					}),
 					Text({
@@ -742,6 +756,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 			if (count)
 			{
 				const text = (this.pull.notificationAddText || BX.message('SIMPLELIST_PULL_NOTIFICATION_ADD'));
+
 				return text.replace('%COUNT%', count);
 			}
 
@@ -770,7 +785,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 		modifyItemsList(itemsData)
 		{
-			itemsData.forEach(item => {
+			itemsData.forEach((item) => {
 				const { id } = item;
 				const currentItem = this.items.has(id) && clone(this.items.get(id));
 

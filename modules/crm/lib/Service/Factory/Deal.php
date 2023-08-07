@@ -336,10 +336,9 @@ final class Deal extends Factory
 			],
 			Item::FIELD_NAME_COMMENTS => [
 				'TYPE' => Field::TYPE_TEXT,
+				'VALUE_TYPE' => Field::VALUE_TYPE_BB,
 				'ATTRIBUTES' => [],
-				'SETTINGS' => [
-					'isFlexibleContentType' => true,
-				],
+				'CLASS' => Field\Comments::class,
 			],
 			Item::FIELD_NAME_ASSIGNED => [
 				'TYPE' => Field::TYPE_USER,

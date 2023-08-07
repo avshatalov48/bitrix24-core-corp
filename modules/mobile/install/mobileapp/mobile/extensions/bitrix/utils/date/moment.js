@@ -2,7 +2,6 @@
  * @module utils/date/moment
  */
 jn.define('utils/date/moment', (require, exports, module) => {
-
 	/**
 	 * Handy wrapper for standard js Date object.
 	 */
@@ -48,6 +47,7 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		setNow(moment)
 		{
 			this.now = moment;
+
 			return this;
 		}
 
@@ -66,6 +66,7 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		{
 			const yesterday = new Date(this.getNow().date);
 			yesterday.setDate(yesterday.getDate() - 1);
+
 			return this.date.toDateString() === yesterday.toDateString();
 		}
 
@@ -76,6 +77,7 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		{
 			const tomorrow = new Date(this.getNow().date);
 			tomorrow.setDate(tomorrow.getDate() + 1);
+
 			return this.date.toDateString() === tomorrow.toDateString();
 		}
 
@@ -117,6 +119,14 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		get withinHour()
 		{
 			return this.isWithinSeconds(3600);
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get withinDay()
+		{
+			return this.isWithinSeconds(86400);
 		}
 
 		/**
@@ -166,6 +176,7 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		get secondsFromNow()
 		{
 			const delta = Math.abs(this.getNow().timestamp - this.timestamp);
+
 			return Math.floor(delta);
 		}
 
@@ -175,6 +186,7 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		get minutesFromNow()
 		{
 			const delta = Math.abs(this.getNow().timestamp - this.timestamp);
+
 			return Math.floor(delta / 60);
 		}
 
@@ -187,6 +199,26 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		}
 
 		/**
+		 * @return {number}
+		 */
+		get daysFromNow()
+		{
+			const delta = Math.abs(this.getNow().timestamp - this.timestamp);
+
+			return Math.floor(delta / (60 * 60 * 24));
+		}
+
+		/**
+		 * @return {number}
+		 */
+		get monthsFromNow()
+		{
+			const delta = Math.abs(this.getNow().timestamp - this.timestamp);
+
+			return Math.floor(delta / (60 * 60 * 24 * 31));
+		}
+
+		/**
 		 * @param {string|function} format
 		 * @param {string|null} locale
 		 * @param {*} rest
@@ -195,6 +227,8 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		format(format, locale = null, ...rest)
 		{
 			const formatStr = typeof format === 'function' ? format(this, locale, ...rest) : format;
+
+			// eslint-disable-next-line no-undef
 			return DateFormatter.getDateString(this.timestamp, formatStr, locale);
 		}
 
@@ -234,6 +268,7 @@ jn.define('utils/date/moment', (require, exports, module) => {
 			{
 				moment.setNow(new Moment(this.now.date));
 			}
+
 			return moment;
 		}
 
@@ -245,6 +280,7 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		{
 			const moment = this.clone();
 			moment.date.setTime(this.date.getTime() + ms);
+
 			return moment;
 		}
 
@@ -292,10 +328,10 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		{
 			const moment = this.clone();
 			moment.date.setMinutes(0, 0, 0);
+
 			return moment;
 		}
 	}
 
 	module.exports = { Moment };
-
 });

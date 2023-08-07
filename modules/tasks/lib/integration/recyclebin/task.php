@@ -292,7 +292,7 @@ if (Loader::includeModule('recyclebin'))
 					}
 				}
 
-				$task = \CTaskItem::getInstance($taskId, 1);
+				$task = \CTaskItem::getInstance($taskId, User::getAdminId());
 				$task->update([], [
 					'FORCE_RECOUNT_COUNTER' => 'Y',
 					'PIN_IN_STAGE' => false,

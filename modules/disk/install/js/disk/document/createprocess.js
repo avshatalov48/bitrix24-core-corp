@@ -206,8 +206,6 @@
 		commit: function ()
 		{
 			return BX.Disk.Document.EditProcess.prototype.commit.apply(this, arguments).then(function (response) {
-				console.log('create file', response);
-
 				return response;
 			});
 		},
