@@ -257,6 +257,11 @@ class OrderDealSynchronizer
 			return new Result();
 		}
 
+		if ($this->isLockedDeal($dealId))
+		{
+			return new Result();
+		}
+
 		$order = $this->getOrderBindedToDeal($dealId);
 		if (!$order)
 		{

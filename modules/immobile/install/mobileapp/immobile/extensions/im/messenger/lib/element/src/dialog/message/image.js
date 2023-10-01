@@ -33,6 +33,11 @@ jn.define('im/messenger/lib/element/dialog/message/image', (require, exports, mo
 			return 'image';
 		}
 
+		setShowTail()
+		{
+			return this;
+		}
+
 		setImageUrl(imageUrl)
 		{
 			if (!Type.isStringFilled(imageUrl))

@@ -1276,7 +1276,18 @@ if($actionData['ACTIVE'])
 						'ASSIGNED_BY_ID' => $actionData['ASSIGNED_BY_ID']
 					);
 
-					if($CCrmCompany->Update($ID, $arUpdateData, true, true, array('DISABLE_USER_FIELD_CHECK' => true)))
+					if (
+						$CCrmCompany->Update(
+							$ID,
+							$arUpdateData,
+							true,
+							true,
+							[
+								'REGISTER_SONET_EVENT' => true,
+								'DISABLE_USER_FIELD_CHECK' => true,
+							]
+						)
+					)
 					{
 						$DB->Commit();
 

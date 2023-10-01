@@ -13,7 +13,7 @@ return [
 		'im:messenger/lib/user-manager',
 		'im:messenger/lib/rest',
 		'im:messenger/lib/uploader',
-        'im/messenger/core',
+		'im:messenger/core',
 	],
 	'bundle' => [
 		'./src/chat',

@@ -23,6 +23,7 @@ class TagHandler implements TagHandlerInterface
 	private const TAG_REGION = 'region';
 	private const TAG_COUNT_ADMIN = 'admin_active_count';
 	private const TAG_COUNT_INTEGRATOR = 'integrator_active_count';
+	private const TAG_CURRENT_TARIFF = 'current_tariff';
 
 	/**
 	 * Update tag by users active status.
@@ -97,7 +98,7 @@ class TagHandler implements TagHandlerInterface
 		return $result;
 	}
 
-	private static function getRegion()
+	private static function getRegion(): string
 	{
 		if (Loader::includeModule('bitrix24'))
 		{
@@ -106,6 +107,11 @@ class TagHandler implements TagHandlerInterface
 		else
 		{
 			$value = Option::get('main', '~PARAM_CLIENT_LANG', LANGUAGE_ID);
+		}
+
+		if (!$value)
+		{
+			$value = 'en';
 		}
 
 		return $value;
@@ -192,12 +198,22 @@ class TagHandler implements TagHandlerInterface
 	{
 		Manager::save(
 			static::MODULE_ID,
-			static::TAG_COUNT_USER,
+			static::TAG_REGION,
 			static::getRegion()
 		);
 
 		return null;
 	}
+
+	/**
+	 * Returns current tariff
+	 * @return string
+	 */
+	private static function getCurrentTariff(): string
+	{
+		return Option::get("main", "~controller_group_name", "");
+	}
+
 
 	/**
 	 * Handler updates regions tag.
@@ -209,6 +225,12 @@ class TagHandler implements TagHandlerInterface
 			static::MODULE_ID,
 			static::TAG_COUNT_USER,
 			static::getRegion()
+		);
+
+		Manager::save(
+			static::MODULE_ID,
+			static::TAG_CURRENT_TARIFF,
+			static::getCurrentTariff()
 		);
 
 		return null;

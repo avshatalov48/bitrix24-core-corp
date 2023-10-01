@@ -367,12 +367,83 @@ a.check-link:hover { text-decoration: none; }
 
 /* Gray theme section */
 
+.gray-theme .salescenter-payment-pay-app {
+	font-family: "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	font-size: 15px;
+	line-height: 1.37;
+	letter-spacing: -0.15px;
+	color: #a8adb4;
+}
+
+.gray-theme .strong-value {
+	color: #ffffff;
+	font-weight: 500;
+}
+
+.gray-theme fieldset input {
+	color: #ffffff;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	border-radius: 4px;
+	padding: 20px 10px;
+	font-size: 15px;
+	background: none;
+	transition: 0.3s border;
+}
+
+.gray-theme fieldset input:focus {
+	color: #ffffff;
+	border: 1px solid rgba(255, 255, 255, 0.5);
+	background: none;
+}
+
+
+.gray-theme .qr-code {
+	border-radius: 12px;
+	padding: 14px;
+	background-color: #ffffff;
+}
+
+.gray-theme .qr-code-container {
+	margin-top: 35px;
+	display: flex;
+	justify-content: center;
+}
+
+
+.gray-theme .widget-paysystem-name {
+	color: #ffffff;
+}
+
+.gray-theme .widget-paysystem-checkout-sum {
+	color: #ffffff;
+}
+
+.gray-theme .widget-payment-checkout-info {
+	margin-bottom: 5px;
+	color: #A8ADB4;
+	font-family: "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	line-height: 21px;
+	letter-spacing: -0.35px;
+	font-size: 15px;
+	font-weight: 400;
+	word-wrap: break-word;
+}
+
+
+.gray-theme .qr-code-image {
+	width: 160px;
+}
+
 .gray-theme .loading-button-text {
 	opacity: 0;
 }
 
 /* I'm very sorry but I need to do this important */
-.gray-theme .order-payment-method-item-button  {
+.gray-theme .order-payment-method-item-button,
+.gray-theme .btn
+{
 	flex-shrink: 0;
 	padding: 6px 20px !important;
 	border-radius: 99rem;
@@ -387,6 +458,7 @@ a.check-link:hover { text-decoration: none; }
 	background: #326446 !important;
 	transition: .2s;
 	cursor: pointer;
+	border: none !important;
 }
 
 .gray-theme .page-section-title {
@@ -399,7 +471,8 @@ a.check-link:hover { text-decoration: none; }
 	color: #ffffff;
 }
 
-.gray-theme .order-payment-method-item-button:hover {
+.gray-theme .order-payment-method-item-button:hover,
+.gray-theme .btn:hover {
 	background: #348856 !important;
 }
 
@@ -559,6 +632,10 @@ a.check-link:hover { text-decoration: none; }
 	background: #31313b !important;
 }
 
+.gray-theme .checkout-basket-personal-order-info-item strong {
+	color: #ffffff;
+}
+
 @media (max-width: 480px) {
 	.gray-theme .page-section-title {
 		padding: 10px 3px;
@@ -580,5 +657,3 @@ a.check-link:hover { text-decoration: none; }
 	}
 
 }
-
-

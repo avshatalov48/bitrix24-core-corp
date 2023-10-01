@@ -114,6 +114,7 @@ const Block = {
 					<div class="salescenter-app-payment-by-sms-item-container-payment-title-item-wrapper">
 						<block-title-item
 							v-for="(item, index) in config.titleItems"
+							v-bind:key="index"
 							v-on:on-title-item="openSliderForTitleItem(item)"
 							:item="item">
 						</block-title-item>

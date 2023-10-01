@@ -2,13 +2,13 @@
 
 namespace Bitrix\Crm\Ml;
 
-class TrainingState
+final class TrainingState
 {
-	const PENDING_CREATION = "pending_creation";
-	const IDLE = "idle";
-	const GATHERING = "gathering";
-	const TRAINING = "training";
-	const EVALUATING = "evaluating";
-	const FINISHED = "finished";
-	const CANCELED = "canceled";
+	public const PENDING_CREATION = "pending_creation";
+	public const IDLE = "idle";
+	public const GATHERING = "gathering";
+	public const TRAINING = "training";
+	public const EVALUATING = "evaluating";
+	public const FINISHED = "finished";
+	public const CANCELED = "canceled";
 }

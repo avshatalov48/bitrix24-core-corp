@@ -48,7 +48,7 @@ class CrmTrackingChannelPoolComponent extends \CBitrixComponent implements Contr
 
 		if (!isset($this->arParams['HAS_ACCESS']))
 		{
-			/**@var $USER \CAllUser*/
+			/**@var $USER \CUser*/
 			$this->arParams['HAS_ACCESS'] = true;
 			/*
 			global $USER;

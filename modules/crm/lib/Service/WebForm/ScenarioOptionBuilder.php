@@ -3,9 +3,6 @@
 namespace Bitrix\Crm\Service\WebForm;
 
 use Bitrix\Crm\Service\WebForm\Scenario\BaseBuilder;
-use Bitrix\Crm\Service\WebForm\Scenario\BaseScenario;
-use Bitrix\Crm\Service\WebForm\Scenario\DependencyScenario\DependencyAction;
-use Bitrix\Crm\Service\WebForm\Scenario\DependencyScenario\DependencyCondition;
 use Bitrix\Crm\Service\WebForm\Scenario\DependencyScenario\DependencyItem;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserConsent\Agreement;
@@ -17,7 +14,7 @@ class ScenarioOptionBuilder extends BaseBuilder
 	/**
 	 * @var bool
 	 */
-	private $supportPreset = false;
+	private bool $supportPreset = false;
 
 	private static function getAgreements(): array
 	{
@@ -42,16 +39,18 @@ class ScenarioOptionBuilder extends BaseBuilder
 	public function addPresetSupport(): ScenarioOptionBuilder
 	{
 		$this->supportPreset = true;
+
 		return $this;
 	}
 	/**
 	 * Add agreements to the prepared object.
 	 * @param bool $use
+	 *
 	 * @return $this
 	 */
 	public function addAgreements(bool $use = false): ScenarioOptionBuilder
 	{
-		if (!$this->prepared['agreements'])
+		if (empty($this->prepared['agreements']))
 		{
 			$this->prepared['agreements'] = [];
 		}
@@ -60,80 +59,92 @@ class ScenarioOptionBuilder extends BaseBuilder
 
 		$agreements = self::getAgreements();
 		$this->prepared['data']['agreements'][0]['id'] = $agreements[0];
+
 		return $this;
 	}
 
 	/**
 	 * Add captcha to the prepared object.
 	 * @param bool $use
+	 *
 	 * @return $this
 	 */
 	public function addCaptcha(bool $use = false): ScenarioOptionBuilder
 	{
-		if (!$this->prepared['data']['captcha'])
+		if (empty($this->prepared['data']['captcha']))
 		{
 			$this->prepared['data']['captcha'] = [];
 		}
+
 		$this->prepared['data']['captcha']['use'] = $use;
+
 		return $this;
 	}
 
 	/**
 	 * @param bool $use
+	 *
 	 * @return $this
 	 */
 	public function usePayment(bool $use = false): ScenarioOptionBuilder
 	{
-		if (!$this->prepared['payment'])
+		if (empty($this->prepared['payment']))
 		{
 			$this->prepared['payment'] = [];
 		}
+
 		$this->prepared['payment']['use'] = $use;
 		$this->prepared['payment']['payer'] = "";
 		$this->prepared['payment']['systems'] = [];
+
 		return $this;
 	}
 
 	/**
 	 * Add recaptcha to the prepared object.
 	 * @param bool $use
+	 *
 	 * @return $this
 	 */
 	public function addRecaptcha(bool $use = false): ScenarioOptionBuilder
 	{
-		if (!$this->prepared['data']['recaptcha'])
+		if (empty($this->prepared['data']['recaptcha']))
 		{
 			$this->prepared['data']['recaptcha'] = [];
 		}
+
 		$this->prepared['data']['recaptcha']['use'] = $use;
+
 		return $this;
 	}
 
 	/**
 	 * Add field to be displayed on the web from page.
 	 * @param array $field
+	 *
 	 * @return $this
 	 */
 	public function addField(array $field): ScenarioOptionBuilder
 	{
-		if (!$this->prepared['data']['fields'])
+		if (empty($this->prepared['data']['fields']))
 		{
 			$this->prepared['data']['fields'] = [];
 		}
 
 		$this->prepared['data']['fields'][]  = $field;
+
 		return $this;
 	}
 
 	public function addDependency(DependencyItem $dependencyItem): ScenarioOptionBuilder
 	{
-
-		if (!$this->prepared['data']['dependencies'])
+		if (empty($this->prepared['data']['dependencies']))
 		{
 			$this->prepared['data']['dependencies'] = [];
 		}
 
 		$this->prepared['data']['dependencies'][] = $dependencyItem->toArray();
+
 		return $this;
 	}
 
@@ -141,11 +152,13 @@ class ScenarioOptionBuilder extends BaseBuilder
 	 * Add sending button caption
 	 *
 	 * @param string|null $caption
+	 *
 	 * @return $this
 	 */
 	public function setButtonCaption(?string $caption): ScenarioOptionBuilder
 	{
-		$this->prepared['data']['buttonCaption']  = $caption ?? '';
+		$this->prepared['data']['buttonCaption'] = $caption ?? '';
+
 		return $this;
 	}
 
@@ -170,6 +183,7 @@ class ScenarioOptionBuilder extends BaseBuilder
 	 * @param string|null $successCaption
 	 * @param string|null $failureCaption
 	 * @param bool $refill
+	 *
 	 * @return $this
 	 */
 	public function addResult(
@@ -178,7 +192,7 @@ class ScenarioOptionBuilder extends BaseBuilder
 		bool $refill = false
 	): ScenarioOptionBuilder
 	{
-		if (!$this->prepared['result'])
+		if (empty($this->prepared['result']))
 		{
 			$this->prepared['result'] = [];
 		}
@@ -200,11 +214,12 @@ class ScenarioOptionBuilder extends BaseBuilder
 	/**
 	 * Document scheme version.
 	 * @param int $schemeVersion
+	 *
 	 * @return $this
 	 */
 	public function addDocumentScheme(int $schemeVersion): ScenarioOptionBuilder
 	{
-		if (!$this->prepared['document'])
+		if (empty($this->prepared['document']))
 		{
 			$this->prepared['document'] = [];
 		}
@@ -217,16 +232,17 @@ class ScenarioOptionBuilder extends BaseBuilder
 	/**
 	 * Deal category.
 	 * @param int $category
+	 *
 	 * @return $this
 	 */
 	public function addDealCategory(int $category): ScenarioOptionBuilder
 	{
-		if (!$this->prepared['document'])
+		if (empty($this->prepared['document']))
 		{
 			$this->prepared['document'] = [];
 		}
 
-		if (!$this->prepared['document']['deal'])
+		if (empty($this->prepared['document']['deal']))
 		{
 			$this->prepared['document']['deal'] = [];
 		}
@@ -239,18 +255,21 @@ class ScenarioOptionBuilder extends BaseBuilder
 	/**
 	 * Deal Duplicate mode
 	 * @param bool $mode
+	 *
 	 * @return $this
 	 */
 	public function addDealDuplicateMode(bool $mode): ScenarioOptionBuilder
 	{
-		if (!$this->prepared['document'])
+		if (empty($this->prepared['document']))
 		{
 			$this->prepared['document'] = [];
 		}
-		if (!$this->prepared['document']['deal'])
+
+		if (empty($this->prepared['document']['deal']))
 		{
 			$this->prepared['document']['deal'] = [];
 		}
+
 		$this->prepared['document']['deal']['duplicatesEnabled'] = $mode;
 
 		return $this;
@@ -260,18 +279,21 @@ class ScenarioOptionBuilder extends BaseBuilder
 	 * Responsible users
 	 *
 	 * @param array $userIds
+	 *
 	 * @return $this
 	 */
 	public function addResponsibleUsers(array $userIds): ScenarioOptionBuilder
 	{
-		if (!$this->prepared['responsible'])
+		if (empty($this->prepared['responsible']))
 		{
 			$this->prepared['responsible'] = [];
 		}
-		if (!$this->prepared['responsible']['users'])
+
+		if (empty($this->prepared['responsible']['users']))
 		{
 			$this->prepared['responsible']['users'] = [];
 		}
+
 		$this->prepared['responsible']['users'] = array_merge($this->prepared['responsible']['users'], $userIds);
 
 		return $this;
@@ -280,14 +302,16 @@ class ScenarioOptionBuilder extends BaseBuilder
 	/**
 	 * Responsible check work time.
 	 * @param bool $mode
+	 *
 	 * @return $this
 	 */
 	public function addResponsibleCheckWorkTimeMode(bool $mode): ScenarioOptionBuilder
 	{
-		if (!$this->prepared['responsible'])
+		if (empty($this->prepared['responsible']))
 		{
 			$this->prepared['responsible'] = [];
 		}
+
 		$this->prepared['responsible']['checkWorkTime'] = $mode;
 
 		return $this;
@@ -296,14 +320,16 @@ class ScenarioOptionBuilder extends BaseBuilder
 	/**
 	 * Use callback mode.
 	 * @param bool $use
+	 *
 	 * @return $this
 	 */
 	public function addCallbackMode(bool $use): ScenarioOptionBuilder
 	{
-		if (!$this->prepared['callback'])
+		if (empty($this->prepared['callback']))
 		{
 			$this->prepared['callback'] = [];
 		}
+
 		$this->prepared['callback']['use'] = $use;
 
 		return $this;
@@ -312,14 +338,16 @@ class ScenarioOptionBuilder extends BaseBuilder
 	/**
 	 * Duplicate mode.
 	 * @param string $mode
+	 *
 	 * @return $this
 	 */
 	public function addDuplicateMode(string $mode): ScenarioOptionBuilder
 	{
-		if (!$this->prepared['document'])
+		if (empty($this->prepared['document']))
 		{
 			$this->prepared['document'] = [];
 		}
+
 		$this->prepared['document']['duplicateMode'] = $mode;
 
 		return $this;
@@ -328,6 +356,7 @@ class ScenarioOptionBuilder extends BaseBuilder
 	/**
 	 * Preparing web form options to built final scenario
 	 * @param array $options
+	 *
 	 * @return array
 	 */
 	public function prepare(array &$options): array
@@ -375,7 +404,7 @@ class ScenarioOptionBuilder extends BaseBuilder
 	 */
 	public function addPresetField(array $field): ScenarioOptionBuilder
 	{
-		if (!$this->prepared['presetFields'])
+		if (empty($this->prepared['presetFields']))
 		{
 			$this->prepared['presetFields'] = [];
 		}

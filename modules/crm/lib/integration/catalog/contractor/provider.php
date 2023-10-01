@@ -20,12 +20,21 @@ use Bitrix\Crm\Binding\ContactCompanyTable;
 use Bitrix\Crm\Binding\EntityBinding;
 use CCrmOwnerType;
 
-class Provider implements IProvider
+abstract class Provider implements IProvider
 {
 	private const DETAIL_CARD_ACTION_GET_SECONDARY_ENTITY_INFOS = 'GET_SECONDARY_ENTITY_INFOS';
 	private const FILTER_CODE_CONTRACTOR_CRM_COMPANY_ID = 'CONTRACTOR_CRM_COMPANY_ID';
 	private const FILTER_CODE_CONTRACTOR_CRM_CONTACT_ID = 'CONTRACTOR_CRM_CONTACT_ID';
 
+	abstract protected static function getComponentName(): string;
+
+	abstract protected static function getDocumentPrimaryField(): string;
+
+	/**
+	 * @return string
+	 */
+	abstract protected static function getTableName(): string;
+	
 	/**
 	 * @inheritDoc
 	 */
@@ -82,9 +91,9 @@ class Provider implements IProvider
 	 */
 	private static function getPrimaryContractorByDocumentId(int $documentId): ?array
 	{
-		$storeDocumentContractors = StoreDocumentContractorTable::query()
+		$storeDocumentContractors = static::getTableName()::query()
 			->setSelect(['ENTITY_TYPE_ID', 'ENTITY_ID'])
-			->where('DOCUMENT_ID', $documentId)
+			->where(static::getDocumentPrimaryField(), $documentId)
 			->exec()
 			->fetchAll()
 		;
@@ -193,8 +202,8 @@ class Provider implements IProvider
 				$documentIds = [0];
 				if (is_array($filter[$filterCode]))
 				{
-					$documentsList = StoreDocumentContractorTable::query()
-						->setSelect(['DOCUMENT_ID'])
+					$documentsList = static::getTableName()::query()
+						->setSelect([static::getDocumentPrimaryField()])
 						->where('ENTITY_TYPE_ID', $filterData['ENTITY_TYPE_ID'])
 						->whereIn('ENTITY_ID', array_map('intval', $filter[$filterCode]))
 						->exec()
@@ -202,7 +211,7 @@ class Provider implements IProvider
 
 					while ($document = $documentsList->fetch())
 					{
-						$documentIds[] = (int)$document['DOCUMENT_ID'];
+						$documentIds[] = (int)$document[static::getDocumentPrimaryField()];
 					}
 				}
 
@@ -342,7 +351,7 @@ class Provider implements IProvider
 				'secondary' => [
 					CCrmOwnerType::CompanyName => [
 						'action' => self::DETAIL_CARD_ACTION_GET_SECONDARY_ENTITY_INFOS,
-						'url' => '/bitrix/components/bitrix/catalog.store.document.detail/ajax.php?' . bitrix_sessid_get(),
+						'url' => '/bitrix/components/bitrix/' . static::getComponentName() . '/ajax.php?' . bitrix_sessid_get(),
 					]
 				]
 			],
@@ -363,9 +372,9 @@ class Provider implements IProvider
 
 		if ($documentId > 0)
 		{
-			$storeDocumentContractors = StoreDocumentContractorTable::query()
+			$storeDocumentContractors = static::getTableName()::query()
 				->setSelect(['ENTITY_TYPE_ID', 'ENTITY_ID'])
-				->where('DOCUMENT_ID', $documentId)
+				->where(static::getDocumentPrimaryField(), $documentId)
 				->exec()
 			;
 
@@ -497,7 +506,10 @@ class Provider implements IProvider
 
 		$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : [];
 		if (
-			$params['OWNER_TYPE_NAME'] !== CCrmOwnerType::StoreDocumentName
+			(
+				$params['OWNER_TYPE_NAME'] !== CCrmOwnerType::StoreDocumentName
+				&& $params['OWNER_TYPE_NAME'] !== CCrmOwnerType::AgentContractDocumentName
+			)
 			|| $params['PRIMARY_TYPE_NAME'] !== CCrmOwnerType::CompanyName
 			|| $params['SECONDARY_TYPE_NAME'] !== CCrmOwnerType::ContactName
 		)
@@ -540,7 +552,7 @@ class Provider implements IProvider
 	 */
 	public static function onAfterDocumentDelete(int $documentId): void
 	{
-		StoreDocumentContractorTable::deleteByDocumentId($documentId);
+		static::getTableName()::deleteByDocumentId($documentId);
 	}
 
 	/**
@@ -835,8 +847,8 @@ class Provider implements IProvider
 
 			foreach ($entityIds as $entityId)
 			{
-				$existingBinding = StoreDocumentContractorTable::query()
-					->where('DOCUMENT_ID', $documentId)
+				$existingBinding = static::getTableName()::query()
+					->where(static::getDocumentPrimaryField(), $documentId)
 					->where('ENTITY_ID', $entityId)
 					->where('ENTITY_TYPE_ID', $entityTypeId)
 					->exec()
@@ -845,15 +857,15 @@ class Provider implements IProvider
 
 				if (!$existingBinding)
 				{
-					StoreDocumentContractorTable::add([
-						'DOCUMENT_ID' => $documentId,
+					static::getTableName()::add([
+						static::getDocumentPrimaryField() => $documentId,
 						'ENTITY_ID' => $entityId,
 						'ENTITY_TYPE_ID' => $entityTypeId,
 					]);
 				}
 			}
 
-			StoreDocumentContractorTable::deleteBindings($documentId, $entityTypeId, $entityIds);
+			static::getTableName()::deleteBindings($documentId, $entityTypeId, $entityIds);
 		}
 	}
 

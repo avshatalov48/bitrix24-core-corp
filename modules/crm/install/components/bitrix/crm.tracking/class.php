@@ -118,7 +118,7 @@ class CrmTrackingComponent extends CBitrixComponent
 				$componentPage = 'edit';
 			}
 
-			/**	@var \CAllMain $APPLICATION */
+			/**	@var CMain $APPLICATION */
 			global $APPLICATION;
 			foreach ($arDefaultUrlTemplates404 as $url => $value)
 			{

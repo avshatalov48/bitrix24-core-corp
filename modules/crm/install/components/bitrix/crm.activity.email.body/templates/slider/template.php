@@ -59,15 +59,15 @@ foreach ($communications as $k => $item)
 		$id = 'CRM'.$item['ENTITY_TYPE'].$item['ENTITY_ID'].':'.hash('crc32b', $item['TYPE'].':'.$item['VALUE']);
 		$type = $socNetLogDestTypes[$item['ENTITY_TYPE']];
 
-		$rcptList[$type][$id] = array(
-			'id'         => $id,
-			'entityId'   => $item['ENTITY_ID'],
+		$rcptList[$type][$id] = [
+			'id' => $id,
+			'entityId' => $item['ENTITY_ID'],
 			'entityType' => $type,
-			'name'       => htmlspecialcharsbx($item['TITLE']),
-			'desc'       => htmlspecialcharsbx($item['VALUE']),
-			'email'      => htmlspecialcharsbx($item['VALUE']),
-			'avatar'     => $item['IMAGE_URL'],
-		);
+			'name' => htmlspecialcharsbx($item['TITLE'] ?? ''),
+			'desc' => htmlspecialcharsbx($item['VALUE'] ?? ''),
+			'email' => htmlspecialcharsbx($item['VALUE'] ?? ''),
+			'avatar' => $item['IMAGE_URL'] ?? '',
+		];
 		$rcptLast['crm'][$id] = $id;
 		$rcptLast[$type][$id] = $id;
 	}
@@ -143,7 +143,7 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 
 <div class="crm-task-list-mail-border-bottom">
 	<div class="crm-task-list-mail-item-inner-header-container">
-		<div class="crm-task-list-mail-item-inner-header <? if ($arParams['LOADED_FROM_LOG'] == 'Y'): ?> crm-task-list-mail-item-inner-header-clickable crm-task-list-mail-item-open<? endif ?>">
+		<div class="crm-task-list-mail-item-inner-header <? if (isset($arParams['LOADED_FROM_LOG']) && $arParams['LOADED_FROM_LOG'] === 'Y'): ?> crm-task-list-mail-item-inner-header-clickable crm-task-list-mail-item-open<? endif ?>">
 			<span class="crm-task-list-mail-item-inner-user"
 				<? if (!empty($activity['ITEM_IMAGE'])): ?> style="background: url('<?=htmlspecialcharsbx($activity['ITEM_IMAGE']) ?>'); background-size: 40px 40px; "<? endif ?>>
 			</span>
@@ -160,7 +160,7 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 								<span class="crm-task-list-mail-item-inner-description-mail"><?=htmlspecialcharsbx($activity['ITEM_FROM_EMAIL']) ?></span>
 							<? endif ?>
 						</div>
-						<div class="crm-task-list-mail-item-inner-description-date <? if ($arParams['LOADED_FROM_LOG'] == 'Y'): ?> crm-task-list-mail-item-date crm-activity-email-item-date<? endif ?>">
+						<div class="crm-task-list-mail-item-inner-description-date <? if (isset($arParams['LOADED_FROM_LOG']) && $arParams['LOADED_FROM_LOG'] === 'Y'): ?> crm-task-list-mail-item-date crm-activity-email-item-date<? endif ?>">
 							<span>
 								<? if (\CCrmActivityDirection::Outgoing == $activity['DIRECTION']): ?>
 									<?=getMessage('CRM_ACT_EMAIL_VIEW_SENT', array('#DATETIME#' => $startDatetimeFormatted)) ?><!--

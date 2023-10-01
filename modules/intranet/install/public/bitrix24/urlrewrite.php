@@ -868,5 +868,11 @@ $arUrlRewrite = array(
 		"ID" => "bitrix:intranet.user.login.history",
 		"PATH" => "/timeman/login-history/index.php"
 	),
+	array(
+		"CONDITION" => "#^/agent_contract/#",
+		"RULE" => "",
+		"ID" => "bitrix:catalog.agent.contract.controller",
+		"PATH" => "/agent_contract/index.php",
+	),
 );
 ?>

@@ -1,6 +1,6 @@
 // @flow
 
-import {Tag, Loc, Type, ajax, debounce} from 'main.core';
+import { Tag, Loc, Type, ajax, debounce, Text } from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {MenuManager} from 'main.popup';
 import {CurrencyCore} from 'currency.currency-core';
@@ -629,17 +629,23 @@ export class EntityEditorPaymentDocuments
 	{
 		const latestOrderId = this._latestOrderId();
 
-		let menuItems = [
+		const menuItems = [
 			{
 				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_PAYMENT'),
-				onclick: () => this._context().startSalescenterApplication(latestOrderId)
+				onclick: () => this._createPaymentSlider(latestOrderId),
 			}
 		];
+
 		if (this._isDeliveryAvailable)
 		{
 			menuItems.push({
 				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_DELIVERY'),
-				onclick: () => this._createDeliverySlider(latestOrderId)
+				onclick: () => this._createDeliverySlider(latestOrderId),
+			});
+
+			menuItems.push({
+				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_PAYMENT_DELIVERY'),
+				onclick: () => this._createPaymentDeliverySlider(latestOrderId),
 			});
 		}
 
@@ -771,34 +777,77 @@ export class EntityEditorPaymentDocuments
 		return this._options.OWNER_TYPE_ID || BX.CrmEntityType.enumeration.deal;
 	}
 
-	_createDeliverySlider(orderId: number)
+	_defaultCreatePaymentDocumentOptions()
 	{
-		let analyticsLabel = 'crmDealPaymentDocumentsCreateDeliverySlider';
-		if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId()))
-		{
-			analyticsLabel = 'crmDynamicTypePaymentDocumentsCreateDeliverySlider';
-		}
-
-		const options = {
+		return {
 			context: this._callContext,
 			templateMode: 'create',
-			mode: 'delivery',
-			analyticsLabel: analyticsLabel,
 			ownerTypeId: this._ownerTypeId(),
 			ownerId: this._options.OWNER_ID,
-			orderId: orderId,
 		};
+	}
+
+	/**
+	 *
+	 * @param labelMode converting to PascalCase before inserting into label template
+	 * @returns {string} final analytics label
+	 * @private
+	 *
+	 * Label template: crm#TYPE#PaymentDocuments#MODE#Slider
+	 * Type: Deal or DynamicType
+	 * Mode: create_payment, create_delivery, view_realization etc.
+	 *
+	 * Mode converts to PascalCase and inserts into label template
+	 *
+	 * Example: crmDealPaymentDocumentsCreateDeliverySlider
+	 */
+	_generateAnalyticsLabel(labelMode: string)
+	{
+		const labelTemplate = 'crm#TYPE#PaymentDocuments#MODE#Slider';
+
+		let labelEntityType = 'Deal';
+		if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId()))
+		{
+			labelEntityType = 'DynamicType';
+		}
+		const mode = Text.toPascalCase(labelMode);
+
+		return labelTemplate.replace('#TYPE#', labelEntityType)
+			.replace('#MODE#', mode);
+	}
+
+	_createPaymentSlider(orderId: number)
+	{
+		const options = this._defaultCreatePaymentDocumentOptions();
+		options.mode = 'payment';
+		options.analyticsLabel = this._generateAnalyticsLabel('create_payment');
+		options.orderId = orderId;
+
+		this._context().startSalescenterApplication(orderId, options);
+	}
+
+	_createDeliverySlider(orderId: number)
+	{
+		const options = this._defaultCreatePaymentDocumentOptions();
+		options.mode = 'delivery';
+		options.analyticsLabel = this._generateAnalyticsLabel('create_delivery');
+		options.orderId = orderId;
+
+		this._context().startSalescenterApplication(orderId, options);
+	}
+
+	_createPaymentDeliverySlider(orderId: number)
+	{
+		const options = this._defaultCreatePaymentDocumentOptions();
+		options.mode = 'payment_delivery';
+		options.analyticsLabel = this._generateAnalyticsLabel('create_payment_delivery');
+		options.orderId = orderId;
+
 		this._context().startSalescenterApplication(orderId, options);
 	}
 
 	_createRealizationSlider(createSliderOptions: CreateRealizationSliderOptions)
 	{
-		let analyticsLabel = 'crmDealPaymentDocumentsCreateRealizationSlider';
-		if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId()))
-		{
-			analyticsLabel = 'crmDynamicTypePaymentDocumentsCreateRealizationSlider';
-		}
-
 		const options = {
 			context: {
 				OWNER_TYPE_ID: this._ownerTypeId(),
@@ -806,13 +855,13 @@ export class EntityEditorPaymentDocuments
 				ORDER_ID: createSliderOptions.orderId || 0,
 				PAYMENT_ID: createSliderOptions.paymentId || 0,
 			},
-			analyticsLabel: analyticsLabel,
+			analyticsLabel: this._generateAnalyticsLabel('create_realization'),
 			documentType: 'W',
 			sliderOptions: {
 				customLeftBoundary: 0,
 				loader: 'crm-entity-details-loader',
 				requestMethod: 'post',
-			}
+			},
 		};
 
 		DocumentManager.openNewRealizationDocument(options).then(function (result) {
@@ -823,21 +872,11 @@ export class EntityEditorPaymentDocuments
 
 	_chooseDeliverySlider(orderId: number)
 	{
-		let analyticsLabel = 'crmDealPaymentDocumentsChooseDeliverySlider';
-		if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId()))
-		{
-			analyticsLabel = 'crmDynamicTypePaymentDocumentsChooseDeliverySlider';
-		}
+		const options = this._defaultCreatePaymentDocumentOptions();
+		options.mode = 'delivery';
+		options.analyticsLabel = this._generateAnalyticsLabel('choose_delivery');
+		options.orderId = orderId;
 
-		const options = {
-			context: this._callContext,
-			templateMode: 'create',
-			mode: 'delivery',
-			analyticsLabel: analyticsLabel,
-			ownerTypeId: this._ownerTypeId(),
-			ownerId: this._options.OWNER_ID,
-			orderId: orderId,
-		};
 		this._context().startSalescenterApplication(orderId, options);
 	}
 
@@ -858,17 +897,11 @@ export class EntityEditorPaymentDocuments
 
 	_resendPaymentSlider(orderId: number, paymentId: number)
 	{
-		let analyticsLabel = 'crmDealPaymentDocumentsResendPaymentSlider';
-		if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId()))
-		{
-			analyticsLabel = 'crmDynamicTypePaymentDocumentsResendPaymentSlider';
-		}
-
 		const options = {
 			disableSendButton: '',
 			context: 'deal',
 			mode: this._ownerTypeId() === BX.CrmEntityType.enumeration.deal ? 'payment_delivery' : 'payment',
-			analyticsLabel: analyticsLabel,
+			analyticsLabel: this._generateAnalyticsLabel('resend_payment'),
 			templateMode: 'view',
 			ownerTypeId: this._ownerTypeId(),
 			ownerId: this._options.OWNER_ID,
@@ -880,17 +913,11 @@ export class EntityEditorPaymentDocuments
 
 	_viewDeliverySlider(orderId: number, shipmentId: number)
 	{
-		let analyticsLabel = 'crmDealPaymentDocumentsViewDeliverySlider';
-		if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId()))
-		{
-			analyticsLabel = 'crmDynamicTypePaymentDocumentsViewDeliverySlider';
-		}
-
 		const options = {
 			context: this._callContext,
 			templateMode: 'view',
 			mode: 'delivery',
-			analyticsLabel: analyticsLabel,
+			analyticsLabel: this._generateAnalyticsLabel('view_delivery'),
 			ownerTypeId: this._ownerTypeId(),
 			ownerId: this._options.OWNER_ID,
 			orderId: orderId,
@@ -901,21 +928,15 @@ export class EntityEditorPaymentDocuments
 
 	_viewRealizationSlider(documentId: number)
 	{
-		let analyticsLabel = 'crmDealPaymentDocumentsViewRealizationSlider';
-		if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId()))
-		{
-			analyticsLabel = 'crmDynamicTypePaymentDocumentsViewRealizationSlider';
-		}
-
 		const options = {
 			ownerTypeId: this._ownerTypeId(),
 			ownerId: this._options.OWNER_ID,
-			analyticsLabel: analyticsLabel,
+			analyticsLabel: this._generateAnalyticsLabel('view_realization'),
 			documentId: documentId,
 			sliderOptions: {
 				customLeftBoundary: 0,
 				loader: 'crm-entity-details-loader',
-			}
+			},
 		};
 
 		DocumentManager.openRealizationDetailDocument(documentId, options).then(function (result) {

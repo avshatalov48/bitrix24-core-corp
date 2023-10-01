@@ -1,68 +1,91 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
+use Bitrix\Ml\Model;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\JsHandler;
+use Bitrix\UI\Buttons\SettingsButton;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 /** @var CBitrixComponentTemplate $this */
+/** @var array $arResult */
 
-\Bitrix\Main\UI\Extension::load([
-	"ui.design-tokens",
-	"ui.fonts.opensans",
-	"amcharts",
-	"amcharts_serial",
-	"crm_activity_planner",
-	"date",
-	"ui.buttons",
-	"ui.hint",
-	"ui.feedback.form",
+global $APPLICATION;
+
+Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'amcharts',
+	'amcharts_serial',
+	'crm_activity_planner',
+	'date',
+	'ui.buttons',
+	'ui.hint',
+	'ui.feedback.form',
 ]);
 
-$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
-$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background pagetitle-toolbar-field-view");
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+$APPLICATION->SetPageProperty(
+	'BodyClass',
+	($bodyClass ? $bodyClass . " " : "") . 'no-all-paddings no-background pagetitle-toolbar-field-view'
+);
 
-$settingsButton = new \Bitrix\UI\Buttons\SettingsButton([
-	"classList" => ($arResult["MODEL"] && $arResult["MODEL"]->getState() === \Bitrix\Ml\Model::STATE_READY) ? [] : ["crm-ml-button-hidden"],
-	"menu" => [
-		"items" => [
+$settingsButton = new SettingsButton([
+	'classList' => ($arResult['MODEL'] && $arResult['MODEL']->getState() === Model::STATE_READY) ? [] : ['crm-ml-button-hidden'],
+	'menu' => [
+		'items' => [
 			[
-				"text" => $arResult["ITEM"]["ENTITY_TYPE_ID"] == CCrmOwnerType::Lead ? Loc::getMessage("CRM_ML_LEAD_SCORING_DISABLE") : Loc::getMessage("CRM_ML_DEAL_SCORING_DISABLE"),
-				"onclick" => new \Bitrix\UI\Buttons\JsHandler(
-					"BX.Crm.entityDetailView.onDisableScoringClick",
-					"BX.Crm.entityDetailView"
+				'text' => $arResult['ITEM']['ENTITY_TYPE_ID'] === CCrmOwnerType::Lead
+					? Loc::getMessage('CRM_ML_LEAD_SCORING_DISABLE')
+					: Loc::getMessage('CRM_ML_DEAL_SCORING_DISABLE'),
+				'onclick' => new JsHandler(
+					'BX.Crm.entityDetailView.onDisableScoringClick',
+					'BX.Crm.entityDetailView'
 				)
 			],
 		],
 	],
 ]);
-\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($settingsButton);
 
-\Bitrix\UI\Toolbar\Facade\Toolbar::addButton([
-	"text" => Loc::getMessage("CRM_ML_HELP"),
-	"color" => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
-	"click" => new \Bitrix\UI\Buttons\JsHandler(
-		"BX.Crm.entityDetailView.showHelp"
+Toolbar::addButton($settingsButton);
+Toolbar::addButton([
+	'text' => Loc::getMessage('CRM_ML_HELP'),
+	'color' => Color::LIGHT_BORDER,
+	'click' => new JsHandler(
+		'BX.Crm.entityDetailView.showHelp'
 	),
 ]);
 
-\Bitrix\UI\Toolbar\Facade\Toolbar::addButton([
-	"text" => Loc::getMessage("CRM_ML_FEEDBACK"),
-	"color" => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
-	"click" => new \Bitrix\UI\Buttons\JsHandler(
-		"BX.Crm.entityDetailView.showFeedbackForm",
-		"BX.Crm.entityDetailView"
+Toolbar::addButton([
+	'text' => Loc::getMessage('CRM_ML_FEEDBACK'),
+	'color' => Color::LIGHT_BORDER,
+	'click' => new JsHandler(
+		'BX.Crm.entityDetailView.showFeedbackForm',
+		'BX.Crm.entityDetailView'
 	),
 ]);
 
-\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+Toolbar::deleteFavoriteStar();
 
-if(!$arResult["SCORING_ENABLED"] && \Bitrix\Main\Loader::includeModule("bitrix24"))
+if (!$arResult['SCORING_ENABLED'] && Loader::includeModule('bitrix24'))
 {
-	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
+	$APPLICATION->IncludeComponent(
+		'bitrix:ui.info.helper',
+		'',
+		[]
+	);
 }
 
 ?>
 <div id="crm-ml-entity-detail"></div>
-
 <script>
 	BX.message({
 		"CRM_ML_MODEL_TRAINING_DEALS": '<?= GetMessageJS("CRM_ML_MODEL_TRAINING_DEALS")?>',
@@ -118,18 +141,18 @@ if(!$arResult["SCORING_ENABLED"] && \Bitrix\Main\Loader::includeModule("bitrix24
 		BX.Crm.entityDetailView = new BX.Crm.MlEntityDetail({
 			node: BX("crm-ml-entity-detail"),
 			settingsButtonId: "<?= $settingsButton->getUniqId()?>",
-			model: <?= \Bitrix\Main\Web\Json::encode($arResult["MODEL"])?>,
+			model: <?= Json::encode($arResult["MODEL"])?>,
 			mlModelExists: <?= ($arResult["ML_MODEL_EXISTS"]) ? "true" : "false" ?>,
 			canStartTraining: <?= ($arResult["CAN_START_TRAINING"]) ? "true" : "false" ?>,
-			trainingError: <?= \Bitrix\Main\Web\Json::encode($arResult["TRAINING_ERROR"])?>,
-			currentTraining: <?= \Bitrix\Main\Web\Json::encode($arResult["CURRENT_TRAINING"])?>,
+			trainingError: <?= Json::encode($arResult["TRAINING_ERROR"])?>,
+			currentTraining: <?= Json::encode($arResult["CURRENT_TRAINING"])?>,
 			entity: <?= CUtil::PhpToJSObject($arResult["ITEM"])?>,
-			predictionHistory: <?= \Bitrix\Main\Web\Json::encode($arResult["PREDICTION_HISTORY"])?>,
-			associatedEvents: <?= \Bitrix\Main\Web\Json::encode($arResult["ASSOCIATED_EVENTS"])?>,
-			trainingHistory: <?= \Bitrix\Main\Web\Json::encode($arResult["TRAINING_HISTORY"])?>,
-			errors: <?= \Bitrix\Main\Web\Json::encode($arResult["ERRORS"])?>,
+			predictionHistory: <?= Json::encode($arResult["PREDICTION_HISTORY"])?>,
+			associatedEvents: <?= Json::encode($arResult["ASSOCIATED_EVENTS"])?>,
+			trainingHistory: <?= Json::encode($arResult["TRAINING_HISTORY"])?>,
+			errors: <?= Json::encode($arResult["ERRORS"] ?? [])?>,
 			scoringEnabled: <?= ($arResult["SCORING_ENABLED"]) ? "true" : "false" ?>,
-			feedbackParams: <?= \Bitrix\Main\Web\Json::encode([
+			feedbackParams: <?= Json::encode([
 					'id' => $arResult["FEEDBACK_PARAMS"]["ID"],
 					'portal' => $arResult["FEEDBACK_PARAMS"]["PORTAL"],
 					'presets' => $arResult["FEEDBACK_PARAMS"]["PRESETS"],

@@ -166,18 +166,25 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 			return null;
 		}
 
+		$payment = null;
+
+		/** @var Order\Payment $item */
+		foreach ($order->getPaymentCollection() as $item)
+		{
+			if ($item->getId() === 0)
+			{
+				$payment = $item;
+				break;
+			}
+		}
+
 		$r = $order->save();
 		if (!$r->isSuccess())
 		{
 			return null;
 		}
 
-		foreach ($order->getPaymentCollection() as $payment)
-		{
-			return $payment;
-		}
-
-		return null;
+		return $payment;
 	}
 
 	private function getBuilderDataBySmartInvoice(Item\SmartInvoice $invoice): array

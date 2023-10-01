@@ -110,7 +110,7 @@ export class PhoneCallsController
 
 		BX.garbage(() =>
 		{
-			if (this.callActive && this.callView && this.callView.canBeUnloaded() && (this.hasExternalCall || this.deviceType === 'PHONE'))
+			if (this.hasActiveCall() && this.callView && this.callView.canBeUnloaded() && (this.hasExternalCall || this.deviceType === 'PHONE'))
 			{
 				BX.localStorage.set(lsKeys.foldedView, {
 					callId: this.callId,
@@ -126,6 +126,11 @@ export class PhoneCallsController
 	get BXIM()
 	{
 		return window.BXIM;
+	}
+
+	hasActiveCall(): boolean
+	{
+		return Boolean(this.currentCall || this.callView);
 	}
 
 	setCallEventListeners(call: VoxImplant.Call)
@@ -209,7 +214,7 @@ export class PhoneCallsController
 			return false;
 		}
 
-		if (this.isCallListMode())
+		if (this.hasActiveCall() || this.isCallListMode())
 		{
 			this.phoneCommand('busy', {'CALL_ID': params.callId});
 			return false;
@@ -403,7 +408,7 @@ export class PhoneCallsController
 				this.callView.setPortalCallQueueName(params.portalCallQueueName);
 			}
 		}
-		else if (!this.callActive && params.callDevice === DeviceType.Phone)
+		else if (!this.hasActiveCall() && params.callDevice === DeviceType.Phone)
 		{
 			this.checkDesktop().then(() =>
 			{
@@ -437,7 +442,8 @@ export class PhoneCallsController
 			this.callView.setStatusText(Loc.getMessage('IM_M_CALL_ST_TRANSFER_CONNECTED'));
 			return;
 		}
-		else if (this.callId != params.callId)
+
+		if (this.callId != params.callId)
 		{
 			return;
 		}
@@ -623,7 +629,7 @@ export class PhoneCallsController
 
 	onPullHideExternalCall(params)
 	{
-		if (this.callActive && this.hasExternalCall && this.callId == params.callId)
+		if (this.hasActiveCall() && this.hasExternalCall && this.callId == params.callId)
 		{
 			this.hideExternalCall();
 		}
@@ -682,6 +688,7 @@ export class PhoneCallsController
 
 	onIncomingCall(params)
 	{
+		// we can't use hasActiveCall here because the call view is open
 		if (this.currentCall)
 		{
 			return false;
@@ -1193,7 +1200,7 @@ export class PhoneCallsController
 			return false;
 		}
 
-		if (this.callActive || this.currentCall || BX.localStorage.get(lsKeys.callInited) || BX.localStorage.get(lsKeys.externalCall))
+		if (this.hasActiveCall() || BX.localStorage.get(lsKeys.callInited) || BX.localStorage.get(lsKeys.externalCall))
 		{
 			return false;
 		}
@@ -1420,7 +1427,7 @@ export class PhoneCallsController
 
 	_doPhoneCall(number, params = {})
 	{
-		if (BX.localStorage.get(lsKeys.callInited) || this.callView || this.callActive)
+		if (BX.localStorage.get(lsKeys.callInited) || this.callView || this.hasActiveCall())
 		{
 			return false;
 		}
@@ -2077,6 +2084,9 @@ export class PhoneCallsController
 
 	onCallViewClose()
 	{
+		this.BXIM.stopRepeatSound('ringtone');
+		this.BXIM.stopRepeatSound('dialtone');
+
 		this.callListId = 0;
 		if (this.callView)
 		{
@@ -2286,7 +2296,7 @@ export class PhoneCallsController
 		this.callView.setStatusText(Loc.getMessage('IM_M_CALL_ST_ONLINE'));
 		this.callView.setUiState(UiState.connected);
 
-		if (this.isCallTransfer)
+		if (this.phoneTransferCallId !== '')
 		{
 			this.phoneCommand('cancelTransfer', {'CALL_ID': this.phoneTransferCallId});
 		}
@@ -2300,11 +2310,6 @@ export class PhoneCallsController
 
 	errorInviteTransfer(code, reason)
 	{
-		if (!this.isCallTransfer)
-		{
-			return false;
-		}
-
 		if (code == '403' || code == '410' || code == '486')
 		{
 			this.callView.setStatusText(Loc.getMessage('IM_M_CALL_ST_TRANSFER_' + code));

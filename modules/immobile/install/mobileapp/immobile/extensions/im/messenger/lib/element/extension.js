@@ -7,6 +7,7 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 	const { UserStatus } = require('im/messenger/lib/element/user-status');
 
 	const {
+		Message,
 		MessageAlign,
 		MessageTextAlign,
 	} = require('im/messenger/lib/element/dialog/message/base');
@@ -48,6 +49,7 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 		ChatAvatar,
 		ChatTitle,
 		UserStatus,
+		Message,
 		TextMessage,
 		DeletedMessage,
 		ImageMessage,

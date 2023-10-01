@@ -48,11 +48,21 @@ jn.define('im/messenger/controller/sidebar/tab-view', (require, exports, module)
 							},
 							items: this.state.tabItems,
 						},
-						onTabSelected: (tab, changed) => {
-							if (changed)
+						onTabSelected: (tab, changed, options) => {
+							if (changed) // on first render, the onTabSelected event automatically starts with options.action = 'code'
 							{
-								const newState = { selectedTab: tab };
-								this.setState(newState);
+								const platform = Application.getPlatform();
+								if (platform === 'ios')
+								{
+									const newState = { selectedTab: tab };
+									this.setState(newState);
+								}
+
+								if (platform !== 'ios' && options.action !== 'code')
+								{
+									const newState = { selectedTab: tab };
+									this.setState(newState);
+								}
 							}
 						},
 					}),

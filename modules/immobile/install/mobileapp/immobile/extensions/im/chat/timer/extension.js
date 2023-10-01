@@ -1,11 +1,12 @@
-"use strict";
+'use strict';
 
 /* Clean session variables after page restart */
-if (typeof clearInterval == 'undefined')
+if (typeof clearInterval === 'undefined')
 {
 	clearInterval = (id) => clearTimeout(id);
 }
-if (typeof ChatTimer != 'undefined' && typeof ChatTimer.cleaner != 'undefined')
+
+if (typeof ChatTimer !== 'undefined' && typeof ChatTimer.cleaner !== 'undefined')
 {
 	ChatTimer.cleaner();
 }
@@ -19,7 +20,7 @@ ChatTimer.init = function()
 	this.updateInterval = 1000;
 
 	clearInterval(this.updateIntervalId);
-	this.updateIntervalId = setInterval(this.worker.bind(this), this.updateInterval)
+	this.updateIntervalId = setInterval(this.worker.bind(this), this.updateInterval);
 };
 
 ChatTimer.delete = function(elementId)
@@ -29,7 +30,7 @@ ChatTimer.delete = function(elementId)
 
 ChatTimer.start = function(type, id, time, callback, callbackParams)
 {
-	id = id === null? 'default': id;
+	id = id === null ? 'default' : id;
 
 	time = parseInt(time);
 	if (time <= 0 || id.toString().length <= 0)
@@ -37,15 +38,15 @@ ChatTimer.start = function(type, id, time, callback, callbackParams)
 		return false;
 	}
 
-	if (typeof this.list[type] == 'undefined')
+	if (typeof this.list[type] === 'undefined')
 	{
 		this.list[type] = {};
 	}
 
 	this.list[type][id] = {
-		'dateStop': new Date().getTime()+time,
-		'callback': typeof callback == 'function'? callback: function() {},
-		'callbackParams': typeof callbackParams == 'undefined'? {}: callbackParams
+		dateStop: Date.now() + time,
+		callback: typeof callback === 'function' ? callback : function() {},
+		callbackParams: typeof callbackParams === 'undefined' ? {} : callbackParams,
 	};
 
 	return true;
@@ -53,9 +54,9 @@ ChatTimer.start = function(type, id, time, callback, callbackParams)
 
 ChatTimer.stop = function(type, id, skipCallback)
 {
-	id = id === null? 'default': id;
+	id = id === null ? 'default' : id;
 
-	if (id.toString().length <= 0 || typeof this.list[type] == 'undefined')
+	if (id.toString().length <= 0 || typeof this.list[type] === 'undefined')
 	{
 		return false;
 	}
@@ -67,7 +68,7 @@ ChatTimer.stop = function(type, id, skipCallback)
 
 	if (skipCallback !== true)
 	{
-		this.list[type][id]['callback'](id, this.list[type][id]['callbackParams']);
+		this.list[type][id].callback(id, this.list[type][id].callbackParams);
 	}
 
 	delete this.list[type][id];
@@ -77,39 +78,42 @@ ChatTimer.stop = function(type, id, skipCallback)
 
 ChatTimer.stopAll = function(skipCallback)
 {
-	for (let type in this.list)
+	for (const type in this.list)
 	{
 		if (this.list.hasOwnProperty(type))
 		{
-			for (let id in this.list[type])
+			for (const id in this.list[type])
 			{
-				if(this.list[type].hasOwnProperty(id))
+				if (this.list[type].hasOwnProperty(id))
 				{
 					this.stop(type, id, skipCallback);
 				}
 			}
 		}
 	}
+
 	return true;
 };
 
 ChatTimer.worker = function()
 {
-	for (let type in this.list)
+	for (const type in this.list)
 	{
 		if (!this.list.hasOwnProperty(type))
 		{
 			continue;
 		}
-		for (let id in this.list[type])
+
+		for (const id in this.list[type])
 		{
-			if(!this.list[type].hasOwnProperty(id) || this.list[type][id]['dateStop'] > new Date())
+			if (!this.list[type].hasOwnProperty(id) || this.list[type][id].dateStop > new Date())
 			{
 				continue;
 			}
 			this.stop(type, id);
 		}
 	}
+
 	return true;
 };
 
@@ -121,6 +125,31 @@ ChatTimer.cleaner = function()
 	console.warn('ChatTimer.cleaner: OK');
 
 	return true;
+};
+
+/**
+ * @desc Returns check is has live timer in list by type and id
+ * @param {string} type
+ * @param {string|number} id
+ * @return (boolean}
+ */
+ChatTimer.isHasTimer = function(type, id)
+{
+	for (const typeTimer in this.list)
+	{
+		if (typeTimer === type)
+		{
+			for (const timerId in this.list[typeTimer])
+			{
+				if (timerId === id)
+				{
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
 };
 
 ChatTimer.init();

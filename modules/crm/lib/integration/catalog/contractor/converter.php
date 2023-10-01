@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Integration\Catalog\Contractor;
 
 use Bitrix\Catalog\ContractorTable;
 use Bitrix\Catalog\StoreDocumentTable;
+use Bitrix\Catalog\AgentContractTable;
 use Bitrix\Crm\EntityPreset;
 use Bitrix\Main\Application;
 use Bitrix\Main\Engine\CurrentUser;
@@ -34,7 +35,7 @@ use Bitrix\Main\DB\SqlExpression;
  *
  * @package Bitrix\Crm\Integration\Catalog\Contractor
  */
-class Converter extends Stepper
+class Converter extends Stepper implements \Bitrix\Catalog\v2\Contractor\IConverter
 {
 	private const COMPLETED_OPTION_NAME = 'catalog_contractors_converted';
 	private const STEP_LIMIT = 50;
@@ -239,6 +240,30 @@ class Converter extends Stepper
 				$sqlHelper->convertToDbString(StoreDocumentTable::TYPE_ARRIVAL),
 				$sqlHelper->convertToDbInteger((int)$contractor['ID'])
 		));
+
+		Application::getConnection()->query(
+			sprintf(
+				'
+					INSERT INTO b_crm_agent_contract_contractor (
+						CONTRACT_ID,
+						ENTITY_ID,
+						ENTITY_TYPE_ID
+					)
+					SELECT
+						cac.ID,
+						%d,
+						%d
+					FROM %s cac
+					WHERE CONTRACTOR_ID = %d
+					ON DUPLICATE KEY UPDATE
+						ENTITY_ID = VALUES(ENTITY_ID),
+						ENTITY_TYPE_ID = VALUES(ENTITY_TYPE_ID)
+				',
+				$sqlHelper->convertToDbInteger($entityId),
+				$sqlHelper->convertToDbInteger($entityTypeId),
+				AgentContractTable::getTableName(),
+				$sqlHelper->convertToDbInteger((int)$contractor['ID'])
+			));
 
 		return $result
 			->setEntityTypeId($entityTypeId)
@@ -622,5 +647,20 @@ class Converter extends Stepper
 	private static function getMessage(array $errorMessages): string
 	{
 		return implode(',', $errorMessages);
+	}
+
+	public static function isMigrated(): bool
+	{
+		return self::isCompleted();
+	}
+
+	public static function runMigration(): void
+	{
+		self::bind(300);
+	}
+
+	public static function showMigrationProgress(): void
+	{
+		echo self::getHtml();
 	}
 }

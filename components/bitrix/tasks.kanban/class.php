@@ -802,7 +802,6 @@ class TasksKanbanComponent extends \CBitrixComponent
 				'TIME_SPENT_IN_LOGS',
 				'TIME_ESTIMATE',
 				'STAGE_ID',
-				'SORTING',
 				'IS_MUTED',
 				'GROUP_ID',
 				'PARENT_ID',
@@ -919,7 +918,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		else
 		{
 			$this->order = [
-				'SORTING' => 'ASC',
+				'SORTING_ORDER' => 'ASC',
 				'STATUS_COMPLETE' => 'ASC',
 				'DEADLINE' => 'ASC,NULLS',
 				'ID' => 'ASC'

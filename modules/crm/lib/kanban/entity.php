@@ -1349,14 +1349,24 @@ abstract class Entity
 		$fieldName = $this->getAssignedByFieldName();
 		foreach ($ids as $id)
 		{
-			if(!$this->checkUpdatePermissions($id, $permissions))
+			if (!$this->checkUpdatePermissions($id, $permissions))
 			{
 				continue;
 			}
+
 			$fields = [
 				$fieldName => $assignedId,
 			];
-			$entity->update($id, $fields);
+
+			if ($this->isItemsAssignedNotificationSupported())
+			{
+				$entity->update($id, $fields, true, true, ['REGISTER_SONET_EVENT' => true]);
+			}
+			else
+			{
+				$entity->update($id, $fields);
+			}
+
 			if (!empty($entity->LAST_ERROR))
 			{
 				$result->addError(new Error($entity->LAST_ERROR));
@@ -2017,7 +2027,7 @@ abstract class Entity
 			{
 				$this->displayedFields[$fieldId] =
 					(Field::createByType('string', $fieldId))
-						->setTitle($title)
+					->setTitle($title)
 				;
 			}
 
@@ -2091,6 +2101,12 @@ abstract class Entity
 		if ($factory && $factory->isCrmTrackingEnabled())
 		{
 			$result['TRACKING_SOURCE_ID'] = Field::createByType('string', 'TRACKING_SOURCE_ID');
+		}
+		if ($factory && $factory->isClientEnabled())
+		{
+			$result['CLIENT'] = (Field::createByType('string', 'CLIENT'))
+				->setTitle(Loc::getMessage('CRM_COMMON_CLIENT'))
+			;
 		}
 
 		return $result;
@@ -2716,5 +2732,15 @@ abstract class Entity
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Returns true if this entity supports notification about add/update assigned user field.
+	 *
+	 * @return bool
+	 */
+	protected function isItemsAssignedNotificationSupported(): bool
+	{
+		return false;
 	}
 }

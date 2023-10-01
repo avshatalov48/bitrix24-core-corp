@@ -24,7 +24,7 @@ class Zoom extends Item
 			return false;
 		}
 
-		if (!ModuleManager::isModuleInstalled('socialservices'))
+		if (!ModuleManager::isModuleInstalled('socialservices') || !ModuleManager::isModuleInstalled('bitrix24'))
 		{
 			return false;
 		}
@@ -40,15 +40,15 @@ class Zoom extends Item
 	public function prepareSettings(): array
 	{
 		return [
-			'isConnected' => true, //\Bitrix\Crm\Activity\Provider\Zoom::isConnected(),
-			'isAvailable' => !ModuleManager::isModuleInstalled('bitrix24') || \Bitrix\Crm\Activity\Provider\Zoom::isAvailable(),
+			'isConnected' => \Bitrix\Crm\Activity\Provider\Zoom::isConnected(),
+			'isAvailable' => \Bitrix\Crm\Activity\Provider\Zoom::isAvailable(),
 		];
 	}
 
 	public function loadAssets(): void
 	{
 		global $APPLICATION;
-		if ($this->getSettings()['isNotAvailable'] ?? false)
+		if (!($this->getSettings()['isAvailable'] ?? false))
 		{
 			$APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
 		}

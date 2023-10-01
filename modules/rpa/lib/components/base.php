@@ -55,7 +55,7 @@ abstract class Base extends \CBitrixComponent implements Errorable
 		return ($this->request->get('IFRAME') === 'Y');
 	}
 
-	protected function getApplication(): \CAllMain
+	protected function getApplication(): \CMain
 	{
 		global $APPLICATION;
 		return $APPLICATION;

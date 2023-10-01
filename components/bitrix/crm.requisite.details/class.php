@@ -1594,7 +1594,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 		}
 
 		// Autocomplete
-		$data['AUTOCOMPLETE'] = trim(strval($this->formData['AUTOCOMPLETE']));
+		$data['AUTOCOMPLETE'] = trim(strval($this->formData['AUTOCOMPLETE'] ?? ''));
 
 		// rq fields
 		$fieldsInfo = $this->getFormFieldsInfo();

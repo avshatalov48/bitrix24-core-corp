@@ -156,6 +156,7 @@ jn.define('crm/timeline/ui/text-editor', (require, exports, module) => {
 						paddingRight: 48,
 						paddingLeft: isIOS ? 8 : 0,
 					},
+					interactable: !isIOS,
 				},
 				Textarea({
 					ref: (ref) => this.textInputRef = ref,

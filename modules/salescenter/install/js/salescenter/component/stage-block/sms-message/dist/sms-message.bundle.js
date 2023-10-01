@@ -14,7 +14,6 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	  methods: {
 	    openSlider: function openSlider() {
 	      var _this = this;
-
 	      this.error.fixer().then(function () {
 	        return _this.onConfigure(_this.error);
 	      });
@@ -95,7 +94,6 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	    },
 	    adjustUpdateMessage: function adjustUpdateMessage(e) {
 	      this.updateMessage(e);
-
 	      if (!this.isHasLink()) {
 	        this.showErrorHasLink(e);
 	      } else {
@@ -213,21 +211,17 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	    },
 	    showPopupHint: function showPopupHint(target, message, timer) {
 	      var _this = this;
-
 	      if (this.popup) {
 	        this.popup.destroy();
 	        this.popup = null;
 	      }
-
 	      if (!target && !message) {
 	        return;
 	      }
-
 	      this.popup = new main_popup.Popup(null, target, {
 	        events: {
 	          onPopupClose: function onPopupClose() {
 	            _this.popup.destroy();
-
 	            _this.popup = null;
 	          }
 	        },
@@ -235,15 +229,12 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	        content: message,
 	        offsetLeft: target.offsetWidth
 	      });
-
 	      if (timer) {
 	        setTimeout(function () {
 	          _this.popup.destroy();
-
 	          _this.popup = null;
 	        }, timer);
 	      }
-
 	      this.popup.show();
 	    },
 	    afterPressKey: function afterPressKey(e) {
@@ -257,11 +248,9 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	    },
 	    afterSavePressKey: function afterSavePressKey(e) {
 	      this.reverseMode();
-
 	      if (this.hasError) {
 	        this.showPopupHint(e.target, main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_TEMPLATE_ERROR'), 2000);
 	      }
-
 	      this.resetError();
 	    },
 	    //endregion
@@ -286,7 +275,6 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	        this.showPopupHint(e.target, main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_TEMPLATE_ERROR'), 2000);
 	      }
 	    } //endregion
-
 	  },
 	  template: "\n\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content\">\n\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content-message\">\t\n\t\t\t\t<template v-if=\"isEditable()\">\n\t\t\t\t\t<sms-message-edit-block\t\t\t\t\n\t\t\t\t\t\t:text=\"editor.template\"\n\t\t\t\t\t\t:selectedMode=\"selectedMode\"\n\t\t\t\t\t\tv-on:edit-on-before-blur=\"beforeBlur\"\n\t\t\t\t\t\tv-on:edit-on-after-press-key=\"afterPressKey\"\n\t\t\t\t\t\tv-on:edit-on-update-template=\"updateTemplate\"\n\t\t\t\t\t\tv-on:edit-on-has-link-error=\"showHasLinkErrorHint\"\n\t\t\t\t\t/>\n\t\t\t\t</template> \n\t\t\t\t<template v-else>\n\t\t\t\t\t<sms-message-view-block\n\t\t\t\t\t\t:text=\"editor.template\"\n\t\t\t\t\t\t:orderPublicUrl=\"orderPublicUrl\"\n\t\t\t\t\t\tv-on:view-on-mouseenter=\"showSmsMessagePopupHint\"\n\t\t\t\t\t\tv-on:view-on-mouseleave=\"hidePopupHint\"\n\t\t\t\t\t/>\n\t\t\t\t</template>\n\t\t\t\t<sms-message-control-block v-if=\"!isReadOnly\"\n\t\t\t\t\t:editable=\"isEditable()\"\n\t\t\t\t\tv-on:control-on-save=\"afterSaveControl\"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
@@ -296,7 +284,6 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	  computed: {
 	    selectedSender: function selectedSender() {
 	      var _this = this;
-
 	      return this.list.find(function (sender) {
 	        return sender.id === _this.selected;
 	      });
@@ -323,7 +310,6 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	  methods: {
 	    openSlider: function openSlider() {
 	      var _this2 = this;
-
 	      salescenter_manager.Manager.openSlider(this.settingUrl).then(function () {
 	        return _this2.onConfigure();
 	      });
@@ -337,22 +323,16 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	    },
 	    render: function render(target, array) {
 	      var _this3 = this;
-
 	      var menuItems = [];
-
 	      var setItem = function setItem(ev) {
 	        target.innerHTML = ev.target.innerHTML;
-
 	        _this3.onSelectedSender(ev.currentTarget.getAttribute('data-item-sender-value'));
-
 	        _this3.popupMenu.close();
 	      };
-
 	      for (var index in array) {
 	        if (!array.hasOwnProperty(index)) {
 	          continue;
 	        }
-
 	        menuItems.push({
 	          text: array[index].name,
 	          dataset: {
@@ -361,12 +341,10 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	          onclick: setItem
 	        });
 	      }
-
 	      menuItems.push({
 	        text: this.localize.SALESCENTER_SENDER_LIST_CONTENT_SETTINGS,
 	        onclick: function onclick() {
 	          _this3.openSlider();
-
 	          _this3.popupMenu.close();
 	        }
 	      });

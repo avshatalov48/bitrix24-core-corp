@@ -233,15 +233,19 @@ class CCrmProductRow extends CAllCrmProductRow
 		$ownerType = $ownerType;
 		$ownerID = intval($ownerID);
 
-		global $DB;
-		$tableName = self::CONFIG_TABLE_NAME;
-		$ownerType = $DB->ForSql($ownerType);
-		$s = $DB->ForSql(serialize($settings));
-		$sql = "INSERT INTO {$tableName}(OWNER_ID, OWNER_TYPE, SETTINGS)
-			VALUES({$ownerID}, '{$ownerType}', '{$s}')
-			ON DUPLICATE KEY UPDATE SETTINGS = '{$s}'";
+		$connection = \Bitrix\Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
 
-		$DB->Query($sql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$insert = [
+			'OWNER_ID' => $ownerID,
+			'OWNER_TYPE' => $ownerType,
+			'SETTINGS' => serialize($settings),
+		];
+		$update = [
+			'SETTINGS' => $insert['SETTINGS'],
+		];
+		$merge = $helper->prepareMerge(self::CONFIG_TABLE_NAME, ['OWNER_ID', 'OWNER_TYPE'], $insert, $update);
+		$connection->query($merge[0]);
 	}
 
 	/**

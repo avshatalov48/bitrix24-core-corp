@@ -84,7 +84,7 @@ var str = '';
 <?if(!empty($arResult['STATUS_LIST']) && $arResult['ENTITY_TYPE'] == 'LEAD'):?>
 <tr>
 	<td class="bx-field-value bx-padding" style="padding-top: 11px!important">
-		<?=GetMessage('CRM_EVENT_STATUS_ID')?>:
+		<?=GetMessage('CRM_EVENT_STATUS_ID_MSGVER_1')?>:
 	</td>
 	<td class="bx-field-value bx-padding" style="padding-top: 11px!important">
 		<?if ($arResult['ENTITY_CONVERTED'] == 'Y'):?>
@@ -108,7 +108,7 @@ var str = '';
 <?if(!empty($arResult['STATUS_LIST']) && $arResult['ENTITY_TYPE'] == 'QUOTE'):?>
 <tr>
 	<td class="bx-field-value bx-padding" style="padding-top: 11px!important">
-		<?=GetMessage('CRM_EVENT_QUOTE_STATUS_ID')?>:
+		<?=GetMessage('CRM_EVENT_QUOTE_STATUS_ID_MSGVER_1')?>:
 	</td>
 	<td class="bx-field-value bx-padding" style="padding-top: 11px!important">
 		<?=SelectBoxFromArray('STATUS_ID', $arResult['STATUS_LIST'], $arResult['STATUS_ID'])?>

@@ -2,7 +2,6 @@
  * @module im/messenger/lib/converter/recent
  */
 jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
-
 	const { clone } = require('utils/object');
 	const { core } = require('im/messenger/core');
 	const { MessengerParams } = require('im/messenger/lib/params');
@@ -35,7 +34,22 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 
 		toListItem(item)
 		{
-			return ChatDataConverter.getElementFormat(item);
+			const formattedElem = ChatDataConverter.getElementFormat(item);
+
+			if (item.writing)
+			{
+				const dialogModel = core.getStore().getters['dialoguesModel/getById'](item.id);
+				if (dialogModel)
+				{
+					formattedElem.writingList = dialogModel.writingList.map((user) => user.userName);
+				}
+			}
+			else
+			{
+				formattedElem.writingList = [];
+			}
+
+			return formattedElem;
 		}
 
 		toCallListItem(callStatus, call)
@@ -52,11 +66,11 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 			return listItem;
 		}
 
-		//TODO: moved from old im.recent, need to refactor
+		// TODO: moved from old im.recent, need to refactor
 		fromPushToModel(element)
 		{
 			let newElement = {};
-			let recentItem = core.getStore().getters['recentModel/getById'](element.id);
+			const recentItem = core.getStore().getters['recentModel/getById'](element.id);
 			if (recentItem)
 			{
 				newElement = clone(recentItem);
@@ -65,7 +79,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 			{
 				newElement = {
 					avatar: {},
-					user: {id: 0},
+					user: { id: 0 },
 					message: {},
 					counter: 0,
 					blocked: false,
@@ -77,7 +91,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 					newElement.type = 'chat';
 					newElement.id = element.id;
 					newElement.chat = {};
-					if (typeof element.chat == 'undefined')
+					if (typeof element.chat === 'undefined')
 					{
 						return false;
 					}
@@ -87,38 +101,40 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 					newElement.type = 'user';
 					newElement.id = parseInt(element.id);
 					newElement.user = {};
-					if (typeof element.user == 'undefined')
+					if (typeof element.user === 'undefined')
 					{
 						return false;
 					}
 				}
-				if (typeof element.message == 'undefined')
+
+				if (typeof element.message === 'undefined')
 				{
 					return false;
 				}
 			}
 
-			if (typeof element.message != 'undefined')
+			if (typeof element.message !== 'undefined')
 			{
 				newElement.message.id = parseInt(element.message.id);
 				newElement.message.text = ChatMessengerCommon.purifyText(element.message.text, element.message.params);
-				newElement.message.author_id = element.message.senderId && element.message.system !== 'Y'? element.message.senderId: 0;
+				newElement.message.author_id = element.message.senderId && element.message.system !== 'Y' ? element.message.senderId : 0;
 				newElement.message.date = new Date(element.message.date);
-				newElement.message.file = element.message.params && element.message.params.FILE_ID? element.message.params.FILE_ID.length > 0: false;
-				newElement.message.attach = element.message.params && element.message.params.ATTACH? element.message.params.ATTACH: false;
-				newElement.message.status = element.message.status? element.message.status: '';
+				newElement.message.file = element.message.params && element.message.params.FILE_ID ? element.message.params.FILE_ID.length > 0 : false;
+				newElement.message.attach = element.message.params && element.message.params.ATTACH ? element.message.params.ATTACH : false;
+				newElement.message.status = element.message.status ? element.message.status : '';
 			}
 
-			if (typeof element.counter != 'undefined')
+			if (typeof element.counter !== 'undefined')
 			{
 				newElement.counter = element.counter;
 			}
-			if (typeof element.writing != 'undefined')
+
+			if (typeof element.writing !== 'undefined')
 			{
 				newElement.writing = element.writing;
 			}
 
-			if (typeof element.user != 'undefined')
+			if (typeof element.user !== 'undefined')
 			{
 				element.user.id = parseInt(element.user.id);
 				if (element.user.id > 0)
@@ -138,7 +154,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 				}
 			}
 
-			if (newElement.type == 'chat' && typeof element.chat != 'undefined')
+			if (newElement.type == 'chat' && typeof element.chat !== 'undefined')
 			{
 				element.chat.id = parseInt(element.chat.id);
 				element.chat.date_create = new Date(element.chat.date_create);
@@ -150,7 +166,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 
 				if (element.chat.type == 'lines' && element.lines != 'undefined')
 				{
-					if (typeof newElement.lines == 'undefined')
+					if (typeof newElement.lines === 'undefined')
 					{
 						newElement.lines = {};
 					}
@@ -160,7 +176,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 			}
 
 			return newElement;
-		};
+		}
 
 		getUserDataFormat(user)
 		{
@@ -168,26 +184,29 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 
 			if (user.id > 0)
 			{
-				if (typeof (user.name) != 'undefined')
+				if (typeof (user.name) !== 'undefined')
 				{
 					user.name = ChatUtils.htmlspecialcharsback(user.name);
 				}
-				if (typeof (user.last_name) != 'undefined')
+
+				if (typeof (user.last_name) !== 'undefined')
 				{
 					user.last_name = ChatUtils.htmlspecialcharsback(user.last_name);
 				}
-				if (typeof (user.first_name) != 'undefined')
+
+				if (typeof (user.first_name) !== 'undefined')
 				{
 					user.first_name = ChatUtils.htmlspecialcharsback(user.first_name);
 				}
-				if (typeof (user.work_position) != 'undefined')
+
+				if (typeof (user.work_position) !== 'undefined')
 				{
 					user.work_position = ChatUtils.htmlspecialcharsback(user.work_position);
 				}
 			}
 
 			return user;
-		};
+		}
 	}
 
 	module.exports = {

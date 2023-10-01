@@ -118,6 +118,12 @@ class StageTable extends ORM\Data\DataManager
 		}
 		$id = (int) $id;
 		$stage = static::getById($id)->fetchObject();
+
+		if (!$stage)
+		{
+			return $result;
+		}
+
 		static::getTemporaryStorage()->saveData($id, $stage->collectValues());
 		$type = Driver::getInstance()->getType($stage->getTypeId());
 		if(!$type)

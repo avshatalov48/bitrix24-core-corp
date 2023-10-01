@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ORDER_FILTER_ALL"] = "(все)";
 $MESS["CRM_ORDER_FILTER_ACCOUNT_NUMBER"] = "Номер";
 $MESS["CRM_ORDER_FILTER_ORDER_TOPIC"] = "Тема заказа";
@@ -26,3 +26,4 @@ $MESS["CRM_ORDER_FILTER_SHIPMENT_TRACKING_NUMBER"] = "Идентификатор
 $MESS["CRM_ORDER_FILTER_CHECK_PRINTED"] = "Чек напечатан";
 $MESS["CRM_ORDER_FILTER_SHIPMENT_DELIVERY_DOC_DATE"] = "Дата документа отгрузки";
 $MESS["CRM_ORDER_FILTER_HAS_ASSOCIATED_DEAL"] = "Имеет связь со сделкой";
+$MESS["CRM_ORDER_FILTER_LAST_ACTIVITY_TIME"] = "Последняя активность";

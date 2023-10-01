@@ -165,7 +165,11 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 			const dialogId = params.dialogId;
 
 			this.store.dispatch('usersModel/set', Object.values(params.users));
-			this.store.dispatch('dialoguesModel/addParticipants', { dialogId, participants: params.newUsers });
+			this.store.dispatch('dialoguesModel/addParticipants', {
+				dialogId,
+				participants: params.newUsers,
+				userCounter: params.userCount,
+			});
 		}
 
 		handleChatUserLeave(params, extra, command)
@@ -183,7 +187,12 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 					.then(() => Counters.update())
 				;
 			}
-			this.store.dispatch('dialoguesModel/removeParticipants', { dialogId, participants: [params.userId] });
+
+			this.store.dispatch('dialoguesModel/removeParticipants', {
+				dialogId,
+				participants: [params.userId],
+				userCounter: params.userCount,
+			});
 		}
 
 		handleChatAvatar(params, extra, command)

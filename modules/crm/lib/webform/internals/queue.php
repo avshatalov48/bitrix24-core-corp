@@ -43,6 +43,7 @@ class QueueTable extends Entity\DataManager
 			'ID' => array(
 				'data_type' => 'integer',
 				'primary' => true,
+				'autocomplete' => true,
 			),
 			'FORM_ID' => array(
 				'data_type' => 'integer',

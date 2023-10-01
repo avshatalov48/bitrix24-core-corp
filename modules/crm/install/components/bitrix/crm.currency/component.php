@@ -18,11 +18,11 @@ $arDefaultUrlTemplates404 = array(
 
 if ($arParams['SEF_MODE'] === 'Y')
 {
-	$arDefaultVariableAliases404 = array();
-	$arComponentVariables = array('currency_id');
-	$arVariables = array();
-	$arUrlTemplates = CComponentEngine::MakeComponentUrlTemplates($arDefaultUrlTemplates404, $arParams['SEF_URL_TEMPLATES']);
-	$arVariableAliases = CComponentEngine::MakeComponentVariableAliases($arDefaultVariableAliases404, $arParams['VARIABLE_ALIASES']);
+	$arDefaultVariableAliases404 = [];
+	$arComponentVariables = ['currency_id'];
+	$arVariables = [];
+	$arUrlTemplates = CComponentEngine::MakeComponentUrlTemplates($arDefaultUrlTemplates404, $arParams['SEF_URL_TEMPLATES'] ?? null);
+	$arVariableAliases = CComponentEngine::MakeComponentVariableAliases($arDefaultVariableAliases404, $arParams['VARIABLE_ALIASES'] ?? null);
 	$componentPage = CComponentEngine::ParseComponentPath($arParams['SEF_FOLDER'], $arUrlTemplates, $arVariables);
 
 	if (!(is_string($componentPage) && isset($componentPage[0]) && isset($arDefaultUrlTemplates404[$componentPage])))

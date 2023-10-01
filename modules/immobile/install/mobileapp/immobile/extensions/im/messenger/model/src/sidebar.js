@@ -81,6 +81,23 @@ jn.define('im/messenger/model/sidebar', (require, exports, module) => {
 				return true;
 			},
 
+			/** @function sidebarModel/update */
+			update(store, payload) {
+				const existingItem = store.state.collection[payload.dialogId];
+				if (!existingItem)
+				{
+					return false;
+				}
+
+				store.commit('update', {
+					actionName: 'update',
+					dialogId: payload.dialogId,
+					fields: payload.fields,
+				});
+
+				return true;
+			},
+
 			/** @function sidebarModel/changeMute */
 			changeMute(store, payload)
 			{

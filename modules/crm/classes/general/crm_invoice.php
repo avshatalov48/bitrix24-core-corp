@@ -982,10 +982,12 @@ class CAllCrmInvoice
 		}
 
 		// prepare entity permissions
-		$arAttr = array();
+		$arAttr = [];
 		if (!empty($arFields['OPENED']))
+		{
 			$arAttr['OPENED'] = $arFields['OPENED'];
-			$arAttr['OPENED'] = $arFields['OPENED'];
+		}
+
 		$sPermission = ($tmpOrderId > 0) ? 'WRITE' : 'ADD';
 		if($this->bCheckPermission)
 		{

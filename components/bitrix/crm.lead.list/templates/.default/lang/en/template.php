@@ -106,7 +106,6 @@ $MESS["CRM_LEAD_REBUILD_SEMANTICS_DLG_SUMMARY"] = "Lead service fields will now 
 $MESS["CRM_LEAD_REBUILD_SEMANTICS_DLG_TITLE"] = "Update lead service fields";
 $MESS["CRM_LEAD_REFRESH_ACCOUNT"] = "Update report data";
 $MESS["CRM_LEAD_REFRESH_ACCOUNTING_DLG_TITLE"] = "Update report data";
-$MESS["CRM_LEAD_SET_STATUS"] = "Set status";
 $MESS["CRM_LEAD_SHOW"] = "View";
 $MESS["CRM_LEAD_SHOW_TITLE"] = "View Lead";
 $MESS["CRM_LEAD_START_CALL_LIST"] = "Start dialing";
@@ -121,6 +120,8 @@ $MESS["CRM_REBUILD_SEARCH_CONTENT_STATE"] = "#processed# of #total#";
 $MESS["CRM_SHOW_ROW_COUNT"] = "Show quantity";
 $MESS["CRM_SIP_MGR_MAKE_CALL"] = "Call";
 $MESS["CRM_SIP_MGR_UNKNOWN_RECIPIENT"] = "Unknown recipient";
-$MESS["CRM_STATUS_INIT"] = "- Status -";
 $MESS["CRM_TIMELINE_REBUILD_SEARCH_CONTENT_DLG_TITLE"] = "Rebuild search index for leads, deals, contacts, companies and other entities";
 $MESS["CRM_LEAD_ADD_TODO"] = "Activity";
+$MESS["CRM_LEAD_SET_STATUS_MSGVER_1"] = "Set stage";
+$MESS["CRM_STATUS_INIT_MSGVER_1"] = "- Lead stage -";
+

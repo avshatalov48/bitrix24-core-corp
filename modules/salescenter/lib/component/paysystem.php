@@ -78,8 +78,13 @@ class PaySystem
 				'ACTION_FILE' => $paySystem['ACTION_FILE'],
 			];
 
-			if ($psMode !== null)
+			if ($psMode !== null && isset($systemHandlerList[$paySystemHandler]['psMode']))
 			{
+				if (!isset($systemHandlerList[$paySystemHandler]['psMode'][$psMode]))
+				{
+					continue;
+				}
+
 				$queryParams['PS_MODE'] = $psMode;
 
 				if (

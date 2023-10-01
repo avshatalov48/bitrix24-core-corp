@@ -151,7 +151,7 @@ return array(
 						'Subject'     => Loc::getMessage("CRM_AUTOMATION_DEMO_DEAL_2_CALL_SUBJECT"),
 						'StartTime'   => '=dateadd({=System:Date},"12h")',
 						'EndTime'     => '=dateadd({=System:Date},"13h")',
-						'Description' => Loc::getMessage("CRM_AUTOMATION_DEMO_DEAL_2_9_MESSAGE"),
+						'Description' => Loc::getMessage("CRM_AUTOMATION_DEMO_DEAL_2_9_MESSAGE_MSGVER_1"),
 						'Responsible' => '{=Document:ASSIGNED_BY_ID}',
 						'Title'       => $callTitle,
 					),

@@ -104,7 +104,6 @@ class SalesCenterCrmFormPanel extends CBitrixComponent
 			'en' => 'https://helpdesk.bitrix24.com/open/13796854/',
 			'de' => 'https://helpdesk.bitrix24.de/open/13790640/',
 			'pl' => 'https://helpdesk.bitrix24.pl/open/13796424/',
-			'ua' => 'https://helpdesk.bitrix24.ua/open/13794655/',
 		];
 		
 		// links

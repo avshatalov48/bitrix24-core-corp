@@ -5,38 +5,28 @@ namespace Bitrix\Crm\Service\Timeline\Item\Activity\Tasks;
 use Bitrix\Crm\Integration\Tasks\TaskPathMaker;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\AssociatedEntityModel;
+use Bitrix\Crm\Service\Timeline\Item\Mixin\FileListPreparer;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Analytics;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Redirect;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockWithTitle;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Link;
-use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Model\File;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Internals\TaskObject;
 
 trait ActivityTrait
 {
+	use FileListPreparer;
+
 	private string $analyticsHit = 'tasks.analytics.hit';
 
 	public function getFiles(): array
 	{
 		$storageFiles = $this->fetchStorageFiles();
-		$files = [];
-		foreach ($storageFiles as $file)
-		{
-			$files[] = new File(
-				$file['ID'],
-				(int)$file['FILE_ID'],
-				trim((string)$file['NAME']),
-				(int)$file['SIZE'],
-				(string)$file['VIEW_URL'],
-				$file['PREVIEW_URL'] ? (string)$file['PREVIEW_URL'] : null
-			);
-		}
 
-		return $files;
+		return $this->prepareFiles($storageFiles);
 	}
 
 	private function getTaskAction(TaskObject $task, string $analyticsActionName = 'task_view'): JsEvent

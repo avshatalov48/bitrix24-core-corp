@@ -206,7 +206,7 @@ class CBPCrmCreateRequestActivity extends CBPActivity
 				'Type' => 'bool'
 			),
 			'AutoComplete' => array(
-				'Name' => GetMessage('CRM_CREATE_REQUEST_AUTO_COMPLETE_ON_ENTITY_ST_CHG'),
+				'Name' => GetMessage('CRM_CREATE_REQUEST_AUTO_COMPLETE_ON_ENTITY_ST_CHG_MSGVER_1'),
 				'FieldName' => 'auto_completed',
 				'Type' => 'bool',
 				'Default' => 'N'

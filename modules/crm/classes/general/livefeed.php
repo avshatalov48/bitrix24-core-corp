@@ -2900,7 +2900,7 @@ class CCrmLiveFeed
 			'SOURCE_ID' => $sourceID,
 			'URL' => $url,
 			'UF_SONET_LOG_DOC' => (!empty($fields["UF_SONET_LOG_DOC"]) ? $fields["UF_SONET_LOG_DOC"] : false),
-			'UF_SONET_LOG_FILE' => (!empty($fields["UF_SONET_LOG_DOC"]) ? $fields["UF_SONET_LOG_FILE"] : false),
+			'UF_SONET_LOG_FILE' => (!empty($fields["UF_SONET_LOG_FILE"]) ? $fields["UF_SONET_LOG_FILE"] : false),
 			'SITE_ID' =>  (!empty($fields["SITE_ID"]) ? $fields["SITE_ID"] : SITE_ID),
 		);
 

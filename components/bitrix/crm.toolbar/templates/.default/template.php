@@ -124,7 +124,7 @@ $renderViews = static function(array $views): void {
 			// init navigation bar panel
 			(new BX.Crm.NavigationBar({
 				id: "<?= $navigationBarId ?>",
-				items: <?= CUtil::PhpToJSObject($arResult['views']['left']) ?>
+				items: <?= CUtil::PhpToJSObject($arResult['views']['left'] ?? []) ?>
 			})).init();
 		});
 	</script>

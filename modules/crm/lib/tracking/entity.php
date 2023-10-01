@@ -7,13 +7,12 @@
  */
 namespace Bitrix\Crm\Tracking;
 
-use Bitrix\Main;
-use Bitrix\Main\Type\DateTime;
-
-use Bitrix\Sale;
-
 use Bitrix\Crm;
 use Bitrix\Crm\Tracking;
+use Bitrix\Main;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Sale;
+
 //use Bitrix\Crm\Entity\Identificator;
 
 /**
@@ -297,7 +296,11 @@ class Entity
 		self::processRestUtm($fields);
 
 		$traceId = Tracking\Internals\TraceTable::getTraceIdByEntity($entityTypeId, $entityId);
-		if (!$traceId && is_numeric($fields['TRACE']))
+		if (
+			!$traceId
+			&& isset($fields['TRACE'])
+			&& is_numeric($fields['TRACE'])
+		)
 		{
 			$traceId = (int) $fields['TRACE'];
 			$traceId = Tracking\Internals\TraceTable::getRowById($traceId)
@@ -481,7 +484,7 @@ class Entity
 		elseif (!empty($fields['COMPANY_ID']))
 		{
 			$queryEntityTypeId = \CCrmOwnerType::Company;
-			$queryEntityId = $fields['CONTACT_ID'];
+			$queryEntityId = $fields['COMPANY_ID'];
 		}
 		else
 		{

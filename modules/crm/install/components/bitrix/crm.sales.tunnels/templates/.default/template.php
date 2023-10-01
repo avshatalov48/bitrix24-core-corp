@@ -22,6 +22,7 @@ Extension::load([
 	'dd',
 	'ui.popup',
 	'crm.restriction.bitrix24',
+	'crm_common',
 ]);
 
 ?>

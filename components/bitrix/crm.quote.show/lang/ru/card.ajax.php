@@ -1,5 +1,5 @@
 <?
-$MESS["CRM_COLUMN_STATUS_ID"] = "Статус предложения";
+$MESS["CRM_COLUMN_STATUS_ID_MSGVER_1"] = "Стадия предложения";
 $MESS["CRM_COLUMN_PRODUCTS"] = "Продукт";
 $MESS["CRM_COLUMN_OPPORTUNITY"] = "Сумма";
 $MESS["CRM_COLUMN_DATE_MODIFY"] = "Дата изменения";

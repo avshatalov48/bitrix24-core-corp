@@ -328,7 +328,7 @@ export const ListItem = {
 						{{ label.TEXT }}
 					</span>
 				</span>
-				<span class="market-catalog__elements-item_labels-status" v-if="!$parent.isInstalledList">
+				<span class="market-catalog__elements-item_labels-status" v-if="item.PRICE_POLICY_NAME">
 					<span class="market-catalog__elements-item_label-status"
 						  :class="{'--blue': item.PRICE_POLICY_BLUE}"
 					>

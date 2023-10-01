@@ -34,7 +34,15 @@ class UserFieldSynchronizer
 	*/
 	public static function needForSynchronization($srcEntityTypeID, $dstEntityTypeID, $languageID = '', array $options = array())
 	{
-		$fieldsToCreate = self::getSynchronizationFields($srcEntityTypeID, $dstEntityTypeID, $languageID, false);
+		$isRecycling = (isset($options['IS_RECYCLING']) && $options['IS_RECYCLING'] === true);
+		
+		$fieldsToCreate = self::getSynchronizationFields(
+			$srcEntityTypeID,
+			$dstEntityTypeID,
+			$languageID,
+			false,
+			$isRecycling
+		);
 		if(!empty($fieldsToCreate))
 		{
 			return true;
@@ -42,7 +50,13 @@ class UserFieldSynchronizer
 
 		if(isset($options['ENABLE_TRIM']) && $options['ENABLE_TRIM'] === true)
 		{
-			$fieldsToDelete = self::getSynchronizationFields($dstEntityTypeID, $srcEntityTypeID, $languageID, false);
+			$fieldsToDelete = self::getSynchronizationFields(
+				$dstEntityTypeID,
+				$srcEntityTypeID,
+				$languageID,
+				false,
+				$isRecycling
+			);
 			if(!empty($fieldsToDelete))
 			{
 				return true;
@@ -59,7 +73,13 @@ class UserFieldSynchronizer
 	* @param string $languageID Language
 	* @return array
 	*/
-	public static function getSynchronizationFields($srcEntityTypeID, $dstEntityTypeID, $languageID = '', $forced = false)
+	public static function getSynchronizationFields(
+		$srcEntityTypeID,
+		$dstEntityTypeID,
+		$languageID = '',
+		$forced = false,
+		$isRecycling = false
+	)
 	{
 		if(!is_int($srcEntityTypeID))
 		{
@@ -163,9 +183,11 @@ class UserFieldSynchronizer
 		self::$existedFieldNameMap = array();
 		$results = array();
 
-		$srcFields = VisibilityManager::getVisibleUserFields(
-			$USER_FIELD_MANAGER->GetUserFields($srcUfEntityID, 0, $languageID)
-		);
+		$srcFields = $USER_FIELD_MANAGER->GetUserFields($srcUfEntityID, 0, $languageID);
+		if (!$isRecycling)
+		{
+			$srcFields = VisibilityManager::getVisibleUserFields($srcFields);
+		}
 
 		foreach($srcFields as $field)
 		{
@@ -225,15 +247,23 @@ class UserFieldSynchronizer
 	 */
 	public static function synchronize($srcEntityTypeID, $dstEntityTypeID, $languageID = '', $filter = array(), array $options = array())
 	{
-		/** @var \CAllMain $APPLICATION */
+		/** @var \CMain $APPLICATION */
 		global $APPLICATION;
 
 		$synchronizedFieldNameMap = array();
 		$entity = new \CUserTypeEntity();
 
+		$isRecycling = (isset($options['IS_RECYCLING']) && $options['IS_RECYCLING'] === true);
+
 		if(isset($options['ENABLE_TRIM']) && $options['ENABLE_TRIM'] === true)
 		{
-			$fieldsToDelete = self::getSynchronizationFields($dstEntityTypeID, $srcEntityTypeID, $languageID, true);
+			$fieldsToDelete = self::getSynchronizationFields(
+				$dstEntityTypeID,
+				$srcEntityTypeID,
+				$languageID,
+				true,
+				$isRecycling
+			);
 			foreach($fieldsToDelete as $field)
 			{
 				if(self::isUserFieldTypeSupported($field['USER_TYPE_ID']))
@@ -244,7 +274,28 @@ class UserFieldSynchronizer
 		}
 
 		$entityID = \CCrmOwnerType::ResolveUserFieldEntityID($dstEntityTypeID);
-		$fieldsToCreate = self::getSynchronizationFields($srcEntityTypeID, $dstEntityTypeID, $languageID, true);
+		$fieldsToCreateDraft = self::getSynchronizationFields(
+			$srcEntityTypeID,
+			$dstEntityTypeID,
+			$languageID,
+			true,
+			$isRecycling
+		);
+		$labelMap = [];
+		foreach ($fieldsToCreateDraft as $index => $field)
+		{
+			$label = self::getFieldComplianceCode($field);
+			if($label !== '' && !isset($labelMap[$label]))
+			{
+				$labelMap[$label] = $index;
+			}
+		}
+		$fieldsToCreate = [];
+		foreach ($labelMap as $index)
+		{
+			$fieldsToCreate[] = $fieldsToCreateDraft[$index];
+		}
+		unset($fieldsToCreateDraft);
 
 		if(isset($filter['FIELD_NAME']))
 		{
@@ -294,11 +345,11 @@ class UserFieldSynchronizer
 				'FIELD_NAME' => $fieldName,
 				'ENTITY_ID' => $entityID,
 				'USER_TYPE_ID' => $typeID,
-				'SORT' => isset($srcField['SORT']) ? $srcField['SORT'] : 100,
-				'MULTIPLE' => isset($srcField['MULTIPLE']) ? $srcField['MULTIPLE'] : 'N',
-				'MANDATORY' => isset($srcField['MANDATORY']) ? $srcField['MANDATORY'] : 'N',
-				'SHOW_FILTER' => isset($srcField['SHOW_FILTER']) ? $srcField['SHOW_FILTER'] : 'N',
-				'SHOW_IN_LIST' => isset($srcField['SHOW_IN_LIST']) ? $srcField['SHOW_IN_LIST'] : 'N'
+				'SORT' => $srcField['SORT'] ?? 100,
+				'MULTIPLE' => $srcField['MULTIPLE'] ?? 'N',
+				'MANDATORY' => $srcField['MANDATORY'] ?? 'N',
+				'SHOW_FILTER' => $srcField['SHOW_FILTER'] ?? 'N',
+				'SHOW_IN_LIST' => $srcField['SHOW_IN_LIST'] ?? 'N'
 			);
 
 			if(isset($srcField['SETTINGS']))
@@ -444,9 +495,9 @@ class UserFieldSynchronizer
 		$srcUfEntityID = \CCrmOwnerType::ResolveUserFieldEntityID($srcEntityTypeID);
 		$dstUfEntityID = \CCrmOwnerType::ResolveUserFieldEntityID($dstEntityTypeID);
 
-		/** @var \CAllUserTypeManager $USER_FIELD_MANAGER */
+		/** @var \CUserTypeManager $USER_FIELD_MANAGER */
 		global $USER_FIELD_MANAGER;
-		/** @var \CAllMain $APPLICATION */
+		/** @var \CMain $APPLICATION */
 		global $APPLICATION;
 
 		$srcFields = $USER_FIELD_MANAGER->GetUserFields($srcUfEntityID, 0, $languageID);

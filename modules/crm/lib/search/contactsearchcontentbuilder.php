@@ -193,15 +193,13 @@ class ContactSearchContentBuilder extends SearchContentBuilder
 			$sql = "
 				INSERT INTO b_crm_contact_index(CONTACT_ID, SEARCH_CONTENT)
 				VALUES({$entityId}, '{$searchContent}')
-				ON DUPLICATE KEY UPDATE SEARCH_CONTENT= '{$searchContent}'
 			";
 			try
 			{
 				return $connection->query($sql);
 			}
-			catch (\Exception $exception)
+			catch (\Bitrix\Main\DB\SqlQueryException $exception)
 			{
-				return $connection->query($sql);
 			}
 		}
 

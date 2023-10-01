@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "The CRM module is not installed.";
 $MESS["CRM_PERMISSION_DENIED"] = "Access denied";
 $MESS["CRM_COLUMN_ID"] = "ID";
@@ -11,7 +11,6 @@ $MESS["CRM_COLUMN_COMPANY_TITLE"] = "Company";
 $MESS["CRM_COLUMN_DEAL_ID"] = "Deal";
 $MESS["CRM_COLUMN_DEAL_TITLE"] = "Deal";
 $MESS["CRM_COLUMN_CONTACT_ID"] = "Contact";
-$MESS["CRM_COLUMN_STATUS_ID"] = "Status";
 $MESS["CRM_COLUMN_CURRENCY_ID"] = "Currency";
 $MESS["CRM_COLUMN_PRODUCT_ID"] = "Product";
 $MESS["CRM_COLUMN_CLOSED"] = "Closed";
@@ -58,3 +57,4 @@ $MESS["CRM_COLUMN_WEBFORM"] = "Created by CRM form";
 $MESS["CRM_QUOTE_NAV_TITLE_LIST_SHORT"] = "Quotes";
 $MESS["CRM_PRESET_MY_IN_WORK"] = "My (in progress)";
 $MESS["CRM_FILTER_MYCOMPANY_TITLE"] = "Your company name";
+$MESS["CRM_COLUMN_STATUS_ID_MSGVER_1"] = "Stage";

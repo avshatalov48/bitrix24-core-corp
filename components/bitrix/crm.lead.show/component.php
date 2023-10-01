@@ -235,7 +235,7 @@ if($enableInstantEdit)
 
 $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'STATUS_ID',
-	'name' => GetMessage('CRM_FIELD_STATUS_ID'),
+	'name' => GetMessage('CRM_FIELD_STATUS_ID_MSGVER_1'),
 	'type' => 'label',
 	'value' => $arResult['STATUS_LIST'][$arResult['ELEMENT']['~STATUS_ID']],
 	'isTactile' => true
@@ -253,7 +253,7 @@ if($enableInstantEdit)
 
 $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'STATUS_DESCRIPTION',
-	'name' => GetMessage('CRM_FIELD_STATUS_DESCRIPTION'),
+	'name' => GetMessage('CRM_FIELD_STATUS_DESCRIPTION_MSGVER_1'),
 	'type' => 'label',
 	'value' => isset($arResult['ELEMENT']['~STATUS_DESCRIPTION']) ? $arResult['ELEMENT']['~STATUS_DESCRIPTION'] : '',
 	'isTactile' => true

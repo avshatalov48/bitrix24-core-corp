@@ -1,6 +1,6 @@
 <?
 $MESS["CRM_FIELD_OPPORTUNITY"] = "Сумма";
-$MESS["CRM_FIELD_STATUS"] = "Статус";
+$MESS["CRM_FIELD_STATUS_MSGVER_1"] = "Стадия";
 $MESS["CRM_FIELD_ASSIGNED_BY"] = "Ответственный";
 $MESS["CRM_FIELD_BEGINDATE"] = "Дата";
 $MESS["CRM_FIELD_CLOSEDATE"] = "Срок";

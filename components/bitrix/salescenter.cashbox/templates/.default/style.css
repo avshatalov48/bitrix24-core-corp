@@ -329,6 +329,18 @@
 	margin: 2px 0 18px 0;
 }
 
+.salescenter-title-container {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.salescenter-subtext-container {
+	font-size: 12px;
+	color: #525c69;
+	margin-top: 4px;
+}
+
 .salescenter-control-block {
 	display: flex;
 	width: 100%;

@@ -8,6 +8,7 @@ use Bitrix\Main\Security\Random;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Market\Categories;
 use Bitrix\Market\History;
+use Bitrix\Market\Link;
 use Bitrix\Market\Loadable;
 use Bitrix\Market\NumberApps;
 use Bitrix\Market\PageRules;
@@ -182,7 +183,7 @@ class MarketMain extends CBitrixComponent implements Controllerable, Loadable
 			$this->arParams['PLACEMENT'] = $requestPlacement;
 		}
 
-		$this->arParams['CREATE_URI_SITE_TEMPLATE'] = (string)$this->request->get('create_uri');
+		$this->arParams['CREATE_URI_SITE_TEMPLATE'] = Link::getCreateUri();
 		$this->arParams['TAGS'] = (array)$this->request->get('tag');
 		$this->arParams['CATEGORY'] = (array)$this->request->get('category');
 		if (isset($this->arParams['REQUEST'])) {

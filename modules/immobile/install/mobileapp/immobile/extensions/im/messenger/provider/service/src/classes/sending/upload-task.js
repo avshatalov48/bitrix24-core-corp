@@ -2,6 +2,7 @@
  * @module im/messenger/provider/service/classes/sending/upload-task
  */
 jn.define('im/messenger/provider/service/classes/sending/upload-task', (require, exports, module) => {
+	const { core } = require('im/messenger/core');
 
 	/**
 	 * @class UploadTask
@@ -21,6 +22,8 @@ jn.define('im/messenger/provider/service/classes/sending/upload-task', (require,
 		})
 		{
 			const megabyte = 1024 * 1024;
+			const cloudChunkSize = 5 * megabyte;
+			const chunkSize = core.isCloud() ? cloudChunkSize : megabyte;
 
 			this.taskId = taskId;
 			this.controller = 'disk.uf.integration.diskUploaderController';
@@ -30,7 +33,7 @@ jn.define('im/messenger/provider/service/classes/sending/upload-task', (require,
 			this.resize = resize;
 			this.type = type;
 			this.mimeType = mimeType;
-			this.chunk = chunk || megabyte;
+			this.chunk = chunkSize;
 			this.params = params;
 			this.name = name;
 			this.url = url;

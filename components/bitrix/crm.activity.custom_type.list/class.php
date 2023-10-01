@@ -19,9 +19,9 @@ class CCrmActivityCustomTypeComponent extends CBitrixComponent
 	protected $hasEditPermission = false;
 	/** @var bool */
 	protected $hasDeletePermission = false;
-	/** @var \CAllMain|null */
+	/** @var CMain|null */
 	protected $application = null;
-	/** @var \CSite|null */
+	/** @var CSite|null */
 	protected $site = null;
 	/** @var string */
 	protected $formID = '';
@@ -55,7 +55,7 @@ class CCrmActivityCustomTypeComponent extends CBitrixComponent
 
 	public function __construct($component = null)
 	{
-		/** @var \CAllMain $APPLICATION */
+		/** @var CMain $APPLICATION */
 		global $APPLICATION;
 		$this->application = $APPLICATION;
 

@@ -1136,7 +1136,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		}
 
 		$statusKey = $this->statusKey;
-		$isStatusChanged = ($item[$statusKey] !== $status);
+		$isStatusChanged = (($item[$statusKey] ?? null) !== $status);
 		if(!$isStatusChanged)
 		{
 			return $result;

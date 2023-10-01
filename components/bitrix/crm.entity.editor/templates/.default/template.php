@@ -840,6 +840,7 @@ if(!empty($htmlEditorConfigs))
 						entityTypeId: <?=$arResult['ENTITY_TYPE_ID']?>,
 						entityTypeTitle: "<?= CUtil::JSEscape($arResult['ENTITY_TYPE_TITLE']) ?>",
 						useFieldsSearch: true,
+						useForceFieldsAdd: true,
 						entityId: <?=$arResult['ENTITY_ID']?>,
 						model: model,
 						config: config,

@@ -42,7 +42,8 @@ export const TodoEditor = {
 			responsibleUserId: this.currentUser.userId,
 			showFileUploader: false,
 			isTextareaToLong: false,
-		}
+			wasUsed: false,
+		};
 	},
 
 	computed: {
@@ -83,6 +84,7 @@ export const TodoEditor = {
 
 		onTextareaFocus(): void
 		{
+			this.wasUsed = true;
 			this.onFocus();
 		},
 
@@ -103,6 +105,7 @@ export const TodoEditor = {
 
 		setTextareaFocused(): void
 		{
+			this.wasUsed = true;
 			this.$refs.textarea.focus();
 		},
 
@@ -187,7 +190,7 @@ export const TodoEditor = {
 				:value="description"
 				:class="{ '--has-scroll': isTextareaToLong }"
 			></textarea>
-			<div class="crm-activity__todo-editor_tools">
+			<div class="crm-activity__todo-editor_tools" v-if="wasUsed">
 				<div
 					ref="deadline"
 					@click="onDeadlineClick"

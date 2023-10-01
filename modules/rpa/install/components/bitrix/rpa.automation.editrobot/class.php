@@ -91,6 +91,11 @@ class RpaAutomationEditRobotComponent extends Rpa\Components\Base
 
 	private function saveRobot(Bizproc\Automation\Engine\Template $template, $robotName, $robotData, $request)
 	{
+		if (empty($robotData['Name']))
+		{
+			$robotData['Name'] = Bizproc\Automation\Engine\Robot::generateName();
+		}
+
 		$saveResult = $template->saveRobotSettings($robotData, $request);
 
 		if ($saveResult->isSuccess())
@@ -98,10 +103,6 @@ class RpaAutomationEditRobotComponent extends Rpa\Components\Base
 			$data = $saveResult->getData();
 			$robotData = $data['robot'];
 
-			if (empty($robotData['Name']))
-			{
-				$robotData['Name'] = Bizproc\Automation\Engine\Robot::generateName();
-			}
 			$robots = $template->getRobots();
 			if ($robots === null)
 			{

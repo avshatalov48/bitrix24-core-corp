@@ -242,7 +242,6 @@ class CrmTrackingSourceArchiveComponent extends CBitrixComponent implements Cont
 		/* Set title */
 		if ($this->arParams['SET_TITLE'])
 		{
-			/**@var CAllMain*/
 			$GLOBALS['APPLICATION']->SetTitle(Loc::getMessage('CRM_TRACKING_ARCHIVE_TITLE'));
 		}
 

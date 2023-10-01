@@ -2318,7 +2318,7 @@ if(!$bError)
 	{
 		$arPerms = $CCrmRole->GetRolePerms($arRole['ID']);
 
-		if(!isset($arPerms['INVOICE']) && is_array($arPerms['DEAL']))
+		if(!isset($arPerms['INVOICE']) && is_array($arPerms['DEAL'] ?? null))
 		{
 			foreach ($arPerms['DEAL'] as $key => $value)
 			{

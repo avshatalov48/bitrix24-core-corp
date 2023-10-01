@@ -81,6 +81,7 @@ class Conversion extends Operation
 
 		$result = new ConversionResult();
 
+		$this->configs->enablePermissionCheck($this->isCheckAccessEnabled());
 		$wizard = ConversionManager::getWizard($this->item->getEntityTypeId(), $this->item->getId(), $this->configs);
 		if (!$wizard)
 		{

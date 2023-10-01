@@ -50,7 +50,7 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 		if (static::$counter[$documentId[2]][$targetStatus] > 2)
 		{
 			$this->WriteToTrackingService(
-				\Bitrix\Main\Localization\Loc::getMessage('CRM_CHANGE_STATUS_RECURSION'),
+				\Bitrix\Main\Localization\Loc::getMessage('CRM_CHANGE_STATUS_RECURSION_MSGVER_1'),
 				0,
 				CBPTrackingType::Error
 			);
@@ -59,7 +59,7 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 				$this->GetWorkflowInstanceId(),
 				$documentId,
 				$arErrorsTmp,
-				GetMessage('CRM_CHANGE_STATUS_RECURSION')
+				GetMessage('CRM_CHANGE_STATUS_RECURSION_MSGVER_1')
 			);
 
 			//Stop running queue
@@ -109,7 +109,7 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 
 		if ($stages && !in_array($targetStatus, $stages, true))
 		{
-			$this->WriteToTrackingService(GetMessage('CRM_CHANGE_STATUS_INCORRECT_STAGE'), 0, CBPTrackingType::Error);
+			$this->WriteToTrackingService(GetMessage('CRM_CHANGE_STATUS_INCORRECT_STAGE_MSGVER_1'), 0, CBPTrackingType::Error);
 
 			return CBPActivityExecutionStatus::Closed;
 		}
@@ -131,7 +131,7 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 			$this->GetWorkflowInstanceId(),
 			$documentId,
 			$arErrorsTmp,
-			GetMessage('CRM_CHANGE_STATUS_TERMINATED')
+			GetMessage('CRM_CHANGE_STATUS_TERMINATED_MSGVER_1')
 		);
 
 		//Stop running queue
@@ -146,7 +146,7 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 			$errors[] = [
 				'code' => 'NotExist',
 				'parameter' => 'TargetStatus',
-				'message' => GetMessage('CRM_CHANGE_STATUS_EMPTY_PROP'),
+				'message' => GetMessage('CRM_CHANGE_STATUS_EMPTY_PROP_MSGVER_1'),
 			];
 		}
 
@@ -192,7 +192,7 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 		$categoryId = isset($context['DOCUMENT_CATEGORY_ID']) ? (int)$context['DOCUMENT_CATEGORY_ID'] : null;
 
 		$targetStatusProperty = [
-			'Name' => GetMessage('CRM_CHANGE_STATUS_STATUS'),
+			'Name' => GetMessage('CRM_CHANGE_STATUS_STAGE'),
 			'FieldName' => 'target_status',
 			'Type' => 'select',
 			'Required' => true,

@@ -1,6 +1,6 @@
-import Context from "./context";
-import {EventEmitter} from 'main.core.events';
-import {Dom} from "main.core";
+import Context from './context';
+import { EventEmitter } from 'main.core.events';
+import { Dom } from 'main.core';
 
 export default class Item
 {
@@ -87,7 +87,7 @@ export default class Item
 	setVisible(visible: Boolean): void
 	{
 		visible = !!visible;
-		if(this.#isVisible === visible)
+		if (this.#isVisible === visible)
 		{
 			return;
 		}
@@ -102,9 +102,11 @@ export default class Item
 		if (visible)
 		{
 			Dom.removeClass(container, '--hidden');
+			this.onShow();
 		}
 		else
 		{
+			this.onHide();
 			Dom.addClass(container, '--hidden');
 		}
 	}
@@ -121,13 +123,14 @@ export default class Item
 		{
 			return;
 		}
+
 		if (isFocused)
 		{
-			Dom.addClass(container, "--focus");
+			Dom.addClass(container, '--focus');
 		}
 		else
 		{
-			Dom.removeClass(container, "--focus");
+			Dom.removeClass(container, '--focus');
 		}
 	}
 
@@ -147,6 +150,11 @@ export default class Item
 	}
 
 	initializeLayout(): void
-	{
-	}
+	{}
+
+	onShow(): void
+	{}
+
+	onHide(): void
+	{}
 }

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_LEAD_COPY_PAGE_TITLE"] = "Copy lead";
 $MESS["CRM_LEAD_CREATE_ON_BASIS"] = "Generate";
 $MESS["CRM_LEAD_CREATION_PAGE_TITLE"] = "New lead";
@@ -28,8 +28,8 @@ $MESS["CRM_LEAD_FIELD_PRODUCTS"] = "Products";
 $MESS["CRM_LEAD_FIELD_SECOND_NAME"] = "Second name";
 $MESS["CRM_LEAD_FIELD_SOURCE_DESCRIPTION"] = "Source information";
 $MESS["CRM_LEAD_FIELD_SOURCE_ID"] = "Source";
-$MESS["CRM_LEAD_FIELD_STATUS_DESCRIPTION"] = "Status information";
-$MESS["CRM_LEAD_FIELD_STATUS_ID"] = "Status";
+$MESS["CRM_LEAD_FIELD_STATUS_DESCRIPTION_MSGVER_1"] = "More about this stage";
+$MESS["CRM_LEAD_FIELD_STATUS_ID_MSGVER_1"] = "Stage";
 $MESS["CRM_LEAD_FIELD_TITLE"] = "Lead name";
 $MESS["CRM_LEAD_FIELD_UTM"] = "UTM parameters";
 $MESS["CRM_LEAD_HONORIFIC_NOT_SELECTED"] = "Not selected";
@@ -42,8 +42,7 @@ $MESS["CRM_LEAD_TAB_AUTOMATION"] = "Automation";
 $MESS["CRM_LEAD_TAB_BIZPROC"] = "Workflows";
 $MESS["CRM_LEAD_TAB_EVENT"] = "History";
 $MESS["CRM_LEAD_TAB_PRODUCTS"] = "Products";
-$MESS["CRM_LEAD_TAB_QUOTE"] = "Quotes";
 $MESS["CRM_LEAD_TAB_TREE"] = "Dependencies";
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "The CRM module is not installed.";
 $MESS["CRM_PERMISSION_DENIED"] = "Access denied";
-?>
+$MESS["CRM_LEAD_TAB_QUOTE"] = "Quotes";

@@ -10,7 +10,7 @@ class Buyer
 
 	/**
 	 * Event handler for buyer authorization when api checks external users.
-	 * @see \CAllUser::Login
+	 * @see \CUser::Login
 	 *
 	 * @param $arParams
 	 * @return int|null
@@ -39,7 +39,7 @@ class Buyer
 
 	/**
 	 * Event handler for buyer creation when api checks user fields.
-	 * @see \CAllUser::CheckFields
+	 * @see \CUser::CheckFields
 	 *
 	 * @param $fields
 	 * @return bool
@@ -65,7 +65,7 @@ class Buyer
 
 	/**
 	 * Event handler for buyer editing when api checks user fields.
-	 * @see \CAllUser::CheckFields
+	 * @see \CUser::CheckFields
 	 *
 	 * @param $fields
 	 * @return bool
@@ -91,7 +91,7 @@ class Buyer
 
 	/**
 	 * Event handler for buyer password restore.
-	 * @see \CAllUser::SendPassword
+	 * @see \CUser::SendPassword
 	 *
 	 * @param $params
 	 */
@@ -128,7 +128,7 @@ class Buyer
 
 	/**
 	 * Event handler for buyer password restore.
-	 * @see \CAllUser::ChangePassword
+	 * @see \CUser::ChangePassword
 	 *
 	 * @param $params
 	 */
@@ -139,7 +139,7 @@ class Buyer
 
 	/**
 	 * Event handler for buyer password restore.
-	 * @see \CAllUser::SendUserInfo
+	 * @see \CUser::SendUserInfo
 	 *
 	 * @param $params
 	 */

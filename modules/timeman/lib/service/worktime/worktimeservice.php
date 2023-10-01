@@ -108,12 +108,16 @@ class WorktimeService extends BaseService
 		return $this->processWorktimeAction($this->recordForm,
 			function () use ($recordForm) {
 				$actionList = $this->buildActionList($recordForm->userId);
-				return $this->checkActionEligibility(
-					array_merge(
-						$actionList->getContinueActions(),
-						$actionList->getReopenActions()
-					)
+				$continueActions = array_merge(
+					$actionList->getContinueActions(),
+					$actionList->getReopenActions()
 				);
+				if (empty($continueActions))
+				{
+					$continueActions[] = WorktimeAction::createContinueAction($recordForm->userId);
+					$this->actionList->fillActions($continueActions);
+				}
+				return $this->checkActionEligibility($continueActions);
 			}
 		);
 	}
@@ -127,9 +131,13 @@ class WorktimeService extends BaseService
 		}
 		return $this->processWorktimeAction($this->recordForm,
 			function () use ($recordForm) {
-				return $this->checkActionEligibility(
-					$this->buildActionList($recordForm->userId)->getPauseActions()
-				);
+				$pauseActions = $this->buildActionList($recordForm->userId)->getPauseActions();
+				if (empty($pauseActions))
+				{
+					$pauseActions[] = WorktimeAction::createPauseAction($recordForm->userId);
+					$this->actionList->fillActions($pauseActions);
+				}
+				return $this->checkActionEligibility($pauseActions);
 			}
 		);
 	}
@@ -150,9 +158,13 @@ class WorktimeService extends BaseService
 		}
 		return $this->processWorktimeAction($this->recordForm,
 			function () use ($recordForm) {
-				return $this->checkActionEligibility(
-					$this->buildActionList($recordForm->userId)->getStopActions()
-				);
+				$stopActions = $this->buildActionList($recordForm->userId)->getStopActions();
+				if (empty($stopActions))
+				{
+					$stopActions[] = WorktimeAction::createStopAction($recordForm->userId);
+					$this->actionList->fillActions($stopActions);
+				}
+				return $this->checkActionEligibility($stopActions);
 			}
 		);
 	}
@@ -170,9 +182,13 @@ class WorktimeService extends BaseService
 		}
 		return $this->processWorktimeAction($this->recordForm,
 			function () use ($recordForm) {
-				return $this->checkActionEligibility(
-					$this->buildActionList($recordForm->editedBy)->getEditActions()
-				);
+				$editActions = $this->buildActionList($recordForm->userId)->getEditActions();
+				if (empty($editActions))
+				{
+					$editActions[] = WorktimeAction::createEditAction($recordForm->userId);
+					$this->actionList->fillActions($editActions);
+				}
+				return $this->checkActionEligibility($editActions);
 			}
 		);
 	}
@@ -259,6 +275,8 @@ class WorktimeService extends BaseService
 	 */
 	private function buildActionList($userId, $userDate = null)
 	{
+		(\Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordTable::getEntity())->cleanCache();
+
 		return $this->actionList->buildPossibleActionsListForUser($userId, $userDate);
 	}
 

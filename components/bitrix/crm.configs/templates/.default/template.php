@@ -413,11 +413,11 @@ foreach($tabs as $tabId => $tabName)
 
 		BX['CrmConfigClass_<?= $arResult['RAND_STRING']?>'] = new BX.CrmConfigClass({
 			randomString: '<?= $arResult['RAND_STRING'] ?>',
-			numeratorInvoiceId: '<?= CUtil::JSEscape($arResult['NUMERATOR_INVOICE_ID']) ?>',
+			numeratorInvoiceId: '<?= CUtil::JSEscape($arResult['NUMERATOR_INVOICE_ID'] ?? '') ?>',
 			numeratorInvoiceType: '<?= REGISTRY_TYPE_CRM_INVOICE ?>',
-			numeratorSmartInvoiceId: '<?= CUtil::JSEscape($arResult['NUMERATOR_SMART_INVOICE_ID']) ?>',
+			numeratorSmartInvoiceId: '<?= CUtil::JSEscape($arResult['NUMERATOR_SMART_INVOICE_ID'] ?? '') ?>',
 			numeratorSmartInvoiceType: '<?= \Bitrix\Crm\Service\Factory\SmartInvoice::NUMERATOR_TYPE ?>',
-			numeratorQuoteId: '<?= CUtil::JSEscape($arResult['NUMERATOR_QUOTE_ID']) ?>',
+			numeratorQuoteId: '<?= CUtil::JSEscape($arResult['NUMERATOR_QUOTE_ID'] ?? '') ?>',
 			numeratorQuoteType: '<?= REGISTRY_TYPE_CRM_QUOTE ?>',
 			tabs: <?=CUtil::PhpToJsObject(array_keys($tabs))?>
 		});

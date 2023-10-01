@@ -1,3 +1,3 @@
 <?php
-$MESS["CRM_AUTOMATION_TEMPLATE_TERMINATED"] = "Автоматическое завершение по переходу в следующий статус.";
+$MESS["CRM_AUTOMATION_TEMPLATE_TERMINATED_MSGVER_1"] = "Автоматическое завершение при переходе на следующую стадию";
 ?>

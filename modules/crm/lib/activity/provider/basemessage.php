@@ -392,6 +392,11 @@ abstract class BaseMessage extends Base
 			);
 
 			ProviderManager::syncBadgesOnActivityUpdate((int)$activity['ID'], $activity);
+
+			if ($status === static::MESSAGE_FAILURE)
+			{
+				static::syncActivitySettings($id, $activity);
+			}
 		}
 	}
 
@@ -421,6 +426,18 @@ abstract class BaseMessage extends Base
 	protected static function fetchOriginalMessageFields(int $messageId): array
 	{
 		return [];
+	}
+
+	/**
+	 * Synchronize the settings field for the activity
+	 *
+	 * @param int $messageId
+	 * @param array $activity
+	 *
+	 * @return void
+	 */
+	protected static function syncActivitySettings(int $messageId, array $activity): void
+	{
 	}
 
 	private static function makeActivityFields(array $additionalFields): array

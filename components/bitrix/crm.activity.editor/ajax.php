@@ -4,10 +4,17 @@ define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
 
+use Bitrix\Crm\Integration\StorageManager;
+use Bitrix\Crm\Integration\StorageType;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Disk\Internals\FolderTable;
+use Bitrix\Disk\Uf\FileUserType;
+use Bitrix\Disk\Uf\Integration\DiskUploaderController;
 use Bitrix\Main\Config;
 use Bitrix\Main\Mail;
 use Bitrix\Main\Loader;
 use Bitrix\Mail\Helper;
+use Bitrix\Disk\File;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
@@ -61,8 +68,16 @@ if(!function_exists('__CrmActivityEditorEndResponse'))
 }
 
 $curUser = CCrmSecurityHelper::GetCurrentUser();
-if (!$curUser || !$curUser->IsAuthorized() || !check_bitrix_sessid() || $_SERVER['REQUEST_METHOD'] != 'POST')
-	__CrmActivityEditorEndResponse(array('ERROR' => getMessage('CRM_PERMISSION_DENIED')));
+if (
+	!$curUser
+	|| !$curUser->IsAuthorized()
+	|| !check_bitrix_sessid()
+	|| ($_SERVER['REQUEST_METHOD'] !== 'POST')
+)
+{
+	__CrmActivityEditorEndResponse(['ERROR' => getMessage('CRM_PERMISSION_DENIED')]);
+}
+$curUserId = (int)$curUser->GetId();
 
 if (($_REQUEST['soc_net_log_dest'] ?? null) === 'search_email_comms')
 {
@@ -620,7 +635,7 @@ function GetCrmEntityCommunications($entityType, $entityID, $communicationType)
 	}
 	else
 	{
-		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::ResolveID($entityType));
+		$factory = Container::getInstance()->getFactory(CCrmOwnerType::ResolveID($entityType));
 		if($factory)
 		{
 			$fieldsCollection = $factory->getFieldsCollection();
@@ -824,6 +839,104 @@ function GetCrmEntityCommunications($entityType, $entityID, $communicationType)
 
 	return array('ERROR' => 'Invalid data');
 }
+function GetCrmEntitiesDisk($desiredFileIds, $userId)
+{
+	if (!Loader::requireModule('disk'))
+	{
+		return null;
+	}
+
+	$shouldForkFile = [];
+	$attachedObjectIds = [];
+	$notFilteredFiles = [];
+	foreach ($desiredFileIds as $value)
+	{
+		[$type, $realValue] = FileUserType::detectType($value);
+		if ($type === FileUserType::TYPE_NEW_OBJECT)
+		{
+			$file = File::getById($realValue);
+			if (!$file || !$file->getStorage())
+			{
+				continue;
+			}
+
+			$securityContext = $file->getStorage()->getSecurityContext($userId);
+			if (!$file->canRead($securityContext))
+			{
+				$notFilteredFiles[$file->getId()] = $file->getId();
+				continue;
+			}
+
+			$shouldForkFile[$file->getId()] = $file;
+		}
+		elseif ($type === FileUserType::TYPE_ALREADY_ATTACHED)
+		{
+			$attachedObjectIds[] = $realValue;
+		}
+	}
+
+	$fileToAttachObjectIds = [];
+	if ($attachedObjectIds)
+	{
+		$userFieldManager = \Bitrix\Disk\Driver::getInstance()->getUserFieldManager();
+		$userFieldManager->loadBatchAttachedObject($attachedObjectIds);
+		foreach ($attachedObjectIds as $attachedObjectId)
+		{
+			$attachedObject = $userFieldManager->getAttachedObjectById($attachedObjectId);
+			if (!$attachedObject)
+			{
+				continue;
+			}
+
+			if (!$attachedObject->canRead($userId))
+			{
+				continue;
+			}
+
+			$file = $attachedObject->getFile();
+			if (!$file)
+			{
+				continue;
+			}
+
+			$shouldForkFile[$file->getId()] = $file;
+			$fileToAttachObjectIds[$file->getId()] = $attachedObjectId;
+		}
+	}
+
+	$storage = \Bitrix\Mail\Helper\Attachment\Storage::getStorage();
+	$folder = $storage->getChild([
+		'=NAME' => date('Y-m'),
+		'=TYPE' => \Bitrix\Disk\Internals\FolderTable::TYPE,
+	]);
+
+	if (!$folder)
+	{
+		$folder = $storage->addFolder([
+			'NAME' => date('Y-m'),
+			'CREATED_BY' => 1,
+		]);
+	}
+
+	if (!$folder)
+	{
+		$folder = $storage;
+	}
+
+	$attachToFileIds = [];
+	$createdFiles = [];
+	foreach ($shouldForkFile as $file)
+	{
+		$forkedFile = $file->copyTo($folder, $userId, true);
+		$createdFiles[$file->getId()] = $forkedFile->getId();
+		if (isset($fileToAttachObjectIds[$file->getId()]))
+		{
+			$attachToFileIds[$forkedFile->getId()] = $fileToAttachObjectIds[$file->getId()];
+		}
+	}
+
+	return [$createdFiles, $attachToFileIds, $notFilteredFiles];
+}
 
 if($action == 'DELETE')
 {
@@ -877,7 +990,7 @@ if($action == 'DELETE')
 	}
 
 	$isSpam = !empty($_REQUEST['IS_SPAM']) && $_REQUEST['IS_SPAM'] == 'Y';
-	if ($isSpam && !$isOutgoing && \CModule::includeModule('mail'))
+	if ($isSpam && !$isOutgoing && CModule::includeModule('mail'))
 	{
 		$res = \Bitrix\Mail\MailboxTable::getList(array(
 			'select' => array('ID', 'OPTIONS'),
@@ -901,7 +1014,7 @@ if($action == 'DELETE')
 
 	if ($isSkiplist || $isBlacklist)
 	{
-		$communications = \CCrmActivity::getCommunications($ID);
+		$communications = CCrmActivity::getCommunications($ID);
 		if (!empty($communications))
 		{
 			$blacklist = array();
@@ -1569,12 +1682,12 @@ elseif($action == 'SAVE_ACTIVITY')
 }
 elseif($action == 'SAVE_EMAIL')
 {
-	if (!CModule::IncludeModule('subscribe'))
+	if (!Loader::includeModule('subscribe'))
 	{
-		__CrmActivityEditorEndResponse(array('ERROR' => 'Could not load module "subscribe"!'));
+		__CrmActivityEditorEndResponse(['ERROR' => 'Could not load module "subscribe"!']);
 	}
 
-	if(!CModule::includeModule('mail'))
+	if(!Loader::includeModule('mail'))
 	{
 		__CrmActivityEditorEndResponse(['ERROR' => getMessage(
 			'CRM_ACTIVITY_EDITOR_MAIL_MODULE_NOT_INSTALLED'
@@ -1583,11 +1696,11 @@ elseif($action == 'SAVE_EMAIL')
 
 	$siteID = !empty($_REQUEST['siteID']) ? $_REQUEST['siteID'] : SITE_ID;
 
-	$data = isset($_POST['DATA']) && is_array($_POST['DATA']) ? $_POST['DATA'] : array();
+	$data = isset($_POST['DATA']) && is_array($_POST['DATA']) ? $_POST['DATA'] : [];
 
 	if (empty($data))
 	{
-		__CrmActivityEditorEndResponse(array('ERROR'=>'SOURCE DATA ARE NOT FOUND!'));
+		__CrmActivityEditorEndResponse(['ERROR'=>'SOURCE DATA ARE NOT FOUND!']);
 	}
 
 	$rawData = (array) \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getPostList()->getRaw('DATA');
@@ -1595,7 +1708,7 @@ elseif($action == 'SAVE_EMAIL')
 	$decodedData = $rawData;
 	\CUtil::decodeURIComponent($decodedData);
 
-	$ID = isset($data['ID']) ? intval($data['ID']) : 0;
+	$ID = isset($data['ID']) ? (int)$data['ID'] : 0;
 	$isNew = $ID <= 0;
 
 	$userID = $curUser->GetID();
@@ -1603,36 +1716,36 @@ elseif($action == 'SAVE_EMAIL')
 	$mailboxOwnerId = null;
 
 	if ($responsibleId <= 0)
-		__CrmActivityEditorEndResponse(array('ERROR' => getMessage('CRM_ACTIVITY_RESPONSIBLE_NOT_FOUND')));
+		__CrmActivityEditorEndResponse(['ERROR' => GetMessage('CRM_ACTIVITY_RESPONSIBLE_NOT_FOUND')]);
 
-	$now = convertTimeStamp(time() + \CTimeZone::getOffset(), 'FULL', $siteID);
+	$now = ConvertTimeStamp(time() + \CTimeZone::GetOffset(), 'FULL', $siteID);
 
 	$subject = isset($data['subject']) ? strval($data['subject']) : '';
 	if ($subject == '')
-		$subject = getMessage('CRM_EMAIL_ACTION_DEFAULT_SUBJECT', array('#DATE#'=> $now));
+		$subject = GetMessage('CRM_EMAIL_ACTION_DEFAULT_SUBJECT', ['#DATE#'=> $now]);
 
-	$arErrors = array();
+	$arErrors = [];
 
-	$socNetLogDestTypes = array(
-		\CCrmOwnerType::LeadName    => 'leads',
-		\CCrmOwnerType::DealName    => 'deals',
-		\CCrmOwnerType::ContactName => 'contacts',
-		\CCrmOwnerType::CompanyName => 'companies',
-	);
+	$socNetLogDestTypes = [
+		CCrmOwnerType::LeadName    => 'leads',
+		CCrmOwnerType::DealName    => 'deals',
+		CCrmOwnerType::ContactName => 'contacts',
+		CCrmOwnerType::CompanyName => 'companies',
+	];
 
-	$to  = array();
-	$cc  = array();
-	$bcc = array();
+	$to  = [];
+	$cc  = [];
+	$bcc = [];
 
 	$countCc = 0;
 	$countBcc = 0;
 	$countTo = 0;
 
 	// Bindings & Communications -->
-	$arBindings = array();
-	$arComms = array();
+	$arBindings = [];
+	$arComms = [];
 	$commData = isset($data['communications']) ? $data['communications'] : array();
-	foreach (array('to', 'cc', 'bcc') as $field)
+	foreach (['to', 'cc', 'bcc'] as $field)
 	{
 		if (!empty($rawData[$field]) && is_array($rawData[$field]))
 		{
@@ -1649,18 +1762,25 @@ elseif($action == 'SAVE_EMAIL')
 
 					$commData[] = $item;
 
-					if($field === 'to')
+					match($field)
 					{
-						$countTo++;
-					}
-					else if($field === 'cc')
-					{
-						$countCc++;
-					}
-					else if($field === 'bcc')
-					{
-						$countBcc++;
-					}
+						'to' => $countTo++,
+						'cc' => $countCc++,
+						'bcc' => $countBcc++,
+					};
+
+					// if($field === 'to')
+					// {
+					// 	$countTo++;
+					// }
+					// else if($field === 'cc')
+					// {
+					// 	$countCc++;
+					// }
+					// else if($field === 'bcc')
+					// {
+					// 	$countBcc++;
+					// }
 				}
 				catch (\Exception $e)
 				{
@@ -1685,7 +1805,7 @@ elseif($action == 'SAVE_EMAIL')
 		]);
 	}
 
-	$sourceList = \CCrmStatus::getStatusList('SOURCE');
+	$sourceList = \CCrmStatus::GetStatusList('SOURCE');
 	if (isset($sourceList['EMAIL']))
 	{
 		$sourceId = 'EMAIL';
@@ -1695,7 +1815,7 @@ elseif($action == 'SAVE_EMAIL')
 		$sourceId = 'OTHER';
 	}
 
-	$contactTypes = \CCrmStatus::getStatusList('CONTACT_TYPE');
+	$contactTypes = \CCrmStatus::GetStatusList('CONTACT_TYPE');
 	if (isset($contactTypes['CLIENT']))
 	{
 		$contactType = 'CLIENT';
@@ -1722,7 +1842,7 @@ elseif($action == 'SAVE_EMAIL')
 		{
 			if(!check_email($commValue))
 			{
-				$arErrors[] = GetMessage('CRM_ACTIVITY_INVALID_EMAIL', array('#VALUE#' => $commValue));
+				$arErrors[] = GetMessage('CRM_ACTIVITY_INVALID_EMAIL', ['#VALUE#' => $commValue]);
 				continue;
 			}
 
@@ -1730,7 +1850,7 @@ elseif($action == 'SAVE_EMAIL')
 			if (isset($commDatum['__field']))
 			{
 				$commDatum['__field'] = mb_strtolower($commDatum['__field']);
-				if (in_array($commDatum['__field'], array('to', 'cc', 'bcc')))
+				if (in_array($commDatum['__field'], ['to', 'cc', 'bcc']))
 					$rcptFieldName = $commDatum['__field'];
 			}
 
@@ -1740,53 +1860,55 @@ elseif($action == 'SAVE_EMAIL')
 		if (isset($commDatum['isEmail']) && $commDatum['isEmail'] == 'Y' && mb_strtolower(trim($commValue)))
 		{
 			$newEntityTypeId = \Bitrix\Crm\Settings\ActivitySettings::getCurrent()->getOutgoingEmailOwnerTypeId();
-			if (\CCrmOwnerType::Contact == $newEntityTypeId && \CCrmContact::checkCreatePermission())
+			if (CCrmOwnerType::Contact == $newEntityTypeId && \CCrmContact::checkCreatePermission())
 			{
-				$contactFields = array(
+				$contactFields = [
 					'NAME'           => isset($commDatum['params']['name']) ? $commDatum['params']['name'] : '',
 					'LAST_NAME'      => isset($commDatum['params']['lastName']) ? $commDatum['params']['lastName'] : '',
 					'RESPONSIBLE_ID' => $userID,
-					'FM'             => array(
-						'EMAIL' => array(
-							'n1' => array(
+					'FM'             => [
+						'EMAIL' => [
+							'n1' => [
 								'VALUE_TYPE' => 'WORK',
 								'VALUE'      => mb_strtolower(trim($commValue))
-							)
-						)
-					),
-				);
+							]
+						]
+					],
+				];
 
-				if ('' != $contactType)
+				if (isset($contactType) && ('' !== $contactType))
 				{
 					$contactFields['TYPE_ID'] = $contactType;
 				}
 
-				if ('' != $sourceId)
+				if (isset($sourceId) && ('' !== $sourceId))
 				{
 					$contactFields['SOURCE_ID'] = $sourceId;
 				}
 
 				if ($contactFields['NAME'] == '' && $contactFields['LAST_NAME'] == '')
+				{
 					$contactFields['NAME'] = mb_strtolower(trim($commValue));
+				}
 
 				$contactEntity = new \CCrmContact();
 				$contactId = $contactEntity->add(
 					$contactFields, true,
-					array(
+					[
 						'DISABLE_USER_FIELD_CHECK' => true,
 						'REGISTER_SONET_EVENT'     => true,
 						'CURRENT_USER'             => $userID,
-					)
+					]
 				);
 
 				if ($contactId > 0)
 				{
-					$commEntityType = \CCrmOwnerType::ContactName;
+					$commEntityType = CCrmOwnerType::ContactName;
 					$commEntityID   = $contactId;
 
-					$bizprocErrors = array();
+					$bizprocErrors = [];
 					\CCrmBizProcHelper::autostartWorkflows(
-						\CCrmOwnerType::Contact, $contactId,
+						CCrmOwnerType::Contact, $contactId,
 						\CCrmBizProcEventType::Create,
 						$bizprocErrors
 					);
@@ -1794,23 +1916,23 @@ elseif($action == 'SAVE_EMAIL')
 			}
 			else if (\CCrmLead::checkCreatePermission())
 			{
-				$leadFields = array(
+				$leadFields = [
 					'TITLE'          => $subject,
 					'NAME'           => isset($commDatum['params']['name']) ? $commDatum['params']['name'] : '',
 					'LAST_NAME'      => isset($commDatum['params']['lastName']) ? $commDatum['params']['lastName'] : '',
 					'STATUS_ID'      => 'NEW',
 					'OPENED'         => 'Y',
-					'FM'             => array(
-						'EMAIL' => array(
-							'n1' => array(
+					'FM'             => [
+						'EMAIL' => [
+							'n1' => [
 								'VALUE_TYPE' => 'WORK',
 								'VALUE'      => mb_strtolower(trim($commValue))
-							)
-						)
-					),
-				);
+							]
+						]
+					],
+				];
 
-				if ('' != $sourceId)
+				if (isset($sourceId) && ('' != $sourceId))
 				{
 					$leadFields['SOURCE_ID'] = $sourceId;
 				}
@@ -1818,26 +1940,26 @@ elseif($action == 'SAVE_EMAIL')
 				$leadEntity = new \CCrmLead(false);
 				$leadId = $leadEntity->add(
 					$leadFields, true,
-					array(
+					[
 						'DISABLE_USER_FIELD_CHECK' => true,
 						'REGISTER_SONET_EVENT'     => true,
 						'CURRENT_USER'             => $userID,
-					)
+					]
 				);
 
 				if ($leadId > 0)
 				{
-					$commEntityType = \CCrmOwnerType::LeadName;
+					$commEntityType = CCrmOwnerType::LeadName;
 					$commEntityID   = $leadId;
 
-					$bizprocErrors = array();
+					$bizprocErrors = [];
 					\CCrmBizProcHelper::autostartWorkflows(
-						\CCrmOwnerType::Lead, $leadId,
+						CCrmOwnerType::Lead, $leadId,
 						\CCrmBizProcEventType::Create,
 						$bizprocErrors
 					);
 
-					$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $leadId);
+					$starter = new \Bitrix\Crm\Automation\Starter(CCrmOwnerType::Lead, $leadId);
 					$starter->setUserIdFromCurrent()->runOnAdd();
 				}
 			}
@@ -1850,23 +1972,23 @@ elseif($action == 'SAVE_EMAIL')
 			$commType,
 			mb_strtolower(trim($commValue))
 		));
-		$arComms[$key] = array(
+		$arComms[$key] = [
 			'ID' => $commID,
 			'TYPE' => $commType,
 			'VALUE' => $commValue,
 			'ENTITY_ID' => $commEntityID,
 			'ENTITY_TYPE_ID' => CCrmOwnerType::ResolveID($commEntityType)
-		);
+		];
 
 		if($commEntityType !== '')
 		{
 			$bindingKey = $commEntityID > 0 ? "{$commEntityType}_{$commEntityID}" : uniqid("{$commEntityType}_");
 			if(!isset($arBindings[$bindingKey]))
 			{
-				$arBindings[$bindingKey] = array(
+				$arBindings[$bindingKey] = [
 					'OWNER_TYPE_ID' => CCrmOwnerType::ResolveID($commEntityType),
 					'OWNER_ID' => $commEntityID
-				);
+				];
 			}
 		}
 	}
@@ -1878,45 +2000,45 @@ elseif($action == 'SAVE_EMAIL')
 
 	$blackListed =
 		Mail\Internal\BlacklistTable::query()
-		->setSelect(["CODE"])
-		->whereIn("CODE",$array = array_merge_recursive($to,$cc,$bcc))
+		->setSelect(['CODE'])
+		->whereIn('CODE',$array = array_merge_recursive($to,$cc,$bcc))
 		->exec()
 		->fetchAll()
 	;
 
-	if (!empty($blackListed = array_column($blackListed,"CODE")))
+	if (!empty($blackListed = array_column($blackListed, 'CODE')))
 	{
 		__CrmActivityEditorEndResponse(
-			array(
-				"ERROR_HTML" => \Bitrix\Main\Localization\Loc::getMessage(
-					"CRM_ACTIVITY_EMAIL_BLACKLISTED",
-					array(
-						"%link_start%" => "<a href=\"/settings/configs/mail_blacklist.php\">",
-						"%link_end%" => "</a>",
-						"%emails%" => implode("; ",$blackListed),
-					)
+			[
+				'ERROR_HTML' => \Bitrix\Main\Localization\Loc::getMessage(
+					'CRM_ACTIVITY_EMAIL_BLACKLISTED',
+					[
+						'%link_start%' => "<a href=\"/settings/configs/mail_blacklist.php\">",
+						'%link_end%' => '</a>',
+						'%emails%' => implode('; ',$blackListed),
+					]
 				)
-			)
+			]
 		);
 	}
 	elseif (empty($to))
 	{
 		__CrmActivityEditorEndResponse(
-			array('ERROR' => getMessage('CRM_ACTIVITY_EMAIL_EMPTY_TO_FIELD'))
+			['ERROR' => getMessage('CRM_ACTIVITY_EMAIL_EMPTY_TO_FIELD')]
 		);
 	}
 	elseif (!empty($arErrors))
 	{
 		__CrmActivityEditorEndResponse(
-			array('ERROR' => $arErrors)
+			['ERROR' => $arErrors]
 		);
 	}
 
 	$ownerTypeName = isset($data['ownerType'])? mb_strtoupper(strval($data['ownerType'])) : '';
-	$ownerTypeID = !empty($ownerTypeName) ? \CCrmOwnerType::resolveId($ownerTypeName) : 0;
+	$ownerTypeID = !empty($ownerTypeName) ? CCrmOwnerType::resolveId($ownerTypeName) : 0;
 	$ownerID = isset($data['ownerID']) ? intval($data['ownerID']) : 0;
 
-	$bindData = isset($data['bindings']) ? $data['bindings'] : array();
+	$bindData = isset($data['bindings']) ? $data['bindings'] : [];
 	if (!empty($rawData['docs']) && is_array($rawData['docs']))
 	{
 		foreach ($rawData['docs'] as $item)
@@ -1936,36 +2058,36 @@ elseif($action == 'SAVE_EMAIL')
 
 	foreach ($bindData as $item)
 	{
-		$item['entityTypeId'] = \CCrmOwnerType::resolveID($item['entityType']);
+		$item['entityTypeId'] = CCrmOwnerType::resolveID($item['entityType']);
 		if ($item['entityTypeId'] > 0 && $item['entityId'] > 0)
 		{
 			$key = sprintf('%u_%u', $item['entityType'], $item['entityId']);
-			if (\CCrmOwnerType::Deal == $item['entityTypeId'] && !isset($arBindings[$key]))
+			if (CCrmOwnerType::Deal == $item['entityTypeId'] && !isset($arBindings[$key]))
 			{
 				$arBindings[sprintf('%u_%u', $ownerTypeID, $ownerID)] = [
 					'OWNER_TYPE_ID' => $ownerTypeID,
 					'OWNER_ID'      => $ownerID,
 				];
 
-				$ownerTypeName = \CCrmOwnerType::resolveName($item['entityTypeId']);
+				$ownerTypeName = CCrmOwnerType::resolveName($item['entityTypeId']);
 				$ownerTypeID = $item['entityTypeId'];
 				$ownerID = $item['entityId'];
 
-				$arBindings[$key] = array(
+				$arBindings[$key] = [
 					'OWNER_TYPE_ID' => $item['entityTypeId'],
 					'OWNER_ID'      => $item['entityId']
-				);
+				];
 			}
 		}
 	}
 
-	$nonRcptOwnerTypes = array(
-		\CCrmOwnerType::Lead,
-		\CCrmOwnerType::Order,
-		\CCrmOwnerType::Deal,
-		\CCrmOwnerType::DealRecurring,
-		\CCrmOwnerType::Quote,
-	);
+	$nonRcptOwnerTypes = [
+		CCrmOwnerType::Lead,
+		CCrmOwnerType::Order,
+		CCrmOwnerType::Deal,
+		CCrmOwnerType::DealRecurring,
+		CCrmOwnerType::Quote,
+	];
 	if (
 		'Y' !== ($data['ownerRcpt'] ?? null)
 		&& (in_array($ownerTypeID, $nonRcptOwnerTypes) || CCrmOwnerType::isUseDynamicTypeBasedApproach($ownerTypeID))
@@ -1998,25 +2120,33 @@ elseif($action == 'SAVE_EMAIL')
 	if ($ownerBinded)
 	{
 		$checkedOwnerType = $ownerTypeID;
-		if ($ownerTypeID == \CCrmOwnerType::DealRecurring)
+		if ($ownerTypeID == CCrmOwnerType::DealRecurring)
 		{
-			$checkedOwnerType = \CCrmOwnerType::Deal;
+			$checkedOwnerType = CCrmOwnerType::Deal;
 		}
-		if (!\CCrmActivity::checkUpdatePermission($checkedOwnerType, $ownerID))
+		if (!CCrmActivity::checkUpdatePermission($checkedOwnerType, $ownerID))
 		{
 			$errorMsg = getMessage('CRM_PERMISSION_DENIED');
-			$entityTitle = \CCrmOwnerType::getCaption($ownerTypeID, $ownerID, false);
+			$entityTitle = CCrmOwnerType::getCaption($ownerTypeID, $ownerID, false);
 
-			if (\CCrmOwnerType::Contact == $ownerTypeID)
-				$errorMsg = getMessage('CRM_CONTACT_UPDATE_PERMISSION_DENIED', array('#TITLE#' => $entityTitle));
-			else if (\CCrmOwnerType::Company == $ownerTypeID)
-				$errorMsg = getMessage('CRM_COMPANY_UPDATE_PERMISSION_DENIED', array('#TITLE#' => $entityTitle));
-			else if (\CCrmOwnerType::Lead == $ownerTypeID)
-				$errorMsg = getMessage('CRM_LEAD_UPDATE_PERMISSION_DENIED', array('#TITLE#' => $entityTitle));
-			else if (\CCrmOwnerType::Deal == $ownerTypeID || \CCrmOwnerType::DealRecurring == $ownerTypeID)
-				$errorMsg = getMessage('CRM_DEAL_UPDATE_PERMISSION_DENIED', array('#TITLE#' => $entityTitle));
+			if (CCrmOwnerType::Contact == $ownerTypeID)
+			{
+				$errorMsg = getMessage('CRM_CONTACT_UPDATE_PERMISSION_DENIED', ['#TITLE#' => $entityTitle]);
+			}
+			else if (CCrmOwnerType::Company == $ownerTypeID)
+			{
+				$errorMsg = getMessage('CRM_COMPANY_UPDATE_PERMISSION_DENIED', ['#TITLE#' => $entityTitle]);
+			}
+			else if (CCrmOwnerType::Lead == $ownerTypeID)
+			{
+				$errorMsg = getMessage('CRM_LEAD_UPDATE_PERMISSION_DENIED', ['#TITLE#' => $entityTitle]);
+			}
+			else if (CCrmOwnerType::Deal == $ownerTypeID || CCrmOwnerType::DealRecurring == $ownerTypeID)
+			{
+				$errorMsg = getMessage('CRM_DEAL_UPDATE_PERMISSION_DENIED', ['#TITLE#' => $entityTitle]);
+			}
 
-			__CrmActivityEditorEndResponse(array('ERROR' => $errorMsg));
+			__CrmActivityEditorEndResponse(['ERROR' => $errorMsg]);
 		}
 	}
 	else
@@ -2024,19 +2154,19 @@ elseif($action == 'SAVE_EMAIL')
 		$ownerTypeID = 0;
 		$ownerID     = 0;
 
-		$typesPriority = array(
-			\CCrmOwnerType::Deal    => 1,
-			\CCrmOwnerType::Order   => 2,
-			\CCrmOwnerType::Contact => 3,
-			\CCrmOwnerType::Company => 4,
-			\CCrmOwnerType::Lead    => 5,
-		);
+		$typesPriority = [
+			CCrmOwnerType::Deal    => 1,
+			CCrmOwnerType::Order   => 2,
+			CCrmOwnerType::Contact => 3,
+			CCrmOwnerType::Company => 4,
+			CCrmOwnerType::Lead    => 5,
+		];
 
 		foreach ($arBindings as $item)
 		{
 			if ($ownerTypeID <= 0 || $typesPriority[$item['OWNER_TYPE_ID']] < $typesPriority[$ownerTypeID])
 			{
-				if (\CCrmActivity::checkUpdatePermission($item['OWNER_TYPE_ID'], $item['OWNER_ID']))
+				if (CCrmActivity::checkUpdatePermission($item['OWNER_TYPE_ID'], $item['OWNER_ID']))
 				{
 					$ownerTypeID = $item['OWNER_TYPE_ID'];
 					$ownerID     = $item['OWNER_ID'];
@@ -2047,24 +2177,26 @@ elseif($action == 'SAVE_EMAIL')
 
 		if (!$ownerBinded)
 		{
-			__CrmActivityEditorEndResponse(array(
+			__CrmActivityEditorEndResponse([
 				'ERROR' => getMessage(
 					empty($arBindings)
 						? 'CRM_ACTIVITY_EMAIL_EMPTY_TO_FIELD'
 						: 'CRM_PERMISSION_DENIED'
 				),
-			));
+			]);
 		}
 	}
 
 	// single deal binding
-	$dealBinded = \CCrmOwnerType::Deal == $ownerTypeID;
+	$dealBinded = CCrmOwnerType::Deal == $ownerTypeID;
 	foreach ($arBindings as $key => $item)
 	{
-		if (\CCrmOwnerType::Deal == $item['OWNER_TYPE_ID'])
+		if (CCrmOwnerType::Deal == $item['OWNER_TYPE_ID'])
 		{
 			if ($dealBinded)
+			{
 				unset($arBindings[$key]);
+			}
 
 			$dealBinded = true;
 		}
@@ -2077,11 +2209,13 @@ elseif($action == 'SAVE_EMAIL')
 	$rawCc = $cc;
 
 	if (isset($decodedData['from']))
+	{
 		$from = trim(strval($decodedData['from']));
+	}
 
 	if ($from == '')
 	{
-		__CrmActivityEditorEndResponse(array('ERROR' => getMessage('CRM_ACTIVITY_EMAIL_EMPTY_FROM_FIELD')));
+		__CrmActivityEditorEndResponse(['ERROR' => getMessage('CRM_ACTIVITY_EMAIL_EMPTY_FROM_FIELD')]);
 	}
 	else
 	{
@@ -2112,24 +2246,19 @@ elseif($action == 'SAVE_EMAIL')
 			__CrmActivityEditorEndResponse(array('ERROR' => getMessage('CRM_ACTIVITY_INVALID_EMAIL', array('#VALUE#' => $from))));
 		}
 
-		$mailboxHelper = null;
+		/**
+		 * @todo Explicitly enter the ID. This will increase the productivity of selection.
+		 */
+		$mailboxHelper = \Bitrix\Mail\Helper\Mailbox::findBy(null, $fromEmail);
 
-		if (\CModule::includeModule('mail'))
+		if ($mailboxHelper !== null)
 		{
-			/**
-			 * @todo Explicitly enter the ID. This will increase the productivity of selection.
-			 */
-			$mailboxHelper = \Bitrix\Mail\Helper\Mailbox::findBy(null, $fromEmail);
-
-			if (!empty($mailboxHelper))
-			{
-				$mailboxOwnerId = $mailboxHelper->getMailboxOwnerId();
-			}
+			$mailboxOwnerId = $mailboxHelper->getMailboxOwnerId();
 		}
 
 		if (empty($mailboxHelper))
 		{
-			if ($crmEmail != '' && $crmEmail != $fromEmail)
+			if ($crmEmail !== '' && $crmEmail !== $fromEmail)
 			{
 				$reply = $fromEmail . ', ' . $crmEmail;
 			}
@@ -2166,40 +2295,39 @@ elseif($action == 'SAVE_EMAIL')
 			$messageBody = preg_replace('/https?:\/\/bxacid:(n?\d+)/i', 'bxacid:\1', $messageBody);
 		}
 	}
-	else
+	else if (isset($data['message']))
 	{
-		if (isset($data['message']))
-		{
-			$messageBody = (string) $data['message'];
+		$messageBody = (string) $data['message'];
 
-			if (\CCrmContentType::PlainText == $contentType)
-			{
-				$messageBody = sprintf(
-					'<html><body>%s</body></html>',
-					preg_replace('/[\r\n]+/'.BX_UTF_PCRE_MODIFIER, '<br>', htmlspecialcharsbx($messageBody))
-				);
-			}
-			else if (\CCrmContentType::BBCode == $contentType)
-			{
-				//Convert BBCODE to HTML
-				$parser = new CTextParser();
-				$parser->allow['SMILES'] = 'N';
-				$messageBody = '<html><body>'.$parser->convertText($messageBody).'</body></html>';
-			}
+		if (\CCrmContentType::PlainText == $contentType)
+		{
+			$messageBody = sprintf(
+				'<html><body>%s</body></html>',
+				preg_replace('/[\r\n]+/'.BX_UTF_PCRE_MODIFIER, '<br>', htmlspecialcharsbx($messageBody))
+			);
+		}
+		else if (\CCrmContentType::BBCode == $contentType)
+		{
+			//Convert BBCODE to HTML
+			$parser = new CTextParser();
+			$parser->allow['SMILES'] = 'N';
+			$messageBody = '<html><body>'.$parser->convertText($messageBody).'</body></html>';
 		}
 	}
 
 	if (($messageHtml = $messageBody) != '')
-		\CCrmActivity::addEmailSignature($messageHtml, \CCrmContentType::Html);
+	{
+		CCrmActivity::addEmailSignature($messageHtml, \CCrmContentType::Html);
+	}
 
 	$parentId = isset($data['REPLIED_ID']) ? (int) $data['REPLIED_ID'] : 0;
 	if ($parentId > 0 && !$dealBinded)
 	{
-		$parentBindings = \CCrmActivity::getBindings($parentId);
+		$parentBindings = CCrmActivity::getBindings($parentId);
 		foreach ($parentBindings as $item)
 		{
-			$key = sprintf('%u_%u', \CCrmOwnerType::resolveName($item['OWNER_TYPE_ID']), $item['OWNER_ID']);
-			if (\CCrmOwnerType::Deal == $item['OWNER_TYPE_ID'] && !isset($arBindings[$key]))
+			$key = sprintf('%u_%u', CCrmOwnerType::resolveName($item['OWNER_TYPE_ID']), $item['OWNER_ID']);
+			if (CCrmOwnerType::Deal == $item['OWNER_TYPE_ID'] && !isset($arBindings[$key]))
 			{
 				$arBindings[$key] = array(
 					'OWNER_TYPE_ID' => $item['OWNER_TYPE_ID'],
@@ -2212,12 +2340,12 @@ elseif($action == 'SAVE_EMAIL')
 	}
 
 	$arBindings = array_merge(
-		array(
-			sprintf('%u_%u', \CCrmOwnerType::resolveName($ownerTypeID), $ownerID) => array(
+		[
+			sprintf('%u_%u', CCrmOwnerType::resolveName($ownerTypeID), $ownerID) => [
 				'OWNER_TYPE_ID' => $ownerTypeID,
 				'OWNER_ID' => $ownerID,
-			),
-		),
+			],
+		],
 		$arBindings
 	);
 
@@ -2244,8 +2372,10 @@ elseif($action == 'SAVE_EMAIL')
 	];
 
 	$storageTypeID = isset($data['storageTypeID']) ? intval($data['storageTypeID']) : CCrmActivityStorageType::Undefined;
-	if($storageTypeID === CCrmActivityStorageType::Undefined
-		|| !CCrmActivityStorageType::IsDefined($storageTypeID))
+	if(
+		($storageTypeID === StorageType::Undefined)
+		|| !StorageType::isDefined($storageTypeID)
+	)
 	{
 		if($isNew)
 		{
@@ -2254,24 +2384,27 @@ elseif($action == 'SAVE_EMAIL')
 		else
 		{
 			$storageTypeID = CCrmActivity::GetStorageTypeID($ID);
-			if($storageTypeID === CCrmActivityStorageType::Undefined)
+			if($storageTypeID === StorageType::Undefined)
 			{
 				$storageTypeID = CCrmActivity::GetDefaultStorageTypeID();
 			}
 		}
 	}
 
+	$arFileIDs = [];
+	$copiedFiles = [];
+	$attachToFileIds = [];
 	$arFields['STORAGE_TYPE_ID'] = $storageTypeID;
-	if($storageTypeID === CCrmActivityStorageType::File)
+	if($storageTypeID === StorageType::File)
 	{
-		$arUserFiles = isset($data['files']) && is_array($data['files']) ? $data['files'] : array();
+		$arUserFiles = isset($data['files']) && is_array($data['files']) ? $data['files'] : [];
 		if(!empty($arUserFiles) || !$isNew)
 		{
-			$arPermittedFiles = array();
-			$arPreviousFiles = array();
+			$arPermittedFiles = [];
+			$arPreviousFiles = [];
 			if(!$isNew)
 			{
-				$arPreviousFields = $ID > 0 ? CCrmActivity::GetByID($ID) : array();
+				$arPreviousFields = $ID > 0 ? CCrmActivity::GetByID($ID) : [];
 				CCrmActivity::PrepareStorageElementIDs($arPreviousFields);
 				$arPreviousFiles = $arPreviousFiles['STORAGE_ELEMENT_IDS'];
 				if(is_array($arPreviousFiles) && !empty($arPreviousFiles))
@@ -2296,11 +2429,15 @@ elseif($action == 'SAVE_EMAIL')
 
 					if(!empty($arForwardedFiles))
 					{
+						$arRawFile = null;
 						foreach($arForwardedFiles as $fileID)
-						$arRawFile = CFile::MakeFileArray($fileID);
+						{
+							$arRawFile = \CFile::MakeFileArray($fileID);
+						}
+
 						if(is_array($arRawFile))
 						{
-							$fileID = intval(CFile::SaveFile($arRawFile, 'crm'));
+							$fileID = (int)\CFile::SaveFile($arRawFile, 'crm');
 							if($fileID > 0)
 							{
 								$arPermittedFiles[] = $fileID;
@@ -2326,51 +2463,51 @@ elseif($action == 'SAVE_EMAIL')
 			$arFields['STORAGE_ELEMENT_IDS'] = $arPermittedFiles;
 		}
 	}
-	elseif($storageTypeID === CCrmActivityStorageType::WebDav || $storageTypeID === CCrmActivityStorageType::Disk)
+	elseif($storageTypeID === StorageType::WebDav || $storageTypeID === StorageType::Disk)
 	{
-		if ($storageTypeID === CCrmActivityStorageType::Disk)
+		if ($storageTypeID === StorageType::Disk)
 		{
-			$arFileIDs = array_merge(
-				isset($data['diskfiles']) && is_array($data['diskfiles']) ? $data['diskfiles'] : array(),
-				isset($data['__diskfiles']) && is_array($data['__diskfiles'])
-					? array_map(
-						function ($item)
-						{
-							if (!is_scalar($item))
-								return $item;
-							return ltrim($item, join(array(
-								'n', // \Bitrix\Disk\Uf\FileUserType::NEW_FILE_PREFIX
-							)));
-						},
-						$data['__diskfiles']
-					) : array()
-			);
+			$diskFiles = isset($data['diskfiles']) && is_array($data['diskfiles'])
+				? $data['diskfiles']
+				: []
+			;
+			$arFileIDs = $diskFiles;
+
+			if (isset($data['__diskfiles']) && is_array($data['__diskfiles']))
+			{
+				[$storageFilesFromTemplate, $attachToFileIds, $arFileIDs] = GetCrmEntitiesDisk($data['__diskfiles'], $curUserId);
+				$copiedFiles = empty($storageFilesFromTemplate)
+					? []
+					: array_map(
+						fn ($diskItem) => !is_scalar($diskItem)
+							? $diskItem
+							: ltrim($diskItem, join([FileUserType::NEW_FILE_PREFIX]))
+					,
+					$storageFilesFromTemplate
+				);
+			}
 		}
 		else
 		{
-			$arFileIDs = isset($data['webdavelements']) && is_array($data['webdavelements']) ? $data['webdavelements'] : array();
+			$arFileIDs = isset($data['webdavelements']) && is_array($data['webdavelements'])
+				? $data['webdavelements']
+				: []
+			;
 		}
 
 		$arFileIDs = array_filter($arFileIDs);
-		if(!empty($arFileIDs) || !$isNew)
+		if (
+			!empty($arFileIDs)
+			|| !$isNew
+			|| !empty($copiedFiles)
+		)
 		{
-			$arFields['STORAGE_ELEMENT_IDS'] = Bitrix\Crm\Integration\StorageManager::filterFiles($arFileIDs, $storageTypeID, $userID);
+			$filteredFiles = StorageManager::filterFiles($arFileIDs, $storageTypeID, $userID);
+			$arFields['STORAGE_ELEMENT_IDS'] = array_merge($filteredFiles, $copiedFiles);
 
-			if (!is_array($arFileIDs) || !is_array($arFields['STORAGE_ELEMENT_IDS']))
+			if (count($arFileIDs) > count($arFields['STORAGE_ELEMENT_IDS']))
 			{
-				addMessage2Log(
-					sprintf(
-						"crm.activity.editor\ajax.php: Invalid email attachments list\r\n(%s) -> (%s)",
-						$arFileIDs,
-						$arFields['STORAGE_ELEMENT_IDS']
-					),
-					'crm',
-					0
-				);
-			}
-			else if (count($arFileIDs) > count($arFields['STORAGE_ELEMENT_IDS']))
-			{
-				addMessage2Log(
+				AddMessage2Log(
 					sprintf(
 						"crm.activity.editor\ajax.php: Email attachments list had been filtered\r\n(%s) -> (%s)",
 						join(',', $arFileIDs),
@@ -2385,27 +2522,49 @@ elseif($action == 'SAVE_EMAIL')
 
 	$totalSize = 0;
 
-	$arRawFiles = array();
-	if (isset($arFields['STORAGE_ELEMENT_IDS']) && !empty($arFields['STORAGE_ELEMENT_IDS']))
+	$arRawFiles = [];
+	if (
+		isset($arFields['STORAGE_ELEMENT_IDS'])
+		&& !empty($arFields['STORAGE_ELEMENT_IDS'])
+		&& is_array($arFields['STORAGE_ELEMENT_IDS'])
+	)
 	{
-		foreach ((array) $arFields['STORAGE_ELEMENT_IDS'] as $item)
+		$storageFilesFromTemplateFlip = array_flip($storageFilesFromTemplate);
+		foreach ($arFields['STORAGE_ELEMENT_IDS'] as $item)
 		{
-			$arRawFiles[$item] = \Bitrix\Crm\Integration\StorageManager::makeFileArray($item, $storageTypeID);
+			$arRawFiles[$item] = StorageManager::makeFileArray($item, $storageTypeID);
 
 			$totalSize += $arRawFiles[$item]['size'];
 
 			if (\CCrmContentType::Html == $contentType)
 			{
-				$fileInfo = \Bitrix\Crm\Integration\StorageManager::getFileInfo(
-					$item, $storageTypeID, false,
-					array('OWNER_TYPE_ID' => \CCrmOwnerType::Activity, 'OWNER_ID' => $ID)
-				);
-
-				$description = preg_replace(
-					sprintf('/(https?:\/\/)?bxacid:n?%u/i', $item),
-					htmlspecialcharsbx($fileInfo['VIEW_URL']),
-					$description
-				);
+				if (array_key_exists($item, $attachToFileIds))
+				{
+					$fileInfo = DiskUploaderController::getFileInfo([$attachToFileIds[$item]]);
+					$description = preg_replace(
+						sprintf('/(https?:\/\/)?bxacid:?%u/i', $attachToFileIds[$item]),
+						htmlspecialcharsbx($fileInfo[0]['serverPreviewUrl']),
+						$description
+					);
+				}
+				elseif (array_key_exists($item, $storageFilesFromTemplateFlip))
+				{
+					$fileInfo = DiskUploaderController::getFileInfo([$storageFilesFromTemplateFlip[$item]]);
+					$description = preg_replace(
+						sprintf('/(https?:\/\/)?bxacid:n?%u/i', $storageFilesFromTemplateFlip[$item]),
+						htmlspecialcharsbx($fileInfo[0]['serverPreviewUrl']),
+						$description
+					);
+				}
+				else
+				{
+					$fileInfo = DiskUploaderController::getFileInfo([$item]);
+					$description = preg_replace(
+						sprintf('/(https?:\/\/)?bxacid:n?%u/i', $item),
+						htmlspecialcharsbx($fileInfo[0]['serverPreviewUrl']),
+						$description
+					);
+				}
 			}
 		}
 	}
@@ -2421,51 +2580,53 @@ elseif($action == 'SAVE_EMAIL')
 
 	if ($isNew)
 	{
-		if(!($ID = CCrmActivity::Add($arFields, false, false, array('REGISTER_SONET_EVENT' => true))))
+		if(!($ID = CCrmActivity::Add($arFields, false, false, ['REGISTER_SONET_EVENT' => true])))
 		{
-			__CrmActivityEditorEndResponse(array('ERROR' => CCrmActivity::GetLastErrorMessage()));
+			__CrmActivityEditorEndResponse(['ERROR' => CCrmActivity::GetLastErrorMessage()]);
 		}
 	}
-	else
+	else if(!CCrmActivity::Update($ID, $arFields, false, false))
 	{
-		if(!CCrmActivity::Update($ID, $arFields, false, false))
-		{
-			__CrmActivityEditorEndResponse(array('ERROR' => CCrmActivity::GetLastErrorMessage()));
-		}
+		__CrmActivityEditorEndResponse(array('ERROR' => CCrmActivity::GetLastErrorMessage()));
 	}
+
 
 	$hostname = \COption::getOptionString('main', 'server_name', '') ?: 'localhost';
 	if (defined('BX24_HOST_NAME') && BX24_HOST_NAME != '')
+	{
 		$hostname = BX24_HOST_NAME;
+	}
 	else if (defined('SITE_SERVER_NAME') && SITE_SERVER_NAME != '')
+	{
 		$hostname = SITE_SERVER_NAME;
+	}
 
-	$urn = \CCrmActivity::prepareUrn($arFields);
+	$urn = CCrmActivity::prepareUrn($arFields);
 	$messageId = sprintf('<crm.activity.%s@%s>', $urn, $hostname);
 
-	\CCrmActivity::update($ID, array(
+	\CCrmActivity::update($ID, [
 		'DESCRIPTION' => $description,
 		'URN'         => $urn,
-		'SETTINGS'    => array(
+		'SETTINGS'    => [
 			'IS_BATCH_EMAIL'  => Config\Option::get('main', 'track_outgoing_emails_read', 'Y') == 'Y' ? false : null,
-			'MESSAGE_HEADERS' => array(
+			'MESSAGE_HEADERS' => [
 				'Message-Id' => $messageId,
 				'Reply-To'   => $reply ?: $fromEmail,
-			),
-			'EMAIL_META' => array(
+			],
+			'EMAIL_META' => [
 				'__email' => $fromEmail,
 				'from'    => $from,
 				'replyTo' => $reply,
 				'to'      => join(', ', $to),
 				'cc'      => join(', ', $rawCc),
 				'bcc'     => join(', ', $bcc),
-			),
-		),
-	), false, false, array('REGISTER_SONET_EVENT' => true));
+			],
+		],
+	], false, false, array('REGISTER_SONET_EVENT' => true));
 
 	if (!empty($_REQUEST['save_as_template']))
 	{
-		$templateFields = array(
+		$templateFields = [
 			'TITLE'          => $subject,
 			'IS_ACTIVE'      => 'Y',
 			'OWNER_ID'       => $userID,
@@ -2483,7 +2644,7 @@ elseif($action == 'SAVE_EMAIL')
 				$arFields['STORAGE_ELEMENT_IDS']
 			),
 			'SORT'           => 100,
-		);
+		];
 		\CCrmMailTemplate::add($templateFields);
 	}
 
@@ -2495,19 +2656,25 @@ elseif($action == 'SAVE_EMAIL')
 	//<-- Save user email in settings
 	if(!empty($arErrors))
 	{
-		__CrmActivityEditorEndResponse(array('ERROR' => $arErrors));
+		__CrmActivityEditorEndResponse(['ERROR' => $arErrors]);
 	}
 
 	// sending email
-	$rcpt    = array();
-	$rcptCc  = array();
-	$rcptBcc = array();
+	$rcpt    = [];
+	$rcptCc  = [];
+	$rcptBcc = [];
 	foreach ($to as $item)
+	{
 		$rcpt[] = Mail\Mail::encodeHeaderFrom($item, SITE_CHARSET);
+	}
 	foreach ($cc as $item)
+	{
 		$rcptCc[] = Mail\Mail::encodeHeaderFrom($item, SITE_CHARSET);
+	}
 	foreach ($bcc as $item)
+	{
 		$rcptBcc[] = Mail\Mail::encodeHeaderFrom($item, SITE_CHARSET);
+	}
 
 	$outgoingSubject = $subject;
 	$outgoingBody = $messageHtml ?: getMessage('CRM_EMAIL_ACTION_DEFAULT_DESCRIPTION');
@@ -2517,15 +2684,15 @@ elseif($action == 'SAVE_EMAIL')
 		switch (\CCrmEMailCodeAllocation::getCurrent())
 		{
 			case \CCrmEMailCodeAllocation::Subject:
-				$outgoingSubject = \CCrmActivity::injectUrnInSubject($urn, $outgoingSubject);
+				$outgoingSubject = CCrmActivity::injectUrnInSubject($urn, $outgoingSubject);
 				break;
 			case \CCrmEMailCodeAllocation::Body:
-				$outgoingBody = \CCrmActivity::injectUrnInBody($urn, $outgoingBody, 'html');
+				$outgoingBody = CCrmActivity::injectUrnInBody($urn, $outgoingBody, 'html');
 				break;
 		}
 	}
 
-	$attachments = array();
+	$attachments = [];
 	foreach ($arRawFiles as $key => $item)
 	{
 		$contentId = sprintf(
@@ -2534,28 +2701,47 @@ elseif($action == 'SAVE_EMAIL')
 			hash('crc32b', $hostname)
 		);
 
-		$attachments[] = array(
+		$attachments[] = [
 			'ID'           => $contentId,
 			'NAME'         => $item['ORIGINAL_NAME'] ?: $item['name'],
 			'PATH'         => $item['tmp_name'],
 			'CONTENT_TYPE' => $item['type'],
-		);
+		];
 
-		$outgoingBody = preg_replace(
-			sprintf('/(https?:\/\/)?bxacid:n?%u/i', $key),
-			sprintf('cid:%s', $contentId),
-			$outgoingBody
-		);
+		if (array_key_exists($key, $attachToFileIds))
+		{
+			$outgoingBody = preg_replace(
+				sprintf('/(https?:\/\/)?bxacid:n?%u/i', $attachToFileIds[$key]),
+				sprintf('cid:%s', $contentId),
+				$outgoingBody
+			);
+		}
+		elseif (array_key_exists($key, $storageFilesFromTemplateFlip))
+		{
+			$outgoingBody = preg_replace(
+				sprintf('/(https?:\/\/)?bxacid:n?%u/i', $storageFilesFromTemplateFlip[$key]),
+				sprintf('cid:%s', $contentId),
+				$outgoingBody
+			);
+		}
+		else
+		{
+			$outgoingBody = preg_replace(
+				sprintf('/(https?:\/\/)?bxacid:n?%u/i', $key),
+				sprintf('cid:%s', $contentId),
+				$outgoingBody
+			);
+		}
 	}
 
-	$outgoingParams = array(
+	$outgoingParams = [
 		'CHARSET'      => SITE_CHARSET,
 		'CONTENT_TYPE' => 'html',
 		'ATTACHMENT'   => $attachments,
 		'TO'           => join(', ', $rcpt),
 		'SUBJECT'      => $outgoingSubject,
 		'BODY'         => $outgoingBody,
-		'HEADER'       => array(
+		'HEADER'       => [
 			'From'       => $fromEncoded ?: $fromEmail,
 			'Reply-To'   => $reply ?: $fromEmail,
 			//'To'         => join(', ', $rcpt),
@@ -2563,8 +2749,8 @@ elseif($action == 'SAVE_EMAIL')
 			'Bcc'        => join(', ', $rcptBcc),
 			//'Subject'    => $outgoingSubject,
 			'Message-Id' => $messageId,
-		),
-	);
+		],
+	];
 
 	$context = new Mail\Context();
 	$context->setCategory(Mail\Context::CAT_EXTERNAL);
@@ -2578,26 +2764,26 @@ elseif($action == 'SAVE_EMAIL')
 
 	$sendResult = Mail\Mail::send(array_merge(
 		$outgoingParams,
-		array(
-			'TRACK_READ' => array(
+		[
+			'TRACK_READ' => [
 				'MODULE_ID' => 'crm',
-				'FIELDS'    => array('urn' => $urn),
+				'FIELDS'    => ['urn' => $urn],
 				'URL_PAGE' => '/pub/mail/read.php',
-			),
-			'TRACK_CLICK' => array(
+			],
+			'TRACK_CLICK' => [
 				'MODULE_ID' => 'crm',
-				'FIELDS'    => array('urn' => $urn),
+				'FIELDS'    => ['urn' => $urn],
 				'URL_PAGE' => '/pub/mail/click.php',
-			),
+			],
 			'CONTEXT' => $context,
-		)
+		]
 	));
 
 	if (!$sendResult)
 	{
 		if ($isNew)
 		{
-			if (\CModule::includeModule('bitrix24'))
+			if (Loader::includeModule('bitrix24'))
 			{
 				if (
 					method_exists(\Bitrix\Bitrix24\MailCounter::class, 'isLimited')
@@ -2610,7 +2796,7 @@ elseif($action == 'SAVE_EMAIL')
 							'%link_end%' => '</a>',
 						]);
 					\CCrmActivity::delete($ID);
-					__CrmActivityEditorEndResponse(array('ERROR_HTML' => $arErrors));
+					__CrmActivityEditorEndResponse(['ERROR_HTML' => $arErrors]);
 				}
 				elseif (
 					method_exists(\Bitrix\Bitrix24\MailCounter::class, 'isCustomLimited')
@@ -2621,15 +2807,15 @@ elseif($action == 'SAVE_EMAIL')
 							'%link_start%' => "<a href=\"javascript:top.BX.Helper.show('redirect=detail&code=2099711')\">",
 							'%link_end%' => '</a>',
 						]);
-					\CCrmActivity::delete($ID);
-					__CrmActivityEditorEndResponse(array('ERROR_HTML' => $arErrors));
+					CCrmActivity::delete($ID);
+					__CrmActivityEditorEndResponse(['ERROR_HTML' => $arErrors]);
 				}
 			}
 			$arErrors[] = getMessage('CRM_ACTIVITY_EMAIL_CREATION_CANCELED');
 		}
 
-		\CCrmActivity::delete($ID);
-		__CrmActivityEditorEndResponse(array('ERROR' => $arErrors));
+		CCrmActivity::delete($ID);
+		__CrmActivityEditorEndResponse(['ERROR' => $arErrors]);
 	}
 
 	addEventToStatFile('crm', 'send_email_message', $_REQUEST['context'], trim(trim($messageId), '<>'));
@@ -2647,41 +2833,46 @@ elseif($action == 'SAVE_EMAIL')
 
 		$outgoing = new \Bitrix\Mail\DummyMail(array_merge(
 			$outgoingParams,
-			array(
+			[
 				'HEADER' => array_merge(
 					$outgoingParams['HEADER'],
-					array(
+					[
 						'To'      => $outgoingParams['TO'],
 						'Subject' => $outgoingParams['SUBJECT'],
-					)
+					]
 				),
-			)
+			]
 		));
 
 		$mailboxHelper->uploadMessage($outgoing);
 	}
 
 	// Try add event to entity
-	$CCrmEvent = new CCrmEvent();
+	$CCrmEvent = new \CCrmEvent();
 
-	$eventText  = '';
-	$eventText .= GetMessage('CRM_TITLE_EMAIL_SUBJECT').': '.$subject."\n\r";
+	$eventText = GetMessage('CRM_TITLE_EMAIL_SUBJECT') . ': ' . $subject . "\n\r";
 	$eventText .= GetMessage('CRM_TITLE_EMAIL_FROM').': '.$from."\n\r";
 	if (!empty($to))
-		$eventText .= getMessage('CRM_TITLE_EMAIL_TO').': '.implode(',', $to)."\n\r";
+	{
+		$eventText .= GetMessage('CRM_TITLE_EMAIL_TO') . ': ' . implode(',', $to) . "\n\r";
+	}
 	if (!empty($rawCc))
-		$eventText .= 'Cc: '.implode(',', $rawCc)."\n\r";
+	{
+		$eventText .= 'Cc: ' . implode(',', $rawCc) . "\n\r";
+	}
 	if (!empty($bcc))
-		$eventText .= 'Bcc: '.implode(',', $bcc)."\n\r";
+	{
+		$eventText .= 'Bcc: ' . implode(',', $bcc) . "\n\r";
+	}
 	$eventText .= "\n\r";
 	$eventText .= $description;
 
-	$eventBindings = array();
+	$eventBindings = [];
 	foreach($arBindings as $item)
 	{
 		$bindingEntityID = $item['OWNER_ID'];
 		$bindingEntityTypeID = $item['OWNER_TYPE_ID'];
-		$bindingEntityTypeName = \CCrmOwnerType::resolveName($bindingEntityTypeID);
+		$bindingEntityTypeName = CCrmOwnerType::resolveName($bindingEntityTypeID);
 
 		$eventBindings["{$bindingEntityTypeName}_{$bindingEntityID}"] = array(
 			'ENTITY_TYPE' => $bindingEntityTypeName,
@@ -2689,37 +2880,37 @@ elseif($action == 'SAVE_EMAIL')
 		);
 	}
 	$CCrmEvent->Add(
-		array(
+		[
 			'ENTITY' => $eventBindings,
 			'EVENT_ID' => 'MESSAGE',
 			'EVENT_TEXT_1' => $eventText,
 			'FILES' => array_values($arRawFiles),
-		)
+		]
 	);
 	// <-- Sending Email
 
-	$commData = array();
+	$commData = [];
 	$communications = CCrmActivity::GetCommunications($ID);
 	foreach($communications as &$arComm)
 	{
 		CCrmActivity::PrepareCommunicationInfo($arComm);
-		$commData[] = array(
+		$commData[] = [
 			'type' => $arComm['TYPE'],
 			'value' => $arComm['VALUE'],
 			'entityId' => $arComm['ENTITY_ID'],
 			'entityType' => CCrmOwnerType::ResolveName($arComm['ENTITY_TYPE_ID']),
 			'entityTitle' => $arComm['TITLE'],
 			'entityUrl' => CCrmOwnerType::GetEntityShowPath($arComm['ENTITY_TYPE_ID'], $arComm['ENTITY_ID'])
-		);
+		];
 	}
 	unset($arComm);
 
 	$userName = '';
 	if($userID > 0)
 	{
-		$dbResUser = CUser::GetByID($userID);
+		$dbResUser = \CUser::GetByID($userID);
 		$userName = is_array(($user = $dbResUser->Fetch()))
-			? CUser::FormatName(CSite::GetNameFormat(false), $user, true, false) : '';
+			? \CUser::FormatName(\CSite::GetNameFormat(false), $user, true, false) : '';
 	}
 
 	$nowStr = ConvertTimeStamp(MakeTimeStamp($now), 'FULL', $siteID);
@@ -2727,7 +2918,7 @@ elseif($action == 'SAVE_EMAIL')
 	CCrmActivity::PrepareStorageElementIDs($arFields);
 	CCrmActivity::PrepareStorageElementInfo($arFields);
 
-	$jsonFields = array(
+	$jsonFields = [
 		'ID' => $ID,
 		'typeID' => CCrmActivityType::Email,
 		'ownerID' => $arFields['OWNER_ID'],
@@ -2749,16 +2940,16 @@ elseif($action == 'SAVE_EMAIL')
 		'responsibleUrl' =>
 			CComponentEngine::MakePathFromTemplate(
 				'/company/personal/user/#user_id#/',
-				array('user_id' => $userID)
+				['user_id' => $userID]
 			),
 		'storageTypeID' => $storageTypeID,
-		'files' => isset($arFields['FILES']) ? $arFields['FILES'] : array(),
-		'webdavelements' => isset($arFields['WEBDAV_ELEMENTS']) ? $arFields['WEBDAV_ELEMENTS'] : array(),
-		'diskfiles' => isset($arFields['DISK_FILES']) ? $arFields['DISK_FILES'] : array(),
+		'files' => isset($arFields['FILES']) ? $arFields['FILES'] : [],
+		'webdavelements' => isset($arFields['WEBDAV_ELEMENTS']) ? $arFields['WEBDAV_ELEMENTS'] : [],
+		'diskfiles' => isset($arFields['DISK_FILES']) ? $arFields['DISK_FILES'] : [],
 		'communications' => $commData
-	);
+	];
 
-	$responseData = array('ACTIVITY' => $jsonFields);
+	$responseData = ['ACTIVITY' => $jsonFields];
 	__CrmActivityEditorEndResponse($responseData);
 }
 elseif($action == 'GET_ACTIVITY')
@@ -2770,7 +2961,7 @@ elseif($action == 'GET_ACTIVITY')
 	{
 		__CrmActivityEditorEndResponse(array('ERROR' => 'NOT FOUND'));
 	}
-	$provider = \CCrmActivity::getActivityProvider($arFields);
+	$provider = CCrmActivity::getActivityProvider($arFields);
 
 	$commData = array();
 	$communications = CCrmActivity::GetCommunications($ID);
@@ -2921,10 +3112,10 @@ elseif($action == 'SEARCH_COMMUNICATIONS')
 	if ($_REQUEST['soc_net_log_dest'] == 'search_email_comms')
 	{
 		$socNetLogDestTypes = array(
-			\CCrmOwnerType::LeadName    => 'leads',
-			\CCrmOwnerType::DealName    => 'deals',
-			\CCrmOwnerType::ContactName => 'contacts',
-			\CCrmOwnerType::CompanyName => 'companies',
+			CCrmOwnerType::LeadName    => 'leads',
+			CCrmOwnerType::DealName    => 'deals',
+			CCrmOwnerType::ContactName => 'contacts',
+			CCrmOwnerType::CompanyName => 'companies',
 		);
 		$response = array(
 			'CONTACTS'  => array(),
@@ -2950,7 +3141,7 @@ elseif($action == 'SEARCH_COMMUNICATIONS')
 					'entityId'   => $item['entityId'],
 					'entityType' => $itemType,
 					'name'       => htmlspecialcharsbx(
-						\CCrmOwnerType::LeadName == $item['entityType'] && $item['entityDescription']
+						CCrmOwnerType::LeadName == $item['entityType'] && $item['entityDescription']
 							? $item['entityDescription']
 							: $item['entityTitle']
 					),
@@ -3437,9 +3628,9 @@ elseif($action == 'GET_WEBDAV_ELEMENT_INFO')
 		array(
 			'DATA' => array(
 				'ELEMENT_ID' => $elementID,
-				'INFO' => \Bitrix\Crm\Integration\StorageManager::getFileInfo(
+				'INFO' => StorageManager::getFileInfo(
 					$elementID,
-					\Bitrix\Crm\Integration\StorageType::WebDav
+					StorageType::WebDav
 				)
 			)
 		)
@@ -3469,7 +3660,7 @@ elseif($action == 'PREPARE_MAIL_TEMPLATE')
 {
 	$templateID = isset($_POST['TEMPLATE_ID']) ? intval($_POST['TEMPLATE_ID']) : 0;
 	$ownerTypeName = isset($_POST['OWNER_TYPE'])? mb_strtoupper(strval($_POST['OWNER_TYPE'])) : '';
-	$ownerTypeId = \CCrmOwnerType::resolveId($ownerTypeName);
+	$ownerTypeId = CCrmOwnerType::resolveId($ownerTypeName);
 	$ownerID = isset($_POST['OWNER_ID']) ? intval($_POST['OWNER_ID']) : 0;
 
 	if($templateID <= 0)
@@ -3484,6 +3675,7 @@ elseif($action == 'PREPARE_MAIL_TEMPLATE')
 	$filter = array(
 		'=ID' => $templateID,
 	);
+
 	if (\CCrmContentType::Html != $contentTypeID)
 		$filter['!BODY_TYPE'] = \CCrmContentType::Html;
 
@@ -3538,19 +3730,17 @@ elseif($action == 'PREPARE_MAIL_TEMPLATE')
 	}
 
 	$files = $USER_FIELD_MANAGER->getUserFieldValue('CRM_MAIL_TEMPLATE', 'UF_ATTACHMENT', $templateID);
-	$files = !empty($files) && is_array($files) && \CModule::includeModule('disk')
-		? \Bitrix\Disk\Uf\FileUserType::getItemsInfo($files) : array();
+	$files = !empty($files) && is_array($files) && CModule::includeModule('disk')
+		? FileUserType::getItemsInfo($files) : array();
 
+	$fileIds = [];
 	foreach ($files as $k => $item)
 	{
-		\Bitrix\Crm\Integration\StorageManager::registerInterRequestFile($item['fileId'], \Bitrix\Crm\Integration\StorageType::Disk);
-
-		if (mb_strpos($item['id'], 'n') !== 0)
-		{
-			$body = str_replace(sprintf('bxacid:%u', $item['id']), sprintf('bxacid:n%u', $item['fileId']), $body);
-			$files[$k]['id'] = $files[$k]['attachId'] = sprintf('n%u', $item['fileId']);
-		}
+		StorageManager::registerInterRequestFile($item['fileId'], StorageType::Disk);
+		$fileIds[] = $item['id'];
 	}
+
+	$filesInfo = DiskUploaderController::getFileInfo($fileIds);
 
 	__CrmActivityEditorEndResponse(
 		array(
@@ -3562,6 +3752,7 @@ elseif($action == 'PREPARE_MAIL_TEMPLATE')
 				'SUBJECT'    => $subject,
 				'BODY'       => $body,
 				'FILES'      => $files,
+				'FILES_INFO' => $filesInfo,
 			)
 		)
 	);
@@ -3632,7 +3823,7 @@ elseif($action == 'UPDATE_DOCS')
 	$errors = array();
 
 	$docsTypes = array(
-		\CCrmOwnerType::Deal,
+		CCrmOwnerType::Deal,
 		//\CCrmOwnerType::Invoice,
 		//\CCrmOwnerType::Quote,
 	);
@@ -3641,7 +3832,7 @@ elseif($action == 'UPDATE_DOCS')
 	foreach ($docsItems as $item)
 	{
 		$itemOwnerId = isset($item['entityId']) ? $item['entityId'] : 0;
-		$itemOwnerTypeId = isset($item['entityType']) ? \CCrmOwnerType::resolveID($item['entityType']) : 0;
+		$itemOwnerTypeId = isset($item['entityType']) ? CCrmOwnerType::resolveID($item['entityType']) : 0;
 
 		if (!in_array($itemOwnerTypeId, $docsTypes) || $itemOwnerId <= 0)
 		{
@@ -3658,18 +3849,18 @@ elseif($action == 'UPDATE_DOCS')
 	if (!empty($errors))
 		__CrmActivityEditorEndResponse(array('ERROR' => $errors));
 
-	$activity = \CCrmActivity::getById($ID);
+	$activity = CCrmActivity::getById($ID);
 	if (empty($activity))
 		__CrmActivityEditorEndResponse(array('ERROR' => 'Activity not found!'));
 
-	$provider = \CCrmActivity::getActivityProvider($activity);
+	$provider = CCrmActivity::getActivityProvider($activity);
 	if (!$provider)
 		__CrmActivityEditorEndResponse(array('ERROR' => 'Provider not found!'));
 
-	if ($provider::checkOwner() && !\CCrmActivity::checkUpdatePermission($activity['OWNER_TYPE_ID'], $activity['OWNER_ID']))
+	if ($provider::checkOwner() && !CCrmActivity::checkUpdatePermission($activity['OWNER_TYPE_ID'], $activity['OWNER_ID']))
 		__CrmActivityEditorEndResponse(array('ERROR' => getMessage('CRM_PERMISSION_DENIED')));
 
-	$activity['BINDINGS'] = \CCrmActivity::getBindings($ID);
+	$activity['BINDINGS'] = CCrmActivity::getBindings($ID);
 	foreach ($activity['BINDINGS'] as $k => $item)
 	{
 		if (!in_array($item['OWNER_TYPE_ID'], $docsTypes))
@@ -3695,18 +3886,18 @@ elseif($action == 'UPDATE_DOCS')
 	if ($activity['OWNER_TYPE_ID'] <= 0 || $activity['OWNER_ID'] <= 0)
 	{
 		$typesPriority = array(
-			\CCrmOwnerType::Deal => 1,
-			\CCrmOwnerType::Order => 2,
-			\CCrmOwnerType::Contact => 3,
-			\CCrmOwnerType::Company => 4,
-			\CCrmOwnerType::Lead => 5,
+			CCrmOwnerType::Deal => 1,
+			CCrmOwnerType::Order => 2,
+			CCrmOwnerType::Contact => 3,
+			CCrmOwnerType::Company => 4,
+			CCrmOwnerType::Lead => 5,
 		);
 
 		foreach ($activity['BINDINGS'] as $item)
 		{
 			if ($activity['OWNER_TYPE_ID'] <= 0 || $typesPriority[$item['OWNER_TYPE_ID']] < $typesPriority[$activity['OWNER_TYPE_ID']])
 			{
-				if (\CCrmActivity::checkUpdatePermission($item['OWNER_TYPE_ID'], $item['OWNER_ID']))
+				if (CCrmActivity::checkUpdatePermission($item['OWNER_TYPE_ID'], $item['OWNER_ID']))
 				{
 					$activity['OWNER_TYPE_ID'] = $item['OWNER_TYPE_ID'];
 					$activity['OWNER_ID'] = $item['OWNER_ID'];
@@ -3717,7 +3908,7 @@ elseif($action == 'UPDATE_DOCS')
 
 	if ($activity['OWNER_TYPE_ID'] > 0 && $activity['OWNER_ID'] > 0)
 	{
-		$result = \CCrmActivity::update(
+		$result = CCrmActivity::update(
 			$ID,
 			array(
 				'OWNER_TYPE_ID' => $activity['OWNER_TYPE_ID'],
@@ -3730,7 +3921,7 @@ elseif($action == 'UPDATE_DOCS')
 
 		if (!$result)
 		{
-			__CrmActivityEditorEndResponse(array('ERROR' => \CCrmActivity::getLastErrorMessage()));
+			__CrmActivityEditorEndResponse(array('ERROR' => CCrmActivity::getLastErrorMessage()));
 		}
 	}
 	else

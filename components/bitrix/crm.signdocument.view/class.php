@@ -184,10 +184,15 @@ class CrmSignDocumentViewComponent extends Bitrix\Crm\Component\Base
 			'subTitle' => '',
 			'link' => Container::getInstance()->getRouter()->getItemDetailUrl(\CCrmOwnerType::Company, $item->getMycompanyId()),
 		];
+
+		$contact = $item?->getContacts()[0] ?? null;
 		$this->arResult['clientRequisites'] = [
-			'title' => $item->getContacts()[0]->getFormattedName(),
+			'title' => $contact?->getFormattedName() ?? '',
 			'subTitle' => '',
-			'link' => Container::getInstance()->getRouter()->getItemDetailUrl(\CCrmOwnerType::Contact, $item->getContacts()[0]->getId()),
+			'link' => $contact?->getId() ?? null
+				? Container::getInstance()->getRouter()->getItemDetailUrl(\CCrmOwnerType::Contact, $contact->getId())
+				: null
+			,
 		];
 	}
 

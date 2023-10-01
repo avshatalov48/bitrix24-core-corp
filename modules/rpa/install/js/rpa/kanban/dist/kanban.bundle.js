@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,ui_designTokens,ui_buttons,ui_notification,ui_fonts_opensans,main_kanban,rpa_kanban,main_core,rpa_manager,ui_dialogs_messagebox,main_popup,rpa_fieldspopup) {
 	'use strict';
@@ -5,25 +6,20 @@ this.BX = this.BX || {};
 	var PullManager = /*#__PURE__*/function () {
 	  function PullManager(grid) {
 	    var _this = this;
-
 	    babelHelpers.classCallCheck(this, PullManager);
 	    this.eventIds = new Set();
-
 	    if (grid instanceof rpa_kanban.Kanban.Grid) {
 	      this.grid = grid;
-
 	      if (main_core.Type.isArray(this.grid.getData().eventIds)) {
 	        this.grid.getData().eventIds.forEach(function (eventId) {
 	          _this.eventIds.add(eventId);
 	        });
 	      }
-
 	      if (main_core.Type.isString(grid.getData().pullTag) && main_core.Type.isString(grid.getData().moduleId) && grid.getData().userId > 0) {
 	        this.init();
 	      }
 	    }
 	  }
-
 	  babelHelpers.createClass(PullManager, [{
 	    key: "registerEventId",
 	    value: function registerEventId(eventId) {
@@ -40,15 +36,12 @@ this.BX = this.BX || {};
 	    key: "init",
 	    value: function init() {
 	      var _this2 = this;
-
 	      main_core.Event.ready(function () {
 	        var Pull = BX.PULL;
-
 	        if (!Pull) {
 	          console.error('pull is not initialized');
 	          return;
 	        }
-
 	        if (main_core.Type.isString(_this2.grid.getData().pullTag)) {
 	          Pull.subscribe({
 	            moduleId: _this2.grid.getData().moduleId,
@@ -60,7 +53,6 @@ this.BX = this.BX || {};
 	                    return;
 	                  }
 	                }
-
 	                if (params.eventName.indexOf('ITEMUPDATED' + _this2.grid.getTypeId()) === 0 && main_core.Type.isPlainObject(params.item)) {
 	                  _this2.onPullItemUpdated(params);
 	                } else if (params.eventName === 'ITEMADDED' + _this2.grid.getTypeId() && main_core.Type.isPlainObject(params.item)) {
@@ -87,7 +79,6 @@ this.BX = this.BX || {};
 	          });
 	          Pull.extendWatch(_this2.grid.getData().pullTag);
 	        }
-
 	        if (main_core.Type.isString(_this2.grid.getData().taskCountersPullTag)) {
 	          Pull.subscribe({
 	            moduleId: _this2.grid.getData().moduleId,
@@ -98,7 +89,6 @@ this.BX = this.BX || {};
 	                  return;
 	                }
 	              }
-
 	              if (_this2.grid.getTypeId() === main_core.Text.toInteger(params.typeId)) {
 	                _this2.onPullCounters(params);
 	              }
@@ -113,13 +103,11 @@ this.BX = this.BX || {};
 	    value: function onPullItemUpdated(params) {
 	      this.grid.addUsers(params.item.users);
 	      var item = this.grid.getItem(params.item.id);
-
 	      if (item) {
 	        item.setData(params.item);
 	        this.grid.insertItem(item);
 	      } else {
 	        var column = this.grid.getColumn(params.item.stageId);
-
 	        if (column && (column.isCanMoveFrom() || column.canAddItems())) {
 	          this.onPullItemAdded(params);
 	        }
@@ -131,11 +119,9 @@ this.BX = this.BX || {};
 	      var itemData = params.item;
 	      this.grid.addUsers(itemData.users);
 	      var oldItem = this.grid.getItem(itemData.id);
-
 	      if (oldItem) {
 	        return;
 	      }
-
 	      var item = new rpa_kanban.Kanban.Item({
 	        id: itemData.id,
 	        columnId: itemData.stageId,
@@ -145,8 +131,8 @@ this.BX = this.BX || {};
 	      item.setGrid(this.grid);
 	      this.grid.items[item.getId()] = item;
 	      var column = this.grid.getColumn(item.getStageId());
-
-	      if (column //&& this.grid.getFirstColumn() !== column
+	      if (column
+	      //&& this.grid.getFirstColumn() !== column
 	      && (column.isCanMoveFrom() || column.canAddItems())) {
 	        column.addItem(item, column.getFirstItem());
 	      }
@@ -157,7 +143,6 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params.item)) {
 	        return;
 	      }
-
 	      this.grid.removeItem(params.item.id);
 	    }
 	  }, {
@@ -169,7 +154,6 @@ this.BX = this.BX || {};
 	    key: "onPullStageUpdated",
 	    value: function onPullStageUpdated(params) {
 	      var column = this.grid.getColumn(params.stage.id);
-
 	      if (column) {
 	        column.update(params);
 	      }
@@ -194,7 +178,6 @@ this.BX = this.BX || {};
 	    value: function onPullRobotDeleted(params) {
 	      if (main_core.Type.isPlainObject(params.robot) && main_core.Type.isString(params.robot.robotName)) {
 	        var column = this.grid.getColumn(params.robot.stageId);
-
 	        if (column) {
 	          column.setTasks(column.getTasks().filter(function (filteredTask) {
 	            return filteredTask.robotName !== params.robot.robotName;
@@ -207,7 +190,6 @@ this.BX = this.BX || {};
 	    key: "onPullRobotChanged",
 	    value: function onPullRobotChanged(stageId) {
 	      var column = this.grid.getColumn(stageId);
-
 	      if (column) {
 	        column.loadTasks().then(function () {
 	          column.rerenderSubtitle();
@@ -219,28 +201,21 @@ this.BX = this.BX || {};
 	    value: function onPullCounters(params) {
 	      var typeId = main_core.Text.toInteger(params.typeId);
 	      var itemId = main_core.Text.toInteger(params.itemId);
-
 	      if (typeId !== this.grid.getTypeId()) {
 	        return;
 	      }
-
 	      var item = this.grid.getItem(itemId);
-
 	      if (item) {
 	        var currentCounter = item.getTasksCounter();
-
 	        if (params.counter === '+1') {
 	          currentCounter++;
 	        } else if (params.counter === '-1') {
 	          currentCounter--;
 	        }
-
 	        item.setTasksCounter(currentCounter);
-
 	        if (main_core.Type.isPlainObject(params.tasksFaces)) {
 	          item.setTasksParticipants(params.tasksFaces);
 	        }
-
 	        item.render();
 	      }
 	    }
@@ -254,15 +229,12 @@ this.BX = this.BX || {};
 	}();
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15;
-
 	var Column = /*#__PURE__*/function (_Kanban$Column) {
 	  babelHelpers.inherits(Column, _Kanban$Column);
-
 	  function Column() {
 	    babelHelpers.classCallCheck(this, Column);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Column).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(Column, [{
 	    key: "getId",
 	    value: function getId() {
@@ -305,29 +277,24 @@ this.BX = this.BX || {};
 	    key: "rerenderSubtitle",
 	    value: function rerenderSubtitle() {
 	      var _this = this;
-
 	      var nodeNames = ['responsible', 'subTitleTasksButton', 'subTitleTasks', 'subTitleAddTaskButton', 'subTitleSettingsButton', 'subTitleAddButton'];
 	      nodeNames.forEach(function (nodeName) {
 	        main_core.Dom.clean(_this.layout[nodeName]);
 	        _this.layout[nodeName] = null;
 	      });
 	      main_core.Dom.clean(this.layout.subtitleNode);
-
 	      if (this.tasksPopup) {
 	        this.tasksPopup.destroy();
 	      }
-
 	      this.renderSubTitle();
 	    }
 	  }, {
 	    key: "renderSubTitle",
 	    value: function renderSubTitle() {
 	      var subTitleNode = this.getSubTitleNode();
-
 	      if (this.isEditable()) {
 	        var tasks = this.getTasks();
 	        var robotsCnt = this.getData()['robotsCount'];
-
 	        if (tasks && tasks.length > 0) {
 	          subTitleNode.appendChild(this.renderSubTitleTasks(tasks));
 	        } else {
@@ -336,7 +303,6 @@ this.BX = this.BX || {};
 	          }
 	        }
 	      }
-
 	      if (this.isFirstColumn() && this.canAddItems()) {
 	        subTitleNode.appendChild(this.renderSubTitleAddButton());
 	      } else {
@@ -345,7 +311,6 @@ this.BX = this.BX || {};
 	          this.layout.subTitleAddButton = null;
 	        }
 	      }
-
 	      return subTitleNode;
 	    }
 	  }, {
@@ -354,35 +319,29 @@ this.BX = this.BX || {};
 	      if (!this.layout.subtitleNode) {
 	        this.layout.subtitleNode = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"main-kanban-column-subtitle-box\"></div>"])));
 	      }
-
 	      return this.layout.subtitleNode;
 	    }
 	  }, {
 	    key: "getContainer",
 	    value: function getContainer() {
 	      var container = babelHelpers.get(babelHelpers.getPrototypeOf(Column.prototype), "getContainer", this).call(this);
-
 	      if (this.isFirstColumn() && this.canAddItems()) {
 	        var quickFormContainer = this.renderQuickFormContainer();
 	        var itemsContainer = this.getItemsContainer();
-
 	        if (quickFormContainer && itemsContainer) {
 	          if (quickFormContainer.parentNode !== itemsContainer) {
 	            main_core.Dom.prepend(quickFormContainer, itemsContainer);
 	          }
 	        }
 	      }
-
 	      return container;
 	    } //region quick form
-
 	  }, {
 	    key: "renderSubTitleAddButton",
 	    value: function renderSubTitleAddButton() {
 	      if (!this.layout.subTitleAddButton) {
 	        this.layout.subTitleAddButton = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div class=\"main-kanban-column-add-item-button\" onclick=\"", "\"></div>"])), this.handleAddItemButtonClick.bind(this));
 	      }
-
 	      return this.layout.subTitleAddButton;
 	    }
 	  }, {
@@ -390,14 +349,11 @@ this.BX = this.BX || {};
 	    value: function renderQuickFormContainer() {
 	      if (!this.layout.quickFormContainer) {
 	        var className = 'rpa-kanban-form';
-
 	        if (this.getGrid().canAddColumns()) {
 	          className += ' rpa-kanban-form-with-settings';
 	        }
-
 	        this.layout.quickFormContainer = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\"></div>"])), className);
 	      }
-
 	      return this.layout.quickFormContainer;
 	    }
 	  }, {
@@ -406,27 +362,22 @@ this.BX = this.BX || {};
 	      if (!this.layout.quickFormButtons) {
 	        this.layout.quickFormButtons = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-kanban-form-buttons\">\n\t\t\t\t<button class=\"ui-btn ui-btn-sm ui-btn-primary\" onclick=\"", "\">", "</button>\n\t\t\t\t<button class=\"ui-btn ui-btn-sm ui-btn-link\" onclick=\"", "\">", "</button>\n\t\t\t</div>"])), this.handleFormSaveButtonClick.bind(this), main_core.Loc.getMessage('RPA_KANBAN_QUICK_FORM_SAVE_BUTTON'), this.handleFormCancelButtonClick.bind(this), main_core.Loc.getMessage('RPA_KANBAN_QUICK_FORM_CANCEL_BUTTON'));
 	      }
-
 	      return this.layout.quickFormButtons;
 	    }
 	  }, {
 	    key: "handleAddItemButtonClick",
 	    value: function handleAddItemButtonClick() {
 	      var _this2 = this;
-
 	      if (this.getGrid().isProgress()) {
 	        return;
 	      }
-
 	      if (this.getGrid().isCreateItemRestricted()) {
 	        rpa_manager.Manager.Instance.showFeatureSlider();
 	        return;
 	      }
-
 	      if (this.isFormVisible()) {
 	        return;
 	      }
-
 	      this.getGrid().startProgress();
 	      main_core.ajax.runAction('rpa.item.getEditor', {
 	        analyticsLabel: 'rpaItemOpenQuickForm',
@@ -438,19 +389,14 @@ this.BX = this.BX || {};
 	        }
 	      }).then(function (response) {
 	        _this2.getGrid().stopProgress();
-
 	        main_core.Runtime.html(_this2.layout.quickFormContainer, response.data.html).then(function () {
 	          _this2.addSelectButtonToEditor();
-
 	          main_core.Dom.append(_this2.renderQuickFormButtons(), _this2.layout.quickFormContainer);
-
 	          _this2.showForm();
-
 	          _this2.bindKeyDownEvents();
 	        });
 	      })["catch"](function (response) {
 	        _this2.getGrid().stopProgress();
-
 	        _this2.getGrid().showErrorFromResponse(response);
 	      });
 	    }
@@ -481,19 +427,16 @@ this.BX = this.BX || {};
 	    key: "handleFormCancelButtonClick",
 	    value: function handleFormCancelButtonClick() {
 	      var editor = this.getEditor();
-
 	      if (editor) {
 	        editor.rollback();
 	        editor.refreshLayout();
 	      }
-
 	      this.hideForm();
 	    }
 	  }, {
 	    key: "handleFormSaveButtonClick",
 	    value: function handleFormSaveButtonClick() {
 	      var editor = this.getEditor();
-
 	      if (editor) {
 	        editor.save();
 	        this.bindEditorEvents();
@@ -509,11 +452,9 @@ this.BX = this.BX || {};
 	        var itemData = response.data.item;
 	        this.getGrid().addUsers(response.data.item.users);
 	        var oldItem = this.getGrid().getItem(itemData.id);
-
 	        if (oldItem) {
 	          return;
 	        }
-
 	        var item = new rpa_kanban.Kanban.Item({
 	          id: itemData.id,
 	          columnId: itemData.stageId,
@@ -523,7 +464,6 @@ this.BX = this.BX || {};
 	        item.setGrid(this.getGrid());
 	        this.getGrid().items[item.getId()] = item;
 	        var column = this.getGrid().getColumn(item.getStageId());
-
 	        if (column) {
 	          column.addItem(item, column.getFirstItem());
 	        }
@@ -550,20 +490,16 @@ this.BX = this.BX || {};
 	    key: "bindKeyDownEvents",
 	    value: function bindKeyDownEvents() {
 	      var _this3 = this;
-
 	      if (!this.isKeyDownEventsBinded) {
 	        this.isKeyDownEventsBinded = true;
-
 	        var onEnterKeyDown = function onEnterKeyDown(event) {
 	          if ((event.code === 'Enter' || event.code === 'NumpadEnter') && _this3.isFormVisible()) {
 	            _this3.handleFormSaveButtonClick();
 	          }
 	        };
-
 	        var isCtrlKey = function isCtrlKey(code) {
 	          return code === 'MetaRight' || code === 'MetaLeft' || code === 'ControlRight' || code === 'ControlLeft';
 	        };
-
 	        main_core.Event.bind(window, 'keydown', function (event) {
 	          if (isCtrlKey(event.code)) {
 	            main_core.Event.bind(window, 'keydown', onEnterKeyDown);
@@ -579,27 +515,22 @@ this.BX = this.BX || {};
 	      }
 	    } //endregion
 	    //region settings
-
 	  }, {
 	    key: "renderSubTitleSettingsButton",
 	    value: function renderSubTitleSettingsButton() {
 	      if (!this.layout.subTitleSettingsButton) {
 	        this.layout.subTitleSettingsButton = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"main-kanban-column-settings-button\" onclick=\"", "\">\n\t\t\t\t<button class=\"ui-btn ui-btn-xs ui-btn-link ui-btn-icon-setting\"></button>\n\t\t\t</div>"])), this.openSettings.bind(this));
 	      }
-
 	      return this.layout.subTitleSettingsButton;
 	    }
 	  }, {
 	    key: "openSettings",
 	    value: function openSettings() {
 	      var _this4 = this;
-
 	      var url = this.data.settingsUrl;
-
 	      if (url) {
 	        rpa_manager.Manager.openSlider(url).then(function (slider) {
 	          var response = slider.getData().get('response');
-
 	          if (response) {
 	            _this4.update(response.data);
 	          }
@@ -607,7 +538,6 @@ this.BX = this.BX || {};
 	      }
 	    } //endregion
 	    //region task
-
 	  }, {
 	    key: "renderSubTitleAddTaskButton",
 	    value: function renderSubTitleAddTaskButton() {
@@ -615,7 +545,6 @@ this.BX = this.BX || {};
 	        var url = this.buildAddRobotUrl();
 	        this.layout.subTitleAddTaskButton = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"main-kanban-column-settings-button\">\n\t\t\t\t\t\t<a class=\"ui-btn ui-btn-xs ui-btn-light-border ui-btn-no-caps ui-btn-round ui-btn-themes main-kanban-column-settings-button-rpa\" href=\"", "\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</div>\n\t\t\t\t"])), url, main_core.Loc.getMessage('RPA_KANBAN_COLUMN_ADD_TASK_BTN'));
 	      }
-
 	      return this.layout.subTitleAddTaskButton;
 	    }
 	  }, {
@@ -624,7 +553,6 @@ this.BX = this.BX || {};
 	      if (!this.layout.subTitleTasks) {
 	        this.layout.subTitleTasks = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"rpa-kanban-column-task-block\">\n\t\t\t\t\t\t<div class=\"rpa-kanban-column-task-inner\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), this.renderSubTitleResponsible(tasks, true), this.renderSubTitleTasksButton(tasks));
 	      }
-
 	      return this.layout.subTitleTasks;
 	    }
 	  }, {
@@ -633,37 +561,31 @@ this.BX = this.BX || {};
 	      if (!this.layout.subTitleTasksButton) {
 	        this.layout.subTitleTasksButton = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"rpa-kanban-column-task-btn\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"rpa-kanban-column-task-btn-title\">", "</span>\n\t\t\t\t\t\t<span class=\"rpa-kanban-column-task-btn-counter\">", "</span>\n\t\t\t\t\t</div>\n\t\t\t\t"])), this.showTasks.bind(this, tasks), main_core.Loc.getMessage('RPA_KANBAN_TASKS'), tasks.length);
 	      }
-
 	      return this.layout.subTitleTasksButton;
 	    }
 	  }, {
 	    key: "renderSubTitleResponsible",
 	    value: function renderSubTitleResponsible(tasks, showTaskListMenu) {
 	      var _this5 = this;
-
 	      var responsibleElements = [];
 	      var plusHandler = this.showTasks.bind(this, tasks);
 	      tasks.forEach(function (task) {
 	        task.users.forEach(function (user) {
 	          var style = 'border-color: #' + _this5.getColor() + ';';
-
 	          if (user.photoSrc) {
-	            style += ' background-image: url(' + main_core.Text.encode(user.photoSrc) + ');';
+	            style += ' background-image: url(\'' + main_core.Text.encode(encodeURI(user.photoSrc)) + '\');';
 	          } else {
 	            style += ' background-size: 60%;';
 	          }
-
 	          responsibleElements.push(main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["<span class=\"rpa-kanban-column-task-responsible-item\" title=\"", "\">\n\t\t\t\t\t<span class=\"rpa-kanban-column-task-responsible-img\" style=\"", "\">\n\t\t\t\t\t</span>\n\t\t\t\t</span>"])), user.name, style));
 	        });
 	      });
 	      responsibleElements = this.sliceResponsibleListElements(responsibleElements);
 	      var plusNode = main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["<span class=\"rpa-kanban-column-task-responsible-add\"></span>"])));
-
 	      if (showTaskListMenu) {
 	        BX.bind(plusNode, 'click', plusHandler);
 	      } else {
 	        var task = tasks[0];
-
 	        if (task.canAppendResponsibles) {
 	          BX.Bizproc.UserSelector.decorateNode(plusNode, {
 	            isOnlyDialogMode: true,
@@ -675,7 +597,6 @@ this.BX = this.BX || {};
 	          plusNode = main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["<a href=\"", "\" class=\"rpa-kanban-column-task-responsible-add\"></a>"])), this.buildEditRobotUrl(task['robotName']));
 	        }
 	      }
-
 	      return main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"rpa-kanban-column-task-responsible\">\n\t\t\t\t\t<div class=\"rpa-kanban-column-task-responsible-list\" style=\"background-color: ", "\" onclick=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), "#" + this.getColor(), plusHandler, responsibleElements, plusNode);
 	    }
 	  }, {
@@ -686,7 +607,6 @@ this.BX = this.BX || {};
 	        elements = elements.slice(0, 4);
 	        elements.push(main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["<span class=\"rpa-kanban-column-task-responsible-item rpa-kanban-column-task-responsible-item-other\">\n\t\t\t\t\t\t<span class=\"rpa-kanban-column-task-responsible-other-text\">+", "</span>\n\t\t\t\t\t</span>"])), counter));
 	      }
-
 	      return elements;
 	    }
 	  }, {
@@ -714,14 +634,11 @@ this.BX = this.BX || {};
 	    key: "getTasksPopup",
 	    value: function getTasksPopup(tasks) {
 	      var _this6 = this;
-
 	      if (!this.tasksPopup) {
 	        var button = this.layout.subTitleTasksButton;
-
 	        if (!button) {
 	          button = this.renderSubTitleTasksButton(this.getTasks());
 	        }
-
 	        this.tasksPopup = new main_popup.Popup('rpa-tasks-' + this.getId(), button, {
 	          autoHide: true,
 	          draggable: false,
@@ -748,14 +665,12 @@ this.BX = this.BX || {};
 	          content: this.renderTasksPopup(tasks)
 	        });
 	      }
-
 	      return this.tasksPopup;
 	    }
 	  }, {
 	    key: "renderTasksPopup",
 	    value: function renderTasksPopup(tasks) {
 	      var _this7 = this;
-
 	      var elements = tasks.map(function (task) {
 	        return main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-kanban-tasks-popup-item\">\n\t\t\t\t\t\t<a href=\"", "\" class=\"rpa-kanban-tasks-popup-name\">", "</a>\n\t\t\t\t\t\t<div class=\"rpa-kanban-tasks-popup-desc\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<span class=\"rpa-kanban-tasks-popup-delete\" onclick=\"", "\">", "</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>"])), _this7.buildEditRobotUrl(task['robotName']), main_core.Text.encode(task['title']), _this7.renderSubTitleResponsible([task]), _this7.deleteTaskHandler.bind(_this7, task), main_core.Loc.getMessage('RPA_KANBAN_COLUMN_DELETE_TASK_BTN'));
 	      });
@@ -765,7 +680,6 @@ this.BX = this.BX || {};
 	    key: "deleteTaskHandler",
 	    value: function deleteTaskHandler(task, event) {
 	      var _this8 = this;
-
 	      ui_dialogs_messagebox.MessageBox.show({
 	        message: main_core.Loc.getMessage('RPA_KANBAN_COLUMN_DELETE_TASK_CONFIRM'),
 	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
@@ -773,9 +687,7 @@ this.BX = this.BX || {};
 	          if (_this8.getGrid().isProgress()) {
 	            return;
 	          }
-
 	          _this8.getGrid().startProgress();
-
 	          var promise = new BX.Promise();
 	          main_core.ajax.runAction('rpa.task.delete', {
 	            analyticsLabel: 'rpaKanbanTaskDelete',
@@ -792,19 +704,14 @@ this.BX = this.BX || {};
 	            if (_this8.tasksPopup) {
 	              _this8.tasksPopup.destroy();
 	            }
-
 	            _this8.setTasks(_this8.getTasks().filter(function (filteredTask) {
 	              return filteredTask.robotName !== task.robotName;
 	            }));
-
 	            _this8.rerenderSubtitle();
-
 	            _this8.getGrid().stopProgress();
-
 	            promise.fulfill();
 	          })["catch"](function (response) {
 	            _this8.getGrid().stopProgress();
-
 	            promise.reject();
 	          });
 	          return promise;
@@ -837,20 +744,16 @@ this.BX = this.BX || {};
 	      });
 	      return url;
 	    } //endregion
-
 	  }, {
 	    key: "getFields",
 	    value: function getFields() {
 	      var fields = this.getData().userFields;
-
 	      if (!fields || !main_core.Type.isPlainObject(fields)) {
 	        fields = this.getGrid().getFields();
 	      }
-
 	      if (!fields || !main_core.Type.isPlainObject(fields)) {
 	        fields = {};
 	      }
-
 	      return fields;
 	    }
 	  }, {
@@ -872,7 +775,6 @@ this.BX = this.BX || {};
 	    key: "canMoveTo",
 	    value: function canMoveTo() {
 	      var _this9 = this;
-
 	      var result = false;
 	      this.getGrid().getColumns().forEach(function (column) {
 	        if (column.isCanMoveFrom() && column.getPossibleNextStages().includes(_this9.getId())) {
@@ -885,7 +787,6 @@ this.BX = this.BX || {};
 	    key: "update",
 	    value: function update(data) {
 	      var _this10 = this;
-
 	      if (main_core.Type.isPlainObject(data) && data.stage && main_core.Type.isPlainObject(data.stage) && parseInt(data.stage.id) === this.getId()) {
 	        var stageData = data.stage;
 	        this.setName(stageData.name);
@@ -906,7 +807,6 @@ this.BX = this.BX || {};
 	    key: "getTargetColumn",
 	    value: function getTargetColumn() {
 	      var _this11 = this;
-
 	      var columns = this.getGrid().getColumns();
 	      var targetColumn = null;
 	      columns.forEach(function (gridColumn) {
@@ -926,14 +826,11 @@ this.BX = this.BX || {};
 	    key: "setPermissionProperties",
 	    value: function setPermissionProperties() {
 	      var _this12 = this;
-
 	      var data = this.getData();
 	      var permissions = {};
-
 	      if (data.permissions && main_core.Type.isPlainObject(data.permissions)) {
 	        permissions = data.permissions;
 	      }
-
 	      Object.keys(permissions).forEach(function (name) {
 	        _this12[name] = permissions[name];
 	      });
@@ -946,13 +843,11 @@ this.BX = this.BX || {};
 	      } else {
 	        this.disableDragging();
 	      }
-
 	      if (this.isDroppable()) {
 	        this.makeDroppable();
 	      } else {
 	        this.disableDropping();
 	      }
-
 	      this.getItems().forEach(function (item) {
 	        item.processPermissions();
 	      });
@@ -961,23 +856,18 @@ this.BX = this.BX || {};
 	    key: "loadTasks",
 	    value: function loadTasks() {
 	      var _this13 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        _this13.getGrid().startProgress();
-
 	        main_core.ajax.runAction('rpa.stage.getTasks', {
 	          data: {
 	            id: _this13.getId()
 	          }
 	        }).then(function (response) {
 	          _this13.getGrid().stopProgress();
-
 	          _this13.setTasks(response.data.tasks);
-
 	          resolve();
 	        })["catch"](function (response) {
 	          _this13.getGrid().stopProgress().showErrorFromResponse(response);
-
 	          reject();
 	        });
 	      });
@@ -988,11 +878,9 @@ this.BX = this.BX || {};
 	      if (!this.data) {
 	        this.data = {};
 	      }
-
 	      if (!this.data.tasks || !main_core.Type.isArray(this.data.tasks)) {
 	        this.data.tasks = [];
 	      }
-
 	      return Array.from(this.data.tasks);
 	    }
 	  }, {
@@ -1001,7 +889,6 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isArray(tasks)) {
 	        tasks = [];
 	      }
-
 	      this.data.tasks = tasks;
 	      return this;
 	    }
@@ -1009,21 +896,16 @@ this.BX = this.BX || {};
 	    key: "addSelectButtonToEditor",
 	    value: function addSelectButtonToEditor() {
 	      var editor = this.getEditor();
-
 	      if (!editor) {
 	        return;
 	      }
-
 	      var editorMainSection = this.getGrid().getEditorMainSection(editor);
-
 	      if (!editorMainSection) {
 	        return;
 	      }
-
 	      if (editorMainSection._addChildButton) {
 	        return;
 	      }
-
 	      editorMainSection.ensureButtonPanelCreated();
 	      editorMainSection._addChildButton = BX.create("span", {
 	        props: {
@@ -1043,26 +925,19 @@ this.BX = this.BX || {};
 	}(main_kanban.Kanban.Column);
 
 	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7$1, _templateObject8$1, _templateObject9$1, _templateObject10$1, _templateObject11$1, _templateObject12$1, _templateObject13$1, _templateObject14$1;
-
 	var Item = /*#__PURE__*/function (_Kanban$Item) {
 	  babelHelpers.inherits(Item, _Kanban$Item);
-
 	  function Item() {
 	    var _babelHelpers$getProt;
-
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, Item);
-
 	    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
 	      args[_key] = arguments[_key];
 	    }
-
 	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(Item)).call.apply(_babelHelpers$getProt, [this].concat(args)));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "currentState", {});
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(Item, [{
 	    key: "setOptions",
 	    value: function setOptions(options) {
@@ -1073,43 +948,35 @@ this.BX = this.BX || {};
 	    key: "render",
 	    value: function render() {
 	      var _this2 = this;
-
 	      this.layout.title = null;
 	      this.renderDescription();
 	      this.renderFieldsList();
 	      this.renderShadow();
-
 	      if (!this.layout.content) {
 	        this.layout.content = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div ondblclick=\"", "\" class=\"rpa-kanban-item\"></div>"])), this.onDoubleClick.bind(this));
 	      } else {
 	        main_core.Dom.clean(this.layout.content);
 	      }
-
 	      if (this.layout.title) {
 	        this.layout.content.appendChild(this.layout.title);
 	      }
-
 	      if (this.layout.fieldList) {
 	        this.layout.content.appendChild(this.layout.fieldList);
 	      }
-
 	      if (this.layout.description) {
 	        this.layout.content.appendChild(this.layout.description);
 	      }
-
-	      this.layout.content.appendChild(this.renderShadow()); //this.layout.content.appendChild(this.renderContact());
-
+	      this.layout.content.appendChild(this.renderShadow());
+	      //this.layout.content.appendChild(this.renderContact());
 	      this.layout.description.appendChild(this.renderTasksParticipants());
 	      this.layout.description.appendChild(this.renderTasksCounter());
 	      this.layout.content.appendChild(BX.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-kanban-item-line\"></div>"]))));
 	      this.layout.content.style.setProperty("--rpa-kanban-item-color", "#" + this.getColumn().getColor());
-
 	      if (this.isDraggable()) {
 	        this.layout.content.style.backgroundColor = "#fff";
 	      } else {
 	        this.layout.content.style.backgroundColor = "#aaa";
 	      }
-
 	      main_core.Event.bindOnce(this.layout.content, "animationend", function () {
 	        BX.removeClass(_this2.layout.container, "main-kanban-item-new");
 	      });
@@ -1139,15 +1006,12 @@ this.BX = this.BX || {};
 	      var waitingForCnt = faces.running.length;
 	      var completedBy = null;
 	      var waitingFor = null;
-
 	      if (completedById) {
 	        completedBy = this.getGrid().getUser(main_core.Text.toInteger(completedById));
 	      }
-
 	      if (waitingForId) {
 	        waitingFor = this.getGrid().getUser(main_core.Text.toInteger(waitingForId));
 	      }
-
 	      return {
 	        startedBy: startedBy,
 	        completedBy: completedBy,
@@ -1175,7 +1039,6 @@ this.BX = this.BX || {};
 	    key: "showEditor",
 	    value: function showEditor(columnId) {
 	      var _this3 = this;
-
 	      main_core.Dom.addClass(this.layout.container, 'main-kanban-item-waiting');
 	      this.bindEditorEvents();
 	      return new Promise(function (resolve, reject) {
@@ -1189,7 +1052,6 @@ this.BX = this.BX || {};
 	          }
 	        }).then(function (response) {
 	          var popup = _this3.getPopup();
-
 	          if (popup) {
 	            main_core.Runtime.html(popup.getContentContainer(), response.data.html).then(function () {
 	              popup.show();
@@ -1207,10 +1069,8 @@ this.BX = this.BX || {};
 	    key: "onEditorSaveClick",
 	    value: function onEditorSaveClick() {
 	      var editor = this.getEditor();
-
 	      if (!editor) {
 	        this.getPopup().close();
-
 	        if (main_core.Type.isFunction(this.editorReject)) {
 	          this.editorReject('Editor not found');
 	          this.editorResolve = null;
@@ -1225,7 +1085,6 @@ this.BX = this.BX || {};
 	    value: function onEditorCancelClick() {
 	      main_core.Dom.removeClass(this.layout.container, 'main-kanban-item-waiting');
 	      this.getPopup().close();
-
 	      if (main_core.Type.isFunction(this.editorResolve)) {
 	        this.editorResolve({
 	          cancel: true
@@ -1251,7 +1110,6 @@ this.BX = this.BX || {};
 	      if (this.getPopup().isShown()) {
 	        main_core.Dom.removeClass(this.layout.container, 'main-kanban-item-waiting');
 	        this.getPopup().close();
-
 	        if (main_core.Type.isFunction(this.editorReject)) {
 	          this.editorReject({
 	            errors: errors
@@ -1266,7 +1124,6 @@ this.BX = this.BX || {};
 	    value: function getPopup() {
 	      var popupId = 'rpa-kanban-item-popup-' + this.getId();
 	      var popup = main_popup.PopupWindowManager.getPopupById(popupId);
-
 	      if (!popup) {
 	        popup = new main_popup.PopupWindow(popupId, null, {
 	          zIndex: 200,
@@ -1280,7 +1137,6 @@ this.BX = this.BX || {};
 	          buttons: this.getItemPopupButtons()
 	        });
 	      }
-
 	      return popup;
 	    }
 	  }, {
@@ -1309,7 +1165,6 @@ this.BX = this.BX || {};
 	    key: "showTasks",
 	    value: function showTasks() {
 	      var _this4 = this;
-
 	      main_core.Dom.addClass(this.layout.container, 'main-kanban-item-waiting');
 	      return new Promise(function (resolve) {
 	        rpa_manager.Manager.Instance.openTasks(_this4.getTypeId(), _this4.getId()).then(function (result) {
@@ -1350,7 +1205,6 @@ this.BX = this.BX || {};
 	    key: "savePosition",
 	    value: function savePosition() {
 	      var _this5 = this;
-
 	      var data = {
 	        id: this.getId(),
 	        typeId: this.getTypeId(),
@@ -1367,11 +1221,9 @@ this.BX = this.BX || {};
 	          data: data
 	        }).then(function (response) {
 	          _this5.data = response.data.item;
-
 	          if (!_this5.moveToActualColumn()) {
 	            _this5.render();
 	          }
-
 	          main_core.Dom.removeClass(_this5.layout.container, 'main-kanban-item-waiting');
 	          resolve(response);
 	        })["catch"](function (response) {
@@ -1385,23 +1237,19 @@ this.BX = this.BX || {};
 	    value: function moveToActualColumn() {
 	      if (this.getStageId() !== this.getColumn().getId()) {
 	        var column = this.getGrid().getColumn(this.getStageId());
-
 	        if (column) {
 	          this.getGrid().moveItem(this, column, column.getFirstItem());
 	        } else {
 	          this.getGrid().moveItem(this, this.getStageId());
 	        }
-
 	        return true;
 	      }
-
 	      return false;
 	    }
 	  }, {
 	    key: "saveSort",
 	    value: function saveSort() {
 	      var _this6 = this;
-
 	      var data = {
 	        id: this.getId(),
 	        typeId: this.getTypeId(),
@@ -1466,31 +1314,25 @@ this.BX = this.BX || {};
 	      if (main_core.Type.isArray(title)) {
 	        title = title[0];
 	      }
-
 	      title = main_core.Text.encode(title);
 	      var href = 'javascript:void(0);';
-
 	      if (this.data.detailUrl) {
 	        href = this.data.detailUrl;
 	      }
-
 	      if (!this.layout.title) {
 	        this.layout.title = main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["<a class=\"rpa-kanban-item-title\" href=\"", "\">", "</a>"])), href, title);
 	      } else {
 	        this.layout.title.innerText = title;
 	      }
-
 	      return this.layout.title;
 	    }
 	  }, {
 	    key: "renderFieldsList",
 	    value: function renderFieldsList() {
 	      var _this7 = this;
-
 	      if (!this.layout.fieldList) {
 	        this.layout.fieldList = main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-kanban-item-field-list\"></div>"])));
 	      }
-
 	      this.layout.fieldList.innerHTML = '';
 	      var fields = this.getGrid().getFields();
 	      Object.keys(fields).forEach(function (fieldName) {
@@ -1499,23 +1341,23 @@ this.BX = this.BX || {};
 	            _this7.renderTitle(_this7.getData()[fieldName]);
 	          } else if (fieldName === 'createdBy' || fieldName === 'updatedBy' || fieldName === 'movedBy') {
 	            var renderedUser = _this7.renderUser(fieldName);
-
 	            if (renderedUser) {
 	              _this7.layout.fieldList.appendChild(main_core.Tag.render(_templateObject5$1 || (_templateObject5$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<div class=\"rpa-kanban-item-field-item\">\n\t\t\t\t\t\t\t\t<span class=\"rpa-kanban-item-field-item-name\">", "</span>\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>"])), main_core.Text.encode(fields[fieldName].title), renderedUser));
 	            }
 	          } else {
-	            _this7.layout.fieldList.appendChild(main_core.Tag.render(_templateObject6$1 || (_templateObject6$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div class=\"rpa-kanban-item-field-item\">\n\t\t\t\t\t\t\t<span class=\"rpa-kanban-item-field-item-name\">", "</span>\n\t\t\t\t\t\t\t<span class=\"rpa-kanban-item-field-item-value\">", "</span>\n\t\t\t\t\t\t</div>"])), main_core.Text.encode(fields[fieldName].title), _this7.getDisplayableValue(fieldName))); // field with link
+	            _this7.layout.fieldList.appendChild(main_core.Tag.render(_templateObject6$1 || (_templateObject6$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div class=\"rpa-kanban-item-field-item\">\n\t\t\t\t\t\t\t<span class=\"rpa-kanban-item-field-item-name\">", "</span>\n\t\t\t\t\t\t\t<span class=\"rpa-kanban-item-field-item-value\">", "</span>\n\t\t\t\t\t\t</div>"])), main_core.Text.encode(fields[fieldName].title), _this7.getDisplayableValue(fieldName)));
 
+	            // field with link
 	            /*this.layout.fieldList.appendChild(Tag.render`
 	            	<div class="rpa-kanban-item-field-item">
 	            		<span class="rpa-kanban-item-field-item-name">Link</span>
 	            		<a class="rpa-kanban-item-field-item-value-link" href="#">Bitrix Inc.</a>
 	            	</div>`
 	            );*/
-
 	          }
 	        }
 	      });
+
 	      return this.layout.fieldList;
 	    }
 	  }, {
@@ -1532,12 +1374,10 @@ this.BX = this.BX || {};
 	    key: "renderUserPhoto",
 	    value: function renderUserPhoto(_ref) {
 	      var link = _ref.link,
-	          photo = _ref.photo;
-
+	        photo = _ref.photo;
 	      if (main_core.Type.isString(link) && main_core.Type.isString(photo)) {
 	        return main_core.Tag.render(_templateObject9$1 || (_templateObject9$1 = babelHelpers.taggedTemplateLiteral(["<a class=\"rpa-kanban-item-user-photo\" href=\"", "\" style=\"background-image: url(", ")\"></a>"])), main_core.Text.encode(link), main_core.Text.encode(photo));
 	      }
-
 	      return null;
 	    }
 	  }, {
@@ -1545,12 +1385,10 @@ this.BX = this.BX || {};
 	    value: function renderUser(fieldName) {
 	      var userId = main_core.Text.toInteger(this.getData()[fieldName]);
 	      var userInfo = this.getGrid().getUser(userId);
-
 	      if (userInfo) {
 	        var photo = this.renderUserPhoto(userInfo);
 	        return main_core.Tag.render(_templateObject10$1 || (_templateObject10$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-kanban-item-user\">\n\t\t\t\t", "\n\t\t\t\t<a class=\"rpa-kanban-item-user-name rpa-kanban-item-field-item-value\" href=\"", "\">", "</a>\n\t\t\t</div>"])), photo ? photo : '', main_core.Text.encode(userInfo.link), main_core.Text.encode(userInfo.fullName));
 	      }
-
 	      return null;
 	    }
 	  }, {
@@ -1562,35 +1400,30 @@ this.BX = this.BX || {};
 	    key: "renderTasksParticipants",
 	    value: function renderTasksParticipants() {
 	      var _this$getTasksPartici = this.getTasksParticipants(),
-	          startedBy = _this$getTasksPartici.startedBy,
-	          completedBy = _this$getTasksPartici.completedBy,
-	          waitingFor = _this$getTasksPartici.waitingFor,
-	          completedCnt = _this$getTasksPartici.completedCnt,
-	          waitingForCnt = _this$getTasksPartici.waitingForCnt;
-
+	        startedBy = _this$getTasksPartici.startedBy,
+	        completedBy = _this$getTasksPartici.completedBy,
+	        waitingFor = _this$getTasksPartici.waitingFor,
+	        completedCnt = _this$getTasksPartici.completedCnt,
+	        waitingForCnt = _this$getTasksPartici.waitingForCnt;
 	      var elements = [];
-
 	      if (startedBy) {
 	        elements.push(this.renderTaskParticipant(startedBy));
 	      }
-
 	      if (completedBy) {
 	        elements.push(this.renderTaskParticipant(completedBy, completedCnt > 1));
 	      }
-
 	      if (waitingFor) {
 	        elements.push(this.renderTaskParticipant(waitingFor, waitingForCnt > 1));
 	      }
-
 	      return main_core.Tag.render(_templateObject12$1 || (_templateObject12$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"rpa-kanban-column-task-responsible-list\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t"])), elements);
 	    }
 	  }, {
 	    key: "renderTaskParticipant",
 	    value: function renderTaskParticipant(_ref2, isMore) {
 	      var link = _ref2.link,
-	          photo = _ref2.photo,
-	          fullName = _ref2.fullName;
-	      return main_core.Tag.render(_templateObject13$1 || (_templateObject13$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"rpa-kanban-column-task-responsible-item ", "\" \n\t\t\t href=\"", "\" title=\"", "\">\n\t\t\t\t<span class=\"rpa-kanban-column-task-responsible-img\" ", ">\t\n\t\t\t\t</span>\n\t\t\t</a>\n\t\t"])), isMore ? 'rpa-kanban-column-task-responsible-item-more' : '', main_core.Text.encode(link), main_core.Text.encode(fullName), photo ? 'style="background-image: url(' + main_core.Text.encode(photo) + '"' : '');
+	        photo = _ref2.photo,
+	        fullName = _ref2.fullName;
+	      return main_core.Tag.render(_templateObject13$1 || (_templateObject13$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"rpa-kanban-column-task-responsible-item ", "\" \n\t\t\t href=\"", "\" title=\"", "\">\n\t\t\t\t<span class=\"rpa-kanban-column-task-responsible-img\" ", ">\t\n\t\t\t\t</span>\n\t\t\t</a>\n\t\t"])), isMore ? 'rpa-kanban-column-task-responsible-item-more' : '', main_core.Text.encode(link), main_core.Text.encode(fullName), photo ? 'style="background-image: url(\'' + main_core.Text.encode(encodeURI(photo)) + '\')"' : '');
 	    }
 	  }, {
 	    key: "renderTasksCounter",
@@ -1601,19 +1434,14 @@ this.BX = this.BX || {};
 	    key: "hasEmptyMandatoryFields",
 	    value: function hasEmptyMandatoryFields(column) {
 	      var _this8 = this;
-
 	      var result = false;
-
 	      if (!column) {
 	        column = this.getStageId();
 	      }
-
 	      column = this.getGrid().getColumn(column);
-
 	      if (!column) {
 	        throw new Error("Column not found");
 	      }
-
 	      var fields = column.getFields();
 	      Object.keys(fields).forEach(function (fieldName) {
 	        if (fields[fieldName].mandatory && _this8.isEmptyValue(_this8.getData()[fieldName])) {
@@ -1635,7 +1463,6 @@ this.BX = this.BX || {};
 	        this.processPermissions();
 	        this.render();
 	      }
-
 	      return this;
 	    }
 	  }, {
@@ -1649,14 +1476,11 @@ this.BX = this.BX || {};
 	    key: "setPermissionProperties",
 	    value: function setPermissionProperties() {
 	      var _this9 = this;
-
 	      var data = this.getData();
 	      var permissions = {};
-
 	      if (data.permissions && main_core.Type.isPlainObject(data.permissions)) {
 	        permissions = data.permissions;
 	      }
-
 	      Object.keys(permissions).forEach(function (name) {
 	        _this9[name] = permissions[name];
 	      });
@@ -1670,7 +1494,6 @@ this.BX = this.BX || {};
 	      } else {
 	        this.disableDragging();
 	      }
-
 	      this.render();
 	      return this;
 	    }
@@ -1678,17 +1501,14 @@ this.BX = this.BX || {};
 	    key: "getDisplayableValue",
 	    value: function getDisplayableValue(fieldName) {
 	      var result = null;
-
 	      if (this.data.display && this.data.display[fieldName]) {
 	        result = this.data.display[fieldName];
 	      } else if (this.data[fieldName]) {
 	        result = this.data[fieldName];
 	      }
-
 	      if (main_core.Type.isArray(result)) {
 	        result = result.join(', ');
 	      }
-
 	      return result;
 	    }
 	  }, {
@@ -1702,12 +1522,10 @@ this.BX = this.BX || {};
 
 	var Grid = /*#__PURE__*/function (_Kanban$Grid) {
 	  babelHelpers.inherits(Grid, _Kanban$Grid);
-
 	  function Grid() {
 	    babelHelpers.classCallCheck(this, Grid);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Grid).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(Grid, [{
 	    key: "getTypeId",
 	    value: function getTypeId() {
@@ -1727,7 +1545,6 @@ this.BX = this.BX || {};
 	    key: "bindEvents",
 	    value: function bindEvents() {
 	      var _this = this;
-
 	      BX.addCustomEvent(this, "Kanban.DropZone:onBeforeItemCaptured", this.onBeforeItemCaptured.bind(this));
 	      BX.addCustomEvent(this, "Kanban.DropZone:onBeforeItemRestored", this.onBeforeItemRestored.bind(this));
 	      BX.addCustomEvent("Kanban.Column:render", function (column) {
@@ -1767,30 +1584,23 @@ this.BX = this.BX || {};
 	    key: "onBeforeItemCaptured",
 	    value: function onBeforeItemCaptured(dropZoneEvent) {
 	      var _this2 = this;
-
 	      main_core.Event.EventEmitter.emit('BX.Rpa.Kanban.Grid:onBeforeItemCapturedStart', [this, dropZoneEvent]);
 	      var item = dropZoneEvent.getItem();
-
 	      if (!(item instanceof Item)) {
 	        return;
 	      }
-
 	      if (!dropZoneEvent.isActionAllowed()) {
 	        return;
 	      }
-
 	      var dropZone = dropZoneEvent.getDropZone();
-
 	      if (dropZone.getId() === 'delete') {
 	        if (!item.isDeletable()) {
 	          dropZoneEvent.denyAction();
 	          return;
 	        }
-
 	        if (this.deleteCommand && !this.deleteCommand.isCompleted()) {
 	          this.deleteCommand.run();
 	        }
-
 	        this.deleteCommand = new Command(item, function (commandItem) {
 	          _this2.deleteItem(commandItem);
 	        }, function (commandItem) {
@@ -1800,14 +1610,12 @@ this.BX = this.BX || {};
 	      } else if (dropZone.getData().isColumn === true) {
 	        dropZoneEvent.denyAction();
 	        var targetColumn = this.getColumn(dropZone.getId());
-
 	        if (!targetColumn) {
 	          item.saveCurrentState();
 	          this.hideItem(item);
 	        } else {
 	          this.moveItem(item, targetColumn);
 	        }
-
 	        this.moveItemToStage(item, dropZone.getId(), item.getColumn());
 	      }
 	    }
@@ -1815,13 +1623,10 @@ this.BX = this.BX || {};
 	    key: "onBeforeItemRestored",
 	    value: function onBeforeItemRestored(dropZoneEvent) {
 	      var item = dropZoneEvent.getItem();
-
 	      if (!(item instanceof Item)) {
 	        return;
 	      }
-
 	      var dropZone = dropZoneEvent.getDropZone();
-
 	      if (dropZone.getId() === 'delete') {
 	        if (this.deleteCommand) {
 	          this.deleteCommand.cancel();
@@ -1838,38 +1643,33 @@ this.BX = this.BX || {};
 	    key: "getFirstColumn",
 	    value: function getFirstColumn() {
 	      var columns = this.getColumns();
-
 	      if (columns.length > 0) {
 	        return columns[0];
 	      }
-
 	      return null;
 	    }
 	  }, {
 	    key: "onItemMoved",
 	    value: function onItemMoved(item, targetColumn, beforeItem, skipHandler) {
 	      var _this3 = this;
-
-	      var itemPreviousState = item.getCurrentState(); // moving in the same column
-
+	      var itemPreviousState = item.getCurrentState();
+	      // moving in the same column
 	      if (parseInt(item.getStageId()) === parseInt(targetColumn.getId())) {
 	        if (!beforeItem && item.getCurrentState().nextItemId === 0 || beforeItem && parseInt(beforeItem.getId()) === parseInt(item.getCurrentState().nextItemId)) {
 	          // skip moving on the same place
 	          this.moveItem(item, item.getStageId(), item.getCurrentState().nextItemId);
 	          return;
-	        } // save sorting
-
-
+	        }
+	        // save sorting
 	        item.saveCurrentState().saveSort()["catch"](function (response) {
 	          _this3.onItemMoveError(item, response, itemPreviousState);
 	        });
 	        return;
-	      } // check permissions and next stage
-
-
-	      var previousColumn = this.getColumn(item.getStageId()); //const isPossibleNextStagesIncludesTargetColumn = previousColumn.getPossibleNextStages().includes(targetColumn.getId());
+	      }
+	      // check permissions and next stage
+	      var previousColumn = this.getColumn(item.getStageId());
+	      //const isPossibleNextStagesIncludesTargetColumn = previousColumn.getPossibleNextStages().includes(targetColumn.getId());
 	      //sorry but for now we do not check possible next stages
-
 	      var isPossibleNextStagesIncludesTargetColumn = true;
 	      /*if(!isPossibleNextStagesIncludesTargetColumn && previousColumn.canMoveTo() && item.getMovedBy() === this.getUserId() && targetColumn.getPossibleNextStages().includes(previousColumn.getId()))
 	      {
@@ -1880,7 +1680,6 @@ this.BX = this.BX || {};
 	      	});
 	      }
 	      else */
-
 	      if (previousColumn.isCanMoveFrom() && isPossibleNextStagesIncludesTargetColumn) {
 	        this.moveItemToStage(item, targetColumn.getId(), previousColumn);
 	      } else if (!previousColumn.isCanMoveFrom() && isPossibleNextStagesIncludesTargetColumn) {
@@ -1904,16 +1703,13 @@ this.BX = this.BX || {};
 	    key: "moveItemToStage",
 	    value: function moveItemToStage(item, targetColumnId, previousColumn) {
 	      var _this4 = this;
-
 	      var itemPreviousState = item.getCurrentState();
-
 	      if (item.hasEmptyMandatoryFields(previousColumn)) {
 	        if (!previousColumn.canAddItems()) {
 	          this.moveItem(item, item.getStageId(), item.getCurrentState().nextItemId);
 	          main_kanban.Kanban.Utils.showErrorDialog(main_core.Loc.getMessage('RPA_KANBAN_MOVE_EMPTY_MANDATORY_FIELDS_ERROR'), false);
 	          return;
 	        }
-
 	        item.showEditor(targetColumnId).then(function (response) {
 	          _this4.onEditorSave(item, response);
 	        })["catch"](function (response) {
@@ -1921,13 +1717,11 @@ this.BX = this.BX || {};
 	        });
 	      } else {
 	        var targetColumn = this.getColumn(targetColumnId);
-
 	        if (targetColumn) {
 	          item.saveCurrentState();
 	        } else {
 	          item.setStageId(targetColumnId);
 	        }
-
 	        item.savePosition()["catch"](function (response) {
 	          var isShowEditor = false;
 	          var isShowTasks = false;
@@ -1942,18 +1736,14 @@ this.BX = this.BX || {};
 	              isTasksError = true;
 	            }
 	          });
-
 	          if (isShowEditor) {
 	            if (!previousColumn.canAddItems()) {
 	              BX.UI.Notification.Center.notify({
 	                content: main_core.Loc.getMessage('RPA_KANBAN_MOVE_ITEM_PERMISSION_NOTIFY').replace('#ITEM#', main_core.Text.encode(item.getName())).replace('#STAGE#', main_core.Text.encode(previousColumn.getName()))
 	              });
-
 	              _this4.onItemMoveError(item, null, itemPreviousState);
-
 	              return;
 	            }
-
 	            item.showEditor(targetColumnId).then(function (response) {
 	              if (response.cancel === true) {
 	                _this4.onItemMoveError(item, null, itemPreviousState);
@@ -1968,7 +1758,6 @@ this.BX = this.BX || {};
 	                _this4.onItemMoveError(item, null, itemPreviousState);
 	              } else {
 	                item.update(response);
-
 	                if (!item.moveToActualColumn()) {
 	                  item.render();
 	                }
@@ -1980,7 +1769,6 @@ this.BX = this.BX || {};
 	            BX.UI.Notification.Center.notify({
 	              content: main_core.Loc.getMessage('RPA_KANBAN_MOVE_ITEM_HAS_TASKS_ERROR')
 	            });
-
 	            _this4.onItemMoveError(item, null, itemPreviousState);
 	          } else {
 	            _this4.onItemMoveError(item, response, itemPreviousState);
@@ -1993,17 +1781,13 @@ this.BX = this.BX || {};
 	    value: function onItemMoveError(item) {
 	      var response = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 	      var previousState = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-
 	      if (previousState) {
 	        item.restoreState(previousState);
-
 	        if (!item.isVisible()) {
 	          this.unhideItem(item);
 	        }
-
 	        this.moveItem(item, item.getStageId(), item.getCurrentState().nextItemId);
 	      }
-
 	      if (response) {
 	        this.showErrorFromResponse(response);
 	      }
@@ -2020,15 +1804,12 @@ this.BX = this.BX || {};
 	    value: function showErrorFromResponse(response) {
 	      var fatal = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      var errors = null;
-
 	      if (main_core.Type.isPlainObject(response) && response.errors && main_core.Type.isArray(response.errors)) {
 	        errors = response.errors;
 	      } else if (main_core.Type.isArray(response)) {
 	        errors = response;
 	      }
-
 	      var message = '';
-
 	      if (main_core.Type.isArray(errors)) {
 	        errors.forEach(function (error) {
 	          message += main_core.Text.encode(error.message) + "\n";
@@ -2036,14 +1817,12 @@ this.BX = this.BX || {};
 	      } else {
 	        message = 'Unknown error';
 	      }
-
 	      main_kanban.Kanban.Utils.showErrorDialog(message, fatal);
 	    }
 	  }, {
 	    key: "onColumnUpdated",
 	    value: function onColumnUpdated(column) {
 	      var _this5 = this;
-
 	      this.startProgress();
 	      main_core.ajax.runAction('rpa.stage.update', {
 	        analyticsLabel: 'rpaKanbanStageUpdate',
@@ -2060,11 +1839,9 @@ this.BX = this.BX || {};
 	        }
 	      }).then(function (response) {
 	        _this5.stopProgress();
-
 	        column.update(response.data);
 	      })["catch"](function (response) {
 	        _this5.stopProgress();
-
 	        _this5.showErrorFromResponse(response, true);
 	      });
 	    }
@@ -2072,7 +1849,6 @@ this.BX = this.BX || {};
 	    key: "addStage",
 	    value: function addStage(column) {
 	      var _this6 = this;
-
 	      this.startProgress();
 	      var previousColumn = this.getPreviousColumnSibling(column);
 	      var previousColumnId = previousColumn ? previousColumn.getId() : 0;
@@ -2093,12 +1869,10 @@ this.BX = this.BX || {};
 	        }
 	      }).then(function (response) {
 	        promise.fulfill(_this6.transformColumnActionResponseToColumnOptions(response));
-
 	        _this6.stopProgress();
 	      })["catch"](function (response) {
 	        var error = response.errors.pop().message;
 	        promise.reject(error);
-
 	        _this6.stopProgress();
 	      });
 	      return promise;
@@ -2107,7 +1881,6 @@ this.BX = this.BX || {};
 	    key: "removeStage",
 	    value: function removeStage(column) {
 	      var _this7 = this;
-
 	      var promise = new BX.Promise();
 	      this.startProgress();
 	      main_core.ajax.runAction('rpa.stage.delete', {
@@ -2120,11 +1893,9 @@ this.BX = this.BX || {};
 	        }
 	      }).then(function () {
 	        _this7.stopProgress();
-
 	        promise.fulfill();
 	      })["catch"](function (response) {
 	        _this7.stopProgress();
-
 	        var error = response.errors.pop().message;
 	        column.enableDragging();
 	        column.getContainer().classList.remove("main-kanban-column-edit-mode");
@@ -2136,7 +1907,6 @@ this.BX = this.BX || {};
 	    key: "onColumnMoved",
 	    value: function onColumnMoved(column) {
 	      var _this8 = this;
-
 	      var previousColumn = this.getPreviousColumnSibling(column);
 	      var previousColumnId = previousColumn ? previousColumn.getId() : 0;
 	      main_core.ajax.runAction('rpa.stage.update', {
@@ -2155,22 +1925,18 @@ this.BX = this.BX || {};
 	        var wasFirst = column.isFirstColumn();
 	        var isFirst = true;
 	        column.update(response.data);
-
 	        if (column.isFirstColumn() && wasFirst) {
 	          return;
 	        }
-
 	        if (column.isFirstColumn() || wasFirst) {
 	          _this8.getColumns().forEach(function (renderedColumn) {
 	            if (renderedColumn !== column) {
 	              renderedColumn.setIsFirstColumn(wasFirst && isFirst);
 	              isFirst = false;
 	            }
-
 	            renderedColumn.rerenderSubtitle();
 	          });
 	        }
-
 	        _this8.getFirstColumn().rerenderSubtitle();
 	      })["catch"](function (response) {
 	        _this8.showErrorFromResponse(response, true);
@@ -2227,10 +1993,8 @@ this.BX = this.BX || {};
 	      if (!(item instanceof Item)) {
 	        return;
 	      }
-
 	      var beforeItem = null;
 	      var newColumn = this.getColumn(item.getStageId());
-
 	      if (newColumn) {
 	        beforeItem = newColumn.getFirstItem();
 	        this.moveItem(item, item.getStageId(), beforeItem);
@@ -2243,11 +2007,9 @@ this.BX = this.BX || {};
 	    key: "onApplyFilter",
 	    value: function onApplyFilter(filterId, values, filterInstance, promise, params) {
 	      var _this9 = this;
-
 	      if (main_core.Type.isPlainObject(params)) {
 	        params.autoResolve = false;
 	      }
-
 	      this.startProgress();
 	      main_core.ajax.runComponentAction('bitrix:rpa.kanban', 'get', {
 	        analyticsLabel: 'rpaKanbanApplyFilter',
@@ -2255,31 +2017,23 @@ this.BX = this.BX || {};
 	        mode: 'class'
 	      }).then(function (response) {
 	        _this9.stopProgress();
-
 	        _this9.getColumns().forEach(function (column) {
 	          var pagination = column.getPagination();
-
 	          if (pagination) {
 	            pagination.page = 1;
 	          }
 	        });
-
 	        _this9.getColumns().forEach(function (column) {
 	          _this9.removeColumn(column);
 	        });
-
 	        _this9.removeItems();
-
 	        _this9.loadData(response.data.kanban);
-
 	        if (!main_core.Type.isNil(promise)) {
 	          promise.fulfill();
 	        }
 	      })["catch"](function (response) {
 	        _this9.stopProgress();
-
 	        _this9.showErrorFromResponse(response);
-
 	        if (!main_core.Type.isNil(promise)) {
 	          promise.reject();
 	        }
@@ -2292,22 +2046,18 @@ this.BX = this.BX || {};
 	        this.addUsers(json.data.users);
 	        this.data.fields = json.data.fields;
 	      }
-
 	      babelHelpers.get(babelHelpers.getPrototypeOf(Grid.prototype), "loadData", this).call(this, json);
 	    }
 	  }, {
 	    key: "addUsers",
 	    value: function addUsers(users) {
 	      var _this10 = this;
-
 	      if (main_core.Type.isPlainObject(users)) {
 	        if (!this.users) {
 	          this.users = new Map();
 	        }
-
 	        Object.keys(users).forEach(function (userId) {
 	          userId = main_core.Text.toInteger(userId);
-
 	          if (userId > 0) {
 	            _this10.users.set(userId, users[userId]);
 	          }
@@ -2320,18 +2070,15 @@ this.BX = this.BX || {};
 	      if (!this.users) {
 	        this.users = new Map();
 	      }
-
 	      return this.users.get(userId);
 	    }
 	  }, {
 	    key: "getFields",
 	    value: function getFields() {
 	      var fields = this.getData().fields;
-
 	      if (!fields || !main_core.Type.isPlainObject(fields)) {
 	        fields = {};
 	      }
-
 	      return fields;
 	    }
 	  }, {
@@ -2340,7 +2087,6 @@ this.BX = this.BX || {};
 	      params.cancel = true;
 	      var popupId = 'rpa-kanban-column-select-fields-menu-' + this.getTypeId();
 	      var popup = main_popup.PopupWindowManager.getPopupById(popupId);
-
 	      if (!popup) {
 	        popup = new main_popup.PopupMenuWindow({
 	          id: 'rpa-kanban-column-select-fields-menu-' + this.getTypeId(),
@@ -2359,18 +2105,15 @@ this.BX = this.BX || {};
 	      } else {
 	        popup.setBindElement(params.button);
 	      }
-
 	      popup.show();
 	    }
 	  }, {
 	    key: "onSelectFieldsViewSettingsClick",
 	    value: function onSelectFieldsViewSettingsClick() {
 	      var _this11 = this;
-
 	      if (!this.canAddColumns()) {
 	        return;
 	      }
-
 	      var fields = this.getFields();
 	      var data = [];
 	      Object.keys(fields).forEach(function (fieldName) {
@@ -2386,9 +2129,7 @@ this.BX = this.BX || {};
 	          if (_this11.isProgress()) {
 	            return;
 	          }
-
 	          _this11.startProgress();
-
 	          main_core.ajax.runAction('rpa.fields.setVisibilitySettings', {
 	            analyticsLabel: 'rpaKanbanSaveVisibleFields',
 	            data: {
@@ -2398,11 +2139,9 @@ this.BX = this.BX || {};
 	            }
 	          }).then(function (response) {
 	            _this11.stopProgress();
-
 	            Object.keys(_this11.getFields()).forEach(function (fieldName) {
 	              _this11.data.fields[fieldName]['isVisibleOnKanban'] = result.has(fieldName);
 	            });
-
 	            _this11.getColumns().forEach(function (column) {
 	              column.getItems().forEach(function (item) {
 	                item.render();
@@ -2410,7 +2149,6 @@ this.BX = this.BX || {};
 	            });
 	          })["catch"](function (response) {
 	            _this11.stopProgress();
-
 	            _this11.showErrorFromResponse(response);
 	          });
 	        }
@@ -2420,23 +2158,17 @@ this.BX = this.BX || {};
 	    key: "onSelectFieldsModifySettingsClick",
 	    value: function onSelectFieldsModifySettingsClick() {
 	      var _this12 = this;
-
 	      if (!this.canAddColumns()) {
 	        return;
 	      }
-
 	      var firstColumn = this.getFirstColumn();
-
 	      if (!firstColumn) {
 	        return;
 	      }
-
 	      var editor = firstColumn.getEditor();
-
 	      if (!editor) {
 	        return;
 	      }
-
 	      var fields = this.getFields();
 	      var data = [];
 	      Object.keys(fields).forEach(function (fieldName) {
@@ -2453,13 +2185,10 @@ this.BX = this.BX || {};
 	        if (!result) {
 	          return;
 	        }
-
 	        if (_this12.isProgress()) {
 	          return;
 	        }
-
 	        _this12.startProgress();
-
 	        main_core.ajax.runAction('rpa.fields.setVisibilitySettings', {
 	          data: {
 	            typeId: _this12.getTypeId(),
@@ -2469,11 +2198,9 @@ this.BX = this.BX || {};
 	          analyticsLabel: 'rpaKanbanSaveCreateFields'
 	        }).then(function (response) {
 	          _this12.stopProgress();
-
 	          _this12.syncEditorFields(editor, result);
 	        })["catch"](function (response) {
 	          _this12.stopProgress();
-
 	          _this12.showErrorFromResponse(response);
 	        });
 	      });
@@ -2483,28 +2210,23 @@ this.BX = this.BX || {};
 	    value: function syncEditorFields(editor, availableFields) {
 	      var fields = this.getFields();
 	      var editorMainSection = this.getEditorMainSection(editor);
-
 	      if (!editorMainSection) {
 	        return;
 	      }
-
 	      Object.keys(fields).forEach(function (fieldName) {
 	        var control = editor.getControlById(fieldName);
-
 	        if (control && !availableFields.has(fieldName)) {
 	          editorMainSection.removeChild(control, {
 	            enableSaving: false
 	          });
 	        } else if (!control && availableFields.has(fieldName)) {
 	          var element = editor.getAvailableSchemeElementByName(fieldName);
-
 	          if (element) {
 	            var field = editor.createControl(element.getType(), element.getName(), {
 	              schemeElement: element,
 	              model: editor._model,
 	              mode: editor._mode
 	            });
-
 	            if (field) {
 	              editorMainSection.addChild(field, {
 	                layout: {
@@ -2521,11 +2243,9 @@ this.BX = this.BX || {};
 	    key: "getEditorMainSection",
 	    value: function getEditorMainSection(editor) {
 	      var editorMainSection = editor.getControlById('main');
-
 	      if (editorMainSection instanceof BX.UI.EntityEditorColumn) {
 	        editorMainSection = editorMainSection.getChildById('main');
 	      }
-
 	      return editorMainSection;
 	    }
 	  }, {
@@ -2563,11 +2283,9 @@ this.BX = this.BX || {};
 	    key: "deleteItem",
 	    value: function deleteItem(item) {
 	      var _this13 = this;
-
 	      if (this.isProgress()) {
 	        return;
 	      }
-
 	      this.startProgress();
 	      main_core.ajax.runAction('rpa.item.delete', {
 	        analyticsLabel: 'rpaKanbanItemDelete',
@@ -2579,18 +2297,15 @@ this.BX = this.BX || {};
 	        if (_this13.getItem(item)) {
 	          item.getColumn().removeItem(item);
 	        }
-
 	        _this13.stopProgress();
 	      })["catch"](function (response) {
 	        _this13.stopProgress();
-
 	        _this13.showErrorFromResponse(response);
 	      });
 	    }
 	  }]);
 	  return Grid;
 	}(main_kanban.Kanban.Grid);
-
 	var Command = /*#__PURE__*/function () {
 	  function Command(item, action, restore) {
 	    babelHelpers.classCallCheck(this, Command);
@@ -2599,7 +2314,6 @@ this.BX = this.BX || {};
 	    this.restore = restore;
 	    this.timeoutId = null;
 	  }
-
 	  babelHelpers.createClass(Command, [{
 	    key: "start",
 	    value: function start(timeout) {
@@ -2610,7 +2324,6 @@ this.BX = this.BX || {};
 	    value: function run() {
 	      clearTimeout(this.timeoutId);
 	      this.timeoutId = null;
-
 	      if (main_core.Type.isFunction(this.action)) {
 	        this.action(this.item);
 	      }
@@ -2620,7 +2333,6 @@ this.BX = this.BX || {};
 	    value: function cancel() {
 	      clearTimeout(this.timeoutId);
 	      this.timeoutId = null;
-
 	      if (main_core.Type.isFunction(this.restore)) {
 	        this.restore(this.item);
 	      }

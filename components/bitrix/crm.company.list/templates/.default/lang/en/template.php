@@ -108,4 +108,4 @@ $MESS["CRM_REBUILD_SEARCH_CONTENT_STATE"] = "#processed# of #total#";
 $MESS["CRM_SHOW_ROW_COUNT"] = "Show quantity";
 $MESS["CRM_SIP_MGR_MAKE_CALL"] = "Call";
 $MESS["CRM_SIP_MGR_UNKNOWN_RECIPIENT"] = "Unknown recipient";
-$MESS["CRM_STATUS_INIT"] = "- Status -";
+

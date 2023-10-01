@@ -2500,6 +2500,7 @@ class CCrmDealDetailsComponent
 		$this->entityData['IS_INVENTORY_MANAGEMENT_RESTRICTED'] = !\Bitrix\Crm\Restriction\RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission();
 		$this->entityData['MODE_WITH_ORDERS'] = \CCrmSaleHelper::isWithOrdersMode();
 		$this->entityData['IS_COPY_MODE'] = $this->isCopyMode;
+		$this->entityData['RECEIVE_PAYMENT_MODE'] = CUserOptions::GetOption('crm', 'receive_payment_mode', 'payment_delivery');
 
 		Tracking\UI\Details::prepareEntityData(
 			\CCrmOwnerType::Deal,

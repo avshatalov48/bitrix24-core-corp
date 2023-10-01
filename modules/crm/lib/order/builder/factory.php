@@ -39,6 +39,21 @@ final class Factory
 	}
 
 	/**
+	 * Builder for work with shipments.
+	 *
+	 * @return OrderBuilder
+	 */
+	public static function createBuilderForPayment(): OrderBuilder
+	{
+		return self::createOrderBuilder(
+			[
+				'createDefaultShipmentIfNeed' => false,
+				'builderScenario' => SettingsContainer::BUILDER_SCENARIO_PAYMENT
+			]
+		);
+	}
+
+	/**
 	 * Builder for work with reservations.
 	 *
 	 * @return OrderBuilder

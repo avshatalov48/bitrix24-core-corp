@@ -169,6 +169,15 @@ class ContactController extends BaseController
 			$slots['STORE_DOCUMENT_IDS'] = $storeDocumentIds;
 		}
 
+		$agentContractIds = AgentContractBinder::getInstance()->getBoundEntityIDs(
+			\CCrmOwnerType::Contact,
+			$entityID
+		);
+		if(!empty($agentContractIds))
+		{
+			$slots['AGENT_CONTRACT_IDS'] = $agentContractIds;
+		}
+
 		$slots = array_merge(
 			$slots,
 			DynamicBinderManager::getInstance()
@@ -418,6 +427,16 @@ class ContactController extends BaseController
 				\CCrmOwnerType::Contact,
 				$newEntityID,
 				$storeDocumentIds
+			);
+		}
+
+		$agentContractIds = isset($slots['AGENT_CONTRACT_IDS']) ? $slots['AGENT_CONTRACT_IDS'] : null;
+		if(is_array($agentContractIds) && !empty($agentContractIds))
+		{
+			AgentContractBinder::getInstance()->bindEntities(
+				\CCrmOwnerType::Contact,
+				$newEntityID,
+				$agentContractIds
 			);
 		}
 

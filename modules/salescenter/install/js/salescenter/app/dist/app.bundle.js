@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,ui_designTokens,rest_client,main_loader,salescenter_marketplace,salescenter_component_stageBlock_tile,Hint,catalog_productForm,main_core_events,ui_vue,DeliverySelector,ui_fonts_ruble,currency,salescenter_component_stageBlock_automation,AutomationStage,salescenter_component_stageBlock_timeline,main_popup,ui_icons_disk,popup,ui_buttons,ui_buttons_icons,ui_forms,ui_fonts_opensans,ui_pinner,ui_vue_vuex,salescenter_component_stageBlock_smsMessage,salescenter_manager,TimeLineItem,salescenter_component_stageBlock,ui_notification,Tile,main_core,salescenter_lib) {
 	'use strict';
@@ -6,15 +7,12 @@ this.BX = this.BX || {};
 
 	var ApplicationModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(ApplicationModel, _VuexBuilderModel);
-
 	  function ApplicationModel() {
 	    babelHelpers.classCallCheck(this, ApplicationModel);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ApplicationModel).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(ApplicationModel, [{
 	    key: "getName",
-
 	    /**
 	     * @inheritDoc
 	     */
@@ -43,12 +41,10 @@ this.BX = this.BX || {};
 	    key: "getMutations",
 	    value: function getMutations() {
 	      var _this = this;
-
 	      return {
 	        setPages: function setPages(state, payload) {
 	          if (babelHelpers["typeof"](payload.pages) === 'object') {
 	            state.pages = payload.pages;
-
 	            _this.saveState(state);
 	          }
 	        },
@@ -57,14 +53,12 @@ this.BX = this.BX || {};
 	            state.pages = state.pages.filter(function (page) {
 	              return !(payload.page.id && payload.page.id > 0 && page.id === payload.page.id || payload.page.landingId && payload.page.landingId > 0 && page.landingId === payload.page.landingId);
 	            });
-
 	            _this.saveState(state);
 	          }
 	        },
 	        addPage: function addPage(state, payload) {
 	          if (babelHelpers["typeof"](payload.page) === 'object') {
 	            state.pages.push(payload.page);
-
 	            _this.saveState(state);
 	          }
 	        }
@@ -76,15 +70,12 @@ this.BX = this.BX || {};
 
 	var OrderCreationModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(OrderCreationModel, _VuexBuilderModel);
-
 	  function OrderCreationModel() {
 	    babelHelpers.classCallCheck(this, OrderCreationModel);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(OrderCreationModel).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(OrderCreationModel, [{
 	    key: "getName",
-
 	    /**
 	     * @inheritDoc
 	     */
@@ -114,7 +105,6 @@ this.BX = this.BX || {};
 	          discount: null,
 	          result: null
 	        },
-
 	        /**
 	         * ID of selected pay systems available for order payment
 	         */
@@ -282,15 +272,12 @@ this.BX = this.BX || {};
 
 	var DocumentSelectorModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(DocumentSelectorModel, _VuexBuilderModel);
-
 	  function DocumentSelectorModel() {
 	    babelHelpers.classCallCheck(this, DocumentSelectorModel);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(DocumentSelectorModel).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(DocumentSelectorModel, [{
 	    key: "getName",
-
 	    /**
 	     * @inheritDoc
 	     */
@@ -303,7 +290,7 @@ this.BX = this.BX || {};
 	      return {
 	        addDocument: function addDocument(_ref, _ref2) {
 	          var commit = _ref.commit,
-	              dispatch = _ref.dispatch;
+	            dispatch = _ref.dispatch;
 	          var document = _ref2.document;
 	          commit('addDocument', {
 	            document: document
@@ -314,9 +301,8 @@ this.BX = this.BX || {};
 	        },
 	        setBoundDocumentId: function setBoundDocumentId(_ref3, _ref4) {
 	          var state = _ref3.state,
-	              commit = _ref3.commit;
+	            commit = _ref3.commit;
 	          var boundDocumentId = _ref4.boundDocumentId;
-
 	          if (state.paymentId > 0) {
 	            rest_client.rest.callMethod('crm.documentgenerator.document.bindToPayment', {
 	              id: boundDocumentId,
@@ -336,15 +322,13 @@ this.BX = this.BX || {};
 	        },
 	        loadTemplates: function loadTemplates(_ref5) {
 	          var state = _ref5.state,
-	              commit = _ref5.commit;
-
+	            commit = _ref5.commit;
 	          if (Number(state.entityTypeId) <= 0 || Number(state.entityId) <= 0) {
 	            commit('setTemplates', {
 	              templates: []
 	            });
 	            return;
 	          }
-
 	          rest_client.rest.callMethod('crm.documentgenerator.template.listForItem', {
 	            entityTypeId: state.entityTypeId,
 	            entityId: state.entityId
@@ -423,14 +407,11 @@ this.BX = this.BX || {};
 	        addDocument: function addDocument(state, payload) {
 	          if (babelHelpers["typeof"](payload.document) === 'object') {
 	            var newDocument = payload.document;
-
 	            if (!newDocument.id) {
 	              return;
 	            }
-
 	            var documents = state.documents || [];
 	            var isUpdated = false;
-
 	            for (var index in documents) {
 	              if (documents[index].id === newDocument.id) {
 	                documents[index] = newDocument;
@@ -438,11 +419,9 @@ this.BX = this.BX || {};
 	                break;
 	              }
 	            }
-
 	            if (!isUpdated) {
 	              documents.unshift(newDocument);
 	            }
-
 	            state.documents = documents;
 	          }
 	        }
@@ -452,6 +431,14 @@ this.BX = this.BX || {};
 	  return DocumentSelectorModel;
 	}(ui_vue_vuex.VuexBuilderModel);
 
+	var ContextDictionary = Object.freeze({
+	  deal: 'deal',
+	  smartInvoice: 'smart_invoice',
+	  chat: 'chat',
+	  sms: 'sms',
+	  imOpenlines: 'imopenlines_app'
+	});
+
 	var MixinTemplatesType = {
 	  data: function data() {
 	    return {
@@ -460,7 +447,6 @@ this.BX = this.BX || {};
 	  },
 	  created: function created() {
 	    var _this = this;
-
 	    this.$root.$on("on-change-editable", function (value) {
 	      _this.editable = value;
 	    });
@@ -484,7 +470,6 @@ this.BX = this.BX || {};
 	    getCollectionTileByFilter: function getCollectionTileByFilter(filter) {
 	      var map = new Map();
 	      var collection = this.getCollectionTile();
-
 	      if (filter.hasOwnProperty('type') && filter.type.length > 0) {
 	        collection.forEach(function (item, index) {
 	          if (filter.type === item.getType()) {
@@ -496,7 +481,6 @@ this.BX = this.BX || {};
 	          return map.set(index, item);
 	        });
 	      }
-
 	      return map;
 	    },
 	    hasTileOfferFromCollection: function hasTileOfferFromCollection() {
@@ -550,7 +534,6 @@ this.BX = this.BX || {};
 	    },
 	    openSlider: function openSlider(inx) {
 	      var _this = this;
-
 	      var slider = new salescenter_marketplace.AppSlider();
 	      var tile = this.getTileByIndex(inx);
 	      slider.openAppLocal(tile, this.getOptionSlider);
@@ -603,7 +586,7 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  mixins: [TileCollectionMixins],
-	  template: "\t\n\t\t<div class=\"salescenter-app-payment-by-sms-item-container-payment\">\n\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-payment-inline\">\n\t\t\t\t<tile-label-block class=\"salescenter-app-payment-by-sms-item-container-payment-item-text\"\n\t\t\t\t\tv-for=\"(tile, index) in tiles\"\n\t\t\t\t\tv-if=\"isControlTile(tile) === false\"\n\t\t\t\t\t:name=\"tile.name\" \n\t\t\t\t\tv-on:tile-label-on-click=\"openSlider(index)\"\n\t\t\t\t/>\n\t\t\t\t<br>\n\t\t\t\t<tile-label-block class=\"salescenter-app-payment-by-sms-item-container-payment-item-text-add\"\n\t\t\t\t\tv-if=\"hasTileOfferFromCollection() === true\"\n\t\t\t\t\t:name=\"getTileOfferFromCollection().tile.name\"\n\t\t\t\t\tv-on:tile-label-on-click=\"openSlider(getTileOfferFromCollection().index)\"\n\t\t\t\t/>\n\t\t\t\t<tile-label-block class=\"salescenter-app-payment-by-sms-item-container-payment-item-text-add\"\n\t\t\t\t\tv-if=\"hasTileMoreFromCollection() === true\"\n\t\t\t\t\t:name=\"getTileMoreFromCollection().tile.name\"\n\t\t\t\t\tv-on:tile-label-on-click=\"openSlider(getTileMoreFromCollection().index)\"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\t\n\t\t<div class=\"salescenter-app-payment-by-sms-item-container-payment\">\n\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-payment-inline\">\n\t\t\t\t<tile-label-block class=\"salescenter-app-payment-by-sms-item-container-payment-item-text\"\n\t\t\t\t\tv-for=\"(tile, index) in tiles\"\n\t\t\t\t\tv-bind:key=\"index\"\n\t\t\t\t\tv-if=\"isControlTile(tile) === false\"\n\t\t\t\t\t:name=\"tile.name\" \n\t\t\t\t\tv-on:tile-label-on-click=\"openSlider(index)\"\n\t\t\t\t/>\n\t\t\t\t<br>\n\t\t\t\t<tile-label-block class=\"salescenter-app-payment-by-sms-item-container-payment-item-text-add\"\n\t\t\t\t\tv-if=\"hasTileOfferFromCollection() === true\"\n\t\t\t\t\t:name=\"getTileOfferFromCollection().tile.name\"\n\t\t\t\t\tv-on:tile-label-on-click=\"openSlider(getTileOfferFromCollection().index)\"\n\t\t\t\t/>\n\t\t\t\t<tile-label-block class=\"salescenter-app-payment-by-sms-item-container-payment-item-text-add\"\n\t\t\t\t\tv-if=\"hasTileMoreFromCollection() === true\"\n\t\t\t\t\t:name=\"getTileMoreFromCollection().tile.name\"\n\t\t\t\t\tv-on:tile-label-on-click=\"openSlider(getTileMoreFromCollection().index)\"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	var StageMixin = {
@@ -695,8 +678,13 @@ this.BX = this.BX || {};
 	  template: "\n\t\t<stage-block-item\n\t\t\t:class=\"[statusClassMixin, statusClass]\"\n\t\t\t:config=\"configForBlock\"\n\t\t\t@on-item-hint.stop.prevent=\"onItemHint\"\n\t\t\t@on-tile-slider-close=\"onSliderClose\"\n\t\t\t@on-adjust-collapsed=\"saveCollapsedOption\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>{{title}}</template>\n\t\t\t<template v-slot:block-hint-title>".concat(main_core.Loc.getMessage('SALESCENTER_CASHBOX_BLOCK_SETTINGS_TITLE'), "</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\">\n\t\t\t\t\t<tile-collection-uninstalled-block \t:tiles=\"tiles\" v-if=\"!installed\"/>\n\t\t\t\t\t<tile-collection-installed-block :tiles=\"tiles\" v-on:on-tile-slider-close=\"onSliderClose\" v-else />\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
 	};
 
-	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	var ModeDictionary = Object.freeze({
+	  payment: 'payment',
+	  delivery: 'delivery',
+	  paymentDelivery: 'payment_delivery'
+	});
 
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var Product = {
 	  mixins: [MixinTemplatesType],
@@ -704,11 +692,9 @@ this.BX = this.BX || {};
 	    var editable = this.$root.$app.options.templateMode !== 'view';
 	    var isCompilationMode = this.$root.$app.compilation !== null;
 	    this.$root.$emit("on-change-editable", editable);
-
 	    if (this.productForm) {
 	      this.productForm.setEditable(editable, isCompilationMode);
 	    }
-
 	    if (this.productForm) {
 	      var formWrapper = this.$root.$el.querySelector('.salescenter-app-form-wrapper');
 	      formWrapper.appendChild(this.productForm.layout());
@@ -716,11 +702,9 @@ this.BX = this.BX || {};
 	  },
 	  created: function created() {
 	    var _this$$root$$app$comp;
-
 	    this.refreshId = null;
 	    var defaultCurrency = this.$root.$app.options.currencyCode || '';
 	    this.$store.dispatch('orderCreation/setCurrency', defaultCurrency);
-
 	    if (main_core.Type.isArray(this.$root.$app.options.basket)) {
 	      var fields = [];
 	      this.$root.$app.options.basket.forEach(function (item) {
@@ -728,11 +712,9 @@ this.BX = this.BX || {};
 	      });
 	      this.$store.commit('orderCreation/setBasket', fields);
 	    }
-
 	    if (main_core.Type.isObject(this.$root.$app.options.totals)) {
 	      this.$store.commit('orderCreation/setTotal', this.$root.$app.options.totals);
 	    }
-
 	    this.productForm = new catalog_productForm.ProductForm({
 	      currencySymbol: this.$root.$app.options.currencySymbol,
 	      currency: defaultCurrency,
@@ -750,7 +732,7 @@ this.BX = this.BX || {};
 	      isCatalogDiscountSetEnabled: this.$root.$app.options.isCatalogDiscountSetEnabled,
 	      fieldHints: this.$root.$app.options.fieldHints,
 	      hideUnselectedProperties: this.$root.$app.options.templateMode === 'view',
-	      showCompilationModeSwitcher: this.$root.$app.options.templateMode === 'create' && this.$root.$app.options.showCompilationModeSwitcher === 'Y' && this.$root.$app.options.mode === 'payment_delivery',
+	      showCompilationModeSwitcher: this.$root.$app.options.templateMode === 'create' && this.$root.$app.options.showCompilationModeSwitcher === 'Y' && this.$root.$app.options.mode === ModeDictionary.paymentDelivery,
 	      compilationFormType: this.$root.$app.connector === 'facebook' && this.$root.$app.isAllowedFacebookRegion ? 'FACEBOOK' : 'REGULAR',
 	      facebookFailProducts: (_this$$root$$app$comp = this.$root.$app.compilation) === null || _this$$root$$app$comp === void 0 ? void 0 : _this$$root$$app$comp.FAIL_PRODUCTS,
 	      ownerId: this.$root.$app.options.ownerId,
@@ -774,18 +756,15 @@ this.BX = this.BX || {};
 	    },
 	    onProductFormModeChange: function onProductFormModeChange(event) {
 	      var mode = event.getData().mode;
-
 	      if (mode === catalog_productForm.FormMode.COMPILATION || mode === catalog_productForm.FormMode.COMPILATION_READ_ONLY) {
 	        this.$store.commit('orderCreation/enableCompilationMode');
 	      } else {
 	        this.$store.commit('orderCreation/disableCompilationMode');
 	      }
-
 	      this.$emit('on-product-form-mode-change');
 	    },
 	    onBasketChange: function onBasketChange(event) {
 	      var _this = this;
-
 	      var processRefreshRequest = function processRefreshRequest(data) {
 	        if (_this.productForm) {
 	          var preparedBasket = [];
@@ -793,48 +772,38 @@ this.BX = this.BX || {};
 	            if (!main_core.Type.isStringFilled(item.innerId)) {
 	              return;
 	            }
-
 	            preparedBasket.push({
 	              selectorId: item.innerId,
 	              fields: item
 	            });
 	          });
-
 	          _this.productForm.setData(_objectSpread(_objectSpread({}, data), {
 	            basket: preparedBasket
 	          }));
-
 	          if (main_core.Type.isArray(data.basket)) {
 	            _this.$store.commit('orderCreation/setBasket', data.basket);
 	          }
-
 	          if (main_core.Type.isObject(data.total)) {
 	            _this.$store.commit('orderCreation/setTotal', data.total);
 	          }
 	        }
 	      };
-
 	      var data = event.getData();
-
 	      if (!main_core.Type.isArray(data.basket)) {
 	        return;
 	      }
-
 	      var fields = [];
 	      data.basket.forEach(function (item) {
 	        fields.push(item.fields);
 	      });
 	      this.$store.commit('orderCreation/setBasket', fields);
-
 	      if (this.$root.$app.newCompilationId) {
 	        this.changeCompilationProducts();
 	      }
-
 	      if (this.isNeedDisableSubmit()) {
 	        this.$store.commit('orderCreation/disableSubmit');
 	        return;
 	      }
-
 	      this.$store.commit('orderCreation/enableSubmit');
 	      var requestId = main_core.Text.getRandom(20);
 	      this.refreshId = requestId;
@@ -847,15 +816,15 @@ this.BX = this.BX || {};
 	        if (_this.refreshId !== requestId) {
 	          return;
 	        }
-
 	        var data = BX.prop.getObject(result, "data", {});
 	        processRefreshRequest({
 	          total: BX.prop.getObject(data, "total", {
 	            discount: 0,
 	            result: 0,
-	            sum: 0 //resultNumeric: 0,
-
+	            sum: 0
+	            //resultNumeric: 0,
 	          }),
+
 	          basket: BX.prop.get(data, "items", [])
 	        });
 	      })["catch"](function (result) {
@@ -872,7 +841,6 @@ this.BX = this.BX || {};
 	        return basketItem.skuId;
 	      });
 	      var compilationId = this.$root.$app.compilation ? this.$root.$app.compilation.ID : this.$root.$app.newCompilationId;
-
 	      if (compilationId) {
 	        BX.ajax.runAction('salescenter.compilation.updateCompilation', {
 	          data: {
@@ -891,12 +859,11 @@ this.BX = this.BX || {};
 	    },
 	    isNeedDisableSubmit: function isNeedDisableSubmit() {
 	      var basket = this.$store.getters['orderCreation/getBasket']();
-
-	      if (basket.length <= 0 //|| !this.$root.$app.hasClientContactInfo()
+	      if (basket.length <= 0
+	      //|| !this.$root.$app.hasClientContactInfo()
 	      || this.productForm && main_core.Type.isFunction(this.productForm.hasErrors) && this.productForm.hasErrors()) {
 	        return true;
 	      }
-
 	      var filledProducts = basket.filter(function (item) {
 	        return main_core.Type.isStringFilled(item.module) && item.productId > 0;
 	      });
@@ -951,7 +918,6 @@ this.BX = this.BX || {};
 	};
 
 	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var DeliverySelector$1 = {
 	  props: {
@@ -989,7 +955,6 @@ this.BX = this.BX || {};
 	    },
 	    refreshAvailableServices: function refreshAvailableServices() {
 	      var _this = this;
-
 	      main_core.ajax.runAction('salescenter.order.getCompatibleDeliverySystems', {
 	        data: {
 	          basketItems: this.config.basket ? this.config.basket : [],
@@ -1037,7 +1002,6 @@ this.BX = this.BX || {};
 	      if (this.productsPrice === null || this.delivery === null) {
 	        return null;
 	      }
-
 	      return this.productsPrice + this.delivery;
 	    },
 	    totalFormatted: function totalFormatted() {
@@ -1101,7 +1065,6 @@ this.BX = this.BX || {};
 	  },
 	  created: function created() {
 	    var _this = this;
-
 	    main_core.ajax.runAction('salescenter.deliveryselector.getShipmentData', {
 	      data: {
 	        id: this.id
@@ -1119,7 +1082,6 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isArray(property.tags)) {
 	        return false;
 	      }
-
 	      return property.tags.includes('phone');
 	    },
 	    makeCall: function makeCall(phoneNumber) {
@@ -1181,7 +1143,6 @@ this.BX = this.BX || {};
 	};
 
 	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var DeliveryVuex = {
 	  props: {
@@ -1247,35 +1208,25 @@ this.BX = this.BX || {};
 	    },
 	    config: function config() {
 	      var deliveryServiceId = null;
-
 	      if (this.$root.$app.options.hasOwnProperty('shipmentData') && this.$root.$app.options.shipmentData.hasOwnProperty('deliveryServiceId')) {
 	        deliveryServiceId = this.$root.$app.options.shipmentData.deliveryServiceId;
 	      }
-
 	      var deliveryPrice = null;
-
 	      if (this.$root.$app.options.hasOwnProperty('shipmentData') && this.$root.$app.options.shipmentData.hasOwnProperty('deliveryPrice')) {
 	        deliveryPrice = this.$root.$app.options.shipmentData.deliveryPrice;
 	      }
-
 	      var relatedPropsValues = {};
-
 	      if (this.$root.$app.options.hasOwnProperty('shipmentData') && this.$root.$app.options.shipmentData.hasOwnProperty('propValues')) {
 	        relatedPropsValues = this.$root.$app.options.shipmentData.propValues;
 	      }
-
 	      var relatedServicesValues = {};
-
 	      if (this.$root.$app.options.hasOwnProperty('shipmentData') && this.$root.$app.options.shipmentData.hasOwnProperty('extraServicesValues') && !Array.isArray(this.$root.$app.options.shipmentData.extraServicesValues)) {
 	        relatedServicesValues = this.$root.$app.options.shipmentData.extraServicesValues;
 	      }
-
 	      var relatedPropsOptions = {};
-
 	      if (this.$root.$app.options.hasOwnProperty('deliveryOrderPropOptions') && !Array.isArray(this.$root.$app.options.deliveryOrderPropOptions)) {
 	        relatedPropsOptions = this.$root.$app.options.deliveryOrderPropOptions;
 	      }
-
 	      return {
 	        personTypeId: this.$root.$app.options.personTypeId,
 	        basket: this.order.basket,
@@ -1442,7 +1393,7 @@ this.BX = this.BX || {};
 	      return this.titleTemplate;
 	    },
 	    isMessageReadOnly: function isMessageReadOnly() {
-	      return this.$root.$app.context !== 'sms';
+	      return this.$root.$app.context !== ContextDictionary.sms;
 	    }
 	  },
 	  created: function created() {},
@@ -1549,7 +1500,6 @@ this.BX = this.BX || {};
 	    if (this.isPayment) {
 	      this.initStages(this.paymentStages, this.stageOnOrderPaid);
 	    }
-
 	    this.initStages(this.shipmentStages, this.stageOnDeliveryFinished);
 	  },
 	  template: "\n\t\t<stage-block-item\n\t\t\t:config=\"configForBlock\"\n\t\t\t:class=\"statusClassMixin\"\n\t\t\t@on-adjust-collapsed=\"saveCollapsedOption\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>".concat(main_core.Loc.getMessage('SALESCENTER_AUTOMATION_BLOCK_TITLE'), "</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\">\n\t\t\t\t\t<div v-if=\"isPayment\">\n\t\t\t\t\t\t<stage-item-list\n\t\t\t\t\t\t\tv-on:on-choose-select-option=\"updatePaymentStage($event)\"\n\t\t\t\t\t\t\t:stages=\"paymentStages\"\n\t\t\t\t\t\t\t:editable=\"editable\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<template v-slot:stage-list-text>").concat(main_core.Loc.getMessage('SALESCENTER_AUTOMATION_BLOCK_TEXT'), "</template>\n\t\t\t\t\t\t</stage-item-list>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<div v-if=\"!isHideDeliveryStage\">\n\t\t\t\t\t\t<stage-item-list\n\t\t\t\t\t\t\tv-on:on-choose-select-option=\"updateShipmentStage($event)\"\n\t\t\t\t\t\t\t:stages=\"shipmentStages\"\n\t\t\t\t\t\t\t:editable=\"editable\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<template v-slot:stage-list-text>").concat(main_core.Loc.getMessage('SALESCENTER_AUTOMATION_DELIVERY_FINISHED'), "</template>\n\t\t\t\t\t\t</stage-item-list>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
@@ -1620,13 +1570,9 @@ this.BX = this.BX || {};
 	};
 
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
+	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$3(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$3(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var DocumentSelector = {
 	  props: {
@@ -1648,11 +1594,9 @@ this.BX = this.BX || {};
 	      if (this.model && this.model.templates && this.model.templates.length || this.model.documents && this.model.documents.length) {
 	        return salescenter_component_stageBlock.StatusTypes.complete;
 	      }
-
 	      if (this.templateAddUrl && this.templateAddUrl.length) {
 	        return salescenter_component_stageBlock.StatusTypes.current;
 	      }
-
 	      return salescenter_component_stageBlock.StatusTypes.disabled;
 	    },
 	    configForBlock: function configForBlock() {
@@ -1668,17 +1612,14 @@ this.BX = this.BX || {};
 	    },
 	    getDocumentTitle: function getDocumentTitle() {
 	      var currentDocument = this.getCurrentDocument();
-
 	      if (currentDocument) {
 	        return currentDocument.title;
 	      }
-
 	      return main_core.Loc.getMessage('SALESCENTER_DOCUMENT_SELECTOR_BLOCK_CREATE_NEW_TEMPLATE');
 	    },
 	    withStamps: function withStamps() {
 	      var isWithStamps = '';
 	      var currentDocument = this.getCurrentDocument();
-
 	      if (currentDocument) {
 	        if (currentDocument.isWithStamps) {
 	          isWithStamps = main_core.Loc.getMessage('SALESCENTER_DOCUMENT_SELECTOR_BLOCK_WITH_SIGNS');
@@ -1686,7 +1627,6 @@ this.BX = this.BX || {};
 	          isWithStamps = main_core.Loc.getMessage('SALESCENTER_DOCUMENT_SELECTOR_BLOCK_WITHOUT_SIGNS');
 	        }
 	      }
-
 	      return isWithStamps;
 	    },
 	    hasData: function hasData() {
@@ -1701,7 +1641,6 @@ this.BX = this.BX || {};
 	  methods: {
 	    handleDocumentClick: function handleDocumentClick(_ref) {
 	      var target = _ref.target;
-
 	      if (this.getCurrentDocument() !== null) {
 	        this.openSelectorMenu(target);
 	      } else {
@@ -1722,13 +1661,10 @@ this.BX = this.BX || {};
 	    },
 	    prepareSelectorMenuItems: function prepareSelectorMenuItems() {
 	      var _this = this;
-
 	      var items = [];
-
 	      if (this.model.documents) {
 	        var _iterator = _createForOfIteratorHelper(this.model.documents),
-	            _step;
-
+	          _step;
 	        try {
 	          var _loop = function _loop() {
 	            var document = _step.value;
@@ -1736,14 +1672,12 @@ this.BX = this.BX || {};
 	              text: document.title,
 	              onclick: function onclick() {
 	                _this.closeSelectorMenu();
-
 	                _this.$store.dispatch('documentSelector/setBoundDocumentId', {
 	                  boundDocumentId: document.id
 	                });
 	              }
 	            });
 	          };
-
 	          for (_iterator.s(); !(_step = _iterator.n()).done;) {
 	            _loop();
 	          }
@@ -1753,22 +1687,18 @@ this.BX = this.BX || {};
 	          _iterator.f();
 	        }
 	      }
-
 	      var templateListItem = {
 	        text: main_core.Loc.getMessage('SALESCENTER_DOCUMENT_SELECTOR_BLOCK_CREATE_NEW_DOCUMENT'),
 	        items: []
 	      };
-
 	      if (this.model.templates) {
 	        if (items.length > 0) {
 	          items.push({
 	            delimiter: true
 	          });
 	        }
-
 	        var _iterator2 = _createForOfIteratorHelper(this.model.templates),
-	            _step2;
-
+	          _step2;
 	        try {
 	          var _loop2 = function _loop2() {
 	            var template = _step2.value;
@@ -1776,14 +1706,12 @@ this.BX = this.BX || {};
 	              text: template.title,
 	              onclick: function onclick() {
 	                _this.closeSelectorMenu();
-
 	                _this.$store.commit('documentSelector/setSelectedTemplateId', {
 	                  selectedTemplateId: template.id
 	                });
 	              }
 	            });
 	          };
-
 	          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
 	            _loop2();
 	          }
@@ -1793,33 +1721,27 @@ this.BX = this.BX || {};
 	          _iterator2.f();
 	        }
 	      }
-
 	      if (this.templateAddUrl) {
 	        if (templateListItem.items.length > 0) {
 	          templateListItem.items.push({
 	            delimiter: true
 	          });
 	        }
-
 	        templateListItem.items.push({
 	          text: main_core.Loc.getMessage('SALESCENTER_DOCUMENT_SELECTOR_BLOCK_CREATE_NEW_TEMPLATE'),
 	          onclick: function onclick() {
 	            _this.closeSelectorMenu();
-
 	            _this.openTemplatesList();
 	          }
 	        });
 	      }
-
 	      if (templateListItem.items.length > 0) {
 	        items.push(templateListItem);
 	      }
-
 	      return items;
 	    },
 	    openTemplatesList: function openTemplatesList() {
 	      var _this2 = this;
-
 	      salescenter_manager.Manager.openSlider(this.templateAddUrl, {
 	        width: 930
 	      }).then(function () {
@@ -1828,15 +1750,12 @@ this.BX = this.BX || {};
 	    },
 	    handleEditDocumentClick: function handleEditDocumentClick() {
 	      var _this3 = this;
-
 	      var currentDocument = this.getCurrentDocument();
-
 	      if (currentDocument.detailUrl) {
 	        salescenter_manager.Manager.openSlider(currentDocument.detailUrl, {
 	          width: 980
 	        }).then(function (slider) {
 	          var document = slider.getData().get('document');
-
 	          if (document) {
 	            _this3.$store.dispatch('documentSelector/addDocument', {
 	              document: document
@@ -1847,18 +1766,14 @@ this.BX = this.BX || {};
 	    },
 	    getCurrentDocument: function getCurrentDocument() {
 	      var document = null;
-
 	      if (this.model.boundDocumentId > 0) {
 	        document = this.getDocumentById(this.model.boundDocumentId);
 	      }
-
 	      if (!document && this.model.selectedTemplateId > 0) {
 	        document = this.getStubDocumentByTemplate(this.model.selectedTemplateId);
 	      }
-
 	      if (!document) {
 	        var documents = this.model.documents;
-
 	        if (documents && documents[0]) {
 	          document = documents[0];
 	          this.$store.dispatch('documentSelector/setBoundDocumentId', {
@@ -1866,10 +1781,8 @@ this.BX = this.BX || {};
 	          });
 	        }
 	      }
-
 	      if (!document) {
 	        var templates = this.model.templates;
-
 	        if (templates && templates[0]) {
 	          document = this.getStubDocumentByTemplate(templates[0].id);
 	          this.$store.commit('documentSelector/setSelectedTemplateId', {
@@ -1877,17 +1790,14 @@ this.BX = this.BX || {};
 	          });
 	        }
 	      }
-
 	      return document;
 	    },
 	    getDocumentById: function getDocumentById(id) {
 	      var _iterator3 = _createForOfIteratorHelper(this.model.documents),
-	          _step3;
-
+	        _step3;
 	      try {
 	        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
 	          var document = _step3.value;
-
 	          if (document.id === id) {
 	            return document;
 	          }
@@ -1897,17 +1807,14 @@ this.BX = this.BX || {};
 	      } finally {
 	        _iterator3.f();
 	      }
-
 	      return null;
 	    },
 	    getTemplateById: function getTemplateById(id) {
 	      var _iterator4 = _createForOfIteratorHelper(this.model.templates),
-	          _step4;
-
+	        _step4;
 	      try {
 	        for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
 	          var template = _step4.value;
-
 	          if (template.id === id) {
 	            return template;
 	          }
@@ -1917,20 +1824,16 @@ this.BX = this.BX || {};
 	      } finally {
 	        _iterator4.f();
 	      }
-
 	      return null;
 	    },
 	    getStubDocumentByTemplate: function getStubDocumentByTemplate(templateId) {
 	      var template = this.getTemplateById(templateId);
-
 	      if (!template) {
 	        return null;
 	      }
-
 	      var paymentId = this.$root.$app.options.paymentId || 0;
 	      var title = null;
 	      var detailUrl = null;
-
 	      if (paymentId > 0) {
 	        title = main_core.Loc.getMessage('SALESCENTER_DOCUMENT_SELECTOR_BLOCK_DOCUMENT_NEW_SUFFIX', {
 	          '#TITLE#': template.title
@@ -1946,7 +1849,6 @@ this.BX = this.BX || {};
 	        });
 	        detailUrl = null;
 	      }
-
 	      return {
 	        id: 0,
 	        title: title,
@@ -2000,7 +1902,6 @@ this.BX = this.BX || {};
 	        status: salescenter_component_stageBlock.StatusTypes.complete
 	      }
 	    };
-
 	    if (this.$root.$app.options.hasOwnProperty('deliveryList')) {
 	      stages.delivery = {
 	        isHidden: this.$root.$app.options.templateMode === 'view' && parseInt(this.$root.$app.options.shipmentId) <= 0,
@@ -2010,7 +1911,6 @@ this.BX = this.BX || {};
 	        initialCollapseState: this.$root.$app.options.isDeliveryCollapsed ? this.$root.$app.options.isDeliveryCollapsed === 'Y' : this.$root.$app.options.deliveryList.isInstalled
 	      };
 	    }
-
 	    if (this.$root.$app.options.cashboxList.hasOwnProperty('items')) {
 	      stages.cashbox = {
 	        status: this.$root.$app.options.cashboxList.isSet ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.disabled,
@@ -2020,7 +1920,6 @@ this.BX = this.BX || {};
 	        initialCollapseState: this.$root.$app.options.isCashboxCollapsed ? this.$root.$app.options.isCashboxCollapsed === 'Y' : this.$root.$app.options.cashboxList.isSet
 	      };
 	    }
-
 	    if (this.$root.$app.options.isAutomationAvailable) {
 	      stages.automation = {
 	        status: salescenter_component_stageBlock.StatusTypes.complete,
@@ -2030,19 +1929,16 @@ this.BX = this.BX || {};
 	        initialCollapseState: this.$root.$app.options.isAutomationCollapsed ? this.$root.$app.options.isAutomationCollapsed === 'Y' : false
 	      };
 	    }
-
 	    if (this.$root.$app.options.hasOwnProperty('timeline')) {
 	      stages.timeline = {
 	        items: this.getTimelineCollection(this.$root.$app.options.timeline)
 	      };
 	    }
-
 	    if (this.$root.$app.hasOwnProperty('documentSelector')) {
 	      if (this.$root.$app.documentSelector.templateAddUrl) {
 	        stages.documentSelector.templateAddUrl = this.$root.$app.documentSelector.templateAddUrl;
 	      }
 	    }
-
 	    return {
 	      stages: stages
 	    };
@@ -2063,12 +1959,10 @@ this.BX = this.BX || {};
 	    },
 	    submitButtonLabel: function submitButtonLabel() {
 	      var _this$$root$$app;
-
 	      return this.editable && !((_this$$root$$app = this.$root.$app) !== null && _this$$root$$app !== void 0 && _this$$root$$app.compilation) ? main_core.Loc.getMessage('SALESCENTER_SEND') : main_core.Loc.getMessage('SALESCENTER_RESEND');
 	    },
 	    isFacebookForm: function isFacebookForm() {
 	      var _this$$root$$app2, _this$$root$$app3;
-
 	      return ((_this$$root$$app2 = this.$root.$app) === null || _this$$root$$app2 === void 0 ? void 0 : _this$$root$$app2.connector) === 'facebook' && ((_this$$root$$app3 = this.$root.$app) === null || _this$$root$$app3 === void 0 ? void 0 : _this$$root$$app3.isAllowedFacebookRegion);
 	    },
 	    isShowDocumentSelector: function isShowDocumentSelector() {
@@ -2149,7 +2043,6 @@ this.BX = this.BX || {};
 	    },
 	    onProductFormModeChange: function onProductFormModeChange() {
 	      var isCompilationMode = this.$store.getters['orderCreation/isCompilationMode'];
-
 	      if (isCompilationMode) {
 	        this.stages.delivery.status = salescenter_component_stageBlock.StatusTypes.disabled;
 	        this.stages.message.selectedMode = 'compilation';
@@ -2183,7 +2076,6 @@ this.BX = this.BX || {};
 	  },
 	  created: function created() {
 	    var _this = this;
-
 	    this.$root.$on('on-start-progress', function () {
 	      _this.startFade();
 	    });
@@ -2200,7 +2092,6 @@ this.BX = this.BX || {};
 	    },
 	    createPinner: function createPinner() {
 	      var buttonsPanel = this.$refs['buttonsPanel'];
-
 	      if (buttonsPanel) {
 	        this.$root.$el.parentNode.appendChild(buttonsPanel);
 	        new BX.UI.Pinner(buttonsPanel, {
@@ -2228,18 +2119,15 @@ this.BX = this.BX || {};
 	    wrapperStyle: function wrapperStyle() {
 	      var position = BX.pos(this.$root.$el);
 	      var offset = position.top + 20;
-
 	      if (this.$root.$nodes.footer) {
 	        offset += BX.pos(this.$root.$nodes.footer).height;
 	      }
-
 	      var buttonsPanel = this.$refs['buttonsPanel'];
-
 	      if (buttonsPanel) {
 	        offset += BX.pos(buttonsPanel).height;
-	      } //?auto
+	      }
 
-
+	      //?auto
 	      return {
 	        'minHeight': 'calc(100vh - ' + offset + 'px)'
 	      };
@@ -2254,7 +2142,6 @@ this.BX = this.BX || {};
 	  methods: {
 	    connect: function connect() {
 	      var _this = this;
-
 	      var loader = new BX.Loader({
 	        size: 200
 	      });
@@ -2265,14 +2152,12 @@ this.BX = this.BX || {};
 	      }).then(function () {
 	        BX.Salescenter.Manager.loadConfig().then(function (result) {
 	          loader.hide();
-
 	          if (result.isSiteExists) {
 	            _this.$root.$app.isSiteExists = result.isSiteExists;
 	            _this.$root.$app.isOrderPublicUrlExists = true;
 	            _this.$root.$app.orderPublicUrl = result.orderPublicUrl;
 	            _this.$root.$app.isOrderPublicUrlAvailable = result.isOrderPublicUrlAvailable;
 	          }
-
 	          _this.$emit('on-successfully-connected');
 	        });
 	      })["catch"](function () {
@@ -2316,14 +2201,10 @@ this.BX = this.BX || {};
 	};
 
 	function ownKeys$4(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$4(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$4(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$4(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-
 	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
 	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
-
-	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	var Chat = {
 	  mixins: [MixinTemplatesType, ComponentMixin],
 	  data: function data() {
@@ -2358,7 +2239,6 @@ this.BX = this.BX || {};
 	  },
 	  mounted: function mounted() {
 	    var _this = this;
-
 	    this.createLoader();
 	    this.$root.$app.fillPages().then(function () {
 	      if (_this.$root.$app.isWithOrdersMode) {
@@ -2366,17 +2246,13 @@ this.BX = this.BX || {};
 	      } else {
 	        _this.refreshPaymentsCount();
 	      }
-
 	      _this.openFirstPage();
 	    });
-
 	    if (this.$root.$app.isPaymentsLimitReached) {
 	      var paymentsLimitStartNode = this.$root.$nodes.paymentsLimit;
 	      var paymentsLimitNode = this.$refs['paymentsLimit'];
-
 	      var _iterator = _createForOfIteratorHelper$1(paymentsLimitStartNode.children),
-	          _step;
-
+	        _step;
 	      try {
 	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
 	          var node = _step.value;
@@ -2392,13 +2268,11 @@ this.BX = this.BX || {};
 	  methods: {
 	    getActions: function getActions() {
 	      var actions = [];
-
 	      if (this.currentPage) {
 	        actions = [{
 	          text: this.localize.SALESCENTER_RIGHT_ACTION_COPY_URL,
 	          onclick: this.copyUrl
 	        }];
-
 	        if (this.currentPage.landingId > 0) {
 	          actions = [].concat(babelHelpers.toConsumableArray(actions), [{
 	            text: this.localize.SALESCENTER_RIGHT_ACTION_HIDE,
@@ -2411,7 +2285,6 @@ this.BX = this.BX || {};
 	          }]);
 	        }
 	      }
-
 	      return [].concat(babelHelpers.toConsumableArray(actions), [{
 	        text: this.localize.SALESCENTER_RIGHT_ACTION_ADD,
 	        items: this.getAddPageActions()
@@ -2419,7 +2292,6 @@ this.BX = this.BX || {};
 	    },
 	    getAddPageActions: function getAddPageActions() {
 	      var _this2 = this;
-
 	      var isWebform = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 	      return [{
 	        text: this.localize.SALESCENTER_RIGHT_ACTION_ADD_SITE_B24,
@@ -2438,7 +2310,6 @@ this.BX = this.BX || {};
 	    openFirstPage: function openFirstPage() {
 	      this.isShowPayment = false;
 	      this.isShowPreview = true;
-
 	      if (this.$root.$app.isPaymentCreationAvailable) {
 	        this.showPaymentForm();
 	      } else if (this.pages && this.pages.length > 0) {
@@ -2453,14 +2324,11 @@ this.BX = this.BX || {};
 	            }
 	          }
 	        });
-
 	        if (!pageToOpen && firstWebformPage) {
 	          pageToOpen = firstWebformPage;
 	        }
-
 	        if (this.currentPageId !== pageToOpen.id) {
 	          this.onPageClick(pageToOpen);
-
 	          if (pageToOpen.isWebform) {
 	            this.isFormsOpen = true;
 	          } else {
@@ -2482,7 +2350,6 @@ this.BX = this.BX || {};
 	      this.isShowPayment = false;
 	      this.isShowPreview = true;
 	      this.setPageTitle(this.pageTitle);
-
 	      if (page.isFrameDenied !== true) {
 	        if (!this.showedPageIds.includes(page.id)) {
 	          this.startFrameCheckTimeout();
@@ -2510,11 +2377,9 @@ this.BX = this.BX || {};
 	      var target = _ref3.target;
 	      var isWebform = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      var menuId = 'salescenter-app-add-page-actions';
-
 	      if (isWebform) {
 	        menuId += '-forms';
 	      }
-
 	      BX.PopupMenu.show(menuId, target, this.getAddPageActions(isWebform), {
 	        offsetLeft: target.offsetWidth + 20,
 	        offsetTop: -target.offsetHeight - 15,
@@ -2530,15 +2395,12 @@ this.BX = this.BX || {};
 	    },
 	    addSite: function addSite() {
 	      var _this3 = this;
-
 	      var isWebform = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 	      salescenter_manager.Manager.addSitePage(isWebform).then(function (result) {
 	        var newPage = result.answer.result.page || false;
-
 	        _this3.$root.$app.fillPages().then(function () {
 	          if (newPage) {
 	            _this3.onPageClick(newPage);
-
 	            _this3.lastAddedPages.push(parseInt(newPage.id));
 	          } else {
 	            _this3.openFirstPage();
@@ -2565,7 +2427,6 @@ this.BX = this.BX || {};
 	    },
 	    hidePage: function hidePage() {
 	      var _this4 = this;
-
 	      if (this.currentPage) {
 	        this.$root.$app.hidePage(this.currentPage).then(function () {
 	          _this4.openFirstPage();
@@ -2578,25 +2439,20 @@ this.BX = this.BX || {};
 	    },
 	    showAddUrlPopup: function showAddUrlPopup(newPage) {
 	      var _this5 = this;
-
 	      if (!main_core.Type.isPlainObject(newPage)) {
 	        newPage = {};
 	      }
-
 	      salescenter_manager.Manager.addCustomPage(newPage).then(function (pageId) {
 	        if (!_this5.isShowPreview) {
 	          _this5.isShowPreview = false;
 	        }
-
 	        _this5.$root.$app.fillPages().then(function () {
 	          if (pageId && (!main_core.Type.isPlainObject(newPage) || !newPage.id)) {
 	            _this5.lastAddedPages.push(parseInt(pageId));
 	          }
-
 	          if (!pageId && newPage) {
 	            pageId = newPage.id;
 	          }
-
 	          if (pageId) {
 	            _this5.pages.forEach(function (page) {
 	              if (parseInt(page.id) === parseInt(pageId)) {
@@ -2616,27 +2472,22 @@ this.BX = this.BX || {};
 	      if (!this.isOrderPublicUrlAvailable) {
 	        return null;
 	      }
-
 	      if (this.$root.$app.options.mode === 'payment') {
 	        return this.localize.SALESCENTER_LEFT_PAYMENT_ADD_2;
 	      }
-
 	      return this.localize.SALESCENTER_LEFT_PAYMENT_AND_DELIVERY;
 	    },
 	    showPaymentForm: function showPaymentForm() {
 	      this.isShowPayment = true;
 	      this.isShowPreview = false;
-
 	      if (this.compilation) {
 	        return;
 	      }
-
 	      var title = this.getPaymentItemTitle() || this.localize.SALESCENTER_DEFAULT_TITLE;
 	      this.setPageTitle(title);
 	    },
 	    showOrdersList: function showOrdersList() {
 	      var _this6 = this;
-
 	      this.hideActionsPopup();
 	      salescenter_manager.Manager.showOrdersList({
 	        context: this.$root.$app.context,
@@ -2648,7 +2499,6 @@ this.BX = this.BX || {};
 	    },
 	    showPaymentsList: function showPaymentsList() {
 	      var _this7 = this;
-
 	      this.hideActionsPopup();
 	      salescenter_manager.Manager.showPaymentsList({
 	        context: this.$root.$app.context,
@@ -2660,7 +2510,6 @@ this.BX = this.BX || {};
 	    },
 	    showOrderAdd: function showOrderAdd() {
 	      var _this8 = this;
-
 	      this.hideActionsPopup();
 	      salescenter_manager.Manager.showOrderAdd({
 	        ownerId: this.$root.$app.ownerId,
@@ -2694,11 +2543,9 @@ this.BX = this.BX || {};
 	    send: function send(event) {
 	      var skipPublicMessage = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'n';
 	      var sendCompilationLinkToFacebook = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-
 	      if (!this.isAllowedSubmitButton) {
 	        return;
 	      }
-
 	      if (this.isShowPayment && !this.isShowStartInfo) {
 	        if (this.$store.getters['orderCreation/isCompilationMode']) {
 	          this.$root.$app.sendCompilation(event.target, sendCompilationLinkToFacebook);
@@ -2711,32 +2558,25 @@ this.BX = this.BX || {};
 	    },
 	    setPageTitle: function setPageTitle() {
 	      var title = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-
 	      if (!title) {
 	        return;
 	      }
-
 	      if (this.$root.$nodes.title) {
 	        this.$root.$nodes.title.innerText = title;
 	      }
 	    },
 	    onFrameError: function onFrameError() {
 	      clearTimeout(this.frameCheckLongTimeout);
-
 	      if (this.showedPageIds.includes(this.currentPage.id)) {
 	        this.loadedPageIds.push(this.currentPage.id);
 	      }
-
 	      this.errorPageIds.push(this.currentPage.id);
 	    },
 	    onFrameLoad: function onFrameLoad(pageId) {
 	      var _this9 = this;
-
 	      clearTimeout(this.frameCheckLongTimeout);
-
 	      if (this.showedPageIds.includes(pageId)) {
 	        this.loadedPageIds.push(pageId);
-
 	        if (this.currentPage && this.currentPage.id === pageId) {
 	          if (this.frameCheckShortTimeout && !this.currentPage.landingId) {
 	            this.onFrameError();
@@ -2747,31 +2587,28 @@ this.BX = this.BX || {};
 	          }
 	        }
 	      }
-
 	      if (this.frameCheckShortTimeout && this.currentPage && this.currentPage.id === pageId && !this.currentPage.landingId) {
 	        this.onFrameError();
 	      }
 	    },
 	    onSuccessfullyConnected: function onSuccessfullyConnected() {
 	      var _this10 = this;
-
 	      this.$root.$app.fillPages().then(function () {
 	        _this10.openFirstPage();
 	      });
 	    },
 	    startFrameCheckTimeout: function startFrameCheckTimeout() {
 	      var _this11 = this;
-
 	      // this is a workaround for denied through X-Frame-Options sources
 	      if (this.frameCheckShortTimeout) {
 	        clearTimeout(this.frameCheckShortTimeout);
 	        this.frameCheckShortTimeout = false;
 	      }
-
 	      this.frameCheckShortTimeout = setTimeout(function () {
 	        _this11.frameCheckShortTimeout = false;
-	      }, 500); // to show error on long loading
+	      }, 500);
 
+	      // to show error on long loading
 	      clearTimeout(this.frameCheckLongTimeout);
 	      this.frameCheckLongTimeout = setTimeout(function () {
 	        if (_this11.currentPage && _this11.showedPageIds.includes(_this11.currentPage.id) && !_this11.loadedPageIds.includes(_this11.currentPage.id)) {
@@ -2789,12 +2626,10 @@ this.BX = this.BX || {};
 	          return page.url;
 	        }
 	      }
-
 	      return null;
 	    },
 	    refreshOrdersCount: function refreshOrdersCount() {
 	      var _this12 = this;
-
 	      this.$root.$app.getOrdersCount().then(function (result) {
 	        _this12.ordersCount = result.answer.result || null;
 	      })["catch"](function () {
@@ -2803,7 +2638,6 @@ this.BX = this.BX || {};
 	    },
 	    refreshPaymentsCount: function refreshPaymentsCount() {
 	      var _this13 = this;
-
 	      this.$root.$app.getPaymentsCount().then(function (result) {
 	        _this13.paymentsCount = result.answer.result || null;
 	      })["catch"](function () {
@@ -2820,11 +2654,9 @@ this.BX = this.BX || {};
 	          textCenter: true,
 	          text: BX.util.htmlspecialchars(errorMessages)
 	        };
-
 	        if (this.$refs.errorBlock.innerHTML.length === 0) {
 	          params.animated = true;
 	        }
-
 	        var alert = new BX.UI.Alert(params);
 	        this.$refs.errorBlock.innerHTML = '';
 	        this.$refs.errorBlock.appendChild(alert.getContainer());
@@ -2840,7 +2672,6 @@ this.BX = this.BX || {};
 	    },
 	    saveMenuItem: function saveMenuItem(event) {
 	      var _this14 = this;
-
 	      var pageId = this.editedPageId;
 	      var name = event.target.value;
 	      var oldName;
@@ -2849,7 +2680,6 @@ this.BX = this.BX || {};
 	          oldName = page.name;
 	        }
 	      });
-
 	      if (pageId > 0 && oldName && name !== oldName && name.length > 0) {
 	        salescenter_manager.Manager.addPage({
 	          id: pageId,
@@ -2860,7 +2690,6 @@ this.BX = this.BX || {};
 	            if (_this14.editedPageId === _this14.currentPageId) {
 	              _this14.setPageTitle(name);
 	            }
-
 	            _this14.editedPageId = null;
 	          });
 	        });
@@ -2880,33 +2709,27 @@ this.BX = this.BX || {};
 	      function config() {
 	        return _config.apply(this, arguments);
 	      }
-
 	      config.toString = function () {
 	        return _config.toString();
 	      };
-
 	      return config;
 	    }(function () {
 	      return config;
 	    }),
 	    currentPage: function currentPage() {
 	      var _this15 = this;
-
 	      if (this.currentPageId > 0) {
 	        var pages = this.application.pages.filter(function (page) {
 	          return page.id === _this15.currentPageId;
 	        });
-
 	        if (pages.length > 0) {
 	          return pages[0];
 	        }
 	      }
-
 	      return null;
 	    },
 	    sendButtonLabel: function sendButtonLabel() {
 	      var _this$$root$$app;
-
 	      return this.editable && !((_this$$root$$app = this.$root.$app) !== null && _this$$root$$app !== void 0 && _this$$root$$app.compilation) ? main_core.Loc.getMessage('SALESCENTER_SEND') : main_core.Loc.getMessage('SALESCENTER_RESEND');
 	    },
 	    pagesSubmenuHeight: function pagesSubmenuHeight() {
@@ -2935,7 +2758,6 @@ this.BX = this.BX || {};
 	          return true;
 	        }
 	      }
-
 	      return false;
 	    },
 	    isShowLoader: function isShowLoader() {
@@ -2943,20 +2765,17 @@ this.BX = this.BX || {};
 	    },
 	    isShowStartInfo: function isShowStartInfo() {
 	      var res = false;
-
 	      if (this.isShowPreview) {
 	        res = !this.pages || this.pages.length <= 0;
 	      } else if (this.isShowPayment) {
 	        res = !this.isOrderPublicUrlAvailable;
 	      }
-
 	      return res;
 	    },
 	    lastModified: function lastModified() {
 	      if (this.currentPage && this.currentPage.modifiedAgo) {
 	        return this.localize.SALESCENTER_MODIFIED.replace('#AGO#', this.currentPage.modifiedAgo);
 	      }
-
 	      return false;
 	    },
 	    localize: function localize() {
@@ -2969,15 +2788,12 @@ this.BX = this.BX || {};
 	      if (this.$root.$app.disableSendButton) {
 	        return false;
 	      }
-
 	      if (this.isShowPreview && this.currentPage && !this.currentPage.isActive) {
 	        return false;
 	      }
-
 	      if (this.isShowPayment) {
 	        return this.$store.getters['orderCreation/isAllowedSubmit'];
 	      }
-
 	      return this.currentPage;
 	    },
 	    showSubmitCompilationLinkToFacebookButton: function showSubmitCompilationLinkToFacebookButton() {
@@ -3002,10 +2818,8 @@ this.BX = this.BX || {};
 	};
 
 	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
 	function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
-
-	function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	var TYPE_PHONE = 'phone';
 	var TYPE_SENDER = 'sender';
 	var SmsMessage = {
@@ -3112,7 +2926,6 @@ this.BX = this.BX || {};
 	    },
 	    currentSender: function currentSender() {
 	      var _this = this;
-
 	      return this.senders.find(function (sender) {
 	        return sender.code === _this.currentSenderCode;
 	      });
@@ -3122,29 +2935,23 @@ this.BX = this.BX || {};
 	    },
 	    errors: function errors() {
 	      var _this2 = this;
-
 	      var result = [];
 	      var bitrix24ConnectUrlError;
-
 	      if (!this.currentSender) {
 	        var _iterator = _createForOfIteratorHelper$2(this.senders),
-	            _step;
-
+	          _step;
 	        try {
 	          for (_iterator.s(); !(_step = _iterator.n()).done;) {
 	            var sender = _step.value;
-
 	            if (!salescenter_lib.SenderConfig.needConfigure(sender)) {
 	              continue;
 	            }
-
 	            result.push({
 	              text: this.getConnectionErrorText(sender),
 	              fixer: salescenter_lib.SenderConfig.openSliderFreeMessages(sender.connectUrl),
 	              fixText: this.getConnectionErrorFixText(sender),
 	              type: TYPE_SENDER
 	            });
-
 	            if (sender.code === salescenter_lib.SenderConfig.BITRIX24) {
 	              bitrix24ConnectUrlError = sender.connectUrl;
 	            }
@@ -3175,14 +2982,12 @@ this.BX = this.BX || {};
 	              fixText: this.getConnectionErrorFixText(this.currentSender),
 	              type: TYPE_SENDER
 	            });
-
 	            if (this.currentSender.code === salescenter_lib.SenderConfig.BITRIX24) {
 	              bitrix24ConnectUrlError = this.currentSender.connectUrl;
 	            }
 	          }
 	        }
 	      }
-
 	      if (!this.contactPhone) {
 	        if (this.contactEditorUrl.length > 0) {
 	          result.push({
@@ -3198,7 +3003,6 @@ this.BX = this.BX || {};
 	          });
 	        }
 	      }
-
 	      if (this.pushedToUseBitrix24Notifications === 'N' && bitrix24ConnectUrlError) {
 	        this.getFixer(bitrix24ConnectUrlError)().then(function () {
 	          return _this2.handleErrorFix();
@@ -3206,7 +3010,6 @@ this.BX = this.BX || {};
 	        BX.userOptions.save('salescenter', 'payment_sender_options', 'pushed_to_use_bitrix24_notifications', 'Y');
 	        this.pushedToUseBitrix24Notifications = 'Y';
 	      }
-
 	      return result;
 	    }
 	  },
@@ -3248,7 +3051,6 @@ this.BX = this.BX || {};
 	            }
 	          });
 	        }
-
 	        if (babelHelpers["typeof"](fixUrl) === 'object' && fixUrl !== null) {
 	          if (fixUrl.type === 'ui_helper') {
 	            return BX.loadExt('ui.info-helper').then(function () {
@@ -3256,7 +3058,6 @@ this.BX = this.BX || {};
 	            });
 	          }
 	        }
-
 	        return Promise.resolve();
 	      };
 	    },
@@ -3275,20 +3076,17 @@ this.BX = this.BX || {};
 	    },
 	    handleErrorFix: function handleErrorFix() {
 	      var _this3 = this;
-
 	      main_core.ajax.runComponentAction("bitrix:salescenter.app", "refreshSenderSettings", {
 	        mode: "class"
 	      }).then(function (resolve) {
 	        if (BX.type.isObject(resolve.data) && Object.values(resolve.data).length > 0) {
 	          _this3.initialize(resolve.data.currentSenderCode, resolve.data.senders, resolve.data.pushedToUseBitrix24Notifications);
-
 	          _this3.smsSenderListComponentKey += 1;
 	        }
 	      });
 	    },
 	    handlePhoneErrorFix: function handlePhoneErrorFix() {
 	      var _this4 = this;
-
 	      main_core.ajax.runComponentAction("bitrix:salescenter.app", "refreshContactPhone", {
 	        mode: "class",
 	        data: {
@@ -3306,9 +3104,7 @@ this.BX = this.BX || {};
 	              })
 	            });
 	          }
-
 	          _this4.contactPhone = resolve.data.contactPhone;
-
 	          _this4.onConfigureContactPhone();
 	        }
 	      });
@@ -3328,7 +3124,7 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  //language=Vue
-	  template: "\n\t\t<stage-block-item\t\t\t\n\t\t\t:config=\"configForBlock\"\n\t\t\t:class=\"statusClassMixin\"\n\t\t\tv-on:on-item-hint=\"onItemHint\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>{{title}}</template>\n\t\t\t<template\n\t\t\t\tv-if=\"showHint\"\n\t\t\t\tv-slot:block-hint-title\n\t\t\t>\n\t\t\t\t".concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS_V3'), "\n\t\t\t</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\" class=\"salescenter-app-payment-by-sms-item-container-offtop\">\n\t\t\t\t\t<sms-error-block\n\t\t\t\t\t\tv-for=\"error in errors\"\n\t\t\t\t\t\tv-on:on-configure=\"hendleSmsErrorBlock($event)\"\n\t\t\t\t\t\t:error=\"error\"\n\t\t\t\t\t>\n\t\t\t\t\t</sms-error-block>\n\t\t\t\t\t\n\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms\">\n\t\t\t\t\t\t<sms-user-avatar-block :manager=\"manager\"/>\n\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content\">\n\t\t\t\t\t\t\t<div v-if=\"currentSenderCode === 'bitrix24'\" class=\"salescenter-app-payment-by-sms-item-container-sms-content\">\n\t\t\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content-message\">\n\t\t\t\t\t\t\t\t\t<div contenteditable=\"false\" class=\"salescenter-app-payment-by-sms-item-container-sms-content-message-text\">\n\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_TEMPLATE_BASED_MESSAGE_WILL_BE_SENT'), "\n\t\t\t\t\t\t\t\t\t\t<a @click.stop.prevent=\"openBitrix24NotificationsHelp(event)\" href=\"#\">\n\t\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_MORE_DETAILS'), "\n\t\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<sms-message-editor-block v-else :editor=\"editor\" :selectedMode=\"selectedMode\"/>\n\t\t\t\t\t\t\t<template v-if=\"currentSenderCode === 'bitrix24'\">\n\t\t\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content-info\">\n\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_VIA_BITRIX24'), "\n\t\t\t\t\t\t\t\t\t<span @click=\"openBitrix24NotificationsWorks(event)\">\n\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_PRODUCT_SET_BLOCK_TITLE_SHORT'), "\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else-if=\"currentSenderCode === 'sms_provider'\">\n\t\t\t\t\t\t\t\t<sms-sender-list-block\n\t\t\t\t\t\t\t\t\t:key=\"smsSenderListComponentKey\"\n\t\t\t\t\t\t\t\t\t:list=\"currentSender.smsSenders\"\n\t\t\t\t\t\t\t\t\t:initSelected=\"selectedSmsSender\"\n\t\t\t\t\t\t\t\t\t:settingUrl=\"currentSender.connectUrl\"\n\t\t\t\t\t\t\t\t\tv-on:on-configure=\"handleErrorFix\"\n\t\t\t\t\t\t\t\t\tv-on:on-selected=\"handleOnSmsSenderSelected\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<template v-slot:sms-sender-list-text-send-from>\n\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER'), "\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</sms-sender-list-block>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
+	  template: "\n\t\t<stage-block-item\t\t\t\n\t\t\t:config=\"configForBlock\"\n\t\t\t:class=\"statusClassMixin\"\n\t\t\tv-on:on-item-hint=\"onItemHint\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>{{title}}</template>\n\t\t\t<template\n\t\t\t\tv-if=\"showHint\"\n\t\t\t\tv-slot:block-hint-title\n\t\t\t>\n\t\t\t\t".concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS_V3'), "\n\t\t\t</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\" class=\"salescenter-app-payment-by-sms-item-container-offtop\">\n\t\t\t\t\t<sms-error-block\n\t\t\t\t\t\tv-for=\"(error, index) in errors\"\n\t\t\t\t\t\tv-bind:key=\"index\"\n\t\t\t\t\t\tv-on:on-configure=\"hendleSmsErrorBlock($event)\"\n\t\t\t\t\t\t:error=\"error\"\n\t\t\t\t\t>\n\t\t\t\t\t</sms-error-block>\n\t\t\t\t\t\n\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms\">\n\t\t\t\t\t\t<sms-user-avatar-block :manager=\"manager\"/>\n\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content\">\n\t\t\t\t\t\t\t<div v-if=\"currentSenderCode === 'bitrix24'\" class=\"salescenter-app-payment-by-sms-item-container-sms-content\">\n\t\t\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content-message\">\n\t\t\t\t\t\t\t\t\t<div contenteditable=\"false\" class=\"salescenter-app-payment-by-sms-item-container-sms-content-message-text\">\n\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_TEMPLATE_BASED_MESSAGE_WILL_BE_SENT'), "\n\t\t\t\t\t\t\t\t\t\t<a @click.stop.prevent=\"openBitrix24NotificationsHelp(event)\" href=\"#\">\n\t\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_MORE_DETAILS'), "\n\t\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<sms-message-editor-block v-else :editor=\"editor\" :selectedMode=\"selectedMode\"/>\n\t\t\t\t\t\t\t<template v-if=\"currentSenderCode === 'bitrix24'\">\n\t\t\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content-info\">\n\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_VIA_BITRIX24'), "\n\t\t\t\t\t\t\t\t\t<span @click=\"openBitrix24NotificationsWorks(event)\">\n\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_PRODUCT_SET_BLOCK_TITLE_SHORT'), "\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else-if=\"currentSenderCode === 'sms_provider'\">\n\t\t\t\t\t\t\t\t<sms-sender-list-block\n\t\t\t\t\t\t\t\t\t:key=\"smsSenderListComponentKey\"\n\t\t\t\t\t\t\t\t\t:list=\"currentSender.smsSenders\"\n\t\t\t\t\t\t\t\t\t:initSelected=\"selectedSmsSender\"\n\t\t\t\t\t\t\t\t\t:settingUrl=\"currentSender.connectUrl\"\n\t\t\t\t\t\t\t\t\tv-on:on-configure=\"handleErrorFix\"\n\t\t\t\t\t\t\t\t\tv-on:on-selected=\"handleOnSmsSenderSelected\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<template v-slot:sms-sender-list-text-send-from>\n\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER'), "\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</sms-sender-list-block>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
 	};
 
 	var StageBlocksList$1 = {
@@ -3388,7 +3184,6 @@ this.BX = this.BX || {};
 	      },
 	      automation: {}
 	    };
-
 	    if (this.$root.$app.options.cashboxList.hasOwnProperty('items')) {
 	      stages.cashbox = {
 	        status: this.$root.$app.options.cashboxList.isSet ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.disabled,
@@ -3398,7 +3193,6 @@ this.BX = this.BX || {};
 	        initialCollapseState: this.$root.$app.options.isCashboxCollapsed ? this.$root.$app.options.isCashboxCollapsed === 'Y' : this.$root.$app.options.cashboxList.isSet
 	      };
 	    }
-
 	    if (this.$root.$app.options.isAutomationAvailable) {
 	      stages.automation = {
 	        status: salescenter_component_stageBlock.StatusTypes.complete,
@@ -3408,17 +3202,14 @@ this.BX = this.BX || {};
 	        initialCollapseState: this.$root.$app.options.isAutomationCollapsed ? this.$root.$app.options.isAutomationCollapsed === 'Y' : false
 	      };
 	    }
-
 	    if (this.$root.$app.options.hasOwnProperty('timeline')) {
 	      stages.timeline = {
 	        items: this.getTimelineCollection(this.$root.$app.options.timeline)
 	      };
 	    }
-
 	    if (this.$root.$app.options.paySystemList.groups) {
 	      stages.paysystem.groups = this.getTileGroupsCollection(this.$root.$app.options.paySystemList.groups, stages.paysystem.tiles);
 	    }
-
 	    return {
 	      stages: stages
 	    };
@@ -3461,7 +3252,6 @@ this.BX = this.BX || {};
 	    },
 	    getTileGroupsCollection: function getTileGroupsCollection(groups, tiles) {
 	      var ret = [];
-
 	      if (groups instanceof Array) {
 	        Object.values(groups).forEach(function (item) {
 	          var group = new Tile.Group(item);
@@ -3469,7 +3259,6 @@ this.BX = this.BX || {};
 	          ret.push(group);
 	        });
 	      }
-
 	      return ret;
 	    },
 	    getTitleItems: function getTitleItems(items) {
@@ -3529,7 +3318,6 @@ this.BX = this.BX || {};
 	    },
 	    onProductFormModeChange: function onProductFormModeChange() {
 	      var isCompilationMode = this.$store.getters['orderCreation/isCompilationMode'];
-
 	      if (isCompilationMode) {
 	        this.stages.delivery.status = salescenter_component_stageBlock.StatusTypes.disabled;
 	        this.stages.message.selectedMode = 'compilation';
@@ -3583,11 +3371,14 @@ this.BX = this.BX || {};
 	        selectedSmsSender: this.$root.$app.sendingMethodDesc.provider,
 	        manager: this.$root.$app.options.entityResponsible,
 	        phone: this.$root.$app.options.contactPhone,
+	        ownerId: this.$root.$app.options.ownerId,
+	        ownerTypeId: this.$root.$app.options.ownerTypeId,
 	        contactEditorUrl: this.$root.$app.options.contactEditorUrl,
 	        titleTemplate: this.$root.$app.sendingMethodDesc.sent ? main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2_PAST_TIME') : main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2'),
 	        showHint: this.$root.$app.options.templateMode !== 'view',
 	        editorTemplate: this.$root.$app.sendingMethodDesc.text,
-	        editorUrl: this.$root.$app.orderPublicUrl
+	        editorUrl: this.$root.$app.orderPublicUrl,
+	        selectedMode: 'payment'
 	      },
 	      product: {
 	        status: this.$root.$app.options.basket && this.$root.$app.options.basket.length > 0 ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.current,
@@ -3607,7 +3398,6 @@ this.BX = this.BX || {};
 	        status: salescenter_component_stageBlock.StatusTypes.complete
 	      }
 	    };
-
 	    if (this.$root.$app.options.cashboxList.hasOwnProperty('items')) {
 	      stages.cashbox = {
 	        status: this.$root.$app.options.cashboxList.isSet ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.disabled,
@@ -3617,7 +3407,6 @@ this.BX = this.BX || {};
 	        initialCollapseState: this.$root.$app.options.isCashboxCollapsed ? this.$root.$app.options.isCashboxCollapsed === 'Y' : this.$root.$app.options.cashboxList.isSet
 	      };
 	    }
-
 	    if (this.$root.$app.options.isAutomationAvailable) {
 	      stages.automation = {
 	        status: salescenter_component_stageBlock.StatusTypes.complete,
@@ -3626,19 +3415,16 @@ this.BX = this.BX || {};
 	        initialCollapseState: this.$root.$app.options.isAutomationCollapsed ? this.$root.$app.options.isAutomationCollapsed === 'Y' : false
 	      };
 	    }
-
 	    if (this.$root.$app.options.hasOwnProperty('timeline')) {
 	      stages.timeline = {
 	        items: this.getTimelineCollection(this.$root.$app.options.timeline)
 	      };
 	    }
-
 	    if (this.$root.$app.hasOwnProperty('documentSelector')) {
 	      if (this.$root.$app.documentSelector.templateAddUrl) {
 	        stages.documentSelector.templateAddUrl = this.$root.$app.documentSelector.templateAddUrl;
 	      }
 	    }
-
 	    return {
 	      stages: stages
 	    };
@@ -3733,7 +3519,7 @@ this.BX = this.BX || {};
 	  beforeUpdate: function beforeUpdate() {
 	    this.initCounter();
 	  },
-	  template: "\n\t\t<div>\n\t\t\t<sms-message-block\n\t\t\t\t@stage-block-sms-send-on-change-provider=\"changeProvider\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.message.status\"\n\t\t\t\t:initSenders=\"stages.message.initSenders\"\n\t\t\t\t:initCurrentSenderCode=\"stages.message.initCurrentSenderCode\"\n\t\t\t\t:initPushedToUseBitrix24Notifications=\"stages.message.initPushedToUseBitrix24Notifications\"\n\t\t\t\t:selectedSmsSender=\"stages.message.selectedSmsSender\"\n\t\t\t\t:manager=\"stages.message.manager\"\n\t\t\t\t:phone=\"stages.message.phone\"\n\t\t\t\t:contactEditorUrl=\"stages.message.contactEditorUrl\"\n\t\t\t\t:titleTemplate=\"stages.message.titleTemplate\"\n\t\t\t\t:showHint=\"stages.message.showHint\"\n\t\t\t\t:editorTemplate=\"stages.message.editorTemplate\"\n\t\t\t\t:editorUrl=\"stages.message.editorUrl\"\n\t\t\t/>\n\t\t\t<product-block\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.product.status\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t/>\n\t\t\t<paysystem-block\n\t\t\t\tv-if=\"editable\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.paysystem.status\"\n\t\t\t\t:tiles=\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\"stages.paysystem.installed\"\n\t\t\t\t:titleItems=\"stages.paysystem.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.paysystem.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<cashbox-block\n\t\t\t\tv-if=\"editable && hasStageCashBox\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.cashbox.status\"\n\t\t\t\t:tiles=\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\"stages.cashbox.installed\"\n\t\t\t\t:titleItems=\"stages.cashbox.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.cashbox.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<document-selector-block\n\t\t\t\tv-if=\"isShowDocumentSelector\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:templateAddUrl=\"stages.documentSelector.templateAddUrl\"\n\t\t\t/>\n\t\t\t<automation-block\n\t\t\t\tv-if=\"editable && hasStageAutomation\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.automation.status\"\n\t\t\t\t:stageOnOrderPaid=\"stages.automation.stageOnOrderPaid\"\n\t\t\t\t:items=\"stages.automation.items\"\n\t\t\t\t:initialCollapseState=\"stages.automation.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<send-block\n\t\t\t\t@on-submit=\"onSend\"\n\t\t\t\t:buttonEnabled=\"sendAllowed\"\n\t\t\t\t:showWhatClientSeesControl=\"!editable\"\n\t\t\t\t:buttonLabel=\"submitButtonLabel\"\n\t\t\t/>\n\t\t\t<timeline-block\n\t\t\t\tv-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems=\"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div>\n\t\t\t<sms-message-block\n\t\t\t\t@stage-block-sms-send-on-change-provider=\"changeProvider\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.message.status\"\n\t\t\t\t:initSenders=\"stages.message.initSenders\"\n\t\t\t\t:initCurrentSenderCode=\"stages.message.initCurrentSenderCode\"\n\t\t\t\t:initPushedToUseBitrix24Notifications=\"stages.message.initPushedToUseBitrix24Notifications\"\n\t\t\t\t:selectedSmsSender=\"stages.message.selectedSmsSender\"\n\t\t\t\t:manager=\"stages.message.manager\"\n\t\t\t\t:phone=\"stages.message.phone\"\n\t\t\t\t:contactEditorUrl=\"stages.message.contactEditorUrl\"\n\t\t\t\t:ownerId=\"stages.message.ownerId\"\n\t\t\t\t:ownerTypeId=\"stages.message.ownerTypeId\"\n\t\t\t\t:titleTemplate=\"stages.message.titleTemplate\"\n\t\t\t\t:showHint=\"stages.message.showHint\"\n\t\t\t\t:editorTemplate=\"stages.message.editorTemplate\"\n\t\t\t\t:editorUrl=\"stages.message.editorUrl\"\n\t\t\t\t:selectedMode=\"stages.message.selectedMode\"\n\t\t\t/>\n\t\t\t<product-block\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.product.status\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t/>\n\t\t\t<paysystem-block\n\t\t\t\tv-if=\"editable\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.paysystem.status\"\n\t\t\t\t:tiles=\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\"stages.paysystem.installed\"\n\t\t\t\t:titleItems=\"stages.paysystem.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.paysystem.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<cashbox-block\n\t\t\t\tv-if=\"editable && hasStageCashBox\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.cashbox.status\"\n\t\t\t\t:tiles=\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\"stages.cashbox.installed\"\n\t\t\t\t:titleItems=\"stages.cashbox.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.cashbox.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<document-selector-block\n\t\t\t\tv-if=\"isShowDocumentSelector\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:templateAddUrl=\"stages.documentSelector.templateAddUrl\"\n\t\t\t/>\n\t\t\t<automation-block\n\t\t\t\tv-if=\"editable && hasStageAutomation\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.automation.status\"\n\t\t\t\t:stageOnOrderPaid=\"stages.automation.stageOnOrderPaid\"\n\t\t\t\t:items=\"stages.automation.items\"\n\t\t\t\t:initialCollapseState=\"stages.automation.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<send-block\n\t\t\t\t@on-submit=\"onSend\"\n\t\t\t\t:buttonEnabled=\"sendAllowed\"\n\t\t\t\t:showWhatClientSeesControl=\"!editable\"\n\t\t\t\t:buttonLabel=\"submitButtonLabel\"\n\t\t\t/>\n\t\t\t<timeline-block\n\t\t\t\tv-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems=\"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
 	};
 
 	var Send$1 = {
@@ -3785,7 +3571,6 @@ this.BX = this.BX || {};
 	      },
 	      automation: {}
 	    };
-
 	    if (this.$root.$app.options.isAutomationAvailable) {
 	      stages.automation = {
 	        status: salescenter_component_stageBlock.StatusTypes.complete,
@@ -3794,7 +3579,6 @@ this.BX = this.BX || {};
 	        initialCollapseState: this.$root.$app.options.isAutomationCollapsed ? this.$root.$app.options.isAutomationCollapsed === 'Y' : false
 	      };
 	    }
-
 	    return {
 	      stages: stages
 	    };
@@ -3871,14 +3655,14 @@ this.BX = this.BX || {};
 	};
 
 	function ownKeys$5(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$5(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$5(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$5(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var Deal = {
 	  mixins: [MixinTemplatesType, ComponentMixin],
 	  data: function data() {
 	    return {
 	      activeMenuItem: this.$root.$app.options.mode,
-	      isLoading: false
+	      isLoading: false,
+	      ModeDictionary: ModeDictionary
 	    };
 	  },
 	  components: {
@@ -3892,7 +3676,6 @@ this.BX = this.BX || {};
 	      if (this.isLoading || !this.editable) {
 	        return;
 	      }
-
 	      this.isLoading = true;
 	      this.activeMenuItem = form;
 	      this.$emit('on-reload', {
@@ -3902,6 +3685,7 @@ this.BX = this.BX || {};
 	        ownerId: this.$root.$app.options.ownerId,
 	        templateMode: 'create',
 	        mode: this.activeMenuItem,
+	        showModeList: this.$root.$app.options.showModeList,
 	        initialMode: this.$root.$app.options.initialMode
 	      });
 	    },
@@ -3915,7 +3699,6 @@ this.BX = this.BX || {};
 	      if (!this.isAllowedPaymentDeliverySubmitButton) {
 	        return;
 	      }
-
 	      if (this.$store.getters['orderCreation/isCompilationMode']) {
 	        this.$root.$app.sendCompilation(event.target);
 	      } else if (this.editable) {
@@ -3928,7 +3711,6 @@ this.BX = this.BX || {};
 	      if (!this.isAllowedDeliverySubmitButton) {
 	        return;
 	      }
-
 	      this.$root.$app.sendShipment(event.target);
 	    },
 	    // region menu item handlers
@@ -3941,11 +3723,10 @@ this.BX = this.BX || {};
 	      BX.Salescenter.Manager.openFeedbackPayOrderForm(event);
 	    },
 	    howItWorks: function howItWorks(event) {
-	      if (this.mode === 'payment') {
+	      if (this.mode === ModeDictionary.payment) {
 	        BX.Salescenter.Manager.openHowPaySmartInvoiceWorks(event);
 	        return;
 	      }
-
 	      BX.Salescenter.Manager.openHowPayDealWorks(event);
 	    },
 	    openIntegrationWindow: function openIntegrationWindow(event) {
@@ -3956,13 +3737,11 @@ this.BX = this.BX || {};
 	      var sender = senders.filter(function (item) {
 	        return item.code === salescenter_lib.SenderConfig.BITRIX24;
 	      });
-
 	      if (sender.length > 0) {
 	        var fixed = salescenter_lib.SenderConfig.openSliderFreeMessages(sender[0].connectUrl);
 	        fixed().then();
 	      }
 	    } // endregion
-
 	  },
 	  computed: _objectSpread$5({
 	    mode: function mode() {
@@ -3979,45 +3758,39 @@ this.BX = this.BX || {};
 	      var sender = senders.filter(function (item) {
 	        return item.code === salescenter_lib.SenderConfig.BITRIX24;
 	      });
-
 	      if (sender.length > 0) {
 	        return salescenter_lib.SenderConfig.needConfigure(sender[0]);
 	      }
-
 	      return false;
 	    },
 	    isOnlyDeliveryItemVisible: function isOnlyDeliveryItemVisible() {
-	      return this.$root.$app.options.hasOwnProperty('deliveryList') && this.$root.$app.options.deliveryList.hasOwnProperty('hasInstallable') && this.$root.$app.options.deliveryList.hasInstallable;
+	      return this.initialMode === ModeDictionary.delivery && this.$root.$app.options.hasOwnProperty('deliveryList') && this.$root.$app.options.deliveryList.hasOwnProperty('hasInstallable') && this.$root.$app.options.deliveryList.hasInstallable;
+	    },
+	    isPaymentItemVisible: function isPaymentItemVisible() {
+	      return this.initialMode === ModeDictionary.payment || this.initialMode === ModeDictionary.paymentDelivery;
 	    },
 	    isAllowedPaymentDeliverySubmitButton: function isAllowedPaymentDeliverySubmitButton() {
 	      var _this = this;
-
 	      if (!this.$root.$app.hasClientContactInfo()) {
 	        return false;
 	      }
-
 	      var senders = this.$root.$app.options.senders;
 	      var filteredSenders = senders.filter(function (sender) {
 	        return sender.code === _this.$root.$app.options.currentSenderCode && sender.isConnected;
 	      });
-
 	      if (filteredSenders.length === 0) {
 	        return false;
 	      }
-
 	      return this.$store.getters['orderCreation/isAllowedSubmit'];
 	    },
 	    isAllowedDeliverySubmitButton: function isAllowedDeliverySubmitButton() {
 	      var deliveryId = this.$store.getters['orderCreation/getDeliveryId'];
-
 	      if (!deliveryId) {
 	        return false;
 	      }
-
 	      if (!this.$store.getters['orderCreation/isAllowedSubmit']) {
 	        return false;
 	      }
-
 	      return deliveryId != this.$root.$app.options.emptyDeliveryServiceId;
 	    },
 	    isSuggestScenarioMenuItemVisible: function isSuggestScenarioMenuItemVisible() {
@@ -4026,17 +3799,18 @@ this.BX = this.BX || {};
 	    isRequestIntegrationMenuItemVisible: function isRequestIntegrationMenuItemVisible() {
 	      return this.$root.$app.options.isIntegrationButtonVisible;
 	    },
+	    isModeListVisible: function isModeListVisible() {
+	      var _this$$root$$app$opti;
+	      return (_this$$root$$app$opti = this.$root.$app.options.showModeList) !== null && _this$$root$$app$opti !== void 0 ? _this$$root$$app$opti : true;
+	    },
 	    needShowStoreConnection: function needShowStoreConnection() {
-	      return !this.isOrderPublicUrlAvailable && this.mode !== 'delivery';
+	      return !this.isOrderPublicUrlAvailable && this.mode !== ModeDictionary.delivery;
 	    },
 	    sendPaymentDeliveryFormButtonText: function sendPaymentDeliveryFormButtonText() {
 	      return this.editable ? main_core.Loc.getMessage('SALESCENTER_SEND') : main_core.Loc.getMessage('SALESCENTER_RESEND');
 	    },
 	    title: function title() {
 	      return this.$root.$app.options.title;
-	    },
-	    getTitleForPaymentDeliveryMenuItem: function getTitleForPaymentDeliveryMenuItem() {
-	      return main_core.Loc.getMessage('SALESCENTER_LEFT_TAKE_PAYMENT_AND_CREATE_SHIPMENT');
 	    },
 	    // classes region
 	    paymentDeliveryFormSubmitButtonClass: function paymentDeliveryFormSubmitButtonClass() {
@@ -4049,14 +3823,19 @@ this.BX = this.BX || {};
 	        'ui-btn-disabled': !this.isAllowedDeliverySubmitButton
 	      };
 	    },
+	    paymentMenuItemClass: function paymentMenuItemClass() {
+	      return {
+	        'salescenter-app-sidebar-menu-active': this.activeMenuItem === ModeDictionary.payment
+	      };
+	    },
 	    paymentDeliveryMenuItemClass: function paymentDeliveryMenuItemClass() {
 	      return {
-	        'salescenter-app-sidebar-menu-active': this.activeMenuItem === 'payment_delivery' || this.activeMenuItem === 'payment'
+	        'salescenter-app-sidebar-menu-active': this.activeMenuItem === ModeDictionary.paymentDelivery
 	      };
 	    },
 	    deliveryMenuItemClass: function deliveryMenuItemClass() {
 	      return {
-	        'salescenter-app-sidebar-menu-active': this.activeMenuItem === 'delivery'
+	        'salescenter-app-sidebar-menu-active': this.activeMenuItem === ModeDictionary.delivery
 	      };
 	    }
 	  }, ui_vue_vuex.Vuex.mapState({
@@ -4068,7 +3847,7 @@ this.BX = this.BX || {};
 	    }
 	  })),
 	  //language=Vue
-	  template: "\n\t\t<div\n\t\t\t:class=\"wrapperClass\"\n\t\t\t:style=\"wrapperStyle\"\n\t\t\tclass=\"salescenter-app-wrapper\"\n\t\t>\n\t\t\t<div class=\"ui-sidepanel-sidebar salescenter-app-sidebar\">\n\t\t\t\t<ul class=\"ui-sidepanel-menu\">\n\t\t\t\t\t<template v-if=\"templateMode === 'view'\">\n\t\t\t\t\t\t<li class=\"ui-sidepanel-menu-item salescenter-app-sidebar-menu-active\">\n\t\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{title}}</div>\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</li>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<li\n\t\t\t\t\t\t\tv-if=\"initialMode === 'payment_delivery'\"\n\t\t\t\t\t\t\t@click=\"reload('payment_delivery')\"\n\t\t\t\t\t\t\t:class=\"paymentDeliveryMenuItemClass\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t\t{{getTitleForPaymentDeliveryMenuItem}}\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</li>\n\t\t\t\t\t\t<li\n\t\t\t\t\t\t\tv-if=\"isOnlyDeliveryItemVisible\"\n\t\t\t\t\t\t\t@click=\"reload('delivery')\"\n\t\t\t\t\t\t\t:class=\"deliveryMenuItemClass\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t\t".concat(main_core.Loc.getMessage('SALESCENTER_LEFT_CREATE_SHIPMENT'), "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</li>\n\t\t\t\t\t</template>\n\n\t\t\t\t\t<li class=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm ui-sidepanel-menu-item-separate\">\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"specifyCompanyContacts\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li\n\t\t\t\t\t\tv-if=\"isSuggestScenarioMenuItemVisible\"\n\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"suggestScenario($event)\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_OFFER_SCRIPT'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li class=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\">\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"howItWorks($event)\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_HOW_WORKS'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li\n\t\t\t\t\t\tv-if=\"isAllowedFreeMessagesButton\"\n\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"freeMessages($event)\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_FREE_MESSAGES'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li\n\t\t\t\t\t\tv-if=\"isRequestIntegrationMenuItemVisible\"\n\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\">\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"openIntegrationWindow($event)\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\"\n\t\t\t\t\t\t\t\t data-manager-openIntegrationRequestForm-params=\"sender_page:deal\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION_MSGVER_2'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t</ul>\n\t\t\t</div>\n\t\t\t<div class=\"salescenter-app-right-side\">\n\t\t\t\t<start\n\t\t\t\t\tv-if=\"needShowStoreConnection\"\n\t\t\t\t\t@on-successfully-connected=\"onSuccessfullyConnected\"\n\t\t\t\t>\n\t\t\t\t</start>\n\t\t        <template v-else>\n\t\t\t        <deal-receiving-payment\n\t\t\t        \tv-if=\"mode === 'payment_delivery'\"\n\t\t\t\t\t\t@stage-block-on-reload=\"onReload\"\n\t\t\t        \t@stage-block-send-on-send=\"sendPaymentDeliveryForm($event)\"\n\t\t\t        \t:sendAllowed=\"isAllowedPaymentDeliverySubmitButton\"\n\t\t\t        />\n\t\t\t        <deal-creating-shipment\n\t\t\t        \tv-else-if=\"mode === 'delivery'\"\n\t\t\t        \t@stage-block-send-on-send=\"sendDeliveryForm($event)\"\n\t\t\t        \t:sendAllowed=\"isAllowedDeliverySubmitButton\"\n\t\t\t        />\n\t\t\t        <crm-entity-create-payment\n\t\t\t        \tv-if=\"mode === 'payment'\"\n\t\t\t        \t@stage-block-send-on-send=\"sendPaymentDeliveryForm($event)\"\n\t\t\t        \t:sendAllowed=\"isAllowedPaymentDeliverySubmitButton\"\n\t\t\t        />\n\t\t        </template>\n\t\t\t</div>\n\t\t\t<div class=\"ui-button-panel-wrapper salescenter-button-panel\" ref=\"buttonsPanel\">\n\t\t\t\t<div class=\"ui-button-panel\">\n\t\t\t\t\t<template v-if=\"mode === 'payment_delivery' || mode === 'payment'\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"sendPaymentDeliveryForm($event)\"\n\t\t\t\t\t\t\t:class=\"paymentDeliveryFormSubmitButtonClass\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-success\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{sendPaymentDeliveryFormButtonText}}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"close\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_CANCEL'), "\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"mode === 'delivery'\">\n\t\t\t\t\t\t<template v-if=\"editable\">\n\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\t@click=\"sendDeliveryForm($event)\"\n\t\t\t\t\t\t\t\t:class=\"deliveryFormSubmitButtonClass\"\n\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-success\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_CREATE_SHIPMENT'), "\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\t@click=\"close\"\n\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-link\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_CANCEL'), "\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"this.order.errors.length > 0\" ref=\"errorBlock\"></div>\n\t\t\t</div>\n\t\t</div>\n\t")
+	  template: "\n\t\t<div\n\t\t\t:class=\"wrapperClass\"\n\t\t\t:style=\"wrapperStyle\"\n\t\t\tclass=\"salescenter-app-wrapper\"\n\t\t>\n\t\t\t<div class=\"ui-sidepanel-sidebar salescenter-app-sidebar\">\n\t\t\t\t<ul class=\"ui-sidepanel-menu\">\n\t\t\t\t\t<template v-if=\"templateMode === 'view'\">\n\t\t\t\t\t\t<li class=\"ui-sidepanel-menu-item salescenter-app-sidebar-menu-active\">\n\t\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{title}}</div>\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</li>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"isModeListVisible\">\n\t\t\t\t\t\t<template v-if=\"isOnlyDeliveryItemVisible\">\n\t\t\t\t\t\t\t<li\n\t\t\t\t\t\t\t\t:class=\"deliveryMenuItemClass\"\n\t\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t\t\t".concat(main_core.Loc.getMessage('SALESCENTER_LEFT_CREATE_SHIPMENT_MSGVER_1'), "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t<li\n\t\t\t\t\t\t\t\tv-if=\"isPaymentItemVisible\"\n\t\t\t\t\t\t\t\t@click=\"reload(ModeDictionary.payment)\"\n\t\t\t\t\t\t\t\t:class=\"paymentMenuItemClass\"\n\t\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_TAKE_PAYMENT'), "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</li>\n\n\t\t\t\t\t\t\t<li\n\t\t\t\t\t\t\t\tv-if=\"isPaymentItemVisible\"\n\t\t\t\t\t\t\t\t@click=\"reload(ModeDictionary.paymentDelivery)\"\n\t\t\t\t\t\t\t\t:class=\"paymentDeliveryMenuItemClass\"\n\t\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_TAKE_PAYMENT_AND_CREATE_SHIPMENT'), "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\n\t\t\t\t\t<li class=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm ui-sidepanel-menu-item-separate\">\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"specifyCompanyContacts\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li\n\t\t\t\t\t\tv-if=\"isSuggestScenarioMenuItemVisible\"\n\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"suggestScenario($event)\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_OFFER_SCRIPT'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li class=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\">\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"howItWorks($event)\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_HOW_WORKS'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li\n\t\t\t\t\t\tv-if=\"isAllowedFreeMessagesButton\"\n\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"freeMessages($event)\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_FREE_MESSAGES'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li\n\t\t\t\t\t\tv-if=\"isRequestIntegrationMenuItemVisible\"\n\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\">\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"openIntegrationWindow($event)\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\"\n\t\t\t\t\t\t\t\t data-manager-openIntegrationRequestForm-params=\"sender_page:deal\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION_MSGVER_2'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t</ul>\n\t\t\t</div>\n\t\t\t<div class=\"salescenter-app-right-side\">\n\t\t\t\t<start\n\t\t\t\t\tv-if=\"needShowStoreConnection\"\n\t\t\t\t\t@on-successfully-connected=\"onSuccessfullyConnected\"\n\t\t\t\t>\n\t\t\t\t</start>\n\t\t\t\t<template v-else>\n\t\t\t\t\t<deal-receiving-payment\n\t\t\t\t\t\tv-if=\"mode === ModeDictionary.paymentDelivery\"\n\t\t\t\t\t\t@stage-block-on-reload=\"onReload\"\n\t\t\t\t\t\t@stage-block-send-on-send=\"sendPaymentDeliveryForm($event)\"\n\t\t\t\t\t\t:sendAllowed=\"isAllowedPaymentDeliverySubmitButton\"\n\t\t\t\t\t/>\n\t\t\t\t\t<deal-creating-shipment\n\t\t\t\t\t\tv-else-if=\"mode === ModeDictionary.delivery\"\n\t\t\t\t\t\t@stage-block-send-on-send=\"sendDeliveryForm($event)\"\n\t\t\t\t\t\t:sendAllowed=\"isAllowedDeliverySubmitButton\"\n\t\t\t\t\t/>\n\t\t\t\t\t<crm-entity-create-payment\n\t\t\t\t\t\tv-if=\"mode === ModeDictionary.payment\"\n\t\t\t\t\t\t@stage-block-send-on-send=\"sendPaymentDeliveryForm($event)\"\n\t\t\t\t\t\t:sendAllowed=\"isAllowedPaymentDeliverySubmitButton\"\n\t\t\t\t\t/>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t\t<div class=\"ui-button-panel-wrapper salescenter-button-panel\" ref=\"buttonsPanel\">\n\t\t\t\t<div class=\"ui-button-panel\">\n\t\t\t\t\t<template v-if=\"mode === ModeDictionary.paymentDelivery || mode === ModeDictionary.payment\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"sendPaymentDeliveryForm($event)\"\n\t\t\t\t\t\t\t:class=\"paymentDeliveryFormSubmitButtonClass\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-success\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{sendPaymentDeliveryFormButtonText}}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"close\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_CANCEL'), "\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"mode === ModeDictionary.delivery\">\n\t\t\t\t\t\t<template v-if=\"editable\">\n\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\t@click=\"sendDeliveryForm($event)\"\n\t\t\t\t\t\t\t\t:class=\"deliveryFormSubmitButtonClass\"\n\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-success\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_CREATE_SHIPMENT'), "\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\t@click=\"close\"\n\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-link\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_CANCEL'), "\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"this.order.errors.length > 0\" ref=\"errorBlock\"></div>\n\t\t\t</div>\n\t\t</div>\n\t")
 	};
 
 	var _templateObject, _templateObject2, _templateObject3;
@@ -4080,10 +3859,8 @@ this.BX = this.BX || {};
 	      return instances.get(dialogId) || null;
 	    }
 	  }]);
-
 	  function App() {
 	    var _this = this;
-
 	    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
 	      dialogId: null,
 	      sessionId: null,
@@ -4128,99 +3905,78 @@ this.BX = this.BX || {};
 	    this.compilation = null;
 	    this.newCompilationId = null;
 	    this.assignedById = options.assignedById;
-
 	    if (main_core.Type.isString(options.stageOnOrderPaid)) {
 	      this.stageOnOrderPaid = options.stageOnOrderPaid;
 	    }
-
 	    if (main_core.Type.isString(options.stageOnDeliveryFinished)) {
 	      this.stageOnDeliveryFinished = options.stageOnDeliveryFinished;
 	    }
-
 	    if (main_core.Type.isBoolean(options.isFrame)) {
 	      this.isFrame = options.isFrame;
 	    } else {
 	      this.isFrame = true;
 	    }
-
 	    if (main_core.Type.isBoolean(options.isOrderPublicUrlAvailable)) {
 	      this.isOrderPublicUrlAvailable = options.isOrderPublicUrlAvailable;
 	    } else {
 	      this.isOrderPublicUrlAvailable = false;
 	    }
-
 	    if (main_core.Type.isBoolean(options.isOrderPublicUrlExists)) {
 	      this.isOrderPublicUrlExists = options.isOrderPublicUrlExists;
 	    } else {
 	      this.isOrderPublicUrlExists = false;
 	    }
-
 	    if (main_core.Type.isString(options.orderPublicUrl)) {
 	      this.orderPublicUrl = options.orderPublicUrl;
 	    }
-
 	    if (main_core.Type.isBoolean(options.isCatalogAvailable)) {
 	      this.isCatalogAvailable = options.isCatalogAvailable;
 	    } else {
 	      this.isCatalogAvailable = false;
 	    }
-
 	    if (main_core.Type.isBoolean(options.isWithOrdersMode)) {
 	      this.isWithOrdersMode = options.isWithOrdersMode;
 	    } else {
 	      this.isWithOrdersMode = false;
 	    }
-
 	    if (main_core.Type.isBoolean(options.disableSendButton)) {
 	      this.disableSendButton = options.disableSendButton;
 	    }
-
 	    if (options.ownerTypeId) {
 	      this.ownerTypeId = options.ownerTypeId;
 	    }
-
 	    if (options.ownerId) {
 	      this.ownerId = options.ownerId;
 	    }
-
 	    if (main_core.Type.isString(options.context) && options.context.length > 0) {
 	      this.context = options.context;
 	    } else if (this.sessionId && this.dialogId) {
-	      this.context = 'imopenlines_app';
+	      this.context = ContextDictionary.imOpenlines;
 	    }
-
 	    if (main_core.Type.isBoolean(options.isPaymentsLimitReached)) {
 	      this.isPaymentsLimitReached = options.isPaymentsLimitReached;
 	    } else {
 	      this.isPaymentsLimitReached = false;
 	    }
-
 	    if (!main_core.Type.isUndefined(options.sendingMethod)) {
 	      this.sendingMethod = options.sendingMethod;
 	    }
-
 	    if (!main_core.Type.isUndefined(options.sendingMethodDesc)) {
 	      this.sendingMethodDesc = this.options.sendingMethodDesc;
 	    }
-
 	    if (main_core.Type.isObject(options.compilation)) {
 	      this.compilation = options.compilation;
 	    }
-
 	    this.isPaymentCreationAvailable = this.sessionId > 0 && this.dialogId.length > 0 || this.ownerTypeId && this.ownerId;
 	    this.connector = main_core.Type.isString(options.connector) ? options.connector : '';
 	    this.isAllowedFacebookRegion = main_core.Type.isBoolean(options.isAllowedFacebookRegion) ? options.isAllowedFacebookRegion : false;
-
 	    if (main_core.Type.isPlainObject(options.documentSelector)) {
 	      this.documentSelector = options.documentSelector;
 	      this.documentSelector.paymentId = this.options.paymentId;
 	    }
-
 	    main_core.Event.ready(function () {
 	      _this.pull = BX.PULL;
-
 	      _this.initPull();
-
 	      _this.isSiteExists = salescenter_manager.Manager.isSiteExists;
 	    });
 	    App.initStore().then(function (result) {
@@ -4231,12 +3987,10 @@ this.BX = this.BX || {};
 	    main_core_events.EventEmitter.subscribe(window.parent, 'onSendCompilationChatButtonClick', this.sendCompilation.bind(this));
 	    instances.set(this.dialogId, this);
 	  }
-
 	  babelHelpers.createClass(App, [{
 	    key: "initPull",
 	    value: function initPull() {
 	      var _this2 = this;
-
 	      if (this.pull) {
 	        if (main_core.Type.isString(this.orderAddPullTag)) {
 	          this.pull.subscribe({
@@ -4249,7 +4003,6 @@ this.BX = this.BX || {};
 	            }
 	          });
 	        }
-
 	        if (main_core.Type.isString(this.landingPublicationPullTag)) {
 	          this.pull.subscribe({
 	            moduleId: 'salescenter',
@@ -4258,7 +4011,6 @@ this.BX = this.BX || {};
 	              if (parseInt(params.landingId) > 0) {
 	                _this2.fillPages();
 	              }
-
 	              if (params.hasOwnProperty('isOrderPublicUrlAvailable') && main_core.Type.isBoolean(params.isOrderPublicUrlAvailable)) {
 	                _this2.isOrderPublicUrlAvailable = params.isOrderPublicUrlAvailable;
 	                _this2.isOrderPublicUrlExists = true;
@@ -4266,7 +4018,6 @@ this.BX = this.BX || {};
 	            }
 	          });
 	        }
-
 	        if (main_core.Type.isString(this.landingUnPublicationPullTag)) {
 	          this.pull.subscribe({
 	            moduleId: 'salescenter',
@@ -4275,7 +4026,6 @@ this.BX = this.BX || {};
 	              if (parseInt(params.landingId) > 0) {
 	                _this2.fillPages();
 	              }
-
 	              if (params.hasOwnProperty('isOrderPublicUrlAvailable') && main_core.Type.isBoolean(params.isOrderPublicUrlAvailable)) {
 	                _this2.isOrderPublicUrlAvailable = params.isOrderPublicUrlAvailable;
 	                _this2.isOrderPublicUrlExists = true;
@@ -4289,7 +4039,6 @@ this.BX = this.BX || {};
 	    key: "initTemplate",
 	    value: function initTemplate(result) {
 	      var _this3 = this;
-
 	      return new Promise(function (resolve) {
 	        var context = _this3;
 	        _this3.store = result.store;
@@ -4311,11 +4060,9 @@ this.BX = this.BX || {};
 	              orderSelector: document.getElementById('salescenter-app-order-selector')
 	            };
 	            this.initOrderSelector();
-
 	            if (context.documentSelector) {
 	              this.$store.commit('documentSelector/fillState', context.documentSelector);
 	            }
-
 	            if (this.$app.options.showCompilationModeSwitcher === 'N') {
 	              this.$store.commit('orderCreation/enableCompilationMode');
 	            }
@@ -4342,18 +4089,14 @@ this.BX = this.BX || {};
 	            },
 	            initOrderSelector: function initOrderSelector() {
 	              var _this4 = this;
-
 	              try {
 	                if (this.$app.options.orderList.length < 2 || this.$app.options.templateMode !== 'create' || !this.$app.options.orderId) {
 	                  return;
 	                }
-
 	                var orderSelectorBtn = this.$nodes.orderSelector.querySelector('.salescenter-app-order-selector-text');
-
 	                if (!orderSelectorBtn) {
 	                  return;
 	                }
-
 	                orderSelectorBtn.innerText = main_core.Loc.getMessage('SALESCENTER_ORDER_SELECTOR_ORDER_NUM').replace('#ORDER_ID#', this.$app.options.orderId);
 	                orderSelectorBtn.setAttribute('data-hint', main_core.Loc.getMessage('SALESCENTER_ORDER_SELECTOR_TOOLTIP'));
 	                var popupMenu;
@@ -4365,7 +4108,6 @@ this.BX = this.BX || {};
 	                    onclick: function onclick(event) {
 	                      popupMenu.close();
 	                      orderSelectorBtn.innerText = orderCaption;
-
 	                      _this4.reload({
 	                        context: _this4.$app.options.context,
 	                        orderId: orderId,
@@ -4390,7 +4132,8 @@ this.BX = this.BX || {};
 	                  BX.UI.Hint.hide();
 	                });
 	                BX.UI.Hint.init(this.$nodes.orderSelector);
-	              } catch (err) {//
+	              } catch (err) {
+	                //
 	              }
 	            }
 	          },
@@ -4413,7 +4156,6 @@ this.BX = this.BX || {};
 	    key: "fillPages",
 	    value: function fillPages() {
 	      var _this5 = this;
-
 	      return new Promise(function (resolve) {
 	        if (_this5.isProgress) {
 	          _this5.fillPagesQueue.push(resolve);
@@ -4421,23 +4163,17 @@ this.BX = this.BX || {};
 	          if (_this5.fillPagesTimeout) {
 	            clearTimeout(_this5.fillPagesTimeout);
 	          }
-
 	          _this5.fillPagesTimeout = setTimeout(function () {
 	            _this5.startProgress();
-
 	            rest_client.rest.callMethod('salescenter.page.list', {}).then(function (result) {
 	              _this5.store.commit('application/setPages', {
 	                pages: result.answer.result.pages
 	              });
-
 	              _this5.stopProgress();
-
 	              resolve();
-
 	              _this5.fillPagesQueue.forEach(function (item) {
 	                item();
 	              });
-
 	              _this5.fillPagesQueue = [];
 	            });
 	          }, 100);
@@ -4453,7 +4189,6 @@ this.BX = this.BX || {};
 	          mode: 'custom'
 	        });
 	      }
-
 	      return this.loader;
 	    }
 	  }, {
@@ -4475,7 +4210,6 @@ this.BX = this.BX || {};
 	      this.isProgress = true;
 	      this.templateEngine.$emit('on-start-progress');
 	      this.showLoader();
-
 	      if (main_core.Type.isDomNode(buttonEvent)) {
 	        buttonEvent.classList.add('ui-btn-wait');
 	      }
@@ -4487,7 +4221,6 @@ this.BX = this.BX || {};
 	      this.isProgress = false;
 	      this.templateEngine.$emit('on-stop-progress');
 	      this.hideLoader();
-
 	      if (main_core.Type.isDomNode(buttonEvent)) {
 	        buttonEvent.classList.remove('ui-btn-wait');
 	      }
@@ -4496,21 +4229,17 @@ this.BX = this.BX || {};
 	    key: "hidePage",
 	    value: function hidePage(page) {
 	      var _this6 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        var promise;
-
 	        if (page.landingId > 0) {
 	          promise = salescenter_manager.Manager.hidePage(page);
 	        } else {
 	          promise = salescenter_manager.Manager.deleteUrl(page);
 	        }
-
 	        promise.then(function () {
 	          _this6.store.commit('application/removePage', {
 	            page: page
 	          });
-
 	          resolve();
 	        })["catch"](function (result) {
 	          App.showError(result.answer.error_description);
@@ -4522,27 +4251,21 @@ this.BX = this.BX || {};
 	    key: "sendPage",
 	    value: function sendPage(pageId) {
 	      var _this7 = this;
-
 	      if (this.isProgress) {
 	        return;
 	      }
-
 	      if (this.disableSendButton) {
 	        return;
 	      }
-
 	      var pages = this.store.getters['application/getPages']();
 	      var page;
-
 	      for (var index in pages) {
 	        if (pages.hasOwnProperty(index) && pages[index].id === pageId) {
 	          page = pages[index];
 	          break;
 	        }
 	      }
-
 	      var source = 'other';
-
 	      if (page.landingId > 0) {
 	        if (parseInt(page.siteId) === parseInt(salescenter_manager.Manager.connectedSiteId)) {
 	          source = 'landing_store_chat';
@@ -4550,13 +4273,11 @@ this.BX = this.BX || {};
 	          source = 'landing_other';
 	        }
 	      }
-
 	      if (!this.dialogId) {
 	        this.slider.data.set('action', 'sendPage');
 	        this.slider.data.set('page', page);
 	        this.slider.data.set('pageId', pageId);
-
-	        if (this.context === 'sms') {
+	        if (this.context === ContextDictionary.sms) {
 	          this.startProgress();
 	          BX.Salescenter.Manager.addAnalyticAction({
 	            analyticsLabel: 'salescenterSendSms',
@@ -4566,16 +4287,13 @@ this.BX = this.BX || {};
 	            code: page.code
 	          }).then(function () {
 	            _this7.stopProgress();
-
 	            _this7.closeApplication();
 	          });
 	        } else {
 	          this.closeApplication();
 	        }
-
 	        return;
 	      }
-
 	      this.startProgress();
 	      main_core.ajax.runAction('salescenter.page.send', {
 	        analyticsLabel: 'salescenterSendChat',
@@ -4596,11 +4314,9 @@ this.BX = this.BX || {};
 	        }
 	      }).then(function () {
 	        _this7.stopProgress();
-
 	        _this7.closeApplication();
 	      })["catch"](function (result) {
 	        App.showError(result.errors.pop().message);
-
 	        _this7.stopProgress();
 	      });
 	    }
@@ -4609,20 +4325,16 @@ this.BX = this.BX || {};
 	    value: function sendCompilation() {
 	      var buttonEvent = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 	      var sendCompilationLinkToFacebook = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
 	      if (!this.isPaymentCreationAvailable) {
 	        this.closeApplication();
 	        return null;
 	      }
-
 	      if (!this.store.getters['orderCreation/isAllowedSubmit'] || this.isProgress) {
 	        return null;
 	      }
-
 	      if (!this.isAllowedFacebookRegion) {
 	        sendCompilationLinkToFacebook = true;
 	      }
-
 	      this.startProgress(buttonEvent);
 	      var options = {
 	        dialogId: this.dialogId,
@@ -4636,15 +4348,12 @@ this.BX = this.BX || {};
 	        compilationId: this.compilation ? this.compilation.ID : this.newCompilationId,
 	        editable: this.options.templateMode === 'create'
 	      };
-
 	      if (this.stageOnOrderPaid !== null) {
 	        options.stageOnOrderPaid = this.stageOnOrderPaid;
 	      }
-
 	      if (this.stageOnDeliveryFinished !== null) {
 	        options.stageOnDeliveryFinished = this.stageOnDeliveryFinished;
 	      }
-
 	      if (this.connector === 'facebook' && this.isAllowedFacebookRegion && !sendCompilationLinkToFacebook) {
 	        this.sendCompilationToFacebook(buttonEvent, options);
 	      } else {
@@ -4655,7 +4364,6 @@ this.BX = this.BX || {};
 	    key: "sendCompilationToFacebook",
 	    value: function sendCompilationToFacebook(buttonEvent, options) {
 	      var _this8 = this;
-
 	      BX.ajax.runComponentAction('bitrix:salescenter.app', 'getFacebookSettingsPath', {
 	        mode: 'class',
 	        data: {
@@ -4663,10 +4371,8 @@ this.BX = this.BX || {};
 	        }
 	      }).then(function (response) {
 	        var facebookSettingsPath = response.data;
-
 	        if (facebookSettingsPath) {
 	          _this8.stopProgress(buttonEvent);
-
 	          _this8.showFacebookCatalogConnectionPopup(buttonEvent, facebookSettingsPath);
 	        } else {
 	          BX.ajax.runAction('salescenter.compilation.sendFacebookModerationWaitingNotification', {
@@ -4675,11 +4381,8 @@ this.BX = this.BX || {};
 	            }
 	          }).then(function (result) {
 	            _this8.sendCompilationAjaxAction(buttonEvent, options);
-
 	            _this8.store.dispatch('orderCreation/resetBasket');
-
 	            _this8.closeApplication();
-
 	            _this8.stopProgress(buttonEvent);
 	          });
 	        }
@@ -4705,7 +4408,6 @@ this.BX = this.BX || {};
 	          }
 	        });
 	      }
-
 	      this.facebookCatalogConnectionPopup.show();
 	    }
 	  }, {
@@ -4733,7 +4435,6 @@ this.BX = this.BX || {};
 	    key: "sendCompilationAjaxAction",
 	    value: function sendCompilationAjaxAction(buttonEvent, options) {
 	      var _this9 = this;
-
 	      var basketItems = this.store.getters['orderCreation/getBasket']();
 	      var productIds = basketItems.map(function (basketItem) {
 	        return basketItem.skuId;
@@ -4746,25 +4447,18 @@ this.BX = this.BX || {};
 	        analyticsLabel: 'salescenterCreateCompilation'
 	      }).then(function (result) {
 	        _this9.store.dispatch('orderCreation/resetBasket');
-
 	        _this9.stopProgress(buttonEvent);
-
 	        if (result.data && result.data.compilation) {
 	          _this9.slider.data.set('action', 'sendCompilation');
-
 	          _this9.slider.data.set('compilation', result.data.compilation);
 	        }
-
 	        _this9.closeApplication();
-
 	        _this9.emitGlobalEvent('salescenter.app:oncompilationcreated');
 	      })["catch"](function (data) {
 	        data.errors.forEach(function (error) {
 	          alert(error.message);
 	        });
-
 	        _this9.stopProgress(buttonEvent);
-
 	        App.showError(data);
 	      });
 	    }
@@ -4772,16 +4466,13 @@ this.BX = this.BX || {};
 	    key: "sendShipment",
 	    value: function sendShipment(buttonEvent) {
 	      var _this10 = this;
-
 	      if (!this.isPaymentCreationAvailable) {
 	        this.closeApplication();
 	        return null;
 	      }
-
 	      if (!this.store.getters['orderCreation/isAllowedSubmit'] || this.isProgress) {
 	        return null;
 	      }
-
 	      this.startProgress(buttonEvent);
 	      var data = {
 	        ownerTypeId: this.ownerTypeId,
@@ -4795,11 +4486,9 @@ this.BX = this.BX || {};
 	        shipmentPropValues: this.store.getters['orderCreation/getPropertyValues'],
 	        deliveryExtraServicesValues: this.store.getters['orderCreation/getDeliveryExtraServicesValues']
 	      };
-
 	      if (this.stageOnDeliveryFinished !== null) {
 	        data.stageOnDeliveryFinished = this.stageOnDeliveryFinished;
 	      }
-
 	      BX.ajax.runAction('salescenter.order.createShipment', {
 	        data: {
 	          basketItems: this.store.getters['orderCreation/getBasket'](),
@@ -4808,29 +4497,22 @@ this.BX = this.BX || {};
 	        analyticsLabel: 'salescenterCreateShipment'
 	      }).then(function (result) {
 	        _this10.store.dispatch('orderCreation/resetBasket');
-
 	        _this10.stopProgress(buttonEvent);
-
 	        if (result.data) {
 	          if (result.data.order) {
 	            _this10.slider.data.set('order', result.data.order);
 	          }
-
 	          if (result.data.deal) {
 	            _this10.slider.data.set('deal', result.data.deal);
 	          }
 	        }
-
 	        _this10.closeApplication();
-
 	        _this10.emitGlobalEvent('salescenter.app:onshipmentcreated');
 	      })["catch"](function (data) {
 	        data.errors.forEach(function (error) {
 	          alert(error.message);
 	        });
-
 	        _this10.stopProgress(buttonEvent);
-
 	        App.showError(data);
 	      });
 	    }
@@ -4838,18 +4520,14 @@ this.BX = this.BX || {};
 	    key: "sendPayment",
 	    value: function sendPayment(buttonEvent) {
 	      var _this11 = this;
-
 	      var skipPublicMessage = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'n';
-
 	      if (!this.isPaymentCreationAvailable) {
 	        this.closeApplication();
 	        return null;
 	      }
-
 	      if (!this.store.getters['orderCreation/isAllowedSubmit'] || this.isProgress) {
 	        return null;
 	      }
-
 	      this.startProgress(buttonEvent);
 	      var data = {
 	        dialogId: this.dialogId,
@@ -4860,6 +4538,7 @@ this.BX = this.BX || {};
 	        ownerTypeId: this.ownerTypeId,
 	        orderId: this.orderId,
 	        ownerId: this.ownerId,
+	        mode: this.options.mode,
 	        skipPublicMessage: skipPublicMessage,
 	        deliveryId: this.store.getters['orderCreation/getDeliveryId'],
 	        deliveryPrice: this.store.getters['orderCreation/getDelivery'],
@@ -4874,26 +4553,22 @@ this.BX = this.BX || {};
 	        currency: this.currencyCode,
 	        assignedById: this.assignedById
 	      };
-
 	      if (this.documentSelector) {
 	        data.boundDocumentId = this.store.getters['documentSelector/getBoundDocumentId'];
 	        data.selectedTemplateId = this.store.getters['documentSelector/getSelectedTemplateId'];
 	      }
-
 	      if (this.stageOnOrderPaid !== null) {
 	        data.stageOnOrderPaid = this.stageOnOrderPaid;
 	      }
-
 	      if (this.stageOnDeliveryFinished !== null) {
 	        data.stageOnDeliveryFinished = this.stageOnDeliveryFinished;
 	      }
-
 	      BX.ajax.runAction('salescenter.order.createPayment', {
 	        data: {
 	          basketItems: this.store.getters['orderCreation/getBasket'](),
 	          options: data
 	        },
-	        analyticsLabel: this.context === 'deal' ? 'salescenterCreatePaymentSms' : 'salescenterCreatePayment',
+	        analyticsLabel: this.context === ContextDictionary.deal ? 'salescenterCreatePaymentSms' : 'salescenterCreatePayment',
 	        getParameters: {
 	          dialogId: this.dialogId,
 	          context: this.context,
@@ -4902,9 +4577,7 @@ this.BX = this.BX || {};
 	        }
 	      }).then(function (result) {
 	        _this11.store.dispatch('orderCreation/resetBasket');
-
 	        _this11.stopProgress(buttonEvent);
-
 	        if (skipPublicMessage === 'y') {
 	          var notify = {
 	            content: main_core.Loc.getMessage('SALESCENTER_ORDER_CREATE_NOTIFICATION').replace('#ORDER_ID#', result.data.order.number)
@@ -4926,20 +4599,15 @@ this.BX = this.BX || {};
 	          });
 	        } else {
 	          _this11.slider.data.set('action', 'sendPayment');
-
 	          _this11.slider.data.set('order', result.data.order);
-
 	          if (result.data.deal) {
 	            _this11.slider.data.set('deal', result.data.deal);
 	          }
-
 	          if (result.data.entity) {
 	            _this11.slider.data.set('entity', result.data.entity);
 	          }
-
 	          _this11.closeApplication();
 	        }
-
 	        _this11.emitGlobalEvent('salescenter.app:onpaymentcreated');
 	      })["catch"](function (data) {
 	        data.errors.forEach(function (error) {
@@ -4947,11 +4615,8 @@ this.BX = this.BX || {};
 	            content: main_core.Text.encode(error.message)
 	          });
 	        });
-
 	        _this11.stopProgress(buttonEvent);
-
 	        App.showError(data);
-
 	        if (_this11.needCloseApplication(data.errors)) {
 	          _this11.closeApplication();
 	        }
@@ -4969,16 +4634,13 @@ this.BX = this.BX || {};
 	    key: "resendPayment",
 	    value: function resendPayment(buttonEvent) {
 	      var _this12 = this;
-
 	      if (!this.isPaymentCreationAvailable) {
 	        this.closeApplication();
 	        return null;
 	      }
-
 	      if (!this.store.getters['orderCreation/isAllowedSubmit'] || this.isProgress) {
 	        return null;
 	      }
-
 	      this.startProgress(buttonEvent);
 	      var options = {
 	        sendingMethod: this.sendingMethod,
@@ -4987,12 +4649,10 @@ this.BX = this.BX || {};
 	        ownerTypeId: this.ownerTypeId,
 	        ownerId: this.ownerId
 	      };
-
 	      if (this.documentSelector) {
 	        options.boundDocumentId = this.store.getters['documentSelector/getBoundDocumentId'];
 	        options.selectedTemplateId = this.store.getters['documentSelector/getSelectedTemplateId'];
 	      }
-
 	      BX.ajax.runAction('salescenter.order.resendPayment', {
 	        data: {
 	          orderId: this.orderId,
@@ -5005,17 +4665,13 @@ this.BX = this.BX || {};
 	        }
 	      }).then(function (result) {
 	        _this12.stopProgress(buttonEvent);
-
 	        _this12.closeApplication();
-
 	        _this12.emitGlobalEvent('salescenter.app:onpaymentresend');
 	      })["catch"](function (data) {
 	        data.errors.forEach(function (error) {
 	          alert(error.message);
 	        });
-
 	        _this12.stopProgress(buttonEvent);
-
 	        App.showError(data);
 	      });
 	    }
@@ -5024,7 +4680,6 @@ this.BX = this.BX || {};
 	    value: function hideNoPaymentSystemsBanner() {
 	      var userOptionName = this.options.orderCreationOption || false;
 	      var userOptionKeyName = this.options.paySystemBannerOptionName || false;
-
 	      if (userOptionName && userOptionKeyName) {
 	        BX.userOptions.save('salescenter', userOptionName, userOptionKeyName, 'Y');
 	      }
@@ -5057,7 +4712,6 @@ this.BX = this.BX || {};
 	      if (this.options.sendingMethod === 'chat') {
 	        return this.options.dialogId !== '';
 	      }
-
 	      return this.options.contactPhone !== '';
 	    }
 	  }, {
@@ -5069,7 +4723,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "isPaymentMode",
 	    value: function isPaymentMode() {
-	      return this.context === 'deal';
+	      return this.context === ContextDictionary.deal || this.context === ContextDictionary.smartInvoice;
 	    }
 	  }], [{
 	    key: "initStore",
@@ -5079,7 +4733,8 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "showError",
-	    value: function showError(error) {// console.error(error);
+	    value: function showError(error) {
+	      // console.error(error);
 	    }
 	  }]);
 	  return App;

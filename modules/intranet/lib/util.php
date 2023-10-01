@@ -327,7 +327,7 @@ class Util
 				return false;
 			}
 
-			$userGroups = array_map('intval', $USER->GetUserGroupArray());
+			$userGroups =  $USER->GetUserGroupArray();
 		}
 		else
 		{
@@ -338,6 +338,7 @@ class Util
 
 			$userGroups = \Bitrix\Main\UserTable::getUserGroupIds($userId);
 		}
+		$userGroups = array_map('intval', $userGroups);
 
 		return in_array($extranetGroupId, $userGroups, true);
 	}

@@ -418,7 +418,7 @@ abstract class ClientDataProvider
 		$result = [];
 		// special pseudo field CONTACT_RAW_ID / COMPANY_RAW_ID
 		// because CONTACT_ID / COMPANY_ID fields are already in use:
-		$result[] = $this->getIdHeader();
+		$result[] = $this->getIdHeader($this->isExportMode);
 
 		foreach ($fields as $fieldId => $field)
 		{
@@ -477,11 +477,11 @@ abstract class ClientDataProvider
 		return $result;
 	}
 
-	protected function getIdHeader(): array
+	protected function getIdHeader(bool $isExportMode = false): array
 	{
 		return [
 			'id' => $this->fieldHelper->addPrefixToFieldId(self::RAW_ID_FIELD),
-			'name' =>$this->fieldHelper->getFieldName(self::ID_FIELD),
+			'name' =>$this->fieldHelper->getFieldName(self::ID_FIELD, $isExportMode),
 			'sort' => $this->fieldHelper->addPrefixToFieldId(self::ID_FIELD),
 			'first_order' => 'desc',
 			'width' => 120,

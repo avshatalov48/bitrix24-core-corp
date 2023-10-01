@@ -363,7 +363,8 @@ const SmsMessage = {
 			<template v-slot:block-container>
 				<div :class="containerClassMixin" class="salescenter-app-payment-by-sms-item-container-offtop">
 					<sms-error-block
-						v-for="error in errors"
+						v-for="(error, index) in errors"
+						v-bind:key="index"
 						v-on:on-configure="hendleSmsErrorBlock($event)"
 						:error="error"
 					>

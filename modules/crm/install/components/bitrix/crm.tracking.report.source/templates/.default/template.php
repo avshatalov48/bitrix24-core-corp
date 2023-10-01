@@ -6,7 +6,7 @@ use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 
-/** @var CAllMain $APPLICATION */
+/** @var CMain $APPLICATION */
 /** @var array $arParams */
 /** @var array $arResult */
 

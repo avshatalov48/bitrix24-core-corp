@@ -7,13 +7,20 @@ use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Category\Entity\DealCategoryTable;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\FieldMultiTable;
+use Bitrix\Crm\History\DealStageHistoryEntry;
 use Bitrix\Crm\Ml\DataProvider;
 use Bitrix\Crm\Ml\FeatureBuilder;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Entity\Query;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\Localization\Loc;
+use CCrmDeal;
+use CCrmFieldMulti;
+use CCrmOwnerType;
+use CCrmUserType;
 
 class DealScoring extends Base
 {
@@ -22,11 +29,13 @@ class DealScoring extends Base
 
 	/**
 	 * Returns available model names for the deal scoring.
+	 *
 	 * @return string[]
 	 */
-	public static function getModelNames()
+	public static function getModelNames(): array
 	{
 		static $result = [];
+
 		if (!empty($result))
 		{
 			return $result;
@@ -38,44 +47,46 @@ class DealScoring extends Base
 		]);
 
 		$result[] = 'CRM_DEAL_DEFAULT';
+
 		while ($row = $cursor->fetch())
 		{
 			$result[] = 'CRM_DEAL_CATEGORY_' . $row['ID'];
 		}
+
 		return $result;
 	}
 
 	/**
 	 * @return array
 	 */
-	public function getPossibleFields()
+	public function getPossibleFields(): array
 	{
 		$result = [];
 
 		// Common features
-		$result["DEAL_ID"] = ["dataType" => "string", "isRowId" => true];
-		$result["SUCCESS"] = ["dataType" => "bool", "isTarget" => true];
-		$result["SOURCE_ID"] = ["dataType" => "string"];
-		$result["SOURCE_DESCRIPTION"] = ["dataType" => "string"];
-		$result["IS_RETURN_CUSTOMER"] = ["dataType" => "bool"];
-		$result["IS_REPEATED_APPROACH"] = ["dataType" => "bool"];
-		$result["TITLE"] = ["dataType" => "text"];
-		$result["COMMENTS"] = ["dataType" => "text"];
-		$result["COMPANY_TYPE"] = ["dataType" => "string"];
-		$result["COMPANY_INDUSTRY"] = ["dataType" => "string"];
-		//$result["COMPANY_CITY"] = ["dataType" => "string"];
-		$result["CONTACT_TYPE_ID"] = ["dataType" => "string"];
-		$result["CONTACT_SOURCE_ID"] = ["dataType" => "string"];
-		$result["CONTACT_POST"] = ["dataType" => "string"];
-		$result["HAS_EMAIL"] = ["dataType" => "bool"];
-		$result["HAS_PHONE"] = ["dataType" => "bool"];
-		$result["DATE_CREATE_MONTH"] = ["dataType" => "string"];
-		$result["DATE_CREATE_DAY_OF_WEEK"] = ["dataType" => "string"];
-		$result["DATE_CREATE_TIME"] = ["dataType" => "string"]; // category: morning, day, evening, night
-		$result["ASSIGNED_BY_ID"] = ["dataType" => "string"];
+		$result['DEAL_ID'] = ['dataType' => 'string', 'isRowId' => true];
+		$result['SUCCESS'] = ['dataType' => 'bool', 'isTarget' => true];
+		$result['SOURCE_ID'] = ['dataType' => 'string'];
+		$result['SOURCE_DESCRIPTION'] = ['dataType' => 'string'];
+		$result['IS_RETURN_CUSTOMER'] = ['dataType' => 'bool'];
+		$result['IS_REPEATED_APPROACH'] = ['dataType' => 'bool'];
+		$result['TITLE'] = ['dataType' => 'text'];
+		$result['COMMENTS'] = ['dataType' => 'text'];
+		$result['COMPANY_TYPE'] = ['dataType' => 'string'];
+		$result['COMPANY_INDUSTRY'] = ['dataType' => 'string'];
+		//$result['COMPANY_CITY'] = ['dataType' => 'string'];
+		$result['CONTACT_TYPE_ID'] = ['dataType' => 'string'];
+		$result['CONTACT_SOURCE_ID'] = ['dataType' => 'string'];
+		$result['CONTACT_POST'] = ['dataType' => 'string'];
+		$result['HAS_EMAIL'] = ['dataType' => 'bool'];
+		$result['HAS_PHONE'] = ['dataType' => 'bool'];
+		$result['DATE_CREATE_MONTH'] = ['dataType' => 'string'];
+		$result['DATE_CREATE_DAY_OF_WEEK'] = ['dataType' => 'string'];
+		$result['DATE_CREATE_TIME'] = ['dataType' => 'string']; // category: morning, day, evening, night
+		$result['ASSIGNED_BY_ID'] = ['dataType' => 'string'];
 
 		$ufFeatures = static::getUserFieldName();
-		if(count($ufFeatures) > 0)
+		if (count($ufFeatures) > 0)
 		{
 			$result += $ufFeatures;
 		}
@@ -91,14 +102,14 @@ class DealScoring extends Base
 		foreach ($providers as $provider)
 		{
 			$featureMap = $provider->getFeatureMap();
-			if(is_array($featureMap))
+			if (is_array($featureMap))
 			{
 				$result += $featureMap;
 			}
 		}
 
 		// Form features
-		//$result["HAS_FILLED_FORMS"] = ["dataType" => "bool"];
+		//$result['HAS_FILLED_FORMS'] = ['dataType' => 'bool'];
 
 		return $result;
 	}
@@ -106,11 +117,12 @@ class DealScoring extends Base
 	/**
 	 * Returns count of successful and failed records in the training set for this model.
 	 *
-	 * @return [$successfulCount, $failedCount]
+	 * @return array
 	 */
 	public function getTrainingSetSize()
 	{
 		static $cache = [];
+
 		if (isset($cache[$this->name]))
 		{
 			return $cache[$this->name];
@@ -120,7 +132,7 @@ class DealScoring extends Base
 		$cursor = DealTable::getList([
 			"select" => [
 				"STAGE_SEMANTIC_ID",
-				"CNT" => \Bitrix\Main\Entity\Query::expr()->count("ID")
+				"CNT" => Query::expr()->count("ID")
 			],
 			"filter" => [
 				"=STAGE_SEMANTIC_ID" => ["S", "F"],
@@ -129,13 +141,14 @@ class DealScoring extends Base
 			],
 			"group" => ["STAGE_SEMANTIC_ID"],
 			"runtime" => [
-				new \Bitrix\Main\ORM\Fields\ExpressionField(
+				new ExpressionField(
 					"HAS_ACT",
-					"CASE WHEN EXISTS(SELECT 'x' FROM b_crm_act_bind WHERE OWNER_TYPE_ID = " . \CCrmOwnerType::Deal . " and OWNER_ID = %s) THEN 1 ELSE 0 END",
+					"CASE WHEN EXISTS(SELECT 'x' FROM b_crm_act_bind WHERE OWNER_TYPE_ID = " . CCrmOwnerType::Deal . " and OWNER_ID = %s) THEN 1 ELSE 0 END",
 					["ID"]
 				),
 			],
 		]);
+
 		$rows = [];
 		while ($row = $cursor->fetch())
 		{
@@ -143,6 +156,7 @@ class DealScoring extends Base
 		}
 
 		$cache[$this->name] = [$rows["S"] ?? 0, $rows["F"] ?? 0];
+
 		return $cache[$this->name];
 	}
 
@@ -158,9 +172,9 @@ class DealScoring extends Base
 				">ID" => $fromId
 			],
 			"runtime" => [
-				new \Bitrix\Main\ORM\Fields\ExpressionField(
+				new ExpressionField(
 					"HAS_ACT",
-					"CASE WHEN EXISTS(SELECT 'x' FROM b_crm_act WHERE OWNER_TYPE_ID = " . \CCrmOwnerType::Deal . " and OWNER_ID = %s) THEN 1 ELSE 0 END",
+					"CASE WHEN EXISTS(SELECT 'x' FROM b_crm_act WHERE OWNER_TYPE_ID = " . CCrmOwnerType::Deal . " and OWNER_ID = %s) THEN 1 ELSE 0 END",
 					["ID"]
 				),
 			],
@@ -171,7 +185,7 @@ class DealScoring extends Base
 		return array_column($rows, "ID");
 	}
 
-	public function getPredictionSet($fromId, $limit)
+	public function getPredictionSet($fromId, $limit): array
 	{
 		$ids = [];
 		$categoryId = static::getModelCategory($this->name);
@@ -201,7 +215,7 @@ class DealScoring extends Base
 		return $result;
 	}
 
-	public function buildFeaturesVector($id) // filter maybe?
+	public function buildFeaturesVector(int $entityId) // filter maybe?
 	{
 		$result = DealTable::getList([
 			"select" => [
@@ -224,66 +238,75 @@ class DealScoring extends Base
 				"CONTACT_POST" => "CONTACT.POST",
 			],
 			"filter" => [
-				"=ID" => $id
+				"=ID" => $entityId
 			]
 		])->fetch();
 
-		if(!$result)
+		if (!$result)
 		{
 			return false;
 		}
 
 		$stage = $result["STAGE_SEMANTIC_ID"];
 		unset($result["STAGE_SEMANTIC_ID"]);
+
 		$isClosed = PhaseSemantics::isFinal($stage);
 		$dateClose = null;
-		if($isClosed)
+		if ($isClosed)
 		{
 			$result["SUCCESS"] = PhaseSemantics::isLost($stage) ? "N" : "Y";
-			$lastStageHistoryEntry = \Bitrix\Crm\History\DealStageHistoryEntry::getLatest($id);
+			$lastStageHistoryEntry = DealStageHistoryEntry::getLatest($entityId);
 			$dateClose = $lastStageHistoryEntry["CREATED_TIME"];
 		}
 
-		$result["IS_RETURN_CUSTOMER"] = $result["IS_RETURN_CUSTOMER"] === "Y" ? "Y" : "N";
-		$result["IS_REPEATED_APPROACH"] = $result["IS_REPEATED_APPROACH"] === "Y" ? "Y" : "N";
-		$result["TITLE"] = FeatureBuilder::clearText($result["TITLE"]);
-		$result["COMMENTS"] = FeatureBuilder::clearText($result["COMMENTS"]);
+		$result["IS_RETURN_CUSTOMER"] = isset($result["IS_RETURN_CUSTOMER"]) && $result["IS_RETURN_CUSTOMER"] === "Y"
+			? "Y"
+			: "N";
+		$result["IS_REPEATED_APPROACH"] = isset($result["IS_REPEATED_APPROACH"]) && $result["IS_REPEATED_APPROACH"] === "Y"
+			? "Y"
+			: "N";
+		$result["TITLE"] = FeatureBuilder::clearText($result["TITLE"] ?? '');
+		$result["COMMENTS"] = FeatureBuilder::clearText($result["COMMENTS"] ?? '');
 
 		// MultiFields
 		$result["HAS_EMAIL"] = "N";
 		$result["HAS_PHONE"] = "N";
 		$bindings = [];
-		if($result["COMPANY_ID"] > 0)
+		if (isset($result["COMPANY_ID"]) && $result["COMPANY_ID"] > 0)
 		{
 			$bindings[] = [
-				"=ENTITY_ID" => \CCrmOwnerType::CompanyName,
+				"=ENTITY_ID" => CCrmOwnerType::CompanyName,
 				"=ELEMENT_ID" => $result["COMPANY_ID"]
 			];
 		}
+
 		unset($result["COMPANY_ID"]);
-		if($result["CONTACT_ID"] > 0)
+
+		if (isset($result["CONTACT_ID"]) && $result["CONTACT_ID"] > 0)
 		{
 			$bindings[] = [
-				"=ENTITY_ID" => \CCrmOwnerType::ContactName,
+				"=ENTITY_ID" => CCrmOwnerType::ContactName,
 				"=ELEMENT_ID" => $result["CONTACT_ID"]
 			];
 		}
+
 		unset($result["CONTACT_ID"]);
-		$additionalContacts = DealContactTable::getDealContactIDs($id);
+
+		$additionalContacts = DealContactTable::getDealContactIDs($entityId);
 		foreach ($additionalContacts as $contactId)
 		{
 			$bindings[] = [
-				"=ENTITY_ID" => \CCrmOwnerType::ContactName,
+				"=ENTITY_ID" => CCrmOwnerType::ContactName,
 				"=ELEMENT_ID" => $contactId
 			];
 		}
 
-		if(count($bindings) > 0)
+		if (count($bindings) > 0)
 		{
 			$cursor = FieldMultiTable::getList([
 				"select" => ["*"],
 				"filter" => [
-					"=TYPE_ID" => [\CCrmFieldMulti::PHONE, \CCrmFieldMulti::EMAIL],
+					"=TYPE_ID" => [CCrmFieldMulti::PHONE, CCrmFieldMulti::EMAIL],
 					[
 						"LOGIC" => "OR",
 						$bindings
@@ -293,25 +316,35 @@ class DealScoring extends Base
 
 			while ($row = $cursor->fetch())
 			{
-				if($row["TYPE_ID"] === \CCrmFieldMulti::EMAIL)
+				if ($row["TYPE_ID"] === CCrmFieldMulti::EMAIL)
 				{
 					$result["HAS_EMAIL"] = "Y";
 				}
-				else if($row["TYPE_ID"] === \CCrmFieldMulti::PHONE)
+				else if ($row["TYPE_ID"] === CCrmFieldMulti::PHONE)
 				{
 					$result["HAS_PHONE"] = "Y";
 				}
 			}
 		}
 
-		$result["DATE_CREATE_MONTH"] = $result["DATE_CREATE"] instanceof DateTime ? FeatureBuilder::getMonth($result["DATE_CREATE"]) : "";
-		$result["DATE_CREATE_DAY_OF_WEEK"] = $result["DATE_CREATE"] instanceof DateTime ? FeatureBuilder::getDayOfWeek($result["DATE_CREATE"]) : "";
-		$result["DATE_CREATE_TIME"] = $result["DATE_CREATE"] instanceof DateTime ? FeatureBuilder::getTimeMnemonic($result["DATE_CREATE"]) : "";
+		$isDateCreateExist = isset($result["DATE_CREATE"]) && $result["DATE_CREATE"] instanceof DateTime;
+		$result["DATE_CREATE_MONTH"] = $isDateCreateExist
+			? FeatureBuilder::getMonth($result["DATE_CREATE"])
+			: '';
+
+		$result["DATE_CREATE_DAY_OF_WEEK"] = $isDateCreateExist
+			? FeatureBuilder::getDayOfWeek($result["DATE_CREATE"])
+			: '';
+
+		$result["DATE_CREATE_TIME"] = $isDateCreateExist
+			? FeatureBuilder::getTimeMnemonic($result["DATE_CREATE"])
+			: '';
+
 		unset($result["DATE_CREATE"]);
 
 		// UF features
-		$ufFeatures = static::getUserFieldFeatures($id);
-		if(is_array($ufFeatures))
+		$ufFeatures = static::getUserFieldFeatures($entityId);
+		if (is_array($ufFeatures))
 		{
 			$result += $ufFeatures;
 		}
@@ -326,8 +359,8 @@ class DealScoring extends Base
 
 		foreach ($providers as $provider)
 		{
-			$providerFeatures = $provider->getFeatures(\CCrmOwnerType::Deal, $id);
-			if(is_array($providerFeatures))
+			$providerFeatures = $provider->getFeatures(CCrmOwnerType::Deal, $entityId);
+			if (is_array($providerFeatures))
 			{
 				$result += $providerFeatures;
 			}
@@ -338,8 +371,8 @@ class DealScoring extends Base
 
 	public static function getModelNameByDeal($dealId)
 	{
-		$dealId = (int)$dealId;
-		if(!$dealId)
+		$dealId = (int)($dealId ?? 0);
+		if ($dealId <= 0)
 		{
 			return false;
 		}
@@ -351,73 +384,77 @@ class DealScoring extends Base
 			]
 		])->fetch();
 
-		if(!$row)
+		if (!$row)
 		{
 			return false;
 		}
 
-		return static::getModelName($row["CATEGORY_ID"]);
+		return static::getModelName((int)$row["CATEGORY_ID"]);
 	}
 
-	protected static function getModelName($categoryId)
+	protected static function getModelName(int $categoryId): string
 	{
-		return $categoryId == 0 ? "CRM_DEAL_DEFAULT" :"CRM_DEAL_CATEGORY_" . $categoryId;
+		return $categoryId === 0 ? 'CRM_DEAL_DEFAULT' : 'CRM_DEAL_CATEGORY_' . $categoryId;
 	}
 
-	protected static function getModelCategory($modelName)
+	protected static function getModelCategory(string $modelName): int
 	{
-		if($modelName === "CRM_DEAL_DEFAULT")
+		if ($modelName === 'CRM_DEAL_DEFAULT')
 		{
 			return 0;
 		}
-		else if(mb_strpos($modelName, "CRM_DEAL_CATEGORY_") !== false)
+
+		if (mb_strpos($modelName, 'CRM_DEAL_CATEGORY_') !== false)
 		{
 			return (int)mb_substr($modelName, 18);
 		}
-		else {
-			throw new ArgumentException("Unknown model name $modelName");
-		}
+
+		throw new ArgumentException('Unknown model name $modelName');
 	}
 
 	/**
 	 * @inheritDoc
 	 */
-	public function getTitle()
+	public function getTitle(): string
 	{
 		$dealCategory = static::getModelCategory($this->getName());
-
-		if($dealCategory > 0)
+		if ($dealCategory > 0)
 		{
 			return Loc::getMessage("CRM_DEAL_SCORING_MODEL_TITLE", [
 				"#CATEGORY_NAME#" => DealCategory::getName($dealCategory)
 			]);
 		}
-		else
-		{
-			return Loc::getMessage("CRM_DEAL_SCORING_MODEL_TITLE_DEFAULT");
-		}
 
+		return Loc::getMessage("CRM_DEAL_SCORING_MODEL_TITLE_DEFAULT");
 	}
 
-	public function hasAccess(int $userId = 0)
+	public function hasAccess(int $userId = 0): bool
 	{
 		$categoryId = static::getModelCategory($this->name);
 		$userPermission = \CCrmPerms::GetUserPermissions($userId);
 
-		return \CCrmDeal::CheckReadPermission(0, $userPermission, $categoryId);
+		return CCrmDeal::CheckReadPermission(
+			0,
+			$userPermission,
+			$categoryId
+		);
 	}
 
 	protected static function getUserFieldName()
 	{
 		static $result;
 
-		if(!is_null($result))
+		if (!is_null($result))
 		{
 			return $result;
 		}
 
 		$result = [];
-		$dealUserType = new \CCrmUserType($GLOBALS['USER_FIELD_MANAGER'], \CCrmDeal::GetUserFieldEntityID());
+		$dealUserType = new CCrmUserType(
+			$GLOBALS['USER_FIELD_MANAGER'],
+			CCrmDeal::GetUserFieldEntityID()
+		);
+
 		$userFields = $dealUserType->GetFields();
 		foreach ($userFields as $fieldName => $fieldDescription)
 		{
@@ -455,14 +492,19 @@ class DealScoring extends Base
 	protected static function getUserFieldFeatures($dealId)
 	{
 		static $fieldTypes;
-		if(is_null($fieldTypes))
+		
+		if (is_null($fieldTypes))
 		{
 			$fieldTypes = [];
 
-			$dealUserType = new \CCrmUserType($GLOBALS['USER_FIELD_MANAGER'], \CCrmDeal::GetUserFieldEntityID());
-			$fields = $dealUserType->GetFields();
-
-			$fieldTypes = array_map(function($field){return $field["USER_TYPE_ID"];}, $fields);
+			$dealUserType = new CCrmUserType(
+				$GLOBALS['USER_FIELD_MANAGER'],
+				CCrmDeal::GetUserFieldEntityID()
+			);
+			$fieldTypes = array_map(
+				static fn($field) => $field["USER_TYPE_ID"],
+				$dealUserType->GetFields()
+			);
 		}
 
 		$fieldValues = DealTable::getList([
@@ -472,8 +514,7 @@ class DealScoring extends Base
 			]
 		])->fetch();
 
-
-		if(!is_array($fieldTypes) || count($fieldTypes) == 0)
+		if (!is_array($fieldTypes) || count($fieldTypes) === 0)
 		{
 			return false;
 		}
@@ -513,50 +554,51 @@ class DealScoring extends Base
 		foreach ($fieldValues as $fieldName => $value)
 		{
 			$fieldType = $fieldTypes[$fieldName];
-			if(!$fieldType)
+			if (!$fieldType)
 			{
 				continue;
 			}
 
-			if($fieldType == "string" || $fieldType == "enumeration")
+			if ($fieldType === "string" || $fieldType === "enumeration")
 			{
-				if(is_array($value))
+				if (is_array($value))
 				{
 					$value = implode(" ", $value);
 				}
 				$result[$fieldName] = FeatureBuilder::clearText($value);
 			}
-			else if($fieldType == "boolean")
+			else if ($fieldType === "boolean")
 			{
-				if(is_array($value))
+				if (is_array($value) && count($value) > 0)
 				{
 					$value = $value[0];
 				}
 				$result[$fieldName] = $value ? "Y" : "N";
 			}
-			else if($fieldType == "integer" || $fieldType == "double")
+			else if ($fieldType === "integer" || $fieldType === "double")
 			{
-				if(is_array($value))
+				if (is_array($value) && count($value) > 0)
 				{
 					$value = $value[0];
 				}
-				$result[$fieldName] = $value != "" ? (int)$value : "";
+				$result[$fieldName] = $value !== "" ? (int)$value : "";
 			}
-			else if($fieldType == "date")
+			else if ($fieldType === "date")
 			{
-				if(is_array($value))
+				if (is_array($value) && count($value) > 0)
 				{
 					$value = $value[0];
 				}
 				$result[$fieldName."_DAY_OF_WEEK"] = $value instanceof Date ? FeatureBuilder::getDayOfWeek($value) : "";
 				$result[$fieldName."_MONTH"] = $value instanceof Date ? FeatureBuilder::getMonth($value) : "";
 			}
-			else if($fieldType == "datetime")
+			else if ($fieldType === "datetime")
 			{
-				if(is_array($value))
+				if (is_array($value) && count($value) > 0)
 				{
 					$value = $value[0];
 				}
+
 				$result[$fieldName."_DAY_OF_WEEK"] = $value instanceof DateTime ? FeatureBuilder::getDayOfWeek($value) : "";
 				$result[$fieldName."_MONTH"] = $value instanceof DateTime ? FeatureBuilder::getMonth($value) : "";
 				$result[$fieldName."_TIME"] = $value instanceof DateTime ? FeatureBuilder::getTimeMnemonic($value) : "";
@@ -569,7 +611,4 @@ class DealScoring extends Base
 
 		return $result;
 	}
-
-
-
 }

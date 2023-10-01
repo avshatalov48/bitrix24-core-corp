@@ -303,6 +303,10 @@ final class ConfigBuilder
 				'lang' => $this->getLangCode(),
 				'region' => $this->getRegion(),
 				'mode' => $this->mode,
+				'coEditing' => [
+					'mode' => $this->isViewMode() ? 'strict' : 'fast',
+					'change' => false,
+				],
 				'callbackUrl' => (string)$this->callbackUrl,
 				'customization' => $this->getCustomizationSection($baseUrl),
 			],

@@ -71,6 +71,8 @@ class Lead extends Base
 
 		$this->loadFmValues();
 		$this->loadUserFieldValues();
+
+		$this->document = Crm\Entity\CommentsHelper::prepareFieldsFromBizProc($this->typeId, $this->id, $this->document);
 	}
 
 	protected function loadCompanyTitle(): void

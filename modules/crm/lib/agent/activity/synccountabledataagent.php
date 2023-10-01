@@ -41,7 +41,7 @@ class SyncCountableDataAgent extends Stepper
 
 		$result['steps'] = (int)($result['steps'] ?? 0);
 
-		if (!$result['currentStep'])
+		if (!isset($result['currentStep']))
 		{
 			$result['currentStep'] = self::STEP_COUNTABLE_ACTIVITIES;
 		}

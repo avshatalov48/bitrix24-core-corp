@@ -10,14 +10,14 @@ $MESS["CRM_PHASE_SEMANTICS_DEAL_FAILURE"] = "Группа стадий \"Сде�
 $MESS["CRM_PHASE_SEMANTICS_LEAD_GROUP_TITLE"] = "Статусы";
 $MESS["CRM_PHASE_SEMANTICS_LEAD_CAPTION"] = "Выберите статусы";
 $MESS["CRM_PHASE_SEMANTICS_LEAD_SELECTOR_TITLE"] = "Выберите статус или категорию";
-$MESS["CRM_PHASE_SEMANTICS_LEAD_UNDEFINED"] = "не выбран";
-$MESS["CRM_PHASE_SEMANTICS_LEAD_PROCESS"] = "Группа статусов \"Лид в работе\"";
-$MESS["CRM_PHASE_SEMANTICS_LEAD_SUCCESS"] = "Статус \"Лид сконвертирован\"";
-$MESS["CRM_PHASE_SEMANTICS_LEAD_FAILURE"] = "Группа статусов \"Лид забракован\"";
+$MESS["CRM_PHASE_SEMANTICS_LEAD_UNDEFINED_MSGVER_1"] = "не выбрана";
+$MESS["CRM_PHASE_SEMANTICS_LEAD_PROCESS_MSGVER_1"] = "Группа стадий \"Лид в работе\"";
+$MESS["CRM_PHASE_SEMANTICS_LEAD_SUCCESS_MSGVER_1"] = "Стадия \"Лид сконвертирован\"";
+$MESS["CRM_PHASE_SEMANTICS_LEAD_FAILURE_MSGVER_1"] = "Группа стадий \"Лид забракован\"";
 
-$MESS["CRM_PHASE_SEMANTICS_QUOTE_PROCESS"] = "Группа статусов \"Предложение открыто\"";
-$MESS["CRM_PHASE_SEMANTICS_QUOTE_SUCCESS"] = "Статус \"Предложение утверждено\"";
-$MESS["CRM_PHASE_SEMANTICS_QUOTE_FAILURE"] = "Группа статусов \"Предложение отклонено\"";
+$MESS["CRM_PHASE_SEMANTICS_QUOTE_PROCESS_MSGVER_1"] = "Группа стадий \"Предложение открыто\"";
+$MESS["CRM_PHASE_SEMANTICS_QUOTE_SUCCESS_MSGVER_1"] = "Стадия \"Предложение утверждено\"";
+$MESS["CRM_PHASE_SEMANTICS_QUOTE_FAILURE_MSGVER_1"] = "Группа стадий \"Предложение отклонено\"";
 
 $MESS["CRM_PHASE_SEMANTICS_INVOICE_GROUP_TITLE"] = "Cтатусы";
 $MESS["CRM_PHASE_SEMANTICS_INVOICE_CAPTION"] = "Выберите статусы";

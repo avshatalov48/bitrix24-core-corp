@@ -31,6 +31,18 @@ final class DocumentService extends Engine\Controller
 				],
 				'-prefilters' => [Csrf::class],
 			],
+			'restoreDocumentInteraction' => [
+				'+prefilters' => [
+					(new DocumentSessionCheck())
+						->enableStrictCheckRight()
+						->enableHashCheck(function(){
+							return Context::getCurrent()->getRequest()->get('documentSessionHash');
+						})
+					,
+					new HttpMethod([HttpMethod::METHOD_GET]),
+				],
+				'-prefilters' => [Csrf::class],
+			],
 			'downloadDocument' => [
 				'+prefilters' => [
 					(new DocumentSessionCheck())
@@ -53,6 +65,65 @@ final class DocumentService extends Engine\Controller
 				new CloseSession(),
 			]],
 		];
+	}
+
+	public function restoreDocumentInteractionAction(Document\OnlyOffice\Models\DocumentSession $documentSession)
+	{
+		$currentUser = $this->getCurrentUser();
+		if (!$currentUser)
+		{
+			$this->addError(new Error('Could not find current user.'));
+
+			return null;
+		}
+
+		$sessionManager = new Document\OnlyOffice\DocumentSessionManager();
+		$sessionManager
+			->setUserId($currentUser->getId())
+			->setSessionType($documentSession->getType())
+			->setSessionContext($documentSession->getContext())
+			->setFile($documentSession->getFile())
+			->setVersion($documentSession->getVersion())
+		;
+
+		if (!$sessionManager->lock())
+		{
+			$this->addError(new Error('Could not getting lock for the session.'));
+
+			return null;
+		}
+
+		$forkedSession = $sessionManager->findOrCreateSession();
+		if (!$forkedSession)
+		{
+			$this->addErrors($forkedSession->getErrors());
+
+			return null;
+		}
+		$sessionManager->unlock();
+
+		$content = $GLOBALS['APPLICATION']->includeComponent(
+			'bitrix:ui.sidepanel.wrapper',
+			'',
+			[
+				'RETURN_CONTENT' => true,
+				'POPUP_COMPONENT_NAME' => 'bitrix:disk.file.editor-onlyoffice',
+				'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+				'POPUP_COMPONENT_PARAMS' => [
+					'DOCUMENT_SESSION' => $forkedSession,
+					'SHOW_BUTTON_OPEN_NEW_WINDOW' => false,
+				],
+				'PLAIN_VIEW' => true,
+				'IFRAME_MODE' => true,
+				'PREVENT_LOADING_WITHOUT_IFRAME' => false,
+				'USE_PADDING' => false,
+			]
+		);
+
+		$response = new HttpResponse();
+		$response->setContent($content);
+
+		return $response;
 	}
 
 	public function viewDocumentAction(Document\OnlyOffice\Models\DocumentSession $documentSession): HttpResponse

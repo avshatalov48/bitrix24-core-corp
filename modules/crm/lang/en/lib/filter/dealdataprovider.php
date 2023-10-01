@@ -8,6 +8,7 @@ $MESS["CRM_DEAL_FILTER_CONTACT_FULL_NAME"] = "Contact name";
 $MESS["CRM_DEAL_FILTER_CONTACT_ID"] = "Contacts";
 $MESS["CRM_DEAL_FILTER_DELIVERY_STAGE"] = "Delivery status";
 $MESS["CRM_DEAL_FILTER_IS_PRODUCT_RESERVED"] = "Has reserved items";
+$MESS["CRM_DEAL_FILTER_LAST_ACTIVITY_TIME"] = "Last activity";
 $MESS["CRM_DEAL_FILTER_ORDER_SOURCE"] = "Order source";
 $MESS["CRM_DEAL_FILTER_ORDER_STAGE"] = "Deal payment status";
 $MESS["CRM_DEAL_FILTER_PAYMENT_PAID"] = "Payment date";

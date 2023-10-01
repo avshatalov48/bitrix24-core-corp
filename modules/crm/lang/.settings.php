@@ -1,9 +1,10 @@
 <?php
 
-return array (
-	'lib/format/requisite.php' =>
-		array (
-			'languages' =>
-				array ('ru'),
-		),
-);
+return [
+	'lib/format/requisite.php' => [
+		'languages' => ['ru'],
+	],
+	'lib/integration/catalog/contractor/agentcontractcontractortable.php' => [
+		'languages' => ['ru', 'en'],
+	],
+];

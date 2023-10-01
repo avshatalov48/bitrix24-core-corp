@@ -1,53 +1,80 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Crm\Ml\Controller\Details;
+use Bitrix\Crm\Ml\Internals\ModelTrainingTable;
+use Bitrix\Crm\Ml\Internals\PredictionHistoryTable;
+use Bitrix\Crm\Ml\Model\Base;
+use Bitrix\Crm\Ml\Model\DealScoring;
+use Bitrix\Crm\Ml\Model\LeadScoring;
+use Bitrix\Crm\Ml\Scoring;
+use Bitrix\Crm\Ml\TrainingState;
+use Bitrix\Crm\Ml\ViewHelper;
+use Bitrix\Main\Context;
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Error;
+use Bitrix\Main\ErrorCollection;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
 class CCrmMlEntityDetailComponent extends CBitrixComponent
 {
-	protected $entityType;
-	protected $entityTypeId;
-	protected $entityId;
-	/** @var \Bitrix\Crm\Ml\Model\Base */
-	protected $model;
-	protected $currentTraining;
+	private const FEEDBACK_PORTAL = 'https://product-feedback.bitrix24.com';
+	const ALLOWED_TYPES = [CCrmOwnerType::DealName, CCrmOwnerType::LeadName]; // TODO: not used?
 
-	protected $successfulRecords;
-	protected $failedRecords;
-
-	protected $errorCollection;
-
-	const ALLOWED_TYPES = [CCrmOwnerType::DealName, CCrmOwnerType::LeadName];
+	protected ?string $entityType;
+	protected ?int $entityTypeId;
+	protected ?int $entityId;
+	protected ?Base $model;
+	protected ?array $currentTraining;
+	protected ErrorCollection $errorCollection;
 
 	public function __construct($component = null)
 	{
 		parent::__construct($component);
 
-		\Bitrix\Main\Loader::includeModule('ui');
-		$this->errorCollection = new \Bitrix\Main\ErrorCollection();
+		Loader::includeModule('ui');
+		
+		$this->errorCollection = new ErrorCollection();
 	}
 
-	public function executeComponent()
+	public function executeComponent(): void
 	{
 		$this->setEntity($this->arParams['TYPE'], $this->arParams['ID']);
 
 		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-		if (!CCrmAuthorizationHelper::CheckReadPermission($this->arParams['TYPE'], $this->arParams['ID'], $userPermissions))
+
+		if (
+			!CCrmAuthorizationHelper::CheckReadPermission(
+				$this->arParams['TYPE'],
+				$this->arParams['ID'],
+				$userPermissions
+			)
+		)
 		{
-			$this->errorCollection[] = new \Bitrix\Main\Error("Access denied");
-		}
-		if(!\Bitrix\Main\Loader::includeModule("ml"))
-		{
-			$this->errorCollection[] = new \Bitrix\Main\Error("ML module is not installed");
-		}
-		if(!$this->model)
-		{
-			$this->errorCollection[] = new \Bitrix\Main\Error("Could not create model for this entity");
+			$this->errorCollection[] = new Error('Access denied');
 		}
 
-		if($this->errorCollection->isEmpty())
+		if (!Loader::includeModule('ml'))
+		{
+			$this->errorCollection[] = new Error('ML module is not installed');
+		}
+
+		if (!$this->model)
+		{
+			$this->errorCollection[] = new Error('Could not create model for this entity');
+		}
+
+		$this->arResult['ERRORS'] = [];
+		if ($this->errorCollection->isEmpty())
 		{
 			$this->arResult = $this->prepareResult();
 			$this->subscribePullEvents($this->model);
@@ -55,8 +82,8 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 		else
 		{
 			$this->arResult = [
-				"ERRORS" => array_map(
-					function($err)
+				'ERRORS' => array_map(
+					static function($err)
 					{
 						return ($err instanceof JsonSerializable ? $err->jsonSerialize() : $err);
 					},
@@ -67,7 +94,11 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 
 		if ($this->arParams['SET_TITLE'] === 'Y')
 		{
-			if($this->model && $this->model->getState() === \Bitrix\Ml\Model::STATE_READY && $this->arResult['ITEM'])
+			if (
+				$this->model
+				&& $this->model->getState() === \Bitrix\Ml\Model::STATE_READY
+				&& $this->arResult['ITEM']
+			)
 			{
 				$GLOBALS['APPLICATION']->SetTitle($this->arResult['ITEM']['TITLE']);
 			}
@@ -78,19 +109,22 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 				);
 			}
 		}
+
 		$this->includeComponentTemplate();
 	}
 
-	public function setEntity($entityType, $entityId)
+	public function setEntity(string $entityType, int $entityId): void
 	{
 		$this->entityId = $entityId;
 		$this->entityType = $entityType;
 		$this->entityTypeId = CCrmOwnerType::ResolveID($this->entityType);
-		$this->model = \Bitrix\Crm\Ml\Scoring::getScoringModel($this->entityTypeId, $this->entityId);
-		$this->currentTraining = $this->model ? $this->getCurrentTraining($this->model) : null;
+		$this->model = Scoring::getScoringModel($this->entityTypeId, $this->entityId);
+		$this->currentTraining = $this->model && $this->model->getMlModel()
+			? $this->getCurrentTraining($this->model)
+			: null;
 	}
 
-	public function prepareResult()
+	public function prepareResult(): array
 	{
 		$result = [];
 
@@ -100,72 +134,72 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 		$result['ITEM'] = $this->getEntityProperties();
 
 		$result['ML_MODEL_EXISTS'] = !is_null($this->model->getMlModel());
-		$result['SCORING_ENABLED'] = \Bitrix\Crm\Ml\Scoring::isEnabled();
-		$canStartTraining = \Bitrix\Crm\Ml\Scoring::canStartTraining($this->model);
+		$result['SCORING_ENABLED'] = Scoring::isEnabled();
+		$canStartTraining = Scoring::canStartTraining($this->model);
 		$result['CAN_START_TRAINING'] = $canStartTraining->isSuccess();
-		if(!$canStartTraining->isSuccess())
+		$result['TRAINING_ERROR'] = null;
+		if (!$canStartTraining->isSuccess())
 		{
 			$result['TRAINING_ERROR'] = $canStartTraining->getErrors()[0];
 		}
 
-		if($result['ITEM']['IS_FINAL'] == 'N')
+		if (isset($result['ITEM']['IS_FINAL']) && $result['ITEM']['IS_FINAL'] === 'N')
 		{
-			\Bitrix\Crm\Ml\Scoring::tryCreateFirstPrediction(
+			Scoring::tryCreateFirstPrediction(
 				$this->entityTypeId,
 				$this->entityId,
-				\Bitrix\Crm\Ml\Scoring::PREDICTION_IMMEDIATE
+				Scoring::PREDICTION_IMMEDIATE
 			);
 		}
 
 		$result['PREDICTION_HISTORY'] = $this->getPredictionHistory();
 		$result['ASSOCIATED_EVENTS'] = $this->prepareAssociatedEvents($result['PREDICTION_HISTORY']);
 		$result['TRAINING_HISTORY'] = $this->getTrainingHistory();
-
 		$result['FEEDBACK_PARAMS'] = $this->getFeedbackParams();
 
 		return $result;
 	}
 
-	public function subscribePullEvents(\Bitrix\Crm\Ml\Model\Base $model)
+	public function subscribePullEvents(Base $model): void
 	{
 		global $USER;
-		if(!\Bitrix\Main\Loader::includeModule("pull"))
+
+		if (!Loader::includeModule('pull'))
 		{
 			return;
 		}
 
-		$tag = \Bitrix\Crm\Ml\Controller\Details::getPushTag($model);
+		$tag = Details::getPushTag($model);
+
 		CPullWatch::Add($USER->GetID(), $tag, true);
 	}
 
-	public function getCurrentTraining(\Bitrix\Crm\Ml\Model\Base $model)
+	public function getCurrentTraining(Base $model): array
 	{
-		$dateFormat = \Bitrix\Main\Type\Date::convertFormatToPhp(\Bitrix\Main\Context::getCurrent()->getCulture()->getDateFormat());
+		$dateFormat = Date::convertFormatToPhp(Context::getCurrent()->getCulture()->getDateFormat());
 
 		$result = $model->getCurrentTraining();
-		$result["DATE_START"] = $result["DATE_START"] instanceof \Bitrix\Main\Type\DateTime ? $result["DATE_START"]->format(DATE_ATOM) : null;
-		$result["DATE_FINISH"] = $result["DATE_FINISH"] instanceof \Bitrix\Main\Type\DateTime ? $result["DATE_FINISH"]->format(DATE_ATOM) : null;
-		$result["NEXT_DATE"] = $result["NEXT_DATE"] instanceof \Bitrix\Main\Type\DateTime ? $result["NEXT_DATE"]->format($dateFormat) : "";
+		$result['DATE_START'] = $result['DATE_START'] instanceof DateTime ? $result['DATE_START']->format(DATE_ATOM) : null;
+		$result['DATE_FINISH'] = $result['DATE_FINISH'] instanceof DateTime ? $result['DATE_FINISH']->format(DATE_ATOM) : null;
+		$result['NEXT_DATE'] = $result['NEXT_DATE'] instanceof DateTime ? $result['NEXT_DATE']->format($dateFormat) : "";
 
 		return $result;
 	}
 
-	public function getEntityProperties()
+	public function getEntityProperties(): array
 	{
-		$result = [
+		return [
 			'ENTITY_TYPE' => $this->entityType,
 			'ENTITY_TYPE_ID' => CCrmOwnerType::ResolveID($this->entityType),
 			'ENTITY_ID' => $this->entityId,
-			'TITLE' => \CCrmOwnerType::GetCaption($this->entityTypeId, $this->entityId, false),
-			'IS_FINAL' => \Bitrix\Crm\Ml\ViewHelper::isEntityFinal($this->entityTypeId, $this->entityId) ? 'Y' : 'N'
+			'TITLE' => CCrmOwnerType::GetCaption($this->entityTypeId, $this->entityId, false),
+			'IS_FINAL' => ViewHelper::isEntityFinal($this->entityTypeId, $this->entityId) ? 'Y' : 'N',
 		];
-
-		return $result;
 	}
 
-	public function getPredictionHistory()
+	public function getPredictionHistory(): array
 	{
-		$historyCursor = \Bitrix\Crm\Ml\Internals\PredictionHistoryTable::getList([
+		$historyCursor = PredictionHistoryTable::getList([
 			'select' => [
 				'ANSWER',
 				'SCORE',
@@ -193,70 +227,72 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 				'ANSWER' => (int)$row['ANSWER'],
 				'SCORE' => (float)$row['SCORE'],
 				'SCORE_DELTA' => (float)$row['SCORE_DELTA'],
-				'CREATED' => $row["CREATED"] instanceof \Bitrix\Main\Type\DateTime ? $row["CREATED"]->format(DATE_ATOM) : null ,
+				'CREATED' => $row['CREATED'] instanceof DateTime ? $row['CREATED']->format(DATE_ATOM) : null ,
 				'EVENT_TYPE' => $row['EVENT_TYPE'],
 				'ASSOCIATED_ACTIVITY_ID' => (int)$row['ASSOCIATED_ACTIVITY_ID'] ?: null
 			];
 		}
+
 		return array_reverse($result);
 	}
 
-	public function prepareAssociatedEvents(array $predictionHistory)
+	public function prepareAssociatedEvents(array $predictionHistory): array
 	{
 		$actIds = [];
 
 		foreach ($predictionHistory as $prediction)
 		{
-			if($prediction["EVENT_TYPE"] == "activity" && $prediction["ASSOCIATED_ACTIVITY_ID"] > 0)
+			if ($prediction['EVENT_TYPE'] === 'activity' && $prediction['ASSOCIATED_ACTIVITY_ID'] > 0)
 			{
-				$actIds[] = $prediction["ASSOCIATED_ACTIVITY_ID"];
+				$actIds[] = $prediction['ASSOCIATED_ACTIVITY_ID'];
 			}
 		}
 
-		if(count($actIds) === 0)
+		if (count($actIds) === 0)
 		{
 			return [];
 		}
 
 		$actCursor = CCrmActivity::GetList(
 			[],
-			["@ID" => $actIds],
+			['@ID' => $actIds],
 			false,
 			false,
-			["ID", "SUBJECT"],
-			["CHECK_PERMISSIONS" => false]
+			['ID', 'SUBJECT'],
+			['CHECK_PERMISSIONS' => false]
 		);
 		$activities = [];
 		while($row = $actCursor->fetch())
 		{
-			$activities[$row["ID"]] = $row;
+			$activities[$row['ID']] = $row;
 		}
 
 		$result = [];
 		foreach ($predictionHistory as $prediction)
 		{
-			if($prediction["EVENT_TYPE"] === "initial")
+			if ($prediction['EVENT_TYPE'] === 'initial')
 			{
 				continue;
 			}
-			if($prediction["EVENT_TYPE"] === "activity" && !$activities[$prediction["ASSOCIATED_ACTIVITY_ID"]])
+			if ($prediction['EVENT_TYPE'] === 'activity' && !$activities[$prediction['ASSOCIATED_ACTIVITY_ID']])
 			{
 				continue;
 			}
 
 			$result[] = [
-				"EVENT_TYPE" => $prediction["EVENT_TYPE"],
-				"ASSOCIATED_ACTIVITY_ID" => $prediction["ASSOCIATED_ACTIVITY_ID"],
-				"SCORE_DELTA" => $prediction["SCORE_DELTA"],
-				"ACTIVITY" => $activities[$prediction["ASSOCIATED_ACTIVITY_ID"]]
+				'EVENT_TYPE' => $prediction['EVENT_TYPE'],
+				'ASSOCIATED_ACTIVITY_ID' => $prediction['ASSOCIATED_ACTIVITY_ID'],
+				'SCORE_DELTA' => $prediction['SCORE_DELTA'],
+				'ACTIVITY' => $activities[$prediction['ASSOCIATED_ACTIVITY_ID']]
 			];
 		}
+
 		return $result;
 	}
 
-	public function getTrainingHistory()
+	public function getTrainingHistory(): array
 	{
-		$cursor = \Bitrix\Crm\Ml\Internals\ModelTrainingTable::getList([
+		$cursor = ModelTrainingTable::getList([
 			'select' => [
 				'DATE_START',
 				'DATE_FINISH',
@@ -266,7 +302,7 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 			],
 			'filter' => [
 				'=MODEL_NAME' => $this->model->getName(),
-				'=STATE' => \Bitrix\Crm\Ml\TrainingState::FINISHED
+				'=STATE' => TrainingState::FINISHED
 			],
 			'order' => [
 				'DATE_START' => 'asc'
@@ -278,38 +314,39 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 		while ($row = $cursor->fetch())
 		{
 			$result[] = [
-				"DATE_START" => $row["DATE_START"] instanceof \Bitrix\Main\Type\DateTime ? $row["DATE_START"]->format(DATE_ATOM) : null,
-				"DATE_FINISH" => $row["DATE_FINISH"] instanceof \Bitrix\Main\Type\DateTime ? $row["DATE_FINISH"]->format(DATE_ATOM) : null,
-				"RECORDS_FAILED" => (int)$row["RECORDS_FAILED"],
-				"RECORDS_SUCCESS" => (int)$row["RECORDS_SUCCESS"],
-				"AREA_UNDER_CURVE" => (float)$row["AREA_UNDER_CURVE"],
+				'DATE_START' => $row['DATE_START'] instanceof DateTime ? $row['DATE_START']->format(DATE_ATOM) : null,
+				'DATE_FINISH' => $row['DATE_FINISH'] instanceof DateTime ? $row['DATE_FINISH']->format(DATE_ATOM) : null,
+				'RECORDS_FAILED' => (int)$row['RECORDS_FAILED'],
+				'RECORDS_SUCCESS' => (int)$row['RECORDS_SUCCESS'],
+				'AREA_UNDER_CURVE' => (float)$row['AREA_UNDER_CURVE'],
 			];
 		}
+
 		return $result;
 	}
 
-	public function getFeedbackParams()
+	public function getFeedbackParams(): array
 	{
-		$auc = "";
-		if($this->currentTraining)
+		$auc = '';
+		if ($this->currentTraining)
 		{
-			$auc = round($this->currentTraining["AREA_UNDER_CURVE"] * 100);
+			$auc = round($this->currentTraining['AREA_UNDER_CURVE'] * 100);
 		}
 
 		return [
 			'ID' => 'crm-scoring',
 			'FORM' => $this->getFeedbackForm(),
-			'PORTAL' => 'https://product-feedback.bitrix24.com',
+			'PORTAL' => self::FEEDBACK_PORTAL,
 			'PRESETS' => [
-				'c_name' => \Bitrix\Main\Engine\CurrentUser::get()->getFullName(),
-				'b24_plan' => \Bitrix\Main\Loader::includeModule("bitrix24") ? CBitrix24::getLicenseType() : "",
-				'percent_lead' => $this->model instanceof \Bitrix\Crm\Ml\Model\LeadScoring ? $auc : '',
-				'percent_deal' => $this->model instanceof \Bitrix\Crm\Ml\Model\DealScoring ? $auc : ''
+				'c_name' => CurrentUser::get()->getFullName(),
+				'b24_plan' => Loader::includeModule('bitrix24') ? CBitrix24::getLicenseType() : '',
+				'percent_lead' => $this->model instanceof LeadScoring ? $auc : '',
+				'percent_deal' => $this->model instanceof DealScoring ? $auc : ''
 			]
 		];
 	}
 
-	public function getFeedbackForm()
+	public function getFeedbackForm(): array
 	{
 		$forms = [
 			['zones' => ['com.br'], 'id' => '122','lang' => 'br', 'sec' => '8f7j4h'],
@@ -320,9 +357,9 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 			['zones' => ['en'], 'id' => '116','lang' => 'en', 'sec' => 'h4pdb1'],
 		];
 
-		if (\Bitrix\Main\Loader::includeModule("bitrix24"))
+		if (Loader::includeModule('bitrix24'))
 		{
-			$zone = \CBitrix24::getPortalZone();
+			$zone = CBitrix24::getPortalZone();
 			$defaultForm = null;
 			foreach ($forms as $form)
 			{
@@ -331,12 +368,12 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 					continue;
 				}
 
-				if (in_array($zone, $form['zones']))
+				if (in_array($zone, $form['zones'], true))
 				{
 					return $form;
 				}
 
-				if (in_array('en', $form['zones']))
+				if (in_array('en', $form['zones'], true))
 				{
 					$defaultForm = $form;
 				}
@@ -344,29 +381,27 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 
 			return $defaultForm;
 		}
-		else
+
+		$lang = LANGUAGE_ID;
+		$defaultForm = null;
+		foreach ($forms as $form)
 		{
-			$lang = LANGUAGE_ID;
-			$defaultForm = null;
-			foreach ($forms as $form)
+			if (!isset($form['lang']))
 			{
-				if (!isset($form['lang']))
-				{
-					continue;
-				}
-
-				if ($lang === $form['lang'])
-				{
-					return $form;
-				}
-
-				if ($form['lang'] === 'en')
-				{
-					$defaultForm = $form;
-				}
+				continue;
 			}
 
-			return $defaultForm;
+			if ($lang === $form['lang'])
+			{
+				return $form;
+			}
+
+			if ($form['lang'] === 'en')
+			{
+				$defaultForm = $form;
+			}
 		}
+
+		return $defaultForm;
 	}
 }

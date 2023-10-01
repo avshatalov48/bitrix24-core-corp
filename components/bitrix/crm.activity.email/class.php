@@ -419,7 +419,9 @@ class CrmActivityEmailComponent extends CBitrixComponent
 
 		$activity = $this->arParams['~ACTIVITY'];
 		if (empty($activity))
+		{
 			return;
+		}
 
 		$authorId = Message::getAssociatedUser($activity)['id'];
 		$userId = $USER->getId();
@@ -430,9 +432,11 @@ class CrmActivityEmailComponent extends CBitrixComponent
 			$authIds[] = $authorId;
 		}
 
-		$pageSize = (int) $this->arParams['PAGE_SIZE'];
+		$pageSize = (int)($this->arParams['PAGE_SIZE'] ?? 0);
 		if ($pageSize < 1 || $pageSize > 100)
+		{
 			$this->arParams['PAGE_SIZE'] = ($pageSize = 5);
+		}
 
 		$actIds  = array();
 
@@ -980,27 +984,37 @@ class CrmActivityEmailComponent extends CBitrixComponent
 	{
 		\CCrmActivity::prepareCommunicationInfo($item);
 
-		$entityTypes = array(
+		$entityTypes = [
 			'\CCrmContact' => \CCrmOwnerType::Contact,
 			'\CCrmCompany' => \CCrmOwnerType::Company,
-		);
+		];
+
 		if ($entityClass = array_search($item['ENTITY_TYPE_ID'], $entityTypes))
 		{
 			$entity = $entityClass::getListEx(
-				array(),
-				array('ID' => $item['ENTITY_ID']),
-				false, false,
-				array('PHOTO', 'LOGO')
+				[],
+				['ID' => $item['ENTITY_ID']],
+				false,
+				false,
+				['PHOTO', 'LOGO']
 			)->fetch();
+			if (!$entity)
+			{
+				return;
+			}
 
-			if (!empty($entity) and $entity['PHOTO'] > 0 || $entity['LOGO'] > 0)
+			if (
+				(isset($entity['PHOTO']) && $entity['PHOTO'] > 0)
+				|| (isset($entity['LOGO']) && $entity['LOGO'] > 0)
+			)
 			{
 				$fileInfo = \CFile::resizeImageGet(
-					$entity['PHOTO'] ?: $entity['LOGO'],
-					array('width' => 38, 'height' => 38),
-					BX_RESIZE_IMAGE_EXACT, false
+					$entity['PHOTO'] ?? $entity['LOGO'],
+					['width' => 38, 'height' => 38],
+					BX_RESIZE_IMAGE_EXACT
 				);
-				$item['IMAGE_URL'] = !empty($fileInfo['src']) ? $fileInfo['src'] : '';
+
+				$item['IMAGE_URL'] = empty($fileInfo['src']) ? '' : $fileInfo['src'];
 			}
 		}
 	}

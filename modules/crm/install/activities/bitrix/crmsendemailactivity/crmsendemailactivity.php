@@ -982,14 +982,18 @@ class CBPCrmSendEmailActivity extends CBPActivity
 					$result = implode(', ', CBPHelper::makeArrayFlat($result));
 				}
 
-				if (
-					$messageType === 'html'
-					&& isset($property['ValueContentType'], $property['Type'])
-					&& $property['ValueContentType'] !== 'html'
-					&& $property['Type'] !== 'S:HTML'
-				)
+				if ($messageType === 'html' && isset($property['ValueContentType']))
 				{
-					$result = htmlspecialcharsbx($result);
+					if ($property['ValueContentType'] === 'bb')
+					{
+						$result = Crm\Format\TextHelper::sanitizeHtml(
+							Crm\Format\TextHelper::convertBbCodeToHtml($result)
+						);
+					}
+					elseif ($property['ValueContentType'] !== 'html' && isset($property['Type']) && $property['Type'] !== 'S:HTML')
+					{
+						$result = htmlspecialcharsbx($result);
+					}
 				}
 
 				return $result;

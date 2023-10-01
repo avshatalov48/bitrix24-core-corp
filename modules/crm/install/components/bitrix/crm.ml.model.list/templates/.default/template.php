@@ -1,11 +1,24 @@
-<?
+<?php
 
+use Bitrix\Crm\Ml\Scoring;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\JsHandler;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
-\Bitrix\Main\UI\Extension::load([
+/** @var array $arResult*/
+
+global $APPLICATION;
+
+Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'date',
@@ -15,22 +28,27 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 	'sidepanel',
 ]);
 
-$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
-$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
-$APPLICATION->SetTitle(Loc::getMessage("CRM_ML_MODEL_LIST_SCORING_TITLE"));
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+$APPLICATION->SetPageProperty(
+	'BodyClass',
+	($bodyClass ? $bodyClass." " : "") . 'no-all-paddings no-background'
+);
+$APPLICATION->SetTitle(Loc::getMessage('CRM_ML_MODEL_LIST_SCORING_TITLE'));
 
-\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
-\Bitrix\UI\Toolbar\Facade\Toolbar::addButton([
-	"text" => Loc::getMessage("CRM_ML_MODEL_LIST_HELP"),
-	"color" => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
-	"click" => new \Bitrix\UI\Buttons\JsHandler(
-		"BX.Crm.scoringModelList.showHelp"
-	),
+Toolbar::deleteFavoriteStar();
+
+Toolbar::addButton([
+	'text' => Loc::getMessage('CRM_ML_MODEL_LIST_HELP'),
+	'color' => Color::LIGHT_BORDER,
+	'click' => new JsHandler('BX.Crm.scoringModelList.showHelp'),
 ]);
 
-if(!$arResult["SCORING_ENABLED"] && \Bitrix\Main\Loader::includeModule("bitrix24"))
+if (
+	!$arResult['IS_SCORING_ENABLED']
+	&& Loader::includeModule('bitrix24')
+)
 {
-	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
+	$APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
 }
 
 ?>
@@ -70,8 +88,8 @@ if(!$arResult["SCORING_ENABLED"] && \Bitrix\Main\Loader::includeModule("bitrix24
 		"CRM_ML_MODEL_LIST_SCORING_MODEL_READY": '<?= GetMessageJS("CRM_ML_MODEL_LIST_SCORING_MODEL_READY")?>',
 		"CRM_ML_MODEL_LIST_SCORING_MODEL_QUALITY": '<?= GetMessageJS("CRM_ML_MODEL_LIST_SCORING_MODEL_QUALITY")?>',
 		"CRM_ML_MODEL_LIST_SCORING_MODEL_TRAINING_DATE": '<?= GetMessageJS("CRM_ML_MODEL_LIST_SCORING_MODEL_TRAINING_DATE")?>',
-		"CRM_SCORING_LICENSE_TITLE": '<?= CUtil::JSEscape(\Bitrix\Crm\Ml\Scoring::getLicenseInfoTitle())?>',
-		"CRM_SCORING_LICENSE_TEXT": '<?= CUtil::JSEscape(\Bitrix\Crm\Ml\Scoring::getLicenseInfoText())?>',
+		"CRM_SCORING_LICENSE_TITLE": '<?= CUtil::JSEscape(Scoring::getLicenseInfoTitle())?>',
+		"CRM_SCORING_LICENSE_TEXT": '<?= CUtil::JSEscape(Scoring::getLicenseInfoText())?>',
 	});
 
 	BX.Crm.scoringModelList = new BX.Crm.Scoring.ModelList({

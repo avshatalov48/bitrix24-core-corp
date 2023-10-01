@@ -6,8 +6,8 @@ use Bitrix\Bizproc\Automation\Engine\TemplateScope;
 use Bitrix\Crm\Automation;
 use Bitrix\Crm\Order;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Settings\OrderSettings;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Result;
 
 if (!Loader::includeModule('bizproc'))
 {
@@ -51,6 +51,18 @@ class TemplatesScheme extends \Bitrix\Bizproc\Automation\Engine\TemplatesScheme
 		}
 
 		return parent::hasTemplate($scope);
+	}
+
+	public function createTemplatesTunnel(TemplateScope $srcScope, TemplateScope $dstScope): Result
+	{
+		$creatingResult = parent::createTemplatesTunnel($srcScope, $dstScope);
+		if ($creatingResult->isSuccess())
+		{
+			$tunnel = new TemplatesTunnel($srcScope->getTemplate(), $dstScope->getTemplate());
+			$creatingResult->setData(['templatesTunnel' => $tunnel]);
+		}
+
+		return $creatingResult;
 	}
 
 	public function build(): void

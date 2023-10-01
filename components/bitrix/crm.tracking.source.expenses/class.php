@@ -74,7 +74,6 @@ class CrmTrackingExpensesComponent extends \CBitrixComponent implements Controll
 		$this->arResult['SOURCE_NAME'] = $sources[$this->arParams['ID']];
 		if ($this->arParams['SET_TITLE'])
 		{
-			/**@var \CAllMain*/
 			$GLOBALS['APPLICATION']->SetTitle(Loc::getMessage(
 				'CRM_TRACKING_EXPENSES_COMP_TITLE',
 				['%name%' => $this->arResult['SOURCE_NAME']]

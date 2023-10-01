@@ -600,11 +600,11 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 		$this->arResult['TYPE_ICON'] = $this->getTypeIcon($activity);
 		$this->arResult['FILES_LIST'] = $this->prepareFilesForView($activity);
 
-		$this->arResult['RESPONSIBLE_NAME'] = CCrmViewHelper::GetFormattedUserName($activity['RESPONSIBLE_ID'], $this->arParams['NAME_TEMPLATE']);
+		$this->arResult['RESPONSIBLE_NAME'] = CCrmViewHelper::GetFormattedUserName($activity['RESPONSIBLE_ID'], $this->arParams['NAME_TEMPLATE'] ?? '');
 		$this->arResult['RESPONSIBLE_URL'] = CComponentEngine::MakePathFromTemplate(
-				'/company/personal/user/#user_id#/',
-				array('user_id' => $activity['RESPONSIBLE_ID'])
-			);
+			'/company/personal/user/#user_id#/',
+			['user_id' => $activity['RESPONSIBLE_ID']]
+		);
 
 		$this->arResult['DOC_BINDINGS'] = $this->prepareDocsBindingsForView($activity['BINDINGS']);
 

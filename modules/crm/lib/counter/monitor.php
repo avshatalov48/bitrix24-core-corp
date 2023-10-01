@@ -23,13 +23,13 @@ final class Monitor
 	private ActivitiesChangesCollection $activitiesChangesCollection;
 	private EntitiesChangesCollection $entitiesChangesCollection;
 	private array $loadedEntitiesData = [];
+	private bool $needProcessChangesInBackground = true;
 
 	private function __construct()
 	{
-		$this->activitiesChangesCollection = new ActivitiesChangesCollection();
-		$this->entitiesChangesCollection = new EntitiesChangesCollection();
+		$this->clearChangesCollections();
 
-		Application::getInstance()->addBackgroundJob(fn() => $this->processChanges());
+		Application::getInstance()->addBackgroundJob(fn() => $this->processChangesInBackground());
 	}
 
 	public function onActivityAdd(
@@ -49,6 +49,8 @@ final class Monitor
 		);
 		$this->synchronizeEntityCountableTableByActivityChange($activityChange);
 		$this->activitiesChangesCollection->add($activityChange);
+
+		$this->processChangesIfNeed();
 	}
 
 	public function onActivityUpdate(
@@ -74,6 +76,8 @@ final class Monitor
 			$this->synchronizeEntityCountableTableByActivityChange($activityChange);
 		}
 		$this->activitiesChangesCollection->add($activityChange);
+
+		$this->processChangesIfNeed();
 	}
 
 	public function onActivityDelete(array $activityFields, array $activityBindings, ?DateTime $oldLightTimeDate): void
@@ -89,6 +93,8 @@ final class Monitor
 		);
 		$this->synchronizeEntityCountableTableByActivityChange($activityChange);
 		$this->activitiesChangesCollection->add($activityChange);
+
+		$this->processChangesIfNeed();
 	}
 
 	public function onChangeActivityBindings(int $activityId, array $oldActivityBindings, array $newActivityBindings): void
@@ -106,6 +112,8 @@ final class Monitor
 		if (count($changedBindings))
 		{
 			CountableActivitySynchronizer::synchronizeByActivityId($activityId);
+
+			$this->processChangesIfNeed();
 		}
 	}
 	public function onChangeActivitySingleBinding(int $activityId, array $oldActivityBinding, array $newActivityBinding): void
@@ -125,6 +133,8 @@ final class Monitor
 		{
 			$this->entitiesChangesCollection->add($change);
 			CountableActivitySynchronizer::synchronizeByEntityChange($change);
+
+			$this->processChangesIfNeed();
 		}
 	}
 
@@ -140,6 +150,8 @@ final class Monitor
 		{
 			$this->entitiesChangesCollection->add($change);
 			CountableActivitySynchronizer::synchronizeByEntityChange($change);
+
+			$this->processChangesIfNeed();
 		}
 	}
 
@@ -155,6 +167,8 @@ final class Monitor
 		{
 			$this->entitiesChangesCollection->add($change);
 			CountableActivitySynchronizer::synchronizeByEntityChange($change);
+
+			$this->processChangesIfNeed();
 		}
 	}
 
@@ -163,6 +177,28 @@ final class Monitor
 		$this->processActivitiesChanges();
 		$this->processEntitiesChanges();
 		$this->processActivityBindingsChanges();
+		$this->clearChangesCollections();
+	}
+
+	private function processChangesInBackground(): void
+	{
+		$this->processChanges();
+		$this->needProcessChangesInBackground = false;
+	}
+
+	private function processChangesIfNeed(): void
+	{
+		if (!$this->needProcessChangesInBackground)
+		{
+			$this->processChanges();
+		}
+	}
+
+	private function clearChangesCollections(): void
+	{
+		$this->activitiesChangesCollection = new ActivitiesChangesCollection();
+		$this->entitiesChangesCollection = new EntitiesChangesCollection();
+		$this->activitiesBindingsChanges = [];
 	}
 
 	private function processActivitiesChanges(): void

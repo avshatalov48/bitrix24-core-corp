@@ -24,6 +24,10 @@ class Quote extends ProductsDataProvider
 		if($this->fields === null)
 		{
 			parent::getFields();
+			if (isset($this->fields['STATUS']))
+			{
+				$this->fields['STATUS']['TITLE'] = \CCrmLead::GetFieldCaption('STATUS_ID');
+			}
 			$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
 			$factoryFieldsInfo = $factory ? $factory->getFieldsInfo() : [];
 			$this->fields['ID'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_ID_TITLE'),];

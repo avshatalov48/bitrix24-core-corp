@@ -163,6 +163,8 @@ class CAllCrmMailTemplate
 		}
 		$ID = (int)$ID;
 
+		self::prepareAttachmentsForOldTemplate($ID);
+		
 		if (!self::CheckFields('UPDATE', $arFields, $ID))
 		{
 			return false;
@@ -516,6 +518,20 @@ class CAllCrmMailTemplate
 		$text = str_replace(array("<", ">"),array("<", ">"), $text);
 		$parser->allow = array();
 		return true;
+	}
+
+	private static function prepareAttachmentsForOldTemplate(int $id)
+	{
+		global $USER_FIELD_MANAGER;
+		global $DB;
+
+		$files = $USER_FIELD_MANAGER->getUserFieldValue('CRM_MAIL_TEMPLATE', 'UF_ATTACHMENT', $id);
+		$files = !empty($files) && is_array($files) ? $files : [];
+
+		foreach ($files as $file)
+		{
+			$DB->Query("UPDATE b_disk_attached_object SET MODULE_ID = 'crm', ENTITY_TYPE = 'Bitrix\\\\Crm\\\\Integration\\\\Disk\\\\MailTemplateConnector' WHERE ID = " . (int)$file);
+		}
 	}
 }
 class CCrmMailTemplateError

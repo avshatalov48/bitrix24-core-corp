@@ -98,7 +98,7 @@ class DuplicateEntityMatchHashTable extends Entity\DataManager
 		$connection->queryExecute(
 			"INSERT INTO b_crm_dp_entity_hash(ENTITY_ID, ENTITY_TYPE_ID, TYPE_ID, MATCH_HASH, SCOPE, IS_PRIMARY, DATE_MODIFY)
 				VALUES({$entityID}, {$entityTypeID}, {$typeID}, '{$matchHash}', '{$scope}', '{$isPrimary}', {$dateModify})
-				ON DUPLICATE KEY UPDATE IS_PRIMARY = '{$isPrimary}'"
+			"
 		);
 
 	}

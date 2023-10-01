@@ -295,7 +295,7 @@ $factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quot
 $arResult['HEADERS'] = 	array(
 	// default fields
 	array('id' => 'QUOTE_SUMMARY', 'name' => GetMessage('CRM_COLUMN_QUOTE'), 'sort' => 'quote_summary', 'width' => 200, 'default' => true, 'editable' => false),
-	array('id' => 'STATUS_ID', 'name' => GetMessage('CRM_COLUMN_STATUS_ID'), 'sort' => 'status_sort', 'width' => 200, 'default' => true, 'prevent_default' => false, 'editable' => array('items' => $arResult['STATUS_LIST_WRITE']), 'type' => 'list'),
+	array('id' => 'STATUS_ID', 'name' => GetMessage('CRM_COLUMN_STATUS_ID_MSGVER_1'), 'sort' => 'status_sort', 'width' => 200, 'default' => true, 'prevent_default' => false, 'editable' => array('items' => $arResult['STATUS_LIST_WRITE']), 'type' => 'list'),
 	array('id' => 'SUM', 'name' => GetMessage('CRM_COLUMN_SUM'), 'sort' => 'opportunity_account', 'first_order' => 'desc', 'default' => true, 'editable' => false, 'align' => 'right'),
 	array('id' => 'ENTITIES_LINKS', 'name' => GetMessage('CRM_COLUMN_ENTITIES_LINKS'), 'default' => true, 'editable' => false),
 	array('id' => 'CLOSEDATE', 'name' => $factory->getFieldCaption('CLOSEDATE'), 'sort' => 'closedate', 'default' => true, 'editable' => true, 'type' => 'date'),
@@ -894,7 +894,18 @@ if($actionData['ACTIVE'])
 						'ASSIGNED_BY_ID' => $actionData['ASSIGNED_BY_ID']
 					);
 
-					if($CCrmQuote->Update($ID, $arUpdateData, true, true, array('DISABLE_USER_FIELD_CHECK' => true)))
+					if (
+						$CCrmQuote->Update(
+							$ID,
+							$arUpdateData,
+							true,
+							true,
+							[
+								'REGISTER_SONET_EVENT' => true,
+								'DISABLE_USER_FIELD_CHECK' => true,
+							]
+						)
+					)
 					{
 						$DB->Commit();
 					}

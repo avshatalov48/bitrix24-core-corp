@@ -29,7 +29,7 @@ $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm-preview.css');
 			</td>
 		</tr>
 		<tr>
-			<td><?= GetMessage('CRM_FIELD_STATUS')?>: </td>
+			<td><?= GetMessage('CRM_FIELD_STATUS_MSGVER_1')?>: </td>
 			<td><?=htmlspecialcharsbx($arResult['STATUS_TEXT'])?></td>
 		</tr>
 		<tr><td colspan="4"><div class="crm-preview-info-spacer"></div></td></tr>

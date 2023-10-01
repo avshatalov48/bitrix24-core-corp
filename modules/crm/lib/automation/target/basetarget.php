@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Automation\Target;
 
 use Bitrix\Bizproc\Automation\Engine\ConditionGroup;
 use Bitrix\Crm\Automation\Engine\TemplatesScheme;
+use Bitrix\Crm\Automation\Trigger\Entity\EO_Trigger;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Loader;
 use Bitrix\Crm\Automation\Factory;
@@ -119,6 +120,22 @@ abstract class BaseTarget extends \Bitrix\Bizproc\Automation\Target\BaseTarget
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param string[] $statuses
+	 * @return EO_Trigger[]
+	 */
+	public function getTriggerObjects(array $statuses): array
+	{
+		$iterator = TriggerTable::getList([
+			'filter' => [
+				'=ENTITY_TYPE_ID' => $this->getEntityTypeId(),
+				'@ENTITY_STATUS' => $statuses,
+			],
+		]);
+
+		return $iterator->fetchCollection()->getAll();
 	}
 
 	public function getAvailableTriggers()

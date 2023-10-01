@@ -51,6 +51,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imDialogRead: 'im.dialog.read',
 		imDialogUnread: 'im.dialog.unread',
 		imDialogWriting: 'im.dialog.writing',
+		imDialogStartRecordVoice: 'im.v2.Chat.startRecordVoice',
 		imDialogRestrictionsGet: 'im.dialog.restrictions.get',
 		imDialogReadAll: 'im.dialog.read.all',
 		imDialogContextGet: 'im.dialog.context.get',
@@ -65,6 +66,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imDiskFolderListGet: 'im.disk.folder.list.get',
 		imDiskFileUpload: 'disk.folder.uploadfile',
 		imDiskFileCommit: 'im.disk.file.commit',
+		imDiskFilePreviewUpload: 'disk.api.file.attachPreview',
 		imDiskFileDelete: 'im.disk.file.delete',
 		imDiskFileSave: 'im.disk.file.save',
 

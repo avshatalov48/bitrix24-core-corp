@@ -329,15 +329,15 @@ class crm extends CModule
 	function InstallDB()
 	{
 		global $DB, $APPLICATION;
-
+		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = false;
 
 		RegisterModule('crm');
 		\Bitrix\Main\Loader::includeModule('crm');
 
-		if (!$DB->Query("SELECT 'x' FROM b_crm_lead", true))
+		if (!$DB->TableExists('b_crm_lead'))
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/db/mysql/install.sql');
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/db/' . $connection->getType() . '/install.sql');
 
 			COption::SetOptionString('crm', '~crm_install_time', time());
 
@@ -734,45 +734,14 @@ class crm extends CModule
 		//endregion
 
 		//region FULL TEXT INDEXES
-		if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_LEAD_SEARCH ON b_crm_lead(SEARCH_CONTENT)", true))
-		{
-			\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_lead", serialize(["SEARCH_CONTENT" => true]));
-		}
-
-		if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_DEAL_SEARCH ON b_crm_deal(SEARCH_CONTENT)", true))
-		{
-			\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_deal", serialize(["SEARCH_CONTENT" => true]));
-		}
-
-		if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_QUOTE_SEARCH ON b_crm_quote(SEARCH_CONTENT)", true))
-		{
-			\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_quote", serialize(["SEARCH_CONTENT" => true]));
-		}
-
-		if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_CONTACT_SEARCH ON b_crm_contact(SEARCH_CONTENT)", true))
-		{
-			\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_contact", serialize(["SEARCH_CONTENT" => true]));
-		}
-
-		if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_COMPANY_SEARCH ON b_crm_company(SEARCH_CONTENT)", true))
-		{
-			\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_company", serialize(["SEARCH_CONTENT" => true]));
-		}
-
-		if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_ACT_SEARCH ON b_crm_act(SEARCH_CONTENT)", true))
-		{
-			\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_act", serialize(["SEARCH_CONTENT" => true]));
-		}
-
-		if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_INVOICE_SEARCH ON b_crm_invoice(SEARCH_CONTENT)", true))
-		{
-			\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_invoice", serialize(["SEARCH_CONTENT" => true]));
-		}
-
-		if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_TIMELINE_SEARCH ON b_crm_timeline_search(SEARCH_CONTENT)", true))
-		{
-			\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_timeline_search", serialize(["SEARCH_CONTENT" => true]));
-		}
+		\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_lead", serialize(["SEARCH_CONTENT" => true]));
+		\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_deal", serialize(["SEARCH_CONTENT" => true]));
+		\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_quote", serialize(["SEARCH_CONTENT" => true]));
+		\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_contact", serialize(["SEARCH_CONTENT" => true]));
+		\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_company", serialize(["SEARCH_CONTENT" => true]));
+		\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_act", serialize(["SEARCH_CONTENT" => true]));
+		\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_invoice", serialize(["SEARCH_CONTENT" => true]));
+		\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_timeline_search", serialize(["SEARCH_CONTENT" => true]));
 		//endregion
 
 		\Bitrix\Main\Config\Option::set('crm', 'enable_slider', 'Y');
@@ -818,6 +787,7 @@ class crm extends CModule
 	function UnInstallDB($arParams = [])
 	{
 		global $DB, $APPLICATION, $CACHE_MANAGER, $stackCacheManager, $USER_FIELD_MANAGER;
+		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = false;
 
 		// register types factories before deleting events.
@@ -887,7 +857,7 @@ class crm extends CModule
 
 			\Bitrix\Crm\Service\Container::getInstance()->getDynamicTypesMap()->invalidateTypesCollectionCache();
 
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/db/mysql/uninstall.sql');
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/db/'.$connection->getType().'/uninstall.sql');
 
 			if (CModule::IncludeModule('socialnetwork'))
 			{
@@ -1680,6 +1650,14 @@ class crm extends CModule
 
 		$eventManager->registerEventHandler(
 			'catalog',
+			'onGetContractorsConverter',
+			'crm',
+			'\Bitrix\Crm\Integration\Catalog\EventHandler',
+			'onGetContractorsConverterEventHandler'
+		);
+
+		$eventManager->registerEventHandler(
+			'catalog',
 			'onAfterCatalogRolePermissionSave',
 			'crm',
 			'\CCrmSaleHelper',
@@ -2337,6 +2315,14 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Integration\Catalog\EventHandler',
 			'onGetContractorsProviderEventHandler'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'catalog',
+			'onGetContractorsConverter',
+			'crm',
+			'\Bitrix\Crm\Integration\Catalog\EventHandler',
+			'onGetContractorsConverterEventHandler'
 		);
 
 		$eventManager->unRegisterEventHandler(

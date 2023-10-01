@@ -1,0 +1,10 @@
+<?php
+$MESS["CRM_CONTACT_INFO_EMAIL"] = "E-Mail";
+$MESS["CRM_CONTACT_INFO_IM"] = "Messenger";
+$MESS["CRM_CONTACT_INFO_PHONE"] = "Telefon";
+$MESS["CRM_CONTACT_INFO_WEB"] = "Website";
+$MESS["CRM_FIELD_ASSIGNED_BY"] = "Verantwortlich";
+$MESS["CRM_FIELD_CONTACT_FULL_NAME"] = "Kontakt";
+$MESS["CRM_FIELD_OPPORTUNITY"] = "Möglicher Gewinn";
+$MESS["CRM_FIELD_STATUS_MSGVER_1"] = "Phase";
+$MESS["CRM_TITLE_LEAD"] = "Lead";

@@ -404,7 +404,10 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 			return null;
 		}
 
-		if (!Bitrix24Manager::isFeatureEnabled('disk_file_sharing'))
+		if (
+			!Bitrix24Manager::isFeatureEnabled('disk_file_sharing')
+			&& !Bitrix24Manager::isFeatureEnabled('disk_onlyoffice_edit')
+		)
 		{
 			return 'blocked-by-feature';
 		}

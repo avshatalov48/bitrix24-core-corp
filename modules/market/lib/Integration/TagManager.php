@@ -8,6 +8,9 @@ use \Bitrix\Market\Integration\Intranet;
 use \Bitrix\Market\Integration\Landing;
 use \Bitrix\Market\Integration\ImOpenLines;
 use \Bitrix\Market\Integration\Main;
+use \Bitrix\Market\Integration\Sale;
+use \Bitrix\Market\Integration\Messageservice;
+use \Bitrix\Market\Integration\Crm;
 
 /**
  * class TagManager
@@ -24,6 +27,10 @@ class TagManager
 		'imopenlines' => ImOpenLines\TagHandler::class,
 		'main' => Main\TagHandler::class,
 		'bizproc' => BizProc\TagHandler::class,
+		'sale' => Sale\TagHandler::class,
+		'messageservice' => Messageservice\TagHandler::class,
+		'crm' => Crm\TagHandler::class,
+		'tasks' => Tasks\TagHandler::class,
 	];
 
 	/**

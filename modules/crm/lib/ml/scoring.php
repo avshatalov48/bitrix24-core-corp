@@ -3,7 +3,6 @@
 namespace Bitrix\Crm\Ml;
 
 use Bitrix\Bitrix24\Feature;
-use Bitrix\Crm\DealTable;
 use Bitrix\Crm\Ml\Agent\ModelTrainer;
 use Bitrix\Crm\Ml\Controller\Details;
 use Bitrix\Crm\Ml\Internals\ModelTrainingTable;
@@ -12,6 +11,7 @@ use Bitrix\Crm\Ml\Internals\PredictionQueueTable;
 use Bitrix\Crm\Ml\Model;
 use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Crm\Timeline\ScoringController;
+use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
@@ -20,34 +20,40 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Ml\Client;
+use CCrmDeal;
+use CCrmOwnerType;
 
 class Scoring
 {
-	const PREDICTION_BATCH = "batch";
-	const PREDICTION_REAL_TIME = "realtime";
-	const PREDICTION_IMMEDIATE = "immediate";
+	public const PREDICTION_BATCH = 'batch';
+	public const PREDICTION_REAL_TIME = 'realtime';
+	public const PREDICTION_IMMEDIATE = 'immediate';
 
-	const EVENT_INITIAL_PREDICTION = "initial";
-	const EVENT_ENTITY_UPDATE = "update";
-	const EVENT_ACTIVITY = "activity";
+	public const EVENT_INITIAL_PREDICTION = 'initial';
+	public const EVENT_ENTITY_UPDATE = 'update';
+	public const EVENT_ACTIVITY = 'activity';
 
-	const MINIMAL_TRAINING_SET = 2000;
-	const MINIMAL_CLASS_SIZE = 200;
+	public const RETRAIN_PERIOD = 90; // days
 
-	const RETRAIN_PERIOD = 90; // days
+	private const MINIMAL_TRAINING_SET = 2000;
+	private const MINIMAL_CLASS_SIZE = 200;
 
-	const ERROR_MODEL_ALREADY_EXISTS = "model_already_exists";
-	const ERROR_NOT_ENOUGH_DATA = "not_enough_data";
-	const ERROR_TOO_SOON = "too_soon";
+	private const ERROR_MODEL_ALREADY_EXISTS = 'model_already_exists';
+	private const ERROR_NOT_ENOUGH_DATA = 'not_enough_data';
+	private const ERROR_TOO_SOON = 'too_soon';
 
 	public static function getMinimalTrainingSetSize()
 	{
-		return defined("CRM_ML_MINIMAL_TRAINING_SET_SIZE") ? CRM_ML_MINIMAL_TRAINING_SET_SIZE : static::MINIMAL_TRAINING_SET;
+		return defined('CRM_ML_MINIMAL_TRAINING_SET_SIZE')
+			? CRM_ML_MINIMAL_TRAINING_SET_SIZE
+			: static::MINIMAL_TRAINING_SET;
 	}
 
 	public static function getMinimalClassSize()
 	{
-		return defined("CRM_ML_MINIMAL_TRAINING_CLASS_SIZE") ? CRM_ML_MINIMAL_TRAINING_CLASS_SIZE : static::MINIMAL_CLASS_SIZE;
+		return defined('CRM_ML_MINIMAL_TRAINING_CLASS_SIZE')
+			? CRM_ML_MINIMAL_TRAINING_CLASS_SIZE
+			: static::MINIMAL_CLASS_SIZE;
 	}
 
 	/**
@@ -56,47 +62,58 @@ class Scoring
 	 *  - last training should be in state finished
 	 *
 	 * @param Model\Base $model Scoring model to train.
+	 * 
 	 * @return Result
 	 */
-	public static function startModelTraining(Model\Base $model)
+	public static function startModelTraining(Model\Base $model): Result
 	{
 		$result = new Result();
-		if(!Loader::includeModule("ml"))
+		if (!Loader::includeModule('ml'))
 		{
-			return $result->addError(new Error("ML module is not installed"));
+			return $result->addError(new Error('ML module is not installed'));
 		}
 
-		if(!static::isEnabled())
+		if (!static::isEnabled())
 		{
-			return $result->addError(new Error("Scoring is not enabled for your tariff"));
+			return $result->addError(new Error('Scoring is not enabled for your tariff'));
 		}
 
-		if($model->getMlModel())
+		if ($model->getMlModel())
 		{
-			return $result->addError(new Error("ML model should be deleted prior to starting learning process"));
+			return $result->addError(new Error('ML model should be deleted prior to starting learning process'));
 		}
 
 		$lastTraining = static::getLastTraining($model);
-		if($lastTraining && !in_array($lastTraining["STATE"], [TrainingState::FINISHED, TrainingState::CANCELED]))
+		if (
+			$lastTraining &&
+			!in_array(
+				$lastTraining['STATE'],
+				[TrainingState::FINISHED, TrainingState::CANCELED],
+				true
+			)
+		)
 		{
-			return $result->addError(new Error("Model " . $model->getName() . " is already in training"));
+			return $result->addError(
+				new Error('Model ' . $model->getName() . ' is already in training')
+			);
 		}
 
-		list($successfulRecords, $failedRecords) = $model->getTrainingSetSize();
+		[$successfulRecords, $failedRecords] = $model->getTrainingSetSize();
 		$totalRecords = $successfulRecords + $failedRecords;
 
-		if($totalRecords < static::getMinimalTrainingSetSize()
+		if (
+			$totalRecords < static::getMinimalTrainingSetSize()
 			|| $successfulRecords < static::getMinimalClassSize()
 			|| $failedRecords < static::getMinimalClassSize()
 		)
 		{
-			return $result->addError(new Error("Not enough data to start model training"));
+			return $result->addError(new Error('Not enough data to start model training'));
 		}
 
 		// check model training state
 
 		$scheduleResult = ModelTrainer::scheduleTraining($model);
-		if(!$scheduleResult->isSuccess())
+		if (!$scheduleResult->isSuccess())
 		{
 			return $result->addErrors($scheduleResult->getErrors());
 		}
@@ -108,44 +125,48 @@ class Scoring
 	 * Checks if scoring model is suitable to start training.
 	 *
 	 * @param Model\Base $model Scoring model.
+	 *
 	 * @return Result
 	 */
-	public static function canStartTraining(Model\Base $model, $useCache = false)
+	public static function canStartTraining(Model\Base $model, bool $useCache = false): Result
 	{
 		$result = new Result();
 
-		if($model->getState() !== false)
+		if ($model->getState() !== false)
 		{
-			return $result->addError(new Error("Model already exists", static::ERROR_MODEL_ALREADY_EXISTS));
+			return $result->addError(new Error('Model already exists', static::ERROR_MODEL_ALREADY_EXISTS));
 		}
 
-		if($useCache)
+		if ($useCache)
 		{
-			list($successfulRecords, $failedRecords) = $model->getCachedTrainingSetSize();
+			[$successfulRecords, $failedRecords] = $model->getCachedTrainingSetSize();
 		}
 		else
 		{
-			list($successfulRecords, $failedRecords) = $model->getTrainingSetSize();
+			[$successfulRecords, $failedRecords] = $model->getTrainingSetSize();
 		}
 		$totalRecords = $successfulRecords + $failedRecords;
-		if($totalRecords < static::getMinimalTrainingSetSize()
+		if (
+			$totalRecords < static::getMinimalTrainingSetSize()
 			|| $successfulRecords < static::getMinimalClassSize()
 			|| $failedRecords < static::getMinimalClassSize()
 		)
 		{
-			return $result->addError(new Error("Not enough data to train model", static::ERROR_NOT_ENOUGH_DATA));
+			return $result->addError(
+				new Error('Not enough data to train model', static::ERROR_NOT_ENOUGH_DATA)
+			);
 		}
 
 		$lastTraining = static::getLastTraining($model);
-		if($lastTraining)
+		if ($lastTraining)
 		{
-			if($lastTraining["DATE_FINISH"] instanceof DateTime)
+			if ($lastTraining['DATE_FINISH'] instanceof DateTime)
 			{
-				$lastTrainingTimestamp = $lastTraining["DATE_FINISH"]->getTimestamp();
+				$lastTrainingTimestamp = $lastTraining['DATE_FINISH']->getTimestamp();
 				$retrainPeriodInSeconds = static::RETRAIN_PERIOD * 24 * 60 * 60;
-				if((time() - $lastTrainingTimestamp) < $retrainPeriodInSeconds)
+				if ((time() - $lastTrainingTimestamp) < $retrainPeriodInSeconds)
 				{
-					return $result->addError(new Error("You can not start training. Too little time passed since the last training", static::ERROR_TOO_SOON));
+					return $result->addError(new Error('You can not start training. Too little time passed since the last training', static::ERROR_TOO_SOON));
 				}
 			}
 		}
@@ -153,28 +174,29 @@ class Scoring
 		return $result;
 	}
 
-	public static function deleteMlModel(Model\Base $model)
+	public static function deleteMlModel(Model\Base $model): Result
 	{
 		$result = new Result();
-		if(!Loader::includeModule("ml"))
+
+		if (!Loader::includeModule('ml'))
 		{
-			return $result->addError(new Error("ML module is not installed"));
+			return $result->addError(new Error('ML module is not installed'));
 		}
 
 		$lastTraining = static::getLastTraining($model);
-		if($lastTraining["STATE"] !== TrainingState::FINISHED)
+		if ($lastTraining['STATE'] !== TrainingState::FINISHED)
 		{
-			ModelTrainer::cancelTraining($lastTraining["ID"]);
+			ModelTrainer::cancelTraining($lastTraining['ID']);
 		}
 
 		$mlModel = $model->getMlModel();
-		if(!$mlModel)
+		if (!$mlModel)
 		{
 			return $result;
 		}
 
 		$deletionResult = $mlModel->deleteCascade();
-		if(!$deletionResult->isSuccess())
+		if (!$deletionResult->isSuccess())
 		{
 			return $result->addErrors($deletionResult->getErrors());
 		}
@@ -194,25 +216,27 @@ class Scoring
 	 *  - EVENT_TYPE
 	 *  - ASSOCIATED_ACTIVITY_ID
 	 *
-	 * @return int
+	 * @return int|false
 	 */
-	public static function queuePredictionUpdate($entityTypeId, $entityId, array $additionalParameters = [])
+	public static function queuePredictionUpdate(int $entityTypeId, int $entityId, array $additionalParameters = [])
 	{
-		$entityTypeId = (int)$entityTypeId;
-		$entityId = (int)$entityId;
-		
-		if(!static::isMlAvailable() || !static::isEnabled() || !$entityTypeId || !$entityId)
+		if (
+			!static::isMlAvailable()
+			|| !static::isEnabled()
+			|| !$entityTypeId
+			|| !$entityId
+		)
 		{
 			return false;
 		}
 
 		$scoringModel = static::getScoringModel($entityTypeId, $entityId);
-		if(!$scoringModel || !$scoringModel->isReady())
+		if (!$scoringModel || !$scoringModel->isReady())
 		{
 			return false;
 		}
 
-		if(isset($additionalParameters['TYPE']))
+		if (isset($additionalParameters['TYPE']))
 		{
 			$type = $additionalParameters['TYPE'];
 			unset($additionalParameters['TYPE']);
@@ -224,17 +248,17 @@ class Scoring
 
 		// 1. checking for another pending request
 		$latestPrediction = PredictionQueueTable::getList([
-			"select" => ["ID"],
-			"filter" => [
-				"=ENTITY_TYPE_ID" => $entityTypeId,
-				"=ENTITY_ID" => $entityId
+			'select' => ['ID'],
+			'filter' => [
+				'=ENTITY_TYPE_ID' => $entityTypeId,
+				'=ENTITY_ID' => $entityId
 			],
-			"limit" => 1,
+			'limit' => 1,
 		])->fetch();
 
-		if($latestPrediction)
+		if ($latestPrediction)
 		{
-			return $latestPrediction["ID"];
+			return $latestPrediction['ID'];
 		}
 
 		$scheduledRequest = new PredictionQueue();
@@ -244,19 +268,19 @@ class Scoring
 		$scheduledRequest->setAdditionalParameters($additionalParameters);
 		$insertResult = $scheduledRequest->save();
 
-		if(!$insertResult->isSuccess())
+		if (!$insertResult->isSuccess())
 		{
 			return false;
 		}
 
 		$scheduledId = $insertResult->getId();
-		if($type === self::PREDICTION_REAL_TIME && $scoringModel->isReady())
+		if ($type === self::PREDICTION_REAL_TIME && $scoringModel->isReady())
 		{
-			\Bitrix\Main\Application::getInstance()->addBackgroundJob([PredictionQueue::class, "executeRequest"], [$scheduledId]);
+			Application::getInstance()->addBackgroundJob([PredictionQueue::class, 'executeRequest'], [$scheduledId]);
 			$scheduledRequest->setState(PredictionQueue::STATE_EXECUTING);
 			$scheduledRequest->save();
 		}
-		else if($type === self::PREDICTION_IMMEDIATE && $scoringModel->isReady())
+		else if ($type === self::PREDICTION_IMMEDIATE && $scoringModel->isReady())
 		{
 			$scheduledRequest->setState(PredictionQueue::STATE_EXECUTING);
 			$scheduledRequest->save();
@@ -278,34 +302,42 @@ class Scoring
 	 * - ASSOCIATED_ACTIVITY_ID int
 	 * @return Result
 	 */
-	public static function updatePrediction($entityTypeId, $entityId, array $parameters = [])
+	public static function updatePrediction(int $entityTypeId, int $entityId, array $parameters = []): Result
 	{
 		$result = new Result();
-		if(!Loader::includeModule("ml"))
+		if (!Loader::includeModule('ml'))
 		{
-			return $result->addError(new Error("ML module is not installed"));
+			return $result->addError(new Error('ML module is not installed'));
 		}
-		if(!static::isEnabled())
+
+		if (!static::isEnabled())
 		{
-			return $result->addError(new Error("Scoring is not enabled for your tariff"));
+			return $result->addError(new Error('Scoring is not enabled for your tariff'));
 		}
 
 		$scoringModel = static::getScoringModel($entityTypeId, $entityId);
 
-		if(!$scoringModel || !$scoringModel->isReady())
+		if (!$scoringModel || !$scoringModel->isReady())
 		{
-			$result->addError(new Error($scoringModel ? "Scoring model is not ready" : "Scoring model is not found"));
+			$result->addError(
+				new Error($scoringModel
+					? 'Scoring model is not ready'
+					: 'Scoring model is not found'
+				)
+			);
+
 			return $result;
 		}
+
 		$featuresVector = $scoringModel->buildFeaturesVector($entityId);
 
 		$mlClient = new Client();
 		$predictionResult = $mlClient->predictRecord([
-			"modelName" => $scoringModel->getName(),
-			"fields" => $featuresVector
+			'modelName' => $scoringModel->getName(),
+			'fields' => $featuresVector
 		]);
 
-		if(!$predictionResult->isSuccess())
+		if (!$predictionResult->isSuccess())
 		{
 			$result->addErrors($predictionResult->getErrors());
 			return $result;
@@ -313,57 +345,64 @@ class Scoring
 		$answer = $predictionResult->getData();
 
 		$predictionHistoryRecord = [
-			"ENTITY_TYPE_ID" => $entityTypeId,
-			"ENTITY_ID" => $entityId,
-			"ANSWER" => $answer["label"],
-			"SCORE" => round($answer["score"], 2),
-			"MODEL_NAME" => $scoringModel->getName(),
-			"EVENT_TYPE" => (string)$parameters["EVENT_TYPE"] ?: null,
-			"ASSOCIATED_ACTIVITY_ID" => (int)$parameters["ASSOCIATED_ACTIVITY_ID"] ?: null,
+			'ENTITY_TYPE_ID' => $entityTypeId,
+			'ENTITY_ID' => $entityId,
+			'ANSWER' => $answer['label'],
+			'SCORE' => round($answer['score'], 2),
+			'MODEL_NAME' => $scoringModel->getName(),
+			'EVENT_TYPE' => isset($parameters['EVENT_TYPE'])
+				? (string)$parameters['EVENT_TYPE']
+				: null,
+			'ASSOCIATED_ACTIVITY_ID' => isset($parameters['ASSOCIATED_ACTIVITY_ID'])
+				? (int)$parameters['ASSOCIATED_ACTIVITY_ID']
+				: null,
 		];
 
 		$previousPrediction = PredictionHistoryTable::getRow([
-			"filter" => [
-				"=ENTITY_TYPE_ID" => $entityTypeId,
-				"=ENTITY_ID" => $entityId
+			'filter' => [
+				'=ENTITY_TYPE_ID' => $entityTypeId,
+				'=ENTITY_ID' => $entityId
 			],
-			"order" => [
-				"ID" => "DESC"
+			'order' => [
+				'ID' => 'DESC'
 			]
 		]);
 
-		if($previousPrediction)
+		if ($previousPrediction)
 		{
-			$delta = $predictionHistoryRecord["SCORE"] - $previousPrediction["SCORE"];
-			$predictionHistoryRecord["SCORE_DELTA"] = round($delta, 2);
+			$delta = $predictionHistoryRecord['SCORE'] - $previousPrediction['SCORE'];
+			$predictionHistoryRecord['SCORE_DELTA'] = round($delta, 2);
 
 			// skip adding new prediction record, if score is not changed
-			if($delta < 0.01)
+			if ($delta < 0.01)
 			{
 				return $result;
 			}
 		}
 
 		$addResult = PredictionHistoryTable::add($predictionHistoryRecord);
-		if(!$addResult->isSuccess())
+		if (!$addResult->isSuccess())
 		{
 			$result->addErrors($addResult->getErrors());
 			return $result;
 		}
 		$predictionId = $addResult->getId();
-		$predictionHistoryRecord["ID"] = $predictionId;
-		\Bitrix\Crm\Timeline\ScoringController::getInstance()->onCreate($predictionId, ["FIELDS" => $predictionHistoryRecord]);
+		$predictionHistoryRecord['ID'] = $predictionId;
+		ScoringController::getInstance()->onCreate(
+			$predictionId,
+			['FIELDS' => $predictionHistoryRecord]
+		);
 
-		if($entityTypeId == \CCrmOwnerType::Deal)
+		if ($entityTypeId === CCrmOwnerType::Deal)
 		{
-			$dealManager = new \CCrmDeal();
+			$dealManager = new CCrmDeal();
 			$dealFields = [
-				"PROBABILITY" => floor($predictionHistoryRecord['SCORE'] * 100)
+				'PROBABILITY' => floor($predictionHistoryRecord['SCORE'] * 100)
 			];
 			$dealManager->Update($entityId, $dealFields, false, true, [
-				"REGISTER_SONET_EVENT" => false,
-				"ENABLE_SYSTEM_EVENTS" => false,
-				"IS_SYSTEM_ACTION" => true
+				'REGISTER_SONET_EVENT' => false,
+				'ENABLE_SYSTEM_EVENTS' => false,
+				'IS_SYSTEM_ACTION' => true
 			]);
 		}
 
@@ -376,12 +415,13 @@ class Scoring
 	 * Deletes prediction with the given id.
 	 *
 	 * @param int $historyId
+	 *
+	 * @return bool
 	 */
-	public static function deletePrediction($historyId)
+	public static function deletePrediction(int $historyId): bool
 	{
 		$historyRecord = PredictionHistoryTable::getRowById($historyId);
-
-		if(!$historyRecord)
+		if (!$historyRecord)
 		{
 			return false;
 		}
@@ -389,8 +429,8 @@ class Scoring
 		PredictionHistoryTable::delete($historyId);
 
 		ScoringController::getInstance()->onDelete($historyId, [
-			"ENTITY_TYPE_ID" => $historyRecord["ENTITY_TYPE_ID"],
-			"ENTITY_ID" => $historyRecord["ENTITY_ID"],
+			'ENTITY_TYPE_ID' => $historyRecord['ENTITY_TYPE_ID'],
+			'ENTITY_ID' => $historyRecord['ENTITY_ID'],
 		]);
 
 		return true;
@@ -399,21 +439,21 @@ class Scoring
 	/**
 	 * Removes references to this activity
 	 *
-	 * @param $activityId
+	 * @param int $activityId
 	 */
-	public static function onActivityDelete($activityId)
+	public static function onActivityDelete(int $activityId): void
 	{
 		$cursor = PredictionHistoryTable::getList([
-			"select" => ["ID"],
-			"filter" => [
-				"=ASSOCIATED_ACTIVITY_ID" => $activityId
+			'select' => ['ID'],
+			'filter' => [
+				'=ASSOCIATED_ACTIVITY_ID' => $activityId
 			]
 		]);
 
 		while ($row = $cursor->fetch())
 		{
-			PredictionHistoryTable::update($row["ID"], [
-				"ASSOCIATED_ACTIVITY_ID" => null
+			PredictionHistoryTable::update($row['ID'], [
+				'ASSOCIATED_ACTIVITY_ID' => null
 			]);
 		}
 	}
@@ -423,13 +463,14 @@ class Scoring
 	 *
 	 * @param int $entityTypeId Entity type.
 	 * @param int $entityId Entity id.
+	 *
 	 * @return void
 	 */
-	public static function onEntityDelete($entityTypeId, $entityId)
+	public static function onEntityDelete(int $entityTypeId, int $entityId): void
 	{
 		PredictionHistoryTable::deleteBatch([
-			"=ENTITY_TYPE_ID" => $entityTypeId,
-			"=ENTITY_ID" => $entityId
+			'=ENTITY_TYPE_ID' => $entityTypeId,
+			'=ENTITY_ID' => $entityId
 		]);
 	}
 
@@ -440,18 +481,19 @@ class Scoring
 	 * @param int $entityId Old entity id.
 	 * @param int @newEntityTypeId New entity type.
 	 * @param int @newEntityId New entity id.
+	 *
 	 * @return void
 	 */
-	public static function replaceAssociatedEntity($entityTypeId, $entityId, $newEntityTypeId, $newEntityId)
+	public static function replaceAssociatedEntity($entityTypeId, $entityId, $newEntityTypeId, $newEntityId): void
 	{
 		PredictionHistoryTable::updateBatch(
 			[
-				"ENTITY_TYPE_ID" => $newEntityTypeId,
-				"ENTITY_ID" => $newEntityId
+				'ENTITY_TYPE_ID' => $newEntityTypeId,
+				'ENTITY_ID' => $newEntityId
 			],
 			[
-				"=ENTITY_TYPE_ID" => $entityTypeId,
-				"=ENTITY_ID" => $entityId
+				'=ENTITY_TYPE_ID' => $entityTypeId,
+				'=ENTITY_ID' => $entityId
 			]
 		);
 	}
@@ -459,12 +501,13 @@ class Scoring
 	/**
 	 * @param int $entityTypeId
 	 * @param int $entityId
-	 * @return Model\Base
+	 *
+	 * @return Model\Base|null
 	 */
 	public static function getScoringModel($entityTypeId, $entityId)
 	{
 		static $cache = [];
-		$key = "{$entityTypeId}_{$entityId}";
+		$key = '{$entityTypeId}_{$entityId}';
 		if (isset($cache[$key]))
 		{
 			return $cache[$key];
@@ -472,16 +515,19 @@ class Scoring
 
 		switch ($entityTypeId)
 		{
-			case \CCrmOwnerType::Lead:
+			case CCrmOwnerType::Lead:
 				$cache[$key] = new Model\LeadScoring(Model\LeadScoring::MODEL_NAME);
+
 				return $cache[$key];
-			case \CCrmOwnerType::Deal:
+			case CCrmOwnerType::Deal:
 				$modelName = Model\DealScoring::getModelNameByDeal($entityId);
-				if(!$modelName)
+				if (!$modelName)
 				{
 					return null;
 				}
+
 				$cache[$key] = new Model\DealScoring($modelName);
+				
 				return $cache[$key];
 			default:
 				return null;
@@ -491,33 +537,38 @@ class Scoring
 	public static function getAvailableModelNames()
 	{
 		$result = Model\DealScoring::getModelNames();
-		if(LeadSettings::isEnabled())
+		if (LeadSettings::isEnabled())
 		{
 			$result = array_merge(Model\LeadScoring::getModelNames(), $result);
 		}
+
 		return $result;
 	}
 
 	/**
 	 * @param $modelId
+	 *
 	 * @return Model\Base
 	 */
 	public static function getModelByName($modelName)
 	{
 		static $cache = [];
+
 		if (isset($cache[$modelName]))
 		{
 			return $cache[$modelName];
 		}
+
 		$possibleModels = [Model\LeadScoring::class, Model\DealScoring::class];
 
 		foreach ($possibleModels as $model)
 		{
 			$possibleNames = $model::getModelNames();
 
-			if(in_array($modelName, $possibleNames))
+			if (in_array($modelName, $possibleNames, true))
 			{
 				$cache[$modelName] = new $model($modelName);
+
 				return $cache[$modelName];
 			}
 		}
@@ -537,7 +588,9 @@ class Scoring
 		{
 			$result[] = Model\LeadScoring::class;
 		}
+
 		$result[] = Model\DealScoring::class;
+
 		return $result;
 	}
 
@@ -556,37 +609,45 @@ class Scoring
 	 * Return current training fields for the specified model.
 	 *
 	 * @param Model\Base $model
+	 *
 	 * @return array|false
 	 */
 	public static function getLastTraining(Model\Base $model)
 	{
 		return ModelTrainingTable::getList([
-			"filter" => [
-				"=MODEL_NAME" => $model->getName()
+			'filter' => [
+				'=MODEL_NAME' => $model->getName()
 			],
-			"order" => [
-				"ID" => "desc"
+			'order' => [
+				'ID' => 'desc'
 			],
-			"limit" => 1
+			'limit' => 1
 		])->fetch();
 	}
 
 	/**
 	 * @param Event $event
 	 */
-	public static function onMlModelStateChange(Event $event)
+	public static function onMlModelStateChange(Event $event): void
 	{
-		if(!Loader::includeModule("ml"))
+		if (!Loader::includeModule('ml'))
 		{
 			return;
 		}
 
-		$mlModel = $event->getParameter("model");
-		$model = Scoring::getModelByName($mlModel->getName());
+		$mlModel = $event->getParameter('model');
+		$model = self::getModelByName($mlModel->getName());
 		Details::onModelUpdate($model);
 
-		$currentTraining = Scoring::getLastTraining($model);
-		if($currentTraining && !in_array($currentTraining["STATE"], [TrainingState::FINISHED, TrainingState::CANCELED]))
+		$currentTraining = self::getLastTraining($model);
+		if (
+			$currentTraining
+			&& !in_array(
+				$currentTraining['STATE'],
+				[TrainingState::FINISHED, TrainingState::CANCELED],
+				true
+			)
+		)
 		{
 			$updatedTrainingFields = [];
 			// update latest training
@@ -594,25 +655,25 @@ class Scoring
 			switch ($model->getState())
 			{
 				case \Bitrix\Ml\Model::STATE_TRAINING:
-					$updatedTrainingFields["STATE"] = TrainingState::TRAINING;
+					$updatedTrainingFields['STATE'] = TrainingState::TRAINING;
 					break;
 				case \Bitrix\Ml\Model::STATE_EVALUATING:
-					$updatedTrainingFields["STATE"] = TrainingState::EVALUATING;
+					$updatedTrainingFields['STATE'] = TrainingState::EVALUATING;
 					break;
 				case \Bitrix\Ml\Model::STATE_READY:
-					$updatedTrainingFields["STATE"] = TrainingState::FINISHED;
-					$updatedTrainingFields["DATE_FINISH"] = new DateTime();
-					$performance = $event->getParameter("performance");
-					if($performance && $performance["AUC"])
+					$updatedTrainingFields['STATE'] = TrainingState::FINISHED;
+					$updatedTrainingFields['DATE_FINISH'] = new DateTime();
+					$performance = $event->getParameter('performance');
+					if ($performance && $performance['AUC'])
 					{
-						$updatedTrainingFields["AREA_UNDER_CURVE"] = (float)$performance["AUC"];
+						$updatedTrainingFields['AREA_UNDER_CURVE'] = (float)$performance['AUC'];
 					}
 					break;
 				default:
 					break;
 			}
 
-			ModelTrainingTable::update($currentTraining["ID"], $updatedTrainingFields);
+			ModelTrainingTable::update($currentTraining['ID'], $updatedTrainingFields);
 
 			$currentTraining = array_merge($currentTraining, $updatedTrainingFields);
 			Details::onTrainingProgress($model, $currentTraining);
@@ -624,22 +685,22 @@ class Scoring
 	 *
 	 * @return bool
 	 */
-	public static function isMlAvailable()
+	public static function isMlAvailable(): bool
 	{
-		return ModuleManager::isModuleInstalled("ml");
+		return ModuleManager::isModuleInstalled('ml');
 	}
 
 	/**
 	 * Returns true if scoring is enabled for this portal by the tariffs.
 	 */
-	public static function isEnabled()
+	public static function isEnabled(): bool
 	{
-		if(!Loader::includeModule("bitrix24"))
+		if (!Loader::includeModule('bitrix24'))
 		{
 			return true;
 		}
 
-		return Feature::isFeatureEnabled("crm_scoring");
+		return Feature::isFeatureEnabled('crm_scoring');
 	}
 
 	/**
@@ -649,10 +710,10 @@ class Scoring
 	 * @param int $entityId Id of the entity.
 	 * @return array|false
 	 */
-	public static function getCurrentPrediction($entityTypeId, $entityId)
+	public static function getCurrentPrediction(int $entityTypeId, int $entityId)
 	{
 		$model = static::getScoringModel($entityTypeId, $entityId);
-		if(!$model)
+		if (!$model)
 		{
 			return false;
 		}
@@ -691,59 +752,59 @@ class Scoring
 	 *
 	 * @return bool
 	 */
-	public static function tryCreateFirstPrediction($entityTypeId, $entityId, $isImmediate = false)
+	public static function tryCreateFirstPrediction($entityTypeId, $entityId, $isImmediate = false): bool
 	{
-		if(!static::isMlAvailable() || !Loader::includeModule("ml") || !static::isEnabled())
+		if (!static::isMlAvailable() || !Loader::includeModule('ml') || !static::isEnabled())
 		{
 			return false;
 		}
 
 		$model = static::getScoringModel($entityTypeId, $entityId);
-		if(!$model || $model->getState() !== \Bitrix\Ml\Model::STATE_READY)
+		if (!$model || $model->getState() !== \Bitrix\Ml\Model::STATE_READY)
 		{
 			return false;
 		}
 
 		$predictionCheck = PredictionHistoryTable::getList([
-			"select" => ["ID"],
-			"filter" => [
-				"=ENTITY_TYPE_ID" => $entityTypeId,
-				"=ENTITY_ID" => $entityId
+			'select' => ['ID'],
+			'filter' => [
+				'=ENTITY_TYPE_ID' => $entityTypeId,
+				'=ENTITY_ID' => $entityId
 			]
 		]);
 
-		if($predictionCheck->fetch())
+		if ($predictionCheck->fetch())
 		{
 			return false;
 		}
 
 		$queueCheck = PredictionQueueTable::getList([
-			"select" => ["ID"],
-			"filter" => [
-				"=STATE" => PredictionQueue::STATE_IDLE,
-				"=ENTITY_TYPE_ID" => $entityTypeId,
-				"=ENTITY_ID" => $entityId
+			'select' => ['ID'],
+			'filter' => [
+				'=STATE' => PredictionQueue::STATE_IDLE,
+				'=ENTITY_TYPE_ID' => $entityTypeId,
+				'=ENTITY_ID' => $entityId
 			]
 		]);
 
-		if($row = $queueCheck->fetch())
+		if ($row = $queueCheck->fetch())
 		{
-			PredictionQueue::executeRequest($row["ID"]);
+			PredictionQueue::executeRequest($row['ID']);
 		}
 		else
 		{
 			static::queuePredictionUpdate($entityTypeId, $entityId, [
-				"TYPE" => $isImmediate ? static::PREDICTION_IMMEDIATE : static::PREDICTION_REAL_TIME,
-				"EVENT_TYPE" => static::EVENT_INITIAL_PREDICTION
+				'TYPE' => $isImmediate ? static::PREDICTION_IMMEDIATE : static::PREDICTION_REAL_TIME,
+				'EVENT_TYPE' => static::EVENT_INITIAL_PREDICTION
 			]);
 		}
 
 		return true;
 	}
 
-	public static function sendPredictionUpdatePullEvent($entityTypeId, $entityId, $predictionRecord)
+	public static function sendPredictionUpdatePullEvent($entityTypeId, $entityId, $predictionRecord): void
 	{
-		if(!Loader::includeModule("pull"))
+		if (!Loader::includeModule('pull'))
 		{
 			return;
 		}
@@ -751,35 +812,35 @@ class Scoring
 		\CPullWatch::AddToStack(
 			static::getPredictionUpdatePullTag($entityTypeId, $entityId),
 			[
-				"module_id" => "crm",
-				"command" => "predictionUpdate",
-				"params" => [
-					"entityType" => \CCrmOwnerType::ResolveName($entityTypeId),
-					"entityId" => $entityId,
-					"predictionRecord" => $predictionRecord
+				'module_id' => 'crm',
+				'command' => 'predictionUpdate',
+				'params' => [
+					'entityType' => CCrmOwnerType::ResolveName($entityTypeId),
+					'entityId' => $entityId,
+					'predictionRecord' => $predictionRecord
 				]
 			]
 		);
 	}
 
-	public static function getPredictionUpdatePullTag($entityTypeId, $entityId)
+	public static function getPredictionUpdatePullTag(int $entityTypeId, int $entityId): string
 	{
-		$entityType = \CCrmOwnerType::ResolveName($entityTypeId);
-		return "CRM_ML_SCORING_PREDICTION_" . $entityType . "_" . $entityId;
+		$entityType = CCrmOwnerType::ResolveName($entityTypeId);
+
+		return 'CRM_ML_SCORING_PREDICTION_' . $entityType . '_' . $entityId;
 	}
 
-	public static function getLicenseInfoTitle()
+	public static function getLicenseInfoTitle(): string
 	{
-		return Loc::getMessage("CRM_SCORING_LICENSE_TITLE");
+		return Loc::getMessage('CRM_SCORING_LICENSE_TITLE');
 	}
 
-	public static function getLicenseInfoText()
+	public static function getLicenseInfoText(): string
 	{
-		$result =
-				"<p>".Loc::getMessage("CRM_SCORING_LICENSE_TEXT_P1")."</p>".
-				"<p>".Loc::getMessage("CRM_SCORING_LICENSE_TEXT_P2")."</p>".
-				"<p>".Loc::getMessage("CRM_SCORING_LICENSE_TEXT_P3")."</p>";
-
-		return $result;
+		return
+			'<p>'.Loc::getMessage('CRM_SCORING_LICENSE_TEXT_P1').'</p>'.
+			'<p>'.Loc::getMessage('CRM_SCORING_LICENSE_TEXT_P2').'</p>'.
+			'<p>'.Loc::getMessage('CRM_SCORING_LICENSE_TEXT_P3').'</p>'
+		;
 	}
 }

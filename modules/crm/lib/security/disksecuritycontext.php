@@ -49,7 +49,7 @@ class DiskSecurityContext extends SecurityContext
 
 		return $this->userPermissions->checkAddPermissions($this->entityTypeId, $this->categoryId);
 	}
-	
+
 	final public function canChangeRights($objectId): bool
 	{
 		return false;
@@ -59,12 +59,12 @@ class DiskSecurityContext extends SecurityContext
 	{
 		return false;
 	}
-	
+
 	final public function canCreateWorkflow($objectId): bool
 	{
 		return false;
 	}
-	
+
 	final public function canDelete($objectId): bool
 	{
 		if (!isset($this->entityTypeId))
@@ -74,37 +74,42 @@ class DiskSecurityContext extends SecurityContext
 
 		return $this->userPermissions->checkDeletePermissions($this->entityTypeId, 0, $this->categoryId);
 	}
-	
+
 	final public function canMarkDeleted($objectId): bool
 	{
 		return false;
 	}
-	
+
 	final public function canMove($objectId, $targetId): bool
 	{
 		return false;
 	}
-	
+
 	final public function canRead($objectId): bool
 	{
-		return false;
+		if (!isset($this->entityTypeId, $this->entityId))
+		{
+			return false;
+		}
+
+		return $this->userPermissions->checkReadPermissions($this->entityTypeId, $this->entityId, $this->categoryId);
 	}
-	
+
 	final public function canRename($objectId): bool
 	{
 		return false;
 	}
-	
+
 	final public function canRestore($objectId): bool
 	{
 		return false;
 	}
-	
+
 	final public function canShare($objectId): bool
 	{
 		return false;
 	}
-	
+
 	final public function canUpdate($objectId): bool
 	{
 		return false;
@@ -114,7 +119,7 @@ class DiskSecurityContext extends SecurityContext
 	{
 		return false;
 	}
-	
+
 	final public function getSqlExpressionForList($columnObjectId, $columnCreatedBy)
 	{
 		return '1 = 0';

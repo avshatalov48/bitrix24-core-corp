@@ -5,6 +5,8 @@ namespace Bitrix\Crm\UserField;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Type\DateTime;
+use CCrmOwnerType;
+use CUserTypeEntity;
 
 class UserFieldHistory
 {
@@ -16,7 +18,21 @@ class UserFieldHistory
 	}
 	public static function processModification($entityTypeID, $fieldID)
 	{
-		self::synchronize($entityTypeID);
+		$entityTypeID = (int)$entityTypeID;
+		$fieldID = (int)$fieldID;
+		if ($entityTypeID <= 0 && $fieldID > 0)
+		{
+			$userFieldInfo = CUserTypeEntity::GetList(array(), array('ID' => $fieldID))->Fetch();
+			if($userFieldInfo)
+			{
+				$entityTypeID = CCrmOwnerType::ResolveIDByUFEntityID($userFieldInfo["ENTITY_ID"]);
+			}
+		}
+
+		if (CCrmOwnerType::IsDefined($entityTypeID))
+		{
+			self::synchronize($entityTypeID);
+		}
 	}
 	public static function processRemoval($entityTypeID, $fieldID)
 	{
@@ -62,8 +78,8 @@ class UserFieldHistory
 					continue;
 				}
 
-				$entityTypeID = \CCrmOwnerType::ResolveID($k);
-				if($entityTypeID !== \CCrmOwnerType::Undefined)
+				$entityTypeID = CCrmOwnerType::ResolveID($k);
+				if($entityTypeID !== CCrmOwnerType::Undefined)
 				{
 					self::$items[$entityTypeID] = new DateTime($v, \DateTime::ISO8601);
 				}
@@ -75,7 +91,7 @@ class UserFieldHistory
 		$ary = array();
 		foreach(self::$items as $entityTypeID => $time)
 		{
-			$ary[\CCrmOwnerType::ResolveName($entityTypeID)] = $time->format(\DateTime::ISO8601);
+			$ary[CCrmOwnerType::ResolveName($entityTypeID)] = $time->format(\DateTime::ISO8601);
 		}
 
 		Main\Config\Option::set('crm', 'crm_uf_history', serialize($ary), '');
@@ -85,7 +101,7 @@ class UserFieldHistory
 	public static function onAdd(array $fields)
 	{
 		self::processCreation(
-			\CCrmOwnerType::ResolveIDByUFEntityID($fields['ENTITY_ID']),
+			CCrmOwnerType::ResolveIDByUFEntityID($fields['ENTITY_ID']),
 			$fields['ID']
 		);
 	}
@@ -93,7 +109,7 @@ class UserFieldHistory
 	public static function onUpdate(array $fields, $ID)
 	{
 		self::processModification(
-			\CCrmOwnerType::ResolveIDByUFEntityID($fields['ENTITY_ID'] ?? null),
+			CCrmOwnerType::ResolveIDByUFEntityID($fields['ENTITY_ID'] ?? null),
 			$ID
 		);
 	}
@@ -101,7 +117,7 @@ class UserFieldHistory
 	public static function onDelete(array $fields, $ID)
 	{
 		self::processRemoval(
-			\CCrmOwnerType::ResolveIDByUFEntityID($fields['ENTITY_ID']),
+			CCrmOwnerType::ResolveIDByUFEntityID($fields['ENTITY_ID']),
 			$ID
 		);
 	}

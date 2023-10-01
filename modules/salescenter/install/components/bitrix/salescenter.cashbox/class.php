@@ -225,13 +225,13 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 			],
 		];
 
-		$additionalFieldsNeeded = $this->areAdditionalFieldsNeeded();
-		if ($additionalFieldsNeeded)
+		if ($this->isOfdFieldNeeded())
 		{
 			$result['ofd_settings'] = [
 				'NAME' => Loc::getMessage('SC_MENU_ITEM_OFD_SETTINGS'),
 			];
 		}
+
 		return $result;
 	}
 
@@ -335,11 +335,9 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 			];
 		}
 
-		$additionalFieldsNeeded = $this->areAdditionalFieldsNeeded();
-
-		if ($additionalFieldsNeeded)
+		if ($this->isOfdFieldNeeded())
 		{
-			$fields[] = [
+			$field = [
 				'name' => 'OFD',
 				'title' => Loc::getMessage('SC_CASHBOX_FIELDS_OFD'),
 				'type' => 'list',
@@ -347,6 +345,19 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 					'items' => $this->getOfdItems(),
 				],
 			];
+
+			if (is_a($this->arParams['handler'], Cashbox\CashboxYooKassa::class, true))
+			{
+				$field['subtext'] = Loc::getMessage('SC_CASHBOX_FIELDS_OFD_YOOKASSA_HINT');
+				$field['subtextLinkOnClick'] = 'BX.Salescenter.Manager.openHowToConfigYooKassaCashBox(event);';
+				$field['subtextLinkText'] = Loc::getMessage('SC_CASHBOX_FIELDS_OFD_YOOKASSA_HINT_MORE');
+			}
+
+			$fields[] = $field;
+		}
+
+		if ($this->areAdditionalFieldsNeeded())
+		{
 			$fields[] = [
 				'name' => 'NUMBER_KKM',
 				'title' => Loc::getMessage('SC_CASHBOX_FIELDS_NUMBER_KKM'),
@@ -367,13 +378,38 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 		return $fields;
 	}
 
-	protected function areAdditionalFieldsNeeded()
+	protected function areAdditionalFieldsNeeded(): bool
 	{
 		if (Cashbox\Manager::isPaySystemCashbox($this->arParams['handler']))
 		{
 			return false;
 		}
 
+		return $this->isCurrentZoneRu();
+	}
+
+	protected function isOfdFieldNeeded(): bool
+	{
+		if (!$this->isCurrentZoneRu())
+		{
+			return false;
+		}
+
+		if (is_a($this->arParams['handler'], Cashbox\CashboxYooKassa::class, true))
+		{
+			return true;
+		}
+
+		if (Cashbox\Manager::isPaySystemCashbox($this->arParams['handler']))
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	protected function isCurrentZoneRu(): bool
+	{
 		if (Bitrix24Manager::getInstance()->isEnabled())
 		{
 			if (Bitrix24Manager::getInstance()->isCurrentZone('ru'))
@@ -439,15 +475,15 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	 */
 	protected function getData(array $data = [])
 	{
-		if ($this->cashboxData === null)
+		if ($this->cashboxData === null || !empty($data))
 		{
 			if (isset($data['id']))
 			{
-				$cashboxId = intval($data['id']);
+				$cashboxId = (int)$data['id'];
 			}
 			else
 			{
-				$cashboxId = intval($this->arResult['id']);
+				$cashboxId = (int)$this->arResult['id'];
 			}
 
 			$result = [];
@@ -471,7 +507,6 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 
 				$result['ACTIVE'] = 'Y';
 			}
-
 
 			$this->cashboxData = array_merge($result, $data);
 		}
@@ -941,7 +976,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 				return [
 					'code' => Cashbox\CashboxYooKassa::getCode(),
 					'title' => Cashbox\CashboxYooKassa::getName(),
-					'description' => 'SC_CASHBOX_YOOKASSA_DESCRIPTION',
+					'description' => 'SC_CASHBOX_YOOKASSA_DESCRIPTION_MSGVER_1',
 				];
 		}
 

@@ -15,7 +15,7 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 		DeletedMessage,
 		ImageMessage,
 		AudioMessage,
-		// VideoMessage,
+		VideoMessage,
 		FileMessage,
 		SystemTextMessage,
 		UnsupportedMessage,
@@ -94,10 +94,7 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 
 			if (isMessageWithFile && file && file.type === FileType.video)
 			{
-				// TODO: return after video player implementation
-				// return new VideoMessage(modelMessage, options, file);
-
-				return new FileMessage(modelMessage, options, file);
+				return new VideoMessage(modelMessage, options, file);
 			}
 
 			if (isMessageWithFile && file && file.type === FileType.file)

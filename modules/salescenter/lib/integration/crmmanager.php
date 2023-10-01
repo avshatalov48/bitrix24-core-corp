@@ -3,6 +3,7 @@
 namespace Bitrix\SalesCenter\Integration;
 
 use Bitrix\Crm\Activity\Provider\Sms;
+use Bitrix\Crm\Activity\Provider\BaseMessage;
 use Bitrix\Crm\AddressTable;
 use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\EntityAddress;
@@ -611,7 +612,7 @@ class CrmManager extends Base
 		$result = Crm\MessageSender\MessageSender::send(
 			[
 				Crm\Integration\SmsManager::getSenderCode() => [
-					'ACTIVITY_PROVIDER_TYPE_ID' => Sms::PROVIDER_TYPE_SALESCENTER_PAYMENT_SENT,
+					'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_SALESCENTER_PAYMENT_SENT,
 					'MESSAGE_BODY' => $messageBody,
 					'SENDER_ID' => $senderId,
 					'MESSAGE_FROM' => $senderId === 'rest' ? $sendingInfo['provider'] : null,
@@ -718,7 +719,7 @@ class CrmManager extends Base
 		$result = Crm\MessageSender\MessageSender::send(
 			[
 				Crm\Integration\NotificationsManager::getSenderCode() => [
-					'ACTIVITY_PROVIDER_TYPE_ID' => Activity\Provider\Notification::PROVIDER_TYPE_NOTIFICATION,
+					'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_SALESCENTER_PAYMENT_SENT,
 					'TEMPLATE_CODE' => 'ORDER_LINK',
 					'PLACEHOLDERS' => [
 						'NAME' => $entityCommunication->getCustomerName(),
@@ -726,7 +727,7 @@ class CrmManager extends Base
 					],
 				],
 				Crm\Integration\SmsManager::getSenderCode() => [
-					'ACTIVITY_PROVIDER_TYPE_ID' => Sms::PROVIDER_TYPE_SALESCENTER_PAYMENT_SENT,
+					'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_SALESCENTER_PAYMENT_SENT,
 					'MESSAGE_BODY' => $messageBody,
 					'SENDER_ID' => $senderId,
 					'MESSAGE_FROM' => $senderId === 'rest' ? $sendingInfo['provider'] : null,
@@ -758,6 +759,7 @@ class CrmManager extends Base
 						),
 						'ACTIVITY_AUTHOR_ID' => $order->getField('RESPONSIBLE_ID'),
 						'ACTIVITY_DESCRIPTION' => $messageBody,
+						'HIGHLIGHT_URL' => $paymentLink,
 					]
 				]
 			]
@@ -796,7 +798,7 @@ class CrmManager extends Base
 		{
 			$senders = [
 				Crm\Integration\NotificationsManager::getSenderCode() => [
-					'ACTIVITY_PROVIDER_TYPE_ID' => Activity\Provider\Notification::PROVIDER_TYPE_NOTIFICATION,
+					'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_SALESCENTER_TERMINAL_PAYMENT_PAID,
 					'TEMPLATE_CODE' => 'ORDER_PAYMENT_SLIP',
 					'PLACEHOLDERS' => [
 						'ORDER_PAYMENT' => PaymentSlip::getFullPathToSlip($payment->getId()),
@@ -808,7 +810,7 @@ class CrmManager extends Base
 		{
 			$senders = [
 				Crm\Integration\SmsManager::getSenderCode() => [
-					'ACTIVITY_PROVIDER_TYPE_ID' => Sms::PROVIDER_TYPE_SALESCENTER_TERMINAL_PAYMENT_PAID,
+					'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_SALESCENTER_TERMINAL_PAYMENT_PAID,
 					'MESSAGE_BODY' => $messageBody,
 					'SENDER_ID' => $senderId,
 				],

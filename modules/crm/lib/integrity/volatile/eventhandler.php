@@ -159,7 +159,7 @@ class EventHandler
 				$progressData = $agent->state()->getData();
 				$finalActionsInfo = $progressData['FINAL_ACTIONS'] ?? [];
 				$userTypeMap =
-					is_array($progressData['FINAL_ACTIONS']['USER_TYPE_MAP'])
+					is_array($progressData['FINAL_ACTIONS']['USER_TYPE_MAP'] ?? null)
 						? $progressData['FINAL_ACTIONS']['USER_TYPE_MAP']
 						: []
 				;
@@ -259,7 +259,7 @@ class EventHandler
 					$agent = $agentClassName::getInstance($userId);
 					$state = $agent->state()->getData();
 
-					if (is_array($state['TYPES']) && !empty(array_intersect($types, $state['TYPES'])))
+					if (is_array($state['TYPES'] ?? null) && !empty(array_intersect($types, $state['TYPES'])))
 					{
 						$agent->stop();
 					}

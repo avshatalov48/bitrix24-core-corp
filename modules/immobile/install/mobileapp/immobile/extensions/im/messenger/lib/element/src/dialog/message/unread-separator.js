@@ -39,11 +39,18 @@ jn.define('im/messenger/lib/element/dialog/message/unread-separator', (require, 
 			this.setFontColor('#FFFFFF');
 			this.setBackgroundColor('#525C6966');
 			this.setRoundedCorners(false);
+			this.setMarginTop(12);
+			this.setMarginBottom(4);
 		}
 
 		getType()
 		{
 			return 'system-text';
+		}
+
+		setShowTail()
+		{
+			return this;
 		}
 
 		static getDefaultId()

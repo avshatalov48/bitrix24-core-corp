@@ -730,7 +730,7 @@ if (
 		'ON_CLICK' => 'event.preventDefault();BX.SidePanel.Instance.open("/shop/documents/?inventoryManagementSource=crm", {cacheable: false, customLeftBoundary: 0,});',
 	];
 
-	if (Contractor\Provider\Manager::isActiveProviderByModule('crm'))
+	if (Contractor\Provider\Manager::isActiveProviderByModule(Contractor\Provider\Manager::PROVIDER_STORE_DOCUMENT, 'crm'))
 	{
 		\CBitrixComponent::includeComponentClass('bitrix:catalog.store.document.control_panel');
 

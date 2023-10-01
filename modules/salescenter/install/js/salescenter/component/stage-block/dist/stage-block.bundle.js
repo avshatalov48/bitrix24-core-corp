@@ -145,7 +145,6 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 	    },
 	    onTitleClicked: function onTitleClicked() {
 	      this.$emit('on-title-clicked');
-
 	      if (this.config.collapsible) {
 	        this.adjustCollapsed();
 	      }
@@ -156,13 +155,11 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 	      } else {
 	        this.collapse = true;
 	      }
-
 	      var collapseOption = this.collapse ? 'Y' : 'N';
 	      this.$emit('on-adjust-collapsed', collapseOption);
 	    },
 	    openSliderForTitleItem: function openSliderForTitleItem(titleItem) {
 	      var _this = this;
-
 	      var slider = new salescenter_marketplace.AppSlider();
 	      var link = titleItem.link;
 	      slider.openAppLocalLink(link);
@@ -176,7 +173,7 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 	  mounted: function mounted() {
 	    this.collapse = this.config.initialCollapseState;
 	  },
-	  template: "\n\t\t<div :class=\"displayClass\">\n\t\t\t<block-counter-number :value=\"config.counter\" :checked=\"config.checked\" v-if=\"config.counter\" />\n\t\t\t<block-counter v-else />\n\t\t\t<block-title @on-title-clicked=\"onTitleClicked\" :collapsible=\"config.collapsible\" v-if=\"hasTitleSlot\">\n\t\t\t\t<template v-slot:default>\n\t\t\t\t\t<slot name=\"block-title-title\"></slot>\n\t\t\t\t</template>\n\t\t\t\t<template v-slot:item-hint v-if=\"config.showHint\">\n\t\t\t\t\t<block-hint v-on:on-hint.stop.prevent=\"onHint\" :class=\"hintClassModifier\">\n\t\t\t\t\t\t<template v-slot:default>\n\t\t\t\t\t\t\t<slot name=\"block-hint-title\"></slot>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</block-hint>\n\t\t\t\t</template>\n\t\t\t\t<template v-slot:title-items v-if=\"collapse\">\n\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-payment-title-item-wrapper\">\n\t\t\t\t\t\t<block-title-item\n\t\t\t\t\t\t\tv-for=\"(item, index) in config.titleItems\"\n\t\t\t\t\t\t\tv-on:on-title-item=\"openSliderForTitleItem(item)\"\n\t\t\t\t\t\t\t:item=\"item\">\n\t\t\t\t\t\t</block-title-item>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-slot:title-name v-if=\"collapse && config.titleName\">\n\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-payment-title-item-wrapper\">\n\t\t\t\t\t\t<block-title-name\n\t\t\t\t\t\t\t:name=\"config.titleName\">\n\t\t\t\t\t\t</block-title-name>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</block-title>\n\t\t\t<div :class=\"{'salescenter-app-payment-collapsible-block': config.collapsible, 'salescenter-app-payment-collapsible-block-collapsed': collapse}\" v-bind:style=\"[config.collapsible ? bodyStyle : null]\" ref=\"containerWrapper\">\n\t\t\t\t<slot name=\"block-container\"></slot>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div :class=\"displayClass\">\n\t\t\t<block-counter-number :value=\"config.counter\" :checked=\"config.checked\" v-if=\"config.counter\" />\n\t\t\t<block-counter v-else />\n\t\t\t<block-title @on-title-clicked=\"onTitleClicked\" :collapsible=\"config.collapsible\" v-if=\"hasTitleSlot\">\n\t\t\t\t<template v-slot:default>\n\t\t\t\t\t<slot name=\"block-title-title\"></slot>\n\t\t\t\t</template>\n\t\t\t\t<template v-slot:item-hint v-if=\"config.showHint\">\n\t\t\t\t\t<block-hint v-on:on-hint.stop.prevent=\"onHint\" :class=\"hintClassModifier\">\n\t\t\t\t\t\t<template v-slot:default>\n\t\t\t\t\t\t\t<slot name=\"block-hint-title\"></slot>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</block-hint>\n\t\t\t\t</template>\n\t\t\t\t<template v-slot:title-items v-if=\"collapse\">\n\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-payment-title-item-wrapper\">\n\t\t\t\t\t\t<block-title-item\n\t\t\t\t\t\t\tv-for=\"(item, index) in config.titleItems\"\n\t\t\t\t\t\t\tv-bind:key=\"index\"\n\t\t\t\t\t\t\tv-on:on-title-item=\"openSliderForTitleItem(item)\"\n\t\t\t\t\t\t\t:item=\"item\">\n\t\t\t\t\t\t</block-title-item>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-slot:title-name v-if=\"collapse && config.titleName\">\n\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-payment-title-item-wrapper\">\n\t\t\t\t\t\t<block-title-name\n\t\t\t\t\t\t\t:name=\"config.titleName\">\n\t\t\t\t\t\t</block-title-name>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</block-title>\n\t\t\t<div :class=\"{'salescenter-app-payment-collapsible-block': config.collapsible, 'salescenter-app-payment-collapsible-block-collapsed': collapse}\" v-bind:style=\"[config.collapsible ? bodyStyle : null]\" ref=\"containerWrapper\">\n\t\t\t\t<slot name=\"block-container\"></slot>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	exports.StatusTypes = StatusTypes;

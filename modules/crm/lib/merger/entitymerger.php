@@ -1529,7 +1529,7 @@ abstract class EntityMerger
 		$seedMap = [];
 		foreach($seeds as $seed)
 		{
-			$seedMap[$seed['ID']] = $seed;
+			$seedMap[$seed['ID'] ?? 0] = $seed;
 		}
 
 		$map = null;

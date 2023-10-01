@@ -10,6 +10,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale;
 use Bitrix\Crm;
+use Bitrix\SalesCenter\Component\ReceivePaymentModeDictionary;
 use Bitrix\SalesCenter\Integration\Bitrix24Manager;
 use Bitrix\SalesCenter\Integration\CrmManager;
 use Bitrix\SalesCenter\Integration\ImOpenLinesManager;
@@ -875,6 +876,11 @@ class Order extends Base
 				if ($shipment && $dealPrimaryContactId)
 				{
 					$this->tryToFillContactDeliveryAddress($dealPrimaryContactId, $shipment->getId());
+				}
+
+				if (isset($options['mode']) && $options['mode'] === ReceivePaymentModeDictionary::PAYMENT)
+				{
+					$this->setDefaultReceivePaymentMode(ReceivePaymentModeDictionary::PAYMENT);
 				}
 
 				// back compatibility ??
@@ -2385,5 +2391,10 @@ HTML;
 	private function onAfterDealAdd(int $dealId, int $sessionId): void
 	{
 		ImOpenLinesManager::getInstance()->updateDealAfterCreation($dealId, $sessionId);
+	}
+
+	private function setDefaultReceivePaymentMode(string $mode): void
+	{
+		\CUserOptions::SetOption('crm', 'receive_payment_mode', $mode);
 	}
 }

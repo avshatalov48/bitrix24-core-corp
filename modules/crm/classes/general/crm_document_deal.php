@@ -1,6 +1,8 @@
 <?php
 
 use Bitrix\Crm;
+use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Main;
 
 if (!CModule::IncludeModule('bizproc'))
 {
@@ -8,9 +10,6 @@ if (!CModule::IncludeModule('bizproc'))
 }
 
 IncludeModuleLangFile(__DIR__ . '/crm_document.php');
-
-use Bitrix\Crm\Category\DealCategory;
-use Bitrix\Main;
 
 class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 {
@@ -194,7 +193,7 @@ class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 			'COMMENTS' => [
 				'Name' => GetMessage('CRM_FIELD_COMMENTS'),
 				'Type' => 'text',
-				'ValueContentType' => 'html',
+				'ValueContentType' => 'bb',
 				'Filterable' => false,
 				'Editable' => true,
 				'Required' => false,

@@ -584,7 +584,7 @@ $arResult['HEADERS'] = array(
 	array('id' => 'LEAD_SUMMARY', 'name' => GetMessage('CRM_COLUMN_LEAD'), 'sort' => 'title', 'width' => 200, 'default' => true, 'editable' => true),
 	array(
 		'id' => 'STATUS_ID',
-		'name' => GetMessage('CRM_COLUMN_STATUS'),
+		'name' => GetMessage('CRM_COLUMN_STATUS_MSGVER_1'),
 		'sort' => 'status_sort',
 		'width' => 200,
 		'default' => true,
@@ -702,7 +702,7 @@ if ($isInExportMode)
 
 $arResult['HEADERS'] = array_merge($arResult['HEADERS'], array(
 	array('id' => 'ASSIGNED_BY', 'name' => GetMessage('CRM_COLUMN_ASSIGNED_BY'), 'sort' => 'assigned_by', 'default' => true, 'editable' => false, 'class' => 'username'),
-	array('id' => 'STATUS_DESCRIPTION', 'name' => GetMessage('CRM_COLUMN_STATUS_DESCRIPTION'), 'sort' => false /**because of MSSQL**/, 'default' => false, 'editable' => false),
+	array('id' => 'STATUS_DESCRIPTION', 'name' => GetMessage('CRM_COLUMN_STATUS_DESCRIPTION_MSGVER_1'), 'sort' => false /**because of MSSQL**/, 'default' => false, 'editable' => false),
 	array('id' => 'SOURCE_DESCRIPTION', 'name' => GetMessage('CRM_COLUMN_SOURCE_DESCRIPTION'), 'sort' => false /**because of MSSQL**/, 'default' => false, 'editable' => false),
 	array('id' => 'CREATED_BY', 'name' => GetMessage('CRM_COLUMN_CREATED_BY'), 'sort' => 'created_by', 'default' => false, 'editable' => false, 'class' => 'username'),
 	array('id' => 'DATE_MODIFY', 'name' => GetMessage('CRM_COLUMN_DATE_MODIFY'), 'sort' => 'date_modify', 'first_order' => 'desc', 'default' => false, 'class' => 'date'),
@@ -1406,7 +1406,7 @@ if($actionData['ACTIVE'])
 				{
 					$arResult['MESSAGES'][] = array(
 						'TITLE' => GetMessage('CRM_SET_STATUS_NOT_COMPLETED_TITLE'),
-						'TEXT' => GetMessage('CRM_SET_STATUS_NOT_COMPLETED_TEXT')
+						'TEXT' => GetMessage('CRM_SET_STATUS_NOT_COMPLETED_TEXT_MSGVER_1')
 					);
 				}
 			}
@@ -1447,7 +1447,18 @@ if($actionData['ACTIVE'])
 						'ASSIGNED_BY_ID' => $actionData['ASSIGNED_BY_ID']
 					);
 
-					if($CCrmLead->Update($ID, $arUpdateData, true, true, array('DISABLE_USER_FIELD_CHECK' => true)))
+					if (
+						$CCrmLead->Update(
+							$ID,
+							$arUpdateData,
+							true,
+							true,
+							[
+								'REGISTER_SONET_EVENT' => true,
+								'DISABLE_USER_FIELD_CHECK' => true,
+							]
+						)
+					)
 					{
 						$DB->Commit();
 

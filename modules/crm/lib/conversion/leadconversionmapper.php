@@ -43,7 +43,7 @@ class LeadConversionMapper extends EntityConversionMapper
 			return $this->srcMultiFields;
 		}
 
-		$this->srcMultiFields = array();
+		$this->srcMultiFields = [];
 		$dbResult = \CCrmFieldMulti::GetList(
 			array('ID' => 'asc'),
 			array('ENTITY_ID' => 'LEAD', 'ELEMENT_ID' => $this->srcEntityID)
@@ -52,16 +52,16 @@ class LeadConversionMapper extends EntityConversionMapper
 		while($multiField = $dbResult->Fetch())
 		{
 			$typeID = $multiField['TYPE_ID'];
-			if(!$this->srcMultiFields[$typeID])
+			if(!isset($this->srcMultiFields[$typeID]))
 			{
-				$this->srcMultiFields[$typeID] = array();
+				$this->srcMultiFields[$typeID] = [];
 			}
 
 			$index = count($this->srcMultiFields[$typeID]);
-			$this->srcMultiFields[$typeID]["n{$index}"] = array(
+			$this->srcMultiFields[$typeID]["n{$index}"] = [
 				'VALUE' => $multiField['VALUE'],
 				'VALUE_TYPE' => $multiField['VALUE_TYPE']
-			);
+			];
 		}
 
 		return $this->srcMultiFields;

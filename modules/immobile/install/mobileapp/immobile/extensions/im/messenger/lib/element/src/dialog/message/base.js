@@ -35,7 +35,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 			this.id = '';
 			this.username = '';
-			this.avatarUrl = null;
+			this.avatarUrl = '';
 			this.me = false;
 			this.time = '';
 			this.likeCount = 0;
@@ -52,6 +52,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				isBackgroundOn: true,
 				roundedCorners: true,
 			};
+			this.showUsername = true;
+			// TODO change user color for message
+			this.userColor = '#428ae8';
+			this.isAuthorBottomMessage = false;
+			this.isAuthorTopMessage = false;
 
 			let likeList = [];
 			if (modelMessage.params && modelMessage.params.REACTION && modelMessage.params.REACTION.like)
@@ -64,6 +69,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setTestId(modelMessage.id)
 				.setUsername(modelMessage.authorId)
 				.setAvatar(modelMessage.authorId)
+				.setUserColor(modelMessage.authorId)
 				.setMe(modelMessage.authorId)
 				.setTime(modelMessage.date)
 				.setWasSent(!modelMessage.error)
@@ -77,6 +83,8 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setShowReaction(options.showReaction)
 				.setCanBeQuoted(true)
 				.setRoundedCorners(true)
+				.setMarginTop(options.marginTop)
+				.setMarginBottom(options.marginBottom)
 			;
 		}
 
@@ -134,9 +142,30 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		{
 			const user = core.getStore().getters['usersModel/getUserById'](authorId);
 
-			this.avatarUrl = (user && user.avatar) ? user.avatar : null;
+			this.avatarUrl = (user && user.avatar) ? user.avatar : '';
 
 			return this;
+		}
+
+		setUserColor(authorId)
+		{
+			const user = core.getStore().getters['usersModel/getUserById'](authorId);
+
+			this.userColor = (user && user.color) ? user.color : '#048bd0';
+
+			return this;
+		}
+
+		/**
+		 * @desc set data uri avatar
+		 * @rules :
+		 * showAvatar = false and avatarUrl = null - don't show avatar, don't show space
+		 * showAvatar = false and avatarUrl = "" | "http://" - don't show avatar, add space
+		 * showAvatar = true and avatarUrl = "" | "http://" - show avatar, add space
+		 */
+		setAvatarUri(value)
+		{
+			this.avatarUrl = value;
 		}
 
 		setMe(authorId)
@@ -216,6 +245,12 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setShowUsername(modelMessage, shouldShowUserName)
 		{
+			const isYourMessage = modelMessage.authorId === core.getUserId();
+			if (isYourMessage)
+			{
+				this.showUsername = false;
+			}
+
 			if (Type.isBoolean(shouldShowUserName))
 			{
 				this.showUsername = shouldShowUserName;
@@ -223,17 +258,17 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				return this;
 			}
 
-			const isYourMessage = modelMessage.authorId === core.getUserId();
-			if (isYourMessage)
-			{
-				this.showUsername = false;
-			}
-
 			return this;
 		}
 
 		setShowAvatar(modelMessage, shouldShowAvatar)
 		{
+			const isYourMessage = modelMessage.authorId === core.getUserId();
+			if (isYourMessage)
+			{
+				this.showAvatar = false;
+			}
+
 			if (Type.isBoolean(shouldShowAvatar))
 			{
 				this.showAvatar = shouldShowAvatar;
@@ -241,10 +276,16 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				return this;
 			}
 
-			const isYourMessage = modelMessage.authorId === core.getUserId();
-			if (isYourMessage)
+			return this;
+		}
+
+		setShowAvatarForce(shouldShowAvatar)
+		{
+			if (Type.isBoolean(shouldShowAvatar))
 			{
-				this.showAvatar = false;
+				this.showAvatar = shouldShowAvatar;
+
+				return this;
 			}
 
 			return this;
@@ -360,6 +401,26 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			return this;
 		}
 
+		setMarginTop(px = 4)
+		{
+			if (Type.isNumber(px))
+			{
+				this.style.marginTop = px;
+			}
+
+			return this;
+		}
+
+		setMarginBottom(px = 4)
+		{
+			if (Type.isNumber(px))
+			{
+				this.style.marginBottom = px;
+			}
+
+			return this;
+		}
+
 		setShowTail(showTail)
 		{
 			if (showTail)
@@ -434,6 +495,16 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		{
 			delete this.style.leftTail;
 			delete this.style.rightTail;
+		}
+
+		setAuthorBottomMessage(value)
+		{
+			this.isAuthorBottomMessage = value;
+		}
+
+		setAuthorTopMessage(value)
+		{
+			this.isAuthorTopMessage = value;
 		}
 	}
 

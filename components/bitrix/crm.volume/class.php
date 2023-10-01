@@ -335,7 +335,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 
 
 	/**
-	 * @return array|bool|\CAllUser|\CUser
+	 * @return array|bool|\CUser
 	 */
 	private function getUser()
 	{
@@ -345,11 +345,11 @@ class CrmVolumeComponent extends \CBitrixComponent
 	}
 
 	/**
-	 * @return \CAllMain|\CMain
+	 * @return CMain
 	 */
 	protected function getApplication()
 	{
-		/** @global \CMain $APPLICATION */
+		/** @global CMain $APPLICATION */
 		global $APPLICATION;
 		return $APPLICATION;
 	}

@@ -1,7 +1,8 @@
-import {Loc} from 'main.core';
-import {Block} from 'salescenter.component.stage-block';
-import {UserAvatar, MessageEditor} from 'salescenter.component.stage-block.sms-message';
-import {StageMixin} from './stage-mixin';
+import { Loc } from 'main.core';
+import { Block } from 'salescenter.component.stage-block';
+import { UserAvatar, MessageEditor } from 'salescenter.component.stage-block.sms-message';
+import { ContextDictionary } from '../../const/context-dictionary';
+import { StageMixin } from './stage-mixin';
 
 const ChatMessage = {
 	props: {
@@ -75,7 +76,7 @@ const ChatMessage = {
 		},
 		isMessageReadOnly()
 		{
-			return this.$root.$app.context !== 'sms';
+			return this.$root.$app.context !== ContextDictionary.sms;
 		},
 	},
 	created() {

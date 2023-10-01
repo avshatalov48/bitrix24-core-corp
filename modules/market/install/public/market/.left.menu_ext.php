@@ -10,7 +10,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
 	die();
 }
 
-IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/rest/install/public/marketplace/.left.menu_ext.php");
+IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/market/install/public/market/.left.menu_ext.php");
 
 $arMenu = [];
 

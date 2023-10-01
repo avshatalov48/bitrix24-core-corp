@@ -11,7 +11,7 @@ use Bitrix\Main\UI\Extension;
 Extension::load("ui.buttons");
 Extension::load("ui.buttons.icons");
 
-/** @var CAllMain $APPLICATION */
+/** @var CMain $APPLICATION */
 /** @var array $arParams */
 /** @var array $arResult */
 $containerId = 'bx-crm-exclusion-import';

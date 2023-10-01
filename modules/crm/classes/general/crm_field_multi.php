@@ -882,7 +882,7 @@ class CCrmFieldMulti
 					}
 					else
 					{
-						$arSqlSearch[] = 'CFM.ENTITY_ID = "' . $DB->ForSql((string)$val) . '"';
+						$arSqlSearch[] = 'CFM.ENTITY_ID = \'' . $DB->ForSql((string)$val) . '\'';
 					}
 
 					break;

@@ -794,7 +794,7 @@ class StoreDocumentDetails extends Controller
 	 */
 	private function updateCatalogContractor(int $entityId, array $data): void
 	{
-		$contractorsProvider = Manager::getActiveProvider();
+		$contractorsProvider = Manager::getActiveProvider(Manager::PROVIDER_STORE_DOCUMENT);
 		if ($contractorsProvider)
 		{
 			$contractorsProvider::onAfterDocumentSaveSuccessForMobile($entityId, $data);

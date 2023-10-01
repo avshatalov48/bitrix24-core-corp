@@ -2100,7 +2100,7 @@ class CCrmViewHelper
 			//'apologyTitle' => Get?Message('CRM_LEAD_STATUS_MANAGER_APOLOGY_TTL'),
 			'failureTitle' => GetMessage('CRM_LEAD_STATUS_MANAGER_FAILURE_TTL'),
 			'selectorTitle' => GetMessage('CRM_LEAD_STATUS_MANAGER_SELECTOR_TTL'),
-			'checkErrorTitle' => GetMessage('CRM_LEAD_STAGE_MANAGER_CHECK_ERROR_TTL'),
+			'checkErrorTitle' => GetMessage('CRM_LEAD_STAGE_MANAGER_CHECK_ERROR_TTL_MSGVER_1'),
 			'checkErrorHelp' => GetMessage('CRM_STAGE_MANAGER_CHECK_ERROR_HELP'),
 			'checkErrorHelpArticleCode' => '8233923',
 			'conversionCancellationTitle' => GetMessage('CRM_CONFIRMATION_DLG_TTL_MSGVER_1'),
@@ -3067,7 +3067,7 @@ class CCrmViewHelper
 			'dialogTitle' => GetMessage('CRM_QUOTE_STATUS_MANAGER_DLG_TTL'),
 			'failureTitle' => GetMessage('CRM_QUOTE_STATUS_MANAGER_FAILURE_TTL'),
 			'selectorTitle' => GetMessage('CRM_QUOTE_STATUS_MANAGER_SELECTOR_TTL'),
-			'checkErrorTitle' => GetMessage('CRM_QUOTE_STATUS_MANAGER_CHECK_ERROR_TTL'),
+			'checkErrorTitle' => GetMessage('CRM_QUOTE_STATUS_MANAGER_CHECK_ERROR_TTL_MSGVER_1'),
 			'checkErrorHelp' => GetMessage('CRM_STAGE_MANAGER_CHECK_ERROR_HELP'),
 			'checkErrorHelpArticleCode' => '8233923'
 		);

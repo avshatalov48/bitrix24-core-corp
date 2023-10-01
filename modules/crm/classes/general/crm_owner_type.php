@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Catalog\StoreDocumentTable;
+use Bitrix\Catalog\AgentContractTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Crm\Security\EntityAuthorization;
@@ -51,8 +52,10 @@ class CCrmOwnerType
 	public const SmartDocument = 36;
 	public const SuspendedSmartDocument = 37;
 
+	public const AgentContractDocument = 38;
+
 	public const FirstOwnerType = 1;
-	public const LastOwnerType = 37;
+	public const LastOwnerType = 38;
 
 	public const DynamicTypeStart = 128;
 	public const DynamicTypeEnd = 192;
@@ -107,6 +110,8 @@ class CCrmOwnerType
 
 	public const DynamicTypePrefixName = 'DYNAMIC_';
 	public const SuspendedDynamicTypePrefixName = 'SUS_DYNAMIC_';
+
+	public const AgentContractDocumentName = 'AGENT_CONTRACT';
 
 	private static $ALL_DESCRIPTIONS = array();
 	private static $ALL_CATEGORY_CAPTION = array();
@@ -353,6 +358,9 @@ class CCrmOwnerType
 			case self::SystemName:
 				return self::System;
 
+			case self::AgentContractDocumentName:
+				return self::AgentContractDocument;
+
 			default:
 				if (CCrmOwnerTypeAbbr::isDynamicTypeAbbreviation($name) || CCrmOwnerTypeAbbr::isSuspendedDynamicTypeAbbreviation($name))
 				{
@@ -487,6 +495,9 @@ class CCrmOwnerType
 
 			case self::System:
 				return self::SystemName;
+
+			case self::AgentContractDocument:
+				return self::AgentContractDocumentName;
 
 			case self::Undefined:
 				return '';
@@ -1003,6 +1014,16 @@ class CCrmOwnerType
 				);
 			}
 
+			case self::AgentContractDocument:
+			{
+				return CComponentEngine::MakePathFromTemplate(
+					COption::GetOptionString('crm', 'path_to_agent_contract_details'),
+					[
+						'agent_contract_id' => $ID,
+					]
+				);
+			}
+
 			default:
 				return '';
 		}
@@ -1195,6 +1216,7 @@ class CCrmOwnerType
 			|| $typeID === CCrmOwnerType::StoreDocument
 			|| $typeID === CCrmOwnerType::SmartInvoice
 			|| $typeID === CCrmOwnerType::SmartDocument
+			|| $typeID === CCrmOwnerType::AgentContractDocument
 		)
 		{
 			return true;
@@ -1435,6 +1457,27 @@ class CCrmOwnerType
 							return $documentTitle;
 						}
 					}
+					return '';
+				}
+				break;
+			}
+
+			case self::AgentContractDocument:
+			{
+				if (\Bitrix\Main\Loader::includeModule('catalog'))
+				{
+					$documentData = AgentContractTable::getList(
+						[
+							'select' => ['ID', 'TITLE'],
+							'filter' => ['ID' => $ID],
+						]
+					)->fetch();
+
+					if ($documentData && !empty($documentData['TITLE']))
+					{
+						return $documentData['TITLE'];
+					}
+
 					return '';
 				}
 				break;

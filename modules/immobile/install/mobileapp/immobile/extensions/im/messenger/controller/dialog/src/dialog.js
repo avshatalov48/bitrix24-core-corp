@@ -10,11 +10,13 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 	const { Loc } = require('loc');
 	const { getPressedColor } = require('utils/color');
 	const { clone, isEqual } = require('utils/object');
+	const { ObjectUtils } = require('im/messenger/lib/utils');
 	const { Uuid } = require('utils/uuid');
 	const { withCurrentDomain } = require('utils/url');
 	const { Haptics } = require('haptics');
 	const { inAppUrl } = require('in-app-url');
 	const { NotifyManager } = require('notify-manager');
+	const { throttle } = require('utils/function');
 	include('InAppNotifier');
 
 	const {
@@ -25,7 +27,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 		FileType,
 	} = require('im/messenger/const');
 	const {
-		MessageRest,
+		MessageRest, DialogRest,
 	} = require('im/messenger/provider/rest');
 	const {
 		ChatService,
@@ -138,6 +140,19 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			 */
 			this.draftManager = null;
 			/**
+			 * @desc Id timer timeout for canceling request rest
+			 * @private
+			 * @type {number|null}
+			 */
+			this.holdWritingTimerId = null;
+			/**
+			 * @desc This hold for start request to rest method 'im.dialog.writing'
+			 * @constant
+			 * @private
+			 * @type {number}
+			 */
+			this.HOLD_WRITING_REST = 3000;
+			/**
 			 * @private
 			 * @type {AudioMessagePlayer}
 			 */
@@ -147,6 +162,8 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 
 			/** @private */
 			this.submitHandler = this.sendMessage.bind(this);
+			/** @private */
+			this.changeTextHandler = this.onChangeText.bind(this);
 			/** @private */
 			this.attachTapHandler = this.onAttachTap.bind(this);
 			/** @private */
@@ -219,7 +236,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			this.updateHandler = this.redrawMessage.bind(this);
 			this.deleteHandler = this.deleteMessage.bind(this);
 			/** @private */
-			this.dialogUpdateHandler = this.redrawHeader.bind(this);
+			this.dialogUpdateHandlerRouter = this.dialogUpdateHandlerRouter.bind(this);
 			this.dialogDeleteHandler = () => {};
 
 			if (FeatureFlag.dialog.nativeSupported)
@@ -227,6 +244,9 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				// TODO: generalize the approach to background caching
 				Dialog.preloadAssets();
 			}
+
+			this.startWriting = throttle(this.startWriting, 5000, this);
+			this.startRecordVoiceMessage = throttle(this.startRecordVoiceMessage, 3000, this);
 		}
 
 		/** @private */
@@ -288,7 +308,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				.on(EventType.dialog.messageMenuActionTap, this.messageMenuActionTapHandler)
 				.on(EventType.dialog.messageFileDownloadTap, this.messageFileDownloadTapHandler)
 				.on(EventType.dialog.messageFileUploadCancelTap, this.messageFileUploadCancelTapHandler)
-				.on(EventType.dialog.changeText, this.draftManager.changeTextHandler)
+				.on(EventType.dialog.changeText, this.changeTextHandler)
 				.on(EventType.view.barButtonTap, this.headerButtons.tapHandler)
 				.on(EventType.view.barButtonLongTap, this.headerButtons.longTapHandler)
 				.on(EventType.view.close, this.closeHandler)
@@ -315,10 +335,10 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				.on('messagesModel/update', this.updateHandler)
 				.on('messagesModel/updateWithId', this.updateHandler)
 				.on('messagesModel/delete', this.deleteHandler)
-				.on('dialoguesModel/add', this.dialogUpdateHandler)
-				.on('dialoguesModel/update', this.dialogUpdateHandler)
+				.on('dialoguesModel/add', this.dialogUpdateHandlerRouter)
+				.on('dialoguesModel/update', this.dialogUpdateHandlerRouter)
 				.on('dialoguesModel/delete', this.dialogDeleteHandler)
-				.on('usersModel/set', this.dialogUpdateHandler)
+				.on('usersModel/set', this.dialogUpdateHandlerRouter)
 			;
 		}
 
@@ -330,10 +350,10 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				.off('messagesModel/update', this.updateHandler)
 				.off('messagesModel/updateWithId', this.updateHandler)
 				.off('messagesModel/delete', this.deleteHandler)
-				.off('dialoguesModel/add', this.dialogUpdateHandler)
-				.off('dialoguesModel/update', this.dialogUpdateHandler)
+				.off('dialoguesModel/add', this.dialogUpdateHandlerRouter)
+				.off('dialoguesModel/update', this.dialogUpdateHandlerRouter)
 				.off('dialoguesModel/delete', this.dialogDeleteHandler)
-				.off('usersModel/set', this.dialogUpdateHandler)
+				.off('usersModel/set', this.dialogUpdateHandlerRouter)
 			;
 		}
 
@@ -535,7 +555,6 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			});
 
 			this.messageRenderer = new MessageRenderer({
-				store: this.store,
 				view: this.view,
 				dialogId: this.getDialogId(),
 				chatId: this.getChatId(),
@@ -581,7 +600,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				return;
 			}
 
-			const date = this.store.getters['messagesModel/getMessageById'](this.view.getTopMessage().id).date;
+			const date = this.store.getters['messagesModel/getMessageById'](this.view.getTopMessageOnScreen().id).date;
 			if (date)
 			{
 				const dateText = DateFormatter.getDateGroupFormat(date);
@@ -593,14 +612,16 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 		/**
 		 * @private
 		 */
-		onReadMessage(messageId)
+		onReadMessage(messageIdList)
 		{
 			if (!this.view.scrollToFirstUnreadCompleted)
 			{
 				return;
 			}
 
-			this.chatService.readMessage(this.getChatId(), messageId);
+			messageIdList.forEach((messageId) => {
+				this.chatService.readMessage(this.getChatId(), messageId);
+			});
 		}
 
 		/**
@@ -682,6 +703,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			{
 				this.view.hideScrollToNewMessagesButton();
 			}
+			this.startRecordVoiceMessage();
 		}
 
 		/**
@@ -719,7 +741,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 		onMessageTap(index, message)
 		{
 			const modelMessage = this.store.getters['messagesModel/getMessageById'](Number(message.id));
-			if (!modelMessage || !modelMessage.files[0])
+			if (!modelMessage || !('id' in modelMessage) || !modelMessage.files[0])
 			{
 				return;
 			}
@@ -775,6 +797,12 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			const isRealMessage = Type.isNumber(messageId);
 
 			const modelMessage = this.store.getters['messagesModel/getMessageById'](messageId);
+
+			if (!modelMessage || !('id' in modelMessage))
+			{
+				return;
+			}
+
 			const userId = MessengerParams.getUserId();
 			const isYourMessage = modelMessage.authorId === userId;
 			const isSystemMessage = modelMessage.authorId === 0;
@@ -837,7 +865,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				menu.addAction(ProfileAction);
 			}
 
-			if (isYourMessage && !isDeletedMessage)
+			if (isYourMessage && !isDeletedMessage && !isSystemMessage)
 			{
 				menu.addAction(EditAction);
 				menu
@@ -867,6 +895,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 		{
 			this.view.clearInput();
 			this.draftManager.saveDraft('');
+			this.cancelWritingRequest();
 
 			let shouldScrollToBottom = true;
 			if (this.replyManager.isEditInProcess)
@@ -880,7 +909,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				return;
 			}
 
-			if (text === '')
+			if (ObjectUtils.isStringFullSpace(text))
 			{
 				return;
 			}
@@ -900,7 +929,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				authorId: MessengerParams.getUserId(),
 				text,
 				unread: false,
-				uuid,
+				templateId: uuid,
 				date: new Date(),
 				sending: true,
 			};
@@ -917,11 +946,25 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 					dialogId: this.getDialogId(),
 					text,
 					messageType: 'self',
-					uuid,
+					templateId: uuid,
 				};
 
 				this._sendMessage(message);
 			});
+		}
+
+		/**
+		 * @desc Handler change text in input message zone ( native region )
+		 * @param {string} text
+		 */
+		onChangeText(text)
+		{
+			if (text && !ObjectUtils.isStringFullSpace(text))
+			{
+				this.startWriting();
+			}
+
+			this.draftManager.changeTextHandler(text);
 		}
 
 		/**
@@ -948,7 +991,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				.send(message)
 				.then((response) => {
 					this.store.dispatch('messagesModel/updateWithId', {
-						id: message.uuid,
+						id: message.templateId,
 						fields: {
 							id: response.data(),
 							error: false,
@@ -957,7 +1000,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				})
 				.catch(() => {
 					this.store.dispatch('messagesModel/update', {
-						id: message.uuid,
+						id: message.templateId,
 						fields: {
 							error: true,
 						},
@@ -973,7 +1016,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				dialogId: this.getDialogId(),
 				text: modelMessage.text,
 				messageType: 'self',
-				uuid: message.id,
+				templateId: message.id,
 			};
 
 			this._sendMessage(messageToSend);
@@ -1231,6 +1274,17 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			this.messageRenderer.render(currentDialogMessageList);
 		}
 
+		/**
+		 * @desc The method routes the dialog handlers by the name of the action from the store
+		 * @param {Object} mutation
+		 * @return {Boolean}
+		 * @private
+		 */
+		dialogUpdateHandlerRouter(mutation)
+		{
+			this.redrawHeader(mutation);
+		}
+
 		redrawMessage(mutation)
 		{
 			let messageId = mutation.payload.id;
@@ -1265,7 +1319,8 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 		{
 			switch (mutation.type)
 			{
-				case 'usersModel/set': {
+				case 'usersModel/set':
+				{
 					const opponent = mutation.payload.find((user) => user.id.toString() === this.getDialogId().toString());
 
 					if (opponent)
@@ -1276,10 +1331,10 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 					return;
 				}
 
-				default: {
+				default:
+				{
 					const dialogId = mutation.payload.dialogId;
-
-					if (dialogId === this.getDialogId())
+					if (dialogId === this.getDialogId() || String(dialogId) === this.getDialogId())
 					{
 						this.headerTitle.renderTitle();
 					}
@@ -1350,6 +1405,46 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_COMING_SOON'),
 				time: 1,
 			});
+		}
+
+		/**
+		 * @desc Call dialog rest request writing message method
+		 * @param {string} dialogId
+		 */
+		startWriting(dialogId = this.getDialogId())
+		{
+			this.holdWritingTimerId = setTimeout(() => {
+				DialogRest.writingMessage(dialogId)
+					.then((resolve) => resolve)
+					.catch((err) => Logger.log('DialogRest.writingMessage.response', err));
+			}, this.HOLD_WRITING_REST);
+		}
+
+		/**
+		 * @desc Call dialog rest request record voice message method
+		 * @param {string} dialogId
+		 */
+		startRecordVoiceMessage(dialogId = this.getDialogId())
+		{
+			this.holdWritingTimerId = setTimeout(() => {
+				DialogRest.recordVoiceMessage(dialogId)
+					.then((resolve) => resolve)
+					.catch((err) => Logger.log('DialogRest.writingMessage.response', err));
+			}, this.HOLD_WRITING_REST);
+		}
+
+		/**
+		 * @desc Method is canceling timeout with request rest 'im.dialog.writing'
+		 * @void
+		 * @private
+		 */
+		cancelWritingRequest()
+		{
+			if (Type.isNumber(this.holdWritingTimerId))
+			{
+				clearTimeout(this.holdWritingTimerId);
+				this.holdWritingTimerId = null;
+			}
 		}
 	}
 

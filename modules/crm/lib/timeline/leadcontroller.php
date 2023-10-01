@@ -448,7 +448,7 @@ class LeadController extends EntityController
 			$fieldName = isset($settings['FIELD']) ? $settings['FIELD'] : '';
 			if($fieldName === 'STATUS_ID')
 			{
-				$data['TITLE'] =  Loc::getMessage('CRM_LEAD_MODIFICATION_STATUS');
+				$data['TITLE'] =  Loc::getMessage('CRM_LEAD_MODIFICATION_STATUS_MSGVER_1');
 				$data['START_NAME'] = isset($settings['START_NAME']) ? $settings['START_NAME'] : $settings['START'];
 				$data['FINISH_NAME'] = isset($settings['FINISH_NAME']) ? $settings['FINISH_NAME'] : $settings['FINISH'];
 			}

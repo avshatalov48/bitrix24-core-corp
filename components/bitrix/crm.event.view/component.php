@@ -90,7 +90,7 @@ $arFilter = array();
 $arSort = array();
 
 $bInternal = false;
-if ($arParams['INTERNAL'] == 'Y' || $arParams['GADGET'] == 'Y')
+if (($arParams['INTERNAL'] ?? 'N') == 'Y' || ($arParams['GADGET'] ?? 'N') == 'Y')
 	$bInternal = true;
 $arResult['INTERNAL'] = $bInternal;
 $arResult['INTERNAL_EDIT'] = false;
@@ -410,8 +410,8 @@ if (!$arResult['INTERNAL'] || $arResult['SHOW_INTERNAL_FILTER'])
 }
 
 $arResult['HEADERS'] = array();
-$arResult['HEADERS'][] = array('id' => 'ID', 'name' => 'ID', 'sort' => 'id', 'default' => false, 'editable' => false);
-$arResult['HEADERS'][] = array('id' => 'DATE_CREATE', 'name' => GetMessage('CRM_COLUMN_DATE_CREATE'), 'sort' => 'date_create', 'default' => true, 'editable' => false, 'width'=>'140px');
+$arResult['HEADERS'][] = ['id' => 'ID', 'name' => 'ID', 'sort' => '', 'default' => false, 'editable' => false];
+$arResult['HEADERS'][] = ['id' => 'DATE_CREATE', 'name' => GetMessage('CRM_COLUMN_DATE_CREATE'), 'sort' => 'event_rel_id', 'default' => true, 'editable' => false, 'width'=>'140px'];
 if ($arResult['EVENT_ENTITY_LINK'] == 'Y')
 {
 	$arResult['HEADERS'][] = array('id' => 'ENTITY_TYPE', 'name' => GetMessage('CRM_COLUMN_ENTITY_TYPE'), 'sort' => '', 'default' => true, 'editable' => false);
@@ -479,7 +479,7 @@ foreach ($arFilter as $k => $v)
 \Bitrix\Crm\UI\Filter\EntityHandler::internalize($arResult['FILTER'], $arFilter);
 
 $_arSort = $gridOptions->GetSorting(array(
-	'sort' => array('date_create' => 'desc'),
+	'sort' => array('event_rel_id' => 'desc'),
 	'vars' => array('by' => 'by', 'order' => 'order')
 ));
 
@@ -595,23 +595,54 @@ $obRes = CCrmEvent::GetListEx(
 	$arFilter,
 	false,
 	false,
+	[
+		'ID',
+	],
+	$arOptions
+);
+$loadedItems = [];
+while ($arEvent = $obRes->Fetch())
+{
+	$loadedItems[$arEvent['ID']] = $arEvent['ID'];
+}
+if (empty($loadedItems))
+{
+	$loadedItems[] = 0;
+}
+
+$obRes = CCrmEvent::GetListEx(
+	[],
+	['@ID' => $loadedItems, 'CHECK_PERMISSIONS' => 'N'],
+	false,
+	false,
 	array_diff(
 		array_keys(CCrmEvent::GetFields()),
-		array(
+		[
 			'CREATED_BY_LOGIN',
 			'CREATED_BY_NAME',
 			'CREATED_BY_LAST_NAME',
 			'CREATED_BY_SECOND_NAME',
 			'CREATED_BY_PERSONAL_PHOTO'
-		)
-	),
-	$arOptions
+		]
+	)
 );
+
+$loadedData = [];
+while ($arEvent = $obRes->Fetch())
+{
+	$loadedData[$arEvent['ID']] = $arEvent;
+}
 
 $userIDs = array();
 $qty = 0;
-while ($arEvent = $obRes->Fetch())
+foreach ($loadedItems as $loadedItemId)
 {
+	$arEvent = $loadedData[$loadedItemId] ?? null;
+	if (!$arEvent)
+	{
+		continue;
+	}
+
 	if(++$qty > $pageSize)
 	{
 		$enableNextPage = true;

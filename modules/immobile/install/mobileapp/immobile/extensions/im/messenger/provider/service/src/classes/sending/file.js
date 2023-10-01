@@ -2,6 +2,8 @@
  * @module im/messenger/provider/service/classes/sending/file
  */
 jn.define('im/messenger/provider/service/classes/sending/file', (require, exports, module) => {
+	const { Filesystem, Reader } = require('native/filesystem');
+
 	const {
 		getExtension,
 	} = require('utils/file');
@@ -71,12 +73,20 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 						return;
 					}
 
-					this.commitFile({
-						chatId: this.getDialog(params.dialogId).chatId,
-						temporaryMessageId: params.temporaryMessageId,
-						temporaryFileId: fileId,
-						realFileId: file.customData.fileId,
-						fromDisk: false,
+					const realFileId = file.customData.fileId;
+					// eslint-disable-next-line promise/catch-or-return
+					this.uploadPreview({
+						fileId: file.customData.fileId,
+						fileName: this.uploadRegistry[fileId].deviceFile.name,
+						previewLocalUrl: this.uploadRegistry[fileId].deviceFile.previewUrl,
+					}).finally(() => {
+						this.commitFile({
+							chatId: this.getDialog(params.dialogId).chatId,
+							temporaryMessageId: params.temporaryMessageId,
+							temporaryFileId: fileId,
+							realFileId: realFileId,
+							fromDisk: false,
+						});
 					});
 				})
 				.on(UploaderManagerEvent.error, (fileId, data) => {
@@ -173,6 +183,14 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 				previewData.image = {
 					width: file.width,
 					height: file.height,
+				};
+			}
+
+			if (fileType === FileType.video)
+			{
+				previewData.image = {
+					width: file.previewWidth,
+					height: file.previewHeight,
 				};
 			}
 
@@ -369,6 +387,48 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 					Logger.error('FileService.commitFile: error', error);
 				})
 			;
+		}
+
+		/**
+		 * @private
+		 */
+		async uploadPreview({ fileId, fileName, previewLocalUrl })
+		{
+			return Promise.resolve();
+
+			// TODO: find replacement for FormData in mobile app and implement preview uploading.
+			if (!previewLocalUrl)
+			{
+				return Promise.reject(new Error('FileService.uploadPreview: previewLocalUrl is empty'));
+			}
+
+			const file = await Filesystem.getFile(previewLocalUrl);
+
+			return new Promise((resolve, reject) => {
+				const reader = new Reader();
+				reader.readAsBinaryString(file);
+
+				reader.on('loadEnd', (event) => {
+					const previewFile = event.result;
+
+					// const formData = new FormData();
+					// formData.append('id', fileId);
+					// formData.append('previewFile', previewFile, `preview_${fileName}.jpg`);
+
+					const formData = {
+						id: fileId,
+						previewFile,
+					};
+
+					return BX.ajax.runAction(RestMethod.imDiskFilePreviewUpload, { data: formData }).catch((error) => {
+						Logger.error('FileService.uploadPreview: upload request error', error);
+					});
+				});
+
+				reader.on('error', () => {
+					reject(new Error('FileService.uploadPreview: file read error'));
+				});
+			});
 		}
 	}
 

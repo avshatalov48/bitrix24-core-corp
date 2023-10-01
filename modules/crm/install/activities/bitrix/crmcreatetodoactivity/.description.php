@@ -46,11 +46,3 @@ $arActivityDescription = [
 		'SORT' => 3500,
 	],
 ];
-
-if (
-	Main\Loader::includeModule('crm')
-	&& !Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
-)
-{
-	$arActivityDescription['EXCLUDED'] = true;
-}

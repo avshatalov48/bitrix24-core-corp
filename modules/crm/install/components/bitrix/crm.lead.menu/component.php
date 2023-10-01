@@ -585,8 +585,8 @@ if($arParams['TYPE'] === 'list')
 		CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/common.js');
 		$arResult['BUTTONS'][] = \Bitrix\Crm\Settings\LeadSettings::getCrmTypeMenuItem(true);
 		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('LEAD_CRM_CONFIG_STATUSES'),
-			'TITLE' => GetMessage('LEAD_CRM_CONFIG_STATUSES_TITLE'),
+			'TEXT' => GetMessage('LEAD_CRM_CONFIG_STATUSES_MSGVER_1'),
+			'TITLE' => GetMessage('LEAD_CRM_CONFIG_STATUSES_TITLE_MSGVER_1'),
 			'ONCLICK' => 'BX.Crm.Lead.Menu.onClickConfigStatuses(\''.CUtil::JSEscape($arResult["PATH_TO_LEAD_STATUS_LIST"]).'\')'
 		);
 	}

@@ -30,7 +30,6 @@ $APPLICATION->IncludeComponent(
 					'alfabank' => '#EE2A23',
 					'yoo_money' => '#FFA900',
 					'qiwi' => '#E9832C',
-					'webmoney' => '#006FA8',
 					'embedded' => '#0697F2',
 				],
 				'uapay' => '#E41F18',

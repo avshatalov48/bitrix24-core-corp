@@ -158,7 +158,13 @@ class TimelineManager
 		self::prepareDisplayData($items);
 		$item = $items[0];
 	}
-	public static function prepareDisplayData(array &$items, $userID = 0, $userPermissions = null, bool $checkPermissions = true)
+	public static function prepareDisplayData(
+		array &$items,
+		$userID = 0,
+		$userPermissions = null,
+		bool $checkPermissions = true,
+		array $params = []
+	)
 	{
 		$entityMap = array();
 		$items = NoteTable::loadForItems($items, NoteTable::NOTE_TYPE_HISTORY);
@@ -545,7 +551,8 @@ class TimelineManager
 		}
 
 		$defaultController = new EntityController();
-		foreach($items as $ID => &$item)
+		$options = ['TYPE' => $params['type'] ?? Service\Timeline\Context::DESKTOP];
+		foreach($items as &$item)
 		{
 			if(!is_array($item))
 			{
@@ -557,7 +564,7 @@ class TimelineManager
 			{
 				$controller = $defaultController;
 			}
-			$item = $controller->prepareHistoryDataModel($item);
+			$item = $controller->prepareHistoryDataModel($item, $options);
 		}
 		unset($item);
 

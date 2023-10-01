@@ -440,6 +440,7 @@ class CAllCrmContact
 			'ORIGIN_ID' => ['FIELD' => $tableAliasName . '.ORIGIN_ID', 'TYPE' => 'string'], //ITEM ID IN EXTERNAL SYSTEM
 			'ORIGIN_VERSION' => ['FIELD' => $tableAliasName . '.ORIGIN_VERSION', 'TYPE' => 'string'], //ITEM VERSION IN EXTERNAL SYSTEM
 			'FACE_ID' => ['FIELD' => $tableAliasName . '.FACE_ID', 'TYPE' => 'int'],
+			'LAST_ACTIVITY_TIME' => ['FIELD' => $tableAliasName . '.LAST_ACTIVITY_TIME', 'TYPE' => 'datetime'],
 
 			'CATEGORY_ID' => ['FIELD' => $tableAliasName . '.CATEGORY_ID', 'TYPE' => 'int'],
 		];
@@ -2823,7 +2824,8 @@ class CAllCrmContact
 				(new \Bitrix\Crm\Order\ContactCompanyBinding(\CCrmOwnerType::Contact))->unbind($ID);
 			}
 
-			(new Contractor\ContactCompanyBinding(\CCrmOwnerType::Contact))->unbind($ID);
+			(new Contractor\StoreDocumentContactCompanyBinding(\CCrmOwnerType::Contact))->unbind($ID);
+			(new Contractor\AgentContractContactCompanyBinding(\CCrmOwnerType::Contact))->unbind($ID);
 
 			if(!$enableDeferredMode)
 			{

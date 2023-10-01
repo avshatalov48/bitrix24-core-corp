@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_LEAD_FILTER_STATUS_SEMANTIC_ID"] = "Состояние";
 $MESS["CRM_LEAD_FILTER_COMMUNICATION_TYPE"] = "Способ связи";
 $MESS["CRM_LEAD_FILTER_PHONE"] = "Телефон";
@@ -11,8 +11,8 @@ $MESS["CRM_LEAD_FILTER_PRODUCT_ROW_PRODUCT_ID"] = "Товар";
 $MESS["CRM_LEAD_FILTER_CONTACT_ID"] = "Список контактов";
 $MESS["CRM_LEAD_FILTER_COMPANY_ID"] = "Список компаний";
 $MESS["CRM_LEAD_FILTER_ACTIVITY_COUNTER"] = "Дела";
-$MESS["CRM_LEAD_FILTER_ACTIVE_TIME_PERIOD"] = "Период активности";
-$MESS["CRM_LEAD_FILTER_STATUS_ID_FROM_HISTORY"] = "Статус по истории";
-$MESS["CRM_LEAD_FILTER_STATUS_ID_FROM_SUPPOSED_HISTORY"] = "Статус по истории(с предполагаемыми переходами)";
+$MESS["CRM_LEAD_FILTER_ACTIVE_TIME_PERIOD"] = "В работе";
+$MESS["CRM_LEAD_FILTER_STATUS_ID_FROM_HISTORY_MSGVER_1"] = "Стадия по истории";
+$MESS["CRM_LEAD_FILTER_STATUS_ID_FROM_SUPPOSED_HISTORY_MSGVER_1"] = "Стадия по истории (с предполагаемыми переходами)";
 $MESS["CRM_LEAD_FILTER_STATUS_SEMANTIC_ID_FROM_HISTORY"] = "Состояние по истории";
-?>
+$MESS["CRM_LEAD_FILTER_LAST_ACTIVITY_TIME"] = "Последняя активность";

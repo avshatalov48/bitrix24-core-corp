@@ -752,7 +752,7 @@ class CCrmLeadDetailsComponent
 			),
 			array(
 				'name' => 'STATUS_ID',
-				'title' => Loc::getMessage('CRM_LEAD_FIELD_STATUS_ID'),
+				'title' => Loc::getMessage('CRM_LEAD_FIELD_STATUS_ID_MSGVER_1'),
 				'type' => 'list',
 				'editable' => true,
 				'enableAttributes' => false,
@@ -766,7 +766,7 @@ class CCrmLeadDetailsComponent
 			),
 			array(
 				'name' => 'STATUS_DESCRIPTION',
-				'title' => Loc::getMessage('CRM_LEAD_FIELD_STATUS_DESCRIPTION'),
+				'title' => Loc::getMessage('CRM_LEAD_FIELD_STATUS_DESCRIPTION_MSGVER_1'),
 				'type' => 'text',
 				'data' => array('lineCount' => 6),
 				'editable' => true,

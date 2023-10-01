@@ -250,6 +250,7 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      this.search.loader = true;
+	      this.search.currentPage = 1;
 	      this.loadItems();
 	    },
 	    loadItems: function (append) {
@@ -291,7 +292,7 @@ this.BX = this.BX || {};
 	      return '';
 	    },
 	    openSubscriptionSlider: function () {
-	      BX.UI.InfoHelper.show(this.$root.marketSlider);
+	      top.BX.UI.InfoHelper.show(this.$root.marketSlider);
 	    },
 	    ...ui_vue3_pinia.mapActions(market_ratingStore.ratingStore, ['isActiveStar', 'getAppRating'])
 	  },

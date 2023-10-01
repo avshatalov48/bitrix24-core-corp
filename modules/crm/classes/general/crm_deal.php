@@ -448,7 +448,8 @@ class CAllCrmDeal
 			// Obsolete
 			'EVENT_ID' => array('FIELD' => 'L.EVENT_ID', 'TYPE' => 'string'),
 			'EVENT_DATE' => array('FIELD' => 'L.EVENT_DATE', 'TYPE' => 'datetime'),
-			'EVENT_DESCRIPTION' => array('FIELD' => 'L.EVENT_DESCRIPTION', 'TYPE' => 'string')
+			'EVENT_DESCRIPTION' => array('FIELD' => 'L.EVENT_DESCRIPTION', 'TYPE' => 'string'),
+			'LAST_ACTIVITY_TIME' => array('FIELD' => 'L.LAST_ACTIVITY_TIME', 'TYPE' => 'datetime')
 		);
 
 		// Creation of field aliases

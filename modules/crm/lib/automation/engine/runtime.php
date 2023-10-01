@@ -163,7 +163,7 @@ class Runtime
 				$instanceId,
 				$documentId,
 				$errors,
-				Loc::getMessage('CRM_AUTOMATION_TEMPLATE_TERMINATED')
+				Loc::getMessage('CRM_AUTOMATION_TEMPLATE_TERMINATED_MSGVER_1')
 			);
 		}
 	}

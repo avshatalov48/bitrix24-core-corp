@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,crm_activity_todoEditor,main_core_events,main_popup,ui_tour,calendar_sharing_interface,main_core_,crm_zoom,main_core) {
+(function (exports,crm_activity_todoEditor,main_core_events,main_popup,ui_tour,calendar_sharing_interface,crm_zoom,main_core) {
 	'use strict';
 
 	var _entityTypeId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
@@ -130,7 +130,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	    if (visible) {
 	      main_core.Dom.removeClass(container, '--hidden');
+	      this.onShow();
 	    } else {
+	      this.onHide();
 	      main_core.Dom.addClass(container, '--hidden');
 	    }
 	  }
@@ -143,9 +145,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      return;
 	    }
 	    if (isFocused) {
-	      main_core.Dom.addClass(container, "--focus");
+	      main_core.Dom.addClass(container, '--focus');
 	    } else {
-	      main_core.Dom.removeClass(container, "--focus");
+	      main_core.Dom.removeClass(container, '--focus');
 	    }
 	  }
 	  addFinishEditListener(callback) {
@@ -158,6 +160,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    throw new Error('Method createLayout() must be overridden');
 	  }
 	  initializeLayout() {}
+	  onShow() {}
+	  onHide() {}
 	}
 	Item.ON_FINISH_EDIT_EVENT = 'onFinishEdit';
 
@@ -1442,7 +1446,6 @@ this.BX.Crm = this.BX.Crm || {};
 						<span data-role="client-container"> ${0}
 						<a data-role="client-selector" href="#">client_caption</a> <a data-role="to-selector" href="#">to_number</a></span>
 					</div>
-					<!--<span class="crm-entity-stream-content-sms-conditions-helper-icon"></span>-->
 				</div>
 			</div>
 			${0}
@@ -1674,7 +1677,7 @@ this.BX.Crm = this.BX.Crm || {};
 	class Sharing extends WithEditor {
 	  constructor(...args) {
 	    super(...args);
-	    this.HELPDESK_CODE = -1;
+	    this.HELPDESK_CODE = 17502612;
 	  }
 	  /**
 	   * @override
@@ -2857,7 +2860,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  showSlider() {
 	    if (this.getSetting('isAvailable')) {
-	      BX.Crm.Zoom.onNotConnectedHandler(main_core_.Loc.getMessage('USER_ID'));
+	      BX.Crm.Zoom.onNotConnectedHandler(main_core.Loc.getMessage('USER_ID'));
 	    } else
 	      // not available
 	      {
@@ -2868,13 +2871,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    return this.getSetting('isConnected') && this.getSetting('isAvailable');
 	  }
 	  createLayout() {
-	    return main_core_.Tag.render(_t$5 || (_t$5 = _$5`<div class="crm-entity-stream-content-new-detail ui-timeline-zoom-editor --focus --hidden"></div>`));
-	  }
-	  initializeLayout() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _createEditor$1)[_createEditor$1]();
+	    return main_core.Tag.render(_t$5 || (_t$5 = _$5`<div class="crm-entity-stream-content-new-detail ui-timeline-zoom-editor --focus --hidden"></div>`));
 	  }
 	  onFocus(e) {
 	    this.setFocused(true);
+	  }
+	  onShow() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor]) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _createEditor$1)[_createEditor$1]();
+	    }
 	  }
 	}
 	function _createEditor2$1() {
@@ -3228,5 +3233,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.MenuBar = MenuBar;
 	exports.Item = Item;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.Crm.Activity,BX.Event,BX.Main,BX.UI.Tour,BX.Calendar.Sharing,BX,BX.Crm,BX));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.Crm.Activity,BX.Event,BX.Main,BX.UI.Tour,BX.Calendar.Sharing,BX.Crm,BX));
 //# sourceMappingURL=toolbar.bundle.js.map

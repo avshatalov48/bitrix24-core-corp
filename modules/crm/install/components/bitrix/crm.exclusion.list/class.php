@@ -278,7 +278,6 @@ class CrmExclusionListComponent extends CBitrixComponent implements Controllerab
 		/* Set title */
 		if ($this->arParams['SET_TITLE'])
 		{
-			/**@var CAllMain*/
 			$GLOBALS['APPLICATION']->SetTitle(Loc::getMessage('CRM_EXCLUSION_LIST_TITLE'));
 		}
 

@@ -48,6 +48,7 @@ BitrixVue.component('salescenter-payment_pay-components-payment_system-pay_syste
 						</div>
 					</div>
 				</div>
+				<slot></slot>
 			</template>
 		</div>
 	`,

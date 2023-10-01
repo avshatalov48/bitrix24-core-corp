@@ -36,6 +36,13 @@ class Link
 		return $from;
 	}
 
+	public static function getCreateUri(): string
+	{
+		$request = Application::getInstance()->getContext()->getRequest();
+
+		return (string)$request->get('create_uri');
+	}
+
 	public static function getDir(string $from = ''): string
 	{
 		return PageRules::MAIN_PAGE . ($from !== '' ? '?' . Link::$keyFrom . '=' . $from : '');

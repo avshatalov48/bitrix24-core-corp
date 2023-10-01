@@ -12013,7 +12013,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    return Promise.resolve();
 	  } else {
 	    // hide files block in comment content before pin
-	    const historyCommentBlock = historyItem.getLayoutContentBlockById('commentContent');
+	    const historyCommentBlock = historyItem.getLayoutContentBlockById('commentContentWeb');
 	    if (historyCommentBlock) {
 	      historyCommentBlock.setIsFilesBlockDisplayed(false);
 	      historyCommentBlock.setIsMoving();
@@ -12037,7 +12037,7 @@ this.BX.Crm = this.BX.Crm || {};
 	              if (historyCommentBlock) {
 	                historyCommentBlock.setIsFilesBlockDisplayed();
 	                historyCommentBlock.setIsMoving(false);
-	                const fixedHistoryCommentBlock = fixedHistoryItem.getLayoutContentBlockById('commentContent');
+	                const fixedHistoryCommentBlock = fixedHistoryItem.getLayoutContentBlockById('commentContentWeb');
 	                if (fixedHistoryCommentBlock) {
 	                  fixedHistoryCommentBlock.setIsFilesBlockDisplayed();
 	                  fixedHistoryCommentBlock.setIsMoving(false);

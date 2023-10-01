@@ -53,7 +53,7 @@ jn.define('im/messenger/controller/dialog/header/title', (require, exports, modu
 			};
 
 			let status = '';
-			if (DialogHelper.isChatId(dialogId))
+			if (DialogHelper.isChatId(dialogId) && !result.isWriting)
 			{
 				status = (new UserUtils()).getLastDateText(store.getters['usersModel/getUserById'](dialogId));
 			}
@@ -85,15 +85,15 @@ jn.define('im/messenger/controller/dialog/header/title', (require, exports, modu
 		renderTitle()
 		{
 			const titleParams = HeaderTitle.createTitleParams(this.dialogId, this.store);
-
 			if (!isEqual(this.titleParams, titleParams))
 			{
 				Logger.info('Dialog._redrawHeader: before: ', this.titleParams, ' after: ', titleParams);
 
 				this.view.setTitle(titleParams);
 				this.titleParams = titleParams;
-			}
 
+				return this;
+			}
 			Logger.info('Dialog._redrawHeader: header is up-to-date, redrawing is cancelled.');
 
 			return this;

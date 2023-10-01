@@ -2,7 +2,6 @@
  * @module im/messenger/lib/utils/object
  */
 jn.define('im/messenger/lib/utils/object', (require, exports, module) => {
-
 	class ObjectUtils
 	{
 		/**
@@ -23,7 +22,7 @@ jn.define('im/messenger/lib/utils/object', (require, exports, module) => {
 					.map(([key, value]) => {
 						if (BX.type.isPlainObject(originalObject[key]))
 						{
-							if (key.indexOf('_') === -1)
+							if (!key.includes('_'))
 							{
 								const newKey = (key.toUpperCase() === key) ? key.toLowerCase() : key;
 
@@ -35,7 +34,8 @@ jn.define('im/messenger/lib/utils/object', (require, exports, module) => {
 								ObjectUtils.convertKeysToCamelCase(originalObject[key]),
 							];
 						}
-						if (key.indexOf('_') === -1)
+
+						if (!key.includes('_'))
 						{
 							const newKey = (key.toUpperCase() === key) ? key.toLowerCase() : key;
 
@@ -43,7 +43,7 @@ jn.define('im/messenger/lib/utils/object', (require, exports, module) => {
 						}
 
 						return [ObjectUtils.stringToCamelCase(key.toLowerCase()), value];
-					})
+					}),
 			);
 		}
 
@@ -53,14 +53,23 @@ jn.define('im/messenger/lib/utils/object', (require, exports, module) => {
 		 */
 		static stringToCamelCase(string)
 		{
-			return string.replace(/([-_][a-z1-9])/ig, (sub) => {
+			return string.replace(/([_-][1-9a-z])/gi, (sub) => {
 				return sub.toUpperCase()
 					.replace('-', '')
 					.replace('_', '')
 				;
 			});
 		}
+
+		/**
+		 * @desc Returns check on white space in all string ('   ' => true, '   d   ' => false)
+		 * @param {string} string
+		 * @return {boolean}
+		 */
+		static isStringFullSpace(string) {
+			return /^\s*$/.test(string);
+		}
 	}
-	
+
 	module.exports = { ObjectUtils };
 });

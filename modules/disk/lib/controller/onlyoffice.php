@@ -166,6 +166,18 @@ final class OnlyOffice extends Engine\Controller
 					,
 				],
 			],
+			'recoverSessionWithBrokenFile' => [
+				'+prefilters' => [
+					new HttpMethod([HttpMethod::METHOD_POST]),
+					new ContentType([ContentType::JSON]),
+					(new Document\OnlyOffice\Filters\DocumentSessionCheck())
+						->enableOwnerCheck()
+						->enableHashCheck(function(){
+							return (new JsonPayload())->getData()['documentSessionHash'];
+						})
+					,
+				],
+			],
 			'handleOnlyOffice' => [
 				'prefilters' => [
 					new Document\OnlyOffice\Filters\OnlyOfficeEnabled(),
@@ -308,7 +320,7 @@ final class OnlyOffice extends Engine\Controller
 		];
 	}
 
-	public function continueWithNewSessionAction(Models\DocumentSession $session): ?array
+	public function recoverSessionWithBrokenFileAction(Models\DocumentSession $session): ?array
 	{
 		$documentInfo = $session->getInfo();
 		if (!$documentInfo)
@@ -318,7 +330,37 @@ final class OnlyOffice extends Engine\Controller
 			return null;
 		}
 
-		if (!$documentInfo->isFinished())
+		if ($documentInfo->isFinished())
+		{
+			$this->addError(new Error("Session {$session->getId()} is already finished."));
+
+			return null;
+		}
+
+		$session->setAsBroken();
+		Models\DocumentSessionTable::markAsBrokenByHash($session->getExternalHash());
+
+		$restoreDocumentInteractionUrl = UrlManager::getInstance()->createByController(new DocumentService(), 'restoreDocumentInteraction', [
+			'documentSessionHash' => $session->getExternalHash(),
+			'documentSessionId' => $session->getId(),
+		]);
+
+		return [
+			'link' => $restoreDocumentInteractionUrl,
+		];
+	}
+
+	public function continueWithNewSessionAction(Models\DocumentSession $session, bool $force = false): ?array
+	{
+		$documentInfo = $session->getInfo();
+		if (!$documentInfo)
+		{
+			$this->addError(new Error("Session {$session->getId()} doesn't have info."));
+
+			return null;
+		}
+
+		if (!$force && !$documentInfo->isFinished())
 		{
 			$this->addError(new Error("Session {$session->getId()} in status {$documentInfo->getContentStatus()}"));
 

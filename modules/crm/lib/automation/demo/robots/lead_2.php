@@ -18,7 +18,7 @@ return array(
 				'Type'       => 'SocNetMessageActivity',
 				'Properties' =>
 					array(
-						'MessageText'   => Loc::getMessage("CRM_AUTOMATION_DEMO_LEAD_2_MESSAGE_1"),
+						'MessageText'   => Loc::getMessage("CRM_AUTOMATION_DEMO_LEAD_2_MESSAGE_1_MSGVER_1"),
 						'MessageFormat' => 'robot',
 						'MessageUserTo' => '{=Document:ASSIGNED_BY_ID}',
 						'Title'         => $messageTitle,
@@ -49,7 +49,7 @@ return array(
 				'Type'       => 'CrmControlNotifyActivity',
 				'Properties' =>
 					array(
-						'MessageText' => Loc::getMessage("CRM_AUTOMATION_DEMO_LEAD_2_MESSAGE_3"),
+						'MessageText' => Loc::getMessage("CRM_AUTOMATION_DEMO_LEAD_2_MESSAGE_3_MSGVER_1"),
 						'ToHead'      => 'Y',
 						'Title'       => $controlTitle,
 					),
@@ -81,7 +81,7 @@ return array(
 				'Type'       => 'CrmControlNotifyActivity',
 				'Properties' =>
 					array(
-						'MessageText' => Loc::getMessage("CRM_AUTOMATION_DEMO_LEAD_2_MESSAGE_3"),
+						'MessageText' => Loc::getMessage("CRM_AUTOMATION_DEMO_LEAD_2_MESSAGE_3_MSGVER_1"),
 						'ToHead'      => 'Y',
 						'Title'       => $controlTitle,
 					),
@@ -120,7 +120,7 @@ return array(
 				'Type'       => 'CrmControlNotifyActivity',
 				'Properties' =>
 					array(
-						'MessageText' => Loc::getMessage("CRM_AUTOMATION_DEMO_LEAD_2_MESSAGE_3"),
+						'MessageText' => Loc::getMessage("CRM_AUTOMATION_DEMO_LEAD_2_MESSAGE_3_MSGVER_1"),
 						'ToHead'      => 'Y',
 						'Title'       => $controlTitle,
 					),

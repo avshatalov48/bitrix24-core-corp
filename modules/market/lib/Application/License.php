@@ -27,7 +27,7 @@ class License
 		) {
 			$licenseInfo['TERMS_OF_SERVICE_LINK'] = Loc::getMessage('MARKET_INSTALL_TERMS_OF_SERVICE_LINK');
 			$licenseInfo['TERMS_OF_SERVICE_TEXT'] = Loc::getMessage('MARKET_INSTALL_TERMS_OF_SERVICE_TEXT', ['#LINK#' => $licenseInfo['TERMS_OF_SERVICE_LINK']]);
-		}https://www.1c-bitrix.ru/download/files/manuals/ru/bitrix_catalog_tos.pdf
+		}
 
 		return $licenseInfo;
 	}

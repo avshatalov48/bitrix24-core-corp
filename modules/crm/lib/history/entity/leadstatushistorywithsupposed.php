@@ -37,7 +37,7 @@ class LeadStatusHistoryWithSupposedTable extends DataManager
 	public static function getMap()
 	{
 		$map = [
-			new IntegerField('ID', ['primary' => true]),
+			new IntegerField('ID', ['primary' => true, 'autocomplete' => true]),
 			new IntegerField('OWNER_ID'),
 			new DatetimeField('CREATED_TIME'),
 			new DateField('CREATED_DATE'),

@@ -123,8 +123,7 @@ class CCrmRole
 		global $DB;
 		
 		$sSql = $ignoreSystem
-			? 'DELETE RR FROM b_crm_role_relation RR '.
-			' LEFT JOIN b_crm_role AS R ON R.ID = RR.ROLE_ID WHERE IS_SYSTEM != \'Y\''
+			? 'DELETE FROM b_crm_role_relation WHERE ROLE_ID IN (SELECT ID FROM b_crm_role WHERE IS_SYSTEM != \'Y\')'
 			: 'DELETE FROM b_crm_role_relation'
 		;
 		

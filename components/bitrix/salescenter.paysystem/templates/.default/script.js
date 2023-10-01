@@ -1458,9 +1458,10 @@
 			}
 		},
 
-		onToggleCanPrintCheckNode: function (switcher)
+		onToggleCanPrintCheckNode: function (switcherNode)
 		{
-			if (switcher.checked === false)
+			// this switcher is just a HTML node, not UI switcher. This node doesn't have an isChecked() method
+			if (switcherNode.checked === false)
 			{
 				this.cashboxSwitchet.check(false);
 			}

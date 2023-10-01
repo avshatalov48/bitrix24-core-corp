@@ -224,29 +224,17 @@ class LeadSearchContentBuilder extends SearchContentBuilder
 		$connection = \Bitrix\Main\Application::getConnection();
 		$helper = $connection->getSqlHelper();
 
-		$searchContent = $helper->forSql($map->getString());
+		$searchContent = $map->getString();
+		$insert = [
+			'LEAD_ID' => $entityId,
+			'SEARCH_CONTENT' => $searchContent,
+		];
+		$update = [
+			'SEARCH_CONTENT' => $searchContent,
+		];
+		$merge = $helper->prepareMerge('b_crm_lead_index', ['LEAD_ID'], $insert, $update);
 
-		if ($checkExist)
-		{
-			$sql = "
-				INSERT INTO b_crm_lead_index(LEAD_ID, SEARCH_CONTENT)
-				VALUES({$entityId}, '{$searchContent}')
-				ON DUPLICATE KEY UPDATE SEARCH_CONTENT= '{$searchContent}'
-			";
-			try
-			{
-				return $connection->query($sql);
-			}
-			catch (\Exception $exception)
-			{
-				return $connection->query($sql);
-			}
-		}
-
-		$sql = "
-			UPDATE b_crm_lead_index SET SEARCH_CONTENT= '{$searchContent}' WHERE LEAD_ID = {$entityId}
-		";
-		return $connection->query($sql);
+		return $connection->query($merge[0]);
 	}
 
 	public function removeShortIndex(int $entityId): \Bitrix\Main\ORM\Data\Result

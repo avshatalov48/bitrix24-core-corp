@@ -1,22 +1,30 @@
 <?php
 
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-
-use Bitrix\Crm\Ml\TrainingState;
-use Bitrix\Main\Result;
-use Bitrix\Main\Engine\ActionFilter\CloseSession;
-
-
-class CrmMlEntityDetailAjaxController extends \Bitrix\Main\Engine\Controller
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
-	public function __construct(\Bitrix\Main\Request $request = null)
+	die();
+}
+
+use Bitrix\Crm\Ml\Agent\ModelTrainer;
+use Bitrix\Crm\Ml\Internals\PredictionHistoryTable;
+use Bitrix\Crm\Ml\Scoring;
+use Bitrix\Crm\Ml\TrainingState;
+use Bitrix\Main\Engine\ActionFilter\CloseSession;
+use Bitrix\Main\Engine\Controller;
+use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Request;
+
+class CrmMlEntityDetailAjaxController extends Controller
+{
+	public function __construct(Request $request = null)
 	{
 		parent::__construct($request);
 
-		\Bitrix\Main\Loader::includeModule('crm');
+		Loader::includeModule('crm');
 	}
 
-	public function configureActions()
+	public function configureActions(): array
 	{
 		return [
 			'continueTraining' => [
@@ -32,32 +40,38 @@ class CrmMlEntityDetailAjaxController extends \Bitrix\Main\Engine\Controller
 	 * Runs next training step for the model.
 	 *
 	 * @param string $modelName The name of the model.
+	 *
 	 * @return array|false|null
 	 */
-	public function continueTrainingAction($modelName)
+	public function continueTrainingAction($modelName): ?array
 	{
-		$model = \Bitrix\Crm\Ml\Scoring::getModelByName($modelName);
-		if(!$model)
+		$model = Scoring::getModelByName($modelName);
+		if (!$model)
 		{
-			$this->addError(new \Bitrix\Main\Error("Model " . $modelName . " is not found"));
+			$this->addError(new Error('Model ' . $modelName . ' is not found'));
+
 			return null;
 		}
 
-		$lastTraining = \Bitrix\Crm\Ml\Scoring::getLastTraining($model);
-		if(!$lastTraining)
+		$lastTraining = Scoring::getLastTraining($model);
+		if (!$lastTraining)
 		{
-			$this->addError(new \Bitrix\Main\Error("Model " . $modelName . " is not training now"));
+			$this->addError(new Error('Model ' . $modelName . ' is not training now'));
+
 			return null;
 		}
 
-		if($lastTraining["STATE"] == \Bitrix\Crm\Ml\TrainingState::GATHERING || $lastTraining["STATE"] === TrainingState::PENDING_CREATION)
+		if (
+			$lastTraining['STATE'] === TrainingState::GATHERING
+			|| $lastTraining['STATE'] === TrainingState::PENDING_CREATION
+		)
 		{
-			\Bitrix\Crm\Ml\Agent\ModelTrainer::run((int)$lastTraining["ID"]);
+			ModelTrainer::run((int)$lastTraining['ID']);
 		}
 
 		return [
-			"model" => $model,
-			"currentTraining" => $lastTraining
+			'model' => $model,
+			'currentTraining' => $lastTraining,
 		];
 	}
 
@@ -65,52 +79,55 @@ class CrmMlEntityDetailAjaxController extends \Bitrix\Main\Engine\Controller
 	 * Return current prediction record for the crm entity.
 	 *
 	 * @param int $entityTypeId Type id of the entity.
-	 * @param int $entityId Id of the entity.
+	 * @param int $entityId Entity Id.
 	 */
-	public function getCurrentPredictionAction($entityTypeId, $entityId)
+	public function getCurrentPredictionAction($entityTypeId, $entityId): ?array
 	{
 		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 		if (!CCrmAuthorizationHelper::CheckReadPermission($entityTypeId, $entityId, $userPermissions))
 		{
-			$this->addError(new \Bitrix\Main\Error("Access denied"));
+			$this->addError(new Error('Access denied'));
+
 			return null;
 		}
 
-		$lastPrediction = \Bitrix\Crm\Ml\Internals\PredictionHistoryTable::getRow([
-			"filter" => [
-				"=ENTITY_TYPE_ID" => $entityTypeId,
-				"=ENTITY_ID" => $entityId
+		$lastPrediction = PredictionHistoryTable::getRow([
+			'filter' => [
+				'=ENTITY_TYPE_ID' => $entityTypeId,
+				'=ENTITY_ID' => $entityId
 			],
-			"order" => [
-				"ID" => "DESC"
+			'order' => [
+				'ID' => 'DESC'
 			]
 		]);
 
 		if ($lastPrediction)
 		{
 			return [
-				"prediction" => $lastPrediction
+				'prediction' => $lastPrediction,
 			];
 		}
 
-		$updateResult = \Bitrix\Crm\Ml\Scoring::updatePrediction($entityTypeId, $entityId);
-		if(!$updateResult->isSuccess())
+		$updateResult = Scoring::updatePrediction($entityTypeId, $entityId);
+		if (!$updateResult->isSuccess())
 		{
 			$this->addErrors($updateResult->getErrors());
+
 			return null;
 		}
 
 		return [
-			"prediction" => $updateResult->getData()
+			'prediction' => $updateResult->getData(),
 		];
 	}
 
-	public function getResultAction($entityType, $entityId)
+	public function getResultAction($entityType, $entityId): ?array
 	{
 		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 		if (!CCrmAuthorizationHelper::CheckReadPermission($entityType, $entityId, $userPermissions))
 		{
-			$this->addError(new \Bitrix\Main\Error("Access denied"));
+			$this->addError(new Error('Access denied'));
+
 			return null;
 		}
 
@@ -120,29 +137,30 @@ class CrmMlEntityDetailAjaxController extends \Bitrix\Main\Engine\Controller
 		$result = $component->prepareResult();
 
 		return [
-			"model" => $result["MODEL"],
-			"mlModelExists" => (bool)$result["ML_MODEL_EXISTS"],
-			"canStartTraining" => (bool)$result["CAN_START_TRAINING"],
-			"currentTraining" => $result["CURRENT_TRAINING"],
-			"entity" => $result["ITEM"],
-			"predictionHistory" => $result["PREDICTION_HISTORY"],
-			"associatedEvents" => $result["ASSOCIATED_EVENTS"],
-			"trainingHistory" => $result["TRAINING_HISTORY"],
-			"errors" => $result["ERRORS"]
+			'model' => $result['MODEL'],
+			'mlModelExists' => (bool)$result['ML_MODEL_EXISTS'],
+			'canStartTraining' => (bool)$result['CAN_START_TRAINING'],
+			'currentTraining' => $result['CURRENT_TRAINING'],
+			'entity' => $result['ITEM'],
+			'predictionHistory' => $result['PREDICTION_HISTORY'],
+			'associatedEvents' => $result['ASSOCIATED_EVENTS'],
+			'trainingHistory' => $result['TRAINING_HISTORY'],
+			'errors' => $result['ERRORS'] ?? []
 		];
 	}
 
-	public function startModelTrainingAction($modelName)
+	public function startModelTrainingAction($modelName): ?array
 	{
-		$model = \Bitrix\Crm\Ml\Scoring::getModelByName($modelName);
+		$model = Scoring::getModelByName($modelName);
 		if (!$model || !$model->hasAccess())
 		{
-			$this->addError(new \Bitrix\Main\Error("Access denied"));
+			$this->addError(new Error('Access denied'));
+
 			return null;
 		}
-		$startTrainingResult = \Bitrix\Crm\Ml\Scoring::startModelTraining($model);
 
-		if(!$startTrainingResult->isSuccess())
+		$startTrainingResult = Scoring::startModelTraining($model);
+		if (!$startTrainingResult->isSuccess())
 		{
 			$this->errorCollection->add($startTrainingResult->getErrors());
 			return null;
@@ -157,25 +175,27 @@ class CrmMlEntityDetailAjaxController extends \Bitrix\Main\Engine\Controller
 		];
 	}
 
-	public function disableScoringAction($modelName)
+	public function disableScoringAction($modelName): ?array
 	{
-		$model = \Bitrix\Crm\Ml\Scoring::getModelByName($modelName);
+		$model = Scoring::getModelByName($modelName);
 		if (!$model || !$model->hasAccess())
 		{
-			$this->addError(new \Bitrix\Main\Error("Access denied"));
+			$this->addError(new Error('Access denied'));
+
 			return null;
 		}
-		$deletionResult = \Bitrix\Crm\Ml\Scoring::deleteMlModel($model);
 
-		if(!$deletionResult->isSuccess())
+		$deletionResult = Scoring::deleteMlModel($model);
+		if (!$deletionResult->isSuccess())
 		{
 			$this->errorCollection->add($deletionResult->getErrors());
+
 			return null;
 		}
 
 		return [
 			'model' => $model,
-			'currentTraining' => $model->getCurrentTraining()
+			'currentTraining' => $model->getCurrentTraining(),
 		];
 	}
 }

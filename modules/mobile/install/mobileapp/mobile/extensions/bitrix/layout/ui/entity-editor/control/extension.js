@@ -15,6 +15,7 @@ jn.define('layout/ui/entity-editor/control', (require, exports, module) => {
 	const { ProductSummarySection } = require('layout/ui/entity-editor/control/product-summary-section');
 	const { RequisiteField } = require('layout/ui/entity-editor/control/requisite');
 	const { RequisiteAddressField } = require('layout/ui/entity-editor/control/requisite-address');
+	const { EntityEditorAddressField } = require('layout/ui/entity-editor/control/address');
 
 	const Type = {
 		COLUMN: 'column',
@@ -28,6 +29,7 @@ jn.define('layout/ui/entity-editor/control', (require, exports, module) => {
 		COMBINED: 'combined',
 		REQUISITE: 'requisite',
 		REQUISITE_ADDRESS: 'requisite_address',
+		ADDRESS: 'address',
 	};
 
 	/**
@@ -98,6 +100,10 @@ jn.define('layout/ui/entity-editor/control', (require, exports, module) => {
 			else if (type === Type.REQUISITE_ADDRESS)
 			{
 				return new RequisiteAddressField(props);
+			}
+			else if (type === Type.ADDRESS)
+			{
+				return new EntityEditorAddressField(props);
 			}
 			else if (FieldFactory.has(type))
 			{

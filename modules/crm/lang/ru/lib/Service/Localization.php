@@ -138,7 +138,7 @@ $MESS["CRM_TYPE_ITEM_FIELD_UPDATED_TIME_FEMININE"] = "Когда обновле�
 $MESS["CRM_TYPE_ITEM_FIELD_MOVED_TIME"] = "Когда передвинут";
 $MESS["CRM_TYPE_ITEM_FIELD_MOVED_TIME_FEMININE"] = "Когда передвинута";
 $MESS["CRM_TYPE_ITEM_FIELD_LAST_ACTIVITY_TIME"] = "Время последней активности в таймлайне";
-$MESS["CRM_TYPE_ITEM_FIELD_LAST_ACTIVITY_TIME_2"] = "Активность";
+$MESS["CRM_TYPE_ITEM_FIELD_LAST_ACTIVITY_TIME_2"] = "Последняя активность";
 $MESS["CRM_TYPE_ITEM_FIELD_OPENED"] = "Доступно для всех";
 $MESS["CRM_TYPE_ITEM_FIELD_BEGINDATE"] = "Дата начала";
 $MESS["CRM_TYPE_ITEM_FIELD_CLOSEDATE"] = "Дата завершения";
@@ -180,7 +180,7 @@ $MESS["CRM_TYPE_SMART_INVOICE_FIELD_ACCOUNT_NUMBER"] = "Номер счёта";
 $MESS["CRM_TYPE_SMART_DOCUMENT_FIELD_NUMBER"] = "Номер документа";
 
 $MESS["CRM_TYPE_QUOTE_FIELD_FILES"] = "Файлы";
-$MESS["CRM_TYPE_QUOTE_FIELD_STATUS"] = "Статус предложения";
+$MESS["CRM_TYPE_QUOTE_FIELD_STATUS_MSGVER_1"] = "Стадия предложения";
 $MESS["CRM_TYPE_ITEM_FIELD_NAME_OPPORTUNITY_WITH_CURRENCY"] = "Сумма и валюта";
 $MESS["CRM_TYPE_SMART_INVOICE_FIELD_BEGIN_DATE"] = "Дата выставления";
 $MESS["CRM_TYPE_SMART_INVOICE_FIELD_CLOSE_DATE"] = "Срок оплаты";

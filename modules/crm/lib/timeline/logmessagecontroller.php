@@ -7,6 +7,9 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Timeline\TimelineEntry\Facade;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
+use CCrmActivity;
+use CCrmDateTimeHelper;
+use CCrmOwnerType;
 
 class LogMessageController extends Controller
 {
@@ -123,31 +126,41 @@ class LogMessageController extends Controller
 		}
 	}
 
+	public function prepareHistoryDataModel(array $data, array $options = null): array
+	{
+		return $data;
+	}
+
+	public function prepareSearchContent(array $params): string
+	{
+		return '';
+	}
+
 	private function sendPingMobileNotification(array $params): void
 	{
-		$entityTypeId = (int)($params['ENTITY_TYPE_ID'] ?? \CCrmOwnerType::Undefined);
+		$entityTypeId = (int)($params['ENTITY_TYPE_ID'] ?? CCrmOwnerType::Undefined);
 
 		if (
-			$entityTypeId !== \CCrmOwnerType::Deal
-			&& $entityTypeId !== \CCrmOwnerType::Contact
-			&& $entityTypeId !== \CCrmOwnerType::Company
+			$entityTypeId !== CCrmOwnerType::Deal
+			&& $entityTypeId !== CCrmOwnerType::Contact
+			&& $entityTypeId !== CCrmOwnerType::Company
 		)
 		{
 			return;
 		}
 
-		if ($params['ASSOCIATED_ENTITY_TYPE_ID'] !== \CCrmOwnerType::Activity)
+		if ($params['ASSOCIATED_ENTITY_TYPE_ID'] !== CCrmOwnerType::Activity)
 		{
 			return;
 		}
 
-		$activity = \CCrmActivity::GetByID($params['ASSOCIATED_ENTITY_ID'], false);
+		$activity = CCrmActivity::GetByID($params['ASSOCIATED_ENTITY_ID'], false);
 		if (!$activity)
 		{
 			return;
 		}
 
-		if (!isset($activity['DEADLINE']) || \CCrmDateTimeHelper::IsMaxDatabaseDate($activity['DEADLINE']))
+		if (!isset($activity['DEADLINE']) || CCrmDateTimeHelper::IsMaxDatabaseDate($activity['DEADLINE']))
 		{
 			return;
 		}
@@ -188,10 +201,5 @@ class LogMessageController extends Controller
 		];
 
 		Notifier::sendImmediate(Notifier::PING_CREATED_MESSAGE_TYPE, $userId, $title, $body, $payload);
-	}
-
-	public function prepareHistoryDataModel(array $data, array $options = null): array
-	{
-		return $data;
 	}
 }

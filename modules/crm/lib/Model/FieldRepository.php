@@ -308,7 +308,7 @@ final class FieldRepository
 	): ScalarField
 	{
 		$title = Loc::getMessage($entityTypeId === \CCrmOwnerType::Quote
-			? 'CRM_TYPE_QUOTE_FIELD_STATUS'
+			? 'CRM_TYPE_QUOTE_FIELD_STATUS_MSGVER_1'
 			: 'CRM_TYPE_ITEM_FIELD_STAGE_ID'
 		);
 

@@ -108,7 +108,7 @@ abstract class Base
 		;
 		$this->fileId = $row ? (int) $row['FILE_ID'] : null;
 		$this->hasRow = $row ? true : false;
-		$this->builtDate = $row['FILE_DATE_UPDATE'] ?: null;
+		$this->builtDate = $row['FILE_DATE_UPDATE'] ?? null;
 
 		$this->controller = (new WebPacker\FileController());
 	}

@@ -1432,15 +1432,16 @@ a.crm-timeline__card-title:hover {
 	display: flex;
 }
 
-.crm-timeline__file_title span {
-	display: inline-block;
-	white-space: pre;
-}
-
 .crm-timeline__file_title span:first-child {
 	max-width: 100%;
+	display: inline-block;
+	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+.crm-timeline__file_title span:last-child {
+	display: inline-block;
+	white-space: nowrap;
 }
 
 .crm-timeline__file-list-btn-text {

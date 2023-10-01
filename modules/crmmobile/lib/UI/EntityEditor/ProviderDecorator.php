@@ -59,7 +59,6 @@ final class ProviderDecorator implements ReturnsEditorFields
 	];
 
 	private const IMMUTABLE_COLLECTION_FIELDS = [
-		self::ADDRESS_FIELD => true,
 		self::RESOURCE_BOOKING_FIELD => true,
 		self::LOCATION_FIELD => true,
 	];

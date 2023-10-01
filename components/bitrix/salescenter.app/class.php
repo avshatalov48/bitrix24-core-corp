@@ -179,6 +179,8 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 		$arParams['compilationId'] ??= $this->request->get('compilationId');
 
+		$arParams['showModeList'] = (int)$arParams['ownerTypeId'] === CCrmOwnerType::Deal;
+
 		return parent::onPrepareComponentParams($arParams);
 	}
 
@@ -339,6 +341,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		}
 		$this->arResult['mode'] = $mode;
 		$this->arResult['initialMode'] = $this->arParams['initialMode'] ?? $this->arResult['mode'];
+		$this->arResult['showModeList'] = $this->arParams['showModeList'] ?? true;
 
 		if ($this->arParams['orderId'] > 0)
 		{
@@ -497,7 +500,10 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		}
 
 		$this->arResult['sendingMethod'] = '';
-		if ($this->arResult['context'] === SalesCenter\Component\ContextDictionary::DEAL)
+		if (
+			$this->arResult['context'] === SalesCenter\Component\ContextDictionary::DEAL
+			|| $this->arResult['context'] === SalesCenter\Component\ContextDictionary::SMART_INVOICE
+		)
 		{
 			$this->arResult['sendingMethod'] = 'sms';
 		}
@@ -632,7 +638,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 		$this->arResult['documentSelector'] = $this->getDocumentSelectorParameters();
 
-		$this->arResult['isAllowedFacebookRegion'] = $this->getFacebookFacade()->isExportAvailable();
+		$this->arResult['isAllowedFacebookRegion'] = $this->isFacebookExportAvailable();
 
 		$this->arResult['facebookSettingsPath'] = $this->getFacebookSettingsPath();
 	}
@@ -642,7 +648,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		if ($this->arParams['compilationId'])
 		{
 			$compilation = CatalogManager::getInstance()->getCompilationById($this->arParams['compilationId']);
-			$exportedProducts = $this->getFacebookFacade()->getExportedProducts($compilation['PRODUCT_IDS']);
+			$exportedProducts = $this->getFacebookExportedProduct($compilation['PRODUCT_IDS']);
 			$failProducts = [];
 			foreach ($exportedProducts as $exportedProduct)
 			{
@@ -689,7 +695,10 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			return $this->arResult['compilation']['TITLE'];
 		}
 
-		if ($this->arParams['context'] === SalesCenter\Component\ContextDictionary::DEAL)
+		if (
+			$this->arParams['context'] === SalesCenter\Component\ContextDictionary::DEAL
+			|| $this->arParams['context'] === SalesCenter\Component\ContextDictionary::SMART_INVOICE
+		)
 		{
 			if ($this->arResult['templateMode'] === self::TEMPLATE_VIEW_MODE)
 			{
@@ -741,7 +750,6 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				if ($this->arResult['mode'] === static::PAYMENT_MODE)
 				{
 					$title = Loc::getMessage('SALESCENTER_APP_PAYMENT_TITLE');
-
 				}
 				elseif ($this->arResult['mode'] == static::DELIVERY_MODE)
 				{
@@ -1447,11 +1455,6 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 							'showTitle' => false,
 							'sort' => $this->getPaySystemSort($systemHandler, $psMode),
 						];
-
-						if (count($result['items']) >= self::LIMIT_COUNT_PAY_SYSTEM)
-						{
-							break 2;
-						}
 					}
 				}
 				else
@@ -1472,11 +1475,6 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 						'showTitle' => false,
 						'sort' => $this->getPaySystemSort($systemHandler),
 					];
-
-					if (count($result['items']) >= self::LIMIT_COUNT_PAY_SYSTEM)
-					{
-						break;
-					}
 				}
 			}
 
@@ -1492,6 +1490,8 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			if ($result['items'])
 			{
 				Main\Type\Collection::sortByColumn($result['items'], ['sort' => SORT_ASC]);
+
+				$result['items'] = array_slice($result['items'], 0, self::LIMIT_COUNT_PAY_SYSTEM);
 			}
 
 			$result['isSet'] = false;
@@ -1501,24 +1501,6 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				'type' => 'more',
 				'group' => 'other',
 			];
-
-			if (Bitrix24Manager::getInstance()->isEnabled())
-			{
-				$feedbackPath = $this->getComponentSliderPath('bitrix:salescenter.feedback');
-				$queryParams = [
-					'lang' => LANGUAGE_ID,
-					'feedback_type' => 'paysystem_offer',
-				];
-				$feedbackPath->addParams($queryParams);
-
-				$result['items'][] = [
-					'name' => Loc::getMessage('SALESCENTER_APP_OFFER_TITLE'),
-					'link' => $feedbackPath->getLocator(),
-					'width' => 735,
-					'type' => 'offer',
-					'group' => 'other',
-				];
-			}
 		}
 		return $result;
 	}
@@ -2483,6 +2465,20 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		return false;
 	}
 
+	private function isFacebookExportAvailable(): bool
+	{
+		$facebookFacade = $this->getFacebookFacade();
+
+		return $facebookFacade && $facebookFacade->isExportAvailable();
+	}
+
+	private function getFacebookExportedProduct(array $productIds): array
+	{
+		$facebookFacade = $this->getFacebookFacade();
+
+		return $facebookFacade ? $facebookFacade->getExportedProducts($productIds) : [];
+	}
+
 	// region Actions
 
 	/**
@@ -2667,7 +2663,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	public function getFacebookSettingsPathAction($dialogId): ?string
 	{
 		$this->arParams['dialogId'] = $dialogId;
-		$this->arResult['isAllowedFacebookRegion'] = $this->getFacebookFacade()->isExportAvailable();
+		$this->arResult['isAllowedFacebookRegion'] = $this->isFacebookExportAvailable();
 
 		return $this->getFacebookSettingsPath();
 	}

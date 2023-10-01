@@ -58,18 +58,18 @@ foreach($arResult['CURRENCIES'] as $key => &$arCurrency)
 		);
 	}
 
-	$arResult['GRID_DATA'][] = array(
+	$arResult['GRID_DATA'][] = [
 		'id' => $key,
 		'actions' => $arActions,
 		'data' => $arCurrency,
 		'editable' => $arResult['CAN_EDIT'] ? true : $arColumns,
-		'columns' => array(
+		'columns' => [
 			'NAME' => '<a target="_self" href="'.$arCurrency['PATH_TO_CURRENCY_EDIT'].'">'.htmlspecialcharsbx($arCurrency['NAME']).'</a>',
 			'EXCH_RATE' => $arCurrency['EXCH_RATE'],
 			'AMOUNT_CNT' => $arCurrency['AMOUNT_CNT'],
-			'STATUS' => $arCurrency['STATUS']
-		)
-	);
+			'STATUS' => $arCurrency['STATUS'] ?? null
+		]
+	];
 }
 unset($arCurrency);
 

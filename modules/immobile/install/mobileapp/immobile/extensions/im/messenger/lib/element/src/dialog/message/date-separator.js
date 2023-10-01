@@ -27,6 +27,13 @@ jn.define('im/messenger/lib/element/dialog/message/date-separator', (require, ex
 			this.setTextAlign(MessageTextAlign.center);
 			this.setFontColor('#FFFFFF');
 			this.setBackgroundColor('#525C6966');
+			this.setMarginTop(12);
+			this.setMarginBottom(4);
+		}
+
+		getType()
+		{
+			return 'system-text';
 		}
 
 		setMessage(date)
@@ -38,9 +45,9 @@ jn.define('im/messenger/lib/element/dialog/message/date-separator', (require, ex
 			return this;
 		}
 
-		getType()
+		setShowTail()
 		{
-			return 'system-text';
+			return this;
 		}
 	}
 

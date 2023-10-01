@@ -151,7 +151,7 @@
 		if(!BX.Salescenter.Cashbox.isProgress)
 		{
 			BX.Salescenter.Cashbox.startProgress();
-			
+
 			BX.ajax.runComponentAction('bitrix:salescenter.cashbox', 'save', {
 				mode: 'class',
 				data: BX.Salescenter.Cashbox.form.getData(),
@@ -260,9 +260,12 @@
 
 	BX.Salescenter.Cashbox.getLoader = function()
 	{
-		if(!this.loader)
+		if (!this.loader)
 		{
-			this.loader = new BX.Loader({size: 150});
+			this.loader = new BX.Loader({
+				size: 150,
+			});
+			this.loader.layout.style.zIndex = '5';
 		}
 
 		return this.loader;

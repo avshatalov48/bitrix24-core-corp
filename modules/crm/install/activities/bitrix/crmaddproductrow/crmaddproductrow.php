@@ -70,11 +70,8 @@ class CBPCrmAddProductRow extends CBPActivity
 			$row['DISCOUNT_RATE'] = (float)$discountRate;
 		}
 
-		if ($product['VAT_RATE'])
-		{
-			$row['TAX_RATE'] = $product['VAT_RATE'];
-			$row['TAX_INCLUDED'] = $product['VAT_INCLUDED'];
-		}
+		$row['TAX_RATE'] = $product['VAT_RATE'];
+		$row['TAX_INCLUDED'] = $product['VAT_INCLUDED'];
 
 		$price = $this->RowPriceAccount;
 		if (CBPHelper::isEmptyValue($price))

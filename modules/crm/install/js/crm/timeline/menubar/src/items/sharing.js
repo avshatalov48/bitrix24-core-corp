@@ -9,7 +9,7 @@ import { DialogNew } from 'calendar.sharing.interface';
 /** @memberof BX.Crm.Timeline.MenuBar */
 export default class Sharing extends WithEditor
 {
-	HELPDESK_CODE = -1;
+	HELPDESK_CODE = 17502612;
 
 	/**
 	 * @override

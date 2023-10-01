@@ -1,17 +1,15 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	die();
 
 if (defined("WIZARD_IS_RERUN") && WIZARD_IS_RERUN === true)
 	return;
 
-CGroup::SetSubordinateGroups(WIZARD_EXTRANET_ADMIN_GROUP, Array(WIZARD_EXTRANET_GROUP));
-
 SetMenuTypes(Array("left" => GetMessage("MAIN_OPT_MENU_SECT"), "top" => GetMessage("MAIN_OPT_MENU_MAIN")),WIZARD_SITE_ID);
 
 $sOptions = 'a:1:{s:7:"GADGETS";a:9:{s:8:"ADV@9058";a:4:{s:6:"COLUMN";i:0;s:3:"ROW";i:0;s:8:"USERDATA";N;s:4:"HIDE";s:1:"N";}s:23:"EXTRANET_CONTACTS@11468";a:5:{s:6:"COLUMN";i:0;s:3:"ROW";i:1;s:8:"USERDATA";N;s:4:"HIDE";s:1:"N";s:8:"SETTINGS";a:2:{s:25:"MY_WORKGROUPS_USERS_COUNT";s:1:"5";s:18:"PUBLIC_USERS_COUNT";s:1:"5";}}s:15:"WORKGROUPS@2647";a:4:{s:6:"COLUMN";i:1;s:3:"ROW";i:0;s:8:"USERDATA";N;s:4:"HIDE";s:1:"N";}s:11:"TASKS@27413";a:4:{s:6:"COLUMN";i:1;s:3:"ROW";i:1;s:8:"USERDATA";N;s:4:"HIDE";s:1:"N";}s:13:"UPDATES@32753";a:5:{s:6:"COLUMN";i:1;s:3:"ROW";i:2;s:8:"USERDATA";N;s:4:"HIDE";s:1:"N";s:8:"SETTINGS";a:2:{s:11:"ENTITY_TYPE";s:1:"G";s:8:"EVENT_ID";s:0:"";}}s:14:"MESSAGES@24748";a:4:{s:6:"COLUMN";i:2;s:3:"ROW";i:0;s:8:"USERDATA";N;s:4:"HIDE";s:1:"N";}s:13:"PROFILE@20859";a:4:{s:6:"COLUMN";i:2;s:3:"ROW";i:1;s:8:"USERDATA";N;s:4:"HIDE";s:1:"N";}s:13:"TICKETS@11871";a:4:{s:6:"COLUMN";i:2;s:3:"ROW";i:2;s:8:"USERDATA";N;s:4:"HIDE";s:1:"N";}s:15:"RSSREADER@16757";a:4:{s:6:"COLUMN";i:2;s:3:"ROW";i:3;s:8:"USERDATA";N;s:4:"HIDE";s:1:"N";}}}';
 
-$arOptions = unserialize($sOptions);
+$arOptions = unserialize($sOptions, ['allowed_classes' => false]);
 CExtranetWizardServices::SetUserOption('intranet', '~gadgets_dashboard_external', $arOptions, $common = true);
 
 COption::SetOptionString("tasks", "paths_task_user", WIZARD_SITE_DIR."contacts/personal/user/#user_id#/tasks/", false, WIZARD_SITE_ID);
@@ -49,4 +47,3 @@ foreach($arSites as $arSite)
 		"path_to_rm" => ""
 	)));
 }
-?>

@@ -5,6 +5,7 @@ import {MessagesModelActions, MessagesModelMutation} from "../../model/types/mes
 import {RecentModelActions, RecentModelMutation} from "../../model/types/recent";
 import {UsersModelActions, UsersModelMutation} from "../../model/types/users";
 import {DraftModelActions, DraftModelMutation} from "../../model/types/draft";
+import {SidebarModelActions} from "../../model/types/sidebar";
 
 
 type MessengerStoreActions =
@@ -15,6 +16,7 @@ type MessengerStoreActions =
 	| RecentModelActions
 	| UsersModelActions
 	| DraftModelActions
+	| SidebarModelActions
 
 type MessengerStoreMutation =
 	ApplicationModelMutation
@@ -24,6 +26,7 @@ type MessengerStoreMutation =
 	| RecentModelMutation
 	| UsersModelMutation
 	| DraftModelMutation
+	| SidebarModelActions
 
 type MessengerCoreStore = {
 	dispatch(actionName: MessengerStoreActions, params?: any) : Promise<any>,

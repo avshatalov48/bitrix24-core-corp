@@ -55,7 +55,6 @@ export default class Sms extends WithEditor
 						<span data-role="client-container"> ${Loc.getMessage('CRM_TIMELINE_SMS_TO')}
 						<a data-role="client-selector" href="#">client_caption</a> <a data-role="to-selector" href="#">to_number</a></span>
 					</div>
-					<!--<span class="crm-entity-stream-content-sms-conditions-helper-icon"></span>-->
 				</div>
 			</div>
 			${this._input}

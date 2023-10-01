@@ -486,7 +486,7 @@ this.BX = this.BX || {};
 	      var menuItems = [{
 	        text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_PAYMENT'),
 	        onclick: function onclick() {
-	          return _this6._context().startSalescenterApplication(latestOrderId);
+	          return _this6._createPaymentSlider(latestOrderId);
 	        }
 	      }];
 	      if (this._isDeliveryAvailable) {
@@ -494,6 +494,12 @@ this.BX = this.BX || {};
 	          text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_DELIVERY'),
 	          onclick: function onclick() {
 	            return _this6._createDeliverySlider(latestOrderId);
+	          }
+	        });
+	        menuItems.push({
+	          text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_PAYMENT_DELIVERY'),
+	          onclick: function onclick() {
+	            return _this6._createPaymentDeliverySlider(latestOrderId);
 	          }
 	        });
 	      }
@@ -597,30 +603,70 @@ this.BX = this.BX || {};
 	      return this._options.OWNER_TYPE_ID || BX.CrmEntityType.enumeration.deal;
 	    }
 	  }, {
-	    key: "_createDeliverySlider",
-	    value: function _createDeliverySlider(orderId) {
-	      var analyticsLabel = 'crmDealPaymentDocumentsCreateDeliverySlider';
-	      if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId())) {
-	        analyticsLabel = 'crmDynamicTypePaymentDocumentsCreateDeliverySlider';
-	      }
-	      var options = {
+	    key: "_defaultCreatePaymentDocumentOptions",
+	    value: function _defaultCreatePaymentDocumentOptions() {
+	      return {
 	        context: this._callContext,
 	        templateMode: 'create',
-	        mode: 'delivery',
-	        analyticsLabel: analyticsLabel,
 	        ownerTypeId: this._ownerTypeId(),
-	        ownerId: this._options.OWNER_ID,
-	        orderId: orderId
+	        ownerId: this._options.OWNER_ID
 	      };
+	    }
+	    /**
+	     *
+	     * @param labelMode converting to PascalCase before inserting into label template
+	     * @returns {string} final analytics label
+	     * @private
+	     *
+	     * Label template: crm#TYPE#PaymentDocuments#MODE#Slider
+	     * Type: Deal or DynamicType
+	     * Mode: create_payment, create_delivery, view_realization etc.
+	     *
+	     * Mode converts to PascalCase and inserts into label template
+	     *
+	     * Example: crmDealPaymentDocumentsCreateDeliverySlider
+	     */
+	  }, {
+	    key: "_generateAnalyticsLabel",
+	    value: function _generateAnalyticsLabel(labelMode) {
+	      var labelTemplate = 'crm#TYPE#PaymentDocuments#MODE#Slider';
+	      var labelEntityType = 'Deal';
+	      if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId())) {
+	        labelEntityType = 'DynamicType';
+	      }
+	      var mode = main_core.Text.toPascalCase(labelMode);
+	      return labelTemplate.replace('#TYPE#', labelEntityType).replace('#MODE#', mode);
+	    }
+	  }, {
+	    key: "_createPaymentSlider",
+	    value: function _createPaymentSlider(orderId) {
+	      var options = this._defaultCreatePaymentDocumentOptions();
+	      options.mode = 'payment';
+	      options.analyticsLabel = this._generateAnalyticsLabel('create_payment');
+	      options.orderId = orderId;
+	      this._context().startSalescenterApplication(orderId, options);
+	    }
+	  }, {
+	    key: "_createDeliverySlider",
+	    value: function _createDeliverySlider(orderId) {
+	      var options = this._defaultCreatePaymentDocumentOptions();
+	      options.mode = 'delivery';
+	      options.analyticsLabel = this._generateAnalyticsLabel('create_delivery');
+	      options.orderId = orderId;
+	      this._context().startSalescenterApplication(orderId, options);
+	    }
+	  }, {
+	    key: "_createPaymentDeliverySlider",
+	    value: function _createPaymentDeliverySlider(orderId) {
+	      var options = this._defaultCreatePaymentDocumentOptions();
+	      options.mode = 'payment_delivery';
+	      options.analyticsLabel = this._generateAnalyticsLabel('create_payment_delivery');
+	      options.orderId = orderId;
 	      this._context().startSalescenterApplication(orderId, options);
 	    }
 	  }, {
 	    key: "_createRealizationSlider",
 	    value: function _createRealizationSlider(createSliderOptions) {
-	      var analyticsLabel = 'crmDealPaymentDocumentsCreateRealizationSlider';
-	      if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId())) {
-	        analyticsLabel = 'crmDynamicTypePaymentDocumentsCreateRealizationSlider';
-	      }
 	      var options = {
 	        context: {
 	          OWNER_TYPE_ID: this._ownerTypeId(),
@@ -628,7 +674,7 @@ this.BX = this.BX || {};
 	          ORDER_ID: createSliderOptions.orderId || 0,
 	          PAYMENT_ID: createSliderOptions.paymentId || 0
 	        },
-	        analyticsLabel: analyticsLabel,
+	        analyticsLabel: this._generateAnalyticsLabel('create_realization'),
 	        documentType: 'W',
 	        sliderOptions: {
 	          customLeftBoundary: 0,
@@ -644,19 +690,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_chooseDeliverySlider",
 	    value: function _chooseDeliverySlider(orderId) {
-	      var analyticsLabel = 'crmDealPaymentDocumentsChooseDeliverySlider';
-	      if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId())) {
-	        analyticsLabel = 'crmDynamicTypePaymentDocumentsChooseDeliverySlider';
-	      }
-	      var options = {
-	        context: this._callContext,
-	        templateMode: 'create',
-	        mode: 'delivery',
-	        analyticsLabel: analyticsLabel,
-	        ownerTypeId: this._ownerTypeId(),
-	        ownerId: this._options.OWNER_ID,
-	        orderId: orderId
-	      };
+	      var options = this._defaultCreatePaymentDocumentOptions();
+	      options.mode = 'delivery';
+	      options.analyticsLabel = this._generateAnalyticsLabel('choose_delivery');
+	      options.orderId = orderId;
 	      this._context().startSalescenterApplication(orderId, options);
 	    }
 	  }, {
@@ -674,15 +711,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_resendPaymentSlider",
 	    value: function _resendPaymentSlider(orderId, paymentId) {
-	      var analyticsLabel = 'crmDealPaymentDocumentsResendPaymentSlider';
-	      if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId())) {
-	        analyticsLabel = 'crmDynamicTypePaymentDocumentsResendPaymentSlider';
-	      }
 	      var options = {
 	        disableSendButton: '',
 	        context: 'deal',
 	        mode: this._ownerTypeId() === BX.CrmEntityType.enumeration.deal ? 'payment_delivery' : 'payment',
-	        analyticsLabel: analyticsLabel,
+	        analyticsLabel: this._generateAnalyticsLabel('resend_payment'),
 	        templateMode: 'view',
 	        ownerTypeId: this._ownerTypeId(),
 	        ownerId: this._options.OWNER_ID,
@@ -694,15 +727,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_viewDeliverySlider",
 	    value: function _viewDeliverySlider(orderId, shipmentId) {
-	      var analyticsLabel = 'crmDealPaymentDocumentsViewDeliverySlider';
-	      if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId())) {
-	        analyticsLabel = 'crmDynamicTypePaymentDocumentsViewDeliverySlider';
-	      }
 	      var options = {
 	        context: this._callContext,
 	        templateMode: 'view',
 	        mode: 'delivery',
-	        analyticsLabel: analyticsLabel,
+	        analyticsLabel: this._generateAnalyticsLabel('view_delivery'),
 	        ownerTypeId: this._ownerTypeId(),
 	        ownerId: this._options.OWNER_ID,
 	        orderId: orderId,
@@ -713,14 +742,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_viewRealizationSlider",
 	    value: function _viewRealizationSlider(documentId) {
-	      var analyticsLabel = 'crmDealPaymentDocumentsViewRealizationSlider';
-	      if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId())) {
-	        analyticsLabel = 'crmDynamicTypePaymentDocumentsViewRealizationSlider';
-	      }
 	      var options = {
 	        ownerTypeId: this._ownerTypeId(),
 	        ownerId: this._options.OWNER_ID,
-	        analyticsLabel: analyticsLabel,
+	        analyticsLabel: this._generateAnalyticsLabel('view_realization'),
 	        documentId: documentId,
 	        sliderOptions: {
 	          customLeftBoundary: 0,

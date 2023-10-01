@@ -260,13 +260,6 @@
 	background-color: #E9832C;
 }
 
-.salescenter-yandexcheckout-webmoney-icon { width: 97px; }
-.salescenter-yandexcheckout-webmoney-icon i {
-	background-image: url(images/yandexcheckout_webmoney.svg);
-	background-size: 90% auto;
-	background-color: #006FA8;
-}
-
 .salescenter-yandexcheckout-embedded-icon { width: 97px; }
 .salescenter-yandexcheckout-embedded-icon i {
 	background-image: url(images/yandexcheckout_embedded.svg);

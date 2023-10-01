@@ -6,6 +6,8 @@ use Bitrix\Crm;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Service\EventHistory;
 use Bitrix\Crm\Settings\HistorySettings;
+use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\ORM\Query\Join;
 
 class CCrmEvent
 {
@@ -245,41 +247,42 @@ class CCrmEvent
 
 		return true;
 	}
+
 	public static function GetFields()
 	{
-		$relationJoin = 'INNER JOIN b_crm_event_relations CER ON CE.ID = CER.EVENT_ID';
+		$relationJoin = 'INNER JOIN b_crm_event CE ON CE.ID = CER.EVENT_ID';
 		$createdByJoin = 'LEFT JOIN b_user U ON CE.CREATED_BY_ID = U.ID';
 
-		$result = array(
-			'ID' => array('FIELD' => 'CER.ID', 'TYPE' => 'int', 'FROM' => $relationJoin),
+		return [
+			'ID' => ['FIELD' => 'CER.ID', 'TYPE' => 'int'],
 
-			'ENTITY_TYPE' => array('FIELD' => 'CER.ENTITY_TYPE', 'TYPE' => 'string', 'FROM' => $relationJoin),
-			'ENTITY_ID' => array('FIELD' => 'CER.ENTITY_ID', 'TYPE' => 'int', 'FROM' => $relationJoin),
-			'ENTITY_FIELD' => array('FIELD' => 'CER.ENTITY_FIELD', 'TYPE' => 'string', 'FROM' => $relationJoin),
+			'ENTITY_TYPE' => ['FIELD' => 'CER.ENTITY_TYPE', 'TYPE' => 'string'],
+			'ENTITY_ID' => ['FIELD' => 'CER.ENTITY_ID', 'TYPE' => 'int'],
+			'ENTITY_FIELD' => ['FIELD' => 'CER.ENTITY_FIELD', 'TYPE' => 'string'],
 
-			'EVENT_REL_ID' => array('FIELD' => 'CER.EVENT_ID', 'TYPE' => 'string', 'FROM' => $relationJoin),
-			'EVENT_ID' => array('FIELD' => 'CE.EVENT_ID', 'TYPE' => 'string'),
-			'EVENT_TYPE' => array('FIELD' => 'CE.EVENT_TYPE', 'TYPE' => 'string'),
-			'EVENT_NAME' => array('FIELD' => 'CE.EVENT_NAME', 'TYPE' => 'string'),
-			'EVENT_TEXT_1' => array('FIELD' => 'CE.EVENT_TEXT_1', 'TYPE' => 'string'),
-			'EVENT_TEXT_2' => array('FIELD' => 'CE.EVENT_TEXT_2', 'TYPE' => 'string'),
-			'FILES' => array('FIELD' => 'CE.FILES', 'TYPE' => 'string'),
+			'EVENT_REL_ID' => ['FIELD' => 'CER.EVENT_ID', 'TYPE' => 'string'],
+			'EVENT_ID' => ['FIELD' => 'CE.EVENT_ID', 'TYPE' => 'string', 'FROM' => $relationJoin],
+			'EVENT_TYPE' => ['FIELD' => 'CE.EVENT_TYPE', 'TYPE' => 'string', 'FROM' => $relationJoin],
+			'EVENT_NAME' => ['FIELD' => 'CE.EVENT_NAME', 'TYPE' => 'string', 'FROM' => $relationJoin],
+			'EVENT_TEXT_1' => ['FIELD' => 'CE.EVENT_TEXT_1', 'TYPE' => 'string', 'FROM' => $relationJoin],
+			'EVENT_TEXT_2' => ['FIELD' => 'CE.EVENT_TEXT_2', 'TYPE' => 'string', 'FROM' => $relationJoin],
+			'FILES' => ['FIELD' => 'CE.FILES', 'TYPE' => 'string', 'FROM' => $relationJoin],
 
-			'CREATED_BY_ID' => array('FIELD' => 'CE.CREATED_BY_ID', 'TYPE' => 'int'),
-			'CREATED_BY_LOGIN' => array('FIELD' => 'U.LOGIN', 'TYPE' => 'string', 'FROM'=> $createdByJoin),
-			'CREATED_BY_NAME' => array('FIELD' => 'U.NAME', 'TYPE' => 'string', 'FROM'=> $createdByJoin),
-			'CREATED_BY_LAST_NAME' => array('FIELD' => 'U.LAST_NAME', 'TYPE' => 'string', 'FROM'=> $createdByJoin),
-			'CREATED_BY_SECOND_NAME' => array('FIELD' => 'U.SECOND_NAME', 'TYPE' => 'string', 'FROM'=> $createdByJoin),
-			'CREATED_BY_PERSONAL_PHOTO' => array('FIELD' => 'U.PERSONAL_PHOTO', 'TYPE' => 'int', 'FROM'=> $createdByJoin),
+			'CREATED_BY_ID' => ['FIELD' => 'CE.CREATED_BY_ID', 'TYPE' => 'int', 'FROM' => $relationJoin],
+			'CREATED_BY_LOGIN' => ['FIELD' => 'U.LOGIN', 'TYPE' => 'string', 'FROM' => $createdByJoin],
+			'CREATED_BY_NAME' => ['FIELD' => 'U.NAME', 'TYPE' => 'string', 'FROM' => $createdByJoin],
+			'CREATED_BY_LAST_NAME' => ['FIELD' => 'U.LAST_NAME', 'TYPE' => 'string', 'FROM' => $createdByJoin],
+			'CREATED_BY_SECOND_NAME' => ['FIELD' => 'U.SECOND_NAME', 'TYPE' => 'string', 'FROM' => $createdByJoin],
+			'CREATED_BY_PERSONAL_PHOTO' => ['FIELD' => 'U.PERSONAL_PHOTO', 'TYPE' => 'int', 'FROM' => $createdByJoin],
 
-			'DATE_CREATE' => array('FIELD' => 'CE.DATE_CREATE', 'TYPE' => 'datetime'),
-			'ASSIGNED_BY_ID' => array('FIELD' => 'CER.ASSIGNED_BY_ID', 'TYPE' => 'int', 'FROM' => $relationJoin)
-		);
-		return $result;
+			'DATE_CREATE' => ['FIELD' => 'CE.DATE_CREATE', 'TYPE' => 'datetime', 'FROM' => $relationJoin],
+			'ASSIGNED_BY_ID' => ['FIELD' => 'CER.ASSIGNED_BY_ID', 'TYPE' => 'int'],
+		];
 	}
+
 	static public function BuildPermSql($aliasPrefix = 'CE', $permType = 'READ')
 	{
-		if(empty($arFilter['ENTITY_TYPE']))
+		if (empty($arFilter['ENTITY_TYPE']))
 		{
 			$arEntity = array(
 				CCrmOwnerType::LeadName,
@@ -368,8 +371,8 @@ class CCrmEvent
 
 		$lb = new CCrmEntityListBuilder(
 			'mysql',
-			'b_crm_event',
-			'CE',
+			'b_crm_event_relations',
+			'CER',
 			self::GetFields(),
 			'',
 			'',
@@ -803,27 +806,28 @@ class CCrmEvent
 		$interval = HistorySettings::getCurrent()->getViewEventGroupingInterval() * 60;
 
 		$query = new Bitrix\Main\Entity\Query(Bitrix\Crm\EventTable::getEntity());
-		$query->addSelect('DATE_CREATE');
-		$query->addSelect('CREATED_BY_ID');
+		$query->setSelect(['ID']);
 		$query->addFilter('=EVENT_TYPE', CCrmEvent::TYPE_VIEW);
 		$query->addFilter('>=DATE_CREATE', ConvertTimeStamp(($timestamp - $interval), 'FULL'));
+		$query->addFilter('=CREATED_BY_ID', $userID);
+		$query->registerRuntimeField(
+			'',
+			new ReferenceField('RELATIONS',
+				Bitrix\Crm\EventRelationsTable::getEntity(),
+				[
+					'ref.EVENT_ID' => 'this.ID',
+					'ref.ENTITY_TYPE' => new \Bitrix\Main\DB\SqlExpression('?s', $entityTypeName),
+					'ref.ENTITY_ID' => new \Bitrix\Main\DB\SqlExpression('?i', $entityID),
+				],
+				['join_type' => Join::TYPE_INNER]
+			)
+		);
+		$query->setLimit(1);
 
-		$subQuery = new Bitrix\Main\Entity\Query(Bitrix\Crm\EventRelationsTable::getEntity());
-		$subQuery->addSelect('EVENT_ID');
-		$subQuery->addFilter('=ENTITY_TYPE', $entityTypeName);
-		$subQuery->addFilter('=ENTITY_ID', $entityID);
-		$query->addFilter('@ID', new Bitrix\Main\DB\SqlExpression($subQuery->getQuery()));
-
-		$query->addOrder('DATE_CREATE', 'DESC');
-		$query->setLimit(50);
-
-		$dbResult = $query->exec();
-		while ($event = $dbResult->fetch())
+		$dbResult = $query->exec()->fetch();
+		if ($dbResult)
 		{
-			if ($event['CREATED_BY_ID'] == $userID)
-				{
-					return false;
-				}
+			return false;
 		}
 
 		$entity = new CCrmEvent();

@@ -3,7 +3,6 @@
 namespace Bitrix\Crm\Integration\Tasks;
 
 use Bitrix\Main\Loader;
-use Bitrix\Tasks\Internals\Fields\Priority;
 
 class Task2ActivityPriority
 {
@@ -16,13 +15,12 @@ class Task2ActivityPriority
 
 		switch ($taskPriority)
 		{
-			case Priority::HIGH:
+			case \CTasks::PRIORITY_HIGH:
 				return \CCrmActivityPriority::High;
 
-			case Priority::LOW:
+			case \CTasks::PRIORITY_AVERAGE:
 			default:
 				return \CCrmActivityPriority::Low;
-
 		}
 	}
 }

@@ -376,7 +376,7 @@ class SmartInvoice extends Dynamic
 		}
 		else
 		{
-			$hasTable = (bool)$DB->Query('SELECT ID FROM b_crm_dynamic_items_31 LIMIT 1', true);
+			$hasTable = (bool)$DB->TableExists('b_crm_dynamic_items_31');
 			$cache->set($cacheKey, $hasTable);
 		}
 

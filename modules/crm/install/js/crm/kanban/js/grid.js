@@ -1627,10 +1627,14 @@ BX.CRM.Kanban.Grid.prototype = {
 
 	showNotCompletedPopup: function(gridData)
 	{
-		var message = BX.message("CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_" + gridData.entityType);
+		var message;
 		if(gridData.isDynamicEntity)
 		{
-			message = BX.message("CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_DYNAMIC")
+			message = BX.message("CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_DYNAMIC_MSGVER_1")
+		}
+		else
+		{
+			message = BX.message("CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_" + gridData.entityType + '_MSGVER_1');
 		}
 
 		this.getPopupCancel(message).show();
@@ -2852,9 +2856,7 @@ BX.CRM.Kanban.Grid.prototype = {
 		}
 		this.actionPanel.appendItem({
 			id: "kanban_column",
-			text: (gridData.entityType === "DEAL" || gridData.isDynamicEntity)
-				? BX.message("CRM_KANBAN_PANEL_STAGE")
-				: BX.message("CRM_KANBAN_PANEL_STATUS"),
+			text: BX.message("CRM_KANBAN_PANEL_STAGE"),
 			items: items,
 			icon: (gridData.entityType === "DEAL" || gridData.isDynamicEntity)
 				? "/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-stage.svg"
@@ -3315,9 +3317,7 @@ BX.CRM.Kanban.Grid.prototype = {
 		}
 		else
 		{
-			settings.title = BX.message(
-				"CRM_KANBAN_REQUIRED_FIELDS_TITLE_" + gridData.entityType
-			)
+			settings.title = BX.message('CRM_TYPE_ITEM_PARTIAL_EDITOR_TITLE');
 		}
 
 		this.progressBarEditor = BX.Crm.PartialEditorDialog.create(

@@ -11,8 +11,10 @@ use Bitrix\SalesCenter\Integration\PullManager;
 use Bitrix\SalesCenter\Integration\SaleManager;
 use Bitrix\SalesCenter\Integration\RestManager;
 use Bitrix\SalesCenter\Integration\Bitrix24Manager;
+use Bitrix\SalesCenter\Integration\CatalogManager;
 use Bitrix\Rest;
 use Bitrix\SalesCenter;
+use Bitrix\Catalog;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
@@ -149,6 +151,11 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 			if (Driver::getInstance()->isCashboxEnabled())
 			{
 				$items[] = $this->getCashboxesTile();
+			}
+
+			if (CatalogManager::getInstance()->isEnabled() && Driver::getInstance()->isCashboxEnabled())
+			{
+				$items[] = $this->getCatalogAgentContractTile();
 			}
 		}
 
@@ -1147,6 +1154,41 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 				'activeImage' => $this->getImagePath() . 'terminal-active.svg',
 				'label' => self::LABEL_NEW,
 			],
+		];
+	}
+
+	private function getCatalogAgentContractTile(): array
+	{
+		$catalogAgentContractPath = '/agent_contract/';
+
+		return [
+			'id' => 'catalog-agent-contract',
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_AGENT_CONTRACT_TILE'),
+			'image' => $this->getImagePath() . 'catalog-agent-contract.svg',
+			'data' => [
+				'url' => $catalogAgentContractPath,
+				'active' => $this->isAgentContractExist(),
+				'activeColor' => '#2C7AB2',
+				'activeImage' => $this->getImagePath() . 'catalog-agent-contract-active.svg',
+				'reloadAction' => 'isAgentContractExistTile',
+			],
+		];
+	}
+
+	private function isAgentContractExist(): bool
+	{
+		return CatalogManager::getInstance()->isEnabled() && Catalog\AgentContractTable::getCount();
+	}
+
+	public function isAgentContractExistTileAction(): array
+	{
+		if (!Loader::includeModule("salescenter"))
+		{
+			return [];
+		}
+
+		return [
+			'active' => $this->isAgentContractExist(),
 		];
 	}
 

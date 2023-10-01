@@ -116,6 +116,8 @@ class ActivityChange
 		$this->newDeadline = $activityChange->getNewDeadline();
 		$this->newIsCompleted = $activityChange->getNewIsCompleted();
 		$this->newBindings = $activityChange->getNewBindings();
+		$this->newLightTime = $activityChange->getNewLightTime();
+		$this->newResponsibleId = $activityChange->getNewResponsibleId();
 	}
 
 	public function getId(): int

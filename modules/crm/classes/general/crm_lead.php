@@ -171,6 +171,10 @@ class CAllCrmLead
 		}
 
 		$result = GetMessage("CRM_LEAD_FIELD_{$fieldName}");
+		if (!(is_string($result) && $result !== ''))
+		{
+			$result = GetMessage("CRM_LEAD_FIELD_{$fieldName}_MSGVER_1");
+		}
 
 		if (!(is_string($result) && $result !== '')
 			&& Crm\Tracking\UI\Details::isTrackingField($fieldName))
@@ -3001,12 +3005,12 @@ class CAllCrmLead
 									//"NOTIFY_EVENT" => "lead_update",
 									"NOTIFY_EVENT" => "changeStage",
 									"NOTIFY_TAG" => "CRM|LEAD_PROGRESS|".$ID,
-									"NOTIFY_MESSAGE" => GetMessage("CRM_LEAD_PROGRESS_IM_NOTIFY", Array(
+									"NOTIFY_MESSAGE" => GetMessage("CRM_LEAD_PROGRESS_IM_NOTIFY_MSGVER_1", Array(
 										"#title#" => "<a href=\"".$url."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($title)."</a>",
 										"#start_status_title#" => htmlspecialcharsbx($infos[$sonetEventFields['PARAMS']['START_STATUS_ID']]['NAME']),
 										"#final_status_title#" => htmlspecialcharsbx($infos[$sonetEventFields['PARAMS']['FINAL_STATUS_ID']]['NAME'])
 									)),
-									"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_LEAD_PROGRESS_IM_NOTIFY", Array(
+									"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_LEAD_PROGRESS_IM_NOTIFY_MSGVER_1", Array(
 											"#title#" => htmlspecialcharsbx($title),
 											"#start_status_title#" => htmlspecialcharsbx($infos[$sonetEventFields['PARAMS']['START_STATUS_ID']]['NAME']),
 											"#final_status_title#" => htmlspecialcharsbx($infos[$sonetEventFields['PARAMS']['FINAL_STATUS_ID']]['NAME'])
@@ -3685,7 +3689,7 @@ class CAllCrmLead
 			$arStatus = CCrmStatus::GetStatusList('STATUS');
 			$arMsg[] = Array(
 				'ENTITY_FIELD' => 'STATUS_ID',
-				'EVENT_NAME' => GetMessage('CRM_FIELD_COMPARE_STATUS_ID'),
+				'EVENT_NAME' => GetMessage('CRM_FIELD_COMPARE_STATUS_ID_MSGVER_1'),
 				'EVENT_TEXT_1' => htmlspecialcharsbx(CrmCompareFieldsList($arStatus, $arFieldsOrig['STATUS_ID'])),
 				'EVENT_TEXT_2' => htmlspecialcharsbx(CrmCompareFieldsList($arStatus, $arFieldsModif['STATUS_ID']))
 			);
@@ -3703,7 +3707,7 @@ class CAllCrmLead
 			&& $arFieldsOrig['STATUS_DESCRIPTION'] != $arFieldsModif['STATUS_DESCRIPTION'])
 			$arMsg[] = Array(
 				'ENTITY_FIELD' => 'STATUS_DESCRIPTION',
-				'EVENT_NAME' => GetMessage('CRM_FIELD_COMPARE_STATUS_DESCRIPTION'),
+				'EVENT_NAME' => GetMessage('CRM_FIELD_COMPARE_STATUS_DESCRIPTION_MSGVER_1'),
 				'EVENT_TEXT_1' => !empty($arFieldsOrig['STATUS_DESCRIPTION'])? $arFieldsOrig['STATUS_DESCRIPTION']: GetMessage('CRM_FIELD_COMPARE_EMPTY'),
 				'EVENT_TEXT_2' => !empty($arFieldsModif['STATUS_DESCRIPTION'])? $arFieldsModif['STATUS_DESCRIPTION']: GetMessage('CRM_FIELD_COMPARE_EMPTY'),
 			);

@@ -36,9 +36,10 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 			;
 
 			const recentParams = clone(params);
+			const userData = recentParams.users[recipientId];
 			const recentItem = RecentConverter.fromPushToModel({
 				id: recipientId,
-				user: recentParams.users[recipientId],
+				user: userData,
 				message: recentParams.message,
 				counter: recentParams.counter,
 				writing: false,
@@ -77,6 +78,7 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 			this.setFiles(params).then(() => {
 				this.setMessage(params);
+				this.checkWritingTimer(params.dialogId, userData);
 			});
 		}
 
@@ -104,11 +106,13 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				recentParams.message.params,
 			);
 			recentParams.message.status = recentParams.message.senderId === userId ? 'received' : '';
-
+			const userData = recentParams.message.senderId > 0
+				? recentParams.users[recentParams.message.senderId]
+				: { id: 0 };
 			const recentItem = RecentConverter.fromPushToModel({
 				id: dialogId,
 				chat: recentParams.chat[recentParams.chatId],
-				user: recentParams.message.senderId > 0 ? recentParams.users[recentParams.message.senderId] : { id: 0 },
+				user: userData,
 				lines: recentParams.lines,
 				message: recentParams.message,
 				counter: recentParams.counter,
@@ -152,6 +156,7 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 			this.setFiles(params).then(() => {
 				this.setMessage(params);
+				this.checkWritingTimer(dialogId, userData);
 			});
 		}
 
@@ -179,16 +184,23 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 			this.fullDeleteMessage(params);
 		}
 
-		handleStartWriting(params, extra, command)
+		async handleStartWriting(params, extra, command)
 		{
-			const dialogId = params.dialogId;
-
-			const isSuccess = this.setRecentItemWriting(dialogId, true);
-			if (isSuccess)
+			const isHasRecent = this.setRecentItemWriting(params, true);
+			const isHasDialog = await this.setDialogItemWriting(params, true);
+			if (isHasRecent || isHasDialog)
 			{
-				ChatTimer.start('writing', dialogId, 29500, () => {
-					this.setRecentItemWriting(dialogId, false);
-				});
+				ChatTimer.start('writing', `${params.dialogId} ${params.userName}`, 25000, () => {
+					if (isHasRecent)
+					{
+						this.setRecentItemWriting(params, false);
+					}
+
+					if (isHasDialog)
+					{
+						this.setDialogItemWriting(params, false);
+					}
+				}, params);
 			}
 		}
 
@@ -439,8 +451,9 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 			;
 		}
 
-		setRecentItemWriting(dialogId, isWriting)
+		setRecentItemWriting(params, isWriting)
 		{
+			const { dialogId } = params;
 			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
 			if (!recentItem)
 			{
@@ -454,6 +467,35 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 			this.store.dispatch('recentModel/set', [recentItem]);
 
 			return true;
+		}
+
+		/**
+		 * @desc set writing list data to dialog model
+		 * @param {object} params
+		 * @param {string} params.dialogId
+		 * @param {number} params.userId
+		 * @param {string} params.userName
+		 * @param {boolean} isWriting
+		 * @return (Promise|boolean}
+		 */
+		setDialogItemWriting(params, isWriting)
+		{
+			const { dialogId, userId } = params;
+			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+			const user = this.store.getters['usersModel/getUserById'](userId);
+			if (!dialog || !user)
+			{
+				return false;
+			}
+
+			Logger.info('MessagePullHandler.handleStartWriting.setDialogItemWriting ', params);
+
+			return this.store.dispatch('dialoguesModel/updateWritingList', {
+				dialogId,
+				fields: {
+					writingList: [{ ...params, isWriting }],
+				},
+			}).then(() => true);
 		}
 
 		saveShareDialogCache()
@@ -537,6 +579,46 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 				this.store.dispatch('messagesModel/add', message);
 			}
+		}
+
+		/**
+		 * @desc Check is has writing timer by user and stop it
+		 * @param {string} dialogId
+		 * @param {object} userData
+		 * @void
+		 */
+		checkWritingTimer(dialogId, userData) {
+			let userModel = userData;
+
+			if (!userModel.name)
+			{
+				userModel = this.store.getters['usersModel/getUserById'](userData.id);
+			}
+			const timerId = `${dialogId} ${userModel.name}`;
+			if (this.isHasTimerWriting(timerId))
+			{
+				this.stopTimerWriting(timerId);
+			}
+		}
+
+		/**
+		 * @desc Returns check is has timer with 'writing' type by id
+		 * @param {string|number} timerId
+		 * @return (boolean}
+		 */
+		isHasTimerWriting(timerId)
+		{
+			return ChatTimer.isHasTimer('writing', timerId);
+		}
+
+		/**
+		 * @desc Stop timer with 'writing' type by id
+		 * @param {string|number} timerId
+		 * @return (boolean}
+		 */
+		stopTimerWriting(timerId)
+		{
+			return ChatTimer.stop('writing', timerId);
 		}
 	}
 

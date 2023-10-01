@@ -306,6 +306,7 @@ export const Toolbar = {
 			}
 
 			this.search.loader = true;
+			this.search.currentPage = 1;
 			this.loadItems();
 		},
 		loadItems: function (append) {
@@ -358,7 +359,7 @@ export const Toolbar = {
 			return '';
 		},
 		openSubscriptionSlider: function () {
-			BX.UI.InfoHelper.show(this.$root.marketSlider);
+			top.BX.UI.InfoHelper.show(this.$root.marketSlider);
 		},
 		...mapActions(ratingStore, ['isActiveStar', 'getAppRating',]),
 	},

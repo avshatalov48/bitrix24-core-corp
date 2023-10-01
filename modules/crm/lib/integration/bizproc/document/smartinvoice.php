@@ -18,12 +18,12 @@ class SmartInvoice extends Item
 
 	protected static function GetDocumentInfo($documentId)
 	{
-		[,,$entityId] = explode('_', $documentId);
+		$documentIdParts = explode('_', $documentId);
 
 		return [
 			'TYPE' => \CCrmOwnerType::SmartInvoiceName,
 			'TYPE_ID' => \CCrmOwnerType::SmartInvoice,
-			'ID' => (int)$entityId,
+			'ID' => (int)($documentIdParts[2] ?? 0),
 			'DOCUMENT_TYPE' => ['crm', static::class, \CCrmOwnerType::SmartInvoiceName],
 		];
 	}

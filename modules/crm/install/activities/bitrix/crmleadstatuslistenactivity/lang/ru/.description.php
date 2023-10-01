@@ -1,5 +1,5 @@
 <?
-$MESS ['BPCLSLA_DESCR_NAME'] = "Ожидание статуса лида";
-$MESS ['BPCLSLA_DESCR_SS'] = "Тип статуса";
-$MESS ['BPCLSLA_DESCR_SI'] = "ID статуса";
+$MESS ['BPCLSLA_DESCR_NAME_MSGVER_1'] = "Ожидание стадии лида";
+$MESS ['BPCLSLA_DESCR_SS_MSGVER_1'] = "Тип стадии";
+$MESS ['BPCLSLA_DESCR_SI_MSGVER_1'] = "ID стадии";
 ?>

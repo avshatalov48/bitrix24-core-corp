@@ -3420,6 +3420,7 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		storeDocument: 33,
 		shipmentDocument: 34,
 		smartdocument: 36,
+		agentcontract: 38,
 		document: 12
 	};
 	BX.CrmEntityType.names =
@@ -3440,7 +3441,8 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		ordercheck: "ORDER_CHECK",
 		smartinvoice: "SMART_INVOICE",
 		dynamic: "DYNAMIC",
-		smartdocument: "SMART_DOCUMENT"
+		smartdocument: "SMART_DOCUMENT",
+		agentcontract: "AGENT_CONTRACT"
 	};
 	BX.CrmEntityType.abbreviations =
 	{
@@ -3455,7 +3457,8 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		ordershipment: "OS",
 		orderpayment: "OP",
 		smartinvoice: "SI",
-		smartdocument: "DO"
+		smartdocument: "DO",
+		agentcontract: "AC",
 	};
 	BX.CrmEntityType.isDefined = function(typeId)
 	{
@@ -3541,6 +3544,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		{
 			return BX.CrmEntityType.names.smartdocument;
 		}
+		else if(typeId === BX.CrmEntityType.enumeration.agentcontract)
+		{
+			return BX.CrmEntityType.names.agentcontract;
+		}
 		else if (BX.CrmEntityType.isDynamicTypeByTypeId(typeId))
 		{
 			return BX.CrmEntityType.getDynamicTypeName(typeId);
@@ -3608,6 +3615,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		else if(name === BX.CrmEntityType.names.smartdocument)
 		{
 			return this.enumeration.smartdocument;
+		}
+		else if(name === BX.CrmEntityType.names.agentcontract)
+		{
+			return this.enumeration.agentcontract;
 		}
 		else if (BX.CrmEntityType.isDynamicTypeByName(name))
 		{

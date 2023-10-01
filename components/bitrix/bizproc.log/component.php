@@ -31,8 +31,8 @@ if (array_key_exists("COMPONENT_VERSION", $arParams) && $arParams["COMPONENT_VER
 		$arResult["FatalErrorMessage"] .= GetMessage("BPABL_INVALID_WF").". ";
 	}
 
-	$arParams["SET_TITLE"] = ($arParams["SET_TITLE"] == "N" ? "N" : "Y"); //Turn on by default
-	$arParams["INLINE_MODE"] = ($arParams["INLINE_MODE"] == "Y" ? "Y" : "N");
+	$arParams["SET_TITLE"] = (($arParams["SET_TITLE"] ?? '') == "N" ? "N" : "Y"); //Turn on by default
+	$arParams["INLINE_MODE"] = (($arParams["INLINE_MODE"] ?? '') == "Y" ? "Y" : "N");
 	$arResult['AJAX_MODE'] = $arParams['AJAX_MODE'] =
 		isset($arParams['AJAX_MODE']) && $arParams['AJAX_MODE'] == 'N'
 			? 'N'

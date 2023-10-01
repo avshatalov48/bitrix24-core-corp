@@ -88,8 +88,8 @@ class Custom extends Base
 	 */
 	public static function getFieldsForEdit(array $activity)
 	{
-		/** @var \CAllMain $APPLICATION */
-		/** @var \CAllUserTypeManager $USER_FIELD_MANAGER */
+		/** @var \CMain $APPLICATION */
+		/** @var \CUserTypeManager $USER_FIELD_MANAGER */
 		global $APPLICATION, $USER_FIELD_MANAGER;
 
 		$results = array(
@@ -145,8 +145,8 @@ class Custom extends Base
 	 */
 	public static function postForm(array &$activity, array $formData)
 	{
-		/** @var \CAllMain $APPLICATION */
-		/** @var \CAllUserTypeManager $USER_FIELD_MANAGER */
+		/** @var \CMain $APPLICATION */
+		/** @var \CUserTypeManager $USER_FIELD_MANAGER */
 		global $APPLICATION, $USER_FIELD_MANAGER;
 
 		$entityID = CustomType::prepareUserFieldEntityID(
@@ -227,8 +227,8 @@ class Custom extends Base
 	 */
 	public static function renderView(array $activity)
 	{
-		/** @var \CAllMain $APPLICATION */
-		/** @var \CAllUserTypeManager $USER_FIELD_MANAGER */
+		/** @var \CMain $APPLICATION */
+		/** @var \CUserTypeManager $USER_FIELD_MANAGER */
 		global $APPLICATION, $USER_FIELD_MANAGER;
 		$typeID = isset($activity['PROVIDER_TYPE_ID']) ? (int)$activity['PROVIDER_TYPE_ID'] : 0;
 		if($typeID <= 0)

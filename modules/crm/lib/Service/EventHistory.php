@@ -9,12 +9,13 @@ use Bitrix\Crm\EventTable;
 use Bitrix\Crm\Service\EventHistory\EventHistoryData;
 use Bitrix\Crm\Service\EventHistory\TrackedObject;
 use Bitrix\Crm\Settings\HistorySettings;
-use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\AddResult;
 use Bitrix\Main\ORM\Objectify\EntityObject;
+use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
 
@@ -81,21 +82,27 @@ class EventHistory
 			return new Result();
 		}
 
-		$subQuery = EventRelationsTable::query()
-			->addSelect('EVENT_ID')
-			->addFilter('=ENTITY_TYPE', $trackedObject->getEntityType())
-			->addFilter('=ENTITY_ID', $trackedObject->getEntityId());
-
 		$interval = HistorySettings::getCurrent()->getViewEventGroupingInterval();
 		$time = new DateTime();
 		$time->add("-T{$interval}M");
 
 		$query = EventTable::query()
-			->addSelect('DATE_CREATE')
+			->setSelect(['ID'])
 			->addFilter('=EVENT_TYPE', static::EVENT_TYPE_VIEW)
 			->addFilter('>=DATE_CREATE', $time)
 			->addFilter('=CREATED_BY_ID', $userId)
-			->addFilter('@ID', new SqlExpression($subQuery->getQuery()))
+			->registerRuntimeField(
+				'',
+				new ReferenceField('RELATIONS',
+					EventRelationsTable::getEntity(),
+					[
+						'ref.EVENT_ID' => 'this.ID',
+						'ref.ENTITY_TYPE' => new \Bitrix\Main\DB\SqlExpression('?s', $trackedObject->getEntityType()),
+						'ref.ENTITY_ID' => new \Bitrix\Main\DB\SqlExpression('?i', $trackedObject->getEntityId()),
+					],
+					['join_type' => Join::TYPE_INNER]
+				)
+			)
 			->addOrder('DATE_CREATE', 'DESC')
 			->setLimit(1);
 
@@ -147,20 +154,51 @@ class EventHistory
 
 	final public function registerBind(TrackedObject $parent, TrackedObject $child, Context $context = null): Result
 	{
-		$eventData = [];
-		$eventData[] = $parent->prepareRelationEventData($child);
-		$eventData[] = $child->prepareRelationEventData($parent);
-
-		return $this->add(static::EVENT_TYPE_LINK, $eventData, $context);
+		return $this->registerRelation(static::EVENT_TYPE_LINK, $parent, $child, $context);
 	}
 
 	final public function registerUnbind(TrackedObject $parent, TrackedObject $child, Context $context = null): Result
 	{
-		$eventData = [];
-		$eventData[] = $parent->prepareRelationEventData($child);
-		$eventData[] = $child->prepareRelationEventData($parent);
+		return $this->registerRelation(static::EVENT_TYPE_UNLINK, $parent, $child, $context);
+	}
 
-		return $this->add(static::EVENT_TYPE_UNLINK, $eventData, $context);
+	private function registerRelation(
+		int $eventType,
+		TrackedObject $parent,
+		TrackedObject $child,
+		Context $context = null
+	): Result
+	{
+		$event = $this->createEventTableRecord($eventType, $context);
+
+		$result = $this->saveRecord($event, []);
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
+
+		$relationParent = $this->createEventRelationsTableRecord($event->getId(), $context);
+		$relationParent
+			->setEntityType($parent->getEntityType())
+			->setEntityId($parent->getEntityId())
+		;
+
+		$relationChild = $this->createEventRelationsTableRecord($event->getId(), $context);
+		$relationChild
+			->setEntityType($child->getEntityType())
+			->setEntityId($child->getEntityId())
+		;
+
+		foreach ([$relationParent, $relationChild] as $record)
+		{
+			$relationResult = $this->saveRecord($record, []);
+			if (!$relationResult->isSuccess())
+			{
+				$result->addErrors($relationResult->getErrors());
+			}
+		}
+
+		return $result;
 	}
 
 	/**

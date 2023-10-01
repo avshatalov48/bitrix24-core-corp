@@ -4,7 +4,9 @@ namespace Bitrix\Crm\Controller\Timeline;
 
 use Bitrix\Crm\Controller\Base;
 use Bitrix\Crm\Controller\ErrorCode;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Timeline\Controller;
 use Bitrix\Crm\Timeline\Entity\Object\Timeline;
 use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use Bitrix\Crm\Timeline\LogMessageType;
@@ -190,6 +192,12 @@ class LogMessage extends Base
 		$entityTypeId = $preparedFields['entityTypeId'];
 		$entityId = $preparedFields['entityId'];
 
+		if (!\CCrmOwnerType::IsDefined($entityTypeId) || $entityId <=0)
+		{
+			$this->addError(ErrorCode::getOwnerNotFoundError());
+			return null;
+		}
+
 		$result = $this->timelineTable::add([
 			'TYPE_ID' => TimelineType::LOG_MESSAGE,
 			'TYPE_CATEGORY_ID' => LogMessageType::REST,
@@ -213,6 +221,8 @@ class LogMessage extends Base
 			];
 
 			TimelineEntry::registerBindings($id, $bindings);
+
+			Controller::getInstance()->sendPullEventOnAdd(new ItemIdentifier($entityTypeId, $entityId), $id);
 
 			$item = $this->getTimelineItem($id);
 

@@ -1,7 +1,7 @@
 <?php
 
-use Bitrix\Main\Loader;
 use Bitrix\Mail\Helper;
+use Bitrix\Main\Loader;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 global $APPLICATION;
@@ -53,15 +53,15 @@ foreach ($communications as $k => $item)
 		$id = 'CRM'.$item['ENTITY_TYPE'].$item['ENTITY_ID'].':'.hash('crc32b', $item['TYPE'].':'.$item['VALUE']);
 		$type = $socNetLogDestTypes[$item['ENTITY_TYPE']];
 
-		$rcptList[$type][$id] = array(
-			'id'         => $id,
-			'entityId'   => $item['ENTITY_ID'],
+		$rcptList[$type][$id] = [
+			'id' => $id,
+			'entityId' => $item['ENTITY_ID'],
 			'entityType' => $type,
-			'name'       => htmlspecialcharsbx($item['TITLE']),
-			'desc'       => htmlspecialcharsbx($item['VALUE']),
-			'email'      => htmlspecialcharsbx($item['VALUE']),
-			'avatar'     => $item['IMAGE_URL'],
-		);
+			'name'  => htmlspecialcharsbx($item['TITLE'] ?? ''),
+			'desc' => htmlspecialcharsbx($item['VALUE'] ?? ''),
+			'email' => htmlspecialcharsbx($item['VALUE'] ?? ''),
+			'avatar' => $item['IMAGE_URL'] ?? '',
+		];
 		$rcptLast['crm'][$id] = $id;
 		$rcptLast[$type][$id] = $id;
 	}

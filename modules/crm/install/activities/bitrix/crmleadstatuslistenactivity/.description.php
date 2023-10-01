@@ -2,7 +2,7 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 $arActivityDescription = array(
-	"NAME" => GetMessage("BPCLSLA_DESCR_NAME"),
+	"NAME" => GetMessage("BPCLSLA_DESCR_NAME_MSGVER_1"),
 	"DESCRIPTION" => "",
 	"TYPE" => "activity",
 	"CLASS" => "CrmLeadStatusListenActivity",
@@ -14,11 +14,11 @@ $arActivityDescription = array(
 	),
 	"RETURN" => array(
 		"StatusSemantics" => array(
-			"NAME" => GetMessage("BPCLSLA_DESCR_SS"),
+			"NAME" => GetMessage("BPCLSLA_DESCR_SS_MSGVER_1"),
 			"TYPE" => "string",
 		),
 		"StatusId" => array(
-			"NAME" => GetMessage("BPCLSLA_DESCR_SI"),
+			"NAME" => GetMessage("BPCLSLA_DESCR_SI_MSGVER_1"),
 			"TYPE" => "string",
 		),
 	),

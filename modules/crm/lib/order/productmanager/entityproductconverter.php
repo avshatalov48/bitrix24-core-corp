@@ -2,15 +2,15 @@
 
 namespace Bitrix\Crm\Order\ProductManager;
 
-use Bitrix\Sale\Basket;
+use Bitrix\Catalog;
 use Bitrix\Crm\Discount;
 use Bitrix\Crm\Order\OrderDealSynchronizer\Products\BasketXmlId;
 use Bitrix\Crm\Order\OrderDealSynchronizer\Products\ProductRowXmlId;
+use Bitrix\Crm\Order\ProductManager\ProductConverter\PricesConverter;
+use Bitrix\Main\Loader;
+use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\Catalog\ProductTypeMapper;
-use Bitrix\Main\Loader;
-use Bitrix\Catalog;
-use Bitrix\Crm\Order\ProductManager\ProductConverter\PricesConverter;
 use Exception;
 
 /**
@@ -71,12 +71,12 @@ class EntityProductConverter implements ProductConverter
 			'BASE_PRICE' => $prices['BASE_PRICE'],
 			'PRICE' => $prices['PRICE'],
 			'CUSTOM_PRICE' => 'Y',
-			'MEASURE_CODE' => $product['MEASURE_CODE'],
-			'MEASURE_NAME' => $product['MEASURE_NAME'],
+			'MEASURE_CODE' => $product['MEASURE_CODE'] ?? null,
+			'MEASURE_NAME' => $product['MEASURE_NAME'] ?? '',
 			'VAT_RATE' => $vatRate,
 			'VAT_INCLUDED' => $product['TAX_INCLUDED'],
 			'XML_ID' => $xmlId,
-			'TYPE' => ProductTypeMapper::getType((int)$product['TYPE']),
+			'TYPE' => ProductTypeMapper::getType((int)($product['TYPE'] ?? 0)),
 			// not `sale` basket item, but used.
 			'DISCOUNT_SUM' => $prices['DISCOUNT_PRICE'],
 			'DISCOUNT_RATE' => $product['DISCOUNT_RATE'] ?? null,

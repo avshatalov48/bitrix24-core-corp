@@ -2,71 +2,85 @@
 
 namespace Bitrix\Crm\Ml\Model;
 
-use Bitrix\Crm\LeadTable;
 use Bitrix\Crm\FieldMultiTable;
+use Bitrix\Crm\History\LeadStatusHistoryEntry;
+use Bitrix\Crm\LeadTable;
+use Bitrix\Crm\Ml\DataProvider;
+use Bitrix\Crm\Ml\FeatureBuilder;
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Crm\Ml\FeatureBuilder;
-use Bitrix\Crm\Ml\DataProvider;
-use Bitrix\Main\Localization\Loc;
+use CCrmAuthorizationHelper;
+use CCrmFieldMulti;
+use CCrmLead;
+use CCrmOwnerType;
+use CCrmPerms;
+use CCrmUserType;
 
 class LeadScoring extends Base
 {
-	const MODEL_NAME ='CRM_LEAD_SCORING';
+	public const MODEL_NAME ='CRM_LEAD_SCORING';
 
 	/**
 	 * Returns available model names for the deal scoring.
+	 *
 	 * @return string[]
 	 */
-	public static function getModelNames()
+	public static function getModelNames(): array
 	{
 		return [static::MODEL_NAME];
 	}
 
 	/**
 	 * Returns title for lead scoring model.
+	 *
 	 * @return string
 	 */
-	public function getTitle()
+	public function getTitle(): string
 	{
-		return Loc::getMessage("CRM_LEAD_SCORING_TITLE");
+		return Loc::getMessage('CRM_LEAD_SCORING_TITLE');
 	}
 
-	public function hasAccess(int $userId = 0)
+	public function hasAccess(int $userId = 0): bool
 	{
-		$userPermission = \CCrmPerms::GetUserPermissions($userId);
-		return \CCrmAuthorizationHelper::CheckReadPermission(\CCrmOwnerType::Lead, 0, $userPermission);
+		$userPermission = CCrmPerms::GetUserPermissions($userId);
+
+		return CCrmAuthorizationHelper::CheckReadPermission(
+			CCrmOwnerType::Lead,
+			0,
+			$userPermission
+		);
 	}
 
 	/**
 	 * @return array
 	 */
-	public function getPossibleFields()
+	public function getPossibleFields(): array
 	{
 		$result = [];
 
 		// Common features
-		$result["LEAD_ID"] = ["dataType" => "string", "isRowId" => true];
-		$result["SUCCESS"] = ["dataType" => "bool", "isTarget" => true];
-		$result["SOURCE_ID"] = ["dataType" => "string"];
-		$result["SOURCE_DESCRIPTION"] = ["dataType" => "text"];
-		$result["TITLE"] = ["dataType" => "text"];
-		$result["COMMENTS"] = ["dataType" => "text"];
-		$result["IS_RETURN_CUSTOMER"] = ["dataType" => "bool"];
-		$result["HAS_EMAIL"] = ["dataType" => "bool"];
-		$result["HAS_PHONE"] = ["dataType" => "bool"];
-		$result["DATE_CREATE_MONTH"] = ["dataType" => "string"];
-		$result["DATE_CREATE_DAY_OF_WEEK"] = ["dataType" => "string"];
-		$result["DATE_CREATE_TIME"] = ["dataType" => "string"]; // category: morning, day, evening, night
-		$result["ASSIGNED_BY_ID"] = ["dataType" => "string"];
+		$result['LEAD_ID'] = ['dataType' => 'string', 'isRowId' => true];
+		$result['SUCCESS'] = ['dataType' => 'bool', 'isTarget' => true];
+		$result['SOURCE_ID'] = ['dataType' => 'string'];
+		$result['SOURCE_DESCRIPTION'] = ['dataType' => 'text'];
+		$result['TITLE'] = ['dataType' => 'text'];
+		$result['COMMENTS'] = ['dataType' => 'text'];
+		$result['IS_RETURN_CUSTOMER'] = ['dataType' => 'bool'];
+		$result['HAS_EMAIL'] = ['dataType' => 'bool'];
+		$result['HAS_PHONE'] = ['dataType' => 'bool'];
+		$result['DATE_CREATE_MONTH'] = ['dataType' => 'string'];
+		$result['DATE_CREATE_DAY_OF_WEEK'] = ['dataType' => 'string'];
+		$result['DATE_CREATE_TIME'] = ['dataType' => 'string']; // category: morning, day, evening, night
+		$result['ASSIGNED_BY_ID'] = ['dataType' => 'string'];
 
 		// UF features
 
 		$ufFeatures = static::getUserFieldName();
-		if(count($ufFeatures) > 0)
+		if (count($ufFeatures) > 0)
 		{
 			$result += $ufFeatures;
 		}
@@ -82,7 +96,7 @@ class LeadScoring extends Base
 		foreach ($providers as $provider)
 		{
 			$featureMap = $provider->getFeatureMap();
-			if(is_array($featureMap))
+			if (is_array($featureMap))
 			{
 				$result += $featureMap;
 			}
@@ -94,12 +108,13 @@ class LeadScoring extends Base
 	/**
 	 * Returns count of successful and failed records in the training set for this model.
 	 *
-	 * @return [$successfulCount, $failedCount]
+	 * @return array
 	 */
 	public function getTrainingSetSize()
 	{
 		static $cachedResult = null;
-		if ($cachedResult != null)
+
+		if (isset($cachedResult))
 		{
 			return $cachedResult;
 		}
@@ -117,7 +132,7 @@ class LeadScoring extends Base
 			"runtime" => [
 				new ExpressionField(
 					"HAS_ACT",
-					"CASE WHEN EXISTS(SELECT 'x' FROM b_crm_act_bind WHERE OWNER_TYPE_ID = " . \CCrmOwnerType::Lead . " and OWNER_ID = %s) THEN 1 ELSE 0 END",
+					"CASE WHEN EXISTS(SELECT 'x' FROM b_crm_act_bind WHERE OWNER_TYPE_ID = " . CCrmOwnerType::Lead . " and OWNER_ID = %s) THEN 1 ELSE 0 END",
 					["ID"]
 				),
 			],
@@ -130,6 +145,7 @@ class LeadScoring extends Base
 		}
 
 		$cachedResult = [$rows["S"] ?? 0, $rows["F"] ?? 0];
+
 		return $cachedResult;
 	}
 
@@ -145,7 +161,7 @@ class LeadScoring extends Base
 			"runtime" => [
 				new ExpressionField(
 				"HAS_ACT",
-				"CASE WHEN EXISTS(SELECT 'x' FROM b_crm_act WHERE OWNER_TYPE_ID = " . \CCrmOwnerType::Lead . " and OWNER_ID = %s) THEN 1 ELSE 0 END",
+				"CASE WHEN EXISTS(SELECT 'x' FROM b_crm_act WHERE OWNER_TYPE_ID = " . CCrmOwnerType::Lead . " and OWNER_ID = %s) THEN 1 ELSE 0 END",
 				["ID"]
 				),
 			],
@@ -156,7 +172,7 @@ class LeadScoring extends Base
 		return array_column($rows, "ID");
 	}
 
-	public function getPredictionSet($modelName, $fromId, $limit)
+	public function getPredictionSet($fromId, $limit): array
 	{
 		$ids = [];
 		$cursor = LeadTable::getList([
@@ -193,8 +209,7 @@ class LeadScoring extends Base
 	}
 
 	/**
-	 *
-	 *
+	 * 
 	 * "LEAD_ID"
 	 * "SUCCESS"
 	 * "SOURCE_ID"
@@ -209,7 +224,7 @@ class LeadScoring extends Base
 	 * "TIME"
 	 *
 	 */
-	public function buildFeaturesVector($id)
+	public function buildFeaturesVector(int $entityId)
 	{
 		$result = LeadTable::getList([
 			"select" => [
@@ -224,11 +239,11 @@ class LeadScoring extends Base
 				"IS_RETURN_CUSTOMER" => "IS_RETURN_CUSTOMER",
 			],
 			"filter" => [
-				"=ID" => $id
+				"=ID" => $entityId
 			]
 		])->fetch();
 
-		if(!$result)
+		if (!$result)
 		{
 			return false;
 		}
@@ -237,18 +252,22 @@ class LeadScoring extends Base
 		unset($result["STAGE_SEMANTIC_ID"]);
 		$isClosed = PhaseSemantics::isFinal($status);
 		$dateClose = null;
-		if($isClosed)
+		if ($isClosed)
 		{
 			$result["SUCCESS"] = PhaseSemantics::isLost($status) ? "N" : "Y";
-			$lastStatusHistoryEntry = \Bitrix\Crm\History\LeadStatusHistoryEntry::getLatest($id);
+			$lastStatusHistoryEntry = LeadStatusHistoryEntry::getLatest($entityId);
 			$dateClose = $lastStatusHistoryEntry["CREATED_TIME"];
 		}
 
-		$result["SOURCE_DESCRIPTION"] = FeatureBuilder::clearText($result["SOURCE_DESCRIPTION"]);
-		$result["TITLE"] = FeatureBuilder::clearText($result["TITLE"]);
-		$result["COMMENTS"] = FeatureBuilder::clearText($result["COMMENTS"]);
-		$result["IS_RETURN_CUSTOMER"] = $result["IS_RETURN_CUSTOMER"] === "Y" ? "Y" : "N";
-		$result["IS_REPEATED_APPROACH"] = $result["IS_REPEATED_APPROACH"] === "Y" ? "Y" : "N";
+		$result["SOURCE_DESCRIPTION"] = FeatureBuilder::clearText($result["SOURCE_DESCRIPTION"] ?? '');
+		$result["TITLE"] = FeatureBuilder::clearText($result["TITLE"] ?? '');
+		$result["COMMENTS"] = FeatureBuilder::clearText($result["COMMENTS"] ?? '');
+		$result["IS_RETURN_CUSTOMER"] = isset($result["IS_RETURN_CUSTOMER"]) && $result["IS_RETURN_CUSTOMER"] === "Y"
+			? "Y"
+			: "N";
+		$result["IS_REPEATED_APPROACH"] = isset($result["IS_REPEATED_APPROACH"]) && $result["IS_REPEATED_APPROACH"] === "Y"
+			? "Y"
+			: "N";
 
 		// MultiFields
 		$result["HAS_EMAIL"] = "N";
@@ -256,32 +275,41 @@ class LeadScoring extends Base
 		$cursor = FieldMultiTable::getList([
 			"select" => ["*"],
 			"filter" => [
-				"=TYPE_ID" => [\CCrmFieldMulti::PHONE, \CCrmFieldMulti::EMAIL],
-				"=ENTITY_ID" => \CCrmOwnerType::LeadName,
-				"=ELEMENT_ID" => $id
+				"=TYPE_ID" => [CCrmFieldMulti::PHONE, CCrmFieldMulti::EMAIL],
+				"=ENTITY_ID" => CCrmOwnerType::LeadName,
+				"=ELEMENT_ID" => $entityId
 			]
 		]);
 
 		while ($row = $cursor->fetch())
 		{
-			if($row["TYPE_ID"] === \CCrmFieldMulti::EMAIL)
+			if ($row["TYPE_ID"] === CCrmFieldMulti::EMAIL)
 			{
 				$result["HAS_EMAIL"] = "Y";
 			}
-			else if($row["TYPE_ID"] === \CCrmFieldMulti::PHONE)
+			else if ($row["TYPE_ID"] === CCrmFieldMulti::PHONE)
 			{
 				$result["HAS_PHONE"] = "Y";
 			}
 		}
 
-		$result["DATE_CREATE_MONTH"] = $result["DATE_CREATE"] instanceof DateTime ? FeatureBuilder::getMonth($result["DATE_CREATE"]) : "";
-		$result["DATE_CREATE_DAY_OF_WEEK"] = $result["DATE_CREATE"] instanceof DateTime ? FeatureBuilder::getDayOfWeek($result["DATE_CREATE"]) : "";
-		$result["DATE_CREATE_TIME"] = $result["DATE_CREATE"] instanceof DateTime ? FeatureBuilder::getTimeMnemonic($result["DATE_CREATE"]) : "";
+		$result["DATE_CREATE_MONTH"] = isset($result["DATE_CREATE"]) && $result["DATE_CREATE"] instanceof DateTime
+			? FeatureBuilder::getMonth($result["DATE_CREATE"])
+			: '';
+
+		$result["DATE_CREATE_DAY_OF_WEEK"] = isset($result["DATE_CREATE"]) && $result["DATE_CREATE"] instanceof DateTime
+			? FeatureBuilder::getDayOfWeek($result["DATE_CREATE"])
+			: '';
+
+		$result["DATE_CREATE_TIME"] = isset($result["DATE_CREATE"]) && $result["DATE_CREATE"] instanceof DateTime
+			? FeatureBuilder::getTimeMnemonic($result["DATE_CREATE"])
+			: '';
+
 		unset($result["DATE_CREATE"]);
 
 		// UF features
-		$ufFeatures = static::getUserFieldFeatures($id);
-		if(is_array($ufFeatures))
+		$ufFeatures = static::getUserFieldFeatures($entityId);
+		if (is_array($ufFeatures))
 		{
 			$result += $ufFeatures;
 		}
@@ -296,8 +324,8 @@ class LeadScoring extends Base
 
 		foreach ($providers as $provider)
 		{
-			$providerFeatures = $provider->getFeatures(\CCrmOwnerType::Lead, $id);
-			if(is_array($providerFeatures))
+			$providerFeatures = $provider->getFeatures(CCrmOwnerType::Lead, $entityId);
+			if (is_array($providerFeatures))
 			{
 				$result += $providerFeatures;
 			}
@@ -310,13 +338,17 @@ class LeadScoring extends Base
 	{
 		static $result;
 
-		if(!is_null($result))
+		if (isset($result))
 		{
 			return $result;
 		}
 
 		$result = [];
-		$leadUserType = new \CCrmUserType($GLOBALS['USER_FIELD_MANAGER'], \CCrmLead::GetUserFieldEntityID());
+		$leadUserType = new CCrmUserType(
+			$GLOBALS['USER_FIELD_MANAGER'],
+			CCrmLead::GetUserFieldEntityID()
+		);
+
 		$userFields = $leadUserType->GetFields();
 		foreach ($userFields as $fieldName => $fieldDescription)
 		{
@@ -354,14 +386,18 @@ class LeadScoring extends Base
 	protected static function getUserFieldFeatures($leadId)
 	{
 		static $fieldTypes;
-		if(is_null($fieldTypes))
+		if (is_null($fieldTypes))
 		{
 			$fieldTypes = [];
 
-			$leadUserType = new \CCrmUserType($GLOBALS['USER_FIELD_MANAGER'], \CCrmLead::GetUserFieldEntityID());
-			$fields = $leadUserType->GetFields();
-
-			$fieldTypes = array_map(function($field){return $field["USER_TYPE_ID"];}, $fields);
+			$leadUserType = new CCrmUserType(
+				$GLOBALS['USER_FIELD_MANAGER'],
+				CCrmLead::GetUserFieldEntityID()
+			);
+			$fieldTypes = array_map(
+				static fn($field) => $field["USER_TYPE_ID"],
+				$leadUserType->GetFields()
+			);
 		}
 
 		$fieldValues = LeadTable::getList([
@@ -372,7 +408,7 @@ class LeadScoring extends Base
 		])->fetch();
 
 
-		if(!is_array($fieldTypes) || count($fieldTypes) == 0)
+		if (!is_array($fieldTypes) || count($fieldTypes) === 0)
 		{
 			return false;
 		}
@@ -412,61 +448,71 @@ class LeadScoring extends Base
 		foreach ($fieldValues as $fieldName => $value)
 		{
 			$fieldType = $fieldTypes[$fieldName];
-			if(!$fieldType)
+			if (!$fieldType)
 			{
 				continue;
 			}
 
-			if($fieldType == "string" || $fieldType == "enumeration")
+			if ($fieldType === "string" || $fieldType === "enumeration")
 			{
-				if(is_array($value))
+				if (is_array($value))
 				{
 					$value = implode(" ", $value);
 				}
-				$result[$fieldName] = FeatureBuilder::clearText($value);
+
+				$result[$fieldName] = FeatureBuilder::clearText($value ?? '');
 			}
-			else if($fieldType == "boolean")
+			else if ($fieldType === "boolean")
 			{
-				if(is_array($value))
+				if (is_array($value) && count($value) > 0)
 				{
 					$value = $value[0];
 				}
+
 				$result[$fieldName] = $value ? "Y" : "N";
 			}
-			else if($fieldType == "integer" || $fieldType == "double")
+			else if ($fieldType === "integer" || $fieldType === "double")
 			{
-				if(is_array($value))
+				if (is_array($value) && count($value) > 0)
 				{
 					$value = $value[0];
 				}
-				$result[$fieldName] = $value != "" ? (int)$value : "";
+
+				$result[$fieldName] = $value !== "" ? (int)$value : "";
 			}
-			else if($fieldType == "date")
+			else if ($fieldType === "date")
 			{
-				if(is_array($value))
+				if (is_array($value) && count($value) > 0)
 				{
 					$value = $value[0];
 				}
-				$result[$fieldName."_DAY_OF_WEEK"] = $value instanceof Date ? FeatureBuilder::getDayOfWeek($value) : "";
-				$result[$fieldName."_MONTH"] = $value instanceof Date ? FeatureBuilder::getMonth($value) : "";
+
+				$result[$fieldName . "_DAY_OF_WEEK"] = $value instanceof Date ? FeatureBuilder::getDayOfWeek($value) : "";
+				$result[$fieldName . "_MONTH"] = $value instanceof Date ? FeatureBuilder::getMonth($value) : "";
 			}
-			else if($fieldType == "datetime")
+			else if ($fieldType === "datetime")
 			{
-				if(is_array($value))
+				if (is_array($value) && count($value) > 0)
 				{
 					$value = $value[0];
 				}
-				$result[$fieldName."_DAY_OF_WEEK"] = $value instanceof DateTime ? FeatureBuilder::getDayOfWeek($value) : "";
-				$result[$fieldName."_MONTH"] = $value instanceof DateTime ? FeatureBuilder::getMonth($value) : "";
-				$result[$fieldName."_TIME"] = $value instanceof DateTime ? FeatureBuilder::getTimeMnemonic($value) : "";
+
+				$result[$fieldName . "_DAY_OF_WEEK"] = $value instanceof DateTime
+					? FeatureBuilder::getDayOfWeek($value)
+					: "";
+				$result[$fieldName . "_MONTH"] = $value instanceof DateTime
+					? FeatureBuilder::getMonth($value)
+					: "";
+				$result[$fieldName . "_TIME"] = $value instanceof DateTime
+					? FeatureBuilder::getTimeMnemonic($value)
+					: "";
 			}
 			else
 			{
-				$result[$fieldName."_FILLED"] =empty($value) ? "N" : "Y";
+				$result[$fieldName . "_FILLED"] = empty($value) ? "N" : "Y";
 			}
 		}
 
 		return $result;
 	}
-
 }

@@ -40,3 +40,4 @@ $MESS["CRM_MENU_RIGHTS_CATEGORY_NONE_FOR_ALL"] = "Закрыть доступ в
 $MESS["CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ALL"] = "Дать доступ только на свои сделки";
 $MESS["CRM_MENU_RIGHTS_CATEGORY_COPY_FROM_TUNNELS2"] = "Копировать права доступа из воронки";
 $MESS["CRM_MENU_RIGHTS_CATEGORY_CUSTOM"] = "Индивидуальные настройки прав";
+$MESS["CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ELEMENT"] = "Дать доступ только к своим элементам";

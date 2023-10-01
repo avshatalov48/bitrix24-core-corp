@@ -84,10 +84,10 @@ if ($firstPass)
 	// convert PREVIEW_TEXT field to DETAIL_TEXT
 	if (!empty($iblockType))
 	{
-		$strSql = 'UPDATE b_iblock_element E '.
-			'SET E.DETAIL_TEXT = E.PREVIEW_TEXT, E.DETAIL_TEXT_TYPE = E.PREVIEW_TEXT_TYPE '.
-			'WHERE E.IBLOCK_ID IN (SELECT B.ID FROM b_iblock B WHERE B.IBLOCK_TYPE_ID = \''.$iblockType.'\') '.
-			'AND E.PREVIEW_TEXT IS NOT NULL AND E.DETAIL_TEXT IS NULL';
+		$strSql = 'UPDATE b_iblock_element '.
+			'SET DETAIL_TEXT = PREVIEW_TEXT, DETAIL_TEXT_TYPE = PREVIEW_TEXT_TYPE '.
+			'WHERE IBLOCK_ID IN (SELECT B.ID FROM b_iblock B WHERE B.IBLOCK_TYPE_ID = \''.$iblockType.'\') '.
+			'AND PREVIEW_TEXT IS NOT NULL AND DETAIL_TEXT IS NULL';
 		$DB->Query($strSql, true);
 	}
 

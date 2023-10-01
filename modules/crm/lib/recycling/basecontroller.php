@@ -257,7 +257,16 @@ abstract class BaseController
 		$enableSynchronization = !isset($options['ENABLE_SYNCHRONIZATION']) || $options['ENABLE_SYNCHRONIZATION'];
 		$synchronizationOptions = isset($options['SYNCHRONIZATION_OPTIONS']) && is_array($options['SYNCHRONIZATION_OPTIONS'])
 			? $options['SYNCHRONIZATION_OPTIONS'] : array();
-		if($enableSynchronization && Crm\Synchronization\UserFieldSynchronizer::needForSynchronization($srcEntityTypeID, $dstEntityTypeID, '', $synchronizationOptions))
+		$synchronizationOptions['IS_RECYCLING'] = true;
+		if (
+			$enableSynchronization
+			&& Crm\Synchronization\UserFieldSynchronizer::needForSynchronization(
+				$srcEntityTypeID,
+				$dstEntityTypeID,
+				'',
+				$synchronizationOptions
+			)
+		)
 		{
 			Crm\Synchronization\UserFieldSynchronizer::synchronize(
 				$srcEntityTypeID,

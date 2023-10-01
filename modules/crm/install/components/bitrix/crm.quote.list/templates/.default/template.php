@@ -363,14 +363,14 @@ if (!$isInternal
 	if ($allowWrite)
 	{
 		//region Set Status
-		$statusList = array(array('NAME' => GetMessage('CRM_STATUS_INIT'), 'VALUE' => ''));
+		$statusList = array(array('NAME' => GetMessage('CRM_STATUS_INIT_MSGVER_1'), 'VALUE' => ''));
 		foreach($arResult['STATUS_LIST_WRITE'] as $statusID => $statusName)
 		{
 			$statusList[] = array('NAME' => $statusName, 'VALUE' => $statusID);
 		}
 
 		$actionList[] = array(
-			'NAME' => GetMessage('CRM_QUOTE_SET_STATUS'),
+			'NAME' => GetMessage('CRM_QUOTE_SET_STATUS_MSGVER_1'),
 			'VALUE' => 'set_status',
 			'ONCHANGE' => array(
 				array(

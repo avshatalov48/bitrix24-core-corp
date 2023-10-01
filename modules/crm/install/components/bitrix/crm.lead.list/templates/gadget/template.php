@@ -19,7 +19,7 @@ else
 		echo '</div>';
 
 		echo '<div class="crm-gadg-stage">';
-		echo '<span class="crm-gadg-stage-left">', htmlspecialcharsbx(GetMessage('CRM_COLUMN_STATUS')), ':<span>';
+		echo '<span class="crm-gadg-stage-left">', htmlspecialcharsbx(GetMessage('CRM_COLUMN_STATUS_MSGVER_1')), ':<span>';
 		echo '<span class="crm-gadg-stage-right">', htmlspecialcharsbx($arLead['LEAD_STATUS_NAME']), '<span>';
 		echo '</div>';
 

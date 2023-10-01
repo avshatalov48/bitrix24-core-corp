@@ -597,4 +597,39 @@ if(typeof BX.Crm.SmartDocumentModel === "undefined")
 		return self;
 	};
 }
+
+if (typeof BX.Crm.AgentContractModel === "undefined")
+{
+	BX.Crm.AgentContractModel = function()
+	{
+		BX.Crm.AgentContractModel.superclass.constructor.apply(this);
+	};
+	BX.extend(BX.Crm.AgentContractModel, BX.Crm.EntityModel);
+	BX.Crm.AgentContractModel.prototype.isCaptionEditable = function()
+	{
+		return true;
+	};
+	BX.Crm.AgentContractModel.prototype.getEntityTypeId = function()
+	{
+		return BX.CrmEntityType.enumeration.agentcontract;
+	};
+	BX.Crm.AgentContractModel.prototype.getCaption = function()
+	{
+		return this.getField("TITLE", "");
+	};
+	BX.Crm.AgentContractModel.prototype.setCaption = function(caption)
+	{
+		this.setField("TITLE", caption);
+	};
+	BX.Crm.AgentContractModel.prototype.prepareCaptionData = function(data)
+	{
+		data["TITLE"] = this.getField("TITLE", "");
+	};
+	BX.Crm.AgentContractModel.create = function(id, settings)
+	{
+		var self = new BX.Crm.AgentContractModel();
+		self.initialize(id, settings);
+		return self;
+	};
+}
 //endregion

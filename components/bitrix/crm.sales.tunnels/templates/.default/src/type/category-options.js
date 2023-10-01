@@ -25,6 +25,7 @@ type CategoryOptions = {
 	isAvailableGenerator: boolean,
 	isAutomationEnabled: boolean,
 	isStagesEnabled: boolean,
+	entityTypeId: Number,
 };
 
 export default CategoryOptions;

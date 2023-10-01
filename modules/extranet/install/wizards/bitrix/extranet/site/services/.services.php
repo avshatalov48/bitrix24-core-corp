@@ -6,20 +6,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 $arServices = Array(
-
-	"search" => Array(
-		"MODULE_ID" => "search",
-		"NAME" => GetMessage("SERVICE_SEARCH"),
-	),
-
-	"files" => Array(
-		"MODULE_ID" => "main",
-		"NAME" => GetMessage("SERVICE_FILES"),
-		"STAGES" => Array(
-			"files.php",
-		),
-	),
-
 	"main" => Array(
 		"NAME" => GetMessage("SERVICE_MAIN_SETTINGS"),
 		"STAGES" => Array(
@@ -33,23 +19,29 @@ $arServices = Array(
 			"mobile.php", //Install mobile interface
 		),
 	),
-
+	"search" => Array(
+		"MODULE_ID" => "search",
+		"NAME" => GetMessage("SERVICE_SEARCH"),
+	),
+	"files" => Array(
+		"MODULE_ID" => "main",
+		"NAME" => GetMessage("SERVICE_FILES"),
+		"STAGES" => Array(
+			"files.php",
+		),
+	),
 	"forum" => Array(
 		"NAME" => GetMessage("SERVICE_FORUM"),
 	),
-
 	"blog" => Array(
 		"NAME" => GetMessage("SERVICE_BLOG"),
 	),
-
 	"socialnetwork" => Array(
 		"NAME" => GetMessage("SERVICE_SOCIALNETWORK"),
 	),
-
 	"intranet" => Array(
 		"NAME" => GetMessage("SERVICE_INTRANET"),
 	),
-
 	"fileman" => Array(
 		"NAME" => GetMessage("SERVICE_FILEMAN"),
 	),

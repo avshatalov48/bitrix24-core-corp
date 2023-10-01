@@ -1,0 +1,2 @@
+<?php
+$MESS['IMMOBILE_PARTICIPANTS_MANAGER_ITEM_LIST_REMOVE'] = 'Исключить из чата';

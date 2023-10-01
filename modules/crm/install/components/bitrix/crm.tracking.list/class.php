@@ -40,7 +40,6 @@ class CrmTrackingListComponent extends CBitrixComponent
 		/* Set title */
 		if ($this->arParams['SET_TITLE'])
 		{
-			/**@var \CAllMain*/
 			$GLOBALS['APPLICATION']->SetTitle(Loc::getMessage('CRM_TRACKING_LIST_TITLE'));
 		}
 

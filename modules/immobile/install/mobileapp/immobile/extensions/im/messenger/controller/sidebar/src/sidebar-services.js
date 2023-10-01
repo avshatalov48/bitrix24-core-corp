@@ -26,7 +26,8 @@ jn.define('im/messenger/controller/sidebar/sidebar-services', (require, exports,
 			this.sidebarRestManager = new RestManager();
 			this.generalRestManager = restManager;
 			this.muteService = new MuteService(this.store, this.sidebarRestManager);
-			this.mapCache = new MapCache(35000);
+			this.participantsMapCache = new MapCache(35000);
+			this.deletedUserSetCache = new Set();
 		}
 
 		/**
@@ -79,8 +80,9 @@ jn.define('im/messenger/controller/sidebar/sidebar-services', (require, exports,
 							Logger.error(result.error());
 						}
 						const data = result.data();
+						Logger.info('SidebarServices.getParticipantList:', data);
 
-						this.store.dispatch('usersModel/update', data);
+						this.store.dispatch('usersModel/merge', data);
 
 						this.store.dispatch('dialoguesModel/update', {
 							actionName: 'updateParticipants',
@@ -142,7 +144,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-services', (require, exports,
 					}
 
 					const data = result.data();
-					this.store.dispatch('usersModel/update', [data]);
+					this.store.dispatch('usersModel/merge', [data]);
 
 					return data;
 				},
@@ -201,6 +203,32 @@ jn.define('im/messenger/controller/sidebar/sidebar-services', (require, exports,
 					return data.name;
 				},
 			);
+		}
+
+		/**
+		 * @desc Add user id (participant id) to set cache
+		 * @param {number|string} userId
+		 */
+		addDeletedUserToCache(userId)
+		{
+			this.deletedUserSetCache.add(userId);
+		}
+
+		/**
+		 * @desc Check is has in cache and if true - delete it
+		 * @param {number|string} userId
+		 * @return {boolean}
+		 */
+		checkDeletedUserFromCache(userId)
+		{
+			if (this.deletedUserSetCache.has(userId))
+			{
+				this.deletedUserSetCache.delete(userId);
+
+				return true;
+			}
+
+			return false;
 		}
 	}
 

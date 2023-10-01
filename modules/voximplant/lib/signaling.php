@@ -175,7 +175,7 @@ class Signaling
 			'PARAMS' => $pushParams
 		];
 
-		$this->send($users, static::COMMAND_INVITE, $config, $push);
+		$this->send($users, static::COMMAND_INVITE, $config, $push, 30);
 	}
 
 	/**
@@ -366,7 +366,7 @@ class Signaling
 		];
 	}
 
-	protected function send($users, $command, $params, $push = null)
+	protected function send($users, $command, $params, $push = null, $expiry = 0)
 	{
 		$params['callId'] = $this->call->getCallId();
 
@@ -374,7 +374,8 @@ class Signaling
 			'module_id' => 'voximplant',
 			'command' => $command,
 			'params' => $params,
-			'push' => $push
+			'push' => $push,
+			'expiry' => $expiry
 		]);
 	}
 

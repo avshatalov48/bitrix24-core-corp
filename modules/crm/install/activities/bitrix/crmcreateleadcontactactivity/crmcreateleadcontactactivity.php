@@ -65,7 +65,7 @@ class CBPCrmCreateLeadContactActivity
 
 		if (\CCrmLead::GetSemanticID($leadFields['STATUS_ID']) === \Bitrix\Crm\PhaseSemantics::SUCCESS)
 		{
-			$this->WriteToTrackingService(GetMessage('CRM_CRLC_LEAD_WRONG_STATUS'), 0, CBPTrackingType::Error);
+			$this->WriteToTrackingService(GetMessage('CRM_CRLC_LEAD_WRONG_STATUS_MSGVER_1'), 0, CBPTrackingType::Error);
 			return CBPActivityExecutionStatus::Closed;
 		}
 

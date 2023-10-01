@@ -14,6 +14,7 @@ const Installed = {
 			<div class="salescenter-app-payment-by-sms-item-container-payment-inline">
 				<tile-label-block class="salescenter-app-payment-by-sms-item-container-payment-item-text"
 					v-for="(tile, index) in tiles"
+					v-bind:key="index"
 					v-if="isControlTile(tile) === false"
 					:name="tile.name" 
 					v-on:tile-label-on-click="openSlider(index)"

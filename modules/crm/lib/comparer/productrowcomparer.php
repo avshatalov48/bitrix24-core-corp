@@ -32,11 +32,8 @@ class ProductRowComparer extends ComparerBase
 	{
 		if ($name === 'TAX_RATE')
 		{
-			if ($left[$name] !== null && $right[$name] !== null)
-			{
-				$left[$name] = (float)$left[$name];
-				$right[$name] = (float)$right[$name];
-			}
+			$left[$name] = (float)($left[$name] ?? null);
+			$right[$name] = (float)($right[$name] ?? null);
 
 			return $left[$name] === $right[$name];
 		}

@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	die();
 
@@ -71,9 +71,13 @@ foreach ($arGroups as $arGroup)
 
 	$dbResult = CGroup::GetList('', '', Array("STRING_ID" => $arGroup["STRING_ID"], "STRING_ID_EXACT_MATCH" => "Y"));
 	if ($arExistsGroup = $dbResult->Fetch())
+	{
 		$groupID = $arExistsGroup["ID"];
-	elseif (!file_exists(WIZARD_SITE_PATH.".superleft.menu.php"))
+	}
+	else
+	{
 		$groupID = $group->Add($arGroup);
+	}
 
 	if ($groupID <= 0)
 		continue;
@@ -84,17 +88,26 @@ foreach ($arGroups as $arGroup)
 	if ($arGroup["STRING_ID"] == "EXTRANET")
 	{
 		COption::SetOptionString("extranet", "extranet_group", $groupID);
-		!defined('WIZARD_EXTRANET_GROUP') && define('WIZARD_EXTRANET_GROUP', $groupID);
+		if (!defined('WIZARD_EXTRANET_GROUP'))
+		{
+			define('WIZARD_EXTRANET_GROUP', $groupID);
+		}
 	}
 
 	if ($arGroup['STRING_ID'] == 'EXTRANET_ADMIN')
 	{
-		!defined('WIZARD_EXTRANET_ADMIN_GROUP') && define('WIZARD_EXTRANET_ADMIN_GROUP', $groupID);
+		if (!defined('WIZARD_EXTRANET_ADMIN_GROUP'))
+		{
+			define('WIZARD_EXTRANET_ADMIN_GROUP', $groupID);
+		}
 	}
 
 	if ($arGroup['STRING_ID'] == 'EXTRANET_CREATE_WG')
 	{
-		!defined('WIZARD_EXTRANET_CREATE_WG_GROUP') && define('WIZARD_EXTRANET_CREATE_WG_GROUP', $groupID);
+		if (!defined('WIZARD_EXTRANET_CREATE_WG_GROUP'))
+		{
+			define('WIZARD_EXTRANET_CREATE_WG_GROUP', $groupID);
+		}
 	}
 
 	if (!file_exists(WIZARD_SITE_PATH.".superleft.menu.php")) // don't use in cloud->box master
@@ -124,6 +137,11 @@ foreach ($arGroups as $arGroup)
 			CExtranetWizardServices::SetFilePermission(Array(WIZARD_SITE_ID, $filePath), Array($groupID => "T_".$arTask["ID"]));
 		}
 	}
+}
+
+if (defined('WIZARD_EXTRANET_ADMIN_GROUP') && defined('WIZARD_EXTRANET_GROUP'))
+{
+	CGroup::SetSubordinateGroups(WIZARD_EXTRANET_ADMIN_GROUP, Array(WIZARD_EXTRANET_GROUP));
 }
 
 // set view perms for employee groups
@@ -163,5 +181,3 @@ if (!file_exists(WIZARD_SITE_PATH.".superleft.menu.php")) // don't use in cloud-
 		}
 	}
 }
-
-?>

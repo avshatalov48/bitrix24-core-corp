@@ -404,6 +404,8 @@
 
 .market-menu-catalog__search-item_info {
 	flex: 1;
+	max-width: 50%;
+	min-width: 360px;
 	margin-top: -4px;
 	margin-left: 8px;
 }
@@ -413,6 +415,12 @@
 }
 
 .market-menu-catalog__search-item_title {
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	-webkit-hyphens: auto;
+	        hyphens: auto;
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	color: var(--ui-color-text-primary, #333333);
 }

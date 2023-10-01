@@ -426,7 +426,7 @@ class CBPCrmCreateCallActivity extends CBPActivity
 				'Type' => 'bool'
 			),
 			'AutoComplete' => array(
-				'Name' => GetMessage('CRM_CREATE_CALL_AUTO_COMPLETE'),
+				'Name' => GetMessage('CRM_CREATE_CALL_AUTO_COMPLETE_MSGVER_1'),
 				'FieldName' => 'auto_completed',
 				'Type' => 'bool',
 				'Default' => 'N'

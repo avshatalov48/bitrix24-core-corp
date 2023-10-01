@@ -129,7 +129,7 @@ class CExtranetWizardServices
 			}
 
 			$arServices[$serviceID]["POSITION"] = $servicePosition;
-			$servicePosition += (isset($arService["STAGES"]) && !empty($arService["STAGES"]) ? count($arService["STAGES"]) : 1);
+			$servicePosition += (!empty($arService["STAGES"]) ? count($arService["STAGES"]) : 1);
 		}
 
 		return $arServices;

@@ -55,7 +55,7 @@ class CCrmDocumentLead extends CCrmDocument
 				'Required' => true,
 			],
 			'STATUS_ID' => [
-				'Name' => GetMessage('CRM_FIELD_STATUS_ID'),
+				'Name' => CCrmLead::GetFieldCaption('STATUS_ID'),
 				'Type' => 'select',
 				'Options' => CCrmStatus::GetStatusListEx('STATUS'),
 				'Filterable' => true,
@@ -63,14 +63,14 @@ class CCrmDocumentLead extends CCrmDocument
 				'Required' => false,
 			],
 			'STATUS_ID_PRINTABLE' => [
-				'Name' => GetMessage('CRM_FIELD_STATUS_ID') . $printableFieldNameSuffix,
+				'Name' => CCrmLead::GetFieldCaption('STATUS_ID') . $printableFieldNameSuffix,
 				'Type' => 'string',
 				'Filterable' => false,
 				'Editable' => false,
 				'Required' => false,
 			],
 			'STATUS_DESCRIPTION' => [
-				'Name' => GetMessage('CRM_FIELD_STATUS_DESCRIPTION'),
+				'Name' => CCrmLead::GetFieldCaption('STATUS_DESCRIPTION'),
 				'Type' => 'text',
 				'Filterable' => false,
 				'Editable' => true,
@@ -130,7 +130,7 @@ class CCrmDocumentLead extends CCrmDocument
 			'COMMENTS' => [
 				'Name' => GetMessage('CRM_FIELD_COMMENTS'),
 				'Type' => 'text',
-				'ValueContentType' => 'html',
+				'ValueContentType' => 'bb',
 				'Filterable' => false,
 				'Editable' => true,
 				'Required' => false,

@@ -9,6 +9,7 @@ use Bitrix\Main\UI\Extension;
 
 Extension::load([
 	'ui.vue',
+	'documentpreview',
 	'salescenter.payment-pay.components',
 ]);
 

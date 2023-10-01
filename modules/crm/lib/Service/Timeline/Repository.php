@@ -248,7 +248,13 @@ class Repository
 		/*
 		 * @todo reorganize TimelineManager::prepareDisplayData and do not use it here
 		 */
-		TimelineManager::prepareDisplayData($itemsMap);
+		TimelineManager::prepareDisplayData(
+			$itemsMap,
+			0,
+			null,
+			true,
+			['type' => $this->context->getType()]
+		);
 
 		$itemsMap = array_values($itemsMap);
 

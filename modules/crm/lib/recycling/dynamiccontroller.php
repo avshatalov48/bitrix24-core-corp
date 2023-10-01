@@ -402,7 +402,7 @@ class DynamicController extends BaseController
 				$item->setCategoryId($factory->getDefaultCategory()->getId());
 			}
 
-			if(!$factory->getStage((string)$item->getStageId()))
+			if($factory->isStagesEnabled() && !$factory->getStage((string)$item->getStageId()))
 			{
 				$stages = $factory->getStages($item->getCategoryId())->getAll();
 				$item->setStageId($stages[0]->getStatusId());

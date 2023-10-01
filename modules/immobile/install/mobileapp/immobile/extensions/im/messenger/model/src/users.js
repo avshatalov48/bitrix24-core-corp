@@ -119,6 +119,42 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 				store.commit('set', result);
 			},
 
+			/** @function usersModel/merge */
+			merge: (store, payload) => {
+				const result = [];
+				if (Type.isArray(payload))
+				{
+					payload.forEach((user) => {
+						const existingItem = store.state.collection[user.id];
+						if (existingItem)
+						{
+							result.push({
+								...store.state.collection[user.id],
+								...validate(user),
+							});
+						}
+						else
+						{
+							const isHasBaseProperty = (
+								user.id
+								&& user.name
+								&& (user.firstName || user.first_name)
+							);
+
+							if (isHasBaseProperty)
+							{
+								result.push({
+									...elementState,
+									...validate(user),
+								});
+							}
+						}
+					});
+				}
+
+				store.commit('set', result);
+			},
+
 			/** @function usersModel/delete */
 			delete: (store, payload) => {
 				const existingItem = store.state.collection[payload.id];

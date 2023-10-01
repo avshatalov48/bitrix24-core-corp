@@ -478,15 +478,18 @@ this.BX.Disk = this.BX.Disk || {};
 	      handler: {
 	        selectFile: (tab, path, selected) => {
 	          Object.values(selected).forEach(item => {
-	            this.getUserFieldControl().getUploader().addFile({
-	              serverFileId: item.id,
-	              name: item.name,
-	              size: item.sizeInt
-	            });
+	            this.getUserFieldControl().getUploader().addFile(item);
 	          });
 	        },
-	        removeFiles: () => {
-	          this.getUserFieldControl().getUploader().removeFiles();
+	        removeFiles: files => {
+	          if (files !== undefined && Array.isArray(files)) {
+	            const uploader = this.getUserFieldControl().getUploader();
+	            const uploadFiles = uploader.getFiles();
+	            let filteredFiles = files.map(item => uploadFiles.find(uploadFile => uploadFile.getServerFileId() === item).getId());
+	            filteredFiles.forEach(file => {
+	              uploader.removeFile(file);
+	            });
+	          }
 	        }
 	      }
 	    };

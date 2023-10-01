@@ -106,7 +106,14 @@ else
 						$style .= 'color:'.getColorText($colorValue, $iconClass, $blockClass).';';
 					?>
 
-					<div class="transaction-stage-title"><?=GetMessage('CRM_STATUS_TITLE_INITIAL_'.$entityId)?></div>
+					<div class="transaction-stage-title"><?
+						$stageTitle = GetMessage('CRM_STATUS_TITLE_INITIAL_' . $entityId);
+						if ((string)$stageTitle === '')
+						{
+							$stageTitle = GetMessage('CRM_STATUS_TITLE_INITIAL_' . $entityId . '_MSGVER_1');
+						}
+						echo $stageTitle;
+						?></div>
 					<div class="transaction-stage-phase" data-sort="<?=$initialFields[$entityId]['SORT']?>"
 						 id="field-phase-<?=$initialFields[$entityId]['ID']?>" data-calculate="1" data-success="1"
 						 ondblclick="BX['<?=$jsClass?>'].editField('<?=$initialFields[$entityId]['ID']?>');"
@@ -162,7 +169,14 @@ else
 				</div>
 
 				<div id="extra-storage-<?=$entityId?>" class="transaction-stage droppable">
-					<div class="transaction-stage-title"><?=GetMessage('CRM_STATUS_TITLE_EXTRA_'.$entityId)?></div>
+					<div class="transaction-stage-title"><?
+						$title = GetMessage('CRM_STATUS_TITLE_EXTRA_' . $entityId);
+						if ((string)$title === '')
+						{
+							$title = GetMessage('CRM_STATUS_TITLE_EXTRA_' . $entityId . '_MSGVER_1');
+						}
+						echo $title;
+						?></div>
 					<? foreach($extraFields[$entityId] as $field): ?>
 
 						<?
@@ -252,7 +266,14 @@ else
 						?>
 
 						<div id="final-success-storage-<?=$entityId?>" class="transaction-stage transaction-stage-success">
-							<div class="transaction-stage-title"><?=GetMessage('CRM_STATUS_SUCCESSFUL_'.$entityId)?></div>
+							<div class="transaction-stage-title"><?
+								$title = GetMessage('CRM_STATUS_SUCCESSFUL_' . $entityId);
+								if ((string)$title === '')
+								{
+									$title = GetMessage('CRM_STATUS_SUCCESSFUL_' . $entityId . '_MSGVER_1');
+								}
+								echo $title;
+							?></div>
 							<div ondblclick="BX['<?=$jsClass?>'].editField('<?=$finalFields[$entityId]['SUCCESSFUL']['ID']?>');"
 								 class="transaction-stage-phase" data-sort="<?=$finalFields[$entityId]['SUCCESSFUL']['SORT']?>"
 								 id="field-phase-<?=$finalFields[$entityId]['SUCCESSFUL']['ID']?>" data-calculate="1"
@@ -324,7 +345,14 @@ else
 						?>
 
 						<div id="final-storage-<?=$entityId?>" class="transaction-stage transaction-stage-failure droppable">
-							<div class="transaction-stage-title"><?=GetMessage('CRM_STATUS_UNSUCCESSFUL_'.$entityId)?></div>
+							<div class="transaction-stage-title"><?
+							 	$title = GetMessage('CRM_STATUS_UNSUCCESSFUL_' . $entityId);
+								if ((string)$title === '')
+								{
+									$title = GetMessage('CRM_STATUS_UNSUCCESSFUL_' . $entityId . '_MSGVER_1');
+								}
+								echo $title;
+							?></div>
 							<div ondblclick="BX['<?=$jsClass?>'].editField('<?=$finalFields[$entityId]['UNSUCCESSFUL']['ID']?>');"
 								 class="transaction-stage-phase" data-sort="<?=$finalFields[$entityId]['UNSUCCESSFUL']['SORT']?>"
 								 id="field-phase-<?=$finalFields[$entityId]['UNSUCCESSFUL']['ID']?>" data-calculate="1"
@@ -557,7 +585,14 @@ else
 						</span>
 						<div class="crm-previously-funnel">
 							<span class="crm-previously-funnel-subtitle">
-								<?=GetMessage('CRM_STATUS_FUNNEL_SUCCESSFUL_'.$entityId)?>
+								<?
+								$title = GetMessage('CRM_STATUS_FUNNEL_SUCCESSFUL_' . $entityId);
+								if ((string)$title === '')
+								{
+									$title = GetMessage('CRM_STATUS_FUNNEL_SUCCESSFUL_' . $entityId . '_MSGVER_1');
+								}
+								echo $title;
+								?>
 							</span>
 							<div class="crm-previously-funnel-inner">
 								<div id="config-funnel-success-<?=$entityId?>" style="width: 100%; min-height: 300px;"></div>
@@ -565,7 +600,14 @@ else
 						</div>
 						<div class="crm-previously-funnel crm-previously-funnel-failure">
 							<span class="crm-previously-funnel-subtitle">
-								<?=GetMessage('CRM_STATUS_FUNNEL_UNSUCCESSFUL_'.$entityId)?>
+								<?
+								$title = GetMessage('CRM_STATUS_FUNNEL_UNSUCCESSFUL_' . $entityId);
+								if ((string)$title === '')
+								{
+									$title = GetMessage('CRM_STATUS_FUNNEL_UNSUCCESSFUL_' . $entityId . '_MSGVER_1');
+								}
+								echo $title;
+								?>
 							</span>
 							<div class="crm-previously-funnel-inner">
 								<div id="config-funnel-unsuccess-<?=$entityId?>" style="width: 100%; min-height: 300px;"></div>

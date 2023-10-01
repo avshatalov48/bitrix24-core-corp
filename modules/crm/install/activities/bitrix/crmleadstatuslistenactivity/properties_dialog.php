@@ -11,7 +11,7 @@ if (!CModule::IncludeModule("crm"))
 	</td>
 </tr>
 <tr>
-	<td align="right" width="40%" valign="top"><?= GetMessage("BPCLSLA_PD_STATUS") ?>:</td>
+	<td align="right" width="40%" valign="top"><?= GetMessage("BPCLSLA_PD_STATUS_MSGVER_1") ?>:</td>
 	<td width="60%">
 		<select name="status[]" multiple="multiple">
 			<?
@@ -25,6 +25,6 @@ if (!CModule::IncludeModule("crm"))
 			}
 			?>
 		</select>
-		<div style="margin: 5px 0; color: grey"><?=GetMessage('BPCLSLA_PD_STATUS_DESCR')?></div>
+		<div style="margin: 5px 0; color: grey"><?=GetMessage('BPCLSLA_PD_STATUS_DESCR_MSGVER_1')?></div>
 	</td>
 </tr>

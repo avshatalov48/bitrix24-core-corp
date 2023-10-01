@@ -179,7 +179,14 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 		 */
 		async prepareData()
 		{
-			await this.setParticipantsFromStore(false);
+			if (this.isCorrectUserCounter())
+			{
+				await this.setParticipantsFromStore(false);
+			}
+			else
+			{
+				this.onUpdateParticipants();
+			}
 		}
 
 		async createView()
@@ -199,7 +206,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 					isCanRemoveParticipants: this.isCanRemoveParticipants,
 				},
 				selectedTab: tabItems[0],
-				participantsCache: this.services.mapCache,
+				participantsCache: this.services.participantsMapCache,
 				loc: {
 					removeParticipants: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ITEM_ACTION_REMOVE'),
 				},
@@ -534,11 +541,13 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 
 		/**
 		 * @desc Build dialog data for use in view
+		 * @param {object} data
+		 * @param {number} [data.userCounter]
 		 * @return {object}
 		 */
-		buildDialogData()
+		buildDialogData(data = {})
 		{
-			const countParticipants = this.getCountParticipants();
+			const countParticipants = data.userCounter ? data.userCounter : this.getCountParticipants();
 
 			return {
 				userCounter: countParticipants || 0,
@@ -555,6 +564,21 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 			const dialogData = this.store.getters['dialoguesModel/getById'](this.dialogId);
 
 			return dialogData ? dialogData.userCounter : 0;
+		}
+
+		/**
+		 * @desc Returns check is equal user counter with participants length
+		 * @return {boolean}
+		 */
+		isCorrectUserCounter()
+		{
+			const dialogState = this.store.getters['dialoguesModel/getById'](this.dialogId);
+			if (!dialogState)
+			{
+				return false;
+			}
+
+			return dialogState.userCounter === dialogState.participants.length;
 		}
 
 		/**
@@ -661,12 +685,43 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 
 			if (payload.actionName === 'changeMute')
 			{
-				this.changeMuteBtn(payload.fields.isMute);
+				const oldStateMute = this.services.isMuteDialog();
+				if (payload.fields.isMute !== oldStateMute)
+				{
+					this.changeMuteBtn(payload.fields.isMute);
+				}
 			}
 
-			if (payload.actionName === 'addParticipants' || payload.actionName === 'removeParticipants')
+			if (payload.actionName === 'addParticipants')
 			{
 				this.setParticipantsFromStore();
+			}
+
+			if (payload.actionName === 'removeParticipants')
+			{
+				if (!Type.isUndefined(payload.removeData) && Type.isArray(payload.removeData))
+				{
+					let isHasId = false;
+					payload.removeData.forEach((userId) => {
+						isHasId = this.services.checkDeletedUserFromCache(userId);
+					});
+
+					if (!isHasId)
+					{
+						this.setParticipantsFromStore();
+					}
+				}
+
+				return;
+			}
+
+			if (payload.actionName === 'updateUserCounter')
+			{
+				this.onChangeUserCounter(payload.fields.userCounter).catch(
+					(error) => {
+						Logger.error('onChangeUserCounter error', error);
+					},
+				);
 			}
 		}
 
@@ -697,7 +752,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 			);
 		}
 
-		onClickBtnParticipantsDelete(deletedUser)
+		async onClickBtnParticipantsDelete(deletedUser)
 		{
 			Logger.log('onClickBtnParticipantsDelete');
 			if (!deletedUser)
@@ -705,25 +760,38 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 				return;
 			}
 
-			this.services.deleteParticipant(deletedUser.id).then(
-				(result) => {
-					if (!result)
-					{
-						include('InAppNotifier');
-						// eslint-disable-next-line no-undef
-						InAppNotifier.showNotification(
-							{
-								message: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ITEM_ACTION_REMOVE_ERROR'),
-							},
-						);
-						this.onUpdateParticipants();
-					}
-				},
-			).catch(
-				(err) => {
-					Logger.error(err);
-				},
-			);
+			this.services.addDeletedUserToCache(deletedUser.id);
+
+			const oldCache = this.services.participantsMapCache.get('participants');
+			this.putParticipantsCache(oldCache.filter((user) => user.id !== deletedUser.id));
+
+			const newUserCounter = this.view.state.dialogData.userCounter - 1;
+			this.store.dispatch('dialoguesModel/updateUserCounter', {
+				dialogId: this.dialogId,
+				userCounter: newUserCounter,
+			});
+
+			this.services.deleteParticipant(deletedUser.id)
+				.then(
+					(result) => {
+						if (!result)
+						{
+							include('InAppNotifier');
+							// eslint-disable-next-line no-undef
+							InAppNotifier.showNotification(
+								{
+									message: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ITEM_ACTION_REMOVE_ERROR_MSGVER_1'),
+								},
+							);
+							this.onUpdateParticipants();
+						}
+					},
+				)
+				.catch(
+					(err) => {
+						Logger.error(err);
+					},
+				);
 		}
 
 		onAddParticipantInBackDrop()
@@ -765,13 +833,13 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 		{
 			const bttnsArr = this.view.state.buttonElements;
 			bttnsArr[2] = this.createMuteBtn(isMute);
-			this.updateStateView({ buttonElements: bttnsArr });
+			this.updateStateView({ buttonElements: bttnsArr }).catch((er) => Logger.error(er));
 		}
 
 		updateBtn()
 		{
 			const newStateBtn = this.createButtons();
-			this.updateStateView({ buttonElements: newStateBtn });
+			this.updateStateView({ buttonElements: newStateBtn }).catch((er) => Logger.error(er));
 		}
 
 		/**
@@ -779,13 +847,13 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 		 * @param {number} newCount
 		 * @void
 		 */
-		onChangeUserCounter(newCount)
+		async onChangeUserCounter(newCount)
 		{
 			const oldCount = this.view.state.dialogData.userCounter;
 			if (newCount !== oldCount)
 			{
-				const data = { dialogData: this.buildDialogData() };
-				this.updateStateView(data);
+				const data = { dialogData: this.buildDialogData({ userCounter: newCount }) };
+				await this.updateStateView(data);
 
 				if (newCount === 1)
 				{
@@ -802,11 +870,18 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 		/**
 		 * @desc Set state in view Sidebar
 		 * @param {object} newState
+		 * @return {Promise}
 		 * @void
 		 */
 		updateStateView(newState)
 		{
-			this.view.setState(newState);
+			return new Promise(
+				(resolve) => {
+					this.view.setState(newState, () => {
+						resolve();
+					});
+				},
+			);
 		}
 
 		/**
@@ -835,7 +910,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 		 * @param {boolean} [forceState=true] - is prop for refresh state in view
 		 * @void
 		 */
-		setParticipants(data, forceState = true)
+		async setParticipants(data, forceState = true)
 		{
 			const participants = data.sort((a, b) => b.isAdmin - a.isAdmin || b.isYou - a.isYou);
 			this.putParticipantsCache(participants);
@@ -848,7 +923,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 			const newState = { participants, isRefreshing: false };
 			if (this.isGroupDialog)
 			{
-				this.onChangeUserCounter(participants.length);
+				await this.onChangeUserCounter(participants.length);
 			}
 
 			this.updateStateParticipantsTabView(newState);
@@ -860,7 +935,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 		 */
 		putParticipantsCache(participants)
 		{
-			this.services.mapCache.set('participants', participants);
+			this.services.participantsMapCache.set('participants', participants);
 		}
 
 		/**
@@ -920,7 +995,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 				usersData = [dialogState, this.store.getters['usersModel/getUserById'](MessengerParams.getUserId())];
 			}
 			const data = await this.buildParticipantsData(usersData);
-			this.setParticipants(data, forceState);
+			await this.setParticipants(data, forceState);
 		}
 
 		/**
@@ -995,23 +1070,19 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 				const statusSvg = this.getUserStatus(user.id);
 				const isAdmin = this.isGroupDialog ? ownerId === user.id : false;
 				const crownStatus = isAdmin ? UserStatus.getStatusCrown() : null;
-				setTimeout(
-					() => {
-						resolve({
-							id: user.id,
-							title: userTitle.title,
-							isYouTitle: isYou ? isYouTitle : null,
-							desc: userTitle.desc,
-							imageUrl: userAvatar.imageUrl,
-							imageColor: userAvatar.imageColor,
-							statusSvg,
-							crownStatus,
-							isAdmin,
-							isYou,
-						});
-					},
-					100, // TODO for tests, then should remove promise
-				);
+
+				resolve({
+					id: user.id,
+					title: userTitle.title,
+					isYouTitle: isYou ? isYouTitle : null,
+					desc: userTitle.desc,
+					imageUrl: userAvatar.imageUrl,
+					imageColor: userAvatar.imageColor,
+					statusSvg,
+					crownStatus,
+					isAdmin,
+					isYou,
+				});
 			});
 		}
 

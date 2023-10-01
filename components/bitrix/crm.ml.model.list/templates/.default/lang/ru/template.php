@@ -5,7 +5,6 @@ $MESS["CRM_ML_MODEL_LIST_BUTTON_DISABLE"] = "Отключить";
 $MESS["CRM_ML_MODEL_LIST_BUTTON_CANCEL"] = "Отмена";
 $MESS["CRM_ML_MODEL_LIST_BUTTON_TRAIN_FREE_OF_CHARGE"] = "Обучить модель бесплатно";
 $MESS["CRM_ML_MODEL_LIST_LEAD_SCORING_DISABLE"] = "Отключить скоринг лидов";
-$MESS["CRM_ML_MODEL_LIST_LEAD_SCORING_DISABLE"] = "Отключить скоринг лидов";
 $MESS["CRM_ML_MODEL_LIST_DEAL_SCORING_DISABLE"] = "Отключить скоринг сделок для этой воронки";
 $MESS["CRM_ML_MODEL_LIST_DISABLE_LEAD_SCORING"] = "Отключить скоринг лидов?";
 $MESS["CRM_ML_MODEL_LIST_DISABLE_DEAL_SCORING"] = "Отключить скоринг сделок для этой воронки?";

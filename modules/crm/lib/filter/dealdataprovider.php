@@ -555,6 +555,18 @@ class DealDataProvider extends EntityDataProvider implements FactoryOptionable
 			$result[$code] = $this->createField($code, $parentField);
 		}
 
+		$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+		if ($factory && $factory->isLastActivityEnabled())
+		{
+			$result['LAST_ACTIVITY_TIME'] = $this->createField(
+				'LAST_ACTIVITY_TIME',
+				[
+					'type' => 'date',
+					'partial' => true,
+				]
+			);
+		}
+
 		return $result;
 	}
 
@@ -582,7 +594,7 @@ class DealDataProvider extends EntityDataProvider implements FactoryOptionable
 		}
 		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID', 'OBSERVER_IDS'], true))
 		{
-			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+			$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
 			$referenceClass = ($factory ? $factory->getDataClass() : null);
 
 			return $this->getUserEntitySelectorParams(

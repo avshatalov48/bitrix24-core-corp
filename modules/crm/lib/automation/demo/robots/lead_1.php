@@ -9,7 +9,7 @@ return array(
 			'Type'       => 'SocNetMessageActivity',
 			'Properties' =>
 				array(
-					'MessageText'     => Loc::getMessage('CRM_AUTOMATION_DEMO_LEAD_1_1_MESSAGE', array(
+					'MessageText'     => Loc::getMessage('CRM_AUTOMATION_DEMO_LEAD_1_1_MESSAGE_MSGVER_1', array(
 						'#URL_1#' => '[url=/crm/lead/show/{=Document:ID}/]',
 						'#URL_2#' => '[/url]',
 					)),
@@ -23,7 +23,7 @@ return array(
 			'Type'       => 'SocNetMessageActivity',
 			'Properties' =>
 				array(
-					'MessageText'     => Loc::getMessage('CRM_AUTOMATION_DEMO_LEAD_1_2_MESSAGE', array(
+					'MessageText'     => Loc::getMessage('CRM_AUTOMATION_DEMO_LEAD_1_2_MESSAGE_MSGVER_1', array(
 						'#URL_1#' => '[url=/crm/lead/show/{=Document:ID}/]',
 						'#URL_2#' => '[/url]',
 					)),

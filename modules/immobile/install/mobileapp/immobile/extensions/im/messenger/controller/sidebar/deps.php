@@ -27,6 +27,7 @@ return [
 		'im:messenger/lib/permission-manager',
         'im:messenger/controller/user-profile',
 		'im/messenger/controller/user-add',
+		'im:messenger/controller/participant-manager',
 	],
 	'bundle' => [
 		'./src/sidebar-controller',

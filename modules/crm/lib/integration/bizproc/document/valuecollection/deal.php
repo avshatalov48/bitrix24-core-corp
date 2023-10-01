@@ -72,6 +72,8 @@ class Deal extends Base
 		}
 
 		$this->loadUserFieldValues();
+
+		$this->document = Crm\Entity\CommentsHelper::prepareFieldsFromBizProc($this->typeId, $this->id, $this->document);
 	}
 
 	protected function loadOrderIdValues(): void

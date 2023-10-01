@@ -1,14 +1,14 @@
-import {Reflection, Event, Loc, Cache, Type} from 'main.core';
-import {PopupWindow, PopupWindowButtonLink} from 'main.popup';
-import {UI} from 'ui.notification';
-import {Category} from '../category/category';
+import { Reflection, Event, Loc, Cache, Type } from 'main.core';
+import { PopupWindow, PopupWindowButtonLink } from 'main.popup';
+import { UI } from 'ui.notification';
+import { Category } from '../category/category';
 import Backend from '../backend';
 import type CategorySourceOptions from '../type/category-source-options';
 import type TunnelScheme from '../type/tunnel-scheme';
 import type Link from '../type/link';
 import CategoryStub from '../category/category-stub';
 import createStageStubs from './internal/create-stage-stubs';
-import type Stage, {Tunnel} from '../type/stage';
+import type Stage, { Tunnel } from '../type/stage';
 import makeErrorMessageFromResponse from './internal/make-error-message';
 import Marker from '../marker/marker';
 
@@ -145,9 +145,10 @@ export default class Manager
 		if (BX.Crm.Restriction.Bitrix24.isRestricted('dealCategory'))
 		{
 			const restrictionData = BX.Crm.Restriction.Bitrix24.getData('dealCategory');
-			if (restrictionData && restrictionData['quantityLimit'] <= this.categories.size)
+			if (restrictionData && restrictionData.quantityLimit <= this.categories.size)
 			{
 				BX.Crm.Restriction.Bitrix24.getHandler('dealCategory').call();
+
 				return Promise.resolve(false);
 			}
 		}
@@ -155,7 +156,7 @@ export default class Manager
 		return Backend
 			.createCategory({
 				name: Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER2'),
-				sort: this.getMaxSort() + 10
+				sort: this.getMaxSort() + 10,
 			})
 			.then((response) => {
 				this.addCategoryFromOptions(response.data);
@@ -167,7 +168,7 @@ export default class Manager
 					...response.data.STAGES.F,
 				];
 
-				newStages.forEach(item => allStages.push(item));
+				newStages.forEach((item) => allStages.push(item));
 
 				const category = this.getCategory(response.data.ID);
 
@@ -221,7 +222,7 @@ export default class Manager
 				appContainer: this.getAppContainer(),
 				id: 'stub',
 				name: 'stub',
-				'default': false,
+				default: false,
 				stages: {
 					P: createStageStubs(5),
 					S: createStageStubs(1),
@@ -274,6 +275,7 @@ export default class Manager
 		if (!this.hasTunnels())
 		{
 			this.showCategoryStub();
+
 			return;
 		}
 
@@ -310,11 +312,12 @@ export default class Manager
 			isAvailableGenerator: this.isAvailableGenerator,
 			isAutomationEnabled: this.isAutomationEnabled,
 			isStagesEnabled: this.isStagesEnabled,
+			entityTypeId: this.entityTypeId,
 		});
 
 		category
 			.subscribe('Category:title:save', (event) => {
-				const {categoryId, value} = event.data;
+				const { categoryId, value } = event.data;
 
 				Backend
 					.updateCategory({
@@ -336,12 +339,12 @@ export default class Manager
 					});
 			})
 			.subscribe('Category:access', (event) => {
-				const {categoryId, access} = event.data;
+				const { categoryId, access } = event.data;
 
 				Backend
 					.accessCategory({
 						id: categoryId,
-						access : access,
+						access: access,
 					})
 					.then(() => {
 						UI.Notification.Center.notify({
@@ -355,12 +358,12 @@ export default class Manager
 					});
 			})
 			.subscribe('Category:access:copy', (event) => {
-				const {categoryId, donorCategoryId} = event.data;
+				const { categoryId, donorCategoryId } = event.data;
 
 				Backend
 					.copyAccessCategory({
 						id: categoryId,
-						donorId : donorCategoryId,
+						donorId: donorCategoryId,
 					})
 					.then(() => {
 						UI.Notification.Center.notify({
@@ -391,6 +394,7 @@ export default class Manager
 							{
 								this.hideCategoryStub();
 								this.showCategoryStub();
+
 								return;
 							}
 
@@ -409,6 +413,7 @@ export default class Manager
 				{
 					return;
 				}
+
 				if (!event.data.preventSave)
 				{
 					if (BX.Crm.Restriction.Bitrix24.isRestricted('automation'))
@@ -427,7 +432,7 @@ export default class Manager
 					const robotAction = event.data.link.robotAction;
 
 					Backend
-						.createRobot({from, to, robotAction})
+						.createRobot({ from, to, robotAction })
 						.then((response: {data: {tunnel: Tunnel, success: boolean}}) => {
 							UI.Notification.Center.notify({
 								content: Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
@@ -458,6 +463,7 @@ export default class Manager
 				{
 					return;
 				}
+
 				if (!event.data.preventSave)
 				{
 					const columnFrom = event.data.link.from.getData().column;
@@ -515,6 +521,7 @@ export default class Manager
 				{
 					return;
 				}
+
 				if (BX.Crm.Restriction.Bitrix24.isRestricted('automation'))
 				{
 					return BX.Crm.Restriction.Bitrix24.getHandler('automation').call();
@@ -542,7 +549,7 @@ export default class Manager
 						.removeRobot(tunnel)
 						.then(() => {
 							Backend
-								.createRobot({from, to, robotAction: event.data.link.robotAction})
+								.createRobot({ from, to, robotAction: event.data.link.robotAction })
 								.then((response: {data: {tunnel: Tunnel, success: boolean}}) => {
 									UI.Notification.Center.notify({
 										content: Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
@@ -595,7 +602,7 @@ export default class Manager
 									component: Backend.component,
 									action: 'update.robot',
 								},
-								data: tunnel
+								data: tunnel,
 							})
 							.then(() => {
 								UI.Notification.Center.notify({
@@ -616,18 +623,18 @@ export default class Manager
 							}).catch((response) => {
 								this.showErrorPopup(makeErrorMessageFromResponse(response));
 							});
-					}
+					},
 				);
 			})
 			.subscribe('Category:sort', () => {
 				const results = Category.instances
-					.filter(category => category.id !== 'stub')
+					.filter((category) => category.id !== 'stub')
 					.map((category, index) => {
 						return Backend
 							.updateCategory({
 								id: category.id,
 								fields: {
-									SORT: (index+1) * 100,
+									SORT: (index + 1) * 100,
 								},
 							});
 					});
@@ -687,7 +694,7 @@ export default class Manager
 						sort: event.data.column.data.stage.SORT,
 						color: event.data.column.getColor(),
 					})
-					.then(({data}) => {
+					.then(({ data }) => {
 						if (data.success)
 						{
 							UI.Notification.Center.notify({
@@ -699,7 +706,7 @@ export default class Manager
 						}
 						else
 						{
-							this.showErrorPopup(makeErrorMessageFromResponse({data}));
+							this.showErrorPopup(makeErrorMessageFromResponse({ data }));
 						}
 					});
 			})
@@ -708,28 +715,28 @@ export default class Manager
 					.addStage({
 						name: event.data.column.getGrid().getMessage('COLUMN_TITLE_PLACEHOLDER'),
 						sort: (() => {
-							const {column} = event.data;
+							const { column } = event.data;
 
 							return Number(column.data.stage.SORT) + 1;
 						})(),
 						entityId: (() => {
-							const {column} = event.data;
+							const { column } = event.data;
 
 							return column.data.stage.ENTITY_ID;
 						})(),
 						color: BX.Kanban.Column.DEFAULT_COLOR,
 						semantics: (() => {
-							const {column} = event.data;
+							const { column } = event.data;
 
 							return column.data.stage.SEMANTICS;
 						})(),
 						categoryId: (() => {
-							const {column} = event.data;
+							const { column } = event.data;
 
 							return column.data.category.id;
 						})(),
 					})
-					.then(({data}) => {
+					.then(({ data }) => {
 						UI.Notification.Center.notify({
 							content: Loc.getMessage('CRM_ST_NOTIFICATION_CHANGES_SAVED'),
 							autoHideDelay: 1500,
@@ -737,7 +744,7 @@ export default class Manager
 						});
 						this.isChanged = true;
 
-						const {stage} = data;
+						const { stage } = data;
 						const prevColumn = event.data.column;
 						const grid = prevColumn.getGrid();
 						const category = this.getCategory(prevColumn.data.category.id);
@@ -781,7 +788,7 @@ export default class Manager
 
 				Backend
 					.updateStages(sortData)
-					.then(({data}) => {
+					.then(({ data }) => {
 						const success = data.every((item) => {
 							return item.success;
 						});
@@ -797,7 +804,7 @@ export default class Manager
 						}
 						else
 						{
-							this.showErrorPopup(makeErrorMessageFromResponse({data}));
+							this.showErrorPopup(makeErrorMessageFromResponse({ data }));
 						}
 					});
 			})
@@ -830,10 +837,10 @@ export default class Manager
 						events: {
 							click() {
 								this.popupWindow.close();
-							}
-						}
-					})
-				]
+							},
+						},
+					}),
+				],
 			});
 		}
 
@@ -845,7 +852,7 @@ export default class Manager
 	{
 		// eslint-disable-next-line
 		return BX.SidePanel.Instance.getSlider(
-			window.location.pathname
+			window.location.pathname,
 		);
 	}
 
@@ -861,7 +868,7 @@ export default class Manager
 
 	getStageDataById(id: string): Stage
 	{
-		return this.getStages().find(stage => String(stage.STATUS_ID) === String(id));
+		return this.getStages().find((stage) => String(stage.STATUS_ID) === String(id));
 	}
 
 	getTunnelByLink(link: Link)

@@ -99,9 +99,9 @@ class StoreDocumentArrival extends StoreDocument
 			return;
 		}
 
-		if (Manager::getActiveProvider())
+		if (Manager::getActiveProvider(Manager::PROVIDER_STORE_DOCUMENT))
 		{
-			$contractor = Manager::getActiveProvider()::getContractorByDocumentId((int)$this->data['ID']);
+			$contractor = Manager::getActiveProvider(Manager::PROVIDER_STORE_DOCUMENT)::getContractorByDocumentId((int)$this->data['ID']);
 			if ($contractor)
 			{
 				$this->data['CONTRACTOR_PERSON_NAME'] = $contractor->getContactPersonFullName();

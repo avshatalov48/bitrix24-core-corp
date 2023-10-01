@@ -327,6 +327,17 @@ class CompanyDataProvider extends EntityDataProvider implements FactoryOptionabl
 			),
 		];
 
+		if ($this->factory && $this->factory->isLastActivityEnabled())
+		{
+			$result['LAST_ACTIVITY_TIME'] = $this->createField(
+				'LAST_ACTIVITY_TIME',
+				[
+					'type' => 'date',
+					'partial' => true,
+				]
+			);
+		}
+
 		Crm\Tracking\UI\Filter::appendFields($result, $this);
 
 		//region UTM

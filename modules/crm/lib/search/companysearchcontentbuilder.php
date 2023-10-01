@@ -169,29 +169,13 @@ class CompanySearchContentBuilder extends SearchContentBuilder
 		$connection = \Bitrix\Main\Application::getConnection();
 		$helper = $connection->getSqlHelper();
 
-		$searchContent = $helper->forSql($map->getString());
+		$update = [
+			'COMPANY_ID' => $entityId,
+			'SEARCH_CONTENT' => $map->getString(),
+		];
+		$merge = $helper->prepareMerge('b_crm_company_index', ['COMPANY_ID'], $update, $update);
 
-		if ($checkExist)
-		{
-			$sql = "
-				INSERT INTO b_crm_company_index(COMPANY_ID, SEARCH_CONTENT)
-				VALUES({$entityId}, '{$searchContent}')
-				ON DUPLICATE KEY UPDATE SEARCH_CONTENT= '{$searchContent}'
-			";
-			try
-			{
-				return $connection->query($sql);
-			}
-			catch (\Exception $exception)
-			{
-				return $connection->query($sql);
-			}
-		}
-
-		$sql = "
-			UPDATE b_crm_company_index SET SEARCH_CONTENT= '{$searchContent}' WHERE COMPANY_ID = {$entityId}
-		";
-		return $connection->query($sql);
+		return $connection->query($merge[0]);
 	}
 
 	public function removeShortIndex(int $entityId): \Bitrix\Main\ORM\Data\Result

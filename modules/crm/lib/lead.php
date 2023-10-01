@@ -153,7 +153,7 @@ class LeadTable extends Main\ORM\Data\DataManager
 
 			(new TextField('STATUS_DESCRIPTION'))
 				->configureNullable()
-				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_STATUS_DESCRIPTION_FIELD'))
+				->configureTitle(\CCrmLead::GetFieldCaption('STATUS_DESCRIPTION'))
 			,
 
 			$fieldRepository->getStageSemanticId('STATUS_SEMANTIC_ID'),

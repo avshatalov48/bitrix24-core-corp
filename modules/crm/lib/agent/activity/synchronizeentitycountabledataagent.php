@@ -34,7 +34,7 @@ class SynchronizeEntityCountableDataAgent extends Stepper
 		}
 
 		$result['steps'] = (int)($result['steps'] ?? 0);
-		if (!$result['currentTable'])
+		if (!isset($result['currentTable']))
 		{
 			$result['currentTable'] = self::ENTITY_COUNTABLE_TABLE;
 		}

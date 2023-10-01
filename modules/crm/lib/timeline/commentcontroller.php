@@ -2,8 +2,15 @@
 
 namespace Bitrix\Crm\Timeline;
 
+use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\ItemIdentifier;
-use Bitrix\Disk;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Timeline\Context;
+use Bitrix\Disk\AttachedObject;
+use Bitrix\Disk\Driver;
+use Bitrix\Disk\File;
+use Bitrix\Disk\TypeFile;
+use Bitrix\Disk\Uf\FileUserType;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -82,6 +89,118 @@ class CommentController extends EntityController
 		return $html;
 	}
 
+	public static function getFiles(int $id, int $ownerId, int $ownerTypeId): array
+	{
+		$ids = self::getFilesIds($id);
+
+		if (empty($ids))
+		{
+			return [];
+		}
+
+		return self::loadFilesData($ids, $ownerId, $ownerTypeId);
+	}
+
+	private static function getFilesIds(int $id): array
+	{
+		if ($id <= 0 || !ModuleManager::isModuleInstalled('disk'))
+		{
+			return [];
+		}
+
+		$fileFields = $GLOBALS['USER_FIELD_MANAGER']->GetUserFields(self::UF_FIELD_NAME, $id);
+
+		if (!isset($fileFields[self::UF_COMMENT_FILE_NAME]))
+		{
+			return [];
+		}
+
+		$ids = $fileFields[self::UF_COMMENT_FILE_NAME]['VALUE'] ?? [];
+
+		if (empty($ids))
+		{
+			return [];
+		}
+
+		return (is_array($ids) ? $ids : [$ids]);
+	}
+
+	private static function loadFilesData(array $ids, int $ownerId, int $ownerTypeId): array
+	{
+		$userId = Container::getInstance()->getContext()->getUserId();
+
+		$values = $ids;
+
+		$files = [];
+		$driver = Driver::getInstance();
+		$urlManager = $driver->getUrlManager();
+		$userFieldManager = $driver->getUserFieldManager();
+
+		$userFieldManager->loadBatchAttachedObject($values);
+		foreach ($values as $id)
+		{
+			$attachedModel = null;
+			[$type, $realValue] = FileUserType::detectType($id);
+			if (empty($realValue) || $realValue <= 0)
+			{
+				continue;
+			}
+
+			if ($type === FileUserType::TYPE_NEW_OBJECT)
+			{
+				$fileModel = File::loadById($realValue);
+				if (!$fileModel || !$fileModel->canRead($fileModel->getStorage()->getCurrentUserSecurityContext()))
+				{
+					continue;
+				}
+			}
+			else
+			{
+				$attachedModel = $userFieldManager->getAttachedObjectById($realValue);
+				if (!$attachedModel)
+				{
+					continue;
+				}
+
+				$attachedModel->setOperableEntity(array(
+					'ENTITY_ID' => $ownerTypeId,
+					'ENTITY_VALUE_ID' => $ownerId,
+				));
+
+				$fileModel = $attachedModel->getFile();
+			}
+
+			$securityContext = $fileModel->getStorage()->getCurrentUserSecurityContext();
+
+			$name = $fileModel->getName();
+			$data = [
+				'ID' => $id,
+				'NAME' => $name,
+				'SIZE' => $fileModel->getSize(),
+				'FILE_ID' => $fileModel->getFileId(),
+				'CAN_READ' => (
+					$attachedModel
+						? $attachedModel->canRead($userId)
+						: $fileModel->canRead($securityContext)
+				),
+				'VIEW_URL' => $urlManager::getUrlUfController('show', ['attachedId' => $id]),
+			];
+
+			if (TypeFile::isImage($fileModel) || TypeFile::isVideo($fileModel))
+			{
+				$data['VIEW_URL'] = (
+					$attachedModel === null
+						? $urlManager->getUrlForShowFile($fileModel)
+						: $urlManager::getUrlUfController('show', ['attachedId' => $id])
+				);
+			}
+
+			$files[] = $data;
+		}
+
+		return $files;
+	}
+
 	public static function convertToHtml(array $data, array $options = null)
 	{
 		$parser = static::getParser();
@@ -152,6 +271,7 @@ class CommentController extends EntityController
 
 		return $data;
 	}
+
 	public static function extractPlainText($sourceText, array $options = null)
 	{
 		$parser = static::getParser();
@@ -174,6 +294,7 @@ class CommentController extends EntityController
 
 		return preg_replace('/\[[^\]]+\]/', '', $sourceText);
 	}
+
 	public static function getMentionIds($text)
 	{
 		preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is" . BX_UTF_PCRE_MODIFIER, $text, $mentionList);
@@ -235,6 +356,7 @@ class CommentController extends EntityController
 
 		$this->sendPullEventOnDelete(new ItemIdentifier($params['ENTITY_TYPE_ID'], $params['ENTITY_ID']), $id);
 	}
+
 	protected function onSave($id, array $data)
 	{
 		if (
@@ -247,6 +369,7 @@ class CommentController extends EntityController
 			$this->sendMentions($id, $data);
 		}
 	}
+
 	private function sendMentions($id, array $data)
 	{
 		$mentionList = self::getMentionIds($data['COMMENT']);
@@ -321,16 +444,32 @@ class CommentController extends EntityController
 			}
 		}
 	}
+
 	public function prepareHistoryDataModel(array $data, array $options = null)
 	{
-		$data['HAS_FILES'] = $data['SETTINGS']['HAS_FILES'];
-		if ($data['HAS_FILES'] === 'Y' && preg_match("/\\[(\\/?)(file|document id|disk file id)(.*?)\\]/is".BX_UTF_PCRE_MODIFIER, $data['COMMENT']))
+		$data['HAS_FILES'] = $data['SETTINGS']['HAS_FILES'] ?? 'N';
+		if (
+			$data['HAS_FILES'] === 'Y'
+			&& preg_match("/\\[(\\/?)(file|document id|disk file id)(.*?)\\]/is".BX_UTF_PCRE_MODIFIER, $data['COMMENT'])
+		)
 		{
 			$data['HAS_INLINE_ATTACHMENT'] = 'Y';
 		}
-		$data = self::convertToHtml($data);
+
+		$type = $options['TYPE'] ?? Context::DESKTOP;
+
+		if ($type === Context::MOBILE)
+		{
+			$data['COMMENT'] = TextHelper::sanitizeBbCode($data['COMMENT']);
+		}
+		else
+		{
+			$data = self::convertToHtml($data);
+		}
+
 		return parent::prepareHistoryDataModel($data, $options);
 	}
+
 	public function prepareSearchContent(array $params)
 	{
 		$result = '';
@@ -339,14 +478,18 @@ class CommentController extends EntityController
 			$result = self::extractPlainText($params['COMMENT']);
 		}
 
-		if ($params['SETTINGS']['HAS_FILES'] === 'Y' && Loader::includeModule('disk'))
+		if (
+			isset($params['SETTINGS']['HAS_FILES'])
+			&& $params['SETTINGS']['HAS_FILES'] === 'Y'
+			&& Loader::includeModule('disk')
+		)
 		{
 			$fileFields = $GLOBALS['USER_FIELD_MANAGER']->GetUserFields(self::UF_FIELD_NAME, $params['ID']);
 			$attachedIds = $fileFields[self::UF_COMMENT_FILE_NAME]['VALUE'];
 			if (!empty($attachedIds))
 			{
 				$fileIds = [];
-				$attachedObjects = Disk\AttachedObject::getList([
+				$attachedObjects = AttachedObject::getList([
 					'select' => ['OBJECT_ID'],
 					'filter' => ['=ID' => $attachedIds]
 				]);
@@ -356,7 +499,7 @@ class CommentController extends EntityController
 				}
 				if (!empty($fileIds))
 				{
-					$fileRaw = Disk\File::getList([
+					$fileRaw = File::getList([
 						'filter' => ['=ID' => $fileIds],
 						'select' => ['NAME']
 					]);

@@ -84,6 +84,7 @@ class CTimeManUser
 	{
 		$recordForm = WorktimeRecordForm::createWithEventForm();
 		$recordForm->editedBy = $this->USER_ID;
+		$recordForm->userId = $this->USER_ID;
 		$recordForm->recordedStartSeconds = $arParams['TIME_START'];
 		$recordForm->recordedStartDateFormatted = $arParams['DATE_START'];
 		$recordForm->recordedStopSeconds = $arParams['TIME_FINISH'];

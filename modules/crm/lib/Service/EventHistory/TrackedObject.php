@@ -185,17 +185,6 @@ abstract class TrackedObject
 		]);
 	}
 
-	public function prepareRelationEventData(self $boundObject): EventHistoryData
-	{
-		return (new EventHistoryData())
-			->setEntityType($this->getEntityType())
-			->setEntityId($this->getEntityId())
-			// values below are not displayed as it is, they are dynamically replaced on rendering in crm.event.view
-			->setEventTextFirst($boundObject->getEntityType()) // 'CONTACT' -> \CCrmOwnerType::GetDescription(\CCrmOwnerType::Contact)
-			->setEventTextSecond($boundObject->getEntityId()) // '13' -> <a href="/crm/contact/details/13/">Contact name</a>
-		;
-	}
-
 	/**
 	 * @return EventHistoryData[]
 	 * @throws ArgumentException

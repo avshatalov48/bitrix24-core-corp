@@ -623,7 +623,7 @@ class CommunicationStatistics
 		$deadline = isset($activity['DEADLINE']) ? $activity['DEADLINE'] : '';
 		if ($deadline)
 		{
-			$deadline = new Main\Type\DateTime($deadline);
+			$deadline = \Bitrix\Main\Type\DateTime::createFromUserTime($deadline);
 			$deadline->setTime(0, 0, 0);
 		}
 		return $deadline;

@@ -1,5 +1,10 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
-<?
+<?php
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
+
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/classes/general/wizard_utils.php");
 
 class WelcomeStep extends CWizardStep
@@ -481,12 +486,26 @@ class DataInstallStep extends CWizardStep
 		$arServices = CExtranetWizardServices::GetServices($_SERVER["DOCUMENT_ROOT"].$wizard->GetPath(), "/site/services/");
 
 		if (COption::GetOptionString("main", "wizard_extranet_rerun") == "Y")
+		{
 			define("WIZARD_IS_RERUN", true);
+		}
 
-		if(
-			defined('WIZARD_IS_RERUN')
-			&& WIZARD_IS_RERUN === true
-		)
+		// define user group constants for the services
+		$groupConstants = [
+			'EXTRANET' => 'WIZARD_EXTRANET_GROUP',
+			'EXTRANET_ADMIN' => 'WIZARD_EXTRANET_ADMIN_GROUP',
+			'EXTRANET_CREATE_WG' => 'WIZARD_EXTRANET_CREATE_WG_GROUP',
+		];
+
+		foreach ($groupConstants as $groupCode => $constantName)
+		{
+			if ($groupId = CGroup::GetIDByCode($groupCode))
+			{
+				define($constantName, $groupId);
+			}
+		}
+
+		if (defined('WIZARD_IS_RERUN') && WIZARD_IS_RERUN === true)
 		{
 			$rsSites = CSite::GetByID(COption::GetOptionString("extranet", "extranet_site"));
 			if ($arSite = $rsSites->Fetch())
@@ -499,8 +518,12 @@ class DataInstallStep extends CWizardStep
 			{
 				$s = Array();
 				foreach($arServices["main"]["STAGES"] as $v)
+				{
 					if(!in_array($v, array("groups.php", "property.php", "options.php", "events.php")))
+					{
 						$s[] = $v;
+					}
+				}
 				$arServices["main"]["STAGES"] = $s;
 
 				unset($arServices["blog"]);
@@ -514,10 +537,10 @@ class DataInstallStep extends CWizardStep
 			}
 		}
 
-		if ($serviceStage == "skip")
-			$success = true;
-		else
-			$success = $this->InstallService($serviceID, $serviceStage);
+		if ($serviceStage != "skip")
+		{
+			$this->InstallService($serviceID, $serviceStage);
+		}
 
 		list($nextService, $nextServiceStage, $stepsComplete, $status) = $this->GetNextStep($arServices, $serviceID, $serviceStage);
 

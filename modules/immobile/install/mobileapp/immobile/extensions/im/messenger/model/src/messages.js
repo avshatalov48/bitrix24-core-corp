@@ -15,7 +15,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 
 	const messageState = {
 		id: 0,
-		uuid: '',
+		templateId: '',
 		chatId: 0,
 		authorId: 0,
 		date: new Date(),
@@ -79,6 +79,19 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				return state.collection[messageId.toString()] || {};
+			},
+
+			/**
+			 * @function messagesModel/getMessageById
+			 * @return {MessagesModelState|null}
+			 */
+			getMessageByTemplateId: (state) => (messageId) => {
+				if (Type.isNumber(messageId))
+				{
+					return null;
+				}
+
+				return state.collection[messageId] || null;
 			},
 
 			/**
@@ -566,15 +579,15 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 		{
 			result.id = fields.id;
 		}
-		else if (Uuid.isV4(fields.uuid))
+		else if (Uuid.isV4(fields.templateId))
 		{
-			result.id = fields.uuid;
-			result.uuid = fields.uuid;
+			result.id = fields.templateId;
+			result.templateId = fields.templateId;
 		}
 		else if (Uuid.isV4(fields.id))
 		{
 			result.id = fields.id;
-			result.uuid = fields.id;
+			result.templateId = fields.id;
 		}
 
 		if (!Type.isUndefined(fields.chat_id))

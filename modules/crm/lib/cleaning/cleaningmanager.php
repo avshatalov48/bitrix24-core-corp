@@ -184,7 +184,9 @@ class CleaningManager
 					new class extends Cleaner\Job {
 						public function run(Options $options): Result
 						{
-							(new Contractor\ContactCompanyBinding($options->getEntityTypeId()))
+							(new Contractor\StoreDocumentContactCompanyBinding($options->getEntityTypeId()))
+								->unbind($options->getEntityId());
+							(new Contractor\AgentContractContactCompanyBinding($options->getEntityTypeId()))
 								->unbind($options->getEntityId());
 
 							return new Result();

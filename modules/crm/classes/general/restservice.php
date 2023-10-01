@@ -1798,7 +1798,9 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 				continue;
 			}
 
-			$attrs = is_array($info['ATTRIBUTES']) ? $info['ATTRIBUTES'] : [];
+			$attrs = isset($info['ATTRIBUTES']) && is_array($info['ATTRIBUTES'])
+				? $info['ATTRIBUTES']
+				: [];
 			$isMultiple = in_array(CCrmFieldInfoAttr::Multiple, $attrs, true);
 
 			$ary = array_intersect($ignoredAttrs, $attrs);

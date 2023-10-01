@@ -527,15 +527,14 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 			'LEAD_CLIENT' => isset($arLead['CLIENT_INFO']) ? CCrmViewHelper::PrepareClientInfo($arLead['CLIENT_INFO']) : '',
 			'COMMENTS' => htmlspecialcharsback($arLead['COMMENTS'] ?? ''),
 			'ADDRESS' => nl2br($arLead['ADDRESS'] ?? ''),
-			'ASSIGNED_BY' => $arLead['~ASSIGNED_BY_ID'] > 0
-				? CCrmViewHelper::PrepareUserBaloonHtml(
-					array(
-						'PREFIX' => "LEAD_{$arLead['~ID']}_RESPONSIBLE",
-						'USER_ID' => $arLead['~ASSIGNED_BY_ID'],
-						'USER_NAME'=> $arLead['ASSIGNED_BY'],
-						'USER_PROFILE_URL' => $arLead['PATH_TO_USER_PROFILE']
-					)
-				) : '',
+			'ASSIGNED_BY' => isset($arLead['~ASSIGNED_BY_ID']) && $arLead['~ASSIGNED_BY_ID'] > 0
+				? CCrmViewHelper::PrepareUserBaloonHtml([
+					'PREFIX' => "LEAD_{$arLead['~ID']}_RESPONSIBLE",
+					'USER_ID' => $arLead['~ASSIGNED_BY_ID'],
+					'USER_NAME'=> $arLead['ASSIGNED_BY'],
+					'USER_PROFILE_URL' => $arLead['PATH_TO_USER_PROFILE']
+				])
+				: '',
 			'STATUS_DESCRIPTION' => nl2br($arLead['STATUS_DESCRIPTION'] ?? ''),
 			'SOURCE_DESCRIPTION' => nl2br($arLead['SOURCE_DESCRIPTION'] ?? ''),
 			'DATE_CREATE' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateCreate), $now),
@@ -543,9 +542,15 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 			'SUM' => $arLead['FORMATTED_OPPORTUNITY'],
 			'OPPORTUNITY' => $arLead['~OPPORTUNITY'] ?? 0.0,
 			'CURRENCY_ID' => CCrmCurrency::GetEncodedCurrencyName($arLead['~CURRENCY_ID'] ?? null),
-			'PRODUCT_ID' => isset($arLead['PRODUCT_ROWS']) ? htmlspecialcharsbx(CCrmProductRow::RowsToString($arLead['PRODUCT_ROWS'])) : '',
-			'IS_RETURN_CUSTOMER' => isset($arResult['BOOLEAN_VALUES_LIST'][$arLead['IS_RETURN_CUSTOMER']]) ? $arResult['BOOLEAN_VALUES_LIST'][$arLead['IS_RETURN_CUSTOMER']] : $arLead['IS_RETURN_CUSTOMER'],
-			'HONORIFIC' => isset($arResult['HONORIFIC'][$arLead['HONORIFIC']]) ? $arResult['HONORIFIC'][$arLead['HONORIFIC']] : '',
+			'PRODUCT_ID' => isset($arLead['PRODUCT_ROWS'])
+				? htmlspecialcharsbx(CCrmProductRow::RowsToString($arLead['PRODUCT_ROWS']))
+				: '',
+			'IS_RETURN_CUSTOMER' => isset($arResult['BOOLEAN_VALUES_LIST'], $arLead['IS_RETURN_CUSTOMER'])
+				? $arResult['BOOLEAN_VALUES_LIST'][$arLead['IS_RETURN_CUSTOMER']]
+				: $arLead['IS_RETURN_CUSTOMER'],
+			'HONORIFIC' => !empty($arResult['HONORIFIC']) && !empty($arLead['HONORIFIC'])
+				? $arResult['HONORIFIC'][$arLead['HONORIFIC']]
+				: '',
 			'STATUS_ID' => CCrmViewHelper::RenderLeadStatusControl(
 				array(
 					'PREFIX' => "{$arResult['GRID_ID']}_PROGRESS_BAR_",
@@ -553,7 +558,8 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 					'CURRENT_ID' => $arLead['~STATUS_ID'],
 					'SERVICE_URL' => '/bitrix/components/bitrix/crm.lead.list/list.ajax.php',
 					'CONVERSION_SCHEME' => isset($arResult['CONVERSION']['SCHEMES']) && isset($arResult['CONVERSION']['SCHEMES'][$arLead['CONVERSION_TYPE_ID']])
-						? $arResult['CONVERSION']['SCHEMES'][$arLead['CONVERSION_TYPE_ID']] : null,
+						? $arResult['CONVERSION']['SCHEMES'][$arLead['CONVERSION_TYPE_ID']]
+						: null,
 					'CAN_CONVERT' => $arResult['CAN_CONVERT'],
 					'CONVERSION_TYPE_ID' => $arLead['CONVERSION_TYPE_ID'],
 					'READ_ONLY' => !(isset($arLead['EDIT']) && $arLead['EDIT'] === true)
@@ -666,13 +672,13 @@ if (!$isInternal
 		}
 		//endregion
 		//region Set Status
-		$statusList = array(array('NAME' => Loc::getMessage('CRM_STATUS_INIT'), 'VALUE' => ''));
+		$statusList = array(array('NAME' => Loc::getMessage('CRM_STATUS_INIT_MSGVER_1'), 'VALUE' => ''));
 		foreach($arResult['STATUS_LIST_WRITE'] as $statusID => $statusName)
 		{
 			$statusList[] = array('NAME' => $statusName, 'VALUE' => $statusID);
 		}
 		$actionList[] = array(
-			'NAME' => Loc::getMessage('CRM_LEAD_SET_STATUS'),
+			'NAME' => Loc::getMessage('CRM_LEAD_SET_STATUS_MSGVER_1'),
 			'VALUE' => 'set_status',
 			'ONCHANGE' => array(
 				array(

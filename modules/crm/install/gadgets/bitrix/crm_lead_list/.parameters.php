@@ -9,7 +9,7 @@ $arParameters = Array(
 	),
 	'USER_PARAMETERS'=> Array(
 		'STATUS_ID' => Array(
-			'NAME' => GetMessage('GD_CRM_COLUMN_STATUS'),
+			'NAME' => GetMessage('GD_CRM_COLUMN_STATUS_MSGVER_1'),
 			'TYPE' => 'LIST',
 			'VALUES' => array('' => '') + CCrmStatus::GetStatusListEx('STATUS'),
 			'MULTIPLE' => 'Y',
@@ -26,7 +26,7 @@ $arParameters = Array(
 			'VALUES' => array(
 				'DATE_CREATE' => GetMessage('GD_CRM_COLUMN_DATE_CREATE'),
 				'DATE_MODIFY' => GetMessage('GD_CRM_COLUMN_DATE_MODIFY'),
-				'STATUS_ID' => GetMessage('GD_CRM_COLUMN_STATUS')
+				'STATUS_ID' => GetMessage('GD_CRM_COLUMN_STATUS_MSGVER_1')
 			),
 			'DEFAULT' => 'DATE_CREATE'
 		),

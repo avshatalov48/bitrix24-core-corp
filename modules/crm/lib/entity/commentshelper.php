@@ -185,4 +185,32 @@ final class CommentsHelper
 
 		return $fields;
 	}
+
+	public static function prepareFieldsFromBizProc(int $entityTypeId, int $entityId, array $fields): array
+	{
+		if (!\CCrmOwnerType::IsDefined($entityTypeId) || $entityId <= 0)
+		{
+			return $fields;
+		}
+
+		$fieldNamesToConvert = self::getFieldsWithFlexibleContentType($entityTypeId);
+		if (empty($fieldNamesToConvert))
+		{
+			return $fields;
+		}
+
+		$contentTypes = FieldContentTypeTable::loadForItem(new ItemIdentifier($entityTypeId, $entityId));
+
+		foreach ($fieldNamesToConvert as $fieldName)
+		{
+			$contentTypeId = $contentTypes[$fieldName] ?? FieldContentTypeTable::getContentTypeIdForAbsentEntry();
+
+			if (!empty($fields[$fieldName]) && is_string($fields[$fieldName]) && $contentTypeId !== \CCrmContentType::BBCode)
+			{
+				$fields[$fieldName] = self::normalizeComment($fields[$fieldName]);
+			}
+		}
+
+		return $fields;
+	}
 }

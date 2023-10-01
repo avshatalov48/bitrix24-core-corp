@@ -1,6 +1,6 @@
 import Item from '../item';
-import {Loc, Tag} from "main.core'";
-import {Zoom as ZoomEditor} from 'crm.zoom';
+import { Loc, Tag } from 'main.core';
+import { Zoom as ZoomEditor } from 'crm.zoom';
 
 export default class Zoom extends Item
 {
@@ -28,14 +28,17 @@ export default class Zoom extends Item
 		return Tag.render`<div class="crm-entity-stream-content-new-detail ui-timeline-zoom-editor --focus --hidden"></div>`;
 	}
 
-	initializeLayout(): void
-	{
-		this.#createEditor();
-	}
-
 	onFocus(e)
 	{
 		this.setFocused(true);
+	}
+
+	onShow()
+	{
+		if (!this.#editor)
+		{
+			this.#createEditor();
+		}
 	}
 
 	#createEditor(): void

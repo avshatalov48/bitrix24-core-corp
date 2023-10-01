@@ -172,6 +172,7 @@ jn.define('layout/ui/fields/base-multiple', (require, exports, module) => {
 		onDeleteField(index)
 		{
 			const value = [...this.getValue()];
+
 			value.splice(index, 1);
 
 			FocusManager

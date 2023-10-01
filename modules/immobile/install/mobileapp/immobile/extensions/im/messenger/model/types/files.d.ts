@@ -24,7 +24,7 @@ export type FilesModelState = {
 	extension: string,
 	icon: string,
 	size: number,
-	image: boolean,
+	image: boolean | object,
 	status: FileStatus,
 	progress: number,
 	authorId: number,

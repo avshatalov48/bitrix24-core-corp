@@ -72,6 +72,10 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 			'RESPONSIBLE_LAST_NAME' => 'RESPONSIBLE.LAST_NAME',
 			'RESPONSIBLE_SECOND_NAME' => 'RESPONSIBLE.SECOND_NAME',
 		],
+		\CCrmOwnerType::AgentContractDocument => [
+			'ID',
+			'TITLE',
+		],
 	];
 
 	protected $documentProvidersMap;
@@ -728,6 +732,10 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 		{
 			return \Bitrix\Catalog\StoreDocumentTable::class;
 		}
+		if ($entityTypeId === \CCrmOwnerType::AgentContractDocument)
+		{
+			return \Bitrix\Catalog\AgentContractTable::class;
+		}
 
 		return '\CCrm'.\CCrmOwnerType::ResolveName($entityTypeId);
 	}
@@ -809,6 +817,20 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 					'filter' => $filter,
 					'limit' => $pageSize,
 					'runtime' => $runtime
+				];
+				if ($pageNumber > 1)
+				{
+					$params['offset'] = ($pageNumber - 1) * $pageSize;
+				}
+
+				$items = $provider::getList($params)->fetchAll();
+			}
+			elseif ($entityTypeId === \CCrmOwnerType::AgentContractDocument)
+			{
+				$params = [
+					'select' => $select,
+					'filter' => $filter,
+					'limit' => $pageSize,
 				];
 				if ($pageNumber > 1)
 				{

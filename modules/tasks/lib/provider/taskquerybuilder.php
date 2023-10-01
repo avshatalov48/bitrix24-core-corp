@@ -562,6 +562,13 @@ class TaskQueryBuilder
 				$this->taskQuery->addSelect('NULL_SORTING');
 				break;
 
+			case 'SORTING_ORDER':
+				$this->query->addOrder('NULL_SORTING', $order);
+				$this->query->addOrder(self::ALIAS_TASK_SORT . '.SORT', $order);
+				$this->taskQuery->addSelect('NULL_SORTING');
+				$this->registerRuntimeField(self::ALIAS_TASK_SORT);
+				break;
+
 			case 'MESSAGE_ID':
 				$this->query->addOrder('MESSAGE_ID', $order);
 				$this->taskQuery->addSelect('MESSAGE_ID');

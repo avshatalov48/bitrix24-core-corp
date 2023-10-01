@@ -29,25 +29,25 @@ $APPLICATION->IncludeComponent(
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.currency.menu',
 	'',
-	array(
-		'PATH_TO_CURRENCY_LIST' => $arResult['PATH_TO_CURRENCY_LIST'],
-		'PATH_TO_CURRENCY_SHOW' => $arResult['PATH_TO_CURRENCY_SHOW'],
-		'PATH_TO_CURRENCY_ADD' => $arResult['PATH_TO_CURRENCY_ADD'],
-		'PATH_TO_CURRENCY_EDIT' => $arResult['PATH_TO_CURRENCY_EDIT'],
-		'CURRENCY_ID' => $arResult['VARIABLES']['currency_id'],
+	[
+		'PATH_TO_CURRENCY_LIST' => $arResult['PATH_TO_CURRENCY_LIST'] ?? null,
+		'PATH_TO_CURRENCY_SHOW' => $arResult['PATH_TO_CURRENCY_SHOW'] ?? null,
+		'PATH_TO_CURRENCY_ADD' => $arResult['PATH_TO_CURRENCY_ADD'] ?? null,
+		'PATH_TO_CURRENCY_EDIT' => $arResult['PATH_TO_CURRENCY_EDIT'] ?? null,
+		'CURRENCY_ID' => $arResult['VARIABLES']['currency_id'] ?? null,
 		'TYPE' => 'list'
-	),
+	],
 	$component
 );
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.currency.list',
 	'',
-	array(
-		'PATH_TO_CURRENCY_LIST' => $arResult['PATH_TO_CURRENCY_LIST'],
-		'PATH_TO_CURRENCY_SHOW' => $arResult['PATH_TO_CURRENCY_SHOW'],
-		'PATH_TO_CURRENCY_ADD' => $arResult['PATH_TO_CURRENCY_ADD'],
-		'PATH_TO_CURRENCY_EDIT' => $arResult['PATH_TO_CURRENCY_EDIT']
-	),
+	[
+		'PATH_TO_CURRENCY_LIST' => $arResult['PATH_TO_CURRENCY_LIST'] ?? null,
+		'PATH_TO_CURRENCY_SHOW' => $arResult['PATH_TO_CURRENCY_SHOW'] ?? null,
+		'PATH_TO_CURRENCY_ADD' => $arResult['PATH_TO_CURRENCY_ADD'] ?? null,
+		'PATH_TO_CURRENCY_EDIT' => $arResult['PATH_TO_CURRENCY_EDIT'] ?? null
+	],
 	$component
 );

@@ -25,8 +25,9 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
-use Bitrix\Tasks\Integration\CRM\Timeline\Bindings;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Tasks\Integration\CRM\Timeline\Bindings;
 use CCrmActivity;
 use CCrmLiveFeed;
 use CCrmLiveFeedEvent;
@@ -409,7 +410,7 @@ final class Task extends Base
 			&& $task->getTaskControl()
 		)
 		{
-			if ($task->getResponsibleId() === $task->getCreatedBy())
+			if ($task->getResponsibleMemberId() === $task->getCreatedByMemberId())
 			{
 				$updateData['STATUS'] = TaskActivityStatus::TASKS_STATE_COMPLETED;
 			}
@@ -772,8 +773,9 @@ final class Task extends Base
 
 		TimelineEntry::deleteByAssociatedEntity(CCrmOwnerType::Activity, $activity['ID']);
 
+		$bindings = $activity['BINDINGS'] ?? [];
 		$commentProvider = new Comment();
-		foreach ($activity['BINDINGS'] as $item)
+		foreach ($bindings as $item)
 		{
 			$slaveActivity = $commentProvider->find(
 				$taskId,
@@ -1157,10 +1159,14 @@ final class Task extends Base
 
 		if (!TaskAccessController::canCompleteResult($taskId, $userId))
 		{
+			$uri = new Uri(TaskPathMaker::getPathMaker($taskId, $userId)->makeEntityPath());
+			$uri->addParams(['RID' => 0]);
+
 			$message = Loc::getMessage('TASKS_TASK_ERROR_REQUIRE_RESULT', [
-				'#TASK_URL#' => TaskPathMaker::getPathMaker($taskId, $userId)->makeEntityPath(),
+				'#TASK_URL#' => $uri->getUri(),
 			]);
 			self::setCompletionDeniedError($message);
+
 			return false;
 		}
 

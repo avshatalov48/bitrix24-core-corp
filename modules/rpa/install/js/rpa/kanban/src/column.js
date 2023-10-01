@@ -466,7 +466,8 @@ export default class Column extends Kanban.Column
 				let style = 'border-color: #' + this.getColor() + ';';
 				if (user.photoSrc)
 				{
-					style += ' background-image: url(' + Text.encode(user.photoSrc) + ');';
+
+					style += ' background-image: url(\'' + Text.encode(encodeURI(user.photoSrc)) + '\');';
 				}
 				else
 				{

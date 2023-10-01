@@ -45,6 +45,11 @@ class LeadDataProvider extends EntityDataProvider implements FactoryOptionable
 		$name = Loc::getMessage("CRM_LEAD_FILTER_{$fieldID}");
 		if($name === null)
 		{
+			$name = Loc::getMessage("CRM_LEAD_FILTER_{$fieldID}_MSGVER_1");
+		}
+
+		if($name === null)
+		{
 			$name = \CCrmLead::GetFieldCaption($fieldID);
 		}
 		if (!$name && ParentFieldManager::isParentFieldName($fieldID))
@@ -475,6 +480,18 @@ class LeadDataProvider extends EntityDataProvider implements FactoryOptionable
 				'partial' => true
 			]
 		);
+
+		$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Lead);
+		if ($factory && $factory->isLastActivityEnabled())
+		{
+			$result['LAST_ACTIVITY_TIME'] = $this->createField(
+				'LAST_ACTIVITY_TIME',
+				[
+					'type' => 'date',
+					'partial' => true,
+				]
+			);
+		}
 
 		return $result;
 	}

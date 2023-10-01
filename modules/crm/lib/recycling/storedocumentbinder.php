@@ -71,7 +71,7 @@ class StoreDocumentBinder extends BaseBinder
 	{
 		if (in_array($associatedEntityTypeID, [\CCrmOwnerType::Contact, \CCrmOwnerType::Company]))
 		{
-			(new Crm\Integration\Catalog\Contractor\ContactCompanyBinding($associatedEntityTypeID))
+			(new Crm\Integration\Catalog\Contractor\StoreDocumentContactCompanyBinding($associatedEntityTypeID))
 				->bindToDocuments($associatedEntityID, $entityIDs);
 		}
 		else

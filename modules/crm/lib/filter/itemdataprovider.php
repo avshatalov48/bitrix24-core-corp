@@ -256,9 +256,9 @@ class ItemDataProvider extends EntityDataProvider
 		if ($this->factory->isLastActivityEnabled())
 		{
 			$fields[Item::FIELD_NAME_LAST_ACTIVITY_TIME] = [
-				'type' => static::PRESET_DATETIME,
+				'type' => static::TYPE_DATE,
 				'displayGrid' => true,
-				'displayFilter' => false,
+				'displayFilter' => true,
 				'defaultGrid' => false,
 				'defaultFilter' => false,
 				'filterOptionPreset' => static::PRESET_DATETIME,

@@ -57,6 +57,8 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.isScrollToNewMessageButtonVisible = false;
 			this.unreadSeparatorAdded = false;
 			this.scrollToFirstUnreadCompleted = false;
+			this.topMessage = null;
+			this.bottomMessage = null;
 
 			this.subscribeEvents();
 		}
@@ -72,7 +74,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			;
 		}
 
-		async onViewAreaMessagesChanged(indexList, messageList)
+		onViewAreaMessagesChanged(indexList, messageList)
 		{
 			if (indexList.includes(0))
 			{
@@ -96,26 +98,28 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				this.emitCustomEvent(EventType.dialog.loadBottomPage);
 			}
 
-			const isDialogVisible = await this.visibilityManager.checkIsDialogVisible(this.dialogId);
-			if (!isDialogVisible)
-			{
-				return;
-			}
-
-			this.emitCustomEvent(
-				EventType.dialog.visibleMessagesChanged,
+			// eslint-disable-next-line promise/catch-or-return
+			this.visibilityManager.checkIsDialogVisible(this.dialogId).then((isDialogVisible) => {
+				if (!isDialogVisible)
 				{
-					indexList,
-					messageList,
-				},
-			);
+					return;
+				}
 
-			if (!this.shouldEmitMessageRead)
-			{
-				return;
-			}
+				this.emitCustomEvent(
+					EventType.dialog.visibleMessagesChanged,
+					{
+						indexList,
+						messageList,
+					},
+				);
 
-			this.readVisibleUnreadMessages(messageList);
+				if (!this.shouldEmitMessageRead)
+				{
+					return;
+				}
+
+				this.readVisibleUnreadMessages(messageList);
+			});
 		}
 
 		/**
@@ -144,9 +148,10 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				return;
 			}
 
-			this.readingMessageId = Number(unreadMessages.shift().id);
+			this.readingMessageId = Number(unreadMessages.at(-1).id);
+			const readingMessageIds = unreadMessages.map((message) => message.id);
 
-			this.emitCustomEvent(EventType.dialog.messageRead, this.readingMessageId);
+			this.emitCustomEvent(EventType.dialog.messageRead, readingMessageIds);
 		}
 
 		onTopReached()
@@ -179,7 +184,10 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		setMessages(messageList)
 		{
 			this.ui.setMessages(messageList);
+
 			this.messagesCount = messageList.length;
+			this.topMessage = messageList[messageList.length - 1];
+			this.bottomMessage = messageList[0];
 
 			this.scrollToFirstUnreadMessage(
 				false,
@@ -224,7 +232,9 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		pushMessages(messageList)
 		{
 			this.ui.pushMessages(messageList);
+
 			this.messagesCount += messageList.length;
+			this.topMessage = messageList[messageList.length - 1];
 		}
 
 		addMessages(messageList)
@@ -232,7 +242,9 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.shouldShowScrollToNewMessagesButton = false;
 
 			this.ui.addMessages(messageList);
+
 			this.messagesCount += messageList.length;
+			this.bottomMessage = messageList[0];
 
 			if (this.messageIndexListOnScreen.includes(0))
 			{
@@ -246,7 +258,11 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 					}
 
 					this.scrollToBottomSmoothly(() => {
-						this.shouldShowScrollToNewMessagesButton = true;
+						// timeout to prevent a race condition between the end of the scroll and viewableMessagesChanged.
+						// If you remove it when adding a message, the scroll down button may start blinking.
+						setTimeout(() => {
+							this.shouldShowScrollToNewMessagesButton = true;
+						}, 300);
 					});
 				});
 
@@ -256,7 +272,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.shouldShowScrollToNewMessagesButton = true;
 		}
 
-		getTopMessage()
+		getTopMessageOnScreen()
 		{
 			const topMessage = this.messageListOnScreen[this.messageListOnScreen.length - 1];
 
@@ -305,6 +321,16 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		showMenuForMessage(message, menu)
 		{
 			this.ui.showMenuForMessage(message, menu);
+		}
+
+		getTopMessage()
+		{
+			return this.topMessage;
+		}
+
+		getBottomMessage()
+		{
+			return this.bottomMessage;
 		}
 
 		/* endregion Message */
@@ -490,15 +516,14 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 								dataSource: {
 									multiple: false,
 									url:
-										MessengerParams.getSiteDir()
-										+ 'mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId='
-										+ MessengerParams.getUserId()
-									,
+										`${MessengerParams.getSiteDir()
+										 }mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${
+										 MessengerParams.getUserId()}`,
 									TABLE_SETTINGS: {
 										searchField: true,
 										showtitle: true,
 										modal: true,
-										name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_DISK_FILES')
+										name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_DISK_FILES'),
 									},
 								},
 							},

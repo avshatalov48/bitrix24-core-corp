@@ -2,19 +2,18 @@
 
 namespace Bitrix\Crm\Integration\BizProc\Document;
 
+use Bitrix\Bizproc\FieldType;
 use Bitrix\Crm;
 use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Bizproc\FieldType;
+use Bitrix\Crm\Service\Operation;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
-use Bitrix\Crm\Service\Operation;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
-use Bitrix\Main\Type\DateTime;
 
 if (!Loader::includeModule('bizproc'))
 {
@@ -359,7 +358,7 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 			$required = \CCrmFieldInfoAttr::isFieldHasAttribute($field, \CCrmFieldInfoAttr::Required);
 			$multiple = \CCrmFieldInfoAttr::isFieldHasAttribute($field, \CCrmFieldInfoAttr::Multiple);
 
-			$entityFields[static::convertFieldId($fieldId)] = [
+			$singleEntityField = [
 				'Name' => static::getFieldName($factory, $fieldId),
 				'Type' => static::resolveBPType($field['TYPE']),
 				'Options' => static::getFieldOptions($field, $factory),
@@ -368,6 +367,17 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 				'Required' => $required,
 				'Multiple' => $multiple,
 			];
+
+			if (
+				$field['TYPE'] === Crm\Field::TYPE_TEXT
+				&& isset($field['VALUE_TYPE'])
+				&& in_array($field['VALUE_TYPE'], [Crm\Field::VALUE_TYPE_HTML, Crm\Field::VALUE_TYPE_BB], true)
+			)
+			{
+				$singleEntityField['ValueContentType'] = $field['VALUE_TYPE'];
+			}
+
+			$entityFields[static::convertFieldId($fieldId)] = $singleEntityField;
 		}
 		static::fitEntityFieldsToInterface($entityFields);
 

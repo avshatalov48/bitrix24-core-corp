@@ -6,6 +6,7 @@ jn.define('im/messenger/controller/sidebar/participants-view', (require, exports
 	const { Item } = require('im/messenger/lib/ui/base/item');
 	const { withPressed } = require('utils/color');
 	const { LoaderItem } = require('im/messenger/lib/ui/base/loader');
+	const { ParticipantManager } = require('im:messenger/controller/participant-manager');
 
 	class SidebarParticipantsView extends LayoutComponent
 	{
@@ -14,6 +15,7 @@ jn.define('im/messenger/controller/sidebar/participants-view', (require, exports
 			super(props);
 			this.state = {
 				participants: props.participants,
+				itemList: [],
 			};
 			this.loader = new LoaderItem({
 				enable: true,
@@ -45,41 +47,49 @@ jn.define('im/messenger/controller/sidebar/participants-view', (require, exports
 
 		renderListView()
 		{
-			const items = this.buildItems();
+			this.buildItems();
 			const platform = Application.getPlatform();
 
 			return ListView({
-				ref: (ref) => this.listViewRef = ref,
+				ref: (ref) => {
+					if (ref)
+					{
+						this.listViewRef = ref;
+					}
+				},
 				style: {
 					marginTop: 12,
 					flexDirection: 'column',
 					flex: 1,
 				},
-				actionsForItem: (section, index) => {
-					if (this.state.participants.length < index) // for empty row
-					{
-						return null;
-					}
-
-					return { right: this.getActionArrayRight() };
-				},
-				data: [{ items }],
+				data: [{ items: this.state.itemList }],
 				renderItem: (item) => {
 					if (item.type === 'empty')
 					{
 						return this.getEmptyRow();
 					}
+					// this check here while in contest menu is one actions - remove participants
+					const isEllipsis = (!item.isYou && this.props.permissions.isCanRemoveParticipants);
 
-					return new Item({ data: item, size: 'M', isCustomStyle: true });
+					return new Item({
+						data: item,
+						size: 'M',
+						isCustomStyle: true,
+						nextTo: false,
+						isEllipsis,
+						onLongClick: () => {
+							this.onLongClickItem(item.key, item.isYou);
+						},
+						onEllipsisClick: () => {
+							this.onLongClickItem(item.key, item.isYou);
+						},
+					});
 				},
 				// onRefresh: () => {
 				// 	Logger.log('Participants.view.onRefresh');
 				// 	this.setState({ isRefreshing: true });
 				// 	this.props.parentEmitter.emit('updateParticipants');
 				// }, // TODO this is disabled as the bootloader works crookedly on IOS and list refresh while is not need
-				onActionClick: (section, index) => {
-					this.onClickActionDelete(section, index);
-				},
 				onLoadMore: platform === 'ios' ? this.iosOnLoadMore.bind(this) : this.androidOnLoadMore.bind(this),
 				renderLoadMore: platform === 'ios' ? this.iosRenderLoadMore.bind(this) : this.androidRenderLoadMore.bind(this),
 			});
@@ -94,6 +104,7 @@ jn.define('im/messenger/controller/sidebar/participants-view', (require, exports
 					type: 'item',
 					key: index.toString(),
 					title: item.title,
+					isYou: item.isYou,
 					isYouTitle: item.isYouTitle,
 					subtitle: item.desc,
 					avatarUri: item.imageUrl,
@@ -126,7 +137,7 @@ jn.define('im/messenger/controller/sidebar/participants-view', (require, exports
 							flexDirection: 'row',
 							borderBottomWidth: 1,
 							borderBottomColor: '#e9e9e9',
-							flexGrow: 2,
+							flex: 1,
 							alignItems: 'center',
 							marginBottom: 6,
 							marginTop: 6,
@@ -135,8 +146,8 @@ jn.define('im/messenger/controller/sidebar/participants-view', (require, exports
 						},
 						itemInfo: {
 							mainContainer: {
-								flexGrow: 2,
-								maxWidth: '80%',
+								flex: 1,
+								marginRight: '5%',
 							},
 							title: {
 								marginBottom: 4,
@@ -168,7 +179,7 @@ jn.define('im/messenger/controller/sidebar/participants-view', (require, exports
 				key: (Number(doneItems.at(-1)?.key || 0) + 1).toString(),
 			});
 
-			return doneItems;
+			this.state.itemList = doneItems;
 		}
 
 		/**
@@ -227,52 +238,75 @@ jn.define('im/messenger/controller/sidebar/participants-view', (require, exports
 				position: { bottom: 25 },
 				onClick: () => this.onClickBtnAdd(),
 				ref: (ref) => this.floatingButtonRef = ref,
-				onLongClick: () => this.onLongClickBtnAdd(),
 			});
-		}
-
-		/**
-		 * @desc Returns array actions for build right list context menu
-		 * @return {Array<object|null>}
-		 * @private
-		 */
-		getActionArrayRight()
-		{
-			const { permissions: { isCanRemoveParticipants }, loc } = this.props;
-
-			return [
-				isCanRemoveParticipants
-					? {
-						color: '#FF799C',
-						title: loc.removeParticipants,
-						icon: 'action_delete',
-						key: 'key_action_delete',
-					}
-					: null,
-			];
 		}
 
 		onClickBtnAdd()
 		{
-			Logger.log('onClick');
 			this.props.parentEmitter.emit('clickBtnParticipantsAdd');
 		}
 
-		onClickActionDelete(section, index)
+		/**
+		 * @desc Handler remove participant
+		 * @param {object} event
+		 * @param {string} event.key  - string key item
+		 * @void
+		 * @private
+		 */
+		onClickRemoveParticipant(event)
 		{
-			const correctIndex = Application.getPlatform() === 'ios' ? index : index - 1;
-
-			const deletedUser = this.state.participants.find((el, i) => i === correctIndex);
-			const onComplete = () => {
-				this.props.parentEmitter.emit('clickBtnParticipantsDelete', [deletedUser]);
-			};
-
-			this.listViewRef.deleteRow(section, correctIndex, 'automatic', onComplete);
+			const { key } = event;
+			const itemPos = this.listViewRef.getElementPosition(key);
+			this.removeParticipant(itemPos.index, itemPos.section);
 		}
 
-		onLongClickBtnAdd()
+		/**
+		 * @desc Remove participant
+		 * @param {number} index
+		 * @param {number} section
+		 * @void
+		 * @private
+		 */
+		removeParticipant(index, section)
 		{
-			Logger.log('onLongClick');
+			const deletedUser = this.state.participants.find((el, i) => i === index);
+			const onComplete = () => {
+				const itemList = this.state.itemList.filter((item) => item.key !== String(index));
+				const participants = this.state.participants.filter((el, i) => i !== index);
+
+				if (Application.getPlatform() === 'ios')
+				{
+					this.setState({ itemList, participants });
+					// FIXME this setState() need only IOS. Without render - deleted item is live on list
+				}
+
+				this.props.parentEmitter.emit('clickBtnParticipantsDelete', [deletedUser]);
+			};
+			this.listViewRef.deleteRow(section, index, 'automatic', onComplete);
+		}
+
+		/**
+		 * @desc Handler long click item
+		 * @param {string} key
+		 * @param {boolean} isYou
+		 * @void
+		 * @private
+		 */
+		onLongClickItem(key, isYou)
+		{
+			if (!this.props.permissions.isCanRemoveParticipants || isYou)
+			{
+				return false;
+			}
+
+			const actions = [
+				'remove',
+			];
+			const callbacks = {
+				remove: this.onClickRemoveParticipant.bind(this, { key }),
+			};
+
+			return ParticipantManager.open({ actions, callbacks });
 		}
 
 		androidOnLoadMore()

@@ -1,9 +1,8 @@
 type ChatTitleOptions = {
-	showItsYou?: boolean
+    showItsYou?: boolean
 }
 
 export type ChatTitleTileParams = {
-	text: string,
-	detailText: string,
+    text: string,
+    detailText: string,
 }
-

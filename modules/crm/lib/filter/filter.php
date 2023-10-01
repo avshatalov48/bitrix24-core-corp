@@ -113,22 +113,22 @@ class Filter extends \Bitrix\Main\Filter\Filter
 		if (in_array(PhaseSemantics::PROCESS, $requestFilter[$fieldStageSemantic], true))
 		{
 			$semanticFilter[] = [
-				'STAGE.SEMANTICS' => '',
+				'=STAGE.SEMANTICS' => '',
 			];
 			$semanticFilter[] = [
-				'STAGE.SEMANTICS' => PhaseSemantics::PROCESS,
+				'=STAGE.SEMANTICS' => PhaseSemantics::PROCESS,
 			];
 		}
 		if (in_array(PhaseSemantics::SUCCESS, $requestFilter[$fieldStageSemantic], true))
 		{
 			$semanticFilter[] = [
-				'STAGE.SEMANTICS' => PhaseSemantics::SUCCESS,
+				'=STAGE.SEMANTICS' => PhaseSemantics::SUCCESS,
 			];
 		}
 		if (in_array(PhaseSemantics::FAILURE, $requestFilter[$fieldStageSemantic], true))
 		{
 			$semanticFilter[] = [
-				'STAGE.SEMANTICS' => PhaseSemantics::FAILURE,
+				'=STAGE.SEMANTICS' => PhaseSemantics::FAILURE,
 			];
 		}
 

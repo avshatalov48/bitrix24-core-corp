@@ -41,7 +41,7 @@ BX.CRM.Kanban.DropZone.prototype = {
 			)
 		)
 		{
-			this.getGrid().getPopupCancel(BX.message("CRM_KANBAN_MASS_CONVERT_DISABLE")).show();
+			this.getGrid().getPopupCancel(BX.message("CRM_KANBAN_MASS_CONVERT_DISABLE_MSGVER_1")).show();
 
 			if (this.getGrid().getChecked().length > 0)
 			{

@@ -25,6 +25,8 @@ export class Form
 			['sectionTitle', 'ui-title-6'],
 			['controlContainer', 'salescenter-control-container'],
 			['controlRequired', 'salescenter-control-required'],
+			['subtextContainer', 'salescenter-subtext-container'],
+			['subtextLink', 'ui-link ui-link-dashed'],
 			['controlTitle', 'ui-ctl-label-text'],
 			['controlInner', 'ui-ctl ui-ctl-w100'],
 			['controlAfterIcon', 'ui-ctl-after-icon'],
@@ -102,17 +104,17 @@ export class Form
 	renderField(field)
 	{
 		let result = '';
-		if(!Type.isObject(field))
+		if (!Type.isObject(field))
 		{
 			return result;
 		}
 
-		if(!field.html)
+		if (!field.html)
 		{
 			field.html = this.renderFieldInput(field);
 		}
 
-		if(Type.isDomNode(field.html))
+		if (Type.isDomNode(field.html))
 		{
 			field.input = field.html;
 			field.html = field.html.innerHTML;
@@ -124,27 +126,39 @@ export class Form
 
 		let label = '';
 		let hint = '';
-		if(field.hint)
+		if (field.hint)
 		{
 			hint = Tag.render`<span class="ui-ctl-after" data-hint="${Text.encode(field.hint)}"></span>`;
 		}
 
 		let title = '';
-		if(field.title)
+		if (field.title)
 		{
-			title = `<div class="${this.classes.get('controlTitle')} ${field.required ? this.classes.get('controlRequired') : ''}">${Text.encode(field.title)}</div>`;
+			title = Tag.render`<div class="${this.classes.get('controlTitle')} ${field.required ? this.classes.get('controlRequired') : ''}">${Text.encode(field.title)}</div>`;
 		}
 
-		if(field.html.indexOf('type="checkbox"') > 0)
+		let subtextLink = '';
+		if (field.subtextLinkOnClick && field.subtextLinkText)
+		{
+			subtextLink = Tag.render`<a onclick="${Text.encode(field.subtextLinkOnClick)}" class="${this.classes.get('subtextLink')}">${Text.encode(field.subtextLinkText)}</a>`;
+		}
+
+		let subtext = '';
+		if (field.subtext)
+		{
+			subtext = Tag.render`<div class="${this.classes.get('subtextContainer')}">${Text.encode(field.subtext)} ${subtextLink}</div>`;
+		}
+
+		if (field.html.indexOf('type="checkbox"') > 0)
 		{
 			label = Tag.render`<label class="${this.classes.get('controlInner')} ${this.classes.get('controlCheckbox')}">${field.input}${field.title ? '<div class="' + this.classes.get('controlCheckboxLabel') + '">' + Text.encode(field.title) + '</div>' : ''}${hint}</label>`;
 		}
-		else if(field.type === 'file')
+		else if (field.type === 'file')
 		{
 			let hiddenFileInput = '';
-			if(field.addHidden === true)
+			if (field.addHidden === true)
 			{
-				let hiddenFileField = {
+				const hiddenFileField = {
 					name: field.name,
 					type: 'hidden',
 					value: field.value,
@@ -159,9 +173,10 @@ export class Form
 				</label>
 				<span></span>
 				${hiddenFileInput}
+				${subtext}
 			`;
 		}
-		else if(field.type === 'list' || field.html.indexOf('select') > 0)
+		else if (field.type === 'list' || field.html.indexOf('select') > 0)
 		{
 			label = Tag.render`
 				${title}
@@ -169,6 +184,7 @@ export class Form
 					<div class="${this.classes.get('controlSelectIcon')}"></div>
 					${field.input}
 				</div>
+				${subtext}
 			`;
 		}
 		else
@@ -178,6 +194,7 @@ export class Form
 				<div class="${this.classes.get('controlInner')}${hint ? ' ' + this.classes.get('controlAfterIcon') : ''}">
 					${field.input}${hint}
 				</div>
+				${subtext}
 			`;
 		}
 

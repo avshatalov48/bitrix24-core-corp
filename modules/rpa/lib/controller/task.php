@@ -52,7 +52,8 @@ class Task extends Base
 		$updatedRobot = null;
 		$documentType = \Bitrix\Rpa\Integration\Bizproc\Document\Item::makeComplexType($typeId);
 
-		$user = reset(\CBPHelper::UsersStringToArray($userValue, $documentType, $errors));
+		$errors = [];
+		$user = current(\CBPHelper::UsersStringToArray($userValue, $documentType, $errors));
 
 		if (!$user)
 		{

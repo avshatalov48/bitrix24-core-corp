@@ -1894,7 +1894,7 @@ class Message extends Controller
 
 	protected function getSenderList(): array
 	{
-		$mailboxes = \Bitrix\Main\Mail\Sender::prepareUserMailboxes();
+		$mailboxes = \Bitrix\Main\Mail\Sender::prepareUserMailboxes(null, true);
 		$senders = [];
 
 		foreach ($mailboxes as $sender)

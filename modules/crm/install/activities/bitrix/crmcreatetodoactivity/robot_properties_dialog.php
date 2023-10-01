@@ -51,8 +51,8 @@ $time = ($timeInterval['h'] > 0 ? $timeInterval['h'] : 12) . ':' . (max($timeInt
 </span>
 	<?= $dialog->renderFieldControl($map['Responsible']) ?>
 </div>
+<?php if (isset($map['AutoComplete'])):?>
 <div class="bizproc-automation-popup-checkbox">
-
 	<div class="bizproc-automation-popup-checkbox-item">
 		<label class="bizproc-automation-popup-chk-label">
 			<input type="checkbox"
@@ -67,3 +67,4 @@ $time = ($timeInterval['h'] > 0 ? $timeInterval['h'] : 12) . ':' . (max($timeInt
 		</label>
 	</div>
 </div>
+<?php endif;

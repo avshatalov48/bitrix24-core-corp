@@ -491,6 +491,10 @@ abstract class CCrmReportHelperBase extends CReportHelper
 				$result[$phraseKey] = $fieldTitle;
 			}
 		}
+		$result['CRM_LEAD_ENTITY_STATUS_ID_FIELD'] = CCrmLead::GetFieldCaption('STATUS_ID');
+		$result['CRM_LEAD_ENTITY_STATUS_DESCRIPTION_FIELD'] = CCrmLead::GetFieldCaption('STATUS_DESCRIPTION');
+		$result['REPORT_crm_lead_COLUMN_TREE_STATUS_SUB'] = Main\Localization\Loc::getMessage('REPORT_crm_COLUMN_TREE_STAGE_SUB');
+		$result['REPORT_crm_LEAD_BY.STATUS_BY.STATUS_ID'] = CCrmLead::GetFieldCaption('STATUS_ID');
 
 		return $result;
 	}
@@ -3296,8 +3300,8 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 					'settings' => unserialize('a:10:{s:6:"entity";s:15:"Bitrix\Crm\Lead";s:6:"period";a:2:{s:4:"type";s:5:"month";s:5:"value";N;}s:6:"select";a:8:{i:3;a:2:{s:4:"name";s:22:"ASSIGNED_BY.SHORT_NAME";s:5:"alias";s:0:"";}i:4;a:3:{s:4:"name";s:2:"ID";s:5:"alias";s:0:"";s:4:"aggr";s:14:"COUNT_DISTINCT";}i:5;a:4:{s:4:"name";s:2:"ID";s:5:"alias";s:0:"";s:4:"aggr";s:14:"COUNT_DISTINCT";s:5:"prcnt";s:11:"self_column";}i:6;a:3:{s:4:"name";s:7:"IS_WORK";s:5:"alias";s:0:"";s:4:"aggr";s:3:"SUM";}i:7;a:3:{s:4:"name";s:10:"IS_CONVERT";s:5:"alias";s:0:"";s:4:"aggr";s:3:"SUM";}i:8;a:4:{s:4:"name";s:10:"IS_CONVERT";s:5:"alias";s:0:"";s:4:"aggr";s:3:"SUM";s:5:"prcnt";s:11:"self_column";}i:9;a:3:{s:4:"name";s:9:"IS_REJECT";s:5:"alias";s:0:"";s:4:"aggr";s:3:"SUM";}i:10;a:4:{s:4:"name";s:9:"IS_REJECT";s:5:"alias";s:0:"";s:4:"aggr";s:3:"SUM";s:5:"prcnt";s:11:"self_column";}}s:6:"filter";a:1:{i:0;a:3:{i:0;a:5:{s:4:"type";s:5:"field";s:4:"name";s:11:"ASSIGNED_BY";s:7:"compare";s:5:"EQUAL";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}i:1;a:5:{s:4:"type";s:5:"field";s:4:"name";s:9:"SOURCE_ID";s:7:"compare";s:5:"EQUAL";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}s:5:"LOGIC";s:3:"AND";}}s:4:"sort";i:3;s:9:"sort_type";s:3:"ASC";s:5:"limit";N;s:12:"red_neg_vals";b:0;s:13:"grouping_mode";b:0;s:5:"chart";a:4:{s:7:"display";b:1;s:4:"type";s:3:"bar";s:8:"x_column";i:3;s:9:"y_columns";a:3:{i:0;i:6;i:1;i:9;i:2;i:7;}}}', ['allowed_classes' => false])
 				),
 				array(
-					'title' => GetMessage('CRM_REPORT_DEFAULT_LEADS_BY_STATUS'),
-					'description' => GetMessage('CRM_REPORT_DEFAULT_LEADS_BY_STATUS_DESCR'),
+					'title' => GetMessage('CRM_REPORT_DEFAULT_LEADS_BY_STATUS_MSGVER_1'),
+					'description' => GetMessage('CRM_REPORT_DEFAULT_LEADS_BY_STATUS_DESCR_MSGVER_1'),
 					'mark_default' => 2,
 					'settings' => unserialize('a:10:{s:6:"entity";s:15:"Bitrix\Crm\Lead";s:6:"period";a:2:{s:4:"type";s:5:"month";s:5:"value";N;}s:6:"select";a:5:{i:4;a:1:{s:4:"name";s:9:"STATUS_ID";}i:5;a:3:{s:4:"name";s:2:"ID";s:5:"alias";s:0:"";s:4:"aggr";s:14:"COUNT_DISTINCT";}i:6;a:4:{s:4:"name";s:2:"ID";s:5:"alias";s:0:"";s:4:"aggr";s:14:"COUNT_DISTINCT";s:5:"prcnt";s:11:"self_column";}i:7;a:3:{s:4:"name";s:11:"OPPORTUNITY";s:5:"alias";s:0:"";s:4:"aggr";s:3:"SUM";}i:8;a:4:{s:4:"name";s:11:"OPPORTUNITY";s:5:"alias";s:0:"";s:4:"aggr";s:3:"SUM";s:5:"prcnt";s:11:"self_column";}}s:6:"filter";a:1:{i:0;a:3:{i:0;a:5:{s:4:"type";s:5:"field";s:4:"name";s:11:"ASSIGNED_BY";s:7:"compare";s:5:"EQUAL";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}i:1;a:5:{s:4:"type";s:5:"field";s:4:"name";s:9:"SOURCE_ID";s:7:"compare";s:5:"EQUAL";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}s:5:"LOGIC";s:3:"AND";}}s:4:"sort";i:4;s:9:"sort_type";s:3:"ASC";s:5:"limit";N;s:12:"red_neg_vals";b:0;s:13:"grouping_mode";b:0;s:5:"chart";a:4:{s:7:"display";b:1;s:4:"type";s:3:"bar";s:8:"x_column";i:4;s:9:"y_columns";a:1:{i:0;i:5;}}}', ['allowed_classes' => false])
 				),

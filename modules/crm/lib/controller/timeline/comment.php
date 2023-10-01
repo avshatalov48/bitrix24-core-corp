@@ -4,6 +4,9 @@ namespace Bitrix\Crm\Controller\Timeline;
 
 use Bitrix\Crm\Controller\Base;
 use Bitrix\Crm\Controller\ErrorCode;
+use Bitrix\Crm\FileUploader\CommentUploaderController;
+use Bitrix\Crm\Integration\Disk\HiddenStorage;
+use Bitrix\Crm\Integration\UI\FileUploader;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Timeline\CommentController;
@@ -13,9 +16,11 @@ use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
 use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use Bitrix\Crm\Timeline\TimelineType;
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\File;
 use Bitrix\Disk\Uf\FileUserType;
 use Bitrix\Main;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use CCrmOwnerType;
 use CRestUtil;
 
@@ -111,7 +116,7 @@ class Comment extends Base
 	 */
 	public function addAction(array $fields): ?int
 	{
-		[$ownerId, $ownerTypeId, $content, $authorId, $filesList] = $this->fetchFieldsToAdd($fields);
+		[$ownerId, $ownerTypeId, $content, $authorId, $filesList, $fileTokensOrId] = $this->fetchFieldsToAdd($fields);
 		if (!$this->assertValidOwner($ownerId, $ownerTypeId))
 		{
 			return null;
@@ -120,6 +125,11 @@ class Comment extends Base
 		if (!$this->assertValidCommentContent($content))
 		{
 			return null;
+		}
+
+		if (!empty($fileTokensOrId) && $this->getScope() === static::SCOPE_AJAX)
+		{
+			$filesList = $this->saveFilesToStorage($ownerTypeId, $ownerId, $fileTokensOrId);
 		}
 
 		return $this->add($ownerTypeId, $ownerId, $content, $filesList, $authorId);
@@ -148,13 +158,14 @@ class Comment extends Base
 		{
 			[$ownerId, $ownerTypeId] = $this->detectOwnerIds($id);
 		}
-		
+
 		if (!$this->assertValidOwner($ownerId, $ownerTypeId))
 		{
 			return null;
 		}
 
-		[$content, $filesList] = $this->fetchFieldsToUpdate($fields);
+		$params = compact('id', 'ownerTypeId', 'ownerId');
+		[$content, $filesList] = $this->fetchFieldsToUpdate($fields, $params);
 
 		if (!$this->assertValidCommentContent($content))
 		{
@@ -170,6 +181,128 @@ class Comment extends Base
 		}
 
 		return $this->update($id, $ownerTypeId, $ownerId, $content, $filesList, $bindings);
+	}
+
+	public function updateFilesAction(int $id, array $files, int $ownerTypeId, int $ownerId): ?array
+	{
+		if (!$this->assertValidCommentRecord($id))
+		{
+			return null;
+		}
+
+		if (!$this->assertValidOwner($ownerId, $ownerTypeId))
+		{
+			return null;
+		}
+
+		[$isBindingsExist, $bindings] = $this->detectBindings($id, $ownerId, $ownerTypeId);
+		if (!$isBindingsExist)
+		{
+			$this->addError(ErrorCode::getNotFoundError());
+
+			return null;
+		}
+
+		$filesList = $this->saveFilesToStorage($ownerTypeId, $ownerId, $files, $id);
+
+		$entity = $this->load($id);
+		$content = ($entity ? $entity->getComment() : null);
+
+		$commentId = $this->update($id, $ownerTypeId, $ownerId, $content, $filesList, $bindings);
+
+		return $commentId ? ['id' => $commentId] : null;
+	}
+
+	private function saveFilesToStorage(int $ownerTypeId, int $ownerId, array $fileUploaderIds, ?int $commentId = null): array
+	{
+		if (!Loader::includeModule('disk'))
+		{
+			$this->addError(new Error('"disk" module is required.'));
+
+			return [];
+		}
+
+		$idsOfNewFiles = $this->prepareFileUploaderIds($fileUploaderIds);
+
+		if (empty($idsOfNewFiles))
+		{
+			return [];
+		}
+
+		$idsOfNewFiles = array_combine($idsOfNewFiles, $idsOfNewFiles);
+
+		if ($commentId)
+		{
+			$currentFiles = CommentController::getFiles($commentId, $ownerId, $ownerTypeId);
+			$currentIds = [];
+			foreach ($currentFiles as $currentFile)
+			{
+				$currentIds[$currentFile['FILE_ID']] = $currentFile['ID'];
+			}
+		}
+		else
+		{
+			$currentIds = [];
+		}
+
+		$hiddenStorage = (new HiddenStorage())->setSecurityContextOptions([
+			'entityTypeId' => $ownerTypeId,
+			'entityId' => $ownerId,
+		]);
+
+		$unchangedFileIds = [];
+		if (!empty($currentIds))
+		{
+			$unchangedFileIds = array_intersect_key($currentIds, $idsOfNewFiles);
+			$idsToRemove = array_diff_key($currentIds, $unchangedFileIds);
+			if (!empty($idsToRemove))
+			{
+				$hiddenStorage->deleteFiles(array_values($idsToRemove));
+			}
+		}
+
+		$uploaderController = new CommentUploaderController([
+			'entityTypeId' => $ownerTypeId,
+			'entityId' => $ownerId,
+		]);
+
+		$fileUploader = new FileUploader($uploaderController);
+		$fileIds = $fileUploader->getPendingFiles($idsOfNewFiles);
+		$hiddenStorageFiles = $hiddenStorage->addFilesToFolder(
+			$fileIds,
+			HiddenStorage::FOLDER_CODE_ACTIVITY
+		);
+		$hiddenStorageFileIds = array_map(
+			static fn(File $file) => FileUserType::NEW_FILE_PREFIX . $file->getId(),
+			$hiddenStorageFiles
+		);
+		$fileUploader->makePersistentFiles($idsOfNewFiles);
+
+		return array_merge($unchangedFileIds, $hiddenStorageFileIds);
+	}
+
+	/**
+	 * @todo get rid of code duplication with saveFilesToStorage method from Bitrix\Crm\Controller\Activity\ToDo
+	 */
+	private function prepareFileUploaderIds(array $fileUploaderIds): array
+	{
+		return array_values(
+			array_unique(
+				array_filter(
+					array_map(static function($item) {
+						if (is_numeric($item))
+						{
+							return (int) $item;
+						}
+
+						if (is_string($item))
+						{
+							return $item;
+						}
+					}, $fileUploaderIds)
+				)
+			)
+		);
 	}
 
 	/**
@@ -477,6 +610,7 @@ class Comment extends Base
 		$loadedFiles = isset($fields['FILES']) && is_array($fields['FILES'])
 			? $fields['FILES']
 			: [];
+
 		$filesList = $this->fetchFileIds($loadedFiles, $authorId);
 		if (empty($filesList))
 		{
@@ -487,10 +621,12 @@ class Comment extends Base
 
 		$filesList = array_values(array_filter($filesList));
 
-		return [$ownerId, $ownerTypeId, $content, $authorId, $filesList];
+		$fileTokensOrId = array_filter($loadedFiles, static fn($item) => is_numeric($item) || is_string($item));
+
+		return [$ownerId, $ownerTypeId, $content, $authorId, $filesList, $fileTokensOrId];
 	}
 
-	private function fetchFieldsToUpdate(array $fields): array
+	private function fetchFieldsToUpdate(array $fields, array $params): array
 	{
 		$content = trim((string)($fields['COMMENT'] ?? ''));
 
@@ -506,6 +642,17 @@ class Comment extends Base
 			$filesList = isset($fields['ATTACHMENTS']) && is_array($fields['ATTACHMENTS'])
 				? $fields['ATTACHMENTS']
 				: [];
+		}
+
+		if (!isset($fields['ATTACHMENTS']) && !isset($fields['FILES']))
+		{
+			$filesList = array_column(
+				CommentController::getFiles(
+					$params['id'],
+					$params['ownerId'],
+					$params['ownerTypeId']
+				), 'ID'
+			);
 		}
 
 		$filesList = array_values(array_filter($filesList));

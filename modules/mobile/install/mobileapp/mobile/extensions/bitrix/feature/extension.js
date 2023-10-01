@@ -40,6 +40,11 @@ jn.define('feature', (require, exports, module) => {
 			return minApiVersion(49, 'isReceivePaymentSupported');
 		}
 
+		static isGeoPositionSupported()
+		{
+			return minApiVersion(51, 'isGeoPositionSupported');
+		}
+
 		/**
 		 * Some devices will automatically show notification, when you copy something to clipboard,
 		 * so you don't have to show it manually.

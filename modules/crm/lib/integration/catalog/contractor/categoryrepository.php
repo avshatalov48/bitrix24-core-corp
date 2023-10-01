@@ -102,43 +102,27 @@ class CategoryRepository
 			return null;
 		}
 
-		$sqlHelper = Application::getConnection()->getSqlHelper();
+		$connection = \Bitrix\Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
 
-		Application::getConnection()->queryExecute(sprintf(
-			'
-			INSERT INTO %s (
-				`CODE`,
-				`IS_SYSTEM`,
-				`ENTITY_TYPE_ID`,
-				`SORT`,
-				`CREATED_DATE`,
-				`SETTINGS`
-			)
-			VALUES (
-				%s,
-			    %s,
-			    %d,
-			    %d,
-			    NOW(),
-			    %s
-			)
-			ON DUPLICATE KEY UPDATE
-			    IS_SYSTEM = VALUES(IS_SYSTEM),
-				ENTITY_TYPE_ID = VALUES(ENTITY_TYPE_ID),
-				SORT = VALUES(SORT),
-				SETTINGS = VALUES(SETTINGS)
-			',
-			$sqlHelper->quote(ItemCategoryTable::getTableName()),
-			$sqlHelper->convertToDbString($code),
-			$sqlHelper->convertToDbString('Y'),
-			$sqlHelper->convertToDbInteger($entityTypeId),
-			$sqlHelper->convertToDbInteger(500),
-			$sqlHelper->convertToDbString(Json::encode([
+		$update = [
+			'IS_SYSTEM' => 'Y',
+			'ENTITY_TYPE_ID' => $entityTypeId,
+			'SORT' => 500,
+			'SETTINGS' => Json::encode([
 				'disabledFieldNames' => self::getDisabledFieldsByEntityTypeId($entityTypeId),
 				'isTrackingEnabled' => false,
 				'uiSettings' => self::getUISettingsByEntityTypeId($entityTypeId),
-			]))
-		));
+			]),
+		];
+		$insert = $update;
+		$insert['CODE'] = $code;
+		$insert['NAME'] = '';
+		$merge = $helper->prepareMerge(ItemCategoryTable::getTableName(), ['CODE'], $insert, $update);
+		if ($merge[0])
+		{
+			$connection->query($merge[0]);
+		}
 
 		$result = self::getByEntityTypeId($entityTypeId);
 		if ($result)

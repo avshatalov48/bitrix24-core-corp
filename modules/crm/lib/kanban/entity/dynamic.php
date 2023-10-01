@@ -231,6 +231,12 @@ class Dynamic extends Kanban\Entity
 			ItemDataProvider::processStageSemanticFilter($filter, $filter);
 		}
 		unset($filter[ItemDataProvider::FIELD_STAGE_SEMANTIC]);
+		$stageIdFieldName = $this->factory->getEntityFieldNameByMap(Item::FIELD_NAME_STAGE_ID);
+		if (isset($filter[$stageIdFieldName]))
+		{
+			$filter['=' . $stageIdFieldName] = $filter[$stageIdFieldName];
+			unset($filter[$stageIdFieldName]);
+		}
 		$parameters['filter'] = $filter;
 		$data = [];
 		$items = $this->factory->getItemsFilteredByPermissions($parameters);

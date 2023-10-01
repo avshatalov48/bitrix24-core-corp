@@ -1,17 +1,18 @@
-import {Vue} from 'ui.vue';
-import {VuexBuilder} from 'ui.vue.vuex';
-import {rest as Rest} from 'rest.client';
-import {Manager} from 'salescenter.manager';
-import {Loader} from 'main.loader';
-import {Type, Text, Loc, ajax as Ajax, Event, Tag} from 'main.core';
-import {EventEmitter} from 'main.core.events';
-import {MenuManager, Popup} from 'main.popup';
+import { Vue } from 'ui.vue';
+import { VuexBuilder } from 'ui.vue.vuex';
+import { rest as Rest } from 'rest.client';
+import { Manager } from 'salescenter.manager';
+import { Loader } from 'main.loader';
+import { Type, Text, Loc, ajax as Ajax, Event, Tag } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { MenuManager, Popup } from 'main.popup';
 import 'ui.notification';
 import 'ui.design-tokens';
 import 'ui.fonts.opensans';
-import {ApplicationModel} from './models/application';
-import {OrderCreationModel} from './models/ordercreation';
-import {DocumentSelectorModel} from './models/document-selector';
+import { ApplicationModel } from './models/application';
+import { OrderCreationModel } from './models/ordercreation';
+import { DocumentSelectorModel } from './models/document-selector';
+import { ContextDictionary } from './const/context-dictionary';
 import Chat from './chat';
 import Deal from './deal';
 import './css/component.css';
@@ -151,7 +152,7 @@ export class App
 		}
 		else if(this.sessionId && this.dialogId)
 		{
-			this.context = 'imopenlines_app';
+			this.context = ContextDictionary.imOpenlines;
 		}
 
 		if(Type.isBoolean(options.isPaymentsLimitReached))
@@ -575,7 +576,7 @@ export class App
 			this.slider.data.set('action', 'sendPage');
 			this.slider.data.set('page', page);
 			this.slider.data.set('pageId', pageId);
-			if(this.context === 'sms')
+			if(this.context === ContextDictionary.sms)
 			{
 				this.startProgress();
 				BX.Salescenter.Manager.addAnalyticAction({
@@ -891,7 +892,7 @@ export class App
 
 		this.startProgress(buttonEvent);
 
-		let data = {
+		const data = {
 			dialogId: this.dialogId,
 			sendingMethod: this.sendingMethod,
 			sendingMethodDesc: this.sendingMethodDesc,
@@ -900,6 +901,7 @@ export class App
 			ownerTypeId: this.ownerTypeId,
 			orderId: this.orderId,
 			ownerId: this.ownerId,
+			mode: this.options.mode,
 			skipPublicMessage,
 			deliveryId: this.store.getters['orderCreation/getDeliveryId'],
 			deliveryPrice: this.store.getters['orderCreation/getDelivery'],
@@ -935,7 +937,7 @@ export class App
 				basketItems: this.store.getters['orderCreation/getBasket'](),
 				options: data,
 			},
-			analyticsLabel: (this.context === 'deal') ? 'salescenterCreatePaymentSms' : 'salescenterCreatePayment',
+			analyticsLabel: (this.context === ContextDictionary.deal) ? 'salescenterCreatePaymentSms' : 'salescenterCreatePayment',
 			getParameters: {
 				dialogId: this.dialogId,
 				context: this.context,
@@ -1118,7 +1120,7 @@ export class App
 
 	isPaymentMode(): boolean
 	{
-		return this.context === 'deal';
+		return this.context === ContextDictionary.deal || this.context === ContextDictionary.smartInvoice;
 	}
 }
 

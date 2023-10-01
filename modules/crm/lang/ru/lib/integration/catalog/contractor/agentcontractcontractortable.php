@@ -1,0 +1,5 @@
+<?php
+$MESS['AGENT_CONTRACT_CONTRACTOR_ENTITY_ID_FIELD'] = 'Идентификатор';
+$MESS['AGENT_CONTRACT_CONTRACTOR_ENTITY_CONTRACT_ID_FIELD'] = 'Идентификатор агентской схемы';
+$MESS['AGENT_CONTRACT_CONTRACTOR_ENTITY_ENTITY_ID_FIELD'] = 'Идентификатор поставщика';
+$MESS['AGENT_CONTRACT_CONTRACTOR_ENTITY_ENTITY_TYPE_ID_FIELD'] = 'Идентификатор типа поставщика';

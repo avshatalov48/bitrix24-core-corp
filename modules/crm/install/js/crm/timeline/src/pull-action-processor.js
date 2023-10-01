@@ -245,7 +245,7 @@ export default class PullActionProcessor
 		else
 		{
 			// hide files block in comment content before pin
-			const historyCommentBlock = historyItem.getLayoutContentBlockById('commentContent');
+			const historyCommentBlock = historyItem.getLayoutContentBlockById('commentContentWeb');
 			if (historyCommentBlock)
 			{
 				historyCommentBlock.setIsFilesBlockDisplayed(false);
@@ -274,7 +274,7 @@ export default class PullActionProcessor
 										historyCommentBlock.setIsFilesBlockDisplayed();
 										historyCommentBlock.setIsMoving(false);
 
-										const fixedHistoryCommentBlock = fixedHistoryItem.getLayoutContentBlockById('commentContent');
+										const fixedHistoryCommentBlock = fixedHistoryItem.getLayoutContentBlockById('commentContentWeb');
 										if (fixedHistoryCommentBlock)
 										{
 											fixedHistoryCommentBlock.setIsFilesBlockDisplayed();

@@ -3822,6 +3822,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      const parentComputedStyles = this.$refs.rootElement ? window.getComputedStyle(this.$refs.rootElement) : {};
 	      const parentHeight = ((_this$$refs$rootEleme = this.$refs.rootElement) === null || _this$$refs$rootEleme === void 0 ? void 0 : _this$$refs$rootEleme.offsetHeight) - parseFloat(parentComputedStyles.paddingTop) - parseFloat(parentComputedStyles.paddingBottom);
 	      return parentHeight > textBlockMaxHeight;
+	    },
+	    isInViewport() {
+	      const rect = this.$el.getBoundingClientRect();
+	      return rect.top >= 0 && rect.left >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && rect.right <= (window.innerWidth || document.documentElement.clientWidth);
 	    }
 	  },
 	  watch: {
@@ -3838,6 +3842,16 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.$nextTick(() => {
 	        this.adjustHeight(this.$refs.textarea);
 	      });
+	    },
+	    isCollapsed(isCollapsed) {
+	      if (isCollapsed === false && this.isInViewport() === false) {
+	        requestAnimationFrame(() => {
+	          this.$el.scrollIntoView({
+	            behavior: 'smooth',
+	            block: 'center'
+	          });
+	        });
+	      }
 	    }
 	  },
 	  mounted() {
@@ -4864,7 +4878,17 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    },
 	    checkIsLongText() {
-	      return this.parentCheckIsLongText() || this.hasInlineFiles;
+	      const textBlock = this.$refs.text;
+	      if (!textBlock) {
+	        return false;
+	      }
+	      const textBlockMaxHeightStyle = window.getComputedStyle(textBlock).getPropertyValue('--crm-timeline__editable-text_max-height');
+	      const textBlockMaxHeight = parseFloat(textBlockMaxHeightStyle.slice(0, -2));
+	      const root = this.filesCount > 0 ? this.$refs.rootElement : this.$refs.rootWrapperElement;
+	      const parentComputedStyles = window.getComputedStyle(root);
+	      const parentHeight = (root === null || root === void 0 ? void 0 : root.offsetHeight) - parseFloat(parentComputedStyles.paddingTop) - parseFloat(parentComputedStyles.paddingBottom);
+	      const isLongText = parentHeight > textBlockMaxHeight;
+	      return isLongText || this.hasInlineFiles;
 	    },
 	    saveContent() {
 	      const isSaveDisabled = this.saveTextButtonState === ButtonState.LOADING || !this.isEdit || !this.saveAction;
@@ -5033,7 +5057,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.createEditor();
 	  },
 	  template: `
-		<div class="crm-timeline__editable-text_wrapper">
+		<div ref="rootWrapperElement" class="crm-timeline__editable-text_wrapper">
 			<div ref="rootElement" :class="className">
 				<button
 					v-if="isLongText && !isEdit && isEditable && isEditButtonVisible"
@@ -7178,17 +7202,17 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (actionType !== 'jsEvent') {
 	        return;
 	      }
-	      if (action === 'Comment:Edit') {
+	      if (action === 'Comment:Edit' || action === 'Comment:AddFile') {
 	        _classPrivateMethodGet$g(this, _showEditor, _showEditor2).call(this, item);
 	      }
 	      if (action === 'Comment:Delete' && actionData) {
 	        _classPrivateMethodGet$g(this, _onCommentDelete, _onCommentDelete2).call(this, actionData, animationCallbacks);
 	      }
 	      if (action === 'Comment:StartEdit') {
-	        item.highlightContentBlockById('commentContent', true);
+	        item.highlightContentBlockById('commentContentWeb', true);
 	      }
 	      if (action === 'Comment:FinishEdit') {
-	        item.highlightContentBlockById('commentContent', false);
+	        item.highlightContentBlockById('commentContentWeb', false);
 	      }
 	    }
 	  }], [{
@@ -7200,7 +7224,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Comment;
 	}(Base);
 	function _showEditor2(item) {
-	  const commentBlock = item.getLayoutContentBlockById('commentContent');
+	  const commentBlock = item.getLayoutContentBlockById('commentContentWeb');
 	  if (commentBlock) {
 	    commentBlock.startEditing();
 	  } else {

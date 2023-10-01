@@ -96,7 +96,7 @@ if ($iLeadId > 0)
 		if (!empty($arLead['STATUS_ID']))
 		{
 			$fields .= '<span class="bx-ui-tooltip-field-row">
-				<span class="bx-ui-tooltip-field-name">'.GetMessage('CRM_COLUMN_STATUS').'</span>: <span class="bx-ui-tooltip-field-value"><span class="fields enumeration">'.$arResult['STATUS_LIST'][$arLead['STATUS_ID']].'</span></span>
+				<span class="bx-ui-tooltip-field-name">'.GetMessage('CRM_COLUMN_STATUS_MSGVER_1').'</span>: <span class="bx-ui-tooltip-field-value"><span class="fields enumeration">'.$arResult['STATUS_LIST'][$arLead['STATUS_ID']].'</span></span>
 			</span>';
 		}
 		if (count($arProductRows) > 0)
@@ -142,7 +142,7 @@ if ($iLeadId > 0)
 	<div class="bx-user-info-data-info">';
 		if (!empty($arLead['STATUS_ID']))
 		{
-			$strCard .= '<span class="field-name">'.GetMessage('CRM_COLUMN_STATUS').'</span>:
+			$strCard .= '<span class="field-name">'.GetMessage('CRM_COLUMN_STATUS_MSGVER_1').'</span>:
 		<span class="fields enumeration">'.$arResult['STATUS_LIST'][$arLead['STATUS_ID']].'</span>
 		<br />';
 		}

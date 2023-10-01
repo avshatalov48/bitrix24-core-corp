@@ -25,7 +25,7 @@ $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm-preview.css');
 					<?=htmlspecialcharsbx($arResult['ASSIGNED_BY_FORMATTED_NAME'])?>
 				</a>
 			</td>
-			<td><?= GetMessage('CRM_FIELD_STATUS')?>: </td>
+			<td><?= GetMessage('CRM_FIELD_STATUS_MSGVER_1')?>: </td>
 			<td><?=htmlspecialcharsbx($arResult['STATUS_TEXT'])?></td>
 		</tr>
 		<tr>

@@ -438,25 +438,34 @@ class CCrmActivity extends CAllCrmActivity
 
 		return true;
 	}
+
 	public static function DoSaveNearestUserActivity($arFields)
 	{
-		global $DB;
+		$connection = \Bitrix\Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
+
 		$userID = isset($arFields['USER_ID']) ? intval($arFields['USER_ID']) : 0;
 		$ownerID = isset($arFields['OWNER_ID']) ? intval($arFields['OWNER_ID']) : 0;
 		$ownerTypeID = isset($arFields['OWNER_TYPE_ID']) ? intval($arFields['OWNER_TYPE_ID']) : 0;
 		$activityID = isset($arFields['ACTIVITY_ID']) ? intval($arFields['ACTIVITY_ID']) : 0;
-		$activityTime = isset($arFields['ACTIVITY_TIME']) ? $arFields['ACTIVITY_TIME'] : '';
-		if($activityTime !== '')
+		$activityTime = isset($arFields['ACTIVITY_TIME']) ? $arFields['ACTIVITY_TIME'] : false;
+		if($activityTime !== false)
 		{
-			$activityTime = $DB->CharToDateFunction($DB->ForSql($activityTime), 'FULL');
+			$activityTime = \Bitrix\Main\Type\DateTime::createFromUserTime($arFields['ACTIVITY_TIME']);
 		}
 		$sort = isset($arFields['SORT']) ? $arFields['SORT'] : '';
 
-		$sql = "INSERT INTO b_crm_usr_act(USER_ID, OWNER_ID, OWNER_TYPE_ID, ACTIVITY_TIME, ACTIVITY_ID, SORT, DEPARTMENT_ID)
-			VALUES({$userID}, {$ownerID}, {$ownerTypeID}, {$activityTime}, {$activityID}, '{$sort}', 0)
-			ON DUPLICATE KEY UPDATE ACTIVITY_TIME = {$activityTime}, ACTIVITY_ID = {$activityID}, SORT = '{$sort}'";
-
-		$DB->Query($sql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$insert = [
+			'USER_ID' => $userID,
+			'OWNER_ID' => $ownerID,
+			'OWNER_TYPE_ID' => $ownerTypeID,
+			'ACTIVITY_TIME' => $activityTime,
+			'ACTIVITY_ID' => $activityID,
+			'SORT' => $sort,
+			'DEPARTMENT_ID' => 0,
+		];
+		$merge = $helper->prepareMerge('b_crm_usr_act', ['USER_ID', 'OWNER_ID', 'OWNER_TYPE_ID'], $insert, $insert);
+		$connection->query($merge[0]);
 	}
 	protected static function DoResetEntityCommunicationSettings($entityTypeID, $entityID)
 	{

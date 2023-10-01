@@ -204,7 +204,7 @@ class Order
 		{
 			$arPerms = $CCrmRole->GetRolePerms($arRole['ID']);
 
-			if(!isset($arPerms['ORDER']) && is_array($arPerms['INVOICE']))
+			if(!isset($arPerms['ORDER']) && is_array($arPerms['INVOICE'] ?? null))
 			{
 				foreach ($arPerms['INVOICE'] as $key => $value)
 				{

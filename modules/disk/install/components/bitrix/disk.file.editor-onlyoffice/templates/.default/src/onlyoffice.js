@@ -14,6 +14,9 @@ import CustomErrorControl from "./custom-error-controls";
 
 const SECONDS_TO_MARK_AS_STILL_WORKING = 60;
 
+import { LocalStorageCache } from 'main.core.cache';
+const cache = new LocalStorageCache();
+
 export default class OnlyOffice
 {
 	editor: any = null;
@@ -505,6 +508,7 @@ export default class OnlyOffice
 		if (d.data.errorCode === -82)
 		{
 			this.brokenDocumentOpened = true;
+			this.processBrokenDocument();
 		}
 		else if (d.data.errorCode === -84)
 		{
@@ -518,6 +522,37 @@ export default class OnlyOffice
 
 			}, 100);
 		}
+	}
+
+	processBrokenDocument(): void
+	{
+		if (!this.context.documentSession.id || !this.brokenDocumentOpened)
+		{
+			return;
+		}
+
+		const key = `oo_broken_doc_${this.context.documentSession.id}`;
+		const lastTime = cache.get(key);
+		if (lastTime && Date.now() - lastTime < 1000 * 60)
+		{
+			return;
+		}
+
+		Ajax.runAction('disk.api.onlyoffice.recoverSessionWithBrokenFile', {
+			mode: 'ajax',
+			json: {
+				force: true,
+				sessionId: this.documentSession.id,
+				documentSessionHash: this.documentSession.hash,
+			},
+		}).then((response) => {
+			if (response.status === 'success')
+			{
+				document.location.href = response.data.link;
+			}
+		});
+
+		cache.set(key, Date.now());
 	}
 
 	handleRequestRename(event): void

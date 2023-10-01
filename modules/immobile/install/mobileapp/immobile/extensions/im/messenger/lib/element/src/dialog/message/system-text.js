@@ -27,6 +27,11 @@ jn.define('im/messenger/lib/element/dialog/message/system-text', (require, expor
 		{
 			return 'system-text';
 		}
+
+		setShowTail()
+		{
+			return this;
+		}
 	}
 
 	module.exports = {

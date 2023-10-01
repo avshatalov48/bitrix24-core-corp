@@ -6,6 +6,7 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\ArgumentException;
+use CCrmOwnerType;
 
 class MarkController extends Controller
 {
@@ -40,12 +41,20 @@ class MarkController extends Controller
 			throw new ArgumentException('Stage should be final', 'finalStageSemantics');
 		}
 
+		$markTypeId = TimelineMarkType::getMarkTypeByPhaseSemantics($finalStageSemantics);
+
+		// do not create a successful entry to lead
+		if ($markTypeId === TimelineMarkType::SUCCESS && $item->getEntityTypeId() === CCrmOwnerType::Lead)
+		{
+			return;
+		}
+
 		$bindings = $this->getBindingsForItem($item);
 
 		$timelineEntryId = $this->getTimelineEntryFacade()->create(
 			TimelineEntry\Facade::MARK,
 			[
-				'MARK_TYPE_ID' => TimelineMarkType::getMarkTypeByPhaseSemantics($finalStageSemantics),
+				'MARK_TYPE_ID' => $markTypeId,
 				'ENTITY_TYPE_ID' => $item->getEntityTypeId(),
 				'ENTITY_ID' => $item->getEntityId(),
 				'AUTHOR_ID' => ($authorId > 0) ? $authorId : static::getCurrentOrDefaultAuthorId(),

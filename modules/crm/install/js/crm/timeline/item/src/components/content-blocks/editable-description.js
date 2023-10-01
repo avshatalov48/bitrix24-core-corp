@@ -255,6 +255,17 @@ export const EditableDescription = {
 
 			return parentHeight > textBlockMaxHeight;
 		},
+
+		isInViewport(): boolean {
+			const rect = this.$el.getBoundingClientRect();
+
+			return (
+				rect.top >= 0
+				&& rect.left >= 0
+				&& rect.bottom <= (window.innerHeight || document.documentElement.clientHeight)
+				&& rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+			);
+		},
 	},
 
 	watch: {
@@ -272,6 +283,18 @@ export const EditableDescription = {
 			this.$nextTick(() => {
 				this.adjustHeight(this.$refs.textarea);
 			});
+		},
+
+		isCollapsed(isCollapsed) {
+			if (isCollapsed === false && this.isInViewport() === false)
+			{
+				requestAnimationFrame(() => {
+					this.$el.scrollIntoView({
+						behavior: 'smooth',
+						block: 'center',
+					});
+				});
+			}
 		},
 	},
 

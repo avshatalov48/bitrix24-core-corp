@@ -138,19 +138,24 @@ class EventRelationsTable extends DataManager
 			$ownedRecordsQuery->where('ENTITY_ID', $id);
 		}
 
-		$mentionsInLinksQuery = self::query()
-			->setSelect(['ID', 'EVENT_ID'])
-			->whereIn('EVENT_BY.EVENT_TYPE', [EventHistory::EVENT_TYPE_LINK, EventHistory::EVENT_TYPE_UNLINK])
-			->where('EVENT_BY.EVENT_TEXT_1', $entityTypeName)
+		$relationEventsWithThisEntityQuery = EventTable::query()
+			->setSelect(['ID'])
+			->whereIn('EVENT_TYPE', [EventHistory::EVENT_TYPE_LINK, EventHistory::EVENT_TYPE_UNLINK])
+			->where('EVENT_RELATION.ENTITY_TYPE', $entityTypeName)
 		;
 		if (!is_null($id))
 		{
-			$mentionsInLinksQuery->where('EVENT_BY.EVENT_TEXT_2', $id);
+			$relationEventsWithThisEntityQuery->where('EVENT_RELATION.ENTITY_ID', $id);
 		}
+
+		$boundRecordsQuery = self::query()
+			->setSelect(['ID', 'EVENT_ID'])
+			->whereIn('EVENT_ID', $relationEventsWithThisEntityQuery)
+		;
 
 		return
 			$ownedRecordsQuery
-				->union($mentionsInLinksQuery)
+				->union($boundRecordsQuery)
 				->fetchCollection()
 		;
 	}

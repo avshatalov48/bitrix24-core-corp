@@ -628,17 +628,20 @@ elseif ($action === 'GET_ROW_COUNT')
 	}
 
 	$gridData = $_SESSION['CRM_GRID_DATA'][$gridID];
-	$filter = isset($gridData['FILTER']) && is_array($gridData['FILTER']) ? $gridData['FILTER'] : array();
-	if ($filter['IS_RECURRING'] === 'Y' || $filter['=IS_RECURRING'] === 'Y')
+	$filter = isset($gridData['FILTER']) && is_array($gridData['FILTER']) ? $gridData['FILTER'] : [];
+	if (
+		(isset($filter['IS_RECURRING']) && $filter['IS_RECURRING'] === 'Y')
+		|| (isset($filter['=IS_RECURRING']) && $filter['=IS_RECURRING'] === 'Y')
+	)
 	{
 		$options['FIELD_OPTIONS']['ADDITIONAL_FIELDS'][] = 'RECURRING';
 	}
 	else
 	{
-		$options = array();
+		$options = [];
 	}
 
-	$result = CCrmDeal::GetListEx(array(), $filter, array(), false, array(), $options);
+	$result = CCrmDeal::GetListEx([], $filter, [], false, [], $options);
 
 	$text = '';
 	if(is_numeric($result))

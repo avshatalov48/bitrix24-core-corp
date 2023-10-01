@@ -106,18 +106,18 @@ elseif ($action === 'CHECK_ENTITY_EXISTENCE')
 	{
 		if($_REQUEST['ENTITY_ID'] == 'STATUS')
 		{
-			$title = GetMessage('CRM_STATUS_DELETION_ALERT_TITLE_STATUS');
-			$message = GetMessage('CRM_STATUS_DELETION_ALERT_STATUS');
+			$title = GetMessage('CRM_STATUS_DELETION_ALERT_TITLE_DEAL_STATUS');
+			$message = GetMessage('CRM_STATUS_DELETION_ALERT_STATUS_MSGVER_1');
 		}
 		elseif($_REQUEST['ENTITY_ID'] == 'INVOICE_STATUS')
 		{
-			$title = GetMessage('CRM_STATUS_DELETION_ALERT_TITLE_STATUS');
-			$message = GetMessage('CRM_STATUS_DELETION_ALERT_INVOICE_STATUS');
+			$title = GetMessage('CRM_STATUS_DELETION_ALERT_TITLE_DEAL_STATUS');
+			$message = GetMessage('CRM_STATUS_DELETION_ALERT_INVOICE_STATUS_MSGVER_1');
 		}
 		elseif($_REQUEST['ENTITY_ID'] == 'QUOTE_STATUS')
 		{
-			$title = GetMessage('CRM_STATUS_DELETION_ALERT_TITLE_STATUS');
-			$message = GetMessage('CRM_STATUS_DELETION_ALERT_QUOTE_STATUS');
+			$title = GetMessage('CRM_STATUS_DELETION_ALERT_TITLE_DEAL_STATUS');
+			$message = GetMessage('CRM_STATUS_DELETION_ALERT_QUOTE_STATUS_MSGVER_1');
 		}
 		elseif(mb_strpos($_REQUEST['ENTITY_ID'], 'DEAL_STAGE') === 0)
 		{

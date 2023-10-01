@@ -1,10 +1,11 @@
-import {FormMode, ProductForm} from 'catalog.product-form';
+import { FormMode, ProductForm } from 'catalog.product-form';
 import 'currency';
-import {MixinTemplatesType} from './components/templates-type-mixin';
-import {Runtime, Type, Text} from 'main.core';
-import {EventEmitter} from 'main.core.events';
-import type {BaseEvent} from 'main.core.events';
-import {Loc} from 'main.core';
+import { MixinTemplatesType } from './components/templates-type-mixin';
+import { Runtime, Type, Text } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import type { BaseEvent } from 'main.core.events';
+import { Loc } from 'main.core';
+import { ModeDictionary } from './const/mode-dictionary';
 
 export default {
 	mixins:[MixinTemplatesType],
@@ -66,7 +67,7 @@ export default {
 				showCompilationModeSwitcher: (
 					this.$root.$app.options.templateMode === 'create'
 					&& this.$root.$app.options.showCompilationModeSwitcher === 'Y'
-					&& this.$root.$app.options.mode === 'payment_delivery'
+					&& this.$root.$app.options.mode === ModeDictionary.paymentDelivery
 				),
 				compilationFormType: this.$root.$app.connector === 'facebook' && this.$root.$app.isAllowedFacebookRegion ? 'FACEBOOK' : 'REGULAR',
 				facebookFailProducts: this.$root.$app.compilation?.FAIL_PRODUCTS,

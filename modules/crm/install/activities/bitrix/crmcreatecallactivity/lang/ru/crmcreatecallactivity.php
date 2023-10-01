@@ -8,5 +8,5 @@ $MESS["CRM_CREATE_CALL_DESCRIPTION"] = "Описание";
 $MESS["CRM_CREATE_CALL_NOTIFY_VALUE"] = "Напомнить за";
 $MESS["CRM_CREATE_CALL_NOTIFY_TYPE"] = "Интервал напоминания";
 $MESS["CRM_CREATE_CALL_RESPONSIBLE_ID"] = "Ответственный";
-$MESS["CRM_CREATE_CALL_AUTO_COMPLETE"] = "Автоматически завершить дело при переходе в другой статус";
+$MESS["CRM_CREATE_CALL_AUTO_COMPLETE_MSGVER_1"] = "Автоматически завершать дело при переходе элемента на другую стадию";
 ?>

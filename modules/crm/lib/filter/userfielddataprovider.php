@@ -6,6 +6,7 @@ use Bitrix\Crm\Category\ItemCategoryUserField;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\UI\Filter\EntityHandler;
 use Bitrix\Crm\UserField\Types\ElementType;
+use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main\Filter\EntityUFDataProvider;
 use Bitrix\Main\Localization\Loc;
 
@@ -145,5 +146,32 @@ class UserFieldDataProvider extends EntityUFDataProvider
 				}
 			}
 		}
+	}
+
+	/**
+	 * Get custom fields defined for entity filtered by fields visibility by user
+	 * @return array
+	 */
+	protected function getUserFields(): array
+	{
+		$result = parent::getUserFields();
+
+		static $visibilityResult = [];
+		$entityId = $this->getUserFieldEntityID();
+
+		if (!isset($visibilityResult[$entityId]))
+		{
+			$userId = Container::getInstance()->getContext()->getUserId();
+			if ($userId > 0)
+			{
+				$visibilityResult[$entityId] = VisibilityManager::getVisibleUserFields($result, $userId);
+			}
+			else
+			{
+				$visibilityResult[$entityId] = $result;
+			}
+		}
+
+		return $visibilityResult[$entityId];
 	}
 }

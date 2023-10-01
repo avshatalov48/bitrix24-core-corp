@@ -160,7 +160,7 @@ class CBPCrmCopyDealActivity extends CBPActivity
 		$oldProducts = \CCrmProductRow::LoadRows('D', $sourceDealId, true);
 		foreach ($oldProducts as $i => $product)
 		{
-			unset($oldProducts[$i]['ID'], $oldProducts[$i]['OWNER_ID']);
+			unset($oldProducts[$i]['ID'], $oldProducts[$i]['OWNER_ID'], $oldProducts[$i]['XML_ID']);
 		}
 
 		if (!CCrmProductRow::SaveRows('D', $newDealId, $oldProducts))

@@ -21,7 +21,7 @@ jn.define('im/messenger/core', (require, exports, module) => {
 		RecentCache,
 		UsersCache,
 		FilesCache,
-		DraftCache
+		DraftCache,
 	} = require('im/messenger/cache');
 	const { Logger } = require('im/messenger/lib/logger');
 
@@ -105,6 +105,11 @@ jn.define('im/messenger/core', (require, exports, module) => {
 			return this.host;
 		}
 
+		isCloud()
+		{
+			return CoreApplication.getOption('isCloud', false);
+		}
+
 		getUserId()
 		{
 			return this.userId;
@@ -152,6 +157,22 @@ jn.define('im/messenger/core', (require, exports, module) => {
 			}
 
 			return this.initPromise;
+		}
+
+		/**
+		 * @private
+		 */
+		static getOption(name, defaultValue)
+		{
+			const options = jnExtensionData.get('im:messenger/core');
+
+			// eslint-disable-next-line no-prototype-builtins
+			if (options.hasOwnProperty(name))
+			{
+				return options[name];
+			}
+
+			return defaultValue;
 		}
 	}
 

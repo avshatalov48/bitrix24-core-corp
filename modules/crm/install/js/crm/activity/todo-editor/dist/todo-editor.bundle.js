@@ -248,7 +248,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      currentDeadline: (_this$deadline = this.deadline) !== null && _this$deadline !== void 0 ? _this$deadline : new Date(),
 	      responsibleUserId: this.currentUser.userId,
 	      showFileUploader: false,
-	      isTextareaToLong: false
+	      isTextareaToLong: false,
+	      wasUsed: false
 	    };
 	  },
 	  computed: {
@@ -281,6 +282,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.description = description;
 	    },
 	    onTextareaFocus() {
+	      this.wasUsed = true;
 	      this.onFocus();
 	    },
 	    onTextareaKeydown(event) {
@@ -293,6 +295,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    },
 	    setTextareaFocused() {
+	      this.wasUsed = true;
 	      this.$refs.textarea.focus();
 	    },
 	    onDeadlineClick() {
@@ -355,7 +358,7 @@ this.BX.Crm = this.BX.Crm || {};
 				:value="description"
 				:class="{ '--has-scroll': isTextareaToLong }"
 			></textarea>
-			<div class="crm-activity__todo-editor_tools">
+			<div class="crm-activity__todo-editor_tools" v-if="wasUsed">
 				<div
 					ref="deadline"
 					@click="onDeadlineClick"

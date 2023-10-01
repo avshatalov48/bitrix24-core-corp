@@ -330,6 +330,18 @@ class QuoteDataProvider extends EntityDataProvider implements FactoryOptionable
 			),
 		];
 
+		$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
+		if ($factory && $factory->isLastActivityEnabled())
+		{
+			$result['LAST_ACTIVITY_TIME'] = $this->createField(
+				'LAST_ACTIVITY_TIME',
+				[
+					'type' => 'date',
+					'partial' => true,
+				]
+			);
+		}
+
 		Crm\Tracking\UI\Filter::appendFields($result, $this);
 
 		//region UTM

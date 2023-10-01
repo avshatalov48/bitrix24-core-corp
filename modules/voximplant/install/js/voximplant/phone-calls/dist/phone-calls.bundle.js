@@ -6189,7 +6189,7 @@ this.BX = this.BX || {};
 	    // to restore stored FoldedCallView if required
 	    FoldedCallView.getInstance();
 	    BX.garbage(function () {
-	      if (_this.callActive && _this.callView && _this.callView.canBeUnloaded() && (_this.hasExternalCall || _this.deviceType === 'PHONE')) {
+	      if (_this.hasActiveCall() && _this.callView && _this.callView.canBeUnloaded() && (_this.hasExternalCall || _this.deviceType === 'PHONE')) {
 	        BX.localStorage.set(lsKeys$1.foldedView, {
 	          callId: _this.callId,
 	          phoneCrm: _this.phoneCrm,
@@ -6201,6 +6201,11 @@ this.BX = this.BX || {};
 	    });
 	  }
 	  babelHelpers.createClass(PhoneCallsController, [{
+	    key: "hasActiveCall",
+	    value: function hasActiveCall() {
+	      return Boolean(this.currentCall || this.callView);
+	    }
+	  }, {
 	    key: "setCallEventListeners",
 	    value: function setCallEventListeners(call) {
 	      call.addEventListener(VoxImplant.CallEvents.Connected, this.onCallConnectedHandler);
@@ -6275,7 +6280,7 @@ this.BX = this.BX || {};
 	        /*this.phoneCommand('busy', {'CALL_ID' : params.callId});*/
 	        return false;
 	      }
-	      if (this.isCallListMode()) {
+	      if (this.hasActiveCall() || this.isCallListMode()) {
 	        this.phoneCommand('busy', {
 	          'CALL_ID': params.callId
 	        });
@@ -6426,7 +6431,7 @@ this.BX = this.BX || {};
 	          this.callView.setPortalCallUserId(params.portalCallUserId);
 	          this.callView.setPortalCallQueueName(params.portalCallQueueName);
 	        }
-	      } else if (!this.callActive && params.callDevice === DeviceType.Phone) {
+	      } else if (!this.hasActiveCall() && params.callDevice === DeviceType.Phone) {
 	        this.checkDesktop().then(function () {
 	          _this3.deviceType = params.callDevice === DeviceType.Phone ? DeviceType.Phone : DeviceType.Webrtc;
 	          _this3.phonePortalCall = !!params.portalCall;
@@ -6455,7 +6460,8 @@ this.BX = this.BX || {};
 	      if (this.phoneTransferCallId === params.callId) {
 	        this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_TRANSFER_CONNECTED'));
 	        return;
-	      } else if (this.callId != params.callId) {
+	      }
+	      if (this.callId != params.callId) {
 	        return;
 	      }
 	      this.callOverlayTimer('start');
@@ -6610,7 +6616,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onPullHideExternalCall",
 	    value: function onPullHideExternalCall(params) {
-	      if (this.callActive && this.hasExternalCall && this.callId == params.callId) {
+	      if (this.hasActiveCall() && this.hasExternalCall && this.callId == params.callId) {
 	        this.hideExternalCall();
 	      }
 	    }
@@ -6659,6 +6665,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onIncomingCall",
 	    value: function onIncomingCall(params) {
+	      // we can't use hasActiveCall here because the call view is open
 	      if (this.currentCall) {
 	        return false;
 	      }
@@ -7063,7 +7070,7 @@ this.BX = this.BX || {};
 	        this.showUnsupported();
 	        return false;
 	      }
-	      if (this.callActive || this.currentCall || BX.localStorage.get(lsKeys$1.callInited) || BX.localStorage.get(lsKeys$1.externalCall)) {
+	      if (this.hasActiveCall() || BX.localStorage.get(lsKeys$1.callInited) || BX.localStorage.get(lsKeys$1.externalCall)) {
 	        return false;
 	      }
 	      if (this.keypad) {
@@ -7258,7 +7265,7 @@ this.BX = this.BX || {};
 	    value: function _doPhoneCall(number) {
 	      var _this13 = this;
 	      var params = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-	      if (BX.localStorage.get(lsKeys$1.callInited) || this.callView || this.callActive) {
+	      if (BX.localStorage.get(lsKeys$1.callInited) || this.callView || this.hasActiveCall()) {
 	        return false;
 	      }
 	      if (!this.phoneSupport()) {
@@ -7812,6 +7819,8 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onCallViewClose",
 	    value: function onCallViewClose() {
+	      this.BXIM.stopRepeatSound('ringtone');
+	      this.BXIM.stopRepeatSound('dialtone');
 	      this.callListId = 0;
 	      if (this.callView) {
 	        this.callView.dispose();
@@ -7986,7 +7995,7 @@ this.BX = this.BX || {};
 	      }
 	      this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_ONLINE'));
 	      this.callView.setUiState(UiState.connected);
-	      if (this.isCallTransfer) {
+	      if (this.phoneTransferCallId !== '') {
 	        this.phoneCommand('cancelTransfer', {
 	          'CALL_ID': this.phoneTransferCallId
 	        });
@@ -8000,9 +8009,6 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "errorInviteTransfer",
 	    value: function errorInviteTransfer(code, reason) {
-	      if (!this.isCallTransfer) {
-	        return false;
-	      }
 	      if (code == '403' || code == '410' || code == '486') {
 	        this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_TRANSFER_' + code));
 	      } else {

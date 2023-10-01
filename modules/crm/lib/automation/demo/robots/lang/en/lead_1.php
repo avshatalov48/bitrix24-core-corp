@@ -1,13 +1,12 @@
-<?
-$MESS["CRM_AUTOMATION_DEMO_LEAD_1_NOTIFY_TITLE"] = "Notification";
+<?php
+$MESS["CRM_AUTOMATION_DEMO_LEAD_1_1_MESSAGE_MSGVER_1"] = "New lead has been created: #URL_1#{=Document:TITLE}#URL_2#.
+
+Note the lead's origin. For a phone call, listen to the recording, fill in the required form and plan activities. For an email, read the message and draw up a reply. For other sources, process the data as required. Once the initial processing has been done, move the lead to the next stage or convert it to a deal.";
+$MESS["CRM_AUTOMATION_DEMO_LEAD_1_2_MESSAGE_MSGVER_1"] = "#URL_1#Lead#URL_2# has been at the initial stage for two days. You risk losing a customer if you don't process it soon.";
+$MESS["CRM_AUTOMATION_DEMO_LEAD_1_3_MESSAGE_MSGVER_1"] = "Potential setback.
+Lead #URL_1#{=Document:TITLE}#URL_2# has been at stage {=Document:STATUS_ID} for three days.
+Responsible person has been advised to move the lead to the next stage or convert it.
+
+Responsible person: {=Document:ASSIGNED_BY_PRINTABLE}";
 $MESS["CRM_AUTOMATION_DEMO_LEAD_1_CONTROL_TITLE"] = "Control";
-$MESS["CRM_AUTOMATION_DEMO_LEAD_1_1_MESSAGE"] = "New lead #URL_1#{=Document:TITLE}#URL_2# created 
-
-Please check the lead source. If it's a phone call - listen to the conversation recording, enter necessary data and schedule activities. If the lead source is email, read it and send your reply. If this lead came from another channel or source, process incoming information and move the lead onto the next status or convert it to a deal.";
-$MESS["CRM_AUTOMATION_DEMO_LEAD_1_2_MESSAGE"] = "This #URL_1#lead#URL_2# is in its original status for over 2 days. You need to process this lead, change its status or convert it to a deal.";
-$MESS["CRM_AUTOMATION_DEMO_LEAD_1_3_MESSAGE"] = "Important! The lead #URL_1#{=Document:TITLE}#URL_2# has been in the {=Document:STATUS_ID} status for over 3 days.
-
-Your supervisor has been notified that the status for this lead needs to be changed or it has to be converted.
-
-This lead has been assigned to  {=Document:ASSIGNED_BY_PRINTABLE}";
-?>
+$MESS["CRM_AUTOMATION_DEMO_LEAD_1_NOTIFY_TITLE"] = "Notification";

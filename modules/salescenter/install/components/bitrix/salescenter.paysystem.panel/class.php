@@ -253,7 +253,6 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 				'alfabank' => '#EE2A23',
 				'yoo_money' => '#FFA900',
 				'qiwi' => '#E9832C',
-				'webmoney' => '#006FA8',
 				'embedded' => '#0697F2',
 				'tinkoff_bank' => '#FFE52B',
 				'installments' => '#00EEBC',

@@ -215,9 +215,7 @@ class Deal extends Entity
 		$item['DATE'] = $item['DATE_CREATE'] ?? null;
 		$item['OBSERVER'] = $item['OBSERVER'] ?? null;
 
-		$item = parent::prepareItemCommonFields($item);
-
-		return $item;
+		return parent::prepareItemCommonFields($item);
 	}
 
 	public function appendRelatedEntitiesValues(array $items, array $selectedFields): array
@@ -481,5 +479,10 @@ class Deal extends Entity
 			PhaseSemantics::SUCCESS,
 			PhaseSemantics::FAILURE,
 		];
+	}
+
+	final protected function isItemsAssignedNotificationSupported(): bool
+	{
+		return true;
 	}
 }

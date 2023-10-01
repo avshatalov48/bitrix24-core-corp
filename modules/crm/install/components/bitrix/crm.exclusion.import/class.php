@@ -76,7 +76,6 @@ class CrmExclusionImportComponent extends CBitrixComponent implements Controller
 		/* Set title */
 		if ($this->arParams['SET_TITLE'])
 		{
-			/**@var CAllMain*/
 			$GLOBALS['APPLICATION']->SetTitle(Loc::getMessage('CRM_EXCLUSION_IMPORT_TITLE'));
 		}
 

@@ -5,6 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm;
+
 class CBPCrmCreateToDoActivity extends CBPActivity
 {
 	public function __construct($name)
@@ -30,11 +32,6 @@ class CBPCrmCreateToDoActivity extends CBPActivity
 	public function Execute()
 	{
 		if (!CModule::IncludeModule("crm"))
-		{
-			return CBPActivityExecutionStatus::Closed;
-		}
-
-		if (!\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled())
 		{
 			return CBPActivityExecutionStatus::Closed;
 		}
@@ -113,7 +110,7 @@ class CBPCrmCreateToDoActivity extends CBPActivity
 		foreach ($fieldsMap as $propertyKey => $fieldProperties)
 		{
 			if (
-				CBPHelper::getBool($fieldProperties['Required'])
+				CBPHelper::getBool($fieldProperties['Required'] ?? null)
 				&& CBPHelper::isEmptyValue($testProperties[$propertyKey])
 			)
 			{
@@ -163,7 +160,12 @@ class CBPCrmCreateToDoActivity extends CBPActivity
 
 	protected static function getPropertiesMap(array $documentType, array $context = []): array
 	{
-		return [
+		if (!CModule::IncludeModule("crm"))
+		{
+			return [];
+		}
+
+		$map = [
 			'Description' => [
 				'Name' => GetMessage('CRM_BP_CREATE_TODO_DESCRIPTION'),
 				'Description' => GetMessage('CRM_BP_CREATE_TODO_DESCRIPTION'),
@@ -185,13 +187,20 @@ class CBPCrmCreateToDoActivity extends CBPActivity
 					: 'author'
 				),
 			],
-			'AutoComplete' => [
-				'Name' => GetMessage('CRM_BP_CREATE_TODO_AUTO_COMPLETE_ON_ENTITY_ST_CHG'),
+		];
+
+		$entityTypeId = CCrmOwnerType::ResolveID($documentType[2]);
+		if (Crm\Automation\Factory::isAutomationAvailable($entityTypeId))
+		{
+			$map['AutoComplete'] = [
+				'Name' => GetMessage('CRM_BP_CREATE_TODO_AUTO_COMPLETE_ON_ENTITY_ST_CHG_MSGVER_1'),
 				'FieldName' => 'auto_completed',
 				'Type' => 'bool',
 				'Default' => 'N',
-			],
-		];
+			];
+		}
+
+		return $map;
 	}
 
 	public static function GetPropertiesDialogValues(

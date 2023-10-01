@@ -1,5 +1,5 @@
-import {Event, Loc, Tag, Dom, Text, Type, Cache, pos} from 'main.core';
-import {PopupWindow, PopupWindowButton, PopupWindowButtonLink, Menu} from 'main.popup';
+import { Event, Loc, Tag, Dom, Text, Type, Cache, pos } from 'main.core';
+import { PopupWindow, PopupWindowButton, PopupWindowButtonLink, Menu } from 'main.popup';
 import Column from '../kanban/column';
 import Grid from '../kanban/grid';
 import Marker from '../marker/marker';
@@ -51,10 +51,11 @@ export class Category extends Event.EventEmitter
 		this.drawed = false;
 		this.allowWrite = Boolean(options.allowWrite);
 		this.isCategoryEditable = Boolean(options.isCategoryEditable);
-		this.areStagesEditable =  Boolean(options.areStagesEditable);
+		this.areStagesEditable = Boolean(options.areStagesEditable);
 		this.isAvailableGenerator = options.isAvailableGenerator;
 		this.isAutomationEnabled = options.isAutomationEnabled;
 		this.isStagesEnabled = options.isStagesEnabled;
+		this.entityTypeId = options.entityTypeId;
 
 		if (!options.lazy)
 		{
@@ -71,7 +72,6 @@ export class Category extends Event.EventEmitter
 		dragButton.onbxdrag = this.onDrag.bind(this);
 		dragButton.onbxdragstop = this.onDragStop.bind(this);
 
-		// eslint-disable-next-line
 		jsDD.registerObject(dragButton, 40);
 		this.adjustRobotsLinkIcon();
 
@@ -117,6 +117,7 @@ export class Category extends Event.EventEmitter
 		{
 			Dom.addClass(this.getContainer(), 'crm-st-category-editing-disabled');
 		}
+
 		if (!this.isAutomationEnabled)
 		{
 			Dom.addClass(this.getContainer(), 'crm-st-category-automation-disabled');
@@ -125,10 +126,12 @@ export class Category extends Event.EventEmitter
 					column.marker.disable();
 				});
 		}
+
 		if (!this.isStagesEnabled)
 		{
 			Dom.addClass(this.getContainer(), 'crm-st-category-stages-stub');
 		}
+
 		if (!this.isAvailableGenerator)
 		{
 			Dom.addClass(this.getContainer(), 'crm-st-category-generator-disabled');
@@ -141,8 +144,9 @@ export class Category extends Event.EventEmitter
 		{
 			return false;
 		}
+
 		return this.getAllColumns()
-			.some(column => column.marker.links.size > 0);
+			.some((column) => column.marker.links.size > 0);
 	}
 
 	getRectArea(): DOMRect | {middle: number}
@@ -158,7 +162,7 @@ export class Category extends Event.EventEmitter
 	getIndex(): number | void
 	{
 		return [...this.getContainer().parentNode.querySelectorAll('.crm-st-category')]
-			.findIndex(item => item === this.getContainer());
+			.findIndex((item) => item === this.getContainer());
 	}
 
 	getNextCategorySibling(): ?Category
@@ -295,11 +299,11 @@ export class Category extends Event.EventEmitter
 			Dom.append(this.getContainer(), this.getContainer().parentElement);
 		}
 
-		const before = Category.instances.map(item => item.getIndex());
+		const before = Category.instances.map((item) => item.getIndex());
 		Category.instances.sort((a, b) => (
 			a.getIndex() > b.getIndex() ? 1 : -1
 		));
-		const after = Category.instances.map(item => item.getIndex());
+		const after = Category.instances.map((item) => item.getIndex());
 
 		if (JSON.stringify(before) !== JSON.stringify(after))
 		{
@@ -386,10 +390,10 @@ export class Category extends Event.EventEmitter
 					<div class="crm-st-category-stages-group-header">
 						<span class="crm-st-category-stages-group-header-text">
 							${Loc.getMessage(
-								this.isStagesEnabled
-									? 'CRM_ST_STAGES_GROUP_IN_PROGRESS'
-									: 'CRM_ST_STAGES_DISABLED'
-							)}
+				this.isStagesEnabled
+					? 'CRM_ST_STAGES_GROUP_IN_PROGRESS'
+					: 'CRM_ST_STAGES_DISABLED',
+			)}
 						</span>
 					</div>
 					${this.getProgressStagesContainer()}
@@ -413,7 +417,7 @@ export class Category extends Event.EventEmitter
 			Category.createGrid({
 				renderTo: this.getProgressStagesContainer(),
 				editable: this.areStagesEditable,
-				columns: this.stages.P.map(stage => (
+				columns: this.stages.P.map((stage) => (
 					new Column({
 						id: stage.STATUS_ID,
 						name: stage.NAME,
@@ -457,7 +461,7 @@ export class Category extends Event.EventEmitter
 			Category.createGrid({
 				renderTo: this.getSuccessStagesContainer(),
 				editable: this.areStagesEditable,
-				columns: this.stages.S.map(stage => (
+				columns: this.stages.S.map((stage) => (
 					new Column({
 						id: stage.STATUS_ID,
 						name: stage.NAME,
@@ -503,7 +507,7 @@ export class Category extends Event.EventEmitter
 			Category.createGrid({
 				renderTo: this.getFailStagesContainer(),
 				editable: this.areStagesEditable,
-				columns: this.stages.F.map(stage => (
+				columns: this.stages.F.map((stage) => (
 					new Column({
 						id: stage.STATUS_ID,
 						name: stage.NAME,
@@ -537,19 +541,19 @@ export class Category extends Event.EventEmitter
 				this.adjustRobotsLinkIcon();
 			},
 			onNameChange: (column) => {
-				this.emit('Column:nameChange', {column});
+				this.emit('Column:nameChange', { column });
 			},
 			onColorChange: (column) => {
-				this.emit('Column:colorChange', {column});
+				this.emit('Column:colorChange', { column });
 			},
 			onAddColumn: (column) => {
-				this.emit('Column:addColumn', {column});
+				this.emit('Column:addColumn', { column });
 			},
 			onRemove: (event) => {
 				this.emit('Column:remove', event);
 			},
 			onChange: (column) => {
-				this.emit('Column:change', {column});
+				this.emit('Column:change', { column });
 			},
 			onSort: () => {
 				this.emit('Column:sort', {
@@ -651,9 +655,6 @@ export class Category extends Event.EventEmitter
 				</span>
 			`;
 		});
-
-
-
 	}
 
 	/** @private */
@@ -669,7 +670,7 @@ export class Category extends Event.EventEmitter
 				events: {
 					onClose: () => {
 						this.emit('Category:slider:close');
-						this.emit('Category:slider:generator:close', {category: this});
+						this.emit('Category:slider:generator:close', { category: this });
 					},
 				},
 			},
@@ -710,6 +711,7 @@ export class Category extends Event.EventEmitter
 		{
 			this.disableTitleEdit();
 			this.saveTitle();
+
 			return;
 		}
 
@@ -719,7 +721,7 @@ export class Category extends Event.EventEmitter
 	showTitleEditor(value: ?string = null)
 	{
 		const titleEditor = this.getTitleEditor();
-		const {innerText} = this.getTitle();
+		const { innerText } = this.getTitle();
 
 		titleEditor.value = Type.isString(value) ? value : Text.decode(innerText);
 
@@ -765,7 +767,7 @@ export class Category extends Event.EventEmitter
 	{
 		const title = this.getTitle();
 		const titleEditor = this.getTitleEditor();
-		const {value} = titleEditor;
+		const { value } = titleEditor;
 		const newTitle = value.trim() || Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER2');
 
 		if (title.innerText !== newTitle)
@@ -774,7 +776,7 @@ export class Category extends Event.EventEmitter
 			Dom.attr(title, 'title', newTitle);
 
 			this.name = newTitle;
-			this.emit('Category:title:save', {categoryId: this.id, value: newTitle});
+			this.emit('Category:title:save', { categoryId: this.id, value: newTitle });
 		}
 	}
 
@@ -801,86 +803,85 @@ export class Category extends Event.EventEmitter
 	getOptionButton(): HTMLSpanElement
 	{
 		return this.cache.remember('optionButton', () => {
-			const button = Tag.render`
+			return Tag.render`
 				<span 
 					class="crm-st-option-button" 
 					onclick="${this.onOptionButtonClick.bind(this)}" 
 					title="${Loc.getMessage('CRM_ST_EDIT_RIGHTS_CATEGORY')}"
 					> </span>
 			`;
-			return button;
 		});
 	}
 
 	onOptionButtonClick()
 	{
-		const onMenuItemClick = (event, item : MenuItem) => {
+		const onMenuItemClick = (event, item: MenuItem) => {
 			this.emit('Category:access', {
 				categoryId: this.id,
-				access : item.dataset["access"],
-				onConfirm: () => {
-				},
-				onCancel: () => {
-				},
+				access: item.dataset.access,
+				onConfirm: () => {},
+				onCancel: () => {},
 			});
-			Dom.addClass(item.getContainer(), "menu-popup-item-accept");
-			Dom.removeClass(item.getContainer(), "menu-popup-no-icon");
-			this.access = item.dataset["access"];
+			Dom.addClass(item.getContainer(), 'menu-popup-item-accept');
+			Dom.removeClass(item.getContainer(), 'menu-popup-no-icon');
+			this.access = item.dataset.access;
 			this.menuWindow.getMenuItems().forEach((itemOther) => {
 				if (itemOther === item)
 				{
 					return;
 				}
-				Dom.removeClass(itemOther.getContainer(), "menu-popup-item-accept");
-				Dom.addClass(itemOther.getContainer(), "menu-popup-no-icon");
+				Dom.removeClass(itemOther.getContainer(), 'menu-popup-item-accept');
+				Dom.addClass(itemOther.getContainer(), 'menu-popup-no-icon');
 			});
 			this.menuWindow.close();
 		};
-		const onSubMenuItemClick = (event, item : MenuItem) => {
+
+		const onSubMenuItemClick = (event, item: MenuItem) => {
 			this.emit('Category:access:copy', {
 				categoryId: this.id,
-				donorCategoryId : item.dataset["categoryId"],
-				onConfirm: () => {
-				},
-				onCancel: () => {
-				},
+				donorCategoryId: item.dataset.categoryId,
+				onConfirm: () => {},
+				onCancel: () => {},
 			});
-			this.access = item.dataset["access"];
+			this.access = item.dataset.access;
 
 			this.menuWindow.getMenuItems().forEach((itemOther) => {
 				if (itemOther.dataset === null)
 				{
 					return;
 				}
-				if (this.access === itemOther.dataset["access"])
+
+				if (this.access === itemOther.dataset.access)
 				{
-					Dom.addClass(itemOther.getContainer(), "menu-popup-item-accept");
-					Dom.removeClass(itemOther.getContainer(), "menu-popup-no-icon");
+					Dom.addClass(itemOther.getContainer(), 'menu-popup-item-accept');
+					Dom.removeClass(itemOther.getContainer(), 'menu-popup-no-icon');
 				}
 				else
 				{
-					Dom.removeClass(itemOther.getContainer(), "menu-popup-item-accept");
-					Dom.addClass(itemOther.getContainer(), "menu-popup-no-icon");
+					Dom.removeClass(itemOther.getContainer(), 'menu-popup-item-accept');
+					Dom.addClass(itemOther.getContainer(), 'menu-popup-no-icon');
 				}
 			});
 			this.menuWindow.close();
 		};
 
-		let items = Category.instances.
-		filter((category) => {
+		const items = Category.instances.filter((category) => {
 			return this.id !== category.id && category.id !== 'stub';
-		}).
-		map((category) => {
+		}).map((category) => {
 			return {
 				text: Text.encode(category.name),
-				dataset : {
-					categoryId : category.id,
-					access : category.access
+				dataset: {
+					categoryId: category.id,
+					access: category.access,
 				},
-				onclick : onSubMenuItemClick
+				onclick: onSubMenuItemClick,
 			};
 		});
 
+		const myItemsText = (this.entityTypeId === BX.CrmEntityType.enumeration.deal)
+			? Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ALL')
+			: Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ELEMENT')
+		;
 		this.menuWindow = new Menu({
 			id: `crm-tunnels-menu-${Text.getRandom().toLowerCase()}`,
 			bindElement: this.getOptionButton(),
@@ -888,61 +889,63 @@ export class Category extends Event.EventEmitter
 				{
 					text: Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_ALL_FOR_ALL'),
 					dataset: {
-						access: "X"
+						access: 'X',
 					},
 				},
 				{
-					text : Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_NONE_FOR_ALL'),
+					text: Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_NONE_FOR_ALL'),
 					dataset: {
-						access: ""
+						access: '',
 					},
 				},
 				{
-					text : Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ALL'),
+					text: myItemsText,
 					dataset: {
-						access: "A"
+						access: 'A',
 					},
 				},
 				(items.length > 0 ? {
 					text: Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_COPY_FROM_TUNNELS2'),
-					items: items
+					items: items,
 				} : null),
-				{ delimiter : true },
+				{ delimiter: true },
 				{
-					text : Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_CUSTOM'),
+					text: Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_CUSTOM'),
 					dataset: { access: false },
-					className: this.access !== "A" &&  this.access !== "X" && this.access !== ""? "menu-popup-item-accept" : "",
-					href : this.permissionEditLink,
-					target: "_blank",
-					onclick : (event, item) => {
-						item.getMenuWindow().close()
-					}
+					className: this.access !== 'A' && this.access !== 'X' && this.access !== '' ? 'menu-popup-item-accept' : '',
+					href: this.permissionEditLink,
+					target: '_blank',
+					onclick: (event, item) => {
+						item.getMenuWindow().close();
+					},
 				},
-			].
-			filter(preItem => preItem !== null).
-			map((preItem) => {
-				if (preItem.dataset)
-				{
-					if (this.access === preItem.dataset.access)
+			]
+				.filter((preItem) => preItem !== null)
+				.map((preItem) => {
+					if (preItem.dataset)
 					{
-						preItem.className = "menu-popup-item-accept";
+						if (this.access === preItem.dataset.access)
+						{
+							preItem.className = 'menu-popup-item-accept';
+						}
+
+						if (!preItem.onclick)
+						{
+							preItem.onclick = onMenuItemClick;
+						}
 					}
-					if (!preItem.onclick)
-					{
-						preItem.onclick = onMenuItemClick;
-					}
-				}
-				return preItem;
-			})),
+
+					return preItem;
+				})),
 			events: {
-				onClose : function() {
+				onClose: function() {
 					Dom.removeClass(this.getOptionButton(), 'crm-st-option-button-active');
 					Dom.removeClass(this.getActionsButtons(), 'crm-st-category-action-buttons-active');
 					setTimeout(this.removeBlur.bind(this), 200);
-				}.bind(this)
+				}.bind(this),
 			},
 			angle: true,
-			offsetLeft: 9
+			offsetLeft: 9,
 		});
 
 		Dom.addClass(this.getActionsButtons(), 'crm-st-category-action-buttons-active');
@@ -977,7 +980,7 @@ export class Category extends Event.EventEmitter
 	onRemoveButtonClick()
 	{
 		this.showConfirmRemovePopup()
-			.then(({confirm}) => {
+			.then(({ confirm }) => {
 				if (confirm)
 				{
 					this.emit('Category:remove', {
@@ -1073,12 +1076,13 @@ export class Category extends Event.EventEmitter
 				}
 			});
 
-		Category.instances = Category.instances.filter(item => item !== this);
+		Category.instances = Category.instances.filter((item) => item !== this);
 	}
 
 	getTitle(): HTMLHeadingElement
 	{
 		const safeTitle = Text.encode(this.name);
+
 		return this.cache.remember('title', () => (
 			Tag.render`
 				<h3 class="crm-st-category-info-title" title="${safeTitle}">${safeTitle}</h3>
@@ -1091,6 +1095,7 @@ export class Category extends Event.EventEmitter
 		return this.cache.remember('titleEditor', () => {
 			const onKeyDown = this.onTitleEditorKeyDown.bind(this);
 			const onBlur = this.onTitleEditorBlur.bind(this);
+
 			return Tag.render`
 				<input class="crm-st-category-info-title-editor" 
 					 onkeydown="${onKeyDown}"
@@ -1192,7 +1197,7 @@ export class Category extends Event.EventEmitter
 			...this.getFailKanban().getColumns(),
 		];
 
-		return columns.find(column => (
+		return columns.find((column) => (
 			columnId === column.getId() || columnId === column.getData().statusId
 		));
 	}
@@ -1214,7 +1219,7 @@ export class Category extends Event.EventEmitter
 						className: 'popup-window-button-decline',
 						events: {
 							click() {
-								resolve({confirm: true});
+								resolve({ confirm: true });
 								this.popupWindow.destroy();
 							},
 						},
@@ -1223,7 +1228,7 @@ export class Category extends Event.EventEmitter
 						text: Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_CANCEL_BUTTON_LABEL'),
 						events: {
 							click() {
-								resolve({confirm: false});
+								resolve({ confirm: false });
 								this.popupWindow.destroy();
 							},
 						},
@@ -1258,6 +1263,7 @@ export class Category extends Event.EventEmitter
 			if (this.hasTunnels())
 			{
 				this.showRobotsLinkIcon();
+
 				return;
 			}
 
@@ -1269,6 +1275,7 @@ export class Category extends Event.EventEmitter
 	{
 		return this.cache.remember('generatorLinkIcon', () => {
 			const onClick = () => BX.SidePanel.Instance.open(this.generatorsListUrl);
+
 			return Tag.render`
 				<span class="crm-st-generator-link-icon" onclick="${onClick}">${this.generatorsCount}</span>
 			`;

@@ -828,10 +828,10 @@
 					}
 				}
 
-				if (data.FILES && data.FILES.length > 0)
-					mailForm.getField('DATA[__diskfiles]').setValue(data.FILES);
+					const filesInfo = data.FILES_INFO && data.FILES_INFO.length > 0 ? data.FILES_INFO : [];
+			mailForm.getField('DATA[__diskfiles]').setValue(filesInfo);
 
-				mailForm.getField('DATA[message]').setValue(data.BODY, {quote: true, signature: true});
+				mailForm.getField('DATA[message]').setValue(data.BODY, {quote: true, signature: true, filesInfo: filesInfo});
 			});
 
 			BX.adjust(selector, {html: item.text});

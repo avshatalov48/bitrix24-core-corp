@@ -9,6 +9,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { Color } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const { clone } = require('utils/object');
 
 	const dialogState = {
 		dialogId: '0',
@@ -180,6 +181,49 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				return true;
 			},
 
+			/** @function dialoguesModel/updateWritingList */
+			updateWritingList: (store, payload) => {
+				const existingItem = store.state.collection[String(payload.dialogId)];
+
+				if (!existingItem)
+				{
+					return false;
+				}
+
+				const oldWritingList = clone(existingItem.writingList);
+				let newWritingList = clone(oldWritingList);
+				let isHasChange = false;
+				payload.fields.writingList.forEach((user) => {
+					const userId = user.userId;
+					const isWriting = user.isWriting;
+
+					const userIndex = oldWritingList.findIndex((user) => user.userId === userId);
+					if (userIndex !== -1 && !isWriting)
+					{
+						isHasChange = true;
+						newWritingList = newWritingList.filter((el, index) => index !== userIndex);
+					}
+
+					if (userIndex === -1)
+					{
+						isHasChange = true;
+						newWritingList.push({ ...user });
+					}
+				});
+
+				const validateList = validate(store, { writingList: newWritingList });
+				if (isHasChange)
+				{
+					store.commit('update', {
+						actionName: 'updateWritingList',
+						dialogId: payload.dialogId,
+						fields: validateList,
+					});
+				}
+
+				return true;
+			},
+
 			/** @function dialoguesModel/delete */
 			delete: (store, payload) => {
 				const existingItem = store.state.collection[payload.dialogId];
@@ -238,7 +282,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				}
 
 				store.commit('update', {
-					actionName: 'userCounter',
+					actionName: 'updateUserCounter',
 					dialogId: payload.dialogId,
 					fields: {
 						userCounter: payload.userCounter,
@@ -316,10 +360,11 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				}
 
 				const newState = [...existingItem.participants, ...uniqId];
+				const userCounter = payload.userCounter || existingItem.userCounter + newState.length;
 				store.commit('update', {
 					actionName: 'addParticipants',
 					dialogId: payload.dialogId,
-					fields: { participants: newState, userCounter: newState.length },
+					fields: { participants: newState, userCounter },
 				});
 			},
 
@@ -341,11 +386,13 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				const newState = existingItem.participants.filter(
 					(userId) => !validUsersId.participants.includes(userId),
 				);
+				const userCounter = payload.userCounter || existingItem.userCounter + newState.length;
 
 				store.commit('update', {
 					actionName: 'removeParticipants',
+					removeData: validUsersId.participants,
 					dialogId: payload.dialogId,
-					fields: { participants: newState, userCounter: newState.length },
+					fields: { participants: newState, userCounter },
 				});
 			},
 		},
@@ -566,14 +613,15 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		// 	result.readList = this.prepareReadList(fields.readList);
 		// }
 
-		// if (!Type.isUndefined(fields.writing_list))
-		// {
-		// 	fields.writingList = fields.writing_list;
-		// }
-		// if (Type.isArray(fields.writingList))
-		// {
-		// 	result.writingList = this.prepareWritingList(fields.writingList);
-		// }
+		if (!Type.isUndefined(fields.writing_list))
+		{
+			fields.writingList = fields.writing_list;
+		}
+
+		if (Type.isArray(fields.writingList))
+		{
+			result.writingList = prepareWritingList(fields.writingList);
+		}
 
 		if (!Type.isUndefined(fields.manager_list))
 		{
@@ -616,6 +664,11 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		if (Type.isString(fields.description))
 		{
 			result.description = fields.description;
+		}
+
+		if (Type.isNumber(fields.disk_folder_id))
+		{
+			result.diskFolderId = fields.disk_folder_id;
 		}
 
 		return result;
@@ -708,6 +761,28 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		{
 			result = encodeURI(result);
 		}
+
+		return result;
+	}
+
+	function prepareWritingList(writingList)
+	{
+		const result = [];
+
+		writingList.forEach((user) => {
+			const item = {};
+
+			if (!user.userId)
+			{
+				return false;
+			}
+
+			item.userId = Number.parseInt(user.userId, 10);
+			item.userName = user.userName;
+			result.push(item);
+
+			return true;
+		});
 
 		return result;
 	}

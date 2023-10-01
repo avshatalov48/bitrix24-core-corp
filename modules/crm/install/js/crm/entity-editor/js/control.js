@@ -628,14 +628,15 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 
 		if (options === undefined)
 		{
-			var entityTypeId = BX.prop.getInteger(this.getModel()._settings, "entityTypeId", 0);
+			var entityTypeId = BX.prop.getInteger(this.getModel()._settings, 'entityTypeId', 0);
 			var ownerInfo = this.getModel().getOwnerInfo();
+			var mode = this.getModel().getField('RECEIVE_PAYMENT_MODE');
 
 			options = {
 				disableSendButton: this._schemeElement.getDataStringParam('disableSendButton', ''),
 				context: 'deal',
 				templateMode: 'create',
-				mode: entityTypeId === BX.CrmEntityType.enumeration.deal ? 'payment_delivery' : 'payment',
+				mode: entityTypeId === BX.CrmEntityType.enumeration.deal ? mode : 'payment',
 				analyticsLabel: 'salescenterClickButtonPay',
 				ownerTypeId: entityTypeId,
 				ownerId: ownerInfo.ownerID,

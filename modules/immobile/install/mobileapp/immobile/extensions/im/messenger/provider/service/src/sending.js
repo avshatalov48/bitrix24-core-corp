@@ -164,7 +164,7 @@ jn.define('im/messenger/provider/service/sending', (require, exports, module) =>
 			const temporaryId = temporaryMessageId || Uuid.getV4();
 
 			return {
-				uuid: temporaryId,
+				templateId: temporaryId,
 				chatId: this.getDialog(dialogId).chatId,
 				dialogId: dialogId,
 				authorId: core.getUserId(),

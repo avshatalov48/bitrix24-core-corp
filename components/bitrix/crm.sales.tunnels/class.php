@@ -91,7 +91,7 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 
 		if($this->factory->getEntityTypeId() === \CCrmOwnerType::Lead)
 		{
-			$title = Loc::getMessage('CRM_SALES_STATUSES_TITLE');
+			$title = Loc::getMessage('CRM_SALES_STATUSES_TITLE_MSGVER_1');
 		}
 		else if($this->factory->getEntityTypeId() === \CCrmOwnerType::Deal)
 		{
@@ -487,7 +487,7 @@ HTML;
 		}
 		$fields = $data['fields'] ?? [];
 		$name = $fields['NAME'] ?? '';
-		$sort = $fields['SORT'] ? (int) $fields['SORT'] : null;
+		$sort = isset($fields['SORT']) ? (int)$fields['SORT'] : null;
 		if ($name)
 		{
 			$category->setName($name);

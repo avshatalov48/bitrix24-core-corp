@@ -37,7 +37,7 @@ class Lead extends ProductsDataProvider
 			$this->fields['LAST_NAME']['TYPE'] = static::FIELD_TYPE_NAME;
 			$this->fields['LAST_NAME']['FORMAT'] = ['format' => '#LAST_NAME#'];
 
-			$this->fields['STATUS'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_STATUS_TITLE'),];
+			$this->fields['STATUS'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_STATUS_TITLE_MSGVER_1'),];
 			$this->fields['SOURCE'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_SOURCE_TITLE'),];
 			$this->fields['HONORIFIC'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_HONORIFIC_TITLE'),
@@ -178,7 +178,7 @@ class Lead extends ProductsDataProvider
 	{
 		parent::fetchData();
 
-		$this->honorific = $this->data['HONORIFIC'];
+		$this->honorific = $this->data['HONORIFIC'] ?? null;
 		if(empty($this->data['ADDRESS']))
 		{
 			// for lead there is only one available type

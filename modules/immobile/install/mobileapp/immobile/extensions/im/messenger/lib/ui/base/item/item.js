@@ -5,7 +5,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 	const { Avatar } = require('im/messenger/lib/ui/base/avatar');
 	const { ItemInfo } = require('im/messenger/lib/ui/base/item/item-info');
 	const { styles: itemStyles } = require('im/messenger/lib/ui/base/item/style');
-	const { arrowRight } = require('im/messenger/assets/common');
+	const { buttonIcons, arrowRight } = require('im/messenger/assets/common');
 
 	/**
 	 * @typedef {Object} ItemData
@@ -16,11 +16,10 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 	 * @property {string} avatarColor
 	 * @property {string} size
 	 */
-
 	class Item extends LayoutComponent
 	{
 		/**
-		 * @param {ItemData}props
+		 * @param {ItemProps} props
 		 */
 		constructor(props)
 		{
@@ -69,6 +68,12 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 							this.props.onClick(openDialogData);
 						}
 					},
+					onLongClick: () => {
+						if (this.props.onLongClick)
+						{
+							this.props.onLongClick(this.props.data);
+						}
+					},
 				},
 				View(
 					{
@@ -113,6 +118,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 							},
 						),
 						this.getArrowRightImage(),
+						this.getEllipsisButton(),
 					),
 				),
 			);
@@ -180,6 +186,35 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 					},
 					svg: {
 						content: arrowRight(),
+					},
+				}),
+			);
+		}
+
+		getEllipsisButton()
+		{
+			if (!this.props.isEllipsis)
+			{
+				return null;
+			}
+
+			return View(
+				{
+					style: {
+						alignSelf: 'center',
+					},
+				},
+				ImageButton({
+					style: {
+						width: 24,
+						height: 24,
+					},
+					svg: { content: buttonIcons.ellipsis() },
+					onClick: () => {
+						if (this.props.onEllipsisClick)
+						{
+							this.props.onEllipsisClick(this.props.data);
+						}
 					},
 				}),
 			);

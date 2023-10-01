@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_QUOTE_FILTER_ALL"] = "(все)";
 $MESS["CRM_QUOTE_FILTER_LEAD_ID"] = "Список лидов";
 $MESS["CRM_QUOTE_FILTER_DEAL_ID"] = "Список сделок";
@@ -11,4 +11,4 @@ $MESS["CRM_QUOTE_FILTER_MYCOMPANY_TITLE"] = "Название вашей ком�
 $MESS["CRM_QUOTE_FILTER_PRODUCT_ROW_PRODUCT_ID"] = "Товар";
 $MESS["CRM_QUOTE_FILTER_ENTITIES_LINKS"] = "Связано с";
 $MESS["CRM_QUOTE_FILTER_ACTIVITY_COUNTER"] = "Дела";
-?>
+$MESS["CRM_QUOTE_FILTER_LAST_ACTIVITY_TIME"] = "Последняя активность";

@@ -1,7 +1,8 @@
-<?
+<?php
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
 	die();
@@ -52,8 +53,11 @@ Extension::load([
 <div id="market-wrapper-vue"></div>
 
 <script>
-	new BX.Market.Detail(<?=CUtil::PhpToJSObject([
-		'params' => $arParams,
-		'result' => $arResult,
-	])?>);
+	BX.ready(function () {
+		const marketDetailData = <?=Json::encode([
+			'params' => $arParams,
+			'result' => $arResult,
+		])?>;
+		new BX.Market.Detail(marketDetailData);
+	});
 </script>

@@ -6,7 +6,7 @@ use Bitrix\Main\UI\Extension;
 
 /** @var array $arParams */
 /** @var array $arResult */
-/** @var \CAllMain $APPLICATION */
+/** @var CMain $APPLICATION */
 
 Extension::load('ui.sidepanel-content');
 ?>

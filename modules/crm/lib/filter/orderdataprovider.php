@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Sale;
 use Bitrix\Main\Localization\Loc;
@@ -225,6 +226,18 @@ class OrderDataProvider extends EntityDataProvider implements FactoryOptionable
 				]
 			),
 		);
+
+		$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Order);
+		if ($factory && $factory->isLastActivityEnabled())
+		{
+			$result['LAST_ACTIVITY_TIME'] = $this->createField(
+				'LAST_ACTIVITY_TIME',
+				[
+					'type' => 'date',
+					'partial' => true,
+				]
+			);
+		}
 
 		Tracking\UI\Filter::appendFields($result, $this);
 

@@ -9,7 +9,8 @@ use Bitrix\Crm\Binding\LeadContactTable;
 use Bitrix\Crm\Conversion\Entity\EntityConversionMapTable;
 use Bitrix\Crm\Conversion\Entity\EO_EntityConversionMap;
 use Bitrix\Crm\Conversion\Entity\EO_EntityConversionMap_Collection;
-use Bitrix\Crm\Integration\Catalog\Contractor\DocumentRelationStorageStrategy;
+use Bitrix\Crm\Integration\Catalog\Contractor\StoreDocumentRelationStorageStrategy;
+use Bitrix\Crm\Integration\Catalog\Contractor\AgentContractRelationStorageStrategy;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Relation;
@@ -670,30 +671,53 @@ class RelationManager
 		//endregion
 
 		//@TODO collect predefined relations across modules via event
-		if (
-			Loader::includeModule('catalog')
-			&& Manager::isActiveProviderByModule('crm')
-		)
+		if (Loader::includeModule('catalog'))
 		{
-			$predefinedRelations[] =
-				(new Relation(
-					new RelationIdentifier(
-						\CCrmOwnerType::Company,
-						\CCrmOwnerType::StoreDocument
-					),
-					clone $bindingSettings
-				))
-					->setStorageStrategy(new DocumentRelationStorageStrategy(\CCrmOwnerType::Company));
+			if (Manager::isActiveProviderByModule(Manager::PROVIDER_STORE_DOCUMENT, 'crm'))
+			{
+				$predefinedRelations[] =
+					(new Relation(
+						new RelationIdentifier(
+							\CCrmOwnerType::Company,
+							\CCrmOwnerType::StoreDocument
+						),
+						clone $bindingSettings
+					))
+						->setStorageStrategy(new StoreDocumentRelationStorageStrategy(\CCrmOwnerType::Company));
 
-			$predefinedRelations[] =
-				(new Relation(
-					new RelationIdentifier(
-						\CCrmOwnerType::Contact,
-						\CCrmOwnerType::StoreDocument
-					),
-					clone $bindingSettings
-				))
-					->setStorageStrategy(new DocumentRelationStorageStrategy(\CCrmOwnerType::Contact));
+				$predefinedRelations[] =
+					(new Relation(
+						new RelationIdentifier(
+							\CCrmOwnerType::Contact,
+							\CCrmOwnerType::StoreDocument
+						),
+						clone $bindingSettings
+					))
+						->setStorageStrategy(new StoreDocumentRelationStorageStrategy(\CCrmOwnerType::Contact));
+			}
+
+			if (Manager::isActiveProviderByModule(Manager::PROVIDER_AGENT_CONTRACT, 'crm'))
+			{
+				$predefinedRelations[] =
+					(new Relation(
+						new RelationIdentifier(
+							\CCrmOwnerType::Company,
+							\CCrmOwnerType::AgentContractDocument
+						),
+						clone $bindingSettings
+					))
+						->setStorageStrategy(new AgentContractRelationStorageStrategy(\CCrmOwnerType::Company));
+
+				$predefinedRelations[] =
+					(new Relation(
+						new RelationIdentifier(
+							\CCrmOwnerType::Contact,
+							\CCrmOwnerType::AgentContractDocument
+						),
+						clone $bindingSettings
+					))
+						->setStorageStrategy(new AgentContractRelationStorageStrategy(\CCrmOwnerType::Contact));
+			}
 		}
 
 		$this->mixinPredefinedRelationsForDynamic($predefinedRelations);

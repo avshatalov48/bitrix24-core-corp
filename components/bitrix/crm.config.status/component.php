@@ -236,7 +236,14 @@ foreach(CCrmStatus::GetEntityTypes() as $entityId => $arEntityType)
 		$entityTypeId = (int)($arEntityType['ENTITY_TYPE_ID'] ?? 0);
 		$parentEntityID = isset($arEntityType['PARENT_ID']) ? $arEntityType['PARENT_ID'] : '';
 		$addCaption = GetMessage("CRM_STATUS_ADD_{$entityId}");
-		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
+		if (
+			\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId)
+			|| in_array($entityTypeId, [
+				CCrmOwnerType::Lead,
+				CCrmOwnerType::Deal,
+				CCrmOwnerType::Quote,
+				CCrmOwnerType::SmartInvoice,
+			]))
 		{
 			$addCaption = GetMessage("CRM_STATUS_ADD_DEAL_STAGE");
 		}
@@ -247,6 +254,10 @@ foreach(CCrmStatus::GetEntityTypes() as $entityId => $arEntityType)
 		$arResult['ENTITY'][$entityId]['ADD_CAPTION'] = $addCaption;
 
 		$defaultName = GetMessage("CRM_STATUS_DEFAULT_NAME_{$entityId}");
+		if (in_array($entityTypeId, [CCrmOwnerType::Lead, CCrmOwnerType::Quote], true))
+		{
+			$defaultName = GetMessage('CRM_STATUS_DEFAULT_NAME_DEAL_STAGE');
+		}
 		if($defaultName == '' && $parentEntityID !== '')
 		{
 			$defaultName = GetMessage("CRM_STATUS_DEFAULT_NAME_{$parentEntityID}");

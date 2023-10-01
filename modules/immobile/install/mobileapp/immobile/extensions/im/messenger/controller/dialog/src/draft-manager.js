@@ -5,6 +5,7 @@ jn.define('im/messenger/controller/dialog/draft-manager', (require, exports, mod
 	const { debounce } = require('utils/function');
 	const { core } = require('im/messenger/core');
 	const { DraftType } = require('im/messenger/const');
+	const { ObjectUtils } = require('im/messenger/lib/utils');
 
 	class DraftManager
 	{
@@ -42,22 +43,29 @@ jn.define('im/messenger/controller/dialog/draft-manager', (require, exports, mod
 				message: draft.message,
 			};
 
-			this.view.setInput(draft.text);
+			if (!ObjectUtils.isStringFullSpace(draft.text))
+			{
+				this.view.setInput(draft.text);
+			}
+
 			switch (draft.type)
 			{
-				case DraftType.edit: {
+				case DraftType.edit:
+				{
 					this.replyManager.initializeEditingMessage(draftMessage);
 
 					break;
 				}
 
-				case DraftType.reply: {
+				case DraftType.reply:
+				{
 					this.replyManager.initializeQuotingMessage(draftMessage);
 
 					break;
 				}
 
-				default: {
+				default:
+				{
 					break;
 				}
 			}

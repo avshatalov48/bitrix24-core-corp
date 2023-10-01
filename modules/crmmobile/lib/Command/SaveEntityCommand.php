@@ -3,6 +3,8 @@
 namespace Bitrix\CrmMobile\Command;
 
 use Bitrix\Crm\Currency;
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\FileUploader\EntityFieldController;
 use Bitrix\Crm\Integration\UI\EntitySelector\DynamicMultipleProvider;
@@ -12,6 +14,8 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\CrmMobile\ProductGrid\UpdateCatalogProductsCommand;
+use Bitrix\Location\Entity\Address;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -621,6 +625,8 @@ final class SaveEntityCommand extends Command
 		if ($res->isSuccess())
 		{
 			$result->setData(['ID' => $this->entity->getId()]);
+
+			$this->onSavedFactoryBasedEntities($fields);
 		}
 		else
 		{
@@ -628,6 +634,68 @@ final class SaveEntityCommand extends Command
 		}
 
 		return $result;
+	}
+
+	private function onSavedFactoryBasedEntities(array $fields)
+	{
+		if (
+			$this->entity->getEntityTypeId() === \CCrmOwnerType::Lead
+			&& array_key_exists('ADDRESS', $fields)
+		)
+		{
+			$this->saveLeadAddress($fields['ADDRESS']);
+		}
+	}
+
+	private function saveLeadAddress($address): void
+	{
+		if (
+			!(
+				is_null($address)
+				|| is_string($address))
+			)
+		{
+			return;
+		}
+
+		if (empty($address))
+		{
+			EntityAddress::unregister(
+				\CCrmOwnerType::Lead,
+				$this->entity->getId(),
+				EntityAddressType::Primary
+			);
+
+			return;
+		}
+
+		if (!Loader::includeModule('location'))
+		{
+			return;
+		}
+
+		try
+		{
+			$locAddr = Address::fromJson(EntityAddress::prepareJsonValue($address));
+		}
+		catch (ArgumentException $exception)
+		{
+			$locAddr = Address::fromArray([
+				'fieldCollection' => [
+					Address\FieldType::ADDRESS_LINE_2 => $address,
+				],
+				'languageId' => LANGUAGE_ID,
+			]);
+		}
+
+		EntityAddress::register(
+			\CCrmOwnerType::Lead,
+			$this->entity->getId(),
+			EntityAddressType::Primary,
+			[
+				'LOC_ADDR' => $locAddr
+			]
+		);
 	}
 
 	private function extractProductRowsData(array &$fields): ?array

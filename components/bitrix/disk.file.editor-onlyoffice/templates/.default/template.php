@@ -134,7 +134,7 @@ $wayToSharing = [
 	],
 	[
 		'id' => 'sharing',
-		'text' => Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_SHARING_SHARE'),
+		'text' => Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_SHARING_SHARE_MSGVER_1'),
 		'className' => 'disk-fe-office-access-setting-popup-item disk-fe-office-icon-link',
 	],
 ];

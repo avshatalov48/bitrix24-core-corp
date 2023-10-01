@@ -298,6 +298,8 @@ final class Monitor
 			->disableAllChecks()
 			//to exclude any possibility of recursion
 			->disableSaveToTimeline()
+			->disableBizProc()
+			->disableAutomation()
 		;
 
 		$operation->launch();

@@ -1137,7 +1137,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 
 			$result[] = [
 				$item['NAME'] ?? $item['TEXT'],
-				$item['URL'],
+				$item['URL'] ?? null,
 				[],
 				[
 					'DEPTH_LEVEL' => $depthLevel,

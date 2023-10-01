@@ -43,6 +43,8 @@ class Contact extends Base
 		$this->loadAddressValues();
 		$this->loadFmValues();
 		$this->loadUserFieldValues();
+
+		$this->document = Crm\Entity\CommentsHelper::prepareFieldsFromBizProc($this->typeId, $this->id, $this->document);
 	}
 
 	protected function loadAddressValues(): void

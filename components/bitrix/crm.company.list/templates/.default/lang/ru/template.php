@@ -27,7 +27,6 @@ $MESS["CRM_COMPANY_CONTACT_ADD"] = "Добавить контакт";
 $MESS["CRM_COMPANY_DEAL_ADD_TITLE"] = "Добавить новою сделку";
 $MESS["CRM_COMPANY_DEAL_ADD"] = "Добавить сделку";
 $MESS["CRM_COMPANY_DELETE_CONFIRM"] = "Вы уверены, что хотите удалить?";
-$MESS["CRM_STATUS_INIT"] = "- Статус -";
 $MESS["CRM_COMPANY_CALENDAR_TITLE"] = "Добавить новую запись в календарь";
 $MESS["CRM_COMPANY_CALENDAR"] = "Добавить звонок/встречу";
 $MESS["CRM_COMPANY_ADD_EMAIL_TITLE"] = "Написать письмо";

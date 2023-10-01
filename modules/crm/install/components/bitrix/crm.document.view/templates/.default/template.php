@@ -6,7 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 /** @var array $arParams */
 /** @var array $arResult */
-/** @var \CAllMain $APPLICATION */
+/** @var CMain $APPLICATION */
 
 use Bitrix\DocumentGenerator\Driver;
 use Bitrix\DocumentGenerator\Integration\Bitrix24Manager;
@@ -33,7 +33,7 @@ Extension::load([
 Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 
 $downloadButtonOptions = \CUserOptions::GetOption('crm.document.view', 'download_button', []);
-$defaultDownloadFormat = in_array(mb_strtolower($downloadButtonOptions['format']), ['doc', 'pdf'], true)
+$defaultDownloadFormat = in_array(mb_strtolower($downloadButtonOptions['format'] ?? ''), ['doc', 'pdf'], true)
 	? mb_strtolower($downloadButtonOptions['format'])
 	: 'pdf';
 

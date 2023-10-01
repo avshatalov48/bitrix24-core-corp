@@ -7,7 +7,6 @@ $MESS["SALESCENTER_SESSION_ERROR"] = "Не указан идентификато
 $MESS["SALESCENTER_APP_TITLE"] = "Продажи в чатах";
 $MESS["SALESCENTER_APP_ADD_TITLE"] = "Добавить";
 $MESS["SALESCENTER_APP_PAYSYSTEM_ITEM_EXTRA"] = "Еще системы";
-$MESS["SALESCENTER_APP_OFFER_TITLE"] = "Предложить свою";
 $MESS["SALESCENTER_APP_RECOMMENDATION_TITLE"] = "Рекомендовать";
 $MESS["SALESCENTER_APP_PAYSYSTEM_INFO"] = "Подключение через платежную систему \"#PAYSYSTEM_NAME#\"";
 $MESS["SALESCENTER_APP_PAYSYSTEM_MODE_INFO"] = "Подключение через платежную систему \"#PAYSYSTEM_NAME#\" (#MODE_NAME#)";

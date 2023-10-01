@@ -14,5 +14,6 @@ return [
 		'layout/ui/entity-editor/control/product-summary-section',
 		'layout/ui/entity-editor/control/requisite',
 		'layout/ui/entity-editor/control/requisite-address',
+		'layout/ui/entity-editor/control/address',
 	],
 ];

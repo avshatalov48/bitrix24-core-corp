@@ -1190,9 +1190,13 @@ a.crm-entity-widget-client-box-name {
 	font: 16px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 	cursor: pointer;
+	text-decoration: none;
 }
 
-a.crm-entity-widget-client-box-name:hover { color: #3f51b5; }
+a.crm-entity-widget-client-box-name:hover {
+	color: #3f51b5;
+	text-decoration: none;
+}
 
 .crm-entity-widget-client-box-position {
 	overflow: hidden;
@@ -3245,6 +3249,18 @@ div.crm-entity-widget-content-block-radio-label {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	-o-text-overflow: ellipsis;
+}
+
+a.crm-widget-employee-name,
+a.crm-widget-employee-position {
+	color: #2067b0;
+	text-decoration: none;
+}
+
+a.crm-widget-employee-name:hover,
+a.crm-widget-employee-position:hover {
+	color: #2067b0;
+	text-decoration: none;
 }
 
 .crm-widget-employee-position {

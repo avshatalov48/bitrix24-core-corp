@@ -52,11 +52,7 @@ class InvoiceTable extends Main\Entity\DataManager
 		$connection = Main\Application::getConnection();
 		$helper = $connection->getSqlHelper();
 
-		$lockStatusExpression = '';
-		if ($DB->type == 'MYSQL')
-		{
-			$lockStatusExpression = "if(DATE_LOCK is null, 'green', if(DATE_ADD(DATE_LOCK, interval ".$maxLock." MINUTE)<now(), 'green', if(LOCKED_BY=".$userID.", 'yellow', 'red')))";
-		}
+		$lockStatusExpression = "case when DATE_LOCK is null or " . $helper->addSecondsToDateTime($maxLock * 60, 'DATE_LOCK') . " < now() then 'green' when LOCKED_BY = ".$userID." then 'yellow' else 'red' end";
 
 		return array(
 			new Main\Entity\IntegerField('ID',

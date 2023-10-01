@@ -505,7 +505,7 @@ class CAllCrmQuote
 		foreach (self::$clientFields as $fieldName)
 		{
 			if (isset($arFields[$fieldName]) && mb_strlen($arFields[$fieldName]) > 255)
-				$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_QUOTE_FIELD_'.$fieldName.($fieldName === 'MYCOMPANY_ID' ? '1' : ''))))."<br />\n";
+				$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', ['%FIELD_NAME%' => self::GetFieldCaption($fieldName)])."<br />\n";
 		}
 		unset($fieldName);
 
@@ -1701,7 +1701,7 @@ class CAllCrmQuote
 				$arStatus = CCrmStatus::GetStatusList('QUOTE_STATUS');
 				$arMsg[] = Array(
 					'ENTITY_FIELD' => 'STATUS_ID',
-					'EVENT_NAME' => GetMessage('CRM_QUOTE_FIELD_COMPARE_STATUS_ID'),
+					'EVENT_NAME' => GetMessage('CRM_QUOTE_FIELD_COMPARE_STATUS_ID_MSGVER_1'),
 					'EVENT_TEXT_1' => htmlspecialcharsbx(CrmCompareFieldsList($arStatus, $origStatusId)),
 					'EVENT_TEXT_2' => htmlspecialcharsbx(CrmCompareFieldsList($arStatus, $modifStatusId))
 				);
@@ -1958,6 +1958,15 @@ class CAllCrmQuote
 	public static function GetFieldCaption($fieldName)
 	{
 		$result = GetMessage("CRM_QUOTE_FIELD_{$fieldName}");
+
+		if ($fieldName === 'MYCOMPANY_ID')
+		{
+			$result = GetMessage("CRM_QUOTE_FIELD_{$fieldName}1");
+		}
+		if (!(is_string($result) && $result !== ''))
+		{
+			$result = GetMessage("CRM_QUOTE_FIELD_{$fieldName}_MSGVER_1");
+		}
 
 		if (
 			!(is_string($result) && $result !== '')
@@ -2535,7 +2544,7 @@ class CAllCrmQuote
 			{
 				$arPerms = $CCrmRole->GetRolePerms($arRole['ID']);
 
-				if(!isset($arPerms['QUOTE']) && is_array($arPerms['DEAL']))
+				if(!isset($arPerms['QUOTE']) && is_array($arPerms['DEAL'] ?? null))
 				{
 					foreach ($arPerms['DEAL'] as $key => $value)
 					{
@@ -3143,7 +3152,7 @@ class CAllCrmQuote
 		$sNumber = 'QUOTE_NUMBER';
 		$arSearchableFields = array(
 			'DATE_CREATE' => GetMessage('CRM_QUOTE_SEARCH_FIELD_DATE_CREATE'),
-			'STATUS_ID' => GetMessage('CRM_QUOTE_SEARCH_FIELD_STATUS_ID'),
+			'STATUS_ID' => GetMessage('CRM_QUOTE_SEARCH_FIELD_STATUS_ID_MSGVER_1'),
 			'BEGINDATE' => GetMessage('CRM_QUOTE_SEARCH_FIELD_BEGINDATE'),
 			'CLOSEDATE' => GetMessage('CRM_QUOTE_SEARCH_FIELD_CLOSEDATE'),
 			'OPPORTUNITY' => GetMessage('CRM_QUOTE_SEARCH_FIELD_OPPORTUNITY'),

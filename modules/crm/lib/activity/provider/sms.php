@@ -92,6 +92,22 @@ class Sms extends BaseMessage
 	/**
 	 * @inheritDoc
 	 */
+	protected static function syncActivitySettings(int $messageId, array $activity): void
+	{
+		if (empty($activity))
+		{
+			return;
+		}
+
+		// update settings field
+		$activity['SETTINGS']['ORIGINAL_MESSAGE'] = static::fetchOriginalMessageFields($messageId);
+
+		CCrmActivity::Update((int)$activity['ID'], ['SETTINGS' => $activity['SETTINGS']]);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public static function getId()
 	{
 		return 'CRM_SMS';

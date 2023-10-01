@@ -143,9 +143,9 @@ class PhaseSemantics
 				array(
 					'type' => 'list',
 					'items' => array(
-						self::PROCESS => GetMessage('CRM_PHASE_SEMANTICS_LEAD_PROCESS'),
-						self::SUCCESS => GetMessage('CRM_PHASE_SEMANTICS_LEAD_SUCCESS'),
-						self::FAILURE => GetMessage('CRM_PHASE_SEMANTICS_LEAD_FAILURE')
+						self::PROCESS => GetMessage('CRM_PHASE_SEMANTICS_LEAD_PROCESS_MSGVER_1'),
+						self::SUCCESS => GetMessage('CRM_PHASE_SEMANTICS_LEAD_SUCCESS_MSGVER_1'),
+						self::FAILURE => GetMessage('CRM_PHASE_SEMANTICS_LEAD_FAILURE_MSGVER_1')
 					)
 				),
 				$params
@@ -157,9 +157,9 @@ class PhaseSemantics
 				array(
 					'type' => 'list',
 					'items' => array(
-						self::PROCESS => GetMessage('CRM_PHASE_SEMANTICS_QUOTE_PROCESS'),
-						self::SUCCESS => GetMessage('CRM_PHASE_SEMANTICS_QUOTE_SUCCESS'),
-						self::FAILURE => GetMessage('CRM_PHASE_SEMANTICS_QUOTE_FAILURE')
+						self::PROCESS => GetMessage('CRM_PHASE_SEMANTICS_QUOTE_PROCESS_MSGVER_1'),
+						self::SUCCESS => GetMessage('CRM_PHASE_SEMANTICS_QUOTE_SUCCESS_MSGVER_1'),
+						self::FAILURE => GetMessage('CRM_PHASE_SEMANTICS_QUOTE_FAILURE_MSGVER_1')
 					)
 				),
 				$params
@@ -210,23 +210,23 @@ class PhaseSemantics
 			elseif($entityTypeName === \CCrmOwnerType::LeadName)
 			{
 				$result[\CCrmOwnerType::LeadName] = array(
-					'groupTitle' => GetMessage('CRM_PHASE_SEMANTICS_LEAD_GROUP_TITLE'),
-					'selectorTitle' => GetMessage('CRM_PHASE_SEMANTICS_LEAD_SELECTOR_TITLE'),
-					'caption' => GetMessage('CRM_PHASE_SEMANTICS_LEAD_CAPTION'),
+					'groupTitle' => GetMessage('CRM_PHASE_SEMANTICS_DEAL_GROUP_TITLE'),
+					'selectorTitle' => GetMessage('CRM_PHASE_SEMANTICS_DEAL_SELECTOR_TITLE'),
+					'caption' => GetMessage('CRM_PHASE_SEMANTICS_DEAL_CAPTION'),
 					'descriptions' => array(
-						self::UNDEFINED => GetMessage('CRM_PHASE_SEMANTICS_LEAD_UNDEFINED'),
-						self::PROCESS => GetMessage('CRM_PHASE_SEMANTICS_LEAD_PROCESS'),
-						self::SUCCESS => GetMessage('CRM_PHASE_SEMANTICS_LEAD_SUCCESS'),
-						self::FAILURE => GetMessage('CRM_PHASE_SEMANTICS_LEAD_FAILURE')
+						self::UNDEFINED => GetMessage('CRM_PHASE_SEMANTICS_LEAD_UNDEFINED_MSGVER_1'),
+						self::PROCESS => GetMessage('CRM_PHASE_SEMANTICS_LEAD_PROCESS_MSGVER_1'),
+						self::SUCCESS => GetMessage('CRM_PHASE_SEMANTICS_LEAD_SUCCESS_MSGVER_1'),
+						self::FAILURE => GetMessage('CRM_PHASE_SEMANTICS_LEAD_FAILURE_MSGVER_1')
 					)
 				);
 			}
 			elseif($entityTypeName === \CCrmOwnerType::InvoiceName)
 			{
 				$result[\CCrmOwnerType::InvoiceName] = array(
-					'groupTitle' => GetMessage('CRM_PHASE_SEMANTICS_INVOICE_GROUP_TITLE'),
-					'selectorTitle' => GetMessage('CRM_PHASE_SEMANTICS_INVOICE_SELECTOR_TITLE'),
-					'caption' => GetMessage('CRM_PHASE_SEMANTICS_INVOICE_CAPTION'),
+					'groupTitle' => GetMessage('CRM_PHASE_SEMANTICS_DEAL_GROUP_TITLE'),
+					'selectorTitle' => GetMessage('CRM_PHASE_SEMANTICS_DEAL_SELECTOR_TITLE'),
+					'caption' => GetMessage('CRM_PHASE_SEMANTICS_DEAL_CAPTION'),
 					'descriptions' => array(
 						self::UNDEFINED => GetMessage('CRM_PHASE_SEMANTICS_INVOICE_UNDEFINED'),
 						self::PROCESS => GetMessage('CRM_PHASE_SEMANTICS_INVOICE_PROCESS'),

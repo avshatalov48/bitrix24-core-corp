@@ -47,7 +47,7 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		if (!$this->TargetStatus)
 		{
 			$this->WriteToTrackingService(
-				Loc::getMessage('CRM_CTA_INCORRECT_STAGE'),
+				Loc::getMessage('CRM_CTA_INCORRECT_STAGE_MSGVER_1'),
 				0,
 				CBPTrackingType::Error
 			);

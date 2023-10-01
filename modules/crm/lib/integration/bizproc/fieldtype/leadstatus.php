@@ -9,7 +9,7 @@ class LeadStatus extends Bizproc\BaseType\Select
 {
 	public static function getName(): string
 	{
-		return Loc::getMessage('CRM_BP_FIELDTYPE_LEAD_STATUS') ?: parent::getName();
+		return Loc::getMessage('CRM_BP_FIELDTYPE_LEAD_STATUS_MSGVER_1') ?: parent::getName();
 	}
 
 	protected static function getFieldOptions(Bizproc\FieldType $fieldType)

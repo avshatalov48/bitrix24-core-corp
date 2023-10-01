@@ -239,7 +239,8 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 				'SUM' => Loc::getMessage('CRM_ENTITY_TREE_SUM'),
 				'EMAIL' => Loc::getMessage('CRM_ENTITY_TREE_EMAIL'),
 				'PHONE' => Loc::getMessage('CRM_ENTITY_TREE_PHONE'),
-				'SOURCE' => Loc::getMessage('CRM_ENTITY_TREE_SOURCE')
+				'SOURCE' => Loc::getMessage('CRM_ENTITY_TREE_SOURCE'),
+				'AGENT_CONTRACT' => Loc::getMessage('CRM_ENTITY_TREE_AGENT_CONTRACT'),
 			);
 		}
 		$statuses = $params['STATUSES'];
@@ -621,6 +622,21 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 								</tr>
 							</table>
 						</div>
+					</div>
+				</div>
+				<?
+				break;
+			case \CCrmOwnerType::AgentContractDocument:
+				?>
+				<div class="crm-doc-cart<?= $selected ? ' crm-tree-active' : ''?><?= $counter == 1 ? ' crm-doc-cart-top' : ''?>">
+					<div class="crm-doc-cart-info">
+						<a href="<?=$item['URL']?>" target="_top" class="crm-doc-cart-title crm-doc-cart-title-sentence crm-tree-link" data-id="<?=$item['ID']?>" data-type="<?=$item['TREE_TYPE']?>">
+							<span class="crm-doc-gray">
+								<?=htmlspecialcharsbx($item['TITLE'])?>
+							</span>
+						</a>
+						<div class="crm-doc-info-text"><?= $lang['AGENT_CONTRACT'] ?></div>
+						<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], null, $result['DOCUMENT']);?>
 					</div>
 				</div>
 				<?

@@ -29,11 +29,6 @@ class salescenter extends CModule
 			$this->MODULE_VERSION = $arModuleVersion["VERSION"];
 			$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
 		}
-		else
-		{
-			$this->MODULE_VERSION = SALESCENTER_VERSION;
-			$this->MODULE_VERSION_DATE = SALESCENTER_VERSION;
-		}
 
 		$this->MODULE_NAME = GetMessage("SALESCENTER_MODULE_NAME");
 		$this->MODULE_DESCRIPTION = GetMessage("SALESCENTER_MODULE_DESCRIPTION");
@@ -72,11 +67,12 @@ class salescenter extends CModule
 	function InstallDB($params = [])
 	{
 		global $DB, $APPLICATION;
+		$connection = \Bitrix\Main\Application::getConnection();
 		$errors = false;
 
-		if(!$DB->Query("SELECT 'x' FROM b_salescenter_page", true))
+		if (!$DB->TableExists('b_salescenter_page'))
 		{
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/db/mysql/install.sql");
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/salescenter/install/db/' . $connection->getType() . '/install.sql');
 		}
 
 		if($errors !== false)
@@ -254,12 +250,12 @@ class salescenter extends CModule
 	function UnInstallDB($params = [])
 	{
 		global $DB, $APPLICATION;
-
+		$connection = \Bitrix\Main\Application::getConnection();
 		$errors = false;
 
 		if(!isset($params['savedata']) || $params['savedata'] !== "Y")
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/db/mysql/uninstall.sql");
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/db/".$connection->getType()."/uninstall.sql");
 		}
 
 		if($errors !== false)

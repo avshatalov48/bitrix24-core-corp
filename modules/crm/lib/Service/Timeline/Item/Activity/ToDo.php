@@ -3,12 +3,11 @@
 namespace Bitrix\Crm\Service\Timeline\Item\Activity;
 
 use Bitrix\Crm\Service\Timeline\Item\Activity;
+use Bitrix\Crm\Service\Timeline\Item\Mixin\FileListPreparer;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
-use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Audio;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\FileList;
-use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Model\File;
 use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItem;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
@@ -19,6 +18,8 @@ use CCrmOwnerType;
 
 class ToDo extends Activity
 {
+	use FileListPreparer;
+
 	protected function getActivityTypeId(): string
 	{
 		return 'ToDo';
@@ -233,18 +234,7 @@ class ToDo extends Activity
 			return null;
 		}
 
-		$files = [];
-		foreach ($storageFiles as $file)
-		{
-			$fileId = $file['ID']; // unique ID
-			$sourceFileId = (int)$file['FILE_ID'];
-			$fileName = trim((string)$file['NAME']);
-			$fileSize = (int)$file['SIZE'];
-			$viewUrl = (string)$file['VIEW_URL'];
-			$previewUrl = $file['PREVIEW_URL'] ? (string)$file['PREVIEW_URL'] : null;
-
-			$files[] = new File($fileId, $sourceFileId, $fileName, $fileSize, $viewUrl, $previewUrl);
-		}
+		$files = $this->prepareFiles($storageFiles);
 
 		$fileListBlock = (new FileList())
 			->setTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_FILES'))
@@ -253,6 +243,7 @@ class ToDo extends Activity
 		if ($this->isScheduled() && $this->hasUpdatePermission())
 		{
 			$fileListBlock->setUpdateParams([
+				'type' => $this->getType(),
 				'entityTypeId' => CCrmOwnerType::Activity,
 				'entityId' => $this->getActivityId(),
 				'files' => array_column($storageFiles, 'FILE_ID'),

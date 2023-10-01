@@ -133,19 +133,7 @@ class WorktimeActionList
 			}
 		}
 
-		foreach ($actions as $action)
-		{
-			$action->setRecordManager($this->recordManager);
-			$action->setShiftsManager($this->shiftsManager);
-			if (!$action->isStart())
-			{
-				$action->setRecord($this->recordManager->getRecord());
-				$action->setSchedule($this->recordManager->getRecordSchedule());
-				$action->setShift($this->recordManager->getRecordShift());
-			}
-		}
-
-		return $actions;
+		return $this->fillActions($actions);
 	}
 
 	private function isEligibleToStart(?WorktimeRecord $record)
@@ -300,6 +288,23 @@ class WorktimeActionList
 			->setSchedule($record->obtainSchedule())
 			->setRecordManager($recordManager)
 			->setRecord($record);
+	}
+
+	public function fillActions(array $actions): array
+	{
+		foreach ($actions as $action)
+		{
+			$action->setRecordManager($this->recordManager);
+			$action->setShiftsManager($this->shiftsManager);
+			if (!$action->isStart())
+			{
+				$action->setRecord($this->recordManager->getRecord());
+				$action->setSchedule($this->recordManager->getRecordSchedule());
+				$action->setShift($this->recordManager->getRecordShift());
+			}
+		}
+
+		return $actions;
 	}
 
 	private function buildShiftWithDateByRecord(?WorktimeRecord $record)

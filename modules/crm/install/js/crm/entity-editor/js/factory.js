@@ -473,6 +473,10 @@ if(typeof BX.Crm.EntityEditorModelFactory === "undefined")
 				{
 					return BX.Crm.StoreDocumentModel.create(id, settings);
 				}
+				else if(entityTypeId === BX.CrmEntityType.enumeration.agentcontract)
+				{
+					return BX.Crm.AgentContractModel.create(id, settings);
+				}
 
 				return BX.Crm.EntityModel.create(id, settings);
 			}

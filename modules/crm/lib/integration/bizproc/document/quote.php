@@ -19,7 +19,9 @@ class Quote extends Item
 
 	protected static function GetDocumentInfo($documentId)
 	{
-		[$entityType, $entityId] = explode('_', $documentId);
+		$documentIdParts = explode('_', $documentId);
+		$entityType = $documentIdParts[0] ?? null;
+		$entityId = $documentIdParts[1] ?? null;
 
 		if ($entityType !== \CCrmOwnerType::QuoteName)
 		{

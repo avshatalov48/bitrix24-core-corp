@@ -243,4 +243,9 @@ class Lead extends Entity
 
 		return parent::canAddItemToStage($stageId, $userPermissions, $semantics);
 	}
+
+	final protected function isItemsAssignedNotificationSupported(): bool
+	{
+		return true;
+	}
 }

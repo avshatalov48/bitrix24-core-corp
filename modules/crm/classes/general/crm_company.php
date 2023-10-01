@@ -429,6 +429,7 @@ class CAllCrmCompany
 			'ORIGIN_VERSION' => ['FIELD' => $tableAliasName . '.ORIGIN_VERSION', 'TYPE' => 'string'], //ITEM VERSION IN EXTERNAL SYSTEM
 
 			'CATEGORY_ID' => ['FIELD' => $tableAliasName . '.CATEGORY_ID', 'TYPE' => 'int'],
+			'LAST_ACTIVITY_TIME' => ['FIELD' => $tableAliasName . '.LAST_ACTIVITY_TIME', 'TYPE' => 'datetime'],
 		];
 
 		if (!(is_array($arOptions) && isset($arOptions['DISABLE_ADDRESS']) && $arOptions['DISABLE_ADDRESS']))
@@ -2639,7 +2640,8 @@ class CAllCrmCompany
 				(new \Bitrix\Crm\Order\ContactCompanyBinding(\CCrmOwnerType::Company))->unbind($ID);
 			}
 
-			(new Contractor\ContactCompanyBinding(\CCrmOwnerType::Company))->unbind($ID);
+			(new Contractor\StoreDocumentContactCompanyBinding(\CCrmOwnerType::Company))->unbind($ID);
+			(new Contractor\AgentContractContactCompanyBinding(\CCrmOwnerType::Company))->unbind($ID);
 
 			\Bitrix\Crm\Timeline\CompanyController::getInstance()->onDelete(
 				$ID,

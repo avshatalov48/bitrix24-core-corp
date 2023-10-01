@@ -37,6 +37,7 @@ final class DocumentSessionTable extends DataManager
 	public const TYPE_VIEW = 0;
 	public const TYPE_EDIT = 2;
 
+	public const STATUS_BROKEN = -1;
 	public const STATUS_ACTIVE = 0;
 	public const STATUS_NON_ACTIVE = 2;
 
@@ -166,6 +167,18 @@ final class DocumentSessionTable extends DataManager
 		parent::updateBatch(
 			[
 				'STATUS' => self::STATUS_NON_ACTIVE,
+			],
+			[
+				'=EXTERNAL_HASH' => $hash,
+			]
+		);
+	}
+
+	public static function markAsBrokenByHash(string $hash): void
+	{
+		parent::updateBatch(
+			[
+				'STATUS' => self::STATUS_BROKEN,
 			],
 			[
 				'=EXTERNAL_HASH' => $hash,

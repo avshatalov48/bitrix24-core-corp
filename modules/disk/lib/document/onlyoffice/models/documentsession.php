@@ -25,6 +25,7 @@ final class DocumentSession extends Model
 
 	public const STATUS_ACTIVE = DocumentSessionTable::STATUS_ACTIVE;
 	public const STATUS_NON_ACTIVE = DocumentSessionTable::STATUS_NON_ACTIVE;
+	public const STATUS_BROKEN = DocumentSessionTable::STATUS_BROKEN;
 
 	public const REF_USER = 'user';
 	public const REF_OWNER = 'owner';
@@ -232,9 +233,21 @@ final class DocumentSession extends Model
 		return $this->getStatus() === self::STATUS_ACTIVE;
 	}
 
+	public function isBroken(): bool
+	{
+		return $this->getStatus() === self::STATUS_BROKEN;
+	}
+
 	public function isNonActive(): bool
 	{
 		return $this->getStatus() === self::STATUS_NON_ACTIVE;
+	}
+
+	public function setAsBroken(): bool
+	{
+		return $this->update([
+			'STATUS' => self::STATUS_BROKEN,
+		]);
 	}
 
 	public function setAsActive(): bool

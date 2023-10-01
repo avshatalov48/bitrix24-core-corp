@@ -29,7 +29,7 @@ export class Comment extends Base
 			return;
 		}
 
-		if (action === 'Comment:Edit')
+		if (action === 'Comment:Edit' || action === 'Comment:AddFile')
 		{
 			this.#showEditor(item);
 		}
@@ -41,18 +41,18 @@ export class Comment extends Base
 
 		if (action === 'Comment:StartEdit')
 		{
-			item.highlightContentBlockById('commentContent', true);
+			item.highlightContentBlockById('commentContentWeb', true);
 		}
 
 		if (action === 'Comment:FinishEdit')
 		{
-			item.highlightContentBlockById('commentContent', false);
+			item.highlightContentBlockById('commentContentWeb', false);
 		}
 	}
 
 	#showEditor(item: ConfigurableItem): void
 	{
-		const commentBlock = item.getLayoutContentBlockById('commentContent');
+		const commentBlock = item.getLayoutContentBlockById('commentContentWeb');
 		if (commentBlock)
 		{
 			commentBlock.startEditing();

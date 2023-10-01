@@ -295,15 +295,20 @@ export default class MainPostForm extends EventEmitter
 				handler: {
 					selectFile: (tab, path, selected): void => {
 						Object.values(selected).forEach((item): void => {
-							this.getUserFieldControl().getUploader().addFile({
-								serverFileId: item.id,
-								name: item.name,
-								size: item.sizeInt,
-							});
+							this.getUserFieldControl().getUploader().addFile(item);
 						});
 					},
-					removeFiles: (): void => {
-						this.getUserFieldControl().getUploader().removeFiles();
+					removeFiles: (files): void => {
+						if (files !== undefined && Array.isArray(files))
+						{
+							const uploader = this.getUserFieldControl().getUploader();
+							const uploadFiles = uploader.getFiles();
+							let filteredFiles = files.map(item => uploadFiles.find(uploadFile => uploadFile.getServerFileId() === item).getId());
+
+							filteredFiles.forEach(file => {
+								uploader.removeFile(file);
+							});
+						}
 					},
 				},
 			};

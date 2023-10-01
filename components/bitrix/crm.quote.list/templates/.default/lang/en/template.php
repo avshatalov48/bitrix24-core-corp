@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ALL"] = "Total";
 $MESS["CRM_QUOTE_SHOW_TITLE"] = "View quote";
 $MESS["CRM_QUOTE_SHOW"] = "View";
@@ -15,8 +15,6 @@ $MESS["CRM_QUOTE_DELETE"] = "Delete";
 $MESS["CRM_QUOTE_DELETE_CONFIRM"] = "Are you sure you want to delete the item?";
 $MESS["CRM_QUOTE_CALENDAR_TITLE"] = "Add new record to calendar";
 $MESS["CRM_QUOTE_CALENDAR"] = "Add call or event";
-$MESS["CRM_STATUS_INIT"] = "- Quote status -";
-$MESS["CRM_QUOTE_SET_STATUS"] = "Set status";
 $MESS["CRM_QUOTE_ASSIGN_TO"] = "Assign responsible person";
 $MESS["CRM_QUOTE_ADD_CALL_TITLE"] = "Create new call";
 $MESS["CRM_QUOTE_ADD_CALL"] = "New call";
@@ -63,4 +61,5 @@ $MESS["CRM_REBUILD_SEARCH_CONTENT_STATE"] = "#processed# of #total#";
 $MESS["CRM_QUOTE_START_CALL_LIST"] = "Start dialing";
 $MESS["CRM_QUOTE_CREATE_CALL_LIST"] = "Create call list";
 $MESS["CRM_QUOTE_UPDATE_CALL_LIST"] = "Add to call list";
-?>
+$MESS["CRM_QUOTE_SET_STATUS_MSGVER_1"] = "Set stage";
+$MESS["CRM_STATUS_INIT_MSGVER_1"] = "- Quote stage -";
