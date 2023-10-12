@@ -519,6 +519,11 @@ if (!$bInternal)
 		$effectiveFilterFieldIDs[] = 'ACTIVITY_COUNTER';
 	}
 
+	if(!in_array('ACTIVITY_RESPONSIBLE_IDS', $effectiveFilterFieldIDs, true))
+	{
+		$effectiveFilterFieldIDs[] = 'ACTIVITY_RESPONSIBLE_IDS';
+	}
+
 	if(!in_array('WEBFORM_ID', $effectiveFilterFieldIDs, true))
 	{
 		$effectiveFilterFieldIDs[] = 'WEBFORM_ID';
@@ -971,8 +976,10 @@ else
 }
 //endregion
 
+Crm\Filter\FieldsTransform\UserBasedField::applyTransformWrapper($arFilter);
+
 //region Activity Counter Filter
-CCrmEntityHelper::applyCounterFilterWrapper(
+CCrmEntityHelper::applySubQueryBasedFiltersWrapper(
 	\CCrmOwnerType::Company,
 	$arResult['GRID_ID'],
 	Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),

@@ -24,8 +24,8 @@ class GoogleDataLensComponent extends CBitrixComponent
 
 		$this->arResult['SHOW_TITLE'] = $this->arParams['SHOW_TITLE'];
 		$this->arResult['ACCESS_KEY'] = $accessKey ? $accessKey . LANGUAGE_ID : '';
-		$this->arResult['QUERY_STRING'] = '{"server_name":"'.urlencode($this->arResult['SERVER_NAME']).'","key":"'.urlencode($this->arResult['ACCESS_KEY']).'"}';
-		$this->arResult['CONNECT_LINK'] = 'https://datastudio.google.com/datasources/create?connectorId=AKfycbzUoCZuMLzQ2-MsxxJdnFUtrEVgWN5UMRl6XT_MD8hc3Ixm9_lanhMZnPlYOrp7epGv&connectorConfig='.urlencode($this->arResult['QUERY_STRING']);
+		$this->arResult['QUERY_STRING'] = '{"server_name":"' . urlencode($this->arResult['SERVER_NAME']) . '","key":"' . urlencode($this->arResult['ACCESS_KEY']) . '"}';
+		$this->arResult['CONNECT_LINK'] = 'https://datastudio.google.com/datasources/create?connectorId=AKfycbzUoCZuMLzQ2-MsxxJdnFUtrEVgWN5UMRl6XT_MD8hc3Ixm9_lanhMZnPlYOrp7epGv&connectorConfig=' . urlencode($this->arResult['QUERY_STRING']);
 
 		$this->includeComponentTemplate();
 	}

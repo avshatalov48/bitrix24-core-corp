@@ -46,7 +46,7 @@ class EntityProductConverter implements ProductConverter
 			(float)($product['PRICE_EXCLUSIVE'] ?? 0),
 			(float)($product['PRICE_NETTO'] ?? 0),
 			(float)($product['PRICE_BRUTTO'] ?? 0),
-			$product['TAX_INCLUDED'] === 'Y'
+			isset($product['TAX_INCLUDED']) && $product['TAX_INCLUDED'] === 'Y'
 		);
 
 		$vatRate = null;
@@ -74,7 +74,7 @@ class EntityProductConverter implements ProductConverter
 			'MEASURE_CODE' => $product['MEASURE_CODE'] ?? null,
 			'MEASURE_NAME' => $product['MEASURE_NAME'] ?? '',
 			'VAT_RATE' => $vatRate,
-			'VAT_INCLUDED' => $product['TAX_INCLUDED'],
+			'VAT_INCLUDED' => $product['TAX_INCLUDED'] ?? 'N',
 			'XML_ID' => $xmlId,
 			'TYPE' => ProductTypeMapper::getType((int)($product['TYPE'] ?? 0)),
 			// not `sale` basket item, but used.

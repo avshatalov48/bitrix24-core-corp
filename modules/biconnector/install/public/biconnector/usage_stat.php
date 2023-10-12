@@ -11,7 +11,6 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_PARAMS' => [
 			'KEY_EDIT_URL' => 'key_edit.php?key_id=#ID#',
 		],
-		'POPUP_COMPONENT_USE_BITRIX24_THEME' => 'Y',
 	]
 );
 

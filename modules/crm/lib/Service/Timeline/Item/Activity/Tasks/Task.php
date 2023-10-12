@@ -49,14 +49,9 @@ class Task extends Activity
 		return true;
 	}
 
-	public function getIcon(): ?\Bitrix\Crm\Service\Timeline\Layout\Icon
+	public function getIconCode(): ?string
 	{
-		$iconObject = new \Bitrix\Crm\Service\Timeline\Layout\Icon();
-		$iconObject
-			->setCode(Icon::TASK_ACTIVITY)
-			->setBackgroundColorToken(\Bitrix\Crm\Service\Timeline\Layout\Icon::BACKGROUND_PRIMARY_ALT)
-		;
-		return $iconObject;
+		return Icon::TASK_ACTIVITY;
 	}
 
 	public function getTags(): ?array

@@ -19,18 +19,21 @@ class SynchronizeUncompletedActivityDataAgent extends Stepper
 	public function execute(array &$result)
 	{
 		$result['steps'] = (int)($result['steps'] ?? 0);
-		if (!$result['currentTable'])
+		if (empty($result['currentTable']))
 		{
 			$result['currentTable'] = self::INCOMING_CHANNEL_TABLE;
 		}
+
 		switch ($result['currentTable'])
 		{
 			case self::INCOMING_CHANNEL_TABLE:
 				$result = $this->processIncomingChannelTable($result);
+
 				return self::CONTINUE_EXECUTION;
 
 			case self::ENTITY_UNCOMPLETED_ACTIVITY_TABLE:
 				$result = $this->processEntityUncompletedActivityTable($result);
+
 				return self::CONTINUE_EXECUTION;
 		}
 

@@ -508,7 +508,10 @@ class CrmField extends BaseLinkedEntitiesField
 			$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
 			if ($entityTypeId)
 			{
-				if (!is_array($linkedEntitiesValues[$fieldType]))
+				if (
+					!isset($linkedEntitiesValues[$fieldType])
+					|| !is_array($linkedEntitiesValues[$fieldType])
+				)
 				{
 					$linkedEntitiesValues[$fieldType] = [];
 				}

@@ -8,11 +8,11 @@ use Bitrix\Crm\CallList\Internals\CallListTable;
 use Bitrix\Crm\CompanyAddress;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Loader;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
@@ -118,11 +118,19 @@ final class CallList
 				$item->setCompanyTitle($itemFields[$item->getElementId()]['COMPANY_TITLE']);
 				$item->setCompanyPost($itemFields[$item->getElementId()]['POST']);
 				$item->setEditUrl($itemFields[$item->getElementId()]['EDIT_URL']);
-				if(is_array($itemFields[$item->getElementId()]['PHONES']))
+
+				if (
+					isset($itemFields[$item->getElementId()]['PHONES'])
+					&& is_array($itemFields[$item->getElementId()]['PHONES'])
+				)
 				{
 					$item->setPhones($itemFields[$item->getElementId()]['PHONES']);
 				}
-				if(is_array($itemFields[$item->getElementId()]['ASSOCIATED_ENTITY']))
+
+				if (
+					isset($itemFields[$item->getElementId()]['ASSOCIATED_ENTITY'])
+					&& is_array($itemFields[$item->getElementId()]['ASSOCIATED_ENTITY'])
+				)
 				{
 					$item->setAssociatedEntity($itemFields[$item->getElementId()]['ASSOCIATED_ENTITY']);
 				}

@@ -1,10 +1,8 @@
 <?php
 namespace Bitrix\Crm\Recurring\DateType;
 
-use Bitrix\Main;
-use Bitrix\Main\Type\Date;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Type\Date;
 
 class Day extends Base
 {
@@ -49,7 +47,7 @@ class Day extends Base
 	 */
 	private function isWorkdayType()
 	{
-		return $this->params[self::FIELD_IS_WORKDAY_NAME] === 'Y';
+		return isset($this->params[self::FIELD_IS_WORKDAY_NAME]) && $this->params[self::FIELD_IS_WORKDAY_NAME] === 'Y';
 	}
 
 	/**

@@ -5,8 +5,7 @@ namespace Bitrix\Crm\Counter\Lighter;
 use Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeTable;
 use Bitrix\Crm\Counter\EntityCounterManager;
 use Bitrix\Crm\Counter\EntityCounterType;
-use Bitrix\Crm\Service\Container;
-use Generator;
+use Bitrix\Crm\Settings\CounterSettings;
 
 final class Lighter
 {
@@ -14,10 +13,16 @@ final class Lighter
 
 	private LighterQueries $queries;
 
+	private CounterManagerResetWrapper $resetWrapper;
+
+	private bool $isUseActivityResponsible;
+
 	public function __construct(LighterQueries $lighterQueries)
 	{
 		$this->queries = $lighterQueries;
-		$this->pushNotification = new PushNotification();
+		$this->pushNotification = PushNotification::getInstance();
+		$this->resetWrapper = CounterManagerResetWrapper::getInstance();
+		$this->isUseActivityResponsible = CounterSettings::getInstance()->useActivityResponsible();
 	}
 
 	public function execute(): void
@@ -29,48 +34,41 @@ final class Lighter
 			return;
 		}
 
-		$groupedBindings = $this->queries->queryGroupedBindings($activityIds);
-		$entitiesInfo = $this->queries->queryEntitiesInfo($groupedBindings);
+		$activities = $this->queries->queryActivitiesByIds($activityIds);
 
+		$bindingsGroupedByTypeId = $this->queries->queryGroupedBindings($activityIds);
 
-		foreach ($this->codesToResetGenerator($entitiesInfo) as $data)
+		$entitiesInfo = $this->queries->queryEntitiesData($bindingsGroupedByTypeId);
+
+		$codeGeneratorParams = $this->getCodeGeneratorParams($entitiesInfo, $activities);
+
+		$resetData = $this->codesToResetGenerator($codeGeneratorParams);
+
+		foreach ($resetData as $data)
 		{
 			[$codes, $responsibleIds] = $data;
 
 			// reset counters also will send push notification to update UI counters.
-			EntityCounterManager::reset($codes, $responsibleIds);
-			EntityCounterManager::resetExcludeUsersCounters($codes, $responsibleIds);
+			$this->resetWrapper->reset($codes, $responsibleIds);
+			$this->resetWrapper->resetExcludeUsersCounters($codes, $responsibleIds);
 		}
 
-		$this->pushNotification->notifyTimeline($this->queries->queryActivitiesByIds($activityIds));
-
+		$this->pushNotification->notifyTimeline($activities);
 		$this->pushNotification->notifyKanban($entitiesInfo);
-
 		$this->markAsNotified($activityIds);
 	}
 
-	/**
-	 * @param EntitiesInfo $entitiesInfo
-	 * @return Generator|array<string[], int[]> Generator An iterator that yields a tuple of entity counter codes
-	 * and an array of unique responsible IDs for each entity type and category
-	 */
-	private function codesToResetGenerator(EntitiesInfo $entitiesInfo): Generator
+
+	private function codesToResetGenerator(array $codeGeneratorParams): array
 	{
-		$ownerTypeIds = $entitiesInfo->uniqueOwnerTypeIds();
+		$result = [];
 
-		foreach ($ownerTypeIds as $ownerTypeId)
+		foreach ($codeGeneratorParams as $ownerTypeId => $categories)
 		{
-			$categoriesWithResponsible = $entitiesInfo->getAssignedIdsByCategory($ownerTypeId);
-
-			foreach ($categoriesWithResponsible as $row)
+			foreach ($categories as $categoryId => $responsibleIds)
 			{
-				$categoryId = $row['CATEGORY_ID'];
-				$responsibleIds = $row['ASSIGNED_IDS'];
-
-				$factory = Container::getInstance()->getFactory($ownerTypeId);
-
 				$extras = [];
-				if ($factory->isCategoriesEnabled())
+				if ($categoryId !== 'None')
 				{
 					$extras['CATEGORY_ID'] = $categoryId;
 				}
@@ -80,15 +78,76 @@ final class Lighter
 					EntityCounterType::getAll(true),
 					$extras
 				);
-
-				yield [$codes, array_unique($responsibleIds)];
+				$result[] = [$codes, array_unique($responsibleIds)];
 			}
 		}
+
+		return $result;
 	}
 
-	private function markAsNotified(array $activitiesIds)
+	private function getCodeGeneratorParams(array $entitiesInfo, array $activities): array
+	{
+		$actResponsibleMap = $this->activityResponsibleMap($activities);
+
+		$codeGeneratorParams = [];
+		foreach ($entitiesInfo as $entityInfo)
+		{
+			$typeId = $entityInfo['OWNER_TYPE_ID'];
+			$categoryId = $entityInfo['CATEGORY_ID'] ?? 'None';
+
+			$responsibleIds = $this->getResponsibleIds($entityInfo, $actResponsibleMap);
+
+			if (!isset($codeGeneratorParams[$typeId]))
+			{
+				$codeGeneratorParams[$typeId] = [];
+			}
+
+			if (!isset($codeGeneratorParams[$typeId][$categoryId]))
+			{
+				$codeGeneratorParams[$typeId][$categoryId] = [];
+			}
+
+			$current = $codeGeneratorParams[$typeId][$categoryId] ?? [];
+
+			$codeGeneratorParams[$typeId][$categoryId] = array_merge($current, $responsibleIds);
+		}
+
+		return $codeGeneratorParams;
+	}
+
+	private function getResponsibleIds(mixed $entityInfo, array $actResponsibleMap): array
+	{
+		if ($this->isUseActivityResponsible)
+		{
+			$responsibleIds = [];
+			foreach ($entityInfo['ACTIVITY_IDS'] as $activityId)
+			{
+				if (isset($actResponsibleMap[$activityId]))
+				{
+					$responsibleIds[] = $actResponsibleMap[$activityId];
+				}
+			}
+		}
+		else
+		{
+			$responsibleIds = [$entityInfo['ASSIGNED_ID']];
+		}
+		return $responsibleIds;
+	}
+
+	private function markAsNotified(array $activitiesIds): void
 	{
 		ActCounterLightTimeTable::updateMulti($activitiesIds, ['IS_LIGHT_COUNTER_NOTIFIED' => 'Y']);
 	}
 
+	private function activityResponsibleMap(array $activities): array
+	{
+		$result = [];
+		foreach ($activities as $activity)
+		{
+			$result[$activity['ID']] = (int)$activity['RESPONSIBLE_ID'];
+		}
+
+		return $result;
+	}
 }

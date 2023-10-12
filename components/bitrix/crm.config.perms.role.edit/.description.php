@@ -1,7 +1,11 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
-$arComponentDescription = array(
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+$arComponentDescription = [
 	'NAME' => GetMessage('CRM_PERMS_ROlE_EDIT_NAME'),
 	'DESCRIPTION' => GetMessage('CRM_PERMS_ROlE_EDIT_DESCRIPTION'),
 	'ICON' => '/images/icon.gif',
@@ -21,5 +25,4 @@ $arComponentDescription = array(
         )
 	),
 	'CACHE_PATH' => 'Y'
-);
-?>
+];

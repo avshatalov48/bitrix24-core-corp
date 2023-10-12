@@ -14,7 +14,7 @@ $APPLICATION->IncludeComponent(
 			'DASHBOARD_EDIT_URL' => 'dashboard_edit.php?dashboard_id=#ID#',
 			'DASHBOARD_VIEW_URL' => 'dashboard.php?id=#ID#',
 		],
-		'POPUP_COMPONENT_USE_BITRIX24_THEME' => 'Y',
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );
 

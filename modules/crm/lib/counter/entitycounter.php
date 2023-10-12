@@ -2,12 +2,15 @@
 
 namespace Bitrix\Crm\Counter;
 
+use Bitrix\Crm\Counter\CounterQueryBuilder\BuilderParams\UserParams;
 use Bitrix\Crm\Counter\CounterQueryBuilder\CounterQueryBuilder;
 use Bitrix\Crm\Counter\CounterQueryBuilder\CounterQueryBuilderFactory;
 use Bitrix\Crm\Counter\CounterQueryBuilder\FactoryConfig;
 use Bitrix\Crm\Counter\CounterQueryBuilder\BuilderParams\QueryParamsBuilder;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\CounterSettings;
 use Bitrix\Main;
+use Bitrix\Main\Application;
 use Bitrix\Main\Entity\Query;
 
 class EntityCounter extends CounterBase
@@ -30,6 +33,8 @@ class EntityCounter extends CounterBase
 
 	private CalculatedTime $calculatedTime;
 
+	private CounterSettings $counterSettings;
+
 	/**
 	 * @param int $entityTypeID Entity Type ID (see \CCrmOwnerType).
 	 * @param int $typeID Type ID (see EntityCounterType).
@@ -39,6 +44,8 @@ class EntityCounter extends CounterBase
 	 */
 	public function __construct($entityTypeID, $typeID, $userID = 0, array $extras = null)
 	{
+		$this->counterSettings = CounterSettings::getInstance();
+
 		$this->setEntityTypeID($entityTypeID);
 		$this->setTypeID($typeID);
 		$this->setUserID($userID > 0 ? $userID : \CCrmSecurityHelper::GetCurrentUserID());
@@ -252,14 +259,20 @@ class EntityCounter extends CounterBase
 
 	/**
 	 * Prepare queries for specified entity.
+	 *
 	 * @param int $entityTypeID Entity Type ID.
 	 * @param int $entityCounterTypeID Entity Counter Type ID.
-	 * @param array|int $userID User ID.
+	 * @param array $userIds Users id.
 	 * @param array|null $options Options.
-	 * @return array
+	 * @return Main\ORM\Query\Query[]
 	 * @throws Main\NotSupportedException
 	 */
-	public function prepareEntityQueries($entityTypeID, $entityCounterTypeID, $userID, array $options = null)
+	public function prepareEntityQueries(
+		int $entityTypeID,
+		int $entityCounterTypeID,
+		array $userIds,
+		array $options = null
+	): array
 	{
 		$entityTypeID = (int)$entityTypeID;
 		if(!is_array($options))
@@ -318,12 +331,15 @@ class EntityCounter extends CounterBase
 
 			$useUncompletedActivityTable = ($selectType === CounterQueryBuilder::SELECT_TYPE_ENTITIES);
 
-			$queryBuilderParams = (new QueryParamsBuilder($entityTypeID, $userID, $selectType))
+			$useActivityResponsible = $this->counterSettings->useActivityResponsible();
+
+			$queryBuilderParams = (new QueryParamsBuilder($entityTypeID, $userIds, $selectType, $useActivityResponsible))
 				->setUseDistinct($distinct)
 				->setExcludeUsers($needExcludeUsers)
 				->setCounterLimit($needExcludeUsers ? self::COUNTER_LIMIT : null)
 				->setHasAnyIncomingChannel($hasAnyIncomingChannel)
-				->setOptions($options);
+				->setOptions($options)
+				->setRestrictedFrom($this->extras['ACT_VIEW_RESTRICT_DEADLINE_FROM'] ?? null);
 
 			if($typeID === EntityCounterType::IDLE)
 			{
@@ -435,7 +451,7 @@ class EntityCounter extends CounterBase
 		}
 		else
 		{
-			$userIDs = array($this->userID);
+			$userIDs = [$this->userID];
 		}
 		$categoryId = $this->getIntegerExtraParam(
 			'DEAL_CATEGORY_ID',
@@ -459,8 +475,8 @@ class EntityCounter extends CounterBase
 	public function calculateValue(): int
 	{
 		if (
-			!\Bitrix\Crm\Settings\CounterSettings::getInstance()->isEnabled()
-			|| !\Bitrix\Crm\Settings\CounterSettings::getInstance()->canBeCounted()
+			!$this->counterSettings->isEnabled()
+			|| !$this->counterSettings->canBeCounted()
 		)
 		{
 			return 0; // counters feature is completely disabled
@@ -644,5 +660,13 @@ class EntityCounter extends CounterBase
 		}
 
 		return $result;
+	}
+
+	public static function resetAllCrmCountersForAllUsers(): void
+	{
+		global $CACHE_MANAGER;
+		Application::getConnection()
+			->query("UPDATE b_user_counter set CNT=-1 WHERE CODE LIKE 'crm%' AND NOT CODE LIKE 'CRM\_**' and CNT > -1");
+		$CACHE_MANAGER->CleanDir("user_counter");
 	}
 }

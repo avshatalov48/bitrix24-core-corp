@@ -32,7 +32,7 @@ class Item extends Converter
 			foreach ($factory->getFieldsCollection() as $field)
 			{
 				$fieldName = $field->getName();
-				$value = $data[$fieldName];
+				$value = $data[$fieldName] ?? null;
 				if ($field->isFileUserField() && !$field->isValueEmpty($value))
 				{
 					$data[$fieldName] = $this->processFile($model, $fieldName);

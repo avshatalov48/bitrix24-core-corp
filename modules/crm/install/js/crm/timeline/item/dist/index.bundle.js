@@ -1252,8 +1252,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      }];
 	    },
 	    iconClassname() {
-	      return ['crm-timeline__card-logo_icon', `--${this.currentIcon}`, `--type-${this.iconType}`, {
-	        '--in-circle': this.inCircle
+	      return ['crm-timeline__card-logo_icon', `--${this.currentIcon}`, {
+	        '--in-circle': this.inCircle,
+	        [`--type-${this.iconType}`]: !!this.iconType && !this.backgroundUrl,
+	        '--custom-bg': !!this.backgroundUrl
 	      }];
 	    },
 	    addIconClassname() {
@@ -2836,7 +2838,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        const confirmationText = (_actionData$confirmat = actionData.confirmationText) !== null && _actionData$confirmat !== void 0 ? _actionData$confirmat : '';
 	        if (confirmationText) {
 	          ui_dialogs_messagebox.MessageBox.show({
-	            message: confirmationText,
+	            message: main_core.Text.encode(confirmationText),
 	            modal: true,
 	            buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_NO,
 	            onYes: () => {
@@ -3724,7 +3726,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    },
 	    expandButtonText() {
-	      return this.isCollapsed ? this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_HIDE') : this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_SHOW');
+	      return this.isCollapsed ? this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_HIDE_MSGVER_1') : this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_SHOW_MSGVER_1');
 	    },
 	    isEditButtonVisible() {
 	      return !(this.isReadOnly || this.isEdit);
@@ -5964,7 +5966,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    content: main_core.Tag.render(_t || (_t = _`<div class="bx-popup-document-activity-popup-content-text">${0}</div>`), content),
 	    titleBar: title,
-	    contentColor: 'white',
 	    className: 'bx-popup-document-activity-popup',
 	    maxWidth: 510
 	  }));

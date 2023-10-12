@@ -5,27 +5,30 @@ namespace Bitrix\Crm\Counter\Lighter;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Timeline\ActivityController;
 use Bitrix\Crm\Kanban;
+use Bitrix\Crm\Traits\Singleton;
 use Bitrix\Main\DI\ServiceLocator;
 use CCrmOwnerType;
 
-final class PushNotification
+class PushNotification
 {
+	use Singleton;
+
 	private PullManager $pullManager;
 
 	public function __construct()
 	{
-		$this->pullManager =  ServiceLocator::getInstance()->get('crm.integration.pullmanager');
+		$this->pullManager = ServiceLocator::getInstance()->get('crm.integration.pullmanager');
 	}
 
 	public function notifyTimeline(array $activities): void
 	{
 		foreach ($activities as $activity)
 		{
-			ActivityController::getInstance()->notifyTimelinesAboutActivityUpdate($activity, \Bitrix\Crm\Timeline\ActivityController::resolveAuthorID($activity));
+			ActivityController::getInstance()->notifyTimelinesAboutActivityUpdate($activity, ActivityController::resolveAuthorID($activity));
 		}
 	}
 
-	public function notifyKanban(EntitiesInfo $entitiesInfo)
+	public function notifyKanban(array $entitiesInfo): void
 	{
 		foreach ($entitiesInfo as $item)
 		{

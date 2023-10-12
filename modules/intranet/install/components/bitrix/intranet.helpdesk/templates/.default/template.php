@@ -11,14 +11,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  * @var CBitrixComponentTemplate $this
  */
 
-use Bitrix\ImBot\Bot\Partner24;
-use Bitrix\ImBot\Bot\Support24;
-use Bitrix\ImBot\Bot\SupportBox;
 use Bitrix\Main;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Intranet;
 use Bitrix\Main\Web\Json;
 
 Main\UI\Extension::load(['ui.icons.b24', 'sidepanel']);
@@ -40,80 +36,15 @@ $imBarExists = $arResult['IM_BAR_EXISTS'];
 
 $frame = $this->createFrame('b24_helper')->begin('');
 
-$supportBotId = 0;
-
-if (Loader::includeModule('imbot'))
-{
-	if (
-		class_exists('\\Bitrix\\ImBot\\Bot\\Support24')
-		&& (Support24::getSupportLevel() === Support24::SUPPORT_LEVEL_PAID)
-		&& Support24::isEnabled()
-	)
-	{
-		$supportBotId = (int)Support24::getBotId();
-	}
-	else if (
-		method_exists('\\Bitrix\\ImBot\\Bot\\SupportBox', 'isEnabled')
-		&& SupportBox::isEnabled()
-	)
-	{
-		$supportBotId = SupportBox::getBotId();
-	}
-}
-
-$isAdmin = Intranet\CurrentUser::get()->isAdmin() ? 1 : 0;
-$isCloud = Main\ModuleManager::isModuleInstalled('bitrix24');
-$userId = Main\Engine\CurrentUser::get()->getId();
-$userEmail = Main\Engine\CurrentUser::get()->getEmail();
-$tariff = Option::get('main', '~controller_group_name', '');
-
-CJSCore::Init(array('helper'));
-
-$helpUrl = $arResult['HELPDESK_URL'] . '/widget2/';
-$helpUrlParameters = [
-	'url' => 'https://' . $_SERVER['HTTP_HOST'] . $APPLICATION->GetCurPageParam(),
-	'is_admin' => $isAdmin,
-	'user_id' => $userId,
-	'user_email' => $userEmail,
-	'tariff' => $tariff,
-	'is_cloud' => $isCloud ? '1' : '0',
-	'support_bot' => $supportBotId,
-];
-
+CJSCore::Init(['helper']);
+$helpUrl = \Bitrix\UI\InfoHelper::getUrl('/widget2/');
 $imBotIncluded = Loader::includeModule('imbot');
-
-if ($imBotIncluded)
-{
-	$helpUrlParameters['support_partner_code'] = Partner24::getBotCode();
-	$supportPartnerName = Main\Text\Encoding::convertEncoding(Partner24::getPartnerName(), SITE_CHARSET, 'utf-8');
-	$helpUrlParameters['support_partner_name'] = $supportPartnerName;
-}
-
-$helpUrl = (new Main\Web\Uri($helpUrl))->addParams($helpUrlParameters)->getUri();
 $frameOpenUrl = (new Main\Web\Uri($helpUrl))->addParams(['action' => 'open'])->getUri();
 $frameCloseUrl = (new Main\Web\Uri($helpUrl))->addParams(['action' => 'close'])->getUri();
-
-$host = $isCloud && defined('BX24_HOST_NAME') ? BX24_HOST_NAME : CIntranetUtils::getHostName();
-$notifyData = [
-	'support_bot' => $supportBotId,
-	'is_admin' => $isAdmin,
-	'user_id' => $userId,
-	'user_email' => $userEmail,
-	'tariff' => $tariff,
-	'host' => $host,
-	'key' => $isCloud ? CBitrix24::RequestSign($host . $userId) : md5($host . $userId .'BX_USER_CHECK'),
-	'is_cloud' => $isCloud ? '1' : '0',
-	'user_date_register' => Intranet\CurrentUser::get()->getDateRegister()?->getTimestamp(),
-	'portal_date_register' => $isCloud ? Option::get('main', '~controller_date_create', '') : '',
+$notifyData = array_merge(\Bitrix\UI\InfoHelper::getParameters(), [
 	'partner_link' => Option::get('bitrix24', 'partner_id', 0) ? 'Y' : 'N',
-	'counter_update_date' => $arResult['COUNTER_UPDATE_DATE'] ?? 0,
-];
-
-if ($imBotIncluded)
-{
-	$notifyData['support_partner_code'] = $helpUrlParameters['support_partner_code'];
-	$notifyData['support_partner_name'] = $helpUrlParameters['support_partner_name'];
-}
+	'counter_update_date' => $arResult['COUNTER_UPDATE_DATE'] ?? 0
+]);
 ?>
 	<script>
 		BX.Helper.init({
@@ -136,8 +67,8 @@ if ($imBotIncluded)
 			});
 		<?php endif;?>
 		<?php
-		if ($supportBotId && isset($_REQUEST['support_chat']))
-			echo 'BX.addCustomEvent("onImInit", function(BXIM) {BXIM.openMessenger('.$supportBotId.');});';
+		if (isset($notifyData['support_bot'], $_REQUEST['support_chat']) && ($notifyData['support_bot'] > 0))
+			echo 'BX.addCustomEvent("onImInit", function(BXIM) {BXIM.openMessenger('.$notifyData['support_bot'].');});';
 		?>
 	</script>
 <?php

@@ -307,8 +307,8 @@ class Form
 	{
 		$formData = $this->form->get();
 		return
-			$formData['FORM_SETTINGS']['REQUEST_PRESET_ID']
-				? (int)$formData['FORM_SETTINGS']['REQUEST_PRESET_ID']
+			$formData['FORM_SETTINGS']['REQUISITE_PRESET_ID']
+				? (int)$formData['FORM_SETTINGS']['REQUISITE_PRESET_ID']
 				: null
 		;
 	}

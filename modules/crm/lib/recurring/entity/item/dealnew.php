@@ -1,10 +1,10 @@
 <?php
 namespace Bitrix\Crm\Recurring\Entity\Item;
 
-use Bitrix\Main,
-	Bitrix\Crm\DealRecurTable,
-	Bitrix\Crm\Recurring\Manager,
-	Bitrix\Crm\Timeline\DealRecurringController;
+use Bitrix\Crm\DealRecurTable;
+use Bitrix\Crm\Recurring\Manager;
+use Bitrix\Crm\Timeline\DealRecurringController;
+use Bitrix\Main;
 
 class DealNew extends DealEntity
 {
@@ -35,7 +35,8 @@ class DealNew extends DealEntity
 		if (!$this->isInitializedFields())
 		{
 			$this->setFieldsNoDemand($fields);
-			if ((int)$fields['DEAL_ID'] > 0)
+
+			if ((int)($fields['DEAL_ID'] ?? 0) > 0)
 			{
 				$this->templateId = (int)$fields['DEAL_ID'];
 			}

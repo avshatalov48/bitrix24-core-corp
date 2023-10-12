@@ -12,7 +12,6 @@ $APPLICATION->IncludeComponent(
 			'SET_TITLE' => 'Y',
 			'DASHBOARD_ID' => $_GET['id'],
 		],
-		'POPUP_COMPONENT_USE_BITRIX24_THEME' => 'Y',
 		'PADDING_USE' => false,
 		'PLAIN_VIEW' => false,
 	]

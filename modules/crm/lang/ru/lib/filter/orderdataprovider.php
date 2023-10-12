@@ -27,3 +27,4 @@ $MESS["CRM_ORDER_FILTER_CHECK_PRINTED"] = "Чек напечатан";
 $MESS["CRM_ORDER_FILTER_SHIPMENT_DELIVERY_DOC_DATE"] = "Дата документа отгрузки";
 $MESS["CRM_ORDER_FILTER_HAS_ASSOCIATED_DEAL"] = "Имеет связь со сделкой";
 $MESS["CRM_ORDER_FILTER_LAST_ACTIVITY_TIME"] = "Последняя активность";
+$MESS['CRM_ORDER_FILTER_ACTIVITY_RESPONSIBLE_IDS'] = "Ответственный за дело";

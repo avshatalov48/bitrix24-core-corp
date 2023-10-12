@@ -429,7 +429,7 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 			<?php
 			echo $renderCardMessage(
 				Loc::getMessage('CRM_TYPE_DETAIL_RELATION_CARD_TITLE'),
-				Loc::getMessage('CRM_TYPE_DETAIL_RELATION_CARD_DESCRIPTION')
+				Loc::getMessage('CRM_TYPE_DETAIL_RELATION_CARD_DESCRIPTION_MSGVER_1')
 			);
 			?>
 			<div class="crm-type-relation-switch-btn">

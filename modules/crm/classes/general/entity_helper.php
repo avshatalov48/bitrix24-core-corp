@@ -476,7 +476,7 @@ class CCrmEntityHelper
 		}
 	}
 
-	public static function applyCounterFilterWrapper(
+	public static function applySubQueryBasedFiltersWrapper(
 		int $entityTypeId,
 		string $gridId,
 		array $extras,
@@ -502,6 +502,8 @@ class CCrmEntityHelper
 		if ($provider instanceof EntityDataProvider)
 		{
 			$provider->applyCounterFilter($entityTypeId, $arFilter, $extras);
+
+			$provider->applyActivityResponsibleFilter($entityTypeId, $arFilter);
 		}
 
 		unset($filterFactory, $provider);

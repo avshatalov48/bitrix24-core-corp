@@ -25,6 +25,7 @@ class EventHandler
 	public static function onAnalyticPageBatchCollect()
 	{
 		$batchList = [];
+		global $USER;
 
 		if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 		{
@@ -43,12 +44,15 @@ class EventHandler
 			$bi->setGroup(self::BATCH_GROUP_BI_GENERAL);
 			$batchList[] = $bi;
 
-			$biSettings = new AnalyticBoardBatch();
-			$biSettings->setKey(self::BATCH_BI_SETTINGS);
-			$biSettings->setTitle(Loc::getMessage('BIC_CRM_MENU_ITEM_SETTINGS'));
-			$biSettings->setOrder(160);
-			$biSettings->setGroup(self::BATCH_GROUP_BI_GENERAL);
-			$batchList[] = $biSettings;
+			if ($USER->CanDoOperation('biconnector_dashboard_manage'))
+			{
+				$biSettings = new AnalyticBoardBatch();
+				$biSettings->setKey(self::BATCH_BI_SETTINGS);
+				$biSettings->setTitle(Loc::getMessage('BIC_CRM_MENU_ITEM_SETTINGS'));
+				$biSettings->setOrder(160);
+				$biSettings->setGroup(self::BATCH_GROUP_BI_GENERAL);
+				$batchList[] = $biSettings;
+			}
 		}
 
 		return $batchList;
@@ -118,19 +122,12 @@ class EventHandler
 					],
 					true
 				);
-				$page->addButton(
-					new BoardButton(
-					'<button class="ui-btn ui-btn-themes ui-btn-light-border" onclick="BX.UI.InfoHelper.show(\'info_implementation_request\');">'
-					.Loc::getMessage('BIC_CRM_BUTTON_ORDER').
-					'</button>'
-					)
-				);
-
+				$page->addButton(self::getImplementationOrderButton());
 			}
 			$page->setExternal($menuItem['external'] ?? true);
 			$page->setExternalUrl($menuItem['url'] ?? '');
 			$page->setSliderSupport(true);
-			$page->setTitle(htmlspecialcharsbx($title));
+			$page->setTitle($title);
 			$page->setGroup(self::BATCH_GROUP_BI_GENERAL);
 			$pageList[] = $page;
 		}
@@ -141,47 +138,57 @@ class EventHandler
 	protected static function getSettingsBoards(): array
 	{
 		$pageList = [];
-
 		$manager = \Bitrix\BIConnector\Manager::getInstance();
+
 		foreach ($manager->getMenuSettingsItem() as $menuItem)
 		{
+			$page = new AnalyticBoard();
+			$page->setBatchKey(self::BATCH_BI_SETTINGS);
+			$page->setBoardKey($menuItem['id']);
+			$page->setGroup(self::BATCH_GROUP_BI_GENERAL);
+			$page->setExternal($menuItem['external'] ?? true);
+			$page->setExternalUrl($menuItem['url'] ?? '');
+			$page->setSliderLoader('biconnector:settings-grid');
+			$page->setSliderSupport(true);
+
 			if (isset($menuItem['title']))
 			{
-				$title = $menuItem['title'];
+				$page->setTitle(htmlspecialcharsbx($menuItem['title']));
 			}
 			else
 			{
 				switch ($menuItem['id'])
 				{
 					case 'crm_bi_connect':
-						$title = Loc::getMessage('BIC_CRM_MENU_CONNECT');
+						$page->setTitle(Loc::getMessage('BIC_CRM_MENU_CONNECT'));
 						break;
 					case 'crm_bi_dashboard_manage':
-						$title = Loc::getMessage('BIC_CRM_MENU_DASHBOARD_MANAGE');
+						$page->setTitle(Loc::getMessage('BIC_CRM_MENU_DASHBOARD_MANAGE'));
 						break;
 					case 'crm_bi_key':
-						$title = Loc::getMessage('BIC_CRM_MENU_KEY_MANAGE');
+						$page->setTitle(Loc::getMessage('BIC_CRM_MENU_KEY_MANAGE'));
 						break;
 					case 'crm_bi_usage':
-						$title = Loc::getMessage('BIC_CRM_MENU_USAGE_STAT');
+						$page->setTitle( Loc::getMessage('BIC_CRM_MENU_USAGE_STAT'));
 						break;
 					default:
-						$title = '';
+						$page->setTitle('');
 						break;
 				}
 			}
 
-			$page = new AnalyticBoard();
-			$page->setBatchKey(self::BATCH_BI_SETTINGS);
-			$page->setBoardKey($menuItem['id']);
-			$page->setExternal($menuItem['external'] ?? true);
-			$page->setExternalUrl($menuItem['url'] ?? '');
-			$page->setSliderSupport(true);
-			$page->setTitle(htmlspecialcharsbx($title));
-			$page->setGroup(self::BATCH_GROUP_BI_GENERAL);
 			$pageList[] = $page;
 		}
 
 		return $pageList;
+	}
+
+	protected static function getImplementationOrderButton(): BoardButton
+	{
+		return new BoardButton(
+			'<button class="ui-btn ui-btn-themes ui-btn-light-border" onclick="BX.UI.InfoHelper.show(\'info_implementation_request\');">'
+			.Loc::getMessage('BIC_CRM_BUTTON_ORDER').
+			'</button>'
+		);
 	}
 }

@@ -322,7 +322,7 @@ abstract class Dynamic extends ProductsDataProvider implements Filterable
 			return $type->getTitle();
 		}
 
-		return Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_DYNAMIC_TITLE');
+		return Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_DYNAMIC_TITLE_MSGVER_1');
 	}
 
 	public function getCategory(): ?string

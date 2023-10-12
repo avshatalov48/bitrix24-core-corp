@@ -331,6 +331,11 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		$this->prepareSubordination($user);
 		$user += Util::getAppsInstallationConfig($this->arParams['ID']);
 
+		if (Loader::includeModule("bitrix24") && \Bitrix\Bitrix24\Integrator::isIntegrator($user["ID"]))
+		{
+			$user["IS_INTEGRATOR"] = true;
+		}
+
 		return $user;
 	}
 
@@ -562,11 +567,6 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 					$user["STATUS"] = "visitor";
 				}
 			}
-		}
-
-		if (Loader::includeModule("bitrix24") && \Bitrix\Bitrix24\Integrator::isIntegrator($user["ID"]))
-		{
-			$user["STATUS"] = "integrator";
 		}
 
 		if ($user["ACTIVE"] === "N")

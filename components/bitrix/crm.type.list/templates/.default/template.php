@@ -4,11 +4,15 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\Main;
+use Bitrix\UI;
+
+/** @var array $arResult */
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
-$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-hidden");
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 'no-all-paddings no-hidden');
 if($this->getComponent()->getErrors())
 {
 	foreach($this->getComponent()->getErrors() as $error)
@@ -35,6 +39,9 @@ Extension::load([
 	'ui.dialogs.messagebox',
 	'ui.fonts.opensans',
 ]);
+Main\Loader::includeModule('ui');
+
+UI\Toolbar\Facade\Toolbar::addFilter($arResult['filter']);
 
 ?>
 
@@ -57,8 +64,8 @@ Extension::load([
 		if($arResult['grid'])
 		{
 			$APPLICATION->IncludeComponent(
-				"bitrix:main.ui.grid",
-				"",
+				'bitrix:main.ui.grid',
+				'',
 				$arResult['grid']
 			);
 		}
@@ -71,7 +78,7 @@ Extension::load([
 				<?= Loc::getMessage('CRM_TYPE_LIST_WELCOME_TEXT')?>
 			</div>
 			<div class="crm-type-list-welcome-help" onclick="BX.Crm.Router.Instance.openTypeHelpPage();">
-				<?= Loc::getMessage('CRM_TYPE_LIST_WELCOME_LINK')?>
+				<?= Loc::getMessage('CRM_TYPE_LIST_WELCOME_LINK_MSGVER_1')?>
 			</div>
 		</div>
 	</div>

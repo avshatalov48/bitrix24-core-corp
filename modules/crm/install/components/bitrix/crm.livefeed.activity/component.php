@@ -177,8 +177,8 @@ if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 						"MESSAGE_24_1"  => $eventTitle,
 						"MESSAGE_24_2"  => (!empty($message_24_2) ? $message_24_2 : ''),
 						"CHANGES_24"    => (!empty($changes_24) ? $changes_24 : ''),
-						"NAME_TEMPLATE"	=> $arParams["PARAMS"]["NAME_TEMPLATE"],
-						"PATH_TO_USER"	=> $arParams["PARAMS"]["PATH_TO_USER"],
+						"NAME_TEMPLATE"	=> $arParams["PARAMS"]["NAME_TEMPLATE"] ?? '',
+						"PATH_TO_USER"	=> $arParams["PARAMS"]["PATH_TO_USER"] ?? '',
 						'TYPE'          => (
 							!empty($arParams["FIELDS"]["PARAMS"])
 							&& !empty($arParams["FIELDS"]["PARAMS"]["TYPE"])

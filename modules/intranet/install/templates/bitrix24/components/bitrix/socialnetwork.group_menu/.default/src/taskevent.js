@@ -13,7 +13,7 @@ export default class TaskEvent
 		this.pageId = Type.isStringFilled(params.pageId) ? params.pageId : '';
 		this.currentUserId = !Type.isUndefined(params.currentUserId) ? Number(params.currentUserId) : 0;
 		this.groupId = !Type.isUndefined(params.groupId) ? Number(params.groupId) : 0;
-
+		this.isRoleControlDisabled = !Type.isUndefined(params.isRoleControlDisabled) ? Boolean(params.isRoleControlDisabled) : false;
 		const compatMode = {
 			compatMode: true,
 		};
@@ -95,6 +95,10 @@ export default class TaskEvent
 
 	onFilterApply(filterId, data, ctx)
 	{
+		if (this.isRoleControlDisabled)
+		{
+			return;
+		}
 		let roleId = ctx.getFilterFieldsValues().ROLEID;
 		document.querySelectorAll('.tasks_role_link').forEach((element) => {
 			element.classList.remove('main-buttons-item-active');

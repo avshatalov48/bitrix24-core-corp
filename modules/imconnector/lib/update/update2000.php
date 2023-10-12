@@ -1,25 +1,24 @@
 <?php
 namespace Bitrix\Imconnector\Update;
 
-use \Bitrix\Main\Loader,
-	\Bitrix\Main\Config\Option,
-	\Bitrix\Main\Update\Stepper,
-	\Bitrix\Main\Localization\Loc,
-	\Bitrix\ImConnector\Rest\Helper,
-	\Bitrix\Main\Entity\ReferenceField,
-	\Bitrix\ImConnector\Model\CustomConnectorsTable;
+use Bitrix\Main\Loader,
+	Bitrix\Main\Config\Option,
+	Bitrix\Main\Update\Stepper,
+	Bitrix\Main\Entity\ReferenceField,
+	Bitrix\Rest\AppTable,
+	Bitrix\ImConnector\Rest\Helper,
+	Bitrix\ImConnector\Model\CustomConnectorsTable;
 
-Loc::loadMessages(__FILE__);
 
 final class Update2000 extends Stepper
 {
 	private const PORTION = 30;
-	private const OPTION_NAME = 'imconnector_check_custom_connectors_to_delete';
+	private const OPTION_NAME = 'imconnector_check_custom_connectors';
 	protected static $moduleId = 'imconnector';
 
-	public function execute(array &$result): bool
+	public function execute(array &$option): bool
 	{
-		$return = false;
+		$return = self::FINISH_EXECUTION;
 
 		if (Loader::includeModule(self::$moduleId) && Loader::includeModule('rest'))
 		{
@@ -27,12 +26,16 @@ final class Update2000 extends Stepper
 
 			if ($status['count'] > 0)
 			{
-				$runtime[] = new ReferenceField(
+				$option['progress'] = 1;
+				$option['steps'] = '';
+				$option['count'] = $status['count'];
+
+				$runtime = [new ReferenceField(
 					'REST_APP',
-					'\Bitrix\Rest\AppTable',
+					AppTable::class,
 					['=ref.ID' => 'this.REST_APP_ID'],
 					['join_type' => 'LEFT']
-				);
+				)];
 
 				$found = false;
 				$cursor = CustomConnectorsTable::getList([
@@ -49,9 +52,8 @@ final class Update2000 extends Stepper
 					],
 					'offset' => 0,
 					'limit' => self::PORTION,
-					'order' => array('ID' => 'ASC'),
+					'order' => ['ID' => 'ASC'],
 				]);
-
 				while ($row = $cursor->fetch())
 				{
 					Helper::unRegisterApp([
@@ -64,13 +66,15 @@ final class Update2000 extends Stepper
 					$found = true;
 				}
 
+				$option['progress'] = floor($status['number'] * 100 / $status['count']);
+				$option['steps'] = $status['number'];
+
 				if ($found)
 				{
 					Option::set(self::$moduleId, self::OPTION_NAME, serialize($status));
-					$return = true;
+					$return = self::CONTINUE_EXECUTION;
 				}
-
-				if ($found === false)
+				else
 				{
 					Option::delete(self::$moduleId, ['name' => self::OPTION_NAME]);
 				}
@@ -80,7 +84,7 @@ final class Update2000 extends Stepper
 		return $return;
 	}
 
-	public function loadCurrentStatus()
+	private function loadCurrentStatus(): array
 	{
 		$status = Option::get(self::$moduleId, self::OPTION_NAME, '');
 		$status = ($status !== '' ? @unserialize($status, ['allowed_classes' => false]) : []);

@@ -56,7 +56,7 @@ class Quote extends Entity
 
 	protected function getPersistentFilterFields(): array
 	{
-		return [ 'ACTIVITY_COUNTER' ];
+		return [ 'ACTIVITY_COUNTER', 'ACTIVITY_RESPONSIBLE_IDS' ];
 	}
 
 	public function getFilterPresets(): array

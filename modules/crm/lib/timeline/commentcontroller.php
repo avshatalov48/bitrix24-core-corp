@@ -225,12 +225,15 @@ class CommentController extends EntityController
 			{
 				$rules["USERFIELDS"] = $fileFields[self::UF_COMMENT_FILE_NAME];
 
-				if ($options['LAZYLOAD'] === 'Y')
+				if (isset($options['LAZYLOAD']) &&$options['LAZYLOAD'] === 'Y')
+				{
 					$parser->LAZYLOAD = 'Y';
+				}
 
 				$parser->arUserfields = $fileFields;
 			}
 		}
+		
 		$parser->bMobile = (($options['MOBILE'] ?? null) === 'Y');
 		if (self::$parser instanceof \blogTextParser)
 		{

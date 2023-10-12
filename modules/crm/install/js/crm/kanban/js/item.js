@@ -1753,76 +1753,160 @@ BX.CRM.Kanban.Item.prototype = {
 		}
 	},
 
-	setActivityExistInnerHtml: function()
+	/**
+	 * Description what the counter fields mean you can see
+	 * at crm/lib/kanban/entityactivitycounter.php::appendToEntityItems
+	 */
+	setActivityExistInnerHtml()
 	{
 		if (this.activityExist !== undefined)
 		{
-			var data = this.getData();
-			var column = this.getColumn();
-			var columnData = column.getData();
+			const data = this.getData();
+			const column = this.getColumn();
+			const columnData = column.getData();
 
 			if (columnData.type !== 'PROGRESS')
 			{
 				return;
 			}
 
-			var html = '';
-
 			this.activityExist.classList.remove(...this.activityExist.classList);
 			this.activityExist.classList.add('crm-kanban-item-activity');
 
 			const userId = this.getGrid().getData().userId;
 
-			if (userId !== BX.prop.getNumber(this.data, 'assignedBy', 0))
-			{
-				html = this.getActivityCounterHtml(data.activityCounterTotal);
-				if (data.activityProgress && !data.activityCounterTotal)
-				{
-					html += this.getActivitiesIndicatorHtml(data, userId);
-				}
+			const errorCounterByActivityResponsible = this.getGrid().getData().showErrorCounterByActivityResponsible || false;
 
-				this.activityExist.classList.add(this.itemActivityZeroClass);
-			}
-			else
-			{
-				if (data.activityErrorTotal && data.activityIncomingTotal)
-				{
-					html = this.getActivityCounterHtml(
-						data.activityCounterTotal,
-						'crm-kanban-item-activity-all-counters'
-					);
-				}
-				else if (data.activityErrorTotal)
-				{
-					html = this.getActivityCounterHtml(
-						data.activityErrorTotal,
-						'crm-kanban-item-activity-deadline-counter'
-					);
-				}
-				else if (data.activityIncomingTotal)
-				{
-					html = this.getActivityCounterHtml(
-						data.activityIncomingTotal,
-						'crm-kanban-item-activity-incoming-counter'
-					);
-				}
-				else
-				{
-					html = this.getActivityCounterHtml(0);
-					this.activityExist.classList.add(this.itemActivityZeroClass);
+			const html = errorCounterByActivityResponsible
+				? this.makeCounterHtmlByActivityResponsible(data, userId)
+				: this.makeCounterHtmlByEntityResponsible(data, userId);
 
-					if (data.activityProgress && !data.activityCounterTotal)
-					{
-						html += this.getActivitiesIndicatorHtml(data, userId);
-					}
-				}
-			}
-
-			if (html.length)
+			if (html.length > 0)
 			{
 				this.activityExist.innerHTML = html;
 			}
 		}
+	},
+
+	makeCounterHtmlByActivityResponsible(data, userId)
+	{
+		let html = '';
+
+		const userActStat = data.activitiesByUser[userId] || {};
+
+		const userActivityError = userActStat.activityError || 0;
+		const userActivityIncoming = userActStat.incoming || 0;
+		const userActivityProgress = userActStat.activityProgress || 0;
+		const userActivityCounterTotal = userActStat.activityCounterTotal || 0;
+
+		if (userActivityIncoming > 0 && userActivityError > 0)
+		{
+			html = this.getActivityCounterHtml(
+				userActivityCounterTotal,
+				'crm-kanban-item-activity-all-counters',
+			);
+		}
+		else if (userActivityError > 0)
+		{
+			html = this.getActivityCounterHtml(
+				userActivityError,
+				'crm-kanban-item-activity-deadline-counter',
+			);
+		}
+		else if (userActivityIncoming > 0)
+		{
+			html = this.getActivityCounterHtml(
+				userActivityIncoming,
+				'crm-kanban-item-activity-incoming-counter',
+			);
+		}
+		else if (userActivityProgress > 0)
+		{
+			html = this.getActivityCounterHtml(0);
+			this.activityExist.classList.add(this.itemActivityZeroClass);
+			html += '<span class="crm-kanban-item-activity-indicator"></span>';
+		}
+		else
+		{
+			if (data.activityCounterTotal > 0)
+			{
+				html = this.getActivityCounterHtml(data.activityCounterTotal);
+			}
+			else
+			{
+				html = this.getActivityCounterHtml(0);
+				html += '<span class="crm-kanban-item-activity-indicator crm-kanban-item-activity-indicator--grey"></span>';
+			}
+			this.activityExist.classList.add(this.itemActivityZeroClass);
+		}
+
+		return html;
+	},
+
+	makeCounterHtmlByEntityResponsible(data, userId)
+	{
+		let html = '';
+		const isCurrentUserResponsibleToElement = userId === BX.prop.getNumber(this.data, 'assignedBy', 0);
+
+		const activityProgress = data.activityProgress || 0;
+		const activityError = data.activityError || 0;
+		const activityIncomingTotal = data.activityIncomingTotal || 0;
+		const activityCounterTotal = data.activityCounterTotal || 0;
+
+		if (isCurrentUserResponsibleToElement)
+		{
+			if (activityIncomingTotal > 0 && activityError > 0)
+			{
+				html = this.getActivityCounterHtml(
+					activityCounterTotal,
+					'crm-kanban-item-activity-all-counters',
+				);
+			}
+			else if (activityError > 0)
+			{
+				html = this.getActivityCounterHtml(
+					activityError,
+					'crm-kanban-item-activity-deadline-counter',
+				);
+			}
+			else if (activityIncomingTotal > 0)
+			{
+				html = this.getActivityCounterHtml(
+					activityIncomingTotal,
+					'crm-kanban-item-activity-incoming-counter',
+				);
+			}
+			else if (activityProgress > 0)
+			{
+				html = this.getActivityCounterHtml(0);
+				this.activityExist.classList.add(this.itemActivityZeroClass);
+				html += '<span class="crm-kanban-item-activity-indicator"></span>';
+			}
+			else
+			{
+				html = this.getActivityCounterHtml(0);
+				this.activityExist.classList.add(this.itemActivityZeroClass);
+			}
+		}
+		else
+		{
+			if (activityCounterTotal > 0)
+			{
+				html = this.getActivityCounterHtml(data.activityCounterTotal);
+			}
+			else if (activityProgress > 0)
+			{
+				html = this.getActivityCounterHtml(0);
+				html += '<span class="crm-kanban-item-activity-indicator crm-kanban-item-activity-indicator--grey"></span>';
+			}
+			else
+			{
+				html = this.getActivityCounterHtml(0);
+			}
+			this.activityExist.classList.add(this.itemActivityZeroClass);
+		}
+
+		return html;
 	},
 
 	getActivityCounterHtml(value, additionalClass = '')

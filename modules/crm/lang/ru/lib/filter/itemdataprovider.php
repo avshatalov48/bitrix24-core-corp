@@ -8,3 +8,4 @@ $MESS["CRM_FILTER_ITEMDATAPROVIDER_COMPANY_TITLE"] = "Название комп�
 $MESS["CRM_FILTER_ITEMDATAPROVIDER_MYCOMPANY_TITLE"] = "Название Вашей компании";
 $MESS["CRM_FILTER_ITEMDATAPROVIDER_OPPORTUNITY_WITH_CURRENCY"] = "Сумма/Валюта";
 $MESS["CRM_FILTER_ITEMDATAPROVIDER_ACTIVITY_COUNTER"] = "Дела";
+$MESS['CRM_FILTER_ITEMDATAPROVIDER_ACTIVITY_RESPONSIBLE_IDS'] = 'Ответственный за дело';

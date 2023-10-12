@@ -70,7 +70,11 @@ class Manager
 		if (!isset($this->dataSources[$languageId]))
 		{
 			$this->dataSources[$languageId] = [];
-			$event = new \Bitrix\Main\Event('biconnector', 'OnBIConnectorDataSources', [$this, &$this->dataSources[$languageId], $languageId]);
+			$event = new \Bitrix\Main\Event('biconnector', 'OnBIConnectorDataSources', [
+				$this,
+				&$this->dataSources[$languageId],
+				$languageId,
+			]);
 			$event->send();
 		}
 	}
@@ -123,6 +127,7 @@ class Manager
 				],
 				'filter' => [
 					'=ACCESS_KEY' => $key,
+					'=ACTIVE' => 'Y',
 				],
 			])->fetch();
 			if ($dbKey)
@@ -475,8 +480,6 @@ class Manager
 			];
 		}
 
-
-
 		foreach ($this->getCurrentUserDashboardList() as $dashboard)
 		{
 			$items[] = [
@@ -543,7 +546,7 @@ class Manager
 		{
 			$items[] = [
 				'id' => $handlerData['APP_ID'],
-				'url' => '/biconnector/placement.php?id='.$handlerData['ID'],//'/marketplace/app/'.$handlerData['APP_ID'].'/',
+				'url' => '/biconnector/placement.php?id=' . $handlerData['ID'],//'/marketplace/app/'.$handlerData['APP_ID'].'/',
 				'title' => !empty($handlerData['TITLE']) ? $handlerData['TITLE'] : $handlerData['APP_NAME'],
 			];
 		}

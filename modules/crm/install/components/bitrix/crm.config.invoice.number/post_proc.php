@@ -18,9 +18,9 @@ if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 $strWarning = '';
 
 if (!checkAccountNumberValue(
-				$_POST["account_number_template"],
-				$_POST["account_number_number"],
-				$_POST["account_number_prefix"]))
+				$_POST["account_number_template"] ?? null,
+				$_POST["account_number_number"] ?? null,
+				$_POST["account_number_prefix"] ?? null))
 {
 	if ($_POST["account_number_template"] == "PREFIX")
 		$strWarning .= GetMessage("CRM_ACCOUNT_NUMBER_PREFIX_WARNING", array("#PREFIX#" => $_POST["account_number_prefix"])).'<br>';

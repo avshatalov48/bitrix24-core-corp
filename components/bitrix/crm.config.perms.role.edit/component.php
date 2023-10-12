@@ -1,11 +1,16 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use \Bitrix\Crm\Service;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Crm\Service;
 
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
+
 	return;
 }
 
@@ -13,28 +18,37 @@ $CrmPerms = new CCrmPerms($USER->GetID());
 if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+
 	return;
 }
 
 $restriction = \Bitrix\Crm\Restriction\RestrictionManager::getPermissionControlRestriction();
 $arResult['IS_PERMITTED'] = $restriction->hasPermission();
-if(!$arResult['IS_PERMITTED'])
+if (!$arResult['IS_PERMITTED'])
 {
 	$arResult['LOCK_SCRIPT'] = $restriction->prepareInfoHelperScript();
 }
 
-$arParams['PATH_TO_ROLE_EDIT'] = CrmCheckPath('PATH_TO_ROLE_EDIT', $arParams['PATH_TO_ROLE_EDIT'], $APPLICATION->GetCurPage());
-$arParams['PATH_TO_ENTITY_LIST'] = CrmCheckPath('PATH_TO_ENTITY_LIST', $arParams['PATH_TO_ENTITY_LIST'], $APPLICATION->GetCurPage());
+$arParams['PATH_TO_ROLE_EDIT'] = CrmCheckPath(
+	'PATH_TO_ROLE_EDIT',
+	$arParams['PATH_TO_ROLE_EDIT'] ?? '',
+	$APPLICATION->GetCurPage()
+);
+$arParams['PATH_TO_ENTITY_LIST'] = CrmCheckPath(
+	'PATH_TO_ENTITY_LIST',
+	$arParams['PATH_TO_ENTITY_LIST'] ?? '',
+	$APPLICATION->GetCurPage()
+);
 
-$arParams['ROLE_ID'] = (int) $arParams['ROLE_ID'];
+$arParams['ROLE_ID'] = (int)($arParams['ROLE_ID'] ?? 0);
 $bVarsFromForm = false;
 
 $arResult['PATH_TO_ROLE_EDIT'] = CComponentEngine::MakePathFromTemplate(
-	$arParams['PATH_TO_ROLE_EDIT'],
-	array('role_id' => $arParams['ROLE_ID'])
+	$arParams['PATH_TO_ROLE_EDIT'] ?? '',
+	['role_id' => $arParams['ROLE_ID']]
 );
 
-if($arResult['IS_PERMITTED'])
+if ($arResult['IS_PERMITTED'])
 {
 	if ($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($_POST['save']) || isset($_POST['apply'])) && check_bitrix_sessid())
 	{
@@ -90,7 +104,6 @@ if($arResult['IS_PERMITTED'])
 		LocalRedirect($arParams['PATH_TO_ENTITY_LIST']);
 	}
 }
-
 
 if (!$bVarsFromForm)
 {
@@ -322,18 +335,24 @@ foreach ($typesMap->getTypes() as $type)
 unset($arResult['ROLE_PERM']['INVOICE'][BX_CRM_PERM_OPEN]);
 unset($arResult['ROLE_PERM']['ORDER'][BX_CRM_PERM_OPEN]);
 
-$arResult['PATH_TO_ROLE_DELETE'] =  CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_ROLE_EDIT'],
-	array(
-		'role_id' => $arResult['ROLE']['ID']
-	)),
-	array('delete' => '1', 'sessid' => bitrix_sessid())
+$arResult['PATH_TO_ROLE_DELETE'] = CHTTP::urlAddParams(
+	CComponentEngine::MakePathFromTemplate(
+		$arParams['PATH_TO_ROLE_EDIT'] ?? '',
+		[
+			'role_id' => $arResult['ROLE']['ID']
+		]
+	),
+	['delete' => '1', 'sessid' => bitrix_sessid()]
 );
 
 foreach ($operationsWithAutomation as $operation)
 {
 	foreach ($arResult['ENTITY'] as $entityType => $entityName)
 	{
-		if(!isset($entityOperationsMap[$entityType]) || in_array($operation, $entityOperationsMap[$entityType]))
+		if (
+			!isset($entityOperationsMap[$entityType])
+			|| in_array($operation, $entityOperationsMap[$entityType])
+		)
 		{
 			$arResult['ENTITY_PERMS'][$entityType][] = $operation;
 		}
@@ -344,8 +363,13 @@ foreach ($operationsWithAutomation as $operation)
 			{
 				foreach ($arFieldValue as $fieldValueID => $fieldValue)
 				{
-					if (!isset($arResult['ROLE_PERMS'][$entityType][$operation][$fieldID][$fieldValueID]) || $arResult['ROLE_PERMS'][$entityType][$operation][$fieldID][$fieldValueID] == '-')
+					if (
+						!isset($arResult['ROLE_PERMS'][$entityType][$operation][$fieldID][$fieldValueID])
+						|| $arResult['ROLE_PERMS'][$entityType][$operation][$fieldID][$fieldValueID] === '-'
+					)
+					{
 						$arResult['ROLE_PERMS'][$entityType][$operation][$fieldID][$fieldValueID] = $arResult['ROLE_PERMS'][$entityType][$operation]['-'];
+					}
 				}
 			}
 		}

@@ -1,6 +1,7 @@
+import { Text } from 'main.core';
+import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { Base } from './base';
 import ConfigurableItem from '../configurable-item';
-import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
 export class Activity extends Base
 {
@@ -42,7 +43,7 @@ export class Activity extends Base
 			if (confirmationText)
 			{
 				MessageBox.show({
-					message: confirmationText,
+					message: Text.encode(confirmationText),
 					modal: true,
 					buttons: MessageBoxButtons.YES_NO,
 					onYes: () => {

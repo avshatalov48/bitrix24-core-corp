@@ -26,7 +26,7 @@ use Bitrix\Main\Localization\Loc;
 $hideCoverOption = CUserOptions::GetOption('biconnector', 'biconnector.start');
 $hideCover = is_array($hideCoverOption) && isset($hideCoverOption['hide_cover']) && $hideCoverOption['hide_cover'] === 'Y';
 
-/** @var \CAllMain $APPLICATION */
+/** @var CMain $APPLICATION */
 /** @var array $arParams */
 /** @var array $arResult */
 ?>

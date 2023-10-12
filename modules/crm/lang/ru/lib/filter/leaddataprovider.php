@@ -15,4 +15,6 @@ $MESS["CRM_LEAD_FILTER_ACTIVE_TIME_PERIOD"] = "В работе";
 $MESS["CRM_LEAD_FILTER_STATUS_ID_FROM_HISTORY_MSGVER_1"] = "Стадия по истории";
 $MESS["CRM_LEAD_FILTER_STATUS_ID_FROM_SUPPOSED_HISTORY_MSGVER_1"] = "Стадия по истории (с предполагаемыми переходами)";
 $MESS["CRM_LEAD_FILTER_STATUS_SEMANTIC_ID_FROM_HISTORY"] = "Состояние по истории";
+$MESS['CRM_LEAD_FILTER_ACTIVITY_RESPONSIBLE_IDS'] = "Ответственный за дело";
 $MESS["CRM_LEAD_FILTER_LAST_ACTIVITY_TIME"] = "Последняя активность";
+?>

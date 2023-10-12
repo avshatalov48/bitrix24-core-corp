@@ -7,5 +7,6 @@ $MESS["CRM_NOTIFY_SCHEME_LIVEFEED_MENTION"] = "You were mentioned in a post";
 $MESS["CRM_NOTIFY_SCHEME_LIVEFEED_POST"] = "You were specified as a post recipient";
 $MESS["CRM_NOTIFY_SCHEME_MERGE"] = "Duplicate control notifications";
 $MESS["CRM_NOTIFY_SCHEME_OTHER"] = "Other notifications";
+$MESS["CRM_NOTIFY_SCHEME_PING_TODO_ACTIVITY"] = "Activity reminder";
 $MESS["CRM_NOTIFY_SCHEME_WEBFORM"] = "CRM form submitted";
 $MESS["CRM_NOTIFY_TITLE"] = "CRM";

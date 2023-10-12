@@ -9,6 +9,7 @@ use Bitrix\Crm\Counter\CounterQueryBuilder\BuilderParams\QueryParams;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\ORM\Query\Join;
@@ -42,7 +43,10 @@ final class UncompletedBased implements CounterQueryBuilder
 
 		$this->qpEntitySpecificFilter->apply($query, $params->entityTypeId(), $params->options());
 
-		$this->qpResponsibleFilter->applyByItemFactory($query, $params, $factory);
+		if (!$params->useActivityResponsible())
+		{
+			$this->qpResponsibleFilter->applyByItemFactory($query, $params->userParams(), $factory);
+		}
 
 		$this->qpSelectFields->applyForUncompleted($query, $params);
 
@@ -55,7 +59,15 @@ final class UncompletedBased implements CounterQueryBuilder
 			->whereColumn('ref.ENTITY_ID', 'this.ID')
 			->where('ref.ENTITY_TYPE_ID', new SqlExpression($params->entityTypeId()));
 
-		$referenceFilter->where('ref.RESPONSIBLE_ID', new SqlExpression('?i', 0));
+
+		if ($params->useActivityResponsible())
+		{
+			$this->filterResponsibleByActivityWay($referenceFilter, $params, $query);
+		}
+		else
+		{
+			$referenceFilter->where('ref.RESPONSIBLE_ID', new SqlExpression('?i', 0));
+		}
 
 		if (is_null($params->hasAnyIncomingChannel()))
 		{
@@ -84,5 +96,51 @@ final class UncompletedBased implements CounterQueryBuilder
 	{
 		$this->dateFilters->applyFilter($referenceFilter, $params);
 
+	}
+
+	private function filterResponsibleByActivityWay(ConditionTree $referenceFilter, QueryParams $params, Query $query): void
+	{
+		$this->qpResponsibleFilter->apply($referenceFilter, $params->userParams(), 'ref.RESPONSIBLE_ID');
+
+		if ($params->restrictedFrom() && !$params->userParams()->isOnlyOneUser())
+		{
+			$this->addRestrictedByDeadlineSection($query, $params);
+		}
+	}
+
+	private function addRestrictedByDeadlineSection(Query $query, QueryParams $params)
+	{
+		$ct = (new ConditionTree())
+			->where('ENTITY_TYPE_ID', new SqlExpression($params->entityTypeId()));
+
+		if ($params->userParams()->isExcluded())
+		{
+			$ct->whereNotIn('RESPONSIBLE_ID', $params->userParams()->userIds());
+		}
+		else
+		{
+			$ct->whereIn('RESPONSIBLE_ID', $params->userParams()->userIds());
+		}
+
+		if (is_null($params->hasAnyIncomingChannel()))
+		{
+			$ct->whereIn('HAS_ANY_INCOMING_CHANEL', ['N', 'Y']);
+		}
+		else
+		{
+			$ct->where('HAS_ANY_INCOMING_CHANEL',
+					new SqlExpression('?', $params->hasAnyIncomingChannel() ? 'Y' : 'N'));
+		}
+
+		$subQuery = EntityUncompletedActivityTable::query()
+			->setSelect(['FAKE_ONE'])
+			->registerRuntimeField('', new ExpressionField('FAKE_ONE', new SqlExpression('?i', 1)))
+			->where($ct)
+			->where('ENTITY_ID', new SqlExpression('?#.?#', $query->getInitAlias(), 'ID'));
+
+		$subQuery->where('MIN_DEADLINE', '<', $params->restrictedFrom());
+
+
+		$query->whereNotExists($subQuery);
 	}
 }

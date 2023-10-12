@@ -11,5 +11,6 @@ export type EntityCounterPanelOptions = {
 	withExcludeUsers: ?boolean,
 	filterLastPresetId: String,
 	filterLastPresetData: Array,
-	lockedCallback: String
+	lockedCallback: String,
+	filterResponsibleFiledName: string
 };

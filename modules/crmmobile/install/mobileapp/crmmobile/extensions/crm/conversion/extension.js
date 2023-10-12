@@ -385,11 +385,7 @@ jn.define('crm/conversion', (require, exports, module) => {
 					this.hideLoading(false);
 					console.error(error);
 				});
-			})
-				.catch((error) => {
-					this.hideLoading(false);
-					console.error(error);
-				});
+			});
 		}
 
 		setLayoutWidget(layoutWidget)
@@ -401,9 +397,7 @@ jn.define('crm/conversion', (require, exports, module) => {
 		{
 			const { entityTypeId, entityId } = props;
 
-			return BX.ajax.runAction(AJAX_ACTION, {
-				json: { entityTypeId, entityId },
-			})
+			return BX.ajax.runAction(AJAX_ACTION, { json: { entityTypeId, entityId } })
 				.then(({ data }) => data)
 				.catch(Conversion.showError);
 		}

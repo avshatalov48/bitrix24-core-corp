@@ -537,7 +537,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 		));
 
 		$authors = array();
-		$nameFormat = \CSite::getNameFormat(null);
+		$nameFormat = \CSite::getNameFormat();
 		while ($item = $res->fetch())
 		{
 			$item['NAME_FORMATTED'] = \CUser::formatName($nameFormat, $item, true, false);

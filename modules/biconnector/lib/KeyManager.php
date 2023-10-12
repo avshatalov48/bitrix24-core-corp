@@ -268,5 +268,4 @@ class KeyManager
 
 		return null;
 	}
-
 }

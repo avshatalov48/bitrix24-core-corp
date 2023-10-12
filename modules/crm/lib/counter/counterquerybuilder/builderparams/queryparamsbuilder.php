@@ -10,7 +10,7 @@ class QueryParamsBuilder
 {
 	private int $entityTypeId;
 
-	/** @var int[]  */
+	/** @var int[] - users id responsible for the Entity  */
 	private array $userIds;
 
 	private string $selectType;
@@ -29,6 +29,10 @@ class QueryParamsBuilder
 
 	private array $options = [];
 
+	private ?Date $restrictedFrom = null;
+
+	private bool $useActivityResponsible;
+
 	/**
 	 * @param int $entityTypeId
 	 * @param int[] $userIds
@@ -38,11 +42,13 @@ class QueryParamsBuilder
 	public function __construct(
 		int $entityTypeId,
 		array $userIds,
-		string $selectType
+		string $selectType,
+		bool $useActivityResponsible
 	)
 	{
 		$this->entityTypeId = $entityTypeId;
 		$this->userIds = array_values(array_unique(array_map('intval', $userIds)));
+		$this->useActivityResponsible = $useActivityResponsible;
 
 		if (!in_array($selectType, [CounterQueryBuilder::SELECT_TYPE_ENTITIES, CounterQueryBuilder::SELECT_TYPE_QUANTITY]))
 		{
@@ -93,19 +99,28 @@ class QueryParamsBuilder
 		return $this;
 	}
 
+	public function setRestrictedFrom(?Date $restrictedFrom): self
+	{
+		$this->restrictedFrom = $restrictedFrom;
+		return $this;
+	}
+
 	public function build(): QueryParams
 	{
+		$entityUserParams = new UserParams($this->userIds, $this->needExcludeUsers);
+
 		return new QueryParams(
 			$this->entityTypeId,
-			$this->userIds,
 			$this->selectType,
 			$this->useDistinct,
-			$this->needExcludeUsers,
 			$this->counterLimit,
 			$this->hasAnyIncomingChannel,
 			$this->periodFrom,
 			$this->periodTo,
-			$this->options
+			$this->options,
+			$this->restrictedFrom,
+			$entityUserParams,
+			$this->useActivityResponsible
 		);
 	}
 }

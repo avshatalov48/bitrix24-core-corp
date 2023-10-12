@@ -8,7 +8,7 @@ $MESS["CRM_KANBAN_ACTIVITY_CHANGE_DEAL_MSGVER_1"] = "You don't have any schedule
 $MESS["CRM_KANBAN_ACTIVITY_CHANGE_DYNAMIC_MSGVER_1"] = "You don't have any scheduled activities. <span class=\"crm-kanban-item-activity-link\">Plan</span> your next action to keep up with the events.";
 $MESS["CRM_KANBAN_ACTIVITY_CHANGE_LEAD_MSGVER_1"] = "You don't have any scheduled activities. <span class=\"crm-kanban-item-activity-link\">Plan</span> your next action on the lead to never forget about the customer.";
 $MESS["CRM_KANBAN_ACTIVITY_CHANGE_ORDER_MSGVER_1"] = "You don't have any scheduled activities. <span class=\"crm-kanban-item-activity-link\">Plan</span> your next action on the order to never forget about the customer.";
-$MESS["CRM_KANBAN_ACTIVITY_CHANGE_QUOTE_MSGVER_1"] = "You don't have any scheduled activities. <span class=\"crm-kanban-item-activity-link\">Plan</span> your next action on the quote to never forget about the customer.";
+$MESS["CRM_KANBAN_ACTIVITY_CHANGE_QUOTE_MSGVER_1"] = "You don't have any scheduled activities. <span class=\"crm-kanban-item-activity-link\">Plan</span> your next action on the estimate to never forget about the customer.";
 $MESS["CRM_KANBAN_ACTIVITY_CHANGE_SMART_INVOICE_MSGVER_1"] = "You don't have any scheduled activities. <span class=\"crm-kanban-item-activity-link\">Plan</span> your next action on the invoice to never forget about the customer.";
 $MESS["CRM_KANBAN_ACTIVITY_LETSGO_DEAL"] = "Plan activities to move the deal forward.";
 $MESS["CRM_KANBAN_ACTIVITY_LETSGO_LEAD"] = "Plan activities to move the lead forward.";

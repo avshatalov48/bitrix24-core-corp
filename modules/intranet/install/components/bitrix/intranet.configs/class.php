@@ -1235,8 +1235,11 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			$this->arResult["NETWORK_AVAILABLE"] = 'N';
 
 			$billingCurrency = CBitrix24::BillingCurrency();
-			$arProductPrices = CBitrix24::getPrices($billingCurrency);
-			$this->arResult["PROJECT_PRICE"] = CBitrix24::ConvertCurrency($arProductPrices["TF1"]["PRICE"], $billingCurrency);
+			$this->arResult["PROJECT_PRICE"] = '';
+			if (($arProductPrices = CBitrix24::getPrices($billingCurrency)) && !empty($arProductPrices["TF1"]["PRICE"]))
+			{
+				$this->arResult["PROJECT_PRICE"] = CBitrix24::ConvertCurrency($arProductPrices["TF1"]["PRICE"], $billingCurrency);
+			}
 		}
 
 		$this->arResult['STRESSLEVEL_AVAILABLE'] = COption::GetOptionString("intranet", "stresslevel_available", "Y");

@@ -6,6 +6,14 @@ use Bitrix\Main\Diag;
 
 class PrettyPrinter
 {
+	public static $allowedUnserializeClassesList = [
+		\Bitrix\Main\Type\Date::class,
+		\Bitrix\Main\Type\DateTime::class,
+		\DateTime::class,
+		\DateTimeZone::class,
+		\Bitrix\Main\Web\Uri::class
+	];
+
 	/**
 	 * Fetches all query rows and prints them.
 	 *
@@ -113,13 +121,7 @@ class PrettyPrinter
 		{
 			if ($value)
 			{
-				$values = unserialize($value, [
-					'allowed_classes' => [
-						'DateTime',
-						'Bitrix\Main\Type\Date',
-						'Bitrix\Main\Type\DateTime',
-					]
-				]);
+				$values = unserialize($value, ['allowed_classes' => static::$allowedUnserializeClassesList]);
 				if (is_array($values))
 				{
 					foreach ($values as $i => &$v)

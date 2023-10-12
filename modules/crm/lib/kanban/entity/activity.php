@@ -8,6 +8,7 @@ use Bitrix\Crm\Kanban\EntityActivityDeadline;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Error;
+use Bitrix\Main\Filter\DataProvider;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
@@ -219,7 +220,7 @@ trait Activity
 		return $this->getEntityActivities()->prepareItemsResult($columnId, parent::getItems($parameters), $filter);
 	}
 
-	public function applyCountersFilter(array &$filter): void
+	public function applyCountersFilter(array &$filter, DataProvider $provider): void
 	{
 		// do nothing, $filter['ACTIVITY_COUNTER'] will be applied in $this->getItems()
 	}

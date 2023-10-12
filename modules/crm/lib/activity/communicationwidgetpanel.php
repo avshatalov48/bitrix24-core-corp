@@ -1940,7 +1940,7 @@ class CommunicationWidgetPanel
 											"NONE_QTY" => "0"
 										),
 										array(
-											"SOURCE" => Loc::getMessage('CRM_COMM_WGT_MARK_SOURCE_VK'),
+											"SOURCE" => Loc::getMessage('CRM_COMM_WGT_MARK_SOURCE_WHATSAPP'),
 											"TOTAL" => "10",
 											"POSITIVE_QTY" => "7",
 											"NEGATIVE_QTY" => "2",
@@ -2468,7 +2468,7 @@ class CommunicationWidgetPanel
 											"NONE_QTY" => "0"
 										),
 										array(
-											"SOURCE" => Loc::getMessage('CRM_COMM_WGT_MARK_SOURCE_VK'),
+											"SOURCE" => Loc::getMessage('CRM_COMM_WGT_MARK_SOURCE_WHATSAPP'),
 											"TOTAL" => "10",
 											"POSITIVE_QTY" => "7",
 											"NEGATIVE_QTY" => "2",

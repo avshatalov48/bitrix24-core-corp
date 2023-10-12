@@ -4036,21 +4036,25 @@ class CAllCrmDeal
 			);
 		}
 
-		if (isset($arFieldsOrig['OPPORTUNITY'])
+		if (
+			isset($arFieldsOrig['OPPORTUNITY'])
 			&& isset($arFieldsModif['OPPORTUNITY'])
-			&& $arFieldsOrig['OPPORTUNITY'] != $arFieldsModif['OPPORTUNITY'])
+			&& $arFieldsOrig['OPPORTUNITY'] != $arFieldsModif['OPPORTUNITY']
+		)
 		{
 			$arMsg[] = Array(
 				'ENTITY_FIELD' => 'OPPORTUNITY',
 				'EVENT_NAME' => GetMessage('CRM_FIELD_COMPARE_OPPORTUNITY'),
-				'EVENT_TEXT_1' => floatval($arFieldsOrig['OPPORTUNITY']).(($val = CrmCompareFieldsList($arCurrency, $arFieldsOrig['CURRENCY_ID'], '')) != '' ? ' ('.$val.')' : ''),
-				'EVENT_TEXT_2' => floatval($arFieldsModif['OPPORTUNITY']).(($val = CrmCompareFieldsList($arCurrency, $arFieldsModif['CURRENCY_ID'], '')) != '' ? ' ('.$val.')' : '')
+				'EVENT_TEXT_1' => floatval($arFieldsOrig['OPPORTUNITY']).(($val = CrmCompareFieldsList($arCurrency, ($arFieldsOrig['CURRENCY_ID'] ?? null), '')) != '' ? ' ('.$val.')' : ''),
+				'EVENT_TEXT_2' => floatval($arFieldsModif['OPPORTUNITY']).(($val = CrmCompareFieldsList($arCurrency, ($arFieldsModif['CURRENCY_ID'] ?? null), '')) != '' ? ' ('.$val.')' : '')
 			);
 		}
 
-		if (isset($arFieldsOrig['IS_MANUAL_OPPORTUNITY'])
+		if (
+			isset($arFieldsOrig['IS_MANUAL_OPPORTUNITY'])
 			&& isset($arFieldsModif['IS_MANUAL_OPPORTUNITY'])
-			&& $arFieldsOrig['IS_MANUAL_OPPORTUNITY'] != $arFieldsModif['IS_MANUAL_OPPORTUNITY'])
+			&& $arFieldsOrig['IS_MANUAL_OPPORTUNITY'] != $arFieldsModif['IS_MANUAL_OPPORTUNITY']
+		)
 		{
 			$arMsg[] = Array(
 				'ENTITY_FIELD' => 'IS_MANUAL_OPPORTUNITY',

@@ -28,6 +28,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
+use Bitrix\Main\Filter\DataProvider;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
@@ -1020,6 +1021,11 @@ abstract class Entity
 				{
 					$select[] = $fieldSum;
 				}
+				if (is_array($filter) && (int)($filter['CATEGORY_ID'] ?? -1) === 0)
+				{
+					$filter['@CATEGORY_ID'] = $filter['CATEGORY_ID'];
+					unset($filter['CATEGORY_ID']);
+				}
 				$res = $provider::GetListEx(
 					[],
 					$filter,
@@ -1603,7 +1609,7 @@ abstract class Entity
 	protected function getPersistentFilterFields(): array
 	{
 		return [
-			'ASSIGNED_BY_ID', 'ACTIVITY_COUNTER', 'STAGE_ID',
+			'ASSIGNED_BY_ID', 'ACTIVITY_COUNTER', 'STAGE_ID', 'ACTIVITY_RESPONSIBLE_IDS'
 		];
 	}
 
@@ -2483,17 +2489,39 @@ abstract class Entity
 		return $this;
 	}
 
-	public function applyCountersFilter(array &$filter): void
+	/**
+	 * Apply filter fields that have to transform to sql query
+	 * @param array $filter
+	 * @return void
+	 * @throws \Bitrix\Main\NotSupportedException
+	 */
+	public function applySubQueryBasedFilters(array &$filter, ?string $viewMode = null): void
+	{
+		$filterFactory = Container::getInstance()->getFilterFactory();
+		$provider = $filterFactory->getDataProvider(
+			$filterFactory::getSettingsByGridId($this->getTypeId(), $this->getGridId()),
+		);
+
+		// counters
+		if ($this->isActivityCountersFilterSupported())
+		{
+			$this->applyCountersFilter($filter, $provider);
+		}
+
+		if ($provider instanceof Filter\EntityDataProvider && $viewMode !== ViewMode::MODE_ACTIVITIES)
+		{
+			$provider->applyActivityResponsibleFilter($this->getTypeId(), $filter);
+		}
+
+	}
+
+	public function applyCountersFilter(array &$filter, DataProvider $provider): void
 	{
 		if (!$this->isActivityCountersFilterSupported())
 		{
 			return;
 		}
 
-		$filterFactory = Container::getInstance()->getFilterFactory();
-		$provider = $filterFactory->getDataProvider(
-			$filterFactory::getSettingsByGridId($this->getTypeId(), $this->getGridId()),
-		);
 		if ($provider instanceof Filter\EntityDataProvider)
 		{
 			$provider->applyCounterFilter(
@@ -2502,7 +2530,6 @@ abstract class Entity
 				EntityCounter::internalizeExtras($_REQUEST)
 			);
 		}
-		unset($filterFactory, $provider);
 	}
 
 	public function getSortSettings(): Sort\Settings

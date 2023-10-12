@@ -2,7 +2,7 @@
  * @module crm/timeline/item/ui/body/blocks/base-editable-block
  */
 jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { inAppUrl } = require('in-app-url');
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { TimelineTextEditor } = require('crm/timeline/ui/text-editor');
 	const { transparent } = require('utils/color');
@@ -24,6 +24,8 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 				expanded: false,
 				editable: this.props.hasOwnProperty('editable') && this.props.editable,
 			};
+
+			this.textEditorLayout = null;
 		}
 
 		componentWillReceiveProps(props)
@@ -102,6 +104,9 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 				required: true,
 				placeholder: this.getEditorPlaceholder(),
 				onSave: (text) => this.onSave(text),
+				onLinkClick: ({ url }) => this.onLinkClick(url),
+			}).then(({ layout }) => {
+				this.textEditorLayout = layout;
 			});
 		}
 
@@ -142,8 +147,18 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 			this.setState({ expanded: !this.state.expanded });
 		}
 
+		onLinkClick(url)
+		{
+			inAppUrl.open(url, {
+				backdrop: true,
+				parentWidget: this.textEditorLayout,
+			});
+		}
+
 		onSave(text)
 		{
+			this.textEditorLayout = null;
+
 			text = text.trim();
 
 			this.setState({ text }, () => {

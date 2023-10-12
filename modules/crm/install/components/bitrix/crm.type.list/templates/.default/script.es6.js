@@ -1,6 +1,6 @@
-import { ajax as Ajax, Dom, Loc, Reflection, Text, Type } from "main.core";
+import { ajax as Ajax, Dom, Loc, Reflection, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import { MessageBox, MessageBoxButtons } from "ui.dialogs.messagebox";
+import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
 const namespace = Reflection.namespace('BX.Crm');
 
@@ -20,14 +20,17 @@ class TypeListComponent
 			{
 				this.gridId = params.gridId;
 			}
+
 			if (this.gridId && BX.Main.grid && BX.Main.gridManager)
 			{
 				this.grid = BX.Main.gridManager.getInstanceById(this.gridId);
 			}
+
 			if (Type.isElementNode(params.errorTextContainer))
 			{
 				this.errorTextContainer = params.errorTextContainer;
 			}
+
 			if (Type.isElementNode(params.welcomeMessageContainer))
 			{
 				this.welcomeMessageContainer = params.welcomeMessageContainer;
@@ -44,6 +47,8 @@ class TypeListComponent
 	bindEvents(): void
 	{
 		EventEmitter.subscribe('BX.Crm.TypeListComponent:onClickDelete', this.handleTypeDelete.bind(this));
+		EventEmitter.subscribe('BX.Crm.TypeListComponent:onFilterByCustomSection', this.handleFilterByCustomSection.bind(this));
+		EventEmitter.subscribe('BX.Crm.TypeListComponent:onResetFilterByCustomSection', this.handleFilterByCustomSection.bind(this));
 
 		const toolbarComponent = this.getToolbarComponent();
 
@@ -55,6 +60,7 @@ class TypeListComponent
 				if (isUrlChanged)
 				{
 					window.location.reload();
+
 					return;
 				}
 
@@ -71,13 +77,13 @@ class TypeListComponent
 	{
 		let text = '';
 		errors.forEach((message) => {
-			text = text + message + ' ';
+			text = `${text + message} `;
 		});
 
 		if (Type.isElementNode(this.errorTextContainer))
 		{
 			this.errorTextContainer.innerText = text;
-			this.errorTextContainer.parentElement.style.display = 'block';
+			Dom.style(this.errorTextContainer.parentElement, { display: 'block' });
 		}
 		else
 		{
@@ -90,14 +96,14 @@ class TypeListComponent
 		if (Type.isElementNode(this.errorTextContainer))
 		{
 			this.errorTextContainer.innerText = '';
-			this.errorTextContainer.parentElement.style.display = 'none';
+			Dom.style(this.errorTextContainer.parentElement, { display: 'none' });
 		}
 	}
 
-	showErrorsFromResponse({errors}): void
+	showErrorsFromResponse({ errors }): void
 	{
 		const messages = [];
-		errors.forEach(({message}) => messages.push(message));
+		errors.forEach(({ message }) => messages.push(message));
 		this.showErrors(messages);
 	}
 
@@ -109,6 +115,7 @@ class TypeListComponent
 		if (!id)
 		{
 			this.showErrors([Loc.getMessage('CRM_TYPE_TYPE_NOT_FOUND')]);
+
 			return;
 		}
 
@@ -118,18 +125,18 @@ class TypeListComponent
 			modal: true,
 			buttons: MessageBoxButtons.YES_CANCEL,
 			onYes: (messageBox) => {
-				Ajax.runAction(
-					'crm.controller.type.delete', {
-						analyticsLabel: 'crmTypeListDeleteType',
-						data:
+				Ajax.runAction('crm.controller.type.delete', {
+					analyticsLabel: 'crmTypeListDeleteType',
+					data:
 							{
 								id,
-							}
+							},
 				}).then((response: {data: {}}) => {
 					const isUrlChanged = Type.isObject(response.data) && (response.data.isUrlChanged === true);
 					if (isUrlChanged)
 					{
 						window.location.reload();
+
 						return;
 					}
 
@@ -137,19 +144,36 @@ class TypeListComponent
 				}).catch(this.showErrorsFromResponse.bind(this));
 
 				messageBox.close();
-			}
+			},
 		});
 	}
-	//endregion
+	// endregion
 
 	getToolbarComponent(): ?BX.Crm.ToolbarComponent
 	{
-		if(Reflection.getClass('BX.Crm.ToolbarComponent'))
+		if (Reflection.getClass('BX.Crm.ToolbarComponent'))
 		{
 			return BX.Crm.ToolbarComponent.Instance;
 		}
 
 		return null;
+	}
+
+	handleFilterByCustomSection(event: BaseEvent): void
+	{
+		const currentFilter = BX.Main.filterManager?.getList()[0]?.getFilterFieldsValues() || [];
+		const data = {
+			...currentFilter,
+			CUSTOM_SECTION: event.data || null,
+		};
+
+		const api = BX.Main.filterManager?.getList()[0]?.getApi();
+		if (!api)
+		{
+			return;
+		}
+		api.setFields(data);
+		api.apply();
 	}
 }
 

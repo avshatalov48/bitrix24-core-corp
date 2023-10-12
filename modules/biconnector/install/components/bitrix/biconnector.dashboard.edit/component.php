@@ -13,6 +13,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\BiConnector\Settings;
 
 if (!$USER->CanDoOperation('biconnector_dashboard_manage'))
 {
@@ -30,7 +32,7 @@ $arResult['ERRORS'] = [];
 
 if (!\Bitrix\BIConnector\LimitManager::getInstance()->checkLimit())
 {
-		$arResult['ERRORS'][] = Loc::getMessage('CC_BBDE_ERROR_LIMIT_EXCEEDED');
+		$arResult['ERRORS']['BASE'][] = Loc::getMessage('CC_BBDE_ERROR_LIMIT_EXCEEDED');
 }
 
 if (
@@ -42,20 +44,20 @@ if (
 	$name = trim($_POST['NAME'], " \t\n\r");
 	if (!$name)
 	{
-		$arResult['ERRORS'][] = Loc::getMessage('CC_BBDE_ERROR_EMPTY_NAME');
+		$arResult['ERRORS']['NAME'] = Loc::getMessage('CC_BBDE_ERROR_EMPTY_FIELD');
 	}
 
 	$url = trim($_POST['URL'], " \t\n\r");
 	if (!$url)
 	{
-		$arResult['ERRORS'][] = Loc::getMessage('CC_BBDE_ERROR_EMPTY_URL');
+		$arResult['ERRORS']['LINK_FORMAT'] = Loc::getMessage('CC_BBDE_ERROR_EMPTY_FIELD');
 	}
 	else
 	{
 		$manager = \Bitrix\BIConnector\Manager::getInstance();
 		if (!$manager->validateDashboardUrl($url))
 		{
-			$arResult['ERRORS'][] = Loc::getMessage('CC_BBDE_ERROR_INVALID_URL');
+			$arResult['ERRORS']['LINK_FORMAT'] = Loc::getMessage('CC_BBDE_ERROR_INVALID_URL');
 		}
 	}
 
@@ -179,7 +181,7 @@ if ($arResult['FORM_DATA'])
 }
 else
 {
-	$APPLICATION->SetTitle(Loc::getMessage('CC_BBDE_TITLE_NEW'));
+	$APPLICATION->SetTitle(Loc::getMessage('CC_BBDE_TITLE_ADD'));
 	$arResult['FORM_DATA'] = [
 		'ID' => 0,
 		'NAME' => '',
@@ -215,5 +217,8 @@ if ($arResult['ERRORS'])
 		}
 	}
 }
+
+Toolbar::addButton(new Settings\Buttons\Implementation());
+Toolbar::deleteFavoriteStar();
 
 $this->includeComponentTemplate();

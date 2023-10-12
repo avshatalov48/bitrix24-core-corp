@@ -7,15 +7,14 @@ use Bitrix\Crm\Filter\ItemSettings;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Item\Dynamic;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Main\DB;
 use Bitrix\Main\Text\HtmlFilter;
 use CCrmOwnerType;
 use CCrmOwnerTypeAbbr;
-use CDBResult;
 
 class CrmDynamics extends CrmEntity
 {
 	public const PREFIX_FULL = 'CRMDYNAMIC-';
+	public const LIMIT_SEARCH = 50;
 
 	protected static function getHandlerType()
 	{
@@ -216,7 +215,7 @@ class CrmDynamics extends CrmEntity
 				[
 					'order' => $this->getSearchOrder(),
 					'select' => $this->getSearchSelect(),
-					'limit' => 20,
+					'limit' => static::LIMIT_SEARCH,
 					'filter' => $filter,
 				]
 			);

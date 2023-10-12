@@ -8,6 +8,8 @@
 
 namespace Bitrix\Intranet\UStat;
 
+use Bitrix\Tasks\Internals\Task\Status;
+
 class TasksEventHandler
 {
 	const SECTION = 'TASKS';
@@ -63,11 +65,11 @@ class TasksEventHandler
 			switch($fieldName)
 			{
 				case 'STATUS':
-					if ($fieldValue == \CTasks::STATE_IN_PROGRESS)
+					if ((int)$fieldValue === \CTasks::STATE_IN_PROGRESS)
 					{
 						UStat::incrementCounter(static::SECTION);
 					}
-					elseif ($fieldValue == \CTasks::STATE_COMPLETED)
+					elseif ((int)$fieldValue === \CTasks::STATE_COMPLETED)
 					{
 						UStat::incrementCounter(static::SECTION);
 					}

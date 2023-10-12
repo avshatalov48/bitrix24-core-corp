@@ -16,6 +16,7 @@ class CCrmDocument
 
 	private static $UNGROUPED_USERS = array();
 	private static $USER_GROUPS = array();
+	private static ?int $b24employeeGroupId;
 	private static $USER_PERMISSION_CHECK = array();
 	private static $webFormSelectList;
 
@@ -1738,23 +1739,27 @@ class CCrmDocument
 			}
 		}
 
-		//Crutch for Bitrix24 context (user group management is not suppotted)
+		//Crutch for Bitrix24 context (user group management is not supported)
 		if(IsModuleInstalled('bitrix24'))
 		{
-			$siteID = CSite::GetDefSite();
-			$dbResult = CGroup::GetList(
-				'',
-				'',
-				array('STRING_ID' => 'EMPLOYEES_'.$siteID,
-				'STRING_ID_EXACT_MATCH' => 'Y')
-			);
-			if($arEmloyeeGroup = $dbResult->Fetch())
+			if (!isset(static::$b24employeeGroupId))
 			{
-				$employeeGroupID = intval($arEmloyeeGroup['ID']);
-				if(!in_array($employeeGroupID, $arGroupsID, true))
-				{
-					$arGroupsID[] = $employeeGroupID;
-				}
+				$siteID = CSite::GetDefSite();
+				$dbResult = CGroup::GetList(
+					'',
+					'',
+					[
+						'STRING_ID' => 'EMPLOYEES_' . $siteID,
+						'STRING_ID_EXACT_MATCH' => 'Y',
+					]
+				);
+				$arEmployeeGroup = $dbResult->fetch();
+				static::$b24employeeGroupId = (int) ($arEmployeeGroup['ID'] ?? 0);
+			}
+
+			if(!in_array(static::$b24employeeGroupId, $arGroupsID, true))
+			{
+				$arGroupsID[] = static::$b24employeeGroupId;
 			}
 		}
 

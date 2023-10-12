@@ -4,6 +4,7 @@ $MESS["CRM_MENU_RIGHTS_CATEGORY_COPY_FROM_TUNNELS2"] = "Copy access permissions 
 $MESS["CRM_MENU_RIGHTS_CATEGORY_CUSTOM"] = "Custom access settings";
 $MESS["CRM_MENU_RIGHTS_CATEGORY_NONE_FOR_ALL"] = "Close access to all users";
 $MESS["CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ALL"] = "Grant access to my deal only";
+$MESS["CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ELEMENT"] = "Grant access to my items only";
 $MESS["CRM_ST_ACTION_COPY"] = "copy";
 $MESS["CRM_ST_ACTION_MOVE"] = "move";
 $MESS["CRM_ST_ADD_FUNNEL_BUTTON2"] = "Add pipeline";

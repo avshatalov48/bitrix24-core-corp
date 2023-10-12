@@ -1,8 +1,14 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
 
-if(!CModule::IncludeModule('crm'))
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+if (!CModule::IncludeModule('crm'))
+{
 	return;
+}
 
 $arComponentParameters = array(
 	'GROUPS' => array(
@@ -26,4 +32,3 @@ $arComponentParameters = array(
 		)
 	)
 );
-?>

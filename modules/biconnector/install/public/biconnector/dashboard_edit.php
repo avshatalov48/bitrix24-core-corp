@@ -13,7 +13,7 @@ $APPLICATION->IncludeComponent(
 			'DASHBOARD_EDIT_URL' => 'dashboard_edit.php?dashboard_id=#ID#',
 			'ID' => $_REQUEST['dashboard_id'],
 		],
-		'POPUP_COMPONENT_USE_BITRIX24_THEME' => 'Y',
+		'USE_UI_TOOLBAR' => 'Y',
 		'RELOAD_GRID_AFTER_SAVE' => true,
 		'CLOSE_AFTER_SAVE' => true,
 	]

@@ -1201,6 +1201,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			"menu_sale_bizval",
 			"sale_status",
 			"sale_ps_handler_refund",
+			"cat_agent_scheme",
 		];
 
 		if (!self::checkCatalogReadPermission())

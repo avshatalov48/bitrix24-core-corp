@@ -178,9 +178,8 @@ export const CollectionTop = {
 							</h3>
 							<div class="market-topset-item-info-description"
 								 :title="appItem.SHORT_DESC"
-							>
-								{{ appItem.SHORT_DESC }}
-							</div>
+								 v-html="appItem.SHORT_DESC"
+							></div>
 							<div class="market-topset-item-info">
 								<div class="market-rating__container">
 									<div class="market-rating__stars" v-if="!isSiteTemplate(appItem)">

@@ -15,6 +15,7 @@ class ControllerBased extends QueryBuilder
 	/** @var string */
 	protected static $departmentRegex = '/^D(\d+)$/i';
 	protected $controller;
+	private array $progressStepsCache = [];
 
 	public function __construct(\Bitrix\Crm\Security\Controller\Base $controller)
 	{
@@ -337,10 +338,23 @@ class ControllerBased extends QueryBuilder
 			{
 				foreach ($restrictionData as $restrictions)
 				{
-					if (!empty($restrictions))
+					if (empty($restrictions))
 					{
-						$canSkipCategoryRestrictions = false;
-						break;
+						continue;
+					}
+					foreach ($restrictions as $restriction)
+					{
+						if (
+							!(
+								count($restriction) === 1
+								&& isset($restriction['PROGRESS_STEPS'])
+								&& empty($this->getProgressSteps($permissionEntityType, $restriction))
+							)
+						)
+						{
+							$canSkipCategoryRestrictions = false;
+							break;
+						}
 					}
 				}
 			}
@@ -364,27 +378,11 @@ class ControllerBased extends QueryBuilder
 				continue;
 			}
 
-			$allProgressSteps = $this->controller->hasProgressSteps()
-				? $this->controller->getProgressSteps($permissionEntityType) : [];
-
-			if (!empty($allProgressSteps))
-			{
-				sort($allProgressSteps, SORT_STRING);
-			}
-
 			foreach ($restrictions as $restriction)
 			{
 				$isProcessed = false;
 
-				$progressSteps = isset($restriction['PROGRESS_STEPS']) ? $restriction['PROGRESS_STEPS'] : [];
-				if (!empty($progressSteps))
-				{
-					sort($progressSteps, SORT_STRING);
-					if (empty(array_diff($allProgressSteps, $progressSteps)))
-					{
-						$progressSteps = [];
-					}
-				}
+				$progressSteps = $this->getProgressSteps($permissionEntityType, $restriction);
 
 				$userIDs = isset($restriction['USER_IDS']) ? $restriction['USER_IDS'] : [];
 				if (!empty($userIDs))
@@ -448,7 +446,8 @@ class ControllerBased extends QueryBuilder
 					}
 					$this->addTypeAndCategoryToRestrictionMap(
 						$restrictionMap[$hash],
-						$permissionEntityType
+						$permissionEntityType,
+						$canSkipCategoryRestrictions
 					);
 				}
 			}
@@ -664,5 +663,38 @@ class ControllerBased extends QueryBuilder
 		}
 
 		return $progressSqlCondition;
+	}
+
+	private function getProgressSteps(string $permissionEntityType, array $restriction): array
+	{
+		$allProgressSteps = $this->loadProgressSteps($permissionEntityType);
+		$progressSteps = isset($restriction['PROGRESS_STEPS']) ? $restriction['PROGRESS_STEPS'] : [];
+		if (!empty($progressSteps))
+		{
+			sort($progressSteps, SORT_STRING);
+			if (empty(array_diff($allProgressSteps, $progressSteps)))
+			{
+				$progressSteps = [];
+			}
+		}
+
+		return $progressSteps;
+	}
+
+	private function loadProgressSteps(string $permissionEntityType): array
+	{
+		if (!isset($this->progressStepsCache[$permissionEntityType]))
+		{
+			$this->progressStepsCache[$permissionEntityType] = $this->controller->hasProgressSteps()
+				? $this->controller->getProgressSteps($permissionEntityType)
+				: []
+			;
+			if (!empty($this->progressStepsCache[$permissionEntityType]))
+			{
+				sort($this->progressStepsCache[$permissionEntityType], SORT_STRING);
+			}
+		}
+
+		return $this->progressStepsCache[$permissionEntityType];
 	}
 }

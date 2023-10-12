@@ -605,8 +605,10 @@ class CUserCMLImport
 			foreach ($arXMLElement[GetMessage('IBLOCK_XML2_USER_TAG_ADDRESS')] as $key => $arAddressField)
 			{
 				if (GetMessage('IBLOCK_XML2_USER_TAG_FULLADDRESS') == $key)
+				{
 					$arFields['PERSONAL_STREET'] = $arAddressField;
-				else
+				}
+				elseif (isset($arAddressField[GetMessage('IBLOCK_XML2_USER_TAG_TYPE')], $arAddressField[GetMessage('IBLOCK_XML2_USER_TAG_VALUE')]))
 				{
 					$type = $arAddressField[GetMessage('IBLOCK_XML2_USER_TAG_TYPE')];
 					$value = $arAddressField[GetMessage('IBLOCK_XML2_USER_TAG_VALUE')];
@@ -638,6 +640,11 @@ class CUserCMLImport
 		{
 			foreach ($arXMLElement[GetMessage('IBLOCK_XML2_USER_TAG_CONTACTS')] as $arContactsField)
 			{
+				if (!isset($arContactsField[GetMessage('IBLOCK_XML2_USER_TAG_TYPE')], $arContactsField[GetMessage('IBLOCK_XML2_USER_TAG_VALUE')]))
+				{
+					continue;
+				}
+
 				$type = $arContactsField[GetMessage('IBLOCK_XML2_USER_TAG_TYPE')];
 				$value = $arContactsField[GetMessage('IBLOCK_XML2_USER_TAG_VALUE')];
 				switch ($type)

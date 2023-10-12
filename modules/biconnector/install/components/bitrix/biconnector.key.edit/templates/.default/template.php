@@ -27,6 +27,10 @@ Bitrix\Main\UI\Extension::load([
 	'ui.entity-selector',
 	'ui.notification',
 	'ui.fonts.opensans',
+	'ui.sidepanel-content',
+	'ui.icon-set.main',
+	'ui.icon-set.actions',
+	'ui.alerts',
 ]);
 
 foreach ($arResult['ERRORS'] as $error)
@@ -40,13 +44,13 @@ foreach ($arResult['FORM_DATA']['USERS'] as $userId)
 	$users[] = ['user', $userId];
 }
 ?>
-<form class="biconnector-key-edit-wrapper" method="post">
+<form class="biconnector-key-edit__wrapper" method="post">
 	<?=bitrix_sessid_post()?>
 	<input type="hidden" name="ID" value="<?=$arResult['FORM_DATA']['ID']?>">
 	<input type="hidden" name="ACCESS_KEY" value="<?=$arResult['FORM_DATA']['ACCESS_KEY']?>">
 	<input type="hidden" name="USERS" id="USERS" value="<?=htmlspecialcharsbx(implode(',', $arResult['FORM_DATA']['USERS']))?>">
-	<div class="biconnector-key-edit-wrapper-form-inner">
-		<div class="biconnector-key-edit-wrapper-form-row" style="margin-bottom:16px">
+	<div class="biconnector-key-edit__wrapper_form-inner">
+		<div class="biconnector-key-edit__wrapper_form-row" style="display: none;margin-bottom:16px">
 			<label class="ui-ctl ui-ctl-checkbox">
 				<input type="checkbox" class="ui-ctl-element" name="ACTIVE" value="Y" <?=$arResult['FORM_DATA']['ACTIVE'] == 'Y' ? 'checked="checked"' : ''?>>
 				<div class="ui-ctl-label-text" style="margin-right: 12px;"><?=Loc::getMessage('CT_BBKE_ACTIVE')?></div>
@@ -54,8 +58,8 @@ foreach ($arResult['FORM_DATA']['USERS'] as $userId)
 		</div>
 
 		<?php if (count($arResult['CONNECTIONS']) > 1):?>
-		<div class="biconnector-key-edit-wrapper-form-row">
-			<div class="ui-ctl-label-text"><?=Loc::getMessage('CT_BBKE_CONNECTION')?></div>
+		<div class="biconnector-key-edit__wrapper_form-row">
+			<div class="ui-slider-heading-4"><?=Loc::getMessage('CT_BBKE_CONNECTION')?></div>
 			<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
 				<div class="ui-ctl-after ui-ctl-icon-angle"></div>
 				<select name="CONNECTION" class="ui-ctl-element">
@@ -67,17 +71,32 @@ foreach ($arResult['FORM_DATA']['USERS'] as $userId)
 		</div>
 		<?php endif?>
 
-		<div class="biconnector-key-edit-wrapper-form-row">
-			<div class="ui-ctl-label-text"><?=Loc::getMessage('CT_BBKE_ACCESS_KEY')?></div>
-			<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
-				<input type="password" class="ui-ctl-element biconnector-key-edit-access-key" readonly value="<?=htmlspecialcharsbx($arResult['FORM_DATA']['ACCESS_KEY'] . LANGUAGE_ID)?>" id="ACCESS_KEY">
+		<div class="biconnector-key-edit__wrapper_form-row">
+			<div class="ui-slider-heading-4"><?=Loc::getMessage('CT_BBKE_ACCESS_KEY')?></div>
+			<div class="biconnector-key-edit__input_box">
+				<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
+					<input type="password" class="ui-ctl-element biconnector-key-edit-access-key" readonly value="<?=htmlspecialcharsbx($arResult['FORM_DATA']['ACCESS_KEY'] . LANGUAGE_ID)?>" id="ACCESS_KEY">
+					<button class="biconnector-key-edit_btn" onclick="return showText(this, '<?= CUtil::JSEscape(Loc::getMessage('CT_BBKE_KEY_SHOW')) ?>', '<?= CUtil::JSEscape(Loc::getMessage('CT_BBKE_KEY_HIDE')) ?>')">
+						<span class="ui-icon-set --crossed-eye"></span>
+					</button>
+				</div>
+				<button class="ui-btn ui-btn-success biconnector-key-edit_btn" onclick="return copyText()">
+					<span class="ui-icon-set --copy-plates"></span>
+				</button>
 			</div>
-			<button class="biconnector-key-edit-action-link" onclick="return showText(this, '<?=CUtil::JSEscape(Loc::getMessage('CT_BBKE_KEY_SHOW'))?>', '<?=CUtil::JSEscape(Loc::getMessage('CT_BBKE_KEY_HIDE'))?>')"><?=Loc::getMessage('CT_BBKE_KEY_SHOW')?></button>
-			<button class="biconnector-key-edit-action-link" onclick="return copyText()"><?=Loc::getMessage('CT_BBKE_KEY_COPY')?></button>
+			<div class="biconnector-key-edit__info">
+				<div class="biconnector-key-edit__info_logo"></div>
+				<div class="biconnector-key-edit__info_content">
+					<?= Loc::getMessage('CT_BBKE_ONBOARDING') ?>
+					<a onclick="top.BX.Helper.show('redirect=detail&code=18017360')" class="biconnector-key-edit_link">
+						<?= Loc::getMessage('CT_BBKE_ONBOARDING_MORE') ?>
+					</a>
+				</div>
+			</div>
 		</div>
 		<?php if (!$arResult['FORM_DATA']['APP_ID']):?>
-		<div class="biconnector-key-edit-wrapper-form-row">
-			<div class="ui-ctl-label-text"><?=Loc::getMessage('CT_BBKE_USERS')?></div>
+		<div class="biconnector-key-edit__wrapper_form-row">
+			<div class="ui-slider-heading-4"><?=Loc::getMessage('CT_BBKE_USERS')?></div>
 			<div id="user-selector"></div>
 		</div>
 		<?php endif;?>
@@ -97,7 +116,6 @@ foreach ($arResult['FORM_DATA']['USERS'] as $userId)
 		</div>
 	</div>
 </form>
-<?php if (!$arResult['FORM_DATA']['APP_ID']):?>
 <script>
 
 function copyText()
@@ -130,21 +148,26 @@ function copyText()
 	return false;
 }
 
-function showText(btn, showText, hideText)
+function showText()
 {
+	const icon = document.querySelector('.ui-icon-set');
 	if (BX('ACCESS_KEY').type == 'password')
 	{
 		BX('ACCESS_KEY').type = 'text';
-		btn.firstChild.data = hideText;
+		icon.classList.remove('--crossed-eye');
+		icon.classList.add('--opened-eye');
 	}
 	else
 	{
 		BX('ACCESS_KEY').type = 'password';
-		btn.firstChild.data = showText;
+		icon.classList.remove('--opened-eye');
+		icon.classList.add('--crossed-eye');
 	}
 
 	return false;
 }
+
+<?php if (!$arResult['FORM_DATA']['APP_ID']): ?>
 
 const tagSelector = new BX.UI.EntitySelector.TagSelector({
 	id: 'user-selector',
@@ -190,5 +213,6 @@ BX.ready(function ()
 {
 	tagSelector.renderTo(document.getElementById('user-selector'));
 });
+
+<?php endif;?>
 </script>
-<?php endif;

@@ -63,7 +63,7 @@ class DealRecurringController extends DealController
 		}
 
 		$settings = array();
-		if ((int)$recurringFields['BASED_ID'] > 0)
+		if ((int)($recurringFields['BASED_ID'] ?? 0) > 0)
 		{
 			$settings['BASE'] = array(
 				'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
@@ -88,7 +88,7 @@ class DealRecurringController extends DealController
 
 		$this->pushHistory($historyEntryID, $ownerID, self::PUSH_COMMAND_DEAL_ADD);
 
-		if ((int)$recurringFields['BASED_ID'] > 0)
+		if ((int)($recurringFields['BASED_ID'] ?? 0) > 0)
 		{
 			$historyEntryID = ConversionEntry::create(
 				array(
@@ -249,9 +249,11 @@ class DealRecurringController extends DealController
 		$settings = $data['SETTINGS'] ?? [];
 		$base = $settings['BASE'] ?? [];
 
-		if($typeID === TimelineType::CREATION)
+		if ($typeID === TimelineType::CREATION)
 		{
-			$codeTitle = ($base['ENTITY_TYPE_ID'] === \CCrmOwnerType::DealRecurring) ? 'CRM_DEAL_RECURRING_CREATION' : 'CRM_DEAL_CREATION';
+			$codeTitle = isset($base['ENTITY_TYPE_ID']) && $base['ENTITY_TYPE_ID'] === \CCrmOwnerType::DealRecurring
+				? 'CRM_DEAL_RECURRING_CREATION'
+				: 'CRM_DEAL_CREATION';
 			$data['TITLE'] = Loc::getMessage($codeTitle);
 
 			$caption = Loc::getMessage("CRM_DEAL_BASE_CAPTION_BASED_ON_DEAL");

@@ -4,7 +4,7 @@
 jn.define('crm/timeline/ui/textarea', (require, exports, module) => {
 	const isAndroid = Application.getPlatform() === 'android';
 
-	function Textarea({ ref, text, placeholder, onChange, style, testId })
+	function Textarea({ ref, text, placeholder, onChange, onLinkClick, style, testId })
 	{
 		return View(
 			{
@@ -30,6 +30,7 @@ jn.define('crm/timeline/ui/textarea', (require, exports, module) => {
 					...style,
 				},
 				onChangeText: onChange,
+				onLinkClick,
 			}),
 		);
 	}

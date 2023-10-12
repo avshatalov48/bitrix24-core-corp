@@ -7,16 +7,16 @@
  */
 namespace Bitrix\Crm\WebForm;
 
+use Bitrix\Crm\SiteButton;
+use Bitrix\Crm\UI\Webpack;
+use Bitrix\Crm\WebForm\Internals;
 use Bitrix\Crm\WebForm\Internals\LandingTable;
 use Bitrix\Main;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\SalesCenter;
-use Bitrix\Crm\UI\Webpack;
-use Bitrix\Crm\SiteButton;
-use Bitrix\Crm\WebForm\Internals;
 
 Loc::loadMessages(__FILE__);
 
@@ -1113,7 +1113,9 @@ class Form
 
 	public function getCurrencyId()
 	{
-		return $this->params['CURRENCY_ID'] ? $this->params['CURRENCY_ID'] : \CCrmCurrency::GetBaseCurrencyID();
+		return empty($this->params['CURRENCY_ID'])
+			? \CCrmCurrency::GetBaseCurrencyID()
+			: $this->params['CURRENCY_ID'];
 	}
 
 	/**
@@ -1123,7 +1125,7 @@ class Form
 	 */
 	public function isPayable()
 	{
-		return $this->params['IS_PAY'] === 'Y';
+		return isset($this->params['IS_PAY']) && $this->params['IS_PAY'] === 'Y';
 	}
 
 	/**

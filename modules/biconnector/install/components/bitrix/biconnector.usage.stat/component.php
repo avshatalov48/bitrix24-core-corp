@@ -136,5 +136,14 @@ while ($data = $logList->fetch())
 $arResult['NAV'] = $nav;
 $arResult['CURRENT_PAGE'] = $nav->getCurrentPage();
 $arResult['ENABLE_NEXT_PAGE'] = count($arResult['ROWS']) == $nav->getPageSize();
+$emptyStateTitle = Loc::getMessage('CC_BBUS_EMPTYSTATE_TITLE');
+$emptyStateDescription = Loc::getMessage('CC_BBUS_EMPTYSTATE_DESCRIPTION');
+$arResult['STUB'] = "
+	<div class=\"biconnector-empty\">
+		<div class=\"biconnector-empty__icon --statistic\"></div>
+		<div class=\"biconnector-empty__title\">{$emptyStateTitle}</div>
+		<div class=\"biconnector-empty__title-sub\">{$emptyStateDescription}</div>
+	</div>
+";
 
 $this->includeComponentTemplate();

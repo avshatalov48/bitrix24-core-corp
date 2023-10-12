@@ -13,7 +13,7 @@ $APPLICATION->IncludeComponent(
 			'KEY_ADD_URL' => 'key_edit.php',
 			'KEY_EDIT_URL' => 'key_edit.php?key_id=#ID#',
 		],
-		'POPUP_COMPONENT_USE_BITRIX24_THEME' => 'Y',
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );
 

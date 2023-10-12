@@ -14,7 +14,7 @@ $tasksCount = (int)CUserCounter::getValue($GLOBALS['USER']->getID(), 'bp_tasks')
 $aMenuLinks = [
 	[
 		GetMessage('MENU_BIZPROC_TASKS_1'),
-		'/company/personal/bizproc/',
+		SITE_DIR . 'company/personal/bizproc/',
 		[],
 		[
 			'counter_id' => 'bp_tasks',
@@ -29,7 +29,7 @@ if (Loader::includeModule('lists') && CLists::isFeatureEnabled())
 {
 	$aMenuLinks[] = [
 		GetMessage('MENU_PROCESS_STREAM2'),
-		'/bizproc/processes/',
+		SITE_DIR . 'bizproc/processes/',
 		[],
 		['menu_item_id' => 'menu_processes'],
 		'',
@@ -37,7 +37,7 @@ if (Loader::includeModule('lists') && CLists::isFeatureEnabled())
 
 	$aMenuLinks[] = [
 		GetMessage('MENU_MY_PROCESS_1'),
-		'/company/personal/processes/',
+		SITE_DIR . 'company/personal/processes/',
 		[],
 		['menu_item_id' => 'menu_my_processes'],
 		'',
@@ -46,7 +46,7 @@ if (Loader::includeModule('lists') && CLists::isFeatureEnabled())
 
 $aMenuLinks[] = [
 	GetMessage('MENU_BIZPROC_ACTIVE'),
-	'/bizproc/bizproc/',
+	SITE_DIR . 'bizproc/bizproc/',
 	[],
 	['menu_item_id' => 'menu_bizproc_active'],
 	'',
@@ -56,7 +56,7 @@ if (Loader::includeModule('crm'))
 {
 	$aMenuLinks[] = [
 		GetMessage('MENU_BIZPROC_CRM'),
-		'/crm/configs/bp/',
+		SITE_DIR . 'crm/configs/bp/',
 		[],
 		['menu_item_id' => 'menu_bizproc_crm'],
 		'',
@@ -67,7 +67,7 @@ if (Loader::includeModule('disk'))
 {
 	$aMenuLinks[] = [
 		GetMessage('MENU_BIZPROC_DISK'),
-		'/docs/path/',
+		SITE_DIR . 'docs/path/',
 		[],
 		['menu_item_id' => 'menu_bizproc_disk'],
 		'',

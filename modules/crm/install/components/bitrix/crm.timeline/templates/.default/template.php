@@ -408,7 +408,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 
 			BX.CrmEntityChat.messages =
 				{
-					invite: "<?=GetMessageJS('CRM_TIMELINE_CHAT_INVITE')?>"
+					invite: "<?=GetMessageJS('CRM_TIMELINE_CHAT_INVITE_MSGVER_1')?>"
 				};
 
 			BX.message({

@@ -12,6 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
@@ -103,6 +104,7 @@ if (
 			projectTypeCode: '<?= CUtil::JSEscape($arResult['Group']['ProjectTypeCode']) ?>',
 			isProject: <?=($arResult["Group"]["PROJECT"] === "Y" ? 'true' : 'false')?>,
 			isScrumProject: <?= ($arResult['isScrumProject'] ? 'true' : 'false') ?>,
+			isRoleControlDisabled: <?= Option::get('tasks', 'tasks_disable_role_control', 'N', '-') === 'Y' ? 'true' : 'false' ?>,
 			isOpened: <?=($arResult["Group"]["OPENED"] === "Y" ? 'true' : 'false')?>,
 			favoritesValue: <?=($arResult["FAVORITES"] ? 'true' : 'false')?>,
 			subscribedValue: <?= ($arResult['isSubscribed'] ? 'true' : 'false') ?>,
@@ -380,6 +382,12 @@ if (
 						}
 
 						$defaultRoleId = $arResult['Tasks']['DefaultRoleId'];
+
+						// tasks 23.500.0
+						if (Option::get('tasks', 'tasks_disable_role_control', 'N', '-') === 'Y')
+						{
+							continue;
+						}
 
 						$menuItems[] = [
 							'TEXT' => Loc::getMessage('SONET_TASKS_PRESET_I_DO'),

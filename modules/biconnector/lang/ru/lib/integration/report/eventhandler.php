@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS['BIC_CRM_MENU_ITEM'] = 'BI-аналитика: готовые отчеты';
 $MESS['BIC_CRM_MENU_ITEM_SETTINGS'] = 'Настройки BI-аналитики';
 $MESS['BIC_CRM_MENU_KEY_MANAGE'] = 'Управление ключами';
@@ -10,4 +10,5 @@ $MESS['BIC_CRM_MENU_YANDEX'] = 'Yandex DataLens';
 $MESS['BIC_CRM_MENU_GOOGLE'] = 'Google Looker Studio';
 $MESS['BIC_CRM_MENU_MICROSOFT'] = 'Microsoft Power BI';
 $MESS['BIC_CRM_BUTTON_ORDER'] = 'Заказать внедрение';
-?>
+$MESS['BIC_CRM_BUTTON_ADD_REPORT'] = 'Добавить отчёт';
+$MESS['BIC_CRM_BUTTON_CREATE_KEY'] = 'Создать ключ';

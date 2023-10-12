@@ -123,6 +123,12 @@ class ListFilter
 
 		foreach ($this->getFieldNamesByType(static::TYPE_USER) as $fieldName)
 		{
+			if ($fieldName === 'ACTIVITY_RESPONSIBLE_IDS' && !empty($requestFilter['ACTIVITY_RESPONSIBLE_IDS']))
+			{
+				$filter[$fieldName] = $requestFilter[$fieldName];
+				continue;
+			}
+
 			if (empty($requestFilter[$fieldName] ?? null)) {
 				continue;
 			}
@@ -163,6 +169,12 @@ class ListFilter
 
 		foreach ($this->getFieldNamesByType(static::TYPE_ENTITY_SELECTOR) as $fieldName)
 		{
+			if ($fieldName === 'ACTIVITY_RESPONSIBLE_IDS' && !empty($requestFilter['ACTIVITY_RESPONSIBLE_IDS']))
+			{
+				$filter[$fieldName] = $requestFilter[$fieldName];
+				continue;
+			}
+
 			if (!empty($requestFilter[$fieldName]))
 			{
 				$filter['=' . $fieldName] = is_array($requestFilter[$fieldName]) ? $requestFilter[$fieldName]

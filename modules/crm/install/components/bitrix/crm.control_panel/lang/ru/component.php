@@ -1,4 +1,5 @@
-<?
+<?php
+
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не установлен.";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
 $MESS["CRM_CTRL_PANEL_ITEM_MY_ACTIVITY"] = "Мои дела";
@@ -72,7 +73,7 @@ $MESS["CRM_CTRL_PANEL_ITEM_MY_COMPANY"] = "Мои реквизиты";
 $MESS["CRM_CTRL_PANEL_ITEM_PERMISSIONS"] = "Права доступа";
 $MESS['CRM_CTRL_PANEL_ITEM_CRM_PERMISSIONS'] = 'CRM';
 $MESS['CRM_CTRL_PANEL_ITEM_CATALOG_PERMISSIONS'] = 'Товары и склады';
-$MESS["CRM_CTRL_PANEL_ITEM_SMART_ENTITY_LIST"] = "Список смарт-процессов";
+$MESS["CRM_CTRL_PANEL_ITEM_SMART_ENTITY_LIST_MSGVER_1"] = "Список смарт-процессов";
 $MESS["CRM_CTRL_PANEL_ITEM_CATALOGUE_GOODS"] = "Каталог товаров";
 $MESS["CRM_CTRL_PANEL_ITEM_CONTRACTORS"] = "Поставщики";
 $MESS["CRM_CTRL_PANEL_ITEM_SIGN_COUNTERPARTY"] = "Контрагенты подписания";

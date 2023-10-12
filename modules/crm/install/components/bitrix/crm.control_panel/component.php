@@ -1257,7 +1257,7 @@ if ($isAdmin || $userPerms->canWriteConfig())
 {
 	$stdItems['DYNAMIC_LIST'] =  [
 		'ID' => 'DYNAMIC_LIST',
-		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SMART_ENTITY_LIST'),
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SMART_ENTITY_LIST_MSGVER_1'),
 		'URL' => Crm\Service\Container::getInstance()->getRouter()->getTypeListUrl(),
 	];
 }

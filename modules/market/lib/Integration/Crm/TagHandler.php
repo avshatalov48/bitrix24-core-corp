@@ -25,10 +25,16 @@ class TagHandler implements TagHandlerInterface
 		$result = [];
 		if (Loader::includeModule(static::MODULE_ID))
 		{
+			$count = 0;
+			$smartInvoice = Container::getInstance()->getFactory(\CCrmOwnerType::SmartInvoice);
+			if ($smartInvoice instanceof Bitrix\Crm\Service\Factory\SmartInvoice)
+			{
+				$count = $smartInvoice->getDataClass()::getCount();
+			}
 			$result = [
 				'MODULE_ID' => static::MODULE_ID,
 				'CODE' => static::TAG_INVOICE,
-				'VALUE' => Container::getInstance()->getFactory(\CCrmOwnerType::SmartInvoice)->getDataClass()::getCount(),
+				'VALUE' => $count,
 			];
 		}
 

@@ -197,14 +197,26 @@ abstract class BaseMessage extends Base
 		];
 		foreach ($availableProviderTypeIds as $providerTypeId)
 		{
-			$result[] = [
-				'NAME' => Loc::getMessage(
+			$providerTypeName = Loc::getMessage(
+				sprintf(
+					'CRM_ACTIVITY_PROVIDER_%s_%s_NAME',
+					static::getLangProviderId(),
+					$providerTypeId
+				)
+			);
+			if (!$providerTypeName)
+			{
+				$providerTypeName = Loc::getMessage(
 					sprintf(
-						'CRM_ACTIVITY_PROVIDER_%s_%s_NAME',
+						'CRM_ACTIVITY_PROVIDER_%s_%s_NAME_MSGVER_1',
 						static::getLangProviderId(),
 						$providerTypeId
 					)
-				),
+				);
+			}
+
+			$result[] = [
+				'NAME' => $providerTypeName,
 				'PROVIDER_ID' => static::getId(),
 				'PROVIDER_TYPE_ID' => $providerTypeId,
 				'DIRECTIONS' => [

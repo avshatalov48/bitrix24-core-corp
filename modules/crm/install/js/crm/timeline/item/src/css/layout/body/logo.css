@@ -99,6 +99,12 @@
 	background-color: var(--ui-color-background-alert, #ffe8e8);
 }
 
+.crm-timeline__card-logo_icon.--custom-bg > i{
+	mask-image: none;
+	background-color: transparent;
+	background-size: contain;
+}
+
 .crm-timeline__card-logo_icon.--mail-income-read > i,
 .crm-timeline__card-logo_icon.--mail-income-unread > i,
 .crm-timeline__card-logo_icon.--mail-outcome > i,

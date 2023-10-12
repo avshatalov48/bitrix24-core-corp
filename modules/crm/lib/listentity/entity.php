@@ -95,8 +95,14 @@ abstract class Entity
 				],
 			];
 		}
+		$filter = $parameters['filter'];
+		if (is_array($filter) && ($filter['CATEGORY_ID'] ?? null) === 0)
+		{
+			$filter['@CATEGORY_ID'] = $filter['CATEGORY_ID'];
+			unset($filter['CATEGORY_ID']);
+		}
 
-		return $provider::$method($parameters['order'], $parameters['filter'], false, false, $parameters['select'], $options);
+		return $provider::$method($parameters['order'], $filter, false, false, $parameters['select'], $options);
 	}
 
 	/**

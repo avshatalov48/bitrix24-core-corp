@@ -330,6 +330,17 @@ class QuoteDataProvider extends EntityDataProvider implements FactoryOptionable
 			),
 		];
 
+		if ($this->isActivityResponsibleEnabled())
+		{
+			$result['ACTIVITY_RESPONSIBLE_IDS'] = $this->createField(
+				'ACTIVITY_RESPONSIBLE_IDS',
+				[
+					'type' => 'entity_selector',
+					'partial' => true,
+				]
+			);
+		}
+
 		$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
 		if ($factory && $factory->isLastActivityEnabled())
 		{
@@ -394,18 +405,26 @@ class QuoteDataProvider extends EntityDataProvider implements FactoryOptionable
 				'items' => \CCrmStatus::GetStatusList('QUOTE_STATUS')
 			);
 		}
-		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID'], true))
+		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID', 'ACTIVITY_RESPONSIBLE_IDS'], true))
 		{
 			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
 			$referenceClass = ($factory ? $factory->getDataClass() : null);
+
+			if ($fieldID === 'ACTIVITY_RESPONSIBLE_IDS')
+			{
+				$referenceClass = null;
+			}
+
+			$isEnableAllUsers = in_array($fieldID, ['ASSIGNED_BY_ID', 'ACTIVITY_RESPONSIBLE_IDS'], true);
+			$isEnableOtherUsers = in_array($fieldID, ['ASSIGNED_BY_ID', 'ACTIVITY_RESPONSIBLE_IDS'], true);
 
 			return $this->getUserEntitySelectorParams(
 				EntitySelector::CONTEXT,
 				[
 					'fieldName' => $fieldID,
 					'referenceClass' => $referenceClass,
-					'isEnableAllUsers' => $fieldID === 'ASSIGNED_BY_ID',
-					'isEnableOtherUsers' => $fieldID === 'ASSIGNED_BY_ID',
+					'isEnableAllUsers' => $isEnableAllUsers,
+					'isEnableOtherUsers' => $isEnableOtherUsers,
 				]
 			);
 		}

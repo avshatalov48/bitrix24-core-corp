@@ -2,6 +2,7 @@
 
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
+use Bitrix\Crm\Filter\FieldsTransform;
 use Bitrix\Crm\Filter\UiFilterOptions;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Item;
@@ -116,8 +117,10 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 
 		$listFilter = $this->getListFilter();
 
-		// transform ACTIVITY_COUNTER filter to real filter params
-		CCrmEntityHelper::applyCounterFilterWrapper(
+		FieldsTransform\UserBasedField::applyTransformWrapper($listFilter);
+
+		// transform ACTIVITY_COUNTER|ACTIVITY_RESPONSIBLE_IDS filter to real filter params
+		CCrmEntityHelper::applySubQueryBasedFiltersWrapper(
 			$this->entityTypeId,
 			$this->getGridId(),
 			\Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),
@@ -452,7 +455,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		{
 			$totalCount = $this->arParams['STEXPORT_TOTAL_ITEMS'];
 			$lastExportedId = $this->arParams['STEXPORT_LAST_EXPORTED_ID'];
-			$listFilter['>ID'] = $lastExportedId;
+			$listFilter['<ID'] = $lastExportedId;
 		}
 
 		$pageNavigation = new PageNavigation($this->navParamName);
@@ -466,7 +469,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$grid = $this->prepareGrid(
 			$listFilter,
 			$pageNavigation,
-			['sort' => ['ID' => 'asc']]
+			['sort' => ['ID' => 'desc']]
 		);
 
 		$this->arResult['HEADERS'] = [];

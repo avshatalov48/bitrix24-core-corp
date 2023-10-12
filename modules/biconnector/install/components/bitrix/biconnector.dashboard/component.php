@@ -13,6 +13,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\BIConnector;
+use Bitrix\Main\Type;
 
 if (!\Bitrix\Main\Loader::includeModule('biconnector'))
 {
@@ -36,6 +38,13 @@ $arResult = \Bitrix\BIConnector\DashboardTable::getList([
 if ($arResult && $arParams['SET_TITLE'] == 'Y')
 {
 	$APPLICATION->SetTitle(htmlspecialcharsEx($arResult['NAME']));
+	BIConnector\DashboardTable::update(
+		$arParams['DASHBOARD_ID'],
+		[
+			'LAST_VIEW_BY' => (int)$USER->GetID(),
+			'DATE_LAST_VIEW' => new Type\DateTime(),
+		]
+	);
 }
 
 $this->includeComponentTemplate();

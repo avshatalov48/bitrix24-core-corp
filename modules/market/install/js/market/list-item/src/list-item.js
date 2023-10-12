@@ -362,9 +362,8 @@ export const ListItem = {
 				<div class="market-catalog__elements-item_info-description"
 					 v-if="!$parent.isInstalledList"
 					 :title="item.SHORT_DESC"
-				>
-					{{ item.SHORT_DESC }}
-				</div>
+					 v-html="item.SHORT_DESC"
+				></div>
 				
 				<div class="market-rating__container">
 					<div class="market-rating__stars" v-if="!this.isSiteTemplate">

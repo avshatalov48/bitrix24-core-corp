@@ -268,6 +268,11 @@ if (!$bInternal)
 		$effectiveFilterFieldIDs[] = 'ACTIVITY_COUNTER';
 	}
 
+	if(!in_array('ACTIVITY_RESPONSIBLE_IDS', $effectiveFilterFieldIDs, true))
+	{
+		$effectiveFilterFieldIDs[] = 'ACTIVITY_RESPONSIBLE_IDS';
+	}
+
 	Tracking\UI\Filter::appendEffectiveFields($effectiveFilterFieldIDs);
 	//endregion
 
@@ -557,8 +562,10 @@ else
 	);
 }
 
+Crm\Filter\FieldsTransform\UserBasedField::applyTransformWrapper($arFilter);
+
 //region Activity Counter Filter
-CCrmEntityHelper::applyCounterFilterWrapper(
+CCrmEntityHelper::applySubQueryBasedFiltersWrapper(
 	\CCrmOwnerType::Quote,
 	$arResult['GRID_ID'],
 	Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),

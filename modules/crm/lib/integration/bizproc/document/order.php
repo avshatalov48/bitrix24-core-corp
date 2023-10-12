@@ -265,15 +265,28 @@ class Order extends \CCrmDocument implements \IBPWorkflowDocument
 			throw new \CBPArgumentNullException('documentId');
 		}
 
-		$dbRes = Crm\Order\Order::getList(array(
-			'filter' => array('=ID' => $arDocumentID['ID'])
-		));
-		if (!$dbRes->fetch())
+		if (!static::isDocumentExists($documentId))
 		{
 			throw new Main\SystemException('Document is not found.');
 		}
 
 		return $arDocumentID['TYPE'];
+	}
+
+	public static function isDocumentExists($documentId): bool
+	{
+		$documentInfo = static::GetDocumentInfo($documentId);
+		if (empty($documentInfo))
+		{
+			return false;
+		}
+
+		$dbRes = Crm\Order\Order::getList([
+			'select' => ['ID'],
+			'filter' => ['=ID' => $documentInfo['ID']]
+		]);
+
+		return is_array($dbRes->fetch());
 	}
 
 	public static function CreateDocument($parentDocumentId, $arFields)

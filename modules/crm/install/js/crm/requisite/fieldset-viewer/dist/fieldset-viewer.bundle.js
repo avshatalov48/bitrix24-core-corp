@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,main_core,main_core_events,main_popup,main_loader,ui_buttons,crm_field_listEditor) {
@@ -216,7 +217,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      const options = this.getOptions();
 	      return new crm_field_listEditor.ListEditor({
 	        setId: this.getData().id,
-	        title: main_core.Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER__SET_EDITOR_TITLE'),
+	        title: main_core.Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER__SET_EDITOR_TITLE_MSGVER_1'),
 	        editable: {
 	          label: {
 	            label: main_core.Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER__SET_EDITOR_NAME_LABEL'),
@@ -243,7 +244,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  getEditButton() {
 	    return this.cache.remember('editButton', () => {
 	      return new ui_buttons.Button({
-	        text: main_core.Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER_EDIT_BUTTON_LABEL'),
+	        text: main_core.Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER_EDIT_BUTTON_LABEL_MSGVER_1'),
 	        color: ui_buttons.Button.Color.LIGHT_BORDER,
 	        icon: ui_buttons.Button.Icon.EDIT,
 	        size: ui_buttons.Button.Size.SMALL,

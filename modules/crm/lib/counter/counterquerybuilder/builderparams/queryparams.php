@@ -9,14 +9,9 @@ final class QueryParams
 {
 	private int $entityTypeId;
 
-	/** @var int[]  */
-	private array $userIds;
-
 	private string $selectType;
 
 	private bool $useDistinct;
-
-	private bool $needExcludeUsers;
 
 	private ?int $counterLimit;
 
@@ -28,42 +23,46 @@ final class QueryParams
 
 	private array $options;
 
+	private UserParams $userParams;
+
+	private bool $useActivityResponsible;
+
+	/**
+	 * @todo description
+	 * @var Date|null
+	 */
+	private ?Date $restrictedFrom;
+
 	public function __construct(
 		int $entityTypeId,
-		array $userIds,
 		string $selectType,
 		bool $useDistinct,
-		bool $needExcludeUsers,
 		?int $counterLimit,
 		?bool $hasAnyIncomingChannel,
 		?Date $periodFrom,
 		?Date $periodTo,
-		array $options
+		array $options,
+		?Date $restrictedFrom,
+		UserParams $userParams,
+		bool $useActivityResponsible
 	)
 	{
 		$this->entityTypeId = $entityTypeId;
 		$this->selectType = $selectType;
-		$this->userIds = $userIds;
 		$this->useDistinct = $useDistinct;
-		$this->needExcludeUsers = $needExcludeUsers;
 		$this->counterLimit = $counterLimit;
 		$this->hasAnyIncomingChannel = $hasAnyIncomingChannel;
 		$this->periodFrom = $periodFrom;
 		$this->periodTo = $periodTo;
 		$this->options = $options;
+		$this->restrictedFrom = $restrictedFrom;
+		$this->userParams = $userParams;
+		$this->useActivityResponsible = $useActivityResponsible;
 	}
 
 	public function entityTypeId(): int
 	{
 		return $this->entityTypeId;
-	}
-
-	/**
-	 * @return int[]
-	 */
-	public function userIds(): array
-	{
-		return $this->userIds;
 	}
 
 	public function getSelectType(): string
@@ -74,11 +73,6 @@ final class QueryParams
 	public function useDistinct(): bool
 	{
 		return $this->useDistinct;
-	}
-
-	public function excludeUsers(): bool
-	{
-		return $this->needExcludeUsers;
 	}
 
 	public function counterLimit(): ?int
@@ -104,6 +98,31 @@ final class QueryParams
 	public function options(): array
 	{
 		return $this->options;
+	}
+
+	public function restrictedFrom(): ?Date
+	{
+		return $this->restrictedFrom;
+	}
+
+	public function userParams(): UserParams
+	{
+		return $this->userParams;
+	}
+
+	/**
+	 * Return first user in filter ID. It will be used to detect timezone for the date filters
+	 *
+	 * @return int|null
+	 */
+	public function firstUserId(): ?int
+	{
+		return $this->userParams->firstUserId();
+	}
+
+	public function useActivityResponsible(): bool
+	{
+		return $this->useActivityResponsible;
 	}
 
 }

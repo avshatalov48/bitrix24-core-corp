@@ -342,16 +342,21 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 			}
 
 			$params['BASKET_CODE'] = $item->getBasketCode();
-			if (is_array($params['STORES']) && !empty($params['STORES']))
+			if (
+				isset($params['STORES'])
+				&& is_array($params['STORES'])
+				&& !empty($params['STORES'])
+			)
 			{
 				$params['STORES'] = $this->filterStores($params['STORES']);
 			}
+
 			if (!$basketItem->isService())
 			{
 				$this->setStoresBarcodesInfo($params);
 			}
 
-			if($this->arResult['SHOW_TOOL_PANEL'] != 'Y')
+			if ($this->arResult['SHOW_TOOL_PANEL'] != 'Y')
 			{
 				if(empty($params['BARCODE_INFO']) && is_array($params['STORES']) && !empty($params['STORES']))
 				{
@@ -682,7 +687,7 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 		$this->arResult['PATH_TO_ORDER_SHIPMENT_PRODUCT_LIST'] = $this->arParams['PATH_TO_ORDER_SHIPMENT_PRODUCT_LIST'] = CrmCheckPath('PATH_TO_ORDER_SHIPMENT_PRODUCT_LIST', $this->arParams['PATH_TO_ORDER_SHIPMENT_PRODUCT_LIST'], $APPLICATION->GetCurPage());
 		$this->arResult['ORDER_SITE_ID'] = $this->order->getSiteId();
 		$this->arResult['ORDER_ID'] =$this->order->getId();
-		$this->arResult['LOADING_SET_ITEMS'] = ($_REQUEST['action'] === \Bitrix\Main\Grid\Actions::GRID_GET_CHILD_ROWS);
+		$this->arResult['LOADING_SET_ITEMS'] = isset($_REQUEST['action']) && $_REQUEST['action'] === \Bitrix\Main\Grid\Actions::GRID_GET_CHILD_ROWS;
 		$this->arResult['CAN_UPDATE_ORDER'] = \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission(intval($this->arResult['ORDER_ID']), $this->userPermissions);
 		if ($this->shipment->getField('DEDUCTED') === 'Y')
 		{

@@ -17,6 +17,11 @@ jn.define('crm/timeline/item/ui/body/blocks/file-list', (require, exports, modul
 	const { Loc } = require('loc');
 	const { AudioPlayer } = require('layout/ui/audio-player');
 
+	const EditableItemTypes = {
+		Comment: 'Comment',
+		TodoActivity: 'Activity:ToDo',
+	};
+
 	class TimelineItemBodyFileList extends TimelineItemBodyBlock
 	{
 		constructor(...props)
@@ -271,7 +276,15 @@ jn.define('crm/timeline/item/ui/body/blocks/file-list', (require, exports, modul
 
 		canOpenFileManager()
 		{
-			return this.props.hasOwnProperty('updateParams') && !this.isReadonly;
+			if (this.isReadonly)
+			{
+				return false;
+			}
+
+			const { updateParams = {} } = this.props;
+			const { type } = updateParams;
+
+			return type && Object.values(EditableItemTypes).includes(type);
 		}
 
 		openFileManager(options = {})
@@ -302,16 +315,24 @@ jn.define('crm/timeline/item/ui/body/blocks/file-list', (require, exports, modul
 			};
 
 			const { type, entityId } = updateParams;
-			if (type === 'Comment')
-			{
-				params.id = entityId;
 
-				return CommentConfig(params);
+			if (type === EditableItemTypes.Comment)
+			{
+				return CommentConfig({
+					...params,
+					id: entityId,
+				});
 			}
 
-			params.activityId = entityId;
+			if (type === EditableItemTypes.TodoActivity)
+			{
+				return TodoActivityConfig({
+					...params,
+					activityId: entityId,
+				});
+			}
 
-			return TodoActivityConfig(params);
+			throw new Error(`TimelineItemBodyFileList: Type ${type} is not supported`);
 		}
 	}
 

@@ -119,7 +119,7 @@ class DashboardUserTable extends DataManager
 		$where = \Bitrix\Main\ORM\Query\Query::buildFilterSql($entity, $filter);
 		if ($where)
 		{
-			$sql = 'DELETE FROM ' . $sqlTableName . ' WHERE ' . $where; echo $sql;
+			$sql = 'DELETE FROM ' . $sqlTableName . ' WHERE ' . $where;
 			$entity->getConnection()->queryExecute($sql);
 		}
 	}

@@ -545,7 +545,7 @@
 				loader: "intranet:crm-entity-details-loader",
 				options: {
 					label: {
-						text: BX.message("INTRANET_BINDINGS_QUOTE"),
+						text: BX.message("INTRANET_BINDINGS_QUOTE_MSGVER_1"),
 						bgColor: "#00B4AC"
 					}
 				}

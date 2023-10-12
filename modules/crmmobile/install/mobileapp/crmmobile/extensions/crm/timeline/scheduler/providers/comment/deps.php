@@ -9,6 +9,5 @@ return [
 		'crm:timeline/ui/toolbar',
 		'crm:timeline/ui/textarea',
 		'layout/ui/fields/file',
-		'utils/object',
 	],
 ];

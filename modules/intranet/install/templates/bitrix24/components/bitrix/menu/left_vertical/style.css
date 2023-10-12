@@ -1371,6 +1371,13 @@
 	align-items: center;
 }
 
+.menu-item-block.menu-license-all {
+	padding: 0;
+	min-height: auto;
+	background: inherit;
+	text-transform: inherit;
+}
+
 .menu-license-all.menu-license-all-default {
 	display: flex !important;
 	max-width: 237px;
@@ -1386,6 +1393,14 @@
 .menu-collapsed-mode.menu-sliding-mode .menu-license-all:hover {
 	background: rgba(184, 0, 218, .2);
 	color: #545c6a;
+}
+
+.bitrix24-light-theme .menu-item-block.menu-license-all:hover {
+	background: rgba(var(--ui-color-background-primary-rgb), var(--ui-opacity-10));
+}
+
+.bitrix24-dark-theme .menu-item-block.menu-license-all:hover {
+	background: rgba(var(--ui-color-base-solid-rgb), var(--ui-opacity-5));
 }
 
 .menu-collapsed-mode.menu-sliding-mode .menu-license-all {

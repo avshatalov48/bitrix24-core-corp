@@ -638,6 +638,11 @@ class CCrmOrderListComponent extends \CBitrixComponent
 				$effectiveFilterFieldIDs[] = 'ACTIVITY_COUNTER';
 			}
 
+			if(!in_array('ACTIVITY_RESPONSIBLE_IDS', $effectiveFilterFieldIDs, true))
+			{
+				$effectiveFilterFieldIDs[] = 'ACTIVITY_RESPONSIBLE_IDS';
+			}
+
 			Tracking\UI\Filter::appendEffectiveFields($effectiveFilterFieldIDs);
 
 			foreach($effectiveFilterFieldIDs as $filterFieldID)
@@ -1999,6 +2004,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			$arOrder['STATUS_ID'] = $arOrder['STATUS_ID'] ?? '';
 			$arOrder['ORDER_STAGE_NAME'] = $arOrder['STATUS_ID'];
 			$arOrder['PERSON_TYPE_ID'] = htmlspecialcharsbx($personTypes[$orderPersonTypeId]['NAME']  ?? '');
+			$arOrder['REASON_CANCELED'] = htmlspecialcharsbx($arOrder['REASON_CANCELED'] ?? '');
 
 			//region Client info
 			if ($contactID > 0)

@@ -498,9 +498,8 @@ export const DetailComponent = {
 					</div>
 					<div class="market-detail__header-info_description"
 						 :title="result.APP.SHORT_DESC"
-					>
-						{{ result.APP.SHORT_DESC }}
-					</div>
+						 v-html="result.APP.SHORT_DESC"
+					></div>
 					<div class="market-detail__header-info_block-btn">
 						<button class="ui-btn ui-btn-success ui-btn-md"
 								v-if="showUpdateButton"

@@ -161,9 +161,6 @@
 					}
 				}
 
-				if(top.BX.FoldedCallView)
-					top.BX.FoldedCallView.getInstance().destroy();
-
 				top.BXIM.startCallList(self.callListId, {
 					webformId: self.webformId,
 					webformSecCode: self.webformSecCode

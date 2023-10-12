@@ -4,10 +4,6 @@ namespace Bitrix\Crm\Integration\Report;
 
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Main\Loader;
-use CCrmContact;
-use CCrmCompany;
-use CCrmDeal;
-use CCrmLead;
 use CCrmOwnerType;
 
 class Limit
@@ -18,11 +14,11 @@ class Limit
 			'var' => 'crm_analytics_lead_max_count'
 		],
 		CCrmOwnerType::DealName => [
-			'class' => 'CCrmContact',
+			'class' => 'CCrmDeal',
 			'var' => 'crm_analytics_deal_max_count'
 		],
 		CCrmOwnerType::ContactName => [
-			'class' => 'CCrmLead',
+			'class' => 'CCrmContact',
 			'var' => 'crm_analytics_contact_max_count'
 		],
 		CCrmOwnerType::CompanyName => [

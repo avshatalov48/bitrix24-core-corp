@@ -10,6 +10,7 @@ use Bitrix\Crm\Kanban\EntityActivityCounter;
 use Bitrix\Crm\Order;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline;
+use Bitrix\Crm\Settings\CounterSettings;
 use Bitrix\Main\Application;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Error;
@@ -349,6 +350,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$this->arResult['CATEGORIES'] = $this->componentParams['CATEGORIES'];
 		$this->arResult['FIELDS_SECTIONS'] = $this->componentParams['FIELDS_SECTIONS'] ?? null;
 		//$this->arResult['STUB'] = $this->getStub(); TODO: исправить, когда по€в€тс€ актуальные тексты
+		$this->arResult['SHOW_ERROR_COUNTER_BY_ACTIVITY_RESPONSIBLE'] = $this->showErrorCounterByActivityResponsible();
 
 		$context = Application::getInstance()->getContext();
 		$request = $context->getRequest();
@@ -1435,5 +1437,10 @@ class CrmKanbanComponent extends \CBitrixComponent
 			'title' => '',
 			'description' => Loc::getMessage('CRM_KANBAN_NO_DATA_TEXT')
 		];
+	}
+
+	private function showErrorCounterByActivityResponsible(): bool
+	{
+		return CounterSettings::getInstance()->useActivityResponsible();
 	}
 }

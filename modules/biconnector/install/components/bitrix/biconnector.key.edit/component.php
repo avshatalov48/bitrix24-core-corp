@@ -13,6 +13,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\BIConnector\Settings;
 
 if (!$USER->CanDoOperation('biconnector_key_manage'))
 {
@@ -116,7 +118,7 @@ if ($aKey = $keyList->fetch())
 }
 else
 {
-	$APPLICATION->SetTitle(Loc::getMessage('CC_BBKE_TITLE_NEW'));
+	$APPLICATION->SetTitle(Loc::getMessage('CC_BBKE_TITLE_CREATE'));
 	$arResult['FORM_DATA'] = [
 		'ID' => 0,
 		'CONNECTION' => key($arResult['CONNECTIONS']),
@@ -155,5 +157,8 @@ if ($arResult['ERRORS'])
 		}
 	}
 }
+
+Toolbar::addButton(new Settings\Buttons\Implementation());
+Toolbar::deleteFavoriteStar();
 
 $this->includeComponentTemplate();

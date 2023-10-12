@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Crm\Integration;
+use Bitrix\Crm\Integration\Intranet\CustomSection\CustomSectionQueries;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Filter\EntityDataProvider;
 use Bitrix\Main\Filter\Field;
@@ -9,12 +11,20 @@ use Bitrix\Main\Localization\Loc;
 
 class TypeDataProvider extends EntityDataProvider
 {
-	protected $settings;
+	protected TypeSettings $settings;
+
+	private CustomSectionQueries $customSectionQueries;
+
+	private bool $isCustomSectionsAvailable;
 
 	public function __construct(TypeSettings $settings)
 	{
 		$this->settings = $settings;
 		Container::getInstance()->getLocalization()->loadMessages();
+
+		$this->customSectionQueries = CustomSectionQueries::getInstance();
+
+		$this->isCustomSectionsAvailable = Integration\IntranetManager::isCustomSectionsAvailable();
 	}
 
 	public function getSettings(): TypeSettings
@@ -25,6 +35,12 @@ class TypeDataProvider extends EntityDataProvider
 	protected function getFieldName($fieldID): string
 	{
 		$result = null;
+
+		$name = Loc::getMessage("CRM_TYPE_FILTER_$fieldID");
+		if (!empty($name))
+		{
+			return $name;
+		}
 
 		$entity = $this->settings->getEntity();
 		if($entity->hasField($fieldID))
@@ -68,12 +84,23 @@ class TypeDataProvider extends EntityDataProvider
 			],
 			'CREATED_BY' => [
 				'options' => [
-					'default' => true,
+					'default' => false,
 					'type' => 'dest_selector',
 					'partial' => true,
 				]
 			],
 		];
+
+		if ($this->isCustomSectionsAvailable)
+		{
+			$fields['CUSTOM_SECTION'] = [
+				'options' => [
+					'default' => true,
+					'partial' => true,
+					'type' => 'list',
+				]
+			];
+		}
 
 		foreach($fields as $name => $field)
 		{
@@ -112,13 +139,35 @@ class TypeDataProvider extends EntityDataProvider
 				]
 			];
 		}
+		elseif ($fieldID === 'CUSTOM_SECTION')
+		{
+			$sections = $this->customSectionQueries->findAllRelatedByCrmType();
+
+			$items = [];
+			// This column for smart process without bindings to custom section must call by specific name
+			$items['-1'] = Loc::getMessage('CRM_TYPE_LIST_CUSTOM_SECTION_DEFAULT_VALUE');
+
+			foreach ($sections as $row)
+			{
+				$title = $row['SECTION_TITLE'];
+				$id = $row['CUSTOM_SECTION_ID'];
+				$items[$id] = $title;
+			}
+
+			$result = [
+				'items' => $items,
+				'params' => [
+					'multiple' => 'N',
+				],
+			];
+		}
 
 		return $result;
 	}
 
 	public function getGridColumns(): array
 	{
-		return [
+		$result = [
 			[
 				'id' => 'ID',
 				'name' => 'ID',
@@ -130,20 +179,35 @@ class TypeDataProvider extends EntityDataProvider
 				'name' => $this->getFieldName('ENTITY_TYPE_ID'),
 				'default' => true,
 				'sort' => 'ENTITY_TYPE_ID',
-			],
-			[
-				'id' => 'TITLE',
-				'name' => $this->getFieldName('TITLE'),
-				'default' => true,
-				'sort' => 'TITLE',
-			],
-			[
-				'id' => 'CREATED_BY',
-				'name' => $this->getFieldName('CREATED_BY'),
-				'default' => true,
-				'sort' => 'CREATED_BY',
+				'width' => 200
 			],
 		];
+
+		if ($this->isCustomSectionsAvailable)
+		{
+			$result[] = [
+				'id' => 'CUSTOM_SECTION',
+				'name' => $this->getFieldName('CUSTOM_SECTION'),
+				'default' => true,
+				'sort' => false,
+			];
+		}
+
+		$result[] = [
+			'id' => 'TITLE',
+			'name' => $this->getFieldName('TITLE'),
+			'default' => true,
+			'sort' => 'TITLE',
+		];
+
+		$result[] = [
+			'id' => 'CREATED_BY',
+			'name' => $this->getFieldName('CREATED_BY'),
+			'default' => false,
+			'sort' => 'CREATED_BY',
+		];
+
+		return $result;
 	}
 
 	public function prepareListFilter(array &$filter, array $requestFilter)
@@ -184,6 +248,57 @@ class TypeDataProvider extends EntityDataProvider
 			{
 				$filter['=CREATED_BY'] = $userId;
 			}
+		}
+
+		$this->appendCustomSectionFilter($filter, $requestFilter);
+	}
+
+	private function appendCustomSectionFilter(array &$filter, array $requestFilter): void
+	{
+		if (!$this->isCustomSectionsAvailable)
+		{
+			return;
+		}
+
+		if (!isset($requestFilter['CUSTOM_SECTION']))
+		{
+			return;
+		}
+
+		$customSectionId = (int)$requestFilter['CUSTOM_SECTION'];
+
+		if ($customSectionId > 0)
+		{
+			$foundSections = $this->customSectionQueries->findSettingsById($customSectionId);
+		}
+		else
+		{
+			$foundSections = $this->customSectionQueries->findAllRelatedByCrmType();
+		}
+
+		$typeIds = [];
+		foreach ($foundSections as $row)
+		{
+			$typeId = Integration\IntranetManager::getEntityTypeIdByPageSettings($row['SETTINGS']);
+
+			if ($typeId !== null)
+			{
+				$typeIds[] = $typeId;
+			}
+		}
+
+		if (empty($typeIds))
+		{
+			return;
+		}
+
+		if ($customSectionId > 0)
+		{
+			$filter['@ENTITY_TYPE_ID'] = $typeIds;
+		}
+		else
+		{
+			$filter[]['!@ENTITY_TYPE_ID'] = $typeIds;
 		}
 	}
 }

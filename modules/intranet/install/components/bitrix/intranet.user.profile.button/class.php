@@ -62,14 +62,11 @@ class IntranetUserProfileButton extends \CBitrixComponent implements Controllera
 		$arParams['THUMBNAIL_SIZE'] = isset($arParams['THUMBNAIL_SIZE']) ? (int)$arParams['THUMBNAIL_SIZE'] : 100;
 		$arParams['USER_ID'] = $this->userId;
 		$arParams['PATH_TO_USER_PROFILE'] = $arParams['PATH_TO_USER_PROFILE']
-			?: SITE_DIR
-			. 'company/personal/user/#user_id#/';
+			?? SITE_DIR . 'company/personal/user/#user_id#/';
 		$arParams["PATH_TO_USER_STRESSLEVEL"] = $arParams["PATH_TO_USER_STRESSLEVEL"]
-			?: SITE_DIR
-			. "company/personal/user/#user_id#/stresslevel/";
+			?? SITE_DIR . "company/personal/user/#user_id#/stresslevel/";
 		$arParams['PATH_TO_USER_COMMON_SECURITY'] = $arParams['PATH_TO_USER_COMMON_SECURITY']
-			?: SITE_DIR
-			. 'company/personal/user/#user_id#/common_security/';
+			?? SITE_DIR . 'company/personal/user/#user_id#/common_security/';
 
 		return parent::onPrepareComponentParams($arParams);
 	}

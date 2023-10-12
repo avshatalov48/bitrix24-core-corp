@@ -1,50 +1,56 @@
 <?php
 
+use Bitrix\Main\Page\Asset;
+use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Uri;
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
-\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
-\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
-\Bitrix\Main\UI\Extension::load([
+Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
+Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
+
+Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 ]);
 
-\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
+Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 ?>
 
-<input type="hidden" value="<?=htmlspecialcharsbx($arResult['ENTITY']['VK_PROFILE'])?>" data-role="crm-card-vk-profile">
+<input type="hidden" value="<?= htmlspecialcharsbx($arResult['ENTITY']['VK_PROFILE'] ?? '') ?>" data-role="crm-card-vk-profile">
 
 <?if ($arResult['SIMPLE']):?>
 	<div class="crm-card-show-main">
 		<div class="crm-card-show-user">
-			<? if(isset($arResult['ENTITY']['PHOTO_URL'])): ?>
-				<div class="crm-card-show-user-item" style="background-image: url(<?=$arResult['ENTITY']['PHOTO_URL']?>)"></div>
+			<? if (!empty($arResult['ENTITY']['PHOTO_URL'])): ?>
+				<div class="crm-card-show-user-item" style="background-image: url(<?= $arResult['ENTITY']['PHOTO_URL'] ?>)"></div>
 			<?else: ?>
 				<div class="crm-card-show-user-item"></div>
 			<?endif?>
 		</div><!--crm-card-show-user-->
 		<div class="crm-card-show-user-name">
 			<div class="crm-card-show-user-name-item">
-				<? if($arResult['ENTITY']['SHOW_URL']): ?>
+				<? if (!empty($arResult['ENTITY']['SHOW_URL'])): ?>
 					<a class="crm-card-show-user-name-link" href="<?=htmlspecialcharsbx($arResult['ENTITY']['SHOW_URL'])?>" target="_blank" data-use-slider="<?= ($arResult['SLIDER_ENABLED'] ? 'Y' : 'N')?>">
-						<?=htmlspecialcharsbx($arResult['ENTITY']['FORMATTED_NAME'])?>
+						<?=htmlspecialcharsbx($arResult['ENTITY']['FORMATTED_NAME'] ?? '')?>
 					</a>
 				<? else: ?>
 					<span class="crm-card-show-user-name-link">
-						<?=htmlspecialcharsbx($arResult['ENTITY']['FORMATTED_NAME'])?>
+						<?=htmlspecialcharsbx($arResult['ENTITY']['FORMATTED_NAME'] ?? '')?>
 					</span>
 				<? endif ?>
 			</div>
-			<?if($arResult['ENTITY']['POST']):?>
+			<?if (!empty($arResult['ENTITY']['POST'])):?>
 				<div class="crm-card-show-user-name-desc"><?=htmlspecialcharsbx($arResult['ENTITY']['POST'])?></div>
 			<?endif?>
-			<?if($arResult['ENTITY']['COMPANY_TITLE']):?>
+			<?if (!empty($arResult['ENTITY']['COMPANY_TITLE'])):?>
 				<div class="crm-card-show-user-name-desc"><?=htmlspecialcharsbx($arResult['ENTITY']['COMPANY_TITLE'])?></div>
 			<?endif?>
 		</div><!--crm-card-show-user-name-->
-		<? if($arResult['ENTITY']['RESPONSIBLE']): ?>
+		<? if (!empty($arResult['ENTITY']['RESPONSIBLE'])): ?>
 			<div class="crm-card-show-user-responsible">
 				<div class="crm-card-show-user-responsible-title"><?= GetMessage('CRM_CARD_RESPONSIBLE')?>:</div>
 				<div class="crm-card-show-user-responsible-user">
@@ -73,7 +79,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 		<div class="crm-card-show-detail-header">
 			<div class="crm-card-show-detail-header-user">
 				<div id="crm-card-user-photo" class="crm-card-show-detail-header-user-image">
-					<? if(isset($arResult['ENTITY']['PHOTO_URL'])): ?>
+					<? if (!empty($arResult['ENTITY']['PHOTO_URL'])): ?>
 						<div class="crm-card-show-detail-header-user-image-item" style="background-image: url('<?=$arResult['ENTITY']['PHOTO_URL']?>')"></div>
 					<? else: ?>
 						<div class="crm-card-show-detail-header-user-image-item"></div>
@@ -289,5 +295,3 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 		})
 	</script>
 <?endif?>
-
-

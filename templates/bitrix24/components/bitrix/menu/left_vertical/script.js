@@ -138,6 +138,7 @@ this.BX = this.BX || {};
 	                console.log('Error!!');
 	              });
 	            });
+	            _this2.isReady = true;
 	          }
 	        }), new ui_buttons.CancelButton({
 	          onclick: function onclick() {

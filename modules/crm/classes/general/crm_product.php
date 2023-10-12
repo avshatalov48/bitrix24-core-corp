@@ -1,8 +1,9 @@
 <?php
-use Bitrix\Main,
-	Bitrix\Main\Loader,
-	Bitrix\Main\Localization\Loc,
-	Bitrix\Catalog;
+
+use Bitrix\Main;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Catalog;
 
 /*
  * CRM Product.
@@ -10,8 +11,8 @@ use Bitrix\Main,
  * */
 class CCrmProduct
 {
-	const CACHE_NAME = 'CRM_CATALOG_PRODUCT_CACHE';
-	const TABLE_ALIAS = 'P';
+	public const CACHE_NAME = 'CRM_CATALOG_PRODUCT_CACHE';
+	public const TABLE_ALIAS = 'P';
 
 	protected const EVENT_ON_AFTER_UPDATE = 'OnAfterCrmProductUpdate';
 
@@ -20,11 +21,11 @@ class CCrmProduct
 	private static $defaultCatalogId = null;
 	private static $selectedPriceTypeId = null;
 	private static $bVatMode = null;
-	private static $arVatRates = array();
+	private static array $arVatRates = [];
 
-	private static $allowElementHandlers = 0;
+	private static int $allowElementHandlers = 0;
 
-	protected static $catalogIncluded = null;
+	protected static bool $catalogIncluded;
 
 	public static function getDefaultCatalogId()
 	{
@@ -45,7 +46,7 @@ class CCrmProduct
 			{
 				if ($priceTypeId > 0)
 				{
-					$list = \CCatalogGroup::GetListArray();
+					$list = Catalog\GroupTable::getTypeList();
 					$getPriceType = !isset($list[$priceTypeId]);
 					unset($list);
 				}
@@ -718,7 +719,7 @@ class CCrmProduct
 
 	public static function handlerAfterProductUpdate(Main\Event $event): void
 	{
-		if (self::$catalogIncluded === null)
+		if (!isset(self::$catalogIncluded))
 		{
 			self::$catalogIncluded = Loader::includeModule('catalog');
 		}
@@ -731,7 +732,12 @@ class CCrmProduct
 			unset($fields['ID']);
 		}
 
-		$datetimeFields = array('TIMESTAMP_X', 'DATE_CREATE', 'ACTIVE_FROM', 'TO');
+		$datetimeFields = [
+			'TIMESTAMP_X',
+			'DATE_CREATE',
+			'ACTIVE_FROM',
+			'ACTIVE_TO',
+		];
 		foreach ($datetimeFields as $fieldName)
 		{
 			if (isset($fields[$fieldName]) && $fields[$fieldName] instanceof Main\Type\DateTime)
@@ -759,9 +765,9 @@ class CCrmProduct
 			unset($fields['PRICES']);
 		}
 
-		foreach (GetModuleEvents("crm", self::EVENT_ON_AFTER_UPDATE, true) as $crmEvent)
+		foreach (GetModuleEvents('crm', self::EVENT_ON_AFTER_UPDATE, true) as $crmEvent)
 		{
-			ExecuteModuleEventEx($crmEvent, array($id, $fields));
+			ExecuteModuleEventEx($crmEvent, [$id, $fields]);
 		}
 		unset($crmEvent);
 		unset($fields, $id);
@@ -1554,9 +1560,8 @@ class CCrmProduct
 	 * @param int $ID
 	 * @return bool
 	 */
-	private static function IsAllowedDelete($ID)
+	private static function IsAllowedDelete(int $ID): bool
 	{
-		$ID = (int)$ID;
 		if ($ID <= 0)
 		{
 			return true;
@@ -1564,7 +1569,7 @@ class CCrmProduct
 
 		foreach (GetModuleEvents('crm', 'OnBeforeCrmProductDelete', true) as $arEvent)
 		{
-			if (ExecuteModuleEventEx($arEvent, array($ID)) === false)
+			if (ExecuteModuleEventEx($arEvent, [$ID]) === false)
 			{
 				return false;
 			}
@@ -1577,9 +1582,8 @@ class CCrmProduct
 	 * @param int $ID
 	 * @return void
 	 */
-	private static function DeleteInternal($ID)
+	private static function DeleteInternal(int $ID): void
 	{
-		$ID = (int)$ID;
 		CCrmEntityHelper::RemoveCached(self::CACHE_NAME, $ID);
 		foreach (GetModuleEvents('crm', 'OnCrmProductDelete', true) as $arEvent)
 		{
@@ -1593,7 +1597,7 @@ class CCrmProduct
 	/**
 	 * @return void
 	 */
-	private static function disableElementHandlers()
+	private static function disableElementHandlers(): void
 	{
 		self::$allowElementHandlers--;
 	}
@@ -1601,7 +1605,7 @@ class CCrmProduct
 	/**
 	 * @return void
 	 */
-	private static function enableElementHandlers()
+	private static function enableElementHandlers(): void
 	{
 		self::$allowElementHandlers++;
 	}
@@ -1609,7 +1613,7 @@ class CCrmProduct
 	/**
 	 * @return bool
 	 */
-	private static function allowedElementHandlers()
+	private static function allowedElementHandlers(): bool
 	{
 		return (self::$allowElementHandlers >= 0);
 	}
@@ -1625,6 +1629,8 @@ class CCrmProduct
 			return true;
 		}
 
+		$ID = (int)$ID;
+
 		$iblockId = (int)CIBlockElement::GetIBlockByID($ID);
 		if ($iblockId <= 0)
 		{
@@ -1632,7 +1638,7 @@ class CCrmProduct
 		}
 
 		$parentIblockId = 0;
-		if (self::$catalogIncluded === null)
+		if (!isset(self::$catalogIncluded))
 		{
 			self::$catalogIncluded = Loader::includeModule('catalog');
 		}
@@ -1659,14 +1665,13 @@ class CCrmProduct
 	 * @param array $element
 	 * @return void
 	 */
-	public static function handlerOnAfterIBlockElementDelete(array $element)
+	public static function handlerOnAfterIBlockElementDelete(array $element): void
 	{
 		if (!self::allowedElementHandlers())
 		{
 			return;
 		}
-
-		self::DeleteInternal($element['ID']);
+		self::DeleteInternal((int)($element['ID'] ?? 0));
 	}
 
 	/**

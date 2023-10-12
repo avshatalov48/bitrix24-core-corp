@@ -5,8 +5,12 @@ namespace Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Activity\Entity\EntityUncompletedActivityTable;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Entity\EntityManager;
+use Bitrix\Crm\Filter\Activity\ExtractUsersFromFilter;
+use Bitrix\Crm\Filter\FieldsTransform\UserBasedField;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\CounterSettings;
 use Bitrix\Main\Application;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
@@ -104,7 +108,7 @@ class EntityActivities
 		$stageId = $filter[self::ACTIVITY_STAGE_ID] ?? null;
 		if (!isset($stageId) && isset($filter['ID'][0]))
 		{
-			$stageId = $this->getActivityStageIdByEntityId($filter['ID'][0]);
+			$stageId = $this->getActivityStageIdByEntityId($filter['ID'][0], $filter);
 		}
 
 		if (!$stageId)
@@ -175,7 +179,7 @@ class EntityActivities
 
 			if (!empty($itemIds))
 			{
-				$minDeadlines = $this->fetchMinDeadlinesData($itemIds);
+				$minDeadlines = $this->fetchMinDeadlinesData($itemIds, $filter);
 				foreach ($minDeadlines as $minDeadlineItem)
 				{
 					$activityStageId = $this->getActivityStageIdByDeadlineAndIncoming($minDeadlineItem['MIN_DEADLINE'], $minDeadlineItem['HAS_ANY_INCOMING_CHANEL'] === 'Y');
@@ -245,41 +249,24 @@ class EntityActivities
 
 		$counterUserIds = [];
 		$excludeUsers = false;
-		if (isset($filter['ASSIGNED_BY_ID']))
+
+		$responsibleFiledName = CounterSettings::getInstance()->useActivityResponsible()
+			? 'ACTIVITY_RESPONSIBLE_IDS'
+			: 'ASSIGNED_BY_ID';
+
+		$currentUserId = Container::getInstance()->getContext()->getUserId();
+		if (isset($filter[$responsibleFiledName]) || isset($filter['!'.$responsibleFiledName]))
 		{
-			if (is_array($filter['ASSIGNED_BY_ID']))
-			{
-				if (in_array('all-users', $filter['ASSIGNED_BY_ID'], true))
-				{
-					$counterUserIds = [];
-					unset($filter['ASSIGNED_BY_ID']);
-				}
-				elseif (in_array('other-users', $filter['ASSIGNED_BY_ID'], true))
-				{
-					if (isset($filter['ACTIVITY_COUNTER']))
-					{
-						$counterUserIds[] = Container::getInstance()->getContext()->getUserId();
-						$excludeUsers = true;
-					}
-					else
-					{
-						$filter['!ASSIGNED_BY_ID'] = Container::getInstance()->getContext()->getUserId();
-					}
-					unset($filter['ASSIGNED_BY_ID']);
-				}
-				else
-				{
-					$counterUserIds = array_filter($filter['ASSIGNED_BY_ID'], 'is_numeric');
-				}
-			}
-			elseif($filter['ASSIGNED_BY_ID'] > 0)
-			{
-				$counterUserIds[] = $filter['ASSIGNED_BY_ID'];
-			}
+			/** @var UserBasedField $userFieldPrepare */
+			$userFieldPrepare = ServiceLocator::getInstance()->get('crm.filter.fieldsTransform.userBasedField');
+			$userFieldPrepare->transformAll($filter, [$responsibleFiledName], $currentUserId);
+
+			$extractUsers = new ExtractUsersFromFilter();
+			[$counterUserIds, $excludeUsers] = $extractUsers->extract($filter, $responsibleFiledName);
 		}
 		else
 		{
-			$counterUserIds[] = Container::getInstance()->getContext()->getUserId();
+			$counterUserIds[] = $currentUserId;
 		}
 
 		return array_merge(
@@ -343,6 +330,11 @@ class EntityActivities
 					}
 				}
 
+				$currentUserTodayMidnight = $this->getUserCurrentDateTime(new DateTime())
+					->setTime(0, 0,0 );
+
+				$counterExtras['ACT_VIEW_RESTRICT_DEADLINE_FROM'] = $currentUserTodayMidnight;
+
 				return \Bitrix\Crm\Counter\EntityCounterFactory::create(
 					$this->entityTypeId,
 					// also show INCOMING_CHANNEL with PENDING
@@ -372,6 +364,8 @@ class EntityActivities
 				$counterExtras['PERIOD_TO'] = $lastWeekDay;
 				$counterExtras['HAS_ANY_INCOMING_CHANEL'] = false;
 				$counterExtras['ONLY_MIN_DEADLINE'] = true;
+				$counterExtras['ACT_VIEW_RESTRICT_DEADLINE_FROM'] = $tomorrow;
+
 				return \Bitrix\Crm\Counter\EntityCounterFactory::create(
 					$this->entityTypeId,
 					$counterType,
@@ -393,6 +387,8 @@ class EntityActivities
 				$counterExtras['PERIOD_TO'] = $nextWeekLastDay;
 				$counterExtras['HAS_ANY_INCOMING_CHANEL'] = false;
 				$counterExtras['ONLY_MIN_DEADLINE'] = true;
+				$counterExtras['ACT_VIEW_RESTRICT_DEADLINE_FROM'] = $nextWeekFirstDay;
+
 				return \Bitrix\Crm\Counter\EntityCounterFactory::create(
 					$this->entityTypeId,
 					$counterType,
@@ -412,10 +408,16 @@ class EntityActivities
 				{
 					$counterType = EntityCounterType::READY_TODO;
 				}
-				$counterExtras['PERIOD_FROM'] = $this->getLastWeekDay(new DateTime())->add('+8 days');
+
+				$lastWeekDay = $this->getLastWeekDay(new DateTime())->add('+8 days');
+
+				$counterExtras['PERIOD_FROM'] = $lastWeekDay;
 				$counterExtras['PERIOD_TO'] = (new DateTime())->setDate(9990, 1, 1)->disableUserTime();
 				$counterExtras['HAS_ANY_INCOMING_CHANEL'] = false;
 				$counterExtras['ONLY_MIN_DEADLINE'] = true;
+
+				$counterExtras['ACT_VIEW_RESTRICT_DEADLINE_FROM'] = $lastWeekDay;
+
 				return \Bitrix\Crm\Counter\EntityCounterFactory::create(
 					$this->entityTypeId,
 					$counterType,
@@ -527,26 +529,70 @@ class EntityActivities
 		return DateTime::createFromTimestamp($userTimezoneDay->getTimestamp());
 	}
 
-	private function fetchMinDeadlinesData(array $itemIds)
+	private function fetchMinDeadlinesData(array $itemIds, array $filter)
 	{
-		return EntityUncompletedActivityTable::getList([
+		$respCondition = [];
+
+		if (CounterSettings::getInstance()->useActivityResponsible())
+		{
+			$currentUserId = Container::getInstance()->getContext()->getUserId();
+
+			if (isset($filter['ACTIVITY_RESPONSIBLE_IDS']) || isset($filter['!ACTIVITY_RESPONSIBLE_IDS']))
+			{
+				/** @var UserBasedField $userFieldPrepare */
+				$userFieldPrepare = ServiceLocator::getInstance()->get('crm.filter.fieldsTransform.userBasedField');
+				$userFieldPrepare->transformAll($filter, [ 'ACTIVITY_RESPONSIBLE_IDS'], $currentUserId);
+			}
+			if (isset($filter['ACTIVITY_RESPONSIBLE_IDS']) && !empty($filter['ACTIVITY_RESPONSIBLE_IDS']))
+			{
+				$respCondition['@RESPONSIBLE_ID'] = array_filter(
+					array_map(fn($val) => is_numeric($val) ? intval($val) : null, $filter['ACTIVITY_RESPONSIBLE_IDS'])
+				);
+			}
+			elseif (isset($filter['ACTIVITY_RESPONSIBLE_IDS']) && empty($filter['ACTIVITY_RESPONSIBLE_IDS']))
+			{
+				$respCondition['=RESPONSIBLE_ID'] = 0; // all users
+			}
+			elseif (isset($filter['!ACTIVITY_RESPONSIBLE_IDS'])) // other users
+			{
+				$respCondition['!@RESPONSIBLE_ID'] = [
+					$currentUserId, // not current
+					0 // not any
+				];
+			}
+			else // not specific users
+			{
+				$respCondition['=RESPONSIBLE_ID'] = $currentUserId;
+			}
+		}
+		else // by entity responsible settings way will use 0 user id
+		{
+			$respCondition['=RESPONSIBLE_ID'] = 0;
+		}
+
+		$listParams = [
 			'select' => [
 				'ENTITY_ID',
 				'MIN_DEADLINE',
 				'IS_INCOMING_CHANNEL',
 				'HAS_ANY_INCOMING_CHANEL',
 			],
-			'filter' => [
+			'filter' => array_merge($respCondition, [
 				'ENTITY_TYPE_ID' => $this->entityTypeId,
 				'@ENTITY_ID' => $itemIds,
-				'=RESPONSIBLE_ID' => 0,
+			]),
+			'order' => [
+				'MIN_DEADLINE' => 'ASC'
 			],
-		]);
+			'limit' => 1
+		];
+
+		return EntityUncompletedActivityTable::getList($listParams);
 	}
 
-	private function getActivityStageIdByEntityId(int $entityId): ?string
+	private function getActivityStageIdByEntityId(int $entityId, array $filter): ?string
 	{
-		$minDeadlineItem = $this->fetchMinDeadlinesData([$entityId])->fetch();
+		$minDeadlineItem = $this->fetchMinDeadlinesData([$entityId], $filter)->fetch();
 
 		return is_array($minDeadlineItem)
 			? $this->getActivityStageIdByDeadlineAndIncoming($minDeadlineItem['MIN_DEADLINE'], $minDeadlineItem['HAS_ANY_INCOMING_CHANEL'] === 'Y')

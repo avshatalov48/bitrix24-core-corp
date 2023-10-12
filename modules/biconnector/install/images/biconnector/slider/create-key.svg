@@ -1,0 +1,66 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg"
+	 viewBox="0 0 100% 1200" style="width: 100%; height: 1200px" preserveAspectRatio="xMinYMin meet">
+	<svg height="1200px">
+		<rect width="100%" height="1200" fill="#EEF2F4"/>
+		<g clip-path="url(#clip0_709_145131)">
+			<rect width="100%" height="75" fill="#EEF2F4"/>
+		</g>
+		<rect x="22" y="75" width="95%" height="412" rx="10" fill="white"/>
+		<rect x="38" y="91" width="93%" height="218" rx="8" fill="#F8F9FA"/>
+		<rect x="54" y="143" width="90%" height="1" rx="0.5" fill="#E6E6E6"/>
+		<rect x="38" y="321" width="93%" height="150" rx="8" fill="#F8F9FA"/>
+		<rect x="54" y="373" width="90%" height="1" rx="0.5" fill="#E6E6E6"/>
+		<defs>
+			<linearGradient id="paint0_linear_709_145131" x1="41" y1="36.4042" x2="-20" y2="36.4042" gradientUnits="userSpaceOnUse">
+				<stop stop-color="#EEF2F4" stop-opacity="0"/>
+				<stop offset="0.491803" stop-color="#EEF2F4"/>
+				<stop offset="1" stop-color="#EEF2F4" stop-opacity="0"/>
+			</linearGradient>
+			<clipPath id="clip0_709_145131">
+				<rect width="644" height="75" fill="white"/>
+			</clipPath>
+		</defs>
+	</svg>
+
+	<svg height="1200px" id="header">
+		<g id="head">
+			<rect x="22" y="34" width="207" height="8" rx="4" fill="#E6E6E6"/>
+			<rect x="100%" y="18" width="177" height="40" rx="4" fill="#E6E6E6" transform="translate(-240, 0)"/>
+		</g>
+		<g id="top">
+			<rect x="54" y="112" width="220" height="12" rx="6" fill="#E6E6E6"/>
+			<path fill-rule="evenodd" clip-rule="evenodd" d="M54 165C54 161.686 56.6863 159 60 159H536C539.314 159 542 161.686 542 165V192C542 195.314 539.314 198 536 198H60C56.6863 198 54 195.314 54 192V165Z" fill="#E6E6E6"/>
+			<path fill-rule="evenodd" clip-rule="evenodd" d="M550 165C550 161.686 552.686 159 556 159H583C586.314 159 589 161.686 589 165V192C589 195.314 586.314 198 583 198H556C552.686 198 550 195.314 550 192V165Z" fill="#E6E6E6"/>
+			<path fill-rule="evenodd" clip-rule="evenodd" d="M54 212C54 208.686 56.6863 206 60 206H583C586.314 206 589 208.686 589 212V287C589 290.314 586.314 293 583 293H60C56.6863 293 54 290.314 54 287V212Z" fill="#E6E6E6"/>
+		</g>
+		<g id="bottom">
+			<rect x="54" y="342" width="220" height="12" rx="6" fill="#E6E6E6"/>
+			<rect x="96" y="399" width="178" height="12" rx="6" fill="#E6E6E6"/>
+			<rect x="490" y="399" width="100" height="12" rx="6" fill="#E6E6E6"/>
+			<rect x="54" y="440" width="67" height="12" rx="6" fill="#E6E6E6"/>
+			<circle cx="70" cy="405" r="16" fill="#E6E6E6"/>
+		</g>
+
+		<use xlink:href="#head" y="0" x="0" width="100%" height="100"/>
+		<use xlink:href="#top" y="0" x="0" width="100%" height="100"/>
+		<use xlink:href="#bottom" y="0" x="0" width="100%" height="100"/>
+	</svg>
+
+	<rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="1200"/>
+
+	<mask id="headerMsk" fill="white">
+		<use xlink:href="#header"/>
+	</mask>
+
+	<linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+		<stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+		<stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+		<stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+	</linearGradient>
+
+	<animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+
+	<svg viewBox="0 0 100% 1200" height="1200px">
+		<rect fill="#EBF1F4" width="20"   height="1200" x="100%" y="0"   transform="translate(-20, 0)"/>
+	</svg>
+</svg>

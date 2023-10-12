@@ -90,7 +90,7 @@ class WaitEntry
 				'filter' => array(
 					'OWNER_TYPE_ID' => $ownerTypeID,
 					'OWNER_ID' => $ownerID,
-					'COMPLETED' => 'N'
+					'=COMPLETED' => 'N'
 				),
 				'order' => array('ID' => 'DESC'),
 				'limit' => 1
@@ -148,7 +148,7 @@ class WaitEntry
 				'filter' => array(
 					'OWNER_TYPE_ID' => $ownerTypeID,
 					'OWNER_ID' => $ownerID,
-					'COMPLETED' => 'N'
+					'=COMPLETED' => 'N'
 				),
 				'select' => array('ID'),
 				'limit' => 1
@@ -273,7 +273,7 @@ class WaitEntry
 				'filter' => array(
 					'OWNER_TYPE_ID' => $ownerTypeID,
 					'OWNER_ID' => $ownerID,
-					'COMPLETED' => 'N'
+					'=COMPLETED' => 'N'
 				)
 			)
 		);

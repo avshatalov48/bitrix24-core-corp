@@ -1,6 +1,8 @@
 <?if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 
+\Bitrix\Main\UI\Extension::load("ui.hint");
+
 CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/common.js');
 
 if($arResult['ENABLE_CONTROL_PANEL'])
@@ -111,9 +113,9 @@ $APPLICATION->IncludeComponent(
 		'TABS' => $arTabs,
 		'BUTTONS' => array(
 			'standard_buttons' =>  true,
-			'back_url' => $arResult['BACK_URL']
+			'back_url' => $arResult['BACK_URL'] ?? null
 		),
-		'DATA' => $arResult['ELEMENT'],
+		'DATA' => $arResult['ELEMENT'] ?? null,
 		'SHOW_SETTINGS' => 'N'
 	),
 	$component,
@@ -187,6 +189,8 @@ endif;
 						BX.CrmInterfaceFormUtil.showFormRow(productPriceEditSetting.checked, productPriceSaveSetting);
 					});
 				}
+
+				BX.UI.Hint.init(BX('form_CRM_SM_CONFIG'));
 			}
 	);
 </script>

@@ -31,6 +31,7 @@ if ($arResult)
 		?>
 		<script>
 			top.window.open('<?php echo CUtil::JSEscape($arResult['URL'])?>', '_blank');
+			top.BX.SidePanel.Instance.close();
 		</script>
 		<?php
 	}

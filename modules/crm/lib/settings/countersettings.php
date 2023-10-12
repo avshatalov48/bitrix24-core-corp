@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Settings;
 
 use Bitrix\Crm\Counter\EntityCountableActivityTable;
+use Bitrix\Crm\Counter\EntityCounter;
 use Bitrix\Crm\Integration\Bitrix24Manager;
 use Bitrix\Crm\Traits;
 use Bitrix\Main\Application;
@@ -21,20 +22,27 @@ class CounterSettings
 	private BooleanSetting $canBeCounted;
 	private bool $useCache = true;
 
+	/**
+	 * Enabling this option will change the counter count. The value will be based on the person responsible
+	 * for the `Activity`, and not on the person responsible for the entity to which the `Activity` is attached.
+	 */
+	private BooleanSetting $useActivityResponsible;
+
 	private function __construct()
 	{
 		$defaultValue = !$this->isLimitReached();
 
 		$this->isEnabled = new BooleanSetting('is_counters_enabled', $defaultValue);
 		$this->canBeCounted = new BooleanSetting('is_counters_enabled_ex', true);
+		$this->useActivityResponsible = new BooleanSetting('is_counters_use_activity_responsible', false);
 	}
 
-	final public function isEnabled(): bool
+	public function isEnabled(): bool
 	{
 		return $this->isEnabled->get();
 	}
 
-	final public function canBeCounted(): bool
+	public function canBeCounted(): bool
 	{
 		return $this->canBeCounted->get();
 	}
@@ -62,6 +70,22 @@ class CounterSettings
 	public function getCounterCurrentValue(): int
 	{
 		return EntityCountableActivityTable::getCount();
+	}
+
+	public function useActivityResponsible(): bool
+	{
+		return $this->useActivityResponsible->get();
+	}
+
+	public function setUseActivityResponsible(bool $val): void
+	{
+		$currentValue = $this->useActivityResponsible();
+
+		if ($currentValue !== $val)
+		{
+			EntityCounter::resetAllCrmCountersForAllUsers();
+			$this->useActivityResponsible->set($val);
+		}
 	}
 
 	private function isLimitReached(): bool

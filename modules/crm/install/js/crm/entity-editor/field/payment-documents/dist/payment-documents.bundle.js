@@ -306,7 +306,7 @@ this.BX = this.BX || {};
 	    value: function _renderDeliveryDocument(doc) {
 	      var _this4 = this;
 	      var labelOptions = {
-	        text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STATUS_WAITING'),
+	        text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STATUS_WAITING_MSGVER_1'),
 	        customClass: 'crm-entity-widget-payment-label',
 	        color: ui_label.LabelColor.LIGHT,
 	        fill: true
@@ -328,7 +328,7 @@ this.BX = this.BX || {};
 	            popupMenu.close();
 	          }
 	        }, {
-	          text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STATUS_WAITING'),
+	          text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STATUS_WAITING_MSGVER_1'),
 	          className: doc.DEDUCTED === 'Y' ? '' : 'menu-popup-item-accept-sm',
 	          onclick: function onclick() {
 	            _this4._setShipmentShippedStatus(doc, false);
@@ -400,7 +400,7 @@ this.BX = this.BX || {};
 	          labelOptions.color = ui_label.LabelColor.LIGHT;
 	        }
 	      }
-	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE').replace(/#DATE#/gi, doc.FORMATTED_DATE);
+	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE_MSGVER_1').replace(/#DATE#/gi, doc.FORMATTED_DATE);
 	      title = title.replace(/#DOCUMENT_ID#/gi, doc.ACCOUNT_NUMBER);
 	      title = BX.util.htmlspecialchars(title);
 	      var sum = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
@@ -1189,7 +1189,7 @@ this.BX = this.BX || {};
 	    value: function _renderDeliveryDocument(doc) {
 	      var _this4 = this;
 	      var labelOptions = {
-	        text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STATUS_WAITING'),
+	        text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STATUS_WAITING_MSGVER_1'),
 	        customClass: 'crm-entity-widget-payment-label',
 	        color: ui_label.LabelColor.LIGHT,
 	        fill: true
@@ -1228,7 +1228,7 @@ this.BX = this.BX || {};
 	          labelOptions.color = ui_label.LabelColor.LIGHT;
 	        }
 	      }
-	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE').replace(/#DATE#/gi, doc.FORMATTED_DATE);
+	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE_MSGVER_1').replace(/#DATE#/gi, doc.FORMATTED_DATE);
 	      title = title.replace(/#DOCUMENT_ID#/gi, doc.ACCOUNT_NUMBER);
 	      title = BX.util.htmlspecialchars(title);
 	      var sum = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));

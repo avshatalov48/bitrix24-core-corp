@@ -132,7 +132,7 @@ class LeadUserField
 							{
 								$result = $USER_FIELD_MANAGER->onAfterFetch(
 									$userField,
-									unserialize($value, ['allowed_classes' => false])
+									unserialize($value, ['allowed_classes' => \Bitrix\BIConnector\PrettyPrinter::$allowedUnserializeClassesList])
 								);
 							}
 							else

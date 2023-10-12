@@ -85,6 +85,7 @@ class Agent
 		}
 
 		$connection = Application::getInstance()->getConnection();
+		$helper = $connection->getSqlHelper();
 
 		$query = '
 			SELECT s.*
@@ -92,7 +93,7 @@ class Agent
 			INNER JOIN (
 				SELECT MAX(MESSAGE_ID), CHAT_ID 
 				FROM b_imconnectors_delivery_mark
-				WHERE DATE_CREATE < DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+				WHERE DATE_CREATE < ' . $helper->addSecondsToDateTime(-300) . '
 				GROUP BY CHAT_ID 
 			) m ON m.CHAT_ID = s.CHAT_ID
 			WHERE s.STATUS = ' . Session::STATUS_OPERATOR . '

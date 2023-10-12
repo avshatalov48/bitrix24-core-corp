@@ -114,10 +114,10 @@ const Form = {
 						{{ language }}
 					</option>				
 				</select>
-			 	
-				<a :href="abuseLink" target="_blank" class="b24-form-sign-abuse-link" v-if="abuseEnabled">
+
+				<!--noindex--><a :href="abuseLink" target="_blank" rel="nofollow" class="b24-form-sign-abuse-link" v-if="abuseEnabled">
 					{{ form.messages.get('abuseLink') }}
-				</a>
+				</a><!--/noindex-->
 				<span class="b24-form-sign-abuse-help" :title="form.messages.get('abuseInfoHint')"></span>
 				<div class="b24-form-sign-info" v-if="form.useSign">
 					<span class="b24-form-sign-text">{{ form.messages.get('sign') }}</span>

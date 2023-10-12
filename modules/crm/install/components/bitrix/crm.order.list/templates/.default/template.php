@@ -556,7 +556,7 @@ foreach ($arResult['ORDER'] as $sKey => $arOrder)
 					)
 				)
 				: '',
-			'COMMENTS' => htmlspecialcharsback($arOrder['COMMENTS'] ?? ''),
+			'COMMENTS' => htmlspecialcharsbx($arOrder['COMMENTS'] ?? ''),
 			'SUM' => $arOrder['SUM'] ?? 0.0,
 			'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateModify), $now),
 			'ORIGINATOR_ID' => $arOrder['ORIGINATOR_NAME'] ?? '',

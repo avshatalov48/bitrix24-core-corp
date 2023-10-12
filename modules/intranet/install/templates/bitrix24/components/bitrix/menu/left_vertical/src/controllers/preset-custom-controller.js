@@ -66,6 +66,7 @@ export default class PresetCustomController extends DefaultController
 								});
 						})
 					;
+					this.isReady = true;
 				}})),
 				new CancelButton({ onclick: () => { this.hide();} }),
 			]

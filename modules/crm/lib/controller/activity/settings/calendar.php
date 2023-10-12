@@ -79,8 +79,8 @@ class Calendar extends Base
 					'id' => $entry['ID'],
 					'dateFrom' => CCalendar::Date($fromTs, $entry['DT_SKIP_TIME'] !== 'Y'),
 					'dateTo' => CCalendar::Date($toTs, $entry['DT_SKIP_TIME'] !== 'Y'),
-					'type' => $entry['FROM_HR'] ? 'hr' : 'event',
-					'title' => $entry['NAME'],
+					'type' => isset($entry['FROM_HR']) ? 'hr' : 'event',
+					'title' => $entry['NAME'] ?? '',
 				];
 			}
 		}

@@ -19,6 +19,7 @@
 			this.canEditProfile = params.canEditProfile === "Y";
 			this.userId = params.userId || "";
 			this.userStatus = params.userStatus || "";
+			this.isIntegratorUser = params.isIntegratorUser === "Y";
 			this.isOwnProfile = params.isOwnProfile === "Y";
 			this.isSessionAdmin = params.isSessionAdmin === "Y";
 			this.urls = params.urls;
@@ -102,8 +103,10 @@
 
 		initAvailableActions: function()
 		{
-			if (!this.userStatus)
+			if (!this.canEditProfile)
+			{
 				return;
+			}
 
 			var actionElement = document.querySelector("[data-role='user-profile-actions-button']");
 			if (BX.type.isDomNode(actionElement))
@@ -244,7 +247,7 @@
 			)
 			{
 				itemText = BX.message("INTRANET_USER_PROFILE_FIRE");
-				if (!this.isFireUserEnabled && this.userStatus !== "integrator")
+				if (!this.isFireUserEnabled && !this.isIntegratorUser)
 				{
 					itemText+= "<span class='intranet-user-profile-lock-icon'></span>";
 				}
@@ -254,7 +257,7 @@
 					className: "menu-popup-no-icon",
 					onclick: BX.proxy(function () {
 						BX.proxy_context.popupWindow.close();
-						if (!this.isFireUserEnabled && this.userStatus !== "integrator")
+						if (!this.isFireUserEnabled && !this.isIntegratorUser)
 						{
 							top.BX.UI.InfoHelper.show('limit_dismiss');
 						}
@@ -314,7 +317,8 @@
 			if (
 				this.isCloud
 				&& this.canEditProfile && !this.isOwnProfile
-				&& this.userStatus !== "integrator"
+				&& !this.isIntegratorUser
+				&& this.userStatus !== "fired"
 			)
 			{
 				menuItems.push({
@@ -355,16 +359,16 @@
 				closeIcon : false,
 				lightShadow : true,
 				offsetLeft : 100,
-				overlay : false,
+				overlay : true,
 				contentPadding: 10,
 				buttons: [
 					new BX.UI.CreateButton({
 						text: BX.message("INTRANET_USER_PROFILE_YES"),
 						events: {
-							click: function (button) {
-								button.setWaiting();
-								this.context.close();
+							click: function (button, event) {
 								confirmCallback();
+								event.stopPropagation();
+								this.context.close();
 							}
 						}
 					}),
@@ -505,6 +509,8 @@
 					this.showErrorPopup(response["errors"][0].message);
 				}
 			);
+
+			BX('intranet-user-profile-photo-remove').hidden = false;
 		},
 
 		deletePhoto: function()
@@ -524,6 +530,8 @@
 				this.hideLoader({loader: loader});
 				this.showErrorPopup(response["errors"][0].message);
 			}.bind(this));
+
+			BX('intranet-user-profile-photo-remove').hidden = true;
 		},
 
 		setAdminRights: function()
@@ -543,11 +551,21 @@
 				else
 				{
 					this.hideLoader({loader: loader});
-					this.showErrorPopup("Error");
+					BX.UI.Notification.Center.notify({
+						content: "Error",
+						position: "top-right",
+						autoHideDelay: 10000,
+					});
+					BX.PopupWindowManager.getPopupById('intranet-user-profile-confirm-popup').close();
 				}
-			}, function (response) {
+			}.bind(this)).catch(function (response) {
 				this.hideLoader({loader: loader});
-				this.showErrorPopup(response["errors"][0].message);
+				BX.UI.Notification.Center.notify({
+					content: response["errors"][0].message,
+					position: "top-right",
+					autoHideDelay: 10000,
+				});
+				BX.PopupWindowManager.getPopupById('intranet-user-profile-confirm-popup').close();
 			}.bind(this));
 		},
 
@@ -717,7 +735,7 @@
 				closeByEsc: true,
 				titleBar: BX.message("INTRANET_USER_PROFILE_MOVE_TO_INTRANET_TITLE"),
 				closeIcon: false,
-				width: 500,
+				width: 'auto',
 				buttons: [
 					new BX.UI.CreateButton({
 						text: BX.message("INTRANET_USER_PROFILE_MOVE"),

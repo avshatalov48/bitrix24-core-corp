@@ -3,6 +3,8 @@
 namespace Bitrix\Crm;
 
 use Bitrix\Crm\Color\PhaseColorScheme;
+use Bitrix\Crm\Filter\Activity\FilterByActivityResponsible;
+use Bitrix\Crm\Filter\FieldsTransform\UserBasedField;
 use Bitrix\Crm\Format\PersonNameFormatter;
 use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Kanban\EntityNotFoundException;
@@ -13,7 +15,9 @@ use Bitrix\Crm\Search\SearchEnvironment;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Field\BooleanField;
 use Bitrix\Crm\Service\ParentFieldManager;
+use Bitrix\Crm\Settings\CounterSettings;
 use Bitrix\Crm\UI\Filter\EntityHandler;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -126,11 +130,7 @@ abstract class Kanban
 
 		$this->params = $params;
 
-		$categoryId = ($this->params['CATEGORY_ID'] ?? null);
-		if ($categoryId === -1 && !$this->entity->canUseAllCategories())
-		{
-			$categoryId = 0;
-		}
+		$categoryId = (isset($this->params['CATEGORY_ID']) ? (int)$this->params['CATEGORY_ID'] : null);
 		$this->setCategoryId($categoryId);
 		$this->setNameTemplate($this->params['NAME_TEMPLATE'] ?? null);
 
@@ -919,11 +919,26 @@ abstract class Kanban
 				$filter['>=' . $key] = $date;
 			}
 		}
-		// counters
-		if ($entity->isActivityCountersFilterSupported())
+
+		if ($this->viewMode === ViewMode::MODE_ACTIVITIES)
 		{
-			$entity->applyCountersFilter($filter);
+			// The responsible field for activity view should not be altered at this time. It must be preserved for later use.
+			$fieldToSkip = !CounterSettings::getInstance()->useActivityResponsible()
+				? 'ACTIVITY_RESPONSIBLE_IDS'
+				: 'ASSIGNED_BY_ID';
+			$userFieldsToTransform = [$fieldToSkip];
 		}
+		else
+		{
+			$userFieldsToTransform = ['ASSIGNED_BY_ID', 'ACTIVITY_RESPONSIBLE_IDS'];
+		}
+
+		/** @var UserBasedField $userFieldPrepare */
+		$userFieldPrepare = ServiceLocator::getInstance()->get('crm.filter.fieldsTransform.userBasedField');
+		$userFieldPrepare->transformAll($filter, $userFieldsToTransform, $this->currentUserId);
+
+		$entity->applySubQueryBasedFilters($filter, $this->viewMode);
+
 
 		$filter = Deal\OrderFilter::prepareFilter($filter);
 		$filter = \Bitrix\Crm\Automation\Debugger\DebuggerFilter::prepareFilter($filter, $entity->getTypeId());
@@ -938,7 +953,7 @@ abstract class Kanban
 		//invoice
 		if($entity->isRecurringSupported())
 		{
-			$filter['!IS_RECURRING'] = 'Y';
+			$filter['=IS_RECURRING'] = 'N';
 		}
 		if(isset($filter['OVERDUE']))
 		{
@@ -1440,7 +1455,6 @@ abstract class Kanban
 				'modifyByAvatar' => '',
 				'activityStageId' => ($row['ACTIVITY_STAGE_ID'] ?? null),
 				'activityShow' => 1,
-				'activityErrorTotal' => 0,
 				'activityIncomingTotal' => 0,
 				'activityCounterTotal' => 0,
 				'activityProgress' => 0,

@@ -1,14 +1,14 @@
 <?php
 namespace Bitrix\Crm\Recurring\Entity;
 
-use Bitrix\Main,
-	Bitrix\Main\Result,
-	Bitrix\Main\Type\Date,
-	Bitrix\Crm\DealRecurTable,
-	Bitrix\Crm\DealTable,
-	Bitrix\Crm\Binding\DealContactTable,
-	Bitrix\Crm\Observer\Entity\ObserverTable,
-	Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Binding\DealContactTable;
+use Bitrix\Crm\DealRecurTable;
+use Bitrix\Crm\DealTable;
+use Bitrix\Crm\Observer\Entity\ObserverTable;
+use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Main;
+use Bitrix\Main\Result;
+use Bitrix\Main\Type\Date;
 
 class Deal extends Base
 {
@@ -132,10 +132,12 @@ class Deal extends Base
 					$recurringDealId = $deal['ID'];
 					$recurringItem = Item\DealExist::load($recurringDealMap[$recurringDealId]);
 					if (!$recurringItem)
+					{
 						continue;
-					$deal['PRODUCT_ROWS'] = $products[$recurringDealId];
-					$deal['CONTACT_IDS'] = $dealContactIds[$recurringDealId];
-					$deal['OBSERVER_IDS'] = $dealObservers[$recurringDealId];
+					}
+					$deal['PRODUCT_ROWS'] = $products[$recurringDealId] ?? null;
+					$deal['CONTACT_IDS'] = $dealContactIds[$recurringDealId] ?? null;
+					$deal['OBSERVER_IDS'] = $dealObservers[$recurringDealId] ?? null;
 					$recurringItem->setTemplateFields($deal);
 					$r = $recurringItem->expose($recalculate);
 					if ($r->isSuccess())

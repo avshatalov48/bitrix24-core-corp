@@ -932,7 +932,7 @@ class ActivityController extends EntityController
 			$smsFields = Integration\SmsManager::getMessageFields($fields['ASSOCIATED_ENTITY_ID']);
 			if (!$smsFields)
 			{
-				$smsFields = $fields['SETTINGS']['ORIGINAL_MESSAGE']; // check message fields stored in CRM
+				$smsFields = $fields['SETTINGS']['ORIGINAL_MESSAGE'] ?? ''; // check message fields stored in CRM
 			}
 
 			if (!empty($smsFields) && is_array($smsFields))
@@ -1255,6 +1255,16 @@ class ActivityController extends EntityController
 		if (empty($scheduledData))
 		{
 			return null;
+		}
+
+		$activityId = (int)$scheduledData['ID'];
+		if (!array_key_exists('IS_INCOMING_CHANNEL', $scheduledData))
+		{
+			$scheduledData['IS_INCOMING_CHANNEL'] = \Bitrix\Crm\Activity\IncomingChannel::getInstance()->isIncomingChannel($activityId) ? 'Y' : 'N';
+		}
+		if (!array_key_exists('LIGHT_COUNTER_AT', $scheduledData))
+		{
+			$scheduledData['LIGHT_COUNTER_AT'] = ServiceLocator::getInstance()->get('crm.activity.actcounterlighttimerepo')->queryLightTimeByActivityId($activityId);
 		}
 
 		return Container::getInstance()->getTimelineScheduledItemFactory()::createItem(

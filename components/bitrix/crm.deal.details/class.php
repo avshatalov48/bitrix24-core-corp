@@ -306,14 +306,14 @@ class CCrmDealDetailsComponent
 			$currencyID = CCrmCurrency::GetBaseCurrencyID();
 			if(isset($this->entityData['CURRENCY_ID']) && $this->entityData['CURRENCY_ID'] !== '')
 			{
-				$currencyID = $this->entityData['CURRENCY_ID'];
+				$currencyID = $this->entityData['CURRENCY_ID'] ?? null;
 			}
 
 			$this->arResult['ENTITY_CONTROLLERS'][] = [
 				'name' => 'PRODUCT_LIST',
 				'type' => 'product_list',
 				'config' => [
-					'productListId' => $this->arResult['PRODUCT_EDITOR_ID'],
+					'productListId' => $this->arResult['PRODUCT_EDITOR_ID'] ?? null,
 					'currencyList' => $currencyList,
 					'currencyId' => $this->getCurrencyId(),
 				]

@@ -41,7 +41,10 @@ final class CountableBased implements CounterQueryBuilder
 
 		$this->joinCountableActivity($params, $query);
 
-		$this->qpResponsibleFilter->apply($query, $params, 'A.ENTITY_ASSIGNED_BY_ID');
+		if (!$params->useActivityResponsible())
+		{
+			$this->qpResponsibleFilter->apply($query, $params->userParams(), 'A.ENTITY_ASSIGNED_BY_ID');
+		}
 
 		$this->qpEntitySpecificFilter->apply($query, $params->entityTypeId(), $params->options());
 
@@ -59,6 +62,11 @@ final class CountableBased implements CounterQueryBuilder
 		$referenceFilter->where('ref.ACTIVITY_IS_INCOMING_CHANNEL', new SqlExpression('?', 'N'));
 
 		$this->applyDeadlineReferenceFilter($referenceFilter, $params);
+
+		if ($params->useActivityResponsible())
+		{
+			$this->qpResponsibleFilter->apply($referenceFilter, $params->userParams(), 'ref.ACTIVITY_RESPONSIBLE_ID');
+		}
 
 		$query->registerRuntimeField(
 			'',

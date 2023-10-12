@@ -410,9 +410,13 @@ $bInternal = false;
 $arResult['FORM_ID'] = $arParams['FORM_ID'] ?? '';
 $arResult['TAB_ID'] = $arParams['TAB_ID'] ?? '';
 
-if ($arResult['CATEGORY_ID'] >= 0)
+if ($arResult['CATEGORY_ID'] > 0)
 {
 	$arFilter['CATEGORY_ID'] = $arResult['CATEGORY_ID'];
+}
+if ($arResult['CATEGORY_ID'] == 0)
+{
+	$arFilter['@CATEGORY_ID'] = $arResult['CATEGORY_ID'];
 }
 
 if (!empty($arParams['INTERNAL_FILTER']) || $isInGadgetMode)
@@ -609,6 +613,10 @@ elseif($effectiveCategoryID < 0 && isset($arFilter['CATEGORY_ID']))
 		$effectiveCategoryID = (int)($arFilter['CATEGORY_ID'][0]);
 	}
 }
+elseif($effectiveCategoryID < 0 && is_array($arFilter['@CATEGORY_ID'] ?? null) && count($arFilter['@CATEGORY_ID']) == 1)
+{
+	$effectiveCategoryID = (int)($arFilter['@CATEGORY_ID'][0] ?? -1);
+}
 
 if ($effectiveCategoryID >= 0)
 {
@@ -717,6 +725,11 @@ if (!$bInternal)
 	if (!in_array('ACTIVITY_COUNTER', $effectiveFilterFieldIDs, true))
 	{
 		$effectiveFilterFieldIDs[] = 'ACTIVITY_COUNTER';
+	}
+
+	if(!in_array('ACTIVITY_RESPONSIBLE_IDS', $effectiveFilterFieldIDs, true))
+	{
+		$effectiveFilterFieldIDs[] = 'ACTIVITY_RESPONSIBLE_IDS';
 	}
 
 	if (!in_array('WEBFORM_ID', $effectiveFilterFieldIDs, true))
@@ -1571,8 +1584,10 @@ else
 
 $arFilter['=IS_RECURRING'] = ($arParams['IS_RECURRING'] === 'Y') ? "Y" : 'N';
 
+Crm\Filter\FieldsTransform\UserBasedField::applyTransformWrapper($arFilter);
+
 //region Activity Counter Filter
-CCrmEntityHelper::applyCounterFilterWrapper(
+CCrmEntityHelper::applySubQueryBasedFiltersWrapper(
 	\CCrmOwnerType::Deal,
 	$arResult['GRID_ID'],
 	Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),

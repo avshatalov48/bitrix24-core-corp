@@ -248,11 +248,13 @@ class ActivityChange
 		return !empty($removedBindings) || !empty($addedBindings);
 	}
 
-	public function getAffectedCounterTypes(): array
+	public function getAffectedCounterTypes(bool $withResponsible = false): array
 	{
 		$isIncomingChannelChanged = $this->isIncomingChannelChanged();
 		$isDeadlineChanged = $this->isDeadlineChanged();
 		$isLightTimeChanged = $this->isLightTimeChanges();
+		$isResponsibleChange = $this->isResponsibleIdChanged();
+
 		$affectedTypeIds = [];
 		if (
 			($isDeadlineChanged && $isIncomingChannelChanged)
@@ -260,6 +262,10 @@ class ActivityChange
 			|| $this->isCompletedChanged()
 			|| $this->areBindingsChanged()
 		)
+		{
+			$affectedTypeIds = EntityCounterType::getAll(true);
+		}
+		elseif ($isResponsibleChange && $withResponsible)
 		{
 			$affectedTypeIds = EntityCounterType::getAll(true);
 		}

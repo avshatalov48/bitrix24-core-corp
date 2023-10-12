@@ -636,7 +636,7 @@ class CAllCrmContact
 		return \Bitrix\Crm\Entity\Contact::getInstance()->getTopIDs([
 			'order' => ['ID' => $sortType],
 			'limit' => $top,
-			'filter' => ['=CATEGORY_ID' => $categoryId],
+			'filter' => ['@CATEGORY_ID' => $categoryId],
 			'userPermissions' => $userPermissions
 		]);
 	}

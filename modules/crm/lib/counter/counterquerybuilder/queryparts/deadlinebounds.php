@@ -20,7 +20,7 @@ final class DeadlineBounds
 		$lowBound = DateTime::createFromTimestamp($params->periodFrom()->getTimestamp());
 		$lowBound->setTime(0, 0, 0);
 
-		return CCrmDateTimeHelper::getServerTime($lowBound,$params->userIds()[0] ?? null)->disableUserTime();
+		return CCrmDateTimeHelper::getServerTime($lowBound, $params->firstUserId())->disableUserTime();
 	}
 
 	public function getHighBound(QueryParams $params): ?DateTime
@@ -32,7 +32,7 @@ final class DeadlineBounds
 		$highBound = DateTime::createFromTimestamp($params->periodTo()->getTimestamp());
 		$highBound->setTime(23, 59, 59);
 
-		return CCrmDateTimeHelper::getServerTime($highBound,$params->userIds()[0] ?? null)->disableUserTime();
+		return CCrmDateTimeHelper::getServerTime($highBound, $params->firstUserId())->disableUserTime();
 	}
 
 	public function applyFilerToField(string $fieldName, ConditionTree $ct, QueryParams $params): void

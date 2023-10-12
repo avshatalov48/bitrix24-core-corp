@@ -65,7 +65,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 		</div>
 	<?endforeach?>
 	<div class="crm-task-list-call-info">
-		<?if($arResult['CALL']):?>
+		<?if (!empty($arResult['CALL'])):?>
 			<div class="crm-task-list-call-info-container">
 				<span class="crm-task-list-call-info-name"><?=GetMessage('CRM_ACTIVITY_CALL_TYPE')?>:</span>
 				<span class="crm-task-list-call-info-item"><?=htmlspecialcharsbx($arResult['CALL']['CALL_TYPE_TEXT'])?></span>
@@ -106,9 +106,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 			</span>
 		</div>
 		<div class="crm-task-list-call-info-container">
-			<?=$arResult['ACTIVITY']['DESCRIPTION_HTML']?>
+			<?=$arResult['ACTIVITY']['DESCRIPTION_HTML'] ?? ''?>
 		</div>
-		<? if($arResult['CALL']['COMMENT'] != ''): ?>
+		<? if (!empty($arResult['CALL']['COMMENT'])): ?>
 			<div class="crm-task-list-call-info-container">
 				<span class="crm-task-list-call-info-name">
 					<?=GetMessage('CRM_ACTIVITY_CALL_COMMENT')?>:

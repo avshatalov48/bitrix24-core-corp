@@ -19,7 +19,7 @@ class InfoConnectors
 	 *
 	 * @return string
 	 */
-	public static function infoConnectorsAddAgent()
+	public static function infoConnectorsAddAgent(): string
 	{
 		if (Loader::includeModule('imopenlines'))
 		{
@@ -47,7 +47,7 @@ class InfoConnectors
 	 *
 	 * @return string
 	 */
-	public static function infoConnectorsUpdateAgent($isCalledRecursively = 0)
+	public static function infoConnectorsUpdateAgent($isCalledRecursively = 0): string
 	{
 		$infoConnectors = self::getExpiredInfoConnectors();
 		$connectorInfo = $infoConnectors->fetch();
@@ -77,7 +77,7 @@ class InfoConnectors
 	 *
 	 * @return string
 	 */
-	public static function infoConnectorsLineAddAgent($lineId)
+	public static function infoConnectorsLineAddAgent($lineId): string
 	{
 		$lineId = (int)$lineId;
 		if ($lineId > 0)
@@ -120,6 +120,7 @@ class InfoConnectors
 	{
 		if (Loader::includeModule('crm'))
 		{
+			/** @see \Bitrix\Crm\SiteButton\Manager::updateScriptCacheAgent */
 			\CAgent::AddAgent(
 				'\\Bitrix\\Crm\\SiteButton\\Manager::updateScriptCacheAgent();',
 				'crm',
@@ -143,11 +144,12 @@ class InfoConnectors
 	 *
 	 * @param int $isCalledRecursively
 	 * @param int $interval
+	 * @return void
 	 */
-	public static function addAllLinesUpdateAgent($isCalledRecursively = 0, $interval = Library::LOCAL_AGENT_EXEC_INTERVAL)
+	public static function addAllLinesUpdateAgent($isCalledRecursively = 0, $interval = Library::LOCAL_AGENT_EXEC_INTERVAL): void
 	{
-		$isCalledRecursively = (int)$isCalledRecursively;
-		$method = '\Bitrix\ImConnector\InfoConnectors::infoConnectorsUpdateAgent('.$isCalledRecursively.');';
+		/** @see self::infoConnectorsUpdateAgent */
+		$method = __CLASS__ . '::infoConnectorsUpdateAgent('.(int)$isCalledRecursively.');';
 		\CAgent::AddAgent(
 			$method,
 			'imconnector',
@@ -170,10 +172,12 @@ class InfoConnectors
 	 *
 	 * @param int $lineId
 	 * @param int $interval
+	 * @return void
 	 */
-	public static function addSingleLineAddAgent($lineId, $interval = Library::INSTANT_AGENT_EXEC_INTERVAL)
+	public static function addSingleLineAddAgent($lineId, $interval = Library::INSTANT_AGENT_EXEC_INTERVAL): void
 	{
-		$method = '\Bitrix\ImConnector\InfoConnectors::infoConnectorsLineAddAgent('.(int)$lineId.');';
+		/** @see self::infoConnectorsLineAddAgent */
+		$method = __CLASS__ . '::infoConnectorsLineAddAgent('.(int)$lineId.');';
 		\CAgent::AddAgent(
 			$method,
 			'imconnector',
@@ -198,9 +202,10 @@ class InfoConnectors
 	 * @param int $interval
 	 * @return void
 	 */
-	public static function addSingleLineUpdateAgent($lineId, $interval = Library::INSTANT_AGENT_EXEC_INTERVAL)
+	public static function addSingleLineUpdateAgent($lineId, $interval = Library::INSTANT_AGENT_EXEC_INTERVAL): void
 	{
-		$method = '\Bitrix\ImConnector\InfoConnectors::infoConnectorsLineUpdateAgent('.(int)$lineId.');';
+		/** @see self::infoConnectorsLineUpdateAgent */
+		$method = __CLASS__ . '::infoConnectorsLineUpdateAgent('.(int)$lineId.');';
 		\CAgent::AddAgent(
 			$method,
 			'imconnector',
@@ -224,7 +229,7 @@ class InfoConnectors
 	 * @param Event $event
 	 * @return void
 	 */
-	public static function onChangeStatusConnector(Event $event)
+	public static function onChangeStatusConnector(Event $event): void
 	{
 		$parameters = $event->getParameters();
 
@@ -235,7 +240,6 @@ class InfoConnectors
 		);
 
 		self::addSiteButtonUpdaterAgent();
-
 	}
 
 	/**
@@ -245,7 +249,7 @@ class InfoConnectors
 	 * @param Event $event
 	 * @return void
 	 */
-	public static function onUpdateStatusConnector(Event $event)
+	public static function onUpdateStatusConnector(Event $event): void
 	{
 		$parameters = $event->getParameters();
 
@@ -280,12 +284,13 @@ class InfoConnectors
 	}
 
 	/**
-	 * Event handler for imopenline create
+	 * Event handler for imopenline create.
+	 * @event `imopenlines:OnImopenlineCreate`
 	 *
 	 * @param Event $event
 	 * @return void
 	 */
-	public static function onImopenlineCreate(Event $event)
+	public static function onImopenlineCreate(Event $event): void
 	{
 		$parameters = $event->getParameters();
 
@@ -293,12 +298,13 @@ class InfoConnectors
 	}
 
 	/**
-	 * Event handler for imopenline delete
+	 * Event handler for imopenline delete.
+	 * @event `imopenlines:OnImopenlineDelete`
 	 *
 	 * @param Event $event
 	 * @return void
 	 */
-	public static function onImopenlineDelete(Event $event)
+	public static function onImopenlineDelete(Event $event): void
 	{
 		$parameters = $event->getParameters();
 
@@ -465,7 +471,7 @@ class InfoConnectors
 	 *
 	 * @return bool
 	 */
-	public static function deleteInfoConnectors($lineId)
+	public static function deleteInfoConnectors($lineId): bool
 	{
 		$result = InfoConnectorsTable::delete($lineId);
 		self::clearInfoConnectorsLineCache($lineId);
@@ -479,7 +485,7 @@ class InfoConnectors
 	 * @param $lineId
 	 * @param $data
 	 */
-	private static function rewriteInfoConnectorsLineCache($lineId, $data)
+	private static function rewriteInfoConnectorsLineCache($lineId, $data): void
 	{
 		$cache = Cache::createInstance();
 		$cache->clean($lineId, Library::CACHE_DIR_INFO_CONNECTORS_LINE);
@@ -493,7 +499,7 @@ class InfoConnectors
 	 *
 	 * @param $lineId
 	 */
-	private static function clearInfoConnectorsLineCache($lineId)
+	private static function clearInfoConnectorsLineCache($lineId): void
 	{
 		$cache = Cache::createInstance();
 		$cache->clean($lineId, Library::CACHE_DIR_INFO_CONNECTORS_LINE);

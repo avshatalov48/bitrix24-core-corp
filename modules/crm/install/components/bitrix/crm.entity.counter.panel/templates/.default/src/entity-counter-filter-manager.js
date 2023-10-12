@@ -106,16 +106,18 @@ export default class EntityCounterFilterManager
 		return this.#isFilteredByField(field);
 	}
 	
-	isFiltered(userId: number, typeId: number, entityTypeId: number, isOtherUsersFilter: boolean): boolean
+	isFiltered(
+		userId: number,
+		typeId: number,
+		entityTypeId: number,
+		isOtherUsersFilter: boolean,
+		counterUserFieldName: string
+	): boolean
 	{
 		if (userId === 0 || typeId === EntityCounterType.UNDEFINED)
 		{
 			return false;
 		}
-
-		const counterUserFieldName = entityTypeId === BX.CrmEntityType.enumeration.order
-			? 'RESPONSIBLE_ID'
-			: 'ASSIGNED_BY_ID';
 
 		const isFilteredByUser = this.isFilteredByFieldEx(counterUserFieldName)
 			&& Type.isArray(this.#fields[counterUserFieldName])

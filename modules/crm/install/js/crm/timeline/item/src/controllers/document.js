@@ -508,7 +508,6 @@ export class Document extends Base
 						},
 						content: Tag.render`<div class="bx-popup-document-activity-popup-content-text">${content}</div>`,
 						titleBar: title,
-						contentColor: 'white',
 						className : 'bx-popup-document-activity-popup',
 						maxWidth: 510
 					}

@@ -89,3 +89,8 @@ $MESS["CRM_FIELD_ENABLE_COMPANY_RECYCLE_BIN"] = "Включить корзину
 $MESS["CRM_FIELD_ENABLE_DEAL_RECYCLE_BIN"] = "Включить корзину для сделок";
 $MESS["CRM_FIELD_ENTITY_ADDRESS_FORMAT_LINK"] = "Изменить формат адреса можно в настройках портала";
 $MESS['CRM_RECYCLEBIN_TTL_TITLE'] = 'Хранить данные в корзине, дней';
+
+$MESS["CRM_SETTINGS_COUNTERS_RESPONSIBLE_MODE"] = "Режим работы счётчиков";
+$MESS["CRM_SETTINGS_COUNTERS_RESPONSIBLE_MODE_HINT"] = "При выборе варианта «По ответственному за дело» счётчик будет загораться для менеджеров, ответственных за дело внутри элемента (сделки, лида, счёта), а не за сам элемент.<br><br>При выборе варианта «По ответственному за элемент» счётчик будет загораться для менеджеров, ответственных за элемент, даже если дела внутри принадлежат другим сотрудникам.";
+$MESS["CRM_SETTINGS_COUNTERS_RESPONSIBLE_MODE_ACTIVITY"] = "По ответственному за дело";
+$MESS["CRM_SETTINGS_COUNTERS_RESPONSIBLE_MODE_ENTITY"] = "По ответственному за элемент";

@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Crm\Filter;
+use Bitrix\Crm\Integration\Intranet\CustomSection\CustomSectionQueries;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
@@ -28,9 +29,13 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 	protected $navParamName = 'page';
 	protected $users;
 
+	private CustomSectionQueries $customSectionQueries;
+
 	protected function init(): void
 	{
 		parent::init();
+
+		$this->customSectionQueries = CustomSectionQueries::getInstance();
 
 		$consistentUrl = Container::getInstance()->getRouter()->getConsistentUrlFromPartlyDefined(\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getRequestUri());
 		if ($consistentUrl)
@@ -61,11 +66,11 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 			return;
 		}
 
-		$this->getApplication()->SetTitle(Loc::getMessage('CRM_TYPE_LIST_TITLE'));
+		$this->getApplication()->SetTitle(Loc::getMessage('CRM_TYPE_LIST_TITLE_MSGVER_1'));
 
 		$this->arResult['grid'] = $this->prepareGrid();
 		$this->arResult['isEmptyList'] = empty($this->arResult['grid']['ROWS']);
-
+		$this->arResult['filter'] = $this->prepareFilter();
 		$this->includeComponentTemplate();
 	}
 
@@ -84,22 +89,31 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 		$pageNavigation = $this->getPageNavigation($pageSize);
 		$userIds = [];
 		$listFilter = $this->getListFilter();
+
 		$list = Container::getInstance()->getDynamicTypeDataClass()::getList([
 			'order' => $gridSort['sort'],
 			'offset' => $pageNavigation->getOffset(),
 			'limit' => $pageNavigation->getLimit(),
 			'filter' => $listFilter,
 		])->fetchAll();
+
 		$totalCount = Container::getInstance()->getDynamicTypeDataClass()::getCount($listFilter);
+
 		if(count($list) > 0)
 		{
+			$typeIds = [];
 			foreach($list as $item)
 			{
 				$userIds[$item['CREATED_BY']] = $item['CREATED_BY'];
+				$typeIds[] = $item['ENTITY_TYPE_ID'];
 			}
+
+			$customSections = $this->customSectionQueries->findByEntityTypeIds($typeIds);
+
 			$this->users = Container::getInstance()->getUserBroker()->getBunchByIds($userIds);
 			foreach($list as $item)
 			{
+				$item['CUSTOM_SECTION'] = $customSections[$item['ENTITY_TYPE_ID']] ?? null;
 				$eventData = \CUtil::PhpToJSObject([
 					'entityTypeId' => $item['ENTITY_TYPE_ID'],
 					'id' => $item['ID'],
@@ -184,6 +198,7 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 			'ENABLE_LABEL' => true,
 			'RESET_TO_DEFAULT_MODE' => false,
 			'ENABLE_LIVE_SEARCH' => true,
+			'THEME' => Bitrix\Main\UI\Filter\Theme::MUTED,
 		];
 	}
 
@@ -202,6 +217,51 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 		$detailUrl = htmlspecialcharsbx(Container::getInstance()->getRouter()->getItemListUrlInCurrentView($item['ENTITY_TYPE_ID']));
 		$item['TITLE'] = '<a href="'.$detailUrl.'">'.htmlspecialcharsbx($item['TITLE']).'</a>';
 
+		if (array_key_exists('CUSTOM_SECTION', $item))
+		{
+			$item = $this->getCustomSectionItemCell($item);
+		}
+
+		return $item;
+	}
+
+	/**
+	 * @param array $item
+	 * @return array
+	 */
+	private function getCustomSectionItemCell(array $item): array
+	{
+		if ($item['CUSTOM_SECTION'] !== null)
+		{
+			$title = $item['CUSTOM_SECTION']['SECTION_TITLE'];
+			$id = (int)$item['CUSTOM_SECTION']['CUSTOM_SECTION_ID'];
+		}
+		else
+		{
+			$title = Loc::getMessage('CRM_TYPE_LIST_CUSTOM_SECTION_DEFAULT_VALUE');
+			$id = -1;
+		}
+
+		$title = htmlspecialcharsbx($title);
+
+		$filterOptions = new Options(static::GRID_ID);
+		$requestFilter = $filterOptions->getFilter($this->filter->getFieldArrays());
+
+		$activeClass = 'crm-type-grid-custom-section-'
+			. (isset($requestFilter['CUSTOM_SECTION']) ? 'active' : 'inactive');
+
+		$item['CUSTOM_SECTION'] = <<<HTML
+<div class='crm-type-grid-custom-section-wrapper $activeClass'>
+	<span 
+		class="crm-type-grid-custom-section-title"
+		onclick="BX.Event.EventEmitter.emit('BX.Crm.TypeListComponent:onFilterByCustomSection', '$id')"
+	>$title</span>
+	<div 
+		class="crm-type-grid-filter-remove"
+		onclick="BX.Event.EventEmitter.emit('BX.Crm.TypeListComponent:onResetFilterByCustomSection')"
+	></div>
+</div>
+HTML;
 		return $item;
 	}
 
@@ -211,7 +271,7 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 		if(Container::getInstance()->getUserPermissions()->canAddType())
 		{
 			$buttons[Toolbar\ButtonLocation::AFTER_TITLE][] = new Buttons\Button([
-				'color' => Buttons\Color::PRIMARY,
+				'color' => Buttons\Color::SUCCESS,
 				'text' => Loc::getMessage('CRM_COMMON_ACTION_CREATE'),
 				'link' => Container::getInstance()->getRouter()->getTypeDetailUrl(0)->getUri(),
 			]);

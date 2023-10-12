@@ -14,7 +14,7 @@ export class QrAuth
 
 		this.qr = options.qr || this.settingsCollection.get('qr');
 		this.title = options.title || Loc.getMessage('TERMINAL_QR_AUTH_TITLE');
-		this.content = options.content || Loc.getMessage('TERMINAL_QR_AUTH_CONTENT');
+		this.content = options.content || Loc.getMessage('TERMINAL_QR_AUTH_CONTENT_MSGVER_1');
 
 		this.popup = null;
 

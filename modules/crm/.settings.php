@@ -351,17 +351,12 @@ return array(
 			'crm.integration.sign' => [
 				'className' => \Bitrix\Crm\Service\Integration\Sign::class,
 			],
-			'crm.lib.filter.activity.prepareactivityfilter' => [
-				'className' => \Bitrix\Crm\Filter\Activity\PrepareActivityFilter::class,
-				'constructorParams' => static function() {
-					return [
-						\Bitrix\Main\Engine\CurrentUser::get()->getId()
-					];
-				},
-			],
 			'crm.activity.actcounterlighttimerepo' => [
 				'className' => \Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo::class,
 			],
+			'crm.filter.fieldsTransform.userBasedField' => [
+				'className' => \Bitrix\Crm\Filter\FieldsTransform\UserBasedField::class,
+			]
 		],
 		'readonly' => true,
 	],

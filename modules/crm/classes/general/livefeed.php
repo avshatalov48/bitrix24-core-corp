@@ -665,22 +665,23 @@ class CCrmLiveFeed
 			);
 
 			if (
-				$arFields["ENTITY_TYPE"] == CCrmLiveFeedEntity::Activity
-				&& $arActivity["TYPE_ID"] == CCrmActivityType::Email
-				&& $arActivity["DIRECTION"] == CCrmActivityDirection::Incoming
+				isset($arFields["ENTITY_TYPE"], $arActivity["TYPE_ID"], $arActivity["DIRECTION"])
+				&& $arFields["ENTITY_TYPE"] === CCrmLiveFeedEntity::Activity
+				&& $arActivity["TYPE_ID"] === CCrmActivityType::Email
+				&& $arActivity["DIRECTION"] === CCrmActivityDirection::Incoming
 			)
 			{
 				switch ($arActivity['OWNER_TYPE_ID'])
 				{
 					case CCrmOwnerType::Company:
-						$rsCrmCompany = CCrmCompany::GetListEx(array(), array('ID' => $arActivity['OWNER_ID'], 'CHECK_PERMISSIONS' => 'N', '@CATEGORY_ID' => 0,), false, false, array('LOGO'));
+						$rsCrmCompany = CCrmCompany::GetListEx([], array('ID' => $arActivity['OWNER_ID'], 'CHECK_PERMISSIONS' => 'N', '@CATEGORY_ID' => 0,), false, false, array('LOGO'));
 						if ($arCrmCompany = $rsCrmCompany->Fetch())
 						{
 							$fileID = $arCrmCompany['LOGO'];
 						}
 						break;
 					case CCrmOwnerType::Contact:
-						$rsCrmContact = CCrmContact::GetListEx(array(), array('ID' => $arActivity['OWNER_ID'], 'CHECK_PERMISSIONS' => 'N', '@CATEGORY_ID' => 0,), false, false, array('PHOTO'));
+						$rsCrmContact = CCrmContact::GetListEx([], array('ID' => $arActivity['OWNER_ID'], 'CHECK_PERMISSIONS' => 'N', '@CATEGORY_ID' => 0,), false, false, array('PHOTO'));
 						if ($arCrmContact = $rsCrmContact->Fetch())
 						{
 							$fileID = $arCrmContact['PHOTO'];
@@ -727,21 +728,30 @@ class CCrmLiveFeed
 				$arResult["CACHED_CSS_PATH"][] = "/bitrix/js/tasks/css/tasks.css";
 			}
 
-			if (is_array($arComponentReturn) && !empty($arComponentReturn["CACHED_CSS_PATH"]))
+			if (
+				isset($arComponentReturn)
+				&& is_array($arComponentReturn)
+				&& !empty($arComponentReturn["CACHED_CSS_PATH"])
+			)
 			{
 				$arResult["CACHED_CSS_PATH"][] = $arComponentReturn["CACHED_CSS_PATH"];
 			}
 
-			if (is_array($arComponentReturn) && !empty($arComponentReturn["CACHED_JS_PATH"]))
+			if (
+				isset($arComponentReturn)
+				&& is_array($arComponentReturn)
+				&& !empty($arComponentReturn["CACHED_JS_PATH"])
+			)
 			{
 				$arResult["CACHED_JS_PATH"][] = $arComponentReturn["CACHED_JS_PATH"];
 			}
 		}
 
 		if (
-			$arFields["ENTITY_TYPE"] == CCrmLiveFeedEntity::Activity
-			&& $arActivity["TYPE_ID"] == CCrmActivityType::Email
-			&& $arActivity["DIRECTION"] == CCrmActivityDirection::Incoming
+			isset($arFields["ENTITY_TYPE"], $arActivity["TYPE_ID"], $arActivity["DIRECTION"])
+			&& $arFields["ENTITY_TYPE"] === CCrmLiveFeedEntity::Activity
+			&& $arActivity["TYPE_ID"] === CCrmActivityType::Email
+			&& $arActivity["DIRECTION"] === CCrmActivityDirection::Incoming
 		)
 		{
 			$arResult['CREATED_BY']['FORMATTED'] = htmlspecialcharsbx(CCrmOwnerType::GetCaption($arActivity['OWNER_TYPE_ID'], $arActivity['OWNER_ID'], false));
@@ -814,9 +824,12 @@ class CCrmLiveFeed
 			}
 
 			$parserLog->arUserfields = $arFields["UF"];
-			$parserLog->pathToUser = $arParams["PATH_TO_USER"];
+			$parserLog->pathToUser = $arParams["PATH_TO_USER"] ?? '';
 
-			if ($arParams['MOBILE'] !== 'Y')
+			if (
+				isset($arParams['MOBILE'])
+				&& $arParams['MOBILE'] !== 'Y'
+			)
 			{
 				if (!empty($arParams['IMAGE_MAX_WIDTH']))
 				{
@@ -2427,7 +2440,7 @@ class CCrmLiveFeed
 			|| !isset($livefeedData['LOG_ID'])
 			|| (int)$livefeedData['LOG_ID'] <= 0
 			|| isset($livefeedData['LOG_COMMENT_ID'])
-			|| (int)$livefeedData['LOG_COMMENT_ID'] > 0
+			|| (int)($livefeedData['LOG_COMMENT_ID'] ?? 0) > 0
 			|| $ratingFields['ENTITY_TYPE_ID'] === 'LOG_COMMENT'
 		)
 		{
@@ -4086,7 +4099,7 @@ class CCrmLiveFeed
 					break;
 			}
 
-			if ($entityName)
+			if (isset($entityName))
 			{
 				$notifyMessage = GetMessage("CRM_LF_COMMENT_MENTION".($genderSuffix <> '' ? "_".$genderSuffix : ""), Array("#title#" => "<a href=\"#url#\" class=\"bx-notifier-item-action\">".$entityName."</a>"));
 				$notifyMessageOut = GetMessage("CRM_LF_COMMENT_MENTION".($genderSuffix <> '' ? "_".$genderSuffix : ""), Array("#title#" => $entityName))." ("."#server_name##url#)";
@@ -5901,7 +5914,7 @@ class CCrmLiveFeedComponent
 				}
 				break;
 			case "PERSON_ID":
-				if (intval($arField["VALUE"]) > 0)
+				if ((int)($arField["VALUE"] ?? 0) > 0)
 				{
 					$dbUser = CUser::GetByID(intval($arField["VALUE"]));
 					if ($arUser = $dbUser->GetNext())
@@ -5925,7 +5938,10 @@ class CCrmLiveFeedComponent
 						$strUser = "";
 
 						$strUser .= '<span class="crm-feed-company-avatar">';
-						if(is_array($arFileTmp) && isset($arFileTmp['src']))
+						if (
+							isset($arFileTmp, $arFileTmp['src'])
+							&& is_array($arFileTmp)
+						)
 						{
 							if (($this->params["PATH_TO_USER"] ?? null) !== '')
 							{
@@ -6188,7 +6204,7 @@ class CCrmLiveFeedComponent
 									array_key_exists("COMPANY_ID", $arField["VALUE"])
 									&& intval($arField["VALUE"]["COMPANY_ID"]) > 0
 										? $arField["VALUE"]["COMPANY_ID"]
-										: intval($contactCompanyID)
+										: (int)($contactCompanyID ?? 0)
 								),
 								'PREFIX' => '',
 								'CLASS_NAME' => '',
@@ -6220,7 +6236,8 @@ class CCrmLiveFeedComponent
 				break;
 			case "COMBI_COMPANY":
 				if (
-					is_array($arField["VALUE"])
+					isset($arField["VALUE"])
+					&& is_array($arField["VALUE"])
 					&& (array_key_exists("TITLE", $arField["VALUE"]) && $arField["VALUE"]["TITLE"] <> '')
 				)
 				{
@@ -6231,7 +6248,7 @@ class CCrmLiveFeedComponent
 					$strResult .= "#cell_begin_right#";
 
 					$url = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Company, $arField["VALUE"]["ENTITY_ID"]);
-					if (intval($arField['VALUE']['LOGO_ID']) > 0)
+					if ((int)($arField['VALUE']['LOGO_ID'] ?? 0) > 0)
 					{
 						$arFileTmp = CFile::ResizeImageGet(
 							$arField['VALUE']['LOGO_ID'],
@@ -6241,7 +6258,11 @@ class CCrmLiveFeedComponent
 						);
 					}
 
-					if(is_array($arFileTmp) && isset($arFileTmp['src']))
+					if (
+						isset($arFileTmp)
+						&& is_array($arFileTmp)
+						&& isset($arFileTmp['src'])
+					)
 					{
 						$strResult .= '<span class="crm-feed-user-block" href="'.$url.'">';
 							$strResult .= '<span class="crm-feed-company-avatar">';
@@ -6922,9 +6943,13 @@ class CCrmLiveFeedComponent
 			}
 			elseif (mb_strpos($value_code, "INVOICE_") === 0)
 			{
-				if (is_array($this->activity[mb_substr($value_code, 9)]))
+				if (
+					isset($this->activity[mb_substr($value_code, 9)])
+					&& is_array($this->activity[mb_substr($value_code, 9)])
+				)
 				{
 					array_walk($this->invoice[mb_substr($value_code, 8)], array($this, '__htmlspecialcharsbx'));
+
 					return $this->invoice[mb_substr($value_code, 8)];
 				}
 
@@ -6932,7 +6957,10 @@ class CCrmLiveFeedComponent
 			}
 			else
 			{
-				if (is_array($this->activity[mb_substr($value_code, 9)]))
+				if (
+					isset($this->activity[mb_substr($value_code, 9)])
+					&& is_array($this->activity[mb_substr($value_code, 9)])
+				)
 				{
 					array_walk($this->fields[$value_code], array($this, '__htmlspecialcharsbx'));
 					return $this->fields[$value_code];
@@ -6943,11 +6971,12 @@ class CCrmLiveFeedComponent
 		}
 		else
 		{
-			$arReturn = array();
+			$arReturn = [];
 			foreach ($value_code as $key_tmp => $value_tmp)
 			{
 				$arReturn[$key_tmp] = $this->getValue($value_tmp);
 			}
+
 			return $arReturn;
 		}
 	}
@@ -6971,7 +7000,7 @@ class CCrmLiveFeedComponent
 				$parser = new forumTextParser(LANGUAGE_ID);
 			}
 
-			$parser->pathToUser = $arParams["PATH_TO_USER"];
+			$parser->pathToUser = $arParams["PATH_TO_USER"] ?? '';
 			$parser->arUserfields = $arUF;
 			$textFormatted = $parser->convert(
 				$text,
@@ -6998,7 +7027,7 @@ class CCrmLiveFeedComponent
 		}
 		else
 		{
-			$parser = new logTextParser(false, $arParams["PATH_TO_SMILE"]);
+			$parser = new logTextParser(false, $arParams["PATH_TO_SMILE"] ?? '');
 			$textFormatted = $parser->convert(
 				$text,
 				array(),
@@ -7024,6 +7053,7 @@ class CCrmLiveFeedComponent
 		{
 			$textFormatted = $parser->html_cut($textFormatted, $arParams["MAX_LENGTH"]);
 		}
+
 		return $textFormatted;
 	}
 

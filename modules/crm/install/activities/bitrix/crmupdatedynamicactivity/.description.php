@@ -8,7 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 
 $arActivityDescription = [
-	'NAME' => Loc::getMessage('CRM_UDA_NAME'),
+	'NAME' => Loc::getMessage('CRM_UDA_NAME_MSGVER_1'),
 	'DESCRIPTION' => Loc::getMessage('CRM_UDA_DESC_1'),
 	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmUpdateDynamicActivity',

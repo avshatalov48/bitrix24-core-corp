@@ -105,7 +105,7 @@ class TypeTable extends UserField\Internal\TypeDataManager
 				$nextId = static::getNextAvailableEntityTypeId();
 				if(!$nextId)
 				{
-					throw new InvalidOperationException(Loc::getMessage('CRM_TYPE_ENTITY_TYPE_ID_LIMIT_ERROR'));
+					throw new InvalidOperationException(Loc::getMessage('CRM_TYPE_ENTITY_TYPE_ID_LIMIT_ERROR_MSGVER_1'));
 				}
 
 				return $nextId;

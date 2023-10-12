@@ -1,8 +1,10 @@
 <?php
 namespace Bitrix\Intranet\Binding;
 
+use Bitrix\Main\Loader;
 use Bitrix\Intranet\Binding\Map\MapItem;
 use Bitrix\Intranet\Binding\Map\MapSection;
+use Bitrix\Landing\Rights;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
@@ -750,6 +752,17 @@ class Menu
 			$cacheManager = $GLOBALS['CACHE_MANAGER'];
 			$cacheTag = 'intranet_menu_binding';
 			$cacheKey = $cacheTag . '_' . LANGUAGE_ID;
+			if (Loader::includeModule('landing'))
+			{
+				if (Rights::hasAdditionalRight('extension', 'knowledge', false, true))
+				{
+					$cacheKey .= '_extension';
+					if (Rights::hasAdditionalRight('create', 'knowledge', false, true))
+					{
+						$cacheKey .= '_create';
+					}
+				}
+			}
 			$cacheDir = '/intranet/menu_binding';
 			if ($cache->initCache(8640000, $cacheKey, $cacheDir))
 			{

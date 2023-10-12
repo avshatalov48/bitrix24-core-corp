@@ -21,7 +21,7 @@ class ActivitiesChangesCollection extends \Bitrix\Main\Type\Dictionary
 		}
 	}
 
-	public function getSignificantlyChangedActivities(): self
+	public function getSignificantlyChangedActivities(bool $withResponsible = false): self
 	{
 		$result = new self();
 		/** @var $activityChange ActivityChange */
@@ -33,6 +33,7 @@ class ActivitiesChangesCollection extends \Bitrix\Main\Type\Dictionary
 				|| $activityChange->isCompletedChanged()
 				|| $activityChange->areBindingsChanged()
 				|| $activityChange->isLightTimeChanges()
+				|| ($withResponsible && $activityChange->isResponsibleIdChanged())
 			)
 			{
 				$result->add($activityChange);

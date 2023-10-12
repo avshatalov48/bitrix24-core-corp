@@ -33,14 +33,17 @@ export const Logo = {
 			];
 		},
 
-		iconClassname() {
+		iconClassname()
+		{
 			return [
 				'crm-timeline__card-logo_icon',
 				`--${this.currentIcon}`,
-				`--type-${this.iconType}`, {
+				{
 					'--in-circle': this.inCircle,
-				}
-			]
+					[`--type-${this.iconType}`]: !!this.iconType && !this.backgroundUrl,
+					'--custom-bg': !!this.backgroundUrl,
+				},
+			];
 		},
 
 		addIconClassname() {

@@ -15,7 +15,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
 
 Loader::requireModule('documentgenerator');
@@ -253,7 +253,7 @@ final class Document extends Activity
 		return $this->getDocumentData()['title'] ?? null;
 	}
 
-	private function getDocumentCreateDate(): ?Date
+	private function getDocumentCreateDate(): ?DateTime
 	{
 		$createTimeField = $this->getDocument()->getFields(['DocumentCreateTime'])['DocumentCreateTime'] ?? null;
 		if (is_array($createTimeField) && isset($createTimeField['VALUE']))
@@ -268,7 +268,7 @@ final class Document extends Activity
 			{
 				try
 				{
-					$parsedCreateTime = new Date($createTime);
+					$parsedCreateTime = new DateTime($createTime);
 				}
 				catch (ObjectException $incorrectDateException)
 				{
@@ -278,7 +278,7 @@ final class Document extends Activity
 				$createTime = $parsedCreateTime;
 			}
 
-			if ($createTime instanceof Date)
+			if ($createTime instanceof DateTime)
 			{
 				// createTime was modified by user, use modified value
 				return $createTime;

@@ -1031,12 +1031,12 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 
 		//region DISCOUNT_PRICE & Currency
 		$this->entityData['FORMATTED_DISCOUNT_PRICE_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
-			$this->entityData['DISCOUNT_PRICE'],
+			$this->entityData['DISCOUNT_PRICE'] ?? 0,
 			$this->entityData['CURRENCY'],
 			''
 		);
 		$this->entityData['FORMATTED_DISCOUNT_PRICE'] = \CCrmCurrency::MoneyToString(
-			$this->entityData['DISCOUNT_PRICE'],
+			$this->entityData['DISCOUNT_PRICE'] ?? 0,
 			$this->entityData['CURRENCY'],
 			'#'
 		);
@@ -1044,12 +1044,12 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 
 		//region BASE_PRICE_DELIVERY & Currency
 		$this->entityData['FORMATTED_BASE_PRICE_DELIVERY_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
-			$this->entityData['BASE_PRICE_DELIVERY'],
+			$this->entityData['BASE_PRICE_DELIVERY'] ?? 0,
 			$this->entityData['CURRENCY'],
 			''
 		);
 		$this->entityData['FORMATTED_BASE_PRICE_DELIVERY'] = \CCrmCurrency::MoneyToString(
-			$this->entityData['BASE_PRICE_DELIVERY'],
+			$this->entityData['BASE_PRICE_DELIVERY'] ?? 0,
 			$this->entityData['CURRENCY'],
 			'#'
 		);
@@ -1109,7 +1109,7 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 		$this->entityData['TRACKING_STATUS_DATA'] = [
 			'TRACKING_STATUS_NAME' =>
 				Delivery\Tracking\Manager::getInstance()::getStatusName(
-					(int)$this->entityData['TRACKING_STATUS']
+					(int)($this->entityData['TRACKING_STATUS'] ?? 0)
 				)
 		];
 
@@ -1270,7 +1270,7 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 		}
 
 		$this->entityData['PATH_TO_'.$entityPrefix.'_USER'] = CComponentEngine::MakePathFromTemplate(
-			$this->arResult['PATH_TO_USER_PROFILE'],
+			$this->arResult['PATH_TO_USER_PROFILE'] ?? '',
 			array('user_id' => $userId)
 		);
 	}

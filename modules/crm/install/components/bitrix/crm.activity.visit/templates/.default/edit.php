@@ -17,11 +17,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 <div class="crm-activity-visit-wrapper">
 	<div class="crm-activity-visit-container" data-role="visit-form">
-		<input type="hidden" name="OWNER_ENTITY_TYPE" value="<?=htmlspecialcharsbx($arResult['OWNER_ENTITY_TYPE'])?>" data-role="field-owner-entity-type">
-		<input type="hidden" name="OWNER_ENTITY_ID" value="<?=intval($arResult['OWNER_ENTITY_ID'])?>" data-role="field-owner-entity-id">
+		<input type="hidden" name="OWNER_ENTITY_TYPE" value="<?= htmlspecialcharsbx($arResult['OWNER_ENTITY_TYPE'] ?? '') ?>" data-role="field-owner-entity-type">
+		<input type="hidden" name="OWNER_ENTITY_ID" value="<?= (int)($arResult['OWNER_ENTITY_ID'] ?? 0) ?>" data-role="field-owner-entity-id">
 		<input type="hidden" name="OWNER_ENTITY_TITLE" value="" data-role="field-owner-entity-title">
-		<input type="hidden" value="<?=intval($arResult['DEAL'])?>" data-role="field-owner-entity-deal">
-		<input type="hidden" name="CREATE_TIMESTAMP" value="<?= time()?>" data-role="field-create-timestamp">
+		<input type="hidden" value="<?= (int)($arResult['DEAL'] ?? 0) ?>" data-role="field-owner-entity-deal">
+		<input type="hidden" name="CREATE_TIMESTAMP" value="<?= time() ?>" data-role="field-create-timestamp">
 
 		<? if($arResult['FACEID_ENABLED']): ?>
 			<div class="crm-activity-visit-faceid-container" data-role="faceid-container">
@@ -73,8 +73,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 				"bitrix:crm.card.show",
 				"",
 				array(
-					'ENTITY_TYPE' => $arResult['OWNER_ENTITY_TYPE'],
-					'ENTITY_ID' => $arResult['OWNER_ENTITY_ID']
+					'ENTITY_TYPE' => $arResult['OWNER_ENTITY_TYPE'] ?? '',
+					'ENTITY_ID' => $arResult['OWNER_ENTITY_ID'] ?? null
 				)
 			) ?>
 		</div>

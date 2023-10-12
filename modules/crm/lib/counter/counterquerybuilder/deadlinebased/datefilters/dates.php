@@ -17,14 +17,14 @@ final class Dates {
 	{
 		$date = DateTime::createFromTimestamp((new DateTime())->getTimestamp());
 		$date->setTime(23, 59, 59);
-		return CCrmDateTimeHelper::getServerTime($date,$params->userIds()[0] ?? null)->disableUserTime();
+		return CCrmDateTimeHelper::getServerTime($date,$params->firstUserId())->disableUserTime();
 	}
 
 	public static function beginOfCurrentDay(QueryParams $params): DateTime
 	{
 		$date = DateTime::createFromTimestamp((new DateTime())->getTimestamp());
 		$date->setTime(00, 00, 0);
-		return CCrmDateTimeHelper::getServerTime($date,$params->userIds()[0] ?? null)->disableUserTime();
+		return CCrmDateTimeHelper::getServerTime($date,$params->firstUserId())->disableUserTime();
 	}
 
 }

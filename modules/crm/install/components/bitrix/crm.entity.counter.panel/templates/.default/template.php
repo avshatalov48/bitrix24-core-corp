@@ -84,7 +84,8 @@ if ($activityFieldRestrictionManager->hasRestrictions())
 			withExcludeUsers: <?= $arResult['WITH_EXCLUDE_USERS'] ? 'true' : 'false' ?>,
 			filterLastPresetId: "<?= $filterLastPresetId ?>",
 			filterLastPresetData: <?= CUtil::PhpToJSObject($filterLastPreset) ?>,
-			lockedCallback: <?= CUtil::PhpToJSObject($lockedCallback) ?>
+			lockedCallback: <?= CUtil::PhpToJSObject($lockedCallback) ?>,
+			filterResponsibleFiledName: "<?= CUtil::JSEscape($arResult['FILTER_RESPONSIBLE_FILED_NAME']) ?>"
 		})).init();
 	});
 </script>

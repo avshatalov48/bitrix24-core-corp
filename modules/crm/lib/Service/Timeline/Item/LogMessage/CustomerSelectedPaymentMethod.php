@@ -21,7 +21,7 @@ class CustomerSelectedPaymentMethod extends LogMessage implements Interfaces\Has
 
 	public function getTitle(): ?string
 	{
-		return Loc::getMessage('CRM_TIMELINE_ECOMMERCE_CUSTOMER_SELECTED_PAYMENT_METHOD');
+		return Loc::getMessage('CRM_TIMELINE_ECOMMERCE_CUSTOMER_SELECTED_PAYMENT_METHOD_MSGVER_1');
 	}
 
 	public function getIconCode(): ?string

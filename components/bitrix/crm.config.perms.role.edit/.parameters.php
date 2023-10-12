@@ -1,12 +1,17 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-if(!CModule::IncludeModule('crm'))
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+if (!CModule::IncludeModule('crm'))
+{
 	return false;
+}
 
-$arComponentParameters = Array(
-	'GROUPS' => array(
-	),
+$arComponentParameters = [
+	'GROUPS' => [],
 	'PARAMETERS' => array(
 		'ROLE_ID' => array(
 			'PARENT' => 'ADDITIONAL_SETTINGS',
@@ -27,5 +32,4 @@ $arComponentParameters = Array(
 			'DEFAULT' => 'role.edit.php?role_id=#role_id#',
 		)
 	)
-);
-?>
+];

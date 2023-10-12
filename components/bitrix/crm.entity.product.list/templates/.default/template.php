@@ -13,7 +13,9 @@ use Bitrix\Main\Web\Json;
 /**
  * @var \CCrmEntityProductListComponent $component
  * @var \CBitrixComponentTemplate $this
- * @var \CMain $APPLICATION
+ * @global \CMain $APPLICATION
+ * @var array $arParams
+ * @var array $arResult
  */
 
 Extension::load([
@@ -37,7 +39,6 @@ $measures = &$arResult['MEASURES'];
 /** @var array $stores */
 $stores = &$arResult['STORES'];
 
-/** @var array $moneyTemplate */
 $moneyTemplate = [];
 $moneyValueIndex = $currency['FORMAT']['TEMPLATE']['VALUE_INDEX'];
 foreach ($currency['FORMAT']['TEMPLATE']['PARTS'] as $index => $value)

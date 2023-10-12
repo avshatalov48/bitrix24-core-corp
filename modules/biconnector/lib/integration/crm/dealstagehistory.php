@@ -165,7 +165,13 @@ class DealStageHistory
 			],
 		];
 
-		if (!\Bitrix\BIConnector\DictionaryManager::validateCache(\Bitrix\BIConnector\Dictionary::USER_DEPARTMENT))
+		if (\Bitrix\BIConnector\DictionaryManager::isAvailable(\Bitrix\BIConnector\Dictionary::USER_DEPARTMENT))
+		{
+			$result['crm_deal']['DICTIONARY'] = [
+				\Bitrix\BIConnector\Dictionary::USER_DEPARTMENT,
+			];
+		}
+		else
 		{
 			unset($result['crm_deal_stage_history']['ASSIGNED_BY_DEPARTMENT']);
 		}

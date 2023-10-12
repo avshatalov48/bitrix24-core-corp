@@ -312,7 +312,18 @@ class Manager
 		$fields = $event->getParameters();
 		if (!empty($fields[0]))
 		{
-			static::loadByModule($fields[0]);
+			\CAgent::AddAgent(
+				static::class . "::doAgentOnceLoad('".EscapePHPString($fields[0], "'")."');",
+				'market',
+				'Y',
+				1,
+				'',
+				'Y',
+				\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL'),
+				100,
+				false,
+				false
+			);
 		}
 	}
 

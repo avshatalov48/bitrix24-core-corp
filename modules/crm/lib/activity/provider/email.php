@@ -3,12 +3,12 @@
 namespace Bitrix\Crm\Activity\Provider;
 
 use Bitrix\Crm;
-use Bitrix\Crm\Automation\Trigger\EmailSentTrigger;
-use Bitrix\Main\Config;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Activity;
 use Bitrix\Crm\Activity\CommunicationStatistics;
+use Bitrix\Crm\Automation\Trigger\EmailSentTrigger;
 use Bitrix\Mail\Message;
+use Bitrix\Main\Config;
+use Bitrix\Main\Localization\Loc;
 
 class Email extends Activity\Provider\Base
 {
@@ -309,10 +309,12 @@ class Email extends Activity\Provider\Base
 
 	public static function uncompressActivity(array &$activity)
 	{
-		if ($activity['PROVIDER_TYPE_ID'] === self::TYPE_EMAIL_COMPRESSED)
+		if (
+			isset($activity['PROVIDER_TYPE_ID'])
+			&& $activity['PROVIDER_TYPE_ID'] === self::TYPE_EMAIL_COMPRESSED
+		)
 		{
 			$body = Crm\Activity\MailBodyTable::getById($activity['ASSOCIATED_ENTITY_ID'])->fetch();
-
 			if ($body)
 			{
 				$activity['DESCRIPTION'] = $body['BODY'];

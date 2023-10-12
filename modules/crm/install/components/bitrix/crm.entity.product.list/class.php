@@ -27,7 +27,6 @@ use Bitrix\Main;
 use Bitrix\Main\Grid\Editor\Types;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Type\Date;
 use Bitrix\Main\Web\Json;
 use Bitrix\Sale;
 use Bitrix\UI\Util;
@@ -111,8 +110,8 @@ final class CCrmEntityProductListComponent
 	{
 		/**
 		 * GRID_ID - string - custom grid id
-		 * NAVIGATION_ID - string - custom navigation id (may be create from GRID_ID)
-		 * FORM_ID - string - custom form identifier (may be create from GRID_ID), default empty
+		 * NAVIGATION_ID - string - custom navigation id (can be created from GRID_ID)
+		 * FORM_ID - string - custom form identifier (can be created from GRID_ID), default empty
 		 * TAB_ID - string - custom product tab identifier, default empty
 		 *
 		 * AJAX_ID - string - ajax component identifier
@@ -227,18 +226,17 @@ final class CCrmEntityProductListComponent
 		}
 		unset($productRow);
 
-		$enableSaleDiscount = false;
 		$calculateOptions = [];
 		if ($this->crmSettings['ALLOW_LD_TAX'])
 		{
 			$calculateOptions['ALLOW_LD_TAX'] = 'Y';
-			$calculateOptions['LOCATION_ID'] = isset($this->arParams['LOCATION_ID']) ? $this->arParams['LOCATION_ID'] : '';
+			$calculateOptions['LOCATION_ID'] = $this->arParams['LOCATION_ID'] ?? '';
 		}
 		$result = CCrmSaleHelper::Calculate(
 			$products,
 			$currencyId,
 			$this->crmSettings['PERSON_TYPE_ID'],
-			$enableSaleDiscount,
+			false,
 			$this->getSiteId(),
 			$calculateOptions
 		);
@@ -306,7 +304,7 @@ final class CCrmEntityProductListComponent
 	/** @noinspection PhpUnused
 	 *
 	 * @param array $products
-	 * @param string currencyId
+	 * @param string $currencyId
 	 * @param array $options
 	 * @return null|array
 	 */
@@ -534,12 +532,13 @@ final class CCrmEntityProductListComponent
 			$this->setLanguageId($params['CUSTOM_LANGUAGE_ID']);
 		}
 
-		$params['CURRENCY_ID'] = isset($params['CURRENCY_ID']) && is_string($params['CURRENCY_ID'])
-			? $params['CURRENCY_ID']
-			: '';
+		$params['CURRENCY_ID'] =
+			isset($params['CURRENCY_ID']) && is_string($params['CURRENCY_ID'])
+				? $params['CURRENCY_ID']
+				: ''
+		;
 
-		$baseGroup = \CCatalogGroup::GetBaseGroup();
-		$params['BASE_PRICE_ID'] = (is_array($baseGroup) && isset($baseGroup['ID'])) ? (int)$baseGroup['ID'] : null;
+		$params['BASE_PRICE_ID'] = Crm\Product\Price::getBaseId();
 
 		$params['SET_ITEMS'] = isset($params['SET_ITEMS']) && $params['SET_ITEMS'] === 'Y';
 		$params['ALLOW_EDIT'] = isset($params['ALLOW_EDIT']) && $params['ALLOW_EDIT'] === 'Y';
@@ -555,7 +554,7 @@ final class CCrmEntityProductListComponent
 
 		$params['PREFIX'] = (isset($params['PREFIX']) && is_string($params['PREFIX']) ? trim($params['PREFIX']) : '');
 		$params['ID'] = (isset($params['ID']) && is_string($params['ID']) ? trim($params['ID']) : '');
-		$params['PRODUCT_DATA_FIELD_NAME'] = isset($params['PRODUCT_DATA_FIELD_NAME']) ? $params['PRODUCT_DATA_FIELD_NAME'] : 'PRODUCT_ROW_DATA';
+		$params['PRODUCT_DATA_FIELD_NAME'] = $params['PRODUCT_DATA_FIELD_NAME'] ?? 'PRODUCT_ROW_DATA';
 	}
 
 	/**
@@ -1974,7 +1973,7 @@ final class CCrmEntityProductListComponent
 	 */
 	protected function initCrmSettings(): void
 	{
-		$this->crmSettings['HIDE_ALL_TAXES'] = isset($this->arParams['HIDE_ALL_TAXES']) ? ($this->arParams['HIDE_ALL_TAXES'] === 'Y') : false;
+		$this->crmSettings['HIDE_ALL_TAXES'] = ($this->arParams['HIDE_ALL_TAXES'] ?? '') === 'Y';
 
 		$this->crmSettings['ALLOW_TAX'] = isset($this->arParams['ALLOW_TAX']) ? ($this->arParams['ALLOW_TAX'] === 'Y') : \CCrmTax::isVatMode();
 		$this->crmSettings['ALLOW_TAX'] = $this->crmSettings['ALLOW_TAX'] && !$this->crmSettings['HIDE_ALL_TAXES'];
@@ -1982,7 +1981,7 @@ final class CCrmEntityProductListComponent
 		$this->crmSettings['ALLOW_LD_TAX'] = isset($this->arParams['ALLOW_LD_TAX']) ? ($this->arParams['ALLOW_LD_TAX'] === 'Y') : \CCrmTax::isTaxMode();
 		$this->crmSettings['ALLOW_LD_TAX'] = $this->crmSettings['ALLOW_LD_TAX'] || $this->crmSettings['HIDE_ALL_TAXES'];
 
-		$this->crmSettings['LOCATION_ID'] = isset($this->arParams['LOCATION_ID']) ? $this->arParams['LOCATION_ID'] : '';
+		$this->crmSettings['LOCATION_ID'] = $this->arParams['LOCATION_ID'] ?? '';
 
 		$this->crmSettings['PRODUCT_ROW_TAX_UNIFORM'] = (Main\Config\Option::get('crm', 'product_row_tax_uniform') === 'Y');
 
@@ -2005,7 +2004,7 @@ final class CCrmEntityProductListComponent
 
 		$arPersonTypes = CCrmPaySystem::getPersonTypeIDs();
 		$personTypeId = 0;
-		$this->crmSettings['CLIENT_SELECTOR_ID'] = isset($this->arParams['CLIENT_SELECTOR_ID']) ? $this->arParams['CLIENT_SELECTOR_ID'] : 'CLIENT';
+		$this->crmSettings['CLIENT_SELECTOR_ID'] = $this->arParams['CLIENT_SELECTOR_ID'] ?? 'CLIENT';
 		$this->crmSettings['CLIENT_TYPE_NAME'] = "CONTACT";
 		if (isset($this->arParams['PERSON_TYPE_ID']) && isset($arPersonTypes['COMPANY']) && isset($arPersonTypes['CONTACT']))
 			$personTypeId = (int)$this->arParams['PERSON_TYPE_ID'];
@@ -2354,19 +2353,18 @@ final class CCrmEntityProductListComponent
 			}
 			unset($index);
 
-			$enableSaleDiscount = false;
 			$calculateOptions = [];
 			if ($this->crmSettings['ALLOW_LD_TAX'])
 			{
 				$calculateOptions['ALLOW_LD_TAX'] = 'Y';
-				$calculateOptions['LOCATION_ID'] = isset($this->arParams['LOCATION_ID']) ? $this->arParams['LOCATION_ID'] : '';
+				$calculateOptions['LOCATION_ID'] = $this->arParams['LOCATION_ID'] ?? '';
 			}
 
 			$result = CCrmSaleHelper::Calculate(
 				$this->rows,
 				$this->getCurrencyId(),
 				$this->crmSettings['PERSON_TYPE_ID'],
-				$enableSaleDiscount,
+				false,
 				$this->getSiteId(),
 				$calculateOptions
 			);
@@ -2569,7 +2567,6 @@ final class CCrmEntityProductListComponent
 				unset($data['NAME']);
 				$replace = [
 					'BASE_PRICE_ID' => $basePriceId,
-					'DETAIL_URL' => '',
 					'STORE_AVAILABLE' => 0,
 					'STORE_AMOUNT' => 0,
 					'COMMON_STORE_RESERVED' => 0,
@@ -2607,7 +2604,7 @@ final class CCrmEntityProductListComponent
 				{
 					$this->rows[$index]['STORE_MAP'] = [];
 					$storeId = $this->rows[$index]['STORE_ID'] ?? null;
-					if ((int)$data['OFFER_ID'] > 0	&& 	$this->isAllowedReservation())
+					if ((int)$data['OFFER_ID'] > 0 && $this->isAllowedReservation())
 					{
 						if ((int)$storeId > 0 && isset($storeOfferMap[$data['OFFER_ID']][$storeId]))
 						{
@@ -2674,12 +2671,12 @@ final class CCrmEntityProductListComponent
 						{
 							$storeId = $this->rows[$index]['STORE_ID'] ?? null;
 							if (
-								(int)$data['OFFER_ID'] > 0
+								(int)$variationId > 0
 								&& (int)$storeId > 0
-								&& isset($storeOfferMap[$data['OFFER_ID']][$storeId])
+								&& isset($storeOfferMap[$variationId][$storeId])
 							)
 							{
-								$storeInfo = $storeOfferMap[$data['OFFER_ID']][$storeId];
+								$storeInfo = $storeOfferMap[$variationId][$storeId];
 								$this->rows[$index]['STORE_AMOUNT'] = $storeInfo['AMOUNT'];
 								$this->rows[$index]['STORE_AVAILABLE'] = $storeInfo['AMOUNT'] - $storeInfo['QUANTITY_RESERVED'];
 							}
@@ -2779,8 +2776,7 @@ final class CCrmEntityProductListComponent
 
 			if (!empty($iblockProductsToOffers))
 			{
-				/** @var \Bitrix\Catalog\Component\SkuTree $skuTree */
-				$skuTree = \Bitrix\Catalog\v2\IoC\ServiceContainer::make('sku.tree', ['iblockId' => $iblockId]);
+				$skuTree = ServiceContainer::make('sku.tree', ['iblockId' => $iblockId]);
 				if ($skuTree)
 				{
 					$skuTreeItems = $skuTree->loadJsonOffers($iblockProductsToOffers);
@@ -3267,7 +3263,6 @@ final class CCrmEntityProductListComponent
 
 	/**
 	 * @param int[] $ids
-	 * @param string[] $selectColumnsIds
 	 *
 	 * @return array[]
 	 */

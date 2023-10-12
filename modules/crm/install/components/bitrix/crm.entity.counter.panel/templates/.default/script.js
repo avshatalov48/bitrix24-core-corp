@@ -316,12 +316,11 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "isFiltered",
-	    value: function isFiltered(userId, typeId, entityTypeId, isOtherUsersFilter) {
+	    value: function isFiltered(userId, typeId, entityTypeId, isOtherUsersFilter, counterUserFieldName) {
 	      var _this2 = this;
 	      if (userId === 0 || typeId === EntityCounterType.UNDEFINED) {
 	        return false;
 	      }
-	      var counterUserFieldName = entityTypeId === BX.CrmEntityType.enumeration.order ? 'RESPONSIBLE_ID' : 'ASSIGNED_BY_ID';
 	      var isFilteredByUser = this.isFilteredByFieldEx(counterUserFieldName) && main_core.Type.isArray(babelHelpers.classPrivateFieldGet(this, _fields)[counterUserFieldName]) && babelHelpers.classPrivateFieldGet(this, _fields)[counterUserFieldName].length === 1 && (isOtherUsersFilter ? babelHelpers.classPrivateFieldGet(this, _fields)[counterUserFieldName][0] === EntityCounterFilterManager.FILTER_OTHER_USERS : parseInt(babelHelpers.classPrivateFieldGet(this, _fields)[counterUserFieldName][0], 10) === userId);
 	      var hasFilteredByTypeValue = this.isFilteredByFieldEx(EntityCounterFilterManager.COUNTER_TYPE_FIELD) && main_core.Type.isObject(babelHelpers.classPrivateFieldGet(this, _fields)[EntityCounterFilterManager.COUNTER_TYPE_FIELD]);
 	      var filteredTypeValues = hasFilteredByTypeValue ? Object.values(babelHelpers.classPrivateFieldGet(this, _fields)[EntityCounterFilterManager.COUNTER_TYPE_FIELD]).map(function (item) {
@@ -380,6 +379,7 @@ this.BX = this.BX || {};
 	var _filterManager$1 = /*#__PURE__*/new WeakMap();
 	var _filterLastPresetId = /*#__PURE__*/new WeakMap();
 	var _filterLastPreset = /*#__PURE__*/new WeakMap();
+	var _filterResponsibleFiledName = /*#__PURE__*/new WeakMap();
 	var _bindEvents$2 = /*#__PURE__*/new WeakSet();
 	var _onActivateItem = /*#__PURE__*/new WeakSet();
 	var _onDeactivateItem = /*#__PURE__*/new WeakSet();
@@ -465,6 +465,10 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _filterResponsibleFiledName, {
+	      writable: true,
+	      value: void 0
+	    });
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _id$1, _options.id);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _entityTypeId$1, _options.entityTypeId ? main_core.Text.toInteger(_options.entityTypeId) : 0);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _entityTypeName$1, _options.entityTypeName);
@@ -472,6 +476,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _userName, main_core.Type.isStringFilled(_options.userName) ? _options.userName : babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _userId));
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _codes$1, main_core.Type.isArray(_options.codes) ? _options.codes : []);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _data, _data2);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _filterResponsibleFiledName, _options.filterResponsibleFiledName);
 	    if (BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _entityTypeId$1))) {
 	      babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _counterManager, new EntityCounterManager({
 	        id: babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _id$1),
@@ -640,6 +645,7 @@ this.BX = this.BX || {};
 	  var typeId = parseInt(babelHelpers.classPrivateFieldGet(this, _data)[item.id].TYPE_ID, 10);
 	  if (typeId > 0) {
 	    if (babelHelpers.classPrivateFieldGet(this, _filterManager$1).isActive()) {
+	      var _objectSpread2;
 	      var filteredFields = babelHelpers.classPrivateFieldGet(this, _filterManager$1).getFields(true);
 	      if (typeof filteredFields[EntityCounterFilterManager.COUNTER_TYPE_FIELD] === 'undefined') {
 	        babelHelpers.classPrivateFieldGet(this, _filterLastPreset).presetId = babelHelpers.classPrivateFieldGet(this, _filterManager$1).getApi().parent.getPreset().getCurrentPresetId();
@@ -657,21 +663,10 @@ this.BX = this.BX || {};
 	          0: counterTypeId
 	        }
 	      };
-	      if (babelHelpers.classPrivateFieldGet(this, _entityTypeId$1) === BX.CrmEntityType.enumeration.order) {
-	        fields = _objectSpread(_objectSpread({}, fields), {}, {
-	          "RESPONSIBLE_ID": {
-	            0: userId
-	          },
-	          "RESPONSIBLE_ID_label": [userName]
-	        });
-	      } else {
-	        fields = _objectSpread(_objectSpread({}, fields), {}, {
-	          "ASSIGNED_BY_ID": {
-	            0: userId
-	          },
-	          "ASSIGNED_BY_ID_label": [userName]
-	        });
-	      }
+	      var responsibleField = babelHelpers.classPrivateFieldGet(this, _filterResponsibleFiledName);
+	      fields = _objectSpread(_objectSpread({}, fields), {}, (_objectSpread2 = {}, babelHelpers.defineProperty(_objectSpread2, responsibleField, {
+	        0: userId
+	      }), babelHelpers.defineProperty(_objectSpread2, responsibleField + '_label', [userName]), _objectSpread2));
 	      api.setFields(fields);
 	      api.apply({
 	        'COUNTER': _classPrivateMethodGet$2(this, _makeFilterAnalyticsLabel, _makeFilterAnalyticsLabel2).call(this, counterTypeId)
@@ -710,7 +705,8 @@ this.BX = this.BX || {};
 	      record = _ref6[1];
 	    var item = _this2.getItemById(code);
 	    var isOtherUsersFilter = item.id.endsWith(EntityCounterPanel.EXCLUDE_USERS_CODE_SUFFIX);
-	    if (babelHelpers.classPrivateFieldGet(_this2, _filterManager$1).isFiltered(babelHelpers.classPrivateFieldGet(_this2, _userId), parseInt(record.TYPE_ID, 10), babelHelpers.classPrivateFieldGet(_this2, _entityTypeId$1), isOtherUsersFilter)) {
+	    var isFiltered = babelHelpers.classPrivateFieldGet(_this2, _filterManager$1).isFiltered(babelHelpers.classPrivateFieldGet(_this2, _userId), parseInt(record.TYPE_ID, 10), babelHelpers.classPrivateFieldGet(_this2, _entityTypeId$1), isOtherUsersFilter, babelHelpers.classPrivateFieldGet(_this2, _filterResponsibleFiledName));
+	    if (isFiltered) {
 	      item.activate(false);
 	      if (isOtherUsersFilter) {
 	        isOtherUsersFilterUse = true;

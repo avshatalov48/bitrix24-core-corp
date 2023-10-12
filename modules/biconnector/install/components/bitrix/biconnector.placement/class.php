@@ -26,7 +26,7 @@ class HandlerPlacement extends CBitrixComponent
 			return;
 		}
 
-		$select = ['TITLE', 'PLACEMENT_HANDLER', 'APP_NAME' => 'REST_APP.APP_NAME',];
+		$select = [0 => 'TITLE', 1 => 'PLACEMENT_HANDLER', 'APP_NAME' => 'REST_APP.APP_NAME',];
 		$filter = [
 			'ID' => (int)$this->arParams['PLACEMENT_ID'],
 			'PLACEMENT' => \Bitrix\BIConnector\Rest::BI_MENU_PLACEMENT

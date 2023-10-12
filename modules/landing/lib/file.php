@@ -26,6 +26,23 @@ class File
 	public const ENTITY_TYPE_ASSET = 'A';
 
 	/**
+	 * Transliterates the Cyrillic characters in a file name to Latin characters and returns the new file name.
+	 * @param string $fileName File name.
+	 * @return string
+	 */
+	public static function transliterateFileName(string $fileName): string
+	{
+		return \CUtil::translit(
+			$fileName,
+			'ru',
+			[
+				'replace_space' => '_',
+				'replace_other' => '_'
+			]
+		);
+	}
+
+	/**
 	 * Returns sanitized file name.
 	 * @param string $fileName File name.
 	 * @return string

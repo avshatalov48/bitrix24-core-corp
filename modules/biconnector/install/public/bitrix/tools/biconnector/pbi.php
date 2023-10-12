@@ -224,7 +224,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 								array_splice($output_row, -$extraCount);
 							}
 
-							$out = ',' . Bitrix\Main\Web\Json::encode($output_row, JSON_UNESCAPED_UNICODE) . "\n";
+							$out = ',' . Bitrix\Main\Web\Json::encode($output_row, JSON_UNESCAPED_UNICODE|JSON_INVALID_UTF8_IGNORE) . "\n";
 							echo $out;
 							$count++;
 							$size += strlen($out);
@@ -247,7 +247,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 							array_splice($row, -$extraCount);
 						}
 
-						$out = ',' . Bitrix\Main\Web\Json::encode($row, JSON_UNESCAPED_UNICODE) . "\n";
+						$out = ',' . Bitrix\Main\Web\Json::encode($row, JSON_UNESCAPED_UNICODE|JSON_INVALID_UTF8_IGNORE) . "\n";
 						echo $out;
 						$count++;
 						$size += strlen($out);
@@ -266,7 +266,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 						array_splice($output_row, -$extraCount);
 					}
 
-					$out = ',' . Bitrix\Main\Web\Json::encode($output_row, JSON_UNESCAPED_UNICODE) . "\n";
+					$out = ',' . Bitrix\Main\Web\Json::encode($output_row, JSON_UNESCAPED_UNICODE|JSON_INVALID_UTF8_IGNORE) . "\n";
 					echo $out;
 					$count++;
 					$size += strlen($out);
@@ -311,4 +311,5 @@ else
 
 echo "\n";
 
+\Bitrix\BIConnector\MemoryCache::expunge();
 \Bitrix\Main\Application::getInstance()->terminate();

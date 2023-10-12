@@ -25,6 +25,7 @@ use Bitrix\Main\Localization\Loc;
 	'sidepanel',
 	'ui.buttons',
 	'ui.fonts.opensans',
+	'biconnector.grid'
 ]);
 $this->addExternalCss('/bitrix/css/main/font-awesome.css');
 
@@ -39,8 +40,8 @@ if (isset($_GET['rownum']) && $_GET['rownum'] > 0)
 {
 	?>
 	<div class="pagetitle-container pagetitle-align-right-container">
+		<a href="?rownum=<?php echo '0' . $frame;?>" class="ui-btn ui-btn-light-border ui-btn-themes"><?=Loc::getMessage('CT_BBSU_SHOW_ALL')?></a>
 		<a href="javascript:void(0)" onclick="BX.Main.gridManager.getInstanceById('<?php echo $arResult['GRID_ID']?>').reloadTable('POST')" class="ui-btn ui-btn-primary" title="<?=Loc::getMessage('CT_BBSU_REFRESH')?>"><i class="fa fa-refresh"></i></a>
-		<a href="?rownum=<?php echo '0' . $frame;?>" class="ui-btn ui-btn-primary"><?=Loc::getMessage('CT_BBSU_SHOW_ALL')?></a>
 	</div>
 	<?php
 }
@@ -48,8 +49,8 @@ elseif ($limitManager->getLimit() > 0)
 {
 	?>
 	<div class="pagetitle-container pagetitle-align-right-container">
+		<a href="?rownum=<?php echo $limitManager->getLimit() . $frame;?>" class="ui-btn ui-btn-light-border ui-btn-themes"><?=Loc::getMessage('CT_BBSU_SHOW_OVERLIMIT')?></a>
 		<a href="javascript:void(0)" onclick="BX.Main.gridManager.getInstanceById('<?php echo $arResult['GRID_ID']?>').reloadTable('POST')" class="ui-btn ui-btn-primary" title="<?=Loc::getMessage('CT_BBSU_REFRESH')?>"><i class="fa fa-refresh"></i></a>
-		<a href="?rownum=<?php echo $limitManager->getLimit() . $frame;?>" class="ui-btn ui-btn-primary"><?=Loc::getMessage('CT_BBSU_SHOW_OVERLIMIT')?></a>
 	</div>
 	<?php
 }
@@ -137,17 +138,17 @@ $APPLICATION->IncludeComponent(
 		'COLUMNS' => $arResult['HEADERS'],
 		'ROWS' => $arResult['ROWS'],
 		'SORT' => $arResult['SORT'],
-		'AJAX_MODE' => 'Y',
-		'AJAX_OPTION_HISTORY' => 'N',
+		'AJAX_MODE' => 'N',
 		'AJAX_OPTION_JUMP' => 'N',
+		'AJAX_OPTION_STYLE' => 'N',
+		'AJAX_OPTION_HISTORY' => 'N',
 		'ALLOW_ROWS_SORT' => false,
 		'SHOW_ROW_CHECKBOXES' => false,
 		'SHOW_SELECTED_COUNTER' => false,
 		'SHOW_TOTAL_COUNTER' => false,
 		'EDITABLE' => false,
-
+		'STUB' => empty($arResult['ROWS']) ? $arResult['STUB'] : null,
 		'SHOW_NAVIGATION_PANEL' => true,
-
 		'NAV_OBJECT' => $arResult['NAV'],
 		'NAV_PARAMS' => [
 			'SEF_MODE' => 'N',

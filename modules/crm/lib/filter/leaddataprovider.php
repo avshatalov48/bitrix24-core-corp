@@ -414,6 +414,17 @@ class LeadDataProvider extends EntityDataProvider implements FactoryOptionable
 			),
 		];
 
+		if ($this->isActivityResponsibleEnabled())
+		{
+			$result['ACTIVITY_RESPONSIBLE_IDS'] = $this->createField(
+				'ACTIVITY_RESPONSIBLE_IDS',
+				[
+					'type' => 'entity_selector',
+					'partial' => true,
+				]
+			);
+		}
+
 		Crm\Tracking\UI\Filter::appendFields($result, $this);
 
 		//region UTM
@@ -532,18 +543,26 @@ class LeadDataProvider extends EntityDataProvider implements FactoryOptionable
 				'items' => \CCrmCurrencyHelper::PrepareListItems()
 			);
 		}
-		elseif (in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID', 'OBSERVER_IDS'], true))
+		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID', 'ACTIVITY_RESPONSIBLE_IDS', 'OBSERVER_IDS'], true))
 		{
 			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Lead);
 			$referenceClass = ($factory ? $factory->getDataClass() : null);
+
+			if (in_array($fieldID, ['ACTIVITY_RESPONSIBLE_IDS', 'OBSERVER_IDS'], true))
+			{
+				$referenceClass = null;
+			}
+
+			$isEnableAllUsers = in_array($fieldID, ['ASSIGNED_BY_ID', 'ACTIVITY_RESPONSIBLE_IDS'], true);
+			$isEnableOtherUsers = in_array($fieldID, ['ASSIGNED_BY_ID', 'ACTIVITY_RESPONSIBLE_IDS'], true);
 
 			return $this->getUserEntitySelectorParams(
 				EntitySelector::CONTEXT,
 				[
 					'fieldName' => $fieldID,
-					'referenceClass' => $fieldID !== 'OBSERVER_IDS' ? $referenceClass : null,
-					'isEnableAllUsers' => $fieldID === 'ASSIGNED_BY_ID',
-					'isEnableOtherUsers' => $fieldID === 'ASSIGNED_BY_ID',
+					'referenceClass' => $referenceClass,
+					'isEnableAllUsers' => $isEnableAllUsers,
+					'isEnableOtherUsers' => $isEnableOtherUsers,
 				]
 			);
 		}

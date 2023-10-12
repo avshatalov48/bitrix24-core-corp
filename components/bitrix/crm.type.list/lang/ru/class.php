@@ -1,2 +1,4 @@
 <?php
-$MESS["CRM_TYPE_LIST_TITLE"] = "Смарт-процессы";
+
+$MESS["CRM_TYPE_LIST_TITLE_MSGVER_1"] = "Смарт-процессы";
+$MESS["CRM_TYPE_LIST_CUSTOM_SECTION_DEFAULT_VALUE"] = "CRM";

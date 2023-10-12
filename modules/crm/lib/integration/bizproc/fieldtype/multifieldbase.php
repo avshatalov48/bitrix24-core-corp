@@ -58,10 +58,15 @@ class MultiFieldBase extends BaseType\Base
 		{
 			$newValue = [];
 
-			$type = mb_strtoupper($fieldType->getType());
-			if (is_array($value[$type]))
+			$type = mb_strtoupper((string)$fieldType->getType());
+			if (is_string($type) && isset($value[$type]) && is_array($value[$type]))
 			{
 				$value = $value[$type];
+			}
+
+			if (isset($value['VALUE'], $value['VALUE_TYPE']))
+			{
+				$value = [$value];
 			}
 
 			foreach ($value as $key => $v)

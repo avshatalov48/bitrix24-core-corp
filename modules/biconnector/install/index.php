@@ -46,6 +46,16 @@ class BIConnector extends \CModule
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/biconnector/install/components',
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/components', true, true
 		);
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/biconnector/install/images',
+			$_SERVER["DOCUMENT_ROOT"] . '/bitrix/images',
+			true, true
+		);
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/biconnector/install/js',
+			$_SERVER["DOCUMENT_ROOT"] . '/bitrix/js',
+			true, true
+		);
 
 		if ($params['public_dir'])
 		{
@@ -204,6 +214,16 @@ class BIConnector extends \CModule
 		DeleteDirFiles(
 			$_SERVER['DOCUMENT_ROOT'] . 'bitrix/modules/' . $this->MODULE_ID . '/install/public/bitrix/tools/',
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/tools'
+		);
+		DeleteDirFiles(
+			$_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/' . $this->MODULE_ID . '/install/images',
+			$_SERVER["DOCUMENT_ROOT"] . '/bitrix/images',
+			true, true
+		);
+		DeleteDirFiles(
+			$_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/' . $this->MODULE_ID . '/install/js',
+			$_SERVER["DOCUMENT_ROOT"] . '/bitrix/js',
+			true, true
 		);
 
 		return true;

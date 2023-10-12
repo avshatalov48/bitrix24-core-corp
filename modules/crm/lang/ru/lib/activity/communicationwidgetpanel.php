@@ -33,4 +33,5 @@ $MESS["CRM_COMM_WGT_DEALS"] = "Сделки";
 $MESS["CRM_COMM_WGT_SUCCESS_DEALS"] = "Выигранные сделки";
 $MESS["CRM_COMM_WGT_PAID_INVOICES"] = "Оплаченные счета";
 $MESS["CRM_COMM_WGT_PAYMENTS"] = "Оплаты";
+$MESS["CRM_COMM_WGT_MARK_SOURCE_WHATSAPP"] = "WhatsApp";
 ?>

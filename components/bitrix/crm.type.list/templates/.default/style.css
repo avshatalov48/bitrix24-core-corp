@@ -38,3 +38,37 @@
     cursor: pointer;
     color: var(--ui-link-color);
 }
+
+.crm-type-list-wrapper .crm-type-grid-custom-section-wrapper {
+	padding: 3px 7px;
+	border-radius: 14px;
+	cursor: pointer;
+	display: inline-block;
+}
+
+.crm-type-list-wrapper .crm-type-grid-custom-section-wrapper.crm-type-grid-custom-section-active {
+	background: #C0EDFD;
+}
+
+.crm-type-list-wrapper .crm-type-grid-custom-section-wrapper.crm-type-grid-custom-section-inactive:hover {
+	background: #C0EDFD;
+}
+
+.crm-type-grid-filter-remove {
+	display: none;
+	width: 22px;
+	height: 11px;
+	margin-right: -5px;
+	opacity: .3;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2210%22%20height%3D%2210%22%20viewBox%3D%220%200%2010%2010%22%3E%3Cpath%20fill%3D%22%23535C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M5.065%203.682L2.377.994%201.01%202.362%203.696%205.05.99%207.757l1.368%201.37%202.708-2.71%202.7%202.703%201.37-1.368-2.702-2.7%202.682-2.684L7.748%201%205.065%203.682z%22/%3E%3C/svg%3E') center no-repeat;
+	transition: .2s;
+	cursor: pointer;
+}
+
+.crm-type-grid-filter-remove:hover {
+	opacity: 1;
+}
+
+.crm-type-grid-custom-section-active .crm-type-grid-filter-remove {
+	display: inline-block;
+}

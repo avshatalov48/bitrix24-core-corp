@@ -639,7 +639,7 @@ class CAllCrmCompany
 		return \Bitrix\Crm\Entity\Company::getInstance()->getTopIDs([
 			'order' => ['ID' => $sortType],
 			'limit' => $top,
-			'filter' => ['=CATEGORY_ID' => $categoryId],
+			'filter' => ['@CATEGORY_ID' => $categoryId, '=IS_MY_COMPANY' => 'N'],
 			'userPermissions' => $userPermissions
 		]);
 	}

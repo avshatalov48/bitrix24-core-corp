@@ -709,10 +709,6 @@
 	transition: .2s;
 }
 
-.--active{
-	opacity: .8;
-}
-
 .system-auth-form__visited-item:hover .system-auth-form__visited-action{
 	opacity: .7;
 	transition: .1s;

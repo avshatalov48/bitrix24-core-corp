@@ -25,6 +25,7 @@ class EntityCounterPanel extends CounterPanel
 	#filterManager: ?EntityCounterFilterManager;
 	#filterLastPresetId: String;
 	#filterLastPreset: Object;
+	#filterResponsibleFiledName: string
 
 	constructor(options: EntityCounterPanelOptions): void
 	{
@@ -50,6 +51,7 @@ class EntityCounterPanel extends CounterPanel
 		this.#userName = Type.isStringFilled(options.userName) ? options.userName : this.#userId;
 		this.#codes = Type.isArray(options.codes) ? options.codes : [];
 		this.#data = data;
+		this.#filterResponsibleFiledName = options.filterResponsibleFiledName;
 
 		if (BX.CrmEntityType.isDefined(this.#entityTypeId))
 		{
@@ -194,21 +196,11 @@ class EntityCounterPanel extends CounterPanel
 						: { 0: counterTypeId }
 				};
 
-				if (this.#entityTypeId === BX.CrmEntityType.enumeration.order)
-				{
-					fields = {
-						...fields,
-						"RESPONSIBLE_ID": { 0: userId },
-						"RESPONSIBLE_ID_label": [ userName ],
-					}
-				}
-				else
-				{
-					fields = {
-						...fields,
-						"ASSIGNED_BY_ID": { 0: userId },
-						"ASSIGNED_BY_ID_label": [ userName ],
-					}
+				const responsibleField = this.#filterResponsibleFiledName;
+				fields = {
+					...fields,
+					[responsibleField]: { 0: userId },
+					[responsibleField + '_label']: [ userName ]
 				}
 
 				api.setFields(fields);
@@ -262,7 +254,15 @@ class EntityCounterPanel extends CounterPanel
 
 			const isOtherUsersFilter = item.id.endsWith(EntityCounterPanel.EXCLUDE_USERS_CODE_SUFFIX);
 
-			if (this.#filterManager.isFiltered(this.#userId, parseInt(record.TYPE_ID, 10), this.#entityTypeId, isOtherUsersFilter))
+			const isFiltered = this.#filterManager.isFiltered(
+				this.#userId,
+				parseInt(record.TYPE_ID, 10),
+				this.#entityTypeId,
+				isOtherUsersFilter,
+				this.#filterResponsibleFiledName
+			);
+
+			if (isFiltered)
 			{
 				item.activate(false);
 

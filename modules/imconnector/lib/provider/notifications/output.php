@@ -199,7 +199,8 @@ class Output extends Base\Output
 	}
 
 	/**
-	 * Used for integration with CRM Widget/Button
+	 * Used for integration with CRM Widget/Button.
+	 * @see \Bitrix\Crm\SiteButton\Channel\ChannelOpenLine::getWidgetsById
 	 *
 	 * @param int $lineId
 	 * @return Result
@@ -217,7 +218,7 @@ class Output extends Base\Output
 		{
 			$notificationsData['id'] = $lineId;
 
-			/** will be overwritten later, in \Bitrix\Crm\SiteButton\Channel\ChannelOpenLine::getWidgetsById */
+			/** will be overwritten later, in @see \Bitrix\Crm\SiteButton\Channel\ChannelOpenLine::getWidgetsById */
 			$notificationsData['name'] = Loc::getMessage("IMCONNECTOR_PROVIDER_NOTIFICATIONS_CONTACT_US_ON_WHATSAPP");
 			$notificationsData['icon'] = Connector::getIconByConnector('notifications_virtual_wa');
 			$notificationsData['url'] = '';

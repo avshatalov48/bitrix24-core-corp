@@ -4,6 +4,8 @@
 jn.define('crm/timeline/item/factory', (require, exports, module) => {
 	const { TimelineItemCompatible } = require('crm/timeline/item/compatible');
 	const { GenericTimelineItem } = require('crm/timeline/item/generic');
+	const { TimelineSchedulerCommentProvider } = require('crm/timeline/scheduler/providers');
+
 	const {
 		CallActivity,
 		Modification,
@@ -57,6 +59,11 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		'TasksTaskCreation',
 		'TasksTaskModification',
 	];
+
+	if (TimelineSchedulerCommentProvider.isSupported())
+	{
+		SupportedTypes.push('Comment');
+	}
 
 	/**
 	 * You can specify custom item class here. It MUST inherit TimelineItemBase.

@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Integration\UI\EntitySelector;
 
 use Bitrix\Crm\Controller\Entity;
+use Bitrix\Crm\Integration\Main\UISelector\CrmDynamics;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Search;
 use Bitrix\Crm\Security\EntityAuthorization;
@@ -189,6 +190,7 @@ abstract class EntityProvider extends BaseProvider
 	public function doSearch(SearchQuery $searchQuery, Dialog $dialog): void
 	{
 		$searchProvider = Search\Result\Factory::createProvider($this->getEntityTypeId());
+		$searchProvider->setLimit(CrmDynamics::LIMIT_SEARCH);
 		$searchProvider->setAdditionalFilter($this->getAdditionalFilter());
 
 		$result = $searchProvider->getSearchResult($searchQuery->getQuery());

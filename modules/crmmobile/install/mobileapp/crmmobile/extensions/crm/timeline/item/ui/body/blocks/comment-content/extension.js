@@ -4,6 +4,7 @@
 jn.define('crm/timeline/item/ui/body/blocks/comment-content', (require, exports, module) => {
 	const { inAppUrl } = require('in-app-url');
 	const { Loc } = require('loc');
+	const { ProfileView } = require('user/profile');
 	const { TimelineItemBodyBaseEditableBlock } = require('crm/timeline/item/ui/body/blocks/base-editable-block');
 
 	/**
@@ -11,6 +12,13 @@ jn.define('crm/timeline/item/ui/body/blocks/comment-content', (require, exports,
 	 */
 	class TimelineItemBodyCommentContentBlock extends TimelineItemBodyBaseEditableBlock
 	{
+		constructor(...props)
+		{
+			super(...props);
+
+			this.state.expanded = true;
+		}
+
 		getPreparedActionParams()
 		{
 			const { actionParams } = this.props.saveAction;
@@ -43,12 +51,35 @@ jn.define('crm/timeline/item/ui/body/blocks/comment-content', (require, exports,
 			return BBCodeText(props);
 		}
 
+		openUserProfile(userId)
+		{
+			const widgetParams = { groupStyle: true };
+
+			widgetParams.backdrop = {
+				bounceEnable: false,
+				swipeAllowed: true,
+				showOnTop: true,
+				hideNavigationBar: false,
+				horizontalSwipeAllowed: false,
+			};
+
+			PageManager.openWidget('list', widgetParams)
+				.then(list => ProfileView.open({ userId, backdrop: true }, list))
+			;
+		}
+
 		getTextParams()
 		{
 			const params = super.getTextParams();
 			params.onLinkClick = ({ url }) => inAppUrl.open(url);
+			params.onUserClick = ({ userId }) => this.openUserProfile(userId);
 
 			return params;
+		}
+
+		toggleExpanded()
+		{
+			// Temporarily disabled, ticket #174855
 		}
 	}
 

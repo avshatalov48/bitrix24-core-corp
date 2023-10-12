@@ -34,14 +34,21 @@ foreach ($arResult['PRODUCTS'] as $product)
 	//extract SKU props
 	$skuHtml = '';
 
-	if(is_array($product['SKU_PROPS_POSSIBLE_VALUES']))
+	if (
+		isset($product['SKU_PROPS_POSSIBLE_VALUES'])
+		&& is_array($product['SKU_PROPS_POSSIBLE_VALUES'])
+	)
 	{
 		foreach($product['SKU_PROPS_POSSIBLE_VALUES'] as $pSkuId => $possibleSku)
 		{
 			$skuItemType = [];
 			$skuItemHtml = '';
 
-			if(is_array($arResult['IBLOCKS_SKU_PARAMS_ORDER']) && !empty($arResult['IBLOCKS_SKU_PARAMS_ORDER']))
+			if (
+				isset($arResult['IBLOCKS_SKU_PARAMS_ORDER'])
+				&& is_array($arResult['IBLOCKS_SKU_PARAMS_ORDER'])
+				&& !empty($arResult['IBLOCKS_SKU_PARAMS_ORDER'])
+			)
 			{
 				foreach($arResult['IBLOCKS_SKU_PARAMS_ORDER'][$product['OFFERS_IBLOCK_ID']] as $skuId)
 				{
@@ -150,7 +157,11 @@ foreach ($arResult['PRODUCTS'] as $product)
 	//region DISCOUNTS
 	$discountsHtml = '';
 
-	if(is_array($product['DISCOUNTS']) && !empty($product['DISCOUNTS']))
+	if (
+		isset($product['DISCOUNTS'])
+		&& is_array($product['DISCOUNTS'])
+		&& !empty($product['DISCOUNTS'])
+	)
 	{
 		foreach($product['DISCOUNTS'] as $discountId => $discount)
 		{
@@ -279,7 +290,7 @@ foreach ($arResult['PRODUCTS'] as $product)
 	';
 	if (!$isReadOnly)
 	{
-		$mainInfo .= '<input type="hidden" name="'.$namePrefix.'[FIELDS_VALUES]" value="'.htmlspecialcharsbx($product['FIELDS_VALUES']).'">';
+		$mainInfo .= '<input type="hidden" name="'.$namePrefix.'[FIELDS_VALUES]" value="'.htmlspecialcharsbx($product['FIELDS_VALUES'] ?? '').'">';
 	}
 	//region Main Info
 
@@ -303,7 +314,9 @@ foreach ($arResult['PRODUCTS'] as $product)
 	//region VAT
 	if ($isReadOnly)
 	{
-		$vatIncludedInnerHtml = ($product['VAT_INCLUDED'] == 'Y') ? Loc::getMessage('CRM_ORDER_PL_YES') : Loc::getMessage('CRM_ORDER_PL_NO');
+		$vatIncludedInnerHtml = isset($product['VAT_INCLUDED']) && $product['VAT_INCLUDED'] === 'Y'
+			? Loc::getMessage('CRM_ORDER_PL_YES')
+			: Loc::getMessage('CRM_ORDER_PL_NO');
 	}
 	else
 	{

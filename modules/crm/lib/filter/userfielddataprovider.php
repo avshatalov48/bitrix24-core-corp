@@ -104,7 +104,7 @@ class UserFieldDataProvider extends EntityUFDataProvider
 				$isProcessed = false;
 				if (isset($filterField['type']))
 				{
-					if ($filterField['type'] === 'number' || $filterField['type'] === 'date' || $filterField['type'] === 'datetime')
+					if (in_array($filterField['type'], ['number', 'date', 'datetime'], true))
 					{
 						if (!empty($requestFilter[$id.'_from']))
 						{
@@ -114,17 +114,26 @@ class UserFieldDataProvider extends EntityUFDataProvider
 						{
 							$filter['<='.$id] = $requestFilter[$id.'_to'];
 						}
-						if ($filterField['type'] === 'number' && $requestFilter[$id] === false)
+						if (
+							$filterField['type'] === 'number'
+							&& isset($requestFilter[$id])
+							&& $requestFilter[$id] === false
+						)
 						{
 							$filter[$id] = $requestFilter[$id];
 						}
-						elseif ($filterField['type'] === 'number' && $requestFilter['!'.$id] === false)
+						elseif (
+							$filterField['type'] === 'number'
+							&& isset($requestFilter['!'.$id])
+							&& $requestFilter['!'.$id] === false
+						)
 						{
 							$filter['!'.$id] = $requestFilter['!'.$id];
 						}
 						$isProcessed = true;
 					}
-					if ($filterField['type'] === 'string' || $filterField['type'] === 'text')
+
+					if (in_array($filterField['type'], ['string', 'text'], true))
 					{
 						if (isset($requestFilter[$id]) && $requestFilter[$id] === false)
 						{
@@ -136,6 +145,7 @@ class UserFieldDataProvider extends EntityUFDataProvider
 						}
 					}
 				}
+				
 				if (!$isProcessed && isset($requestFilter[$id]))
 				{
 					$filter[$id] = $requestFilter[$id];

@@ -55,7 +55,7 @@ final class Compatible implements CounterQueryBuilder
 	private function applyResponsibleFilter(Query $query, Factory $factory, QueryParams $params): void
 	{
 		$responsibleFieldName = $factory->getEntityFieldNameByMap(Item::FIELD_NAME_ASSIGNED);
-		(new QueryParts\ResponsibleFilter)->apply($query, $params, $responsibleFieldName);
+		(new QueryParts\ResponsibleFilter)->apply($query, $params->userParams(), $responsibleFieldName);
 	}
 
 	private function applySelect(QueryParams $params, Query $query): void

@@ -7,6 +7,7 @@ use Bitrix\Crm\Activity\Entity\IncomingChannelTable;
 use Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Timeline\Monitor;
+use Bitrix\Crm\Settings\CounterSettings;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Type\DateTime;
 
@@ -207,7 +208,16 @@ class UncompletedActivity
 				$deadlineDateTime = DateTime::createFromUserTime($deadline);
 			}
 
-			$minLightTime = $this->lightTimeRepo->minLightTimeByItemIdentifier($this->itemIdentifier);
+			$responsibleToCalcLightTime = null;
+			if (CounterSettings::getInstance()->useActivityResponsible())
+			{
+				$responsibleToCalcLightTime = $this->responsibleId > 0 ? $this->responsibleId : null;
+			}
+
+			$minLightTime = $this->lightTimeRepo->minLightTimeByItemIdentifier(
+				$this->itemIdentifier,
+				$responsibleToCalcLightTime
+			);
 
 			$this->upsert(
 				$activityId,
@@ -576,7 +586,9 @@ class UncompletedActivity
 			$hasAnyIncomingChannel = !!$this->getUncompletedIncomingActivityId();
 		}
 
-		$minLightTime = $this->lightTimeRepo->minLightTimeByItemIdentifier($this->itemIdentifier);
+		$minLightTime = $isIncomingChannel
+			? \CCrmDateTimeHelper::getMaxDatabaseDateObject()
+			: $this->lightTimeRepo->minLightTimeByItemIdentifier($this->itemIdentifier);
 
 		$this->upsert(
 			$this->activityChange->getId(),

@@ -255,7 +255,9 @@ if (
 						}
 						?>
 					</div>
-					<div class="intranet-user-profile-userpic-remove" id="intranet-user-profile-photo-remove"></div>
+					<div class="intranet-user-profile-userpic-remove" id="intranet-user-profile-photo-remove"
+						<?= $arResult["User"]["PERSONAL_PHOTO"] ? '' : 'hidden' ?>>
+					</div>
 					<?php
 				}
 				?>
@@ -926,6 +928,7 @@ if ($arResult["adminRightsRestricted"])
 		gratPostListPageSize: <?= (int)$arParams['GRAT_POST_LIST_PAGE_SIZE'] ?>,
 		userId: <?= (int)$arResult["User"]["ID"] ?>,
 		userStatus: <?= CUtil::PhpToJSObject($arResult["User"]["STATUS"]) ?>,
+		isIntegratorUser: '<?=$arResult["User"]['IS_INTEGRATOR'] ? "Y" : "N"?>',
 		isOwnProfile: '<?=$arResult["IsOwnProfile"] ? "Y" : "N"?>',
 		urls: <?= CUtil::PhpToJSObject($arResult["Urls"]) ?>,
 		isSessionAdmin: "<?=($arResult["User"]["IS_SESSION_ADMIN"] ?? null) ? "Y" : "N"?>",

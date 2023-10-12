@@ -1,0 +1,68 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg"
+	 viewBox="0 0 100% 1200" style="width: 100%; height: 1200px" preserveAspectRatio="xMinYMin meet"
+>
+	<svg height="1200px">
+		<rect width="100%" height="1200" fill="#EEF2F4"/>
+		<g clip-path="url(#clip0_639_142793)">
+			<rect width="100%" height="75" fill="#EEF2F4"/>
+		</g>
+		<rect x="22" y="75" width="95%" height="353" rx="10" fill="white"/>
+		<g clip-path="url(#clip1_639_142793)">
+			<rect x="38" y="91" width="90%" height="99" rx="8" fill="#F8F9FA"/>
+		</g>
+		<g clip-path="url(#clip2_639_142793)">
+			<rect x="38" y="202" width="90%" height="99" rx="8" fill="#F8F9FA"/>
+			<circle cx="69.5" cy="233.5" r="15.5" fill="#E6E6E6"/>
+			<path d="M68 249L68 301L71 301L71 249L68 249Z" fill="#E6E6E6"/>
+			<rect x="97" y="218" width="146" height="12" rx="6" fill="#E6E6E6"/>
+			<path fill-rule="evenodd" clip-rule="evenodd" d="M97 252C97 248.686 99.6863 246 103 246H588C591.314 246 594 248.686 594 252V279C594 282.314 591.314 285 588 285H103C99.6863 285 97 282.314 97 279V252Z" fill="#E6E6E6"/>
+		</g>
+		<g clip-path="url(#clip3_639_142793)">
+			<rect x="38" y="313" width="90%" height="99" rx="8" fill="#F8F9FA"/>
+			<circle cx="69.5" cy="344.5" r="15.5" fill="#E6E6E6"/>
+			<path d="M68 360L68 412L71 412L71 360L68 360Z" fill="#E6E6E6"/>
+			<rect x="97" y="329" width="146" height="12" rx="6" fill="#E6E6E6"/>
+			<path fill-rule="evenodd" clip-rule="evenodd" d="M97 363C97 359.686 99.6863 357 103 357H588C591.314 357 594 359.686 594 363V390C594 393.314 591.314 396 588 396H103C99.6863 396 97 393.314 97 390V363Z" fill="#E6E6E6"/>
+		</g>
+	</svg>
+	<svg height="1200px" id="header">
+		<defs>
+			<g id="line-1">
+				<rect x="22" y="34" width="207" height="8" rx="4" fill="#E6E6E6"/>
+			</g>
+			<g id="line-2">
+				<rect x="100%" y="18" width="177" height="40" rx="4" fill="#E6E6E6" transform="translate(-240, 0)" />
+			</g>
+			<g id="msg">
+				<circle xmlns="http://www.w3.org/2000/svg" cx="69.5" cy="122.5" r="15.5" fill="#E6E6E6"/>
+				<path xmlns="http://www.w3.org/2000/svg" d="M68 138L68 190L71 190L71 138L68 138Z" fill="#E6E6E6"/>
+				<rect xmlns="http://www.w3.org/2000/svg" x="97" y="107" width="146" height="12" rx="6" fill="#E6E6E6"/>
+				<path xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd" d="M97 141C97 137.686 99.6863 135 103 135H588C591.314 135 594 137.686 594 141V168C594 171.314 591.314 174 588 174H103C99.6863 174 97 171.314 97 168V141Z" fill="#E6E6E6"/>
+			</g>
+		</defs>
+
+		<use xlink:href="#line-1" y="0" x="0" width="100%" height="100"/>
+		<use xlink:href="#line-2" y="0" x="0" width="100%" height="100"/>
+		<use xlink:href="#msg" y="0" x="0" width="100%" height="100"/>
+		<use xlink:href="#msg" y="111" x="0" width="100%" height="100"/>
+		<use xlink:href="#msg" y="222" x="0" width="100%" height="100"/>
+	</svg>
+
+	<rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="1200"/>
+
+	<mask id="headerMsk" fill="white">
+		<use xlink:href="#header"/>
+	</mask>
+
+	<linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+		<stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+		<stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+		<stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+	</linearGradient>
+
+	<animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+
+	<svg viewBox="0 0 100% 1200" height="1200px">
+		<rect fill="#EBF1F4" width="20"   height="1200" x="100%" y="0"   transform="translate(-20, 0)"/>
+	</svg>
+</svg>

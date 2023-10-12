@@ -17,6 +17,14 @@ use Bitrix\Crm\Counter\CounterQueryBuilder\QueryParts;
 
 final class CountableBased implements CounterQueryBuilder
 {
+
+	private QueryParts\ResponsibleFilter $responsibleFilter;
+
+	public function __construct()
+	{
+		$this->responsibleFilter = new QueryParts\ResponsibleFilter();
+	}
+
 	public function build(Factory $factory, QueryParams $params): Query
 	{
 		$query = $factory->getDataClass()::query();
@@ -37,7 +45,14 @@ final class CountableBased implements CounterQueryBuilder
 			)
 		);
 
-		(new QueryParts\ResponsibleFilter)->apply($query, $params, 'A.ENTITY_ASSIGNED_BY_ID');
+		if ($params->useActivityResponsible())
+		{
+			$this->responsibleFilter->apply($referenceFilter, $params->userParams(), 'ref.ACTIVITY_RESPONSIBLE_ID');
+		}
+		else
+		{
+			$this->responsibleFilter->apply($query, $params->userParams(), 'A.ENTITY_ASSIGNED_BY_ID');
+		}
 
 		(new QueryParts\EntitySpecificFilter())->apply($query, $params->entityTypeId(), $params->options());
 

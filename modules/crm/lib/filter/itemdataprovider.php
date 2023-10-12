@@ -406,7 +406,7 @@ class ItemDataProvider extends EntityDataProvider
 			];
 		}
 
-		if($this->factory->isCountersEnabled()) {
+		if ($this->factory->isCountersEnabled()) {
 			$fields['ACTIVITY_COUNTER'] = [
 				'type' => static::TYPE_LIST,
 				'displayGrid' => false,
@@ -415,6 +415,18 @@ class ItemDataProvider extends EntityDataProvider
 				'defaultFilter' => false,
 				'filterOptionPreset' => static::PRESET_LIST,
 				'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_ACTIVITY_COUNTER')
+			];
+		}
+
+		if ($this->factory->isCountersEnabled() && $this->isActivityResponsibleEnabled()) {
+			$fields['ACTIVITY_RESPONSIBLE_IDS'] = [
+				'type' => static::TYPE_USER,
+				'displayGrid' => false,
+				'displayFilter' => true,
+				'defaultGrid' => false,
+				'defaultFilter' => false,
+				'filterOptionPreset' => static::PRESET_ENTITY_SELECTOR,
+				'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_ACTIVITY_RESPONSIBLE_IDS')
 			];
 		}
 
@@ -730,6 +742,13 @@ class ItemDataProvider extends EntityDataProvider
 
 			if ($factory->isCountersEnabled() && $fieldID === Item::FIELD_NAME_ASSIGNED)
 			{
+				$params['isEnableAllUsers'] = true;
+				$params['isEnableOtherUsers'] = true;
+			}
+
+			if ($fieldID === 'ACTIVITY_RESPONSIBLE_IDS')
+			{
+				$params['referenceClass'] = null;
 				$params['isEnableAllUsers'] = true;
 				$params['isEnableOtherUsers'] = true;
 			}

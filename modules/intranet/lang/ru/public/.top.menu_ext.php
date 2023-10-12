@@ -41,4 +41,6 @@ $MESS["TOP_MENU_DEVOPS"] = "Разработчикам";
 $MESS["MENU_STORE_ACCOUNTING_SECTION"] = "Складской учёт";
 $MESS["TOP_MENU_SITES_AND_STORES"] = "Сайты и Магазины";
 $MESS["TOP_MENU_COMPANY_SECTION"] = "Компания";
+$MESS["TOP_MENU_SIGN"] = "Подпись";
+
 ?>

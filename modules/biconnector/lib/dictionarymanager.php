@@ -95,6 +95,17 @@ class DictionaryManager
 		static::$userBefore = null;
 	}
 
+	protected static $available = [];
+
+	public static function isAvailable($dictionaryId)
+	{
+		if (!array_key_exists($dictionaryId, static::$available))
+		{
+			static::$available[$dictionaryId] = (static::getInsertSelect($dictionaryId) !== '');
+		}
+		return static::$available[$dictionaryId];
+	}
+
 	/**
 	 * invalidateCache
 	 *
@@ -224,7 +235,10 @@ class DictionaryManager
 								c.id DEPARTMENT_ID
 								,case
 									when p.id is not null
-									then concat(group_concat(concat('[',p.id,'] ',p.name) order by p.left_margin separator ' / '), ' / [', c.id, '] ', c.name)
+									then concat(
+										group_concat(concat('[',p.id,'] ',p.name) order by p.left_margin separator ' / '),
+										' / [', c.id, '] ',
+										c.name)
 									else concat('[', c.id, '] ', c.name)
 								end DEPARTMENT_PATH
 							from
@@ -239,7 +253,7 @@ class DictionaryManager
 								c.id
 						) D on D.DEPARTMENT_ID = UD.USER_DEPARTMENT_ID
 					where
-						U.EXTERNAL_AUTH_ID NOT IN ('" . implode("', '", \Bitrix\Main\UserTable::getExternalUserTypes()) . "')
+						U.EXTERNAL_AUTH_ID NOT IN ('" . implode("', '", \Bitrix\Main\UserTable::getExternalUserTypes()) . "') OR U.EXTERNAL_AUTH_ID IS NULL
 					";
 			}
 		}

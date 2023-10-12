@@ -203,7 +203,7 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 	_renderDeliveryDocument(doc: PaymentDocument): HTMLElement
 	{
 		const labelOptions = {
-			text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STATUS_WAITING'),
+			text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STATUS_WAITING_MSGVER_1'),
 			customClass: 'crm-entity-widget-payment-label',
 			color: LabelColor.LIGHT,
 			fill: true,
@@ -263,7 +263,7 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 			}
 		}
 
-		let title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE').replace(/#DATE#/gi, doc.FORMATTED_DATE);
+		let title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE_MSGVER_1').replace(/#DATE#/gi, doc.FORMATTED_DATE);
 		title = title.replace(/#DOCUMENT_ID#/gi, doc.ACCOUNT_NUMBER);
 		title = BX.util.htmlspecialchars(title);
 

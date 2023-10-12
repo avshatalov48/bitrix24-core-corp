@@ -13,9 +13,9 @@ $APPLICATION->IncludeComponent(
 			'KEY_EDIT_URL' => 'key_edit.php?key_id=#ID#',
 			'ID' => $_REQUEST['key_id'],
 		],
-		'POPUP_COMPONENT_USE_BITRIX24_THEME' => 'Y',
 		'RELOAD_GRID_AFTER_SAVE' => true,
 		'CLOSE_AFTER_SAVE' => true,
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );
 

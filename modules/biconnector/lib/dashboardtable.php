@@ -62,6 +62,13 @@ class DashboardTable extends DataManager
 				]
 			),
 			new DatetimeField(
+				'DATE_LAST_VIEW',
+				[
+					'required' => false,
+					'title' => Loc::getMessage('DASHBOARD_ENTITY_DATE_LAST_VIEW_FIELD')
+				]
+			),
+			new DatetimeField(
 				'TIMESTAMP_X',
 				[
 					'required' => true,
@@ -73,6 +80,12 @@ class DashboardTable extends DataManager
 				[
 					'required' => true,
 					'title' => Loc::getMessage('DASHBOARD_ENTITY_CREATED_BY_FIELD')
+				]
+			),
+			new IntegerField(
+				'LAST_VIEW_BY',
+				[
+					'title' => Loc::getMessage('DASHBOARD_ENTITY_LAST_VIEW_BY_FIELD')
 				]
 			),
 			new StringField(
@@ -101,6 +114,12 @@ class DashboardTable extends DataManager
 				'CREATED_USER',
 				'\Bitrix\Main\UserTable',
 				['=this.CREATED_BY' => 'ref.ID'],
+				['join_type' => 'LEFT']
+			),
+			new Reference(
+				'LAST_VIEW_USER',
+				'\Bitrix\Main\UserTable',
+				['=this.LAST_VIEW_BY' => 'ref.ID'],
 				['join_type' => 'LEFT']
 			),
 		];

@@ -11,6 +11,7 @@ use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\MessageHelper;
 use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Crm\Settings\CounterSettings;
 use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main\Localization\Loc;
 
@@ -187,6 +188,7 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 		$this->arResult['ENTITY_NUMBER_DECLENSIONS'] = MessageHelper::getEntityNumberDeclensionMessages($this->entityTypeID);
 		$this->arResult['ENTITY_PLURALS'] = MessageHelper::getEntityPluralMessages($this->entityTypeID);
 		$this->arResult['WITH_EXCLUDE_USERS'] = $withExcludeUsers;
+		$this->arResult['FILTER_RESPONSIBLE_FILED_NAME'] = $this->filterResponsibleFiledName();
 	}
 
 	private function fillCountersData(int &$total, array &$codes, array &$data, array $extras): void
@@ -228,5 +230,17 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 		$isAllowedEntity = Container::getInstance()->getFactory($this->entityTypeID)->isCountersEnabled();
 
 		return $isAllowedEntity && $hasAllPermissions;
+	}
+
+	private function filterResponsibleFiledName(): string
+	{
+		if (CounterSettings::getInstance()->useActivityResponsible())
+		{
+			return 'ACTIVITY_RESPONSIBLE_IDS';
+		}
+		else
+		{
+			return $this->entityTypeID === \CCrmOwnerType::Order ? 'RESPONSIBLE_ID' : 'ASSIGNED_BY_ID';
+		}
 	}
 }

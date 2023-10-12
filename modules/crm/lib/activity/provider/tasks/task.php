@@ -140,6 +140,7 @@ final class Task extends Base
 			'END_TIME' => is_null($task->getEndDatePlan()) ? '' : $task->getEndDatePlan()->toString(),
 			'PRIORITY' => Task2ActivityPriority::getPriority((int)$task->getPriority()),
 			'COMPLETED' => $status === TaskActivityStatus::TASKS_STATE_COMPLETED || $status === TaskActivityStatus::TASKS_STATE_SUPPOSEDLY_COMPLETED,
+			'AUTHOR_ID' => $timelineParams['AUTHOR_ID'],
 		];
 
 		if (!empty($timelineParams['TASK_FILE_IDS']))
@@ -339,7 +340,7 @@ final class Task extends Base
 		}
 		else
 		{
-			$fields['DEADLINE'] = '';
+			$fields['DEADLINE'] = null;
 		}
 
 		return $result;

@@ -11,7 +11,7 @@ this.BX = this.BX || {};
 	    this.settingsCollection = main_core.Extension.getSettings('crm.terminal');
 	    this.qr = options.qr || this.settingsCollection.get('qr');
 	    this.title = options.title || main_core.Loc.getMessage('TERMINAL_QR_AUTH_TITLE');
-	    this.content = options.content || main_core.Loc.getMessage('TERMINAL_QR_AUTH_CONTENT');
+	    this.content = options.content || main_core.Loc.getMessage('TERMINAL_QR_AUTH_CONTENT_MSGVER_1');
 	    this.popup = null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _createQrAuthorization)[_createQrAuthorization]();
 	  }

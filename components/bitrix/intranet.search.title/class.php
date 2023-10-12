@@ -946,7 +946,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 
 					$globalCrmSearchCategories["quote"] = array(
 						"url" => $quotePath . "?apply_filter=Y&with_preset=Y&FIND=",
-						"text" => GetMessage("CT_BST_GLOBAL_SEARCH_CRM_QUOTE")
+						"text" => GetMessage("CT_BST_GLOBAL_SEARCH_CRM_QUOTE_MSGVER_1")
 					);
 				}
 

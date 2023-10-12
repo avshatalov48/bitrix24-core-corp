@@ -1,10 +1,10 @@
 <?php
 
+use Bitrix\Crm\Format\PhoneNumberParser;
+use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
 use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
 use Bitrix\Crm\Integrity\DuplicateVolatileCriterion;
 use Bitrix\Crm\Integrity\Volatile\FieldCategory;
-use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
-use Bitrix\Crm\Format\PhoneNumberParser;
 use Bitrix\Crm\Model\FieldMultiPhoneCountryTable;
 use Bitrix\Crm\Multifield;
 use Bitrix\Main;
@@ -1027,21 +1027,23 @@ class CCrmFieldMulti
 	public static function ParseComplexName($complexName, $enableCheck = true)
 	{
 		$ary = explode('_', $complexName);
-		if(count($ary) !== 2)
+		if (count($ary) !== 2)
 		{
-			array();
+			return [];
 		}
 
-		if(!$enableCheck)
+		if (!$enableCheck)
 		{
-			return array('TYPE' => $ary[0], 'VALUE_TYPE' => $ary[1]);
+			return ['TYPE' => $ary[0] ?? '', 'VALUE_TYPE' => $ary[1] ?? ''];
 		}
 
-		$type = $ary[0];
-		$valueType = $ary[1];
+		$type = $ary[0] ?? '';
+		$valueType = $ary[1] ?? '';
 		$entityTypes = self::GetEntityTypes();
-		return isset($entityTypes[$type]) && isset($entityTypes[$type][$valueType])
-			? array('TYPE' => $type, 'VALUE_TYPE' => $valueType) : array();
+
+		return isset($entityTypes[$type], $entityTypes[$type][$valueType])
+			? ['TYPE' => $type, 'VALUE_TYPE' => $valueType]
+			: [];
 	}
 
 	public static function GetEntityTypeList($entityType = '', $bFullName = true)

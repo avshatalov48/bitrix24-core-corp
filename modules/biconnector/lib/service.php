@@ -341,7 +341,7 @@ abstract class Service
 
 		if (isset($parameters['dateRange']) && is_array($parameters['dateRange']))
 		{
-			$timeFilterColumn = isset($parameters['configParams']) && is_array($parameters['configParams']) && array_key_exists('timeFilterColumn', $parameters['configParams']) ? $parameters['configParams']['timeFilterColumn'] : '';
+			$timeFilterColumn = $parameters['configParams']['timeFilterColumn'] ?? '';
 			$this->applyDateFilter($sqlWhere, $tableFields, $parameters['dateRange'], $timeFilterColumn);
 		}
 
@@ -472,6 +472,19 @@ abstract class Service
 				if ($fieldName === $fieldInfo['ID'])
 				{
 					$schema[] = $fieldInfo;
+				}
+			}
+		}
+
+		if (isset($tableInfo['DICTIONARY']))
+		{
+			foreach ($tableInfo['DICTIONARY'] as $dictionaryId)
+			{
+				if (!\Bitrix\BIConnector\DictionaryManager::validateCache($dictionaryId))
+				{
+					return [
+						'error' => 'DICTIONARY_' . $dictionaryId . '_UPDATE',
+					];
 				}
 			}
 		}

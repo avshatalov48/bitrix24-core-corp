@@ -170,7 +170,7 @@ else
 			if($fp = fopen($ABS_FILE_NAME, "ab"))
 			{
 				$result = fwrite($fp, $DATA);
-				if($result === (function_exists("mb_strlen")? mb_strlen($DATA, 'latin1') : mb_strlen($DATA)))
+				if($result === strlen($DATA))
 				{
 					echo "success";
 					if($_SESSION["BX_CML2_IMPORT"]["zip"])

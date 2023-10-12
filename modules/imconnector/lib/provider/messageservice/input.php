@@ -5,6 +5,7 @@ namespace Bitrix\ImConnector\Provider\Messageservice;
 use Bitrix\ImConnector\Library;
 use Bitrix\ImConnector\Provider\Base;
 use Bitrix\Main\Loader;
+use Bitrix\MessageService;
 use Bitrix\MessageService\Sender\SmsManager;
 
 class Input extends Base\Input
@@ -41,8 +42,8 @@ class Input extends Base\Input
 
 		$this->connector = Library::ID_EDNA_WHATSAPP_CONNECTOR;
 
-		$sender = SmsManager::getSenderById('ednaru');
-		if ($sender instanceof \Bitrix\MessageService\Sender\Base)
+		$sender = SmsManager::getSenderById(MessageService\Sender\Sms\Ednaru::ID);
+		if ($sender instanceof MessageService\Sender\Base)
 		{
 			$this->line = $sender->getLineId();
 		}
@@ -138,6 +139,6 @@ class Input extends Base\Input
 
 	private function getSentTemplateMessage(string $from, string $to): string
 	{
-		return SmsManager::getSenderById('ednaru')->getSentTemplateMessage($from, $to);
+		return SmsManager::getSenderById(MessageService\Sender\Sms\Ednaru::ID)->getSentTemplateMessage($from, $to);
 	}
 }

@@ -4611,8 +4611,8 @@ class CAllCrmQuote
 
 		$pdfContent = include($actionFilePath);
 
-		$_REQUEST['pdf'] = $origRequest['pdf'];
-		$_REQUEST['GET_CONTENT'] = $origRequest['GET_CONTENT'];
+		$_REQUEST['pdf'] = $origRequest['pdf'] ?? false;
+		$_REQUEST['GET_CONTENT'] = $origRequest['GET_CONTENT'] ?? 'N';
 
 		$fileName = "quote_{$quote_id}.pdf";
 		$fileData = array(

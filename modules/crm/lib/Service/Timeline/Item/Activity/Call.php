@@ -426,6 +426,7 @@ class Call extends Activity
 	protected function getDeleteConfirmationText(): string
 	{
 		$title = $this->getAssociatedEntityModel()->get('SUBJECT') ?? '';
+
 		switch ($this->fetchDirection())
 		{
 			case CCrmActivityDirection::Incoming:

@@ -3,8 +3,10 @@
 namespace Bitrix\Crm\Counter\Lighter;
 
 use Bitrix\Crm\ActivityBindingTable;
+use Bitrix\Crm\ActivityTable;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Factory;
 
 abstract class LighterQueries
 {
@@ -21,11 +23,13 @@ abstract class LighterQueries
 	 */
 	abstract public function queryActivitiesByIds(array $ids): array;
 
-	public function queryEntitiesInfo(GroupedBindings $groupedBindings): EntitiesInfo
+	public function queryEntitiesData(GroupedBindings $groupedBindings): array
 	{
 		$result = [];
-		foreach ($groupedBindings as $ownerTypeId => $ownerIds)
+		foreach ($groupedBindings as $ownerTypeId => $binding)
 		{
+			$ownerIds = array_column($binding, 'OWNER_ID');
+
 			$factory = Container::getInstance()->getFactory($ownerTypeId);
 			if (!$factory)
 			{
@@ -64,16 +68,19 @@ abstract class LighterQueries
 					$category = (int)$category;
 				}
 
+				$ownerId = (int)$entity[Item::FIELD_NAME_ID];
+
 				$result[] = [
 					'OWNER_TYPE_ID' => $ownerTypeId,
-					'OWNER_ID' => (int)$entity[Item::FIELD_NAME_ID],
+					'OWNER_ID' => $ownerId,
 					'CATEGORY_ID' => $category,
-					'ASSIGNED_ID' => (int)$entity[$assignedByFiledName]
+					'ASSIGNED_ID' => (int)$entity[$assignedByFiledName],
+					'ACTIVITY_IDS' => $binding[$ownerId]['ACTIVITY_IDS'] ?? [],
 				];
 			}
 		}
 
-		return new EntitiesInfo($result);
+		return $result;
 	}
 
 	/**
@@ -92,14 +99,17 @@ abstract class LighterQueries
 		$bindings = ActivityBindingTable::query()
 			->addSelect('OWNER_TYPE_ID')
 			->addSelect('OWNER_ID')
+			->addSelect('ACTIVITY_ID')
 			->whereIn('ACTIVITY_ID', $activityIds)
 			->addOrder('OWNER_TYPE_ID')
 			->fetchAll();
 
 		foreach ($bindings as $binding) {
-			$ownerTypeId = (int) $binding['OWNER_TYPE_ID'];
-			$ownerId = (int) $binding['OWNER_ID'];
-			$groupedBindings->add($ownerTypeId, $ownerId);
+			$groupedBindings->add(
+				(int)$binding['OWNER_TYPE_ID'],
+				(int)$binding['OWNER_ID'],
+				(int)$binding['ACTIVITY_ID']
+			);
 		}
 
 		return $groupedBindings;

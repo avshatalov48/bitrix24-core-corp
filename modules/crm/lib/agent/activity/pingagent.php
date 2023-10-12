@@ -4,12 +4,19 @@ namespace Bitrix\Crm\Agent\Activity;
 
 use Bitrix\Crm\ActivityTable;
 use Bitrix\Crm\Agent\AgentBase;
+use Bitrix\Crm\Entity\MessageBuilder\ProcessTodoActivity;
 use Bitrix\Crm\Model\ActivityPingQueueTable;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Timeline\LogMessageController;
 use Bitrix\Crm\Timeline\LogMessageType;
+use Bitrix\Main\Application;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Web\Uri;
 use CCrmActivity;
+use CCrmDateTimeHelper;
 use CCrmOwnerType;
+use CIMNotify;
 
 class PingAgent extends AgentBase
 {
@@ -38,6 +45,8 @@ class PingAgent extends AgentBase
 				->setSelect([
 					'ID',
 					'COMPLETED',
+					'SUBJECT',
+					'AUTHOR_ID',
 					'RESPONSIBLE_ID',
 					'DEADLINE',
 				])
@@ -58,7 +67,7 @@ class PingAgent extends AgentBase
 
 			$authorId = $activity['RESPONSIBLE_ID'] ?? null;
 			$deadline = $activity['DEADLINE'] ?? null;
-			if ($deadline && \CCrmDateTimeHelper::IsMaxDatabaseDate($deadline))
+			if ($deadline && CCrmDateTimeHelper::IsMaxDatabaseDate($deadline))
 			{
 				$deadline = null;
 			}
@@ -66,6 +75,7 @@ class PingAgent extends AgentBase
 			foreach ($bindings as $binding)
 			{
 				static::addPing((int)$item['ACTIVITY_ID'], $item['PING_DATETIME'], $deadline, $binding, $authorId);
+				static::sendNotification((int)$binding['OWNER_TYPE_ID'], (int)$binding['OWNER_ID'], $activity);
 
 				ActivityPingQueueTable::delete($item['ID']);
 			}
@@ -76,7 +86,6 @@ class PingAgent extends AgentBase
 
 	private static function isActivityPassed($activity): bool
 	{
-
 		if (!is_array($activity))
 		{
 			return true; // no activity
@@ -110,5 +119,77 @@ class PingAgent extends AgentBase
 			LogMessageType::PING,
 			$authorId
 		);
+	}
+
+	private static function sendNotification(int $ownerTypeId, int $ownerId, array $activity): void
+	{
+		if (!Loader::includeModule('im'))
+		{
+			return;
+		}
+
+		if (empty($activity))
+		{
+			return;
+		}
+
+		$url = Container::getInstance()->getRouter()->getItemDetailUrl($ownerTypeId, $ownerId);
+		if (!isset($url))
+		{
+			return;
+		}
+
+		$entityName = (string)$ownerId; // ID by default
+		if (CCrmOwnerType::isUseFactoryBasedApproach($ownerTypeId))
+		{
+			$entityName = Container::getInstance()->getFactory($ownerTypeId)?->getItem($ownerId)?->getHeading();
+		}
+
+		$message = (new ProcessTodoActivity($ownerTypeId))
+			->getMessage([
+				'#subject#' => isset($activity['SUBJECT']) && mb_strlen($activity['SUBJECT']) > 0
+					? htmlspecialcharsbx($activity['SUBJECT'])
+					: '',
+				'#url#' => '#url#',
+				'#title#' => htmlspecialcharsbx(trim($entityName)),
+				'#deadline#' => static::transformDateTime($activity['DEADLINE'] ?? null, $activity['RESPONSIBLE_ID'] ?? null),
+			])
+		;
+
+		CIMNotify::Add([
+			'MESSAGE_TYPE' => IM_MESSAGE_SYSTEM,
+			'TO_USER_ID' => $activity['RESPONSIBLE_ID'] ?? null,
+			'FROM_USER_ID' => $activity['AUTHOR_ID'] ?? null,
+			'NOTIFY_TYPE' => IM_NOTIFY_FROM,
+			'NOTIFY_MODULE' => 'crm',
+			'NOTIFY_EVENT' => 'pingTodoActivity',
+			'NOTIFY_TAG' => 'CRM|PING_TODO_ACTIVITY|' . $activity['ID'],
+			'NOTIFY_MESSAGE' => str_replace('#url#', $url, $message),
+			'NOTIFY_MESSAGE_OUT' => str_replace('#url#', static::transformRelativeUrlToAbsolute($url), $message),
+		]);
+	}
+
+	private static function transformDateTime(?DateTime $deadline, ?int $responsibleUserId): string
+	{
+		if ($deadline === null)
+		{
+			return '';
+		}
+
+		$culture = Application::getInstance()->getContext()->getCulture();
+		$dateFormat = $culture?->getShortDateFormat();
+		$timeFormat = $culture?->getShortTimeFormat();
+		$datetimeFormat = $dateFormat . ' ' . $timeFormat;
+
+		return CCrmDateTimeHelper::getUserTime($deadline, $responsibleUserId, true)
+			->format($datetimeFormat)
+		;
+	}
+
+	private static function transformRelativeUrlToAbsolute(Uri $url): Uri
+	{
+		$host = Application::getInstance()->getContext()->getRequest()->getServer()->getHttpHost();
+
+		return (new Uri($url))->setHost($host);
 	}
 }

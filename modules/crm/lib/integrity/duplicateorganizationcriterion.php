@@ -385,7 +385,7 @@ class DuplicateOrganizationCriterion extends DuplicateCriterion
 		$filter = array();
 		if($this->useStrictComparison)
 		{
-			$filter['TITLE'] = $this->title;
+			$filter['=TITLE'] = $this->title;
 		}
 		else
 		{
@@ -427,7 +427,7 @@ class DuplicateOrganizationCriterion extends DuplicateCriterion
 		$filter = array();
 		if($this->useStrictComparison)
 		{
-			$filter['TITLE'] = $this->title;
+			$filter['=TITLE'] = $this->title;
 		}
 		else
 		{

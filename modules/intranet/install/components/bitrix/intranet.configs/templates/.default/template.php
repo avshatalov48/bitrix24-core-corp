@@ -731,7 +731,7 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 		{
 			?>
 			<tr>
-				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="buy_tariff_by_all"><?=GetMessage('CONFIG_BUY_TARIFF_BY_ALL')?></label></td>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="buy_tariff_by_all"><?=GetMessage('CONFIG_BUY_TARIFF_BY_ALL_MSGVER_1')?></label></td>
 				<td class="content-edit-form-field-input"><input type="checkbox" name="buy_tariff_by_all" value="N" id="buy_tariff_by_all" <?if (COption::GetOptionString("bitrix24", "buy_tariff_by_all", "Y") == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
 				<td class="content-edit-form-field-error"></td>
 			</tr>

@@ -18,28 +18,36 @@ jn.define('crm/timeline/ui/text-editor', (require, exports, module) => {
 		 */
 		static open({ title, ...options })
 		{
-			PageManager.openWidget('layout', {
-				modal: true,
-				backgroundColor: '#eef2f4',
-				backdrop: {
-					onlyMediumPosition: true,
-					showOnTop: false,
-					mediumPositionPercent: 70,
-					navigationBarColor: '#eef2f4',
-					swipeAllowed: true,
-					swipeContentAllowed: false,
-					horizontalSwipeAllowed: false,
-				},
-			})
-				.then((widget) => {
-					widget.setTitle({ text: title });
-					widget.enableNavigationBarBorder(false);
-					widget.showComponent(new TimelineTextEditor({
-						layout: widget,
-						...options,
-					}));
-				})
-			;
+			const backdrop = {
+				onlyMediumPosition: true,
+				showOnTop: false,
+				mediumPositionPercent: 70,
+				navigationBarColor: '#eef2f4',
+				swipeAllowed: true,
+				swipeContentAllowed: false,
+				horizontalSwipeAllowed: false,
+			};
+
+			return new Promise((resolve) => {
+				PageManager.openWidget(
+					'layout',
+					{
+						modal: true,
+						backgroundColor: '#eef2f4',
+						backdrop,
+					})
+					.then((widget) => {
+						widget.setTitle({ text: title });
+						widget.enableNavigationBarBorder(false);
+						widget.showComponent(new TimelineTextEditor({
+							layout: widget,
+							...options,
+						}));
+
+						resolve({ layout: widget });
+					})
+				;
+			});
 		}
 
 		constructor(props)
@@ -149,6 +157,22 @@ jn.define('crm/timeline/ui/text-editor', (require, exports, module) => {
 		{
 			const isIOS = Application.getPlatform() === 'ios';
 
+			const params = {
+				ref: (ref) => this.textInputRef = ref,
+				text: this.state.text,
+				placeholder: this.placeholder,
+				onChange: (text) => {
+					this.state.text = text;
+					this.refreshSaveButton();
+				},
+			};
+			const { onLinkClick } = this.props;
+
+			if (onLinkClick)
+			{
+				params.onLinkClick = onLinkClick;
+			}
+
 			return View(
 				{
 					style: {
@@ -158,15 +182,7 @@ jn.define('crm/timeline/ui/text-editor', (require, exports, module) => {
 					},
 					interactable: !isIOS,
 				},
-				Textarea({
-					ref: (ref) => this.textInputRef = ref,
-					text: this.state.text,
-					placeholder: this.placeholder,
-					onChange: (text) => {
-						this.state.text = text;
-						this.refreshSaveButton();
-					},
-				}),
+				Textarea(params),
 			);
 		}
 

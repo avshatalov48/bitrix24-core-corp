@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Crm\Recurring\Entity\ParameterMapper;
 
-use \Bitrix\Crm\Recurring\Manager,
-	\Bitrix\Crm\Recurring\Calculator;
+use Bitrix\Crm\Recurring\Calculator;
+use Bitrix\Crm\Recurring\Manager;
 
 class SecondFormDeal extends DealMap
 {
@@ -71,7 +71,8 @@ class SecondFormDeal extends DealMap
 		$scheme = $this->getScheme();
 		foreach ($scheme as $code => $fieldName)
 		{
-			$item = (int)$params[$fieldName];
+			$item = (int)($params[$fieldName] ?? 0);
+			
 			$this->map[$code] = ($item > 0) ? $item : 0;
 		}
 	}

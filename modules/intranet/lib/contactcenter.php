@@ -704,11 +704,11 @@ class ContactCenter
 				"LOGO_CLASS" => "ui-icon ui-icon-service-import",
 				"SELECTED" => (\Bitrix\Rest\AppTable::getRow([
 					'filter'=> [
-						'ACTIVE' => 'Y',
-						'CODE' => 'bitrix.eshop',
+						'=ACTIVE' => 'Y',
+						'=CODE' => 'bitrix.eshop',
 					],
 				])),
-				"ONCLICK" => "BX.SidePanel.Instance.open(" . Marketplace::getMainDirectory() . "'detail/bitrix.eshop/?from=contact_center_eshop')",
+				"ONCLICK" => "BX.SidePanel.Instance.open('" . Marketplace::getMainDirectory() . "detail/bitrix.eshop/?from=contact_center_eshop')",
 			];
 		}
 
@@ -928,7 +928,7 @@ class ContactCenter
 			foreach ($configList as &$configItem)
 			{
 				//getting status if connector is connected for the open line
-				$status = $statusList[$connectorCode][$configItem["ID"]];
+				$status = $statusList[$connectorCode][$configItem["ID"]] ?? null;
 				if (!empty($status) && ($status instanceof ImConnector\Status) && $status->isStatus())
 				{
 					$configItem["STATUS"] = 1;

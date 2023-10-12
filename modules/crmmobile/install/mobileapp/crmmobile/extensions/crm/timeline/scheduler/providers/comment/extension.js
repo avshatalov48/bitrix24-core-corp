@@ -4,7 +4,6 @@
 jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module) => {
 	include('InAppNotifier');
 
-	const { Feature } = require('feature');
 	const { Haptics } = require('haptics');
 	const { Loc } = require('loc');
 	const { TimelineSchedulerBaseProvider } = require('crm/timeline/scheduler/providers/base');
@@ -15,7 +14,6 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 	} = require('crm/timeline/ui/toolbar');
 	const { Textarea } = require('crm/timeline/ui/textarea');
 	const { FileField } = require('layout/ui/fields/file');
-	const { get } = require('utils/object');
 
 	const isAndroid = Application.getPlatform() === 'android';
 
@@ -74,13 +72,7 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 
 		static isSupported(context = {})
 		{
-			const flag = get(
-				jnExtensionData.get('crm:timeline/scheduler/providers/comment'),
-				'isCommentAvailable',
-				false,
-			);
-
-			return Boolean(flag);
+			return true;
 		}
 
 		componentDidMount()
@@ -270,7 +262,9 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 
 				this.setState({ text }, () => {
 					this.setCursorPosition(text.length);
-					this.focus();
+					setTimeout(() => {
+						this.focus();
+					}, 500);
 				});
 			}
 		}

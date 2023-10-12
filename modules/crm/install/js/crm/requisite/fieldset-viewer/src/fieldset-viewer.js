@@ -271,7 +271,7 @@ export class FieldsetViewer extends EventEmitter
 			const options: FieldsetViewerOptions = this.getOptions();
 			return new ListEditor({
 				setId: this.getData().id,
-				title: Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER__SET_EDITOR_TITLE'),
+				title: Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER__SET_EDITOR_TITLE_MSGVER_1'),
 				editable: {
 					label: {
 						label: Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER__SET_EDITOR_NAME_LABEL'),
@@ -300,7 +300,7 @@ export class FieldsetViewer extends EventEmitter
 	{
 		return this.cache.remember('editButton', () => {
 			return new Button({
-				text: Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER_EDIT_BUTTON_LABEL'),
+				text: Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER_EDIT_BUTTON_LABEL_MSGVER_1'),
 				color: Button.Color.LIGHT_BORDER,
 				icon: Button.Icon.EDIT,
 				size: Button.Size.SMALL,

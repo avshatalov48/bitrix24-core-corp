@@ -11,7 +11,9 @@ final class Culture
 	public static function getCultures(): array
 	{
 		$langCultures = [];
-		$data = CultureTable::getList();
+		$data = CultureTable::getList([
+			'select' => ['ID', 'CODE', 'NAME', 'SHORT_DATE_FORMAT', 'LONG_DATE_FORMAT']
+		]);
 
 		global $b24Languages;
 		$fileName = \Bitrix\Main\Application::getDocumentRoot() . getLocalPath('templates/bitrix24', BX_PERSONAL_ROOT) . "/languages.php";

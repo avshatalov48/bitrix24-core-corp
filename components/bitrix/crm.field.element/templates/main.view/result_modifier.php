@@ -9,13 +9,13 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var array $arParams */
 
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\UserField\DataModifiers;
 use Bitrix\Crm\UserField\Types\ElementType;
 use Bitrix\Main\Engine\UrlManager;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Text\HtmlFilter;
-use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Loader;
-use Bitrix\Crm\UserField\DataModifiers;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Page\Asset;
+use Bitrix\Main\Text\HtmlFilter;
 
 if(!Loader::includeModule('crm'))
 {
@@ -162,10 +162,10 @@ if(is_array($arResult['value']) && count($arResult['value']))
 	}
 
 	$arResult['value']['DEAL']['title'] = Loc::getMessage('CRM_ENTITY_TYPE_DEAL');
-	if(
-		$arParams['userField']['SETTINGS']['DEAL'] === 'Y'
-		&&
-		!empty($values['DEAL'])
+	if (
+		isset($arParams['userField']['SETTINGS']['DEAL'])
+		&& $arParams['userField']['SETTINGS']['DEAL'] === 'Y'
+		&& !empty($values['DEAL'])
 	)
 	{
 		$deals = CCrmDeal::GetListEx(
@@ -185,8 +185,9 @@ if(is_array($arResult['value']) && count($arResult['value']))
 	}
 
 	$arResult['value']['ORDER']['title'] = Loc::getMessage('CRM_ENTITY_TYPE_ORDER');
-	if(
-		$arParams['userField']['SETTINGS']['ORDER'] === 'Y'
+	if (
+		isset($arParams['userField']['SETTINGS']['ORDER'])
+		&& $arParams['userField']['SETTINGS']['ORDER'] === 'Y'
 		&& !empty($values['ORDER'])
 	)
 	{

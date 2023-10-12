@@ -318,7 +318,7 @@ if($arParams['TYPE'] === 'details')
 	return;
 }
 
-if($arParams['TYPE'] === 'list')
+if (isset($arParams['TYPE']) && $arParams['TYPE'] === 'list')
 {
 	if ($bAdd)
 	{
@@ -330,7 +330,11 @@ if($arParams['TYPE'] === 'list')
 			'JS_AVAILABLE_POPUP_SHOWER' => Rc\Service::getJsAvailablePopupShower(),
 		];
 
-		if($arResult['RC']['CAN_USE'] && !$arResult['RC']['IS_AVAILABLE'])
+		if (
+			isset($arResult['RC']['CAN_USE'])
+			&& $arResult['RC']['CAN_USE']
+			&& !$arResult['RC']['IS_AVAILABLE']
+		)
 		{
 			Rc\Service::initJsExtensions();
 		}
@@ -341,7 +345,7 @@ if($arParams['TYPE'] === 'list')
 		['lead_id' => 0]
 	);
 
-	if($arResult['RC']['CAN_USE'])
+	if (isset($arResult['RC']['CAN_USE']) && $arResult['RC']['CAN_USE'])
 	{
 		$itemAdd = ['TEXT' => GetMessage('LEAD_CREATE')];
 		if($isSliderEnabled)

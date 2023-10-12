@@ -94,7 +94,14 @@ class Key extends Controller
 	 * @throws SystemException
 	 * @see \Bitrix\BIConnector\KeyTable::getList
 	 */
-	public function listAction(array $order = [], array $filter = [], array $select = [], $offset = 0, $limit = 50, \CRestServer $server = null)
+	public function listAction(
+		array $order = [],
+		array $filter = [],
+		array $select = [],
+		$offset = 0,
+		$limit = 50,
+		\CRestServer $server = null
+	)
 	{
 		$result = [];
 		$appId = 0;

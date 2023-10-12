@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\Activity;
 
+use Bitrix\Crm\Activity\Mail\Message;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
 use Bitrix\Crm\Service\Timeline\Layout\Action;
@@ -94,7 +95,7 @@ class Email extends Activity
 		if (is_null($header) || $activityId !== $associatedActivityId)
 		{
 			$associatedActivityId = $activityId;
-			$header = \Bitrix\Crm\Activity\Mail\Message::getHeader([
+			$header = Message::getHeader([
 				'OWNER_TYPE_ID' => (int)$this->getAssociatedEntityModel()->get('OWNER_TYPE_ID'),
 				'OWNER_ID' => (int)$this->getAssociatedEntityModel()->get('OWNER_ID'),
 				'ID' => $this->getAssociatedEntityModel()->get('ID'),
@@ -297,6 +298,7 @@ class Email extends Activity
 	protected function getDeleteConfirmationText(): string
 	{
 		$title = $this->getAssociatedEntityModel()->get('SUBJECT') ?? '';
+
 		return Loc::getMessage('CRM_TIMELINE_INCOMING_EMAIL_DELETION_CONFIRM', ['#TITLE#' => $title]);
 	}
 

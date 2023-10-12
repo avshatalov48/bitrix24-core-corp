@@ -224,7 +224,7 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 
 	protected function isProductVariantSupported(string $productVariant) : bool
 	{
-		$options = $this->getOptions()['VALUES'];
+		$options = $this->getOptions()['VALUES'] ?? [];
 
 		if (empty($options['productsTableVariant']))
 		{
@@ -277,7 +277,12 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 			];
 		}
 		$calculate = \CCrmSaleHelper::Calculate($crmProducts, $currencyID, $this->getPersonTypeID(), false, 's1', $calcOptions);
-		if(is_array($calculate['TAX_LIST']) && \CCrmTax::isTaxMode())
+
+		if (
+			isset($calculate['TAX_LIST'])
+			&& is_array($calculate['TAX_LIST'])
+			&& \CCrmTax::isTaxMode()
+		)
 		{
 			foreach($calculate['TAX_LIST'] as $taxInfo)
 			{

@@ -245,7 +245,7 @@ export default class Form
 	{
 		if (this.error !== null)
 		{
-			Dom.remove(this.error.getContainer());
+			Dom.remove(this.error.container);
 			this.error = null;
 		}
 	}

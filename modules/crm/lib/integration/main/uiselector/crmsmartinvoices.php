@@ -112,6 +112,12 @@ class CrmSmartInvoices extends CrmDynamics
 		$list = Container::getInstance()->getFactory(static::getOwnerType())->getItemsFilteredByPermissions([
 			'order' => ['ID' => 'DESC'],
 			'limit' => 10,
+			'select' => [
+				Item::FIELD_NAME_ID,
+				Item::FIELD_NAME_TITLE,
+				Item::FIELD_NAME_BEGIN_DATE,
+				Item::FIELD_NAME_CREATED_TIME,
+			],
 		]);
 
 		foreach ($list as $item)

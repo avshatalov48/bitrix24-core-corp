@@ -50,6 +50,8 @@ class Notifications
 		return Loader::includeModule('notifications') && Limit::canUseConnector('notifications');
 	}
 
+	//region Agreement Terms
+
 	/**
 	 * @return int
 	 */
@@ -145,6 +147,9 @@ class Notifications
 		return (bool)$result;
 	}
 
+	//endregion
+
+	//region Widget
 	public static function getWidgetScript(): string
 	{
 		if (!Loader::includeModule('imconnector'))
@@ -249,6 +254,8 @@ JS;
 		// TODO: replace with actual url when known
 		return 'https://bitrix24.com';
 	}
+
+	//endregion
 
 	/**
 	 * @param int $lineId

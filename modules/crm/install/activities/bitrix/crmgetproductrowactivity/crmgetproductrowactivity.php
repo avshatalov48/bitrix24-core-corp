@@ -137,7 +137,7 @@ class CBPCrmGetProductRowActivity extends CBPActivity
 	{
 		return [
 			'RowId' => [
-				'Name' => GetMessage('CRM_BP_GPR_ROW_ID'),
+				'Name' => GetMessage('CRM_BP_GPR_ROW_ID_MSGVER_1'),
 				'FieldName' => 'row_id',
 				'Type' => 'int',
 			],

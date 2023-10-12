@@ -3,26 +3,22 @@
 namespace Bitrix\Crm\Product;
 
 use Bitrix\Main\Loader;
+use Bitrix\Catalog;
 
-if (Loader::includeModule('catalog'))
+class Price
 {
-	class Price
+	/**
+	 * Returns base price id.
+	 *
+	 * @return int|null
+	 */
+	public static function getBaseId(): ?int
 	{
-		/**
-		 * Returns base price id.
-		 *
-		 * @return int|null
-		 */
-		public static function getBaseId(): ?int
+		if (!Loader::includeModule('catalog'))
 		{
-			$id = 0;
-			$basePrice = \CCatalogGroup::GetBaseGroup();
-			if (!empty($basePrice['ID']))
-			{
-				$id = (int)$basePrice['ID'];
-			}
-
-			return ($id > 0 ? $id : null);
+			return null;
 		}
+
+		return Catalog\GroupTable::getBasePriceTypeId();
 	}
 }

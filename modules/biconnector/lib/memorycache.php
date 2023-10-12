@@ -28,7 +28,7 @@ class MemoryCache
 	{
 		if (static::$memoryLimit === null)
 		{
-			static::$memoryLimit = \Bitrix\Main\Config\Ini::getInt('memory_limit') * 0.9;
+			static::$memoryLimit = \Bitrix\Main\Config\Ini::getInt('memory_limit') * 0.8;
 		}
 	}
 
@@ -119,5 +119,18 @@ class MemoryCache
 		}
 		unset($tmp);
 		static::$hitRatio += 0.1;
+	}
+
+	/**
+	 * Deletes all cache entries.
+	 *
+	 * @return void
+	 */
+	public static function expunge()
+	{
+		static::$cache = [];
+		static::$hit = [];
+		static::$miss = [];
+		static::$hitRatio = 0.1;
 	}
 }

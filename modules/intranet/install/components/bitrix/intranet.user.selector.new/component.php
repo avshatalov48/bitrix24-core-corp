@@ -98,8 +98,8 @@ $arStructure = $arSections = array();
 if ($arParams["DISPLAY_TAB_STRUCTURE"] == 'Y' && (!CModule::IncludeModule('extranet') || CExtranet::IsIntranetUser()) )
 {
 	$arStructure = CIntranetUtils::getSubStructure(0, 1);
-	$arSections  = $arStructure['DATA'];
-	$arStructure = $arStructure['TREE'];
+	$arSections  = $arStructure['DATA'] ?? [];
+	$arStructure = $arStructure['TREE'] ?? [];
 
 	if($bSubordinateOnly)
 	{

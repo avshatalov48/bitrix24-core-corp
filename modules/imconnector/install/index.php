@@ -41,14 +41,12 @@ if (!class_exists('imconnector'))
 		public function InstallDB($arParams = [])
 		{
 			global $DB, $APPLICATION;
+			$connection = \Bitrix\Main\Application::getConnection();
 			$this->errors = false;
 
-			if (
-				!$this->errors
-				&& !$DB->Query('SELECT \'x\' FROM b_imconnectors_status WHERE 1=0', true)
-			)
+			if (!$DB->TableExists('b_imconnectors_status'))
 			{
-				$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/imconnector/install/db/mysql/install.sql');
+				$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/imconnector/install/db/' . $connection->getType() . '/install.sql');
 			}
 
 			if ($this->errors !== false)
@@ -133,6 +131,7 @@ if (!class_exists('imconnector'))
 		public function UnInstallDB($arParams = [])
 		{
 			global $DB, $APPLICATION;
+			$connection = \Bitrix\Main\Application::getConnection();
 			$this->errors = false;
 
 			if (
@@ -140,7 +139,7 @@ if (!class_exists('imconnector'))
 				&& $arParams['savedata'] !== 'Y'
 			)
 			{
-				$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/imconnector/install/db/mysql/uninstall.sql');
+				$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/imconnector/install/db/' . $connection->getType() . '/uninstall.sql');
 
 				$rsUserType = \CUserTypeEntity::GetList(
 					[],

@@ -25,11 +25,16 @@ Bitrix\Main\UI\Extension::load([
 	'ui.buttons',
 	'ui.forms',
 	'ui.entity-selector',
+	'ui.sidepanel-content',
+	'ui.alerts',
 ]);
 
-foreach ($arResult['ERRORS'] as $error)
+if (isset($arResult['ERRORS']['BASE']) && is_array($arResult['ERRORS']['BASE']))
 {
-	ShowError($error);
+	foreach ($arResult['ERRORS']['BASE'] as $error)
+	{
+		ShowError($error);
+	}
 }
 
 $users = [];
@@ -38,27 +43,46 @@ foreach ($arResult['FORM_DATA']['USERS'] as $userId)
 	$users[] = ['user', $userId];
 }
 ?>
-<form class="biconnector-dashboard-edit-wrapper" method="post">
+<form class="biconnector-dashboard-edit__wrapper" method="post">
 	<?=bitrix_sessid_post()?>
 	<input type="hidden" name="ID" value="<?=$arResult['FORM_DATA']['ID']?>">
 	<input type="hidden" name="USERS" id="USERS" value="<?=htmlspecialcharsbx(implode(',', $arResult['FORM_DATA']['USERS']))?>">
-	<div class="biconnector-dashboard-edit-wrapper-form-inner">
-		<div class="biconnector-dashboard-edit-wrapper-form-row">
-			<div class="ui-ctl-label-text"><?=Loc::getMessage('CT_BBDE_NAME')?></div>
+	<div class="biconnector-dashboard-edit__wrapper_form-inner">
+		<div class="biconnector-dashboard-edit__wrapper_form-row<?= isset($arResult['ERRORS']['NAME']) ? ' --error' : ''?>">
+			<div class="ui-slider-heading-4"><?=Loc::getMessage('CT_BBDE_NAME')?></div>
 			<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
-			<input type="text" class="ui-ctl-element" name="NAME" value="<?=htmlspecialcharsbx($arResult['FORM_DATA']['NAME'])?>">
-		</div>
+				<input type="text" class="ui-ctl-element" name="NAME" value="<?=htmlspecialcharsbx($arResult['FORM_DATA']['NAME'])?>">
+			</div>
+			<?php if (isset($arResult['ERRORS']['NAME'])): ?>
+				<div class="ui-alert ui-alert-danger ui-alert-icon-danger">
+					<span class="ui-alert-message"><?= $arResult['ERRORS']['NAME'] ?></span>
+				</div>
+			<?php endif; ?>
 		</div>
 
-		<div class="biconnector-dashboard-edit-wrapper-form-row">
-			<div class="ui-ctl-label-text"><?=Loc::getMessage('CT_BBDE_URL')?></div>
+		<div class="biconnector-dashboard-edit__wrapper_form-row<?= isset($arResult['ERRORS']['LINK_FORMAT']) ? ' --error' : ''?>">
+			<div class="ui-slider-heading-4"><?=Loc::getMessage('CT_BBDE_URL')?></div>
 			<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
-			<input type="text" class="ui-ctl-element" name="URL" value="<?=htmlspecialcharsbx($arResult['FORM_DATA']['URL'])?>">
-		</div>
+				<input type="text" class="ui-ctl-element" name="URL" value="<?=htmlspecialcharsbx($arResult['FORM_DATA']['URL'])?>">
+			</div>
+			<?php if (isset($arResult['ERRORS']['LINK_FORMAT'])): ?>
+				<div class="ui-alert ui-alert-danger ui-alert-icon-danger">
+					<span class="ui-alert-message"><?= $arResult['ERRORS']['LINK_FORMAT'] ?></span>
+				</div>
+			<?php endif; ?>
+			<div class="biconnector-dashboard-edit__info">
+				<div class="biconnector-dashboard-edit__info_logo"></div>
+				<div class="biconnector-dashboard-edit__info_content">
+					<?= Loc::getMessage('CT_BBDE_ONBOARDING') ?>
+					<a onclick="top.BX.Helper.show('redirect=detail&code=18017338')" class="biconnector-dashboard-edit_link">
+						<?= Loc::getMessage('CT_BBDE_ONBOARDING_MORE') ?>
+					</a>
+				</div>
+			</div>
 		</div>
 
-		<div class="biconnector-dashboard-edit-wrapper-form-row">
-			<div class="ui-ctl-label-text"><?=Loc::getMessage('CT_BBKE_USERS')?></div>
+		<div class="biconnector-dashboard-edit__wrapper_form-row">
+			<div class="ui-slider-heading-4"><?=Loc::getMessage('CT_BBKE_USERS')?></div>
 			<div id="user-selector"></div>
 		</div>
 

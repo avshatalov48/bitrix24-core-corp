@@ -1978,6 +1978,13 @@ class CAllCrmActivity
 				$fields['~DEADLINE'] = CCrmDateTimeHelper::GetMaxDatabaseDate();
 			}
 		}
+
+		if ($action == 'ADD' && empty($fields['DEADLINE'] ?? null) && empty($fields['~DEADLINE'] ?? null))
+		{
+			unset($fields['DEADLINE']);
+			$fields['~DEADLINE'] = CCrmDateTimeHelper::GetMaxDatabaseDate();
+		}
+
 		// incoming channel activity cannot have a deadline
 		if (($fields['IS_INCOMING_CHANNEL'] ?? null) === 'Y')
 		{
@@ -3831,7 +3838,7 @@ class CAllCrmActivity
 		elseif($entityTypeID === CCrmOwnerType::Contact)
 		{
 			// Empty TYPE is person to person communiation, empty ENTITY_ID is unbound communication - no method to build title
-			if(!($arComm['TYPE'] === '' && intval($arComm['ENTITY_ID']) === 0))
+			if (!(empty($arComm['TYPE']) && intval($arComm['ENTITY_ID']) === 0))
 			{
 				$honorific = '';
 				$name = '';
@@ -3937,19 +3944,21 @@ class CAllCrmActivity
 		}
 		elseif($storageTypeID === StorageType::Disk)
 		{
-			$infos = array();
+			$infos = [];
 			foreach($storageElementIDs as $elementID)
 			{
 				$diskFileInfo = Bitrix\Crm\Integration\DiskManager::getFileInfo(
 					$elementID,
 					false,
-					array('OWNER_TYPE_ID' => CCrmOwnerType::Activity, 'OWNER_ID' => $arFields['ID'])
+					['OWNER_TYPE_ID' => CCrmOwnerType::Activity, 'OWNER_ID' => $arFields['ID'] ?? null]
 				);
+
 				if ($diskFileInfo)
 				{
 					$infos[] = $diskFileInfo;
 				}
 			}
+
 			$arFields['DISK_FILES'] = &$infos;
 			unset($infos);
 		}
@@ -5493,14 +5502,15 @@ class CAllCrmActivity
 			$suffix = "_{$suffix}";
 		}
 
+		$communicationType = $arComm['TYPE'] ?? '';
 		$eventName = GetMessage(
-			"CRM_ACTIVITY_COMM_{$arComm['TYPE']}_{$eventType}{$suffix}",
+			"CRM_ACTIVITY_COMM_{$communicationType}_{$eventType}{$suffix}",
 			array('#NAME#' => self::GetEventName($arFields))
 		);
 
-		if($eventName !== '')
+		if ($eventName !== '')
 		{
-			$arBindings = isset($arFields['BINDINGS']) ? $arFields['BINDINGS'] : self::GetBindings($ID);
+			$arBindings = $arFields['BINDINGS'] ?? self::GetBindings($ID);
 			foreach($arBindings as &$arBinding)
 			{
 				self::RegisterEvents(
@@ -5509,9 +5519,9 @@ class CAllCrmActivity
 					array(
 						array(
 							'EVENT_NAME' => $eventName,
-							'EVENT_TEXT_1' => $arComm['VALUE'],
+							'EVENT_TEXT_1' => $arComm['VALUE'] ?? '',
 							'EVENT_TEXT_2' => '',
-							'USER_ID' => isset($arFields['EDITOR_ID']) ? $arFields['EDITOR_ID'] : 0
+							'USER_ID' => $arFields['EDITOR_ID'] ?? 0
 						)
 					),
 					$checkPerms
@@ -5519,6 +5529,7 @@ class CAllCrmActivity
 			}
 			unset($arBinding);
 		}
+		
 		return true;
 	}
 	public static function GetActivityType(&$arFields)

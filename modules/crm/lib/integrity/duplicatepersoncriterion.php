@@ -367,7 +367,7 @@ class DuplicatePersonCriterion extends DuplicateCriterion
 		$filter = array();
 		if($this->useStrictComparison)
 		{
-			$filter['LAST_NAME'] = self::prepareCode($this->lastName);
+			$filter['=LAST_NAME'] = self::prepareCode($this->lastName);
 		}
 		else
 		{
@@ -378,7 +378,7 @@ class DuplicatePersonCriterion extends DuplicateCriterion
 		{
 			if($this->useStrictComparison)
 			{
-				$filter['NAME'] = self::prepareCode($this->name);
+				$filter['=NAME'] = self::prepareCode($this->name);
 			}
 			else
 			{
@@ -390,7 +390,7 @@ class DuplicatePersonCriterion extends DuplicateCriterion
 		{
 			if($this->useStrictComparison)
 			{
-				$filter['SECOND_NAME'] = self::prepareCode($this->secondName);
+				$filter['=SECOND_NAME'] = self::prepareCode($this->secondName);
 			}
 			else
 			{
