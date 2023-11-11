@@ -14,6 +14,10 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 	 */
 	class LoadService
 	{
+		/**
+		 *
+		 * @param {MessengerCoreStore} store
+		 */
 		constructor(store)
 		{
 			this.store = store;
@@ -60,7 +64,21 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 							inited: true,
 						},
 					});
-				});
+				})
+				.catch((error) => {
+					const extractor = new RestDataExtractor(error);
+					Object.values(extractor.errors).forEach((methodError) => {
+						if (!methodError)
+						{
+							return;
+						}
+
+						throw methodError.ex.error;
+					});
+
+					throw extractor.errors;
+				})
+			;
 		}
 
 		/**
@@ -74,12 +92,14 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 			const usersPromise = this.store.dispatch('usersModel/set', extractor.getUsers());
 			const dialoguesPromise = this.store.dispatch('dialoguesModel/set', extractor.getDialogues());
 			const filesPromise = this.store.dispatch('filesModel/set', extractor.getFiles());
+			const reactionPromise = this.store.dispatch('messagesModel/reactionsModel/set', extractor.getReactions());
+
 			const messagesPromise = [
+				this.store.dispatch('messagesModel/store', extractor.getMessagesToStore()),
 				this.store.dispatch('messagesModel/setChatCollection', {
 					messages: extractor.getMessages(),
 					clearCollection: true,
 				}),
-				this.store.dispatch('messagesModel/store', extractor.getMessagesToStore()),
 				this.store.dispatch('messagesModel/setPinned', {
 					chatId: extractor.getChatId(),
 					pinnedMessages: extractor.getPinnedMessages(),
@@ -90,8 +110,10 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 				usersPromise,
 				dialoguesPromise,
 				filesPromise,
-				Promise.all(messagesPromise),
-			]);
+				reactionPromise,
+			])
+				.then(() => Promise.all(messagesPromise))
+			;
 		}
 	}
 

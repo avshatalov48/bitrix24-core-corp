@@ -77,11 +77,11 @@ this.BX.Landing = this.BX.Landing || {};
 	    main_core.Dom.attr(this.node, 'href', decodeDataValue(data.href));
 	    main_core.Dom.attr(this.node, 'target', escapeText(data.target));
 	    if ('attrs' in data) {
-	      for (const attr in data.attrs) {
-	        if (data.attrs.hasOwn(attr)) {
+	      Object.keys(data.attrs).forEach(attr => {
+	        if (Object.prototype.hasOwnProperty.call(data.attrs, attr)) {
 	          main_core.Dom.attr(this.node, attr, data.attrs[attr]);
 	        }
-	      }
+	      });
 	    } else {
 	      main_core.Dom.attr(this.node, 'data-url', null);
 	      main_core.Dom.attr(this.node, 'data-embed', null);
@@ -93,7 +93,7 @@ this.BX.Landing = this.BX.Landing || {};
 	   * @return {boolean}
 	   */
 	  containsImage() {
-	    return !!this.node.firstElementChild && this.node.firstElementChild.tagName === 'IMG';
+	    return Boolean(this.node.firstElementChild) && this.node.firstElementChild.tagName === 'IMG';
 	  }
 
 	  /**
@@ -154,7 +154,7 @@ this.BX.Landing = this.BX.Landing || {};
 	          siteId: BX.Landing.Main.getInstance().options.site_id,
 	          landingId: BX.Landing.Main.getInstance().id
 	        },
-	        allowedTypes: allowedTypes
+	        allowedTypes
 	      });
 	    } else if (!preventAdjustValue) {
 	      this.field.setValue(value);

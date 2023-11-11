@@ -9,6 +9,9 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { parser } = require('im/messenger/lib/parser');
+	const { defaultUserIcon } = require('im/messenger/assets/common');
+	const { ColorUtils } = require('im/messenger/lib/utils');
+	const { ReactionType } = require('im/messenger/const');
 
 	const MessageAlign = Object.freeze({
 		center: 'center',
@@ -52,17 +55,15 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				isBackgroundOn: true,
 				roundedCorners: true,
 			};
+			this.reactions = [];
+			/** @deprecated */
+			this.ownReactions = []; //TODO delete after the new format is supported on iOS
+
 			this.showUsername = true;
 			// TODO change user color for message
 			this.userColor = '#428ae8';
 			this.isAuthorBottomMessage = false;
 			this.isAuthorTopMessage = false;
-
-			let likeList = [];
-			if (modelMessage.params && modelMessage.params.REACTION && modelMessage.params.REACTION.like)
-			{
-				likeList = modelMessage.params.REACTION.like;
-			}
 
 			this
 				.setId(modelMessage.id)
@@ -75,7 +76,8 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setWasSent(!modelMessage.error)
 				.setStatus(modelMessage)
 				.setStatusText(modelMessage)
-				.setLikes(likeList)
+				.setLikes(modelMessage.reactions)
+				.setReactions(modelMessage.reactions)
 				.setShowUsername(modelMessage, options.showUsername)
 				.setShowAvatar(modelMessage, options.showAvatar)
 				.setFontColor(options.fontColor)
@@ -131,7 +133,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setUsername(authorId)
 		{
-			const user = core.getStore().getters['usersModel/getUserById'](authorId);
+			const user = core.getStore().getters['usersModel/getById'](authorId);
 
 			this.username = (user && user.name) ? user.name : '';
 
@@ -140,7 +142,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setAvatar(authorId)
 		{
-			const user = core.getStore().getters['usersModel/getUserById'](authorId);
+			const user = core.getStore().getters['usersModel/getById'](authorId);
 
 			this.avatarUrl = (user && user.avatar) ? user.avatar : '';
 
@@ -149,7 +151,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setUserColor(authorId)
 		{
-			const user = core.getStore().getters['usersModel/getUserById'](authorId);
+			const user = core.getStore().getters['usersModel/getById'](authorId);
 
 			this.userColor = (user && user.color) ? user.color : '#048bd0';
 
@@ -204,7 +206,36 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setMessage(text = '')
 		{
-			const message = parser.decodeMessageFromText(text);
+			let messageText = text;
+
+			// TODO: remove after native support for attachments
+			const modelMessage = core.store.getters['messagesModel/getById'](this.id);
+			const isMessageWithAttach = modelMessage
+				&& modelMessage.params
+				&& modelMessage.params.ATTACH
+				&& modelMessage.params.ATTACH[0]
+			;
+			if (isMessageWithAttach)
+			{
+				if (Type.isStringFilled(text))
+				{
+					messageText += '\n\n';
+				}
+
+				const attach = modelMessage.params.ATTACH[0];
+				if (Type.isStringFilled(attach.DESCRIPTION) && attach.DESCRIPTION !== 'SKIP_MESSAGE')
+				{
+					messageText += `${attach.DESCRIPTION}\n`;
+				}
+
+				const openAttachText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_ATTACH_SHOW');
+				// link to avoid processing by the general rules for /mobile/ (open in full screen widget)
+				const openAttachUrl = `${core.getHost()}/immobile/in-app/message-attach/${modelMessage.id}`;
+				const attachIcon = String.fromCodePoint(128_206);
+				messageText += `${attachIcon} [b][url=${openAttachUrl}]${openAttachText}[/url][/b]`;
+			}
+
+			const message = parser.decodeMessageFromText(messageText);
 			if (Type.isArrayFilled(message))
 			{
 				this.message = message;
@@ -230,15 +261,95 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			return this;
 		}
 
-		setLikes(likeList)
+		/**
+		 *
+		 * @param {ReactionsModelState} reactions
+		 * @return {Message}
+		 */
+		setLikes(reactions)
 		{
-			if (!Type.isArray(likeList))
+			if (!Type.isPlainObject(reactions))
 			{
 				return this;
 			}
 
-			this.likeCount = likeList.length;
-			this.meLiked = likeList.includes(MessengerParams.getUserId());
+			this.likeCount = Object.values(reactions.reactionCounters)
+				.reduce((currentSum, currentNumber) => {
+					return currentSum + currentNumber;
+				}, 0)
+			;
+
+			this.meLiked = reactions.ownReactions.size > 0;
+
+			return this;
+		}
+
+		/**
+		 *
+		 * @param {ReactionsModelState} reactionsList
+		 */
+		setReactions(reactionsList)
+		{
+			const colorUtils = new ColorUtils();
+			if (!reactionsList)
+			{
+				this.ownReactions = [];
+				this.reactions = [];
+
+				return this;
+			}
+
+			this.ownReactions = [...reactionsList.ownReactions]; // TODO delete after the new format is supported on iOS
+
+			const reactions = [];
+			Object.values(ReactionType)
+				/** @type {ReactionType} */
+				.forEach((reactionType) => {
+					if (!reactionsList.reactionCounters[reactionType])
+					{
+						return;
+					}
+
+					const reaction = {
+						id: reactionType,
+						testId: `REACTION_${reactionType.toUpperCase()}`,
+						counter: reactionsList.reactionCounters[reactionType],
+						meLiked: reactionsList.ownReactions.has(reactionType),
+					};
+
+					if (reactionsList.reactionUsers.has(reactionType))
+					{
+						reaction.users = reactionsList.reactionUsers
+							.get(reactionType)
+							.map((user) => {
+								const userModel = core.getStore().getters['usersModel/getById'](user.id);
+
+								const result = {
+									isCurrentUser: user.id === MessengerParams.getUserId(),
+								};
+
+								if (user.avatar !== '')
+								{
+									result.imageUrl = user.avatar;
+
+									return result;
+								}
+
+								result.defaultIconSvg = defaultUserIcon(
+									userModel
+										? userModel.color
+										: colorUtils.getColorByNumber(user.id),
+								);
+
+								return result;
+							})
+						;
+					}
+
+					reactions.push(reaction);
+				})
+			;
+			this.reactions = reactions;
 
 			return this;
 		}

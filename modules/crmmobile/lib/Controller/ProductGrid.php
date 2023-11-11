@@ -11,6 +11,7 @@ use Bitrix\CrmMobile\ProductGrid\SingleProductQuery;
 use Bitrix\CrmMobile\ProductGrid\SkuCollectionQuery;
 use Bitrix\CrmMobile\ProductGrid\SummaryQuery;
 use Bitrix\CrmMobile\ProductGrid\ConvertCurrencyQuery;
+use Bitrix\CrmMobile\ProductGrid\CompleteStoresQuery;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Engine\JsonController;
 use Bitrix\Main\Loader;
@@ -56,18 +57,35 @@ class ProductGrid extends JsonController
 		return (new SummaryQuery($entity, $products, $currencyId))->execute();
 	}
 
-	public function loadProductModelAction(int $productId, string $currencyId, Item $entity): array
+	public function loadProductModelAction(
+		Item $entity,
+		int $productId,
+		string $currencyId
+	): array
 	{
 		return (new SingleProductQuery($entity, $productId, $currencyId))->execute();
 	}
 
-	public function loadSkuCollectionAction(int $variationId, string $currencyId): array
+	public function loadSkuCollectionAction(
+		Item $entity,
+		int $variationId,
+		string $currencyId
+	): array
 	{
-		return (new SkuCollectionQuery($variationId, $currencyId))->execute();
+		return (new SkuCollectionQuery($entity, $variationId, $currencyId))->execute();
 	}
 
-	public function convertCurrencyAction(string $currencyId, array $products = []): array
+	public function convertCurrencyAction(
+		Item $entity,
+		string $currencyId,
+		array $products = []
+	): array
 	{
-		return (new ConvertCurrencyQuery($currencyId, $products))->execute();
+		return (new ConvertCurrencyQuery($entity, $currencyId, $products))->execute();
+	}
+
+	public function completeStoresAction(Item $entity, array $products = []): array
+	{
+		return (new CompleteStoresQuery($entity, $products))->execute();
 	}
 }

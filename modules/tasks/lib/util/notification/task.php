@@ -9,6 +9,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Integration\IM;
 use Bitrix\Tasks\Internals\Runtime;
 use Bitrix\Tasks\Internals\Task\MemberTable;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Util\Type\DateTime;
 
@@ -80,7 +81,7 @@ final class Task
 			'!DEADLINE' => null,
 			'>=DEADLINE' => static::getDayStartDateTime(), // day start
 			'<=DEADLINE' => new DateTime(), // current time
-			'=STATUS' => [\CTasks::STATE_PENDING, \CTasks::STATE_IN_PROGRESS],
+			'=STATUS' => [Status::PENDING, Status::IN_PROGRESS],
 		]);
 		$query->registerRuntimeField('', new ReferenceField(
 			'TM',

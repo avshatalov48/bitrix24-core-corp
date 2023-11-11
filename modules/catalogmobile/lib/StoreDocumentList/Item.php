@@ -16,9 +16,8 @@ class Item
 
 	protected const SUM_FIELD_ID = 'TOTAL_WITH_CURRENCY';
 	protected const CONTRACTOR_FIELD_ID = 'CONTRACTOR_ID';
-	protected const STATUS_FIELD_ID = 'DOC_STATUS';
 
-	protected $document = [];
+	protected array $document = [];
 
 	public function __construct($document)
 	{

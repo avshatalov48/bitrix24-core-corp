@@ -28,12 +28,12 @@ trait CommandTrait
 
 		if ($userId)
 		{
-			$where[] = '`USER_ID` = ' . $userId;
+			$where[] = 'USER_ID = ' . $userId;
 		}
 
 		if (!empty($types))
 		{
-			$where[] = "`TYPE` IN ('". implode("','", $types) ."')";
+			$where[] = "TYPE IN ('". implode("','", $types) ."')";
 		}
 
 		if (!empty($tasksIds))
@@ -65,7 +65,7 @@ trait CommandTrait
 	{
 		$sql = "
 			INSERT INTO ". CounterTable::getTableName() ."
-			(`USER_ID`, `TASK_ID`, `GROUP_ID`, `TYPE`, `VALUE`)
+			(USER_ID, TASK_ID, GROUP_ID, TYPE, VALUE)
 			VALUES ({$userId}, 0, 0, '". CounterDictionary::COUNTER_FLAG_COUNTED ."', 1)
 		";
 		Application::getConnection()->query($sql);
@@ -91,7 +91,7 @@ trait CommandTrait
 
 		$sql = "
 			INSERT INTO ". CounterTable::getTableName(). "
-			(`USER_ID`, `TASK_ID`, `GROUP_ID`, `TYPE`, `VALUE`)
+			(USER_ID, TASK_ID, GROUP_ID, TYPE, VALUE)
 			VALUES
 			(". implode("),(", $req) .")
 		";

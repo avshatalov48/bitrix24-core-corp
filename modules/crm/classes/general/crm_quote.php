@@ -342,7 +342,7 @@ class CAllCrmQuote
 					}
 					else
 					{
-						$this->LAST_ERROR = GetMessage('CRM_QUOTE_CREATION_CANCELED', array('#NAME#' => $arEvent['TO_NAME']));
+						$this->LAST_ERROR = GetMessage('CRM_QUOTE_CREATION_CANCELED_MSGVER_1', ['#NAME#' => $arEvent['TO_NAME']]);
 						$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
 					}
 					return false;
@@ -368,7 +368,7 @@ class CAllCrmQuote
 
 			if (!self::SetQuoteNumber($ID))
 			{
-				$this->LAST_ERROR = GetMessage('CRM_ERROR_QUOTE_NUMBER_IS_NOT_SET');
+				$this->LAST_ERROR = GetMessage('CRM_ERROR_QUOTE_NUMBER_IS_NOT_SET_MSGVER_1');
 				$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
 				return false;
 			}
@@ -453,11 +453,11 @@ class CAllCrmQuote
 		{
 			/*if (strlen($arFields['QUOTE_NUMBER']) <= 0)
 			{
-				$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_IS_MISSING', array('%FIELD_NAME%' => GetMessage('CRM_QUOTE_FIELD_QUOTE_NUMBER')))."<br />\n";
+				$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_IS_MISSING', array('%FIELD_NAME%' => GetMessage('CRM_QUOTE_FIELD_QUOTE_NUMBER_MSGVER_1')))."<br />\n";
 			}
 			else*/ if (mb_strlen($arFields['QUOTE_NUMBER']) > 100)
 			{
-				$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_QUOTE_FIELD_QUOTE_NUMBER')))."<br />\n";
+				$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_QUOTE_FIELD_QUOTE_NUMBER_MSGVER_1')))."<br />\n";
 			}
 			else
 			{
@@ -466,7 +466,7 @@ class CAllCrmQuote
 				{
 					if (is_array($arRes) && $arRes["ID"] != $ID)
 					{
-						$this->LAST_ERROR .= GetMessage('CRM_ERROR_QUOTE_NUMBER_EXISTS')."<br />\n";
+						$this->LAST_ERROR .= GetMessage('CRM_ERROR_QUOTE_NUMBER_EXISTS_MSGVER_1')."<br />\n";
 					}
 				}
 				unset($arRes, $dbres);
@@ -909,7 +909,7 @@ class CAllCrmQuote
 					}
 					else
 					{
-						$this->LAST_ERROR = GetMessage('CRM_QUOTE_UPDATE_CANCELED', array('#NAME#' => $arEvent['TO_NAME']));
+						$this->LAST_ERROR = GetMessage('CRM_QUOTE_UPDATE_CANCELED_MSGVER_1', ['#NAME#' => $arEvent['TO_NAME']]);
 						$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
 					}
 					return false;
@@ -1106,7 +1106,7 @@ class CAllCrmQuote
 				'DELETE FROM '.CCrmQuote::ELEMENT_TABLE_NAME.' WHERE QUOTE_ID = '.$ID,
 				false, 'File: '.__FILE__.'<br/>Line: '.__LINE__))
 			{
-				$APPLICATION->throwException(GetMessage('CRM_QUOTE_ERR_DELETE_STORAGE_ELEMENTS_QUERY'));
+				$APPLICATION->throwException(GetMessage('CRM_QUOTE_ERR_DELETE_STORAGE_ELEMENTS_QUERY_MSGVER_1'));
 				return false;
 			}
 		}
@@ -1966,6 +1966,10 @@ class CAllCrmQuote
 		if (!(is_string($result) && $result !== ''))
 		{
 			$result = GetMessage("CRM_QUOTE_FIELD_{$fieldName}_MSGVER_1");
+		}
+		if (!(is_string($result) && $result !== ''))
+		{
+			$result = GetMessage("CRM_QUOTE_FIELD_{$fieldName}_MSGVER_2");
 		}
 
 		if (
@@ -3529,7 +3533,7 @@ class CAllCrmQuote
 		$ID = intval($ID);
 		if($ID <= 0)
 		{
-			$APPLICATION->throwException(GetMessage('CRM_QUOTE_ERR_INCORRECT_QUOTE_ID'));
+			$APPLICATION->throwException(GetMessage('CRM_QUOTE_ERR_INCORRECT_QUOTE_ID_MSGVER_1'));
 			return false;
 		}
 
@@ -3538,7 +3542,7 @@ class CAllCrmQuote
 		$arRes = $dbRes->Fetch();
 		if(!is_array($arRes))
 		{
-			$APPLICATION->throwException(GetMessage('CRM_QUOTE_ERR_QUOTE_NOT_FOUND', array('#QUOTE_ID#' => $ID)));
+			$APPLICATION->throwException(GetMessage('CRM_QUOTE_ERR_QUOTE_NOT_FOUND_MSGVER_1', ['#QUOTE_ID#' => $ID]));
 			return false;
 		}
 
@@ -3840,7 +3844,7 @@ class CAllCrmQuote
 										$requisite->getRqListFieldValueTitle(
 											$fieldName,
 											$presetCountryId,
-											$fieldValue
+											(string)$fieldValue
 										)
 									;
 								}
@@ -4145,7 +4149,7 @@ class CAllCrmQuote
 										$requisite->getRqListFieldValueTitle(
 											$fieldName,
 											$mcPresetCountryId,
-											$fieldValue
+											(string)$fieldValue
 										)
 									;
 								}

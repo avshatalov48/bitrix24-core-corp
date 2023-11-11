@@ -1,7 +1,8 @@
 .mobile-timeman {
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-regular, 400);
-	color: #293139;
+	color: var(--base1);
+	background-color: var(--bg-content-primary);
 	font-size: 22px;
 	display: flex;
 	position: absolute;
@@ -14,7 +15,9 @@
 	align-items: stretch;
 	min-height: 400px;
 }
-
+.mobile-timeman-view {
+	background-color: var(--bg-content-primary);
+}
 .mobile-timeman-timing {
 	display: flex;
 	align-items: center;
@@ -55,7 +58,7 @@
 	display: flex;
 	flex: 1;
 	padding: 0 35px;
-	color: #535c69;
+	color: var(--base2);
 	flex-direction: column;
 	align-items: stretch;
 }
@@ -77,13 +80,13 @@
 	width: 100%;
 	margin: 0 -35px 18px -35px;
 	padding: 10px 35px;
-	border: 1px solid #293139;
+	border: 1px solid var(--base1);
 	border-left: none;
 	border-right: none;
 	font-size: 18px;
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-regular, 400);
-	color: #535c69;
+	color: var(--base2);
 	resize: none;
 	-webkit-appearance: none;
 	-webkit-border-radius: 0;
@@ -93,7 +96,7 @@
 
 .mobile-timeman-control-info {
 	font-size: 16px;
-	color: #acb4bf;
+	color: var(--base4);
 	text-align: center;
 	margin: 0 0 18px 0;
 }
@@ -105,7 +108,7 @@
 	width: 100%;
 	max-width: 300px;
 	font-size: 16px;
-	color: #293139;
+	color: var(--base1);
 	margin: 0 auto 18px auto;
 }
 
@@ -134,13 +137,13 @@
 	height: 47px;
 	line-height: 47px;
 	max-width: 300px;
-	background: #ecedef;
+	background: var(--base7);
 	-webkit-border-radius: 2px;
 	-moz-border-radius: 2px;
 	border-radius: 2px;
 	border: none;
 	cursor: pointer;
-	color: #293139;
+	color: var(--base1);
 	display: block;
 	margin: 0 auto 15px auto;
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
@@ -160,32 +163,33 @@
 }
 
 .mobile-button:active {
-	background: #868d95;
+	background: var(--base3);
 	-webkit-box-shadow: none;
 	box-shadow: none;
-	color: #fff;
+	color: var(--graphics-base1);
 }
 
 .mobile-button-decline {
-	background: #f1361b;
+	background: var(--accent-soft-element-red1);
 	-webkit-box-shadow: none;
 	box-shadow: none;
-	color: #fff;
+	color: var(--base-white-fixed);
 }
 
 .mobile-button-decline:active {
-	background: #d24430;
-	color: #fff;
+	background: var(--accent-soft-element-red1);
+	opacity: 0.8;
+	color: var(--base-white-fixed);
 }
 
 .mobile-button-create {
-	background: #bbed21;
-	color: #293139;
+	background: var(--accent-brand-green);
+	color: var(--base1);
 }
 
 .mobile-button-create:active {
-	background: #b2e233;
-	color: #535c69;
+	background: var(--accent-main-success);
+	color: var(--base2);
 }
 
 .mobile-button:disabled {
@@ -197,7 +201,7 @@
 	display: block;
 	font-size: 28px;
 	text-align: center;
-	color: #293139;
+	color: var(--base1);
 	padding: 0 0 37px 0;
 }
 
@@ -228,7 +232,7 @@
 	.mobile-timeman-completion-textarea {
 		font-size: 16px;
 		font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-regular, 400);
+		font-weight: var(--ui-font-weight-regular, 400);
 	}
 
 	.mobile-timeman-control-info {

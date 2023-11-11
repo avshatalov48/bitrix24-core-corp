@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,main_core,rest_client) {
 	'use strict';
@@ -11,7 +12,6 @@ this.BX = this.BX || {};
 	      taskComplete: 'taskComplete'
 	    };
 	  }
-
 	  static get accessActions() {
 	    return {
 	      deadlineChange: 'CHANGE_DEADLINE',
@@ -20,7 +20,6 @@ this.BX = this.BX || {};
 	      taskComplete: 'COMPLETE'
 	    };
 	  }
-
 	  static get ajaxActions() {
 	    return {
 	      deadlineChange: 'tasks.task.update',
@@ -29,7 +28,6 @@ this.BX = this.BX || {};
 	      taskComplete: 'tasks.task.complete'
 	    };
 	  }
-
 	  static get actionNotificationMessages() {
 	    const prefix = 'TASKS_COMMENT_ACTION_CONTROLLER_NOTIFICATION';
 	    return {
@@ -39,11 +37,9 @@ this.BX = this.BX || {};
 	      taskComplete: main_core.Loc.getMessage(`${prefix}_TASK_COMPLETE`)
 	    };
 	  }
-
 	  static init(parameters = {}) {
 	    return new Promise(resolve => {
 	      const promisesToResolve = [];
-
 	      if (!CommentActionController.workHours) {
 	        if (parameters.workHours) {
 	          CommentActionController.workHours = parameters.workHours;
@@ -51,7 +47,6 @@ this.BX = this.BX || {};
 	          promisesToResolve.push(CommentActionController.loadWorkHours());
 	        }
 	      }
-
 	      if (!CommentActionController.workSettings) {
 	        if (parameters.workSettings) {
 	          CommentActionController.workSettings = parameters.workSettings;
@@ -59,15 +54,12 @@ this.BX = this.BX || {};
 	          promisesToResolve.push(CommentActionController.loadWorkSettings());
 	        }
 	      }
-
 	      if (!promisesToResolve.length) {
 	        resolve();
 	      }
-
 	      Promise.all(promisesToResolve).then(() => resolve());
 	    });
 	  }
-
 	  static loadWorkHours() {
 	    return new Promise(resolve => {
 	      rest_client.rest.callMethod('calendar.settings.get').then(response => {
@@ -90,7 +82,6 @@ this.BX = this.BX || {};
 	      });
 	    });
 	  }
-
 	  static loadWorkSettings() {
 	    return new Promise(resolve => {
 	      main_core.ajax.runAction('tasks.userOption.getCalendarTimeVisibilityOption').then(response => {
@@ -101,32 +92,26 @@ this.BX = this.BX || {};
 	      });
 	    });
 	  }
-
 	  static isActionValid(action) {
 	    return Object.keys(CommentActionController.possibleActions).includes(action);
 	  }
-
 	  static processLink(link) {
 	    const [url, userId, taskId, action, deadline] = link.matches;
-
 	    if (!CommentActionController.isActionValid(action)) {
 	      return;
 	    }
-
 	    if (action === CommentActionController.possibleActions.deadlineChange) {
 	      CommentActionController.init().then(() => {
 	        CommentActionController.showDeadlinePicker(link.anchor, taskId, deadline);
 	      });
 	      return;
 	    }
-
 	    CommentActionController.checkCanRun(action, taskId).then(response => {
 	      if (response) {
 	        CommentActionController.runAjaxAction(action, taskId);
 	      }
 	    }, response => console.error(response));
 	  }
-
 	  static showDeadlinePicker(target, taskId, deadline) {
 	    const now = new Date();
 	    const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), CommentActionController.workHours.end.hours, CommentActionController.workHours.end.minutes));
@@ -146,7 +131,6 @@ this.BX = this.BX || {};
 	      callback_after: value => CommentActionController.onDeadlinePicked(value, taskId)
 	    });
 	  }
-
 	  static onDeadlinePicked(value, taskId) {
 	    const action = CommentActionController.possibleActions.deadlineChange;
 	    CommentActionController.checkCanRun(action, taskId).then(response => {
@@ -159,13 +143,11 @@ this.BX = this.BX || {};
 	      }
 	    }, response => console.error(response));
 	  }
-
 	  static checkCanRun(action, taskId) {
 	    return new Promise((resolve, reject) => {
 	      if (CommentActionController.isAjaxRunning) {
 	        resolve(false);
 	      }
-
 	      CommentActionController.isAjaxRunning = true;
 	      main_core.ajax.runAction('tasks.task.getAccess', {
 	        data: {
@@ -182,29 +164,24 @@ this.BX = this.BX || {};
 	      }, response => reject(response));
 	    });
 	  }
-
 	  static runAjaxAction(action, taskId, data = {}) {
 	    if (CommentActionController.isAjaxRunning) {
 	      return;
 	    }
-
 	    CommentActionController.isAjaxRunning = true;
-
 	    if (action !== 'taskComplete') {
 	      CommentActionController.showNotification(action);
 	    }
-
 	    const defaultData = {
 	      taskId
 	    };
-	    data = { ...data,
+	    data = {
+	      ...data,
 	      ...defaultData
 	    };
-
 	    if (!data.params) {
 	      data.params = {};
 	    }
-
 	    data.params.PLATFORM = 'web';
 	    main_core.ajax.runAction(CommentActionController.ajaxActions[action], {
 	      data: data
@@ -212,7 +189,6 @@ this.BX = this.BX || {};
 	      if (action === 'taskComplete') {
 	        CommentActionController.showNotification(action);
 	      }
-
 	      CommentActionController.isAjaxRunning = false;
 	    }, response => {
 	      if (response && response.errors) {
@@ -225,11 +201,9 @@ this.BX = this.BX || {};
 	        const Tasks = main_core.Reflection.getClass('BX.Tasks');
 	        Tasks.alert([errorMsg]);
 	      }
-
 	      CommentActionController.isAjaxRunning = false;
 	    });
 	  }
-
 	  static showNotification(action) {
 	    main_core.Runtime.loadExtension('ui.notification').then(() => {
 	      const notificationCenter = main_core.Reflection.getClass('BX.UI.Notification.Center');
@@ -238,9 +212,7 @@ this.BX = this.BX || {};
 	      });
 	    });
 	  }
-
 	}
-
 	CommentActionController.workHours = null;
 	CommentActionController.workSettings = null;
 	CommentActionController.isAjaxRunning = false;

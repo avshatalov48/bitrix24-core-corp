@@ -213,7 +213,7 @@ class CCrmEntityProgressBarComponent extends CBitrixComponent
 
 			$infos = CCrmViewHelper::GetQuoteStatusInfos();
 			\CCrmViewHelper::PrepareQuoteStatusInfoExtraParams($infos);
-			$this->arResult['TERMINATION_TITLE'] = Loc::getMessage('CRM_ENTITY_ED_PROG_QUOTE_CLOSE');
+			$this->arResult['TERMINATION_TITLE'] = Loc::getMessage('CRM_ENTITY_ED_PROG_QUOTE_CLOSE_MSGVER_1');
 		}
 		else if($this->entityTypeID === CCrmOwnerType::Order)
 		{

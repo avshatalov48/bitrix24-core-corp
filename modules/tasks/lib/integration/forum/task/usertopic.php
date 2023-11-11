@@ -11,6 +11,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Integration\Forum;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
+use Bitrix\Tasks\Internals\Task\Status;
 use CTaskItem;
 use Exception;
 
@@ -176,12 +177,12 @@ class UserTopic extends Forum
 
 		if ($closedOnly)
 		{
-			$condition[] = 'T.STATUS = '. \CTasks::STATE_COMPLETED;
+			$condition[] = 'T.STATUS = '. Status::COMPLETED;
 		}
 
 		$condition[] = 'TV.VIEWED_DATE IS NULL';
 		$condition[] = 'FM.POST_DATE > T.CREATED_DATE';
-		$condition[] = 'FM.NEW_TOPIC = "N"';
+		$condition[] = 'FM.NEW_TOPIC = \'N\'';
 
 		$condition = '(' . implode(') AND (', $condition) . ')';
 		$sql = "

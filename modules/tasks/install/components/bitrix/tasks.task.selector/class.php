@@ -5,6 +5,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Internals\Task\MetaStatus;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Util\User;
 
 Loc::loadMessages(__FILE__);
@@ -96,11 +98,11 @@ class TasksTaskSelectorComponent extends TasksBaseComponent
 			[
 				'DOER' => User::getId(),
 				'STATUS' => [
-					CTasks::METASTATE_VIRGIN_NEW,
-					CTasks::METASTATE_EXPIRED,
-					CTasks::STATE_NEW,
-					CTasks::STATE_PENDING,
-					CTasks::STATE_IN_PROGRESS
+					MetaStatus::UNSEEN,
+					MetaStatus::EXPIRED,
+					Status::NEW,
+					Status::PENDING,
+					Status::IN_PROGRESS,
 				]
 			],
 			$this->arParams['FILTER']

@@ -27,7 +27,7 @@ jn.define('layout/ui/detail-card/floating-button/menu', (require, exports, modul
 			{
 				this.recentStorage = new MenuRecentStorage({
 					entityTypeId: this.detailCard.getEntityTypeId(),
-					categoryId: this.detailCard.getComponentParams()['categoryId'],
+					categoryId: this.detailCard.getComponentParams().categoryId,
 				});
 			}
 		}
@@ -113,7 +113,6 @@ jn.define('layout/ui/detail-card/floating-button/menu', (require, exports, modul
 			}
 
 			return Promise.resolve();
-
 		}
 
 		getGridViewRecentItems()
@@ -136,7 +135,7 @@ jn.define('layout/ui/detail-card/floating-button/menu', (require, exports, modul
 					{ style: { height } },
 					RecentGridView(this.detailCard, recentItems),
 				),
-				height: height,
+				height,
 			};
 		}
 
@@ -149,7 +148,7 @@ jn.define('layout/ui/detail-card/floating-button/menu', (require, exports, modul
 			/** @var {FloatingMenuItem[]} items */
 			let items = [...this.items];
 
-			items = items.filter((item) => item.isAvailable());
+			items = items.filter((item) => (item.isAvailable() && !item.isDisabled()));
 			items.sort((a, b) => a.getPosition() - b.getPosition());
 
 			return items;
@@ -263,7 +262,6 @@ jn.define('layout/ui/detail-card/floating-button/menu', (require, exports, modul
 			}
 
 			return null;
-
 		}
 
 		/**

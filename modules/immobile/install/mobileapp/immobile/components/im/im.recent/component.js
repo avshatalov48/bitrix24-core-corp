@@ -6,6 +6,7 @@
 var { ChatSelector } = jn.require('im/chat/selector/chat');
 var { EntityReady } = jn.require('entity-ready');
 var { SelectorDialogListAdapter } = jn.require('im/chat/selector/adapter/dialog-list');
+var { Theme } = jn.require('im/lib/theme');
 
 var REVISION = 19; // api revision - sync with im/lib/revision.php
 
@@ -517,6 +518,8 @@ RecentList.getOpenDialogParams = function(dialogId, modern, push)
 			WIDGET_CHAT_TRANSFER_VERSION : BX.componentParameters.get('WIDGET_CHAT_TRANSFER_VERSION', '1.0.0'),
 
 			WIDGET_BACKDROP_MENU_VERSION : BX.componentParameters.get('WIDGET_BACKDROP_MENU_VERSION', '1.0.0'),
+
+			THEME_ID: Theme.getInstance().getId(),
 		};
 	}
 	else

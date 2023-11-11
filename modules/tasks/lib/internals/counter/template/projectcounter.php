@@ -1,20 +1,17 @@
 <?php
-/**
- * Bitrix Framework
- * @package bitrix
- * @subpackage tasks
- * @copyright 2001-2021 Bitrix
- */
 
 namespace Bitrix\Tasks\Internals\Counter\Template;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
-use Bitrix\Tasks\Internals\Registry\UserRegistry;
 
 class ProjectCounter
 {
-	private $userId;
+	private int $userId;
 
 	public function __construct(int $userId)
 	{
@@ -24,10 +21,10 @@ class ProjectCounter
 	/**
 	 * @param int $groupId
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\DB\SqlQueryException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
 	 */
 	public function getRowCounter(int $groupId): array
 	{

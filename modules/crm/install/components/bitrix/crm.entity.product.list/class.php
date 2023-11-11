@@ -81,7 +81,6 @@ final class CCrmEntityProductListComponent
 	protected array $productVatList = [];
 	protected array $discountTypes = [];
 	protected int $newRowCounter = 0;
-	protected ?bool $isAllowedReserve = null;
 
 	/**
 	 * Base constructor.
@@ -657,7 +656,6 @@ final class CCrmEntityProductListComponent
 		$this->defaultSettings['SHOW_PRODUCT_IMAGES'] = CUserOptions::GetOption('crm.entity.product.list', 'show.product.images', 'Y');
 		$this->defaultSettings['ALLOW_CATALOG_PRICE_EDIT'] = true;
 		$this->defaultSettings['ALLOW_DISCOUNT_CHANGE'] = true;
-		$this->defaultSettings['ALLOW_ENTITY_RESERVE'] = false;
 		$this->defaultSettings['ALLOW_RESERVATION'] = false;
 	}
 
@@ -1666,7 +1664,6 @@ final class CCrmEntityProductListComponent
 				'hintHtml' => true,
 				'hintInteractivity' => true,
 				'sort' => 'STORE_ID',
-				'editable' => $this->isAllowedProductReserve() ? null : false,
 				'align' => 'right',
 			];
 
@@ -1702,7 +1699,6 @@ final class CCrmEntityProductListComponent
 						'#HELPER_HTML_LINK#' => $articleLinkHtml
 					]
 				),
-				'editable' => $this->isAllowedProductReserve() ? null : false,
 				'hintHtml' => true,
 				'hintInteractivity' => true,
 				'sort' => 'INPUT_RESERVE_QUANTITY',
@@ -1995,7 +1991,6 @@ final class CCrmEntityProductListComponent
 		$this->crmSettings['ALLOW_CATALOG_PRICE_SAVE'] = $accessController->check(ActionDictionary::ACTION_PRICE_EDIT);
 
 		$this->crmSettings['CATALOG_ENABLE_EMPTY_PRODUCT_ERROR'] = !\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isCreationEntityCommodityItemAllowed();
-		$this->crmSettings['ALLOW_ENTITY_RESERVE'] = $this->isAllowedProductReserve();
 		$this->crmSettings['ALLOW_RESERVATION'] = $this->isAllowedReservation();
 
 		$priceNotification = \Bitrix\Crm\Config\State::getProductPriceChangingNotification();
@@ -2091,7 +2086,6 @@ final class CCrmEntityProductListComponent
 		$this->arResult['IS_RESERVE_EQUAL_PRODUCT_QUANTITY'] = $this->crmSettings['IS_RESERVE_EQUAL_PRODUCT_QUANTITY'];
 		$this->arResult['IS_PRODUCT_EDITABLE'] = $this->crmSettings['IS_PRODUCT_EDITABLE'];
 		$this->arResult['ALLOW_CATALOG_PRICE_EDIT'] = $this->crmSettings['ALLOW_CATALOG_PRICE_EDIT'];
-		$this->arResult['ALLOW_ENTITY_RESERVE'] = $this->crmSettings['ALLOW_ENTITY_RESERVE'];
 		$this->arResult['ALLOW_RESERVATION'] = $this->crmSettings['ALLOW_RESERVATION'];
 		$this->arResult['ALLOW_DISCOUNT_CHANGE'] = $this->crmSettings['ALLOW_DISCOUNT_CHANGE'];
 		$this->arResult['ALLOW_CATALOG_PRICE_SAVE'] = $this->crmSettings['ALLOW_CATALOG_PRICE_SAVE'];
@@ -2432,15 +2426,10 @@ final class CCrmEntityProductListComponent
 	 */
 	private function isAllowedReservation(): bool
 	{
-		$categoryId = (string)($this->entity['CATEGORY_ID'] ?? 0);
-
-		return
-			$this->entity['TYPE_NAME'] === CCrmOwnerType::DealName
-			&& Catalog\Config\State::isUsedInventoryManagement()
-			&& !\CCrmSaleHelper::isWithOrdersMode()
-			&& $this->checkProductReadRights()
-			&& AccessController::getCurrent()->checkByValue(ActionDictionary::ACTION_DEAL_PRODUCT_RESERVE, $categoryId)
-		;
+		return \CCrmSaleHelper::isAllowedReservation(
+			CCrmOwnerType::ResolveID($this->entity['TYPE_NAME']),
+			isset($this->entity['CATEGORY_ID']) ? (int)$this->entity['CATEGORY_ID'] : 0
+		);
 	}
 
 	private function isAllowedDiscount()
@@ -2454,28 +2443,6 @@ final class CCrmEntityProductListComponent
 	public function checkProductReadRights()
 	{
 		return \CCrmSaleHelper::isShopAccess();
-	}
-
-	public function isAllowedProductReserve(): bool
-	{
-		if ($this->isAllowedReserve !== null)
-		{
-			return $this->isAllowedReserve;
-		}
-
-		if ($this->entity['TYPE_ID'] === CCrmOwnerType::Deal)
-		{
-			$this->isAllowedReserve = AccessController::getCurrent()->checkByValue(
-				ActionDictionary::ACTION_DEAL_PRODUCT_RESERVE,
-				$this->entity['CATEGORY_ID']
-			);
-		}
-		else
-		{
-			$this->isAllowedReserve = false;
-		}
-
-		return $this->isAllowedReserve;
 	}
 
 	/**
@@ -2628,10 +2595,26 @@ final class CCrmEntityProductListComponent
 					}
 					else
 					{
-						$this->rows[$index]['INPUT_RESERVE_QUANTITY'] = (float)($this->rows[$index]['INPUT_RESERVE_QUANTITY'] ?? 0);
-						$this->rows[$index]['RESERVE_QUANTITY'] = (float)($this->rows[$index]['RESERVE_QUANTITY'] ?? 0);
-						$this->rows[$index]['ROW_RESERVED'] = (float)($this->rows[$index]['RESERVE_QUANTITY'] ?? 0);
-						$this->rows[$index]['DEDUCTED_QUANTITY'] = (float)($this->rows[$index]['DEDUCTED_QUANTITY'] ?? 0);
+						$this->rows[$index]['INPUT_RESERVE_QUANTITY'] =
+							isset($this->rows[$index]['INPUT_RESERVE_QUANTITY'])
+								? (float)$this->rows[$index]['INPUT_RESERVE_QUANTITY']
+								: null
+						;
+						$this->rows[$index]['RESERVE_QUANTITY'] =
+							isset($this->rows[$index]['RESERVE_QUANTITY'])
+								? (float)$this->rows[$index]['RESERVE_QUANTITY']
+								: null
+						;
+						$this->rows[$index]['ROW_RESERVED'] =
+							isset($this->rows[$index]['RESERVE_QUANTITY'])
+								? (float)$this->rows[$index]['RESERVE_QUANTITY']
+								: null
+						;
+						$this->rows[$index]['DEDUCTED_QUANTITY'] =
+							isset($this->rows[$index]['DEDUCTED_QUANTITY'])
+								? (float)$this->rows[$index]['DEDUCTED_QUANTITY']
+								: null
+						;
 						$this->rows[$index]['DATE_RESERVE'] = $this->rows[$index]['DATE_RESERVE'] ?? '';
 						$this->rows[$index]['DATE_RESERVE_END'] = $this->rows[$index]['DATE_RESERVE_END'] ?? '';
 						$this->rows[$index]['SKU_TREE'] = $this->rows[$index]['SKU_TREE'] ?? [];

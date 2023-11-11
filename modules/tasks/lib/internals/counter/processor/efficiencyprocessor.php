@@ -16,6 +16,7 @@ use Bitrix\Tasks\Internals\Counter\Event\EventResource;
 use Bitrix\Tasks\Internals\Counter\Event\EventResourceCollection;
 use Bitrix\Tasks\Internals\Effective;
 use Bitrix\Tasks\Internals\Task\MemberTable;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Util\Type\DateTime;
 
 class EfficiencyProcessor
@@ -289,13 +290,13 @@ class EfficiencyProcessor
 		$accomplicesModified = false;
 
 		$canProceed = false;
-		$statesCompleted = [\CTasks::STATE_DEFERRED, \CTasks::STATE_SUPPOSEDLY_COMPLETED, \CTasks::STATE_COMPLETED];
-		$statesInProgress = [\CTasks::STATE_NEW, \CTasks::STATE_PENDING, \CTasks::STATE_IN_PROGRESS];
+		$statusesCompleted = [Status::DEFERRED, Status::COMPLETED, Status::SUPPOSEDLY_COMPLETED];
+		$statusesInProgress = [Status::NEW, Status::PENDING, Status::IN_PROGRESS];
 
 		$processedMembers = [];
 
 		// TASK DEFERRED OR COMPLETED
-		if ($statusChanged && in_array($newStatus, $statesCompleted, true))
+		if ($statusChanged && in_array($newStatus, $statusesCompleted, true))
 		{
 			Effective::repair($taskId);
 			$this->modifyEfficiencyForResponsible($oldResponsibleId, $oldTaskData, $oldGroupId, false);
@@ -333,8 +334,8 @@ class EfficiencyProcessor
 		// TASK RESTARTED
 		if (
 			$statusChanged
-			&& in_array($oldStatus, $statesCompleted, true)
-			&& in_array($newStatus, $statesInProgress, true)
+			&& in_array($oldStatus, $statusesCompleted, true)
+			&& in_array($newStatus, $statusesInProgress, true)
 		)
 		{
 			if (!$responsibleChanged)
@@ -359,7 +360,7 @@ class EfficiencyProcessor
 			$canProceed = true;
 		}
 
-		if (!$canProceed && in_array($oldStatus, $statesCompleted, true))
+		if (!$canProceed && in_array($oldStatus, $statusesCompleted, true))
 		{
 			return $processedMembers;
 		}

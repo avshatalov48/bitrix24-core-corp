@@ -119,10 +119,15 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 				return this.renderEmptyContent();
 			}
 
-			return Text({
-				style: this.styles.value,
-				text: this.getFormattedDate(),
-			});
+			return View(
+				{
+					onLongClick: this.getContentLongClickHandler(),
+				},
+				Text({
+					style: this.styles.value,
+					text: this.getFormattedDate(),
+				}),
+			);
 		}
 
 		renderEditableContent()
@@ -140,10 +145,16 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 				});
 			}
 
-			return Text({
-				style: this.styles.value,
-				text: this.getFormattedDate(),
-			});
+			return View(
+				{
+					onLongClick: this.getContentLongClickHandler(),
+					onClick: () => this.handleAdditionalFocusActions(),
+				},
+				Text({
+					style: this.styles.value,
+					text: this.getFormattedDate(),
+				}),
+			);
 		}
 
 		getEditableEmptyValue()
@@ -204,6 +215,11 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 
 		renderEditIcon()
 		{
+			if (this.props.editIcon)
+			{
+				return this.props.editIcon;
+			}
+
 			if (this.isEmpty())
 			{
 				if (this.hasHiddenEmptyView())
@@ -290,6 +306,16 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 
 			return null;
 		}
+
+		canCopyValue()
+		{
+			return true;
+		}
+
+		prepareValueToCopy()
+		{
+			return this.getFormattedDate();
+		}
 	}
 
 	module.exports = {
@@ -297,5 +323,4 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 		DateTimeFieldClass: DateTimeField,
 		DateTimeField: (props) => new DateTimeField(props),
 	};
-
 });

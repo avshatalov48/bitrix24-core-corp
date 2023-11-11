@@ -2,17 +2,12 @@
 
 namespace Bitrix\TasksMobile\Controller;
 
-use Bitrix\Main\Config\Option;
-use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use Bitrix\Main\Engine\Controller;
-use Bitrix\Main\Filter\UserDataProvider;
 use Bitrix\Main\Loader;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Socialnetwork\Component\WorkgroupList;
-use Bitrix\Socialnetwork\Integration\Main\UIFilter\Workgroup;
 use Bitrix\Tasks\Internals\Project\Provider;
 
-Loader::requireModule('tasks');
 Loader::requireModule('socialnetwork');
 
 class Filter extends Controller

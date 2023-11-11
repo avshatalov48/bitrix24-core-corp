@@ -2,6 +2,7 @@
 
 namespace Bitrix\Tasks\UI\Task;
 
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\Type\DateTime;
 use CTasks;
@@ -25,7 +26,7 @@ class Deadline
 	 */
 	public function buildState(int $status, string $deadline = null): array
 	{
-		if ($status === CTasks::STATE_COMPLETED)
+		if ($status === Status::COMPLETED)
 		{
 			return [
 				'state' => '',
@@ -34,7 +35,7 @@ class Deadline
 			];
 		}
 
-		if ($status === CTasks::STATE_DEFERRED)
+		if ($status === Status::DEFERRED)
 		{
 			return [
 				'state' => Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_DEADLINE_STATE_DEFERRED'),
@@ -43,7 +44,7 @@ class Deadline
 			];
 		}
 
-		if ($status === CTasks::STATE_SUPPOSEDLY_COMPLETED)
+		if ($status === \Bitrix\Tasks\Internals\Task\Status::SUPPOSEDLY_COMPLETED)
 		{
 			return [
 				'state' => Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_DEADLINE_STATE_SUPPOSEDLY_COMPLETED'),

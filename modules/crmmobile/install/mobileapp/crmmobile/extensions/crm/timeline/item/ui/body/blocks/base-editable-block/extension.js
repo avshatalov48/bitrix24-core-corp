@@ -6,8 +6,7 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { TimelineTextEditor } = require('crm/timeline/ui/text-editor');
 	const { transparent } = require('utils/color');
-
-	const MAX_NUMBER_OF_LINES = 10000;
+	const { Loc } = require('loc');
 
 	/**
 	 * @abstract
@@ -49,7 +48,6 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 							borderWidth: 1,
 							borderColor: transparent('#000000', 0.1),
 							borderRadius: 12,
-							maxHeight: this.state.expanded ? 'auto' : 200,
 						},
 						onClick: () => this.toggleExpanded(),
 						onLongClick: () => this.openEditor(),
@@ -123,17 +121,26 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 		renderText()
 		{
 			const props = this.getTextParams();
-			props.text = this.state.text;
+			props.value = this.prepareTextToRender(this.state.text);
 
-			return Text(props);
+			return BBCodeText(props);
+		}
+
+		prepareTextToRender(text)
+		{
+			const maxLettersCount = this.getMaxLettersCount();
+			if (this.state.expanded || text.length <= maxLettersCount)
+			{
+				return text;
+			}
+
+			return `${text.slice(0, maxLettersCount).trim()}... [color=#828B95]${Loc.getMessage('M_CRM_TIMELINE_VIEW_MORE')}[/color]`;
 		}
 
 		getTextParams()
 		{
 			return {
 				testId: 'TimelineItemBodyEditableDescriptionText',
-				ellipsize: 'end',
-				numberOfLines: this.state.expanded ? MAX_NUMBER_OF_LINES : 10,
 				style: {
 					fontSize: 14,
 					fontWeight: '400',
@@ -144,7 +151,10 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 
 		toggleExpanded()
 		{
-			this.setState({ expanded: !this.state.expanded });
+			if (this.state.text.length > this.getMaxLettersCount())
+			{
+				this.setState({ expanded: !this.state.expanded });
+			}
 		}
 
 		onLinkClick(url)
@@ -175,6 +185,16 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 		getPreparedActionParams()
 		{
 			throw new Error('Abstract method must be implemented in child class');
+		}
+
+		getMaxLettersCount()
+		{
+			if (this.model.hasLowPriority)
+			{
+				return 35;
+			}
+
+			return 330;
 		}
 	}
 

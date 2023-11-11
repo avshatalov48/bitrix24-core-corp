@@ -53,7 +53,7 @@ if(typeof(BX.CrmMobileContext) === "undefined")
 				{
 					menuButton:
 					{
-						type:    'context-menu',
+						type:    'more',
 						style:   'custom',
 						callback: function(){ app.menuShow(); }
 					}
@@ -98,7 +98,7 @@ if(typeof(BX.CrmMobileContext) === "undefined")
 				{
 					menuButton:
 					{
-						type:    'context-menu',
+						type:    'more',
 						style:   'custom',
 						callback: function(){ app.menuShow(); }
 					}

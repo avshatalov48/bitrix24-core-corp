@@ -1322,7 +1322,7 @@ BX.Tasks.Kanban.Item.prototype = {
 				text: data.deadline.value.replace('&minus;', '-'),
 				color: data.deadline.color,
 				fill: (data.date_deadline ? data.deadline.fill : false),
-				size: BX.UI.Label.Size.SM,
+				// size: BX.UI.Label.Size.SM,
 			});
 			this.date_deadline_container = BX.create("div", {
 				props: {

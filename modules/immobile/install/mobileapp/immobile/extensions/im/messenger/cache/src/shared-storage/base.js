@@ -20,7 +20,7 @@ jn.define('im/messenger/cache/base', (require, exports, module) => {
 				throw new TypeError('Cache: options.storageId must be a string value');
 			}
 
-			const namespace = 'im/messenger/cache/v1.3/';
+			const namespace = 'im/messenger/cache/v1.4/';
 			const name = options.name;
 
 			this.storageId = namespace + name;

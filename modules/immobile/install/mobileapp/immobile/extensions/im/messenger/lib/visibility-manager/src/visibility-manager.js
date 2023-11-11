@@ -41,7 +41,7 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 		}
 
 		/**
-		 * @return {Promise}
+		 * @return {Promise<boolean>}
 		 */
 		checkIsDialogVisible(dialogId)
 		{
@@ -64,7 +64,7 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 							return;
 						}
 
-						const topItem = context.itemsInStack[0];
+						const topItem = context.itemsInStack[context.itemsInStack.length - 1];
 						const isDialogWidgetOnTop = topItem.name && topItem.name === 'chat.dialog';
 						if (!isDialogWidgetOnTop)
 						{

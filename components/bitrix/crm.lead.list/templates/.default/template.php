@@ -15,6 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var CBitrixComponent $component
  */
 
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Conversion\EntityConverter;
 use Bitrix\Crm\Conversion\LeadConversionScheme;
@@ -426,8 +427,8 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 			if (IsModuleInstalled('sale'))
 			{
 				$quoteAction = [
-					'TITLE' => Loc::getMessage('CRM_LEAD_ADD_QUOTE_TITLE'),
-					'TEXT' => Loc::getMessage('CRM_LEAD_ADD_QUOTE'),
+					'TITLE' => Loc::getMessage('CRM_LEAD_ADD_QUOTE_TITLE_MSGVER_1'),
+					'TEXT' => Loc::getMessage('CRM_LEAD_ADD_QUOTE_MSGVER_1'),
 					'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arLead['PATH_TO_QUOTE_ADD'])."');",
 				];
 
@@ -1210,7 +1211,6 @@ $APPLICATION->IncludeComponent(
 <?php if (
 	!$isInternal
 	&& \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('IFRAME') !== 'Y'
-	&& \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
 ): ?>
 <script type="text/javascript">
 	BX.ready(
@@ -1223,7 +1223,8 @@ $APPLICATION->IncludeComponent(
 				/** @see BX.Crm.PushCrmSettings */
 				new exports.PushCrmSettings({
 					smartActivityNotificationSupported: <?= Container::getInstance()->getFactory(\CCrmOwnerType::Lead)->isSmartActivityNotificationSupported() ? 'true' : 'false' ?>,
-					entityTypeId: <?= (int)\CCrmOwnerType::Lead ?>,
+					entityTypeId: <?= \CCrmOwnerType::Lead ?>,
+					pingSettings: <?= \CUtil::PhpToJSObject((new TodoPingSettingsProvider(\CCrmOwnerType::Lead))->fetchAll()) ?>,
 					rootMenu: settingsButton ? settingsButton.getMenuWindow() : undefined,
 					grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
 				});

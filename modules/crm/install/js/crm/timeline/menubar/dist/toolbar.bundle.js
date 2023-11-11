@@ -1485,14 +1485,13 @@ this.BX.Crm = this.BX.Crm || {};
 					<strong>${0}</strong><br>
 					${0}<br>
 					${0}
-					<!--<span class="crm-entity-stream-content-sms-conditions-helper-icon"></span>-->
 				</div>
 			</div>
 		</div>
 		<div class="crm-entity-stream-content-new-sms-btn-container">
 			<a href="#" data-role="sender-selector" target="_top" class="crm-entity-stream-content-new-sms-connect-link">${0}</a>
 			${0}
-		</div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_1'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_2'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_3'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_URL'), enableSalesCenter ? main_core.Tag.render(_t10 || (_t10 = _$2`<div class="crm-entity-stream-content-sms-salescenter-container-absolute" data-role="salescenter-starter">
+		</div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_1'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_2'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_3_MSGVER_1'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_URL'), enableSalesCenter ? main_core.Tag.render(_t10 || (_t10 = _$2`<div class="crm-entity-stream-content-sms-salescenter-container-absolute" data-role="salescenter-starter">
 	<div class="crm-entity-stream-content-sms-salescenter-icon"></div>
 	<div class="crm-entity-stream-content-sms-button-text">${0}</div>
 </div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_SALESCENTER_STARTER')) : null);

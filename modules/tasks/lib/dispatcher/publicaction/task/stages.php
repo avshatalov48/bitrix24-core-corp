@@ -14,6 +14,7 @@ namespace Bitrix\Tasks\Dispatcher\PublicAction\Task;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Localization\Loc;
 use Bitrix\Socialnetwork\Item\Workgroup;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Service\EntityService;
 use Bitrix\Tasks\Scrum\Service\ItemService;
@@ -157,7 +158,7 @@ final class Stages extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 			// check for exists tasks
 			if ($stage['ENTITY_TYPE'] == StagesTable::WORK_MODE_GROUP)
 			{
-				list($rows, $res) = \CTaskItem::fetchList(
+				[$rows, $res] = \CTaskItem::fetchList(
 					Util\User::getId(),
 					array(),
 					array(
@@ -692,7 +693,7 @@ final class Stages extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		{
 			$queryObject = \CTasks::getList(
 				[],
-				['ID' => $taskId, '=STATUS' => \CTasks::STATE_COMPLETED],
+				['ID' => $taskId, '=STATUS' => Status::COMPLETED],
 				['ID'],
 				['USER_ID' => Util\User::getId()]
 			);

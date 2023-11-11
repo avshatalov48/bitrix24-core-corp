@@ -28,6 +28,7 @@ use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\Task\MemberTable;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Manager;
@@ -452,7 +453,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 				;
 			}
 		}
-	
+
 		return $result;
 	}
 
@@ -1581,7 +1582,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 		if (
 			array_key_exists('STATUS', $filter)
 			&& is_array($filter['STATUS'])
-			&& in_array(CTasks::STATE_IN_PROGRESS, $filter['STATUS'])
+			&& in_array(Status::IN_PROGRESS, $filter['STATUS'])
 		)
 		{
 			unset($filter['STATUS']);

@@ -5,6 +5,7 @@ jn.define("tab/presets/editor", (require, exports, module) => {
 
 	const {colors, styles, getSvg} = jn.require('tab/settings/res');
 	const {Haptics} = jn.require('haptics');
+	const AppTheme = require("apptheme")
 	const CellType = {
 		SECTION: "section",
 		ELEMENT: "element",
@@ -158,7 +159,7 @@ jn.define("tab/presets/editor", (require, exports, module) => {
 							style: {
 								textAlign: "center",
 								marginLeft: 10,
-								color: '#30000000',
+								color: AppTheme.colors.base4,
 								fontWeight: '400',
 								fontSize: 14
 							},
@@ -188,7 +189,7 @@ jn.define("tab/presets/editor", (require, exports, module) => {
 					style: {
 						flexDirection: 'row',
 						justifyContent: 'flex-start',
-						backgroundColor: "#ffffff",
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 					},
 				},
 				View({
@@ -204,7 +205,7 @@ jn.define("tab/presets/editor", (require, exports, module) => {
 						: Image({
 							style: {width: 6, height: 14},
 							svg: {
-								content: getSvg('drag', '#999999')
+								content: getSvg('drag', AppTheme.colors.base4)
 							}
 						})
 				),
@@ -358,8 +359,8 @@ jn.define("tab/presets/editor", (require, exports, module) => {
 				dialogs.showSnackbar({
 					title: BX.message("SETTINGS_TAB_CANT_MOVE").replace("#title#", title),
 					id: "cantmove",
-					backgroundColor: "#AA333333",
-					textColor: "#ffffff",
+					backgroundColor: AppTheme.colors.base1,
+					textColor: AppTheme.colors.base8,
 					hideOnTap: true,
 					autoHide: true
 				}, () => {
@@ -382,8 +383,8 @@ jn.define("tab/presets/editor", (require, exports, module) => {
 							dialogs.showSnackbar({
 								title: BX.message("SETTINGS_TAB_CANT_BE_HIDDEN").replace("#title#", item.title),
 								id: "cantmove",
-								backgroundColor: "#AA333333",
-								textColor: "#ffffff",
+								backgroundColor: AppTheme.colors.base1,
+								textColor: AppTheme.colors.base8,
 								hideOnTap: true,
 								autoHide: true
 							}, () => {

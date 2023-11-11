@@ -5,6 +5,11 @@ import Marker from '../marker/marker';
 import isLinkInSameCategory from '../internal/is-link-in-same-category';
 import isCycleLink from '../internal/is-cycle-link';
 
+if (BX.Kanban.Pagination)
+{
+	BX.Kanban.Pagination.prototype.adjust = () => {};
+}
+
 export default class Column extends Kanban.Column
 {
 	constructor(options)
@@ -22,7 +27,7 @@ export default class Column extends Kanban.Column
 			name: `${this.getData().categoryName} (${this.getName()})`,
 			data: {
 				column: this,
-			}
+			},
 		});
 
 		this.marker

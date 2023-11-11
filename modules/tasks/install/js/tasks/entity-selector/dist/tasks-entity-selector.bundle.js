@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,ui_entitySelector,main_core) {

@@ -16,6 +16,7 @@ use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Control\Tag;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Integration\CRM\TimeLineManager;
+use Bitrix\Tasks\Internals\CacheConfig;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\ScenarioTable;
@@ -245,7 +246,7 @@ if (Loader::includeModule('recyclebin'))
 			try
 			{
 				$cache = Cache::createInstance();
-				$cache->clean(CTasks::CACHE_TASKS_COUNT, CTasks::CACHE_TASKS_COUNT_DIR_NAME);
+				$cache->clean(CacheConfig::UNIQUE_CODE, CacheConfig::DIRECTORY);
 			}
 			catch (\Exception $e)
 			{

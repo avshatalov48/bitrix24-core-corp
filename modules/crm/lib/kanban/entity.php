@@ -207,7 +207,9 @@ abstract class Entity
 
 	public function getTitle(): string
 	{
-		return Loc::getMessage('CRM_KANBAN_TITLE2_' . $this->getTypeName());
+		$message = Loc::getMessage('CRM_KANBAN_TITLE2_' . $this->getTypeName() . '_MSGVER_1');
+
+		return $message ? $message : Loc::getMessage('CRM_KANBAN_TITLE2_' . $this->getTypeName());
 	}
 
 	public function getConfigurationPlacementUrlCode(): string

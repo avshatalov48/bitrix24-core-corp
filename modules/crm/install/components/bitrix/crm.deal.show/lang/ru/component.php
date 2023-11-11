@@ -113,7 +113,7 @@ $MESS["CRM_FIELD_DEAL_INVOICE"] = "Счета сделки";
 $MESS["CRM_SECTION_LIVE_FEED"] = "Лента сделки";
 $MESS["CRM_FIELD_LIVE_FEED"] = "Лента сделки";
 $MESS["CRM_DEAL_ADD_INVOICE_TITLE"] = "Выставить счёт на основании сделки";
-$MESS["CRM_DEAL_QUOTE_LINK"] = "Сделка создана на основании предложения <a href='#URL#'>#TITLE#</a>";
+$MESS["CRM_DEAL_QUOTE_LINK_MSGVER_1"] = "Сделка создана на основании предложения <a href='#URL#'>#TITLE#</a>";
 $MESS["CRM_DEAL_SHOW_FIELD_CLIENT"] = "Клиент";
 $MESS["CRM_DEAL_SHOW_CONTACT_SELECTOR_HEADER"] = "Контакты, участвующие в сделке";
 $MESS["CRM_FIELD_ENTITY_TREE"] = "Связи";

@@ -92,7 +92,14 @@ endif;
 				$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 				$isInfoHelperInitialized = true;
 			}
-			$onClick = "BX.UI.InfoHelper.show('".htmlspecialcharsbx(CUtil::JSEscape($tab['tariffLock']))."')";
+			if (strpos($tab['tariffLock'], 'BX.UI.InfoHelper.show') !== false)
+			{
+				$onClick = htmlspecialcharsbx($tab['tariffLock']);
+			}
+			else
+			{
+				$onClick = "BX.UI.InfoHelper.show('" . htmlspecialcharsbx(CUtil::JSEscape($tab['tariffLock'])) . "')";
+			}
 		}
 		else
 		{

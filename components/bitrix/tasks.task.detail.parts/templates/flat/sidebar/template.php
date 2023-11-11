@@ -4,6 +4,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Tasks\Internals\Task\MetaStatus;
 
 Loc::loadMessages(__FILE__);
 
@@ -59,7 +60,7 @@ $canReadGroupTasks = (
 						echo $templateData["DEADLINE"];
 					endif ?>
 				</div>
-				<? if ($taskData["STATUS"] == CTasks::METASTATE_EXPIRED):?>
+				<? if ((int)$taskData["STATUS"] === MetaStatus::EXPIRED):?>
 					<div class="task-detail-sidebar-item-delay">
 						<div class="task-detail-sidebar-item-delay-message">
 							<span class="task-detail-sidebar-item-delay-message-icon"></span>

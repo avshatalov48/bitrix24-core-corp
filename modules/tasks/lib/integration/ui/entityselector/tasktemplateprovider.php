@@ -10,12 +10,14 @@ use Bitrix\UI\EntitySelector\SearchQuery;
 
 class TaskTemplateProvider extends BaseProvider
 {
-	private static $entityId = 'task-template';
-	private static $maxCount = 30;
+	private const ENTITY_ID = 'task-template';
+	private const LIMIT = 30;
+	private int $templateId;
 
 	public function __construct(array $options = [])
 	{
 		parent::__construct();
+		$this->templateId = $options['templateId'] ?? null;
 	}
 
 	public function isAvailable(): bool
@@ -44,7 +46,7 @@ class TaskTemplateProvider extends BaseProvider
 	{
 		$this->fillWithRecentItems($dialog);
 
-		if ($dialog->getItemCollection()->count() < self::$maxCount)
+		if ($dialog->getItemCollection()->count() < static::LIMIT)
 		{
 			$templateItems = $this->getTemplateItems(['excludeIds' => $this->getRecentItemsIds($dialog)]);
 			foreach ($templateItems as $item)
@@ -53,7 +55,7 @@ class TaskTemplateProvider extends BaseProvider
 				$item->addTab('recents');
 				$dialog->addItem($item);
 
-				if ($dialog->getItemCollection()->count() >= self::$maxCount)
+				if ($dialog->getItemCollection()->count() >= static::LIMIT)
 				{
 					break;
 				}
@@ -76,7 +78,7 @@ class TaskTemplateProvider extends BaseProvider
 
 			if (
 				!array_key_exists($itemId, $templates)
-				|| $dialog->getItemCollection()->get(self::$entityId, $itemId)
+				|| $dialog->getItemCollection()->get(static::ENTITY_ID, $itemId)
 			)
 			{
 				continue;
@@ -84,14 +86,14 @@ class TaskTemplateProvider extends BaseProvider
 
 			$dialog->addItem(
 				new Item([
-					'entityId' => self::$entityId,
+					'entityId' => static::ENTITY_ID,
 					'id' => $itemId,
 					'title' => $templates[$itemId],
 					'tabs' => 'recents',
 				])
 			);
 
-			if ($dialog->getItemCollection()->count() >= self::$maxCount)
+			if ($dialog->getItemCollection()->count() >= static::ENTITY_ID)
 			{
 				break;
 			}
@@ -124,13 +126,16 @@ class TaskTemplateProvider extends BaseProvider
 		$filter = $this->getFilterByOptions($options);
 		$parameters = [
 			'USER_ID' => $GLOBALS['USER']->getId(),
+		];
+
+		$navigation = [
 			'NAV_PARAMS' => [
-				'nTopCount' => self::$maxCount,
+				'nTopCount' => static::LIMIT,
 			],
 		];
 		$select = ['ID', 'TITLE'];
 
-		$templatesResult = \CTaskTemplates::GetList($order, $filter, [], $parameters, $select);
+		$templatesResult = \CTaskTemplates::GetList($order, $filter, $navigation, $parameters, $select);
 		while ($template = $templatesResult->Fetch())
 		{
 			$templates[$template['ID']] = $template['TITLE'];
@@ -169,6 +174,8 @@ class TaskTemplateProvider extends BaseProvider
 			$filter['!ID'] = $options['excludeIds'];
 		}
 
+		$filter['!ID'][] = $this->templateId;
+
 		return $filter;
 	}
 
@@ -185,7 +192,7 @@ class TaskTemplateProvider extends BaseProvider
 			if ($title !== '')
 			{
 				$result[] = new Item([
-					'entityId' => self::$entityId,
+					'entityId' => static::ENTITY_ID,
 					'id' => $id,
 					'title' => $title,
 					'tabs' => 'recents',

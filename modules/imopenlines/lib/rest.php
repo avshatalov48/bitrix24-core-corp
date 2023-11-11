@@ -12,6 +12,7 @@ use Bitrix\Main\UserConsent\Consent;
 
 use Bitrix\ImOpenLines\Model\SessionTable;
 use Bitrix\ImOpenLines\Widget\FormHandler;
+use Bitrix\ImOpenlines\Security\Permissions;
 
 use Bitrix\Im;
 
@@ -55,11 +56,19 @@ class Rest extends \IRestService
 				'imopenlines.operator.transfer' => [__CLASS__, 'operatorTransfer'],
 				'imopenlines.operator.finish' => [__CLASS__, 'operatorFinish'],
 				'imopenlines.operator.another.finish' => [__CLASS__, 'operatorFinishAnother'],
+				'imopenlines.operator.pause.start' => [__CLASS__, 'startSoftPause'],
+				'imopenlines.operator.pause.stop' => [__CLASS__, 'stopSoftPause'],
+				'imopenlines.operator.pause.get' => [__CLASS__, 'getSoftPauseStatus'],
+				'imopenlines.operator.pause.getAll' => [__CLASS__, 'getAllSoftPause'],
+				'imopenlines.operator.pause.getHistory' => [__CLASS__, 'getSoftPauseHistory'],
 
 				'imopenlines.session.intercept' => [__CLASS__, 'sessionIntercept'],
 				'imopenlines.session.open' => [__CLASS__, 'sessionOpen'],
 				'imopenlines.session.mode.silent' => [__CLASS__, 'sessionSilent'],
 				'imopenlines.session.mode.pin' => [__CLASS__, 'sessionPin'],
+				'imopenlines.session.mode.unpin' => [__CLASS__, 'sessionUnpin'],
+				'imopenlines.session.mode.pinAll' => [__CLASS__, 'sessionPinAll'],
+				'imopenlines.session.mode.unpinAll' => [__CLASS__, 'sessionUnpinAll'],
 				'imopenlines.session.head.vote' => [__CLASS__, 'sessionVoteAsHead'],
 				'imopenlines.session.join' => [__CLASS__, 'sessionJoin'],
 				'imopenlines.session.start' => [__CLASS__, 'sessionStart'],
@@ -447,6 +456,9 @@ class Rest extends \IRestService
 		]);
 	}
 
+	/**
+	 * @deprecated
+	 */
 	public static function sessionSilent($arParams, $n, \CRestServer $server)
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
@@ -462,8 +474,14 @@ class Rest extends \IRestService
 
 	public static function sessionPin($arParams, $n, \CRestServer $server)
 	{
+		if (!$arParams['CHAT_ID'])
+		{
+			throw new RestException('Chat ID can\'t be empty', 'CHAT_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
 		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
-		$result = $control->setPinMode($arParams['ACTIVATE'] === 'Y');
+		isset($arParams['ACTIVATE']) ?: $arParams['ACTIVATE'] = null;
+		$result = $control->setPinMode($arParams['ACTIVATE'] !== 'N');
 
 		if (!$result->isSuccess())
 		{
@@ -473,8 +491,62 @@ class Rest extends \IRestService
 		return true;
 	}
 
+	public static function sessionUnpin($arParams, $n, \CRestServer $server)
+	{
+		if (!$arParams['CHAT_ID'])
+		{
+			throw new RestException('Chat ID can\'t be empty', 'CHAT_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
+		$result = $control->setPinMode(false);
+
+		if (!$result->isSuccess())
+		{
+			throw new RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return true;
+	}
+
+	public static function sessionPinAll($arParams, $n, \CRestServer $server)
+	{
+		$control = new \Bitrix\ImOpenLines\Operator(0);
+		$result = $control->pinOperatorDialogs(true);
+
+		if (!$result->isSuccess())
+		{
+			throw new RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return $result->getResult();
+	}
+
+	public static function sessionUnpinAll($arParams, $n, \CRestServer $server)
+	{
+		$control = new \Bitrix\ImOpenLines\Operator(0);
+		$result = $control->pinOperatorDialogs(false);
+
+		if (!$result->isSuccess())
+		{
+			throw new RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return $result->getResult();
+	}
+
 	public static function sessionVoteAsHead($arParams, $n, \CRestServer $server)
 	{
+		if (!$arParams['SESSION_ID'])
+		{
+			throw new RestException('Session ID can\'t be empty', 'EMPTY_SESSION_ID', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		if (!trim($arParams['RATING']) && !trim($arParams['COMMENT']))
+		{
+			throw new RestException('At least one of the parameters RATING or COMMENT must be specified', 'EMPTY_VOTE_PARAMS', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
 		$control = new \Bitrix\ImOpenLines\Operator(0);
 		$result = $control->voteAsHead(
 			$arParams['SESSION_ID'],
@@ -531,7 +603,7 @@ class Rest extends \IRestService
 
 	public static function sessionGetHistory($arParams, $n, \CRestServer $server)
 	{
-		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
+		$control = new \Bitrix\ImOpenLines\Operator(0);
 		$result = $control->getSessionHistory($arParams['SESSION_ID']);
 
 		if (!$result)
@@ -1722,6 +1794,94 @@ class Rest extends \IRestService
 		}
 
 		return true;
+	}
+
+	public static function startSoftPause($arParams, $n, \CRestServer $server): bool
+	{
+		$userPause = new \Bitrix\ImOpenLines\UserPause();
+		return $userPause->start();
+	}
+
+	public static function stopSoftPause($arParams, $n, \CRestServer $server): bool
+	{
+		$userPause = new \Bitrix\ImOpenLines\UserPause();
+		return $userPause->stop();
+	}
+
+	public static function getSoftPauseStatus($arParams, $n, \CRestServer $server): bool
+	{
+		$userPause = new \Bitrix\ImOpenLines\UserPause();
+		return $userPause->getStatus();
+	}
+
+	public static function getAllSoftPause($arParams, $n, \CRestServer $server): array
+	{
+		$permission = Permissions::createWithCurrentUser();
+		if(!$permission->canPerform(Permissions::ENTITY_SOFT_PAUSE_LIST, Permissions::ACTION_VIEW))
+		{
+			throw new RestException('You dont have access to this action', 'ACCESS_DENIED', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return UserPause::getAllStatuses((int)$arParams['CONFIG_ID'] ?? 0);
+	}
+
+	public static function getSoftPauseHistory($arParams, $n, \CRestServer $server): array
+	{
+		$permission = Permissions::createWithCurrentUser();
+		if(!$permission->canPerform(Permissions::ENTITY_SOFT_PAUSE_LIST, Permissions::ACTION_VIEW))
+		{
+			throw new RestException('You dont have access to this action', 'ACCESS_DENIED', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		if (!isset($arParams['DATE_START']))
+		{
+			throw new RestException('Empty DATE_START parameter', 'DATE_START_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$matches = [];
+		if (
+			preg_match("/^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[1-2]\d|3[0-1])$/", $arParams['DATE_START'], $matches)
+			&& checkdate($matches[2], $matches[3], $matches[1])
+		)
+		{
+			$arParams['DATE_START'] .= 'T00:00:00' . date('P');
+		}
+
+		if (
+			!preg_match("/^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[1-2]\d|3[0-1])T[0-2]\d:[0-5]\d:[0-5]\d[+-][0-2]\d:[0-5]\d$/", $arParams['DATE_START'], $matches)
+			|| !checkdate($matches[2], $matches[3], $matches[1])
+			|| !$dateStart = DateTime::createFromPhp(\DateTime::createFromFormat(DATE_ATOM, $arParams['DATE_START']))
+		)
+		{
+			throw new RestException("DATE_START parameter not in 'Y-m-dTH:i:sP' or 'Y-m-d' format", 'DATE_START_WRONG_FORMAT', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		if (isset($arParams['DATE_END']))
+		{
+			if (
+				preg_match("/^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[1-2]\d|3[0-1])$/", $arParams['DATE_END'], $matches)
+				&& checkdate($matches[2], $matches[3], $matches[1])
+			)
+			{
+				$arParams['DATE_END'] .= 'T23:59:59' . date('P');
+			}
+
+			if (
+				!preg_match("/^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[1-2]\d|3[0-1])T[0-2]\d:[0-5]\d:[0-5]\d[+-][0-2]\d:[0-5]\d$/", $arParams['DATE_END'], $matches)
+				|| !checkdate($matches[2], $matches[3], $matches[1])
+				|| !$dateEnd = DateTime::createFromPhp(\DateTime::createFromFormat(DATE_ATOM, $arParams['DATE_END']))
+			)
+			{
+				throw new RestException("DATE_END parameter not in 'Y-m-dTH:i:sP' or 'Y-m-d' format", 'DATE_END_WRONG_FORMAT', \CRestServer::STATUS_WRONG_REQUEST);
+			}
+		}
+
+		return UserPause::getHistory(
+			$dateStart,
+			$dateEnd ?? null,
+			(int)$arParams['CONFIG_ID'] ?? 0,
+			(int)$arParams['USER_ID'] ?? 0
+		);
 	}
 
 	private static function getChatId(array $params)

@@ -268,7 +268,7 @@ if($arResult['PERM_CONFIG'])
 
 	$items['tab_content_numerator']['QUOTE']['URL'] = '#';
 	$items['tab_content_numerator']['QUOTE']['ICON_CLASS'] = 'img-quote js-numerator-quote';
-	$items['tab_content_numerator']['QUOTE']['NAME'] = GetMessage("CRM_CONFIGS_NUMERATOR_FOR_QUOTE");
+	$items['tab_content_numerator']['QUOTE']['NAME'] = GetMessage("CRM_CONFIGS_NUMERATOR_FOR_QUOTE_MSGVER_1");
 
 	if($arResult['BITRIX24'])
 	{

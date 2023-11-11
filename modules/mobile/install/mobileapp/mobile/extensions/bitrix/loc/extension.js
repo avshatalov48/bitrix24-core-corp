@@ -2,7 +2,6 @@
  * @module loc
  */
 jn.define('loc', (require, exports, module) => {
-
 	const { Type } = require('type');
 
 	/**
@@ -27,7 +26,7 @@ jn.define('loc', (require, exports, module) => {
 
 					mess = mess.replace(
 						globalRegexp,
-						() => Type.isNil(replacements[replacement]) ? '' : String(replacements[replacement]),
+						() => (Type.isNil(replacements[replacement]) ? '' : String(replacements[replacement])),
 					);
 				});
 			}
@@ -107,7 +106,7 @@ jn.define('loc', (require, exports, module) => {
 				case 'hi':
 				case 'it':
 				case 'la':
-					pluralForm = ((value !== 1) ? 1 : 0);
+					pluralForm = ((value === 1) ? 0 : 1);
 					break;
 
 				case 'ru':

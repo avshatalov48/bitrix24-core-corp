@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,main_popup,main_core,main_core_events,tasks_viewed) {

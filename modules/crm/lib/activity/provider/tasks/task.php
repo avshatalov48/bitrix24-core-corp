@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Activity\Provider\Tasks;
 
 use Bitrix\Crm\Activity\Provider\Base;
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\ActivityTable;
 use Bitrix\Crm\Automation\Trigger\TaskStatusTrigger;
 use Bitrix\Crm\Badge;
@@ -78,9 +79,9 @@ final class Task extends Base
 		];
 	}
 
-	public static function getDefaultPingOffsets(): array
+	public static function getDefaultPingOffsets(array $params = []): array
 	{
-		return [0, 15];
+		return TodoPingSettingsProvider::DEFAULT_OFFSETS;
 	}
 
 	public function delete(int $activityId): void

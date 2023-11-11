@@ -35,15 +35,20 @@ jn.define('im/messenger/model/sidebar', (require, exports, module) => {
 					{
 						store.commit('update', {
 							actionName: 'set',
-							dialogId: element.dialogId,
-							fields: element,
+							data: {
+								dialogId: element.dialogId,
+								fields: element,
+							},
 						});
 					}
 					else
 					{
 						store.commit('add', {
-							dialogId: element.dialogId,
-							fields: { ...elementState, ...element },
+							actionName: 'set',
+							data: {
+								dialogId: element.dialogId,
+								fields: { ...elementState, ...element },
+							},
 						});
 					}
 				});
@@ -61,8 +66,11 @@ jn.define('im/messenger/model/sidebar', (require, exports, module) => {
 					if (!existingItem)
 					{
 						store.commit('add', {
-							dialogId: element.dialogId,
-							fields: { ...elementState, ...element },
+							actionName: 'add',
+							data: {
+								dialogId: element.dialogId,
+								fields: { ...elementState, ...element },
+							},
 						});
 					}
 				});
@@ -76,7 +84,12 @@ jn.define('im/messenger/model/sidebar', (require, exports, module) => {
 					return false;
 				}
 
-				store.commit('delete', { dialogId: payload.dialogId });
+				store.commit('delete', {
+					actionName: 'delete',
+					data: {
+						dialogId: payload.dialogId,
+					},
+				});
 
 				return true;
 			},
@@ -91,8 +104,10 @@ jn.define('im/messenger/model/sidebar', (require, exports, module) => {
 
 				store.commit('update', {
 					actionName: 'update',
-					dialogId: payload.dialogId,
-					fields: payload.fields,
+					data: {
+						dialogId: payload.dialogId,
+						fields: payload.fields,
+					},
 				});
 
 				return true;
@@ -114,9 +129,11 @@ jn.define('im/messenger/model/sidebar', (require, exports, module) => {
 
 				store.commit('update', {
 					actionName: 'changeMute',
-					dialogId: payload.dialogId,
-					fields: {
-						isMute: payload.isMute,
+					data: {
+						dialogId: payload.dialogId,
+						fields: {
+							isMute: payload.isMute,
+						},
 					},
 				});
 
@@ -124,22 +141,50 @@ jn.define('im/messenger/model/sidebar', (require, exports, module) => {
 			},
 		},
 		mutations: {
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			add: (state, payload) => {
-				if (!Type.isUndefined(payload.dialogId))
+				const {
+					dialogId,
+					fields,
+				} = payload.data;
+
+				if (!Type.isUndefined(dialogId))
 				{
-					state.collection[payload.dialogId] = payload.fields;
+					state.collection[dialogId] = fields;
 				}
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			update: (state, payload) => {
-				if (!Type.isUndefined(payload.dialogId))
+				const {
+					dialogId,
+					fields,
+				} = payload.data;
+
+				if (!Type.isUndefined(dialogId))
 				{
-					state.collection[payload.dialogId] = { ...state.collection[payload.dialogId], ...payload.fields };
+					state.collection[dialogId] = { ...state.collection[dialogId], ...fields };
 				}
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			delete: (state, payload) => {
-				if (!Type.isUndefined(payload.dialogId))
+				const {
+					dialogId,
+				} = payload.data;
+
+				if (!Type.isUndefined(dialogId))
 				{
-					delete state.collection[payload.dialogId];
+					delete state.collection[dialogId];
 				}
 			},
 		},

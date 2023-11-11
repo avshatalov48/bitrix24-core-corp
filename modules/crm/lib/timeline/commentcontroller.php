@@ -424,6 +424,10 @@ class CommentController extends EntityController
 				$phrase = "CRM_ENTITY_TITLE_" . \CCrmOwnerType::InvoiceName;
 			}
 			$entityTitle = Loc::getMessage($phrase, ["#ENTITY_NAME#" => $nameLink]);
+			if (!$entityTitle)
+			{
+				$entityTitle = Loc::getMessage($phrase . '_MSGVER_1', ["#ENTITY_NAME#" => $nameLink]);
+			}
 			$message = Loc::getMessage("CRM_COMMENT_IM_MENTION_POST" . $genderSuffix, [
 				"#COMMENT#" => $cuttedComment,
 				"#ENTITY_TITLE#" => $entityTitle

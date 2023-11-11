@@ -1,4 +1,9 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+<?
+
+use Bitrix\Tasks\Internals\Task\MetaStatus;
+use Bitrix\Tasks\Internals\Task\Priority;
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 /**
  * @var CMain $APPLICATION
  * @var CDatabase $DB
@@ -71,7 +76,7 @@ foreach ($arResult["LAST_TASKS"] as $task)
 	{
 		$task["DEADLINE"] = '<span id="bx-task-deadline-'.$taskId.'">'.trim(FormatDate($arParams["DATE_TIME_FORMAT"], MakeTimeStamp($task["DEADLINE"])), ", .").'</span>';
 	}
-	if (isset($task['~STATUS']) && $task["~STATUS"] == CTasks::METASTATE_EXPIRED)
+	if (isset($task['~STATUS']) && (int)$task["~STATUS"] === MetaStatus::EXPIRED)
 	{
 		$task["EXPIRED"] = '<span class="mobile-grid-field-expired">'.GetMessage("TASK_EXPIRED").'</span>';
 	}
@@ -86,7 +91,7 @@ foreach ($arResult["LAST_TASKS"] as $task)
 	}
 
 	$task["PRIORITY"] = (
-		isset($task["~PRIORITY"]) && $task["~PRIORITY"] == CTasks::PRIORITY_HIGH
+		isset($task["~PRIORITY"]) && (int)$task["~PRIORITY"] === Priority::HIGH
 			? "<label class=\"mobile-grid-field-priority mobile-grid-field-priority-2\"><span>" . GetMessage("TASKS_PRIORITY_2") . "</span></label>"
 			: ""
 	);

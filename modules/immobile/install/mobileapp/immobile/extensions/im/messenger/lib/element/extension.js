@@ -18,6 +18,7 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 	const { VideoMessage } = require('im/messenger/lib/element/dialog/message/video');
 	const { FileMessage } = require('im/messenger/lib/element/dialog/message/file');
 	const { SystemTextMessage } = require('im/messenger/lib/element/dialog/message/system-text');
+	const { StatusField } = require('im/messenger/lib/element/dialog/message/status');
 	const { UnsupportedMessage } = require('im/messenger/lib/element/dialog/message/unsupported');
 	const { DateSeparatorMessage } = require('im/messenger/lib/element/dialog/message/date-separator');
 	const { UnreadSeparatorMessage } = require('im/messenger/lib/element/dialog/message/unread-separator');
@@ -57,6 +58,7 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 		VideoMessage,
 		FileMessage,
 		SystemTextMessage,
+		StatusField,
 		UnsupportedMessage,
 		DateSeparatorMessage,
 		UnreadSeparatorMessage,

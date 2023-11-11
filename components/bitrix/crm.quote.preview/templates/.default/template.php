@@ -13,7 +13,7 @@ $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm-preview.css');
 	<div class="crm-preview-header">
 		<span class="crm-preview-header-icon crm-preview-header-icon-quote"></span>
 		<span class="crm-preview-header-title">
-			<?=GetMessage("CRM_TITLE_QUOTE")?>:
+			<?=GetMessage("CRM_TITLE_QUOTE_MSGVER_1")?>:
 			<a href="<?=htmlspecialcharsbx($arParams['URL'])?>" target="_blank"><?=htmlspecialcharsbx($arResult['TITLE'])?></a>
 		</span>
 	</div>

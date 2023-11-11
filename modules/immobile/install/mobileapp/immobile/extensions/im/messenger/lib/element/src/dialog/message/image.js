@@ -26,6 +26,8 @@ jn.define('im/messenger/lib/element/dialog/message/image', (require, exports, mo
 			{
 				this.setMessage(modelMessage.text);
 			}
+
+			this.setPreviewParams(file.image);
 		}
 
 		getType()
@@ -46,6 +48,24 @@ jn.define('im/messenger/lib/element/dialog/message/image', (require, exports, mo
 			}
 
 			this.imageUrl = imageUrl;
+		}
+
+		setPreviewParams(param)
+		{
+			if (Type.isObject(param))
+			{
+				this.previewParams = {
+					height: param.height || 0,
+					width: param.width || 0,
+				};
+			}
+			else
+			{
+				this.previewParams = {
+					height: 0,
+					width: 0,
+				};
+			}
 		}
 	}
 

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Integration\Rest;
 
+use Bitrix\Crm\Model\Dynamic\Type;
 use Bitrix\Crm\Model\Dynamic\TypeTable;
 use Bitrix\Crm\Service;
 use Bitrix\Main\Event;
@@ -118,11 +119,19 @@ class EventManager
 			'isLoadStages' => false,
 			'isLoadCategories' => false,
 		]);
-		foreach ($typesMap->getTypes() as $type)
+
+		$entityTypeIds = array_map(fn(Type $type) => $type->getEntityTypeId(), $typesMap->getTypes());
+
+		if (Service\Container::getInstance()->getFactory(\CCrmOwnerType::SmartInvoice))
+		{
+			$entityTypeIds[] = \CCrmOwnerType::SmartInvoice;
+		}
+
+		foreach ($entityTypeIds as $entityTypeId)
 		{
 			foreach ($eventNames as $eventName)
 			{
-				$typeSpecificEventName = $this->getItemEventNameWithEntityTypeId($eventName, $type->getEntityTypeId());
+				$typeSpecificEventName = $this->getItemEventNameWithEntityTypeId($eventName, $entityTypeId);
 				$bindings[\CRestUtil::EVENTS][$typeSpecificEventName] = $this->getItemEventInfo($typeSpecificEventName);
 			}
 		}

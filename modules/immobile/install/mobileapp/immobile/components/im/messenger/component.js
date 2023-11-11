@@ -63,6 +63,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { DialogCreator } = require('im/messenger/controller/dialog-creator');
 	const { SidebarController } = require('im/messenger/controller/sidebar/sidebar-controller');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
+	const { RecentSelector } = require('im/messenger/controller/search/experimental');
+	const { MessengerParams } = require('im/messenger/lib/params');
 	/* endregion import */
 
 	class Messenger
@@ -103,13 +105,21 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 			this.visibilityManager = VisibilityManager.getInstance();
 
+			/**
+			 * @type {MessengerCoreStore}
+			 */
 			this.store = null;
+			/**
+			 * @type {MessengerCoreStoreManager}
+			 */
 			this.storeManager = null;
 			this.sendingService = null;
 
 			this.recent = null;
 			this.dialog = null;
 			this.dialogSelector = null;
+			/** @type {RecentSelector} */
+			this.recentSelector = null;
 			this.chatCreator = null;
 			this.dialogCreator = null;
 			this.sidebar = null;
@@ -171,9 +181,19 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 				}),
 			});
 
-			this.dialogSelector = new DialogSelector({
-				view: new SelectorDialogListAdapter(dialogList),
+			const chatSettings = Application.storage.getObject('settings.chat', {
+				chatBetaEnable: false,
 			});
+			if (MessengerParams.isBetaAvailable() && chatSettings.chatBetaEnable)
+			{
+				this.recentSelector = new RecentSelector(dialogList);
+			}
+			else
+			{
+				this.dialogSelector = new DialogSelector({
+					view: new SelectorDialogListAdapter(dialogList),
+				});
+			}
 
 			this.chatCreator = new ChatCreator();
 
@@ -206,10 +226,12 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.addCustomEvent(EventType.messenger.getOpenDialogParams, this.getOpenDialogParams.bind(this));
 			BX.addCustomEvent(EventType.messenger.getOpenLineParams, this.getOpenLineParams.bind(this));
 			BX.addCustomEvent(EventType.messenger.showSearch, this.openChatSearch.bind(this));
+			BX.addCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch.bind(this));
 			BX.addCustomEvent(EventType.messenger.createChat, this.openChatCreate.bind(this));
 			BX.addCustomEvent(EventType.messenger.openNotifications, this.openNotifications.bind(this));
 			BX.addCustomEvent(EventType.messenger.refresh, this.refresh.bind(this));
 			BX.addCustomEvent(EventType.messenger.closeDialog, this.closeDialog.bind(this));
+			BX.addCustomEvent(EventType.messenger.destroyDialog, this.destroyDialog.bind(this));
 			BX.addCustomEvent(EventType.messenger.uploadFiles, this.uploadFiles.bind(this));
 			BX.addCustomEvent(EventType.messenger.cancelFileUpload, this.cancelFileUpload.bind(this));
 		}
@@ -412,6 +434,12 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			Logger.info('EventType.messenger.closeDialog', dialogId);
 		}
 
+		destroyDialog(dialogId)
+		{
+			Logger.info('EventType.messenger.destroyDialog', dialogId);
+			this.dialog.view.ui.back();
+		}
+
 		openLine(options)
 		{
 			Logger.info('EventType.messenger.openLine', options);
@@ -434,7 +462,24 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			Logger.log('EventType.messenger.showSearch');
 
+			if (this.recentSelector)
+			{
+				this.recentSelector.open();
+
+				return;
+			}
+
 			this.dialogSelector.open();
+		}
+
+		closeChatSearch()
+		{
+			Logger.log('EventType.messenger.hideSearch');
+
+			if (this.recentSelector)
+			{
+				this.recentSelector.close();
+			}
 		}
 
 		openChatCreate()
@@ -567,6 +612,16 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			}
 
 			recentItem.counter = event.counter;
+			const dialogItem = ChatUtils.objectClone(this.store.getters['dialoguesModel/getById'](event.dialogId));
+			if (dialogItem)
+			{
+				this.store.dispatch('dialoguesModel/update', {
+					dialogId: event.dialogId,
+					fields: {
+						counter: event.counter,
+					},
+				});
+			}
 
 			this.store.dispatch('recentModel/set', [recentItem]);
 		}

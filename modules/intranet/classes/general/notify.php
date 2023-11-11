@@ -4,6 +4,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Type\RandomSequence;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -11,8 +12,6 @@ class CIntranetNotify
 {
 	public static function NewUserMessage($USER_ID): void
 	{
-		static $uniqueIdCache = [];
-
 		if (!CModule::IncludeModule('socialnetwork'))
 		{
 			return;
@@ -83,12 +82,7 @@ class CIntranetNotify
 			$bExtranetUser = true;
 		}
 
-		$uniqueId = round((microtime(true) - mktime(0,0,0,1,1,2017))*10);
-		while (in_array($uniqueId, $uniqueIdCache))
-		{
-			$uniqueId += 10000000;
-		}
-		$uniqueIdCache[] = $uniqueId;
+		$randomGenerator = new RandomSequence('INTRANET_NEW_USER' . $USER_ID);
 
 		$arSoFields = array(
 			"ENTITY_TYPE" => SONET_INTRANET_NEW_USER_ENTITY,
@@ -106,7 +100,7 @@ class CIntranetNotify
 			"SITE_ID" => SITE_ID,
 			"ENABLE_COMMENTS" => "Y", //!!!
 			"RATING_TYPE_ID" => "INTRANET_NEW_USER",
-			"RATING_ENTITY_ID" => $uniqueId,
+			"RATING_ENTITY_ID" => $randomGenerator->rand(1, 2147483647),
 		);
 
 		// check earlier messages for this user

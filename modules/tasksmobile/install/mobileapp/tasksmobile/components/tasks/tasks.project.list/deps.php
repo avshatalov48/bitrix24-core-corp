@@ -2,7 +2,7 @@
 
 return [
 	'extensions' => [
-		'cache',
+		'assets/common',
 		'entity-ready',
 		'layout/socialnetwork/project/create',
 		'layout/socialnetwork/project/edit',
@@ -12,8 +12,10 @@ return [
 		'pull/client/events',
 		'reload/listeners',
 		'rest',
+		'storage-cache',
 		'tasks:layout/presetList',
 		'tasks:project',
 		'utils/function',
+		'utils/logger',
 	],
 ];

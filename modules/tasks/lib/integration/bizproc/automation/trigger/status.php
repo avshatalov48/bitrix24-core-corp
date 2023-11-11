@@ -56,23 +56,23 @@ class Status extends Base
 	{
 		return [
 			[
-				'value' => \CTasks::STATE_PENDING,
+				'value' => \Bitrix\Tasks\Internals\Task\Status::PENDING,
 				'name' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_PENDING_1')
 			],
 			[
-				'value' => \CTasks::STATE_IN_PROGRESS,
+				'value' => \Bitrix\Tasks\Internals\Task\Status::IN_PROGRESS,
 				'name' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_IN_PROGRESS')
 			],
 			[
-				'value' => \CTasks::STATE_SUPPOSEDLY_COMPLETED,
+				'value' => \Bitrix\Tasks\Internals\Task\Status::SUPPOSEDLY_COMPLETED,
 				'name' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_SUPPOSEDLY_COMPLETED')
 			],
 			[
-				'value' => \CTasks::STATE_COMPLETED,
+				'value' => \Bitrix\Tasks\Internals\Task\Status::COMPLETED,
 				'name' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_COMPLETED')
 			],
 			[
-				'value' => \CTasks::STATE_DEFERRED,
+				'value' => \Bitrix\Tasks\Internals\Task\Status::DEFERRED,
 				'name' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_DEFERRED')
 			]
 		];

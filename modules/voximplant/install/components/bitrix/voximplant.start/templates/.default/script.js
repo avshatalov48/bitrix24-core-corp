@@ -43,6 +43,7 @@ BX.Voximplant.Start = {
 		this.crmFormListUrl = config.crmFormListUrl || '';
 		this.crmFormCreateUrl = config.crmFormCreateUrl || '';
 		this.isShownPrivacyPolicy = config.isShownPrivacyPolicy === 'Y';
+		this.isRussianRegion = config.isRussianRegion === 'Y';
 
 		if(this.mainMenuItems.length > 0)
 		{
@@ -119,6 +120,10 @@ BX.Voximplant.Start = {
 		BX.bind(BX('balance-top-up'), 'click', this.onTopUpButtonClick.bind(this));
 		BX.bind(BX('balance-menu'), 'click', this.onBalanceMenuButtonClick.bind(this));
 
+		if (this.isRussianRegion)
+		{
+			BX.UI.Hint.init(BX('#vox-charge-balance-button'));
+		}
 
 		if(BX.PULL)
 		{

@@ -25,6 +25,7 @@ $MESS["CRM_TYPE_DETAIL_IS_SET_OPEN_PERMISSIONS_DESCRIPTION"] = "Wenn ein Smartpr
 $MESS["CRM_TYPE_DETAIL_IS_SET_OPEN_PERMISSIONS_TITLE"] = "Standardmäßige Zugriffsrechte für Pipelines";
 $MESS["CRM_TYPE_DETAIL_IS_USE_IN_USERFIELD_ENABLED_TITLE"] = "CRM-Elemente";
 $MESS["CRM_TYPE_DETAIL_RECYCLE_DISABLED_HINT"] = "Löschen Sie die Elemente von diesem Typ im Papierkorb, bevor die Verbindung getrennt wird.";
+$MESS["CRM_TYPE_DETAIL_RELATION_CARD_DESCRIPTION_MSGVER_1"] = "Ein Smartprozess kann mit den anderen CRM-Elementen (Leads, Aufträgen, Angeboten usw.) oder mit den anderen Smartprozessen verknüpft werden. Wenn bspw. ein Smartprozess mit einem Auftrag verknüpft wird, wird im Auftragsprofil ein Feld angezeigt, wo ein Element dieses Smartprozesses ausgewählt werden kann. Ähnlich wird auch im Profil des Smartprozesses ein Tab angezeigt, wo Kontakte enthalten sind.";
 $MESS["CRM_TYPE_DETAIL_RELATION_CARD_TITLE"] = "An CRM-Elemente anbinden";
 $MESS["CRM_TYPE_DETAIL_RELATION_CHILD"] = "Diesen Smartprozess mit anderen CRM-Elementen verknüpfen";
 $MESS["CRM_TYPE_DETAIL_RELATION_CHILDREN_LIST"] = "Liste mit verknüpften Elementen zum Formular hinzufügen";

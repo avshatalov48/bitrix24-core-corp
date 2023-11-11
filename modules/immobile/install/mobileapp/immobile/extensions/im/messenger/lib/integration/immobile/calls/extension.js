@@ -29,7 +29,7 @@ jn.define('im/messenger/lib/integration/immobile/calls', (require, exports, modu
 				return;
 			}
 
-			const userData = core.getStore().getters['usersModel/getUserById'](dialogId);
+			const userData = core.getStore().getters['usersModel/getById'](dialogId);
 			const eventData = {
 				userId: dialogId,
 				video: false,
@@ -58,7 +58,7 @@ jn.define('im/messenger/lib/integration/immobile/calls', (require, exports, modu
 				return;
 			}
 
-			const userData = core.getStore().getters['usersModel/getUserById'](dialogId);
+			const userData = core.getStore().getters['usersModel/getById'](dialogId);
 			const eventData = {
 				userId: dialogId,
 				video: true,

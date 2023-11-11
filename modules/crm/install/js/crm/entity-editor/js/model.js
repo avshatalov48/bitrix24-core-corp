@@ -383,7 +383,7 @@ if(typeof BX.Crm.QuoteModel === "undefined")
 		if (this.getField('IS_USE_NUMBER_IN_TITLE_PLACEHOLDER'))
 		{
 			caption = BX.Loc.getMessage(
-				'CRM_QUOTE_TITLE',
+				'CRM_QUOTE_TITLE_MSGVER_1',
 				{
 					'#QUOTE_NUMBER#': this.getField('QUOTE_NUMBER'),
 					'#BEGINDATE#': this.getField('BEGINDATE')
@@ -398,7 +398,7 @@ if(typeof BX.Crm.QuoteModel === "undefined")
 				id = '';
 			}
 			caption = BX.Loc.getMessage(
-				'CRM_QUOTE_TITLE_PLACEHOLDER',
+				'CRM_QUOTE_TITLE_PLACEHOLDER_MSGVER_1',
 				{
 					'#ID#': id,
 				}

@@ -38,7 +38,7 @@ $MESS["CRM_CONV_EX_CONTACT_AUTOCREATION_DISABLED"] = "Автоматическо
 $MESS["CRM_CONV_EX_COMPANY_AUTOCREATION_DISABLED"] = "Автоматическое создание компаний отключено.";
 $MESS["CRM_CONV_EX_DEAL_AUTOCREATION_DISABLED"] = "Автоматическое создание сделок отключено.";
 $MESS["CRM_CONV_EX_INVOICE_AUTOCREATION_DISABLED"] = "Автоматическое создание счетов отключено.";
-$MESS["CRM_CONV_EX_QUOTE_AUTOCREATION_DISABLED"] = "Автоматическое создание предложений отключено.";
+$MESS["CRM_CONV_EX_QUOTE_AUTOCREATION_DISABLED_MSGVER_1"] = "Автоматическое создание предложений отключено.";
 
 $MESS["CRM_CONV_EX_LEAD_HAS_WORKFLOWS"] = "Найдены бизнес-процессы, настроенные на запуск при создании лида. Возможно потребуется участие пользователя.";
 $MESS["CRM_CONV_EX_CONTACT_HAS_WORKFLOWS"] = "Найдены бизнес-процессы, настроенные на запуск при создании контакта. Возможно потребуется участие пользователя.";

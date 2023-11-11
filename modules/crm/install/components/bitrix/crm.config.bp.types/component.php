@@ -56,8 +56,8 @@ $arTypes = [
 	],
 	'CRM_QUOTE' => [
 		'ID' => 'CRM_QUOTE',
-		'NAME' => \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_QUOTE'),
-		'DESC' => GetMessage('CRM_BP_QUOTE_DESC'),
+		'NAME' => \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_QUOTE_MSGVER_1'),
+		'DESC' => GetMessage('CRM_BP_QUOTE_DESC_MSGVER_1'),
 	],
 ];
 

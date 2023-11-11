@@ -40,8 +40,12 @@ class Ping extends LogMessage
 		}
 
 		$created = $this->getDate();
-		$deadline = DateTime::createFromUserTime($deadlineStr);
-		$offset = $deadline->getDiff($created)->i; // minutes
+		$offset = 0;
+		if ($created)
+		{
+			$deadline = DateTime::createFromUserTime($deadlineStr);
+			$offset = ($deadline->getTimestamp() - $created->getTimestamp()) / 60; // minutes
+		}
 
 		$pingOffset = null;
 		if ($offset === 0)
@@ -66,9 +70,7 @@ class Ping extends LogMessage
 
 		if (!is_null($pingOffset) && $pingOffset >= 0)
 		{
-			$startBlockTitle = ($pingOffset === 0)
-				? Loc::getMessage('CRM_TIMELINE_LOG_PING_ACTIVITY_STARTED_NEW')
-				: Loc::getMessagePlural('CRM_TIMELINE_LOG_PING_ACTIVITY_START_NEW', $pingOffset, ['#OFFSET#' => $pingOffset]);
+			$startBlockTitle = $this->getOffsetText($pingOffset);
 			$blocks['start'] = ContentBlockFactory::createTitle($startBlockTitle);
 		}
 
@@ -89,5 +91,25 @@ class Ping extends LogMessage
 				->setEditable(false)
 				->setHeight(EditableDescription::HEIGHT_SHORT),
 		];
+	}
+
+	private function getOffsetText(int $pingOffset): string
+	{
+		if ($pingOffset === 0)
+		{
+			return Loc::getMessage('CRM_TIMELINE_LOG_PING_ACTIVITY_STARTED_NEW');
+		}
+		$hours = (int)($pingOffset / 60);
+		$minutes = $pingOffset % 60;
+		if (!$hours)
+		{
+			return Loc::getMessagePlural('CRM_TIMELINE_LOG_PING_ACTIVITY_START_NEW', $minutes, ['#OFFSET#' => $minutes]);
+		}
+		if (!$minutes)
+		{
+			return Loc::getMessagePlural('CRM_TIMELINE_LOG_PING_ACTIVITY_START_NEW_HOURS', $hours, ['#HOURS#' => $hours]);
+		}
+
+		return Loc::getMessagePlural('CRM_TIMELINE_LOG_PING_ACTIVITY_START_NEW_HOURS_MINS', $hours, ['#HOURS#' => $hours, '#MINUTES#' => $minutes]);
 	}
 }

@@ -142,7 +142,6 @@ jn.define('crm/conversion', (require, exports, module) => {
 				this.convertParams = params;
 				const data = await this.runConvert(params);
 				const conversionResult = await this.dataValidationForConversion(data);
-
 				const result = conversionResult && conversionResult.DATA;
 				if (!result)
 				{

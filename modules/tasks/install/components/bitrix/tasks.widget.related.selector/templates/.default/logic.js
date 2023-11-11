@@ -193,7 +193,10 @@ BX.namespace('Tasks.Component');
 						preselectedItems: this.prepareDialogItems(this.preselectedItems),
 						entities: [
 							{
-								id: 'task-template'
+								id: 'task-template',
+								options: {
+									templateId: this.sys.parent.option('templateId'),
+								}
 							}
 						],
 						events: {

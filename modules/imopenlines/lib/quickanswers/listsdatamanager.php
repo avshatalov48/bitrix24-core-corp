@@ -3,6 +3,9 @@
 namespace Bitrix\ImOpenlines\QuickAnswers;
 
 use Bitrix\ImOpenLines\Config;
+use Bitrix\ImOpenLines\Model\RoleAccessTable;
+use Bitrix\ImOpenLines\Model\RolePermissionTable;
+use Bitrix\ImOpenlines\Security\Permissions;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Loader;
@@ -298,7 +301,7 @@ class ListsDataManager extends DataManager
 	 * @param int $userWithNoXmlId
 	 * @return array
 	 */
-	protected static function getRights($rightCode, array $users, $userWithNoXmlId = 0)
+	protected static function getRights($rightCode, array $users, $userWithNoXmlId = 0, $additionalRights = [])
 	{
 		$result = array();
 		$userWithNoXmlId = intval($userWithNoXmlId);
@@ -314,7 +317,7 @@ class ListsDataManager extends DataManager
 			foreach($users as $user)
 			{
 				$code = $user;
-				if(intval($user) == $user)
+				if($user && intval($user) == $user)
 				{
 					$code = 'U'.$user;
 				}
@@ -326,6 +329,21 @@ class ListsDataManager extends DataManager
 				{
 					$result['n' . $i]['XML_ID'] = self::RIGHTS_XML_ID;
 				}
+				$i++;
+
+				if (in_array($code, $additionalRights))
+				{
+					$additionalRights = array_diff($additionalRights, [$code]);
+				}
+			}
+
+			foreach ($additionalRights as $additionalRight)
+			{
+				$result['n' . $i] = array(
+					'TASK_ID' => $rightTaskId,
+					'GROUP_CODE' => $additionalRight,
+					'XML_ID' => self::RIGHTS_XML_ID,
+				);
 				$i++;
 			}
 		}
@@ -650,6 +668,37 @@ class ListsDataManager extends DataManager
 			{
 				$users = array_merge($users, $config['QUEUE']);
 			}
+
+			$rolePermissions = RolePermissionTable::getList([
+				'select' => [
+					'ROLE_ID'
+				],
+				'filter' => [
+					'=ENTITY' => Permissions::ENTITY_QUICK_ANSWERS,
+					'=ACTION' => Permissions::ACTION_MODIFY,
+					'=PERMISSION' => Permissions::PERMISSION_ANY,
+				]
+			])->fetchAll();
+
+			$roleIds = array_map(function ($item) {
+				return $item['ROLE_ID'];
+			}, $rolePermissions);
+
+			$roleAccessCodes = RoleAccessTable::getList([
+				'select' => [
+					'ACCESS_CODE'
+				],
+				'filter' => [
+					'ROLE_ID' => array_unique($roleIds)
+				]
+			])->fetchAll();
+
+			$accessCodes = array_map(function ($item) {
+				return $item['ACCESS_CODE'];
+			}, $roleAccessCodes);
+
+			$accessCodes = array_unique($accessCodes);
+
 			$departments = array();
 			// get all departments of the users
 			$usersData = UserTable::getList(array(
@@ -664,7 +713,7 @@ class ListsDataManager extends DataManager
 				{
 					$departments[] = $userData['UF_DEPARTMENT'];
 				}
-				else
+				elseif (is_array($userData['UF_DEPARTMENT']))
 				{
 					$departments = array_merge($departments, $userData['UF_DEPARTMENT']);
 				}
@@ -678,7 +727,7 @@ class ListsDataManager extends DataManager
 
 			$fields = array(
 				'RIGHTS_MODE' => 'E',
-				'RIGHTS' => self::getRights(self::RIGHTS_IBLOCK_FOR_LINE_QUEUE, $users)
+				'RIGHTS' => self::getRights(self::RIGHTS_IBLOCK_FOR_LINE_QUEUE, $users, 0, $accessCodes)
 			);
 			$rightsManager = new \CIBlockRights($iblockId);
 			$currentRights = $rightsManager->GetRights();

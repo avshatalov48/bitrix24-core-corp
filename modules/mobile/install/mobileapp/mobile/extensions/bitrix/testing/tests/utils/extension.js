@@ -2,12 +2,13 @@
 
 	const require = ext => jn.require(ext);
 
-	const { describe, it, test, expect } = require('testing');
+	const { describe, it, test, expect, beforeEach } = require('testing');
 
 	const { md5 } = require('utils/hash');
 	const { clone, get, has, isEqual } = require('utils/object');
 	const { isRegExp } = require('utils/type');
 	const { replaceAll } = require('utils/string');
+	const { Moment } = require('utils/date');
 
 	describe('global utils objects', () => {
 
@@ -514,7 +515,5 @@
 			expect(isRegExp('hello')).toBeFalse();
 
 		});
-
 	});
-
 })();

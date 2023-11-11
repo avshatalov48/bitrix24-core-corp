@@ -18,7 +18,7 @@ jn.define('crm/entity-detail/component', (require, exports, module) => {
 	const { getSmartActivityMenuItem } = require('crm/entity-detail/component/smart-activity-menu-item');
 	const { onEntityModelReady } = require('crm/entity-detail/component/on-model-ready');
 	const { getOpenLinesMenuItems } = require('crm/entity-detail/component/open-lines-menu-items');
-	const { ahaMomentsManager } = require('crm/entity-detail/component/aha-moments-manager');
+	const { AhaMomentsManager } = require('crm/entity-detail/component/aha-moments-manager');
 
 	module.exports = {
 		menuProvider,
@@ -37,6 +37,6 @@ jn.define('crm/entity-detail/component', (require, exports, module) => {
 		getPaymentAutomationMenuItem,
 		onEntityModelReady,
 		getOpenLinesMenuItems,
-		ahaMomentsManager,
+		AhaMomentsManager,
 	};
 });

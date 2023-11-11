@@ -55,7 +55,7 @@ jn.define('im/messenger/controller/dialog/header/title', (require, exports, modu
 			let status = '';
 			if (DialogHelper.isChatId(dialogId) && !result.isWriting)
 			{
-				status = (new UserUtils()).getLastDateText(store.getters['usersModel/getUserById'](dialogId));
+				status = (new UserUtils()).getLastDateText(store.getters['usersModel/getById'](dialogId));
 			}
 
 			if (status)

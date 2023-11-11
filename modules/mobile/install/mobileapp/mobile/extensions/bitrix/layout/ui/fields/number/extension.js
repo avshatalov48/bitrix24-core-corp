@@ -20,11 +20,30 @@ jn.define('layout/ui/fields/number', (require, exports, module) => {
 	{
 		renderReadOnlyContent()
 		{
-			return (
-				this.isMoneyFieldEnabledView()
-					? this.renderEditableContent()
-					: super.renderReadOnlyContent()
-			);
+			if (this.isMoneyFieldEnabledView())
+			{
+				return View(
+					{
+						style: {
+							flex: 1,
+							flexDirection: 'row',
+						},
+					},
+					MoneyField(this.getFieldInputProps()),
+					// for workability of copying by long click
+					View({
+						style: {
+							width: '100%',
+							height: '100%',
+							position: 'absolute',
+						},
+						onLongClick: this.getContentLongClickHandler(),
+						onClick: this.getContentClickHandler(),
+					}),
+				);
+			}
+
+			return super.renderReadOnlyContent();
 		}
 
 		renderEditableContent()
@@ -195,5 +214,4 @@ jn.define('layout/ui/fields/number', (require, exports, module) => {
 		NumberField: (props) => new NumberField(props),
 		NumberPrecision: Types,
 	};
-
 });

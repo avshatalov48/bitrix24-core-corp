@@ -26,9 +26,12 @@ use Bitrix\Tasks\Internals\Counter\CounterTable;
 use Bitrix\Tasks\Internals\Counter\Deadline;
 use Bitrix\Tasks\Internals\Task\ElapsedTimeTable;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
+use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\SortingTable;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\Task\TaskTagTable;
+use Bitrix\Tasks\Internals\Task\TimeUnitType;
 use Bitrix\Tasks\Internals\Task\UserOptionTable;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Internals\TaskTable;
@@ -415,6 +418,12 @@ class TaskQueryBuilder
 		foreach ($this->taskQuery->getOrder() as $column => $order)
 		{
 			$this->addOrder($column, $order);
+		}
+
+		$queryOrder = $this->query->getOrder();
+		if (!array_key_exists('ID', $queryOrder) && !empty($queryOrder))
+		{
+			$this->query->addOrder('ID', TaskQuery::SORT_ASC);
 		}
 
 		return $this;
@@ -1100,11 +1109,11 @@ class TaskQueryBuilder
 				"STATUS_COMPLETE",
 				"CASE
 					WHEN
-						%s = '".\CTasks::STATE_COMPLETED."'
+						%s = '".Status::COMPLETED."'
 					THEN
-						'".\CTasks::STATE_PENDING."'
+						'".Status::PENDING."'
 					ELSE
-						'".\CTasks::STATE_NEW."'
+						'".Status::NEW."'
 					END",
 				["STATUS"]
 			),
@@ -1189,11 +1198,11 @@ class TaskQueryBuilder
 				'COMPUTE_DURATION_PLAN',
 				'case
 					when
-						%1$s = \''. \CTasks::TIME_UNIT_TYPE_MINUTE .'\' or %1$s = \''. \CTasks::TIME_UNIT_TYPE_HOUR .'\'
+						%1$s = \''. TimeUnitType::MINUTE .'\' or %1$s = \''. TimeUnitType::HOUR .'\'
 					then
 						ROUND(%2$s / 3600, 0)
 					when
-						%1$s = \''. \CTasks::TIME_UNIT_TYPE_DAY .'\' or %1$s = "" or %1$s is null
+						%1$s = \''. TimeUnitType::DAY .'\' or %1$s = \'\' or %1$s is null
 					then
 						ROUND(%2$s / 86400, 0)
 					else
@@ -1205,9 +1214,9 @@ class TaskQueryBuilder
 				"COMPUTE_DURATION_TYPE",
 				'case
 					when
-						%1$s = \''. \CTasks::TIME_UNIT_TYPE_MINUTE .'\'
+						%1$s = \''. TimeUnitType::MINUTE .'\'
 					then
-						\''. \CTasks::TIME_UNIT_TYPE_HOUR .'\'
+						\''. TimeUnitType::HOUR .'\'
 					else
 						%1$s
 				end',
@@ -1310,11 +1319,11 @@ class TaskQueryBuilder
 					AND
 					%2$s != '. $this->taskQuery->getBehalfUser() .'
 					AND
-					(%1$s = '. \CTasks::STATE_NEW .' OR %1$s = '. \CTasks::STATE_PENDING .')
+					(%1$s = '. Status::NEW .' OR %1$s = '. Status::PENDING .')
 				THEN
-					"Y"
+					\'Y\'
 				ELSE
-					"N"
+					\'N\'
 			END',
 			["STATUS", "CREATED_BY", self::ALIAS_TASK_VIEW.".USER_ID"]
 		);
@@ -1345,35 +1354,37 @@ class TaskQueryBuilder
 	 */
 	private function getStatusField(): ExpressionField
 	{
+		$connection = \Bitrix\Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
 		$this->joinByAlias(self::ALIAS_TASK_VIEW);
 
 		return new ExpressionField(
 			"COMPUTE_STATUS",
 			'CASE
 					WHEN
-						%1$s < DATE_ADD(NOW(), INTERVAL '. Deadline::getDeadlineTimeLimit() .' SECOND)
+						%1$s < ' . $helper->addSecondsToDateTime(Deadline::getDeadlineTimeLimit()) . '
 						AND %1$s >= NOW()
-						AND %2$s != '. \CTasks::STATE_SUPPOSEDLY_COMPLETED .'
-						AND %2$s != '. \CTasks::STATE_COMPLETED .'
+						AND %2$s != '. Status::SUPPOSEDLY_COMPLETED .'
+						AND %2$s != '. Status::COMPLETED .'
 						AND (
-							%2$s != '. \CTasks::STATE_DECLINED .'
+							%2$s != '. Status::DECLINED .'
 							OR %3$s != '. $this->taskQuery->getBehalfUser() .'
 						)
 					THEN
-						"'. \CTasks::METASTATE_EXPIRED_SOON .'"
+						'. MetaStatus::EXPIRED_SOON .'
 					WHEN
 						%1$s < NOW() 
-						AND %2$s != '. \CTasks::STATE_SUPPOSEDLY_COMPLETED .'
-						AND %2$s != '. \CTasks::STATE_COMPLETED .'
-						AND (%2$s != '. \CTasks::STATE_DECLINED .' OR %3$s != '. $this->taskQuery->getBehalfUser() .')
+						AND %2$s != '. Status::SUPPOSEDLY_COMPLETED .'
+						AND %2$s != '. Status::COMPLETED .'
+						AND (%2$s != '. Status::DECLINED .' OR %3$s != '. $this->taskQuery->getBehalfUser() .')
 					THEN
-						'. \CTasks::METASTATE_EXPIRED .'
+						'. MetaStatus::EXPIRED .'
 					WHEN
 						%5$s IS NULL
 						AND %4$s != '. $this->taskQuery->getBehalfUser() .'
-						AND (%2$s = '. \CTasks::STATE_NEW .' OR %2$s = '. \CTasks::STATE_PENDING .')
+						AND (%2$s = '. Status::NEW .' OR %2$s = '. Status::PENDING .')
 					THEN
-						'. \CTasks::METASTATE_VIRGIN_NEW .'
+						'. MetaStatus::UNSEEN .'
 					ELSE
 						%2$s
 				END',
@@ -1531,7 +1542,7 @@ class TaskQueryBuilder
 			  AND OPTION_CODE = {$option}
 		";
 
-		$sql = "IF(EXISTS({$sql}), 'Y', 'N')";
+		$sql = 'case when EXISTS(' . $sql . ') then \'Y\' else \'N\' end';
 
 		return new ExpressionField(
 			$field,

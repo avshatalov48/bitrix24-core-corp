@@ -1061,10 +1061,11 @@ class CCalendarEvent
 						}
 						break;
 					case '*SEARCHABLE_CONTENT':
-						$query->whereMatch('SEARCHABLE_CONTENT', $value);
+						$searchText = \Bitrix\Main\ORM\Query\Filter\Helper::matchAgainstWildcard($value);
+						$query->whereMatch('SEARCHABLE_CONTENT', $searchText);
 						break;
 					case '*%SEARCHABLE_CONTENT':
-						$query->whereLike('SEARCHABLE_CONTENT', $value);
+						$query->whereLike('SEARCHABLE_CONTENT', '%' . $value . '%');
 						break;
 					case '=UF_CRM_CAL_EVENT':
 						$query->where('UF_CRM_CAL_EVENT', $value);

@@ -9,6 +9,12 @@ jn.define('im/messenger/lib/helper/date', (require, exports, module) => {
 	 */
 	class DateHelper
 	{
+		/**
+		 * @template T
+		 * @param date
+		 * @param {T} [defaultValue]
+		 * @return {Date | T}
+		 */
 		cast(date, defaultValue = new Date())
 		{
 			let result = defaultValue;

@@ -47,46 +47,67 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 		actions: {
 			/** @function applicationModel/openDialogId */
 			openDialogId: (store, payload) => {
+				let dialogId;
 				if (DialogHelper.isDialogId(payload))
 				{
-					store.commit('openDialogId', payload);
-
-					return;
+					dialogId = payload;
 				}
-
-				if (DialogHelper.isChatId(payload))
+				else if (DialogHelper.isChatId(payload))
 				{
-					store.commit('openDialogId', Number(payload));
+					dialogId = Number(payload);
 				}
+
+				store.commit('openDialogId', {
+					actionName: 'openDialogId',
+					data: {
+						dialogId,
+					},
+				});
 			},
 
 			/** @function applicationModel/closeDialogId */
 			closeDialogId: (store, payload) => {
+				let dialogId;
 				if (DialogHelper.isDialogId(payload))
 				{
-					store.commit('closeDialogId', payload);
-
-					return;
+					dialogId = payload;
 				}
-
-				if (DialogHelper.isChatId(payload))
+				else if (DialogHelper.isChatId(payload))
 				{
-					store.commit('closeDialogId', Number(payload));
+					dialogId = Number(payload);
 				}
+
+				store.commit('closeDialogId', {
+					actionName: 'closeDialogId',
+					data: {
+						dialogId,
+					},
+				});
 			},
 		},
 		mutations: {
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			openDialogId: (state, payload) => {
 				Logger.warn('applicationModel: openDialogId mutation', payload);
 
-				state.dialog.currentId = payload;
+				const { dialogId } = payload.data;
+				state.dialog.currentId = dialogId;
 
-				state.dialog.idList.push(payload);
+				state.dialog.idList.push(dialogId);
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			closeDialogId: (state, payload) => {
 				Logger.warn('applicationModel: closeDialogId mutation', payload);
 
-				const index = state.dialog.idList.lastIndexOf(payload);
+				const { dialogId } = payload.data;
+				const index = state.dialog.idList.lastIndexOf(dialogId);
 				if (index !== -1)
 				{
 					state.dialog.idList.splice(index, 1);

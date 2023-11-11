@@ -198,7 +198,7 @@ jn.define('layout/ui/entity-editor/control/section', (require, exports, module) 
 						return true;
 					}
 
-					return element.isEditable() || element.isRequired();
+					return element.isEditable() || element.isRequired() || element.isShowNew();
 				});
 			}
 

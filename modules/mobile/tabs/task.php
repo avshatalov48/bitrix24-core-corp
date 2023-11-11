@@ -2,14 +2,16 @@
 
 namespace Bitrix\Mobile\AppTabs;
 
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ORM\Query\Filter;
 use Bitrix\Mobile\Context;
 use Bitrix\Mobile\Project\Helper;
 use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\MobileApp\Janative\Manager;
+use Bitrix\MobileApp\Mobile;
+use Bitrix\Socialnetwork\Component\WorkgroupList;
 
 class Task implements Tabable
 {
@@ -107,15 +109,7 @@ class Task implements Tabable
 				'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER'),
 				'componentCode' => 'tasks.list',
 				'scriptPath' => Manager::getComponentPath('tasks:tasks.list'),
-				'rootWidget' => [
-					'name' => 'tasks.list',
-					'settings' => [
-						'objectName' => 'list',
-						'useSearch' => true,
-						'useLargeTitleMode' => true,
-						'emptyListMode' => true,
-					],
-				],
+				'rootWidget' => $this->getTaskListRootWidget(),
 				'params' => [
 					'COMPONENT_CODE' => 'tasks.list',
 					'USER_ID' => $this->context->userId,
@@ -130,7 +124,6 @@ class Task implements Tabable
 						'siteId' => $this->context->siteId,
 						'siteDir' => $this->context->siteDir,
 					]),
-					'MIN_SEARCH_SIZE' => Filter\Helper::getMinTokenSize(),
 					'MESSAGES' => [],
 					'IS_TABS_MODE' => true,
 				],
@@ -165,15 +158,49 @@ class Task implements Tabable
 						'siteId' => $this->context->siteId,
 						'siteDir' => $this->context->siteDir,
 					]),
-					'MIN_SEARCH_SIZE' => Filter\Helper::getMinTokenSize(),
+					'MODE' => WorkgroupList::MODE_TASKS_PROJECT,
 				],
 			],
 		];
 		$scrumTab = [
 			'id' => 'tasks.scrum.list',
 			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_SCRUM'),
+			'component' => [
+				'name' => 'JSStackComponent',
+				'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER'),
+				'componentCode' => 'tasks.project.list',
+				'scriptPath' => Manager::getComponentPath('tasks:tasks.project.list'),
+				'rootWidget' => [
+					'name' => 'tasks.list',
+					'settings' => [
+						'objectName' => 'list',
+						'useSearch' => true,
+						'useLargeTitleMode' => true,
+						'emptyListMode' => true,
+					],
+				],
+				'params' => [
+					'COMPONENT_CODE' => 'tasks.project.list',
+					'SITE_ID' => $this->context->siteId,
+					'SITE_DIR' => $this->context->siteDir,
+					'USER_ID' => $this->context->userId,
+					'PROJECT_NEWS_PATH_TEMPLATE' => Helper::getProjectNewsPathTemplate([
+						'siteDir' => $this->context->siteDir,
+					]),
+					'PROJECT_CALENDAR_WEB_PATH_TEMPLATE' => Helper::getProjectCalendarWebPathTemplate([
+						'siteId' => $this->context->siteId,
+						'siteDir' => $this->context->siteDir,
+					]),
+					'MODE' => WorkgroupList::MODE_TASKS_SCRUM,
+				],
+			],
 			'selectable' => false,
 		];
+		$showScrumList = (Option::get('tasksmobile', 'showScrumList', 'N') === 'Y');
+		if ($showScrumList)
+		{
+			unset($scrumTab['selectable']);
+		}
 		$efficiencyTab = [
 			'id' => 'tasks.efficiency',
 			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_EFFICIENCY'),
@@ -206,6 +233,32 @@ class Task implements Tabable
 				'COMPONENT_CODE' => 'tasks.tabs',
 				'USER_ID' => $this->context->userId,
 				'SITE_ID' => $this->context->siteId,
+				'SHOW_SCRUM_LIST' => $showScrumList,
+			],
+		];
+	}
+
+	private function getTaskListRootWidget(): array
+	{
+		// if (Mobile::getApiVersion() >= 49)
+		// {
+		// 	return [
+		// 		'name' => 'layout',
+		// 		'settings' => [
+		// 			'objectName' => 'layout',
+		// 			'useSearch' => true,
+		// 			'useLargeTitleMode' => true,
+		// 		],
+		// 	];
+		// }
+
+		return [
+			'name' => 'tasks.list',
+			'settings' => [
+				'objectName' => 'list',
+				'useSearch' => true,
+				'useLargeTitleMode' => true,
+				'emptyListMode' => true,
 			],
 		];
 	}

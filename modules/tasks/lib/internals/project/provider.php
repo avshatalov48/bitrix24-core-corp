@@ -11,9 +11,11 @@ use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Filter\Factory;
 use Bitrix\Main\Filter\UserDataProvider;
 use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UI\Filter\Options;
+use Bitrix\Mobile\Project\Helper;
 use Bitrix\Socialnetwork\Component\WorkgroupList;
 use Bitrix\Socialnetwork\Component\WorkgroupList\RuntimeFieldsManager;
 use Bitrix\Socialnetwork\Component\WorkgroupList\TasksCounter;
@@ -24,12 +26,11 @@ use Bitrix\Socialnetwork\WorkgroupPinTable;
 use Bitrix\Socialnetwork\WorkgroupSiteTable;
 use Bitrix\Socialnetwork\WorkgroupTable;
 use Bitrix\Socialnetwork\WorkgroupTagTable;
+use Bitrix\Tasks\Integration\Socialnetwork;
 use Bitrix\Tasks\Internals\Counter\Template\ProjectCounter;
 use Bitrix\Tasks\Internals\Counter\Template\ScrumCounter;
 use Bitrix\Tasks\Internals\Effective;
-use Bitrix\Tasks\Internals\Project\UserOption\UserOptionTypeDictionary;
 use Bitrix\Tasks\Internals\Task\ProjectLastActivityTable;
-use Bitrix\Tasks\Internals\Task\ProjectUserOptionTable;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\User;
 
@@ -43,8 +44,8 @@ class Provider
 	public function __construct(int $userId = 0, string $mode = '')
 	{
 		$this->userId = ($userId ?: User::getId());
-		$this->isScrum = false;
 		$this->mode = $mode;
+		$this->isScrum = ($mode === WorkgroupList::MODE_TASKS_SCRUM);
 		$this->runtimeFieldsManager = new RuntimeFieldsManager();
 	}
 
@@ -106,7 +107,7 @@ class Provider
 		];
 	}
 
-	public function prepareQuerySelect(array $select): array
+	private function prepareQuerySelect(array $select): array
 	{
 		$allowedFields = [
 			'ID',
@@ -120,28 +121,12 @@ class Provider
 			'OPENED',
 			'CLOSED',
 			'VISIBLE',
-			'USER_GROUP_ID',
 			'ACTIVITY_DATE',
 			'IS_PINNED',
+			'SCRUM_MASTER_ID',
 		];
-		$prepared = array_intersect($select, $allowedFields);
 
-		if (in_array('USER_GROUP_ID', $prepared, true))
-		{
-			$prepared['USER_GROUP_ID'] = 'CONTEXT_RELATION.ID';
-			unset($prepared[array_search('USER_GROUP_ID', $prepared, true)]);
-		}
-		if (in_array('IS_PINNED', $prepared, true))
-		{
-			$prepared[] = new ExpressionField(
-				'IS_PINNED',
-				ProjectUserOptionTable::getSelectExpression($this->userId, UserOptionTypeDictionary::OPTION_PINNED),
-				['ID', 'CONTEXT_RELATION.USER_ID']
-			);
-			unset($prepared[array_search('IS_PINNED', $prepared, true)]);
-		}
-
-		return $prepared;
+		return array_intersect($select, $allowedFields);
 	}
 
 	/**
@@ -154,7 +139,7 @@ class Provider
 	{
 		$query = WorkgroupTable::query();
 		$query
-			->setSelect($select)
+			->setSelect($this->prepareQuerySelect($select))
 			->registerRuntimeField(
 				new Reference(
 					'CONTEXT_RELATION',
@@ -279,6 +264,7 @@ class Provider
 	 * @return Query
 	 * @throws ArgumentException
 	 * @throws SystemException
+	 * @throws LoaderException
 	 */
 	private function addQueryFilter(Query $query, array $filterValues): Query
 	{
@@ -303,7 +289,10 @@ class Provider
 				'currentUserId' => $this->userId,
 				'contextUserId' => $this->userId,
 				'mode' => $this->mode,
-				'hasAccessToTasksCounters' => $this->getHasAccessToTasksCounters(),
+				'hasAccessToTasksCounters' => TasksCounter::getAccessToTasksCounters([
+					'mode' => $this->mode,
+					'contextUserId' => $this->userId,
+				]),
 			]
 		);
 		$filter = $filterManager->getFilter();
@@ -408,14 +397,6 @@ class Provider
 		return $query;
 	}
 
-	private function getHasAccessToTasksCounters(): bool
-	{
-		return TasksCounter::getAccessToTasksCounters([
-			'mode' => $this->mode,
-			'contextUserId' => $this->userId,
-		]);
-	}
-
 	private function checkQueryFieldName(string $fieldName = ''): bool
 	{
 		$fieldName = trim($fieldName, '!=<>%*');
@@ -426,7 +407,7 @@ class Provider
 		);
 	}
 
-	public function fillAvatars(array $projects, $mode = 'web'): array
+	public function fillAvatars(array $projects): array
 	{
 		foreach (array_keys($projects) as $id)
 		{
@@ -453,7 +434,6 @@ class Provider
 		{
 			if (
 				$project['IMAGE_ID'] === null
-				&& $mode === 'mobile'
 				&& array_key_exists($project['AVATAR_TYPE'], $avatarTypes)
 			)
 			{
@@ -554,25 +534,22 @@ class Provider
 		$avatars = UI::getAvatars($imageIds);
 
 		$scrumMasters = [];
-		foreach ($projectIds as $projectId)
+		if ($this->isScrum)
 		{
-			$group = \Bitrix\Socialnetwork\Item\Workgroup::getById($projectId);
-			if ($group && $group->isScrumProject())
+			foreach ($projects as $id => $data)
 			{
-				$scrumMasters[$projectId] = (int) $group->getScrumMaster();
+				$scrumMasters[$id] = (int)$data['SCRUM_MASTER_ID'];
 			}
 		}
 
 		foreach ($resultMembers as $member)
 		{
-			$memberId = (int) $member['USER_ID'];
-			$projectId = (int) $member['GROUP_ID'];
-
-			$isScrumProject = array_key_exists($projectId, $scrumMasters);
+			$memberId = (int)$member['USER_ID'];
+			$projectId = (int)$member['GROUP_ID'];
 
 			$isOwner = ($member['ROLE'] === UserToGroupTable::ROLE_OWNER);
 			$isModerator = ($member['ROLE'] === UserToGroupTable::ROLE_MODERATOR);
-			$isScrumMaster = ($isScrumProject && $scrumMasters[$projectId] === $memberId);
+			$isScrumMaster = (isset($scrumMasters[$projectId]) && $scrumMasters[$projectId] === $memberId);
 			$isAccessRequesting = ($member['ROLE'] === UserToGroupTable::ROLE_REQUEST);
 			$isAccessRequestingByMe = (
 				$isAccessRequesting && $member['INITIATED_BY_TYPE'] === UserToGroupTable::INITIATED_BY_USER
@@ -597,6 +574,80 @@ class Provider
 				'HEADS' => ($members[$projectId]['HEADS'] ?? []),
 				'MEMBERS' => ($members[$projectId]['MEMBERS'] ?? []),
 			];
+		}
+
+		return $projects;
+	}
+
+	public function fillIsExtranet(array $projects): array
+	{
+		$projectIds = array_keys($projects);
+
+		foreach ($projectIds as $id)
+		{
+			$projects[$id]['IS_EXTRANET'] = 'N';
+		}
+
+		if (!Loader::includeModule('extranet'))
+		{
+			return $projects;
+		}
+
+		$sites = [];
+		$projectsSiteIdsResult = \CSocNetGroup::GetSite($projectIds);
+		while ($site = $projectsSiteIdsResult->Fetch())
+		{
+			$sites[$site['GROUP_ID']][$site['LID']] = true;
+		}
+
+		$extranetSiteId = \CExtranet::GetExtranetSiteID();
+		foreach ($projectIds as $id)
+		{
+			$projects[$id]['IS_EXTRANET'] = isset($sites[$id][$extranetSiteId]);
+		}
+
+		return $projects;
+	}
+
+	public function fillActions(array $projects): array
+	{
+		foreach ($projects as $id => $project)
+		{
+			$permissions = SocialNetwork\Group::getUserPermissionsInGroup($id);
+
+			$projects[$id]['ACTIONS'] = [
+				'EDIT' => $permissions['UserCanModifyGroup'],
+				'DELETE' => $permissions['UserCanModifyGroup'],
+				'INVITE' => $permissions['UserCanInitiate'],
+				'JOIN' => !$permissions['UserIsMember'] && !$permissions['UserRole'],
+				'LEAVE' => $permissions['UserIsMember'] && !$permissions['UserIsAutoMember'] && !$permissions['UserIsOwner'],
+			];
+		}
+
+		return $projects;
+	}
+
+	public function fillTabsData(array $projects): array
+	{
+		if (!empty($projects))
+		{
+			$projectIds = array_keys($projects);
+			$additionalData = Workgroup::getAdditionalData([
+				'ids' => $projectIds,
+				'features' => Helper::getMobileFeatures(),
+				'mandatoryFeatures' => Helper::getMobileMandatoryFeatures(),
+				'currentUserId' => $this->userId,
+			]);
+
+			foreach ($projectIds as $id)
+			{
+				if (!isset($additionalData[$id]))
+				{
+					continue;
+				}
+
+				$projects[$id]['ADDITIONAL_DATA'] = ($additionalData[$id] ?? []);
+			}
 		}
 
 		return $projects;
@@ -688,10 +739,5 @@ class Provider
 	public function getIsScrum(): bool
 	{
 		return $this->isScrum;
-	}
-
-	public function setIsScrum(bool $isScrum): void
-	{
-		$this->isScrum = $isScrum;
 	}
 }

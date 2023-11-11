@@ -1,7 +1,7 @@
 (function () {
 
 	include("SharedBundle")
-
+	const AppTheme = jn.require("apptheme")
 	function getDomain() {
 		const domain = currentDomain
 		const regex = /^.+\.(bitrix24\.\w+|br\.\w+)$/i;
@@ -18,10 +18,10 @@
 		guideNumber: {
 			textAlign: "center",
 			borderRadius: 13,
-			backgroundColor: "#D5F4FD",
+			backgroundColor: AppTheme.colors.accentSoftBlue1,
 			fontSize: 14,
 			fontWeight: "bold",
-			color: "#333333",
+			color: AppTheme.colors.base1,
 			width: 26,
 			height: 26,
 			marginRight: 10,
@@ -29,11 +29,11 @@
 		hint:{
 			height:54,
 			paddingLeft: 24,
-			backgroundColor: '#D5F4FD'
+			backgroundColor: AppTheme.colors.accentSoftBlue1
 		},
 		browserNote: {
 			opacity: 0.5,
-			color: "#000000",
+			color: AppTheme.colors.base0,
 			fontSize: 12,
 		},
 		guideView: {
@@ -44,6 +44,7 @@
 		},
 		guideTitle: {
 			fontSize: 18,
+			color: AppTheme.colors.base0
 		},
 		hintView: {
 			flex: 1,
@@ -57,7 +58,7 @@
 		hintText: {
 			flex:1,
 			fontSize: 15,
-			color: '#333333',
+			color: AppTheme.colors.base1,
 			marginLeft: 18,
 		}
 	}
@@ -112,15 +113,15 @@
 					style:{
 						height: 144,
 						borderRadius: 6,
-						borderWidth: 2,
-						borderColor: "#C0C9CE",
+						borderWidth: 1,
+						borderColor: AppTheme.colors.bgSeparatorPrimary,
 					}
 				},
 				Video(
 					{
 						style: {
 							height: 144,
-							backgroundColor: "#ffffff"
+							backgroundColor: AppTheme.colors.bgContentPrimary
 						},
 						onReadyPlay: () => {
 							console.log("can play")
@@ -176,11 +177,11 @@
 				View({style: {flex:1, justifyContent:"center" }},
 					View({style:{justifyContent:"center", height:40}},
 						BBCodeText({
-							style: {fontSize: 15, color: "#333333"},
+							style: {fontSize: 15, color: AppTheme.colors.base1},
 							value: text
 						})
 					),
-					showBorder ? View({style:{ height:1, backgroundColor: "#edeef0"}}) : null
+					showBorder ? View({style:{ height:1, backgroundColor: AppTheme.colors.bgSeparatorPrimary}}) : null
 				),
 			)
 		}
@@ -237,7 +238,7 @@
 		render()
 		{
 			return ScrollView(
-				{},
+				{ style: { backgroundColor: AppTheme.colors.bgContentPrimary}},
 				View(
 					{
 						style: {
@@ -259,15 +260,14 @@
 		}
 
 		scanButton(){
-
 			return View({
 					style: {
 						justifyContent: "center",
 						alignSelf: "center",
-						borderColor: "#00A2E8",
+						borderColor: AppTheme.colors.accentSoftBlue1,
 						borderRadius:6,
 						borderWidth:1,
-						backgroundColor:{ default: "#ffffff", pressed: "#f0f0f0" },
+						backgroundColor:{ default: AppTheme.colors.bgContentPrimary, pressed: AppTheme.colors.base7 },
 						height:40,
 						width:284,
 						alignItems: "center"
@@ -299,7 +299,7 @@
 						svg: {uri: `${currentDomain}${pathToExtension}images/photo.svg?2`}
 					}),
 					Text({
-						style: {fontSize: 17, color: "#525C69", marginLeft: 8, fontWeight:'500'},
+						style: {fontSize: 17, color: AppTheme.colors.base2, marginLeft: 8, fontWeight:'500'},
 						text: BX.message("SCAN_QR_BUTTON")
 					})
 				)
@@ -380,7 +380,7 @@
 							style: {
 								fontSize: 19,
 								fontWeight:'bold',
-								color: '#333333'
+								color: AppTheme.colors.base1
 							},
 							value: BX.message('QR_WARNING').replace("#DOMAIN#", currentDomain)
 						})
@@ -443,7 +443,7 @@
 			return View(
 				{
 					style: {
-						backgroundColor: "#ffffff",
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						alignItems: 'center',
 						justifyContent: "center",
 						padding:10,
@@ -454,7 +454,9 @@
 						borderRadius: 12,
 						height: "100%",
 						width: "100%",
-						backgroundColor: "#000000"
+						borderWidth: 0.5,
+						borderColor: AppTheme.colors.bgSeparatorSecondary,
+						backgroundColor: AppTheme.colors.bgContentTertiary
 					},
 					scanTypes: ["qr_code"],
 					result: this.onResult.bind(this),
@@ -474,7 +476,7 @@
 						opacity: 0.0,
 						borderRadius:12,
 						justifyContent: "center",
-						backgroundColor:"#9DCF00"
+						backgroundColor:AppTheme.colors.accentMainSuccess
 					},
 					ref: view => {
 						this.successOverlay = view;

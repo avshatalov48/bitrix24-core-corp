@@ -8,15 +8,15 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 	const { clone } = require('utils/object');
 	const { PullHandler } = require('im/messenger/provider/pull/base');
 	const { DialogConverter } = require('im/messenger/lib/converter');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { Counters } = require('im/messenger/lib/counters');
 	const { RecentConverter } = require('im/messenger/lib/converter');
 	const { Notifier } = require('im/messenger/lib/notifier');
 	const { ShareDialogCache } = require('im/messenger/cache/share-dialog');
-	const { ReactionType } = require('im/messenger/const');
-	const { restManager } = require('im/messenger/lib/rest-manager');
-	const { RestMethod } = require('im/messenger/const/rest');
+	const { UuidManager } = require('im/messenger/lib/uuid');
+	const { DialogType } = require('im/messenger/const');
 
 	/**
 	 * @class MessagePullHandler
@@ -43,10 +43,17 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				message: recentParams.message,
 				counter: recentParams.counter,
 				writing: false,
+				date_update: new Date(),
 			});
 
 			this.store.dispatch('usersModel/set', Object.values(params.users));
-			this.store.dispatch('recentModel/set', [recentItem])
+
+			if (!recentItem)
+			{
+				return;
+			}
+			this.updateDialog(params)
+				.then(() => this.store.dispatch('recentModel/set', [recentItem]))
 				.then(() => {
 					Counters.updateDelayed();
 
@@ -64,7 +71,7 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				});
 			}
 
-			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+			const dialog = this.getDialog(dialogId);
 			if (!dialog || dialog.hasNextPage)
 			{
 				return;
@@ -82,9 +89,87 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 *
+		 * @param {MessagePullHandlerUpdateDialogParams}params
+		 * @return {Promise<any>}
+		 */
+		async updateDialog(params)
+		{
+			const dialog = this.store.getters['dialoguesModel/getById'](params.dialogId);
+
+			if (!dialog)
+			{
+				return this.addDialog(params);
+			}
+
+			const dialogFieldsToUpdate = {};
+			if (params.message.id > dialog.lastMessageId)
+			{
+				dialogFieldsToUpdate.lastMessageId = params.message.id;
+			}
+
+			if (params.message.senderId === MessengerParams.getUserId() && params.message.id > dialog.lastReadId)
+			{
+				dialogFieldsToUpdate.lastId = params.message.id;
+			}
+
+			dialogFieldsToUpdate.counter = params.counter;
+
+			if (Object.keys(dialogFieldsToUpdate).length > 0)
+			{
+				return this.store.dispatch('dialoguesModel/update', {
+					dialogId: params.dialogId,
+					fields: dialogFieldsToUpdate,
+				}).then(() => this.store.dispatch('dialoguesModel/clearLastMessageViews', {
+					dialogId: params.dialogId,
+				}));
+			}
+		}
+
+		/**
+		 *
+		 * @param {MessagePullHandlerUpdateDialogParams}params
+		 * @return {Promise<any>}
+		 */
+		async addDialog(params)
+		{
+			if (DialogHelper.isChatId(params.dialogId))
+			{
+				if (!params.users)
+				{
+					return false;
+				}
+				/** @type {UsersModelState} */
+				const opponent = params.users[params.dialogId];
+
+				return this.store.dispatch('dialoguesModel/set', {
+					dialogId: params.dialogId,
+					counter: params.counter,
+					type: DialogType.user,
+					name: opponent.name,
+					avatar: opponent.avatar,
+					color: opponent.color,
+					chatId: params.chatId,
+				});
+			}
+
+			if (!params.chat)
+			{
+				return false;
+			}
+
+			return this.store.dispatch('dialoguesModel/set', {
+				...params.chat[params.chatId],
+				dialogId: params.dialogId,
+				counter: params.counter,
+				chatId: params.chatId,
+			});
+		}
+
 		handleMessageChat(params, extra, command)
 		{
-			Logger.info('MessagePullHandler.handleMessageChat ', params);
+			Logger.info('MessagePullHandler.handleMessageChat ', params, extra);
 
 			const dialogId = params.message.recipientId;
 			const userId = MessengerParams.getUserId();
@@ -118,9 +203,11 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				counter: recentParams.counter,
 				liked: false,
 				writing: false,
+				date_update: new Date(),
 			});
 
-			this.store.dispatch('recentModel/set', [recentItem])
+			this.updateDialog(params)
+				.then(() => this.store.dispatch('recentModel/set', [recentItem]))
 				.then(() => {
 					Counters.updateDelayed();
 
@@ -142,7 +229,7 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				});
 			}
 
-			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+			const dialog = this.getDialog(dialogId);
 			if (!dialog || dialog.hasNextPage)
 			{
 				return;
@@ -177,11 +264,80 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 			this.updateMessage(params);
 		}
 
+		/**
+		 * @param {MessagePullHandlerMessageDeleteCompleteParams} params
+		 * @param extra
+		 * @param command
+		 */
 		handleMessageDeleteComplete(params, extra, command)
 		{
 			Logger.info('MessagePullHandler.handleMessageDeleteComplete: ', params, extra);
 
 			this.fullDeleteMessage(params);
+		}
+
+		/**
+		 * @param {AddReactionParams} params
+		 * @param extra
+		 * @param command
+		 */
+		handleAddReaction(params, extra, command)
+		{
+			Logger.info('MessagePullHandler.handleAddReaction: ', params);
+			if (UuidManager.hasActionUuid(extra.action_uuid))
+			{
+				Logger.info('MessagePullHandler.handleAddReaction: we already locally processed this action');
+
+				return;
+			}
+			const {
+				actualReactions: { reaction: actualReactionsState, usersShort },
+				userId,
+				reaction,
+			} = params;
+			const message = this.store.getters['messagesModel/getById'](actualReactionsState.messageId);
+			if (!message)
+			{
+				return;
+			}
+
+			if (MessengerParams.getUserId().toString() === userId.toString())
+			{
+				actualReactionsState.ownReactions = [reaction];
+			}
+
+			this.store.dispatch('messagesModel/reactionsModel/setFromPullEvent', {
+				usersShort,
+				reactions: [actualReactionsState],
+			});
+		}
+
+		/**
+		 * @param {DeleteReactionParams} params
+		 * @param extra
+		 * @param command
+		 */
+		handleDeleteReaction(params, extra, command)
+		{
+			Logger.info('MessagePullHandler.handleDeleteReaction: ', params);
+			if (UuidManager.hasActionUuid(extra.action_uuid))
+			{
+				Logger.info('MessagePullHandler.handleDeleteReaction: we already locally processed this action');
+
+				return;
+			}
+			const { actualReactions: { reaction: actualReactionsState, usersShort } } = params;
+
+			const message = this.store.getters['messagesModel/getById'](actualReactionsState.messageId);
+			if (!message)
+			{
+				return;
+			}
+
+			this.store.dispatch('messagesModel/reactionsModel/setFromPullEvent', {
+				usersShort,
+				reactions: [actualReactionsState],
+			});
 		}
 
 		async handleStartWriting(params, extra, command)
@@ -251,18 +407,25 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 		{
 			const dialogId = params.dialogId;
 			const messageId = params.id;
+			const messageParams = params.params;
 
-			const message = clone(this.store.getters['messagesModel/getMessageById'](messageId));
+			const message = clone(this.store.getters['messagesModel/getById'](messageId));
 			if (!message)
 			{
 				return;
+			}
+
+			if (message.params && message.params.replyId)
+			{
+				// this copyrighting params need for update quote - not deleting
+				messageParams.replyId = message.params.replyId;
 			}
 
 			this.store.dispatch('messagesModel/update', {
 				id: params.id,
 				fields: {
 					text: params.text,
-					params: params.params,
+					params: messageParams,
 				},
 			});
 
@@ -290,13 +453,18 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 					...recentItem.message,
 					...message,
 				};
+
+				recentItem.date_update = new Date();
 			}
 
 			recentItem.writing = false;
 			this.store.dispatch('recentModel/set', [recentItem]);
 		}
 
-		fullDeleteMessage(params)
+		/**
+		 * @param {MessagePullHandlerMessageDeleteCompleteParams} params
+		 */
+		async fullDeleteMessage(params)
 		{
 			const dialogId = params.dialogId;
 			const messageId = params.id;
@@ -310,18 +478,51 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				return;
 			}
 
+			let isNeedUpdateRecentItem = false;
+			const dialogItem = this.store.getters['dialoguesModel/getById'](dialogId);
+
+			if (params.counter !== dialogItem.counter)
+			{
+				recentItem.counter = params.counter;
+
+				await this.updateDialog({
+					dialogId,
+					message: {
+						senderId: params.senderId,
+						id: messageId,
+					},
+					counter: params.counter,
+				});
+
+				isNeedUpdateRecentItem = true;
+			}
+
 			const newLastMessage = params.newLastMessage;
-			if (newLastMessage && newLastMessage.message)
+			if (newLastMessage)
 			{
 				recentItem.message = {
-					text: newLastMessage.message.text,
-					date: newLastMessage.message.date,
-					author_id: newLastMessage.message.author_id,
-					id: newLastMessage.message.id,
-					file: newLastMessage.files.length > 0,
+					text: newLastMessage.text,
+					date: newLastMessage.date,
+					author_id: newLastMessage.author_id,
+					id: newLastMessage.id,
+					file: newLastMessage.files ? (newLastMessage.files.length > 0) : false,
 				};
+
+				recentItem.date_update = new Date();
+
+				isNeedUpdateRecentItem = true;
+			}
+
+			if (isNeedUpdateRecentItem)
+			{
 				this.store.dispatch('recentModel/set', [recentItem])
-					.catch((err) => Logger.error(err));
+					.then(() => {
+						Counters.update();
+
+						this.saveShareDialogCache();
+					})
+					.catch((err) => Logger.error(err))
+				;
 			}
 		}
 
@@ -331,6 +532,7 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 			this.updateMessageViewedByOthers(params);
 			this.updateMessageStatus(params);
+			this.updateChatLastMessageViews(params);
 		}
 
 		handleReadMessageChatOpponent(params, extra, command)
@@ -339,6 +541,7 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 			this.updateMessageViewedByOthers(params);
 			this.updateMessageStatus(params);
+			this.updateChatLastMessageViews(params);
 		}
 
 		handleUnreadMessageOpponent(params, extra, command)
@@ -353,40 +556,6 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 			Logger.info('MessagePullHandler.handleUnreadMessageChatOpponent: ', params);
 
 			this.updateMessageStatus(params);
-		}
-
-		handleMessageLike(params, extra, command)
-		{
-			Logger.info('MessagePullHandler.handleMessageLike: ', params);
-
-			const dialogId = params.dialogId;
-
-			const payload = {
-				dialogId,
-				messageId: params.id,
-				reactionId: ReactionType.like,
-				userList: params.users.map((userId) => Number(userId)),
-			};
-
-			this.store.dispatch('messagesModel/setReaction', payload);
-
-			const currentDialogId = this.store.getters['applicationModel/getDialogId'];
-			if (dialogId === currentDialogId)
-			{
-				return;
-			}
-
-			const currentUserId = MessengerParams.getUserId();
-			if (currentUserId === params.senderId)
-			{
-				return;
-			}
-
-			this.store.dispatch('recentModel/like', {
-				id: dialogId,
-				messageId: params.id,
-				liked: params.set,
-			});
 		}
 
 		updateMessageStatus(params)
@@ -421,6 +590,54 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 			// TODO: also change data in user model
 		}
 
+		/**
+		 * @desc Update views message in dialog model store
+		 * @param {Object} params - pull event
+		 */
+		updateChatLastMessageViews(params)
+		{
+			const dialogModelState = this.getDialog(params.dialogId);
+			if (!dialogModelState)
+			{
+				return;
+			}
+
+			const isLastMessage = params.viewedMessages.includes(dialogModelState.lastMessageId);
+			if (!isLastMessage)
+			{
+				return;
+			}
+
+			const hasFirstViewer = Boolean(dialogModelState.lastMessageViews.firstViewer);
+			if (hasFirstViewer)
+			{
+				// FIXME this case occurs when the user is using 2 or more devices at the same time ( work only first user )
+				//  need wait update while this bug in backend will be fix
+				const isDoubleFirstViewer = params.userId === dialogModelState.lastMessageViews.firstViewer.userId;
+				if (DialogHelper.isDialogId(params.dialogId) && !isDoubleFirstViewer)
+				{
+					this.store.dispatch('dialoguesModel/incrementLastMessageViews', {
+						dialogId: params.dialogId,
+					});
+				}
+
+				return;
+			}
+
+			if (params.userId)
+			{
+				this.store.dispatch('dialoguesModel/setLastMessageViews', {
+					dialogId: params.dialogId,
+					fields: {
+						userId: params.userId,
+						userName: params.userName,
+						date: params.date,
+						messageId: dialogModelState.lastMessageId,
+					},
+				});
+			}
+		}
+
 		updateMessageViewedByOthers(params)
 		{
 			this.store.dispatch('messagesModel/setViewedByOthers', { messageIds: params.viewedMessages });
@@ -446,7 +663,21 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 			recentItem.counter = params.counter;
 
-			this.store.dispatch('recentModel/set', [recentItem])
+			const dialog = clone(this.store.getters['dialoguesModel/getById'](dialogId));
+
+			if (!dialog)
+			{
+				return;
+			}
+
+			this.store.dispatch('dialoguesModel/update', {
+				dialogId,
+				fields: {
+					counter: params.counter,
+					lastReadId: params.lastId,
+				},
+			})
+				.then(() => this.store.dispatch('recentModel/set', [recentItem]))
 				.then(() => Counters.update())
 			;
 		}
@@ -481,8 +712,8 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 		setDialogItemWriting(params, isWriting)
 		{
 			const { dialogId, userId } = params;
-			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
-			const user = this.store.getters['usersModel/getUserById'](userId);
+			const dialog = this.getDialog(dialogId);
+			const user = this.store.getters['usersModel/getById'](userId);
 			if (!dialog || !user)
 			{
 				return false;
@@ -592,7 +823,7 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 			if (!userModel.name)
 			{
-				userModel = this.store.getters['usersModel/getUserById'](userData.id);
+				userModel = this.store.getters['usersModel/getById'](userData.id);
 			}
 			const timerId = `${dialogId} ${userModel.name}`;
 			if (this.isHasTimerWriting(timerId))
@@ -619,6 +850,11 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 		stopTimerWriting(timerId)
 		{
 			return ChatTimer.stop('writing', timerId);
+		}
+
+		getDialog(dialogId)
+		{
+			return this.store.getters['dialoguesModel/getById'](dialogId);
 		}
 	}
 

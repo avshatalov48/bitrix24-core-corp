@@ -1030,7 +1030,7 @@ elseif ($action === 'PREPARE_BATCH_CONVERSION' && check_bitrix_sessid())
 	$settings = \Bitrix\Crm\Settings\ConversionSettings::getCurrent();
 	if (!$settings->isAutocreationEnabled())
 	{
-		$errors[] = GetMessage('CRM_LEAD_LIST_BATCH_CONVERSION_AUTOCREATION_DISABLED');
+		$errors[] = GetMessage('CRM_LEAD_LIST_BATCH_CONVERSION_AUTOCREATION_DISABLED_MSGVER_1');
 	}
 
 	$needForSync = false;

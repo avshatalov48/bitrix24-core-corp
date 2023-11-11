@@ -18,7 +18,7 @@ jn.define('im/messenger/controller/sidebar/friendly-date', (require, exports, mo
 
 			const userUtils = new UserUtils();
 
-			return userUtils.getLastDateText(userData, true);
+			return userUtils.getLastDateText(userData, true, true);
 		}
 	}
 

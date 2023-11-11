@@ -28,7 +28,7 @@ jn.define('crm/product-grid/menu/product-context-menu', (require, exports, modul
 			{
 				actions.push({
 					id: 'edit',
-					title: Loc.getMessage('PRODUCT_GRID_MENU_PRODUCT_CONTEXT_EDIT_PRODUCT'),
+					title: Loc.getMessage('PRODUCT_GRID_MENU_PRODUCT_CONTEXT_EDIT_PRODUCT_MSGVER_1'),
 					subTitle: '',
 					data: {
 						svgIcon: SvgIcons.edit,

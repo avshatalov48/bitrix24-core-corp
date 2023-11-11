@@ -45,7 +45,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 		{
 			const userItems = [];
 
-			const recentUserList = ChatUtils.objectClone(this.store.getters['recentModel/getUserList']);
+			const recentUserList = ChatUtils.objectClone(this.store.getters['recentModel/getUserList']());
 			const recentUserListIndex = {};
 			if (Type.isArrayFilled(recentUserList))
 			{
@@ -56,7 +56,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 				});
 			}
 
-			const colleaguesList = ChatUtils.objectClone(this.store.getters['usersModel/getUserList']());
+			const colleaguesList = ChatUtils.objectClone(this.store.getters['usersModel/getList']());
 			if (Type.isArrayFilled(colleaguesList))
 			{
 				colleaguesList.forEach((user) => {

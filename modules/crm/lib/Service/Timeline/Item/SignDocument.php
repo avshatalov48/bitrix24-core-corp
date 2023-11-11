@@ -12,6 +12,8 @@ use Bitrix\Crm\Timeline\SignDocument\MessageData;
 use Bitrix\Crm\Timeline\SignDocument\Signer;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sign\Document;
+use Bitrix\Sign\Operation;
+use Bitrix\Sign\Service\Container;
 
 class SignDocument extends Configurable
 {
@@ -369,13 +371,26 @@ class SignDocument extends Configurable
 				$buttons['open'] = $openButton;
 			}
 
+			$documentHash = $this->getDocumentData()->getDocumentHash();
+			$operation = new Operation\GetSignedFilePdfUrl($documentHash, $recipientHash);
+			$result = $operation->launch();
+
+			$downloadLink = '';
+			if ($result->isSuccess() && $operation->ready)
+			{
+				$downloadLink = $operation->url;
+			}
+			$filename = Container::instance()->getDocumentFileNameService()->getNameByHash($documentHash);
+
 			$buttons['download'] = (new Layout\Footer\Button(
 				Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_BUTTON_DOWNLOAD') ?? '',
 				Layout\Footer\Button::TYPE_SECONDARY,
 			))->setAction(
 				(new Layout\Action\JsEvent('SignDocument:Download'))
-					->addActionParamString('documentHash', $this->getDocumentData()->getDocumentHash())
+					->addActionParamString('documentHash', $documentHash)
 					->addActionParamString('memberHash', $recipientHash)
+					->addActionParamString('downloadLink', $downloadLink)
+					->addActionParamString('filename', $filename)
 					->setAnimation(Layout\Action\Animation::showLoaderForBlock())
 			);
 		}

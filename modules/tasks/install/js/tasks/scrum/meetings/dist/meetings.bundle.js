@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,main_loader,main_popup,ui_popupcomponentsmaker,main_core_events,main_core,ui_dialogs_messagebox) {
@@ -326,17 +327,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(Meetings, [{
 	    key: "showMenu",
 	    value: function showMenu(targetNode) {
-	      if (this.menu) {
-	        if (this.menu.isShown()) {
-	          this.menu.close();
-	          return;
-	        }
+	      if (this.menu && this.menu.isShown()) {
+	        this.menu.close();
+	        return;
 	      }
 	      var response = this.requestSender.getMeetings({
 	        groupId: this.groupId
-	      }).then(function (response) {
-	        Culture.getInstance().setData(response.data.culture);
-	        return response;
+	      }).then(function (meetingsResponse) {
+	        Culture.getInstance().setData(meetingsResponse.data.culture);
+	        return meetingsResponse;
 	      });
 	      this.menu = new ui_popupcomponentsmaker.PopupComponentsMaker({
 	        id: 'tasks-scrum-meetings-widget',
@@ -358,23 +357,22 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderMeetings",
 	    value: function renderMeetings(response) {
 	      var _this = this;
-	      return response.then(function (response) {
-	        _this.meetingsNode = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings tasks-scrum__widget-meetings--scope\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"])), _this.renderMeetingsHeader(response), _this.renderEventTemplates(response), _this.renderScheduledMeetings(response));
+	      return response.then(function (meetingsResponse) {
+	        _this.meetingsNode = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings tasks-scrum__widget-meetings--scope\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t"])), _this.renderMeetingsHeader(meetingsResponse), _this.renderEventTemplates(meetingsResponse), _this.renderScheduledMeetings(meetingsResponse));
 	        return _this.meetingsNode;
-	      })["catch"](function (response) {
-	        _this.requestSender.showErrorAlert(response);
+	      })["catch"](function (meetingsResponse) {
+	        _this.requestSender.showErrorAlert(meetingsResponse);
 	      });
 	    }
 	  }, {
 	    key: "renderChats",
 	    value: function renderChats(response) {
 	      var _this2 = this;
-	      return response.then(function (response) {
-	        var chats = response.data.chats;
-	        var node = main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings tasks-scrum__widget-meetings--scope\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--header\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"ui-icon ui-icon-service-livechat tasks-scrum__widget-meetings--icon-chats\"\n\t\t\t\t\t\t\t><i></i></div>\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--header-title\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('TSM_CHATS_HEADER_TITLE'), _this2.renderChatsList(chats), _this2.renderChatsEmpty(chats));
-	        return node;
-	      })["catch"](function (response) {
-	        _this2.requestSender.showErrorAlert(response);
+	      return response.then(function (chatsResponse) {
+	        var chats = chatsResponse.data.chats;
+	        return main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings tasks-scrum__widget-meetings--scope\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--header\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"ui-icon ui-icon-service-livechat tasks-scrum__widget-meetings--icon-chats\"\n\t\t\t\t\t\t\t><i></i></div>\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--header-title\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('TSM_CHATS_HEADER_TITLE'), _this2.renderChatsList(chats), _this2.renderChatsEmpty(chats));
+	      })["catch"](function (errorResponse) {
+	        _this2.requestSender.showErrorAlert(errorResponse);
 	      });
 	    }
 	  }, {
@@ -384,7 +382,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var visibility = chats.length > 0 ? '--visible' : '';
 	      return main_core.Tag.render(_templateObject3$2 || (_templateObject3$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--chat-content ", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), visibility, chats.map(function (chat) {
 	        var chatIconClass = chat.icon === '' ? 'default' : '';
-	        var chatIconStyle = chat.icon !== '' ? "background-image: url('".concat(chat.icon, "');") : '';
+	        var chatIconStyle = chat.icon === '' ? '' : "background-image: url('".concat(chat.icon, "');");
 	        var chatNode = main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--chat-container\">\n\t\t\t\t\t\t\t\t<div class=\"ui-icon ui-icon-common-company tasks-scrum__widget-meetings--chat-icon\">\n\t\t\t\t\t\t\t\t\t<i\n\t\t\t\t\t\t\t\t\tclass=\"chat-icon ", "\"\n\t\t\t\t\t\t\t\t\t\tstyle=\"", "\"\n\t\t\t\t\t\t\t\t\t></i>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--chat-info\">\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--chat-name\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t<div class=\"users-icon tasks-scrum__widget-meetings--chat-users\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t"])), chatIconClass, chatIconStyle, chat.name, _this3.renderChatUser(chat.users));
 	        main_core.Event.bind(chatNode, 'click', _this3.openChat.bind(_this3, chat, chatNode));
 	        return chatNode;
@@ -406,7 +404,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        chatId: chat.id
 	      }).then(function () {
 	        if (top.window.BXIM) {
-	          top.BXIM.openMessenger('chat' + parseInt(chat.id));
+	          top.BXIM.openMessenger("chat".concat(parseInt(chat.id, 10)));
 	          _this4.menu.close();
 	        }
 	      })["catch"](function (response) {
@@ -452,12 +450,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var templateVisibility = isTemplatesClosed || this.isAllEventsCreated(mapCreatedEvents) ? '' : '--visible';
 	      var emptyVisibility = isTemplatesClosed && listEvents.length === 0 ? '--visible' : '';
 	      var contentVisibilityClass = emptyVisibility === '' && templateVisibility === '' ? '--content-hidden' : '';
-	      var node = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--content ", "\">\n\t\t\t\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--creation-block ", "\">\n\t\t\t\t\t<span\n\t\t\t\t\t\tclass=\"tasks-scrum__widget-meetings--creation-close-btn\"\n\t\t\t\t\t\tdata-role=\"close-event-templates\"\n\t\t\t\t\t></span>\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--create-element-info\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--empty-meetings ", "\">\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--empty-name\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--empty-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<button class=\"tasks-scrum__widget-meetings--one-click-btn ui-qr-popupcomponentmaker__btn\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), contentVisibilityClass, templateVisibility, main_core.Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATES_INFO'), babelHelpers.toConsumableArray(this.getEventTemplates(calendarSettings).values()).map(function (eventTemplate) {
+	      var node = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--content ", "\">\n\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--creation-block ", "\">\n\t\t\t\t\t<span\n\t\t\t\t\t\tclass=\"tasks-scrum__widget-meetings--creation-close-btn\"\n\t\t\t\t\t\tdata-role=\"close-event-templates\"\n\t\t\t\t\t></span>\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--create-element-info\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--empty-meetings ", "\">\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--empty-name\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--empty-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<button class=\"tasks-scrum__widget-meetings--one-click-btn ui-qr-popupcomponentmaker__btn\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), contentVisibilityClass, templateVisibility, main_core.Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATES_INFO'), babelHelpers.toConsumableArray(this.getEventTemplates(calendarSettings).values()).map(function (eventTemplate) {
 	        if (main_core.Type.isArray(mapCreatedEvents) || main_core.Type.isUndefined(mapCreatedEvents[eventTemplate.id])) {
 	          return _this5.renderEventTemplate(eventTemplate);
-	        } else {
-	          return '';
 	        }
+	        return '';
 	      }), emptyVisibility, main_core.Loc.getMessage('TSM_MEETINGS_EMPTY_TITLE'), main_core.Loc.getMessage('TSM_MEETINGS_EMPTY_TEXT'), main_core.Loc.getMessage('TSM_MEETINGS_CREATE_ONE_CLICK'));
 	      var closeButton = node.querySelector('.tasks-scrum__widget-meetings--creation-close-btn');
 	      var oneClickButton = node.querySelector('.tasks-scrum__widget-meetings--one-click-btn');
@@ -471,8 +468,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        }
 	        _this5.requestSender.closeTemplates({
 	          groupId: _this5.groupId
-	        })["catch"](function (response) {
-	          _this5.requestSender.showErrorAlert(response);
+	        })["catch"](function (errorResponse) {
+	          _this5.requestSender.showErrorAlert(errorResponse);
 	        });
 	      });
 	      main_core.Event.bind(oneClickButton, 'click', function () {
@@ -488,8 +485,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var listEvents = response.data.listEvents;
 	      var todayEventVisibility = main_core.Type.isNull(todayEvent) ? '' : '--visible';
 	      this.listEvents.setTodayEvent(todayEvent);
-	      var node = main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable\">\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable-container ", "\">\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable-title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), todayEventVisibility, main_core.Loc.getMessage('TSM_TODAY_EVENT_TITLE'), this.todayEvent.render(todayEvent), this.listEvents.render(listEvents, todayEvent));
-	      return node;
+	      return main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable\">\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable-container ", "\">\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable-title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), todayEventVisibility, main_core.Loc.getMessage('TSM_TODAY_EVENT_TITLE'), this.todayEvent.render(todayEvent), this.listEvents.render(listEvents, todayEvent));
 	    }
 	  }, {
 	    key: "renderEventTemplate",
@@ -514,11 +510,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showMenuWithEventTemplates",
 	    value: function showMenuWithEventTemplates(targetNode, calendarSettings) {
 	      var _this6 = this;
-	      if (this.eventTemplatesMenu) {
-	        if (this.eventTemplatesMenu.getPopupWindow().isShown()) {
-	          this.eventTemplatesMenu.close();
-	          return;
-	        }
+	      if (this.eventTemplatesMenu && this.eventTemplatesMenu.getPopupWindow().isShown()) {
+	        this.eventTemplatesMenu.close();
+	        return;
 	      }
 	      this.eventTemplatesMenu = new main_popup.Menu({
 	        id: 'tsm-event-templates-menu',
@@ -637,10 +631,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          BYDAY: calendarSettings.weekDays
 	        },
 	        roles: [{
-	          id: this.groupId + '_M',
+	          id: "".concat(this.groupId, "_M"),
 	          entityId: 'project-roles'
 	        }, {
-	          id: this.groupId + '_E',
+	          id: "".concat(this.groupId, "_E"),
 	          entityId: 'project-roles'
 	        }],
 	        uiClass: 'widget-meetings__sprint-daily',
@@ -660,13 +654,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          BYDAY: calendarSettings.weekStart
 	        },
 	        roles: [{
-	          id: this.groupId + '_A',
+	          id: "".concat(this.groupId, "_A"),
 	          entityId: 'project-roles'
 	        }, {
-	          id: this.groupId + '_M',
+	          id: "".concat(this.groupId, "_M"),
 	          entityId: 'project-roles'
 	        }, {
-	          id: this.groupId + '_E',
+	          id: "".concat(this.groupId, "_E"),
 	          entityId: 'project-roles'
 	        }],
 	        uiClass: 'widget-meetings__sprint-planning',
@@ -686,13 +680,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          BYDAY: calendarSettings.weekStart
 	        },
 	        roles: [{
-	          id: this.groupId + '_A',
+	          id: "".concat(this.groupId, "_A"),
 	          entityId: 'project-roles'
 	        }, {
-	          id: this.groupId + '_M',
+	          id: "".concat(this.groupId, "_M"),
 	          entityId: 'project-roles'
 	        }, {
-	          id: this.groupId + '_E',
+	          id: "".concat(this.groupId, "_E"),
 	          entityId: 'project-roles'
 	        }],
 	        uiClass: 'widget-meetings__sprint-review',
@@ -712,10 +706,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          BYDAY: calendarSettings.weekStart
 	        },
 	        roles: [{
-	          id: this.groupId + '_M',
+	          id: "".concat(this.groupId, "_M"),
 	          entityId: 'project-roles'
 	        }, {
-	          id: this.groupId + '_E',
+	          id: "".concat(this.groupId, "_E"),
 	          entityId: 'project-roles'
 	        }],
 	        uiClass: 'widget-meetings__sprint-retrospective',

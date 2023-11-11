@@ -337,7 +337,7 @@ class CCrmLeadDetailsComponent
 		{
 			$this->arResult['TABS'][] = array(
 				'id' => 'tab_quote',
-				'name' => Loc::getMessage('CRM_LEAD_TAB_QUOTE'),
+				'name' => Loc::getMessage('CRM_LEAD_TAB_QUOTE_MSGVER_1'),
 				'loader' => array(
 					'serviceUrl' => '/bitrix/components/bitrix/crm.quote.list/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
 					'componentData' => array(
@@ -456,7 +456,7 @@ class CCrmLeadDetailsComponent
 		{
 			$this->arResult['TABS'][] = array(
 				'id' => 'tab_quote',
-				'name' => Loc::getMessage('CRM_LEAD_TAB_QUOTE'),
+				'name' => Loc::getMessage('CRM_LEAD_TAB_QUOTE_MSGVER_1'),
 				'enabled' => false
 			);
 			if (\Bitrix\Crm\Automation\Factory::isAutomationAvailable(CCrmOwnerType::Lead))
@@ -1011,6 +1011,7 @@ class CCrmLeadDetailsComponent
 			'type' => 'client_light',
 			'editable' => true,
 			'data' => [
+				'affectedFields' => ['CLIENT_INFO'],
 				'compound' => [
 					[
 						'name' => 'COMPANY_ID',

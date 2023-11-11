@@ -3,7 +3,7 @@
 namespace Bitrix\CatalogMobile\Controller;
 
 use Bitrix\Main\Loader;
-use Bitrix\CatalogMobile\Controller\Actions\GetListAction;
+use Bitrix\CatalogMobile\Controller\Actions\GetStoreDocumentListAction;
 use Bitrix\Mobile\UI\StatefulList\BaseController;
 
 Loader::requireModule('catalog');
@@ -16,7 +16,7 @@ class StoreDocumentList extends BaseController
 	{
 		return [
 			'loadItems' => [
-				'class' => GetListAction::class,
+				'class' => GetStoreDocumentListAction::class,
 			],
 		];
 	}

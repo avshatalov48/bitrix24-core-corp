@@ -2715,3 +2715,9 @@ table.task-table-hide-first-column > tr > td:first-child {
 	height: 10px;
 	line-height: 10px;
 }
+
+.main-grid-labels .ui-label-inner {
+	font: 12px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans)) !important;
+	font-weight: var(--ui-font-weight-semi-bold, 600) !important;
+	overflow: visible !important;
+}

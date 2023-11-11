@@ -63,6 +63,10 @@ abstract class BaseBuilder
 		$result = Loc::getMessage($this->buildCode(), $replaceList) ?? '';
 		if (empty($result))
 		{
+			$result = Loc::getMessage($this->buildCode() . '_MSGVER_1', $replaceList) ?? '';
+		}
+		if (empty($result))
+		{
 			return Loc::getMessage($this->buildDefaultCode(), $replaceList) ?? '';
 		}
 

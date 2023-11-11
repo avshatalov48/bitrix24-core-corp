@@ -61,7 +61,7 @@ endif;
 
 if ($arResult['NEED_FOR_REBUILD_QUOTE_ATTRS']):
 	?><div id="rebuildQuoteAttrsMsg" class="crm-view-message">
-		<?=GetMessage('CRM_CONFIG_PERMS_REBUILD_QUOTE_ATTRS', array('#ID#' => 'rebuildQuoteAttrsLink', '#URL#' => '#'))?>
+		<?=GetMessage('CRM_CONFIG_PERMS_REBUILD_QUOTE_ATTRS_MSGVER_1', array('#ID#' => 'rebuildQuoteAttrsLink', '#URL#' => '#'))?>
 	</div><?
 endif;
 
@@ -104,8 +104,8 @@ BX.ready(
 			rebuildDealAccessAttrsDlgSummary: "<?=GetMessageJS('CRM_CONFIG_PERMS_REBUILD_DEAL_ATTR_DLG_SUMMARY')?>",
 			rebuildLeadAccessAttrsDlgTitle: "<?=GetMessageJS('CRM_CONFIG_PERMS_REBUILD_LEAD_ATTR_DLG_TITLE')?>",
 			rebuildLeadAccessAttrsDlgSummary: "<?=GetMessageJS('CRM_CONFIG_PERMS_REBUILD_LEAD_ATTR_DLG_SUMMARY')?>",
-			rebuildQuoteAccessAttrsDlgTitle: "<?=GetMessageJS('CRM_CONFIG_PERMS_REBUILD_QUOTE_ATTR_DLG_TITLE')?>",
-			rebuildQuoteAccessAttrsDlgSummary: "<?=GetMessageJS('CRM_CONFIG_PERMS_REBUILD_QUOTE_ATTR_DLG_SUMMARY')?>",
+			rebuildQuoteAccessAttrsDlgTitle: "<?=GetMessageJS('CRM_CONFIG_PERMS_REBUILD_QUOTE_ATTR_DLG_TITLE_MSGVER_1')?>",
+			rebuildQuoteAccessAttrsDlgSummary: "<?=GetMessageJS('CRM_CONFIG_PERMS_REBUILD_QUOTE_ATTR_DLG_SUMMARY_MSGVER_1')?>",
 			rebuildInvoiceAccessAttrsDlgTitle: "<?=GetMessageJS('CRM_CONFIG_PERMS_REBUILD_INVOICE_ATTR_DLG_TITLE')?>",
 			rebuildInvoiceAccessAttrsDlgSummary: "<?=GetMessageJS('CRM_CONFIG_PERMS_REBUILD_INVOICE_ATTR_DLG_SUMMARY')?>"
 		};

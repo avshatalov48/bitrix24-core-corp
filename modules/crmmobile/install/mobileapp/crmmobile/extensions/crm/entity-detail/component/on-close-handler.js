@@ -12,6 +12,8 @@ jn.define('crm/entity-detail/component/on-close-handler', (require, exports, mod
 	 * @param {boolean} entityWasSaved
 	 */
 	const onCloseHandler = (detailCard, entityWasSaved = false) => {
+		device.setProximitySensorEnabled(false);
+
 		let promise = Promise.resolve();
 
 		if (

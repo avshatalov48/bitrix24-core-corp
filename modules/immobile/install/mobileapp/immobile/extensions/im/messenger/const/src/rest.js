@@ -45,6 +45,11 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatMessageRead: 'im.v2.Chat.Message.read',
 		imV2ChatMessageMark: 'im.v2.Chat.Message.mark',
 		imV2ChatMessageDelete: 'im.v2.Chat.Message.delete',
+		imV2ChatMessageTailViewers: 'im.v2.Chat.Message.tailViewers',
+
+		imV2ChatMessageReactionAdd: 'im.v2.Chat.Message.Reaction.add',
+		imV2ChatMessageReactionDelete: 'im.v2.Chat.Message.Reaction.delete',
+		imV2ChatMessageReactionTail: 'im.v2.Chat.Message.Reaction.tail',
 
 		imDialogGet: 'im.dialog.get',
 		imDialogMessagesGet: 'im.dialog.messages.get',

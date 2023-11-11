@@ -102,7 +102,12 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 				return new FileMessage(modelMessage, options, file);
 			}
 
-			if (Type.isStringFilled(modelMessage.text))
+			const isMessageWithAttach = modelMessage
+				&& modelMessage.params
+				&& modelMessage.params.ATTACH
+				&& modelMessage.params.ATTACH[0]
+			;
+			if (Type.isStringFilled(modelMessage.text) || isMessageWithAttach)
 			{
 				return new TextMessage(modelMessage, options);
 			}

@@ -10,5 +10,5 @@ $MESS["CRM_STAGE_LIST_VIEW_SELECT_SAME_STAGE_ERROR"] = "Cannot select current st
 $MESS["CRM_STAGE_LIST_VIEW_TITLE"] = "Select item stage";
 $MESS["CRM_STAGE_LIST_VIEW_TITLE_DEAL"] = "Select deal stage";
 $MESS["CRM_STAGE_LIST_VIEW_TITLE_LEAD"] = "Select lead stage";
-$MESS["CRM_STAGE_LIST_VIEW_TITLE_QUOTE"] = "Select quote stage";
+$MESS["CRM_STAGE_LIST_VIEW_TITLE_QUOTE_MSGVER_1"] = "Select estimate stage";
 $MESS["CRM_STAGE_LIST_VIEW_TITLE_SMART_INVOICE"] = "Select invoice stage";

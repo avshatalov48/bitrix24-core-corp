@@ -1,4 +1,6 @@
 import {Type} from 'main.core';
+import { DesktopApi } from 'im.v2.lib.desktop-api';
+import type {MessengerFacade} from '../controller';
 
 const desktopFeatureMap = {
 	'iframe': 39
@@ -16,10 +18,6 @@ export class Desktop
 
 	openCallWindow(content, js, params)
 	{
-		if (!BX.MessengerCommon.isDesktop())
-		{
-			return false;
-		}
 		params = params || {};
 
 		if (params.minSettingsWidth)
@@ -34,7 +32,7 @@ export class Desktop
 
 		params.resizable = (params.resizable === true);
 
-		BX.desktop.createWindow("callWindow", (callWindow) =>
+		DesktopApi.createWindow("callWindow", (callWindow) =>
 		{
 			callWindow.SetProperty("clientSize", {Width: params.width, Height: params.height});
 			callWindow.SetProperty("resizable", params.resizable);
@@ -44,8 +42,9 @@ export class Desktop
 			}
 			callWindow.SetProperty("title", this.title);
 			callWindow.SetProperty("closable", true);
+
 			//callWindow.OpenDeveloperTools();
-			let html = this.getHtmlPage(content, js, {});
+			let html = this.#getHtmlPage(content, js, {});
 			callWindow.ExecuteCommand("html.load", html);
 			this.window = callWindow;
 		});
@@ -69,13 +68,8 @@ export class Desktop
 		}
 	};
 
-	getHtmlPage(content, jsContent, initImJs, bodyClass)
+	#getHtmlPage(content, jsContent, initImJs, bodyClass)
 	{
-		if (!BX.MessengerCommon.isDesktop())
-		{
-			return;
-		}
-
 		content = content || '';
 		jsContent = jsContent || '';
 		bodyClass = bodyClass || '';
@@ -111,34 +105,38 @@ export class Desktop
 			initJs = `
 				<script type="text/javascript">
 					BX.ready(function() {
+							const backgroundWorker = new BX.Voximplant.BackgroundWorker();
+							
 							window.PCW = new BX.Voximplant.PhoneCallView({
-								'slave': true, 
-								'skipOnResize': true, 
-								'callId': '${this.parentPhoneCallView.callId}',
-								'uiState': ${this.parentPhoneCallView._uiState},
-								'phoneNumber': '${this.parentPhoneCallView.phoneNumber}',
-								'companyPhoneNumber': '${this.parentPhoneCallView.companyPhoneNumber}',
-								'direction': '${this.parentPhoneCallView.direction}',
-								'fromUserId': '${this.parentPhoneCallView.fromUserId}',
-								'toUserId': '${this.parentPhoneCallView.toUserId}',
-								'crm': ${this.parentPhoneCallView.crm},
-								'hasSipPhone': ${this.parentPhoneCallView.hasSipPhone},
-								'deviceCall': ${this.parentPhoneCallView.deviceCall},
-								'transfer': ${this.parentPhoneCallView.transfer},
-								'crmEntityType': '${this.parentPhoneCallView.crmEntityType}',
-								'crmEntityId': '${this.parentPhoneCallView.crmEntityId}',
-								'crmActivityId': '${this.parentPhoneCallView.crmActivityId}',
-								'crmActivityEditUrl': '${this.parentPhoneCallView.crmActivityEditUrl}',
-								'callListId': ${this.parentPhoneCallView.callListId},
-								'callListStatusId': '${this.parentPhoneCallView.callListStatusId}',
-								'callListItemIndex': ${this.parentPhoneCallView.callListItemIndex},
-								'config': ${this.parentPhoneCallView.config ? JSON.stringify(this.parentPhoneCallView.config) : '{}'},
-								'portalCall': ${this.parentPhoneCallView.portalCall ? 'true' : 'false'},
-								'portalCallData': ${this.parentPhoneCallView.portalCallData ? JSON.stringify(this.parentPhoneCallView.portalCallData) : '{}'},
-								'portalCallUserId': ${this.parentPhoneCallView.portalCallUserId},
-								'webformId': ${this.parentPhoneCallView.webformId},
-								'webformSecCode': '${this.parentPhoneCallView.webformSecCode}',
-								'restApps': ${this.parentPhoneCallView.restApps ? JSON.stringify(this.parentPhoneCallView.restApps) : '[]'},
+								isDesktop: true,
+								slave: true, 
+								skipOnResize: true, 
+								callId: '${this.parentPhoneCallView.callId}',
+								uiState: ${this.parentPhoneCallView._uiState},
+								phoneNumber: '${this.parentPhoneCallView.phoneNumber}',
+								companyPhoneNumber: '${this.parentPhoneCallView.companyPhoneNumber}',
+								direction: '${this.parentPhoneCallView.direction}',
+								fromUserId: '${this.parentPhoneCallView.fromUserId}',
+								toUserId: '${this.parentPhoneCallView.toUserId}',
+								crm: ${this.parentPhoneCallView.crm},
+								hasSipPhone: ${this.parentPhoneCallView.hasSipPhone},
+								deviceCall: ${this.parentPhoneCallView.deviceCall},
+								transfer: ${this.parentPhoneCallView.transfer},
+								crmEntityType: '${this.parentPhoneCallView.crmEntityType}',
+								crmEntityId: '${this.parentPhoneCallView.crmEntityId}',
+								crmActivityId: '${this.parentPhoneCallView.crmActivityId}',
+								crmActivityEditUrl: '${this.parentPhoneCallView.crmActivityEditUrl}',
+								callListId: ${this.parentPhoneCallView.callListId},
+								callListStatusId: '${this.parentPhoneCallView.callListStatusId}',
+								callListItemIndex: ${this.parentPhoneCallView.callListItemIndex},
+								config: ${this.parentPhoneCallView.config ? JSON.stringify(this.parentPhoneCallView.config) : '{}'},
+								portalCall: ${this.parentPhoneCallView.portalCall ? 'true' : 'false'},
+								portalCallData: ${this.parentPhoneCallView.portalCallData ? JSON.stringify(this.parentPhoneCallView.portalCallData) : '{}'},
+								portalCallUserId: ${this.parentPhoneCallView.portalCallUserId},
+								webformId: ${this.parentPhoneCallView.webformId},
+								webformSecCode: '${this.parentPhoneCallView.webformSecCode}',
+								backgroundWorker: backgroundWorker,
+								restApps: ${this.parentPhoneCallView.restApps ? JSON.stringify(this.parentPhoneCallView.restApps) : '[]'},
 							});
 					});
 				</script>`;
@@ -158,21 +156,11 @@ export class Desktop
 
 	addCustomEvent(eventName, eventHandler)
 	{
-		if (!BX.MessengerCommon.isDesktop())
-		{
-			return false;
-		}
-
 		BX.desktop.addCustomEvent(eventName, eventHandler);
 	};
 
 	onCustomEvent(windowTarget, eventName, arEventParams)
 	{
-		if (!BX.MessengerCommon.isDesktop())
-		{
-			return false;
-		}
-
 		BX.desktop.onCustomEvent(windowTarget, eventName, arEventParams);
 	};
 

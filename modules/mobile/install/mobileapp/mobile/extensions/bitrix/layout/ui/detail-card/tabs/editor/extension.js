@@ -2,7 +2,6 @@
  * @module layout/ui/detail-card/tabs/editor
  */
 jn.define('layout/ui/detail-card/tabs/editor', (require, exports, module) => {
-
 	const { Tab } = require('layout/ui/detail-card/tabs');
 	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
 	const { EntityManager } = require('layout/ui/entity-editor/manager');

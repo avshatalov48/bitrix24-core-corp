@@ -7,6 +7,9 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * @deprecated No longer in use
+ */
 class ExternalNoticeController extends EntityController
 {
 	//region EntityController

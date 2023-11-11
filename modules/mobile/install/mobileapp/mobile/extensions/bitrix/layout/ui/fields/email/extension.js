@@ -8,6 +8,7 @@ jn.define('layout/ui/fields/email', (require, exports, module) => {
 	const { domains } = require('layout/ui/fields/email/domains');
 	const { isValidEmail } = require('utils/url');
 	const { stringify } = require('utils/string');
+	const { Loc } = require('loc');
 
 	const DEFAULT = 'default';
 
@@ -117,6 +118,15 @@ jn.define('layout/ui/fields/email', (require, exports, module) => {
 			};
 		}
 
+		canCopyValue()
+		{
+			return this.isReadOnly();
+		}
+
+		copyMessage()
+		{
+			return Loc.getMessage('FIELD_EMAIL_VALUE_COPIED');
+		}
 	}
 
 	module.exports = {

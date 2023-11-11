@@ -166,7 +166,7 @@ if ($arParams['TYPE'] === 'details')
 			),
 			'CODE' => 'convert',
 			'TEXT' => Loc::getMessage('QUOTE_CREATE_ON_BASIS'),
-			'TITLE' => Loc::getMessage('QUOTE_CREATE_ON_BASIS_TITLE'),
+			'TITLE' => Loc::getMessage('QUOTE_CREATE_ON_BASIS_TITLE_MSGVER_1'),
 			'ICON' => $isPermitted ? 'btn-convert' : 'btn-convert-blocked'
 		);
 	}
@@ -186,7 +186,7 @@ if ($arParams['TYPE'] === 'details')
 
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => Loc::getMessage('QUOTE_COPY'),
-			'TITLE' => Loc::getMessage('QUOTE_COPY_TITLE'),
+			'TITLE' => Loc::getMessage('QUOTE_COPY_TITLE_MSGVER_1'),
 			'ONCLICK' => "BX.Crm.Page.open('".CUtil::JSEscape($copyUrl)."')",
 			'ICON' => 'btn-copy'
 		);
@@ -196,7 +196,7 @@ if ($arParams['TYPE'] === 'details')
 	{
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => Loc::getMessage('QUOTE_DELETE'),
-			'TITLE' => Loc::getMessage('QUOTE_DELETE_TITLE'),
+			'TITLE' => Loc::getMessage('QUOTE_DELETE_TITLE_MSGVER_1'),
 			'ONCLICK' => $scripts['DELETE'],
 			'ICON' => 'btn-delete'
 		);
@@ -219,7 +219,7 @@ if ($arParams['TYPE'] === 'list')
 		),
 		'HIGHLIGHT' => true,
 		'IS_DISABLED' => !$bAdd,
-		'HINT' => Loc::getMessage('CRM_QUOTE_ADD_HINT')
+		'HINT' => Loc::getMessage('CRM_QUOTE_ADD_HINT_MSGVER_1')
 	];
 
 	if (!$isInSlider)
@@ -294,7 +294,7 @@ if ($arParams['TYPE'] === 'list')
 				'EXPORT_ALL_FIELDS' => array(
 					'name' => 'EXPORT_ALL_FIELDS',
 					'type' => 'checkbox',
-					'title' => Loc::getMessage('QUOTE_STEXPORT_OPTION_EXPORT_ALL_FIELDS'),
+					'title' => Loc::getMessage('QUOTE_STEXPORT_OPTION_EXPORT_ALL_FIELDS_MSGVER_1'),
 					'value' => 'N'
 				),
 				'EXPORT_PRODUCT_FIELDS' => array(
@@ -305,8 +305,8 @@ if ($arParams['TYPE'] === 'list')
 				),
 			),
 			'messages' => array(
-				'DialogTitle' => Loc::getMessage('QUOTE_EXPORT_CSV_TITLE'),
-				'DialogSummary' => Loc::getMessage('QUOTE_STEXPORT_SUMMARY'),
+				'DialogTitle' => Loc::getMessage('QUOTE_EXPORT_CSV_TITLE_MSGVER_1'),
+				'DialogSummary' => Loc::getMessage('QUOTE_STEXPORT_SUMMARY_MSGVER_1'),
 			),
 			'dialogMaxWidth' => 650,
 		];
@@ -315,20 +315,20 @@ if ($arParams['TYPE'] === 'list')
 		$arResult['EXPORT_EXCEL_PARAMS'] = $arResult['EXPORT_CSV_PARAMS'];
 		$arResult['EXPORT_EXCEL_PARAMS']['id'] = $stExportId. '_EXCEL';
 		$arResult['EXPORT_EXCEL_PARAMS']['params']['EXPORT_TYPE'] = 'excel';
-		$arResult['EXPORT_EXCEL_PARAMS']['messages']['DialogTitle'] = Loc::getMessage('QUOTE_EXPORT_EXCEL_TITLE');
+		$arResult['EXPORT_EXCEL_PARAMS']['messages']['DialogTitle'] = Loc::getMessage('QUOTE_EXPORT_EXCEL_TITLE_MSGVER_1');
 
 		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 
 		$arResult['BUTTONS'][] = array(
-			'TITLE' => Loc::getMessage('QUOTE_EXPORT_CSV_TITLE'),
-			'TEXT' => Loc::getMessage('QUOTE_EXPORT_CSV'),
+			'TITLE' => Loc::getMessage('QUOTE_EXPORT_CSV_TITLE_MSGVER_1'),
+			'TEXT' => Loc::getMessage('QUOTE_EXPORT_CSV_MSGVER_1'),
 			'ONCLICK' => "BX.UI.StepProcessing.ProcessManager.get('{$stExportId}_CSV').showDialog()",
 			'ICON' => 'btn-export'
 		);
 
 		$arResult['BUTTONS'][] = array(
-			'TITLE' => Loc::getMessage('QUOTE_EXPORT_EXCEL_TITLE'),
-			'TEXT' => Loc::getMessage('QUOTE_EXPORT_EXCEL'),
+			'TITLE' => Loc::getMessage('QUOTE_EXPORT_EXCEL_TITLE_MSGVER_1'),
+			'TEXT' => Loc::getMessage('QUOTE_EXPORT_EXCEL_MSGVER_1'),
 			'ONCLICK' => "BX.UI.StepProcessing.ProcessManager.get('{$stExportId}_EXCEL').showDialog()",
 			'ICON' => 'btn-export'
 		);
@@ -373,7 +373,7 @@ if (
 		),
 		'CODE' => 'convert',
 		'TEXT' => Loc::getMessage('QUOTE_CREATE_ON_BASIS'),
-		'TITLE' => Loc::getMessage('QUOTE_CREATE_ON_BASIS_TITLE'),
+		'TITLE' => Loc::getMessage('QUOTE_CREATE_ON_BASIS_TITLE_MSGVER_1'),
 		'ICON' => $isPermitted ? 'btn-convert' : 'btn-convert-blocked'
 	);
 }
@@ -385,7 +385,7 @@ if ($arParams['TYPE'] === 'show' && !empty($arParams['ELEMENT_ID']))
 		$arResult['BUTTONS'][] = [
 			'CODE' => 'document',
 			'TEXT' => Loc::getMessage('QUOTE_DOCUMENT_BUTTON_TEXT'),
-			'TITLE' => Loc::getMessage('QUOTE_DOCUMENT_BUTTON_TITLE'),
+			'TITLE' => Loc::getMessage('QUOTE_DOCUMENT_BUTTON_TITLE_MSGVER_1'),
 			'TYPE' => 'crm-document-button',
 			'PARAMS' => DocumentGeneratorManager::getInstance()->getDocumentButtonParameters(DocumentGenerator\DataProvider\Quote::class, $arParams['ELEMENT_ID']),
 		];
@@ -396,12 +396,12 @@ if ($arParams['TYPE'] === 'show' && !empty($arParams['ELEMENT_ID']))
 		$menuItems = [];
 		$menuItems[] = [
 			'text' => Loc::getMessage('QUOTE_PAYMENT_HTML'),
-			'title' => Loc::getMessage('QUOTE_PAYMENT_HTML_TITLE'),
+			'title' => Loc::getMessage('QUOTE_PAYMENT_HTML_TITLE_MSGVER_1'),
 			'onclick' => "BX.onCustomEvent(window, 'CrmQuotePrint', [this, { blank: false }])"
 		];
 		$menuItems[] = [
-			'text' => Loc::getMessage('QUOTE_PAYMENT_HTML_BLANK'),
-			'title' => Loc::getMessage('QUOTE_PAYMENT_HTML_BLANK_TITLE'),
+			'text' => Loc::getMessage('QUOTE_PAYMENT_HTML_BLANK_MSGVER_1'),
+			'title' => Loc::getMessage('QUOTE_PAYMENT_HTML_BLANK_TITLE_MSGVER_1'),
 			'onclick' => "BX.onCustomEvent(window, 'CrmQuotePrint', [this, { blank: true }])"
 		];
 
@@ -409,17 +409,17 @@ if ($arParams['TYPE'] === 'show' && !empty($arParams['ELEMENT_ID']))
 		{
 			$menuItems[] = [
 				'text' => Loc::getMessage('QUOTE_PAYMENT_PDF'),
-				'title' => Loc::getMessage('QUOTE_PAYMENT_PDF_TITLE'),
+				'title' => Loc::getMessage('QUOTE_PAYMENT_PDF_TITLE_MSGVER_1'),
 				'onclick' => "BX.onCustomEvent(window, 'CrmQuoteDownloadPdf', [this, { blank: false }])"
 			];
 			$menuItems[] = [
 				'text' => Loc::getMessage('QUOTE_PAYMENT_PDF_BLANK'),
-				'title' => Loc::getMessage('QUOTE_PAYMENT_PDF_BLANK_TITLE'),
+				'title' => Loc::getMessage('QUOTE_PAYMENT_PDF_BLANK_TITLE_MSGVER_1'),
 				'onclick' => "BX.onCustomEvent(window, 'CrmQuoteDownloadPdf', [this, { blank: true }])"
 			];
 			$menuItems[] = [
 				'text' => Loc::getMessage('QUOTE_PAYMENT_EMAIL'),
-				'title' => Loc::getMessage('QUOTE_PAYMENT_EMAIL_TITLE'),
+				'title' => Loc::getMessage('QUOTE_PAYMENT_EMAIL_TITLE_MSGVER_1'),
 				'onclick' => "BX.onCustomEvent(window, 'CrmQuoteSendByEmail', [this])"
 			];
 		}
@@ -428,7 +428,7 @@ if ($arParams['TYPE'] === 'show' && !empty($arParams['ELEMENT_ID']))
 			$arResult['BUTTONS'][] = [
 				'CODE' => 'leftMenu',
 				'TEXT' => Loc::getMessage('QUOTE_LEFT_MENU_TEXT'),
-				'TITLE' => Loc::getMessage('QUOTE_LEFT_MENU_TITLE'),
+				'TITLE' => Loc::getMessage('QUOTE_LEFT_MENU_TITLE_MSGVER_1'),
 				'TYPE' => 'toolbar-menu-left',
 				'ITEMS' => $menuItems,
 			];
@@ -440,7 +440,7 @@ if ($arParams['TYPE'] === 'show' && !empty($arParams['ELEMENT_ID']))
 	{
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => Loc::getMessage('QUOTE_EDIT'),
-			'TITLE' => Loc::getMessage('QUOTE_EDIT_TITLE'),
+			'TITLE' => Loc::getMessage('QUOTE_EDIT_TITLE_MSGVER_1'),
 			'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
 				array(
 					'quote_id' => $arParams['ELEMENT_ID']
@@ -455,7 +455,7 @@ if ($arParams['TYPE'] === 'edit' && $bRead && !empty($arParams['ELEMENT_ID']))
 {
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => Loc::getMessage('QUOTE_SHOW'),
-		'TITLE' => Loc::getMessage('QUOTE_SHOW_TITLE'),
+		'TITLE' => Loc::getMessage('QUOTE_SHOW_TITLE_MSGVER_1'),
 		'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_SHOW'],
 			array(
 				'quote_id' => $arParams['ELEMENT_ID']
@@ -470,7 +470,7 @@ if (($arParams['TYPE'] === 'edit' || $arParams['TYPE'] === 'show') && $bAdd
 {
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => Loc::getMessage('QUOTE_COPY'),
-		'TITLE' => Loc::getMessage('QUOTE_COPY_TITLE'),
+		'TITLE' => Loc::getMessage('QUOTE_COPY_TITLE_MSGVER_1'),
 		'LINK' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
 			array(
 				'quote_id' => $arParams['ELEMENT_ID']
@@ -493,9 +493,9 @@ elseif ($qty >= 3)
 if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bDelete && !empty($arParams['ELEMENT_ID']))
 {
 	$arResult['BUTTONS'][] = array(
-		'TEXT' => Loc::getMessage('QUOTE_DELETE'),
-		'TITLE' => Loc::getMessage('QUOTE_DELETE_TITLE'),
-		'LINK' => "javascript:quote_delete('".Loc::getMessage('QUOTE_DELETE_DLG_TITLE')."', '".Loc::getMessage('QUOTE_DELETE_DLG_MESSAGE')."', '".Loc::getMessage('QUOTE_DELETE_DLG_BTNTITLE')."', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
+		'TEXT' => Loc::getMessage('QUOTE_DELETE_MSGVER_1'),
+		'TITLE' => Loc::getMessage('QUOTE_DELETE_TITLE_MSGVER_1'),
+		'LINK' => "javascript:quote_delete('".Loc::getMessage('QUOTE_DELETE_DLG_TITLE_MSGVER_1')."', '".Loc::getMessage('QUOTE_DELETE_DLG_MESSAGE_MSGVER_1')."', '".Loc::getMessage('QUOTE_DELETE_DLG_BTNTITLE')."', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
 			array(
 				'quote_id' => $arParams['ELEMENT_ID']
 			)),

@@ -2,7 +2,6 @@
  * @module layout/ui/detail-card/tabs/product
  */
 jn.define('layout/ui/detail-card/tabs/product', (require, exports, module) => {
-
 	const { Tab } = require('layout/ui/detail-card/tabs');
 	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
 	const { stringify } = require('utils/string');
@@ -101,7 +100,7 @@ jn.define('layout/ui/detail-card/tabs/product', (require, exports, module) => {
 						});
 					}
 
-					const hasLoadingPhotos = item.gallery.some(file => BX.type.isPlainObject(file) && file.isLoading);
+					const hasLoadingPhotos = item.gallery.some((file) => BX.type.isPlainObject(file) && file.isLoading);
 					if (hasLoadingPhotos)
 					{
 						errors.push({
@@ -110,7 +109,7 @@ jn.define('layout/ui/detail-card/tabs/product', (require, exports, module) => {
 						});
 					}
 
-					const hasErrorPhotos = item.gallery.some(file => BX.type.isPlainObject(file) && file.hasError);
+					const hasErrorPhotos = item.gallery.some((file) => BX.type.isPlainObject(file) && file.hasError);
 					if (hasErrorPhotos)
 					{
 						errors.push({

@@ -52,7 +52,7 @@ jn.define('catalog/store/product-list/menu/product-context-menu', (require, expo
 				actions.push({
 					id: 'remove',
 					type: 'delete',
-					title: BX.message('CSPL_PRODUCT_CONTEXT_MENU_REMOVE'),
+					title: BX.message('CSPL_PRODUCT_CONTEXT_MENU_REMOVE_MSGVER_1'),
 					subTitle: '',
 					onClickCallback: this.callback.bind(this, 'onChooseRemove'),
 				});

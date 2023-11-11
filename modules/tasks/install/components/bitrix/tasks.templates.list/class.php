@@ -514,12 +514,9 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 			$filter['BASE_TEMPLATE_ID'] = 0;
 		}
 
-		if (isset($this->arParams['BASE_TEMPLATE_ID']))
+		if (isset($this->arParams['BASE_TEMPLATE_ID']) && ($filter['BASE_TEMPLATE_ID'] ?? null) <= 0)
 		{
-			if ($filter['BASE_TEMPLATE_ID'] <= 0)
-			{
-				$filter['BASE_TEMPLATE_ID'] = $this->arParams['BASE_TEMPLATE_ID'];
-			}
+			$filter['BASE_TEMPLATE_ID'] = $this->arParams['BASE_TEMPLATE_ID'];
 		}
 
 		if (isset($this->arParams['SCENARIO']))

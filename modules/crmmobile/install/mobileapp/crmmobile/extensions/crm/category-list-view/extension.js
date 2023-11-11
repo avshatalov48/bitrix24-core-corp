@@ -66,6 +66,12 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 
 			this.layout = props.layout || layout;
 
+			CategoryStorage
+				.subscribeOnChange(() => this.reloadCategoryList())
+				.subscribeOnLoading(({ status }) => NavigationLoader.setLoading(status, this.layout))
+				.markReady()
+			;
+
 			this.state = {
 				categoryList: this.getCategoryListFromStorage(props.entityTypeId),
 			};
@@ -86,12 +92,6 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 			BX.addCustomEvent('Crm.CategoryDetail::onClose', () => this.getCategoryListFromStorage(this.props.entityTypeId));
 
 			this.layout.enableNavigationBarBorder(false);
-
-			CategoryStorage
-				.subscribeOnChange(() => this.reloadCategoryList())
-				.subscribeOnLoading(({ status }) => NavigationLoader.setLoading(status, this.layout))
-				.markReady()
-			;
 		}
 
 		getCategoryListFromStorage(entityTypeId)

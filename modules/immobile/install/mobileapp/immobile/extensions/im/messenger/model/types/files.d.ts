@@ -35,6 +35,11 @@ export type FilesModelState = {
 	init: boolean,
 	viewerAttrs: Object,
 	localUrl?: string,
+
+	uploadData: {
+		byteSent?: 0,
+		byteTotal?: 0,
+	},
 };
 
 export type FilesModelActions =

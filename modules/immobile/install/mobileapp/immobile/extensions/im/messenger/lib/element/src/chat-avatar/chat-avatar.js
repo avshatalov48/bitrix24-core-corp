@@ -13,7 +13,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 	{
 		/**
 		 *
-		 * @param {string} dialogId
+		 * @param {string || number} dialogId
 		 * @param {object} options
 		 * @return {ChatAvatar}
 		 */
@@ -74,7 +74,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 		createUserAvatar(userId)
 		{
-			const user = this.store.getters['usersModel/getUserById'](userId);
+			const user = this.store.getters['usersModel/getById'](userId);
 			if (!user)
 			{
 				return;

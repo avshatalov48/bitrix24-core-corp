@@ -18,7 +18,7 @@ jn.define('layout/ui/context-menu/button', (require, exports, module) => {
 	 * @return {ContextMenuItem}
 	 */
 	const menuButton = (props = {}) => {
-		const { type, style = {}, divider = false, radius = true, ...restProps } = props;
+		const { type, testId, style = {}, divider = false, radius = true, ...restProps } = props;
 		const isCancel = type === ContextMenuItem.getTypeCancelName();
 
 		let config = {
@@ -38,7 +38,9 @@ jn.define('layout/ui/context-menu/button', (require, exports, module) => {
 			config = cancelConfig(config);
 		}
 
-		return View({
+		return View(
+			{
+				testId,
 				style: {
 					width: '100%',
 					borderRadius: radius ? 12 : 0,

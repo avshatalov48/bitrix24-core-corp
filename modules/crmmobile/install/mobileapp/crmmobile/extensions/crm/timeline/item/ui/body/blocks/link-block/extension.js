@@ -18,6 +18,8 @@ jn.define('crm/timeline/item/ui/body/blocks/link-block', (require, exports, modu
 				},
 				Text({
 					text: this.props.text,
+					ellipsize: 'end',
+					numberOfLines: this.props.inline ? 1 : 0,
 					style: {
 						fontSize: 14,
 						color: '#0B66C3',

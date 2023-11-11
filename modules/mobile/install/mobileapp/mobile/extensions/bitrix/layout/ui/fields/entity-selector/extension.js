@@ -27,6 +27,11 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 			this.state.showAll = true;
 		}
 
+		getEntityList()
+		{
+			return this.state.entityList;
+		}
+
 		componentWillReceiveProps(newProps)
 		{
 			super.componentWillReceiveProps(newProps);
@@ -84,6 +89,11 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 		shouldShowEditIcon()
 		{
 			return BX.prop.getBoolean(this.props, 'showEditIcon', true);
+		}
+
+		shouldShowChevronDown()
+		{
+			return BX.prop.getBoolean(this.props, 'showChevronDown', false);
 		}
 
 		getValueFromEntityList(entityList)
@@ -203,6 +213,17 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 					ellipsize: 'end',
 					text: BX.message('FIELDS_SELECTOR_CONTROL_SELECT'),
 				}),
+				this.shouldShowChevronDown() && Image({
+					style: {
+						height: 5,
+						width: 7,
+						marginTop: 4,
+						marginLeft: 5,
+					},
+					svg: {
+						content: chevronDown(),
+					},
+				}),
 			);
 		}
 
@@ -224,9 +245,27 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 				},
 				View(
 					{
-						style: this.styles.entityContent,
+						style: {
+							flexDirection: 'row',
+						},
 					},
-					...this.renderEntities(this.state.entityList),
+					View(
+						{
+							style: this.styles.entityContent,
+						},
+						...this.renderEntities(this.state.entityList),
+					),
+					this.shouldShowChevronDown() && Image({
+						style: {
+							height: 5,
+							width: 7,
+							marginTop: 9,
+							marginLeft: 5,
+						},
+						svg: {
+							content: chevronDown(),
+						},
+					}),
 				),
 				showAllButton,
 			);

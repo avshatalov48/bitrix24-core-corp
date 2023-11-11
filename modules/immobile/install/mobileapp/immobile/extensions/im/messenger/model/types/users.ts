@@ -23,6 +23,7 @@ export type UsersModelState = {
 	absent: string,
 	isAbsent: boolean,
 	departments: Array<string>,
+	departmentName: string,
 	phones: {
 		workPhone: string,
 		personalMobile: string,
@@ -36,7 +37,7 @@ export type UsersModelActions =
 	| 'usersModel/set'
 	| 'usersModel/update'
 	| 'usersModel/delete'
-
+	| 'usersModel/merge'
 
 export type UsersModelMutation =
 	'usersModel/set'

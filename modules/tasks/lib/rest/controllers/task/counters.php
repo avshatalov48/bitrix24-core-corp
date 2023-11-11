@@ -79,14 +79,4 @@ class Counters extends Base
 
 		return true;
 	}
-
-	public function getProjectsTotalCounterAction(int $userId = 0): int
-	{
-		$userId = ($userId ?: (int)$this->getCurrentUser()->getId());
-		$counter = Counter::getInstance($userId);
-
-		return
-			$counter->get(Counter\CounterDictionary::COUNTER_SONET_TOTAL_EXPIRED)
-			+ $counter->get(Counter\CounterDictionary::COUNTER_SONET_TOTAL_COMMENTS);
-	}
 }

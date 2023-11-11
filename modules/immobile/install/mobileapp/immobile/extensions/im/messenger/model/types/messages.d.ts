@@ -1,3 +1,5 @@
+import {ReactionsModelState} from "./messages/reactions";
+
 export type MessagesModelState = {
 	id: number | string,
 	templateId: string,
@@ -5,6 +7,7 @@ export type MessagesModelState = {
 	authorId: number,
 	date: Date,
 	text: string,
+	loadText: string,
 	params: object,
 	replaces: Array<Object>,
 	files: Array<number | string>,
@@ -16,6 +19,7 @@ export type MessagesModelState = {
 	retry: boolean,
 	audioPlaying: boolean,
 	playingTime: number,
+	reactions?: ReactionsModelState // extended property
 }
 
 export type MessagesModelActions =
@@ -31,6 +35,8 @@ export type MessagesModelActions =
 	| 'messagesModel/removeReaction'
 	| 'messagesModel/readMessages'
 	| 'messagesModel/setViewedByOthers'
+	| 'messagesModel/updateLoadTextProgress'
+	| 'messagesModel/setChatCollection'
 
 export type MessagesModelMutation =
 	'messagesModel/setChatCollection'

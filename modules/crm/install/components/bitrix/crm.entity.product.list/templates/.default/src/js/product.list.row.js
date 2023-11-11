@@ -2159,9 +2159,7 @@ export class Row
 			return false;
 		}
 
-		return !this.#getAllowedStores().includes(storeId)
-			|| !this.editor.getSettingValue('allowEntityReserve', true)
-		;
+		return !this.#getAllowedStores().includes(storeId);
 	}
 
 	#getAllowedStores(): Array

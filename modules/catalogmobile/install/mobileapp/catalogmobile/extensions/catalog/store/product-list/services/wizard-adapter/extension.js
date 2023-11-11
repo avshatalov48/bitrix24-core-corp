@@ -38,7 +38,8 @@ jn.define('catalog/store/product-list/services/wizard-adapter', (require, export
 				data: {
 					fields: data,
 					documentId: state.document.id,
-				}
+					documentType: state.document.type,
+				},
 			};
 
 			BX.ajax.runAction(action, queryConfig)

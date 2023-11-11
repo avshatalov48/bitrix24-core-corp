@@ -38,6 +38,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 
 	protected $currentUserID = 0;
 	protected $componentParams = [];
+	protected bool $needPrepareColumns = false;
 
 	public function onPrepareComponentParams($arParams): array
 	{
@@ -321,6 +322,12 @@ class CrmKanbanComponent extends \CBitrixComponent
 						$this->arResult['ITEMS']['IS_SHOULD_UPDATE_CARD'] = $viewMode === Kanban\ViewMode::MODE_DEADLINES;
 					}
 				}
+			}
+
+			if ($this->needPrepareColumns)
+			{
+				$this->getColumns(true);
+				$this->needPrepareColumns = false;
 			}
 
 			if ($this->arParams['IS_AJAX'] !== 'Y')
@@ -1158,7 +1165,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 			return $result;
 		}
 
-		$this->getColumns(true);
+		$this->needPrepareColumns = true;
 
 		return $result;
 	}
@@ -1428,7 +1435,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		if ($type === CCrmOwnerType::QuoteName)
 		{
 			return [
-				'title' => Loc::getMessage('CRM_KANBAN_TITLE_QUOTE'),
+				'title' => Loc::getMessage('CRM_KANBAN_TITLE_QUOTE_MSGVER_1'),
 				'description' => Loc::getMessage('CRM_KANBAN_NO_DATA_TEXT')
 			];
 		}

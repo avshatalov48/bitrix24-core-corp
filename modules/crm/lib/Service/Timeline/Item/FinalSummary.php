@@ -49,11 +49,6 @@ class FinalSummary extends Configurable
 		return Layout\Common\Icon::COMPLETE;
 	}
 
-	public function getBackgroundColorToken(): string
-	{
-		return Layout\Icon::BACKGROUND_PRIMARY_ALT;
-	}
-
 	public function getLogo(): ?Layout\Body\Logo
 	{
 		return Logo::getInstance(Logo::LIST_CHECK)

@@ -2549,6 +2549,9 @@ class CAllMailMessage
 			}
 		}
 
+		$mainBody = (string) $mainBody;
+		$mainBodyHtml = (string) $mainBodyHtml;
+
 		$mainBody = self::getClearBody($mainBody);
 
 		return [$mainBody, $mainBodyHtml];
@@ -2588,7 +2591,7 @@ class CAllMailMessage
 	 * @param $messageBodyHtml
 	 * @return array|string|string[]|null
 	 */
-	private static function cutBlockQuote(&$messageBodyHtml)
+	private static function cutBlockQuote(&$messageBodyHtml): array|string|null
 	{
 		return preg_replace('|(<blockquote([^>]*)>)(.*?)(<\/blockquote>)|isU', '', $messageBodyHtml);
 	}

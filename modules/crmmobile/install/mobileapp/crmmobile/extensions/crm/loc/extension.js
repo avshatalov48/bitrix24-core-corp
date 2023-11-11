@@ -17,6 +17,12 @@ jn.define('crm/loc', (require, exports, module) => {
 			return Loc.hasMessage(messageCode) ? Loc.getMessage(messageCode) : '';
 		}
 
+		const entityCodeVer1 = `${messageCode}_${entityTypeName.toUpperCase()}_MSGVER_1`;
+		if (Loc.hasMessage(entityCodeVer1))
+		{
+			return Loc.getMessage(entityCodeVer1);
+		}
+
 		const entityCode = `${messageCode}_${entityTypeName.toUpperCase()}`;
 		if (Loc.hasMessage(entityCode))
 		{

@@ -33,6 +33,10 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 		urlDownload: '',
 		localUrl: '',
 		viewerAttrs: null,
+		uploadData: {
+			byteSent: 0,
+			byteTotal: 0,
+		},
 	};
 
 	const filesModel = {
@@ -68,7 +72,12 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 		actions: {
 			/** @function filesModel/setState */
 			setState: (store, payload) => {
-				store.commit('setState', payload);
+				store.commit('setState', {
+					actionName: 'setState',
+					data: {
+						collection: payload,
+					},
+				});
 			},
 
 			/** @function filesModel/set */
@@ -111,12 +120,22 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 
 				if (existingFileList.length > 0)
 				{
-					store.commit('update', existingFileList);
+					store.commit('update', {
+						actionName: 'set',
+						data: {
+							fileList: existingFileList,
+						},
+					});
 				}
 
 				if (newFileList.length > 0)
 				{
-					store.commit('add', newFileList);
+					store.commit('add', {
+						actionName: 'set',
+						data: {
+							fileList: newFileList,
+						},
+					});
 				}
 			},
 
@@ -130,8 +149,11 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 				}
 
 				store.commit('updateWithId', {
-					id,
-					fields: validate(store, fields),
+					actionName: 'updateWithId',
+					data: {
+						id,
+						fields: validate(store, fields),
+					},
 				});
 			},
 
@@ -143,26 +165,57 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 					return;
 				}
 
-				store.commit('delete', { id });
+				store.commit('delete', {
+					actionName: 'delete',
+					data: {
+						id,
+					},
+				});
 			},
 		},
 		mutations: {
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			setState: (state, payload) => {
-				state.collection = payload.collection;
+				const {
+					collection,
+				} = payload.data;
+
+				state.collection = collection;
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			add: (state, payload) => {
 				Logger.warn('filesModel: add mutation', payload);
 
-				payload.forEach((file) => {
+				const {
+					fileList,
+				} = payload.data;
+
+				fileList.forEach((file) => {
 					state.collection[file.id] = file;
 				});
 
 				FilesCache.save();
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			update: (state, payload) => {
 				Logger.warn('filesModel: update mutation', payload);
 
-				payload.forEach((file) => {
+				const {
+					fileList,
+				} = payload.data;
+
+				fileList.forEach((file) => {
 					state.collection[file.id] = {
 						...state.collection[file.id],
 						...file,
@@ -171,10 +224,19 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 
 				FilesCache.save();
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			updateWithId: (state, payload) => {
 				Logger.warn('filesModel: updateWithId mutation', payload);
 
-				const { id, fields } = payload;
+				const {
+					id,
+					fields,
+				} = payload.data;
+
 				const currentFile = { ...state.collection[id] };
 
 				delete state.collection[id];
@@ -185,9 +247,16 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 
 				FilesCache.save();
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			delete: (state, payload) => {
 				Logger.warn('filesModel: delete mutation', payload);
-				const { id } = payload;
+				const {
+					id,
+				} = payload.data;
 
 				delete state.collection[id];
 				FilesCache.save();
@@ -367,6 +436,11 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 		{
 			result.type = FileType.image;
 			result.urlPreview = result.urlShow;
+		}
+
+		if (Type.isObject(fields.uploadData))
+		{
+			result.uploadData = fields.uploadData;
 		}
 
 		return result;

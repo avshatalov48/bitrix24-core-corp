@@ -17,7 +17,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 global $USER;
 
 /**
- * @var  $USER CAllUser
+ * @var  $USER CUser
  * @var  $this \Bitrix\MobileApp\Janative\Entity\Component
  * @var  $isExtranetUser bool
  */
@@ -700,7 +700,7 @@ JS,
 	$menuStructure[] = [
 		"title" => Loc::getMessage("MENU_CATALOG"),
 		"sort" => 125,
-		"code" => "catalog",
+		"code" => "catalog_store",
 		"hidden" => false,
 		"items" => $catalogMenuItems,
 	];

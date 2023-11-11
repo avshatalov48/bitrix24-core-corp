@@ -1,18 +1,16 @@
 <?php
 
-
 namespace Bitrix\CrmMobile\Kanban\ItemPreparer;
 
 use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\CrmMobile\Kanban\Dto\Field;
-use Bitrix\CrmMobile\Kanban\ItemCounter;
-use Bitrix\CrmMobile\Kanban\ItemIndicator;
+use Bitrix\CrmMobile\Kanban\ItemPreparer\Counters\ItemCounterFactory;
+use Bitrix\Main\Localization\Loc;
 
 abstract class Base
 {
 	protected const EXCLUDED_FIELDS = [
 		'TITLE',
-		'OPPORTUNITY',
 		'DATE_CREATE',
 	];
 
@@ -20,8 +18,6 @@ abstract class Base
 	protected const CRM_FIELD_TYPE = 'crm';
 	protected const IBLOCK_ELEMENT_FIELD_TYPE = 'iblock_element';
 	protected const IBLOCK_SECTION_FIELD_TYPE = 'iblock_section';
-
-	protected const DEFAULT_COUNT_WITH_RECKON_ACTIVITY = 1;
 
 	protected array $params;
 	protected int $entityTypeId;
@@ -45,6 +41,10 @@ abstract class Base
 		$id = $this->getItemId($item);
 		$entityAttributes = ($params['permissionEntityAttributes'] ?? null);
 
+		$fields = $this->prepareFields($item, $params);
+		$fields = $this->addClientToFields($fields, $item, $params);
+		$fields = $this->orderFields($fields, $item, $params);
+
 		return [
 			'id' => $id,
 			'data' => [
@@ -54,7 +54,7 @@ abstract class Base
 				'date' => $this->getItemDate($item),
 				'dateFormatted' => $this->getItemDateFormatted($item),
 				'price' => $this->getItemPrice($item),
-				'fields' => $this->prepareFields($item, $params),
+				'fields' => $fields,
 				'badges' => $this->prepareBadges($item, $params),
 				'return' => $this->getItemReturn($item),
 				'returnApproach' => $this->getItemReturnApproach($item),
@@ -71,6 +71,90 @@ abstract class Base
 	protected function getClient(array $item, array $params = []): ?array
 	{
 		return ($item['client'] ?? null);
+	}
+
+	protected function addClientToFields(array $fields, array $item, array $params = []): array
+	{
+		$clientField = $this->getClientField($item, $params);
+		if ($clientField)
+		{
+			$fields[] = $clientField;
+		}
+
+		return $fields;
+	}
+
+	protected function getClientField(array $item, array $params = []): ?Field
+	{
+		$client = $this->getClient($item, $params);
+		if (!$client || !empty($client['hidden']))
+		{
+			return null;
+		}
+
+		$isCompanyHidden = true;
+		$isContactHidden = true;
+
+		if (!empty($client['company']) && is_array($client['company']))
+		{
+			$client['company'] = array_filter($client['company'], fn ($item) => empty($item['hiddenInKanbanFields']));
+			$isCompanyHidden = count(array_filter($client['company'], fn ($item) => !$item['hidden'] || $item['title'] !== '')) === 0;
+		}
+
+		if (!empty($client['contact']) && is_array($client['contact']))
+		{
+			$client['contact'] = array_filter($client['contact'], fn ($item) => empty($item['hiddenInKanbanFields']));
+			$isContactHidden = count(array_filter($client['contact'], fn ($item) => !$item['hidden'] || $item['title'] !== '')) === 0;
+		}
+
+		if ($isCompanyHidden && $isContactHidden)
+		{
+			return null;
+		}
+
+		$dtoField = new Field([
+			'name' => 'CLIENT',
+			'title' => Loc::getMessage('CRMMOBILE_KANBAN_ITEM_PREPARER_BASE_CLIENT'),
+			'type' => 'client',
+			'value' =>  $client,
+			'config' =>  [
+				'owner' => [
+					'id' => $this->getItemId($item),
+				],
+				'entityList' => $client,
+			],
+			'multiple' => false,
+		]);
+		$this->prepareField($dtoField);
+
+		return $dtoField;
+	}
+
+	protected function orderFields(array $fields, array $item, array $params = []): array
+	{
+		$moneyField = null;
+		$clientField = null;
+
+		foreach ($fields as $index => $field)
+		{
+			if ($field->name === 'OPPORTUNITY')
+			{
+				$moneyField = $field;
+				unset($fields[$index]);
+				break;
+			}
+		}
+		foreach ($fields as $index => $field)
+		{
+			if ($field->name === 'CLIENT')
+			{
+				$clientField = $field;
+				unset($fields[$index]);
+				break;
+			}
+		}
+
+		return [...array_filter([$moneyField, $clientField, ...$fields])];
 	}
 
 	/**
@@ -120,72 +204,17 @@ abstract class Base
 
 	protected function getItemCounters(array $item, array $params = []): array
 	{
-		$counters = [];
+		$itemCounters = ItemCounterFactory::make();
 
-		$activityCounterTotal = ($item['activityCounterTotal'] ?? 0);
-		$isCurrentUserAssigned = ((int)$this->params['userId'] === $this->getAssignedById($item));
-
-		if (!$isCurrentUserAssigned)
-		{
-			$counters[] = ItemCounter::getInstance()->getEmptyCounter($activityCounterTotal);
-		}
-		else
-		{
-			$isReckonActivityLessItems = $this->params['isReckonActivityLessItems'];
-			$activityErrorTotal = (int)($item['activityErrorTotal'] ?? 0);
-			$activityIncomingTotal = (int)($item['activityIncomingTotal'] ?? 0);
-
-			$itemCounter = ItemCounter::getInstance();
-
-			if ($activityErrorTotal)
-			{
-				$counters[] = $itemCounter->getErrorCounter($activityErrorTotal);
-			}
-
-			if ($activityIncomingTotal)
-			{
-				$counters[] = $itemCounter->getIncomingCounter($activityIncomingTotal);
-			}
-
-			if (empty($counters))
-			{
-				if ($isReckonActivityLessItems)
-				{
-					$counters[] = $itemCounter->getErrorCounter(self::DEFAULT_COUNT_WITH_RECKON_ACTIVITY);
-				}
-				else
-				{
-					$counters[] = $itemCounter->getEmptyCounter(0);
-				}
-			}
-		}
-
-		$indicator = null;
-		if (!$activityCounterTotal && !empty($item['activityProgress']))
-		{
-			$userId = (int)$this->params['userId'];
-
-			$activityProgressForCurrentUser = 0;
-			if (isset($item['activitiesByUser'][$userId]))
-			{
-				$activityProgressForCurrentUser = ($item['activitiesByUser'][$userId]['activityProgress'] ?? 0);
-			}
-
-			$indicatorInstance = ItemIndicator::getInstance();
-			$indicator = (
-				$activityProgressForCurrentUser
-					? $indicatorInstance->getOwnIndicator()
-					: $indicatorInstance->getSomeoneIndicator()
-			);
-		}
+		$res = $itemCounters->counters($item, $this->params, $this->getAssignedById($item));
 
 		$renderLastActivityTime = ($params['renderLastActivityTime'] ?? false);
 
 		return [
-			'counters' => $counters,
-			'activityCounterTotal' => $activityCounterTotal,
+			'counters' => $res->getCounters(),
+			'activityCounterTotal' => $res->getActivityCounterTotal(),
 			'lastActivity' => $this->getLastActivityTimestamp($item),
-			'indicator' => $indicator,
+			'indicator' => $res->getIndicator(),
 			'skipTimeRender' => !$renderLastActivityTime,
 		];
 	}
@@ -213,6 +242,15 @@ abstract class Base
 		if (in_array($field->type, $fields))
 		{
 			$field->params['styleName'] = 'field';
+		}
+
+		if ($field->name === 'OPPORTUNITY')
+		{
+			$field->title = (
+				Loc::getMessage("CRMMOBILE_KANBAN_ITEM_PREPARER_BASE_TOTAL_SUM_{$this->getEntityType()}")
+				?? Loc::getMessage('CRMMOBILE_KANBAN_ITEM_PREPARER_BASE_TOTAL_SUM')
+			);
+			$field->config['largeFont'] = true;
 		}
 	}
 

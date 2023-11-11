@@ -33,15 +33,13 @@ Class tasks extends CModule
 	function InstallDB($arParams = [])
 	{
 		global $DB, $APPLICATION;
-
+		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = false;
 
 		// Database tables creation
-		if (!$DB->Query("SELECT 'x' FROM b_tasks WHERE 1 = 0", true))
+		if (!$DB->TableExists('b_tasks'))
 		{
-			$this->errors = $DB->RunSQLBatch(
-				$_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/tasks/install/db/mysql/install.sql"
-			);
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/tasks/install/db/' . $connection->getType() . '/install.sql');
 		}
 
 		$errors = static::installUserFields();
@@ -159,13 +157,13 @@ Class tasks extends CModule
 		// bitrix24
 		$eventManager->registerEventHandler('bitrix24', 'onFeedbackCollectorCheckCanRun', 'tasks', '\Bitrix\Tasks\Integration\Bitrix24\FeedbackCollector', 'onFeedbackCollectorCheckCanRun');
 
+		$eventManager->registerEventHandler('ai', 'onContextGetMessages', 'tasks', '\Bitrix\Tasks\Integration\AI\EventHandler', 'onContextGetMessages');
+
 		$this->InstallTasks();
 
 		CModule::includeModule('tasks');
-		if ($DB->Query("CREATE FULLTEXT INDEX IXF_TASKS_SEARCH_INDEX_SEARCH_INDEX ON b_tasks_search_index (SEARCH_INDEX)", true))
-		{
-			\Bitrix\Tasks\Internals\Task\SearchIndexTable::getEntity()->enableFullTextIndex("SEARCH_INDEX");
-		}
+
+		\Bitrix\Tasks\Internals\Task\SearchIndexTable::getEntity()->enableFullTextIndex("SEARCH_INDEX");
 
 		(new \Bitrix\Tasks\Access\Install\AccessInstaller($DB))->install();
 		(new \Bitrix\Tasks\Access\Install\Migration($DB))->migrateTemplateRights();
@@ -599,7 +597,7 @@ Class tasks extends CModule
 	function UnInstallDB($arParams = array())
 	{
 		global $DB, $APPLICATION;
-
+		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = false;
 
 		if (!array_key_exists('savedata', $arParams) || $arParams['savedata'] !== 'Y')
@@ -607,7 +605,7 @@ Class tasks extends CModule
 			$this->uninstallUserFields();
 
 			$this->errors = $DB->RunSQLBatch(
-				$_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/tasks/install/db/mysql/uninstall.sql"
+				$_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/tasks/install/db/".$connection->getType()."/uninstall.sql"
 			);
 		}
 
@@ -715,6 +713,8 @@ Class tasks extends CModule
 
 		// bitrix24
 		$eventManager->unRegisterEventHandler('bitrix24', 'onFeedbackCollectorCheckCanRun', 'tasks', '\Bitrix\Tasks\Integration\Bitrix24\FeedbackCollector', 'onFeedbackCollectorCheckCanRun');
+
+		$eventManager->unRegisterEventHandler('ai', 'onContextGetMessages', 'tasks', '\Bitrix\Tasks\Integration\AI\EventHandler', 'onContextGetMessages');
 
 		// remove tasks from socnetlog table
 		if (

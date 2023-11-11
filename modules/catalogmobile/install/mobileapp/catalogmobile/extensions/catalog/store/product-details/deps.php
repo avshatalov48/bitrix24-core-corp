@@ -17,5 +17,6 @@ return [
 		'alert',
 		'notify',
 		'catalog:store/document-type',
+		'loc',
 	],
 ];

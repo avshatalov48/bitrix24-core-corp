@@ -8,6 +8,8 @@ use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Bitrix24\User;
 use Bitrix\Tasks\Integration\CRM\Fields\EmulationData;
 use Bitrix\Tasks\Integration\CRM\Fields\Emulator;
+use Bitrix\Tasks\Internals\Task\Priority;
+use Bitrix\Tasks\Internals\Task\TimeUnitType;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Type;
@@ -229,7 +231,7 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 		<div class="task-info">
 			<div class="task-info-panel">
 				<div class="task-info-panel-important">
-					<input data-bx-id="task-edit-priority-cb" type="checkbox" id="tasks-task-priority-cb" <?=($taskData['PRIORITY'] == CTasks::PRIORITY_HIGH ? 'checked' : '')?>>
+					<input data-bx-id="task-edit-priority-cb" type="checkbox" id="tasks-task-priority-cb" <?=((int)$taskData['PRIORITY'] === Priority::HIGH ? 'checked' : '')?>>
 					<label for="tasks-task-priority-cb"><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_PRIORITY')?></label>
 					<input data-bx-id="task-edit-priority" type="hidden" name="<?=htmlspecialcharsbx($inputPrefix)?>[PRIORITY]" value="<?=intval($taskData['PRIORITY'])?>" />
 				</div>
@@ -504,7 +506,7 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 										<input data-bx-id="dateplanmanager-duration" type="text" class="task-options-inp" value="">
 									</span>
 									<span class="task-dashed-link">
-										<span data-bx-id="dateplanmanager-unit-setter" data-unit="<?=CTasks::TIME_UNIT_TYPE_DAY?>" class="task-dashed-link-inner"><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_OF_DAYS')?></span><span data-bx-id="dateplanmanager-unit-setter" data-unit="<?=CTasks::TIME_UNIT_TYPE_HOUR?>" class="task-dashed-link-inner"><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_OF_HOURS')?></span><span data-bx-id="dateplanmanager-unit-setter" data-unit="<?=CTasks::TIME_UNIT_TYPE_MINUTE?>" class="task-dashed-link-inner"><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_OF_MINUTES')?></span>
+										<span data-bx-id="dateplanmanager-unit-setter" data-unit="<?= TimeUnitType::DAY ?>" class="task-dashed-link-inner"><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_OF_DAYS')?></span><span data-bx-id="dateplanmanager-unit-setter" data-unit="<?= TimeUnitType::HOUR ?>" class="task-dashed-link-inner"><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_OF_HOURS')?></span><span data-bx-id="dateplanmanager-unit-setter" data-unit="<?= TimeUnitType::MINUTE ?>" class="task-dashed-link-inner"><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_OF_MINUTES')?></span>
 										<input data-bx-id="dateplanmanager-duration-type-value" type="hidden" name="<?=htmlspecialcharsbx($inputPrefix)?>[DURATION_TYPE]" value="<?=htmlspecialcharsbx($taskData['DURATION_TYPE'])?>" <?=$disabled?> />
 									</span>
 									<div class="tasks-disabling-overlay-form" title="<?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_PLAN_DATES_DISABLED')?>"></div>

@@ -145,7 +145,7 @@ $APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
 					[
 						'TYPE' => 'custom',
 						'LAYOUT' => '<div class="ui-alert ui-alert-warning" style="margin: 15px 0 0 0;">
-			<span class="ui-alert-message"> ' . Loc::getMessage('IMOL_PERM_RESTRICTION') . '</span>
+			<span class="ui-alert-message"> ' . Loc::getMessage('IMOL_PERM_RESTRICTION_MSGVER_1') . '</span>
 		</div>'
 					],
 				],

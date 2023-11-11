@@ -5,4 +5,4 @@ $MESS["CRM_ENTITY_ED_PROG_HAS_INACCESSIBLE_FIELDS"] = "Access to this function w
 $MESS["CRM_ENTITY_ED_PROG_LEAD_CLOSE"] = "Complete lead";
 $MESS["CRM_ENTITY_ED_PROG_ORDER_CLOSE"] = "Complete order";
 $MESS["CRM_ENTITY_ED_PROG_ORDER_SHIPMENT_CLOSE"] = "Complete shipment";
-$MESS["CRM_ENTITY_ED_PROG_QUOTE_CLOSE"] = "Complete quote";
+$MESS["CRM_ENTITY_ED_PROG_QUOTE_CLOSE_MSGVER_1"] = "Complete estimate";

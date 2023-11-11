@@ -4,14 +4,14 @@ namespace Bitrix\Crm\Ml\Agent;
 
 use Bitrix\Crm\Ml\Controller\Details;
 use Bitrix\Crm\Ml\Internals\Lock;
-use Bitrix\Crm\Ml\Model;
 use Bitrix\Crm\Ml\Internals\ModelTrainingTable;
+use Bitrix\Crm\Ml\Model;
 use Bitrix\Crm\Ml\Scoring;
 use Bitrix\Crm\Ml\TrainingState;
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
-use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Ml\Client;
 
@@ -35,10 +35,12 @@ class ModelTrainer
 		}
 
 		$training = ModelTrainingTable::getRowById($trainingId);
-
-		if(!$training || in_array($training["STATE"], [TrainingState::FINISHED, $training["STATE"] == TrainingState::CANCELED]))
+		if (
+			!$training
+			|| in_array($training['STATE'], [TrainingState::FINISHED, TrainingState::CANCELED], true)
+		)
 		{
-			return "";
+			return '';
 		}
 
 		$model = Scoring::getModelByName($training["MODEL_NAME"]);

@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core,main_popup) {
+(function (exports,main_core_events,main_core,im_v2_lib_desktopApi,main_popup,ui_dialogs_messagebox) {
 	'use strict';
 
 	var baseZIndex = 15000;
@@ -108,7 +108,7 @@ this.BX = this.BX || {};
 	      var _this = this;
 	      return main_core.Dom.create("div", {
 	        props: {
-	          className: "bx-messenger-calc-wrap" + (BX.MessengerCommon.isPage() ? ' bx-messenger-calc-wrap-desktop' : '')
+	          className: "bx-messenger-calc-wrap"
 	        },
 	        children: [main_core.Dom.create("div", {
 	          props: {
@@ -1104,7 +1104,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "isCorporatePortalPage",
 	    value: function isCorporatePortalPage() {
-	      return !BX.MessengerCommon.isDesktop();
+	      return typeof BXDesktopSystem == "undefined" && typeof BXDesktopWindow == "undefined";
 	    }
 	  }, {
 	    key: "getCallCardWindow",
@@ -1189,7 +1189,6 @@ this.BX = this.BX || {};
 	}(BaseWorker);
 
 	var backgroundWorkerEvents = callCardEvents;
-	var instance;
 	var BackgroundWorker = /*#__PURE__*/function () {
 	  function BackgroundWorker() {
 	    babelHelpers.classCallCheck(this, BackgroundWorker);
@@ -1239,14 +1238,6 @@ this.BX = this.BX || {};
 	    key: "setExternalCall",
 	    value: function setExternalCall(isExternalCall) {
 	      this.platformWorker.setIsExternalCall(isExternalCall);
-	    }
-	  }], [{
-	    key: "getInstance",
-	    value: function getInstance() {
-	      if (!instance) {
-	        instance = new BackgroundWorker();
-	      }
-	      return instance;
 	    }
 	  }]);
 	  return BackgroundWorker;
@@ -1339,6 +1330,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classCallCheck(this, CallList);
 	    this.node = params.node;
 	    this.id = params.id;
+	    this.isDesktop = params.isDesktop;
 	    this.entityType = '';
 	    this.statuses = new Map(); // {STATUS_ID (string): { STATUS_NAME; string, CLASS: string, ITEMS: []}
 	    this.elements = {};
@@ -2013,19 +2005,26 @@ this.BX = this.BX || {};
 	  }], [{
 	    key: "getAjaxUrl",
 	    value: function getAjaxUrl() {
-	      return BX.MessengerCommon.isDesktop() ? '/desktop_app/call_list.ajax.php' : '/bitrix/components/bitrix/crm.activity.call_list/ajax.php';
+	      return this.isDesktop ? '/desktop_app/call_list.ajax.php' : '/bitrix/components/bitrix/crm.activity.call_list/ajax.php';
 	    }
 	  }]);
 	  return CallList;
 	}();
 
-	var foldedCallListInstance = null;
 	var avatars = {};
-	var FoldedCallView = /*#__PURE__*/function () {
-	  function FoldedCallView() {
+	var Events = {
+	  onUnfold: "onUnfold"
+	};
+	var FoldedCallView = /*#__PURE__*/function (_EventEmitter) {
+	  babelHelpers.inherits(FoldedCallView, _EventEmitter);
+	  function FoldedCallView(params) {
+	    var _this;
 	    babelHelpers.classCallCheck(this, FoldedCallView);
-	    this.currentItem = {};
-	    this.callListParams = {
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(FoldedCallView).call(this));
+	    _this.setEventNamespace("BX.VoxImplant.FoldedCallView");
+	    _this.subscribeFromOptions(params.events);
+	    _this.currentItem = {};
+	    _this.callListParams = {
 	      id: 0,
 	      webformId: 0,
 	      webformSecCode: '',
@@ -2034,16 +2033,17 @@ this.BX = this.BX || {};
 	      statusList: {},
 	      entityType: ''
 	    };
-	    this.node = null;
-	    this.elements = {
+	    _this.node = null;
+	    _this.elements = {
 	      avatar: null,
 	      callButton: null,
 	      nextButton: null,
 	      unfoldButton: null
 	    };
-	    this._lsKey = 'bx-im-folded-call-view-data';
-	    this._lsTtl = 86400;
-	    this.init();
+	    _this._lsKey = 'bx-im-folded-call-view-data';
+	    _this._lsTtl = 86400;
+	    _this.init();
+	    return _this;
 	  }
 	  babelHelpers.createClass(FoldedCallView, [{
 	    key: "init",
@@ -2094,28 +2094,29 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "unfold",
 	    value: function unfold(makeCall) {
-	      var _this = this;
+	      var _this2 = this;
 	      main_core.Dom.addClass(this.node, "im-phone-folded-call-view-unfold");
 	      this.node.addEventListener('animationend', function () {
-	        if (_this.node) {
-	          main_core.Dom.remove(_this.node);
-	          _this.node = null;
+	        if (_this2.node) {
+	          main_core.Dom.remove(_this2.node);
+	          _this2.node = null;
 	        }
-	        BX.localStorage.remove(_this._lsKey);
-	        if (!window.BXIM || _this.callListParams.id === 0) {
+	        BX.localStorage.remove(_this2._lsKey);
+	        if (_this2.callListParams.id === 0) {
 	          return false;
 	        }
 	        var restoredParams = {};
-	        if (_this.callListParams.webformId > 0 && _this.callListParams.webformSecCode !== '') {
-	          restoredParams.webformId = _this.callListParams.webformId;
-	          restoredParams.webformSecCode = _this.callListParams.webformSecCode;
+	        if (_this2.callListParams.webformId > 0 && _this2.callListParams.webformSecCode !== '') {
+	          restoredParams.webformId = _this2.callListParams.webformId;
+	          restoredParams.webformSecCode = _this2.callListParams.webformSecCode;
 	        }
-	        restoredParams.callListStatusId = _this.callListParams.itemStatusId;
-	        restoredParams.callListItemIndex = _this.callListParams.itemIndex;
+	        restoredParams.callListStatusId = _this2.callListParams.itemStatusId;
+	        restoredParams.callListItemIndex = _this2.callListParams.itemIndex;
 	        restoredParams.makeCall = makeCall;
-
-	        // TODO: WTF is happening here?
-	        window.BXIM.startCallList(_this.callListParams.id, restoredParams);
+	        _this2.emit(Events.onUnfold, {
+	          callListId: _this2.callListParams.id,
+	          callListParams: restoredParams
+	        });
 	      });
 	    }
 	  }, {
@@ -2264,7 +2265,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "loadAvatar",
 	    value: function loadAvatar(entityType, entityId) {
-	      var _this2 = this;
+	      var _this3 = this;
 	      BX.ajax({
 	        url: CallList.getAjaxUrl(),
 	        method: 'POST',
@@ -2280,8 +2281,8 @@ this.BX = this.BX || {};
 	            return;
 	          }
 	          avatars[entityId] = data.avatar;
-	          if (_this2.currentItem.ELEMENT_ID == entityId && _this2.elements.avatar) {
-	            _this2.elements.avatar.style.backgroundImage = 'url(\'' + main_core.Text.encode(data.avatar) + '\')';
+	          if (_this3.currentItem.ELEMENT_ID == entityId && _this3.elements.avatar) {
+	            _this3.elements.avatar.style.backgroundImage = 'url(\'' + main_core.Text.encode(data.avatar) + '\')';
 	          }
 	        }
 	      });
@@ -2310,24 +2311,22 @@ this.BX = this.BX || {};
 	      e.preventDefault();
 	      this.unfold(false);
 	    }
-	  }], [{
-	    key: "getInstance",
-	    value: function getInstance() {
-	      if (foldedCallListInstance === null) {
-	        foldedCallListInstance = new FoldedCallView();
-	      }
-	      return foldedCallListInstance;
-	    }
 	  }]);
 	  return FoldedCallView;
-	}();
+	}(main_core_events.EventEmitter);
+	babelHelpers.defineProperty(FoldedCallView, "Events", Events);
 
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var desktopFeatureMap = {
 	  'iframe': 39
 	};
+	var _getHtmlPage = /*#__PURE__*/new WeakSet();
 	var Desktop = /*#__PURE__*/function () {
 	  function Desktop(params) {
 	    babelHelpers.classCallCheck(this, Desktop);
+	    _classPrivateMethodInitSpec(this, _getHtmlPage);
 	    this.parentPhoneCallView = params.parentPhoneCallView;
 	    this.closable = params.closable;
 	    this.title = params.title || '';
@@ -2337,9 +2336,6 @@ this.BX = this.BX || {};
 	    key: "openCallWindow",
 	    value: function openCallWindow(content, js, params) {
 	      var _this = this;
-	      if (!BX.MessengerCommon.isDesktop()) {
-	        return false;
-	      }
 	      params = params || {};
 	      if (params.minSettingsWidth) {
 	        this.minSettingsWidth = params.minSettingsWidth;
@@ -2348,7 +2344,7 @@ this.BX = this.BX || {};
 	        this.minSettingsHeight = params.minSettingsHeight;
 	      }
 	      params.resizable = params.resizable === true;
-	      BX.desktop.createWindow("callWindow", function (callWindow) {
+	      im_v2_lib_desktopApi.DesktopApi.createWindow("callWindow", function (callWindow) {
 	        callWindow.SetProperty("clientSize", {
 	          Width: params.width,
 	          Height: params.height
@@ -2362,8 +2358,9 @@ this.BX = this.BX || {};
 	        }
 	        callWindow.SetProperty("title", _this.title);
 	        callWindow.SetProperty("closable", true);
+
 	        //callWindow.OpenDeveloperTools();
-	        var html = _this.getHtmlPage(content, js, {});
+	        var html = _classPrivateMethodGet(_this, _getHtmlPage, _getHtmlPage2).call(_this, content, js, {});
 	        callWindow.ExecuteCommand("html.load", html);
 	        _this.window = callWindow;
 	      });
@@ -2385,46 +2382,13 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
-	    key: "getHtmlPage",
-	    value: function getHtmlPage(content, jsContent, initImJs, bodyClass) {
-	      if (!BX.MessengerCommon.isDesktop()) {
-	        return;
-	      }
-	      content = content || '';
-	      jsContent = jsContent || '';
-	      bodyClass = bodyClass || '';
-	      if (this.htmlWrapperHead == null) {
-	        this.htmlWrapperHead = document.head.outerHTML.replace(/BX\.PULL\.start\([^)]*\);/g, '');
-	      }
-	      if (main_core.Type.isDomNode(content)) {
-	        content = content.outerHTML;
-	      }
-	      if (main_core.Type.isDomNode(jsContent)) {
-	        jsContent = jsContent.outerHTML;
-	      }
-	      if (main_core.Type.isStringFilled(jsContent)) {
-	        jsContent = "<script type=\"text/javascript\">\n\t\t\t\t\tBX.ready(function() {\n\t\t\t\t\t\t".concat(jsContent, "\n\t\t\t\t\t});\n\t\t\t\t</script>");
-	      }
-	      var initJs = '';
-	      if (initImJs) {
-	        initJs = "\n\t\t\t\t<script type=\"text/javascript\">\n\t\t\t\t\tBX.ready(function() {\n\t\t\t\t\t\t\twindow.PCW = new BX.Voximplant.PhoneCallView({\n\t\t\t\t\t\t\t\t'slave': true, \n\t\t\t\t\t\t\t\t'skipOnResize': true, \n\t\t\t\t\t\t\t\t'callId': '".concat(this.parentPhoneCallView.callId, "',\n\t\t\t\t\t\t\t\t'uiState': ").concat(this.parentPhoneCallView._uiState, ",\n\t\t\t\t\t\t\t\t'phoneNumber': '").concat(this.parentPhoneCallView.phoneNumber, "',\n\t\t\t\t\t\t\t\t'companyPhoneNumber': '").concat(this.parentPhoneCallView.companyPhoneNumber, "',\n\t\t\t\t\t\t\t\t'direction': '").concat(this.parentPhoneCallView.direction, "',\n\t\t\t\t\t\t\t\t'fromUserId': '").concat(this.parentPhoneCallView.fromUserId, "',\n\t\t\t\t\t\t\t\t'toUserId': '").concat(this.parentPhoneCallView.toUserId, "',\n\t\t\t\t\t\t\t\t'crm': ").concat(this.parentPhoneCallView.crm, ",\n\t\t\t\t\t\t\t\t'hasSipPhone': ").concat(this.parentPhoneCallView.hasSipPhone, ",\n\t\t\t\t\t\t\t\t'deviceCall': ").concat(this.parentPhoneCallView.deviceCall, ",\n\t\t\t\t\t\t\t\t'transfer': ").concat(this.parentPhoneCallView.transfer, ",\n\t\t\t\t\t\t\t\t'crmEntityType': '").concat(this.parentPhoneCallView.crmEntityType, "',\n\t\t\t\t\t\t\t\t'crmEntityId': '").concat(this.parentPhoneCallView.crmEntityId, "',\n\t\t\t\t\t\t\t\t'crmActivityId': '").concat(this.parentPhoneCallView.crmActivityId, "',\n\t\t\t\t\t\t\t\t'crmActivityEditUrl': '").concat(this.parentPhoneCallView.crmActivityEditUrl, "',\n\t\t\t\t\t\t\t\t'callListId': ").concat(this.parentPhoneCallView.callListId, ",\n\t\t\t\t\t\t\t\t'callListStatusId': '").concat(this.parentPhoneCallView.callListStatusId, "',\n\t\t\t\t\t\t\t\t'callListItemIndex': ").concat(this.parentPhoneCallView.callListItemIndex, ",\n\t\t\t\t\t\t\t\t'config': ").concat(this.parentPhoneCallView.config ? JSON.stringify(this.parentPhoneCallView.config) : '{}', ",\n\t\t\t\t\t\t\t\t'portalCall': ").concat(this.parentPhoneCallView.portalCall ? 'true' : 'false', ",\n\t\t\t\t\t\t\t\t'portalCallData': ").concat(this.parentPhoneCallView.portalCallData ? JSON.stringify(this.parentPhoneCallView.portalCallData) : '{}', ",\n\t\t\t\t\t\t\t\t'portalCallUserId': ").concat(this.parentPhoneCallView.portalCallUserId, ",\n\t\t\t\t\t\t\t\t'webformId': ").concat(this.parentPhoneCallView.webformId, ",\n\t\t\t\t\t\t\t\t'webformSecCode': '").concat(this.parentPhoneCallView.webformSecCode, "',\n\t\t\t\t\t\t\t\t'restApps': ").concat(this.parentPhoneCallView.restApps ? JSON.stringify(this.parentPhoneCallView.restApps) : '[]', ",\n\t\t\t\t\t\t\t});\n\t\t\t\t\t});\n\t\t\t\t</script>");
-	      }
-	      return "\n\t\t\t<!DOCTYPE html>\n\t\t\t<html lang=\"".concat(document.documentElement.lang, "\">\n\t\t\t\t").concat(this.htmlWrapperHead, "\n\t\t\t\t<body class=\"im-desktop im-desktop-popup ").concat(bodyClass, "\">\n\t\t\t\t\t<div id=\"placeholder-messanger\">").concat(content, "</div>\n\t\t\t\t\t").concat(initJs, "\n\t\t\t\t\t").concat(jsContent, "\n\t\t\t\t</body>\n\t\t\t</html>\n\t\t");
-	    }
-	  }, {
 	    key: "addCustomEvent",
 	    value: function addCustomEvent(eventName, eventHandler) {
-	      if (!BX.MessengerCommon.isDesktop()) {
-	        return false;
-	      }
 	      BX.desktop.addCustomEvent(eventName, eventHandler);
 	    }
 	  }, {
 	    key: "onCustomEvent",
 	    value: function onCustomEvent(windowTarget, eventName, arEventParams) {
-	      if (!BX.MessengerCommon.isDesktop()) {
-	        return false;
-	      }
 	      BX.desktop.onCustomEvent(windowTarget, eventName, arEventParams);
 	    }
 	  }, {
@@ -2481,10 +2445,31 @@ this.BX = this.BX || {};
 	  }]);
 	  return Desktop;
 	}();
+	function _getHtmlPage2(content, jsContent, initImJs, bodyClass) {
+	  content = content || '';
+	  jsContent = jsContent || '';
+	  bodyClass = bodyClass || '';
+	  if (this.htmlWrapperHead == null) {
+	    this.htmlWrapperHead = document.head.outerHTML.replace(/BX\.PULL\.start\([^)]*\);/g, '');
+	  }
+	  if (main_core.Type.isDomNode(content)) {
+	    content = content.outerHTML;
+	  }
+	  if (main_core.Type.isDomNode(jsContent)) {
+	    jsContent = jsContent.outerHTML;
+	  }
+	  if (main_core.Type.isStringFilled(jsContent)) {
+	    jsContent = "<script type=\"text/javascript\">\n\t\t\t\t\tBX.ready(function() {\n\t\t\t\t\t\t".concat(jsContent, "\n\t\t\t\t\t});\n\t\t\t\t</script>");
+	  }
+	  var initJs = '';
+	  if (initImJs) {
+	    initJs = "\n\t\t\t\t<script type=\"text/javascript\">\n\t\t\t\t\tBX.ready(function() {\n\t\t\t\t\t\t\tconst backgroundWorker = new BX.Voximplant.BackgroundWorker();\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\twindow.PCW = new BX.Voximplant.PhoneCallView({\n\t\t\t\t\t\t\t\tisDesktop: true,\n\t\t\t\t\t\t\t\tslave: true, \n\t\t\t\t\t\t\t\tskipOnResize: true, \n\t\t\t\t\t\t\t\tcallId: '".concat(this.parentPhoneCallView.callId, "',\n\t\t\t\t\t\t\t\tuiState: ").concat(this.parentPhoneCallView._uiState, ",\n\t\t\t\t\t\t\t\tphoneNumber: '").concat(this.parentPhoneCallView.phoneNumber, "',\n\t\t\t\t\t\t\t\tcompanyPhoneNumber: '").concat(this.parentPhoneCallView.companyPhoneNumber, "',\n\t\t\t\t\t\t\t\tdirection: '").concat(this.parentPhoneCallView.direction, "',\n\t\t\t\t\t\t\t\tfromUserId: '").concat(this.parentPhoneCallView.fromUserId, "',\n\t\t\t\t\t\t\t\ttoUserId: '").concat(this.parentPhoneCallView.toUserId, "',\n\t\t\t\t\t\t\t\tcrm: ").concat(this.parentPhoneCallView.crm, ",\n\t\t\t\t\t\t\t\thasSipPhone: ").concat(this.parentPhoneCallView.hasSipPhone, ",\n\t\t\t\t\t\t\t\tdeviceCall: ").concat(this.parentPhoneCallView.deviceCall, ",\n\t\t\t\t\t\t\t\ttransfer: ").concat(this.parentPhoneCallView.transfer, ",\n\t\t\t\t\t\t\t\tcrmEntityType: '").concat(this.parentPhoneCallView.crmEntityType, "',\n\t\t\t\t\t\t\t\tcrmEntityId: '").concat(this.parentPhoneCallView.crmEntityId, "',\n\t\t\t\t\t\t\t\tcrmActivityId: '").concat(this.parentPhoneCallView.crmActivityId, "',\n\t\t\t\t\t\t\t\tcrmActivityEditUrl: '").concat(this.parentPhoneCallView.crmActivityEditUrl, "',\n\t\t\t\t\t\t\t\tcallListId: ").concat(this.parentPhoneCallView.callListId, ",\n\t\t\t\t\t\t\t\tcallListStatusId: '").concat(this.parentPhoneCallView.callListStatusId, "',\n\t\t\t\t\t\t\t\tcallListItemIndex: ").concat(this.parentPhoneCallView.callListItemIndex, ",\n\t\t\t\t\t\t\t\tconfig: ").concat(this.parentPhoneCallView.config ? JSON.stringify(this.parentPhoneCallView.config) : '{}', ",\n\t\t\t\t\t\t\t\tportalCall: ").concat(this.parentPhoneCallView.portalCall ? 'true' : 'false', ",\n\t\t\t\t\t\t\t\tportalCallData: ").concat(this.parentPhoneCallView.portalCallData ? JSON.stringify(this.parentPhoneCallView.portalCallData) : '{}', ",\n\t\t\t\t\t\t\t\tportalCallUserId: ").concat(this.parentPhoneCallView.portalCallUserId, ",\n\t\t\t\t\t\t\t\twebformId: ").concat(this.parentPhoneCallView.webformId, ",\n\t\t\t\t\t\t\t\twebformSecCode: '").concat(this.parentPhoneCallView.webformSecCode, "',\n\t\t\t\t\t\t\t\tbackgroundWorker: backgroundWorker,\n\t\t\t\t\t\t\t\trestApps: ").concat(this.parentPhoneCallView.restApps ? JSON.stringify(this.parentPhoneCallView.restApps) : '[]', ",\n\t\t\t\t\t\t\t});\n\t\t\t\t\t});\n\t\t\t\t</script>");
+	  }
+	  return "\n\t\t\t<!DOCTYPE html>\n\t\t\t<html lang=\"".concat(document.documentElement.lang, "\">\n\t\t\t\t").concat(this.htmlWrapperHead, "\n\t\t\t\t<body class=\"im-desktop im-desktop-popup ").concat(bodyClass, "\">\n\t\t\t\t\t<div id=\"placeholder-messanger\">").concat(content, "</div>\n\t\t\t\t\t").concat(initJs, "\n\t\t\t\t\t").concat(jsContent, "\n\t\t\t\t</body>\n\t\t\t</html>\n\t\t");
+	}
 
-	/**
-	 * @bxjs_lang_path js_phone_call_view.php
-	 */
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var Direction = {
 	  incoming: 'incoming',
 	  outgoing: 'outgoing',
@@ -2584,55 +2569,95 @@ this.BX = this.BX || {};
 	  onSetAutoClose: 'phoneCallViewOnSetAutoClose'
 	};
 	var blankAvatar = '/bitrix/js/im/images/blank.gif';
+	var _onExternalEvent = /*#__PURE__*/new WeakMap();
+	var _onWindowUnload = /*#__PURE__*/new WeakMap();
 	var PhoneCallView = /*#__PURE__*/function () {
-	  function PhoneCallView(params) {
+	  function PhoneCallView(_params) {
 	    var _this = this;
 	    babelHelpers.classCallCheck(this, PhoneCallView);
+	    _classPrivateFieldInitSpec(this, _onExternalEvent, {
+	      writable: true,
+	      value: function value(params) {
+	        console.warn('#onExternalEvent', params);
+	        return;
+	        params = main_core.Type.isPlainObject(params) ? params : {};
+	        params.key = params.key || '';
+	        var value = params.value || {};
+	        value.entityTypeName = value.entityTypeName || '';
+	        value.context = value.context || '';
+	        value.isCanceled = main_core.Type.isBoolean(value.isCanceled) ? value.isCanceled : false;
+	        if (value.isCanceled) {
+	          return;
+	        }
+	        if (params.key === "onCrmEntityCreate" && _this.externalRequests[value.context]) {
+	          if (_this.externalRequests[value.context]) {
+	            if (_this.externalRequests[value.context]['type'] == 'create') {
+	              _this.crmEntityType = value.entityTypeName;
+	              _this.crmEntityId = value.entityInfo.id;
+	              _this.loadCrmCard(_this.crmEntityType, _this.crmEntityId);
+	            } else if (_this.externalRequests[value.context]['type'] == 'add') {
+	              // reload crm card
+	              _this.loadCrmCard(_this.crmEntityType, _this.crmEntityId);
+	            }
+	            if (_this.externalRequests[value.context]['window']) {
+	              _this.externalRequests[value.context]['window'].close();
+	            }
+	            delete _this.externalRequests[value.context];
+	          }
+	        }
+	      }
+	    });
+	    _classPrivateFieldInitSpec(this, _onWindowUnload, {
+	      writable: true,
+	      value: function value() {
+	        _this.close();
+	      }
+	    });
 	    this.id = 'im-phone-call-view';
-	    this.darkMode = params.darkMode === true;
+	    this.darkMode = _params.darkMode === true;
 
 	    //params
-	    this.phoneNumber = params.phoneNumber || 'hidden';
-	    this.lineNumber = params.lineNumber || '';
-	    this.companyPhoneNumber = params.companyPhoneNumber || '';
-	    this.direction = params.direction || Direction.incoming;
-	    this.fromUserId = params.fromUserId;
-	    this.toUserId = params.toUserId;
-	    this.config = params.config || {};
-	    this.callId = params.callId || '';
+	    this.phoneNumber = _params.phoneNumber || 'hidden';
+	    this.lineNumber = _params.lineNumber || '';
+	    this.companyPhoneNumber = _params.companyPhoneNumber || '';
+	    this.direction = _params.direction || Direction.incoming;
+	    this.fromUserId = _params.fromUserId;
+	    this.toUserId = _params.toUserId;
+	    this.config = _params.config || {};
+	    this.callId = _params.callId || '';
 	    this.callState = CallState.idle;
 
 	    //associated crm entities
-	    this.crmEntityType = BX.prop.getString(params, 'crmEntityType', '');
-	    this.crmEntityId = BX.prop.getInteger(params, 'crmEntityId', 0);
-	    this.crmActivityId = BX.prop.getInteger(params, 'crmActivityId', 0);
-	    this.crmActivityEditUrl = BX.prop.getString(params, 'crmActivityEditUrl', '');
-	    this.crmData = BX.prop.getObject(params, 'crmData', {});
-	    this.crmBindings = BX.prop.getArray(params, 'crmBindings', []);
+	    this.crmEntityType = BX.prop.getString(_params, 'crmEntityType', '');
+	    this.crmEntityId = BX.prop.getInteger(_params, 'crmEntityId', 0);
+	    this.crmActivityId = BX.prop.getInteger(_params, 'crmActivityId', 0);
+	    this.crmActivityEditUrl = BX.prop.getString(_params, 'crmActivityEditUrl', '');
+	    this.crmData = BX.prop.getObject(_params, 'crmData', {});
+	    this.crmBindings = BX.prop.getArray(_params, 'crmBindings', []);
 	    this.externalRequests = {};
 
 	    //portal call
-	    this.portalCallData = params.portalCallData;
-	    this.portalCallUserId = params.portalCallUserId;
-	    this.portalCallQueueName = params.portalCallQueueName;
+	    this.portalCallData = _params.portalCallData;
+	    this.portalCallUserId = _params.portalCallUserId;
+	    this.portalCallQueueName = _params.portalCallQueueName;
 
 	    //flags
-	    this.hasSipPhone = params.hasSipPhone === true;
-	    this.deviceCall = params.deviceCall === true;
-	    this.portalCall = params.portalCall === true;
-	    this.crm = params.crm === true;
+	    this.hasSipPhone = _params.hasSipPhone === true;
+	    this.deviceCall = _params.deviceCall === true;
+	    this.portalCall = _params.portalCall === true;
+	    this.crm = _params.crm === true;
 	    this.held = false;
 	    this.muted = false;
-	    this.recording = params.recording === true;
-	    this.makeCall = params.makeCall === true; // emulate pressing on "dial" button right after showing call view
+	    this.recording = _params.recording === true;
+	    this.makeCall = _params.makeCall === true; // emulate pressing on "dial" button right after showing call view
 	    this.closable = false;
 	    this.allowAutoClose = true;
-	    this.folded = params.folded === true;
-	    this.autoFold = params.autoFold === true;
-	    this.transfer = params.transfer === true;
+	    this.folded = _params.folded === true;
+	    this.autoFold = _params.autoFold === true;
+	    this.transfer = _params.transfer === true;
 	    this.title = '';
-	    this._uiState = params.uiState || UiState.idle;
-	    this.statusText = params.statusText || '';
+	    this._uiState = _params.uiState || UiState.idle;
+	    this.statusText = _params.statusText || '';
 	    this.progress = '';
 	    this.quality = 0;
 	    this.qualityPopup = null;
@@ -2641,36 +2666,36 @@ this.BX = this.BX || {};
 	    this.commentShown = false;
 
 	    //timer
-	    this.initialTimestamp = params.initialTimestamp || 0;
+	    this.initialTimestamp = _params.initialTimestamp || 0;
 	    this.timerInterval = null;
 	    this.elements = this.getInitialElements();
 	    this.sections = this.getInitialSections();
 	    var uiStateButtons = this.getUiStateButtons(this._uiState);
 	    this.buttonLayout = uiStateButtons.layout;
 	    this.buttons = uiStateButtons.buttons;
-	    this.restApps = params.restApps || [];
-	    if (!main_core.Type.isPlainObject(params.events)) {
-	      params.events = {};
+	    this.restApps = _params.restApps || [];
+	    if (!main_core.Type.isPlainObject(_params.events)) {
+	      _params.events = {};
 	    }
 	    this.callbacks = {
-	      hold: main_core.Type.isFunction(params.events.hold) ? params.events.hold : nop,
-	      unhold: main_core.Type.isFunction(params.events.unhold) ? params.events.unhold : nop,
-	      mute: main_core.Type.isFunction(params.events.mute) ? params.events.mute : nop,
-	      unmute: main_core.Type.isFunction(params.events.unmute) ? params.events.unmute : nop,
-	      makeCall: main_core.Type.isFunction(params.events.makeCall) ? params.events.makeCall : nop,
-	      callListMakeCall: main_core.Type.isFunction(params.events.callListMakeCall) ? params.events.callListMakeCall : nop,
-	      answer: main_core.Type.isFunction(params.events.answer) ? params.events.answer : nop,
-	      skip: main_core.Type.isFunction(params.events.skip) ? params.events.skip : nop,
-	      hangup: main_core.Type.isFunction(params.events.hangup) ? params.events.hangup : nop,
-	      close: main_core.Type.isFunction(params.events.close) ? params.events.close : nop,
-	      transfer: main_core.Type.isFunction(params.events.transfer) ? params.events.transfer : nop,
-	      completeTransfer: main_core.Type.isFunction(params.events.completeTransfer) ? params.events.completeTransfer : nop,
-	      cancelTransfer: main_core.Type.isFunction(params.events.cancelTransfer) ? params.events.cancelTransfer : nop,
-	      switchDevice: main_core.Type.isFunction(params.events.switchDevice) ? params.events.switchDevice : nop,
-	      qualityGraded: main_core.Type.isFunction(params.events.qualityGraded) ? params.events.qualityGraded : nop,
-	      dialpadButtonClicked: main_core.Type.isFunction(params.events.dialpadButtonClicked) ? params.events.dialpadButtonClicked : nop,
-	      saveComment: main_core.Type.isFunction(params.events.saveComment) ? params.events.saveComment : nop,
-	      notifyAdmin: main_core.Type.isFunction(params.events.notifyAdmin) ? params.events.notifyAdmin : nop
+	      hold: main_core.Type.isFunction(_params.events.hold) ? _params.events.hold : nop,
+	      unhold: main_core.Type.isFunction(_params.events.unhold) ? _params.events.unhold : nop,
+	      mute: main_core.Type.isFunction(_params.events.mute) ? _params.events.mute : nop,
+	      unmute: main_core.Type.isFunction(_params.events.unmute) ? _params.events.unmute : nop,
+	      makeCall: main_core.Type.isFunction(_params.events.makeCall) ? _params.events.makeCall : nop,
+	      callListMakeCall: main_core.Type.isFunction(_params.events.callListMakeCall) ? _params.events.callListMakeCall : nop,
+	      answer: main_core.Type.isFunction(_params.events.answer) ? _params.events.answer : nop,
+	      skip: main_core.Type.isFunction(_params.events.skip) ? _params.events.skip : nop,
+	      hangup: main_core.Type.isFunction(_params.events.hangup) ? _params.events.hangup : nop,
+	      close: main_core.Type.isFunction(_params.events.close) ? _params.events.close : nop,
+	      transfer: main_core.Type.isFunction(_params.events.transfer) ? _params.events.transfer : nop,
+	      completeTransfer: main_core.Type.isFunction(_params.events.completeTransfer) ? _params.events.completeTransfer : nop,
+	      cancelTransfer: main_core.Type.isFunction(_params.events.cancelTransfer) ? _params.events.cancelTransfer : nop,
+	      switchDevice: main_core.Type.isFunction(_params.events.switchDevice) ? _params.events.switchDevice : nop,
+	      qualityGraded: main_core.Type.isFunction(_params.events.qualityGraded) ? _params.events.qualityGraded : nop,
+	      dialpadButtonClicked: main_core.Type.isFunction(_params.events.dialpadButtonClicked) ? _params.events.dialpadButtonClicked : nop,
+	      saveComment: main_core.Type.isFunction(_params.events.saveComment) ? _params.events.saveComment : nop,
+	      notifyAdmin: main_core.Type.isFunction(_params.events.notifyAdmin) ? _params.events.notifyAdmin : nop
 	    };
 	    this.popup = null;
 
@@ -2694,8 +2719,6 @@ this.BX = this.BX || {};
 	    this._onSwitchDeviceButtonClickHandler = this._onSwitchDeviceButtonClick.bind(this);
 	    this._onQualityMeterClickHandler = this._onQualityMeterClick.bind(this);
 	    this._onPullEventCrmHandler = this._onPullEventCrm.bind(this);
-	    this._externalEventHandler = this._onExternalEvent.bind(this);
-	    this._unloadHandler = this._onWindowUnload.bind(this);
 
 	    // tabs
 	    this.hiddenTabs = [];
@@ -2703,17 +2726,17 @@ this.BX = this.BX || {};
 	    this.moreTabsMenu = null;
 
 	    // callList
-	    this.callListId = params.callListId || 0;
-	    this.callListStatusId = params.callListStatusId || null;
-	    this.callListItemIndex = params.callListItemIndex || null;
+	    this.callListId = _params.callListId || 0;
+	    this.callListStatusId = _params.callListStatusId || null;
+	    this.callListItemIndex = _params.callListItemIndex || null;
 	    this.callListView = null;
 	    this.currentEntity = null;
 	    this.callingEntity = null;
 	    this.numberSelectMenu = null;
 
 	    // webform
-	    this.webformId = params.webformId || 0;
-	    this.webformSecCode = params.webformSecCode || '';
+	    this.webformId = _params.webformId || 0;
+	    this.webformSecCode = _params.webformSecCode || '';
 	    this.webformLoaded = false;
 
 	    // partner data
@@ -2723,18 +2746,19 @@ this.BX = this.BX || {};
 
 	    // desktop integration
 	    this.callWindow = null;
-	    this.slave = params.slave === true;
-	    this.skipOnResize = params.skipOnResize === true;
+	    this.slave = _params.slave === true;
+	    this.skipOnResize = _params.skipOnResize === true;
 	    this.desktop = new Desktop({
 	      parentPhoneCallView: this,
 	      closable: this.callListId > 0 ? true : this.closable
 	    });
 	    this.currentLayout = this.callListId > 0 ? layouts.crm : layouts.simple;
-
-	    // TODO: make this decent somehow
-	    this.backgroundWorker = BackgroundWorker.getInstance();
+	    this.backgroundWorker = _params.backgroundWorker;
 	    this.backgroundWorker.setCallCard(this);
-	    this.backgroundWorker.setExternalCall(!!params.isExternalCall);
+	    this.backgroundWorker.setExternalCall(!!_params.isExternalCall);
+	    this._isDesktop = _params.messengerFacade ? _params.messengerFacade.isDesktop() : _params.isDesktop === true;
+	    this.messengerFacade = _params.messengerFacade;
+	    this.foldedCallView = _params.foldedCallView;
 	    this.init();
 	    if (this.backgroundWorker.isDesktop()) {
 	      this.backgroundWorker.removeDesktopEventHandlers();
@@ -2743,10 +2767,9 @@ this.BX = this.BX || {};
 	    this.createTitle().then(function (title) {
 	      return _this.setTitle(title);
 	    });
-	    if (params.hasOwnProperty('uiState')) {
-	      this.setUiState(params['uiState']);
+	    if (_params.hasOwnProperty('uiState')) {
+	      this.setUiState(_params['uiState']);
 	    }
-	    window.test = this;
 	  }
 	  babelHelpers.createClass(PhoneCallView, [{
 	    key: "getInitialElements",
@@ -2812,7 +2835,7 @@ this.BX = this.BX || {};
 	    key: "init",
 	    value: function init() {
 	      var _this2 = this;
-	      if (BX.MessengerCommon.isDesktop() && !this.slave) {
+	      if (this.isDesktop() && !this.slave) {
 	        this.desktop.openCallWindow('', null, {
 	          width: this.getInitialWidth(),
 	          height: this.getInitialHeight(),
@@ -2821,7 +2844,7 @@ this.BX = this.BX || {};
 	          minHeight: 650
 	        });
 	        this.bindMasterDesktopEvents();
-	        window.addEventListener('beforeunload', this._unloadHandler); //master window unload
+	        window.addEventListener('beforeunload', babelHelpers.classPrivateFieldGet(this, _onWindowUnload)); //master window unload
 	        return;
 	      }
 	      this.elements.main = this.createLayout();
@@ -2833,7 +2856,7 @@ this.BX = this.BX || {};
 	        document.body.appendChild(this.elements.main);
 	      } else {
 	        this.popup = this.createPopup();
-	        BX.addCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
+	        BX.addCustomEvent(window, "onLocalStorageSet", babelHelpers.classPrivateFieldGet(this, _onExternalEvent));
 	      }
 	      if (this.callListId > 0) {
 	        if (this.callListView) {
@@ -2847,6 +2870,7 @@ this.BX = this.BX || {};
 	            statusId: this.callListStatusId,
 	            itemIndex: this.callListItemIndex,
 	            makeCall: this.makeCall,
+	            isDesktop: this.isDesktop,
 	            onSelectedItem: this.onCallListSelectedItem.bind(this)
 	          });
 	          this.callListView.init(function () {
@@ -3686,7 +3710,7 @@ this.BX = this.BX || {};
 	        if (this.slave) {
 	          BXDesktopWindow.SetProperty('title', title);
 	        } else {
-	          BX.desktop.onCustomEvent(desktopEvents.setTitle, [title]);
+	          im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.setTitle, [title]);
 	        }
 	      }
 	      if (this.elements.title) {
@@ -3732,7 +3756,7 @@ this.BX = this.BX || {};
 	    key: "setStatusText",
 	    value: function setStatusText(statusText) {
 	      if (this.isDesktop() && !this.slave) {
-	        BX.desktop.onCustomEvent(desktopEvents.setStatus, [statusText]);
+	        im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.setStatus, [statusText]);
 	        return;
 	      }
 	      this.statusText = statusText;
@@ -3865,7 +3889,7 @@ this.BX = this.BX || {};
 	          break;
 	      }
 	      if (this.isDesktop() && !this.slave) {
-	        BX.desktop.onCustomEvent(desktopEvents.setUiState, [uiState]);
+	        im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.setUiState, [uiState]);
 	        return;
 	      }
 	      this.renderButtons();
@@ -3973,7 +3997,7 @@ this.BX = this.BX || {};
 	        }
 	      }
 	      if (this.isDesktop() && !this.slave) {
-	        BX.desktop.onCustomEvent(desktopEvents.setDeviceCall, [deviceCall]);
+	        im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.setDeviceCall, [deviceCall]);
 	      }
 	    }
 	  }, {
@@ -3985,7 +4009,7 @@ this.BX = this.BX || {};
 	      this.crmActivityEditUrl = params.activityEditUrl || '';
 	      this.crmBindings = main_core.Type.isArray(params.bindings) ? params.bindings : [];
 	      if (this.isDesktop() && !this.slave) {
-	        BX.desktop.onCustomEvent(desktopEvents.setCrmEntity, [params]);
+	        im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.setCrmEntity, [params]);
 	      }
 	    }
 	  }, {
@@ -4045,7 +4069,7 @@ this.BX = this.BX || {};
 	    key: "reloadCrmCard",
 	    value: function reloadCrmCard() {
 	      if (this.isDesktop() && !this.slave) {
-	        BX.desktop.onCustomEvent(desktopEvents.reloadCrmCard, []);
+	        im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.reloadCrmCard, []);
 	      } else {
 	        this.loadCrmCard(this.crmEntityType, this.crmEntityId);
 	      }
@@ -4112,7 +4136,7 @@ this.BX = this.BX || {};
 	    key: "setOnSlave",
 	    value: function setOnSlave(message, parameters) {
 	      if (this.isDesktop() && !this.slave) {
-	        BX.desktop.onCustomEvent(message, parameters);
+	        im_v2_lib_desktopApi.DesktopApi.emit(message, parameters);
 	      }
 	    }
 	  }, {
@@ -4774,7 +4798,7 @@ this.BX = this.BX || {};
 	        this.held = false;
 	        main_core.Dom.removeClass(this.elements.buttons.hold, 'active');
 	        if (this.isDesktop() && this.slave) {
-	          BX.desktop.onCustomEvent(desktopEvents.onUnHold, []);
+	          im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onUnHold, []);
 	        } else {
 	          this.callbacks.unhold();
 	        }
@@ -4782,7 +4806,7 @@ this.BX = this.BX || {};
 	        this.held = true;
 	        main_core.Dom.addClass(this.elements.buttons.hold, 'active');
 	        if (this.isDesktop() && this.slave) {
-	          BX.desktop.onCustomEvent(desktopEvents.onHold, []);
+	          im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onHold, []);
 	        } else {
 	          this.callbacks.hold();
 	        }
@@ -4796,7 +4820,7 @@ this.BX = this.BX || {};
 	        this.muted = false;
 	        main_core.Dom.removeClass(this.elements.buttons.mute, 'active');
 	        if (this.isDesktop() && this.slave) {
-	          BX.desktop.onCustomEvent(desktopEvents.onUnMute, []);
+	          im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onUnMute, []);
 	        } else {
 	          this.callbacks.unmute();
 	        }
@@ -4804,7 +4828,7 @@ this.BX = this.BX || {};
 	        this.muted = true;
 	        main_core.Dom.addClass(this.elements.buttons.mute, 'active');
 	        if (this.isDesktop() && this.slave) {
-	          BX.desktop.onCustomEvent(desktopEvents.onMute, []);
+	          im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onMute, []);
 	        } else {
 	          this.callbacks.mute();
 	        }
@@ -4818,7 +4842,7 @@ this.BX = this.BX || {};
 	      this.selectTransferTarget(function (result) {
 	        _this19.backgroundWorker.emitEvent(backgroundWorkerEvents.transferButtonClick, result);
 	        if (_this19.isDesktop() && _this19.slave) {
-	          BX.desktop.onCustomEvent(desktopEvents.onStartTransfer, [result]);
+	          im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onStartTransfer, [result]);
 	        } else {
 	          _this19.callbacks.transfer(result);
 	        }
@@ -4829,7 +4853,7 @@ this.BX = this.BX || {};
 	    value: function _onTransferCompleteButtonClick() {
 	      this.backgroundWorker.emitEvent(backgroundWorkerEvents.completeTransferButtonClick);
 	      if (this.isDesktop() && this.slave) {
-	        BX.desktop.onCustomEvent(desktopEvents.onCompleteTransfer, []);
+	        im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onCompleteTransfer, []);
 	      } else {
 	        this.callbacks.completeTransfer();
 	      }
@@ -4839,7 +4863,7 @@ this.BX = this.BX || {};
 	    value: function _onTransferCancelButtonClick() {
 	      this.backgroundWorker.emitEvent(backgroundWorkerEvents.cancelTransferButtonClick);
 	      if (this.isDesktop() && this.slave) {
-	        BX.desktop.onCustomEvent(desktopEvents.onCancelTransfer, []);
+	        im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onCancelTransfer, []);
 	      } else {
 	        this.callbacks.cancelTransfer();
 	      }
@@ -4854,7 +4878,7 @@ this.BX = this.BX || {};
 	        onButtonClick: function onButtonClick(e) {
 	          var key = e.key;
 	          if (_this20.isDesktop() && _this20.slave) {
-	            BX.desktop.onCustomEvent(desktopEvents.onDialpadButtonClicked, [key]);
+	            im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onDialpadButtonClicked, [key]);
 	          } else {
 	            _this20.callbacks.dialpadButtonClicked(key);
 	          }
@@ -4872,7 +4896,7 @@ this.BX = this.BX || {};
 	    value: function _onHangupButtonClick() {
 	      this.backgroundWorker.emitEvent(backgroundWorkerEvents.hangupButtonClick);
 	      if (this.isDesktop() && this.slave) {
-	        BX.desktop.onCustomEvent(desktopEvents.onHangup, []);
+	        im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onHangup, []);
 	      } else {
 	        this.callbacks.hangup();
 	      }
@@ -4882,7 +4906,7 @@ this.BX = this.BX || {};
 	    value: function _onCloseButtonClick() {
 	      this.backgroundWorker.emitEvent(backgroundWorkerEvents.closeButtonClick);
 	      if (this.isDesktop() && this.slave) {
-	        BX.desktop.onCustomEvent(desktopEvents.onClose, []);
+	        im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onClose, []);
 	      } else {
 	        this.close();
 	      }
@@ -4916,7 +4940,7 @@ this.BX = this.BX || {};
 	                callListId: _this21.callListId
 	              };
 	              if (_this21.isDesktop() && _this21.slave) {
-	                BX.desktop.onCustomEvent(desktopEvents.onCallListMakeCall, [event]);
+	                im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onCallListMakeCall, [event]);
 	              } else {
 	                _this21.callbacks.callListMakeCall(event);
 	              }
@@ -4930,7 +4954,7 @@ this.BX = this.BX || {};
 	          event.crmEntityId = this.crmEntityId;
 	          event.callListId = this.callListId;
 	          if (this.isDesktop() && this.slave) {
-	            BX.desktop.onCustomEvent(desktopEvents.onCallListMakeCall, [event]);
+	            im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onCallListMakeCall, [event]);
 	          } else {
 	            this.callbacks.callListMakeCall(event);
 	          }
@@ -4952,7 +4976,7 @@ this.BX = this.BX || {};
 	                callListId: _this21.callListId
 	              };
 	              if (_this21.isDesktop() && _this21.slave) {
-	                BX.desktop.onCustomEvent(desktopEvents.onCallListMakeCall, [event]);
+	                im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onCallListMakeCall, [event]);
 	              } else {
 	                _this21.callbacks.callListMakeCall(event);
 	              }
@@ -4961,7 +4985,7 @@ this.BX = this.BX || {};
 	        }
 	      } else {
 	        if (this.isDesktop() && this.slave) {
-	          BX.desktop.onCustomEvent(desktopEvents.onMakeCall, [this.phoneNumber]);
+	          im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onMakeCall, [this.phoneNumber]);
 	        } else {
 	          this.callbacks.makeCall(this.phoneNumber);
 	        }
@@ -4991,7 +5015,7 @@ this.BX = this.BX || {};
 	    value: function _onAddCommentButtonClick() {
 	      this.commentShown = !this.commentShown;
 	      if (this.isDesktop() && this.slave) {
-	        BX.desktop.onCustomEvent(desktopEvents.onCommentShown, [this.commentShown]);
+	        im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onCommentShown, [this.commentShown]);
 	      }
 	      if (this.commentShown) {
 	        if (this.elements.crmButtons.addComment) {
@@ -5014,7 +5038,7 @@ this.BX = this.BX || {};
 	          this.elements.commentEditorContainer.style.display = 'none';
 	        }
 	        if (this.isDesktop() && this.slave) {
-	          BX.desktop.onCustomEvent(desktopEvents.onSaveComment, [this.comment]);
+	          im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onSaveComment, [this.comment]);
 	        } else {
 	          this.saveComment();
 	        }
@@ -5116,7 +5140,7 @@ this.BX = this.BX || {};
 	    value: function _onAnswerButtonClick() {
 	      this.backgroundWorker.emitEvent(backgroundWorkerEvents.answerButtonClick);
 	      if (this.isDesktop() && this.slave) {
-	        BX.desktop.onCustomEvent(desktopEvents.onAnswer, []);
+	        im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onAnswer, []);
 	      } else {
 	        this.callbacks.answer();
 	      }
@@ -5126,7 +5150,7 @@ this.BX = this.BX || {};
 	    value: function _onSkipButtonClick() {
 	      this.backgroundWorker.emitEvent(backgroundWorkerEvents.skipButtonClick);
 	      if (this.isDesktop() && this.slave) {
-	        BX.desktop.onCustomEvent(desktopEvents.onSkip, []);
+	        im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onSkip, []);
 	      } else {
 	        this.callbacks.skip();
 	      }
@@ -5135,7 +5159,7 @@ this.BX = this.BX || {};
 	    key: "_onSwitchDeviceButtonClick",
 	    value: function _onSwitchDeviceButtonClick() {
 	      if (this.isDesktop() && this.slave) {
-	        BX.desktop.onCustomEvent(desktopEvents.onSwitchDevice, [{
+	        im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onSwitchDevice, [{
 	          phoneNumber: this.phoneNumber
 	        }]);
 	      } else {
@@ -5154,41 +5178,12 @@ this.BX = this.BX || {};
 	          _this22.qualityGrade = qualityGrade;
 	          _this22.closeQualityPopup();
 	          if (_this22.isDesktop() && _this22.slave) {
-	            BX.desktop.onCustomEvent(desktopEvents.onQualityGraded, [qualityGrade]);
+	            im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onQualityGraded, [qualityGrade]);
 	          } else {
 	            _this22.callbacks.qualityGraded(qualityGrade);
 	          }
 	        }
 	      });
-	    }
-	  }, {
-	    key: "_onExternalEvent",
-	    value: function _onExternalEvent(params) {
-	      params = main_core.Type.isPlainObject(params) ? params : {};
-	      params.key = params.key || '';
-	      var value = params.value || {};
-	      value.entityTypeName = value.entityTypeName || '';
-	      value.context = value.context || '';
-	      value.isCanceled = main_core.Type.isBoolean(value.isCanceled) ? value.isCanceled : false;
-	      if (value.isCanceled) {
-	        return;
-	      }
-	      if (params.key === "onCrmEntityCreate" && this.externalRequests[value.context]) {
-	        if (this.externalRequests[value.context]) {
-	          if (this.externalRequests[value.context]['type'] == 'create') {
-	            this.crmEntityType = value.entityTypeName;
-	            this.crmEntityId = value.entityInfo.id;
-	            this.loadCrmCard(this.crmEntityType, this.crmEntityId);
-	          } else if (this.externalRequests[value.context]['type'] == 'add') {
-	            // reload crm card
-	            this.loadCrmCard(this.crmEntityType, this.crmEntityId);
-	          }
-	          if (this.externalRequests[value.context]['window']) {
-	            this.externalRequests[value.context]['window'].close();
-	          }
-	          delete this.externalRequests[value.context];
-	        }
-	      }
 	    }
 	  }, {
 	    key: "_onPullEventCrm",
@@ -5245,11 +5240,6 @@ this.BX = this.BX || {};
 	        this.setUiState(UiState.outgoing);
 	      }
 	      this.updateView();
-	    }
-	  }, {
-	    key: "_onWindowUnload",
-	    value: function _onWindowUnload() {
-	      this.close();
 	    }
 	  }, {
 	    key: "showCallIcon",
@@ -5510,14 +5500,13 @@ this.BX = this.BX || {};
 	    key: "foldCallView",
 	    value: function foldCallView() {
 	      var _this27 = this;
-	      var foldedCallView = FoldedCallView.getInstance();
 	      var popupNode = this.popup.getPopupContainer();
 	      var overlayNode = this.popup.overlay.element;
 	      main_core.Dom.addClass(popupNode, 'im-phone-call-view-folding');
 	      main_core.Dom.addClass(overlayNode, 'popup-window-overlay-im-phone-call-view-folding');
 	      setTimeout(function () {
 	        _this27.close();
-	        foldedCallView.fold({
+	        _this27.foldedCallView.fold({
 	          callListId: _this27.callListId,
 	          webformId: _this27.webformId,
 	          webformSecCode: _this27.webformSecCode,
@@ -5532,29 +5521,29 @@ this.BX = this.BX || {};
 	    key: "bindSlaveDesktopEvents",
 	    value: function bindSlaveDesktopEvents() {
 	      var _this28 = this;
-	      BX.desktop.addCustomEvent(desktopEvents.setTitle, this.setTitle.bind(this));
-	      BX.desktop.addCustomEvent(desktopEvents.setStatus, this.setStatusText.bind(this));
-	      BX.desktop.addCustomEvent(desktopEvents.setUiState, this.setUiState.bind(this));
-	      BX.desktop.addCustomEvent(desktopEvents.setDeviceCall, this.setDeviceCall.bind(this));
-	      BX.desktop.addCustomEvent(desktopEvents.setCrmEntity, this.setCrmEntity.bind(this));
-	      BX.desktop.addCustomEvent(desktopEvents.reloadCrmCard, this.reloadCrmCard.bind(this));
-	      BX.desktop.addCustomEvent(desktopEvents.setPortalCall, this.setPortalCall.bind(this));
-	      BX.desktop.addCustomEvent(desktopEvents.setPortalCallUserId, this.setPortalCallUserId.bind(this));
-	      BX.desktop.addCustomEvent(desktopEvents.setPortalCallQueueName, this.setPortalCallQueueName.bind(this));
-	      BX.desktop.addCustomEvent(desktopEvents.setPortalCallData, this.setPortalCallData.bind(this));
-	      BX.desktop.addCustomEvent(desktopEvents.setConfig, this.setConfig.bind(this));
-	      BX.desktop.addCustomEvent(desktopEvents.setCallId, this.setCallId.bind(this));
-	      BX.desktop.addCustomEvent(desktopEvents.setLineNumber, this.setLineNumber.bind(this));
-	      BX.desktop.addCustomEvent(desktopEvents.setCompanyPhoneNumber, this.setCompanyPhoneNumber.bind(this));
-	      BX.desktop.addCustomEvent(desktopEvents.setPhoneNumber, this.setPhoneNumber.bind(this));
-	      BX.desktop.addCustomEvent(desktopEvents.setTransfer, this.setTransfer.bind(this));
-	      BX.desktop.addCustomEvent(desktopEvents.setCallState, this.setCallState.bind(this));
-	      BX.desktop.addCustomEvent(desktopEvents.closeWindow, function () {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setTitle, this.setTitle.bind(this));
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setStatus, this.setStatusText.bind(this));
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setUiState, this.setUiState.bind(this));
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setDeviceCall, this.setDeviceCall.bind(this));
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setCrmEntity, this.setCrmEntity.bind(this));
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.reloadCrmCard, this.reloadCrmCard.bind(this));
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setPortalCall, this.setPortalCall.bind(this));
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setPortalCallUserId, this.setPortalCallUserId.bind(this));
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setPortalCallQueueName, this.setPortalCallQueueName.bind(this));
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setPortalCallData, this.setPortalCallData.bind(this));
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setConfig, this.setConfig.bind(this));
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setCallId, this.setCallId.bind(this));
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setLineNumber, this.setLineNumber.bind(this));
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setCompanyPhoneNumber, this.setCompanyPhoneNumber.bind(this));
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setPhoneNumber, this.setPhoneNumber.bind(this));
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setTransfer, this.setTransfer.bind(this));
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setCallState, this.setCallState.bind(this));
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.closeWindow, function () {
 	        return window.close();
 	      });
 	      BX.bind(window, "beforeunload", function () {
 	        BX.unbindAll(window, "beforeunload");
-	        BX.desktop.onCustomEvent(desktopEvents.onBeforeUnload, []);
+	        im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onBeforeUnload, []);
 	      });
 	      BX.bind(window, "resize", main_core.Runtime.debounce(function () {
 	        if (_this28.skipOnResize) {
@@ -5574,7 +5563,7 @@ this.BX = this.BX || {};
 	      {
 	      	if(e.keyCode === 27)
 	      	{
-	      		BX.desktop.onCustomEvent(desktopEvents.onBeforeUnload, []);
+	      		DesktopApi.emit(desktopEvents.onBeforeUnload, []);
 	      	}
 	      }.bind(this));*/
 	    }
@@ -5582,67 +5571,67 @@ this.BX = this.BX || {};
 	    key: "bindMasterDesktopEvents",
 	    value: function bindMasterDesktopEvents() {
 	      var _this29 = this;
-	      BX.desktop.addCustomEvent(desktopEvents.onHold, function () {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onHold, function () {
 	        return _this29.callbacks.hold();
 	      });
-	      BX.desktop.addCustomEvent(desktopEvents.onUnHold, function () {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onUnHold, function () {
 	        return _this29.callbacks.unhold();
 	      });
-	      BX.desktop.addCustomEvent(desktopEvents.onMute, function () {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onMute, function () {
 	        return _this29.callbacks.mute();
 	      });
-	      BX.desktop.addCustomEvent(desktopEvents.onUnMute, function () {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onUnMute, function () {
 	        return _this29.callbacks.unmute();
 	      });
-	      BX.desktop.addCustomEvent(desktopEvents.onMakeCall, function (phoneNumber) {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onMakeCall, function (phoneNumber) {
 	        return _this29.callbacks.makeCall(phoneNumber);
 	      });
-	      BX.desktop.addCustomEvent(desktopEvents.onCallListMakeCall, function (e) {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onCallListMakeCall, function (e) {
 	        return _this29.callbacks.callListMakeCall(e);
 	      });
-	      BX.desktop.addCustomEvent(desktopEvents.onAnswer, function () {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onAnswer, function () {
 	        return _this29.callbacks.answer();
 	      });
-	      BX.desktop.addCustomEvent(desktopEvents.onSkip, function () {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onSkip, function () {
 	        return _this29.callbacks.skip();
 	      });
-	      BX.desktop.addCustomEvent(desktopEvents.onHangup, function () {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onHangup, function () {
 	        return _this29.callbacks.hangup();
 	      });
-	      BX.desktop.addCustomEvent(desktopEvents.onClose, function () {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onClose, function () {
 	        return _this29.close();
 	      });
-	      BX.desktop.addCustomEvent(desktopEvents.onStartTransfer, function (e) {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onStartTransfer, function (e) {
 	        return _this29.callbacks.transfer(e);
 	      });
-	      BX.desktop.addCustomEvent(desktopEvents.onCompleteTransfer, function () {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onCompleteTransfer, function () {
 	        return _this29.callbacks.completeTransfer();
 	      });
-	      BX.desktop.addCustomEvent(desktopEvents.onCancelTransfer, function () {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onCancelTransfer, function () {
 	        return _this29.callbacks.cancelTransfer();
 	      });
-	      BX.desktop.addCustomEvent(desktopEvents.onSwitchDevice, function (e) {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onSwitchDevice, function (e) {
 	        return _this29.callbacks.switchDevice(e);
 	      });
-	      BX.desktop.addCustomEvent(desktopEvents.onBeforeUnload, function () {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onBeforeUnload, function () {
 	        _this29.desktop.window = null;
 	        _this29.callbacks.hangup();
 	        _this29.callbacks.close();
 	      }); //slave window unload
-	      BX.desktop.addCustomEvent(desktopEvents.onQualityGraded, function (grade) {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onQualityGraded, function (grade) {
 	        return _this29.callbacks.qualityGraded(grade);
 	      });
-	      BX.desktop.addCustomEvent(desktopEvents.onDialpadButtonClicked, function (grade) {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onDialpadButtonClicked, function (grade) {
 	        return _this29.callbacks.dialpadButtonClicked(grade);
 	      });
-	      BX.desktop.addCustomEvent(desktopEvents.onCommentShown, function (commentShown) {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onCommentShown, function (commentShown) {
 	        return _this29.commentShown = commentShown;
 	      });
-	      BX.desktop.addCustomEvent(desktopEvents.onSaveComment, function (comment) {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onSaveComment, function (comment) {
 	        _this29.comment = comment;
 	        _this29.saveComment();
 	      });
-	      BX.desktop.addCustomEvent(desktopEvents.onSetAutoClose, function (autoClose) {
+	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onSetAutoClose, function (autoClose) {
 	        return _this29.autoClose = autoClose;
 	      });
 	    }
@@ -5651,14 +5640,14 @@ this.BX = this.BX || {};
 	    value: function unbindDesktopEvents() {
 	      for (var eventId in desktopEvents) {
 	        if (desktopEvents.hasOwnProperty(eventId)) {
-	          BX.desktop.removeCustomEvents(desktopEvents[eventId]);
+	          im_v2_lib_desktopApi.DesktopApi.unsubscribe(desktopEvents[eventId]);
 	        }
 	      }
 	    }
 	  }, {
 	    key: "isDesktop",
 	    value: function isDesktop() {
-	      return BX.MessengerCommon.isDesktop();
+	      return this._isDesktop;
 	    }
 	  }, {
 	    key: "isFolded",
@@ -5747,13 +5736,11 @@ this.BX = this.BX || {};
 	        this.popup.close();
 	      }
 	      if (this.desktop.window) {
-	        BX.desktop.onCustomEvent(desktopEvents.closeWindow, []);
+	        im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.closeWindow, []);
 	        //this.desktop.window.ExecuteCommand('close');
 	        //this.desktop.window = null;
 	      }
 
-	      this.backgroundWorker.setCallCard(null);
-	      this.backgroundWorker = null;
 	      this.enableDocumentScroll();
 	      this.callbacks.close();
 	      BX.onCustomEvent(window, 'CallCard::AfterClose', []);
@@ -5763,7 +5750,7 @@ this.BX = this.BX || {};
 	    value: function disableAutoClose() {
 	      this.allowAutoClose = false;
 	      if (this.isDesktop() && this.slave) {
-	        BX.desktop.onCustomEvent(desktopEvents.onSetAutoClose, [this.allowAutoClose]);
+	        im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onSetAutoClose, [this.allowAutoClose]);
 	      }
 	      this.renderButtons();
 	    }
@@ -5772,7 +5759,7 @@ this.BX = this.BX || {};
 	    value: function enableAutoClose() {
 	      this.allowAutoClose = true;
 	      if (this.isDesktop() && this.slave) {
-	        BX.desktop.onCustomEvent(desktopEvents.onSetAutoClose, [this.allowAutoClose]);
+	        im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onSetAutoClose, [this.allowAutoClose]);
 	      }
 	      this.renderButtons();
 	    }
@@ -5820,6 +5807,10 @@ this.BX = this.BX || {};
 	          return main_core.Dom.remove(_this31.elements.main);
 	        }, 300);
 	      }
+	      if (this.backgroundWorker) {
+	        this.backgroundWorker.setCallCard(null);
+	        this.backgroundWorker = null;
+	      }
 	      if (this.popup) {
 	        this.popup.destroy();
 	        this.popup = null;
@@ -5837,7 +5828,7 @@ this.BX = this.BX || {};
 	      if (this.isDesktop()) {
 	        this.unbindDesktopEvents();
 	        if (this.desktop.window) {
-	          BX.desktop.onCustomEvent(desktopEvents.closeWindow, []);
+	          im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.closeWindow, []);
 	          //this.desktop.window.ExecuteCommand('close');
 	          this.desktop.window = null;
 	        }
@@ -5933,7 +5924,7 @@ this.BX = this.BX || {};
 	            if (item.getEntityId() === 'user') {
 	              var customData = item.getCustomData();
 	              if (customData.get('personalPhone') || customData.get('personalMobile') || customData.get('workPhone')) {
-	                showTransferToUserMenu({
+	                _this33.showTransferToUserMenu({
 	                  userId: item.getId(),
 	                  customData: Object.fromEntries(customData),
 	                  darkMode: _this33.darkMode,
@@ -5985,7 +5976,7 @@ this.BX = this.BX || {};
 	            if (item.getEntityId() === 'user') {
 	              var customData = item.getCustomData();
 	              if (customData.get('personalPhone') || customData.get('personalMobile') || customData.get('workPhone')) {
-	                showTransferToUserMenu({
+	                _this34.showTransferToUserMenu({
 	                  userId: item.getId(),
 	                  customData: Object.fromEntries(customData),
 	                  darkMode: _this34.darkMode,
@@ -6012,9 +6003,89 @@ this.BX = this.BX || {};
 	        }
 	      };
 	    }
+	  }, {
+	    key: "showTransferToUserMenu",
+	    value: function showTransferToUserMenu() {
+	      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	      var userId = main_core.Type.isInteger(options.userId) ? options.userId : 0;
+	      var userCustomData = main_core.Type.isPlainObject(options.customData) ? options.customData : {};
+	      var darkMode = options.darkMode === true;
+	      var onSelect = main_core.Type.isFunction(options.onSelect) ? options.onSelect : nop;
+	      var popup;
+	      var onMenuItemClick = function onMenuItemClick(e) {
+	        var type = e.currentTarget.dataset["type"];
+	        var target = e.currentTarget.dataset["target"];
+	        onSelect({
+	          type: type,
+	          target: target
+	        });
+	        popup.close();
+	      };
+	      var menuItems = [{
+	        icon: 'bx-messenger-menu-call-voice',
+	        text: main_core.Loc.getMessage('IM_PHONE_INNER_CALL'),
+	        dataset: {
+	          type: 'user',
+	          target: userId
+	        },
+	        onclick: onMenuItemClick
+	      }, {
+	        delimiter: true
+	      }];
+	      if (userCustomData["personalMobile"]) {
+	        menuItems.push({
+	          html: renderTransferMenuItem(main_core.Loc.getMessage("IM_PHONE_PERSONAL_MOBILE"), main_core.Text.encode(userCustomData["personalMobile"])),
+	          dataset: {
+	            type: 'pstn',
+	            target: userCustomData["personalMobile"]
+	          },
+	          onclick: onMenuItemClick
+	        });
+	      }
+	      if (userCustomData["personalPhone"]) {
+	        menuItems.push({
+	          type: "call",
+	          html: renderTransferMenuItem(main_core.Loc.getMessage("IM_PHONE_PERSONAL_PHONE"), main_core.Text.encode(userCustomData["personalPhone"])),
+	          dataset: {
+	            type: 'pstn',
+	            target: userCustomData["personalPhone"]
+	          },
+	          onclick: onMenuItemClick
+	        });
+	      }
+	      if (userCustomData["workPhone"]) {
+	        menuItems.push({
+	          html: renderTransferMenuItem(main_core.Loc.getMessage("IM_PHONE_WORK_PHONE"), main_core.Text.encode(userCustomData["workPhone"])),
+	          dataset: {
+	            type: 'pstn',
+	            target: userCustomData["workPhone"]
+	          },
+	          onclick: onMenuItemClick
+	        });
+	      }
+	      popup = new main_popup.Menu({
+	        id: "bx-messenger-phone-transfer-menu",
+	        bindElement: null,
+	        targetContainer: document.body,
+	        darkMode: darkMode,
+	        lightShadow: true,
+	        autoHide: true,
+	        closeByEsc: true,
+	        cacheable: false,
+	        overlay: {
+	          backgroundColor: '#FFFFFF',
+	          opacity: 0
+	        },
+	        items: menuItems
+	      });
+	      popup.show();
+	    }
 	  }]);
 	  return PhoneCallView;
 	}();
+	function renderTransferMenuItem(surTitle, text) {
+	  return "<div class=\"transfer-menu-item-surtitle\">".concat(main_core.Text.encode(surTitle), "</div><div class=\"transfer-menu-item-text\">").concat(main_core.Text.encode(text), "</div>");
+	}
 	function renderSimpleButton(text, className, clickCallback) {
 	  var params = {};
 	  if (main_core.Type.isStringFilled(text)) {
@@ -6049,98 +6120,10 @@ this.BX = this.BX || {};
 	    }
 	  });
 	}
-	function showTransferToUserMenu() {
-	  var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-	  var userId = main_core.Type.isInteger(options.userId) ? options.userId : 0;
-	  var userCustomData = main_core.Type.isPlainObject(options.customData) ? options.customData : {};
-	  var darkMode = options.darkMode === true;
-	  var onSelect = main_core.Type.isFunction(options.onSelect) ? options.onSelect : nop;
-	  var popup;
-	  var onMenuItemClick = function onMenuItemClick(e) {
-	    var type = e.currentTarget.dataset["type"];
-	    var target = e.currentTarget.dataset["target"];
-	    onSelect({
-	      type: type,
-	      target: target
-	    });
-	    popup.close();
-	  };
-	  var menuItems = [{
-	    icon: 'bx-messenger-menu-call-voice',
-	    text: main_core.Loc.getMessage('IM_PHONE_INNER_CALL'),
-	    dataset: {
-	      type: 'user',
-	      target: userId
-	    },
-	    onclick: onMenuItemClick
-	  }, {
-	    separator: true
-	  }];
-	  if (userCustomData["personalMobile"]) {
-	    menuItems.push({
-	      type: "call",
-	      text: main_core.Loc.getMessage("IM_PHONE_PERSONAL_MOBILE"),
-	      phone: main_core.Text.encode(userCustomData["personalMobile"]),
-	      dataset: {
-	        type: 'pstn',
-	        target: userCustomData["personalMobile"]
-	      },
-	      onclick: onMenuItemClick
-	    });
-	  }
-	  if (userCustomData["personalPhone"]) {
-	    menuItems.push({
-	      type: "call",
-	      text: main_core.Loc.getMessage("IM_PHONE_PERSONAL_PHONE"),
-	      phone: main_core.Text.encode(userCustomData["personalPhone"]),
-	      dataset: {
-	        type: 'pstn',
-	        target: userCustomData["personalPhone"]
-	      },
-	      onclick: onMenuItemClick
-	    });
-	  }
-	  if (userCustomData["workPhone"]) {
-	    menuItems.push({
-	      type: "call",
-	      text: main_core.Loc.getMessage("IM_PHONE_WORK_PHONE"),
-	      phone: main_core.Text.encode(userCustomData["workPhone"]),
-	      dataset: {
-	        type: 'pstn',
-	        target: userCustomData["workPhone"]
-	      },
-	      onclick: onMenuItemClick
-	    });
-	  }
-	  var popupContent = main_core.Dom.create("div", {
-	    props: {
-	      className: "bx-messenger-popup-menu"
-	    },
-	    children: [main_core.Dom.create("div", {
-	      props: {
-	        className: "bx-messenger-popup-menu-items"
-	      },
-	      children: BX.MessengerChat.MenuPrepareList(menuItems)
-	    })]
-	  });
-	  popup = new main_popup.Popup({
-	    id: "bx-messenger-phone-transfer-menu",
-	    bindElement: null,
-	    targetContainer: document.body,
-	    darkMode: darkMode,
-	    lightShadow: true,
-	    autoHide: true,
-	    closeByEsc: true,
-	    cacheable: false,
-	    overlay: {
-	      backgroundColor: '#FFFFFF',
-	      opacity: 0
-	    },
-	    content: popupContent
-	  });
-	  popup.show();
-	}
 
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var lsKeys$1 = {
 	  callInited: 'viInitedCall',
 	  externalCall: 'viExternalCard',
@@ -6148,46 +6131,161 @@ this.BX = this.BX || {};
 	  dialHistory: 'vox-dial-history',
 	  foldedView: 'vox-folded-call-card'
 	};
+	var Events$1 = {
+	  onCallCreated: 'onCallCreated',
+	  onCallConnected: 'onCallConnected',
+	  onCallDestroyed: 'onCallDestroyed',
+	  onDeviceCallStarted: 'onDeviceCallStarted'
+	};
 	var DeviceType = {
 	  Webrtc: 'WEBRTC',
 	  Phone: 'PHONE'
 	};
-	var PhoneCallsController = /*#__PURE__*/function () {
+	var _setCallEventListeners = /*#__PURE__*/new WeakSet();
+	var _removeCallEventListeners = /*#__PURE__*/new WeakSet();
+	var _onPullEvent = /*#__PURE__*/new WeakSet();
+	var _onPullInvite = /*#__PURE__*/new WeakSet();
+	var _onPullAnswerSelf = /*#__PURE__*/new WeakSet();
+	var _onPullTimeout = /*#__PURE__*/new WeakSet();
+	var _onPullOutgoing = /*#__PURE__*/new WeakSet();
+	var _onPullStart = /*#__PURE__*/new WeakSet();
+	var _onPullHold = /*#__PURE__*/new WeakSet();
+	var _onPullUnhold = /*#__PURE__*/new WeakSet();
+	var _onPullUpdateCrm = /*#__PURE__*/new WeakSet();
+	var _onPullUpdatePortalUser = /*#__PURE__*/new WeakSet();
+	var _onPullCompleteTransfer = /*#__PURE__*/new WeakSet();
+	var _onPullPhoneDeviceActive = /*#__PURE__*/new WeakSet();
+	var _onPullChangeDefaultLineId = /*#__PURE__*/new WeakSet();
+	var _onPullReplaceCallerId = /*#__PURE__*/new WeakSet();
+	var _onPullShowExternalCall = /*#__PURE__*/new WeakSet();
+	var _onPullHideExternalCall = /*#__PURE__*/new WeakSet();
+	var _onIncomingCall = /*#__PURE__*/new WeakSet();
+	var _startCall = /*#__PURE__*/new WeakSet();
+	var _onCallFailed = /*#__PURE__*/new WeakSet();
+	var _onCallDisconnected = /*#__PURE__*/new WeakSet();
+	var _onProgressToneStart = /*#__PURE__*/new WeakSet();
+	var _onProgressToneStop = /*#__PURE__*/new WeakSet();
+	var _onConnectionEstablished = /*#__PURE__*/new WeakSet();
+	var _onConnectionFailed = /*#__PURE__*/new WeakSet();
+	var _onConnectionClosed = /*#__PURE__*/new WeakSet();
+	var _onMicResult = /*#__PURE__*/new WeakSet();
+	var _onNetStatsReceived = /*#__PURE__*/new WeakSet();
+	var _doOpenKeyPad = /*#__PURE__*/new WeakSet();
+	var _doPhoneCall = /*#__PURE__*/new WeakSet();
+	var _doCallListMakeCall = /*#__PURE__*/new WeakSet();
+	var _phoneOnSDKReady = /*#__PURE__*/new WeakSet();
+	var _onCallConnected = /*#__PURE__*/new WeakSet();
+	var _bindPhoneViewCallbacks = /*#__PURE__*/new WeakSet();
+	var _onCallViewMute = /*#__PURE__*/new WeakSet();
+	var _onCallViewUnmute = /*#__PURE__*/new WeakSet();
+	var _onCallViewHold = /*#__PURE__*/new WeakSet();
+	var _onCallViewUnhold = /*#__PURE__*/new WeakSet();
+	var _onCallViewAnswer = /*#__PURE__*/new WeakSet();
+	var _onCallViewSkip = /*#__PURE__*/new WeakSet();
+	var _onCallViewHangup = /*#__PURE__*/new WeakSet();
+	var _onCallViewTransfer = /*#__PURE__*/new WeakSet();
+	var _onCallViewCancelTransfer = /*#__PURE__*/new WeakSet();
+	var _onCallViewCompleteTransfer = /*#__PURE__*/new WeakSet();
+	var _onCallViewCallListMakeCall = /*#__PURE__*/new WeakSet();
+	var _onCallViewClose = /*#__PURE__*/new WeakSet();
+	var _onCallViewSwitchDevice = /*#__PURE__*/new WeakSet();
+	var _onCallViewQualityGraded = /*#__PURE__*/new WeakSet();
+	var _onCallViewDialpadButtonClicked = /*#__PURE__*/new WeakSet();
+	var _onCallViewSaveComment = /*#__PURE__*/new WeakSet();
+	var PhoneCallsController = /*#__PURE__*/function (_EventEmitter) {
+	  babelHelpers.inherits(PhoneCallsController, _EventEmitter);
 	  /** @see DeviceType */
 
 	  function PhoneCallsController(options) {
-	    var _this = this;
+	    var _this;
 	    babelHelpers.classCallCheck(this, PhoneCallsController);
-	    this.debug = false;
-	    this.phoneEnabled = main_core.Type.isBoolean(options.phoneEnabled) ? options.phoneEnabled : false;
-	    this.userId = options.userId;
-	    this.isAdmin = options.isAdmin;
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(PhoneCallsController).call(this));
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallViewSaveComment);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallViewDialpadButtonClicked);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallViewQualityGraded);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallViewSwitchDevice);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallViewClose);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallViewCallListMakeCall);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallViewCompleteTransfer);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallViewCancelTransfer);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallViewTransfer);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallViewHangup);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallViewSkip);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallViewAnswer);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallViewUnhold);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallViewHold);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallViewUnmute);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallViewMute);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _bindPhoneViewCallbacks);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallConnected);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _phoneOnSDKReady);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _doCallListMakeCall);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _doPhoneCall);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _doOpenKeyPad);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onNetStatsReceived);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onMicResult);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onConnectionClosed);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onConnectionFailed);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onConnectionEstablished);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onProgressToneStop);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onProgressToneStart);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallDisconnected);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onCallFailed);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _startCall);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onIncomingCall);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullHideExternalCall);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullShowExternalCall);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullReplaceCallerId);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullChangeDefaultLineId);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullPhoneDeviceActive);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullCompleteTransfer);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullUpdatePortalUser);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullUpdateCrm);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullUnhold);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullHold);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullStart);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullOutgoing);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullTimeout);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullAnswerSelf);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullInvite);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEvent);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _removeCallEventListeners);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _setCallEventListeners);
+	    _this.setEventNamespace('BX.Voximplant.PhoneCallsControllerOptions');
+	    _this.subscribeFromOptions(options.events);
+	    _this.debug = false;
+	    _this.phoneEnabled = main_core.Type.isBoolean(options.phoneEnabled) ? options.phoneEnabled : false;
+	    _this.userId = options.userId;
+	    _this.userEmail = options.userEmail;
+	    _this.isAdmin = options.isAdmin;
 	    var history = BX.localStorage.get(lsKeys$1.dialHistory);
-	    this.dialHistory = main_core.Type.isArray(history) ? history : [];
-	    this.availableLines = main_core.Type.isArray(options.availableLines) ? options.availableLines : [];
-	    this.defaultLineId = main_core.Type.isString(options.defaultLineId) ? options.defaultLineId : '';
-	    this.callInterceptAllowed = options.canInterceptCall || false;
-	    this.restApps = options.restApps;
-	    this.hasSipPhone = options.deviceActive === true;
-	    this.readDefaults();
-	    this.restoreFoldedCallView();
+	    _this.dialHistory = main_core.Type.isArray(history) ? history : [];
+	    _this.availableLines = main_core.Type.isArray(options.availableLines) ? options.availableLines : [];
+	    _this.defaultLineId = main_core.Type.isString(options.defaultLineId) ? options.defaultLineId : '';
+	    _this.callInterceptAllowed = options.canInterceptCall || false;
+	    _this.restApps = options.restApps;
+	    _this.hasSipPhone = options.deviceActive === true;
+	    _this.readDefaults();
+	    _this.restoreFoldedCallView();
 	    if (main_core.Browser.isLocalStorageSupported()) {
-	      BX.addCustomEvent(window, "onLocalStorageSet", this.storageSet.bind(this));
+	      BX.addCustomEvent(window, "onLocalStorageSet", _this.storageSet.bind(babelHelpers.assertThisInitialized(_this)));
 	    }
-	    BX.addCustomEvent("onPullEvent-voximplant", this.onPullEvent.bind(this));
+	    BX.addCustomEvent("onPullEvent-voximplant", _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onPullEvent, _onPullEvent2).bind(babelHelpers.assertThisInitialized(_this)));
 
 	    // call event handlers
-	    this.onCallConnectedHandler = this.onCallConnected.bind(this);
-	    this.onCallDisconnectedHandler = this.onCallDisconnected.bind(this);
-	    this.onCallFailedHandler = this.onCallFailed.bind(this);
-	    this.onProgressToneStartHandler = this.onProgressToneStart.bind(this);
-	    this.onProgressToneStopHandler = this.onProgressToneStop.bind(this);
-
-	    // to be sure, that background placement is initialized
-	    BackgroundWorker.getInstance();
-
-	    // to restore stored FoldedCallView if required
-	    FoldedCallView.getInstance();
+	    _this.onCallConnectedHandler = _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onCallConnected, _onCallConnected2).bind(babelHelpers.assertThisInitialized(_this));
+	    _this.onCallDisconnectedHandler = _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onCallDisconnected, _onCallDisconnected2).bind(babelHelpers.assertThisInitialized(_this));
+	    _this.onCallFailedHandler = _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onCallFailed, _onCallFailed2).bind(babelHelpers.assertThisInitialized(_this));
+	    _this.onProgressToneStartHandler = _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onProgressToneStart, _onProgressToneStart2).bind(babelHelpers.assertThisInitialized(_this));
+	    _this.onProgressToneStopHandler = _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onProgressToneStop, _onProgressToneStop2).bind(babelHelpers.assertThisInitialized(_this));
+	    _this.messengerFacade = options.messengerFacade;
+	    _this.backgroundWorker = new BackgroundWorker();
+	    _this.foldedCallView = new FoldedCallView({
+	      events: babelHelpers.defineProperty({}, FoldedCallView.Events.onUnfold, function (event) {
+	        var data = event.getData();
+	        _this.startCallList(data.callListId, data.callListParams);
+	      })
+	    });
 	    BX.garbage(function () {
 	      if (_this.hasActiveCall() && _this.callView && _this.callView.canBeUnloaded() && (_this.hasExternalCall || _this.deviceType === 'PHONE')) {
 	        BX.localStorage.set(lsKeys$1.foldedView, {
@@ -6199,34 +6297,12 @@ this.BX = this.BX || {};
 	        }, 15);
 	      }
 	    });
+	    return _this;
 	  }
 	  babelHelpers.createClass(PhoneCallsController, [{
 	    key: "hasActiveCall",
 	    value: function hasActiveCall() {
-	      return Boolean(this.currentCall || this.callView);
-	    }
-	  }, {
-	    key: "setCallEventListeners",
-	    value: function setCallEventListeners(call) {
-	      call.addEventListener(VoxImplant.CallEvents.Connected, this.onCallConnectedHandler);
-	      call.addEventListener(VoxImplant.CallEvents.Disconnected, this.onCallDisconnectedHandler);
-	      call.addEventListener(VoxImplant.CallEvents.Failed, this.onCallFailedHandler);
-	      call.addEventListener(VoxImplant.CallEvents.ProgressToneStart, this.onProgressToneStartHandler);
-	      call.addEventListener(VoxImplant.CallEvents.ProgressToneStop, this.onProgressToneStopHandler);
-	    }
-	  }, {
-	    key: "removeCallEventListeners",
-	    value: function removeCallEventListeners(call) {
-	      call.removeEventListener(VoxImplant.CallEvents.Connected, this.onCallConnectedHandler);
-	      call.removeEventListener(VoxImplant.CallEvents.Disconnected, this.onCallDisconnectedHandler);
-	      call.removeEventListener(VoxImplant.CallEvents.Failed, this.onCallFailedHandler);
-	      call.removeEventListener(VoxImplant.CallEvents.ProgressToneStart, this.onProgressToneStartHandler);
-	      call.removeEventListener(VoxImplant.CallEvents.ProgressToneStop, this.onProgressToneStopHandler);
-	    }
-	  }, {
-	    key: "setNotifyManager",
-	    value: function setNotifyManager(notifyManager) {
-	      this.notifyManager = notifyManager;
+	      return Boolean(this._currentCall || this.callView);
 	    }
 	  }, {
 	    key: "ready",
@@ -6245,433 +6321,9 @@ this.BX = this.BX || {};
 	      this.enableMicAutoParameters = localStorage.getItem('bx-im-settings-enable-mic-auto-parameters') !== 'N';
 	    }
 	  }, {
-	    key: "onPullEvent",
-	    value: function onPullEvent(command, params) {
-	      var handlers = {
-	        'invite': this.onPullInvite,
-	        'answer_self': this.onPullAnswerSelf,
-	        'timeout': this.onPullTimeout,
-	        'outgoing': this.onPullOutgoing,
-	        'start': this.onPullStart,
-	        'hold': this.onPullHold,
-	        'unhold': this.onPullUnhold,
-	        'update_crm': this.onPullUpdateCrm,
-	        'updatePortalUser': this.onPullUpdatePortalUser,
-	        'completeTransfer': this.onPullCompleteTransfer,
-	        'phoneDeviceActive': this.onPullPhoneDeviceActive,
-	        'changeDefaultLineId': this.onPullChangeDefaultLineId,
-	        'replaceCallerId': this.onPullReplaceCallerId,
-	        'showExternalCall': this.onPullShowExternalCall,
-	        'hideExternalCall': this.onPullHideExternalCall
-	      };
-	      if (handlers.hasOwnProperty(command)) {
-	        handlers[command].apply(this, [params]);
-	      }
-	    }
-	  }, {
-	    key: "onPullInvite",
-	    value: function onPullInvite(params) {
-	      var _this2 = this;
-	      if (!this.phoneSupport()) {
-	        return false;
-	      }
-	      if (this.BXIM.callController && this.BXIM.callController.hasActiveCall()) {
-	        // todo: set and proceed busy status in b_voximplant_queue
-	        /*this.phoneCommand('busy', {'CALL_ID' : params.callId});*/
-	        return false;
-	      }
-	      if (this.hasActiveCall() || this.isCallListMode()) {
-	        this.phoneCommand('busy', {
-	          'CALL_ID': params.callId
-	        });
-	        return false;
-	      }
-	      if (BX.localStorage.get(lsKeys$1.callInited) || BX.localStorage.get(lsKeys$1.externalCall)) {
-	        return false;
-	      }
-	      this.checkDesktop().then(function () {
-	        if (params.CRM && params.CRM.FOUND) {
-	          _this2.phoneCrm = params.CRM;
-	        } else {
-	          _this2.phoneCrm = {};
-	        }
-	        _this2.phonePortalCall = !!params.portalCall;
-	        if (_this2.phonePortalCall && params.portalCallData) {
-	          BX.MessengerCommon.updateUserData(params.portalCallData);
-	          var userData = BX.MessengerCommon.getUser(params.portalCallUserId);
-	          if (userData) {
-	            params.callerId = userData.name;
-	          }
-	          params.phoneNumber = '';
-	        }
-	        _this2.phoneCallConfig = params.config ? params.config : {};
-	        _this2.phoneCallTime = 0;
-	        _this2.BXIM.repeatSound('ringtone', 5000);
-
-	        // if (this.isPage())
-	        // {
-	        // 	BX.MessengerWindow.changeTab('im');
-	        // }
-
-	        _this2.phoneCommand('wait', {
-	          'CALL_ID': params.callId,
-	          'DEBUG_INFO': _this2.getDebugInfo()
-	        });
-	        _this2.isCallTransfer = !!params.isTransfer;
-	        _this2.displayIncomingCall({
-	          chatId: params.chatId,
-	          callId: params.callId,
-	          callerId: params.callerId,
-	          lineNumber: params.lineNumber,
-	          companyPhoneNumber: params.phoneNumber,
-	          isCallback: params.isCallback,
-	          showCrmCard: params.showCrmCard,
-	          crmEntityType: params.crmEntityType,
-	          crmEntityId: params.crmEntityId,
-	          crmActivityId: params.crmActivityId,
-	          crmActivityEditUrl: params.crmActivityEditUrl,
-	          portalCall: params.portalCall,
-	          portalCallUserId: params.portalCallUserId,
-	          portalCallData: params.portalCallData,
-	          config: params.config
-	        });
-	      })["catch"](function () {});
-	    }
-	  }, {
-	    key: "onPullAnswerSelf",
-	    value: function onPullAnswerSelf(params) {
-	      if (this.callSelfDisabled || this.callId != params.callId) {
-	        return false;
-	      }
-	      this.BXIM.stopRepeatSound('ringtone');
-	      this.BXIM.stopRepeatSound('dialtone');
-	      this.phoneCallFinish();
-	      this.callAbort();
-	      this.callView.close();
-	      this.callId = params.callId;
-	    }
-	  }, {
-	    key: "onPullTimeout",
-	    value: function onPullTimeout(params) {
-	      if (this.phoneTransferCallId === params.callId) {
-	        return this.errorInviteTransfer(params.failedCode, params.failedReason);
-	      } else if (this.callId != params.callId) {
-	        return false;
-	      }
-	      clearInterval(this.phoneConnectedInterval);
-	      BX.localStorage.remove(lsKeys$1.callInited);
-	      var external = this.hasExternalCall;
-	      this.BXIM.stopRepeatSound('ringtone');
-	      this.BXIM.stopRepeatSound('dialtone');
-	      this.phoneCallFinish();
-	      this.callAbort();
-	      if (!this.callView) {
-	        return;
-	      }
-	      this.callView.setCallState(CallState.idle, {
-	        failedCode: params.failedCode
-	      });
-	      if (external && params.failedCode == 486) {
-	        this.callView.setProgress(CallProgress.offline);
-	        this.callView.setStatusText(main_core.Loc.getMessage('IM_PHONE_ERROR_BUSY_PHONE'));
-	        this.callView.setUiState(UiState.sipPhoneError);
-	      } else if (external && params.failedCode == 480) {
-	        this.callView.setProgress(CallProgress.error);
-	        this.callView.setStatusText(main_core.Loc.getMessage('IM_PHONE_ERROR_NA_PHONE'));
-	        this.callView.setUiState(UiState.sipPhoneError);
-	      } else {
-	        if (this.isCallListMode()) {
-	          this.callView.setStatusText('');
-	          this.callView.setUiState(UiState.outgoing);
-	        } else {
-	          this.callView.setStatusText(main_core.Loc.getMessage('IM_PHONE_END'));
-	          this.callView.setUiState(UiState.idle);
-	          this.callView.autoClose();
-	        }
-	      }
-	    }
-	  }, {
-	    key: "onPullOutgoing",
-	    value: function onPullOutgoing(params) {
-	      var _this3 = this;
-	      if (this.phoneNumber == params.phoneNumber || params.phoneNumber.indexOf(this.phoneNumber) >= 0) {
-	        this.deviceType = params.callDevice == DeviceType.Phone ? DeviceType.Phone : DeviceType.Webrtc;
-	        this.phonePortalCall = !!params.portalCall;
-	        this.phoneNumber = params.phoneNumber;
-	        if (this.hasExternalCall && this.deviceType == DeviceType.Phone) {
-	          this.callView.setProgress(CallProgress.connect);
-	          this.callView.setStatusText(main_core.Loc.getMessage('IM_PHONE_WAIT_ANSWER'));
-	        }
-	        this.phoneCallConfig = params.config ? params.config : {};
-	        this.callId = params.callId;
-	        this.phoneCallTime = 0;
-	        this.phoneCrm = params.CRM;
-	        if (this.callView && params.showCrmCard) {
-	          this.callView.setCrmData(params.CRM);
-	          this.callView.setCrmEntity({
-	            type: params.crmEntityType,
-	            id: params.crmEntityId,
-	            activityId: params.crmActivityId,
-	            activityEditUrl: params.crmActivityEditUrl,
-	            bindings: params.crmBindings
-	          });
-	          this.callView.setConfig(params.config);
-	          this.callView.setCallId(params.callId);
-	          if (params.lineNumber) {
-	            this.callView.setLineNumber(params.lineNumber);
-	          }
-	          if (params.lineName) {
-	            this.callView.setCompanyPhoneNumber(params.lineName);
-	          }
-	          this.callView.reloadCrmCard();
-	        }
-	        if (this.callView && this.phonePortalCall) {
-	          this.callView.setPortalCall(true);
-	          this.callView.setPortalCallData(params.portalCallData);
-	          this.callView.setPortalCallUserId(params.portalCallUserId);
-	          this.callView.setPortalCallQueueName(params.portalCallQueueName);
-	        }
-	      } else if (!this.hasActiveCall() && params.callDevice === DeviceType.Phone) {
-	        this.checkDesktop().then(function () {
-	          _this3.deviceType = params.callDevice === DeviceType.Phone ? DeviceType.Phone : DeviceType.Webrtc;
-	          _this3.phonePortalCall = !!params.portalCall;
-	          _this3.callId = params.callId;
-	          _this3.phoneCallTime = 0;
-	          _this3.phoneCallConfig = params.config ? params.config : {};
-	          _this3.phoneCrm = params.CRM;
-	          _this3.phoneDisplayExternal({
-	            callId: params.callId,
-	            config: params.config ? params.config : {},
-	            phoneNumber: params.phoneNumber,
-	            portalCall: params.portalCall,
-	            portalCallUserId: params.portalCallUserId,
-	            portalCallData: params.portalCallData,
-	            portalCallQueueName: params.portalCallQueueName,
-	            showCrmCard: params.showCrmCard,
-	            crmEntityType: params.crmEntityType,
-	            crmEntityId: params.crmEntityId
-	          });
-	        })["catch"](function () {});
-	      }
-	    }
-	  }, {
-	    key: "onPullStart",
-	    value: function onPullStart(params) {
-	      if (this.phoneTransferCallId === params.callId) {
-	        this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_TRANSFER_CONNECTED'));
-	        return;
-	      }
-	      if (this.callId != params.callId) {
-	        return;
-	      }
-	      this.callOverlayTimer('start');
-	      this.BXIM.stopRepeatSound('ringtone');
-	      if (this.callId == params.callId && this.deviceType == DeviceType.Phone && (this.deviceType == params.callDevice || this.phonePortalCall)) {
-	        this.onCallConnected();
-	      } else if (this.callId == params.callId && params.callDevice == DeviceType.Phone && this.phoneIncoming) {
-	        this.deviceType = DeviceType.Phone;
-	        if (this.callView) {
-	          this.callView.setDeviceCall(true);
-	        }
-	        this.onCallConnected();
-	      }
-	      if (params.CRM) {
-	        this.phoneCrm = params.CRM;
-	      }
-	      if (this.phoneNumber !== '') {
-	        this.phoneNumberLast = this.phoneNumber;
-	        this.BXIM.setLocalConfig('phone_last', this.phoneNumber);
-	      }
-	    }
-	  }, {
-	    key: "onPullHold",
-	    value: function onPullHold(params) {
-	      if (this.callId == params.callId) {
-	        this.isCallHold = true;
-	      }
-	    }
-	  }, {
-	    key: "onPullUnhold",
-	    value: function onPullUnhold(params) {
-	      if (this.callId == params.callId) {
-	        this.isCallHold = false;
-	      }
-	    }
-	  }, {
-	    key: "onPullUpdateCrm",
-	    value: function onPullUpdateCrm(params) {
-	      if (this.callId == params.callId && params.CRM && params.CRM.FOUND) {
-	        this.phoneCrm = params.CRM;
-	        if (this.callView) {
-	          this.callView.setCrmData(params.CRM);
-	          if (params.showCrmCard) {
-	            this.callView.setCrmEntity({
-	              type: params.crmEntityType,
-	              id: params.crmEntityId,
-	              activityId: params.crmActivityId,
-	              activityEditUrl: params.crmActivityEditUrl,
-	              bindings: params.crmBindings
-	            });
-	            this.callView.reloadCrmCard();
-	          }
-	        }
-	      }
-	    }
-	  }, {
-	    key: "onPullUpdatePortalUser",
-	    value: function onPullUpdatePortalUser(params) {
-	      if (this.callId == params.callId && this.callView) {
-	        this.callView.setPortalCall(true);
-	        this.callView.setPortalCallData(params.portalCallData);
-	        this.callView.setPortalCallUserId(params.portalCallUserId);
-	      }
-	    }
-	  }, {
-	    key: "onPullCompleteTransfer",
-	    value: function onPullCompleteTransfer(params) {
-	      if (this.callId != params.callId) {
-	        return false;
-	      }
-	      this.callId = params.newCallId;
-	      this.phoneTransferTargetId = 0;
-	      this.phoneTransferTargetType = '';
-	      this.phoneTransferCallId = '';
-	      this.phoneTransferEnabled = false;
-	      BX.localStorage.set(lsKeys$1.vite, false, 1);
-	      this.deviceType = params.callDevice == DeviceType.Phone ? DeviceType.Phone : DeviceType.Webrtc;
-	      if (this.deviceType == DeviceType.Phone) {
-	        this.callView.setDeviceCall(true);
-	      }
-	      this.callView.setTransfer(false);
-	      this.onCallConnected();
-	    }
-	  }, {
-	    key: "onPullPhoneDeviceActive",
-	    value: function onPullPhoneDeviceActive(params) {
-	      this.hasSipPhone = params.active == 'Y';
-	    }
-	  }, {
-	    key: "onPullChangeDefaultLineId",
-	    value: function onPullChangeDefaultLineId(params) {
-	      this.defaultLineId = params.defaultLineId;
-	    }
-	  }, {
-	    key: "onPullReplaceCallerId",
-	    value: function onPullReplaceCallerId(params) {
-	      var callTitle = main_core.Loc.getMessage('IM_PHONE_CALL_TRANSFER').replace('#PHONE#', params.callerId);
-	      this.setCallOverlayTitle(callTitle);
-	      this.callView.setPhoneNumber(params.callerId);
-	      if (params.CRM) {
-	        this.phoneCrm = params.CRM;
-	        this.callView.setCrmData(params.CRM);
-	        if (params.showCrmCard) {
-	          this.callView.setCrmEntity({
-	            type: params.crmEntityType,
-	            id: params.crmEntityId,
-	            activityId: params.crmActivityId,
-	            activityEditUrl: params.crmActivityEditUrl,
-	            bindings: params.crmBindings
-	          });
-	          this.callView.reloadCrmCard();
-	        }
-	      }
-	    }
-	  }, {
-	    key: "onPullShowExternalCall",
-	    value: function onPullShowExternalCall(params) {
-	      var _this4 = this;
-	      if (this.BXIM.callController && this.BXIM.callController.hasActiveCall()) {
-	        return false;
-	      }
-	      if (BX.localStorage.get(lsKeys$1.callInited) || BX.localStorage.get(lsKeys$1.externalCall)) {
-	        return false;
-	      }
-	      this.checkDesktop().then(function () {
-	        if (params.CRM && params.CRM.FOUND) {
-	          _this4.phoneCrm = params.CRM;
-	        } else {
-	          _this4.phoneCrm = {};
-	        }
-	        _this4.showExternalCall({
-	          callId: params.callId,
-	          fromUserId: params.fromUserId,
-	          toUserId: params.toUserId,
-	          isCallback: params.isCallback,
-	          phoneNumber: params.phoneNumber,
-	          lineNumber: params.lineNumber,
-	          companyPhoneNumber: params.companyPhoneNumber,
-	          showCrmCard: params.showCrmCard,
-	          crmEntityType: params.crmEntityType,
-	          crmEntityId: params.crmEntityId,
-	          crmBindings: params.crmBindings,
-	          crmActivityId: params.crmActivityId,
-	          crmActivityEditUrl: params.crmActivityEditUrl,
-	          config: params.config,
-	          portalCall: params.portalCall,
-	          portalCallData: params.portalCallData,
-	          portalCallUserId: params.portalCallUserId
-	        });
-	      })["catch"](function () {});
-	    }
-	  }, {
-	    key: "onPullHideExternalCall",
-	    value: function onPullHideExternalCall(params) {
-	      if (this.hasActiveCall() && this.hasExternalCall && this.callId == params.callId) {
-	        this.hideExternalCall();
-	      }
-	    }
-	  }, {
-	    key: "phoneCommand",
-	    value: function phoneCommand(command, params, async, successCallback) {
-	      var _this5 = this;
-	      if (!this.phoneSupport()) {
-	        return Promise.reject();
-	      }
-	      params = babelHelpers["typeof"](params) == 'object' ? params : {};
-	      try {
-	        params = JSON.stringify(params);
-	      } catch (e) {
-	        console.error("Could not convert params to JSON, error: ", e);
-	        return;
-	      }
-	      return new Promise(function (resolve, reject) {
-	        BX.ajax({
-	          url: _this5.BXIM.pathToCallAjax + '?PHONE_SHARED&V=' + _this5.BXIM.revision,
-	          method: 'POST',
-	          dataType: 'json',
-	          timeout: 30,
-	          async: async,
-	          data: {
-	            'IM_PHONE': 'Y',
-	            'COMMAND': command,
-	            'PARAMS': params,
-	            'IM_AJAX_CALL': 'Y',
-	            'sessid': BX.bitrix_sessid()
-	          },
-	          onsuccess: function onsuccess(response) {
-	            resolve(response);
-	            if (main_core.Type.isFunction(successCallback)) {
-	              successCallback(response);
-	            }
-	          }
-	        });
-	      });
-	    }
-	  }, {
 	    key: "correctPhoneNumber",
 	    value: function correctPhoneNumber(number) {
 	      return number.toString().replace(/[^0-9+#*;,]/g, '');
-	    }
-	  }, {
-	    key: "onIncomingCall",
-	    value: function onIncomingCall(params) {
-	      // we can't use hasActiveCall here because the call view is open
-	      if (this.currentCall) {
-	        return false;
-	      }
-	      this.currentCall = params.call;
-	      this.setCallEventListeners(this.currentCall);
-	      this.currentCall.answer();
 	    }
 	  }, {
 	    key: "getCallParams",
@@ -6683,44 +6335,12 @@ this.BX = this.BX || {};
 	      return JSON.stringify(result);
 	    }
 	  }, {
-	    key: "startCall",
-	    value: function startCall() {
-	      var _this6 = this;
-	      this.phoneParams['CALLER_ID'] = '';
-	      this.phoneParams['USER_ID'] = this.userId;
-	      this.phoneLog('Call params: ', this.phoneNumber, this.phoneParams);
-	      if (!this.voximplantClient.connected()) {
-	        this.phoneOnSDKReady();
-	        return false;
-	      }
-	      this.currentCall = this.voximplantClient.call(this.phoneNumber, false, this.getCallParams());
-	      this.setCallEventListeners(this.currentCall);
-	      var initParams = {
-	        'NUMBER': this.phoneNumber,
-	        'NUMBER_USER': main_core.Text.decode(this.phoneNumberUser),
-	        'IM_AJAX_CALL': 'Y'
-	      };
-	      this.phoneCommand('init', initParams).then(function (data) {
-	        if (!(data.HR_PHOTO.length === 0)) {
-	          for (var i in data.HR_PHOTO) {
-	            // this.BXIM.messenger.hrphoto[i] = data.HR_PHOTO[i];
-	          }
-	          _this6.callOverlayUserId = data.DIALOG_ID;
-	        } else {
-	          _this6.callOverlayChatId = data.DIALOG_ID.substr(4);
-	        }
-	      });
-	    }
-	  }, {
 	    key: "phoneCallFinish",
 	    value: function phoneCallFinish() {
 	      clearInterval(this.phoneConnectedInterval);
 	      clearInterval(this.phoneCallTimeInterval);
 	      BX.localStorage.remove(lsKeys$1.callInited);
 	      this.callOverlayTimer('pause');
-
-	      // this.BXIM.desktop.closeTopmostWindow();
-
 	      if (this.currentCall) {
 	        try {
 	          this.currentCall.hangup({
@@ -6728,7 +6348,6 @@ this.BX = this.BX || {};
 	            "X-Disconnect-Reason": "Normal hangup"
 	          });
 	        } catch (e) {}
-	        this.removeCallEventListeners(this.currentCall);
 	        this.currentCall = null;
 	        this.phoneLog('Call hangup call');
 	      } else {
@@ -6767,168 +6386,24 @@ this.BX = this.BX || {};
 	        return false;
 	      }
 	      if (this.phoneIncoming) {
-	        this.phoneCommand('ready', {
+	        BX.rest.callMethod('voximplant.call.sendReady', {
 	          'CALL_ID': this.callId
 	        });
 	      } else if (this.callInitUserId == this.userId) {
-	        this.startCall();
+	        _classPrivateMethodGet$1(this, _startCall, _startCall2).call(this);
 	      }
-	    }
-	  }, {
-	    key: "onCallFailed",
-	    value: function onCallFailed(e) {
-	      var headers = e.headers || {};
-	      this.phoneLog('Call failed', e.code, e.reason);
-	      var reason = main_core.Loc.getMessage('IM_PHONE_END');
-	      if (e.code == 603) {
-	        reason = main_core.Loc.getMessage('IM_PHONE_DECLINE');
-	      } else if (e.code == 380) {
-	        reason = main_core.Loc.getMessage('IM_PHONE_ERR_SIP_LICENSE');
-	      } else if (e.code == 436) {
-	        reason = main_core.Loc.getMessage('IM_PHONE_ERR_NEED_RENT');
-	      } else if (e.code == 438) {
-	        reason = main_core.Loc.getMessage('IM_PHONE_ERR_BLOCK_RENT');
-	      } else if (e.code == 400) {
-	        reason = main_core.Loc.getMessage('IM_PHONE_ERR_LICENSE');
-	      } else if (e.code == 401) {
-	        reason = main_core.Loc.getMessage('IM_PHONE_401');
-	      } else if (e.code == 480 || e.code == 503) {
-	        if (this.phoneNumber == 911 || this.phoneNumber == 112) {
-	          reason = main_core.Loc.getMessage('IM_PHONE_NO_EMERGENCY');
-	        } else {
-	          reason = main_core.Loc.getMessage('IM_PHONE_UNAVAILABLE');
-	        }
-	      } else if (e.code == 484 || e.code == 404) {
-	        if (this.phoneNumber == 911 || this.phoneNumber == 112) {
-	          reason = main_core.Loc.getMessage('IM_PHONE_NO_EMERGENCY');
-	        } else {
-	          reason = main_core.Loc.getMessage('IM_PHONE_INCOMPLETED');
-	        }
-	      } else if (e.code == 402) {
-	        if (headers.hasOwnProperty('X-Reason') && headers['X-Reason'] === "SIP_PAYMENT_REQUIRED") {
-	          reason = main_core.Loc.getMessage('IM_PHONE_ERR_SIP_LICENSE');
-	        } else {
-	          reason = main_core.Loc.getMessage('IM_PHONE_NO_MONEY') + (this.isAdmin ? ' ' + main_core.Loc.getMessage('IM_PHONE_PAY_URL_NEW') : '');
-	        }
-	      } else if (e.code == 486 && this.phoneRinging > 1) {
-	        reason = main_core.Loc.getMessage('IM_M_CALL_ST_DECLINE');
-	      } else if (e.code == 486) {
-	        reason = main_core.Loc.getMessage('IM_PHONE_ERROR_BUSY');
-	      } else if (e.code == 403) {
-	        reason = main_core.Loc.getMessage('IM_PHONE_403');
-	        this.phoneServer = '';
-	        this.phoneLogin = '';
-	        this.phoneCheckBalance = true;
-	      } else if (e.code == 504) {
-	        reason = main_core.Loc.getMessage('IM_PHONE_ERROR_CONNECT');
-	      } else {
-	        reason = main_core.Loc.getMessage('IM_PHONE_ERROR');
-	      }
-	      if (e.code == 408 || e.code == 403) {
-	        this.scheduleApiDisconnect();
-	      }
-	      this.callOverlayProgress('offline');
-	      this.callAbort(reason);
-	      this.callView.setUiState(UiState.error);
-	      this.callView.setCallState(CallState.idle);
 	    }
 	  }, {
 	    key: "scheduleApiDisconnect",
 	    value: function scheduleApiDisconnect() {
-	      var _this7 = this;
+	      var _this2 = this;
 	      if (this.voximplantClient && this.voximplantClient.connected()) {
 	        setTimeout(function () {
-	          if (_this7.voximplantClient && _this7.voximplantClient.connected()) {
-	            _this7.voximplantClient.disconnect();
+	          if (_this2.voximplantClient && _this2.voximplantClient.connected()) {
+	            _this2.voximplantClient.disconnect();
 	          }
 	        }, 500);
 	      }
-	    }
-	  }, {
-	    key: "onCallDisconnected",
-	    value: function onCallDisconnected(e) {
-	      this.phoneLog('Call disconnected', this.currentCall ? this.currentCall.id() : '-', this.currentCall ? this.currentCall.state() : '-');
-	      if (this.currentCall) {
-	        this.phoneCallFinish();
-	        this.callOverlayDeleteEvents();
-	        this.callOverlayStatus(main_core.Loc.getMessage('IM_M_CALL_ST_END'));
-	        this.BXIM.playSound('stop');
-	        this.callView.setCallState(CallState.idle);
-	        if (this.isCallListMode()) {
-	          this.callView.setUiState(UiState.outgoing);
-	        } else {
-	          this.callView.setStatusText(main_core.Loc.getMessage('IM_PHONE_END'));
-	          this.callView.setUiState(UiState.idle);
-	          this.callView.autoClose();
-	        }
-	      }
-	      this.scheduleApiDisconnect();
-	    }
-	  }, {
-	    key: "onProgressToneStart",
-	    value: function onProgressToneStart(e) {
-	      if (!this.currentCall) {
-	        return false;
-	      }
-	      this.phoneLog('Progress tone start', this.currentCall.id());
-	      this.phoneRinging++;
-	      this.callOverlayStatus(main_core.Loc.getMessage('IM_PHONE_WAIT_ANSWER'));
-	    }
-	  }, {
-	    key: "onProgressToneStop",
-	    value: function onProgressToneStop(e) {
-	      if (!this.currentCall) {
-	        return false;
-	      }
-	      this.phoneLog('Progress tone stop', this.currentCall.id());
-	    }
-	  }, {
-	    key: "onConnectionEstablished",
-	    value: function onConnectionEstablished(e) {
-	      this.phoneLog('Connection established', this.voximplantClient.connected());
-	    }
-	  }, {
-	    key: "onConnectionFailed",
-	    value: function onConnectionFailed(e) {
-	      this.phoneLog('Connection failed');
-	      this.phoneCallFinish();
-	      this.callAbort(main_core.Loc.getMessage('IM_M_CALL_ERR'));
-	    }
-	  }, {
-	    key: "onConnectionClosed",
-	    value: function onConnectionClosed(e) {
-	      this.phoneLog('Connection closed');
-	    }
-	  }, {
-	    key: "onMicResult",
-	    value: function onMicResult(e) {
-	      this.phoneMicAccess = e.result;
-	      this.phoneLog('Mic Access Allowed', e.result);
-	      if (e.result) {
-	        this.callOverlayProgress('connect');
-	        this.callOverlayStatus(main_core.Loc.getMessage('IM_M_CALL_ST_CONNECT'));
-	      } else {
-	        this.phoneCallFinish();
-	        this.callOverlayProgress('offline');
-	        this.callAbort(main_core.Loc.getMessage('IM_M_CALL_ST_NO_ACCESS'));
-	        this.callView.setUiState(UiState.error);
-	        this.callView.setCallState(CallState.idle);
-	      }
-	    }
-	  }, {
-	    key: "onNetStatsReceived",
-	    value: function onNetStatsReceived(e) {
-	      if (!this.currentCall || this.currentCall.state() != "CONNECTED") {
-	        return false;
-	      }
-	      var percent = 100 - parseInt(e.stats.packetLoss);
-	      var grade = this.displayCallQuality(percent);
-	      this.currentCall.sendMessage(JSON.stringify({
-	        'COMMAND': 'meter',
-	        'PACKETLOSS': e.stats.packetLoss,
-	        'PERCENT': percent,
-	        'GRADE': grade
-	      }));
 	    }
 	  }, {
 	    key: "holdCall",
@@ -6955,7 +6430,7 @@ this.BX = this.BX || {};
 	            'COMMAND': 'unhold'
 	          }));
 	        } else {
-	          this.phoneCommand('unhold', {
+	          BX.rest.callMethod('voximplant.call.unhold', {
 	            'CALL_ID': this.callId
 	          });
 	        }
@@ -6965,7 +6440,7 @@ this.BX = this.BX || {};
 	            'COMMAND': 'hold'
 	          }));
 	        } else {
-	          this.phoneCommand('hold', {
+	          BX.rest.callMethod('voximplant.call.hold', {
 	            'CALL_ID': this.callId
 	          });
 	        }
@@ -7033,24 +6508,24 @@ this.BX = this.BX || {};
 	    value: function phoneDeviceCall(status) {
 	      var result = true;
 	      if (typeof status == 'boolean') {
-	        this.BXIM.setLocalConfig('viDeviceCallBlock', !status);
+	        this.messengerFacade.setLocalConfig('viDeviceCallBlock', !status);
 	        BX.localStorage.set('viDeviceCallBlock', !status, 86400);
 	        if (this.callView) {
 	          this.callView.setDeviceCall(status);
 	        }
 	      } else {
-	        var deviceCallBlock = this.BXIM.getLocalConfig('viDeviceCallBlock');
+	        var deviceCallBlock = this.messengerFacade.getLocalConfig('viDeviceCallBlock');
 	        if (!deviceCallBlock) {
 	          deviceCallBlock = BX.localStorage.get('viDeviceCallBlock');
 	        }
-	        result = this.hasSipPhone && deviceCallBlock != true;
+	        result = this.hasSipPhone && !deviceCallBlock;
 	      }
 	      return result;
 	    }
 	  }, {
 	    key: "openKeyPad",
 	    value: function openKeyPad() {
-	      var _this8 = this;
+	      var _this3 = this;
 	      var e = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      if (main_core.Loc.getMessage["voximplantCanMakeCalls"] == "N") {
 	        main_core.Runtime.loadExtension("voximplant.common").then(function () {
@@ -7059,45 +6534,8 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      this.loadPhoneLines().then(function () {
-	        return _this8._doOpenKeyPad(e);
+	        return _classPrivateMethodGet$1(_this3, _doOpenKeyPad, _doOpenKeyPad2).call(_this3, e);
 	      });
-	    }
-	  }, {
-	    key: "_doOpenKeyPad",
-	    value: function _doOpenKeyPad(e) {
-	      var _this9 = this;
-	      if (!this.phoneSupport() && !(this.BXIM.desktopStatus && this.BXIM.desktopVersion >= 18) && !this.isRestLine(this.defaultLineId)) {
-	        this.showUnsupported();
-	        return false;
-	      }
-	      if (this.hasActiveCall() || BX.localStorage.get(lsKeys$1.callInited) || BX.localStorage.get(lsKeys$1.externalCall)) {
-	        return false;
-	      }
-	      if (this.keypad) {
-	        this.keypad.close();
-	        return false;
-	      }
-	      this.keypad = new Keypad({
-	        bindElement: e.bindElement,
-	        offsetTop: e.offsetTop,
-	        offsetLeft: e.offsetLeft,
-	        anglePosition: e.anglePosition,
-	        angleOffset: e.angleOffset,
-	        defaultLineId: this.defaultLineId,
-	        lines: this.phoneLines,
-	        availableLines: this.availableLines,
-	        history: this.dialHistory,
-	        callInterceptAllowed: this.callInterceptAllowed,
-	        onDial: this.onKeyPadDial.bind(this),
-	        onIntercept: this.onKeyPadIntercept.bind(this),
-	        onClose: function onClose() {
-	          _this9.onKeyPadClose();
-	          if (main_core.Type.isFunction(e.onClose)) {
-	            e.onClose();
-	          }
-	        }
-	      });
-	      this.keypad.show();
 	    }
 	  }, {
 	    key: "onKeyPadDial",
@@ -7112,7 +6550,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onKeyPadIntercept",
 	    value: function onKeyPadIntercept(e) {
-	      var _this10 = this;
+	      var _this4 = this;
 	      if (!this.callInterceptAllowed) {
 	        this.keypad.close();
 	        if ('UI' in BX && 'InfoHelper' in BX.UI) {
@@ -7120,16 +6558,17 @@ this.BX = this.BX || {};
 	        }
 	        return;
 	      }
-	      this.phoneCommand('interceptCall', {}, true, function (response) {
-	        if (!response.FOUND || response.FOUND == 'Y') {
-	          _this10.keypad.close();
+	      BX.rest.callMethod('voximplant.call.intercept').then(function (response) {
+	        var data = response.data();
+	        if (!data.FOUND || data.FOUND == 'Y') {
+	          _this4.keypad.close();
 	        } else {
-	          if (response.ERROR) {
-	            _this10.interceptErrorPopup = new main_popup.Popup({
+	          if (data.ERROR) {
+	            _this4.interceptErrorPopup = new main_popup.Popup({
 	              id: 'intercept-call-error',
 	              bindElement: e.interceptButton,
 	              targetContainer: document.body,
-	              content: main_core.Text.encode(response.ERROR),
+	              content: main_core.Text.encode(data.ERROR),
 	              autoHide: true,
 	              closeByEsc: true,
 	              cacheable: false,
@@ -7141,11 +6580,11 @@ this.BX = this.BX || {};
 	              },
 	              events: {
 	                onPopupClose: function onPopupClose(e) {
-	                  return _this10.interceptErrorPopup = null;
+	                  return _this4.interceptErrorPopup = null;
 	                }
 	              }
 	            });
-	            _this10.interceptErrorPopup.show();
+	            _this4.interceptErrorPopup.show();
 	          }
 	        }
 	      });
@@ -7199,9 +6638,12 @@ this.BX = this.BX || {};
 	        crmEntityType: params.crmEntityType,
 	        crmEntityId: params.crmEntityId,
 	        crmData: this.phoneCrm,
+	        foldedCallView: this.foldedCallView,
+	        backgroundWorker: this.backgroundWorker,
+	        messengerFacade: this.messengerFacade,
 	        restApps: this.restApps
 	      });
-	      this.bindPhoneViewCallbacks(this.callView);
+	      _classPrivateMethodGet$1(this, _bindPhoneViewCallbacks, _bindPhoneViewCallbacks2).call(this, this.callView);
 	      this.callView.setUiState(UiState.idle);
 	      this.callView.setCallState(CallState.connected);
 	      this.callView.show();
@@ -7209,21 +6651,21 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "loadPhoneLines",
 	    value: function loadPhoneLines() {
-	      var _this11 = this;
+	      var _this5 = this;
 	      var cachedLines = BX.localStorage.get('bx-im-phone-lines');
 	      if (cachedLines) {
 	        this.phoneLines = cachedLines;
 	        return Promise.resolve(cachedLines);
 	      }
 	      return new Promise(function (resolve, reject) {
-	        if (_this11.phoneLines) {
-	          return resolve(_this11.phoneLines);
+	        if (_this5.phoneLines) {
+	          return resolve(_this5.phoneLines);
 	        }
 	        BX.ajax.runAction("voximplant.callView.getLines").then(function (response) {
-	          _this11.phoneLines = response.data;
-	          BX.localStorage.set('bx-im-phone-lines', _this11.phoneLines, 86400);
+	          _this5.phoneLines = response.data;
+	          BX.localStorage.set('bx-im-phone-lines', _this5.phoneLines, 86400);
 	          {
-	            resolve(_this11.phoneLines);
+	            resolve(_this5.phoneLines);
 	          }
 	        })["catch"](function (err) {
 	          console.error(err);
@@ -7255,129 +6697,26 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "phoneCall",
 	    value: function phoneCall(number, params) {
-	      var _this12 = this;
+	      var _this6 = this;
 	      this.loadPhoneLines().then(function () {
-	        return _this12._doPhoneCall(number, params);
+	        return _classPrivateMethodGet$1(_this6, _doPhoneCall, _doPhoneCall2).call(_this6, number, params);
 	      });
-	    }
-	  }, {
-	    key: "_doPhoneCall",
-	    value: function _doPhoneCall(number) {
-	      var _this13 = this;
-	      var params = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-	      if (BX.localStorage.get(lsKeys$1.callInited) || this.callView || this.hasActiveCall()) {
-	        return false;
-	      }
-	      if (!this.phoneSupport()) {
-	        this.showUnsupported();
-	        return false;
-	      }
-	      if (this.keypad) {
-	        this.keypad.close();
-	      }
-	      if (main_core.Type.isStringFilled(number)) {
-	        this.addToHistory(number);
-	      }
-	      var lineId = main_core.Type.isStringFilled(params['LINE_ID']) ? params['LINE_ID'] : this.defaultLineId;
-	      if (this.isRestLine(lineId)) {
-	        this.startCallViaRestApp(number, lineId, params);
-	        return true;
-	      }
-	      this.phoneLog(number, params);
-	      this.phoneNumberUser = main_core.Text.encode(number);
-	      var numberOriginal = number;
-	      if (babelHelpers["typeof"](params) != 'object') {
-	        params = {};
-	      }
-	      var internationalNumber = this.correctPhoneNumber(number);
-	      if (internationalNumber.length <= 0) {
-	        this.BXIM.openConfirm({
-	          title: main_core.Loc.getMessage('IM_PHONE_WRONG_NUMBER'),
-	          message: main_core.Loc.getMessage('IM_PHONE_WRONG_NUMBER_DESC')
-	        });
-	        return false;
-	      }
-	      this.setPhoneNumber(internationalNumber);
-	      this.initiator = true;
-	      this.callInitUserId = this.userId;
-	      this.callActive = false;
-	      this.callUserId = 0;
-	      this.hasExternalCall = this.phoneDeviceCall();
-	      this.phoneParams = params;
-	      this.callView = new PhoneCallView({
-	        darkMode: BX.MessengerTheme.isDark(),
-	        phoneNumber: this.phoneFullNumber,
-	        callTitle: this.phoneNumberUser,
-	        fromUserId: this.userId,
-	        direction: Direction.outgoing,
-	        uiState: UiState.connectingOutgoing,
-	        status: main_core.Loc.getMessage('IM_M_CALL_ST_CONNECT'),
-	        hasSipPhone: this.hasSipPhone,
-	        deviceCall: this.hasExternalCall,
-	        crmData: this.phoneCrm,
-	        autoFold: params['AUTO_FOLD'] === true,
-	        restApps: this.restApps
-	      });
-	      this.bindPhoneViewCallbacks(this.callView);
-	      this.callView.show();
-	      this.BXIM.playSound("start");
-	      if (this.hasExternalCall) {
-	        this.deviceType = DeviceType.Phone;
-	        this.callView.setProgress(CallProgress.wait);
-	        this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_PHONE_NOTICE'));
-	        this.phoneCommand('deviceStartCall', {
-	          'NUMBER': numberOriginal.toString().replace(/[^0-9+*#,;]/g, ''),
-	          'PARAMS': params
-	        }, true, function (response) {
-	          if (response.ERROR) {
-	            _this13.callView.setProgress(CallProgress.error);
-	            _this13.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_PHONE_ERROR'));
-	            _this13.callView.setUiState(UiState.error);
-	            _this13.callView.setCallState(CallState.idle);
-	          } else {
-	            _this13.callId = response.CALL_ID;
-	            _this13.hasExternalCall = response.EXTERNAL === true;
-	            _this13.phoneCallConfig = response.CONFIG;
-	            _this13.callView.setProgress(CallProgress.wait);
-	            _this13.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_WAIT_PHONE'));
-	            _this13.callView.setUiState(UiState.connectingOutgoing);
-	            _this13.callView.setCallState(CallState.connecting);
-	          }
-	          if (BX.MessengerCommon.isDesktop()) {
-	            //todo
-	            BX.desktop.changeTab('im');
-	            BX.desktop.windowCommand("show");
-	            _this13.BXIM.desktop.closeTopmostWindow();
-	          }
-	        });
-	      } else {
-	        this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_CALL_INIT'));
-	        this.phoneApiInit().then(function () {
-	          return _this13.phoneOnSDKReady();
-	        });
-	      }
 	    }
 	  }, {
 	    key: "showUnsupported",
 	    value: function showUnsupported() {
-	      this.BXIM.openConfirm(main_core.Loc.getMessage('IM_CALL_NO_WEBRT'), [new BX.PopupWindowButton({
-	        text: main_core.Loc.getMessage('IM_M_CALL_BTN_DOWNLOAD'),
-	        className: "popup-window-button-accept",
-	        events: {
-	          click: BX.delegate(function () {
-	            window.open(BX.browser.IsMac() ? "http://dl.bitrix24.com/b24/bitrix24_desktop.dmg" : "http://dl.bitrix24.com/b24/bitrix24_desktop.exe", "desktopApp");
-	            BX.proxy_context.popupWindow.close();
-	          }, this)
+	      var messageBox = new ui_dialogs_messagebox.MessageBox({
+	        message: main_core.Loc.getMessage('IM_CALL_NO_WEBRT'),
+	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	        okCaption: main_core.Loc.getMessage('IM_M_CALL_BTN_DOWNLOAD'),
+	        cancelCaption: main_core.Loc.getMessage('IM_NOTIFY_CONFIRM_CLOSE'),
+	        onOk: function onOk() {
+	          var url = main_core.Browser.isMac() ? "http://dl.bitrix24.com/b24/bitrix24_desktop.dmg" : "http://dl.bitrix24.com/b24/bitrix24_desktop.exe";
+	          window.open(url, "desktopApp");
+	          return true;
 	        }
-	      }), new BX.PopupWindowButton({
-	        text: main_core.Loc.getMessage('IM_NOTIFY_CONFIRM_CLOSE'),
-	        className: "popup-window-button",
-	        events: {
-	          click: function click() {
-	            this.popupWindow.close();
-	          }
-	        }
-	      })]);
+	      });
+	      messageBox.show();
 	    }
 	  }, {
 	    key: "addToHistory",
@@ -7393,7 +6732,7 @@ this.BX = this.BX || {};
 	        this.dialHistory = [phoneNumber].concat(oldHistory.slice(0, 4));
 	      }
 	      BX.localStorage.set(lsKeys$1.dialHistory, this.dialHistory, 31536000);
-	      this.BXIM.setLocalConfig('phone-history', this.dialHistory);
+	      this.messengerFacade.setLocalConfig('phone-history', this.dialHistory);
 	    }
 	  }, {
 	    key: "startCallList",
@@ -7402,6 +6741,7 @@ this.BX = this.BX || {};
 	      if (callListId === 0 || this.currentCall || this.callView || this.isCallListMode()) {
 	        return false;
 	      }
+	      this.foldedCallView.destroy();
 	      this.callListId = callListId;
 	      this.callView = new PhoneCallView({
 	        crm: true,
@@ -7411,15 +6751,17 @@ this.BX = this.BX || {};
 	        direction: Direction.outgoing,
 	        makeCall: params.makeCall === true,
 	        uiState: UiState.outgoing,
-	        BXIM: this.BXIM,
 	        webformId: params.webformId || 0,
 	        webformSecCode: params.webformSecCode || '',
 	        hasSipPhone: this.hasSipPhone,
 	        deviceCall: this.phoneDeviceCall(),
 	        crmData: this.phoneCrm,
+	        foldedCallView: this.foldedCallView,
+	        backgroundWorker: this.backgroundWorker,
+	        messengerFacade: this.messengerFacade,
 	        restApps: this.restApps
 	      });
-	      this.bindPhoneViewCallbacks(this.callView);
+	      _classPrivateMethodGet$1(this, _bindPhoneViewCallbacks, _bindPhoneViewCallbacks2).call(this, this.callView);
 	      this.callView.show();
 	      return true;
 	    }
@@ -7431,108 +6773,18 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "callListMakeCall",
 	    value: function callListMakeCall(e) {
-	      var _this14 = this;
-	      console.log('callListMakeCall', e);
+	      var _this7 = this;
 	      this.loadPhoneLines().then(function () {
-	        return _this14._doCallListMakeCall(e);
+	        return _classPrivateMethodGet$1(_this7, _doCallListMakeCall, _doCallListMakeCall2).call(_this7, e);
 	      });
-	    }
-	  }, {
-	    key: "_doCallListMakeCall",
-	    value: function _doCallListMakeCall(e) {
-	      var _this15 = this;
-	      if (this.isRestLine(this.defaultLineId)) {
-	        this.startCallViaRestApp(e.phoneNumber, this.defaultLineId, {
-	          'ENTITY_TYPE': 'CRM_' + e.crmEntityType,
-	          'ENTITY_ID': e.crmEntityId,
-	          'CALL_LIST_ID': e.callListId
-	        });
-	        return true;
-	      }
-	      if (BX.localStorage.get(lsKeys$1.callInited)) {
-	        return false;
-	      }
-	      if (this.callActive) {
-	        return false;
-	      }
-	      if (!this.callView) {
-	        return false;
-	      }
-	      this.lastCallListCallParams = e;
-	      if (!this.phoneSupport()) {
-	        this.callView.setStatusText(main_core.Loc.getMessage('IM_CALL_NO_WEBRT'));
-	        this.callView.setUiState(UiState.error);
-	        this.callView.setCallState(CallState.idle);
-	        return false;
-	      }
-	      var number = e.phoneNumber;
-	      var numberOriginal = number;
-	      var internationalNumber = this.correctPhoneNumber(number);
-	      if (internationalNumber.length <= 0) {
-	        this.callView.setStatusText(main_core.Loc.getMessage('IM_PHONE_WRONG_NUMBER_DESC').replace("<br/>", "\n"));
-	        return false;
-	      }
-	      this.initiator = true;
-	      this.callInitUserId = this.userId;
-	      this.callActive = false;
-	      this.callUserId = 0;
-	      this.hasExternalCall = this.phoneDeviceCall();
-	      this.setPhoneNumber(internationalNumber);
-	      this.phoneParams = {
-	        'ENTITY_TYPE': 'CRM_' + e.crmEntityType,
-	        'ENTITY_ID': e.crmEntityId,
-	        'CALL_LIST_ID': e.callListId
-	      };
-	      this.BXIM.playSound("start");
-	      if (this.hasExternalCall) {
-	        this.deviceType = DeviceType.Phone;
-	        this.callView.setProgress(CallProgress.wait);
-	        this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_PHONE_NOTICE'));
-	        this.callView.setUiState(UiState.connectingOutgoing);
-	        this.callView.setCallState(CallState.connecting);
-	        this.phoneCommand('deviceStartCall', {
-	          'NUMBER': numberOriginal.toString().replace(/[^0-9+*#,;]/g, ''),
-	          'PARAMS': this.phoneParams
-	        }, true, function (response) {
-	          if (response.ERROR) {
-	            _this15.callView.setProgress(CallProgress.error);
-	            _this15.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_PHONE_ERROR'));
-	            _this15.callView.setUiState(UiState.error);
-	            _this15.callView.setCallState(CallState.idle);
-	          } else {
-	            _this15.callId = response.CALL_ID;
-
-	            // TODO: is this necessary? It did not work previously
-	            _this15.hasExternalCall = response.EXTERNAL === true;
-	            _this15.phoneCallConfig = response.CONFIG;
-	            _this15.callView.setProgress(CallProgress.wait);
-	            _this15.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_WAIT_PHONE'));
-	            _this15.callView.setUiState(UiState.connectingOutgoing);
-	            _this15.callView.setCallState(CallState.connecting);
-	          }
-	          if (BX.MessengerCommon.isDesktop()) {
-	            //todo
-	            BX.desktop.changeTab('im');
-	            BX.desktop.windowCommand("show");
-	            _this15.BXIM.desktop.closeTopmostWindow();
-	          }
-	        });
-	      } else {
-	        this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_CALL_INIT'));
-	        this.callView.setUiState(UiState.connectingOutgoing);
-	        this.callView.setCallState(CallState.connecting);
-	        this.phoneApiInit().then(function () {
-	          return _this15.phoneOnSDKReady();
-	        });
-	      }
 	    }
 	  }, {
 	    key: "phoneIncomingAnswer",
 	    value: function phoneIncomingAnswer() {
-	      var _this16 = this;
-	      this.BXIM.stopRepeatSound('ringtone');
+	      var _this8 = this;
+	      this.messengerFacade.stopRepeatSound('ringtone');
 	      this.callSelfDisabled = true;
-	      this.phoneCommand('answer', {
+	      BX.rest.callMethod('voximplant.call.answer', {
 	        'CALL_ID': this.callId
 	      });
 	      if (this.keypad) {
@@ -7541,15 +6793,15 @@ this.BX = this.BX || {};
 	      this.callView.setUiState(UiState.connectingIncoming);
 	      this.callView.setCallState(CallState.connecting);
 	      this.phoneApiInit().then(function () {
-	        return _this16.phoneCommand('ready', {
-	          'CALL_ID': _this16.callId
+	        return BX.rest.callMethod('voximplant.call.sendReady', {
+	          'CALL_ID': _this8.callId
 	        });
 	      });
 	    }
 	  }, {
 	    key: "phoneApiInit",
 	    value: function phoneApiInit() {
-	      var _this17 = this;
+	      var _this9 = this;
 	      if (!this.phoneSupport()) {
 	        return Promise.reject('Telephony is not supported');
 	      }
@@ -7604,281 +6856,47 @@ this.BX = this.BX || {};
 	          // debug: this.debug,
 	          apiParameters: phoneApiParameters
 	        }).then(function (client) {
-	          _this17.voximplantClient = client;
-	          if (_this17.defaultMicrophone) {
-	            _this17.voximplantClient.useAudioSource(_this17.defaultMicrophone);
+	          _this9.voximplantClient = client;
+	          if (_this9.defaultMicrophone) {
+	            _this9.voximplantClient.useAudioSource(_this9.defaultMicrophone);
 	          }
-	          if (_this17.defaultSpeaker) {
+	          if (_this9.defaultSpeaker) {
 	            VoxImplant.Hardware.AudioDeviceManager.get().setDefaultAudioSettings({
-	              outputId: _this17.defaultSpeaker
+	              outputId: _this9.defaultSpeaker
 	            });
 	          }
-	          if (BX.MessengerCommon.isDesktop() && main_core.Type.isFunction(_this17.voximplantClient.setLoggerCallback)) {
-	            _this17.voximplantClient.enableSilentLogging();
-	            _this17.voximplantClient.setLoggerCallback(function (e) {
-	              return _this17.phoneLog(e.label + ": " + e.message);
+	          if (_this9.messengerFacade.isDesktop() && main_core.Type.isFunction(_this9.voximplantClient.setLoggerCallback)) {
+	            _this9.voximplantClient.enableSilentLogging();
+	            _this9.voximplantClient.setLoggerCallback(function (e) {
+	              return _this9.phoneLog(e.label + ": " + e.message);
 	            });
 	          }
-	          _this17.voximplantClient.addEventListener(VoxImplant.Events.ConnectionFailed, _this17.onConnectionFailed.bind(_this17));
-	          _this17.voximplantClient.addEventListener(VoxImplant.Events.ConnectionClosed, _this17.onConnectionClosed.bind(_this17));
-	          _this17.voximplantClient.addEventListener(VoxImplant.Events.IncomingCall, _this17.onIncomingCall.bind(_this17));
-	          _this17.voximplantClient.addEventListener(VoxImplant.Events.MicAccessResult, _this17.onMicResult.bind(_this17));
-	          _this17.voximplantClient.addEventListener(VoxImplant.Events.SourcesInfoUpdated, _this17.phoneOnInfoUpdated.bind(_this17));
-	          _this17.voximplantClient.addEventListener(VoxImplant.Events.NetStatsReceived, _this17.onNetStatsReceived.bind(_this17));
+	          _this9.voximplantClient.addEventListener(VoxImplant.Events.ConnectionFailed, _classPrivateMethodGet$1(_this9, _onConnectionFailed, _onConnectionFailed2).bind(_this9));
+	          _this9.voximplantClient.addEventListener(VoxImplant.Events.ConnectionClosed, _classPrivateMethodGet$1(_this9, _onConnectionClosed, _onConnectionClosed2).bind(_this9));
+	          _this9.voximplantClient.addEventListener(VoxImplant.Events.IncomingCall, _classPrivateMethodGet$1(_this9, _onIncomingCall, _onIncomingCall2).bind(_this9));
+	          _this9.voximplantClient.addEventListener(VoxImplant.Events.MicAccessResult, _classPrivateMethodGet$1(_this9, _onMicResult, _onMicResult2).bind(_this9));
+	          _this9.voximplantClient.addEventListener(VoxImplant.Events.SourcesInfoUpdated, _this9.phoneOnInfoUpdated.bind(_this9));
+	          _this9.voximplantClient.addEventListener(VoxImplant.Events.NetStatsReceived, _classPrivateMethodGet$1(_this9, _onNetStatsReceived, _onNetStatsReceived2).bind(_this9));
 	          resolve();
 	        })["catch"](function (e) {
-	          _this17.phoneCommand('connectionError', {
-	            'CALL_ID': _this17.callId,
+	          BX.rest.callMethod('voximplant.call.onConnectionError', {
+	            'CALL_ID': _this9.callId,
 	            'ERROR': e
 	          });
-	          _this17.phoneCallFinish();
-	          _this17.BXIM.playSound('error');
-	          _this17.callOverlayProgress('offline');
-	          _this17.callAbort(main_core.Loc.getMessage('IM_PHONE_ERROR'));
-	          _this17.callView.setUiState(UiState.error);
-	          _this17.callView.setCallState(CallState.idle);
+	          _this9.phoneCallFinish();
+	          _this9.messengerFacade.playSound('error');
+	          _this9.callOverlayProgress('offline');
+	          _this9.callAbort(main_core.Loc.getMessage('IM_PHONE_ERROR'));
+	          _this9.callView.setUiState(UiState.error);
+	          _this9.callView.setCallState(CallState.idle);
 	          reject('Could not connect to Voximplant cloud');
 	        });
 	      });
 	    }
 	  }, {
-	    key: "phoneOnSDKReady",
-	    value: function phoneOnSDKReady(params) {
-	      var _this18 = this;
-	      this.phoneLog('SDK ready');
-	      params = params || {};
-	      params.delay = params.delay || false;
-	      if (!params.delay && this.hasSipPhone) {
-	        if (!this.phoneIncoming && !this.phoneDeviceCall()) {
-	          // if (BX.MessengerCommon.isPage())
-	          // {
-	          // 	BX.MessengerWindow.changeTab('im');
-	          // }
-	          if (BX.MessengerCommon.isDesktop()) {
-	            BX.desktop.windowCommand("show");
-	            // this.desktop.closeTopmostWindow();
-	          }
-
-	          this.callOverlayProgress('wait');
-	          this.callDialogAllowTimeout = setTimeout(function () {
-	            return _this18.phoneOnSDKReady({
-	              delay: true
-	            });
-	          }, 5000);
-	          return false;
-	        }
-	      }
-	      if (BX.MessengerCommon.isDesktop() && this.BXIM.init) {
-	        BX.desktop.syncPause(true);
-	      }
-	      this.phoneLog('Connection exists');
-	      this.callView.setProgress(CallProgress.connect);
-	      this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_CONNECT'));
-	      this.phoneOnAuthResult({
-	        result: true
-	      });
-	      this.callView.setCallState(CallState.connecting);
-	      if (this.phoneIncoming) {
-	        this.callView.setUiState(UiState.connectingIncoming);
-	      } else {
-	        this.callView.setUiState(UiState.connectingOutgoing);
-	      }
-	    }
-	  }, {
 	    key: "phoneOnInfoUpdated",
 	    value: function phoneOnInfoUpdated(e) {
 	      this.phoneLog('Info updated', this.voximplantClient.audioSources(), this.voximplantClient.videoSources());
-	    }
-	  }, {
-	    key: "onCallConnected",
-	    value: function onCallConnected(e) {
-	      if (BX.MessengerCommon.isDesktop() && this.BXIM.init) {
-	        BX.desktop.syncPause(true);
-	      }
-	      this.BXIM.stopRepeatSound('ringtone', 5000);
-	      BX.localStorage.set(lsKeys$1.callInited, true, 7);
-	      clearInterval(this.phoneConnectedInterval);
-	      this.phoneConnectedInterval = setInterval(function () {
-	        return BX.localStorage.set(lsKeys$1.callInited, true, 7);
-	      }, 5000);
-
-	      // this.desktop.closeTopmostWindow();
-
-	      this.phoneLog('Call connected', e);
-	      this.callView.setUiState(UiState.connected);
-	      this.callView.setCallState(CallState.connected);
-	      this.callView.setProgress(CallProgress.online);
-	      this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_ONLINE'));
-	      this.callActive = true;
-	    }
-	  }, {
-	    key: "bindPhoneViewCallbacks",
-	    value: function bindPhoneViewCallbacks(callView) {
-	      if (!callView instanceof PhoneCallView) {
-	        return false;
-	      }
-	      callView.setCallback('mute', this.onCallViewMute.bind(this));
-	      callView.setCallback('unmute', this.onCallViewUnmute.bind(this));
-	      callView.setCallback('hold', this.onCallViewHold.bind(this));
-	      callView.setCallback('unhold', this.onCallViewUnhold.bind(this));
-	      callView.setCallback('answer', this.onCallViewAnswer.bind(this));
-	      callView.setCallback('skip', this.onCallViewSkip.bind(this));
-	      callView.setCallback('hangup', this.onCallViewHangup.bind(this));
-	      callView.setCallback('transfer', this.onCallViewTransfer.bind(this));
-	      callView.setCallback('cancelTransfer', this.onCallViewCancelTransfer.bind(this));
-	      callView.setCallback('completeTransfer', this.onCallViewCompleteTransfer.bind(this));
-	      callView.setCallback('callListMakeCall', this.onCallViewCallListMakeCall.bind(this));
-	      callView.setCallback('close', this.onCallViewClose.bind(this));
-	      callView.setCallback('switchDevice', this.onCallViewSwitchDevice.bind(this));
-	      callView.setCallback('qualityGraded', this.onCallViewQualityGraded.bind(this));
-	      callView.setCallback('dialpadButtonClicked', this.onCallViewDialpadButtonClicked.bind(this));
-	      callView.setCallback('saveComment', this.onCallViewSaveComment.bind(this));
-	    }
-	  }, {
-	    key: "onCallViewMute",
-	    value: function onCallViewMute() {
-	      this.muteCall();
-	    }
-	  }, {
-	    key: "onCallViewUnmute",
-	    value: function onCallViewUnmute() {
-	      this.unmuteCall();
-	    }
-	  }, {
-	    key: "onCallViewHold",
-	    value: function onCallViewHold() {
-	      this.holdCall();
-	    }
-	  }, {
-	    key: "onCallViewUnhold",
-	    value: function onCallViewUnhold() {
-	      this.unholdCall();
-	    }
-	  }, {
-	    key: "onCallViewAnswer",
-	    value: function onCallViewAnswer() {
-	      this.phoneIncomingAnswer();
-	    }
-	  }, {
-	    key: "onCallViewSkip",
-	    value: function onCallViewSkip() {
-	      this.phoneCommand('skip', {
-	        'CALL_ID': this.callId
-	      });
-	      this.phoneCallFinish();
-	      this.callAbort();
-	      this.callView.close();
-	    }
-	  }, {
-	    key: "onCallViewHangup",
-	    value: function onCallViewHangup() {
-	      if (this.hasExternalCall && this.callId) {
-	        this.phoneCommand('deviceHungup', {
-	          'CALL_ID': this.callId
-	        });
-	      }
-	      this.phoneCallFinish();
-	      this.BXIM.playSound('stop');
-	      this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_FINISHED'));
-	      this.callView.setCallState(CallState.idle);
-	      if (this.isCallListMode()) {
-	        this.callView.setUiState(UiState.outgoing);
-	        if (this.callView.isFolded()) {
-	          this.callView.unfold();
-	        }
-	      } else {
-	        this.callView.close();
-	      }
-	    }
-	  }, {
-	    key: "onCallViewTransfer",
-	    value: function onCallViewTransfer(e) {
-	      if (e.type == 'user' || e.type == 'pstn' || e.type == 'queue') {
-	        this.phoneTransferTargetType = e.type;
-	        this.phoneTransferTargetId = e.target;
-	        this.sendInviteTransfer();
-	      } else {
-	        console.error('Unknown transfer type', e);
-	      }
-	    }
-	  }, {
-	    key: "onCallViewCancelTransfer",
-	    value: function onCallViewCancelTransfer(e) {
-	      this.cancelInviteTransfer(e);
-	    }
-	  }, {
-	    key: "onCallViewCompleteTransfer",
-	    value: function onCallViewCompleteTransfer(e) {
-	      this.completeTransfer(e);
-	    }
-	  }, {
-	    key: "onCallViewCallListMakeCall",
-	    value: function onCallViewCallListMakeCall(e) {
-	      this.callListMakeCall(e);
-	    }
-	  }, {
-	    key: "onCallViewClose",
-	    value: function onCallViewClose() {
-	      this.BXIM.stopRepeatSound('ringtone');
-	      this.BXIM.stopRepeatSound('dialtone');
-	      this.callListId = 0;
-	      if (this.callView) {
-	        this.callView.dispose();
-	        this.callView = null;
-	      }
-	      if (this.deviceType == DeviceType.Phone) {
-	        this.callId = '';
-	        this.callActive = false;
-	        this.hasExternalCall = false;
-	        this.callSelfDisabled = false;
-	        clearInterval(this.phoneConnectedInterval);
-	        BX.localStorage.set(lsKeys$1.externalCall, false);
-	      }
-	    }
-	  }, {
-	    key: "onCallViewSwitchDevice",
-	    value: function onCallViewSwitchDevice(e) {
-	      var phoneNumber = e.phoneNumber;
-	      var lastCallListCallParams = this.lastCallListCallParams;
-	      if (this.hasExternalCall && this.callId) {
-	        this.phoneCommand('deviceHungup', {
-	          'CALL_ID': this.callId
-	        });
-	      }
-	      this.phoneCallFinish();
-	      this.callAbort();
-	      this.phoneDeviceCall(!this.phoneDeviceCall());
-	      this.callView.setDeviceCall(this.phoneDeviceCall());
-	      if (this.isCallListMode()) {
-	        this.callListMakeCall(lastCallListCallParams);
-	      } else {
-	        this.callView.close();
-	        this.phoneCall(phoneNumber);
-	      }
-	    }
-	  }, {
-	    key: "onCallViewQualityGraded",
-	    value: function onCallViewQualityGraded(grade) {
-	      var message = {
-	        COMMAND: 'gradeQuality',
-	        grade: grade
-	      };
-	      if (this.currentCall) {
-	        this.currentCall.sendMessage(JSON.stringify(message));
-	      }
-	    }
-	  }, {
-	    key: "onCallViewDialpadButtonClicked",
-	    value: function onCallViewDialpadButtonClicked(key) {
-	      this.sendDTMF(key);
-	    }
-	  }, {
-	    key: "onCallViewSaveComment",
-	    value: function onCallViewSaveComment(e) {
-	      this.phoneCommand("saveComment", {
-	        'CALL_ID': e.callId,
-	        'COMMENT': e.comment
-	      });
 	    }
 	  }, {
 	    key: "displayIncomingCall",
@@ -7905,7 +6923,6 @@ this.BX = this.BX || {};
 	      this.phoneParams = {};
 	      var direction = params.isCallback ? Direction.callback : Direction.incoming;
 	      this.callView = new PhoneCallView({
-	        BXIM: this.BXIM,
 	        userId: this.userId,
 	        phoneNumber: this.phoneNumber,
 	        lineNumber: params.lineNumber,
@@ -7921,9 +6938,12 @@ this.BX = this.BX || {};
 	        crmActivityEditUrl: params.crmActivityEditUrl,
 	        callId: this.callId,
 	        crmData: this.phoneCrm,
+	        foldedCallView: this.foldedCallView,
+	        backgroundWorker: this.backgroundWorker,
+	        messengerFacade: this.messengerFacade,
 	        restApps: this.restApps
 	      });
-	      this.bindPhoneViewCallbacks(this.callView);
+	      _classPrivateMethodGet$1(this, _bindPhoneViewCallbacks, _bindPhoneViewCallbacks2).call(this, this.callView);
 	      this.callView.setUiState(UiState.incoming);
 	      this.callView.setCallState(CallState.connecting);
 	      if (params.config) {
@@ -7935,55 +6955,32 @@ this.BX = this.BX || {};
 	        this.callView.setPortalCallData(params.portalCallData);
 	        this.callView.setPortalCallUserId(params.portalCallUserId);
 	      }
-	      if (!this.BXIM.windowFocus && this.notifyManager && this.notifyManager.nativeNotifyGranted()) {
-	        var icon = '';
-	        if (this.callUserId) {
-	          var userData = BX.MessengerCommon.getUser(this.callUserId);
-	          if (userData) {
-	            icon = userData.avatar;
-	          }
-	        }
-	        var notify = {
-	          title: main_core.Loc.getMessage('IM_PHONE_DESC'),
-	          text: main_core.Text.decode(this.callView.getTitle()),
-	          icon: icon,
-	          tag: 'im-call',
-	          onshow: function onshow() {
-	            return setTimeout(function () {
-	              return notify.close();
-	            }, 5000);
-	          },
-	          onclick: function onclick() {
-	            window.focus();
-	            notify.close();
-	          }
-	        };
-	        this.notifyManager.nativeNotify(notify);
-	      }
 	    }
 	  }, {
 	    key: "sendInviteTransfer",
 	    value: function sendInviteTransfer() {
-	      var _this19 = this;
+	      var _this10 = this;
 	      if (!this.currentCall && this.deviceType == DeviceType.Webrtc) {
 	        return false;
 	      }
 	      if (!this.phoneTransferTargetType || !this.phoneTransferTargetId) {
 	        return false;
 	      }
-	      this.phoneCommand('startTransfer', {
+	      var transferParams = {
 	        'CALL_ID': this.callId,
 	        'TARGET_TYPE': this.phoneTransferTargetType,
 	        'TARGET_ID': this.phoneTransferTargetId
-	      }).then(function (result) {
-	        if (result.SUCCESS == 'Y') {
-	          _this19.phoneTransferEnabled = true;
+	      };
+	      BX.rest.callMethod('voximplant.call.startTransfer', transferParams).then(function (response) {
+	        var data = response.data();
+	        if (data.SUCCESS == 'Y') {
+	          _this10.phoneTransferEnabled = true;
 	          BX.localStorage.set(lsKeys$1.vite, true, 1);
-	          _this19.phoneTransferCallId = result.DATA.CALL.CALL_ID;
-	          _this19.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_TRANSFER'));
-	          _this19.callView.setUiState(UiState.transferring);
+	          _this10.phoneTransferCallId = data.DATA.CALL.CALL_ID;
+	          _this10.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_TRANSFER'));
+	          _this10.callView.setUiState(UiState.transferring);
 	        } else {
-	          console.error("Could not start call transfer. Error: ", result.ERRORS);
+	          console.error("Could not start call transfer. Error: ", data.ERRORS);
 	        }
 	      });
 	    }
@@ -7996,7 +6993,7 @@ this.BX = this.BX || {};
 	      this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_ONLINE'));
 	      this.callView.setUiState(UiState.connected);
 	      if (this.phoneTransferCallId !== '') {
-	        this.phoneCommand('cancelTransfer', {
+	        BX.rest.callMethod('voximplant.call.cancelTransfer', {
 	          'CALL_ID': this.phoneTransferCallId
 	        });
 	      }
@@ -8014,7 +7011,7 @@ this.BX = this.BX || {};
 	      } else {
 	        this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_TRANSFER_1'));
 	      }
-	      this.BXIM.playSound('error', true);
+	      this.messengerFacade.playSound('error', true);
 	      this.callView.setUiState(UiState.transferFailed);
 	      this.phoneTransferTargetId = 0;
 	      this.phoneTransferTargetType = '';
@@ -8025,14 +7022,14 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "completeTransfer",
 	    value: function completeTransfer() {
-	      this.phoneCommand('completeTransfer', {
+	      BX.rest.callMethod('voximplant.call.completeTransfer', {
 	        'CALL_ID': this.phoneTransferCallId
 	      });
 	    }
 	  }, {
 	    key: "showExternalCall",
 	    value: function showExternalCall(params) {
-	      var _this20 = this;
+	      var _this11 = this;
 	      var direction;
 	      if (this.callView) {
 	        return;
@@ -8042,7 +7039,7 @@ this.BX = this.BX || {};
 	      }, 100);
 	      clearInterval(this.phoneConnectedInterval);
 	      this.phoneConnectedInterval = setInterval(function () {
-	        if (_this20.hasExternalCall) {
+	        if (_this11.hasExternalCall) {
 	          BX.localStorage.set(lsKeys$1.externalCall, true, 5);
 	        }
 	      }, 5000);
@@ -8072,6 +7069,9 @@ this.BX = this.BX || {};
 	        crmActivityEditUrl: params.crmActivityEditUrl,
 	        crmData: this.phoneCrm,
 	        isExternalCall: true,
+	        foldedCallView: this.foldedCallView,
+	        backgroundWorker: this.backgroundWorker,
+	        messengerFacade: this.messengerFacade,
 	        restApps: this.restApps
 	      });
 	      this.bindPhoneViewCallbacksExternalCall(this.callView);
@@ -8088,20 +7088,20 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "bindPhoneViewCallbacksExternalCall",
 	    value: function bindPhoneViewCallbacksExternalCall(callView) {
-	      var _this21 = this;
+	      var _this12 = this;
 	      callView.setCallback('close', function () {
-	        if (_this21.callView) {
-	          _this21.callView.dispose();
-	          _this21.callView = null;
+	        if (_this12.callView) {
+	          _this12.callView.dispose();
+	          _this12.callView = null;
 	        }
-	        _this21.callId = '';
-	        _this21.callActive = false;
-	        _this21.hasExternalCall = false;
-	        _this21.callSelfDisabled = false;
-	        clearInterval(_this21.phoneConnectedInterval);
+	        _this12.callId = '';
+	        _this12.callActive = false;
+	        _this12.hasExternalCall = false;
+	        _this12.callSelfDisabled = false;
+	        clearInterval(_this12.phoneConnectedInterval);
 	        BX.localStorage.set(lsKeys$1.externalCall, false);
 	      });
-	      callView.setCallback('saveComment', this.onCallViewSaveComment.bind(this));
+	      callView.setCallback('saveComment', _classPrivateMethodGet$1(this, _onCallViewSaveComment, _onCallViewSaveComment2).bind(this));
 	    }
 	  }, {
 	    key: "hideExternalCall",
@@ -8113,7 +7113,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "phoneLog",
 	    value: function phoneLog() {
-	      if (BX.MessengerCommon.isDesktop()) {
+	      if (this.messengerFacade.isDesktop()) {
 	        var text = '';
 	        for (var i = 0; i < arguments.length; i++) {
 	          if (BX.type.isPlainObject(arguments[i])) {
@@ -8126,7 +7126,7 @@ this.BX = this.BX || {};
 	            text = text + ' | ' + arguments[i];
 	          }
 	        }
-	        BX.desktop.log('phone.' + this.BXIM.userEmail + '.log', text.substring(3));
+	        im_v2_lib_desktopApi.DesktopApi.writeToLogFile('phone.' + this.userEmail + '.log', text.substring(3));
 	      }
 	      if (this.debug) {
 	        if (console) {
@@ -8147,42 +7147,29 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "checkDesktop",
 	    value: function checkDesktop() {
-	      return new Promise(function (resolve, reject) {
-	        BX.desktopUtils.runningCheck(function () {
-	          return reject();
-	        }, function () {
-	          return resolve();
+	      if (main_core.Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager')) {
+	        return new Promise(function (resolve) {
+	          var desktop = BX.Messenger.v2.Lib.DesktopManager.getInstance();
+	          desktop.checkStatusInDifferentContext().then(function (result) {
+	            if (result === false) {
+	              resolve();
+	            }
+	          });
 	        });
-	      });
-	    }
-	  }, {
-	    key: "callDialogAllowShow",
-	    value: function callDialogAllowShow(checkActive) {
-	      // TODO: make this dialog work properly again
-	      return;
-	      if (BX.MessengerCommon.isDesktop()) {
-	        return false;
 	      }
-	      if (this.phoneMicAccess) {
-	        return false;
+	      if (main_core.Reflection.getClass('BX.desktopUtils')) {
+	        return new Promise(function (resolve) {
+	          BX.desktopUtils.runningCheck(function () {}, function () {
+	            return resolve();
+	          });
+	        });
 	      }
-	      if (this.callDialogAllow) {
-	        this.callDialogAllow.close();
-	      }
-	      this.callDialogAllow = new BX.IM.Call.HardwareDialog({
-	        bindNode: this.messenger.popupMessengerDialog,
-	        offsetTop: this.messenger.popupMessengerDialog ? this.callOverlayMinimize ? -20 : -this.messenger.popupMessengerDialog.offsetHeight / 2 - 100 : -20,
-	        offsetLeft: this.callOverlay ? this.callOverlay.offsetWidth / 2 - 170 : 0,
-	        onDestroy: function () {
-	          this.callDialogAllow = null;
-	        }.bind(this)
-	      });
-	      this.callDialogAllow.show();
+	      return Promise.resolve();
 	    }
 	  }, {
 	    key: "restoreFoldedCallView",
 	    value: function restoreFoldedCallView() {
-	      var _this22 = this;
+	      var _this13 = this;
 	      var callProperties = BX.localStorage.get(lsKeys$1.foldedView);
 	      if (!main_core.Type.isPlainObject(callProperties)) {
 	        return;
@@ -8193,37 +7180,39 @@ this.BX = this.BX || {};
 	      this.deviceType = callProperties.phoneCallDevice;
 	      this.hasExternalCall = callProperties.hasExternalCall;
 	      var callViewProperties = callProperties.callView;
-	      callViewProperties.BXIM = this.BXIM;
+	      callViewProperties.foldedCallView = this.foldedCallView;
+	      callViewProperties.backgroundWorker = this.backgroundWorker;
+	      callViewProperties.messengerFacade = this.messengerFacade;
 	      this.callView = new PhoneCallView(callProperties.callView);
 	      if (this.hasExternalCall) {
 	        this.callView.setUiState(UiState.externalCard);
 	        this.callView.setCallState(CallState.connected);
 	        this.bindPhoneViewCallbacksExternalCall(this.callView);
 	      } else {
-	        this.bindPhoneViewCallbacks(this.callView);
+	        _classPrivateMethodGet$1(this, _bindPhoneViewCallbacks, _bindPhoneViewCallbacks2).call(this, this.callView);
 	      }
 	      if (this.hasExternalCall) {
 	        BX.localStorage.set(lsKeys$1.externalCall, true, 5);
 	        this.phoneConnectedInterval = setInterval(function () {
-	          if (_this22.hasExternalCall) {
+	          if (_this13.hasExternalCall) {
 	            BX.localStorage.set(lsKeys$1.externalCall, true, 5);
 	          }
 	        }, 5000);
 	      }
-	      this.phoneCommand('getCall', {
+	      BX.rest.callMethod('voximplant.call.get', {
 	        'CALL_ID': this.callId
-	      }, true, function (result) {
-	        if (!result.FOUND || result.FOUND !== 'Y') {
-	          _this22.callId = '';
-	          _this22.callActive = false;
-	          _this22.hasExternalCall = false;
-	          _this22.callSelfDisabled = false;
-	          clearInterval(_this22.phoneConnectedInterval);
-	          BX.localStorage.set(lsKeys$1.externalCall, false);
-	          if (_this22.callView) {
-	            _this22.callView.dispose();
-	            _this22.callView = null;
-	          }
+	      })["catch"](function () {
+	        // call is not found
+
+	        _this13.callId = '';
+	        _this13.callActive = false;
+	        _this13.hasExternalCall = false;
+	        _this13.callSelfDisabled = false;
+	        clearInterval(_this13.phoneConnectedInterval);
+	        BX.localStorage.set(lsKeys$1.externalCall, false);
+	        if (_this13.callView) {
+	          _this13.callView.dispose();
+	          _this13.callView = null;
 	        }
 	      });
 	    }
@@ -8254,7 +7243,7 @@ this.BX = this.BX || {};
 	      if (this.callView) {
 	        this.callView.setProgress(progress);
 	        if (progress === 'offline') {
-	          this.BXIM.playSound('error');
+	          this.messengerFacade.playSound('error');
 	        }
 	      }
 	    }
@@ -8280,11 +7269,11 @@ this.BX = this.BX || {};
 	    value: function callOverlayTimer(state)
 	    // TODO not ready yet
 	    {
-	      var _this23 = this;
+	      var _this14 = this;
 	      state = typeof state == 'undefined' ? 'start' : state;
 	      if (state == 'start') {
 	        this.phoneCallTimeInterval = setInterval(function () {
-	          return _this23.phoneCallTime++;
+	          return _this14.phoneCallTime++;
 	        }, 1000);
 	      } else {
 	        clearInterval(this.phoneCallTimeInterval);
@@ -8305,12 +7294,9 @@ this.BX = this.BX || {};
 	    value: function callOverlayDeleteEvents() {
 	      // this.desktop.closeTopmostWindow();
 
-	      if (BX.MessengerCommon.isDesktop() && this.BXIM.init) {
-	        BX.desktop.syncPause(false);
-	      }
 	      this.phoneCallFinish();
-	      this.BXIM.stopRepeatSound('ringtone');
-	      this.BXIM.stopRepeatSound('dialtone');
+	      this.messengerFacade.stopRepeatSound('ringtone');
+	      this.messengerFacade.stopRepeatSound('dialtone');
 	      clearTimeout(this.callDialogAllowTimeout);
 	      if (this.callDialogAllow) {
 	        this.callDialogAllow.close();
@@ -8333,35 +7319,33 @@ this.BX = this.BX || {};
 	    key: "getDebugInfo",
 	    value: function getDebugInfo() {
 	      return {
-	        context: this.BXIM.context,
-	        design: this.BXIM.design,
-	        // isDesktop: this.isDesktop() ? 'Y' : 'N',
-	        // isPage: this.isPage() ? 'Y' : 'N',
-	        // isMobile: this.isMobile() ? 'Y' : 'N',
 	        vInitedCall: BX.localStorage.get('vInitedCall') ? 'Y' : 'N',
-	        desktopStatus: this.BXIM.desktopStatus ? 'Y' : 'N',
-	        hasActiveCall: BX.MessengerCalls && BX.MessengerCalls.hasActiveCall() ? 'Y' : 'N',
-	        hasActiveCallTab: this.BXIM.callController && this.BXIM.callController.hasActiveCall() ? 'Y' : 'N',
+	        isDesktop: this.messengerFacade.isDesktop() ? 'Y' : 'N',
+	        hasActiveCall: this.messengerFacade.hasActiveCall() ? 'Y' : 'N',
 	        appVersion: navigator.appVersion
 	      };
 	    }
 	  }, {
 	    key: "testSimple",
 	    value: function testSimple() {
-	      var _this24 = this;
+	      var _this15 = this;
 	      var callId = 'test-call';
 	      this.callView = new PhoneCallView({
 	        callId: callId,
 	        restApps: this.restApps,
+	        foldedCallView: this.foldedCallView,
+	        backgroundWorker: this.backgroundWorker,
+	        messengerFacade: this.messengerFacade,
+	        darkMode: this.messengerFacade.isThemeDark(),
 	        events: {
 	          close: function close() {
-	            var _this24$callView;
+	            var _this15$callView;
 	            console.trace('close');
-	            (_this24$callView = _this24.callView) === null || _this24$callView === void 0 ? void 0 : _this24$callView.dispose();
-	            _this24.callView = null;
+	            (_this15$callView = _this15.callView) === null || _this15$callView === void 0 ? void 0 : _this15$callView.dispose();
+	            _this15.callView = null;
 	          },
 	          hangup: function hangup() {
-	            return _this24.callView.close();
+	            return _this15.callView.close();
 	          },
 	          transfer: function transfer(e) {
 	            return console.log('transfer', e);
@@ -8391,22 +7375,946 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "testUser",
 	    value: function testUser() {
-	      this.callView = new PhoneCallView({});
+	      this.callView = new PhoneCallView({
+	        messengerFacade: this.messengerFacade
+	      });
 	    }
 	  }, {
-	    key: "BXIM",
+	    key: "currentCall",
 	    get: function get() {
-	      return window.BXIM;
+	      return this._currentCall;
+	    },
+	    set: function set(call) {
+	      if (this._currentCall) {
+	        _classPrivateMethodGet$1(this, _removeCallEventListeners, _removeCallEventListeners2).call(this, this._currentCall);
+	        this.emit(Events$1.onCallDestroyed, {
+	          call: this._currentCall
+	        });
+	      }
+	      this._currentCall = call;
+	      if (this._currentCall) {
+	        _classPrivateMethodGet$1(this, _setCallEventListeners, _setCallEventListeners2).call(this, call);
+	        this.emit(Events$1.onCallCreated, {
+	          call: call
+	        });
+	      }
 	    }
 	  }]);
 	  return PhoneCallsController;
-	}();
+	}(main_core_events.EventEmitter);
+	function _setCallEventListeners2(call) {
+	  call.addEventListener(VoxImplant.CallEvents.Connected, this.onCallConnectedHandler);
+	  call.addEventListener(VoxImplant.CallEvents.Disconnected, this.onCallDisconnectedHandler);
+	  call.addEventListener(VoxImplant.CallEvents.Failed, this.onCallFailedHandler);
+	  call.addEventListener(VoxImplant.CallEvents.ProgressToneStart, this.onProgressToneStartHandler);
+	  call.addEventListener(VoxImplant.CallEvents.ProgressToneStop, this.onProgressToneStopHandler);
+	}
+	function _removeCallEventListeners2(call) {
+	  call.removeEventListener(VoxImplant.CallEvents.Connected, this.onCallConnectedHandler);
+	  call.removeEventListener(VoxImplant.CallEvents.Disconnected, this.onCallDisconnectedHandler);
+	  call.removeEventListener(VoxImplant.CallEvents.Failed, this.onCallFailedHandler);
+	  call.removeEventListener(VoxImplant.CallEvents.ProgressToneStart, this.onProgressToneStartHandler);
+	  call.removeEventListener(VoxImplant.CallEvents.ProgressToneStop, this.onProgressToneStopHandler);
+	}
+	function _onPullEvent2(command, params) {
+	  var handlers = {
+	    'invite': _classPrivateMethodGet$1(this, _onPullInvite, _onPullInvite2),
+	    'answer_self': _classPrivateMethodGet$1(this, _onPullAnswerSelf, _onPullAnswerSelf2),
+	    'timeout': _classPrivateMethodGet$1(this, _onPullTimeout, _onPullTimeout2),
+	    'outgoing': _classPrivateMethodGet$1(this, _onPullOutgoing, _onPullOutgoing2),
+	    'start': _classPrivateMethodGet$1(this, _onPullStart, _onPullStart2),
+	    'hold': _classPrivateMethodGet$1(this, _onPullHold, _onPullHold2),
+	    'unhold': _classPrivateMethodGet$1(this, _onPullUnhold, _onPullUnhold2),
+	    'update_crm': _classPrivateMethodGet$1(this, _onPullUpdateCrm, _onPullUpdateCrm2),
+	    'updatePortalUser': _classPrivateMethodGet$1(this, _onPullUpdatePortalUser, _onPullUpdatePortalUser2),
+	    'completeTransfer': _classPrivateMethodGet$1(this, _onPullCompleteTransfer, _onPullCompleteTransfer2),
+	    'phoneDeviceActive': _classPrivateMethodGet$1(this, _onPullPhoneDeviceActive, _onPullPhoneDeviceActive2),
+	    'changeDefaultLineId': _classPrivateMethodGet$1(this, _onPullChangeDefaultLineId, _onPullChangeDefaultLineId2),
+	    'replaceCallerId': _classPrivateMethodGet$1(this, _onPullReplaceCallerId, _onPullReplaceCallerId2),
+	    'showExternalCall': _classPrivateMethodGet$1(this, _onPullShowExternalCall, _onPullShowExternalCall2),
+	    'hideExternalCall': _classPrivateMethodGet$1(this, _onPullHideExternalCall, _onPullHideExternalCall2)
+	  };
+	  if (handlers.hasOwnProperty(command)) {
+	    handlers[command].apply(this, [params]);
+	  }
+	}
+	function _onPullInvite2(params) {
+	  var _this16 = this;
+	  if (!this.phoneSupport()) {
+	    return false;
+	  }
+	  if (this.hasActiveCall() || this.isCallListMode() || this.messengerFacade.hasActiveCall()) {
+	    BX.rest.callMethod('voximplant.call.busy', {
+	      'CALL_ID': params.callId
+	    });
+	    return false;
+	  }
+	  if (BX.localStorage.get(lsKeys$1.callInited) || BX.localStorage.get(lsKeys$1.externalCall)) {
+	    return false;
+	  }
+	  this.checkDesktop().then(function () {
+	    if (params.CRM && params.CRM.FOUND) {
+	      _this16.phoneCrm = params.CRM;
+	    } else {
+	      _this16.phoneCrm = {};
+	    }
+	    _this16.phonePortalCall = !!params.portalCall;
+	    if (_this16.phonePortalCall && params.portalCallData) {
+	      var userData = params.portalCallData[params.portalCallUserId];
+	      if (userData) {
+	        params.callerId = userData.name;
+	      }
+	      params.phoneNumber = '';
+	    }
+	    _this16.phoneCallConfig = params.config ? params.config : {};
+	    _this16.phoneCallTime = 0;
+	    _this16.messengerFacade.repeatSound('ringtone', 5000);
+	    BX.rest.callMethod('voximplant.call.sendWait', {
+	      'CALL_ID': params.callId,
+	      'DEBUG_INFO': _this16.getDebugInfo()
+	    });
+	    _this16.isCallTransfer = !!params.isTransfer;
+	    _this16.displayIncomingCall({
+	      chatId: params.chatId,
+	      callId: params.callId,
+	      callerId: params.callerId,
+	      lineNumber: params.lineNumber,
+	      companyPhoneNumber: params.phoneNumber,
+	      isCallback: params.isCallback,
+	      showCrmCard: params.showCrmCard,
+	      crmEntityType: params.crmEntityType,
+	      crmEntityId: params.crmEntityId,
+	      crmActivityId: params.crmActivityId,
+	      crmActivityEditUrl: params.crmActivityEditUrl,
+	      portalCall: params.portalCall,
+	      portalCallUserId: params.portalCallUserId,
+	      portalCallData: params.portalCallData,
+	      config: params.config
+	    });
+	  })["catch"](function () {});
+	}
+	function _onPullAnswerSelf2(params) {
+	  if (this.callSelfDisabled || this.callId != params.callId) {
+	    return false;
+	  }
+	  this.messengerFacade.stopRepeatSound('ringtone');
+	  this.messengerFacade.stopRepeatSound('dialtone');
+	  this.phoneCallFinish();
+	  this.callAbort();
+	  this.callView.close();
+	  this.callId = params.callId;
+	}
+	function _onPullTimeout2(params) {
+	  if (this.phoneTransferCallId === params.callId) {
+	    return this.errorInviteTransfer(params.failedCode, params.failedReason);
+	  } else if (this.callId != params.callId) {
+	    return false;
+	  }
+	  clearInterval(this.phoneConnectedInterval);
+	  BX.localStorage.remove(lsKeys$1.callInited);
+	  var external = this.hasExternalCall;
+	  this.messengerFacade.stopRepeatSound('ringtone');
+	  this.messengerFacade.stopRepeatSound('dialtone');
+	  this.phoneCallFinish();
+	  this.callAbort();
+	  if (!this.callView) {
+	    return;
+	  }
+	  this.callView.setCallState(CallState.idle, {
+	    failedCode: params.failedCode
+	  });
+	  if (external && params.failedCode == 486) {
+	    this.callView.setProgress(CallProgress.offline);
+	    this.callView.setStatusText(main_core.Loc.getMessage('IM_PHONE_ERROR_BUSY_PHONE'));
+	    this.callView.setUiState(UiState.sipPhoneError);
+	  } else if (external && params.failedCode == 480) {
+	    this.callView.setProgress(CallProgress.error);
+	    this.callView.setStatusText(main_core.Loc.getMessage('IM_PHONE_ERROR_NA_PHONE'));
+	    this.callView.setUiState(UiState.sipPhoneError);
+	  } else {
+	    if (this.isCallListMode()) {
+	      this.callView.setStatusText('');
+	      this.callView.setUiState(UiState.outgoing);
+	    } else {
+	      this.callView.setStatusText(main_core.Loc.getMessage('IM_PHONE_END'));
+	      this.callView.setUiState(UiState.idle);
+	      this.callView.autoClose();
+	    }
+	  }
+	}
+	function _onPullOutgoing2(params) {
+	  var _this17 = this;
+	  if (this.phoneNumber == params.phoneNumber || params.phoneNumber.indexOf(this.phoneNumber) >= 0) {
+	    this.deviceType = params.callDevice == DeviceType.Phone ? DeviceType.Phone : DeviceType.Webrtc;
+	    this.phonePortalCall = !!params.portalCall;
+	    this.phoneNumber = params.phoneNumber;
+	    if (this.hasExternalCall && this.deviceType == DeviceType.Phone) {
+	      this.callView.setProgress(CallProgress.connect);
+	      this.callView.setStatusText(main_core.Loc.getMessage('IM_PHONE_WAIT_ANSWER'));
+	    }
+	    this.phoneCallConfig = params.config ? params.config : {};
+	    this.callId = params.callId;
+	    this.phoneCallTime = 0;
+	    this.phoneCrm = params.CRM;
+	    if (this.callView && params.showCrmCard) {
+	      this.callView.setCrmData(params.CRM);
+	      this.callView.setCrmEntity({
+	        type: params.crmEntityType,
+	        id: params.crmEntityId,
+	        activityId: params.crmActivityId,
+	        activityEditUrl: params.crmActivityEditUrl,
+	        bindings: params.crmBindings
+	      });
+	      this.callView.setConfig(params.config);
+	      this.callView.setCallId(params.callId);
+	      if (params.lineNumber) {
+	        this.callView.setLineNumber(params.lineNumber);
+	      }
+	      if (params.lineName) {
+	        this.callView.setCompanyPhoneNumber(params.lineName);
+	      }
+	      this.callView.reloadCrmCard();
+	    }
+	    if (this.callView && this.phonePortalCall) {
+	      this.callView.setPortalCall(true);
+	      this.callView.setPortalCallData(params.portalCallData);
+	      this.callView.setPortalCallUserId(params.portalCallUserId);
+	      this.callView.setPortalCallQueueName(params.portalCallQueueName);
+	    }
+	  } else if (!this.hasActiveCall() && params.callDevice === DeviceType.Phone) {
+	    this.checkDesktop().then(function () {
+	      _this17.deviceType = params.callDevice === DeviceType.Phone ? DeviceType.Phone : DeviceType.Webrtc;
+	      _this17.phonePortalCall = !!params.portalCall;
+	      _this17.callId = params.callId;
+	      _this17.phoneCallTime = 0;
+	      _this17.phoneCallConfig = params.config ? params.config : {};
+	      _this17.phoneCrm = params.CRM;
+	      _this17.phoneDisplayExternal({
+	        callId: params.callId,
+	        config: params.config ? params.config : {},
+	        phoneNumber: params.phoneNumber,
+	        portalCall: params.portalCall,
+	        portalCallUserId: params.portalCallUserId,
+	        portalCallData: params.portalCallData,
+	        portalCallQueueName: params.portalCallQueueName,
+	        showCrmCard: params.showCrmCard,
+	        crmEntityType: params.crmEntityType,
+	        crmEntityId: params.crmEntityId
+	      });
+	    })["catch"](function () {});
+	  }
+	}
+	function _onPullStart2(params) {
+	  if (this.phoneTransferCallId === params.callId) {
+	    this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_TRANSFER_CONNECTED'));
+	    return;
+	  }
+	  if (this.callId != params.callId) {
+	    return;
+	  }
+	  this.callOverlayTimer('start');
+	  this.messengerFacade.stopRepeatSound('ringtone');
+	  if (this.callId == params.callId && this.deviceType == DeviceType.Phone && (this.deviceType == params.callDevice || this.phonePortalCall)) {
+	    _classPrivateMethodGet$1(this, _onCallConnected, _onCallConnected2).call(this);
+	  } else if (this.callId == params.callId && params.callDevice == DeviceType.Phone && this.phoneIncoming) {
+	    this.deviceType = DeviceType.Phone;
+	    if (this.callView) {
+	      this.callView.setDeviceCall(true);
+	    }
+	    _classPrivateMethodGet$1(this, _onCallConnected, _onCallConnected2).call(this);
+	  }
+	  if (params.CRM) {
+	    this.phoneCrm = params.CRM;
+	  }
+	  if (this.phoneNumber !== '') {
+	    this.phoneNumberLast = this.phoneNumber;
+	    this.messengerFacade.setLocalConfig('phone_last', this.phoneNumber);
+	  }
+	}
+	function _onPullHold2(params) {
+	  if (this.callId == params.callId) {
+	    this.isCallHold = true;
+	  }
+	}
+	function _onPullUnhold2(params) {
+	  if (this.callId == params.callId) {
+	    this.isCallHold = false;
+	  }
+	}
+	function _onPullUpdateCrm2(params) {
+	  if (this.callId == params.callId && params.CRM && params.CRM.FOUND) {
+	    this.phoneCrm = params.CRM;
+	    if (this.callView) {
+	      this.callView.setCrmData(params.CRM);
+	      if (params.showCrmCard) {
+	        this.callView.setCrmEntity({
+	          type: params.crmEntityType,
+	          id: params.crmEntityId,
+	          activityId: params.crmActivityId,
+	          activityEditUrl: params.crmActivityEditUrl,
+	          bindings: params.crmBindings
+	        });
+	        this.callView.reloadCrmCard();
+	      }
+	    }
+	  }
+	}
+	function _onPullUpdatePortalUser2(params) {
+	  if (this.callId == params.callId && this.callView) {
+	    this.callView.setPortalCall(true);
+	    this.callView.setPortalCallData(params.portalCallData);
+	    this.callView.setPortalCallUserId(params.portalCallUserId);
+	  }
+	}
+	function _onPullCompleteTransfer2(params) {
+	  if (this.callId != params.callId) {
+	    return false;
+	  }
+	  this.callId = params.newCallId;
+	  this.phoneTransferTargetId = 0;
+	  this.phoneTransferTargetType = '';
+	  this.phoneTransferCallId = '';
+	  this.phoneTransferEnabled = false;
+	  BX.localStorage.set(lsKeys$1.vite, false, 1);
+	  this.deviceType = params.callDevice == DeviceType.Phone ? DeviceType.Phone : DeviceType.Webrtc;
+	  if (this.deviceType == DeviceType.Phone) {
+	    this.callView.setDeviceCall(true);
+	  }
+	  this.callView.setTransfer(false);
+	  _classPrivateMethodGet$1(this, _onCallConnected, _onCallConnected2).call(this);
+	}
+	function _onPullPhoneDeviceActive2(params) {
+	  this.hasSipPhone = params.active == 'Y';
+	}
+	function _onPullChangeDefaultLineId2(params) {
+	  this.defaultLineId = params.defaultLineId;
+	}
+	function _onPullReplaceCallerId2(params) {
+	  var callTitle = main_core.Loc.getMessage('IM_PHONE_CALL_TRANSFER').replace('#PHONE#', params.callerId);
+	  this.setCallOverlayTitle(callTitle);
+	  this.callView.setPhoneNumber(params.callerId);
+	  if (params.CRM) {
+	    this.phoneCrm = params.CRM;
+	    this.callView.setCrmData(params.CRM);
+	    if (params.showCrmCard) {
+	      this.callView.setCrmEntity({
+	        type: params.crmEntityType,
+	        id: params.crmEntityId,
+	        activityId: params.crmActivityId,
+	        activityEditUrl: params.crmActivityEditUrl,
+	        bindings: params.crmBindings
+	      });
+	      this.callView.reloadCrmCard();
+	    }
+	  }
+	}
+	function _onPullShowExternalCall2(params) {
+	  var _this18 = this;
+	  if (this.messengerFacade.hasActiveCall()) {
+	    return false;
+	  }
+	  if (BX.localStorage.get(lsKeys$1.callInited) || BX.localStorage.get(lsKeys$1.externalCall)) {
+	    return false;
+	  }
+	  this.checkDesktop().then(function () {
+	    if (params.CRM && params.CRM.FOUND) {
+	      _this18.phoneCrm = params.CRM;
+	    } else {
+	      _this18.phoneCrm = {};
+	    }
+	    _this18.showExternalCall({
+	      callId: params.callId,
+	      fromUserId: params.fromUserId,
+	      toUserId: params.toUserId,
+	      isCallback: params.isCallback,
+	      phoneNumber: params.phoneNumber,
+	      lineNumber: params.lineNumber,
+	      companyPhoneNumber: params.companyPhoneNumber,
+	      showCrmCard: params.showCrmCard,
+	      crmEntityType: params.crmEntityType,
+	      crmEntityId: params.crmEntityId,
+	      crmBindings: params.crmBindings,
+	      crmActivityId: params.crmActivityId,
+	      crmActivityEditUrl: params.crmActivityEditUrl,
+	      config: params.config,
+	      portalCall: params.portalCall,
+	      portalCallData: params.portalCallData,
+	      portalCallUserId: params.portalCallUserId
+	    });
+	  })["catch"](function () {});
+	}
+	function _onPullHideExternalCall2(params) {
+	  if (this.hasActiveCall() && this.hasExternalCall && this.callId == params.callId) {
+	    this.hideExternalCall();
+	  }
+	}
+	function _onIncomingCall2(params) {
+	  // we can't use hasActiveCall here because the call view is open
+	  if (this.currentCall) {
+	    return false;
+	  }
+	  this.currentCall = params.call;
+	  this.currentCall.answer();
+	}
+	function _startCall2() {
+	  var _this19 = this;
+	  this.phoneParams['CALLER_ID'] = '';
+	  this.phoneParams['USER_ID'] = this.userId;
+	  this.phoneLog('Call params: ', this.phoneNumber, this.phoneParams);
+	  if (!this.voximplantClient.connected()) {
+	    _classPrivateMethodGet$1(this, _phoneOnSDKReady, _phoneOnSDKReady2).call(this);
+	    return false;
+	  }
+	  this.currentCall = this.voximplantClient.call(this.phoneNumber, false, this.getCallParams());
+	  var initParams = {
+	    'NUMBER': this.phoneNumber,
+	    'NUMBER_USER': main_core.Text.decode(this.phoneNumberUser),
+	    'IM_AJAX_CALL': 'Y'
+	  };
+	  BX.rest.callMethod('voximplant.call.init', initParams).then(function (response) {
+	    var data = response.data();
+	    if (!(data.HR_PHOTO.length === 0)) {
+	      _this19.callOverlayUserId = data.DIALOG_ID;
+	    } else {
+	      _this19.callOverlayChatId = data.DIALOG_ID.substring(4);
+	    }
+	  });
+	}
+	function _onCallFailed2(e) {
+	  var headers = e.headers || {};
+	  this.phoneLog('Call failed', e.code, e.reason);
+	  var reason = main_core.Loc.getMessage('IM_PHONE_END');
+	  if (e.code == 603) {
+	    reason = main_core.Loc.getMessage('IM_PHONE_DECLINE');
+	  } else if (e.code == 380) {
+	    reason = main_core.Loc.getMessage('IM_PHONE_ERR_SIP_LICENSE');
+	  } else if (e.code == 436) {
+	    reason = main_core.Loc.getMessage('IM_PHONE_ERR_NEED_RENT');
+	  } else if (e.code == 438) {
+	    reason = main_core.Loc.getMessage('IM_PHONE_ERR_BLOCK_RENT');
+	  } else if (e.code == 400) {
+	    reason = main_core.Loc.getMessage('IM_PHONE_ERR_LICENSE');
+	  } else if (e.code == 401) {
+	    reason = main_core.Loc.getMessage('IM_PHONE_401');
+	  } else if (e.code == 480 || e.code == 503) {
+	    if (this.phoneNumber == 911 || this.phoneNumber == 112) {
+	      reason = main_core.Loc.getMessage('IM_PHONE_NO_EMERGENCY');
+	    } else {
+	      reason = main_core.Loc.getMessage('IM_PHONE_UNAVAILABLE');
+	    }
+	  } else if (e.code == 484 || e.code == 404) {
+	    if (this.phoneNumber == 911 || this.phoneNumber == 112) {
+	      reason = main_core.Loc.getMessage('IM_PHONE_NO_EMERGENCY');
+	    } else {
+	      reason = main_core.Loc.getMessage('IM_PHONE_INCOMPLETED');
+	    }
+	  } else if (e.code == 402) {
+	    if (headers.hasOwnProperty('X-Reason') && headers['X-Reason'] === "SIP_PAYMENT_REQUIRED") {
+	      reason = main_core.Loc.getMessage('IM_PHONE_ERR_SIP_LICENSE');
+	    } else {
+	      reason = main_core.Loc.getMessage('IM_PHONE_NO_MONEY') + (this.isAdmin ? ' ' + main_core.Loc.getMessage('IM_PHONE_PAY_URL_NEW') : '');
+	    }
+	  } else if (e.code == 486 && this.phoneRinging > 1) {
+	    reason = main_core.Loc.getMessage('IM_M_CALL_ST_DECLINE');
+	  } else if (e.code == 486) {
+	    reason = main_core.Loc.getMessage('IM_PHONE_ERROR_BUSY');
+	  } else if (e.code == 403) {
+	    reason = main_core.Loc.getMessage('IM_PHONE_403');
+	    this.phoneServer = '';
+	    this.phoneLogin = '';
+	    this.phoneCheckBalance = true;
+	  } else if (e.code == 504) {
+	    reason = main_core.Loc.getMessage('IM_PHONE_ERROR_CONNECT');
+	  } else {
+	    reason = main_core.Loc.getMessage('IM_PHONE_ERROR');
+	  }
+	  if (e.code == 408 || e.code == 403) {
+	    this.scheduleApiDisconnect();
+	  }
+	  this.callOverlayProgress('offline');
+	  this.callAbort(reason);
+	  this.callView.setUiState(UiState.error);
+	  this.callView.setCallState(CallState.idle);
+	}
+	function _onCallDisconnected2(e) {
+	  this.phoneLog('Call disconnected', this.currentCall ? this.currentCall.id() : '-', this.currentCall ? this.currentCall.state() : '-');
+	  if (this.currentCall) {
+	    this.phoneCallFinish();
+	    this.callOverlayDeleteEvents();
+	    this.callOverlayStatus(main_core.Loc.getMessage('IM_M_CALL_ST_END'));
+	    this.messengerFacade.playSound('stop');
+	    this.callView.setCallState(CallState.idle);
+	    if (this.isCallListMode()) {
+	      this.callView.setUiState(UiState.outgoing);
+	    } else {
+	      this.callView.setStatusText(main_core.Loc.getMessage('IM_PHONE_END'));
+	      this.callView.setUiState(UiState.idle);
+	      this.callView.autoClose();
+	    }
+	  }
+	  this.scheduleApiDisconnect();
+	}
+	function _onProgressToneStart2(e) {
+	  if (!this.currentCall) {
+	    return false;
+	  }
+	  this.phoneLog('Progress tone start', this.currentCall.id());
+	  this.phoneRinging++;
+	  this.callOverlayStatus(main_core.Loc.getMessage('IM_PHONE_WAIT_ANSWER'));
+	}
+	function _onProgressToneStop2(e) {
+	  if (!this.currentCall) {
+	    return false;
+	  }
+	  this.phoneLog('Progress tone stop', this.currentCall.id());
+	}
+	function _onConnectionFailed2(e) {
+	  this.phoneLog('Connection failed');
+	  this.phoneCallFinish();
+	  this.callAbort(main_core.Loc.getMessage('IM_M_CALL_ERR'));
+	}
+	function _onConnectionClosed2(e) {
+	  this.phoneLog('Connection closed');
+	}
+	function _onMicResult2(e) {
+	  this.phoneMicAccess = e.result;
+	  this.phoneLog('Mic Access Allowed', e.result);
+	  if (e.result) {
+	    this.callOverlayProgress('connect');
+	    this.callOverlayStatus(main_core.Loc.getMessage('IM_M_CALL_ST_CONNECT'));
+	  } else {
+	    this.phoneCallFinish();
+	    this.callOverlayProgress('offline');
+	    this.callAbort(main_core.Loc.getMessage('IM_M_CALL_ST_NO_ACCESS'));
+	    this.callView.setUiState(UiState.error);
+	    this.callView.setCallState(CallState.idle);
+	  }
+	}
+	function _onNetStatsReceived2(e) {
+	  if (!this.currentCall || this.currentCall.state() != "CONNECTED") {
+	    return false;
+	  }
+	  var percent = 100 - parseInt(e.stats.packetLoss);
+	  var grade = this.displayCallQuality(percent);
+	  this.currentCall.sendMessage(JSON.stringify({
+	    'COMMAND': 'meter',
+	    'PACKETLOSS': e.stats.packetLoss,
+	    'PERCENT': percent,
+	    'GRADE': grade
+	  }));
+	}
+	function _doOpenKeyPad2(e) {
+	  var _this20 = this;
+	  if (!this.phoneSupport() && !this.isRestLine(this.defaultLineId)) {
+	    this.showUnsupported();
+	    return false;
+	  }
+	  if (this.hasActiveCall() || BX.localStorage.get(lsKeys$1.callInited) || BX.localStorage.get(lsKeys$1.externalCall)) {
+	    return false;
+	  }
+	  if (this.keypad) {
+	    this.keypad.close();
+	    return false;
+	  }
+	  this.keypad = new Keypad({
+	    bindElement: e.bindElement,
+	    offsetTop: e.offsetTop,
+	    offsetLeft: e.offsetLeft,
+	    anglePosition: e.anglePosition,
+	    angleOffset: e.angleOffset,
+	    defaultLineId: this.defaultLineId,
+	    lines: this.phoneLines,
+	    availableLines: this.availableLines,
+	    history: this.dialHistory,
+	    callInterceptAllowed: this.callInterceptAllowed,
+	    onDial: this.onKeyPadDial.bind(this),
+	    onIntercept: this.onKeyPadIntercept.bind(this),
+	    onClose: function onClose() {
+	      _this20.onKeyPadClose();
+	      if (main_core.Type.isFunction(e.onClose)) {
+	        e.onClose();
+	      }
+	    }
+	  });
+	  this.keypad.show();
+	}
+	function _doPhoneCall2(number) {
+	  var _this21 = this;
+	  var params = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	  if (BX.localStorage.get(lsKeys$1.callInited) || this.callView || this.hasActiveCall()) {
+	    return false;
+	  }
+	  if (!this.phoneSupport()) {
+	    this.showUnsupported();
+	    return false;
+	  }
+	  if (this.keypad) {
+	    this.keypad.close();
+	  }
+	  if (main_core.Type.isStringFilled(number)) {
+	    this.addToHistory(number);
+	  }
+	  var lineId = main_core.Type.isStringFilled(params['LINE_ID']) ? params['LINE_ID'] : this.defaultLineId;
+	  if (this.isRestLine(lineId)) {
+	    this.startCallViaRestApp(number, lineId, params);
+	    return true;
+	  }
+	  this.phoneLog(number, params);
+	  this.phoneNumberUser = main_core.Text.encode(number);
+	  var numberOriginal = number;
+	  if (babelHelpers["typeof"](params) != 'object') {
+	    params = {};
+	  }
+	  var internationalNumber = this.correctPhoneNumber(number);
+	  if (internationalNumber.length <= 0) {
+	    ui_dialogs_messagebox.MessageBox.alert(main_core.Loc.getMessage('IM_PHONE_WRONG_NUMBER_DESC'), main_core.Loc.getMessage('IM_PHONE_WRONG_NUMBER'));
+	    return false;
+	  }
+	  this.setPhoneNumber(internationalNumber);
+	  this.initiator = true;
+	  this.callInitUserId = this.userId;
+	  this.callActive = false;
+	  this.callUserId = 0;
+	  this.hasExternalCall = this.phoneDeviceCall();
+	  this.phoneParams = params;
+	  this.callView = new PhoneCallView({
+	    darkMode: this.messengerFacade.isThemeDark(),
+	    phoneNumber: this.phoneFullNumber,
+	    callTitle: this.phoneNumberUser,
+	    fromUserId: this.userId,
+	    direction: Direction.outgoing,
+	    uiState: UiState.connectingOutgoing,
+	    status: main_core.Loc.getMessage('IM_M_CALL_ST_CONNECT'),
+	    hasSipPhone: this.hasSipPhone,
+	    deviceCall: this.hasExternalCall,
+	    crmData: this.phoneCrm,
+	    autoFold: params['AUTO_FOLD'] === true,
+	    foldedCallView: this.foldedCallView,
+	    backgroundWorker: this.backgroundWorker,
+	    messengerFacade: this.messengerFacade,
+	    restApps: this.restApps
+	  });
+	  _classPrivateMethodGet$1(this, _bindPhoneViewCallbacks, _bindPhoneViewCallbacks2).call(this, this.callView);
+	  this.callView.show();
+	  this.messengerFacade.playSound("start");
+	  if (this.hasExternalCall) {
+	    this.deviceType = DeviceType.Phone;
+	    this.callView.setProgress(CallProgress.wait);
+	    this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_PHONE_NOTICE'));
+	    var callStartParams = {
+	      'NUMBER': numberOriginal.toString().replace(/[^0-9+*#,;]/g, ''),
+	      'PARAMS': params
+	    };
+	    BX.rest.callMethod('voximplant.call.startWithDevice', callStartParams).then(function (response) {
+	      var data = response.data();
+	      _this21.callId = data.CALL_ID;
+	      _this21.hasExternalCall = data.EXTERNAL === true;
+	      _this21.phoneCallConfig = data.CONFIG;
+	      _this21.callView.setProgress(CallProgress.wait);
+	      _this21.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_WAIT_PHONE'));
+	      _this21.callView.setUiState(UiState.connectingOutgoing);
+	      _this21.callView.setCallState(CallState.connecting);
+	      _this21.emit(Events$1.onDeviceCallStarted, {
+	        callId: data.CALL_ID,
+	        config: data.CONFIG
+	      });
+	    })["catch"](function (err) {
+	      _this21.callView.setProgress(CallProgress.error);
+	      _this21.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_PHONE_ERROR'));
+	      _this21.callView.setUiState(UiState.error);
+	      _this21.callView.setCallState(CallState.idle);
+	    });
+	  } else {
+	    this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_CALL_INIT'));
+	    this.phoneApiInit().then(function () {
+	      return _classPrivateMethodGet$1(_this21, _phoneOnSDKReady, _phoneOnSDKReady2).call(_this21);
+	    });
+	  }
+	}
+	function _doCallListMakeCall2(e) {
+	  var _this22 = this;
+	  if (this.isRestLine(this.defaultLineId)) {
+	    this.startCallViaRestApp(e.phoneNumber, this.defaultLineId, {
+	      'ENTITY_TYPE': 'CRM_' + e.crmEntityType,
+	      'ENTITY_ID': e.crmEntityId,
+	      'CALL_LIST_ID': e.callListId
+	    });
+	    return true;
+	  }
+	  if (BX.localStorage.get(lsKeys$1.callInited)) {
+	    return false;
+	  }
+	  if (this.callActive) {
+	    return false;
+	  }
+	  if (!this.callView) {
+	    return false;
+	  }
+	  this.lastCallListCallParams = e;
+	  if (!this.phoneSupport()) {
+	    this.callView.setStatusText(main_core.Loc.getMessage('IM_CALL_NO_WEBRT'));
+	    this.callView.setUiState(UiState.error);
+	    this.callView.setCallState(CallState.idle);
+	    return false;
+	  }
+	  var number = e.phoneNumber;
+	  var numberOriginal = number;
+	  var internationalNumber = this.correctPhoneNumber(number);
+	  if (internationalNumber.length <= 0) {
+	    this.callView.setStatusText(main_core.Loc.getMessage('IM_PHONE_WRONG_NUMBER_DESC').replace("<br/>", "\n"));
+	    return false;
+	  }
+	  this.initiator = true;
+	  this.callInitUserId = this.userId;
+	  this.callActive = false;
+	  this.callUserId = 0;
+	  this.hasExternalCall = this.phoneDeviceCall();
+	  this.setPhoneNumber(internationalNumber);
+	  this.phoneParams = {
+	    'ENTITY_TYPE': 'CRM_' + e.crmEntityType,
+	    'ENTITY_ID': e.crmEntityId,
+	    'CALL_LIST_ID': e.callListId
+	  };
+	  this.messengerFacade.playSound("start");
+	  if (this.hasExternalCall) {
+	    this.deviceType = DeviceType.Phone;
+	    this.callView.setProgress(CallProgress.wait);
+	    this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_PHONE_NOTICE'));
+	    this.callView.setUiState(UiState.connectingOutgoing);
+	    this.callView.setCallState(CallState.connecting);
+	    var callStartParams = {
+	      'NUMBER': numberOriginal.toString().replace(/[^0-9+*#,;]/g, ''),
+	      'PARAMS': this.phoneParams
+	    };
+	    BX.rest.callMethod('voximplant.call.startWithDevice', callStartParams).then(function (response) {
+	      var data = response.data();
+	      _this22.callId = data.CALL_ID;
+
+	      // TODO: is this necessary? It did not work previously
+	      _this22.hasExternalCall = data.EXTERNAL === true;
+	      _this22.phoneCallConfig = data.CONFIG;
+	      _this22.callView.setProgress(CallProgress.wait);
+	      _this22.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_WAIT_PHONE'));
+	      _this22.callView.setUiState(UiState.connectingOutgoing);
+	      _this22.callView.setCallState(CallState.connecting);
+	      _this22.emit(Events$1.onDeviceCallStarted, {
+	        callId: data.CALL_ID,
+	        config: data.CONFIG
+	      });
+	    })["catch"](function (err) {
+	      _this22.callView.setProgress(CallProgress.error);
+	      _this22.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_PHONE_ERROR'));
+	      _this22.callView.setUiState(UiState.error);
+	      _this22.callView.setCallState(CallState.idle);
+	    });
+	  } else {
+	    this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_CALL_INIT'));
+	    this.callView.setUiState(UiState.connectingOutgoing);
+	    this.callView.setCallState(CallState.connecting);
+	    this.phoneApiInit().then(function () {
+	      return _classPrivateMethodGet$1(_this22, _phoneOnSDKReady, _phoneOnSDKReady2).call(_this22);
+	    });
+	  }
+	}
+	function _phoneOnSDKReady2(params) {
+	  var _this23 = this;
+	  this.phoneLog('SDK ready');
+	  params = params || {};
+	  params.delay = params.delay || false;
+	  if (!params.delay && this.hasSipPhone) {
+	    if (!this.phoneIncoming && !this.phoneDeviceCall()) {
+	      this.callOverlayProgress('wait');
+	      this.callDialogAllowTimeout = setTimeout(function () {
+	        return _classPrivateMethodGet$1(_this23, _phoneOnSDKReady, _phoneOnSDKReady2).call(_this23, {
+	          delay: true
+	        });
+	      }, 5000);
+	      return false;
+	    }
+	  }
+	  this.phoneLog('Connection exists');
+	  this.callView.setProgress(CallProgress.connect);
+	  this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_CONNECT'));
+	  this.phoneOnAuthResult({
+	    result: true
+	  });
+	  this.callView.setCallState(CallState.connecting);
+	  if (this.phoneIncoming) {
+	    this.callView.setUiState(UiState.connectingIncoming);
+	  } else {
+	    this.callView.setUiState(UiState.connectingOutgoing);
+	  }
+	}
+	function _onCallConnected2(e) {
+	  this.messengerFacade.stopRepeatSound('ringtone', 5000);
+	  BX.localStorage.set(lsKeys$1.callInited, true, 7);
+	  clearInterval(this.phoneConnectedInterval);
+	  this.phoneConnectedInterval = setInterval(function () {
+	    return BX.localStorage.set(lsKeys$1.callInited, true, 7);
+	  }, 5000);
+
+	  // this.desktop.closeTopmostWindow();
+
+	  this.phoneLog('Call connected', e);
+	  if (this.callView) {
+	    this.callView.setUiState(UiState.connected);
+	    this.callView.setCallState(CallState.connected);
+	    this.callView.setProgress(CallProgress.online);
+	    this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_ONLINE'));
+	  }
+	  this.callActive = true;
+	  this.emit(Events$1.onCallConnected, {
+	    call: this.currentCall,
+	    isIncoming: this.phoneIncoming,
+	    isDeviceCall: this.phoneDeviceCall()
+	  });
+	}
+	function _bindPhoneViewCallbacks2(callView) {
+	  if (!callView instanceof PhoneCallView) {
+	    return false;
+	  }
+	  callView.setCallback('mute', _classPrivateMethodGet$1(this, _onCallViewMute, _onCallViewMute2).bind(this));
+	  callView.setCallback('unmute', _classPrivateMethodGet$1(this, _onCallViewUnmute, _onCallViewUnmute2).bind(this));
+	  callView.setCallback('hold', _classPrivateMethodGet$1(this, _onCallViewHold, _onCallViewHold2).bind(this));
+	  callView.setCallback('unhold', _classPrivateMethodGet$1(this, _onCallViewUnhold, _onCallViewUnhold2).bind(this));
+	  callView.setCallback('answer', _classPrivateMethodGet$1(this, _onCallViewAnswer, _onCallViewAnswer2).bind(this));
+	  callView.setCallback('skip', _classPrivateMethodGet$1(this, _onCallViewSkip, _onCallViewSkip2).bind(this));
+	  callView.setCallback('hangup', _classPrivateMethodGet$1(this, _onCallViewHangup, _onCallViewHangup2).bind(this));
+	  callView.setCallback('transfer', _classPrivateMethodGet$1(this, _onCallViewTransfer, _onCallViewTransfer2).bind(this));
+	  callView.setCallback('cancelTransfer', _classPrivateMethodGet$1(this, _onCallViewCancelTransfer, _onCallViewCancelTransfer2).bind(this));
+	  callView.setCallback('completeTransfer', _classPrivateMethodGet$1(this, _onCallViewCompleteTransfer, _onCallViewCompleteTransfer2).bind(this));
+	  callView.setCallback('callListMakeCall', _classPrivateMethodGet$1(this, _onCallViewCallListMakeCall, _onCallViewCallListMakeCall2).bind(this));
+	  callView.setCallback('close', _classPrivateMethodGet$1(this, _onCallViewClose, _onCallViewClose2).bind(this));
+	  callView.setCallback('switchDevice', _classPrivateMethodGet$1(this, _onCallViewSwitchDevice, _onCallViewSwitchDevice2).bind(this));
+	  callView.setCallback('qualityGraded', _classPrivateMethodGet$1(this, _onCallViewQualityGraded, _onCallViewQualityGraded2).bind(this));
+	  callView.setCallback('dialpadButtonClicked', _classPrivateMethodGet$1(this, _onCallViewDialpadButtonClicked, _onCallViewDialpadButtonClicked2).bind(this));
+	  callView.setCallback('saveComment', _classPrivateMethodGet$1(this, _onCallViewSaveComment, _onCallViewSaveComment2).bind(this));
+	}
+	function _onCallViewMute2() {
+	  this.muteCall();
+	}
+	function _onCallViewUnmute2() {
+	  this.unmuteCall();
+	}
+	function _onCallViewHold2() {
+	  this.holdCall();
+	}
+	function _onCallViewUnhold2() {
+	  this.unholdCall();
+	}
+	function _onCallViewAnswer2() {
+	  this.phoneIncomingAnswer();
+	}
+	function _onCallViewSkip2() {
+	  BX.rest.callMethod('voximplant.call.skip', {
+	    'CALL_ID': this.callId
+	  });
+	  this.phoneCallFinish();
+	  this.callAbort();
+	  this.callView.close();
+	}
+	function _onCallViewHangup2() {
+	  if (this.hasExternalCall && this.callId) {
+	    BX.rest.callMethod('voximplant.call.hangupDevice', {
+	      'CALL_ID': this.callId
+	    });
+	  }
+	  this.phoneCallFinish();
+	  this.messengerFacade.playSound('stop');
+	  if (!this.callView) {
+	    return;
+	  }
+	  this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_FINISHED'));
+	  this.callView.setCallState(CallState.idle);
+	  if (this.isCallListMode()) {
+	    this.callView.setUiState(UiState.outgoing);
+	    if (this.callView.isFolded()) {
+	      this.callView.unfold();
+	    }
+	  } else {
+	    this.callView.close();
+	  }
+	}
+	function _onCallViewTransfer2(e) {
+	  if (e.type == 'user' || e.type == 'pstn' || e.type == 'queue') {
+	    this.phoneTransferTargetType = e.type;
+	    this.phoneTransferTargetId = e.target;
+	    this.sendInviteTransfer();
+	  } else {
+	    console.error('Unknown transfer type', e);
+	  }
+	}
+	function _onCallViewCancelTransfer2(e) {
+	  this.cancelInviteTransfer(e);
+	}
+	function _onCallViewCompleteTransfer2(e) {
+	  this.completeTransfer(e);
+	}
+	function _onCallViewCallListMakeCall2(e) {
+	  this.callListMakeCall(e);
+	}
+	function _onCallViewClose2() {
+	  this.messengerFacade.stopRepeatSound('ringtone');
+	  this.messengerFacade.stopRepeatSound('dialtone');
+	  this.callListId = 0;
+	  if (this.callView) {
+	    this.callView.dispose();
+	    this.callView = null;
+	  }
+	  if (this.deviceType == DeviceType.Phone) {
+	    this.callId = '';
+	    this.callActive = false;
+	    this.hasExternalCall = false;
+	    this.callSelfDisabled = false;
+	    clearInterval(this.phoneConnectedInterval);
+	    BX.localStorage.set(lsKeys$1.externalCall, false);
+	  }
+	}
+	function _onCallViewSwitchDevice2(e) {
+	  var phoneNumber = e.phoneNumber;
+	  var lastCallListCallParams = this.lastCallListCallParams;
+	  if (this.hasExternalCall && this.callId) {
+	    BX.rest.callMethod('voximplant.call.hangupDevice', {
+	      'CALL_ID': this.callId
+	    });
+	  }
+	  this.phoneCallFinish();
+	  this.callAbort();
+	  this.phoneDeviceCall(!this.phoneDeviceCall());
+	  this.callView.setDeviceCall(this.phoneDeviceCall());
+	  if (this.isCallListMode()) {
+	    this.callListMakeCall(lastCallListCallParams);
+	  } else {
+	    this.callView.close();
+	    this.phoneCall(phoneNumber);
+	  }
+	}
+	function _onCallViewQualityGraded2(grade) {
+	  var message = {
+	    COMMAND: 'gradeQuality',
+	    grade: grade
+	  };
+	  if (this.currentCall) {
+	    this.currentCall.sendMessage(JSON.stringify(message));
+	  }
+	}
+	function _onCallViewDialpadButtonClicked2(key) {
+	  this.sendDTMF(key);
+	}
+	function _onCallViewSaveComment2(e) {
+	  BX.rest.callMethod("voximplant.call.saveComment", {
+	    'CALL_ID': e.callId,
+	    'COMMENT': e.comment
+	  });
+	}
+	babelHelpers.defineProperty(PhoneCallsController, "Events", Events$1);
 
 	// legacy compat
 	BX.FoldedCallView = FoldedCallView;
 
 	exports.PhoneCallsController = PhoneCallsController;
 	exports.PhoneCallView = PhoneCallView;
+	exports.BackgroundWorker = BackgroundWorker;
 
-}((this.BX.Voximplant = this.BX.Voximplant || {}),BX,BX.Main));
+}((this.BX.Voximplant = this.BX.Voximplant || {}),BX.Event,BX,BX.Messenger.v2.Lib,BX.Main,BX.UI.Dialogs));
 //# sourceMappingURL=phone-calls.bundle.js.map

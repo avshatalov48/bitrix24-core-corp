@@ -144,8 +144,8 @@ class CCrmFields
 			),
 			'CRM_QUOTE'=> array(
 				'ID' =>'CRM_QUOTE',
-				'NAME' => GetMessage('CRM_FIELDS_QUOTE'),
-				'DESC' => GetMessage('CRM_FIELDS_QUOTE_DESC')
+				'NAME' => GetMessage('CRM_FIELDS_QUOTE_MSGVER_1'),
+				'DESC' => GetMessage('CRM_FIELDS_QUOTE_DESC_MSGVER_1')
 			),
 			'CRM_INVOICE'=> array(
 				'ID' =>'CRM_INVOICE',
@@ -502,7 +502,7 @@ class CCrmFields
 					<input type="checkbox" name="ENTITY_TYPE[CONTACT]" value="Y" '.($entityTypeContact==="Y"? 'checked="checked"': '').'> '.GetMessage('USER_TYPE_CRM_ENTITY_TYPE_CONTACT').'<br/>
 					<input type="checkbox" name="ENTITY_TYPE[COMPANY]" value="Y" '.($entityTypeCompany==="Y"? 'checked="checked"': '').'> '.GetMessage('USER_TYPE_CRM_ENTITY_TYPE_COMPANY').'<br/>
 					<input type="checkbox" name="ENTITY_TYPE[DEAL]" value="Y" '.($entityTypeDeal==="Y"? 'checked="checked"': '').'> '.GetMessage('USER_TYPE_CRM_ENTITY_TYPE_DEAL').'<br/>
-					<input type="checkbox" name="ENTITY_TYPE[QUOTE]" value="Y" '.($entityTypeQuote==="Y"? 'checked="checked"': '').'> '.GetMessage('USER_TYPE_CRM_ENTITY_TYPE_QUOTE').'<br/>
+					<input type="checkbox" name="ENTITY_TYPE[QUOTE]" value="Y" '.($entityTypeQuote==="Y"? 'checked="checked"': '').'> '.GetMessage('USER_TYPE_CRM_ENTITY_TYPE_QUOTE_MSGVER_1').'<br/>
 				';
 
 				$dynamicTypes = \Bitrix\Crm\UserField\Types\ElementType::getUseInUserfieldTypes();

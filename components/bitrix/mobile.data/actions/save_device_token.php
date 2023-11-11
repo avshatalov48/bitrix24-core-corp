@@ -12,8 +12,8 @@ $data = ["status" => "failed"];
 
 
 /**
- * @var $DB CAllDatabase
- * @var $USER CALLUser
+ * @var $DB CDatabase
+ * @var $USER CUser
  */
 
 

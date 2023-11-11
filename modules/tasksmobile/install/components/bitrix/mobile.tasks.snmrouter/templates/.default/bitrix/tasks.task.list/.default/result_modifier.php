@@ -1,4 +1,9 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+<?
+
+use Bitrix\Tasks\Internals\Task\MetaStatus;
+use Bitrix\Tasks\Internals\Task\Priority;
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
 /**
@@ -108,7 +113,7 @@ foreach ($arResult["LIST"] as $task)
 	if (!empty($task["DEADLINE"]))
 		$task["DEADLINE"] = '<span id="bx-task-deadline-'.$task["ID"].'">'.trim(FormatDate($arParams["DATE_TIME_FORMAT"], MakeTimeStamp($task["DEADLINE"])), ", .").'</span>';
 	$task["EXPIRED"] = "";
-	if ($task["STATUS"] == CTasks::METASTATE_EXPIRED)
+	if ((int)$task["STATUS"] === MetaStatus::EXPIRED)
 		$task["EXPIRED"] = '<span class="mobile-grid-field-expired">'.GetMessage("TASK_EXPIRED").'</span>';
 
 	$user = (CUser::GetByID($task["CREATED_BY"])->fetch() ?: array());
@@ -123,12 +128,12 @@ foreach ($arResult["LIST"] as $task)
 		'bx-user_id="'. $task["~RESPONSIBLE_ID"] .'" '.
 		'onclick="BX.Mobile.Tasks.go(this)">'.$task["RESPONSIBLE_ID"].'</span>';
 
-	$task["PRIORITY"] = ($task["~PRIORITY"] == CTasks::PRIORITY_HIGH ?
+	$task["PRIORITY"] = ((int)$task["~PRIORITY"] === Priority::HIGH ?
 		"<label class=\"mobile-grid-field-priority mobile-grid-field-priority-2\"><span>".GetMessage("TASKS_PRIORITY_2")."</span></label>" : "");
 	if ($task["ACTION"]['EDIT'])
 	{
 		$task["PRIORITY"] = "<label for=\"bx-task-priority-".$task["ID"]."\" class=\"mobile-grid-field-priority\">".
-			"<input type=\"checkbox\" id=\"bx-task-priority-".$task["ID"]."\" value=\"2\" ".($task["~PRIORITY"] == CTasks::PRIORITY_HIGH ? "checked" : "")." class=\"mobile-grid-field-priority\">".
+			"<input type=\"checkbox\" id=\"bx-task-priority-".$task["ID"]."\" value=\"2\" ".((int)$task["~PRIORITY"] === Priority::HIGH ? "checked" : "")." class=\"mobile-grid-field-priority\">".
 			"<span>".GetMessage("TASKS_PRIORITY_0")."</span>".
 			"<span>".GetMessage("TASKS_PRIORITY_2")."</span>".
 			"</label>";

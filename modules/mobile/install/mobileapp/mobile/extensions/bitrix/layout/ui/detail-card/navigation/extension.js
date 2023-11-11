@@ -41,7 +41,7 @@
 				if (typeData.hasOwnProperty('svg'))
 				{
 					let { svg } = typeData;
-					if (svg.indexOf('http') === -1)
+					if (!svg.includes('http'))
 					{
 						svg = currentDomain + svg;
 					}

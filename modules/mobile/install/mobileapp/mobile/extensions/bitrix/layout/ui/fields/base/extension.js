@@ -12,7 +12,8 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 	const { capitalize, stringify } = require('utils/string');
 	const { isNil } = require('utils/type');
 	const { chevronDown, chevronUp } = require('assets/common');
-
+	const { copyToClipboard } = require('utils/copy');
+	const { Loc } = require('loc');
 	const ERROR_TEXT_COLOR = '#ff5752';
 	const TOOLTIP_COLOR = '#e89b06';
 
@@ -58,6 +59,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			this.preparedValue = null;
 
 			this.handleContentClick = this.handleContentClick.bind(this);
+			this.handleContentLongClick = this.handleContentLongClick.bind(this);
 			this.setFocusInternal = throttle(this.setFocusInternal, 300, this);
 
 			this.debouncedValidation = debounce(this.validate, 300, this);
@@ -249,6 +251,13 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return BX.prop.getString(styles, 'externalWrapperBackgroundColor', null);
 		}
 
+		getExternalWrapperMarginHorizontal()
+		{
+			const styles = this.getConfig().styles || {};
+
+			return BX.prop.getString(styles, 'externalWrapperMarginHorizontal', 6);
+		}
+
 		getConfig()
 		{
 			const config = BX.prop.getObject(this.props, 'config', {});
@@ -256,6 +265,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return {
 				...config,
 				parentWidget: BX.prop.get(config, 'parentWidget', undefined),
+				copyingOnLongClick: BX.prop.getBoolean(config, 'copyingOnLongClick', true),
 			};
 		}
 
@@ -449,7 +459,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 				if (this.hasSolidBorderContainer())
 				{
 					return {
-						marginHorizontal: 6,
+						marginHorizontal: this.getExternalWrapperMarginHorizontal(),
 						paddingHorizontal: 16,
 						paddingVertical: 9,
 						backgroundColor: this.getExternalWrapperBackgroundColor(),
@@ -585,6 +595,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 						this.renderRightIcons(),
 						this.renderAdditionalContent(),
 					),
+					this.renderAdditionalBottomContent(),
 				),
 				this.hasErrorMessage() && this.renderError(),
 				!this.hasErrorMessage() && this.hasTooltipMessage() && this.renderTooltip(),
@@ -661,6 +672,57 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			{
 				this.focus();
 			}
+		}
+
+		getContentLongClickHandler()
+		{
+			if (!this.canCopyValue() || (Application.getPlatform() === 'android' && Application.getApiVersion() < 51))
+			{
+				return null;
+			}
+
+			return this.handleContentLongClick;
+		}
+
+		/**
+		 * @internal
+		 */
+		handleContentLongClick(forceCopyValue = null)
+		{
+			const copiedText = forceCopyValue || this.prepareValueToCopy();
+			const copyingOnLongClick = this.getConfig().copyingOnLongClick;
+			if (this.canCopyValue() && copiedText && copyingOnLongClick)
+			{
+				copyToClipboard(copiedText, this.copyMessage());
+				Haptics.impactLight();
+			}
+		}
+
+		/**
+		 * @protected
+		 * @return {boolean}
+		 */
+		canCopyValue()
+		{
+			return false;
+		}
+
+		/**
+		 * @protected
+		 * @return {string}
+		 */
+		copyMessage()
+		{
+			return Loc.getMessage('FIELDS_BASE_VALUE_COPIED');
+		}
+
+		/**
+		 * @protected
+		 * @return {string}
+		 */
+		prepareValueToCopy()
+		{
+			return stringify(this.getValue());
 		}
 
 		isPossibleToFocus()
@@ -1198,6 +1260,16 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return null;
 		}
 
+		renderAdditionalBottomContent()
+		{
+			if (this.props.renderAdditionalBottomContent)
+			{
+				return this.props.renderAdditionalBottomContent(this);
+			}
+
+			return null;
+		}
+
 		renderReadOnlyContent()
 		{
 			throw new Error('Method "renderReadOnlyContent" must be implemented.');
@@ -1260,7 +1332,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 				return null;
 			}
 
-			if (!this.isReadOnly())
+			if (!this.isReadOnly() || this.shouldShowEditIconInReadOnly())
 			{
 				return this.renderEditIcon();
 			}
@@ -1276,6 +1348,11 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		shouldShowEditIcon()
 		{
 			return BX.prop.getBoolean(this.props, 'showEditIcon', false);
+		}
+
+		shouldShowEditIconInReadOnly()
+		{
+			return BX.prop.getBoolean(this.props, 'showEditIconInReadOnly', false);
 		}
 
 		renderEditIcon()

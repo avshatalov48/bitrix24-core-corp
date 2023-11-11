@@ -14,6 +14,9 @@ use Bitrix\Tasks\Item\SystemLog;
 
 final class AgentManager
 {
+	public const LOG_CLEANER_AGENT_NAME = 'rotateSystemLog';
+	public const LOG_CLEANER_AGENT_INTERVAL = 60 * 60 * 24 * 3; // 3 days
+
 	public static function notificationThrottleRelease()
 	{
 		\CTaskNotifications::throttleRelease();

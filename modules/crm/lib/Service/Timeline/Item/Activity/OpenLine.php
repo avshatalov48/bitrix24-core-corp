@@ -235,6 +235,7 @@ class OpenLine extends Activity
 			->addActionParamInt('activityId', $this->getActivityId())
 			->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 			->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+			->addActionParamString('ajaxAction', $this->getCompleteAction()->getAction())
 			->setAnimation(Animation::disableItem()->setForever())
 		;
 

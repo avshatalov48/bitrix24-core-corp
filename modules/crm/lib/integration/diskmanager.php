@@ -376,7 +376,7 @@ class DiskManager
 				continue;
 			}
 
-			$archive->addEntry(ArchiveEntry::createFromFileModel($file, $file->getName()));
+			$archive->addEntry(ArchiveEntry::createFromFileModel($file));
 		}
 
 		return $archive;

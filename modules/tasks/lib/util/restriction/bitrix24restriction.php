@@ -5,6 +5,7 @@ use Bitrix\Main\Data\Cache;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Integration\Bitrix24;
+use Bitrix\Tasks\Internals\CacheConfig;
 use Bitrix\Tasks\Internals\TaskTable;
 use CTasks;
 
@@ -37,7 +38,7 @@ class Bitrix24Restriction
 		$cache = Cache::createInstance();
 		$tasksCount = 0;
 
-		if ($cache->initCache(86400, CTasks::CACHE_TASKS_COUNT, CTasks::CACHE_TASKS_COUNT_DIR_NAME))
+		if ($cache->initCache(86400, CacheConfig::UNIQUE_CODE, CacheConfig::DIRECTORY))
 		{
 			$data = $cache->getVars(); // read variables from cache
 			$tasksCount = $data['tasks_count'];

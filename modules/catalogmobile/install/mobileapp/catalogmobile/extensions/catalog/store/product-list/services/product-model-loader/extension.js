@@ -21,10 +21,12 @@ jn.define('catalog/store/product-list/services/product-model-loader', (require, 
 			const state = this.root.getState();
 			const action = 'catalogmobile.StoreDocumentProduct.loadProductModel';
 			const documentId = state.document.id || null;
+			const documentType = state.document.type || null;
 			const queryConfig = {
 				data: {
 					productId,
 					documentId,
+					documentType,
 				}
 			};
 

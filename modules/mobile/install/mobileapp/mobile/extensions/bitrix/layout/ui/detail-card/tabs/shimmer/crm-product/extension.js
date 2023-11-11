@@ -48,7 +48,9 @@ jn.define('layout/ui/detail-card/tabs/shimmer/crm-product', (require, exports, m
 						marginTop: 12,
 					},
 				},
-				...Array(productsToShow).fill(0).map((value, index) => this.renderProduct(index % 2 === 0)),
+				...Array.from({ length: productsToShow }).fill(0).map((value, index) => {
+					return this.renderProduct(index % 2 === 0);
+				}),
 				this.renderSummary(),
 			);
 		}

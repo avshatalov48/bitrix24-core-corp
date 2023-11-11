@@ -256,7 +256,7 @@ class CTaskTags
 				"=NAME" => $OLD_NAME,
 				'=GROUP_ID' => 0,
 			],
-		]);
+		])->fetchAll();
 		$id = array_map(static function($el): int{
 			return (int)$el['ID'];
 		}, $list);

@@ -1,6 +1,7 @@
 <?php
 return [
 	"extensions" => [
+		'apptheme',
 		'rest',
 		'notify',
 		'qrauth/utils',

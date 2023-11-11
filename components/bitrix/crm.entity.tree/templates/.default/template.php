@@ -224,7 +224,7 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 		{
 			$lang = array(
 				'ASSIGNED_BY' => Loc::getMessage('CRM_ENTITY_TREE_ASSIGNED_BY'),
-				'QUOTE' => Loc::getMessage('CRM_ENTITY_TREE_QUOTE'),
+				'QUOTE' => Loc::getMessage('CRM_ENTITY_TREE_QUOTE_MSGVER_1'),
 				'INVOICE' => Loc::getMessage('CRM_ENTITY_TREE_INVOICE'),
 				'ORDER' => Loc::getMessage('CRM_ENTITY_TREE_ORDER'),
 				'ORDER_PAYMENT' => Loc::getMessage('CRM_ENTITY_TREE_ORDER_PAYMENT'),

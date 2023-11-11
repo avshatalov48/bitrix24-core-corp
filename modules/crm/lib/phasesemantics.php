@@ -157,9 +157,9 @@ class PhaseSemantics
 				array(
 					'type' => 'list',
 					'items' => array(
-						self::PROCESS => GetMessage('CRM_PHASE_SEMANTICS_QUOTE_PROCESS_MSGVER_1'),
-						self::SUCCESS => GetMessage('CRM_PHASE_SEMANTICS_QUOTE_SUCCESS_MSGVER_1'),
-						self::FAILURE => GetMessage('CRM_PHASE_SEMANTICS_QUOTE_FAILURE_MSGVER_1')
+						self::PROCESS => GetMessage('CRM_PHASE_SEMANTICS_QUOTE_PROCESS_MSGVER_2'),
+						self::SUCCESS => GetMessage('CRM_PHASE_SEMANTICS_QUOTE_SUCCESS_MSGVER_2'),
+						self::FAILURE => GetMessage('CRM_PHASE_SEMANTICS_QUOTE_FAILURE_MSGVER_2')
 					)
 				),
 				$params

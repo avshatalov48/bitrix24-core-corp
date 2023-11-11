@@ -17,6 +17,9 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			titleClick: 'titleClick ',
 			barButtonTap: 'barButtonTap',
 			barButtonLongTap: 'barButtonLongTap',
+			statusField: {
+				tap: 'tap',
+			},
 		},
 		/** Messenger component events */
 		messenger: {
@@ -29,20 +32,24 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			openLineParams: 'ImMobile.Messenger.Openlines:openParams',
 			openNotifications: 'ImMobile.Messenger.Notifications:open',
 			showSearch: 'ImMobile.Messenger.Search:open',
+			hideSearch: 'ImMobile.Messenger.Search:close',
 			createChat: 'ImMobile.Messenger.Chat:create',
 			refresh: 'ImMobile.Messenger:refresh',
 			afterRefreshSuccess: 'ImMobile.Messenger:afterRefreshSuccess',
 			renderRecent: 'ImMobile.Messenger:renderRecent',
 			closeDialog: 'ImMobile.Messenger:closeDialog',
+			destroyDialog: 'ImMobile.Messenger:destroyDialog',
 			uploadFiles: 'ImMobile.Messenger:uploadFiles',
 			uploadFileError: 'ImMobile.Messenger:uploadFileError',
 			cancelFileUpload: 'ImMobile.Messenger:cancelFileUpload',
+			dialogAccessError: 'ImMobile.Messenger:dialogAccessError',
 		},
 		/** Extension events */
 		recent: {
 			itemSelected: 'onItemSelected',
 			itemAction: 'onItemAction',
 			searchShow: 'onSearchShow',
+			searchHide: 'onSearchHide',
 			userTypeText: 'onUserTypeText',
 			scopeSelected: 'onScopeSelected',
 			searchItemSelected: 'onSearchItemSelected',
@@ -60,8 +67,6 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			attachTap: 'attachTap',
 			topReached: 'topReached',
 			bottomReached: 'bottomReached',
-			like: 'like',
-			whoLikes: 'whoLikes',
 			resend: 'resend',
 			reply: 'reply',
 			quoteTap: 'quoteTap',
@@ -77,6 +82,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			scrollBegin: 'scrollBegin',
 			scrollEnd: 'scrollEnd',
 			messageTap: 'messageTap',
+			messageSystemTap: 'messageSystemTap',
 			messageAvatarTap: 'avatarTap',
 			messageDoubleTap: 'messageDoubleTap',
 			messageLongTap: 'messageLongTap',
@@ -87,6 +93,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			messageFileUploadCancelTap: 'messageFileUploadCancelTap',
 			quoteRemoveAnimationEnd: 'quoteRemoveAnimationEnd',
 			urlTap: 'urlTap',
+			statusFieldTap: 'statusFieldTap',
 			mentionTap: 'mentionTap',
 			visibleMessagesChanged: 'custom:visibleMessagesChanged',
 			loadTopPage: 'custom:loadTopPage',
@@ -94,9 +101,14 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			messageRead: 'custom:messageRead',
 			changeText: 'changeText',
 			input: 'input',
+			reactionTap: 'reactionTap',
+			reactionLongTap: 'reactionLongTap',
+			updateUploadProgressByMessageId: 'updateUploadProgressByMessageId',
 			external: {
 				scrollToBottom: 'ImMobile.Messenger.Dialog:scrollToBottom',
 			},
+			/** @deprecated */
+			like: 'like',
 		},
 		/** Integration (other components events) */
 		chatDialog: {

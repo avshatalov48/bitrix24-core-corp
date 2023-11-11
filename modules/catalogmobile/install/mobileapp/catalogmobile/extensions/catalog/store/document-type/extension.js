@@ -10,6 +10,7 @@ jn.define('catalog/store/document-type', (require, exports, module) => {
 		StoreAdjustment: 'S',
 		Deduct: 'D',
 		Moving: 'M',
+		SalesOrders: 'W',
 	};
 
 	module.exports = { DocumentType };

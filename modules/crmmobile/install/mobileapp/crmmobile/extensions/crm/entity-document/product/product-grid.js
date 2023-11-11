@@ -62,7 +62,6 @@ jn.define('crm/entity-document/product/product-grid', (require, exports, module)
 					editable: false,
 					vatRates: taxes.vatRates,
 					iblockId: catalog.id,
-					inventoryControlEnabled: inventoryControl.enabled,
 					entityDetailPageUrl: entity.detailPageUrl,
 					entityTypeId: entity.typeId,
 				}),

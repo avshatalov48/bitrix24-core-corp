@@ -92,7 +92,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		 */
 		createUserTitle(options = {})
 		{
-			const user = this.store.getters['usersModel/getUserById'](this.dialogId);
+			const user = this.store.getters['usersModel/getById'](this.dialogId);
 			if (!user)
 			{
 				return;
@@ -198,7 +198,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 		/**
 		 * @desc Build text 'who writing'
-		 * @return {string} text
+		 * @return {string}
 		 * @private
 		 */
 		buildWritingListText()
@@ -206,7 +206,12 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			let text = '';
 			const countName = this.writingList.length;
 
-			const firstUser = this.store.getters['usersModel/getUserById'](this.writingList[0].userId);
+			if (!DialogHelper.isDialogId(this.dialogId))
+			{
+				return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_WRITING');
+			}
+
+			const firstUser = this.store.getters['usersModel/getById'](this.writingList[0].userId);
 			if (!firstUser)
 			{
 				return text;
@@ -224,7 +229,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			}
 			else if (countName === 2)
 			{
-				const secondUser = this.store.getters['usersModel/getUserById'](this.writingList[1].userId);
+				const secondUser = this.store.getters['usersModel/getById'](this.writingList[1].userId);
 				if (secondUser)
 				{
 					text = Loc.getMessage(

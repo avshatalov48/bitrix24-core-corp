@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,ui_manual,ui_popupcomponentsmaker,main_core,ui_dialogs_messagebox,main_core_events) {
@@ -7,7 +8,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  function RequestSender() {
 	    babelHelpers.classCallCheck(this, RequestSender);
 	  }
-
 	  babelHelpers.createClass(RequestSender, [{
 	    key: "sendRequest",
 	    value: function sendRequest(controller, action) {
@@ -50,10 +50,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        console.error(response);
 	        return;
 	      }
-
 	      if (response.errors.length) {
 	        var firstError = response.errors.shift();
-
 	        if (firstError) {
 	          var errorCode = firstError.code ? firstError.code : '';
 	          var message = firstError.message + ' ' + errorCode;
@@ -68,23 +66,17 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	var SidePanel = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(SidePanel, _EventEmitter);
-
 	  function SidePanel() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, SidePanel);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SidePanel).call(this));
-
 	    _this.setEventNamespace('BX.Tasks.Scrum.Methodology.SidePanel');
+
 	    /* eslint-disable */
-
-
 	    _this.sidePanelManager = BX.SidePanel.Instance;
 	    /* eslint-enable */
-
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(SidePanel, [{
 	    key: "openSidePanelByUrl",
 	    value: function openSidePanelByUrl(url) {
@@ -101,7 +93,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var extensionName = 'tasks.scrum.' + name.toLowerCase();
 	      return top.BX.Runtime.loadExtension(extensionName).then(function (exports) {
 	        name = name.replaceAll('-', '');
-
 	        if (exports && exports[name]) {
 	          var extension = new exports[name](params);
 	          extension.show();
@@ -128,7 +119,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.menu = null;
 	    this.hintManager = null;
 	  }
-
 	  babelHelpers.createClass(Methodology, [{
 	    key: "showMenu",
 	    value: function showMenu(targetNode) {
@@ -138,7 +128,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          return;
 	        }
 	      }
-
 	      this.menu = new ui_popupcomponentsmaker.PopupComponentsMaker({
 	        id: 'tasks-scrum-methodology-widget',
 	        target: targetNode,
@@ -176,7 +165,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderEpics",
 	    value: function renderEpics() {
 	      var _this = this;
-
 	      return this.requestSender.getEpicInfo({
 	        groupId: this.groupId
 	      }).then(function (response) {
@@ -187,9 +175,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        var blockClass = existsEpic ? '--active' : '';
 	        var baseClasses = 'tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope';
 	        var node = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"", " tasks-scrum__widget-methodology--bg ", "\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"ui-icon ", " tasks-scrum__widget-methodology--icon\"\n\t\t\t\t\t\t\t><i></i></div>\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--content\">\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--name\">\n\t\t\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t\t\t\t<span class=\"ui-hint\">\n\t\t\t\t\t\t\t\t\t\t<i class=\"ui-hint-icon\" data-hint=\"", "\"></i>\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--btn-box\">\n\t\t\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\t\t\tclass=\"ui-qr-popupcomponentmaker__btn ", "\"\n\t\t\t\t\t\t\t\t\t\tdata-role=\"open-epics\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), baseClasses, blockClass, iconClass, main_core.Loc.getMessage('TSF_EPIC_TITLE'), main_core.Loc.getMessage('TSF_EPIC_HINT'), buttonClass, buttonText);
-
 	        _this.initHints(node);
-
 	        main_core.Event.bind(node.querySelector('button'), 'click', function () {
 	          if (existsEpic) {
 	            _this.showEpics();
@@ -206,7 +192,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderDod",
 	    value: function renderDod() {
 	      var _this2 = this;
-
 	      return this.requestSender.getDodInfo({
 	        groupId: this.groupId
 	      }).then(function (response) {
@@ -216,9 +201,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        var iconClass = existsDod ? 'ui-icon-service-dod' : 'ui-icon-service-light-dod';
 	        var blockClass = existsDod ? '--active' : '';
 	        var node = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope tasks-scrum__widget-methodology--bg ", "\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"ui-icon ", " tasks-scrum__widget-methodology--icon\"\n\t\t\t\t\t\t\t><i></i></div>\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--content\">\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--name\">\n\t\t\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t\t\t\t<span class=\"ui-hint\">\n\t\t\t\t\t\t\t\t\t\t<i class=\"ui-hint-icon\" data-hint=\"", "\"></i>\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--btn-box\">\n\t\t\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\t\t\tclass=\"ui-qr-popupcomponentmaker__btn ", "\"\n\t\t\t\t\t\t\t\t\t\tdata-role=\"open-dod\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), blockClass, iconClass, main_core.Loc.getMessage('TSF_DOD_TITLE_NEW'), main_core.Loc.getMessage('TSF_DOD_HINT_NEW'), buttonClass, buttonText);
-
 	        _this2.initHints(node);
-
 	        main_core.Event.bind(node.querySelector('button'), 'click', _this2.showDodSettings.bind(_this2));
 	        return node;
 	      })["catch"](function (response) {
@@ -229,7 +212,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderTeamSpeed",
 	    value: function renderTeamSpeed() {
 	      var _this3 = this;
-
 	      return this.requestSender.getTeamSpeedInfo({
 	        groupId: this.groupId
 	      }).then(function (response) {
@@ -237,11 +219,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        var btnUiClasses = 'ui-qr-popupcomponentmaker__btn --border';
 	        var disableClass = isDisabled ? '--disabled' : '';
 	        var node = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope\"\n\t\t\t\t\t\tdata-role=\"show-team-speed-chart\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--btn-box-center\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--image ", "\">\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<button class=\"", " ", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), disableClass, btnUiClasses, disableClass, main_core.Loc.getMessage('TSF_TEAM_SPEED_BUTTON'));
-
 	        if (!isDisabled) {
 	          main_core.Event.bind(node, 'click', _this3.showTeamSpeedChart.bind(_this3));
 	        }
-
 	        return node;
 	      })["catch"](function (response) {
 	        _this3.requestSender.showErrorAlert(response);
@@ -251,7 +231,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderBurnDown",
 	    value: function renderBurnDown() {
 	      var _this4 = this;
-
 	      return this.requestSender.getBurnDownInfo({
 	        groupId: this.groupId
 	      }).then(function (response) {
@@ -259,11 +238,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        var btnUiClasses = 'ui-qr-popupcomponentmaker__btn --border';
 	        var disableClass = existsChart ? '' : '--disabled';
 	        var node = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope\"\n\t\t\t\t\t\tdata-role=\"show-burn-down-chart\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--btn-box-center\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--image-diagram ", "\">\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<button class=\"", " ", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), disableClass, btnUiClasses, disableClass, main_core.Loc.getMessage('TSF_TEAM_SPEED_DIAGRAM'));
-
 	        if (existsChart) {
 	          main_core.Event.bind(node, 'click', _this4.showBurnDownChart.bind(_this4, response.data.sprint.id));
 	        }
-
 	        return node;
 	      })["catch"](function (response) {
 	        _this4.requestSender.showErrorAlert(response);
@@ -273,7 +250,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderTutor",
 	    value: function renderTutor() {
 	      var _this5 = this;
-
 	      return this.requestSender.getTutorInfo({
 	        groupId: this.groupId
 	      }).then(function (response) {
@@ -295,7 +271,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderMigration",
 	    value: function renderMigration() {
 	      var _this6 = this;
-
 	      var baseClasses = 'tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope';
 	      var migrationClasses = 'tasks-scrum__widget-methodology--migration tasks-scrum__widget-methodology--bg';
 	      var iconClass = 'ui-icon-service-tutorial tasks-scrum__widget-methodology--migration-btn';
@@ -303,9 +278,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      main_core.Event.bind(node, 'click', function () {
 	        var uri = new main_core.Uri('/marketplace/');
 	        uri.setQueryParam('tag', ['migrator', 'tasks']);
-
 	        _this6.sidePanel.openSidePanelByUrl(uri.toString());
-
 	        _this6.menu.close();
 	      });
 	      return node;
@@ -348,7 +321,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      } else {
 	        throw new Error('Could not find a page to display the chart.');
 	      }
-
 	      this.menu.close();
 	      main_core.ajax.runAction('bitrix:tasks.scrum.info.saveAnalyticsLabel', {
 	        data: {},
@@ -366,7 +338,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      } else {
 	        throw new Error('Could not find a page to display the chart.');
 	      }
-
 	      this.menu.close();
 	      main_core.ajax.runAction('bitrix:tasks.scrum.info.saveAnalyticsLabel', {
 	        data: {},

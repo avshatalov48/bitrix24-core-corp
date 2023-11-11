@@ -452,34 +452,37 @@ class QueueManager
 	}
 
 	/**
-	 * @param $idDepartment
+	 * @param int $departmentId
 	 * @param string[] $select
-	 * @param false $excludeHead
+	 * @param bool $excludeHead
 	 */
-	public static function getUsersDepartment($idDepartment, $select = ['ID'], $excludeHead = true)
+	public static function getUsersDepartment($departmentId, array $select = ['ID'], bool $excludeHead = true)
 	{
 		$query = UserTable::query();
 
 		$query->setSelect($select);
-		$departments = self::getChildDepartments($idDepartment, true, true);
 
-		$query->addFilter('LOGIC', 'OR');
-		foreach ($departments as $id => $department)
+		$departments = self::getChildDepartments($departmentId, true, true);
+		$subDepartments = [];
+		$excludeUsers = [];
+		foreach ($departments as $department)
 		{
-			$filter = [
-				'UF_DEPARTMENT' => $department['id'],
-				'=ACTIVE' => 'Y',
-				'!=BLOCKED' => 'Y'
-			];
-			if(
-				$excludeHead === true &&
-				$department['headUserId']>0
-			)
+			$subDepartments[] = $department['id'];
+			if ($excludeHead && $department['headUserId'] > 0)
 			{
-				$filter['!=ID'] = $department['headUserId'];
+				$excludeUsers[] = $department['headUserId'];
 			}
-			$query->addFilter(null, $filter);
 		}
+		$filter = [
+			'UF_DEPARTMENT' => $subDepartments,
+			'=ACTIVE' => 'Y',
+			'!=BLOCKED' => 'Y'
+		];
+		if ($excludeHead && !empty($excludeUsers))
+		{
+			$filter['!=ID'] = $excludeUsers;
+		}
+		$query->addFilter(null, $filter);
 
 		$query->setCacheTtl(3600);
 

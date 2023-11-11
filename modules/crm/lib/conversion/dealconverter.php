@@ -277,7 +277,7 @@ class DealConverter extends EntityConverter
 					$entityTypeID,
 					EntityConversionException::TARG_SRC,
 					EntityConversionException::INVALID_OPERATION,
-					GetMessage('CRM_DEAL_CONVERTER_QUOTE_PROHIBITED')
+					GetMessage('CRM_DEAL_CONVERTER_QUOTE_PROHIBITED_MSGVER_1')
 				);
 			}
 

@@ -3,6 +3,7 @@
 
 	const { CatalogStoreActivationWizard } = require('catalog/store/activation-wizard');
 	const { StatefulList } = require('layout/ui/stateful-list');
+	const { ListItemType, ListItemsFactory } = require('catalog/simple-list/items');
 	const { EmptyScreen } = require('layout/ui/empty-screen');
 	const { Loc } = require('loc');
 	const { AnalyticsLabel } = require('analytics-label');
@@ -29,7 +30,7 @@
 			this.floatingButtonMenu = null;
 			this.statuses = result.statuses;
 			this.state = {
-				activeTab: this.documentTabs[0].id,
+				activeTab: this.documentTabs.length > 0 ? this.documentTabs[0].id : null,
 			};
 			this.layout = props.layout;
 			this.statefulList = null;
@@ -41,9 +42,14 @@
 
 		createStatefulList()
 		{
+			const actions = this.state.activeTab === 'shipment'
+				? result.actions.realizationDocumentActions
+				: result.actions.storeDocumentActions
+			;
+
 			return new StatefulList({
 				testId: `${COMPONENT_ID}_${this.state.activeTab}`.toUpperCase(),
-				actions: result.actions || {},
+				actions: actions || {},
 				actionParams: {
 					loadItems: {
 						documentTypes: this.getDocumentTypeIdsByTab(this.state.activeTab),
@@ -56,6 +62,8 @@
 				},
 				isShowFloatingButton: this.isShowFloatingButton(),
 				itemDetailOpenHandler: this.itemDetailOpenHandler.bind(this),
+				itemType: ListItemType.STORE_DOCUMENT,
+				itemFactory: ListItemsFactory,
 				itemActions: [
 					{
 						id: 'openDocument',
@@ -152,7 +160,7 @@
 			});
 		}
 
-		renderEmptyListComponent()
+		renderEmptyListComponent(customTitle = '', customDescription = '')
 		{
 			const params = {
 				styles: styles.emptyScreen.container,
@@ -164,16 +172,33 @@
 				},
 			};
 
-			if (this.layout.search.text === '')
+			let title = customTitle;
+			if (title === '')
 			{
-				params.title = Loc.getMessage(`M_CSDL_EMPTY_LIST_STORE_${this.state.activeTab}_TITLE`.toUpperCase());
-				params.description = Loc.getMessage(`M_CSDL_EMPTY_LIST_STORE_${this.state.activeTab}_DESCRIPTION`.toUpperCase());
+				if (this.layout.search.text === '')
+				{
+					title = Loc.getMessage(`M_CSDL_EMPTY_LIST_STORE_${this.state.activeTab}_TITLE`.toUpperCase());
+				}
+				else
+				{
+					title = Loc.getMessage('M_CSDL_EMPTY_LIST_STORE_SEARCH_TITLE');
+				}
 			}
-			else
+
+			let description = customDescription;
+			if (description === '')
 			{
-				params.title = Loc.getMessage('M_CSDL_EMPTY_LIST_STORE_SEARCH_TITLE');
-				params.description = Loc.getMessage('M_CSDL_EMPTY_LIST_STORE_SEARCH_DESCRIPTION');
+				if (this.layout.search.text === '')
+				{
+					description = Loc.getMessage(`M_CSDL_EMPTY_LIST_STORE_${this.state.activeTab}_DESCRIPTION`.toUpperCase());
+				}
+				else
+				{
+					description = Loc.getMessage('M_CSDL_EMPTY_LIST_STORE_SEARCH_DESCRIPTION');
+				}
 			}
+			params.title = title;
+			params.description = description;
 
 			return new EmptyScreen(params);
 		}
@@ -212,6 +237,23 @@
 					testId: COMPONENT_ID,
 					resizableByKeyboard: true,
 				},
+				...this.renderContent(),
+			);
+		}
+
+		renderContent()
+		{
+			if (this.documentTabs.length === 0)
+			{
+				return [
+					this.renderEmptyListComponent(
+						Loc.getMessage('M_CSDL_NO_RIGHTS_TO_ANY_DOCUMENT_TITLE'),
+						Loc.getMessage('M_CSDL_NO_RIGHTS_TO_ANY_DOCUMENT_DESCRIPTION'),
+					),
+				];
+			}
+
+			return [
 				TabView({
 					testId: `${COMPONENT_ID}_TAB`,
 					style: {
@@ -250,7 +292,7 @@
 					ref: (ref) => this.tabViewRef = ref,
 				}),
 				this.createStatefulList(),
-			);
+			];
 		}
 
 		setActiveTabByDocumentType(documentType)
@@ -272,6 +314,9 @@
 					break;
 				case DocumentType.Deduct:
 					tabId = 'deduct';
+					break;
+				case DocumentType.SalesOrders:
+					tabId = 'shipment';
 					break;
 			}
 
@@ -322,7 +367,10 @@
 		itemDetailOpenHandler(entityId, item)
 		{
 			this.itemDetailOpen(
-				{ entityId },
+				{
+					entityId,
+					docType: item.docType,
+				},
 				{
 					...this.detailNavigation.getTitleParamsByType(item.docType),
 					text: item.name,
@@ -347,7 +395,9 @@
 			titleParams = (titleParams || {});
 
 			ComponentHelper.openLayout({
-				name: 'catalog:catalog.store.document.details',
+				name: componentParams.docType === DocumentType.SalesOrders
+					? 'catalog:catalog.realization.document.details'
+					: 'catalog:catalog.store.document.details',
 				componentParams: {
 					payload: componentParams,
 				},
@@ -478,6 +528,7 @@
 					{
 						data: {
 							id: itemId,
+							docType: options.parent.data.docType,
 						},
 					},
 				)
@@ -510,7 +561,7 @@
 
 		canConductDocumentHandler(actionItemId, itemId, item = {})
 		{
-			if (result.permissions.document[item.data.docType]['catalog_store_document_conduct'] !== true)
+			if (result.permissions.document[item.data.docType].catalog_store_document_conduct !== true)
 			{
 				return false;
 			}
@@ -526,6 +577,7 @@
 					{
 						data: {
 							id: itemId,
+							docType: options.parent.data.docType,
 						},
 					},
 				)
@@ -548,7 +600,7 @@
 
 		canCancelDocumentHandler(actionItemId, itemId, item)
 		{
-			if (result.permissions.document[item.data.docType]['catalog_store_document_cancel'] !== true)
+			if (result.permissions.document[item.data.docType].catalog_store_document_cancel !== true)
 			{
 				return false;
 			}
@@ -588,7 +640,7 @@
 			);
 		}
 
-		deleteDocumentHandler(actionItemId, itemId)
+		deleteDocumentHandler(actionItemId, itemId, options)
 		{
 			return new Promise((resolve, reject) => {
 				Alert.confirm(
@@ -609,6 +661,7 @@
 									{
 										data: {
 											id: itemId,
+											docType: options.parent.data.docType,
 										},
 									},
 								)
@@ -652,6 +705,7 @@
 	const floatingButtonSvgIcons = {
 		A: '<svg width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M0 2.5C0 1.11929 1.11929 0 2.5 0H10.2657C10.9196 0 11.5474 0.256149 12.0146 0.71354L16.807 5.40509C17.2874 5.87537 17.5581 6.51929 17.5581 7.19155V18.8483C17.5581 20.229 16.4388 21.3483 15.0581 21.3483H2.5C1.11929 21.3483 0 20.229 0 18.8483V2.5ZM2.5 2.5V18.8483H15.0581V7.19155L10.2657 2.5H2.5Z" fill="#4793E0"/><path d="M12.124 12.8008C12.3129 12.6119 12.1791 12.2887 11.9118 12.2887H9.64688L9.64688 6.4663C9.64688 6.19015 9.42303 5.9663 9.14688 5.9663H7.94006C7.66391 5.9663 7.44006 6.19015 7.44006 6.4663V12.2887H5.01381C4.74654 12.2887 4.61269 12.6119 4.80168 12.8008L7.75571 15.7549C8.14623 16.1454 8.7794 16.1454 9.16992 15.7549L12.124 12.8008Z" fill="#4793E0"/></svg>',
 		S: '<svg width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M0 2.5C0 1.11929 1.11929 0 2.5 0H10.2657C10.9196 0 11.5474 0.256149 12.0146 0.71354L16.807 5.40509C17.2874 5.87537 17.5581 6.51929 17.5581 7.19155V18.8483C17.5581 20.229 16.4388 21.3483 15.0581 21.3483H2.5C1.11929 21.3483 0 20.229 0 18.8483V2.5ZM2.5 2.5V18.8483H15.0581V7.19155L10.2657 2.5H2.5Z" fill="#00ACE3"/><path d="M4.56836 17.1055C4.29222 17.1055 4.06836 16.8816 4.06836 16.6055V15.3986C4.06836 15.1225 4.29222 14.8986 4.56836 14.8986H12.5162C12.7923 14.8986 13.0162 15.1225 13.0162 15.3986V16.6055C13.0162 16.8816 12.7923 17.1055 12.5162 17.1055H4.56836Z" fill="#00ACE3"/><path d="M12.1237 10.4154C12.3127 10.2264 12.1788 9.90325 11.9115 9.90325H9.64661V6.18574C9.64661 5.9096 9.42275 5.68574 9.14661 5.68574H7.93978C7.66364 5.68574 7.43978 5.9096 7.43978 6.18574V9.90325L5.01353 9.90325C4.74626 9.90325 4.61241 10.2264 4.8014 10.4154L7.75543 13.3694C8.14596 13.7599 8.77912 13.7599 9.16964 13.3694L12.1237 10.4154Z" fill="#00ACE3"/></svg>',
+		W: '<svg width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.72093 0.326172C1.34022 0.326172 0.220932 1.44546 0.220932 2.82617V19.1744C0.220932 20.5552 1.34022 21.6744 2.72093 21.6744H15.279C16.6598 21.6744 17.779 20.5552 17.779 19.1744V7.51772C17.779 6.84547 17.5083 6.20154 17.0279 5.73126L12.2355 1.03971C11.7683 0.582321 11.1405 0.326172 10.4867 0.326172H2.72093ZM2.72093 19.1744V2.82617H10.4867L15.279 7.51772V19.1744H2.72093ZM5.31382 10.2402C5.04655 10.2402 4.9127 9.91709 5.10169 9.7281L8.05572 6.77407C8.44624 6.38354 9.07941 6.38354 9.46993 6.77407L12.424 9.7281C12.613 9.91709 12.4791 10.2402 12.2118 10.2402H9.78559L9.78559 15.2077C9.78559 15.4839 9.56173 15.7077 9.28559 15.7077H8.07876C7.80262 15.7077 7.57876 15.4839 7.57876 15.2077L7.57876 10.2402L5.31382 10.2402Z" fill="#8FBC00"/></svg>',
 		D: '<svg width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M0 2.5C0 1.11929 1.11929 0 2.5 0H10.2657C10.9196 0 11.5474 0.256149 12.0146 0.71354L16.807 5.40509C17.2874 5.87537 17.5581 6.51929 17.5581 7.19155V18.8483C17.5581 20.229 16.4388 21.3483 15.0581 21.3483H2.5C1.11929 21.3483 0 20.229 0 18.8483V2.5ZM2.5 2.5V18.8483H15.0581V7.19155L10.2657 2.5H2.5Z" fill="#F78500"/><path d="M4.56836 17.1055C4.29222 17.1055 4.06836 16.8816 4.06836 16.6055V15.3986C4.06836 15.1225 4.29222 14.8986 4.56836 14.8986H12.5162C12.7923 14.8986 13.0162 15.1225 13.0162 15.3986V16.6055C13.0162 16.8816 12.7923 17.1055 12.5162 17.1055H4.56836Z" fill="#F78500"/><path d="M4.80136 8.93248C4.61237 9.12147 4.74622 9.44461 5.01349 9.44461L7.27844 9.44461L7.27844 13.1621C7.27844 13.4383 7.50229 13.6621 7.77843 13.6621H8.98526C9.26141 13.6621 9.48526 13.4383 9.48526 13.1621V9.44461L11.9115 9.44461C12.1788 9.44461 12.3126 9.12147 12.1236 8.93248L9.16961 5.97844C8.77909 5.58792 8.14592 5.58792 7.7554 5.97844L4.80136 8.93248Z" fill="#F78500"/></svg>',
 		M: '<svg width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M0 2.5C0 1.11929 1.11929 0 2.5 0H10.2657C10.9196 0 11.5474 0.256149 12.0146 0.71354L16.807 5.40509C17.2874 5.87537 17.5581 6.51929 17.5581 7.19155V18.8483C17.5581 20.229 16.4388 21.3483 15.0581 21.3483H2.5C1.11929 21.3483 0 20.229 0 18.8483V2.5ZM2.5 2.5V18.8483H15.0581V7.19155L10.2657 2.5H2.5Z" fill="#17CDC4"/><path d="M9.87947 5.21053C9.69048 5.02154 9.36734 5.15539 9.36734 5.42266L9.36734 7.40314H4.92017C4.64403 7.40314 4.42017 7.627 4.42017 7.90314L4.42017 8.89997C4.42017 9.17612 4.64403 9.39997 4.92017 9.39997H9.36734V11.5264C9.36734 11.7937 9.69048 11.9276 9.87947 11.7386L12.4364 9.18165C12.8269 8.79113 12.8269 8.15796 12.4364 7.76744L9.87947 5.21053Z" fill="#17CDC4"/><path d="M6.80412 17.5014C6.99311 17.6904 7.31625 17.5565 7.31625 17.2893V15.3088H11.7634C12.0396 15.3088 12.2634 15.0849 12.2634 14.8088L12.2634 13.8119C12.2634 13.5358 12.0396 13.3119 11.7634 13.3119H7.31625V11.1855C7.31625 10.9182 6.99311 10.7844 6.80412 10.9733L4.24721 13.5303C3.85668 13.9208 3.85668 14.554 4.24721 14.9445L6.80412 17.5014Z" fill="#17CDC4"/></svg>',
 		XXX: '<svg width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M0 2.5C0 1.11929 1.11929 0 2.5 0H10.2657C10.9196 0 11.5474 0.256149 12.0146 0.71354L16.807 5.40509C17.2874 5.87537 17.5581 6.51929 17.5581 7.19155V18.8483C17.5581 20.229 16.4388 21.3483 15.0581 21.3483H2.5C1.11929 21.3483 0 20.229 0 18.8483V2.5ZM2.5 2.5V18.8483H15.0581V7.19155L10.2657 2.5H2.5Z" fill="#9DCF00"/><path d="M4.88218 9.402C4.69319 9.59099 4.82704 9.91413 5.09431 9.91413L7.35925 9.91413L7.35925 14.8816C7.35925 15.1578 7.58311 15.3816 7.85925 15.3816L9.06608 15.3816C9.34222 15.3816 9.56608 15.1578 9.56608 14.8816L9.56608 9.91413L11.9923 9.91413C12.2596 9.91413 12.3935 9.59099 12.2045 9.402L9.25043 6.44797C8.8599 6.05744 8.22674 6.05744 7.83621 6.44797L4.88218 9.402Z" fill="#9DCF00"/></svg>',

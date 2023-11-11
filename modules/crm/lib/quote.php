@@ -158,7 +158,7 @@ class QuoteTable extends DataManager
 			$fieldRepository->getStageId('STATUS_ID', \CCrmOwnerType::Quote),
 
 			$fieldRepository->getClosed()
-				->configureTitle(Loc::getMessage('CRM_QUOTE_CLOSED_TITLE'))
+				->configureTitle(Loc::getMessage('CRM_QUOTE_CLOSED_TITLE_MSGVER_1'))
 			,
 
 			$fieldRepository->getOpportunity(),
@@ -201,7 +201,7 @@ class QuoteTable extends DataManager
 			(new StringField('QUOTE_NUMBER'))
 				->configureSize(100)
 				->configureUnique()
-				->configureTitle(Loc::getMessage('CRM_QUOTE_QUOTE_NUMBER_TITLE'))
+				->configureTitle(Loc::getMessage('CRM_QUOTE_QUOTE_NUMBER_TITLE_MSGVER_1'))
 			,
 
 			(new TextField('CONTENT'))

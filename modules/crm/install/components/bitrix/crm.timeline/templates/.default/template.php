@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true){
 	die();
 }
 
+use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\MenuIdResolver;
 use Bitrix\Crm\Integration;
 
 /**
@@ -25,6 +26,7 @@ Bitrix\Main\UI\Extension::load([
 	'ui.buttons',
 	'ui.icons',
 	'ui.selector',
+	'ui.notification',
 	'crm.zoom',
 	'ui.timeline',
 	'ui.forms',
@@ -34,6 +36,7 @@ Bitrix\Main\UI\Extension::load([
 	'ui.hint',
 	'ui.viewer',
 	'applayout',
+	'im.public',
 ]);
 
 //HACK: Preloading files for prevent trembling of player afer load.
@@ -108,45 +111,24 @@ if (!empty($arResult['ERRORS']))
 			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-new"></div>
 			<div class="crm-entity-stream-section-content">
 				<?
-				$menuBarObjectId = mb_strtolower($arResult['ENTITY_TYPE_NAME']);
+				$mode = true;
+				if ($arParams['ENTITY_CONFIG_SCOPE'] !== Bitrix\Crm\Entity\EntityEditorConfigScope::PERSONAL)
+				{
+					$mode = CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
+				}
+
 				$categoryId =  (isset($arResult['EXTRAS']['CATEGORY_ID']) && (int)$arResult['EXTRAS']['CATEGORY_ID'] >= 0)
 					? (int)$arResult['EXTRAS']['CATEGORY_ID']
 					: null
 				;
-				if ($categoryId)
-				{
-					$menuBarObjectId .= '_' . $categoryId;
-				}
-				$menuBarObjectId .= '_menu';
-				$mode = true;
 
-				if (
-					array_key_exists('ENTITY_CONFIG_SCOPE', $arParams)
-					&& array_key_exists('USER_SCOPE_ID', $arParams)
-					&& $arParams['ENTITY_CONFIG_SCOPE'] !== Bitrix\Crm\Entity\EntityEditorConfigScope::PERSONAL
-				)
-				{
-					$menuBarObjectIdParts = [
-						'crm_scope_timeline',
-						$arParams['ENTITY_CONFIG_SCOPE'],
-						$arResult['ENTITY_TYPE_NAME'],
-					];
-
-					if ($categoryId)
-					{
-						$menuBarObjectIdParts[] = $categoryId;
-					}
-					$menuBarObjectIdParts[] = $arParams['USER_SCOPE_ID'];
-
-					$menuBarObjectId = mb_strtolower(implode('_', $menuBarObjectIdParts));
-					$mode = CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
-				}
+				$menuId = MenuIdResolver::getMenuId($arResult['ENTITY_TYPE_ID'], $arResult['USER_ID'], $categoryId);
 				$APPLICATION->IncludeComponent(
 					'bitrix:crm.timeline.menubar',
 					'',
 					[
 						'GUID' => $arResult['GUID'],
-						'MENU_ID' => $menuBarObjectId,
+						'MENU_ID' => $menuId,
 						'ALLOW_MOVE_ITEMS' => $mode,
 						'ENTITY_TYPE_ID' => $arResult['ENTITY_TYPE_ID'],
 						'ENTITY_ID' => $arResult['ENTITY_ID'],
@@ -288,7 +270,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				order_shipment: "<?=GetMessageJS('CRM_TIMELINE_ORDER_SHIPMENT_CREATION')?>",
 				contact: "<?=GetMessageJS('CRM_TIMELINE_CONTACT_CREATION')?>",
 				company: "<?=GetMessageJS('CRM_TIMELINE_COMPANY_CREATION')?>",
-				quote: "<?=GetMessageJS('CRM_TIMELINE_QUOTE_CREATION')?>",
+				quote: "<?=GetMessageJS('CRM_TIMELINE_QUOTE_CREATION_MSGVER_1')?>",
 				invoice: "<?=GetMessageJS('CRM_TIMELINE_INVOICE_CREATION')?>",
 				task: "<?=GetMessageJS('CRM_TIMELINE_TASK_CREATION')?>",
 				activity: "<?=GetMessageJS('CRM_TIMELINE_ACTIVITY_CREATION')?>",

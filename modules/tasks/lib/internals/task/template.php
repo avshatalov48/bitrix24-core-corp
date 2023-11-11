@@ -104,10 +104,13 @@ class TemplateTable extends Main\Entity\DataManager
 				'values' => array('N', 'Y'),
 				'default_value' => 'Y',
 			),
-			new EnumField('PRIORITY', array(
-				'values' => array('0', '1', '2', 0, 1, 2), // see constants at CTasks
-				'default_value' => '1', // CTasks::PRIORITY_AVERAGE
-			)),
+			new EnumField('PRIORITY', [
+				'values' => array_merge(
+					array_values(Priority::getAll()),
+					array_map('strval', array_values(Priority::getAll()))
+				),
+				'default_value' => (string)Priority::AVERAGE,
+			]),
 
 			// wtf? status in template?
 			'STATUS' => array(
@@ -251,6 +254,11 @@ class TemplateTable extends Main\Entity\DataManager
 					Join::on('this.ID', 'ref.TEMPLATE_ID')
 				)
 			)->configureJoinType('left'),
+			(new Reference(
+				'CHECKLIST_DATA',
+				\Bitrix\Tasks\Internals\Task\Template\CheckListTable::getEntity(),
+				['this.ID' => 'ref.TEMPLATE_ID'],
+			))->configureJoinType(Join::TYPE_LEFT)
 		);
 	}
 	/**

@@ -12,11 +12,11 @@ namespace Bitrix\Tasks\Util\Replicator\Task;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
-use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Item;
 use Bitrix\Tasks\Item\Result;
 use Bitrix\Tasks\Provider\TaskList;
 use Bitrix\Tasks\Provider\TaskQuery;
+use Bitrix\Tasks\Replicator\Template\TaskProducer;
 use Bitrix\Tasks\Util\Collection;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util;
@@ -25,6 +25,11 @@ use Bitrix\Tasks\Item\Task\Template;
 use Bitrix\Tasks\Item\SystemLog;
 
 Loc::loadMessages(__FILE__);
+
+/**
+ * @deprecated
+ * @see \Bitrix\Tasks\Replicator\Template\Replicators\RegularTaskReplicator
+ */
 
 final class FromTemplate extends Util\Replicator\Task
 {

@@ -1,6 +1,7 @@
 <?
 
 use \Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Internals\Task\Status;
 
 define('STOP_STATISTICS',    true);
 define('NO_AGENT_CHECK',     true);
@@ -43,7 +44,7 @@ if ($_REQUEST['MODE'] === 'SEARCH')
 		$filter = array_merge($filter, $_GET['FILTER']);
 	}
 	$filter['CHECK_PERMISSIONS'] = 'Y';
-	$filter['STATUS'] = [CTasks::STATE_PENDING, CTasks::STATE_IN_PROGRESS];
+	$filter['STATUS'] = [Status::PENDING, Status::IN_PROGRESS];
 
 	$totalTasksToBeSelected = 10;
 
@@ -69,7 +70,7 @@ if ($_REQUEST['MODE'] === 'SEARCH')
 	{
 		// Additionally, get not active tasks
 		unset($filter['STATUS']);
-		$filter['!STATUS'] = [CTasks::STATE_PENDING, CTasks::STATE_IN_PROGRESS];
+		$filter['!STATUS'] = [Status::PENDING, Status::IN_PROGRESS];
 		$params['NAV_PARAMS']['nTopCount'] = $totalTasksToBeSelected - $tasksCount;
 
 		$dbRes = CTasks::GetList($order, $filter, $select, $params);

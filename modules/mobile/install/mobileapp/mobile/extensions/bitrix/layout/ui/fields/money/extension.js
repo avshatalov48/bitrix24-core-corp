@@ -8,6 +8,7 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 	const { NumberField, NumberPrecision } = require('layout/ui/fields/number');
 	const { SelectField } = require('layout/ui/fields/select');
 	const { StringField } = require('layout/ui/fields/string');
+	const { stringify } = require('utils/string');
 	const { Type } = require('type');
 
 	/**
@@ -169,6 +170,7 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 					style: {
 						flexDirection: 'row',
 					},
+					onLongClick: this.getContentLongClickHandler(),
 				},
 				MoneyView({
 					money: Money.create(value),
@@ -421,7 +423,19 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 						name: money.currencyName,
 					};
 				})
-				;
+			;
+		}
+
+		canCopyValue()
+		{
+			return this.isReadOnly();
+		}
+
+		prepareValueToCopy()
+		{
+			const money = new Money(this.getValue());
+
+			return stringify(money.formatted);
 		}
 	}
 

@@ -36,7 +36,7 @@ jn.define('layout/ui/address', (require, exports, module) => {
 	 * @returns {null|*}
 	 */
 	const AddressView = (props) => {
-		const { coords, clickable = true, parentWidget, viewType = AddressViewType.DEFAULT } = props;
+		const { coords, clickable = true, parentWidget, viewType = AddressViewType.DEFAULT, onLongClick } = props;
 		let { address, type } = props;
 
 		address = stringify(address);
@@ -56,6 +56,7 @@ jn.define('layout/ui/address', (require, exports, module) => {
 					const mapOpener = new MapOpener(parentWidget);
 					mapOpener.open({ address, coords });
 				}),
+				onLongClick,
 			},
 			Image({
 				style: {

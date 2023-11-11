@@ -778,25 +778,31 @@ BX.namespace("Tasks.Component");
 		this.layout.mark.className = "task-detail-sidebar-item-mark-" + popup.listValue.toLowerCase();
 		this.layout.mark.innerHTML = popup.listItem.name;
 
-		BX.ajax.runComponentAction('bitrix:tasks.task', 'setMark', {
-			mode: 'class',
-			data: {
-				taskId: this.taskId,
-				mark: popup.listValue === "NULL" ? "" :  popup.listValue
-			}
-		}).then(
-			function(response)
+		BX.ajax.runAction(
+			'tasks.task.update',
 			{
-				BX.Tasks.Util.fireGlobalTaskEvent('UPDATE', {ID: this.taskId}, {STAY_AT_PAGE: true}, {id: this.taskId});
-			}.bind(this)
-		).catch(
-			function(response)
-			{
+				data: {
+					taskId: this.taskId,
+					fields: {
+						MARK: popup.listValue === 'NULL' ? '' : popup.listValue,
+					},
+				},
+			},
+		).then(response => {
+				this.mark = response.data.task.mark || 'NULL';
+				BX.Tasks.Util.fireGlobalTaskEvent(
+					'UPDATE',
+					{ ID: this.taskId },
+					{ STAY_AT_PAGE: true },
+					{ id: this.taskId },
+				);
+			},
+		).catch(response => {
 				if (response.errors)
 				{
 					BX.Tasks.alert(response.errors);
 				}
-			}.bind(this)
+			},
 		);
 	};
 

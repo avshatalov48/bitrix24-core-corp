@@ -18,6 +18,7 @@ jn.define('im/messenger/const/dialog-type', (require, exports, module) => {
 		tasks: 'tasks',
 		thread: 'thread',
 		mail: 'mail',
+		private: 'private',
 	});
 
 	module.exports = { DialogType };

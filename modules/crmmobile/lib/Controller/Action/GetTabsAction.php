@@ -12,17 +12,18 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\CrmMobile\Controller\Action;
+use Bitrix\CrmMobile\CustomSections;
 use Bitrix\CrmMobile\Entity\FactoryProvider;
 use Bitrix\CrmMobile\Kanban\Entity;
 use Bitrix\CrmMobile\Kanban\GridId;
 use Bitrix\ImOpenlines\Security\Permissions;
 use Bitrix\Main\Loader;
 use Bitrix\Main\UI\Filter\Options;
+use Bitrix\Crm\Integration\Im;
 
 class GetTabsAction extends Action
 {
 	private const TITLE_MAX_LENGTH = 30;
-
 	public function run(?int $customSectionId = null): array
 	{
 		$this->checkModules();
@@ -76,7 +77,6 @@ class GetTabsAction extends Action
 			{
 				continue;
 			}
-
 			if ($customSectionId !== null && $isPossibleDynamicTypeId)
 			{
 				$customSection = IntranetManager::getCustomSectionByEntityTypeId($entityTypeId);
@@ -116,6 +116,7 @@ class GetTabsAction extends Action
 				'isStagesEnabled' => $factory->isStagesEnabled(),
 				'isCategoriesSupported' => $isCategoriesSupported,
 				'isCategoriesEnabled' => $isCategoriesEnabled,
+				'isChatSupported' => Im\Chat::isEntitySupported($entityTypeId),
 				'isLastActivityEnabled' => $factory->isLastActivityEnabled(),
 				'isLinkWithProductsEnabled' => $factory->isLinkWithProductsEnabled(),
 				'needSaveCurrentCategoryId' => (
@@ -141,7 +142,7 @@ class GetTabsAction extends Action
 				],
 			];
 		}
-
+		CustomSections\TabSorter::sort($result, $customSectionId);
 		$this->prepareActiveTab($result);
 
 		return $result;

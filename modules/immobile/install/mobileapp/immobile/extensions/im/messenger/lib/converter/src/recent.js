@@ -5,6 +5,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 	const { clone } = require('utils/object');
 	const { core } = require('im/messenger/core');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const { DateHelper } = require('im/messenger/lib/helper');
 
 	/**
 	 * @class RecentConverter
@@ -173,6 +174,11 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 					newElement.lines.id = parseInt(element.lines.id);
 					newElement.lines.status = parseInt(element.lines.status);
 				}
+			}
+
+			if (element.date_update)
+			{
+				newElement.date_update = DateHelper.cast(element.date_update);
 			}
 
 			return newElement;

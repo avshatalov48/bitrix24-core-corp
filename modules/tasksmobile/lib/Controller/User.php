@@ -4,10 +4,7 @@ namespace Bitrix\TasksMobile\Controller;
 
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use Bitrix\Main\Engine\Controller;
-use Bitrix\Main\Loader;
 use Bitrix\Tasks\Ui\Avatar;
-
-Loader::requireModule('tasks');
 
 class User extends Controller
 {

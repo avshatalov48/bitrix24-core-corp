@@ -4,13 +4,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Catalog\Access\AccessController;
-use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
-use Bitrix\Iblock;
+use Bitrix\Crm\Settings\LayoutSettings;
 
 class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Errorable
 {
@@ -30,13 +28,9 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 
 	/** @var int */
 	protected $iblockId;
-	/** @var array */
-	protected $iblock;
-	/** @var string */
-	protected $iblockListMode;
 	/** @var bool */
 	protected $iblockListMixed;
-	/** @var $sliderMode */
+	/** @var bool */
 	private $sliderMode;
 
 	/** @var string */
@@ -186,7 +180,10 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 			return;
 		}
 		$this->initUiScope();
+
 		$this->arResult['PAGE_DESCRIPTION'] = $this->getPageDescription();
+		$this->arResult['USE_NEW_CARD'] = LayoutSettings::getCurrent()->isFullCatalogEnabled() ? 'Y' : 'N';
+
 		$this->includeComponentTemplate($this->pageId);
 	}
 
@@ -230,22 +227,27 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 			$this->addErrorMessage(Loc::getMessage('CRM_CATALOG_CONTROLLER_ERR_CATALOG_PRODUCT_ABSENT'));
 			return;
 		}
+
 		$iblock = \CIBlock::GetArrayByID($iblockId);
 		if (empty($iblock) || !is_array($iblock))
 		{
 			$this->addErrorMessage(Loc::getMessage('CRM_CATALOG_CONTROLLER_ERR_CATALOG_PRODUCT_ABSENT'));
 			return;
 		}
+
 		$this->iblockId = $iblockId;
-		$this->iblock = $iblock;
 		$this->request = Main\Application::getInstance()->getContext()->getRequest();
 		$this->sliderMode = $this->request->get(self::MODE_SLIDER_VIEW_NAME) === 'Y';
+
+		$this->arResult['IBLOCK_ID'] = $iblockId;
 	}
 
 	protected function initUrlBuilder(): void
 	{
 		$this->urlBuilder = new Crm\Product\Url\ProductBuilder();
 		$this->urlBuilder->setIblockId($this->iblockId);
+		$this->iblockListMixed = $this->urlBuilder->isIblockListMixed();
+
 		$params = [];
 		if ($this->sliderMode)
 		{
@@ -253,12 +255,8 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 			$params = static::getViewModeParams();
 		}
 		$this->urlBuilder->setUrlParams($params);
-		$this->iblockListMixed = $this->urlBuilder->isIblockListMixed();
-		$this->iblockListMode =
-			$this->iblockListMixed
-				? Iblock\IblockTable::LIST_MODE_COMBINED
-				: Iblock\IblockTable::LIST_MODE_SEPARATE
-		;
+
+		$this->arResult['URL_BUILDER'] = $this->urlBuilder;
 	}
 
 	protected function parseComponentVariables(): void
@@ -294,27 +292,6 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 		if (empty($this->pageId))
 		{
 			$this->addErrorMessage(Loc::getMessage('CRM_CATALOG_CONTROLLER_ERR_PAGE_UNKNOWN'));
-		}
-		if ($this->pageId == self::PAGE_INDEX)
-		{
-			if (
-				!$this->request->isPost()
-				&& !$this->request->isAjaxRequest()
-				&& (
-					$this->request->getQuery('find_section_section') === null
-					|| $this->request->getQuery('SECTION_ID') === null
-					|| $this->request->getQuery('apply_filter') === null
-				)
-			)
-			{
-				$pageUrl = $this->request->getRequestUri();
-				$currentUri = new Main\Web\Uri($pageUrl);
-				LocalRedirect($currentUri->addParams([
-					'find_section_section' => 0,
-					'SECTION_ID' => 0,
-					'apply_filter' => 'Y'
-				])->getUri());
-			}
 		}
 	}
 
@@ -379,45 +356,9 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 		switch ($this->pageId)
 		{
 			case self::PAGE_INDEX:
-				$result = [
-					'PAGE_ID' => 'crm_catalog_products',
-					'PAGE_PATH' => '/bitrix/modules/iblock/admin/'.($this->iblockListMixed
-						? 'iblock_list_admin.php'
-						: 'iblock_element_admin.php'
-					),
-					'PAGE_PARAMS' => $this->urlBuilder->getBaseParams(),
-					'SEF_FOLDER' => '/', // hack for template files
-					'INTERNAL_PAGE' => 'N',
-					'CACHE_TYPE' => 'N',
-					'PAGE_CONSTANTS' => [
-						'CATALOG_PRODUCT' => 'Y',
-						'URL_BUILDER_TYPE' => Crm\Product\Url\ProductBuilder::TYPE_ID,
-						'SELF_FOLDER_URL' => '/shop/settings/'
-					]
-				];
-				break;
 			case self::PAGE_LIST:
 			case self::PAGE_LIST_SLIDER:
-				$result = [
-					'PAGE_ID' => ($this->iblockListMixed ? 'crm_catalog_item_list' : 'crm_catalog_product_list'),
-					'PAGE_PATH' => '/bitrix/modules/iblock/admin/'.($this->iblockListMixed
-						? 'iblock_list_admin.php'
-						: 'iblock_element_admin.php'
-					),
-					'PAGE_PARAMS' =>
-						($this->pageId === self::PAGE_LIST_SLIDER)
-							? $queryString
-							: $this->urlBuilder->getBaseParams()
-					,
-					'SEF_FOLDER' => '/', // hack for template files
-					'INTERNAL_PAGE' => 'N',
-					'CACHE_TYPE' => 'N',
-					'PAGE_CONSTANTS' => [
-						'CATALOG_PRODUCT' => 'Y',
-						'URL_BUILDER_TYPE' => Crm\Product\Url\ProductBuilder::TYPE_ID,
-						'SELF_FOLDER_URL' => '/shop/settings/'
-					]
-				];
+				$result = [];
 				break;
 			case self::PAGE_SECTION_LIST:
 				$result = [

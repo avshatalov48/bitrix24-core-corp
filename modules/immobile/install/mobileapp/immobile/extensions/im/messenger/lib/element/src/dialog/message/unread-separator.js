@@ -9,6 +9,7 @@ jn.define('im/messenger/lib/element/dialog/message/unread-separator', (require, 
 		MessageTextAlign,
 	} = require('im/messenger/lib/element/dialog/message/base');
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
+	const { MessageIdType, MessageType } = require('im/messenger/const');
 
 	/**
 	 * @class UnreadSeparatorMessage
@@ -45,7 +46,7 @@ jn.define('im/messenger/lib/element/dialog/message/unread-separator', (require, 
 
 		getType()
 		{
-			return 'system-text';
+			return MessageType.systemText;
 		}
 
 		setShowTail()
@@ -55,7 +56,7 @@ jn.define('im/messenger/lib/element/dialog/message/unread-separator', (require, 
 
 		static getDefaultId()
 		{
-			return 'template-separator-unread';
+			return MessageIdType.templateSeparatorUnread;
 		}
 	}
 

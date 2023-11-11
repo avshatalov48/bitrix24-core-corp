@@ -1,8 +1,8 @@
 <?php
 
 return [
-	'extensions' => [],
+	'extensions' => ['apptheme'],
 	'components' => [
-		'stress',
+		'stress'
 	],
 ];

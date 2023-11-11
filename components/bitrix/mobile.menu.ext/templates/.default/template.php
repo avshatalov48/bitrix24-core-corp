@@ -7,8 +7,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 
 /**
- * @var $USER CAllUser
- * @var $APPLICATION CAllMain
+ * @var $USER CUser
+ * @var $APPLICATION CMain
  * @var $userPerms CCrmPerms
  * @var $this CBitrixComponentTemplate
  */

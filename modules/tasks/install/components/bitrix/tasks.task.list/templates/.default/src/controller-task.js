@@ -2,6 +2,7 @@ import {EventEmitter} from "main.core.events";
 
 import {ControllerTaskEvent} from "./controller-task-event"
 import {ControllerTaskRepository} from "./controller-task-repository"
+import {Action} from "./controller-task-action";
 
 class ControllerTask
 {
@@ -84,9 +85,38 @@ class ControllerTask
 		return result;
 	}
 
+	static getItemsByType(poolItems, type)
+	{
+		const result = [];
+
+		Object.keys(poolItems).forEach((key) => {
+			const poolItem = poolItems[key];
+
+			if (Object.keys(poolItem)[0] === type)
+			{
+				result.push(poolItem[type].fields)
+			}
+		})
+
+		return result;
+	}
+
+	static sortedById(items)
+	{
+		items.sort((l,r) => l.id > r.id
+			? 1
+			: (r.id < r.id
+				? -1
+				: 0)
+		);
+		
+		return items;
+	}
+
 	static prepareByPoolToEmit(items)
 	{
 		const result = [];
+		const action = Action.USER_OPTION_CHANGED;
 
 		Object.keys(items).forEach((key) => {
 			const item = items[key];
@@ -94,8 +124,21 @@ class ControllerTask
 			const poolItems = item['default'].fields.params.items;
 			const repository = item['default'].fields.params.repository;
 
+			let poolItem = {};
+			const sortedItems = ControllerTask.sortedById(
+				ControllerTask.getItemsByType(poolItems, action));
+
 			Object.keys(poolItems).forEach((key) => {
-				const poolItem = poolItems[key];
+
+				if (Object.keys(poolItems[key])[0] === action)
+				{
+					// ORDER actions user_option_changed BY ASC
+					poolItem = {[action]: {fields: sortedItems.shift()}}
+				}
+				else
+				{
+					poolItem = poolItems[key];
+				}
 
 				result.push({poolItem, repository})
 			})

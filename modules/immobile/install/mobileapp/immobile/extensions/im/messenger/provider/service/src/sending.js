@@ -37,6 +37,11 @@ jn.define('im/messenger/provider/service/sending', (require, exports, module) =>
 			this.fileService = new FileService();
 		}
 
+		/**
+		 * @desc Send files from device by fileService
+		 * @param {string} dialogId
+		 * @param {Array<Object>} deviceFileList
+		 */
 		sendFilesFromDevice(dialogId, deviceFileList)
 		{
 			if (deviceFileList.length === 0)
@@ -48,29 +53,40 @@ jn.define('im/messenger/provider/service/sending', (require, exports, module) =>
 
 			this.fileService.getDiskFolderId(dialogId)
 				.then((diskFolderId) => {
-					deviceFileList.forEach((deviceFile) => {
+					const prepareFiles = deviceFileList.map((deviceFile) => {
 						const temporaryMessageId = Uuid.getV4();
 						const temporaryFileId = Uuid.getV4();
-						const fileToUpload = {
+
+						return {
 							temporaryMessageId,
 							temporaryFileId,
 							deviceFile,
 							diskFolderId,
 							dialogId,
 						};
-
-						this.fileService.uploadFile(fileToUpload)
-							.then(() => {
-								this.sendMessage({
-									dialogId: dialogId,
-									temporaryMessageId: temporaryMessageId,
-									fileId: temporaryFileId,
-								});
-							})
-						;
 					});
-				})
-			;
+					const callBackSend = (file) => {
+						this.sendMessage({
+							dialogId,
+							temporaryMessageId: file.temporaryMessageId,
+							fileId: file.temporaryFileId,
+						});
+					};
+
+					if (prepareFiles.length >= 2)
+					{
+						this.fileService.uploadFiles(prepareFiles, callBackSend);
+					}
+					else
+					{
+						const prepareFile = prepareFiles[0];
+						this.fileService.uploadFile(prepareFile)
+							.then(() => {
+								callBackSend(prepareFile);
+							})
+							.catch((err) => Logger.error('this.fileService.uploadFile', err));
+					}
+				});
 		}
 
 		cancelFileUpload(temporaryMessageId, temporaryFileId)
@@ -166,7 +182,7 @@ jn.define('im/messenger/provider/service/sending', (require, exports, module) =>
 			return {
 				templateId: temporaryId,
 				chatId: this.getDialog(dialogId).chatId,
-				dialogId: dialogId,
+				dialogId,
 				authorId: core.getUserId(),
 				text,
 				date: new Date(),

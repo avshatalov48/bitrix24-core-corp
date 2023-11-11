@@ -98,7 +98,7 @@ jn.define('layout/ui/detail-card/toolbar/actions-panel', (require, exports, modu
 
 		prepareButtons()
 		{
-			const filteredItems = this.props.actions.filter(action => action.onActiveCallback(this.props.item));
+			const filteredItems = this.props.actions.filter((action) => action.onActiveCallback(this.props.item));
 
 			return (
 				filteredItems

@@ -6,8 +6,11 @@ use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Tasks\Integration\Bizproc\Automation\Factory;
+use Bitrix\Tasks\Internals\Task\Mark;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Tasks\Internals\Task\Priority;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Socialnetwork;
 
@@ -194,13 +197,13 @@ class Task implements \IBPWorkflowDocument
 				'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_STATUS'),
 				'Type' => 'select',
 				//'Editable' => true,
-				'Options' => array(
-					\CTasks::STATE_PENDING => Loc::getMessage('TASKS_BP_DOCUMENT_STATUS_PENDING_1'),
-					\CTasks::STATE_IN_PROGRESS => Loc::getMessage('TASKS_BP_DOCUMENT_STATUS_IN_PROGRESS'),
-					\CTasks::STATE_SUPPOSEDLY_COMPLETED => Loc::getMessage('TASKS_BP_DOCUMENT_STATUS_SUPPOSEDLY_COMPLETED'),
-					\CTasks::STATE_COMPLETED => Loc::getMessage('TASKS_BP_DOCUMENT_STATUS_COMPLETED'),
-					\CTasks::STATE_DEFERRED => Loc::getMessage('TASKS_BP_DOCUMENT_STATUS_DEFERRED'),
-				)
+				'Options' => [
+					Status::PENDING => Loc::getMessage('TASKS_BP_DOCUMENT_STATUS_PENDING_1'),
+					Status::IN_PROGRESS => Loc::getMessage('TASKS_BP_DOCUMENT_STATUS_IN_PROGRESS'),
+					Status::SUPPOSEDLY_COMPLETED => Loc::getMessage('TASKS_BP_DOCUMENT_STATUS_SUPPOSEDLY_COMPLETED'),
+					Status::COMPLETED => Loc::getMessage('TASKS_BP_DOCUMENT_STATUS_COMPLETED'),
+					Status::DEFERRED => Loc::getMessage('TASKS_BP_DOCUMENT_STATUS_DEFERRED'),
+				],
 			],
 			'RESPONSIBLE_ID' => [
 				'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_RESPONSIBLE_ID'),
@@ -272,8 +275,8 @@ class Task implements \IBPWorkflowDocument
 				'Type' => 'select',
 				'Editable' => true,
 				'Options' => [
-					\CTasks::MARK_POSITIVE => Loc::getMessage('TASKS_BP_DOCUMENT_MARK_POSITIVE'),
-					\CTasks::MARK_NEGATIVE => Loc::getMessage('TASKS_BP_DOCUMENT_MARK_NEGATIVE')
+					Mark::POSITIVE => Loc::getMessage('TASKS_BP_DOCUMENT_MARK_POSITIVE'),
+					Mark::NEGATIVE => Loc::getMessage('TASKS_BP_DOCUMENT_MARK_NEGATIVE')
 				]
 			],
 			'ALLOW_CHANGE_DEADLINE' => [
@@ -558,7 +561,7 @@ class Task implements \IBPWorkflowDocument
 
 		if (isset($fields['IS_IMPORTANT']))
 		{
-			$fields['PRIORITY'] = $fields['IS_IMPORTANT'] === 'Y' ? \CTasks::PRIORITY_HIGH : \CTasks::PRIORITY_AVERAGE;
+			$fields['PRIORITY'] = $fields['IS_IMPORTANT'] === 'Y' ? Priority::HIGH : Priority::AVERAGE;
 			unset($fields['IS_IMPORTANT']);
 		}
 
@@ -837,7 +840,7 @@ class Task implements \IBPWorkflowDocument
 
 	private static function convertFieldsToDocument(array &$fields)
 	{
-		$fields['IS_IMPORTANT'] = ($fields['PRIORITY'] > \CTasks::PRIORITY_AVERAGE) ? 'Y' : 'N';
+		$fields['IS_IMPORTANT'] = ($fields['PRIORITY'] > Priority::AVERAGE) ? 'Y' : 'N';
 
 		$documentFields = self::getDocumentFields(null);
 		foreach ($fields as $fieldName => $fieldValue)
@@ -868,7 +871,7 @@ class Task implements \IBPWorkflowDocument
 		if (!empty($fields['DEADLINE']))
 		{
 			$closedDateTs = time();
-			if ($fields['STATUS'] >= \CTasks::STATE_SUPPOSEDLY_COMPLETED && !empty($fields['CLOSED_DATE']))
+			if ($fields['STATUS'] >= Status::SUPPOSEDLY_COMPLETED && !empty($fields['CLOSED_DATE']))
 			{
 				$closedDateTs = DateTime::createFromUserTime($fields['CLOSED_DATE'])->getTimestamp();
 			}

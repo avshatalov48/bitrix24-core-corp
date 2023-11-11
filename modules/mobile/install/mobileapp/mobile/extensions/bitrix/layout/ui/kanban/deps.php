@@ -8,6 +8,7 @@ return [
 		'layout/ui/pure-component',
 		'layout/ui/loading-screen',
 		'layout/ui/stateful-list',
+		'layout/ui/simple-list/items',
 		'loc',
 		'type',
 		'utils',

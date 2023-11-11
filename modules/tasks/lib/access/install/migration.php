@@ -39,7 +39,7 @@ class Migration
 			SELECT
 				ENTITY_ID AS TEMPLATE_ID,
 				GROUP_CODE AS ACCESS_CODE,
-				IF(TASK_ID='. $levelFull .', '. PermissionDictionary::TEMPLATE_FULL .', '. PermissionDictionary::TEMPLATE_VIEW .') AS PERMISSION_ID,
+				CASE WHEN TASK_ID = '. $levelFull .' THEN '. PermissionDictionary::TEMPLATE_FULL .' ELSE '. PermissionDictionary::TEMPLATE_VIEW .' END AS PERMISSION_ID,
 				1 AS VALUE
 			FROM b_tasks_task_template_access
 		';

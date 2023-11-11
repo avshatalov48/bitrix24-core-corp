@@ -988,6 +988,9 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	var _templateObject$2, _templateObject2$1, _templateObject3$1;
+	if (BX.Kanban.Pagination) {
+	  BX.Kanban.Pagination.prototype.adjust = function () {};
+	}
 	var Column = /*#__PURE__*/function (_Kanban$Column) {
 	  babelHelpers.inherits(Column, _Kanban$Column);
 	  function Column(options) {
@@ -1871,7 +1874,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          failStagesGroup: this.getFailContainer()
 	        },
 	        currentStageGroup: this.getFailContainer(),
-	        categoryName: this.getTitle().innerText,
+	        categoryName: this.getTitle().textContent,
 	        isCategoryEditable: this.isCategoryEditable,
 	        areStagesEditable: this.areStagesEditable
 	      };
@@ -1991,8 +1994,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      var value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 	      var titleEditor = this.getTitleEditor();
 	      var _this$getTitle = this.getTitle(),
-	        innerText = _this$getTitle.innerText;
-	      titleEditor.value = main_core.Type.isString(value) ? value : main_core.Text.decode(innerText);
+	        textContent = _this$getTitle.textContent;
+	      titleEditor.value = main_core.Type.isString(value) ? value : main_core.Text.decode(textContent);
 	      main_core.Tag.style(titleEditor)(_templateObject18 || (_templateObject18 = babelHelpers.taggedTemplateLiteral(["\n\t\t\tdisplay: block;\n\t\t"])));
 	    }
 	  }, {
@@ -2008,7 +2011,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      titleEditor.focus();
 	      var title = this.getTitle();
 	      titleEditor.setSelectionRange(titleLength, titleLength);
-	      var titleLength = title.innerText.length;
+	      var titleLength = title.textContent.length;
 	    }
 	  }, {
 	    key: "showTitle",
@@ -2027,8 +2030,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      var titleEditor = this.getTitleEditor();
 	      var value = titleEditor.value;
 	      var newTitle = value.trim() || main_core.Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER2');
-	      if (title.innerText !== newTitle) {
-	        title.innerText = newTitle;
+	      if (title.textContent !== newTitle) {
+	        title.textContent = newTitle;
 	        main_core.Dom.attr(title, 'title', newTitle);
 	        this.name = newTitle;
 	        this.emit('Category:title:save', {
@@ -2376,7 +2379,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          overlay: {
 	            opacity: 30
 	          },
-	          titleBar: main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_POPUP_TITLE2').replace('#name#', _this28.getTitle().innerText),
+	          titleBar: main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_POPUP_TITLE2').replace('#name#', _this28.getTitle().textContent),
 	          content: main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_POPUP_DESCRIPTION2'),
 	          buttons: [new main_popup.PopupWindowButton({
 	            text: main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_REMOVE_BUTTON_LABEL2'),

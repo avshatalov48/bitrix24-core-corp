@@ -13,36 +13,34 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Engine\CurrentUser;
-use Bitrix\Main\Web\Json;
-use Bitrix\Socialnetwork\WorkgroupTable;
+use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\Loader;
-use Bitrix\Tasks\Access\Model\TaskModel;
-use Bitrix\Tasks\Access\TagAccessController;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Control\Task;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Action\Filter\BooleanFilter;
-use Bitrix\Tasks\Manager\Task;
-use Bitrix\Tasks\Slider\Exception\SliderException;
-use Bitrix\Tasks\Slider\Factory\SliderFactory;
 use Bitrix\Tasks\Slider\Path\PathMaker;
 use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 use Bitrix\Tasks\Slider\Path\TemplatePathMaker;
-use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Control\Tag;
+use Bitrix\Main\Error;
 
 Loc::loadMessages(__FILE__);
 
 class TasksTagsSelector extends \CBitrixComponent implements Errorable, Controllerable
 {
-	private $errorCollection;
+	private ErrorCollection $errorCollection;
 	private int $userId = 0;
 	private array $tags = [];
 	private bool $templateContext = false;
 	private PathMaker $pathMaker;
+	private Task $taskHandler;
+	private Tag $tagHandler;
 
 	/**
 	 * @param null $component
@@ -55,11 +53,6 @@ class TasksTagsSelector extends \CBitrixComponent implements Errorable, Controll
 
 	public function configureActions()
 	{
-		if (!Loader::includeModule('tasks'))
-		{
-			return [];
-		}
-
 		return [
 			'updateTags' => [
 				'+prefilters' => [
@@ -69,9 +62,6 @@ class TasksTagsSelector extends \CBitrixComponent implements Errorable, Controll
 		];
 	}
 
-	/**
-	 * @return array|\Bitrix\Main\Error[]
-	 */
 	public function getErrors()
 	{
 		return $this->errorCollection->toArray();
@@ -81,10 +71,9 @@ class TasksTagsSelector extends \CBitrixComponent implements Errorable, Controll
 	{
 	}
 
-	public function updateTagsAction($taskId, $tagIds = [], string $newTag = ''): ?array
+	public function updateTagsAction(int $taskId, array $tagIds = [], string $newTag = ''): ?array
 	{
-		$taskId = (int)$taskId;
-		if (!$taskId)
+		if ($taskId <= 0)
 		{
 			return null;
 		}
@@ -94,7 +83,7 @@ class TasksTagsSelector extends \CBitrixComponent implements Errorable, Controll
 			return null;
 		}
 
-		$task = TaskRegistry::getInstance()->get($taskId);
+		$task = TaskRegistry::getInstance()->getObject($taskId);
 
 		if (is_null($task))
 		{
@@ -104,23 +93,16 @@ class TasksTagsSelector extends \CBitrixComponent implements Errorable, Controll
 		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_EDIT, $taskId))
 		{
 			$this->addForbiddenError();
-			return [];
+			return null;
 		}
 
-		$groupId = 0;
-		$groupName = '';
+		$group = $task->customData->get('GROUP_INFO');
+		$groupId = is_null($group) ? 0 : (int)$group['ID'];
+		$groupName = is_null($group) ? '' : $group['NAME'];
 
-		if (!is_null($task['GROUP_INFO']))
+		if ($this->hasNewTag($newTag))
 		{
-			$groupId = $task['GROUP_INFO']['ID'];
-			$groupName = $task['GROUP_INFO']['NAME'];
-		}
-
-		if (!empty(trim($newTag)))
-		{
-			$tagService = new Bitrix\Tasks\Control\Tag($this->userId);
-
-			if ($tagService->isExists($newTag, $groupId, $taskId))
+			if ($this->tagHandler->isExists($newTag, $groupId, $taskId))
 			{
 				return [
 					'success' => false,
@@ -131,25 +113,22 @@ class TasksTagsSelector extends \CBitrixComponent implements Errorable, Controll
 			$tagIds[] = $newTag;
 		}
 
-		$this->updateTask(
-			$taskId,
-			[
-				'TAGS' => $tagIds,
-			]
-		);
-
-		if ($this->errorCollection->checkNoFatals())
+		try
 		{
-			return [
-				'success' => true,
-				'error' => '',
-				'owner' => empty($groupName) ? CurrentUser::get()->getFormattedName() : $groupName,
-			];
+			$this->taskHandler->update($taskId, ['TAGS' => $tagIds]);
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(
+				new Error(Loc::getMessage('TASKS_TS_UNEXPECTED_ERROR'))
+			);
+			return null;
 		}
 
 		return [
-			'success' => false,
-			'error' => Loc::getMessage('TASKS_TS_UNEXPECTED_ERROR'),
+			'success' => true,
+			'error' => '',
+			'owner' => empty($groupName) ? CurrentUser::get()->getFormattedName() : $groupName,
 		];
 	}
 
@@ -238,51 +217,23 @@ class TasksTagsSelector extends \CBitrixComponent implements Errorable, Controll
 		}
 	}
 
-	private function updateTask(int $taskId, array $data): void
-	{
-		try
-		{
-			Task::update(
-				$this->userId,
-				$taskId,
-				$data,
-				[
-					'PUBLIC_MODE' => true,
-					'ERRORS' => $this->errorCollection,
-				]
-			);
-		}
-		catch (TasksException $e)
-		{
-			$messages = @unserialize($e->getMessage(), ['allowed_classes' => false]);
-			if (is_array($messages))
-			{
-				foreach ($messages as $message)
-				{
-					$this->errorCollection->add('TASK_EXCEPTION', $message['text'], false, ['ui' => 'notification']);
-				}
-			}
-		}
-		catch (\Exception $e)
-		{
-			$this->errorCollection->add('UNKNOWN_EXCEPTION', Loc::getMessage('TASKS_TS_UNEXPECTED_ERROR'), false,
-				['ui' => 'notification']);
-		}
-	}
-
-	private function init()
+	private function init(): void
 	{
 		if (!Loader::includeModule('tasks'))
 		{
-			return null;
+			return;
 		}
 		$this->userId = User::getId();
-		$this->errorCollection = new Collection();
+		$this->errorCollection = new ErrorCollection();
+		$this->taskHandler = new Task($this->userId);
+		$this->tagHandler = new Tag($this->userId);
 	}
 
-	private function addForbiddenError()
+	private function addForbiddenError(): void
 	{
-		$this->errorCollection->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
+		$this->errorCollection->setError(
+			new Error(Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'), 'ACTION_NOT_ALLOWED')
+		);
 	}
 
 	private function formatTags(): void
@@ -305,5 +256,10 @@ class TasksTagsSelector extends \CBitrixComponent implements Errorable, Controll
 		}
 
 		$this->arResult['TAGS'] = implode(',', $items);
+	}
+
+	private function hasNewTag(string $tag = ''): bool
+	{
+		return !empty(trim($tag));
 	}
 }

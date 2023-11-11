@@ -85,7 +85,6 @@ class PaySystemMode extends Base
 				'tinkoff_bank',
 				'',
 				'qiwi',
-				'webmoney',
 				'embedded',
 				'installments',
 				'cash',

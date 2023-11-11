@@ -418,8 +418,9 @@ export class TodoEditor
 
 	#getDefaultPingParams(): Object
 	{
+		// TODO: get real default values from server-side
 		return  {
-			selectedItems: ['at the time of the onset', 'in 15 minutes']
+			selectedItems: ['at_the_time_of_the_onset', 'in_15_minutes']
 		}
 	}
 

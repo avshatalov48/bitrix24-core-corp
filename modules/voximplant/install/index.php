@@ -28,11 +28,6 @@ Class voximplant extends CModule
 			$this->MODULE_VERSION = $arModuleVersion["VERSION"];
 			$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
 		}
-		else
-		{
-			$this->MODULE_VERSION = VI_VERSION;
-			$this->MODULE_VERSION_DATE = VI_VERSION_DATE;
-		}
 
 		$this->MODULE_NAME = GetMessage("VI_MODULE_NAME_2");
 		$this->MODULE_DESCRIPTION = GetMessage("VI_MODULE_DESCRIPTION_2");
@@ -118,7 +113,7 @@ Class voximplant extends CModule
 	function InstallDB($params = Array())
 	{
 		global $DB, $APPLICATION;
-
+		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = false;
 		if ($params['PUBLIC_URL'] <> '' && mb_strlen($params['PUBLIC_URL']) < 12)
 		{
@@ -129,7 +124,7 @@ Class voximplant extends CModule
 			$this->errors[] = GetMessage('VI_CHECK_PUBLIC_PATH');
 		}
 		if(!$this->errors && !$DB->Query("SELECT 'x' FROM b_voximplant_phone", true))
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/voximplant/install/db/mysql/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/voximplant/install/db/".$connection->getType()."/install.sql");
 
 		if($this->errors !== false)
 		{
@@ -571,11 +566,11 @@ Class voximplant extends CModule
 	function UnInstallDB($arParams = Array())
 	{
 		global $APPLICATION, $DB, $errors;
-
+		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = false;
 
 		if (!$arParams['savedata'])
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/voximplant/install/db/mysql/uninstall.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/voximplant/install/db/".$connection->getType()."/uninstall.sql");
 
 		if(is_array($this->errors))
 			$arSQLErrors = $this->errors;

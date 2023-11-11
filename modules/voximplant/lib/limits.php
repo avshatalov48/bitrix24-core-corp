@@ -234,7 +234,7 @@ class Limits
 	 * Returns array or russian license prefixes.
 	 * @return array
 	 */
-	protected static function getRussianRegions()
+	public static function getRussianRegions()
 	{
 		return array('ru', 'ua', 'kz', 'by');
 	}

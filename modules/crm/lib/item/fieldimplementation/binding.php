@@ -11,11 +11,16 @@ use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ORM\Entity;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Objectify\Collection;
 use Bitrix\Main\ORM\Objectify\EntityObject;
 use Bitrix\Main\ORM\Objectify\Values;
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Result;
 
+/**
+ * @internal
+ */
 final class Binding implements FieldImplementation
 {
 	/** @var EntityObject */
@@ -29,6 +34,10 @@ final class Binding implements FieldImplementation
 	private $fieldNameMap;
 	/** @var Entity */
 	private $bindingEntity;
+
+	private ?Entity $boundEntity = null;
+	private string $thisIdField = '';
+	private array $boundIdsBeforeSave;
 
 	/** @var Array<string, mixed> */
 	private $defaultValuesForBindingObject = [];
@@ -65,6 +74,34 @@ final class Binding implements FieldImplementation
 	public function setBindingObjectDefaultValues(array $defaultValuesForFields): self
 	{
 		$this->defaultValuesForBindingObject = $defaultValuesForFields;
+
+		return $this;
+	}
+
+	public function configureUpdatingRefIdInBoundEntity(Entity $boundEntity, string $thisIdField): self
+	{
+		if (!$this->bindingEntity->hasField($thisIdField))
+		{
+			throw new ArgumentException("{$thisIdField} doesn't exist in Binding Entity");
+		}
+
+		$isFound = false;
+		foreach ($this->bindingEntity->getFields() as $field)
+		{
+			if ($field instanceof Reference && $field->getRefEntity()->getFullName() === $boundEntity->getFullName())
+			{
+				$isFound = true;
+				break;
+			}
+		}
+
+		if (!$isFound)
+		{
+			throw new ArgumentException('The provided bound entity is not referenced by binding entity');
+		}
+
+		$this->boundEntity = $boundEntity;
+		$this->thisIdField = $thisIdField;
 
 		return $this;
 	}
@@ -121,8 +158,10 @@ final class Binding implements FieldImplementation
 			{
 				if (!($entityToBind instanceof EntityObject))
 				{
+					$type = is_object($entityToBind) ? $entityToBind::class : gettype($entityToBind);
+
 					throw new ArgumentException(
-						'value should an array of ' . EntityObject::class . ', got this as part of the array: '. gettype($entityToBind),
+						'value should an array of ' . EntityObject::class . ", got this as part of the array: {$type}",
 					);
 				}
 
@@ -195,14 +234,96 @@ final class Binding implements FieldImplementation
 		return null;
 	}
 
+	public function beforeItemSave(Item $item, EntityObject $entityObject): void
+	{
+		$actualBindings = $this->remindActual($this->fieldNameMap->getBindings());
+
+		$this->boundIdsBeforeSave = EntityBinding::prepareEntityIDs($this->boundEntityTypeId, $actualBindings);
+	}
+
 	public function afterSuccessfulItemSave(Item $item, EntityObject $entityObject): void
 	{
 	}
 
 	public function save(): Result
 	{
-		// everything was saved at entityObject save
-		return new Result();
+		if (is_null($this->boundEntity) || empty($this->thisIdField))
+		{
+			// everything was saved at entityObject save
+			return new Result();
+		}
+
+		$newBindings = $this->get($this->fieldNameMap->getBindings());
+		$boundIdsAfterSave = EntityBinding::prepareEntityIDs($this->boundEntityTypeId, $newBindings);
+
+		sort($this->boundIdsBeforeSave);
+		sort($boundIdsAfterSave);
+		if ($boundIdsAfterSave === $this->boundIdsBeforeSave)
+		{
+			return new Result();
+		}
+
+		$affectedIds = array_unique(array_merge($this->boundIdsBeforeSave, $boundIdsAfterSave));
+		if (empty($affectedIds))
+		{
+			return new Result();
+		}
+
+		$query = new Query($this->bindingEntity);
+
+		/** @var Collection $collection */
+		$collection =
+			$query
+				->setSelect([$this->boundEntityIdFieldName, $this->thisIdField, 'IS_PRIMARY'])
+				->whereIn($this->boundEntityIdFieldName, $affectedIds)
+				->fetchCollection()
+		;
+
+		/** @var Array<int, array{isPrimary: bool, thisId: int}> $newPrimaryMap */
+		$newPrimaryMap = [];
+
+		foreach ($collection as $object)
+		{
+			$boundEntityId = $object->require($this->boundEntityIdFieldName);
+			$thisId = $object->require($this->thisIdField);
+			$isPrimary = $object->require('IS_PRIMARY');
+
+			$primaryDesc = $newPrimaryMap[$boundEntityId] ?? null;
+
+			if (
+				is_null($primaryDesc)
+				|| $isPrimary && $primaryDesc['isPrimary'] === false
+				|| $thisId < $primaryDesc['thisId'] && !$primaryDesc['isPrimary']
+			)
+			{
+				$newPrimaryMap[$boundEntityId] = ['isPrimary' => $isPrimary, 'thisId' => $thisId];
+			}
+		}
+
+		foreach ($affectedIds as $affectedId)
+		{
+			if (!isset($newPrimaryMap[$affectedId]))
+			{
+				//no primary found - set to null
+				$newPrimaryMap[$affectedId] = ['isPrimary' => false, 'thisId' => null];
+			}
+		}
+
+		$result = new Result();
+		foreach ($newPrimaryMap as $boundEntityId => $primaryDesc)
+		{
+			$updateResult =  $this->boundEntity->getDataClass()::update(
+				$boundEntityId,
+				['fields' => [$this->thisIdField => $primaryDesc['thisId']]],
+			);
+
+			if (!$updateResult->isSuccess())
+			{
+				$result->addErrors($updateResult->getErrors());
+			}
+		}
+
+		return $result;
 	}
 
 	public function getSerializableFieldNames(): array

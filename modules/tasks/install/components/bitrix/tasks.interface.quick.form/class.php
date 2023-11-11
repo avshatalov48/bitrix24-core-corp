@@ -1,26 +1,38 @@
 <?php
 
+use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Errorable;
+use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Action\Filter\BooleanFilter;
 use Bitrix\Tasks\Manager\Task;
 use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Slider\Path\PathMaker;
+use Bitrix\Tasks\Slider\Path\TaskPathMaker;
+use Bitrix\Tasks\Util\Error\Collection;
+use Bitrix\Tasks\Util\Restriction;
+use Bitrix\Tasks\Util\User;
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
-class TasksQuickFormComponent extends TasksBaseComponent
-	implements \Bitrix\Main\Errorable, \Bitrix\Main\Engine\Contract\Controllerable
+class TasksQuickFormComponent extends TasksBaseComponent implements Errorable, Controllerable
 {
-	protected $errorCollection;
+	protected Collection $errorCollection;
 
-	public function configureActions()
+	public function configureActions(): array
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return [];
 		}
@@ -28,7 +40,7 @@ class TasksQuickFormComponent extends TasksBaseComponent
 		return [
 			'addTask' => [
 				'+prefilters' => [
-					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+					new BooleanFilter(),
 				],
 			],
 		];
@@ -40,25 +52,19 @@ class TasksQuickFormComponent extends TasksBaseComponent
 		$this->init();
 	}
 
-	protected function init()
+	private function init(): void
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
-			return null;
+			return;
 		}
 
-		$this->setUserId();
-		$this->errorCollection = new \Bitrix\Tasks\Util\Error\Collection();
-	}
-
-	protected function setUserId()
-	{
-		$this->userId = (int) \Bitrix\Tasks\Util\User::getId();
+		$this->userId = User::getId();
+		$this->errorCollection = new Collection();
 	}
 
 	public function getErrorByCode($code)
 	{
-		// TODO: Implement getErrorByCode() method.
 	}
 
 	public function getErrors()
@@ -70,11 +76,11 @@ class TasksQuickFormComponent extends TasksBaseComponent
 		return $this->errorCollection->toArray();
 	}
 
-	public function addTaskAction($data)
+	public function addTaskAction($data): ?array
 	{
 		global $DB;
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -90,7 +96,7 @@ class TasksQuickFormComponent extends TasksBaseComponent
 		{
 			$responsibleId = intval($data["responsibleId"]);
 		}
-		else if ($userEmail === "")
+		elseif ($userEmail === "")
 		{
 			$responsibleId = $this->userId;
 		}
@@ -98,7 +104,7 @@ class TasksQuickFormComponent extends TasksBaseComponent
 		$deadline = "";
 		if (
 			isset($data["deadline"])
-			&& $DB->FormatDate($data["deadline"], \CSite::GetDateFormat("FULL"))
+			&& $DB->FormatDate($data["deadline"], CSite::GetDateFormat())
 		)
 		{
 			$deadline = $data["deadline"];
@@ -107,7 +113,10 @@ class TasksQuickFormComponent extends TasksBaseComponent
 		$description = isset($data["description"]) ? trim($data["description"]) : "";
 		$project = isset($data["project"]) ? intval($data["project"]) : 0;
 		$nameTemplate = isset($data["nameTemplate"]) ? trim($data["nameTemplate"]) : "";
-		$ganttMode = isset($data["ganttMode"]) && ($data["ganttMode"] === true || $data["ganttMode"] === "1" || $data["ganttMode"] === "true");
+		$ganttMode = isset($data["ganttMode"])
+			&& ($data["ganttMode"] === true
+				|| $data["ganttMode"] === "1"
+				|| $data["ganttMode"] === "true");
 
 		if ($nameTemplate <> '')
 		{
@@ -120,39 +129,42 @@ class TasksQuickFormComponent extends TasksBaseComponent
 		}
 		else
 		{
-			$nameTemplate = \CSite::GetNameFormat(false);
+			$nameTemplate = CSite::GetNameFormat(false);
 		}
 
-		$fields = array(
+		$fields = [
 			"TITLE" => $title,
 			"DESCRIPTION" => $description,
-			"SE_RESPONSIBLE" => array(
+			"SE_RESPONSIBLE" => [
 				$userEmail !== ""
-					? array(
+					? [
 					"EMAIL" => $userEmail,
 					"NAME" => $userName,
-					"LAST_NAME" => $userLastName
-				)
-					: array(
-					"ID" => $responsibleId
-				)
-			),
+					"LAST_NAME" => $userLastName,
+				]
+					: [
+					"ID" => $responsibleId,
+				],
+			],
 			"DEADLINE" => $deadline,
 			"SITE_ID" => $data["siteId"],
 			"GROUP_ID" => $project,
 			"NAME_TEMPLATE" => $nameTemplate,
-			"DESCRIPTION_IN_BBCODE" => "Y"
-		);
+			"DESCRIPTION_IN_BBCODE" => "Y",
+		];
 
 		$task = TaskModel::createNew($fields['GROUP_ID']);
 		$task->setMembers([
 			RoleDictionary::ROLE_RESPONSIBLE => [
 				$fields['SE_RESPONSIBLE'][0]['ID']
-				?? $fields['SE_RESPONSIBLE'][0]['EMAIL']
-			]
+				?? $fields['SE_RESPONSIBLE'][0]['EMAIL'],
+			],
 		]);
 
-		if (!(new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_SAVE, TaskModel::createNew(), $task))
+		if (
+			!(new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_SAVE,
+				TaskModel::createNew(), $task)
+		)
 		{
 			$this->addForbiddenError();
 			return [];
@@ -182,32 +194,27 @@ class TasksQuickFormComponent extends TasksBaseComponent
 		}
 
 		SocialNetwork::setLogDestinationLast(
-			array(
-				"USER" => array($task["RESPONSIBLE_ID"]),
-				"SGROUP" => array($task["GROUP_ID"])
-			)
+			[
+				"USER" => [$task["RESPONSIBLE_ID"]],
+				"SGROUP" => [$task["GROUP_ID"]],
+			]
 		);
 
 		$taskId = $taskItem->getId();
 
-		$arPaths = array(
+		$arPaths = [
 			"PATH_TO_TASKS_TASK" => isset($data["pathToTask"]) ? trim($data["pathToTask"]) : "",
-		);
+		];
 
 		$getListParameters = $this->unserializeArray("getListParams", $data);
+		$context = $task['GROUP_ID'] > 0 ? PathMaker::GROUP_CONTEXT : PathMaker::PERSONAL_CONTEXT;
+		$ownerId = $task['GROUP_ID'] > 0 ? $task['GROUP_ID'] : $this->userId;
 
-		$result = array();
+		$result = [];
 		$result["taskRaw"] = $task;
 		$result["taskId"] = $task["ID"];
-		$result["taskPath"] = \CComponentEngine::MakePathFromTemplate(
-			$arPaths["PATH_TO_TASKS_TASK"],
-			array(
-				"task_id" => $task["ID"],
-				"group_id" => $project,
-				"user_id" => $this->userId,
-				"action" => "view"
-			)
-		);
+		$result["taskPath"] = (new TaskPathMaker($taskId, PathMaker::DEFAULT_ACTION, $ownerId,
+			$context))->makeEntityPath();
 
 		$result["position"] = $this->getTaskPosition($taskId, $getListParameters);
 
@@ -229,72 +236,71 @@ class TasksQuickFormComponent extends TasksBaseComponent
 
 		$arParams =& $this->arParams;
 
-		static::tryParseStringParameter($arParams["NAME_TEMPLATE"], \CSite::GetNameFormat(false));
+		static::tryParseStringParameter($arParams["NAME_TEMPLATE"], CSite::GetNameFormat(false));
 	}
 
 	protected function getData()
 	{
 		parent::getData();
 
-		$this->arResult["DESTINATION"] = SocialNetwork::getLogDestination('TASKS', array(
-			'USE_PROJECTS' => 'Y'
-		));
+		$this->arResult["DESTINATION"] = SocialNetwork::getLogDestination('TASKS', [
+			'USE_PROJECTS' => 'Y',
+		]);
 		$this->arResult["GROUP"] = \CSocNetGroup::getByID($this->arParams["GROUP_ID"]);
 
 		$canAddMailUsers = (
-			\Bitrix\Main\ModuleManager::isModuleInstalled("mail") &&
-			\Bitrix\Main\ModuleManager::isModuleInstalled("intranet") &&
-			(
-				!\Bitrix\Main\Loader::includeModule("bitrix24")
+			ModuleManager::isModuleInstalled("mail")
+			&& ModuleManager::isModuleInstalled("intranet")
+			&& (
+				!Loader::includeModule("bitrix24")
 				|| \CBitrix24::isEmailConfirmed()
 			)
 		);
 
-		$this->arResult["CAN"] = array(
+		$this->arResult["CAN"] = [
 			"addMailUsers" => $canAddMailUsers,
-			"manageTask" => \Bitrix\Tasks\Util\Restriction::canManageTask()
-		);
-
+			"manageTask" => Restriction::canManageTask(),
+		];
 
 		$user = \CUser::getByID($this->arParams["USER_ID"]);
 		$this->arResult["USER"] = $user->fetch();
 	}
 
-	private function addForbiddenError()
+	private function addForbiddenError(): void
 	{
 		$this->errorCollection->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
 	}
 
 	private function unserializeArray($key, $data)
 	{
-		$result = array();
+		$result = [];
 		if (isset($data[$key]) && checkSerializedData($data[$key]))
 		{
 			$result = unserialize($data[$key], ['allowed_classes' => false]);
 			if (!is_array($result))
 			{
-				$result = array();
+				$result = [];
 			}
 		}
 
 		return $result;
 	}
 
-	private function getTaskPosition($taskId, array $getListParameters)
+	private function getTaskPosition(int $taskId, array $getListParameters): array
 	{
-		$list = Task::getList($this->userId, $getListParameters, array("PUBLIC_MODE" => true));
+		$list = Task::getList($this->userId, $getListParameters, ["PUBLIC_MODE" => true]);
 		$items = $list["DATA"];
 
-		$result = array(
+		$result = [
 			"found" => false,
 			"prevTaskId" => 0,
-			"nextTaskId" => 0
-		);
+			"nextTaskId" => 0,
+		];
 
 		foreach ($items as $i => $item)
 		{
-			$id = $item["ID"];
-			if ($id == $taskId)
+			$id = (int)$item["ID"];
+			if ($id === $taskId)
 			{
 				$result["found"] = true;
 				if (isset($items[$i + 1]))
@@ -314,9 +320,8 @@ class TasksQuickFormComponent extends TasksBaseComponent
 	private function getJson($task, $arPaths, $nameTemplate)
 	{
 		ob_start();
-		tasksRenderJSON($task, 0, $arPaths, false, true, false, $nameTemplate, array());
-		$jsonString = ob_get_clean();
+		tasksRenderJSON($task, 0, $arPaths, false, true, false, $nameTemplate);
 
-		return $jsonString;
+		return ob_get_clean();
 	}
 }

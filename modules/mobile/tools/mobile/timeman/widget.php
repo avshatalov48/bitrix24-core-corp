@@ -1,7 +1,7 @@
 <?
 
-/** @var $USER \CALLUser */
-/** @var $APPLICATION \CALLUser */
+/** @var $USER CUser */
+/** @var $APPLICATION CMain */
 
 define("NOT_CHECK_FILE_PERMISSIONS", true);
 define("PUBLIC_AJAX_MODE", true);

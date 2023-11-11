@@ -34,6 +34,10 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			// return
 			'DynamicEntityFields' => null,
 		];
+
+		$this->setPropertiesTypes([
+			'DynamicTypeId' => ['Type' => FieldType::INT],
+		]);
 	}
 
 	protected function prepareProperties(): void

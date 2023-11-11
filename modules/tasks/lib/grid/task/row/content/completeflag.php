@@ -2,6 +2,7 @@
 namespace Bitrix\Tasks\Grid\Task\Row\Content;
 
 use Bitrix\Tasks\Grid\Task\Row\Content;
+use Bitrix\Tasks\Internals\Task\Status;
 use CTasks;
 
 /**
@@ -28,7 +29,7 @@ class CompleteFlag extends Content
 			$onClick = "BX.Tasks.GridActions.action('complete', {$row['ID']});";
 			$class = 'task-complete-action-need-complete';
 		}
-		else if ($row['REAL_STATUS'] === CTasks::STATE_COMPLETED)
+		else if ($row['REAL_STATUS'] === Status::COMPLETED)
 		{
 			$title = GetMessageJS('TASKS_GRID_TASK_ROW_CONTENT_COMPLETE_FLAG_FINISHED');
 			$class = 'task-complete-action-completed';

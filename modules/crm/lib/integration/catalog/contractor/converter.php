@@ -30,6 +30,19 @@ use Bitrix\Main\ORM\Query;
 use Bitrix\Crm\Service\Operation\Add;
 use Bitrix\Main\DB\SqlExpression;
 
+if (!Loader::includeModule('catalog'))
+{
+	class Converter extends Stepper
+	{
+		public function execute(&$option): bool
+		{
+			return self::FINISH_EXECUTION;
+		}
+	}
+
+	return;
+}
+
 /**
  * Class Converter
  *

@@ -17,6 +17,7 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 		DateSeparatorMessage,
 		UnreadSeparatorMessage,
 	} = require('im/messenger/lib/element');
+	const { MessageIdType, MessageType } = require('im/messenger/const');
 
 	/**
 	 * @class MessageRenderer
@@ -40,6 +41,7 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 
 		render(messageList)
 		{
+			Logger.log('MessageRenderer.render:', messageList);
 			if (this.messageList.length === 0)
 			{
 				this.setMessageList(messageList);
@@ -368,7 +370,7 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 		{
 			if (String(currentMessageId) === this.idAfterUnreadSeparatorMessage)
 			{
-				return this.viewMessageCollection['template-separator-unread'];
+				return this.viewMessageCollection[MessageIdType.templateSeparatorUnread];
 			}
 
 			const messageModel = this.getMessageModelByAnyId(currentMessageId);
@@ -385,9 +387,9 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 		}
 
 		/**
-		 * @desc Returns next message by id ( if next is system message or break - than return null )
+		 * @desc Returns next message by id
 		 * @param {number} currentMessageId
-		 * @return {Message|null}
+		 * @return {Message|null|undefined}
 		 * @private
 		 */
 		getNextMessage(currentMessageId)
@@ -407,7 +409,13 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 				return null;
 			}
 
-			return this.viewMessageCollection[this.messageIdsStack[indexMessage + 1]];
+			const nextMessage = this.viewMessageCollection[this.messageIdsStack[indexMessage + 1]];
+			if (nextMessage && String(nextMessage.id) === this.idAfterUnreadSeparatorMessage)
+			{
+				return this.viewMessageCollection[MessageIdType.templateSeparatorUnread];
+			}
+
+			return nextMessage;
 		}
 
 		/**
@@ -621,7 +629,7 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 			});
 
 			messageListWithTemplate.forEach((messageTemplate) => {
-				if (messageTemplate.type === this.constants.messageType.systemText)
+				if (messageTemplate.type === MessageType.systemText)
 				{
 					this.prepareSystemMessage(messageTemplate);
 				}
@@ -706,7 +714,7 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 					message.setAuthorBottomMessage(true);
 				}
 
-				if (message.type === this.constants.messageType.systemText)
+				if (message.type === MessageType.systemText)
 				{
 					this.prepareSystemMessage(message);
 				}
@@ -734,7 +742,7 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 					this.preparePrivateMessage(message, modelMessage);
 				}
 
-				if (message.type === this.constants.messageType.systemText)
+				if (message.type === MessageType.systemText)
 				{
 					this.prepareSystemMessage(message);
 				}
@@ -798,7 +806,7 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 				this.preparePrivateMessage(message, modelMessage);
 			}
 
-			if (message.type === this.constants.messageType.systemText)
+			if (message.type === MessageType.systemText)
 			{
 				this.prepareSystemMessage(message);
 			}
@@ -882,7 +890,7 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 		 */
 		getMessage(messageId)
 		{
-			return this.store.getters['messagesModel/getMessageById'](messageId);
+			return this.store.getters['messagesModel/getById'](messageId);
 		}
 
 		/**
@@ -893,10 +901,10 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 		 */
 		getMessageModelByAnyId(messageId)
 		{
-			let modelMessage = this.store.getters['messagesModel/getMessageById'](messageId);
+			let modelMessage = this.store.getters['messagesModel/getById'](messageId);
 			if (Type.isUndefined(modelMessage) || !('id' in modelMessage)) // getMessageById may returns {}
 			{
-				modelMessage = this.store.getters['messagesModel/getMessageByTemplateId'](messageId);
+				modelMessage = this.store.getters['messagesModel/getByTemplateId'](messageId);
 				if (!modelMessage)
 				{
 					modelMessage = this.messageList.find(
@@ -947,16 +955,10 @@ jn.define('im/messenger/controller/dialog/message-renderer', (require, exports, 
 		 */
 		getSeparator(date)
 		{
-			const id = `template-separator-${this.toDateCode(date)}`;
+			const id = `${MessageIdType.templateSeparatorDate}-${this.toDateCode(date)}`;
 
 			return new DateSeparatorMessage(id, date);
 		}
-
-		constants = {
-			messageType: {
-				systemText: 'system-text',
-			},
-		};
 	}
 
 	module.exports = {

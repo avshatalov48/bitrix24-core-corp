@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Bitrix\CrmMobile\Controller;
 
+use Bitrix\Catalog;
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
 use Bitrix\Crm\Conversion;
 use Bitrix\Crm\Engine\ActionFilter\CheckReadMyCompanyPermission;
@@ -13,6 +14,7 @@ use Bitrix\Crm\Entity\PaymentDocumentsRepository;
 use Bitrix\Crm\Exclusion\Manager;
 use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
+use Bitrix\Crm\Integration\Im;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Item\Company;
 use Bitrix\Crm\Item\Contact;
@@ -26,6 +28,7 @@ use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Crm\UserField\UserFieldManager;
 use Bitrix\CrmMobile\AhaMoments\GoToChat;
+use Bitrix\CrmMobile\AhaMoments\Yoochecks;
 use Bitrix\CrmMobile\Command\SaveEntityCommand;
 use Bitrix\CrmMobile\Controller\Filter\CheckRestrictions;
 use Bitrix\CrmMobile\Entity\FactoryProvider;
@@ -39,11 +42,14 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\EntitySelector\EntityUsageTable;
 use Bitrix\Mobile\Helpers\ReadsApplicationErrors;
 use Bitrix\Mobile\UI\DetailCard\Configurator;
 use Bitrix\Mobile\UI\DetailCard\Controller;
 use Bitrix\Mobile\UI\DetailCard\Tabs;
+use Bitrix\Main\Web\Json;
+use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\MenuIdResolver;
 
 Loader::requireModule('crm');
 
@@ -249,7 +255,14 @@ class EntityDetails extends Controller
 
 		if ($entity->isNew())
 		{
-			return $result;
+			return array_merge(
+				$result,
+				[
+					'params' => [
+						'permissions' => $this->getPermissions($entity),
+					],
+				]
+			);
 		}
 
 		$permissions = $this->getPermissions($entity);
@@ -270,12 +283,12 @@ class EntityDetails extends Controller
 					'isLinkWithProductsEnabled' => $this->isLinkWithProductsEnabled(),
 					'isDocumentGenerationEnabled' => $this->isDocumentGenerationEnabled(),
 					'isClientEnabled' => $this->isClientEnabled(),
+					'isChatSupported' => Im\Chat::isEntitySupported($entity->getEntityTypeId()),
 					'isCategoriesEnabled' => $this->isCategoriesEnabled(),
 					'documentGeneratorProvider' => $this->getDocumentGeneratorProvider($entity->getEntityTypeId()),
-					'ahaMoments' => [
-						'goToChat' => (GoToChat::getInstance())->canShow(),
-					],
+					'ahaMoments' => $this->getAhaMoments($entity),
 					'linkedUserFields' => $this->getLinkedUserFields(),
+					'floatingMenuItemsSettings' => $this->getFloatingMenuItemsSettings($entity, $currentUser),
 				],
 			]
 		);
@@ -328,6 +341,26 @@ class EntityDetails extends Controller
 		return $params;
 	}
 
+	private function getCommonPermissions(): array
+	{
+		return [
+			'openLinesAccess' => $this->hasOpenLinesAccess(),
+			'productCatalogAccess' => $this->hasProductCatalogAccess(),
+		];
+	}
+
+	private function hasProductCatalogAccess(): bool
+	{
+		if (!Loader::includeModule('catalog'))
+		{
+			return false;
+		}
+
+		return Catalog\Access\AccessController::getCurrent()->check(
+			Catalog\Access\ActionDictionary::ACTION_CATALOG_READ
+		);
+	}
+
 	private function prepareEditorConversionParams(&$params, $entityTypeId)
 	{
 		$conversionWizard = $this->getConversionWizard();
@@ -352,7 +385,7 @@ class EntityDetails extends Controller
 	{
 		if (!is_array($permissions))
 		{
-			$permissions = $this->getPermissions($entity);
+			$permissions = $this->getEntityPermissions($entity);
 		}
 
 		if (
@@ -447,13 +480,24 @@ class EntityDetails extends Controller
 
 	private function getPermissions(Item $entity): array
 	{
+		return array_merge(
+			$this->getCommonPermissions(),
+			$this->getEntityPermissions($entity)
+		);
+	}
+
+	private function getEntityPermissions(Item $entity): array
+	{
+		if ($entity->isNew())
+		{
+			return [];
+		}
+
 		$userPermissions = Container::getInstance()->getUserPermissions();
 		$crmPermissions = $userPermissions->getCrmPermissions();
 
 		$entityTypeId = $entity->getEntityTypeId();
 		$entityId = $entity->getId();
-
-		$openLinesAccess = $this->hasOpenLinesAccess();
 
 		if ($entityTypeId === \CCrmOwnerType::Company && \CCrmCompany::isMyCompany($entityId))
 		{
@@ -465,7 +509,6 @@ class EntityDetails extends Controller
 				'update' => $myCompanyPermissions->canUpdate(),
 				'delete' => $myCompanyPermissions->canDelete(),
 				'exclude' => false,
-				'openLinesAccess' => $openLinesAccess,
 			];
 		}
 
@@ -477,7 +520,6 @@ class EntityDetails extends Controller
 			'update' => $userPermissions->checkUpdatePermissions($entityTypeId, $entityId, $categoryId),
 			'delete' => $userPermissions->checkDeletePermissions($entityTypeId, $entityId, $categoryId),
 			'exclude' => !$crmPermissions->HavePerm('EXCLUSION', BX_CRM_PERM_NONE, 'WRITE'),
-			'openLinesAccess' => $openLinesAccess,
 		];
 	}
 
@@ -1032,5 +1074,63 @@ class EntityDetails extends Controller
 			'totalAmount' => $data['TOTAL_AMOUNT'] ?? 0,
 			'currencyId' => $data['CURRENCY_ID'] ?? '',
 		];
+	}
+
+	private function getFloatingMenuItemsSettings(Item $entity, CurrentUser $currentUser): ?array
+	{
+		$categoryId = $entity->isCategoriesSupported() ? $entity->getCategoryId() : null;
+		$entityTypeId = $entity->getEntityTypeId();
+		$userId = $currentUser->getId();
+		$menuId = MenuIdResolver::getMenuId($entityTypeId, (string)$userId, $categoryId);
+
+		$options = \CUserOptions::GetOption('ui', $menuId, []);
+		$settings = $options['settings'] ?? null;
+		if (!$settings)
+		{
+			return null;
+		}
+		$menuItemsSettings =  Json::decode($settings);
+
+		$preparedMenuItemsSettings = [];
+		foreach ($menuItemsSettings as $key => $value)
+		{
+			$preparedMenuItemsSettings[str_replace($menuId.'_', '', $key)] = [
+				'position' => $value['sort'],
+				'disabled' => $value['isDisabled'],
+				'pinned' => $value['isPinned'],
+			];
+		}
+
+		return $preparedMenuItemsSettings;
+	}
+
+	private function getAhaMoments(Item $entity): array
+	{
+		if (!$this->needShowAhaMoments($entity))
+		{
+			return [];
+		}
+
+		$ahaMoments = [
+			'goToChat' => (GoToChat::getInstance())->canShow(),
+		];
+
+		if ($entity->getEntityTypeId() === \CCrmOwnerType::Deal)
+		{
+			$ahaMoments['yoochecks'] = (Yoochecks::getInstance())->canShow();
+		}
+
+		return $ahaMoments;
+	}
+
+	private function needShowAhaMoments(Item $entity): bool
+	{
+		$timeCreated = $entity->getCreatedTime();
+		if ($timeCreated)
+		{
+			return $timeCreated->getDiff(new DateTime())->h > 1;
+		}
+
+		return false;
 	}
 }

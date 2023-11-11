@@ -22,6 +22,10 @@ class CCrmEntitySelectorHelper
 	public static function getHiddenTitle(string $entityName): ?string
 	{
 		$message = Loc::getMessage('CRM_ENT_SEL_HLP_HIDDEN_' . $entityName);
+		if (!(is_string($message) && $message !== ''))
+		{
+			$message = Loc::getMessage('CRM_ENT_SEL_HLP_HIDDEN_' . $entityName . '_MSGVER_1');
+		}
 
 		if (!$message)
 		{
@@ -1093,7 +1097,7 @@ class CCrmEntitySelectorHelper
 			'contact' => GetMessage('CRM_FF_CONTACT'),
 			'company' => GetMessage('CRM_FF_COMPANY'),
 			'deal'=> GetMessage('CRM_FF_DEAL'),
-			'quote'=> GetMessage('CRM_FF_QUOTE'),
+			'quote'=> GetMessage('CRM_FF_QUOTE_MSGVER_1'),
 			'ok' => GetMessage('CRM_FF_OK'),
 			'cancel' => GetMessage('CRM_FF_CANCEL'),
 			'close' => GetMessage('CRM_FF_CLOSE'),

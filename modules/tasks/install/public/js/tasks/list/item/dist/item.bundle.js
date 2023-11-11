@@ -1,11 +1,10 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports) {
 	'use strict';
 
-	var Item =
-	/*#__PURE__*/
-	function () {
+	var Item = /*#__PURE__*/function () {
 	  babelHelpers.createClass(Item, null, [{
 	    key: "statusList",
 	    get: function get() {
@@ -27,7 +26,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      };
 	    }
 	  }]);
-
 	  function Item(userId) {
 	    babelHelpers.classCallCheck(this, Item);
 	    this.id = "tmp-id-".concat(new Date().getTime());
@@ -49,7 +47,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.rawAccess = {};
 	    this.counter = null;
 	  }
-
 	  babelHelpers.createClass(Item, [{
 	    key: "setData",
 	    value: function setData(row) {
@@ -122,16 +119,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var counterColor = BX.UI.Counter.Color;
 	      var value = this.newCommentsCount || 0;
 	      var color = counterColor.SUCCESS;
-
 	      if (this.isExpired && !this.isCompletedCounts && !this.isWaitCtrlCounts && !this.isDeferred) {
 	        value += 1;
 	        color = counterColor.DANGER;
 	      }
-
 	      if (this.isMuted) {
 	        color = counterColor.GRAY;
 	      }
-
 	      return {
 	        value: value,
 	        color: color
@@ -151,18 +145,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        });
 	        this.updateCounterInstance();
 	      }
-
 	      return this.counter;
 	    }
 	  }, {
 	    key: "updateCounterInstance",
 	    value: function updateCounterInstance() {
 	      var counterData = this.getCounterData();
-
 	      if (counterData.value !== this.counter.getValue()) {
 	        this.counter.update(counterData.value);
 	      }
-
 	      this.counter.setColor(counterData.color);
 	    }
 	  }, {

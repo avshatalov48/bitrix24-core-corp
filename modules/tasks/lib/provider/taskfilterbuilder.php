@@ -27,9 +27,11 @@ use Bitrix\Tasks\Internals\Counter\CounterTable;
 use Bitrix\Tasks\Internals\Counter\Deadline;
 use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\Task\MemberTable;
+use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Internals\Task\RelatedTable;
 use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\Task\TaskTagTable;
 use Bitrix\Tasks\Internals\Task\UserOptionTable;
 use Bitrix\Tasks\Internals\TaskTable;
@@ -230,10 +232,7 @@ class TaskFilterBuilder
 			switch ($field)
 			{
 				case "META::ID_OR_NAME":
-					if (
-                        empty($val)
-                        || !is_scalar($val)
-                    )
+					if (empty($val))
 					{
 						break;
 					}
@@ -321,10 +320,6 @@ class TaskFilterBuilder
 
 				case 'GUID':
 				case 'TITLE':
-                    if (!is_scalar($val))
-                    {
-                        break;
-                    }
 					if ($this->query->needTitleEscape())
 					{
 						$val = $this->escapeStencilCharacters($val);
@@ -453,7 +448,7 @@ class TaskFilterBuilder
 						$scrumFilter = Query::filter()
 							->logic('and')
 							->whereNotNull(TaskQueryBuilder::ALIAS_SCRUM_ITEM.'.ID')
-							->where('STATUS', \CTasks::STATE_COMPLETED);
+							->where('STATUS', Status::COMPLETED);
 
 						if ($subFilter)
 						{
@@ -482,7 +477,7 @@ class TaskFilterBuilder
 								WHEN
 									%1$s IS NULL
 									AND
-									(%2$s = '.\CTasks::STATE_NEW.' OR %2$s = '.\CTasks::STATE_PENDING.')
+									(%2$s = '.Status::NEW.' OR %2$s = '.Status::PENDING.')
 								THEN
 									0
 								ELSE
@@ -503,12 +498,12 @@ class TaskFilterBuilder
 					$subFilter = Query::filter()
 						->logic('and')
 						->where('DEADLINE', '<', new SqlExpression('NOW()'))
-						->whereNot('STATUS', \CTasks::STATE_SUPPOSEDLY_COMPLETED)
-						->whereNot('STATUS', \CTasks::STATE_COMPLETED)
+						->whereNot('STATUS', Status::SUPPOSEDLY_COMPLETED)
+						->whereNot('STATUS', Status::COMPLETED)
 						->where(
 							Query::filter()
 								->logic('or')
-								->whereNot('STATUS', \CTasks::STATE_DECLINED)
+								->whereNot('STATUS', Status::DECLINED)
 								->whereNot('RESPONSIBLE_ID', $this->behalfUserId)
 						);
 
@@ -532,8 +527,8 @@ class TaskFilterBuilder
 						->where(
 							Query::filter()
 								->logic('or')
-								->where('STATUS', \CTasks::STATE_NEW)
-								->where('STATUS', \CTasks::STATE_PENDING)
+								->where('STATUS', Status::NEW)
+								->where('STATUS', Status::PENDING)
 						);
 
 					if ($operation === self::OPERATION_NOT)
@@ -551,35 +546,35 @@ class TaskFilterBuilder
 						"STATUS_".mt_rand(1000, 9999),
 						'
 							CASE WHEN 
-								%1$s < DATE_ADD(NOW(), INTERVAL '.Deadline::getDeadlineTimeLimit().' SECOND)
+								%1$s < ' . $helper->addSecondsToDateTime(Deadline::getDeadlineTimeLimit()) . '
 								AND %1$s >= NOW()
-								AND %2$s != '.\CTasks::STATE_SUPPOSEDLY_COMPLETED.'
-								AND %2$s != '.\CTasks::STATE_COMPLETED.'
+								AND %2$s != '.Status::SUPPOSEDLY_COMPLETED.'
+								AND %2$s != '.Status::COMPLETED.'
 								AND (
-									%2$s != '.\CTasks::STATE_DECLINED.'
+									%2$s != '.Status::DECLINED.'
 									OR %3$s != '.$this->behalfUserId.'
 								)
 							THEN
-								'.\CTasks::METASTATE_EXPIRED_SOON.'
+								'.MetaStatus::EXPIRED_SOON.'
 							WHEN
 								%1$s < NOW() 
-								AND %2$s != '.\CTasks::STATE_SUPPOSEDLY_COMPLETED.'
-								AND %2$s != '.\CTasks::STATE_COMPLETED.'
+								AND %2$s != '.Status::SUPPOSEDLY_COMPLETED.'
+								AND %2$s != '.Status::COMPLETED.'
 								AND (
-									%2$s != '.\CTasks::STATE_DECLINED.'
+									%2$s != '.Status::DECLINED.'
 									OR %3$s != '.$this->behalfUserId.'
 								)
 							THEN
-								'.\CTasks::METASTATE_EXPIRED.'
+								'.MetaStatus::EXPIRED.'
 							WHEN
 								%5$s IS NULL
 								AND %4$s != '.$this->behalfUserId.'
 								AND (
-									%2$s = '.\CTasks::STATE_NEW.'
-									OR %2$s = '.\CTasks::STATE_PENDING.'
+									%2$s = '.Status::NEW.'
+									OR %2$s = '.Status::PENDING.'
 								)
 							THEN
-								'.\CTasks::METASTATE_VIRGIN_NEW.'
+								'.MetaStatus::UNSEEN.'
 							ELSE
 								%2$s
 							END
@@ -2421,7 +2416,7 @@ class TaskFilterBuilder
 	 * @param string $value
 	 * @return string
 	 */
-	private function escapeStencilCharacters(string $value): string
+	public function escapeStencilCharacters(string $value): string
 	{
 		return str_replace(['!', '_', '%'], ['\!', '\_', '\%'], $value);
 	}

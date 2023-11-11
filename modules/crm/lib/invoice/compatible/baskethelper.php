@@ -5,12 +5,16 @@ namespace Bitrix\Crm\Invoice\Compatible;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale;
 
-Loc::loadMessages(__FILE__);
-
 class BasketHelper
 {
-	public static function doGetUserShoppingCart($siteId, $userId, $shoppingCart, &$errors, $orderId = 0,
-		$enableCustomCurrency = false)
+	public static function doGetUserShoppingCart(
+		$siteId,
+		$userId,
+		$shoppingCart,
+		&$errors,
+		$orderId = 0,
+		$enableCustomCurrency = false
+	)
 	{
 		$siteId = is_string($siteId) ? trim($siteId) : '';
 		if ($siteId == '')
@@ -22,11 +26,11 @@ class BasketHelper
 			return null;
 		}
 
-		$userId = intval($userId);
+		$userId = (int)$userId;
 
 		if (!is_array($shoppingCart))
 		{
-			if (intval($shoppingCart).'|' != $shoppingCart.'|')
+			if (((int)($shoppingCart)) . '|' !== $shoppingCart . '|')
 			{
 				$errors[] = [
 					'CODE' => 'PARAM',
@@ -34,85 +38,95 @@ class BasketHelper
 				];
 				return null;
 			}
-			$shoppingCart = intval($shoppingCart);
+			$shoppingCart = (int)$shoppingCart;
 
 			$dbShoppingCartItems = static::getList(
-				array('NAME' => 'ASC'),
-				array(
+				['NAME' => 'ASC'],
+				[
 					'FUSER_ID' => $shoppingCart,
 					'LID' => $siteId,
 					'ORDER_ID' => 'NULL',
 					'DELAY' => 'N',
-				),
+				],
 				false,
 				false,
-				array(
+				[
 					'ID', 'LID', 'CALLBACK_FUNC', 'MODULE', 'PRODUCT_ID', 'QUANTITY', 'DELAY',
 					'CAN_BUY', 'PRICE', 'WEIGHT', 'NAME', 'CURRENCY', 'CATALOG_XML_ID',
 					'VAT_RATE', 'NOTES', 'DISCOUNT_PRICE', 'DETAIL_PAGE_URL', 'PRODUCT_PROVIDER_CLASS',
 					'RESERVED', 'DEDUCTED', 'RESERVE_QUANTITY', 'DIMENSIONS', 'TYPE', 'SET_PARENT_ID'
-				)
+				]
 			);
-			$arTmp = array();
+			$arTmp = [];
 			while ($arShoppingCartItem = $dbShoppingCartItems->Fetch())
 			{
 				$arTmp[] = $arShoppingCartItem;
 			}
+			unset($dbShoppingCartItems);
 
 			$shoppingCart = $arTmp;
 		}
 
 		// for existing basket we need old data to calculate quantity delta for availability checking
-		$arOldShoppingCart = array();
+		$arOldShoppingCart = [];
 		if ($orderId != 0)
 		{
 			$dbs = Basket::getList(
-				array('NAME' => 'ASC'),
-				array(
+				['NAME' => 'ASC'],
+				[
 					'LID' => $siteId,
 					'ORDER_ID' => $orderId,
 					'DELAY' => 'N',
-				),
+				],
 				false,
 				false,
-				array(
+				[
 					'ID', 'LID', 'CALLBACK_FUNC', 'MODULE', 'PRODUCT_ID', 'PRODUCT_PRICE_ID', 'PRICE',
 					'QUANTITY', 'DELAY', 'CAN_BUY', 'PRICE', 'WEIGHT', 'NAME', 'CURRENCY',
 					'CATALOG_XML_ID', 'VAT_RATE', 'NOTES', 'DISCOUNT_PRICE', 'DETAIL_PAGE_URL', 'PRODUCT_PROVIDER_CLASS',
 					'RESERVED', 'DEDUCTED', 'BARCODE_MULTI', 'DIMENSIONS', 'TYPE', 'SET_PARENT_ID'
-				)
+				]
 			);
 			while ($arOldShoppingCartItem = $dbs->Fetch())
 			{
 				$arOldShoppingCart[$arOldShoppingCartItem['ID']] = $arOldShoppingCartItem;
 			}
+			unset($dbs);
 		}
 
 		if (\CSaleHelper::IsAssociativeArray($shoppingCart))
 		{
-			$shoppingCart = array($shoppingCart);
+			$shoppingCart = [$shoppingCart];
 		}
 
-		if(!is_bool($enableCustomCurrency))
+		if (!is_bool($enableCustomCurrency))
 		{
 			$enableCustomCurrency = false;
 		}
 
-		$result = array();
+		$result = [];
 		$emptyID = 1;
 
 		foreach ($shoppingCart as $itemIndex => $arShoppingCartItem)
 		{
-			if ((array_key_exists('CALLBACK_FUNC', $arShoppingCartItem)
-					&& !empty($arShoppingCartItem['CALLBACK_FUNC']))
-				|| (array_key_exists('PRODUCT_PROVIDER_CLASS', $arShoppingCartItem)
-					&& !empty($arShoppingCartItem['PRODUCT_PROVIDER_CLASS'])))
+			if (
+				(
+					array_key_exists('CALLBACK_FUNC', $arShoppingCartItem)
+					&& !empty($arShoppingCartItem['CALLBACK_FUNC'])
+				)
+				|| (
+					array_key_exists('PRODUCT_PROVIDER_CLASS', $arShoppingCartItem)
+					&& !empty($arShoppingCartItem['PRODUCT_PROVIDER_CLASS'])
+				)
+			)
 			{
 				// get quantity difference to check its availability
 				if ($orderId != 0)
 				{
-					$quantity = $arShoppingCartItem['QUANTITY'] -
-						$arOldShoppingCart[$arShoppingCartItem['ID_TMP']]['QUANTITY'];
+					$quantity =
+						$arShoppingCartItem['QUANTITY'] -
+						$arOldShoppingCart[$arShoppingCartItem['ID_TMP']]['QUANTITY']
+					;
 				}
 				else
 				{
@@ -141,17 +155,17 @@ class BasketHelper
 					$checkCoupons = ('Y' == $arShoppingCartItem['CAN_BUY']
 						&& (!array_key_exists('DELAY', $arShoppingCartItem)
 							|| 'Y' != $arShoppingCartItem['DELAY']));
-					$providerParams = array(
+					$providerParams = [
 						'PRODUCT_ID' => $arShoppingCartItem['PRODUCT_ID'],
-						'QUANTITY'   => ($quantity > 0) ? $quantity : $arShoppingCartItem['QUANTITY'],
-						'RENEWAL'    => 'N',
-						'USER_ID'    => $userId,
-						'SITE_ID'    => $siteId,
+						'QUANTITY' => ($quantity > 0) ? $quantity : $arShoppingCartItem['QUANTITY'],
+						'RENEWAL' => 'N',
+						'USER_ID' => $userId,
+						'SITE_ID' => $siteId,
 						'BASKET_ID' => $basketID,
 						'CHECK_QUANTITY' => ($quantity > 0) ? 'Y' : 'N',
 						'CHECK_COUPONS' => $checkCoupons ? 'Y' : 'N',
 						'CHECK_PRICE' => ($customPrice ? 'N' : 'Y')
-					);
+					];
 					unset($checkCoupons);
 					if (isset($arShoppingCartItem['NOTES']))
 					{
@@ -174,7 +188,9 @@ class BasketHelper
 					if (!empty($arFieldsTmp) && is_array($arFieldsTmp))
 					{
 						if ($customPrice)
+						{
 							unset($arFieldsTmp['PRICE'], $arFieldsTmp['CURRENCY']);
+						}
 					}
 				}
 
@@ -207,32 +223,38 @@ class BasketHelper
 					static::update($arShoppingCartItem['ID'], $arFieldsTmp);
 
 					$dbTmp = static::getList(
-						array(),
-						array('ID' => $arShoppingCartItem['ID']),
+						[],
+						['ID' => $arShoppingCartItem['ID']],
 						false,
 						false,
-						array(
+						[
 							'ID', 'CALLBACK_FUNC', 'MODULE', 'PRODUCT_ID', 'QUANTITY', 'DELAY', 'CAN_BUY', 'PRICE',
 							'TYPE', 'SET_PARENT_ID', 'WEIGHT', 'NAME', 'CURRENCY', 'CATALOG_XML_ID', 'VAT_RATE',
 							'NOTES', 'DISCOUNT_PRICE', 'DETAIL_PAGE_URL', 'PRODUCT_PROVIDER_CLASS', 'DIMENSIONS'
-						)
+						]
 					);
 					$arTmp = $dbTmp->Fetch();
 
 					foreach ($arTmp as $key => $val)
+					{
 						$arShoppingCartItem[$key] = $val;
+					}
 				}
 				else
 				{
 					foreach ($arFieldsTmp as $key => $val)
 					{
 						// update returned quantity for the product if quantity difference is available
-						if ($orderId != 0 && $key == 'QUANTITY'
+						if (
+							$orderId != 0
+							&& $key == 'QUANTITY'
 							&& $arOldShoppingCart[$arShoppingCartItem['ID_TMP']]['RESERVED'] == 'Y'
-							&& $quantity > 0)
+							&& $quantity > 0
+						)
 						{
 							$arShoppingCartItem[$key] = $val +
-								$arOldShoppingCart[$arShoppingCartItem['ID_TMP']]['QUANTITY'];
+								$arOldShoppingCart[$arShoppingCartItem['ID_TMP']]['QUANTITY']
+							;
 						}
 						else
 						{
@@ -255,22 +277,24 @@ class BasketHelper
 							$baseLangCurrency
 						);
 						if (is_set($arShoppingCartItem, 'DISCOUNT_PRICE'))
+						{
 							$arShoppingCartItem['DISCOUNT_PRICE'] = \CCurrencyRates::ConvertCurrency(
 								$arShoppingCartItem['DISCOUNT_PRICE'],
 								$arShoppingCartItem['CURRENCY'],
 								$baseLangCurrency
 							);
+						}
 						$arShoppingCartItem['CURRENCY'] = $baseLangCurrency;
 					}
 				}
 
 				$arShoppingCartItem['PRICE'] = Sale\PriceMaths::roundPrecision($arShoppingCartItem['PRICE']);
 
-				$arShoppingCartItem['QUANTITY'] = floatval($arShoppingCartItem['QUANTITY']);
-				$arShoppingCartItem['WEIGHT'] = floatval($arShoppingCartItem['WEIGHT'] ?? null);
+				$arShoppingCartItem['QUANTITY'] = (float)$arShoppingCartItem['QUANTITY'];
+				$arShoppingCartItem['WEIGHT'] = (float)($arShoppingCartItem['WEIGHT'] ?? null);
 				$arShoppingCartItem['DIMENSIONS'] = unserialize(($arShoppingCartItem['DIMENSIONS'] ?? null), ['allowed_classes' => false]);
-				$arShoppingCartItem['VAT_RATE'] = floatval($arShoppingCartItem['VAT_RATE'] ?? null);
-				$arShoppingCartItem['DISCOUNT_PRICE'] = roundEx(($arShoppingCartItem['DISCOUNT_PRICE'] ?? null), SALE_VALUE_PRECISION);
+				$arShoppingCartItem['VAT_RATE'] = (float)($arShoppingCartItem['VAT_RATE'] ?? null);
+				$arShoppingCartItem['DISCOUNT_PRICE'] = round(($arShoppingCartItem['DISCOUNT_PRICE'] ?? null), SALE_VALUE_PRECISION);
 
 				if ($arShoppingCartItem['VAT_RATE'] > 0)
 				{
@@ -305,12 +329,13 @@ class BasketHelper
 	 *
 	 * @return Sale\Compatible\CDBResult
 	 */
-	public static function getList($order = array(), $filter = array(), $group = false, $navStartParams = false,
-		$select = array())
+	public static function getList($order = [], $filter = [], $group = false, $navStartParams = false, $select = [])
 	{
 		$result = Basket::getList($order, $filter, $group, $navStartParams, $select);
 		if ($result instanceof Sale\Compatible\CDBResult)
+		{
 			$result->addFetchAdapter(new Sale\Compatible\BasketFetchAdapter());
+		}
 
 		return $result;
 	}
@@ -340,12 +365,11 @@ class BasketHelper
 		$basket->Init();
 		unset($basket);
 
-		if (is_set($fields, "QUANTITY") && floatval($fields["QUANTITY"]) <= 0)
+		if (array_key_exists('QUANTITY', $fields) && (float)$fields['QUANTITY'] <= 0)
 		{
 			return static::delete($id);
 		}
 
-		/** @var Sale\Result $r */
 		$r = Basket::update($id, $fields);
 		if (!$r->isSuccess())
 		{
@@ -380,7 +404,6 @@ class BasketHelper
 			return false;
 		}
 
-		/** @var Sale\Result $r */
 		$r = Basket::delete($id);
 		if (!$r->isSuccess(true))
 		{

@@ -14,6 +14,7 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Internals\Task\Status;
 
 Loc::loadMessages(__FILE__);
 
@@ -35,7 +36,7 @@ foreach ($arResult['RESULT_LIST'] as $result)
 		var result = BX.Tasks.ResultManager.getInstance()
 			.initResult({
 				taskId: <?= $arParams['TASK_ID'] ?>,
-				isClosed: <?= in_array($arResult['TASK_DATA']['STATUS'], [CTasks::STATE_SUPPOSEDLY_COMPLETED, CTasks::STATE_COMPLETED]) ? 'true' : 'false'; ?>,
+				isClosed: <?= in_array((int)$arResult['TASK_DATA']['STATUS'], [Status::SUPPOSEDLY_COMPLETED, Status::COMPLETED], true) ? 'true' : 'false'; ?>,
 				comments: <?= CUtil::PhpToJsObject($commentsAsResult, false, false, true); ?>,
 				context: 'task'
 			});
@@ -55,4 +56,3 @@ foreach ($arResult['RESULT_LIST'] as $result)
 		);
 	});
 </script>
-

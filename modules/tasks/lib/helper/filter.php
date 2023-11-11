@@ -7,6 +7,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\SearchIndex;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Item\Task;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Service\EpicService;
@@ -152,10 +153,10 @@ class Filter extends Common
 				'default' => true,
 				'fields' => [
 					'STATUS' => [
-						\CTasks::STATE_PENDING,
-						\CTasks::STATE_IN_PROGRESS,
-						\CTasks::STATE_SUPPOSEDLY_COMPLETED,
-						\CTasks::STATE_DEFERRED,
+						Status::PENDING,
+						Status::IN_PROGRESS,
+						Status::SUPPOSEDLY_COMPLETED,
+						Status::DEFERRED,
 						EntityForm::STATE_COMPLETED_IN_ACTIVE_SPRINT,
 					],
 					'STORY_POINTS' => '',
@@ -169,10 +170,10 @@ class Filter extends Common
 			'default' => !$isScrumProject,
 			'fields' => [
 				'STATUS' => [
-					\CTasks::STATE_PENDING,
-					\CTasks::STATE_IN_PROGRESS,
-					\CTasks::STATE_SUPPOSEDLY_COMPLETED,
-					\CTasks::STATE_DEFERRED,
+					Status::PENDING,
+					Status::IN_PROGRESS,
+					Status::SUPPOSEDLY_COMPLETED,
+					Status::DEFERRED,
 				],
 			],
 		];
@@ -185,7 +186,7 @@ class Filter extends Common
 			'name' => Loc::getMessage('TASKS_PRESET_COMPLETED'),
 			'default' => false,
 			'fields' => [
-				'STATUS' => [\CTasks::STATE_COMPLETED],
+				'STATUS' => [Status::COMPLETED],
 			],
 		];
 		if ($isScrumProject)
@@ -209,7 +210,7 @@ class Filter extends Common
 				'name' => Loc::getMessage('TASKS_PRESET_DEFERRED'),
 				'default' => false,
 				'fields' => [
-					'STATUS' => [\CTasks::STATE_DEFERRED],
+					'STATUS' => [Status::DEFERRED],
 				],
 			];
 			$presets['filter_tasks_expire'] = [
@@ -217,8 +218,8 @@ class Filter extends Common
 				'default' => false,
 				'fields' => [
 					'STATUS' => [
-						\CTasks::STATE_PENDING,
-						\CTasks::STATE_IN_PROGRESS,
+						Status::PENDING,
+						Status::IN_PROGRESS,
 					],
 					'PROBLEM' => \CTaskListState::VIEW_TASK_CATEGORY_EXPIRED,
 				],
@@ -228,8 +229,8 @@ class Filter extends Common
 				'default' => false,
 				'fields' => [
 					'STATUS' => [
-						\CTasks::STATE_PENDING,
-						\CTasks::STATE_IN_PROGRESS,
+						Status::PENDING,
+						Status::IN_PROGRESS,
 					],
 					'PROBLEM' => \CTaskListState::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES,
 				],
@@ -450,7 +451,7 @@ class Filter extends Common
 		if (
 			isset($filter[$statusKey]['REAL_STATUS'])
 			&& !empty($filter[$statusKey]['REAL_STATUS'])
-			&& !in_array(\CTasks::STATE_COMPLETED, $filter[$statusKey]['REAL_STATUS'])
+			&& !in_array(Status::COMPLETED, $filter[$statusKey]['REAL_STATUS'])
 			&& (int)$this->getUserId() === User::getId()
 		)
 		{
@@ -459,7 +460,7 @@ class Filter extends Common
 				'::SUBFILTER-1' => $filter[$statusKey],
 				'::SUBFILTER-2' => [
 					'WITH_COMMENT_COUNTERS' => 'Y',
-					'REAL_STATUS' => \CTasks::STATE_COMPLETED,
+					'REAL_STATUS' => Status::COMPLETED,
 				],
 			];
 		}
@@ -540,11 +541,11 @@ class Filter extends Common
 		if (in_array('STATUS', $fields))
 		{
 			$statusItems = [
-				\CTasks::STATE_PENDING => Loc::getMessage('TASKS_STATUS_2'),
-				\CTasks::STATE_IN_PROGRESS => Loc::getMessage('TASKS_STATUS_3'),
-				\CTasks::STATE_SUPPOSEDLY_COMPLETED => Loc::getMessage('TASKS_STATUS_4'),
-				\CTasks::STATE_COMPLETED => Loc::getMessage('TASKS_STATUS_5'),
-				\CTasks::STATE_DEFERRED => Loc::getMessage('TASKS_STATUS_6'),
+				Status::PENDING => Loc::getMessage('TASKS_STATUS_2'),
+				Status::IN_PROGRESS => Loc::getMessage('TASKS_STATUS_3'),
+				Status::SUPPOSEDLY_COMPLETED => Loc::getMessage('TASKS_STATUS_4'),
+				Status::COMPLETED => Loc::getMessage('TASKS_STATUS_5'),
+				Status::DEFERRED => Loc::getMessage('TASKS_STATUS_6'),
 				EntityForm::STATE_COMPLETED_IN_ACTIVE_SPRINT => Loc::getMessage('TASKS_STATUS_8'),
 			];
 
@@ -1168,7 +1169,7 @@ class Filter extends Common
 						}
 						$filter['<=DEADLINE'] = Counter\Deadline::getExpiredTime();
 						$filter['IS_MUTED'] = 'N';
-						$filter['REAL_STATUS'] = [\CTasks::STATE_PENDING, \CTasks::STATE_IN_PROGRESS];
+						$filter['REAL_STATUS'] = [Status::PENDING, Status::IN_PROGRESS];
 						break;
 
 					case Counter\Type::TYPE_EXPIRED_CANDIDATES:
@@ -1177,7 +1178,7 @@ class Filter extends Common
 						break;
 
 					case Counter\Type::TYPE_WAIT_CTRL:
-						$filter['REAL_STATUS'] = \CTasks::STATE_SUPPOSEDLY_COMPLETED;
+						$filter['REAL_STATUS'] = Status::SUPPOSEDLY_COMPLETED;
 						$filter['!RESPONSIBLE_ID'] = $this->getUserId();
 						$filter['=CREATED_BY'] = $this->getUserId();
 						break;
@@ -1188,7 +1189,7 @@ class Filter extends Common
 						break;
 
 					case Counter\Type::TYPE_DEFERRED:
-						$filter['REAL_STATUS'] = \CTasks::STATE_DEFERRED;
+						$filter['REAL_STATUS'] = Status::DEFERRED;
 						break;
 
 					case Counter\Type::TYPE_NEW_COMMENTS:

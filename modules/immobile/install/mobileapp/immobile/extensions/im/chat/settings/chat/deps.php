@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'rest',
 		'im:chat/tables',
 		'utils/iterators',
 		'cache',

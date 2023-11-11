@@ -17,11 +17,22 @@ interface ICanSendMessage
 	public static function getSenderCode(): string;
 
 	/**
+	 * If all the necessary modules installed
+	 *
+	 * @return bool
+	 */
+	public static function canUse(): bool;
+
+	/**
+	 * If the sender available on current tariff, with current modules installed, and in current region
+	 *
 	 * @return bool
 	 */
 	public static function isAvailable(): bool;
 
 	/**
+	 * If the sender fully configured by the user
+	 *
 	 * @return bool
 	 */
 	public static function isConnected(): bool;
@@ -32,7 +43,7 @@ interface ICanSendMessage
 	public static function getConnectUrl();
 
 	/**
-	 * @return array
+	 * @return string[]
 	 */
 	public static function getUsageErrors(): array;
 
@@ -64,7 +75,16 @@ interface ICanSendMessage
 
 	/**
 	 * @param array $options
-	 * @param array $commonOptions
+	 * @param array{
+	 *     USER_ID: int,
+	 *     PHONE_NUMBER: ?string,
+	 *     EMAIL: ?string,
+	 *     ADDITIONAL_FIELDS: array{
+	 *         BINDINGS: array{OWNER_TYPE_ID: int, OWNER_ID: int},
+	 *         ROOT_SOURCE: ?array{ENTITY_TYPE_ID: int, ENTITY_ID: int},
+	 *         ADDRESS_SOURCE: ?array{ENTITY_TYPE_ID: int, ENTITY_ID: int},
+	 *     },
+	 * } $commonOptions
 	 * @return array
 	 */
 	public static function makeMessageFields(array $options, array $commonOptions): array;

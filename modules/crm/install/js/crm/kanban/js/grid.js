@@ -1892,9 +1892,11 @@ BX.CRM.Kanban.Grid.prototype = {
 		const entityType = this.getData().entityType;
 
 		const hintTitle = BX.Loc.getMessage(`CRM_GRID_HINT_FOR_NOT_VISIBLE_${entityType}_TITLE`)
-			|| BX.Loc.getMessage(`CRM_GRID_HINT_FOR_NOT_VISIBLE_ELEMENT_TITLE`);
+			|| BX.Loc.getMessage(`CRM_GRID_HINT_FOR_NOT_VISIBLE_${entityType}_TITLE_MSGVER_1`)
+			|| BX.Loc.getMessage('CRM_GRID_HINT_FOR_NOT_VISIBLE_ELEMENT_TITLE');
 		const hintText = BX.Loc.getMessage(`CRM_GRID_HINT_FOR_NOT_VISIBLE_${entityType}_TEXT`)
-			|| BX.Loc.getMessage(`CRM_GRID_HINT_FOR_NOT_VISIBLE_ELEMENT_TEXT`);
+			|| BX.Loc.getMessage(`CRM_GRID_HINT_FOR_NOT_VISIBLE_${entityType}_TEXT_MSGVER_1`)
+			|| BX.Loc.getMessage('CRM_GRID_HINT_FOR_NOT_VISIBLE_ELEMENT_TEXT');
 
 		this.hintForNotVisibleItems = new BX.UI.Tour.Guide({
 			onEvents: true,

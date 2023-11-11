@@ -49,18 +49,18 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		}),
 		getters: {
 			/**
-			 * @function usersModel/getUserById
-			 * @return {UsersModelState|undefined}
+			 * @function usersModel/getById
+			 * @return {?UsersModelState}
 			 */
-			getUserById: (state) => (userId) => {
+			getById: (state) => (userId) => {
 				return state.collection[userId];
 			},
 
 			/**
-			 * @function usersModel/getUserList
+			 * @function usersModel/getList
 			 * @return {UsersModelState[]}
 			 */
-			getUserList: (state) => () => {
+			getList: (state) => () => {
 				const userList = [];
 
 				Object.keys(state.collection).forEach((userId) => {
@@ -73,7 +73,20 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		actions: {
 			/** @function usersModel/setState */
 			setState: (store, payload) => {
-				store.commit('setState', payload);
+				// broken keys invalidation, remove after immobile 23.1000.0
+				Object.keys(payload.collection).forEach((userId) => {
+					if (!Type.isNumber(userId))
+					{
+						delete payload.collection[userId];
+					}
+				});
+
+				store.commit('setState', {
+					actionName: 'setState',
+					data: {
+						collection: payload.collection,
+					},
+				});
 			},
 
 			/** @function usersModel/set */
@@ -94,7 +107,12 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 					return false;
 				}
 
-				store.commit('set', result);
+				store.commit('set', {
+					actionName: 'set',
+					data: {
+						userList: result,
+					},
+				});
 
 				return true;
 			},
@@ -116,7 +134,15 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 					});
 				}
 
-				store.commit('set', result);
+				if (result.length > 0)
+				{
+					store.commit('set', {
+						actionName: 'update',
+						data: {
+							userList: result,
+						},
+					});
+				}
 			},
 
 			/** @function usersModel/merge */
@@ -152,7 +178,15 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 					});
 				}
 
-				store.commit('set', result);
+				if (result.length > 0)
+				{
+					store.commit('set', {
+						actionName: 'merge',
+						data: {
+							userList: result,
+						},
+					});
+				}
 			},
 
 			/** @function usersModel/delete */
@@ -163,30 +197,61 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 					return false;
 				}
 
-				store.commit('delete', { id: payload.id });
+				store.commit('delete', {
+					actionName: 'delete',
+					data: {
+						id: payload.id,
+					},
+				});
 
 				return true;
 			},
 		},
 		mutations: {
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			setState: (state, payload) => {
 				Logger.warn('usersModel: setState mutation', payload);
 
-				state.collection = payload.collection;
+				const {
+					collection,
+				} = payload.data;
+
+				state.collection = collection;
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			set: (state, payload) => {
 				Logger.warn('usersModel: set mutation', payload);
 
-				payload.forEach((user) => {
+				const {
+					userList,
+				} = payload.data;
+
+				userList.forEach((user) => {
 					state.collection[user.id] = user;
 				});
 
 				UsersCache.save(state);
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			delete: (state, payload) => {
 				Logger.warn('usersModel: delete mutation', payload);
 
-				delete state.collection[payload.id];
+				const {
+					id,
+				} = payload.data;
+
+				delete state.collection[id];
 
 				UsersCache.save(state);
 			},

@@ -82,7 +82,7 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 
 		prepareItem(item)
 		{
-			const { ENTITY_ID, ENTITY_TYPE_ID, PHONE, EMAIL, TITLE, POST, URL } = item;
+			const { ENTITY_ID, ENTITY_TYPE_ID, PHONE, EMAIL, TITLE, POST, URL, RESPONSIBLE_PHOTO_URL } = item;
 			const hidden = !URL.trim();
 
 			const params = {
@@ -91,6 +91,7 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 				type: Type.resolveNameById(ENTITY_TYPE_ID),
 				title: TITLE,
 				url: URL,
+				responsiblePhotoUrl: RESPONSIBLE_PHOTO_URL,
 				hidden,
 			};
 
@@ -100,6 +101,7 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 				email: EMAIL,
 				subtitle: POST,
 				showClientInfo: true,
+				showResponsiblePhoto: true,
 				actionParams: !hidden && this.getDuplicateActionParams(params),
 				onOpenBackdrop: () => {
 					this.handleOpenBackdrop(params);
@@ -136,31 +138,32 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 			const { id, type, entityTypeId } = params;
 			const { onUseContact } = this.props;
 			const isAllowed = this.isAllowed(type);
-			const text = Loc.getMessage(`MCRM_DUPLICATES_PANEL_CONTACT_${isAllowed ? 'USE' : 'OPEN'}`);
+			const text = Loc.getMessage(`MCRM_DUPLICATES_PANEL_CONTACT_${isAllowed ? 'USE' : 'OPEN_MSGVER_1'}`);
+			const onClick = () => {
+				if (isAllowed && onUseContact)
+				{
+					onUseContact(id, entityTypeId, params);
+				}
+				else
+				{
+					this.handleOpenBackdrop(params);
+				}
+			};
 
 			return {
-				onClick: () => {
-					if (isAllowed && onUseContact)
-					{
-						onUseContact(id, entityTypeId, params);
-					}
-					else
-					{
-						this.handleOpenBackdrop(params);
-					}
-				},
-				element: Text({
+				onClick,
+				element: Button({
 					style: {
-						marginLeft: 8,
-						marginTop: 2,
-						color: '#2066b0',
-						fontSize: 12,
-						borderBottomWidth: 1,
-						borderBottomColor: transparent('#2066b0', 0.4),
-						borderStyle: 'dash',
-						borderDashSegmentLength: 3,
-						borderDashGapLength: 3,
+						color: '#fff',
+						backgroundColor: '#29A8DF',
+						fontSize: 13,
+						textAlign: 'center',
+						marginTop: 12,
+						width: 100,
+						height: 22,
+						borderRadius: 11,
 					},
+					onClick,
 					text,
 				}),
 			};

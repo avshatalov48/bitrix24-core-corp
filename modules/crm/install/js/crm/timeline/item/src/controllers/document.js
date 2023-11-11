@@ -334,7 +334,7 @@ export class Document extends Base
 				wizardUri.setQueryParams({
 					docId: response.data.SMART_DOCUMENT,
 					stepId: 'changePartner',
-					noRedirect: 'Y',
+					noRedirect: 'Y'
 				});
 				BX.SidePanel.Instance.open(wizardUri.toString());
 			}
@@ -388,39 +388,38 @@ export class Document extends Base
 						documentId: id,
 						usePrevious: !usePrevious ? 0 : 1,
 					}
-			}).then(
-				(response) =>
-				{
-					if (response?.data?.SMART_DOCUMENT)
-					{
-						const wizardUri = new Uri('/sign/doc/0/');
-						wizardUri.setQueryParams({
-							docId: response.data.SMART_DOCUMENT,
-							stepId: 'changePartner',
-							noRedirect: 'Y',
-						});
-						BX.SidePanel.Instance.open(wizardUri.toString());
-					}
+				}).then(
+					(response) => {
+						if (response?.data?.SMART_DOCUMENT)
+						{
+							const wizardUri = new Uri('/sign/doc/0/');
+							wizardUri.setQueryParams({
+								docId: response.data.SMART_DOCUMENT,
+								stepId: 'changePartner',
+								noRedirect: 'Y'
+							});
+							BX.SidePanel.Instance.open(wizardUri.toString());
+						}
 
-					if (animationCallbacks.onStop)
-					{
-						animationCallbacks.onStop();
+						if (animationCallbacks.onStop)
+						{
+							animationCallbacks.onStop();
+						}
+					},
+					(response) => {
+						if (response.errors[0].message)
+						{
+							UI.Notification.Center.notify({
+								content: response.errors[0].message,
+								autoHideDelay: 5000
+							});
+						}
+						if (animationCallbacks.onStop)
+						{
+							animationCallbacks.onStop();
+						}
 					}
-				},
-				(response) => {
-					if (response.errors[0].message)
-					{
-						UI.Notification.Center.notify({
-							content: response.errors[0].message,
-							autoHideDelay: 5000,
-						});
-					}
-					if (animationCallbacks.onStop)
-					{
-						animationCallbacks.onStop();
-					}
-				}
-			).catch((response) =>
+				).catch((response) =>
 				{
 					if (response.errors[0].message)
 					{
@@ -448,8 +447,8 @@ export class Document extends Base
 					this.#showMessage(
 						Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DO_USE_PREVIOUS_MSGVER_3',
 							{
-								'%TITLE%': '<b>' + (response.data.TITLE || '') + '</b>',
-								'%INITIATOR%': '<b>' + (response.data.INITIATOR || '') + '</b>',
+								'%TITLE%': '<b>' + BX.util.htmlspecialchars(response.data.TITLE || '') + '</b>',
+								'%INITIATOR%': '<b>' + BX.util.htmlspecialchars(response.data.INITIATOR || '') + '</b>',
 							}),
 						[
 							new BX.UI.Button({

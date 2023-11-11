@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/system-text', (require, exports, module) => {
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
+	const { MessageType } = require('im/messenger/const');
 
 	/**
 	 * @class SystemTextMessage
@@ -25,7 +26,7 @@ jn.define('im/messenger/lib/element/dialog/message/system-text', (require, expor
 
 		getType()
 		{
-			return 'system-text';
+			return MessageType.systemText;
 		}
 
 		setShowTail()

@@ -4,7 +4,6 @@
  * @module im/messenger/controller/recent/item-action
  */
 jn.define('im/messenger/controller/recent/item-action', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { clone } = require('utils/object');
 	const { core } = require('im/messenger/core');
@@ -18,7 +17,7 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 		ChatRest,
 		UserRest,
 	} = require('im/messenger/provider/rest');
-	const { ProfileView } = require("user/profile");
+	const { ProfileView } = require('user/profile');
 
 	/**
 	 * @class ItemAction
@@ -35,7 +34,7 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 
 		do(action, itemId)
 		{
-			Logger.info('Recent item action: ', action, 'dialogId: ' + itemId);
+			Logger.info('Recent item action: ', action, `dialogId: ${itemId}`);
 
 			switch (action)
 			{
@@ -102,8 +101,7 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 			;
 
 			RecentRest.hideChat({ dialogId: recentItem.id })
-				.catch((result) =>
-				{
+				.catch((result) => {
 					Logger.error('Recent item hide error: ', result.error());
 
 					this.store.dispatch('recentModel/set', [recentItem])
@@ -129,8 +127,7 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 				.then(() => {
 					this.store.dispatch('dialoguesModel/delete', { id: itemId });
 				})
-				.catch((result) =>
-				{
+				.catch((result) => {
 					Logger.error('Recent item leave error: ', result.error());
 
 					this.store.dispatch('recentModel/set', [recentItem])
@@ -150,14 +147,14 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 			this.store.dispatch('recentModel/set', [{
 				id: itemId,
 				pinned: shouldPin,
+				date_update: new Date(),
 			}]).then(() => this.renderRecent());
 
 			RecentRest.pinChat({
 				dialogId: itemId,
 				shouldPin,
 			})
-				.catch((result) =>
-				{
+				.catch((result) => {
 					Logger.error('Recent item pin error: ', result.error());
 
 					this.store.dispatch('recentModel/set', [{
@@ -171,29 +168,43 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 		read(itemId)
 		{
 			const recentItem = this.getRecentItemById(itemId);
+			const dialogItem = this.getDialogById(itemId);
 
-			this.store.dispatch('recentModel/set', [{
+			this.store.dispatch('dialoguesModel/update', {
+				dialogId: itemId,
+				fields: {
+					counter: 0,
+				},
+			}).then(() => this.store.dispatch('recentModel/set', [{
 				id: itemId,
 				unread: false,
 				counter: 0,
-			}]).then(() => {
-				this.renderRecent();
+				date_update: new Date(),
+			}]))
+				.then(() => {
+					this.renderRecent();
 
-				Counters.update();
-			});
+					Counters.update();
+				});
 
 			RecentRest.readChat({
-					dialogId: itemId,
-				})
-				.catch((result) =>
-				{
+				dialogId: itemId,
+			})
+				.catch((result) => {
 					Logger.error('Recent item read error: ', result.error());
 
-					this.store.dispatch('recentModel/set', [recentItem]).then(() => {
-						this.renderRecent();
+					this.store.dispatch('dialoguesModel/update', {
+						dialogId: itemId,
+						fields: {
+							counter: dialogItem.counter,
+						},
+					})
+						.then(() => this.store.dispatch('recentModel/set', [recentItem]))
+						.then(() => {
+							this.renderRecent();
 
-						Counters.update();
-					});
+							Counters.update();
+						});
 				})
 			;
 		}
@@ -206,6 +217,7 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 				id: itemId,
 				unread: true,
 				counter: recentItem.counter,
+				date_update: new Date(),
 			}]).then(() => {
 				this.renderRecent();
 
@@ -213,8 +225,7 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 			});
 
 			RecentRest.unreadChat({ dialogId: itemId })
-				.catch((result) =>
-				{
+				.catch((result) => {
 					Logger.error('Recent item unread error: ', result.error());
 
 					this.store.dispatch('recentModel/set', [recentItem]).then(() => {
@@ -243,23 +254,22 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 				muteList.delete(userId);
 			}
 
-			//TODO remove after RecentConverter implementation, only the dialoguesModel should change
+			// TODO remove after RecentConverter implementation, only the dialoguesModel should change
 			const recentMuteList = {};
-			muteList.forEach(userId => recentMuteList[userId] = true);
+			muteList.forEach((userId) => recentMuteList[userId] = true);
 			recentItem.chat.mute_list = recentMuteList;
 			this.store.dispatch('recentModel/set', [recentItem]).then(() => this.renderRecent());
 
 			this.store.dispatch('dialoguesModel/set', [{
 				dialogId: itemId,
-				muteList: Array.from(muteList),
+				muteList: [...muteList],
 			}]);
 
 			ChatRest.mute({
-					dialogId: itemId,
-					shouldMute,
-				})
-				.catch((result) =>
-				{
+				dialogId: itemId,
+				shouldMute,
+			})
+				.catch((result) => {
 					Logger.error('Recent item mute error: ', result.error());
 
 					this.store.dispatch('dialoguesModel/set', [dialog]);
@@ -275,7 +285,7 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 			})
 				.then((response) => {
 					InAppNotifier.showNotification({
-						backgroundColor: "#E6000000",
+						backgroundColor: '#E6000000',
 						message: Loc.getMessage('IMMOBILE_INVITE_RESEND_DONE'),
 					});
 				})
@@ -284,7 +294,7 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 					{
 						InAppNotifier.showNotification({
 							backgroundColor: '#E6000000',
-							message: response.errors.map(element => element.message).join('. '),
+							message: response.errors.map((element) => element.message).join('. '),
 						});
 					}
 					else
@@ -314,7 +324,7 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 					{
 						InAppNotifier.showNotification({
 							backgroundColor: '#E6000000',
-							message: response.errors.map(element => element.message).join('. '),
+							message: response.errors.map((element) => element.message).join('. '),
 						});
 					}
 					else

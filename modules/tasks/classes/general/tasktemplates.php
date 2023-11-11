@@ -11,6 +11,8 @@
 global $APPLICATION, $DB;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Internals\Task\Priority;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Template;
 
 Loc::loadMessages(__FILE__);
@@ -52,11 +54,11 @@ class CTaskTemplates
 			"PRIORITY"    => [
 				'type'    => 'enum',
 				'values'  => [
-					\CTasks::PRIORITY_HIGH    => Loc::getMessage('TASKS_FIELDS_PRIORITY_HIGH'),
-					\CTasks::PRIORITY_AVERAGE => Loc::getMessage('TASKS_FIELDS_PRIORITY_AVERAGE'),
-					\CTasks::PRIORITY_LOW     => Loc::getMessage('TASKS_FIELDS_PRIORITY_LOW')
+					Priority::HIGH    => Loc::getMessage('TASKS_FIELDS_PRIORITY_HIGH'),
+					Priority::AVERAGE => Loc::getMessage('TASKS_FIELDS_PRIORITY_AVERAGE'),
+					Priority::LOW     => Loc::getMessage('TASKS_FIELDS_PRIORITY_LOW')
 				],
-				'default' => \CTasks::PRIORITY_AVERAGE
+				'default' => Priority::AVERAGE
 			],
 
 
@@ -93,13 +95,13 @@ class CTaskTemplates
 			"STATUS"      => [
 				'type'    => 'enum',
 				'values'  => [
-					\CTasks::STATE_PENDING              => Loc::getMessage('TASKS_FIELDS_STATUS_PENDING'),
-					\CTasks::STATE_IN_PROGRESS          => Loc::getMessage('TASKS_FIELDS_STATUS_IN_PROGRESS'),
-					\CTasks::STATE_SUPPOSEDLY_COMPLETED => Loc::getMessage('TASKS_FIELDS_STATUS_SUPPOSEDLY_COMPLETED'),
-					\CTasks::STATE_COMPLETED            => Loc::getMessage('TASKS_FIELDS_STATUS_COMPLETED'),
-					\CTasks::STATE_DEFERRED             => Loc::getMessage('TASKS_FIELDS_STATUS_DEFERRED')
+					Status::PENDING              => Loc::getMessage('TASKS_FIELDS_STATUS_PENDING'),
+					Status::IN_PROGRESS          => Loc::getMessage('TASKS_FIELDS_STATUS_IN_PROGRESS'),
+					Status::SUPPOSEDLY_COMPLETED => Loc::getMessage('TASKS_FIELDS_STATUS_SUPPOSEDLY_COMPLETED'),
+					Status::COMPLETED            => Loc::getMessage('TASKS_FIELDS_STATUS_COMPLETED'),
+					Status::DEFERRED             => Loc::getMessage('TASKS_FIELDS_STATUS_DEFERRED')
 				],
-				'default' => \CTasks::STATE_PENDING
+				'default' => Status::PENDING
 			],
 
 			"MULTITASK" => [
@@ -465,12 +467,20 @@ class CTaskTemplates
 		}
 		catch (\Bitrix\Tasks\Control\Exception\TemplateAddException $e)
 		{
-			$this->_errors[] = $e->getMessage();
+			$this->_errors[] = [
+				'text' => $e->getMessage(),
+				'id' => 'ERROR_TASKS_BAD_TEMPLATE_SYSTEM_ERROR'
+			];
+
 			return false;
 		}
 		catch (\Exception $e)
 		{
-			$this->_errors[] = $e->getMessage();
+			$this->_errors[] = [
+				'text' => $e->getMessage(),
+				'id' => 'ERROR_TASKS_BAD_TEMPLATE_SYSTEM_ERROR'
+			];
+
 			return false;
 		}
 
@@ -529,12 +539,20 @@ class CTaskTemplates
 		}
 		catch(\Bitrix\Tasks\Control\Exception\TemplateUpdateException $e)
 		{
-			$this->_errors[] = $e->getMessage();
+			$this->_errors[] = [
+				'text' => $e->getMessage(),
+				'id' => 'ERROR_TASKS_BAD_TEMPLATE_SYSTEM_ERROR'
+			];
+
 			return false;
 		}
 		catch (\Exception $e)
 		{
-			$this->_errors[] = $e->getMessage();
+			$this->_errors[] = [
+				'text' => $e->getMessage(),
+				'id' => 'ERROR_TASKS_BAD_TEMPLATE_SYSTEM_ERROR'
+			];
+
 			return false;
 		}
 
@@ -791,7 +809,7 @@ class CTaskTemplates
 		];
 		foreach ($params as $fld => $value)
 		{
-			if (!$allowed[$fld])
+			if (!($allowed[$fld] ?? null))
 			{
 				unset($params[$fld]);
 			}

@@ -6,6 +6,8 @@ return [
 		'loc',
 		'notify',
 		'crm:type',
+		'crm:entity-chat-opener',
+		'layout/ui/menu',
 	],
 	'bundle' => [
 		'./entities/base',
@@ -17,5 +19,6 @@ return [
 		'./entities/quote',
 		'./entities/dynamic',
 		'./traits/exclude-item',
+		'./traits/open-chat',
 	],
 ];

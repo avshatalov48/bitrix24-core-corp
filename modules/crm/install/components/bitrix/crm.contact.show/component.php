@@ -879,7 +879,7 @@ if (CCrmQuote::CheckReadPermission(0, $userPermissions))
 {
 	$arResult['FIELDS']['tab_quote'][] = array(
 		'id' => 'CONTACT_QUOTE',
-		'name' => GetMessage('CRM_FIELD_CONTACT_QUOTE'),
+		'name' => GetMessage('CRM_FIELD_CONTACT_QUOTE_MSGVER_1'),
 		'colspan' => true,
 		'type' => 'crm_quote_list',
 		'componentData' => array(

@@ -6,7 +6,7 @@ use Bitrix\Main\ErrorableImplementation;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
-use Bitrix\CatalogMobile\Controller\StoreDocumentDetails;
+use Bitrix\CatalogMobile\Controller\DocumentDetails\StoreDocumentDetails;
 use Bitrix\Mobile\UI\DetailCard\Tabs;
 use Bitrix\Mobile\UI\DetailCard\Configurator;
 
@@ -33,7 +33,6 @@ $component = new class {
 			Loader::requireModule('catalog');
 			Loader::requireModule('crm');
 			Loader::requireModule('currency');
-			Loader::requireModule('mobile');
 			Loader::requireModule('sale');
 		}
 		catch (LoaderException $exception)

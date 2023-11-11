@@ -15,6 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var CBitrixComponent $component
  */
 
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
@@ -247,8 +248,8 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 		if($arResult['PERM_QUOTE'] && !$arResult['CATEGORY_ID'])
 		{
 			$quoteAction = [
-				'TITLE' => Loc::getMessage('CRM_COMPANY_ADD_QUOTE_TITLE'),
-				'TEXT' => Loc::getMessage('CRM_COMPANY_ADD_QUOTE_SHORT'),
+				'TITLE' => Loc::getMessage('CRM_COMPANY_ADD_QUOTE_TITLE_MSGVER_1'),
+				'TEXT' => Loc::getMessage('CRM_COMPANY_ADD_QUOTE_SHORT_MSGVER_1'),
 				'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arCompany['PATH_TO_QUOTE_ADD'])."');"
 			];
 			if (\Bitrix\Crm\Settings\QuoteSettings::getCurrent()->isFactoryEnabled())
@@ -304,7 +305,7 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 		if (!empty($arEntitySubMenuItems))
 		{
 			$arActions[] = array(
-				'TITLE' => Loc::getMessage('CRM_COMPANY_ADD_ENTITY_TITLE'),
+				'TITLE' => Loc::getMessage('CRM_COMPANY_ADD_ENTITY_TITLE_MSGVER_1'),
 				'TEXT' => Loc::getMessage('CRM_COMPANY_ADD_ENTITY'),
 				'MENU' => $arEntitySubMenuItems
 			);
@@ -994,7 +995,6 @@ $APPLICATION->IncludeComponent(
 <?php if (
 	!$isInternal
 	&& \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('IFRAME') !== 'Y'
-	&& \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
 ): ?>
 <script type="text/javascript">
 	BX.ready(
@@ -1007,7 +1007,8 @@ $APPLICATION->IncludeComponent(
 				/** @see BX.Crm.PushCrmSettings */
 				new exports.PushCrmSettings({
 					smartActivityNotificationSupported: <?= Container::getInstance()->getFactory(\CCrmOwnerType::Company)->isSmartActivityNotificationSupported() ? 'true' : 'false' ?>,
-					entityTypeId: <?= (int)\CCrmOwnerType::Company ?>,
+					entityTypeId: <?= \CCrmOwnerType::Company ?>,
+					pingSettings: <?= CUtil::PhpToJSObject((new TodoPingSettingsProvider(\CCrmOwnerType::Company, (int)($arResult['CATEGORY_ID'] ?? 0)))->fetchAll()) ?>,
 					rootMenu: settingsButton ? settingsButton.getMenuWindow() : undefined,
 					grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
 				});

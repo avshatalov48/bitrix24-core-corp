@@ -830,7 +830,6 @@
 
 				const filesInfo = data.FILES_INFO && data.FILES_INFO.length > 0 ? data.FILES_INFO : [];
 			mailForm.getField('DATA[__diskfiles]').setValue(filesInfo);
-
 				mailForm.getField('DATA[message]').setValue(data.BODY, {quote: true, signature: true, filesInfo: filesInfo});
 			});
 

@@ -425,7 +425,7 @@ class Entity
 				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_DEAL_INVOICE_DESC1')
 			),
 			self::ENUM_ENTITY_SCHEME_QUOTE => array(
-				'NAME' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_QUOTE'),
+				'NAME' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_QUOTE_MSGVER_1'),
 				'ENTITIES' => array(
 					\CCrmOwnerType::QuoteName,
 					\CCrmOwnerType::CompanyName,
@@ -435,10 +435,10 @@ class Entity
 				'HAS_INVOICE' => false,
 				'SPECULAR_ID' => self::ENUM_ENTITY_SCHEME_QUOTE_INVOICE,
 				'DYNAMIC' => false,
-				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_QUOTE_DESC')
+				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_QUOTE_DESC_MSGVER_1')
 			),
 			self::ENUM_ENTITY_SCHEME_QUOTE_INVOICE => array(
-				'NAME' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_QUOTE'),
+				'NAME' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_QUOTE_MSGVER_1'),
 				'ENTITIES' => array(
 					\CCrmOwnerType::InvoiceName,
 					\CCrmOwnerType::QuoteName,
@@ -449,7 +449,7 @@ class Entity
 				'HAS_INVOICE' => true,
 				'SPECULAR_ID' => self::ENUM_ENTITY_SCHEME_QUOTE,
 				'DYNAMIC' => false,
-				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_QUOTE_INVOICE_DESC1')
+				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_QUOTE_INVOICE_DESC1_MSGVER_1')
 			),
 		);
 

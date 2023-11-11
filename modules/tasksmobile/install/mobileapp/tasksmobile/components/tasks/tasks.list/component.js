@@ -2057,9 +2057,9 @@
 			if (this.isTabsMode && this.isMyList())
 			{
 				BX.addCustomEvent('tasks.tabs:onTabSelected', (eventData) => this.onTabSelected(eventData));
-				BX.addCustomEvent('tasks.tabs:onAppActiveBefore', () => this.onAppActiveBefore());
-				BX.addCustomEvent('tasks.tabs:onAppActive', () => this.onAppActive());
-				BX.addCustomEvent('tasks.tabs:onAppPaused', () => this.onAppPaused());
+				BX.addCustomEvent('tasks.tabs:onAppActiveBefore', (eventData) => this.onAppActiveBefore(eventData));
+				BX.addCustomEvent('tasks.tabs:onAppActive', (eventData) => this.onAppActive(eventData));
+				BX.addCustomEvent('tasks.tabs:onAppPaused', (eventData) => this.onAppPaused(eventData));
 			}
 			else
 			{
@@ -2453,7 +2453,7 @@
 			let { swipeShowHelper } = this.options.get();
 			if (!swipeShowHelper)
 			{
-				swipeShowHelper = this.options.getDefaultOptions().swipeShowHelper;
+				swipeShowHelper = Options.getDefaultOptions().swipeShowHelper;
 				this.options.update('swipeShowHelper', swipeShowHelper);
 			}
 
@@ -2476,17 +2476,22 @@
 		{
 			if (data.tabId === 'tasks.list')
 			{
-				this.onAppActiveBefore();
-				this.onAppActive();
+				this.onAppActiveBefore(data);
+				this.onAppActive(data);
 			}
 			else
 			{
-				this.onAppPaused();
+				this.onAppPaused(data, true);
 			}
 		}
 
-		onAppPaused()
+		onAppPaused(data, force = false)
 		{
+			if (!force && data.tabId !== 'tasks.list')
+			{
+				return;
+			}
+
 			this.pauseTime = new Date();
 
 			this.pull.setCanExecute(false);
@@ -2494,8 +2499,13 @@
 			this.push.clear();
 		}
 
-		onAppActiveBefore()
+		onAppActiveBefore(data)
 		{
+			if (data.tabId !== 'tasks.list')
+			{
+				return;
+			}
+
 			BX.onViewLoaded(() => {
 				if (this.push)
 				{
@@ -2504,8 +2514,13 @@
 			});
 		}
 
-		onAppActive()
+		onAppActive(data)
 		{
+			if (data.tabId !== 'tasks.list')
+			{
+				return;
+			}
+
 			this.activationTime = new Date();
 			this.canShowSwipeActions = true;
 
@@ -3932,13 +3947,19 @@
 		}
 	}
 
-	return new TaskList(
-		list,
-		parseInt(BX.componentParameters.get('USER_ID', 0), 10),
-		{
-			projectNewsPathTemplate: BX.componentParameters.get('PROJECT_NEWS_PATH_TEMPLATE', ''),
-			projectCalendarWebPathTemplate: BX.componentParameters.get('PROJECT_CALENDAR_WEB_PATH_TEMPLATE', ''),
-			isTabsMode: BX.componentParameters.get('IS_TABS_MODE', false),
-		},
-	);
+	const userId = parseInt(BX.componentParameters.get('USER_ID', 0), 10);
+	const params = {
+		projectNewsPathTemplate: BX.componentParameters.get('PROJECT_NEWS_PATH_TEMPLATE', ''),
+		projectCalendarWebPathTemplate: BX.componentParameters.get('PROJECT_CALENDAR_WEB_PATH_TEMPLATE', ''),
+		isTabsMode: BX.componentParameters.get('IS_TABS_MODE', false),
+	};
+
+	// if (apiVersion >= 49)
+	// {
+	// 	const { TaskList: TaskListLayoutComponent } = jn.require('tasks/layout/task-list');
+	//
+	// 	return TaskListLayoutComponent.open(layout, userId, params);
+	// }
+
+	return new TaskList(list, userId, params);
 })();

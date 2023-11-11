@@ -325,7 +325,7 @@ class CCrmContactDetailsComponent
 				];
 				$this->arResult['TABS'][] = [
 					'id' => 'tab_quote',
-					'name' => Loc::getMessage('CRM_CONTACT_TAB_QUOTE'),
+					'name' => Loc::getMessage('CRM_CONTACT_TAB_QUOTE_MSGVER_1'),
 					'loader' => [
 						'serviceUrl' => '/bitrix/components/bitrix/crm.quote.list/lazyload.ajax.php?&site'
 							. SITE_ID
@@ -519,7 +519,7 @@ class CCrmContactDetailsComponent
 				];
 				$this->arResult['TABS'][] = [
 					'id' => 'tab_quote',
-					'name' => Loc::getMessage('CRM_CONTACT_TAB_QUOTE'),
+					'name' => Loc::getMessage('CRM_CONTACT_TAB_QUOTE_MSGVER_1'),
 					'enabled' => false
 				];
 				$this->arResult['TABS'][] = [
@@ -925,6 +925,7 @@ class CCrmContactDetailsComponent
 				'type' => 'client_light',
 				'editable' => true,
 				'data' => array(
+					'affectedFields' => ['CLIENT_INFO'],
 					'compound' => array(
 						array(
 							'name' => 'COMPANY_IDS',

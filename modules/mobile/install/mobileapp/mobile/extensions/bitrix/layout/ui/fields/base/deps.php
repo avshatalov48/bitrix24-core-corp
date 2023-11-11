@@ -13,5 +13,7 @@ return [
 		'utils/random',
 		'utils/prop',
 		'assets/common',
+		'utils/copy',
+		'loc',
 	],
 ];

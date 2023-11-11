@@ -863,7 +863,7 @@ if (!$isMyCompanyMode && CCrmQuote::CheckReadPermission(0, $userPermissions))
 {
 	$arResult['FIELDS']['tab_quote'][] = array(
 		'id' => 'DEAL_QUOTE',
-		'name' => GetMessage('CRM_FIELD_COMPANY_QUOTE'),
+		'name' => GetMessage('CRM_FIELD_COMPANY_QUOTE_MSGVER_1'),
 		'colspan' => true,
 		'type' => 'crm_quote_list',
 		'componentData' => array(

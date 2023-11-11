@@ -15,7 +15,7 @@ $isStExportFirstPage = (isset($arResult['STEXPORT_IS_FIRST_PAGE']) && $arResult[
 
 if ((!is_array($arResult['QUOTE']) || count($arResult['QUOTE']) <= 0) && (!$isStExport || $isStExportFirstPage))
 {
-	echo GetMessage('ERROR_QUOTE_IS_EMPTY_2');
+	echo GetMessage('ERROR_QUOTE_IS_EMPTY_2_MSGVER_1');
 }
 else
 {

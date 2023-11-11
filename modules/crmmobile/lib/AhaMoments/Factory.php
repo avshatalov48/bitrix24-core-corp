@@ -16,6 +16,11 @@ class Factory
 			return GoToChat::getInstance();
 		}
 
+		if ($name === 'yoochecks')
+		{
+			return Yoochecks::getInstance();
+		}
+
 		throw new ArgumentException('Unknown ahamoment: ' . $name);
 	}
 }

@@ -81,6 +81,9 @@ jn.define('crm/payment-system/creation/actions/oauth', (require, exports, module
 										reject({
 											errors: [
 												{
+													customData: {
+														public: true,
+													},
 													message: item.params.error,
 												},
 											],

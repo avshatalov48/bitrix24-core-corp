@@ -128,4 +128,44 @@ final class Agent
 
 		return '';
 	}
+
+	public static function updateRightsQuickAnswersAgent(): string
+	{
+		if (!Loader::includeModule('iblock'))
+		{
+			return '';
+		}
+
+		$iblocks = \CIBlock::getList(
+			[],
+			[
+				'ACTIVE' => 'Y',
+				'TYPE' => \Bitrix\ImOpenlines\QuickAnswers\ListsDataManager::TYPE,
+				'CODE' => \Bitrix\ImOpenlines\QuickAnswers\ListsDataManager::IBLOCK_CODE,
+				'CHECK_PERMISSIONS' => 'N'
+			]
+		);
+
+		while ($iblock = $iblocks->Fetch())
+		{
+			$configsCount = \Bitrix\ImOpenLines\Model\ConfigTable::getCount([
+				'=QUICK_ANSWERS_IBLOCK_ID' => (int)$iblock['ID']
+			]);
+
+			if ($configsCount)
+			{
+				\Bitrix\ImOpenlines\QuickAnswers\ListsDataManager::updateIblockRights($iblock['ID']);
+			}
+			else
+			{
+				$sectionCount = \CIBlockElement::GetList([], ['IBLOCK_ID' => $iblock['ID']]);
+				if (!$sectionCount->SelectedRowsCount())
+				{
+					\CIBlock::Delete($iblock['ID']);
+				}
+			}
+		}
+
+		return '';
+	}
 }

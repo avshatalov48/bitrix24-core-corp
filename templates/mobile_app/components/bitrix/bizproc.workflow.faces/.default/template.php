@@ -1,4 +1,12 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\Web\Uri;
+
 if (empty($arResult['WORKFLOW_ID'])):?>
 <p style="color:red"><?=GetMessage('BPWLFC_WORKFLOW_NOT_FOUND')?></p>
 <?else:
@@ -21,7 +29,7 @@ $defaultAvatar = '/bitrix/templates/mobile_app/images/bizproc/bp-default-icon.jp
 						if (!$startedPhoto)
 							$startedPhoto = $defaultAvatar;
 						?>
-						<img src="<?=$startedPhoto?>" border="0"/>
+						<img src="<?= htmlspecialcharsbx(Uri::urnEncode($startedPhoto)) ?>" border="0"/>
 					<?elseif (!empty($arResult['DOCUMENT_ID']) && in_array($arResult['DOCUMENT_ID'][0], array('crm', 'disk', 'lists', 'tasks'))):?>
 					<img src="/bitrix/templates/mobile_app/images/bizproc/bp-<?=$arResult['DOCUMENT_ID'][0]?>-icon.png"  border="0"/>
 					<?else:?>
@@ -47,7 +55,7 @@ $defaultAvatar = '/bitrix/templates/mobile_app/images/bizproc/bp-default-icon.jp
 			<div class="bp-short-process-step-wrapper <?if ($task['USERS_CNT'] > 1) echo 'bp-short-process-step-wrapper-more'?>">
 				<a href="<?=SITE_DIR.'mobile/users/?user_id='.(int)$face['USER_ID']?>" class="bp-short-process-step <?if ($face['STATUS'] == CBPTaskUserStatus::Ok || $face['STATUS'] == CBPTaskUserStatus::Yes) echo 'bp-short-process-step-ready'?>
 			<?if ($face['STATUS'] == CBPTaskUserStatus::No || $face['STATUS'] == 4) echo 'bp-short-process-step-cancel'?> <?if ($task['USERS_CNT'] > 1) echo 'bp-short-process-step-more'?>">
-					<span class="bp-short-process-step-inner"><img src="<?=$photoSrc?>" border="0"/></span>
+					<span class="bp-short-process-step-inner"><img src="<?= htmlspecialcharsbx(Uri::urnEncode($photoSrc)) ?>" border="0"/></span>
 				</a>
 				<?if ($task['USERS_CNT'] > 1):?>
 				<a href="javascript:void(0)" class="process-step-more process-step-more-complete">
@@ -71,7 +79,7 @@ $defaultAvatar = '/bitrix/templates/mobile_app/images/bizproc/bp-default-icon.jp
 		<span class="bp-short-process-step-wrapper <?if ($task['USERS_CNT'] > 1) echo 'bp-short-process-step-wrapper-more'?>">
 			<a href="<?=SITE_DIR.'mobile/users/?user_id='.(int)$face['USER_ID']?>" class="bp-short-process-step  <?if ($face['STATUS'] == CBPTaskUserStatus::Ok || $face['STATUS'] == CBPTaskUserStatus::Yes) echo 'bp-short-process-step-ready'?>
 			<?if ($face['STATUS'] == CBPTaskUserStatus::No || $face['STATUS'] == 4) echo 'bp-short-process-step-cancel'?> <?if ($task['USERS_CNT'] > 1) echo 'bp-short-process-step-more'?>">
-				<span class="bp-short-process-step-inner"><img src="<?=$photoSrc?>" border="0" data-users="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($arResult['TASKS']['RUNNING_ALL_USERS']))?>" onload="return BX.BizProcMobile.renderFacePhoto(this, JSON.parse(this.getAttribute('data-users')));"/></span>
+				<span class="bp-short-process-step-inner"><img src="<?= htmlspecialcharsbx(Uri::urnEncode($photoSrc)) ?>" border="0" data-users="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($arResult['TASKS']['RUNNING_ALL_USERS']))?>" onload="return BX.BizProcMobile.renderFacePhoto(this, JSON.parse(this.getAttribute('data-users')));"/></span>
 			</a>
 			<? if ($allFaces >= 2):?>
 			<a href="javascript:void(0)" class="process-step-more process-step-more-running"><span><?=GetMessage('BPWLFC_TOTAL')?> <?=$allFaces?></span></a>
@@ -82,4 +90,5 @@ $defaultAvatar = '/bitrix/templates/mobile_app/images/bizproc/bp-default-icon.jp
 	</div>
 	<?endif?>
 </div>
-<?endif?>
+<?php
+endif;

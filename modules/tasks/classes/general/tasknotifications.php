@@ -18,6 +18,8 @@ use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\Counter\Template\TaskCounter;
 use Bitrix\Tasks\Internals\Notification\Task\ThrottleTable;
+use Bitrix\Tasks\Internals\TaskObject;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\UI;
@@ -27,6 +29,8 @@ use Bitrix\Tasks\Util\User;
 
 class CTaskNotifications
 {
+	public const USE_LEGACY_KEY = 'tasks_use_legacy_notifications';
+
 	const PUSH_MESSAGE_MAX_LENGTH = 255;
 
 	private static $arBuiltInTasksXmlIds = array(
@@ -59,6 +63,19 @@ class CTaskNotifications
 
 	public static function sendAddMessage($arFields, $arParams = array())
 	{
+		if (self::useNewNotifications())
+		{
+			$task = \Bitrix\Tasks\Internals\Registry\TaskRegistry::getInstance()->getObject($arFields['ID'], true);
+			if (!$task)
+			{
+				return;
+			}
+			$controller = new \Bitrix\Tasks\Internals\Notification\Controller();
+			$controller->onTaskCreated($task, $arParams);
+			$controller->push();
+			return;
+		}
+
 		$isBbCodeDescription = true;
 		if (isset($arFields['DESCRIPTION_IN_BBCODE']) && ($arFields['DESCRIPTION_IN_BBCODE'] === 'N'))
 			$isBbCodeDescription = false;
@@ -257,6 +274,27 @@ class CTaskNotifications
 
 	public static function sendUpdateMessage($arFields, $arTask, $bSpawnedByAgent = false, array $parameters = array())
 	{
+		// previous fields = $arTask
+		// updated fields = $arFields
+
+		if (self::useNewNotifications())
+		{
+			$task = \Bitrix\Tasks\Internals\Registry\TaskRegistry::getInstance()
+				->drop((int)$arTask['ID'])
+				->getObject((int)$arTask['ID'], true);
+
+			if (!$task)
+			{
+				return;
+			}
+
+			$controller = new \Bitrix\Tasks\Internals\Notification\Controller();
+			$controller->onTaskUpdated($task, $arFields, $arTask, ['spawned_by_agent' => $bSpawnedByAgent]);
+			$controller->push();
+			return;
+		}
+
+
 		$occurAsUserId = self::getOccurAsUserId($arFields, $arTask, $bSpawnedByAgent, $parameters);
 		$effectiveUserId = self::getEffectiveUserId($arFields, $arTask, $bSpawnedByAgent, $parameters);
 		// generally, $occurAsUserId === $effectiveUserId, but sometimes dont
@@ -731,8 +769,16 @@ class CTaskNotifications
 	 * @param $arFields
 	 * @param bool $safeDelete
 	 */
-	public static function SendDeleteMessage($arFields, bool $safeDelete = false): void
+	public static function SendDeleteMessage($arFields, bool $safeDelete = false, ?TaskObject $task = null): void
 	{
+		if (self::useNewNotifications() && $task !== null)
+		{
+			$controller = new \Bitrix\Tasks\Internals\Notification\Controller();
+			$controller->onTaskDeleted($task, $safeDelete);
+			$controller->push();
+			return;
+		}
+
 		$cacheWasEnabled = CTaskNotifications::enableStaticCache();
 
 		$recipientIds = CTaskNotifications::GetRecipientsIDs($arFields);
@@ -786,6 +832,19 @@ class CTaskNotifications
 
 	public static function SendStatusMessage($arTask, $status, $arFields = array())
 	{
+		if (self::useNewNotifications())
+		{
+			$task = \Bitrix\Tasks\Internals\Registry\TaskRegistry::getInstance()->getObject($arTask['ID'], true);
+			if (!$task)
+			{
+				return;
+			}
+			$controller = new \Bitrix\Tasks\Internals\Notification\Controller();
+			$controller->onTaskStatusChanged($task, (int)$status, $arFields);
+			$controller->push();
+			return;
+		}
+
 		global $DB;
 
 		$cacheWasEnabled = CTaskNotifications::enableStaticCache();
@@ -801,13 +860,13 @@ class CTaskNotifications
 					$occurAsUserId = User::getId() ? User::getId() : $arTask["CREATED_BY"];
 
 				// If task was redone
-				if (($status == CTasks::STATE_NEW || $status == CTasks::STATE_PENDING) &&
-					($arTask['REAL_STATUS'] == CTasks::STATE_SUPPOSEDLY_COMPLETED))
+				if (((int)$status === Status::NEW || (int)$status === Status::PENDING) &&
+					((int)$arTask['REAL_STATUS'] === Status::SUPPOSEDLY_COMPLETED))
 				{
 					$statusMessage = CTaskNotifications::getGenderMessage($occurAsUserId, 'TASKS_TASK_STATUS_MESSAGE_REDOED');
 					$messagePush = CTaskNotifications::makePushMessage('TASKS_TASK_STATUS_MESSAGE_REDOED', $occurAsUserId, $arTask);
 				}
-				elseif ($status == CTasks::STATE_PENDING && $arTask['REAL_STATUS'] == CTasks::STATE_DEFERRED)
+				elseif ((int)$status === Status::PENDING && (int)$arTask['REAL_STATUS'] === Status::DEFERRED)
 				{
 					$statusMessage = CTaskNotifications::getGenderMessage($occurAsUserId, 'TASKS_TASK_STATUS_MESSAGE_1');
 					$messagePush = CTaskNotifications::makePushMessage('TASKS_TASK_STATUS_MESSAGE_1', $occurAsUserId, $arTask);
@@ -829,7 +888,7 @@ class CTaskNotifications
 					$statusMessage
 				);
 
-				if ($status == CTasks::STATE_DECLINED)
+				if ((int)$status === Status::DECLINED)
 				{
 					$message = str_replace("#TASK_DECLINE_REASON#", $arTask["DECLINE_REASON"], $message);
 					$message_email = str_replace("#TASK_DECLINE_REASON#", $arTask["DECLINE_REASON"], $message_email);
@@ -866,12 +925,12 @@ class CTaskNotifications
 		// sonet log
 		if (CModule::IncludeModule("socialnetwork"))
 		{
-			if ($status == CTasks::STATE_PENDING)
-				$message = GetMessage("TASKS_SONET_TASK_STATUS_MESSAGE_" . CTasks::STATE_NEW);
+			if ((int)$status === Status::PENDING)
+				$message = GetMessage("TASKS_SONET_TASK_STATUS_MESSAGE_" . Status::NEW);
 			else
 				$message = GetMessage("TASKS_SONET_TASK_STATUS_MESSAGE_" . $status);
 
-			if ($status == CTasks::STATE_DECLINED)
+			if ((int)$status === Status::DECLINED)
 				$message = str_replace("#TASK_DECLINE_REASON#", $arTask["DECLINE_REASON"], $message);
 
 			$bCrmTask = self::isCrmTask($arTask);
@@ -956,6 +1015,19 @@ class CTaskNotifications
 
 	public static function sendExpiredSoonMessage(array $taskData): void
 	{
+		if (self::useNewNotifications())
+		{
+			$task = \Bitrix\Tasks\Internals\Registry\TaskRegistry::getInstance()->getObject($taskData['ID'], true);
+			if (!$task)
+			{
+				return;
+			}
+			$controller = new \Bitrix\Tasks\Internals\Notification\Controller();
+			$controller->onTaskExpiresSoon($task, $taskData);
+			$controller->push();
+			return;
+		}
+
 		$cacheWasEnabled = self::enableStaticCache();
 
 		$parameters = [
@@ -1084,6 +1156,19 @@ class CTaskNotifications
 
 	public static function sendExpiredMessage(array $taskData): void
 	{
+		if (self::useNewNotifications())
+		{
+			$task = \Bitrix\Tasks\Internals\Registry\TaskRegistry::getInstance()->getObject($taskData['ID'], true);
+			if (!$task)
+			{
+				return;
+			}
+			$controller = new \Bitrix\Tasks\Internals\Notification\Controller();
+			$controller->onTaskExpired($task);
+			$controller->push();
+			return;
+		}
+
 		$cacheWasEnabled = self::enableStaticCache();
 
 		$parameters = [
@@ -1228,6 +1313,19 @@ class CTaskNotifications
 
 	public static function sendPingStatusMessage(array $taskData, int $authorId): void
 	{
+		if (self::useNewNotifications())
+		{
+			$task = \Bitrix\Tasks\Internals\Registry\TaskRegistry::getInstance()->getObject($taskData['ID'], true);
+			if (!$task)
+			{
+				return;
+			}
+			$controller = new \Bitrix\Tasks\Internals\Notification\Controller();
+			$controller->onTaskPingSend($task, $authorId);
+			$controller->push();
+			return;
+		}
+
 		$cacheWasEnabled = self::enableStaticCache();
 
 		$responsibleId = (int)$taskData['RESPONSIBLE_ID'];
@@ -2055,6 +2153,7 @@ class CTaskNotifications
 
 		$byUser = [];
 		$mailed = [];
+		$type = null;
 
 		foreach(self::$buffer as $i => $message)
 		{
@@ -2304,7 +2403,7 @@ class CTaskNotifications
 					// see /mobile/install/components/bitrix/mobile.rtc/templates/.default/script.js for handling details
 					$arMessageFields['PUSH_PARAMS'] = [
 						'ACTION' => 'tasks',
-						'TAG' => $tag,
+						'TAG' => $imNotificationTag->getName(),
 						'ADVANCED_PARAMS' => [],
 					];
 
@@ -2396,6 +2495,9 @@ class CTaskNotifications
 
 	private static function preparePushData(int $taskId, int $userId, array $taskData): array
 	{
+		$counter = (new TaskCounter($userId))->getMobileRowCounter($taskId);
+		unset($counter['counters']);
+
 		$pushData = [
 			'id' => (string)$taskId,
 			'counter' => (new TaskCounter($userId))->getMobileRowCounter($taskId),
@@ -2744,6 +2846,19 @@ class CTaskNotifications
 
 	public static function addAnswer($taskId, $text)
 	{
+		if (self::useNewNotifications())
+		{
+			$task = \Bitrix\Tasks\Internals\Registry\TaskRegistry::getInstance()->getObject((int)$taskId, true);
+			if (!$task)
+			{
+				return;
+			}
+			$controller = new \Bitrix\Tasks\Internals\Notification\Controller();
+			$controller->onNotificationReply($task, $text);
+			$controller->push();
+			return;
+		}
+
 		$task = new CTaskItem($taskId, $GLOBALS['USER']->GetId());
 
 		$commentId = CTaskCommentItem::add($task, array(
@@ -3991,5 +4106,15 @@ class CTaskNotifications
 	public static function disableSonetLogNotifyAuthor()
 	{
 		self::$sonetLogNotifyAuthor = false;
+	}
+
+	public static function useNewNotifications(): bool
+	{
+		if (Option::get('tasks', self::USE_LEGACY_KEY, 'null', '-') !== 'null')
+		{
+			return false;
+		}
+
+		return true;
 	}
 }

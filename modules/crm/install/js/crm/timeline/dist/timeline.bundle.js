@@ -2088,6 +2088,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this._messageTextNode = null;
 	    _this._userWrapper = null;
 	    _this._extraUserCounter = null;
+	    _this.isLoading = false;
 	    _this._openChatHandler = BX.delegate(_this.onOpenChat, babelHelpers.assertThisInitialized(_this));
 	    return _this;
 	  }
@@ -2409,11 +2410,19 @@ this.BX.Crm = this.BX.Crm || {};
 	      //region Message Text
 	      let text = BX.prop.getString(message, "text", "");
 	      const params = BX.prop.getObject(message, "params", {});
-	      if (text === "") {
+	      if (text === "" && !params.ATTACH && !params.FILE_ID) {
 	        this._messageTextNode.innerHTML = "";
 	      } else {
-	        if (typeof top.BX.MessengerCommon !== "undefined") {
-	          text = top.BX.MessengerCommon.purifyText(text, params);
+	        const MessengerCommon = main_core.Reflection.getClass('top.BX.MessengerCommon');
+	        const MessengerParser = main_core.Reflection.getClass('top.BX.Messenger.v2.Lib.Parser');
+	        if (MessengerCommon) {
+	          text = MessengerCommon.purifyText(text, params);
+	        } else if (MessengerParser) {
+	          text = MessengerParser.purify({
+	            text,
+	            attach: params.ATTACH,
+	            files: typeof params.FILE_ID === 'object' && params.FILE_ID.length > 0
+	          });
 	        }
 	        this._messageTextNode.innerHTML = text;
 	      }
@@ -2456,33 +2465,52 @@ this.BX.Crm = this.BX.Crm || {};
 	      }.bind(this), 500);
 	    }
 	  }, {
+	    key: "loading",
+	    value: function loading(isLoading) {
+	      if (this._contentWrapper && this._contentWrapper.classList) {
+	        if (isLoading) {
+	          main_core.Dom.addClass(this._contentWrapper, 'crm-entity-chat-loading');
+	          this.isLoading = true;
+	        } else {
+	          main_core.Dom.removeClass(this._contentWrapper, 'crm-entity-chat-loading');
+	          this.isLoading = false;
+	        }
+	      }
+	    }
+	  }, {
 	    key: "onOpenChat",
 	    value: function onOpenChat(e) {
-	      if (typeof top.BXIM === "undefined") {
+	      if (main_core.Type.isUndefined(top.BX.Messenger.Public) || this.isLoading) {
 	        return;
 	      }
 	      if (this.isRestricted()) {
 	        this.applyLockScript();
 	        return;
 	      }
-	      let slug = "";
-	      const chatId = this.getChatId();
-	      if (chatId > 0 && this.hasUserInfo(this.getUserId())) {
-	        slug = "chat" + chatId.toString();
-	      } else {
-	        const ownerInfo = this.getOwnerInfo();
-	        const entityId = BX.prop.getInteger(ownerInfo, "ENTITY_ID", 0);
-	        const entityTypeName = BX.prop.getString(ownerInfo, "ENTITY_TYPE_NAME", "");
-	        if (entityTypeName !== "" && entityId > 0) {
-	          slug = "crm|" + entityTypeName + "|" + entityId.toString();
+	      const ownerInfo = this.getOwnerInfo();
+	      const entityId = BX.prop.getInteger(ownerInfo, 'ENTITY_ID', 0);
+	      const entityTypeId = BX.prop.getInteger(ownerInfo, 'ENTITY_TYPE_ID', 0);
+	      const data = {
+	        data: {
+	          entityId,
+	          entityTypeId
 	        }
-	      }
-	      if (slug !== "") {
-	        top.BXIM.openMessengerSlider(slug, {
-	          RECENT: "N",
-	          MENU: "N"
+	      };
+	      const successCallback = response => {
+	        this.loading(false);
+	        const chatId = response.data.chatId;
+	        top.BX.Messenger.Public.openChat(`chat${chatId}`);
+	      };
+	      const errorCallback = error => {
+	        this.loading(false);
+	        const errorMessage = error.errors[0].message;
+	        BX.UI.Notification.Center.notify({
+	          content: errorMessage,
+	          autoHideDelay: 5000
 	        });
-	      }
+	      };
+	      this.loading(true);
+	      BX.ajax.runAction('crm.timeline.chat.get', data).then(successCallback, errorCallback);
 	    }
 	  }, {
 	    key: "onChatEvent",

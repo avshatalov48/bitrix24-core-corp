@@ -4,6 +4,7 @@
 jn.define('im/messenger/provider/service/message', (require, exports, module) => {
 	const { LoadService } = require('im/messenger/provider/service/classes/message/load');
 	const { ReactionService } = require('im/messenger/provider/service/classes/message/reaction');
+	const { StatusService } = require('im/messenger/provider/service/classes/message/status');
 	const { RestMethod } = require('im/messenger/const/rest');
 
 	/**
@@ -13,8 +14,13 @@ jn.define('im/messenger/provider/service/message', (require, exports, module) =>
 	{
 		constructor({ store, chatId })
 		{
+			/** @type {MessengerCoreStore} */
 			this.store = store;
 			this.chatId = chatId;
+			/** @type {LoadService} */
+			this.loadService = null;
+			/** @type {ReactionService} */
+			this.reactionService = null;
 
 			this.initServices();
 		}
@@ -79,6 +85,16 @@ jn.define('im/messenger/provider/service/message', (require, exports, module) =>
 			});
 		}
 
+		openUsersReadMessageList(messageId)
+		{
+			this.statusService.openUsersReadMessageList(messageId);
+		}
+
+		createUsersReadCache()
+		{
+			this.statusService.createCache();
+		}
+
 		/**
 		 * @private
 		 */
@@ -90,6 +106,11 @@ jn.define('im/messenger/provider/service/message', (require, exports, module) =>
 			});
 
 			this.reactionService = new ReactionService({
+				store: this.store,
+				chatId: this.chatId,
+			});
+
+			this.statusService = new StatusService({
 				store: this.store,
 				chatId: this.chatId,
 			});

@@ -1,21 +1,24 @@
 <?
+
+use Bitrix\Tasks\Internals\Task\Status;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 if (isset($arParams['TASK']['REAL_STATUS'])
-	&& ($arParams['TASK']['REAL_STATUS'] != CTasks::STATE_DECLINED)
-	&& ($arParams['TASK']['REAL_STATUS'] != CTasks::STATE_SUPPOSEDLY_COMPLETED)
+	&& ((int)$arParams['TASK']['REAL_STATUS'] !== Status::DECLINED)
+	&& ((int)$arParams['TASK']['REAL_STATUS'] !== Status::SUPPOSEDLY_COMPLETED)
 	&& ($arParams['TASK']['REAL_STATUS'] > 0)
 	&& ($arParams["TYPE"] === 'status')
 )
 {
 	if (
-		isset($arParams['PREV_REAL_STATUS']) 
+		isset($arParams['PREV_REAL_STATUS'])
 		&& ($arParams['PREV_REAL_STATUS'] !== false)
 		&& (
-			($arParams['TASK']['REAL_STATUS'] == CTasks::STATE_NEW)
-			|| ($arParams['TASK']['REAL_STATUS'] == CTasks::STATE_PENDING)
+			((int)$arParams['TASK']['REAL_STATUS'] === Status::NEW)
+			|| ((int)$arParams['TASK']['REAL_STATUS'] === Status::PENDING)
 		)
-		&& ($arParams['PREV_REAL_STATUS'] == CTasks::STATE_SUPPOSEDLY_COMPLETED)
+		&& ((int)$arParams['PREV_REAL_STATUS'] === Status::SUPPOSEDLY_COMPLETED)
 	)
 	{
 		//$message = GetMessage('TASKS_SONET_TASK_STATUS_MESSAGE_REDOED');
@@ -26,7 +29,7 @@ if (isset($arParams['TASK']['REAL_STATUS'])
 		//$message = GetMessage("TASKS_SONET_TASK_STATUS_MESSAGE_" . $arParams['TASK']['REAL_STATUS']);
 		//$message_24 = GetMessage("TASKS_SONET_TASK_STATUS_MESSAGE_" . $arParams['TASK']['REAL_STATUS'] . '_24');
 
-		if ($arParams['TASK']['REAL_STATUS'] == CTasks::STATE_DECLINED)
+		if ((int)$arParams['TASK']['REAL_STATUS'] === Status::DECLINED)
 		{
 			$arParams['~MESSAGE'] = str_replace("#TASK_DECLINE_REASON#", $arParams['TASK']["DECLINE_REASON"], $message);
 			$arParams['~MESSAGE_24_1'] = str_replace("#TASK_DECLINE_REASON#", $arParams['TASK']["DECLINE_REASON"], $message_24);
@@ -46,7 +49,7 @@ if ( !array_key_exists("AVATAR_SIZE", $arParams)
 	else
 		$arParams["AVATAR_SIZE"] = 30;
 }
-	
+
 if ($arParams["NAME_TEMPLATE"] == '')
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
 

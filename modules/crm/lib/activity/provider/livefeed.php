@@ -118,22 +118,7 @@ class Livefeed extends Base
 	 */
 	public static function getTypesFilterPresets()
 	{
-		return array(
-			array(
-				'NAME' => Loc::getMessage('CRM_ACTIVITY_PROVIDER_LIVEFEED_TYPE_LOG_ENTRY'),
-				'PROVIDER_TYPE_ID' => self::PROVIDER_TYPE_ID_ENTRY
-			),
-			array(
-				'NAME' => Loc::getMessage('CRM_ACTIVITY_PROVIDER_LIVEFEED_TYPE_LOG_COMMENT_OUT'),
-				'PROVIDER_TYPE_ID' => self::PROVIDER_TYPE_ID_COMMENT,
-				'DIRECTION' => \CCrmActivityDirection::Outgoing
-			),
-			array(
-				'NAME' => Loc::getMessage('CRM_ACTIVITY_PROVIDER_LIVEFEED_TYPE_LOG_COMMENT_IN'),
-				'PROVIDER_TYPE_ID' => self::PROVIDER_TYPE_ID_COMMENT,
-				'DIRECTION' => \CCrmActivityDirection::Incoming
-			)
-		);
+		return [];
 	}
 
 	/**

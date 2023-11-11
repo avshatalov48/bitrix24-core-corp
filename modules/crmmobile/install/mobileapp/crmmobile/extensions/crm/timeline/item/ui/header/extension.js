@@ -14,6 +14,11 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 	const { FriendlyDate } = require('layout/ui/friendly-date');
 	const { TimeAgo } = require('layout/ui/friendly-date/time-ago');
 	const { Haptics } = require('haptics');
+	const { Alert } = require('alert');
+	const {
+		makeCancelButton,
+		makeButton,
+	} = require('alert/confirm');
 
 	const ChangeStreamButtonTypes = {
 		PIN: 'pin',
@@ -31,6 +36,8 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 			super(props);
 
 			this.onAction = this.onAction.bind(this);
+			this.changeStreamButtonRef = null;
+			this.sharedStorage = Application.sharedStorage('crm.timeline');
 		}
 
 		get hasIcon()
@@ -45,7 +52,7 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 					style: {
 						flexDirection: 'row',
 						justifyContent: 'space-between',
-						flexGrow: 1,
+						flex: 1,
 						opacity: BX.prop.getNumber(this.props, 'opacity', 1),
 					},
 				},
@@ -233,6 +240,7 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 			}
 
 			const { type, action } = this.props.changeStreamButton;
+
 			const props = {
 				onClick: () => {
 					Haptics.impactMedium();
@@ -240,12 +248,46 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 				},
 			};
 
+			const cancelButton = makeCancelButton(
+
+				() => this.changeStreamButtonRef.uncheck(),
+
+				this.props.confirmationTexts.cancelButton,
+			);
+
+			const confirmButton = makeButton(
+				this.props.confirmationTexts.confirmButton,
+
+				() => {
+					this.sharedStorage.set(`${this.props.activityType}_showConfirm`, 'N');
+					this.onAction(action);
+				},
+			);
+
+			const onCompleteButtonClick = () => {
+				Haptics.impactMedium();
+
+				if (this.sharedStorage.get(`${this.props.activityType}_showConfirm`) !== 'N')
+				{
+					Alert.confirm(
+						this.props.confirmationTexts.title,
+						this.props.confirmationTexts.description,
+						[confirmButton, cancelButton],
+					);
+				}
+				else
+				{
+					this.onAction(action);
+				}
+			};
+
 			const ChangeStreamButton = () => {
 				switch (type)
 				{
 					case ChangeStreamButtonTypes.COMPLETE:
 						return new Checkbox({
-							...props,
+							ref: (ref) => this.changeStreamButtonRef = ref,
+							onClick: onCompleteButtonClick,
 							testId: 'TimelineItemChangeStreamComplete',
 						});
 

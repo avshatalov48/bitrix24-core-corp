@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,ui_entitySelector,ui_sidepanel_menu,ui_notification,main_core,main_core_events,main_loader,ui_dialogs_messagebox,ui_buttons,ui_sidepanel_layout) {
@@ -7,7 +8,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  function RequestSender() {
 	    babelHelpers.classCallCheck(this, RequestSender);
 	  }
-
 	  babelHelpers.createClass(RequestSender, [{
 	    key: "sendRequest",
 	    value: function sendRequest(controller, action) {
@@ -70,10 +70,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        console.error(response);
 	        return;
 	      }
-
 	      if (response.errors.length) {
 	        var firstError = response.errors.shift();
-
 	        if (firstError) {
 	          var errorCode = firstError.code ? firstError.code : '';
 	          var message = firstError.message + ' ' + errorCode;
@@ -97,7 +95,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.setParticipants(params.participants);
 	    this.setActive(params.active === 'Y');
 	  }
-
 	  babelHelpers.createClass(ItemType, [{
 	    key: "setId",
 	    value: function setId(id) {
@@ -152,13 +149,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "setParticipants",
 	    value: function setParticipants(participants) {
 	      var _this = this;
-
 	      this.participants = [];
-
 	      if (!main_core.Type.isArray(participants)) {
 	        return;
 	      }
-
 	      participants.forEach(function (participant) {
 	        _this.participants.push([participant.entityId, participant.id]);
 	      });
@@ -177,7 +171,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    babelHelpers.classCallCheck(this, TypeStorage);
 	    this.types = new Map();
 	  }
-
 	  babelHelpers.createClass(TypeStorage, [{
 	    key: "setTypes",
 	    value: function setTypes(types) {
@@ -217,11 +210,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var foundItem = babelHelpers.toConsumableArray(this.types.values()).find(function (type) {
 	        return type.isActive();
 	      });
-
 	      if (main_core.Type.isNil(foundItem)) {
 	        return this.types.values().next().value;
 	      }
-
 	      return foundItem;
 	    }
 	  }, {
@@ -237,7 +228,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var Settings = /*#__PURE__*/function () {
 	  function Settings(params) {
 	    var _this = this;
-
 	    babelHelpers.classCallCheck(this, Settings);
 	    this.requestSender = params.requestSender;
 	    this.groupId = parseInt(params.groupId, 10);
@@ -251,12 +241,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      _this.setChanged();
 	    });
 	  }
-
 	  babelHelpers.createClass(Settings, [{
 	    key: "show",
 	    value: function show() {
 	      var _this2 = this;
-
 	      this.sidePanelManager.open('tasks-scrum-dod-settings-side-panel', {
 	        cacheable: false,
 	        width: 1000,
@@ -282,9 +270,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            buttons: []
 	          }).then(function (layout) {
 	            _this2.layoutMenu = layout.getMenu();
-
 	            _this2.layoutMenu.subscribe('click', _this2.onMenuItemClick.bind(_this2));
-
 	            return layout.render();
 	          });
 	        },
@@ -299,7 +285,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onLoadSettings",
 	    value: function onLoadSettings() {
 	      this.layoutMenu.setItems(this.getMenuItems());
-
 	      if (!this.isEmpty()) {
 	        this.buildEditingForm(this.typeStorage.getActiveType());
 	      }
@@ -320,7 +305,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onCloseSettingsComplete",
 	    value: function onCloseSettingsComplete() {
 	      var currentSlider = this.sidePanelManager.getTopSlider();
-
 	      if (currentSlider) {
 	        if (currentSlider.getUrl() === 'tasks-scrum-dod-list-side-panel' && this.isChanged()) {
 	          currentSlider.reload();
@@ -346,7 +330,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderContent",
 	    value: function renderContent() {
 	      var _this3 = this;
-
 	      return this.requestSender.getSettings({
 	        groupId: this.groupId
 	      }).then(function (response) {
@@ -356,11 +339,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          var itemType = new ItemType(typeData);
 	          itemTypes.set(itemType.getId(), itemType);
 	        });
-
 	        _this3.typeStorage.setTypes(itemTypes);
-
 	        _this3.typeStorage.setActiveType();
-
 	        return _this3.render(_this3.typeStorage.getActiveType());
 	      })["catch"](function (response) {
 	        _this3.requestSender.showErrorAlert(response);
@@ -395,13 +375,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderRequiredOption",
 	    value: function renderRequiredOption(type) {
 	      var _this4 = this;
-
 	      var node = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<label class=\"ui-ctl ui-ctl-checkbox\">\n\t\t\t\t\t<input type=\"checkbox\" class=\"ui-ctl-element ui-form-content-required-option\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</label>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_DOD_OPTIONS_REQUIRED_LABEL'));
 	      var checkbox = node.querySelector('.ui-form-content-required-option');
 	      checkbox.checked = type.isDodRequired();
 	      main_core.Event.bind(checkbox, 'click', function () {
 	        _this4.setChanged();
-
 	        _this4.updateActiveType();
 	      });
 	      return node;
@@ -417,7 +395,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderTypeForm",
 	    value: function renderTypeForm(type) {
 	      var _this5 = this;
-
 	      var name = type ? type.getName() : '';
 	      this.typeFormNode = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-dod-settings-type-form\">\n\t\t\t\t<div class=\"ui-alert ui-alert-danger --hidden\">\n\t\t\t\t\t<span class=\"ui-alert-message\"></span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-w100\">\n\t\t\t\t\t<input\n\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_DOD_POPUP_INPUT_PLACEHOLDER'), main_core.Text.encode(name));
 	      this.nameInput = this.typeFormNode.querySelector('input');
@@ -425,7 +402,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        if (event.key === 'Enter') {
 	          _this5.onOkTypeForm(type);
 	        }
-
 	        _this5.hideTypeFormError();
 	      });
 	      return this.typeFormNode;
@@ -434,13 +410,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "initParticipantsSelector",
 	    value: function initParticipantsSelector(type) {
 	      var participantsSelectorContainer = this.node.querySelector('.tasks-scrum-dod-settings-user-selector');
-
 	      if (main_core.Type.isNil(participantsSelectorContainer)) {
 	        return;
 	      }
+	      var selectorId = 'tasks-scrum-dod-settings-participants-selector-' + type.getId();
 
-	      var selectorId = 'tasks-scrum-dod-settings-participants-selector-' + type.getId(); // todo change to scrum-user provider
-
+	      // todo change to scrum-user provider
 	      this.participantsSelector = new ui_entitySelector.TagSelector({
 	        id: selectorId,
 	        dialogOptions: {
@@ -467,7 +442,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "buildEditingForm",
 	    value: function buildEditingForm(type) {
 	      var _this6 = this;
-
 	      var container = this.cleanTypeForm();
 	      main_core.Dom.append(this.renderEditingForm(type), container);
 	      this.initParticipantsSelector(type);
@@ -481,7 +455,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        main_core.Runtime.html(listContainer, response.data.html);
 	      })["catch"](function (response) {
 	        loader.hide();
-
 	        _this6.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -495,7 +468,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showTypeForm",
 	    value: function showTypeForm(type) {
 	      var _this7 = this;
-
 	      this.typeForm = new ui_dialogs_messagebox.MessageBox({
 	        popupOptions: this.getDefaultPopupOptions(),
 	        title: main_core.Type.isUndefined(type) ? main_core.Loc.getMessage('TASKS_SCRUM_DOD_POPUP_TITLE_CREATE') : main_core.Loc.getMessage('TASKS_SCRUM_DOD_POPUP_TITLE_EDIT'),
@@ -509,9 +481,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var popup = this.typeForm.getPopupWindow();
 	      popup.subscribe('onAfterShow', function () {
 	        var length = _this7.nameInput.value.length;
-
 	        _this7.nameInput.focus();
-
 	        _this7.nameInput.setSelectionRange(length, length);
 	      });
 	      this.typeForm.show();
@@ -520,21 +490,17 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onOkTypeForm",
 	    value: function onOkTypeForm(type) {
 	      var _this8 = this;
-
 	      if (!this.nameInput.value.trim()) {
 	        this.showTypeFormError(main_core.Loc.getMessage('TASKS_SCRUM_DOD_POPUP_EMPTY_NAME'));
 	        this.typeForm.getOkButton().setDisabled(false);
 	        return;
 	      }
-
 	      this.typeForm.close();
-
 	      if (main_core.Type.isUndefined(type)) {
 	        var skipPrevious = this.typeStorage.isEmpty();
 	        this.createType(this.nameInput.value).then(function (createdType) {
 	          if (createdType) {
 	            _this8.addMenuItem(createdType);
-
 	            _this8.switchType(createdType, skipPrevious);
 	          }
 	        });
@@ -543,7 +509,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        this.changeType(type).then(function (changedType) {
 	          if (changedType) {
 	            _this8.changeMenuItem(changedType);
-
 	            _this8.switchType(changedType);
 	          }
 	        });
@@ -560,7 +525,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "hideTypeFormError",
 	    value: function hideTypeFormError() {
 	      var alertNode = this.typeFormNode.querySelector('.ui-alert');
-
 	      if (!main_core.Dom.hasClass(alertNode, '--hidden')) {
 	        main_core.Dom.addClass(this.typeFormNode.querySelector('.ui-alert'), '--hidden');
 	      }
@@ -569,7 +533,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "createType",
 	    value: function createType(name) {
 	      var _this9 = this;
-
 	      var container = this.node.querySelector('.tasks-scrum-dod-settings-container-sidebar-wrapper');
 	      var loader = this.showLoader(container);
 	      return this.requestSender.createType({
@@ -578,16 +541,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        sort: this.typeStorage.getTypes().size + 1
 	      }).then(function (response) {
 	        _this9.setChanged();
-
 	        loader.hide();
 	        var createdType = new ItemType(response.data);
-
 	        _this9.typeStorage.addType(createdType);
-
 	        return createdType;
 	      })["catch"](function (response) {
 	        loader.hide();
-
 	        _this9.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -595,28 +554,22 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "switchType",
 	    value: function switchType(type) {
 	      var _this10 = this;
-
 	      var skipPrevious = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      var menuItem = this.getMenuItem(type);
 	      var previousType = null;
-
 	      if (!skipPrevious) {
 	        previousType = this.typeStorage.getActiveType();
-
 	        if (menuItem.getId() === previousType.getId()) {
 	          return;
 	        }
 	      }
-
 	      this.typeStorage.setActiveType(type);
 	      this.setActiveMenuItem(type);
-
 	      if (previousType) {
 	        this.saveSettings(previousType).then(function (response) {
 	          var updatedType = response.data.type;
 	          previousType.setDodRequired(updatedType.dodRequired);
 	          previousType.setParticipants(updatedType.participants);
-
 	          _this10.buildEditingForm(type);
 	        });
 	      } else {
@@ -627,14 +580,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "changeType",
 	    value: function changeType(type) {
 	      var _this11 = this;
-
 	      return this.requestSender.changeTypeName({
 	        groupId: this.groupId,
 	        id: type.getId(),
 	        name: type.getName()
 	      }).then(function () {
 	        _this11.setChanged();
-
 	        return type;
 	      })["catch"](function (response) {
 	        _this11.requestSender.showErrorAlert(response);
@@ -644,18 +595,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "removeType",
 	    value: function removeType(type) {
 	      var _this12 = this;
-
 	      return this.requestSender.removeType({
 	        groupId: this.groupId,
 	        id: type.getId()
 	      }).then(function () {
 	        _this12.setChanged();
-
 	        _this12.typeStorage.removeType(type);
-
 	        if (_this12.typeStorage.isEmpty()) {
 	          _this12.buildEmptyForm();
-
 	          return null;
 	        } else {
 	          return _this12.typeStorage.getActiveType();
@@ -668,17 +615,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "saveSettings",
 	    value: function saveSettings(inputType) {
 	      var _this13 = this;
-
 	      if (this.typeStorage.isEmpty()) {
 	        return Promise.resolve();
 	      }
-
 	      var type = inputType ? inputType : this.typeStorage.getActiveType();
-
 	      if (!(type instanceof ItemType)) {
 	        return Promise.resolve();
 	      }
-
 	      return this.requestSender.saveSettings({
 	        groupId: this.groupId,
 	        typeId: type.getId(),
@@ -696,7 +639,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (typeof BX.Tasks.CheckListInstance === 'undefined') {
 	        return [];
 	      }
-
 	      var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
 	      return treeStructure.getRequestData();
 	      /* eslint-enable */
@@ -707,7 +649,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (main_core.Type.isNil(this.participantsSelector)) {
 	        return [];
 	      }
-
 	      var selectedParticipants = [];
 	      this.participantsSelector.getTags().forEach(function (tag) {
 	        selectedParticipants.push({
@@ -756,11 +697,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getMenuItems",
 	    value: function getMenuItems() {
 	      var _this14 = this;
-
 	      if (this.typeStorage.isEmpty()) {
 	        return [];
 	      }
-
 	      var items = [];
 	      this.typeStorage.getTypes().forEach(function (type) {
 	        items.push(_this14.getMenuItemOptions(type, items.length === 0));
@@ -798,7 +737,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getMenuItemOptions",
 	    value: function getMenuItemOptions(type) {
 	      var _this15 = this;
-
 	      var active = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      return {
 	        id: type.getId(),
@@ -822,11 +760,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	              onOk: function onOk(messageBox) {
 	                _this15.removeType(type).then(function (nextType) {
 	                  _this15.removeMenuItem(type);
-
 	                  if (!main_core.Type.isNull(nextType)) {
 	                    _this15.switchType(nextType, true);
 	                  }
-
 	                  messageBox.close();
 	                });
 	              }
@@ -839,8 +775,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onMenuItemClick",
 	    value: function onMenuItemClick(baseEvent) {
 	      var _baseEvent$getData = baseEvent.getData(),
-	          menuItem = _baseEvent$getData.item;
-
+	        menuItem = _baseEvent$getData.item;
 	      this.switchType(this.typeStorage.getType(menuItem.getId()));
 	    }
 	  }, {
@@ -848,11 +783,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function getDefaultPopupOptions() {
 	      var popupOptions = {};
 	      var currentSlider = this.sidePanelManager.getTopSlider();
-
 	      if (currentSlider) {
 	        popupOptions.targetContainer = currentSlider.getContainer();
 	      }
-
 	      return popupOptions;
 	    }
 	  }]);
@@ -862,15 +795,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _templateObject$1, _templateObject2$1;
 	var List = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(List, _EventEmitter);
-
 	  function List(params) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, List);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(List).call(this, params));
-
 	    _this.setEventNamespace('BX.Tasks.Scrum.Dod.List');
-
 	    _this.sidePanelManager = BX.SidePanel.Instance;
 	    _this.requestSender = params.requestSender;
 	    _this.groupId = parseInt(params.groupId, 10);
@@ -881,12 +810,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.node = null;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(List, [{
 	    key: "show",
 	    value: function show() {
 	      var _this2 = this;
-
 	      this.sidePanelManager.open('tasks-scrum-dod-list-side-panel', {
 	        cacheable: false,
 	        width: 800,
@@ -910,14 +837,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            },
 	            buttons: function buttons(_ref2) {
 	              var cancelButton = _ref2.cancelButton,
-	                  SaveButton = _ref2.SaveButton;
+	                SaveButton = _ref2.SaveButton;
 	              return [new SaveButton({
 	                text: _this2.getListButtonText(),
 	                onclick: _this2.onSaveList.bind(_this2)
 	              }), new ui_buttons.CancelButton({
 	                onclick: function onclick() {
 	                  _this2.emit('reject');
-
 	                  _this2.sidePanelManager.close(false);
 	                }
 	              })];
@@ -935,26 +861,21 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (this.isEmpty()) {
 	        return;
 	      }
-
 	      this.renderList();
 	    }
 	  }, {
 	    key: "onSaveList",
 	    value: function onSaveList() {
 	      var _this3 = this;
-
 	      if (this.isEmpty()) {
 	        return;
 	      }
-
 	      this.save().then(function (decision) {
 	        if (decision === 'resolve') {
 	          _this3.emit('resolve');
-
 	          _this3.sidePanelManager.close(false);
 	        } else if (decision === 'reject') {
 	          _this3.emit('reject');
-
 	          _this3.sidePanelManager.close(false);
 	        }
 	      });
@@ -972,7 +893,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderContent",
 	    value: function renderContent() {
 	      var _this4 = this;
-
 	      return this.requestSender.getSettings({
 	        groupId: this.groupId,
 	        taskId: this.taskId,
@@ -986,19 +906,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          var itemType = new ItemType(typeData);
 	          itemTypes.set(itemType.getId(), itemType);
 	        });
-
 	        _this4.typeStorage.setTypes(itemTypes);
-
 	        _this4.typeStorage.setActiveType(itemTypes.get(activeTypeId));
-
 	        if (_this4.isEmpty()) {
 	          if (!_this4.isSkipNotifications()) {
 	            _this4.emit('resolve');
 	          }
-
 	          return _this4.renderEmpty();
 	        }
-
 	        return _this4.render();
 	      })["catch"](function (response) {
 	        _this4.requestSender.showErrorAlert(response);
@@ -1008,7 +923,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderList",
 	    value: function renderList() {
 	      var _this5 = this;
-
 	      var listNode = this.node.querySelector('.tasks-scrum-dod-checklist');
 	      main_core.Dom.clean(listNode);
 	      var loader = this.showLoader(listNode);
@@ -1027,7 +941,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderEmpty",
 	    value: function renderEmpty() {
 	      var _this6 = this;
-
 	      var node = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-form ui-form-line tasks-scrum-dod-form\">\n\t\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_DOD_LABEL_EMPTY'));
 	      main_core.Event.bind(node.querySelector('span'), 'click', function () {
 	        return _this6.emit('showSettings', true);
@@ -1038,23 +951,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "render",
 	    value: function render() {
 	      var _this7 = this;
-
 	      var activeType = this.getActiveType();
-
 	      var renderOption = function renderOption(typeData) {
 	        var selected = activeType.getId() === typeData.id ? 'selected' : '';
 	        return "<option value=\"".concat(parseInt(typeData.id, 10), "\" ").concat(selected, ">").concat(main_core.Text.encode(typeData.name), "</option>");
 	      };
-
 	      this.node = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form ui-form-line tasks-scrum-dod-form\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-dropdown\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t\t<select class=\"ui-ctl-element tasks-scrum-dod-types\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content tasks-scrum-dod-checklist\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_DOD_LABEL_TYPES'), babelHelpers.toConsumableArray(this.typeStorage.getTypes().values()).map(function (typeData) {
 	        return renderOption(typeData);
 	      }).join(''));
 	      var typeSelector = this.node.querySelector('.tasks-scrum-dod-types');
 	      main_core.Event.bind(typeSelector, 'change', function (event) {
 	        var typeId = parseInt(event.target.value, 10);
-
 	        _this7.typeStorage.setActiveType(_this7.typeStorage.getType(typeId));
-
 	        _this7.renderList();
 	      });
 	      return this.node;
@@ -1063,7 +971,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "save",
 	    value: function save() {
 	      var _this8 = this;
-
 	      var activeType = this.getActiveType();
 	      return this.requestSender.saveList({
 	        typeId: activeType.getId(),
@@ -1079,7 +986,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	              return 'resolve';
 	            } else {
 	              _this8.showInfoPopup();
-
 	              return 'wait';
 	            }
 	          } else {
@@ -1087,7 +993,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	              return 'resolve';
 	            } else {
 	              _this8.showConfirmPopup();
-
 	              return 'wait';
 	            }
 	          }
@@ -1136,7 +1041,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (typeof BX.Tasks.CheckListInstance === 'undefined') {
 	        return [];
 	      }
-
 	      var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
 	      return treeStructure.getRequestData();
 	      /* eslint-enable */
@@ -1148,7 +1052,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (typeof BX.Tasks.CheckListInstance === 'undefined') {
 	        return false;
 	      }
-
 	      var isAllToggled = true;
 	      var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
 	      treeStructure.getDescendants().forEach(function (checkList) {
@@ -1164,11 +1067,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function showInfoPopup() {
 	      var popupOptions = {};
 	      var currentSlider = this.sidePanelManager.getTopSlider();
-
 	      if (currentSlider) {
 	        popupOptions.targetContainer = currentSlider.getContainer();
 	      }
-
 	      new ui_dialogs_messagebox.MessageBox({
 	        message: main_core.Loc.getMessage('TASKS_SCRUM_DOD_INFO_TEXT'),
 	        popupOptions: popupOptions,
@@ -1179,14 +1080,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showConfirmPopup",
 	    value: function showConfirmPopup() {
 	      var _this9 = this;
-
 	      var popupOptions = {};
 	      var currentSlider = this.sidePanelManager.getTopSlider();
-
 	      if (currentSlider) {
 	        popupOptions.targetContainer = currentSlider.getContainer();
 	      }
-
 	      var messageBox = new ui_dialogs_messagebox.MessageBox({
 	        popupOptions: popupOptions,
 	        message: main_core.Loc.getMessage('TASKS_SCRUM_DOD_CONFIRM_TEXT_COMPLETE'),
@@ -1197,7 +1095,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          events: {
 	            click: function click() {
 	              _this9.emit('resolve');
-
 	              messageBox.close();
 	            }
 	          }
@@ -1207,7 +1104,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          events: {
 	            click: function click() {
 	              _this9.emit('reject');
-
 	              messageBox.close();
 	            }
 	          }
@@ -1237,20 +1133,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	var Dod = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Dod, _EventEmitter);
-
 	  function Dod(params) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, Dod);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Dod).call(this, params));
-
 	    _this.setEventNamespace('BX.Tasks.Scrum.Dod');
-
 	    _this.view = params.view;
 	    _this.groupId = parseInt(params.groupId, 10);
 	    _this.taskId = parseInt(params.taskId, 10);
-	    /* eslint-disable */
 
+	    /* eslint-disable */
 	    _this.sidePanelManager = BX.SidePanel.Instance;
 	    /* eslint-enable */
 
@@ -1266,22 +1158,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      taskId: _this.taskId,
 	      skipNotifications: params.skipNotifications
 	    });
-
 	    _this.list.subscribe('resolve', function () {
 	      _this.emit('resolve');
-
 	      _this.sidePanelManager.close(false);
 	    });
-
 	    _this.list.subscribe('reject', function () {
 	      _this.emit('reject');
-
 	      _this.sidePanelManager.close(false);
 	    });
-
 	    _this.list.subscribe('showSettings', function (baseEvent) {
 	      var close = baseEvent.getData();
-
 	      if (close) {
 	        _this.sidePanelManager.close(false, function () {
 	          return _this.showSettings();
@@ -1290,15 +1176,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        _this.showSettings();
 	      }
 	    });
-
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(Dod, [{
 	    key: "isNecessary",
 	    value: function isNecessary() {
 	      var _this2 = this;
-
 	      return this.requestSender.isNecessary({
 	        groupId: this.groupId,
 	        taskId: this.taskId
@@ -1315,7 +1198,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        case 'settings':
 	          this.showSettings();
 	          break;
-
 	        case 'list':
 	          this.showList();
 	          break;

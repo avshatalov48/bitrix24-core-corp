@@ -66,7 +66,7 @@ $MESS['M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_SKIP_TITLE2_LEAD'] = 'Не п�
 $MESS['M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_SKIP_TITLE2_DEAL'] = 'Не предлагать (для всех сделок воронки)';
 $MESS['M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_SKIP_TITLE2_CONTACT'] = 'Не предлагать (для всех контактов)';
 $MESS['M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_SKIP_TITLE2_COMPANY'] = 'Не предлагать (для всех компаний)';
-$MESS['M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_SKIP_TITLE2_QUOTE'] = 'Не предлагать (для всех предложений)';
+$MESS['M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_SKIP_TITLE2_QUOTE_MSGVER_1'] = 'Не предлагать (для всех предложений)';
 $MESS['M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_SKIP_TITLE2_SMART_INVOICE'] = 'Не предлагать (для всех счетов)';
 
 $MESS['M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_SKIP_DAY'] = 'Сегодня';

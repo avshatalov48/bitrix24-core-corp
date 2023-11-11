@@ -42,7 +42,7 @@ class Conversion extends LogMessage
 				$locMessage = 'CRM_TIMELINE_CONVERSION_TITLE_COMPANY';
 				break;
 			case \CCrmOwnerType::Quote:
-				$locMessage = 'CRM_TIMELINE_CONVERSION_TITLE_QUOTE';
+				$locMessage = 'CRM_TIMELINE_CONVERSION_TITLE_QUOTE_MSGVER_1';
 				break;
 			case \CCrmOwnerType::Invoice:
 			case \CCrmOwnerType::SmartInvoice:

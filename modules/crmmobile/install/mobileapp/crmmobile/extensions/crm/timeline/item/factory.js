@@ -9,6 +9,7 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 	const {
 		CallActivity,
 		Modification,
+		OpenlineChat,
 	} = require('crm/timeline/item/custom-types');
 
 	/**
@@ -54,10 +55,14 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		'CalendarSharingEventConfirmed',
 		'CalendarSharingInvitationSent',
 		'CalendarSharingLinkCopied',
+		'CalendarSharingRuleUpdated',
 		'Activity:TasksTask',
 		'Activity:TasksTaskComment',
 		'TasksTaskCreation',
 		'TasksTaskModification',
+		'StoreDocumentRealization:Modification',
+		'StoreDocumentRealization:Creation',
+		'StoreDocumentConduction:Modification',
 	];
 
 	if (TimelineSchedulerCommentProvider.isSupported())
@@ -72,6 +77,7 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 	const TypeAliases = {
 		Modification,
 		'Activity:Call': CallActivity,
+		'Activity:OpenLine': OpenlineChat,
 	};
 
 	/**

@@ -2,7 +2,6 @@
  * @module layout/ui/entity-editor/control/combined/phone
  */
 jn.define('layout/ui/entity-editor/control/combined/phone', (require, exports, module) => {
-
 	const { EntityEditorCombinedBase } = require('layout/ui/entity-editor/control/combined/base');
 	const { phoneUtils } = require('native/phonenumber');
 	const { get } = require('utils/object');
@@ -12,7 +11,6 @@ jn.define('layout/ui/entity-editor/control/combined/phone', (require, exports, m
 	 */
 	class EntityEditorPhone extends EntityEditorCombinedBase
 	{
-
 		prepareBeforeSaving(values)
 		{
 			return values.map((singleValue) => {
@@ -24,7 +22,9 @@ jn.define('layout/ui/entity-editor/control/combined/phone', (require, exports, m
 					return null;
 				}
 
-				const value = { ...singleValue.value, VALUE: phoneNumber, VALUE_COUNTRY_CODE: countryCode };
+				const phoneNumberValue = phoneNumber === '+' ? '' : phoneNumber;
+
+				const value = { ...singleValue.value, VALUE: phoneNumberValue, VALUE_COUNTRY_CODE: countryCode };
 
 				return { ...singleValue, value };
 			}).filter(Boolean);

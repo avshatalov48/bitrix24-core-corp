@@ -1,0 +1,384 @@
+/* eslint-disable no-param-reassign */
+/**
+ * @module im/messenger/model/messages/reactions
+ */
+jn.define('im/messenger/model/messages/reactions', (require, exports, module) => {
+	const { Type } = require('type');
+	const { ReactionType } = require('im/messenger/const');
+	const { Logger } = require('im/messenger/lib/logger');
+	const { MessengerParams } = require('im/messenger/lib/params');
+	const { clone } = require('utils/object');
+
+	/** @type{ReactionsModelState} */
+	const reactionState = {
+		messageId: 0,
+		ownReactions: new Set(),
+		reactionCounters: {},
+		reactionUsers: new Map(),
+	};
+
+	const USERS_TO_SHOW = 3;
+
+	const reactionsModel = {
+		namespaced: true,
+		state: () => ({
+			collection: {},
+		}),
+		getters: {
+			/**
+			 * @function messagesModel/reactionsModel/getByMessageId
+			 * @param state
+			 * @return {ReactionsModelState}
+			 */
+			getByMessageId: (state) => (messageId) => {
+				if (!Type.isNumber(messageId) && !Type.isStringFilled(messageId))
+				{
+					return null;
+				}
+
+				return state.collection[messageId.toString()] || null;
+			},
+		},
+		actions: {
+			/**
+			 * @function messagesModel/reactionsModel/setFromPullEvent
+			 * @param store
+			 * @param {ReactionsModelSetPayload} payload
+			 */
+			setFromPullEvent: (store, payload) => {
+				const reactionList = prepareSetPayload(payload);
+
+				if (reactionList.length === 0)
+				{
+					return;
+				}
+
+				store.commit('set', {
+					actionName: 'setFromPullEvent',
+					data: {
+						reactionList,
+					},
+				});
+			},
+			/**
+			 * @function messagesModel/reactionsModel/set
+			 * @param store
+			 * @param {ReactionsModelSetPayload} payload
+			 */
+			set: (store, payload) => {
+				const reactionList = prepareSetPayload(payload);
+
+				if (reactionList.length === 0)
+				{
+					return;
+				}
+
+				store.commit('set', {
+					actionName: 'set',
+					data: {
+						reactionList,
+					},
+				});
+			},
+			/**
+			 * @function messagesModel/reactionsModel/setReaction
+			 * @param store
+			 * @param {ReactionsModelSetReactionPayload} payload
+			 */
+			setReaction: (store, payload) => {
+				if (!ReactionType[payload.reaction])
+				{
+					return;
+				}
+				const message = store.rootGetters['messagesModel/getById'](payload.messageId);
+				if (!message)
+				{
+					return;
+				}
+
+				if (!store.state.collection[payload.messageId])
+				{
+					store.commit('add', {
+						actionName: 'setReaction',
+						data: {
+							reaction: prepareAddPayload(payload),
+						},
+					});
+
+					return;
+				}
+
+				store.commit('updateWithId', {
+					actionName: 'setReaction',
+					data: {
+						reaction: prepareUpdatePayload(payload, store.state.collection[payload.messageId]),
+					},
+				});
+			},
+			/**
+			 * @function messagesModel/reactionsModel/removeReaction
+			 * @param store
+			 * @param {ReactionsModelRemoveReactionPayload} payload
+			 */
+			removeReaction: (store, payload) => {
+				const { messageId, user, reaction } = payload;
+
+				const message = store.rootGetters['messagesModel/getById'](messageId);
+				if (!message)
+				{
+					return;
+				}
+
+				/** @type {ReactionsModelState} */
+				const result = { ...store.state.collection[messageId] };
+
+				if (MessengerParams.getUserId().toString() === user.id.toString())
+				{
+					result.ownReactions.delete(reaction);
+				}
+
+				const newUsers = (result.reactionUsers.get(reaction) ?? [])
+					.filter((removingUser) => removingUser.id.toString() !== user.id.toString())
+				;
+				result.reactionUsers.set(reaction, newUsers);
+
+				result.reactionCounters[reaction]--;
+				if (result.reactionCounters[reaction] <= 0)
+				{
+					delete result.reactionCounters[reaction];
+					result.reactionUsers.delete(reaction);
+				}
+
+				store.commit('updateWithId', {
+					actionName: 'removeReaction',
+					data: {
+						reaction: result,
+					},
+				});
+			},
+
+		},
+		mutations: {
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 * @param {ReactionsModelState[]} payload.data
+			 */
+			store: (state, payload) => {
+				Logger.warn('reactionsModel: store mutation', payload);
+
+				const {
+					reactionList,
+				} = payload.data;
+
+				reactionList.forEach((reaction) => {
+					state.collection[reaction.messageId] = reaction;
+				});
+			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 * @param {ReactionsModelState[]} payload.data
+			 */
+			set: (state, payload) => {
+				Logger.warn('reactionsModel: set mutation', payload);
+
+				const {
+					reactionList,
+				} = payload.data;
+
+				reactionList.forEach((item) => {
+					const newItem = {
+						reactionCounters: item.reactionCounters,
+						reactionUsers: item.reactionUsers,
+						messageId: item.messageId,
+					};
+
+					/** @type {ReactionsModelState} */
+					const currentItem = state.collection[item.messageId];
+					const newOwnReaction = Boolean(item.ownReactions);
+					if (newOwnReaction)
+					{
+						newItem.ownReactions = item.ownReactions;
+					}
+					else
+					{
+						newItem.ownReactions = currentItem ? currentItem.ownReactions : new Set();
+					}
+
+					state.collection[item.messageId] = newItem;
+				});
+			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 * @param {ReactionsModelState} payload.data.reaction
+			 */
+			add: (state, payload) => {
+				Logger.warn('reactionsModel: add mutation', payload);
+
+				const {
+					messageId,
+				} = payload.data.reaction;
+
+				state.collection[messageId] = payload.data.reaction;
+			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 * @param {ReactionsModelState} payload.data.reaction
+			 */
+			updateWithId: (state, payload) => {
+				Logger.warn('reactionsModel: updateWithId mutation', payload);
+
+				const {
+					messageId,
+				} = payload.data.reaction;
+
+				state.collection[messageId] = payload.data.reaction;
+			},
+		},
+	};
+
+	/**
+	 * @param {ReactionsModelSetPayload} payload
+	 * @return {ReactionsModelState[]}
+	 */
+	function prepareSetPayload(payload)
+	{
+		return payload.reactions.map((reactionPayload) => {
+			/** @type {ReactionsModelState} */
+			const result = {
+				messageId: reactionPayload.messageId,
+				reactionCounters: Array.isArray(reactionPayload.reactionCounters) ? {} : reactionPayload.reactionCounters,
+				reactionUsers: new Map(),
+			};
+
+			if (Type.isArray(reactionPayload.ownReactions) && reactionPayload.ownReactions.length > 0)
+			{
+				result.ownReactions = new Set(reactionPayload.ownReactions);
+			}
+
+			Object.entries(reactionPayload.reactionUsers).forEach(([reactionType, users]) => {
+				const reactionUsers = users.map((userId) => {
+
+					if (userId === MessengerParams.getUserId())
+					{
+						if (!result.ownReactions)
+						{
+							result.ownReactions = new Set();
+						}
+						result.ownReactions.add(reactionType);
+					}
+
+					const foundUser = payload.usersShort.find((user) => {
+						return user.id.toString() === userId.toString();
+					});
+
+					return {
+						id: userId,
+						name: foundUser.name,
+						avatar: encodeURI(foundUser.avatar),
+					};
+				});
+
+				result.reactionUsers.set(reactionType, reactionUsers);
+			});
+
+			return result;
+		});
+	}
+
+	/**
+	 *
+	 * @param {ReactionsModelSetReactionPayload} payload
+	 * @return {ReactionsModelState}
+	 */
+	function prepareAddPayload(payload)
+	{
+		const result = clone(reactionState);
+		result.messageId = payload.messageId;
+		result.ownReactions.add(payload.reaction);
+		result.reactionCounters[payload.reaction] = 1;
+		result.reactionUsers.set(payload.reaction, [payload.user]);
+
+		return result;
+	}
+
+	/**
+	 *
+	 * @param {ReactionsModelSetReactionPayload} payload
+	 * @param {ReactionsModelState} elementState
+	 * @return {ReactionsModelState}
+	 */
+	function prepareUpdatePayload(payload, elementState)
+	{
+		const { reaction, user } = payload;
+		const result = clone(elementState);
+		if (user.id.toString() === MessengerParams.getUserId().toString())
+		{
+			removeAllCurrentUserReactions(result);
+			result.ownReactions.add(reaction);
+		}
+
+		if (!result.reactionCounters[reaction])
+		{
+			result.reactionCounters = {
+				...result.reactionCounters,
+				[reaction]: 0,
+			};
+		}
+
+		const currentCounter = result.reactionCounters[reaction];
+		if (currentCounter + 1 <= USERS_TO_SHOW)
+		{
+			if (!result.reactionUsers.has(reaction))
+			{
+				result.reactionUsers.set(reaction, []);
+			}
+			result.reactionUsers.get(reaction).push(user);
+		}
+
+		result.reactionCounters[reaction]++;
+
+		return result;
+	}
+
+	/**
+	 *
+	 * @param {ReactionsModelState} reactions
+	 */
+	function removeAllCurrentUserReactions(reactions)
+	{
+		reactions.ownReactions.forEach((reaction) => {
+			if (!reactions.reactionUsers.has(reaction))
+			{
+				return;
+			}
+
+			const newUsers = reactions.reactionUsers.get(reaction)
+				.filter((user) => user.id.toString() !== MessengerParams.getUserId().toString())
+			;
+
+			reactions.reactionUsers.set(reaction, newUsers);
+
+			if (newUsers.length === 0)
+			{
+				reactions.reactionUsers.delete(reaction);
+			}
+
+			reactions.reactionCounters[reaction]--;
+			if (reactions.reactionCounters[reaction] === 0)
+			{
+				delete reactions.reactionCounters[reaction];
+			}
+		});
+
+		reactions.ownReactions = new Set();
+	}
+
+	module.exports = { reactionsModel };
+});

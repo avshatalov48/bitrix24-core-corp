@@ -24,6 +24,9 @@ if($arResult['GET_FROM_TO_MODE'] == 'Y'):?>
 	BX.addCustomEvent("onOpenPageAfter", onPageShown);
 	BX.addCustomEvent("onHidePageAfter", function(){app.hideDatePicker();});
 
+	BXMobileApp.UI.Page.Refresh.setParams({ enabled: true, callback: ()=>{ BXMobileApp.UI.Page.Refresh.stop()}})
+	BXMobileApp.UI.Page.Refresh.setEnabled(true);
+	BXMobileApp.UI.Page.Refresh.setEnabled(false);
 	BX.MobileUI.bottomPanel.setButtons([
 		{
 			name: '<?= GetMessageJS('MBCAL_EDEV_SELECT');?>',

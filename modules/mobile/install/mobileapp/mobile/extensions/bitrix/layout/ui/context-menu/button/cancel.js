@@ -2,7 +2,6 @@
  * @module layout/ui/context-menu/buttons/cancel
  */
 jn.define('layout/ui/context-menu/buttons/cancel', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { ContextMenuItem } = require('layout/ui/context-menu/item');
 

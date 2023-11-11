@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,ui_notification,tasks_scrum_dod,main_core,ui_dialogs_messagebox) {
@@ -7,7 +8,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  function RequestSender() {
 	    babelHelpers.classCallCheck(this, RequestSender);
 	  }
-
 	  babelHelpers.createClass(RequestSender, [{
 	    key: "sendRequest",
 	    value: function sendRequest(controller, action) {
@@ -60,10 +60,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        console.error(response);
 	        return;
 	      }
-
 	      if (response.errors.length) {
 	        var firstError = response.errors.shift();
-
 	        if (firstError) {
 	          var errorCode = firstError.code ? firstError.code : '';
 	          var message = firstError.message + ' ' + errorCode;
@@ -77,7 +75,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}();
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var TaskStatus = /*#__PURE__*/function () {
 	  function TaskStatus(state) {
@@ -85,7 +82,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.setState(state);
 	    this.requestSender = new RequestSender();
 	  }
-
 	  babelHelpers.createClass(TaskStatus, [{
 	    key: "setState",
 	    value: function setState(state) {
@@ -99,7 +95,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "updateState",
 	    value: function updateState() {
 	      var _this = this;
-
 	      return this.requestSender.getData({
 	        taskId: this.taskId
 	      }).then(function (response) {
@@ -115,7 +110,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "update",
 	    value: function update() {
 	      var _this2 = this;
-
 	      return this.requestSender.needUpdateTask({
 	        taskId: this.parentTaskId,
 	        action: this.action
@@ -143,7 +137,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	                });
 	                return response;
 	              });
-
 	            case TaskStatus.actions.renew:
 	              return _this2.renewTask(_this2.parentTaskId).then(function () {
 	                ui_notification.UI.Notification.Center.notify({
@@ -151,13 +144,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	                });
 	                return response;
 	              });
-
 	            case TaskStatus.actions.proceed:
 	              ui_notification.UI.Notification.Center.notify({
 	                content: main_core.Loc.getMessage('TST_PARENT_PROCEED_NOTIFY')
 	              });
 	              return response;
-
 	            case TaskStatus.actions.skip:
 	              return response;
 	          }
@@ -172,13 +163,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "isParentScrumTask",
 	    value: function isParentScrumTask(taskId) {
 	      taskId = main_core.Type.isUndefined(taskId) ? this.parentTaskId : taskId;
-
 	      if (!taskId) {
 	        return new Promise(function (resolve) {
 	          return resolve(false);
 	        });
 	      }
-
 	      return this.requestSender.isParentScrumTask({
 	        groupId: this.groupId,
 	        taskId: taskId
@@ -190,7 +179,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showMessage",
 	    value: function showMessage(parentTask, task) {
 	      var _this3 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        var isCompleteAction = _this3.action === TaskStatus.actions.complete;
 	        new ui_dialogs_messagebox.MessageBox({
@@ -214,7 +202,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          },
 	          onCancel: function onCancel(messageBox) {
 	            messageBox.close();
-
 	            if (isCompleteAction) {
 	              _this3.proceedParentTask(_this3.parentTaskId).then(function () {
 	                resolve(TaskStatus.actions.proceed);
@@ -230,7 +217,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showDod",
 	    value: function showDod(taskId) {
 	      var _this4 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        var dod = new tasks_scrum_dod.Dod({
 	          groupId: _this4.groupId,

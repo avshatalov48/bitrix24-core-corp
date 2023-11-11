@@ -35,6 +35,8 @@ if (
 {
 	$APPLICATION->AddHeadScript("/bitrix/components/bitrix/voting.uf/templates/.default/script.js");
 	Asset::getInstance()->addString('<link href="'.CUtil::GetAdditionalFileURL('/bitrix/components/bitrix/voting.uf/templates/.default/style.css').'" type="text/css" rel="stylesheet" />');
+
+	Asset::getInstance()->addString('<link href="'.CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH.'/components/bitrix/voting.uf/templates/.default/style.css').'" type="text/css" rel="stylesheet" />');
 }
 else if (IsModuleInstalled("vote"))
 {

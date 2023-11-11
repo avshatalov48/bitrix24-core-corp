@@ -148,7 +148,7 @@ else
 			'HEADERS_SECTIONS' => [
 				[
 					'id'=> CCrmOwnerType::QuoteName,
-					'name' => Loc::getMessage('CRM_COMMON_QUOTE'),
+					'name' => Loc::getMessage('CRM_COMMON_QUOTE_MSGVER_1'),
 					'default' => true,
 					'selected' => true,
 				],

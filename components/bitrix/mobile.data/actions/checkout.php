@@ -5,8 +5,8 @@
 
 /**
  *
- * @var $APPLICATION CAllMain
- * @var $USER CAllUser
+ * @var $APPLICATION CMain
+ * @var $USER CUser
  * @var $params array
  */
 global $APPLICATION, $USER;
@@ -247,6 +247,9 @@ else
 		$modifiedMenuTabs = ExecuteModuleEventEx($events[0], [$menuTabs]);
 		$menuTabs = $modifiedMenuTabs;
 	}
+
+	$isImModuleInstalled = Main\Loader::includeModule('im');
+
 	$data = [
 		"status" => "success",
 		"id" => $USER->GetID(),
@@ -285,7 +288,8 @@ else
 					"turnServerPassword" => Main\Config\Option::get("im", "turn_server_password", ""),
 					"callLogService" => Main\Config\Option::get("im", "call_log_service", ""),
 					"jitsiServer" => Main\Config\Option::get("im", "jitsi_server", ""),
-					"sfuServerEnabled" => Main\Loader::includeModule('im') && Im\Call\Call::isCallServerEnabled(),
+					"sfuServerEnabled" => $isImModuleInstalled && Im\Call\Call::isCallServerEnabled(),
+					"bitrixCallsEnabled" => $isImModuleInstalled && Im\Call\Call::isBitrixCallServerEnabled(),
 				]
 			],
 			[

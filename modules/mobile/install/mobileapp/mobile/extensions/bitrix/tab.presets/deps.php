@@ -1,6 +1,7 @@
 <?
 return [
 	'extensions' => [
+		'apptheme',
 		'rest',
 		'notify',
 		'haptics',

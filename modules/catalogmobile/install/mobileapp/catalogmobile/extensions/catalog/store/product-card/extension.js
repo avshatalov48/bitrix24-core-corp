@@ -41,6 +41,8 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 
 		render()
 		{
+			const documentType = this.props.document ? this.props.document.type : '';
+
 			return View(
 				{
 					style: {
@@ -65,9 +67,9 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 								{},
 								...this.renderStoreAmount(),
 								this.renderLineSeparator(),
-								...this.renderPurchasePrice(),
+								documentType !== 'W' && this.renderPurchasePrice(),
 								this.renderSellPrice(),
-							)
+							),
 						),
 					),
 					onNameClick: () => this.showProductDetailsBackdrop(),
@@ -102,6 +104,8 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 					mediumPositionPercent: 80,
 					navigationBarColor: '#EEF2F4',
 					horizontalSwipeAllowed: false,
+					swipeAllowed: true,
+					swipeContentAllowed: false,
 				},
 				onReady: (layout) => {
 					layout.showComponent(
@@ -238,11 +242,13 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 
 			const action = 'catalogmobile.StoreDocumentProduct.loadProductModel';
 			const documentId = this.props.document.id || null;
+			const documentType = this.props.document.type || null;
 			const queryConfig = {
 				data: {
 					productId,
 					documentId,
-				}
+					documentType,
+				},
 			};
 
 			Notify.showIndicatorLoading();
@@ -356,7 +362,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 			{
 				storeTitle = storeTo.title ? storeTo.title : '';
 			}
-			else if (documentType === DocumentType.Deduct && storeFrom)
+			else if ((documentType === DocumentType.Deduct || documentType === 'W') && storeFrom)
 			{
 				storeTitle = storeFrom.title ? storeFrom.title : '';
 			}
@@ -477,14 +483,11 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 						money: Money.create({amount, currency}),
 						renderAmount: (formattedAmount) => Text({
 							text: formattedAmount,
-							style: Styles.summaryRow.purchasePriceExists
+							style: Styles.summaryRow.mainPrice,
 						}),
 						renderCurrency: (formattedCurrency) => Text({
 							text: formattedCurrency,
-							style: {
-								...Styles.summaryRow.purchasePriceExists,
-								color: '#828B95'
-							}
+							style: Styles.summaryRow.mainPriceCurrency,
 						}),
 					});
 				}
@@ -492,8 +495,8 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 				{
 					node = Text({
 						text: `${BX.message('CSPL_PRICE_EMPTY')}`,
-						style: Styles.summaryRow.purchasePriceEmpty
-					})
+						style: Styles.summaryRow.mainPriceEmpty,
+					});
 				}
 
 				return View(
@@ -504,33 +507,28 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 				);
 			};
 
-			return [
-				View(
-					{
-						style: {
-							flexDirection: 'row',
-							marginBottom: 4,
-						}
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+						marginBottom: 4,
 					},
-					title(),
-					value(),
-				)
-			];
+				},
+				title(),
+				value(),
+			);
 		}
 
 		renderSellPrice()
 		{
+			const documentType = this.props.document ? this.props.document.type : '';
 			const title = () => View(
 				{
 					style: Styles.summaryRow.leftWrapper
 				},
 				Text({
 					text: BX.message('CSPL_SELLING_PRICE'),
-					style: {
-						fontSize: 14,
-						color: '#bdc1c6',
-						textAlign: 'right',
-					}
+					style: documentType === 'W' ? Styles.summaryRow.title : Styles.summaryRow.secondaryTitle,
 				}),
 			);
 
@@ -546,14 +544,11 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 						money: Money.create({amount, currency}),
 						renderAmount: (formattedAmount) => Text({
 							text: formattedAmount,
-							style: Styles.summaryRow.sellPrice
+							style: documentType === 'W' ? Styles.summaryRow.mainPrice : Styles.summaryRow.secondaryPrice,
 						}),
 						renderCurrency: (formattedCurrency) => Text({
 							text: formattedCurrency,
-							style: {
-								...Styles.summaryRow.sellPrice,
-								color: '#bdc1c6'
-							}
+							style: documentType === 'W' ? Styles.summaryRow.mainPriceCurrency : Styles.summaryRow.secondaryPriceCurrency,
 						}),
 					});
 				}
@@ -561,7 +556,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 				{
 					node = Text({
 						text: `${BX.message('CSPL_PRICE_EMPTY')}`,
-						style: Styles.summaryRow.sellPrice
+						style: Styles.summaryRow.secondaryPrice
 					})
 				}
 
@@ -617,7 +612,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 				fontSize: 18,
 				fontWeight: 'bold',
 				textAlign: 'right',
-				color: '#333333'
+				color: '#333333',
 			}
 		},
 
@@ -645,20 +640,35 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 				color: '#828B95',
 				textAlign: 'right',
 			},
-			purchasePriceExists: {
+			secondaryTitle: {
+				fontSize: 14,
+				color: '#bdc1c6',
+				textAlign: 'right',
+			},
+			mainPrice: {
 				fontSize: 18,
 				color: '#333333',
 				fontWeight: 'bold',
 			},
-			purchasePriceEmpty: {
+			mainPriceCurrency: {
+				fontSize: 18,
+				color: '#828B95',
+				fontWeight: 'bold',
+			},
+			mainPriceEmpty: {
 				fontSize: 16,
 				fontWeight: 'bold',
-				color: '#A8ADB4'
+				color: '#A8ADB4',
 			},
-			sellPrice: {
+			secondaryPrice: {
 				fontSize: 14,
 				color: '#A8ADB4',
 				fontWeight: 'bold',
+			},
+			secondaryPriceCurrency: {
+				fontSize: 14,
+				fontWeight: 'bold',
+				color: '#bdc1c6',
 			},
 		},
 	};

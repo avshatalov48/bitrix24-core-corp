@@ -4,6 +4,8 @@
 jn.define('crm/product-grid/model/product-row', (require, exports, module) => {
 	const { ProductRow: BaseProductRow } = require('layout/ui/product-grid/model');
 	const { ProductCalculator, TaxForSumStrategy } = require('crm/product-calculator');
+	const { ReserveQuantityActualizer } = require('crm/product-grid/services/reserve-quantity-actualizer');
+	const { ProductType } = require('catalog/product-type');
 
 	const DiscountType = {
 		MONETARY: 1,
@@ -66,6 +68,19 @@ jn.define('crm/product-grid/model/product-row', (require, exports, module) => {
 		getId()
 		{
 			return this.props.ID;
+		}
+
+		/**
+		 * @returns {Number|null}
+		 */
+		getType()
+		{
+			if (this.props.hasOwnProperty('TYPE'))
+			{
+				return Number(this.props.TYPE);
+			}
+
+			return null;
 		}
 
 		/**
@@ -279,6 +294,203 @@ jn.define('crm/product-grid/model/product-row', (require, exports, module) => {
 		getBarcode()
 		{
 			return this.props.BARCODE || '';
+		}
+
+		/**
+		 * @returns {Object[]}
+		 */
+		getStores()
+		{
+			return this.props.STORES || [];
+		}
+
+		/**
+		 * @returns {Boolean|null}
+		 */
+		hasStoreAccess()
+		{
+			if (this.props.hasOwnProperty('HAS_STORE_ACCESS'))
+			{
+				return BX.prop.getBoolean(this.props, 'HAS_STORE_ACCESS', false);
+			}
+
+			return null;
+		}
+
+		/**
+		 * @returns {Number|null}
+		 */
+		getStoreId()
+		{
+			if (this.props.hasOwnProperty('STORE_ID'))
+			{
+				return Number(this.props.STORE_ID || 0);
+			}
+
+			return null;
+		}
+
+		/**
+		 * @returns {String|null}
+		 */
+		getStoreName()
+		{
+			if (this.props.hasOwnProperty('STORE_NAME'))
+			{
+				return String(this.props.STORE_NAME);
+			}
+
+			return null;
+		}
+
+		/**
+		 * @returns {Number|null}
+		 */
+		getStoreAmount()
+		{
+			if (this.props.hasOwnProperty('STORE_AMOUNT'))
+			{
+				return Number(this.props.STORE_AMOUNT || 0);
+			}
+
+			return null;
+		}
+
+		/**
+		 * @returns {Number|null}
+		 */
+		getStoreAvailableAmount()
+		{
+			if (this.props.hasOwnProperty('STORE_AVAILABLE_AMOUNT'))
+			{
+				return Number(this.props.STORE_AVAILABLE_AMOUNT || 0);
+			}
+
+			return null;
+		}
+
+		/**
+		 * @returns {Number|null}
+		 */
+		getInputReserveQuantity()
+		{
+			if (this.props.hasOwnProperty('INPUT_RESERVE_QUANTITY'))
+			{
+				return Number(this.props.INPUT_RESERVE_QUANTITY);
+			}
+
+			return null;
+		}
+
+		/**
+		 * @returns {Number|null}
+		 */
+		getDateReserveEnd()
+		{
+			if (this.props.hasOwnProperty('DATE_RESERVE_END'))
+			{
+				if (this.props.DATE_RESERVE_END === null)
+				{
+					return null;
+				}
+
+				return Number(this.props.DATE_RESERVE_END);
+			}
+
+			return null;
+		}
+
+		/**
+		 * @returns {Number|null}
+		 */
+		getRowReserved()
+		{
+			if (this.props.hasOwnProperty('ROW_RESERVED'))
+			{
+				return Number(this.props.ROW_RESERVED || 0);
+			}
+
+			return null;
+		}
+
+		/**
+		 * @returns {Number|null}
+		 */
+		getDeductedQuantity()
+		{
+			if (this.props.hasOwnProperty('DEDUCTED_QUANTITY'))
+			{
+				return Number(this.props.DEDUCTED_QUANTITY || 0);
+			}
+
+			return null;
+		}
+
+		/**
+		 * @returns {Number|null}
+		 */
+		getAvailableQuantity()
+		{
+			const deductedQuantity = this.getDeductedQuantity();
+
+			if (deductedQuantity === null)
+			{
+				return null;
+			}
+
+			return this.getQuantity() - deductedQuantity;
+		}
+
+		/**
+		 * @returns {Boolean|null}
+		 */
+		shouldSyncReserveQuantity()
+		{
+			if (this.props.hasOwnProperty('SHOULD_SYNC_RESERVE_QUANTITY'))
+			{
+				return BX.prop.getBoolean(this.props, 'SHOULD_SYNC_RESERVE_QUANTITY', false);
+			}
+
+			return null;
+		}
+
+		/**
+		 * @returns {Boolean}
+		 */
+		isReserveChangedManually()
+		{
+			return BX.prop.getBoolean(this.props, 'IS_RESERVE_CHANGED_MANUALLY', false);
+		}
+
+		/**
+		 * @returns {Boolean}
+		 */
+		isInputReserveQuantityActualized()
+		{
+			return BX.prop.getBoolean(this.props, 'IS_INPUT_RESERVE_QUANTITY_ACTUALIZED', true);
+		}
+
+		/**
+		 * @returns {Number}
+		 */
+		getLatestActualizedQuantity()
+		{
+			if (this.props.hasOwnProperty('LATEST_ACTUALIZED_QUANTITY'))
+			{
+				return Number(this.props.LATEST_ACTUALIZED_QUANTITY || 0);
+			}
+
+			return this.getQuantity();
+		}
+
+		actualizeInputReserveQuantity()
+		{
+			if (this.getType() === ProductType.Service)
+			{
+				return;
+			}
+
+			ReserveQuantityActualizer.actualize(this);
 		}
 	}
 

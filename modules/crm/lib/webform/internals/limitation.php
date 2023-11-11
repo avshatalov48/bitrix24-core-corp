@@ -10,6 +10,22 @@ use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
 use Bitrix\Main\Type;
 use Bitrix\Main;
 
+/**
+ * Class LimitationTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Limitation_Query query()
+ * @method static EO_Limitation_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_Limitation_Result getById($id)
+ * @method static EO_Limitation_Result getList(array $parameters = [])
+ * @method static EO_Limitation_Entity getEntity()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_Limitation createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_Limitation_Collection createCollection()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_Limitation wakeUpObject($row)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_Limitation_Collection wakeUpCollection($rows)
+ */
 class LimitationTable extends DataManager
 {
 	/**

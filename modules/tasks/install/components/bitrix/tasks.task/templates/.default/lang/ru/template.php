@@ -111,4 +111,3 @@ $MESS["TASKS_TASK_COMPONENT_TEMPLATE_SAVE_AS_TEMPLATE"] = "Сохранить к
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_NO_WORK_DAYS_ERROR"] = "Все дни на Вашем портале отмечены как выходные";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_BLOCK_TITLE_SE_REQUIRE_RESULT"] = "Результат задачи";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_BLOCK_LABEL_SE_REQUIRE_RESULT"] = "Обязательный отчет при завершении задачи";
-?>

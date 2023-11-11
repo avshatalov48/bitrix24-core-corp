@@ -1,6 +1,6 @@
 <?php
 $MESS["CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_DESC"] = "Create CRM Document";
-$MESS["CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_DESC_1"] = "Creates a document based on the template (invoice, estimate etc.)";
+$MESS["CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_DESC_1_MSGVER_1"] = "Creates a document from template (invoice, estimate etc.)";
 $MESS["CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_ID"] = "CRM document ID";
 $MESS["CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_NAME"] = "Create CRM Document";
 $MESS["CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_NAME_1"] = "Create document";

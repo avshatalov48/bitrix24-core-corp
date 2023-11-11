@@ -14,6 +14,7 @@ use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\UserTable;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\User;
@@ -269,7 +270,7 @@ class TasksDepartmentsOverviewComponent extends TasksBaseComponent
 		$tasksByRoles = [];
 
 		$connection = Application::getConnection();
-		$statuses = implode(',', [CTasks::STATE_PENDING, CTasks::STATE_IN_PROGRESS]);
+		$statuses = implode(',', [Status::PENDING, Status::IN_PROGRESS]);
 		$preparedUserIds = implode(',', $userIds);
 
 		$res = $connection->query("

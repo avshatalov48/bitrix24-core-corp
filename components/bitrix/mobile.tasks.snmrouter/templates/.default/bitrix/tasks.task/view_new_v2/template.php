@@ -16,8 +16,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Tasks\Internals\Task\Priority;
 
-\Bitrix\Main\UI\Extension::load('mobile.diskfile');
+Extension::load('mobile.diskfile');
 
 Loc::loadMessages(__FILE__);
 
@@ -37,7 +39,7 @@ if (isset($templateData["ERROR"]))
 <?=CJSCore::Init(array('tasks_util_query'), true)?>
 <?php
 $APPLICATION->SetPageProperty('BodyClass', 'task-card-page');
-\Bitrix\Main\UI\Extension::load("ui.progressround");
+Extension::load('ui.progressround');
 
 Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/log_mobile.js');
 Asset::getInstance()->addJs($templateFolder.'/../.default/script.js');
@@ -56,7 +58,7 @@ $status = Loc::getMessage("TASKS_STATUS_{$statuses[$task['REAL_STATUS']]}");
 
 $task['~STATUS'] = $task['STATUS'];
 $task['STATUS'] = (empty($status) ? Loc::getMessage('TASKS_STATUS_STATE_UNKNOWN') : $status);
-$task['PRIORITY'] = ((int)$task["PRIORITY"] === CTasks::PRIORITY_HIGH ? CTasks::PRIORITY_HIGH : CTasks::PRIORITY_LOW);
+$task['PRIORITY'] = ((int)$task["PRIORITY"] === Priority::HIGH ? Priority::HIGH : Priority::LOW);;
 
 $timerTask = (
 	$task['ALLOW_TIME_TRACKING'] === 'Y'
@@ -202,7 +204,7 @@ $url = CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_TASKS_EDI
 								"class" => "mobile-grid-field-priority"
 							),
 							"name" => GetMessage("MB_TASKS_BASE_SETTINGS_PRIORITY"),
-							"items" => array(CTasks::PRIORITY_HIGH => GetMessage("MB_TASKS_BASE_SETTINGS_PRIORITY_VALUE") ),
+							"items" => [Priority::HIGH => GetMessage("MB_TASKS_BASE_SETTINGS_PRIORITY_VALUE")],
 							"value" => array($task["PRIORITY"])
 						) : array(
 							"type" => "label",

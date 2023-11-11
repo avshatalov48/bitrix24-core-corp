@@ -5,6 +5,8 @@ jn.define('layout/ui/fields/requisite-address', (require, exports, module) => {
 
 	const { AddressView } = require('layout/ui/address');
 	const { BaseField } = require('layout/ui/fields/base');
+	const { stringify } = require('utils/string');
+	const { Loc } = require('loc');
 
 	/**
 	 * @class RequisiteAddressField
@@ -56,7 +58,21 @@ jn.define('layout/ui/fields/requisite-address', (require, exports, module) => {
 			const parentWidget = this.getParentWidget();
 			const type = this.getTypeValueById(id);
 
-			return AddressView({ address, type, coords, parentWidget });
+			return AddressView(
+				{
+					address,
+					type,
+					coords,
+					parentWidget,
+					onLongClick: () => {
+						const callback = this.getContentLongClickHandler();
+						if (callback)
+						{
+							callback(address);
+						}
+					},
+				},
+			);
 		}
 
 		getTypeValueById(id)
@@ -68,11 +84,27 @@ jn.define('layout/ui/fields/requisite-address', (require, exports, module) => {
 
 			return null;
 		}
+
+		canCopyValue()
+		{
+			return true;
+		}
+
+		prepareValueToCopy()
+		{
+			const [address] = this.getValue();
+
+			return stringify(address);
+		}
+
+		copyMessage()
+		{
+			return Loc.getMessage('FIELDS_REQUISITE_ADDRESS_VALUE_COPIED');
+		}
 	}
 
 	module.exports = {
 		RequisiteAddressType: 'requisite_address',
 		RequisiteAddressField: (props) => new RequisiteAddressField(props),
 	};
-
 });

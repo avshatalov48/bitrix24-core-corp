@@ -10,6 +10,7 @@ use Bitrix\Tasks\Comments\Task\CommentPoster;
 use Bitrix\Tasks\Integration\Bizproc;
 use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Item\Task;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
@@ -88,7 +89,7 @@ class Agent
 	{
 		$adminId = User::getAdminId();
 		$task = Task::getInstance($taskId, $adminId);
-		$statesCompleted = [CTasks::STATE_DEFERRED, CTasks::STATE_COMPLETED, CTasks::STATE_SUPPOSEDLY_COMPLETED];
+		$statesCompleted = [Status::DEFERRED, Status::COMPLETED, Status::SUPPOSEDLY_COMPLETED];
 
 		if (
 			!$task
@@ -140,7 +141,7 @@ class Agent
 	public static function expiredSoon($taskId): string
 	{
 		$task = Task::getInstance($taskId, User::getAdminId());
-		$statesCompleted = [CTasks::STATE_DEFERRED, CTasks::STATE_COMPLETED, CTasks::STATE_SUPPOSEDLY_COMPLETED];
+		$statusesCompleted = [Status::DEFERRED, Status::COMPLETED, Status::SUPPOSEDLY_COMPLETED];
 
 		if (!$task || !$task['RESPONSIBLE_ID'] || !($taskData = $task->getData()))
 		{
@@ -155,7 +156,7 @@ class Agent
 
 		self::add($taskId, $taskData['DEADLINE'], true);
 
-		if (in_array((int)$taskData['STATUS'], $statesCompleted, true))
+		if (in_array((int)$taskData['STATUS'], $statusesCompleted, true))
 		{
 			return '';
 		}

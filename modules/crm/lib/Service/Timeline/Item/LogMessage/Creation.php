@@ -48,7 +48,7 @@ class Creation extends LogMessage
 				\CCrmOwnerType::Deal => 'CRM_TIMELINE_DEAL_CREATION',
 				\CCrmOwnerType::Contact => 'CRM_TIMELINE_CONTACT_CREATION',
 				\CCrmOwnerType::Company => 'CRM_TIMELINE_COMPANY_CREATION',
-				\CCrmOwnerType::Quote => 'CRM_TIMELINE_QUOTE_CREATION',
+				\CCrmOwnerType::Quote => 'CRM_TIMELINE_QUOTE_CREATION_MSGVER_1',
 				\CCrmOwnerType::Invoice => 'CRM_TIMELINE_INVOICE_CREATION',
 				\CCrmOwnerType::DealRecurring => 'CRM_TIMELINE_RECURRING_DEAL_CREATION',
 			];

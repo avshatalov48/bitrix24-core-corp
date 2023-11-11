@@ -213,10 +213,22 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 					});
 				}
 
-				return Text({
-					...params,
-					text: value,
-				});
+				return View(
+					{
+						style: {
+							flex: 1,
+							flexDirection: 'row',
+						},
+						onLongClick: this.getContentLongClickHandler(),
+						onClick: this.getContentClickHandler(),
+					},
+					Text(
+						{
+							...params,
+							text: value,
+						},
+					),
+				);
 			};
 
 			return View(
@@ -353,6 +365,11 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 		showAllCount()
 		{
 			return false;
+		}
+
+		canCopyValue()
+		{
+			return this.isReadOnly();
 		}
 	}
 

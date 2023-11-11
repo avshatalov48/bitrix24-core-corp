@@ -471,20 +471,20 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 		}
 		else if ($field === 'VOTE_HEAD_PERM')
 		{
-			if(Limit::canUseVoteHead())
-			{
-				$result = '<span style="display: inline-flex;" id="ol-vote-head-placeholder-'.$sessionId.'" title=""></span><script>BX.ready(function(){
-				var voteChild = BX.MessengerCommon.linesVoteHeadNodes('.$sessionId.', '.$rating.', true);
+			$result = '<span id="ol-vote-head-placeholder-'.$sessionId.'" '.(Limit::canUseVoteHead()? 'style="display: inline-flex;"': 'style="display: inline-flex; cursor: pointer" onclick="BX.UI.InfoHelper.show(\'' . Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_BOSS_RATE . '\');"').'>
+				'.(Limit::canUseVoteHead()? '': '<span style="margin-left: -5px;" class="tariff-lock"></span>').'
+				</span><script>BX.ready(function(){
+				if (typeof BX.MessengerCommon !== "undefined")
+				{
+					var voteChild = BX.MessengerCommon.linesVoteHeadNodes('.$sessionId.', '.$rating.', '.(Limit::canUseVoteHead() ? 'true': 'false').');
+				}
+				else 
+				{
+					var voteChild = BX.Dom.create("span", {attrs: {className: "bx-im-lines-rating"}});
+					voteChild.innerHTML = "<span class=\"bx-im-lines-rating-selected\" style=\"width: '.($rating*20).'%\">";
+				}
 				BX("ol-vote-head-placeholder-'.$sessionId.'").appendChild(voteChild);
 			})</script>';
-			}
-			else
-			{
-				$result = '<span style="display: inline-flex;" id="ol-vote-head-placeholder-'.$sessionId.'" onclick="BX.UI.InfoHelper.show(\'' . Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_BOSS_RATE . '\');" title=""><span style="margin-left: -5px;" class="tariff-lock"></span></span><script>BX.ready(function(){
-				var voteChild = BX.MessengerCommon.linesVoteHeadNodes('.$sessionId.', '.$rating.', false);
-				BX("ol-vote-head-placeholder-'.$sessionId.'").appendChild(voteChild);
-			})</script>';
-			}
 		}
 
 		return $result;
@@ -518,9 +518,12 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 				$result = '
 				<div id="ol-comment-head-text-'.$sessionId.'" title="">' . $comment . '</div>
 				<div id="ol-comment-head-placeholder-'.$sessionId.'" title=""></div><script>BX.ready(function(){
-				var voteChild = BX.MessengerCommon.linesCommentHeadNodes('.$sessionId.', BX("ol-comment-head-text-'.$sessionId.'").innerHTML.replace(/<br>/g, "\n"), true, "statistics");
-				BX("ol-comment-head-placeholder-'.$sessionId.'").appendChild(voteChild);
-				BX.style(BX("ol-comment-head-text-'.$sessionId.'"), \'display\', \'none\');
+					if (typeof BX.MessengerCommon !== "undefined")
+					{
+						var voteChild = BX.MessengerCommon.linesCommentHeadNodes('.$sessionId.', BX("ol-comment-head-text-'.$sessionId.'").innerHTML.replace(/<br>/g, "\n"), true, "statistics");
+						BX("ol-comment-head-placeholder-'.$sessionId.'").appendChild(voteChild);
+						BX.style(BX("ol-comment-head-text-'.$sessionId.'"), \'display\', \'none\');
+					}
 			})</script>';
 			}
 			elseif($comment === '')

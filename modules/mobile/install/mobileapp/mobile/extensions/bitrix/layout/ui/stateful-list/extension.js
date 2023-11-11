@@ -8,6 +8,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 	const { merge, mergeImmutable, get, set, clone, isEqual } = require('utils/object');
 	const { PureComponent } = require('layout/pure-component');
 	const { SimpleList } = require('layout/ui/simple-list');
+	const { ListItemType, ListItemsFactory } = require('layout/ui/simple-list/items');
 
 	const ITEMS_LOAD_LIMIT = 20;
 	const DEFAULT_BLOCK_PAGE = 1;
@@ -59,7 +60,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			this.bindSimpleListRef = this.bindSimpleListRef.bind(this);
 
 			this.state = this.getInitialState();
-			this.state.itemType = this.getValue(props, 'itemType', ListItemsFactory.Type.Base);
+			this.state.itemType = this.getValue(props, 'itemType', ListItemType.BASE);
+			this.state.itemFactory = this.getValue(props, 'itemFactory', ListItemsFactory);
 			this.state.actionParams = this.getValue(props, 'actionParams', {});
 			this.state.itemParams = this.getValue(props, 'itemParams', {});
 			this.state.itemActions = this.getValue(props, 'itemActions', []);
@@ -111,6 +113,11 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			if (newProps.actionParams)
 			{
 				this.state.actionParams = this.getValue(newProps, 'actionParams');
+			}
+
+			if (newProps.actions)
+			{
+				this.actions = this.getValue(newProps, 'actions');
 			}
 
 			this.needInitMenu = this.getValue(newProps, 'needInitMenu', true);
@@ -1285,6 +1292,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 						settingsIsLoaded: this.state.settingsIsLoaded,
 						renderType: this.state.renderType,
 						itemType: this.state.itemType,
+						itemFactory: this.state.itemFactory,
 						items: this.state.items,
 						itemParams: this.state.itemParams,
 						getItemCustomStyles: BX.prop.getFunction(this.props, 'getItemCustomStyles', null),

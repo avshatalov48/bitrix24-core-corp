@@ -6,7 +6,15 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 		text: 'text',
 		audio: 'audio',
 		image: 'image',
+		status: 'status',
+		systemText: 'system-text',
 	});
+
+	const MessageIdType = {
+		statusMessage: 'status-message',
+		templateSeparatorUnread: 'template-separator-unread',
+		templateSeparatorDate: 'template-separator',
+	};
 
 	const OwnMessageStatus = Object.freeze({
 		sending: 'sending',
@@ -16,6 +24,7 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 
 	module.exports = {
 		MessageType,
+		MessageIdType,
 		OwnMessageStatus,
 	};
 });

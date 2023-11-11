@@ -114,21 +114,13 @@ class UserFieldDataProvider extends EntityUFDataProvider
 						{
 							$filter['<='.$id] = $requestFilter[$id.'_to'];
 						}
-						if (
-							$filterField['type'] === 'number'
-							&& isset($requestFilter[$id])
-							&& $requestFilter[$id] === false
-						)
+						if (isset($requestFilter[$id]) && $requestFilter[$id] === false)
 						{
 							$filter[$id] = $requestFilter[$id];
 						}
-						elseif (
-							$filterField['type'] === 'number'
-							&& isset($requestFilter['!'.$id])
-							&& $requestFilter['!'.$id] === false
-						)
+						elseif (isset($requestFilter['!' . $id]) && $requestFilter['!' . $id] === false)
 						{
-							$filter['!'.$id] = $requestFilter['!'.$id];
+							$filter['!' . $id] = $requestFilter['!' . $id];
 						}
 						$isProcessed = true;
 					}
@@ -145,7 +137,7 @@ class UserFieldDataProvider extends EntityUFDataProvider
 						}
 					}
 				}
-				
+
 				if (!$isProcessed && isset($requestFilter[$id]))
 				{
 					$filter[$id] = $requestFilter[$id];

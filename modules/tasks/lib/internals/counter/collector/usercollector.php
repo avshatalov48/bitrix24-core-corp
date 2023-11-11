@@ -5,6 +5,7 @@ use Bitrix\Main\Application;
 use Bitrix\Tasks\Comments\Internals\Comment;
 use Bitrix\Tasks\Comments\Viewed\Enum;
 use Bitrix\Tasks\Comments\Viewed\Group;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\Task\UserOptionTable;
 use Bitrix\Tasks\Internals\UserOption;
 use CTasks;
@@ -88,15 +89,17 @@ class UserCollector
 	 */
 	private function recountExpired(string $taskFilter, array $mutedTasks): array
 	{
+		$connection = Application::getConnection();
+		$helper = $connection->getSqlHelper();
 		$expiredTime = Deadline::getExpiredTime()->format('Y-m-d H:i:s');
-		$statuses = implode(',', [CTasks::STATE_PENDING, CTasks::STATE_IN_PROGRESS]);
+		$statuses = implode(',', [Status::PENDING, Status::IN_PROGRESS]);
 
 		$sql = "
 			SELECT
 				T.ID,
 				T.GROUP_ID,
 				TM.TYPE,
-				'1' as `COUNT`
+				'1' as " . $helper->quote('COUNT') . "
 			FROM b_tasks T
 			INNER JOIN ". MemberTable::getTableName() ." TM 
 				ON TM.TASK_ID = T.ID 
@@ -107,7 +110,7 @@ class UserCollector
 				AND T.STATUS IN ({$statuses})
 		";
 
-		$res = Application::getConnection()->query($sql);
+		$res = $connection->query($sql);
 		$rows = $res->fetchAll();
 
 		$responsibleTasks = [];

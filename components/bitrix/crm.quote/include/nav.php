@@ -4,10 +4,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 global $APPLICATION;
 if (!isset($arResult['INTERNAL']) || !$arResult['INTERNAL'])
 {
-	$defaultTitle = GetMessage('CRM_QUOTE_NAV_TITLE_LIST_SHORT');
+	$defaultTitle = GetMessage('CRM_QUOTE_NAV_TITLE_LIST_SHORT_MSGVER_1');
 	if(empty($defaultTitle))
 	{
-		$defaultTitle = GetMessage('CRM_QUOTE_NAV_TITLE_LIST');
+		$defaultTitle = GetMessage('CRM_QUOTE_NAV_TITLE_LIST_MSGVER_1');
 	}
 
 	if(isset($arResult['CRM_CUSTOM_PAGE_TITLE']))

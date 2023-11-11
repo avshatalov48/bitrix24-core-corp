@@ -398,7 +398,7 @@ export class DesktopWorker extends BaseWorker
 
 	isCorporatePortalPage(): boolean
 	{
-		return !BX.MessengerCommon.isDesktop();
+		return typeof(BXDesktopSystem) == "undefined" && typeof(BXDesktopWindow) == "undefined";
 	}
 
 	getCallCardWindow(): window

@@ -13,6 +13,7 @@ use Bitrix\Main\Access\User\UserSubordinate;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
+use Bitrix\Tasks\Internals\Task\Status;
 
 class TaskRenewRule extends \Bitrix\Main\Access\Rule\AbstractRule
 {
@@ -30,7 +31,7 @@ class TaskRenewRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		$isAccomplice = $task->isMember($this->user->getUserId(), RoleDictionary::ROLE_ACCOMPLICE);
 
 		if (
-			$status === \CTasks::STATE_SUPPOSEDLY_COMPLETED
+			$status === Status::SUPPOSEDLY_COMPLETED
 			&& !$isDirector
 			&& ($isResponsible || $isAccomplice)
 		)
@@ -38,7 +39,7 @@ class TaskRenewRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return true;
 		}
 
-		if (!in_array($status, [\CTasks::STATE_COMPLETED, \CTasks::STATE_DEFERRED], true))
+		if (!in_array($status, [Status::COMPLETED, Status::DEFERRED], true))
 		{
 			$this->controller->addError(static::class, 'Incorrect status');
 			return false;

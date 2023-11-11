@@ -94,7 +94,7 @@ class Parameter
 
 		$sql = "
 			INSERT INTO ". ParameterTable::getTableName() ."
-			(`TASK_ID`, `CODE`, `VALUE`)
+			(TASK_ID, CODE, VALUE)
 			VALUES
 			(". implode("),(", $insertRows) .")
 		";

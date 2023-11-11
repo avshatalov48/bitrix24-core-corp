@@ -130,7 +130,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 
 		getCreatorItem()
 		{
-			const creatorData = this.store.getters['usersModel/getUserById'](MessengerParams.getUserId());
+			const creatorData = this.store.getters['usersModel/getById'](MessengerParams.getUserId());
 
 			const chatTitle = ChatTitle.createFromDialogId(MessengerParams.getUserId(), {showItsYou: true});
 			const chatAvatar = ChatAvatar.createFromDialogId(MessengerParams.getUserId());

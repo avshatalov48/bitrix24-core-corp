@@ -14,6 +14,7 @@ return [
 		'tasks:filter/task',
 		'tasks:layout/presetList',
 		'tasks:layout/task/create',
+		// 'tasks:layout/task-list',
 		'tasks:task',
 		'utils/function',
 	],

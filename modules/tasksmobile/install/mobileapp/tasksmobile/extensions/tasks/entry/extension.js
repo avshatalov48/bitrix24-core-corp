@@ -32,7 +32,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 			});
 		}
 
-		static openTask(data, params)
+		static openTask(data, params = {})
 		{
 			const { taskObject, userId, parentWidget } = params;
 			const taskId = data.id || data.taskId;

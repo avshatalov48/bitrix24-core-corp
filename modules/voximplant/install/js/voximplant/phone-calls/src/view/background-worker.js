@@ -3,10 +3,7 @@ import {BaseWorker, callCardEvents} from "./background-worker/base-worker";
 import {DesktopWorker} from "./background-worker/desktop-worker";
 import {BrowserWorker} from "./background-worker/browser-worker";
 
-
 export const backgroundWorkerEvents = callCardEvents;
-
-let instance: BackgroundWorker;
 
 export class BackgroundWorker
 {
@@ -15,15 +12,6 @@ export class BackgroundWorker
 	constructor()
 	{
 		this.initializePlacement();
-	}
-	static getInstance(): BackgroundWorker
-	{
-		if (!instance)
-		{
-			instance = new BackgroundWorker();
-		}
-
-		return instance;
 	}
 
 	setCallCard(callCard: ?PhoneCallView)

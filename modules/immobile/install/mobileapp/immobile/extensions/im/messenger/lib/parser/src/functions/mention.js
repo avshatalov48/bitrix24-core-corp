@@ -22,7 +22,7 @@ jn.define('im/messenger/lib/parser/functions/mention', (require, exports, module
 
 				if (replace || !userName)
 				{
-					const user = core.getStore().getters['usersModel/getUserById'](userId);
+					const user = core.getStore().getters['usersModel/getById'](userId);
 					if (user)
 					{
 						userName = user.name;
@@ -52,7 +52,7 @@ jn.define('im/messenger/lib/parser/functions/mention', (require, exports, module
 
 				if (replace || !userName)
 				{
-					const user = core.getStore().getters['usersModel/getUserById'](userId);
+					const user = core.getStore().getters['usersModel/getById'](userId);
 					if (user)
 					{
 						userName = user.name;

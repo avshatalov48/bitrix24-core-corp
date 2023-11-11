@@ -14,6 +14,22 @@ use Bitrix\Main\Result;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class QuoteElementTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_QuoteElement_Query query()
+ * @method static EO_QuoteElement_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_QuoteElement_Result getById($id)
+ * @method static EO_QuoteElement_Result getList(array $parameters = [])
+ * @method static EO_QuoteElement_Entity getEntity()
+ * @method static \Bitrix\Crm\EO_QuoteElement createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\EO_QuoteElement_Collection createCollection()
+ * @method static \Bitrix\Crm\EO_QuoteElement wakeUpObject($row)
+ * @method static \Bitrix\Crm\EO_QuoteElement_Collection wakeUpCollection($rows)
+ */
 class QuoteElementTable extends Entity\DataManager
 {
 	/**

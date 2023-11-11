@@ -20,7 +20,7 @@ class MobileMenu extends \CBitrixComponent
 		global $USER;
 
 		/**
-		 * @var CAllUser $USER
+		 * @var CUser $USER
 		 */
 		$USER_ID = $USER->GetID();
 		$arResult = Array();

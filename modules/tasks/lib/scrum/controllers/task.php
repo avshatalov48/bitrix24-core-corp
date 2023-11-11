@@ -11,6 +11,7 @@ use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Scrum\Service\ItemService;
 use Bitrix\Tasks\Util\User;
@@ -111,11 +112,11 @@ class Task extends Controller
 			if (
 				!(
 					(
-						$taskData['STATUS'] == \CTasks::STATE_COMPLETED
+						(int)$taskData['STATUS'] === Status::COMPLETED
 						&& $action === ActionDictionary::ACTION_TASK_RENEW
 					)
 					|| (
-						$taskData['STATUS'] != \CTasks::STATE_COMPLETED
+						(int)$taskData['STATUS'] !== Status::COMPLETED
 						&& $action === ActionDictionary::ACTION_TASK_COMPLETE
 					)
 				)
@@ -135,7 +136,7 @@ class Task extends Controller
 		]);
 		while ($childTaskData = $queryObject->fetch())
 		{
-			if ($childTaskData['STATUS'] != \CTasks::STATE_COMPLETED)
+			if ((int)$childTaskData['STATUS'] !== Status::COMPLETED)
 			{
 				$isAllChildTasksCompleted = false;
 			}
@@ -241,7 +242,7 @@ class Task extends Controller
 
 		$queryObject = \CTasks::getList(
 			[],
-			['ID' => $taskId, '=STATUS' => \CTasks::STATE_COMPLETED],
+			['ID' => $taskId, '=STATUS' => Status::COMPLETED],
 			['ID'],
 			['USER_ID' => $userId]
 		);

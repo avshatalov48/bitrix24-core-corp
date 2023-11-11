@@ -26,11 +26,18 @@ $currentFilterPresetID = isset($arResult['GRID_FILTER_ID']) ? $arResult['GRID_FI
 <?if(!$rubric['ENABLED']):?>
 <div id="<?=htmlspecialcharsbx($searchContainerID)?>" class="crm_search<?=$searchValue !== '' ? ' active' : ''?>">
 	<div class="crm_input_container">
-		<span class="crm_lupe"></span>
-		<input class="crm_search_input" type="text" value="<?=htmlspecialcharsbx($searchValue)?>" placeholder="<?=htmlspecialcharsbx(GetMessage('M_CRM_ACTIVITY_LIST_SEARCH_PLACEHOLDER'))?>" />
+		<div class="crm-search-field">
+			<span class="crm_lupe"></span>
+			<input class="crm_search_input" type="text" value="<?=htmlspecialcharsbx($searchValue)?>" placeholder="<?=htmlspecialcharsbx(GetMessage('M_CRM_ACTIVITY_LIST_SEARCH_PLACEHOLDER'))?>" />
+			<div class="crm_clear-container">
+				<span class="crm_clear"></span>
+			</div>
+		</div>
+		<a class="crm_button"><?=htmlspecialcharsbx(GetMessage('M_CRM_ACTIVITY_LIST_SEARCH_BUTTON'))?></a>
+
 	</div>
-	<a class="crm_button"><?=htmlspecialcharsbx(GetMessage('M_CRM_ACTIVITY_LIST_SEARCH_BUTTON'))?></a>
-	<span class="crm_clear"></span>
+
+
 </div>
 <div class="crm_toppanel">
 	<div id="<?=htmlspecialcharsbx($filterContainerID)?>" class="crm_filter">
@@ -85,7 +92,8 @@ $currentFilterPresetID = isset($arResult['GRID_FILTER_ID']) ? $arResult['GRID_FI
 		$isExpired = $dataItem['IS_EXPIRED'];
 		$isImportant = $dataItem['IS_IMPORTANT'];
 
-		$wrapperStyle = ($isCompleted ? 'background:#f5f6f8;' : ($isExpired ? 'background:#fae9e7;' : ''));
+		$wrapperStyle = ($isCompleted ? 'crm-deal-completed' : ($isExpired ? 'crm-deal-expired' : ''));
+		$titleClass = ($isCompleted ? 'crm_company_title_completed' :'');
 
 		if ($dataItem['TYPE_ID'] === CCrmActivityType::Task)
 		{
@@ -97,14 +105,14 @@ $currentFilterPresetID = isset($arResult['GRID_FILTER_ID']) ? $arResult['GRID_FI
 			$redirectParams = ['url' => $item['SHOW_URL']];
 			$onClick = 'BX.CrmMobileContext.redirect('.CUtil::PhpToJSObject($redirectParams).');';
 		}
-		?><li class="crm_company_list_item" data-entity-id="<?=$item['ID']?>" style="<?=$wrapperStyle?>" onclick="<?=$onClick?>">
+		?><li class="crm_company_list_item <?=$wrapperStyle?>" data-entity-id="<?=$item['ID']?>" onclick="<?=$onClick?>">
 			<?if($dataItem['LIST_IMAGE_URL'] !== ''):?>
 				<img src="<?=htmlspecialcharsbx($dataItem['LIST_IMAGE_URL'])?>" style="width:20px;padding:10px 15px 0 8px;float:left;" />
 			<?endif;?>
-			<a class="crm_company_title"<?=$isCompleted ? ' style="text-decoration:line-through; color:#7c8182;"' : ''?>><?=htmlspecialcharsbx($dataItem['SUBJECT'])?><?if($isImportant):?><span class="crm_important"><?=htmlspecialcharsbx(GetMessage('M_CRM_ACTIVITY_LIST_IMPORTANT'))?></span><?endif;?></a>
+			<a class="crm_company_title <?=$titleClass?>" <?=$isCompleted ? ' style="text-decoration:line-through;"' : ''?>><?=htmlspecialcharsbx($dataItem['SUBJECT'])?><?if($isImportant):?><span class="crm_important"><?=htmlspecialcharsbx(GetMessage('M_CRM_ACTIVITY_LIST_IMPORTANT'))?></span><?endif;?></a>
 			<div class="crm_company_company">
 				<?if($isExpired):?>
-					<span class="fwb"<?=$isExpired ? ' style="color:#e20707;"' : ''?>><?=htmlspecialcharsbx($dataItem['DEAD_LINE'])?></span>
+					<span class="fwb crm-deadline-text"><?=htmlspecialcharsbx($dataItem['DEAD_LINE'])?></span>
 				<?else:?>
 					<?=htmlspecialcharsbx($dataItem['DEAD_LINE'] !== '' ? $dataItem['DEAD_LINE'] : GetMessage('M_CRM_ACTIVITY_LIST_TIME_NOT_DEFINED'))?>
 				<?endif;?>

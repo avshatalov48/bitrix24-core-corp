@@ -1,5 +1,8 @@
 <?php
 
 return [
-	'rest',
+	'extensions' => [
+		'rest',
+		'utils/logger/error-logger',
+	],
 ];

@@ -222,10 +222,16 @@ class SearchAction extends Search\SearchAction
 		 * CRM_CONTROLLER_SEARCH_ACTION_QUOTE_LIMIT_EXCEEDED
 		 * CRM_CONTROLLER_SEARCH_ACTION_INVOICE_LIMIT_EXCEEDED
 		 */
+		$content = Loc::getMessage("CRM_CONTROLLER_SEARCH_ACTION_{$entityTypeName}_LIMIT_EXCEEDED");
+		if (!$content)
+		{
+			$content = Loc::getMessage("CRM_CONTROLLER_SEARCH_ACTION_{$entityTypeName}_LIMIT_EXCEEDED_MSGVER_1");
+		}
+
 		$info = $restriction->prepareStubInfo(
 			[
 				'ENTITY_TYPE_ID' => $entityTypeID,
-				'CONTENT' => Loc::getMessage("CRM_CONTROLLER_SEARCH_ACTION_{$entityTypeName}_LIMIT_EXCEEDED"),
+				'CONTENT' => $content,
 				'GLOBAL_SEARCH' => true,
 			]
 		);

@@ -279,7 +279,22 @@ class CBPTask2Activity extends CBPActivity implements
 
 		if (isset($arFieldsChecked['TAG_NAMES']))
 		{
-			$arFieldsChecked['TAGS'] = $arFieldsChecked['TAG_NAMES'];
+			if (is_array($arFieldsChecked['TAG_NAMES']))
+			{
+				$arFieldsChecked['TAGS'] = [];
+				foreach ($arFieldsChecked['TAG_NAMES'] as $tagName)
+				{
+					if (is_numeric($tagName))
+					{
+						$arFieldsChecked['TAGS'][] = (string)$tagName;
+					}
+					elseif (is_string($tagName))
+					{
+						$arFieldsChecked['TAGS'][] = $tagName;
+					}
+				}
+			}
+
 			unset($arFieldsChecked['TAG_NAMES']);
 		}
 
@@ -1169,8 +1184,8 @@ class CBPTask2Activity extends CBPActivity implements
 				'FieldName' => 'PRIORITY',
 				'Type' => FieldType::SELECT,
 				'Options' => [
-					CTasks::PRIORITY_AVERAGE => Loc::getMessage('TASKS_COMMON_NO'),
-					CTasks::PRIORITY_HIGH => Loc::getMessage('TASKS_COMMON_YES'),
+					Tasks\Internals\Task\Priority::AVERAGE => Loc::getMessage('TASKS_COMMON_NO'),
+					Tasks\Internals\Task\Priority::HIGH => Loc::getMessage('TASKS_COMMON_YES'),
 				],
 				'Editable' => true,
 				'Required' => false,

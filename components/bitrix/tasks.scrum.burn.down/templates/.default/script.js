@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,main_core,main_core_events,ui_entitySelector,ui_buttons) {
@@ -10,19 +11,17 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.selectorContainer = params.selectorContainer;
 	    this.infoContainer = params.infoContainer;
 	    this.currentSprint = params.currentSprint;
-	    /* eslint-disable */
 
+	    /* eslint-disable */
 	    this.sidePanelManager = BX.SidePanel.Instance;
 	    /* eslint-enable */
 
 	    this.chart = null;
 	  }
-
 	  babelHelpers.createClass(BurnDownChart, [{
 	    key: "render",
 	    value: function render(chartDiv, data) {
 	      var _this = this;
-
 	      this.renderSelectorTo(this.selectorContainer);
 	      setTimeout(function () {
 	        return _this.create(chartDiv, data);
@@ -32,11 +31,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderSelectorTo",
 	    value: function renderSelectorTo(selectorContainer) {
 	      var _this2 = this;
-
 	      if (!main_core.Type.isElementNode(selectorContainer)) {
 	        return;
 	      }
-
 	      this.selectorButton = new ui_buttons.Button({
 	        text: this.currentSprint.dateStartFormatted + ' - ' + this.currentSprint.dateEndFormatted,
 	        color: ui_buttons.Button.Color.LIGHT_BORDER,
@@ -44,7 +41,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        className: 'ui-btn-themes',
 	        onclick: function onclick() {
 	          var dialog = _this2.createSelectorDialog(_this2.selectorButton.getContainer(), _this2.currentSprint);
-
 	          dialog.show();
 	        }
 	      });
@@ -54,7 +50,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "createSelectorDialog",
 	    value: function createSelectorDialog(targetNode, currentSprint) {
 	      var _this3 = this;
-
 	      return new ui_entitySelector.Dialog({
 	        targetNode: targetNode,
 	        width: 400,
@@ -77,10 +72,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        events: {
 	          'Item:onSelect': function ItemOnSelect(event) {
 	            var _event$getData = event.getData(),
-	                selectedItem = _event$getData.item;
-
+	              selectedItem = _event$getData.item;
 	            _this3.selectorButton.setText(selectedItem.customData.get('label'));
-
 	            _this3.changeChart(selectedItem.getId());
 	          }
 	        }
@@ -90,7 +83,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "changeChart",
 	    value: function changeChart(sprintId) {
 	      var _this4 = this;
-
 	      main_core.ajax.runComponentAction('bitrix:tasks.scrum.burn.down', 'changeChart', {
 	        mode: 'class',
 	        data: {
@@ -167,7 +159,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "createLegend",
 	    value: function createLegend() {
 	      var _this5 = this;
-
 	      this.chart.legend = new am4charts.Legend();
 	      this.chart.legend.itemContainers.template.clickable = false;
 	      this.chart.legend.position = 'bottom';

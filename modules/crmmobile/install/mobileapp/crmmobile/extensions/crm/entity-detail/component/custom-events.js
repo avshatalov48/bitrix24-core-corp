@@ -7,6 +7,8 @@ jn.define('crm/entity-detail/component/custom-events', (require, exports, module
 	const { PaymentDocument, DeliveryDocument } = require('crm/entity-document');
 	const { AnalyticsLabel } = require('analytics-label');
 	const { Feature } = require('feature');
+	const { DocumentCardManager } = require('catalog/store/document-card/manager');
+	const { Loc } = require('loc');
 
 	/**
 	 * @type {(string, function(DetailCardComponent, ...*): void)[][]}
@@ -95,6 +97,16 @@ jn.define('crm/entity-detail/component/custom-events', (require, exports, module
 					entityModel: detailCard.entityModel,
 					uid: detailCard.uid,
 				});
+			},
+		],
+		[
+			'EntityRealizationDocument::Click',
+			/**
+			 * @param {DetailCardComponent} detailCard
+			 * @param document
+			 */
+			(detailCard, document) => {
+				DocumentCardManager.open(document);
 			},
 		],
 	];

@@ -140,6 +140,16 @@ BX.Tasks.Kanban.Grid.prototype = {
 			task_remove: this.onPullTaskRemove,
 		};
 
+		const isCompletedSprint = (
+			this.isScrumGrid()
+				? this.getData().params.IS_COMPLETED_SPRINT === 'Y'
+				: false
+		);
+		if (isCompletedSprint)
+		{
+			return;
+		}
+
 		const tasksEventQueue = {
 			pull: new BX.Tasks.Runtime.DebouncedQueue({
 				timeout: 3000,

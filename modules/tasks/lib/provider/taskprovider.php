@@ -7,6 +7,7 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
+use Bitrix\Tasks\Internals\Task\TimeUnitType;
 use Bitrix\Tasks\Internals\UserOption;
 use \CDBResult;
 use Bitrix\Tasks\Internals\Counter;
@@ -233,7 +234,7 @@ class TaskProvider
 			$pageName = 'PAGEN_' . ($navNum + 1);
 			global ${$pageName};
 			$page = ${$pageName};
-			$page = $page > 0 ? (int)$page : (int)$this->arParams['NAV_PARAMS']['iNumPage'];
+			$page = $page > 0 ? (int)$page : (int)($this->arParams['NAV_PARAMS']['iNumPage'] ?? null);
 			$page = $page > 0 ? $page : 1;
 			$cnt = $this->getCountOrm($this->arFilter, $this->arParams, $this->arGroup)->Fetch()['CNT'];
 			$pageSize = $this->arParams['NAV_PARAMS']['nPageSize'] ?? 0;
@@ -1138,11 +1139,11 @@ class TaskProvider
 			"DURATION_PLAN" => "
 				case
 					when
-						T.DURATION_TYPE = '".\CTasks::TIME_UNIT_TYPE_MINUTE."' or T.DURATION_TYPE = '".\CTasks::TIME_UNIT_TYPE_HOUR."'
+						T.DURATION_TYPE = '".TimeUnitType::MINUTE."' or T.DURATION_TYPE = '".TimeUnitType::HOUR."'
 					then
 						ROUND(T.DURATION_PLAN / 3600, 0)
 					when
-						T.DURATION_TYPE = '".\CTasks::TIME_UNIT_TYPE_DAY."' or T.DURATION_TYPE = '' or T.DURATION_TYPE is null
+						T.DURATION_TYPE = '".TimeUnitType::DAY."' or T.DURATION_TYPE = '' or T.DURATION_TYPE is null
 					then
 						ROUND(T.DURATION_PLAN / 86400, 0)
 					else
@@ -1152,9 +1153,9 @@ class TaskProvider
 			"DURATION_TYPE" => "
 				case
 					when
-						T.DURATION_TYPE = '".\CTasks::TIME_UNIT_TYPE_MINUTE."'
+						T.DURATION_TYPE = '".TimeUnitType::MINUTE."'
 					then
-						'".\CTasks::TIME_UNIT_TYPE_HOUR."'
+						'".TimeUnitType::HOUR."'
 					else
 						T.DURATION_TYPE
 				end

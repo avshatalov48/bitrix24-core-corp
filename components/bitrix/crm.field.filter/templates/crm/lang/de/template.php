@@ -1,0 +1,14 @@
+<?php
+$MESS["CRM_FF_CANCEL"] = "Abbrechen";
+$MESS["CRM_FF_CHANGE"] = "Ändern";
+$MESS["CRM_FF_CHOISE"] = "Auswählen";
+$MESS["CRM_FF_CLOSE"] = "Schließen";
+$MESS["CRM_FF_COMPANY"] = "Unternehmen";
+$MESS["CRM_FF_CONTACT"] = "Kontakte";
+$MESS["CRM_FF_DEAL"] = "Aufträge";
+$MESS["CRM_FF_LAST"] = "Zuletzt ausgewählte";
+$MESS["CRM_FF_LEAD"] = "Leads";
+$MESS["CRM_FF_NO_RESULT"] = "Leider ergab Ihre Suche keine Treffer.";
+$MESS["CRM_FF_OK"] = "Auswählen";
+$MESS["CRM_FF_QUOTE_MSGVER_1"] = "Angebote";
+$MESS["CRM_FF_SEARCH"] = "Suchen";

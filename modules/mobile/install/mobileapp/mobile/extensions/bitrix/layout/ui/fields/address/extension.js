@@ -11,6 +11,7 @@ jn.define('layout/ui/fields/address', (require, exports, module) => {
 	const { throttle } = require('utils/function');
 	const { Loc } = require('loc');
 	const { AddressValueConverter } = require('layout/ui/fields/address/value-converter');
+	const { stringify } = require('utils/string');
 
 	/**
 	 * @class AddressField
@@ -100,6 +101,15 @@ jn.define('layout/ui/fields/address', (require, exports, module) => {
 							},
 						});
 						this.contextMenu.show(this.getParentWidget());
+					},
+					onLongClick: () => {
+						const callback = this.getContentLongClickHandler();
+						if (callback)
+						{
+							callback(
+								AddressValueConverter.convertFromValue(this.getValue()).text
+							);
+						}
 					},
 				},
 				Image({
@@ -235,6 +245,7 @@ jn.define('layout/ui/fields/address', (require, exports, module) => {
 				this.openEditor(AddressEditorModes.edit);
 			}
 		}
+
 		handleAdditionalFocusActions()
 		{
 			this.removeFocus();
@@ -242,6 +253,27 @@ jn.define('layout/ui/fields/address', (require, exports, module) => {
 			return Promise.resolve();
 		}
 
+		canCopyValue()
+		{
+			return true;
+		}
+
+		prepareValueToCopy()
+		{
+			const [address] = this.getValue();
+
+			return stringify(address);
+		}
+
+		copyMessage()
+		{
+			return Loc.getMessage('FIELDS_ADDRESS_VALUE_COPIED');
+		}
+
+		getReadOnlyEmptyValue()
+		{
+			return this.props.emptyValue || BX.message('FIELDS_BASE_FILL_IN_PLACEHOLDER');
+		}
 	}
 
 	const ContextMenuActions = {

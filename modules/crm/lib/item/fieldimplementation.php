@@ -43,8 +43,23 @@ interface FieldImplementation
 
 	public function getDefaultValue(string $commonFieldName);
 
+	/**
+	 * An event handler that is called before EntityObject is saved to DB
+	 */
+	public function beforeItemSave(Item $item, EntityObject $entityObject): void;
+
+	/**
+	 * An event handler that is called after EntityObject is saved successfully to DB.
+	 * If there were errors in save, this handler is not called.
+	 */
 	public function afterSuccessfulItemSave(Item $item, EntityObject $entityObject): void;
 
+	/**
+	 * Saves implementation state to DB. The method is called after successful EntityObject save.
+	 * If there were errors in save, this method is not called.
+	 *
+	 * @return Result
+	 */
 	public function save(): Result;
 
 	/**

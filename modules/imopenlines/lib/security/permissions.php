@@ -16,7 +16,9 @@ class Permissions
 	const ENTITY_JOIN = 'JOIN';
 	const ENTITY_VOTE_HEAD = 'VOTE_HEAD';
 	const ENTITY_SETTINGS = 'SETTINGS';
-	
+	const ENTITY_QUICK_ANSWERS = 'QUICK_ANSWERS';
+	const ENTITY_SOFT_PAUSE_LIST = 'SOFT_PAUSE_LIST';
+
 	const ACTION_VIEW = 'VIEW';
 	const ACTION_PERFORM = 'PERFORM';
 	const ACTION_MODIFY = 'MODIFY';
@@ -225,6 +227,18 @@ class Permissions
 					self::PERMISSION_NONE,
 					self::PERMISSION_ALLOW
 				)
+			),
+			self::ENTITY_QUICK_ANSWERS => array(
+				self::ACTION_MODIFY => array(
+					self::PERMISSION_NONE,
+					self::PERMISSION_ANY
+				),
+			),
+			self::ENTITY_SOFT_PAUSE_LIST => array(
+				self::ACTION_VIEW => array(
+					self::PERMISSION_NONE,
+					self::PERMISSION_ANY
+				),
 			),
 		);
 	}

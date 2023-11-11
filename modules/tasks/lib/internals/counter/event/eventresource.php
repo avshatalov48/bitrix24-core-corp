@@ -3,6 +3,7 @@ namespace Bitrix\Tasks\Internals\Counter\Event;
 
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\MemberTable;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Util\Type\DateTime;
 
 /**
@@ -16,7 +17,7 @@ class EventResource
 		$id,
 		$title,
 		$deadline,
-		$status = \CTasks::STATE_PENDING,
+		$status = Status::PENDING,
 		$groupId = 0,
 		$members = [],
 		$isExpired = false;

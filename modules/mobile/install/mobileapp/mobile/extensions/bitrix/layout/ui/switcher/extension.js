@@ -75,6 +75,7 @@ jn.define('layout/ui/switcher', (require, exports, module) => {
 
 			return View(
 				{
+					testId: `${this.props.testId}-Container`,
 					ref: (ref) => {
 						this.switcherContainerRef = ref;
 					},

@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Transformer;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentTypeException;
@@ -24,6 +25,9 @@ class Http
 
 	const CONNECTION_ERROR = 'no connection with controller';
 
+	/**
+	 * @deprecated \Bitrix\Transformer\Http::getDefaultCloudControllerUrl
+	 */
 	public const CLOUD_CONVERTER_URL = 'https://transformer-de.bitrix.info/bitrix/tools/transformercontroller/add_queue.php';
 
 	private $controllerUrl;
@@ -39,7 +43,11 @@ class Http
 		}
 		else
 		{
-			$optionsControllerUrl = Option::get(self::MODULE_ID, 'transformer_controller_url', static::CLOUD_CONVERTER_URL);
+			$optionsControllerUrl = Option::get(
+				self::MODULE_ID,
+				'transformer_controller_url',
+				self::getDefaultCloudControllerUrl(),
+			);
 			if(!empty($optionsControllerUrl))
 			{
 				$uri = new Uri($optionsControllerUrl);
@@ -93,6 +101,16 @@ class Http
 		}
 
 		return UrlManager::getInstance()->getHostUrl();
+	}
+
+	final public static function getDefaultCloudControllerUrl(): string
+	{
+		$region = Application::getInstance()->getLicense()->getRegion();
+
+		return match ($region) {
+			'ru' => 'https://transformer-ru-boxes.bitrix.info/bitrix/tools/transformercontroller/add_queue.php',
+			default => self::CLOUD_CONVERTER_URL,
+		};
 	}
 
 

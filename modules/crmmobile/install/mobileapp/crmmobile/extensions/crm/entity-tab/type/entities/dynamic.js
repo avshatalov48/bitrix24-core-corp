@@ -104,6 +104,25 @@ jn.define('crm/entity-tab/type/entities/dynamic', (require, exports, module) => 
 		{
 			return Loc.getMessage('M_CRM_ENTITY_TAB_ENTITY_EMPTY_SINGLE_DYNAMIC');
 		}
+
+		getEmptyEntityScreenDescriptionText()
+		{
+			return Loc.getMessage('M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_ROBOTS', {
+				'#MANY_ENTITY_TYPE_TITLE#': this.getManyEntityTypeTitle(),
+			});
+		}
+
+		getMenuActions()
+		{
+			return [
+				{
+					type: UI.Menu.Types.HELPDESK,
+					data: {
+						articleCode: '18098934',
+					},
+				},
+			];
+		}
 	}
 
 	module.exports = { Dynamic };

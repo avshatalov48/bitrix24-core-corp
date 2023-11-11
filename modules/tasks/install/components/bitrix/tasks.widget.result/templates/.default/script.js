@@ -21,18 +21,17 @@ this.BX = this.BX || {};
 	      this.initExpand();
 	      main_core_events.EventEmitter.subscribe('onPullEvent-tasks', this.onPushResult.bind(this));
 	      main_core_events.EventEmitter.subscribe('BX.Livefeed:recalculateComments', this.onRecalculateLivefeedComments.bind(this));
-	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpenComplete', this.blockResize.bind(this));
+	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onLoad', this.onSidePanelLoad.bind(this));
 	    }
 	  }, {
 	    key: "scrollToResult",
 	    value: function scrollToResult() {
-	      var _this = this;
-	      var resultId = this.getResultIdFromRequest();
+	      var resultId = TaskResult.getResultIdFromRequest();
 	      if (resultId) {
-	        var resultItem = this.contentNode.querySelector('[data-id="' + resultId + '"]');
+	        var resultItem = this.contentNode.querySelector("[data-id=\"".concat(resultId, "\"]"));
 	        if (resultItem) {
 	          var scrollTo = function scrollTo() {
-	            _this.activateBlinking(resultItem);
+	            TaskResult.activateBlinking(resultItem);
 	            var itemTopPosition = main_core.Dom.getPosition(resultItem).top;
 	            window.scrollTo({
 	              top: itemTopPosition,
@@ -47,38 +46,46 @@ this.BX = this.BX || {};
 	          }
 	        }
 	      }
-	    }
-	  }, {
-	    key: "getResultIdFromRequest",
-	    value: function getResultIdFromRequest() {
-	      var uri = new main_core.Uri(window.location.href);
-	      var resultId = uri.getQueryParam('RID');
-	      return resultId ? parseInt(resultId, 10) : null;
+	      if (resultId === 0) {
+	        var commentNode = document.getElementById("record-TASK_".concat(this.taskId, "-0-placeholder")).parentElement;
+	        if (commentNode) {
+	          TaskResult.showCommentInput(commentNode);
+	          window.scrollTo({
+	            top: document.body.scrollHeight,
+	            behavior: 'smooth'
+	          });
+	        }
+	      }
 	    }
 	  }, {
 	    key: "blockResize",
 	    value: function blockResize() {
 	      this.contentNode.style.height = "".concat(this.containerNode.scrollHeight, "px");
+	    }
+	  }, {
+	    key: "onSidePanelLoad",
+	    value: function onSidePanelLoad() {
+	      this.blockResize();
 	      this.scrollToResult();
 	    }
 	  }, {
 	    key: "initExpand",
 	    value: function initExpand() {
-	      var _this2 = this;
+	      var _this = this;
 	      this.initExpandButton();
 	      if (this.contentNode) {
 	        this.blockResize();
 	      }
 	      this.targetBtnDown && this.targetBtnDown.addEventListener('click', this.showResults.bind(this));
 	      this.targetBtnUp && this.targetBtnUp.addEventListener('click', function () {
-	        _this2.targetBtnUp.classList.remove('--visible');
-	        _this2.targetBtnDown.classList.add('--visible');
-	        _this2.itemsContentNode.classList.remove('--open');
-	        _this2.itemsWrapperNode.style.height = "".concat(_this2.itemsWrapperNode.scrollHeight, "px");
-	        _this2.itemsWrapperNode.clientHeight; // it's needed, P.Rafeev magic
-	        _this2.itemsWrapperNode.style.height = 0;
-	        if (_this2.contentNode) {
-	          _this2.contentNode.style.height = "".concat(_this2.itemsNodes[0].offsetHeight + 35, "px");
+	        _this.targetBtnUp.classList.remove('--visible');
+	        _this.targetBtnDown.classList.add('--visible');
+	        _this.itemsContentNode.classList.remove('--open');
+	        _this.itemsWrapperNode.style.height = "".concat(_this.itemsWrapperNode.scrollHeight, "px");
+	        _this.itemsWrapperNode.clientHeight; // it's needed, P.Rafeev magic
+	        _this.itemsWrapperNode.style.height = 0;
+	        if (_this.contentNode) {
+	          _this.contentNode.style.height = "".concat(_this.itemsNodes[0].offsetHeight + 35, "px");
 	        }
 	      });
 	    }
@@ -166,28 +173,9 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
-	    key: "activateBlinking",
-	    value: function activateBlinking(resultNode) {
-	      if (main_core.Type.isUndefined(IntersectionObserver)) {
-	        return;
-	      }
-	      var observer = new IntersectionObserver(function (entries) {
-	        if (entries[0].isIntersecting === true) {
-	          main_core.Dom.addClass(resultNode, '--blink');
-	          setTimeout(function () {
-	            main_core.Dom.removeClass(resultNode, '--blink');
-	          }, 300);
-	          observer.disconnect();
-	        }
-	      }, {
-	        threshold: [0]
-	      });
-	      observer.observe(resultNode);
-	    }
-	  }, {
 	    key: "reloadResults",
 	    value: function reloadResults() {
-	      var _this3 = this;
+	      var _this2 = this;
 	      main_core.ajax.runComponentAction('bitrix:tasks.widget.result', 'getResults', {
 	        mode: 'class',
 	        data: {
@@ -197,11 +185,65 @@ this.BX = this.BX || {};
 	        if (!response.data) {
 	          return;
 	        }
-	        _this3.containerNode.innerHTML = response.data;
-	        main_core.Runtime.html(_this3.containerNode, response.data).then(function () {
-	          _this3.initExpand();
+	        _this2.containerNode.innerHTML = response.data;
+	        main_core.Runtime.html(_this2.containerNode, response.data).then(function () {
+	          _this2.initExpand();
 	        });
 	      });
+	    }
+	  }], [{
+	    key: "getResultIdFromRequest",
+	    value: function getResultIdFromRequest() {
+	      var uri = new main_core.Uri(window.location.href);
+	      var resultId = uri.getQueryParam('RID');
+	      return resultId ? parseInt(resultId, 10) : null;
+	    }
+	  }, {
+	    key: "activateBlinking",
+	    value: function activateBlinking(node) {
+	      if (main_core.Type.isUndefined(IntersectionObserver)) {
+	        return;
+	      }
+	      var observer = new IntersectionObserver(function (entries) {
+	        if (entries[0].isIntersecting === true) {
+	          main_core.Dom.addClass(node, '--blink');
+	          setTimeout(function () {
+	            main_core.Dom.removeClass(node, '--blink');
+	          }, 300);
+	          observer.disconnect();
+	        }
+	      }, {
+	        threshold: [0]
+	      });
+	      observer.observe(node);
+	    }
+	  }, {
+	    key: "showCommentInput",
+	    value: function showCommentInput(node) {
+	      if (main_core.Type.isUndefined(IntersectionObserver)) {
+	        return;
+	      }
+	      var observer = new IntersectionObserver(function (entries) {
+	        if (entries[0].isIntersecting === true) {
+	          var replyNode = node.querySelector('.feed-com-footer');
+	          if (replyNode) {
+	            // eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
+	            BX.fireEvent(replyNode, 'click');
+	            setTimeout(function () {
+	              window.scrollTo({
+	                top: document.body.scrollHeight,
+	                behavior: 'smooth'
+	              });
+	              var resultCheckbox = document.getElementById('IS_TASK_RESULT');
+	              resultCheckbox.checked = true;
+	            }, 300);
+	          }
+	          observer.disconnect();
+	        }
+	      }, {
+	        threshold: [0]
+	      });
+	      observer.observe(node);
 	    }
 	  }]);
 	  return TaskResult;

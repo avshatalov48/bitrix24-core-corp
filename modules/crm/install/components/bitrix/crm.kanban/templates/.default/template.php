@@ -19,6 +19,7 @@ if (isset($arResult['ERROR']))
 	return;
 }
 
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Conversion\EntityConverter;
 use Bitrix\Crm\Conversion\LeadConversionScheme;
@@ -340,6 +341,7 @@ else
 					new PushCrmSettings({
 						smartActivityNotificationSupported: <?= $smartActivityNotificationSupported ? 'true' : 'false' ?>,
 						entityTypeId: <?= $entityTypeId ?>,
+						pingSettings: <?= CUtil::PhpToJSObject((new TodoPingSettingsProvider($entityTypeId, (int)($arParams['EXTRA']['CATEGORY_ID'] ?? 0)))->fetchAll()) ?>,
 						rootMenu: Kanban.getSettingsButtonMenu(),
 						targetItemId: 'crm_kanban_cc_delimiter',
 						controller: BX.CRM.Kanban.Sort.SettingsController.Instance,

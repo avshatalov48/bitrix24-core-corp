@@ -18,6 +18,6 @@ $MESS["CRM_LEAD_LIST_DELETION_FILTER_OUTDATED_ERROR"] = "Операция уда
 $MESS["CRM_LEAD_LIST_REBUILD_SEARCH_CONTENT_NOT_REQUIRED_SUMMARY"] = "Перестроение поискового индекса лидов не требуется.";
 $MESS["CRM_LEAD_LIST_REBUILD_SEARCH_CONTENT_PROGRESS_SUMMARY"] = "Обработано лидов: #PROCESSED_ITEMS# из #TOTAL_ITEMS#.";
 $MESS["CRM_LEAD_LIST_REBUILD_SEARCH_CONTENT_COMPLETED_SUMMARY"] = "Обновление поискового индекса лидов завершено. Обработано лидов: #PROCESSED_ITEMS#.";
-$MESS["CRM_LEAD_LIST_BATCH_CONVERSION_AUTOCREATION_DISABLED"] = "Для групповой конвертации требуется включить опцию \"Создавать контакты, компании, сделки без участия пользователя\" в настройках CRM (Настройки/Прочие настройки/Общие/Настройки создания на основании)";
+$MESS["CRM_LEAD_LIST_BATCH_CONVERSION_AUTOCREATION_DISABLED_MSGVER_1"] = "Для групповой конвертации требуется включить опцию \"Создавать контакты, компании, сделки без участия пользователя\" в настройках CRM (Настройки/Прочие настройки/Общие/Настройки создания на основании)";
 $MESS["CRM_LEAD_LIST_BATCH_CONVERSION_CONFIG_IS_NOT_SUPPORTED"] = "Невозможно выполнить конвертацию лида при выбранных настройках.";
 ?>

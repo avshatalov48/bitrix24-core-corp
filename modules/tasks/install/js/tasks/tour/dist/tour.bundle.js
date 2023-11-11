@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,main_core,main_core_events,ui_tour) {
@@ -5,15 +6,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	var FirstProject = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(FirstProject, _EventEmitter);
-
 	  function FirstProject(params) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, FirstProject);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(FirstProject).call(this, params));
-
 	    _this.setEventNamespace('BX.Tasks.Tour.FirstProject');
-
 	    _this.popupData = params.popupData;
 	    _this.targetNode = document.getElementById(params.targetNodeId);
 	    _this.guide = new ui_tour.Guide({
@@ -25,12 +22,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }],
 	      onEvents: true
 	    });
-
 	    _this.bindEvents();
-
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(FirstProject, [{
 	    key: "bindEvents",
 	    value: function bindEvents() {
@@ -41,8 +35,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onGuideFinish",
 	    value: function onGuideFinish(event) {
 	      var _event$getData = event.getData(),
-	          guide = _event$getData.guide;
-
+	        guide = _event$getData.guide;
 	      if (guide === this.guide) {
 	        this.targetNode.href = main_core.Uri.removeParam(this.targetNode.href, ['PROJECT_OPTIONS']);
 	      }
@@ -51,19 +44,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onProjectSliderMessage",
 	    value: function onProjectSliderMessage(event) {
 	      var _event$getData2 = event.getData(),
-	          _event$getData3 = babelHelpers.slicedToArray(_event$getData2, 1),
-	          sliderEvent = _event$getData3[0];
-
+	        _event$getData3 = babelHelpers.slicedToArray(_event$getData2, 1),
+	        sliderEvent = _event$getData3[0];
 	      if (sliderEvent.getEventId() !== 'sonetGroupEvent') {
 	        return;
 	      }
-
 	      var sliderEventData = sliderEvent.getData();
-
 	      if (sliderEventData.code !== 'afterCreate' || sliderEventData.data.projectOptions.tourId !== this.guide.getId()) {
 	        return;
 	      }
-
 	      var projectId = sliderEventData.data.group.ID;
 	      this.emit('afterProjectCreated', projectId);
 	    }
@@ -71,7 +60,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showFinalStep",
 	    value: function showFinalStep(target) {
 	      var _this2 = this;
-
 	      this.guide.steps.push(new ui_tour.Step({
 	        target: target,
 	        cursorMode: true,
@@ -104,7 +92,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showNextStep",
 	    value: function showNextStep() {
 	      var _this3 = this;
-
 	      setTimeout(function () {
 	        return _this3.guide.showNextStep();
 	      }, 1000);
@@ -115,15 +102,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	var FirstScrum = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(FirstScrum, _EventEmitter);
-
 	  function FirstScrum(params) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, FirstScrum);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(FirstScrum).call(this, params));
-
 	    _this.setEventNamespace('BX.Tasks.Tour.FirstScrum');
-
 	    _this.popupData = params.popupData;
 	    _this.targetNode = document.getElementById(params.targetNodeId);
 	    _this.guide = new ui_tour.Guide({
@@ -135,12 +118,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }],
 	      onEvents: true
 	    });
-
 	    _this.bindEvents();
-
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(FirstScrum, [{
 	    key: "bindEvents",
 	    value: function bindEvents() {
@@ -151,8 +131,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onGuideFinish",
 	    value: function onGuideFinish(event) {
 	      var _event$getData = event.getData(),
-	          guide = _event$getData.guide;
-
+	        guide = _event$getData.guide;
 	      if (guide === this.guide) {
 	        this.targetNode.href = main_core.Uri.removeParam(this.targetNode.href, ['PROJECT_OPTIONS']);
 	      }
@@ -161,19 +140,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onProjectSliderMessage",
 	    value: function onProjectSliderMessage(event) {
 	      var _event$getData2 = event.getData(),
-	          _event$getData3 = babelHelpers.slicedToArray(_event$getData2, 1),
-	          sliderEvent = _event$getData3[0];
-
+	        _event$getData3 = babelHelpers.slicedToArray(_event$getData2, 1),
+	        sliderEvent = _event$getData3[0];
 	      if (sliderEvent.getEventId() !== 'sonetGroupEvent') {
 	        return;
 	      }
-
 	      var sliderEventData = sliderEvent.getData();
-
 	      if (sliderEventData.code !== 'afterCreate' || sliderEventData.data.projectOptions.tourId !== this.guide.getId()) {
 	        return;
 	      }
-
 	      var projectId = sliderEventData.data.group.ID;
 	      this.emit('afterProjectCreated', projectId);
 	    }
@@ -181,7 +156,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showFinalStep",
 	    value: function showFinalStep(target) {
 	      var _this2 = this;
-
 	      this.guide.steps.push(new ui_tour.Step({
 	        target: target,
 	        cursorMode: true,
@@ -214,7 +188,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showNextStep",
 	    value: function showNextStep() {
 	      var _this3 = this;
-
 	      setTimeout(function () {
 	        return _this3.guide.showNextStep();
 	      }, 1000);
@@ -225,57 +198,43 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	var Tour = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Tour, _EventEmitter);
-
 	  function Tour(params) {
 	    var _tours$firstProjectCr, _tours$firstScrumCrea;
-
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, Tour);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Tour).call(this, params));
-
 	    _this.setEventNamespace('BX.Tasks.Tour');
-
 	    var tours = params.tours;
 	    var firstProjectData = (_tours$firstProjectCr = tours.firstProjectCreation) !== null && _tours$firstProjectCr !== void 0 ? _tours$firstProjectCr : {};
 	    var firstScrumData = (_tours$firstScrumCrea = tours.firstScrumCreation) !== null && _tours$firstScrumCrea !== void 0 ? _tours$firstScrumCrea : {};
-
 	    if (firstProjectData.show) {
 	      _this.firstProject = new FirstProject({
 	        targetNodeId: firstProjectData.targetNodeId,
 	        popupData: firstProjectData.popupData
 	      });
-
 	      _this.firstProject.subscribe('afterProjectCreated', function (baseEvent) {
 	        _this.emit('FirstProject:afterProjectCreated', baseEvent.getData());
 	      });
-
 	      _this.firstProject.start();
 	    }
-
 	    if (firstScrumData.show) {
 	      _this.firstScrum = new FirstScrum({
 	        targetNodeId: firstScrumData.targetNodeId,
 	        popupData: firstScrumData.popupData
 	      });
-
 	      _this.firstScrum.subscribe('afterProjectCreated', function (baseEvent) {
 	        _this.emit('FirstScrum:afterScrumCreated', baseEvent.getData());
 	      });
-
 	      _this.firstScrum.start();
 	    }
-
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(Tour, [{
 	    key: "showFinalStep",
 	    value: function showFinalStep(target) {
 	      if (this.firstProject) {
 	        this.firstProject.showFinalStep(target);
 	      }
-
 	      if (this.firstScrum) {
 	        this.firstScrum.showFinalStep(target);
 	      }

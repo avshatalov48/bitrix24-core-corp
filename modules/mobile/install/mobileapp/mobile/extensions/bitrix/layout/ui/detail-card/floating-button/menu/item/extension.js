@@ -27,6 +27,7 @@ jn.define('layout/ui/detail-card/floating-button/menu/item', (require, exports, 
 	 * @property {?boolean} [shouldSaveInRecent]
 	 * @property {?string} [tabId]
 	 * @property {?boolean} [shouldLoadTab]
+	 * @property {bool} [disabled]
 	 */
 
 	/**
@@ -148,7 +149,7 @@ jn.define('layout/ui/detail-card/floating-button/menu/item', (require, exports, 
 		 */
 		isActive()
 		{
-			return this.isSupported() && this.isAvailable();
+			return this.isSupported() && this.isAvailable() && !this.isDisabled();
 		}
 
 		/**
@@ -187,6 +188,15 @@ jn.define('layout/ui/detail-card/floating-button/menu/item', (require, exports, 
 			}
 
 			return BX.prop.getBoolean(this.options, 'isAvailable', false);
+		}
+
+		/**
+		 * @public
+		 * @return {bool}
+		 */
+		isDisabled()
+		{
+			return BX.prop.getBoolean(this.options, 'disabled', false);
 		}
 
 		/**
@@ -375,11 +385,13 @@ jn.define('layout/ui/detail-card/floating-button/menu/item', (require, exports, 
 		emitItemAction(result)
 		{
 			const { customEventEmitter } = this.detailCard;
-			const eventArgs = [{
-				actionId: this.getId(),
-				tabId: this.getTabId(),
-				result,
-			}];
+			const eventArgs = [
+				{
+					actionId: this.getId(),
+					tabId: this.getTabId(),
+					result,
+				},
+			];
 
 			customEventEmitter.emit('DetailCard.FloatingMenu.Item::onAction', eventArgs);
 		}
@@ -419,10 +431,12 @@ jn.define('layout/ui/detail-card/floating-button/menu/item', (require, exports, 
 		saveInRecent()
 		{
 			const { customEventEmitter } = this.detailCard;
-			const eventArgs = [{
-				actionId: this.getId(),
-				tabId: this.getTabId(),
-			}];
+			const eventArgs = [
+				{
+					actionId: this.getId(),
+					tabId: this.getTabId(),
+				},
+			];
 
 			customEventEmitter.emit('DetailCard.FloatingMenu.Item::onSaveInRecent', eventArgs);
 		}

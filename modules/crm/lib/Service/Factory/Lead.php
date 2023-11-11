@@ -488,7 +488,7 @@ final class Lead extends Service\Factory
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
-				new Operation\Action\ClearCache('b_crm_lead'),
+				new Operation\Action\ClearCache('b_crm_lead', ),
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,

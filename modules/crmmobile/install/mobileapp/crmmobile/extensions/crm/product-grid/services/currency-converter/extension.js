@@ -11,16 +11,20 @@ jn.define('crm/product-grid/services/currency-converter', (require, exports, mod
 	class CurrencyConverter
 	{
 		/**
+		 * @param {number} entityId
+		 * @param {number} entityTypeId
 		 * @param {ProductRow[]} products
 		 * @param {string} currencyId
 		 */
-		convert(products, currencyId)
+		convert(entityId, entityTypeId, products, currencyId)
 		{
 			const action = 'crmmobile.ProductGrid.convertCurrency';
 			const queryConfig = {
 				json: {
 					currencyId,
 					products: products.map((product) => product.getRawValues()),
+					entityId,
+					entityTypeId,
 				},
 			};
 

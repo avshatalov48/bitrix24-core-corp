@@ -7,6 +7,7 @@ use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Category\Entity\ClientDefaultCategory;
 use Bitrix\Crm\Category\Entity\ItemCategory;
 use Bitrix\Crm\CompanyTable;
+use Bitrix\Crm\ContactTable;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Model\ItemCategoryTable;
@@ -98,15 +99,17 @@ final class Company extends Service\Factory
 				->setBoundEntities(Item::FIELD_NAME_CONTACTS)
 		;
 
-		$item->addImplementation(
-			new Item\FieldImplementation\Binding(
-				$entityObject,
-				\CCrmOwnerType::Contact,
-				$fieldNameMap,
-				ContactCompanyTable::getEntity(),
-				Container::getInstance()->getContactBroker(),
-			)
+		$implementation = new Item\FieldImplementation\Binding(
+			$entityObject,
+			\CCrmOwnerType::Contact,
+			$fieldNameMap,
+			ContactCompanyTable::getEntity(),
+			Container::getInstance()->getContactBroker(),
 		);
+
+		$implementation->configureUpdatingRefIdInBoundEntity(ContactTable::getEntity(), 'COMPANY_ID');
+
+		$item->addImplementation($implementation);
 	}
 
 	/**

@@ -1749,11 +1749,13 @@ class Chat
 							'SYSTEM' => 'Y',
 							'IMPORTANT_CONNECTOR' => 'Y',
 							'NO_SESSION_OL' => 'Y',
+							'RECENT_ADD' => 'N',
 							'PARAMS' => [
 								'CLASS' => 'bx-messenger-content-item-ol-output',
 								'IMOL_FORM' => 'offline',
 								'TYPE' => 'lines',
 								'COMPONENT_ID' => 'bx-imopenlines-message',
+								'NOTIFY' => 'N',
 							],
 						]);
 						if (!empty($messageId))

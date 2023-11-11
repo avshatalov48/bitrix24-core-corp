@@ -75,7 +75,7 @@ UI\Toolbar\Facade\Toolbar::addFilter($arResult['filter']);
 				<?= Loc::getMessage('CRM_TYPE_LIST_WELCOME_TITLE')?>
 			</div>
 			<div class="crm-type-list-welcome-text">
-				<?= Loc::getMessage('CRM_TYPE_LIST_WELCOME_TEXT')?>
+				<?= Loc::getMessage('CRM_TYPE_LIST_WELCOME_TEXT_MSGVER_1')?>
 			</div>
 			<div class="crm-type-list-welcome-help" onclick="BX.Crm.Router.Instance.openTypeHelpPage();">
 				<?= Loc::getMessage('CRM_TYPE_LIST_WELCOME_LINK_MSGVER_1')?>

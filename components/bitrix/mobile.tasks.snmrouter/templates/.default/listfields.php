@@ -5,7 +5,6 @@
  * @var CBitrixComponentTemplate $this
  * @var CUser $USER
  */
-\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 CModule::IncludeModule("task");
 $oListState = CTaskListState::getInstance($USER->getId());
 $loggedInUserId = (int) $USER->GetID();

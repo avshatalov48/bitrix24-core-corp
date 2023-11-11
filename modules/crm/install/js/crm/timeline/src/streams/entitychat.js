@@ -1,4 +1,5 @@
 import Stream from "../stream";
+import { Dom, Reflection, Type } from 'main.core';
 
 /** @memberof BX.Crm.Timeline.Streams */
 export default class EntityChat extends Stream
@@ -23,6 +24,7 @@ export default class EntityChat extends Stream
 		this._messageTextNode = null;
 		this._userWrapper = null;
 		this._extraUserCounter = null;
+		this.isLoading = false;
 
 		this._openChatHandler = BX.delegate(this.onOpenChat, this);
 	}
@@ -354,15 +356,25 @@ export default class EntityChat extends Stream
 		//region Message Text
 		let text = BX.prop.getString(message, "text", "");
 		const params = BX.prop.getObject(message, "params", {});
-		if(text === "")
+		if(text === "" && !params.ATTACH && !params.FILE_ID)
 		{
 			this._messageTextNode.innerHTML = "";
 		}
 		else
 		{
-			if(typeof(top.BX.MessengerCommon) !== "undefined")
+			const MessengerCommon = Reflection.getClass('top.BX.MessengerCommon');
+			const MessengerParser = Reflection.getClass('top.BX.Messenger.v2.Lib.Parser');
+			if (MessengerCommon)
 			{
-				text = top.BX.MessengerCommon.purifyText(text, params);
+				text = MessengerCommon.purifyText(text, params);
+			}
+			else if (MessengerParser)
+			{
+				text = MessengerParser.purify({
+					text,
+					attach: params.ATTACH,
+					files: typeof params.FILE_ID === 'object' && params.FILE_ID.length > 0,
+				});
 			}
 			this._messageTextNode.innerHTML = text;
 		}
@@ -433,9 +445,26 @@ export default class EntityChat extends Stream
 		);
 	}
 
+	loading(isLoading: boolean)
+	{
+		if (this._contentWrapper && this._contentWrapper.classList)
+		{
+			if (isLoading)
+			{
+				Dom.addClass(this._contentWrapper, 'crm-entity-chat-loading');
+				this.isLoading = true;
+			}
+			else
+			{
+				Dom.removeClass(this._contentWrapper, 'crm-entity-chat-loading');
+				this.isLoading = false;
+			}
+		}
+	}
+
 	onOpenChat(e)
 	{
-		if(typeof(top.BXIM) === "undefined")
+		if (Type.isUndefined(top.BX.Messenger.Public) || this.isLoading)
 		{
 			return;
 		}
@@ -447,29 +476,34 @@ export default class EntityChat extends Stream
 			return;
 		}
 
-		let slug = "";
+		const ownerInfo = this.getOwnerInfo();
+		const entityId = BX.prop.getInteger(ownerInfo, 'ENTITY_ID', 0);
+		const entityTypeId = BX.prop.getInteger(ownerInfo, 'ENTITY_TYPE_ID', 0);
 
-		const chatId = this.getChatId();
-		if(chatId > 0 && this.hasUserInfo(this.getUserId()))
-		{
-			slug = "chat" + chatId.toString();
-		}
-		else
-		{
-			const ownerInfo = this.getOwnerInfo();
-			const entityId = BX.prop.getInteger(ownerInfo, "ENTITY_ID", 0);
-			const entityTypeName = BX.prop.getString(ownerInfo, "ENTITY_TYPE_NAME", "");
+		const data = {
+			data: {
+				entityId,
+				entityTypeId,
+			},
+		};
 
-			if(entityTypeName !== "" && entityId > 0)
-			{
-				slug = "crm|" + entityTypeName + "|" + entityId.toString();
-			}
-		}
+		const successCallback = (response) => {
+			this.loading(false);
+			const chatId = response.data.chatId;
+			top.BX.Messenger.Public.openChat(`chat${chatId}`);
+		};
 
-		if(slug !== "")
-		{
-			top.BXIM.openMessengerSlider(slug, { RECENT: "N", MENU: "N" });
-		}
+		const errorCallback = (error) => {
+			this.loading(false);
+			const errorMessage = error.errors[0].message;
+			BX.UI.Notification.Center.notify({
+				content: errorMessage,
+				autoHideDelay: 5000,
+			});
+		};
+
+		this.loading(true);
+		BX.ajax.runAction('crm.timeline.chat.get', data).then(successCallback, errorCallback);
 	}
 
 	onChatEvent(command, params, extras)

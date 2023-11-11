@@ -9,6 +9,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { Color } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const { Logger } = require('im/messenger/lib/logger');
 	const { clone } = require('utils/object');
 
 	const dialogState = {
@@ -63,7 +64,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		getters: {
 			/**
 			 * @function dialoguesModel/getById
-			 * @return {DialoguesModelState}
+			 * @return {?DialoguesModelState}
 			 */
 			getById: (state) => (id) => {
 				return state.collection[id];
@@ -71,7 +72,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 			/**
 			 * @function dialoguesModel/getByChatId
-			 * @return {DialoguesModelState}
+			 * @return {?DialoguesModelState}
 			 */
 			getByChatId: (state) => (chatId) => {
 				chatId = Number.parseInt(chatId, 10);
@@ -126,19 +127,26 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				payload.map((element) => {
 					return validate(store, element);
 				}).forEach((element) => {
+					/** @type {DialoguesModelState} */
 					const existingItem = store.state.collection[element.dialogId];
 					if (existingItem)
 					{
 						store.commit('update', {
-							dialogId: element.dialogId,
-							fields: element,
+							actionName: 'set',
+							data: {
+								dialogId: element.dialogId,
+								fields: element,
+							},
 						});
 					}
 					else
 					{
 						store.commit('add', {
-							dialogId: element.dialogId,
-							fields: { ...dialogState, ...element },
+							actionName: 'set',
+							data: {
+								dialogId: element.dialogId,
+								fields: { ...dialogState, ...element },
+							},
 						});
 					}
 				});
@@ -158,8 +166,11 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 					if (!existingItem)
 					{
 						store.commit('add', {
-							dialogId: element.dialogId,
-							fields: { ...dialogState, ...element },
+							actionName: 'add',
+							data: {
+								dialogId: element.dialogId,
+								fields: { ...dialogState, ...element },
+							},
 						});
 					}
 				});
@@ -174,8 +185,11 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				}
 
 				store.commit('update', {
-					dialogId: payload.dialogId,
-					fields: validate(store, payload.fields),
+					actionName: 'update',
+					data: {
+						dialogId: payload.dialogId,
+						fields: validate(store, payload.fields),
+					},
 				});
 
 				return true;
@@ -216,8 +230,10 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				{
 					store.commit('update', {
 						actionName: 'updateWritingList',
-						dialogId: payload.dialogId,
-						fields: validateList,
+						data: {
+							dialogId: payload.dialogId,
+							fields: validateList,
+						},
 					});
 				}
 
@@ -232,16 +248,44 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 					return false;
 				}
 
-				store.commit('delete', payload.dialogId);
+				store.commit('delete', {
+					actionName: 'delete',
+					data: {
+						dialogId: payload.dialogId,
+					},
+				});
 
 				return true;
 			},
 
 			/** @function dialoguesModel/decreaseCounter */
 			decreaseCounter: (store, payload) => {
+				/** @type {DialoguesModelState} */
 				const existingItem = store.state.collection[payload.dialogId];
 				if (!existingItem)
 				{
+					return false;
+				}
+
+				// for fix race condition
+				if (payload.lastId)
+				{
+					if (existingItem.lastReadId === payload.lastId && payload.count !== existingItem.counter)
+					{
+						store.commit('update', {
+							actionName: 'decreaseCounter',
+							data: {
+								dialogId: payload.dialogId,
+								fields: {
+									counter: payload.count,
+									previousCounter: existingItem.counter,
+								},
+							},
+						});
+
+						return true;
+					}
+
 					return false;
 				}
 
@@ -256,11 +300,19 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 					decreasedCounter = 0;
 				}
 
+				if (decreasedCounter === existingItem.counter)
+				{
+					return false;
+				}
+
 				store.commit('update', {
-					dialogId: payload.dialogId,
-					fields: {
-						counter: decreasedCounter,
-						previousCounter: existingItem.counter,
+					actionName: 'decreaseCounter',
+					data: {
+						dialogId: payload.dialogId,
+						fields: {
+							counter: decreasedCounter,
+							previousCounter: existingItem.counter,
+						},
 					},
 				});
 
@@ -283,9 +335,11 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 				store.commit('update', {
 					actionName: 'updateUserCounter',
-					dialogId: payload.dialogId,
-					fields: {
-						userCounter: payload.userCounter,
+					data: {
+						dialogId: payload.dialogId,
+						fields: {
+							userCounter: payload.userCounter,
+						},
 					},
 				});
 
@@ -310,8 +364,10 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 				store.commit('update', {
 					actionName: 'mute',
-					dialogId: payload.dialogId,
-					fields: validate(store, { muteList }),
+					data: {
+						dialogId: payload.dialogId,
+						fields: validate(store, { muteList }),
+					},
 				});
 
 				return true;
@@ -330,8 +386,10 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 				store.commit('update', {
 					actionName: 'unmute',
-					dialogId: payload.dialogId,
-					fields: validate(store, { muteList }),
+					data: {
+						dialogId: payload.dialogId,
+						fields: validate(store, { muteList }),
+					},
 				});
 
 				return true;
@@ -360,11 +418,13 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				}
 
 				const newState = [...existingItem.participants, ...uniqId];
-				const userCounter = payload.userCounter || existingItem.userCounter + newState.length;
+				const userCounter = payload.userCounter || existingItem.userCounter;
 				store.commit('update', {
 					actionName: 'addParticipants',
-					dialogId: payload.dialogId,
-					fields: { participants: newState, userCounter },
+					data: {
+						dialogId: payload.dialogId,
+						fields: { participants: newState, userCounter },
+					},
 				});
 			},
 
@@ -386,25 +446,161 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				const newState = existingItem.participants.filter(
 					(userId) => !validUsersId.participants.includes(userId),
 				);
-				const userCounter = payload.userCounter || existingItem.userCounter + newState.length;
-
+				const userCounter = payload.userCounter || existingItem.userCounter;
 				store.commit('update', {
 					actionName: 'removeParticipants',
-					removeData: validUsersId.participants,
-					dialogId: payload.dialogId,
-					fields: { participants: newState, userCounter },
+					data: {
+						removeData: validUsersId.participants,
+						dialogId: payload.dialogId,
+						fields: { participants: newState, userCounter },
+					},
+				});
+			},
+
+			/** @function dialoguesModel/clearLastMessageViews */
+			clearLastMessageViews: (store, payload) => {
+				const existingItem = store.state.collection[payload.dialogId];
+				if (!existingItem)
+				{
+					return;
+				}
+
+				const {
+					lastMessageViews: defaultLastMessageViews,
+				} = dialogState;
+				store.commit('update', {
+					actionName: 'clearLastMessageViews',
+					data: {
+						dialogId: payload.dialogId,
+						fields: {
+							lastMessageViews: defaultLastMessageViews,
+						},
+					},
+				});
+			},
+
+			/** @function dialoguesModel/incrementLastMessageViews */
+			incrementLastMessageViews: (store, payload) => {
+				const existingItem = store.state.collection[payload.dialogId];
+				if (!existingItem)
+				{
+					return;
+				}
+
+				const newCounter = existingItem.lastMessageViews.countOfViewers + 1;
+				store.commit('update', {
+					actionName: 'incrementLastMessageViews',
+					data: {
+						dialogId: payload.dialogId,
+						fields: {
+							lastMessageViews: {
+								...existingItem.lastMessageViews,
+								countOfViewers: newCounter,
+							},
+						},
+					},
+				});
+			},
+
+			/** @function dialoguesModel/setLastMessageViews */
+			setLastMessageViews: (store, payload) => {
+				const {
+					dialogId,
+					fields: {
+						userId,
+						userName,
+						date,
+						messageId,
+					},
+				} = payload;
+				const existingItem = store.state.collection[dialogId];
+				if (!existingItem)
+				{
+					return;
+				}
+
+				const newLastMessageViews = {
+					countOfViewers: 1,
+					messageId,
+					firstViewer: {
+						userId,
+						userName,
+						date,
+					},
+				};
+				store.commit('update', {
+					actionName: 'setLastMessageViews',
+					data: {
+						dialogId,
+						fields: {
+							lastMessageViews: newLastMessageViews,
+						},
+					},
+				});
+			},
+
+			/** @function dialoguesModel/clearAllCounters */
+			clearAllCounters: (store, payload) => {
+				Object.values(store.state.collection).forEach((dialogItem) => {
+
+					if (dialogItem.counter > 0)
+					{
+						store.commit('update', {
+							actionName: 'clearAllCounters',
+							data: {
+								dialogId: dialogItem.dialogId,
+								fields: {
+									counter: 0,
+								},
+							},
+						});
+					}
 				});
 			},
 		},
 		mutations: {
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			add: (state, payload) => {
-				state.collection[payload.dialogId] = payload.fields;
+				Logger.warn('dialoguesModel: add mutation', payload);
+
+				const {
+					dialogId,
+					fields,
+				} = payload.data;
+
+				state.collection[dialogId] = fields;
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			update: (state, payload) => {
-				state.collection[payload.dialogId] = { ...state.collection[payload.dialogId], ...payload.fields };
+				Logger.warn('dialoguesModel: update mutation', payload, state.collection[payload.data.dialogId]);
+
+				const {
+					dialogId,
+					fields,
+				} = payload.data;
+
+				state.collection[dialogId] = { ...state.collection[dialogId], ...fields };
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			delete: (state, payload) => {
-				delete state.collection[payload.dialogId];
+				Logger.warn('dialoguesModel: delete mutation', payload);
+
+				const {
+					dialogId,
+				} = payload.data;
+
+				delete state.collection[dialogId];
 			},
 		},
 	};
@@ -669,6 +865,10 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		if (Type.isNumber(fields.disk_folder_id))
 		{
 			result.diskFolderId = fields.disk_folder_id;
+		}
+		else if (Type.isNumber(fields.diskFolderId))
+		{
+			result.diskFolderId = fields.diskFolderId;
 		}
 
 		return result;

@@ -16,6 +16,8 @@
 			this.providerId = 'chat';
 			this.providerTitle = BX.message('SE_CHAT_TITLE');
 			this.providerSubtitle = '';
+
+			this.isBetaAvailablePromise = this.checkIsBetaAvailable();
 		}
 
 		getProviderId()
@@ -33,7 +35,23 @@
 			return this.providerSubtitle;
 		}
 
-		getForm()
+		checkIsBetaAvailable()
+		{
+			return new Promise((resolve) => {
+				BX.ajax.runAction('immobile.api.Settings.isBetaAvailable')
+					.then((result) => {
+						resolve(result.data);
+					})
+					.catch((error) => {
+						console.error('immobile.isBetaAvailable error', error);
+
+						resolve(false);
+					})
+				;
+			});
+		}
+
+		async getForm()
 		{
 			this.values = Application.storage.getObject('settings.chat', {
 				quoteEnable: true,
@@ -62,8 +80,10 @@
 				])
 			}
 
+			const isBetaAvailable = await this.isBetaAvailablePromise;
+
 			let chatBetaOption = null;
-			if (Application.getApiVersion() >= 43 && Application.isBeta())
+			if (Application.getApiVersion() >= 43 && isBetaAvailable)
 			{
 				const chatBetaEnableSwitch =
 					FormItem.create('chatBetaEnable', FormItemType.SWITCH, BX.message('SE_CHAT_BETA_ENABLE_TITLE'))
@@ -90,16 +110,13 @@
 				FormSection.create("autoplay", BX.message("SE_CHAT_AUTOPLAY_TITLE")).addItems([
 					FormItem.create("autoplayVideo", FormItemType.SWITCH, BX.message("SE_CHAT_AUTOPLAY_VIDEO_TITLE")).setValue(this.values.autoplayVideo),
 				]),
-				FormSection.create("background", BX.message("SE_CHAT_BACKGROUND_TITLE"), BX.message('SE_CHAT_DESC')).addItems([
-					FormItem.create("backgroundType", FormItemType.SELECTOR, BX.message("SE_CHAT_BACKGROUND_COLOR_TITLE")).setSelectorItems(backgroundItems).setValue(this.values.backgroundType),
-				]),
 				chatBetaOption,
 			]);
 		}
 
-		drawForm()
+		async drawForm()
 		{
-			const form = this.getForm();
+			const form = await this.getForm();
 
 			this.provider.openForm(
 				form.compile(),

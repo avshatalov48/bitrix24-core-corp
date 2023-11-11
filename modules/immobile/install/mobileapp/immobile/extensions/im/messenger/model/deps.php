@@ -15,11 +15,13 @@ return [
 	'bundle' => [
 		'./src/application',
 		'./src/recent',
+		'./src/recent/search',
 		'./src/messages',
 		'./src/users',
 		'./src/dialogues',
 		'./src/files',
 		'./src/sidebar',
 		'./src/draft',
+		'./src/messages/reactions',
 	],
 ];

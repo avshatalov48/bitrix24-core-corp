@@ -36,7 +36,7 @@ class ContactSettings
 		$this->enableOutmodedRequisites = new BooleanSetting('~CRM_ENABLE_CONTACT_OUTMODED_FIELDS', false);
 		$this->enableDeferredCleaning = new BooleanSetting('enable_contact_deferred_cleaning', true);
 		$this->enableRecycleBin = new BooleanSetting('enable_contact_recycle_bin', true);
-		$this->initIsFactoryEnabledSetting(\CCrmOwnerType::Contact);
+		$this->initIsFactoryEnabledSetting(\CCrmOwnerType::Contact, false);
 	}
 	/**
 	 * Get current instance

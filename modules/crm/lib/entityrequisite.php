@@ -2496,7 +2496,7 @@ class EntityRequisite
 					$result[$fieldName] = $requisite->getRqListFieldValueTitle(
 						$fieldName,
 						$countryId,
-						$requisiteFields[$fieldName]
+						(string)$requisiteFields[$fieldName]
 					);
 				}
 			}

@@ -35,8 +35,8 @@ use Bitrix\Tasks\Integration\CRM\Timeline\Event\OnTaskTitleUpdated;
 use Bitrix\Tasks\Integration\CRM\Timeline\Event\OnTaskViewed;
 use Bitrix\Tasks\Integration\CRM\Timeline\TaskRepository;
 use Bitrix\Tasks\Internals\Task\Result\ResultTable;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\TaskObject;
-use CTasks;
 
 class TimeLineManager
 {
@@ -139,20 +139,20 @@ class TimeLineManager
 			);
 		}
 
-		if ($currentStatus !== $previousStatus && (int)$currentStatus === CTasks::STATE_COMPLETED)
+		if ($currentStatus !== $previousStatus && (int)$currentStatus === Status::COMPLETED)
 		{
 			$this->eventsController->addEvent(new OnTaskCompleted($this->taskRepository->getTask(), $this->userId));
 		}
 
-		if ($currentStatus !== $previousStatus && (int)$previousStatus === CTasks::STATE_COMPLETED)
+		if ($currentStatus !== $previousStatus && (int)$previousStatus === Status::COMPLETED)
 		{
 			$this->eventsController->addEvent(new OnTaskRenew($this->taskRepository->getTask(), $this->userId));
 		}
 
 		// task disapproved
 		if (
-			(int)$previousStatus === CTasks::STATE_SUPPOSEDLY_COMPLETED
-			&& (int)$currentStatus === CTasks::STATE_PENDING
+			(int)$previousStatus === Status::SUPPOSEDLY_COMPLETED
+			&& (int)$currentStatus === Status::PENDING
 		)
 		{
 			$this->eventsController->addEvent(
@@ -285,7 +285,7 @@ class TimeLineManager
 		}
 
 		if (
-			(int)$this->taskRepository->getTask()->getStatus() !== CTasks::STATE_COMPLETED
+			(int)$this->taskRepository->getTask()->getStatus() !== Status::COMPLETED
 			&& $this->userId !== $this->taskRepository->getTask()->getCreatedBy()
 			&& $this->userId === $this->taskRepository->getTask()->getResponsibleId()
 		)

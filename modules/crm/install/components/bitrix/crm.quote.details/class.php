@@ -100,12 +100,12 @@ class CrmQuoteDetailsComponent extends FactoryBased
 	{
 		if ($this->isPreviewItemBeforeCopyMode())
 		{
-			return Loc::getMessage('CRM_QUOTE_DETAILS_TITLE_COPY');
+			return Loc::getMessage('CRM_QUOTE_DETAILS_TITLE_COPY_MSGVER_1');
 		}
 
 		if($this->item->isNew())
 		{
-			return Loc::getMessage('CRM_QUOTE_DETAILS_TITLE_NEW');
+			return Loc::getMessage('CRM_QUOTE_DETAILS_TITLE_NEW_MSGVER_1');
 		}
 
 		return (string)$this->item->getHeading();
@@ -119,10 +119,10 @@ class CrmQuoteDetailsComponent extends FactoryBased
 	protected function getEntityEditorMessages(): array
 	{
 		return [
-			'COPY_PAGE_URL' => Loc::getMessage('CRM_QUOTE_DETAILS_COPY_PAGE_URL'),
-			'PAGE_URL_COPIED' => Loc::getMessage('CRM_QUOTE_DETAILS_PAGE_URL_COPIED'),
-			'MANUAL_OPPORTUNITY_CHANGE_MODE_TITLE' => Loc::getMessage('CRM_QUOTE_DETAILS_MANUAL_OPPORTUNITY_CHANGE_MODE_TITLE'),
-			'MANUAL_OPPORTUNITY_CHANGE_MODE_TEXT' => Loc::getMessage('CRM_QUOTE_DETAILS_MANUAL_OPPORTUNITY_CHANGE_MODE_TEXT'),
+			'COPY_PAGE_URL' => Loc::getMessage('CRM_QUOTE_DETAILS_COPY_PAGE_URL_MSGVER_1'),
+			'PAGE_URL_COPIED' => Loc::getMessage('CRM_QUOTE_DETAILS_PAGE_URL_COPIED_MSGVER_1'),
+			'MANUAL_OPPORTUNITY_CHANGE_MODE_TITLE' => Loc::getMessage('CRM_QUOTE_DETAILS_MANUAL_OPPORTUNITY_CHANGE_MODE_TITLE_MSGVER_1'),
+			'MANUAL_OPPORTUNITY_CHANGE_MODE_TEXT' => Loc::getMessage('CRM_QUOTE_DETAILS_MANUAL_OPPORTUNITY_CHANGE_MODE_TEXT_MSGVER_1'),
 		];
 	}
 
@@ -301,8 +301,8 @@ class CrmQuoteDetailsComponent extends FactoryBased
 					'messages' => [
 						'accessDenied' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_ACCESS_DENIED'),
 						'generalError' => Loc::getMessage('CRM_COMMON_ERROR_GENERAL'),
-						'dialogTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_DIALOG_TITLE'),
-						'syncEditorLegend' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_LEGEND'),
+						'dialogTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_DIALOG_TITLE_MSGVER_1'),
+						'syncEditorLegend' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_LEGEND_MSGVER_1'),
 						'syncEditorFieldListTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_FIELD_LIST'),
 						'syncEditorEntityListTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_ENTITY_LIST'),
 						'continueButton' => Loc::getMessage('CRM_COMMON_CONTINUE'),
@@ -339,8 +339,8 @@ class CrmQuoteDetailsComponent extends FactoryBased
 		// 		'messages' => [
 		// 			'accessDenied' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_ACCESS_DENIED'),
 		// 			'generalError' => Loc::getMessage('CRM_COMMON_ERROR_GENERAL'),
-		// 			'dialogTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_DIALOG_TITLE'),
-		// 			'syncEditorLegend' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_LEGEND'),
+		// 			'dialogTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_DIALOG_TITLE_MSGVER_1'),
+		// 			'syncEditorLegend' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_LEGEND_MSGVER_1'),
 		// 			'syncEditorFieldListTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_FIELD_LIST'),
 		// 			'syncEditorEntityListTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_ENTITY_LIST'),
 		// 			'continueButton' => Loc::getMessage('CRM_COMMON_CONTINUE'),
@@ -363,8 +363,8 @@ class CrmQuoteDetailsComponent extends FactoryBased
 	protected function getJsMessages(): array
 	{
 		return array_merge(parent::getJsMessages(), [
-			'deleteItemTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_DELETE_CONFIRMATION_TITLE'),
-			'deleteItemMessage' => Loc::getMessage('CRM_QUOTE_DETAILS_DELETE_CONFIRMATION_MESSAGE'),
+			'deleteItemTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_DELETE_CONFIRMATION_TITLE_MSGVER_1'),
+			'deleteItemMessage' => Loc::getMessage('CRM_QUOTE_DETAILS_DELETE_CONFIRMATION_MESSAGE_MSGVER_1'),
 			'template' => Loc::getMessage('CRM_QUOTE_DETAILS_JS_TEMPLATE'),
 			'selectTemplate' => Loc::getMessage('CRM_QUOTE_DETAILS_JS_SELECT_TEMPLATE'),
 			'print' => Loc::getMessage('CRM_QUOTE_DETAILS_JS_PRINT'),
@@ -408,7 +408,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 		if ($userPermissions->canDeleteItem($this->item))
 		{
 			$items[] = [
-				'text' => Loc::getMessage('CRM_QUOTE_DETAILS_DELETE'),
+				'text' => Loc::getMessage('CRM_QUOTE_DETAILS_DELETE_MSGVER_1'),
 				'onclick' => new Buttons\JsEvent('BX.Crm.ItemDetailsComponent:onClickDelete'),
 			];
 		}
@@ -432,7 +432,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 						'onclick' => $this->compileJsForPrintButton(static::WITH_SIGNATURE_AND_STAMP),
 					],
 					[
-						'text' => Loc::getMessage('CRM_QUOTE_DETAILS_BUTTON_ACTIONS_PRINT_BLANK'),
+						'text' => Loc::getMessage('CRM_QUOTE_DETAILS_BUTTON_ACTIONS_PRINT_BLANK_MSGVER_1'),
 						'onclick' => $this->compileJsForPrintButton(static::WITHOUT_SIGNATURE_AND_STAMP),
 					],
 					[
@@ -499,7 +499,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 		$sections = [];
 		$sections[] = [
 			'name' => 'main',
-			'title' => Loc::getMessage('CRM_QUOTE_DETAILS_EDITOR_MAIN_SECTION_TITLE'),
+			'title' => Loc::getMessage('CRM_QUOTE_DETAILS_EDITOR_MAIN_SECTION_TITLE_MSGVER_1'),
 			'type' => 'section',
 			'elements' => [
 				['name' => Item\Quote::FIELD_NAME_TITLE],
@@ -514,7 +514,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 	{
 		$sectionMain = [
 			'name' => 'main',
-			'title' => Loc::getMessage('CRM_QUOTE_DETAILS_EDITOR_MAIN_SECTION_TITLE'),
+			'title' => Loc::getMessage('CRM_QUOTE_DETAILS_EDITOR_MAIN_SECTION_TITLE_MSGVER_1'),
 			'type' => 'section',
 			'elements' => [
 				['name' => Item\Quote::FIELD_NAME_STAGE_ID],
@@ -586,7 +586,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 					'id' => static::TAB_NAME_DEALS,
 					'name' => Loc::getMessage('CRM_COMMON_DEALS'),
 					'html' => Loc::getMessage(
-						'CRM_QUOTE_DETAILS_CONVERTED_FROM_DEAL',
+						'CRM_QUOTE_DETAILS_CONVERTED_FROM_DEAL_MSGVER_1',
 						['#TITLE#' => $dealTitle, '#URL#' => $linkToDealDetails]
 					),
 					'enabled' => !$this->item->isNew(),
@@ -858,7 +858,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 	protected function getTimelineHistoryStubMessage(): ?string
 	{
 		return $this->arParams['CRM_TIMELINE_HISTORY_STUB_MESSAGE']
-			?? Loc::getMessage('CRM_QUOTE_DETAILS_TIMELINE_HISTORY_STUB');
+			?? Loc::getMessage('CRM_QUOTE_DETAILS_TIMELINE_HISTORY_STUB_MSGVER_1');
 	}
 
 	public function prepareKanbanConfiguration(): array
@@ -866,7 +866,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 		$scheme = [];
 		$scheme[] = [
 			'name' => 'main',
-			'title' => Loc::getMessage('CRM_QUOTE_DETAILS_SECTION_MAIN'),
+			'title' => Loc::getMessage('CRM_QUOTE_DETAILS_SECTION_MAIN_MSGVER_1'),
 			'type' => 'section',
 			'elements' => [
 				['name' => 'QUOTE_NUMBER'],

@@ -17,6 +17,11 @@ jn.define('im/messenger/provider/rest/message', (require, exports, module) => {
 				MESSAGE: options.text,
 			};
 
+			if (options.replyId && Type.isNumber(options.replyId))
+			{
+				messageAddParams.REPLY_ID = options.replyId;
+			}
+
 			if (Type.isString(options.messageType))
 			{
 				messageAddParams.MESSAGE_TYPE = options.messageType;

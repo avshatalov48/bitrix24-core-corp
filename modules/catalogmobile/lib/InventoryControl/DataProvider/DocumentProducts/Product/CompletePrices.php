@@ -21,7 +21,7 @@ final class CompletePrices implements Enricher
 		$result = [];
 		foreach ($records as $record)
 		{
-			$document = Document::load($record->documentId);
+			$document = Document::load($record->documentId, $record->documentType);
 			$currency = $document->currency;
 
 			$sku = null;

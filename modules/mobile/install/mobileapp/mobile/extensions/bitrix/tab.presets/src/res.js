@@ -3,9 +3,10 @@
  * @return {Object}
  */
 jn.define("tab/settings/res", (require, exports, module) => {
+	const AppTheme = require("apptheme")
 	const svg = {
 		chevron: '<svg width="10" height="16" viewBox="0 0 10 16" fill="none" xmlns="http://www.w3.org/2000/svg">\n' +
-			'<path fill-rule="evenodd" clip-rule="evenodd" d="M0.160156 2.34343L4.68721 6.87048L5.85979 7.99985L4.68721 9.12989L0.160156 13.6569L1.75762 15.2544L9.01178 8.00025L1.75762 0.746094L0.160156 2.34343Z" fill="#A8ADB4"/>\n' +
+			'<path fill-rule="evenodd" clip-rule="evenodd" d="M0.160156 2.34343L4.68721 6.87048L5.85979 7.99985L4.68721 9.12989L0.160156 13.6569L1.75762 15.2544L9.01178 8.00025L1.75762 0.746094L0.160156 2.34343Z" fill=AppTheme.colors.base4/>\n' +
 			'</svg>',
 		task: '<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">\n' +
 			'<path fill-rule="evenodd" clip-rule="evenodd" d="M14.583 26.166C20.9801 26.166 26.166 20.9801 26.166 14.583C26.166 8.18589 20.9801 3 14.583 3C8.18589 3 3 8.18589 3 14.583C3 20.9801 8.18589 26.166 14.583 26.166ZM8.38754 15.7555C8.05951 15.4604 8.08303 14.939 8.43632 14.6747L9.12617 14.1584C9.35082 13.9903 9.65416 13.9726 9.89687 14.1134L12.3809 15.5547C12.6486 15.71 12.9865 15.6711 13.2119 15.4591L19.1278 9.89349C19.2785 9.75172 19.4842 9.68388 19.6896 9.70817L20.5947 9.81518C21.1525 9.88113 21.4093 10.5441 21.0416 10.9687L13.6355 19.5177C13.3791 19.8138 12.9295 19.8418 12.6383 19.5798L8.38754 15.7555Z" fill="#COLOR#"/>\n' +
@@ -70,15 +71,15 @@ jn.define("tab/settings/res", (require, exports, module) => {
 	}
 
 	const colors = {
-		mainBackground: "#F2F2F6",
-		listViewBackground: "#F2F2F6",
-		sectionText: "#525C69",
-		icon: '#6A737F',
-		unreachableIcon: '#A8ADB4',
-		cellBorder: '#EBEBEB',
-		cellTextUnreachable: '#A8ADB4',
-		cellText: '#333333',
-		descriptionText: '#959CA4'
+		mainBackground: AppTheme.colors.bgPrimary,
+		listViewBackground: AppTheme.colors.bgPrimary,
+		sectionText: AppTheme.colors.base2,
+		icon: AppTheme.colors.base3,
+		unreachableIcon: AppTheme.colors.base4,
+		cellBorder: AppTheme.colors.base7,
+		cellTextUnreachable: AppTheme.colors.base4,
+		cellText: AppTheme.colors.base1,
+		descriptionText: AppTheme.colors.base4
 	}
 
 	const presetRoundedBorderStyle = {
@@ -104,7 +105,7 @@ jn.define("tab/settings/res", (require, exports, module) => {
 	 */
 	const styles = {
 		presetTitle: {
-			color: "#333333", fontWeight: "600", fontSize: 18, lineHeight: 20
+			color: AppTheme.colors.base1, fontWeight: "600", fontSize: 18, lineHeight: 20
 		},
 		presetBlockShadow: {
 			justifyContent: "space-around",
@@ -113,27 +114,30 @@ jn.define("tab/settings/res", (require, exports, module) => {
 			...presetRoundedBorderStyle
 		},
 		presetBlock: {
-			paddingLeft: 10,
-			paddingRight: 10,
-			paddingBottom: 10,
+			paddingLeft: 12,
+			paddingRight: 12,
+			paddingBottom: 14,
+
 			flexGrow: 1,
 			...presetRoundedBorderStyle
 		},
 		tabPreviewRoundedBorderStyle,
 		tabBarPreview: {
-			backgroundColor: "#ffffff",
-			height: "100%",
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			flexDirection: "row",
 			paddingLeft: 10,
+			height: 70,
 			paddingRight: 10,
 			justifyContent: "space-around",
 			alignItems: "flex-start",
+			borderColor: AppTheme.colors.accentSoftGray2,
+			borderWidth: 1,
 			...tabPreviewRoundedBorderStyle
 		},
 		sectionHeader: {
 			height: 38,
 			flex: 1,
-			backgroundColor: '#ffffff',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			justifyContent: "center",
 			borderTopRightRadius: 12,
 			paddingLeft: 18,
@@ -141,22 +145,22 @@ jn.define("tab/settings/res", (require, exports, module) => {
 		},
 		sectionFooter: {
 			height: 24,
-			backgroundColor: '#ffffff',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			borderBottomRightRadius: 12,
 			borderBottomLeftRadius: 12,
 		}
 	};
 
 	styles.presetBlockActive = {
-		borderColor: "#C3F0FF",
-		backgroundColor: "#E5F9FF",
+		borderColor: AppTheme.colors.accentSoftBlue1,
+		backgroundColor: AppTheme.colors.accentSoftBlue2,
 		borderWidth: 1,
 		check: true,
 		...styles.presetBlock
 	}
 	styles.presetBlockNonActive = {
-		borderColor: "#E6E7E9",
-		backgroundColor: "#F5F7F8",
+		borderColor: AppTheme.colors.bgSeparatorSecondary,
+		backgroundColor: AppTheme.colors.bgNavigation,
 		check: false,
 		...styles.presetBlock
 	}
@@ -172,11 +176,11 @@ jn.define("tab/settings/res", (require, exports, module) => {
 		paddingLeft: 6,
 		paddingRight: 6,
 		height: activeStatusLabelHeight,
-		backgroundColor: "#2FC6F6",
+		backgroundColor: AppTheme.colors.accentBrandBlue,
 		borderRadius: 10,
 	}
 
-	const getSvg = (code, color = "#D5D7DB") => {
+	const getSvg = (code, color = AppTheme.colors.base6) => {
 		let modifiedCode = getModifiedCode(code)
 		if (typeof svg[modifiedCode] !== "undefined")
 		{

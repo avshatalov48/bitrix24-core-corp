@@ -1,0 +1,2 @@
+.bx-im-smile-like, .bx-im-smile-dislike { display: inline-block; height: 20px; width: 20px; background: url("/bitrix/js/im/images/im-sprite-v36.png") repeat -211px -52px; margin-bottom: -1px;}
+.bx-im-smile-dislike { background-position:  -239px -52px;}

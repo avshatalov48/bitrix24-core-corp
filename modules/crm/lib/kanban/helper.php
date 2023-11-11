@@ -392,7 +392,7 @@ class Helper
 					}
 				}
 				$presets[$entity]['filter_new'] = array(
-					'name' => Loc::getMessage('CRM_KANBAN_HELPER_QT_NEW'),
+					'name' => Loc::getMessage('CRM_KANBAN_HELPER_QT_NEW_MSGVER_1'),
 					'fields' => array(
 						'STATUS_ID' => array(
 							'selDRAFT' => 'DRAFT'
@@ -400,7 +400,7 @@ class Helper
 					)
 				);
 				$presets[$entity]['filter_my'] = array(
-					'name' => Loc::getMessage('CRM_KANBAN_HELPER_QT_MY'),
+					'name' => Loc::getMessage('CRM_KANBAN_HELPER_QT_MY_MSGVER_1'),
 					'disallow_for_all' => true,
 					'fields' => array(
 						'ASSIGNED_BY_ID_name' => $uname,

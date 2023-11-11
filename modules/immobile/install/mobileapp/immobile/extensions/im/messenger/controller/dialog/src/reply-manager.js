@@ -5,8 +5,8 @@
  * @module im/messenger/controller/dialog/reply-manager
  */
 jn.define('im/messenger/controller/dialog/reply-manager', (require, exports, module) => {
-
 	const { Loc } = require('loc');
+	const { Type } = require('type');
 	const { clone } = require('utils/object');
 	const {
 		MessageType,
@@ -68,7 +68,7 @@ jn.define('im/messenger/controller/dialog/reply-manager', (require, exports, mod
 
 		setQuoteMessage(message)
 		{
-			const modelMessage = this.store.getters['messagesModel/getMessageById'](message.id);
+			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
 
 			const quoteMessage = clone(message);
 			const isSystemMessage = modelMessage.authorId === 0;
@@ -101,15 +101,19 @@ jn.define('im/messenger/controller/dialog/reply-manager', (require, exports, mod
 			return this.quoteMessage;
 		}
 
-		getQuoteText()
+		getQuoteText(message = this.getQuoteMessage())
 		{
-			const modelMessage = this.store.getters['messagesModel/getMessageById'](this.getQuoteMessage().id);
+			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
+			if (Type.isUndefined(modelMessage) || (Type.isObject(modelMessage) && !('id' in modelMessage)))
+			{
+				return '';
+			}
 
 			let quoteTitle = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_QUOTE_DEFAULT_TITLE');
 			const isSystemMessage = modelMessage.authorId === 0;
 			if (!isSystemMessage && modelMessage.authorId)
 			{
-				const user = this.store.getters['usersModel/getUserById'](modelMessage.authorId);
+				const user = this.store.getters['usersModel/getById'](modelMessage.authorId);
 				quoteTitle = user.name;
 			}
 
@@ -118,7 +122,7 @@ jn.define('im/messenger/controller/dialog/reply-manager', (require, exports, mod
 
 			let quoteContext = '';
 			const dialog = this.store.getters['dialoguesModel/getByChatId'](modelMessage.chatId);
-			if (dialog && dialog.type === DialogType.user)
+			if (dialog && (dialog.type === DialogType.user || dialog.type === DialogType.private))
 			{
 				quoteContext = `#${dialog.dialogId}:${MessengerParams.getUserId()}/${modelMessage.id}`;
 			}
@@ -137,7 +141,7 @@ jn.define('im/messenger/controller/dialog/reply-manager', (require, exports, mod
 
 		setEditMessage(message)
 		{
-			const modelMessage = this.store.getters['messagesModel/getMessageById'](message.id);
+			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
 			const editMessage = clone(message);
 			editMessage.username = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_EDIT_FIELD');
 
@@ -224,7 +228,7 @@ jn.define('im/messenger/controller/dialog/reply-manager', (require, exports, mod
 			this.setEditMessage(message);
 			this._isEditInProcess = true;
 
-			const modelMessage = clone(this.store.getters['messagesModel/getMessageById'](Number(message.id)));
+			const modelMessage = clone(this.store.getters['messagesModel/getById'](Number(message.id)));
 			const editMessage = this.getEditMessage();
 
 			this.dialogView.setInputQuote(editMessage, InputQuoteType.edit);
@@ -276,6 +280,16 @@ jn.define('im/messenger/controller/dialog/reply-manager', (require, exports, mod
 			this.setQuoteMessage(message);
 			this._isQuoteInProcess = true;
 			this.dialogView.setInputQuote(message, InputQuoteType.reply, false);
+		}
+
+		/**
+		 * @desc Check is having reply id in the message
+		 * @param {MessagesModelState} message
+		 * @return {boolean}
+		 */
+		isHasQuote(message)
+		{
+			return message.params.replyId;
 		}
 	}
 

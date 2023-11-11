@@ -1,5 +1,6 @@
+/* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core_events,crm_activity_todoNotificationSkipMenu,main_popup,crm_kanban_sort,crm_kanban_restriction,main_core) {
+(function (exports,main_core_events,crm_activity_todoNotificationSkipMenu,crm_activity_todoPingSettingsMenu,main_popup,crm_kanban_sort,crm_kanban_restriction,main_core) {
 	'use strict';
 
 	function requireClassOrNull(param, constructor, paramName) {
@@ -170,12 +171,14 @@ this.BX = this.BX || {};
 	 * @memberOf BX.Crm
 	 */
 	var _entityTypeId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+	var _pingSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pingSettings");
 	var _rootMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rootMenu");
 	var _targetItemId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("targetItemId");
 	var _kanbanController = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("kanbanController");
 	var _restriction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restriction");
 	var _gridController = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("gridController");
 	var _todoSkipMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("todoSkipMenu");
+	var _todoPingSettingsMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("todoPingSettingsMenu");
 	var _isSetSortRequestRunning = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSetSortRequestRunning");
 	var _smartActivityNotificationSupported = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("smartActivityNotificationSupported");
 	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
@@ -186,8 +189,12 @@ this.BX = this.BX || {};
 	var _isLastActivitySortEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isLastActivitySortEnabled");
 	var _handleLastActivitySortToggleClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleLastActivitySortToggleClick");
 	var _shouldShowTodoSkipMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowTodoSkipMenu");
+	var _shouldShowTodoPingSettingsMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowTodoPingSettingsMenu");
 	class PushCrmSettings {
 	  constructor(params) {
+	    Object.defineProperty(this, _shouldShowTodoPingSettingsMenu, {
+	      value: _shouldShowTodoPingSettingsMenu2
+	    });
 	    Object.defineProperty(this, _shouldShowTodoSkipMenu, {
 	      value: _shouldShowTodoSkipMenu2
 	    });
@@ -216,6 +223,10 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _pingSettings, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _rootMenu, {
 	      writable: true,
 	      value: void 0
@@ -240,6 +251,10 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _todoPingSettingsMenu, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _isSetSortRequestRunning, {
 	      writable: true,
 	      value: false
@@ -249,6 +264,7 @@ this.BX = this.BX || {};
 	      value: false
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1] = main_core.Text.toInteger(params.entityTypeId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _pingSettings)[_pingSettings] = main_core.Type.isPlainObject(params.pingSettings) ? params.pingSettings : {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _smartActivityNotificationSupported)[_smartActivityNotificationSupported] = main_core.Text.toBoolean(params.smartActivityNotificationSupported);
 	    if (EntityType && !EntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1])) {
 	      throw new Error(`Provided entityTypeId is invalid: ${babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1]}`);
@@ -264,6 +280,12 @@ this.BX = this.BX || {};
 	      entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1],
 	      selectedValue: requireStringOrNull(params.todoCreateNotificationSkipPeriod, 'params.todoCreateNotificationSkipPeriod')
 	    });
+	    if (Object.keys(babelHelpers.classPrivateFieldLooseBase(this, _pingSettings)[_pingSettings]).length > 0) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _todoPingSettingsMenu)[_todoPingSettingsMenu] = new crm_activity_todoPingSettingsMenu.TodoPingSettingsMenu({
+	        entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1],
+	        settings: babelHelpers.classPrivateFieldLooseBase(this, _pingSettings)[_pingSettings]
+	      });
+	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _bindEvents)[_bindEvents]();
 	  }
 	}
@@ -309,12 +331,16 @@ this.BX = this.BX || {};
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _shouldShowTodoSkipMenu)[_shouldShowTodoSkipMenu]()) {
 	    items.push(...babelHelpers.classPrivateFieldLooseBase(this, _todoSkipMenu)[_todoSkipMenu].getItems());
 	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _shouldShowTodoPingSettingsMenu)[_shouldShowTodoPingSettingsMenu]()) {
+	    var _babelHelpers$classPr;
+	    items.push(...((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _todoPingSettingsMenu)[_todoPingSettingsMenu]) == null ? void 0 : _babelHelpers$classPr.getItems()));
+	  }
 	  return items;
 	}
 	function _shouldShowLastActivitySortToggle2() {
-	  var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3;
-	  const shouldShowInKanban = ((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _kanbanController)[_kanbanController]) == null ? void 0 : _babelHelpers$classPr.getCurrentSettings().isTypeSupported(crm_kanban_sort.Type.BY_LAST_ACTIVITY_TIME)) && ((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _restriction)[_restriction]) == null ? void 0 : _babelHelpers$classPr2.isSortTypeChangeAvailable());
-	  return !!(shouldShowInKanban || (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _gridController)[_gridController]) != null && _babelHelpers$classPr3.isLastActivitySortSupported());
+	  var _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4;
+	  const shouldShowInKanban = ((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _kanbanController)[_kanbanController]) == null ? void 0 : _babelHelpers$classPr2.getCurrentSettings().isTypeSupported(crm_kanban_sort.Type.BY_LAST_ACTIVITY_TIME)) && ((_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _restriction)[_restriction]) == null ? void 0 : _babelHelpers$classPr3.isSortTypeChangeAvailable());
+	  return !!(shouldShowInKanban || (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _gridController)[_gridController]) != null && _babelHelpers$classPr4.isLastActivitySortSupported());
 	}
 	function _getLastActivitySortToggle2() {
 	  return {
@@ -364,11 +390,14 @@ this.BX = this.BX || {};
 	function _shouldShowTodoSkipMenu2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _smartActivityNotificationSupported)[_smartActivityNotificationSupported];
 	}
+	function _shouldShowTodoPingSettingsMenu2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _todoPingSettingsMenu)[_todoPingSettingsMenu] && babelHelpers.classPrivateFieldLooseBase(this, _shouldShowLastActivitySortToggle)[_shouldShowLastActivitySortToggle]();
+	}
 
 	const namespace = main_core.Reflection.namespace('BX.Crm');
 	namespace.PushCrmSettings = PushCrmSettings;
 
 	exports.PushCrmSettings = PushCrmSettings;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX.Event,BX.Crm.Activity,BX.Main,BX.CRM.Kanban,BX.CRM.Kanban,BX));
+}((this.BX.Crm = this.BX.Crm || {}),BX.Event,BX.Crm.Activity,BX.Crm.Activity,BX.Main,BX.CRM.Kanban,BX.CRM.Kanban,BX));
 //# sourceMappingURL=push-crm-settings.bundle.js.map

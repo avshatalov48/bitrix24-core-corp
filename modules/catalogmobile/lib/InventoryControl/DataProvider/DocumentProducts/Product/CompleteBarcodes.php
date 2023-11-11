@@ -38,6 +38,8 @@ final class CompleteBarcodes implements Enricher
 				$record->barcode = $barcodesFromCatalog[$record->productId];
 			}
 
+			$record->oldBarcode = $record->barcode;
+
 			$result[] = $record;
 		}
 

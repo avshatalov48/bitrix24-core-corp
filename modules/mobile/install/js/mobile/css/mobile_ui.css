@@ -166,9 +166,8 @@
 
 .long-tap-activate
 {
-    background: #e0e0e0 !important;
-    -webkit-transition-property: none!important;
-
+    background: var(--tech-push)  !important;
+    -webkit-transition-property: none!important
 }
 
 .long-tap-block

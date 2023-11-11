@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,ui_vue3,main_popup,main_core,main_core_events,ui_entitySelector,ui_notification,main_date,crm_timeline_tools,crm_activity_fileUploader,crm_activity_settingsPopup) {
@@ -938,8 +939,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  };
 	}
 	function _getDefaultPingParams2() {
+	  // TODO: get real default values from server-side
 	  return {
-	    selectedItems: ['at the time of the onset', 'in 15 minutes']
+	    selectedItems: ['at_the_time_of_the_onset', 'in_15_minutes']
 	  };
 	}
 	function _getDefaultDescription2() {

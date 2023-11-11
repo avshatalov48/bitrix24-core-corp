@@ -36,7 +36,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 			'contact': '<?=GetMessageJS('REST_CRM_FF_CONTACT')?>',
 			'company': '<?=GetMessageJS('REST_CRM_FF_COMPANY')?>',
 			'deal': '<?=GetMessageJS('REST_CRM_FF_DEAL')?>',
-			'quote': '<?=GetMessageJS('REST_CRM_FF_QUOTE')?>',
+			'quote': '<?=GetMessageJS('REST_CRM_FF_QUOTE_MSGVER_1')?>',
 			'ok': '<?=GetMessageJS('REST_CRM_FF_OK')?>',
 			'cancel': '<?=GetMessageJS('REST_CRM_FF_CANCEL')?>',
 			'close': '<?=GetMessageJS('REST_CRM_FF_CLOSE')?>',

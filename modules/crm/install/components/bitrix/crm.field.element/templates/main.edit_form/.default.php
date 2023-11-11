@@ -122,7 +122,7 @@ else
 						CRM_FF_COMPANY: '<?=GetMessageJS('CRM_FF_COMPANY')?>',
 						CRM_FF_DEAL: '<?=GetMessageJS('CRM_FF_DEAL')?>',
 						CRM_FF_ORDER: '<?=GetMessageJS('CRM_FF_ORDER')?>',
-						CRM_FF_QUOTE: '<?=GetMessageJS('CRM_FF_QUOTE')?>',
+						CRM_FF_QUOTE: '<?=GetMessageJS('CRM_FF_QUOTE_MSGVER_1')?>',
 						CRM_FF_OK: '<?=GetMessageJS('CRM_FF_OK')?>',
 						CRM_FF_CANCEL: '<?=GetMessageJS('CRM_FF_CANCEL')?>',
 						CRM_FF_CLOSE: '<?=GetMessageJS('CRM_FF_CLOSE')?>',

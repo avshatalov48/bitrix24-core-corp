@@ -250,6 +250,7 @@ BX.namespace('Tasks.Component');
 
 			bindEvents: function()
 			{
+				this.bindAIEvents();
 				if(!this.isEditMode())
 				{
 					// editor events
@@ -368,6 +369,21 @@ BX.namespace('Tasks.Component');
 
 					BX.Event.EventEmitter.emit('BX.Tasks.Component.Task:projectPreselected', { groupId: groupId });
 				}
+			},
+
+			bindAIEvents: function() {
+				BX.addCustomEvent('AI.Copilot:save', function(event) {
+					if (event.data.code === 'create_checklist')
+					{
+						this.onToCheckListClick(event.data.result);
+					}
+				}.bind(this));
+				BX.addCustomEvent('AI.Copilot:add_below', function(event) {
+					if (event.data.code === 'create_checklist')
+					{
+						this.onToCheckListClick(event.data.result);
+					}
+				}.bind(this));
 			},
 
 			bindNestedControls: function()
@@ -1244,9 +1260,12 @@ BX.namespace('Tasks.Component');
 				return text.split(/\r\n|\r|\n/g);
 			},
 
-			onToCheckListClick: function()
+			onToCheckListClick: function(text = '')
 			{
-				var text = this.getEditorSelectedText();
+				if (typeof text !== 'string' || (typeof text === 'string' && text === ''))
+				{
+					text = this.getEditorSelectedText();
+				}
 				var titles = this.getTitlesFromText(text);
 
 				if (titles.length <= 0)

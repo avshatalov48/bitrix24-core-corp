@@ -9,6 +9,13 @@ jn.define('catalog/product-wizard-step/photo', (require, exports, module) => {
 	 */
 	class CatalogProductPhotoStep extends CatalogProductWizardStep
 	{
+		constructor(entity, options)
+		{
+			super(entity, options);
+
+			this.isSaving = false;
+		}
+
 		prepareFields()
 		{
 			this.clearFields();
@@ -39,10 +46,20 @@ jn.define('catalog/product-wizard-step/photo', (require, exports, module) => {
 
 		onMoveToNextStep()
 		{
+			if (this.isSaving)
+			{
+				return false;
+			}
+
+			this.isSaving = true;
+
 			return (
 				super.onMoveToNextStep()
 					.then(() => this.waitUntilPhotosLoaded())
 					.then(() => this.entity.save(true))
+					.then(() => {
+						this.isSaving = false;
+					})
 			);
 		}
 

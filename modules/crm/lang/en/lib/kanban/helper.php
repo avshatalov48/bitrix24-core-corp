@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_KANBAN_HELPER_DPR_MY"] = "My Deals";
 $MESS["CRM_KANBAN_HELPER_DPR_WON"] = "Won deals";
 $MESS["CRM_KANBAN_HELPER_DPR_WORK"] = "Deals in progress";
@@ -49,9 +49,8 @@ $MESS["CRM_KANBAN_HELPER_LPR_WORK"] = "All in progress";
 $MESS["CRM_KANBAN_HELPER_ORDER_PRESET_MY"] = "My orders";
 $MESS["CRM_KANBAN_HELPER_ORDER_PRESET_MY_WORK"] = "Orders in progress";
 $MESS["CRM_KANBAN_HELPER_ORDER_PRESET_WON"] = "Completed";
-$MESS["CRM_KANBAN_HELPER_QT_MY"] = "My Quotes";
+$MESS["CRM_KANBAN_HELPER_QT_MY_MSGVER_1"] = "My estimates";
 $MESS["CRM_KANBAN_HELPER_QT_MY_NOT_OVERDUE"] = "My Items on Schedule";
 $MESS["CRM_KANBAN_HELPER_QT_MY_OVERDUE"] = "My Overdue Items";
 $MESS["CRM_KANBAN_HELPER_QT_MY_WORK"] = "My lists in progress";
-$MESS["CRM_KANBAN_HELPER_QT_NEW"] = "New quotes";
-?>
+$MESS["CRM_KANBAN_HELPER_QT_NEW_MSGVER_1"] = "New estimates";

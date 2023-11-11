@@ -51,6 +51,7 @@ jn.define('layout/ui/entity-editor/scheme/element', (require, exports, module) =
 			this.data = BX.prop.getObject(this.settings, 'data', {});
 
 			this.editable = BX.prop.getBoolean(this.settings, 'editable', true);
+			this.showNew = BX.prop.getBoolean(this.settings, 'showNew', false);
 			this.isShownAlways = BX.prop.getBoolean(this.settings, 'showAlways', false);
 			this.multiple = BX.prop.getBoolean(this.settings, 'multiple', false);
 			this.enableTitle = BX.prop.getBoolean(this.settings, 'enableTitle', true)
@@ -129,6 +130,11 @@ jn.define('layout/ui/entity-editor/scheme/element', (require, exports, module) =
 		isEditable()
 		{
 			return this.editable;
+		}
+
+		isShowNew()
+		{
+			return this.showNew;
 		}
 
 		isMultiple()

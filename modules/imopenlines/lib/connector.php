@@ -515,10 +515,12 @@ class Connector
 							$session->update($updateSession);
 
 							if (
-								$session->getConfig('AGREEMENT_MESSAGE') == 'Y' &&
-								!$session->chat->isNowCreated() &&
-								$session->getUser() && $session->getUser('USER_ID') == $params['message']['user_id'] &&
-								$session->getUser('USER_CODE') && $session->getUser('AGREES') == 'N'
+								$session->getConfig('AGREEMENT_MESSAGE') == 'Y'
+								&& !$session->chat->isNowCreated()
+								&& $session->getUser()
+								&& $session->getUser('USER_ID') == $params['message']['user_id']
+								&& $session->getUser('USER_CODE')
+								&& $session->getUser('AGREES') == 'N'
 							)
 							{
 								ImOpenLines\Common::setUserAgrees([
@@ -547,13 +549,11 @@ class Connector
 							if (!$voteSession && $params['message']['user_id'] != 0 && !User::getInstance($params['message']['user_id'])->isBot())
 							{
 								$kpi = new KpiManager($session->getData('ID'));
-								$kpi->addMessage(
-									[
-										'MESSAGE_ID' => $messageId,
-										'LINE_ID' => $session->getData('CONFIG_ID'),
-										'OPERATOR_ID' => $session->getData('OPERATOR_ID')
-									]
-								);
+								$kpi->addMessage([
+									'MESSAGE_ID' => $messageId,
+									'LINE_ID' => $session->getData('CONFIG_ID'),
+									'OPERATOR_ID' => $session->getData('OPERATOR_ID')
+								]);
 							}
 
 							$result = [
@@ -563,8 +563,8 @@ class Connector
 						}
 
 						if (
-							!$resultLoadSession &&
-							$session->isCloseVote()
+							!$resultLoadSession
+							&& $session->isCloseVote()
 						)
 						{
 							Im::addCloseVoteMessage($session->getData('CHAT_ID'), $session->getConfig('VOTE_TIME_LIMIT'));
@@ -736,6 +736,8 @@ class Connector
 
 	/**
 	 * Sending messages to external channels.
+	 * Event `im:OnAfterMessagesAdd` fired in @see \CIMMessenger::Add
+	 * when calls @see \Bitrix\ImOpenLines\Connector::onMessageSend
 	 *
 	 * @param $params
 	 * @return Result
@@ -767,9 +769,12 @@ class Connector
 
 			$actualLineId = $params['connector']['line_id'];
 
-			$session = new Session();
-			if (empty($params['no_session']) || $params['no_session'] !== 'Y')
+			$allowTouchSession = empty($params['no_session']) || $params['no_session'] !== 'Y';
+
+			if ($allowTouchSession)
 			{
+				$session = new Session();
+
 				$resultLoadSession = $session->load([
 					'USER_CODE' => self::getUserCode($params['connector']),
 					'MODE' => Session::MODE_OUTPUT,
@@ -781,79 +786,69 @@ class Connector
 				}
 
 				if (
-					$result->isSuccess() &&
-					ReplyBlock::isBlocked($session)
+					$result->isSuccess()
+					&& ReplyBlock::isBlocked($session)
 				)
 				{
 					$result->addError(new Error('This chat is blocked for sending outgoing messages', 'IMOPENLINES_ERROR_SESSION_BLOCKED', __METHOD__));
 				}
 
 				if (
-					$result->isSuccess() &&
-					$session->getConfig('ACTIVE') !== 'Y'
+					$result->isSuccess()
+					&& $session->getConfig('ACTIVE') !== 'Y'
 				)
 				{
 					$result->addError(new Error('The open line is deactivated', 'IMOPENLINES_ERROR_LINE_DEACTIVATED', __METHOD__));
 				}
 
-				if (
-					$result->isSuccess() &&
-					$params['message']['system'] !== 'Y'
-				)
-				{
-					$updateSession = [
-						'DATE_MODIFY' => new DateTime,
-						'MESSAGE_COUNT' => true,
-						'DATE_LAST_MESSAGE' => new DateTime
-					];
-
-					if (
-						!$session->getData('DATE_FIRST_ANSWER')
-						&& !empty($session->getData('OPERATOR_ID'))
-						&& Queue::isRealOperator($session->getData('OPERATOR_ID'))
-					)
-					{
-						$currentTime = new DateTime();
-						$updateSession['DATE_FIRST_ANSWER'] = $currentTime;
-						$updateSession['TIME_FIRST_ANSWER'] = $currentTime->getTimestamp() - $session->getData('DATE_CREATE')->getTimestamp();
-					}
-
-					$eventData = [
-						'STATUS_BEFORE' => $session->getData('STATUS'),
-						'CHAT_ENTITY_ID' => self::getUserCode($params['connector']),
-						'AUTHOR_ID' => $params['message']['user_id']
-					];
-					$session->update($updateSession);
-					$eventData['STATUS_AFTER'] = $session->getData('STATUS');
-					Queue\Event::checkFreeSlotBySendMessage($eventData);
-				}
-
 				if ($result->isSuccess())
 				{
+					if ($params['message']['system'] !== 'Y')
+					{
+						$updateSession = [
+							'DATE_MODIFY' => new DateTime,
+							'MESSAGE_COUNT' => true,
+							'DATE_LAST_MESSAGE' => new DateTime
+						];
+
+						if (
+							!$session->getData('DATE_FIRST_ANSWER')
+							&& !empty($session->getData('OPERATOR_ID'))
+							&& Queue::isRealOperator($session->getData('OPERATOR_ID'))
+						)
+						{
+							$currentTime = new DateTime();
+							$updateSession['DATE_FIRST_ANSWER'] = $currentTime;
+							$updateSession['TIME_FIRST_ANSWER'] = $currentTime->getTimestamp()
+								- $session->getData('DATE_CREATE')->getTimestamp();
+						}
+
+						$eventData = [
+							'STATUS_BEFORE' => $session->getData('STATUS'),
+							'CHAT_ENTITY_ID' => self::getUserCode($params['connector']),
+							'AUTHOR_ID' => $params['message']['user_id']
+						];
+						$session->update($updateSession);
+						$eventData['STATUS_AFTER'] = $session->getData('STATUS');
+						Queue\Event::checkFreeSlotBySendMessage($eventData);
+					}
+
 					$actualLineId = Queue::getActualLineId([
-						'LINE_ID' =>  $params['connector']['line_id'],
+						'LINE_ID' => $params['connector']['line_id'],
 						'USER_CODE' => $session->getData('USER_CODE')
 					]);
+
+					//Automatic messages
+					(new AutomaticAction($session))->automaticSendMessage($params['message']['id']);
+
+					if (
+						$params['message']['system'] !== 'Y'
+						&& !User::getInstance($session->getData('OPERATOR_ID'))->isBot()
+					)
+					{
+						KpiManager::setSessionLastKpiMessageAnswered($session->getData('ID'));
+					}
 				}
-			}
-
-			if (
-				$params['no_session'] !== 'Y' &&
-				$result->isSuccess()
-			)
-			{
-				//Automatic messages
-				(new AutomaticAction($session))->automaticSendMessage($params['message']['id']);
-			}
-
-			if (
-				$params['no_session'] !== 'Y' &&
-				$params['message']['system'] !== 'Y' &&
-				$result->isSuccess() &&
-				!User::getInstance($session->getData('OPERATOR_ID'))->isBot()
-			)
-			{
-				KpiManager::setSessionLastKpiMessageAnswered($session->getData('ID'));
 			}
 
 			if ($result->isSuccess())
@@ -877,7 +872,7 @@ class Connector
 	}
 
 	/**
-	 * @param $fields
+	 * @param array $fields
 	 * @return bool
 	 */
 	public function sendStatusWriting($fields): bool
@@ -898,8 +893,9 @@ class Connector
 	}
 
 	/**
-	 * @param $connector
-	 * @param $messages
+	 * @see \Bitrix\ImOpenLines\Connector::onChatRead
+	 * @param array $connector
+	 * @param array $messages
 	 * @param $event
 	 * @return false
 	 */
@@ -1188,10 +1184,9 @@ class Connector
 	}
 
 	/**
-	 * Handler for event `im:OnAfterMessagesAdd` fired in \CIMMessenger::Add.
-	 * @see \CIMMessenger::Add
-	 * @param $messageId
-	 * @param $messageFields
+	 * Handler for event `im:OnAfterMessagesAdd` fired in @see \CIMMessenger::Add
+	 * @param int $messageId
+	 * @param array $messageFields
 	 * @return bool
 	 */
 	public static function onMessageSend($messageId, $messageFields)
@@ -1316,7 +1311,7 @@ class Connector
 				$message['MESSAGE'] = $messageFields['MESSAGE'];
 			}
 
-			if ($messageFields['NO_SESSION_OL'] !== 'Y')
+			if (empty($messageFields['NO_SESSION_OL']) || $messageFields['NO_SESSION_OL'] !== 'Y')
 			{
 				$session = new Session();
 				$resultLoadSession = $session->load([
@@ -1369,7 +1364,6 @@ class Connector
 				}
 			}
 
-			$isActiveKeyboard = false;
 			if (
 				!empty($connectorChatId)
 				&& $connectorChatId > 0
@@ -1379,8 +1373,6 @@ class Connector
 				//Processing for native messages
 				$interactiveMessage = InteractiveMessage\Output::getInstance($messageFields['TO_CHAT_ID'], ['connectorId' => self::TYPE_LIVECHAT]);
 				$message = $interactiveMessage->nativeMessageProcessing($message);
-
-				$isActiveKeyboard = $interactiveMessage->isLoadedKeyboard();
 			}
 
 			$mid = Im::addMessage($message);
@@ -1396,7 +1388,8 @@ class Connector
 				$paramsMessageLiveChat = ['CONNECTOR_MID' => $messageId];
 
 				if (
-					!empty($session)
+					isset($session)
+					&& $session instanceof Session
 					&& $resultLoadSession
 				)
 				{
@@ -1419,7 +1412,8 @@ class Connector
 			}
 			if (
 				$messageFields['NO_SESSION_OL'] !== 'Y'
-				&& !empty($session)
+				&& isset($session)
+				&& $session instanceof Session
 				&& $resultLoadSession
 			)
 			{

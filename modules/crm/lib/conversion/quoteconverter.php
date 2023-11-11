@@ -303,7 +303,7 @@ class QuoteConverter extends EntityConverter
 					$entityTypeID,
 					EntityConversionException::TARG_SRC,
 					EntityConversionException::INVALID_OPERATION,
-					GetMessage('CRM_QUOTE_CONVERTER_DEAL_PROHIBITED')
+					GetMessage('CRM_QUOTE_CONVERTER_DEAL_PROHIBITED_MSGVER_1')
 				);
 			}
 

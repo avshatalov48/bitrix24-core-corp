@@ -62,6 +62,16 @@ if(empty($arResult['NOTIFY'])):?>
 			$data['text'] = preg_replace("/\[context=(chat\d+|\d+:\d+)\/(\d+)\](.*?)\[\/context\]/i", "$3", $data['text']);
 			$data['text'] = preg_replace("/\[LIKE\]/i", '<span class="bx-smile bx-im-smile-like"></span>', $data['text']);
 			$data['text'] = preg_replace("/\[DISLIKE\]/i", '<span class="bx-smile bx-im-smile-dislike"></span>', $data['text']);
+			$data['text'] = preg_replace(
+				["/\[color=#([0-9a-f]{3}|[0-9a-f]{6})](.*?)\[\/color]/".BX_UTF_PCRE_MODIFIER],
+				["<span style='color: #\\1'>\\2</span>"],
+				$data['text']
+			);
+			$data['text'] = preg_replace(
+				["/\[size=(\d+)](.*?)\[\/size]/".BX_UTF_PCRE_MODIFIER],
+				["<span style='font-size: \\1px'>\\2</span>"],
+				$data['text']
+			);
 
 			if (trim($data['text']) || !isset($data['params']))
 			{
@@ -236,6 +246,7 @@ if(empty($arResult['NOTIFY'])):?>
 				maxHeight = parseInt(maxHeightFromCssStyle);
 
 			console.log(maxHeightFromCssStyle);
+
 			for(var i in blocks)
 			{
 				var foldId = blocks[i].getAttribute("data-fold");
@@ -244,10 +255,9 @@ if(empty($arResult['NOTIFY'])):?>
 				{
 					var gradient = BX.create("DIV", {
 						props:{
-							className: "notif-bottom-gradient"
+							className: "notif-bottom-gradient im-notify-collapse-background-image"
 						}});
 
-					gradient.style.backgroundImage = 'linear-gradient(to bottom,rgba(255,255,255,0),rgba(255,255,255,0.1) 0px,rgba(255,255,255,1) 14px)';
 					blocks[i].appendChild(gradient);
 					if(foldButton)
 						foldButton.style.visibility = "visible";
@@ -271,6 +281,7 @@ if(empty($arResult['NOTIFY'])):?>
 							block.bxfolded = false;
 							foldButton.innerHTML = "<?=GetMessage("NM_FOLD")?>";
 							gradient.style.backgroundImage = "";
+							gradient.classList.remove("im-notify-collapse-background-image");
 
 							(new BX.easing({
 								duration : 200,
@@ -289,6 +300,7 @@ if(empty($arResult['NOTIFY'])):?>
 							foldButton.innerHTML = "<?= GetMessage("NM_UNFOLD")?>";
 							scrollToY = Math.max(0, window.pageYOffset - (block.scrollHeight - maxHeight));
 							block.bxfolded = true;
+							gradient.classList.add("im-notify-collapse-background-image");
 							(new BX.easing({
 								duration : 200,
 								start : { pos : window.pageYOffset, height: 0},
@@ -384,13 +396,13 @@ if(empty($arResult['NOTIFY'])):?>
 			if(!link)
 				return;
 			var hoverTimeout = setTimeout(function(){
-				object.style.background = "#f0f0f0";
+				object.classList.add("im-notify-item-hover")
 			}, 100);
 			var removeHover = BX.proxy(function(){
 				clearTimeout(hoverTimeout);
 				BX.unbind(document.body, "touchend", removeHover,{ passive: true });
 				window.removeEventListener("scroll", removeHover);
-				object.style.background = "#ffffff";
+				object.classList.remove("im-notify-item-hover")
 			}, this);
 
 			BX.bind(document.body, "touchend", removeHover);
@@ -506,13 +518,24 @@ function decodeBbCode($text, $safe = true)
 
 	$text = str_replace(['[BR]', '[br]', '#br#'], '<br>', $text);
 
-	$text = preg_replace_callback('/\[url=([^\s\]]+)\s*\](.*?)\[\/url\]/i', function($match) {
-		return '<span data-url="'.$match[1].'" onclick="urlValidation(this)" style="color: #2067b0;font-weight: bold;">'.$match[2].'</a>';
+	$text = preg_replace_callback("/\\[url\\s*=\\s*((?:[^\\[\\]]++|\\[ (?: (?>[^\\[\\]]+) | (?:\\1) )* \\])+)\\s*\\](.*?)\\[\\/url\\]/ixs", function($match) {
+		return '<span data-url="'.$match[1].'" onclick="urlValidation(this)" style="color: #2067b0;font-weight: bold;">'.$match[2].'</span>';
 	}, $text);
 
 	$text = preg_replace_callback('/\[url\](.*?)\[\/url\]/i', function($match) {
-		return '<span data-url="'.$match[1].'" onclick="urlValidation(this)" style="color: #2067b0;font-weight: bold;">'.$match[1].'</a>';
+		return '<span data-url="'.$match[1].'" onclick="urlValidation(this)" style="color: #2067b0;font-weight: bold;">'.$match[1].'</span>';
 	}, $text);
+
+	$text = preg_replace(
+		["/\[color=#([0-9a-f]{3}|[0-9a-f]{6})](.*?)\[\/color]/".BX_UTF_PCRE_MODIFIER],
+		["<span style='color: #\\1'>\\2</span>"],
+		$text
+	);
+	$text = preg_replace(
+		["/\[size=(\d+)](.*?)\[\/size]/".BX_UTF_PCRE_MODIFIER],
+		["<span style='font-size: \\1px'>\\2</span>"],
+		$text
+	);
 
 	$text = preg_replace_callback('/\[([buis])\](.*?)\[(\/[buis])\]/i', function($match) {
 		return '<'.$match[1].'>'.$match[2].'<'.$match[3].'>';

@@ -15,6 +15,7 @@ use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\Rule\Traits\SubordinateTrait;
+use Bitrix\Tasks\Internals\Task\Status;
 
 class TaskPauseRule extends \Bitrix\Main\Access\Rule\AbstractRule
 {
@@ -28,7 +29,7 @@ class TaskPauseRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return false;
 		}
 
-		if ($task->getStatus() !== \CTasks::STATE_IN_PROGRESS)
+		if ($task->getStatus() !== Status::IN_PROGRESS)
 		{
 			$this->controller->addError(static::class, 'Incorrect status');
 			return false;

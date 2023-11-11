@@ -1024,8 +1024,8 @@
 			if (data.sort === 100 && this.getGrid().getTypeInfoParam('hasPlusButtonTitle'))
 			{
 				plusTitle = gridData.isDynamicEntity
-					? BX.message("CRM_KANBAN_PLUS_TITLE_DYNAMIC")
-					: BX.message("CRM_KANBAN_PLUS_TITLE_" + gridData.entityType);
+					? BX.message('CRM_KANBAN_PLUS_TITLE_DYNAMIC')
+					: (BX.message(`CRM_KANBAN_PLUS_TITLE_${gridData.entityType}`) || BX.message(`CRM_KANBAN_PLUS_TITLE_${gridData.entityType}_MSGVER_1`));
 			}
 
 			if (quickForm)

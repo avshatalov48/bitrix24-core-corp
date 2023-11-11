@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Scrum\Service\ItemService;
 use Bitrix\Tasks\Scrum\Service\KanbanService;
 
@@ -135,7 +136,7 @@ class ScrumManager
 				$parentTasks[$item['parentId']] = [
 					'id' => $parentTaskData['ID'],
 					'name' => $parentTaskData['TITLE'],
-					'completed' => ($parentTaskData['STATUS'] == \CTasks::STATE_COMPLETED ? 'Y' : 'N'),
+					'completed' => ((int)$parentTaskData['STATUS'] === Status::COMPLETED ? 'Y' : 'N'),
 					'storyPoints' => $scrumItem->getStoryPoints(),
 					'isVisibilitySubtasks' => $scrumItem->getInfo()->isVisibilitySubtasks() ? 'Y' : 'N',
 				];

@@ -1,6 +1,4 @@
 <?php
-$MESS["MOBILE_RECEIVE_PAYMENT_DELIVERY_MODE"] = "Delivery only";
-$MESS["MOBILE_RECEIVE_PAYMENT_DELIVERY_MODE_TITLE"] = "Delivery";
 $MESS["MOBILE_RECEIVE_PAYMENT_LIMIT"] = "You have reached the maximum number of payments you can receive on your current plan. Please upgrade to receive more payments";
 $MESS["MOBILE_RECEIVE_PAYMENT_MODE_MENU_TITLE"] = "Receive payment";
 $MESS["MOBILE_RECEIVE_PAYMENT_NO_CONTACT_TEXT"] = "Add contact to send payment link to";

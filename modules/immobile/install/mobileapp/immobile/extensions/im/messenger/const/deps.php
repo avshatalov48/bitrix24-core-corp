@@ -18,5 +18,7 @@ return [
 		'./src/reaction-type',
 		'./src/path',
 		'./src/draft',
+		'./src/search',
+		'./src/error',
 	],
 ];

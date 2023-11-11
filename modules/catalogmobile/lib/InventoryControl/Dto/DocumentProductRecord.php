@@ -21,6 +21,9 @@ final class DocumentProductRecord extends Dto
 	public $documentId;
 
 	/** @var int|null */
+	public $documentType;
+
+	/** @var int|null */
 	public $productId;
 
 	public $name;
@@ -30,6 +33,9 @@ final class DocumentProductRecord extends Dto
 
 	/** @var int|null */
 	public $storeToId;
+
+	public $storeToAvailableAmount = 0.0;
+	public $storeToAmount = 0.0;
 
 	public $desktopUrl;
 
@@ -41,6 +47,7 @@ final class DocumentProductRecord extends Dto
 	public $sections = [];
 
 	public $barcode;
+	public $oldBarcode;
 
 	/** @var float */
 	public $amount = 0.0;
@@ -52,6 +59,9 @@ final class DocumentProductRecord extends Dto
 
 	/** @var Store|null */
 	public $storeFrom;
+
+	public $storeFromAvailableAmount = 0.0;
+	public $storeFromAmount = 0.0;
 
 	/** @var Store|null */
 	public $storeTo;

@@ -18,6 +18,7 @@ return [
 		'crm:timeline/item/ui/body/blocks/text-block',
 		'crm:timeline/item/ui/body/blocks/value-change',
 		'crm:timeline/item/ui/body/blocks/with-title',
+		'crm:timeline/item/ui/body/blocks/sharing-slots-list',
 		'crm:timeline/item/ui/body/blocks/money-pill',
 		'crm:timeline/item/ui/body/blocks/money',
 		'crm:timeline/item/ui/body/blocks/ecommerce-documents-list',

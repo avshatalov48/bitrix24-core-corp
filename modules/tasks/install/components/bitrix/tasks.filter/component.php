@@ -1,5 +1,8 @@
 <?php
 // DEPRECATED! use tasks.interface.filter
+use Bitrix\Tasks\Internals\Task\MetaStatus;
+use Bitrix\Tasks\Internals\Task\Status;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 if (!CModule::IncludeModule("tasks"))
@@ -22,34 +25,34 @@ $arResult["ADVANCED_STATUSES"] = array(
 	array(
 		"TITLE" => GetMessage("TASKS_FILTER_ACTIVE"),
 		"FILTER" => array("STATUS" => array(
-			CTasks::METASTATE_VIRGIN_NEW,
-			CTasks::METASTATE_EXPIRED,
-			CTasks::STATE_NEW,
-			CTasks::STATE_PENDING,
-			CTasks::STATE_IN_PROGRESS
+			MetaStatus::UNSEEN,
+			MetaStatus::EXPIRED,
+			Status::NEW,
+			Status::PENDING,
+			Status::IN_PROGRESS,
 	))),
 	array(
 		"TITLE" => GetMessage("TASKS_FILTER_NEW"),
 		"FILTER" => array("STATUS" => array(
-			CTasks::METASTATE_VIRGIN_NEW,
-			CTasks::STATE_NEW
+			MetaStatus::UNSEEN,
+			Status::NEW
 	))),
 	array(
 		"TITLE" => GetMessage("TASKS_FILTER_IN_CONTROL"),
 		"FILTER" => array("STATUS" => array(
-			CTasks::STATE_SUPPOSEDLY_COMPLETED,
-			CTasks::STATE_DECLINED
+			Status::SUPPOSEDLY_COMPLETED,
+			Status::DECLINED,
 	))),
-	array("TITLE" => GetMessage("TASKS_FILTER_IN_PROGRESS"), "FILTER" => array("STATUS" => CTasks::STATE_IN_PROGRESS)),
-	array("TITLE" => GetMessage("TASKS_FILTER_ACCEPTED"), "FILTER" => array("STATUS" => CTasks::STATE_PENDING)),
-	array("TITLE" => GetMessage("TASKS_FILTER_OVERDUE"), "FILTER" => array("STATUS" => CTasks::METASTATE_EXPIRED)),
-	array("TITLE" => GetMessage("TASKS_FILTER_DELAYED"), "FILTER" => array("STATUS" => CTasks::STATE_DEFERRED)),
-	array("TITLE" => GetMessage("TASKS_FILTER_DECLINED"), "FILTER" => array("STATUS" => CTasks::STATE_DECLINED)),
+	array("TITLE" => GetMessage("TASKS_FILTER_IN_PROGRESS"), "FILTER" => array("STATUS" => Status::IN_PROGRESS)),
+	array("TITLE" => GetMessage("TASKS_FILTER_ACCEPTED"), "FILTER" => array("STATUS" => Status::PENDING)),
+	array("TITLE" => GetMessage("TASKS_FILTER_OVERDUE"), "FILTER" => array("STATUS" => MetaStatus::EXPIRED)),
+	array("TITLE" => GetMessage("TASKS_FILTER_DELAYED"), "FILTER" => array("STATUS" => Status::DEFERRED)),
+	array("TITLE" => GetMessage("TASKS_FILTER_DECLINED"), "FILTER" => array("STATUS" => Status::DECLINED)),
 	array(
 		"TITLE" => GetMessage("TASKS_FILTER_CLOSED"),
 		"FILTER" => array("STATUS" => array(
-			CTasks::STATE_SUPPOSEDLY_COMPLETED,
-			CTasks::STATE_COMPLETED
+			Status::SUPPOSEDLY_COMPLETED,
+			Status::COMPLETED,
 	)))
 );
 

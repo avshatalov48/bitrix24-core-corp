@@ -133,7 +133,7 @@ else
 						CRM_ELEMENT_COMPANY: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_COMPANY')) ?>',
 						CRM_ELEMENT_DEAL: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_DEAL')) ?>',
 						CRM_ELEMENT_ORDER: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_ORDER')) ?>',
-						CRM_ELEMENT_QUOTE: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_QUOTE')) ?>',
+						CRM_ELEMENT_QUOTE: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_QUOTE_MSGVER_1')) ?>',
 						CRM_ELEMENT_OK: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_OK')) ?>',
 						CRM_ELEMENT_CANCEL: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_CANCEL')) ?>',
 						CRM_ELEMENT_CLOSE: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_CLOSE')) ?>',

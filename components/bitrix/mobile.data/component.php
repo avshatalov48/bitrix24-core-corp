@@ -7,9 +7,8 @@ if (!Defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 /**
- * @var $APPLICATION CAllMain
- * @var $USER CAllUser
- * @var $USER CAllUser
+ * @var $APPLICATION CMain
+ * @var $USER CUser
  * @var $arParams array
  */
 Bitrix\Main\Loader::includeModule("mobileapp");

@@ -11,6 +11,7 @@ use Bitrix\Socialnetwork\EO_Workgroup;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Socialnetwork\WorkgroupTable;
 use Bitrix\Tasks\Integration\Bizproc\Document\Task;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Kanban\StagesTable;
 use Bitrix\Tasks\Scrum\Service\KanbanService;
 use Bitrix\Tasks\Scrum\Service\SprintService;
@@ -56,11 +57,11 @@ class TemplatesScheme extends \Bitrix\Bizproc\Automation\Engine\TemplatesScheme
 	private function getPersonalTasksStages(): array
 	{
 		return [
-			\CTasks::STATE_PENDING => Loc::getMessage('TASKS_BP_AUTOMATION_ENGINE_TEMPLATES_SCHEME_PERSONAL_TASKS_STATUS_PENDING'),
-			\CTasks::STATE_IN_PROGRESS => Loc::getMessage('TASKS_BP_AUTOMATION_ENGINE_TEMPLATES_SCHEME_PERSONAL_TASKS_STATUS_IN_PROGRESS'),
-			\CTasks::STATE_SUPPOSEDLY_COMPLETED => Loc::getMessage('TASKS_BP_AUTOMATION_ENGINE_TEMPLATES_SCHEME_PERSONAL_TASKS_STATUS_SUPPOSEDLY_COMPLETED'),
-			\CTasks::STATE_COMPLETED => Loc::getMessage('TASKS_BP_AUTOMATION_ENGINE_TEMPLATES_SCHEME_PERSONAL_TASKS_STATUS_COMPLETED'),
-			\CTasks::STATE_DEFERRED => Loc::getMessage('TASKS_BP_AUTOMATION_ENGINE_TEMPLATES_SCHEME_PERSONAL_TASKS_STATUS_DEFERRED'),
+			Status::PENDING => Loc::getMessage('TASKS_BP_AUTOMATION_ENGINE_TEMPLATES_SCHEME_PERSONAL_TASKS_STATUS_PENDING'),
+			Status::IN_PROGRESS => Loc::getMessage('TASKS_BP_AUTOMATION_ENGINE_TEMPLATES_SCHEME_PERSONAL_TASKS_STATUS_IN_PROGRESS'),
+			Status::SUPPOSEDLY_COMPLETED => Loc::getMessage('TASKS_BP_AUTOMATION_ENGINE_TEMPLATES_SCHEME_PERSONAL_TASKS_STATUS_SUPPOSEDLY_COMPLETED'),
+			Status::COMPLETED => Loc::getMessage('TASKS_BP_AUTOMATION_ENGINE_TEMPLATES_SCHEME_PERSONAL_TASKS_STATUS_COMPLETED'),
+			Status::DEFERRED => Loc::getMessage('TASKS_BP_AUTOMATION_ENGINE_TEMPLATES_SCHEME_PERSONAL_TASKS_STATUS_DEFERRED'),
 		];
 	}
 

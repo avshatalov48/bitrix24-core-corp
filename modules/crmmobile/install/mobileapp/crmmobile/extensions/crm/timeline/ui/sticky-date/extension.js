@@ -3,7 +3,7 @@
  */
 jn.define('crm/timeline/ui/sticky-date', (require, exports, module) => {
 	const { Moment } = require('utils/date');
-	const { DateDivider } = require('crm/timeline/ui/divider');
+	const { DateDivider } = require('crm/timeline/ui/date-divider');
 
 	const DEFAULT_OPACITY = 1;
 	const INNER_PADDING = 16;

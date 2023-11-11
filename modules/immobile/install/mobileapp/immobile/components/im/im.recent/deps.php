@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'db',
 		'entity-ready',
+		'im:lib/theme',
 		'im:chat/tables',
 		'im:chat/utils',
 		'im:chat/messengercommon',

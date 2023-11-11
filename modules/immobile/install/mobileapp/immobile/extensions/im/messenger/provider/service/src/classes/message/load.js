@@ -26,6 +26,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			this.preparedUnreadMessages = [];
 			this.isLoading = false;
 			this.userManager = new UserManager(this.store);
+			this.reactions = null;
 		}
 
 		loadUnread()
@@ -59,6 +60,10 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			return runAction(RestMethod.imV2ChatMessageTail, { data: query }).then((result) => {
 				Logger.warn('LoadService: loadUnread result', result);
 				this.preparedUnreadMessages = result.messages;
+				this.reactions = {
+					reactions: result.reactions,
+					usersShort: result.usersShort,
+				};
 
 				return this.updateModels(result);
 			}).then(() => {
@@ -103,6 +108,11 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			return runAction(RestMethod.imV2ChatMessageTail, { data: query }).then((result) => {
 				Logger.warn('LoadService: loadHistory result', result);
 				this.preparedHistoryMessages = result.messages;
+				this.reactions = {
+					reactions: result.reactions,
+					usersShort: result.usersShort,
+				};
+
 				const hasPrevPage = result.hasNextPage;
 				const rawData = { ...result, hasPrevPage, hasNextPage: null };
 
@@ -135,13 +145,17 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				return Promise.resolve();
 			}
 
-			return this.store.dispatch('messagesModel/setChatCollection', {
-				messages: this.preparedHistoryMessages,
-			}).then(() => {
-				this.preparedHistoryMessages = [];
+			return this.store.dispatch('messagesModel/reactionsModel/set', this.reactions)
+				.then(() => this.store.dispatch('messagesModel/setChatCollection', {
+					messages: this.preparedHistoryMessages,
+				}))
+				.then(() => {
+					this.preparedUnreadMessages = [];
+					this.reactions = null;
 
-				return true;
-			});
+					return true;
+				})
+			;
 		}
 
 		drawPreparedUnreadMessages()
@@ -151,13 +165,17 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				return Promise.resolve();
 			}
 
-			return this.store.dispatch('messagesModel/setChatCollection', {
-				messages: this.preparedUnreadMessages,
-			}).then(() => {
-				this.preparedUnreadMessages = [];
+			return this.store.dispatch('messagesModel/reactionsModel/set', this.reactions)
+				.then(() => this.store.dispatch('messagesModel/setChatCollection', {
+					messages: this.preparedUnreadMessages,
+				}))
+				.then(() => {
+					this.preparedUnreadMessages = [];
+					this.reactions = null;
 
-				return true;
-			});
+					return true;
+				})
+			;
 		}
 
 		/**
@@ -170,6 +188,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				users,
 				hasPrevPage,
 				hasNextPage,
+				additionalMessages,
 			} = rawData;
 
 			const dialogPromise = this.store.dispatch('dialoguesModel/update', {
@@ -181,11 +200,13 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			});
 			const usersPromise = this.userManager.setUsersToModel(users);
 			const filesPromise = this.store.dispatch('filesModel/set', files);
+			const additionalMessagesPromise = this.store.dispatch('messagesModel/store', additionalMessages);
 
 			return Promise.all([
 				dialogPromise,
 				filesPromise,
 				usersPromise,
+				additionalMessagesPromise,
 			]);
 		}
 

@@ -15,6 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var CBitrixComponent $component
  */
 
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
@@ -245,7 +246,7 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 				{
 					$arActions[] = array('SEPARATOR' => true);
 					$arActions[] = array(
-						'TITLE' => GetMessage('CRM_DEAL_CREATE_ON_BASIS_TITLE'),
+						'TITLE' => GetMessage('CRM_DEAL_CREATE_ON_BASIS_TITLE_MSGVER_1'),
 						'TEXT' => GetMessage('CRM_DEAL_CREATE_ON_BASIS'),
 						'MENU' => $arSchemeList
 					);
@@ -254,7 +255,7 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 			else
 			{
 				$arActions[] = array(
-					'TITLE' => GetMessage('CRM_DEAL_CREATE_ON_BASIS_TITLE'),
+					'TITLE' => GetMessage('CRM_DEAL_CREATE_ON_BASIS_TITLE_MSGVER_1'),
 					'TEXT' => GetMessage('CRM_DEAL_CREATE_ON_BASIS'),
 					'ONCLICK' => $arResult['CONVERSION_LOCK_SCRIPT'] ?? ''
 				);
@@ -1279,7 +1280,6 @@ if (
 	!$isInternal
 	&& !$isRecurring
 	&& \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('IFRAME') !== 'Y'
-	&& \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
 ):
 	$todoCreateNotificationSkipPeriod =
 		(new \Bitrix\Crm\Activity\TodoCreateNotification(\CCrmOwnerType::Deal))
@@ -1296,7 +1296,8 @@ if (
 				/** @see BX.Crm.PushCrmSettings */
 				new exports.PushCrmSettings({
 					smartActivityNotificationSupported: <?= Container::getInstance()->getFactory(\CCrmOwnerType::Deal)->isSmartActivityNotificationSupported() ? 'true' : 'false' ?>,
-						entityTypeId: <?= (int)\CCrmOwnerType::Deal ?>,
+						entityTypeId: <?= \CCrmOwnerType::Deal ?>,
+						pingSettings: <?= \CUtil::PhpToJSObject((new TodoPingSettingsProvider(\CCrmOwnerType::Deal, (int)($arResult['CATEGORY_ID'] ?? 0)))->fetchAll()) ?>,
 						rootMenu: settingsButton ? settingsButton.getMenuWindow() : undefined,
 						grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
 						<?php if (is_string($todoCreateNotificationSkipPeriod)): ?>

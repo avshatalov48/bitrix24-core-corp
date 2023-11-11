@@ -168,7 +168,7 @@ class OrderBuilderCrm extends OrderBuilder
 		return parent::setFields();
 	}
 
-	protected function prepareDateFields(array $fields, array $dateFields)
+	protected function prepareDateFields(array $fields, array $dateFields, bool $enableTime = false)
 	{
 		foreach($dateFields as $dateFieldName)
 		{
@@ -176,7 +176,10 @@ class OrderBuilderCrm extends OrderBuilder
 			{
 				try
 				{
-					$fields[$dateFieldName] = new \Bitrix\Main\Type\Date($fields[$dateFieldName]);
+					$fields[$dateFieldName] = $enableTime
+						? new \Bitrix\Main\Type\DateTime($fields[$dateFieldName])
+						: new \Bitrix\Main\Type\Date($fields[$dateFieldName])
+					;
 				}
 				catch (ObjectException $exception)
 				{
@@ -268,7 +271,8 @@ class OrderBuilderCrm extends OrderBuilder
 			{
 				$this->formData["SHIPMENT"][$idx] = $this->prepareDateFields(
 					$this->formData["SHIPMENT"][$idx],
-					$dateTypeFields
+					$dateTypeFields,
+					true
 				);
 			}
 		}

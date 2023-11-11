@@ -205,7 +205,7 @@ class CCrmStatus
 			[
 				'QUOTE_STATUS' => [
 					'ID' =>'QUOTE_STATUS',
-					'NAME' => GetMessage('CRM_STATUS_TYPE_QUOTE_STATUS_MSGVER_1'),
+					'NAME' => GetMessage('CRM_STATUS_TYPE_QUOTE_STATUS_MSGVER_2'),
 					'SEMANTIC_INFO' => self::GetQuoteStatusSemanticInfo(),
 					'ENTITY_TYPE_ID' => \CCrmOwnerType::Quote,
 				],

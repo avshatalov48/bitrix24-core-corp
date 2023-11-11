@@ -1697,7 +1697,7 @@ BX(function() {
 					this.getGrid().getRows().reset();
 
 					var moveRows = this.getGridMoveRows(rowId, parameters);
-					this.moveRow(rowId, moveRows.rowAfter, moveRows.rowBefore);
+					this.moveRow(rowId, moveRows.rowAfter);
 				}
 				this.highlightGridRow(rowId).then(function() {
 					this.colorPinnedRows();
@@ -1749,14 +1749,15 @@ BX(function() {
 			};
 		},
 
-		moveRow: function(rowId, after, before) {
+		moveRow: function(rowId, after) {
 			if (after)
 			{
 				this.getGrid().getRows().insertAfter(rowId, after);
 			}
-			else if (before)
+			else
 			{
-				this.getGrid().getRows().insertBefore(rowId, before);
+				const firstRow = this.getGrid().getRows().getBodyFirstChild();
+				this.getGrid().getRows().insertBefore(rowId, firstRow.getId());
 			}
 		},
 

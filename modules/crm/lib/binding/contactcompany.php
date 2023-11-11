@@ -21,9 +21,9 @@ use Bitrix\Main\ORM\Query\Join;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_ContactCompany_Query query()
- * @method static EO_ContactCompany_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ContactCompany_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_ContactCompany_Result getById($id)
- * @method static EO_ContactCompany_Result getList(array $parameters = array())
+ * @method static EO_ContactCompany_Result getList(array $parameters = [])
  * @method static EO_ContactCompany_Entity getEntity()
  * @method static \Bitrix\Crm\Binding\EO_ContactCompany createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Binding\EO_ContactCompany_Collection createCollection()

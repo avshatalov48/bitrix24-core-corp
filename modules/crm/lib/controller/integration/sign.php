@@ -9,6 +9,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Request;
 use Bitrix\Main\SystemException;
+use Bitrix\Sign\Config\Storage;
 use Bitrix\Sign\Service\Integration\Crm\DocumentService;
 
 class Sign extends Controller
@@ -41,8 +42,17 @@ class Sign extends Controller
 		{
 			$this->addErrors($result->getErrors());
 		}
-		
-		return $result->getData();
+
+		$docId = $result->getData()['SMART_DOCUMENT'] ?? null;
+		$document = \Bitrix\Sign\Document::resolveByEntity('SMART', $docId);
+		$response = $result->getData();
+
+		if (Storage::instance()->isNewSignEnabled() && $document)
+		{
+			$response['uid'] = $document->getUid();
+		}
+
+		return $response;
 	}
 
 	/**

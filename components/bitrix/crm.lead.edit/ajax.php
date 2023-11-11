@@ -239,7 +239,6 @@ elseif($action === 'FIND_DUPLICATES')
 				array(
 					'ENABLE_RESPONSIBLE' => true,
 					'ENABLE_EDIT_URL' => true,
-					'PHOTO_SIZE' => array('WIDTH'=> 21, 'HEIGHT'=> 21)
 				)
 			);
 

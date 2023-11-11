@@ -42,9 +42,9 @@ class CCrmUserType
 		return $this->arFields;
 	}
 
-	public function GetFields()
+	public function GetFields(array $params = [])
 	{
-		return $this->GetAbstractFields();
+		return $this->GetAbstractFields($params);
 	}
 	public function GetFieldNames()
 	{
@@ -199,9 +199,9 @@ class CCrmUserType
 		unset($field);
 	}
 
-	public function PrepareListFilterFields(&$arFilterFields, &$arFilterLogic)
+	public function PrepareListFilterFields(&$arFilterFields, &$arFilterLogic, $fieldsParams = [])
 	{
-		$arUserFields = $this->GetAbstractFields();
+		$arUserFields = $this->GetAbstractFields($fieldsParams);
 		foreach($arUserFields as $FIELD_NAME => $arUserField)
 		{
 			if ($arUserField['SHOW_FILTER'] === 'N' || $arUserField['USER_TYPE']['BASE_TYPE'] === 'file')

@@ -10,6 +10,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 	const { Logger } = require('im/messenger/lib/logger');
 	const { Uuid } = require('utils/uuid');
 	const { get } = require('utils/object');
+	const { reactionsModel } = require('im/messenger/model/messages/reactions');
 
 	const TEMPORARY_MESSAGE_PREFIX = 'temporary';
 
@@ -20,6 +21,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 		authorId: 0,
 		date: new Date(),
 		text: '',
+		loadText: '',
 		params: {},
 		replaces: [],
 		files: [],
@@ -40,19 +42,25 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 			chatCollection: {},
 			pinnedMessages: {},
 		}),
+		modules: {
+			reactionsModel,
+		},
 		getters: {
 			/**
 			 * @function messagesModel/getByChatId
 			 * @return {MessagesModelState[]}
 			*/
-			getByChatId: (state) => (chatId) => {
+			getByChatId: (state, getters, rootState, rootGetters) => (chatId) => {
 				if (!state.chatCollection[chatId])
 				{
 					return [];
 				}
 
 				return [...state.chatCollection[chatId]].map((messageId) => {
-					return state.collection[messageId];
+					return {
+						...state.collection[messageId],
+						reactions: rootGetters['messagesModel/reactionsModel/getByMessageId'](messageId),
+					};
 				}).sort((a, b) => {
 					if (Type.isNumber(a.id) && Type.isNumber(b.id))
 					{
@@ -69,23 +77,31 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 			},
 
 			/**
-			 * @function messagesModel/getMessageById
+			 * @function messagesModel/getById
 			 * @return {MessagesModelState}
 			 */
-			getMessageById: (state) => (messageId) => {
+			getById: (state, getters, rootState, rootGetters) => (messageId) => {
 				if (!Type.isNumber(messageId) && !Type.isStringFilled(messageId))
 				{
 					return {};
 				}
+				const message = state.collection[messageId.toString()];
+				if (!message)
+				{
+					return {};
+				}
 
-				return state.collection[messageId.toString()] || {};
+				return {
+					...message,
+					reactions: rootGetters['messagesModel/reactionsModel/getByMessageId'](messageId),
+				};
 			},
 
 			/**
-			 * @function messagesModel/getMessageById
+			 * @function messagesModel/getByTemplateId
 			 * @return {MessagesModelState|null}
 			 */
-			getMessageByTemplateId: (state) => (messageId) => {
+			getByTemplateId: (state) => (messageId) => {
 				if (Type.isNumber(messageId))
 				{
 					return null;
@@ -181,32 +197,24 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 
 				return lastId;
 			},
-
-			/**
-			 * @function messagesModel/getMessageReaction
-			 */
-			getMessageReaction: (state) => (messageId, reactionId = null) => {
-				const message = state.collection[messageId.toString()];
-				if (!message)
-				{
-					return false;
-				}
-
-				if (!reactionId)
-				{
-					return get(message, 'params.REACTION', {});
-				}
-
-				return get(message, `params.REACTION.${reactionId}`, []);
-			},
 		},
 		actions: {
 			/** @function messagesModel/forceUpdateByChatId */
 			forceUpdateByChatId: (store, { chatId }) => {
 				const messages = store.getters.getByChatId(chatId);
 
-				store.commit('store', { messages });
-				store.commit('setChatCollection', { messages });
+				store.commit('store', {
+					actionName: 'forceUpdateByChatId',
+					data: {
+						messageList: messages,
+					},
+				});
+				store.commit('setChatCollection', {
+					actionName: 'forceUpdateByChatId',
+					data: {
+						messageList: messages,
+					},
+				});
 			},
 
 			/** @function messagesModel/setChatCollection */
@@ -224,11 +232,26 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				const chatId = messages[0]?.chatId;
 				if (chatId && clearCollection)
 				{
-					store.commit('clearCollection', { chatId });
+					store.commit('clearCollection', {
+						actionName: 'setChatCollection',
+						data: {
+							chatId,
+						},
+					});
 				}
 
-				store.commit('store', { messages });
-				store.commit('setChatCollection', { messages });
+				store.commit('store', {
+					actionName: 'setChatCollection',
+					data: {
+						messageList: messages,
+					},
+				});
+				store.commit('setChatCollection', {
+					actionName: 'setChatCollection',
+					data: {
+						messageList: messages,
+					},
+				});
 			},
 
 			/** @function messagesModel/store */
@@ -248,7 +271,10 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				store.commit('store', {
-					messages,
+					actionName: 'store',
+					data: {
+						messageList: messages,
+					},
 				});
 			},
 
@@ -259,10 +285,16 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 					...validate(payload),
 				};
 				store.commit('store', {
-					messages: [message],
+					actionName: 'add',
+					data: {
+						messageList: [message],
+					},
 				});
 				store.commit('setChatCollection', {
-					messages: [message],
+					actionName: 'add',
+					data: {
+						messageList: [message],
+					},
 				});
 			},
 
@@ -274,8 +306,11 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				store.commit('setPinned', {
-					chatId,
-					pinnedMessageIds: pinnedMessages,
+					actionName: 'setPinned',
+					data: {
+						chatId,
+						pinnedMessageIds: pinnedMessages,
+					},
 				});
 			},
 
@@ -288,8 +323,11 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				store.commit('updateWithId', {
-					id,
-					fields: validate(fields),
+					actionName: 'updateWithId',
+					data: {
+						id,
+						fields: validate(fields),
+					},
 				});
 			},
 
@@ -301,8 +339,11 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				store.commit('update', {
-					id,
-					fields: validate(fields),
+					actionName: 'update',
+					data: {
+						id,
+						fields: validate(fields),
+					},
 				});
 			},
 
@@ -314,112 +355,14 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 					return false;
 				}
 
-				store.commit('delete', { id });
+				store.commit('delete', {
+					actionName: 'delete',
+					data: {
+						id,
+					},
+				});
 
 				return true;
-			},
-
-			/** @function messagesModel/setReaction */
-			setReaction: (store, payload) => {
-				const {
-					messageId,
-					reactionId,
-					userList,
-				} = payload;
-
-				const message = store.rootGetters['messagesModel/getMessageById'](messageId);
-				if (!message)
-				{
-					return;
-				}
-
-				const reactionCollection = {};
-				reactionCollection[reactionId] = userList;
-
-				if (!message.params.REACTION)
-				{
-					message.params.REACTION = {};
-				}
-				message.params.REACTION = reactionCollection;
-
-				store.commit('update', {
-					id: messageId,
-					fields: message,
-				});
-			},
-
-			/** @function messagesModel/addReaction */
-			addReaction: (store, payload) => {
-				const {
-					messageId,
-					reactionId,
-					userList,
-				} = payload;
-
-				const message = store.rootGetters['messagesModel/getMessageById'](messageId);
-				if (!message)
-				{
-					return;
-				}
-
-				let reactionUserList = get(message, `params.REACTION.${reactionId}`, []);
-				reactionUserList = [...new Set(reactionUserList.concat(userList))];
-
-				const reactionCollection = {};
-				reactionCollection[reactionId] = reactionUserList;
-
-				if (!message.params.REACTION)
-				{
-					message.params.REACTION = {};
-				}
-				message.params.REACTION = reactionCollection;
-
-				store.commit('update', {
-					id: messageId,
-					fields: message,
-				});
-			},
-
-			/** @function messagesModel/removeReaction */
-			removeReaction: (store, payload) => {
-				const {
-					messageId,
-					reactionId,
-					userList,
-				} = payload;
-
-				const message = store.rootGetters['messagesModel/getMessageById'](messageId);
-				if (!message)
-				{
-					return;
-				}
-
-				const userListIndex = {};
-				userList.forEach((userId) => {
-					userListIndex[userId] = true;
-				});
-
-				let reactionUserList = get(message, `params.REACTION.${reactionId}`, []);
-				if (reactionUserList.length === 0)
-				{
-					return;
-				}
-
-				reactionUserList = reactionUserList.filter((userId) => !userListIndex[userId]);
-
-				const reactionCollection = {};
-				reactionCollection[reactionId] = reactionUserList;
-
-				if (!message.params.REACTION)
-				{
-					message.params.REACTION = {};
-				}
-				message.params.REACTION = reactionCollection;
-
-				store.commit('update', {
-					id: messageId,
-					fields: message,
-				});
 			},
 
 			/** @function messagesModel/readMessages */
@@ -460,18 +403,24 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 
 				messageIdsToRead.forEach((messageId) => {
 					store.commit('update', {
-						id: messageId,
-						fields: {
-							unread: false,
+						actionName: 'readMessages',
+						data: {
+							id: messageId,
+							fields: {
+								unread: false,
+							},
 						},
 					});
 				});
 
 				messageIdsToView.forEach((messageId) => {
 					store.commit('update', {
-						id: messageId,
-						fields: {
-							viewed: true,
+						actionName: 'readMessages',
+						data: {
+							id: messageId,
+							fields: {
+								viewed: true,
+							},
 						},
 					});
 				});
@@ -495,18 +444,81 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 					}
 
 					store.commit('update', {
-						id,
-						fields: {
-							viewedByOthers: true,
+						actionName: 'setViewedByOthers',
+						data: {
+							id,
+							fields: {
+								viewedByOthers: true,
+							},
 						},
 					});
 				});
 			},
+
+			/** @function messagesModel/updateLoadTextProgress */
+			updateLoadTextProgress(store, payload) {
+				const message = store.state.collection[payload.id];
+				if (!message)
+				{
+					return;
+				}
+
+				const { loadText: currentLoadText } = message;
+				if (currentLoadText === payload.loadText)
+				{
+					return;
+				}
+
+				store.commit('update', {
+					actionName: 'updateLoadTextProgress',
+					data: {
+						id: payload.id,
+						fields: { loadText: payload.loadText },
+					},
+				});
+			},
+
+			/** @function messagesModel/setAudioState */
+			setAudioState(store, payload) {
+				const message = store.state.collection[payload.id];
+				if (!message)
+				{
+					return;
+				}
+
+				const fieldsToUpdate = {};
+				if (!Type.isUndefined(payload.audioPlaying))
+				{
+					fieldsToUpdate.audioPlaying = payload.audioPlaying;
+				}
+
+				if (!Type.isUndefined(payload.playingTime))
+				{
+					fieldsToUpdate.playingTime = payload.playingTime;
+				}
+
+				store.commit('update', {
+					actionName: 'setAudioState',
+					data: {
+						id: payload.id,
+						fields: fieldsToUpdate,
+					},
+				});
+			},
 		},
 		mutations: {
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			setChatCollection: (state, payload) => {
 				Logger.warn('messagesModel: setChatCollection mutation', payload);
-				payload.messages.forEach((message) => {
+
+				const {
+					messageList,
+				} = payload.data;
+
+				messageList.forEach((message) => {
 					if (!state.chatCollection[message.chatId])
 					{
 						state.chatCollection[message.chatId] = new Set();
@@ -514,17 +526,37 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 					state.chatCollection[message.chatId].add(message.id);
 				});
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			store: (state, payload) => {
 				Logger.warn('messagesModel: store mutation', payload);
-				payload.messages.forEach((message) => {
+
+				const {
+					messageList,
+				} = payload.data;
+
+				messageList.forEach((message) => {
 					message.params = { ...messageState.params, ...message.params };
 
 					state.collection[message.id] = message;
 				});
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			setPinned: (state, payload) => {
 				Logger.warn('messagesModel: setPinned mutation', payload);
-				const { chatId, pinnedMessageIds } = payload;
+
+				const {
+					chatId,
+					pinnedMessageIds,
+				} = payload.data;
+
 				if (!state.pinnedMessages[chatId])
 				{
 					state.pinnedMessages[chatId] = new Set();
@@ -534,9 +566,18 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 					state.pinnedMessages[chatId].add(pinnedMessageId);
 				});
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			updateWithId: (state, payload) => {
 				Logger.warn('messagesModel: updateWithId mutation', payload);
-				const { id, fields } = payload;
+
+				const {
+					id,
+					fields,
+				} = payload.data;
 				const currentMessage = { ...state.collection[id] };
 
 				delete state.collection[id];
@@ -548,25 +589,51 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 					state.chatCollection[currentMessage.chatId].add(fields.id);
 				}
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			update: (state, payload) => {
 				Logger.warn('messagesModel: update mutation', payload);
-				const { id, fields } = payload;
+
+				const {
+					id,
+					fields,
+				} = payload.data;
+
 				state.collection[id] = {
 					...state.collection[id],
 					...fields,
 				};
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			delete: (state, payload) => {
 				Logger.warn('messagesModel: delete mutation', payload);
-				const { id } = payload;
+				const {
+					id,
+				} = payload.data;
 				const { chatId } = state.collection[id];
 
 				state.chatCollection[chatId].delete(id);
 				delete state.collection[id];
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			clearCollection: (state, payload) => {
-				Logger.warn('messagesModel: clear collection mutation', payload.chatId);
-				state.chatCollection[payload.chatId] = new Set();
+				Logger.warn('messagesModel: clear collection mutation', payload);
+				const {
+					chatId,
+				} = payload.data;
+
+				state.chatCollection[chatId] = new Set();
 			},
 		},
 	};
@@ -612,6 +679,11 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 		if (Type.isNumber(fields.text) || Type.isStringFilled(fields.text))
 		{
 			result.text = fields.text.toString();
+		}
+
+		if (Type.isNumber(fields.loadText) || Type.isStringFilled(fields.loadText))
+		{
+			result.loadText = fields.loadText.toString();
 		}
 
 		if (!Type.isUndefined(fields.senderId))
@@ -727,6 +799,10 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 			else if (key === 'FILE_ID' && Type.isArray(value))
 			{
 				fileIds = value;
+			}
+			else if (key === 'REPLY_ID')
+			{
+				params.replyId = Type.isString(value) ? parseInt(value, 10) : value;
 			}
 			else
 			{

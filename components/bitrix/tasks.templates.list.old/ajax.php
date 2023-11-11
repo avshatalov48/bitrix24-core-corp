@@ -1,6 +1,7 @@
 <?php
 
 use \Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Internals\Task\Status;
 
 define('STOP_STATISTICS', true);
 define('NO_AGENT_CHECK', true);
@@ -196,7 +197,7 @@ if (check_bitrix_sessid())
 					else
 					{
 						$template['META:ALLOWED_ACTIONS'] = $template['ALLOWED_ACTIONS'];
-						$template['STATUS'] = CTasks::STATE_PENDING;
+						$template['STATUS'] = Status::PENDING;
 
 						$params = array(
 							"PATHS" => $arPaths,

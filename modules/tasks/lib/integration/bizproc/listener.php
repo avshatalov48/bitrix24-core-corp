@@ -5,6 +5,7 @@ namespace Bitrix\Tasks\Integration\Bizproc;
 use Bitrix\Main;
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Internals\Task\EO_Member_Collection;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 
 class Listener
@@ -25,7 +26,7 @@ class Listener
 		//fix creation from template
 		if (empty($fields['STATUS']))
 		{
-			$fields['STATUS'] = \CTasks::STATE_PENDING;
+			$fields['STATUS'] = Status::PENDING;
 		}
 
 		//Run project automation

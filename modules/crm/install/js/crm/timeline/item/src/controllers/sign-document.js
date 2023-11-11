@@ -1,8 +1,8 @@
-import {ajax as Ajax, Text, Loc} from 'main.core';
-import {Router} from 'crm.router';
-import {Base} from './base';
-import {ajax} from 'main.core';
-import {DateTimeFormat} from "main.date";
+import { ajax as Ajax, Text, Loc } from 'main.core';
+import { Router } from 'crm.router';
+import { Base } from './base';
+import { ajax } from 'main.core';
+import { DateTimeFormat } from "main.date";
 import { DatetimeConverter } from "crm.timeline.tools";
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
@@ -87,7 +87,7 @@ export class SignDocument extends Base
 		return Router.Instance.openSignDocumentSlider(documentId, memberHash);
 	}
 
-	#modifyDocument({documentId}): Promise
+	#modifyDocument({ documentId }): Promise
 	{
 		return Router.Instance.openSignDocumentModifySlider(documentId);
 	}
@@ -170,7 +170,7 @@ export class SignDocument extends Base
 		console.log('touch signer document ' + documentId);
 	}
 
-	#download({documentHash, memberHash}, animationCallbacks): void
+	#download({filename, downloadLink}, animationCallbacks): void
 	{
 		if (animationCallbacks.onStart)
 		{
@@ -178,11 +178,11 @@ export class SignDocument extends Base
 		}
 
 		const link = document.createElement('a');
-		link.href = '/bitrix/services/main/ajax.php?action=sign.document.getFileForSrc' +
+		/*link.href = '/bitrix/services/main/ajax.php?action=sign.document.getFileForSrc' +
 			'&memberHash=' + memberHash +
-			'&documentHash=' + documentHash;
-
-		link.setAttribute('download', '');
+			'&documentHash=' + documentHash;*/
+		link.href = downloadLink;
+		link.setAttribute('download', filename || '');
 
 		document.body.appendChild(link);
 		link.click();

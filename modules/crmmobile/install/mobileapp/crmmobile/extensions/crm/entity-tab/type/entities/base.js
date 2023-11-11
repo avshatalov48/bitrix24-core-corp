@@ -3,7 +3,7 @@
  */
 jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 	const { Loc } = require('loc');
-
+	const { openChat } = require('crm/entity-tab/type/traits/open-chat');
 	/**
 	 * @class Base
 	 */
@@ -70,7 +70,7 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 					},
 					onLinkClick: (url) => {
 						qrauth.open({
-							title: BX.message('M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_REDIRECT_TITLE'),
+							title: Loc.getMessage('M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_REDIRECT_TITLE'),
 							redirectUrl: url,
 							layout,
 						});
@@ -83,7 +83,7 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 		{
 			const entityTypeName = (this.getName() || 'COMMON');
 
-			return Loc.getMessage(`M_CRM_ENTITY_TAB_ENTITY_EMPTY_TITLE2_${entityTypeName}`);
+			return this.getLastMessageVer(`M_CRM_ENTITY_TAB_ENTITY_EMPTY_TITLE2_${entityTypeName}`);
 		}
 
 		getEmptyColumnScreenConfig(data)
@@ -105,6 +105,11 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 		getEmptyColumnScreenTitle()
 		{
 			const entityTypeName = this.getName();
+			const messageCodeVer1 = `M_CRM_ENTITY_TAB_COLUMN_EMPTY_${entityTypeName}_TITLE_MSGVER_1`;
+			if (Loc.hasMessage(messageCodeVer1))
+			{
+				return Loc.getMessage(messageCodeVer1);
+			}
 
 			return Loc.getMessage(`M_CRM_ENTITY_TAB_COLUMN_EMPTY_${entityTypeName}_TITLE`);
 		}
@@ -112,8 +117,7 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 		getEmptyColumnScreenDescription()
 		{
 			const entityTypeName = this.getName();
-
-			return Loc.getMessage(`M_CRM_ENTITY_TAB_COLUMN_EMPTY_${entityTypeName}_DESCRIPTION`);
+			return this.getLastMessageVer(`M_CRM_ENTITY_TAB_COLUMN_EMPTY_${entityTypeName}_DESCRIPTION`)
 		}
 
 		getUnsuitableStageScreenConfig(data)
@@ -175,11 +179,11 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 		 */
 		getItemActions(permissions)
 		{
-			return [
+			const actions = [
 				{
 					id: 'activity',
 					sort: 200,
-					title: BX.message('M_CRM_ENTITY_TAB_ACTION_ACTIVITY'),
+					title: Loc.getMessage('M_CRM_ENTITY_TAB_ACTION_ACTIVITY'),
 					showActionLoader: false,
 					showArrow: true,
 					onClickCallback: this.addActivity.bind(this),
@@ -190,6 +194,25 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 					isDisabled: !permissions.update,
 				},
 			];
+			if (this.params.isChatSupported)
+			{
+				actions.push({
+					id: 'chat',
+					title: BX.message('M_CRM_ENTITY_TAB_ACTION_CHAT'),
+					sort: 1050,
+					onClickCallback: openChat.bind(this, { entityTypeId: this.getId() }),
+					onDisableClick: this.showForbiddenActionNotification.bind(this),
+					data: {
+						svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.5672 6.14844C18.0699 6.14844 19.2881 7.36662 19.2881 8.86932V15.0831C19.2881 16.5858 18.0699 17.804 16.5672 17.804L11.9749 17.805C10.3779 19.6811 9.4145 20.6515 9.08477 20.716C8.51327 20.8277 8.19352 19.8574 8.12551 17.805L7.4328 17.804C5.9301 17.804 4.71191 16.5858 4.71191 15.0831V8.86932C4.71191 7.36662 5.9301 6.14844 7.4328 6.14844H16.5672ZM16.371 8.15775H7.62902C7.09234 8.15775 6.65727 8.59281 6.65727 9.12949V14.7962C6.65727 15.3329 7.09234 15.7679 7.62902 15.7679H16.371C16.9077 15.7679 17.3427 15.3329 17.3427 14.7962V9.12949C17.3427 8.59281 16.9077 8.15775 16.371 8.15775Z" fill="#525C69"/></svg>',
+					},
+					sectionCode: 'additional',
+					showArrow: true,
+					isRawIcon: true,
+					isDisabled: false, // !permissions.exclude,
+				});
+			}
+
+			return actions;
 		}
 
 		async addActivity(action, itemId, { parentWidget } = {})
@@ -215,8 +238,8 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 
 		showForbiddenActionNotification()
 		{
-			const title = BX.message('M_CRM_ENTITY_TAB_ACTION_FORBIDDEN_TITLE');
-			const text = BX.message('M_CRM_ENTITY_TAB_ACTION_FORBIDDEN_TEXT');
+			const title = Loc.getMessage('M_CRM_ENTITY_TAB_ACTION_FORBIDDEN_TITLE');
+			const text = Loc.getMessage('M_CRM_ENTITY_TAB_ACTION_FORBIDDEN_TEXT');
 
 			Notify.showUniqueMessage(text, title, { time: 3 });
 		}
@@ -232,7 +255,7 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 		{
 			const image = this.getEmptyImage();
 			const title = this.getEmptySearchScreenTitle();
-			const description = BX.message('M_CRM_ENTITY_TAB_SEARCH_EMPTY_DESCRIPTION');
+			const description = Loc.getMessage('M_CRM_ENTITY_TAB_SEARCH_EMPTY_DESCRIPTION');
 
 			return {
 				image,
@@ -245,7 +268,7 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 		{
 			const entityTypeName = (this.getName() || 'COMMON');
 
-			return Loc.getMessage(`M_CRM_ENTITY_TAB_SEARCH_EMPTY_${entityTypeName}_TITLE2`);
+			return this.getLastMessageVer(`M_CRM_ENTITY_TAB_SEARCH_EMPTY_${entityTypeName}_TITLE2`);
 		}
 
 		/**
@@ -258,19 +281,20 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 
 		getEmptyEntityScreenDescriptionText()
 		{
-			return (
-				BX.message('M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION')
-					.replace('#URL#', this.getCommunicationChannelsRedirectUrl())
-					.replace('#MANY_ENTITY_TYPE_TITLE#', this.getManyEntityTypeTitle())
-					.replace('#SINGLE_ENTITY_TYPE_TITLE#', this.getSingleEntityTypeTitle())
-			);
+			return Loc.getMessage('M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION', {
+				'#URL#': this.getCommunicationChannelsRedirectUrl(),
+				'#MANY_ENTITY_TYPE_TITLE#': this.getManyEntityTypeTitle(),
+				'#SINGLE_ENTITY_TYPE_TITLE#': this.getSingleEntityTypeTitle()
+			});
 		}
 
 		getManyEntityTypeTitle()
 		{
 			const entityTypeName = (this.getName() || 'COMMON');
 
-			return Loc.getMessage(`M_CRM_ENTITY_TAB_ENTITY_EMPTY_MANY_${entityTypeName}`);
+
+
+			return this.getLastMessageVer(`M_CRM_ENTITY_TAB_ENTITY_EMPTY_MANY_${entityTypeName}`);
 		}
 
 		getSingleEntityTypeTitle()
@@ -283,6 +307,24 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 		getMenuActions()
 		{
 			return [];
+		}
+
+		getLastMessageVer(messageCode, verLimit = 5)
+		{
+			if (Loc.hasMessage(messageCode))
+			{
+				return Loc.getMessage(messageCode);
+			}
+			let messageWithVerText = `${messageCode}_MSGVER_`;
+			for (let ver = 1; ver <= verLimit; ver++)
+			{
+				if (Loc.hasMessage(messageWithVerText + ver.toString()))
+				{
+					return Loc.getMessage(messageWithVerText + ver.toString());
+				}
+			}
+
+			return null;
 		}
 	}
 

@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'utils/console',
 		'type',
+		'utils/object',
 	],
 	'bundle' => [
 		'./test-suite',

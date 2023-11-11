@@ -23,7 +23,7 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 			if (Type.isNumber(userData))
 			{
 				this.store = core.getStore();
-				const userState = this.store.getters['usersModel/getUserById'](userData);
+				const userState = this.store.getters['usersModel/getById'](userData);
 
 				if (Type.isUndefined(userState))
 				{

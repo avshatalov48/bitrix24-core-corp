@@ -72,6 +72,39 @@ abstract class Adapter
 	}
 
 	/**
+	 * Any adapter in a family can call this method to check fields by this adapter and its children.
+	 *
+	 * @param Array<string, mixed> $fields
+	 * @param Array<string, mixed> $compatibleOptions
+	 * @param string[] $requiredFields
+	 * @return Result
+	 */
+	final protected function checkRequiredFields(
+		array $fields,
+		array $compatibleOptions,
+		array $requiredFields
+	): Result
+	{
+		$mainResult = $this->doCheckRequiredFields($fields, $compatibleOptions, $requiredFields);
+
+		foreach ($this->children as $child)
+		{
+			$childResult = $child->checkRequiredFields($fields, $compatibleOptions, $requiredFields);
+			if (!$childResult->isSuccess())
+			{
+				$mainResult->addErrors($childResult->getErrors());
+			}
+		}
+
+		return $mainResult;
+	}
+
+	protected function doCheckRequiredFields(array $fields, array $compatibleOptions, array $requiredFields): Result
+	{
+		return new Result();
+	}
+
+	/**
 	 * @param Array<string, mixed> $fields
 	 * @param Array<string, mixed> $compatibleOptions
 	 *

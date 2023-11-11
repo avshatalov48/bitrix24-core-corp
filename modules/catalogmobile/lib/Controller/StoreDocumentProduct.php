@@ -19,7 +19,7 @@ class StoreDocumentProduct extends \Bitrix\Main\Engine\Controller
 {
 	use CatalogPermissions;
 
-	public function loadProductModelAction(int $productId, ?int $documentId = null)
+	public function loadProductModelAction(int $productId, ?int $documentId = null, ?string $documentType = null)
 	{
 		if (!$this->hasReadPermissions())
 		{
@@ -28,7 +28,7 @@ class StoreDocumentProduct extends \Bitrix\Main\Engine\Controller
 			return null;
 		}
 
-		return DocumentProducts\Facade::loadProductModel($productId, $documentId);
+		return DocumentProducts\Facade::loadProductModel($productId, $documentId, $documentType);
 	}
 
 	public function loadSkuCollectionAction(int $variationId): array
@@ -36,7 +36,7 @@ class StoreDocumentProduct extends \Bitrix\Main\Engine\Controller
 		return (new SkuCollectionQuery($variationId))->execute();
 	}
 
-	public function buildProductModelFromWizardAction(array $fields, ?int $documentId = null)
+	public function buildProductModelFromWizardAction(array $fields, ?int $documentId = null, ?string $documentType = null)
 	{
 		if (!$this->hasReadPermissions())
 		{
@@ -47,7 +47,7 @@ class StoreDocumentProduct extends \Bitrix\Main\Engine\Controller
 
 		$product = new ProductFromWizard($fields);
 
-		return DocumentProducts\Facade::buildProductModelFromWizard($product, $documentId);
+		return DocumentProducts\Facade::buildProductModelFromWizard($product, $documentId, $documentType);
 	}
 
 	/**

@@ -11,6 +11,7 @@ $MESS["IM_M_CALL_BTN_RECALL"] = "Перезвонить";
 $MESS["IM_M_CALL_BTN_RETURN"] = "Вернуться к звонку";
 $MESS["IM_M_CALL_BTN_TRANSFER"] = "Перенаправить";
 $MESS["IM_M_CALL_ERR"] = "Невозможно установить соединение";
+$MESS["IM_M_CALL_ST_CALL_INIT"] = "Инициализация звонка";
 $MESS["IM_M_CALL_ST_CONNECT"] = "Установка соединения...";
 $MESS["IM_M_CALL_ST_DECLINE"] = "Пользователь отменил вызов";
 $MESS["IM_M_CALL_ST_END"] = "Разговор завершен";

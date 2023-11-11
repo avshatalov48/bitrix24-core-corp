@@ -123,7 +123,7 @@ class AccessInstaller
 
 		$query = '
 			INSERT INTO b_tasks_permission
-				(ROLE_ID, PERMISSION_ID, `VALUE`)
+				(ROLE_ID, PERMISSION_ID, VALUE)
 				VALUES '. implode(',', $query) .'
 		';
 		$this->db->Query($query);
@@ -155,14 +155,14 @@ class AccessInstaller
 				$query = '
 					INSERT INTO b_tasks_role_relation 
 					    (ROLE_ID, RELATION)
-					    VALUES ('. $role['ID'] .', "'. AccessCode::ACCESS_DIRECTOR .'0")';
+					    VALUES ('. $role['ID'] .', \''. AccessCode::ACCESS_DIRECTOR .'0\')';
 			}
 			elseif ($role['NAME'] === RoleDictionary::TASKS_ROLE_MANAGER)
 			{
 				$query = '
 					INSERT INTO b_tasks_role_relation 
 					    (ROLE_ID, RELATION)
-					    VALUES ('. $role['ID'] .', "'. AccessCode::ACCESS_EMPLOYEE .'0")';
+					    VALUES ('. $role['ID'] .', \''. AccessCode::ACCESS_EMPLOYEE .'0\')';
 			}
 
 			if ($query)

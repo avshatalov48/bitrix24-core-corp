@@ -1,58 +1,39 @@
-(() => {
-	const Type = {
-		Base: 'Base',
-		Kanban: 'Kanban',
-		Terminal: 'Terminal',
-		LoadingElement: 'LoadingElement',
-		EmptySpace: 'EmptySpace',
-	}
+/**
+ * @module layout/ui/simple-list/items
+ */
+jn.define('layout/ui/simple-list/items', (require, exports, module) => {
+	const { Base } = require('layout/ui/simple-list/items/base');
+	const { Extended } = require('layout/ui/simple-list/items/extended');
+	const { EmptySpace } = require('layout/ui/simple-list/items/empty-space');
+
+	const ListItemType = {
+		BASE: 'Base',
+		EXTENDED: 'Extended',
+		EMPTY_SPACE: 'EmptySpace',
+	};
 
 	class ListItemsFactory
 	{
 		static create(type, data)
 		{
-			if (type === Type.Base)
+			if (type === ListItemType.BASE)
 			{
-				return new ListItems.Base(data);
+				return new Base(data);
 			}
 
-			if (type === Type.Kanban)
+			if (type === ListItemType.EXTENDED)
 			{
-				return new ListItems.Kanban(data);
+				return new Extended(data);
 			}
 
-			if (type === Type.Terminal)
+			if (type === ListItemType.EMPTY_SPACE)
 			{
-				return new ListItems.Terminal(data);
+				return new EmptySpace(data);
 			}
 
-			if (type === Type.LoadingElement)
-			{
-				return new ListItems.LoadingElement();
-			}
-
-			if (type === Type.EmptySpace)
-			{
-				const defaultHeight = (Application.getPlatform() === 'android' ? 0 : 20);
-				const height = (data && data.item && data.item.height) ? data.item.height : defaultHeight;
-				return View(
-					{
-						style: {
-							height,
-							backgroundColor: '#f5f7f8',
-						},
-					},
-					Text({
-						style: {
-							height,
-						},
-						text: '', // empty View not render in Android
-					}),
-				);
-			}
+			return null;
 		}
 	}
 
-	this.ListItemsFactory = ListItemsFactory;
-	this.ListItemsFactory.Type = Type;
-})();
+	module.exports = { ListItemsFactory, ListItemType };
+});

@@ -19,7 +19,7 @@ if(typeof(BX.CrmActivityListView) === "undefined")
 				{
 					menuButton:
 					{
-						type: 'context-menu',
+						type: 'more',
 						style: 'custom',
 						callback: BX.delegate(this._onMenuButtonClick, this)
 					}
@@ -226,11 +226,11 @@ if(typeof(BX.CrmActivityListItemView) === "undefined")
 
 		if(isCompleted)
 		{
-			this._container.style.backgroundColor = "#f5f6f8";
+			this._container.classList.add("crm-deal-completed")
 		}
 		else if(isExpired)
 		{
-			this._container.style.backgroundColor = "#fae9e7";
+			this._container.classList.add("crm-deal-expired")
 		}
 
 
@@ -268,8 +268,8 @@ if(typeof(BX.CrmActivityListItemView) === "undefined")
 
 		if(isCompleted)
 		{
-			title.style.color = "#7c8182";
 			title.style.textDecoration = "line-through";
+			title.classList.add("crm_company_title_completed");
 		}
 
 		this._container.appendChild(title);
@@ -292,11 +292,11 @@ if(typeof(BX.CrmActivityListItemView) === "undefined")
 			var timeData =
 			{
 				attrs: { className: "fwb" },
-				style: { color:"#e20707" },
 				text: time
 			};
-
-			detailContainer.appendChild(BX.create("SPAN", timeData));
+			let span = BX.create("SPAN", timeData)
+			span.classList.add("crm-deadline-text")
+			detailContainer.appendChild(span);
 		}
 		else
 		{

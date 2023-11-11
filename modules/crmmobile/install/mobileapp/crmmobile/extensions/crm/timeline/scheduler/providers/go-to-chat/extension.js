@@ -69,9 +69,9 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 			return '<svg width="31" height="31" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.75631 7.79004C6.32956 7.79004 5.17296 8.94665 5.17297 10.3734L5.17306 20.6003C5.17307 22.0271 6.32967 23.1837 7.75639 23.1837H9.93154V25.9041C9.93154 26.3726 10.505 26.5992 10.8253 26.2573L13.704 23.1837H23.3895C24.8162 23.1837 25.9728 22.027 25.9728 20.6003L25.9727 10.3734C25.9727 8.94662 24.8161 7.79004 23.3894 7.79004H7.75631ZM16.7683 11.4191L20.751 15.4018L16.7683 19.3845V17.0515H10.63V13.9792H16.7683V11.4191Z" fill="#767C87"/></svg>';
 		}
 
-		static getMenuPosition()
+		static getDefaultPosition()
 		{
-			return 500;
+			return 5;
 		}
 
 		static isAvailableInMenu(context = {})

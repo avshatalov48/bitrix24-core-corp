@@ -12,8 +12,12 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Integration\Intranet\Department;
 use Bitrix\Tasks\Internals\Helper\Task\Dependence;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
+use Bitrix\Tasks\Internals\Task\Mark;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
+use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Internals\Task\ProjectDependenceTable;
+use Bitrix\Tasks\Internals\Task\Status;
+use Bitrix\Tasks\Internals\Task\TimeUnitType;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Type\DateTime;
@@ -226,7 +230,10 @@ class TaskFieldHandler
 
 		$nowDateTimeString = \Bitrix\Tasks\UI::formatDateTime(Util\User::getTime());
 
-		$this->fields['ACTIVITY_DATE'] = $nowDateTimeString;
+		if (!isset($this->fields['ACTIVITY_DATE']))
+		{
+			$this->fields['ACTIVITY_DATE'] = $nowDateTimeString;
+		}
 
 		if (isset($fields['CHANGED_BY']))
 		{
@@ -297,20 +304,20 @@ class TaskFieldHandler
 		}
 		$this->fields['STATUS'] = (int) $this->fields['STATUS'];
 
-		if ($this->fields['STATUS'] === \CTasks::STATE_NEW)
+		if ($this->fields['STATUS'] === Status::NEW)
 		{
-			$this->fields['STATUS'] = \CTasks::STATE_PENDING;
+			$this->fields['STATUS'] = Status::PENDING;
 		}
 
 		$validValues = [
-			\CTasks::STATE_PENDING,
-			\CTasks::STATE_IN_PROGRESS,
-			\CTasks::STATE_SUPPOSEDLY_COMPLETED,
-			\CTasks::STATE_COMPLETED,
-			\CTasks::STATE_DEFERRED,
+			Status::PENDING,
+			Status::IN_PROGRESS,
+			Status::SUPPOSEDLY_COMPLETED,
+			Status::COMPLETED,
+			Status::DEFERRED,
 		];
 
-		if (!in_array($this->fields['STATUS'], $validValues))
+		if (!in_array($this->fields['STATUS'], $validValues, true))
 		{
 			throw new TaskFieldValidateException(Loc::getMessage('TASKS_INCORRECT_STATUS'));
 		}
@@ -340,8 +347,8 @@ class TaskFieldHandler
 		}
 
 		if (
-			$this->fields['STATUS'] === \CTasks::STATE_COMPLETED
-			|| $this->fields['STATUS'] === \CTasks::STATE_SUPPOSEDLY_COMPLETED
+			$this->fields['STATUS'] === Status::COMPLETED
+			|| $this->fields['STATUS'] === Status::SUPPOSEDLY_COMPLETED
 		)
 		{
 			$this->fields['CLOSED_BY'] = $this->userId;
@@ -353,7 +360,7 @@ class TaskFieldHandler
 			$this->fields['CLOSED_DATE'] = false;
 
 			if (
-				$this->fields['STATUS'] === \CTasks::STATE_IN_PROGRESS
+				$this->fields['STATUS'] === Status::IN_PROGRESS
 				&& !array_key_exists('DATE_START', $this->fields)
 			)
 			{
@@ -369,11 +376,7 @@ class TaskFieldHandler
 	 */
 	public function preparePriority(): self
 	{
-		$validValues = [
-			\CTasks::PRIORITY_LOW,
-			\CTasks::PRIORITY_AVERAGE,
-			\CTasks::PRIORITY_HIGH,
-		];
+		$validValues = array_values(Priority::getAll());
 
 		if (
 			$this->taskId
@@ -388,13 +391,13 @@ class TaskFieldHandler
 			&& !array_key_exists('PRIORITY', $this->fields)
 		)
 		{
-			$this->fields['PRIORITY'] = \CTasks::PRIORITY_AVERAGE;
+			$this->fields['PRIORITY'] = Priority::AVERAGE;
 		}
 
 		$this->fields['PRIORITY'] = (int) $this->fields['PRIORITY'];
 		if (!in_array($this->fields['PRIORITY'], $validValues))
 		{
-			$this->fields['PRIORITY'] = \CTasks::PRIORITY_AVERAGE;
+			$this->fields['PRIORITY'] = Priority::AVERAGE;
 		}
 
 		return $this;
@@ -405,11 +408,7 @@ class TaskFieldHandler
 	 */
 	public function prepareMark(): self
 	{
-		$validValues = [
-			\CTasks::MARK_NEGATIVE,
-			\CTasks::MARK_POSITIVE,
-			'',
-		];
+		$validValues = array_values(Mark::getAll());
 
 		if (
 			array_key_exists('MARK', $this->fields)
@@ -663,7 +662,7 @@ class TaskFieldHandler
 					|| !$this->fields['STATUS']
 				)
 				{
-					$this->fields['STATUS'] = \CTasks::STATE_PENDING;
+					$this->fields['STATUS'] = Status::PENDING;
 				}
 
 				if (!$isSubordinate)
@@ -925,12 +924,12 @@ class TaskFieldHandler
 	 */
 	private function convertDurationToSeconds(int $value, string $type): int
 	{
-		if($type === \CTasks::TIME_UNIT_TYPE_HOUR)
+		if($type === TimeUnitType::HOUR)
 		{
 			// hours to seconds
 			return $value * 3600;
 		}
-		elseif($type === \CTasks::TIME_UNIT_TYPE_DAY || $type === '')
+		elseif($type === TimeUnitType::DAY || $type === '')
 		{
 			// days to seconds
 			return $value * 86400;

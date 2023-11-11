@@ -1373,6 +1373,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			params.categoryId = this.getCategoryId(this.props.entityTypeId);
 			params.categoriesCount = this.getCurrentEntityType().data.categoriesCount || 0;
 			params.userInfo = this.props.userInfo;
+			params.isChatSupported = this.getCurrentEntityType().isChatSupported;
 
 			return TypeFactory.getEntityByType(this.entityTypeName, params);
 		}

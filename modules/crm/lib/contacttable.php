@@ -35,9 +35,9 @@ Loc::loadMessages(Path::combine(__DIR__, 'contact.php'));
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Contact_Query query()
- * @method static EO_Contact_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Contact_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Contact_Result getById($id)
- * @method static EO_Contact_Result getList(array $parameters = array())
+ * @method static EO_Contact_Result getList(array $parameters = [])
  * @method static EO_Contact_Entity getEntity()
  * @method static \Bitrix\Crm\Contact createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\EO_Contact_Collection createCollection()

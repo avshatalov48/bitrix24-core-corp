@@ -2,7 +2,6 @@
  * @module im/messenger/const
  */
 jn.define('im/messenger/const', (require, exports, module) => {
-
 	const { EventType } = require('im/messenger/const/event-type');
 	const { FeatureFlag } = require('im/messenger/const/feature-flag');
 	const {
@@ -17,6 +16,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	} = require('im/messenger/const/user');
 	const {
 		MessageType,
+		MessageIdType,
 		OwnMessageStatus,
 	} = require('im/messenger/const/message');
 	const { ReactionType } = require('im/messenger/const/reaction-type');
@@ -32,6 +32,8 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	} = require('im/messenger/const/path');
 
 	const { DraftType } = require('im/messenger/const/draft');
+	const { SearchEntityIdTypes } = require('im/messenger/const/search');
+	const { ErrorType } = require('im/messenger/const/error');
 
 	module.exports = {
 		EventType,
@@ -40,6 +42,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		MessageStatus,
 		RestMethod,
 		MessageType,
+		MessageIdType,
 		OwnMessageStatus,
 		ReactionType,
 		DialogType,
@@ -50,5 +53,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		Color,
 		Path,
 		DraftType,
+		SearchEntityIdTypes,
+		ErrorType,
 	};
 });

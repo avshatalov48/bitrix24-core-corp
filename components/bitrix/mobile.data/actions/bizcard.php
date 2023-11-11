@@ -1,8 +1,8 @@
 <? if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 /**
- * @var CAllUser $USER
- * @var CAllMain $APPLICATION
+ * @var CUser $USER
+ * @var CMain $APPLICATION
  */
 
 if(!IsModuleInstalled("bizcard"))

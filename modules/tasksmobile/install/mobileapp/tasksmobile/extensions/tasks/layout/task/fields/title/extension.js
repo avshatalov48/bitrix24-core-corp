@@ -50,7 +50,11 @@ jn.define('tasks/layout/task/fields/title', (require, exports, module) => {
 				{
 					ref: (ref) => (this.props.onViewRef && this.props.onViewRef(ref)),
 					style: (this.props.style || {}),
-					onLongClick: (this.state.readOnly ? () => this.copyTitle() : () => {}),
+					onLongClick: (
+						this.state.readOnly && Application.getPlatform() === 'android' && Application.getApiVersion() < 51
+							? () => this.copyTitle()
+							: () => {}
+					),
 				},
 				TextAreaField({
 					readOnly: this.state.readOnly,

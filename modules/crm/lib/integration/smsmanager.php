@@ -24,7 +24,7 @@ class SmsManager implements ICanSendMessage
 	/**
 	 * @return bool
 	 */
-	public static function canUse()
+	public static function canUse(): bool
 	{
 		if (static::$canUse === null)
 		{
@@ -598,6 +598,13 @@ class SmsManager implements ICanSendMessage
 
 	/**
 	 * @inheritDoc
+	 *
+	 * @param array{
+	 *     SENDER_ID: ?string,
+	 *     MESSAGE_FROM: ?string,
+	 *     MESSAGE_BODY: string,
+	 *     ACTIVITY_PROVIDER_TYPE_ID: int,
+	 * } $options
 	 */
 	public static function makeMessageFields(array $options, array $commonOptions): array
 	{

@@ -18,6 +18,8 @@ $MESS['M_CSDL_TAB_MENU_MOVING'] = 'Перемещение';
 $MESS['M_CSDL_TAB_DEDUCT'] = 'Списание';
 $MESS['M_CSDL_TAB_MENU_DEDUCT'] = 'Списание';
 
+$MESS['M_CSDL_TAB_REALIZATION_DESC'] = 'Реализация товаров';
+
 $MESS['M_CSDL_STATUS_CONDUCTED'] = 'Проведён';
 $MESS['M_CSDL_STATUS_NOT_CONDUCTED'] = 'Черновик';
 $MESS['M_CSDL_STATUS_CANCELLED'] = 'Отменён';
@@ -37,6 +39,9 @@ $MESS['M_CSDL_EMPTY_LIST_STORE_SHIPMENT_DESCRIPTION'] = 'Фиксируйте к
 
 $MESS['M_CSDL_EMPTY_LIST_STORE_SEARCH_TITLE'] = 'Документы не найдены';
 $MESS['M_CSDL_EMPTY_LIST_STORE_SEARCH_DESCRIPTION'] = 'Попробуйте изменить запрос поиска';
+
+$MESS['M_CSDL_NO_RIGHTS_TO_ANY_DOCUMENT_TITLE'] = 'Нет доступа к документам Складского учёта';
+$MESS['M_CSDL_NO_RIGHTS_TO_ANY_DOCUMENT_DESCRIPTION'] = 'Обратитесь к вашему руководителю или администратору Битрикс24';
 
 $MESS['M_CSDL_DOCUMENT_DELETE_CONFIRMATION'] = 'Вы уверены, что хотите удалить документ?';
 $MESS['M_CSDL_DOCUMENT_DELETE_CONFIRMATION_OK'] = 'Удалить';

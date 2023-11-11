@@ -45,8 +45,8 @@ jn.define('im/messenger/lib/user-manager', (require, exports, module) => {
 				dialogues.push(UserManager.getDialogForUser(user));
 			});
 
-			const usersPromise = this.store.dispatch('users/set', filteredUsers);
-			const dialoguesPromise = this.store.dispatch('dialogues/set', dialogues);
+			const usersPromise = this.store.dispatch('usersModel/set', filteredUsers);
+			const dialoguesPromise = this.store.dispatch('dialoguesModel/set', dialogues);
 
 			return Promise.all([usersPromise, dialoguesPromise]);
 		}

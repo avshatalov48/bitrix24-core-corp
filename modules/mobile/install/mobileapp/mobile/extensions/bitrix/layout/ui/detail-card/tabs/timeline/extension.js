@@ -2,7 +2,6 @@
  * @module layout/ui/detail-card/tabs/timeline
  */
 jn.define('layout/ui/detail-card/tabs/timeline', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { Tab } = require('layout/ui/detail-card/tabs');
 	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
@@ -117,7 +116,7 @@ jn.define('layout/ui/detail-card/tabs/timeline', (require, exports, module) => {
 		{
 			const floatingItemsContext = {
 				detailCard: this.props.detailCard,
-			}
+			};
 
 			return [
 				new FloatingMenuItem({

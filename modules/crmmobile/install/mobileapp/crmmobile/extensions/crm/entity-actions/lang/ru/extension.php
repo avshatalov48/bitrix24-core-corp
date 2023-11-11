@@ -12,7 +12,7 @@ $MESS['M_CRM_ENTITY_ACTION_COPY_ENTITY_LEAD'] = 'Копировать лид';
 $MESS['M_CRM_ENTITY_ACTION_COPY_ENTITY_DEAL'] = 'Копировать сделку';
 $MESS['M_CRM_ENTITY_ACTION_COPY_ENTITY_CONTACT'] = 'Копировать контакт';
 $MESS['M_CRM_ENTITY_ACTION_COPY_ENTITY_COMPANY'] = 'Копировать компанию';
-$MESS['M_CRM_ENTITY_ACTION_COPY_ENTITY_QUOTE'] = 'Копировать предложение';
+$MESS['M_CRM_ENTITY_ACTION_COPY_ENTITY_QUOTE_MSGVER_1'] = 'Копировать предложение';
 $MESS['M_CRM_ENTITY_ACTION_COPY_ENTITY_SMART_INVOICE'] = 'Копировать счёт';
 $MESS['M_CRM_ENTITY_ACTION_CHANGE_CRM_MODE'] = 'Режим работы CRM';
 

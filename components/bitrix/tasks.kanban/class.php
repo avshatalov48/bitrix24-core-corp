@@ -14,7 +14,10 @@ use \Bitrix\Main\Loader;
 use \Bitrix\Main\Application;
 
 use Bitrix\Tasks\Component\Kanban\ScrumManager;
+use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
+use Bitrix\Tasks\Internals\Task\MetaStatus;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\TaskTable;
 use \Bitrix\Tasks\Kanban\StagesTable;
 use \Bitrix\Tasks\Kanban\TaskStageTable;
@@ -1362,12 +1365,12 @@ class TasksKanbanComponent extends \CBitrixComponent
 			// statuses
 			'overdue' => false,
 			'is_expired' => $this->isExpired($this->getDateTimestamp($item['DEADLINE'])),
-			'high' => $item['PRIORITY'] == \CTasks::PRIORITY_HIGH,
-			'new' => $item['STATUS'] == \CTasks::METASTATE_VIRGIN_NEW,
-			'in_progress' => $item['REAL_STATUS'] == \CTasks::STATE_IN_PROGRESS,
-			'deferred' => $item['STATUS'] == \CTasks::STATE_DEFERRED,
-			'completed' => $item['STATUS'] == \CTasks::STATE_COMPLETED,
-			'completed_supposedly' => $item['STATUS'] == \CTasks::STATE_SUPPOSEDLY_COMPLETED,
+			'high' => (int)$item['PRIORITY'] === Task\Priority::HIGH,
+			'new' => (int)$item['STATUS'] === MetaStatus::UNSEEN,
+			'in_progress' => (int)$item['REAL_STATUS'] === Status::IN_PROGRESS,
+			'deferred' => (int)$item['STATUS'] === Status::DEFERRED,
+			'completed' => (int)$item['STATUS'] === Status::COMPLETED,
+			'completed_supposedly' => (int)$item['STATUS'] === Status::SUPPOSEDLY_COMPLETED,
 			'muted' => $item['IS_MUTED'] === 'Y',
 			'item_fields' => [
 				$this->displayService->fillId($item['ID']),
@@ -1637,7 +1640,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		if (
 			array_key_exists('STATUS', $filter)
 			&& is_array($filter['STATUS'])
-			&& in_array(CTasks::STATE_IN_PROGRESS, $filter['STATUS'])
+			&& in_array(Status::IN_PROGRESS, $filter['STATUS'])
 		)
 		{
 			unset($filter['STATUS']);
@@ -2716,7 +2719,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 								));
 								\Bitrix\Tasks\Integration\Pull\PushService::addEvent($this->getMembersTask($data), [
 									'module_id' => 'tasks',
-									'command' => 'stage_change',
+									'command' => PushCommand::TASK_STAGE_UPDATED,
 									'params' => [
 										'taskId' => $data['id']
 									]
@@ -2731,7 +2734,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 							));
 							\Bitrix\Tasks\Integration\Pull\PushService::addEvent($this->getMembersTask($data), [
 								'module_id' => 'tasks',
-								'command' => 'stage_change',
+								'command' => PushCommand::TASK_STAGE_UPDATED,
 								'params' => [
 									'taskId' => $data['id']
 								]
@@ -3783,7 +3786,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 			{
 				$queryObject = \CTasks::getList(
 					[],
-					['ID' => $taskId, '=STATUS' => \CTasks::STATE_COMPLETED],
+					['ID' => $taskId, '=STATUS' => Status::COMPLETED],
 					['ID'],
 					['USER_ID' => $this->userId]
 				);

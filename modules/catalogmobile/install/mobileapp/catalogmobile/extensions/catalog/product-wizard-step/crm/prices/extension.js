@@ -49,7 +49,6 @@ jn.define('catalog/product-wizard-step/crm/prices', (require, exports, module) =
 				{
 					config: {
 						selectionOnFocus: true,
-						currencyReadOnly: true,
 					},
 				}
 			);

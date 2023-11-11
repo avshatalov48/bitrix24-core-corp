@@ -300,6 +300,11 @@
 
 		renderTitle: function()
 		{
+			if (this.isScrumGridHeader())
+			{
+				this.getContainer().classList.add("main-kanban-column-scrum");
+			}
+
 			if ((this.isScrumGridHeader() || !this.isScrumGrid()))
 			{
 				return BX.Kanban.Column.prototype.renderTitle.call(this);

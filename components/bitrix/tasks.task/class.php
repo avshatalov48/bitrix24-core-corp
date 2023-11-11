@@ -33,6 +33,7 @@ use Bitrix\Tasks\Integration\Forum\Task\Topic;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Kanban\StagesTable;
@@ -2803,7 +2804,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			'CREATED_BY' => 		$this->userId,
 			Task\Originator::getCode(true) => array('ID' => $this->userId),
 			Task\Responsible::getCode(true) => array(array('ID' => $this->arParams['USER_ID'])),
-			'PRIORITY' => 			CTasks::PRIORITY_AVERAGE,
+			'PRIORITY' => 			Tasks\Internals\Task\Priority::AVERAGE,
 			'FORUM_ID' => 			CTasksTools::getForumIdForIntranet(), // obsolete
 			'REPLICATE' => 			'N',
 
@@ -2815,8 +2816,8 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			'MATCH_WORK_TIME' => $stateFlags['MATCH_WORK_TIME'] ? 'Y' : 'N',
 
 			'DESCRIPTION_IN_BBCODE' => 'Y', // new tasks should be always in bbcode
-			'DURATION_TYPE' => CTasks::TIME_UNIT_TYPE_DAY,
-			'DURATION_TYPE_ALL' => CTasks::TIME_UNIT_TYPE_DAY,
+			'DURATION_TYPE' => Tasks\Internals\Task\TimeUnitType::DAY,
+			'DURATION_TYPE_ALL' => Tasks\Internals\Task\TimeUnitType::DAY,
 
 			'SE_PARAMETER' => [
 				array('NAME' => 'PROJECT_PLAN_FROM_SUBTASKS', 'VALUE' => 'Y')
@@ -4298,7 +4299,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		{
 			$queryObject = \CTasks::getList(
 				[],
-				['ID' => $taskId, '=STATUS' => \CTasks::STATE_COMPLETED],
+				['ID' => $taskId, '=STATUS' => Status::COMPLETED],
 				['ID'],
 				['USER_ID' => User::getId()]
 			);
@@ -4333,7 +4334,8 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 	{
 		if (
 			isset($task['SCENARIO_NAME'])
-			&& $task['SCENARIO_NAME'] === Tasks\Internals\Task\ScenarioTable::SCENARIO_MOBILE
+			&& is_array($task['SCENARIO_NAME'])
+			&& in_array(Tasks\Internals\Task\ScenarioTable::SCENARIO_MOBILE, $task['SCENARIO_NAME'], true)
 			&& !(new UserOption\Mobile())->isMobileAppInstalled()
 		)
 		{

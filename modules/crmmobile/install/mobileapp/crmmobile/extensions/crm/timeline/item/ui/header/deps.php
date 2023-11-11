@@ -7,5 +7,5 @@ return [
 		'./pin-button',
 		'./tag',
 		'./info-helper',
-	]
+	],
 ];

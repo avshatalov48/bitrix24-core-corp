@@ -185,6 +185,7 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 		{
 			return View(
 				{
+					testId: `${this.props.testId}-Container`,
 					style: {
 						flexShrink: 2,
 						flexDirection: 'row',
@@ -219,6 +220,7 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 			const checked = this.getValue();
 
 			return new Switcher({
+				testId: `${this.testId}-Switcher`,
 				checked,
 				animations: this.getBlinkAnimation(),
 				disabled: this.isReadOnly(),
@@ -297,9 +299,10 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 		getImageUrl(url)
 		{
 			let imageUrl = url;
+
 			if (imageUrl.indexOf(currentDomain) !== 0)
 			{
-				imageUrl = imageUrl.replace(`${currentDomain}`, '');
+				imageUrl = imageUrl.replace(String(currentDomain), '');
 				imageUrl = (imageUrl.indexOf('http') === 0 ? imageUrl : `${currentDomain}${imageUrl}`);
 			}
 

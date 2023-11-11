@@ -4,6 +4,7 @@
 
 	const { Loc } = require('loc');
 	const { RefsContainer } = require('layout/ui/kanban/refs-container');
+	const { KanbanToolbar } = require('layout/ui/kanban/toolbar');
 	const {
 		clone,
 		merge,
@@ -13,6 +14,7 @@
 	const { useCallback } = require('utils/function');
 	const { PureComponent } = require('layout/pure-component');
 	const { StatefulList } = require('layout/ui/stateful-list');
+	const { ListItemType, ListItemsFactory } = require('layout/ui/simple-list/items');
 	const { Type } = require('type');
 
 	let CategoryStorage;
@@ -40,10 +42,12 @@
 
 	/**
 	 * @class UI.Kanban
-	 * @property { ToolbarFactory } props.toolbarFactory
 	 */
 	class Kanban extends PureComponent
 	{
+		/**
+		 * @param {KanbanProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
@@ -63,14 +67,19 @@
 
 			this.getRuntimeParams = this.getRuntimeParamsHandler.bind(this);
 			this.changeColumn = this.changeColumnHandler.bind(this);
-			this.reloadCurrentColumn = this.reloadCurrentColumnHandler.bind(this);
 			this.changeItemStageHandler = this.changeItemStage.bind(this);
 			this.reloadListCallbackHandler = this.initCounters.bind(this);
-			this.blinkItemHandler = this.blinkItem.bind(this);
 			this.onUpdateItemHandler = this.onUpdateItem.bind(this);
 			this.onCreateItemHandler = this.onCreateItem.bind(this);
 			this.onAccessDeniedItemHandler = this.onAccessDeniedItem.bind(this);
-			this.onChangeItemCategoryHandler = this.onChangeItemCategory.bind(this);
+		}
+
+		/**
+		 * @return {KanbanProps}
+		 */
+		getProps()
+		{
+			return this.props;
 		}
 
 		initSlides(props = null)
@@ -193,6 +202,9 @@
 			}
 		}
 
+		/**
+		 * @param {KanbanProps} newProps
+		 */
 		componentWillReceiveProps(newProps)
 		{
 			this.actions = newProps.actions;
@@ -216,6 +228,9 @@
 			});
 		}
 
+		/**
+		 * @param {KanbanProps} props
+		 */
 		init(props)
 		{
 			this.actions = props.actions || {};
@@ -279,11 +294,6 @@
 				const page = Array.from(this.slides.keys()).indexOf(slideName);
 				this.scrollToPage(page);
 			});
-		}
-
-		reloadCurrentColumnHandler()
-		{
-			this.reload(this.getCurrentSlideName());
 		}
 
 		/**
@@ -753,66 +763,25 @@
 
 		isEnabledKanbanToolbar()
 		{
-			return (
-				this.props.toolbarFactory
-				&& this.props.toolbarFactory.has(this.props.entityTypeName)
-			);
+			const { enabled, componentClass } = (this.getProps().toolbar || {});
+
+			return enabled && componentClass && componentClass.prototype instanceof KanbanToolbar;
 		}
 
 		renderKanbanToolbar()
 		{
 			if (this.isEnabledKanbanToolbar())
 			{
-				return this.props.toolbarFactory.create(
-					this.props.entityTypeName,
-					{
-						entityTypeName: this.props.entityTypeName,
-						entityTypeId: this.props.entityTypeId,
-						params: this.props.toolbarParams,
-						filter: this.filter,
-						filterParams: this.props.filterParams,
-						loadAction: this.actions.loadEntityStages,
-						loadActionParams: this.props.actionParams.loadItems,
-						changeColumn: this.changeColumn,
-						reloadColumn: this.reloadCurrentColumn,
-						changeItemStage: this.changeItemStageHandler,
-						blinkItem: this.blinkItemHandler,
-						layout: this.props.layout,
-						onChangeItemCategory: this.onChangeItemCategoryHandler,
-						ref: ref => {
-							if (ref)
-							{
-								this.refsContainer.setToolbar(ref);
-							}
-						},
-					},
-				);
-			}
+				const { componentClass: Toolbar, props = {} } = this.getProps().toolbar;
 
-			console.warn('Toolbar factory not found.');
+				return new Toolbar({
+					...props,
+					onChangeStage: this.changeColumn,
+					ref: (ref) => ref && this.refsContainer.setToolbar(ref),
+				});
+			}
 
 			return null;
-		}
-
-		onChangeItemCategory(data)
-		{
-			const statefulList = this.getCurrentStatefulList();
-			const toolbar = this.refsContainer.getToolbar();
-
-			if (!statefulList || !toolbar)
-			{
-				return;
-			}
-
-			const { ids = [] } = data;
-
-			ids.forEach((id) => {
-				const item = statefulList.getItem(id);
-				if (item)
-				{
-					toolbar.removeFromStageCounters(item.data.columnId, item.data.price);
-				}
-			});
 		}
 
 		/**
@@ -854,7 +823,8 @@
 				cacheName: this.getStatefulListCacheName(columnId),
 				layoutMenuActions: this.props.layoutMenuActions,
 				menuButtons: (this.props.menuButtons || []),
-				itemType: 'Kanban',
+				itemType: (this.props.itemType || ListItemType.EXTENDED),
+				itemFactory: (this.props.itemFactory || ListItemsFactory),
 				itemParams: (params.itemParams || {}),
 				getEmptyListComponent: this.props.getEmptyListComponent || null,
 				getRuntimeParams: this.getRuntimeParams,
@@ -908,17 +878,21 @@
 			itemParams.onChange = this.changeItemStageHandler;
 			itemParams.useStageFieldInSkeleton = true;
 
-			return mergeImmutable(itemParams, this.getAdditionalParamsForItem());
-		}
+			/** @type {KanbanToolbar|null} */
+			const toolbar = this.refsContainer.getToolbar();
 
-		getAdditionalParamsForItem()
-		{
-			if (this.refsContainer.hasToolbar())
+			if (toolbar)
 			{
-				return this.refsContainer.getToolbar().getAdditionalParamsForItem();
+				const category = this.getCurrentCategory();
+
+				return mergeImmutable(itemParams, {
+					categoryId: category ? category.id : null,
+					activeStageId: toolbar.getActiveStageId(),
+					columns: toolbar.getColumns(),
+				});
 			}
 
-			return {};
+			return itemParams;
 		}
 
 		getRuntimeParamsHandler(data)
@@ -1184,7 +1158,7 @@
 			const newColumn = this.columns.get(newColumnStatusId);
 			const newColumnId = (newColumn ? newColumn.id : null);
 
-			toolbar.updateCurrentColumnId(newColumnId);
+			toolbar.setActiveStage(newColumnId);
 		}
 
 		/**
@@ -1213,6 +1187,11 @@
 			return this.currentSlideName;
 		}
 
+		/**
+		 * @public
+		 * @param {number} itemId
+		 * @param {boolean} showUpdated
+		 */
 		blinkItem(itemId, showUpdated = true)
 		{
 			const statefulList = this.getCurrentStatefulList();

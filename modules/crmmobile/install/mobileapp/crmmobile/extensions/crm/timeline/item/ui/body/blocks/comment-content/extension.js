@@ -46,7 +46,7 @@ jn.define('crm/timeline/item/ui/body/blocks/comment-content', (require, exports,
 		renderText()
 		{
 			const props = this.getTextParams();
-			props.value = this.state.text;
+			props.value = this.prepareTextToRender(this.state.text);
 
 			return BBCodeText(props);
 		}

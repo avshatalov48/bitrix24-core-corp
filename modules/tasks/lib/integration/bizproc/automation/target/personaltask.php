@@ -3,6 +3,7 @@ namespace Bitrix\Tasks\Integration\Bizproc\Automation\Target;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Internals\Task\Status;
 
 if (!Loader::includeModule('bizproc'))
 {
@@ -37,19 +38,19 @@ class PersonalTask extends Base
 	public function getDocumentStatusList($categoryId = 0)
 	{
 		return [
-			\CTasks::STATE_PENDING => [
+			Status::PENDING => [
 				'TITLE' => Loc::getMessage('TASKS_BP_AUTOMATION_PERSONAL_STATUS_PENDING')
 			],
-			\CTasks::STATE_IN_PROGRESS => [
+			Status::IN_PROGRESS => [
 				'TITLE' => Loc::getMessage('TASKS_BP_AUTOMATION_PERSONAL_STATUS_IN_PROGRESS')
 			],
-			\CTasks::STATE_SUPPOSEDLY_COMPLETED => [
+			Status::SUPPOSEDLY_COMPLETED => [
 				'TITLE' => Loc::getMessage('TASKS_BP_AUTOMATION_PERSONAL_STATUS_SUPPOSEDLY_COMPLETED')
 			],
-			\CTasks::STATE_COMPLETED => [
+			Status::COMPLETED => [
 				'TITLE' => Loc::getMessage('TASKS_BP_AUTOMATION_PERSONAL_STATUS_COMPLETED')
 			],
-			\CTasks::STATE_DEFERRED => [
+			Status::DEFERRED => [
 				'TITLE' => Loc::getMessage('TASKS_BP_AUTOMATION_PERSONAL_STATUS_DEFERRED')
 			],
 		];

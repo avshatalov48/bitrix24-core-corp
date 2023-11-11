@@ -328,12 +328,12 @@ if($mode === 'CONVERT')
 	$entityID = isset($_POST['ENTITY_ID']) ? (int)$_POST['ENTITY_ID'] : 0;
 	if($entityID <= 0)
 	{
-		__CrmQuoteShowEndJsonResonse(array('ERROR' => array('MESSAGE' => GetMessage('CRM_QUOTE_CONVERSION_ID_NOT_DEFINED'))));
+		__CrmQuoteShowEndJsonResonse(array('ERROR' => array('MESSAGE' => GetMessage('CRM_QUOTE_CONVERSION_ID_NOT_DEFINED_MSGVER_1'))));
 	}
 
 	if(!CCrmQuote::Exists($entityID))
 	{
-		__CrmQuoteShowEndJsonResonse(array('ERROR' => array('MESSAGE' => GetMessage('CRM_QUOTE_CONVERSION_NOT_FOUND'))));
+		__CrmQuoteShowEndJsonResonse(array('ERROR' => array('MESSAGE' => GetMessage('CRM_QUOTE_CONVERSION_NOT_FOUND_MSGVER_1'))));
 	}
 
 	if(!CCrmQuote::CheckReadPermission($entityID, $currentUserPermissions))

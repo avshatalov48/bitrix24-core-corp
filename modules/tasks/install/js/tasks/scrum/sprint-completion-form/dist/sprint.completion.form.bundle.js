@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,main_core_events,ui_sidepanel_layout,ui_confetti,main_core,ui_dialogs_messagebox) {
@@ -7,7 +8,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  function RequestSender() {
 	    babelHelpers.classCallCheck(this, RequestSender);
 	  }
-
 	  babelHelpers.createClass(RequestSender, [{
 	    key: "sendRequest",
 	    value: function sendRequest(controller, action) {
@@ -40,10 +40,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        console.error(response);
 	        return;
 	      }
-
 	      if (response.errors.length) {
 	        var firstError = response.errors.shift();
-
 	        if (firstError) {
 	          var errorCode = firstError.code ? firstError.code : '';
 	          var message = firstError.message + ' ' + errorCode;
@@ -57,22 +55,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}();
 
 	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
-
 	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
-
 	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
-
 	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
-
 	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
-
 	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
-
 	var Culture = /*#__PURE__*/function () {
 	  function Culture() {
 	    babelHelpers.classCallCheck(this, Culture);
 	  }
-
 	  babelHelpers.createClass(Culture, [{
 	    key: "setData",
 	    value: function setData(data) {
@@ -99,7 +90,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (!_classStaticPrivateFieldSpecGet(Culture, Culture, _instance)) {
 	        _classStaticPrivateFieldSpecSet(Culture, Culture, _instance, new Culture());
 	      }
-
 	      return _classStaticPrivateFieldSpecGet(Culture, Culture, _instance);
 	    }
 	  }]);
@@ -113,18 +103,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14;
 	var SprintCompletionForm = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(SprintCompletionForm, _EventEmitter);
-
 	  function SprintCompletionForm(params) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, SprintCompletionForm);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SprintCompletionForm).call(this, params));
-
 	    _this.setEventNamespace('BX.Tasks.Scrum.SprintCompletionForm');
-
 	    _this.groupId = parseInt(params.groupId, 10);
-	    /* eslint-disable */
 
+	    /* eslint-disable */
 	    _this.sidePanelManager = BX.SidePanel.Instance;
 	    /* eslint-enable */
 
@@ -134,12 +120,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.completeButton = null;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(SprintCompletionForm, [{
 	    key: "show",
 	    value: function show() {
 	      var _this2 = this;
-
 	      this.sidePanelManager.open(this.sidePanelId, {
 	        cacheable: false,
 	        width: 700,
@@ -153,7 +137,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            },
 	            buttons: function buttons(_ref) {
 	              var cancelButton = _ref.cancelButton,
-	                  SaveButton = _ref.SaveButton;
+	                SaveButton = _ref.SaveButton;
 	              return [_this2.completeButton = new SaveButton({
 	                text: main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_BUTTON'),
 	                onclick: _this2.onComplete.bind(_this2)
@@ -167,15 +151,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onComplete",
 	    value: function onComplete() {
 	      var _this3 = this;
-
 	      var direction = 'backlog';
 	      var directionSelector = this.node.querySelector('.tasks-scrum__side-panel-completion--info-select');
-
 	      if (directionSelector) {
 	        directionSelector = directionSelector.querySelector('select');
 	        direction = directionSelector.value;
 	      }
-
 	      this.completeButton.setWaiting();
 	      this.requestSender.completeSprint({
 	        groupId: this.groupId,
@@ -192,17 +173,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            zIndex: _this3.sidePanelManager.getTopSlider().getZindex() + 1
 	          }).then(function () {
 	            _this3.closeSidePanel();
-
 	            _this3.emit('afterComplete');
 	          });
 	        } else {
 	          _this3.closeSidePanel();
-
 	          _this3.emit('afterComplete');
 	        }
 	      })["catch"](function (response) {
 	        _this3.completeButton.setWaiting(false);
-
 	        _this3.requestSender.showErrorAlert(response, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_ERROR_TITLE_POPUP'));
 	      });
 	    }
@@ -210,9 +188,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "closeSidePanel",
 	    value: function closeSidePanel() {
 	      var _this4 = this;
-
 	      var openSliders = this.sidePanelManager.getOpenSliders();
-
 	      if (openSliders.length > 0) {
 	        openSliders.forEach(function (slider) {
 	          if (slider.getUrl() === _this4.sidePanelId) {
@@ -225,7 +201,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "createContent",
 	    value: function createContent() {
 	      var _this5 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        _this5.requestSender.getDataForSprintCompletionForm({
 	          groupId: _this5.groupId
@@ -234,7 +209,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          resolve(_this5.render(response.data));
 	        })["catch"](function (response) {
 	          reject();
-
 	          _this5.sidePanelManager.close(false, function () {
 	            _this5.requestSender.showErrorAlert(response);
 	          });
@@ -256,7 +230,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (main_core.Type.isNull(periodDays)) {
 	        return '';
 	      }
-
 	      return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_PERIOD_LABEL'));
 	    }
 	  }, {
@@ -265,7 +238,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (main_core.Type.isNull(periodDays)) {
 	        return '';
 	      }
-
 	      return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), main_core.Text.encode(periodDays));
 	    }
 	  }, {
@@ -274,23 +246,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (goal === '') {
 	        return '';
 	      }
-
 	      return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-block\">\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-description\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(goal));
 	    }
 	  }, {
 	    key: "renderEpics",
 	    value: function renderEpics(epics) {
 	      var _this6 = this;
-
 	      if (!epics.length) {
 	        return '';
 	      }
-
 	      return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-row\">\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-content\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_EPICS_ROW_LABEL'), epics.map(function (epic) {
 	        var colorBorder = _this6.convertHexToRGBA(epic.color, 0.7);
-
 	        var colorBackground = _this6.convertHexToRGBA(epic.color, 0.3);
-
 	        return main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\tclass=\"tasks-scrum__epic-label\"\n\t\t\t\t\t\t\t\t\tstyle=\"background: ", "; border-color: ", ";\"\n\t\t\t\t\t\t\t\t>", "</span>"])), colorBackground, colorBorder, main_core.Text.encode(epic.name));
 	      }));
 	    }
@@ -299,43 +266,34 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function renderWheelCompletedStoryPoints(sprintData) {
 	      var differencePercentage = 0;
 	      var currentPercentage = this.calculatePercentage(sprintData.storyPoints, sprintData.completedStoryPoints);
-
 	      if (sprintData.existsLastSprint) {
 	        var lastPercentage = this.calculatePercentage(sprintData.lastStoryPoints, sprintData.lastCompletedStoryPoints);
 	        differencePercentage = parseFloat(currentPercentage) - parseFloat(lastPercentage);
 	      } else {
 	        differencePercentage = currentPercentage;
 	      }
-
 	      var wheelClass = '';
-
 	      if (differencePercentage > 0) {
 	        wheelClass = "tasks-scrum__side-panel-completion--plan-block-number --arrow-up --percent --success";
 	      } else {
 	        wheelClass = "tasks-scrum__side-panel-completion--plan-block-number --arrow-down --percent --warning";
 	      }
-
 	      var absoluteValue = Math.abs(differencePercentage);
-
 	      var renderProgress = function renderProgress(percent) {
 	        if (percent === 0) {
 	          return '';
 	        }
-
 	        return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--progress\">\n\t\t\t\t\t<span class=\"tasks-scrum__side-panel-completion--progress-number\">", "</span>\n\t\t\t\t\t<span class=\"tasks-scrum__side-panel-completion--progress-percent\">%</span></div>\n\t\t\t\t</div>\n\t\t\t"])), percent);
 	      };
-
 	      return main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"", "\">\n\t\t\t\t<div \n\t\t\t\t\tclass=\"tasks-scrum__side-panel-completion--plan-block-number-date\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), wheelClass, main_core.Text.encode(sprintData.completedStoryPoints), main_core.Text.encode(sprintData.completedStoryPoints), renderProgress(absoluteValue));
 	    }
 	  }, {
 	    key: "renderUncompletedTasks",
 	    value: function renderUncompletedTasks(sprintData) {
 	      var _this7 = this;
-
 	      if (sprintData.uncompletedTasks.length === 0) {
 	        return '';
 	      }
-
 	      return main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__side-panel-completion--block\">\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic\">\n\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-block\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-title-icon\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-description\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-items\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_ACTION_ROW_LABEL'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_ACTION_MOVE_LABEL'), this.renderMoveSelect(sprintData.plannedSprints), sprintData.uncompletedTasks.map(function (item) {
 	        return _this7.renderItem(item);
 	      }));
@@ -354,7 +312,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderItem",
 	    value: function renderItem(item) {
 	      var _this8 = this;
-
 	      var src = item.responsible.photo ? main_core.Text.encode(item.responsible.photo.src) : null;
 	      var photoStyle = src ? "background-image: url('".concat(encodeURI(src), "');") : '';
 	      var storyPointsClass = item.storyPoints === '' ? '--empty' : '';
@@ -370,7 +327,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (main_core.Type.isArray(epic) || main_core.Type.isUndefined(epic)) {
 	        return '';
 	      }
-
 	      return main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item-side-panel--epic --visible\">\n\t\t\t\t<i\n\t\t\t\t\tclass=\"tasks-scrum__item-side-panel--epic-point\"\n\t\t\t\t\tstyle=\"", "\"\n\t\t\t\t></i>\n\t\t\t\t<span>", "</span>\n\t\t\t</div>\n\t\t"])), "background-color: ".concat(epic.color), main_core.Text.encode(epic.name));
 	    }
 	  }, {
@@ -379,7 +335,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (tags.length === 0) {
 	        return '';
 	      }
-
 	      return main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t", "\n\t\t"])), tags.map(function (tag) {
 	        return main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-scrum__item-side-panel--hashtag --visible\">#", "</div>\n\t\t\t"])), main_core.Text.encode(tag));
 	      }));
@@ -406,11 +361,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      dateWithWeekendOffset.setHours(0, 0, 0, 0);
 	      var dateStart = new Date(dateStartTime * 1000);
 	      var date = new Date();
-
 	      if (dateStart >= date) {
 	        return null;
 	      }
-
 	      return BX.date.format('ddiff', dateStart, dateWithWeekendOffset);
 	    }
 	  }, {
@@ -419,7 +372,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (first === 0) {
 	        return 0;
 	      }
-
 	      var result = Math.round(second * 100 / first);
 	      return isNaN(result) ? 0 : result;
 	    }
@@ -427,11 +379,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "convertHexToRGBA",
 	    value: function convertHexToRGBA(hexCode, opacity) {
 	      var hex = hexCode.replace('#', '');
-
 	      if (hex.length === 3) {
 	        hex = "".concat(hex[0]).concat(hex[0]).concat(hex[1]).concat(hex[1]).concat(hex[2]).concat(hex[2]);
 	      }
-
 	      var r = parseInt(hex.substring(0, 2), 16);
 	      var g = parseInt(hex.substring(2, 4), 16);
 	      var b = parseInt(hex.substring(4, 6), 16);

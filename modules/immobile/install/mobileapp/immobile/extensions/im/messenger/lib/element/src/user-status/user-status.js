@@ -28,7 +28,7 @@ jn.define('im/messenger/lib/element/user-status', (require, exports, module) => 
 		static getStatusByUserId(userId)
 		{
 			UserStatus.store = core.getStore();
-			const userData = UserStatus.store.getters['usersModel/getUserById'](userId);
+			const userData = UserStatus.store.getters['usersModel/getById'](userId);
 
 			return userData ? userStatuses[userData.status] : '';
 		}

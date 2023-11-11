@@ -1258,7 +1258,8 @@ BX.CRM.Kanban.Item.prototype = {
 	getActivityMessage: function(type) {
 		const content = BX.create("span");
 		const typeTranslateCode = /DYNAMIC_(\d+)/.test(type) ? 'DYNAMIC' : type;
-		content.innerHTML = BX.message("CRM_KANBAN_ACTIVITY_CHANGE_" + typeTranslateCode + '_MSGVER_1');
+		content.innerHTML = BX.message(`CRM_KANBAN_ACTIVITY_CHANGE_${typeTranslateCode}_MSGVER_1`)
+			|| BX.message(`CRM_KANBAN_ACTIVITY_CHANGE_${typeTranslateCode}_MSGVER_2`);
 
 		const eventLink = content.querySelector(".crm-kanban-item-activity-link");
 		BX.bind(eventLink, "click", function() {

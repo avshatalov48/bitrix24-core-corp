@@ -75,10 +75,13 @@ jn.define('layout/ui/entity-editor/control/opportunity', (require, exports, modu
 			const entityTypeId = this.model.getField('ENTITY_TYPE_ID', 0);
 			const data = {
 				documentsData: this.model.getField('DOCUMENTS', {}),
+				orderList: this.model.getField('ORDER_LIST', {}),
 				uid: this.getUid(),
 				entityId: this.model.getField('ID', 0),
-				entityTypeId: entityTypeId,
+				entityTypeId,
 				isUsedInventoryManagement: this.model.getField('IS_USED_INVENTORY_MANAGEMENT', false),
+				modeWithOrders: this.model.getField('MODE_WITH_ORDERS', false),
+				salesOrderRights: this.model.getField('SALES_ORDERS_RIGHTS', {}),
 			};
 
 			return new DocumentList(data);

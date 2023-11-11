@@ -5,11 +5,11 @@ use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\PostDecodeFilter;
 
-define('NO_KEEP_STATISTIC', 'Y');
-define('NO_AGENT_STATISTIC', 'Y');
-define('NO_AGENT_CHECK', true);
-define('PUBLIC_AJAX_MODE', true);
-define('DisableEventsCheck', true);
+const NO_KEEP_STATISTIC = 'Y';
+const NO_AGENT_STATISTIC = 'Y';
+const NO_AGENT_CHECK = true;
+const PUBLIC_AJAX_MODE = true;
+const DisableEventsCheck = true;
 
 $siteID = isset($_REQUEST['site']) ? mb_substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site']), 0, 2) : '';
 if ($siteID !== '')

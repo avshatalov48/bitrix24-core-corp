@@ -69,9 +69,6 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			this.floatingButtonProvider = null;
 			/** @type {FloatingButton} */
 			this.floatingButtonRef = null;
-			this.ahaMomentRef = null;
-
-			this.ahaMomentsManager = null;
 
 			this.readOnly = true;
 			this.entityModel = null;
@@ -98,6 +95,8 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			{
 				this.state.tabsInfo = props.tabs;
 			}
+			this.state.ahaMoment = null;
+			this.ahaMomentsManager = null;
 
 			/** @type {(string, function(DetailCardComponent, ...*): void)[][]} */
 			this.globalEvents = [];
@@ -238,6 +237,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 		createUid()
 		{
 			const { uid } = this.getComponentParams();
+
 			return uid || Random.getString();
 		}
 
@@ -376,7 +376,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 		getTabCacheId()
 		{
-			return this.props.endpoint + '-' + Object.toMD5(this.getTabParams());
+			return `${this.props.endpoint}-${Object.toMD5(this.getTabParams())}`;
 		}
 
 		getTabParams()
@@ -391,6 +391,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 			return options.reduce((obj, option) => {
 				obj[option] = params[option] || null;
+
 				return obj;
 			}, {});
 		}
@@ -741,7 +742,8 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 							duration,
 						},
 						height: TOP_TOOLBAR_HEIGHT,
-					});
+					},
+				);
 			}
 
 			return null;
@@ -818,14 +820,9 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 		renderAhaMoments()
 		{
-			if (this.ahaMomentsManager)
+			if (this.ahaMomentsManager && this.state.ahaMoment)
 			{
-				const goToChat = this.ahaMomentsManager('goToChat');
-
-				return new goToChat({
-					detailCard: this,
-					ref: (ref) => this.ahaMomentRef = ref,
-				});
+				return this.state.ahaMoment;
 			}
 
 			return null;
@@ -891,7 +888,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 					{
 						AnalyticsLabel.send({
 							...this.getEntityAnalyticsData(),
-							event: action.id + '-success',
+							event: `${action.id}-success`,
 						});
 					}
 				})
@@ -927,7 +924,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 				this.hasEntityModel()
 				&& !this.isNewEntity()
 				&& !this.isToolPanelVisible()
-				&& this.itemActions.filter((action) => action.onActiveCallback(this.entityModel)).length > 0
+				&& this.itemActions.some((action) => action.onActiveCallback(this.entityModel))
 			);
 		}
 
@@ -943,8 +940,6 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 		reloadWithData(tabsData)
 		{
-			this.entityModel = null;
-
 			if (!Array.isArray(tabsData))
 			{
 				return Promise.resolve();
@@ -1069,11 +1064,28 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 					this.floatingButtonRef.actualize();
 				}
 
-				if (this.ahaMomentRef)
+				if (this.state.ahaMoment && !this.state.ahaMoment.state.isVisible)
 				{
-					this.ahaMomentRef.actualize();
+					this.state.ahaMoment.actualize();
 				}
 			}
+		}
+
+		setActualAhaMoment()
+		{
+			const ahaMoment = this.ahaMomentsManager.chooseAhaMoment(this);
+			if (ahaMoment)
+			{
+				this.setState({ ahaMoment });
+			}
+		}
+
+		getAvailableAhaMoments()
+		{
+			return [
+				'goToChat',
+				'yoochecks',
+			];
 		}
 
 		setActiveTab(tabId)
@@ -1265,7 +1277,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 						// validation returns false
 						if (Array.isArray(errors))
 						{
-							if (errors.length)
+							if (errors.length > 0)
 							{
 								NotifyManager.showErrors(errors);
 							}
@@ -1328,9 +1340,14 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 				this.floatingButtonRef.actualize();
 			}
 
-			if (this.ahaMomentRef)
+			if (this.ahaMomentsManager && !this.state.ahaMoment)
 			{
-				this.ahaMomentRef.actualize();
+				this.setActualAhaMoment();
+			}
+
+			if (this.state.ahaMoment && !this.state.ahaMoment.state.isVisible)
+			{
+				this.state.ahaMoment.actualize();
 			}
 
 			if (this.activeTab !== MAIN_TAB)
@@ -1341,14 +1358,14 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 		reloadTabs()
 		{
-			return Promise.all([
-				...[...this.tabRefMap.values()].map((tabRef) => {
+			return Promise.all(
+				[...this.tabRefMap.values()].map((tabRef) => {
 					if (!tabRef.isInitialStatus())
 					{
 						tabRef.fetch();
 					}
 				}),
-			]);
+			);
 		}
 
 		setLoading(isLoading)
@@ -1380,17 +1397,17 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 		handleCancelNewEntity()
 		{
 			return new Promise((resolve) => {
-				if (!this.isChanged)
-				{
-					this.close();
-					resolve();
-				}
-				else
+				if (this.isChanged)
 				{
 					this.showConfirmDiscardChanges(() => {
 						this.close();
 						resolve();
 					});
+				}
+				else
+				{
+					this.close();
+					resolve();
 				}
 			});
 		}
@@ -1398,19 +1415,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 		handleCancelExistingEntity()
 		{
 			return new Promise((resolve) => {
-				if (!this.isChanged)
-				{
-					this
-						.dismissKeyboard()
-						.then(() => {
-							this.isEditing = false;
-							this.checkToolbarPanel();
-							this.customEventEmitter.emit('UI.EntityEditor::switchToViewMode');
-							resolve();
-						})
-					;
-				}
-				else
+				if (this.isChanged)
 				{
 					this.showConfirmDiscardChanges(
 						() => {
@@ -1428,6 +1433,19 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 						},
 						resolve,
 					);
+				}
+				else
+				{
+					this
+						.dismissKeyboard()
+						.then(() => {
+							this.isEditing = false;
+							this.checkToolbarPanel();
+							this.customEventEmitter.emit('UI.EntityEditor::switchToViewMode');
+							resolve();
+						})
+						.catch(console.error)
+					;
 				}
 			});
 		}
@@ -1561,7 +1579,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 							Haptics.notifyWarning();
 							this.showTab(this.availableTabs[showTabWithErrors].id);
 
-							if (errors.length)
+							if (errors.length > 0)
 							{
 								NotifyManager.showErrors(errors);
 							}
@@ -1698,7 +1716,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 			return new Promise((resolve, reject) => {
 				const { errors } = response;
-				if (errors && errors.length)
+				if (errors && errors.length > 0)
 				{
 					if (this.areSaveErrorsCritical(errors))
 					{
@@ -2019,7 +2037,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 					)
 					|| (
 						error.customData.hasOwnProperty('NON_CRITICAL')
-						&& error.customData['NON_CRITICAL'] !== true
+						&& error.customData.NON_CRITICAL !== true
 					)
 				)
 				{
@@ -2079,12 +2097,12 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 			BX.ajax
 				.runAction(this.getActionEndpoint('loadTabCounters'), queryConfig)
-				.then(response => {
+				.then((response) => {
 					response.data.forEach(({ id, counter }) => {
 						this.setTabCounter(id, counter);
 					});
 				})
-				.catch(response => {
+				.catch((response) => {
 					console.warn('Unable to load tab counters', response);
 				})
 			;

@@ -386,6 +386,16 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 				},
 			};
 		}
+
+		canCopyValue()
+		{
+			return true;
+		}
+
+		prepareValueToCopy()
+		{
+			return this.getSelectedItemTitle();
+		}
 	}
 
 	module.exports = {

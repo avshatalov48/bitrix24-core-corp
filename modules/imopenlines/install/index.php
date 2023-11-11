@@ -25,11 +25,6 @@ final class imopenlines extends \CModule
 			$this->MODULE_VERSION = $arModuleVersion["VERSION"];
 			$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
 		}
-		else
-		{
-			$this->MODULE_VERSION = IMOPENLINES_VERSION;
-			$this->MODULE_VERSION_DATE = IMOPENLINES_VERSION_DATE;
-		}
 
 		$this->MODULE_NAME = Loc::getMessage("IMOPENLINES_MODULE_NAME");
 		$this->MODULE_DESCRIPTION = Loc::getMessage("IMOPENLINES_MODULE_DESCRIPTION");

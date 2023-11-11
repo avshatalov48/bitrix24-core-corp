@@ -174,7 +174,17 @@ class EntityEditorConfig
 				}
 			case \CCrmOwnerType::Quote:
 			{
-				$optionName = 'quote_details';
+				$optionName = 'QUOTE_details';
+				break;
+			}
+			case \CCrmOwnerType::StoreDocument:
+			{
+				$optionName = 'store_document_details';
+				break;
+			}
+			case \CCrmOwnerType::ShipmentDocument:
+			{
+				$optionName = 'realization_document_delivery_details'; // or realization_document_shipment_details ?
 				break;
 			}
 			default:
@@ -205,11 +215,23 @@ class EntityEditorConfig
 					$component->arParams = $params;
 					$component->init();
 					$optionName = $component->getEditorConfigId();
+
+					return $optionName;
 				}
 			}
 		}
+		if (empty($optionName) && \CCrmOwnerType::IsDefined($this->entityTypeID))
+		{
+			$optionName = mb_strtolower(\CCrmOwnerType::ResolveName($this->entityTypeID)) . '_details';
+		}
+		$categoryId = $this->extras['CATEGORY_ID'] ?? 0;
 
-		return $optionName;
+		$useUppercase = in_array($this->entityTypeID, [
+			\CCrmOwnerType::Contact,
+			\CCrmOwnerType::Company,
+		]);
+
+		return (new Crm\Category\EditorHelper($this->entityTypeID))->getEditorConfigId($categoryId, $optionName, $useUppercase);
 	}
 
 	public function canDoOperation($operation)

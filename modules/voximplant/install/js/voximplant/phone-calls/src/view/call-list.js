@@ -8,6 +8,7 @@ export class CallList
 	{
 		this.node = params.node;
 		this.id = params.id;
+		this.isDesktop = params.isDesktop;
 
 		this.entityType = '';
 		this.statuses = new Map(); // {STATUS_ID (string): { STATUS_NAME; string, CLASS: string, ITEMS: []}
@@ -710,6 +711,6 @@ export class CallList
 
 	static getAjaxUrl(): string
 	{
-		return (BX.MessengerCommon.isDesktop() ? '/desktop_app/call_list.ajax.php' : '/bitrix/components/bitrix/crm.activity.call_list/ajax.php')
+		return (this.isDesktop ? '/desktop_app/call_list.ajax.php' : '/bitrix/components/bitrix/crm.activity.call_list/ajax.php')
 	}
 }

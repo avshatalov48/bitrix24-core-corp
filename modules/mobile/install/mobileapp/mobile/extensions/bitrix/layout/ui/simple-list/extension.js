@@ -4,6 +4,7 @@
 jn.define('layout/ui/simple-list', (require, exports, module) => {
 	const { Haptics } = require('haptics');
 	const { clone, merge } = require('utils/object');
+	const { ListItemType } = require('layout/ui/simple-list/items');
 	const { ViewMode } = require('layout/ui/simple-list/view-mode');
 	const { SkeletonFactory, SkeletonTypes } = require('layout/ui/simple-list/skeleton');
 	const { PureComponent } = require('layout/pure-component');
@@ -43,6 +44,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 			this.testId = this.props.testId || '';
 			this.itemType = props.itemType;
+			this.itemFactory = props.itemFactory;
 			this.currentViewMode = null;
 
 			this.state.viewMode = ViewMode.loading;
@@ -429,7 +431,9 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 			{
 				items = [
 					{
-						factoryType: ListItemsFactory.Type.EmptySpace,
+						itemType: ListItemType.EMPTY_SPACE,
+						type: ListItemType.EMPTY_SPACE,
+						key: `${ListItemType.EMPTY_SPACE}_top`,
 					},
 					...items,
 				];
@@ -444,7 +448,9 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 				items = [
 					...items,
 					{
-						factoryType: ListItemsFactory.Type.EmptySpace,
+						itemType: ListItemType.EMPTY_SPACE,
+						type: ListItemType.EMPTY_SPACE,
+						key: `${ListItemType.EMPTY_SPACE}_bottom`,
 						height: 84,
 					},
 				];
@@ -467,7 +473,6 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 			if (viewMode === ViewMode.list)
 			{
-				const { allItemsLoaded } = this.props;
 				container = ListView({
 					testId: `${this.testId}_LIST_VIEW`,
 					style: this.getStyle('container'),
@@ -480,8 +485,10 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 								? this.props.getItemCustomStyles(item, section, row)
 								: {}
 						);
+						const itemType = (item.itemType || this.itemType);
+						const itemFactory = (item.itemFactory || this.itemFactory);
 
-						return ListItemsFactory.create(item.factoryType || this.itemType, {
+						return itemFactory.create(itemType, {
 							testId: this.testId,
 							item,
 							params: (this.props.itemParams || {}),
@@ -494,7 +501,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 							hasActions: (
 								this.props.itemActions
 								&& Array.isArray(this.props.itemActions)
-								&& this.props.itemActions.length
+								&& this.props.itemActions.length > 0
 							),
 							ref: (ref) => {
 								if (item.id)
@@ -511,9 +518,11 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 						BX.postComponentEvent('UI.SimpleList::onRefresh');
 					},
 					isRefreshing: this.props.isRefreshing,
-					onLoadMore: (allItemsLoaded || this.props.items.size < MIN_ROWS_COUNT_FOR_LOAD_MORE) ? null : this.onLoadMoreDummy, // need for show the loader at the bottom of the list ))
+					onLoadMore: (this.props.allItemsLoaded || this.props.items.size < MIN_ROWS_COUNT_FOR_LOAD_MORE)
+						? null
+						: this.onLoadMoreDummy, // need for show the loader at the bottom of the list ))
 					onViewableItemsChanged: (items) => {
-						if (allItemsLoaded)
+						if (this.props.allItemsLoaded)
 						{
 							return;
 						}
@@ -535,7 +544,9 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 							length: 1,
 						});
 					},
-					ref: (ref) => this.listView = ref,
+					ref: (ref) => {
+						this.listView = ref;
+					},
 				});
 			}
 

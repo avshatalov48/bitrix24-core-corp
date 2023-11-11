@@ -2,7 +2,6 @@
  * @module layout/ui/wizard/step-layout
  */
 jn.define('layout/ui/wizard/step-layout', (require, exports, module) => {
-
 	const { ProgressBar } = require('layout/ui/wizard/progress-bar');
 	const { PureComponent } = require('layout/pure-component');
 
@@ -76,7 +75,7 @@ jn.define('layout/ui/wizard/step-layout', (require, exports, module) => {
 				View(
 					{
 						style: {
-							flexShrink: 1,
+							flex: 1,
 						},
 					},
 					this.step.createLayout({

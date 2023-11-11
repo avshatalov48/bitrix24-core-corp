@@ -47,7 +47,7 @@ class Quote
 	 */
 	public function getTitle()
 	{
-		return Loc::getMessage('CRM_VOLUME_QUOTE_TITLE');
+		return Loc::getMessage('CRM_VOLUME_QUOTE_TITLE_MSGVER_1');
 	}
 
 	/**

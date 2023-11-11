@@ -2,6 +2,7 @@
 namespace Bitrix\ImOpenLines;
 
 use Bitrix\Im\V2\Message\ReadService;
+use Bitrix\ImOpenLines\Session\Update;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Application;
@@ -102,6 +103,11 @@ class Session
 		}
 
 		Loader::includeModule('im');
+	}
+
+	public function setConfig(array $config)
+	{
+		$this->config = $config;
 	}
 
 	/**
@@ -1591,611 +1597,10 @@ class Session
 	 */
 	public function update($fields)
 	{
-		$updateCheckTable = [];
-		$updateChatSession = [];
-		$updateDateCrmClose = [];
-		if (isset($fields['CONFIG_ID']))
-		{
-			$configManager = new Config();
-			$config = $configManager->get($fields['CONFIG_ID']);
-			if ($config)
-			{
-				$this->config = $config;
-			}
-			else
-			{
-				unset($fields['CONFIG_ID']);
-			}
-		}
+		$update = new Update($this);
+		$update->setData($fields);
 
-		if (
-			array_key_exists('SEND_NO_ANSWER_TEXT', $fields)
-			&& $fields['SEND_NO_ANSWER_TEXT'] === 'Y'
-		)
-		{
-			$updateCheckTable['DATE_NO_ANSWER'] = null;
-		}
-
-		if (array_key_exists('CHECK_DATE_CLOSE', $fields))
-		{
-			$updateCheckTable['DATE_CLOSE'] = $fields['CHECK_DATE_CLOSE'];
-			unset($fields['CHECK_DATE_CLOSE']);
-		}
-		elseif (
-			isset($fields['DATE_MODIFY'])
-			&& $fields['DATE_MODIFY'] instanceof DateTime
-			&& (!isset($fields['CLOSED']) || $fields['CLOSED'] !== 'Y')
-		)
-		{
-			$dateCrmClose = new DateTime();
-			$dateCrmClose->add('1 DAY');
-			$dateCrmClose->add($this->getConfig('AUTO_CLOSE_TIME').' SECONDS');
-
-			$fullCloseTime = $this->getConfig('FULL_CLOSE_TIME');
-
-			/** var DateTime */
-			$dateClose = clone $fields['DATE_MODIFY'];
-
-			//do not pause
-			if (
-				$this->session['PAUSE'] === 'N'
-				|| $fields['PAUSE'] === 'N'
-			)
-			{
-				if (
-					isset($fields['USER_ID'])
-					&& User::getInstance($fields['USER_ID'])->isConnector()
-				)
-				{
-					if (
-						isset($this->session['VOTE_SESSION'])
-						&& $this->session['VOTE_SESSION']
-						&&
-						(
-							(
-								$this->session['WAIT_ACTION'] === 'Y'
-								&& $fields['WAIT_ACTION'] !== 'N'
-							)
-							||
-							(
-								isset($fields['WAIT_ACTION'])
-								&& $fields['WAIT_ACTION'] === 'Y'
-							)
-						)
-					)
-					{
-						$fields['STATUS'] = self::STATUS_WAIT_CLIENT;
-						if (!empty($fullCloseTime))
-						{
-							$dateClose->add($fullCloseTime . ' MINUTES');
-						}
-
-						$updateDateCrmClose = $dateCrmClose;
-					}
-					else
-					{
-						$dateClose->add('1 MONTH');
-						$updateCheckTable['DATE_CLOSE'] = $dateClose;
-						$updateChatSession['WAIT_ACTION'] = "N";
-						$this->session['WAIT_ACTION'] = "N";
-						$fields['WAIT_ACTION'] = "N";
-
-						if (
-							$this->session['STATUS'] >= self::STATUS_OPERATOR ||
-							$this->session['STATUS'] == self::STATUS_ANSWER
-						)
-						{
-							$updateDateCrmClose = $dateCrmClose;
-						}
-
-						if ($this->session['WAIT_ANSWER'] == 'N')
-						{
-							$fields['STATUS'] =
-								$this->session['STATUS'] >= self::STATUS_OPERATOR
-									? self::STATUS_CLIENT_AFTER_OPERATOR
-									: self::STATUS_CLIENT;
-						}
-					}
-				}
-				else
-				{
-					if (isset($fields['SKIP_DATE_CLOSE']))
-					{
-						$dateClose->add('1 MONTH');
-					}
-					elseif (
-						(
-							$this->session['WAIT_ANSWER'] == 'Y'
-							&& $fields['WAIT_ANSWER'] != 'N'
-						)
-						||
-						(
-							isset($fields['WAIT_ANSWER'])
-							&& $fields['WAIT_ANSWER'] == 'Y'
-						)
-					)
-					{
-						$fields['STATUS'] =
-							$this->session['STATUS'] >= self::STATUS_CLIENT_AFTER_OPERATOR
-								? self::STATUS_CLIENT_AFTER_OPERATOR
-								: self::STATUS_CLIENT;
-
-						$dateClose->add('1 MONTH');
-
-						if ($this->session['STATUS'] >=  self::STATUS_OPERATOR)
-						{
-							$updateDateCrmClose = $dateCrmClose;
-						}
-					}
-					elseif (
-						(
-							$this->session['WAIT_ACTION'] === 'Y'
-							&& $fields['WAIT_ACTION'] !== 'N'
-						)
-						||
-						(
-							isset($fields['WAIT_ACTION'])
-							&& $fields['WAIT_ACTION'] === 'Y'
-						)
-					)
-					{
-						$fields['STATUS'] = self::STATUS_WAIT_CLIENT;
-						if (!empty($fullCloseTime))
-						{
-							$dateClose->add($fullCloseTime . ' MINUTES');
-						}
-
-						$updateDateCrmClose = $dateCrmClose;
-					}
-					else
-					{
-						$fields['STATUS'] = self::STATUS_OPERATOR;
-						$dateClose->add($this->config['AUTO_CLOSE_TIME'].' SECONDS');
-
-						$updateDateCrmClose = $dateCrmClose;
-					}
-				}
-			}
-
-			//On pause
-			else
-			{
-				$dateCrmClose->add('6 DAY'); // 6+1 = 7
-				if (
-					$this->session['WAIT_ACTION'] === 'N' &&
-					isset($fields['USER_ID']) &&
-					User::getInstance($fields['USER_ID'])->isConnector()
-				)
-				{
-					$dateClose->add('1 WEEK');
-
-					if (
-						$this->session['STATUS'] >= self::STATUS_OPERATOR ||
-						$this->session['STATUS'] == self::STATUS_ANSWER
-					)
-					{
-						$updateDateCrmClose = $dateCrmClose;
-					}
-
-					if ($this->session['WAIT_ANSWER'] == 'N')
-					{
-						$fields['STATUS'] =
-							$this->session['STATUS'] >= self::STATUS_OPERATOR
-								? self::STATUS_CLIENT_AFTER_OPERATOR
-								: self::STATUS_CLIENT;
-					}
-				}
-				else
-				{
-					if (isset($fields['SKIP_DATE_CLOSE']))
-					{
-						$dateClose->add('1 WEEK');
-					}
-					elseif (
-						$this->session['WAIT_ANSWER'] === 'Y' &&
-						$fields['WAIT_ANSWER'] !== 'N' ||
-						$fields['WAIT_ANSWER'] === 'Y'
-					)
-					{
-						$dateClose->add('1 WEEK');
-
-						$fields['STATUS'] =
-							$this->session['STATUS'] >= self::STATUS_CLIENT_AFTER_OPERATOR
-								? self::STATUS_CLIENT_AFTER_OPERATOR
-								: self::STATUS_CLIENT;
-
-						if ($this->session['STATUS'] >=  self::STATUS_OPERATOR)
-						{
-							$updateDateCrmClose = $dateCrmClose;
-						}
-					}
-					elseif (
-						$this->session['WAIT_ACTION'] === 'Y' &&
-						$fields['WAIT_ACTION'] !== 'N' ||
-						$fields['WAIT_ACTION'] === 'Y'
-					)
-					{
-						$fields['STATUS'] = self::STATUS_WAIT_CLIENT;
-						if (!empty($fullCloseTime))
-						{
-							$dateClose->add($fullCloseTime . ' MINUTES');
-						}
-
-						$updateDateCrmClose = $dateCrmClose;
-					}
-					else
-					{
-						$dateClose->add('1 WEEK');
-
-						$fields['STATUS'] = self::STATUS_OPERATOR;
-						$updateDateCrmClose = $dateCrmClose;
-					}
-				}
-			}
-
-			if ($dateClose)
-			{
-				$updateCheckTable['DATE_CLOSE'] = $dateClose;
-			}
-		}
-
-		if (
-			isset($fields['DATE_LAST_MESSAGE'])
-			&& $fields['DATE_LAST_MESSAGE'] instanceof DateTime
-			&& $this->session['DATE_CREATE'] instanceof DateTime
-		)
-		{
-			$fields['TIME_DIALOG'] = $fields['DATE_LAST_MESSAGE']->getTimestamp() - $this->session['DATE_CREATE']->getTimestamp();
-		}
-
-		if (
-			!isset($fields['DATE_FIRST_LAST_USER_ACTION'])
-			&& isset($fields['INPUT_MESSAGE'])
-			&& $fields['INPUT_MESSAGE'] === true
-			&& (
-				empty($this->session['DATE_FIRST_LAST_USER_ACTION'])
-				|| (
-					!empty($fields['STATUS'])
-					&& (
-						(int)$fields['STATUS'] === self::STATUS_CLIENT
-						|| (int)$fields['STATUS'] === self::STATUS_CLIENT_AFTER_OPERATOR
-					)
-					&& (int)$this->session['STATUS'] !== self::STATUS_CLIENT
-					&& (int)$this->session['STATUS'] !== self::STATUS_CLIENT_AFTER_OPERATOR
-				)
-			)
-		)
-		{
-			$fields['DATE_FIRST_LAST_USER_ACTION'] = new DateTime();
-		}
-
-		//The actual closing
-		if
-		(
-			isset($fields['CLOSED']) &&
-			$fields['CLOSED'] === 'Y'
-		)
-		{
-			if ($this->session['SPAM'] == 'Y')
-			{
-				$fields['STATUS'] = self::STATUS_SPAM;
-				$updateChatSession['ID'] = 0;
-			}
-			else
-			{
-				$fields['STATUS'] = self::STATUS_CLOSE;
-			}
-
-			$fields['PAUSE'] = 'N';
-			$updateChatSession['PAUSE'] = 'N';
-
-			$updateCheckTable = [];
-
-			ConfigStatistic::getInstance((int)$this->session['CONFIG_ID'])->addClosed()->deleteInWork();
-
-			if (!isset($fields['FORCE_CLOSE']) || $fields['FORCE_CLOSE'] != 'Y')
-			{
-				$this->chat->close();
-			}
-
-			if (
-				Connector::isLiveChat($this->session['SOURCE']) &&
-				$this->session['SPAM'] !== 'Y'
-			)
-			{
-				if (
-					Loader::includeModule('im') &&
-					User::getInstance($this->session['USER_ID'])->isOnline())
-
-				{
-					\CAgent::AddAgent(
-						'\Bitrix\ImOpenLines\Mail::sendOperatorAnswerAgent('.$this->session['ID'].');',
-						"imopenlines",
-						"N",
-						60,
-						"",
-						"Y",
-						\ConvertTimeStamp(time()+\CTimeZone::GetOffset()+60, "FULL")
-					);
-				}
-				else
-				{
-					\Bitrix\ImOpenLines\Mail::sendOperatorAnswer($this->session['ID']);
-				}
-			}
-
-			Model\SessionCheckTable::delete($this->session['ID']);
-		}
-
-		elseif (isset($fields['PAUSE']))
-		{
-			if ($fields['PAUSE'] == 'Y')
-			{
-				$datePause = new DateTime();
-				$datePause->add('1 WEEK');
-
-				$updateCheckTable['DATE_CLOSE'] = $datePause;
-				$updateCheckTable['DATE_QUEUE'] = null;
-			}
-		}
-		elseif (isset($fields['WAIT_ANSWER']))
-		{
-			if ($fields['WAIT_ANSWER'] == 'Y')
-			{
-				$fields['STATUS'] = self::STATUS_SKIP;
-				$fields['PAUSE'] = 'N';
-				$updateChatSession['PAUSE'] = 'N';
-
-				$dateQueue = new DateTime();
-				//TODO: A bad place! Potential problem. Can change the distribution time logic by ignoring rules from the queue.
-				$dateQueue->add($this->config['QUEUE_TIME'].' SECONDS');
-				$updateCheckTable['DATE_QUEUE'] = $dateQueue;
-			}
-			else
-			{
-				if (
-					$this->session['STATUS'] < self::STATUS_ANSWER &&
-					$fields['STATUS'] < self::STATUS_ANSWER
-				)
-				{
-					$fields['STATUS'] = self::STATUS_ANSWER;
-				}
-				$fields['WAIT_ACTION'] = isset($fields['WAIT_ACTION'])? $fields['WAIT_ACTION']: 'N';
-				$fields['PAUSE'] = 'N';
-				$updateChatSession['WAIT_ACTION'] = $fields['WAIT_ACTION'];
-				$updateChatSession['PAUSE'] = 'N';
-
-				$updateCheckTable['DATE_QUEUE'] = null;
-			}
-		}
-
-		//If the status is lower than STATUS_WAIT_CLIENT, the dialog cannot be in the evaluation waiting state
-		if (
-			isset($fields['STATUS']) &&
-			$fields['STATUS'] < self::STATUS_WAIT_CLIENT &&
-			!array_key_exists('WAIT_VOTE', $fields) &&
-			$this->session['WAIT_VOTE'] === 'Y'
-		)
-		{
-			$fields['WAIT_VOTE'] = 'N';
-		}
-
-		//If no more evaluation is expected, DATE_CLOSE_VOTE should be reset
-		if (
-			array_key_exists('WAIT_VOTE', $fields) &&
-			$fields['WAIT_VOTE'] !== 'Y' &&
-			!array_key_exists('DATE_CLOSE_VOTE', $fields) &&
-			$this->session['DATE_CLOSE_VOTE'] !== null
-		)
-		{
-			$fields['DATE_CLOSE_VOTE'] = null;
-		}
-
-		if (
-			Connector::isLiveChat($this->session['SOURCE']) &&
-			array_key_exists('DATE_CLOSE_VOTE', $fields)
-		)
-		{
-			\Bitrix\Pull\Event::add($this->session['USER_ID'], [
-				'module_id' => 'imopenlines',
-				'command' => 'sessionDateCloseVote',
-				'params' => [
-					'sessionId' => (int)$this->session['ID'],
-					'dateCloseVote' => (!empty($fields['DATE_CLOSE_VOTE']) && $fields['DATE_CLOSE_VOTE'] instanceof DateTime) ? date('c', $fields['DATE_CLOSE_VOTE']->getTimestamp()): '',
-				]
-			]);
-		}
-
-		if (!empty($updateChatSession))
-		{
-			$this->chat->updateFieldData([Chat::FIELD_SESSION => $updateChatSession]);
-		}
-
-		if (isset($fields['MESSAGE_COUNT']))
-		{
-			$fields["MESSAGE_COUNT"] = new SqlExpression("?# + 1", "MESSAGE_COUNT");
-			ConfigStatistic::getInstance((int)$this->session['CONFIG_ID'])->addMessage();
-		}
-
-		if (!empty($updateCheckTable))
-		{
-			if (
-				isset($updateCheckTable['DATE_CLOSE'])
-				&& $this->session['CRM_ACTIVITY_ID'] > 0
-				&& (
-					!isset($fields['CLOSED']) ||
-					$fields['CLOSED'] === 'N'
-				)
-			)
-			{
-				if (
-					(
-						$this->session['STATUS'] >= self::STATUS_ANSWER
-						&& !in_array($this->session['STATUS'], [self::STATUS_CLIENT, self::STATUS_CLIENT_AFTER_OPERATOR])
-					)
-					||
-					(
-						$fields['STATUS'] >= self::STATUS_ANSWER
-						&& !in_array($fields['STATUS'], [self::STATUS_CLIENT, self::STATUS_CLIENT_AFTER_OPERATOR])
-					)
-				)
-				{
-					if ($updateCheckTable['DATE_CLOSE'])
-					{
-						$dateCheckClose = clone $updateCheckTable['DATE_CLOSE'];
-					}
-					else
-					{
-						$dateCheckClose = new Main\Type\DateTime();
-					}
-					$dateCheckClose->add($this->getConfig('AUTO_CLOSE_TIME').' SECONDS');
-					$dateCheckClose->add('1 DAY');
-
-					$crmManager = new Crm($this);
-					if ($crmManager->isLoaded())
-					{
-						$crmManager->setSessionDataClose($dateCheckClose);
-					}
-				}
-			}
-
-			Model\SessionCheckTable::update($this->session['ID'], $updateCheckTable);
-		}
-
-		if (
-			!empty($updateDateCrmClose) &&
-			$this->session['CRM_ACTIVITY_ID']
-		)
-		{
-			$crmManager = new Crm($this);
-			if ($crmManager->isLoaded())
-			{
-				$crmManager->setSessionDataClose($updateDateCrmClose);
-			}
-		}
-
-		if (
-			isset($fields['SKIP_CHANGE_STATUS'])
-			&& $fields['SKIP_CHANGE_STATUS'] === true
-			&& isset($fields['STATUS'])
-		)
-		{
-			unset($fields['STATUS']);
-		}
-
-		unset(
-			$fields['USER_ID'],
-			$fields['SKIP_DATE_CLOSE'],
-			$fields['SKIP_CHANGE_STATUS'],
-			$fields['FORCE_CLOSE'],
-			$fields['INPUT_MESSAGE']
-		);
-
-		$isResponseOperator = null;
-
-		if (
-			!empty($fields['STATUS'])
-			&& $this->session['STATUS'] != $fields['STATUS']
-		)
-		{
-			$this->chat->updateSessionStatus($fields['STATUS']);
-
-			if (
-				(int)$this->session['STATUS'] !== self::STATUS_OPERATOR
-				&& (int)$fields['STATUS'] === self::STATUS_OPERATOR
-			)
-			{
-				$isResponseOperator = true;
-			}
-			elseif (
-				(int)$this->session['STATUS'] === self::STATUS_OPERATOR
-				&& (int)$fields['STATUS'] !== self::STATUS_OPERATOR
-			)
-			{
-				$isResponseOperator = false;
-			}
-
-			$sessionClose = false;
-			if (
-				isset($fields['CLOSED'])
-				&& $fields['CLOSED'] === 'Y'
-			)
-			{
-				$sessionClose = true;
-			}
-
-			if (
-				!empty($this->session['SOURCE'])
-				&& Connector::isLiveChat($this->session['SOURCE'])
-				&& !empty($this->session['USER_CODE'])
-			)
-			{
-				$chatEntityId = \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId($this->session['USER_CODE']);
-				if (!empty($chatEntityId['connectorChatId']))
-				{
-					\Bitrix\Pull\Event::add($this->session['USER_ID'], [
-						'module_id' => 'imopenlines',
-						'command' => 'sessionStatus',
-						'params' => [
-							'chatId' => (int)$chatEntityId['connectorChatId'],
-							'sessionId' => (int)$this->session['ID'],
-							'sessionStatus' => (int)$fields['STATUS'],
-							'spam' => $this->session['SPAM'] == 'Y',
-							'sessionClose' => $sessionClose
-						]
-					]);
-				}
-			}
-		}
-
-		foreach ($fields as $key => $value)
-		{
-			$this->session[$key] = $value;
-		}
-		foreach ($updateCheckTable as $key => $value)
-		{
-			$this->session['CHECK_'.$key] = $value;
-		}
-
-		if (
-			$this->session['STATUS'] < self::STATUS_CLOSE
-			&& $this->session['CLOSED'] === 'Y'
-		)
-		{
-			$this->session['STATUS'] = self::STATUS_CLOSE;
-			$fields['STATUS'] = self::STATUS_CLOSE;
-		}
-
-		if (
-			$this->session['ID']
-			&& !empty($fields)
-		)
-		{
-			Model\SessionTable::update($this->session['ID'], $fields);
-		}
-
-		if ($isResponseOperator !== null)
-		{
-			$automaticActionMessages = new AutomaticAction\Messages($this);
-
-			if ($isResponseOperator === true)
-			{
-				$automaticActionMessages->setStatusResponseOperator();
-			}
-			elseif($isResponseOperator === false)
-			{
-				$automaticActionMessages->setStatusNotResponseOperator();
-			}
-		}
-
-		Debug::addSession($this,  __METHOD__, [
-			'fields' => $fields,
-			'updateCheckTable' => $updateCheckTable,
-			'updateChatSession' => $updateChatSession,
-			'updateDateCrmClose' => $updateDateCrmClose
-		]);
-
-		return true;
+		return $update->save();
 	}
 
 	/**
@@ -2340,7 +1745,6 @@ class Session
 
 		if (
 			$this->session['CLOSED'] !== 'Y'
-			&& $this->session['PAUSE'] !== 'Y'
 			&& $this->session['STATUS'] < self::STATUS_WAIT_CLIENT
 			&& !empty($configTask)
 			&& $configTask['ACTIVE'] === 'Y'
@@ -2457,11 +1861,13 @@ class Session
 				'SYSTEM' => 'Y',
 				'IMPORTANT_CONNECTOR' => 'Y',
 				'NO_SESSION_OL' => 'Y',
+				'RECENT_ADD' => 'N',
 				'PARAMS' => [
 					'CLASS' => 'bx-messenger-content-item-ol-output',
 					'IMOL_FORM' => 'offline',
 					'TYPE' => 'lines',
 					'COMPONENT_ID' => 'bx-imopenlines-form-offline',
+					'NOTIFY' => 'N',
 				],
 				'KEYBOARD' => $operatorKeyboard,
 			]);
@@ -3317,5 +2723,29 @@ class Session
 	public static function dismissedOperatorAgent($nextExec)
 	{
 		return '';
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getSession(): array
+	{
+		return $this->session;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getSessionField(string $fieldName)
+	{
+		return $this->session[$fieldName] ?? null;
+	}
+
+	/**
+	 * @param array $session
+	 */
+	public function setSessionField(string $fieldName, $value): void
+	{
+		$this->session[$fieldName] = $value;
 	}
 }

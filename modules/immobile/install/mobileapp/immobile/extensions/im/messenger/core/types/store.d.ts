@@ -5,7 +5,9 @@ import {MessagesModelActions, MessagesModelMutation} from "../../model/types/mes
 import {RecentModelActions, RecentModelMutation} from "../../model/types/recent";
 import {UsersModelActions, UsersModelMutation} from "../../model/types/users";
 import {DraftModelActions, DraftModelMutation} from "../../model/types/draft";
+import {ReactionsModelActions, ReactionsModelMutation} from "../../model/types/messages/reactions";
 import {SidebarModelActions} from "../../model/types/sidebar";
+import {RecentSearchModelActions, RecentSearchModelMutation} from "../../model/types/recent/search";
 
 
 type MessengerStoreActions =
@@ -16,7 +18,9 @@ type MessengerStoreActions =
 	| RecentModelActions
 	| UsersModelActions
 	| DraftModelActions
+	| ReactionsModelActions
 	| SidebarModelActions
+	| RecentSearchModelActions
 
 type MessengerStoreMutation =
 	ApplicationModelMutation
@@ -26,7 +30,9 @@ type MessengerStoreMutation =
 	| RecentModelMutation
 	| UsersModelMutation
 	| DraftModelMutation
+	| ReactionsModelMutation
 	| SidebarModelActions
+	| RecentSearchModelMutation
 
 type MessengerCoreStore = {
 	dispatch(actionName: MessengerStoreActions, params?: any) : Promise<any>,

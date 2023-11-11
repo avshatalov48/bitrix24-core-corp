@@ -116,13 +116,12 @@ export class Link extends Node
 
 		if ('attrs' in data)
 		{
-			for (const attr in data.attrs)
-			{
-				if (data.attrs.hasOwn(attr))
+			Object.keys(data.attrs).forEach((attr) => {
+				if (Object.prototype.hasOwnProperty.call(data.attrs, attr))
 				{
 					Dom.attr(this.node, attr, data.attrs[attr]);
 				}
-			}
+			});
 		}
 		else
 		{
@@ -137,7 +136,7 @@ export class Link extends Node
 	 */
 	containsImage(): boolean
 	{
-		return !!this.node.firstElementChild && this.node.firstElementChild.tagName === 'IMG';
+		return Boolean(this.node.firstElementChild) && this.node.firstElementChild.tagName === 'IMG';
 	}
 
 	/**
@@ -221,7 +220,7 @@ export class Link extends Node
 					siteId: BX.Landing.Main.getInstance().options.site_id,
 					landingId: BX.Landing.Main.getInstance().id,
 				},
-				allowedTypes: allowedTypes,
+				allowedTypes,
 			});
 		}
 		else if (!preventAdjustValue)

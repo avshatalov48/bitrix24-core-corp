@@ -52,8 +52,9 @@ final class ProductGridDocumentQuery
 				'currencyId' => Catalog::getBaseCurrency(),
 			],
 			'inventoryControl' => [
-				'enabled' => null,
-				'reservationEnabled' => null,
+				'isAllowedReservation' => null,
+				'isReservationRestrictedByPlan' => null,
+				'defaultDateReserveEnd' => null,
 			],
 			'measures' => array_values(MeasureRepository::findAll()),
 			'taxes' => [

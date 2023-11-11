@@ -1,4 +1,8 @@
-(() => {
+jn.define('tasks/project', (require, exports, module) => {
+	const { ErrorLogger } = require('utils/logger/error-logger');
+
+	const logger = new ErrorLogger();
+
 	class Counter
 	{
 		static get types()
@@ -273,17 +277,20 @@
 			this.canLeave = (actions.leave || false);
 		}
 
-		pin()
+		pin(mode)
 		{
 			this.project.isPinned = true;
 
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.project.pin', { projectId: this.project.id }))
+				(new RequestExecutor('tasksmobile.Project.pin', {
+					projectId: this.project.id,
+					mode,
+				}))
 					.call()
 					.then(
 						(response) => resolve(response),
 						(response) => {
-							console.error(response);
+							logger.error(response);
 							reject(response);
 						},
 					)
@@ -292,17 +299,20 @@
 			});
 		}
 
-		unpin()
+		unpin(mode)
 		{
 			this.project.isPinned = false;
 
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.project.unpin', { projectId: this.project.id }))
+				(new RequestExecutor('tasksmobile.Project.unpin', {
+					projectId: this.project.id,
+					mode,
+				}))
 					.call()
 					.then(
 						(response) => resolve(response),
 						(response) => {
-							console.error(response);
+							logger.error(response);
 							reject(response);
 						},
 					)
@@ -325,7 +335,7 @@
 					.then(
 						(response) => resolve(response),
 						(response) => {
-							console.error(response);
+							logger.error(response);
 							reject(response);
 						},
 					)
@@ -626,14 +636,14 @@
 			this.actions.set(actions);
 		}
 
-		pin()
+		pin(mode)
 		{
-			return this.actions.pin();
+			return this.actions.pin(mode);
 		}
 
-		unpin()
+		unpin(mode)
 		{
-			return this.actions.unpin();
+			return this.actions.unpin(mode);
 		}
 
 		read()
@@ -692,5 +702,5 @@
 		}
 	}
 
-	jnexport([Project, 'Project']);
-})();
+	module.exports = { Project };
+});

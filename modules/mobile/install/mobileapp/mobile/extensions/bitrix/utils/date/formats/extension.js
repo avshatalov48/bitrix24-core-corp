@@ -2,16 +2,19 @@
  * @module utils/date/formats
  */
 jn.define('utils/date/formats', (require, exports, module) => {
-
 	const useCultureSettings = (formatName, fallback = '') => {
-		return function () {
+		return function() {
 			const phpFormat = dateFormatter.formats[formatName];
+
 			return phpFormat ? dateFormatter.convert(phpFormat) : fallback;
-		}
+		};
 	};
 
 	/** @example 16:48 */
 	const shortTime = useCultureSettings('shortTime', 'HH:mm');
+
+	/** @returns boolean */
+	const isAmPmMode = () => shortTime().slice(-1) === 'a';
 
 	/** @example 1 April */
 	const dayMonth = useCultureSettings('dayMonth', 'd MMMM');
@@ -42,6 +45,7 @@ jn.define('utils/date/formats', (require, exports, module) => {
 
 	module.exports = {
 		shortTime,
+		isAmPmMode,
 		dayMonth,
 		date,
 		datetime,
@@ -52,5 +56,4 @@ jn.define('utils/date/formats', (require, exports, module) => {
 		longDate,
 		mediumDate,
 	};
-
 });

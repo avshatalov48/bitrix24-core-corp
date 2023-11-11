@@ -1,2 +1,2 @@
 <?php
-$MESS["FIELDS_PHONE_PLACEHOLDER"] = "Заполнить";
+$MESS["FIELDS_PHONE_VALUE_COPIED"] = "Номер скопирован";

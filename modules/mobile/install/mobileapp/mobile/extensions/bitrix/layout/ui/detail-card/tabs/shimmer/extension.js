@@ -85,6 +85,7 @@ jn.define('layout/ui/detail-card/tabs/shimmer', (require, exports, module) => {
 			{
 				outerViewStyle.marginTop = marginTop;
 			}
+
 			if (marginBottom)
 			{
 				outerViewStyle.marginBottom = marginBottom;

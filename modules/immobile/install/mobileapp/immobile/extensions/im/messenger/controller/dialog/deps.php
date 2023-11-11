@@ -11,6 +11,7 @@ return [
 		'utils/url',
 		'notify-manager',
 		'in-app-url',
+		'im:lib/theme',
 		'im:messenger/core',
 		'im:messenger/const',
 		'im:messenger/lib/feature',
@@ -44,6 +45,8 @@ return [
 		'im:chat/messengercommon',
 		'im:messenger/lib/utils',
 		'im/messenger/lib/permission-manager',
+		'im:messenger/controller/reaction-viewer',
+		'im:messenger/assets/common',
 	],
 	'bundle' => [
 		'./src/dialog',

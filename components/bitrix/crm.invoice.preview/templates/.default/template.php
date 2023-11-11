@@ -48,7 +48,7 @@ $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm-preview.css');
 			</td>
 			<td>
 				<span <?=($arResult['UF_QUOTE_ID'] == 0 ? 'style="display:none;"' : '' )?>>
-					<?= GetMessage('CRM_FIELD_QUOTE')?>:
+					<?= GetMessage('CRM_FIELD_QUOTE_MSGVER_1')?>:
 				</span>
 			</td>
 			<td>

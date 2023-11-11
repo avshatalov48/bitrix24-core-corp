@@ -7,7 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Integration\SocialNetwork;
-use Bitrix\Tasks\Internals\Fields\Status;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\Type\DateTime;
@@ -104,7 +104,7 @@ foreach ($arResult['LIST'] as $task)
 	$task['GROUP'] = "<a href='{$groupLink}'>".htmlspecialcharsbx($task['GROUP_NAME'])."</a>";
 
 	$task['ORIGINATOR'] = prepareTaskRowUserBalloonHtml($task['CREATED_BY'], $taskId, $arParams);
-	$task['STATUS'] = htmlspecialcharsbx(Status::getTranslate($task['STATUS']));
+	$task['STATUS'] = htmlspecialcharsbx(Status::getMessage((int)$task['STATUS']));
 
 	$task['DEADLINE'] = ($task['DEADLINE'] ? DateTime::createFrom($task['DEADLINE']) : null);
 	$task['CREATED_DATE'] = ($task['CREATED_DATE'] ? DateTime::createFrom($task['CREATED_DATE']) : null);

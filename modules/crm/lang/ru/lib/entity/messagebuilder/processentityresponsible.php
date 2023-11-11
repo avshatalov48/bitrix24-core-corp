@@ -6,7 +6,7 @@ $MESS['CRM_PROCESS_ENTITY_ORDER_BECOME_RESPONSIBLE'] = 'Вы назначены 
 $MESS['CRM_PROCESS_ENTITY_CONTACT_BECOME_RESPONSIBLE'] = 'Вы назначены ответственным за контакт "<a href="#URL#" class="bx-notifier-item-action">#TITLE#</a>"';
 $MESS['CRM_PROCESS_ENTITY_COMPANY_BECOME_RESPONSIBLE'] = 'Вы назначены ответственным за компанию "<a href="#URL#" class="bx-notifier-item-action">#TITLE#</a>"';
 $MESS['CRM_PROCESS_ENTITY_SMART_INVOICE_BECOME_RESPONSIBLE'] = 'Вы назначены ответственным за счёт "<a href="#URL#" class="bx-notifier-item-action">#TITLE#</a>"';
-$MESS['CRM_PROCESS_ENTITY_QUOTE_BECOME_RESPONSIBLE'] = 'Вы назначены ответственным за предложение "<a href="#URL#" class="bx-notifier-item-action">#TITLE#</a>"';
+$MESS['CRM_PROCESS_ENTITY_QUOTE_BECOME_RESPONSIBLE_MSGVER_1'] = 'Вы назначены ответственным за предложение "<a href="#URL#" class="bx-notifier-item-action">#TITLE#</a>"';
 $MESS['CRM_PROCESS_ENTITY_DYNAMIC_BECOME_RESPONSIBLE'] = 'Вы назначены ответственным за элемент смарт-процесса "#ENTITY_TYPE_CAPTION#" "<a href="#URL#" class="bx-notifier-item-action">#TITLE#</a>"';
 $MESS['CRM_PROCESS_ENTITY_DEFAULT_BECOME_RESPONSIBLE'] = 'Вы назначены ответственным за элемент типа "#ENTITY_TYPE_CAPTION#" "<a href="#URL#" class="bx-notifier-item-action">#TITLE#</a>"';
 

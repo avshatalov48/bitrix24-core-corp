@@ -10,5 +10,6 @@ return [
 		'loc',
 		'utils/object',
 		'crm:type',
+		'imconnector:connectors/telegram',
 	],
 ];

@@ -213,9 +213,11 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		 */
 		get monthsFromNow()
 		{
-			const delta = Math.abs(this.getNow().timestamp - this.timestamp);
+			const nowDate = this.getNow().date;
+			const date = this.date;
 
-			return Math.floor(delta / (60 * 60 * 24 * 31));
+			return Math.abs(date.getMonth() - nowDate.getMonth()
+				+ (12 * (date.getFullYear() - nowDate.getFullYear())));
 		}
 
 		/**

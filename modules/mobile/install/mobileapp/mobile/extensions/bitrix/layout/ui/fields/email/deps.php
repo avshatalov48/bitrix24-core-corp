@@ -6,6 +6,7 @@ return [
 		'layout/ui/fields/string',
 		'utils/url',
 		'utils/string',
+		'loc',
 	],
 	'bundle' => [
 		'./domains',

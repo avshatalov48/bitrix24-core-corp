@@ -109,7 +109,7 @@ jn.define('layout/ui/detail-card/floating-button/menu/recent/storage', (require,
 				itemMap.set(hash, calculatedItem);
 			});
 
-			return Array.from(itemMap.values());
+			return [...itemMap.values()];
 		}
 
 		/**
@@ -189,7 +189,7 @@ jn.define('layout/ui/detail-card/floating-button/menu/recent/storage', (require,
 			const event = {
 				actionId,
 				tabId,
-				timestamp: new Date().getTime(),
+				timestamp: Date.now(),
 			};
 
 			this.saveEvent(this.getEntityTypeIdKey(), event);

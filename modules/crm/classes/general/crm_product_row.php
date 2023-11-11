@@ -687,18 +687,18 @@ class CAllCrmProductRow
 		{
 			$productID = $ary['PRODUCT_ID'] = isset($ary['PRODUCT_ID']) ? intval($ary['PRODUCT_ID']) : 0;
 
-			$ary['QUANTITY'] = isset($ary['QUANTITY']) ? round((double)$ary['QUANTITY'], 4) : 0.0;
-			$ary['PRICE'] = isset($ary['PRICE']) ? round((double)$ary['PRICE'], 2) : 0.0;
-			$ary['PRICE_EXCLUSIVE'] = isset($ary['PRICE_EXCLUSIVE']) ? round((double)$ary['PRICE_EXCLUSIVE'], 2) : 0.0;
-			$ary['PRICE_NETTO'] = isset($ary['PRICE_NETTO']) ? round((double)$ary['PRICE_NETTO'], 2) : 0.0;
-			$ary['PRICE_BRUTTO'] = isset($ary['PRICE_BRUTTO']) ? round((double)$ary['PRICE_BRUTTO'], 2) : 0.0;
+			$ary['QUANTITY'] = isset($ary['QUANTITY']) ? round((float)$ary['QUANTITY'], 4) : 0.0;
+			$ary['PRICE'] = isset($ary['PRICE']) ? round((float)$ary['PRICE'], 2) : 0.0;
+			$ary['PRICE_EXCLUSIVE'] = isset($ary['PRICE_EXCLUSIVE']) ? round((float)$ary['PRICE_EXCLUSIVE'], 2) : 0.0;
+			$ary['PRICE_NETTO'] = isset($ary['PRICE_NETTO']) ? round((float)$ary['PRICE_NETTO'], 2) : 0.0;
+			$ary['PRICE_BRUTTO'] = isset($ary['PRICE_BRUTTO']) ? round((float)$ary['PRICE_BRUTTO'], 2) : 0.0;
 
 			$ary['DISCOUNT_TYPE_ID'] = isset($ary['DISCOUNT_TYPE_ID'])
 				? (int)$ary['DISCOUNT_TYPE_ID'] : \Bitrix\Crm\Discount::UNDEFINED;
-			$ary['DISCOUNT_RATE'] = isset($ary['DISCOUNT_RATE']) ? round((double)$ary['DISCOUNT_RATE'], 2) : 0.0;
-			$ary['DISCOUNT_SUM'] = isset($ary['DISCOUNT_SUM']) ? round((double)$ary['DISCOUNT_SUM'], 2) : 0.0;
+			$ary['DISCOUNT_RATE'] = isset($ary['DISCOUNT_RATE']) ? round((float)$ary['DISCOUNT_RATE'], 2) : 0.0;
+			$ary['DISCOUNT_SUM'] = isset($ary['DISCOUNT_SUM']) ? round((float)$ary['DISCOUNT_SUM'], 2) : 0.0;
 
-			$ary['TAX_RATE'] = isset($ary['TAX_RATE']) ? round((double)$ary['TAX_RATE'], 2) : null;
+			$ary['TAX_RATE'] = isset($ary['TAX_RATE']) ? round((float)$ary['TAX_RATE'], 2) : null;
 			$ary['TAX_INCLUDED'] = isset($ary['TAX_INCLUDED']) ? $ary['TAX_INCLUDED'] : 'N';
 			$ary['CUSTOMIZED'] = isset($ary['CUSTOMIZED']) ? $ary['CUSTOMIZED'] : 'N';
 
@@ -1051,10 +1051,10 @@ class CAllCrmProductRow
 	{
 		$result = [];
 
-		$result['PRICE'] = isset($product['PRICE']) ? round((double)$product['PRICE'], 2) : 0.0;
-		$result['PRICE_EXCLUSIVE'] = isset($product['PRICE_EXCLUSIVE']) ? round((double)$product['PRICE_EXCLUSIVE'], 2) : 0.0;
-		$result['QUANTITY'] = isset($product['QUANTITY']) ? round((double)$product['QUANTITY'], 4) : 1;
-		$result['TAX_RATE'] = isset($product['TAX_RATE']) ? round((double)$product['TAX_RATE'], 2) : null;
+		$result['PRICE'] = isset($product['PRICE']) ? round((float)$product['PRICE'], 2) : 0.0;
+		$result['PRICE_EXCLUSIVE'] = isset($product['PRICE_EXCLUSIVE']) ? round((float)$product['PRICE_EXCLUSIVE'], 2) : 0.0;
+		$result['QUANTITY'] = isset($product['QUANTITY']) ? round((float)$product['QUANTITY'], 4) : 1;
+		$result['TAX_RATE'] = isset($product['TAX_RATE']) ? round((float)$product['TAX_RATE'], 2) : null;
 		$result['TAX_INCLUDED'] = isset($product['TAX_INCLUDED']) ? ($product['TAX_INCLUDED'] === 'Y' ? 'Y' : 'N') : 'N';
 		$result['DISCOUNT_TYPE_ID'] = isset($product['DISCOUNT_TYPE_ID']) ? intval($product['DISCOUNT_TYPE_ID']) : 0;
 
@@ -1131,11 +1131,11 @@ class CAllCrmProductRow
 		{
 			$priceNetto = $exclusivePrice + $discountSum;
 		}
-		$result['PRICE_NETTO'] = round((double)$priceNetto, 2);
+		$result['PRICE_NETTO'] = round((float)$priceNetto, 2);
 
 		if (isset($product['PRICE_BRUTTO']))
 		{
-			$result['PRICE_BRUTTO'] = round((double)$product['PRICE_BRUTTO'], 2);
+			$result['PRICE_BRUTTO'] = round((float)$product['PRICE_BRUTTO'], 2);
 		}
 		else
 		{
@@ -1459,13 +1459,13 @@ class CAllCrmProductRow
 
 			$taxRate =
 				isset($arRow['TAX_RATE'])
-					? round((double)($arRow['TAX_RATE']), 2)
+					? round((float)($arRow['TAX_RATE']), 2)
 					: null
 			;
 
 			$presentTaxRate =
 				isset($arPresentRow['TAX_RATE'])
-					? round((double)($arPresentRow['TAX_RATE']), 2)
+					? round((float)($arPresentRow['TAX_RATE']), 2)
 					: null
 			;
 			if($presentTaxRate !== $taxRate)
@@ -1872,7 +1872,7 @@ class CAllCrmProductRow
 			{
 				unset($row['ID']);
 
-				$row['QUANTITY'] = isset($row['QUANTITY']) ? (double)$row['QUANTITY'] : 0.0;
+				$row['QUANTITY'] = isset($row['QUANTITY']) ? (float)$row['QUANTITY'] : 0.0;
 				if($row['QUANTITY'] <= 0.0)
 				{
 					continue;
@@ -1898,7 +1898,7 @@ class CAllCrmProductRow
 		{
 			foreach($toRows as $row)
 			{
-				$quantity = isset($row['QUANTITY']) ? (double)$row['QUANTITY'] : 0.0;
+				$quantity = isset($row['QUANTITY']) ? (float)$row['QUANTITY'] : 0.0;
 				if($quantity <= 0.0)
 				{
 					continue;

@@ -11,5 +11,6 @@ return [
 		'money',
 		'type',
 		'utils/object',
+		'utils/string',
 	],
 ];

@@ -50,7 +50,11 @@
 
 		isDefaultColor()
 		{
-			return [...ColorPalette, ...UI.ColorMenu.Colors, ...this.getColorsFromProps()].includes(this.getCurrentColor());
+			return [
+				...ColorPalette,
+				...UI.ColorMenu.Colors,
+				...this.getColorsFromProps(),
+			].includes(this.getCurrentColor());
 		}
 
 		getColorsFromProps()
@@ -97,8 +101,11 @@
 
 		renderColorPalette(color, index)
 		{
+			const isSelected = this.state.currentColor === color;
+
 			return View(
 				{
+					testId: `ColorContainer-${color}-${isSelected}`,
 					style: styles.colorPaletteContainer(this.state.currentColor, color, index),
 					onClick: () => {
 						this.setState({
@@ -131,28 +138,27 @@
 					style: styles.menuButton(this.isMenuColor()),
 					onClick: () => {
 						PageManager.openWidget('layout', {
-								modal: true,
-								backdrop: {
-									mediumPositionPercent: 65,
-									horizontalSwipeAllowed: false,
-								},
-								onReady: (layoutWidget) => {
-									layoutWidget.showComponent(
-										new UI.ColorMenu({
-											layoutWidget: layoutWidget,
-											currentColor: this.state.currentColor,
-											onChangeColor: (color) => {
-												this.setState({
-													currentColor: color,
-												}, () => {
-													this.onChangeColor();
-												});
-											},
-										}),
-									);
-								},
+							modal: true,
+							backdrop: {
+								mediumPositionPercent: 65,
+								horizontalSwipeAllowed: false,
 							},
-						);
+							onReady: (layoutWidget) => {
+								layoutWidget.showComponent(
+									new UI.ColorMenu({
+										layoutWidget,
+										currentColor: this.state.currentColor,
+										onChangeColor: (color) => {
+											this.setState({
+												currentColor: color,
+											}, () => {
+												this.onChangeColor();
+											});
+										},
+									}),
+								);
+							},
+						});
 					},
 				},
 				View(
@@ -244,7 +250,7 @@
 	};
 
 	const svgImages = {
-		menuIcon: `<svg width="20" height="5" viewBox="0 0 20 5" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 5C3.88071 5 5 3.88071 5 2.5C5 1.11929 3.88071 0 2.5 0C1.11929 0 0 1.11929 0 2.5C0 3.88071 1.11929 5 2.5 5Z" fill="white"/><path d="M10 5C11.3807 5 12.5 3.88071 12.5 2.5C12.5 1.11929 11.3807 0 10 0C8.61929 0 7.5 1.11929 7.5 2.5C7.5 3.88071 8.61929 5 10 5Z" fill="white"/><path d="M20 2.5C20 3.88071 18.8807 5 17.5 5C16.1193 5 15 3.88071 15 2.5C15 1.11929 16.1193 0 17.5 0C18.8807 0 20 1.11929 20 2.5Z" fill="white"/></svg>`,
+		menuIcon: '<svg width="20" height="5" viewBox="0 0 20 5" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 5C3.88071 5 5 3.88071 5 2.5C5 1.11929 3.88071 0 2.5 0C1.11929 0 0 1.11929 0 2.5C0 3.88071 1.11929 5 2.5 5Z" fill="white"/><path d="M10 5C11.3807 5 12.5 3.88071 12.5 2.5C12.5 1.11929 11.3807 0 10 0C8.61929 0 7.5 1.11929 7.5 2.5C7.5 3.88071 8.61929 5 10 5Z" fill="white"/><path d="M20 2.5C20 3.88071 18.8807 5 17.5 5C16.1193 5 15 3.88071 15 2.5C15 1.11929 16.1193 0 17.5 0C18.8807 0 20 1.11929 20 2.5Z" fill="white"/></svg>',
 	};
 
 	this.UI = this.UI || {};

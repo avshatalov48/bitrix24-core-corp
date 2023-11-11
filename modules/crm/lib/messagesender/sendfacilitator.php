@@ -37,6 +37,18 @@ abstract class SendFacilitator
 
 	final public function send(): Result
 	{
+		$channelCheckResult = $this->channel->checkChannel();
+		if (!$channelCheckResult->isSuccess())
+		{
+			return $channelCheckResult;
+		}
+
+		$checkCommunicationsResult = $this->channel->checkCommunications();
+		if (!$checkCommunicationsResult->isSuccess())
+		{
+			return $checkCommunicationsResult;
+		}
+
 		$fields = $this->channel->getSender()::makeMessageFields(
 			array_merge(
 				$this->prepareMessageOptions(),
@@ -121,21 +133,21 @@ abstract class SendFacilitator
 			return $this->from;
 		}
 
-		$first = null;
+		$firstAvailable = null;
 		foreach ($this->channel->getFromList() as $from)
 		{
-			if (!$first)
+			if (!$firstAvailable && $from->isAvailable())
 			{
-				$first = $from;
+				$firstAvailable = $from;
 			}
 
-			if ($from->isDefault())
+			if ($from->isDefault() && $from->isAvailable())
 			{
 				return $from;
 			}
 		}
 
-		return $first;
+		return $firstAvailable;
 	}
 
 	final protected function getTo(): ?To

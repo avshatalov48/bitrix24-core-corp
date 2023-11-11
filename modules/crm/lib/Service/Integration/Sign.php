@@ -11,18 +11,21 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\Result;
 use Bitrix\Sign\Config\Storage;
+use Bitrix\Sign\Service\Container;
+use Bitrix\Sign\Service\Sign\DocumentService as SignDocumentService;
 use Bitrix\Sign\Service\Integration\Crm\DocumentService;
 
 class Sign
 {
-	private ?DocumentService $signDocumentService = null;
+	private ?DocumentService $crmSignDocumentService = null;
+	private ?SignDocumentService $signDocumentService = null;
 
 	public function __construct()
 	{
 		if (self::isAvailable())
 		{
-			$this->signDocumentService = ServiceLocator::getInstance()
-				->get('sign.service.integration.crm.document');
+			$this->crmSignDocumentService = Container::instance()->getCrmSignDocumentService();
+			$this->signDocumentService = Container::instance()->getDocumentService();
 		}
 	}
 
@@ -106,7 +109,12 @@ class Sign
 				{
 					ServiceLocator::getInstance()
 						->get('sign.service.integration.crm.document')
-						->createSignDocumentFromDealDocument($fileId, $document, $data['SMART_DOCUMENT']);
+						->createSignDocumentFromDealDocument(
+							$fileId,
+							$document,
+							$data['SMART_DOCUMENT'],
+							true
+						);
 
 					$item = \Bitrix\Crm\Service\Container::getInstance()
 						->getFactory(\CCrmOwnerType::SmartDocument)
@@ -131,7 +139,7 @@ class Sign
 	private function checkSignInitiation(Document $document, int $dealId, int $fileId): Result
 	{
 		$linkedBlank = $this
-			->signDocumentService
+			->crmSignDocumentService
 			->getLinkedBlankForDocumentGeneratorTemplate($document->TEMPLATE_ID);
 
 		if ($linkedBlank)
@@ -163,15 +171,22 @@ class Sign
 			return $result->addError(new Error(Loc::getMessage('CRM_INTEGRATION_SIGN_CAN_NOT_CONVERT')));
 		}
 
-		$result = $this->signDocumentService
+		$result = $this->crmSignDocumentService
 			->createSignDocumentFromBlank(
 				$fileId,
-				$blank,
+				$blank->getId(),
 				$document,
 				$smartDocId
 			);
 
-		if (!$result->isSuccess() || !isset($result->getData()['signDocument']))
+		$data = $result->getData();
+		if (isset($data['newSign']))
+		{
+			Container::instance()->getDocumentAgentService()->addConfigureAndStartAgent($data['signDocument']->uid);
+			return $result;
+		}
+
+		if (!$result->isSuccess() || !isset($data['signDocument']))
 		{
 			return $result;
 		}

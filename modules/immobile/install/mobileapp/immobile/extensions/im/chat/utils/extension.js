@@ -68,6 +68,11 @@ ChatUtils.objectMerge = function(currentProperties, newProperties)
 	return currentProperties;
 };
 
+/**
+ * @template T
+ * @param {T} properties
+ * @return {T}
+ */
 ChatUtils.objectClone = function(properties)
 {
 	let newProperties = {};

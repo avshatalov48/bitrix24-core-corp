@@ -161,6 +161,10 @@ class EntityConversionException extends Main\SystemException
 		elseif ($code === EntityConversionException::AUTOCREATION_DISABLED)
 		{
 			$message = GetMessage("CRM_CONV_EX_{$entityTypeName}_AUTOCREATION_DISABLED");
+			if (!$message)
+			{
+				$message = GetMessage("CRM_CONV_EX_{$entityTypeName}_AUTOCREATION_DISABLED_MSGVER_1");
+			}
 		}
 		elseif ($code === EntityConversionException::INVALID_FIELDS)
 		{

@@ -2,7 +2,7 @@
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не установлен.";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
 $MESS["CRM_ENTITY_TYPE_LEAD"] = "Лид";
-$MESS["CRM_ENTITY_TYPE_QUOTE"] = "Предложение";
+$MESS["CRM_ENTITY_TYPE_QUOTE_MSGVER_1"] = "Предложение";
 $MESS["CRM_ENTITY_TYPE_INVOICE"] = "Счёт";
 $MESS["CRM_ENTITY_TYPE_CONTACT"] = "Контакт";
 $MESS["CRM_ENTITY_TYPE_COMPANY"] = "Компания";

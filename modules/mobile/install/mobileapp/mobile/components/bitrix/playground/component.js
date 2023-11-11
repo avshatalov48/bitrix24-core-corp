@@ -5,18 +5,20 @@
 
 	const require = ext => jn.require(ext);
 
-	class PlaygroundComponent extends LayoutComponent
-	{
-		constructor(props)
-		{
+	class PlaygroundComponent extends LayoutComponent {
+		constructor(props) {
+
 			super(props);
 
 			this.state = {};
 		}
 
-		render()
-		{
-			return View({});
+		render() {
+			return View(
+				{
+					style: {},
+				},
+			);
 		}
 	}
 

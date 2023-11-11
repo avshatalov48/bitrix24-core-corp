@@ -9,7 +9,7 @@ $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_OPEN_LEAD'] = 'Открыть лид';
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_OPEN_DEAL'] = 'Открыть сделку';
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_OPEN_CONTACT'] = 'Открыть контакт';
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_OPEN_COMPANY'] = 'Открыть компанию';
-$MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_OPEN_QUOTE'] = 'Открыть предложение';
+$MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_OPEN_QUOTE_MSGVER_1'] = 'Открыть предложение';
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_OPEN_SMART_INVOICE'] = 'Открыть счёт';
 
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_EDIT'] = 'Редактировать элемент';
@@ -17,7 +17,7 @@ $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_EDIT_LEAD'] = 'Редактировать л
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_EDIT_DEAL'] = 'Редактировать сделку';
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_EDIT_CONTACT'] = 'Редактировать контакт';
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_EDIT_COMPANY'] = 'Редактировать компанию';
-$MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_EDIT_QUOTE'] = 'Редактировать предложение';
+$MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_EDIT_QUOTE_MSGVER_1'] = 'Редактировать предложение';
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_EDIT_SMART_INVOICE'] = 'Редактировать счёт';
 
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE'] = 'Удалить элемент';
@@ -25,7 +25,7 @@ $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE_LEAD'] = 'Удалить лид';
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE_DEAL'] = 'Удалить сделку';
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE_CONTACT'] = 'Удалить контакт';
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE_COMPANY'] = 'Удалить компанию';
-$MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE_QUOTE'] = 'Удалить предложение';
+$MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE_QUOTE_MSGVER_1'] = 'Удалить предложение';
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE_SMART_INVOICE'] = 'Удалить счёт';
 
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE_CONFIRMATION'] = 'Вы уверены, что хотите удалить элемент?';
@@ -50,7 +50,7 @@ $MESS['M_CRM_ENTITY_TAB_FORBIDDEN_DELETE_TITLE_LEAD'] = 'Недостаточн�
 $MESS['M_CRM_ENTITY_TAB_FORBIDDEN_DELETE_TITLE_DEAL'] = 'Недостаточно прав на удаление сделки';
 $MESS['M_CRM_ENTITY_TAB_FORBIDDEN_DELETE_TITLE_CONTACT'] = 'Недостаточно прав на удаление контакта';
 $MESS['M_CRM_ENTITY_TAB_FORBIDDEN_DELETE_TITLE_COMPANY'] = 'Недостаточно прав на удаление компании';
-$MESS['M_CRM_ENTITY_TAB_FORBIDDEN_DELETE_TITLE_QUOTE'] = 'Недостаточно прав на удаление предложения';
+$MESS['M_CRM_ENTITY_TAB_FORBIDDEN_DELETE_TITLE_QUOTE_MSGVER_1'] = 'Недостаточно прав на удаление предложения';
 $MESS['M_CRM_ENTITY_TAB_FORBIDDEN_DELETE_TITLE_SMART_INVOICE'] = 'Недостаточно прав на удаление счёта';
 
 $MESS['M_CRM_ENTITY_TAB_FORBIDDEN_CREATE_TITLE'] = 'Недостаточно прав на создание элемента';
@@ -58,7 +58,7 @@ $MESS['M_CRM_ENTITY_TAB_FORBIDDEN_CREATE_TITLE_LEAD'] = 'Недостаточн�
 $MESS['M_CRM_ENTITY_TAB_FORBIDDEN_CREATE_TITLE_DEAL'] = 'Недостаточно прав на создание сделки';
 $MESS['M_CRM_ENTITY_TAB_FORBIDDEN_CREATE_TITLE_CONTACT'] = 'Недостаточно прав на создание контакта';
 $MESS['M_CRM_ENTITY_TAB_FORBIDDEN_CREATE_TITLE_COMPANY'] = 'Недостаточно прав на создание компании';
-$MESS['M_CRM_ENTITY_TAB_FORBIDDEN_CREATE_TITLE_QUOTE'] = 'Недостаточно прав на создание предложения';
+$MESS['M_CRM_ENTITY_TAB_FORBIDDEN_CREATE_TITLE_QUOTE_MSGVER_1'] = 'Недостаточно прав на создание предложения';
 $MESS['M_CRM_ENTITY_TAB_FORBIDDEN_CREATE_TITLE_SMART_INVOICE'] = 'Недостаточно прав на создание счёта';
 
 $MESS['M_CRM_ENTITY_TAB_FORBIDDEN_TITLE'] = 'Для действия недостаточно прав';
@@ -74,7 +74,7 @@ $MESS['M_CRM_ENTITY_TAB_SORT_BY_LAST_ACTIVITY_MESSAGE_LEAD'] = 'Теперь л�
 $MESS['M_CRM_ENTITY_TAB_SORT_BY_LAST_ACTIVITY_MESSAGE_DEAL'] = 'Теперь сделки сортируются по дате активности';
 $MESS['M_CRM_ENTITY_TAB_SORT_BY_LAST_ACTIVITY_MESSAGE_COMPANY'] = 'Теперь компании сортируются по дате активности';
 $MESS['M_CRM_ENTITY_TAB_SORT_BY_LAST_ACTIVITY_MESSAGE_CONTACT'] = 'Теперь контакты сортируются по дате активности';
-$MESS['M_CRM_ENTITY_TAB_SORT_BY_LAST_ACTIVITY_MESSAGE_QUOTE'] = 'Теперь предложения сортируются по дате активности';
+$MESS['M_CRM_ENTITY_TAB_SORT_BY_LAST_ACTIVITY_MESSAGE_QUOTE_MSGVER_1'] = 'Теперь предложения сортируются по дате активности';
 $MESS['M_CRM_ENTITY_TAB_SORT_BY_LAST_ACTIVITY_MESSAGE_SMART_INVOICE'] = 'Теперь счета сортируются по дате активности';
 $MESS['M_CRM_ENTITY_TAB_SORT_BY_ID_TITLE'] = 'Фокусировка внимания отключена';
 $MESS['M_CRM_ENTITY_TAB_SORT_BY_ID_MESSAGE'] = 'Теперь элементы сортируются по дате их добавления';
@@ -82,6 +82,6 @@ $MESS['M_CRM_ENTITY_TAB_SORT_BY_ID_MESSAGE_LEAD'] = 'Теперь лиды со�
 $MESS['M_CRM_ENTITY_TAB_SORT_BY_ID_MESSAGE_DEAL'] = 'Теперь сделки сортируются по дате их добавления';
 $MESS['M_CRM_ENTITY_TAB_SORT_BY_ID_MESSAGE_COMPANY'] = 'Теперь компании сортируются по дате их добавления';
 $MESS['M_CRM_ENTITY_TAB_SORT_BY_ID_MESSAGE_CONTACT'] = 'Теперь контакты сортируются по дате их добавления';
-$MESS['M_CRM_ENTITY_TAB_SORT_BY_ID_MESSAGE_QUOTE'] = 'Теперь предложения сортируются по дате их добавления';
+$MESS['M_CRM_ENTITY_TAB_SORT_BY_ID_MESSAGE_QUOTE_MSGVER_1'] = 'Теперь предложения сортируются по дате их добавления';
 $MESS['M_CRM_ENTITY_TAB_SORT_BY_ID_MESSAGE_SMART_INVOICE'] = 'Теперь счета сортируются по дате их добавления';
 

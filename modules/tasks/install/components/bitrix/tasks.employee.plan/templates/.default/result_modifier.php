@@ -2,6 +2,7 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\User;
@@ -35,7 +36,7 @@ if($arResult['HELPER']->getErrors()->checkNoFatals())
 		foreach($arResult['AUX_DATA']['TASK']['STATUS'] as $id => $code)
 		{
 			$id = intval($id);
-			if($id <= 0 || $id == CTasks::STATE_DECLINED || $id == CTasks::STATE_NEW)
+			if($id <= 0 || $id === Status::DECLINED|| $id === Status::NEW)
 			{
 				unset($arResult['AUX_DATA']['TASK']['STATUS'][$id]);
 				continue;

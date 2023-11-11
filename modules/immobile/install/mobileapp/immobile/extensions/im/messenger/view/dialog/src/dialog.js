@@ -43,21 +43,78 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				EventType.dialog.loadTopPage,
 				EventType.dialog.loadBottomPage,
 				EventType.dialog.visibleMessagesChanged,
+				EventType.dialog.statusFieldTap,
 			]);
 
+			/**
+			 * @private
+			 * @type {string | number}
+			 */
 			this.dialogId = options.dialogId;
+			/**
+			 * @private
+			 * @type {number}
+			 */
 			this.chatId = options.chatId;
+			/**
+			 * @private
+			 * @type {VisibilityManager}
+			 */
 			this.visibilityManager = VisibilityManager.getInstance();
+			/**
+			 * @private
+			 * @type {Array<Message>}
+			 */
 			this.messageListOnScreen = [];
+			/**
+			 * @private
+			 * @type {Array<number>}
+			 */
 			this.messageIndexListOnScreen = [];
+			/**
+			 * @private
+			 * @type {number}
+			 */
 			this.messagesCount = 0;
-			this.readingMessageId = 0;
+			/**
+			 * @private
+			 * @type {number}
+			 */
+			this.readingMessageId = options.lastReadId;
+			/**
+			 * @private
+			 * @type {boolean}
+			 */
 			this.shouldEmitMessageRead = false;
+			/**
+			 * @private
+			 * @type {boolean}
+			 */
 			this.shouldShowScrollToNewMessagesButton = true;
+			/**
+			 * @private
+			 * @type {boolean}
+			 */
 			this.isScrollToNewMessageButtonVisible = false;
+			/**
+			 * @private
+			 * @type {boolean}
+			 */
 			this.unreadSeparatorAdded = false;
+			/**
+			 * @private
+			 * @type {boolean}
+			 */
 			this.scrollToFirstUnreadCompleted = false;
+			/**
+			 * @private
+			 * @type {Message | null}
+			 */
 			this.topMessage = null;
+			/**
+			 * @private
+			 * @type {Message | null}
+			 */
 			this.bottomMessage = null;
 
 			this.subscribeEvents();
@@ -71,18 +128,30 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				.on(EventType.dialog.viewAreaMessagesChanged, this.onViewAreaMessagesChanged.bind(this))
 				.on(EventType.dialog.topReached, this.onTopReached.bind(this))
 				.on(EventType.dialog.bottomReached, this.onBottomReached.bind(this))
+				.on(EventType.view.show, this.onViewShown.bind(this))
+			;
+
+			this.ui.statusField
+				.on(EventType.view.statusField.tap, this.onStatusFieldTap.bind(this))
 			;
 		}
 
+		/**
+		 * @param {Array<number>} indexList
+		 * @param {Array<Message>}messageList
+		 */
 		onViewAreaMessagesChanged(indexList, messageList)
 		{
-			if (indexList.includes(0))
+			if (this.scrollToFirstUnreadCompleted)
 			{
-				this.hideScrollToNewMessagesButton();
-			}
-			else
-			{
-				this.showScrollToNewMessagesButton();
+				if (indexList.includes(0))
+				{
+					this.hideScrollToNewMessagesButton();
+				}
+				else
+				{
+					this.showScrollToNewMessagesButton();
+				}
 			}
 
 			this.messageListOnScreen = messageList;
@@ -113,17 +182,16 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 					},
 				);
 
-				if (!this.shouldEmitMessageRead)
+				if (this.shouldEmitMessageRead)
 				{
-					return;
+					this.readVisibleUnreadMessages(messageList);
 				}
-
-				this.readVisibleUnreadMessages(messageList);
 			});
 		}
 
 		/**
 		 * @private
+		 * @param {Array<Message>} messageList
 		 */
 		readVisibleUnreadMessages(messageList)
 		{
@@ -135,12 +203,9 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 					return false;
 				}
 
-				const modelMessage = core.getStore().getters['messagesModel/getMessageById'](messageId);
+				const modelMessage = core.getStore().getters['messagesModel/getById'](messageId);
 
-				return (
-					modelMessage.unread === true
-					&& messageId > this.readingMessageId
-				);
+				return modelMessage.viewed === false;
 			});
 
 			if (unreadMessages.length === 0)
@@ -148,7 +213,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				return;
 			}
 
-			this.readingMessageId = Number(unreadMessages.at(-1).id);
+			this.readingMessageId = Number(unreadMessages[0].id);
 			const readingMessageIds = unreadMessages.map((message) => message.id);
 
 			this.emitCustomEvent(EventType.dialog.messageRead, readingMessageIds);
@@ -164,10 +229,29 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.emitCustomEvent(EventType.dialog.loadBottomPage);
 		}
 
+		onStatusFieldTap()
+		{
+			this.emitCustomEvent(EventType.dialog.statusFieldTap);
+		}
+
+		onViewShown()
+		{
+			if (!this.shouldEmitMessageRead)
+			{
+				return;
+			}
+
+			Logger.log('onViewShown', this.messageListOnScreen);
+			this.readVisibleUnreadMessages(this.messageListOnScreen);
+		}
+
 		/* endregion Events */
 
 		/* region Message */
 
+		/**
+		 * @return {{messageList: Array<Message>, indexList: Array<number>}}
+		 */
 		getViewableMessages()
 		{
 			const {
@@ -181,13 +265,17 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			};
 		}
 
+		/**
+		 * @param {Array<Message>} messageList
+		 */
 		setMessages(messageList)
 		{
+			this.unreadSeparatorAdded = messageList.some((message) => message.id === UnreadSeparatorMessage.getDefaultId());
 			this.ui.setMessages(messageList);
 
-			this.messagesCount = messageList.length;
 			this.topMessage = messageList[messageList.length - 1];
 			this.bottomMessage = messageList[0];
+			this.messagesCount = messageList.length;
 
 			this.scrollToFirstUnreadMessage(
 				false,
@@ -206,7 +294,6 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		afterSetMessages(withScroll)
 		{
 			this.scrollToFirstUnreadCompleted = true;
-			this.shouldEmitMessageRead = true;
 
 			if (this.unreadSeparatorAdded)
 			{
@@ -217,11 +304,17 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				Logger.warn('DialogView: scrolling to the first unread is not required, everything is read');
 			}
 
+			if (!this.messageIndexListOnScreen.includes(0))
+			{
+				this.showScrollToNewMessagesButton();
+			}
+
 			// TODO: refactor temporary hack. Without it, extra messages are read, somehow connected with the scroll
 			setTimeout(() => {
 				const {
 					messageList,
 				} = this.getViewableMessages();
+				this.shouldEmitMessageRead = true;
 
 				Logger.warn('DialogView.afterSetMessages: visible messages ', messageList);
 
@@ -229,6 +322,9 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			}, 200);
 		}
 
+		/**
+		 * @param {Array<Message>} messageList
+		 */
 		pushMessages(messageList)
 		{
 			this.ui.pushMessages(messageList);
@@ -237,6 +333,9 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.topMessage = messageList[messageList.length - 1];
 		}
 
+		/**
+		 * @param {Array<Message>} messageList
+		 */
 		addMessages(messageList)
 		{
 			this.shouldShowScrollToNewMessagesButton = false;
@@ -279,11 +378,19 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			return topMessage || {};
 		}
 
+		/**
+		 * @param {number} id
+		 * @param {Message} message
+		 */
 		updateMessageById(id, message)
 		{
 			this.ui.updateMessageById(id, message);
 		}
 
+		/**
+		 * @param {Array<number>} idList
+		 * @return {boolean}
+		 */
 		removeMessagesByIds(idList)
 		{
 			if (!Type.isArrayFilled(idList))
@@ -299,11 +406,19 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			return true;
 		}
 
+		/**
+		 * @param {number} id
+		 * @return {boolean}
+		 */
 		removeMessageById(id)
 		{
 			return this.removeMessagesByIds([id]);
 		}
 
+		/**
+		 * @param {number} id
+		 * @return {boolean}
+		 */
 		isMessageWithIdOnScreen(id)
 		{
 			const messageIndex = this.messageListOnScreen
@@ -313,11 +428,20 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			return messageIndex !== -1;
 		}
 
+		/**
+		 * @param {number} index
+		 * @return {boolean}
+		 */
 		isMessageWithIndexOnScreen(index)
 		{
 			return this.messageIndexListOnScreen.includes(index);
 		}
 
+		/**
+		 *
+		 * @param {Message} message
+		 * @param {MessageMenu} menu
+		 */
 		showMenuForMessage(message, menu)
 		{
 			this.ui.showMenuForMessage(message, menu);
@@ -442,6 +566,14 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.ui.scrollToMessageByIndex(0, true, afterScrollEndCallback, position);
 		}
 
+		scrollToLastReadMessage(
+			afterScrollEndCallback = () => {},
+			position = AfterScrollMessagePosition.center,
+		)
+		{
+			this.scrollToMessageById(this.readingMessageId, true, afterScrollEndCallback, position);
+		}
+
 		/* endregion Scroll */
 
 		setFloatingText(text = '')
@@ -472,6 +604,16 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		showMessageListLoader()
 		{
 			this.ui.showLoader();
+		}
+
+		close()
+		{
+			this.ui.close();
+		}
+
+		back()
+		{
+			this.ui.back();
 		}
 
 		hideMessageListLoader()
@@ -535,6 +677,11 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			dialogs.showImagePicker(imagePickerParams, selectedFilesHandler);
 		}
 
+		setNewMessageCounter(counter)
+		{
+			this.ui.setNewMessageCounter(counter);
+		}
+
 		/**
 		 * @private
 		 */
@@ -569,6 +716,60 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			});
 
 			return index !== -1;
+		}
+
+		/**
+		 * @desc Call native method for update load text progress in message
+		 * @param {object} data
+		 * @param {string} data.messageId
+		 * @param {number} data.currentBytes
+		 * @param {number} data.totalBytes
+		 * @param {string} data.textProgress
+		 * @return {boolean}
+		 */
+		updateUploadProgressByMessageId(data)
+		{
+			if (Type.isUndefined(data.messageId))
+			{
+				return false;
+			}
+
+			this.ui.updateUploadProgressByMessageId(
+				data.messageId,
+				data.currentBytes,
+				data.totalBytes,
+				data.textProgress,
+			);
+
+			return true;
+		}
+
+		/**
+		 * @desc Call native method for set status field
+		 * @param {string} iconType
+		 * @param {string} text
+		 * @return {boolean}
+		 */
+		setStatusField(iconType, text)
+		{
+			if (Type.isUndefined(iconType) || Type.isUndefined(text))
+			{
+				return false;
+			}
+			this.ui.statusField.set({ iconType, text });
+
+			return true;
+		}
+
+		/**
+		 * @desc Call native method for clear status field
+		 * @return {boolean}
+		 */
+		clearStatusField()
+		{
+			this.ui.statusField.clear();
+
+			return true;
 		}
 	}
 

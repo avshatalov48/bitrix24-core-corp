@@ -187,7 +187,7 @@ class Member
 
 		$sql = "
 			INSERT INTO " . MemberTable::getTableName() . "
-			(`USER_ID`, `TASK_ID`, `TYPE`)
+			(USER_ID, TASK_ID, TYPE)
 			VALUES
 			(" . implode("),(", $insertRows) . ")
 		";

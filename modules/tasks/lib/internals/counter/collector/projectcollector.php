@@ -16,6 +16,7 @@ use Bitrix\Tasks\Comments\Viewed\Enum;
 use Bitrix\Tasks\Comments\Viewed\Group;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 use Bitrix\Tasks\Internals\Counter\Deadline;
+use Bitrix\Tasks\Internals\Task\Status;
 
 class ProjectCollector
 {
@@ -98,7 +99,7 @@ class ProjectCollector
 		}
 
 		$filter[] = "T.DEADLINE < '". $expiredTime ."'";
-		$filter[] = 'T.STATUS IN ('. implode(',', [\CTasks::STATE_PENDING, \CTasks::STATE_IN_PROGRESS]) .')';
+		$filter[] = 'T.STATUS IN ('. implode(',', [Status::PENDING, Status::IN_PROGRESS]) .')';
 
 		$filter = implode(' AND ', $filter);
 		$joinFilter = implode(' AND ', $joinFilter);

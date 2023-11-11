@@ -14,6 +14,7 @@ use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Common\Logo;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sign\Config\Storage;
 
 Container::getInstance()->getLocalization()->loadMessages();
 
@@ -30,11 +31,6 @@ final class SignDocument extends Activity
 	public function getIconCode(): ?string
 	{
 		return Icon::DOCUMENT;
-	}
-
-	public function getBackgroundColorToken(): string
-	{
-		return Layout\Icon::BACKGROUND_PRIMARY_ALT;
 	}
 
 	public function getTitle(): ?string
@@ -185,13 +181,16 @@ final class SignDocument extends Activity
 
 		if ($signDocument && $signDocument->canBeChanged())
 		{
+			$action = (new Layout\Action\JsEvent($this->getType() . ':Modify'))
+				->addActionParamInt('documentId', $this->getDocumentId());
+			if (Storage::instance()->isNewSignEnabled())
+			{
+				$action->addActionParamString('documentUid', $this->getSignDocument()->getUid());
+			}
 			$buttons['edit'] = (new Layout\Footer\Button(
 				Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_MODIFY'),
 				Layout\Footer\Button::TYPE_SECONDARY,
-			))->setAction(
-				(new Layout\Action\JsEvent($this->getType() . ':Modify'))
-					->addActionParamInt('documentId', $this->getDocumentId())
-			);
+			))->setAction($action);
 		}
 
 		return $buttons;

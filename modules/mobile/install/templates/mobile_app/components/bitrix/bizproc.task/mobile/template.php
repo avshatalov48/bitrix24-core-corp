@@ -71,7 +71,7 @@ if (!empty($arResult["ERROR_MESSAGE"]))
 						));
 						?>
 
-						<a href="javascript:void(0)" onclick="return BX.BizProcMobile.doTask(<?=$props?>, function(){BXMobileApp.UI.Page.close({drop: true});});" class="webform-small-button bp-small-button webform-small-button-<?=$class?>">
+						<a href="javascript:void(0)" onclick="return BX.BizProcMobile.doTask(<?=$props?>, function(){BXMobileApp.UI.Page.close({drop: true});});" class="webform-small-button bp-small-button webform-small-button-<?=$class?> mobile-small-button-<?=$class?>">
 							<span class="bp-button-icon"></span>
 							<span class="bp-button-text"><?=$control['TEXT']?></span>
 						</a>
@@ -137,7 +137,7 @@ endif;
 							?>
 							<button type="submit" name="<?=htmlspecialcharsbx($control['NAME'])?>"
 									value="<?=htmlspecialcharsbx($control['VALUE'])?>"
-									class="webform-small-button bp-small-button webform-small-button-<?=$class?>"
+									class="webform-small-button bp-small-button webform-small-button-<?=$class?> mobile-small-button-<?=$class?>"
 									style="border: none">
 								<span class="bp-button-icon"></span>
 								<span class="bp-button-text"><?=htmlspecialcharsbx($control['TEXT'])?></span>

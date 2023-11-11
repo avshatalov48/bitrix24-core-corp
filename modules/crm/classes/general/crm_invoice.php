@@ -5148,7 +5148,7 @@ class CAllCrmInvoice
 										$requisite->getRqListFieldValueTitle(
 											$fieldName,
 											$presetCountryId,
-											$fieldValue
+											(string)$fieldValue
 										)
 									;
 								}
@@ -5460,7 +5460,7 @@ class CAllCrmInvoice
 										$requisite->getRqListFieldValueTitle(
 											$fieldName,
 											$mcPresetCountryId,
-											$fieldValue
+											(string)$fieldValue
 										)
 									;
 								}

@@ -16,9 +16,9 @@ Loader::includeModule('catalog');
 
 final class Wizard
 {
-	public static function buildProductModel(ProductFromWizard $product, ?int $documentId = null): DocumentProductRecord
+	public static function buildProductModel(ProductFromWizard $product, ?int $documentId = null, ?string $documentType = null): DocumentProductRecord
 	{
-		$document = Document::load($documentId);
+		$document = Document::load($documentId, $documentType);
 		$currency = $product->documentCurrency ?? $document->currency;
 		$sku = self::loadProduct((int)$product->id);
 

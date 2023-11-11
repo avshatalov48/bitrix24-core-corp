@@ -9,6 +9,7 @@ jn.define('crm/timeline/controllers/openline', (require, exports, module) => {
 
 	const SupportedActions = {
 		OPEN_CHAT: 'Openline:OpenChat',
+		COMPLETE: 'Openline:Complete',
 	};
 
 	/**
@@ -82,7 +83,30 @@ jn.define('crm/timeline/controllers/openline', (require, exports, module) => {
 						this.openChat(openLineActionParams);
 					}, 400);
 					break;
+
+				case SupportedActions.COMPLETE:
+					this.onComplete(actionParams);
+					break;
 			}
+		}
+
+		onComplete(actionParams)
+		{
+			const action = actionParams.ajaxAction;
+
+			this.item.showLoader();
+
+			const data = {
+				activityId: actionParams.activityId,
+				ownerId: actionParams.ownerId,
+				ownerTypeId: actionParams.ownerTypeId,
+			};
+
+			BX.ajax.runAction(action, { data })
+				.catch((response) => {
+					this.item.hideLoader();
+					void ErrorNotifier.showError(response.errors[0].message);
+				});
 		}
 
 		openChat(params)

@@ -65,9 +65,10 @@ jn.define('im:messenger/controller/participant-manager', (require, exports, modu
 					id: actionName,
 					title: Loc.getMessage(`IMMOBILE_PARTICIPANTS_MANAGER_ITEM_LIST_${actionName.toUpperCase()}`),
 					data: {
-						svgIcon: menuIcons.remove(),
+						svgIcon: menuIcons[actionName](),
 					},
 					onClickCallback: this.getCallbackByAction(actionName),
+					testId: `SIDEBAR_USER_CONTEXT_MENU_${actionName.toUpperCase()}`,
 				});
 			});
 		}

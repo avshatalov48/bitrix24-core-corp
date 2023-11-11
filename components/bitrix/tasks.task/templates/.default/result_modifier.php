@@ -10,7 +10,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 use Bitrix\Main\Localization\Loc;
 
+use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Component\Task\TasksTaskFormState;
@@ -613,11 +615,11 @@ $order = ['STATUS' => 'ASC', 'DEADLINE' => 'DESC', 'PRIORITY' => 'DESC', 'ID' =>
 $filter = [
 	'DOER' => User::getId(),
 	'STATUS' => [
-		CTasks::METASTATE_VIRGIN_NEW,
-		CTasks::METASTATE_EXPIRED,
-		CTasks::STATE_NEW,
-		CTasks::STATE_PENDING,
-		CTasks::STATE_IN_PROGRESS
+		MetaStatus::UNSEEN,
+		MetaStatus::EXPIRED,
+		Status::NEW,
+		Status::PENDING,
+		Status::IN_PROGRESS,
 	]
 ];
 $select = ['ID', 'TITLE', 'STATUS'];

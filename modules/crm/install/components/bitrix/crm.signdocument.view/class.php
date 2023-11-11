@@ -10,6 +10,8 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Result;
+use Bitrix\Main\Web\Uri;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -69,10 +71,6 @@ class CrmSignDocumentViewComponent extends Bitrix\Crm\Component\Base
 		$memberHash = $this->arParams['memberHash'] ?? null;
 		$memberHash = $memberHash === 'undefined' ? null : $memberHash;
 
-		$data = [
-			'documentHash' => $document->getHash(),
-			'secCode' => $document->getSecCode(),
-		];
 
 		$currentMember = null;
 		if (!$this->arParams['memberHash'] && !$document->isAllMembersSigned())
@@ -90,33 +88,12 @@ class CrmSignDocumentViewComponent extends Bitrix\Crm\Component\Base
 			$memberHash = $document->getInitiatorMember()->getHash();
 		}
 
-		if ($memberHash)
-		{
-			$data['memberHash'] = $memberHash;
-		}
-
-		$status = \Bitrix\Sign\Proxy::sendCommand('document.file.getStatus',
-			$data
-		)['status'];
-
-		if ($status != 'exists')
+		$result = $this->prepareDocumentPdfLink($documentHash, $memberHash);
+		if (!$result->isSuccess())
 		{
 			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('CRM_SIGNDOCUMENT_TRY_AGAIN_LATER'));
 			return;
 		}
-
-		$basePath = '/bitrix/services/main/ajax.php?action=sign.document.getFileForSrc&documentHash=%s';
-		$this->arResult['pdfSource'] = $memberHash
-			? sprintf(
-				$basePath.'&memberHash=%s',
-				$documentHash,
-				$memberHash
-			)
-			: sprintf(
-				$basePath,
-				$documentHash
-			)
-		;
 
 		if ($document->getEntityId() > 0)
 		{
@@ -146,6 +123,23 @@ class CrmSignDocumentViewComponent extends Bitrix\Crm\Component\Base
 
 		$this->arResult['ERRORS'][] = $this->errorCollection->getValues()[0]->getMessage();
 		$this->includeComponentTemplate('unavailable');
+	}
+
+	private function prepareDocumentPdfLink(string $documentHash, ?string $memberHash = null): Result
+	{
+		$operation = new \Bitrix\Sign\Operation\GetSignedFilePdfUrl($documentHash, $memberHash);
+		$result = $operation->launch();
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
+		if (!$operation->ready)
+		{
+			return $result->addError(new Error('Document file is not ready'));
+		}
+
+		$this->arResult['pdfSource'] = $operation->url;
+		return $result;
 	}
 
 	private function prepareRequisites(\Bitrix\Sign\Document $document): void

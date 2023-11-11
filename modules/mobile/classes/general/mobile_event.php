@@ -5,6 +5,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Mobile\Tab\Manager;
 use Bitrix\MobileApp\Janative\Entity\Component;
+use Bitrix\MobileApp\Janative\Entity\Extension;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -66,6 +67,26 @@ class CMobileEvent
 		];
 	}
 
+	/**
+	 * @param Component $component
+	 * @return string|null
+	 */
+	public static function onBeforeComponentContentGet(Component $component): ?string {
+		$content = "";
+		if (defined('JN_HOTRELOAD_ENABLED') && defined('JN_HOTRELOAD_HOST')) {
+			$hotreloadHost = JN_HOTRELOAD_HOST;
+			$content  = (new Extension("hotreload"))->getContent();
+			$content .= "\n(()=>{ let wsclient = startHotReload(this.env.userId, '$hotreloadHost') })();\n";
+		}
+
+		$apptheme  = (new Extension("apptheme"))->getContent();
+		$apptheme .= "\nvar AppTheme = jn.require('apptheme')\n";
+		$content .= $apptheme;
+
+
+		return $content;
+	}
+
 	public static function onMobileMenuBuilt($data, $eventProvider = null)
 	{
 		/**
@@ -118,6 +139,17 @@ class CMobileEvent
 					array_unshift($favorite, $item);
 				}
 
+			}
+			else
+			{
+				foreach ($data as &$dataTab)
+				{
+					if (isset($dataTab['code']) && $tabId === $dataTab['code'])
+					{
+						$dataTab['hidden'] = true;
+						break;
+					}
+				}
 			}
 		}
 

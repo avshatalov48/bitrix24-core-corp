@@ -5,6 +5,7 @@ jn.define('crm/timeline/item/ui/body/blocks', (require, exports, module) => {
 	const { TimelineItemBodyTextBlock: TextBlock } = require('crm/timeline/item/ui/body/blocks/text-block');
 	const { TimelineItemBodyLinkBlock: LinkBlock } = require('crm/timeline/item/ui/body/blocks/link-block');
 	const { TimelineItemBodyWithTitleBlock: WithTitle } = require('crm/timeline/item/ui/body/blocks/with-title');
+	const { TimelineItemBodySharingSlotsListBlock: SharingSlotsList } = require('crm/timeline/item/ui/body/blocks/sharing-slots-list');
 	const { TimelineItemBodyValueChangeBlock: ValueChange } = require('crm/timeline/item/ui/body/blocks/value-change');
 	const { TimelineItemBodyLineOfTextBlocks: LineOfTextBlocks } = require('crm/timeline/item/ui/body/blocks/line-of-text-blocks');
 	const { TimelineItemBodySmsMessageBlock: SmsMessage } = require('crm/timeline/item/ui/body/blocks/sms-message');
@@ -26,6 +27,7 @@ jn.define('crm/timeline/item/ui/body/blocks', (require, exports, module) => {
 		TextBlock,
 		LinkBlock,
 		WithTitle,
+		SharingSlotsList,
 		ValueChange,
 		LineOfTextBlocks,
 		SmsMessage,

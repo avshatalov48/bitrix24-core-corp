@@ -23,6 +23,7 @@ return [
 	'rel' => [
 		'main.core.events',
 		'crm.activity.todo-notification-skip-menu',
+		'crm.activity.todo-ping-settings-menu',
 		'main.popup',
 		'crm.kanban.sort',
 		'crm.kanban.restriction',

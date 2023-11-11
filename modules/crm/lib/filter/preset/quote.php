@@ -24,7 +24,7 @@ final class Quote extends Base
 				])
 			],
 			self::ID_MY => [
-				'name' => Loc::getMessage('CRM_PRESET_MY_QUOTES'),
+				'name' => Loc::getMessage('CRM_PRESET_MY_QUOTES_MSGVER_1'),
 				'fields' => array_merge($this->defaultValues, [
 					'ASSIGNED_BY_ID_name' => $this->userName,
 					'ASSIGNED_BY_ID' => $this->userId,
@@ -32,7 +32,7 @@ final class Quote extends Base
 				])
 			],
 			self::ID_IN_CLOSED => [
-				'name' => Loc::getMessage('CRM_PRESET_CLOSED_QUOTES'),
+				'name' => Loc::getMessage('CRM_PRESET_CLOSED_QUOTES_MSGVER_1'),
 				'fields' => array_merge($this->defaultValues, [
 					'STATUS_ID' => $this->closedStatusIds,
 				])

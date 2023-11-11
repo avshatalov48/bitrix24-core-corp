@@ -28,7 +28,7 @@ class QuoteIdNumberGenerator extends NumberGenerator implements DynamicConfigura
 	{
 		return [
 			static::getPatternFor(static::TEMPLATE_WORD_QUOTE_ID)
-			=> Loc::getMessage('BITRIX_CRM_INTEGRATION_NUMERATOR_QUOTEIDNUMBERGENERATOR_WORD_QUOTE_ID'),
+			=> Loc::getMessage('BITRIX_CRM_INTEGRATION_NUMERATOR_QUOTEIDNUMBERGENERATOR_WORD_QUOTE_ID_MSGVER_1'),
 		];
 	}
 

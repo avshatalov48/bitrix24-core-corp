@@ -2,8 +2,8 @@
 	const SECTION_DEFAULT = 'default';
 	const SECTION_SERVICE = 'service';
 	const svgIcons = {
-		['add']: {
-			content: `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.73364 3.75H8.25V8.25H3.75V9.71066H8.25V14.2423H9.73364V9.71066H14.2813V8.25H9.73364V3.75Z" fill="#2066B0"/></svg>`,
+		add: {
+			content: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.73364 3.75H8.25V8.25H3.75V9.71066H8.25V14.2423H9.73364V9.71066H14.2813V8.25H9.73364V3.75Z" fill="#2066B0"/></svg>',
 		},
 	};
 
@@ -145,7 +145,7 @@
 				Text({
 					style: {
 						fontSize: 14,
-						color: '#0065A3',
+						color: '#0065a3',
 						flexShrink: 2,
 					},
 					numberOfLines: 1,
@@ -169,8 +169,7 @@
 				promise = Promise.resolve();
 			}
 
-			promise.then(({ closeMenu = true, closeCallback} = {}) => {
-
+			promise.then(({ closeMenu = true, closeCallback } = {}) => {
 				if (closeMenu)
 				{
 					this.closeMenuHandler(closeCallback);

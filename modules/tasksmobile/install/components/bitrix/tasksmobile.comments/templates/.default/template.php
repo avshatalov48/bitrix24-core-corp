@@ -11,6 +11,7 @@ use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\Tasks\Internals\Task\Status;
 
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -124,7 +125,7 @@ $taskId = (int)$arResult['TASK']['ID'];
 				'resultComments' => $arResult['RESULT_COMMENTS'],
 				'isClosed' => in_array(
 					(int)$arResult['TASK']['STATUS'],
-					[CTasks::STATE_SUPPOSEDLY_COMPLETED, CTasks::STATE_COMPLETED],
+					[Status::SUPPOSEDLY_COMPLETED, Status::COMPLETED],
 					true
 				),
 			]) ?>);

@@ -88,9 +88,10 @@ class CBPImOpenLinesMessageActivity extends CBPActivity
 		if ($messageText)
 		{
 			$messageFields = array(
-				"FROM_USER_ID" => $fromUserId,
-				"TO_CHAT_ID" => $chat['ID'],
-				"MESSAGE" => $messageText,
+				'FROM_USER_ID' => $fromUserId,
+				'TO_CHAT_ID' => $chat['ID'],
+				'MESSAGE' => $messageText,
+				'NO_SESSION_OL' => 'Y',
 			);
 
 			if ($isSystem)

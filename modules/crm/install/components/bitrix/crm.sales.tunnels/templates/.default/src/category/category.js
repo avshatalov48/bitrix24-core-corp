@@ -572,7 +572,7 @@ export class Category extends Event.EventEmitter
 				failStagesGroup: this.getFailContainer(),
 			},
 			currentStageGroup: this.getFailContainer(),
-			categoryName: this.getTitle().innerText,
+			categoryName: this.getTitle().textContent,
 			isCategoryEditable: this.isCategoryEditable,
 			areStagesEditable: this.areStagesEditable,
 		};
@@ -721,9 +721,9 @@ export class Category extends Event.EventEmitter
 	showTitleEditor(value: ?string = null)
 	{
 		const titleEditor = this.getTitleEditor();
-		const { innerText } = this.getTitle();
+		const { textContent } = this.getTitle();
 
-		titleEditor.value = Type.isString(value) ? value : Text.decode(innerText);
+		titleEditor.value = Type.isString(value) ? value : Text.decode(textContent);
 
 		Tag.style(titleEditor)`
 			display: block;
@@ -746,7 +746,7 @@ export class Category extends Event.EventEmitter
 
 		const title = this.getTitle();
 		titleEditor.setSelectionRange(titleLength, titleLength);
-		const titleLength = title.innerText.length;
+		const titleLength = title.textContent.length;
 	}
 
 	showTitle()
@@ -770,9 +770,9 @@ export class Category extends Event.EventEmitter
 		const { value } = titleEditor;
 		const newTitle = value.trim() || Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER2');
 
-		if (title.innerText !== newTitle)
+		if (title.textContent !== newTitle)
 		{
-			title.innerText = newTitle;
+			title.textContent = newTitle;
 			Dom.attr(title, 'title', newTitle);
 
 			this.name = newTitle;
@@ -1211,7 +1211,7 @@ export class Category extends Event.EventEmitter
 					opacity: 30,
 				},
 				titleBar: Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_POPUP_TITLE2')
-					.replace('#name#', this.getTitle().innerText),
+					.replace('#name#', this.getTitle().textContent),
 				content: Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_POPUP_DESCRIPTION2'),
 				buttons: [
 					new PopupWindowButton({

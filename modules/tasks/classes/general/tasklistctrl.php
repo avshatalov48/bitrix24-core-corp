@@ -7,6 +7,8 @@
  */
 
 use \Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Task\MetaStatus;
+use Bitrix\Tasks\Internals\Task\Status;
 
 class CTaskListCtrl
 {
@@ -111,15 +113,15 @@ class CTaskListCtrl
 		switch ($taskCategoryId)
 		{
 			case CTaskListState::VIEW_TASK_CATEGORY_COMPLETED:
-				$arFilter['REAL_STATUS'] = array(
-					CTasks::STATE_COMPLETED,
-					CTasks::STATE_SUPPOSEDLY_COMPLETED,
-					CTasks::STATE_DECLINED
-				);
-			break;
+				$arFilter['REAL_STATUS'] = [
+					Status::COMPLETED,
+					Status::SUPPOSEDLY_COMPLETED,
+					Status::DECLINED,
+				];
+				break;
 
 			case CTaskListState::VIEW_TASK_CATEGORY_WAIT_CTRL:
-				$arFilter['REAL_STATUS'] = CTasks::STATE_SUPPOSEDLY_COMPLETED;
+				$arFilter['REAL_STATUS'] = Status::SUPPOSEDLY_COMPLETED;
 			break;
 
 			case CTaskListState::VIEW_TASK_CATEGORY_NEW:
@@ -132,28 +134,28 @@ class CTaskListCtrl
 
 			case CTaskListState::VIEW_TASK_CATEGORY_IN_PROGRESS:
 				$arFilter['REAL_STATUS'] = array(
-					CTasks::STATE_NEW,
-					CTasks::STATE_PENDING,
-					CTasks::STATE_IN_PROGRESS
+					Status::NEW,
+					Status::PENDING,
+					Status::IN_PROGRESS,
 				);
 			break;
 
 			case CTaskListState::VIEW_TASK_CATEGORY_EXPIRED:
-				$arFilter['STATUS'] = CTasks::METASTATE_EXPIRED;
+				$arFilter['STATUS'] = MetaStatus::EXPIRED;
 			break;
 
 			case CTaskListState::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES:
 				$arFilter['>=DEADLINE'] = Counter\Deadline::getExpiredTime();
 				$arFilter['<DEADLINE'] = Counter\Deadline::getExpiredSoonTime();
-				$arFilter['!REAL_STATUS'] = array(
-					CTasks::STATE_SUPPOSEDLY_COMPLETED,
-					CTasks::STATE_COMPLETED,
-					CTasks::STATE_DECLINED
-				);
-			break;
+				$arFilter['!REAL_STATUS'] = [
+					Status::SUPPOSEDLY_COMPLETED,
+					Status::COMPLETED,
+					Status::DECLINED,
+				];
+				break;
 
 			case CTaskListState::VIEW_TASK_CATEGORY_DEFERRED:
-				$arFilter['REAL_STATUS'] = CTasks::STATE_DEFERRED;
+				$arFilter['REAL_STATUS'] = Status::DEFERRED;
 			break;
 
 			case CTaskListState::VIEW_TASK_CATEGORY_ATTENTION:
@@ -162,11 +164,11 @@ class CTaskListCtrl
 					case CTaskListState::VIEW_ROLE_RESPONSIBLE:
 					case CTaskListState::VIEW_ROLE_ACCOMPLICE:
 						// selects not viewed tasks, expired and to be expired soon
-						$arFilter['!REAL_STATUS'] = array(
-							CTasks::STATE_SUPPOSEDLY_COMPLETED,
-							CTasks::STATE_COMPLETED,
-							CTasks::STATE_DECLINED
-						);
+						$arFilter['!REAL_STATUS'] = [
+							Status::SUPPOSEDLY_COMPLETED,
+							Status::COMPLETED,
+							Status::DECLINED,
+						];
 
 						$arFilter['::SUBFILTER-' . (++$subfilterIndex)] = array(
 							'::LOGIC'   => 'OR',
@@ -179,17 +181,17 @@ class CTaskListCtrl
 					case CTaskListState::VIEW_ROLE_AUDITOR:
 					case CTaskListState::VIEW_ROLE_ORIGINATOR:
 						// selects only expired tasks
-						$arFilter['STATUS'] = CTasks::METASTATE_EXPIRED;
+						$arFilter['STATUS'] = MetaStatus::EXPIRED;
 					break;
 				}
 			break;
 
 			case CTaskListState::VIEW_TASK_CATEGORY_WO_DEADLINE:
-				$arFilter['!REAL_STATUS'] = array(
-					CTasks::STATE_DECLINED,
-					CTasks::STATE_SUPPOSEDLY_COMPLETED,
-					CTasks::STATE_COMPLETED
-				);
+				$arFilter['!REAL_STATUS'] = [
+					Status::DECLINED,
+					Status::SUPPOSEDLY_COMPLETED,
+					Status::COMPLETED,
+				];
 
 				$arFilter['DEADLINE'] = '';
 

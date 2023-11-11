@@ -3,6 +3,7 @@
 namespace Bitrix\Tasks\Comments\Viewed;
 
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Internals\Counter;
 
@@ -78,7 +79,7 @@ class Event
 		{
 			PushService::addEvent($currentUserId, [
 				'module_id' => 'tasks',
-				'command' => 'comment_read_all',
+				'command' => PushCommand::COMMENTS_VIEWED,
 				'params' => [
 					'USER_ID' => $currentUserId,
 					'GROUP_ID' => $groupId,
@@ -90,7 +91,7 @@ class Event
 		{
 			PushService::addEvent($currentUserId, [
 				'module_id' => 'tasks',
-				'command' => 'project_read_all',
+				'command' => PushCommand::PROJECT_COMMENTS_VIEWED,
 				'params' => [
 					'USER_ID' => $currentUserId,
 					'GROUP_ID' => $groupId,
@@ -101,7 +102,7 @@ class Event
 		{
 			PushService::addEvent($currentUserId, [
 				'module_id' => 'tasks',
-				'command' => 'scrum_read_all',
+				'command' => PushCommand::SCRUM_COMMENTS_VIEWED,
 				'params' => [
 					'USER_ID' => $currentUserId,
 					'GROUP_ID' => $groupId,

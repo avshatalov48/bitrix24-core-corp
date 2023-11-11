@@ -292,19 +292,23 @@
 			if (this.sendedToSign)
 			{
 				this.showError(BX.message('CRM_DOCUMENT_VIEW_SIGN_CLICKED'));
-				return
-			}
-			if (!this.isSigningEnabledInCurrentTariff)
-			{
-				BX.UI.InfoHelper.show(this.signingInfoHelperSliderCode)
+
 				return;
 			}
+
+			if (!this.isSigningEnabledInCurrentTariff)
+			{
+				BX.UI.InfoHelper.show(this.signingInfoHelperSliderCode);
+				return;
+			}
+
 			this.sendedToSign = true;
 			if (!this.rightPanelLoader)
 			{
 				this.rightPanelLoader = new BX.Loader({size: 100, offset: {left: "33%", top: "-10%"}})
 			}
 			this.rightPanelLoader.show(e.currentTarget.closest('.--company-information'));
+
 			return new Promise(function(resolve, reject) {
 				var convertDealAndStartSign = (function (usePrevious)
 				{
@@ -340,8 +344,8 @@
 					if (response.data.ID > 0) {
 						this.showMessage(BX.Loc.getMessage('CRM_DOCUMENT_VIEW_SIGN_DO_USE_PREVIOUS_MSG_MSGVER_3',
 							{
-								'%TITLE%': '<b>' + (response.data.TITLE || '') + '</b>',
-								'%INITIATOR%': '<b>' + (response.data.INITIATOR || '') + '</b>',
+								'%TITLE%': '<b>' + (BX.util.htmlspecialchars(response.data.TITLE || '')) + '</b>',
+								'%INITIATOR%': '<b>' + (BX.util.htmlspecialchars(response.data.INITIATOR || '')) + '</b>',
 							})
 							, [
 								new BX.PopupWindowButton({

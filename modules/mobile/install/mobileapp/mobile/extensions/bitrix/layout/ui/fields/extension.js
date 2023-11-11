@@ -31,6 +31,7 @@ jn.define('layout/ui/fields', (require, exports, module) => {
 	const { CombinedType, CombinedField } = require('layout/ui/fields/combined');
 	const { CombinedV2Type, CombinedV2Field } = require('layout/ui/fields/combined-v2');
 	const { MultipleCombinedType, MultipleCombinedField } = require('layout/ui/fields/multiple-combined');
+	const { ShipmentExtraServicesType, ShipmentExtraServicesField } = require('layout/ui/fields/shipment-extra-services');
 
 	let CrmElementType;
 	let CrmElementField;
@@ -84,6 +85,7 @@ jn.define('layout/ui/fields', (require, exports, module) => {
 		CombinedType,
 		CombinedV2Type,
 		MultipleCombinedType,
+		ShipmentExtraServicesType,
 	];
 
 	const ALIAS_TYPES = {
@@ -242,6 +244,9 @@ jn.define('layout/ui/fields', (require, exports, module) => {
 
 				case MultipleCombinedType:
 					return MultipleCombinedField({ ...data, renderField });
+
+				case ShipmentExtraServicesType:
+					return ShipmentExtraServicesField(data);
 			}
 
 			if (fieldType === CrmStageType && CrmStageField)
@@ -297,6 +302,7 @@ jn.define('layout/ui/fields', (require, exports, module) => {
 		CombinedType,
 		CombinedV2Type,
 		MultipleCombinedType,
+		ShipmentExtraServicesType,
 	};
 
 });

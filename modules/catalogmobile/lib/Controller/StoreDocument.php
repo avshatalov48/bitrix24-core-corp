@@ -5,6 +5,7 @@ namespace Bitrix\CatalogMobile\Controller;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\Access;
+use Bitrix\Crm\Controller\RealizationDocument;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\CatalogMobile\EntityEditor\StoreDocumentProvider;
 use Bitrix\Mobile\Helpers\ReadsApplicationErrors;
@@ -13,15 +14,24 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\CatalogMobile\InventoryControl\Command\ConductDocumentCommand;
 use CCatalogDocs;
+use Bitrix\Main\Engine\Controller;
+use Bitrix\Catalog\StoreDocumentTable;
+use Bitrix\Sale\Repository\ShipmentRepository;
+use Bitrix\Catalog\Integration\PullManager;
 
 Loader::requireModule('catalog');
 
-class StoreDocument extends \Bitrix\Main\Engine\Controller
+class StoreDocument extends Controller
 {
 	use ReadsApplicationErrors;
 
-	public function conductAction(int $id, CurrentUser $currentUser): ?array
+	public function conductAction(int $id, string $docType, CurrentUser $currentUser): ?array
 	{
+		if ($docType === StoreDocumentTable::TYPE_SALES_ORDERS)
+		{
+			return $this->setShipped($id, 'Y');
+		}
+
 		if (!$this->checkDocumentAccess(ActionDictionary::ACTION_STORE_DOCUMENT_CONDUCT, $id, $currentUser))
 		{
 			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_ERROR_CONDUCT_PERMS')));
@@ -57,8 +67,74 @@ class StoreDocument extends \Bitrix\Main\Engine\Controller
 		];
 	}
 
-	public function cancellationAction(int $id, CurrentUser $currentUser): ?array
+	private function setShipped(int $id, string $shipped): ?array
 	{
+		if (!Loader::requireModule('crm'))
+		{
+			$this->addError(new Error('Module crm is not installed'));
+
+			return null;
+		}
+
+		$this->forward(
+			RealizationDocument::class,
+			'setShipped',
+			[
+				'id' => $id,
+				'value' => $shipped,
+			]
+		);
+
+		if (!empty($this->getErrors()))
+		{
+			return null;
+		}
+
+		$statuses = $this->getStatusesList();
+		$status = $shipped === 'Y' ? CCatalogDocs::CONDUCTED : CCatalogDocs::CANCELLED;
+
+		$shipment = ShipmentRepository::getInstance()->getById($id);
+		if (!$shipment)
+		{
+			return null;
+		}
+
+		$fields = $shipment->getFields()->getValues();
+		$fields['DOC_TYPE'] = 'W';
+		PullManager::getInstance()->sendDocumentsUpdatedEvent([
+			[
+				'id' => $shipment->getId(),
+				'data' => [
+					'fields' => $fields,
+				],
+			],
+		]);
+
+		return [
+			'result' => true,
+			'item' => [
+				'statuses' => [
+					$status,
+				],
+				'fields' => [
+					[
+						'name' => 'DOC_STATUS',
+						'value' => [
+							$statuses[$status],
+						]
+					],
+				],
+			],
+		];
+	}
+
+	public function cancellationAction(int $id, string $docType, CurrentUser $currentUser): ?array
+	{
+		if ($docType === StoreDocumentTable::TYPE_SALES_ORDERS)
+		{
+			return $this->setShipped($id, 'N');
+		}
+
 		if (!$this->checkDocumentAccess(ActionDictionary::ACTION_STORE_DOCUMENT_CONDUCT, $id, $currentUser))
 		{
 			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_ERROR_CANCELLATION_PERMS')));
@@ -103,8 +179,12 @@ class StoreDocument extends \Bitrix\Main\Engine\Controller
 		return $provider->getStatusesList();
 	}
 
-	public function deleteAction(int $id, CurrentUser $currentUser): ?array
+	public function deleteAction(int $id, string $docType, CurrentUser $currentUser): ?array
 	{
+		if ($docType === StoreDocumentTable::TYPE_SALES_ORDERS)
+		{
+			return $this->deleteRealization($id);
+		}
 		if (!$this->checkDocumentAccess(ActionDictionary::ACTION_STORE_DOCUMENT_DELETE, $id, $currentUser))
 		{
 			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_ERROR_DELETE_PERMS')));
@@ -125,6 +205,51 @@ class StoreDocument extends \Bitrix\Main\Engine\Controller
 
 		return [
 			'result' => $result,
+		];
+	}
+
+	private function deleteRealization(int $id): ?array
+	{
+		if (!Loader::requireModule('crm'))
+		{
+			$this->addError(new Error('Module crm is not installed'));
+
+			return null;
+		}
+
+		$this->forward(
+			RealizationDocument::class,
+			'setRealization',
+			[
+				'id' => $id,
+				'value' => 'N'
+			]
+		);
+
+		if (!empty($this->getErrors()))
+		{
+			return null;
+		}
+
+		$shipment = ShipmentRepository::getInstance()->getById($id);
+		if (!$shipment)
+		{
+			return null;
+		}
+
+		$fields = $shipment->getFields()->getValues();
+		$fields['DOC_TYPE'] = 'W';
+		PullManager::getInstance()->sendDocumentDeletedEvent([
+			[
+				'id' => $shipment->getId(),
+				'data' => [
+					'fields' => $fields,
+				],
+			],
+		]);
+
+		return [
+			'result' => true,
 		];
 	}
 

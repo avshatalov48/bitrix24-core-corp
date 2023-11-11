@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Activity\Provider;
 
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Badge\SourceIdentifier;
 use Bitrix\Crm\Badge\Type\CalendarSharingStatus;
 use Bitrix\Crm\ItemIdentifier;
@@ -39,9 +40,9 @@ class CalendarSharing extends Base
 		];
 	}
 
-	public static function getDefaultPingOffsets(): array
+	public static function getDefaultPingOffsets(array $params = []): array
 	{
-		return [0, 15];
+		return TodoPingSettingsProvider::DEFAULT_OFFSETS;
 	}
 
 	public static function syncBadges(int $activityId, array $activityFields, array $bindings): void

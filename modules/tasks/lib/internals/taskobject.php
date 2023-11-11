@@ -5,15 +5,15 @@ use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
-use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Internals\Task\CheckListTable;
-use Bitrix\Tasks\Internals\Task\EO_Member;
-use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\Result\Result;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
 use Bitrix\Tasks\Internals\Task\Result\ResultTable;
 use Bitrix\Tasks\Internals\Task\ScenarioTable;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\Task\UtsTasksTaskTable;
+use Bitrix\Tasks\Member\MemberService;
+use Bitrix\Tasks\Member\Service\TaskMemberService;
 use Bitrix\Tasks\Util\Entity\DateTimeField;
 use Bitrix\Tasks\Util\Type\DateTime;
 
@@ -24,6 +24,8 @@ use Bitrix\Tasks\Util\Type\DateTime;
  */
 class TaskObject extends EO_Task
 {
+	use MemberTrait;
+
 	/**
 	 * @param $data
 	 * @return TaskObject
@@ -76,7 +78,7 @@ class TaskObject extends EO_Task
 	/**
 	 * @return bool
 	 */
-	public function isDeleted()
+	public function isDeleted(): bool
 	{
 		return $this->getZombie();
 	}
@@ -99,7 +101,7 @@ class TaskObject extends EO_Task
 	public function isExpired(): bool
 	{
 		$status = (int)$this->getStatus();
-		$completedStates = [\CTasks::STATE_SUPPOSEDLY_COMPLETED, \CTasks::STATE_COMPLETED, \CTasks::STATE_DEFERRED];
+		$completedStates = [Status::SUPPOSEDLY_COMPLETED, Status::COMPLETED, Status::DEFERRED];
 
 		if (!$this->getDeadline() || in_array($status, $completedStates, true))
 		{
@@ -231,7 +233,6 @@ class TaskObject extends EO_Task
 		return null;
 	}
 
-
 	/**
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
@@ -244,57 +245,6 @@ class TaskObject extends EO_Task
 		return !is_null($checklist);
 	}
 
-	public function getResponsibleMemberId(): ?int
-	{
-		return $this->getMemberId(RoleDictionary::ROLE_RESPONSIBLE);
-	}
-
-	public function getCreatedByMemberId(): ?int
-	{
-		return $this->getMemberId(RoleDictionary::ROLE_DIRECTOR);
-	}
-
-	private function getMemberId(string $role): ?int
-	{
-		$members = $this->getMemberList();
-
-		if (is_null($members))
-		{
-			$members = MemberTable::getList([
-				'select' => [
-					'*'
-				],
-				'filter' => [
-					'=TASK_ID' => $this->getId()
-				],
-			])->fetchCollection();
-		}
-		else
-		{
-			$members = $members->getAll();
-		}
-
-		foreach ($members as $member)
-		{
-			if ($member->getType() === $role)
-			{
-				return $member->getUserId();
-			}
-		}
-
-		return null;
-	}
-
-	public function getAccompliceMembersIds(): array
-	{
-		return $this->getMembersIdsByRole(RoleDictionary::ROLE_ACCOMPLICE);
-	}
-
-	public function getAuditorMembersIds(): array
-	{
-		return $this->getMembersIdsByRole(RoleDictionary::ROLE_AUDITOR);
-	}
-
 	public function getRealStatus(): ?int
 	{
 		$params = [
@@ -304,33 +254,18 @@ class TaskObject extends EO_Task
 		return $task ? $task->getStatus(): null;
 	}
 
-	private function getMembersIdsByRole(string $role): array
-	{
-		$result = [];
-		$memberList = $this->getMemberList();
-		if ($memberList)
-		{
-			$members = $memberList->getAll();
-
-			foreach ($members as $member)
-			{
-				if ($member->getType() === $role)
-				{
-					$result[] = $member->getUserId();
-				}
-			}
-		}
-
-		return $result;
-	}
-
 	public function isCompleted(): bool
 	{
-		return \CTasks::STATE_COMPLETED === (int)$this->getStatus();
+		return Status::COMPLETED === (int)$this->getStatus();
 	}
 
 	public function isResultRequired(): bool
 	{
 		return ResultManager::requireResult($this->getId());
+	}
+
+	public function getMemberService(): MemberService
+	{
+		return new TaskMemberService($this->getId());
 	}
 }

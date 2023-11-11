@@ -97,7 +97,6 @@ $editorConfig = [
 
 	'allowEdit' => $settings['ALLOW_EDIT'],
 	'allowedStores' => $arResult['ALLOWED_STORES'],
-	'allowEntityReserve' => $arResult['ALLOW_ENTITY_RESERVE'],
 	'allowReservation' => $arResult['ALLOW_RESERVATION'],
 	'allowProductView' => $arResult['ALLOW_PRODUCT_VIEW'] ?? null,
 	'allowDiscountChange' => $arResult['ALLOW_DISCOUNT_CHANGE'],

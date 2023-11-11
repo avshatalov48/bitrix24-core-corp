@@ -3,6 +3,8 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
 use Bitrix\Main\UI;
+use Bitrix\Tasks\Internals\Task\Priority;
+use Bitrix\Tasks\Internals\Task\Status;
 
 UI\Extension::load("ui.tooltip");
 
@@ -174,11 +176,11 @@ foreach ($arResult['ITEMS'] as &$arItem)
 						}
 						elseif (
 							(
-								($task["REAL_STATUS"] == CTasks::STATE_NEW)
+								((int)$task["REAL_STATUS"] === Status::NEW)
 								&& ($task["CREATED_BY"] == $USER->GetID())
 							)
 							|| (
-								($task["REAL_STATUS"] == CTasks::STATE_SUPPOSEDLY_COMPLETED)
+								((int)$task["REAL_STATUS"] === Status::SUPPOSEDLY_COMPLETED)
 								&& ($task["RESPONSIBLE_ID"] == $USER->GetID())
 							)
 						)
@@ -189,7 +191,7 @@ foreach ($arResult['ITEMS'] as &$arItem)
 						{
 							?><a href="javascript: void(0)" class="task-flag-begin-perform" onClick="StartTask(<?php echo $task["ID"]?>)" title="<?php echo GetMessage("TASKS_START")?>"></a><?php
 						}
-						elseif ($task["REAL_STATUS"] == CTasks::STATE_IN_PROGRESS)
+						elseif ((int)$task["REAL_STATUS"] === Status::IN_PROGRESS)
 						{
 							?><span class="task-flag-in-progress" title="<?php echo GetMessage("TASKS_IN_PROGRESS")?>"></span><?php
 						}
@@ -203,13 +205,13 @@ foreach ($arResult['ITEMS'] as &$arItem)
 						if ($arItem['ALLOWED_ACTIONS']['ACTION_EDIT'])
 						{
 							?>
-							<a href="javascript: void(0)" class="task-priority-box" onclick="return ShowPriorityPopup(<?php echo $task["ID"]?>, this, <?php echo $task["PRIORITY"]?>);" title="<?php echo GetMessage("TASKS_PRIORITY_V2")?>: <?=GetMessage($task["PRIORITY"] == CTasks::PRIORITY_HIGH ? 'TASKS_COMMON_YES' : 'TASKS_COMMON_NO')?>"><i class="task-priority-icon task-priority-<?=($task["PRIORITY"] == CTasks::PRIORITY_HIGH ? 'high' : 'low')?>"></i></a>
+							<a href="javascript: void(0)" class="task-priority-box" onclick="return ShowPriorityPopup(<?php echo $task["ID"]?>, this, <?php echo $task["PRIORITY"]?>);" title="<?php echo GetMessage("TASKS_PRIORITY_V2")?>: <?=GetMessage((int)$task["PRIORITY"] === Priority::HIGH ? 'TASKS_COMMON_YES' : 'TASKS_COMMON_NO')?>"><i class="task-priority-icon task-priority-<?=((int)$task["PRIORITY"] === Priority::HIGH ? 'high' : 'low')?>"></i></a>
 							<?php
 						}
 						else
 						{
 							?>
-							<i class="task-priority-icon task-priority-<?=($task["PRIORITY"] == CTasks::PRIORITY_HIGH ? 'high' : 'low')?>" title="<?php echo GetMessage("TASKS_PRIORITY_V2")?>: <?=GetMessage($task["PRIORITY"] == CTasks::PRIORITY_HIGH ? 'TASKS_COMMON_YES' : 'TASKS_COMMON_NO')?>"></i>
+							<i class="task-priority-icon task-priority-<?=((int)$task["PRIORITY"] === Priority::HIGH ? 'high' : 'low')?>" title="<?php echo GetMessage("TASKS_PRIORITY_V2")?>: <?=GetMessage((int)$task["PRIORITY"] === Priority::HIGH ? 'TASKS_COMMON_YES' : 'TASKS_COMMON_NO')?>"></i>
 							<?php
 						}
 						?>
@@ -533,14 +535,14 @@ foreach ($arResult['ITEMS'] as &$arItem)
 			if (
 				$arItem['ALLOWED_ACTIONS']['ACTION_COMPLETE']
 				|| $arItem['ALLOWED_ACTIONS']['ACTION_APPROVE']
-				|| ($task["REAL_STATUS"] == CTasks::STATE_COMPLETED)
+				|| ((int)$task["REAL_STATUS"] === Status::COMPLETED)
 			)
 			{
 				?><a class="task-complete-action" href="javascript: void(0)"
 					<?php
-					if ($task["REAL_STATUS"] != CTasks::STATE_COMPLETED)
+					if ((int)$task["REAL_STATUS"] !== Status::COMPLETED)
 					{
-						if ($task["REAL_STATUS"] == CTasks::STATE_SUPPOSEDLY_COMPLETED)
+						if ((int)$task["REAL_STATUS"] === Status::SUPPOSEDLY_COMPLETED)
 						{
 							?>
 							title="<?php echo GetMessage('TASKS_APPROVE_TASK'); ?>"

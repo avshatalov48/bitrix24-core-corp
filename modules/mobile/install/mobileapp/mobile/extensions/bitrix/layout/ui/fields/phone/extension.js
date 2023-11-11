@@ -8,6 +8,7 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 	const { stringify } = require('utils/string');
 	const { BaseField } = require('layout/ui/fields/base');
 	const { chevronDown } = require('assets/common');
+	const { Loc } = require('loc');
 
 	const DEFAULT = 'default';
 	const GLOBAL_COUNTRY_CODE = 'XX';
@@ -87,7 +88,7 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 		{
 			if (this.isReadOnly())
 			{
-				return null;
+				return;
 			}
 
 			dialogs.showCountryPicker({ useRecent: true })
@@ -108,7 +109,7 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 
 			const currentCountryPhoneCode = phoneUtils.getPhoneCode(phoneNumber);
 
-			if (Boolean(currentCountryPhoneCode))
+			if (currentCountryPhoneCode)
 			{
 				const countryPhoneCode = `+${currentCountryPhoneCode}`;
 
@@ -177,12 +178,17 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 			{
 				return this.renderEmptyContent();
 			}
-			const formattedNumber = phoneUtils.getFormattedNumber(this.getValuePhoneNumber(), this.getFieldCountryCode());
+			const formattedNumber = phoneUtils.getFormattedNumber(
+				this.getValuePhoneNumber(),
+				this.getFieldCountryCode(),
+			);
 			const phoneNumber = formattedNumber || this.getValuePhoneNumber();
 
 			return View(
 				{
 					style: this.styles.phoneFieldContainer,
+					onLongClick: this.getContentLongClickHandler(),
+					onClick: this.getContentClickHandler(),
 				},
 				this.renderFlag(),
 				Text({
@@ -243,7 +249,7 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 				phoneField: {
 					flex: 1,
 					marginRight: 10,
-					color: !this.isReadOnly() ? '#333333' : '#0b66c3',
+					color: this.isReadOnly() ? '#0b66c3' : '#333333',
 					fontSize: 16,
 					alignSelf: 'center',
 				},
@@ -263,11 +269,25 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 				},
 			};
 		}
+
+		canCopyValue()
+		{
+			return this.isReadOnly();
+		}
+
+		prepareValueToCopy()
+		{
+			return this.getValuePhoneNumber();
+		}
+
+		copyMessage()
+		{
+			return Loc.getMessage('FIELDS_PHONE_VALUE_COPIED');
+		}
 	}
 
 	module.exports = {
 		PhoneType: 'phone',
 		PhoneField: (props) => new PhoneField(props),
 	};
-
 });

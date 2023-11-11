@@ -659,10 +659,10 @@ class CCrmDealDetailsComponent
 					{
 						$this->arResult['TABS'][] = array(
 							'id' => 'tab_quote',
-							'name' => GetMessage('CRM_DEAL_TAB_QUOTE'),
+							'name' => GetMessage('CRM_DEAL_TAB_QUOTE_MSGVER_1'),
 							'html' => '<div class="crm-conv-info">'
 								.Loc::getMessage(
-									'CRM_DEAL_QUOTE_LINK',
+									'CRM_DEAL_QUOTE_LINK_MSGVER_1',
 									array(
 										'#TITLE#' => htmlspecialcharsbx($quoteFields['TITLE']),
 										'#URL#' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Quote, $quoteID, false)
@@ -676,7 +676,7 @@ class CCrmDealDetailsComponent
 				{
 					$this->arResult['TABS'][] = array(
 						'id' => 'tab_quote',
-						'name' => Loc::getMessage('CRM_DEAL_TAB_QUOTE'),
+						'name' => Loc::getMessage('CRM_DEAL_TAB_QUOTE_MSGVER_1'),
 						'loader' => array(
 							'serviceUrl' => '/bitrix/components/bitrix/crm.quote.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
 							'componentData' => array(
@@ -871,7 +871,7 @@ class CCrmDealDetailsComponent
 			{
 				$this->arResult['TABS'][] = array(
 					'id' => 'tab_quote',
-					'name' => Loc::getMessage('CRM_DEAL_TAB_QUOTE'),
+					'name' => Loc::getMessage('CRM_DEAL_TAB_QUOTE_MSGVER_1'),
 					'enabled' => false
 				);
 				$this->arResult['TABS'][] = array(
@@ -1336,6 +1336,7 @@ class CCrmDealDetailsComponent
 				'type' => 'client_light',
 				'editable' => true,
 				'data' => array(
+					'affectedFields' => ['CLIENT_INFO'],
 					'compound' => array(
 						array(
 							'name' => 'COMPANY_ID',

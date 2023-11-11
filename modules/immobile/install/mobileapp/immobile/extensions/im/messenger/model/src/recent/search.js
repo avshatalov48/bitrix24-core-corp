@@ -1,0 +1,124 @@
+/* eslint-disable no-param-reassign */
+
+/**
+ * @module im/messenger/model/recent/search
+ */
+jn.define('im/messenger/model/recent/search', (require, exports, module) => {
+	const { Type } = require('type');
+	const { DateHelper } = require('im/messenger/lib/helper');
+	const { Logger } = require('im/messenger/lib/logger');
+
+	const searchModel = {
+		namespaced: true,
+		state: () => ({
+			collection: {},
+		}),
+		getters: {
+			/**
+			 * @function recentModel/searchModel/getCollection
+			 * @return {Array<RecentSearchModelState>}
+			 */
+			getCollection: (state) => () => {
+				return Object.values(state.collection);
+			},
+
+			/**
+			 * @function recentModel/searchModel/getById
+			 * @return {?RecentSearchModelState}
+			 */
+			getById: (state) => (dialogId) => {
+				return state.collection[dialogId];
+			},
+		},
+		actions: {
+			/**
+			 * @function recentModel/searchModel/set
+			 * @param store
+			 * @param {Array<any>} payload
+			 */
+			set: (store, payload) => {
+				payload.forEach((item) => {
+					const recentElement = validate(item);
+
+					store.commit('set', {
+						actionName: 'set',
+						data: {
+							item: {
+								id: recentElement.id,
+								date_update: recentElement.date_update,
+							},
+						},
+					});
+				});
+			},
+
+			/**
+			 * @function recentModel/searchModel/clear
+			 */
+			clear: (store, payload) => {
+				store.commit('clear', {
+					actionName: 'clear',
+					data: {},
+				});
+			},
+		},
+		mutations: {
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
+			set: (state, payload) => {
+				Logger.log('searchModel: set mutation', payload);
+
+				const {
+					item,
+				} = payload.data;
+
+				state.collection[item.id] = item;
+			},
+
+			/**
+			 * @param state
+			 * @param payload
+			 */
+			clear: (state, payload) => {
+				Logger.log('searchModel: clear mutation', payload);
+
+				state.collection = {};
+			},
+		},
+	};
+
+	/**
+	 * @param {any} fields
+	 * @return {RecentSearchModelState}
+	 */
+	function validate(fields)
+	{
+		const result = {};
+
+		if (Type.isStringFilled(fields.dialogId))
+		{
+			fields.id = fields.dialogId;
+		}
+
+		if (Type.isStringFilled(fields.id))
+		{
+			result.id = fields.id;
+		}
+
+		if (!Type.isUndefined(fields.dateUpdate))
+		{
+			fields.date_update = fields.dateUpdate;
+		}
+
+		if (Type.isStringFilled(fields.date_update))
+		{
+			result.date_update = DateHelper.cast(fields.date_update, null);
+		}
+
+		return result;
+	}
+
+	module.exports = { searchModel };
+});

@@ -23,7 +23,12 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 					const currencyId = this.props.currencyId;
 					const action = 'crmmobile.ProductGrid.loadSkuCollection';
 					const queryConfig = {
-						json: { variationId, currencyId },
+						json: {
+							variationId,
+							currencyId,
+							entityId: this.props.entityId,
+							entityTypeId: this.props.entityTypeId,
+						},
 					};
 
 					// @todo cache this query on client

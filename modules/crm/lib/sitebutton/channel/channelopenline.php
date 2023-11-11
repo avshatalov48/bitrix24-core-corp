@@ -8,17 +8,14 @@
 
 namespace Bitrix\Crm\SiteButton\Channel;
 
-use Bitrix\Crm\SiteButton\Manager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\ImOpenLines\Common;
-use Bitrix\Imopenlines\Model\ConfigTable;
-use Bitrix\ImConnector;
-use Bitrix\ImOpenLines\LiveChatManager;
-use Bitrix\Imopenlines\Model\LivechatTable;
-use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\WebPacker;
+use Bitrix\Main\Web\Json;
+use Bitrix\ImOpenLines;
+use Bitrix\ImConnector;
 use Bitrix\Crm\Tracking;
+use Bitrix\Crm\SiteButton\Manager;
 use Bitrix\Notifications;
 
 Loc::loadMessages(__FILE__);
@@ -29,10 +26,21 @@ Loc::loadMessages(__FILE__);
  */
 class ChannelOpenLine implements iProvider
 {
-	private static $excludedConnectors = array(
-		'facebookcomments',
+	private static array $excludedConnectors = array(
+		ImConnector\Library::ID_FB_COMMENTS_CONNECTOR,
 		'yandex'
 	);
+
+	private static array $connectorWithGeneratedUrl = [
+		ImConnector\Library::ID_NOTIFICATIONS_CONNECTOR,
+		ImConnector\Library::ID_EDNA_WHATSAPP_CONNECTOR,
+	];
+
+	private static array $trackingDetectingDisabled = [
+		ImConnector\Library::ID_LIVE_CHAT_CONNECTOR,
+		ImConnector\Library::ID_NOTIFICATIONS_CONNECTOR,
+	];
+
 	/**
 	 * Return true if it can be used.
 	 *
@@ -52,18 +60,18 @@ class ChannelOpenLine implements iProvider
 	{
 		if (!self::canUse())
 		{
-			return array();
+			return [];
 		}
 
-		return LivechatTable::getList(array(
-			'select' => array(
+		return Imopenlines\Model\LivechatTable::getList([
+			'select' => [
 				'ID' => 'CONFIG_ID',
 				'NAME' => 'CONFIG.LINE_NAME'
-			),
-			'filter' => array(
+			],
+			'filter' => [
 				'=CONFIG.ACTIVE' => 'Y'
-			),
-		))->fetchAll();
+			],
+		])->fetchAll();
 	}
 
 	/**
@@ -75,22 +83,22 @@ class ChannelOpenLine implements iProvider
 	{
 		if (!self::canUse())
 		{
-			return array();
+			return [];
 		}
 
-		$list = ConfigTable::getList(array(
-			'select' => array(
+		$list = Imopenlines\Model\ConfigTable::getList([
+			'select' => [
 				'ID', 'NAME' => 'LINE_NAME',
 				'WORKTIME_ENABLE',
 				'WORKTIME_FROM', 'WORKTIME_TO', 'WORKTIME_TIMEZONE',
 				'WORKTIME_HOLIDAYS', 'WORKTIME_DAYOFF'
-			),
-			'filter' => array(
+			],
+			'filter' => [
 				'=ACTIVE' => 'Y'
-			),
-		))->fetchAll();
+			],
+		])->fetchAll();
 
-		$result = array();
+		$result = [];
 		foreach ($list as $line)
 		{
 			$connectors = self::getConnectors($line['ID']);
@@ -99,22 +107,22 @@ class ChannelOpenLine implements iProvider
 				$workTime = null;
 				if ($line['WORKTIME_ENABLE'] == 'Y')
 				{
-					$workTime = array(
+					$workTime = [
 						'ENABLED' => $line['WORKTIME_ENABLE'] == 'Y',
 						'TIME_FROM' => (float) $line['WORKTIME_FROM'],
 						'TIME_TO' => (float) $line['WORKTIME_TO'],
 						'TIME_ZONE' => $line['WORKTIME_TIMEZONE'],
 						'HOLIDAYS' => explode(',', $line['WORKTIME_HOLIDAYS']),
 						'DAY_OFF' => explode(',', $line['WORKTIME_DAYOFF']),
-					);
+					];
 				}
 
-				$result[] = array(
+				$result[] = [
 					'ID' => $line['ID'],
 					'NAME' => $line['NAME'],
 					'CONNECTORS' => $connectors,
 					'WORK_TIME' => $workTime,
-				);
+				];
 			}
 		}
 
@@ -130,7 +138,7 @@ class ChannelOpenLine implements iProvider
 	 * @param array $config Config
 	 * @return array
 	 */
-	public static function getWidgets($id, $removeCopyright = true, $lang = null, array $config = array())
+	public static function getWidgets($id, $removeCopyright = true, $lang = null, array $config = [])
 	{
 		Loc::loadMessages(__FILE__); // TODO: remove with dependence main: deeply lazy Load loc files
 		Loc::loadMessages(\Bitrix\Main\Application::getDocumentRoot() . '/bitrix/modules/imconnector/lib/connector.php');
@@ -160,8 +168,10 @@ class ChannelOpenLine implements iProvider
 		}
 
 		//condition for changes in ui 18.5.5
-		if (file_exists($_SERVER['DOCUMENT_ROOT'].'/bitrix/js/ui/icons/service/ui.icons.service.css') &&
-			file_exists($_SERVER['DOCUMENT_ROOT'].'/bitrix/js/ui/icons/service/images/'))
+		if (
+			file_exists($_SERVER['DOCUMENT_ROOT'].'/bitrix/js/ui/icons/service/ui.icons.service.css')
+			&& file_exists($_SERVER['DOCUMENT_ROOT'].'/bitrix/js/ui/icons/service/images/')
+		)
 		{
 			$iconAssetPath = '/bitrix/js/ui/icons/service/ui.icons.service.css';
 			$pathToIcons = '/bitrix/js/ui/icons/service/images/';
@@ -225,7 +235,7 @@ class ChannelOpenLine implements iProvider
 		}
 
 		return array(
-			'path' => Common::getContactCenterPublicFolder() . 'lines_edit/?ID=#ID#',
+			'path' => ImOpenLines\Common::getContactCenterPublicFolder() . 'lines_edit/?ID=#ID#',
 			'id' => '#ID#'
 		);
 	}
@@ -241,9 +251,9 @@ class ChannelOpenLine implements iProvider
 			return null;
 		}
 
-		$ratingRequest = \Bitrix\Imopenlines\Limit::canUseVoteClient() ? 'Y' : 'N';
+		$ratingRequest = Imopenlines\Limit::canUseVoteClient() ? 'Y' : 'N';
 
-		return Common::getContactCenterPublicFolder() . 'lines_edit/?ID=0&action-line=create&rating-request=' . $ratingRequest;
+		return ImOpenLines\Common::getContactCenterPublicFolder() . 'lines_edit/?ID=0&action-line=create&rating-request=' . $ratingRequest;
 	}
 
 	/**
@@ -258,7 +268,7 @@ class ChannelOpenLine implements iProvider
 			return null;
 		}
 
-		return Common::getContactCenterPublicFolder() . 'lines_edit/?ID=0';
+		return ImOpenLines\Common::getContactCenterPublicFolder() . 'lines_edit/?ID=0';
 	}
 
 	/**
@@ -281,21 +291,19 @@ class ChannelOpenLine implements iProvider
 		return 'openline';
 	}
 
-	protected static function getWidgetsById($lineId, $removeCopyright, $lang, array $config = array())
+	protected static function getWidgetsById($lineId, $removeCopyright, $lang, array $config = []): array
 	{
 		if (!self::canUse())
 		{
-			return array();
+			return [];
 		}
 
-		$excluded = $config['excluded'] ?? array();
+		$excluded = $config['excluded'] ?? [];
 
-		$widgets = array();
+		$widgets = [];
 		$sort = 400;
 		$type = self::getType();
 		$connectors = self::getConnectors($lineId);
-		$detectingDisabled = ['livechat', 'notifications'];
-
 		foreach ($connectors as $connector)
 		{
 			if (in_array($connector['id'], $excluded))
@@ -303,112 +311,202 @@ class ChannelOpenLine implements iProvider
 				continue;
 			}
 
-			$widget = array(
+			$widget = [
 				'id' => $type . '_' . $connector['code'],
 				'title' => $connector['title'],
 				'script' => '',
 				'show' => null,
 				'hide' => null,
 				'tracking' => [
-					'detecting' => !in_array($connector['code'], $detectingDisabled, true),
+					'detecting' => !in_array($connector['code'], self::$trackingDetectingDisabled, true),
 					'channel' => [
 						'code' => Tracking\Channel\Base::Imol,
 						'value' => $connector['code'],
 					]
 				]
-			);
+			];
 
-			if ($connector['code'] === 'livechat')
+			if ($connector['code'] === ImConnector\Library::ID_LIVE_CHAT_CONNECTOR)
 			{
-				$liveChatManager = new LiveChatManager($lineId);
-				$widget['script'] = $liveChatManager->getWidget(
-					LiveChatManager::TYPE_BUTTON,
-					$lang,
-					array(
-						'copyright' => !$removeCopyright
-					),
-					true
-				);
-
-				if (!$widget['script'])
+				$widgetParams = self::getLiveChatWidget($lineId, $removeCopyright, $lang);
+				if (!$widgetParams)
 				{
 					continue;
 				}
-
-				$widget['show'] = 'window.BX.LiveChat.openLiveChat();';
-				$widget['hide'] = 'window.BX.LiveChat.closeLiveChat();';
-				$widget['freeze'] = true;
-				$widget['sort'] = 100;
-				$widget['useColors'] = true;
-				$widget['classList'] = array('b24-widget-button-' . $widget['id']);
+				$widget = array_merge($widget, $widgetParams);
+				$widget['classList'] = ['b24-widget-button-' . $widget['id']];
 			}
 			else
 			{
-				$widget['classList'] = array(
+				$widget['classList'] = [
 					'ui-icon',
 					'ui-icon-service-' . $connector['icon'],
 					'connector-icon-45'
-				);
+				];
 				$widget['sort'] = $sort;
 				$sort += 100;
-				$widget['show'] = array(
+				$widget['show'] = [
 					'url' => $connector['url']
-				);
+				];
 			}
 
-			// we need localized title and url for this connector
-			if ($connector['code'] === 'notifications')
+			if ($connector['code'] === ImConnector\Library::ID_NOTIFICATIONS_CONNECTOR)
 			{
-				if (!Loader::includeModule('notifications'))
+				$widgetParams = self::getNotificationsWidget($lang);
+				if (!$widgetParams)
 				{
 					continue;
 				}
-				if (!Notifications\Settings::isScenarioEnabled(Notifications\Settings::SCENARIO_VIRTUAL_WHATSAPP))
+				$widget = array_merge($widget, $widgetParams);
+			}
+			elseif ($connector['code'] === ImConnector\Library::ID_EDNA_WHATSAPP_CONNECTOR)
+			{
+				$widgetParams = self::getWhatsAppEdnaWidget((int)$lineId, $lang);
+				if (!$widgetParams)
 				{
 					continue;
 				}
-
-				$portalCode = Notifications\Alias::getCodeForScenario(Notifications\Settings::SCENARIO_VIRTUAL_WHATSAPP);
-				$url = ImConnector\Tools\Connectors\Notifications::getVirtualWhatsappLink($portalCode, $lang);
-				$onclick = method_exists(ImConnector\Tools\Connectors\Notifications::class, "getVirtualWhatsappOnClick")
-					? ImConnector\Tools\Connectors\Notifications::getVirtualWhatsappOnClick($url)
-					: ""
-				;
-				$widgetParams = [
-					'url' => $url,
-					'onclick' => $onclick,
-					'messages' => ImConnector\Tools\Connectors\Notifications::getWidgetLocalization($lang),
-					'disclaimerUrl' => ImConnector\Tools\Connectors\Notifications::getWidgetDisclaimerUrl($lang),
-				];
-				$widgetParamsEncoded = Json::encode($widgetParams);
-				$widget['title'] = Loc::getMessage("CRM_BUTTON_MANAGER_OPENLINE_VIRTUAL_WHATSAPP_TITLE");
-				$widget['script'] = ImConnector\Tools\Connectors\Notifications::getWidgetScript();
-				$widget['show'] = [
-					'js' => [
-						'desktop' =>'BX.NotificationsWidgetLoader.init('.$widgetParamsEncoded.').then(function(){window.BX.NotificationsWidget.Instance.show();})',
-					],
-					'url' => [
-						'mobile' => $url,
-						'force' => true,
-					],
-				];
-				$widget['hide'] = 'window.BX.NotificationsWidget.Instance.close();';
-				$widget['freeze'] = true;
-				$widget['classList'] = array(
-					'ui-icon',
-					'ui-icon-service-' . ImConnector\Connector::getIconByConnector('notifications_virtual_wa'),
-					'connector-icon-45'
-				);
+				$widget = array_merge($widget, $widgetParams);
 			}
 
 			$widgets[] = $widget;
-
 		}
 
 		return $widgets;
 	}
 
-	protected static function getConnectors($lineId)
+	/**
+	 * @param int $lineId
+	 * @param bool $removeCopyright
+	 * @param string $lang
+	 * @return array|null
+	 */
+	private static function getLiveChatWidget($lineId, $removeCopyright, $lang): ?array
+	{
+		$widget = [];
+		$liveChatManager = new ImOpenLines\LiveChatManager($lineId);
+		$widget['script'] = $liveChatManager->getWidget(
+			ImOpenLines\LiveChatManager::TYPE_BUTTON,
+			$lang,
+			['copyright' => !$removeCopyright],
+			true
+		);
+
+		if (!$widget['script'])
+		{
+			return null;
+		}
+
+		$widget['show'] = 'window.BX.LiveChat.openLiveChat();';
+		$widget['hide'] = 'window.BX.LiveChat.closeLiveChat();';
+		$widget['freeze'] = true;
+		$widget['sort'] = 100;
+		$widget['useColors'] = true;
+
+		return $widget;
+	}
+
+	/**
+	 * Provides localized title and url for notifications connector.
+	 * @param int $lineId
+	 * @param bool $removeCopyright
+	 * @param string $lang
+	 * @return array|null
+	 */
+	private static function getNotificationsWidget($lang): ?array
+	{
+		$widget = [];
+		if (!Loader::includeModule('notifications'))
+		{
+			return null;
+		}
+		if (!Notifications\Settings::isScenarioEnabled(Notifications\Settings::SCENARIO_VIRTUAL_WHATSAPP))
+		{
+			return null;
+		}
+
+		$portalCode = Notifications\Alias::getCodeForScenario(Notifications\Settings::SCENARIO_VIRTUAL_WHATSAPP);
+		$url = ImConnector\Tools\Connectors\Notifications::getVirtualWhatsappLink($portalCode, $lang);
+		$onclick = ImConnector\Tools\Connectors\Notifications::getVirtualWhatsappOnClick($url);
+		$widgetParams = [
+			'url' => $url,
+			'onclick' => $onclick,
+			'messages' => ImConnector\Tools\Connectors\Notifications::getWidgetLocalization($lang),
+			'disclaimerUrl' => ImConnector\Tools\Connectors\Notifications::getWidgetDisclaimerUrl($lang),
+		];
+		$widgetParamsEncoded = Json::encode($widgetParams);
+		$widget['title'] = Loc::getMessage("CRM_BUTTON_MANAGER_OPENLINE_VIRTUAL_WHATSAPP_TITLE");
+		$widget['script'] = ImConnector\Tools\Connectors\Notifications::getWidgetScript();
+		$widget['show'] = [
+			'js' => [
+				'desktop' =>'BX.NotificationsWidgetLoader.init('.$widgetParamsEncoded.').then(function(){window.BX.NotificationsWidget.Instance.show();})',
+			],
+			'url' => [
+				'mobile' => $url,
+				'force' => true,
+			],
+		];
+		$widget['hide'] = 'window.BX.NotificationsWidget.Instance.close();';
+		$widget['freeze'] = true;
+		$widget['classList'] = [
+			'ui-icon',
+			'ui-icon-service-' . ImConnector\Connector::getIconByConnector('notifications_virtual_wa'),
+			'connector-icon-45'
+		];
+
+		return $widget;
+	}
+
+	/**
+	 * Provides localized title and url for messageservice connector.
+	 * @param int $lineId
+	 * @param string $lang
+	 * @return array|null
+	 */
+	private static function getWhatsAppEdnaWidget(int $lineId, $lang): ?array
+	{
+		$widget = [];
+		if (!Loader::includeModule('messageservice'))
+		{
+			return null;
+		}
+		if (!ImConnector\Tools\Connectors\Messageservice::isEnabled())
+		{
+			return null;
+		}
+
+		$url = ImConnector\Tools\Connectors\Messageservice::getWhatsappLink($lineId, $lang);
+		$onclick = ImConnector\Tools\Connectors\Messageservice::getWhatsappOnClick($url);
+		$widgetParams = [
+			'url' => $url,
+			'onclick' => $onclick,
+			'messages' => ImConnector\Tools\Connectors\Messageservice::getWidgetLocalization($lang),
+			'disclaimerUrl' => '',
+		];
+		$widgetParamsEncoded = Json::encode($widgetParams);
+		$widget['title'] = Loc::getMessage("CRM_BUTTON_MANAGER_OPENLINE_VIRTUAL_WHATSAPP_TITLE");
+		$widget['script'] = ImConnector\Tools\Connectors\Messageservice::getWidgetScript();
+		$widget['show'] = [
+			'js' => [
+				'desktop' =>'BX.NotificationsWidgetLoader.init('.$widgetParamsEncoded.').then(function(){window.BX.NotificationsWidget.Instance.show();})',
+			],
+			'url' => [
+				'mobile' => $url,
+				'force' => true,
+			],
+		];
+		$widget['hide'] = 'window.BX.NotificationsWidget.Instance.close();';
+		$widget['freeze'] = true;
+		$widget['classList'] = [
+			'ui-icon',
+			'ui-icon-service-' . ImConnector\Connector::getIconByConnector('notifications_virtual_wa'),
+			'connector-icon-45'
+		];
+
+		return $widget;
+	}
+
+	protected static function getConnectors($lineId): array
 	{
 		$nameList = ImConnector\Connector::getListConnectorReal(40);
 		if (Manager::isWidgetSelectDisabled())
@@ -434,10 +532,10 @@ class ChannelOpenLine implements iProvider
 
 		if (count($connectors) == 0)
 		{
-			return array();
+			return [];
 		}
 
-		$list = array();
+		$list = [];
 		$iconCodeMap = ImConnector\Connector::getIconClassMap();
 		foreach ($connectors as $code => $connector)
 		{
@@ -446,7 +544,11 @@ class ChannelOpenLine implements iProvider
 				continue;
 			}
 
-			if (empty($connector['url']) && empty($connector['url_im']) && $code != 'notifications')
+			if (
+				empty($connector['url'])
+				&& empty($connector['url_im'])
+				&& !in_array($code, self::$connectorWithGeneratedUrl)
+			)
 			{
 				continue;
 			}
@@ -456,7 +558,7 @@ class ChannelOpenLine implements iProvider
 			{
 				$title = $connector['name'];
 			}
-			else if (isset($nameList[$code]))
+			elseif (isset($nameList[$code]))
 			{
 				$title = $nameList[$code];
 			}
@@ -465,15 +567,15 @@ class ChannelOpenLine implements iProvider
 				$title = $connector['connector_name'];
 			}
 
-			$list[] = array(
+			$list[] = [
 				'id' => $id,
 				'code' => $code,
 				'icon' => $connector['icon'] ?? $iconCodeMap[$code],
 				'title' => $title,
 				'name' => $connector['connector_name'],
-				'desc' => $connector['name'],
-				'url' => $connector['url_im'] ? $connector['url_im'] : $connector['url']
-			);
+				'desc' => $connector['desc'] ?? $connector['name'],
+				'url' => $connector['url_im'] ?? $connector['url']
+			];
 		}
 
 		return $list;
@@ -487,7 +589,7 @@ class ChannelOpenLine implements iProvider
 	 */
 	public static function getConfigFromPost(array $item = array()): array
 	{
-		$externalConfigField = array();
+		$externalConfigField = [];
 		if(isset($item['EXTERNAL_CONFIG']) && is_array($item['EXTERNAL_CONFIG']))
 		{
 			$externalConfigField = $item['EXTERNAL_CONFIG'];
@@ -496,7 +598,7 @@ class ChannelOpenLine implements iProvider
 		$externalIdField = is_string($item['EXTERNAL_ID']) ? $item['EXTERNAL_ID'] : '';
 		$externalIds = explode(',', $externalIdField);
 
-		$result = array();
+		$result = [];
 		foreach ($externalIds as $openlineId)
 		{
 			$openlineId = (int)$openlineId;
@@ -507,12 +609,12 @@ class ChannelOpenLine implements iProvider
 			{
 				if (!isset($result[$openlineId]))
 				{
-					$result[$openlineId] = array();
+					$result[$openlineId] = [];
 				}
 
 				if (!isset($result[$openlineId]['excluded']))
 				{
-					$result[$openlineId]['excluded'] = array();
+					$result[$openlineId]['excluded'] = [];
 				}
 
 				if (in_array($connector['id'], $config, true))

@@ -40,6 +40,7 @@ return [
 		'im:messenger/widgets/user-profile',
 		'im:messenger/widgets/participants-list',
 		'im:messenger/lib/ui/header',
+		'im:messenger/controller/search/experimental',
 	],
 	'components' => [],
 	//'packer' => [],

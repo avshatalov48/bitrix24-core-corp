@@ -2,22 +2,22 @@
 
 namespace Bitrix\Tasks\Internals\Task;
 
-use CTasks;
-use ReflectionClass;
+use Bitrix\Main\Localization\Loc;
 
-class Status
+Loc::loadMessages(__FILE__);
+
+abstract class Status extends Base
 {
-	public const NEW = CTasks::STATE_NEW;
-	public const PENDING = CTasks::STATE_PENDING;
-	public const IN_PROGRESS = CTasks::STATE_IN_PROGRESS;
-	public const SUPPOSEDLY_COMPLETED = CTasks::STATE_SUPPOSEDLY_COMPLETED;
-	public const COMPLETED = CTasks::STATE_COMPLETED;
-	public const DEFERRED = CTasks::STATE_DEFERRED;
-	public const DECLINED = CTasks::STATE_DECLINED;
+	public const NEW = 1;
+	public const PENDING = 2;
+	public const IN_PROGRESS = 3;
+	public const SUPPOSEDLY_COMPLETED = 4;
+	public const COMPLETED = 5;
+	public const DEFERRED = 6;
+	public const DECLINED = 7;
 
-	public static function getAll(): array
+	public static function getMessage(int $status): ?string
 	{
-		$reflection = new ReflectionClass(static::class);
-		return $reflection->getConstants();
+		return Loc::getMessage("TASKS_STATUS_{$status}");
 	}
 }

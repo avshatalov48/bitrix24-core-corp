@@ -10,6 +10,7 @@ return [
 		'utils/function',
 		'loc',
 		'layout/ui/fields/address/value-converter',
+		'utils/string',
 	],
 	'bundle' => [
 		'./value-converter',

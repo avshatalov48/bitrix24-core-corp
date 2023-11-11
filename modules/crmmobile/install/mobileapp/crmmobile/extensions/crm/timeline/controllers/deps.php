@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'alert',
 		'crm:type',
 		'type',
 		'loc',

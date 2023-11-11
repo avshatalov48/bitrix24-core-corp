@@ -16,8 +16,8 @@ jn.define('layout/ui/detail-card/floating-button/menu/recent/grid-view', (requir
 	 */
 	function RecentGridView(detailCard, items)
 	{
-		items = items.map((item, index) => ({
-			key: item.getId() + '/' + item.getTabId(),
+		items = items.map((item) => ({
+			key: `${item.getId()}/${item.getTabId()}`,
 			actionId: item.getId(),
 			tabId: item.getTabId(),
 			title: item.getShortTitle() || item.getTitle(),
@@ -71,7 +71,8 @@ jn.define('layout/ui/detail-card/floating-button/menu/recent/grid-view', (requir
 				testId: `recent-item-${tabId || 'root'}-${actionId}`,
 				onClick,
 			},
-			View({
+			View(
+				{
 					style: {
 						width: 90,
 						paddingHorizontal: 4,
@@ -109,18 +110,17 @@ jn.define('layout/ui/detail-card/floating-button/menu/recent/grid-view', (requir
 							onClick,
 						},
 						Image({
-								style: {
-									alignSelf: 'center',
-									width: 38,
-									height: 38,
-								},
-								tintColor: TINT_COLOR,
-								resizeMode: 'contain',
-								svg: {
-									content: svgIcon,
-								},
+							style: {
+								alignSelf: 'center',
+								width: 38,
+								height: 38,
 							},
-						),
+							tintColor: TINT_COLOR,
+							resizeMode: 'contain',
+							svg: {
+								content: svgIcon,
+							},
+						}),
 					),
 				),
 				Text({

@@ -33,6 +33,7 @@ return [
 	],
 	'css'=>[
 		'/bitrix/js/im/css/common.css',
+		'/bitrix/js/im/css/dark_im.css',
 	],
 	'images'=>[
 		// mobile

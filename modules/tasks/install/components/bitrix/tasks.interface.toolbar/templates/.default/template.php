@@ -256,7 +256,7 @@ if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS'])
 					const robotsBtn = document.querySelector('.--robots');
 					if (robotsBtn)
 					{
-						(new Guide({
+						const guide = new Guide({
 							steps: [
 								{
 									target: robotsBtn,
@@ -265,7 +265,11 @@ if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS'])
 								}
 							],
 							onEvents: true,
-						})).start();
+						});
+
+						guide.start();
+						guide.getPopup().setAutoHide(true);
+						guide.getPopup().setClosingByEsc(true);
 					}
 				}
 			);

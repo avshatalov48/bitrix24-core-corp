@@ -758,13 +758,13 @@ if (Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnablingPossible())
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'QUOTE_CONFIG',
-	'name' => GetMessage('CRM_SECTION_QUOTE_CONFIG2'),
+	'name' => GetMessage('CRM_SECTION_QUOTE_CONFIG2_MSGVER_1'),
 	'type' => 'section'
 );
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'QUOTE_OPENED',
-	'name' => GetMessage('CRM_FIELD_QUOTE_OPENED2'),
+	'name' => GetMessage('CRM_FIELD_QUOTE_OPENED2_MSGVER_1'),
 	'type' => 'checkbox',
 	'value' => \Bitrix\Crm\Settings\QuoteSettings::getCurrent()->getOpenedFlag(),
 	'required' => false
@@ -787,7 +787,7 @@ if (!Settings\LeadSettings::isEnabled())
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'CONVERSION_ENABLE_AUTOCREATION',
-	'name' => GetMessage('CRM_FIELD_CONVERSION_ENABLE_AUTOCREATION'),
+	'name' => GetMessage('CRM_FIELD_CONVERSION_ENABLE_AUTOCREATION_MSGVER_1'),
 	'type' => $conversionEnableAutocreationType,
 	'value' => $conversionEnableAutocreationValue,
 	'required' => false
@@ -1061,7 +1061,7 @@ $arResult['FIELDS']['tab_history'][] = array(
 
 $arResult['FIELDS']['tab_history'][] = array(
 	'id' => 'ENABLE_QUOTE_DELETION_EVENT',
-	'name' => GetMessage('CRM_FIELD_ENABLE_QUOTE_DELETION_EVENT2'),
+	'name' => GetMessage('CRM_FIELD_ENABLE_QUOTE_DELETION_EVENT2_MSGVER_1'),
 	'type' => 'checkbox',
 	'value' => \Bitrix\Crm\Settings\HistorySettings::getCurrent()->isQuoteDeletionEventEnabled(),
 	'required' => false

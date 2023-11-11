@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { Type } = require('type');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { core } = require('im/messenger/core');
 	const { EventType, RestMethod } = require('im/messenger/const');
@@ -64,9 +65,32 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 
 		getUserList()
 		{
-			const userList = ChatUtils.objectClone(this.store.getters['usersModel/getUserList']());
+			const userItems = [];
+			const recentUserList = ChatUtils.objectClone(this.store.getters['recentModel/getUserList']());
+			const recentUserListIndex = {};
+			if (Type.isArrayFilled(recentUserList))
+			{
+				recentUserList.forEach((recentUserChat) => {
+					recentUserListIndex[recentUserChat.user.id] = true;
 
-			return userList.filter((user) => {
+					userItems.push(recentUserChat.user);
+				});
+			}
+
+			const colleaguesList = ChatUtils.objectClone(this.store.getters['usersModel/getList']());
+			if (Type.isArrayFilled(colleaguesList))
+			{
+				colleaguesList.forEach((user) => {
+					if (recentUserListIndex[user.id])
+					{
+						return;
+					}
+
+					userItems.push(user);
+				});
+			}
+
+			return userItems.filter((user) => {
 				if (user.id === MessengerParams.getUserId())
 				{
 					return false;
@@ -163,7 +187,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 
 						if (this.options.callback.onAddUser)
 						{
-							this.options.callback.onAddUser();
+							this.options.callback.onAddUser(result);
 						}
 
 						if (result.answer.error)

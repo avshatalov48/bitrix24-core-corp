@@ -2,6 +2,7 @@
 /** @var \CrmControlPanel $this */
 
 use Bitrix\Catalog\v2\Contractor;
+use Bitrix\Crm\Component\ControlPanel\ControlPanelMenuMapper;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
@@ -384,7 +385,7 @@ if($isAdmin || CCrmLead::CheckReadPermission(0, $userPermissions))
 
 	$leadItem = array(
 		'ID' => 'LEAD',
-		'MENU_ID' => 'menu_crm_lead',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdByEntityTypeId(CCrmOwnerType::Lead),
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_LEAD'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_LEAD_TITLE'),
 		'URL' => CComponentEngine::MakePathFromTemplate(
@@ -448,7 +449,7 @@ if($isAdmin || CCrmDeal::CheckReadPermission(0, $userPermissions))
 
 	$stdItems['DEAL'] = array(
 		'ID' => 'DEAL',
-		'MENU_ID' => 'menu_crm_deal',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdByEntityTypeId(CCrmOwnerType::Deal),
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_DEAL'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_DEAL_TITLE'),
 		'URL' => CComponentEngine::MakePathFromTemplate(
@@ -498,7 +499,7 @@ if($isAdmin || CCrmContact::CheckReadPermission(0, $userPermissions))
 	}
 	$stdItems['CONTACT'] = array(
 		'ID' => 'CONTACT',
-		'MENU_ID' => CrmControlPanel::MENU_ID_CRM_CONTACT,
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdByEntityTypeId(CCrmOwnerType::Contact),
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CONTACT'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_CONTACT_TITLE'),
 		'URL' => CComponentEngine::MakePathFromTemplate(
@@ -549,7 +550,7 @@ if($isAdmin || CCrmCompany::CheckReadPermission(0, $userPermissions))
 
 	$stdItems['COMPANY'] = array(
 		'ID' => 'COMPANY',
-		'MENU_ID' => CrmControlPanel::MENU_ID_CRM_COMPANY,
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdByEntityTypeId(CCrmOwnerType::Company),
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_COMPANY'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_COMPANY_TITLE'),
 		'URL' => CComponentEngine::MakePathFromTemplate(
@@ -583,11 +584,10 @@ if (
 			'URL' =>  $router->getItemDetailUrl($invoiceEntityTypeId),
 		];
 	}
-
 	$entityName = \CCrmOwnerType::ResolveName($invoiceEntityTypeId);
 	$invoiceItem = [
 		'ID' => $entityName,
-		'MENU_ID' => 'menu_crm_' . mb_strtolower($entityName),
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdByEntityTypeId($invoiceEntityTypeId), //'menu_crm_' . mb_strtolower($entityName),
 		'NAME' => \CCrmOwnerType::GetCategoryCaption($invoiceEntityTypeId),
 		'URL' => $router->getItemListUrlInCurrentView($invoiceEntityTypeId),
 		'ICON' => 'invoice',
@@ -624,7 +624,7 @@ if (Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\A
 {
 	$stdItems['ANALYTICS'] = [
 		'ID' => 'ANALYTICS',
-		'MENU_ID' => 'menu_crm_analytics',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('ANALYTICS'), //'menu_crm_analytics',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS'),
 		'TITLE' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS_TITLE'),
 		'URL' => SITE_DIR."report/analytics/",
@@ -666,7 +666,7 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ')
 
 		$stdItems['CATALOGUE'] = array(
 			'ID' => 'CATALOG',
-			'MENU_ID' => 'menu_crm_catalog',
+			'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('CATALOG'), // 'menu_crm_catalog',
 			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_GOODS'),
 			'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CATALOG']),
 			'ICON' => 'catalog',
@@ -680,7 +680,7 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ')
 	{
 		$stdItems['CATALOGUE'] = array(
 			'ID' => 'PRODUCT',
-			'MENU_ID' => 'menu_crm_catalog',
+			'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('PRODUCT'), // 'menu_crm_catalog',
 			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_2'),
 			'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_2'),
 			'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PRODUCT_LIST']),
@@ -700,7 +700,7 @@ if (\CCrmSaleHelper::isWithOrdersMode())
 
 	$stdItems['ORDER'] = array(
 		'ID' => 'ORDER',
-		'MENU_ID' => 'menu_crm_order',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('ORDER'), // 'menu_crm_order',
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_ORDER'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_ORDER'),
 		'URL' => CComponentEngine::MakePathFromTemplate(
@@ -723,7 +723,7 @@ if (
 	]);
 	$stdItems['STORE_DOCUMENTS'] = [
 		'ID' => 'STORE_DOCUMENTS',
-		'MENU_ID' => 'menu_crm_store_docs',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('STORE_DOCUMENTS'), // 'menu_crm_store_docs',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_STORE_DOCS'),
 		'TITLE' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_STORE_DOCS'),
 		'URL' => SITE_DIR."shop/documents/",
@@ -737,7 +737,7 @@ if (
 		$contractorsCompanyItem = $this->getContractorsMenuItem(
 			\CCrmOwnerType::Company,
 			\CatalogStoreDocumentControlPanelComponent::PATH_TO['CONTRACTORS'],
-			CrmControlPanel::MENU_ID_CRM_STORE_CONTRACTORS_COMPANIES,
+			ControlPanelMenuMapper::MENU_ID_CRM_STORE_CONTRACTORS_COMPANIES,
 			$counterExtras
 		);
 		if ($contractorsCompanyItem)
@@ -748,7 +748,7 @@ if (
 		$contractorsContactItem = $this->getContractorsMenuItem(
 			\CCrmOwnerType::Contact,
 			\CatalogStoreDocumentControlPanelComponent::PATH_TO['CONTRACTORS_CONTACTS'],
-			CrmControlPanel::MENU_ID_CRM_STORE_CONTRACTORS_CONTACTS,
+			ControlPanelMenuMapper::MENU_ID_CRM_STORE_CONTRACTORS_CONTACTS,
 			$counterExtras
 		);
 		if ($contractorsContactItem)
@@ -777,10 +777,9 @@ if (
 			]
 		)
 	);
-
 	$stdItems[$counterPartyContactMenuId] = [
 		'ID' => $counterPartyContactMenuId,
-		'MENU_ID' => CrmControlPanel::MENU_ID_CRM_SIGN_COUNTERPARTY_CONTACTS,
+		'MENU_ID' => ControlPanelMenuMapper::MENU_ID_CRM_SIGN_COUNTERPARTY_CONTACTS,
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CONTACT'),
 		'TITLE' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CONTACT'),
 		'COUNTER' => $counter->getValue(),
@@ -792,7 +791,7 @@ if (
 
 $stdItems['SETTINGS'] = array(
 	'ID' => 'SETTINGS',
-	'MENU_ID' => 'menu_crm_configs',
+	'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('SETTINGS'), //'menu_crm_configs',
 	'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CONFIGS'),
 	'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_CONFIGS'),
 	'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_SETTINGS']),
@@ -892,9 +891,9 @@ if($isAdmin || CCrmQuote::CheckReadPermission(0, $userPermissions))
 
 	$stdItems['QUOTE'] = array(
 		'ID' => 'QUOTE',
-		'MENU_ID' => 'menu_crm_quote',
-		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_QUOTE'),
-		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_QUOTE_TITLE'),
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdByEntityTypeId(CCrmOwnerType::Quote),
+		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_QUOTE_MSGVER_1'),
+		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_QUOTE_TITLE_MSGVER_1'),
 		'URL' => CComponentEngine::MakePathFromTemplate(
 			isset($arParams['PATH_TO_QUOTE_INDEX']) && $arParams['PATH_TO_QUOTE_INDEX'] !== ''
 				? $arParams['PATH_TO_QUOTE_INDEX'] : $arParams['PATH_TO_QUOTE_LIST']
@@ -915,7 +914,7 @@ if($isAdmin || CCrmQuote::CheckReadPermission(0, $userPermissions))
 
 $stdItems['RECYCLE_BIN'] = array(
 	'ID' => 'RECYCLE_BIN',
-	'MENU_ID' => 'menu_crm_recycle_bin',
+	'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('RECYCLE_BIN'), // 'menu_crm_recycle_bin',
 	'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_RECYCLE_BIN'),
 	'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_RECYCLE_BIN_TITLE'),
 	'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_RECYCLE_BIN']),
@@ -927,7 +926,7 @@ if($isAdmin || CCrmDeal::CheckReadPermission(0, $userPermissions))
 {
 	$stdItems['DEAL_FUNNEL'] = array(
 		'ID' => 'DEAL_FUNNEL',
-		'MENU_ID' => 'menu_crm_funel',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('DEAL_FUNNEL'), // 'menu_crm_funel',
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_FUNNEL'),
 		'BRIEF_NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_FUNNEL_BRIEF'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_FUNNEL'),
@@ -941,7 +940,7 @@ if(IsModuleInstalled('report'))
 {
 	$stdItems['REPORT'] = array(
 		'ID' => 'REPORT',
-		'MENU_ID' => 'menu_crm_report',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('REPORT'), // 'menu_crm_report',
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_REPORT_CONSTRUCTOR2'),
 		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_REPORT_LIST']),
 		'ICON' => 'report',
@@ -957,7 +956,7 @@ if(IsModuleInstalled('report'))
 
 $eventItem = array(
 	'ID' => 'EVENT',
-	'MENU_ID' => 'menu_crm_event',
+	'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('EVENT'), // 'menu_crm_event',
 	'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_EVENT_2'),
 	'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_EVENT_2'), //title
 	'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_EVENT_LIST']),
@@ -978,7 +977,7 @@ if($isAdmin || !$userPermissions->HavePerm('WEBFORM', BX_CRM_PERM_NONE, 'READ'))
 {
 	$stdItems['WEBFORM'] = array(
 		'ID' => 'WEBFORM',
-		'MENU_ID' => 'menu_crm_webform',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('WEBFORM'), // 'menu_crm_webform',
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_WEBFORM'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_WEBFORM'),
 		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_WEBFORM']),
@@ -991,7 +990,7 @@ if($isAdmin || !$userPermissions->HavePerm('BUTTON', BX_CRM_PERM_NONE, 'READ'))
 {
 	$stdItems['SITEBUTTON'] = array(
 		'ID' => 'SITEBUTTON',
-		'MENU_ID' => 'menu_crm_button',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('SITEBUTTON'), // 'menu_crm_button',
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_BUTTON'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_BUTTON'),
 		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_BUTTON']),
@@ -1004,7 +1003,7 @@ if ($this->isOldPortal())
 {
 	$stdItems['START'] = array(
 		'ID' => 'START',
-		'MENU_ID' => 'menu_crm_start',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('START'), // 'menu_crm_start',
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_START'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_START_TITLE'),
 		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_START']),
@@ -1013,7 +1012,7 @@ if ($this->isOldPortal())
 
 	$stdItems['STREAM'] = array(
 		'ID' => 'STREAM',
-		'MENU_ID' => 'menu_crm_stream',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('STREAM'), // 'menu_crm_stream',
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_STREAM'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_STREAM_TITLE'),
 		'URL' =>  CComponentEngine::MakePathFromTemplate(
@@ -1026,7 +1025,7 @@ if ($this->isOldPortal())
 
 $stdItems['MY_ACTIVITY'] = array(
 	'ID' => 'MY_ACTIVITY',
-	'MENU_ID' => 'menu_crm_activity',
+	'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('MY_ACTIVITY'), // 'menu_crm_activity',
 	'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_MY_ACTIVITY'),
 	'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_MY_ACTIVITY_TITLE'),
 	'URL' => CComponentEngine::MakePathFromTemplate(
@@ -1046,7 +1045,7 @@ if(ModuleManager::isModuleInstalled('bitrix24'))
 {
 	$stdItems['MARKETPLACE'] = array(
 		'ID' => 'MARKETPLACE',
-		'MENU_ID' => 'menu_crm_marketplace',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('MARKETPLACE'), // 'menu_crm_marketplace',
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_MARKETPLACE'),
 		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PRODUCT_MARKETPLACE']),
 		'ICON' => 'apps',
@@ -1081,7 +1080,7 @@ if (Loader::includeModule('salescenter'))
 			'ID' => 'SALES_CENTER',
 			'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SALES_CENTER'),
 			'URL' => '/saleshub/',
-			'MENU_ID' => 'menu-sale-center',
+			'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('SALES_CENTER'), // 'menu-sale-center',
 		];
 	}
 
@@ -1119,7 +1118,7 @@ if (Crm\Terminal\AvailabilityManager::getInstance()->isAvailable())
 		'ID' => 'TERMINAL',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_TERMINAL'),
 		'URL' => '/crm/terminal/',
-		'MENU_ID' => 'menu_terminal',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('TERMINAL'), // 'menu_terminal',
 	];
 }
 
@@ -1129,7 +1128,7 @@ if (Loader::includeModule('voximplant') && \Bitrix\Voximplant\Security\Helper::i
 		'ID' => 'TELEPHONY',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_TELEPHONY'),
 		'URL' => '/telephony/',
-		'MENU_ID' => 'menu_telephony',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('TELEPHONY'), // 'menu_telephony',
 	];
 }
 
@@ -1137,7 +1136,7 @@ $stdItems['CONTACT_CENTER'] = [
 	'ID' => 'CONTACT_CENTER',
 	'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CONTACT_CENTER'),
 	'URL' => ModuleManager::isModuleInstalled('bitrix24') ? '/contact_center/' : SITE_DIR . 'services/contact_center/',
-	'MENU_ID' => 'menu_contact_center',
+	'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('CONTACT_CENTER'), // 'menu_contact_center',
 ];
 
 if (ModuleManager::isModuleInstalled('rest'))
@@ -1146,7 +1145,7 @@ if (ModuleManager::isModuleInstalled('rest'))
 		'ID' => 'DEVOPS',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_DEVOPS'),
 		'URL' => '/devops/',
-		'MENU_ID' => 'menu_devops',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('DEVOPS'), // 'menu_devops',
 	];
 }
 
@@ -1156,7 +1155,7 @@ if (\Bitrix\Crm\Tracking\Manager::isAccessible())
 		'ID' => 'CRM_TRACKING',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CRM_TRACKING'),
 		'URL' => '/crm/tracking/',
-		'MENU_ID' => 'menu_crm_tracking',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('CRM_TRACKING'), // 'menu_crm_tracking',
 	];
 }
 
@@ -1203,17 +1202,30 @@ if (Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\A
 
 	if (Loader::includeModule('biconnector'))
 	{
-		$bi = \Bitrix\BIConnector\Manager::getInstance();
-		if (method_exists($bi, 'getMenuItems'))
+		$stdItems['ANALYTICS_BI']['ID'] = 'ANALYTICS_BI';
+		$stdItems['ANALYTICS_BI']['NAME'] = Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS_BI');
+
+		if (\Bitrix\Main\Loader::includeModule('bitrix24') && !\Bitrix\Bitrix24\Feature::isFeatureEnabled('biconnector'))
 		{
-			$items = $bi->getMenuItems();
-			if (!empty($items))
+			$stdItems['ANALYTICS_BI']['IS_LOCKED'] = true;
+			$stdItems['ANALYTICS_BI']['ON_CLICK'] = 'top.BX.UI.InfoHelper.show("limit_crm_BI_analytics")';
+		}
+		else
+		{
+			$bi = \Bitrix\BIConnector\Manager::getInstance();
+
+			if (method_exists($bi, 'getMenuItems'))
 			{
-				$stdItems['ANALYTICS_BI'] = [
-					'ID' => 'ANALYTICS_BI',
-					'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS_BI'),
-					'URL' => '/report/analytics/?analyticBoardKey=' . $items[0]['id'],
-				];
+				$items = $bi->getMenuItems();
+
+				if (!empty($items))
+				{
+					$stdItems['ANALYTICS_BI']['URL'] = '/report/analytics/?analyticBoardKey=' . $items[0]['id'];
+				}
+				else
+				{
+					unset($stdItems['ANALYTICS_BI']);
+				}
 			}
 		}
 	}
@@ -1342,7 +1354,7 @@ if (!empty($dymamicSubItems))
 {
 	$stdItems['DYNAMIC_ADD'] = [
 		'ID' => 'DYNAMIC_LIST',
-		'MENU_ID' => 'dynamic_menu',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('DYNAMIC_LIST'), //'dynamic_menu',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_DYNAMIC_LIST'),
 		'URL' => Crm\Service\Container::getInstance()->getRouter()->getTypeListUrl(),
 		'SUB_ITEMS' => $dymamicSubItems,

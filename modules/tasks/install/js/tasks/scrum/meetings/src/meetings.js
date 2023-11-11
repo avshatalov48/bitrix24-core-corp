@@ -1,14 +1,14 @@
-import {Event, Loc, Tag, Text, Type, Dom, ajax} from 'main.core';
-import {BaseEvent, EventEmitter} from 'main.core.events';
-import {Loader} from 'main.loader';
-import {Menu} from 'main.popup';
+import { Event, Loc, Tag, Text, Type, Dom, ajax } from 'main.core';
+import { BaseEvent } from 'main.core.events';
+import { Loader } from 'main.loader';
+import { Menu } from 'main.popup';
 
-import {PopupComponentsMaker} from 'ui.popupcomponentsmaker';
+import { PopupComponentsMaker } from 'ui.popupcomponentsmaker';
 
-import {CreatedEvent, CreatedEventType} from './created.event';
-import {ListEvents} from './list.events';
-import {RequestSender} from './request.sender';
-import {Culture, CultureData} from './culture';
+import { CreatedEvent, CreatedEventType } from './created.event';
+import { ListEvents } from './list.events';
+import { RequestSender } from './request.sender';
+import { Culture, CultureData } from './culture';
 
 import 'ui.design-tokens';
 import 'ui.fonts.opensans';
@@ -109,7 +109,7 @@ export class Meetings
 
 		this.todayEvent = new CreatedEvent();
 		this.listEvents = new ListEvents();
-		this.listEvents.subscribe('showView', this.onShowView.bind(this))
+		this.listEvents.subscribe('showView', this.onShowView.bind(this));
 
 		this.menu = null;
 		this.eventTemplatesMenu = null;
@@ -117,22 +117,19 @@ export class Meetings
 
 	showMenu(targetNode: HTMLElement)
 	{
-		if (this.menu)
+		if (this.menu && this.menu.isShown())
 		{
-			if (this.menu.isShown())
-			{
-				this.menu.close();
+			this.menu.close();
 
-				return;
-			}
+			return;
 		}
 
 		const response = this.requestSender.getMeetings({
-			groupId: this.groupId
-		}).then((response: MeetingsResponse) => {
-			Culture.getInstance().setData(response.data.culture);
+			groupId: this.groupId,
+		}).then((meetingsResponse: MeetingsResponse) => {
+			Culture.getInstance().setData(meetingsResponse.data.culture);
 
-			return response;
+			return meetingsResponse;
 		});
 
 		this.menu = new PopupComponentsMaker({
@@ -144,17 +141,17 @@ export class Meetings
 					html: [
 						{
 							html: this.renderMeetings(response),
-						}
-					]
+						},
+					],
 				},
 				{
 					html: [
 						{
 							html: this.renderChats(response),
-						}
-					]
+						},
+					],
 				},
-			]
+			],
 		});
 
 		this.menu.show();
@@ -163,19 +160,20 @@ export class Meetings
 	renderMeetings(response: Promise): Promise
 	{
 		return response
-			.then((response: MeetingsResponse) => {
+			.then((meetingsResponse: MeetingsResponse) => {
 				this.meetingsNode = Tag.render`
 					<div class="tasks-scrum__widget-meetings tasks-scrum__widget-meetings--scope">
-						${this.renderMeetingsHeader(response)}
-						${this.renderEventTemplates(response)}
-						${this.renderScheduledMeetings(response)}
-					</div>`
+						${this.renderMeetingsHeader(meetingsResponse)}
+						${this.renderEventTemplates(meetingsResponse)}
+						${this.renderScheduledMeetings(meetingsResponse)}
+					</div>
+				`
 				;
 
 				return this.meetingsNode;
 			})
-			.catch((response) => {
-				this.requestSender.showErrorAlert(response);
+			.catch((meetingsResponse) => {
+				this.requestSender.showErrorAlert(meetingsResponse);
 			})
 		;
 	}
@@ -183,9 +181,10 @@ export class Meetings
 	renderChats(response: Promise): HTMLElement
 	{
 		return response
-			.then((response: ChatsResponse) => {
-				const chats = response.data.chats;
-				const node = Tag.render`
+			.then((chatsResponse: ChatsResponse) => {
+				const chats = chatsResponse.data.chats;
+
+				return Tag.render`
 					<div class="tasks-scrum__widget-meetings tasks-scrum__widget-meetings--scope">
 						<div class="tasks-scrum__widget-meetings--header">
 							<div
@@ -197,14 +196,12 @@ export class Meetings
 						</div>
 						${this.renderChatsList(chats)}
 						${this.renderChatsEmpty(chats)}
-						
+	
 					</div>
 				`;
-
-				return node;
 			})
-			.catch((response) => {
-				this.requestSender.showErrorAlert(response);
+			.catch((errorResponse) => {
+				this.requestSender.showErrorAlert(errorResponse);
 			})
 		;
 	}
@@ -218,7 +215,7 @@ export class Meetings
 				${
 					chats.map((chat: Chat) => {
 						const chatIconClass = chat.icon === '' ? 'default' : '';
-						const chatIconStyle = chat.icon !== '' ? `background-image: url('${chat.icon}');` : '';
+						const chatIconStyle = chat.icon === '' ? '' : `background-image: url('${chat.icon}');`;
 						const chatNode = Tag.render`
 							<div class="tasks-scrum__widget-meetings--chat-container">
 								<div class="ui-icon ui-icon-common-company tasks-scrum__widget-meetings--chat-icon">
@@ -239,7 +236,7 @@ export class Meetings
 						`;
 
 						Event.bind(chatNode, 'click', this.openChat.bind(this, chat, chatNode));
-						
+
 						return chatNode;
 					})
 				}
@@ -260,12 +257,12 @@ export class Meetings
 
 		this.requestSender.getChat({
 			groupId: this.groupId,
-			chatId: chat.id
+			chatId: chat.id,
 		})
 			.then(() => {
 				if (top.window.BXIM)
 				{
-					top.BXIM.openMessenger('chat' + parseInt(chat.id));
+					top.BXIM.openMessenger(`chat${parseInt(chat.id, 10)}`);
 
 					this.menu.close();
 				}
@@ -285,6 +282,7 @@ export class Meetings
 				users.map((user: ChatUser) => {
 					const src = user.photo ? encodeURI(Text.encode(user.photo.src)) : null;
 					const photoStyle = src ? `background-image: url('${src}');` : '';
+
 					return Tag.render`
 						<div class="user-icon ${uiIconClasses}" title="${Text.encode(user.name)}">
 							<i style="${photoStyle}"></i>
@@ -292,7 +290,7 @@ export class Meetings
 					`;
 				})
 			}
-		`
+		`;
 	}
 
 	renderChatsEmpty(chats: Array<Chat>): HTMLElement
@@ -368,7 +366,7 @@ export class Meetings
 
 		const node = Tag.render`
 			<div class="tasks-scrum__widget-meetings--content ${contentVisibilityClass}">
-			
+
 				<div class="tasks-scrum__widget-meetings--creation-block ${templateVisibility}">
 					<span
 						class="tasks-scrum__widget-meetings--creation-close-btn"
@@ -387,14 +385,12 @@ export class Meetings
 								{
 									return this.renderEventTemplate(eventTemplate);
 								}
-								else
-								{
+
 									return '';
-								}
 							})
 					}
 				</div>
-				
+	
 				<div class="tasks-scrum__widget-meetings--empty-meetings ${emptyVisibility}">
 					<div class="tasks-scrum__widget-meetings--empty-name">
 						${Loc.getMessage('TSM_MEETINGS_EMPTY_TITLE')}
@@ -423,10 +419,10 @@ export class Meetings
 				Dom.addClass(emptyNode, '--visible');
 			}
 			this.requestSender.closeTemplates({
-				groupId: this.groupId
+				groupId: this.groupId,
 			})
-				.catch((response) => {
-					this.requestSender.showErrorAlert(response);
+				.catch((errorResponse) => {
+					this.requestSender.showErrorAlert(errorResponse);
 				})
 			;
 		});
@@ -443,11 +439,11 @@ export class Meetings
 		const todayEvent = response.data.todayEvent;
 		const listEvents = response.data.listEvents;
 
-		const todayEventVisibility = (Type.isNull(todayEvent)? '' : '--visible');
+		const todayEventVisibility = (Type.isNull(todayEvent) ? '' : '--visible');
 
 		this.listEvents.setTodayEvent(todayEvent);
 
-		const node = Tag.render`
+		return Tag.render`
 			<div class="tasks-scrum__widget-meetings--timetable">
 				<div class="tasks-scrum__widget-meetings--timetable-container ${todayEventVisibility}">
 					<div class="tasks-scrum__widget-meetings--timetable-title">
@@ -458,8 +454,6 @@ export class Meetings
 				${this.listEvents.render(listEvents, todayEvent)}
 			</div>
 		`;
-
-		return node;
 	}
 
 	renderEventTemplate(eventTemplate: EventTemplate): HTMLElement
@@ -511,25 +505,22 @@ export class Meetings
 
 	showMenuWithEventTemplates(targetNode: HTMLElement, calendarSettings: CalendarSettings)
 	{
-		if (this.eventTemplatesMenu)
+		if (this.eventTemplatesMenu && this.eventTemplatesMenu.getPopupWindow().isShown())
 		{
-			if (this.eventTemplatesMenu.getPopupWindow().isShown())
-			{
-				this.eventTemplatesMenu.close();
+			this.eventTemplatesMenu.close();
 
-				return;
-			}
+			return;
 		}
 
 		this.eventTemplatesMenu = new Menu({
 			id: 'tsm-event-templates-menu',
 			bindElement: targetNode,
-			closeByEsc : true
+			closeByEsc: true,
 		});
 
 		this.eventTemplatesMenu.addMenuItem({
 			text: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_BLANK'),
-			delimiter: true
+			delimiter: true,
 		});
 
 		this.getEventTemplates(calendarSettings)
@@ -539,7 +530,7 @@ export class Meetings
 					onclick: (event, menuItem) => {
 						this.openCalendarSidePanel(eventTemplate);
 						menuItem.getMenuWindow().close();
-					}
+					},
 				});
 			})
 		;
@@ -555,7 +546,7 @@ export class Meetings
 
 	openCalendarSidePanel(eventTemplate?: EventTemplate)
 	{
-		const participantsEntityList = eventTemplate ? eventTemplate.roles: [];
+		const participantsEntityList = eventTemplate ? eventTemplate.roles : [];
 
 		const formData = eventTemplate
 			? {
@@ -564,12 +555,12 @@ export class Meetings
 				from: eventTemplate.from,
 				to: eventTemplate.to,
 				color: eventTemplate.color,
-				rrule: eventTemplate.rrule
+				rrule: eventTemplate.rrule,
 			}
 			: {
 				name: '',
 				description: '',
-				color: '#86b100'
+				color: '#86b100',
 			}
 		;
 
@@ -581,21 +572,21 @@ export class Meetings
 				sliderId: sliderId,
 				participantsSelectorEntityList: [
 					{
-						id: 'user'
+						id: 'user',
 					},
 					{
 						id: 'project-roles',
 						options: {
-							projectId: this.groupId
+							projectId: this.groupId,
 						},
-						dynamicLoad: true
-					}
+						dynamicLoad: true,
+					},
 				],
 				formDataValue: formData,
 				participantsEntityList: participantsEntityList,
 				type: 'group',
-				ownerId: this.groupId
-			}
+				ownerId: this.groupId,
+			},
 		).show();
 
 		top.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onLoad', (event: BaseEvent) => {
@@ -613,7 +604,7 @@ export class Meetings
 								this.requestSender.saveEventInfo({
 									groupId: this.groupId,
 									templateId: eventTemplate.id,
-									eventId: data.responseData.entryId
+									eventId: data.responseData.entryId,
 								})
 									.then(() => {
 										this.menu.close();
@@ -631,12 +622,12 @@ export class Meetings
 									analyticsLabel: {
 										scrum: 'Y',
 										action: 'create_meet',
-										template: eventTemplate ? eventTemplate.id : 'custom'
-									}
-								}
+										template: eventTemplate ? eventTemplate.id : 'custom',
+									},
+								},
 							);
 						}
-					}
+					},
 				);
 			}
 		});
@@ -653,8 +644,8 @@ export class Meetings
 			TH: 4,
 			FR: 5,
 			SA: 6,
-			SU: 7
-		}
+			SU: 7,
+		};
 
 		const weekStartDay = calendarSettings.weekStart[Object.keys(calendarSettings.weekStart)[0]];
 		const weekStartDayNumber = daysNumberMap[weekStartDay];
@@ -669,21 +660,21 @@ export class Meetings
 			rrule: {
 				FREQ: 'WEEKLY',
 				INTERVAL: 1,
-				BYDAY: calendarSettings.weekDays
+				BYDAY: calendarSettings.weekDays,
 			},
 			roles: [
 				{
-					id: this.groupId + '_M',
-					entityId: 'project-roles'
+					id: `${this.groupId}_M`,
+					entityId: 'project-roles',
 				},
 				{
-					id: this.groupId + '_E',
-					entityId: 'project-roles'
-				}
+					id: `${this.groupId}_E`,
+					entityId: 'project-roles',
+				},
 			],
 			uiClass: 'widget-meetings__sprint-daily',
 			color: '#2FC6F6',
-			hint: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_HINT_DAILY')
+			hint: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_HINT_DAILY'),
 		});
 
 		eventTemplates.add({
@@ -693,34 +684,34 @@ export class Meetings
 			desc: '',
 			from: new Date(
 				this.getNextWeekStartDate(weekStartDayNumber)
-					.setHours(calendarSettings.workTimeStart, 0, 0)
+					.setHours(calendarSettings.workTimeStart, 0, 0),
 			),
 			to: new Date(
 				this.getNextWeekStartDate(weekStartDayNumber)
-					.setHours(calendarSettings.workTimeStart + 1, 0, 0)
+					.setHours(calendarSettings.workTimeStart + 1, 0, 0),
 			),
 			rrule: {
 				FREQ: 'WEEKLY',
 				INTERVAL: calendarSettings.interval,
-				BYDAY: calendarSettings.weekStart
+				BYDAY: calendarSettings.weekStart,
 			},
 			roles: [
 				{
-					id: this.groupId + '_A',
-					entityId: 'project-roles'
+					id: `${this.groupId}_A`,
+					entityId: 'project-roles',
 				},
 				{
-					id: this.groupId + '_M',
-					entityId: 'project-roles'
+					id: `${this.groupId}_M`,
+					entityId: 'project-roles',
 				},
 				{
-					id: this.groupId + '_E',
-					entityId: 'project-roles'
-				}
+					id: `${this.groupId}_E`,
+					entityId: 'project-roles',
+				},
 			],
 			uiClass: 'widget-meetings__sprint-planning',
 			color: '#DA51D4',
-			hint: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_HINT_PLANNING')
+			hint: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_HINT_PLANNING'),
 		});
 
 		eventTemplates.add({
@@ -730,34 +721,34 @@ export class Meetings
 			desc: '',
 			from: new Date(
 				this.getNextWeekStartDate(weekStartDayNumber)
-					.setHours(calendarSettings.workTimeStart, 0, 0)
+					.setHours(calendarSettings.workTimeStart, 0, 0),
 			),
 			to: new Date(
 				this.getNextWeekStartDate(weekStartDayNumber)
-					.setHours(calendarSettings.workTimeStart + 1, 0, 0)
+					.setHours(calendarSettings.workTimeStart + 1, 0, 0),
 			),
 			rrule: {
 				FREQ: 'WEEKLY',
 				INTERVAL: calendarSettings.interval,
-				BYDAY: calendarSettings.weekStart
+				BYDAY: calendarSettings.weekStart,
 			},
 			roles: [
 				{
-					id: this.groupId + '_A',
-					entityId: 'project-roles'
+					id: `${this.groupId}_A`,
+					entityId: 'project-roles',
 				},
 				{
-					id: this.groupId + '_M',
-					entityId: 'project-roles'
+					id: `${this.groupId}_M`,
+					entityId: 'project-roles',
 				},
 				{
-					id: this.groupId + '_E',
-					entityId: 'project-roles'
-				}
+					id: `${this.groupId}_E`,
+					entityId: 'project-roles',
+				},
 			],
 			uiClass: 'widget-meetings__sprint-review',
 			color: '#FF5752',
-			hint: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_HINT_REVIEW')
+			hint: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_HINT_REVIEW'),
 		});
 
 		eventTemplates.add({
@@ -767,30 +758,30 @@ export class Meetings
 			desc: '',
 			from: new Date(
 				this.getNextWeekStartDate(weekStartDayNumber)
-					.setHours(calendarSettings.workTimeStart, 0, 0)
+					.setHours(calendarSettings.workTimeStart, 0, 0),
 			),
 			to: new Date(
 				this.getNextWeekStartDate(weekStartDayNumber)
-					.setHours(calendarSettings.workTimeStart + 1, 0, 0)
+					.setHours(calendarSettings.workTimeStart + 1, 0, 0),
 			),
 			rrule: {
 				FREQ: 'WEEKLY',
 				INTERVAL: calendarSettings.interval,
-				BYDAY: calendarSettings.weekStart
+				BYDAY: calendarSettings.weekStart,
 			},
 			roles: [
 				{
-					id: this.groupId + '_M',
-					entityId: 'project-roles'
+					id: `${this.groupId}_M`,
+					entityId: 'project-roles',
 				},
 				{
-					id: this.groupId + '_E',
-					entityId: 'project-roles'
-				}
+					id: `${this.groupId}_E`,
+					entityId: 'project-roles',
+				},
 			],
 			uiClass: 'widget-meetings__sprint-retrospective',
 			color: '#FF5752',
-			hint: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_HINT_RETROSPECTIVE')
+			hint: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_HINT_RETROSPECTIVE'),
 		});
 
 		return eventTemplates;
@@ -820,11 +811,11 @@ export class Meetings
 
 		if (delta >= 0)
 		{
-			targetDate.setDate(date.getDate() + delta)
+			targetDate.setDate(date.getDate() + delta);
 		}
 		else
 		{
-			targetDate.setDate(date.getDate() + 7 + delta)
+			targetDate.setDate(date.getDate() + 7 + delta);
 		}
 
 		return targetDate;

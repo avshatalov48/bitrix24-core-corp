@@ -83,7 +83,7 @@ jn.define('im/messenger/controller/dialog/header/buttons', (require, exports, mo
 		 */
 		renderUserHeaderButtons()
 		{
-			const userData = this.store.getters['usersModel/getUserById'](this.dialogId);
+			const userData = this.store.getters['usersModel/getById'](this.dialogId);
 
 			if (!UserPermission.isCanCall(userData))
 			{
@@ -92,18 +92,18 @@ jn.define('im/messenger/controller/dialog/header/buttons', (require, exports, mo
 
 			return [
 				{
-					id: 'call_video',
-					type: 'call_video',
-					badgeCode: 'call_video',
-					color: '#11A9D9',
-					testId: 'DIALOG_HEADER_VIDEO_CALL_BUTTON',
-				},
-				{
 					id: 'call_audio',
 					type: 'call_audio',
 					badgeCode: 'call_audio',
 					color: '#11A9D9',
 					testId: 'DIALOG_HEADER_AUDIO_CALL_BUTTON',
+				},
+				{
+					id: 'call_video',
+					type: 'call_video',
+					badgeCode: 'call_video',
+					color: '#11A9D9',
+					testId: 'DIALOG_HEADER_VIDEO_CALL_BUTTON',
 				},
 			];
 		}
@@ -130,17 +130,17 @@ jn.define('im/messenger/controller/dialog/header/buttons', (require, exports, mo
 
 			return [
 				{
-					id: 'call_video',
-					type: 'call_video',
-					badgeCode: 'call_video',
-					testId: 'DIALOG_HEADER_VIDEO_CALL_BUTTON',
-					color: '#11A9D9',
-				},
-				{
 					id: 'call_audio',
 					type: 'call_audio',
 					badgeCode: 'call_audio',
 					testId: 'DIALOG_HEADER_AUDIO_CALL_BUTTON',
+					color: '#11A9D9',
+				},
+				{
+					id: 'call_video',
+					type: 'call_video',
+					badgeCode: 'call_video',
+					testId: 'DIALOG_HEADER_VIDEO_CALL_BUTTON',
 					color: '#11A9D9',
 				},
 			];
@@ -172,7 +172,8 @@ jn.define('im/messenger/controller/dialog/header/buttons', (require, exports, mo
 
 		onLongTap(buttonId)
 		{
-			if (!Feature.isCallBetaAvailable())
+			const { bitrixCallsEnabled } = jnExtensionData.get('im:messenger/controller/dialog');
+			if (!Feature.isCallBetaAvailable() || bitrixCallsEnabled)
 			{
 				return;
 			}

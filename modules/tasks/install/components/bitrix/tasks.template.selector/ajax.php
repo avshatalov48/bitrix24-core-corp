@@ -1,6 +1,7 @@
 <?
 
 use \Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Internals\Task\Status;
 
 define('STOP_STATISTICS',    true);
 define('NO_AGENT_CHECK',     true);
@@ -45,7 +46,7 @@ if ($_REQUEST['MODE'] == 'SEARCH')
 	}
 
 	$dbRes = CTaskTemplates::GetList(
-		array('TITLE' => 'ASC'), 
+		array('TITLE' => 'ASC'),
 		$arFilter,
 		array('NAV_PARAMS' => array('nTopCount' => 10)),			// nPageTop
 		$arGetListParams,
@@ -58,7 +59,7 @@ if ($_REQUEST['MODE'] == 'SEARCH')
 		$arTasks[] = array(
 			"ID" => $arRes["ID"],
 			"TITLE" => $arRes["TITLE"],
-			"STATUS" => CTasks::STATE_PENDING
+			"STATUS" => Status::PENDING
 		);
 	}
 

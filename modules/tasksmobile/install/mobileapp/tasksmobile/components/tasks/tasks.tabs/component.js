@@ -1,6 +1,8 @@
 (() => {
 	const { EntityReady } = jn.require('entity-ready');
 	const { Entry } = jn.require('tasks/entry');
+	const { ErrorLogger } = jn.require('utils/logger/error-logger');
+	const { StorageCache } = jn.require('storage-cache');
 
 	const SITE_ID = BX.componentParameters.get('SITE_ID', 's1');
 
@@ -104,11 +106,6 @@
 			this.queue.clear();
 		}
 
-		getCanExecute()
-		{
-			return this.canExecute;
-		}
-
 		setCanExecute(canExecute)
 		{
 			this.canExecute = canExecute;
@@ -124,9 +121,11 @@
 					return;
 				}
 
-				this.tabs.setDownMenuTasksCounter(data[0].view_all.total);
+				TasksTabs.setDownMenuTasksCounter(data[0].view_all.total);
+
 				this.tabs.updateTasksCounter(data[0].view_all.total);
 				this.tabs.updateProjectsCounter(data.projects_major);
+				this.tabs.updateScrumCounter(data.scrum_total_comments);
 
 				resolve();
 			});
@@ -162,18 +161,61 @@
 			return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
 		}
 
+		static setDownMenuTasksCounter(value = -1)
+		{
+			const taskListCache = new StorageCache('tasksTaskList', 'filterCounters_0');
+
+			if (value >= 0)
+			{
+				Application.setBadges({ tasks: value });
+				taskListCache.set({ counterValue: value });
+
+				return;
+			}
+
+			let counterValue = 0;
+
+			const cachedCounters = Application.sharedStorage().get('userCounters');
+			if (cachedCounters)
+			{
+				try
+				{
+					const counters = JSON.parse(cachedCounters)[SITE_ID];
+					counterValue = (counters.tasks_total || 0);
+					taskListCache.set({ counterValue });
+				}
+				catch
+				{
+					// do nothing
+				}
+			}
+			else
+			{
+				const taskListCounter = taskListCache.get();
+				if (taskListCounter)
+				{
+					counterValue = (taskListCounter.counterValue || 0);
+				}
+			}
+
+			Application.setBadges({ tasks: counterValue });
+		}
+
 		constructor(tabs)
 		{
 			this.tabs = tabs;
 			this.userId = parseInt(BX.componentParameters.get('USER_ID', 0), 10);
+			this.showScrumList = BX.componentParameters.get('SHOW_SCRUM_LIST', false);
 			this.guid = TasksTabs.createGuid();
 
 			this.pull = new Pull(this, this.userId);
 			this.pull.subscribe();
 
-			this.setDownMenuTasksCounter();
+			this.logger = new ErrorLogger();
+
+			TasksTabs.setDownMenuTasksCounter();
 			EntityReady.wait('chat')
-				.then(() => setTimeout(() => this.setDownMenuTasksCounter(), 1000))
+				.then(() => setTimeout(() => TasksTabs.setDownMenuTasksCounter(), 1000))
 				.catch(() => {})
 			;
 
@@ -198,11 +240,12 @@
 				}
 			});
 			BX.addCustomEvent('tasks.project.list:setVisualCounter', (data) => this.updateProjectsCounter(data.value));
+			BX.addCustomEvent('tasks.scrum.list:setVisualCounter', (data) => this.updateScrumCounter(data.value));
 		}
 
 		onAppPaused()
 		{
-			BX.postComponentEvent('tasks.tabs:onAppPaused', [], this.tabs.getCurrentItem().id);
+			BX.postComponentEvent('tasks.tabs:onAppPaused', [{ tabId: this.tabs.getCurrentItem().id }]);
 
 			this.pauseTime = new Date();
 
@@ -212,12 +255,12 @@
 
 		onAppActiveBefore()
 		{
-			BX.postComponentEvent('tasks.tabs:onAppActiveBefore', [], this.tabs.getCurrentItem().id);
+			BX.postComponentEvent('tasks.tabs:onAppActiveBefore', [{ tabId: this.tabs.getCurrentItem().id }]);
 		}
 
 		onAppActive()
 		{
-			BX.postComponentEvent('tasks.tabs:onAppActive', [], this.tabs.getCurrentItem().id);
+			BX.postComponentEvent('tasks.tabs:onAppActive', [{ tabId: this.tabs.getCurrentItem().id }]);
 
 			this.activationTime = new Date();
 
@@ -247,8 +290,7 @@
 
 			if (changed)
 			{
-				BX.postComponentEvent('tasks.tabs:onTabSelected', [{ tabId }], TasksTabs.tabNames.tasks);
-				BX.postComponentEvent('tasks.tabs:onTabSelected', [{ tabId }], TasksTabs.tabNames.projects);
+				BX.postComponentEvent('tasks.tabs:onTabSelected', [{ tabId }]);
 			}
 			else if (tabId === TasksTabs.tabNames.scrum)
 			{
@@ -262,55 +304,6 @@
 			{
 				Entry.openEfficiency({ userId: this.userId });
 			}
-		}
-
-		setDownMenuTasksCounter(value = -1)
-		{
-			const storage = Application.sharedStorage('tasksTaskList');
-
-			if (value >= 0)
-			{
-				Application.setBadges({ tasks: value });
-				storage.set('filterCounters_0', JSON.stringify({ counterValue: value }));
-
-				return;
-			}
-
-			let counterValue = 0;
-
-			const cachedCounters = Application.sharedStorage().get('userCounters');
-			if (cachedCounters)
-			{
-				try
-				{
-					const counters = JSON.parse(cachedCounters)[SITE_ID];
-					counterValue = (counters.tasks_total || 0);
-
-					storage.set('filterCounters_0', JSON.stringify({ counterValue }));
-				}
-				catch
-				{
-					// do nothing
-				}
-			}
-			else
-			{
-				const cache = storage.get('filterCounters_0');
-				if (cache)
-				{
-					try
-					{
-						const counters = JSON.parse(cache);
-						counterValue = (counters.counterValue || 0);
-					}
-					catch
-					{
-						// do nothing
-					}
-				}
-			}
-
-			Application.setBadges({ tasks: counterValue });
 		}
 
 		updateCounters()
@@ -333,35 +326,40 @@
 				}
 			}
 
-			const projectCountersStorage = Application.sharedStorage('tasksProjectList');
-			const cachedProjectCounters = projectCountersStorage.get('filterCounters');
+			const projectListStorage = new StorageCache('tasks_project', 'filterCounters');
+			const cachedProjectCounters = projectListStorage.get();
 			if (cachedProjectCounters)
 			{
-				try
-				{
-					const counters = JSON.parse(cachedProjectCounters);
-					if (counters)
-					{
-						this.updateProjectsCounter(counters.counterValue);
-					}
-				}
-				catch
-				{
-					// do nothing
-				}
+				this.updateProjectsCounter(cachedProjectCounters.counterValue);
 			}
 
-			(new RequestExecutor('tasks.task.counters.getProjectsTotalCounter'))
+			const scrumListStorage = new StorageCache('tasks_scrum', 'filterCounters');
+			const cachedScrumCounters = scrumListStorage.get();
+			if (cachedScrumCounters)
+			{
+				this.updateScrumCounter(cachedScrumCounters.counterValue);
+			}
+
+			(new RequestExecutor('tasksmobile.Task.Counter.get'))
 				.call()
 				.then(
 					(response) => {
-						const counterValue = response.result;
-						this.updateProjectsCounter(counterValue);
-						projectCountersStorage.set('filterCounters', JSON.stringify({ counterValue }));
+						const counters = response.result;
+
+						const projectCounter = counters.sonetTotalExpired + counters.sonetTotalComments;
+						this.updateProjectsCounter(projectCounter);
+						projectListStorage.set({ counterValue: projectCounter });
+
+						if (this.showScrumList)
+						{
+							const scrumCounter = counters.scrumTotalComments;
+							this.updateScrumCounter(scrumCounter);
+							scrumListStorage.set({ counterValue: scrumCounter });
+						}
 					},
-					(response) => console.error(response),
+					(response) => this.logger.error(response),
 				)
-				.catch((response) => console.error(response))
+				.catch((response) => this.logger.error(response))
 			;
 		}
 
@@ -378,6 +376,20 @@
 		{
 			this.tabs.updateItem(TasksTabs.tabNames.projects, {
 				title: BX.message('MOBILE_TASKS_TABS_TAB_PROJECTS'),
+				counter: Number(value),
+				label: (value > 0 ? String(value) : ''),
+			});
+		}
+
+		updateScrumCounter(value)
+		{
+			if (!this.showScrumList)
+			{
+				return;
+			}
+
+			this.tabs.updateItem(TasksTabs.tabNames.scrum, {
+				title: BX.message('MOBILE_TASKS_TABS_TAB_SCRUM'),
 				counter: Number(value),
 				label: (value > 0 ? String(value) : ''),
 			});

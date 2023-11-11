@@ -7,6 +7,8 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 	const { clone } = require('utils/object');
+
+	const { Theme } = require('im/lib/theme');
 	const { core } = require('im/messenger/core');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper');
@@ -59,13 +61,9 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 			const chatSettings = Application.storage.getObject('settings.chat', {
 				quoteEnable: ChatPerformance.isGestureQuoteSupported(),
 				quoteFromRight: false,
-				backgroundType: 'LIGHT_GRAY',
 			});
+			chatSettings.backgroundType = Theme.getInstance().getId() === 'dark' ? 'DARK' : 'LIGHT_GRAY';
 
-			if (!ChatDialogBackground[chatSettings.backgroundType])
-			{
-				chatSettings.backgroundType = 'LIGHT_GRAY';
-			}
 
 			const backgroundConfig = { ...ChatDialogBackground[chatSettings.backgroundType] };
 			backgroundConfig.url = currentDomain + backgroundConfig.url;
@@ -144,6 +142,7 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 				WIDGET_CHAT_RECIPIENTS_VERSION: MessengerParams.get('WIDGET_CHAT_RECIPIENTS_VERSION', '1.0.0'),
 				WIDGET_CHAT_TRANSFER_VERSION: MessengerParams.get('WIDGET_CHAT_TRANSFER_VERSION', '1.0.0'),
 				WIDGET_BACKDROP_MENU_VERSION: MessengerParams.get('WIDGET_BACKDROP_MENU_VERSION', '1.0.0'),
+				THEME_ID: Theme.getInstance().getId(),
 			};
 
 			if (this.isOpenlineDialog(dialogId, dialogTitleParams, userCode))
@@ -243,6 +242,7 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 							WIDGET_CHAT_RECIPIENTS_VERSION: MessengerParams.get('WIDGET_CHAT_RECIPIENTS_VERSION', '1.0.0'),
 							WIDGET_CHAT_TRANSFER_VERSION: MessengerParams.get('WIDGET_CHAT_TRANSFER_VERSION', '1.0.0'),
 							WIDGET_BACKDROP_MENU_VERSION: MessengerParams.get('WIDGET_BACKDROP_MENU_VERSION', '1.0.0'),
+							THEME_ID: Theme.getInstance().getId(),
 						},
 						url: `/mobile/web_mobile_component/im.dialog/?version=${MessengerParams.get('COMPONENT_CHAT_DIALOG_VERSION', '1.0.0')}`,
 						animated: true,

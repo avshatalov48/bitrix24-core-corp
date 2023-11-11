@@ -32,14 +32,18 @@ class File
 	 */
 	public static function transliterateFileName(string $fileName): string
 	{
-		return \CUtil::translit(
-			$fileName,
+		$parts = pathinfo($fileName);
+		$basename = $parts['filename'];
+		$transliterateBaseName =  \CUtil::translit(
+			$basename,
 			'ru',
 			[
 				'replace_space' => '_',
 				'replace_other' => '_'
 			]
 		);
+
+		return $transliterateBaseName . '.' . $parts['extension'];
 	}
 
 	/**

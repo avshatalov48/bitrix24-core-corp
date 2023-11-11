@@ -1,15 +1,25 @@
 (() => {
-	const { debounce } = jn.require('utils/function');
-	const { EntityReady } = jn.require('entity-ready');
-	const { Loc } = jn.require('loc');
-	const { magnifierWithMenuAndDot } = jn.require('assets/common');
-	const { PresetList } = jn.require('tasks/layout/presetList');
+	const require = (ext) => jn.require(ext);
+	const { debounce } = require('utils/function');
+	const { EntityReady } = require('entity-ready');
+	const { Loc } = require('loc');
+	const { Logger, LogType } = require('utils/logger');
+	const { magnifierWithMenuAndDot } = require('assets/common');
+	const { PresetList } = require('tasks/layout/presetList');
+	const { Project } = require('tasks/project');
+	const { StorageCache } = require('storage-cache');
 
 	const apiVersion = Application.getApiVersion();
 	const platform = Application.getPlatform();
-	const caches = new Map();
 
 	const isSearchByPresetsEnable = (apiVersion >= 49);
+
+	const Mode = {
+		PROJECT: 'tasks_project',
+		SCRUM: 'tasks_scrum',
+	};
+
+	const logger = new Logger([LogType.LOG, LogType.ERROR]);
 
 	class Loading
 	{
@@ -86,35 +96,18 @@
 		}
 	}
 
-	class SectionHandler
+	class Section
 	{
-		static getInstance()
-		{
-			if (SectionHandler.instance == null)
-			{
-				SectionHandler.instance = new SectionHandler();
-			}
-
-			return SectionHandler.instance;
-		}
-
-		static get sections()
+		static get type()
 		{
 			return {
-				new: 'new',
 				pinned: 'pinned',
 				default: 'default',
 				more: 'more',
-				empty: 'empty',
 			};
 		}
 
-		constructor()
-		{
-			this.clear();
-		}
-
-		clear()
+		static get()
 		{
 			const defaultSectionParams = {
 				title: '',
@@ -132,253 +125,49 @@
 				},
 			};
 
-			this.items = {
-				new: { id: SectionHandler.sections.new, ...defaultSectionParams },
-				pinned: { id: SectionHandler.sections.pinned, ...defaultSectionParams },
-				default: { id: SectionHandler.sections.default, ...defaultSectionParams },
-				more: { id: SectionHandler.sections.more, ...defaultSectionParams },
-				empty: { id: SectionHandler.sections.empty, ...defaultSectionParams },
-			};
-		}
-
-		setSortItemParams(sectionId, sortItemParams)
-		{
-			if (this.has(sectionId))
-			{
-				this.items[sectionId].sortItemParams = sortItemParams;
-			}
-		}
-
-		has(id)
-		{
-			return (id in this.items);
-		}
-
-		get list()
-		{
-			return Object.values(this.items);
+			return [
+				{ id: Section.type.pinned, ...defaultSectionParams },
+				{ id: Section.type.default, ...defaultSectionParams },
+				{ id: Section.type.more, ...defaultSectionParams },
+			];
 		}
 	}
 
-	class Cache
+	class Cache extends StorageCache
 	{
-		constructor(cacheKey)
-		{
-			this.cacheKey = cacheKey;
-
-			this.storage = Application.sharedStorage('tasksProjectList');
-			this.defaultData = {};
-		}
-
-		static getInstance(id)
-		{
-			if (!caches.has(id))
-			{
-				caches.set(id, (new Cache(id)));
-			}
-
-			return caches.get(id);
-		}
-
-		get()
-		{
-			const cache = this.storage.get(this.cacheKey);
-
-			if (typeof cache === 'string')
-			{
-				return JSON.parse(cache);
-			}
-
-			return this.defaultData;
-		}
-
-		set(data)
-		{
-			this.storage.set(this.cacheKey, JSON.stringify(data));
-		}
-
-		update(key, value)
-		{
-			const currentCache = this.get();
-			currentCache[key] = value;
-			this.set(currentCache);
-		}
-
-		clear()
-		{
-			this.set({});
-		}
-
-		setDefaultData(defaultData)
-		{
-			this.defaultData = defaultData;
-		}
-	}
-
-	class ProjectCache extends Cache
-	{
-		constructor(cacheKey)
-		{
-			super(cacheKey);
-			this.init();
-		}
-
-		init()
-		{
-			const has = Object.prototype.hasOwnProperty;
-			const cache = this.get();
-
-			Object.values(Filter.counterTypes).forEach((counterType) => {
-				if (!has.call(cache, counterType))
-				{
-					cache[counterType] = [];
-				}
-			});
-
-			this.set(cache);
-		}
-
 		/**
-		 * @param {Project} project
-		 * @param {Object} projectItem
+		 * @param {Array<Object>} projects
 		 */
-		addProject(project, projectItem)
+		setProjects(projects)
 		{
-			const cache = this.get();
-			if (!cache || Object.keys(cache).length === 0)
+			const cachedProjects = this.get();
+			if (Object.prototype.hasOwnProperty.call(cachedProjects, Filter.counterTypes.none))
 			{
 				return;
 			}
 
-			const countersMap = {
-				[Filter.counterTypes.none]: true,
-				[Filter.counterTypes.sonetTotalExpired]: (project.getCounterMyExpiredCount() > 0),
-				[Filter.counterTypes.sonetTotalComments]: (project.getCounterMyNewCommentsCount() > 0),
-				[Filter.counterTypes.sonetForeignExpired]: (project.getCounterProjectExpiredCount() > 0),
-				[Filter.counterTypes.sonetForeignComments]: (project.getCounterProjectNewCommentsCount() > 0),
-			};
-			Object.keys(countersMap).forEach((counter) => {
-				if (countersMap[counter])
+			projects.forEach((project) => {
+				if (Object.keys(cachedProjects).includes(project.id))
 				{
-					cache[counter].splice(0, 0, projectItem);
+					cachedProjects[project.id] = project;
 				}
 			});
-			this.set(cache);
-		}
-
-		updateProject(projects)
-		{
-			const cache = this.get();
-			if (!cache || Object.keys(cache).length === 0)
-			{
-				return;
-			}
-
-			Object.keys(projects).forEach((projectId) => {
-				const { project, projectItem } = projects[projectId];
-				const countersMap = {
-					[Filter.counterTypes.none]: true,
-					[Filter.counterTypes.sonetTotalExpired]: (project.getCounterMyExpiredCount() > 0),
-					[Filter.counterTypes.sonetTotalComments]: (project.getCounterMyNewCommentsCount() > 0),
-					[Filter.counterTypes.sonetForeignExpired]: (project.getCounterProjectExpiredCount() > 0),
-					[Filter.counterTypes.sonetForeignComments]: (project.getCounterProjectNewCommentsCount() > 0),
-				};
-				Object.keys(countersMap).forEach((counter) => {
-					if (countersMap[counter])
-					{
-						const index = cache[counter].findIndex((item) => Number(item.id) === Number(projectId));
-						if (index === -1)
-						{
-							cache[counter].splice(0, 0, projectItem);
-						}
-						else
-						{
-							cache[counter][index] = projectItem;
-						}
-					}
-					else
-					{
-						const index = cache[counter].findIndex((item) => Number(item.id) === Number(projectId));
-						if (index !== -1)
-						{
-							cache[counter].splice(index, 1);
-						}
-					}
-				});
-			});
-			this.set(cache);
+			this.set(cachedProjects);
 		}
 
 		removeProject(projectId)
 		{
-			const cache = this.get();
-			if (!cache || Object.keys(cache).length === 0)
+			const cachedProjects = this.get();
+			if (Object.prototype.hasOwnProperty.call(cachedProjects, Filter.counterTypes.none))
 			{
 				return;
 			}
 
-			Object.keys(cache).forEach((counter) => {
-				const index = cache[counter].findIndex((project) => Number(project.id) === Number(projectId));
-				if (index !== -1)
-				{
-					cache[counter].splice(index, 1);
-				}
-			});
-			this.set(cache);
-		}
-	}
-
-	class Order
-	{
-		static get fields()
-		{
-			return {
-				activityDate: [
-					{
-						field: 'ACTIVITY_DATE',
-						direction: 'DESC',
-					},
-					{
-						field: 'ID',
-						direction: 'DESC',
-					},
-				],
-			};
-		}
-
-		static get sectionOrderFields()
-		{
-			return {
-				activityDate: 'desc',
-			};
-		}
-
-		constructor()
-		{
-			this.order = 'activityDate';
-		}
-
-		get()
-		{
-			const order = {
-				IS_PINNED: 'DESC',
-			};
-
-			Order.fields[this.order].forEach((fieldData) => {
-				order[fieldData.field] = fieldData.direction;
-			});
-
-			return order;
-		}
-
-		getOrder()
-		{
-			return this.order;
-		}
-
-		setOrder(order)
-		{
-			this.order = order;
+			if (Object.keys(cachedProjects).includes(projectId))
+			{
+				delete cachedProjects[projectId];
+				this.set(cachedProjects);
+			}
 		}
 	}
 
@@ -400,6 +189,8 @@
 				sonetTotalComments: 'sonetTotalComments',
 				sonetForeignExpired: 'sonetForeignExpired',
 				sonetForeignComments: 'sonetForeignComments',
+				scrumTotalComments: 'scrumTotalComments',
+				scrumForeignComments: 'scrumForeignComments',
 			};
 		}
 
@@ -418,7 +209,7 @@
 			this.searchText = '';
 			this.isShowMine = !isSearchByPresetsEnable;
 
-			this.cache = Cache.getInstance('filterCounters');
+			this.cache = new StorageCache(this.list.mode, 'filterCounters');
 			this.total = this.cache.get().counterValue || 0;
 
 			EntityReady.wait('chat').then(() => this.updateCounters()).catch(() => {});
@@ -426,9 +217,9 @@
 
 		updateCounters()
 		{
-			console.log('ProjectList.Filter.updateCounters');
+			logger.log('ProjectList.Filter.updateCounters');
 
-			(new RequestExecutor('tasks.project.counter.getTotal', { userId: this.userId }))
+			(new RequestExecutor('tasksmobile.Task.Counter.get'))
 				.call()
 				.then((response) => {
 					this.counters = {};
@@ -436,10 +227,13 @@
 
 					Object.entries(response.result).forEach(([type, value]) => {
 						this.counters[type] = value;
-						if (
-							type === Filter.counterTypes.sonetTotalExpired
-							|| type === Filter.counterTypes.sonetTotalComments
-						)
+
+						const typesToCollectInTotal = (
+							this.list.isScrum()
+								? [Filter.counterTypes.scrumTotalComments]
+								: [Filter.counterTypes.sonetTotalExpired, Filter.counterTypes.sonetTotalComments]
+						);
+						if (typesToCollectInTotal.includes(type))
 						{
 							this.total += value;
 						}
@@ -463,9 +257,9 @@
 		setVisualCounters()
 		{
 			Application.setBadges({
-				[`tasksProjectListMoreButton_${this.userId}`]: this.total,
+				[`${this.list.mode}_MoreButton`]: this.total,
 			});
-			BX.postComponentEvent('tasks.project.list:setVisualCounter', [{ value: this.total }], 'tasks.tabs');
+			BX.postComponentEvent(`${this.list.getTabName()}:setVisualCounter`, [{ value: this.total }], 'tasks.tabs');
 		}
 
 		saveCache()
@@ -494,6 +288,7 @@
 					break;
 
 				case Filter.counterTypes.sonetTotalComments:
+				case Filter.counterTypes.scrumTotalComments:
 					filter.COUNTERS = 'NEW_COMMENTS';
 					break;
 
@@ -502,6 +297,7 @@
 					break;
 
 				case Filter.counterTypes.sonetForeignComments:
+				case Filter.counterTypes.scrumForeignComments:
 					filter.COUNTERS = 'PROJECT_NEW_COMMENTS';
 					break;
 
@@ -516,6 +312,16 @@
 		getCounterValue(type)
 		{
 			return this.counters[type] || 0;
+		}
+
+		isDefaultPreset()
+		{
+			return (this.preset === Filter.presetTypes.default);
+		}
+
+		isDefaultCounter()
+		{
+			return (this.counter === Filter.counterTypes.none);
 		}
 
 		getSearchText()
@@ -582,7 +388,7 @@
 		show()
 		{
 			const menuItems = this.prepareItems();
-			const menuSections = [{ id: SectionHandler.sections.default }];
+			const menuSections = [{ id: 'default' }];
 
 			if (!this.popupMenu)
 			{
@@ -599,11 +405,11 @@
 
 		prepareItems()
 		{
-			let items = [
+			const projectListItems = [
 				{
 					id: Filter.counterTypes.sonetTotalComments,
 					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_MY_NEW_COMMENTS'),
-					sectionCode: SectionHandler.sections.default,
+					sectionCode: 'default',
 					checked: (this.filter.getCounter() === Filter.counterTypes.sonetTotalComments),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetTotalComments),
 					counterStyle: {
@@ -613,7 +419,7 @@
 				{
 					id: Filter.counterTypes.sonetTotalExpired,
 					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_MY_EXPIRED'),
-					sectionCode: SectionHandler.sections.default,
+					sectionCode: 'default',
 					checked: (this.filter.getCounter() === Filter.counterTypes.sonetTotalExpired),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetTotalExpired),
 					counterStyle: {
@@ -623,7 +429,7 @@
 				{
 					id: Filter.counterTypes.sonetForeignComments,
 					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_OTHER_NEW_COMMENTS'),
-					sectionCode: SectionHandler.sections.default,
+					sectionCode: 'default',
 					checked: (this.filter.getCounter() === Filter.counterTypes.sonetForeignComments),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetForeignComments),
 					counterStyle: {
@@ -633,36 +439,54 @@
 				{
 					id: Filter.counterTypes.sonetForeignExpired,
 					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_OTHER_EXPIRED'),
-					sectionCode: SectionHandler.sections.default,
+					sectionCode: 'default',
 					checked: (this.filter.getCounter() === Filter.counterTypes.sonetForeignExpired),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetForeignExpired),
 					counterStyle: {
 						backgroundColor: MoreMenu.counterColors.gray,
 					},
 				},
+			];
+			const scrumListItems = [
 				{
-					id: 'toggleShowMine',
-					title: Loc.getMessage(
-						this.filter.getIsShowMine()
-							? 'MOBILE_TASKS_PROJECT_LIST_ACTION_SHOW_ALL'
-							: 'MOBILE_TASKS_PROJECT_LIST_ACTION_SHOW_MINE',
-					),
-					sectionCode: SectionHandler.sections.default,
-					showTopSeparator: true,
+					id: Filter.counterTypes.scrumTotalComments,
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_MY_NEW_COMMENTS'),
+					sectionCode: 'default',
+					checked: (this.filter.getCounter() === Filter.counterTypes.scrumTotalComments),
+					counterValue: this.filter.getCounterValue(Filter.counterTypes.scrumTotalComments),
+					counterStyle: {
+						backgroundColor: MoreMenu.counterColors.green,
+					},
 				},
 				{
-					id: 'readAll',
-					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_READ_ALL'),
-					iconName: 'read',
-					sectionCode: SectionHandler.sections.default,
-					showTopSeparator: true,
+					id: Filter.counterTypes.scrumForeignComments,
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_OTHER_NEW_COMMENTS'),
+					sectionCode: 'default',
+					checked: (this.filter.getCounter() === Filter.counterTypes.scrumForeignComments),
+					counterValue: this.filter.getCounterValue(Filter.counterTypes.scrumForeignComments),
+					counterStyle: {
+						backgroundColor: MoreMenu.counterColors.gray,
+					},
 				},
 			];
+			const items = (this.list.isScrum() ? scrumListItems : projectListItems);
 
-			if (isSearchByPresetsEnable)
+			if (!isSearchByPresetsEnable)
 			{
-				items = items.filter((item) => item.id !== 'toggleShowMine');
+				items.push({
+					id: 'toggleShowMine',
+					title: Loc.getMessage(`MOBILE_TASKS_PROJECT_LIST_ACTION_SHOW_${this.filter.getIsShowMine() ? 'ALL' : 'MINE'}`),
+					sectionCode: 'default',
+					showTopSeparator: true,
+				});
 			}
+			items.push({
+				id: 'readAll',
+				title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_READ_ALL'),
+				iconName: 'read',
+				sectionCode: 'default',
+				showTopSeparator: true,
+			});
 
 			return items;
 		}
@@ -675,6 +499,8 @@
 				case Filter.counterTypes.sonetTotalComments:
 				case Filter.counterTypes.sonetForeignExpired:
 				case Filter.counterTypes.sonetForeignComments:
+				case Filter.counterTypes.scrumTotalComments:
+				case Filter.counterTypes.scrumForeignComments:
 					this.onCounterChange(item.id);
 					break;
 
@@ -712,15 +538,20 @@
 		{
 			this.list.pseudoReadProjects([...this.list.projectList.keys()]);
 
-			(new RequestExecutor('tasks.viewedGroup.project.markAsRead', { fields: { groupId: 0 } }))
+			const methodName = `tasks.viewedGroup.${this.list.isScrum() ? 'scrum' : 'project'}.markAsRead`;
+
+			(new RequestExecutor(methodName, { fields: { groupId: 0 } }))
 				.call()
 				.then((response) => {
 					if (response.result === true)
 					{
-						Notify.showIndicatorSuccess({
-							text: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_NOTIFICATION_READ_ALL'),
-							hideAfter: 1500,
-						});
+						Notify.showMessage(
+							'',
+							Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_NOTIFICATION_READ_ALL'),
+							{
+								time: 1,
+							},
+						);
 					}
 				})
 				.catch(() => {})
@@ -868,7 +699,7 @@
 		 */
 		onPinAction(project)
 		{
-			void project.pin();
+			void project.pin(this.list.mode);
 		}
 
 		/**
@@ -876,7 +707,7 @@
 		 */
 		onUnpinAction(project)
 		{
-			void project.unpin();
+			void project.unpin(this.list.mode);
 		}
 
 		/**
@@ -901,7 +732,7 @@
 		 */
 		onMembersAction(project)
 		{
-			PageManager.openWidget('list', {
+			void PageManager.openWidget('list', {
 				backdrop: {
 					bounceEnable: false,
 					swipeAllowed: true,
@@ -919,7 +750,7 @@
 						minSearchSize: 3,
 					});
 				},
-				onError: (error) => console.log(error),
+				onError: (error) => logger.log(error),
 			});
 		}
 
@@ -934,7 +765,7 @@
 			{
 				project.joinProject().then(() => this.list.updateItem(projectId)).catch(() => {});
 
-				const projectItem = this.list.prepareListItem(project);
+				const projectItem = ProjectList.prepareListItem(project);
 				projectItem.joinButtonState = 'animated';
 				this.list.list.updateItem({ id: projectId }, projectItem);
 			}
@@ -956,6 +787,7 @@
 			return [
 				'project_read_all',
 				'comment_read_all',
+				'scrum_read_all',
 			];
 		}
 
@@ -1037,6 +869,10 @@
 					method: this.onProjectCommentsReadAll,
 					context: this,
 				},
+				scrum_read_all: {
+					method: this.onProjectCommentsReadAll,
+					context: this,
+				},
 				project_counter: {
 					method: this.onProjectCounter,
 					context: this,
@@ -1047,17 +883,17 @@
 		startWatch()
 		{
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('mobile.tasks.project.list.startWatch'))
+				(new RequestExecutor('tasksmobile.Project.startWatchList'))
 					.call()
 					.then(
 						(response) => resolve(response),
 						(response) => {
-							console.error(response);
+							logger.error(response);
 							reject(response);
 						},
 					)
 					.catch((response) => {
-						console.error(response);
+						logger.error(response);
 						reject(response);
 					})
 				;
@@ -1343,14 +1179,23 @@
 				'OPENED',
 				'CLOSED',
 				'VISIBLE',
-				'IS_EXTRANET',
-				'USER_GROUP_ID',
 				'ACTIVITY_DATE',
 				'IS_PINNED',
+				'SCRUM_MASTER_ID',
+				'IS_EXTRANET',
+				'ACTIONS',
 				'MEMBERS',
 				'COUNTERS',
-				'ACTIONS',
 			];
+		}
+
+		static get order()
+		{
+			return {
+				IS_PINNED: 'DESC',
+				ACTIVITY_DATE: 'DESC',
+				ID: 'DESC',
+			};
 		}
 
 		static get avatarTypes()
@@ -1363,12 +1208,75 @@
 			};
 		}
 
+		/**
+		 * @param {Project} project
+		 * @param {bool} withActions
+		 */
+		static prepareListItem(project, withActions = true)
+		{
+			let itemData = {
+				id: String(project.id),
+				title: project.name || '',
+				imageUrl: project.image || '',
+				date: project.activityDate / 1000,
+				messageCount: project.getCounter().value,
+				joinButtonState: (project.getActions().join && project.isOpened ? 'showed' : 'hidden'),
+				creatorIcons: project.getHeadIcons(),
+				creatorCount: project.getHeadCount(),
+				responsibleIcons: project.getMemberIcons(),
+				responsibleCount: project.getMemberCount(),
+				styles: {
+					counter: {
+						backgroundColor: ProjectList.counterColors[project.getCounter().color],
+					},
+					date: {
+						image: {
+							name: (project.isPinned ? 'message_pin' : ''),
+						},
+						font: {
+							size: 13,
+						},
+					},
+					avatar: {
+						image: {
+							name: ProjectList.avatarTypes[project.getType()],
+						},
+					},
+				},
+				backgroundColor: ProjectList.backgroundColors.default,
+				sectionCode: Section.type.default,
+				sortValues: {
+					activityDate: project.activityDate,
+				},
+				type: 'project',
+			};
+
+			if (project.getCounter().isHidden)
+			{
+				itemData.messageCount = 0;
+			}
+
+			if (project.isPinned)
+			{
+				itemData.backgroundColor = ProjectList.backgroundColors.pinned;
+				itemData.sectionCode = Section.type.pinned;
+			}
+
+			if (withActions)
+			{
+				itemData = Action.fill(itemData, project);
+			}
+
+			return itemData;
+		}
+
 		constructor(list, userId, params)
 		{
-			console.log('ProjectList.constructor', userId);
+			logger.log(`${params.mode}.constructor`, userId);
 
 			this.list = list;
 			this.userId = userId;
+			this.mode = params.mode;
 			this.newsPathTemplate = (params.projectNewsPathTemplate || '');
 			this.calendarWebPathTemplate = (params.projectCalendarWebPathTemplate || '');
 
@@ -1377,8 +1285,7 @@
 
 			this.projectList = new Map();
 
-			this.cache = new ProjectCache(`projectList_${this.userId}`);
-			this.order = new Order();
+			this.cache = new Cache(this.mode, `projectList_${this.userId}`);
 			this.filter = new Filter(this, this.userId);
 			this.moreMenu = new MoreMenu(this);
 			this.welcomeScreen = new WelcomeScreen(this);
@@ -1404,6 +1311,7 @@
 						title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_LOADING'),
 					},
 				]);
+				this.list.setSections(Section.get());
 
 				this.setTopButtons();
 				this.setFloatingButton();
@@ -1417,6 +1325,16 @@
 			});
 		}
 
+		isScrum()
+		{
+			return (this.mode === Mode.SCRUM);
+		}
+
+		getTabName()
+		{
+			return (this.isScrum() ? 'tasks.scrum.list' : 'tasks.project.list');
+		}
+
 		getPresets()
 		{
 			if (!isSearchByPresetsEnable)
@@ -1424,7 +1342,9 @@
 				return;
 			}
 
-			(new RequestExecutor('tasksmobile.Filter.getProjectListPresets'))
+			const methodName = (this.isScrum() ? 'getScrumListPresets' : 'getProjectListPresets');
+
+			(new RequestExecutor(`tasksmobile.Filter.${methodName}`))
 				.call()
 				.then((response) => {
 					this.presets = response.result;
@@ -1447,7 +1367,7 @@
 			this.list.setRightButtons([
 				{
 					type: 'search',
-					badgeCode: 'tasksProjectListSearchButton',
+					badgeCode: `${this.mode}_SearchButton`,
 					svg: {
 						content: magnifierWithMenuAndDot('#a8adb4', (isDefaultSearch ? null : '#2fc6f6')),
 					},
@@ -1455,7 +1375,7 @@
 				},
 				{
 					type: (this.filter.getCounter() === Filter.counterTypes.none ? 'more' : 'more_active'),
-					badgeCode: `tasksProjectListMoreButton_${this.userId}`,
+					badgeCode: `${this.mode}_MoreButton`,
 					callback: () => this.moreMenu.show(),
 				},
 			]);
@@ -1540,9 +1460,9 @@
 				.call()
 				.then(
 					(response) => this.renderFloatingButton(response.result),
-					(response) => console.error(response),
+					(response) => logger.error(response),
 				)
-				.catch((response) => console.error(response))
+				.catch((response) => logger.error(response))
 			;
 		}
 
@@ -1595,7 +1515,7 @@
 			};
 
 			this.list.setListener((event, data) => {
-				console.log(`ProjectList.appEvent.${event}`);
+				logger.log(`ProjectList.appEvent.${event}`);
 				if (eventHandlers[event])
 				{
 					eventHandlers[event].callback.apply(eventHandlers[event].context, [data]);
@@ -1606,30 +1526,29 @@
 		bindEvents()
 		{
 			BX.addCustomEvent('tasks.tabs:onTabSelected', (eventData) => this.onTabSelected(eventData));
-			BX.addCustomEvent('tasks.tabs:onAppActive', () => this.onAppActive());
-			BX.addCustomEvent('tasks.tabs:onAppPaused', () => this.onAppPaused());
+			BX.addCustomEvent('tasks.tabs:onAppActive', (eventData) => this.onAppActive(eventData));
+			BX.addCustomEvent('tasks.tabs:onAppPaused', (eventData) => this.onAppPaused(eventData));
 		}
 
 		loadProjectsFromCache()
 		{
-			const counter = this.filter.getCounter();
-			const has = Object.prototype.hasOwnProperty;
-			const cache = this.cache.get();
+			BX.onViewLoaded(() => {
+				const projects = this.cache.get();
 
-			let cachedProjects = [];
-			if (has.call(cache, counter))
-			{
-				cachedProjects = cache[counter] || [];
-			}
+				if (Object.prototype.hasOwnProperty.call(projects, Filter.counterTypes.none)) // old cache
+				{
+					return;
+				}
 
-			if (!Array.isArray(cachedProjects) || cachedProjects.length === 0)
-			{
-				console.log('ProjectList.loadProjectsFromCache.empty');
+				if (Object.keys(projects).length === 0)
+				{
+					logger.log('Cache is empty');
 
-				return;
-			}
+					return;
+				}
 
-			this.list.setItems(cachedProjects, null, false);
+				this.list.setItems(Object.values(projects), null, false);
+			});
 		}
 
 		reload(offset = 0, showLoading = false)
@@ -1641,8 +1560,7 @@
 			this.loading.showForTitle();
 
 			const params = {
-				mode: 'mobile',
-				listMode: 'tasks_project',
+				mode: this.mode,
 			};
 			if (isSearchByPresetsEnable)
 			{
@@ -1652,11 +1570,11 @@
 			}
 
 			BX.rest.callMethod(
-				'tasks.project.list',
+				'tasksmobile.Project.list',
 				{
 					select: ProjectList.select,
 					filter: this.filter.get(),
-					order: this.order.get(),
+					order: ProjectList.order,
 					start: offset,
 					params,
 				},
@@ -1666,7 +1584,7 @@
 
 		onReloadSuccess(response, showLoading, offset)
 		{
-			console.log('ProjectList.onReloadSuccess', response);
+			logger.log('ProjectList.onReloadSuccess', response);
 
 			this.start = offset + this.pageSize;
 
@@ -1675,7 +1593,6 @@
 			{
 				this.projectList.clear();
 			}
-			this.updateSections(isFirstPage);
 
 			const { projects } = response.answer.result;
 			const items = [];
@@ -1684,17 +1601,14 @@
 				project.setData(row);
 
 				this.projectList.set(String(project.id), project);
-				items.push(this.prepareListItem(project));
+				items.push(ProjectList.prepareListItem(project));
 			});
 
-			console.log('ProjectList.onReloadSuccess:items', items);
-
-			if (isFirstPage)
-			{
-				this.fillCache(items);
-			}
+			logger.log('ProjectList.onReloadSuccess:items', items);
 
 			const isNextPageExist = (this.projectList.size < response.answer.total);
+
+			this.fillCache(items, isFirstPage);
 			this.renderProjectListItems(items, isFirstPage, isNextPageExist);
 
 			if (showLoading)
@@ -1706,94 +1620,20 @@
 			this.list.stopRefreshing();
 		}
 
-		updateSections(clear = true)
+		fillCache(list, isFirstPage)
 		{
-			const sectionHandler = SectionHandler.getInstance();
-
-			if (clear)
+			if (
+				isFirstPage
+				&& this.filter.isDefaultPreset()
+				&& this.filter.isDefaultCounter()
+			)
 			{
-				sectionHandler.clear();
+				const projects = {};
+				list.forEach((project) => {
+					projects[project.id] = project;
+				});
+				this.cache.set(projects);
 			}
-
-			sectionHandler.setSortItemParams(SectionHandler.sections.pinned, {
-				[this.order.getOrder()]: Order.sectionOrderFields[this.order.getOrder()],
-			});
-			sectionHandler.setSortItemParams(SectionHandler.sections.default, {
-				[this.order.getOrder()]: Order.sectionOrderFields[this.order.getOrder()],
-			});
-
-			this.list.setSections(sectionHandler.list);
-		}
-
-		/**
-		 * @param {Project} project
-		 * @param {bool} withActions
-		 */
-		prepareListItem(project, withActions = true)
-		{
-			let itemData = {
-				id: String(project.id),
-				title: project.name || '',
-				imageUrl: project.image || '',
-				date: project.activityDate / 1000,
-				messageCount: project.getCounter().value,
-				joinButtonState: (project.getActions().join && project.isOpened ? 'showed' : 'hidden'),
-				creatorIcons: project.getHeadIcons(),
-				creatorCount: project.getHeadCount(),
-				responsibleIcons: project.getMemberIcons(),
-				responsibleCount: project.getMemberCount(),
-				styles: {
-					counter: {
-						backgroundColor: ProjectList.counterColors[project.getCounter().color],
-					},
-					date: {
-						image: {
-							name: (project.isPinned ? 'message_pin' : ''),
-						},
-						font: {
-							size: 13,
-						},
-					},
-					avatar: {
-						image: {
-							name: ProjectList.avatarTypes[project.getType()],
-						},
-					},
-				},
-				backgroundColor: ProjectList.backgroundColors.default,
-				sectionCode: SectionHandler.sections.default,
-				sortValues: {
-					activityDate: project.activityDate,
-				},
-				type: 'project',
-			};
-
-			if (project.getCounter().isHidden)
-			{
-				itemData.messageCount = 0;
-			}
-
-			if (project.isPinned)
-			{
-				itemData.backgroundColor = ProjectList.backgroundColors.pinned;
-				itemData.sectionCode = SectionHandler.sections.pinned;
-			}
-
-			if (withActions)
-			{
-				itemData = Action.fill(itemData, project);
-			}
-
-			return itemData;
-		}
-
-		fillCache(list)
-		{
-			const counter = this.filter.getCounter();
-			const cache = this.cache.get();
-			cache[counter] = list;
-
-			this.cache.set(cache);
 		}
 
 		renderProjectListItems(items, isFirstPage, isNextPageExist)
@@ -1822,7 +1662,7 @@
 					id: '-more-',
 					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_NEXT_PAGE'),
 					type: 'button',
-					sectionCode: SectionHandler.sections.more,
+					sectionCode: Section.type.more,
 				}]);
 			}
 		}
@@ -1895,9 +1735,8 @@
 
 				this.welcomeScreen.hide();
 
-				const projectItem = this.prepareListItem(project);
+				const projectItem = ProjectList.prepareListItem(project);
 				this.list.addItems([projectItem]);
-				this.cache.addProject(project, projectItem);
 			});
 		}
 
@@ -1914,9 +1753,9 @@
 				const project = this.projectList.get(projectId);
 				project.updateData(projectData);
 
-				const projectItem = this.prepareListItem(project);
+				const projectItem = ProjectList.prepareListItem(project);
 				this.list.updateItem({ id: projectId }, projectItem);
-				this.cache.updateProject({ [projectId]: { project, projectItem } });
+				this.cache.setProjects([projectItem]);
 			});
 		}
 
@@ -1936,26 +1775,36 @@
 
 		onTabSelected(data)
 		{
-			if (data.tabId === 'tasks.project.list')
+			if (data.tabId === this.getTabName())
 			{
-				this.onAppActive();
+				this.onAppActive(data);
 			}
 			else
 			{
-				this.onAppPaused();
+				this.onAppPaused(data, true);
 			}
 		}
 
-		onAppPaused()
+		onAppPaused(data, force = false)
 		{
+			if (!force && data.tabId !== this.getTabName())
+			{
+				return;
+			}
+
 			this.pauseTime = new Date();
 
 			this.pull.setCanExecute(false);
 			this.pull.clear();
 		}
 
-		onAppActive()
+		onAppActive(data)
 		{
+			if (data.tabId !== this.getTabName())
+			{
+				return;
+			}
+
 			this.activationTime = new Date();
 
 			if (this.pauseTime)
@@ -2031,8 +1880,7 @@
 		{
 			return new Promise((resolve, reject) => {
 				const params = {
-					mode: 'mobile',
-					listMode: 'tasks_project',
+					mode: this.mode,
 				};
 				if (isSearchByPresetsEnable)
 				{
@@ -2040,7 +1888,7 @@
 						presetId: this.filter.getPreset(),
 					};
 				}
-				(new RequestExecutor('tasks.project.list', {
+				(new RequestExecutor('tasksmobile.Project.list', {
 					select: ProjectList.select,
 					filter: { ...this.filter.get(), ID: projectIds },
 					params,
@@ -2052,12 +1900,12 @@
 							resolve();
 						},
 						(response) => {
-							console.error(response);
+							logger.error(response);
 							reject();
 						},
 					)
 					.catch((response) => {
-						console.error(response);
+						logger.error(response);
 						reject();
 					})
 				;
@@ -2089,7 +1937,7 @@
 		pseudoReadProjects(projectIds)
 		{
 			const items = [];
-			const projects = {};
+			const projects = [];
 			let newCommentsRead = 0;
 
 			this.projectList.forEach((project) => {
@@ -2099,16 +1947,16 @@
 					newCommentsRead += project.getNewCommentsCount();
 					project.pseudoRead();
 
-					const projectItem = this.prepareListItem(project);
+					const projectItem = ProjectList.prepareListItem(project);
 					items.push({
 						filter: { id: projectId },
 						element: projectItem,
 					});
-					projects[projectId] = { project, projectItem };
+					projects.push(projectItem);
 				}
 			});
 			this.list.updateItems(items);
-			this.cache.updateProject(projects);
+			this.cache.setProjects(projects);
 			this.filter.pseudoUpdateCounters(-newCommentsRead);
 		}
 	}
@@ -2117,6 +1965,7 @@
 		list,
 		parseInt(BX.componentParameters.get('USER_ID', 0), 10),
 		{
+			mode: BX.componentParameters.get('MODE', Mode.PROJECT),
 			projectNewsPathTemplate: BX.componentParameters.get('PROJECT_NEWS_PATH_TEMPLATE', ''),
 			projectCalendarWebPathTemplate: BX.componentParameters.get('PROJECT_CALENDAR_WEB_PATH_TEMPLATE', ''),
 		},

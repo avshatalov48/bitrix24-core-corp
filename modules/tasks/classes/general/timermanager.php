@@ -8,7 +8,9 @@
 
 use Bitrix\Main\Type\Date;
 use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Integration\Pull\PushService;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Util\User;
 
 /**
@@ -62,9 +64,9 @@ final class CTaskTimerManager
 			$arTimer = $oTimer->getLastTimer();
 
 			$completeStatuses = [
-				CTasks::STATE_SUPPOSEDLY_COMPLETED,
-				CTasks::STATE_COMPLETED,
-				CTasks::STATE_DEFERRED,
+				Status::SUPPOSEDLY_COMPLETED,
+				Status::COMPLETED,
+				Status::DEFERRED,
 			];
 			$oldStatus = (int)($task['REAL_STATUS'] ?? null);
 			$newStatus = (int)($fields['STATUS'] ?? null);
@@ -226,7 +228,7 @@ final class CTaskTimerManager
 			}
 		}
 
-		if ((int)$taskData['REAL_STATUS'] !== CTasks::STATE_IN_PROGRESS)
+		if ((int)$taskData['REAL_STATUS'] !== Status::IN_PROGRESS)
 		{
 			if ($task->checkAccess(ActionDictionary::ACTION_TASK_START))
 			{
@@ -242,7 +244,7 @@ final class CTaskTimerManager
 			$this->userId,
 			[
 				'module_id' => 'tasks',
-				'command' => 'task_timer_start',
+				'command' => PushCommand::TASK_TIMER_STARTED,
 				'params' => [
 					'taskId' => $taskId,
 					'timeElapsed' => (int)$taskData['TIME_SPENT_IN_LOGS'] + (time() - $timer['TIMER_STARTED_AT']),
@@ -336,7 +338,7 @@ final class CTaskTimerManager
 				$affectedUsers,
 				[
 					'module_id' => 'tasks',
-					'command' => 'task_timer_stop',
+					'command' => PushCommand::TASK_TIMER_STOPPED,
 					'params' => [
 						'taskId' => (int)$timer['TASK_ID'],
 						'userId' => $this->userId,

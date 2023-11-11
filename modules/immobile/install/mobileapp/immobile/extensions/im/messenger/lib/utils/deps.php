@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'loc',
+		'type',
 		'utils/date',
 		'utils/date/formats',
 		'layout/ui/friendly-date/time-ago-format',
@@ -12,5 +13,6 @@ return [
 		'./src/user',
 		'./src/date',
 		'./src/object',
+		'./src/color',
 	],
 ];

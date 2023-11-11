@@ -11,4 +11,4 @@ $MESS["REST_CRM_FF_NO_RESULT"] = "К сожалению, на ваш поиск�
 $MESS["REST_CRM_FF_CHOISE"] = "Выбрать";
 $MESS["REST_CRM_FF_CHANGE"] = "Изменить";
 $MESS["REST_CRM_FF_LAST"] = "Последние";
-$MESS["REST_CRM_FF_QUOTE"] = "Предложения";
+$MESS["REST_CRM_FF_QUOTE_MSGVER_1"] = "Предложения";

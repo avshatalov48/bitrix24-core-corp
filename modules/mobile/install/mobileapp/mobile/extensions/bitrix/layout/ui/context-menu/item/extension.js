@@ -2,7 +2,6 @@
  * @module layout/ui/context-menu/item
  */
 jn.define('layout/ui/context-menu/item', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { AnalyticsLabel } = require('analytics-label');
 	const { CounterView } = require('layout/ui/counter-view');
@@ -26,10 +25,10 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 
 	const svgIcons = {
 		[ImageAfterTypes.WEB]: {
-			content: `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.93726 0.9375H6.00552V3.18574H4.1855C3.63321 3.18574 3.1855 3.63346 3.1855 4.18574V11.8122C3.1855 12.3645 3.63321 12.8122 4.1855 12.8122H11.812C12.3643 12.8122 12.812 12.3645 12.812 11.8122V10.5903H15.0624V12.0627C15.0624 13.7195 13.7193 15.0627 12.0624 15.0627H3.93725C2.2804 15.0627 0.937256 13.7195 0.937256 12.0627V3.9375C0.937256 2.28064 2.2804 0.9375 3.93726 0.9375Z" fill="#bdc1c6"/><path d="M8.98799 1.66387C8.799 1.47488 8.93285 1.15174 9.20012 1.15174H13.8782C14.4305 1.15174 14.8782 1.59945 14.8782 2.15174V6.82982C14.8782 7.09709 14.5551 7.23094 14.3661 7.04195L12.3898 5.06566L7.89355 9.56189C7.69829 9.75715 7.38171 9.75715 7.18644 9.56189L6.34414 8.71959C6.14888 8.52433 6.14888 8.20775 6.34414 8.01248L10.8404 3.51625L8.98799 1.66387Z" fill="#bdc1c6"/></svg>`,
+			content: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.93726 0.9375H6.00552V3.18574H4.1855C3.63321 3.18574 3.1855 3.63346 3.1855 4.18574V11.8122C3.1855 12.3645 3.63321 12.8122 4.1855 12.8122H11.812C12.3643 12.8122 12.812 12.3645 12.812 11.8122V10.5903H15.0624V12.0627C15.0624 13.7195 13.7193 15.0627 12.0624 15.0627H3.93725C2.2804 15.0627 0.937256 13.7195 0.937256 12.0627V3.9375C0.937256 2.28064 2.2804 0.9375 3.93726 0.9375Z" fill="#bdc1c6"/><path d="M8.98799 1.66387C8.799 1.47488 8.93285 1.15174 9.20012 1.15174H13.8782C14.4305 1.15174 14.8782 1.59945 14.8782 2.15174V6.82982C14.8782 7.09709 14.5551 7.23094 14.3661 7.04195L12.3898 5.06566L7.89355 9.56189C7.69829 9.75715 7.38171 9.75715 7.18644 9.56189L6.34414 8.71959C6.14888 8.52433 6.14888 8.20775 6.34414 8.01248L10.8404 3.51625L8.98799 1.66387Z" fill="#bdc1c6"/></svg>',
 		},
 		[ImageAfterTypes.LOCK]: {
-			content: `<svg width="28" height="29" viewBox="0 0 28 29" fill="none" xmlns="http://www.w3.org/2000/svg"><g opacity="0.8"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.17 18.4443V20.3019H12.6987V18.4443C12.4339 18.2285 12.2644 17.8989 12.2644 17.5293C12.2644 16.8792 12.7882 16.3522 13.4344 16.3522C14.0804 16.3522 14.6043 16.8792 14.6043 17.5293C14.6043 17.8989 14.4348 18.2285 14.17 18.4443ZM10.2313 10.8976C10.2313 9.11768 11.6653 7.67481 13.4343 7.67481C15.2033 7.67481 16.6374 9.11768 16.6374 10.8976V13.6219H10.2313V10.8976ZM18.3301 13.6219V10.8976C18.3301 8.17704 16.1382 5.97168 13.4343 5.97168C10.7305 5.97168 8.53854 8.17704 8.53854 10.8976V13.6219H7.05225V22.9508H19.8164V13.6219H18.3301Z" fill="#2FC6F6"/></g></svg>`,
+			content: '<svg width="28" height="29" viewBox="0 0 28 29" fill="none" xmlns="http://www.w3.org/2000/svg"><g opacity="0.8"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.17 18.4443V20.3019H12.6987V18.4443C12.4339 18.2285 12.2644 17.8989 12.2644 17.5293C12.2644 16.8792 12.7882 16.3522 13.4344 16.3522C14.0804 16.3522 14.6043 16.8792 14.6043 17.5293C14.6043 17.8989 14.4348 18.2285 14.17 18.4443ZM10.2313 10.8976C10.2313 9.11768 11.6653 7.67481 13.4343 7.67481C15.2033 7.67481 16.6374 9.11768 16.6374 10.8976V13.6219H10.2313V10.8976ZM18.3301 13.6219V10.8976C18.3301 8.17704 16.1382 5.97168 13.4343 5.97168C10.7305 5.97168 8.53854 8.17704 8.53854 10.8976V13.6219H7.05225V22.9508H19.8164V13.6219H18.3301Z" fill="#2FC6F6"/></g></svg>',
 		},
 	};
 
@@ -219,6 +218,13 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 			return BX.prop.getBoolean(this.props, 'isRawIcon', false);
 		}
 
+		get testId()
+		{
+			const { id, testId } = this.props;
+
+			return `${testId || 'ContextMenu'}_${id}`;
+		}
+
 		render()
 		{
 			if (!this.isActive)
@@ -226,15 +232,13 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 				return null;
 			}
 
-			const { id, testId } = this.props;
-
 			const containerStyle = get(this.props, 'data.style.container', {});
 			const itemStyle = get(this.props, 'data.style.item', {});
 
 			return View(
 				{
 					style: mergeImmutable(styles.wrapper(this.dimmed), containerStyle),
-					testId: `${testId || ""}_${id}`,
+					testId: this.testId,
 					onClick: this.handleSelectItem,
 				},
 				...this.renderByType(itemStyle),
@@ -318,7 +322,7 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 						},
 						({ errors } = {}) => {
 							this.setState({ isProcessing: false }, () => {
-								if (errors && errors.length)
+								if (errors && errors.length > 0)
 								{
 									this.showErrors(errors);
 								}
@@ -331,7 +335,7 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 
 		showError(errorText)
 		{
-			if (errorText.length)
+			if (errorText.length > 0)
 			{
 				navigator.notification.alert(errorText, null, '');
 			}
@@ -340,7 +344,7 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 		showErrors(errors, callback = null)
 		{
 			navigator.notification.alert(
-				errors.map(error => error.message).join('\n'),
+				errors.map((error) => error.message).join('\n'),
 				callback,
 				'',
 			);
@@ -376,6 +380,7 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 			else
 			{
 				title = Text({
+					testId: `${this.testId}_title`,
 					style: styles.title(!this.isSemitransparent),
 					text: this.title,
 					numberOfLines: 1,
@@ -386,6 +391,7 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 					const subtitleStyle = get(customStyle, 'subtitle', {});
 
 					subtitle = Text({
+						testId: `${this.testId}_subtitle`,
 						style: styles.subtitle(this.subtitleType, subtitleStyle),
 						text: this.subtitle,
 						numberOfLines: 1,
@@ -503,7 +509,7 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 							opacity: this.isDisabled ? 0.4 : 1,
 						},
 						svg: {
-							content: `<svg width="20" height="15" viewBox="0 0 20 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.34211 14.351L0.865234 8.03873L3.13214 5.82945L7.34211 9.9324L16.8677 0.648926L19.1346 2.85821L7.34211 14.351Z" fill="#828B95"/></svg>`,
+							content: '<svg width="20" height="15" viewBox="0 0 20 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.34211 14.351L0.865234 8.03873L3.13214 5.82945L7.34211 9.9324L16.8677 0.648926L19.1346 2.85821L7.34211 14.351Z" fill="#828B95"/></svg>',
 						},
 					},
 				);
@@ -525,7 +531,7 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 				);
 			}
 
-			if (Array.isArray(this.props.badges) && this.props.badges.length)
+			if (Array.isArray(this.props.badges) && this.props.badges.length > 0)
 			{
 				const items = [];
 				this.props.badges.forEach((params) => items.push(new Badge(params)));
@@ -541,7 +547,13 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 				imageContainer,
 				View(
 					{
-						style: styles.divider(this.hasAnyLeftIcon(), this.isSelected, this.dimmed, this.lastInSection, this.isTypeLayout()),
+						style: styles.divider(
+							this.hasAnyLeftIcon(),
+							this.isSelected,
+							this.dimmed,
+							this.lastInSection,
+							this.isTypeLayout(),
+						),
 					},
 				),
 				View(
@@ -645,7 +657,7 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 	}
 
 	const styles = {
-		nonSelectedColor: (isService) => isService ? '#fbfbfc' : '#ffffff',
+		nonSelectedColor: (isService) => (isService ? '#fbfbfc' : '#ffffff'),
 		wrapper: (isService) => {
 			return {
 				flexDirection: 'row',
@@ -657,7 +669,7 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 			return {
 				justifyContent: 'center',
 				alignItems: 'center',
-				borderBottomColor: (!isLast ? '#edeef0' : '#00ffffff'),
+				borderBottomColor: (isLast ? '#00ffffff' : '#edeef0'),
 				borderBottomWidth: 1,
 				padding: 4,
 				paddingBottom: 3,
@@ -673,7 +685,7 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 				borderTopLeftRadius: hasAnyLeftIcon ? 0 : 8,
 				width: hasAnyLeftIcon ? 0 : 11,
 				marginLeft: hasAnyLeftIcon ? 0 : 4,
-				borderBottomColor: (!isLastInSection ? '#edeef0' : '#00ffffff'),
+				borderBottomColor: (isLastInSection ? '#00ffffff' : '#edeef0'),
 			};
 
 			if (!autoHeight)
@@ -682,7 +694,6 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 			}
 
 			return dividerStyles;
-
 		},
 		selectedView: (isSelected, isService) => {
 			return {

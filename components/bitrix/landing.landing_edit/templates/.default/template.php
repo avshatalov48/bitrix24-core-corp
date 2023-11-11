@@ -153,16 +153,25 @@ $uriSave->addParams(array(
 	'action' => 'save'
 ));
 
-// special for forms
+// Not all hooks in forms
 if ($formEditor)
 {
-	$hooks = [
-		'METAOG' => $hooks['METAOG'],
-		'YACOUNTER' => $hooks['YACOUNTER'],
-		'GACOUNTER' => $hooks['GACOUNTER'],
-		'GTM' => $hooks['GTM'],
-		'B24BUTTON' => $hooks['B24BUTTON'],
+	$formHooks = [
+		'METAOG',
+		'YACOUNTER',
+		'GACOUNTER',
+		'GTM',
+		'B24BUTTON',
 	];
+
+	foreach($hooks as $code => $hook)
+	{
+		if (!in_array($code, $formHooks))
+		{
+			unset($hooks[$code]);
+		}
+	}
+
 	$arResult['TEMPLATES'] = [];
 }
 ?>
@@ -304,12 +313,14 @@ if ($arParams['SUCCESS_SAVE'])
 								}
 								$link2 = $link1 ? '</a>' : '';
 								?>
+								<?php if (!$formEditor): ?>
 								<div class="landing-form-field-description">
 									<?= $component->getMessageType('LANDING_TPL_CODE_SETTINGS', [
 										'#LINK1#' => $link1,
 										'#LINK2#' => $link2,
 									]) ?>
 								</div>
+								<?php endif; ?>
 								<?php if (!$isAjax && $arParams['PAGE_URL_SITE_EDIT']): ?>
 									<script>
 										BX.ready(function()

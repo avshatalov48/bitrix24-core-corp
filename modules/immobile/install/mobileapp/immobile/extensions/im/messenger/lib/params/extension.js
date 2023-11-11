@@ -53,6 +53,11 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		{
 			return this.get('OPENLINES_USER_IS_OPERATOR', false);
 		}
+
+		isBetaAvailable()
+		{
+			return this.get('IS_BETA_AVAILABLE', false);
+		}
 	}
 
 	module.exports = {

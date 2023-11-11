@@ -1,5 +1,4 @@
 <?php
-
 $MESS["CRM_CTRL_PANEL_ITEM_ANALYTICS"] = "Analytics";
 $MESS["CRM_CTRL_PANEL_ITEM_ANALYTICS_BI"] = "BI-Analytik";
 $MESS["CRM_CTRL_PANEL_ITEM_ANALYTICS_CALLS"] = "Anrufanalytik";
@@ -50,10 +49,11 @@ $MESS["CRM_CTRL_PANEL_ITEM_MY_ACTIVITY"] = "Aktivitäten";
 $MESS["CRM_CTRL_PANEL_ITEM_MY_ACTIVITY_TITLE"] = "Meine Aktivitäten";
 $MESS["CRM_CTRL_PANEL_ITEM_MY_COMPANY"] = "Detaillierte Informationen meines Unternehmens";
 $MESS["CRM_CTRL_PANEL_ITEM_ONEC"] = "1C:Backoffice";
+$MESS["CRM_CTRL_PANEL_ITEM_ONEC_MSGVER_1"] = "Connector für 1C";
 $MESS["CRM_CTRL_PANEL_ITEM_ORDER"] = "Bestellungen";
 $MESS["CRM_CTRL_PANEL_ITEM_PERMISSIONS"] = "Zugriffsrechte";
-$MESS["CRM_CTRL_PANEL_ITEM_QUOTE"] = "Angebote";
-$MESS["CRM_CTRL_PANEL_ITEM_QUOTE_TITLE"] = "Alle Angebote";
+$MESS["CRM_CTRL_PANEL_ITEM_QUOTE_MSGVER_1"] = "Angebote";
+$MESS["CRM_CTRL_PANEL_ITEM_QUOTE_TITLE_MSGVER_1"] = "Angebote";
 $MESS["CRM_CTRL_PANEL_ITEM_RECYCLE_BIN"] = "Papierkorb";
 $MESS["CRM_CTRL_PANEL_ITEM_RECYCLE_BIN_TITLE"] = "Gelöschte Leads, Kontakte, Unternehmen und Aufträge anzeigen und wiederherstellen.";
 $MESS["CRM_CTRL_PANEL_ITEM_REPORT"] = "Berichte";

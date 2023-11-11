@@ -10,6 +10,7 @@ return [
 		'im:calls/plain',
 		'im:calls/users',
 		'im:calls/voximplant',
+		'im:calls/bitrix',
 	],
 	'components' => []
 ];

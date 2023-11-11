@@ -14,6 +14,8 @@ Loc::loadMessages(__FILE__);
 
 class Operator
 {
+	public const SOFT_PAUSE_OPTION = 'soft_pause';
+
 	private $chatId = 0;
 	private $userId = 0;
 	private $error = null;
@@ -263,6 +265,34 @@ class Operator
 		{
 			$result->addError(new Error($this->getError()->msg, $this->getError()->code, __METHOD__, ['ACTIVE' => $active, 'USER_ID' => $this->userId]));
 		}
+
+		return $result;
+	}
+
+	public function pinOperatorDialogs(bool $active = true)
+	{
+		$sessions = \Bitrix\ImOpenLines\Model\SessionTable::getList([
+			'filter' => [
+				'OPERATOR_ID' => $this->userId,
+				'PAUSE' => !$active ? 'Y' : 'N',
+				'<STATUS' => Session::STATUS_CLOSE,
+				'>=STATUS' => Session::STATUS_ANSWER,
+			]
+		]);
+
+		$rawResult = [];
+		foreach ($sessions as $session)
+		{
+			$this->chatId = $session['CHAT_ID'];
+			$pinResult = $this->setPinMode($active);
+			if ($pinResult->isSuccess())
+			{
+				$rawResult[] = (int)$session['ID'];
+			}
+		}
+
+		$result = new Result();
+		$result->setResult($rawResult);
 
 		return $result;
 	}

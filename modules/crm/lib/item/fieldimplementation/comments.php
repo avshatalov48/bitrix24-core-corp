@@ -84,6 +84,10 @@ final class Comments implements FieldImplementation
 		return $this->entityObject->entity->getField($commonFieldName)->getDefaultValue();
 	}
 
+	public function beforeItemSave(Item $item, EntityObject $entityObject): void
+	{
+	}
+
 	public function afterSuccessfulItemSave(Item $item, EntityObject $entityObject): void
 	{
 		$this->afterItemClone($item, $entityObject);

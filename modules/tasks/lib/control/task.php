@@ -20,10 +20,13 @@ use Bitrix\Tasks\Integration\CRM\Timeline\Exception\TimelineException;
 use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Integration\Disk;
 use Bitrix\Tasks\Integration\Forum\Task\Topic;
+use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Integration\SocialNetwork\User;
+use Bitrix\Tasks\Internals\CacheConfig;
 use Bitrix\Tasks\Internals\Counter\CounterService;
 use Bitrix\Tasks\Internals\Counter\Event\EventDictionary;
+use Bitrix\Tasks\Internals\Notification\Pusher;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\EO_Scenario;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
@@ -36,12 +39,14 @@ use Bitrix\Tasks\Internals\Task\Result\ResultTable;
 use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Internals\Task\SortingTable;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\Task\Template\TemplateDependenceTable;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Kanban\TaskStageTable;
+use Bitrix\Tasks\Member\MemberService;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
 use Bitrix\Tasks\Util;
 use Bitrix\Main\Localization\Loc;
@@ -49,8 +54,6 @@ use Bitrix\Main\Localization\Loc;
 class Task
 {
 	private const REGEX_TAG = '/\s#([^\s,\[\]<>]+)/is';
-
-	private const PUSH_COMMAND_ADD = 'task_add';
 	private const FIELD_SCENARIO = 'SCENARIO_NAME';
 
 	private $userId;
@@ -347,6 +350,7 @@ class Task
 			return false;
 		}
 
+		$taskObject = \Bitrix\Tasks\Internals\Registry\TaskRegistry::getInstance()->getObject($taskId, true);
 		$timeLineManager = new TimeLineManager($taskId, $this->userId);
 		$timeLineManager->onTaskDeleted();
 
@@ -384,7 +388,7 @@ class Task
 		$tagService = new Tag($this->userId);
 		$tagService->unlinkTags($taskId);
 
-		\CTaskNotifications::SendDeleteMessage($taskData, $safeDelete);
+		\CTaskNotifications::SendDeleteMessage($taskData, $safeDelete, $taskObject);
 
 		CounterService::addEvent(
 			EventDictionary::EVENT_AFTER_TASK_DELETE,
@@ -753,7 +757,7 @@ class Task
 		{
 			PushService::addEvent($participants, [
 				'module_id' => 'tasks',
-				'command' => 'task_update',
+				'command' => PushCommand::TASK_UPDATED,
 				'params' => $params,
 			]);
 		}
@@ -827,7 +831,7 @@ class Task
 			return;
 		}
 
-		if (in_array((int)$taskData['STATUS'], [\CTasks::STATE_COMPLETED, \CTasks::STATE_SUPPOSEDLY_COMPLETED]))
+		if (in_array((int)$taskData['STATUS'], [Status::COMPLETED, Status::SUPPOSEDLY_COMPLETED], true))
 		{
 			(new ResultManager($this->getOccurUserId()))->close($this->taskId);
 		}
@@ -1011,15 +1015,15 @@ class Task
 		$prevStatus = (int)$this->sourceTaskData['REAL_STATUS'];
 		$statusChanged =
 			$currentStatus !== $prevStatus
-			&& $currentStatus >= \CTasks::STATE_NEW
-			&& $currentStatus <= \CTasks::STATE_DECLINED
+			&& $currentStatus >= Status::NEW
+			&& $currentStatus <= Status::DECLINED
 		;
 
 		if ($statusChanged)
 		{
 			$this->fullTaskData['STATUS_CHANGED'] = true;
 
-			if ($currentStatus === \CTasks::STATE_DECLINED)
+			if ($currentStatus === Status::DECLINED)
 			{
 				$this->fullTaskData['DECLINE_REASON'] = $fields['DECLINE_REASON'];
 			}
@@ -1044,7 +1048,7 @@ class Task
 	{
 		if (
 			!array_key_exists('STATUS', $fields)
-			|| (int) $fields['STATUS'] !== \CTasks::STATE_COMPLETED
+			|| (int) $fields['STATUS'] !== Status::COMPLETED
 		)
 		{
 			return;
@@ -1279,7 +1283,7 @@ class Task
 
 		PushService::addEvent($pushRecipients, [
 			'module_id' => 'tasks',
-			'command' => 'task_remove',
+			'command' => PushCommand::TASK_DELETED,
 			'params' => [
 				'TASK_ID' => $this->taskId,
 				'TS' => time(),
@@ -1464,7 +1468,7 @@ class Task
 
 		if (
 			!$force
-			&& !in_array($taskData['STATUS'], [\CTasks::STATE_COMPLETED, \CTasks::STATE_SUPPOSEDLY_COMPLETED])
+			&& !in_array((int)$taskData['STATUS'], [Status::COMPLETED, Status::SUPPOSEDLY_COMPLETED], true)
 		)
 		{
 			return;
@@ -1616,7 +1620,7 @@ class Task
 
 			PushService::addEvent($pushRecipients, [
 				'module_id' => 'tasks',
-				'command' => self::PUSH_COMMAND_ADD,
+				'command' => PushCommand::TASK_ADDED,
 				'params' => $this->prepareAddPullEventParameters($mergedFields),
 			]);
 		}
@@ -1724,6 +1728,7 @@ class Task
 	private function resetCache()
 	{
 		\Bitrix\Tasks\Access\TaskAccessController::dropItemCache($this->taskId);
+		MemberService::invalidate();
 
 		$taskData = $this->getFullTaskData();
 		if (!$taskData)
@@ -1745,7 +1750,7 @@ class Task
 			$this->cacheManager->ClearByTag("tasks_user_".$userId);
 		}
 		$cache = Cache::createInstance();
-		$cache->clean(\CTasks::CACHE_TASKS_COUNT, \CTasks::CACHE_TASKS_COUNT_DIR_NAME);
+		$cache->clean(CacheConfig::UNIQUE_CODE, CacheConfig::DIRECTORY);
 	}
 
 	/**

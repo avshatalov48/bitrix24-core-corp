@@ -860,6 +860,7 @@ class EditorAdapter
 			'editable' => true,
 			'showAlways' => $showAlways,
 			'data' => [
+				'affectedFields' => [$fieldName . '_INFO'],
 				'compound' => [
 					[
 						'name' => 'COMPANY_ID',
@@ -2418,6 +2419,7 @@ class EditorAdapter
 			'editable' => $editable,
 			'showAlways' => $showAlways,
 			'data' => [
+				'affectedFields' => [$infoName],
 				'enableMyCompanyOnly' => true,
 				'enableRequisiteSelection' => true,
 				'enableCreation' => Container::getInstance()->getUserPermissions()->getMyCompanyPermissions()->canAdd(),

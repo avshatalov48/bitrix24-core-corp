@@ -7,6 +7,9 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 	const {
 		getExtension,
 	} = require('utils/file');
+	const { debounce } = require('utils/function');
+	const { formatFileSize } = require('im/messenger/lib/helper');
+	const { Uuid } = require('utils/uuid');
 
 	const {
 		FileStatus,
@@ -40,7 +43,14 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 			/** @private */
 			this.uploadRegistry = {};
 
+			/**
+			 * @desc Async generate upload task
+			 * @private
+			 */
+			this.uploadGenerator = null;
+
 			this.initUploadManager();
+			this.updateLoadTextProgressToModelDebounce = debounce(this.updateLoadTextProgressToModel, 500, this, true);
 		}
 
 		initUploadManager()
@@ -52,8 +62,27 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 					Logger.info('UploaderManagerEvent.progress', fileId, data);
 					const params = data.file.params;
 
-					this.updateFileProgress(fileId, data.percent, FileStatus.upload);
-					// to remove the cross to cancel the download
+					this.updateFileProgress(
+						fileId,
+						data.percent,
+						data.byteSent,
+						data.byteTotal,
+						FileStatus.upload,
+					);
+					const textCurrent = formatFileSize(data.byteSent);
+					const textTotal = formatFileSize(data.byteTotal);
+					const textProgress = `${textCurrent} / ${textTotal}`;
+
+					const oneMB = 1_048_576;
+					if (data.byteSent < oneMB)
+					{
+						this.updateLoadTextProgressToModelDebounce(params.temporaryMessageId, textProgress);
+					}
+					else
+					{
+						this.updateLoadTextProgressToModel(params.temporaryMessageId, textProgress);
+					}
+
 					if (data.percent === 100)
 					{
 						this.updateMessageSending(params.temporaryMessageId, false);
@@ -61,16 +90,14 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 				})
 				.on(UploaderManagerEvent.done, (fileId, data) => {
 					Logger.info('UploaderManagerEvent.done', fileId, data);
-
 					const params = data.file.params;
 					const file = data.result.data.file;
+					const size = file.size;
 
-					this.updateFileProgress(fileId, 100, FileStatus.wait);
+					this.updateFileProgress(fileId, 100, size, size, FileStatus.wait);
 					if (!this.uploadRegistry[fileId])
 					{
 						Logger.warn('UploaderManagerEvent.done: file upload was canceled: ', fileId, data);
-
-						return;
 					}
 
 					const realFileId = file.customData.fileId;
@@ -84,17 +111,33 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 							chatId: this.getDialog(params.dialogId).chatId,
 							temporaryMessageId: params.temporaryMessageId,
 							temporaryFileId: fileId,
-							realFileId: realFileId,
+							realFileId,
 							fromDisk: false,
 						});
+						if (this.uploadGenerator)
+						{
+							this.uploadGenerator.next();
+						}
 					});
 				})
 				.on(UploaderManagerEvent.error, (fileId, data) => {
 					Logger.error('UploaderManagerEvent.error', fileId, data);
 
-					this.updateFileProgress(fileId, 0, FileStatus.error);
+					this.updateFileProgress(fileId, 0, 0, 0, FileStatus.error);
 				})
 			;
+		}
+
+		/**
+		 * @desc Update progress text to message model
+		 * @param {string} messageId
+		 * @param {string} textProgress
+		 */
+		updateLoadTextProgressToModel(messageId, textProgress) {
+			this.store.dispatch('messagesModel/updateLoadTextProgress', {
+				id: messageId,
+				loadText: textProgress,
+			});
 		}
 
 		getDiskFolderId(dialogId)
@@ -145,6 +188,43 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 			const uploadTask = await this.uploadManager.addUploadTaskByMessage(messageWithFile);
 
 			return this.addFileToModelByUploadTask(uploadTask);
+		}
+
+		/**
+		 * @desc Start upload files generator
+		 * @param {Array<Object>} messagesWithFiles
+		 * @param {Function} callBackSend
+		 */
+		uploadFiles(messagesWithFiles, callBackSend)
+		{
+			this.uploadGenerator = this.getUploadGenerator(messagesWithFiles, callBackSend);
+			this.uploadGenerator.next();
+		}
+
+		/**
+		 * @desc Init async generate upload files
+		 * 1 - at the beginning, prepare all the files and send them for viewing
+		 * 2 - then, yield start client.addTask(task) = start upload file
+		 * @param {Array<Object>} messagesWithFiles
+		 * @param {Function} callBackSend
+		 */
+		async* getUploadGenerator(messagesWithFiles, callBackSend)
+		{
+			const tasks = [];
+			for await (const file of messagesWithFiles)
+			{
+				this.addFileToUploadRegistry(file.temporaryFileId, file);
+				const { fileData, task } = await this.uploadManager.getFileDataAndTask(file);
+				await this.addFileToModelByUploadTask(fileData);
+				callBackSend(file);
+				tasks.push(task);
+			}
+
+			for (const task of tasks)
+			{
+				this.uploadManager.client.addTask(task);
+				yield task;
+			}
 		}
 
 		cancelFileUpload(temporaryMessageId, temporaryFileId)
@@ -215,14 +295,16 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 		/**
 		 * @private
 		 */
-		updateFileProgress(id, progress, status)
+		updateFileProgress(id, progress, byteSent, byteTotal, status)
 		{
-			return this.store.dispatch('filesModel/update', {
+			return this.store.dispatch('filesModel/set', {
 				id,
-				fields: {
-					progress: (progress === 100 ? 99 : progress),
-					status,
+				progress: (progress === 100 ? 99 : progress),
+				uploadData: {
+					byteSent,
+					byteTotal,
 				},
+				status,
 			});
 		}
 
@@ -273,7 +355,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 		{
 			const userId = core.getUserId();
 
-			return this.store.getters['usersModel/getUserById'](userId);
+			return this.store.getters['usersModel/getById'](userId);
 		}
 
 		/**
@@ -326,9 +408,9 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 					chat_id: this.getChatIdByDialogId(dialogId),
 				};
 				BX.rest.callMethod(RestMethod.imDiskFolderGet, diskFolderGetOptions)
-					.then((response) => {
+					.then(async (response) => {
 						const diskFolderId = response.data().ID;
-						this.store.commit('dialoguesModel/update', {
+						await this.store.dispatch('dialoguesModel/update', {
 							dialogId,
 							fields: {
 								diskFolderId,
@@ -394,15 +476,37 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 		 */
 		async uploadPreview({ fileId, fileName, previewLocalUrl })
 		{
-			return Promise.resolve();
-
-			// TODO: find replacement for FormData in mobile app and implement preview uploading.
 			if (!previewLocalUrl)
 			{
 				return Promise.reject(new Error('FileService.uploadPreview: previewLocalUrl is empty'));
 			}
 
-			const file = await Filesystem.getFile(previewLocalUrl);
+			const previewName = `preview_${fileName}.jpg`;
+			const previewData = await this.getPreviewByLocalUrl(previewLocalUrl);
+
+			const boundary = `immobileFormBoundary${Uuid.getV4()}`;
+			const config = {
+				headers: {
+					'Content-Type': `multipart/form-data; boundary=${boundary}`,
+				},
+				data: `--${boundary}\r\n`
+					+ `Content-Disposition: form-data; name="id"\r\n\r\n${fileId}\r\n`
+					+ `--${boundary}\r\n`
+					+ `Content-Disposition: form-data; name="previewFile"; filename="${previewName}"\r\n`
+					+ `Content-Type: image/jpeg\r\n\r\n${previewData}\r\n\r\n`
+					+ `--${boundary}--`,
+				binary: true,
+				prepareData: false,
+			};
+
+			return BX.ajax.runAction(RestMethod.imDiskFilePreviewUpload, config).catch((error) => {
+				Logger.error('FileService.uploadPreview: upload request error', error);
+			});
+		}
+
+		async getPreviewByLocalUrl(localUrl)
+		{
+			const file = await Filesystem.getFile(localUrl);
 
 			return new Promise((resolve, reject) => {
 				const reader = new Reader();
@@ -410,19 +514,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 
 				reader.on('loadEnd', (event) => {
 					const previewFile = event.result;
-
-					// const formData = new FormData();
-					// formData.append('id', fileId);
-					// formData.append('previewFile', previewFile, `preview_${fileName}.jpg`);
-
-					const formData = {
-						id: fileId,
-						previewFile,
-					};
-
-					return BX.ajax.runAction(RestMethod.imDiskFilePreviewUpload, { data: formData }).catch((error) => {
-						Logger.error('FileService.uploadPreview: upload request error', error);
-					});
+					resolve(previewFile);
 				});
 
 				reader.on('error', () => {

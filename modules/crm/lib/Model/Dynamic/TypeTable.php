@@ -44,6 +44,22 @@ use Bitrix\Main\Security\Random;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UserField;
 
+/**
+ * Class TypeTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Type_Query query()
+ * @method static EO_Type_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_Type_Result getById($id)
+ * @method static EO_Type_Result getList(array $parameters = [])
+ * @method static EO_Type_Entity getEntity()
+ * @method static \Bitrix\Crm\Model\Dynamic\Type createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Model\Dynamic\EO_Type_Collection createCollection()
+ * @method static \Bitrix\Crm\Model\Dynamic\Type wakeUpObject($row)
+ * @method static \Bitrix\Crm\Model\Dynamic\EO_Type_Collection wakeUpCollection($rows)
+ */
 class TypeTable extends UserField\Internal\TypeDataManager
 {
 	protected const MAX_TRIES_GENERATE_NAME = 5;

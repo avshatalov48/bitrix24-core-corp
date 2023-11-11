@@ -18,6 +18,7 @@ return array(
 				'\\Bitrix\\Crm\\Controller\\Ads' => 'ads',
 				'\\Bitrix\\Crm\\Controller\\Mobile' => 'mobile',
 				'\\Bitrix\\Crm\\Controller\\Mail' => 'mail',
+				'\\Bitrix\\Crm\\Controller\\Timeline' => 'timeline',
 			],
 			'restIntegration' => [
 				'enabled' => true,

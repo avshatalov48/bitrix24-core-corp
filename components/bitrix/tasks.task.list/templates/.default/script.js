@@ -1,3 +1,4 @@
+/* eslint-disable */
 BX.namespace('BX.Tasks.Grid');
 
 BX.Tasks.GridActions = {
@@ -1697,7 +1698,7 @@ BX(function() {
 					this.getGrid().getRows().reset();
 
 					var moveRows = this.getGridMoveRows(rowId, parameters);
-					this.moveRow(rowId, moveRows.rowAfter, moveRows.rowBefore);
+					this.moveRow(rowId, moveRows.rowAfter);
 				}
 				this.highlightGridRow(rowId).then(function() {
 					this.colorPinnedRows();
@@ -1749,14 +1750,15 @@ BX(function() {
 			};
 		},
 
-		moveRow: function(rowId, after, before) {
+		moveRow: function(rowId, after) {
 			if (after)
 			{
 				this.getGrid().getRows().insertAfter(rowId, after);
 			}
-			else if (before)
+			else
 			{
-				this.getGrid().getRows().insertBefore(rowId, before);
+				const firstRow = this.getGrid().getRows().getBodyFirstChild();
+				this.getGrid().getRows().insertBefore(rowId, firstRow.getId());
 			}
 		},
 
@@ -3007,15 +3009,45 @@ this.BX = this.BX || {};
 	      return result;
 	    }
 	  }, {
+	    key: "getItemsByType",
+	    value: function getItemsByType(poolItems, type) {
+	      var result = [];
+	      Object.keys(poolItems).forEach(function (key) {
+	        var poolItem = poolItems[key];
+	        if (Object.keys(poolItem)[0] === type) {
+	          result.push(poolItem[type].fields);
+	        }
+	      });
+	      return result;
+	    }
+	  }, {
+	    key: "sortedById",
+	    value: function sortedById(items) {
+	      items.sort(function (l, r) {
+	        return l.id > r.id ? 1 : r.id < r.id ? -1 : 0;
+	      });
+	      return items;
+	    }
+	  }, {
 	    key: "prepareByPoolToEmit",
 	    value: function prepareByPoolToEmit(items) {
 	      var result = [];
+	      var action = Action.USER_OPTION_CHANGED;
 	      Object.keys(items).forEach(function (key) {
 	        var item = items[key];
 	        var poolItems = item['default'].fields.params.items;
 	        var repository = item['default'].fields.params.repository;
+	        var poolItem = {};
+	        var sortedItems = ControllerTask.sortedById(ControllerTask.getItemsByType(poolItems, action));
 	        Object.keys(poolItems).forEach(function (key) {
-	          var poolItem = poolItems[key];
+	          if (Object.keys(poolItems[key])[0] === action) {
+	            // ORDER actions user_option_changed BY ASC
+	            poolItem = babelHelpers.defineProperty({}, action, {
+	              fields: sortedItems.shift()
+	            });
+	          } else {
+	            poolItem = poolItems[key];
+	          }
 	          result.push({
 	            poolItem: poolItem,
 	            repository: repository

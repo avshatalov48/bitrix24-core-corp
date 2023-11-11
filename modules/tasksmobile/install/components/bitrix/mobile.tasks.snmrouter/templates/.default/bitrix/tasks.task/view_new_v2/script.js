@@ -1,8 +1,10 @@
 ;(function() {
 	var BX = window.BX;
-	if (BX && BX["Mobile"] && BX["Mobile"]["Tasks"] && BX["Mobile"]["Tasks"]["detail"])
+	if (BX && BX.Mobile && BX.Mobile.Tasks && BX.Mobile.Tasks.detail)
+	{
 		return;
-	BX.namespace("BX.Mobile.Tasks.detail");
+	}
+	BX.namespace('BX.Mobile.Tasks.detail');
 
 	BX.Mobile.Tasks.detail = function(opts, nf)
 	{

@@ -1,0 +1,7 @@
+<?php
+$MESS["CRM_ACTIVITY_TODO_PING_OFFSET_0_MIN"] = "When event starts";
+$MESS["CRM_ACTIVITY_TODO_PING_OFFSET_1_DAY"] = "1 day before";
+$MESS["CRM_ACTIVITY_TODO_PING_OFFSET_1_HOUR"] = "1 hour before";
+$MESS["CRM_ACTIVITY_TODO_PING_OFFSET_2_HOURS"] = "2 hours before";
+$MESS["CRM_ACTIVITY_TODO_PING_OFFSET_15_MIN"] = "15 minutes before";
+$MESS["CRM_ACTIVITY_TODO_PING_OFFSET_30_MIN"] = "30 minutes before";

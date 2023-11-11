@@ -11,10 +11,12 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\UI\Filter;
 
+use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Internals\Counter\Deadline;
 use Bitrix\Tasks\Internals\Counter\EffectiveTable;
 use Bitrix\Tasks\Internals\Task\MemberTable;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Update\EfficiencyRecount;
 use Bitrix\Tasks\Util\Type\DateTime;
 
@@ -308,7 +310,7 @@ class Effective
 			$userId,
 			[
 				'module_id' => 'tasks',
-				'command' => 'user_efficiency_counter',
+				'command' => PushCommand::EFFICIENCY_RECOUNTED,
 				'params' => [
 					'value' => $efficiency,
 				],
@@ -568,7 +570,7 @@ class Effective
 			)
 			->where('CLOSED_DATE', NULL)
 			->where('DEADLINE', '<', Deadline::getExpiredTime())
-			->where('STATUS', '<', \CTasks::STATE_SUPPOSEDLY_COMPLETED)
+			->where('STATUS', '<', Status::SUPPOSEDLY_COMPLETED)
 			->where(($groupId? Query::filter()->where('GROUP_ID', $groupId) : []));
 
 		$count = $query->exec()->fetch();
@@ -625,7 +627,7 @@ class Effective
 					->where(
 						Query::filter()
 							->where('CLOSED_DATE', NULL)
-							->where('STATUS', '<>', \CTasks::STATE_DEFERRED)
+							->where('STATUS', '<>', Status::DEFERRED)
 					)
 					->where($expressions['DATE'], $expressions['NOW'])
 			)
@@ -823,7 +825,7 @@ class Effective
 					->where('CLOSED_DATE', '>=', $dateFrom)
 					->where('CLOSED_DATE', NULL)
 			)
-			->where('STATUS', '<>', \CTasks::STATE_DEFERRED)
+			->where('STATUS', '<>', Status::DEFERRED)
 			->where(($groupId? Query::filter()->where('GROUP_ID', $groupId) : []));
 
 		$count = $query->exec()->fetch();
@@ -1027,7 +1029,7 @@ class Effective
 					->where('CLOSED_DATE', '>=', $dateFrom)
 					->where('CLOSED_DATE', NULL)
 			)
-			->where('STATUS', '<>', \CTasks::STATE_DEFERRED)
+			->where('STATUS', '<>', Status::DEFERRED)
 			->where((!empty($groupIds) ? Query::filter()->whereIn('GROUP_ID', $groupIds) : []));
 
 		$count = array_fill_keys($groupIds, 0);

@@ -569,6 +569,11 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			}
 		}
 
+		if (Loader::includeModule("bitrix24") && \Bitrix\Bitrix24\Integrator::isIntegrator($user["ID"]))
+		{
+			$user["STATUS"] = "integrator";
+		}
+
 		if ($user["ACTIVE"] === "N")
 		{
 			$user["STATUS"] = "fired";

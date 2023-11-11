@@ -118,6 +118,69 @@ jn.define('im/messenger/provider/service/classes/sending/upload-manager', (requi
 			};
 		}
 
+		/**
+		 * @desc Returns prepare file data and done task
+		 * @param {Object} messageWithFile
+		 * @return {object} {fileData,task}
+		 */
+		async getFileDataAndTask(messageWithFile)
+		{
+			const {
+				dialogId,
+				temporaryMessageId,
+				temporaryFileId,
+				deviceFile,
+				diskFolderId,
+			} = messageWithFile;
+
+			const fileInfo = await Filesystem.getFile(deviceFile.url);
+			const taskOptions = {
+				taskId: temporaryFileId,
+				resize: false,
+				type: fileInfo.type,
+				mimeType: fileInfo.type,
+				folderId: diskFolderId,
+				name: fileInfo.name,
+				url: deviceFile.url,
+				params: {
+					dialogId,
+					temporaryMessageId,
+				},
+			};
+
+			const fileType = fileInfo.type.split('/')[0];
+			if (
+				fileType === FileType.image
+				|| fileType === FileType.video
+			)
+			{
+				taskOptions.resize = {
+					height: 1080,
+					width: 1920,
+					quality: 80,
+				};
+			}
+
+			const task = new UploadTask(taskOptions);
+
+			return {
+				fileData: {
+					taskId: temporaryFileId,
+					file: {
+						...deviceFile,
+						name: fileInfo.name,
+						size: fileInfo.size,
+						extension: fileInfo.extension,
+						path: fileInfo.path,
+						type: fileInfo.type,
+						start: fileInfo.start,
+						end: fileInfo.end,
+					},
+				},
+				task,
+			};
+		}
+
 		cancelTask(id)
 		{
 			this.client.cancelTask(id);

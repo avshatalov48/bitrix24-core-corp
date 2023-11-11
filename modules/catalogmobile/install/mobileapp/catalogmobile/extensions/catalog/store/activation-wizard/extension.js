@@ -3,6 +3,7 @@
  */
 jn.define('catalog/store/activation-wizard', (require, exports, module) => {
 	const STORE_CONTROL_DISABLED_CONDUCT_ERROR_CODE = 'store_control_disabled_conduct';
+	const REALIZATION_NOT_USED_INVENTORY_MANAGEMENT_ERROR_CODE = 'REALIZATION_NOT_USED_INVENTORY_MANAGEMENT';
 
 	/**
 	 * @class CatalogStoreActivationWizard
@@ -36,7 +37,10 @@ jn.define('catalog/store/activation-wizard', (require, exports, module) => {
 		{
 			return (
 				responseErrors
-					.filter((error) => error.code === STORE_CONTROL_DISABLED_CONDUCT_ERROR_CODE)
+					.filter((error) =>
+						error.code === STORE_CONTROL_DISABLED_CONDUCT_ERROR_CODE
+						|| error.code === REALIZATION_NOT_USED_INVENTORY_MANAGEMENT_ERROR_CODE
+					)
 					.length > 0
 			);
 		}

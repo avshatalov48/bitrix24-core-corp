@@ -466,7 +466,7 @@ foreach ($ufIndexableFields as $ixNameSuffix => $ufIndexableField)
 		// IX_UTS_INVOICE_CONTACT_ID
 		// IX_UTS_INVOICE_COMPANY_ID
 		$inName = 'IX_UTS_INVOICE_' . $ixNameSuffix;
-		$DB->Query("ALTER TABLE b_uts_crm_invoice ADD INDEX {$inName} ({$ufIndexableField})");
+		$DB->Query("CREATE INDEX {$inName} ON b_uts_crm_invoice({$ufIndexableField})");
 	}
 }
 

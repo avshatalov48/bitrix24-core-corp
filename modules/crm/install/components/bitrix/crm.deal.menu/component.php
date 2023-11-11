@@ -279,7 +279,7 @@ if ($arParams['TYPE'] === 'details')
 				),
 				'CODE' => 'convert',
 				'TEXT' => GetMessage('DEAL_CREATE_ON_BASIS'),
-				'TITLE' => GetMessage('DEAL_CREATE_ON_BASIS_TITLE'),
+				'TITLE' => GetMessage('DEAL_CREATE_ON_BASIS_TITLE_MSGVER_1'),
 				'ICON' => 'btn-convert'
 			);
 		}
@@ -848,7 +848,7 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show')
 		),
 		'CODE' => 'convert',
 		'TEXT' => GetMessage('DEAL_CREATE_ON_BASIS'),
-		'TITLE' => GetMessage('DEAL_CREATE_ON_BASIS_TITLE'),
+		'TITLE' => GetMessage('DEAL_CREATE_ON_BASIS_TITLE_MSGVER_1'),
 		'ICON' => $isPermitted ? 'btn-convert' : 'btn-convert-blocked'
 	);
 }

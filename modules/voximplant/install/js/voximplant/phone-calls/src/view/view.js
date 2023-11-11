@@ -3,15 +3,18 @@
  */
 
 import {Dom, Type, Text, Runtime, Loc, Uri} from 'main.core';
-import {Popup, Menu} from 'main.popup'
-import {BackgroundWorker, backgroundWorkerEvents} from './background-worker'
-import {FormManager} from './form-manager'
-import {CallList} from './call-list'
-import {FoldedCallView} from './folded-view'
-import {Desktop} from './desktop'
-import {Keypad} from './keypad'
-import type {Dialog} from 'ui.entity-selector'
-import {baseZIndex, nop} from './common'
+import {Popup, Menu} from 'main.popup';
+import {DesktopApi} from 'im.v2.lib.desktop-api';
+import {BackgroundWorker, backgroundWorkerEvents} from './background-worker';
+import {FormManager} from './form-manager';
+import {CallList} from './call-list';
+import {FoldedCallView} from './folded-view';
+import {Desktop} from './desktop';
+import {Keypad} from './keypad';
+import type {Dialog} from 'ui.entity-selector';
+import {baseZIndex, nop} from './common';
+
+import type {MessengerFacade} from '../controller';
 
 export const Direction = {
 	incoming: 'incoming',
@@ -129,6 +132,8 @@ export type PhoneCallViewParams = {
 	companyPhoneNumber: ?string,
 	direction: string, /** @see Direction */
 	uiState: number, /** @see UiState */
+	backgroundWorker: BackgroundWorker,
+	foldedCallView: FoldedCallView,
 
 	fromUserId: ?number,
 	toUserId: ?number,
@@ -168,6 +173,7 @@ export type PhoneCallViewParams = {
 	skipOnResize: ?boolean,
 
 	isExternalCall: ?boolean,
+	isDesktop: ?boolean,
 
 	restApps: RestApp[],
 }
@@ -203,6 +209,9 @@ export class PhoneCallView
 	popup: ?Popup
 	restApps: RestApp[]
 	formManager: ?FormManager
+	foldedCallView: FoldedCallView
+	messengerFacade: ?MessengerFacade
+	backgroundWorker: BackgroundWorker
 
 	constructor(params: PhoneCallViewParams)
 	{
@@ -321,9 +330,6 @@ export class PhoneCallView
 		this._onQualityMeterClickHandler = this._onQualityMeterClick.bind(this);
 		this._onPullEventCrmHandler = this._onPullEventCrm.bind(this);
 
-		this._externalEventHandler = this._onExternalEvent.bind(this);
-		this._unloadHandler = this._onWindowUnload.bind(this);
-
 		// tabs
 		this.hiddenTabs = [];
 		this.currentTabName = '';
@@ -354,15 +360,18 @@ export class PhoneCallView
 		this.skipOnResize = params.skipOnResize === true;
 		this.desktop = new Desktop({
 			parentPhoneCallView: this,
-			closable: (this.callListId > 0 ? true : this.closable)
+			closable: (this.callListId > 0 ? true : this.closable),
 		});
 
 		this.currentLayout = (this.callListId > 0 ? layouts.crm : layouts.simple);
 
-		// TODO: make this decent somehow
-		this.backgroundWorker = BackgroundWorker.getInstance();
+		this.backgroundWorker = params.backgroundWorker;
 		this.backgroundWorker.setCallCard(this);
 		this.backgroundWorker.setExternalCall(!!params.isExternalCall);
+
+		this._isDesktop = params.messengerFacade ? params.messengerFacade.isDesktop() : params.isDesktop === true;
+		this.messengerFacade = params.messengerFacade;
+		this.foldedCallView = params.foldedCallView;
 
 		this.init();
 
@@ -376,8 +385,6 @@ export class PhoneCallView
 		{
 			this.setUiState(params['uiState']);
 		}
-
-		window.test = this;
 	}
 
 	getInitialElements()
@@ -433,7 +440,7 @@ export class PhoneCallView
 
 	init()
 	{
-		if (BX.MessengerCommon.isDesktop() && !this.slave)
+		if (this.isDesktop() && !this.slave)
 		{
 			this.desktop.openCallWindow('', null, {
 				width: this.getInitialWidth(),
@@ -444,7 +451,7 @@ export class PhoneCallView
 			});
 			this.bindMasterDesktopEvents();
 
-			window.addEventListener('beforeunload', this._unloadHandler); //master window unload
+			window.addEventListener('beforeunload', this.#onWindowUnload); //master window unload
 			return;
 		}
 
@@ -463,7 +470,7 @@ export class PhoneCallView
 		else
 		{
 			this.popup = this.createPopup();
-			BX.addCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
+			BX.addCustomEvent(window, "onLocalStorageSet", this.#onExternalEvent);
 		}
 
 		if (this.callListId > 0)
@@ -482,6 +489,7 @@ export class PhoneCallView
 					statusId: this.callListStatusId,
 					itemIndex: this.callListItemIndex,
 					makeCall: this.makeCall,
+					isDesktop: this.isDesktop,
 					onSelectedItem: this.onCallListSelectedItem.bind(this)
 				});
 
@@ -520,7 +528,7 @@ export class PhoneCallView
 
 	show()
 	{
-		if(!this.popup && this.isDesktop())
+		if (!this.popup && this.isDesktop())
 		{
 			return;
 		}
@@ -1367,7 +1375,7 @@ export class PhoneCallView
 			}
 			else
 			{
-				BX.desktop.onCustomEvent(desktopEvents.setTitle, [title]);
+				DesktopApi.emit(desktopEvents.setTitle, [title]);
 			}
 		}
 
@@ -1425,7 +1433,7 @@ export class PhoneCallView
 	{
 		if (this.isDesktop() && !this.slave)
 		{
-			BX.desktop.onCustomEvent(desktopEvents.setStatus, [statusText]);
+			DesktopApi.emit(desktopEvents.setStatus, [statusText]);
 			return;
 		}
 
@@ -1574,7 +1582,7 @@ export class PhoneCallView
 
 		if (this.isDesktop() && !this.slave)
 		{
-			BX.desktop.onCustomEvent(desktopEvents.setUiState, [uiState]);
+			DesktopApi.emit(desktopEvents.setUiState, [uiState]);
 			return;
 		}
 		this.renderButtons();
@@ -1700,7 +1708,7 @@ export class PhoneCallView
 
 		if (this.isDesktop() && !this.slave)
 		{
-			BX.desktop.onCustomEvent(desktopEvents.setDeviceCall, [deviceCall]);
+			DesktopApi.emit(desktopEvents.setDeviceCall, [deviceCall]);
 		}
 	};
 
@@ -1714,7 +1722,7 @@ export class PhoneCallView
 
 		if (this.isDesktop() && !this.slave)
 		{
-			BX.desktop.onCustomEvent(desktopEvents.setCrmEntity, [params]);
+			DesktopApi.emit(desktopEvents.setCrmEntity, [params]);
 		}
 	};
 
@@ -1736,7 +1744,7 @@ export class PhoneCallView
 			'CRM_ENTITY_ID': entityId,
 			'PHONE_NUMBER': this.phoneNumber
 		}]);
-		this.backgroundWorker.emitEvent(backgroundWorkerEvents.entityChanged,{
+		this.backgroundWorker.emitEvent(backgroundWorkerEvents.entityChanged, {
 			'CRM_ENTITY_TYPE': entityType,
 			'CRM_ENTITY_ID': entityId,
 			'PHONE_NUMBER': this.phoneNumber
@@ -1783,7 +1791,7 @@ export class PhoneCallView
 	{
 		if (this.isDesktop() && !this.slave)
 		{
-			BX.desktop.onCustomEvent(desktopEvents.reloadCrmCard, []);
+			DesktopApi.emit(desktopEvents.reloadCrmCard, []);
 		}
 		else
 		{
@@ -1857,7 +1865,7 @@ export class PhoneCallView
 	{
 		if (this.isDesktop() && !this.slave)
 		{
-			BX.desktop.onCustomEvent(message, parameters);
+			DesktopApi.emit(message, parameters);
 		}
 	};
 
@@ -2640,7 +2648,7 @@ export class PhoneCallView
 			Dom.removeClass(this.elements.buttons.hold, 'active');
 			if (this.isDesktop() && this.slave)
 			{
-				BX.desktop.onCustomEvent(desktopEvents.onUnHold, []);
+				DesktopApi.emit(desktopEvents.onUnHold, []);
 			}
 			else
 			{
@@ -2653,14 +2661,14 @@ export class PhoneCallView
 			Dom.addClass(this.elements.buttons.hold, 'active');
 			if (this.isDesktop() && this.slave)
 			{
-				BX.desktop.onCustomEvent(desktopEvents.onHold, []);
+				DesktopApi.emit(desktopEvents.onHold, []);
 			}
 			else
 			{
 				this.callbacks.hold();
 			}
 		}
-		this.backgroundWorker.emitEvent(backgroundWorkerEvents.holdButtonClick,this.isHeld())
+		this.backgroundWorker.emitEvent(backgroundWorkerEvents.holdButtonClick, this.isHeld())
 	};
 
 	_onMuteButtonClick()
@@ -2671,7 +2679,7 @@ export class PhoneCallView
 			Dom.removeClass(this.elements.buttons.mute, 'active');
 			if (this.isDesktop() && this.slave)
 			{
-				BX.desktop.onCustomEvent(desktopEvents.onUnMute, []);
+				DesktopApi.emit(desktopEvents.onUnMute, []);
 			}
 			else
 			{
@@ -2684,7 +2692,7 @@ export class PhoneCallView
 			Dom.addClass(this.elements.buttons.mute, 'active');
 			if (this.isDesktop() && this.slave)
 			{
-				BX.desktop.onCustomEvent(desktopEvents.onMute, []);
+				DesktopApi.emit(desktopEvents.onMute, []);
 			}
 			else
 			{
@@ -2701,7 +2709,7 @@ export class PhoneCallView
 			this.backgroundWorker.emitEvent(backgroundWorkerEvents.transferButtonClick, result)
 			if (this.isDesktop() && this.slave)
 			{
-				BX.desktop.onCustomEvent(desktopEvents.onStartTransfer, [result]);
+				DesktopApi.emit(desktopEvents.onStartTransfer, [result]);
 			}
 			else
 			{
@@ -2715,7 +2723,7 @@ export class PhoneCallView
 		this.backgroundWorker.emitEvent(backgroundWorkerEvents.completeTransferButtonClick);
 		if (this.isDesktop() && this.slave)
 		{
-			BX.desktop.onCustomEvent(desktopEvents.onCompleteTransfer, []);
+			DesktopApi.emit(desktopEvents.onCompleteTransfer, []);
 		}
 		else
 		{
@@ -2728,7 +2736,7 @@ export class PhoneCallView
 		this.backgroundWorker.emitEvent(backgroundWorkerEvents.cancelTransferButtonClick);
 		if (this.isDesktop() && this.slave)
 		{
-			BX.desktop.onCustomEvent(desktopEvents.onCancelTransfer, []);
+			DesktopApi.emit(desktopEvents.onCancelTransfer, []);
 		}
 		else
 		{
@@ -2746,7 +2754,7 @@ export class PhoneCallView
 				var key = e.key;
 				if (this.isDesktop() && this.slave)
 				{
-					BX.desktop.onCustomEvent(desktopEvents.onDialpadButtonClicked, [key]);
+					DesktopApi.emit(desktopEvents.onDialpadButtonClicked, [key]);
 				}
 				else
 				{
@@ -2768,7 +2776,7 @@ export class PhoneCallView
 		this.backgroundWorker.emitEvent(backgroundWorkerEvents.hangupButtonClick);
 		if (this.isDesktop() && this.slave)
 		{
-			BX.desktop.onCustomEvent(desktopEvents.onHangup, []);
+			DesktopApi.emit(desktopEvents.onHangup, []);
 		}
 		else
 		{
@@ -2781,7 +2789,7 @@ export class PhoneCallView
 		this.backgroundWorker.emitEvent(backgroundWorkerEvents.closeButtonClick);
 		if (this.isDesktop() && this.slave)
 		{
-			BX.desktop.onCustomEvent(desktopEvents.onClose, []);
+			DesktopApi.emit(desktopEvents.onClose, []);
 		}
 		else
 		{
@@ -2822,7 +2830,7 @@ export class PhoneCallView
 
 						if (this.isDesktop() && this.slave)
 						{
-							BX.desktop.onCustomEvent(desktopEvents.onCallListMakeCall, [event]);
+							DesktopApi.emit(desktopEvents.onCallListMakeCall, [event]);
 						}
 						else
 						{
@@ -2841,7 +2849,7 @@ export class PhoneCallView
 				event.callListId = this.callListId;
 				if (this.isDesktop() && this.slave)
 				{
-					BX.desktop.onCustomEvent(desktopEvents.onCallListMakeCall, [event]);
+					DesktopApi.emit(desktopEvents.onCallListMakeCall, [event]);
 				}
 				else
 				{
@@ -2869,7 +2877,7 @@ export class PhoneCallView
 
 						if (this.isDesktop() && this.slave)
 						{
-							BX.desktop.onCustomEvent(desktopEvents.onCallListMakeCall, [event]);
+							DesktopApi.emit(desktopEvents.onCallListMakeCall, [event]);
 						}
 						else
 						{
@@ -2883,7 +2891,7 @@ export class PhoneCallView
 		{
 			if (this.isDesktop() && this.slave)
 			{
-				BX.desktop.onCustomEvent(desktopEvents.onMakeCall, [this.phoneNumber]);
+				DesktopApi.emit(desktopEvents.onMakeCall, [this.phoneNumber]);
 			}
 			else
 			{
@@ -2920,7 +2928,7 @@ export class PhoneCallView
 		this.commentShown = !this.commentShown;
 		if (this.isDesktop() && this.slave)
 		{
-			BX.desktop.onCustomEvent(desktopEvents.onCommentShown, [this.commentShown]);
+			DesktopApi.emit(desktopEvents.onCommentShown, [this.commentShown]);
 		}
 
 		if (this.commentShown)
@@ -2957,7 +2965,7 @@ export class PhoneCallView
 
 			if (this.isDesktop() && this.slave)
 			{
-				BX.desktop.onCustomEvent(desktopEvents.onSaveComment, [this.comment]);
+				DesktopApi.emit(desktopEvents.onSaveComment, [this.comment]);
 			}
 			else
 			{
@@ -3054,7 +3062,7 @@ export class PhoneCallView
 		this.backgroundWorker.emitEvent(backgroundWorkerEvents.answerButtonClick);
 		if (this.isDesktop() && this.slave)
 		{
-			BX.desktop.onCustomEvent(desktopEvents.onAnswer, []);
+			DesktopApi.emit(desktopEvents.onAnswer, []);
 		}
 		else
 		{
@@ -3067,7 +3075,7 @@ export class PhoneCallView
 		this.backgroundWorker.emitEvent(backgroundWorkerEvents.skipButtonClick);
 		if (this.isDesktop() && this.slave)
 		{
-			BX.desktop.onCustomEvent(desktopEvents.onSkip, []);
+			DesktopApi.emit(desktopEvents.onSkip, []);
 		}
 		else
 		{
@@ -3079,7 +3087,7 @@ export class PhoneCallView
 	{
 		if (this.isDesktop() && this.slave)
 		{
-			BX.desktop.onCustomEvent(desktopEvents.onSwitchDevice, [{
+			DesktopApi.emit(desktopEvents.onSwitchDevice, [{
 				phoneNumber: this.phoneNumber
 			}]);
 		}
@@ -3101,7 +3109,7 @@ export class PhoneCallView
 				this.closeQualityPopup();
 				if (this.isDesktop() && this.slave)
 				{
-					BX.desktop.onCustomEvent(desktopEvents.onQualityGraded, [qualityGrade]);
+					DesktopApi.emit(desktopEvents.onQualityGraded, [qualityGrade]);
 				}
 				else
 				{
@@ -3111,8 +3119,10 @@ export class PhoneCallView
 		});
 	};
 
-	_onExternalEvent(params)
+	#onExternalEvent = (params) =>
 	{
+		console.warn('#onExternalEvent', params)
+		return
 		params = Type.isPlainObject(params) ? params : {};
 		params.key = params.key || '';
 
@@ -3221,10 +3231,10 @@ export class PhoneCallView
 		this.updateView();
 	};
 
-	_onWindowUnload()
+	#onWindowUnload = () =>
 	{
 		this.close();
-	};
+	}
 
 	showCallIcon()
 	{
@@ -3526,7 +3536,6 @@ export class PhoneCallView
 
 	foldCallView()
 	{
-		const foldedCallView = FoldedCallView.getInstance();
 		const popupNode = this.popup.getPopupContainer();
 		const overlayNode = this.popup.overlay.element;
 
@@ -3536,7 +3545,7 @@ export class PhoneCallView
 			() =>
 			{
 				this.close();
-				foldedCallView.fold({
+				this.foldedCallView.fold({
 					callListId: this.callListId,
 					webformId: this.webformId,
 					webformSecCode: this.webformSecCode,
@@ -3552,29 +3561,29 @@ export class PhoneCallView
 
 	bindSlaveDesktopEvents()
 	{
-		BX.desktop.addCustomEvent(desktopEvents.setTitle, this.setTitle.bind(this));
-		BX.desktop.addCustomEvent(desktopEvents.setStatus, this.setStatusText.bind(this));
-		BX.desktop.addCustomEvent(desktopEvents.setUiState, this.setUiState.bind(this));
-		BX.desktop.addCustomEvent(desktopEvents.setDeviceCall, this.setDeviceCall.bind(this));
-		BX.desktop.addCustomEvent(desktopEvents.setCrmEntity, this.setCrmEntity.bind(this));
-		BX.desktop.addCustomEvent(desktopEvents.reloadCrmCard, this.reloadCrmCard.bind(this));
-		BX.desktop.addCustomEvent(desktopEvents.setPortalCall, this.setPortalCall.bind(this));
-		BX.desktop.addCustomEvent(desktopEvents.setPortalCallUserId, this.setPortalCallUserId.bind(this));
-		BX.desktop.addCustomEvent(desktopEvents.setPortalCallQueueName, this.setPortalCallQueueName.bind(this));
-		BX.desktop.addCustomEvent(desktopEvents.setPortalCallData, this.setPortalCallData.bind(this));
-		BX.desktop.addCustomEvent(desktopEvents.setConfig, this.setConfig.bind(this));
-		BX.desktop.addCustomEvent(desktopEvents.setCallId, this.setCallId.bind(this));
-		BX.desktop.addCustomEvent(desktopEvents.setLineNumber, this.setLineNumber.bind(this));
-		BX.desktop.addCustomEvent(desktopEvents.setCompanyPhoneNumber, this.setCompanyPhoneNumber.bind(this));
-		BX.desktop.addCustomEvent(desktopEvents.setPhoneNumber, this.setPhoneNumber.bind(this));
-		BX.desktop.addCustomEvent(desktopEvents.setTransfer, this.setTransfer.bind(this));
-		BX.desktop.addCustomEvent(desktopEvents.setCallState, this.setCallState.bind(this));
-		BX.desktop.addCustomEvent(desktopEvents.closeWindow, () => window.close());
+		DesktopApi.subscribe(desktopEvents.setTitle, this.setTitle.bind(this));
+		DesktopApi.subscribe(desktopEvents.setStatus, this.setStatusText.bind(this));
+		DesktopApi.subscribe(desktopEvents.setUiState, this.setUiState.bind(this));
+		DesktopApi.subscribe(desktopEvents.setDeviceCall, this.setDeviceCall.bind(this));
+		DesktopApi.subscribe(desktopEvents.setCrmEntity, this.setCrmEntity.bind(this));
+		DesktopApi.subscribe(desktopEvents.reloadCrmCard, this.reloadCrmCard.bind(this));
+		DesktopApi.subscribe(desktopEvents.setPortalCall, this.setPortalCall.bind(this));
+		DesktopApi.subscribe(desktopEvents.setPortalCallUserId, this.setPortalCallUserId.bind(this));
+		DesktopApi.subscribe(desktopEvents.setPortalCallQueueName, this.setPortalCallQueueName.bind(this));
+		DesktopApi.subscribe(desktopEvents.setPortalCallData, this.setPortalCallData.bind(this));
+		DesktopApi.subscribe(desktopEvents.setConfig, this.setConfig.bind(this));
+		DesktopApi.subscribe(desktopEvents.setCallId, this.setCallId.bind(this));
+		DesktopApi.subscribe(desktopEvents.setLineNumber, this.setLineNumber.bind(this));
+		DesktopApi.subscribe(desktopEvents.setCompanyPhoneNumber, this.setCompanyPhoneNumber.bind(this));
+		DesktopApi.subscribe(desktopEvents.setPhoneNumber, this.setPhoneNumber.bind(this));
+		DesktopApi.subscribe(desktopEvents.setTransfer, this.setTransfer.bind(this));
+		DesktopApi.subscribe(desktopEvents.setCallState, this.setCallState.bind(this));
+		DesktopApi.subscribe(desktopEvents.closeWindow, () => window.close());
 
 		BX.bind(window, "beforeunload", () =>
 		{
 			BX.unbindAll(window, "beforeunload");
-			BX.desktop.onCustomEvent(desktopEvents.onBeforeUnload, []);
+			DesktopApi.emit(desktopEvents.onBeforeUnload, []);
 		});
 
 		BX.bind(window, "resize", Runtime.debounce(() =>
@@ -3601,42 +3610,42 @@ export class PhoneCallView
 		{
 			if(e.keyCode === 27)
 			{
-				BX.desktop.onCustomEvent(desktopEvents.onBeforeUnload, []);
+				DesktopApi.emit(desktopEvents.onBeforeUnload, []);
 			}
 		}.bind(this));*/
 	};
 
 	bindMasterDesktopEvents()
 	{
-		BX.desktop.addCustomEvent(desktopEvents.onHold, () => this.callbacks.hold());
-		BX.desktop.addCustomEvent(desktopEvents.onUnHold, () => this.callbacks.unhold());
-		BX.desktop.addCustomEvent(desktopEvents.onMute, () => this.callbacks.mute());
-		BX.desktop.addCustomEvent(desktopEvents.onUnMute, () => this.callbacks.unmute());
-		BX.desktop.addCustomEvent(desktopEvents.onMakeCall, (phoneNumber) => this.callbacks.makeCall(phoneNumber));
-		BX.desktop.addCustomEvent(desktopEvents.onCallListMakeCall, (e) => this.callbacks.callListMakeCall(e));
-		BX.desktop.addCustomEvent(desktopEvents.onAnswer, () => this.callbacks.answer());
-		BX.desktop.addCustomEvent(desktopEvents.onSkip, () => this.callbacks.skip());
-		BX.desktop.addCustomEvent(desktopEvents.onHangup, () => this.callbacks.hangup());
-		BX.desktop.addCustomEvent(desktopEvents.onClose, () => this.close());
-		BX.desktop.addCustomEvent(desktopEvents.onStartTransfer, (e) => this.callbacks.transfer(e));
-		BX.desktop.addCustomEvent(desktopEvents.onCompleteTransfer, () => this.callbacks.completeTransfer());
-		BX.desktop.addCustomEvent(desktopEvents.onCancelTransfer, () => this.callbacks.cancelTransfer());
-		BX.desktop.addCustomEvent(desktopEvents.onSwitchDevice, (e) => this.callbacks.switchDevice(e));
-		BX.desktop.addCustomEvent(desktopEvents.onBeforeUnload, () =>
+		DesktopApi.subscribe(desktopEvents.onHold, () => this.callbacks.hold());
+		DesktopApi.subscribe(desktopEvents.onUnHold, () => this.callbacks.unhold());
+		DesktopApi.subscribe(desktopEvents.onMute, () => this.callbacks.mute());
+		DesktopApi.subscribe(desktopEvents.onUnMute, () => this.callbacks.unmute());
+		DesktopApi.subscribe(desktopEvents.onMakeCall, (phoneNumber) => this.callbacks.makeCall(phoneNumber));
+		DesktopApi.subscribe(desktopEvents.onCallListMakeCall, (e) => this.callbacks.callListMakeCall(e));
+		DesktopApi.subscribe(desktopEvents.onAnswer, () => this.callbacks.answer());
+		DesktopApi.subscribe(desktopEvents.onSkip, () => this.callbacks.skip());
+		DesktopApi.subscribe(desktopEvents.onHangup, () => this.callbacks.hangup());
+		DesktopApi.subscribe(desktopEvents.onClose, () => this.close());
+		DesktopApi.subscribe(desktopEvents.onStartTransfer, (e) => this.callbacks.transfer(e));
+		DesktopApi.subscribe(desktopEvents.onCompleteTransfer, () => this.callbacks.completeTransfer());
+		DesktopApi.subscribe(desktopEvents.onCancelTransfer, () => this.callbacks.cancelTransfer());
+		DesktopApi.subscribe(desktopEvents.onSwitchDevice, (e) => this.callbacks.switchDevice(e));
+		DesktopApi.subscribe(desktopEvents.onBeforeUnload, () =>
 		{
 			this.desktop.window = null;
 			this.callbacks.hangup();
 			this.callbacks.close();
 		}); //slave window unload
-		BX.desktop.addCustomEvent(desktopEvents.onQualityGraded, (grade) => this.callbacks.qualityGraded(grade));
-		BX.desktop.addCustomEvent(desktopEvents.onDialpadButtonClicked, (grade) => this.callbacks.dialpadButtonClicked(grade));
-		BX.desktop.addCustomEvent(desktopEvents.onCommentShown, (commentShown) => this.commentShown = commentShown);
-		BX.desktop.addCustomEvent(desktopEvents.onSaveComment, (comment) =>
+		DesktopApi.subscribe(desktopEvents.onQualityGraded, (grade) => this.callbacks.qualityGraded(grade));
+		DesktopApi.subscribe(desktopEvents.onDialpadButtonClicked, (grade) => this.callbacks.dialpadButtonClicked(grade));
+		DesktopApi.subscribe(desktopEvents.onCommentShown, (commentShown) => this.commentShown = commentShown);
+		DesktopApi.subscribe(desktopEvents.onSaveComment, (comment) =>
 		{
 			this.comment = comment;
 			this.saveComment();
 		});
-		BX.desktop.addCustomEvent(desktopEvents.onSetAutoClose, (autoClose) => this.autoClose = autoClose);
+		DesktopApi.subscribe(desktopEvents.onSetAutoClose, (autoClose) => this.autoClose = autoClose);
 
 	};
 
@@ -3646,14 +3655,14 @@ export class PhoneCallView
 		{
 			if (desktopEvents.hasOwnProperty(eventId))
 			{
-				BX.desktop.removeCustomEvents(desktopEvents[eventId]);
+				DesktopApi.unsubscribe(desktopEvents[eventId]);
 			}
 		}
 	};
 
 	isDesktop()
 	{
-		return BX.MessengerCommon.isDesktop();
+		return this._isDesktop;
 	};
 
 	isFolded()
@@ -3767,12 +3776,10 @@ export class PhoneCallView
 
 		if (this.desktop.window)
 		{
-			BX.desktop.onCustomEvent(desktopEvents.closeWindow, []);
+			DesktopApi.emit(desktopEvents.closeWindow, []);
 			//this.desktop.window.ExecuteCommand('close');
 			//this.desktop.window = null;
 		}
-		this.backgroundWorker.setCallCard(null);
-		this.backgroundWorker = null;
 
 		this.enableDocumentScroll();
 
@@ -3785,7 +3792,7 @@ export class PhoneCallView
 		this.allowAutoClose = false;
 		if (this.isDesktop() && this.slave)
 		{
-			BX.desktop.onCustomEvent(desktopEvents.onSetAutoClose, [this.allowAutoClose]);
+			DesktopApi.emit(desktopEvents.onSetAutoClose, [this.allowAutoClose]);
 		}
 		this.renderButtons();
 	};
@@ -3795,7 +3802,7 @@ export class PhoneCallView
 		this.allowAutoClose = true;
 		if (this.isDesktop() && this.slave)
 		{
-			BX.desktop.onCustomEvent(desktopEvents.onSetAutoClose, [this.allowAutoClose]);
+			DesktopApi.emit(desktopEvents.onSetAutoClose, [this.allowAutoClose]);
 		}
 		this.renderButtons();
 	};
@@ -3848,6 +3855,12 @@ export class PhoneCallView
 			setTimeout(() => Dom.remove(this.elements.main), 300);
 		}
 
+		if (this.backgroundWorker)
+		{
+			this.backgroundWorker.setCallCard(null);
+			this.backgroundWorker = null;
+		}
+
 		if (this.popup)
 		{
 			this.popup.destroy();
@@ -3876,7 +3889,7 @@ export class PhoneCallView
 			this.unbindDesktopEvents();
 			if (this.desktop.window)
 			{
-				BX.desktop.onCustomEvent(desktopEvents.closeWindow, []);
+				DesktopApi.emit(desktopEvents.closeWindow, []);
 				//this.desktop.window.ExecuteCommand('close');
 				this.desktop.window = null;
 			}
@@ -3990,7 +4003,7 @@ export class PhoneCallView
 						var customData = item.getCustomData();
 						if (customData.get('personalPhone') || customData.get('personalMobile') || customData.get('workPhone'))
 						{
-							showTransferToUserMenu({
+							this.showTransferToUserMenu({
 								userId: item.getId(),
 								customData: Object.fromEntries(customData),
 								darkMode: this.darkMode,
@@ -4053,7 +4066,7 @@ export class PhoneCallView
 						var customData = item.getCustomData();
 						if (customData.get('personalPhone') || customData.get('personalMobile') || customData.get('workPhone'))
 						{
-							showTransferToUserMenu({
+							this.showTransferToUserMenu({
 								userId: item.getId(),
 								customData: Object.fromEntries(customData),
 								darkMode: this.darkMode,
@@ -4085,6 +4098,98 @@ export class PhoneCallView
 			}
 		};
 	}
+
+	showTransferToUserMenu(options: TransferOptions = {})
+	{
+		const userId = Type.isInteger(options.userId) ? options.userId : 0;
+		const userCustomData = Type.isPlainObject(options.customData) ? options.customData : {};
+		const darkMode = options.darkMode === true;
+		const onSelect = Type.isFunction(options.onSelect) ? options.onSelect : nop;
+		let popup;
+
+		const onMenuItemClick = (e) =>
+		{
+			const type = e.currentTarget.dataset["type"];
+			const target = e.currentTarget.dataset["target"];
+			onSelect({
+				type: type,
+				target: target,
+			});
+			popup.close();
+		};
+
+		let menuItems = [
+			{
+				icon: 'bx-messenger-menu-call-voice',
+				text: Loc.getMessage('IM_PHONE_INNER_CALL'),
+				dataset: {
+					type: 'user',
+					target: userId
+				},
+				onclick: onMenuItemClick
+			},
+			{
+				delimiter: true
+			},
+		];
+
+		if (userCustomData["personalMobile"])
+		{
+			menuItems.push({
+				html: renderTransferMenuItem(Loc.getMessage("IM_PHONE_PERSONAL_MOBILE"), Text.encode(userCustomData["personalMobile"])),
+				dataset: {
+					type: 'pstn',
+					target: userCustomData["personalMobile"]
+				},
+				onclick: onMenuItemClick,
+			});
+		}
+		if (userCustomData["personalPhone"])
+		{
+			menuItems.push({
+				type: "call",
+				html: renderTransferMenuItem(Loc.getMessage("IM_PHONE_PERSONAL_PHONE"), Text.encode(userCustomData["personalPhone"])),
+				dataset: {
+					type: 'pstn',
+					target: userCustomData["personalPhone"]
+				},
+				onclick: onMenuItemClick,
+			});
+		}
+		if (userCustomData["workPhone"])
+		{
+			menuItems.push({
+				html: renderTransferMenuItem(Loc.getMessage("IM_PHONE_WORK_PHONE"), Text.encode(userCustomData["workPhone"])),
+				dataset: {
+					type: 'pstn',
+					target: userCustomData["workPhone"]
+				},
+				onclick: onMenuItemClick,
+			});
+		}
+
+		popup = new Menu({
+			id: "bx-messenger-phone-transfer-menu",
+			bindElement: null,
+			targetContainer: document.body,
+			darkMode: darkMode,
+			lightShadow: true,
+			autoHide: true,
+			closeByEsc: true,
+			cacheable: false,
+			overlay: {
+				backgroundColor: '#FFFFFF',
+				opacity: 0
+			},
+			items: menuItems,
+		});
+		popup.show();
+	}
+}
+
+function renderTransferMenuItem(surTitle: string, text: string): string
+{
+	return `<div class="transfer-menu-item-surtitle">${Text.encode(surTitle)}</div><div class="transfer-menu-item-text">${Text.encode(text)}</div>`
 }
 
 function renderSimpleButton(text, className, clickCallback)
@@ -4134,105 +4239,4 @@ type TransferOptions = {
 type TransferTarget = {
 	type: string,
 	target: string,
-}
-
-function showTransferToUserMenu(options: TransferOptions = {})
-{
-	const userId = Type.isInteger(options.userId) ? options.userId : 0;
-	const userCustomData = Type.isPlainObject(options.customData) ? options.customData : {};
-	const darkMode = options.darkMode === true;
-	const onSelect = Type.isFunction(options.onSelect) ? options.onSelect : nop;
-	let popup;
-
-	const onMenuItemClick = (e) =>
-	{
-		const type = e.currentTarget.dataset["type"];
-		const target = e.currentTarget.dataset["target"];
-		onSelect({
-			type: type,
-			target: target,
-		});
-		popup.close();
-	};
-
-	let menuItems = [
-		{
-			icon: 'bx-messenger-menu-call-voice',
-			text: Loc.getMessage('IM_PHONE_INNER_CALL'),
-			dataset: {
-				type: 'user',
-				target: userId
-			},
-			onclick: onMenuItemClick
-		},
-		{
-			separator: true
-		},
-	];
-
-	if (userCustomData["personalMobile"])
-	{
-		menuItems.push({
-			type: "call",
-			text: Loc.getMessage("IM_PHONE_PERSONAL_MOBILE"),
-			phone: Text.encode(userCustomData["personalMobile"]),
-			dataset: {
-				type: 'pstn',
-				target: userCustomData["personalMobile"]
-			},
-			onclick: onMenuItemClick,
-		});
-	}
-	if (userCustomData["personalPhone"])
-	{
-		menuItems.push({
-			type: "call",
-			text: Loc.getMessage("IM_PHONE_PERSONAL_PHONE"),
-			phone: Text.encode(userCustomData["personalPhone"]),
-			dataset: {
-				type: 'pstn',
-				target: userCustomData["personalPhone"]
-			},
-			onclick: onMenuItemClick,
-		});
-	}
-	if (userCustomData["workPhone"])
-	{
-		menuItems.push({
-			type: "call",
-			text: Loc.getMessage("IM_PHONE_WORK_PHONE"),
-			phone: Text.encode(userCustomData["workPhone"]),
-			dataset: {
-				type: 'pstn',
-				target: userCustomData["workPhone"]
-			},
-			onclick: onMenuItemClick,
-		});
-	}
-	const popupContent = Dom.create("div", {
-		props: {className: "bx-messenger-popup-menu"},
-		children: [
-			Dom.create("div", {
-				props: {className: "bx-messenger-popup-menu-items"},
-				children: BX.MessengerChat.MenuPrepareList(menuItems),
-			}),
-		],
-	});
-
-	popup = new Popup({
-		id: "bx-messenger-phone-transfer-menu",
-		bindElement: null,
-		targetContainer: document.body,
-		darkMode: darkMode,
-		lightShadow: true,
-		autoHide: true,
-		closeByEsc: true,
-		cacheable: false,
-		overlay: {
-			backgroundColor: '#FFFFFF',
-			opacity: 0
-		},
-		content: popupContent,
-	});
-	popup.show();
 }

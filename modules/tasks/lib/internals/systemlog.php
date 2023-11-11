@@ -23,6 +23,10 @@ use Bitrix\Main,
  */
 class SystemLogTable extends Main\Entity\DataManager
 {
+	public const ENTITY_TYPE_TEMPLATE = 1;
+	public const TYPE_MESSAGE = 1;
+	public const TYPE_ERROR = 3;
+
 	/**
 	 * Returns DB table name for entity.
 	 *

@@ -11,13 +11,13 @@ class Status
 	public static function getList(): array
 	{
 		return [
-			\CTasks::STATE_NEW => Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_STATUS_'.\CTasks::STATE_NEW),
-			\CTasks::STATE_PENDING => Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_STATUS_'.\CTasks::STATE_PENDING),
-			\CTasks::STATE_IN_PROGRESS => Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_STATUS_'.\CTasks::STATE_IN_PROGRESS),
-			\CTasks::STATE_SUPPOSEDLY_COMPLETED => Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_STATUS_'.\CTasks::STATE_SUPPOSEDLY_COMPLETED),
-			\CTasks::STATE_COMPLETED => Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_STATUS_'.\CTasks::STATE_COMPLETED),
-			\CTasks::STATE_DEFERRED => Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_STATUS_'.\CTasks::STATE_DEFERRED),
-			\CTasks::STATE_DECLINED => Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_STATUS_'.\CTasks::STATE_DECLINED),
+			\Bitrix\Tasks\Internals\Task\Status::NEW => Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_STATUS_'.\Bitrix\Tasks\Internals\Task\Status::NEW),
+			\Bitrix\Tasks\Internals\Task\Status::PENDING => Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_STATUS_'.\Bitrix\Tasks\Internals\Task\Status::PENDING),
+			\Bitrix\Tasks\Internals\Task\Status::IN_PROGRESS => Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_STATUS_'. \Bitrix\Tasks\Internals\Task\Status::IN_PROGRESS),
+			\Bitrix\Tasks\Internals\Task\Status::SUPPOSEDLY_COMPLETED => Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_STATUS_'.\Bitrix\Tasks\Internals\Task\Status::SUPPOSEDLY_COMPLETED),
+			\Bitrix\Tasks\Internals\Task\Status::COMPLETED => Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_STATUS_'. \Bitrix\Tasks\Internals\Task\Status::COMPLETED),
+			\Bitrix\Tasks\Internals\Task\Status::DEFERRED => Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_STATUS_'.\Bitrix\Tasks\Internals\Task\Status::DEFERRED),
+			\Bitrix\Tasks\Internals\Task\Status::DECLINED => Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_STATUS_'.\Bitrix\Tasks\Internals\Task\Status::DECLINED),
 		];
 	}
 }

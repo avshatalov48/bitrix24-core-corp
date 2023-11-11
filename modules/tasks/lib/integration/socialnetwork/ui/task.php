@@ -11,6 +11,7 @@
 namespace Bitrix\Tasks\Integration\Socialnetwork\UI;
 
 use \Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Internals\Task\Status;
 
 Loc::loadMessages(__FILE__);
 
@@ -294,7 +295,7 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 
 					$message_24_1 = $eventTitle;
 
-					if ($arTask["STATUS"] == \CTasks::STATE_DECLINED)
+					if ((int)$arTask["STATUS"] === Status::DECLINED)
 					{
 						$message      = str_replace("#TASK_DECLINE_REASON#", $arTask["DECLINE_REASON"], $message);
 						$message_24_2 = Loc::getMessage("TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_".$arTask["STATUS"]."_24_2");

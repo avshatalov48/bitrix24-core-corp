@@ -1,13 +1,22 @@
 import {Dom, Loc, Text, Type} from 'main.core';
+import {EventEmitter} from 'main.core.events';
+
 import {CallList} from './call-list'
 
-let foldedCallListInstance = null;
 let avatars = {};
 
-export class FoldedCallView
+const Events = {
+	onUnfold: "onUnfold"
+}
+
+export class FoldedCallView extends EventEmitter
 {
-	constructor()
+	constructor(params)
 	{
+		super();
+		this.setEventNamespace("BX.VoxImplant.FoldedCallView");
+		this.subscribeFromOptions(params.events)
+
 		this.currentItem = {};
 		this.callListParams = {
 			id: 0,
@@ -29,16 +38,6 @@ export class FoldedCallView
 		this._lsTtl = 86400;
 		this.init();
 	}
-
-	static getInstance(): FoldedCallView
-	{
-		if (foldedCallListInstance === null)
-		{
-			foldedCallListInstance = new FoldedCallView();
-		}
-
-		return foldedCallListInstance;
-	};
 
 	init()
 	{
@@ -90,7 +89,7 @@ export class FoldedCallView
 		this.render(animation);
 	};
 
-	unfold(makeCall)
+	unfold(makeCall: ?boolean)
 	{
 		Dom.addClass(this.node, "im-phone-folded-call-view-unfold");
 		this.node.addEventListener('animationend', () =>
@@ -102,12 +101,12 @@ export class FoldedCallView
 			}
 
 			BX.localStorage.remove(this._lsKey);
-			if (!window.BXIM || this.callListParams.id === 0)
+			if (this.callListParams.id === 0)
 			{
 				return false;
 			}
 
-			var restoredParams = {};
+			let restoredParams = {};
 			if (this.callListParams.webformId > 0 && this.callListParams.webformSecCode !== '')
 			{
 				restoredParams.webformId = this.callListParams.webformId;
@@ -117,8 +116,10 @@ export class FoldedCallView
 			restoredParams.callListItemIndex = this.callListParams.itemIndex;
 			restoredParams.makeCall = makeCall;
 
-			// TODO: WTF is happening here?
-			window.BXIM.startCallList(this.callListParams.id, restoredParams);
+			this.emit(Events.onUnfold, {
+				callListId: this.callListParams.id,
+				callListParams: restoredParams
+			})
 		});
 	};
 
@@ -313,4 +314,6 @@ export class FoldedCallView
 		e.preventDefault();
 		this.unfold(false);
 	};
+
+	static Events = Events;
 }

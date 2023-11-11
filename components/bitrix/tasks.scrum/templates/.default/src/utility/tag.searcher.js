@@ -127,7 +127,7 @@ export class TagSearcher extends EventEmitter
 			clearUnavailableItems: true,
 			events: {
 				'onLoad': (baseEvent: BaseEvent) => {
-					baseEvent.getTarget().getFooterContainer().style.zIndex = 1;
+					Dom.style(baseEvent.getTarget().getFooterContainer(), 'zIndex', 1);
 					this.onShowTaskEditCallback(baseEvent, statusSuccess, item);
 					this.hideDialogLabel(baseEvent.getTarget());
 				},
@@ -305,11 +305,16 @@ export class TagSearcher extends EventEmitter
 		}
 		const input = inputObject.getInputNode();
 
-		if (this.tagSearchDialog && this.tagSearchDialog.getId() !== inputObject.getNodeId())
+		const groupId = this.groupId;
+
+		if (
+			this.tagSearchDialog
+			&& this.tagSearchDialog.getId() !== inputObject.getNodeId()
+		)
 		{
 			this.tagSearchDialog = null;
 		}
-		const groupId = this.groupId;
+
 		if (!this.tagSearchDialog)
 		{
 			this.tagSearchDialog = new Dialog({
@@ -342,7 +347,7 @@ export class TagSearcher extends EventEmitter
 				clearUnavailableItems: true,
 				events: {
 					'onLoad': (event) => {
-						event.getTarget().getFooterContainer().style.zIndex = 1;
+						Dom.style(event.getTarget().getFooterContainer(), 'zIndex', 1);
 						this.onLoadTaskQuickCreateCallback(event, inputObject);
 					},
 					'onSearch': event => {
@@ -374,26 +379,27 @@ export class TagSearcher extends EventEmitter
 
 			this.tagSearchDialog.subscribe('onHide', () => {
 				inputObject.setTagsSearchMode(false);
+
+				this.tagSearchDialog = null;
+			});
+
+			inputObject.subscribe('onEnter', event => {
+				if (Type.isNil(this.tagSearchDialog))
+				{
+					return;
+				}
+				const searchTab = this.tagSearchDialog.getSearchTab();
+				if (Type.isNil(searchTab))
+				{
+					return;
+				}
+				if (searchTab.isEmptyResult())
+				{
+					this.tagSearchDialog.hide();
+					input.focus();
+				}
 			});
 		}
-
-		inputObject.subscribe('onEnter', event => {
-			if (Type.isNil(this.tagSearchDialog))
-			{
-				return;
-			}
-			const searchTab = this.tagSearchDialog.getSearchTab();
-			if (Type.isNil(searchTab))
-			{
-				return;
-			}
-			if (searchTab.isEmptyResult())
-			{
-				this.tagSearchDialog.hide();
-				this.tagSearchDialog = null;
-				input.focus();
-			}
-		});
 
 		inputObject.setTagsSearchMode(true);
 		this.tagSearchDialog.show();
@@ -412,12 +418,15 @@ export class TagSearcher extends EventEmitter
 	{
 		const input = inputObject.getInputNode();
 
-		if (this.epicSearchDialog && this.epicSearchDialog.getId() !== inputObject.getNodeId())
+		this.epicEnteredQuery = enteredQuery;
+
+		if (
+			this.epicSearchDialog
+			&& this.epicSearchDialog.getId() !== inputObject.getNodeId()
+		)
 		{
 			this.epicSearchDialog = null;
 		}
-
-		this.epicEnteredQuery = enteredQuery;
 
 		if (!this.epicSearchDialog)
 		{
@@ -475,7 +484,6 @@ export class TagSearcher extends EventEmitter
 							;
 
 							this.epicSearchDialog.hide();
-							this.epicSearchDialog = null;
 						});
 					},
 					'Item:onSelect': (event: BaseEvent) => {
@@ -500,6 +508,8 @@ export class TagSearcher extends EventEmitter
 
 			this.epicSearchDialog.subscribe('onHide', () => {
 				inputObject.setEpicSearchMode(false);
+
+				this.epicSearchDialog = null;
 			});
 
 			inputObject.subscribe('onMetaEnter', () => {

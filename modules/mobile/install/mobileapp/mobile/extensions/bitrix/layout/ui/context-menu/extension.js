@@ -23,6 +23,9 @@
 	 * @property {?string} banner.title
 	 * @property {?boolean} banner.showSubtitle
 	 * @property {?string} banner.buttonText
+	 * @property {?string} banner.buttonType
+	 * @property {?object} banner.onButtonClick
+	 * @property {?object} banner.onCloseBanner
 	 * @property {?object} banner.qrAuth
 	 * @property {string} banner.qrAuth.redirectUrl
 	 *
@@ -60,6 +63,7 @@
 	const DEFAULT_BANNER_ITEM_HEIGHT = 30;
 	const DEFAULT_BANNER_ITEM_HEIGHT_VERTICAL = 48;
 	const DEFAULT_BANNER_BUTTON_HEIGHT = 72;
+	const DEFAULT_BANNER_SUBTEXT_HEIGHT = 72;
 
 	const INDENT_BETWEEN_SECTIONS = 10;
 	const ITEM_HEIGHT = 58;
@@ -602,9 +606,14 @@
 						: 0;
 				}
 
-				if (this.banner.qrauth)
+				if (this.banner.qrauth || this.banner.onButtonClick)
 				{
 					itemsHeight += DEFAULT_BANNER_BUTTON_HEIGHT;
+				}
+
+				if (this.banner.subtext)
+				{
+					itemsHeight += DEFAULT_BANNER_SUBTEXT_HEIGHT;
 				}
 
 				return Math.max(DEFAULT_BANNER_HEIGHT, itemsHeight);

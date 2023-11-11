@@ -33,7 +33,7 @@ jn.define('crm/entity-detail/component/open-lines-menu-items', (require, exports
 			id: 'openLinesTelegramItem',
 			sectionCode: 'action',
 			onItemSelected: () => manager.openEditor(layout),
-			title: Loc.getMessage('M_CRM_ACTION_SMART_ACTIVITY_OPEN_LINES_TELEGRAM'),
+			title: Loc.getMessage('M_CRM_ACTION_SMART_ACTIVITY_OPEN_LINES_TELEGRAM_MSGVER_1'),
 			checked: false,
 			iconUrl: `${pathToIcons}ol_telegram.png`,
 		};

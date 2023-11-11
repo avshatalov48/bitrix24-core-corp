@@ -7,6 +7,7 @@ return [
 		'layout/ui/context-menu',
 		'event-emitter',
 		'layout/ui/range-slider',
+		'feature',
 	],
 	'bundle'=> [
 		'./play-button',

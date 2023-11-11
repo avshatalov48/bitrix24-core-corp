@@ -2,6 +2,7 @@
 
 namespace Bitrix\CatalogMobile\InventoryControl\DataProvider\DocumentProducts;
 
+use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\StoreTable;
 use Bitrix\CatalogMobile\Catalog;
@@ -10,13 +11,22 @@ use Bitrix\CatalogMobile\Repository\MeasureRepository;
 use Bitrix\CatalogMobile\InventoryControl\Dto\DocumentProductRecord;
 use Bitrix\CatalogMobile\InventoryControl\Dto\ProductFromWizard;
 use Bitrix\CatalogMobile\InventoryControl\UrlBuilder;
+use Bitrix\CatalogMobile\InventoryControl\DataProvider\DocumentProducts\Product\RealizationProduct;
+use Bitrix\CatalogMobile\InventoryControl\DataProvider\DocumentProducts\Product\StoreProduct;
 
 class Facade
 {
-	public static function loadByDocumentId(?int $documentId = null, ?string $documentType = null): array
+	public static function loadByDocumentId(?int $documentId = null, ?string $documentType = null, array $context = []): array
 	{
 		$document = Document::load($documentId, $documentType);
-		$items = Product::loadByDocumentId($documentId);
+		if ($documentType === StoreDocumentTable::TYPE_SALES_ORDERS)
+		{
+			$items = RealizationProduct::load($documentId, $context);
+		}
+		else
+		{
+			$items = StoreProduct::load($documentId);
+		}
 		$catalog = [
 			'id' => Catalog::getDefaultId(),
 			'base_price_id' => Catalog::getBasePrice(),
@@ -49,13 +59,18 @@ class Facade
 		];
 	}
 
-	public static function loadProductModel(int $productId, ?int $documentId = null): DocumentProductRecord
+	public static function loadProductModel(int $productId, ?int $documentId = null, ?string $documentType = null): DocumentProductRecord
 	{
-		return Product::loadProductModel($productId, $documentId);
+		if ($documentType === StoreDocumentTable::TYPE_SALES_ORDERS)
+		{
+			return RealizationProduct::loadProductModel($productId, $documentId, $documentType);
+		}
+
+		return StoreProduct::loadProductModel($productId, $documentId, $documentType);
 	}
 
-	public static function buildProductModelFromWizard(ProductFromWizard $product, ?int $documentId = null): DocumentProductRecord
+	public static function buildProductModelFromWizard(ProductFromWizard $product, ?int $documentId = null, ?string $documentType = null): DocumentProductRecord
 	{
-		return Wizard::buildProductModel($product, $documentId);
+		return Wizard::buildProductModel($product, $documentId, $documentType);
 	}
 }

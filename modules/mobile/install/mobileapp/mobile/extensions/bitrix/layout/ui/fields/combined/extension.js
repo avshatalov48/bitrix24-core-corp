@@ -130,7 +130,7 @@ jn.define('layout/ui/fields/combined', (require, exports, module) => {
 						renderSecondaryField({
 							...secondaryField,
 							focus: undefined,
-							readOnly: this.isReadOnly(),
+							readOnly: secondaryField.readOnly ?? this.isReadOnly(),
 							value: secondaryValue,
 							ref: this.bindSecondaryRef,
 							testId: `${this.testId}_${secondaryId}`,

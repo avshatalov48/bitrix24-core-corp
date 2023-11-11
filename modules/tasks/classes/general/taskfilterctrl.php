@@ -7,6 +7,9 @@
  */
 
 use Bitrix\Main;
+use Bitrix\Tasks\Internals\Task\MetaStatus;
+use Bitrix\Tasks\Internals\Task\Priority;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Util\User;
 
 IncludeModuleLangFile(__FILE__);
@@ -256,13 +259,13 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 	{
 		global $DB;
 
-		$arActiveStatuses = array(
-			CTasks::METASTATE_VIRGIN_NEW,
-			CTasks::METASTATE_EXPIRED,
-			CTasks::STATE_NEW,
-			CTasks::STATE_PENDING,
-			CTasks::STATE_IN_PROGRESS
-		);
+		$arActiveStatuses = [
+			MetaStatus::UNSEEN,
+			MetaStatus::EXPIRED,
+			Status::NEW,
+			Status::PENDING,
+			Status::IN_PROGRESS,
+		];
 
 		if ( ! $this->bGroupMode )
 		{
@@ -286,7 +289,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 								'::SUBFILTER-1' => array(
 									'::LOGIC'    => 'AND',
 									'CREATED_BY' => $this->userId,
-									'STATUS'     => array(CTasks::STATE_DECLINED, CTasks::STATE_SUPPOSEDLY_COMPLETED)
+									'STATUS'     => [Status::DECLINED, Status::SUPPOSEDLY_COMPLETED]
 								)
 							)
 						)
@@ -332,11 +335,11 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 							'::SUBFILTER-1' => array(
 								'::LOGIC' => 'OR',
 								'STATUS'  => $arActiveStatuses,
-								'::SUBFILTER-1' => array(
-									'::LOGIC'    => 'AND',
+								'::SUBFILTER-1' => [
+									'::LOGIC' => 'AND',
 									'CREATED_BY' => $this->userId,
-									'STATUS'     => CTasks::STATE_DECLINED
-								)
+									'STATUS' => Status::DECLINED,
+								],
 							)
 						)
 					)
@@ -351,11 +354,11 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 							'::SUBFILTER-1' => array(
 								'::LOGIC' => 'OR',
 								'STATUS'  => $arActiveStatuses,
-								'::SUBFILTER-1' => array(
-									'::LOGIC'    => 'AND',
+								'::SUBFILTER-1' => [
+									'::LOGIC' => 'AND',
 									'CREATED_BY' => $this->userId,
-									'STATUS'     => CTasks::STATE_DECLINED
-								)
+									'STATUS' => Status::DECLINED,
+								],
 							)
 						)
 					)
@@ -370,11 +373,11 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 							'::SUBFILTER-1' => array(
 								'::LOGIC' => 'OR',
 								'STATUS'  => $arActiveStatuses,
-								'::SUBFILTER-1' => array(
-									'::LOGIC'    => 'AND',
+								'::SUBFILTER-1' => [
+									'::LOGIC' => 'AND',
 									'CREATED_BY' => $this->userId,
-									'STATUS'     => CTasks::STATE_DECLINED
-								)
+									'STATUS' => Status::DECLINED,
+								],
 							)
 						)
 					)
@@ -389,11 +392,11 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 							'::SUBFILTER-1' => array(
 								'::LOGIC' => 'OR',
 								'STATUS'  => $arActiveStatuses,
-								'::SUBFILTER-1' => array(
-									'::LOGIC'    => 'AND',
+								'::SUBFILTER-1' => [
+									'::LOGIC' => 'AND',
 									'CREATED_BY' => $this->userId,
-									'STATUS'     => array(CTasks::STATE_DECLINED, CTasks::STATE_SUPPOSEDLY_COMPLETED)
-								)
+									'STATUS' => [Status::DECLINED, Status::SUPPOSEDLY_COMPLETED],
+								],
 							)
 						)
 					)
@@ -408,11 +411,11 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 							'::SUBFILTER-1' => array(
 								'::LOGIC' => 'OR',
 								'STATUS'  => $arActiveStatuses,
-								'::SUBFILTER-1' => array(
-									'::LOGIC'    => 'AND',
+								'::SUBFILTER-1' => [
+									'::LOGIC' => 'AND',
 									'CREATED_BY' => $this->userId,
-									'STATUS'     => CTasks::STATE_DECLINED
-								)
+									'STATUS' => Status::DECLINED,
+								],
 							)
 						)
 					)
@@ -424,7 +427,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 						array(
 							'::LOGIC' => 'AND',
 							'MEMBER'  => $this->userId,
-							'STATUS'  => CTasks::METASTATE_EXPIRED
+							'STATUS'  => MetaStatus::EXPIRED,
 						)
 					)
 				),
@@ -435,7 +438,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 						array(
 							'::LOGIC' => 'AND',
 							'MEMBER'  => $this->userId,
-							'STATUS'  => CTasks::METASTATE_EXPIRED_SOON
+							'STATUS'  => MetaStatus::EXPIRED_SOON,
 						)
 					)
 				),
@@ -446,7 +449,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 						array(
 							'::LOGIC' => 'AND',
 							'MEMBER'  => $this->userId,
-							'STATUS'  => CTasks::STATE_DEFERRED
+							'STATUS'  => Status::DEFERRED
 						)
 					)
 				),
@@ -457,10 +460,10 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 						array(
 							'::LOGIC' => 'AND',
 							'MEMBER'  => $this->userId,
-							'STATUS'  => array(
-								CTasks::STATE_SUPPOSEDLY_COMPLETED,
-								CTasks::STATE_COMPLETED
-							)
+							'STATUS' => [
+								Status::SUPPOSEDLY_COMPLETED,
+								Status::COMPLETED,
+							],
 						)
 					)
 				),
@@ -494,11 +497,11 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 							'::SUBFILTER-1' => array(
 								'::LOGIC' => 'OR',
 								'STATUS'  => $arActiveStatuses,
-								'::SUBFILTER-1' => array(
-									'::LOGIC'    => 'AND',
+								'::SUBFILTER-1' => [
+									'::LOGIC' => 'AND',
 									'CREATED_BY' => $this->userId,
-									'STATUS'     => CTasks::STATE_DECLINED
-								)
+									'STATUS' => Status::DECLINED,
+								],
 							)
 						)
 					)
@@ -511,7 +514,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 						array(
 							'::LOGIC' => 'AND',
 							'MEMBER'  => $this->userId,
-							'STATUS'  => CTasks::METASTATE_EXPIRED
+							'STATUS'  => MetaStatus::EXPIRED,
 						)
 					)
 				),
@@ -522,7 +525,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 						array(
 							'::LOGIC' => 'AND',
 							'MEMBER'  => $this->userId,
-							'STATUS'  => CTasks::METASTATE_EXPIRED_SOON
+							'STATUS'  => MetaStatus::EXPIRED_SOON,
 						)
 					)
 				),
@@ -533,7 +536,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 					'Condition' => serialize(
 						array(
 							'::LOGIC' => 'AND',
-							'STATUS'  => CTasks::STATE_DEFERRED
+							'STATUS'  => Status::DEFERRED
 						)
 					)
 				),
@@ -543,10 +546,10 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 					'Condition' => serialize(
 						array(
 							'::LOGIC' => 'AND',
-							'STATUS'  => array(
-								CTasks::STATE_SUPPOSEDLY_COMPLETED,
-								CTasks::STATE_COMPLETED
-							)
+							'STATUS' => [
+								Status::SUPPOSEDLY_COMPLETED,
+								Status::COMPLETED,
+							],
 						)
 					)
 				),
@@ -1209,7 +1212,7 @@ class CTaskFilterCtrl implements CTaskFilterCtrlInterface
 
 					if ( ! in_array(
 						$value,
-						array(CTasks::PRIORITY_LOW, CTasks::PRIORITY_AVERAGE, CTasks::PRIORITY_HIGH),
+						array_values(Priority::getAll()),
 						true
 					))
 					{

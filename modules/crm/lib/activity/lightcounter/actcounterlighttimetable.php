@@ -7,6 +7,22 @@ use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 
+/**
+ * Class ActCounterLightTimeTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ActCounterLightTime_Query query()
+ * @method static EO_ActCounterLightTime_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_ActCounterLightTime_Result getById($id)
+ * @method static EO_ActCounterLightTime_Result getList(array $parameters = [])
+ * @method static EO_ActCounterLightTime_Entity getEntity()
+ * @method static \Bitrix\Crm\Activity\LightCounter\EO_ActCounterLightTime createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Activity\LightCounter\EO_ActCounterLightTime_Collection createCollection()
+ * @method static \Bitrix\Crm\Activity\LightCounter\EO_ActCounterLightTime wakeUpObject($row)
+ * @method static \Bitrix\Crm\Activity\LightCounter\EO_ActCounterLightTime_Collection wakeUpCollection($rows)
+ */
 class ActCounterLightTimeTable extends DataManager
 {
 	public static function getTableName()

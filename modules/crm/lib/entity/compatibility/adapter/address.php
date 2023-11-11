@@ -2,11 +2,15 @@
 
 namespace Bitrix\Crm\Entity\Compatibility\Adapter;
 
+use Bitrix\Crm\Entity\AddressValidator;
 use Bitrix\Crm\Entity\Compatibility\Adapter;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 
 class Address extends Adapter
@@ -50,6 +54,26 @@ class Address extends Adapter
 		$this->entityAddress = $address;
 
 		return $this;
+	}
+
+	final protected function doCheckRequiredFields(array $fields, array $compatibleOptions, array $requiredFields): Result
+	{
+		$result = new Result();
+
+		if (in_array('ADDRESS', $requiredFields, true))
+		{
+			$validator = new AddressValidator($this->entityTypeId, 0, $fields);
+
+			$isSuccess = $validator->checkPresence();
+			if (!$isSuccess)
+			{
+				Container::getInstance()->getLocalization()->loadMessages();
+
+				$result->addError(Field::getRequiredEmptyError('ADDRESS', Loc::getMessage('CRM_COMMON_ADDRESS')));
+			}
+		}
+
+		return $result;
 	}
 
 	final protected function doPerformAdd(array &$fields, array $compatibleOptions): Result

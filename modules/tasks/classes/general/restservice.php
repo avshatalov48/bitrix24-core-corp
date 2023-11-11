@@ -6,6 +6,7 @@
  * @copyright 2001-2013 Bitrix
  */
 
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Util\User;
 
 if(!CModule::IncludeModule('rest'))
@@ -276,13 +277,13 @@ final class CTaskRestService extends IRestService
 
 			if ( ! in_array(
 				$statusId,
-				array(
-					CTasks::STATE_PENDING,
-					CTasks::STATE_IN_PROGRESS,
-					CTasks::STATE_SUPPOSEDLY_COMPLETED,
-					CTasks::STATE_COMPLETED,
-					CTasks::STATE_DEFERRED
-				),
+				[
+					Status::PENDING,
+					Status::IN_PROGRESS,
+					Status::SUPPOSEDLY_COMPLETED,
+					Status::COMPLETED,
+					Status::DEFERRED,
+				],
 				true	// forbid type casting
 			))
 			{

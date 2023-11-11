@@ -69,6 +69,7 @@ jn.define('crm/entity-name', (require, exports, module) => {
 					},
 				},
 				TextAreaField({
+					testId: 'EntityNameField',
 					ref: useCallback((ref) => this.textAreaField = ref),
 					title: this.title,
 					value: this.state.name,

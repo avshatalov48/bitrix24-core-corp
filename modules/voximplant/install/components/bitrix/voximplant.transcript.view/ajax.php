@@ -37,7 +37,7 @@ if($action == 'getTranscript')
 			'CALL_ID' => $callId
 		)
 	);
-	CAllMain::FinalActions();
+	CMain::FinalActions();
 	die();
 }
 else

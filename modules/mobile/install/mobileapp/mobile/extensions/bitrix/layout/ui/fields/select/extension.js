@@ -165,10 +165,17 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 				return this.renderEmptyContent();
 			}
 
-			return Text({
-				style: this.styles.value,
-				text: this.getSelectedItemsText(),
-			});
+			return View(
+				{
+					onLongClick: this.getContentLongClickHandler(),
+				},
+				Text({
+					style: this.styles.value,
+					numberOfLines: 1,
+					ellipsize: 'end',
+					text: this.getSelectedItemsText(),
+				}),
+			);
 		}
 
 		renderEditableContent()
@@ -182,6 +189,8 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 			return View(
 				{
 					style: this.styles.selectorWrapper,
+					onLongClick: this.getContentLongClickHandler(),
+					onClick: () => this.handleAdditionalFocusActions(),
 				},
 				Text({
 					style: this.styles.value,
@@ -594,6 +603,16 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 					},
 				),
 			);
+		}
+
+		canCopyValue()
+		{
+			return true;
+		}
+
+		prepareValueToCopy()
+		{
+			return this.getSelectedItemsText();
 		}
 	}
 

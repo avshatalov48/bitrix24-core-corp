@@ -208,7 +208,7 @@ final class ChannelRepository
 
 		$this->channels = [];
 
-		$senders = SenderRepository::getPrioritizedList();
+		$senders = SenderRepository::getAllImplementationsList();
 		foreach ($senders as $sender)
 		{
 			foreach ($sender::getChannelsList($this->toListByType, $this->userId) as $channel)

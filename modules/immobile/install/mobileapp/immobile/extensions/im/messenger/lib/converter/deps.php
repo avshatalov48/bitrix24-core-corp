@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'type',
 		'utils/object',
+		'im:lib/theme',
 		'im:chat/utils',
 		'im:chat/messengercommon',
 		'im:chat/dataconverter',

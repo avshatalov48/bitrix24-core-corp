@@ -5551,15 +5551,18 @@ this.BX.Crm = this.BX.Crm || {};
 	  console.log('touch signer document ' + documentId);
 	}
 	function _download2({
-	  documentHash,
-	  memberHash
+	  filename,
+	  downloadLink
 	}, animationCallbacks) {
 	  if (animationCallbacks.onStart) {
 	    animationCallbacks.onStart();
 	  }
 	  const link = document.createElement('a');
-	  link.href = '/bitrix/services/main/ajax.php?action=sign.document.getFileForSrc' + '&memberHash=' + memberHash + '&documentHash=' + documentHash;
-	  link.setAttribute('download', '');
+	  /*link.href = '/bitrix/services/main/ajax.php?action=sign.document.getFileForSrc' +
+	  	'&memberHash=' + memberHash +
+	  	'&documentHash=' + documentHash;*/
+	  link.href = downloadLink;
+	  link.setAttribute('download', filename || '');
 	  document.body.appendChild(link);
 	  link.click();
 	  document.body.removeChild(link);
@@ -5922,8 +5925,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _response$data3;
 	    if ((response === null || response === void 0 ? void 0 : (_response$data3 = response.data) === null || _response$data3 === void 0 ? void 0 : _response$data3.ID) > 0) {
 	      _classPrivateMethodGet$6(this, _showMessage, _showMessage2).call(this, main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DO_USE_PREVIOUS_MSGVER_3', {
-	        '%TITLE%': '<b>' + (response.data.TITLE || '') + '</b>',
-	        '%INITIATOR%': '<b>' + (response.data.INITIATOR || '') + '</b>'
+	        '%TITLE%': '<b>' + BX.util.htmlspecialchars(response.data.TITLE || '') + '</b>',
+	        '%INITIATOR%': '<b>' + BX.util.htmlspecialchars(response.data.INITIATOR || '') + '</b>'
 	      }), [new BX.UI.Button({
 	        text: BX.message('CRM_TIMELINE_ITEM_ACTIVITY_OLD_BUTTON_MSGVER_2'),
 	        className: "ui-btn ui-btn-md ui-btn-primary",
@@ -6735,7 +6738,10 @@ this.BX.Crm = this.BX.Crm || {};
 	function _viewActivity2$1(id) {
 	  const editor = _classPrivateMethodGet$c(this, _getActivityEditor$1, _getActivityEditor2$1).call(this);
 	  if (editor && id) {
-	    editor.viewActivity(id);
+	    const emailActivity = BX.CrmActivityEmail.create({
+	      ID: id
+	    }, editor, {});
+	    emailActivity.openDialog(BX.CrmDialogMode.view);
 	  }
 	}
 	function _getActivityEditor2$1() {

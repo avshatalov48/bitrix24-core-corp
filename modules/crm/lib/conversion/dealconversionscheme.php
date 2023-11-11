@@ -62,7 +62,7 @@ class DealConversionScheme
 		if(!isset(self::$allDescriptions[LANGUAGE_ID]))
 		{
 			self::$allDescriptions[LANGUAGE_ID] = [
-				self::QUOTE => GetMessage('CRM_DEAL_CONV_QUOTE'),
+				self::QUOTE => GetMessage('CRM_DEAL_CONV_QUOTE_MSGVER_1'),
 				self::INVOICE => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Invoice),
 			];
 		}

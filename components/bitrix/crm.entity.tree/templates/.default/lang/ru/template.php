@@ -1,6 +1,6 @@
 <?php
 $MESS['CRM_ENTITY_TREE_ASSIGNED_BY'] = 'Ответственный';
-$MESS['CRM_ENTITY_TREE_QUOTE'] = 'ПРЕДЛОЖЕНИЕ';
+$MESS['CRM_ENTITY_TREE_QUOTE_MSGVER_1'] = 'ПРЕДЛОЖЕНИЕ';
 $MESS['CRM_ENTITY_TREE_INVOICE'] = 'СЧЕТ №';
 $MESS['CRM_ENTITY_TREE_ORDER'] = 'ЗАКАЗ №';
 $MESS['CRM_ENTITY_TREE_ORDER_PAYMENT'] = 'ОПЛАТА №';

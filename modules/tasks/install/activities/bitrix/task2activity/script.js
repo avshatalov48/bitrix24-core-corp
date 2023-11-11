@@ -1,3 +1,4 @@
+/* eslint-disable */
 (function (exports,bizproc_automation,main_core,main_core_events,ui_entitySelector,tasks_entitySelector) {
 	'use strict';
 

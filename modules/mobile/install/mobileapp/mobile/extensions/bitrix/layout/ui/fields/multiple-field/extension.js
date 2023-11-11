@@ -65,15 +65,18 @@ jn.define('layout/ui/fields/multiple-field', (require, exports, module) => {
 				return null;
 			}
 
+			const isAdd = index === 0;
+
 			return View(
 				{
+					testId: `${this.testId}_MULTIPLE_FIELD_ITEM_${isAdd ? 'ADD' : 'DELETE'}`,
 					style: this.styles.addOrDeleteFieldButtonWrapper,
 					onClick: () => this.handleAddOrDeleteFieldButtonClick(index),
 				},
 				Image({
 					style: this.styles.buttonContainer,
 					resizeMode: 'center',
-					svg: index === 0 ? svgImages.addField : svgImages.deleteField,
+					svg: isAdd ? svgImages.addField : svgImages.deleteField,
 				}),
 			);
 		}

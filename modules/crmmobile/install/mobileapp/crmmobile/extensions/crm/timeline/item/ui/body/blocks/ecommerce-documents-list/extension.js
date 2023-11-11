@@ -195,11 +195,15 @@ jn.define('crm/timeline/item/ui/body/blocks/ecommerce-documents-list', (require,
 					);
 					labelText = Loc.getMessage('CRM_TIMELINE_DOCUMENT_LIST_SHIPMENT_DOCUMENT_LABEL');
 					onClick = () => {
-						qrauth.open({
-							title: documentDescription,
-							redirectUrl: `/crm/deal/details/${this.props.ownerId}/`,
-							hintText: Loc.getMessage('CRM_TIMELINE_DOCUMENT_LIST_SHIPMENT_DOCUMENT_QRAUTH_HINT_MSGVER_1'),
-						});
+						this.timelineScopeEventBus.emit('EntityRealizationDocument::Click', [{
+							id: document.ID,
+							title: Loc.getMessage(
+								'CRM_TIMELINE_DOCUMENT_LIST_SHIPMENT_DOCUMENT_SHORT_DESCRIPTION',
+								{
+									'#ACCOUNT_NUMBER#': document.ACCOUNT_NUMBER,
+								},
+							),
+						}]);
 					};
 				}
 				else if (document.TYPE === 'SHIPMENT' && document.DEDUCTED === 'Y')

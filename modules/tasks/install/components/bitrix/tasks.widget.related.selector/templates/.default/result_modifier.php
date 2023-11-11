@@ -66,4 +66,5 @@ $arResult['JS_DATA'] = array(
 	'inputPostfixTask' => $arParams['SOLE_INPUT_TASK_POSTFIX'],
 	'inputPostfixTaskTemplate' => $arParams['SOLE_INPUT_TASK_TEMPLATE_POSTFIX'],
 	'templateSubtaskLimitExceeded' => $arResult['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'],
+	'templateId' => $arParams['TEMPLATE_ID'] ?? null,
 );

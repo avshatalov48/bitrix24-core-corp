@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Catalog\StoreDocumentTable;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Main\Context;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorableImplementation;
@@ -9,6 +10,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\CatalogMobile\Controller\StoreDocumentList;
+use Bitrix\CatalogMobile\Controller\RealizationDocumentList;
 use Bitrix\CatalogMobile\PermissionsProvider;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -37,7 +39,7 @@ $component = new class {
 		'backgroundColor' => '#fef3b8',
 	];
 
-	private const TYPE_LOGO_PATTERN = '/bitrix/mobileapp/catalogmobile/components/catalog/catalog.store.document.details/images/type_#DOCUMENT_TYPE#.png';
+	private const TYPE_LOGO_PATTERN = '/bitrix/mobileapp/catalogmobile/extensions/catalog/store/document-card/component/images/type_#DOCUMENT_TYPE#.png';
 
 	use ErrorableImplementation;
 
@@ -56,7 +58,6 @@ $component = new class {
 			Loader::requireModule('catalog');
 			Loader::requireModule('crm');
 			Loader::requireModule('currency');
-			Loader::requireModule('mobile');
 			Loader::requireModule('sale');
 		}
 		catch (LoaderException $exception)
@@ -81,7 +82,12 @@ $component = new class {
 	{
 		$types = [];
 
-		foreach (StoreDocumentTable::getTypeList(true) as $type => $name)
+		$typeList = array_merge(
+			StoreDocumentTable::getTypeList(true),
+			['W' => Loc::getMessage('M_CSDL_TAB_REALIZATION_DESC')]
+		);
+
+		foreach ($typeList as $type => $name)
 		{
 			$types[] = [
 				'id' => $type,
@@ -109,8 +115,14 @@ $component = new class {
 
 	private function getDocumentTabs(): array
 	{
-		return [
-			[
+		$accessController = \Bitrix\Catalog\Access\AccessController::getCurrent();
+		$documentTabs = [];
+		if (
+			$accessController->checkByValue(ActionDictionary::ACTION_STORE_DOCUMENT_VIEW, StoreDocumentTable::TYPE_ARRIVAL)
+			|| $accessController->checkByValue(ActionDictionary::ACTION_STORE_DOCUMENT_VIEW, StoreDocumentTable::TYPE_STORE_ADJUSTMENT)
+		)
+		{
+			$documentTabs[] = [
 				'id' => 'receipt_adjustment',
 				'title' => Loc::getMessage('M_CSDL_TAB_RECEIPT_ADJUSTMENT'),
 				'documentTypes' => [
@@ -123,8 +135,26 @@ $component = new class {
 						'title' => Loc::getMessage('M_CSDL_TAB_MENU_STORE_ADJUSTMENT'),
 					],
 				],
-			],
-			[
+			];
+		}
+
+		if ($accessController->checkByValue(ActionDictionary::ACTION_STORE_DOCUMENT_VIEW, StoreDocumentTable::TYPE_SALES_ORDERS))
+		{
+			$documentTabs[] = [
+				'id' => 'shipment',
+				'title' => Loc::getMessage('M_CSDL_TAB_REALIZATION'),
+				'documentTypes' => [
+					[
+						'id' => StoreDocumentTable::TYPE_SALES_ORDERS,
+						'title' => Loc::getMessage('M_CSDL_TAB_REALIZATION'),
+					],
+				],
+			];
+		}
+
+		if ($accessController->checkByValue(ActionDictionary::ACTION_STORE_DOCUMENT_VIEW, StoreDocumentTable::TYPE_MOVING))
+		{
+			$documentTabs[] = [
 				'id' => 'moving',
 				'title' => Loc::getMessage('M_CSDL_TAB_MOVING'),
 				'documentTypes' => [
@@ -133,8 +163,12 @@ $component = new class {
 						'title' => Loc::getMessage('M_CSDL_TAB_MENU_MOVING'),
 					],
 				],
-			],
-			[
+			];
+		}
+
+		if ($accessController->checkByValue(ActionDictionary::ACTION_STORE_DOCUMENT_VIEW, StoreDocumentTable::TYPE_DEDUCT))
+		{
+			$documentTabs[] = [
 				'id' => 'deduct',
 				'title' => Loc::getMessage('M_CSDL_TAB_DEDUCT'),
 				'documentTypes' => [
@@ -143,15 +177,10 @@ $component = new class {
 						'title' => Loc::getMessage('M_CSDL_TAB_MENU_DEDUCT'),
 					],
 				],
-			],
-			[
-				'id' => 'shipment',
-				'title' => Loc::getMessage('M_CSDL_TAB_REALIZATION'),
-				'documentTypes' => [],
-				'selectable' => false,
-				'link' => '/shop/documents/sales_order/',
-			],
-		];
+			];
+		}
+
+		return $documentTabs;
 	}
 
 	public function execute(): array
@@ -179,7 +208,10 @@ $component = new class {
 		return [
 			'detailNavigation' => $this->getDetailNavigation(),
 			'documentTabs' => $this->getDocumentTabs(),
-			'actions' => StoreDocumentList::getActionsList(),
+			'actions' => [
+				'storeDocumentActions' => StoreDocumentList::getActionsList(),
+				'realizationDocumentActions' => RealizationDocumentList::getActionsList(),
+			],
 			'statuses' => $this->prepareStatuses(),
 			'permissions' => PermissionsProvider::getInstance()->getPermissions(),
 			'floatingMenuTypes' => $this->getFloatingMenuTypes(),
@@ -196,6 +228,10 @@ $component = new class {
 			[
 				'id' => StoreDocumentTable::TYPE_STORE_ADJUSTMENT,
 				'title' => Loc::getMessage('M_CSDL_TAB_MENU_STORE_ADJUSTMENT'),
+			],
+			[
+				'id' => StoreDocumentTable::TYPE_SALES_ORDERS,
+				'title' => Loc::getMessage('M_CSDL_TAB_REALIZATION'),
 			],
 			[
 				'id' => StoreDocumentTable::TYPE_MOVING,

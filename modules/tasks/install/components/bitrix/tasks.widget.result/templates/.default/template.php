@@ -5,6 +5,9 @@
  * @subpackage tasks
  * @copyright 2001-2021 Bitrix
  */
+
+use Bitrix\Tasks\Internals\Task\Status;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -49,7 +52,7 @@ foreach ($arResult['RESULT_LIST'] as $result)
 		var result = BX.Tasks.ResultManager.getInstance()
 			.initResult({
 				taskId: <?= $arParams['TASK_ID'] ?>,
-				isClosed: <?= in_array($arResult['TASK_DATA']['STATUS'], [CTasks::STATE_SUPPOSEDLY_COMPLETED, CTasks::STATE_COMPLETED]) ? 'true' : 'false'; ?>,
+				isClosed: <?= in_array((int)$arResult['TASK_DATA']['STATUS'], [Status::SUPPOSEDLY_COMPLETED, Status::COMPLETED], true) ? 'true' : 'false'; ?>,
 				comments: <?= CUtil::PhpToJsObject($commentsAsResult, false, false, true); ?>,
 				context: 'task'
 			});

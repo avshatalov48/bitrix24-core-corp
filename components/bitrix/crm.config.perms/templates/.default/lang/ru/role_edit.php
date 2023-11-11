@@ -16,9 +16,9 @@ $MESS["CRM_CONFIG_PERMS_REBUILD_DEAL_ATTR_DLG_SUMMARY"] = "Будет произ
 $MESS["CRM_CONFIG_PERMS_REBUILD_LEAD_ATTRS"] = "Для правильной работы обновлённых прав доступа к лидам необходимо <a id=\"#ID#\" href=\"#URL#\">выполнить обновление</a> атрибутов доступа созданных ранее лидов.";
 $MESS["CRM_CONFIG_PERMS_REBUILD_LEAD_ATTR_DLG_TITLE"] = "Обновление атрибутов доступа для лидов";
 $MESS["CRM_CONFIG_PERMS_REBUILD_LEAD_ATTR_DLG_SUMMARY"] = "Будет произведено перестроение атрибутов доступа для всех лидов. Выполнение этой операции может занять продолжительное время.";
-$MESS["CRM_CONFIG_PERMS_REBUILD_QUOTE_ATTRS"] = "Для правильной работы обновлённых прав доступа к предложениям необходимо <a id=\"#ID#\" href=\"#URL#\">выполнить обновление</a> атрибутов доступа созданных ранее предложений.";
-$MESS["CRM_CONFIG_PERMS_REBUILD_QUOTE_ATTR_DLG_TITLE"] = "Обновление атрибутов доступа для предложений";
-$MESS["CRM_CONFIG_PERMS_REBUILD_QUOTE_ATTR_DLG_SUMMARY"] = "Будет произведено перестроение атрибутов доступа для всех предложений. Выполнение этой операции может занять продолжительное время.";
+$MESS["CRM_CONFIG_PERMS_REBUILD_QUOTE_ATTRS_MSGVER_1"] = "Для правильной работы обновлённых прав доступа к предложениям необходимо <a id=\"#ID#\" href=\"#URL#\">выполнить обновление</a> атрибутов доступа созданных ранее предложений.";
+$MESS["CRM_CONFIG_PERMS_REBUILD_QUOTE_ATTR_DLG_TITLE_MSGVER_1"] = "Обновление атрибутов доступа для предложений";
+$MESS["CRM_CONFIG_PERMS_REBUILD_QUOTE_ATTR_DLG_SUMMARY_MSGVER_1"] = "Будет произведено перестроение атрибутов доступа для всех предложений. Выполнение этой операции может занять продолжительное время.";
 $MESS["CRM_CONFIG_PERMS_REBUILD_INVOICE_ATTRS"] = "Для правильной работы обновлённых прав доступа к счетам необходимо <a id=\"#ID#\" href=\"#URL#\">выполнить обновление</a> атрибутов доступа созданных ранее счетов.";
 $MESS["CRM_CONFIG_PERMS_REBUILD_INVOICE_ATTR_DLG_TITLE"] = "Обновление атрибутов доступа для счетов";
 $MESS["CRM_CONFIG_PERMS_REBUILD_INVOICE_ATTR_DLG_SUMMARY"] = "Будет произведено перестроение атрибутов доступа для всех счетов. Выполнение этой операции может занять продолжительное время.";

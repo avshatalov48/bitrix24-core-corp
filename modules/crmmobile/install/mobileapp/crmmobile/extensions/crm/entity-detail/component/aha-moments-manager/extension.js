@@ -3,26 +3,61 @@
  */
 jn.define('crm/entity-detail/component/aha-moments-manager', (require, exports, module) => {
 	const { GoToChat } = require('crm/entity-detail/component/aha-moments-manager/go-to-chat');
-
-	const availableAhaMoments = {
-		goToChat: GoToChat,
-	};
+	const { Yoochecks } = require('crm/entity-detail/component/aha-moments-manager/yoochecks');
 
 	/**
-	 * @returns {*[]}
+	 * @class AhaMomentsManager
 	 */
-	const ahaMomentsManager = (name) => getAhaMomentClassByName(name);
-
-	const getAhaMomentClassByName = (ahaMomentName) => {
-		if (!availableAhaMoments.hasOwnProperty(ahaMomentName))
+	class AhaMomentsManager
+	{
+		constructor()
 		{
-			console.error(`Unknown aha: ${ahaMomentName}`);
+			this.availableAhaMoments = {
+				goToChat: GoToChat,
+				yoochecks: Yoochecks,
+			};
+		}
+
+		getAvailableAhaMoments()
+		{
+			return this.availableAhaMoments;
+		}
+
+		getAhaMomentClassByName(ahaMomentName)
+		{
+			if (!this.getAvailableAhaMoments().hasOwnProperty(ahaMomentName))
+			{
+				console.error(`Unknown aha: ${ahaMomentName}`);
+
+				return null;
+			}
+
+			return this.getAvailableAhaMoments()[ahaMomentName];
+		}
+
+		chooseAhaMoment(context)
+		{
+			let moment;
+			const contextAhaMoments = context.getAvailableAhaMoments();
+			for (const index in contextAhaMoments)
+			{
+				if (this.getAvailableAhaMoments().hasOwnProperty(contextAhaMoments[index]))
+				{
+					const momentClass = this.getAhaMomentClassByName(contextAhaMoments[index]);
+					moment = new momentClass({
+						detailCard: context,
+					});
+
+					if (moment.isVisible())
+					{
+						return moment;
+					}
+				}
+			}
 
 			return null;
 		}
+	}
 
-		return availableAhaMoments[ahaMomentName];
-	};
-
-	module.exports = { ahaMomentsManager };
+	module.exports = { AhaMomentsManager: new AhaMomentsManager() };
 });

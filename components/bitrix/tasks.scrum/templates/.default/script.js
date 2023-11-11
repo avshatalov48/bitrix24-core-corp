@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,ui_shortView,ui_entitySelector,ui_hint,main_polyfill_intersectionobserver,main_popup,ui_dialogs_messagebox,ui_draganddrop_draggable,pull_client,main_loader,main_core,main_core_events) {
@@ -2566,7 +2567,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        clearUnavailableItems: true,
 	        events: {
 	          'onLoad': function onLoad(baseEvent) {
-	            baseEvent.getTarget().getFooterContainer().style.zIndex = 1;
+	            main_core.Dom.style(baseEvent.getTarget().getFooterContainer(), 'zIndex', 1);
 	            _this2.onShowTaskEditCallback(baseEvent, statusSuccess, item);
 	            _this2.hideDialogLabel(baseEvent.getTarget());
 	          },
@@ -2723,10 +2724,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return;
 	      }
 	      var input = inputObject.getInputNode();
+	      var groupId = this.groupId;
 	      if (this.tagSearchDialog && this.tagSearchDialog.getId() !== inputObject.getNodeId()) {
 	        this.tagSearchDialog = null;
 	      }
-	      var groupId = this.groupId;
 	      if (!this.tagSearchDialog) {
 	        this.tagSearchDialog = new ui_entitySelector.Dialog({
 	          id: inputObject.getNodeId(),
@@ -2756,7 +2757,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          clearUnavailableItems: true,
 	          events: {
 	            'onLoad': function onLoad(event) {
-	              event.getTarget().getFooterContainer().style.zIndex = 1;
+	              main_core.Dom.style(event.getTarget().getFooterContainer(), 'zIndex', 1);
 	              _this4.onLoadTaskQuickCreateCallback(event, inputObject);
 	            },
 	            'onSearch': function onSearch(event) {
@@ -2784,22 +2785,22 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        });
 	        this.tagSearchDialog.subscribe('onHide', function () {
 	          inputObject.setTagsSearchMode(false);
+	          _this4.tagSearchDialog = null;
+	        });
+	        inputObject.subscribe('onEnter', function (event) {
+	          if (main_core.Type.isNil(_this4.tagSearchDialog)) {
+	            return;
+	          }
+	          var searchTab = _this4.tagSearchDialog.getSearchTab();
+	          if (main_core.Type.isNil(searchTab)) {
+	            return;
+	          }
+	          if (searchTab.isEmptyResult()) {
+	            _this4.tagSearchDialog.hide();
+	            input.focus();
+	          }
 	        });
 	      }
-	      inputObject.subscribe('onEnter', function (event) {
-	        if (main_core.Type.isNil(_this4.tagSearchDialog)) {
-	          return;
-	        }
-	        var searchTab = _this4.tagSearchDialog.getSearchTab();
-	        if (main_core.Type.isNil(searchTab)) {
-	          return;
-	        }
-	        if (searchTab.isEmptyResult()) {
-	          _this4.tagSearchDialog.hide();
-	          _this4.tagSearchDialog = null;
-	          input.focus();
-	        }
-	      });
 	      inputObject.setTagsSearchMode(true);
 	      this.tagSearchDialog.show();
 	      this.tagSearchDialog.search(enteredQuery);
@@ -2816,10 +2817,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function showEpicSearchDialog(inputObject, enteredQuery) {
 	      var _this5 = this;
 	      var input = inputObject.getInputNode();
+	      this.epicEnteredQuery = enteredQuery;
 	      if (this.epicSearchDialog && this.epicSearchDialog.getId() !== inputObject.getNodeId()) {
 	        this.epicSearchDialog = null;
 	      }
-	      this.epicEnteredQuery = enteredQuery;
 	      if (!this.epicSearchDialog) {
 	        this.epicSearchDialog = new ui_entitySelector.Dialog({
 	          id: inputObject.getNodeId(),
@@ -2864,7 +2865,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	                  resolve();
 	                });
 	                _this5.epicSearchDialog.hide();
-	                _this5.epicSearchDialog = null;
 	              });
 	            },
 	            'Item:onSelect': function ItemOnSelect(event) {
@@ -2883,6 +2883,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        });
 	        this.epicSearchDialog.subscribe('onHide', function () {
 	          inputObject.setEpicSearchMode(false);
+	          _this5.epicSearchDialog = null;
 	        });
 	        inputObject.subscribe('onMetaEnter', function () {
 	          if (main_core.Type.isNil(_this5.epicSearchDialog)) {

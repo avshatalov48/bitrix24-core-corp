@@ -7,12 +7,21 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
+
+/**
+ * Bitrix vars
+ * @global CMain $APPLICATION
+ * @var array $arParams
+ * @var array $arResult
+ */
 
 Extension::load(['ui.dialogs.messagebox', 'crm_common']);
 
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
+Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
+Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-hidden no-background");
@@ -76,6 +85,7 @@ $this->getComponent()->addToolbar($this);
 </div>
 
 <?php
+
 $messages = array_merge(Container::getInstance()->getLocalization()->loadMessages(), Loc::loadLanguageFile(__FILE__));
 
 if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))
@@ -88,14 +98,16 @@ if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))
 
 <script>
 	BX.ready(function() {
-		BX.message(<?=\Bitrix\Main\Web\Json::encode($messages)?>);
-		var params = <?=CUtil::PhpToJSObject($arResult['jsParams'], false, false, true);?>;
+		BX.message(<?=Json::encode($messages)?>);
+
+		let params = <?=CUtil::PhpToJSObject($arResult['jsParams'], false, false, true);?>;
 		params.errorTextContainer = document.getElementById('crm-type-item-list-error-text-container');
+
 		(new BX.Crm.ItemListComponent(params)).init();
 
 		<?php if (isset($arResult['RESTRICTED_VALUE_CLICK_CALLBACK'])):?>
 		BX.addCustomEvent(window, 'onCrmRestrictedValueClick', function() {
-			<?=$arResult['RESTRICTED_VALUE_CLICK_CALLBACK'];?>
+			<?= $arResult['RESTRICTED_VALUE_CLICK_CALLBACK']; ?>
 		});
 		<?php endif;?>
 	});

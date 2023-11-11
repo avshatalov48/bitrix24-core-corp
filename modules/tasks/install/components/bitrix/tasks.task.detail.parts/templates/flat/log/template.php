@@ -112,7 +112,7 @@ if (!function_exists('prepareUfCrmEntities'))
 			[$type, $id] = explode('_', $entity);
 			$typeId = CCrmOwnerType::ResolveID($type);
 			$url = CCrmOwnerType::GetEntityShowPath($typeId, $id);
-			$title = CCrmOwnerType::GetCaption($typeId, $id);
+			$title = htmlspecialcharsbx(CCrmOwnerType::GetCaption($typeId, $id));
 			$elements[] = "<a href='{$url}'>{$title}</a>";
 		}
 

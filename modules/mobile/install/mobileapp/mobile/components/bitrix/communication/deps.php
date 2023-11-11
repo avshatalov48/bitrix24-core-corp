@@ -2,13 +2,14 @@
 
 return [
 	'extensions' => [
-		'reload/listeners',
 		'db',
-		'pull/client',
-		'im:chat/tables',
 		'entity-ready',
+		'im:chat/tables',
+		'pull/client',
+		'reload/listeners',
+		'tasks:entry',
 		'user/profile',
 		'utils'
 	],
-	'components' => ['user.profile']
+	'components' => ['user.profile'],
 ];

@@ -5,6 +5,7 @@ jn.define("tab.presets", (require, exports, module) => {
 	const getSvg = res.getSvg
 	const TabPresetUtils = jn.require("tab.presets/utils")
 	const Editor = jn.require("tab/presets/editor")
+	const AppTheme = require("apptheme")
 
 	class TabPresetsComponent extends LayoutComponent
 	{
@@ -103,9 +104,9 @@ jn.define("tab.presets", (require, exports, module) => {
 			{
 				const {presets} = this.state
 				return ScrollView(
-					{},
+					{ style: { backgroundColor: AppTheme.colors.bgContentPrimary}},
 					View(
-						{style: {padding: 10, backgroundColor: "#FFFFFF"}},
+						{style: {padding: 10, backgroundColor: AppTheme.colors.bgContentPrimary}},
 						...this.renderList(presets),
 						this.renderManualPresetButton(),
 					)
@@ -124,7 +125,7 @@ jn.define("tab.presets", (require, exports, module) => {
 							marginTop: 10,
 							marginRight: 6,
 							borderRadius: 12,
-							backgroundColor: "#F1F4F6",
+							backgroundColor: AppTheme.colors.bgNavigation,
 							alignItems: 'center',
 							justifyContent: 'space-between',
 							flexDirection: 'row',
@@ -135,8 +136,8 @@ jn.define("tab.presets", (require, exports, module) => {
 					onClick: () => this.openPresetEditor()
 
 				},
-				Text({style:{ color: '#525C69', fontWeight: '600', fontSize: 18}, text: BX.message("TAB_PRESET_USER_PRESET") },),
-				Image({style:{ color: '#525C69', width: 10, height: 16 }, svg: { content: getSvg('chevron')} },),
+				Text({style:{ color: AppTheme.colors.base2, fontWeight: '600', fontSize: 18}, text: BX.message("TAB_PRESET_USER_PRESET") },),
+				Image({style:{ color: AppTheme.colors.base2, width: 10, height: 16 }, svg: { content: getSvg('chevron')} },),
 			)
 		}
 
@@ -158,10 +159,7 @@ jn.define("tab.presets", (require, exports, module) => {
 					style: {justifyContent: "space-around"}
 				},
 				(blockStyle.check ? this.renderActiveStatus() : null),
-				Shadow({
-						radius: 4,
-						color: active ? '#08000000' : '#00000000',
-						offset: {x: 0, y: 4},
+				View({
 						style: res.styles.presetBlockShadow
 					},
 					View(
@@ -191,21 +189,22 @@ jn.define("tab.presets", (require, exports, module) => {
 		renderTabPreview(data, active = false)
 		{
 			const tabs = this.tabList(Object.keys(data), active)
+
+			return View({
+				style: res.styles.tabBarPreview,
+			}, ...tabs);
 			return View(
 				{
 					style: {
 						clickable: false,
-						height: 84,
+						height: 70,
 						flexGrow: 1,
 					}
 				},
-				Shadow({
-						radius: 4, color: active ? '#08000000' : '#00000000', offset: {x: 0, y: 4},
-						style: res.styles.tabPreviewRoundedBorderStyle,
-					},
-					View({
-						style: res.styles.tabBarPreview,
-					}, ...tabs)))
+				View({
+					style: res.styles.tabBarPreview,
+				}, ...tabs),
+			)
 		}
 
 		renderActiveStatus()
@@ -216,7 +215,7 @@ jn.define("tab.presets", (require, exports, module) => {
 					text: BX.message('TAB_PRESET_CURRENT_LABEL'),
 					style: {
 						fontSize: 9,
-						color: '#ffffff',
+						color: AppTheme.colors.baseWhiteFixed,
 						lineHeightMultiple: 1.1,
 						fontWeight: '700'
 					}
@@ -226,7 +225,7 @@ jn.define("tab.presets", (require, exports, module) => {
 		renderLoading()
 		{
 			return View({}, Loader({
-				tintColor: '#999999', animating: true, size: 'small',
+				tintColor: AppTheme.colors.base4, animating: true, size: 'small',
 				style: {width: "100%", height: "100%"},
 			}))
 		}
@@ -266,13 +265,13 @@ jn.define("tab.presets", (require, exports, module) => {
 						height: 30,
 					},
 					svg: {
-						content: getSvg(code, index === 0 ? "#00A2E8" : "#D5D7DB")
+						content: getSvg(code, index === 0 ? AppTheme.colors.accentMainPrimary : AppTheme.colors.base6)
 					}
 				}), Text({
 					style: {
 						fontSize: 11,
 						fontWeight: "400",
-						color: index === 0 ? "#333333" : "#ACB0B7"
+						color: index === 0 ? AppTheme.colors.base1 : AppTheme.colors.base4
 					}, text: title
 				}))
 			})
@@ -296,7 +295,7 @@ jn.define("tab.presets", (require, exports, module) => {
 				title: text,
 				id: "error",
 				backgroundColor: "#AA333333",
-				textColor: "#ffffff",
+				textColor: AppTheme.colors.bgContentPrimary,
 				hideOnTap: true,
 				autoHide: true
 			}, () => {

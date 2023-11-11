@@ -1,8 +1,11 @@
 ;(function() {
 	var BX = window.BX;
-	if (BX && BX["Mobile"] && BX["Mobile"]["Tasks"] && BX["Mobile"]["Tasks"]["edit"])
+	if (BX && BX.Mobile && BX.Mobile.Tasks && BX.Mobile.Tasks.edit)
+	{
 		return;
-	BX.namespace("BX.Mobile.Tasks.edit");
+	}
+	BX.namespace('BX.Mobile.Tasks.edit');
+
 	var counter = 0,
 		getId = function(){ return 'TaskEdit' + (++counter) + BX.util.getRandomString(); },
 		checkListEditMode = (function () {

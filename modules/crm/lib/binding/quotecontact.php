@@ -15,6 +15,22 @@ use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
 
+/**
+ * Class QuoteContactTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_QuoteContact_Query query()
+ * @method static EO_QuoteContact_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_QuoteContact_Result getById($id)
+ * @method static EO_QuoteContact_Result getList(array $parameters = [])
+ * @method static EO_QuoteContact_Entity getEntity()
+ * @method static \Bitrix\Crm\Binding\EO_QuoteContact createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Binding\EO_QuoteContact_Collection createCollection()
+ * @method static \Bitrix\Crm\Binding\EO_QuoteContact wakeUpObject($row)
+ * @method static \Bitrix\Crm\Binding\EO_QuoteContact_Collection wakeUpCollection($rows)
+ */
 class QuoteContactTable extends DataManager
 {
 	/**

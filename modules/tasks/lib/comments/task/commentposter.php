@@ -14,6 +14,7 @@ use Bitrix\Tasks\Integration\Forum;
 use Bitrix\Tasks\Integration\Mail;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Util\Collection;
 use Bitrix\Tasks\Util\Type\DateTime;
@@ -749,11 +750,11 @@ class CommentPoster
 		$creatorId = (isset($newFields['CREATED_BY']) ? (int)$newFields['CREATED_BY'] : (int)$oldFields['CREATED_BY']);
 		$newStatus = (int)$newFields['STATUS'];
 		$oldStatus = (int)$oldFields['REAL_STATUS'];
-		$newStatus = ($newStatus === \CTasks::STATE_NEW ? \CTasks::STATE_PENDING : $newStatus);
-		$oldStatus = ($oldStatus === \CTasks::STATE_NEW ? \CTasks::STATE_PENDING : $oldStatus);
+		$newStatus = ($newStatus === Status::NEW ? Status::PENDING : $newStatus);
+		$oldStatus = ($oldStatus === Status::NEW ? Status::PENDING : $oldStatus);
 
-		$validNewStates = [\CTasks::STATE_PENDING, \CTasks::STATE_SUPPOSEDLY_COMPLETED, \CTasks::STATE_COMPLETED];
-		if (!in_array($newStatus, $validNewStates, true))
+		$validNewStatuses = [Status::PENDING, Status::SUPPOSEDLY_COMPLETED, Status::COMPLETED];
+		if (!in_array($newStatus, $validNewStatuses, true))
 		{
 			return $statusComments;
 		}
@@ -765,10 +766,10 @@ class CommentPoster
 		$replace = ['#CREATOR#' => $userToLinkFunction($creatorId)];
 		$liveParams = $this->prepareStatusCommentLiveParams(array_merge($oldFields, $newFields));
 
-		if ($newStatus === \CTasks::STATE_PENDING)
+		if ($newStatus === Status::PENDING)
 		{
-			$validOldStates = [\CTasks::STATE_SUPPOSEDLY_COMPLETED, \CTasks::STATE_COMPLETED];
-			if (!in_array($oldStatus, $validOldStates, true))
+			$validOldStatuses = [Status::SUPPOSEDLY_COMPLETED, Status::COMPLETED];
+			if (!in_array($oldStatus, $validOldStatuses, true))
 			{
 				return $statusComments;
 			}
@@ -797,7 +798,7 @@ class CommentPoster
 				$replace['#MEMBERS#'] = implode(', ', array_map($userToLinkFunction, $members));
 			}
 		}
-		else if ($newStatus === \CTasks::STATE_COMPLETED && $oldStatus === \CTasks::STATE_SUPPOSEDLY_COMPLETED)
+		else if ($newStatus === Status::COMPLETED && $oldStatus === Status::SUPPOSEDLY_COMPLETED)
 		{
 			$messageKey = "{$messageKey}_APPROVE";
 		}
@@ -818,9 +819,9 @@ class CommentPoster
 		$liveParams = [];
 
 		$newStatus = (int)$taskData['STATUS'];
-		$newStatus = ($newStatus === \CTasks::STATE_NEW ? \CTasks::STATE_PENDING : $newStatus);
+		$newStatus = ($newStatus === Status::NEW ? Status::PENDING : $newStatus);
 
-		if ($newStatus === \CTasks::STATE_SUPPOSEDLY_COMPLETED)
+		if ($newStatus === Status::SUPPOSEDLY_COMPLETED)
 		{
 			$taskId = (int)$taskData['ID'];
 			$users = array_unique(

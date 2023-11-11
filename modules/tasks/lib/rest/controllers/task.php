@@ -5,9 +5,15 @@ use Bitrix\Crm\Integration\UI\EntitySelector\DynamicMultipleProvider;
 use Bitrix\Crm\Service\Display;
 use Bitrix\Crm\Service\Display\Field;
 use Bitrix\Main;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine;
+use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\ObjectException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\UserTable;
@@ -33,6 +39,7 @@ use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
 use Bitrix\Tasks\Internals\Task\Result\ResultTable;
 use Bitrix\Tasks\Internals\Task\ScenarioTable;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Scrum\Service\TaskService;
 use Bitrix\Tasks\Internals\UserOption;
@@ -46,8 +53,8 @@ use TasksException;
 
 /**
  * Class Task
- *
  * @package Bitrix\Tasks\Rest\Controllers
+ * @restController tasks.task
  */
 final class Task extends Base
 {
@@ -82,6 +89,7 @@ final class Task extends Base
 	 * Return all DB and UF_ fields of task
 	 *
 	 * @return array
+	 * @restMethod tasks.task.getFields
 	 */
 	public function getFieldsAction(): array
 	{
@@ -95,6 +103,7 @@ final class Task extends Base
 	 * @param array $users
 	 * @param array $params
 	 * @return array[]
+	 * @restMethod tasks.task.getAccess
 	 */
 	public function getAccessAction(\CTaskItem $task, array $users = [], array $params = []): array
 	{
@@ -194,6 +203,7 @@ final class Task extends Base
 	 * @throws Main\ArgumentException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
+	 * @restMethod tasks.task.get
 	 */
 	public function getAction(\CTaskItem $task, array $select = [], array $params = []): array
 	{
@@ -984,6 +994,7 @@ final class Task extends Base
 	 * @throws Main\SystemException
 	 * @throws TasksException
 	 * @throws \CTaskAssertException
+	 * @restMethod tasks.task.add
 	 */
 	public function addAction(array $fields, array $params = []): ?array
 	{
@@ -1032,6 +1043,7 @@ final class Task extends Base
 	 * @throws Main\LoaderException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
+	 * @restMethod tasks.task.update
 	 */
 	public function updateAction(\CTaskItem $task, array $fields, array $params = []): ?array
 	{
@@ -1074,8 +1086,8 @@ final class Task extends Base
 	 *
 	 * @param \CTaskItem $task
 	 * @param array $params
-	 * @return array
-	 * @throws TasksException
+	 * @return array|null
+	 * @restMethod tasks.task.delete
 	 */
 	public function deleteAction(\CTaskItem $task, array $params = []): ?array
 	{
@@ -1101,12 +1113,12 @@ final class Task extends Base
 	 * @param array $order
 	 * @param array $params
 	 * @param PageNavigation|null $pageNavigation
-	 * @return Engine\Response\DataType\Page
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\ObjectException
-	 * @throws Main\SystemException
+	 * @return Page|null
+	 * @throws ArgumentException
+	 * @throws ObjectException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @restMethod tasks.task.list
 	 */
 	public function listAction(
 		array $filter = [],
@@ -1511,7 +1523,7 @@ final class Task extends Base
 					],
 					'::SUBFILTER-2' => [
 						'=CREATED_BY' => $userId,
-						'REAL_STATUS' => \CTasks::STATE_SUPPOSEDLY_COMPLETED,
+						'REAL_STATUS' => Status::SUPPOSEDLY_COMPLETED,
 					],
 				];
 				unset($filter['REAL_STATUS']);
@@ -1544,6 +1556,7 @@ final class Task extends Base
 	 * @throws Main\ArgumentException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
+	 * @restMethod tasks.task.mute
 	 */
 	public function muteAction(\CTaskItem $task): ?array
 	{
@@ -1557,6 +1570,7 @@ final class Task extends Base
 	 * @throws Main\ArgumentException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
+	 * @restMethod tasks.task.unmute
 	 */
 	public function unmuteAction(\CTaskItem $task): ?array
 	{
@@ -1570,6 +1584,7 @@ final class Task extends Base
 	 * @throws Main\ArgumentException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
+	 * @restMethod tasks.task.pin
 	 */
 	public function pinAction(\CTaskItem $task): ?array
 	{
@@ -1583,6 +1598,7 @@ final class Task extends Base
 	 * @throws Main\ArgumentException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
+	 * @restMethod tasks.task.unpin
 	 */
 	public function unpinAction(\CTaskItem $task): ?array
 	{
@@ -1592,7 +1608,8 @@ final class Task extends Base
 
 	/**
 	 * @param \CTaskItem $task
-	 * @return bool
+	 * @return bool|null
+	 * @restMethod tasks.task.ping
 	 */
 	public function pingAction(\CTaskItem $task): ?bool
 	{
@@ -1615,6 +1632,7 @@ final class Task extends Base
 	/**
 	 * @param array $taskData
 	 * @return bool
+	 * @restMethod tasks.task.pingStatus
 	 */
 	private function pingStatusAction(array $taskData): bool
 	{
@@ -1635,17 +1653,17 @@ final class Task extends Base
 	 * @param \CTaskItem $task
 	 * @param $userId
 	 * @param array $params
-	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 * @throws TasksException
+	 * @return array|null
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @restMethod tasks.task.delegate
 	 */
 	public function delegateAction(\CTaskItem $task, $userId, array $params = []): ?array
 	{
 		try
 		{
-			$task->delegate($userId, $params);
+			$task->delegate((int)$userId, $params);
 		}
 		catch (TasksException $e)
 		{
@@ -1671,6 +1689,7 @@ final class Task extends Base
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 * @throws TasksException
+	 * @restMethod tasks.task.start
 	 */
 	public function startAction(\CTaskItem $task, array $params = []): ?array
 	{
@@ -1688,6 +1707,9 @@ final class Task extends Base
 		return $this->getAction($task);
 	}
 
+	/**
+	 * @restMethod tasks.task.startTimer
+	 */
 	public function startTimerAction(\CTaskItem $task, array $params = []): ?array
 	{
 		try
@@ -1774,6 +1796,7 @@ final class Task extends Base
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 * @throws TasksException
+	 * @restMethod tasks.task.pause
 	 */
 	public function pauseAction(\CTaskItem $task, array $params = []): ?array
 	{
@@ -1791,6 +1814,9 @@ final class Task extends Base
 		return $this->getAction($task);
 	}
 
+	/**
+	 * @restMethod tasks.task.pauseTimer
+	 */
 	public function pauseTimerAction(\CTaskItem $task, array $params = []): ?array
 	{
 		try
@@ -1837,11 +1863,11 @@ final class Task extends Base
 	 *
 	 * @param \CTaskItem $task
 	 * @param array $params
-	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 * @throws TasksException
+	 * @return array|null
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @restMethod tasks.task.complete
 	 */
 	public function completeAction(\CTaskItem $task, array $params = []): ?array
 	{
@@ -1880,11 +1906,11 @@ final class Task extends Base
 	 *
 	 * @param \CTaskItem $task
 	 * @param array $params
-	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 * @throws TasksException
+	 * @return array|null
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @restMethod tasks.task.defer
 	 */
 	public function deferAction(\CTaskItem $task, array $params = []): ?array
 	{
@@ -1906,11 +1932,11 @@ final class Task extends Base
 	 *
 	 * @param \CTaskItem $task
 	 * @param array $params
-	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 * @throws TasksException
+	 * @return array|null
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @restMethod tasks.task.renew
 	 */
 	public function renewAction(\CTaskItem $task, array $params = []): ?array
 	{
@@ -1932,11 +1958,11 @@ final class Task extends Base
 	 *
 	 * @param \CTaskItem $task
 	 * @param array $params
-	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 * @throws TasksException
+	 * @return array|null
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @restMethod tasks.task.approve
 	 */
 	public function approveAction(\CTaskItem $task, array $params = []): ?array
 	{
@@ -1958,11 +1984,11 @@ final class Task extends Base
 	 *
 	 * @param \CTaskItem $task
 	 * @param array $params
-	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 * @throws TasksException
+	 * @return array|null
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @restMethod tasks.task.disapprove
 	 */
 	public function disapproveAction(\CTaskItem $task, array $params = []): ?array
 	{
@@ -1983,11 +2009,11 @@ final class Task extends Base
 	 * Become an auditor of a specified task
 	 *
 	 * @param \CTaskItem $task
-	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 * @throws TasksException
+	 * @return array|null
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @restMethod tasks.task.startWatch
 	 */
 	public function startWatchAction(\CTaskItem $task): ?array
 	{
@@ -2008,11 +2034,11 @@ final class Task extends Base
 	 * Stop being an auditor of a specified task
 	 *
 	 * @param \CTaskItem $task
-	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 * @throws TasksException
+	 * @return array|null
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @restMethod tasks.task.stopWatch
 	 */
 	public function stopWatchAction(\CTaskItem $task): ?array
 	{
@@ -2036,6 +2062,7 @@ final class Task extends Base
 	 * @throws Main\ArgumentException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
+	 * @restMethod tasks.task.addAuditors
 	 */
 	public function addAuditorsAction(\CTaskItem $task, array $auditorsIds = []): array
 	{
@@ -2066,6 +2093,7 @@ final class Task extends Base
 	 * @throws Main\ArgumentException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
+	 * @restMethod tasks.task.addAccomplices
 	 */
 	public function addAccomplicesAction(\CTaskItem $task, array $accomplicesIds = []): array
 	{
@@ -2274,12 +2302,14 @@ final class Task extends Base
 
 	/**
 	 * @param array $taskIds
+	 * @param array $navigation
 	 * @param array $arParams
 	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
+	 * @throws ArgumentException
+	 * @throws LoaderException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @restMethod tasks.task.getGridRows
 	 */
 	public function getGridRowsAction(array $taskIds = [], array $navigation = [], array $arParams = []): array
 	{
@@ -2289,11 +2319,12 @@ final class Task extends Base
 	}
 
 	/**
-	 * @param $taskId
+	 * @param array $taskIds
 	 * @param array $navigation
 	 * @param array $arParams
 	 * @return array
-	 * @throws Main\LoaderException
+	 * @throws LoaderException
+	 * @restMethod tasks.task.getNearTasks
 	 */
 	public function getNearTasksAction(array $taskIds, array $navigation, array $arParams = []): array
 	{
@@ -2322,5 +2353,14 @@ final class Task extends Base
 		}
 
 		return $fields;
+	}
+
+	/**
+	 * @return void
+	 * @restMethod tasks.task.sendAnalyticsLabel
+	 */
+	public function sendAnalyticsLabelAction(): void
+	{
+		return;
 	}
 }

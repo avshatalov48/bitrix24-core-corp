@@ -84,7 +84,7 @@ class GarbageCollector
 
 		$sql = "
 			INSERT INTO ". CounterTable::getTableName() ."
-			(`USER_ID`, `TASK_ID`, `GROUP_ID`, `TYPE`, `VALUE`)
+			(USER_ID, TASK_ID, GROUP_ID, TYPE, VALUE)
 			VALUES ({$userId}, 0, 0, '". CounterDictionary::COUNTER_FLAG_CLEARED ."', {$date})
 		";
 		Application::getConnection()->query($sql);

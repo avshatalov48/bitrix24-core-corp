@@ -2,9 +2,9 @@
 
 namespace Bitrix\Crm\Reservation;
 
-use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
+use Bitrix\Main\Type\Date;
 
 class ProductRowReservation extends Crm\Reservation\Internals\EO_ProductRowReservation
 {
@@ -16,6 +16,7 @@ class ProductRowReservation extends Crm\Reservation\Internals\EO_ProductRowReser
 	public const RESERVE_QUANTITY = 'RESERVE_QUANTITY';
 	public const RESERVE_STORE_ID = 'STORE_ID';
 	public const RESERVE_DATE_END = 'DATE_RESERVE_END';
+	public const IS_AUTO = 'IS_AUTO';
 
 	private ?Crm\ProductRow $productRow = null;
 	private ?int $saleReserveId = null;
@@ -84,6 +85,13 @@ class ProductRowReservation extends Crm\Reservation\Internals\EO_ProductRowReser
 			$fields['DATE_RESERVE_END'] = ReservationService::getInstance()->getDefaultDateReserveEnd();
 		}
 
+		if (is_int($fields['DATE_RESERVE_END']))
+		{
+			$fields['DATE_RESERVE_END'] = Date::createFromPhp(
+				(new \DateTime())->setTimestamp($fields['DATE_RESERVE_END'])
+			);
+		}
+
 		return array_filter(
 			$fields,
 			static function (string $fieldName): bool {
@@ -133,6 +141,7 @@ class ProductRowReservation extends Crm\Reservation\Internals\EO_ProductRowReser
 			self::RESERVE_QUANTITY => $this->getReserveQuantity(),
 			self::RESERVE_STORE_ID => $this->getStoreId(),
 			self::RESERVE_DATE_END => $this->getDateReserveEnd(),
+			self::IS_AUTO => $this->getIsAuto(),
 		];
 	}
 

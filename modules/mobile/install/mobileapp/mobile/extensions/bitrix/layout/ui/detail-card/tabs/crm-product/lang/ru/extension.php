@@ -14,7 +14,6 @@ $MESS['CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION_MSGVER_1'] = 'Создать то�
 $MESS['CSPL_PRODUCT_DETAIL_BACKDROP_TITLE'] = 'Данные товара';
 $MESS['CSPL_PRODUCT_CONTEXT_MENU_EDIT'] = 'Редактировать';
 $MESS['CSPL_PRODUCT_CONTEXT_MENU_OPEN'] = 'Открыть';
-$MESS['CSPL_PRODUCT_CONTEXT_MENU_REMOVE'] = 'Убрать из документа';
 $MESS['CSPL_VALIDATION_ERROR_EMPTY_NAME'] = 'Позиция №#NUM# не содержит названия товара';
 $MESS['CSPL_MENU_SEARCH_PRODUCT_BY_BARCODE'] = 'Найти по штрихкоду';
 $MESS['CSPL_PRODUCT_NOT_FOUND_BY_BARCODE'] = 'Товар с таким штрихкодом не найден';

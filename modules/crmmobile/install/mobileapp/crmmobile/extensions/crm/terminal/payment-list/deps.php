@@ -15,5 +15,6 @@ return [
 		'analytics-label',
 		'layout/ui/menu',
 		'crm:terminal/services/payment',
+		'crm:simple-list/items',
 	],
 ];

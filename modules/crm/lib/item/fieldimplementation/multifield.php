@@ -114,6 +114,10 @@ final class Multifield implements FieldImplementation
 		return null;
 	}
 
+	public function beforeItemSave(Item $item, EntityObject $entityObject): void
+	{
+	}
+
 	public function afterSuccessfulItemSave(Item $item, EntityObject $entityObject): void
 	{
 		$this->ownerEntityTypeId = $item->getEntityTypeId();

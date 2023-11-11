@@ -41,6 +41,9 @@ return [
 		'crm:document/list',
 		'crm:receive-payment/mode-selection',
 		'crm:entity-document',
+		'crm:entity-chat-opener',
+
+		'catalog:store/document-card/manager',
 
 		'imconnector:connectors/telegram',
 

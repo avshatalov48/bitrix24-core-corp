@@ -172,6 +172,12 @@ class Helper
 					),
 					Permissions::ENTITY_SETTINGS => array(
 						Permissions::ACTION_MODIFY => Permissions::PERMISSION_ALLOW,
+					),
+					Permissions::ENTITY_QUICK_ANSWERS => array(
+						Permissions::ACTION_MODIFY => Permissions::PERMISSION_ANY,
+					),
+					Permissions::ENTITY_SOFT_PAUSE_LIST => array(
+						Permissions::ACTION_VIEW => Permissions::PERMISSION_ALLOW,
 					)
 				)
 			),
@@ -199,6 +205,12 @@ class Helper
 					),
 					Permissions::ENTITY_SETTINGS => array(
 						Permissions::ACTION_MODIFY => Permissions::PERMISSION_NONE,
+					),
+					Permissions::ENTITY_QUICK_ANSWERS => array(
+						Permissions::ACTION_MODIFY => Permissions::PERMISSION_ANY,
+					),
+					Permissions::ENTITY_SOFT_PAUSE_LIST => array(
+						Permissions::ACTION_VIEW => Permissions::PERMISSION_ANY,
 					)
 				)
 			),
@@ -226,6 +238,12 @@ class Helper
 					),
 					Permissions::ENTITY_SETTINGS => array(
 						Permissions::ACTION_MODIFY => Permissions::PERMISSION_NONE,
+					),
+					Permissions::ENTITY_QUICK_ANSWERS => array(
+						Permissions::ACTION_MODIFY => Permissions::PERMISSION_NONE,
+					),
+					Permissions::ENTITY_SOFT_PAUSE_LIST => array(
+						Permissions::ACTION_VIEW => Permissions::PERMISSION_NONE,
 					)
 				)
 			)

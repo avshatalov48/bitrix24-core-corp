@@ -8,6 +8,6 @@ $MESS['CRM_PROCESS_ENTITY_ORDER_SHIPMENT_ADD'] = 'Создана отгрузк�
 $MESS['CRM_PROCESS_ENTITY_CONTACT_ADD'] = 'Создан контакт';
 $MESS['CRM_PROCESS_ENTITY_COMPANY_ADD'] = 'Создана компания';
 $MESS['CRM_PROCESS_ENTITY_SMART_INVOICE_ADD'] = 'Создан счёт';
-$MESS['CRM_PROCESS_ENTITY_QUOTE_ADD'] = 'Создано предложение';
+$MESS['CRM_PROCESS_ENTITY_QUOTE_ADD_MSGVER_1'] = 'Создано предложение';
 $MESS['CRM_PROCESS_ENTITY_DYNAMIC_ADD'] = 'Создан элемент смарт-процесса "#ENTITY_TYPE_CAPTION#"';
 $MESS['CRM_PROCESS_ENTITY_DEFAULT_ADD'] = 'Создан элемент типа "#ENTITY_TYPE_CAPTION#"';

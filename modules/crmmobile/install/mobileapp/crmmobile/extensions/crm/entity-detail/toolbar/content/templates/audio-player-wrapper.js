@@ -5,6 +5,7 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 	const { EventEmitter } = require('event-emitter');
 	const { throttle, debounce } = require('utils/function');
 	const { Loc } = require('loc');
+	const { Feature } = require('feature');
 
 	const MARKER_SIZE = 20;
 
@@ -26,7 +27,11 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 				duration: props.duration,
 			};
 
+			// current state to render on next tick if debouncePlayState triggers
+			this.playState = this.state.play;
+
 			this.currentTimeWidth = 27;
+			this.currentlyPlayedUri = null;
 
 			this.updatePosition = throttle((position) => {
 				this.setState({
@@ -38,9 +43,16 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 			this.freezeTouchEnd = debounce((value) => {
 				this.setState({
 					...this.state,
+					play: this.playState,
 					isTouchEnd: value,
 				});
-			}, 200);
+			}, 200, this);
+
+			this.debouncePlayState = debounce(() => {
+				this.setState({ play: this.playState });
+			}, 24, this);
+
+			this.onProximitySensorDebounced = debounce(this.onProximitySensor.bind(this), 500);
 
 			this.enableToUpdateCurrentTime = true;
 
@@ -73,6 +85,38 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 			}
 		}
 
+		componentWillUnmount()
+		{
+			this.removePlayerEvents();
+			this.disableProximitySensor();
+		}
+
+		onProximitySensor()
+		{
+			if (!Feature.canChangeAudioDevice())
+			{
+				return;
+			}
+
+			if (
+				(!device.proximityState && this.state.play)
+				|| (device.proximityState && !this.state.play)
+			)
+			{
+				this.onPlay();
+			}
+
+			this.customEventEmitter.emit(
+				'TopPanelAudioPlayer::onProximitySensor',
+				[
+					{
+						proximityState: device.proximityState,
+						uri: this.props.uri,
+					},
+				],
+			);
+		}
+
 		/**
 		 * @param {PinnableAudioPlayerProps} props
 		 */
@@ -83,6 +127,8 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 				this.removePlayerEvents();
 				this.customEventEmitter.setUid(props.uid);
 				this.bindPlayerEvents();
+
+				this.playState = true;
 				this.setState({
 					play: true,
 					currentTime: props.currentTime,
@@ -90,6 +136,15 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 					speed: props.speed,
 					duration: props.duration,
 				});
+			}
+
+			if (props.clickable)
+			{
+				this.enableProximitySensor();
+			}
+			else
+			{
+				this.disableProximitySensor();
 			}
 		}
 
@@ -113,10 +168,12 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 				.off('AudioPlayer::onChangeSpeed', this.onChangeSpeed);
 		}
 
-		onUpdateAudioPlayer({ currentTime, duration, uid })
+		onUpdateAudioPlayer({ currentTime, duration, uid, uri })
 		{
 			if (this.state.isTouchEnd && this.enableToUpdateCurrentTime && uid === this.getProps().uid)
 			{
+				this.currentlyPlayedUri = uri;
+
 				const position = this.getPositionByValue(currentTime, this.state.duration);
 
 				this.setState({
@@ -127,32 +184,76 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 			}
 		}
 
-		onPlayAudio()
+		onPlayAudio({ uri })
 		{
+			this.currentlyPlayedUri = uri;
+
 			this.enableToUpdateCurrentTime = false;
 
 			setTimeout(() => {
 				this.enableToUpdateCurrentTime = true;
 			}, 100);
 
-			this.setState({ play: true });
+			this.playState = true;
+			this.debouncePlayState();
+			this.enableProximitySensor();
 		}
 
-		onPauseAudio()
+		onPauseAudio({ uri })
 		{
-			this.setState({ play: false });
+			if (!this.checkIsCurrentPlayedUri(uri))
+			{
+				return;
+			}
+
+			this.playState = false;
+			this.debouncePlayState();
+			this.disableProximitySensor();
 		}
 
-		onFinishAudio()
+		onFinishAudio({ uri })
 		{
-			this.setState({ play: false });
+			if (!this.checkIsCurrentPlayedUri(uri))
+			{
+				return;
+			}
+
+			this.disableProximitySensor();
+
+			this.playState = false;
+			this.debouncePlayState();
 		}
 
-		onChangeSpeed({ speed })
+		enableProximitySensor()
 		{
-			this.setState({
-				speed,
-			});
+			if (!Feature.canChangeAudioDevice())
+			{
+				return;
+			}
+
+			device.setProximitySensorEnabled(true);
+			device.on('proximityChanged', this.onProximitySensorDebounced);
+		}
+
+		disableProximitySensor()
+		{
+			device.setProximitySensorEnabled(false);
+			device.off('proximityChanged', this.onProximitySensorDebounced);
+		}
+
+		onChangeSpeed({ speed, uri })
+		{
+			if (!this.checkIsCurrentPlayedUri(uri))
+			{
+				return;
+			}
+
+			this.setState({ speed });
+		}
+
+		checkIsCurrentPlayedUri(uri)
+		{
+			return this.currentlyPlayedUri === uri;
 		}
 
 		convertSecondsToTime(totalSeconds)
@@ -470,10 +571,13 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 						speed: parseFloat(value),
 					}, () => {
 						const { uri } = this.getProps();
-						this.customEventEmitter.emit('TopPanelAudioPlayer::onChangeSpeed', [{
-							uri,
-							speed: parseFloat(value),
-						}]);
+
+						this.customEventEmitter.emit('TopPanelAudioPlayer::onChangeSpeed', [
+							{
+								uri,
+								speed: parseFloat(value),
+							},
+						]);
 					});
 				},
 				isSelected: this.state.speed === parseFloat(value),
@@ -649,6 +753,7 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 			{
 				this.setState({
 					...this.state,
+					play: this.playState,
 					isTouchEnd: true,
 				});
 			}

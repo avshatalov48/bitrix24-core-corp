@@ -2821,7 +2821,7 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 			/** @var \Bitrix\Disk\File $fileModel */
 			$contentType = 'file';
 			$imageParams = false;
-			if (\Bitrix\Disk\TypeFile::isImage($fileModel->getName()))
+			if (\Bitrix\Disk\TypeFile::isImage($fileModel))
 			{
 				$contentType = 'image';
 				$params = $fileModel->getFile();
@@ -3062,6 +3062,10 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 				$filter["={$fieldName}"] = $v;
 				unset($filter[$k]);
 				continue;
+			}
+			if (in_array($operation, ['<', '>', '>=', '<=']) && $fieldType === 'integer')
+			{
+				$filter[$k] = (int)$v;
 			}
 
 			if($fieldType === 'datetime')
@@ -13902,7 +13906,7 @@ class CCrmExternalChannelConnectorRestProxy  extends CCrmRestProxyBase
 
 				$this->internalizeFields($fields, $fieldsInfo, array());
 
-				if(count($error) <= 0)
+				if (empty($error))
 				{
 					$channelId = $entity::register($fields['TYPE_ID'], $fields['ORIGINATOR_ID'], $fields);
 				}

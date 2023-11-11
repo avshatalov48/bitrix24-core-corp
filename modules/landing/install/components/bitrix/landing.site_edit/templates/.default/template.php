@@ -88,11 +88,20 @@ else
 // special for forms
 if ($formEditor)
 {
-	$hooks = [
-		'B24BUTTON' => $hooks['B24BUTTON'],
-		'YMAP' => $hooks['YMAP'],
-		'GMAP' => $hooks['GMAP'],
+	$formHooks = [
+		'B24BUTTON',
+		'YMAP',
+		'GMAP',
 	];
+
+	foreach($hooks as $code => $hook)
+	{
+		if (!in_array($code, $formHooks))
+		{
+			unset($hooks[$code]);
+		}
+	}
+
 	$arResult['TEMPLATES'] = [];
 }
 

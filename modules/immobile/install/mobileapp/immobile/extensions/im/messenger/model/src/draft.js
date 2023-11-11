@@ -37,10 +37,16 @@ jn.define('im/messenger/model/draft', (require, exports, module) => {
 		actions: {
 			/** @function draftModel/setState */
 			setState: (store, payload) => {
-				store.commit('setState', payload);
+				store.commit('setState', {
+					actionName: 'setState',
+					data: {
+						collection: payload.collection,
+					},
+				});
 			},
 			/**
 			 * @function draftModel/set
+			 * @param store
 			 * @param {DraftModelState} payload
 			 */
 			set: (store, payload) => {
@@ -56,21 +62,28 @@ jn.define('im/messenger/model/draft', (require, exports, module) => {
 				if (existingItem)
 				{
 					store.commit('update', {
-						dialogId: validPayload.dialogId,
-						fields: validPayload,
+						actionName: 'set',
+						data: {
+							dialogId: validPayload.dialogId,
+							fields: validPayload,
+						},
 					});
 
 					return;
 				}
 
 				store.commit('add', {
-					dialogId: validPayload.dialogId,
-					fields: { ...draftState, ...validPayload },
+					actionName: 'set',
+					data: {
+						dialogId: validPayload.dialogId,
+						fields: { ...draftState, ...validPayload },
+					},
 				});
 			},
 
 			/**
 			 * @function draftModel/delete
+			 * @param store
 			 * @param {{dialogId: string|number}} payload
 			 */
 			delete: (store, payload) => {
@@ -80,32 +93,74 @@ jn.define('im/messenger/model/draft', (require, exports, module) => {
 					return false;
 				}
 
-				store.commit('delete', payload.dialogId);
+				store.commit('delete', {
+					actionName: 'delete',
+					data: {
+						dialogId: payload.dialogId,
+					},
+				});
 
 				return true;
 			},
 		},
 
 		mutations: {
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			setState: (state, payload) => {
+				const {
+					collection,
+				} = payload.data;
+
 				// eslint-disable-next-line no-param-reassign
-				state.collection = payload.collection;
+				state.collection = collection;
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			add: (state, payload) => {
+				const {
+					dialogId,
+					fields,
+				} = payload.data;
+
 				// eslint-disable-next-line no-param-reassign
-				state.collection[payload.dialogId] = payload.fields;
+				state.collection[dialogId] = fields;
 
 				DraftCache.save(state);
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			update: (state, payload) => {
+				const {
+					dialogId,
+					fields,
+				} = payload.data;
+
 				// eslint-disable-next-line no-param-reassign
-				state.collection[payload.dialogId] = { ...state.collection[payload.dialogId], ...payload.fields };
+				state.collection[dialogId] = { ...state.collection[dialogId], ...fields };
 
 				DraftCache.save(state);
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			delete: (state, payload) => {
+				const {
+					dialogId,
+				} = payload.data;
+
 				// eslint-disable-next-line no-param-reassign
-				delete state.collection[payload.dialogId];
+				delete state.collection[dialogId];
 
 				DraftCache.save(state);
 			},

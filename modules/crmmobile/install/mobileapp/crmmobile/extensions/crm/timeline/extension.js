@@ -4,7 +4,8 @@
 jn.define('crm/timeline', (require, exports, module) => {
 	const { FadeView } = require('animation/components/fade-view');
 	const { StickyDate } = require('crm/timeline/ui/sticky-date');
-	const { Divider, DateDivider } = require('crm/timeline/ui/divider');
+	const { Divider } = require('layout/ui/timeline/components/divider');
+	const { DateDivider } = require('crm/timeline/ui/date-divider');
 	const { CreateReminder } = require('crm/timeline/ui/reminder');
 	const { Banner, BannerStack } = require('crm/timeline/ui/banner');
 	const { TimelinePushProcessor } = require('crm/timeline/services/push-processor');
@@ -34,6 +35,7 @@ jn.define('crm/timeline', (require, exports, module) => {
 
 		constructor(props)
 		{
+
 			super(props);
 
 			this.uid = props.uid || Random.getString();

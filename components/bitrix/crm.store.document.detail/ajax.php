@@ -1171,7 +1171,6 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 				'AMOUNT' => $quantity,
 				'BASKET_ID' => $basketCode,
 				'BASKET_CODE' => $basketCode,
-				'XML_ID' => uniqid('bx_'),
 				'BARCODE_INFO' => [
 					$storeId => [
 						'STORE_ID' => (int)$product['STORE_FROM'],
@@ -1184,6 +1183,10 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 					],
 				],
 			];
+			if (!$product['BASKET_ID'])
+			{
+				$item['XML_ID'] = uniqid('bx_');
+			}
 
 			$result[$basketCode] = $item;
 		}

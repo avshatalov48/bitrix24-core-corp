@@ -22,6 +22,7 @@ class ProviderManager
 		if(self::$providers === null)
 		{
 			self::$providers = [
+				ToDo::getId() => ToDo::className(),
 				Meeting::getId() => Meeting::className(),
 				Task::getId() => Task::className(),
 				Call::getId() => Call::className(),
@@ -40,7 +41,6 @@ class ProviderManager
 				StoreDocument::getId() => StoreDocument::className(),
 				Document::getId() => Document::className(),
 				SignDocument::getId() => SignDocument::className(),
-				ToDo::getId() => ToDo::className(),
 				Payment::getId() => Payment::className(),
 				ConfigurableRestApp::getId() => ConfigurableRestApp::className(),
 				CalendarSharing::getId() => CalendarSharing::className(),

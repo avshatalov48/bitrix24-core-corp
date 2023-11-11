@@ -15,9 +15,9 @@ $MESS["CRM_PHASE_SEMANTICS_LEAD_PROCESS_MSGVER_1"] = "Группа стадий 
 $MESS["CRM_PHASE_SEMANTICS_LEAD_SUCCESS_MSGVER_1"] = "Стадия \"Лид сконвертирован\"";
 $MESS["CRM_PHASE_SEMANTICS_LEAD_FAILURE_MSGVER_1"] = "Группа стадий \"Лид забракован\"";
 
-$MESS["CRM_PHASE_SEMANTICS_QUOTE_PROCESS_MSGVER_1"] = "Группа стадий \"Предложение открыто\"";
-$MESS["CRM_PHASE_SEMANTICS_QUOTE_SUCCESS_MSGVER_1"] = "Стадия \"Предложение утверждено\"";
-$MESS["CRM_PHASE_SEMANTICS_QUOTE_FAILURE_MSGVER_1"] = "Группа стадий \"Предложение отклонено\"";
+$MESS["CRM_PHASE_SEMANTICS_QUOTE_PROCESS_MSGVER_2"] = "Группа стадий \"Предложение открыто\"";
+$MESS["CRM_PHASE_SEMANTICS_QUOTE_SUCCESS_MSGVER_2"] = "Стадия \"Предложение утверждено\"";
+$MESS["CRM_PHASE_SEMANTICS_QUOTE_FAILURE_MSGVER_2"] = "Группа стадий \"Предложение отклонено\"";
 
 $MESS["CRM_PHASE_SEMANTICS_INVOICE_GROUP_TITLE"] = "Cтатусы";
 $MESS["CRM_PHASE_SEMANTICS_INVOICE_CAPTION"] = "Выберите статусы";

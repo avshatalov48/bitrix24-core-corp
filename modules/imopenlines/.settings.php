@@ -46,7 +46,14 @@ return [
 						'moduleId' => 'imopenlines',
 						'className' => \Bitrix\ImOpenlines\Integrations\UI\EntitySelector\CrmFormProvider::class,
 					],
-				]
+				],
+				[
+					'entityId' => 'imol-chat',
+					'provider' => [
+						'moduleId' => 'imopenlines',
+						'className' => \Bitrix\ImOpenlines\Integrations\UI\EntitySelector\ChatProvider::class,
+					],
+				],
 			],
 			'extensions' => ['imopenlines.entity-selector']
 		],

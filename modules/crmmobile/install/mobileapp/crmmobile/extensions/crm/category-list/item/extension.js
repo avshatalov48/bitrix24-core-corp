@@ -57,8 +57,11 @@ jn.define('crm/category-list/item', (require, exports, module) => {
 
 		render()
 		{
+			const { category: { id: categoryId } } = this.props;
+
 			return View(
 				{
+					testId: `CategoryListItem-${categoryId}`,
 					style: styles.categoryWrapper(this.enabled),
 					onClick: () => this.onSelectCategory(),
 				},
@@ -97,6 +100,7 @@ jn.define('crm/category-list/item', (require, exports, module) => {
 		{
 			return View(
 				{
+					testId: `CategoryListItemIsActive-${this.isActiveCategory()}`,
 					style: styles.categoryContentWrapper(this.showBottomBorder),
 				},
 				View(
@@ -126,6 +130,7 @@ jn.define('crm/category-list/item', (require, exports, module) => {
 					),
 					this.hasTunnelsToRender() && View(
 						{
+							testId: 'CategoryListItemTunnelsContainer',
 							style: styles.tunnelsWrapper,
 						},
 						...this.renderTunnels(),
@@ -171,6 +176,7 @@ jn.define('crm/category-list/item', (require, exports, module) => {
 
 			return View(
 				{
+					testId: 'CategoryListItemTitle',
 					style: styles.categoryTitleContainer,
 				},
 				Text(
@@ -219,6 +225,7 @@ jn.define('crm/category-list/item', (require, exports, module) => {
 			{
 				return View(
 					{
+						testId: 'CategoryListItemCounter',
 						style: styles.counterContainer,
 					},
 					Text(
@@ -250,6 +257,7 @@ jn.define('crm/category-list/item', (require, exports, module) => {
 
 			return Image(
 				{
+					testId: 'CategoryListItemEditButton',
 					style: styles.editButtonIcon,
 					onClick: () => this.onEditCategory(categoryId),
 					svg: {

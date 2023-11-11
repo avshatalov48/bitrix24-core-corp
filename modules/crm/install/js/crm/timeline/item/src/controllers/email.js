@@ -30,7 +30,15 @@ export class Email extends Base
 		const editor = this.#getActivityEditor();
 		if (editor && id)
 		{
-			editor.viewActivity(id);
+			const emailActivity = BX.CrmActivityEmail.create(
+				{
+					ID: id,
+				},
+				editor,
+				{}
+			);
+
+			emailActivity.openDialog(BX.CrmDialogMode.view);
 		}
 	}
 

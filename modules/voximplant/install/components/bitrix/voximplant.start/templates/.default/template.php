@@ -28,6 +28,11 @@ $voxStartRentOrLink =
 		? GetMessageJS("VOX_START_LINK_NUMBER")
 		: GetMessageJS("VOX_START_RENT_OR_LINK_NUMBER")
 ;
+
+$isRussianRegion = in_array(
+	\Bitrix\Main\Application::getInstance()->getLicense()->getRegion(),
+	\Bitrix\Voximplant\Limits::getRussianRegions()
+);
 ?>
 
 <? if ($arResult['ERROR_MESSAGE'] ?? null): ?>
@@ -41,11 +46,19 @@ $voxStartRentOrLink =
 				<div class="voximplant-start-head-box">
 					<div class="voximplant-start-head-box-title">
 						<select id="balance-type" class="voximplant-control-select" name="BALANCE_TYPE">
-							<option value="balance" <?= $arResult["BALANCE_TYPE"] === "balance" ? "selected": ""?>><?= Loc::getMessage("VOX_START_ACCOUNT_BALANCE")?></option>
+							<option value="balance" <?= $arResult["BALANCE_TYPE"] === "balance" ? "selected": ""?>><?= Loc::getMessage("VOX_START_ACCOUNT_BALANCE_MSGVER_1")?></option>
 							<option value="sip" <?= $arResult["BALANCE_TYPE"] === "sip" ? "selected": ""?>><?= Loc::getMessage("VOX_START_ACCOUNT_SIP_CONNECTOR")?></option>
 						</select>
 						<? if($arResult['HAS_BALANCE'] && $arResult["SHOW_PAY_BUTTON"]): ?>
-							<div style="display:none" data-for-balance-type="balance">
+							<div
+								id="vox-charge-balance-button"
+								style="display:none"
+								<? if($isRussianRegion): ?>
+								data-hint="<?=htmlspecialcharsbx(Loc::getMessage("VOX_NOT_BITRIX_BALANCE_HINT"))?>"
+								data-hint-no-icon
+								<? endif ?>
+								data-for-balance-type="balance"
+							>
 								<div class="ui-btn-split ui-btn-primary ui-btn-sm">
 									<button id="balance-top-up" class="ui-btn-main  "><?= Loc::getMessage("VOX_START_TOP_UP") ?></button>
 									<button id="balance-menu" class="ui-btn-menu"></button>
@@ -187,6 +200,7 @@ $voxStartRentOrLink =
 			isRestOnly: '<?= $arResult['IS_REST_ONLY'] ? 'Y' : 'N' ?>',
 			isTelephonyAvailable: '<?= $arResult['TELEPHONY_AVAILABLE'] ? 'Y' : 'N' ?>',
 			isShownPrivacyPolicy: '<?= $arResult['IS_SHOWN_PRIVACY_POLICY'] ? 'Y' : 'N' ?>',
+			isRussianRegion: '<?= $isRussianRegion ? 'Y' : 'N' ?>',
 		});
 	</script>
 <? endif ?>

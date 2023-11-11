@@ -3,9 +3,16 @@
 
 	BX.namespace("BX.Crm");
 
-	BX.Crm.Catalog = function()
+	BX.Crm.Catalog = function(options)
 	{
+		if (!BX.Type.isPlainObject(options))
+		{
+			options = {};
+		}
+
 		this.selfFolderUrl = '/crm/catalog/';
+		this.gridId = options.gridId || null;
+
 		this.init();
 	};
 
@@ -20,7 +27,7 @@
 							"/crm/catalog/(\\d+)/product/",
 							"/crm/catalog/section/(\\d+)/"
 						],
-						handler: this.adjustSidePanelOpener
+						handler: this.adjustSidePanelOpener.bind(this),
 					}
 				]
 			});
@@ -42,8 +49,21 @@
 			if (!isSidePanelParams || (isSidePanelParams && !BX.SidePanel.Instance.getTopSlider()))
 			{
 				event.preventDefault();
+
 				BX.SidePanel.Instance.open(link.url, {
-					allowChangeHistory: true
+					allowChangeHistory: true,
+					events: {
+						onClose() {
+							if (this.gridId)
+							{
+								const grid = BX.Main.gridManager.getInstanceById(this.gridId);
+								if (grid)
+								{
+									grid.reload();
+								}
+							}
+						},
+					}
 				});
 			}
 		}

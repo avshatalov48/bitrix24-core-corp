@@ -45,9 +45,14 @@ class Template extends Base
 
 		if (!$result)
 		{
-			if ($taskTemplates->getErrors())
+			if ($taskTemplatesErrors = $taskTemplates->getErrors())
 			{
-				$this->result->addErrors($taskTemplates->getErrors());
+				$errors = [];
+				foreach ($taskTemplatesErrors as $taskTemplatesError)
+				{
+					$errors[] = new Error($taskTemplatesError['text'], $taskTemplatesError['id']);
+				}
+				$this->result->addErrors($errors);
 			}
 			else
 			{

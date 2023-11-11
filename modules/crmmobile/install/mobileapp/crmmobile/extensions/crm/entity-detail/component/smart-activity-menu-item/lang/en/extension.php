@@ -1,12 +1,12 @@
 <?php
 $MESS["M_CRM_ACTION_SMART_ACTIVITY2"] = "Smart activities";
-$MESS["M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TEXT"] = "Proactive CRM will not suggest that you create an activity when you close the view pane.";
-$MESS["M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TEXT_DEAL"] = "Proactive CRM will not suggest that you create an activity when you close the deal view.";
-$MESS["M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TEXT_LEAD"] = "Proactive CRM will not suggest that you create an activity when you close the lead view.";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TEXT"] = "Proactive CRM will not suggest that you create an activity when you close the view pane";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TEXT_DEAL"] = "Proactive CRM will not suggest that you create an activity when you close the deal view";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TEXT_LEAD"] = "Proactive CRM will not suggest that you create an activity when you close the lead view";
 $MESS["M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TITLE"] = "Smart activities disabled";
-$MESS["M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TEXT"] = "Proactive CRM will suggest that you create an activity when you close the view pane.";
-$MESS["M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TEXT_DEAL"] = "Proactive CRM will suggest to create an activity when you close the deal view.";
-$MESS["M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TEXT_LEAD"] = "Proactive CRM will suggest that you create an activity when you close the lead view.";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TEXT"] = "Proactive CRM will suggest that you create an activity when you close the view pane";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TEXT_DEAL"] = "Proactive CRM will suggest to create an activity when you close the deal view";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TEXT_LEAD"] = "Proactive CRM will suggest that you create an activity when you close the lead view";
 $MESS["M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TITLE"] = "Smart activities enabled";
 $MESS["M_CRM_ACTION_SMART_ACTIVITY_SKIP_DAY"] = "Today";
 $MESS["M_CRM_ACTION_SMART_ACTIVITY_SKIP_FOREVER"] = "Never";

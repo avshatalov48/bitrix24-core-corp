@@ -14,6 +14,8 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 	const { get } = require('utils/object');
 	const { EventEmitter } = require('event-emitter');
 
+	const { Loc } = require('loc');
+
 	/**
 	 * @abstract
 	 * @class TimelineItemBase
@@ -137,11 +139,14 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 					}),
 					this.layoutSchema.header && new TimelineItemHeader({
 						...this.layoutSchema.header,
+						confirmationTexts: this.getActivityConfirmationParams(),
 						hasIcon: this.hasIcon,
 						opacity: this.model.hasLowPriority ? 0.6 : 1,
 						onAction: this.onAction.bind(this),
 						useFriendlyDate: this.model.isScheduled || this.model.isPinned,
 						isReadonly: this.model.isReadonly,
+						itemScopeEventBus: this.itemScopeEventBus,
+						activityType: this.model.props.type,
 					}),
 				),
 				this.layoutSchema.body && new TimelineItemBody({
@@ -164,6 +169,15 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 					ref: (ref) => this.loadingOverlayRef = ref,
 				}),
 			);
+		}
+
+		getActivityConfirmationParams()
+		{
+			return {
+				title: Loc.getMessage('M_CRM_TIMELINE_ITEM_ACTIVITY_COMPLETE_CONF_TITLE'),
+				confirmButton: Loc.getMessage('M_CRM_TIMELINE_ITEM_ACTIVITY_COMPLETE_CONF_OK_TEXT'),
+				cancelButton: Loc.getMessage('M_CRM_TIMELINE_ITEM_ACTIVITY_COMPLETE_CONF_CANCEL_TEXT'),
+			};
 		}
 
 		// @todo article will be added later

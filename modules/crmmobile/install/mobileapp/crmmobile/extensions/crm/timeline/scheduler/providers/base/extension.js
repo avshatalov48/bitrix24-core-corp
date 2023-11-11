@@ -3,6 +3,7 @@
  */
 jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) => {
 	const { PureComponent } = require('layout/pure-component');
+	const { Type } = require('type');
 
 	/**
 	 * @abstract
@@ -83,7 +84,18 @@ jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) =>
 		/**
 		 * @return {number}
 		 */
-		static getMenuPosition()
+
+		static getMenuPosition(position)
+		{
+			if (Type.isNumber(position))
+			{
+				return position;
+			}
+
+			return this.getDefaultPosition();
+		}
+
+		static getDefaultPosition()
 		{
 			return Infinity;
 		}

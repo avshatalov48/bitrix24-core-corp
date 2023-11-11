@@ -1,4 +1,4 @@
 <?php
-$MESS["CRM_QUOTE_CLOSED_TITLE"] = "Quote closed";
-$MESS["CRM_QUOTE_QUOTE_NUMBER_TITLE"] = "Quote #";
+$MESS["CRM_QUOTE_CLOSED_TITLE_MSGVER_1"] = "Estimate closed";
+$MESS["CRM_QUOTE_QUOTE_NUMBER_TITLE_MSGVER_1"] = "Estimate #";
 $MESS["CRM_QUOTE_TITLE_TITLE"] = "Subject";

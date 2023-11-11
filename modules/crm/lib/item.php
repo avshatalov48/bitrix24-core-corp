@@ -849,6 +849,12 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		{
 			$this->disableCheckUserFields();
 		}
+
+		foreach ($this->getAllImplementations() as $implementation)
+		{
+			$implementation->beforeItemSave($this, $this->entityObject);
+		}
+
 		$result = $this->entityObject->save();
 		if($result->isSuccess())
 		{

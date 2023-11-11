@@ -14,6 +14,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Main\Access\AccessibleItem;
+use Bitrix\Tasks\Internals\Task\Status;
 
 class TaskApproveRule extends AbstractRule
 {
@@ -25,7 +26,7 @@ class TaskApproveRule extends AbstractRule
 			return false;
 		}
 
-		if ($task->getStatus() !== \CTasks::STATE_SUPPOSEDLY_COMPLETED)
+		if ($task->getStatus() !== Status::SUPPOSEDLY_COMPLETED)
 		{
 			$this->controller->addError(static::class, 'Task is already completed');
 			return false;

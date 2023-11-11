@@ -1,4 +1,10 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+<?
+
+use Bitrix\Tasks\Internals\Task\MetaStatus;
+use Bitrix\Tasks\Internals\Task\Priority;
+use Bitrix\Tasks\Internals\Task\Status;
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -26,7 +32,7 @@ $task = &$arResult["DATA"]["TASK"];
 $can = $arResult["CAN"]["TASK"]["ACTION"];
 $arResult["FORM_ID"] = 'MOBILE_TASK_VIEW';
 $arResult['GRID_ID'] = 'MOBILE_TASK_VIEW';
-$task["PRIORITY"] = ($task["PRIORITY"] == CTasks::PRIORITY_HIGH ? CTasks::PRIORITY_HIGH : CTasks::PRIORITY_LOW);
+$task["PRIORITY"] = ((int)$task["PRIORITY"] === Priority::HIGH ? Priority::HIGH : Priority::LOW);
 $arResult["STATUSES"] = CTaskItem::getStatusMap();
 $task["~STATUS"] = $task["STATUS"];
 $task["STATUS"] = GetMessage("TASKS_STATUS_" . $arResult["STATUSES"][$task["REAL_STATUS"]]);
@@ -151,7 +157,7 @@ function getPriorityField($task, $can)
 				"class" => 'mobile-grid-field-priority'
 			),
 
-			'items' => [CTasks::PRIORITY_HIGH => GetMessage('MB_TASKS_BASE_SETTINGS_PRIORITY_VALUE')],
+			'items' => [Priority::HIGH => GetMessage('MB_TASKS_BASE_SETTINGS_PRIORITY_VALUE')],
 			'value' => [$task['PRIORITY']]
 		]);
 	}
@@ -212,10 +218,10 @@ $APPLICATION->IncludeComponent(
 							($can["FAVORITE.ADD"] || $can["FAVORITE.DELETE"] ? "<div id=\"favorites".$task["ID"]."\" class=\"favorites".($can["FAVORITE.DELETE"] ? " active" : "")."\"></div>" : "").
 							($can["EDIT"] ? "<input id=\"title".$task["ID"]."\" type=\"hidden\" data-bx-type=\"text\" name=\"data[TITLE]\" value=\"".htmlspecialcharsbx($task["TITLE"])."\" />" : "").
 							"<label>".($can["EDIT"] ? "<span id=\"title".$task["ID"]."Container\">" : "").htmlspecialcharsbx($task["TITLE"]).($can["EDIT"] ? "</span>" : "")." (".GetMessage("MB_TASKS_BASE_SETTINGS_TITLE_TASK", array("#TASK_ID#" => $task["ID"])).")</label>").
-							($task["~STATUS"] == CTasks::METASTATE_EXPIRED ? '<div class="mobile-grid-field-expired">'.GetMessage("MB_TASKS_TASK_DETAIL_NOTIFICATION_EXPIRED_BRIEF").'</div>' : null)
-							.($task["~STATUS"] == CTasks::METASTATE_EXPIRED_SOON ? '<div class="mobile-grid-field-expired">'.GetMessage("MB_TASKS_TASK_DETAIL_NOTIFICATION_EXPIRED_SOON_BRIEF").'</div>' : null)
+							((int)$task["~STATUS"] === MetaStatus::EXPIRED ? '<div class="mobile-grid-field-expired">'.GetMessage("MB_TASKS_TASK_DETAIL_NOTIFICATION_EXPIRED_BRIEF").'</div>' : null)
+							.((int)$task["~STATUS"] === MetaStatus::EXPIRED_SOON ? '<div class="mobile-grid-field-expired">'.GetMessage("MB_TASKS_TASK_DETAIL_NOTIFICATION_EXPIRED_SOON_BRIEF").'</div>' : null)
 							.($task["NOT_VIEWED"] == 'Y' ? '<div class="mobile-grid-field-expired">'.GetMessage("MB_TASKS_TASK_DETAIL_NOTIFICATION_NEW_BRIEF").'</div>' : null)
-							.($task["~STATUS"] == CTasks::STATE_SUPPOSEDLY_COMPLETED ? '<div class="mobile-grid-field-expired">'.GetMessage("MB_TASKS_TASK_DETAIL_NOTIFICATION_STATE_SUPPOSEDLY_COMPLETED").'</div>' : null)
+							.((int)$task["~STATUS"] === Status::SUPPOSEDLY_COMPLETED ? '<div class="mobile-grid-field-expired">'.GetMessage("MB_TASKS_TASK_DETAIL_NOTIFICATION_STATE_SUPPOSEDLY_COMPLETED").'</div>' : null)
 							.($task["DEADLINE"] == '' && $task['CREATED_BY'] != $task['RESPONSIBLE_ID'] ? '<div class="mobile-grid-field-expired">'.GetMessage("MB_TASKS_TASK_DETAIL_NOTIFICATION_WO_DEADLINE_BRIEF").'</div>' : null)
 					),
 					(!empty($task["DESCRIPTION"]) ? ( $can["EDIT"] && false ?
@@ -618,7 +624,7 @@ BX.ready(function(){
 		tabId = 'commentTab';
 	else
 		<?php
-			if($task["~STATUS"] == CTasks::METASTATE_VIRGIN_NEW)
+			if((int)$task["~STATUS"] === MetaStatus::UNSEEN)
 			{
 				?>tabId = 'taskTab';<?
 			}

@@ -16,5 +16,6 @@ return [
 		'crm:state-storage',
 		'crm:kanban/toolbar',
 		'crm:ui/loading-progress',
+		'crm:simple-list/items',
 	],
 ];

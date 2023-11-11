@@ -711,7 +711,11 @@ class Queue
 
 				if($result === true)
 				{
-					if(Config::isTimeManActive())
+					if ((new \Bitrix\ImOpenLines\UserPause((int)$userId))->getStatus())
+					{
+						$result = self::REASON_OPERATOR_DAY_PAUSE;
+					}
+					elseif(Config::isTimeManActive())
 					{
 						$result = self::getActiveStatusByTimeman($userId, $ignorePause);
 					}

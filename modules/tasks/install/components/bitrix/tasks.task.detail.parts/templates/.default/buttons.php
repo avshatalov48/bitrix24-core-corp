@@ -15,7 +15,7 @@ if ($arResult['INNER_HTML'] !== 'Y')
 	<?php
 }
 
-if ($arResult["TASK"]["REAL_STATUS"] == CTasks::STATE_DECLINED)
+if ((int)$arResult["TASK"]["REAL_STATUS"] === \Bitrix\Tasks\Internals\Task\Status::DECLINED)
 {
 	?>
 	<div class="webform-round-corners webform-warning-block">
@@ -52,8 +52,8 @@ if ($arResult["TASK"]["REAL_STATUS"] == CTasks::STATE_DECLINED)
 			$timeRunned = $arResult['TASK']['TIME_SPENT_IN_LOGS'];
 
 		?>
-		<span id="task_details_buttons_timer_<?php echo (int) $arResult['TASK']['ID']; ?>" 
-			class="task-timeman-link <?php 
+		<span id="task_details_buttons_timer_<?php echo (int) $arResult['TASK']['ID']; ?>"
+			class="task-timeman-link <?php
 				if (($arResult['TASK']['TIME_ESTIMATE'] > 0) && $timeRunned > $arResult['TASK']['TIME_ESTIMATE'])
 					echo 'task-timeman-link-red';
 				elseif ($arResult['TIMER_IS_RUNNING_FOR_CURRENT_USER'] === 'Y')
@@ -110,7 +110,7 @@ if ($arResult["TASK"]["REAL_STATUS"] == CTasks::STATE_DECLINED)
 				<?php
 			}
 			?>
-		});		
+		});
 		</script>
 		<?php
 	}
@@ -260,12 +260,12 @@ if ($arResult["TASK"]["REAL_STATUS"] == CTasks::STATE_DECLINED)
 			elseif (isset($arParams["GROUP_ID"]) && (intval($arParams["GROUP_ID"]) > 0))
 				$groupIdForSite = (int) $arParams["GROUP_ID"];
 
-			?><a 
-				href="javascript: void(0);" 
-				class="webform-small-button-link task-button-delegate-link" 
+			?><a
+				href="javascript: void(0);"
+				class="webform-small-button-link task-button-delegate-link"
 				onclick="
 					tasksDetailPartsNS.ShowDelegatePopup(
-						this, 
+						this,
 						<?php echo $arResult['TASK']['ID']; ?>,
 						<?php echo $groupIdForSite; ?>
 						)"
@@ -306,7 +306,7 @@ if ($arResult["TASK"]["REAL_STATUS"] == CTasks::STATE_DECLINED)
 
 		if($arResult['ALLOWED_ACTIONS']['ACTION_REMOVE'])
 		{
-			?><a 
+			?><a
 				href="?ACTION=delete&amp;<?=bitrix_sessid_get()?><?=((string) $arParams['CONTROLLER_ID'] ? "&amp;controller_id=".urlencode($arParams['CONTROLLER_ID']) : "")?>"
 				class="webform-small-button-link task-button-delete-link" target="_top" onclick="tasksDetailPartsNS.onDeleteClick(event, <?php echo $arResult["TASK"]["ID"]?>);"><?php echo GetMessage("TASKS_DELETE_TASK")?></a><?php
 		}

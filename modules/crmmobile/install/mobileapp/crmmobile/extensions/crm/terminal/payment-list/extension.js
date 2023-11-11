@@ -4,6 +4,7 @@
 jn.define('crm/terminal/payment-list', (require, exports, module) => {
 	const { Alert } = require('alert');
 	const { EventEmitter } = require('event-emitter');
+	const { ListItemType, ListItemsFactory } = require('crm/simple-list/items');
 	const { Loc } = require('loc');
 	const { PureComponent } = require('layout/pure-component');
 	const { EmptyScreen } = require('layout/ui/empty-screen');
@@ -73,7 +74,8 @@ jn.define('crm/terminal/payment-list', (require, exports, module) => {
 				},
 				floatingButtonClickHandler: this.createPaymentHandler.bind(this),
 				cacheName: `crm.terminal.list.${env.userId}`,
-				itemType: 'Terminal',
+				itemType: ListItemType.TERMINAL_PAYMENT,
+				itemFactory: ListItemsFactory,
 				pull: {
 					moduleId: 'crm',
 					callback: (data) => {

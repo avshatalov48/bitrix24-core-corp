@@ -3,7 +3,6 @@
  */
 
 jn.define('layout/ui/detail-card/toolbar/toolbar-padding', (require, exports, module) => {
-
 	const { get } = require('utils/object');
 
 	const HEIGHT_TOOL_PANEL = 45;
@@ -94,8 +93,11 @@ jn.define('layout/ui/detail-card/toolbar/toolbar-padding', (require, exports, mo
 				height += this.getSafeAreaBottomHeight();
 			}
 
-			return View({
-					ref: (ref) => this.ref = ref,
+			return View(
+				{
+					ref: (ref) => {
+						this.ref = ref;
+					},
 					style: {
 						height,
 						display: 'flex',

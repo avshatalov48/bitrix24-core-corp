@@ -50,6 +50,7 @@ jn.define('crm/ui/entity-boolean', (require, exports, module) => {
 
 			return {
 				id: entityTypeId,
+				testId: `CrmEntityBooleanField-${entityTypeId}-${enable}`,
 				value: enable,
 				config: {
 					description: View(

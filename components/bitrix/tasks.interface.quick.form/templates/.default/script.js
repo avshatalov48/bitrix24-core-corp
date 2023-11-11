@@ -35,7 +35,7 @@ BX.Tasks.QuickForm = function(formContainerId, parameters)
 	this.messages = this.parameters.messages || {};
 	this.canManageTask = this.parameters.canManageTask !== false;
 	this.canAddMailUsers = this.parameters.canAddMailUsers === true;
-
+	this.personalContext = Boolean(this.parameters.personalContext)
 	if (this.canManageTask)
 	{
 		BX.bind(this.layout.title, "keypress", BX.proxy(this.fireEnterKey, this));
@@ -429,7 +429,7 @@ BX.Tasks.QuickForm.prototype.clear = function(data)
 	this.layout.title.value = "";
 	this.layout.deadline.value = "";
 	this.layout.description.value = "";
-	this.projectSelector.clearProject();
+	this.personalContext && this.projectSelector.clearProject();
 	this.userSelector.setCurrentUser(data);
 };
 

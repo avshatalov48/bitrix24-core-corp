@@ -3323,6 +3323,7 @@
 			iframeDocument.open("text/html", "replace");
 			iframeDocument.write(iframeHtml);
 			iframeDocument.close();
+			iframeDocument.documentElement.innerHTML = iframeHtml;
 
 			this.GetWindow = function()
 			{

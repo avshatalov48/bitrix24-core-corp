@@ -195,6 +195,13 @@
 	border-bottom: 1px dashed transparent;
 }
 
+.tasks-kanban-item-tags .ui-label-inner,
+.tasks-kanban-item-deadline .ui-label-inner {
+	font: 12px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans)) !important;
+	font-weight: var(--ui-font-weight-semi-bold, 600) !important;
+	overflow: visible !important;
+}
+
 .tasks-kanban-item-deadline-hover { cursor: pointer }
 .tasks-kanban-item-deadline-hover:hover { border-bottom: 1px dashed #525c69 }
 
@@ -498,6 +505,10 @@ a.tasks-kanban-item-super-blue:hover,
 	transform: translateX(36px);
 	-webkit-transition: .2s;
 	transition: .2s;
+}
+
+.main-kanban-column-scrum.main-kanban-column:before {
+	display: none;
 }
 
 .main-kanban-column-title-wrapepr:hover .task-kanban-column-edit {

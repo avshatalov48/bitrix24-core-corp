@@ -138,7 +138,7 @@ export class Keypad
 	render()
 	{
 		return Dom.create("div", {
-			props: {className: "bx-messenger-calc-wrap" + (BX.MessengerCommon.isPage() ? ' bx-messenger-calc-wrap-desktop' : '')},
+			props: {className: "bx-messenger-calc-wrap"},
 			children: [
 				Dom.create("div", {
 					props: {className: "bx-messenger-calc-body"}, children: [

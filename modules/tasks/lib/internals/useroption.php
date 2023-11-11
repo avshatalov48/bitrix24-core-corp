@@ -2,6 +2,7 @@
 namespace Bitrix\Tasks\Internals;
 
 use Bitrix\Main;
+use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Internals\Task\UserOptionTable;
 use Bitrix\Tasks\Internals\UserOption\Option;
@@ -33,7 +34,7 @@ class UserOption
 		$tableName = UserOptionTable::getTableName();
 		$select = "SELECT 'x' FROM {$tableName} WHERE TASK_ID = T.ID AND USER_ID = {$userId} AND OPTION_CODE = {$option}";
 
-		return "IF(EXISTS({$select}), 'Y', 'N')";
+		return 'case when EXISTS(' . $select . ') then \'Y\' else \'N\' end';
 	}
 
 	/**
@@ -332,7 +333,7 @@ class UserOption
 	{
 		PushService::addEvent([$userId], [
 			'module_id' => 'tasks',
-			'command' => 'user_option_changed',
+			'command' => PushCommand::USER_OPTION_UPDATED,
 			'params' => [
 				'TASK_ID' => $taskId,
 				'USER_ID' => $userId,

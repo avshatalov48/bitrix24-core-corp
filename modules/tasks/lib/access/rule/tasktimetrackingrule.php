@@ -12,6 +12,7 @@ use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Main\Loader;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\Rule\Traits\SubordinateTrait;
+use Bitrix\Tasks\Internals\Task\Status;
 
 class TaskTimeTrackingRule extends \Bitrix\Main\Access\Rule\AbstractRule
 {
@@ -33,7 +34,7 @@ class TaskTimeTrackingRule extends \Bitrix\Main\Access\Rule\AbstractRule
 
 		if (
 			$task->isClosed()
-			|| $task->getStatus() === \CTasks::STATE_SUPPOSEDLY_COMPLETED
+			|| $task->getStatus() === Status::SUPPOSEDLY_COMPLETED
 		)
 		{
 			$this->controller->addError(static::class, 'Task already completed');

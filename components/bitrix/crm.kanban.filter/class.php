@@ -105,10 +105,14 @@ class CrmKanbanFilterComponent extends \CBitrixComponent
 		}
 
 		\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+
+		$entityName = Loc::getMessage('CRM_COMMON_' . $this->arParams['ENTITY_TYPE'] . '_MSGVER_1')
+			?? Loc::getMessage('CRM_COMMON_' . $this->arParams['ENTITY_TYPE']);
+
 		return [
 			[
 				'id' => $this->arParams['ENTITY_TYPE'],
-				'name' => Loc::getMessage('CRM_COMMON_' . $this->arParams['ENTITY_TYPE']),
+				'name' => $entityName,
 				'default' => true,
 				'selected' => true,
 			],

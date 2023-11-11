@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Tasks;
+use Bitrix\Tasks\Internals\Task\Status;
 
 class CBPTasksChangeStatusActivity extends CBPActivity
 {
@@ -82,11 +83,11 @@ class CBPTasksChangeStatusActivity extends CBPActivity
 				'Type' => 'select',
 				'Required' => true,
 				'Options' => [
-					\CTasks::STATE_PENDING => GetMessage('TASKS_CHANGE_STATUS_PENDING'),
-					\CTasks::STATE_IN_PROGRESS => GetMessage('TASKS_CHANGE_STATUS_IN_PROGRESS'),
-					\CTasks::STATE_SUPPOSEDLY_COMPLETED => getMessage('TASKS_CHANGE_STATE_SUPPOSEDLY_COMPLETED'),
-					\CTasks::STATE_COMPLETED => GetMessage('TASKS_CHANGE_STATUS_COMPLETED'),
-					\CTasks::STATE_DEFERRED => GetMessage('TASKS_CHANGE_STATUS_DEFERRED'),
+					Status::PENDING => GetMessage('TASKS_CHANGE_STATUS_PENDING'),
+					Status::IN_PROGRESS => GetMessage('TASKS_CHANGE_STATUS_IN_PROGRESS'),
+					Status::SUPPOSEDLY_COMPLETED => getMessage('TASKS_CHANGE_STATE_SUPPOSEDLY_COMPLETED'),
+					Status::COMPLETED => GetMessage('TASKS_CHANGE_STATUS_COMPLETED'),
+					Status::DEFERRED => GetMessage('TASKS_CHANGE_STATUS_DEFERRED'),
 				]
 			],
 			'ModifiedBy' => [

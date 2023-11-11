@@ -2,7 +2,6 @@
  * @module layout/ui/context-menu/item/badge
  */
 jn.define('layout/ui/context-menu/item/badge', (require, exports, module) => {
-
 	const { Type } = require('type');
 
 	/**

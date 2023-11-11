@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Tasks\Internals\Task\Status;
+
 if(!Defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 ?>
 
@@ -16,12 +19,12 @@ if(!Defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 	<?endif?>
 
 	<?php foreach($arResult["CURRENT_TEMPLATES"] as $task):?>
-		<?=$jsObjectName?>.arSelected[<?=$task["ID"]?>] = {id : <?=CUtil::JSEscape($task["ID"])?>, name : "<?=CUtil::JSEscape($task["TITLE"])?>", status : <?=CTasks::STATE_PENDING?>};
-		<?=$jsObjectName?>.arTasksData[<?=$task["ID"]?>] = {id : <?=CUtil::JSEscape($task["ID"])?>, name : "<?=CUtil::JSEscape($task["TITLE"])?>", status : <?=CTasks::STATE_PENDING?>};
+		<?=$jsObjectName?>.arSelected[<?=$task["ID"]?>] = {id : <?=CUtil::JSEscape($task["ID"])?>, name : "<?=CUtil::JSEscape($task["TITLE"])?>", status : <?= Status::PENDING ?>};
+		<?=$jsObjectName?>.arTasksData[<?=$task["ID"]?>] = {id : <?=CUtil::JSEscape($task["ID"])?>, name : "<?=CUtil::JSEscape($task["TITLE"])?>", status : <?= Status::PENDING ?>};
 	<?php endforeach?>
 
 	<?php foreach($arResult["LAST_TEMPLATES"] as $task):?>
-		<?=$jsObjectName?>.arTasksData[<?=$task["ID"]?>] = {id : <?=CUtil::JSEscape($task["ID"])?>, name : "<?=CUtil::JSEscape($task["TITLE"])?>", status : <?=CTasks::STATE_PENDING?>};
+		<?=$jsObjectName?>.arTasksData[<?=$task["ID"]?>] = {id : <?=CUtil::JSEscape($task["ID"])?>, name : "<?=CUtil::JSEscape($task["TITLE"])?>", status : <?= Status::PENDING ?>};
 	<?php endforeach?>
 
 	BX.ready(function() {

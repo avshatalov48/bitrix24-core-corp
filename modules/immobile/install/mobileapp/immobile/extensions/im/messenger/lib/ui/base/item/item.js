@@ -12,7 +12,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 	 * @property {string | number} id
 	 * @property {string} title
 	 * @property {string} subTitle
-	 * @property {string} avatarUrl
+	 * @property {string} avatarUri
 	 * @property {string} avatarColor
 	 * @property {string} size
 	 */
@@ -59,6 +59,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 							const openDialogData = {
 								dialogId: this.props.data.id,
 								dialogTitleParams: {
+									key: this.props.data.key || null,
 									name: this.props.data.title,
 									description: this.props.data.description,
 									avatar: this.props.data.avatarUri,
@@ -115,6 +116,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 								size: this.props.data.size,
 								style: style.itemInfo,
 								status: this.props.data.status,
+								iconSubtitle: this.props.data.iconSubtitle,
 							},
 						),
 						this.getArrowRightImage(),
@@ -216,6 +218,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 							this.props.onEllipsisClick(this.props.data);
 						}
 					},
+					testId: 'ITEM_ELLIPSIS_BUTTON',
 				}),
 			);
 		}

@@ -8,6 +8,7 @@ use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 
@@ -83,10 +84,10 @@ class TasksWidgetRolesfilterComponent extends TasksBaseComponent
 	{
 		$userType = $this->roleCodeToUserType()[$roleCode];
 		$statuses = [
-			CTasks::STATE_PENDING,
-			CTasks::STATE_IN_PROGRESS,
-			CTasks::STATE_SUPPOSEDLY_COMPLETED,
-			CTasks::STATE_DEFERRED,
+			Status::PENDING,
+			Status::IN_PROGRESS,
+			Status::SUPPOSEDLY_COMPLETED,
+			Status::DEFERRED,
 		];
 		$statuses = implode(',', $statuses);
 

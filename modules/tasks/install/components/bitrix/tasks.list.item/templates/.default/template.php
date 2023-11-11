@@ -3,6 +3,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
 use Bitrix\Main\UI;
+use Bitrix\Tasks\Internals\Task\Status;
 
 UI\Extension::load("ui.tooltip");
 
@@ -140,11 +141,11 @@ if ($arResult['IFRAME'] === 'Y')
 		}
 		elseif (
 			(
-				($task["REAL_STATUS"] == CTasks::STATE_NEW)
+				((int)$task["REAL_STATUS"] === Status::NEW)
 				&& ($task["CREATED_BY"] == $USER->GetID())
 			)
 			|| (
-				($task["REAL_STATUS"] == CTasks::STATE_SUPPOSEDLY_COMPLETED)
+				((int)$task["REAL_STATUS"] === Status::SUPPOSEDLY_COMPLETED)
 				&& ($task["RESPONSIBLE_ID"] == $USER->GetID())
 			)
 		)
@@ -155,7 +156,7 @@ if ($arResult['IFRAME'] === 'Y')
 		{
 			?><a href="javascript: void(0)" class="task-flag-begin-perform" onClick="StartTask(<?php echo $task["ID"]?>)" title="<?php echo GetMessage("TASKS_START")?>"></a><?php
 		}
-		elseif ($task["REAL_STATUS"] == CTasks::STATE_IN_PROGRESS)
+		elseif ((int)$task["REAL_STATUS"] === Status::IN_PROGRESS)
 		{
 			?><span class="task-flag-in-progress" title="<?php echo GetMessage("TASKS_IN_PROGRESS")?>"></span><?php
 		}
@@ -324,14 +325,14 @@ if ($arResult['IFRAME'] === 'Y')
 		if (
 			$arResult['ALLOWED_ACTIONS']['ACTION_COMPLETE']
 			|| $arResult['ALLOWED_ACTIONS']['ACTION_APPROVE']
-			|| ($task["REAL_STATUS"] == CTasks::STATE_COMPLETED)
+			|| ((int)$task["REAL_STATUS"] === Status::COMPLETED)
 		)
 		{
 			?><a class="task-complete-action" href="javascript: void(0)"
 				<?php
-				if ($task["REAL_STATUS"] != CTasks::STATE_COMPLETED)
+				if ((int)$task["REAL_STATUS"] !== Status::COMPLETED)
 				{
-					if ($task["REAL_STATUS"] == CTasks::STATE_SUPPOSEDLY_COMPLETED)
+					if ((int)$task["REAL_STATUS"] === Status::SUPPOSEDLY_COMPLETED)
 					{
 						?>
 						title="<?php echo GetMessage('TASKS_APPROVE_TASK'); ?>"

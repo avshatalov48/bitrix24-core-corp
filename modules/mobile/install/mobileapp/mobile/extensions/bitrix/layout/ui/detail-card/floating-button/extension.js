@@ -163,7 +163,7 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 
 		isVisible()
 		{
-			return this.detailCard.hasEntityModel() && this.getItemsToShow().length;
+			return this.detailCard.hasEntityModel() && this.hasItemsToShow();
 		}
 
 		getPosition()
@@ -217,6 +217,9 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 		}
 
 		/**
+		 * Returns array of menu items
+		 *
+		 * @public
 		 * @return {FloatingMenuItem[]}
 		 */
 		getItems()
@@ -231,9 +234,38 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 			return items;
 		}
 
-		getItemsToShow()
+		/**
+		 * Returns true if button has items to show in selected tab; false otherwise
+		 *
+		 * @public
+		 * @returns {boolean}
+		 */
+		hasItemsToShow()
 		{
-			return this.getItems().filter((item) => item.isAvailable());
+			if (this.getItems().some((item) => item.getTabId() === this.detailCard.activeTab))
+			{
+				return this.isActiveTabHasNestedItems();
+			}
+
+			return this.getItems().some((item) => item.isAvailable());
+		}
+
+		/**
+		 * @private
+		 * @returns {boolean}
+		 */
+		isActiveTabHasNestedItems()
+		{
+			const activeTabItems = this.getItems().filter((item) => item.getTabId() === this.detailCard.activeTab);
+			for (const activeTabItem of activeTabItems)
+			{
+				if (activeTabItem.getNestedItems().some((item) => item.isActive()))
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		/**

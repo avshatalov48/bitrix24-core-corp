@@ -5,6 +5,7 @@ if(!CModule::IncludeModule('rest'))
 }
 
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Rest\OAuth;
 use Bitrix\Rest\APAuth;
 use Bitrix\Voximplant\Security;
@@ -79,6 +80,10 @@ class CVoxImplantRestService extends IRestService
 					'callback' => ['CVoxImplantRestService', 'skipCall'],
 					'options' => ['private' => true]
 				],
+				'voximplant.call.busy' => [
+					'callback' => ['CVoxImplantRestService', 'rejectCallWithBusy'],
+					'options' => ['private' => true]
+				],
 				'voximplant.call.hold' => [
 					'callback' => ['CVoxImplantRestService', 'holdCall'],
 					'options' => ['private' => true]
@@ -101,6 +106,22 @@ class CVoxImplantRestService extends IRestService
 				],
 				'voximplant.call.saveComment' => [
 					'callback' => ['CVoxImplantRestService', 'saveCallComment'],
+					'options' => ['private' => true]
+				],
+				'voximplant.call.startTransfer' => [
+					'callback' => ['CVoxImplantRestService', 'startCallTransfer'],
+					'options' => ['private' => true]
+				],
+				'voximplant.call.completeTransfer' => [
+					'callback' => ['CVoxImplantRestService', 'completeCallTransfer'],
+					'options' => ['private' => true]
+				],
+				'voximplant.call.cancelTransfer' => [
+					'callback' => ['CVoxImplantRestService', 'cancelCallTransfer'],
+					'options' => ['private' => true]
+				],
+				'voximplant.call.onConnectionError' => [
+					'callback' => ['CVoxImplantRestService', 'onCallConnectionError'],
 					'options' => ['private' => true]
 				],
 
@@ -479,6 +500,7 @@ class CVoxImplantRestService extends IRestService
 			$arSort[$sort] = $order;
 		}
 
+		$result = [];
 		$dbRes = \Bitrix\Voximplant\StatisticTable::getList([
 			'order' => $arSort,
 			'filter' => $arFilter,
@@ -486,7 +508,6 @@ class CVoxImplantRestService extends IRestService
 			'offset' => $arNavParams['offset'],
 		]);
 
-		$result = [];
 		while ($arData = $dbRes->fetch())
 		{
 			$arData['RECORD_FILE_ID'] = (int)$arData['CALL_WEBDAV_ID'] ?: null;
@@ -513,6 +534,15 @@ class CVoxImplantRestService extends IRestService
 		);
 	}
 
+	private static function splitToOperationAndField($filterDefinition)
+	{
+		if (preg_match('/^([^a-zA-Z]*)(.*)/', $filterDefinition, $matches))
+		{
+			return ['operation' => $matches[1], 'field' => $matches[2]];
+		}
+
+		return null;
+	}
 	public static function checkStatisticFilter($arFilter)
 	{
 		if (!is_array($arFilter))
@@ -524,8 +554,20 @@ class CVoxImplantRestService extends IRestService
 
 		foreach ($arFilter as $key => $value)
 		{
+			$splittedFilterDefinition = self::splitToOperationAndField($key);
+
 			if (is_array($value))
 			{
+				// ticket 178188: error happens when trying to filter by ID field using non-plain array as a value
+				// It should be temporary fix as it should be handled in the ORM module (I think so)
+				$value = $splittedFilterDefinition['field'] === 'ID' ? array_values($value) : $value;
+
+				if (empty($value))
+				{
+					unset($arFilter[$key]);
+					continue;
+				}
+
 				$isPlainArray = true;
 				foreach ($value as $subKey => $subValue)
 				{
@@ -551,10 +593,10 @@ class CVoxImplantRestService extends IRestService
 				}
 			}
 
-			if (preg_match('/^([^a-zA-Z]*)(.*)/', $key, $matches))
+			if (!is_null($splittedFilterDefinition))
 			{
-				$operation = $matches[1];
-				$field = $matches[2];
+				$operation = $splittedFilterDefinition['operation'];
+				$field = $splittedFilterDefinition['field'];
 
 				if (!in_array($operation, self::$allowedFilterOperations))
 				{
@@ -1124,6 +1166,19 @@ class CVoxImplantRestService extends IRestService
 		]);
 	}
 
+	public static function rejectCallWithBusy($params, $n, $server)
+	{
+		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
+
+		CVoxImplantIncoming::SendCommand(Array(
+			'CALL_ID' => $params['CALL_ID'],
+			'COMMAND' => CVoxImplantIncoming::COMMAND_BUSY
+		));
+	}
+
 	/**
 	 * @param array $params
 	 * @param ? $n
@@ -1255,7 +1310,7 @@ class CVoxImplantRestService extends IRestService
 		];
 		if (!$interceptResult)
 		{
-			$result['ERROR'] = GetMessage('VOX_CALL_FOR_INTERCEPT_NOT_FOUND');
+			$result['ERROR'] = Loc::getMessage('VI_REST_CALL_FOR_INTERCEPT_NOT_FOUND');
 		}
 
 		return $result;
@@ -1276,16 +1331,98 @@ class CVoxImplantRestService extends IRestService
 		$callId = $params['CALL_ID'];
 		$comment = $params['COMMENT'];
 		$call = \Bitrix\Voximplant\Model\CallTable::getByCallId($callId);
+		if ($call)
+		{
+			\Bitrix\Voximplant\Model\CallTable::update($call['ID'], [
+				'COMMENT' => $comment
+			]);
+
+			return 1;
+		}
+
+		$statisticCall = \Bitrix\Voximplant\StatisticTable::getRow(['filter' => [
+			'=CALL_ID' => $callId
+		]]);
+		if($statisticCall)
+		{
+			\Bitrix\Voximplant\StatisticTable::update($statisticCall['ID'], [
+				'COMMENT' => $comment
+			]);
+
+			return 1;
+		}
+
+		throw new \Bitrix\Rest\RestException('Call is not found, or finished', 'NOT_FOUND', \CRestServer::STATUS_NOT_FOUND);
+	}
+
+	public static function startCallTransfer($params, $n, $server)
+	{
+		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
+
+		$result = Bitrix\Voximplant\Transfer\Transferor::initiateTransfer(
+			$params['CALL_ID'],
+			Security\Helper::getCurrentUserId(),
+			$params['TARGET_TYPE'],
+			$params['TARGET_ID'],
+		);
+		return $result->toArray();
+	}
+
+	public static function completeCallTransfer($params, $n, $server)
+	{
+		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
+		$call = \Bitrix\Voximplant\Call::load($params['CALL_ID']);
 		if (!$call)
 		{
 			throw new \Bitrix\Rest\RestException("Call is not found, or finished", "NOT_FOUND", \CRestServer::STATUS_NOT_FOUND);
 		}
 
-		\Bitrix\Voximplant\Model\CallTable::update($call['ID'], [
-			'COMMENT' => $comment
-		]);
+		$call->getScenario()->sendCompleteTransfer(Security\Helper::getCurrentUserId());
 
-		return 1;
+		return null;
+	}
+
+	public static function cancelCallTransfer($params, $n, $server)
+	{
+		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
+
+		$call = \Bitrix\Voximplant\Call::load($params['CALL_ID']);
+		if (!$call)
+		{
+			throw new \Bitrix\Rest\RestException("Call is not found, or finished", "NOT_FOUND", \CRestServer::STATUS_NOT_FOUND);
+		}
+
+		$call->getScenario()->sendCancelTransfer(Security\Helper::getCurrentUserId());
+
+		return null;
+	}
+
+	public static function onCallConnectionError($params, $n, $server)
+	{
+		if ($server->getAuthType() !== \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\RestException("This method is only available for internal usage.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
+
+		$callId = $params['CALL_ID'];
+		$error = $params['ERROR'];
+		$userId = Security\Helper::getCurrentUserId();
+
+		$call = \Bitrix\Voximplant\Call::load($callId);
+		if(!$call)
+		{
+			throw new \Bitrix\Rest\RestException("Call is not found, or finished", "NOT_FOUND", \CRestServer::STATUS_NOT_FOUND);
+		}
+		$call->getScenario()->sendConnectionError($userId, $error);
 	}
 
 	public static function startCallback($params, $n, $server)

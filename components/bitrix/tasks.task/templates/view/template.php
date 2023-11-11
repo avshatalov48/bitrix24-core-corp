@@ -2,6 +2,8 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI;
+use Bitrix\Tasks\Internals\Task\MetaStatus;
+use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Util;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
@@ -72,6 +74,8 @@ if (isset($arResult['CAN_SHOW_MOBILE_QR_POPUP']) && $arResult['CAN_SHOW_MOBILE_Q
 				}
 			});
 			popup.show();
+
+			BX.ajax.runAction('tasks.api.task.sendAnalyticsLabel', { analyticsLabel: 'taskMobileTooltipClick' });
 		}
 	</script>
 	<?php $this->EndViewTarget();
@@ -156,8 +160,8 @@ if (
 <div class="task-detail">
 	<div class="task-detail-info">
 		<div class="task-detail-header">
-			<?if($can["EDIT"] || $taskData["PRIORITY"] == CTasks::PRIORITY_HIGH):?>
-				<div id="task-detail-important-button" class="task-info-panel-important <?if($taskData["PRIORITY"] != CTasks::PRIORITY_HIGH):?>no<?endif?> <?if($can["EDIT"]):?>mutable<?endif?>" data-priority="<?=intval($taskData["PRIORITY"])?>">
+			<?if($can["EDIT"] || (int)$taskData["PRIORITY"] === Priority::HIGH):?>
+				<div id="task-detail-important-button" class="task-info-panel-important <?if((int)$taskData["PRIORITY"] !== Priority::HIGH):?>no<?endif?> <?if($can["EDIT"]):?>mutable<?endif?>" data-priority="<?=intval($taskData["PRIORITY"])?>">
 					<span class="if-no"><?=Loc::getMessage("TASKS_TASK_COMPONENT_TEMPLATE_MAKE_IMPORTANT")?></span>
 					<span class="if-not-no"><?=Loc::getMessage("TASKS_IMPORTANT_TASK")?></span>
 				</div>
@@ -166,7 +170,7 @@ if (
 			<? if ($arParams["PUBLIC_MODE"]): ?>
 				<div class="task-detail-header-title"><?=htmlspecialcharsbx($taskData["TITLE"])?></div>
 			<? else:
-				$expired = $taskData["STATUS"] == CTasks::METASTATE_EXPIRED;?>
+				$expired = (int)$taskData["STATUS"] === MetaStatus::EXPIRED;?>
 				<div class="task-detail-subtitle-status <?if($expired):?>task-detail-subtitle-status-delay-message<?endif?>"><?=Loc::getMessage('TASKS_TTV_SUB_TITLE', array(
 						'#ID#' => intval($taskData['ID']),
 					))?> - <span id="task-detail-status-below-name"><?=\Bitrix\Tasks\UI::toLowerCaseFirst(Loc::getMessage("TASKS_TASK_STATUS_".$taskData["REAL_STATUS"]))?><?if($expired):?></span>, <?=\Bitrix\Tasks\UI::toLowerCaseFirst(Loc::getMessage('TASKS_STATUS_OVERDUE'))?><?endif?>
@@ -669,7 +673,14 @@ if (
 										"DISABLE_LOCAL_EDIT" => true
 									)
 								)
-								: array()
+								: array(),
+							'LHE' => [
+								'copilotParams' => [
+									'moduleId' => 'tasks',
+									'contextId' => 'comments_' . $taskData['ID'],
+									'category' => 'tasks_comments',
+								],
+							]
 						),
 						($component->__parent ? $component->__parent : $component),
 						array("HIDE_ICONS" => "Y")

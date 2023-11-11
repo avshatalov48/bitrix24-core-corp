@@ -52,8 +52,9 @@ jn.define('layout/ui/fields/url', (require, exports, module) => {
 						flex: 1,
 					},
 					onClick: () => {
-						inAppUrl.open(link)
+						inAppUrl.open(link);
 					},
+					onLongClick: this.getContentLongClickHandler(),
 				},
 				showFavicon && Image({
 					style: {
@@ -139,6 +140,11 @@ jn.define('layout/ui/fields/url', (require, exports, module) => {
 					},
 				),
 			);
+		}
+
+		canCopyValue()
+		{
+			return true;
 		}
 	}
 

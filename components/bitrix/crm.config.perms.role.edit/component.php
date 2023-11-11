@@ -215,7 +215,7 @@ $arResult['ENTITY'] = array_merge(
 	$arResult['ENTITY'],
 	[
 		'LEAD' => GetMessage('CRM_ENTITY_TYPE_LEAD'),
-		'QUOTE' => GetMessage('CRM_ENTITY_TYPE_QUOTE'),
+		'QUOTE' => GetMessage('CRM_ENTITY_TYPE_QUOTE_MSGVER_1'),
 	]
 );
 

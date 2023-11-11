@@ -24,6 +24,11 @@ jn.define('im/messenger/cache/simple-wrapper/map-cache', (require, exports, modu
 			return this.cache.get(key);
 		}
 
+		has(key)
+		{
+			return this.cache.has(key);
+		}
+
 		getAll()
 		{
 			return Object.fromEntries(this.cache.entries());

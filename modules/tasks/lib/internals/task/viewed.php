@@ -13,6 +13,7 @@ use Bitrix\Tasks\Integration\CRM\Timeline;
 use Bitrix\Tasks\Integration\CRM\Timeline\Exception\TimelineException;
 use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Integration\Forum;
+use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
@@ -117,7 +118,7 @@ class ViewedTable extends TaskDataManager
 	{
 		PushService::addEvent([$userId], [
 			'module_id' => 'tasks',
-			'command' => 'task_view',
+			'command' => PushCommand::TASK_VIEWED,
 			'params' => [
 				'TASK_ID' => $taskId,
 				'USER_ID' => $userId,
@@ -237,12 +238,12 @@ class ViewedTable extends TaskDataManager
 
 		if ($closedOnly)
 		{
-			$condition[] = 'T.STATUS = '. \CTasks::STATE_COMPLETED;
+			$condition[] = 'T.STATUS = '. Status::COMPLETED;
 		}
 
 		$condition[] = 'TV.VIEWED_DATE IS NULL';
 		$condition[] = 'FM.POST_DATE >= T.CREATED_DATE';
-		$condition[] = 'FM.NEW_TOPIC = "N"';
+		$condition[] = 'FM.NEW_TOPIC = \'N\'';
 
 		$condition = '(' . implode(') AND (', $condition) . ')';
 

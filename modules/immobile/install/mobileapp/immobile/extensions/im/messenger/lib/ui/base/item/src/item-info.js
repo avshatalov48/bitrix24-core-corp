@@ -37,6 +37,16 @@ jn.define('im/messenger/lib/ui/base/item/item-info', (require, exports, module) 
 			}
 			/** @type{ItemInfoStyle} */
 			const style = this.props.style;
+			const iconSubtitle = this.props.iconSubtitle
+				? Image({
+					style: style.iconSubtitleStyle || {
+						width: 14,
+						height: 12,
+						alignSelf: 'center',
+					},
+					svg: { content: this.props.iconSubtitle },
+				})
+				: null;
 
 			return View(
 				{
@@ -71,12 +81,20 @@ jn.define('im/messenger/lib/ui/base/item/item-info', (require, exports, module) 
 							})
 							: null,
 					),
-					Text({
-						style: style.subtitle,
-						text: this.props.subtitle,
-						ellipsize: 'end',
-						numberOfLines: 1,
-					}),
+					View(
+						{
+							style: {
+								flexDirection: 'row',
+							},
+						},
+						iconSubtitle,
+						Text({
+							style: style.subtitle,
+							text: this.props.subtitle,
+							ellipsize: 'end',
+							numberOfLines: 1,
+						}),
+					),
 				),
 			);
 		}

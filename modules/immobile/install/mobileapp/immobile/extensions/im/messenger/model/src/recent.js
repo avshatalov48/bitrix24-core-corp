@@ -1,5 +1,4 @@
 /* eslint-disable no-param-reassign */
-
 /**
  * @module im/messenger/model/recent
  */
@@ -8,6 +7,8 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 	const { ChatTypes, MessageStatus } = require('im/messenger/const');
 	const { RecentCache } = require('im/messenger/cache');
 	const { DateHelper } = require('im/messenger/lib/helper');
+	const { searchModel } = require('im/messenger/model/recent/search');
+	const { Logger } = require('im/messenger/lib/logger');
 
 	const elementState = {
 		id: 0,
@@ -29,6 +30,13 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 		chat: {},
 		user: { id: 0 },
 		writing: false,
+		unread: false,
+		options: {},
+		invitation: {
+			isActive: false,
+			originator: 0,
+			canResend: false,
+		},
 	};
 
 	const recentModel = {
@@ -37,6 +45,9 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			collection: [],
 			index: {},
 		}),
+		modules: {
+			searchModel,
+		},
 		getters: {
 			/**
 			 * @function recentModel/getRecentPage
@@ -53,7 +64,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 
 			/**
 			 * @function recentModel/getById
-			 * @return {RecentModelState}
+			 * @return {?RecentModelState}
 			 */
 			getById: (state) => (id) => {
 				return state.collection.find((item) => item.id == id);
@@ -63,15 +74,32 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			 * @function recentModel/getUserList
 			 * @return {RecentModelState[]}
 			 */
-			getUserList: (state) => {
+			getUserList: (state) => () => {
 				return state.collection.filter((recentItem) => recentItem.type === 'user').sort(sortListByMessageDate);
+			},
+
+			/**
+			 * @function recentModel/getSortedCollection
+			 * @return {RecentModelState[]}
+			 */
+			getSortedCollection: (state) => () => {
+				const collectionAsArray = Object.values(state.collection).filter((item) => {
+					const isBirthdayPlaceholder = item.options.birthdayPlaceholder;
+					const isInvitedUser = item.options.defaultUserRecord;
+
+					return !isBirthdayPlaceholder && !isInvitedUser && item.message.id;
+				});
+
+				return [...collectionAsArray].sort((a, b) => {
+					return b.message.date - a.message.date;
+				});
 			},
 
 			/**
 			 * @function recentModel/getCollection
 			 * @return {RecentModelState[]}
 			 */
-			getCollection: (state) => {
+			getCollection: (state) => () => {
 				return state.collection;
 			},
 
@@ -79,7 +107,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			 * @function recentModel/isEmpty
 			 * @return {boolean}
 			 */
-			isEmpty: (state) => {
+			isEmpty: (state) => () => {
 				return state.collection.length === 0;
 			},
 		},
@@ -101,21 +129,29 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 						.filter((item) => item.id !== 0)
 					;
 
-					store.commit('setState', payload);
+					store.commit('setState', {
+						actionName: 'setState',
+						data: {
+							collection: payload.collection,
+						},
+					});
 				}
 			},
 
 			/** @function recentModel/set */
 			set: (store, payload) => {
-				let result = [];
+				/**
+				 * @type {Array<RecentModelState>}
+				 */
+				const result = [];
 
 				if (Type.isArray(payload))
 				{
-					result = payload.map((recentItem) => {
-						return {
-							...elementState,
-							...validate(recentItem),
-						};
+					payload.forEach((recentItem) => {
+						if (Type.isPlainObject(recentItem))
+						{
+							result.push(validate(recentItem));
+						}
 					});
 				}
 
@@ -127,7 +163,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 				const newItems = [];
 				const existingItems = [];
 
-				payload.forEach((recentItem) => {
+				result.forEach((recentItem) => {
 					const existingItem = findItemById(store, recentItem.id);
 					if (existingItem)
 					{
@@ -135,8 +171,8 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 						// with default user chat (unless it's an accepted invitation)
 						const defaultUserElement = (
 							recentItem.options
-							&& recentItem.options.default_user_record
-							&& !recentItem.invited
+							&& recentItem.options.defaultUserRecord
+							&& !recentItem.invitation
 						);
 
 						if (defaultUserElement)
@@ -159,13 +195,73 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 
 				if (newItems.length > 0)
 				{
-					store.commit('add', newItems);
+					store.commit('add', {
+						actionName: 'set',
+						data: {
+							recentItemList: newItems,
+						},
+					});
 				}
 
 				if (existingItems.length > 0)
 				{
-					store.commit('update', existingItems);
+					store.commit('update', {
+						actionName: 'set',
+						data: {
+							recentItemList: existingItems,
+						},
+					});
 				}
+
+				return true;
+			},
+
+			/** @function recentModel/update */
+			update: (store, payload) => {
+				/** @type {Array<Partial<RecentModelState>>} */
+				const result = [];
+
+				if (Type.isArray(payload))
+				{
+					payload.forEach((recentItem) => {
+						if (Type.isPlainObject(recentItem))
+						{
+							result.push(validate(recentItem));
+						}
+					});
+				}
+
+				if (result.length === 0)
+				{
+					return false;
+				}
+
+				const existingItems = [];
+				result.forEach((item) => {
+					const existingItem = findItemById(store, item.id);
+
+					if (!existingItem)
+					{
+						return;
+					}
+
+					existingItems.push({
+						index: existingItem.index,
+						fields: item,
+					});
+				});
+
+				if (existingItems.length === 0)
+				{
+					return false;
+				}
+
+				store.commit('update', {
+					actionName: 'update',
+					data: {
+						recentItemList: existingItems,
+					},
+				});
 
 				return true;
 			},
@@ -188,10 +284,17 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 					return;
 				}
 
-				store.commit('update', [{
+				const recentItemForUpdate = {
 					index: existingItem.index,
 					fields: { liked },
-				}]);
+				};
+
+				store.commit('update', {
+					actionName: 'like',
+					data: {
+						recentItemList: [recentItemForUpdate],
+					},
+				});
 			},
 
 			/** @function recentModel/delete */
@@ -203,8 +306,11 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 				}
 
 				store.commit('delete', {
-					index: existingItem.index,
-					id: payload.id,
+					actionName: 'delete',
+					data: {
+						index: existingItem.index,
+						id: payload.id,
+					},
 				});
 
 				return true;
@@ -215,6 +321,11 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 				const updatedItems = [];
 
 				store.state.collection.forEach((recentItem, index) => {
+					if (recentItem.counter === 0 && recentItem.unread === false)
+					{
+						return;
+					}
+
 					recentItem.counter = 0;
 					recentItem.unread = false;
 
@@ -224,14 +335,30 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 					});
 				});
 
-				store.commit('update', updatedItems);
+				if (updatedItems.length > 0)
+				{
+					store.commit('update', {
+						actionName: 'clearAllCounters',
+						data: {
+							recentItemList: updatedItems,
+						},
+					});
+				}
 			},
 		},
 		mutations: {
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			setState: (state, payload) => {
-				state.collection = payload.collection;
+				const {
+					collection,
+				} = payload.data;
 
-				payload.collection.forEach((item) => {
+				state.collection = collection;
+
+				collection.forEach((item) => {
 					if (!state.index[item.id])
 					{
 						state.index[item.id] = 1;
@@ -242,9 +369,22 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 					state.index[item.id]++;
 				});
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			add: (state, payload) => {
-				payload.forEach((item) => {
-					state.collection.push(item.fields);
+				Logger.warn('RecentModel.addMutation', payload);
+				const {
+					recentItemList,
+				} = payload.data;
+
+				recentItemList.forEach((item) => {
+					state.collection.push({
+						...elementState,
+						...item.fields,
+					});
 
 					if (!state.index[item.fields.id])
 					{
@@ -270,8 +410,23 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 
 				RecentCache.save(state);
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			update: (state, payload) => {
-				payload.forEach((item) => {
+				Logger.warn('RecentModel.updateMutation', payload);
+				const {
+					recentItemList,
+				} = payload.data;
+
+				recentItemList.forEach((item) => {
+					const currentElement = state.collection[item.index];
+
+					item.message = { ...currentElement.message, ...item.message };
+					item.options = { ...currentElement.options, ...item.options };
+
 					state.collection[item.index] = {
 						...state.collection[item.index],
 						...item.fields,
@@ -280,19 +435,35 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 
 				RecentCache.save(state);
 			},
-			delete: (state, payload) => {
-				state.collection.splice(payload.index, 1);
 
-				delete state.index[payload.id];
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
+			delete: (state, payload) => {
+				const {
+					id,
+					index,
+				} = payload.data;
+
+				state.collection.splice(index, 1);
+
+				delete state.index[id];
 
 				RecentCache.save(state);
 			},
 		},
 	};
 
+	/**
+	 * @param fields
+	 * @return {Partial<RecentModelState>}
+	 */
 	function validate(fields)
 	{
-		const result = {};
+		const result = {
+			options: {},
+		};
 
 		if (Type.isNumber(fields.id) || Type.isStringFilled(fields.id))
 		{
@@ -344,25 +515,38 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			result.chat_id = Number.parseInt(fields.chatId, 10);
 		}
 
-		result.date_update = DateHelper.cast(fields.date_update);
+		if (Type.isBoolean(fields.unread))
+		{
+			result.unread = fields.unread;
+		}
+
+		if (!Type.isUndefined(fields.date_update))
+		{
+			result.date_update = DateHelper.cast(fields.date_update, null);
+		}
 
 		// TODO: move part to file model
-		result.message = fields.message || { id: 0 };
-		if (result.message.id > 0)
+
+		if (Type.isPlainObject(fields.message))
 		{
-			result.message.date = DateHelper.cast(result.message.date);
+			result.message = fields.message;
+			if (result.message.id > 0)
+			{
+				result.message.date = DateHelper.cast(result.message.date);
+			}
 		}
 
 		// TODO: move to user and dialog model
-		result.chat = fields.chat || { id: 0 };
-		if (result.chat.id > 0)
+		if (Type.isPlainObject(fields.chat))
 		{
+			result.chat = fields.chat;
 			result.chat.date_create = DateHelper.cast(result.chat.date_create);
 		}
 
-		result.user = fields.user || { id: 0 };
-		if (result.user.id > 0)
+		if (Type.isPlainObject(fields.user))
 		{
+			result.user = fields.user;
+
 			result.user.last_activity_date = DateHelper.cast(result.user.last_activity_date);
 			if (result.user.mobile_last_date)
 			{
@@ -379,9 +563,62 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			}
 		}
 
+		if (Type.isPlainObject(fields.invited))
+		{
+			result.invitation = {
+				isActive: true,
+				originator: fields.invited.originator_id,
+				canResend: fields.invited.can_resend,
+			};
+			result.options.defaultUserRecord = true;
+		}
+		else if (fields.invited === false)
+		{
+			result.invitation = {
+				isActive: false,
+				originator: 0,
+				canResend: false,
+			};
+			result.options.defaultUserRecord = true;
+		}
+		else if (Type.isPlainObject(fields.invitation))
+		{
+			result.invitation = fields.invitation;
+			result.options.defaultUserRecord = true;
+		}
+
+		if (Type.isPlainObject(fields.options))
+		{
+			if (!result.options)
+			{
+				result.options = {};
+			}
+
+			if (Type.isBoolean(fields.options.default_user_record))
+			{
+				fields.options.defaultUserRecord = fields.options.default_user_record;
+			}
+
+			if (Type.isBoolean(fields.options.defaultUserRecord))
+			{
+				result.options.defaultUserRecord = fields.options.defaultUserRecord;
+			}
+
+			if (Type.isBoolean(fields.options.birthdayPlaceholder))
+			{
+				result.options.birthdayPlaceholder = fields.options.birthdayPlaceholder;
+			}
+		}
+
 		return result;
 	}
 
+	/**
+	 *
+	 * @param store
+	 * @param id
+	 * @return {{index: number, element: RecentModelState}|boolean}
+	 */
 	function findItemById(store, id)
 	{
 		const result = {};

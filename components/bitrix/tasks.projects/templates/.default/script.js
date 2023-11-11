@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,pull_client,main_loader,main_popup,main_core_events,ui_tour,main_core) {
@@ -6,7 +7,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	/**
 	 * @memberOf BX.Grid
 	 */
-
 	var CellActionState = function CellActionState() {
 	  babelHelpers.classCallCheck(this, CellActionState);
 	};
@@ -19,7 +19,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  function ActionsController() {
 	    babelHelpers.classCallCheck(this, ActionsController);
 	  }
-
 	  babelHelpers.createClass(ActionsController, null, [{
 	    key: "setOptions",
 	    value: function setOptions(options) {
@@ -60,13 +59,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (id !== undefined) {
 	        return [id];
 	      }
-
 	      var selected = ActionsController.getSelectedRows();
-
 	      if (selected.length === 0) {
 	        return [];
 	      }
-
 	      return selected.map(function (row) {
 	        return row.getDataset().id;
 	      });
@@ -82,7 +78,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (main_core.Dom.hasClass(button, 'ui-btn-clock')) {
 	        return;
 	      }
-
 	      main_core.Dom.addClass(button, 'ui-btn-clock');
 	      BX.ajax({
 	        url: button.getAttribute('bx-request-url'),
@@ -177,8 +172,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "changePin",
 	    value: function changePin(groupId, event) {
 	      var _event$getData = event.getData(),
-	          button = _event$getData.button;
-
+	        button = _event$getData.button;
 	      if (main_core.Dom.hasClass(button, CellActionState.ACTIVE)) {
 	        ActionsController.doAction('unpin', groupId).then(function () {
 	          main_core.Dom.removeClass(button, CellActionState.ACTIVE);
@@ -203,24 +197,20 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      main_core.Runtime.loadExtension('ui.entity-selector').then(function (exports) {
 	        var onRowUpdate = function onRowUpdate(event) {
 	          var _event$getData2 = event.getData(),
-	              id = _event$getData2.id;
-
+	            id = _event$getData2.id;
 	          if (id === groupId) {
 	            var row = ActionsController.getGridInstance().getRows().getById(id);
 	            var button = row.getCellById('TAGS').querySelector('.main-grid-tag-add');
 	            dialog.setTargetNode(button);
 	          }
 	        };
-
 	        var onRowRemove = function onRowRemove(event) {
 	          var _event$getData3 = event.getData(),
-	              id = _event$getData3.id;
-
+	            id = _event$getData3.id;
 	          if (id === groupId) {
 	            dialog.hide();
 	          }
 	        };
-
 	        var onTagsChange = function onTagsChange(event) {
 	          var dialog = event.getTarget();
 	          var tags = dialog.getSelectedItems().map(function (item) {
@@ -230,7 +220,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            KEYWORDS: tags.join(',')
 	          });
 	        };
-
 	        var Dialog = exports.Dialog;
 	        var dialog = new Dialog({
 	          targetNode: event.getData().button,
@@ -269,8 +258,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            'Search:onItemCreateAsync': function SearchOnItemCreateAsync(event) {
 	              return new Promise(function (resolve) {
 	                var _event$getData4 = event.getData(),
-	                    searchQuery = _event$getData4.searchQuery;
-
+	                  searchQuery = _event$getData4.searchQuery;
 	                var name = searchQuery.getQuery().toLowerCase();
 	                var dialog = event.getTarget();
 	                setTimeout(function () {
@@ -280,11 +268,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	                    title: name,
 	                    tabs: 'all'
 	                  });
-
 	                  if (item) {
 	                    item.select();
 	                  }
-
 	                  resolve();
 	                }, 1000);
 	              });
@@ -307,7 +293,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.init();
 	    this.bindEvents();
 	  }
-
 	  babelHelpers.createClass(Filter, [{
 	    key: "init",
 	    value: function init() {
@@ -333,7 +318,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onCounterClick",
 	    value: function onCounterClick(event) {
 	      var data = event.getData();
-
 	      if (data.counter && data.counter.filter) {
 	        this.toggleByField(babelHelpers.defineProperty({}, data.counter.filterField, data.counter.filterValue));
 	      }
@@ -344,11 +328,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (!Object.keys(this.fields).includes(field)) {
 	        return false;
 	      }
-
 	      if (main_core.Type.isArray(this.fields[field])) {
 	        return this.fields[field].length > 0;
 	      }
-
 	      return this.fields[field] !== '';
 	    }
 	  }, {
@@ -360,15 +342,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "toggleByField",
 	    value: function toggleByField(field) {
 	      var _this = this;
-
 	      var name = Object.keys(field)[0];
 	      var value = field[name];
-
 	      if (!this.isFilteredByFieldValue(name, value)) {
 	        this.filter.getApi().extendFilter(babelHelpers.defineProperty({}, name, value));
 	        return;
 	      }
-
 	      this.filter.getFilterFields().forEach(function (field) {
 	        if (field.getAttribute('data-name') === name) {
 	          _this.filter.getFields().deleteField(field);
@@ -386,18 +365,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    babelHelpers.classCallCheck(this, MembersPopup);
 	    this.signedParameters = options.signedParameters;
 	  }
-
 	  babelHelpers.createClass(MembersPopup, [{
 	    key: "show",
 	    value: function show(groupId, bindNode) {
 	      var _this = this;
-
 	      var type = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'all';
-
 	      if (this.isPopupShown) {
 	        this.popup.destroy();
 	      }
-
 	      this.groupId = groupId;
 	      this.resetPopupData();
 	      this.changeType(type, false);
@@ -429,11 +404,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          },
 	          onAfterPopupShow: function onAfterPopupShow(popup) {
 	            popup.contentContainer.appendChild(_this.renderContainer());
-
 	            _this.showLoader();
-
 	            _this.showUsers(groupId, type);
-
 	            _this.isPopupShown = true;
 	          }
 	        }
@@ -450,17 +422,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "popupScroll",
 	    value: function popupScroll(groupId, type) {
 	      var _this2 = this;
-
 	      if (!BX.type.isDomNode(this.getCurrentPopupData().innerContainer)) {
 	        return;
 	      }
-
 	      main_core.Event.bind(this.getCurrentPopupData().innerContainer, 'scroll', function (event) {
 	        var area = event.target;
-
 	        if (area.scrollTop > (area.scrollHeight - area.offsetHeight) / 1.5) {
 	          _this2.showUsers(groupId, type);
-
 	          main_core.Event.unbindAll(_this2.getCurrentPopupData().innerContainer);
 	        }
 	      });
@@ -469,7 +437,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showUsers",
 	    value: function showUsers(groupId, type) {
 	      var _this3 = this;
-
 	      BX.ajax.runComponentAction('bitrix:tasks.projects', 'getPopupMembers', {
 	        mode: 'class',
 	        data: {
@@ -481,20 +448,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }).then(function (response) {
 	        if (_this3.groupId !== groupId || _this3.currentType !== type) {
 	          _this3.hideLoader();
-
 	          return;
 	        }
-
 	        if (response.data.length > 0) {
 	          _this3.renderUsers(response.data);
-
 	          _this3.popupScroll(groupId, _this3.currentType);
 	        } else if (!_this3.getCurrentPopupData().innerContainer.hasChildNodes()) {
 	          _this3.getCurrentPopupData().innerContainer.innerText = main_core.Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_EMPTY');
 	        }
-
 	        _this3.getCurrentPopupData().currentPage++;
-
 	        _this3.hideLoader();
 	      }, function () {
 	        return _this3.hideLoader();
@@ -504,14 +466,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderUsers",
 	    value: function renderUsers(users) {
 	      var _this4 = this;
-
 	      Object.values(users).forEach(function (user) {
 	        if (_this4.getCurrentPopupData().renderedUsers.indexOf(user.ID) >= 0) {
 	          return;
 	        }
-
 	        _this4.getCurrentPopupData().renderedUsers.push(user.ID);
-
 	        _this4.getCurrentPopupData().innerContainer.appendChild(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<a class=\"tasks-projects-members-popup-item\" href=\"", "\" target=\"_blank\">\n\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-avatar-new\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-avatar-status-icon\"></span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-name\">", "</span>\n\t\t\t\t\t</a>\n\t\t\t\t"])), user['HREF'], _this4.getAvatar(user), user['FORMATTED_NAME']));
 	      });
 	    }
@@ -519,9 +478,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getAvatar",
 	    value: function getAvatar(user) {
 	      if (main_core.Type.isStringFilled(user['PHOTO'])) {
-	        return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-icon ui-icon-common-user tasks-projects-members-popup-avatar-img\">\n\t\t\t\t\t<i style=\"background-image: url('", "')\"></i>\n\t\t\t\t</div>\n\t\t\t"])), user['PHOTO']);
+	        return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-icon ui-icon-common-user tasks-projects-members-popup-avatar-img\">\n\t\t\t\t\t<i style=\"background-image: url('", "')\"></i>\n\t\t\t\t</div>\n\t\t\t"])), encodeURI(user['PHOTO']));
 	      }
-
 	      return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-icon ui-icon-common-user tasks-projects-members-popup-avatar-img\"><i></i></div>\n\t\t"])));
 	    }
 	  }, {
@@ -533,7 +491,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          size: 40
 	        });
 	      }
-
 	      void this.loader.show();
 	    }
 	  }, {
@@ -554,11 +511,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        main_core.Dom.removeClass(item.tab, 'tasks-projects-members-popup-head-item-current');
 	      });
 	      main_core.Dom.addClass(this.getCurrentPopupData().tab, 'tasks-projects-members-popup-head-item-current');
-
 	      if (oldType) {
 	        main_core.Dom.replace(this.popupData[oldType].innerContainer, this.getCurrentPopupData().innerContainer);
 	      }
-
 	      if (loadUsers && this.getCurrentPopupData().currentPage === 1) {
 	        this.showLoader();
 	        this.showUsers(this.groupId, newType);
@@ -600,12 +555,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7$1, _templateObject8$1, _templateObject9$1, _templateObject10$1, _templateObject11, _templateObject12;
 	var ScrumMembersPopup = /*#__PURE__*/function (_MembersPopup) {
 	  babelHelpers.inherits(ScrumMembersPopup, _MembersPopup);
-
 	  function ScrumMembersPopup() {
 	    babelHelpers.classCallCheck(this, ScrumMembersPopup);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ScrumMembersPopup).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(ScrumMembersPopup, [{
 	    key: "renderContainer",
 	    value: function renderContainer() {
@@ -639,25 +592,20 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderUsers",
 	    value: function renderUsers(users) {
 	      var _this = this;
-
 	      if (this.currentType === 'scrumTeam') {
 	        this.renderLabels(users);
 	        Object.values(users).forEach(function (user) {
 	          if (_this.getCurrentPopupData().renderedUsers.indexOf(user.ID) >= 0 && user.ROLE !== 'M') {
 	            return;
 	          }
-
 	          _this.getCurrentPopupData().renderedUsers.push(user.ID);
-
 	          var containersMap = new Map();
 	          containersMap.set('A', 'tasks-scrum-members-popup-owner-container');
 	          containersMap.set('M', 'tasks-scrum-members-popup-master-container');
 	          containersMap.set('E', 'tasks-scrum-members-popup-team-container');
-
 	          if (main_core.Type.isUndefined(containersMap.get(user.ROLE))) {
 	            return;
 	          }
-
 	          _this.getCurrentPopupData().innerContainer.querySelector('.' + containersMap.get(user.ROLE)).appendChild(main_core.Tag.render(_templateObject8$1 || (_templateObject8$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<a class=\"tasks-projects-members-popup-item\" href=\"", "\" target=\"_blank\">\n\t\t\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-avatar-new\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-avatar-status-icon\"></span>\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<span class=\"tasks-scrum-members-popup-name\">", "</span>\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t"])), user['HREF'], _this.getAvatar(user), user['FORMATTED_NAME']));
 	        });
 	      } else {
@@ -665,9 +613,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          if (_this.getCurrentPopupData().renderedUsers.indexOf(user.ID) >= 0) {
 	            return;
 	          }
-
 	          _this.getCurrentPopupData().renderedUsers.push(user.ID);
-
 	          _this.getCurrentPopupData().innerContainer.appendChild(main_core.Tag.render(_templateObject9$1 || (_templateObject9$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<a class=\"tasks-projects-members-popup-item\" href=\"", "\" target=\"_blank\">\n\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-avatar-new\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-avatar-status-icon\"></span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span class=\"tasks-scrum-members-popup-name\">", "</span>\n\t\t\t\t\t</a>\n\t\t\t\t"])), user['HREF'], _this.getAvatar(user), user['FORMATTED_NAME']));
 	        });
 	      }
@@ -684,15 +630,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var hasTeam = users.find(function (user) {
 	        return user.ROLE === 'E';
 	      });
-
 	      if (hasOwner) {
 	        this.getCurrentPopupData().innerContainer.appendChild(main_core.Tag.render(_templateObject10$1 || (_templateObject10$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum-members-popup-owner-container\">\n\t\t\t\t\t\t<span class=\"tasks-scrum-members-popup-label\">\n\t\t\t\t\t\t\t<span class=\"tasks-scrum-members-popup-label-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_LABEL_SCRUM_OWNER')));
 	      }
-
 	      if (hasMaster) {
 	        this.getCurrentPopupData().innerContainer.appendChild(main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum-members-popup-master-container\">\n\t\t\t\t\t\t<span class=\"tasks-scrum-members-popup-label\">\n\t\t\t\t\t\t\t<span class=\"tasks-scrum-members-popup-label-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_LABEL_SCRUM_MASTER')));
 	      }
-
 	      if (hasTeam) {
 	        this.getCurrentPopupData().innerContainer.appendChild(main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum-members-popup-team-container\">\n\t\t\t\t\t\t<span class=\"tasks-scrum-members-popup-label\">\n\t\t\t\t\t\t\t<span class=\"tasks-scrum-members-popup-label-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_LABEL_SCRUM_TEAM')));
 	      }
@@ -702,7 +645,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}(MembersPopup);
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var Grid = /*#__PURE__*/function () {
 	  babelHelpers.createClass(Grid, null, [{
@@ -714,7 +656,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      };
 	    }
 	  }]);
-
 	  function Grid(options) {
 	    babelHelpers.classCallCheck(this, Grid);
 	    this.pageSize = 10;
@@ -727,7 +668,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.bindEvents();
 	    this.colorPinnedRows();
 	  }
-
 	  babelHelpers.createClass(Grid, [{
 	    key: "bindEvents",
 	    value: function bindEvents() {
@@ -740,7 +680,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var data = event.getData();
 	      var grid = data[1];
 	      var column = data[0];
-
 	      if (grid === this.grid) {
 	        this.sort = {};
 	        this.sort[column.sort_by] = column.sort_order;
@@ -772,7 +711,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        counters: data.counters
 	      };
 	      var moveParams = params.moveParams || {};
-
 	      if (moveParams.rowBefore) {
 	        options.insertAfter = moveParams.rowBefore;
 	      } else if (moveParams.rowAfter) {
@@ -780,14 +718,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      } else {
 	        options.append = true;
 	      }
-
 	      if (this.items.size > this.getCurrentPage() * this.pageSize) {
 	        var lastRowId = this.getLastRowId();
 	        this.removeItem(lastRowId);
 	        main_core.Dom.remove(this.getRowNodeById(lastRowId));
 	        this.showMoreButton();
 	      }
-
 	      this.hideStub();
 	      this.getRealtime().addRow(options);
 	      this.colorPinnedRows();
@@ -799,7 +735,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "updateRow",
 	    value: function updateRow(id, data, params) {
 	      var _this = this;
-
 	      var row = this.getRowById(id);
 	      row.setCellsContent(data.content);
 	      row.setActions(data.actions);
@@ -821,7 +756,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (!this.isRowExist(id)) {
 	        return;
 	      }
-
 	      this.grid.removeRow(id);
 	      main_core_events.EventEmitter.emit('Tasks.Projects.Grid:RowRemove', {
 	        id: id
@@ -833,10 +767,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (params.skip) {
 	        return;
 	      }
-
 	      var rowBefore = params.rowBefore || 0;
 	      var rowAfter = params.rowAfter || 0;
-
 	      if (rowBefore) {
 	        this.grid.getRows().insertAfter(rowId, rowBefore);
 	      } else if (rowAfter) {
@@ -847,35 +779,27 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "highlightRow",
 	    value: function highlightRow(rowId, params) {
 	      var _this2 = this;
-
 	      params = params || {};
 	      return new Promise(function (resolve, reject) {
 	        if (!_this2.isRowExist(rowId)) {
 	          reject();
 	          return;
 	        }
-
 	        if (params.skip) {
 	          resolve();
 	          return;
 	        }
-
 	        var node = _this2.getRowNodeById(rowId);
-
 	        var isPinned = main_core.Dom.hasClass(node, Grid.classes.pinned);
-
 	        if (isPinned) {
 	          main_core.Dom.removeClass(node, Grid.classes.pinned);
 	        }
-
 	        main_core.Dom.addClass(node, Grid.classes.highlighted);
 	        setTimeout(function () {
 	          main_core.Dom.removeClass(node, Grid.classes.highlighted);
-
 	          if (isPinned) {
 	            main_core.Dom.addClass(node, Grid.classes.pinned);
 	          }
-
 	          resolve();
 	        }, 900);
 	      });
@@ -884,7 +808,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "colorPinnedRows",
 	    value: function colorPinnedRows() {
 	      var _this3 = this;
-
 	      this.getRows().forEach(function (row) {
 	        var node = row.getNode();
 	        _this3.getIsPinned(row.getId()) ? main_core.Dom.addClass(node, Grid.classes.pinned) : main_core.Dom.removeClass(node, Grid.classes.pinned);
@@ -916,16 +839,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getLastPinnedRowId",
 	    value: function getLastPinnedRowId() {
 	      var _this4 = this;
-
 	      var pinnedRows = Object.values(this.getRows()).filter(function (row) {
 	        return _this4.getIsPinned(row.getId());
 	      });
 	      var keys = Object.keys(pinnedRows);
-
 	      if (keys.length > 0) {
 	        return pinnedRows[keys[keys.length - 1]].getId();
 	      }
-
 	      return 0;
 	    }
 	  }, {
@@ -988,7 +908,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "fillItems",
 	    value: function fillItems(items) {
 	      var _this5 = this;
-
 	      Object.keys(items).forEach(function (id) {
 	        return _this5.addItem(id);
 	      });
@@ -1056,7 +975,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return ['onAfterTaskAdd', 'onAfterCommentAdd'];
 	    }
 	  }]);
-
 	  function PullController(options) {
 	    babelHelpers.classCallCheck(this, PullController);
 	    this.signedParameters = options.signedParameters;
@@ -1068,7 +986,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.counterData = new Map();
 	    this.userOptions = options.userOptions;
 	  }
-
 	  babelHelpers.createClass(PullController, [{
 	    key: "getModuleId",
 	    value: function getModuleId() {
@@ -1095,7 +1012,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onProjectAdd",
 	    value: function onProjectAdd(data) {
 	      var _this = this;
-
 	      var params = {
 	        event: PullController.events.add,
 	        moveParams: {
@@ -1108,7 +1024,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }, function (response) {
 	        return console.error(response);
 	      });
-
 	      if (this.isScrumList) {
 	        this.checkScrumLimit().then(function (isLimitExceeded) {
 	          return _this.onCheckScrumLimit(isLimitExceeded);
@@ -1121,7 +1036,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onProjectUpdate",
 	    value: function onProjectUpdate(data) {
 	      var _this2 = this;
-
 	      var params = {
 	        event: PullController.events.update
 	      };
@@ -1135,9 +1049,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onProjectRemove",
 	    value: function onProjectRemove(data) {
 	      var _this3 = this;
-
 	      this.removeRow(data.ID);
-
 	      if (this.isScrumList) {
 	        this.checkScrumLimit().then(function (isLimitExceeded) {
 	          return _this3.onCheckScrumLimit(isLimitExceeded);
@@ -1150,7 +1062,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onProjectUserAdd",
 	    value: function onProjectUserAdd(data) {
 	      var _this4 = this;
-
 	      var params = {
 	        event: PullController.events.userAdd
 	      };
@@ -1164,7 +1075,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onProjectUserUpdate",
 	    value: function onProjectUserUpdate(data) {
 	      var _this5 = this;
-
 	      var params = {
 	        event: PullController.events.userUpdate
 	      };
@@ -1178,7 +1088,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onProjectUserRemove",
 	    value: function onProjectUserRemove(data) {
 	      var _this6 = this;
-
 	      var params = {
 	        event: PullController.events.userRemove
 	      };
@@ -1195,7 +1104,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        case this.userOptions.pinned:
 	          this.onProjectPinChanged(data);
 	          break;
-
 	        default:
 	          break;
 	      }
@@ -1212,20 +1120,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onProjectCounter",
 	    value: function onProjectCounter(data) {
 	      var _this7 = this;
-
 	      var groupId = data.GROUP_ID;
 	      var event = data.EVENT;
-
 	      if (!PullController.counterEvents.includes(event)) {
 	        return;
 	      }
-
 	      if (!this.timer) {
 	        this.timer = setTimeout(function () {
 	          _this7.freeCounterQueue();
 	        }, 1000);
 	      }
-
 	      if (PullController.movingProjectEvents.includes(event) || !this.counterData.has(groupId)) {
 	        this.counterData.set(groupId, event);
 	      }
@@ -1234,7 +1138,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "freeCounterQueue",
 	    value: function freeCounterQueue() {
 	      var _this8 = this;
-
 	      this.counterData.forEach(function (event, groupId) {
 	        var params = {
 	          event: event,
@@ -1242,7 +1145,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            skip: true
 	          }
 	        };
-
 	        if (PullController.movingProjectEvents.includes(event)) {
 	          params.moveParams = {
 	            rowBefore: _this8.grid.getIsPinned(groupId) ? 0 : _this8.grid.getLastPinnedRowId(),
@@ -1252,7 +1154,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            skip: false
 	          };
 	        }
-
 	        _this8.checkExistence(groupId).then(function (response) {
 	          return _this8.onCheckExistenceSuccess(response, groupId, params);
 	        }, function (response) {
@@ -1266,7 +1167,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onProjectCommentsReadAll",
 	    value: function onProjectCommentsReadAll(data) {
 	      var groupId = data.GROUP_ID;
-
 	      if (groupId) {
 	        if (this.grid.isRowExist(groupId)) {
 	          this.updateCounter([groupId]);
@@ -1279,7 +1179,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "checkExistence",
 	    value: function checkExistence(groupId) {
 	      var _this9 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        BX.ajax.runComponentAction('bitrix:tasks.projects', 'checkExistence', {
 	          mode: 'class',
@@ -1298,7 +1197,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "checkScrumLimit",
 	    value: function checkScrumLimit() {
 	      var _this10 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        main_core.ajax.runAction('bitrix:tasks.scrum.info.checkScrumLimit', {
 	          data: {},
@@ -1316,14 +1214,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (main_core.Type.isUndefined(response.data[groupId])) {
 	        return;
 	      }
-
 	      if (response.data[groupId] === false) {
 	        this.removeRow(groupId);
 	        return;
 	      }
-
 	      var group = response.data[groupId];
-
 	      if (this.grid.isRowExist(groupId)) {
 	        this.grid.isActivityRealtimeMode() ? this.updateRow(groupId, group, params) : this.moveToDirectPlace(groupId, group, params);
 	      } else if (this.grid.isActivityRealtimeMode() && (PullController.movingProjectEvents.includes(params.event) || params.event === PullController.events.add)) {
@@ -1336,11 +1231,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onCheckScrumLimit",
 	    value: function onCheckScrumLimit(isLimitExceeded) {
 	      this.projectAddButton = document.getElementById('projectAddButton');
-
 	      if (!main_core.Type.isDomNode(this.projectAddButton)) {
 	        return;
 	      }
-
 	      if (isLimitExceeded) {
 	        this.projectAddButton.href = "javascript:BX.UI.InfoHelper.show('".concat(this.scrumLimitSidePanelId, "', {isLimit: true, limitAnalyticsLabels: {module: 'tasks', source: 'scrumList'}})");
 	      } else {
@@ -1361,11 +1254,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "addRow",
 	    value: function addRow(rowId, rowData, params) {
 	      var _this11 = this;
-
 	      if (this.grid.isRowExist(rowId)) {
 	        return;
 	      }
-
 	      BX.ajax.runComponentAction('bitrix:tasks.projects', 'prepareGridRows', {
 	        mode: 'class',
 	        data: {
@@ -1383,11 +1274,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "updateRow",
 	    value: function updateRow(rowId, rowData, params) {
 	      var _this12 = this;
-
 	      if (!this.grid.isRowExist(rowId)) {
 	        return;
 	      }
-
 	      BX.ajax.runComponentAction('bitrix:tasks.projects', 'prepareGridRows', {
 	        mode: 'class',
 	        data: {
@@ -1411,7 +1300,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "moveToDirectPlace",
 	    value: function moveToDirectPlace(groupId, data, params) {
 	      var _this13 = this;
-
 	      params = params || {};
 	      BX.ajax.runComponentAction('bitrix:tasks.projects', 'findProjectPlace', {
 	        mode: 'class',
@@ -1424,11 +1312,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        if (response.data === null) {
 	          return;
 	        }
-
 	        var _response$data = response.data,
-	            projectBefore = _response$data.projectBefore,
-	            projectAfter = _response$data.projectAfter;
-
+	          projectBefore = _response$data.projectBefore,
+	          projectAfter = _response$data.projectAfter;
 	        if (projectBefore === false && projectAfter === false) {
 	          _this13.removeRow(groupId);
 	        } else {
@@ -1442,7 +1328,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	              skip: true
 	            };
 	          }
-
 	          _this13.updateItem(groupId, data, params);
 	        }
 	      });
@@ -1451,7 +1336,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "updateCounter",
 	    value: function updateCounter(rowIds) {
 	      var _this14 = this;
-
 	      BX.ajax.runComponentAction('bitrix:tasks.projects', 'prepareGridRows', {
 	        mode: 'class',
 	        data: {
@@ -1461,7 +1345,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        signedParameters: this.signedParameters
 	      }).then(function (response) {
 	        var projects = response.data;
-
 	        if (projects) {
 	          Object.keys(projects).forEach(function (projectId) {
 	            if (_this14.grid.isRowExist(projectId)) {
@@ -1493,7 +1376,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    });
 	    this.bindEvents();
 	  }
-
 	  babelHelpers.createClass(FirstProjectCreationTourGuide, [{
 	    key: "bindEvents",
 	    value: function bindEvents() {
@@ -1504,8 +1386,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onGuideFinish",
 	    value: function onGuideFinish(event) {
 	      var _event$getData = event.getData(),
-	          guide = _event$getData.guide;
-
+	        guide = _event$getData.guide;
 	      if (guide === this.guide) {
 	        this.projectAddButton.href = main_core.Uri.removeParam(this.projectAddButton.href, ['PROJECT_OPTIONS']);
 	      }
@@ -1514,21 +1395,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onProjectSliderMessage",
 	    value: function onProjectSliderMessage(event) {
 	      var _event$getData2 = event.getData(),
-	          _event$getData3 = babelHelpers.slicedToArray(_event$getData2, 1),
-	          sliderEvent = _event$getData3[0];
-
+	        _event$getData3 = babelHelpers.slicedToArray(_event$getData2, 1),
+	        sliderEvent = _event$getData3[0];
 	      if (sliderEvent.getEventId() !== 'sonetGroupEvent') {
 	        return;
 	      }
-
 	      var sliderEventData = sliderEvent.getData();
-
 	      if (sliderEventData.code !== 'afterCreate' || sliderEventData.data.projectOptions.tourId !== this.guide.getId()) {
 	        return;
 	      }
-
 	      var projectId = sliderEventData.data.group.ID;
-
 	      if (this.grid.isRowExist(projectId)) {
 	        this.showFinalStep(projectId);
 	      } else {
@@ -1539,8 +1415,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onProjectRowAdded",
 	    value: function onProjectRowAdded(projectId, event) {
 	      var _event$getData4 = event.getData(),
-	          id = _event$getData4.id;
-
+	        id = _event$getData4.id;
 	      if (Number(id) === Number(projectId)) {
 	        this.showFinalStep(projectId);
 	      }
@@ -1549,7 +1424,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showFinalStep",
 	    value: function showFinalStep(projectId) {
 	      var _this = this;
-
 	      var target = this.grid.getRowNodeById(projectId).querySelector('.tasks-projects-text');
 	      this.guide.steps.push(new ui_tour.Step({
 	        target: target,
@@ -1583,7 +1457,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showNextStep",
 	    value: function showNextStep() {
 	      var _this2 = this;
-
 	      setTimeout(function () {
 	        return _this2.guide.showNextStep();
 	      }, 1000);
@@ -1610,7 +1483,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    });
 	    this.bindEvents();
 	  }
-
 	  babelHelpers.createClass(FirstScrumCreationTourGuide, [{
 	    key: "bindEvents",
 	    value: function bindEvents() {
@@ -1621,8 +1493,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onGuideFinish",
 	    value: function onGuideFinish(event) {
 	      var _event$getData = event.getData(),
-	          guide = _event$getData.guide;
-
+	        guide = _event$getData.guide;
 	      if (guide === this.guide) {
 	        this.projectAddButton.href = main_core.Uri.removeParam(this.projectAddButton.href, ['PROJECT_OPTIONS']);
 	      }
@@ -1631,21 +1502,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onProjectSliderMessage",
 	    value: function onProjectSliderMessage(event) {
 	      var _event$getData2 = event.getData(),
-	          _event$getData3 = babelHelpers.slicedToArray(_event$getData2, 1),
-	          sliderEvent = _event$getData3[0];
-
+	        _event$getData3 = babelHelpers.slicedToArray(_event$getData2, 1),
+	        sliderEvent = _event$getData3[0];
 	      if (sliderEvent.getEventId() !== 'sonetGroupEvent') {
 	        return;
 	      }
-
 	      var sliderEventData = sliderEvent.getData();
-
 	      if (sliderEventData.code !== 'afterCreate' || sliderEventData.data.projectOptions.tourId !== this.guide.getId()) {
 	        return;
 	      }
-
 	      var projectId = sliderEventData.data.group.ID;
-
 	      if (this.grid.isRowExist(projectId)) {
 	        this.showFinalStep(projectId);
 	      } else {
@@ -1656,8 +1522,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onProjectRowAdded",
 	    value: function onProjectRowAdded(projectId, event) {
 	      var _event$getData4 = event.getData(),
-	          id = _event$getData4.id;
-
+	        id = _event$getData4.id;
 	      if (Number(id) === Number(projectId)) {
 	        this.showFinalStep(projectId);
 	      }
@@ -1666,7 +1531,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showFinalStep",
 	    value: function showFinalStep(projectId) {
 	      var _this = this;
-
 	      var target = this.grid.getRowNodeById(projectId).querySelector('.tasks-projects-text');
 	      this.guide.steps.push(new ui_tour.Step({
 	        target: target,
@@ -1700,7 +1564,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showNextStep",
 	    value: function showNextStep() {
 	      var _this2 = this;
-
 	      setTimeout(function () {
 	        return _this2.guide.showNextStep();
 	      }, 1000);
@@ -1715,7 +1578,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.tours = options.tours;
 	    this.initGuides(options);
 	  }
-
 	  babelHelpers.createClass(TourGuideController, [{
 	    key: "initGuides",
 	    value: function initGuides(options) {
@@ -1723,7 +1585,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        this.firstProjectCreationTourGuide = new FirstProjectCreationTourGuide(options);
 	        this.firstProjectCreationTourGuide.start();
 	      }
-
 	      if (this.tours.firstScrumCreation && this.tours.firstScrumCreation.show) {
 	        this.firstScrumCreationTourGuide = new FirstScrumCreationTourGuide(options);
 	        this.firstScrumCreationTourGuide.start();
@@ -1744,7 +1605,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    ActionsController.setOptions(options);
 	    this.initPull(options);
 	  }
-
 	  babelHelpers.createClass(Controller, [{
 	    key: "initPull",
 	    value: function initPull(options) {

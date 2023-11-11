@@ -6,6 +6,7 @@ use Bitrix\Main\Entity\DatetimeField;
 use Bitrix\Main\Text\Emoji;
 use Bitrix\Tasks\Control\Handler\Exception\TemplateFieldValidateException;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
+use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
 use Bitrix\Main\Localization\Loc;
 
@@ -197,10 +198,10 @@ class TemplateFieldHandler
 	{
 		if (
 			isset($this->fields["PRIORITY"])
-			&& !in_array($this->fields["PRIORITY"], [\CTasks::PRIORITY_LOW, \CTasks::PRIORITY_AVERAGE, \CTasks::PRIORITY_HIGH])
+			&& !in_array((int)$this->fields["PRIORITY"], array_values(Priority::getAll()), true)
 		)
 		{
-			$this->fields["PRIORITY"] = \CTasks::PRIORITY_AVERAGE;
+			$this->fields["PRIORITY"] = Priority::AVERAGE;
 		}
 
 		return $this;

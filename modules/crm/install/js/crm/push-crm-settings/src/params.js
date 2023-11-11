@@ -4,6 +4,7 @@ import { Restriction } from "crm.kanban.restriction";
 
 export type Params = {
 	entityTypeId: number,
+	pingSettings: Object,
 	rootMenu: Menu,
 	todoCreateNotificationSkipPeriod: ?string,
 	targetItemId: ?string,

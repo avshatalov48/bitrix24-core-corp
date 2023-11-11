@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Tasks\Internals\Project\UserOption;
 
+use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Internals\Task\ProjectUserOptionTable;
 use Bitrix\Tasks\Util\Result;
@@ -132,7 +133,7 @@ class UserOptionController
 			$this->userId,
 			[
 				'module_id' => 'tasks',
-				'command' => 'project_user_option_changed',
+				'command' => PushCommand::PROJECT_USER_OPTION_UPDATED,
 				'params' => [
 					'PROJECT_ID' => $this->projectId,
 					'USER_ID' => $this->userId,

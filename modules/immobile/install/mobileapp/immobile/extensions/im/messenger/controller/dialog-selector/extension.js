@@ -18,6 +18,13 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 	 */
 	class DialogSelector
 	{
+		/**
+		 *
+		 * @param {object} options
+		 * @param {SelectorDialogListAdapter} options.view
+		 * @param {Array<object>} [options.entities]
+		 * @param {Function} [options.onRecentResult]
+		 */
 		constructor(options = {})
 		{
 			if (options.view)
@@ -110,12 +117,16 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 			};
 		}
 
+		/**
+		 * @return {RecentUserCarouselItem}
+		 */
 		getUserCarouselItem()
 		{
-			const recentUserList = clone(this.store.getters['recentModel/getUserList']);
+			const recentUserList = clone(this.store.getters['recentModel/getUserList']());
 			const recentUserListIndex = {};
 			const recentUserListRemoveIndex = {};
 
+			/** @type {Array<RecentCarouselItem>} */
 			const userItems = [];
 			if (Type.isArrayFilled(recentUserList))
 			{
@@ -137,7 +148,7 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 				});
 			}
 
-			const colleaguesList = clone(this.store.getters['usersModel/getUserList']());
+			const colleaguesList = clone(this.store.getters['usersModel/getList']());
 			if (Type.isArrayFilled(colleaguesList))
 			{
 				colleaguesList.forEach((user) => {

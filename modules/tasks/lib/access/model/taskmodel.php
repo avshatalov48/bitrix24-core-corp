@@ -14,22 +14,22 @@ use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Registry\GroupRegistry;
+use Bitrix\Tasks\Internals\Task\Status;
 
 class TaskModel implements AccessibleTask
 {
 	private static $cache = [];
 
-	private
-		$id = 0,
-		$members,
-		$groupId,
-		$status,
-		$group;
+	private $id = 0;
+	private $members;
+	private $groupId;
+	private $status;
+	private $group;
 
 	/**
 	 * @param int $taskId
 	 */
-	public static function invalidateCache(int $taskId)
+	public static function invalidateCache(int $taskId): void
 	{
 		unset(static::$cache[$taskId]);
 		TaskRegistry::getInstance()->drop($taskId);
@@ -44,7 +44,7 @@ class TaskModel implements AccessibleTask
 		$model = new self();
 		$model
 			->setGroupId($groupId)
-			->setStatus(\CTasks::STATE_PENDING);
+			->setStatus(Status::PENDING);
 		return $model;
 	}
 
@@ -68,7 +68,7 @@ class TaskModel implements AccessibleTask
 	 * @param \Bitrix\Tasks\Item\Task $item
 	 * @return TaskModel
 	 */
-	public static function createFromTaskItem(\Bitrix\Tasks\Item\Task $item)
+	public static function createFromTaskItem(\Bitrix\Tasks\Item\Task $item): static
 	{
 		$item = $item->getRawValues();
 
@@ -239,18 +239,10 @@ class TaskModel implements AccessibleTask
 		$auditors = [];
 		if (isset($data['AUDITORS']) && is_array($data['AUDITORS']))
 		{
-			if (is_scalar($data['AUDITORS']))
-			{
-				$data['AUDITORS'] = [$data['AUDITORS']];
-			}
 			$auditors = $data['AUDITORS'];
 		}
 		elseif (isset($default['AUDITORS']) && is_array($default['AUDITORS']))
 		{
-			if (is_scalar($default['AUDITORS']))
-			{
-				$default['AUDITORS'] = [$default['AUDITORS']];
-			}
 			$auditors = $default['AUDITORS'];
 		}
 		foreach ($auditors as $member)
@@ -408,7 +400,7 @@ class TaskModel implements AccessibleTask
 	public function isClosed(): bool
 	{
 		$status = $this->getStatus();
-		return $status === \CTasks::STATE_COMPLETED;
+		return $status === Status::COMPLETED;
 	}
 
 	/**
@@ -445,7 +437,7 @@ class TaskModel implements AccessibleTask
 	/**
 	 * @return bool
 	 */
-	public function isAllowedChangeDeadline()
+	public function isAllowedChangeDeadline(): bool
 	{
 		$task = $this->getTask();
 		if (!$task)
@@ -458,7 +450,7 @@ class TaskModel implements AccessibleTask
 	/**
 	 * @return bool
 	 */
-	public function isAllowedTimeTracking()
+	public function isAllowedTimeTracking(): bool
 	{
 		$task = $this->getTask();
 		if (!$task)
@@ -511,7 +503,7 @@ class TaskModel implements AccessibleTask
 	 * @throws \Bitrix\Main\NotImplementedException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function getChecklist()
+	public function getChecklist(): array
 	{
 		if (!$this->id)
 		{
@@ -539,7 +531,6 @@ class TaskModel implements AccessibleTask
 	 * @param bool $recursive
 	 * @param array $roles
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
 	 */
 	public function isInDepartment(int $userId, bool $recursive = false, array $roles = []): bool
 	{
@@ -567,7 +558,6 @@ class TaskModel implements AccessibleTask
 	/**
 	 * @param array $roles
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
 	 */
 	private function getDepartments(array $roles = []): array
 	{

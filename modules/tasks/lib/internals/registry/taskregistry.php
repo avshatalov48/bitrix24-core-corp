@@ -46,7 +46,7 @@ class TaskRegistry
 	/**
 	 * @param int|null $taskId
 	 */
-	public function drop(int $taskId = null)
+	public function drop(int $taskId = null): self
 	{
 		if ($taskId)
 		{
@@ -56,6 +56,8 @@ class TaskRegistry
 		{
 			$this->storage = [];
 		}
+
+		return $this;
 	}
 
 	/**

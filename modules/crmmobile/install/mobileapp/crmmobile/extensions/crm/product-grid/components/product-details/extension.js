@@ -4,6 +4,7 @@
 jn.define('crm/product-grid/components/product-details', (require, exports, module) => {
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
+	const { getEntityMessage } = require('crm/loc');
 	const { ProductRow } = require('crm/product-grid/model');
 	const { ProductCalculator, DiscountType } = require('crm/product-calculator');
 	const { Container, Island, Title, FormGroup } = require('layout/ui/islands');
@@ -19,7 +20,10 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 	const { StringField } = require('layout/ui/fields/string');
 	const { debounce } = require('utils/function');
 	const { isObjectLike, isArray, clone } = require('utils/object');
-	const { BannerButton } = require('layout/ui/banners');
+	const { Moment } = require('utils/date');
+	const { PlanRestriction } = require('layout/ui/plan-restriction');
+	const { lock } = require('assets/common');
+	const { ProductType } = require('catalog/product-type');
 
 	/**
 	 * @callback calculationFn
@@ -38,12 +42,13 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 
 			this.state = {
 				productRow: new ProductRow(clone(this.props.productData)),
-				reservedQuantity: null, // tmp
-				reserveEndDate: null, // tmp
 			};
 
 			/** @type {FileField} */
 			this.photoFieldRef = null;
+
+			this.notifyReadAccessDenied = this.notifyReadAccessDenied.bind(this);
+			this.notifyReservationLimits = this.notifyReservationLimits.bind(this);
 
 			this.layout = props.layout;
 			this.initLayout();
@@ -59,10 +64,13 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 
 		/**
 		 * @returns {{
+		 * 	entityTypeId: number,
 		 *	measures: CrmProductGridMeasure[],
 		 *	vatRates: CrmProductGridVatRate[],
 		 *	editable: boolean,
-		 *	inventoryControlEnabled: boolean,
+		 *	isAllowedReservation: boolean,
+		 *  isReservationRestrictedByPlan: boolean
+		 *  defaultDateReserveEnd: number,
 		 *	iblockId: number,
 		 *	entityDetailPageUrl: string,
 		 *	permissions: CrmProductGridCatalogPermissions,
@@ -135,6 +143,8 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 
 		validate()
 		{
+			this.actualizeInputReserveQuantity();
+
 			return !this.nameFieldRef || this.nameFieldRef.validate();
 		}
 
@@ -168,17 +178,25 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 						this.totalSumField(),
 					),
 				),
-				this.getProps().inventoryControlEnabled && BannerButton({
-					title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_INVENTORY_CONTROL_INTEGRATION_TITLE'),
-					description: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_INVENTORY_CONTROL_INTEGRATION_BODY_MSGVER_1'),
-					onClick: () => this.openEntityDesktopPage(),
-				}),
+				this.getProps().isAllowedReservation
+				&& this.productRow.getType() !== ProductType.Service
+				&& Island(
+					Title(Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_INVENTORY_CONTROL_INTEGRATION_TITLE')),
+					FormGroup(
+						this.storeField(),
+						this.inputReserveQuantityField(),
+						this.dateReserveEndField(),
+						this.rowReservedField(),
+						this.deductedQuantityField(),
+					),
+				),
 			);
 		}
 
 		nameField()
 		{
 			return StringField({
+				testId: 'ProductGridProductDetailsNameField',
 				ref: (ref) => this.nameFieldRef = ref,
 				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_NAME'),
 				value: this.productRow.getProductName(),
@@ -192,6 +210,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 		sectionsField()
 		{
 			return EntitySelectorField({
+				testId: 'ProductGridProductDetailsSectionsField',
 				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_SECTIONS'),
 				value: this.productRow.getSections().map((section) => section.ID),
 				readOnly: !this.isCatalogProductFieldEditable(),
@@ -225,6 +244,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 		barcodeField()
 		{
 			return BarcodeField({
+				testId: 'ProductGridProductDetailsBarcodeField',
 				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_BARCODE'),
 				value: this.productRow.getBarcode(),
 				readOnly: !this.isCatalogProductFieldEditable(),
@@ -254,6 +274,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 			});
 
 			return FileField({
+				testId: 'ProductGridProductDetailsGalleryField',
 				ref: (ref) => this.photoFieldRef = ref,
 				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_PHOTOS'),
 				multiple: true,
@@ -294,6 +315,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 		priceField()
 		{
 			return MoneyField({
+				testId: 'ProductGridProductDetailsPriceField',
 				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_PRICE'),
 				value: {
 					amount: this.productRow.getBasePrice(),
@@ -313,6 +335,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 		quantityField()
 		{
 			return CombinedField({
+				testId: 'ProductGridProductDetailsQuantityField',
 				value: {
 					amount: this.productRow.getQuantity(),
 					measureCode: this.productRow.getMeasureCode(),
@@ -327,7 +350,10 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 						this.setField('MEASURE_CODE', measure.code);
 						this.setField('MEASURE_NAME', measure.name);
 					}
+
+					this.productRow.setField('IS_INPUT_RESERVE_QUANTITY_ACTUALIZED', false);
 				},
+				onFocusOut: () => this.actualizeInputReserveQuantity(),
 				config: {
 					primaryField: {
 						id: 'amount',
@@ -366,6 +392,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 				: this.productRow.getDiscountRate();
 
 			return CombinedField({
+				testId: 'ProductGridProductDetailsDiscountField',
 				value: {
 					discountValue: String(discountValue),
 					discountType,
@@ -447,6 +474,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 			};
 
 			return CombinedField({
+				testId: 'ProductGridProductDetailsTaxField',
 				value: {
 					taxRate: vatIdByRate(this.productRow.getTaxRate()),
 					taxIncluded: this.productRow.isTaxIncluded(),
@@ -493,6 +521,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 		totalSumField()
 		{
 			return MoneyField({
+				testId: 'ProductGridProductDetailsTotalSumField',
 				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_SUM'),
 				value: {
 					amount: this.productRow.getSum(),
@@ -511,127 +540,203 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 
 		storeField()
 		{
-			const storeId = null;
-			const entityList = [];
+			const config = {
+				selectorType: EntitySelectorFactory.Type.STORE,
+				enableCreation: (
+					this.hasAccess('catalog_store_all')
+					&& this.hasAccess('catalog_store_modify')
+				),
+				entityList: [
+					{
+						id: this.productRow.getStoreId(),
+						title: this.productRow.getStoreName(),
+						type: 'store',
+					},
+				],
+				provider: {
+					options: {
+						useAddressAsTitle: true,
+						productId: this.productRow.getProductId(),
+					},
+				},
+				parentWidget: this.layout,
+			};
 
-			return EntitySelectorField({
-				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_STORE'),
-				value: storeId,
+			const props = {
+				testId: 'ProductGridProductDetailsStoreField',
+				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_STORE_ID'),
 				readOnly: this.isReadonly(),
 				multiple: false,
-				config: {
-					selectorType: EntitySelectorFactory.Type.STORE,
-					enableCreation: true,
-					entityList,
-					provider: {
-						options: {
-							useAddressAsTitle: true,
-						},
+				showEditIcon: false,
+			};
+
+			if (this.state.productRow.hasStoreAccess())
+			{
+				config.styles = {
+					externalWrapperBackgroundColor: this.isReadonly() ? '#FCFCFD' : '#F8FAFB',
+					externalWrapperBorderColor: '#DFE0E3',
+					externalWrapperMarginHorizontal: 0,
+				};
+
+				props.showBorder = true;
+				props.hasSolidBorderContainer = true;
+				props.value = this.productRow.getStoreId();
+				props.onChange = (value) => {
+					this.setField('STORE_ID', value);
+
+					const store = this.productRow.getStores().find((item) => item.STORE_ID === value);
+					const storeAmount = store ? store.AMOUNT : 0;
+					const storeAvailableAmount = store ? storeAmount - store.QUANTITY_RESERVED : 0;
+
+					this.setField('STORE_AMOUNT', storeAmount);
+					this.setField('STORE_AVAILABLE_AMOUNT', storeAvailableAmount);
+				};
+				props.wrapperConfig = {
+					showWrapperBorder: false,
+					style: {
+						paddingHorizontal: 0,
+						paddingVertical: 8,
 					},
-					parentWidget: this.layout,
-				},
-				onChange: (value, entityList) => {
-					console.log(value, entityList);
-					// let newVal;
-					//
-					// if (entityList.length)
-					// {
-					// 	newVal = {
-					// 		id: entityList[0].id,
-					// 		title: entityList[0].title,
-					// 	};
-					// }
-					// else
-					// {
-					// 	newVal = {
-					// 		id: null,
-					// 		title: null,
-					// 	};
-					// }
-					//
-					// this.updateFieldState('storeTo', newVal);
-					// this.updateFieldState('storeToId', newVal.id);
-				},
-			});
+				};
+
+				props.renderAdditionalBottomContent = () => {
+					return View(
+						{},
+						Text({
+							text: Loc.getMessage(
+								'PRODUCT_GRID_PRODUCT_DETAILS_FIELD_STORE_AVAILABLE_AMOUNT',
+								{
+									'#VALUE#': this.productRow.getStoreAvailableAmount(),
+									'#MEASURE#': this.productRow.getMeasureName(),
+								},
+							),
+						}),
+						Text({
+							text: Loc.getMessage(
+								'PRODUCT_GRID_PRODUCT_DETAILS_FIELD_STORE_AMOUNT',
+								{
+									'#VALUE#': this.productRow.getStoreAmount(),
+									'#MEASURE#': this.productRow.getMeasureName(),
+								},
+							),
+						}),
+					);
+				};
+
+				if (this.getProps().isReservationRestrictedByPlan)
+				{
+					props.disabled = true;
+					props.onContentClick = this.notifyReservationLimits;
+					props.showEditIcon = true;
+					props.showEditIconInReadOnly = true;
+					props.editIcon = Image(
+						{
+							style: {
+								width: 28,
+								height: 29,
+							},
+							svg: {
+								content: lock,
+							},
+						},
+					);
+				}
+			}
+			else
+			{
+				props.disabled = true;
+				props.onContentClick = this.notifyReadAccessDenied;
+				props.placeholder = Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_ACCESS_DENIED');
+				props.emptyValue = Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_ACCESS_DENIED');
+			}
+
+			props.config = config;
+
+			return EntitySelectorField(props);
 		}
 
-		storeBalanceField()
+		inputReserveQuantityField()
 		{
-			const value = `17 ${this.productRow.getMeasureName()}`;
-
-			return StringField({
-				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_STORE_BALANCE'),
-				value,
-				readOnly: true,
-				required: false,
-			});
-		}
-
-		storeReservedField()
-		{
-			const value = `3 ${this.productRow.getMeasureName()}`;
-
-			return StringField({
-				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_STORE_RESERVED'),
-				value,
-				readOnly: true,
-				required: false,
-			});
-		}
-
-		reserveQuantityField()
-		{
-			return CombinedField({
-				value: {
-					amount: this.state.reservedQuantity,
-					measure: this.productRow.getMeasureCode(),
+			return NumberField({
+				testId: 'ProductGridProductDetailsInputReserveQuantityField',
+				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_INPUT_RESERVE_QUANTITY'),
+				placeholder: '0',
+				readOnly: this.isReadonly(),
+				config: {
+					type: NumberPrecision.INTEGER,
 				},
+				value: this.productRow.getInputReserveQuantity(),
+				onFocusOut: () => this.actualizeInputReserveQuantity(),
 				onChange: (newVal) => {
-					const { amount } = newVal;
-					this.setState({ reservedQuantity: amount });
+					const amount = Number(newVal || 0);
+
+					const fields = {
+						IS_RESERVE_CHANGED_MANUALLY: true,
+						IS_INPUT_RESERVE_QUANTITY_ACTUALIZED: amount <= this.productRow.getAvailableQuantity(),
+						INPUT_RESERVE_QUANTITY: amount,
+					};
+
+					if (amount > 0 && this.productRow.getDateReserveEnd() === null)
+					{
+						fields.DATE_RESERVE_END = this.getProps().defaultDateReserveEnd ?? null;
+					}
+					else if (amount <= 0)
+					{
+						fields.DATE_RESERVE_END = null;
+					}
+
+					this.setFields(fields);
 				},
-				config: {
-					primaryField: {
-						id: 'amount',
-						renderField: NumberField,
-						title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_RESERVE'),
-						placeholder: '0',
-						readOnly: this.isReadonly(),
-						config: {
-							type: NumberPrecision.INTEGER,
-						},
-					},
-					secondaryField: {
-						id: 'measure',
-						renderField: SelectField,
-						title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_MEASURE'),
-						readOnly: true,
-						required: true,
-						showRequired: false,
-						config: {
-							items: this.getProps().measures.map((item) => ({
-								name: item.name,
-								value: item.code,
-							})),
-						},
-					},
-				},
+				...this.getReservationLimitsProps(),
 			});
 		}
 
-		reserveDateField()
+		dateReserveEndField()
 		{
 			return DateTimeField({
+				testId: 'ProductGridProductDetailsDateReserveEndField',
 				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_RESERVE_TILL'),
-				value: this.state.reserveEndDate,
+				value: this.productRow.getDateReserveEnd(),
 				readOnly: this.isReadonly(),
 				required: false,
 				config: {
 					enableTime: false,
 				},
 				onChange: (newVal) => {
-					this.setState({ reserveEndDate: newVal });
+					this.setField(
+						'DATE_RESERVE_END',
+						(newVal && newVal > (new Moment()).getNow().timestamp)
+							? newVal
+							: this.getProps().defaultDateReserveEnd
+						,
+					);
 				},
+				...this.getReservationLimitsProps(),
+			});
+		}
+
+		rowReservedField()
+		{
+			return StringField({
+				testId: 'ProductGridProductDetailsRowReservedField',
+				title: getEntityMessage(
+					'PRODUCT_GRID_PRODUCT_DETAILS_FIELD_ROW_RESERVED',
+					this.getProps().entityTypeId
+				),
+				value: this.productRow.getRowReserved(),
+				readOnly: true,
+				required: false,
+			});
+		}
+
+		deductedQuantityField()
+		{
+			return StringField({
+				testId: 'ProductGridProductDetailsDeductedQuantityField',
+				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_DEDUCTED_QUANTITY'),
+				value: this.productRow.getDeductedQuantity(),
+				readOnly: true,
+				required: false,
 			});
 		}
 
@@ -639,6 +744,13 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 		{
 			const productRow = this.state.productRow;
 			productRow.setField(fieldName, newValue);
+			this.setState({ productRow });
+		}
+
+		setFields(fields)
+		{
+			const productRow = this.state.productRow;
+			Object.keys(fields).forEach((name) => productRow.setField(name, fields[name]));
 			this.setState({ productRow });
 		}
 
@@ -652,13 +764,15 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 			this.setState({ productRow });
 		}
 
-		openEntityDesktopPage()
+		actualizeInputReserveQuantity()
 		{
-			qrauth.open({
-				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_DESKTOP_VERSION_MSGVER_1'),
-				redirectUrl: this.getProps().entityDetailPageUrl,
-				layout: this.layout,
-			});
+			if (!this.hasAccess('catalog_deal_product_reserve'))
+			{
+				return;
+			}
+
+			this.productRow.actualizeInputReserveQuantity();
+			this.setState({ productRow: this.state.productRow });
 		}
 
 		notifyProductDisabled()
@@ -716,6 +830,82 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 		isDiscountFieldEditable()
 		{
 			return this.productRow.isDiscountEditable() && !this.isReadonly();
+		}
+
+		hasAccess(permission)
+		{
+			return !!this.props.permissions[permission];
+		}
+
+		/**
+		 * @param {boolean} readAccess
+		 * @returns {*}
+		 */
+		getAccessProps(readAccess = false)
+		{
+			if (!readAccess)
+			{
+				return {
+					disabled: true,
+					onContentClick: this.notifyReadAccessDenied,
+					showEditIcon: null,
+					showEditIconInReadOnly: null,
+					editIcon: null,
+					value: null,
+					placeholder: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_ACCESS_DENIED'),
+					emptyValue: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_ACCESS_DENIED'),
+				};
+			}
+
+			return {};
+		}
+
+		notifyReadAccessDenied()
+		{
+			notify({
+				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_READ_ACCESS_DENIED_NOTIFY_TITLE'),
+				message: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_READ_ACCESS_DENIED_NOTIFY_TEXT'),
+				seconds: 5,
+			});
+		}
+
+		/**
+		 * @returns {*}
+		 */
+		getReservationLimitsProps()
+		{
+			if (this.getProps().isReservationRestrictedByPlan)
+			{
+				return {
+					disabled: true,
+					onContentClick: this.notifyReservationLimits,
+					showEditIcon: true,
+					showEditIconInReadOnly: true,
+					editIcon: Image(
+						{
+							style: {
+								width: 28,
+								height: 29,
+							},
+							svg: {
+								content: lock,
+							},
+						},
+					),
+				};
+			}
+
+			return {};
+		}
+
+		notifyReservationLimits()
+		{
+			PlanRestriction.open(
+				{
+					title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_RESERVATION_TARIFF_LIMIT')
+				},
+				this.layout
+			);
 		}
 	}
 

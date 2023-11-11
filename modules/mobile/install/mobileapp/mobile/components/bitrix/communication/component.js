@@ -671,15 +671,14 @@
 				result = link + "mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=LOG_ENTRY&ENTITY_ID=" + params[2];
 			}
 			else if (
-				tag.substr(0, 11) == 'TASKS|TASK|'
-				|| tag.substr(0, 14) == 'TASKS|COMMENT|'
+				tag.slice(0, 11) === 'TASKS|TASK|'
+				|| tag.slice(0, 14) === 'TASKS|COMMENT|'
 			)
 			{
-				params = tag.split("|");
-				BX.postComponentEvent(
-					'taskbackground::task::open',
-					[{id: params[2], taskId: params[2]}, {taskId: params[2], getTaskInfo: true}]
-				);
+				params = tag.split('|');
+
+				const { Entry } = jn.require('tasks/entry');
+				Entry.openTask({ id: params[2] });
 			}
 			else if (tag.substr(0, 12) == 'SONET|EVENT|')
 			{

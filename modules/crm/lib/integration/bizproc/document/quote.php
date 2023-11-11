@@ -14,7 +14,7 @@ class Quote extends Item
 {
 	public static function getEntityName($entity)
 	{
-		return Loc::getMessage('CRM_BP_DOCUMENT_QUOTE_ENTITY_NAME');
+		return Loc::getMessage('CRM_BP_DOCUMENT_QUOTE_ENTITY_NAME_MSGVER_1');
 	}
 
 	protected static function GetDocumentInfo($documentId)

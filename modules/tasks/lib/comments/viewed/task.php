@@ -10,6 +10,7 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Integration\Forum\Task\UserTopic;
+use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Internals\Counter\CounterService;
 use Bitrix\Tasks\Internals\Counter\Event\EventDictionary;
@@ -76,7 +77,7 @@ class Task
 
 		PushService::addEvent($currentUserId, [
 			'module_id' => 'tasks',
-			'command' => 'comment_read_all',
+			'command' => PushCommand::COMMENTS_VIEWED,
 			'params' => [
 				'USER_ID' => $currentUserId,
 				'GROUP_ID' => $groupId,
@@ -131,7 +132,7 @@ class Task
 
 		PushService::addEvent($currentUserId, [
 			'module_id' => 'tasks',
-			'command' => 'project_read_all',
+			'command' => PushCommand::PROJECT_COMMENTS_VIEWED,
 			'params' => [
 				'USER_ID' => $currentUserId,
 				'GROUP_ID' => $groupId,
@@ -179,7 +180,7 @@ class Task
 
 		PushService::addEvent($currentUserId, [
 			'module_id' => 'tasks',
-			'command' => 'scrum_read_all',
+			'command' => PushCommand::SCRUM_COMMENTS_VIEWED,
 			'params' => [
 				'USER_ID' => $currentUserId,
 				'GROUP_ID' => $groupId,

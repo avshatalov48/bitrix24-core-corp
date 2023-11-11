@@ -111,6 +111,7 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 
 			return View(
 				{
+					testId: 'StageListItemIndexBadge',
 					style: indexContainer,
 				},
 				!this.isReadOnly() && this.canMoveStages() && Image(
@@ -129,6 +130,7 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 		{
 			return View(
 				{
+					testId: 'StageListItemIndexBadge',
 					style: {
 						width: 60,
 						height: 26,
@@ -160,6 +162,7 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 
 			return View(
 				{
+					testId: 'StageListItemInnerContent',
 					style: styles.content(stage.showContentBorder),
 				},
 				View(
@@ -192,10 +195,13 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 		 */
 		renderEditButton(isDummyView = false)
 		{
+			const testId = 'StageListItemEditButton';
+
 			if (isDummyView)
 			{
 				return View(
 					{
+						testId,
 						style: styles.editButtonContainer,
 					},
 				);
@@ -203,6 +209,7 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 
 			return View(
 				{
+					testId,
 					style: {
 						justifyContent: 'center',
 						alignItems: 'center',
@@ -281,12 +288,20 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 			);
 		}
 
+		getStageTestId()
+		{
+			const { id, index, color, active } = this.props.stage || {};
+
+			return `StageListItem-${id}-${index}-${color}-${active}`;
+		}
+
 		render()
 		{
 			const { stage } = this.props;
 
 			return View(
 				{
+					testId: this.getStageTestId(),
 					style: styles.wrapper(this.isStageEnabled()),
 					onClick: this.enableStageSelect() && this.isStageEnabled() && this.onSelectedStage,
 				},

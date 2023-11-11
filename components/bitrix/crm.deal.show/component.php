@@ -1168,7 +1168,7 @@ if (CCrmQuote::CheckReadPermission($quoteID, $userPermissions) && $arParams['IS_
 				'type' => 'custom',
 				'value' => '<div class="crm-conv-info">'
 					.GetMessage(
-						'CRM_DEAL_QUOTE_LINK',
+						'CRM_DEAL_QUOTE_LINK_MSGVER_1',
 						array(
 							'#TITLE#' => htmlspecialcharsbx($quoteFields['TITLE']),
 							'#URL#' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Quote, $arResult['ELEMENT']['QUOTE_ID'], false)

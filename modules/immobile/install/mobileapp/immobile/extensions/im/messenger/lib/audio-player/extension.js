@@ -51,7 +51,7 @@ jn.define('im/messenger/lib/audio-player', (require, exports, module) => {
 			}
 
 			this.playingMessageId = messageId;
-			const playingMessage = this.store.getters['messagesModel/getMessageById'](this.playingMessageId);
+			const playingMessage = this.store.getters['messagesModel/getById'](this.playingMessageId);
 			if (!playingMessage || !playingMessage.files[0])
 			{
 				return;
@@ -156,7 +156,7 @@ jn.define('im/messenger/lib/audio-player', (require, exports, module) => {
 		 */
 		setMessageIsPlaying(isPlaying)
 		{
-			const message = this.store.getters['messagesModel/getMessageById'](this.playingMessageId);
+			const message = this.store.getters['messagesModel/getById'](this.playingMessageId);
 			if (!message)
 			{
 				return;
@@ -175,7 +175,7 @@ jn.define('im/messenger/lib/audio-player', (require, exports, module) => {
 		 */
 		getNextMessageToPlay(previousMessageId)
 		{
-			const previousMessage = this.store.getters['messagesModel/getMessageById'](previousMessageId);
+			const previousMessage = this.store.getters['messagesModel/getById'](previousMessageId);
 			if (!previousMessage)
 			{
 				return null;

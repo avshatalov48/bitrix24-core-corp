@@ -1,5 +1,6 @@
 <?
 
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
 
@@ -22,7 +23,7 @@ $data =& $arParams["TASK"];
  * The originator has permissions to complete, but if the task awaiting validation, we're should hide the Complete button
  * #100526
  */
-if ((int)$data['STATUS'] === \CTasks::STATE_SUPPOSEDLY_COMPLETED)
+if ((int)$data['STATUS'] === Status::SUPPOSEDLY_COMPLETED)
 {
 	$can['COMPLETE'] = false;
 }

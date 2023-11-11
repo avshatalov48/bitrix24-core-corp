@@ -2,6 +2,7 @@
 namespace Bitrix\Tasks\Grid\Task\Row\Content;
 
 use Bitrix\Tasks\Grid\Task\Row\Content;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Util\User;
 use CComponentEngine;
 use CTasks;
@@ -37,7 +38,7 @@ class Title extends Content
 			'action' => 'view',
 		]);
 
-		$priorityLayout = ($taskPriority === CTasks::PRIORITY_HIGH ? '<span class="task-priority-high"></span> ' : '');
+		$priorityLayout = ($taskPriority === \Bitrix\Tasks\Internals\Task\Priority::HIGH ? '<span class="task-priority-high"></span> ' : '');
 
 		$countFiles = (int) ($row['COUNT_FILES'] ?? 0);
 		$checkListComplete = (int) ($row['CHECK_LIST']['COMPLETE'] ?? 0);
@@ -53,7 +54,7 @@ class Title extends Content
 			."</span>";
 		$timeTracker = "<span class='task-timer' id='task-timer-block-container-{$taskId}'></span>";
 
-		$statuses = [CTasks::STATE_COMPLETED, CTasks::STATE_DEFERRED];
+		$statuses = [Status::COMPLETED, Status::DEFERRED];
 		$cssClass = 'task-status-text-color-'.(
 			in_array($taskStatus, $statuses, true) ? tasksStatus2String($taskStatus) : 'in-progress'
 			);

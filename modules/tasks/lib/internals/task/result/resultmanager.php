@@ -24,6 +24,7 @@ use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Internals\Task\Result\Exception\ResultNotFoundException;
 use Bitrix\Tasks\Internals\Task\Result\Exception\ResultSystemException;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\User;
@@ -185,7 +186,7 @@ class ResultManager
 		$result->setText($comment->getPostMessage());
 		$result->setUpdatedAt($comment->getPostDate());
 
-		if (in_array($task->getStatus(), [\CTasks::STATE_COMPLETED,\CTasks::STATE_SUPPOSEDLY_COMPLETED]))
+		if (in_array((int)$task->getStatus(), [Status::COMPLETED,Status::SUPPOSEDLY_COMPLETED], true))
 		{
 			$result->setStatus(ResultTable::STATUS_CLOSED);
 		}

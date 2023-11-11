@@ -8,4 +8,4 @@ $MESS['CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_NUMBER'] = 'Номер докуме
 $MESS['CRM_ACTIVITY_GENERATE_ENTITY_PDF_FILE'] = 'PDF-файл';
 $MESS['CRM_ACTIVITY_GENERATE_ENTITY_DOCX_FILE'] = 'DOCX-файл';
 $MESS['CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_NAME_1'] = 'Создать документ';
-$MESS['CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_DESC_1'] = 'Создаёт документ на основании шаблона. Например, счёт или коммерческое предложение';
+$MESS['CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_DESC_1_MSGVER_1'] = 'Создаёт документ на основании шаблона. Например, счёт или коммерческое предложение';

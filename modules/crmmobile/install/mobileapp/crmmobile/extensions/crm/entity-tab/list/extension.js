@@ -4,6 +4,7 @@
 jn.define('crm/entity-tab/list', (require, exports, module) => {
 	const { EntityTab } = require('crm/entity-tab');
 	const { Filter } = require('crm/entity-tab/filter');
+	const { ListItemType, ListItemsFactory } = require('crm/simple-list/items');
 	const { TypePull } = require('crm/entity-tab/pull-manager');
 	const { StatefulList } = require('layout/ui/stateful-list');
 	const { Type } = require('type');
@@ -53,9 +54,12 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 				floatingButtonClickHandler: this.handleFloatingButtonClick.bind(this),
 				floatingButtonLongClickHandler: this.handleFloatingButtonLongClick.bind(this),
 				getEmptyListComponent: this.getEmptyListComponent.bind(this),
-				itemType: 'Kanban',
+				itemType: ListItemType.CRM_ENTITY,
+				itemFactory: ListItemsFactory,
 				pull: this.getPullConfig(),
-				ref: (ref) => this.viewComponent = ref,
+				ref: (ref) => {
+					this.viewComponent = ref;
+				},
 				analyticsLabel: {
 					module: 'crm',
 					source: 'crm-entity-tab',

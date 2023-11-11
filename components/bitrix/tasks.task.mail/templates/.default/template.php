@@ -2,6 +2,9 @@
 
 <?
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Internals\Task\MetaStatus;
+use Bitrix\Tasks\Internals\Task\Priority;
+use Bitrix\Tasks\Internals\Task\Status;
 
 Loc::loadMessages(__FILE__);
 
@@ -84,16 +87,16 @@ if(!empty($arResult['ERROR']))
 						</div>
 						<br />
 					<?endif?>
-					<?if($data['PRIORITY'] == CTasks::PRIORITY_HIGH):?>
+					<?if((int)$data['PRIORITY'] === Priority::HIGH):?>
 						<div style="color:#4c4b44;font-size:13px;">
 							<?=Loc::getMessage('TASKS_FIELD_PRIORITY')?>: <b style="font-weight:normal;color:red;margin-right:10px"><?=Loc::getMessage('TASKS_IMPORTANT')?></b>
 						</div>
 						<br />
 					<?endif?>
-					<?if($data['STATUS'] == CTasks::METASTATE_EXPIRED):?>
+					<?if((int)$data['STATUS'] === MetaStatus::EXPIRED):?>
 						<div style="border-radius:2px;font-size:13px;display: inline-block;background: #fcbe9e;padding:10px 15px;color:#000;"><?=Loc::getMessage('TASKS_EXPIRED')?></div>
 					<?else:?>
-						<div style="border-radius:2px;font-size:13px;display: inline-block;background: #<?if($data["REAL_STATUS"] == CTasks::STATE_DEFERRED):?>fee178<?else:?>e3f1b8<?endif?>;padding:10px 15px;color:#000;"><?=Loc::getMessage("TASKS_STATUS_".$data["REAL_STATUS"])?><?if((string) $data["STATUS_CHANGED_DATE"] != ''):?><?if($arResult['S_NEEDED']):?> <?=Loc::getMessage('TASKS_SIDEBAR_START_DATE')?><?endif?> <b><?=htmlspecialcharsbx($data["STATUS_CHANGED_DATE"])?></b><?endif?></div>
+						<div style="border-radius:2px;font-size:13px;display: inline-block;background: #<?if((int)$data["REAL_STATUS"] === Status::DEFERRED):?>fee178<?else:?>e3f1b8<?endif?>;padding:10px 15px;color:#000;"><?=Loc::getMessage("TASKS_STATUS_".$data["REAL_STATUS"])?><?if((string) $data["STATUS_CHANGED_DATE"] != ''):?><?if($arResult['S_NEEDED']):?> <?=Loc::getMessage('TASKS_SIDEBAR_START_DATE')?><?endif?> <b><?=htmlspecialcharsbx($data["STATUS_CHANGED_DATE"])?></b><?endif?></div>
 					<?endif?>
 					<br />
 					<br />
@@ -189,9 +192,9 @@ if(!empty($arResult['ERROR']))
 
 								case "PRIORITY":
 
-									if($change["FROM_VALUE"] == CTasks::PRIORITY_HIGH || $change["TO_VALUE"] == CTasks::PRIORITY_HIGH)
+									if((int)$change["FROM_VALUE"] === Priority::HIGH || (int)$change["TO_VALUE"] === Priority::HIGH)
 									{
-										$value = $change['TO_VALUE'] == CTasks::PRIORITY_HIGH ? Loc::getMessage('TASKS_IMPORTANT') : Loc::getMessage('TASKS_NORMAL');
+										$value = (int)$change['TO_VALUE'] === Priority::HIGH ? Loc::getMessage('TASKS_IMPORTANT') : Loc::getMessage('TASKS_NORMAL');
 									}
 
 									break;

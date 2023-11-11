@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\Filter\FieldsTransform;
@@ -15,13 +16,17 @@ use Bitrix\Crm\Service\Router;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main\Grid;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\UI\Buttons;
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
-\Bitrix\Main\Loader::includeModule('crm');
+Loader::includeModule('crm');
 
 class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 {
@@ -134,6 +139,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$pageSize = (int)$navParams['nPageSize'];
 		$pageNavigation = $this->getPageNavigation($pageSize);
 		$entityTypeName = \CCrmOwnerType::ResolveName($this->entityTypeId);
+		$categoryId = $this->category ? $this->category->getId() : 0;
 		$this->arResult['grid'] = $this->prepareGrid(
 			$listFilter,
 			$pageNavigation,
@@ -143,13 +149,13 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$this->arResult['jsParams'] = [
 			'entityTypeId' => $this->entityTypeId,
 			'entityTypeName' => $entityTypeName,
-			'categoryId' => $this->category ? $this->category->getId() : 0,
+			'categoryId' => $categoryId,
 			'gridId' => $this->getGridId(),
 			'backendUrl' => $this->arParams['backendUrl'] ?? null,
-			'isUniversalActivityScenarioEnabled' => \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled(),
 			'smartActivityNotificationSupported' => $this->factory->isSmartActivityNotificationSupported(),
 			'isIframe' => $this->isIframe(),
 			'isEmbedded' => ($this->arParams['isEmbedded'] ?? false) === true,
+			'pingSettings' => (new TodoPingSettingsProvider($this->entityTypeId, $categoryId))->fetchAll(),
 		];
 		$this->arResult['entityTypeName'] = $entityTypeName;
 		$this->arResult['categoryId'] = $this->category ? $this->category->getId() : 0;
@@ -493,13 +499,11 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$this->arResult['LAST_EXPORT_PAGE'] = $pageNumber >= $lastPageNumber;
 		$this->includeComponentTemplate();
 
-		$returnValues = [
+		return [
 			'PROCESSED_ITEMS' => count($items),
 			'LAST_EXPORTED_ID' => $lastExportedId ?? 0,
 			'TOTAL_ITEMS' => $totalCount,
 		];
-
-		return $returnValues;
 	}
 
 	protected function getSelect(): array

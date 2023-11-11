@@ -1,24 +1,24 @@
 <?php
 
-use Bitrix\Catalog\Access\ShopGroupAssistant;
-use Bitrix\Catalog\Access\AccessController;
-use Bitrix\Catalog\Access\ActionDictionary;
-use Bitrix\Catalog\Config\State;
+use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\Loader;
-use Bitrix\Crm;
-use Bitrix\Crm\Restriction\RestrictionManager;
-use Bitrix\Main;
-use Bitrix\Main\UserTable;
-use Bitrix\Sale;
-use Bitrix\Catalog\Access\Permission\Catalog\IblockCatalogPermissions;
-use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\UserTable;
+use Bitrix\Catalog\Access\ShopGroupAssistant;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Config\State;
 use Bitrix\Catalog\StoreDocumentTable;
+use Bitrix\Crm;
+use Bitrix\Crm\Discount;
+use Bitrix\Crm\Invoice;
+use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Sale;
 
 class CCrmSaleHelper
 {
@@ -26,29 +26,29 @@ class CCrmSaleHelper
 	public const GROUP_CRM_ADMIN = 'ADMIN';
 	public const GROUP_CRM_MANAGER = 'MANAGER';
 
-	private static $userIdsWithShopAccess = [];
+	private static array $userIdsWithShopAccess = [];
 
 	public static function getGroupCode(string $code): string
 	{
-		return self::CROUP_PREFIX.$code;
+		return self::CROUP_PREFIX . $code;
 	}
 
 	public static function Calculate($productRows, $currencyID, $personTypeID, $enableSaleDiscount = false, $siteId = SITE_ID, $arOptions = array())
 	{
-		if(!CModule::IncludeModule('sale'))
+		if (!Loader::includeModule('sale'))
 		{
-			return array('err'=> '1');
+			return ['err'=> '1'];
 		}
 
-		$saleUserId = intval(CSaleUser::GetAnonymousUserID());
+		$saleUserId = (int)CSaleUser::GetAnonymousUserID();
 		if ($saleUserId <= 0)
 		{
-			return array('err'=> '2');
+			return ['err'=> '2'];
 		}
 
-		if(!is_array($productRows) && empty($productRows))
+		if (empty($productRows) || !is_array($productRows))
 		{
-			return array('err'=> '3');
+			return ['err'=> '3'];
 		}
 
 		$bTaxMode = isset($arOptions['ALLOW_LD_TAX']) ? $arOptions['ALLOW_LD_TAX'] === 'Y' : CCrmTax::isTaxMode();
@@ -70,9 +70,14 @@ class CCrmSaleHelper
 		}
 		unset($item);
 
-		$errors = array();
-		$cartItems = Bitrix\Crm\Invoice\Compatible\BasketHelper::doGetUserShoppingCart(
-			$siteId, $saleUserId, $cartItems, $errors, 0, true
+		$errors = [];
+		$cartItems = Invoice\Compatible\BasketHelper::doGetUserShoppingCart(
+			$siteId,
+			$saleUserId,
+			$cartItems,
+			$errors,
+			0,
+			true
 		);
 
 		foreach ($cartItems as &$item)
@@ -82,40 +87,44 @@ class CCrmSaleHelper
 		}
 		unset($item);
 
-		$personTypeID = intval($personTypeID);
+		$personTypeID = (int)$personTypeID;
 		if($personTypeID <= 0)
 		{
 			$personTypes = CCrmPaySystem::getPersonTypeIDs();
 			if (isset($personTypes['CONTACT']))
 			{
-				$personTypeID = intval($personTypes['CONTACT']);
+				$personTypeID = (int)$personTypes['CONTACT'];
 			}
 		}
 
 		if ($personTypeID <= 0)
 		{
-			return array('err'=> '4');
+			return ['err'=> '4'];
 		}
 
-		$orderPropsValues = array();
+		$orderPropsValues = [];
 		$paySystemId = 0;
-		if (is_array($arOptions) && !empty($arOptions))
+		if (!empty($arOptions) && is_array($arOptions))
 		{
 			if (isset($arOptions['LOCATION_ID']) && CCrmTax::isTaxMode())
 			{
 				$locationPropertyID = self::getLocationPropertyId($personTypeID);
-				if ($locationPropertyID !== false)
+				if ($locationPropertyID !== null)
+				{
 					$orderPropsValues[$locationPropertyID] = $arOptions['LOCATION_ID'];
+				}
 			}
 			if (isset($arOptions['PAY_SYSTEM_ID']))
-				$paySystemId = intval($arOptions['PAY_SYSTEM_ID']);
+			{
+				$paySystemId = (int)$arOptions['PAY_SYSTEM_ID'];
+			}
 		}
-		$warnings = array();
+		$warnings = [];
 
-		$options = array(
-			'CURRENCY' => $currencyID
-		);
-		if(!$enableSaleDiscount)
+		$options = [
+			'CURRENCY' => $currencyID,
+		];
+		if (!$enableSaleDiscount)
 		{
 			$options['CART_FIX'] = 'Y';
 		}
@@ -127,7 +136,7 @@ class CCrmSaleHelper
 
 		$arOrder = CSaleOrder::makeOrderArray($siteId, $saleUserId, $cartItems, $options);
 
-		$invoiceCompatible = \Bitrix\Crm\Invoice\Compatible\Invoice::create($arOrder);
+		$invoiceCompatible = Invoice\Compatible\Invoice::create($arOrder);
 		$options['ORDER'] = $invoiceCompatible->getOrder();
 
 		$result = CSaleOrder::DoCalculateOrder(
@@ -145,11 +154,11 @@ class CCrmSaleHelper
 
 		if ($bTaxMode)
 		{
-			$totalTax = isset($result['TAX_VALUE']) ? round(doubleval($result['TAX_VALUE']), 2) : 0.0;
+			$totalTax = isset($result['TAX_VALUE']) ? round((float)$result['TAX_VALUE'], 2) : 0.0;
 			$totalModified = false;
 			$taxes = (is_array($result['TAX_LIST'])) ? $result['TAX_LIST'] : null;
 			$moneyFormat = CCurrencyLang::GetCurrencyFormat($currencyID);
-			$moneyDecimals = isset($moneyFormat['DECIMALS']) ?  intval($moneyFormat['DECIMALS']) : 2;
+			$moneyDecimals = isset($moneyFormat['DECIMALS']) ?  (int)$moneyFormat['DECIMALS'] : 2;
 			unset($moneyFormat);
 			if (is_array($taxes))
 			{
@@ -164,19 +173,21 @@ class CCrmSaleHelper
 				}
 			}
 			if ($totalModified)
+			{
 				$result['TAX_VALUE'] = $totalTax;
+			}
 		}
 
 		return $result;
 	}
-	private static function PrepareShoppingCartItems(&$productRows, $currencyID, $siteId)
+	private static function PrepareShoppingCartItems(&$productRows, $currencyID, $siteId): array
 	{
-		$items = array();
+		$items = [];
 
 		foreach($productRows as $k => &$v)
 		{
-			$item = array();
-			$item['PRODUCT_ID'] = isset($v['PRODUCT_ID']) ? intval($v['PRODUCT_ID']) : 0;
+			$item = [];
+			$item['PRODUCT_ID'] = (int)($v['PRODUCT_ID'] ?? 0);
 
 			$isCustomized = isset($v['CUSTOMIZED']) && $v['CUSTOMIZED'] === 'Y';
 			if($item['PRODUCT_ID'] > 0 && !$isCustomized)
@@ -186,26 +197,28 @@ class CCrmSaleHelper
 			}
 			else
 			{
-				$item['MODULE'] = $item['PRODUCT_PROVIDER_CLASS'] = '';
+				$item['MODULE'] = '';
+				$item['PRODUCT_PROVIDER_CLASS'] = '';
 			}
 
-			if($isCustomized)
+			if ($isCustomized)
 			{
 				$item['CUSTOM_PRICE'] = 'Y';
 			}
 
 			$item['TABLE_ROW_ID'] = $k;
 
-			$item['QUANTITY'] = isset($v['QUANTITY']) ? doubleval($v['QUANTITY']) : 0;
+			$item['QUANTITY'] = (float)($v['QUANTITY'] ?? 0);
 			$item['QUANTITY_DEFAULT'] = $item['QUANTITY'];
 
-			$taxRate = isset($v['TAX_RATE']) ? round(doubleval($v['TAX_RATE']), 2) : 0.0;
-			$inclusivePrice = isset($v['PRICE']) ? doubleval($v['PRICE']) : 0.0;
+			$taxRate = isset($v['TAX_RATE']) ? round((float)$v['TAX_RATE'], 2) : 0.0;
+			$inclusivePrice = isset($v['PRICE']) ? (float)$v['PRICE'] : 0.0;
 			$exclusivePrice = isset($v['PRICE_EXCLUSIVE'])
-				? doubleval($v['PRICE_EXCLUSIVE'])
+				? (float)$v['PRICE_EXCLUSIVE']
 				: (($taxRate !== 0.0)
 					? CCrmProductRow::CalculateExclusivePrice($inclusivePrice, $taxRate)
-					: $inclusivePrice);
+					: $inclusivePrice)
+			;
 			$isTaxIncluded = isset($v['TAX_INCLUDED']) && $v['TAX_INCLUDED'] === 'Y';
 
 			$item['VAT_INCLUDED'] = $isTaxIncluded ? 'Y' : 'N';
@@ -215,13 +228,16 @@ class CCrmSaleHelper
 			$item['CURRENCY'] = $currencyID;
 
 			// discount info
-			$item['CRM_PR_FIELDS'] = array();
-			$item['CRM_PR_FIELDS']['DISCOUNT_TYPE_ID'] = isset($v['DISCOUNT_TYPE_ID']) ?
-				intval($v['DISCOUNT_TYPE_ID']) : \Bitrix\Crm\Discount::PERCENTAGE;
+			$item['CRM_PR_FIELDS'] = [];
+			$item['CRM_PR_FIELDS']['DISCOUNT_TYPE_ID'] =
+				isset($v['DISCOUNT_TYPE_ID'])
+					? (int)$v['DISCOUNT_TYPE_ID']
+					: Discount::PERCENTAGE
+			;
 			$item['CRM_PR_FIELDS']['DISCOUNT_RATE'] = isset($v['DISCOUNT_RATE']) ?
-				round(doubleval($v['DISCOUNT_RATE']), 2) : 0.0;
+				round((float)$v['DISCOUNT_RATE'], 2) : 0.0;
 			$item['CRM_PR_FIELDS']['DISCOUNT_SUM'] = isset($v['DISCOUNT_SUM']) ?
-				round(doubleval($v['DISCOUNT_SUM']), 2) : 0.0;
+				round((float)$v['DISCOUNT_SUM'], 2) : 0.0;
 
 			// tax info
 			$allowLDTax = CCrmTax::isTaxMode();
@@ -234,27 +250,30 @@ class CCrmSaleHelper
 			{
 				$item['CRM_PR_FIELDS']['TAX_RATE'] = $taxRate;
 				$item['CRM_PR_FIELDS']['TAX_INCLUDED'] =
-					(isset($v['TAX_INCLUDED']) && $v['TAX_INCLUDED'] === 'Y') ? 'Y' : 'N';
+					(isset($v['TAX_INCLUDED']) && $v['TAX_INCLUDED'] === 'Y') ? 'Y' : 'N'
+				;
 			}
 
 			// price netto, price brutto
 			$priceNetto = 0.0;
 			if (isset($v['PRICE_NETTO']) && $v['PRICE_NETTO'] != 0.0)
 			{
-				$priceNetto = doubleval($v['PRICE_NETTO']);
+				$priceNetto = (float)$v['PRICE_NETTO'];
 			}
 			else
 			{
-				if($item['CRM_PR_FIELDS']['DISCOUNT_TYPE_ID'] === \Bitrix\Crm\Discount::MONETARY)
+				if($item['CRM_PR_FIELDS']['DISCOUNT_TYPE_ID'] === Discount::MONETARY)
 				{
 					$priceNetto = $exclusivePrice + $item['CRM_PR_FIELDS']['DISCOUNT_SUM'];
 				}
 				else
 				{
 					$discoutRate = $item['CRM_PR_FIELDS']['DISCOUNT_RATE'];
-					$discoutSum = $discoutRate < 100
-						? \Bitrix\Crm\Discount::calculateDiscountByDiscountPrice($exclusivePrice, $discoutRate)
-						: $item['CRM_PR_FIELDS']['DISCOUNT_SUM'];
+					$discoutSum =
+						$discoutRate < 100
+							? Discount::calculateDiscountByDiscountPrice($exclusivePrice, $discoutRate)
+							: $item['CRM_PR_FIELDS']['DISCOUNT_SUM']
+					;
 					$priceNetto = $exclusivePrice + $discoutSum;
 				}
 			}
@@ -268,35 +287,44 @@ class CCrmSaleHelper
 			{
 				if (isset($v['PRICE_BRUTTO']) && $v['PRICE_BRUTTO'] != 0.0)
 				{
-					$item['CRM_PR_FIELDS']['PRICE_BRUTTO'] = round(doubleval($v['PRICE_BRUTTO']), 2);
+					$item['CRM_PR_FIELDS']['PRICE_BRUTTO'] = round((float)$v['PRICE_BRUTTO'], 2);
 				}
 				else
 				{
 					$item['CRM_PR_FIELDS']['PRICE_BRUTTO'] = round(
-						CCrmProductRow::CalculateInclusivePrice($priceNetto, $item['CRM_PR_FIELDS']['TAX_RATE']), 2);
+						CCrmProductRow::CalculateInclusivePrice($priceNetto, $item['CRM_PR_FIELDS']['TAX_RATE']),
+						2
+					);
 				}
 			}
 
-			if(isset($v['VAT_RATE']))
+			if (isset($v['VAT_RATE']))
 			{
 				$item['VAT_RATE'] = $v['VAT_RATE'];
 			}
-			elseif(isset($v['TAX_RATE']))
+			elseif (isset($v['TAX_RATE']))
 			{
 				$item['VAT_RATE'] = $v['TAX_RATE'] / 100;
 			}
 
-			if(isset($v['MEASURE_CODE']))
+			if (isset($v['MEASURE_CODE']))
 			{
 				$item['MEASURE_CODE'] = $v['MEASURE_CODE'];
 			}
 
-			if(isset($v['MEASURE_NAME']))
+			if (isset($v['MEASURE_NAME']))
 			{
 				$item['MEASURE_NAME'] = $v['MEASURE_NAME'];
 			}
 
-			$item['NAME'] = isset($v['NAME']) ? $v['NAME'] : (isset($v['PRODUCT_NAME']) ? $v['PRODUCT_NAME'] : '');
+			if (isset($v['NAME']))
+			{
+				$item['NAME'] = (string)$item['NAME'];
+			}
+			else
+			{
+				$item['NAME'] = (string)($v['PRODUCT_NAME'] ?? '');
+			}
 			$item['LID'] = $siteId;
 			$item['CAN_BUY'] = 'Y';
 
@@ -307,38 +335,39 @@ class CCrmSaleHelper
 
 		return $items;
 	}
-	private static function getLocationPropertyId($personTypeId)
+	private static function getLocationPropertyId($personTypeId): ?int
 	{
-		if(!CModule::IncludeModule('sale'))
+		if (!Loader::includeModule('sale'))
 		{
-			return false;
+			return null;
 		}
 
-		$locationPropertyId = null;
-		$dbRes = \Bitrix\Crm\Invoice\Property::getList([
-			'select' => ['ID'],
-			'filter' => [
-				'PERSON_TYPE_ID' => $personTypeId,
-				'ACTIVE' => 'Y',
-				'TYPE' => 'LOCATION',
-				'IS_LOCATION' => 'Y',
-				'IS_LOCATION4TAX' => 'Y'
+		$dbRes = Invoice\Property::getList([
+			'select' => [
+				'ID',
+				'SORT',
 			],
-			'order' => ['SORT' => 'ASC']
+			'filter' => [
+				'=PERSON_TYPE_ID' => $personTypeId,
+				'=ACTIVE' => 'Y',
+				'=TYPE' => 'LOCATION',
+				'=IS_LOCATION' => 'Y',
+				'=IS_LOCATION4TAX' => 'Y'
+			],
+			'order' => [
+				'SORT' => 'ASC',
+			],
+			'limit' => 1,
 		]);
+		$arOrderProp = $dbRes->fetch();
+		unset($dbRes);
+		if (!$arOrderProp)
+		{
+			return null;
+		}
+		$locationPropertyId = (int)$arOrderProp['ID'];
 
-		if ($arOrderProp = $dbRes->fetch())
-		{
-			$locationPropertyId = $arOrderProp['ID'];
-		}
-		else
-		{
-			return false;
-		}
-		$locationPropertyId = intval($locationPropertyId);
-		if ($locationPropertyId <= 0)
-			return false;
-		return $locationPropertyId;
+		return $locationPropertyId > 0 ? $locationPropertyId : null;
 	}
 
 	public static function getShopGroupIdByType($type): ?int
@@ -349,6 +378,8 @@ class CCrmSaleHelper
 		{
 			$groupId = (int)$group["ID"];
 		}
+		unset($group);
+
 		return $groupId;
 	}
 
@@ -359,7 +390,6 @@ class CCrmSaleHelper
 	 * @throws \Bitrix\Main\ArgumentNullException
 	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 * @throws SqlQueryException
-	 * @throws LoaderException
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 */
@@ -371,12 +401,12 @@ class CCrmSaleHelper
 		}
 
 		global $USER;
-		if (!is_object($USER))
+		if (!(isset($USER) && $USER instanceof CUser))
 		{
 			return false;
 		}
 
-		$userId = $USER->getID();
+		$userId = (int)$USER->getID();
 		if (!$userId)
 		{
 			return false;
@@ -407,7 +437,7 @@ class CCrmSaleHelper
 
 		self::addToCacheAccess($userId, $role, true);
 
-		if (!AccessController::getCurrent()->hasIblockAccess($action))
+		if (!self::isDbAccess($userId, $role))
 		{
 			self::addShopAccessByUserId($userId);
 		}
@@ -441,18 +471,17 @@ class CCrmSaleHelper
 	 * @throws ObjectPropertyException
 	 * @throws SqlQueryException
 	 * @throws SystemException
-	 * @throws LoaderException
 	 */
-	private static function isCrmAccess(CUser $user, $role = "")
+	private static function isCrmAccess(CUser $user, $role = ""): bool
 	{
 		$userId = $user->getID();
-		if ($user->isAdmin() || (Loader::includeModule("bitrix24") && CBitrix24::IsPortalAdmin($userId)))
+		if ($user->isAdmin() || (Loader::includeModule('bitrix24') && CBitrix24::IsPortalAdmin($userId)))
 		{
 			return true;
 		}
 		else
 		{
-			if ($role == "admin")
+			if ($role === "admin")
 			{
 				return self::checkAdminAccess($userId);
 			}
@@ -471,7 +500,7 @@ class CCrmSaleHelper
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 */
-	private static function checkAdminAccess(int $userId)
+	private static function checkAdminAccess(int $userId): bool
 	{
 		$listUserId = self::getListUserIdFromCrmRoles();
 		if (in_array($userId, $listUserId))
@@ -494,40 +523,63 @@ class CCrmSaleHelper
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 */
-	private static function checkManagerAccess(int $userId)
+	private static function checkManagerAccess(int $userId): bool
 	{
 		$listUserId = self::getListUserIdFromCrmRoles();
+
 		return (in_array($userId, $listUserId));
 	}
 
-	private static function getShopRole($userId)
+	private static function isDbAccess($userId, $role): bool
 	{
-		$user = new CUser();
-		$groups = $user->getUserGroup($userId);
-		if (in_array(1, $groups) || (Loader::includeModule("bitrix24") && CBitrix24::isPortalAdmin($userId)))
+		$shopGroupIds = [];
+		if ($role)
 		{
-			return "admin";
+			$shopGroupIds[] = self::getShopGroupIdByType($role);
 		}
 		else
 		{
-			$listUserId = self::getListUserIdFromCrmRoles();
-			if (in_array($userId, $listUserId))
-			{
-				$CrmPerms = new CCrmPerms($userId);
-				if ($CrmPerms->havePerm("CONFIG", BX_CRM_PERM_CONFIG, "WRITE"))
-				{
-					return "admin";
-				}
-				else
-				{
-					return "manager";
-				}
-			}
-			return "";
+			$shopGroupIds[] = self::getShopGroupIdByType('admin');
+			$shopGroupIds[] = self::getShopGroupIdByType('manager');
 		}
+
+		$currentUserGroupIds = [];
+		$groupListObject = CUser::getUserGroupList($userId);
+		while ($groupList = $groupListObject->fetch())
+		{
+			$currentUserGroupIds[] = (int)$groupList['GROUP_ID'];
+		}
+
+		return !empty(array_intersect($currentUserGroupIds, $shopGroupIds));
 	}
 
-	private static function addToDbAccess($userId, $shopRole)
+	private static function getShopRole($userId): string
+	{
+		$user = new CUser();
+		$groups = $user->getUserGroup($userId);
+		if (in_array(1, $groups) || (Loader::includeModule('bitrix24') && CBitrix24::isPortalAdmin($userId)))
+		{
+			return "admin";
+		}
+
+		$listUserId = self::getListUserIdFromCrmRoles();
+		if (in_array($userId, $listUserId))
+		{
+			$CrmPerms = new CCrmPerms($userId);
+			if ($CrmPerms->havePerm("CONFIG", BX_CRM_PERM_CONFIG, "WRITE"))
+			{
+				return "admin";
+			}
+			else
+			{
+				return "manager";
+			}
+		}
+
+		return "";
+	}
+
+	private static function addToDbAccess($userId, $shopRole): void
 	{
 		$groupId = self::getShopGroupIdByType($shopRole);
 		if ($groupId)
@@ -579,7 +631,6 @@ class CCrmSaleHelper
 	 * Proxy for starting \Bitrix\Catalog\Access\Permission\Catalog\IblockCatalogPermissionStepper
 	 *
 	 * @return void
-	 * @throws LoaderException
 	 */
 	public static function updateShopAccess()
 	{
@@ -597,7 +648,6 @@ class CCrmSaleHelper
 	 *
 	 * @return void
 	 * @throws ArgumentException
-	 * @throws LoaderException
 	 * @throws ObjectPropertyException
 	 * @throws SqlQueryException
 	 * @throws SystemException
@@ -665,7 +715,6 @@ class CCrmSaleHelper
 	 *
 	 * @param $userId
 	 * @return void
-	 * @throws LoaderException
 	 */
 	public static function addShopAccessByUserId($userId)
 	{
@@ -736,7 +785,7 @@ class CCrmSaleHelper
 					switch ($moduleId)
 					{
 						case "iblock":
-							if (CModule::includeModule("iblock"))
+							if (Loader::includeModule("iblock"))
 							{
 								CIBlockRights::setGroupRight($groupId, "CRM_PRODUCT_CATALOG", $letter);
 							}
@@ -804,7 +853,7 @@ class CCrmSaleHelper
 					{
 						$listDepartmentId = array();
 						$listDepartmentId[] = str_replace($matches[1], "", $relationCode);
-						if ($matches[1] == "DR" && CModule::includeModule("iblock"))
+						if ($matches[1] == "DR" && Loader::includeModule("iblock"))
 						{
 							$currentDepartmentId = current($listDepartmentId);
 							if ($currentDepartmentId)
@@ -848,10 +897,10 @@ class CCrmSaleHelper
 						}
 					}
 				}
-				elseif (preg_match("/^SG([0-9]+)_[A-Z]$/", $relationCode, $matches) && CModule::includeModule("socialnetwork"))
+				elseif (preg_match("/^SG([0-9]+)_[A-Z]$/", $relationCode, $matches) && Loader::includeModule("socialnetwork"))
 				{
 					$groupId = (int)$matches[1];
-					$role = (isset($matches[2]) ? $matches[2] : "K");
+					$role = ($matches[2] ?? "K");
 					$userToGroup = Bitrix\Socialnetwork\UserToGroupTable::getList(array(
 						"filter" => array("=GROUP_ID" => $groupId, "@ROLE" => $role),
 						"select" => array("USER_ID")
@@ -899,7 +948,7 @@ class CCrmSaleHelper
 	 * @param $userId
 	 * @return int|null
 	 */
-	private static function getShopGroupIdByUserId($userId)
+	private static function getShopGroupIdByUserId($userId): ?int
 	{
 		$CrmPerms = new CCrmPerms($userId);
 		if ($CrmPerms->havePerm("CONFIG", BX_CRM_PERM_CONFIG, "WRITE"))
@@ -910,7 +959,7 @@ class CCrmSaleHelper
 		return self::getShopGroupIdByType("manager");
 	}
 
-	private static function addUserToShopGroupByUserIds($newUserIds)
+	private static function addUserToShopGroupByUserIds($newUserIds): void
 	{
 		if (!$newUserIds)
 		{
@@ -920,7 +969,7 @@ class CCrmSaleHelper
 		global $USER;
 
 		$currentUserId = 0;
-		if ($USER instanceof \CUser)
+		if (isset($USER) && $USER instanceof \CUser)
 		{
 			$currentUserId = (int)$USER->GetID();
 		}
@@ -981,7 +1030,7 @@ class CCrmSaleHelper
 	 * @throws SqlQueryException
 	 * @deprecated
 	 */
-	public static function deleteUserFromShopGroup()
+	public static function deleteUserFromShopGroup(): void
 	{
 		if (IsModuleInstalled("bitrix24"))
 		{
@@ -991,7 +1040,7 @@ class CCrmSaleHelper
 			{
 				foreach ($listGroupId as $groupId)
 				{
-					$groupId = intval($groupId);
+					$groupId = (int)$groupId;
 					if ($groupId)
 					{
 						$listUserId = array();
@@ -1011,14 +1060,14 @@ class CCrmSaleHelper
 		}
 	}
 
-	public static function divideInvoiceOrderPersonTypeAgent()
+	public static function divideInvoiceOrderPersonTypeAgent(): string
 	{
 		if (!\Bitrix\Main\Loader::includeModule('sale'))
 		{
 			return '';
 		}
 
-		$dbRes = \Bitrix\Crm\Invoice\PersonType::getList([
+		$dbRes = Invoice\PersonType::getList([
 			'filter' => [
 				'@CODE' => ['CRM_CONTACT', 'CRM_COMPANY']
 			]
@@ -1338,7 +1387,7 @@ class CCrmSaleHelper
 		return true;
 	}
 
-	private static function clearCacheMenu()
+	private static function clearCacheMenu(): void
 	{
 		if (defined('BX_COMP_MANAGED_CACHE'))
 		{
@@ -1371,6 +1420,20 @@ class CCrmSaleHelper
 			&& AccessController::getCurrent()->checkByValue(
 				ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY,
 				StoreDocumentTable::TYPE_SALES_ORDERS
+			)
+		);
+	}
+
+	public static function isAllowedReservation(int $entityTypeId, int $categoryId): bool
+	{
+		return (
+			$entityTypeId === CCrmOwnerType::Deal
+			&& State::isUsedInventoryManagement()
+			&& !\CCrmSaleHelper::isWithOrdersMode()
+			&& \CCrmSaleHelper::isShopAccess()
+			&& AccessController::getCurrent()->checkByValue(
+				ActionDictionary::ACTION_DEAL_PRODUCT_RESERVE,
+				(string)$categoryId
 			)
 		);
 	}

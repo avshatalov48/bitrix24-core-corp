@@ -11,6 +11,7 @@ return [
 		'assets/communication',
 		'communication/events',
 		'layout/ui/context-menu',
+		'feature',
 	],
 	'bundle' => [
 		'./base',

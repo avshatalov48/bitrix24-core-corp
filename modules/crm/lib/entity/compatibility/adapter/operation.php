@@ -141,6 +141,15 @@ final class Operation extends Adapter
 
 		$this->prepareOperation($operation, $compatibleOptions);
 
+		if ($operation->isCheckFieldsEnabled() && $operation->isCheckRequiredUserFields())
+		{
+			$result = $this->checkRequiredFields($fields, $compatibleOptions, $operation->getRequiredFields());
+			if (!$result->isSuccess())
+			{
+				return $this->returnError($result, $fields);
+			}
+		}
+
 		$result = $operation->launch();
 		if (!$result->isSuccess())
 		{
@@ -217,6 +226,12 @@ final class Operation extends Adapter
 		{
 			$operation->disableBizProc();
 		}
+	}
+
+	protected function doCheckRequiredFields(array $fields, array $compatibleOptions, array $requiredFields): Result
+	{
+		// required fields will be checked inside the operation
+		return new Result();
 	}
 
 	/**
@@ -366,6 +381,15 @@ final class Operation extends Adapter
 		$operation = $this->factory->getUpdateOperation($item);
 
 		$this->prepareOperation($operation, $compatibleOptions);
+
+		if ($operation->isCheckFieldsEnabled() && $operation->isCheckRequiredUserFields())
+		{
+			$result = $this->checkRequiredFields($fields, $compatibleOptions, $operation->getRequiredFields());
+			if (!$result->isSuccess())
+			{
+				return $this->returnError($result);
+			}
+		}
 
 		$result = $operation->launch();
 		if (!$result->isSuccess())

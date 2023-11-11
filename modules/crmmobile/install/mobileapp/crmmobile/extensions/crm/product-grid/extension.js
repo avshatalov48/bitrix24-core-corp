@@ -183,9 +183,12 @@ jn.define('crm/product-grid', (require, exports, module) => {
 				editable: this.isEditable(),
 				vatRates: taxes.vatRates,
 				iblockId: catalog.id,
-				inventoryControlEnabled: inventoryControl.enabled,
+				isAllowedReservation: inventoryControl.isAllowedReservation,
+				isReservationRestrictedByPlan: inventoryControl.isReservationRestrictedByPlan,
+				defaultDateReserveEnd: inventoryControl.defaultDateReserveEnd,
 				showTax: this.showTaxInProductCard(),
 				entityDetailPageUrl: entity.detailPageUrl,
+				entityId: entity.id,
 				entityTypeId: entity.typeId,
 				onChange: (productRow) => {
 					this.unifyTaxIncludedByRow(productRow);
@@ -371,9 +374,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 
 		renderAddItemButton()
 		{
-			const { permissions } = this.getProps();
-
-			if (permissions.catalog_read)
+			if (this.canReadCatalog())
 			{
 				return super.renderAddItemButton();
 			}
@@ -470,13 +471,44 @@ jn.define('crm/product-grid', (require, exports, module) => {
 		{
 			if (this.state.currencyId !== currencyId)
 			{
+				const { entity = {} } = this.getProps();
+
 				this.currencyConverter
-					.convert(this.getItems(), currencyId)
+					.convert(
+						entity.id,
+						entity.typeId,
+						this.getItems(),
+						currencyId
+					)
 					.then((products) => {
 						this.setStateWithNotification({ products, currencyId }, () => this.fetchTotals());
 					})
 				;
 			}
+		}
+
+		recalculateStoresData()
+		{
+			const { entity = {} } = this.getProps();
+
+			BX.ajax.runAction(
+				'crmmobile.ProductGrid.completeStores',
+				{
+					json: {
+						products: this.getItems().map((product) => product.getRawValues()),
+						entityId: entity.id,
+						entityTypeId: entity.typeId,
+					},
+				}
+			)
+				.then((response) => {
+					this.setState({
+						products: response.data.map((props) => ProductRow.createRecalculated(props))
+					});
+				})
+				.catch((err) => {
+					console.error(err);
+				});
 		}
 
 		getEntityTypeId()
@@ -488,12 +520,33 @@ jn.define('crm/product-grid', (require, exports, module) => {
 
 		getEmptyScreenTitle()
 		{
-			return getEntityMessage('M_CRM_PRODUCT_GRID_EMPTY_TITLE2', this.getEntityTypeId());
+			if (this.canReadCatalog())
+			{
+				return getEntityMessage('M_CRM_PRODUCT_GRID_EMPTY_TITLE2', this.getEntityTypeId());
+			}
+
+			return Loc.getMessage('M_CRM_PRODUCT_GRID_EMPTY_TITLE2_NO_RIGHTS');
 		}
 
 		getEmptyScreenDescription()
 		{
-			return getEntityMessage('M_CRM_PRODUCT_GRID_EMPTY_DESCRIPTION2', this.getEntityTypeId());
+			if (this.canReadCatalog())
+			{
+				return getEntityMessage('M_CRM_PRODUCT_GRID_EMPTY_DESCRIPTION2', this.getEntityTypeId());
+			}
+
+			return Loc.getMessage('M_CRM_PRODUCT_GRID_EMPTY_DESCRIPTION2_NO_RIGHTS');
+		}
+
+		/**
+		 * @private
+		 * @returns {boolean}
+		 */
+		canReadCatalog()
+		{
+			const { permissions } = this.getProps();
+
+			return permissions.catalog_read;
 		}
 
 		handleFloatingMenuAction(actionId)

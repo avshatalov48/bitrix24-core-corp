@@ -216,7 +216,7 @@ var TaskGradeSimplePopup = function(popupId)
 	TaskGradeSimplePopup.superclass.constructor.apply(this, [
 		popupId,
 		"grade",
-		BX.message("TASKS_MARK"),
+		BX.message("TASKS_MARK_MSGVER_1"),
 		[
 			{ id : "NULL", name : BX.message("TASKS_MARK_NONE"), className : "none" },
 			{ id : "P", name : BX.message("TASKS_MARK_P_MSGVER_1"), className : "plus" },

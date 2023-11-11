@@ -2,6 +2,7 @@
  * @module im/messenger/const/feature-flag
  */
 jn.define('im/messenger/const/feature-flag', (require, exports, module) => {
+
 	const FeatureFlag = Object.freeze({
 		isDevelopmentEnvironment: (
 			Application.getApiVersion() >= 44
@@ -20,8 +21,7 @@ jn.define('im/messenger/const/feature-flag', (require, exports, module) => {
 		},
 		dialog: {
 			nativeSupported: (
-				Application.getApiVersion() >= 49
-				&& Application.isBeta()
+				Application.getApiVersion() >= 50
 			),
 		},
 	});

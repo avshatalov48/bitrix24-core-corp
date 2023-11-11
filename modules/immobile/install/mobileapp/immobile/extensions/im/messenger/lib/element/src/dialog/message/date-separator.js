@@ -8,6 +8,7 @@ jn.define('im/messenger/lib/element/dialog/message/date-separator', (require, ex
 	} = require('im/messenger/lib/element/dialog/message/base');
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
+	const { MessageType } = require('im/messenger/const');
 
 	/**
 	 * @class DateSeparatorMessage
@@ -33,7 +34,7 @@ jn.define('im/messenger/lib/element/dialog/message/date-separator', (require, ex
 
 		getType()
 		{
-			return 'system-text';
+			return MessageType.systemText;
 		}
 
 		setMessage(date)

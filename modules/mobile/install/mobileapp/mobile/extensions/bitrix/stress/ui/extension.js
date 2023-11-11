@@ -1,7 +1,9 @@
 /**
-* @bxjs_lang_path extension.php
-*/
+ * @bxjs_lang_path extension.php
+ */
 (()=>{
+
+	const AppTheme = jn.require("apptheme")
 
 	this.stressDesc = (color, value)=>{
 
@@ -43,13 +45,11 @@
 
 	this.stressDesc = stressDesc;
 
-
-
 	this.stressIndication =  {
-		green: "#9DCF00",
-		yellow: "#F7A700",
-		red: "#FF5752",
-		unknown: "#C8CBCE",
+		green: AppTheme.colors.accentMainSuccess,
+		yellow: AppTheme.colors.accentMainWarning,
+		red: AppTheme.colors.accentMainAlert,
+		unknown: AppTheme.colors.base5,
 		getDesc:(color, value) => ({
 			style: {cornerRadius: 15, backgroundColor: stressIndication[color]},
 			text: stressDesc(color, value)
@@ -59,19 +59,20 @@
 	this.Buttons = class {
 		static blueButton(text, id, margin = {top: 16}, params = {})
 		{
+
 			return Object.assign({
 				text: text,
 				id: id,
 				style: {
 					cornerRadius: 5,
-					font: {color: "#ffffff", size: 18, fontStyle: "semibold"},
+					font: {color: AppTheme.colors.baseWhiteFixed, size: 18, fontStyle: "semibold"},
 					margin: margin,
 					size: {
 						height: 48,
 						width: 100
 					},
-					backgroundColor: "#3BC8F5",
-					backgroundColorActive: "#3195b9",
+					backgroundColor: AppTheme.colors.accentBrandBlue,
+					backgroundColorActive: AppTheme.colors.accentSoftElementBlue1,
 				}
 			}, params)
 		}
@@ -83,18 +84,18 @@
 				id: id,
 				style: {
 					cornerRadius: 5,
-					font: {color: "#525C69", size: 18, fontStyle: "semibold"},
+					font: {color: AppTheme.colors.base2, size: 18, fontStyle: "semibold"},
 					border: {
 						width: 1,
-						color: "#8C525C69",
+						color: AppTheme.colors.bgSeparatorSecondary,
 					},
 					margin: margin,
 					size: {
 						height: 48,
 						width: 100
 					},
-					backgroundColor: "#ffffff",
-					backgroundColorActive: "#b7b7b7",
+					backgroundColor: AppTheme.colors.base8,
+					backgroundColorActive: AppTheme.colors.base5,
 				}
 			}, params)
 		}
@@ -106,21 +107,21 @@
 				id: id,
 				style: {
 					cornerRadius: 5,
-					font: {color: "#525C69", size: 18, fontStyle: "semibold"},
+					font: {color: AppTheme.colors.base1, size: 18, fontStyle: "semibold"},
 					image: {
 						name: "status_online"
 					},
 					border: {
 						width: 0,
-						color: "#8C525C69",
+						color: AppTheme.colors.bgSeparatorPrimary,
 					},
 					margin: margin,
 					size: {
 						height: 48,
 						width: 100
 					},
-					backgroundColor: "#ffffff",
-					backgroundColorActive: "#fb0000",
+					backgroundColor: AppTheme.colors.bgContentPrimary,
+					backgroundColorActive: AppTheme.colors.accentSoftElementRed1,
 				}
 			}, params);
 		}
@@ -132,14 +133,14 @@
 				id: id,
 				style: {
 					cornerRadius: 5,
-					font: {color: "#2066B0", size: 18, fontStyle: "normal"},
+					font: {color: AppTheme.colors.accentMainLinks, size: 18, fontStyle: "normal"},
 					margin: margin,
 					size: {
 						height: 48,
 						width: 100
 					},
-					backgroundColor: "#ffffff",
-					backgroundColorActive: "#fb0000",
+					backgroundColor: AppTheme.colors.bgContentPrimary,
+					backgroundColorActive: AppTheme.colors.accentSoftElementRed1,
 				}
 			}
 		}
@@ -163,21 +164,21 @@
 						text: BX.message("STRESS_DO_MEASURE_RIGHT_NOW"),
 						style: {
 							margin: {top: 50},
-							font: {color: "#333333", size: 20, fontStyle: "normal"},
+							font: {color: AppTheme.colors.base1, size: 20, fontStyle: "normal"},
 						}
 					},
 					{
 						text: BX.message("STRESS_INFLUENT_STRESS_LEVEL"),
 						style: {
 							margin: {top: 14},
-							font: {color: "#8C525C69", size: 17, fontStyle: "normal"},
+							font: {color: AppTheme.colors.base3, size: 17, fontStyle: "normal"},
 						}
 					}
 				],
 				"buttons": [
 					Buttons.blueButton(BX.message("STRESS_MAKE_MEASURE"), "measure", {top: 50})
 				],
-				"footer":{ text:BX.message("WELLTORY_PROVIDED"),  style:{font:{color:"#525C69", size:15}}}
+				"footer":{ text:BX.message("WELLTORY_PROVIDED"),  style:{font:{color:AppTheme.colors.base2, size:15}}}
 			}
 		},
 		NewMeasureResult: (params) =>
@@ -194,7 +195,7 @@
 						params: params,
 						style: {
 							cornerRadius: 5,
-							font: {color: "#2066B0", size: 18, fontStyle: "normal"},
+							font: {color: AppTheme.colors.accentMainLinks, size: 18, fontStyle: "normal"},
 							margin: {top: 10},
 						}
 					}
@@ -204,7 +205,7 @@
 					Buttons.grayBorderedButton(BX.message("STRESS_SAVE_PRIVATE"), "save_private", {top: 16}, {params}),
 					Buttons.greyButton(BX.message("STRESS_CANCEL_MEASURE_RESULT"), "cancel_measure")
 				],
-				"footer":{ text:BX.message("WELLTORY_PROVIDED"),  style:{font:{color:"#73525C69", size:15}}}
+				"footer":{ text:BX.message("WELLTORY_PROVIDED"),  style:{font:{color: AppTheme.colors.base3, size:15}}}
 			}
 		},
 		ExistsMeasureResult: (params) =>
@@ -221,7 +222,7 @@
 						params: params,
 						style: {
 							cornerRadius: 5,
-							font: {color: "#2066B0", size: 18, fontStyle: "normal"},
+							font: {color: AppTheme.colors.accentMainLinks, size: 18, fontStyle: "normal"},
 							margin: {top: 10},
 						}
 					}
@@ -230,7 +231,7 @@
 					Buttons.blueButton(BX.message("STRESS_SHARE"), "share", {top: 32}, {params}),
 					Buttons.grayBorderedButton(BX.message("STRESS_MAKE_ANOTHER_ONE_MEASURE"), "measure"),
 				],
-				"footer":{ text:BX.message("WELLTORY_PROVIDED"),  style:{font:{color:"#73525C69", size:15}}}
+				"footer":{ text:BX.message("WELLTORY_PROVIDED"),  style:{font:{color:AppTheme.colors.base3, size:15}}}
 			}
 		},
 		StressLevelDescription: () =>
@@ -244,7 +245,7 @@
 					{
 						text: "",
 						style: {
-							font: {color: "#333333", size: 26, fontStyle: "normal"},
+							font: {color: AppTheme.colors.base1, size: 26, fontStyle: "normal"},
 							margin: {top: 10},
 							alignment: "left"
 						}
@@ -252,7 +253,7 @@
 					{
 						text: "",
 						style: {
-							font: {color: "#525C69", size: 16, fontStyle: "normal"},
+							font: {color: AppTheme.colors.base2, size: 16, fontStyle: "normal"},
 							margin: {top: 10},
 							alignment:"left"
 						}
@@ -301,7 +302,7 @@
 			template.labels.unshift({
 				text: data["comment"],
 				style: {
-					font: {color: "#333333", size: 25, fontStyle: "normal"},
+					font: {color: AppTheme.colors.base1, size: 25, fontStyle: "normal"},
 					margin: {top: 16},
 				}
 			});
@@ -337,7 +338,7 @@
 			{
 				state.labels.subtitle = {
 					text: new Date(rowData.date).toLocaleString(),
-					style: {font: {color: "#8C525C69", size: 14}}
+					style: {font: {color: AppTheme.colors.base3, size: 14}}
 				};
 			}
 

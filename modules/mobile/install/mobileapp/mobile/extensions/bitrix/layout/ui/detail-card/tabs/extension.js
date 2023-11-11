@@ -210,8 +210,7 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 		}
 
 		scrollTop(animate = true)
-		{
-		}
+		{}
 
 		refreshResult()
 		{
@@ -219,6 +218,7 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 				if (this.state.status !== Status.DONE)
 				{
 					resolve();
+
 					return;
 				}
 
@@ -257,7 +257,8 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 			{
 				return [this.renderLoader()];
 			}
-			else if (this.state.status === Status.DONE)
+
+			if (this.state.status === Status.DONE)
 			{
 				return [
 					this.renderCustomShimmer(),
@@ -338,8 +339,7 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 		 * @return void
 		 */
 		handleFloatingMenuAction({ actionId, tabId })
-		{
-		}
+		{}
 	}
 
 	module.exports = { Tab };

@@ -34,8 +34,11 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 		 *	vatRates: CrmProductGridVatRate[],
 		 *	measures: CrmProductGridMeasure[],
 		 *	iblockId: number,
-		 *	inventoryControlEnabled: boolean,
+		 *	isAllowedReservation: boolean,
+		 *  isReservationRestrictedByPlan: boolean
+		 * 	defaultDateReserveEnd: number,
 		 *	entityDetailPageUrl: string,
+		 *  entityId: number,
 		 *  entityTypeId: number,
 		 *  permissions: CrmProductGridCatalogPermissions,
 		 * }}
@@ -59,6 +62,11 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 		componentWillReceiveProps(props)
 		{
 			this.state = this.buildState(props);
+		}
+
+		validate()
+		{
+			this.actualizeInputReserveQuantity();
 		}
 
 		/**
@@ -138,6 +146,9 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 
 		onChangeQuantity(newValue)
 		{
+			const productRow = this.state.productRow;
+			productRow.setField('IS_INPUT_RESERVE_QUANTITY_ACTUALIZED', false);
+
 			this.recalculate((calculator) => calculator.calculateQuantity(newValue));
 		}
 
@@ -175,6 +186,58 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 				TAX_INCLUDED: variationData.TAX_INCLUDED ? 'Y' : 'N',
 				SKU_TREE: skuTree,
 				BARCODE: variationData.BARCODE,
+				STORES: variationData.hasOwnProperty('STORES')
+					? variationData.STORES
+					: []
+				,
+				HAS_STORE_ACCESS: variationData.hasOwnProperty('HAS_STORE_ACCESS')
+					? variationData.HAS_STORE_ACCESS
+					: null
+				,
+				STORE_ID: variationData.hasOwnProperty('STORE_ID')
+					? variationData.STORE_ID
+					: null
+				,
+				STORE_NAME: variationData.hasOwnProperty('STORE_NAME')
+					? variationData.STORE_NAME
+					: null
+				,
+				STORE_AMOUNT: variationData.hasOwnProperty('STORE_AMOUNT')
+					? variationData.STORE_AMOUNT
+					: null
+				,
+				STORE_AVAILABLE_AMOUNT: variationData.hasOwnProperty('STORE_AVAILABLE_AMOUNT')
+					? variationData.STORE_AVAILABLE_AMOUNT
+					: null
+				,
+				INPUT_RESERVE_QUANTITY: variationData.hasOwnProperty('SHOULD_SYNC_RESERVE_QUANTITY')
+					? (
+						variationData.SHOULD_SYNC_RESERVE_QUANTITY === true
+						? quantity
+						: 0
+					)
+					: null
+				,
+				ROW_RESERVED: variationData.hasOwnProperty('ROW_RESERVED')
+					? variationData.ROW_RESERVED
+					: null
+				,
+				DEDUCTED_QUANTITY: variationData.hasOwnProperty('STORE_ID')
+					? variationData.DEDUCTED_QUANTITY
+					: null
+				,
+				SHOULD_SYNC_RESERVE_QUANTITY: variationData.hasOwnProperty('SHOULD_SYNC_RESERVE_QUANTITY')
+					? variationData.SHOULD_SYNC_RESERVE_QUANTITY
+					: null
+				,
+				DATE_RESERVE_END:
+					(
+						variationData.hasOwnProperty('SHOULD_SYNC_RESERVE_QUANTITY')
+						&& variationData.SHOULD_SYNC_RESERVE_QUANTITY === true
+					)
+						? this.getProps().defaultDateReserveEnd
+						: null
+				,
 			};
 
 			productRow.setFields({ ...currentFields, ...overrides });
@@ -212,6 +275,18 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 			this.setState(nextState, () => this.onChange());
 		}
 
+		actualizeInputReserveQuantity()
+		{
+			if (!this.hasAccess('catalog_deal_product_reserve'))
+			{
+				return;
+			}
+
+			const productRow = this.state.productRow;
+			productRow.actualizeInputReserveQuantity();
+			this.setState({ productRow });
+		}
+
 		showProductDetailsBackdrop()
 		{
 			const productRow = this.state.productRow;
@@ -228,15 +303,20 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 					horizontalSwipeAllowed: false,
 				},
 				onReady: (layout) => {
+					this.actualizeInputReserveQuantity();
+
 					layout.showComponent(
 						new ProductDetails({
 							layout,
+							entityTypeId: this.getProps().entityTypeId,
 							productData: productRow.getRawValues(),
 							editable: this.getProps().editable,
 							iblockId: this.getProps().iblockId,
 							measures: this.getProps().measures,
 							vatRates: this.getProps().vatRates,
-							inventoryControlEnabled: this.getProps().inventoryControlEnabled,
+							isAllowedReservation: this.getProps().isAllowedReservation,
+							isReservationRestrictedByPlan: this.getProps().isReservationRestrictedByPlan,
+							defaultDateReserveEnd: this.getProps().defaultDateReserveEnd,
 							entityDetailPageUrl: this.getProps().entityDetailPageUrl,
 							permissions: this.getProps().permissions,
 							onChange: (productData) => {
@@ -271,6 +351,8 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 			PageManager.openWidget('layout', widgetParams).then((layout) => {
 				layout.showComponent(new SkuSelector({
 					layout,
+					entityId: this.getProps().entityId,
+					entityTypeId: this.getProps().entityTypeId,
 					selectedVariationId: productRow.getProductId(),
 					quantity: productRow.getQuantity(),
 					currencyId: productRow.getCurrency(),
@@ -308,6 +390,11 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 			{
 				this.statelessProductCardRef.blink();
 			}
+		}
+
+		hasAccess(permission)
+		{
+			return !!this.props.permissions[permission];
 		}
 	}
 

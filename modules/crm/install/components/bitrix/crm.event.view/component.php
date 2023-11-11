@@ -366,7 +366,7 @@ if (!$arResult['INTERNAL'] || $arResult['SHOW_INTERNAL_FILTER'])
 					'CONTACT' => GetMessage('CRM_ENTITY_TYPE_CONTACT'),
 					'COMPANY' => GetMessage('CRM_ENTITY_TYPE_COMPANY'),
 					'DEAL' => GetMessage('CRM_ENTITY_TYPE_DEAL'),
-					'QUOTE' => GetMessage('CRM_ENTITY_TYPE_QUOTE')
+					'QUOTE' => GetMessage('CRM_ENTITY_TYPE_QUOTE_MSGVER_1')
 				)
 			);
 		}

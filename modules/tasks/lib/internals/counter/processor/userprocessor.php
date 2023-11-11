@@ -150,7 +150,7 @@ class UserProcessor
 		{
 			$sql = "
 				SELECT DISTINCT(TASK_ID)
-				FROM `b_tasks_member`
+				FROM b_tasks_member
 				WHERE USER_ID = {$this->userId}
 			";
 			$res = Application::getConnection()->query($sql);

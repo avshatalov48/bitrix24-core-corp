@@ -209,7 +209,7 @@ class Action
 
 			if ($tasksInPlan === null)
 			{
-				$tasksInPlan = CTaskPlannerMaintance::getCurrentTasksList();
+				$tasksInPlan = array_map('intval', CTaskPlannerMaintance::getCurrentTasksList());
 			}
 
 			if (is_array($tasksInPlan) && in_array((int)$this->rowData['ID'], $tasksInPlan, true))

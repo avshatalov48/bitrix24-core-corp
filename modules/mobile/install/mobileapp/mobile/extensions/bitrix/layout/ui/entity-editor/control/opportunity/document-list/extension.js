@@ -7,6 +7,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 	const { EventEmitter } = require('event-emitter');
 	const { handleErrors } = require('crm/error');
 	const { Feature } = require('feature');
+	const { ImageAfterTypes } = require('layout/ui/context-menu/item');
 
 	/**
 	 * @class DocumentList
@@ -125,7 +126,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 			}
 		}
 
-		getDocumentName(document)
+		getDocumentName(document, showDate = true)
 		{
 			if (document.TYPE === 'PAYMENT')
 			{
@@ -145,8 +146,15 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 
 			if (document.TYPE === 'SHIPMENT_DOCUMENT')
 			{
-				return Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_DATE', {
-					'#DATE#': document.FORMATTED_DATE,
+				if (showDate)
+				{
+					return Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_DATE', {
+						'#DATE#': document.FORMATTED_DATE,
+						'#ACCOUNT_NUMBER#': document.ACCOUNT_NUMBER,
+					});
+				}
+
+				return Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_TITLE', {
 					'#ACCOUNT_NUMBER#': document.ACCOUNT_NUMBER,
 				});
 			}
@@ -262,11 +270,10 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 					{
 						style: styles.documentNameBlock,
 						onClick: () => {
-							qrauth.open({
-								title: this.getDocumentName(document),
-								redirectUrl: `/crm/deal/details/${this.props.entityId}/`,
-								hintText: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_DETAIL_HINT_MSGVER_1'),
-							});
+							this.customEventEmitter.emit('EntityRealizationDocument::Click', [{
+								id: document.ID,
+								title: this.getDocumentName(document, false),
+							}]);
 						},
 					},
 					Text({
@@ -436,50 +443,64 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 
 		setShipmentStatus(document, isShipped)
 		{
-			// Setting same status
-			if (
-				(document.DEDUCTED === 'Y' && isShipped === true)
-				|| (document.DEDUCTED === 'N' && isShipped === false)
-			)
-			{
-				return;
-			}
-			const strShipped = isShipped ? 'Y' : 'N';
+			return new Promise((resolve) => {
+				// Setting same status
+				if (
+					(document.DEDUCTED === 'Y' && isShipped === true)
+					|| (document.DEDUCTED === 'N' && isShipped === false)
+				)
+				{
+					return;
+				}
+				const strShipped = isShipped ? 'Y' : 'N';
 
-			// Positive approach - render success first, then do actual query
-			const documents = this.state.documents;
-			const documentIndex = documents.findIndex((doc) => doc.ID === document.ID);
-			const previousDeductedStatus = documents[documentIndex].DEDUCTED;
-			documents[documentIndex].DEDUCTED = strShipped;
-			this.setState({ documents: documents });
+				// Positive approach - render success first, then do actual query
+				const documents = this.state.documents;
+				const previousDeductedStatus = document.DEDUCTED;
+				document.DEDUCTED = strShipped;
+				this.setState({ documents });
 
-			let actionName = 'crmmobile.Document.Shipment.setShipped';
-			if (this.isUsedInventoryManagement)
-			{
-				actionName = 'crmmobile.Document.Realization.setShipped';
-			}
+				let actionName = 'crmmobile.Document.Shipment.setShipped';
+				if (this.isUsedInventoryManagement)
+				{
+					actionName = 'crmmobile.Document.Realization.setShipped';
+				}
 
-			BX.ajax.runAction(actionName, {
-				data: {
-					documentId: document.ID,
-					value: strShipped,
-				},
-			})
-				.then(() => {
-					const params = {
-						entityTypeId: this.props.entityTypeId,
-						entityId: this.props.entityId,
-						uid: this.uid,
-					};
-					this.customEventEmitter.emit('DetailCard::onUpdate', params);
-				})
-				.catch((response) => {
-					documents[documentIndex].DEDUCTED = previousDeductedStatus;
-					this.setState(
-						{ documents: documents },
-						() => handleErrors(response),
-					);
-				});
+				BX.ajax.runAction(actionName, {
+						data: {
+							documentId: document.ID,
+							value: strShipped,
+						},
+					})
+					.then(() => {
+						const params = {
+							entityTypeId: this.props.entityTypeId,
+							entityId: this.props.entityId,
+							uid: this.uid,
+						};
+						if (this.isUsedInventoryManagement)
+						{
+							if (strShipped === 'Y')
+							{
+								this.customEventEmitter.emit('Catalog.StoreDocument::onConduct', ['W']);
+							}
+							else
+							{
+								this.customEventEmitter.emit('Catalog.StoreDocument::onCancel', ['W']);
+							}
+						}
+						this.customEventEmitter.emit('DetailCard::onUpdate', params);
+						resolve();
+					})
+					.catch((response) => {
+						document.DEDUCTED = previousDeductedStatus;
+						this.setState(
+							{ documents },
+							() => handleErrors(response),
+						);
+						resolve();
+					});
+			});
 		}
 
 		deleteDocument(document)
@@ -657,13 +678,54 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 
 			if (document.TYPE === 'SHIPMENT_DOCUMENT')
 			{
+				if (document.DEDUCTED === 'Y')
+				{
+					actions.push({
+						id: 'cancel-deduct-realization',
+						title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_MENU_CANCEL_DEDUCT'),
+						data: {
+							svgIcon: svgIcons.menuArrow,
+						},
+						isDisabled: !this.props.salesOrderRights.conduct,
+						onClickCallback: () => this.setShipmentStatus(document, false),
+						onDisableClick: () => {
+							Notify.showUniqueMessage(
+								Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_CANCEL_DEDUCT_WARNING_REALIZATION'),
+								Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_CANCEL_DEDUCT_WARNING_TITLE_REALIZATION'),
+								{ time: 3 },
+							);
+						},
+						showActionLoader: true,
+					});
+				}
+				else
+				{
+					actions.push({
+						id: 'deduct-realization',
+						title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_MENU_DEDUCT'),
+						data: {
+							svgIcon: svgIcons.menuArrow,
+						},
+						isDisabled: !this.props.salesOrderRights.conduct,
+						onClickCallback: () => this.setShipmentStatus(document, true),
+						onDisableClick: () => {
+							Notify.showUniqueMessage(
+								Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DEDUCT_WARNING_REALIZATION'),
+								Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DEDUCT_WARNING_TITLE_REALIZATION'),
+								{ time: 3 },
+							);
+						},
+						showActionLoader: true,
+					});
+				}
+
 				actions.push({
 					id: 'delete-realization',
 					title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_MENU_DELETE'),
 					data: {
 						svgIcon: svgIcons.menuDelete,
 					},
-					isDisabled: document.DEDUCTED === 'Y',
+					isDisabled: document.DEDUCTED === 'Y' || !this.props.salesOrderRights.delete,
 					onClickCallback: () => this.documentMenu.close(() => {
 						Alert.confirm(
 							Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_CONFIRM_TITLE'),
@@ -682,7 +744,9 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 					}),
 					onDisableClick: () => {
 						Notify.showUniqueMessage(
-							Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_WARNING_REALIZATION'),
+							this.props.salesOrderRights.delete
+								? Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_WARNING_REALIZATION')
+								: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_WARNING_ACCESS_DENIED_REALIZATION'),
 							Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_WARNING_TITLE_REALIZATION'),
 							{ time: 3 },
 						);
@@ -740,7 +804,9 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 			return View(
 				{
 					style: styles.addDocumentButton,
-					onClick: () => this.customEventEmitter.emit('OpportunityButton::Click'),
+					onClick: () => {
+						this.getCreationDocumentContextMenu().show();
+					},
 				},
 				Image({
 					style: styles.plusIcon,
@@ -756,6 +822,73 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 					text: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_ADD'),
 				}),
 			);
+		}
+
+		getCreationDocumentContextMenu()
+		{
+			const orderIds = this.props.orderList.map((order) => parseInt(order.ORDER_ID));
+			const latestOrderId = orderIds.length > 0 ? Math.max(...orderIds) : 0;
+			const actions = [
+				{
+					id: 'payment',
+					title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_CREATION_MENU_PAYMENT'),
+					onClickCallback: () => {
+						menu.close(() => {
+							this.customEventEmitter.emit('OpportunityButton::Click');
+						});
+					},
+				},
+			];
+			if (
+				this.props.isUsedInventoryManagement
+				&& !this.props.modeWithOrders
+				&& this.props.salesOrderRights.modify
+			)
+			{
+				actions.push(
+					{
+						id: 'realization',
+						title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_CREATION_MENU_REALIZATION'),
+						onClickCallback: () => {
+							menu.close(() => {
+								this.customEventEmitter.emit('EntityRealizationDocument::Click', [{
+									uid: this.uid,
+									ownerId: parseInt(this.props.entityId),
+									ownerTypeId: parseInt(this.props.entityTypeId),
+									orderId: latestOrderId,
+								}]);
+							});
+						},
+					},
+				);
+			}
+			actions.push(
+				{
+					id: 'delivery',
+					title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_CREATION_MENU_DELIVERY'),
+					data: {
+						svgIconAfter: {
+							type: ImageAfterTypes.WEB,
+						},
+					},
+					onClickCallback: () => {
+						menu.close(() => {
+							qrauth.open({
+								redirectUrl: `/crm/deal/details/${this.props.entityId}/`,
+							});
+						});
+					},
+				},
+			);
+
+			const menu = new ContextMenu({
+				params: {
+					title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_ADD'),
+				},
+				actions,
+			});
+
+			return menu;
 		}
 
 		renderSeparator()

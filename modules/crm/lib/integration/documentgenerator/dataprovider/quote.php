@@ -41,7 +41,7 @@ class Quote extends ProductsDataProvider
 			$this->fields['LOCATION_ID'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_LOCATION_ID_TITLE'),];
 			$this->fields['COMMENTS'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_COMMENTS_TITLE'), 'TYPE' => static::FIELD_TYPE_TEXT];
 			$this->fields['BEGINDATE'] = [
-				'TITLE' => $factoryFieldsInfo['BEGINDATE']['TITLE'] ?? GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_BEGINDATE_TITLE'),
+				'TITLE' => $factoryFieldsInfo['BEGINDATE']['TITLE'] ?? GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_BEGINDATE_TITLE_MSGVER_1'),
 				'TYPE' => DateTime::class,
 			];
 			$this->fields['CLOSEDATE'] = [
@@ -125,7 +125,7 @@ class Quote extends ProductsDataProvider
 	 */
 	public static function getLangName()
 	{
-		return GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_TITLE');
+		return GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_TITLE_MSGVER_1');
 	}
 
 	/**

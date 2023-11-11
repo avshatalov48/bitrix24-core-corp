@@ -57,6 +57,7 @@ final class PermissionsProvider
 			ActionDictionary::ACTION_PRODUCT_PURCHASE_INFO_VIEW,
 			ActionDictionary::ACTION_PRICE_EDIT,
 			ActionDictionary::ACTION_STORE_MODIFY,
+			ActionDictionary::ACTION_DEAL_PRODUCT_RESERVE,
 		];
 		foreach ($actionsList as $action)
 		{
@@ -92,7 +93,12 @@ final class PermissionsProvider
 			)
 		);
 
-		foreach (StoreDocumentTable::getTypeList() as $type)
+		$documentTypes = [
+			...StoreDocumentTable::getTypeList(),
+			StoreDocumentTable::TYPE_SALES_ORDERS,
+		];
+
+		foreach ($documentTypes as $type)
 		{
 			$storeDocumentActions = [
 				ActionDictionary::ACTION_STORE_DOCUMENT_VIEW,

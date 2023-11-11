@@ -9,6 +9,7 @@ use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Engine\Response\Component;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Errorable;
+use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\ExpressionField;
@@ -22,6 +23,7 @@ use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TagAccessController;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Control\Tag;
+use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Registry\TagRegistry;
@@ -29,7 +31,7 @@ use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\Task\TaskTagTable;
 use Bitrix\Tasks\Provider\TaskProvider;
-use Bitrix\Tasks\Util\Error\Collection;
+use Bitrix\Main\Error;
 
 Loc::loadMessages(__FILE__);
 
@@ -42,7 +44,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 	public const TASKS_PAGE_SIZE = 10;
 	private Tag $tagService;
 
-	private Collection $errorCollection;
+	private ErrorCollection $errorCollection;
 	private int $userId;
 	private int $groupId;
 	private bool $canUseGridActions = true;
@@ -72,7 +74,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 		{
 			$this->canUseGridActions = $this->canUseGridActions($this->groupId);
 		}
-		$this->errorCollection = new Collection();
+		$this->errorCollection = new ErrorCollection();
 	}
 
 	private function setTagService(): void
@@ -106,7 +108,9 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 
 	private function addForbiddenError(): void
 	{
-		$this->errorCollection->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TAG_ACTION_NOT_ALLOWED'));
+		$this->errorCollection->setError(
+			new Error(Loc::getMessage('TAG_ACTION_NOT_ALLOWED'), 'ACTION_NOT_ALLOWED.RESTRICTED')
+		);
 	}
 
 	public function deleteTagAction(int $tagId, int $groupId): ?array
@@ -141,7 +145,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 
 		PushService::addEvent($recipients, [
 			'module_id' => 'tasks',
-			'command' => 'tag_changed',
+			'command' => PushCommand::TAG_UPDATED,
 			'params' => [
 				'newTagName' => '',
 				'oldTagName' => $curName,
@@ -230,7 +234,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 
 		PushService::addEvent($recipients, [
 			'module_id' => 'tasks',
-			'command' => 'tag_added',
+			'command' => PushCommand::TAG_ADDED,
 			'params' => [
 				'groupId' => $groupId,
 			],
@@ -318,7 +322,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 
 		PushService::addEvent($recipients, [
 			'module_id' => 'tasks',
-			'command' => 'tag_changed',
+			'command' => PushCommand::TAG_UPDATED,
 			'params' => [
 				'oldTagName' => $curName,
 				'newTagName' => $newName,
@@ -370,7 +374,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 
 			PushService::addEvent($recipients, [
 				'module_id' => 'tasks',
-				'command' => 'tag_changed',
+				'command' => PushCommand::TAG_UPDATED,
 				'params' => [
 					'oldTagsNames' => $names,
 					'newTagName' => '',
@@ -865,7 +869,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 
 			PushService::addEvent($recipients, [
 				'module_id' => 'tasks',
-				'command' => 'tag_added',
+				'command' => PushCommand::TAG_ADDED,
 				'params' => [
 					'groupId' => $groupId,
 				],
@@ -890,7 +894,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 
 		PushService::addEvent($this->userId, [
 			'module_id' => 'tasks',
-			'command' => 'tag_added',
+			'command' => PushCommand::TAG_ADDED,
 			'params' => [
 				'groupId' => $groupId,
 			],

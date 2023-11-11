@@ -14,6 +14,7 @@ jn.define('in-app-url', (require, exports, module) => {
 	const routes = [
 		'crm/in-app-url/routes',
 		'tasks/in-app-url/routes',
+		'im/in-app-url/routes',
 		'in-app-url/routes',
 	];
 

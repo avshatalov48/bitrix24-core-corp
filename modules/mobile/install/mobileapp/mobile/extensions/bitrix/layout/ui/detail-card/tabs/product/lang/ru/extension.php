@@ -14,7 +14,6 @@ $MESS['CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION_MSGVER_1'] = 'Создать то�
 $MESS['CSPL_PRODUCT_DETAIL_BACKDROP_TITLE'] = 'Данные товара';
 $MESS['CSPL_PRODUCT_CONTEXT_MENU_EDIT'] = 'Редактировать';
 $MESS['CSPL_PRODUCT_CONTEXT_MENU_OPEN'] = 'Открыть';
-$MESS['CSPL_PRODUCT_CONTEXT_MENU_REMOVE'] = 'Убрать из документа';
 $MESS['CSPL_VALIDATION_ERROR_EMPTY_NAME'] = 'Позиция №#NUM# не содержит названия товара';
 $MESS['CSPL_VALIDATION_ERROR_PHOTO_IS_LOADING'] = 'Позиция №#NUM# содержит незагруженные фотографии товара';
 $MESS['CSPL_VALIDATION_ERROR_PHOTO_HAS_ERROR'] = 'Позиция №#NUM# содержит фотографии товара, загруженные с ошибкой. Удалите их и попробуйте загрузить заново.';

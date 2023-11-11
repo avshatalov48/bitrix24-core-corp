@@ -15,6 +15,7 @@ use Bitrix\Crm\Integration\Disk\HiddenStorage;
 use Bitrix\Crm\Integration\StorageFileType;
 use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Integration\StorageType;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings;
 use Bitrix\Crm\Settings\ActivitySettings;
 use Bitrix\Disk\SpecificFolder;
@@ -2387,7 +2388,7 @@ class CAllCrmActivity
 		$userID =
 			($userPermissions !== null && is_object($userPermissions))
 				? $userPermissions->GetUserID()
-				: Crm\Service\Container::getInstance()->getContext()->getUserId()
+				: Container::getInstance()->getContext()->getUserId()
 		;
 		if (CCrmPerms::IsAdmin($userID))
 		{
@@ -2416,8 +2417,8 @@ class CAllCrmActivity
 		$entitiesSql[(string)CCrmOwnerType::Quote] =
 			CCrmPerms::BuildSql(CCrmOwnerType::QuoteName, $aliasPrefix, $permType, $permOptions);
 
-		$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions($userID);
-		$typesMap = Crm\Service\Container::getInstance()->getTypesMap();
+		$userPermissions = Container::getInstance()->getUserPermissions($userID);
+		$typesMap = Container::getInstance()->getTypesMap();
 
 		foreach ($typesMap->getFactories() as $factory)
 		{
@@ -7864,7 +7865,13 @@ class CAllCrmActivity
 			$provider = self::GetActivityProvider($arFields);
 			if ($provider !== null)
 			{
-				$arPingOffsets = $provider::getDefaultPingOffsets();
+				$categoryId = Container::getInstance()->getFactory($arFields['OWNER_TYPE_ID'])?->getItemCategoryId($arFields['OWNER_ID']);
+				$arPingOffsets = $provider::getDefaultPingOffsets(
+					[
+						'entityTypeId' => (int)$arFields['OWNER_TYPE_ID'],
+						'categoryId' => (int)($categoryId ?? 0),
+					]
+				);
 			}
 		}
 

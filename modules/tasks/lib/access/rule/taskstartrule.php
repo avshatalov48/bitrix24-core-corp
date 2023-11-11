@@ -12,6 +12,7 @@ use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Main\Loader;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\Rule\Traits\SubordinateTrait;
+use Bitrix\Tasks\Internals\Task\Status;
 
 class TaskStartRule extends \Bitrix\Main\Access\Rule\AbstractRule
 {
@@ -25,7 +26,7 @@ class TaskStartRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return false;
 		}
 
-		if (!in_array($task->getStatus(), [\CTasks::STATE_NEW, \CTasks::STATE_PENDING]))
+		if (!in_array((int)$task->getStatus(), [Status::NEW, Status::PENDING], true))
 		{
 			$this->controller->addError(static::class, 'Incorrect status');
 			return false;

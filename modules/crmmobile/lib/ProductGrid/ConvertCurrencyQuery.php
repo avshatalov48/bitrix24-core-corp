@@ -4,16 +4,20 @@ declare(strict_types = 1);
 
 namespace Bitrix\CrmMobile\ProductGrid;
 
+use Bitrix\Crm\Item;
+use Bitrix\CrmMobile\ProductGrid\Enricher\CompleteStores;
 use Bitrix\CrmMobile\ProductGrid\Enricher\ConvertCurrency;
 use Bitrix\Mobile\Query;
 
 final class ConvertCurrencyQuery extends Query
 {
+	private Item $entity;
 	private string $currencyId;
 	private array $products;
 
-	public function __construct(string $currencyId, array $products = [])
+	public function __construct(Item $entity, string $currencyId, array $products = [])
 	{
+		$this->entity = $entity;
 		$this->currencyId = $currencyId;
 		$this->products = $products;
 	}
@@ -24,6 +28,7 @@ final class ConvertCurrencyQuery extends Query
 
 		$enrichers = [
 			new ConvertCurrency($this->currencyId),
+			new CompleteStores($this->entity),
 		];
 
 		foreach ($enrichers as $enricher)

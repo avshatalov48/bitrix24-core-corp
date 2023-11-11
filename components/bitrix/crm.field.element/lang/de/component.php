@@ -1,0 +1,24 @@
+<?php
+$MESS["CRM_ELEMENT_BUTTON_SELECT"] = "Auswählen";
+$MESS["CRM_ELEMENT_CANCEL"] = "Abbrechen";
+$MESS["CRM_ELEMENT_CHANGE"] = "Ändern";
+$MESS["CRM_ELEMENT_CHOISE"] = "Auswählen";
+$MESS["CRM_ELEMENT_CLOSE"] = "Schließen";
+$MESS["CRM_ELEMENT_COMPANY"] = "Unternehmen";
+$MESS["CRM_ELEMENT_CONTACT"] = "Kontakte";
+$MESS["CRM_ELEMENT_CREATE"] = "Erstellen";
+$MESS["CRM_ELEMENT_CREATE_COMPANY"] = "Unternehmen";
+$MESS["CRM_ELEMENT_CREATE_CONTACT"] = "Kontakt";
+$MESS["CRM_ELEMENT_CREATE_DEAL"] = "Auftrag";
+$MESS["CRM_ELEMENT_CREATE_LEAD"] = "Lead";
+$MESS["CRM_ELEMENT_DEAL"] = "Aufträge";
+$MESS["CRM_ELEMENT_LAST"] = "Zuletzt ausgewählte";
+$MESS["CRM_ELEMENT_LEAD"] = "Leads";
+$MESS["CRM_ELEMENT_NO_RESULT"] = "Leider ergab Ihre Suche keine Treffer.";
+$MESS["CRM_ELEMENT_OK"] = "Auswählen";
+$MESS["CRM_ELEMENT_ORDER"] = "Bestellungen";
+$MESS["CRM_ELEMENT_PERMISSION_DENIED"] = "Zugriff verweigert";
+$MESS["CRM_ELEMENT_QUOTE_MSGVER_1"] = "Angebote";
+$MESS["CRM_ELEMENT_SEARCH"] = "Suchen";
+$MESS["CRM_ENTITY_ITEM_DELETED"] = "Gelöschtes Element";
+$MESS["CRM_SFE_ENTITY_NOT_SELECTED"] = "Es wurde kein Elementtyp in den Feldeinstellungen ausgewählt";

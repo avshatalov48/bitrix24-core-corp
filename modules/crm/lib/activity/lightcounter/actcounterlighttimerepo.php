@@ -39,8 +39,7 @@ class ActCounterLightTimeRepo
 	public function minLightTimeByItemIdentifier(ItemIdentifier $identifier, ?int $responsibleId = null): DateTime
 	{
 		$query = ActCounterLightTimeTable::query()
-			->registerRuntimeField('', new ExpressionField('MIN_LIGHT_COUNTER_AT', 'MIN(%s)', 'LIGHT_COUNTER_AT'))
-			->addSelect('MIN_LIGHT_COUNTER_AT')
+			->addSelect('LIGHT_COUNTER_AT')
 			->registerRuntimeField(
 				'',
 				new ReferenceField('B',
@@ -50,6 +49,7 @@ class ActCounterLightTimeRepo
 			)
 			->where('B.OWNER_ID', '=', $identifier->getEntityId())
 			->where('B.OWNER_TYPE_ID', '=', $identifier->getEntityTypeId())
+			->addOrder('LIGHT_COUNTER_AT', 'ASC')
 			->setLimit(1);
 
 		if ($responsibleId !== null)
@@ -57,16 +57,16 @@ class ActCounterLightTimeRepo
 			$query->registerRuntimeField(
 				'',
 				new ReferenceField('A',
-							ActivityTable::getEntity(),
-							['=ref.ID' => 'this.ACTIVITY_ID'],
-						)
-				);
+					ActivityTable::getEntity(),
+					['=ref.ID' => 'this.ACTIVITY_ID'],
+				)
+			);
 			$query->where('A.RESPONSIBLE_ID', $responsibleId);
 		}
 
 		$row = $query->fetch();
 
-		return $row['MIN_LIGHT_COUNTER_AT'] ?? CCrmDateTimeHelper::getMaxDatabaseDateObject();
+		return $row['LIGHT_COUNTER_AT'] ?? CCrmDateTimeHelper::getMaxDatabaseDateObject();
 	}
 
 	/**

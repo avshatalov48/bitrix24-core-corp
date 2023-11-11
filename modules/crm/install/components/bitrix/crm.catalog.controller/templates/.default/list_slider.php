@@ -5,16 +5,19 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var \CBitrixComponentTemplate $this  */
 /** @var \CrmCatalogControllerComponent $component */
 
-$arResult['PAGE_DESCRIPTION']['SEF_FOLDER'] = $this->GetFolder().'/';
-$arResult['PAGE_DESCRIPTION']['PAGE_PATH'] = 'include/list_slider.php';
-
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
 	'',
 	[
-		'POPUP_COMPONENT_NAME' => 'bitrix:crm.admin.page.include',
+		'POPUP_COMPONENT_NAME' => 'bitrix:catalog.product.grid',
 		'POPUP_COMPONENT_TEMPLATE_NAME' => '.default',
-		'POPUP_COMPONENT_PARAMS' => $arResult['PAGE_DESCRIPTION'],
+		'POPUP_COMPONENT_PARAMS' => [
+			'GRID_ID' => 'CrmProductGrid',
+			'IBLOCK_ID' => $arResult['IBLOCK_ID'],
+			'SECTION_ID' => $arResult['VARIABLES']['SECTION_ID'] ?? null,
+			'URL_BUILDER' => $arResult['URL_BUILDER'],
+			'USE_NEW_CARD' => $arResult['USE_NEW_CARD'],
+		],
 		'USE_PADDING' => false,
 		'USE_UI_TOOLBAR' => 'N',
 	],

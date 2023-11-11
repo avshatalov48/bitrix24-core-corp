@@ -5,11 +5,12 @@ declare(strict_types = 1);
 namespace Bitrix\CrmMobile\ProductGrid;
 
 use Bitrix\Crm\Item;
-use Bitrix\Crm\ProductRowCollection;
 use Bitrix\Crm\Service\Accounting;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
 use Bitrix\CrmMobile\Dto\VatRate;
 use Bitrix\CrmMobile\ProductGrid\Enricher\CompleteExtraFields;
+use Bitrix\CrmMobile\ProductGrid\Enricher\CompleteStores;
 use Bitrix\CrmMobile\ProductGrid\Enricher\ConvertCurrency;
 use Bitrix\CrmMobile\ProductGrid\Enricher\EnricherContract;
 use Bitrix\CrmMobile\ProductGrid\Enricher\UpdateFieldsForTaxMode;
@@ -19,6 +20,7 @@ use Bitrix\CatalogMobile\Catalog;
 use Bitrix\CatalogMobile\PermissionsProvider;
 use Bitrix\CatalogMobile\Repository\MeasureRepository;
 use Bitrix\Mobile\Query;
+use Bitrix\Crm\Restriction\RestrictionManager;
 
 Loader::requireModule('crm');
 Loader::requireModule('catalog');
@@ -57,8 +59,9 @@ class ProductGridQuery extends Query
 				'currencyId' => Catalog::getBaseCurrency(),
 			],
 			'inventoryControl' => [
-				'enabled' => $this->isInventoryControlEnabled(),
-				'reservationEnabled' => $this->isReservationEnabled(),
+				'isAllowedReservation' => $this->isAllowedReservation(),
+				'isReservationRestrictedByPlan' => $this->isReservationRestrictedByPlan(),
+				'defaultDateReserveEnd' => ReservationService::getInstance()->getDefaultDateReserveEnd()->getTimestamp(),
 			],
 			'measures' => array_values(MeasureRepository::findAll()),
 			'taxes' => [
@@ -112,6 +115,7 @@ class ProductGridQuery extends Query
 			new UpdateFieldsForTaxMode($this->accounting, $this->entity),
 			new CompleteExtraFields($this->accounting, $this->permissionsProvider, $this->entity),
 			new ConvertCurrency($this->currencyId),
+			new CompleteStores($this->entity),
 		];
 	}
 
@@ -129,13 +133,6 @@ class ProductGridQuery extends Query
 	{
 		$vatRates = \CCrmTax::GetVatRateInfos();
 		return array_map(static fn ($fields) => new VatRate($fields), $vatRates);
-	}
-
-	private function isInventoryControlEnabled(): bool
-	{
-		return $this->entity->getEntityTypeId() === \CCrmOwnerType::Deal
-			&& \Bitrix\Catalog\Config\State::isUsedInventoryManagement()
-			&& !\CCrmSaleHelper::isWithOrdersMode();
 	}
 
 	private function isEntityEditable(): bool
@@ -161,9 +158,17 @@ class ProductGridQuery extends Query
 		return $isEditable;
 	}
 
-	private function isReservationEnabled(): bool
+	private function isAllowedReservation(): bool
 	{
-		return \Bitrix\Crm\Restriction\RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission();
+		return \CCrmSaleHelper::isAllowedReservation(
+			$this->entity->getEntityTypeId(),
+			$this->entity->getCategoryId() ?? 0
+		);
+	}
+
+	private function isReservationRestrictedByPlan(): bool
+	{
+		return !RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission();
 	}
 
 	private function isProductRowTaxUniform(): bool

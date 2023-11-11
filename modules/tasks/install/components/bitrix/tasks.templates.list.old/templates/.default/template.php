@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Tasks\Internals\Task\Status;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -168,7 +171,7 @@ $arPaths = array(
 		// hacks
 		//$template['ALLOWED_ACTIONS'] = $template['META:ALLOWED_ACTIONS'] = array();
 		$template['META:ALLOWED_ACTIONS'] = $template['ALLOWED_ACTIONS'];
-		$template['STATUS'] = CTasks::STATE_PENDING;
+		$template['STATUS'] = Status::PENDING;
 		$arPaths['PATH_TO_TASKS_TASK'] = str_replace(
 			'#template_id#',
 			'#task_id#',

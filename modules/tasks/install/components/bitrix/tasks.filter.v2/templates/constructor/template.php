@@ -1,4 +1,9 @@
 <?php
+
+use Bitrix\Tasks\Internals\Task\MetaStatus;
+use Bitrix\Tasks\Internals\Task\Priority;
+use Bitrix\Tasks\Internals\Task\Status;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
@@ -9,14 +14,14 @@ $loggedInUserFormattedName = '';
 
 $rsUser = CUser::GetList(
 	'ID', 'ASC',
-	array('ID' => $loggedInUserId), 
+	array('ID' => $loggedInUserId),
 	array('FIELDS' => array('NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN'))
 );
 
 if ($arUser = $rsUser->Fetch())
 {
 	$loggedInUserFormattedName = CUser::FormatName(
-		CSite::GetNameFormat(false), 
+		CSite::GetNameFormat(false),
 		array(
 			'NAME'        => $arUser['NAME'],
 			'LAST_NAME'   => $arUser['LAST_NAME'],
@@ -120,7 +125,7 @@ BX.ready(function(){
 									if (reply['reply'] === 'no name given')
 										alert(BX.message('TASKS_FILTERV2_CONSTRUCTOR_NO_NAME_GIVEN'));
 								}
-							});							
+							});
 						}
 					}
 				}),
@@ -146,7 +151,7 @@ BX.ready(function(){
 							BX.Tasks.filterV2.engine.renderer.closeForm();
 							BX.Tasks.filterV2.engine.removeCurrentPreset(function(){
 								window.location = BX.Tasks.filterV2.pathToTasks;
-							});							
+							});
 						}
 					}
 				})
@@ -256,7 +261,7 @@ BX.ready(function(){
 				{
 					BX.Tasks.filterV2.engine.addCondition(
 						blockMeta,
-						'TITLE', 
+						'TITLE',
 						3,		// operation code of operation named 'contains'
 						''
 					);
@@ -361,7 +366,7 @@ BX.ready(function(){
 				{
 					BX.Tasks.filterV2.engine.addCondition(
 						blockMeta,
-						'TITLE', 
+						'TITLE',
 						3,		// contains
 						''
 					);
@@ -406,8 +411,8 @@ BX.ready(function(){
 				{
 					referenceNode = insertTo.childNodes[i];
 					break;
-				}        
-			}			
+				}
+			}
 
 			insertTo.insertBefore(insertWhat, referenceNode);
 		},
@@ -482,7 +487,7 @@ BX.ready(function(){
 							nodeValueSelector,
 							removeNode
 						]
-					}),					
+					}),
 				]
 			});
 
@@ -708,12 +713,12 @@ BX.ready(function(){
 						return function()
 						{
 							BX.calendar({
-								node: this, 
-								field: this, 
-								form: '', 
-								bTime: false, 
+								node: this,
+								field: this,
+								form: '',
+								bTime: false,
 								bHideTimebar: true,
-								currentTime: Math.round((new Date()) / 1000) - (new Date()).getTimezoneOffset()*60, 
+								currentTime: Math.round((new Date()) / 1000) - (new Date()).getTimezoneOffset()*60,
 								callback_after: function(value) {
 									BX.Tasks.filterV2.engine.setValue(
 										itemMeta,
@@ -1097,7 +1102,7 @@ BX.ready(function(){
 								}
 							})(skipSetSelector, newValue, this)
 						}
-					);					
+					);
 				}
 			};
 
@@ -1427,15 +1432,15 @@ BX.ready(function(){
 	oEngine.renderer.phrases.prioritiesMap = [
 		{
 			phrase : '<?=(GetMessageJs('TASKS_COMMON_NO').' '.GetMessageJs('TASKS_FILTERV2_CONSTRUCTOR_PRIORITY_LOW_V2'))?>',
-			value  : <?php echo CTasks::PRIORITY_LOW; ?>
+			value  : <?php echo Priority::LOW; ?>
 		},
 		{
 			phrase : '<?php echo GetMessageJs('TASKS_COMMON_NO'); ?>',
-			value  : <?php echo CTasks::PRIORITY_AVERAGE; ?>
+			value  : <?php echo Priority::AVERAGE; ?>
 		},
 		{
 			phrase : '<?php echo GetMessageJs('TASKS_COMMON_YES'); ?>',
-			value  : <?php echo CTasks::PRIORITY_HIGH; ?>
+			value  : <?php echo Priority::HIGH; ?>
 		}
 	];
 
@@ -1444,48 +1449,48 @@ BX.ready(function(){
 		{
 			phrase : '<?php echo GetMessageJs('TASKS_FILTERV2_CONSTRUCTOR_STATUS_ACTIVE'); ?>',
 			value  : [
-				<?php echo CTasks::METASTATE_VIRGIN_NEW; ?>,
-				<?php echo CTasks::METASTATE_EXPIRED; ?>,
-				<?php echo CTasks::STATE_NEW; ?>,
-				<?php echo CTasks::STATE_PENDING; ?>,
-				<?php echo CTasks::STATE_IN_PROGRESS; ?>,
-				<?php echo CTasks::STATE_DECLINED; ?>
+				<?php echo MetaStatus::UNSEEN; ?>,
+				<?php echo MetaStatus::EXPIRED; ?>,
+				<?php echo Status::NEW; ?>,
+				<?php echo Status::PENDING; ?>,
+				<?php echo Status::IN_PROGRESS; ?>,
+				<?php echo Status::DECLINED; ?>
 			]
 		},
 		{
 			phrase : '<?php echo GetMessageJs('TASKS_FILTERV2_CONSTRUCTOR_STATUS_NEW'); ?>',
 			value  : [
-				<?php echo CTasks::METASTATE_VIRGIN_NEW; ?>,
-				<?php echo CTasks::STATE_NEW; ?>
+				<?php echo MetaStatus::UNSEEN; ?>,
+				<?php echo Status::NEW; ?>
 			]
 		},
 		{
 			phrase : '<?php echo GetMessageJs('TASKS_FILTERV2_CONSTRUCTOR_STATUS_WAIT_CONTROL'); ?>',
-			value  : <?php echo CTasks::STATE_SUPPOSEDLY_COMPLETED; ?>
+			value  : <?php echo Status::SUPPOSEDLY_COMPLETED; ?>
 		},
 		{
 			phrase : '<?php echo GetMessageJs('TASKS_FILTERV2_CONSTRUCTOR_STATUS_IN_PROGRESS'); ?>',
-			value  : <?php echo CTasks::STATE_IN_PROGRESS; ?>
+			value  : <?php echo Status::IN_PROGRESS; ?>
 		},
 		{
 			phrase : '<?php echo GetMessageJs('TASKS_FILTERV2_CONSTRUCTOR_STATUS_ACCEPTED'); ?>',
-			value  : <?php echo CTasks::STATE_PENDING; ?>
+			value  : <?php echo Status::PENDING; ?>
 		},
 		{
 			phrase : '<?php echo GetMessageJs('TASKS_FILTERV2_CONSTRUCTOR_STATUS_EXPIRED'); ?>',
-			value  : <?php echo CTasks::METASTATE_EXPIRED; ?>
+			value  : <?php echo MetaStatus::EXPIRED; ?>
 		},
 		{
 			phrase : '<?php echo GetMessageJs('TASKS_FILTERV2_CONSTRUCTOR_STATUS_DEFERRED'); ?>',
-			value  : <?php echo CTasks::STATE_DEFERRED; ?>
+			value  : <?php echo Status::DEFERRED; ?>
 		},
 		{
 			phrase : '<?php echo GetMessageJs('TASKS_FILTERV2_CONSTRUCTOR_STATUS_DECLINED'); ?>',
-			value  : <?php echo CTasks::STATE_DECLINED; ?>
+			value  : <?php echo Status::DECLINED; ?>
 		},
 		{
 			phrase : '<?php echo GetMessageJs('TASKS_FILTERV2_CONSTRUCTOR_STATUS_COMPLETE'); ?>',
-			value  : <?php echo CTasks::STATE_COMPLETED; ?>
+			value  : <?php echo Status::COMPLETED; ?>
 		}
 	];
 

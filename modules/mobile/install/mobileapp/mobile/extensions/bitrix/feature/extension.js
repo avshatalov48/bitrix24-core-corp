@@ -40,6 +40,11 @@ jn.define('feature', (require, exports, module) => {
 			return minApiVersion(49, 'isReceivePaymentSupported');
 		}
 
+		static isBackgroundGradientSupported()
+		{
+			return minApiVersion(50, 'isBackgroundGradientSupported');
+		}
+
 		static isGeoPositionSupported()
 		{
 			return minApiVersion(51, 'isGeoPositionSupported');
@@ -53,7 +58,8 @@ jn.define('feature', (require, exports, module) => {
 		static hasCopyToClipboardAutoNotification()
 		{
 			const deviceVersion = parseInt(device.version, 10);
-			return isAndroid && deviceVersion > 11;
+
+			return isAndroid && deviceVersion > 12;
 		}
 
 		static isPreventBottomSheetDismissSupported()
@@ -64,6 +70,11 @@ jn.define('feature', (require, exports, module) => {
 		static showDefaultUnsupportedWidget(props = {}, parentWidget = PageManager)
 		{
 			AppUpdateNotifier.open(props, parentWidget);
+		}
+
+		static canChangeAudioDevice()
+		{
+			return minApiVersion(52, 'canChangeAudioDevice');
 		}
 	}
 
@@ -79,6 +90,7 @@ jn.define('feature', (require, exports, module) => {
 		{
 			console.warn(`Feature ${featureName} requires API ${minVersion} and probably can be omitted (current is ${currentVersion}).`);
 		}
+
 		return currentVersion >= minVersion;
 	};
 

@@ -1822,6 +1822,11 @@
 	align-items: center;
 	-ms-flex-wrap: nowrap;
 	flex-wrap: nowrap;
+	-webkit-transition: opacity .2s linear;
+	-moz-transition: opacity .2s linear;
+	-ms-transition: opacity .2s linear;
+	-o-transition: opacity .2s linear;
+	transition: opacity .2s linear;
 }
 
 .crm-entity-stream-live-im-users { }
@@ -3945,4 +3950,14 @@ span + .crm-entity-stream-content-delivery-phone-ext {
 
 .crm-entity-stream-section-planned-store-document .crm-entity-stream-content-detail-title {
 	margin-bottom: 10px;
+}
+
+.crm-entity-chat-loading{
+	cursor: default !important;
+	opacity: 0.5;
+	-webkit-transition: opacity .2s linear;
+	-moz-transition: opacity .2s linear;
+	-ms-transition: opacity .2s linear;
+	-o-transition: opacity .2s linear;
+	transition: opacity .2s linear;
 }

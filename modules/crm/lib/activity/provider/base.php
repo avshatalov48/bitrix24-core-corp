@@ -661,7 +661,14 @@ class Base
 	{
 	}
 
-	public static function getDefaultPingOffsets(): array
+	/**
+	 * Get ping settings
+	 *
+	 * @param array $params List of the additional parameters to get ping settings
+	 *
+	 * @return array
+	 */
+	public static function getDefaultPingOffsets(array $params = []): array
 	{
 		return [];
 	}

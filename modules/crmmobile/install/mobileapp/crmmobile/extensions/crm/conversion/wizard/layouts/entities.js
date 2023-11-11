@@ -111,6 +111,7 @@ jn.define('crm/conversion/wizard/layouts/entities', (require, exports, module) =
 			}
 
 			return menuButton({
+				testId: 'ConversionSelectorButton',
 				title: Loc.getMessage('MCRM_CONVERSION_WIZARD_LAYOUT_SELECTOR_TITLE'),
 				showArrow: true,
 				style: {

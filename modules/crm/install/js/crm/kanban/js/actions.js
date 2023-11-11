@@ -100,12 +100,19 @@
 			code = "CRM_KANBAN_NOTIFY_" + code;
 			if ([
 				'CRM_KANBAN_NOTIFY_LEAD_STATUS',
-				'CRM_KANBAN_NOTIFY_QUOTE_STATUS',
 				'CRM_KANBAN_NOTIFY_DYNAMIC_STATUS',
-				'CRM_KANBAN_NOTIFY_INVOICE_STATUS'
+				'CRM_KANBAN_NOTIFY_INVOICE_STATUS',
+				'CRM_KANBAN_NOTIFY_QUOTE_DELETE',
+				'CRM_KANBAN_NOTIFY_QUOTE_SETASSIGNED',
 			].indexOf(code) >= 0)
 			{
 				code += '_MSGVER_1';
+			}
+			if ([
+				'CRM_KANBAN_NOTIFY_QUOTE_STATUS',
+			].indexOf(code) >= 0)
+			{
+				code += '_MSGVER_2';
 			}
 			if (typeof BX.message[code] !== "undefined")
 			{
@@ -188,8 +195,8 @@
 								if (grid.getTypeInfoParam('showPersonalSetStatusNotCompletedText'))
 								{
 									var messageCode = gridData.isDynamicEntity
-										? "CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_DYNAMIC_MSGVER_1"
-										: "CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_" + gridData.entityType + '_MSGVER_1';
+										? 'CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_DYNAMIC_MSGVER_1'
+										: (`CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_${gridData.entityType}_MSGVER_1` || `CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_${gridData.entityType}_MSGVER_2`);
 
 									BX.Kanban.Utils.showErrorDialog(BX.message(messageCode));
 									reject(new Error(BX.message(messageCode)));

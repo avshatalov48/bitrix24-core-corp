@@ -270,7 +270,7 @@ class CCrmViewHelper
 		}
 		elseif($entityTypeID === CCrmOwnerType::Quote)
 		{
-			return GetMessage('CRM_CLIENT_SUMMARY_HIDDEN_QUOTE');
+			return GetMessage('CRM_CLIENT_SUMMARY_HIDDEN_QUOTE_MSGVER_1');
 		}
 		return GetMessage('CRM_CLIENT_SUMMARY_HIDDEN');
 	}
@@ -3046,7 +3046,7 @@ class CCrmViewHelper
 			{
 				$isTresholdPassed = true;
 				$info['semantics'] = 'success';
-				$info['hint'] = GetMessage('CRM_QUOTE_STATUS_MANAGER_APPROVED_STEP_HINT');
+				$info['hint'] = GetMessage('CRM_QUOTE_STATUS_MANAGER_APPROVED_STEP_HINT_MSGVER_1');
 			}
 			elseif($status['STATUS_ID'] === 'DECLAINED')
 			{
@@ -3064,10 +3064,10 @@ class CCrmViewHelper
 		}
 
 		$messages = array(
-			'dialogTitle' => GetMessage('CRM_QUOTE_STATUS_MANAGER_DLG_TTL'),
+			'dialogTitle' => GetMessage('CRM_QUOTE_STATUS_MANAGER_DLG_TTL_MSGVER_1'),
 			'failureTitle' => GetMessage('CRM_QUOTE_STATUS_MANAGER_FAILURE_TTL'),
-			'selectorTitle' => GetMessage('CRM_QUOTE_STATUS_MANAGER_SELECTOR_TTL'),
-			'checkErrorTitle' => GetMessage('CRM_QUOTE_STATUS_MANAGER_CHECK_ERROR_TTL_MSGVER_1'),
+			'selectorTitle' => GetMessage('CRM_QUOTE_STATUS_MANAGER_SELECTOR_TTL_MSGVER_1'),
+			'checkErrorTitle' => GetMessage('CRM_QUOTE_STATUS_MANAGER_CHECK_ERROR_TTL_MSGVER_2'),
 			'checkErrorHelp' => GetMessage('CRM_STAGE_MANAGER_CHECK_ERROR_HELP'),
 			'checkErrorHelpArticleCode' => '8233923'
 		);

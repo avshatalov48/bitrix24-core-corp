@@ -1,11 +1,11 @@
 fieldset.bizproc-item {
-	border: 1px solid #D8D8D8;
+	border: 1px solid var(--bg-separator-secondary);
 	padding: 0 1.5em 1.5em 1em;}
 legend.bizproc-item-legend {
 	padding: 0 1em;
 	margin-left: 2em;
 	font-size: 110%;
-	color: #000000;}
+	color: var(--base0);}
 div.bizproc-item-description {
 	--font-style: italic;
 	margin-top: 0.3em;
@@ -45,7 +45,7 @@ table.bizproc-task-table select
 	box-sizing: border-box;
 }
 span.required {
-	color: red;
+	color: var(--accent-soft-element-red1);
 }
 
 table.bizproc-task-table tr {
@@ -70,8 +70,8 @@ table.bizproc-task-table td:first-child {
 	vertical-align: middle;
 	display: inline-block;
 	padding: 0 0 0 22px;
-	color:#aaa;
-	background-color: #e8f9fe;
+	color:var(--base4);
+	background-color: var(--accent-soft-blue3);
 }
 
 .bp-task-block .webform-field-item-wrap {
@@ -85,7 +85,7 @@ table.bizproc-task-table td:first-child {
 
 .bp-task-block .webform-field-item-wrap del {
 	display: block;
-	background: #e7e6eb;
+	background: var(--base6);
 	position: absolute;
 	z-index: 2;
 	bottom: 0;
@@ -101,7 +101,7 @@ table.bizproc-task-table td:first-child {
 .bp-task-block .webform-field-item-wrap del:after {
 	position: absolute;
 	content: '';
-	background: #fff;
+	background: var(--bg-content-primary);
 	margin-top: -7px;
 	width: 2px;
 	height: 12px;

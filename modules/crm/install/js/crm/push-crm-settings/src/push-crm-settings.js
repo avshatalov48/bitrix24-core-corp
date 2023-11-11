@@ -2,8 +2,9 @@ import { Menu, MenuItem, MenuItemOptions } from "main.popup";
 import { SettingsController, Type as SortType } from "crm.kanban.sort";
 import { Restriction } from "crm.kanban.restriction";
 import { BaseEvent, EventEmitter } from "main.core.events";
-import { Loc, Reflection, Text } from "main.core";
+import { Loc, Reflection, Text, Type } from "main.core";
 import { TodoNotificationSkipMenu } from "crm.activity.todo-notification-skip-menu";
+import { TodoPingSettingsMenu } from "crm.activity.todo-ping-settings-menu";
 import { Params } from "./params";
 import { requireClass, requireClassOrNull, requireStringOrNull } from "./params-handling";
 import { SortController as GridSortController } from "./grid/sort-controller";
@@ -19,6 +20,7 @@ const NOT_CHECKED_CLASS = 'menu-popup-item-none';
 export class PushCrmSettings
 {
 	#entityTypeId: number;
+	#pingSettings: Object;
 	#rootMenu: Menu;
 	#targetItemId: ?string;
 	#kanbanController: ?SettingsController;
@@ -26,6 +28,7 @@ export class PushCrmSettings
 	#gridController: ?GridSortController = null;
 
 	#todoSkipMenu: TodoNotificationSkipMenu;
+	#todoPingSettingsMenu: TodoPingSettingsMenu;
 
 	#isSetSortRequestRunning: boolean = false;
 	#smartActivityNotificationSupported: boolean = false;
@@ -33,15 +36,15 @@ export class PushCrmSettings
 	constructor(params: Params)
 	{
 		this.#entityTypeId = Text.toInteger(params.entityTypeId);
+		this.#pingSettings = Type.isPlainObject(params.pingSettings) ? params.pingSettings : {};
 		this.#smartActivityNotificationSupported = Text.toBoolean(params.smartActivityNotificationSupported);
-
+		
 		if (EntityType && !EntityType.isDefined(this.#entityTypeId))
 		{
 			throw new Error(`Provided entityTypeId is invalid: ${this.#entityTypeId}`);
 		}
 
 		this.#rootMenu = requireClass(params.rootMenu, Menu, 'params.rootMenu');
-
 		this.#targetItemId = requireStringOrNull(params.targetItemId, 'params.targetItemId');
 
 		this.#kanbanController = requireClassOrNull(params.controller, SettingsController, 'params.controller');
@@ -56,6 +59,15 @@ export class PushCrmSettings
 			entityTypeId: this.#entityTypeId,
 			selectedValue: requireStringOrNull(params.todoCreateNotificationSkipPeriod, 'params.todoCreateNotificationSkipPeriod'),
 		});
+
+		if (Object.keys(this.#pingSettings).length > 0)
+		{
+			this.#todoPingSettingsMenu = new TodoPingSettingsMenu({
+				entityTypeId: this.#entityTypeId,
+				settings: this.#pingSettings,
+			});
+		}
+
 
 		this.#bindEvents();
 	}
@@ -122,6 +134,11 @@ export class PushCrmSettings
 		if (this.#shouldShowTodoSkipMenu())
 		{
 			items.push(...this.#todoSkipMenu.getItems());
+		}
+
+		if (this.#shouldShowTodoPingSettingsMenu())
+		{
+			items.push(...this.#todoPingSettingsMenu?.getItems());
 		}
 
 		return items;
@@ -211,5 +228,10 @@ export class PushCrmSettings
 	#shouldShowTodoSkipMenu(): boolean
 	{
 		return this.#smartActivityNotificationSupported;
+	}
+
+	#shouldShowTodoPingSettingsMenu(): boolean
+	{
+		return this.#todoPingSettingsMenu && this.#shouldShowLastActivitySortToggle();
 	}
 }

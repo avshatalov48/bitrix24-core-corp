@@ -77,7 +77,7 @@ jn.define('im/messenger/controller/chat-creator/chat-creator', (require, exports
 		{
 			const userItems = [];
 
-			const recentUserList = clone(this.store.getters['recentModel/getUserList']);
+			const recentUserList = clone(this.store.getters['recentModel/getUserList']());
 			const recentUserListIndex = {};
 			if (Type.isArrayFilled(recentUserList))
 			{
@@ -88,7 +88,7 @@ jn.define('im/messenger/controller/chat-creator/chat-creator', (require, exports
 				});
 			}
 
-			const colleaguesList = clone(this.store.getters['usersModel/getUserList']());
+			const colleaguesList = clone(this.store.getters['usersModel/getList']());
 			if (Type.isArrayFilled(colleaguesList))
 			{
 				colleaguesList.forEach((user) => {

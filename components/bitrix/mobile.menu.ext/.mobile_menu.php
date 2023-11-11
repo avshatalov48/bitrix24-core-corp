@@ -6,7 +6,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 global $USER;
 
 /**
- * @var CAllUser $USER
+ * @var CUser $USER
  */
 
 $allowedFeatures = array();

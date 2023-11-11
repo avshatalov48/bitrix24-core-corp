@@ -20,7 +20,7 @@ $this->IncludeLangFile();
 				<div class="sms-conditions">
 					<strong><?=Loc::getMessage("CRM_SMS_MANAGE_TEXT_1")?></strong><br>
 					<?=Loc::getMessage("CRM_SMS_MANAGE_TEXT_2")?><br>
-					<?=Loc::getMessage("CRM_SMS_MANAGE_TEXT_3")?>
+					<?=Loc::getMessage("CRM_SMS_MANAGE_TEXT_3_MSGVER_1")?>
 				</div>
 			</div>
 			<div class="new-sms-btn-container">

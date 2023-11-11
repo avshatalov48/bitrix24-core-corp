@@ -5,6 +5,8 @@ namespace Bitrix\Crm\Activity\Settings\Section;
 use Bitrix\Crm\Activity\Settings\OptionallyConfigurable;
 use Bitrix\Crm\Integration\UI\EntitySelector\TimelinePingProvider;
 use Bitrix\Crm\Model\ActivityPingOffsetsTable;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\Crm;
 use CCrmActivity;
 
 final class Ping extends Base
@@ -30,7 +32,13 @@ final class Ping extends Base
 			$provider = CCrmActivity::GetProviderById($this->activityData['providerId']);
 			if ($provider !== null)
 			{
-				$offsets = $provider::getDefaultPingOffsets();
+				$categoryId = Container::getInstance()->getFactory($this->activityData['ownerTypeId'])?->getItemCategoryId($this->activityData['ownerId']);
+				$offsets = $provider::getDefaultPingOffsets(
+					[
+						'entityTypeId' => $this->activityData['ownerTypeId'],
+						'categoryId' => (int)($categoryId ?? 0),
+					]
+				);
 			}
 		}
 
@@ -46,6 +54,11 @@ final class Ping extends Base
 
 	public function prepareEntity(OptionallyConfigurable $entity, bool $skipActiveSectionCheck = false): void
 	{
+		if (!Crm::isTimelineToDoCalendarSyncEnabled())
+		{
+			return;
+		}
+
 		if (isset($this->data['selectedItems']) && is_array($this->data['selectedItems']))
 		{
 			$entity->setAdditionalFields([

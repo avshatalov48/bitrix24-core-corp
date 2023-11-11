@@ -1,5 +1,5 @@
 <?php
-$MESS["VOX_START_ACCOUNT_BALANCE"] = "Баланс Битрикс24";
+$MESS["VOX_START_ACCOUNT_BALANCE_MSGVER_1"] = "Телефония Битрикс24";
 $MESS["VOX_START_ACCOUNT_SIP_CONNECTOR"] = "SIP-коннектор";
 $MESS["VOX_START_NO_BALANCE"] = "Баланс доступен в личном кабинете оператора связи";
 $MESS["VOX_START_TOP_UP"] = "Пополнить";
@@ -28,3 +28,4 @@ $MESS["VOX_START_RECORD_LIMIT"] = "Записи звонков:#STRONG_START# #R
 $MESS["VOX_START_SIP_BUY_POPUP_TEXT"] = "You are about to transfer data outside Bitrix24. By pressing Connect and continuing to the SIP Connector service you accept Voximplant #LINK1START#Privacy Policy#LINK1END# and Voximplant #LINK2START#Data Processing Addendum#LINK2END#.";
 $MESS["VOX_START_POPUP_BUTTON_I_AGREE"] = "Согласен";
 $MESS["VOX_START_POPUP_BUTTON_CANCEL"] = "Отменить";
+$MESS["VOX_NOT_BITRIX_BALANCE_HINT"] = "Оплата выполняется на сайте оператора связи ООО \"Фастком\"";

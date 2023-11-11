@@ -5,6 +5,7 @@ use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Helper\FilterRegistry;
 use Bitrix\Tasks\Integration\CRM\UserField;
+use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Util\User;
 
 define('STOP_STATISTICS',    true);
@@ -354,7 +355,7 @@ if (check_bitrix_sessid())
 					{
 						$arFields["DEADLINE"] = $_POST["deadline"] ? $_POST["deadline"] : false;
 					}
-					elseif ($_POST["mode"] == "priority" && in_array($_POST["priority"], array(CTasks::PRIORITY_LOW, CTasks::PRIORITY_AVERAGE, CTasks::PRIORITY_HIGH)))
+					elseif ($_POST["mode"] == "priority" && in_array((int)$_POST["priority"], array_values(Priority::getAll()), true))
 					{
 						$arFields = array("PRIORITY" => $_POST["priority"]);
 					}

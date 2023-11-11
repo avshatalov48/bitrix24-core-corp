@@ -9,8 +9,10 @@ use Bitrix\Catalog\v2\Facade\Repository;
 use Bitrix\Catalog\v2\IoC\ServiceContainer;
 use Bitrix\Catalog\v2\Product\BaseProduct;
 use Bitrix\Catalog\v2\Sku\BaseSku;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Accounting;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
 use Bitrix\Main\Loader;
 use Bitrix\Mobile\Query;
 use Bitrix\Mobile\UI\File;
@@ -20,6 +22,8 @@ Loader::requireModule('catalog');
 
 final class SkuCollectionQuery extends Query
 {
+	private Item $entity;
+
 	private int $variationId;
 
 	private Accounting $accounting;
@@ -30,8 +34,13 @@ final class SkuCollectionQuery extends Query
 
 	private string $currencyId;
 
-	public function __construct(int $variationId, string $currencyId)
+	public function __construct(
+		Item $entity,
+		int $variationId,
+		string $currencyId
+	)
 	{
+		$this->entity = $entity;
 		$this->variationId = $variationId;
 		$this->currencyId = $currencyId;
 		$this->accounting = Container::getInstance()->getAccounting();
@@ -49,6 +58,7 @@ final class SkuCollectionQuery extends Query
 
 		$variations = [];
 
+		$storeData = $this->getStoreData($product);
 		foreach ($product->getSkuCollection() as $sku)
 		{
 			$fields = $sku->getFields();
@@ -71,8 +81,10 @@ final class SkuCollectionQuery extends Query
 				$sku->getFrontImageCollection()->toArray()
 			));
 
-			$variations[$sku->getId()] = [
-				'ID' => $sku->getId(),
+			$skuId = $sku->getId();
+
+			$variationItem = [
+				'ID' => $skuId,
 				'NAME' => $sku->getName(),
 				'GALLERY' => $gallery,
 				'PRICE' => $this->taxCalculator->getFinalPrice(),
@@ -86,6 +98,40 @@ final class SkuCollectionQuery extends Query
 				'EMPTY_PRICE' => empty($basePriceFields['PRICE']),
 				'BARCODE' => $this->findBarcode($sku),
 			];
+
+			if ($this->isAllowedReservation())
+			{
+				$store = $storeData[$skuId]['INITIAL_STORE'] ?? null;
+				$storeId = $store ? $store['ID'] : null;
+				$storeAmount = $storeData[$skuId]['STORES'][$storeId]['AMOUNT'] ?? null;
+				$storeAvailableAmount =
+					isset($storeAmount) && isset($storeData[$skuId]['STORES'][$storeId]['QUANTITY_RESERVED'])
+						? $storeAmount - $storeData[$skuId]['STORES'][$storeId]['QUANTITY_RESERVED']
+						: null
+				;
+				$shouldSyncReserveQuantity = ReservationService::getInstance()->isReserveEqualProductQuantity();
+
+				$variationItem = array_merge(
+					$variationItem,
+					[
+						'HAS_STORE_ACCESS' => true,
+						'STORE_ID' => $store ? $store['ID'] : null,
+						'STORE_NAME' => $store ? $store['TITLE'] : null,
+						'STORE_AMOUNT' => $storeAmount,
+						'STORE_AVAILABLE_AMOUNT' => $storeAvailableAmount,
+						'STORES' =>
+							isset($storeData[$skuId]['STORES'])
+								? array_values($storeData[$skuId]['STORES'])
+								: []
+						,
+						'SHOULD_SYNC_RESERVE_QUANTITY' => $shouldSyncReserveQuantity,
+						'ROW_RESERVED' => 0,
+						'DEDUCTED_QUANTITY' => 0,
+					]
+				);
+			}
+
+			$variations[$skuId] = $variationItem;
 		}
 
 		return [
@@ -119,5 +165,24 @@ final class SkuCollectionQuery extends Query
 		}
 
 		return $barcode;
+	}
+
+	private function getStoreData(BaseProduct $product): array
+	{
+		$skuIds = [];
+		foreach ($product->getSkuCollection() as $sku)
+		{
+			$skuIds[] = $sku->getId();
+		}
+
+		return StoreDataProvider::provideStoreData($skuIds);
+	}
+
+	private function isAllowedReservation(): bool
+	{
+		return \CCrmSaleHelper::isAllowedReservation(
+			$this->entity->getEntityTypeId(),
+			$this->entity->getCategoryId() ?? 0
+		);
 	}
 }

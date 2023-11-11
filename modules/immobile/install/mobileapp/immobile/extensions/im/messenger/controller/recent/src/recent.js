@@ -115,6 +115,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 			this.view
 				.on(EventType.recent.itemSelected, this.onItemSelected.bind(this))
 				.on(EventType.recent.searchShow, this.onShowSearchDialog.bind(this))
+				.on(EventType.recent.searchHide, this.onHideSearchDialog.bind(this))
 				.on(EventType.recent.loadNextPage, this.onLoadNextPage.bind(this))
 				.on(EventType.recent.itemAction, this.onItemAction.bind(this))
 				.on(EventType.recent.createChat, this.onCreateChat.bind(this))
@@ -171,6 +172,11 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 			MessengerEmitter.emit(EventType.messenger.showSearch);
 		}
 
+		onHideSearchDialog()
+		{
+			MessengerEmitter.emit(EventType.messenger.hideSearch);
+		}
+
 		onLoadNextPage()
 		{
 			const canLoadNextPage = !this.pageNavigation.isPageLoading && this.pageNavigation.hasNextPage;
@@ -197,11 +203,19 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 
 		onReadAll()
 		{
-			DialogRest.readAllMessages()
+			this.store.dispatch('dialoguesModel/clearAllCounters')
+				.then(() => {
+					return this.store.dispatch('recentModel/clearAllCounters');
+				})
+				.then(() => {
+					this.renderer.render();
+
+					Counters.update();
+
+					return DialogRest.readAllMessages();
+				})
 				.then((result) => {
 					Logger.log('DialogRest.readAllMessages result:', result);
-
-					this.store.dispatch('recentModel/clearAllCounters');
 				})
 				.catch((error) => {
 					Logger.error('DialogRest.readAllMessages error:', error);
@@ -413,9 +427,9 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 		drawItems(mutation, state)
 		{
 			const recentList = [];
-			const payload = clone(mutation.payload);
+			const recentItemList = clone(mutation.payload.data.recentItemList);
 
-			payload.forEach((item) => recentList.push(item.fields));
+			recentItemList.forEach((item) => recentList.push(item.fields));
 
 			this.renderer.do('add', recentList);
 			if (!this.pageNavigation.hasNextPage && this.view.isLoaderShown)
@@ -430,7 +444,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 		{
 			const recentList = [];
 
-			mutation.payload.forEach((item) => {
+			mutation.payload.data.recentItemList.forEach((item) => {
 				recentList.push(clone(this.store.state.recentModel.collection[item.index]));
 			});
 
@@ -445,9 +459,9 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 
 		deleteItem(mutation, state)
 		{
-			this.renderer.removeFromQueue(mutation.payload.id);
+			this.renderer.removeFromQueue(mutation.payload.data.id);
 
-			this.view.removeItem({ 'params.id': mutation.payload.id });
+			this.view.removeItem({ 'params.id': mutation.payload.data.id });
 			if (!this.pageNavigation.hasNextPage && this.view.isLoaderShown)
 			{
 				this.view.hideLoader();
@@ -469,34 +483,73 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 				{
 					result.users.push(item.user);
 				}
+				let dialogItem = {};
 
 				if (item.chat)
 				{
-					result.dialogues.push({
+					dialogItem = {
 						...item.chat,
+						counter: item.counter,
 						dialogId: item.id,
-					});
+					};
+					if (item.message)
+					{
+						dialogItem.lastMessageId = item.message.id;
+					}
 				}
 
-				if (item.user)
+				if (item.type === 'user' && item.user)
 				{
-					result.dialogues.push({
+					dialogItem = {
 						dialogId: item.user.id,
 						avatar: item.user.avatar,
 						color: item.user.color,
 						name: item.user.name,
 						type: DialogType.user,
-					});
+						counter: item.counter,
+					};
+					if (item.message)
+					{
+						dialogItem.lastMessageId = item.message.id;
+					}
 				}
+				dialogItem = this.invalidateOutdatedDialogData(dialogItem);
+
+				result.dialogues.push(dialogItem);
 
 				result.recent.push({
 					...item,
 					avatar: item.avatar.url,
 					color: item.avatar.color,
+					counter: dialogItem.counter,
 				});
 			});
 
 			return result;
+		}
+
+		/**
+		 * @param {Partial<DialoguesModelState>} dialogItem
+		 * @return {Partial<DialoguesModelState>}
+		 */
+		invalidateOutdatedDialogData(dialogItem)
+		{
+			const existingItem = this.store.getters['dialoguesModel/getById'](dialogItem.dialogId);
+
+			if (!existingItem)
+			{
+				return dialogItem;
+			}
+
+			if (dialogItem.lastMessageId && dialogItem.counter && dialogItem.lastMessageId <= existingItem.lastMessageId)
+			{
+				return {
+					...dialogItem,
+					counter: existingItem.counter,
+				};
+			}
+
+			return dialogItem;
 		}
 
 		saveRecentItems(recentItems)
@@ -513,7 +566,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 				modelData.recent.forEach((item) => recentIndex.push(item.id.toString()));
 
 				const idListForDeleteFromCache = [];
-				this.store.getters['recentModel/getCollection']
+				this.store.getters['recentModel/getCollection']()
 					.forEach((item) => {
 						if (!recentIndex.includes(item.id.toString()))
 						{
@@ -557,7 +610,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 
 		enableSwipeHelperPromo()
 		{
-			const firstItem = clone(this.store.getters['recentModel/getCollection'][0]);
+			const firstItem = clone(this.store.getters['recentModel/getCollection']()[0]);
 			if (!firstItem)
 			{
 				return;
@@ -571,7 +624,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 
 		checkEmpty()
 		{
-			if (this.store.getters['recentModel/isEmpty'])
+			if (this.store.getters['recentModel/isEmpty']())
 			{
 				this.view.showWelcomeScreen();
 
@@ -598,7 +651,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 		updateUserStatuses()
 		{
 			const timeStart = new Date();
-			const recentDialogIdList = Object.keys(this.store.getters['recentModel/getCollection']);
+			const recentDialogIdList = Object.keys(this.store.getters['recentModel/getCollection']());
 			const listUpdate = [];
 
 			recentDialogIdList.forEach((dialogId) => {

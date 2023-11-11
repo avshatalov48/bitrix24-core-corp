@@ -241,7 +241,7 @@ if (typeof BX.BizProcMobile === 'undefined')
 		if (displayedUser['PHOTO_SRC'])
 		{
 			scope.onload = null;
-			scope.src = displayedUser['PHOTO_SRC'];
+			scope.src = encodeURI(displayedUser['PHOTO_SRC']);
 		}
 	};
 

@@ -85,7 +85,10 @@ jn.define('tasks/layout/task/fields/project', (require, exports, module) => {
 							const resultGroupData = (
 								resultGroupId > 0 ? Project.convertGroupDataFromFieldToTask(groupData[0]) : null
 							);
-							this.setState({ resultGroupId, resultGroupData });
+							this.setState({
+								groupId: resultGroupId,
+								groupData: resultGroupData,
+							});
 							this.props.onChange(resultGroupId, resultGroupData);
 						}
 					},

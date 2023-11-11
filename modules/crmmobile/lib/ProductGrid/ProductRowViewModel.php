@@ -32,6 +32,16 @@ final class ProductRowViewModel
 
 	public string $barcode = '';
 
+	public array $stores = [];
+	public bool $hasStoreAccess = false;
+	public ?string $storeName = null;
+	public ?float $storeAmount = null;
+	public ?float $storeAvailableAmount = null;
+	public ?float $inputReserveQuantity = null;
+	public ?float $rowReserved = null;
+	public ?float $deductedQuantity = null;
+	public bool $shouldSyncReserveQuantity = false;
+
 	public int $type = self::TYPE_PRODUCT;
 
 	private string $uniqId;
@@ -84,7 +94,7 @@ final class ProductRowViewModel
 		{
 			if ($source['DATE_RESERVE_END'] instanceof Date)
 			{
-				$source['DATE_RESERVE_END'] = $source['DATE_RESERVE_END']->toString();
+				$source['DATE_RESERVE_END'] = $source['DATE_RESERVE_END']->getTimestamp() - \CTimeZone::GetOffset();
 			}
 		}
 
@@ -100,6 +110,15 @@ final class ProductRowViewModel
 			'BASKET_ITEM_FIELDS' => $this->basketItemFields,
 			'BARCODE' => $this->barcode,
 			'TYPE' => $this->type,
+			'STORES' => $this->stores,
+			'HAS_STORE_ACCESS' => $this->hasStoreAccess,
+			'STORE_NAME' => $this->storeName,
+			'STORE_AMOUNT' => $this->storeAmount,
+			'STORE_AVAILABLE_AMOUNT' => $this->storeAvailableAmount,
+			'INPUT_RESERVE_QUANTITY' => $this->inputReserveQuantity,
+			'ROW_RESERVED' => $this->rowReserved,
+			'DEDUCTED_QUANTITY' => $this->deductedQuantity,
+			'SHOULD_SYNC_RESERVE_QUANTITY' => $this->shouldSyncReserveQuantity,
 		]);
 	}
 }

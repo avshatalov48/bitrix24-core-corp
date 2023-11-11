@@ -72,7 +72,7 @@ jn.define('im/messenger/lib/ui/base/avatar', (require, exports, module) => {
 				this.state.showImageAvatar
 					? Image({
 						style: style.icon,
-						uri: this.props.uri,
+						uri: encodeURI(this.props.uri),
 						svg: this.props.svg,
 						onFailure: () => {
 							this.setState({ showImageAvatar: false });

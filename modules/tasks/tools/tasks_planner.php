@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Tasks\Internals\Task\Status;
+
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 
 
@@ -40,14 +43,14 @@ if (check_bitrix_sessid() && CModule::IncludeModule('tasks'))
 				"SITE_ID" => $site_id,
 				"FILTER" => array(
 					'DOER' => $USER->GetID(),
-					'STATUS' => array(
+					'STATUS' => [
 						-2,
 						-1,
-						CTasks::STATE_NEW,
-						CTasks::STATE_PENDING,
-						CTasks::STATE_IN_PROGRESS,
-						CTasks::STATE_DEFERRED
-					)
+						Status::NEW,
+						Status::PENDING,
+						Status::IN_PROGRESS,
+						Status::DEFERRED,
+					],
 				),
 				"SELECT" => array('ID', 'TITLE', 'STATUS'),
 				'HIDE_ADD_REMOVE_CONTROLS' => 'Y'

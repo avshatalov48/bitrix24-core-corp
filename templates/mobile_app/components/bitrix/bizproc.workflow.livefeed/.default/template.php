@@ -58,7 +58,7 @@ foreach ($arResult['TASKS']['RUNNING'] as $task)
 						$control['NAME'] => $control['VALUE'],
 					)));
 					?>
-					<a href="javascript:void(0)" data-task="<?=$props?>" onclick="return BX.BizProcMobile.doTask(JSON.parse(this.getAttribute('data-task')), BX.BizProcMobile.loadLogMessageCallback, true)" class="webform-small-button bp-small-button webform-small-button-<?=$class?>">
+					<a href="javascript:void(0)" data-task="<?=$props?>" onclick="return BX.BizProcMobile.doTask(JSON.parse(this.getAttribute('data-task')), BX.BizProcMobile.loadLogMessageCallback, true)" class="webform-small-button bp-small-button webform-small-button-<?=$class?> mobile-small-button-<?=$class?>">
 						<span class="bp-button-icon"></span>
 						<span class="bp-button-text"><?=$control['TEXT']?></span>
 					</a>

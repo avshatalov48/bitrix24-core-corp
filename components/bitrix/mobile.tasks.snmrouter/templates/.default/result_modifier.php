@@ -7,7 +7,6 @@
  */
 \Bitrix\Main\Page\Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/tasks/logic.js');
 $APPLICATION->AddHeadString('<link href="'.CUtil::GetAdditionalFileURL($this->getFolder().'/style.css').'" type="text/css" rel="stylesheet" />');
-\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 ?>
 <script>
 BX.debugEnable(true);

@@ -11,6 +11,10 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 	const { getActionChangeCrmMode } = require('crm/entity-actions/change-crm-mode');
 	const { getSmartActivityMenuItem } = require('crm/entity-detail/component/smart-activity-menu-item');
 	const { get } = require('utils/object');
+	const { ListItemType, ListItemsFactory } = require('crm/simple-list/items');
+
+	const PLUS_ONE_ACTION = 'plus';
+	const MINUS_ONE_ACTION = 'minus';
 
 	/**
 	 * @class KanbanTab
@@ -25,6 +29,10 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			this.setCounterFilter = this.setCounterFilter.bind(this);
 			this.initCategoryCounters = this.initCategoryCounters.bind(this);
 			this.onBeforeReload = this.onBeforeReloadHandler.bind(this);
+			this.onItemMovedHandler = this.handleOnItemMoved.bind(this);
+			this.onItemDeletedHandler = this.handleOnItemDeleted.bind(this);
+			this.onItemUpdatedHandler = this.handleOnItemUpdated.bind(this);
+			this.onItemChangedCategoryHandler = this.handleOnItemChangedCategory.bind(this);
 
 			this.toolbarFactory = new ToolbarFactory();
 		}
@@ -56,6 +64,10 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 		componentDidMount()
 		{
 			BX.addCustomEvent('Crm.Activity.Todo::onChangeNotifications', this.setSmartActivityStatus);
+			BX.addCustomEvent('UI.SimpleList::onUpdateItem', this.onItemUpdatedHandler);
+			BX.addCustomEvent('UI.SimpleList::onDeleteItem', this.onItemDeletedHandler);
+			BX.addCustomEvent('UI.Kanban::onItemMoved', this.onItemMovedHandler);
+			BX.addCustomEvent('Crm.Item::onChangePipeline', this.onItemChangedCategoryHandler);
 
 			super.componentDidMount();
 		}
@@ -65,6 +77,10 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			super.componentWillUnmount();
 
 			BX.removeCustomEvent('Crm.Activity.Todo::onChangeNotifications', this.setSmartActivityStatus);
+			BX.removeCustomEvent('UI.SimpleList::onUpdateItem', this.onItemUpdatedHandler);
+			BX.removeCustomEvent('UI.SimpleList::onDeleteItem', this.onItemDeletedHandler);
+			BX.removeCustomEvent('UI.Kanban::onItemMoved', this.onItemMovedHandler);
+			BX.removeCustomEvent('Crm.Item::onChangePipeline', this.onItemChangedCategoryHandler);
 		}
 
 		render()
@@ -99,6 +115,16 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			const entityType = this.getCurrentEntityType();
 
 			return new UI.Kanban({
+				toolbar: {
+					enabled: this.toolbarFactory.has(this.entityTypeName),
+					componentClass: this.toolbarFactory.get(this.entityTypeName),
+					props: {
+						entityTypeName: this.entityTypeName,
+						entityTypeId: this.props.entityTypeId,
+						filterParams: this.getFilterParams(),
+						showSum: entityType ? entityType.isLinkWithProductsEnabled : false,
+					},
+				},
 				entityTypeName: this.entityTypeName,
 				entityTypeId: this.props.entityTypeId,
 				actions: this.props.actions,
@@ -116,6 +142,8 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				onNotViewableHandler: this.onNotViewable,
 				onPanListHandler: this.props.onPanList || null,
 				initCountersHandler: this.initCategoryCounters,
+				itemType: ListItemType.CRM_ENTITY,
+				itemFactory: ListItemsFactory,
 				itemActions: this.getItemActions(),
 				itemParams: {
 					isClientEnabled: this.isClientEnabled(),
@@ -128,10 +156,6 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				cacheName: this.getCacheName(),
 				getEmptyListComponent: this.getEmptyListComponent.bind(this),
 				onBeforeReload: this.onBeforeReload,
-				toolbarFactory: this.toolbarFactory,
-				toolbarParams: {
-					showSum: entityType ? entityType.isLinkWithProductsEnabled : false,
-				},
 				config,
 				needInitMenu: this.props.needInitMenu,
 				ref: (ref) => {
@@ -455,6 +479,97 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				reload: false,
 				animate: !this.getCurrentStatefulList().getSimpleList().shouldShowReloadListNotification(),
 			};
+		}
+
+		handleOnItemUpdated(params)
+		{
+			const oldAmount = params.oldItem.data ? params.oldItem.data.price : 0;
+			const amount = params.item.data.price;
+
+			if (oldAmount === amount)
+			{
+				return;
+			}
+
+			const columnId = params.item.columnId;
+
+			this.modifyCountersByColumnId(PLUS_ONE_ACTION, columnId, amount, 0);
+		}
+
+		handleOnItemDeleted(params)
+		{
+			const oldAmount = params.oldItem.data ? params.oldItem.data.price : 0;
+			const oldColumnId = params.oldItem.data.columnId;
+
+			this.modifyCountersByColumnId(MINUS_ONE_ACTION, oldColumnId, oldAmount);
+		}
+
+		handleOnItemMoved(params)
+		{
+			const oldColumnId = params.oldItem.data.columnId;
+			const columnId = params.item.data.columnId;
+
+			if (oldColumnId === columnId)
+			{
+				return;
+			}
+
+			const amount = params.item.data.price;
+			this.modifyCountersByColumnId(PLUS_ONE_ACTION, columnId, amount);
+			this.modifyCountersByColumnId(MINUS_ONE_ACTION, oldColumnId, amount);
+
+			this.blinkItemListView(params.item.id);
+		}
+
+		handleOnItemChangedCategory(params)
+		{
+			const statefulList = this.getCurrentStatefulList();
+			if (!statefulList)
+			{
+				return;
+			}
+
+			const { ids = [] } = params;
+
+			ids.forEach((id) => {
+				const item = statefulList.getItem(id);
+				if (item)
+				{
+					this.modifyCountersByColumnId(MINUS_ONE_ACTION, item.data.columnId, item.data.price);
+				}
+			});
+		}
+
+		modifyCountersByColumnId(action, columnId, amount = 0, count = 1)
+		{
+			if (action !== PLUS_ONE_ACTION && action !== MINUS_ONE_ACTION)
+			{
+				throw new Error(`ModifyCounters action type ${action} is not known`);
+			}
+
+			const category = this.getCategoryFromCategoryStorage();
+			if (!category)
+			{
+				return;
+			}
+
+			const { processStages = [], successStages = [], failedStages = [] } = category;
+			const stages = [...processStages, ...successStages, ...failedStages];
+
+			const stage = stages.find((item) => item.statusId === columnId);
+			if (!stage)
+			{
+				return;
+			}
+
+			const stageCounters = CategoryCountersStoreManager.getStages().find((item) => item.id === stage.id);
+
+			const data = {
+				total: (action === PLUS_ONE_ACTION ? stageCounters.total + amount : stageCounters.total - amount),
+				count: (action === PLUS_ONE_ACTION ? stageCounters.count + count : stageCounters.count - count),
+			};
+
+			CategoryCountersStoreManager.updateStage(stage.id, data);
 		}
 	}
 

@@ -12,6 +12,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Tasks\Access\Rule\Traits\SubordinateTrait;
+use Bitrix\Tasks\Internals\Task\Status;
 
 class TaskCompleteRule extends \Bitrix\Main\Access\Rule\AbstractRule
 {
@@ -36,7 +37,7 @@ class TaskCompleteRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return true;
 		}
 
-		if ($task->getStatus() === \CTasks::STATE_SUPPOSEDLY_COMPLETED)
+		if ($task->getStatus() === Status::SUPPOSEDLY_COMPLETED)
 		{
 			if (
 				$task->isMember($this->user->getUserId(), RoleDictionary::ROLE_DIRECTOR)

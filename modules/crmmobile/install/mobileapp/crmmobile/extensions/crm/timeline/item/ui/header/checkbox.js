@@ -16,6 +16,14 @@ jn.define('crm/timeline/item/ui/header/checkbox', (require, exports, module) => 
 			this.state.checked = props.checked;
 		}
 
+		/**
+		 * @public
+		 */
+		uncheck()
+		{
+			this.setState({ checked: false })
+		}
+
 		render()
 		{
 			return View(

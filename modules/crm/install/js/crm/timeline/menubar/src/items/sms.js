@@ -84,8 +84,7 @@ export default class Sms extends WithEditor
 				<div class="crm-entity-stream-content-sms-conditions-text">
 					<strong>${Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_1')}</strong><br>
 					${Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_2')}<br>
-					${Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_3')}
-					<!--<span class="crm-entity-stream-content-sms-conditions-helper-icon"></span>-->
+					${Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_3_MSGVER_1')}
 				</div>
 			</div>
 		</div>

@@ -16,11 +16,11 @@ class ItemListComponent
 	entityTypeName: string;
 	reloadGridTimeoutId: number;
 	exportPopups: Object;
-	#isUniversalActivityScenarioEnabled: boolean = false;
 	#isIframe: boolean = false;
 	#smartActivityNotificationSupported: boolean = false;
 	// is the list is embedded in another entity detail tab
 	#isEmbedded: boolean = false;
+	#pingSettings: Object;
 
 	constructor(params): void
 	{
@@ -64,10 +64,6 @@ class ItemListComponent
 			{
 				this.errorTextContainer = params.errorTextContainer;
 			}
-			if (Type.isBoolean(params.isUniversalActivityScenarioEnabled))
-			{
-				this.#isUniversalActivityScenarioEnabled = params.isUniversalActivityScenarioEnabled;
-			}
 			if (Type.isBoolean(params.isIframe))
 			{
 				this.#isIframe = params.isIframe;
@@ -75,6 +71,10 @@ class ItemListComponent
 			if (Type.isBoolean(params.isEmbedded))
 			{
 				this.#isEmbedded = params.isEmbedded;
+			}
+			if (Type.isPlainObject(params.pingSettings))
+			{
+				this.#pingSettings = params.pingSettings;
 			}
 		}
 
@@ -188,7 +188,7 @@ class ItemListComponent
 
 	#initPushCrmSettings(): void
 	{
-		if (!this.#isUniversalActivityScenarioEnabled || this.#isIframe || this.#isEmbedded)
+		if (this.#isIframe || this.#isEmbedded)
 		{
 			return;
 		}
@@ -197,6 +197,7 @@ class ItemListComponent
 		if (!toolbar)
 		{
 			console.error('BX.Crm.ToolbarComponent not found');
+
 			return;
 		}
 
@@ -205,6 +206,7 @@ class ItemListComponent
 			new PushCrmSettings({
 				smartActivityNotificationSupported: this.#smartActivityNotificationSupported,
 				entityTypeId: this.entityTypeId,
+				pingSettings: this.#pingSettings,
 				rootMenu: toolbar.getSettingsButton()?.getMenuWindow(),
 				grid: this.grid,
 			});

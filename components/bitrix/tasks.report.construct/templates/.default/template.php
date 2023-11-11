@@ -1,4 +1,9 @@
 <?php
+
+use Bitrix\Tasks\Internals\Task\MetaStatus;
+use Bitrix\Tasks\Internals\Task\Priority;
+use Bitrix\Tasks\Internals\Task\Status;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -6,23 +11,23 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 $arResult['enumValues'] = [
 	'STATUS' => [
-		CTasks::STATE_PENDING,
-		CTasks::STATE_IN_PROGRESS,
-		CTasks::STATE_SUPPOSEDLY_COMPLETED,
-		CTasks::STATE_COMPLETED,
-		CTasks::STATE_DEFERRED,
+		Status::PENDING,
+		Status::IN_PROGRESS,
+		Status::SUPPOSEDLY_COMPLETED,
+		Status::COMPLETED,
+		Status::DEFERRED,
 	],
 	'STATUS_PSEUDO' => [
-		CTasks::STATE_PENDING,
-		CTasks::STATE_IN_PROGRESS,
-		CTasks::STATE_SUPPOSEDLY_COMPLETED,
-		CTasks::STATE_COMPLETED,
-		CTasks::STATE_DEFERRED,
-		CTasks::METASTATE_EXPIRED,
+		Status::PENDING,
+		Status::IN_PROGRESS,
+		Status::SUPPOSEDLY_COMPLETED,
+		Status::COMPLETED,
+		Status::DEFERRED,
+		MetaStatus::EXPIRED,
 	],
 	'PRIORITY' => [
-		CTasks::PRIORITY_AVERAGE,
-		CTasks::PRIORITY_HIGH,
+		Priority::AVERAGE,
+		Priority::HIGH,
 	],
 ];
 

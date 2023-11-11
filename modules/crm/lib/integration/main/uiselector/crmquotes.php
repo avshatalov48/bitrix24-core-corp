@@ -64,7 +64,7 @@ class CrmQuotes extends CrmBase
 			'ADDITIONAL_INFO' => [
 				'GROUPS_LIST' => [
 					'crmquotes' => [
-						'TITLE' => Loc::getMessage('MAIN_UI_SELECTOR_TITLE_CRMQUOTES'),
+						'TITLE' => Loc::getMessage('MAIN_UI_SELECTOR_TITLE_CRMQUOTES_MSGVER_1'),
 						'TYPE_LIST' => [ $entityType ],
 						'DESC_LESS_MODE' => 'N',
 						'SORT' => 80,
@@ -162,7 +162,7 @@ class CrmQuotes extends CrmBase
 			$result = [
 				[
 					'id' => 'quotes',
-					'name' => Loc::getMessage('MAIN_UI_SELECTOR_TAB_CRMQUOTES'),
+					'name' => Loc::getMessage('MAIN_UI_SELECTOR_TAB_CRMQUOTES_MSGVER_1'),
 					'sort' => 80,
 				],
 			];

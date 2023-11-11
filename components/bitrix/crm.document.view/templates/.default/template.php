@@ -38,6 +38,15 @@ $defaultDownloadFormat = in_array(mb_strtolower($downloadButtonOptions['format']
 	: 'pdf';
 
 $isSigningEnabledInCurrentTariff = (bool)($arResult['isSigningEnabledInCurrentTariff'] ?? false);
+
+if ($isSigningEnabledInCurrentTariff)
+{
+	Extension::load([
+		'sign.v2.ui.tokens',
+		'sign.v2.wizard',
+	]);
+}
+
 $APPLICATION->IncludeComponent("bitrix:bitrix24.limit.lock", "", array());
 
 $renderRequisiteSection = function(?string $entityName, array $data): void {

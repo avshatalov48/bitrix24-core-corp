@@ -15,7 +15,7 @@
 		globalEvents,
 		onEntityModelReady,
 		menuProvider,
-		ahaMomentsManager,
+		AhaMomentsManager,
 	} = require('crm/entity-detail/component');
 
 	const { DetailToolbarFactory } = require('crm/entity-detail/toolbar');
@@ -30,7 +30,7 @@
 		.setRightButtonsProvider(rightButtonsProvider)
 		.setAdditionalElementsProvider(additionalButtonProvider)
 		.setFloatingButtonProvider(floatingButtonProvider)
-		.setAhaMomentsManager(ahaMomentsManager)
+		.setAhaMomentsManager(AhaMomentsManager)
 		.enableFloatingButton(true)
 		.setAvailableTabsHandler(setAvailableTabs)
 		.setAjaxErrorHandler(ajaxErrorHandler)

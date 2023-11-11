@@ -88,7 +88,7 @@ class Quote extends Factory
 					'numeratorIdSettings' => 'QUOTE_ID',
 					'eventName' => 'OnBeforeCrmQuoteNumberSet',
 					'tableClassName' => $this->getDataClass(),
-					'fieldValueNotUniqueErrorMessage' => Loc::getMessage('CRM_SERVICE_FACTORY_QUOTE_NUMBER_NOT_UNIQUE_ERROR'),
+					'fieldValueNotUniqueErrorMessage' => Loc::getMessage('CRM_SERVICE_FACTORY_QUOTE_NUMBER_NOT_UNIQUE_ERROR_MSGVER_1'),
 				],
 			],
 			Item::FIELD_NAME_TITLE => [
@@ -427,7 +427,7 @@ class Quote extends Factory
 				Operation::ACTION_BEFORE_SAVE,
 				new Operation\Action\Compatible\SendEvent\WithCancel\Update(
 					'OnBeforeCrmQuoteAdd',
-					'CRM_QUOTE_CREATION_CANCELED'
+					'CRM_QUOTE_CREATION_CANCELED_MSGVER_1'
 				)
 			)
 			->addAction(
@@ -454,7 +454,7 @@ class Quote extends Factory
 				Operation::ACTION_BEFORE_SAVE,
 				new Operation\Action\Compatible\SendEvent\WithCancel\Update(
 					'OnBeforeCrmQuoteUpdate',
-					'CRM_QUOTE_UPDATE_CANCELED'
+					'CRM_QUOTE_UPDATE_CANCELED_MSGVER_1'
 				)
 			)
 			->addAction(

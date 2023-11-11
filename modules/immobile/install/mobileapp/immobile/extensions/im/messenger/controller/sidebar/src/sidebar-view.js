@@ -5,7 +5,15 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 	const { Logger } = require('im/messenger/lib/logger');
 	const { Avatar } = require('im/messenger/lib/ui/base/avatar');
 	const { SidebarFriendlyDate } = require('im/messenger/controller/sidebar/friendly-date');
+	const { SidebarProfileBtn } = require('im/messenger/controller/sidebar/sidebar-profile-btn');
+	const { SidebarTabView } = require('im/messenger/controller/sidebar/tabs/tab-view');
+	const { SidebarProfileUserCounter } = require('im/messenger/controller/sidebar/sidebar-profile-user-counter');
+	const { Type } = require('type');
 
+	/**
+	 * @class SidebarView
+	 * @typedef {LayoutComponent<SidebarViewProps, SidebarViewState>} SidebarView
+	 */
 	class SidebarView extends LayoutComponent
 	{
 		/**
@@ -17,12 +25,36 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 			super(props);
 			this.state = {
 				userData: props.userData,
-				dialogData: props.dialogData,
-				buttonElements: props.buttonElements,
-				isVisibleProfile: true,
 			};
 
-			this.onPanTabView = this.onPanTabView.bind(this);
+			this.setRestService();
+		}
+
+		setRestService()
+		{
+			this.sidebarRestServices = this.props.restService;
+		}
+
+		/**
+		 * @desc Get users department name
+		 * @param {string} departmentName
+		 * @return {string|null}
+		 */
+		getUserDepartmentName(departmentName)
+		{
+			if (Type.isBoolean(departmentName) || Type.isUndefined(departmentName) || departmentName.length <= 1)
+			{
+				this.sidebarRestServices.getUserDepartment().then((departmentNameRes) => {
+					const newState = { ...this.state.userData, departmentName: departmentNameRes };
+					this.setState({ userData: newState });
+				}).catch((err) => {
+					Logger.error(err);
+				});
+
+				return null;
+			}
+
+			return departmentName;
 		}
 
 		render()
@@ -43,45 +75,17 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 
 		renderProfile()
 		{
-			const heightOptions = this.state.isVisibleProfile ? {} : { height: 0, maxHeight: 0 };
-
 			return View(
 				{
 					style: {
 						justifyContent: 'flex-start',
 						alignItems: 'center',
 						flexDirection: 'column',
-						...heightOptions,
-					},
-					ref: (ref) => {
-						this.profileView = ref;
 					},
 				},
 				this.renderInfoBlock(),
 				this.renderButtonsBlock(),
 			);
-		}
-
-		animateProfile()
-		{
-			const heightOptions = this.state.isVisibleProfile
-				? { height: 0, maxHeight: 0 }
-				: {
-					height: 260, // FIXME need set the real value height by device
-					maxHeight: 280,
-				};
-
-			const animator = this.profileView.animate(
-				{
-					duration: 300,
-					option: 'linear',
-					...heightOptions,
-				},
-				() => {
-					this.setState({ isVisibleProfile: !this.state.isVisibleProfile });
-				},
-			);
-			animator.start();
 		}
 
 		renderInfoBlock()
@@ -116,6 +120,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 						flexDirection: 'column',
 						justifyContent: 'flex-end',
 					},
+					onClick: () => this.props.callbacks.onClickInfoBLock(),
 				},
 				new Avatar({
 					text: this.props.headData.title,
@@ -143,7 +148,6 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 						flexDirection: 'row',
 						alignSelf: 'flex-end',
 					},
-					onClick: () => this.props.callbacks.onClickInfoBLock(),
 				},
 				Image({
 					style: {
@@ -179,6 +183,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 					numberOfLines: 2,
 					ellipsize: 'end',
 					text: this.props.headData.title,
+					testId: 'SIDEBAR_TITLE',
 				}),
 			);
 		}
@@ -211,6 +216,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 					numberOfLines: 1,
 					ellipsize: 'end',
 					text: this.props.headData.desc,
+					testId: 'SIDEBAR_DESCRIPTION',
 				}),
 				this.renderShevronImage(),
 			);
@@ -243,6 +249,8 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 				return null;
 			}
 
+			const departmentName = this.getUserDepartmentName(this.state.userData.departmentName);
+
 			const styleText = {
 				color: '#959CA4',
 				fontSize: 14,
@@ -251,51 +259,44 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 				textAlign: 'center',
 			};
 
+			const departmentView = departmentName
+				? Text({
+					style: styleText,
+					numberOfLines: 1,
+					ellipsize: 'end',
+					text: departmentName,
+				})
+				: ShimmerView(
+					{
+						animating: true,
+						style: {
+							marginTop: 7,
+							marginBottom: 4,
+						},
+					},
+					View({
+						style: {
+							width: 80,
+							height: 8,
+							backgroundColor: '#A8ADB4',
+							borderRadius: 2,
+						},
+					}),
+				);
+
 			return View(
 				{
 					style: {
 						flexDirection: 'row',
 					},
 				},
-				this.state.userData.department
-					? Text({
-						style: styleText,
-						numberOfLines: 1,
-						ellipsize: 'end',
-						text: this.state.userData.department,
-					})
-					: ShimmerView(
-						{
-							animating: true,
-							style: {
-								marginTop: 7,
-								marginBottom: 4,
-							},
-						},
-						View({
-							style: {
-								width: 80,
-								height: 8,
-								backgroundColor: '#A8ADB4',
-								borderRadius: 2,
-							},
-						}),
-					),
+				departmentView,
 			);
 		}
 
 		renderDialogUserCounter()
 		{
-			return Text({
-				style: {
-					color: '#959CA4',
-					fontSize: 14,
-					fontWeight: 400,
-					textStyle: 'normal',
-					textAlign: 'center',
-				},
-				text: this.state.dialogData.userCounterLocal,
-			});
+			return new SidebarProfileUserCounter({ dialogId: this.props.dialogId });
 		}
 
 		renderUserLastTime()
@@ -310,7 +311,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 				textAlign: 'center',
 			};
 
-			if (!userData.lastActivityDate)
+			if (Type.isUndefined(userData.lastActivityDate) || Type.isNull(userData.lastActivityDate))
 			{
 				return null;
 			}
@@ -335,34 +336,25 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 
 		renderButtonsBlock()
 		{
-			return View(
-				{
-					style: {
-						marginTop: 16,
-						marginHorizontal: 14,
-						marginBottom: 12,
-						flexDirection: 'row',
-					},
-				},
-				...this.state.buttonElements,
-			);
+			return new SidebarProfileBtn({ buttonElements: this.props.buttonElements });
 		}
 
 		renderTabs()
 		{
-			// tabView.off('onPan', this.onPanTabView);
-			// tabView.once('onPan', this.onPanTabView); // TODO ref sidebar/src/tab-view.js:35
-			return this.props.tabView;
+			return new SidebarTabView({
+				dialogId: this.props.dialogId,
+				isNotes: this.props.isNotes,
+			});
 		}
 
 		/**
-		 * @desc Handler pan event in tab view component, starting animate visible profile view
-		 * @private
+		 * @desc Method update state component
+		 * @param {object} newState
 		 * @void
 		 */
-		onPanTabView()
+		updateStateView(newState)
 		{
-			this.animateProfile();
+			this.setState(newState);
 		}
 	}
 

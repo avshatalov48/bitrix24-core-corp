@@ -1581,13 +1581,25 @@ class CrmVolumeComponent extends \CBitrixComponent
 				{
 					$menuTitle = Loc::getMessage("CRM_VOLUME_DELETE_{$keyUpper}");
 				}
+				if (Loc::getMessage("CRM_VOLUME_DELETE_{$keyUpper}_MSGVER_1") != '')
+				{
+					$menuTitle = Loc::getMessage("CRM_VOLUME_DELETE_{$keyUpper}_MSGVER_1");
+				}
 				if (Loc::getMessage("CRM_VOLUME_DELETE_CONFIRM_{$keyUpper}") != '')
 				{
 					$confirm = Loc::getMessage("CRM_VOLUME_DELETE_CONFIRM_{$keyUpper}");
 				}
+				if (Loc::getMessage("CRM_VOLUME_DELETE_CONFIRM_{$keyUpper}_MSGVER_1") != '')
+				{
+					$confirm = Loc::getMessage("CRM_VOLUME_DELETE_CONFIRM_{$keyUpper}_MSGVER_1");
+				}
 				if (Loc::getMessage("CRM_VOLUME_DELETE_CONFIRM_ALL_{$keyUpper}") != '')
 				{
 					$confirmAll = Loc::getMessage("CRM_VOLUME_DELETE_CONFIRM_ALL_{$keyUpper}");
+				}
+				if (Loc::getMessage("CRM_VOLUME_DELETE_CONFIRM_ALL_{$keyUpper}_MSGVER_1") != '')
+				{
+					$confirmAll = Loc::getMessage("CRM_VOLUME_DELETE_CONFIRM_ALL_{$keyUpper}_MSGVER_1");
 				}
 
 				$actions[] = array(
@@ -1650,15 +1662,27 @@ class CrmVolumeComponent extends \CBitrixComponent
 					{
 						$confirm = Loc::getMessage("CRM_VOLUME_DELETE_CONFIRM_HISTORY_{$keyUpper}");
 					}
+					if (Loc::getMessage("CRM_VOLUME_DELETE_CONFIRM_HISTORY_{$keyUpper}_MSGVER_1") !== '')
+					{
+						$confirm = Loc::getMessage("CRM_VOLUME_DELETE_CONFIRM_HISTORY_{$keyUpper}_MSGVER_1");
+					}
 					$confirmAll = Loc::getMessage('CRM_VOLUME_DELETE_CONFIRM_ALL_HISTORY', array('#NAME#' => $report['TITLE']));
 					if (Loc::getMessage("CRM_VOLUME_DELETE_CONFIRM_ALL_HISTORY_{$keyUpper}") !== '')
 					{
 						$confirmAll = Loc::getMessage("CRM_VOLUME_DELETE_CONFIRM_ALL_HISTORY_{$keyUpper}");
 					}
+					if (Loc::getMessage("CRM_VOLUME_DELETE_CONFIRM_ALL_HISTORY_{$keyUpper}_MSGVER_1") !== '')
+					{
+						$confirmAll = Loc::getMessage("CRM_VOLUME_DELETE_CONFIRM_ALL_HISTORY_{$keyUpper}_MSGVER_1");
+					}
 					$menuTitle = Loc::getMessage('CRM_VOLUME_DELETE_HISTORY', array('#NAME#' => $report['TITLE']));
 					if (Loc::getMessage("CRM_VOLUME_DELETE_HISTORY_{$keyUpper}") != '')
 					{
 						$menuTitle = Loc::getMessage("CRM_VOLUME_DELETE_HISTORY_{$keyUpper}");
+					}
+					if (Loc::getMessage("CRM_VOLUME_DELETE_HISTORY_{$keyUpper}_MSGVER_1") != '')
+					{
+						$menuTitle = Loc::getMessage("CRM_VOLUME_DELETE_HISTORY_{$keyUpper}_MSGVER_1");
 					}
 
 					$actions[] = array(

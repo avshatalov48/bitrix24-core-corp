@@ -9,8 +9,6 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 	const { Loc } = require('loc');
 	const { Alert, ButtonType } = require('alert');
 
-	const MAX_NUMBER_OF_LINES = 10000;
-
 	/**
 	 * @class TimelineItemBodyNoteBlock
 	 */
@@ -96,22 +94,11 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 									flexGrow: 1,
 									paddingVertical: 12,
 									flex: 1,
-									maxHeight: this.state.expanded ? null : 200,
 								},
 								onClick: () => this.toggleExpanded(),
 								onLongClick: () => this.openEditor(),
 							},
-							Text({
-								testId: 'TimelineItemBodyNoteText',
-								text: this.state.text,
-								ellipsize: 'end',
-								numberOfLines: this.state.expanded ? MAX_NUMBER_OF_LINES : 10,
-								style: {
-									fontSize: 14,
-									fontWeight: '400',
-									color: '#333333',
-								},
-							}),
+							this.renderText(),
 						),
 						this.renderEditIcon(),
 					),
@@ -150,13 +137,37 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 			);
 		}
 
+		renderText()
+		{
+			return BBCodeText({
+				testId: 'TimelineItemBodyNoteText',
+				value: this.prepareTextToRender(this.state.text),
+				style: {
+					fontSize: 14,
+					fontWeight: '400',
+					color: '#333333',
+				},
+			});
+		}
+
+		prepareTextToRender(text)
+		{
+			const maxLettersCount = this.getMaxLettersCount();
+			if (this.state.expanded || text.length <= maxLettersCount)
+			{
+				return text;
+			}
+
+			return `${text.slice(0, maxLettersCount).trim()}... [color=#828B95]${Loc.getMessage('M_CRM_TIMELINE_VIEW_MORE')}[/color]`;
+		}
+
 		openEditor()
 		{
 			TimelineTextEditor.open({
-				title: Loc.getMessage('M_CRM_TIMELINE_BLOCK_EDITABLE_NOTE_TITLE'),
+				title: Loc.getMessage('M_CRM_TIMELINE_BLOCK_EDITABLE_NOTE_TITLE_MSGVER_1'),
 				text: this.state.text,
 				required: !this.initiallyFilled,
-				placeholder: Loc.getMessage('M_CRM_TIMELINE_BLOCK_EDITABLE_NOTE_PLACEHOLDER'),
+				placeholder: Loc.getMessage('M_CRM_TIMELINE_BLOCK_EDITABLE_NOTE_PLACEHOLDER_MSGVER_1'),
 				onBeforeSave: (editor) => new Promise((resolve, reject) => {
 					const text = editor.value.trim();
 					if (text.length === 0 && this.initiallyFilled)
@@ -222,7 +233,20 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 
 		toggleExpanded()
 		{
-			this.setState({ expanded: !this.state.expanded });
+			if (this.state.text.length > this.getMaxLettersCount())
+			{
+				this.setState({ expanded: !this.state.expanded });
+			}
+		}
+
+		getMaxLettersCount()
+		{
+			if (this.model.hasLowPriority)
+			{
+				return 35;
+			}
+
+			return 330;
 		}
 	}
 

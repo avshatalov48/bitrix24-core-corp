@@ -124,6 +124,33 @@ class CImOpenlinesPermsComponent extends CBitrixComponent
 			}
 		}
 
+		$iblocksCount = \CIBlock::getList(
+			[],
+			[
+				'ACTIVE' => 'Y',
+				'TYPE' => \Bitrix\ImOpenlines\QuickAnswers\ListsDataManager::TYPE,
+				'CODE' => \Bitrix\ImOpenlines\QuickAnswers\ListsDataManager::IBLOCK_CODE,
+				'CHECK_PERMISSIONS' => 'N'
+			]
+		)->SelectedRowsCount();
+
+		if ($iblocksCount > 0 && $iblocksCount <= 20)
+		{
+			\Bitrix\Imopenlines\Update\Agent::updateRightsQuickAnswersAgent();
+		}
+		elseif ($iblocksCount > 20)
+		{
+			\CAgent::AddAgent(
+				'\Bitrix\Imopenlines\Update\Agent::updateRightsQuickAnswersAgent();',
+				'imopenlines',
+				'N',
+				0,
+				'',
+				'Y',
+				\ConvertTimeStamp(time() + \CTimeZone::GetOffset(), 'FULL')
+			);
+		}
+
 		return true;
 	}
 

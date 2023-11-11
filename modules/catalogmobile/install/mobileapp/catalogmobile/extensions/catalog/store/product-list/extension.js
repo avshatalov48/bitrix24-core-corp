@@ -70,9 +70,7 @@ jn.define('catalog/store/product-list', (require, exports, module) => {
 				enableCreation: !!this.props.permissions.catalog_product_add,
 				onCreate: (productName) => this.wizardAdapter.openWizard(productName),
 				onSelect: (productId) => {
-					const lastSelectedStores = this.getLastSelectedStores();
-					defaultStoreReplacements = lastSelectedStores || defaultStoreReplacements;
-					this.addProductById(productId, defaultStoreReplacements);
+					this.addProductById(productId);
 				},
 			});
 
@@ -290,6 +288,8 @@ jn.define('catalog/store/product-list', (require, exports, module) => {
 					return 'DEDUCT';
 				case DocumentType.Moving:
 					return 'MOVING';
+				case DocumentType.SalesOrders:
+					return 'SHIPMENT';
 				default:
 					return 'ARRIVAL';
 			}
@@ -322,7 +322,15 @@ jn.define('catalog/store/product-list', (require, exports, module) => {
 		{
 			let documentTotal = 0;
 			this.getItems().map((productRow) => {
-				const price = productRow.getPurchasePrice().amount ? productRow.getPurchasePrice().amount : 0;
+				let price;
+				if (this.state.document.type === DocumentType.SalesOrders)
+				{
+					price = productRow.getSellPrice().amount || 0;
+				}
+				else
+				{
+					price = productRow.getPurchasePrice().amount || 0;
+				}
 				const quantity = parseFloat(productRow.getAmount() || 0);
 
 				documentTotal += (price * quantity);

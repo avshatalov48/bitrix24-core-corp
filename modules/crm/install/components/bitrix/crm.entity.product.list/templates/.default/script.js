@@ -1931,7 +1931,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      } else if (this.getModel().isSimple() || this.getModel().isService()) {
 	        return false;
 	      }
-	      return !_classPrivateMethodGet$2(this, _getAllowedStores, _getAllowedStores2).call(this).includes(storeId) || !this.editor.getSettingValue('allowEntityReserve', true);
+	      return !_classPrivateMethodGet$2(this, _getAllowedStores, _getAllowedStores2).call(this).includes(storeId);
 	    }
 	  }, {
 	    key: "setType",

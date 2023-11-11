@@ -10,6 +10,7 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
+use Bitrix\Tasks\Internals\Task\Priority;
 
 $APPLICATION->SetPageProperty('BodyClass', 'task-card-page');
 if (
@@ -72,7 +73,7 @@ $url = CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_TASKS_EDI
 	<input type="hidden" name="_JS_STEPPER_SUPPORTED" value="Y">
 	<input type="hidden" name="DESCRIPTION_IN_BBCODE" value="<?=$task['DESCRIPTION_IN_BBCODE']; ?>" />
 	<input type="hidden" name="back_url" value="<?=$url."&".http_build_query(array("save" => "Y", "sessid" => bitrix_sessid())) ?>" />
-	<input type="hidden" name="data[PRIORITY]" value="<?=($task["PRIORITY"] == CTasks::PRIORITY_HIGH ? CTasks::PRIORITY_HIGH : CTasks::PRIORITY_LOW)?>" />
+	<input type="hidden" name="data[PRIORITY]" value="<?=((int)$task["PRIORITY"] === Priority::HIGH ? Priority::HIGH : Priority::LOW)?>" />
 	<input type="hidden" name="data[ADD_TO_FAVORITE]" value="N" />
 	<input type="hidden" name="data[SE_AUDITOR][]" value="" />
 	<input type="hidden" name="data[SE_ACCOMPLICE][]" value="" />
@@ -114,7 +115,7 @@ $APPLICATION->IncludeComponent(
 							"class" => "mobile-grid-field-priority"
 						),
 						"name" => GetMessage("MB_TASKS_BASE_SETTINGS_PRIORITY"),
-						"items" => array(CTasks::PRIORITY_HIGH => ($task["PRIORITY"] == CTasks::PRIORITY_HIGH ? GetMessage("TASKS_PRIORITY_2") : GetMessage("TASKS_PRIORITY_0"))),
+						"items" => [Priority::HIGH => ((int)$task["PRIORITY"] === Priority::HIGH ? GetMessage("TASKS_PRIORITY_2") : GetMessage("TASKS_PRIORITY_0"))],
 						"value" => array($task["PRIORITY"])
 					),
 					array(

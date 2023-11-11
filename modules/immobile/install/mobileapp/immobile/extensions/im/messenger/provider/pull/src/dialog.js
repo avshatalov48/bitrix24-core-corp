@@ -21,7 +21,8 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 		{
 			Logger.info('DialogPullHandler.handleReadAllChats');
 
-			this.store.dispatch('recentModel/clearAllCounters')
+			this.store.dispatch('dialoguesModel/clearAllCounters')
+				.then(() => this.store.dispatch('recentModel/clearAllCounters'))
 				.then(() => Counters.update())
 			;
 		}
@@ -33,6 +34,7 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 			this.store.dispatch('recentModel/set', [{
 				id: params.dialogId,
 				pinned: params.active,
+				date_update: new Date(),
 			}]);
 		}
 
@@ -156,6 +158,7 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 				id: dialogId,
 				unread: params.active,
 				counter,
+				date_update: new Date(),
 			}]).then(() => Counters.update());
 		}
 

@@ -77,7 +77,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 
 		static getId()
 		{
-			return 'activity';
+			return 'todo';
 		}
 
 		static getTitle()
@@ -100,9 +100,9 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 			return '<svg width="30" height="31" viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M15 5.5C9.47715 5.5 5 9.97715 5 15.5C5 21.0228 9.47715 25.5 15 25.5C20.5228 25.5 25 21.0228 25 15.5C25 9.97715 20.5228 5.5 15 5.5ZM11.6346 14.4874L13.8697 16.7226L19.228 11.3643L20.8081 12.9444L13.8713 19.8812L13.7853 19.7952L13.7838 19.7968L10.0545 16.0675L11.6346 14.4874Z" fill="#767C87"/></svg>';
 		}
 
-		static getMenuPosition()
+		static getDefaultPosition()
 		{
-			return 100;
+			return 1;
 		}
 
 		/**
@@ -235,6 +235,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 					ref: (ref) => this.fileFieldRef = ref,
 					showTitle: false,
 					showAddButton: false,
+					hasHiddenEmptyView: true,
 					multiple: true,
 					value: [],
 					config: {

@@ -12,10 +12,11 @@ jn.define('im/messenger/lib/utils/user', (require, exports, module) => {
 		/**
 		 *
 		 * @param {UsersModelState} userData
-		 * @param {boolean} fullLastSeenText
+		 * @param {boolean} [fullLastSeenText=false]
+		 * @param {boolean} [fullLastSeenTextByNow=false]
 		 * @return {string}
 		 */
-		getLastDateText(userData, fullLastSeenText = false)
+		getLastDateText(userData, fullLastSeenText = false, fullLastSeenTextByNow = false)
 		{
 			if (!userData || userData.bot || userData.network || !userData.lastActivityDate)
 			{
@@ -46,10 +47,23 @@ jn.define('im/messenger/lib/utils/user', (require, exports, module) => {
 			// last activity date > 5 minutes ago - "Was online X minutes ago"
 			else if (lastSeenText)
 			{
-				text = fullLastSeenText
-					? this.getFullLastSeenPhrase(new Moment(userData.lastActivityDate), userData.gender)
-					: this.getShortLastSeenPhrase(lastSeenText, userData.gender)
-				;
+				if (fullLastSeenTextByNow)
+				{
+					const moment = new Moment(userData.lastActivityDate);
+					const isNearNow = moment.isToday || moment.isYesterday;
+
+					text = isNearNow
+						? this.getShortLastSeenPhrase(lastSeenText, userData.gender)
+						: this.getFullLastSeenPhrase(moment, userData.gender)
+					;
+				}
+				else
+				{
+					text = fullLastSeenText
+						? this.getFullLastSeenPhrase(new Moment(userData.lastActivityDate), userData.gender)
+						: this.getShortLastSeenPhrase(lastSeenText, userData.gender)
+					;
+				}
 			}
 
 			return text;

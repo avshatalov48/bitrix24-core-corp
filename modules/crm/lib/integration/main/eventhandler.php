@@ -3,8 +3,9 @@ namespace Bitrix\Crm\Integration\Main;
 
 use Bitrix\Crm\Activity\Provider\Email;
 use Bitrix\Crm\ActivityTable;
-use Bitrix\Crm\Integrity;
 use Bitrix\Crm\Category\ItemCategoryUserField;
+use Bitrix\Crm\Integration\MailManager;
+use Bitrix\Crm\Integrity;
 use Bitrix\Crm\WebForm;
 use Bitrix\Main\Application;
 use Bitrix\Main\DI\ServiceLocator;
@@ -75,7 +76,11 @@ class EventHandler
 	 */
 	public static function onMailEventMailChangeStatus(Result $result) : void
 	{
-		$isBelongCrm = ($result->isBelongTo("crm","rpa") || $result->isBelongTo("crm","act"));
+		$isBelongCrm = (
+			$result->isBelongTo("crm","rpa")
+			|| $result->isBelongTo("crm","act")
+			|| $result->isBelongTo('crm', MailManager::CALLBACK_ENTITY_TYPE)
+		);
 		if (!$isBelongCrm || !$result->isError() || !$result->isPermanentError())
 		{
 			return;

@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+        'type',
 		'loc',
 		'im:messenger/core',
 		'im:messenger/const',

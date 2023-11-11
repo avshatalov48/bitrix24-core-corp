@@ -24,16 +24,27 @@ use Bitrix\Main\UserTable;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Comments\Internals\Comment;
 use Bitrix\Tasks\Control\Tag;
+use Bitrix\Tasks\Control\Task;
 use Bitrix\Tasks\Integration;
+use Bitrix\Tasks\Internals\CacheConfig;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
+use Bitrix\Tasks\Internals\Task\LabelTable;
+use Bitrix\Tasks\Internals\Task\Mark;
 use Bitrix\Tasks\Internals\Task\MemberTable;
+use Bitrix\Tasks\Internals\Task\MetaStatus;
+use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Internals\Task\SortingTable;
+use Bitrix\Tasks\Internals\Task\Status;
+use Bitrix\Tasks\Internals\Task\TimeUnitType;
 use Bitrix\Tasks\Internals\Task\UserOptionTable;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Kanban\TaskStageTable;
+use Bitrix\Tasks\Provider\TaskList;
+use Bitrix\Tasks\Provider\TaskProvider;
+use Bitrix\Tasks\Replicator\Template\Replicators\RegularTaskReplicator;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
@@ -48,35 +59,66 @@ class CTasks
 	//Task statuses: 1 - New, 2 - Pending, 3 - In Progress, 4 - Supposedly completed, 5 - Completed, 6 - Deferred, 7 - Declined
 	// todo: using statuses in the way "-2, -1" is a bad idea. its better to have separate (probably runtime) fields called "viewed" and "expired"
 	// todo: and then, if you want to know if the task is "virgin new", just apply filter array('=VIEWED' => false, '=STATUS' => 2/*or 1*/)
+	/** @use MetaStatus */
+	/** @deprecated */
 	const METASTATE_VIRGIN_NEW = -2; // unseen
+	/** @deprecated */
 	const METASTATE_EXPIRED = -1;
+	/** @deprecated */
 	const METASTATE_EXPIRED_SOON = -3;
+
+	/** @use Status */
+	/** @deprecated */
 	const STATE_NEW = 1;
+	/** @deprecated */
 	const STATE_PENDING = 2;    // Pending === Accepted
+	/** @deprecated */
 	const STATE_IN_PROGRESS = 3;
+	/** @deprecated */
 	const STATE_SUPPOSEDLY_COMPLETED = 4;
+	/** @deprecated */
 	const STATE_COMPLETED = 5;
+	/** @deprecated */
 	const STATE_DEFERRED = 6;
+	/** @deprecated */
 	const STATE_DECLINED = 7;
 
+	/** @use Priority */
+	/** @deprecated */
 	const PRIORITY_LOW = 0;
+	/** @deprecated */
 	const PRIORITY_AVERAGE = 1;
+	/** @deprecated */
 	const PRIORITY_HIGH = 2;
 
+	/** @use Mark */
+	/** @deprecated */
 	const MARK_POSITIVE = 'P';
+	/** @deprecated */
 	const MARK_NEGATIVE = 'N';
 
+	/** @use TimeUnitType */
+	/** @deprecated */
 	const TIME_UNIT_TYPE_SECOND = 'secs';
+	/** @deprecated */
 	const TIME_UNIT_TYPE_MINUTE = 'mins';
+	/** @deprecated */
 	const TIME_UNIT_TYPE_HOUR = 'hours';
+	/** @deprecated */
 	const TIME_UNIT_TYPE_DAY = 'days';
+	/** @deprecated */
 	const TIME_UNIT_TYPE_WEEK = 'weeks';
+	/** @deprecated */
 	const TIME_UNIT_TYPE_MONTH = 'monts'; // 5 chars max :)
+	/** @deprecated */
 	const TIME_UNIT_TYPE_YEAR = 'years';
 
 	const MAX_INT = 2147483647;
 
+	/** @use CacheConfig */
+	/** @deprecated */
 	const CACHE_TASKS_COUNT = 'CACHE_TASKS_COUNT_KEY';
+	/** @deprecated */
 	const CACHE_TASKS_COUNT_DIR_NAME = '/bx_tasks_count';
 
 	private $_errors = [];
@@ -101,7 +143,7 @@ class CTasks
 	 * @return false|int
 	 *
 	 * @deprecated since tasks 22.700.0
-	 * Use (new Tasks\Control\Task($userId))->add($fields) instead
+	 * @use Task
 	 */
 	public function Add($arFields, $arParams = [])
 	{
@@ -123,7 +165,7 @@ class CTasks
 			}
 		}
 
-		$handler = new \Bitrix\Tasks\Control\Task($userId);
+		$handler = new Task($userId);
 
 		$correctDatePlan = ($arParams['CORRECT_DATE_PLAN'] ?? true);
 		if ($correctDatePlan !== 'N' && $correctDatePlan !== false)
@@ -184,6 +226,10 @@ class CTasks
 		return $task->getId();
 	}
 
+	/**
+	 * @use Task
+	 * @deprecated
+	 */
 	public function Update($taskId, $arFields, $arParams = [
 		'CORRECT_DATE_PLAN_DEPENDENT_TASKS' => true,
 		'CORRECT_DATE_PLAN' => true,
@@ -218,7 +264,7 @@ class CTasks
 			$arParams['THROTTLE_MESSAGES'] = false;
 		}
 
-		$handler = new \Bitrix\Tasks\Control\Task($userId);
+		$handler = new Task($userId);
 		$handler->setByPassParams($arParams);
 
 		if (isset($arFields['META::EVENT_GUID']))
@@ -361,7 +407,7 @@ class CTasks
 	 * @throws Main\SystemException
 	 *
 	 * @deprecated since tasks 22.700.0
-	 * use (new \Bitrix\Tasks\Control\Task($userId))->delete($taskId) instead
+	 * @use Task
 	 */
 	public static function Delete($taskId, $parameters = [])
 	{
@@ -371,7 +417,7 @@ class CTasks
 			$userId = User::getAdminId();
 		}
 
-		$handler = new \Bitrix\Tasks\Control\Task($userId);
+		$handler = new Task($userId);
 
 		if (isset($parameters['META::EVENT_GUID']))
 		{
@@ -1009,7 +1055,7 @@ class CTasks
 
 				case "PERIOD":
 				case "ACTIVE":
-					if ($val["START"] || $val["END"])
+					if (is_array($val) && ($val["START"] || $val["END"]))
 					{
 						$strDateStart = $strDateEnd = false;
 
@@ -3034,30 +3080,30 @@ class CTasks
 			'MARK' => [
 				'type' => 'enum',
 				'values' => [
-					self::MARK_NEGATIVE => Loc::getMessage('TASKS_FIELDS_MARK_NEGATIVE'),
-					self::MARK_POSITIVE => Loc::getMessage('TASKS_FIELDS_MARK_POSITIVE'),
+					Mark::NEGATIVE => Loc::getMessage('TASKS_FIELDS_MARK_NEGATIVE'),
+					Mark::POSITIVE => Loc::getMessage('TASKS_FIELDS_MARK_POSITIVE'),
 				],
 				'default' => null,
 			],
 			'PRIORITY' => [
 				'type' => 'enum',
 				'values' => [
-					self::PRIORITY_HIGH => Loc::getMessage('TASKS_FIELDS_PRIORITY_HIGH'),
-					self::PRIORITY_AVERAGE => Loc::getMessage('TASKS_FIELDS_PRIORITY_AVERAGE'),
-					self::PRIORITY_LOW => Loc::getMessage('TASKS_FIELDS_PRIORITY_LOW'),
+					Priority::HIGH => Loc::getMessage('TASKS_FIELDS_PRIORITY_HIGH'),
+					Priority::AVERAGE => Loc::getMessage('TASKS_FIELDS_PRIORITY_AVERAGE'),
+					Priority::LOW => Loc::getMessage('TASKS_FIELDS_PRIORITY_LOW'),
 				],
-				'default' => self::PRIORITY_AVERAGE,
+				'default' => Priority::AVERAGE,
 			],
 			'STATUS' => [
 				'type' => 'enum',
 				'values' => [
-					self::STATE_PENDING => Loc::getMessage('TASKS_FIELDS_STATUS_PENDING'),
-					self::STATE_IN_PROGRESS => Loc::getMessage('TASKS_FIELDS_STATUS_IN_PROGRESS'),
-					self::STATE_SUPPOSEDLY_COMPLETED => Loc::getMessage('TASKS_FIELDS_STATUS_SUPPOSEDLY_COMPLETED'),
-					self::STATE_COMPLETED => Loc::getMessage('TASKS_FIELDS_STATUS_COMPLETED'),
-					self::STATE_DEFERRED => Loc::getMessage('TASKS_FIELDS_STATUS_DEFERRED'),
+					Status::PENDING => Loc::getMessage('TASKS_FIELDS_STATUS_PENDING'),
+					Status::IN_PROGRESS => Loc::getMessage('TASKS_FIELDS_STATUS_IN_PROGRESS'),
+					Status::SUPPOSEDLY_COMPLETED => Loc::getMessage('TASKS_FIELDS_STATUS_SUPPOSEDLY_COMPLETED'),
+					Status::COMPLETED => Loc::getMessage('TASKS_FIELDS_STATUS_COMPLETED'),
+					Status::DEFERRED => Loc::getMessage('TASKS_FIELDS_STATUS_DEFERRED'),
 				],
-				'default' => self::STATE_PENDING,
+				'default' => Status::PENDING,
 			],
 			'MULTITASK' => [
 				'type' => 'enum',
@@ -3330,6 +3376,9 @@ class CTasks
 	}
 
 	/**
+	 * @use TaskList
+	 * @use TaskProvider
+	 * @deprecated
 	 * @param array $arOrder
 	 * @param array $arFilter
 	 * @param array $arSelect
@@ -3342,7 +3391,7 @@ class CTasks
 	{
 		global $DB, $USER_FIELD_MANAGER;
 
-		$provider = new \Bitrix\Tasks\Provider\TaskProvider($DB, $USER_FIELD_MANAGER);
+		$provider = new TaskProvider($DB, $USER_FIELD_MANAGER);
 		return $provider->getList($arOrder, $arFilter, $arSelect, $arParams, $arGroup);
 	}
 
@@ -4499,7 +4548,7 @@ class CTasks
 		 */
 		global $DB, $USER_FIELD_MANAGER;
 
-		$provider = new \Bitrix\Tasks\Provider\TaskProvider($DB, $USER_FIELD_MANAGER);
+		$provider = new TaskProvider($DB, $USER_FIELD_MANAGER);
 		return $provider->getCount($arFilter, $arParams, $arGroupBy);
 	}
 
@@ -5006,6 +5055,10 @@ class CTasks
 		}
 	}
 
+	/**
+	 * @use Task
+	 * @deprecated
+	 */
 	static function AddFiles($ID, $arFiles = [], $arParams = [])
 	{
 		$arFilesIds = [];
@@ -5058,6 +5111,8 @@ class CTasks
 	}
 
 	/**
+	 * @use Tag
+	 * @deprecated
 	 * @param $taskId
 	 * @param $userId
 	 * @param array $sourceTags
@@ -5169,6 +5224,10 @@ class CTasks
 		return $arResult;
 	}
 
+	/**
+	 * @use LabelTable
+	 * @deprecated
+	 */
 	private static function getTags(int $taskId): array
 	{
 		$tags = [];
@@ -5397,6 +5456,12 @@ class CTasks
 		if (\Bitrix\Tasks\Update\TemplateConverter::isProceed())
 		{
 			return 'CTasks::RepeatTaskByTemplateId(' . $templateId . ');';
+		}
+
+		if (RegularTaskReplicator::isEnabled())
+		{
+			$replicator = new RegularTaskReplicator(0);
+			return $replicator->replicate($templateId);
 		}
 
 		return Replicator\Task\FromTemplate::repeatTask(
@@ -5928,12 +5993,12 @@ class CTasks
 	// $value comes in seconds, we must translate to units of $type
 	public static function convertDurationFromSeconds($value, $type)
 	{
-		if ($type == self::TIME_UNIT_TYPE_HOUR)
+		if ((string)$type === TimeUnitType::HOUR)
 		{
 			// hours to seconds
 			return round(intval($value) / 3600, 0);
 		}
-		elseif ($type == self::TIME_UNIT_TYPE_DAY || (string)$type == ''/*days by default, see install/db*/)
+		elseif ((string)$type === TimeUnitType::DAY || (string)$type == ''/*days by default, see install/db*/)
 		{
 			// days to seconds
 			return round(intval($value) / 86400, 0);

@@ -160,6 +160,10 @@ class CAllCrmDeal
 	public static function GetFieldCaption($fieldName)
 	{
 		$result = GetMessage("CRM_DEAL_FIELD_{$fieldName}");
+		if (!(is_string($result) && $result !== ''))
+		{
+			$result = GetMessage("CRM_DEAL_FIELD_{$fieldName}_MSGVER_1");
+		}
 
 		if (!(is_string($result) && $result !== '')
 			&& Crm\Tracking\UI\Details::isTrackingField($fieldName))

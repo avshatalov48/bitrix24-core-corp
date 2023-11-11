@@ -99,7 +99,7 @@ class Quote extends Item
 		{
 			$id = (int)($data[static::FIELD_NAME_ID] ?? 0);
 
-			return Loc::getMessage('CRM_QUOTE_TITLE_PLACEHOLDER', [
+			return Loc::getMessage('CRM_QUOTE_TITLE_PLACEHOLDER_MSGVER_1', [
 				'#ID#' => ($id > 0) ? $id : '',
 			]);
 		}
@@ -118,7 +118,7 @@ class Quote extends Item
 			}
 		}
 
-		return Loc::getMessage('CRM_QUOTE_TITLE', [
+		return Loc::getMessage('CRM_QUOTE_TITLE_MSGVER_1', [
 			'#QUOTE_NUMBER#' => $data['QUOTE_NUMBER'] ?? '',
 			'#BEGINDATE#' => $beginDate ?? '-',
 		]);

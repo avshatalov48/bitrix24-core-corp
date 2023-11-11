@@ -14,6 +14,7 @@ return [
 		'im:messenger/lib/counters',
 		'im:messenger/lib/notifier',
 		'im:messenger/lib/emitter',
+		'im:messenger/lib/uuid',
 		'im:messenger/cache/share-dialog',
 		'im:chat/utils',
 		'im:chat/messengercommon',

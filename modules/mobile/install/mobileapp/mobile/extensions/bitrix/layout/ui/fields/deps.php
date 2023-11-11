@@ -33,5 +33,6 @@ return [
 		'layout/ui/fields/crm-element',
 		'layout/ui/fields/client',
 		'layout/ui/fields/crm-stage',
+		'layout/ui/fields/shipment-extra-services',
 	],
 ];

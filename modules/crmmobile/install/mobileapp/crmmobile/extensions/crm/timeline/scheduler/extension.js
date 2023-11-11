@@ -18,21 +18,33 @@ jn.define('crm/timeline/scheduler', (require, exports, module) => {
 	{
 		static getFloatingMenuItems(context)
 		{
+			const floatingMenuItemsSettings = context?.detailCard?.componentParams?.floatingMenuItemsSettings;
+
 			return (
 				providerClasses
 					.filter((providerClass) => providerClass && providerClass.isAvailableInMenu(context))
 					.map((providerClass) => {
+						const id = providerClass.getId();
+						let position = null;
+						let disabled = false;
+						if (floatingMenuItemsSettings && floatingMenuItemsSettings[id])
+						{
+							position = floatingMenuItemsSettings[id].position;
+							disabled = floatingMenuItemsSettings[id].disabled;
+						}
+
 						return new FloatingMenuItem({
-							id: providerClass.getId(),
+							id,
 							title: providerClass.getMenuTitle(),
 							subtitle: providerClass.getMenuSubtitle(),
 							subtitleType: providerClass.getMenuSubtitleType(),
 							shortTitle: providerClass.getMenuShortTitle(),
 							isSupported: providerClass.isSupported(context),
 							isAvailable: true,
-							position: providerClass.getMenuPosition(),
+							position: providerClass.getMenuPosition(position),
 							badges: providerClass.getMenuBadges(),
 							icon: providerClass.getMenuIcon(),
+							disabled,
 						});
 					})
 			);
@@ -69,7 +81,7 @@ jn.define('crm/timeline/scheduler', (require, exports, module) => {
 		 */
 		openActivityEditor(context = {})
 		{
-			this.openEditorByProviderId('activity', context);
+			this.openEditorByProviderId('todo', context);
 		}
 
 		/**

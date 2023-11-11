@@ -7,15 +7,17 @@ return [
 		'layout/ui/context-menu',
 		'layout/ui/widget-header-button',
 		'layout/ui/snackbar-text',
+		'layout/ui/timeline/components/divider',
 		'selector/widget/factory',
 
+		'crm:timeline/ui/date-divider',
 		'crm:timeline/ui/banner',
-		'crm:timeline/ui/divider',
 		'crm:timeline/ui/reminder',
 		'crm:timeline/ui/sticky-date',
 		'crm:timeline/ui/text-editor',
 		'crm:timeline/ui/textarea',
 		'crm:timeline/ui/toolbar',
+		'crm:timeline/ui/expand-text-button',
 
 		'crm:timeline/services/activity-viewer',
 		'crm:timeline/services/data-provider',

@@ -89,24 +89,24 @@ jn.define('im/messenger/lib/counters/counters', (require, exports, module) => {
 
 			const userId = MessengerParams.getUserId();
 
-			this.chatCounter.value = this.store.getters['recentModel/getCollection']
+			this.chatCounter.value = this.store.getters['recentModel/getCollection']()
 				.reduce((counter, item) => {
 					delete this.chatCounter.detail[item.id];
 
+					const dialog = this.store.getters['dialoguesModel/getById'](item.id);
 					if (item.type === 'user')
 					{
-						return counter + this.calculateItemCounter(item);
+						return counter + this.calculateItemCounter(item, dialog);
 					}
 
-					if (item.type === 'chat' && !item.chat.mute_list[userId])
+					if (item.type === 'chat' && !(dialog && dialog.muteList.includes(userId)))
 					{
-						return counter + this.calculateItemCounter(item);
+						return counter + this.calculateItemCounter(item, dialog);
 					}
 
 					return counter;
 				}, 0)
 			;
-
 			this.chatCounter.update();
 			this.openlinesCounter.update();
 
@@ -121,14 +121,19 @@ jn.define('im/messenger/lib/counters/counters', (require, exports, module) => {
 			BX.postComponentEvent('ImRecent::counter::list', [counters], 'im.navigation');
 		}
 
-		calculateItemCounter(item = {})
+		/**
+		 * @param {RecentModelState} recentItem
+		 * @param {DialoguesModelState} dialogItem
+		 * @return {number}
+		 */
+		calculateItemCounter(recentItem = {}, dialogItem = {})
 		{
 			let counter = 0;
-			if (item.counter && item.counter > 0)
+			if (dialogItem.counter && dialogItem.counter > 0)
 			{
-				counter = item.counter;
+				counter = dialogItem.counter;
 			}
-			else if (item.unread)
+			else if (recentItem.unread)
 			{
 				counter = 1;
 			}

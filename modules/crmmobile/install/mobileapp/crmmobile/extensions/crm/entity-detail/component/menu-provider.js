@@ -14,6 +14,7 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 	const { CrmDocumentList } = require('crm/document/list');
 	const { getPaymentAutomationMenuItem } = require('crm/entity-detail/component/payment-automation-menu-item');
 	const { getOpenLinesMenuItems } = require('crm/entity-detail/component/open-lines-menu-items');
+	const { EntityChatOpener } = require('crm/entity-chat-opener');
 
 	/**
 	 * @param {DetailCardComponent} detailCard
@@ -34,6 +35,7 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 			isDocumentGenerationEnabled,
 			isCategoriesEnabled,
 			isClientEnabled,
+			isChatSupported,
 		} = detailCard.getComponentParams();
 		const { entityModel } = detailCard;
 
@@ -62,6 +64,20 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 						title: Loc.getMessage('M_CRM_ENTITY_ACTION_DOCUMENTS'),
 						iconUrl: `${component.path}/icons/documents.png`,
 						disable: false, // todo check rights to documents
+					},
+				);
+			}
+
+			if (isChatSupported)
+			{
+				result.push(
+					{
+						id: 'openChat',
+						sectionCode: 'action',
+						onItemSelected: () => openChat(detailCard),
+						title: Loc.getMessage('M_CRM_ENTITY_ACTION_CHAT'),
+						iconUrl: `${component.path}/icons/chat.png`,
+						disable: false,
 					},
 				);
 			}
@@ -349,6 +365,13 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 				},
 			],
 		);
+	};
+
+	/**
+	 * @param {DetailCardComponent} detailCard
+	 */
+	const openChat = (detailCard) => {
+		EntityChatOpener.openChatByEntity(detailCard.getEntityTypeId(), detailCard.getEntityId());
 	};
 
 	/**

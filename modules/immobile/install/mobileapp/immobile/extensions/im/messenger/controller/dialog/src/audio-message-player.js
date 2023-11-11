@@ -28,7 +28,7 @@ jn.define('im/messenger/controller/dialog/audio-player', (require, exports, modu
 			}
 
 			this.playingMessageId = messageId;
-			const playingMessage = this.store.getters['messagesModel/getMessageById'](this.playingMessageId);
+			const playingMessage = this.store.getters['messagesModel/getById'](this.playingMessageId);
 			if (!playingMessage || !playingMessage.files[0])
 			{
 				return;
@@ -55,11 +55,9 @@ jn.define('im/messenger/controller/dialog/audio-player', (require, exports, modu
 				return;
 			}
 
-			this.store.dispatch('messagesModel/update', {
+			this.store.dispatch('messagesModel/setPlayAudio', {
 				id: nextMessageToPlay.id,
-				fields: {
-					audioPlaying: true,
-				},
+				audioPlaying: true,
 			});
 
 			this.play(nextMessageToPlay.id);
@@ -81,18 +79,16 @@ jn.define('im/messenger/controller/dialog/audio-player', (require, exports, modu
 		 */
 		setMessageIsPlaying(isPlaying, playingTime)
 		{
-			const message = this.store.getters['messagesModel/getMessageById'](this.playingMessageId);
+			const message = this.store.getters['messagesModel/getById'](this.playingMessageId);
 			if (!message)
 			{
 				return;
 			}
 
-			this.store.dispatch('messagesModel/update', {
+			this.store.dispatch('messagesModel/setAudioState', {
 				id: this.playingMessageId,
-				fields: {
-					audioPlaying: isPlaying,
-					playingTime,
-				},
+				audioPlaying: isPlaying,
+				playingTime,
 			});
 		}
 
@@ -101,7 +97,7 @@ jn.define('im/messenger/controller/dialog/audio-player', (require, exports, modu
 		 */
 		getNextMessageToPlay(previousMessageId)
 		{
-			const previousMessage = this.store.getters['messagesModel/getMessageById'](previousMessageId);
+			const previousMessage = this.store.getters['messagesModel/getById'](previousMessageId);
 			if (!previousMessage)
 			{
 				return null;

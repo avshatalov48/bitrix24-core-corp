@@ -2,7 +2,6 @@
  * @module crm/timeline/item/ui/body/blocks/editable-description
  */
 jn.define('crm/timeline/item/ui/body/blocks/editable-description', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { TimelineItemBodyBaseEditableBlock } = require('crm/timeline/item/ui/body/blocks/base-editable-block');
 	const { clone } = require('utils/object');

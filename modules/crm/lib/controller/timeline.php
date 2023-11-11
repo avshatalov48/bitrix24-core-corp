@@ -137,13 +137,4 @@ class Timeline extends Main\Engine\Controller
 			$editorParameters
 		);
 	}
-
-	final public function onReceiveAction($entityId, $entityTypeId, $settings): void
-	{
-		ExternalNoticeController::getInstance()->onReceive(
-			$entityId,
-			$entityTypeId,
-			$settings
-		);
-	}
 }

@@ -14,6 +14,7 @@ use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinDataTable;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
 use Bitrix\Tasks\Integration\Recyclebin\Manager;
+use Bitrix\Tasks\Internals\Task\Priority;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -27,9 +28,9 @@ class CTasksWebService extends IWebService
 {
 
 	var $arPriorities = array(
-		CTasks::PRIORITY_LOW     => 3,
-		CTasks::PRIORITY_AVERAGE => 2,
-		CTasks::PRIORITY_HIGH    => 1
+		Priority::LOW     => 3,
+		Priority::AVERAGE => 2,
+		Priority::LOW    => 1
 	);
 	var $arStatuses = array(
 		1 => 2,
@@ -261,7 +262,7 @@ class CTasksWebService extends IWebService
 		// 468;#Andrey Nikitin,#a.nikitin,#a.nikitin@example.com,#,#Andrey Nikitin
 		// 468;#a.nikitin@example.com,Andrey Nikitin
 
-		list($USER_ID, $FIELDS) = explode(';', $user_str);
+		[$USER_ID, $FIELDS] = explode(';', $user_str);
 
 		if ($USER_ID <= 0)
 		{
@@ -716,7 +717,7 @@ class CTasksWebService extends IWebService
 
 		if (array_key_exists('>CHANGED_DATE', $arFilter))
 		{
-			$format = \CAllSite::GetDateFormat('FULL');
+			$format = CSite::GetDateFormat('FULL');
 			$format = \Bitrix\Main\Type\Date::convertFormatToPhp($format);
 			$query->where('TIMESTAMP', '>', new \Bitrix\Main\Type\DateTime($arFilter['>CHANGED_DATE'], $format));
 		}

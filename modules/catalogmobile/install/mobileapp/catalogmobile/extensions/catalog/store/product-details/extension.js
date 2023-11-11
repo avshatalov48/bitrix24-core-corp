@@ -12,6 +12,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 	const { NumberField, NumberPrecision } = require('layout/ui/fields/number');
 	const { SelectField } = require('layout/ui/fields/select');
 	const { StringField } = require('layout/ui/fields/string');
+	const { Loc } = require('loc');
 	const {
 		clone,
 		set,
@@ -70,29 +71,48 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 					},
 					View(
 						{},
-						this.renderForm(),
+						this.renderForm(Loc.getMessage('CSPD_TITLE_ABOUT'), this.buildProductInfoFieldsList()),
+						this.renderForm(Loc.getMessage('CSPD_TITLE_STORE_INFO'), this.buildStoreInfoFieldsList()),
 						this.renderMoreOpportunitiesButton(),
 					),
 				),
 			);
 		}
 
-		renderForm()
+		renderForm(title, fields)
 		{
-			const fields = this.buildFieldsList();
-
 			return View(
 				{
 					style: {
-						padding: 16,
+						paddingBottom: 16,
 						paddingTop: 0,
 						backgroundColor: '#ffffff',
 						borderRadius: 12,
 						marginBottom: 12,
 					},
 				},
+				Text({
+					style: {
+						color: '#333333',
+						fontWeight: 'bold',
+						fontSize: 16,
+						width: '100%',
+						textAlign: 'left',
+						paddingTop: 0,
+						paddingBottom: 0,
+						marginHorizontal: 16,
+						marginTop: 16,
+						marginBottom: 8,
+					},
+					text: title,
+				}),
 				FieldsWrapper({
 					fields,
+					config: {
+						fieldStyles: {
+							paddingHorizontal: 16,
+						},
+					},
 				}),
 			);
 		}
@@ -100,44 +120,91 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 		renderMoreOpportunitiesButton()
 		{
 			return BannerButton({
-				title: BX.message('CSPD_MORE_OPPORTUNITIES'),
-				description: BX.message('CSPD_ADD_SKU'),
+				title: Loc.getMessage('CSPD_MORE_OPPORTUNITIES'),
+				description: Loc.getMessage('CSPD_ADD_SKU'),
 				onClick: this.openDesktopVersion.bind(this),
 			});
 		}
 
-		getFieldsListForCurrentDocumentType()
+		buildProductInfoFieldsList()
 		{
-			const docType = this.props.document.type;
+			const hasProductEditAccess = this.hasAccess('catalog_product_edit');
+			const gallery = clone(this.state.product.gallery);
+			const galleryInfo = clone(this.state.product.galleryInfo);
 
-			if (docType === DocumentType.Arrival || docType === DocumentType.StoreAdjustment)
-			{
-				return [
-					'name', 'sections', 'barcode', 'gallery', 'amount',
-					'storeTo', 'purchasingPrice', 'sellingPrice',
-				];
-			}
-
-			if (docType === DocumentType.Moving)
-			{
-				return [
-					'name', 'sections', 'barcode', 'gallery', 'amount',
-					'storeFrom', 'storeTo', 'purchasingPrice', 'sellingPrice',
-				];
-			}
-
-			if (docType === DocumentType.Deduct)
-			{
-				return [
-					'name', 'sections', 'barcode', 'gallery', 'amount',
-					'storeFrom', 'purchasingPrice',  'sellingPrice',
-				];
-			}
-
-			return [];
+			return [
+				StringField({
+					ref: (ref) => this.nameFieldRef = ref,
+					title: Loc.getMessage('CSPD_FIELDS_PRODUCT_NAME'),
+					value: this.state.product.name,
+					readOnly: this.isReadonly(),
+					required: true,
+					onChange: (newVal) => this.updateFieldState('name', newVal),
+					...this.getAccessProps(true, hasProductEditAccess),
+				}),
+				EntitySelectorField({
+					title: Loc.getMessage('CSPD_FIELDS_PRODUCT_SECTIONS'),
+					value: this.state.product.sections.map((section) => section.id),
+					readOnly: this.isReadonly(),
+					multiple: true,
+					showEditIcon: false,
+					config: {
+						selectorType: EntitySelectorFactory.Type.SECTION,
+						enableCreation: true,
+						provider: {
+							options: {
+								iblockId: this.props.catalog.id,
+							},
+						},
+						entityList: this.state.product.sections.map((section) => ({
+							title: section.name,
+							id: section.id,
+							type: 'section',
+						})),
+						parentWidget: this.layout,
+					},
+					onChange: (value, entityList) => {
+						const newVal = entityList.map((item) => ({
+							id: item.id,
+							name: item.title,
+						}));
+						this.updateFieldState('sections', newVal);
+					},
+					...this.getAccessProps(true, hasProductEditAccess),
+				}),
+				BarcodeField({
+					title: Loc.getMessage('CSPD_FIELDS_BARCODE'),
+					value: this.state.product.barcode,
+					readOnly: this.isReadonly(),
+					onChange: (newVal) => this.updateFieldState('barcode', newVal),
+					...this.getAccessProps(true, hasProductEditAccess),
+					config: {
+						parentWidget: this.layout,
+					},
+				}),
+				FileField({
+					ref: (ref) => this.photoFieldRef = ref,
+					title: Loc.getMessage('CSPD_FIELDS_PHOTOS'),
+					multiple: true,
+					value: gallery,
+					config: {
+						fileInfo: galleryInfo,
+						mediaType: 'image',
+						controller: {
+							entityId: 'catalog-product',
+							options: {
+								productId: this.state.product.productId,
+							},
+						},
+					},
+					readOnly: this.isReadonly(),
+					onChange: (images) => this.updateFieldState('gallery', images),
+					...this.getAccessProps(true, hasProductEditAccess),
+				}),
+			];
 		}
 
-		buildFieldsList()
+		buildStoreInfoFieldsList()
 		{
 			const fieldsList = this.getFieldsListForCurrentDocumentType();
 			const fieldDescriptions = this.getFieldsDescriptions();
@@ -148,9 +215,36 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 				{
 					fields.push(fieldDescriptions[field]);
 				}
-			})
+			});
 
 			return fields;
+		}
+
+		getFieldsListForCurrentDocumentType()
+		{
+			const docType = this.props.document.type;
+
+			if (docType === DocumentType.Arrival || docType === DocumentType.StoreAdjustment)
+			{
+				return ['purchasingPrice', 'sellingPrice', 'amount', 'storeTo', 'totalPrice'];
+			}
+
+			if (docType === DocumentType.Moving)
+			{
+				return ['purchasingPrice', 'sellingPrice', 'amount', 'storeFrom', 'storeTo', 'totalPrice'];
+			}
+
+			if (docType === DocumentType.Deduct)
+			{
+				return ['purchasingPrice', 'sellingPrice', 'amount', 'storeFrom', 'totalPrice'];
+			}
+
+			if (docType === DocumentType.SalesOrders)
+			{
+				return ['sellingPrice', 'amount', 'storeFrom', 'totalPrice'];
+			}
+
+			return [];
 		}
 
 		getFieldsDescriptions()
@@ -162,7 +256,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 			fields.name = StringField({
 				testId: 'ProductGridProductDetailsNameField',
 				ref: (ref) => this.nameFieldRef = ref,
-				title: BX.message('CSPD_FIELDS_PRODUCT_NAME'),
+				title: Loc.getMessage('CSPD_FIELDS_PRODUCT_NAME'),
 				value: this.state.product.name,
 				readOnly: this.isReadonly(),
 				required: true,
@@ -172,10 +266,11 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 
 			fields.sections = EntitySelectorField({
 				testId: 'ProductGridProductDetailsSectionsField',
-				title: BX.message('CSPD_FIELDS_PRODUCT_SECTIONS'),
+				title: Loc.getMessage('CSPD_FIELDS_PRODUCT_SECTIONS'),
 				value: this.state.product.sections.map(section => section.id),
 				readOnly: this.isReadonly(),
 				multiple: true,
+				showEditIcon: false,
 				config: {
 					selectorType: EntitySelectorFactory.Type.SECTION,
 					enableCreation: true,
@@ -203,7 +298,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 
 			fields.barcode = BarcodeField({
 				testId: 'ProductGridProductDetailsBarcodeField',
-				title: BX.message('CSPD_FIELDS_BARCODE'),
+				title: Loc.getMessage('CSPD_FIELDS_BARCODE'),
 				value: this.state.product.barcode,
 				readOnly: this.isReadonly(),
 				onChange: (newVal) => this.updateFieldState('barcode', newVal),
@@ -219,7 +314,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 			fields.gallery = FileField({
 				testId: 'ProductGridProductDetailsGalleryField',
 				ref: (ref) => this.photoFieldRef = ref,
-				title: BX.message('CSPD_FIELDS_PHOTOS'),
+				title: Loc.getMessage('CSPD_FIELDS_PHOTOS'),
 				multiple: true,
 				value: gallery,
 				config: {
@@ -241,7 +336,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 
 			fields.purchasingPrice = MoneyField({
 				testId: 'ProductGridProductDetailsPurchasingPriceField',
-				title: BX.message('CSPD_FIELDS_PURCHASING_PRICE'),
+				title: Loc.getMessage('CSPD_FIELDS_PURCHASING_PRICE'),
 				value: this.state.product.price.purchase,
 				readOnly: this.arePricesReadonly(),
 				config: {
@@ -255,7 +350,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 
 			fields.sellingPrice = MoneyField({
 				testId: 'ProductGridProductDetailsSellingPriceField',
-				title: BX.message('CSPD_FIELDS_SELLING_PRICE'),
+				title: Loc.getMessage('CSPD_FIELDS_SELLING_PRICE'),
 				value: this.state.product.price.sell,
 				readOnly: this.arePricesReadonly(),
 				config: {
@@ -278,7 +373,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 			{
 				amountAccess = hasStoreFromAccess && hasStoreToAccess;
 			}
-			else if (docType === DocumentType.Deduct)
+			else if (docType === DocumentType.Deduct || docType === DocumentType.SalesOrders)
 			{
 				amountAccess = hasStoreFromAccess;
 			}
@@ -293,27 +388,35 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 					this.updateFieldState('amount', amount);
 					this.updateFieldState('measure', this.props.measures[measure]);
 				},
+				ref: (ref) => this.amountFieldRef = ref,
 				config: {
 					primaryField: {
 						id: 'amount',
 						renderField: NumberField,
 						title:
 							[DocumentType.Arrival, DocumentType.StoreAdjustment].includes(docType)
-								? BX.message('CSPD_FIELDS_STORE_TO_AMOUNT')
-								: BX.message('CSPD_FIELDS_AMOUNT')
-						,
+								? Loc.getMessage('CSPD_FIELDS_STORE_TO_AMOUNT')
+								: Loc.getMessage('CSPD_FIELDS_AMOUNT'),
 						value: this.state.product.amount,
 						placeholder: '0',
 						config: {
 							type: NumberPrecision.DOUBLE,
 							precision: 10,
 						},
+						required: docType === 'W',
+						showRequired: docType === 'W',
+						customValidation: (field) => {
+							return docType === 'W' && field.getValue() <= 0
+								? Loc.getMessage('CSPD_FIELDS_AMOUNT_POSITIVE_ERROR')
+								: null
+							;
+						},
 						...this.getAccessProps(amountAccess, true),
 					},
 					secondaryField: {
 						id: 'measure',
 						renderField: SelectField,
-						title: BX.message('CSPD_FIELDS_MEASURES'),
+						title: Loc.getMessage('CSPD_FIELDS_MEASURES'),
 						required: true,
 						showRequired: false,
 						config: {
@@ -333,17 +436,46 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 			});
 
 			fields.storeFrom = this.getStoreSelectorField({
-				fieldTitle: docType === DocumentType.Moving ? BX.message('CSPD_FIELDS_STORE_FROM') : BX.message('CSPD_FIELDS_STORE'),
+				fieldTitle: docType === DocumentType.Moving
+					? Loc.getMessage('CSPD_FIELDS_STORE_FROM')
+					: Loc.getMessage('CSPD_FIELDS_STORE'),
 				fieldCode: 'storeFrom',
 				storeInfo: this.state.product.storeFrom ? this.state.product.storeFrom : null,
 				access: hasStoreFromAccess,
+				amount: this.state.product.storeFromAmount,
+				availableAmount: this.state.product.storeFromAvailableAmount,
+				measure: this.state.product.measure.name,
 			});
 
 			fields.storeTo = this.getStoreSelectorField({
-				fieldTitle: docType === DocumentType.Moving ? BX.message('CSPD_FIELDS_STORE_TO') : BX.message('CSPD_FIELDS_STORE'),
+				fieldTitle: docType === DocumentType.Moving
+					? Loc.getMessage('CSPD_FIELDS_STORE_TO')
+					: Loc.getMessage('CSPD_FIELDS_STORE'),
 				fieldCode: 'storeTo',
 				storeInfo: this.state.product.storeTo ? this.state.product.storeTo : null,
 				access: hasStoreToAccess,
+				amount: this.state.product.storeToAmount,
+				availableAmount: this.state.product.storeToAvailableAmount,
+				measure: this.state.product.measure.name,
+			});
+
+			const totalPriceValue = docType === DocumentType.SalesOrders
+				? { ...this.state.product.price.sell }
+				: { ...this.state.product.price.purchase }
+			;
+			totalPriceValue.amount = (totalPriceValue.amount * this.state.product.amount).toFixed(2);
+			fields.totalPrice = MoneyField({
+				title: Loc.getMessage('CSPD_FIELDS_TOTAL_PRICE'),
+				value: totalPriceValue,
+				readOnly: true,
+				config: {
+					currencyReadOnly: true,
+				},
+				...(
+					docType === DocumentType.SalesOrders
+						? this.getAccessProps(amountAccess, hasSellingPriceEditAccess)
+						: this.getAccessProps(hasPurchasingPriceReadAccess && amountAccess, hasProductEditAccess)
+				),
 			});
 
 			return fields;
@@ -355,7 +487,9 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 				fieldTitle,
 				fieldCode,
 				storeInfo,
-				access
+				access,
+				amount,
+				availableAmount,
 			} = params;
 
 			let storeId = null;
@@ -368,6 +502,10 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 					id: storeInfo.id,
 					title: storeInfo.title,
 					type: 'store',
+					customData: {
+						amount,
+						availableAmount,
+					},
 				});
 			}
 
@@ -384,43 +522,101 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 				title: fieldTitle,
 				value: storeId,
 				readOnly: this.isReadonly(),
-				required: true,
 				multiple: false,
+				required: true,
+				showEditIcon: false,
+				showChevronDown: true,
+				showBorder: access,
+				hasSolidBorderContainer: access,
 				config: {
 					selectorType: EntitySelectorFactory.Type.STORE,
 					enableCreation: hasStoreModifyAccess,
-					entityList: entityList,
+					entityList,
 					provider: {
 						options: {
-							'useAddressAsTitle': true,
-							'productId': this.state.product.productId,
+							useAddressAsTitle: true,
+							productId: this.state.product.productId,
+						},
+					},
+					styles: {
+						externalWrapperBackgroundColor: this.isReadonly() ? '#fcfcfd' : '#f8fafb',
+						externalWrapperBorderColor: '#dfe0e3',
+						emptyValue: {
+							flex: 0,
+							fontSize: 16,
+							fontWeight: '400',
+							color: '#a8adb4',
 						},
 					},
 					parentWidget: this.layout,
 				},
-				onChange: (value, entityList) => {
-					let newVal;
-
-					if (entityList.length)
-					{
-						newVal = {
-							id: entityList[0].id,
-							title: entityList[0].title,
-						};
-					}
-					else
-					{
-						newVal = {
-							id: null,
-							title: null,
-						};
-					}
-
-					this.updateFieldState(fieldCode, newVal);
-					this.updateFieldState(fieldCode + 'Id', newVal.id);
+				wrapperConfig: {
+					showWrapperBorder: !access,
+					style: access
+						? {
+							paddingHorizontal: 0,
+							paddingVertical: 8,
+						}
+						: {}
+					,
 				},
+				renderAdditionalBottomContent: this.renderStoreSelectorBottomContent.bind(this, access),
+				onChange: this.onStoreSelectorChange.bind(this, fieldCode),
 				...this.getAccessProps(access, true),
 			});
+		}
+
+		onStoreSelectorChange(fieldCode, value, entityList)
+		{
+			const newVal = {
+				id: entityList[0] ? entityList[0].id : null,
+				title: entityList[0] ? entityList[0].title : null,
+			};
+
+			this.updateFieldsState([
+				{
+					name: fieldCode,
+					value: newVal,
+				},
+				{
+					name: `${fieldCode}Id`,
+					value: newVal.id,
+				},
+			]);
+		}
+
+		renderStoreSelectorBottomContent(access, entitySelector)
+		{
+			const currentEntityList = entitySelector.getEntityList();
+			if (!access || currentEntityList.length === 0)
+			{
+				return null;
+			}
+
+			const amount = currentEntityList[0].customData.amount || 0;
+			const availableAmount = currentEntityList[0].customData.availableAmount || 0;
+
+			return View(
+				{},
+				Text({
+					text: Loc.getMessage(
+						'CSPD_STORE_SELECTOR_AVAILABLE_AMOUNT',
+						{
+							'#VALUE#': availableAmount,
+							'#MEASURE#': this.state.product.measure.name,
+						},
+					),
+				}),
+				Text({
+					text: Loc.getMessage(
+						'CSPD_STORE_SELECTOR_AMOUNT',
+						{
+							'#VALUE#': amount,
+							'#MEASURE#': this.state.product.measure.name,
+						},
+					),
+				}),
+			);
 		}
 
 		/**
@@ -434,8 +630,8 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 			{
 				return {
 					disabled: true,
-					placeholder: BX.message('CSPD_ACCESS_DENIED'),
-					emptyValue: BX.message('CSPD_ACCESS_DENIED'),
+					placeholder: Loc.getMessage('CSPD_ACCESS_DENIED'),
+					emptyValue: Loc.getMessage('CSPD_ACCESS_DENIED'),
 					value: null,
 					onContentClick: this.showReadAccessDenied,
 				};
@@ -455,8 +651,8 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 		showReadAccessDenied()
 		{
 			Notify.showUniqueMessage(
-				BX.message('CSPD_ACCESS_DENIED_NOTIFY_TEXT'),
-				BX.message('CSPD_READ_ACCESS_DENIED_NOTIFY_TITLE'),
+				Loc.getMessage('CSPD_ACCESS_DENIED_NOTIFY_TEXT'),
+				Loc.getMessage('CSPD_READ_ACCESS_DENIED_NOTIFY_TITLE'),
 				{ time: 3 },
 			);
 		}
@@ -464,10 +660,23 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 		showEditAccessDenied()
 		{
 			Notify.showUniqueMessage(
-				BX.message('CSPD_ACCESS_DENIED_NOTIFY_TEXT'),
-				BX.message('CSPD_EDIT_ACCESS_DENIED_NOTIFY_TITLE'),
+				Loc.getMessage('CSPD_ACCESS_DENIED_NOTIFY_TEXT'),
+				Loc.getMessage('CSPD_EDIT_ACCESS_DENIED_NOTIFY_TITLE'),
 				{ time: 3 },
 			);
+		}
+
+		updateFieldsState(fields)
+		{
+			this.setState((oldState) => {
+				const product = clone(oldState.product);
+
+				fields.forEach((field) => {
+					set(product, field.name, field.value);
+				});
+
+				return { product };
+			});
 		}
 
 		updateFieldState(fieldName, newValue)
@@ -487,7 +696,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 			const catalogUrl = get(this.props, 'catalog.url.create_product', '/');
 
 			qrauth.open({
-				title: BX.message('CSPD_OPEN_PRODUCT_IN_DESKTOP_VERSION'),
+				title: Loc.getMessage('CSPD_OPEN_PRODUCT_IN_DESKTOP_VERSION'),
 				redirectUrl: productUrl || catalogUrl,
 				layout: this.layout,
 			});
@@ -497,7 +706,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 		{
 			this.layout.setRightButtons([
 				{
-					name: this.isReadonly() ? BX.message('CSPD_CLOSE') : BX.message('CSPD_DONE'),
+					name: this.isReadonly() ? Loc.getMessage('CSPD_CLOSE') : Loc.getMessage('CSPD_DONE'),
 					type: 'text',
 					color: '#0b66c3',
 					callback: this.close.bind(this),
@@ -540,10 +749,10 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 		showAlertToWaitUploading()
 		{
 			Alert.alert(
-				BX.message('CSPD_FIELDS_PHOTOS_UPLOADING'),
-				BX.message('CSPD_FIELDS_PHOTOS_UPLOADING_DESC'),
+				Loc.getMessage('CSPD_FIELDS_PHOTOS_UPLOADING'),
+				Loc.getMessage('CSPD_FIELDS_PHOTOS_UPLOADING_DESC'),
 				null,
-				BX.message('CSPD_FIELDS_PHOTOS_UPLOADING_BUTTON'),
+				Loc.getMessage('CSPD_FIELDS_PHOTOS_UPLOADING_BUTTON'),
 			);
 		}
 
@@ -572,6 +781,11 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 			}
 
 			if (this.storeToFieldRef && !this.storeToFieldRef.validate())
+			{
+				return false;
+			}
+
+			if (this.amountFieldRef && !this.amountFieldRef.primaryFieldRef.validate())
 			{
 				return false;
 			}

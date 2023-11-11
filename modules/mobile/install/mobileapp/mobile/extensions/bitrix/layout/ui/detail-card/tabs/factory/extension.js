@@ -2,7 +2,6 @@
  * @module layout/ui/detail-card/tabs/factory
  */
 jn.define('layout/ui/detail-card/tabs/factory', (require, exports, module) => {
-
 	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
 	const { EditorTab } = require('layout/ui/detail-card/tabs/editor');
 	const { ProductTab } = require('layout/ui/detail-card/tabs/product');
@@ -16,36 +15,35 @@ jn.define('layout/ui/detail-card/tabs/factory', (require, exports, module) => {
 	{
 		static create(type, props)
 		{
-			let tab;
+			let Tab = null;
 
 			switch (type)
 			{
 				case TabType.EDITOR:
-					tab = EditorTab;
+					Tab = EditorTab;
 					break;
 
 				case TabType.PRODUCT:
-					tab = ProductTab;
+					Tab = ProductTab;
 					break;
 
 				case TabType.CRM_PRODUCT:
-					tab = CrmProductTab;
+					Tab = CrmProductTab;
 					break;
 
 				case TabType.TIMELINE:
-					tab = TimelineTab;
+					Tab = TimelineTab;
 					break;
 			}
 
-			if (!tab)
+			if (!Tab)
 			{
 				throw new Error(`Tab implementation {${type}} not found.`);
 			}
 
-			return new tab(props);
+			return new Tab(props);
 		}
 	}
 
 	module.exports = { TabFactory };
-
 });

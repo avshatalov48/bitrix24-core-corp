@@ -1,3 +1,4 @@
+/* eslint-disable */
 (function (exports,main_core,main_core_events,ui_dialogs_messagebox,crm_router) {
 	'use strict';
 
@@ -8,10 +9,10 @@
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var namespace = main_core.Reflection.namespace('BX.Crm');
-	var _isUniversalActivityScenarioEnabled = /*#__PURE__*/new WeakMap();
 	var _isIframe = /*#__PURE__*/new WeakMap();
 	var _smartActivityNotificationSupported = /*#__PURE__*/new WeakMap();
 	var _isEmbedded = /*#__PURE__*/new WeakMap();
+	var _pingSettings = /*#__PURE__*/new WeakMap();
 	var _getToolbarComponent = /*#__PURE__*/new WeakSet();
 	var _initPushCrmSettings = /*#__PURE__*/new WeakSet();
 	var ItemListComponent = /*#__PURE__*/function () {
@@ -22,10 +23,6 @@
 	    babelHelpers.classCallCheck(this, ItemListComponent);
 	    _classPrivateMethodInitSpec(this, _initPushCrmSettings);
 	    _classPrivateMethodInitSpec(this, _getToolbarComponent);
-	    _classPrivateFieldInitSpec(this, _isUniversalActivityScenarioEnabled, {
-	      writable: true,
-	      value: false
-	    });
 	    _classPrivateFieldInitSpec(this, _isIframe, {
 	      writable: true,
 	      value: false
@@ -37,6 +34,10 @@
 	    _classPrivateFieldInitSpec(this, _isEmbedded, {
 	      writable: true,
 	      value: false
+	    });
+	    _classPrivateFieldInitSpec(this, _pingSettings, {
+	      writable: true,
+	      value: void 0
 	    });
 	    this.exportPopups = {};
 	    if (main_core.Type.isPlainObject(params)) {
@@ -67,14 +68,14 @@
 	      if (main_core.Type.isElementNode(params.errorTextContainer)) {
 	        this.errorTextContainer = params.errorTextContainer;
 	      }
-	      if (main_core.Type.isBoolean(params.isUniversalActivityScenarioEnabled)) {
-	        babelHelpers.classPrivateFieldSet(this, _isUniversalActivityScenarioEnabled, params.isUniversalActivityScenarioEnabled);
-	      }
 	      if (main_core.Type.isBoolean(params.isIframe)) {
 	        babelHelpers.classPrivateFieldSet(this, _isIframe, params.isIframe);
 	      }
 	      if (main_core.Type.isBoolean(params.isEmbedded)) {
 	        babelHelpers.classPrivateFieldSet(this, _isEmbedded, params.isEmbedded);
+	      }
+	      if (main_core.Type.isPlainObject(params.pingSettings)) {
+	        babelHelpers.classPrivateFieldSet(this, _pingSettings, params.pingSettings);
 	      }
 	    }
 	    this.reloadGridTimeoutId = 0;
@@ -291,7 +292,7 @@
 	}
 	function _initPushCrmSettings2() {
 	  var _this6 = this;
-	  if (!babelHelpers.classPrivateFieldGet(this, _isUniversalActivityScenarioEnabled) || babelHelpers.classPrivateFieldGet(this, _isIframe) || babelHelpers.classPrivateFieldGet(this, _isEmbedded)) {
+	  if (babelHelpers.classPrivateFieldGet(this, _isIframe) || babelHelpers.classPrivateFieldGet(this, _isEmbedded)) {
 	    return;
 	  }
 	  var toolbar = _classPrivateMethodGet(this, _getToolbarComponent, _getToolbarComponent2).call(this);
@@ -306,6 +307,7 @@
 	    new PushCrmSettings({
 	      smartActivityNotificationSupported: babelHelpers.classPrivateFieldGet(_this6, _smartActivityNotificationSupported),
 	      entityTypeId: _this6.entityTypeId,
+	      pingSettings: babelHelpers.classPrivateFieldGet(_this6, _pingSettings),
 	      rootMenu: (_toolbar$getSettingsB = toolbar.getSettingsButton()) === null || _toolbar$getSettingsB === void 0 ? void 0 : _toolbar$getSettingsB.getMenuWindow(),
 	      grid: _this6.grid
 	    });

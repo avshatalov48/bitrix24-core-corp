@@ -1,4 +1,8 @@
 <?
+
+use Bitrix\Tasks\Internals\Task\MetaStatus;
+use Bitrix\Tasks\Internals\Task\Status;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 if (!CModule::IncludeModule("tasks"))
@@ -28,16 +32,16 @@ if(array_key_exists('SELECT', $arParams))
 	$arSelect = $arParams['SELECT'];
 }
 $arOrder = array("STATUS" => "ASC", "DEADLINE" => "DESC", "PRIORITY" => "DESC", "ID" => "DESC");
-$arFilter = array(
-	'DOER'   => \Bitrix\Tasks\Util\User::getId(),
-	'STATUS' => array(
-		CTasks::METASTATE_VIRGIN_NEW,
-		CTasks::METASTATE_EXPIRED,
-		CTasks::STATE_NEW,
-		CTasks::STATE_PENDING,
-		CTasks::STATE_IN_PROGRESS
-	)
-);
+$arFilter = [
+	'DOER' => \Bitrix\Tasks\Util\User::getId(),
+	'STATUS' => [
+		MetaStatus::UNSEEN,
+		MetaStatus::EXPIRED,
+		Status::NEW,
+		Status::PENDING,
+		Status::IN_PROGRESS,
+	],
+];
 
 if (is_array($arParams["FILTER"]))
 	$arFilter = array_merge($arFilter, $arParams["FILTER"]);

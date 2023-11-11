@@ -25,6 +25,8 @@ use Bitrix\UI\EntitySelector\Dialog;
 use Bitrix\UI\EntitySelector\Item;
 use Bitrix\UI\EntitySelector\SearchQuery;
 use Bitrix\UI\EntitySelector\Tab;
+use CSite;
+use CUser;
 
 /**
  * Class TagProvider
@@ -132,7 +134,6 @@ final class TaskTagProvider extends BaseProvider
 		$query = LabelTable::query();
 		$query->setSelect(array_merge($this->getSelect(), ['TASK_TAG.TASK_ID']));
 		$query->where('TASK_TAG.TASK_ID', $this->taskId);
-		/** @var TagCollection $tagCollection */
 		$tagCollection = $query->exec()->fetchCollection();
 
 		return $tagCollection;
@@ -145,20 +146,33 @@ final class TaskTagProvider extends BaseProvider
 	 */
 	private function getFilterTagCollection(SearchQuery $searchQuery = null): TagCollection
 	{
-		$userTagsQuery = LabelTable::query();
-		$userTagsQuery
+		$contextTagsQuery = LabelTable::query();
+		$contextTagsQuery
 			->setSelect($this->getSelect())
 			->setOrder(['ID' => 'DESC'])
 			->setLimit(self::LIMIT)
-			->where('USER_ID', $this->userId)
-			->where('GROUP_ID', 0)
 		;
-		!is_null($searchQuery) && $userTagsQuery->whereLike('NAME', "%{$searchQuery->getQuery()}%");
 
-		/** @var TagCollection $tagCollection */
-		$tagCollection = $userTagsQuery->exec()->fetchCollection();
+		if ($this->groupId > 0)
+		{
+			$contextTagsQuery
+				->where('USER_ID', 0)
+				->where('GROUP_ID', $this->groupId)
+			;
+		}
+		else
+		{
+			$contextTagsQuery
+				->where('USER_ID', $this->userId)
+				->where('GROUP_ID', 0)
+			;
+		}
 
-		if ($tagCollection->count() < self::LIMIT)
+		!is_null($searchQuery) && $contextTagsQuery->whereLike('NAME', "%{$searchQuery->getQuery()}%");
+
+		$tagCollection = $contextTagsQuery->exec()->fetchCollection();
+
+		if ($this->groupId === 0 && $tagCollection->count() < self::LIMIT)
 		{
 			$groups = UserRegistry::getInstance($this->userId)->getUserGroups();
 			$groupIds = array_slice(array_keys($groups), 0, 100);
@@ -173,7 +187,6 @@ final class TaskTagProvider extends BaseProvider
 			;
 			!is_null($searchQuery) && $groupTagsQuery->whereLike('NAME', "%{$searchQuery->getQuery()}%");
 
-			/** @var TagCollection $groupTagCollection */
 			$groupTagCollection = $groupTagsQuery->exec()->fetchCollection();
 			$tagCollection->mergeByName($groupTagCollection);
 		}
@@ -198,7 +211,6 @@ final class TaskTagProvider extends BaseProvider
 			->setSelect($this->getSelect())
 			->whereIn('ID', $this->lastActivityTagIds)
 		;
-		/** @var TagCollection $lastActivityTagCollection */
 		$lastActivityTagCollection = $lastActivityQuery->exec()->fetchCollection();
 		$lastActivityTagCollection->sort($this->lastActivityTagIds);
 
@@ -223,7 +235,6 @@ final class TaskTagProvider extends BaseProvider
 			->setLimit(self::LIMIT - $count)
 		;
 		($count > 0) && $query->whereNotIn('ID', $this->lastActivityTagIds);
-		/** @var TagCollection $tagCollection */
 		$tagCollection = $query->exec()->fetchCollection();
 
 		return $tagCollection;
@@ -242,7 +253,6 @@ final class TaskTagProvider extends BaseProvider
 			->setSelect($this->getSelect())
 			->whereLike('NAME', "%{$searchQuery->getQuery()}%")
 		;
-		/** @var TagCollection $tagCollection */
 		$tagCollection = $query->exec()->fetchCollection();
 
 		return $tagCollection;
@@ -384,8 +394,8 @@ final class TaskTagProvider extends BaseProvider
 				$user = $tag->getUser();
 				if (isset($user))
 				{
-					$owner = \CUser::FormatName(
-						\CSite::GetNameFormat(),
+					$owner = CUser::FormatName(
+						CSite::GetNameFormat(),
 						[
 							'LOGIN' => $user->getLogin(),
 							'NAME' => $user->getName(),
@@ -393,7 +403,6 @@ final class TaskTagProvider extends BaseProvider
 							'SECOND_NAME' => $user->getSecondName(),
 						],
 						true,
-						false
 					);
 				}
 				break;

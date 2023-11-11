@@ -1,39 +1,48 @@
-(() =>
-{
-	const caches = new Map();
-
+/**
+ * @module storage-cache
+ */
+jn.define('storage-cache', (require, exports, module) => {
 	class StorageCache
 	{
-		constructor(storageName)
+		constructor(storageId, cacheKey)
 		{
-			this.storageName = storageName;
-			this.defaultData = {};
+			this.storageId = storageId;
+			this.cacheKey = cacheKey;
+
+			this.setDefaultData({});
 		}
 
-		static getInstance(id)
-		{
-			if (!caches.has(id))
-			{
-				caches.set(id, (new StorageCache(id)));
-			}
-			return caches.get(id);
-		}
-
+		/**
+		 * @return {Object}
+		 */
 		get()
 		{
-			return Application.storage.getObject(this.storageName, this.defaultData);
+			if (!this.storage)
+			{
+				this.storage = Application.storageById(this.storageId);
+			}
+
+			return this.storage.getObject(this.cacheKey, this.defaultData);
 		}
 
 		set(data)
 		{
-			Application.storage.setObject(this.storageName, data);
+			if (!this.storage)
+			{
+				this.storage = Application.storageById(this.storageId);
+			}
+
+			this.storage.setObject(this.cacheKey, data);
 		}
 
 		update(key, value)
 		{
-			const currentCache = this.get();
-			currentCache[key] = value;
-			this.set(currentCache);
+			if (!this.storage)
+			{
+				this.storage = Application.storageById(this.storageId);
+			}
+
+			this.storage.updateObject(key, value);
 		}
 
 		setDefaultData(defaultData)
@@ -42,5 +51,5 @@
 		}
 	}
 
-	this.StorageCache = StorageCache;
-})();
+	module.exports = { StorageCache };
+});

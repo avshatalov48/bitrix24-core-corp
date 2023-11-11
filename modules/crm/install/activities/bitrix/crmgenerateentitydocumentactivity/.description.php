@@ -9,7 +9,7 @@ use Bitrix\Main\Localization\Loc;
 
 $arActivityDescription = [
 	'NAME' => Loc::getMessage('CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_NAME_1'),
-	'DESCRIPTION' => Loc::getMessage('CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_DESC_1'),
+	'DESCRIPTION' => Loc::getMessage('CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_DESC_1_MSGVER_1'),
 	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmGenerateEntityDocumentActivity',
 	'JSCLASS' => 'BizProcActivity',

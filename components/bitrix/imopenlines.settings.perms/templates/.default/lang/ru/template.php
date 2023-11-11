@@ -13,3 +13,4 @@ $MESS['IMOL_PERM_ROLE_DELETE_CONFIRM']='Вы уверены, что хотите
 $MESS['IMOL_PERM_ROLE_OK']='Ок';
 $MESS['IMOL_PERM_ROLE_CANCEL']='Отмена';
 $MESS['IMOL_PERM_RESTRICTION']='Настроить права доступа сотрудников к открытым линиям можно <a target="_blank" href="https://www.bitrix24.ru/prices/">в коммерческих тарифах</a>.';
+$MESS['IMOL_PERM_RESTRICTION_MSGVER_1']='Настройка прав доступа сотрудников к Открытым линиям недоступна на вашем тарифе. <a target="_blank" href="https://www.bitrix24.ru/prices/">Выбрать подходящий тариф</a>';

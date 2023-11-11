@@ -3,6 +3,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Integration;
+use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Item\Task\Template;
 use Bitrix\Tasks\Util\Result;
 use Bitrix\Tasks\Util\User;
@@ -133,11 +134,11 @@ $APPLICATION->SetAdditionalCSS('/bitrix/js/tasks/css/tasks.css');
 			<div class="js-id-task-template-view-file-area task-detail-info">
 				<div class="task-detail-header">
 					<?if($canUpdate):?>
-						<div class="js-id-task-template-view-importance-switch task-info-panel-important <?if($template["PRIORITY"] != CTasks::PRIORITY_HIGH):?>no<?endif?> mutable" data-priority="<?=intval($template["PRIORITY"])?>">
+						<div class="js-id-task-template-view-importance-switch task-info-panel-important <?if((int)$template["PRIORITY"] !== Priority::HIGH):?>no<?endif?> mutable" data-priority="<?=intval($template["PRIORITY"])?>">
 							<span class="if-no"><?=Loc::getMessage("TASKS_TASK_COMPONENT_TEMPLATE_MAKE_IMPORTANT")?></span>
 							<span class="if-not-no"><?=Loc::getMessage("TASKS_IMPORTANT_TASK")?></span>
 						</div>
-					<?elseif($template["PRIORITY"] == CTasks::PRIORITY_HIGH):?>
+					<?elseif((int)$template["PRIORITY"] === Priority::HIGH):?>
 						<div class="task-info-panel-important">
 							<span class="if-not-no"><?=Loc::getMessage("TASKS_IMPORTANT_TASK")?></span>
 						</div>

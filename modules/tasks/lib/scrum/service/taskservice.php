@@ -22,6 +22,8 @@ use Bitrix\Tasks\Control\Tag;
 use Bitrix\Tasks\Internals\Counter\Template\CounterStyle;
 use Bitrix\Tasks\Internals\Counter\Template\TaskCounter;
 use Bitrix\Tasks\Internals\Task\LabelTable;
+use Bitrix\Tasks\Internals\Task\Priority;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Helper\Common;
@@ -291,7 +293,7 @@ class TaskService implements Errorable
 				['ID' => 'ASC'],
 				[
 					'GROUP_ID' => $groupId,
-					'!=STATUS' => \CTasks::STATE_COMPLETED,
+					'!=STATUS' => Status::COMPLETED,
 					'CHECK_PERMISSIONS' => 'N',
 				],
 				['ID']
@@ -653,7 +655,7 @@ class TaskService implements Errorable
 				[],
 				[
 					'ID' => $taskId,
-					'=STATUS' => \CTasks::STATE_COMPLETED,
+					'=STATUS' => Status::COMPLETED,
 					'CHECK_PERMISSIONS' => 'N',
 				],
 				['ID']
@@ -690,7 +692,7 @@ class TaskService implements Errorable
 				[],
 				[
 					'ID' => $taskIds,
-					'!=STATUS' => \CTasks::STATE_COMPLETED,
+					'!=STATUS' => Status::COMPLETED,
 					'CHECK_PERMISSIONS' => 'N',
 				],
 				['ID']
@@ -733,7 +735,7 @@ class TaskService implements Errorable
 			];
 			if ($notCompleted)
 			{
-				$filter['!=STATUS'] = \CTasks::STATE_COMPLETED;
+				$filter['!=STATUS'] = Status::COMPLETED;
 			}
 
 			$queryObject = \CTasks::getList(
@@ -777,7 +779,7 @@ class TaskService implements Errorable
 						'ID' => $parentId,
 						'GROUP_ID' => $groupId,
 						'CHECK_PERMISSIONS' => 'Y',
-						'!=STATUS' => \CTasks::STATE_COMPLETED,
+						'!=STATUS' => Status::COMPLETED,
 					],
 				]);
 
@@ -883,9 +885,9 @@ class TaskService implements Errorable
 				'name' => $taskInfo['TITLE'],
 				'groupId' => $groupId,
 				'responsibleId' => ($taskInfo['RESPONSIBLE_ID'] ?? 0),
-				'completed' => ($taskInfo['STATUS'] == \CTasks::STATE_COMPLETED) ? 'Y' : 'N',
+				'completed' => ((int)$taskInfo['STATUS'] === Status::COMPLETED) ? 'Y' : 'N',
 				'attachedFilesCount' => $attachedFilesCount,
-				'isImportant' => ($taskInfo['PRIORITY'] == \CTasks::PRIORITY_HIGH) ? 'Y' : 'N',
+				'isImportant' => ((int)$taskInfo['PRIORITY'] === Priority::HIGH) ? 'Y' : 'N',
 			];
 
 			$parentId = (int) $taskInfo['PARENT_ID'];
@@ -1180,17 +1182,17 @@ class TaskService implements Errorable
 			)
 		);
 		$isCompleteAction = (
-			isset($fields['STATUS']) && $fields['STATUS'] == \CTasks::STATE_COMPLETED
-			&& (isset($previousFields['STATUS']) && $previousFields['STATUS'] != \CTasks::STATE_COMPLETED)
+			isset($fields['STATUS']) && (int)$fields['STATUS'] === Status::COMPLETED
+			&& (isset($previousFields['STATUS']) && (int)$previousFields['STATUS'] !== Status::COMPLETED)
 		);
 
 		$isRenewAction = (
-			(isset($fields['STATUS']) && $fields['STATUS'] == \CTasks::STATE_PENDING)
+			(isset($fields['STATUS']) && (int)$fields['STATUS'] === Status::PENDING)
 			&& (
 				isset($previousFields['STATUS'])
 				&& (
-					$previousFields['STATUS'] == \CTasks::STATE_COMPLETED
-					|| $previousFields['STATUS'] == \CTasks::STATE_SUPPOSEDLY_COMPLETED
+					(int)$previousFields['STATUS'] === Status::COMPLETED
+					|| (int)$previousFields['STATUS'] === Status::SUPPOSEDLY_COMPLETED
 				)
 			)
 		);
@@ -1471,7 +1473,7 @@ class TaskService implements Errorable
 			{
 				$subTasksInfo[$taskData['PARENT_ID']][$taskData['ID']] = [
 					'sourceId' => (int) $taskData['ID'],
-					'completed' => ($taskData['STATUS'] == \CTasks::STATE_COMPLETED ? 'Y' : 'N'),
+					'completed' => ((int)$taskData['STATUS'] === Status::COMPLETED ? 'Y' : 'N'),
 				];
 			}
 		}

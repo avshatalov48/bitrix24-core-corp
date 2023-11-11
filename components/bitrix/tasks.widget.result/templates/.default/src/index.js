@@ -1,4 +1,4 @@
-import {ajax as Ajax, Dom, Runtime, Type, Uri, Event} from 'main.core';
+import { ajax as Ajax, Dom, Runtime, Type, Uri, Event } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 
 import 'main.polyfill.intersectionobserver';
@@ -26,19 +26,19 @@ class TaskResult
 
 		EventEmitter.subscribe('onPullEvent-tasks', this.onPushResult.bind(this));
 		EventEmitter.subscribe('BX.Livefeed:recalculateComments', this.onRecalculateLivefeedComments.bind(this));
-		EventEmitter.subscribe('SidePanel.Slider:onOpenComplete', this.blockResize.bind(this));
+		EventEmitter.subscribe('SidePanel.Slider:onLoad', this.onSidePanelLoad.bind(this));
 	}
 
 	scrollToResult()
 	{
-		const resultId = this.getResultIdFromRequest();
+		const resultId = TaskResult.getResultIdFromRequest();
 		if (resultId)
 		{
-			const resultItem = this.contentNode.querySelector('[data-id="' + resultId + '"]');
+			const resultItem = this.contentNode.querySelector(`[data-id="${resultId}"]`);
 			if (resultItem)
 			{
 				const scrollTo = () => {
-					this.activateBlinking(resultItem);
+					TaskResult.activateBlinking(resultItem);
 
 					const itemTopPosition = Dom.getPosition(resultItem).top;
 
@@ -57,9 +57,26 @@ class TaskResult
 				}
 			}
 		}
+
+		if (resultId === 0)
+		{
+			const commentNode = document
+				.getElementById(`record-TASK_${this.taskId}-0-placeholder`)
+				.parentElement
+			;
+			if (commentNode)
+			{
+				TaskResult.showCommentInput(commentNode);
+
+				window.scrollTo({
+					top: document.body.scrollHeight,
+					behavior: 'smooth',
+				});
+			}
+		}
 	}
 
-	getResultIdFromRequest(): ?number
+	static getResultIdFromRequest(): ?number
 	{
 		const uri = new Uri(window.location.href);
 
@@ -71,6 +88,11 @@ class TaskResult
 	blockResize()
 	{
 		this.contentNode.style.height = `${this.containerNode.scrollHeight}px`;
+	}
+
+	onSidePanelLoad()
+	{
+		this.blockResize();
 
 		this.scrollToResult();
 	}
@@ -225,32 +247,70 @@ class TaskResult
 		}
 	}
 
-	activateBlinking(resultNode: HTMLElement)
+	static activateBlinking(node: HTMLElement)
 	{
 		if (Type.isUndefined(IntersectionObserver))
 		{
 			return;
 		}
 
-		const observer = new IntersectionObserver((entries) =>
-			{
+		const observer = new IntersectionObserver(
+			(entries) => {
 				if (entries[0].isIntersecting === true)
 				{
-					Dom.addClass(resultNode, '--blink');
+					Dom.addClass(node, '--blink');
 
 					setTimeout(() => {
-						Dom.removeClass(resultNode, '--blink');
+						Dom.removeClass(node, '--blink');
 					}, 300);
 
 					observer.disconnect();
 				}
 			},
 			{
-				threshold: [0]
-			}
+				threshold: [0],
+			},
 		);
 
-		observer.observe(resultNode);
+		observer.observe(node);
+	}
+
+	static showCommentInput(node: HTMLElement)
+	{
+		if (Type.isUndefined(IntersectionObserver))
+		{
+			return;
+		}
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (entries[0].isIntersecting === true)
+				{
+					const replyNode = node.querySelector('.feed-com-footer');
+					if (replyNode)
+					{
+						// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
+						BX.fireEvent(replyNode, 'click');
+
+						setTimeout(() => {
+							window.scrollTo({
+								top: document.body.scrollHeight,
+								behavior: 'smooth',
+							});
+							const resultCheckbox = document.getElementById('IS_TASK_RESULT');
+							resultCheckbox.checked = true;
+						}, 300);
+					}
+
+					observer.disconnect();
+				}
+			},
+			{
+				threshold: [0],
+			},
+		);
+
+		observer.observe(node);
 	}
 
 	reloadResults()

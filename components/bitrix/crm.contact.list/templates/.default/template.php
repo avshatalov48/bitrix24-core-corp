@@ -15,6 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 * @var CBitrixComponent $component
 */
 
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
@@ -219,8 +220,8 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 		if($arResult['PERM_QUOTE'] && !$arResult['CATEGORY_ID'])
 		{
 			$quoteAction = [
-				'TITLE' => GetMessage('CRM_CONTACT_ADD_QUOTE_TITLE'),
-				'TEXT' => GetMessage('CRM_CONTACT_ADD_QUOTE'),
+				'TITLE' => GetMessage('CRM_CONTACT_ADD_QUOTE_TITLE_MSGVER_1'),
+				'TEXT' => GetMessage('CRM_CONTACT_ADD_QUOTE_MSGVER_1'),
 				'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arContact['PATH_TO_QUOTE_ADD'])."');"
 			];
 			if (\Bitrix\Crm\Settings\QuoteSettings::getCurrent()->isFactoryEnabled())
@@ -275,7 +276,7 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 		if(!empty($arEntitySubMenuItems))
 		{
 			$arActions[] = array(
-				'TITLE' => GetMessage('CRM_CONTACT_ADD_ENTITY_TITLE'),
+				'TITLE' => GetMessage('CRM_CONTACT_ADD_ENTITY_TITLE_MSGVER_1'),
 				'TEXT' => GetMessage('CRM_CONTACT_ADD_ENTITY'),
 				'MENU' => $arEntitySubMenuItems
 			);
@@ -931,6 +932,7 @@ $APPLICATION->IncludeComponent(
 		)
 	)
 );
+
 ?><script type="text/javascript">
 BX.ready(
 		function()
@@ -954,7 +956,6 @@ BX.ready(
 <?php if(
 	!$isInternal
 	&& \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('IFRAME') !== 'Y'
-	&& \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
 ): ?>
 <script type="text/javascript">
 	BX.ready(
@@ -967,7 +968,8 @@ BX.ready(
 				/** @see BX.Crm.PushCrmSettings */
 				new exports.PushCrmSettings({
 					smartActivityNotificationSupported: <?= Container::getInstance()->getFactory(\CCrmOwnerType::Contact)->isSmartActivityNotificationSupported() ? 'true' : 'false' ?>,
-					entityTypeId: <?= (int)\CCrmOwnerType::Contact ?>,
+					entityTypeId: <?= \CCrmOwnerType::Contact ?>,
+					pingSettings: <?= CUtil::PhpToJSObject((new TodoPingSettingsProvider(\CCrmOwnerType::Contact, (int)($arResult['CATEGORY_ID'] ?? 0)))->fetchAll()) ?>,
 					rootMenu: settingsButton ? settingsButton.getMenuWindow() : undefined,
 					grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
 				});

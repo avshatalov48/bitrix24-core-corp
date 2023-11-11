@@ -59,7 +59,7 @@ class Type extends \Bitrix\Tasks\Util\UserField\Type
 				$newValue = Disk::cloneFileAttachmentHash($newValue, $userId);
 
 				// also, we need to translate raw attachments
-				$entityData['DESCRIPTION'] = static::translateRawAttachments($entityData['DESCRIPTION'], $newValue, $origValueData);
+				$entityData['DESCRIPTION'] = static::translateRawAttachments($entityData['DESCRIPTION'] ?? null, $newValue, $origValueData);
 			}
 		}
 

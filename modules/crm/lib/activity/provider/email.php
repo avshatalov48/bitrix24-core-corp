@@ -17,7 +17,7 @@ class Email extends Activity\Provider\Base
 	public const ERROR_TYPE_FULL = "full";
 
 	protected const TYPE_EMAIL = 'EMAIL';
-	protected const TYPE_EMAIL_COMPRESSED = 'EMAIL_COMPRESSED';
+	public const TYPE_EMAIL_COMPRESSED = 'EMAIL_COMPRESSED';
 
 	public static function getId()
 	{

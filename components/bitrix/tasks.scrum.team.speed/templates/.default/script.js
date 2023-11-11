@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,main_core_events,main_core) {
@@ -10,12 +11,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.chart = null;
 	    this.loader = null;
 	  }
-
 	  babelHelpers.createClass(Chart, [{
 	    key: "renderTo",
 	    value: function renderTo(chartDiv) {
 	      var _this = this;
-
 	      setTimeout(function () {
 	        return _this.create(chartDiv);
 	      }, 300);
@@ -32,7 +31,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.createColumn('plan', main_core.Loc.getMessage('TASKS_SCRUM_TEAM_SPEED_CHART_PLAN_COLUMN'), '#2882b3');
 	      this.createColumn('done', main_core.Loc.getMessage('TASKS_SCRUM_TEAM_SPEED_CHART_DONE_COLUMN'), '#9c1f1f');
 	      this.createLegend();
-
 	      if (this.data.length === 0) {
 	        this.showLoader(true);
 	      }
@@ -43,10 +41,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (!this.chart) {
 	        return;
 	      }
-
 	      this.data = data;
 	      this.chart.data = this.data;
-
 	      if (this.data.length > 0) {
 	        this.removeLoader();
 	      } else {
@@ -98,7 +94,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.loader.background.fillOpacity = 0.8;
 	      this.loader.width = am4core.percent(100);
 	      this.loader.height = am4core.percent(100);
-
 	      if (notData) {
 	        var loaderLabel = this.loader.createChild(am4core.Label);
 	        loaderLabel.text = main_core.Loc.getMessage('TASKS_SCRUM_TEAM_SPEED_CHART_NOT_DATA_LABEL');
@@ -125,7 +120,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.data = data;
 	    this.node = null;
 	  }
-
 	  babelHelpers.createClass(Stats, [{
 	    key: "renderTo",
 	    value: function renderTo(rootNode) {
@@ -138,13 +132,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (!main_core.Type.isUndefined(data)) {
 	        this.data = data;
 	      }
-
 	      if (this.node) {
 	        this.sync(this.build(), this.node);
 	      } else {
 	        this.node = this.build();
 	      }
-
 	      return this.node;
 	    }
 	  }, {
@@ -159,7 +151,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        main_core.Dom.addClass(this.node, '--loader');
 	      }
 	    } // todo move it to Dom library
-
 	  }, {
 	    key: "sync",
 	    value: function sync(virtualNode, realNode) {
@@ -170,52 +161,45 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          }
 	        });
 	      }
-
 	      if (virtualNode.nodeValue !== realNode.nodeValue) {
 	        realNode.nodeValue = virtualNode.nodeValue;
-	      } // Sync child nodes
+	      }
 
-
+	      // Sync child nodes
 	      var virtualChildren = virtualNode.childNodes;
 	      var realChildren = realNode.childNodes;
-
 	      for (var k = 0; k < virtualChildren.length || k < realChildren.length; k++) {
 	        var virtual = virtualChildren[k];
-	        var real = realChildren[k]; // Remove
+	        var real = realChildren[k];
 
+	        // Remove
 	        if (virtual === undefined && real !== undefined) {
 	          realNode.remove(real);
-	        } // Update
-
-
+	        }
+	        // Update
 	        if (virtual !== undefined && real !== undefined && virtual.tagName === real.tagName) {
 	          this.sync(virtual, real);
-	        } // Replace
-
-
+	        }
+	        // Replace
 	        if (virtual !== undefined && real !== undefined && virtual.tagName !== real.tagName) {
 	          var newReal = this.createRealNodeByVirtual(virtual);
 	          this.sync(virtual, newReal);
 	          main_core.Dom.replace(real, newReal);
-	        } // Add
-
-
+	        }
+	        // Add
 	        if (virtual !== undefined && real === undefined) {
 	          var _newReal = this.createRealNodeByVirtual(virtual);
-
 	          this.sync(virtual, _newReal);
 	          main_core.Dom.append(_newReal, realNode);
 	        }
 	      }
 	    } // todo move it to Dom library
-
 	  }, {
 	    key: "createRealNodeByVirtual",
 	    value: function createRealNodeByVirtual(virtual) {
 	      if (virtual.nodeType === Node.TEXT_NODE) {
 	        return document.createTextNode('');
 	      }
-
 	      return document.createElement(virtual.tagName);
 	    }
 	  }]);
@@ -229,15 +213,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.signedParameters = params.signedParameters;
 	    this.chart = new Chart(params.chartData);
 	    this.stats = new Stats(params.statsData);
-	    /* eslint-disable */
 
+	    /* eslint-disable */
 	    this.filterManager = BX.Main.filterManager.getById(this.filterId);
 	    this.sidePanelManager = BX.SidePanel.Instance;
 	    /* eslint-enable */
 
 	    this.bindEvents();
 	  }
-
 	  babelHelpers.createClass(TeamSpeed, [{
 	    key: "bindEvents",
 	    value: function bindEvents() {
@@ -253,19 +236,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onFilterApply",
 	    value: function onFilterApply(event) {
 	      var _this = this;
-
 	      var _event$getCompatData = event.getCompatData(),
-	          _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 5),
-	          filterId = _event$getCompatData2[0],
-	          values = _event$getCompatData2[1],
-	          filterInstance = _event$getCompatData2[2],
-	          promise = _event$getCompatData2[3],
-	          params = _event$getCompatData2[4];
-
+	        _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 5),
+	        filterId = _event$getCompatData2[0],
+	        values = _event$getCompatData2[1],
+	        filterInstance = _event$getCompatData2[2],
+	        promise = _event$getCompatData2[3],
+	        params = _event$getCompatData2[4];
 	      if (this.filterId !== filterId) {
 	        return;
 	      }
-
 	      this.chart.showLoader();
 	      this.stats.showLoader();
 	      main_core.ajax.runComponentAction('bitrix:tasks.scrum.team.speed', 'applyFilter', {
@@ -275,9 +255,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }).then(function (response) {
 	        var chartData = response.data.chartData;
 	        var statsData = response.data.statsData;
-
 	        _this.chart.render(chartData);
-
 	        _this.stats.render(statsData);
 	      });
 	    }

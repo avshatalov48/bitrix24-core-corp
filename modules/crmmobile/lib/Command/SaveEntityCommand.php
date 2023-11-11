@@ -10,6 +10,7 @@ use Bitrix\Crm\FileUploader\EntityFieldController;
 use Bitrix\Crm\Integration\UI\EntitySelector\DynamicMultipleProvider;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Multifield\Type\Link;
+use Bitrix\Crm\Reservation\Internals\ProductRowReservationTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Factory;
@@ -87,6 +88,7 @@ final class SaveEntityCommand extends Command
 			$this->prepareFields($data);
 			$this->prepareMultiFields($data);
 			$this->prepareCurrencyIdForCompanyRevenue($data);
+			$this->prepareProductRowData($data);
 
 			$result->setData($data);
 		}
@@ -574,6 +576,76 @@ final class SaveEntityCommand extends Command
 
 			$fields['FM'][$name] = $fmValues;
 		}
+	}
+
+	private function prepareProductRowData(array &$fields): void
+	{
+		if ($this->entity->getEntityTypeId() !== \CCrmOwnerType::Deal)
+		{
+			return;
+		}
+
+		if (empty($fields['PRODUCT_ROWS']))
+		{
+			return;
+		}
+
+		$existReserveIds = [];
+		foreach ($fields['PRODUCT_ROWS'] as $productRow)
+		{
+			if (!isset($productRow['ID']) || !is_numeric($productRow['ID']))
+			{
+				continue;
+			}
+			$existReserveIds[] = $productRow['ID'];
+		}
+		$existReserves = self::getReserves($existReserveIds);
+
+		foreach ($fields['PRODUCT_ROWS'] as $productRowIndex => $productRow)
+		{
+			$isAutoReservation = $productRow['INPUT_RESERVE_QUANTITY'] === $productRow['QUANTITY'];
+			$existReserve =
+				isset($productRow['ID']) && is_numeric($productRow['ID'])
+					? $existReserves[(int)$productRow['ID']]
+					: null
+			;
+			if ($existReserve)
+			{
+				$isAuto = $isAutoReservation && $existReserve['IS_AUTO'] === 'Y' ? 'Y' : 'N';
+			}
+			else
+			{
+				$isAuto =
+					!isset($productRow['INPUT_RESERVE_QUANTITY'])
+					|| $productRow['QUANTITY'] === 0
+					|| $isAutoReservation
+						? 'Y'
+						: 'N'
+				;
+			}
+			$fields['PRODUCT_ROWS'][$productRowIndex]['IS_AUTO'] = $isAuto;
+		}
+	}
+
+	private static function getReserves(array $productRowIds): ?array
+	{
+		$productRowsMap = [];
+		$dbResult =  ProductRowReservationTable::getList([
+			'select' => [
+				'ROW_ID',
+				'IS_AUTO',
+			],
+			'filter' => [
+				'=ROW_ID' => $productRowIds,
+			],
+		]);
+
+		while ($productRow = $dbResult->fetch())
+		{
+			$productRowsMap[(int)$productRow['ROW_ID']] = $productRow;
+		}
+
+		return $productRowsMap;
 	}
 
 	private function prepareCurrencyIdForCompanyRevenue(array &$fields): void

@@ -28,7 +28,7 @@ class NotificationService extends AbstractService
 			return false;
 		}
 
-		return $channel->checkChannel()->isSuccess();
+		return NotificationsManager::canSendMessage();
 	}
 
 
