@@ -18,12 +18,11 @@ use Bitrix\Main\Loader;
 use Bitrix\Tasks\Internals\Task\Template\TemplateTagTable;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
 use Bitrix\Tasks\Item\SystemLog;
+use Bitrix\Tasks\Member\Service\TemplateMemberService;
 
 class Template
 {
 	private const FIELD_SCENARIO = 'SCENARIO_NAME';
-
-	private $userId;
 
 	private $db;
 	private $ufManager;
@@ -38,13 +37,12 @@ class Template
 	private $skipAgent = false;
 
 
-	public function __construct(int $userId)
+	public function __construct(private int $userId)
 	{
 		global $DB;
 		global $USER_FIELD_MANAGER;
 		global $APPLICATION;
 
-		$this->userId = $userId;
 		$this->db = $DB;
 		$this->ufManager = $USER_FIELD_MANAGER;
 		$this->application = $APPLICATION;
@@ -140,6 +138,7 @@ class Template
 		$this->enableReplication($fields);
 		$this->setParent($fields);
 		$this->setRights($fields);
+		$this->resetCache();
 
 		return $template;
 	}
@@ -200,6 +199,8 @@ class Template
 		{
 			return false;
 		}
+
+		$this->resetCache();
 
 		return true;
 	}
@@ -275,6 +276,8 @@ class Template
 		{
 			$this->enableReplication($fields);
 		}
+
+		$this->resetCache();
 
 		return $templateObject;
 	}
@@ -776,5 +779,10 @@ class Template
 
 		$this->template = $template;
 		return $this->template;
+	}
+
+	private function resetCache(): void
+	{
+		TemplateMemberService::invalidate();
 	}
 }

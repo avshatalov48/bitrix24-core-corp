@@ -1,5 +1,5 @@
 <?php
-$MESS["SP_SALESCENTER_MODULE_ERROR"] = "Модуль \"Продажи в чате\" не установлен";
+$MESS["SP_SALESCENTER_MODULE_ERROR_MSGVER_1"] = "Модуль \"Продажи в чате\" не установлен";
 $MESS['SP_SEO_MODULE_ERROR'] = "Модуль \"Поисковая оптимизация (seo)\" не установлен";
 $MESS["SP_SALESCENTER_SALE_ACCESS_DENIED"] = "Доступ запрещен.";
 $MESS["SP_MENU_ITEM_PARAMS"] = "Параметры";
@@ -22,3 +22,4 @@ $MESS['SALESCENTER_SP_CASHBOX_OFD_OPTION_OTHER'] = 'Другой';
 $MESS['SALESCENTER_SP_CASHBOX_ERROR_NO_HANDLER_EXIST'] = 'Неверный обработчик кассы';
 $MESS['SALESCENTER_SP_CASHBOX_VAT_HINT'] = 'Значение налоговой ставки передается в кассовый чек для информирования покупателей';
 $MESS['SALESCENTER_SP_CASHBOX_MEASURE_HINT'] = 'Единица измерения передается в кассовый чек для информирования покупателей';
+$MESS["SALESCENTER_SP_PAYSYSTEM_NAME_TEMPLATE"] = "#PAYSYSTEMS_NAME#. Оплата через #HANDLERS_NAME#";

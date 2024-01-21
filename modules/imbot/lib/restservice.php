@@ -26,6 +26,10 @@ class RestService extends \IRestService
 				'imbot.support24.question.add' => [__CLASS__, 'support24QuestionAdd'],
 				'imbot.support24.question.list' => [__CLASS__, 'support24QuestionList'],
 				'imbot.support24.question.search' => [__CLASS__, 'support24QuestionSearch'],
+
+				'imbot.network.question.add' => [__CLASS__, 'networkQuestionAdd'],
+				'imbot.network.question.list' => [__CLASS__, 'networkQuestionList'],
+				'imbot.network.question.search' => [__CLASS__, 'networkQuestionSearch'],
 			]
 		];
 	}
@@ -174,6 +178,99 @@ class RestService extends \IRestService
 		}
 
 		return $classSupport;
+	}
+
+	private static function getSupportBotId(): ?int
+	{
+		$classSupport = self::detectSupportBot();
+		if (is_null($classSupport))
+		{
+			return null;
+		}
+
+		return $classSupport::getBotId();
+	}
+
+	public static function networkQuestionAdd($params, $offset, \CRestServer $server)
+	{
+		if (!self::validateRequest($params, $server))
+		{
+			return -1;
+		}
+
+		if (!is_null(self::detectSupportBot()) && (int)$params['BOT_ID'] === self::getSupportBotId())
+		{
+			return self::support24QuestionAdd($params, $offset, $server);
+		}
+
+		$chatId = \Bitrix\ImBot\Bot\Network::addNetworkQuestionByBotId((int)$params['BOT_ID']);
+
+		if (\Bitrix\ImBot\Bot\Network::hasError())
+		{
+			self::throwException(\Bitrix\ImBot\Bot\Network::getError());
+		}
+
+		return $chatId;
+	}
+
+	/**
+	 * Returns the question dialog list.
+	 * @param array $params Query parameters.
+	 * <pre>
+	 * [
+	 * 	(int) limit - Number rows to select.
+	 * 	(int) offset - Set starting offset.
+	 * ]
+	 * </pre>
+	 * @param int $offset Starting offset.
+	 * @param \CRestServer $server Rest server.
+	 * @return array{id: int, title: string}
+	 * @throws RestException
+	 */
+	public static function networkQuestionList($params, $offset = 0, \CRestServer $server)
+	{
+		$params = array_change_key_case($params, CASE_UPPER);
+		unset($params['SEARCHQUERY']);
+
+		return self::networkQuestionSearch($params, $offset, $server);
+	}
+
+	/**
+	 * Perfoms searching within question dialogs.
+	 * @param array $params Query parameters.
+	 * <pre>
+	 * [
+	 * 	(string) searchQuery - String to search by title.
+	 * 	(int) limit - Number rows to select.
+	 * 	(int) offset - Set starting offset.
+	 * ]
+	 * </pre>
+	 * @param int $offset Starting offset.
+	 * @param \CRestServer $server Rest server.
+	 * @return array{id: int, title: string}
+	 * @throws RestException
+	 */
+	public static function networkQuestionSearch($params, $offset = 0, \CRestServer $server)
+	{
+		if (!self::validateRequest($params, $server))
+		{
+			return [];
+		}
+
+		$params = array_change_key_case($params, CASE_UPPER);
+		if ($offset > 0)
+		{
+			$params['OFFSET'] = $offset;
+		}
+
+		$questions = \Bitrix\ImBot\Bot\Network::getQuestionList($params);
+
+		if (\Bitrix\ImBot\Bot\Network::hasError())
+		{
+			self::throwException(\Bitrix\ImBot\Bot\Network::getError());
+		}
+
+		return $questions;
 	}
 
 	/**

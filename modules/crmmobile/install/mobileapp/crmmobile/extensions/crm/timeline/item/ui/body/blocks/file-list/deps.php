@@ -2,6 +2,8 @@
 return [
 	'extensions' => [
 		'loc',
+		'apptheme',
+		'assets/common',
 		'layout/ui/audio-player',
 		'layout/ui/file/icon',
 		'layout/ui/file/selector',

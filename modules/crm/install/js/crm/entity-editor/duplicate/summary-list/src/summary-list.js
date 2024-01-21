@@ -3,6 +3,8 @@ import {EventEmitter} from 'main.core.events';
 import {PopupManager} from "main.popup";
 import {Button} from 'ui.buttons';
 import 'ui.design-tokens';
+import 'ui.tooltip';
+import 'ui.hint';
 
 import "./summary-list.css"
 
@@ -11,6 +13,23 @@ type Settings = {
 	anchor: Object;
 	wrapper: Object;
 	clientSearchBox: Object;
+};
+
+type Responsible = {
+	id: number;
+	fullName: string;
+	profileUrl: string;
+	photoUrl: string;
+};
+
+type Communications = {
+	phone: string[],
+	email: string[],
+};
+
+type MatchIndex = {
+	phone: number[],
+	email: number[],
 };
 
 class ItemInfo
@@ -22,16 +41,27 @@ class ItemInfo
 	#isMy: false;
 	#entityUrl: "";
 	#relatedEntityTitle = "";
-	#communications: {
-		phone: string[],
-		email: string[],
-	};
+	#responsible: Responsible;
+	#communications: Communications;
+	#matchIndex: MatchIndex;
 
 	constructor()
 	{
 		this.#communications = {
 			phone: [],
 			email: [],
+		};
+
+		this.#matchIndex = {
+			phone: [],
+			email: [],
+		};
+
+		this.#responsible = {
+			id: 0,
+			fullName: "",
+			profileUrl: "",
+			photoUrl: "",
 		};
 	}
 
@@ -45,7 +75,9 @@ class ItemInfo
 			isMy: this.#isMy,
 			entityUrl: this.#entityUrl,
 			relatedEntityTitle: this.#relatedEntityTitle,
+			responsible: this.#responsible,
 			communications: this.#communications,
+			matchIndex: this.#matchIndex,
 		};
 	}
 
@@ -119,30 +151,46 @@ class ItemInfo
 		return this.#relatedEntityTitle;
 	}
 
-	#addCommunicationValue(communicationType: string, value: string)
+	set responsible(value: Responsible)
+	{
+		this.#responsible = value;
+	}
+
+	get responsible(): Responsible
+	{
+		return this.#responsible;
+	}
+
+	#addCommunicationValue(communicationType: string, value: string, isMatched: boolean)
 	{
 		if (this.#communications[communicationType].indexOf(value) < 0)
 		{
+			if (isMatched)
+			{
+				this.#matchIndex[communicationType].push(this.#communications[communicationType].length);
+			}
 			this.#communications[communicationType].push(value);
 		}
 	}
 
-	#addCommunicationList(communicationType: string, list: Array)
+	#addCommunicationList(communicationType: string, list: Array, matchIndex: Array)
 	{
 		for (let i = 0; i < list.length; i++)
 		{
-			this.#addCommunicationValue(communicationType, list[i]);
+			this.#addCommunicationValue(communicationType, list[i], matchIndex.includes(i.toString()));
 		}
 	}
-	
-	addPhones(values: Array)
+
+	addPhones(values: Array, matchIndex: Object)
 	{
-		this.#addCommunicationList("phone", values);
+		const matchIndexPhone = BX.prop.getArray(matchIndex, "PHONE", []);
+		this.#addCommunicationList("phone", values, matchIndexPhone);
 	}
 
-	addEmails(values: Array)
+	addEmails(values: Array, matchIndex: Object)
 	{
-		this.#addCommunicationList("email", values);
+		const matchIndexEmail = BX.prop.getArray(matchIndex, "EMAIL", []);
+		this.#addCommunicationList("email", values, matchIndexEmail);
 	}
 }
 
@@ -181,7 +229,7 @@ class SummaryList extends EventEmitter
 			this.enableEntitySelect = BX.prop.getBoolean(settings, "enableEntitySelect", false);
 		}
 
-		this.padding = BX.prop.getInteger(settings, 'padding', 14);
+		this.padding = BX.prop.getInteger(settings, 'padding', 11);
 	}
 
 	show()
@@ -193,9 +241,10 @@ class SummaryList extends EventEmitter
 			contentPadding: 0,
 			content: this.getLayout(),
 			closeIcon: {
-				top: '10px',
+				top: '11px',
 				right: '5px',
 			},
+			borderRadius: '12px',
 			closeByEsc: false,
 			background: this.#getPopupBackgroundColor(),
 			animation: {
@@ -283,7 +332,6 @@ class SummaryList extends EventEmitter
 		};
 
 		const data = this.getDuplicateData();
-
 		let totalItemCount = 0;
 		for (const groupId in data)
 		{
@@ -372,15 +420,22 @@ class SummaryList extends EventEmitter
 		const entityTypeId = this.getEntityTypeId(entity);
 		itemInfo.entityTypeName = BX.CrmEntityType.resolveName(entityTypeId)
 		itemInfo.entityId = this.getEntityId(entity);
-		itemInfo.entityTypeTitle = BX.CrmEntityType.getCaption(entityTypeId)
+		itemInfo.entityTypeTitle = BX.prop.getString(entity, 'CATEGORY_NAME', BX.CrmEntityType.getCaption(entityTypeId));
 		itemInfo.entityTitle = BX.prop.getString(entity, "TITLE", "");
 		itemInfo.isMy = (
 			entityTypeId === BX.CrmEntityType.enumeration.company
 			&& BX.prop.getString(entity, "IS_MY_COMPANY", "") === "Y"
 		);
 		itemInfo.entityUrl = BX.prop.getString(entity, "URL", "");
-		itemInfo.addPhones(BX.prop.getArray(entity, "PHONE", []));
-		itemInfo.addEmails(BX.prop.getArray(entity, "EMAIL", []));
+		itemInfo.responsible = {
+			id: BX.prop.getInteger(entity, "RESPONSIBLE_ID", 0),
+			fullName: BX.prop.getString(entity, "RESPONSIBLE_FULL_NAME", ""),
+			profileUrl: BX.prop.getString(entity, "RESPONSIBLE_URL", "#"),
+			photoUrl: BX.prop.getString(entity, "RESPONSIBLE_PHOTO_URL", "#"),
+		};
+		const matchIndex = BX.prop.getObject(entity, "MATCH_INDEX", { PHONE: [], EMAIL: [] });
+		itemInfo.addPhones(BX.prop.getArray(entity, "PHONE", []), matchIndex);
+		itemInfo.addEmails(BX.prop.getArray(entity, "EMAIL", []), matchIndex);
 
 		return itemInfo.toPlainObject();
 	}
@@ -390,11 +445,13 @@ class SummaryList extends EventEmitter
 		let content = "";
 
 		const communications = item["communications"];
-
-		let needDots = false;
+		const matchIndex = BX.prop.getObject(item, "matchIndex", {phone: [], email: []});
 
 		["phone", "email"].forEach((type) => {
-			if (!needDots && communications[type].length > 5)
+			const maxItems = 5;
+			let needDots = false;
+
+			if (!needDots && communications[type].length > maxItems)
 			{
 				needDots = true;
 			}
@@ -402,19 +459,29 @@ class SummaryList extends EventEmitter
 			{
 				for (let i = 0; i < communications[type].length; i++)
 				{
+					if (i >= maxItems)
+					{
+						break;
+					}
+
 					if (content.length > 0)
 					{
 						content += ", ";
 					}
-					content += communications[type][i];
+					const isMatched = (matchIndex[type].includes(i));
+					const value = Text.encode(communications[type][i]);
+					content += (
+						isMatched
+							? "<span class=\"crm-dups-item-details-matched\">" + value + "</span>"
+							: value
+					);
+				}
+				if (needDots)
+				{
+					content += ", ...";
 				}
 			}
 		});
-
-		if (needDots)
-		{
-			content += ", ...";
-		}
 
 		return content;
 	}
@@ -450,16 +517,17 @@ class SummaryList extends EventEmitter
 											class="crm-dups-item-title">${Text.encode(item["entityTitle"])}</a>
 										<div class="crm-dups-item-rel-title hidden"></div>
 									</div>
+									${this.#renderResponsible(item["responsible"])}
+								</div>
+								<div class="crm-dups-item-details">
+									${this.renderItemDetails(item)}
+								</div>
 									${this.#renderAddButton({
 										"type": item["entityTypeName"],
 										"id": item["entityId"],
 										"title": item["entityTitle"],
 										"isMy": item["isMy"]
 									})}
-								</div>
-								<div class="crm-dups-item-details">
-									${Text.encode(this.renderItemDetails(item))}
-								</div>
 							</div>
 						`)}</div>
 					</div>
@@ -551,7 +619,34 @@ class SummaryList extends EventEmitter
 	#getPopupBackgroundColor(): string
 	{
 		const bodyStyles = getComputedStyle(document.body);
-		return bodyStyles?.getPropertyValue("--ui-color-palette-gray-03") || '#F5F7F8';
+		return bodyStyles?.getPropertyValue("--ui-color-background-primary") || '#FFFFFF';
+	}
+
+	#renderResponsible(options): HTMLElement|string
+	{
+		const isPhoto = (Type.isStringFilled(options["photoUrl"]) && options["photoUrl"] !== "#");
+		const noPhotoClass = isPhoto ? "" : " no-photo";
+		const backgroundStyle =
+			isPhoto
+				? ` background: url('${Text.encode(options["photoUrl"])}') no-repeat center; background-size: cover;`
+				: ""
+		;
+		const responsibleContainer = Tag.render`<div class="crm-dups-item-photo bx-ui-tooltip-photo">
+			<a
+				href="${Text.encode(options["profileUrl"])}"
+				class="bx-ui-tooltip-info-data-photo${noPhotoClass}"
+				style="width: 20px; height: 20px;${backgroundStyle}"
+				data-hint="${Text.encode(options["fullName"])}"
+				data-hint-no-icon
+			></a>
+		</div>`;
+		BX.UI.Hint.popupParameters = {
+			padding: 10,
+		};
+
+		BX.UI.Hint.init(responsibleContainer);
+
+		return responsibleContainer;
 	}
 
 	#renderAddButton(options): HTMLElement|string

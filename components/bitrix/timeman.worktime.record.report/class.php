@@ -195,7 +195,12 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 			$recordForm->recordedStartTimestamp,
 			$this->mainUser->getId()
 		);
-		$this->arResult['REPORT_FORMATTED_DATE'] = $this->timeHelper->formatDateTime($recordedStartDate, 'd F Y');
+		$this->arResult['REPORT_FORMATTED_DATE'] =
+			$this->timeHelper->formatDateTime(
+				$recordedStartDate,
+				Main\Application::getInstance()->getContext()->getCulture()->getLongDateFormat()
+			)
+		;
 
 		$this->arResult['USER_PHOTO_PATH'] = $userHelper->getPhotoPath($employee->getPersonalPhoto());
 		$this->arResult['MANAGER_PHOTO_PATH'] = $userHelper->getPhotoPath($userManagers[0]['PERSONAL_PHOTO']);
@@ -319,7 +324,7 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 			$this->fillEditingExtraInfo($editedWarnings, $record, 'WARNINGS');
 		}
 
-		$this->fillEditingExtraInfo($this->arResult['VIOLATIONS'], $record, 'VIOLATIONS');
+		$this->fillEditingExtraInfo($this->arResult['VIOLATIONS'] ?? null, $record, 'VIOLATIONS');
 
 		$this->arResult['WORKTIME_RECORD_FORM_NAME'] = $recordForm->getFormName();
 		$this->arResult['WORKTIME_EVENT_FORM_NAME'] = (new WorktimeEventForm())->getFormName();

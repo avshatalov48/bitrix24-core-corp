@@ -1,6 +1,7 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_core,main_popup,main_core_events,crm_router,main_loader,ui_menuConfigurable) {
+(function (exports,crm_router,main_core,main_core_events,main_loader,main_popup,ui_icons_service,ui_menuConfigurable) {
 	'use strict';
 
 	let _ = t => t,
@@ -13,7 +14,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  _t7,
 	  _t8,
 	  _t9,
-	  _t10;
+	  _t10,
+	  _t11,
+	  _t12;
 	const CrmActivityEditor = main_core.Reflection.namespace('BX.CrmActivityEditor');
 	const UserOptions = main_core.Reflection.namespace('BX.userOptions');
 	const NotificationCenter = main_core.Reflection.namespace('BX.UI.Notification.Center');
@@ -21,7 +24,7 @@ this.BX.Crm = this.BX.Crm || {};
 	const CHANNEL_TYPE_EMAIL = 'EMAIL';
 	const CHANNEL_TYPE_IM = 'IM';
 	const MAX_VISIBLE_ITEMS = 4;
-	const MARKET_LINK = '/market/category/crm_robot_sms/';
+	const MARKET_LINK = 'category/crm_robot_sms/';
 	const items = new Map();
 
 	/**
@@ -32,7 +35,6 @@ this.BX.Crm = this.BX.Crm || {};
 	var _getLinkPromise = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLinkPromise");
 	var _menu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menu");
 	var _menuConfigurable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menuConfigurable");
-	var _renderChannel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderChannel");
 	var _getChannelById = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChannelById");
 	var _isChannelAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isChannelAvailable");
 	var _getLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLink");
@@ -55,6 +57,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _getLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLoader");
 	class List extends main_core_events.EventEmitter {
 	  constructor(parameters) {
+	    var _parameters$templateC;
 	    super();
 	    Object.defineProperty(this, _getLoader, {
 	      value: _getLoader2
@@ -116,9 +119,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    Object.defineProperty(this, _getChannelById, {
 	      value: _getChannelById2
 	    });
-	    Object.defineProperty(this, _renderChannel, {
-	      value: _renderChannel2
-	    });
 	    Object.defineProperty(this, _link, {
 	      writable: true,
 	      value: void 0
@@ -140,7 +140,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      value: void 0
 	    });
 	    this.title = main_core.Type.isStringFilled(parameters.title) ? parameters.title : main_core.Loc.getMessage('CRM_CHANNEL_SELECTOR_DEFAULT_TITLE');
+	    this.documentTitle = String(parameters.documentTitle);
 	    this.body = String(parameters.body);
+	    this.fullBody = String(parameters.fullBody);
 	    babelHelpers.classPrivateFieldLooseBase(this, _link)[_link] = String(parameters.link);
 	    this.isLinkObtainable = main_core.Text.toBoolean(parameters.isLinkObtainable);
 	    this.entityTypeId = main_core.Text.toInteger(parameters.entityTypeId);
@@ -150,6 +152,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.files = main_core.Type.isArray(parameters.files) ? parameters.files : [];
 	    this.activityEditorId = String(parameters.activityEditorId);
 	    this.smsUrl = String(parameters.smsUrl);
+	    this.templateCode = (_parameters$templateC = parameters.templateCode) != null ? _parameters$templateC : null;
 	    this.setChannels(parameters.channels);
 	    this.communications = main_core.Type.isPlainObject(parameters.communications) ? parameters.communications : {};
 	    this.hasVisibleChannels = main_core.Text.toBoolean(parameters.hasVisibleChannels);
@@ -195,7 +198,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.layout.settings = main_core.Tag.render(_t4 || (_t4 = _`<button class="ui-btn ui-btn-xs ui-btn-link ui-btn-icon-setting crm__channel-selector--setting-btn" onclick="${0}"></button>`), babelHelpers.classPrivateFieldLooseBase(this, _handleSettingsClick)[_handleSettingsClick].bind(this));
 	      this.layout.list = main_core.Tag.render(_t5 || (_t5 = _`<div class="crm__channel-selector--list"></div>`));
 	      this.channels.forEach(channel => {
-	        const channelNode = babelHelpers.classPrivateFieldLooseBase(this, _renderChannel)[_renderChannel](channel);
+	        const channelNode = this.renderChannel(channel);
 	        if (channelNode) {
 	          this.layout.channels[channel.id] = channelNode;
 	        }
@@ -224,6 +227,37 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	    this.adjustAppearance();
 	    return this.layout.container;
+	  }
+	  renderChannel(channel) {
+	    const channelHandler = () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _handleChannelClick)[_handleChannelClick](channel);
+	    };
+	    const icon = List.getChannelIcon(channel);
+	    return main_core.Tag.render(_t9 || (_t9 = _`<div 
+			class="crm__channel-selector--channel"
+			onclick="${0}"
+		>
+			${0}
+			${0}
+			${0}
+			<div class="crm__channel-selector--channel-helper">
+				<span class="crm__channel-selector--channel-helper-text">${0}</span>
+			</div>
+		</div>`), channelHandler, icon ? main_core.Tag.render(_t10 || (_t10 = _`<div class="crm__channel-selector--channel-icon ${0}"></div>`), icon) : '', this.renderChannelMainTitle(channel), this.renderChannelTitle(channel), main_core.Loc.getMessage('CRM_CHANNEL_SELECTOR_SEND_BUTTON'));
+	  }
+	  renderChannelMainTitle(channel) {
+	    var _channel$categoryTitl;
+	    return main_core.Tag.render(_t11 || (_t11 = _`<div class="crm__channel-selector--channel-main-title">
+			${0}
+		</div>`), main_core.Text.encode((_channel$categoryTitl = channel.categoryTitle) != null ? _channel$categoryTitl : channel.title));
+	  }
+	  renderChannelTitle(channel) {
+	    if (!channel.categoryTitle) {
+	      return null;
+	    }
+	    return main_core.Tag.render(_t12 || (_t12 = _`<div class="crm__channel-selector--channel-title">
+			${0}
+		</div>`), main_core.Text.encode(channel.title));
 	  }
 	  adjustAppearance() {
 	    if (this.hasVisibleChannels) {
@@ -269,9 +303,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _getLink)[_getLink]().then(link => {
 	        var _CrmActivityEditor$it;
 	        CrmActivityEditor == null ? void 0 : (_CrmActivityEditor$it = CrmActivityEditor.items[this.activityEditorId]) == null ? void 0 : _CrmActivityEditor$it.addEmail({
-	          'subject': this.body,
-	          'body': main_core.Loc.getMessage('CRM_CHANNEL_SELECTOR_MESSAGE_WITH_LINK', {
-	            '#MESSAGE#': this.body,
+	          subject: this.documentTitle,
+	          body: main_core.Loc.getMessage('CRM_CHANNEL_SELECTOR_MESSAGE_WITH_LINK', {
+	            '#MESSAGE#': this.documentTitle,
 	            '#LINK#': link
 	          })
 	        });
@@ -281,9 +315,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    } else {
 	      var _CrmActivityEditor$it2;
 	      CrmActivityEditor == null ? void 0 : (_CrmActivityEditor$it2 = CrmActivityEditor.items[this.activityEditorId]) == null ? void 0 : _CrmActivityEditor$it2.addEmail({
-	        'subject': this.body,
-	        'diskfiles': this.files,
-	        'storageTypeID': this.storageTypeId
+	        subject: this.documentTitle,
+	        diskfiles: this.files,
+	        storageTypeID: this.storageTypeId
 	      });
 	    }
 	  }
@@ -294,19 +328,27 @@ this.BX.Crm = this.BX.Crm || {};
 	      return;
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _getLink)[_getLink]().then(link => {
+	      const requestParams = {
+	        entityTypeId: this.entityTypeId,
+	        entityId: this.entityId,
+	        text: main_core.Loc.getMessage('CRM_CHANNEL_SELECTOR_MESSAGE_WITH_LINK', {
+	          '#MESSAGE#': channel.id === 'bitrix24' && this.fullBody ? this.fullBody : this.body,
+	          '#LINK#': link
+	        }),
+	        providerId: channel.id,
+	        isProviderFixed: 'Y',
+	        canUseBitrix24Provider: 'Y'
+	      };
+	      if (channel.templateCode) {
+	        requestParams.templateCode = channel.templateCode;
+	        requestParams.templatePlaceholders = channel.templatePlaceholders;
+	        requestParams.templatePlaceholders.DOCUMENT_URL = link;
+	        requestParams.isEditable = 'N';
+	      }
 	      crm_router.Router.openSlider(this.smsUrl, {
 	        width: 443,
 	        requestMethod: 'post',
-	        requestParams: {
-	          entityTypeId: this.entityTypeId,
-	          entityId: this.entityId,
-	          text: main_core.Loc.getMessage('CRM_CHANNEL_SELECTOR_MESSAGE_WITH_LINK', {
-	            '#MESSAGE#': this.body,
-	            '#LINK#': link
-	          }),
-	          providerId: channel.id,
-	          isProviderFixed: 'Y'
-	        }
+	        requestParams
 	      });
 	    }).catch(reason => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _showGetLinkErrorNotification)[_showGetLinkErrorNotification](channelNode, reason);
@@ -333,14 +375,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  static getById(id) {
 	    return items.get(id);
 	  }
-	  getChannelIcon(channel) {
-	    let icon = channel.icon;
-	    if (!icon) {
-	      icon = List.getIconByChannelId(channel.id);
-	    }
-	    return icon;
+	  static getChannelIcon(channel) {
+	    return channel.icon || List.getIconByChannelId(channel.id);
 	  }
 	  static getIconByChannelId(id) {
+	    if (id === 'bitrix24') {
+	      return '--service-bitrix24';
+	    }
 	    if (id === CHANNEL_TYPE_EMAIL) {
 	      return '--service-email';
 	    }
@@ -355,24 +396,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	    return '--service-sms';
 	  }
-	}
-	function _renderChannel2(channel) {
-	  const channelHandler = () => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _handleChannelClick)[_handleChannelClick](channel);
-	  };
-	  let icon = this.getChannelIcon(channel);
-	  return main_core.Tag.render(_t9 || (_t9 = _`<div 
-			class="crm__channel-selector--channel"
-			onclick="${0}"
-		>
-			${0}
-			<div class="crm__channel-selector--channel-text">
-				${0}
-			</div>
-			<div class="crm__channel-selector--channel-helper">
-				<span class="crm__channel-selector--channel-helper-text">${0}</span>
-			</div>
-		</div>`), channelHandler, icon ? main_core.Tag.render(_t10 || (_t10 = _`<div class="crm__channel-selector--channel-icon ${0}"></div>`), icon) : '', main_core.Text.encode(channel.title), main_core.Loc.getMessage('CRM_CHANNEL_SELECTOR_SEND_BUTTON'));
 	}
 	function _getChannelById2(id) {
 	  return this.channels.find(channel => channel.id === id);
@@ -467,7 +490,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  settingsItems.push({
 	    text: main_core.Loc.getMessage('CRM_CHANNEL_SELECTOR_CHOOSE_FROM_MARKET'),
 	    id: 'market',
-	    href: MARKET_LINK,
+	    href: main_core.Loc.getMessage('MARKET_BASE_PATH') + MARKET_LINK,
 	    onclick: (event, item) => {
 	      var _item$getMenuWindow;
 	      const menu = ((_item$getMenuWindow = item.getMenuWindow()) == null ? void 0 : _item$getMenuWindow.getRootMenuWindow()) || item.getMenuWindow();
@@ -623,5 +646,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.List = List;
 
-}((this.BX.Crm.ChannelSelector = this.BX.Crm.ChannelSelector || {}),BX,BX.Main,BX.Event,BX.Crm,BX,BX.UI.MenuConfigurable));
+}((this.BX.Crm.ChannelSelector = this.BX.Crm.ChannelSelector || {}),BX.Crm,BX,BX.Event,BX,BX.Main,BX,BX.UI.MenuConfigurable));
 //# sourceMappingURL=channel-selector.bundle.js.map

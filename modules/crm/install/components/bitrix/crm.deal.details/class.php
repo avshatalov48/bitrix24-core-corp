@@ -45,6 +45,7 @@ class CCrmDealDetailsComponent
 	use Traits\InitializeExternalContextId;
 	use Traits\InitializeGuid;
 	use Traits\InitializeUFConfig;
+	use Traits\InitializeAdditionalFieldsData;
 	use Crm\Entity\Traits\VisibilityConfig;
 
 	/** @var string */
@@ -105,6 +106,7 @@ class CCrmDealDetailsComponent
 	private $isLocationModuleIncluded = false;
 	/** @var bool */
 	private $isCatalogModuleIncluded = false;
+	private bool $isSalescenterModuleIncluded = false;
 	/** @var Crm\Service\Factory\Deal|null */
 	private ?Crm\Service\Factory\Deal $factory;
 	/** @var EditorAdapter|null */
@@ -270,6 +272,7 @@ class CCrmDealDetailsComponent
 	{
 		$this->isLocationModuleIncluded = Main\Loader::includeModule('location');
 		$this->isCatalogModuleIncluded = Main\Loader::includeModule('catalog');
+		$this->isSalescenterModuleIncluded = Main\Loader::includeModule('salescenter');
 	}
 
 	public function prepareEntityControllers(): array
@@ -645,67 +648,91 @@ class CCrmDealDetailsComponent
 			if($this->entityID > 0)
 			{
 				$quoteID = isset($this->entityData['QUOTE_ID']) ? (int)$this->entityData['QUOTE_ID'] : 0;
-				if($quoteID > 0)
+				$tabQuote = null;
+				if ($quoteID > 0)
 				{
 					$quoteDbResult = \CCrmQuote::GetList(
-						array(),
-						array('=ID' => $quoteID, 'CHECK_PERMISSIONS' => 'N'),
+						[],
+						[
+							'=ID' => $quoteID,
+							'CHECK_PERMISSIONS' => 'N',
+						],
 						false,
 						false,
-						array('TITLE')
+						['TITLE']
 					);
 					$quoteFields = is_object($quoteDbResult) ? $quoteDbResult->Fetch() : null;
 					if (is_array($quoteFields))
 					{
-						$this->arResult['TABS'][] = array(
+						$replace = [
+							'#TITLE#' => htmlspecialcharsbx($quoteFields['TITLE']),
+							'#URL#' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Quote, $quoteID, false),
+						];
+						$tabQuote = [
 							'id' => 'tab_quote',
-							'name' => GetMessage('CRM_DEAL_TAB_QUOTE_MSGVER_1'),
+							'name' => Loc::getMessage('CRM_DEAL_TAB_QUOTE_MSGVER_1'),
 							'html' => '<div class="crm-conv-info">'
-								.Loc::getMessage(
-									'CRM_DEAL_QUOTE_LINK_MSGVER_1',
-									array(
-										'#TITLE#' => htmlspecialcharsbx($quoteFields['TITLE']),
-										'#URL#' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Quote, $quoteID, false)
-									)
-								)
-								.'</div>'
-						);
+								. Loc::getMessage('CRM_DEAL_QUOTE_LINK_MSGVER_1', $replace)
+								.'</div>',
+						];
 					}
 				}
 				else
 				{
-					$this->arResult['TABS'][] = array(
+					$tabQuote = [
 						'id' => 'tab_quote',
 						'name' => Loc::getMessage('CRM_DEAL_TAB_QUOTE_MSGVER_1'),
-						'loader' => array(
-							'serviceUrl' => '/bitrix/components/bitrix/crm.quote.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
-							'componentData' => array(
+						'loader' => [
+							'serviceUrl' => '/bitrix/components/bitrix/crm.quote.list/lazyload.ajax.php?&site'
+								.SITE_ID
+								.'&'
+								.bitrix_sessid_get()
+							,
+							'componentData' => [
 								'template' => '',
 								'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 									'QUOTE_COUNT' => '20',
 									'PATH_TO_QUOTE_SHOW' => $this->arResult['PATH_TO_QUOTE_SHOW'],
 									'PATH_TO_QUOTE_EDIT' => $this->arResult['PATH_TO_QUOTE_EDIT'],
-									'INTERNAL_FILTER' => array('DEAL_ID' => $this->entityID),
-									'INTERNAL_CONTEXT' => array('DEAL_ID' => $this->entityID),
+									'INTERNAL_FILTER' => ['DEAL_ID' => $this->entityID],
+									'INTERNAL_CONTEXT' => ['DEAL_ID' => $this->entityID],
 									'GRID_ID_SUFFIX' => 'DEAL_DETAILS',
 									'TAB_ID' => 'tab_quote',
 									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
 									'ENABLE_TOOLBAR' => true,
 									'PRESERVE_HISTORY' => true,
-									'ADD_EVENT_NAME' => 'CrmCreateQuoteFromDeal'
-								], 'crm.quote.list')
-							)
-						)
-					);
+									'ADD_EVENT_NAME' => 'CrmCreateQuoteFromDeal',
+								], 'crm.quote.list'),
+							],
+						],
+					];
 				}
+
+				if ($tabQuote)
+				{
+					$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+					if (!$toolsManager->checkEntityTypeAvailability(\CCrmOwnerType::Quote))
+					{
+						$availabilityLock = \Bitrix\Crm\Restriction\AvailabilityManager::getInstance()
+							->getEntityTypeAvailabilityLock(\CCrmOwnerType::Quote)
+						;
+						$tabQuote['availabilityLock'] = $availabilityLock;
+					}
+
+					$this->arResult['TABS'][] = $tabQuote;
+				}
+
 				if (Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
 				{
-					$this->arResult['TABS'][] = array(
+					$tabInvoice = [
 						'id' => 'tab_invoice',
 						'name' => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::Invoice),
-						'loader' => array(
-							'serviceUrl' => '/bitrix/components/bitrix/crm.invoice.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
-							'componentData' => array(
+						'loader' => [
+							'serviceUrl' => '/bitrix/components/bitrix/crm.invoice.list/lazyload.ajax.php?&site'
+								.SITE_ID.
+								'&'.
+								bitrix_sessid_get(),
+							'componentData' => [
 								'template' => '',
 								'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 									'INVOICE_COUNT' => '20',
@@ -715,18 +742,29 @@ class CCrmDealDetailsComponent
 									'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'] ?? null,
 									'PATH_TO_INVOICE_EDIT' => $this->arResult['PATH_TO_INVOICE_EDIT'] ?? null,
 									'PATH_TO_INVOICE_PAYMENT' => $this->arResult['PATH_TO_INVOICE_PAYMENT'] ?? null,
-									'INTERNAL_FILTER' => array('UF_DEAL_ID' => $this->entityID),
+									'INTERNAL_FILTER' => ['UF_DEAL_ID' => $this->entityID],
 									'SUM_PAID_CURRENCY' => $currencyId,
 									'GRID_ID_SUFFIX' => 'DEAL_DETAILS',
 									'TAB_ID' => 'tab_invoice',
 									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? null,
 									'ENABLE_TOOLBAR' => 'Y',
 									'PRESERVE_HISTORY' => true,
-									'ADD_EVENT_NAME' => 'CrmCreateInvoiceFromDeal'
-								], 'crm.invoice.list')
-							)
-						)
-					);
+									'ADD_EVENT_NAME' => 'CrmCreateInvoiceFromDeal',
+								], 'crm.invoice.list'),
+							],
+						],
+					];
+
+					$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+					if (!$toolsManager->checkEntityTypeAvailability(\CCrmOwnerType::Invoice))
+					{
+						$availabilityLock = \Bitrix\Crm\Restriction\AvailabilityManager::getInstance()
+							->getEntityTypeAvailabilityLock(\CCrmOwnerType::Invoice)
+						;
+						$tabInvoice['availabilityLock'] = $availabilityLock;
+					}
+
+					$this->arResult['TABS'][] = $tabInvoice;
 				}
 				if (
 					CModule::IncludeModule('sale')
@@ -1282,20 +1320,34 @@ class CCrmDealDetailsComponent
 					? 'moneyPay' : 'money',
 				'editable' => true,
 				'mergeable' => false,
-				'data' => array(
-					'affectedFields' => array('CURRENCY_ID', 'OPPORTUNITY'),
-					'currency' => array(
+				'data' => [
+					'affectedFields' => [
+						'CURRENCY_ID',
+						'OPPORTUNITY',
+					],
+					'currency' => [
 						'name' => 'CURRENCY_ID',
-						'items' => \CCrmInstantEditorHelper::PrepareListOptions(CCrmCurrencyHelper::PrepareListItems())
-					),
+						'items' => \CCrmInstantEditorHelper::PrepareListOptions(CCrmCurrencyHelper::PrepareListItems()),
+					],
 					'amount' => 'OPPORTUNITY',
 					'formatted' => 'FORMATTED_OPPORTUNITY',
 					'formattedWithCurrency' => 'FORMATTED_OPPORTUNITY_WITH_CURRENCY',
 					'isDeliveryAvailable' => Crm\Integration\SalesCenterManager::getInstance()->hasInstallableDeliveryItems(),
+					'isTerminalAvailable' => Crm\Terminal\AvailabilityManager::getInstance()->isAvailable(),
 					'disableSendButton' => Crm\Integration\SmsManager::canSendMessage() ? '' : 'y',
 					'isShowPaymentDocuments' => ($this->entityData['IS_RECURRING'] ?? 'N') !== 'Y',
 					'isWithOrdersMode' => \CCrmSaleHelper::isWithOrdersMode(),
-				)
+					'isInventoryManagementToolEnabled' => $this->isCatalogModuleIncluded
+						? \Bitrix\Catalog\Restriction\ToolAvailabilityManager::getInstance()->checkInventoryManagementAvailability()
+						: false
+					,
+					'isTerminalToolEnabled' => Container::getInstance()->getIntranetToolsManager()->checkTerminalAvailability(),
+					'isSalescenterToolEnabled' => $this->isSalescenterModuleIncluded
+						? \Bitrix\Salescenter\Restriction\ToolAvailabilityManager::getInstance()->checkSalescenterAvailability()
+						: false
+					,
+					'shouldShowCashboxChecks' => Main\Application::getInstance()->getLicense()->getRegion() === 'ru',
+				],
 			),
 			array(
 				'name' => 'CLOSEDATE',
@@ -2138,56 +2190,20 @@ class CCrmDealDetailsComponent
 		//region Observers
 		if(isset($this->entityData['OBSERVER_IDS']) && !empty($this->entityData['OBSERVER_IDS']))
 		{
-			$this->entityData['OBSERVER_INFOS'] = array();
+			$userBroker = Container::getInstance()->getUserBroker();
 
-			$userDbResult = \CUser::GetList(
-				'ID',
-				'ASC',
-				array('ID' => implode('||', $this->entityData['OBSERVER_IDS'])),
-				array('FIELDS' => array('ID', 'PERSONAL_PHOTO', 'WORK_POSITION', 'NAME', 'SECOND_NAME', 'LAST_NAME'))
-			);
+			$users = $userBroker->getBunchByIds($this->entityData['OBSERVER_IDS']);
 
-			$observerMap = array();
-			while($userData = $userDbResult->Fetch())
+			$this->entityData['OBSERVER_INFOS'] = [];
+			foreach ($users as $singleUser)
 			{
-				$userInfo = array(
-					'ID' => intval($userData['ID']),
-					'FORMATTED_NAME' => \CUser::FormatName(
-						$this->arResult['NAME_TEMPLATE'],
-						$userData,
-						false,
-						false
-					),
-					'WORK_POSITION' => isset($userData['WORK_POSITION']) ? $userData['WORK_POSITION'] : '',
-					'SHOW_URL' => CComponentEngine::MakePathFromTemplate(
-						$this->arResult['PATH_TO_USER_PROFILE'],
-						array('user_id' => $userData['ID'])
-					)
-				);
-
-				$userPhotoID = isset($userData['PERSONAL_PHOTO']) ? (int)$userData['PERSONAL_PHOTO'] : 0;
-				if($userPhotoID > 0)
-				{
-					$file = new \CFile();
-					$fileInfo = $file->ResizeImageGet(
-						$userPhotoID,
-						array('width' => 60, 'height'=> 60),
-						BX_RESIZE_IMAGE_EXACT
-					);
-					if(is_array($fileInfo) && isset($fileInfo['src']))
-					{
-						$userInfo['PHOTO_URL'] = $fileInfo['src'];
-					}
-				}
-
-				$observerMap[$userData['ID']] = $userInfo;
-			}
-			foreach($this->entityData['OBSERVER_IDS'] as $userID)
-			{
-				if(isset($observerMap[$userID]))
-				{
-					$this->entityData['OBSERVER_INFOS'][] = $observerMap[$userID];
-				}
+				$this->entityData['OBSERVER_INFOS'][] = [
+					'ID' => $singleUser['ID'],
+					'FORMATTED_NAME' => $singleUser['FORMATTED_NAME'],
+					'WORK_POSITION' => $singleUser['WORK_POSITION'] ?? '',
+					'SHOW_URL' => (string)$singleUser['SHOW_URL'],
+					'PHOTO_URL' => $singleUser['PHOTO_URL'],
+				];
 			}
 		}
 		//endregion
@@ -2499,9 +2515,19 @@ class CCrmDealDetailsComponent
 		$this->entityData['IS_USED_INVENTORY_MANAGEMENT'] = $isUsedInventoryManagement;
 		$this->entityData['SALES_ORDERS_RIGHTS'] = $salesOrderRights;
 		$this->entityData['IS_INVENTORY_MANAGEMENT_RESTRICTED'] = !\Bitrix\Crm\Restriction\RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission();
+		$this->entityData['IS_INVENTORY_MANAGEMENT_TOOL_ENABLED'] =
+			$this->isCatalogModuleIncluded
+			&& \Bitrix\Catalog\Restriction\ToolAvailabilityManager::getInstance()->checkInventoryManagementAvailability()
+		;
+		$this->entityData['IS_SALESCENTER_TOOL_ENABLED'] =
+			$this->isSalescenterModuleIncluded
+			&& \Bitrix\Salescenter\Restriction\ToolAvailabilityManager::getInstance()->checkSalescenterAvailability()
+		;
 		$this->entityData['MODE_WITH_ORDERS'] = \CCrmSaleHelper::isWithOrdersMode();
 		$this->entityData['IS_COPY_MODE'] = $this->isCopyMode;
 		$this->entityData['RECEIVE_PAYMENT_MODE'] = CUserOptions::GetOption('crm', 'receive_payment_mode', 'payment_delivery');
+		$this->entityData['IS_TERMINAL_AVAILABLE'] = Crm\Terminal\AvailabilityManager::getInstance()->isAvailable();
+		$this->entityData['IS_TERMINAL_TOOL_ENABLED'] = Container::getInstance()->getIntranetToolsManager()->checkTerminalAvailability();
 
 		Tracking\UI\Details::prepareEntityData(
 			\CCrmOwnerType::Deal,
@@ -3567,7 +3593,8 @@ class CCrmDealDetailsComponent
 	{
 		return [
 			'ENTITY_ID' => $this->getEntityID(),
-			'ENTITY_DATA' => $this->prepareEntityData()
+			'ENTITY_DATA' => $this->prepareEntityData(),
+			'ADDITIONAL_FIELDS_DATA' => $this->getAdditionalFieldsData(),
 		];
 	}
 

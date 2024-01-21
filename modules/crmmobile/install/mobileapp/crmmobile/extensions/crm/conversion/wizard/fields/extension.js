@@ -3,6 +3,7 @@
  */
 jn.define('crm/conversion/wizard/fields', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { unique } = require('utils/array');
 	const { Type } = require('crm/type');
 	const { getEntityMessage } = require('crm/loc');
@@ -56,7 +57,7 @@ jn.define('crm/conversion/wizard/fields', (require, exports, module) => {
 		renderField({ text, enable })
 		{
 			const size = 24;
-			const color = enable ? '#333333' : '#bdc1c6';
+			const color = enable ? AppTheme.colors.base1 : AppTheme.colors.base5;
 
 			return View(
 				{

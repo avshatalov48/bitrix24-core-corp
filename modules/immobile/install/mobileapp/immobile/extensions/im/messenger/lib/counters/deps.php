@@ -9,6 +9,7 @@ return [
 		'im:messenger/const',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/params',
+		'im:messenger/lib/helper',
 	],
 	'bundle' => [
 		'./src/counters',

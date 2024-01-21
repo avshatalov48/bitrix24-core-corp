@@ -6,6 +6,7 @@ jn.define('im/messenger/controller/sidebar/tabs/tab-view', (require, exports, mo
 		'im/messenger/controller/sidebar/tabs/participants/participants-view',
 	);
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @class SidebarTabView
@@ -69,7 +70,7 @@ jn.define('im/messenger/controller/sidebar/tabs/tab-view', (require, exports, mo
 			return View(
 				{
 					style: {
-						backgroundColor: '#FFFFFF',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						flex: 1,
 					},
 				},
@@ -78,12 +79,12 @@ jn.define('im/messenger/controller/sidebar/tabs/tab-view', (require, exports, mo
 					TabView({
 						style: {
 							height: 44,
-							backgroundColor: '#FFFFFF',
+							backgroundColor: AppTheme.colors.bgContentPrimary,
 						},
 						params: {
 							styles: {
 								tabTitle: {
-									underlineColor: '#11A9D9',
+									underlineColor: AppTheme.colors.accentMainPrimary,
 								},
 							},
 							items: this.state.tabItems,

@@ -135,7 +135,7 @@ class DepartmentRepository
 	public function getUsersOfDepartment($depId)
 	{
 		$structure = \CIntranetUtils::getStructure();
-		$employees = array_map('intval', (array)$structure['DATA'][$depId]['EMPLOYEES']);
+		$employees = array_map('intval', (array) ($structure['DATA'][$depId]['EMPLOYEES'] ?? null));
 		return empty($employees) ? [] : $employees;
 	}
 

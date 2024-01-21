@@ -84,9 +84,14 @@ final class Multifield implements FieldImplementation
 
 	public function isChanged(string $commonFieldName): bool
 	{
+		if (!$this->current)
+		{
+			return false;
+		}
+
 		$this->load();
 
-		return ($this->current && !$this->current->isEqualTo($this->actual));
+		return !$this->current->isEqualTo($this->actual);
 	}
 
 	public function remindActual(string $commonFieldName)
@@ -98,8 +103,6 @@ final class Multifield implements FieldImplementation
 
 	public function reset(string $commonFieldName): void
 	{
-		$this->load();
-
 		$this->current = null;
 	}
 

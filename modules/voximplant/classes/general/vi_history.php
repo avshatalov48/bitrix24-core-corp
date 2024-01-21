@@ -676,6 +676,15 @@ class CVoxImplantHistory
 	 */
 	public static function GetMessageForChat($callFields, $hasRecord = false, $prependPlus = true)
 	{
+		$crmEntityType = $callFields['CRM_ENTITY_TYPE'] ?? '';
+		$crmEntityId = (int)($callFields['CRM_ENTITY_ID'] ?? 0);
+		$callInfoMessage = '';
+		$crmEntityUrl = '';
+		if ($crmEntityType !== '' && $crmEntityId > 0 && \Bitrix\Main\Loader::includeModule('crm'))
+		{
+			$crmEntityUrl = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::ResolveID($crmEntityType), $crmEntityId);
+			$callInfoMessage = "[URL={$crmEntityUrl}]" . GetMessage('VI_CALL_INFO') . '[/URL]';
+		}
 		$result = '';
 		if ($callFields["PHONE_NUMBER"] <> '' && $callFields["PORTAL_USER_ID"] > 0 && $callFields["CALL_FAILED_CODE"] != 423)
 		{
@@ -712,7 +721,7 @@ class CVoxImplantHistory
 				{
 					$result = GetMessage('VI_OUT_CALL_END', Array(
 						'#NUMBER#' => $formattedNumber,
-						'#INFO#' => '[PCH='.$callFields['ID'].']'.GetMessage('VI_CALL_INFO').'[/PCH]',
+						'#INFO#' => $callInfoMessage,
 					));
 				}
 			}
@@ -744,14 +753,14 @@ class CVoxImplantHistory
 				}
 				else if ($callFields['CALL_FAILED_CODE'] == 304)
 				{
-					$subMessage = '[PCH='.$callFields['ID'].']'.GetMessage('VI_CALL_INFO').'[/PCH]';
+					$subMessage = $callInfoMessage;
 					$result = GetMessage('VI_CALLBACK_SKIP', Array('#NUMBER#' => $formattedNumber, '#INFO#' => $subMessage));
 				}
 				else
 				{
 					$result = GetMessage('VI_CALLBACK_END', Array(
 						'#NUMBER#' => $formattedNumber,
-						'#INFO#' => '[PCH='.$callFields['ID'].']'.GetMessage('VI_CALL_INFO').'[/PCH]',
+						'#INFO#' => $callInfoMessage,
 					));
 				}
 			}
@@ -759,10 +768,10 @@ class CVoxImplantHistory
 			{
 				if ($callFields['CALL_FAILED_CODE'] == 304)
 				{
-					if ($hasRecord)
-						$subMessage = GetMessage('VI_CALL_VOICEMAIL', Array('#LINK_START#' => '[PCH='.$callFields['ID'].']', '#LINK_END#' => '[/PCH]',));
+					if ($hasRecord && $crmEntityUrl !== '')
+						$subMessage = GetMessage('VI_CALL_VOICEMAIL', Array('#LINK_START#' => "[URL={$crmEntityUrl}]", '#LINK_END#' => '[/URL]',));
 					else
-						$subMessage = '[PCH='.$callFields['ID'].']'.GetMessage('VI_CALL_INFO').'[/PCH]';
+						$subMessage = $callInfoMessage;
 
 					$result = GetMessage('VI_IN_CALL_SKIP', Array(
 						'#NUMBER#' => $formattedNumber,
@@ -773,7 +782,7 @@ class CVoxImplantHistory
 				{
 					$result = GetMessage('VI_IN_CALL_END', Array(
 						'#NUMBER#' => $formattedNumber,
-						'#INFO#' => '[PCH='.$callFields['ID'].']'.GetMessage('VI_CALL_INFO').'[/PCH]',
+						'#INFO#' => $callInfoMessage,
 					));
 				}
 			}

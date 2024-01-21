@@ -87,7 +87,8 @@ class StatusTable extends Entity\DataManager
 				->configureValues('N', 'Y')
 				->configureDefaultValue('N'),
 			(new ORM\Fields\StringField('COLOR'))
-				->configureSize(10),
+				->configureSize(10)
+				->addFetchDataModifier([self::class, 'colorFetchModifier'],),
 			(new ORM\Fields\EnumField('SEMANTICS'))
 				->configureValues([
 					PhaseSemantics::PROCESS,
@@ -491,5 +492,15 @@ class StatusTable extends Entity\DataManager
 	public static function getStatusesIds(string $entityId): array
 	{
 		return array_keys(static::getStatusesList($entityId));
+	}
+
+	public static function colorFetchModifier($value): ?string
+	{
+		if (!is_null($value))
+		{
+			return trim((string)$value);
+		}
+
+		return null;
 	}
 }

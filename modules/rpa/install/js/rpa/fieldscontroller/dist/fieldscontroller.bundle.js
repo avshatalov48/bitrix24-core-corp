@@ -1,17 +1,17 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,main_core,ui_userfieldfactory,ui_userfield,main_loader,main_core_events,main_popup,rpa_manager) {
 	'use strict';
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14;
+
 	/**
 	 * @memberof BX.Rpa
 	 * @mixes EventEmitter
 	 */
-
 	var FieldsController = /*#__PURE__*/function () {
 	  function FieldsController(params) {
 	    var _this = this;
-
 	    babelHelpers.classCallCheck(this, FieldsController);
 	    main_core_events.EventEmitter.makeObservable(this, 'BX.Rpa.FieldsController');
 	    this.fields = new Map();
@@ -20,54 +20,42 @@ this.BX = this.BX || {};
 	    this.fieldSubTitle = main_core.Loc.getMessage('RPA_FIELDS_SELECTOR_FIELD_DEFAULT_SUBTITLE');
 	    this.errorContainer = null;
 	    this.progress = false;
-
 	    if (main_core.Type.isPlainObject(params)) {
 	      if (params.factory instanceof ui_userfieldfactory.Factory) {
 	        this.factory = params.factory;
 	      }
-
 	      if (main_core.Type.isPlainObject(params.fields)) {
 	        this.setFields(params.fields);
 	      }
-
 	      if (main_core.Type.isPlainObject(params.hiddenFields)) {
 	        this.setHiddenFields(params.hiddenFields);
 	      }
-
 	      if (main_core.Type.isString(params.fieldSubTitle)) {
 	        this.fieldSubTitle = params.fieldSubTitle;
 	      }
-
 	      if (main_core.Type.isDomNode(params.errorContainer)) {
 	        this.errorContainer = params.errorContainer;
 	      }
-
 	      if (main_core.Type.isPlainObject(params.settings)) {
 	        this.settings = params.settings;
-
 	        if (!main_core.Type.isString(this.settings.inputName)) {
 	          this.settings.inputName = '';
 	        }
-
 	        if (!main_core.Type.isPlainObject(this.settings.values)) {
 	          this.settings.values = {};
 	        }
 	      }
-
 	      this.typeId = main_core.Text.toInteger(params.typeId);
 	      this.languageId = params.languageId || main_core.Loc.getMessage('LANGUAGE_ID');
-
 	      if (this.factory) {
 	        this.factory.setCustomTypesUrl(rpa_manager.Manager.Instance.getFieldDetailUrl(this.typeId, 0));
 	        this.factory.subscribe('onCreateCustomUserField', function (event) {
 	          var userField = event.getData().userField;
-
 	          _this.addField(userField).renderFields();
 	        });
 	      }
 	    }
 	  }
-
 	  babelHelpers.createClass(FieldsController, [{
 	    key: "getFields",
 	    value: function getFields() {
@@ -77,7 +65,6 @@ this.BX = this.BX || {};
 	    key: "setFields",
 	    value: function setFields(fields) {
 	      var _this2 = this;
-
 	      Object.keys(fields).forEach(function (fieldName) {
 	        _this2.addField(new ui_userfield.UserField(fields[fieldName], {
 	          languageId: _this2.languageId,
@@ -102,7 +89,6 @@ this.BX = this.BX || {};
 	    key: "setHiddenFields",
 	    value: function setHiddenFields(fields) {
 	      var _this3 = this;
-
 	      Object.keys(fields).forEach(function (fieldName) {
 	        _this3.addHiddenField(new ui_userfield.UserField(fields[fieldName], {
 	          languageId: _this3.languageId,
@@ -128,13 +114,11 @@ this.BX = this.BX || {};
 	    value: function render() {
 	      var container = this.renderContainer();
 	      container.appendChild(this.renderFields());
-
 	      if (this.factory) {
 	        this.layout.configurator = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div></div>"])));
 	        container.appendChild(this.layout.configurator);
 	        container.appendChild(this.renderFooter());
 	      }
-
 	      return container;
 	    }
 	  }, {
@@ -152,17 +136,14 @@ this.BX = this.BX || {};
 	    key: "renderFields",
 	    value: function renderFields() {
 	      var _this4 = this;
-
 	      if (this.layout.fieldsContainer) {
 	        main_core.Dom.clean(this.layout.fieldsContainer);
-
 	        if (this.settings) {
 	          this.settings.values = this.getSettings();
 	        }
 	      } else {
 	        this.layout.fieldsContainer = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-fields\"></div>"])));
 	      }
-
 	      Array.from(this.fields.values()).forEach(function (userField) {
 	        _this4.layout.fieldsContainer.appendChild(_this4.renderField(userField));
 	      });
@@ -174,25 +155,20 @@ this.BX = this.BX || {};
 	      if (!this.layout.fieldsContainer) {
 	        return null;
 	      }
-
 	      return this.layout.fieldsContainer.querySelector("[data-role=\"field-row-".concat(userField.getName(), "\"]"));
 	    }
 	  }, {
 	    key: "renderField",
 	    value: function renderField(userField) {
 	      var _this5 = this;
-
 	      var row = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-row\" data-role=\"field-row-", "\"></div>"])), userField.getName());
 	      var container = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-container\"></div>"])));
-
 	      if (this.fieldSubTitle) {
 	        container.appendChild(main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-subtitle\">", "</div>"])), main_core.Text.encode(this.fieldSubTitle)));
 	      }
-
 	      container.appendChild(main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-title\">", "</div>"])), main_core.Text.encode(userField.getTitle())));
 	      var wrapper = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-wrapper\"></div>"])));
 	      wrapper.appendChild(container);
-
 	      if (this.settings) {
 	        wrapper.appendChild(this.renderSwitcher(userField));
 	      } else {
@@ -203,7 +179,6 @@ this.BX = this.BX || {};
 	        });
 	        wrapper.appendChild(fieldSettingsButton);
 	      }
-
 	      row.appendChild(wrapper);
 	      row.appendChild(main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-settings\"></div>"]))));
 	      return row;
@@ -228,7 +203,6 @@ this.BX = this.BX || {};
 	      if (!this.layout.footer) {
 	        this.layout.footer = main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-footer\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>"])), this.getSelectButton(), this.getCreateButton());
 	      }
-
 	      this.updateSelectButtonAppearance();
 	      return this.layout.footer;
 	    }
@@ -240,7 +214,6 @@ this.BX = this.BX || {};
 	      } else {
 	        this.getSelectButton().style.display = 'inline-block';
 	      }
-
 	      return this;
 	    }
 	  }, {
@@ -249,7 +222,6 @@ this.BX = this.BX || {};
 	      if (!this.layout.createButton) {
 	        this.layout.createButton = main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-create-field-button\" onclick=\"", "\">", "</div>"])), this.handleCreateButtonClick.bind(this), main_core.Loc.getMessage('RPA_FIELDS_SELECTOR_FILED_CREATE_BUTTON'));
 	      }
-
 	      return this.layout.createButton;
 	    }
 	  }, {
@@ -267,7 +239,6 @@ this.BX = this.BX || {};
 	      if (!this.layout.selectButton) {
 	        this.layout.selectButton = main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-select-field-button\" onclick=\"", "\">", "</div>"])), this.handleSelectButtonClick.bind(this), main_core.Loc.getMessage('RPA_FIELDS_SELECTOR_FIELD_SELECT_BUTTON'));
 	      }
-
 	      return this.layout.selectButton;
 	    }
 	  }, {
@@ -281,26 +252,20 @@ this.BX = this.BX || {};
 	      if (!this.factory) {
 	        return;
 	      }
-
 	      var userField = this.factory.createUserField(fieldType);
-
 	      if (!userField) {
 	        return;
 	      }
-
 	      this.showFieldConfigurator(userField);
 	    }
 	  }, {
 	    key: "showFieldConfigurator",
 	    value: function showFieldConfigurator(userField) {
 	      var _this6 = this;
-
 	      if (userField.isSaved()) {
 	        var row = this.getFieldRow(userField);
-
 	        if (row) {
 	          var settings = row.querySelector('.rpa-fields-controller-field-settings');
-
 	          if (settings) {
 	            row.classList.add('rpa-fields-controller-edit');
 	            main_core.Dom.clean(settings);
@@ -325,11 +290,9 @@ this.BX = this.BX || {};
 	    key: "hideFieldConfigurator",
 	    value: function hideFieldConfigurator(userField) {
 	      var row = this.getFieldRow(userField);
-
 	      if (row) {
 	        row.classList.remove('rpa-fields-controller-edit');
 	        var settings = row.querySelector('.rpa-fields-controller-field-settings');
-
 	        if (settings) {
 	          main_core.Dom.clean(settings);
 	        }
@@ -339,27 +302,21 @@ this.BX = this.BX || {};
 	    key: "handleFieldSave",
 	    value: function handleFieldSave(userField) {
 	      var _this7 = this;
-
 	      if (!this.factory) {
 	        return;
 	      }
-
 	      if (this.isProgress()) {
 	        return;
 	      }
-
 	      this.startProgress();
 	      userField.save().then(function () {
 	        _this7.stopProgress().addField(userField).renderFields();
-
 	        main_core.Dom.clean(_this7.layout.configurator);
-
 	        _this7.emit('onFieldSave', {
 	          userField: userField
 	        });
 	      })["catch"](function (errors) {
 	        _this7.stopProgress();
-
 	        _this7.showError(errors);
 	      });
 	    }
@@ -372,11 +329,9 @@ this.BX = this.BX || {};
 	    key: "startProgress",
 	    value: function startProgress() {
 	      this.progress = true;
-
 	      if (!this.getLoader().isShown()) {
 	        this.getLoader().show(this.getContainer());
 	      }
-
 	      return this;
 	    }
 	  }, {
@@ -394,7 +349,6 @@ this.BX = this.BX || {};
 	          size: 150
 	        });
 	      }
-
 	      return this.loader;
 	    }
 	  }, {
@@ -403,15 +357,12 @@ this.BX = this.BX || {};
 	      if (!errorContainer) {
 	        errorContainer = this.errorContainer;
 	      }
-
 	      var message = '';
-
 	      if (main_core.Type.isArray(error)) {
 	        message = error.join(", ");
 	      } else if (main_core.Type.isString(error)) {
 	        message = error;
 	      }
-
 	      if (message) {
 	        if (main_core.Type.isDomNode(errorContainer)) {
 	          errorContainer.innerHTML = message;
@@ -426,16 +377,12 @@ this.BX = this.BX || {};
 	    key: "getSettings",
 	    value: function getSettings() {
 	      var _this8 = this;
-
 	      var settings = {};
-
 	      if (!this.settings) {
 	        return settings;
 	      }
-
 	      Array.from(this.fields.values()).forEach(function (userField) {
 	        var switcher = BX.UI.Switcher.getById(FieldsController.getSwitcherId(_this8.settings.inputName, userField.getName()));
-
 	        if (switcher) {
 	          settings[userField.getName()] = switcher.isChecked();
 	        }
@@ -451,7 +398,6 @@ this.BX = this.BX || {};
 	    key: "getSelectFieldsMenuItems",
 	    value: function getSelectFieldsMenuItems() {
 	      var _this9 = this;
-
 	      var items = [];
 	      Array.from(this.hiddenFields.values()).forEach(function (userField) {
 	        items.push({
@@ -467,11 +413,9 @@ this.BX = this.BX || {};
 	    key: "getSelectFieldsMenu",
 	    value: function getSelectFieldsMenu() {
 	      var _this10 = this;
-
 	      if (!this.getSelectButton()) {
 	        return;
 	      }
-
 	      return main_popup.MenuManager.create({
 	        id: this.getSelectFieldsMenuId(),
 	        bindElement: this.getSelectButton(),
@@ -499,7 +443,6 @@ this.BX = this.BX || {};
 	    key: "getSettingsMenu",
 	    value: function getSettingsMenu(button, userField) {
 	      var _this11 = this;
-
 	      return main_popup.MenuManager.create({
 	        id: 'rpa-fieldscontroller-field-settings-' + userField.getId(),
 	        bindElement: button,
@@ -507,7 +450,6 @@ this.BX = this.BX || {};
 	          text: main_core.Loc.getMessage('RPA_FIELDS_SELECTOR_CONFIGURATOR_ACTION_HIDE'),
 	          onclick: function onclick(event, item) {
 	            _this11.removeField(userField).addHiddenField(userField).updateSelectButtonAppearance().renderFields();
-
 	            if (item && item.menuWindow) {
 	              item.menuWindow.close();
 	            }
@@ -516,7 +458,6 @@ this.BX = this.BX || {};
 	          text: main_core.Loc.getMessage('RPA_FIELDS_SELECTOR_CONFIGURATOR_ACTION_EDIT'),
 	          onclick: function onclick(event, item) {
 	            _this11.showFieldConfigurator(userField);
-
 	            if (item && item.menuWindow) {
 	              item.menuWindow.close();
 	            }
@@ -529,20 +470,16 @@ this.BX = this.BX || {};
 	              cacheable: false
 	            }).then(function (slider) {
 	              var userFieldData = slider.getData().get('userFieldData');
-
 	              if (userFieldData) {
 	                userField = ui_userfield.UserField.unserialize(userFieldData);
-
 	                if (userField.isDeleted()) {
 	                  _this11.removeField(userField).renderFields();
 	                } else {
 	                  _this11.addField(userField);
-
 	                  _this11.renderFields();
 	                }
 	              }
 	            });
-
 	            if (item && item.menuWindow) {
 	              item.menuWindow.close();
 	            }

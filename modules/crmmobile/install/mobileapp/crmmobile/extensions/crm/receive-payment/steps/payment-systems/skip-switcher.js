@@ -3,6 +3,8 @@
  */
 jn.define('crm/receive-payment/steps/payment-systems/skip-switcher', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
+	const { transparent } = require('utils/color');
 	const { PureComponent } = require('layout/pure-component');
 	const { BooleanField } = require('layout/ui/fields/boolean');
 
@@ -27,7 +29,7 @@ jn.define('crm/receive-payment/steps/payment-systems/skip-switcher', (require, e
 					style: {
 						marginVertical: 10,
 						borderRadius: 12,
-						backgroundColor: '#80ffffff',
+						backgroundColor: transparent(AppTheme.colors.accentExtraAqua, 0.2),
 					},
 				},
 				BooleanField({
@@ -43,7 +45,7 @@ jn.define('crm/receive-payment/steps/payment-systems/skip-switcher', (require, e
 							description: {
 								marginLeft: 10,
 								fontSize: 16,
-								color: this.state.value ? '#333333' : '#828b95',
+								color: this.state.value ? AppTheme.colors.base1 : AppTheme.colors.base3,
 							},
 						},
 					},
@@ -62,7 +64,7 @@ jn.define('crm/receive-payment/steps/payment-systems/skip-switcher', (require, e
 						marginRight: 16,
 						marginBottom: 24,
 						fontSize: 13,
-						color: '#6a737f',
+						color: AppTheme.colors.base3,
 					},
 					text: Loc.getMessage('M_RP_PS_SKIP_STEP_DESC'),
 				}),

@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Activity\Rest;
 
 use \Bitrix\Crm\Activity\Entity\AppTypeTable;
 
+use Bitrix\Crm\Activity\Provider\ConfigurableRestApp;
 use Bitrix\Main\Loader;
 use Bitrix\Rest\AccessException;
 use Bitrix\Rest\AppTable;
@@ -64,6 +65,13 @@ class TypeProxy implements \ICrmRestProxy
 		$params = array_change_key_case($params, CASE_UPPER);
 		$params = $params['FIELDS'];
 
+		$configurableTypeId = ConfigurableRestApp::PROVIDER_TYPE_ID_DEFAULT;
+		$isConfigurable = (isset($params['IS_CONFIGURABLE_TYPE']) && $params['IS_CONFIGURABLE_TYPE'] === 'Y');
+		if (isset($params['TYPE_ID']) && $params['TYPE_ID'] === $configurableTypeId && $isConfigurable)
+		{
+			throw new RestException('Type ID "' . $configurableTypeId . '" is reserved');
+		}
+
 		$app = AppTable::getList(
 			array(
 				'filter' => array(
@@ -87,11 +95,17 @@ class TypeProxy implements \ICrmRestProxy
 		}
 
 		$fields = array(
-			'APP_ID' => $app['ID'],
-			'TYPE_ID' => $params['TYPE_ID'],
-			'NAME' => $params['NAME'],
+			'APP_ID' => $app['ID'] ?? 0,
+			'TYPE_ID' => $params['TYPE_ID'] ?? '',
+			'NAME' => $params['NAME'] ?? '',
+			'IS_CONFIGURABLE_TYPE' => 'N',
 			'ICON_ID' => 0
 		);
+
+		if ($isConfigurable)
+		{
+			$fields['IS_CONFIGURABLE_TYPE'] = 'Y';
+		}
 
 		if (!empty($params['ICON_FILE']))
 		{
@@ -179,7 +193,7 @@ class TypeProxy implements \ICrmRestProxy
 			'filter' => array(
 				'=APP_ID' => $app['ID'],
 			),
-			'select' => array('TYPE_ID', 'NAME', 'ICON_ID')
+			'select' => array('TYPE_ID', 'NAME', 'IS_CONFIGURABLE_TYPE', 'ICON_ID')
 		))->fetchAll();
 	}
 

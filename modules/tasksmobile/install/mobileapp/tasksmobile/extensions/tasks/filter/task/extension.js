@@ -1,8 +1,19 @@
+/**
+ * @module tasks/filter/task
+ */
 jn.define('tasks/filter/task', (require, exports, module) => {
 	const { Type } = require('type');
 
 	class TaskFilter
 	{
+		static get presetType()
+		{
+			return {
+				none: 'none',
+				default: 'filter_tasks_in_progress',
+			};
+		}
+
 		static get roleType()
 		{
 			return {
@@ -57,7 +68,8 @@ jn.define('tasks/filter/task', (require, exports, module) => {
 
 		constructor()
 		{
-			this.presets = {};
+			this.loaded = false;
+			this.presets = [];
 		}
 
 		fillPresets(groupId)
@@ -66,12 +78,68 @@ jn.define('tasks/filter/task', (require, exports, module) => {
 				(new RequestExecutor('tasksmobile.Filter.getTaskListPresets', { groupId }))
 					.call()
 					.then((response) => {
+						this.loaded = true;
 						this.presets = response.result;
 						resolve();
 					})
 					.catch(() => {})
 				;
 			});
+		}
+
+		getRoleByPreset(presetId)
+		{
+			if (Object.keys(this.presets).length === 0)
+			{
+				return null;
+			}
+
+			const preset = this.presets.find((item) => item.id === presetId);
+			if (!preset)
+			{
+				return null;
+			}
+
+			const fields = TaskFilter.clearEmptyFields(preset.fields);
+
+			if (Object.keys(fields).length === 0)
+			{
+				return null;
+			}
+
+			const has = Object.prototype.hasOwnProperty;
+			if (has.call(fields, TaskFilter.allowedPresetField.ROLEID))
+			{
+				return fields[TaskFilter.allowedPresetField.ROLEID];
+			}
+
+			return null;
+		}
+
+		/**
+		 * @public
+		 * @param {string} presetId
+		 * @return {*}
+		 */
+		getPresetById(presetId)
+		{
+			return this.presets.find((item) => item.id === presetId);
+		}
+
+		/**
+		 * @public
+		 * @param {string} presetId
+		 * @return {string|null}
+		 */
+		getPresetNameById(presetId)
+		{
+			const preset = this.getPresetById(presetId);
+			if (!preset)
+			{
+				return null;
+			}
+
+			return preset.name;
 		}
 
 		/**
@@ -81,7 +149,7 @@ jn.define('tasks/filter/task', (require, exports, module) => {
 		 */
 		isTaskSuitPreset(presetId, task)
 		{
-			if (Object.keys(this.presets).length === 0)
+			if (!this.loaded)
 			{
 				return true;
 			}
@@ -93,7 +161,6 @@ jn.define('tasks/filter/task', (require, exports, module) => {
 			}
 
 			const fields = TaskFilter.clearEmptyFields(preset.fields);
-
 			if (Object.keys(fields).length === 0)
 			{
 				return true;
@@ -261,14 +328,18 @@ jn.define('tasks/filter/task', (require, exports, module) => {
 					case TaskFilter.allowedPresetField.ACCOMPLICE:
 						if (has.call(fields, 'ACCOMPLICE'))
 						{
-							result = (result && Object.keys(task.accomplices).some((userId) => fields.ACCOMPLICE.includes(userId)));
+							result = (result && Object.keys(task.accomplices).some((userId) => fields.ACCOMPLICE.includes(
+								userId,
+							)));
 						}
 						break;
 
 					case TaskFilter.allowedPresetField.AUDITOR:
 						if (has.call(fields, 'AUDITOR'))
 						{
-							result = (result && Object.keys(task.auditors).some((userId) => fields.AUDITOR.includes(userId)));
+							result = (result && Object.keys(task.auditors).some((userId) => fields.AUDITOR.includes(
+								userId,
+							)));
 						}
 						break;
 

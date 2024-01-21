@@ -2,22 +2,100 @@
 
 namespace Bitrix\Crm\Activity\Mail;
 
+use Bitrix\Crm\Activity\Provider\Email;
 use Bitrix\Crm\ActivityTable;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Mail\Internals\UserSignatureTable;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main;
 use Bitrix\Mail\Internals\MailboxAccessTable;
 use Bitrix\Mail\MailboxTable;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
+use Bitrix\Main\Mail\Address;
+use Bitrix\Main\Mail\Sender;
+use Bitrix\Main\Mail\Converter;
+use Bitrix\Main\Web\Uri;
 
 class Message
 {
 	protected const PERMISSION_READ = 1;
+	protected const SUPPORTED_ACTIVITY_TYPE = 'CRM_EMAIL';
+	protected const EMAIL_COMMUNICATION_TYPE = 'EMAIL';
 	protected const typesForBinding = [
 		\CCrmOwnerType::LeadName => 'leads',
 		\CCrmOwnerType::DealName => 'deals',
 		\CCrmOwnerType::ContactName => 'contacts',
 		\CCrmOwnerType::CompanyName => 'companies',
 	];
+
+	protected static function makeWebPathToMessageById(int $id): Uri
+	{
+		$uriView = new Uri('/bitrix/components/bitrix/crm.activity.planner/slider.php');
+		$uriView->addParams([
+			'site_id' => SITE_ID,
+			'sessid' => bitrix_sessid_get(),
+			'ajax_action' => 'ACTIVITY_VIEW',
+			'activity_id' => $id
+		]);
+
+		return $uriView;
+	}
+
+	protected static function getNeighborActivity(string $order, array $filter, bool $requiredWebUrl = false): ?array
+	{
+		$dbResult = \CCrmActivity::getList(
+			['ID' => $order],
+			$filter,
+			false,
+			false,
+			['ID'],
+			['QUERY_OPTIONS' => ['LIMIT' => 1]],
+		);
+
+		$result = null;
+		if ($row = $dbResult->fetch())
+		{
+			$result = [
+				'ID' => (int)$row['ID'],
+			];
+
+			if ($requiredWebUrl)
+			{
+				$result['HREF'] = self::makeWebPathToMessageById((int)$row['ID']);
+			}
+		}
+
+		return $result;
+	}
+
+	public static function getNeighbors(int $ownerId, int $ownerTypeId, int $elementId, bool $requiredWebUrl = false): ?array
+	{
+		$activity = \CCrmActivity::GetByID($elementId);
+
+		if (empty($activity))
+		{
+			return null;
+		}
+
+		$threadId = (int)$activity['THREAD_ID'];
+
+		$baseFilter = [
+			'PROVIDER_ID' => 'CRM_EMAIL',
+			'OWNER_ID' => $ownerId,
+			'OWNER_TYPE_ID' => $ownerTypeId,
+			'!=THREAD_ID' => $threadId,
+		];
+
+		$prevMessageFilter = $baseFilter + ['>ID' => $elementId];
+		$result['PREV'] = self::getNeighborActivity('ASC', $prevMessageFilter, $requiredWebUrl);
+
+		$nextMessageFilter = $baseFilter + ['<ID' => $elementId];
+		$result['NEXT'] = self::getNeighborActivity('DESC', $nextMessageFilter, $requiredWebUrl);
+
+		return $result;
+	}
 
 	public static function convertTypeToFormatForBinding($type)
 	{
@@ -84,7 +162,7 @@ class Message
 		return $result;
 	}
 
-	protected static function buildContact(array $props): array
+	public static function buildContact(array $props): array
 	{
 		$whiteListKeys = [
 			'typeNameId' => \CCrmOwnerType::ResolveID(\CCrmOwnerType::ContactName),
@@ -117,19 +195,74 @@ class Message
 		return $contact;
 	}
 
-	protected static function getSenderList(): array
+	protected static function getGeneralSignature()
 	{
-		$mailboxes = \Bitrix\Main\Mail\Sender::prepareUserMailboxes();
+		static $generalSignature;
+
+		if (is_null($generalSignature))
+		{
+			global $USER;
+			$userId = $USER->getId();
+
+			$signatureList = UserSignatureTable::getList([
+				'select' => ["SIGNATURE"],
+				'order' => ['ID' => 'desc'],
+				'filter' => [
+					'=SENDER' => '',
+					'USER_ID' => $userId,
+				],
+				'limit' => 1,
+			])->fetchAll();
+
+			$generalSignature = $signatureList[0]['SIGNATURE'] ?? '';
+		}
+
+		return $generalSignature;
+	}
+
+	public static function getSignature($email, $name)
+	{
+		$signatureList = UserSignatureTable::getList([
+			'select' => ["SIGNATURE"],
+			'order' => ['ID' => 'desc'],
+			'filter' => ['=SENDER' => (trim($name).' <'.trim($email).'>')],
+			'limit' => 1,
+		])->fetchAll();
+
+		if (isset($signatureList[0]['SIGNATURE']))
+		{
+			return $signatureList[0]['SIGNATURE'];
+		}
+		else
+		{
+			// Old signature format
+			$signatureList = UserSignatureTable::getList([
+				'select' => ["SIGNATURE"],
+				'order' => ['ID' => 'desc'],
+				'filter' => ['=SENDER' => trim($email)],
+				'limit' => 1,
+			])->fetchAll();
+		}
+
+		return $signatureList[0]['SIGNATURE'] ?? self::getGeneralSignature();
+	}
+
+	public static function getSenderList(): array
+	{
+		$mailboxes = Sender::prepareUserMailboxes();
 		$senders = [];
 
 		foreach ($mailboxes as $sender)
 		{
-			$senders[] = self::buildContact([
+			$builtContact = self::buildContact([
 				'email' => $sender['email'] ?? '',
 				'name' => $sender['name'] ?? '',
 				'id' => $sender['userId'] ?? 0,
 				'isUser' => true,
 			]);
+			$builtContact['signature'] = Converter::htmlToText(self::getSignature($sender['email'], $sender['name']));
+
+			$senders[] = $builtContact;
 		}
 
 		/*
@@ -147,7 +280,7 @@ class Message
 	 * @param array $contactsForMerge
 	 * @return array
 	 */
-	protected static function parseContacts($value, array $contactsForMerge): array
+	protected static function parseContacts(array|string $value, array $contactsForMerge): array
 	{
 		/*
 			todo: It should be used in the future to select the preferred email: If there is an email in the message and you can also send from it (not disabled)
@@ -158,7 +291,7 @@ class Message
 
 		foreach ($list as $item)
 		{
-			$address = new \Bitrix\Main\Mail\Address($item);
+			$address = new Address($item);
 			if ($address->validate())
 			{
 				$email = $address->getEmail();
@@ -347,16 +480,24 @@ class Message
 			}
 		}
 
-		if (!empty($activity['SETTINGS']['EMAIL_META']))
+		if (isset($activity['SETTINGS']['EMAIL_META']) && !empty($activity['SETTINGS']['EMAIL_META']))
 		{
 			$activityEmailMeta = $activity['SETTINGS']['EMAIL_META'];
 			$ownerEmail = false;
+
 			if (isset($activityEmailMeta['__email']))
 			{
 				$ownerEmail = trim($activityEmailMeta['__email']);
-			}
 
-			$foundContacts = [];
+				/* @TODO: replace with: the message owner's mailbox
+				 * Since clearing the fields when forwarding a letter is required only of  the owner's mailbox
+				 */
+				$header['employeeEmails'] = self::parseContacts($ownerEmail, $contacts);
+			}
+			else
+			{
+				$header['employeeEmails'] = [];
+			}
 
 			foreach ($activityEmailMeta as $key => $value)
 			{
@@ -450,6 +591,103 @@ class Message
 
 		$headerResult->setData($header);
 		return $headerResult;
+	}
+
+	public static function getMessageBody($id): Main\Result
+	{
+		if (!self::checkModules())
+		{
+			return new Main\Result();
+		}
+
+		$body = [
+			'HTML' => '',
+		];
+
+		$activities = self::getActivities(
+			[
+				'ID' => $id,
+			],
+			self::SUPPORTED_ACTIVITY_TYPE,
+			[
+				'DESCRIPTION',
+			]
+		);
+
+		if (!self::checkActivityPermission(self::PERMISSION_READ, $activities))
+		{
+			return new Main\Result();
+		}
+
+		$activity = $activities[0];
+
+		Email::uncompressActivity($activity);
+
+		if ($activity)
+		{
+			$body['HTML'] = $activity['DESCRIPTION'];
+		}
+
+		return (new Main\Result())->setData($body);
+	}
+
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
+	private static function getActivities(array $filters, string $activityType, array $select = [], array $order = [], int $limit = 50): array
+	{
+		$requiredFieldsForChecks = [
+			'ID',
+			'TYPE_ID',
+			'PROVIDER_ID',
+			'OWNER_TYPE_ID',
+			'OWNER_ID',
+		];
+
+		$activities = ActivityTable::getList([
+			'select' => array_merge($select, $requiredFieldsForChecks),
+			'filter' => $filters,
+			'order' => $order,
+			'limit' => $limit,
+		])->fetchAll();
+
+		if (empty($activities))
+		{
+			return [];
+		}
+
+		if (!self::checkActivityIsType($activities[0], $activityType)->isSuccess())
+		{
+			return [];
+		}
+
+		foreach ($activities as &$activity)
+		{
+			\CCrmActivity::PrepareStorageElementIDs($activity);
+		}
+
+		return $activities;
+	}
+
+	private static function checkActivityIsType(array $activity, string $type = self::SUPPORTED_ACTIVITY_TYPE): Main\Result
+	{
+		$result = new Main\Result();
+
+		$provider = \CCrmActivity::getActivityProvider($activity);
+
+		if (!$provider)
+		{
+			return $result->addError(new Error(Loc::getMessage('CRM_MAIL_CONTROLLER_CAN_NOT_DETERMINE_THE_MESSAGE_FORMAT')));
+		}
+
+		if ($provider::getId() === $type)
+		{
+			return new Main\Result();
+		}
+
+		return (new Main\Result())->addError(new Error(Loc::getMessage('CRM_TIMELINE_EMAIL_ERROR_NOT_CHECK_TYPE_PROVIDER')));
 	}
 
 	/*

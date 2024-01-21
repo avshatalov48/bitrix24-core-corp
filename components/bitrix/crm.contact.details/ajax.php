@@ -242,6 +242,11 @@ elseif($action === 'SAVE')
 		'FILES' => [],
 	]);
 
+	if (isset($_POST['OBSERVER_IDS']))
+	{
+		$fields['OBSERVER_IDS'] = is_array($_POST['OBSERVER_IDS']) ? $_POST['OBSERVER_IDS'] : array();
+	}
+
 	if($isNew)
 	{
 		$fields['CATEGORY_ID'] = $categoryID;
@@ -418,7 +423,11 @@ elseif($action === 'SAVE')
 			Tracking\UI\Details::appendEntityFieldValue($fields, $_POST);
 
 			$entity = new \CCrmContact(false);
-			$saveOptions = ['REGISTER_SONET_EVENT' => true];
+			$saveOptions = [
+				'REGISTER_SONET_EVENT' => true,
+				'eventId' => $_POST['EVENT_ID'] ?? null,
+			];
+
 			if($isNew)
 			{
 				if(!isset($fields['TYPE_ID']))
@@ -544,7 +553,11 @@ elseif($action === 'SAVE')
 			$url = $conversionWizard->getRedirectUrl();
 			if($url !== '')
 			{
-				$responseData = array('ENTITY_ID' => $ID, 'REDIRECT_URL' => $url);
+				$responseData = [
+					'ENTITY_ID' => $ID,
+					'REDIRECT_URL' => $url,
+					'OPEN_IN_NEW_SLIDE' => !$conversionWizard->isFinished(),
+				];
 				$eventParams = $conversionWizard->getClientEventParams();
 				if(is_array($eventParams))
 				{

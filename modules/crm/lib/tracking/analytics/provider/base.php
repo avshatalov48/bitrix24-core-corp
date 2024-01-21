@@ -193,7 +193,7 @@ abstract class Base
 		if ($this->isGroupedByTrackingSource())
 		{
 			$query->addSelect(
-				new Orm\Fields\ExpressionField(self::TrackingSourceId, 'IFNULL(%s, 0)', ['TRACE_ENTITY.TRACE.SOURCE_ID'])
+				new Orm\Fields\ExpressionField(self::TrackingSourceId, 'COALESCE(%s, 0)', ['TRACE_ENTITY.TRACE.SOURCE_ID'])
 			);
 			$mainSelect[] = self::TrackingSourceId;
 		}

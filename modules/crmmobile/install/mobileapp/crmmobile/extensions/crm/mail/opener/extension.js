@@ -2,6 +2,7 @@
  * @module crm/mail/opener
  */
 jn.define('crm/mail/opener', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { showEmailBanner } = require('communication/email-menu');
 	const { Loc } = require('loc');
 	const { NotifyManager } = require('notify-manager');
@@ -31,14 +32,16 @@ jn.define('crm/mail/opener', (require, exports, module) => {
 		 * @param {String} widgetParams.titleParams.text
 		 * @param {String} widgetParams.title
 		 * @param parentWidget
+		 * @param {Boolean} clearCache
 		 */
 		static openSend(
 			componentParams,
 			widgetParams = {},
 			parentWidget = null,
+			clearCache = false,
 		)
 		{
-			this.checkIfMailIsActive()
+			this.checkIfMailIsActive(clearCache)
 				.then(() => this.preloadInfo(componentParams))
 				.then((preloadedParams = {}) => {
 					componentParams = mergeImmutable(componentParams, preloadedParams);
@@ -58,7 +61,7 @@ jn.define('crm/mail/opener', (require, exports, module) => {
 				.catch((error) => {
 					if (error === NOT_ACTIVE_ERROR)
 					{
-						showEmailBanner(parentWidget);
+						showEmailBanner(parentWidget, this.openSend.bind(this, componentParams, widgetParams, parentWidget, true));
 					}
 					else
 					{
@@ -68,11 +71,11 @@ jn.define('crm/mail/opener', (require, exports, module) => {
 			;
 		}
 
-		static checkIfMailIsActive()
+		static checkIfMailIsActive(clearCache = false)
 		{
 			let promise = Promise.resolve();
 
-			if (this.cacheExpired())
+			if (this.cacheExpired() || clearCache)
 			{
 				promise = promise.then(() => this.loadIsActiveMail());
 			}
@@ -223,7 +226,6 @@ jn.define('crm/mail/opener', (require, exports, module) => {
 					ownerId,
 					ownerType,
 				} = {},
-				uploadClients = true,
 				uploadSenders = true,
 			} = componentParams;
 
@@ -231,18 +233,34 @@ jn.define('crm/mail/opener', (require, exports, module) => {
 			{
 				NotifyManager.showLoadingIndicator();
 
-				return getContactsPromise(ownerId, ownerType, uploadClients, uploadSenders)
+				return getContactsPromise(ownerId, ownerType, true, uploadSenders)
 					.then(({ data }) => {
 						const preloadInfo = {};
 
-						if (Array.isArray(data.clients))
+						const {
+							clients,
+							clientIdsByType,
+							senders,
+						} = data;
+
+						if (Array.isArray(clients))
 						{
-							preloadInfo.clients = data.clients;
+							preloadInfo.clients = clients;
 						}
 
-						if (Array.isArray(data.senders))
+						if (typeof clientIdsByType === 'object'
+							&& clientIdsByType !== null
+							&& clientIdsByType !== undefined
+							&& 'contacts' in clientIdsByType
+							&& 'company' in clientIdsByType
+						)
 						{
-							preloadInfo.senders = data.senders;
+							preloadInfo.clientIdsByType = clientIdsByType;
+						}
+
+						if (Array.isArray(senders))
+						{
+							preloadInfo.senders = senders;
 						}
 
 						return preloadInfo;
@@ -280,7 +298,7 @@ jn.define('crm/mail/opener', (require, exports, module) => {
 		{
 			const defaultTitleParams = {
 				useLargeTitleMode: false,
-				detailTextColor: '#a8adb4',
+				detailTextColor: AppTheme.colors.base4,
 				text: Loc.getMessage('MCRM_MAIL_OPENER_TITLE_NEW'),
 			};
 

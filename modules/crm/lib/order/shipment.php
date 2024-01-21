@@ -254,6 +254,8 @@ class Shipment extends Sale\Shipment
 				]
 			);
 		}
+
+		parent::onAfterSave($isNew);
 	}
 
 	/**

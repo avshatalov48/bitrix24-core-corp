@@ -4,8 +4,12 @@ namespace Bitrix\TasksMobile\Controller;
 
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Socialnetwork\Component\WorkgroupList;
+use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Counter\CounterDictionary;
+use Bitrix\Tasks\Internals\Counter\Role;
 use Bitrix\Tasks\Internals\Project\Provider;
 
 Loader::requireModule('socialnetwork');
@@ -41,6 +45,31 @@ class Filter extends Controller
 		$provider = new Provider($this->getCurrentUser()->getId(), WorkgroupList::MODE_TASKS_SCRUM);
 
 		return $this->preparePresetsForOutput($provider->getPresets());
+	}
+
+	public function getSearchBarPresetsAction(int $groupId = 0): array
+	{
+		/** @var \Bitrix\Tasks\Helper\Filter $filterInstance */
+		$filterInstance = \Bitrix\Tasks\Helper\Filter::getInstance($this->getCurrentUser()->getId(), $groupId);
+		$presets = $filterInstance->getAllPresets();
+		unset(
+			$presets[Options::DEFAULT_FILTER],
+			$presets[Options::TMP_FILTER]
+		);
+
+		$presets = array_map(
+			static fn (string $key) => [
+				'id' => $key,
+				'name' => (string)$presets[$key]['name'],
+				'default' => (bool)$presets[$key]['default'],
+			],
+			array_keys($presets)
+		);
+
+		return [
+			'presets' => $presets,
+			'counters' => [],
+		];
 	}
 
 	private function preparePresetsForOutput(array $presets): array

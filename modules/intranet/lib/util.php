@@ -19,6 +19,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Intranet;
 
 Loc::loadMessages(__FILE__);
 
@@ -243,52 +244,30 @@ class Util
 		return $list;
 	}
 
+	/**
+	 * @deprecated use Intranet\Portal::getInstance()->getSettings()->getLogo()
+	 * @return array
+	 */
 	public static function getClientLogo($force = false)
 	{
-		if (!$force && Loader::includeModule('bitrix24'))
+		if ($result = Intranet\Portal::getInstance()->getSettings()->getLogo())
 		{
-			if (!Feature::isFeatureEnabled("set_logo"))
-			{
-				return array(
-					'logo' => 0,
-					'retina' => 0,
-				);
-			}
+			return [
+				'logo' => $result['id'],
+				'regular' => $result['id'],
+				'retina' => 0,
+			];
 		}
 
-		$regular = (int) Option::get('bitrix24', 'client_logo', 0);
-		$retina = (int) Option::get('bitrix24', 'client_logo_retina', 0);
-
-		return array(
-			'logo' => $regular ?: $retina,
-			'regular' => $regular,
-			'retina' => $retina,
-		);
+		return [
+			'logo' => null,
+			'retina' => null,
+		];
 	}
 
-	public static function getLogo24($force = false)
+	public static function getLogo24()
 	{
-		$logo = '24';
-
-		if ($force)
-		{
-			return $logo;
-		}
-
-		if (Loader::includeModule('bitrix24'))
-		{
-			if (!Feature::isFeatureEnabled("remove_logo24"))
-			{
-				return $logo;
-			}
-		}
-
-		if (Option::get('bitrix24', 'logo24show', 'Y') == 'N')
-		{
-			$logo = '';
-		}
-
-		return $logo;
+		return Intranet\Portal::getInstance()->getSettings()->getLogo24();
 	}
 
 	public static function isIntranetUser(int $userId = null): bool

@@ -1,10 +1,12 @@
 <?php
 
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Main;
 use Bitrix\Main\Entity\DatetimeField;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
+
 
 class CCrmDateTimeHelper
 {
@@ -83,6 +85,7 @@ class CCrmDateTimeHelper
 		$year = isset($parts['YYYY']) ? intval($parts['YYYY']) : 0;
 		return $year === 9999;
 	}
+
 	public static function SetMaxDayTime($date)
 	{
 		if($date !== '')
@@ -110,6 +113,7 @@ class CCrmDateTimeHelper
 		$date->setTime(23, 59, 59);
 		return $date->format(Date::convertFormatToPhp(FORMAT_DATETIME));
 	}
+
 	/**
 	* Creates date object from string in format of current site
 	* @return Bitrix\Main\Type\Date|null
@@ -139,6 +143,7 @@ class CCrmDateTimeHelper
 		}
 		return $date;
 	}
+
 	public static function DateToSql(Date $date)
 	{
 		return Main\Application::getConnection()->getSqlHelper()->convertToDb($date, new DatetimeField('D'));
@@ -216,6 +221,33 @@ class CCrmDateTimeHelper
 	{
 		return Date::createFromTimestamp(
 			static::getUserTime($serverDate, $userId)->setTime(0, 0, 0)->getTimestamp()
+		);
+	}
+
+	/**
+	 * @return string|string[]
+	 */
+	public static function getDefaultDateTimeFormat()
+	{
+		$layoutSettings = LayoutSettings::getCurrent();
+		if ($layoutSettings && $layoutSettings->isSimpleTimeFormatEnabled())
+		{
+			return [
+				'tommorow' => 'tommorow',
+				's' => 'sago',
+				'i' => 'iago',
+				'H3' => 'Hago',
+				'today' => 'today',
+				'yesterday' => 'yesterday',
+				//'d7' => 'dago',
+				'-' => DateTime::convertFormatToPhp(FORMAT_DATE),
+			];
+		}
+
+		return preg_replace(
+			'/:s$/',
+			'',
+			DateTime::convertFormatToPhp(FORMAT_DATETIME)
 		);
 	}
 }

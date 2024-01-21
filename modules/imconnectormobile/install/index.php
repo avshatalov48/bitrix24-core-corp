@@ -49,7 +49,7 @@ class ImConnectorMobile extends CModule
 	public function installFiles()
 	{
 		CopyDirFiles(
-			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/mobileapp/',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/imconnectormobile/install/mobileapp/',
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/mobileapp/',
 			true,
 			true

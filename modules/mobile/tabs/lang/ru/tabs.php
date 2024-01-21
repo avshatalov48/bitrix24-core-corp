@@ -29,7 +29,6 @@ $MESS['TASKS_ROLE_ACCOMPLICE'] = 'Помогаю';
 $MESS['TASKS_ROLE_AUDITOR'] = 'Наблюдаю';
 $MESS['TASKS_ROLE_ORIGINATOR'] = 'Поручил';
 
-$MESS["TAB_TASKS_INPUT_PANEL_B24_DISK"] = "Битрикс24.Диск";
 $MESS["TAB_TASKS_INPUT_PANEL_NEW_TASK"] = "Новая задача";
 $MESS["TAB_TASKS_NAVIGATION_HEADER"] = "Задачи и Проекты";
 $MESS["TAB_TASKS_NAVIGATION_TAB_TASKS"] = "Задачи";

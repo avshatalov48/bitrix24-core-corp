@@ -2,7 +2,14 @@
  * @module tasks/layout/task/fields/status/actionButton
  */
 jn.define('tasks/layout/task/fields/status/actionButton', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { EventEmitter } = require('event-emitter');
+
+	const ICONS = {
+		play: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.6778 11.872L8.14943 5.13493C7.92478 4.97385 7.63206 4.95562 7.39033 5.08763C7.1486 5.21965 6.9981 5.47994 7.00004 5.76265V19.2362C6.99719 19.5193 7.14755 19.7803 7.38964 19.9125C7.63173 20.0447 7.92496 20.026 8.14943 19.8639L17.6778 13.1268C17.8793 12.986 18 12.7509 18 12.4994C18 12.2479 17.8793 12.0128 17.6778 11.872Z" fill="${AppTheme.colors.accentMainSuccess}"/></svg>`,
+		pause: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M10.5 5H7V19H10.5V5Z" fill="${AppTheme.colors.accentBrandBlue}"/><path d="M18 5H14.5V19H18V5Z" fill="${AppTheme.colors.accentBrandBlue}"/></svg>`,
+		renew: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.70462 6.61184C3.72867 9.58779 3.72867 14.4128 6.70462 17.3887C9.68056 20.3647 14.5055 20.3647 17.4815 17.3887C17.5802 17.29 17.6756 17.1892 17.7678 17.0866L16.1118 15.4308C16.0223 15.5354 15.9281 15.6373 15.8291 15.7363C13.7657 17.7997 10.4204 17.7997 8.357 15.7363C6.29364 13.673 6.29364 10.3276 8.357 8.26423C10.4204 6.20086 13.7657 6.20086 15.8291 8.26423L15.9121 8.3501L13.6972 10.5659H19.527V4.7361L17.5658 6.69746L17.4815 6.61184C14.5055 3.6359 9.68056 3.6359 6.70462 6.61184Z" fill="${AppTheme.colors.accentBrandBlue}"/></svg>`,
+	};
 
 	class ActionButton extends LayoutComponent
 	{
@@ -126,9 +133,9 @@ jn.define('tasks/layout/task/fields/status/actionButton', (require, exports, mod
 				style: {
 					flex: null,
 					fontSize: 10,
-					fontColor: '#696c70',
+					fontColor: AppTheme.colors.base2,
 					fontWeight: '600',
-					color: (timeEstimate && timeElapsed > timeEstimate ? '#ff5752' : '#696c70'),
+					color: (timeEstimate && timeElapsed > timeEstimate ? AppTheme.colors.accentMainAlert : AppTheme.colors.base2),
 				},
 				// eslint-disable-next-line sonarjs/no-nested-template-literals
 				text: `${elapsedHours}:${elapsedMinutes} ${(timeEstimate ? `/ ${estimateHours}:${estimateMinutes}` : '')}`,
@@ -203,9 +210,7 @@ jn.define('tasks/layout/task/fields/status/actionButton', (require, exports, mod
 			return {
 				[Task.statusList.pending]: {
 					icon: (
-						this.props.isTimerExisting && this.state.isTimerRunning
-							? '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M10.5 5H7V19H10.5V5Z" fill="#2FC6F6"/><path d="M18 5H14.5V19H18V5Z" fill="#2FC6F6"/></svg>'
-							: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.6778 11.872L8.14943 5.13493C7.92478 4.97385 7.63206 4.95562 7.39033 5.08763C7.1486 5.21965 6.9981 5.47994 7.00004 5.76265V19.2362C6.99719 19.5193 7.14755 19.7803 7.38964 19.9125C7.63173 20.0447 7.92496 20.026 8.14943 19.8639L17.6778 13.1268C17.8793 12.986 18 12.7509 18 12.4994C18 12.2479 17.8793 12.0128 17.6778 11.872Z" fill="#9DCF00"/></svg>'
+						this.props.isTimerExisting && this.state.isTimerRunning ? ICONS.pause : ICONS.play
 					),
 					onClick: () => {
 						if (this.props.isTimerExisting)
@@ -226,9 +231,7 @@ jn.define('tasks/layout/task/fields/status/actionButton', (require, exports, mod
 				},
 				[Task.statusList.inprogress]: {
 					icon: (
-						this.props.isTimerExisting && !this.state.isTimerRunning
-							? '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.6778 11.872L8.14943 5.13493C7.92478 4.97385 7.63206 4.95562 7.39033 5.08763C7.1486 5.21965 6.9981 5.47994 7.00004 5.76265V19.2362C6.99719 19.5193 7.14755 19.7803 7.38964 19.9125C7.63173 20.0447 7.92496 20.026 8.14943 19.8639L17.6778 13.1268C17.8793 12.986 18 12.7509 18 12.4994C18 12.2479 17.8793 12.0128 17.6778 11.872Z" fill="#9DCF00"/></svg>'
-							: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M10.5 5H7V19H10.5V5Z" fill="#2FC6F6"/><path d="M18 5H14.5V19H18V5Z" fill="#2FC6F6"/></svg>'
+						this.props.isTimerExisting && !this.state.isTimerRunning ? ICONS.play : ICONS.pause
 					),
 					onClick: () => {
 						if (this.props.isTimerExisting)
@@ -248,15 +251,15 @@ jn.define('tasks/layout/task/fields/status/actionButton', (require, exports, mod
 					},
 				},
 				[Task.statusList.waitCtrl]: {
-					icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.70462 6.61184C3.72867 9.58779 3.72867 14.4128 6.70462 17.3887C9.68056 20.3647 14.5055 20.3647 17.4815 17.3887C17.5802 17.29 17.6756 17.1892 17.7678 17.0866L16.1118 15.4308C16.0223 15.5354 15.9281 15.6373 15.8291 15.7363C13.7657 17.7997 10.4204 17.7997 8.357 15.7363C6.29364 13.673 6.29364 10.3276 8.357 8.26423C10.4204 6.20086 13.7657 6.20086 15.8291 8.26423L15.9121 8.3501L13.6972 10.5659H19.527V4.7361L17.5658 6.69746L17.4815 6.61184C14.5055 3.6359 9.68056 3.6359 6.70462 6.61184Z" fill="#2FC6F6"/></svg>',
+					icon: ICONS.renew,
 					onClick: renewHandler,
 				},
 				[Task.statusList.completed]: {
-					icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.70462 6.61184C3.72867 9.58779 3.72867 14.4128 6.70462 17.3887C9.68056 20.3647 14.5055 20.3647 17.4815 17.3887C17.5802 17.29 17.6756 17.1892 17.7678 17.0866L16.1118 15.4308C16.0223 15.5354 15.9281 15.6373 15.8291 15.7363C13.7657 17.7997 10.4204 17.7997 8.357 15.7363C6.29364 13.673 6.29364 10.3276 8.357 8.26423C10.4204 6.20086 13.7657 6.20086 15.8291 8.26423L15.9121 8.3501L13.6972 10.5659H19.527V4.7361L17.5658 6.69746L17.4815 6.61184C14.5055 3.6359 9.68056 3.6359 6.70462 6.61184Z" fill="#2FC6F6"/></svg>',
+					icon: ICONS.renew,
 					onClick: renewHandler,
 				},
 				[Task.statusList.deferred]: {
-					icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.70462 6.61184C3.72867 9.58779 3.72867 14.4128 6.70462 17.3887C9.68056 20.3647 14.5055 20.3647 17.4815 17.3887C17.5802 17.29 17.6756 17.1892 17.7678 17.0866L16.1118 15.4308C16.0223 15.5354 15.9281 15.6373 15.8291 15.7363C13.7657 17.7997 10.4204 17.7997 8.357 15.7363C6.29364 13.673 6.29364 10.3276 8.357 8.26423C10.4204 6.20086 13.7657 6.20086 15.8291 8.26423L15.9121 8.3501L13.6972 10.5659H19.527V4.7361L17.5658 6.69746L17.4815 6.61184C14.5055 3.6359 9.68056 3.6359 6.70462 6.61184Z" fill="#2FC6F6"/></svg>',
+					icon: ICONS.renew,
 					onClick: renewHandler,
 				},
 			};

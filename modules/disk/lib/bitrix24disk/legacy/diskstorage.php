@@ -733,6 +733,7 @@ class DiskStorage extends AbstractStorage
 				'type' => $tmpFile->getContentType(),
 				'width' => $tmpFile->getWidth(),
 				'height' => $tmpFile->getHeight(),
+				'size' => $tmpFile->getSize(),
 				'MODULE_ID' => Driver::INTERNAL_MODULE_ID,
 			), Driver::INTERNAL_MODULE_ID, true, true);
 			if(!$fileId)
@@ -909,6 +910,7 @@ class DiskStorage extends AbstractStorage
 				'type' => $tmpFile->getContentType(),
 				'width' => $tmpFile->getWidth(),
 				'height' => $tmpFile->getHeight(),
+				'size' => $tmpFile->getSize(),
 				'MODULE_ID' => Driver::INTERNAL_MODULE_ID,
 			), Driver::INTERNAL_MODULE_ID, true, true);
 

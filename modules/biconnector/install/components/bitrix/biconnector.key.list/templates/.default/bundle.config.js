@@ -1,5 +1,5 @@
 module.exports = {
-	input: 'src/grid.js',
+	input: 'src/index.js',
 	output: {
 		js: './script.js',
 	},

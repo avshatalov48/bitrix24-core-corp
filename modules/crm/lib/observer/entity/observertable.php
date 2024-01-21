@@ -1,13 +1,14 @@
 <?php
 namespace Bitrix\Crm\Observer\Entity;
 
+use Bitrix\Crm\CompanyTable;
+use Bitrix\Crm\ContactTable;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\LeadTable;
 use Bitrix\Main;
-use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\ORM\Data\DataManager;
-use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
+use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Query\Join;
 
 /**
@@ -68,6 +69,18 @@ class ObserverTable extends DataManager
 				LeadTable::class,
 				Join::on('this.ENTITY_ID', 'ref.ID')
 					->where('this.ENTITY_TYPE_ID', \CCrmOwnerType::Lead)
+			)),
+			(new Main\ORM\Fields\Relations\Reference(
+				'CONTACT',
+				ContactTable::class,
+				Join::on('this.ENTITY_ID', 'ref.ID')
+					->where('this.ENTITY_TYPE_ID', \CCrmOwnerType::Contact)
+			)),
+			(new Main\ORM\Fields\Relations\Reference(
+				'COMPANY',
+				CompanyTable::class,
+				Join::on('this.ENTITY_ID', 'ref.ID')
+					->where('this.ENTITY_TYPE_ID', \CCrmOwnerType::Company)
 			)),
 		];
 	}

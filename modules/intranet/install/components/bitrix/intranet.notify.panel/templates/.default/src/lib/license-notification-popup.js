@@ -114,9 +114,20 @@ export class LicenseNotificationPopup
 	//region Buttons
 	#getButtons(): Array<Button>
 	{
+		if (this.getOptions().isCIS)
+		{
+
+			return [
+				this.#getRenewalButton(),
+				this.getOptions().isAdmin ? this.#getPartnerButton() : null,
+				this.#getMoreInformationButton(),
+			];
+
+		}
+
 		return [
-			this.#getRenewalButton(),
 			this.getOptions().isAdmin ? this.#getPartnerButton() : null,
+			this.#getRenewalButton(),
 			this.#getMoreInformationButton(),
 		];
 	}
@@ -130,7 +141,7 @@ export class LicenseNotificationPopup
 			}
 
 			return new Button({
-				color: Button.Color.LIGHT_BORDER,
+				color: this.getOptions().isCIS ? Button.Color.LIGHT_BORDER : Button.Color.SUCCESS,
 				text: Loc.getMessage('INTRANET_NOTIFY_PANEL_LICENSE_NOTIFICATION_BUTTON_PARTNER'),
 				round: true,
 				onclick: () => {
@@ -144,7 +155,7 @@ export class LicenseNotificationPopup
 	{
 		return this.#cache.remember('renewal-button', () => {
 			return new Button({
-				color: Button.Color.SUCCESS,
+				color: this.getOptions().isCIS ? Button.Color.SUCCESS : Button.Color.LIGHT_BORDER,
 				text: Loc.getMessage('INTRANET_NOTIFY_PANEL_LICENSE_NOTIFICATION_BUTTON_RENEW_LICENSE'),
 				round: true,
 				onclick: () => {

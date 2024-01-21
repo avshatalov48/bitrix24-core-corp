@@ -29,6 +29,10 @@ if(!empty($arResult['SESSION_EXPIRED']))
 			BX.UI.Notification.Center.notify({
 				content: '{$sessionExpireMessage}',
 			});
+			
+			let url = window.location.href;
+			url = url.replace(/\&session=expired/, '');
+			window.history.replaceState({}, '', url);			
 		</script>
 	JS;
 	$this->EndViewTarget();

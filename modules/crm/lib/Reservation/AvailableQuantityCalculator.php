@@ -206,7 +206,10 @@ final class AvailableQuantityCalculator
 				if ($row)
 				{
 					$productId = $row['productId'];
-					$result[$productId] = $basketItemAvailableQuantity[$basketId];
+					foreach ($basketItemAvailableQuantity[$basketId] as $basketItemStoreId => $basketItemQuantity)
+					{
+						$result[$productId][$basketItemStoreId] = $basketItemAvailableQuantity[$basketId][$basketItemStoreId];
+					}
 				}
 			}
 		}

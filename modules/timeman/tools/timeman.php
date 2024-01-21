@@ -158,10 +158,10 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 						'STATUS' => [
 							-2,
 							-1,
-							CTasks::STATE_NEW,
-							CTasks::STATE_PENDING,
-							CTasks::STATE_IN_PROGRESS,
-							CTasks::STATE_DEFERRED,
+							\Bitrix\Tasks\Internals\Task\Status::NEW,
+							\Bitrix\Tasks\Internals\Task\Status::PENDING,
+							\Bitrix\Tasks\Internals\Task\Status::IN_PROGRESS,
+							\Bitrix\Tasks\Internals\Task\Status::DEFERRED,
 						],
 					],
 					"SELECT" => ['ID', 'TITLE', 'STATUS'],
@@ -682,13 +682,15 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 								$res["INFO"]['CAN_EDIT'] = ($arUser['ID'] != $USER->GetID()) && ($bCanEditAll || in_array($arUser['ID'], $arAccessUsers['WRITE']));
 								$res["INFO"]['CAN_EDIT_TEXT'] = ($report["APPROVE"] == "Y") ? "N" : "Y";
 
+								$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
+								$dayMonthFormat = $culture->getDayMonthFormat();
 								if ($report["DATE_FROM"] != $report["DATE_TO"])
 								{
-									$res["INFO"]["TEXT_TITLE"] = FormatDate('j F', MakeTimeStamp($report["DATE_FROM"])) . " - " . FormatDate('j F', MakeTimeStamp($report["DATE_TO"]));
+									$res["INFO"]["TEXT_TITLE"] = FormatDate($dayMonthFormat, MakeTimeStamp($report["DATE_FROM"])) . " - " . FormatDate($dayMonthFormat, MakeTimeStamp($report["DATE_TO"]));
 								}
 								else
 								{
-									$res["INFO"]["TEXT_TITLE"] = FormatDate('j F', MakeTimeStamp($report["DATE_TO"]));
+									$res["INFO"]["TEXT_TITLE"] = FormatDate($dayMonthFormat, MakeTimeStamp($report["DATE_TO"]));
 								}
 
 								$res["INFO"]["REPORT_STRIP_TAGS"] = strip_tags(nl2br($res["INFO"]["REPORT"]));
@@ -1084,8 +1086,10 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 							}
 						}
 
+						$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
+						$longDateFormat = $culture->getLongDateFormat();
 						$arInfo = CTimeMan::GetRuntimeInfo(true);
-						$arInfo['DATE_TEXT'] = FormatDate('j F Y', $arInfo['INFO']['DATE_START']);
+						$arInfo['DATE_TEXT'] = FormatDate($longDateFormat, $arInfo['INFO']['DATE_START']);
 						$arInfo['INFO']['TIME_OFFSET'] = CTimeManUser::instance()->getDayStartOffset($arInfo['INFO'], true);
 
 
@@ -1194,7 +1198,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 											: 'DURATION'
 										);
 
-									if (count((array)$res['REPORTS'][$key]) > 0)
+									if (count((array) ($res['REPORTS'][$key] ?? null)) > 0)
 									{
 										if (mb_strlen($arReport['REPORT']) > 150)
 										{
@@ -2281,9 +2285,11 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 									$arRes['DATE_START'] = MakeTimeStamp($arRes['DATE_START']) - CTimeZone::GetOffset();
 									$arRes['DATE_FINISH'] = MakeTimeStamp($arRes['DATE_FINISH']) - CTimeZone::GetOffset();
 
+									$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
+									$longDateFormat = $culture->getLongDateFormat();
 									$arInfo = [
 										'INFO' => $arRes,
-										'DATE_TEXT' => FormatDate('j F Y', $arRes['DATE_START']),
+										'DATE_TEXT' => FormatDate($longDateFormat, $arRes['DATE_START']),
 										'CALENDAR_ENABLED' => CBXFeatures::IsFeatureEnabled('Calendar'),
 										'TASKS_ENABLED' => CBXFeatures::IsFeatureEnabled('Tasks') && IsModuleInstalled('tasks'),
 									];

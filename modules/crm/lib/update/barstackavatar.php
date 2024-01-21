@@ -24,7 +24,7 @@ class BarStackAvatar extends Stepper
 		$connection = Application::getInstance()->getConnection();
 		$sqlHelper = $connection->getSqlHelper();
 
-		$queryObject = $connection->query("SELECT `ID`, `VALUE` FROM `b_user_option` WHERE `CATEGORY`='crm.widget_panel' ORDER BY ID LIMIT ".$this->limit." OFFSET ".$offset);
+		$queryObject = $connection->query("SELECT ID, VALUE FROM b_user_option WHERE CATEGORY='crm.widget_panel' ORDER BY ID LIMIT ".$this->limit." OFFSET ".$offset);
 		$selectedRowsCount = $queryObject->getSelectedRowsCount();
 		while ($userOption = $queryObject->fetch())
 		{
@@ -81,8 +81,8 @@ class BarStackAvatar extends Stepper
 			$newOptionValue = $recursiveIterator->getArrayCopy();
 			if ($newOptionValue)
 			{
-				$connection->query("UPDATE `b_user_option` SET `VALUE` = '".$sqlHelper->forSql(
-					serialize($newOptionValue))."' WHERE `ID` = '".$sqlHelper->forSql($userOption["ID"])."'");
+				$connection->query("UPDATE b_user_option SET VALUE = '".$sqlHelper->forSql(
+					serialize($newOptionValue))."' WHERE ID = '".$sqlHelper->forSql($userOption["ID"])."'");
 			}
 		}
 

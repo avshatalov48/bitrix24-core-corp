@@ -10,5 +10,6 @@ return [
 		'catalog:product-wizard-step/crm/prices',
 		'alert',
 		'files',
+		'apptheme',
 	],
 ];

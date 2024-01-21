@@ -9,6 +9,8 @@ return [
 
 		'selector/widget/entity/complex',
 
+		'selector/widget/entity/iblock/element',
+		'selector/widget/entity/iblock/section',
 		'selector/widget/entity/iblock/element-user-field',
 		'selector/widget/entity/iblock/section-user-field',
 

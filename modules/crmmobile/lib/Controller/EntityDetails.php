@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Bitrix\CrmMobile\Controller;
 
 use Bitrix\Catalog;
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
 use Bitrix\Crm\Conversion;
 use Bitrix\Crm\Engine\ActionFilter\CheckReadMyCompanyPermission;
@@ -280,6 +281,8 @@ class EntityDetails extends Controller
 					'timelinePushTag' => $this->subscribeToTimelinePushEvents($entity, $currentUser),
 					'todoNotificationParams' => $this->getTodoNotificationParams($factory, $entity, $permissions),
 					'isAutomationAvailable' => $this->getIsAutomationAvailable($entity->getEntityTypeId()),
+					'isBizProcAvailable' => $this->getIsBizProcAvailable($entity->getEntityTypeId()),
+					'bizProcStarterConfig' => $this->getBizProcStarterConfig($entity),
 					'isLinkWithProductsEnabled' => $this->isLinkWithProductsEnabled(),
 					'isDocumentGenerationEnabled' => $this->isDocumentGenerationEnabled(),
 					'isClientEnabled' => $this->isClientEnabled(),
@@ -289,6 +292,7 @@ class EntityDetails extends Controller
 					'ahaMoments' => $this->getAhaMoments($entity),
 					'linkedUserFields' => $this->getLinkedUserFields(),
 					'floatingMenuItemsSettings' => $this->getFloatingMenuItemsSettings($entity, $currentUser),
+					'isCalendarSharingEnabled' => RestrictionManager::getCalendarSharingRestriction()->hasPermission(),
 				],
 			]
 		);
@@ -401,9 +405,12 @@ class EntityDetails extends Controller
 			return null;
 		}
 
-		$counter = new EntityActivityCounter($entity->getEntityTypeId(), [$entity->getId()]);
+		$entityTypeId = $entity->getEntityTypeId();
+		$categoryId = $factory->isCategoriesSupported() ? $entity->getCategoryId() : null;
+		$counter = new EntityActivityCounter($entityTypeId, [$entity->getId()]);
 
 		return [
+			'reminders' => (new TodoPingSettingsProvider($entityTypeId, (int)$categoryId))->fetchForJsComponent(),
 			'notificationSupported' => $factory->isSmartActivityNotificationSupported(),
 			'notificationEnabled' => $factory->isSmartActivityNotificationEnabled(),
 			'plannedActivityCounter' => $counter->getCounters()[$entity->getId()]['N'] ?? 0,
@@ -418,6 +425,34 @@ class EntityDetails extends Controller
 	private function getIsAutomationAvailable($entityTypeId): bool
 	{
 		return \Bitrix\Crm\Automation\Factory::isAutomationAvailable($entityTypeId);
+	}
+
+	private function getIsBizProcAvailable($entityTypeId): bool
+	{
+		return (
+			Loader::includeModule('bizproc')
+			&& \CBPRuntime::isFeatureEnabled()
+			&& \Bitrix\Main\ModuleManager::isModuleInstalled('bizprocmobile')
+			&& \Bitrix\Crm\Automation\Factory::isBizprocDesignerEnabled((int)$entityTypeId)
+		);
+	}
+
+	private function getBizProcStarterConfig(Item $entity): array
+	{
+		if (Loader::includeModule('bizproc'))
+		{
+			$factory = $this->getFactory();
+			$entityTypeId = $factory->getEntityTypeId();
+			$documentType = \CCrmBizProcHelper::ResolveDocumentType($entityTypeId);
+			$documentId =  \CCrmBizProcHelper::ResolveDocumentId($entityTypeId, $entity->getId());
+
+			return [
+				'signedDocument' => \CBPDocument::signParameters([$documentType, $documentId[2]]),
+				'documentType' => $documentType[2],
+			];
+		}
+
+		return [];
 	}
 
 	private function isLinkWithProductsEnabled(): bool

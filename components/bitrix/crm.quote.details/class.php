@@ -618,11 +618,14 @@ class CrmQuoteDetailsComponent extends FactoryBased
 
 		if ($tabCode === static::TAB_NAME_INVOICES)
 		{
-			return [
+			$tabInvoice = [
 				'id' => static::TAB_NAME_INVOICES,
 				'name' => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::Invoice),
 				'loader' => [
-					'serviceUrl' => '/bitrix/components/bitrix/crm.invoice.list/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
+					'serviceUrl' => '/bitrix/components/bitrix/crm.invoice.list/lazyload.ajax.php?&site='
+						.SITE_ID
+						.'&'
+						.bitrix_sessid_get(),
 					'componentData' => [
 						'template' => '',
 						'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
@@ -634,12 +637,24 @@ class CrmQuoteDetailsComponent extends FactoryBased
 							'ENABLE_TOOLBAR' => 'Y',
 							'PRESERVE_HISTORY' => true,
 							// compatible entity-specific event name
-							'ADD_EVENT_NAME' => 'CrmCreateInvoiceFrom'.mb_convert_case($this->getEntityName(), MB_CASE_TITLE)
-						], 'crm.invoice.list')
+							'ADD_EVENT_NAME' => 'CrmCreateInvoiceFrom'
+								. mb_convert_case($this->getEntityName(), MB_CASE_TITLE),
+						], 'crm.invoice.list'),
 					],
 				],
 				'enabled' => !$this->item->isNew(),
 			];
+
+			$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+			if (!$toolsManager->checkEntityTypeAvailability(\CCrmOwnerType::Invoice))
+			{
+				$availabilityLock = \Bitrix\Crm\Restriction\AvailabilityManager::getInstance()
+					->getEntityTypeAvailabilityLock(\CCrmOwnerType::Invoice)
+				;
+				$tabInvoice['availabilityLock'] = $availabilityLock;
+			}
+
+			return $tabInvoice;
 		}
 
 		return parent::getDefaultTabInfoByCode($tabCode);

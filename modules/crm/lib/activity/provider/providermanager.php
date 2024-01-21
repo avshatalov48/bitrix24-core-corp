@@ -13,69 +13,105 @@ Loc::loadMessages(__FILE__);
 
 class ProviderManager
 {
-	private static $providers = null;
+	private static array|null $providers = null;
+
+	private static array|null $allProviders = null;
 	/**
 	 * @return Base[] - List of providers.
 	 */
-	public static function getProviders()
+	public static function getProviders(): array
 	{
 		if(self::$providers === null)
 		{
-			self::$providers = [
-				ToDo::getId() => ToDo::className(),
-				Meeting::getId() => Meeting::className(),
-				Task::getId() => Task::className(),
-				Call::getId() => Call::className(),
-				CallList::getId() => CallList::className(),
-				Email::getId() => Email::className(),
-				Sms::getId() => Sms::className(),
-				Notification::getId() => Notification::className(),
-				OpenLine::getId() => OpenLine::className(),
-				WebForm::getId() => WebForm::className(),
-				Livefeed::getId() => Livefeed::className(),
-				ExternalChannel::getId() => ExternalChannel::className(),
-				Request::getId() => Request::className(),
-				RestApp::getId() => RestApp::className(),
-				Delivery::getId() => Delivery::className(),
-				CallTracker::getId() => CallTracker::class,
-				StoreDocument::getId() => StoreDocument::className(),
-				Document::getId() => Document::className(),
-				SignDocument::getId() => SignDocument::className(),
-				Payment::getId() => Payment::className(),
-				ConfigurableRestApp::getId() => ConfigurableRestApp::className(),
-				CalendarSharing::getId() => CalendarSharing::className(),
-				Tasks\Comment::getId() => Tasks\Comment::class,
-				Tasks\Task::getId() => Tasks\Task::class,
-			];
+			self::$providers = self::prepareProviderList();
+		}
 
-			if(Visit::isAvailable())
-			{
-				self::$providers[Visit::getId()] = Visit::className();
-			}
+		return self::$providers;
+	}
 
-			if (Zoom::isAvailable())
-			{
-				self::$providers[Zoom::getId()] = Zoom::className();
-			}
+	public static function getAllProviders(): array
+	{
+		if(self::$allProviders === null)
+		{
+			self::$allProviders = self::prepareProviderList(false);
+		}
 
-			foreach(GetModuleEvents('crm', 'OnGetActivityProviders', true) as $event)
+		return self::$allProviders;
+	}
+
+	public static function prepareProviderList(bool $checkAvailable = true): array
+	{
+		$providersList = [
+			ToDo::getId() => ToDo::className(),
+			Meeting::getId() => Meeting::className(),
+			Task::getId() => Task::className(),
+			Call::getId() => Call::className(),
+			CallList::getId() => CallList::className(),
+			Email::getId() => Email::className(),
+			Sms::getId() => Sms::className(),
+			Notification::getId() => Notification::className(),
+			OpenLine::getId() => OpenLine::className(),
+			WebForm::getId() => WebForm::className(),
+			Livefeed::getId() => Livefeed::className(),
+			ExternalChannel::getId() => ExternalChannel::className(),
+			Request::getId() => Request::className(),
+			RestApp::getId() => RestApp::className(),
+			Delivery::getId() => Delivery::className(),
+			CallTracker::getId() => CallTracker::class,
+			StoreDocument::getId() => StoreDocument::className(),
+			Document::getId() => Document::className(),
+			SignDocument::getId() => SignDocument::className(),
+			Payment::getId() => Payment::className(),
+			ConfigurableRestApp::getId() => ConfigurableRestApp::className(),
+			CalendarSharing::getId() => CalendarSharing::className(),
+			Tasks\Comment::getId() => Tasks\Comment::class,
+			Tasks\Task::getId() => Tasks\Task::class,
+		];
+
+		if(!$checkAvailable || Visit::isAvailable())
+		{
+			$providersList[Visit::getId()] = Visit::className();
+		}
+
+		if (!$checkAvailable || Zoom::isAvailable())
+		{
+			$providersList[Zoom::getId()] = Zoom::className();
+		}
+
+		return array_merge($providersList, self::anotherProviders());
+	}
+
+	private static function anotherProviders(): array
+	{
+		static $anotherProviders = null;
+
+		if ($anotherProviders !== null)
+		{
+			return $anotherProviders;
+		}
+
+		$another = [];
+
+		foreach(GetModuleEvents('crm', 'OnGetActivityProviders', true) as $event)
+		{
+			$result = (array)ExecuteModuleEventEx($event);
+			foreach ($result as $provider)
 			{
-				$result = (array)ExecuteModuleEventEx($event);
-				foreach ($result as $provider)
+				/** @var \Bitrix\Crm\Activity\Provider\Base $provider */
+				$provider = (string)$provider;
+				if ($provider
+					&& class_exists($provider)
+					&& (is_subclass_of($provider, Base::className()) || in_array(Base::className(), class_implements($provider)))
+				)
 				{
-					/** @var \Bitrix\Crm\Activity\Provider\Base  $provider */
-					$provider = (string)$provider;
-					if ($provider
-						&& class_exists($provider)
-						&& (is_subclass_of($provider, Base::className()) || in_array(Base::className(), class_implements($provider)))
-					)
-					{
-						self::$providers[$provider::getId()] = $provider;
-					}
+					$another[$provider::getId()] = $provider;
 				}
 			}
 		}
-		return self::$providers;
+
+		$anotherProviders = $another;
+
+		return $anotherProviders;
 	}
 
 	/**

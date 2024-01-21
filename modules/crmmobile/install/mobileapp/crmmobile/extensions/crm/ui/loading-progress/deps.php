@@ -1,6 +1,7 @@
 <?php
 return [
 	'extensions' => [
+		'apptheme',
 		'utils/type',
 		'utils/color',
 		'notify-manager',

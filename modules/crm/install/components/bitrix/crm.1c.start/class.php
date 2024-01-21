@@ -292,6 +292,15 @@ class OnecStartComponent extends CBitrixComponent
 
 		CJSCore::Init(['popup', 'applayout']);
 
+		if (Loader::includeModule('crm'))
+		{
+			$this->arResult['PATH_TO_APPS'] = [
+				'doc' => \Bitrix\Crm\Integration\Market\Router::getApplicationPath('bitrix.1cdoc'),
+				'backoffice' => \Bitrix\Crm\Integration\Market\Router::getApplicationPath('bitrix.1ctotal'),
+				'default' => \Bitrix\Crm\Integration\Market\Router::getApplicationPath('bitrix.1c'),
+			];
+		}
+
 		$this->includeComponentTemplate($componentPage);
 	}
 

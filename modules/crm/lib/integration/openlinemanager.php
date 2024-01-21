@@ -61,10 +61,6 @@ class OpenLineManager
 		'imessage',
 	];
 
-	/**
-	 * Check if current manager enabled.
-	 * @return bool
-	 */
 	public static function isEnabled()
 	{
 		if (self::$isEnabled === null)
@@ -91,11 +87,11 @@ class OpenLineManager
 
 		$typeID = $items[1];
 		$suffix = mb_strtoupper(preg_replace('/[^a-z0-9]/i', '', $typeID));
-		$text = Loc::getMessage("CRM_OPEN_LINE_{$suffix}");
-		if ($text === null)
-		{
-			$text = Loc::getMessage('CRM_OPEN_LINE_SEND_MESSAGE');
-		}
+		$text =
+			Loc::getMessage("CRM_OPEN_LINE_{$suffix}")
+			?? Loc::getMessage("CRM_OPEN_LINE_{$suffix}_MSGVER_1")
+			?? Loc::getMessage('CRM_OPEN_LINE_SEND_MESSAGE')
+		;
 
 		return [
 			'HREF' => '#',
@@ -161,7 +157,7 @@ class OpenLineManager
 
 	public static function getLineConnectorType(?string $code): ?string
 	{
-		if (!isset($code))
+		if (!isset($code) || !self::isEnabled())
 		{
 			return null;
 		}
@@ -198,12 +194,12 @@ class OpenLineManager
 
 	public static function getOpenLineTitle(string $value): ?string
 	{
-		return OpenLineManager::getLineTitle(mb_substr($value, 5));
+		return self::getLineTitle(mb_substr($value, 5));
 	}
 
 	public static function getChatTitle(?string $code): ?string
 	{
-		if (!isset($code))
+		if (!isset($code) || !self::isEnabled())
 		{
 			return null;
 		}
@@ -216,7 +212,7 @@ class OpenLineManager
 
 	public static function getSessionData(?int $sessionId): array
 	{
-		if (!isset($sessionId))
+		if (!isset($sessionId) || !self::isEnabled())
 		{
 			return [];
 		}

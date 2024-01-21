@@ -2,6 +2,7 @@
  * @module layout/ui/fields/phone
  */
 jn.define('layout/ui/fields/phone', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { StringFieldClass } = require('layout/ui/fields/string');
 	const { phoneUtils } = require('native/phonenumber');
 	const { getCountryCode } = require('utils/phone');
@@ -249,7 +250,7 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 				phoneField: {
 					flex: 1,
 					marginRight: 10,
-					color: this.isReadOnly() ? '#0b66c3' : '#333333',
+					color: this.isReadOnly() ? AppTheme.colors.accentMainLinks : AppTheme.colors.base1,
 					fontSize: 16,
 					alignSelf: 'center',
 				},

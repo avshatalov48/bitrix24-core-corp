@@ -3,6 +3,7 @@
  */
 jn.define('crm/conversion/wizard/layouts/entities', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { unique } = require('utils/array');
 	const { NotifyManager } = require('notify-manager');
 	const { menuButton } = require('layout/ui/context-menu/button');
@@ -87,7 +88,7 @@ jn.define('crm/conversion/wizard/layouts/entities', (require, exports, module) =
 				{
 					style: {
 						borderRadius: 12,
-						backgroundColor: '#ffffff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						paddingVertical: 14,
 						paddingHorizontal: 16,
 						marginBottom: 10,
@@ -147,7 +148,6 @@ jn.define('crm/conversion/wizard/layouts/entities', (require, exports, module) =
 						width: '100%',
 						height: '100%',
 						flexDirection: 'column',
-						backgroundColor: '#eef2f4',
 						borderRadius: 12,
 					},
 				},
@@ -171,3 +171,4 @@ jn.define('crm/conversion/wizard/layouts/entities', (require, exports, module) =
 
 	module.exports = { ConversionWizardEntitiesLayout };
 });
+

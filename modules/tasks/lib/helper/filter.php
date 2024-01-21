@@ -5,19 +5,31 @@ namespace Bitrix\Tasks\Helper;
 use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter\Options;
-use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Counter\Deadline;
+use Bitrix\Tasks\Internals\Counter\Role;
+use Bitrix\Tasks\Internals\Counter\Type;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Item\Task;
+use Bitrix\Tasks\Replicator\Template\Replicators\RegularTaskReplicator;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Service\EpicService;
+use Bitrix\Tasks\Update\Preset;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\FilterLimit;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\UserField;
+use CTaskListState;
 
 class Filter extends Common
 {
-	protected static $instance;
+	public const RESPONSIBLE_PRESET = 'filter_tasks_role_responsible';
+	public const ACCOMPLICE_PRESET = 'filter_tasks_role_accomplice';
+	public const ORIGINATOR_PRESET = 'filter_tasks_role_originator';
+	public const AUDITOR_PRESET = 'filter_tasks_role_auditor';
+	public const REGULAR_PRESET = 'filter_tasks_task_is_regular';
+	public const SCRUM_PRESET = 'filter_tasks_scrum';
+
+	protected static ?array $instance = null;
 	protected static array $options = [];
 
 	private bool $isFilterDataSet = false;
@@ -28,6 +40,11 @@ class Filter extends Common
 	 */
 	public function getDefaultRoleId()
 	{
+		if (static::isRolesEnabled())
+		{
+			return Role::ALL;
+		}
+
 		static $roleId = null;
 
 		if (!$roleId)
@@ -44,29 +61,7 @@ class Filter extends Common
 			$fState = $request->get('F_STATE');
 			if ($fState && !is_array($fState) && mb_strpos($fState, 'sR') === 0)
 			{
-				switch ($fState)
-				{
-					case 'sR400':
-						$roleId = Counter\Role::RESPONSIBLE;
-						break;
-
-					case 'sR800':
-						$roleId = Counter\Role::ACCOMPLICE;
-						break;
-
-					case 'sRc00':
-						$roleId = Counter\Role::AUDITOR;
-						break;
-
-					case 'sRg00':
-						$roleId = Counter\Role::ORIGINATOR;
-						break;
-
-					default: // all
-						$roleId = '';
-						break;
-				}
-
+				$roleId = Role::getByState($fState);
 				$currentPresetId = $filterOptions->getCurrentFilterId();
 				$filterSettings = $filterOptions->getFilterSettings($currentPresetId);
 
@@ -118,28 +113,27 @@ class Filter extends Common
 	public function getAllPresets(): array
 	{
 		$presets = static::getPresets($this);
-
-		foreach (FilterRegistry::getList() as $name)
+		$contexts = $this->getContexts();
+		foreach ($contexts as $name)
 		{
 			$registryId = FilterRegistry::getId($name, $this->getGroupId());
-			$options = new Options($registryId, static::getPresets($this));
+			$options = new Options($registryId, $presets);
 			$presets = array_merge($presets, $options->getOptions()['filters']);
+
+			if (static::isRolesEnabled())
+			{
+				$presets = array_merge($presets, static::getRolePresets($this->isScrumProject()));
+			}
 		}
 
 		return $presets;
 	}
 
-	/**
-	 * @param Common|null $filterInstance
-	 * @return array[]
-	 */
-	public static function getPresets(Common $filterInstance = null): array
+	public static function getPresets(self $filterInstance = null): array
 	{
 		$presets = [];
-
 		$isScrumProject = false;
 		$userId = 0;
-
 		if ($filterInstance)
 		{
 			$isScrumProject = $filterInstance->isScrumProject();
@@ -148,7 +142,7 @@ class Filter extends Common
 
 		if ($isScrumProject)
 		{
-			$presets['filter_tasks_scrum'] = [
+			$presets[static::SCRUM_PRESET] = [
 				'name' => Loc::getMessage('TASKS_PRESET_SCRUM'),
 				'default' => true,
 				'fields' => [
@@ -176,11 +170,8 @@ class Filter extends Common
 					Status::DEFERRED,
 				],
 			],
+			'sort' => $isScrumProject ? 2 : 1,
 		];
-		if ($isScrumProject)
-		{
-			$presets['filter_tasks_in_progress']['sort'] = 2;
-		}
 
 		$presets['filter_tasks_completed'] = [
 			'name' => Loc::getMessage('TASKS_PRESET_COMPLETED'),
@@ -188,11 +179,8 @@ class Filter extends Common
 			'fields' => [
 				'STATUS' => [Status::COMPLETED],
 			],
+			'sort' => $isScrumProject ? 3 : 2,
 		];
-		if ($isScrumProject)
-		{
-			$presets['filter_tasks_completed']['sort'] = 3;
-		}
 
 		if ($isScrumProject)
 		{
@@ -212,6 +200,7 @@ class Filter extends Common
 				'fields' => [
 					'STATUS' => [Status::DEFERRED],
 				],
+				'sort' => 3,
 			];
 			$presets['filter_tasks_expire'] = [
 				'name' => Loc::getMessage('TASKS_PRESET_EXPIRED'),
@@ -221,8 +210,9 @@ class Filter extends Common
 						Status::PENDING,
 						Status::IN_PROGRESS,
 					],
-					'PROBLEM' => \CTaskListState::VIEW_TASK_CATEGORY_EXPIRED,
+					'PROBLEM' => CTaskListState::VIEW_TASK_CATEGORY_EXPIRED,
 				],
+				'sort' => 4,
 			];
 			$presets['filter_tasks_expire_candidate'] = [
 				'name' => Loc::getMessage('TASKS_PRESET_EXPIRED_CAND'),
@@ -232,14 +222,111 @@ class Filter extends Common
 						Status::PENDING,
 						Status::IN_PROGRESS,
 					],
-					'PROBLEM' => \CTaskListState::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES,
+					'PROBLEM' => CTaskListState::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES,
 				],
+				'sort' => 5,
 			];
 		}
 
 		return $presets;
 	}
 
+	public static function getRolePresets(bool $isScrumProject = false): array
+	{
+		if ($isScrumProject)
+		{
+			return [];
+		}
+
+		$presets[static::RESPONSIBLE_PRESET] = [
+			'name' => Loc::getMessage('TASKS_PRESET_I_DO'),
+			'default' => false,
+			'fields' => [
+				'ROLEID' => Role::RESPONSIBLE,
+				'STATUS' => [
+					Status::PENDING,
+					Status::IN_PROGRESS,
+					Status::SUPPOSEDLY_COMPLETED,
+					Status::DEFERRED,
+				],
+			],
+			'sort' => 6,
+		];
+
+		$presets[static::ACCOMPLICE_PRESET] = [
+			'name' => Loc::getMessage('TASKS_PRESET_I_ACCOMPLICES'),
+			'default' => false,
+			'fields' => [
+				'ROLEID' => Role::ACCOMPLICE,
+				'STATUS' => [
+					Status::PENDING,
+					Status::IN_PROGRESS,
+					Status::SUPPOSEDLY_COMPLETED,
+					Status::DEFERRED,
+				],
+			],
+			'sort' => 7,
+		];
+
+		$presets[static::ORIGINATOR_PRESET] = [
+			'name' => Loc::getMessage('TASKS_PRESET_I_ORIGINATOR'),
+			'default' => false,
+			'fields' => [
+				'ROLEID' => Role::ORIGINATOR,
+				'STATUS' => [
+					Status::PENDING,
+					Status::IN_PROGRESS,
+					Status::SUPPOSEDLY_COMPLETED,
+					Status::DEFERRED,
+				],
+			],
+			'sort' => 8,
+		];
+
+		$presets[static::AUDITOR_PRESET] = [
+			'name' => Loc::getMessage('TASKS_PRESET_I_AUDITOR'),
+			'default' => false,
+			'fields' => [
+				'ROLEID' => Role::AUDITOR,
+				'STATUS' => [
+					Status::PENDING,
+					Status::IN_PROGRESS,
+					Status::SUPPOSEDLY_COMPLETED,
+					Status::DEFERRED,
+				],
+			],
+			'sort' => 9,
+		];
+
+		return $presets;
+	}
+
+	public static function isRolesEnabled(): bool
+	{
+		return Preset::isRolePresetsEnabled();
+	}
+
+	public static function getRegularPresets(int $startSort = 0): array
+	{
+		if (!RegularTaskReplicator::isEnabled())
+		{
+			return [];
+		}
+
+		$presets[static::REGULAR_PRESET] = [
+			'name' => Loc::getMessage('TASKS_PRESET_IS_REGULAR'),
+			'default' => false,
+			'fields' => [
+				'PARAMS' => [
+					'IS_REGULAR',
+					'::REMOVE-MEMBER'
+				]
+			],
+			'sort' => $startSort + 1,
+		];
+
+		return $presets;
+	}
 	/**
 	 * @return array
 	 */
@@ -612,6 +699,7 @@ class Filter extends Common
 					'OVERDUED' => Loc::getMessage('TASKS_FILTER_PARAMS_OVERDUED'),
 					'FAVORITE' => Loc::getMessage('TASKS_FILTER_PARAMS_FAVORITE'),
 					'ANY_TASK' => Loc::getMessage('TASKS_FILTER_PARAMS_ANY_TASK'),
+					'IS_REGULAR' => Loc::getMessage('TASKS_FILTER_PARAMS_IS_REGULAR'),
 				],
 			];
 		}
@@ -816,7 +904,7 @@ class Filter extends Common
 		if (in_array('ROLEID', $fields))
 		{
 			$items = [];
-			foreach (Counter\Role::getRoles() as $roleCode => $roleName)
+			foreach (Role::getRoles() as $roleCode => $roleName)
 			{
 				$items[$roleCode] = $roleName['TITLE'];
 			}
@@ -948,22 +1036,22 @@ class Filter extends Common
 		$list = [];
 
 		$taskCategories = [
-			\CTaskListState::VIEW_TASK_CATEGORY_WO_DEADLINE,
-			\CTaskListState::VIEW_TASK_CATEGORY_NEW,
-			\CTaskListState::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES,
-			\CTaskListState::VIEW_TASK_CATEGORY_EXPIRED,
-			\CTaskListState::VIEW_TASK_CATEGORY_WAIT_CTRL,
-			\CTaskListState::VIEW_TASK_CATEGORY_DEFERRED,
-			\CTaskListState::VIEW_TASK_CATEGORY_NEW_COMMENTS,
+			CTaskListState::VIEW_TASK_CATEGORY_WO_DEADLINE,
+			CTaskListState::VIEW_TASK_CATEGORY_NEW,
+			CTaskListState::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES,
+			CTaskListState::VIEW_TASK_CATEGORY_EXPIRED,
+			CTaskListState::VIEW_TASK_CATEGORY_WAIT_CTRL,
+			CTaskListState::VIEW_TASK_CATEGORY_DEFERRED,
+			CTaskListState::VIEW_TASK_CATEGORY_NEW_COMMENTS,
 		];
 		if ($this->getGroupId() > 0)
 		{
-			$taskCategories[] = \CTaskListState::VIEW_TASK_CATEGORY_PROJECT_EXPIRED;
-			$taskCategories[] = \CTaskListState::VIEW_TASK_CATEGORY_PROJECT_NEW_COMMENTS;
+			$taskCategories[] = CTaskListState::VIEW_TASK_CATEGORY_PROJECT_EXPIRED;
+			$taskCategories[] = CTaskListState::VIEW_TASK_CATEGORY_PROJECT_NEW_COMMENTS;
 		}
 		foreach ($taskCategories as $categoryId)
 		{
-			$list[$categoryId] = \CTaskListState::getTaskCategoryName($categoryId);
+			$list[$categoryId] = CTaskListState::getTaskCategoryName($categoryId);
 		}
 
 		return $list;
@@ -974,15 +1062,15 @@ class Filter extends Common
 		$list = [];
 
 		$taskCategories = [
-			\CTaskListState::VIEW_TASK_CATEGORY_NEW_COMMENTS,
+			CTaskListState::VIEW_TASK_CATEGORY_NEW_COMMENTS,
 		];
 		if ($this->getGroupId() > 0)
 		{
-			$taskCategories[] = \CTaskListState::VIEW_TASK_CATEGORY_PROJECT_NEW_COMMENTS;
+			$taskCategories[] = CTaskListState::VIEW_TASK_CATEGORY_PROJECT_NEW_COMMENTS;
 		}
 		foreach ($taskCategories as $categoryId)
 		{
-			$list[$categoryId] = \CTaskListState::getTaskCategoryName($categoryId);
+			$list[$categoryId] = CTaskListState::getTaskCategoryName($categoryId);
 		}
 
 		return $list;
@@ -1158,41 +1246,41 @@ class Filter extends Common
 			case 'PROBLEM':
 				switch ($field)
 				{
-					case Counter\Type::TYPE_WO_DEADLINE:
+					case Type::TYPE_WO_DEADLINE:
 						$filter['DEADLINE'] = '';
 						break;
 
-					case Counter\Type::TYPE_EXPIRED:
+					case Type::TYPE_EXPIRED:
 						if ($this->getGroupId() > 0)
 						{
 							$filter['MEMBER'] = $this->getUserId();
 						}
-						$filter['<=DEADLINE'] = Counter\Deadline::getExpiredTime();
+						$filter['<=DEADLINE'] = Deadline::getExpiredTime();
 						$filter['IS_MUTED'] = 'N';
 						$filter['REAL_STATUS'] = [Status::PENDING, Status::IN_PROGRESS];
 						break;
 
-					case Counter\Type::TYPE_EXPIRED_CANDIDATES:
-						$filter['>=DEADLINE'] = Counter\Deadline::getExpiredTime();
-						$filter['<=DEADLINE'] = Counter\Deadline::getExpiredSoonTime();
+					case Type::TYPE_EXPIRED_CANDIDATES:
+						$filter['>=DEADLINE'] = Deadline::getExpiredTime();
+						$filter['<=DEADLINE'] = Deadline::getExpiredSoonTime();
 						break;
 
-					case Counter\Type::TYPE_WAIT_CTRL:
+					case Type::TYPE_WAIT_CTRL:
 						$filter['REAL_STATUS'] = Status::SUPPOSEDLY_COMPLETED;
 						$filter['!RESPONSIBLE_ID'] = $this->getUserId();
 						$filter['=CREATED_BY'] = $this->getUserId();
 						break;
 
-					case Counter\Type::TYPE_NEW:
+					case Type::TYPE_NEW:
 						$filter['VIEWED'] = 0;
 						$filter['VIEWED_BY'] = $this->getUserId();
 						break;
 
-					case Counter\Type::TYPE_DEFERRED:
+					case Type::TYPE_DEFERRED:
 						$filter['REAL_STATUS'] = Status::DEFERRED;
 						break;
 
-					case Counter\Type::TYPE_NEW_COMMENTS:
+					case Type::TYPE_NEW_COMMENTS:
 						if ($this->getGroupId() > 0)
 						{
 							$filter['MEMBER'] = $this->getUserId();
@@ -1201,11 +1289,11 @@ class Filter extends Common
 						$filter['IS_MUTED'] = 'N';
 						break;
 
-					case Counter\Type::TYPE_PROJECT_EXPIRED:
+					case Type::TYPE_PROJECT_EXPIRED:
 						$filter['PROJECT_EXPIRED'] = 'Y';
 						break;
 
-					case Counter\Type::TYPE_PROJECT_NEW_COMMENTS:
+					case Type::TYPE_PROJECT_NEW_COMMENTS:
 						$filter['PROJECT_NEW_COMMENTS'] = 'Y';
 						break;
 
@@ -1217,20 +1305,20 @@ class Filter extends Common
 			case 'ROLEID':
 				switch ($field)
 				{
-					case 'view_role_responsible':
+					case Role::RESPONSIBLE:
 						$filter['=RESPONSIBLE_ID'] = $this->getUserId();
 						break;
 
-					case 'view_role_originator':
+					case Role::ORIGINATOR:
 						$filter['=CREATED_BY'] = $this->getUserId();
 						$filter['!REFERENCE:RESPONSIBLE_ID'] = 'CREATED_BY';
 						break;
 
-					case 'view_role_accomplice':
+					case Role::ACCOMPLICE:
 						$filter['=ACCOMPLICE'] = $this->getUserId();
 						break;
 
-					case 'view_role_auditor':
+					case Role::AUDITOR:
 						$filter['=AUDITOR'] = $this->getUserId();
 						break;
 
@@ -1264,6 +1352,10 @@ class Filter extends Common
 
 							case 'IN_REPORT':
 								$filter['ADD_IN_REPORT'] = 'Y';
+								break;
+							case 'IS_REGULAR':
+								$filter['IS_REGULAR'] = 'Y';
+								$filter['::REMOVE-MEMBER'] = true; // hack
 								break;
 
 							case 'SUBORDINATE':
@@ -1344,5 +1436,15 @@ class Filter extends Common
 		}
 
 		return $epics;
+	}
+
+	private function getContexts(): array
+	{
+		return match (true)
+		{
+			$this->isGantt() => [FilterRegistry::FILTER_GANTT],
+			$this->isGrid() => [FilterRegistry::FILTER_GRID],
+			default => FilterRegistry::getList(),
+		};
 	}
 }

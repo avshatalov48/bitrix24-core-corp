@@ -17,7 +17,7 @@ class TaskResponsibleChanged extends LogMessage
 
 	public function getTitle(): ?string
 	{
-		return Loc::getMessage('TASKS_ON_TASK_RESPONSIBLE_CHANGED_TITLE');
+		return Loc::getMessage('TASKS_ON_TASK_ASSIGNEE_CHANGED_TITLE');
 	}
 
 	public function getIconCode(): ?string

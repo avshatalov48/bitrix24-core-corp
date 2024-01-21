@@ -8,6 +8,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Filter\EntityDataProvider;
 use Bitrix\Main\Filter\Field;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\DateTime;
 
 class TypeDataProvider extends EntityDataProvider
 {
@@ -25,6 +26,10 @@ class TypeDataProvider extends EntityDataProvider
 		$this->customSectionQueries = CustomSectionQueries::getInstance();
 
 		$this->isCustomSectionsAvailable = Integration\IntranetManager::isCustomSectionsAvailable();
+		if (!$this->isCustomSectionsAvailable)
+		{
+			$this->settings->setIsExternalDynamicalTypes(false);
+		}
 	}
 
 	public function getSettings(): TypeSettings
@@ -68,13 +73,7 @@ class TypeDataProvider extends EntityDataProvider
 			'ID' => [
 				'options' => [
 					'type' => 'number',
-					'default' => false,
-				]
-			],
-			'ENTITY_TYPE_ID' => [
-				'options' => [
 					'default' => true,
-					'type' => 'number',
 				]
 			],
 			'TITLE' => [
@@ -84,14 +83,34 @@ class TypeDataProvider extends EntityDataProvider
 			],
 			'CREATED_BY' => [
 				'options' => [
-					'default' => false,
+					'default' => true,
 					'type' => 'dest_selector',
 					'partial' => true,
 				]
 			],
+			'UPDATED_BY' => [
+				'options' => [
+					'default' => true,
+					'type' => 'dest_selector',
+					'partial' => true,
+				],
+			],
+			'CREATED_TIME' => [
+				'options' => [
+					'default' => true,
+					'type' => 'date',
+				]
+			],
+
+			'UPDATED_TIME' => [
+				'options' => [
+					'default' => true,
+					'type' => 'date',
+				]
+			],
 		];
 
-		if ($this->isCustomSectionsAvailable)
+		if ($this->isCustomSectionsAvailable && $this->settings->getIsExternalDynamicalTypes())
 		{
 			$fields['CUSTOM_SECTION'] = [
 				'options' => [
@@ -119,12 +138,12 @@ class TypeDataProvider extends EntityDataProvider
 	{
 		$result = null;
 
-		if ($fieldID === 'CREATED_BY')
+		if ($fieldID === 'CREATED_BY' || $fieldID === 'UPDATED_BY')
 		{
 			$result = [
 				'params' => [
 					'apiVersion' => 3,
-					'context' => 'CRM_TYPE_FILTER_CREATED_BY',
+					'context' => "CRM_TYPE_FILTER_{$fieldID}",
 					'multiple' => 'N',
 					'contextCode' => 'U',
 					'enableDepartments' => 'N',
@@ -144,11 +163,14 @@ class TypeDataProvider extends EntityDataProvider
 			$sections = $this->customSectionQueries->findAllRelatedByCrmType();
 
 			$items = [];
-			// This column for smart process without bindings to custom section must call by specific name
-			$items['-1'] = Loc::getMessage('CRM_TYPE_LIST_CUSTOM_SECTION_DEFAULT_VALUE');
 
 			foreach ($sections as $row)
 			{
+				if ($row['SECTION_TITLE'] === null)
+				{
+					continue;
+				}
+
 				$title = $row['SECTION_TITLE'];
 				$id = $row['CUSTOM_SECTION_ID'];
 				$items[$id] = $title;
@@ -167,31 +189,22 @@ class TypeDataProvider extends EntityDataProvider
 
 	public function getGridColumns(): array
 	{
-		$result = [
-			[
-				'id' => 'ID',
-				'name' => 'ID',
-				'default' => false,
-				'sort' => 'ID',
-			],
-			[
-				'id' => 'ENTITY_TYPE_ID',
-				'name' => $this->getFieldName('ENTITY_TYPE_ID'),
-				'default' => true,
-				'sort' => 'ENTITY_TYPE_ID',
-				'width' => 200
-			],
+		$result = [];
+
+		$result[] = [
+			'id' => 'ID',
+			'name' => 'ID',
+			'default' => true,
+			'sort' => 'ID',
 		];
 
-		if ($this->isCustomSectionsAvailable)
-		{
-			$result[] = [
-				'id' => 'CUSTOM_SECTION',
-				'name' => $this->getFieldName('CUSTOM_SECTION'),
-				'default' => true,
-				'sort' => false,
-			];
-		}
+		$result[] = [
+			'id' => 'ENTITY_TYPE_ID',
+			'name' => $this->getFieldName('ENTITY_TYPE_ID'),
+			'default' => false,
+			'sort' => 'ENTITY_TYPE_ID',
+			'width' => 200
+		];
 
 		$result[] = [
 			'id' => 'TITLE',
@@ -207,6 +220,44 @@ class TypeDataProvider extends EntityDataProvider
 			'sort' => 'CREATED_BY',
 		];
 
+		$result[] = [
+			'id' => 'CREATED_TIME',
+			'name' => $this->getFieldName('CREATED_TIME'),
+			'default' => false,
+			'sort' => 'CREATED_TIME',
+		];
+
+		$result[] = [
+			'id' => 'UPDATED_BY',
+			'name' => $this->getFieldName('UPDATED_BY'),
+			'default' => true,
+			'sort' => 'UPDATED_BY',
+		];
+
+		$result[] = [
+			'id' => 'UPDATED_TIME',
+			'name' => $this->getFieldName('UPDATED_TIME'),
+			'default' => true,
+			'sort' => 'UPDATED_TIME',
+		];
+
+		$result[] = [
+			'id' => 'LAST_ACTIVITY_TIME',
+			'name' => $this->getFieldName('LAST_ACTIVITY_TIME'),
+			'default' => true,
+			'sort' => false,
+		];
+
+		if ($this->isCustomSectionsAvailable && $this->settings->getIsExternalDynamicalTypes())
+		{
+			$result[] = [
+				'id' => 'CUSTOM_SECTION',
+				'name' => $this->getFieldName('CUSTOM_SECTION'),
+				'default' => true,
+				'sort' => false,
+			];
+		}
+
 		return $result;
 	}
 
@@ -220,6 +271,7 @@ class TypeDataProvider extends EntityDataProvider
 		{
 			$filter['<=ID'] = (int) $requestFilter['ID_to'];
 		}
+
 		if(isset($requestFilter['ENTITY_TYPE_ID_from']) && $requestFilter['ENTITY_TYPE_ID_from'] > 0)
 		{
 			$filter['>=ENTITY_TYPE_ID'] = (int) $requestFilter['ENTITY_TYPE_ID_from'];
@@ -228,20 +280,22 @@ class TypeDataProvider extends EntityDataProvider
 		{
 			$filter['<=ENTITY_TYPE_ID'] = (int) $requestFilter['ENTITY_TYPE_ID_to'];
 		}
+
 		$titleSearch = null;
-		if(isset($requestFilter['TITLE']) && !empty($requestFilter['TITLE']))
+		if(isset($requestFilter['TITLE']) && !empty(trim($requestFilter['TITLE'])))
 		{
-			$titleSearch = $requestFilter['TITLE'];
+			$titleSearch = trim($requestFilter['TITLE']);
 		}
-		elseif(isset($requestFilter['FIND']) && !empty($requestFilter['FIND']))
+		elseif(isset($requestFilter['FIND']) && !empty(trim($requestFilter['FIND'])))
 		{
-			$titleSearch = $requestFilter['FIND'];
+			$titleSearch = trim($requestFilter['FIND']);
 		}
 		if($titleSearch)
 		{
 			$filter['TITLE'] = '%'.$titleSearch.'%';
 		}
-		if(isset($requestFilter['CREATED_BY']) && !empty($requestFilter['CREATED_BY']))
+
+		if(!empty($requestFilter['CREATED_BY']))
 		{
 			$userId = (int)substr($requestFilter['CREATED_BY'], 1);
 			if($userId > 0)
@@ -250,10 +304,72 @@ class TypeDataProvider extends EntityDataProvider
 			}
 		}
 
+		if(!empty($requestFilter['UPDATED_BY']))
+		{
+			$userId = (int)substr($requestFilter['UPDATED_BY'], 1);
+			if($userId > 0)
+			{
+				$filter['=UPDATED_BY'] = $userId;
+			}
+		}
+
+		if (isset($requestFilter['CREATED_TIME_from']) && !empty(trim($requestFilter['CREATED_TIME_from'])))
+		{
+			$filter['>=CREATED_TIME'] = $requestFilter['CREATED_TIME_from'];
+		}
+		if (isset($requestFilter['CREATED_TIME_to']) && !empty(trim($requestFilter['CREATED_TIME_to'])))
+		{
+			$filter['<=CREATED_TIME'] = $requestFilter['CREATED_TIME_to'];
+		}
+
+		if (isset($requestFilter['UPDATED_TIME_from']) && !empty(trim($requestFilter['UPDATED_TIME_from'])))
+		{
+			$filter['>=UPDATED_TIME'] = $requestFilter['UPDATED_TIME_from'];
+		}
+		if (isset($requestFilter['UPDATED_TIME_to']) && !empty(trim($requestFilter['UPDATED_TIME_to'])))
+		{
+			$filter['<=UPDATED_TIME'] = $requestFilter['UPDATED_TIME_to'];
+		}
+
 		$this->appendCustomSectionFilter($filter, $requestFilter);
+		$this->appendDefaultCustomSectionFilter($filter, $requestFilter);
 	}
 
-	private function appendCustomSectionFilter(array &$filter, array $requestFilter): void
+	protected function appendDefaultCustomSectionFilter(array &$filter, array $requestFilter) : void
+	{
+		if (isset($requestFilter['CUSTOM_SECTION']))
+		{
+			return;
+		}
+
+		$foundSections = $this->customSectionQueries->findAllRelatedByCrmType();
+		$typeIds = [];
+		foreach ($foundSections as $row)
+		{
+			$typeId = Integration\IntranetManager::getEntityTypeIdByPageSettings($row['SETTINGS']);
+
+			if ($typeId !== null)
+			{
+				$typeIds[] = $typeId;
+			}
+		}
+
+		if ($this->settings->getIsExternalDynamicalTypes())
+		{
+			//-1, needed to cut off CRM processes if there are no external processes
+			$filter['@ENTITY_TYPE_ID'] = empty($typeIds) ? [-1] : $typeIds;
+		}
+		else
+		{
+			if (empty($typeIds))
+			{
+				return;
+			}
+			$filter[]['!@ENTITY_TYPE_ID'] = $typeIds;
+		}
+	}
+
+	protected function appendCustomSectionFilter(array &$filter, array $requestFilter): void
 	{
 		if (!$this->isCustomSectionsAvailable)
 		{

@@ -6,6 +6,7 @@ jn.define('im/messenger/controller/dialog-creator/recipient-selector', (require,
 	const { Loc } = require('loc');
 	const { DialogInfo } = require('im/messenger/controller/dialog-creator/dialog-info');
 	const { RecipientSelectorView } = require('im/messenger/controller/dialog-creator/recipient-selector/view');
+	const AppTheme = require('apptheme');
 	class RecipientSelector
 	{
 
@@ -30,7 +31,7 @@ jn.define('im/messenger/controller/dialog-creator/recipient-selector', (require,
 		{
 			const config = {
 				title: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_RECIPIENT_SELECTOR_TITLE'),
-
+				backgroundColor: AppTheme.colors.bgContentTertiary,
 				onReady: layoutWidget =>
 				{
 					this.layout = layoutWidget;
@@ -82,7 +83,8 @@ jn.define('im/messenger/controller/dialog-creator/recipient-selector', (require,
 							},
 							this.layout
 						);
-					}
+					},
+					color: AppTheme.colors.accentMainLinks,
 				},
 			]);
 		}

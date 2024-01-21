@@ -13,7 +13,7 @@ CUtil::initJSCore(array('ajax', 'popup', 'ui.design-tokens', 'ui.fonts.opensans'
 <html>
 <head>
 <meta name="robots" content="noindex, nofollow, noarchive">
-<?
+<?php
 $APPLICATION->showHead();
 $APPLICATION->setAdditionalCSS("/bitrix/templates/bitrix24/interface.css", true);
 \Bitrix\Main\Page\Asset::getInstance()->addJs(SITE_TEMPLATE_PATH."/template_scripts.js", true);
@@ -23,13 +23,9 @@ if ($publicPageSiteName)
 {
 	$siteName = $publicPageSiteName;
 }
-else if (isModuleInstalled('bitrix24'))
-{
-	$siteName = COption::getOptionString('bitrix24', 'site_title', '');
-}
 else
 {
-	$siteName = COption::getOptionString('main', 'site_name', '');
+	$siteName = \Bitrix\Intranet\Portal::getInstance()->getSettings()->getTitle();
 }
 
 $customTitle = '';
@@ -39,11 +35,11 @@ if (defined('CUSTOM_HEADER_TITLE') && is_string(CUSTOM_HEADER_TITLE))
 }
 
 ?>
-<title><? $APPLICATION->showTitle(); ?></title>
+<title><?php $APPLICATION->showTitle(); ?></title>
 </head>
 
-<body class="<?$APPLICATION->showProperty("BodyClass")?>">
-<?
+<body class="<?php $APPLICATION->showProperty("BodyClass")?>">
+<?php
 /*
 This is commented to avoid Project Quality Control warning
 $APPLICATION->ShowPanel();
@@ -55,21 +51,20 @@ $APPLICATION->ShowPanel();
 			<div class="content-wrap">
 				<div class="content">
 					<h1 class="main-title">
-						<? $clientLogo = Bitrix\Intranet\Util::getClientLogo(); ?>
-						<? if (!empty($customTitle)): ?>
+						<?php if (!empty($customTitle)): ?>
 							<span class="main-title-custom"><?=$customTitle?></span>
-						<? elseif ($clientLogo['logo']): ?>
-							<img class="intranet-pub-title-user-logo" src="<?=CFile::getPath($clientLogo['logo']) ?>"
-								<? if ($clientLogo['retina']): ?> srcset="<?=CFile::getPath($clientLogo['retina']) ?> 2x"<? endif ?>>
-						<? elseif (Bitrix\Main\Config\Option::get('main', 'wizard_site_logo', '', SITE_ID)): ?>
-							<? $APPLICATION->includeComponent(
+						<?php elseif ($clientLogo = \Bitrix\Intranet\Portal::getInstance()->getSettings()->getLogo()): ?>
+							<img class="intranet-pub-title-user-logo" src="<?=$clientLogo['src']?>"
+								<?php if (isset($clientLogo['srcset'])): ?> srcset="<?=$clientLogo['srcset'] ?>"<?php endif ?>>
+						<?php elseif (Bitrix\Main\Config\Option::get('main', 'wizard_site_logo', '', SITE_ID)): ?>
+							<?php $APPLICATION->includeComponent(
 								'bitrix:main.include', '',
 								array('AREA_FILE_SHOW' => 'file', 'PATH' => SITE_DIR.'include/company_name.php')
 							); ?>
-						<? else : ?>
+						<?php else : ?>
 							<span class="main-title-inner"><?=htmlspecialcharsbx($siteName); ?></span>
-							<? if ($logo24 = Bitrix\Intranet\Util::getLogo24()): ?>
+							<?php if ($logo24 = Bitrix\Intranet\Portal::getInstance()->getSettings()->getLogo24()): ?>
 								<span class="title-num"><?=$logo24 ?></span>
-							<? endif ?>
-						<? endif; ?>
+							<?php endif ?>
+						<?php endif; ?>
 					</h1>

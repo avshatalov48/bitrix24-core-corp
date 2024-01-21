@@ -71,5 +71,6 @@ type SidebarParticipantsViewState = {
 	permissions: {
 		isCanRemoveParticipants: boolean,
 		isCanAddParticipants: boolean,
+		isCanLeave: boolean,
 	},
 }

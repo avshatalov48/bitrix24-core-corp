@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/controller/users-read-message-list', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { Type } = require('type');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { Moment } = require('utils/date');
 	const { RestMethod } = require('im/messenger/const/rest');
@@ -11,6 +12,10 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 	const { atomIcons } = require('im/messenger/assets/common');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { FriendlyDate } = require('layout/ui/friendly-date');
+	const AppTheme = require('apptheme');
+	const { runAction } = require('im/messenger/lib/rest');
+	const { EventType } = require('im/messenger/const');
+	const { ChatTitle } = require('im/messenger/lib/element');
 
 	/**
 	 * @desc This class provider calling backdrop widget with users of list who read message
@@ -43,6 +48,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 			this.cache = cache;
 			this.setCache = setCache;
 			this.onItemClick = this.onItemClick.bind(this);
+			this.onClose = this.onClose.bind(this);
 		}
 
 		open()
@@ -56,6 +62,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 			PageManager.openWidget(
 				'layout',
 				{
+					backgroundColor: AppTheme.colors.bgContentPrimary,
 					title: Loc.getMessage('IMMOBILE_MESSENGER_WIDGET_USERS_READ_MESSAGE_LIST_TITLE'),
 					backdrop: {
 						mediumPositionPercent: 60,
@@ -75,8 +82,19 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 		onWidgetReady()
 		{
 			this.checkCache();
+			this.subscribeExternalEvents();
 			this.createView();
 			this.widget.showComponent(this.view);
+		}
+
+		subscribeExternalEvents()
+		{
+			BX.addCustomEvent(EventType.messenger.openDialog, this.onClose);
+		}
+
+		unsubscribeExternalEvents()
+		{
+			BX.removeCustomEvent(EventType.messenger.openDialog, this.onClose);
 		}
 
 		checkCache()
@@ -132,24 +150,15 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 		 */
 		getUserReadMessageList()
 		{
-			return new Promise((resolve, reject) => {
-				BX.rest.callMethod(
-					RestMethod.imV2ChatMessageTailViewers,
-					{
-						id: this.messageId,
-					},
-					(result) => {
-						if (result.error())
-						{
-							Logger.error('UsersReadMessageList.getUserReadMessageList.result.error', result.error());
-							reject(result.error());
-						}
+			const tailViewersData = {
+				id: this.messageId,
+			};
 
-						const data = result.data();
-						resolve(data);
-					},
-				);
-			});
+			return runAction(RestMethod.imV2ChatMessageTailViewers, { data: tailViewersData })
+				.catch((errors) => {
+					Logger.error('UsersReadMessageList.getUserReadMessageList.result.error', errors);
+				})
+			;
 		}
 
 		/**
@@ -166,7 +175,14 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 			const currentUserId = MessengerParams.getUserId();
 			const filteredViews = restData.views.filter((view) => view.userId !== currentUserId);
 
-			return filteredViews.map((view) => {
+			const sortedViews = filteredViews.sort((viewA, viewB) => {
+				const dateA = new Date(viewA.dateView).getTime();
+				const dateB = new Date(viewB.dateView).getTime();
+
+				return dateA - dateB;
+			});
+
+			return sortedViews.map((view) => {
 				const userData = restData.users.find((user) => user.id === view.userId);
 				const dataState = new Moment(view.dateView);
 				const dataFriendly = new FriendlyDate({
@@ -174,6 +190,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 					showTime: true,
 				});
 				const dateText = dataFriendly.makeText(dataState);
+				const avatarUri = Type.isStringFilled(userData.avatar) ? encodeURI(userData.avatar) : null;
 
 				return {
 					type: 'item',
@@ -183,12 +200,12 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 					title: userData.name,
 					subtitle: dateText,
 					iconSubtitle: atomIcons.doubleCheck(),
-					avatarUri: userData.avatar,
+					avatarUri,
 					avatarColor: userData.color,
 
 					style: {
 						parentView: {
-							backgroundColor: '#FFFFFF',
+							backgroundColor: AppTheme.colors.bgContentPrimary,
 						},
 						itemContainer: {
 							flexDirection: 'row',
@@ -203,7 +220,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 						itemInfoContainer: {
 							flexDirection: 'row',
 							borderBottomWidth: 1,
-							borderBottomColor: '#e9e9e9',
+							borderBottomColor: AppTheme.colors.bgSeparatorSecondary,
 							flex: 1,
 							alignItems: 'center',
 							marginBottom: 6,
@@ -219,10 +236,10 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 								marginBottom: 4,
 								fontSize: 16,
 								fontWeight: 400,
-								color: '#333',
+								color: ChatTitle.createFromDialogId(userData.id).getTitleColor(),
 							},
 							subtitle: {
-								color: '#A8ADB4',
+								color: AppTheme.colors.base3,
 								fontSize: 14,
 								fontWeight: 400,
 								textStyle: 'normal',
@@ -261,6 +278,16 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 			{
 				this.openUserProfile(Number(event.dialogTitleParams.key));
 			}
+		}
+
+		/**
+		 * @desc Handler is close widget
+		 * @return void
+		 */
+		onClose()
+		{
+			this.unsubscribeExternalEvents();
+			this.widget.close();
 		}
 
 		/**

@@ -65,7 +65,17 @@ type MessagePullHandlerUpdateDialogParams = {
 		senderId: number,
 	},
 	counter: number,
-	users?: OptiosRecord<number, UsersModelState>,
+	users?: Record<number, UsersModelState>,
 	chat: Record<number, Partial<DialoguesModelState>>,
 	userInChat: Record<number, Array<number>>,
+}
+
+declare type MessagePullHandlerMessageParamsUpdateParams = {
+	id: number, //message id
+	chatId: number,
+	type: 'private' | 'chat',
+	senderId?: number, //only open chat
+	fromUserId?: number, //only private chat
+	toUserId?: number, //only private chat
+	params: Object,
 }

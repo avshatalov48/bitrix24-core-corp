@@ -10,6 +10,7 @@ class Context
 	public const SCOPE_TASK = 'task'; // agents, background jobs
 	public const SCOPE_AUTOMATION = 'automation';
 	public const SCOPE_REST = 'rest';
+	public const SCOPE_AI = 'ai';
 
 	protected $eventId;
 	protected $userId;

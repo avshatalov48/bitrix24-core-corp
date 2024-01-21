@@ -1,0 +1,8 @@
+<?php
+
+$MESS['CRM_SETTINGS_BUTTON_EXTENDER_PUSH_CRM'] = 'Push CRM';
+$MESS['CRM_SETTINGS_BUTTON_EXTENDER_PUSH_CRM_TOGGLE_SORT'] = 'Фокусировка внимания';
+$MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING'] = 'Автоматический запуск обработки звонков';
+$MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_FIRST_INCOMING'] = 'Автоматически обрабатывать первый входящий звонок';
+$MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_ALL'] = 'Автоматически обрабатывать все входящие звонки';
+$MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_MANUAL_CALLS_PROCESSING'] = 'Запускать обработку звонков вручную';

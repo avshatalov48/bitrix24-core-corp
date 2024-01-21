@@ -1,0 +1,15 @@
+.crm-entity-stream-content-wait-detail.--locked::before,
+.crm-entity-stream-content-new-detail.--locked::before
+{
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	background: #fff;
+	opacity: .5;
+	z-index: 100;
+	content: '';
+	display: block;
+	border-radius: var(--crm-entity-stream-section-border-radius, var(--ui-border-radius-md, 2px));
+}

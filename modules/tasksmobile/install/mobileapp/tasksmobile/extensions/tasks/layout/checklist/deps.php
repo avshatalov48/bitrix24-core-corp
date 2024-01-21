@@ -2,11 +2,8 @@
 
 return [
 	'extensions' => [
-		'tasks:checklist',
-		'layout/ui/checkbox',
-		'layout/ui/context-menu',
-		'loc',
-		'notify',
-		'rest',
+		'tasks:layout/checklist/preview',
+		'tasks:layout/checklist/list',
+		'tasks:layout/checklist/legacy',
 	],
 ];

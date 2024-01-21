@@ -13,12 +13,12 @@ class CrmProducts extends CrmBase
 	public const PREFIX_SHORT = 'PROD_';
 	public const PREFIX_FULL = 'CRMPRODUCT';
 
-	protected static function getHandlerType()
+	protected static function getHandlerType(): string
 	{
 		return Handler::ENTITY_TYPE_CRMPRODUCTS;
 	}
 
-	protected static function prepareEntity($data, $options = [])
+	protected static function prepareEntity($data, $options = []): array
 	{
 		$img = '';
 		$imgId = $data['PREVIEW_PICTURE'] ?? $data['DETAIL_PICTURE'];
@@ -39,7 +39,7 @@ class CrmProducts extends CrmBase
 		];
 	}
 
-	public function getData($params = [])
+	public function getData($params = []): array
 	{
 		$options = (!empty($params['options']) ? $params['options'] : []);
 
@@ -187,7 +187,7 @@ class CrmProducts extends CrmBase
 		return $result;
 	}
 
-	public function getTabList($params = [])
+	public function getTabList($params = []): array
 	{
 		$result = [];
 
@@ -210,7 +210,7 @@ class CrmProducts extends CrmBase
 		return $result;
 	}
 
-	public function search($params = [])
+	public function search($params = []): array
 	{
 		$result = [
 			'ITEMS' => [],

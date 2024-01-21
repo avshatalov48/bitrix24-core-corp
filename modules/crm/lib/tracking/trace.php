@@ -174,7 +174,7 @@ class Trace
 		{
 			foreach ($pages as $page)
 			{
-				if (empty($page[0]) || empty($page[0]))
+				if (empty($page[0]))
 				{
 					continue;
 				}

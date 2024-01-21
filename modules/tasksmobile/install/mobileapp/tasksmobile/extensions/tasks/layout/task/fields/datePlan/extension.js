@@ -2,6 +2,7 @@
  * @module tasks/layout/task/fields/datePlan
  */
 jn.define('tasks/layout/task/fields/datePlan', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { DatePlanIs } = require('tasks/layout/task/fields/datePlanIs');
 	const { DatePlanStart } = require('tasks/layout/task/fields/datePlanStart');
 	const { DatePlanEnd } = require('tasks/layout/task/fields/datePlanEnd');
@@ -122,7 +123,7 @@ jn.define('tasks/layout/task/fields/datePlan', (require, exports, module) => {
 				View({
 					style: {
 						height: 0.5,
-						backgroundColor: '#e6e7e9',
+						backgroundColor: AppTheme.colors.bgSeparatorSecondary,
 					},
 				}),
 				field,

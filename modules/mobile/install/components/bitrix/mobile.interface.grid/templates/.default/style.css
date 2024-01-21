@@ -1,15 +1,15 @@
 body{
-	background: #DFE2E4;
+	background: var(--bg-separator-secondary);
 }
 .mobile-grid {
-	background: #dfe2e4;
+	background: var(--bg-separator-secondary);
 	padding: 1px 0;
 	font-family: 'Helvetica Neue', Arial, Helvetica, sans-serif;
 }
 
 .mobile-grid-item {
 	position: relative;
-	background: #fff;
+	background: var(--bg-content-primary);
 	margin: 11px;
 }
 
@@ -19,9 +19,9 @@ body{
 	width: 100%;
 	display: block;
 	font-size: 14px;
-	color: #0c74d5;
+	color: var(--accent-extra-darkblue);
 	line-height: 40px;
-	background: #fff;
+	background: var(--bg-content-primary);
 	text-decoration: none;
 }
 
@@ -53,7 +53,7 @@ body{
 
 .mobile-grid-field-textarea-fn {
 	display: block;
-	color: #6f6f6f;
+	color: var(--base3);
 	font-size: 12px;
 }
 
@@ -91,7 +91,7 @@ body{
 .mobile-grid-field:first-child:before {display: none;}
 
 .mobile-grid-field-name .mobile-grid-field-data {
-	color: #000;
+	color: var(--base0);
 	line-height: normal;
 	padding: 12px 0 11px;
 }
@@ -101,16 +101,16 @@ body{
 	top: 6px;
 	left: 18px;
 	font-size: 10px;
-	color: rgba(0,0,0,.5);
+	color: rgba(var(--base0-rgb), 0.5);
 	text-transform: lowercase;
 }
 
-.mobile-grid-field-textarea-title span {color: #3d4853;}
+.mobile-grid-field-textarea-title span {color: var(--base2);}
 
 .mobile-grid-change {
 	position: relative;
 	font-size: 10px;
-	color: #566573;
+	color: var(--base2);
 	text-align: center;
 	padding: 2px 0;
 }
@@ -118,7 +118,7 @@ body{
 .mobile-grid-change p {
 	display: inline-block;
 	padding: 0 10px;
-	background-color: #dfe2e4;
+	background-color: var(--bg-separator-secondary);
 	z-index: 2;
 	position: relative;
 	top: 0;
@@ -131,7 +131,7 @@ body{
 .mobile-grid-field-lead-title {
 	display: block;
 	font-size: 17px;
-	color: #000;
+	color: var(--base0);
 	padding: 10px 18px 19px 43px;
 	position: relative;
 	line-height: 22px;
@@ -157,7 +157,7 @@ body{
 	z-index: 2;
 	width: 10px;
 	height: 2px;
-	background: #8b919d;
+	background: var(--base3);
 	-webkit-transform: rotate(45deg);
 			transform: rotate(45deg);
 }
@@ -170,7 +170,7 @@ body{
 	z-index: 2;
 	width: 2px;
 	height: 10px;
-	background: #8b919d;
+	background: var(--base3);
 	-webkit-transform: rotate(45deg);
 			transform: rotate(45deg);
 }
@@ -180,13 +180,13 @@ body{
 	width: 100%;
 	position: relative;
 	box-sizing: border-box;
-	background: #f1f3f4;
+	background: var(--bg-secondary);
 }
 
 .mobile-grid-action-panel a {
 	display: inline-block;
 	font-size: 11px;
-	color: #5f686d;
+	color: var(--base2);
 	line-height: 45px;
 	font-weight: bold;
 	padding: 0 0 0 16px;
@@ -222,8 +222,8 @@ body{
 	margin: auto;
 	text-align: center;
 	line-height: 33px;
-	background: #fff;
-	border: 1px solid #C2CACF;
+	background: var(--bg-content-primary);
+	border: 1px solid var(--base5);
 	overflow: hidden;
 	font-size: 0;
 }
@@ -237,7 +237,7 @@ body{
 	position: absolute;
 	width: 33px;
 	height:33px;
-	background: #717e8a;
+	background: var(--base3);
 	border-radius: 50%;
 	top: 0;
 	bottom: 0;
@@ -262,7 +262,7 @@ body{
 .mobile-grid-field-progress {
 	display: table;
 	height: 10px;
-	background: #e6e9ec;
+	background: var(--base6);
 	margin: 15px 0 21px;
 	width: 100%;
 	border-radius: 9px;
@@ -271,7 +271,7 @@ body{
 
 .mobile-grid-field-progress-step {
 	display: table-cell;
-	border-right: 1px solid rgba(255,255,255,.6);
+	border-right: 1px solid rgba(var(--bg-content-primary-rgb), 0.6);
 	line-height: 9px;
 }
 
@@ -281,7 +281,7 @@ body{
 	display: block;
 	position: relative;
 	margin: 16px 0;
-	border: 1px solid #dbdee2;
+	border: 1px solid var(--base6);
 	border-radius: 18px;
 	height: 36px;
 	padding: 0 51px 0 51px;
@@ -308,11 +308,11 @@ body{
 }
 
 .mobile-grid-field-link {
-	color: #0c74d5;
+	color: var(--accent-extra-darkblue);
 }
 
 .mobile-grid-field-search {
-	background: #fff;
+	background: var(--bg-content-primary);
 	padding: 3px 16px 3px 0;
 	z-index: 1;
 	margin-bottom:13px;
@@ -331,7 +331,7 @@ body{
 
 .mobile-grid-field-search .mobile-grid-field-data {
 	border: none;
-	color: rgba(0,0,0,.6);
+	color: rgba(var(--base0-rgb), 0.6);
 	font-size: 14px;
 	font-family: 'Helvetica Neue', Arial, Helvetica, sans-serif;
 	padding-left: 35px;
@@ -359,7 +359,7 @@ body{
 	position: absolute;
 	width: 13px;
 	height: 2px;
-	background: #9498a3;
+	background: var(--base3);
 	-webkit-transform: rotate(45deg);
 			transform: rotate(45deg);
 	left: 0;
@@ -374,7 +374,7 @@ body{
 			transform: rotate(-45deg);
 }
 
-.mobile-grid-field-folder-list {background: #DFE2E4;}
+.mobile-grid-field-folder-list {background: var(--bg-separator-secondary);}
 
 .mobile-grid-field-folder {
 	font-family: "San Francisco Display", "Helvetica Neue", Helvetica, sans-serif;
@@ -400,12 +400,12 @@ body{
 	width: 100%;
 	display: block;
 	font-size: 17px;
-	color: #000;
+	color: var(--base0);
 	line-height: 20px;
 	outline: none;
 	box-sizing: border-box;
 	text-decoration: none;
-	background: #fff;
+	background: var(--bg-content-primary);
 	border: 1px solid;
 	padding: 13px 70px 13px 45px;
 	border-image: url(images/borderg.png) 2 0 2 repeat;
@@ -423,7 +423,7 @@ body{
 	z-index: 1;
 	width: 2px;
 	height: 10px;
-	background: #8b919d;
+	background: var(--base3);
 	-webkit-transform: rotate(45deg);
 			transform: rotate(45deg);
 }
@@ -436,7 +436,7 @@ body{
 	z-index: 1;
 	width: 10px;
 	height: 2px;
-	background: #8b919d;
+	background: var(--base3);
 	-webkit-transform: rotate(45deg);
 			transform: rotate(45deg);
 }
@@ -481,5 +481,5 @@ body{
 	font-family: "SanFranciscoText", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	font-weight: Bold;
 	font-size:18px;
-	color: #556574;
+	color: var(--base2);
 }

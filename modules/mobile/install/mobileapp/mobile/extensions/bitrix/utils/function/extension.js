@@ -1,15 +1,16 @@
 (() => {
+	const require = (ext) => jn.require(ext);
 
-	const { hashCode } = jn.require('utils/hash');
-	const { camelize, stringify } = jn.require('utils/string');
+	const { hashCode } = require('utils/hash');
+	const { camelize, stringify } = require('utils/string');
 
 	/**
 	 * Creates a debounced function that delays invoking {fn} until after {timeout} milliseconds have elapsed
 	 * since the last time the debounced function was invoked.
 	 * @param {function} fn
 	 * @param {number} timeout
-	 * @param {*} ctx
-	 * @param {boolean} immediate
+	 * @param {*} [ctx]
+	 * @param {boolean} [immediate]
 	 * @returns {function}
 	 */
 	function debounce(fn, timeout, ctx, immediate = false)
@@ -129,19 +130,18 @@
 		}
 	}
 
-	window.reflectFunction = function (object, funcName, thisObject)
-	{
-		return function(){
+	window.reflectFunction = function(object, funcName, thisObject) {
+		return function() {
 			const context = thisObject || object;
 			const targetFunction = camelize(funcName);
-			if(object && typeof object[targetFunction] == "function")
+			if (object && typeof object[targetFunction] === 'function')
 			{
 				return object[targetFunction].apply(context, arguments);
 			}
 
-			return function(){};
-		}
-	}
+			return function() {};
+		};
+	};
 
 	jnexport(FunctionUtils);
 
@@ -149,7 +149,6 @@
 	 * @module utils/function
 	 */
 	jn.define('utils/function', (require, exports, module) => {
-
 		module.exports = {
 			debounce,
 			throttle,
@@ -157,7 +156,5 @@
 			mapPromise,
 			useCallback,
 		};
-
 	});
-
 })();

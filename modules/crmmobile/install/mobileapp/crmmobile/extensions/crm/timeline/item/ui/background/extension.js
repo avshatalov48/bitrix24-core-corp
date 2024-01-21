@@ -2,6 +2,7 @@
  * @module crm/timeline/item/ui/background
  */
 jn.define('crm/timeline/item/ui/background', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { transition, pause, chain } = require('animation');
 
 	/**
@@ -19,7 +20,7 @@ jn.define('crm/timeline/item/ui/background', (require, exports, module) => {
 
 		get color()
 		{
-			return this.props.color || '#ffffff';
+			return this.props.color || AppTheme.colors.bgContentPrimary;
 		}
 
 		get opacity()
@@ -70,7 +71,7 @@ jn.define('crm/timeline/item/ui/background', (require, exports, module) => {
 
 			const toYellow = transition(this.nodeRef, {
 				duration: 300,
-				backgroundColor: '#ffe9be', // same as in kanban
+				backgroundColor: AppTheme.colors.accentSoftOrange2, // same as in kanban
 				opacity: 1,
 			});
 

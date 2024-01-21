@@ -2,7 +2,7 @@
 
 namespace Bitrix\Tasks\Member\Config;
 
-class BaseConfig implements Config
+class BaseConfig implements ConfigInterface
 {
 	public function getType(): string
 	{
@@ -13,6 +13,7 @@ class BaseConfig implements Config
 	{
 		return [
 			new AdditionalConfig(),
+			new WorkConfig(),
 		];
 	}
 

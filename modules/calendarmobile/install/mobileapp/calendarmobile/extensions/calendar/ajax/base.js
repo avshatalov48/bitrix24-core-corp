@@ -2,7 +2,6 @@
  * @module calendar/ajax/base
  */
 jn.define('calendar/ajax/base', (require, exports, module) => {
-
 	/**
 	 * @class BaseAjax
 	 * @abstract
@@ -36,5 +35,4 @@ jn.define('calendar/ajax/base', (require, exports, module) => {
 	}
 
 	module.exports = { BaseAjax };
-
 });

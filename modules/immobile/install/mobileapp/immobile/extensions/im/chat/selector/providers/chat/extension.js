@@ -319,7 +319,7 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 
 			const queryWords = this.splitQueryByWords(query);
 
-			ChatUtils.throttle(this.sendRequest(query, queryWords), 500, this);
+			this.sendRequest(query, queryWords);
 		}
 
 		sendRequest(query, queryWords)

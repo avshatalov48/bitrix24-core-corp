@@ -44,9 +44,8 @@ jn.define('crm/timeline/controllers/payment', (require, exports, module) => {
 		{
 			this.timelineScopeEventBus.emit('EntityPaymentDocument::Click', [{
 				ID: actionParams.paymentId,
-				TYPE: 'PAYMENT',
-				FORMATTED_DATE: actionParams.formattedDate,
-				ACCOUNT_NUMBER: actionParams.accountNumber,
+				TYPE: actionParams.isTerminalPayment === 'Y' ? 'TERMINAL_PAYMENT' : 'PAYMENT',
+				PAID: actionParams.isPaid === 'Y' ? 'Y' : 'N',
 			}]);
 		}
 

@@ -1,5 +1,8 @@
 (() => {
-	const pathToExtension = `/bitrix/mobileapp/catalogmobile/extensions/catalog/barcode-scanner/`;
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
+
+	const pathToExtension = '/bitrix/mobileapp/catalogmobile/extensions/catalog/barcode-scanner/';
 
 	class BarcodeScanner extends LayoutComponent
 	{
@@ -16,14 +19,14 @@
 			return View(
 				{
 					style: {
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgSecondary,
 					},
 				},
 				CameraView({
 					style: {
 						width: '100%',
 						height: '100%',
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgSecondary,
 						borderTopLeftRadius: 12,
 						borderTopRightRadius: 12,
 					},
@@ -31,20 +34,23 @@
 					result: (barcode) => {
 						BX.ajax.runAction(
 							'catalog.analytics.sendAnalyticsLabel',
-							{analyticsLabel: 'catalog:barcodeScanned'}
+							{ analyticsLabel: 'catalog:barcodeScanned' },
 						);
 						if (typeof this.props.onBarcodeScanned !== 'function')
 						{
 							this.stopScanning();
+
 							return;
 						}
 
 						this.props.onBarcodeScanned(barcode, this);
 					},
 					error: (error) => console.error(error),
-					ref: (ref) => this.cameraRef = ref
+					ref: (ref) => {
+						this.cameraRef = ref;
+					},
 				}),
-				this.renderSuccessOverlay()
+				this.renderSuccessOverlay(),
 			);
 		}
 
@@ -70,16 +76,16 @@
 
 		hideSuccessOverlay()
 		{
-			return this.successOverlay .hide();
+			return this.successOverlay.hide();
 		}
 
 		renderSuccessOverlay()
 		{
 			return new UI.Overlay({
 				type: UI.Overlay.Types.SUCCESS,
-				ref: view => {
+				ref: (view) => {
 					this.successOverlay = view;
-				}
+				},
 			});
 		}
 
@@ -124,7 +130,7 @@
 		{
 			const {
 				widgetTitle,
-				layoutProps
+				layoutProps,
 			} = options;
 
 			const widgetParams = BarcodeScannerWidget.getWidgetParams();
@@ -137,7 +143,7 @@
 
 			parentWidget
 				.openWidget('layout', widgetParams)
-				.then(layoutWidget => {
+				.then((layoutWidget) => {
 					const barcodeScanner = new BarcodeScanner(layoutProps);
 
 					layoutWidget.enableNavigationBarBorder(false);
@@ -154,8 +160,9 @@
 				backdrop: {
 					mediumPositionPercent: 70,
 					horizontalSwipeAllowed: false,
-					navigationBarColor: '#eef2f4',
-				}
+					navigationBarColor: AppTheme.colors.bgSecondary,
+					hideNavigationBar: true,
+				},
 			};
 		}
 	}

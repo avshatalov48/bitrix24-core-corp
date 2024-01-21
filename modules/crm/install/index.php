@@ -32,11 +32,6 @@ class crm extends CModule
 			$this->MODULE_VERSION = $arModuleVersion['VERSION'];
 			$this->MODULE_VERSION_DATE = $arModuleVersion['VERSION_DATE'];
 		}
-		else
-		{
-			$this->MODULE_VERSION = CRM_VERSION;
-			$this->MODULE_VERSION_DATE = CRM_VERSION_DATE;
-		}
 
 		$this->MODULE_NAME = Loc::getMessage('CRM_INSTALL_NAME');
 		$this->MODULE_DESCRIPTION = Loc::getMessage('CRM_INSTALL_DESCRIPTION');
@@ -677,6 +672,8 @@ class crm extends CModule
 			}
 		}
 
+		\Bitrix\Crm\Model\ItemCategoryTable::installBundledCategoriesIfNotExists();
+
 		$this->InstallUserFields();
 
 		//region BUSINESS TYPES
@@ -747,6 +744,10 @@ class crm extends CModule
 		\Bitrix\Main\Config\Option::set('crm', 'enable_slider', 'Y');
 		\Bitrix\Main\Config\Option::set('crm', 'enable_order_deal_create', 'Y');
 
+		\Bitrix\Crm\Settings\Crm::setLiveFeedRecordsGenerationEnabled(false);
+		\Bitrix\Crm\Settings\LiveFeedSettings::getCurrent()->enableLiveFeedMerge(false);
+		\Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper::setAvailable(false);
+
 		\Bitrix\Crm\EntityRequisite::installDefaultPresets();
 
 		// Adjust default address zone
@@ -767,6 +768,28 @@ class crm extends CModule
 			COption::SetOptionString('crm', '~CRM_CONVERT_CONTACT_UF_ADDRESSES_PROGRESS', serialize($progressData));
 			unset($progressData);
 		}
+		\Bitrix\Crm\Attribute\Entity\FieldAttributeTable::add([
+			'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+			'ENTITY_SCOPE' => '',
+			'TYPE_ID' => \Bitrix\Crm\Attribute\FieldAttributeType::REQUIRED,
+			'FIELD_NAME' => 'NAME',
+			'CREATED_TIME' => new \Bitrix\Main\Type\DateTime(),
+			'START_PHASE' => '',
+			'FINISH_PHASE' => '',
+			'PHASE_GROUP_TYPE_ID' => \Bitrix\Crm\Attribute\FieldAttributePhaseGroupType::ALL,
+			'IS_CUSTOM_FIELD' => false,
+		]);
+		\Bitrix\Crm\Attribute\Entity\FieldAttributeTable::add([
+			'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+			'ENTITY_SCOPE' => '',
+			'TYPE_ID' => \Bitrix\Crm\Attribute\FieldAttributeType::REQUIRED,
+			'FIELD_NAME' => 'TITLE',
+			'CREATED_TIME' => new \Bitrix\Main\Type\DateTime(),
+			'START_PHASE' => '',
+			'FINISH_PHASE' => '',
+			'PHASE_GROUP_TYPE_ID' => \Bitrix\Crm\Attribute\FieldAttributePhaseGroupType::ALL,
+			'IS_CUSTOM_FIELD' => false,
+		]);
 
 		if (\Bitrix\Main\Loader::includeModule('intranet'))
 		{
@@ -846,6 +869,7 @@ class crm extends CModule
 
 				$tableNamesToDelete[] = $type->getTableName();
 				$tableNamesToDelete[] = $typeFactory->getItemIndexDataClass($type)::getTableName();
+				$tableNamesToDelete[] = $typeFactory->getItemFieldsContextDataClass($type)::getTableName();
 			}
 			foreach ($tableNamesToDelete as $tableName)
 			{
@@ -1671,6 +1695,52 @@ class crm extends CModule
 			'\Bitrix\Crm\Integration\Calendar\CalendarSharingTimeline',
 			'onSharedCrmActions'
 		);
+
+		$eventManager->registerEventHandler(
+			'ai',
+			'onQueueJobExecute',
+			'crm',
+			'\Bitrix\Crm\Integration\AI\EventHandler',
+			'onQueueJobExecute',
+		);
+		$eventManager->registerEventHandler(
+			'ai',
+			'onQueueJobFail',
+			'crm',
+			'\Bitrix\Crm\Integration\AI\EventHandler',
+			'onQueueJobFail',
+		);
+		$eventManager->registerEventHandler(
+			'ai',
+			'onTuningLoad',
+			'crm',
+			'\Bitrix\Crm\Integration\AI\EventHandler',
+			'onTuningLoad',
+		);
+
+		$eventManager->registerEventHandler(
+			'ui',
+			'onUIFormResetScope',
+			'crm',
+			'\\Bitrix\\Crm\\Component\\EntityDetails\\Config\\Scope',
+			'onUIFormResetScope'
+		);
+
+		$eventManager->registerEventHandler(
+			'ui',
+			'onUIFormSetScope',
+			'crm',
+			'\\Bitrix\\Crm\\Component\\EntityDetails\\Config\\Scope',
+			'onUIFormSetScope'
+		);
+
+		$eventManager->registerEventHandler(
+			'sale',
+			'onSalePsBeforeInitiatePay',
+			'crm',
+			'\Bitrix\Crm\Terminal\EventsHandler\OnSalePsBeforeInitiatePay',
+			'handle'
+		);
 	}
 
 	private function installAgents()
@@ -1745,6 +1815,7 @@ class crm extends CModule
 		);
 
 		CAgent::AddAgent(
+			/** @see \Bitrix\Crm\Service\Factory\SmartInvoice::createTypeIfNotExists() */
 			"\\Bitrix\\Crm\\Service\\Factory\\SmartInvoice::createTypeIfNotExists();",
 			"crm",
 			"N",
@@ -1752,6 +1823,28 @@ class crm extends CModule
 			'',
 			'Y',
 			$startTime
+		);
+
+		CAgent::AddAgent(
+			/** @see \Bitrix\Crm\Service\Factory\SmartDocument::createTypeIfNotExists() */
+			"\\Bitrix\\Crm\\Service\\Factory\\SmartDocument::createTypeIfNotExists();",
+			"crm",
+			"N",
+			3600,
+			'',
+			'Y',
+			$startTime
+		);
+
+		\CAgent::AddAgent(
+			/** @see \Bitrix\Crm\Integration\Sign\Access::installDefaultRoles() */
+			'\Bitrix\Crm\Integration\Sign\Access::installDefaultRoles();',
+			'crm',
+			'N',
+			60,
+			'',
+			'Y',
+			$startTime,
 		);
 
 		// set initial values for MOVED_BY_ID and MOVED_TIME fields in leads
@@ -1810,6 +1903,8 @@ class crm extends CModule
 			'N',
 			60,
 		);
+
+		\Bitrix\Crm\Update\RemoveDuplicatingMultifieldsStepper::bindOnCrmModuleInstall();
 	}
 
 	private function uninstallEventHandlers()
@@ -2342,6 +2437,52 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Integration\Calendar\CalendarSharingTimeline',
 			'onSharedCrmActions'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'ai',
+			'onQueueJobExecute',
+			'crm',
+			'\Bitrix\Crm\Integration\AI\EventHandler',
+			'onQueueJobExecute',
+		);
+		$eventManager->unRegisterEventHandler(
+			'ai',
+			'onQueueJobFail',
+			'crm',
+			'\Bitrix\Crm\Integration\AI\EventHandler',
+			'onQueueJobFail',
+		);
+		$eventManager->unRegisterEventHandler(
+			'ai',
+			'onTuningLoad',
+			'crm',
+			'\Bitrix\Crm\Integration\AI\EventHandler',
+			'onTuningLoad',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'ui',
+			'onUIFormSetScope',
+			'crm',
+			'\\Bitrix\\Crm\\Component\\EntityDetails\\Config\\Scope',
+			'onUIFormSetScope'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'ui',
+			'onUIFormResetScope',
+			'crm',
+			'\\Bitrix\\Crm\\Component\\EntityDetails\\Config\\Scope',
+			'onUIFormResetScope'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'sale',
+			'onSalePsBeforeInitiatePay',
+			'crm',
+			'\Bitrix\Crm\Terminal\EventsHandler\OnSalePsBeforeInitiatePay',
+			'handle'
 		);
 	}
 

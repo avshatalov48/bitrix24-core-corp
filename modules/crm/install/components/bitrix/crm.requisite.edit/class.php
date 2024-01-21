@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\Integrity\DuplicateControl;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\EntityAddress;
@@ -637,12 +638,12 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 			$this->refererUrl = strval($_SERVER['HTTP_REFERER']);
 		}
 
-		if ($this->popupMode && !$this->bEdit && $this->entityTypeId > 0)
+		if ($this->popupMode && $this->entityTypeId > 0)
 		{
-			$this->enableDupControl = Bitrix\Crm\Integrity\DuplicateControl::isControlEnabledFor($this->entityTypeId);
+			$this->enableDupControl = DuplicateControl::isControlEnabledFor($this->entityTypeId);
 		}
 
-		$this->externalContextId = isset($this->arParams['EXTERNAL_CONTEXT_ID']) ? $this->arParams['EXTERNAL_CONTEXT_ID'] : '';
+		$this->externalContextId = $this->arParams['EXTERNAL_CONTEXT_ID'] ?? '';
 
 		return true;
 	}

@@ -30,6 +30,8 @@ export type TypeModelData = {
 	relations?: RelationsMap,
 	customSectionId: ?number,
 	customSections: CustomSection[],
+	isExternal?: boolean,
+	isSaveFromTypeDetail?: boolean,
 };
 
 declare type RelationsMap = {
@@ -286,6 +288,16 @@ export class TypeModel extends Model
 	setCustomSections(customSections: CustomSection[])
 	{
 		this.data.customSections = customSections;
+	}
+
+	setIsExternalDynamicalType(isExternal: boolean): void
+	{
+		this.data.isExternal = isExternal;
+	}
+
+	setIsSaveFromTypeDetail(isSaveFromTypeDetail: boolean): void
+	{
+		this.data.isSaveFromTypeDetail = isSaveFromTypeDetail;
 	}
 
 	setConversionMap({sourceTypes, destinationTypes}: ConversionMap)

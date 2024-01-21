@@ -90,7 +90,7 @@ if($isIFrame)
 
 	if($edit)
 	{
-		$parameters['TOOLBAR_PARAMETERS'] = array_merge($parameters['TOOLBAR_PARAMETERS'], array(
+		$parameters['TOOLBAR_PARAMETERS'] = array_merge($parameters['TOOLBAR_PARAMETERS'] ?? [], array(
 			'CUSTOM_ELEMENTS' => array(),
 			'TEMPLATES_TOOLBAR_LABEL' => Loc::getMessage('TASKS_TIP_TEMPLATE_LINK_COPIED_TEMPLATE_BAR_TITLE'),
 		));

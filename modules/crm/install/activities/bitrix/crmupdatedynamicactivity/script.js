@@ -2,88 +2,74 @@
 	'use strict';
 
 	var namespace = main_core.Reflection.namespace('BX.Crm.Activity');
-
 	var CrmUpdateDynamicActivity = /*#__PURE__*/function () {
 	  function CrmUpdateDynamicActivity(options) {
 	    var _this = this;
-
 	    babelHelpers.classCallCheck(this, CrmUpdateDynamicActivity);
-
 	    if (main_core.Type.isPlainObject(options)) {
 	      this.documentType = options.documentType;
 	      this.isRobot = options.isRobot;
 	      var form = document.forms[options.formName];
-
 	      if (!main_core.Type.isNil(form)) {
 	        this.entityTypeIdSelect = form.dynamic_type_id;
 	        this.currentEntityTypeId = this.entityTypeIdSelect.value;
 	        this.entityTypeDependentElements = document.querySelectorAll('[data-role="bca-cuda-entity-type-id-dependent"]');
 	      }
-
 	      this.document = new bizproc_automation.Document({
 	        rawDocumentType: this.documentType,
 	        documentFields: options.documentFields,
 	        title: options.documentName
 	      });
-
 	      if (this.isRobot) {
 	        this.fieldsListSelect = document.querySelector('[data-role="bca-cuda-fields-list"]');
 	      } else {
 	        this.addConditionButton = document.querySelector('[data-role="bca_cuda_add_condition"]');
 	      }
-
 	      this.entitiesFieldsContainers = document.querySelector('[data-role="bca-cuda-fields-container"]');
 	      this.conditinIdPrefix = 'id_bca_cuda_field_';
 	      this.fieldsMap = new Map(Object.entries(options.fieldsMap));
 	      this.filterFieldsContainer = document.querySelector('[data-role="bca-cuda-filter-fields-container"]');
 	      this.filteringFieldsPrefix = options.filteringFieldsPrefix;
-	      this.filterFieldsMap = new Map(Object.entries(options.filterFieldsMap)); // issue 0158608
+	      this.filterFieldsMap = new Map(Object.entries(options.filterFieldsMap));
 
+	      // issue 0158608
 	      if (!main_core.Type.isNil(options.documentType) && !this.isRobot) {
 	        BX.Bizproc.Automation.API.documentType = options.documentType;
 	      }
-
 	      this.conditionGroup = new bizproc_automation.ConditionGroup(options.conditions);
 	      this.currentValues = new Map();
 	      Array.from(this.fieldsMap.keys()).forEach(function (entityTypeId) {
 	        return _this.currentValues.set(entityTypeId, {});
 	      });
-
 	      if (!main_core.Type.isNil(this.currentEntityTypeId) && main_core.Type.isObject(options.currentValues)) {
 	        this.currentValues.set(this.currentEntityTypeId, options.currentValues);
 	      }
 	    }
 	  }
-
 	  babelHelpers.createClass(CrmUpdateDynamicActivity, [{
 	    key: "init",
 	    value: function init() {
 	      if (this.entityTypeIdSelect && this.fieldsMap && this.entitiesFieldsContainers) {
 	        main_core.Event.bind(this.entityTypeIdSelect, 'change', this.onEntityTypeIdChange.bind(this));
 	      }
-
 	      if (this.isRobot && this.fieldsListSelect) {
 	        main_core.Event.bind(this.fieldsListSelect, 'click', this.onFieldsListSelectClick.bind(this));
 	      } else if (!this.isRobot && this.addConditionButton) {
 	        main_core.Event.bind(this.addConditionButton, 'click', this.onAddConditionButtonClick.bind(this));
 	      }
-
 	      this.initAutomationContext();
 	    }
 	  }, {
 	    key: "initAutomationContext",
 	    value: function initAutomationContext() {
 	      var _this2 = this;
-
 	      try {
 	        bizproc_automation.getGlobalContext();
-
 	        if (this.isRobot) {
 	          this.onOpenFilterFieldsMenu = function (event) {
 	            var dialog = bizproc_automation.Designer.getInstance().getRobotSettingsDialog();
 	            var template = dialog.template;
 	            var robot = dialog.robot;
-
 	            if (template && robot) {
 	              template.onOpenMenu(event, robot);
 	            }
@@ -93,7 +79,6 @@
 	        bizproc_automation.setGlobalContext(new bizproc_automation.Context({
 	          document: this.document
 	        }));
-
 	        this.onOpenFilterFieldsMenu = function (event) {
 	          return _this2.addBPFields(event.getData().selector);
 	        };
@@ -104,15 +89,13 @@
 	    value: function addBPFields(selector) {
 	      var getSelectorProperties = function getSelectorProperties(_ref) {
 	        var properties = _ref.properties,
-	            objectName = _ref.objectName,
-	            expressionPrefix = _ref.expressionPrefix;
-
+	          objectName = _ref.objectName,
+	          expressionPrefix = _ref.expressionPrefix;
 	        if (main_core.Type.isObject(properties)) {
 	          return Object.entries(properties).map(function (_ref2) {
 	            var _ref3 = babelHelpers.slicedToArray(_ref2, 2),
-	                id = _ref3[0],
-	                property = _ref3[1];
-
+	              id = _ref3[0],
+	              property = _ref3[1];
 	            return {
 	              id: id,
 	              title: property.Name,
@@ -129,21 +112,17 @@
 	            };
 	          });
 	        }
-
 	        return [];
 	      };
-
 	      var getGlobalSelectorProperties = function getGlobalSelectorProperties(_ref4) {
 	        var properties = _ref4.properties,
-	            visibilityNames = _ref4.visibilityNames,
-	            objectName = _ref4.objectName;
-
+	          visibilityNames = _ref4.visibilityNames,
+	          objectName = _ref4.objectName;
 	        if (main_core.Type.isObject(properties)) {
 	          return Object.entries(properties).map(function (_ref5) {
 	            var _ref6 = babelHelpers.slicedToArray(_ref5, 2),
-	                id = _ref6[0],
-	                property = _ref6[1];
-
+	              id = _ref6[0],
+	              property = _ref6[1];
 	            var field = {
 	              id: id,
 	              Type: property.Type,
@@ -152,11 +131,9 @@
 	              SystemExpression: "{=".concat(objectName, ":").concat(id, "}"),
 	              Expression: "{=".concat(objectName, ":").concat(id, "}")
 	            };
-
 	            if (property.Visibility && visibilityNames[property.Visibility]) {
 	              field.Expression = "{{".concat(visibilityNames[property.Visibility], ":").concat(property.Name, "}}");
 	            }
-
 	            return {
 	              id: id,
 	              title: property.Name,
@@ -167,10 +144,8 @@
 	            };
 	          });
 	        }
-
 	        return [];
 	      };
-
 	      selector.addGroup('workflowParameters', {
 	        id: 'workflowParameters',
 	        title: main_core.Loc.getMessage('BIZPROC_WFEDIT_MENU_PARAMS'),
@@ -199,7 +174,6 @@
 	          })
 	        }]
 	      });
-
 	      if (window.arWorkflowGlobalVariables && window.wfGVarVisibilityNames) {
 	        selector.addGroup('globalVariables', {
 	          id: 'globalVariables',
@@ -211,7 +185,6 @@
 	          })
 	        });
 	      }
-
 	      selector.addGroup('globalConstants', {
 	        id: 'globalConstants',
 	        title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_CONSTANTS_LIST'),
@@ -255,16 +228,25 @@
 	        var selector = new bizproc_automation.ConditionGroupSelector(this.conditionGroup, {
 	          fields: Object.values(this.filterFieldsMap.get(this.currentEntityTypeId)),
 	          fieldPrefix: this.filteringFieldsPrefix,
-	          onOpenMenu: this.onOpenFilterFieldsMenu
+	          onOpenMenu: this.onOpenFilterFieldsMenu,
+	          caption: {
+	            head: main_core.Loc.getMessage('CRM_UDA_FILTERING_FIELDS_PROPERTY'),
+	            collapsed: main_core.Loc.getMessage('CRM_UDA_FILTERING_FIELDS_COLLAPSED_TEXT')
+	          }
 	        });
-	        this.filterFieldsContainer.appendChild(selector.createNode());
+
+	        // todo: remove 2024 with this.filterFieldsContainer.parentNode.firstElementChild
+	        if (selector.modern && this.filterFieldsContainer && this.filterFieldsContainer.parentNode) {
+	          var element = this.filterFieldsContainer.parentNode.firstElementChild === this.filterFieldsContainer ? this.filterFieldsContainer.parentNode.parentNode.firstElementChild : this.filterFieldsContainer.parentNode.firstElementChild;
+	          main_core.Dom.clean(element);
+	        }
+	        main_core.Dom.append(selector.createNode(), this.filterFieldsContainer);
 	      }
 	    }
 	  }, {
 	    key: "renderEntityFields",
 	    value: function renderEntityFields() {
 	      var _this3 = this;
-
 	      Object.keys(this.currentValues.get(this.currentEntityTypeId)).forEach(function (fieldId) {
 	        return _this3.addCondition(fieldId);
 	      });
@@ -273,17 +255,14 @@
 	    key: "onFieldsListSelectClick",
 	    value: function onFieldsListSelectClick(event) {
 	      var fields = this.fieldsMap.get(this.currentEntityTypeId);
-
 	      if (main_core.Type.isNil(fields)) {
 	        return event.preventDefault();
 	      }
-
 	      var activity = this;
 	      var menuItems = Object.entries(fields).map(function (_ref7) {
 	        var _ref8 = babelHelpers.slicedToArray(_ref7, 2),
-	            fieldId = _ref8[0],
-	            field = _ref8[1];
-
+	          fieldId = _ref8[0],
+	          field = _ref8[1];
 	        return {
 	          fieldId: fieldId,
 	          text: field.Name,
@@ -414,9 +393,8 @@
 	    value: function getCurrentFieldsOptions(selectedFieldId) {
 	      return Object.entries(this.fieldsMap.get(this.currentEntityTypeId)).map(function (_ref9) {
 	        var _ref10 = babelHelpers.slicedToArray(_ref9, 2),
-	            fieldId = _ref10[0],
-	            field = _ref10[1];
-
+	          fieldId = _ref10[0],
+	          field = _ref10[1];
 	        return main_core.Dom.create('option', {
 	          props: {
 	            value: field.FieldName
@@ -432,17 +410,14 @@
 	    key: "renderField",
 	    value: function renderField(fieldId) {
 	      var value = this.currentValues.get(this.currentEntityTypeId)[fieldId];
-
 	      if (main_core.Type.isNil(value)) {
 	        value = '';
 	      }
-
 	      return BX.Bizproc.FieldType.renderControl(this.documentType, this.fieldsMap.get(this.currentEntityTypeId)[fieldId], fieldId, value, this.isRobot ? 'public' : 'designer');
 	    }
 	  }]);
 	  return CrmUpdateDynamicActivity;
 	}();
-
 	namespace.CrmUpdateDynamicActivity = CrmUpdateDynamicActivity;
 
 }((this.window = this.window || {}),BX,BX.Main,BX.Bizproc.Automation));

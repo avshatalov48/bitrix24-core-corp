@@ -16,6 +16,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 /** !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Integration\Intranet;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Util\User;
@@ -145,7 +146,11 @@ class TasksTopmenuComponent extends TasksBaseComponent
 		{
 			$counter = Counter::getInstance($this->arParams['USER_ID']);
 
-			$this->arResult['ROLES'] = $this->getRoles();
+			// tasks 23.500.0
+			if (!Filter::isRolesEnabled())
+			{
+				$this->arResult['ROLES'] = $this->getRoles();
+			}
 			$this->arResult['TOTAL'] = $counter->get(Counter\CounterDictionary::COUNTER_MEMBER_TOTAL);
 			$this->arResult['PROJECTS_COUNTER'] = $counter->get(Counter\CounterDictionary::COUNTER_SONET_TOTAL_EXPIRED)
 				+ $counter->get(Counter\CounterDictionary::COUNTER_SONET_TOTAL_COMMENTS);

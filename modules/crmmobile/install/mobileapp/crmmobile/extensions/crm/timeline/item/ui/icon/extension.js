@@ -5,11 +5,12 @@ jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
 	const { stringify } = require('utils/string');
 	const { get } = require('utils/object');
 	const { Haptics } = require('haptics');
+	const AppTheme = require('apptheme');
 	const { TimelineItemIconLogo } = require('crm/timeline/item/ui/icon/logo');
 
 	const CounterTypeColor = {
-		DANGER: '#FF5752',
-		SUCCESS: '#9DCF00',
+		DANGER: AppTheme.colors.accentMainAlert,
+		SUCCESS: AppTheme.colors.accentMainSuccess,
 
 		get(code)
 		{
@@ -113,7 +114,7 @@ jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
 		{
 			const iconType = get(this.props, 'logo.iconType', null);
 
-			return iconType ? '#ffe8e8' : '#e5f9ff';
+			return iconType ? AppTheme.colors.accentSoftRed2 : AppTheme.colors.accentSoftBlue2;
 		}
 
 		renderIcon()
@@ -148,7 +149,7 @@ jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
 				testId: `TimelineItemIconCounter_${color}`,
 				text: String(text),
 				style: {
-					color: '#ffffff',
+					color: AppTheme.colors.baseWhiteFixed,
 					fontSize: 12,
 					fontWeight: '500',
 				},
@@ -158,3 +159,4 @@ jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
 
 	module.exports = { TimelineItemIcon };
 });
+

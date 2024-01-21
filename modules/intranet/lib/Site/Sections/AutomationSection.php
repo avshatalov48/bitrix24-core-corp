@@ -3,6 +3,7 @@
 namespace Bitrix\Intranet\Site\Sections;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Service\Router;
 use Bitrix\Sign;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Crm\Service\Container;
@@ -13,38 +14,66 @@ use Bitrix\Rpa\Driver;
 
 class AutomationSection
 {
+	private static array $items;
+	private static array $bpSubMenu;
+
+	public const MENU_ITEMS_ID = [
+		'robots' => 'menu_robots',
+		'bizproc_automation' => 'menu_bizproc_sect',
+		'smart_process' => 'menu_crm_dynamic',
+		'scripts' => 'menu_bizproc_script',
+		'rpa' => 'rpa_tasks',
+		'lists' => 'lists',
+		'onec' => 'menu_onec_sect',
+		'ai' => 'menu_ai',
+	];
+
 	public static function getItems(): array
 	{
-		return [
-			static::getBizProc(),
-			static::getRobots(),
-			static::getSmartProcesses(),
-			static::getRpa(),
-			static::getOnec(),
-			static::getScripts(),
-			static::getLists(),
-			static::getAI(),
-		];
+		if (!isset(self::$items))
+		{
+			$items = [
+				static::getBizProc(),
+				static::getRobots(),
+				static::getSmartProcesses(),
+				static::getRpa(),
+				static::getOnec(),
+				static::getScripts(),
+				static::getLists(),
+				static::getAI(),
+			];
+
+			self::$items = array_filter($items, function($item) {
+				return !empty($item);
+			});
+		}
+
+		return self::$items;
 	}
 
 	public static function getBizProc(): array
 	{
-		$available = Loader::includeModule('bizproc') && \CBPRuntime::isFeatureEnabled();
+		$available = Loader::includeModule('bizproc')
+			&& (
+				!Loader::includeModule('bitrix24')
+				|| \Bitrix\Bitrix24\Feature::isFeatureEnabled('bizproc')
+			);
+		$subMenu = self::getBizProcSubMenu();
+		$urls = array_unique(
+			array_column($subMenu, 1)
+		);
 
 		return [
 			'id' => 'bizproc',
 			'title' => Loc::getMessage('AUTOMATION_SECTION_BIZPROC_ITEM_TITLE'),
 			'available' => $available,
 			'url' => SITE_DIR . 'bizproc/',
-			'extraUrls' => [
-				SITE_DIR . 'company/personal/bizproc/',
-				SITE_DIR . 'company/personal/processes/',
-			],
+			'extraUrls' => $urls,
 			'iconClass' => 'ui-icon intranet-automation-bp-icon',
 			'menuData' => [
-				'real_link' => SITE_DIR . 'company/personal/bizproc/',
+				'real_link' => $urls[0] ?? (SITE_DIR . 'company/personal/bizproc/'),
 				'counter_id' => 'bp_tasks',
-				'menu_item_id' => 'menu_bizproc_sect',
+				'menu_item_id' => self::MENU_ITEMS_ID['bizproc_automation'],
 				'top_menu_id' => 'top_menu_id_bizproc',
 			],
 			'tileData' => [
@@ -53,72 +82,163 @@ class AutomationSection
 		];
 	}
 
+	public static function getBizProcSubMenu(): array
+	{
+		if (isset(self::$bpSubMenu))
+		{
+			return self::$bpSubMenu;
+		}
+
+		Loc::loadMessages(
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/public_bitrix24/bizproc/.left.menu_ext.php'
+		);
+
+		$userId = \Bitrix\Main\Engine\CurrentUser::get()->getId();
+		$tasksCount = (int)\CUserCounter::getValue($userId, 'bp_tasks');
+		$menu = [];
+
+		$menu[] = [
+			Loc::getMessage('MENU_USER_PROCESSES'),
+			SITE_DIR . 'bizproc/userprocesses/',
+			[],
+			[
+				'counter_id' => 'bp_tasks',
+				'counter_num' => $tasksCount,
+				'menu_item_id' => 'menu_processes_and_tasks',
+			],
+		];
+
+		if (Loader::includeModule('lists') && \CLists::isFeatureEnabled())
+		{
+			$menu[] = [
+				Loc::getMessage('MENU_PROCESS_STREAM2'),
+				SITE_DIR . 'bizproc/processes/',
+				[],
+				['menu_item_id' => 'menu_processes'],
+				'',
+			];
+		}
+
+		$menu[] = [
+			Loc::getMessage('MENU_BIZPROC_ACTIVE'),
+			SITE_DIR . 'bizproc/bizproc/',
+			[],
+			['menu_item_id' => 'menu_bizproc_active'],
+			'',
+		];
+
+		if (ModuleManager::isModuleInstalled('crm'))
+		{
+			$menu[] = [
+				Loc::getMessage('MENU_BIZPROC_CRM'),
+				SITE_DIR . 'crm/configs/bp/',
+				[],
+				['menu_item_id' => 'menu_bizproc_crm'],
+				'',
+			];
+		}
+
+		if (Loader::includeModule('disk'))
+		{
+			$storage = \Bitrix\Disk\Driver::getInstance()->getStorageByCommonId('shared_files_' . SITE_ID);
+			if ($storage)
+			{
+				$menu[] = [
+					Loc::getMessage('MENU_BIZPROC_DISK'),
+					$storage->getProxyType()->getStorageBaseUrl(),
+					[],
+					['menu_item_id' => 'menu_bizproc_disk'],
+					'',
+				];
+			}
+		}
+
+		self::$bpSubMenu = $menu;
+
+		return self::$bpSubMenu;
+	}
+
 	public static function getSmartProcesses(): array
 	{
 		$available = Loader::includeModule('crm');
-
-		$defaultItems = [];
-		$internalDynamicTypes = [];
-		$externalDynamicTypes = [];
-		if ($available)
+		if (!$available)
 		{
-			$router = Container::getInstance()->getRouter();
-			$defaultItems[] = [
-				'TEXT' => Loc::getMessage('AUTOMATION_SECTION_CRM_DYNAMIC_DEFAULT_SUBTITLE'),
-				'URL' => $router->getTypeListUrl(),
-			];
+			return [];
+		}
 
-			$types = Container::getInstance()->getDynamicTypesMap();
-			$types->load([
-				'isLoadStages' => false,
-				'isLoadCategories' => false,
-			]);
+		$menuDefaultItems = [];
+		$menuCustomSections = [];
 
-			$currentUser = CurrentUser::get();
-			$userPermissions = Container::getInstance()->getUserPermissions($currentUser->getId());
-			foreach ($types->getTypes() as $type)
+		$router = Container::getInstance()->getRouter();
+
+		$currentUser = CurrentUser::get();
+		$userPermissions = Container::getInstance()->getUserPermissions($currentUser->getId());
+
+		$customSections = Crm\Integration\IntranetManager::getCustomSections() ?? [];
+		foreach ($customSections as $customSection)
+		{
+			$pageItems = [];
+
+			$pages = $customSection->getPages();
+			foreach ($pages as $page)
 			{
-				if (!$userPermissions->canReadType($type->getEntityTypeId()))
+				$pageSettings = $page->getSettings();
+				$entityTypeId = Crm\Integration\IntranetManager::getEntityTypeIdByPageSettings($pageSettings);
+				if (!$userPermissions->canReadType($entityTypeId))
 				{
 					continue;
 				}
 
-				$menuItem = [
-					'TEXT' => $type->getTitle(),
-					'URL' => $router->getItemListUrlInCurrentView($type->getEntityTypeId()),
+				$pageUrl = $router->getItemListUrlInCurrentView($entityTypeId);
+				$pageItems[] = [
+					'TEXT' => $page->getTitle(),
+					'URL' => $pageUrl,
 				];
-
-				if (Crm\Integration\IntranetManager::isEntityTypeInCustomSection($type->getEntityTypeId()))
-				{
-					$externalDynamicTypes[] = $menuItem;
-				}
-				else
-				{
-					$internalDynamicTypes[] = $menuItem;
-				}
 			}
+			if (!empty($pageItems))
+			{
+				$menuCustomSections[] = [
+					'TEXT' => $customSection->getTitle(),
+					'ITEMS' => $pageItems,
+				];
+			}
+		}
+
+		if ($userPermissions->canWriteConfig())
+		{
+			if (!empty($menuCustomSections))
+			{
+				$menuDefaultItems[] = [
+					'IS_DELIMITER' => true,
+				];
+			}
+
+			$externalTypeUrl = method_exists(Router::class, 'getExternalTypeListUrl')
+				? $router->getExternalTypeListUrl()
+				: $router->getTypeListUrl()
+			;
+
+			$menuDefaultItems[] = [
+				'TEXT' => Loc::getMessage('AUTOMATION_SECTION_CRM_DYNAMIC_DEFAULT_SUBTITLE'),
+				'URL' => $externalTypeUrl,
+			];
+		}
+
+		$menuSubItems = array_merge($menuCustomSections, $menuDefaultItems);
+		if (empty($menuSubItems))
+		{
+			return [];
 		}
 
 		return [
 			'id' => 'crm-dynamic',
-			'title' => Loc::getMessage('AUTOMATION_SECTION_CRM_DYNAMIC_ITEM_TITLE'),
-			'available' => $available,
+			'title' => Loc::getMessage('AUTOMATION_SECTION_CRM_DYNAMIC_SUBTITLE_1'),
+			'available' => true,
 			'iconClass' => 'ui-icon intranet-automation-bp-icon',
 			'menuData' => [
-				'menu_item_id' => 'menu_crm_dynamic',
+				'menu_item_id' => self::MENU_ITEMS_ID['smart_process'],
 				'top_menu_id' => 'top_menu_id_crm_dynamic',
-				'sub_menu' => [
-					[
-						'TEXT' => Loc::getMessage('AUTOMATION_SECTION_CRM_DYNAMIC_SUBTITLE_1'),
-						'URL' => '/crm/',
-						'ITEMS' => array_merge($externalDynamicTypes, $defaultItems),
-					],
-					[
-						'TEXT' => Loc::getMessage('AUTOMATION_SECTION_CRM_DYNAMIC_CRM_SUBTITLE'),
-						'URL' => '/crm/',
-						'ITEMS' => array_merge($internalDynamicTypes, $defaultItems),
-					]
-				],
+				'sub_menu' => $menuSubItems,
 			],
 		];
 	}
@@ -134,7 +254,7 @@ class AutomationSection
 			'url' => SITE_DIR . 'rpa/',
 			'iconClass' => 'ui-icon intranet-automation-rpa-icon',
 			'menuData' => [
-				'counter_id' => 'rpa_tasks',
+				'counter_id' => self::MENU_ITEMS_ID['rpa'],
 				'menu_item_id' => 'menu_rpa',
 				'top_menu_id' => 'top_menu_id_rpa',
 			],
@@ -150,7 +270,7 @@ class AutomationSection
 			// 'url' => SITE_DIR,
 			'iconClass' => 'ui-icon intranet-automation-rpa-icon',
 			'menuData' => [
-				'menu_item_id' => 'menu_robots',
+				'menu_item_id' => self::MENU_ITEMS_ID['robots'],
 				'top_menu_id' => 'top_menu_id_robots',
 				'sub_menu' => array_values(array_filter([
 					self::getCrmRobots(),
@@ -206,7 +326,12 @@ class AutomationSection
 
 		foreach ($elements as $elementTypeId)
 		{
-			if (Crm\Automation\Factory::isScriptAvailable($elementTypeId))
+			if ($elementTypeId === \CCrmOwnerType::Contact || $elementTypeId === \CCrmOwnerType::Company)
+			{
+				$elementTypeId = \CCrmOwnerType::Deal;
+			}
+
+			if (Crm\Automation\Factory::isSupported($elementTypeId))
 			{
 				$items[] = [
 					'TEXT' => \CCrmOwnerType::GetCategoryCaption($elementTypeId),
@@ -222,7 +347,7 @@ class AutomationSection
 			// 'url' => SITE_DIR,
 			'iconClass' => 'ui-icon intranet-automation-rpa-icon',
 			'menuData' => [
-				'menu_item_id' => 'menu_bizproc_script',
+				'menu_item_id' => self::MENU_ITEMS_ID['scripts'],
 				'top_menu_id' => 'top_menu_id_bizproc_script',
 				'sub_menu' => $items,
 			],
@@ -256,7 +381,7 @@ class AutomationSection
 
 		foreach ($elements as $elementTypeId)
 		{
-			if (Crm\Automation\Factory::isAutomationAvailable($elementTypeId))
+			if (Crm\Automation\Factory::isSupported($elementTypeId))
 			{
 				$items[] = [
 					'TEXT' => \CCrmOwnerType::GetCategoryCaption($elementTypeId),
@@ -353,7 +478,7 @@ class AutomationSection
 			'url' => SITE_DIR . 'ai/',
 			'iconClass' => 'ui-icon intranet-automation-ai-icon',
 			'menuData' => [
-				'menu_item_id' => 'menu_ai',
+				'menu_item_id' => self::MENU_ITEMS_ID['ai'],
 			],
 		];
 	}
@@ -376,7 +501,7 @@ class AutomationSection
 			'url' => SITE_DIR . 'onec/',
 			'iconClass' => 'ui-icon ui-icon-service-1c',
 			'menuData' => [
-				'menu_item_id' => 'menu_onec_sect',
+				'menu_item_id' => self::MENU_ITEMS_ID['onec'],
 				'top_menu_id' => 'top_menu_id_onec',
 			]
 		];
@@ -404,6 +529,7 @@ class AutomationSection
 			'url' => $listUrl,
 			'locked' => $locked,
 			'menuData' => [
+				'menu_item_id' => self::MENU_ITEMS_ID['lists'],
 				'is_locked' => $locked,
 				'onclick' => $onclick,
 			],
@@ -436,7 +562,7 @@ class AutomationSection
 		$firstItemUrl = '';
 		foreach (static::getItems() as $item)
 		{
-			if ($item['available'])
+			if (!empty($item['available']))
 			{
 				if (isset($item['menuData']['real_link']) && is_string($item['menuData']['real_link']))
 				{

@@ -1,2 +1,8 @@
 <?php
-return ['utils','rest'];
+return [
+	'extensions' => [
+		'rest',
+		'utils',
+		'selector/utils/picker-cache',
+	],
+];

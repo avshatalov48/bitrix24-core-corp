@@ -3,11 +3,20 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+
 /** @var array $arParams */
 global $APPLICATION;
-CJSCore::RegisterExt('popup_menu', array('js' => array('/bitrix/js/main/popup_menu.js')));
-\Bitrix\Main\UI\Extension::load("ui.buttons");
-\Bitrix\Main\UI\Extension::load("ui.buttons.icons");
+CJSCore::RegisterExt('popup_menu', [
+	'js' => [
+		'/bitrix/js/main/popup_menu.js',
+	],
+]);
+Extension::load('crm.client-selector');
+Extension::load('ui.buttons');
+Extension::load('ui.buttons.icons');
 
 $toolbarID = $arParams['TOOLBAR_ID'];
 $prefix =  $toolbarID.'_';
@@ -63,7 +72,7 @@ $bindingMenuMask = '/(lead|deal|invoice|quote|company|contact).*?([\d]+)/i';
 if (preg_match($bindingMenuMask, $arParams['TOOLBAR_ID'], $bindingMenuMatches) &&
 	\Bitrix\Main\Loader::includeModule('intranet'))
 {
-	\Bitrix\Main\UI\Extension::load('bizproc.script');
+	Extension::load('bizproc.script');
 	$APPLICATION->includeComponent(
 		'bitrix:intranet.binding.menu',
 		'',
@@ -93,11 +102,35 @@ if($communicationPanel)
 	$emailButtonId = "{$toolbarID}_email" ;
 
 	$ownerInfo = isset($data['OWNER_INFO']) && is_array($data['OWNER_INFO']) ? $data['OWNER_INFO'] : array();
+	$entityTypeName = $ownerInfo['ENTITY_TYPE_NAME'] ?? null;
 	?>
 	<div class="crm-entity-actions-container">
 		<?if(!$enableCall || empty($phones))
 		{
-			?><div id="<?=htmlspecialcharsbx($callButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-phone-call ui-btn-disabled ui-btn-themes"></div><?
+			if (empty($phones))
+			{
+				$title = null;
+				if ($entityTypeName)
+				{
+					$title = Loc::getMessage('CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_' . $entityTypeName);
+				}
+
+				if (!$title)
+				{
+					$title = Loc::getMessage('CRM_TOOLBAR_ADD_CLIENT_FOR_CALL');
+				}
+			}
+			else
+			{
+				$title = Loc::getMessage('CRM_TOOLBAR_INSTALL_CALENDAR_FOR_CALL');
+			}
+			?>
+				<div
+					id="<?= htmlspecialcharsbx($callButtonId) ?>"
+					class="ui-btn ui-btn-light-border ui-btn-icon-phone-call ui-btn-disabled ui-btn-themes"
+					title="<?= htmlspecialcharsbx($title) ?>"
+				></div>
+			<?
 		}
 		else
 		{
@@ -116,7 +149,8 @@ if($communicationPanel)
 						{
 							button: BX("<?=CUtil::JSEscape($callButtonId)?>"),
 							data: <?=CUtil::PhpToJSObject($phones)?>,
-							ownerInfo: <?=CUtil::PhpToJSObject($ownerInfo)?>
+							ownerInfo: <?= CUtil::PhpToJSObject($ownerInfo) ?>,
+							useClientSelector: true,
 						}
 					);
 				}
@@ -125,7 +159,24 @@ if($communicationPanel)
 		<!--<div class="webform-small-button webform-small-button-transparent crm-contact-menu-sms-icon-not-available"></div>-->
 		<?if(empty($emails))
 		{
-			?><div id="<?=htmlspecialcharsbx($emailButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-mail ui-btn-disabled ui-btn-themes"></div><?
+			$title = null;
+			if ($entityTypeName)
+			{
+				$title = Loc::getMessage('CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_' . $entityTypeName);
+			}
+
+			if (!$title)
+			{
+				$title = Loc::getMessage('CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND');
+			}
+
+			?>
+			<div
+				id="<?= htmlspecialcharsbx($emailButtonId) ?>"
+				class="ui-btn ui-btn-light-border ui-btn-icon-mail ui-btn-disabled ui-btn-themes"
+				title="<?= htmlspecialcharsbx($title) ?>"
+			></div>
+			<?
 		}
 		else
 		{
@@ -140,7 +191,8 @@ if($communicationPanel)
 						{
 							button: BX("<?=CUtil::JSEscape($emailButtonId)?>"),
 							data: <?=CUtil::PhpToJSObject($emails)?>,
-							ownerInfo: <?=CUtil::PhpToJSObject($ownerInfo)?>
+							ownerInfo: <?= CUtil::PhpToJSObject($ownerInfo) ?>,
+							useClientSelector: true,
 						}
 					);
 				}

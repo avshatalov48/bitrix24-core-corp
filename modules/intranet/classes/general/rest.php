@@ -140,10 +140,10 @@ class CIntranetRestService extends IRestService
 
 			$arFields = array(
 				'IBLOCK_ID' => self::getDeptIblock(),
-				'NAME' => $params['NAME'],
-				'SORT' => $params['SORT'],
-				'IBLOCK_SECTION_ID' => $params['PARENT'],
-				'UF_HEAD' => $params['UF_HEAD']
+				'NAME' => $params['NAME'] ?? null,
+				'SORT' => $params['SORT'] ?? null,
+				'IBLOCK_SECTION_ID' => $params['PARENT'] ?? null,
+				'UF_HEAD' => $params['UF_HEAD'] ?? null
 			);
 
 			$ob = new CIBlockSection();

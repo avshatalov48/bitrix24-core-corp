@@ -14,10 +14,11 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 	const {
 		FileStatus,
 		FileType,
+		ErrorCode,
 	} = require('im/messenger/const');
 	const { getFileTypeByExtension } = require('im/messenger/lib/helper');
 	const { Logger } = require('im/messenger/lib/logger');
-	const { RestMethod } = require('im/messenger/const');
+	const { RestMethod, SubTitleIconType } = require('im/messenger/const');
 	const { core } = require('im/messenger/core');
 	const {
 		UploadManager,
@@ -42,6 +43,9 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 
 			/** @private */
 			this.uploadRegistry = {};
+
+			/** @private */
+			this.fileUploadStack = [];
 
 			/**
 			 * @desc Async generate upload task
@@ -83,10 +87,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 						this.updateLoadTextProgressToModel(params.temporaryMessageId, textProgress);
 					}
 
-					if (data.percent === 100)
-					{
-						this.updateMessageSending(params.temporaryMessageId, false);
-					}
+					this.checkIsLiveMessage();
 				})
 				.on(UploaderManagerEvent.done, (fileId, data) => {
 					Logger.info('UploaderManagerEvent.done', fileId, data);
@@ -94,7 +95,9 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 					const file = data.result.data.file;
 					const size = file.size;
 
+					this.checkHasMessageIdToChatCollection(params.temporaryMessageId, fileId);
 					this.updateFileProgress(fileId, 100, size, size, FileStatus.wait);
+
 					if (!this.uploadRegistry[fileId])
 					{
 						Logger.warn('UploaderManagerEvent.done: file upload was canceled: ', fileId, data);
@@ -107,6 +110,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 						fileName: this.uploadRegistry[fileId].deviceFile.name,
 						previewLocalUrl: this.uploadRegistry[fileId].deviceFile.previewUrl,
 					}).finally(() => {
+						this.checkHasMessageIdToChatCollection(params.temporaryMessageId, fileId);
 						this.commitFile({
 							chatId: this.getDialog(params.dialogId).chatId,
 							temporaryMessageId: params.temporaryMessageId,
@@ -114,6 +118,19 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 							realFileId,
 							fromDisk: false,
 						});
+
+						const currentRecentItem = this.store.getters['recentModel/getById'](params.dialogId);
+						if (currentRecentItem && currentRecentItem.message.subTitleIcon === SubTitleIconType.wait
+							&& currentRecentItem.message.id === params.temporaryMessageId)
+						{
+							currentRecentItem.message.subTitleIcon = SubTitleIconType.reply;
+							this.store.dispatch('recentModel/set', [currentRecentItem])
+								.catch((er) => Logger.warn(
+									'UploaderManagerEvent.done.recentModel/set.error: ',
+									er,
+								));
+						}
+
 						if (this.uploadGenerator)
 						{
 							this.uploadGenerator.next();
@@ -123,9 +140,23 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 				.on(UploaderManagerEvent.error, (fileId, data) => {
 					Logger.error('UploaderManagerEvent.error', fileId, data);
 
-					this.updateFileProgress(fileId, 0, 0, 0, FileStatus.error);
-				})
-			;
+					this.uploadGenerator = null;
+
+					this.fileUploadStack.forEach((file) => {
+						const { temporaryFileId, temporaryMessageId } = file;
+						this.updateFileProgress(temporaryFileId, 0, 0, 0, FileStatus.error);
+
+						this.store.dispatch('messagesModel/update', {
+							id: temporaryMessageId,
+							fields: {
+								error: true,
+								errorReason: ErrorCode.uploadManager.NETWORK_ERROR,
+							},
+						});
+					});
+
+					this.fileUploadStack = [];
+				});
 		}
 
 		/**
@@ -137,6 +168,41 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 			this.store.dispatch('messagesModel/updateLoadTextProgress', {
 				id: messageId,
 				loadText: textProgress,
+			});
+		}
+
+		/**
+		 * @desc Check is having message from chat collection ( if not than add it )
+		 */
+		checkIsLiveMessage() {
+			this.fileUploadStack.forEach((file) => {
+				const { temporaryMessageId, temporaryFileId } = file;
+
+				this.checkHasMessageIdToChatCollection(temporaryMessageId, temporaryFileId);
+
+				const isHasFile = this.store.getters['filesModel/hasFile'](temporaryFileId);
+				if (!isHasFile)
+				{
+					const fileDataObj = this.uploadRegistry[temporaryFileId] || file;
+
+					const fileData = {
+						id: temporaryFileId,
+						chatId: fileDataObj.chatId || fileDataObj.dialogId,
+						authorId: core.getUserId(),
+						name: fileDataObj.deviceFile.name,
+						type: fileDataObj.deviceFile.type,
+						status: FileStatus.upload,
+						progress: 0,
+						authorName: this.getCurrentUser().name,
+						urlPreview: fileDataObj.deviceFile.previewUrl,
+						image: {
+							height: fileDataObj.deviceFile.previewHeight,
+							width: fileDataObj.deviceFile.previewWidth,
+						},
+					};
+
+					this.store.dispatch('filesModel/set', fileData);
+				}
 			});
 		}
 
@@ -185,6 +251,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 		async uploadFile(messageWithFile)
 		{
 			this.addFileToUploadRegistry(messageWithFile.temporaryFileId, messageWithFile);
+			this.addFileToFileUploadStack(messageWithFile);
 			const uploadTask = await this.uploadManager.addUploadTaskByMessage(messageWithFile);
 
 			return this.addFileToModelByUploadTask(uploadTask);
@@ -214,6 +281,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 			for await (const file of messagesWithFiles)
 			{
 				this.addFileToUploadRegistry(file.temporaryFileId, file);
+				this.addFileToFileUploadStack(file);
 				const { fileData, task } = await this.uploadManager.getFileDataAndTask(file);
 				await this.addFileToModelByUploadTask(fileData);
 				callBackSend(file);
@@ -243,6 +311,14 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 				return false;
 			});
 
+			this.fileUploadStack = this.fileUploadStack.filter(
+				(file) => file.temporaryMessageId !== temporaryMessageId && file.temporaryFileId !== temporaryFileId,
+			);
+
+			if (this.uploadGenerator)
+			{
+				this.uploadGenerator.next();
+			}
 			// eslint-disable-next-line promise/catch-or-return
 			this.store.dispatch('messagesModel/delete', { id: temporaryMessageId }).then(() => {
 				this.store.dispatch('filesModel/delete', { id: temporaryFileId });
@@ -287,6 +363,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 				progress: 0,
 				authorName: this.getCurrentUser().name,
 				urlPreview: file.previewUrl,
+				urlShow: file.previewUrl,
 				localUrl: file.path,
 				...previewData,
 			});
@@ -297,26 +374,30 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 		 */
 		updateFileProgress(id, progress, byteSent, byteTotal, status)
 		{
-			return this.store.dispatch('filesModel/set', {
+			return this.store.dispatch('filesModel/updateWithId', {
 				id,
-				progress: (progress === 100 ? 99 : progress),
-				uploadData: {
-					byteSent,
-					byteTotal,
+				fields: {
+					progress,
+					id,
+					uploadData: {
+						byteSent,
+						byteTotal,
+					},
+					status,
 				},
-				status,
 			});
 		}
 
 		/**
 		 * @private
 		 */
-		updateMessageSending(id, sending)
+		updateMessageSending(id, sending, fileId)
 		{
 			return this.store.dispatch('messagesModel/update', {
 				id,
 				fields: {
 					sending,
+					files: [fileId],
 				},
 			});
 		}
@@ -330,6 +411,16 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 				chatId: this.getChatIdByDialogId(fileToUpload.dialogId),
 				...fileToUpload,
 			};
+		}
+
+		/**
+		 * @desc push to file stack
+		 * @param {Object} fileData
+		 * @private
+		 */
+		addFileToFileUploadStack(fileData)
+		{
+			this.fileUploadStack.push(fileData);
 		}
 
 		/**
@@ -458,15 +549,34 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 				...fileIdParams,
 			})
 				.then(() => {
+					Logger.log('FileService.commitFile is done', params);
 					this.store.dispatch('filesModel/updateWithId', {
 						id: temporaryFileId,
 						fields: {
 							id: realFileId,
 						},
 					});
+
+					this.updateMessageSending(temporaryMessageId, false, realFileId);
+
+					this.checkHasMessageIdToChatCollection(temporaryMessageId, realFileId);
+
+					this.fileUploadStack = this.fileUploadStack.filter(
+						(fileData) => fileData.temporaryFileId !== temporaryFileId,
+					);
 				})
 				.catch((error) => {
 					Logger.error('FileService.commitFile: error', error);
+
+					this.updateFileProgress(temporaryFileId, 0, 0, 0, FileStatus.error);
+
+					this.store.dispatch('messagesModel/update', {
+						id: temporaryMessageId,
+						fields: {
+							error: true,
+							errorReason: 404,
+						},
+					});
 				})
 			;
 		}
@@ -521,6 +631,24 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 					reject(new Error('FileService.uploadPreview: file read error'));
 				});
 			});
+		}
+
+		checkHasMessageIdToChatCollection(messageId, fileId = null)
+		{
+			const isHasMessageId = this.store.getters['messagesModel/isInChatCollection']({
+				messageId,
+			});
+
+			if (!isHasMessageId)
+			{
+				const messagesModelState = this.store.getters['messagesModel/getById'](messageId);
+				if (fileId)
+				{
+					messagesModelState.files[0] = fileId;
+				}
+
+				this.store.dispatch('messagesModel/addToChatCollection', messagesModelState);
+			}
 		}
 	}
 

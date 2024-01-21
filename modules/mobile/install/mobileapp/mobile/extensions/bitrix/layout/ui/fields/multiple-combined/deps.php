@@ -1,6 +1,7 @@
 <?php
 return [
 	'extensions' => [
+		'apptheme',
 		'assets/common',
 		'assets/communication',
 		'layout/ui/buttons/add-button',

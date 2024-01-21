@@ -3,13 +3,11 @@ import { Events } from 'crm.activity.settings-popup';
 
 import { Section as WrapperSection } from '../section/section';
 import { Calendar as SettingsPopupCalendar } from '../calendar/calendar';
-import { Ping as SettingsPopupPing } from '../ping/ping';
 
 export const Wrapper = {
 	components: {
 		WrapperSection,
-		SettingsPopupCalendar,
-		SettingsPopupPing,
+		SettingsPopupCalendar
 	},
 	props: {
 		onSettingsChangeCallback: {

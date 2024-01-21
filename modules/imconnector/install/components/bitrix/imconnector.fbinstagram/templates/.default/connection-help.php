@@ -1,10 +1,15 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 use \Bitrix\Main\Localization\Loc;
+
+Loc::loadMessages(__DIR__ . '/meta.php');
+
+$langPostfix = $arResult['NEED_META_RESTRICTION_NOTE'] ? '_META_RU' : '';
+$instructionTitle = Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_INSTRUCTION_TITLE' . $langPostfix);
 ?>
 <div class="imconnector-field-box">
 	<div class="imconnector-field-box-subtitle-darken">
-		<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_INSTRUCTION_TITLE')?>
+		<?= $instructionTitle ?>
 	</div>
 	<div class="imconnector-field-button-box">
 		<div onclick="top.BX.Helper.show('<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_INFO_CONNECT_ID')?>');"

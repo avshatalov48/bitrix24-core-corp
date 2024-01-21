@@ -6,6 +6,7 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 	const { ProfileView } = require('user/profile');
 	const { inAppUrl } = require('in-app-url');
 	const { FileAttachment } = require('layout/ui/file-attachment');
+	const AppTheme = require('apptheme');
 
 	class TaskResult extends LayoutComponent
 	{
@@ -15,7 +16,7 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 
 			if (result.indexOf(currentDomain) !== 0)
 			{
-				result = result.replace(`${currentDomain}`, '');
+				result = result.replace(currentDomain, '');
 				result = (result.indexOf('http') === 0 ? result : `${currentDomain}${result}`);
 			}
 
@@ -58,11 +59,13 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 
 		render()
 		{
+			const { isFirst } = this.props;
+
 			return View(
 				{
 					style: {
 						flexDirection: 'column',
-						backgroundColor: (this.props.isFirst ? '#f8fbeb' : '#ffffff'),
+						backgroundColor: isFirst ? AppTheme.colors.accentSoftOrange3 : AppTheme.colors.bgContentPrimary,
 						paddingHorizontal: 16,
 						paddingTop: 14,
 						paddingBottom: 23,
@@ -80,7 +83,7 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 				style: {
 					fontSize: 10,
 					fontWeight: '500',
-					color: '#a8adb4',
+					color: AppTheme.colors.base4,
 				},
 				text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_TASK_RESULT_TITLE_MSGVER_1').toLocaleUpperCase(),
 			});
@@ -130,7 +133,7 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 						marginLeft: 6,
 						fontSize: 16,
 						fontWeight: '400',
-						color: '#2066b0',
+						color: AppTheme.colors.accentMainLinks,
 					},
 					text: author.formattedName,
 				}),
@@ -146,7 +149,7 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 						marginLeft: 30,
 						paddingLeft: 12,
 						borderLeftWidth: 3,
-						borderLeftColor: '#8dbb00',
+						borderLeftColor: AppTheme.colors.accentMainSuccess,
 					},
 				},
 				this.renderText(),
@@ -273,7 +276,7 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 						style: {
 							fontSize: 14,
 							fontWeight: '400',
-							color: '#a8adb4',
+							color: AppTheme.colors.base4,
 						},
 						text: Loc.getMessage(
 							'TASKSMOBILE_LAYOUT_TASK_FIELDS_TASK_RESULT_FILES_MORE',
@@ -343,7 +346,7 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 										position: 'absolute',
 										top: 8,
 										right: 9,
-										borderColor: '#333333',
+										borderColor: AppTheme.colors.base1,
 										borderWidth: 1,
 										borderRadius: 6,
 										opacity: 0.08,

@@ -44,8 +44,14 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatMessageTail: 'im.v2.Chat.Message.tail',
 		imV2ChatMessageRead: 'im.v2.Chat.Message.read',
 		imV2ChatMessageMark: 'im.v2.Chat.Message.mark',
+		imV2ChatMessageUpdate: 'im.v2.Chat.Message.update',
 		imV2ChatMessageDelete: 'im.v2.Chat.Message.delete',
 		imV2ChatMessageTailViewers: 'im.v2.Chat.Message.tailViewers',
+		imV2ChatMessageDeleteRichUrl: 'im.v2.Chat.Message.deleteRichUrl',
+
+		imV2ChatJoin: 'im.v2.Chat.join',
+		imV2ChatAddUsers: 'im.v2.Chat.addUsers',
+		imV2ChatDeleteUser: 'im.v2.Chat.deleteUser',
 
 		imV2ChatMessageReactionAdd: 'im.v2.Chat.Message.Reaction.add',
 		imV2ChatMessageReactionDelete: 'im.v2.Chat.Message.Reaction.delete',
@@ -96,6 +102,8 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imRevisionGet: 'im.revision.get',
 
 		imDepartmentColleaguesGet: 'im.department.colleagues.get',
+
+		imV2SyncList: 'im.v2.Sync.list',
 
 		mobileBrowserConstGet: 'mobile.browser.const.get',
 

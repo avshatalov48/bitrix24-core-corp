@@ -1,4 +1,8 @@
+/**
+ * @module layout/ui/product-grid/components/price-line/styles
+ */
 jn.define('layout/ui/product-grid/components/price-line/styles', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 
 	const Styles = {
 		wrapper: {
@@ -18,17 +22,17 @@ jn.define('layout/ui/product-grid/components/price-line/styles', (require, expor
 		},
 		titleText: {
 			fontSize: 16,
-			color: '#828B95',
+			color: AppTheme.colors.base3,
 			textAlign: 'right',
 		},
 		amount: {
 			fontSize: 18,
-			color: '#333333',
+			color: AppTheme.colors.base1,
 			fontWeight: 'bold',
 		},
 		currency: {
 			fontSize: 18,
-			color: '#828B95',
+			color: AppTheme.colors.base3,
 			fontWeight: 'bold',
 		},
 	};

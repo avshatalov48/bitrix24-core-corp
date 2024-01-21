@@ -11,8 +11,8 @@ namespace Bitrix\Tasks\Internals\Counter\Push;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Socialnetwork\UserToGroupTable;
-use Bitrix\Tasks\Internals\Counter\CounterState;
 use Bitrix\Tasks\Internals\Counter\Event\EventDictionary;
+use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Project;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 
@@ -125,7 +125,7 @@ class GroupSender
 		$owners = array_unique(array_merge($owners, $this->getProjectsOwners($groupIds)));
 		foreach ($owners as $userId)
 		{
-			CounterState::reload($userId);
+			Counter\State\Factory::reloadState($userId);
 		}
 		(new PushSender())->sendUserCounters($owners);
 	}

@@ -57,6 +57,4 @@ $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_NEW_ROW_POSITION_TITLE"] = "Add new items
 $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_SHOW_PRODUCT_IMAGES_TITLE"] = "Show product images";
 $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_TAXES_DESC"] = "Tax description";
 $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_TAXES_TITLE"] = "Show tax";
-$MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_WAREHOUSE_HINT"] = "Inventory management is enabled. You can disable it in the settings.";
-$MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_WAREHOUSE_TITLE"] = "Enable inventory management";
 $MESS["HINT_CRM_ENTITY_PRODUCT_LIST_HEADER_SECTION_PRODUCT"] = "Supported custom product field types: String, List, Date/Time, Yes/No, Number, Dictionary, HTML/Text";

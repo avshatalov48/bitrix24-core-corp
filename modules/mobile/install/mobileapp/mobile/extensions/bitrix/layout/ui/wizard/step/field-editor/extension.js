@@ -2,14 +2,14 @@
  * @module layout/ui/wizard/step/field-editor
  */
 jn.define('layout/ui/wizard/step/field-editor', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { FieldFactory, CombinedType } = require('layout/ui/fields');
 	const { WizardStep } = require('layout/ui/wizard/step');
 
 	const styles = {
 		editor: {
 			container: {
-				backgroundColor: '#ffffff',
+				backgroundColor: AppTheme.colors.bgContentPrimary,
 				borderRadius: 12,
 				paddingTop: 8,
 				paddingBottom: 8,
@@ -69,40 +69,38 @@ jn.define('layout/ui/wizard/step/field-editor', (require, exports, module) => {
 		renderEditor()
 		{
 			/** @type {BaseField[]} */
-			const fields = this.props.fields.map((field) =>
-				(field.type === CombinedType)
-					? FieldFactory.create(CombinedType, {
-						value: {
-							[field.primaryField.id]: this.getFieldValue(field.primaryField.id),
-							[field.secondaryField.id]: this.getFieldValue(field.secondaryField.id),
+			const fields = this.props.fields.map((field) => ((field.type === CombinedType)
+				? FieldFactory.create(CombinedType, {
+					value: {
+						[field.primaryField.id]: this.getFieldValue(field.primaryField.id),
+						[field.secondaryField.id]: this.getFieldValue(field.secondaryField.id),
+					},
+					onChange: (value) => {
+						this.onChangeValue(field.primaryField.id, value[field.primaryField.id]);
+						this.onChangeValue(field.secondaryField.id, value[field.secondaryField.id]);
+					},
+					config: {
+						primaryField: {
+							...field.primaryField,
+							readOnly: false,
+							value: this.getFieldValue(field.primaryField.id),
 						},
-						onChange: (value) => {
-							this.onChangeValue(field.primaryField.id, value[field.primaryField.id]);
-							this.onChangeValue(field.secondaryField.id, value[field.secondaryField.id]);
+						secondaryField: {
+							...field.secondaryField,
+							readOnly: false,
+							value: this.getFieldValue(field.secondaryField.id),
+							onChange: this.onChangeValue.bind(this, field.secondaryField.id),
 						},
-						config: {
-							primaryField: {
-								...field.primaryField,
-								readOnly: false,
-								value: this.getFieldValue(field.primaryField.id),
-							},
-							secondaryField: {
-								...field.secondaryField,
-								readOnly: false,
-								value: this.getFieldValue(field.secondaryField.id),
-								onChange: this.onChangeValue.bind(this, field.secondaryField.id),
-							},
-						},
-						ref: (ref) => this.processFieldRef(field.id, ref),
-					})
-					: FieldFactory.create(field.type, {
-						...field,
-						value: this.getFieldValue(field.id),
-						readOnly: false,
-						onChange: this.onChangeValue.bind(this, field.id),
-						ref: (ref) => this.processFieldRef(field.id, ref),
-					}),
-			);
+					},
+					ref: (ref) => this.processFieldRef(field.id, ref),
+				})
+				: FieldFactory.create(field.type, {
+					...field,
+					value: this.getFieldValue(field.id),
+					readOnly: false,
+					onChange: this.onChangeValue.bind(this, field.id),
+					ref: (ref) => this.processFieldRef(field.id, ref),
+				})));
 
 			return FieldsWrapper({
 				fields,
@@ -115,7 +113,7 @@ jn.define('layout/ui/wizard/step/field-editor', (require, exports, module) => {
 		processFieldRef(fieldId, ref)
 		{
 			this.fieldRefMap[fieldId] = ref;
-			if (this.props.fields.length && this.props.fields[0].id === fieldId && this.focusOnFirstField)
+			if (this.props.fields.length > 0 && this.props.fields[0].id === fieldId && this.focusOnFirstField)
 			{
 				this.focusOnFirstField = false;
 				setTimeout(
@@ -137,7 +135,7 @@ jn.define('layout/ui/wizard/step/field-editor', (require, exports, module) => {
 		getFieldValue(fieldId)
 		{
 			let value = null;
-			const field = this.props.fields.find(item => item.id === fieldId);
+			const field = this.props.fields.find((item) => item.id === fieldId);
 
 			if (this.state.fieldValues.hasOwnProperty(fieldId))
 			{
@@ -154,7 +152,7 @@ jn.define('layout/ui/wizard/step/field-editor', (require, exports, module) => {
 		validate()
 		{
 			let validationResult = true;
-			Object.values(this.fieldRefMap).forEach(field => (validationResult &= field.validate()));
+			Object.values(this.fieldRefMap).forEach((field) => (validationResult &= field.validate()));
 
 			return validationResult;
 		}
@@ -224,7 +222,9 @@ jn.define('layout/ui/wizard/step/field-editor', (require, exports, module) => {
 					onChange: this.onChange.bind(this),
 					focusOnFirstField: true,
 					...props,
-					ref: (ref) => this.editorRef = ref,
+					ref: (ref) => {
+						this.editorRef = ref;
+					},
 				}),
 			);
 		}
@@ -241,7 +241,7 @@ jn.define('layout/ui/wizard/step/field-editor', (require, exports, module) => {
 
 		onChange(fieldId, fieldValue, options)
 		{
-			const field = this.fields.find(item => item.id === fieldId);
+			const field = this.fields.find((item) => item.id === fieldId);
 			if (field)
 			{
 				field.value = fieldValue;
@@ -252,8 +252,7 @@ jn.define('layout/ui/wizard/step/field-editor', (require, exports, module) => {
 		{
 			return (this.editorRef && this.editorRef.validate())
 				? Promise.resolve()
-				: Promise.reject()
-				;
+				: Promise.reject();
 		}
 	}
 

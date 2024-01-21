@@ -1,9 +1,25 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Crm;
+use Bitrix\Crm\Restriction\AvailabilityManager;
 
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
+	return;
+}
+
+$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+$isAvailable = $toolsManager->checkCrmAvailability();
+if (!$isAvailable)
+{
+	print AvailabilityManager::getInstance()->getCrmInaccessibilityContent();
+
 	return;
 }
 
@@ -31,7 +47,6 @@ if (!CModule::IncludeModule('sale'))
 $showRecurring = \Bitrix\Crm\Recurring\Manager::isAllowedExpose(\Bitrix\Crm\Recurring\Manager::INVOICE);
 
 global $APPLICATION;
-use Bitrix\Crm;
 
 $arDefaultUrlTemplates404 = array(
 	'index' => 'index.php',
@@ -86,10 +101,16 @@ if ($arParams['SEF_MODE'] == 'Y')
 
 	foreach ($arUrlTemplates as $url => $value)
 	{
-		if($arParams['PATH_TO_INVOICE_'.mb_strtoupper($url)] == '')
-			$arResult['PATH_TO_INVOICE_'.mb_strtoupper($url)] = $arParams['SEF_FOLDER'].$value;
+		$pathToInvoiceKey = 'PATH_TO_INVOICE_' . mb_strtoupper($url);
+		$pathToInvoice = $arParams[$pathToInvoiceKey] ?? null;
+		if (empty($pathToInvoice))
+		{
+			$arResult[$pathToInvoiceKey] = $arParams['SEF_FOLDER'] . $value;
+		}
 		else
-			$arResult['PATH_TO_INVOICE_'.mb_strtoupper($url)] = $arParams['PATH_TO_'.mb_strtoupper($url)];
+		{
+			$arResult[$pathToInvoiceKey] = $arParams['PATH_TO_' . mb_strtoupper($url)];
+		}
 	}
 }
 else
@@ -124,7 +145,7 @@ else
 		$componentPage = 'list';
 		if ($showRecurring)
 			$arResult['IS_RECURRING'] = 'Y';
-	}	
+	}
 
 	$curPage = $APPLICATION->GetCurPage();
 	$arResult['PATH_TO_INVOICE_LIST'] = $curPage;
@@ -189,10 +210,17 @@ if($componentPage === 'index')
 	$componentPage = 'list';
 }
 
-if (!Crm\Restriction\RestrictionManager::getInvoicesRestriction()->hasPermission())
+$hasPermissions = Crm\Restriction\RestrictionManager::getInvoicesRestriction()->hasPermission();
+if (!$hasPermissions)
 {
 	$componentPage = 'restrictions';
 }
 
+$toolsManager = Crm\Service\Container::getInstance()->getIntranetToolsManager();
+$isAvailable = $toolsManager->checkEntityTypeAvailability(\CCrmOwnerType::Invoice);
+if (!$isAvailable)
+{
+	$componentPage = 'disabled';
+}
+
 $this->IncludeComponentTemplate($componentPage);
-?>

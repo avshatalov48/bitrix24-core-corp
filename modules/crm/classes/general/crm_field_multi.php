@@ -233,8 +233,8 @@ class CCrmFieldMulti
 						'LINK' => 'https://www.instagram.com/#VALUE_URL#',
 					],
 					Multifield\Type\Im::VALUE_TYPE_BITRIX24 => [
-						'FULL' => GetMessage('CRM_FM_ENTITY_IM_BITRIX24'),
-						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_BITRIX24_SHORT'),
+						'FULL' => GetMessage('CRM_FM_ENTITY_IM_BITRIX24_MSGVER_1'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_BITRIX24_SHORT_MSGVER_1'),
 						'TEMPLATE' => '#VALUE_HTML#',
 						'LINK' => '#VALUE_URL#',
 					],
@@ -585,110 +585,77 @@ class CCrmFieldMulti
 			return false;
 		}
 
-		$arPreviousFieldData = array();
-		$dbResult = self::GetListEx(array('ID' => 'asc'), array('ENTITY_ID' => $entityId, 'ELEMENT_ID' => $elementId));
-
-		while($arPreviousField = $dbResult->Fetch())
+		$entityTypeId = \CCrmOwnerType::ResolveID($entityId);
+		if (!\CCrmOwnerType::IsDefined($entityTypeId) || (int)$elementId < 0)
 		{
-			$typeId = $arPreviousField['TYPE_ID'];
-			if(!isset($arPreviousFieldData[$typeId]))
-			{
-				$arPreviousFieldData[$typeId] = array();
-			}
-
-			$arPreviousFieldData[$typeId][$arPreviousField['ID']] = $arPreviousField;
+			return false;
 		}
 
-		$addItems = array();
-		$removeItems = array();
-		$updateItems = array();
+		$owner = new \Bitrix\Crm\ItemIdentifier($entityTypeId, (int)$elementId);
 
-		foreach($arPreviousFieldData as $typeId => $previousItems)
+		$storage = \Bitrix\Crm\Service\Container::getInstance()->getMultifieldStorage();
+
+		$values = $storage->get($owner);
+		Multifield\Assembler::updateCollectionByArray($values, $arFieldData);
+
+		$storage->save($owner, $values);
+
+		return true;
+	}
+
+	/**
+	 * @internal
+	 *
+	 * @param string $entityId entityTypeName
+	 * @param int $elementId item id
+	 * @param array[] $toAdd
+	 * @param Array<int, array> $toUpdate [id => value]
+	 * @param int[] $idsToDelete
+	 *
+	 * @return Main\Result
+	 */
+	final public function saveBulk(
+		string $entityId,
+		int $elementId,
+		array $toAdd,
+		array $toUpdate,
+		array $idsToDelete,
+	): Main\Result
+	{
+		$result = new Main\Result();
+
+		$ownerInfo = ['ENTITY_ID' => $entityId, 'ELEMENT_ID' => $elementId];
+
+		foreach ($toAdd as $value)
 		{
-			$currentItems = isset($arFieldData[$typeId]) ? $arFieldData[$typeId] : array();
-			foreach($previousItems as $id => $previousItem)
+			$isSuccess = $this->Add($ownerInfo + $value, ['ENABLE_NOTIFICATION' => false]);
+			if (!$isSuccess)
 			{
-				if(!isset($currentItems[$id]))
-				{
-					continue;
-				}
-
-				$currentItem = $currentItems[$id];
-
-				$currentValue = isset($currentItem['VALUE']) ? trim($currentItem['VALUE']) : '';
-				$currentValueType = isset($currentItem['VALUE_TYPE']) ? trim($currentItem['VALUE_TYPE']) : '';
-
-				$previousValue = isset($previousItem['VALUE']) ? trim($previousItem['VALUE']) : '';
-				$previousValueType = isset($previousItem['VALUE_TYPE']) ? trim($previousItem['VALUE_TYPE']) : '';
-
-				if($currentValue === '')
-				{
-					$removeItems[$id] = true;
-				}
-				elseif($previousValue !== $currentValue || $previousValueType !== $currentValueType)
-				{
-					$updateItems[$id] = array(
-						'TYPE_ID' => $typeId,
-						'VALUE_TYPE' => $currentValueType,
-						'VALUE' => $currentValue,
-						'VALUE_COUNTRY_CODE' => static::fetchCountryCode($typeId, $currentItem),
-					);
-				}
+				$result->addError($this->getErrorFromApplication(['valueArray' => $value]));
 			}
 		}
 
-		foreach($arFieldData as $typeId => $arValues)
+		foreach ($toUpdate as $id => $value)
 		{
-			foreach($arValues as $id => $arValue)
+			$isSuccess = $this->Update($id, $ownerInfo + $value, ['ENABLE_NOTIFICATION' => false]);
+			if (!$isSuccess)
 			{
-				$currentValue = isset($arValue['VALUE']) ? trim($arValue['VALUE']) : '';
-				$currentValueType = isset($arValue['VALUE_TYPE']) ? trim($arValue['VALUE_TYPE']) : '';
-
-				if(mb_substr($id, 0, 1) === 'n' && $currentValue !== '')
-				{
-					$addItems[] = array(
-						'ENTITY_ID' => $entityId,
-						'ELEMENT_ID' => $elementId,
-						'TYPE_ID' => $typeId,
-						'VALUE_TYPE' => $currentValueType,
-						'VALUE' => $currentValue,
-						'VALUE_COUNTRY_CODE' => static::fetchCountryCode($typeId, $arValue),
-					);
-				}
+				$result->addError($this->getErrorFromApplication(['valueArray' => $value]));
 			}
 		}
 
-		$isChanged = false;
-		if(!empty($addItems))
+		foreach ($idsToDelete as $id)
 		{
-			foreach($addItems as $item)
+			$isSuccess = $this->Delete($id, ['ENABLE_NOTIFICATION' => false]);
+			if (!$isSuccess)
 			{
-				$this->Add($item, array('ENABLE_NOTIFICATION' => false));
+				$result->addError($this->getErrorFromApplication(['id' => $id]));
 			}
-			$isChanged = true;
 		}
 
-		if(!empty($removeItems))
+		if (!empty($toAdd) || !empty($toUpdate) || !empty($idsToDelete))
 		{
-			foreach(array_keys($removeItems) as $id)
-			{
-				$this->Delete($id, array('ENABLE_NOTIFICATION' => false));
-			}
-			$isChanged = true;
-		}
-
-		if(!empty($updateItems))
-		{
-			foreach($updateItems as $id => $item)
-			{
-				$this->Update($id, $item, array('ENABLE_NOTIFICATION' => false));
-			}
-			$isChanged = true;
-		}
-
-		if ($isChanged)
-		{
-			$entityTypeId = CCrmOwnerType::ResolveID($entityId);
+			$entityTypeId = \CCrmOwnerType::ResolveID($entityId);
 
 			//region Register volatile duplicate criterion fields
 			DuplicateCommunicationCriterion::processMultifieldsChange($entityTypeId, $elementId);
@@ -700,7 +667,14 @@ class CCrmFieldMulti
 			//endregion Register volatile duplicate criterion fields
 		}
 
-		return true;
+		return $result;
+	}
+
+	private function getErrorFromApplication(?array $customData = null): Main\Error
+	{
+		global $APPLICATION;
+
+		return new Main\Error((string)$APPLICATION->GetException(), 0, $customData);
 	}
 
 	public static function GetList($arSort=array(), $arFilter=array())

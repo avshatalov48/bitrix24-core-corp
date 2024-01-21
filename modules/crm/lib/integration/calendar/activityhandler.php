@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Integration\Calendar;
 
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Type\DateTime;
 
 class ActivityHandler
 {
@@ -71,6 +72,30 @@ class ActivityHandler
 		$settings[$status] = true;
 
 		return \CCrmActivity::Update($this->activity['ID'], ['SETTINGS' => $settings]);
+	}
+
+	/**
+	 * updates deadline of the crm deal calendar sharing activity
+	 *
+	 * @param DateTime $deadline
+	 * @return bool
+	 */
+	public function updateDeadline(DateTime $deadline): bool
+	{
+		if (
+			!\CCrmActivity::CheckUpdatePermission(
+				$this->ownerTypeId,
+				$this->ownerId,
+				Container::getInstance()->getUserPermissions()->getCrmPermissions(),
+			)
+		)
+		{
+			return false;
+		}
+
+		\CCrmActivity::PostponeToDate($this->activity, $deadline, true);
+
+		return true;
 	}
 
 	/**

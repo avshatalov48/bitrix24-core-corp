@@ -1,4 +1,16 @@
 <?php
+
+use Bitrix\Crm\Binding\ContactCompanyTable;
+use Bitrix\Crm\Binding\LeadContactTable;
+use Bitrix\Crm\EntityAdapterFactory;
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\Format\PersonNameFormatter;
+use Bitrix\Crm\Integrity\Duplicate;
+use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
+use Bitrix\Crm\Integrity\DuplicateCriterion;
+use Bitrix\Crm\Integrity\DuplicateEntity;
+use Bitrix\Crm\Integrity\DuplicateSearchParams;
+
 define('STOP_STATISTICS', true);
 define('BX_SECURITY_SHOW_MESSAGE', true);
 define('NO_KEEP_STATISTIC', 'Y');
@@ -80,118 +92,118 @@ if($action === 'ENABLE_SONET_SUBSCRIPTION')
 		}
 	}
 }
-elseif($action === 'FIND_DUPLICATES')
+elseif ($action === 'FIND_DUPLICATES')
 {
 	$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : array();
-	$entityTypeName = isset($params['ENTITY_TYPE_NAME']) ? $params['ENTITY_TYPE_NAME'] : '';
-	if($entityTypeName === '')
+	$params = (isset($_POST['PARAMS']) && is_array($_POST['PARAMS'])) ? $_POST['PARAMS'] : [];
+	$entityTypeName = $params['ENTITY_TYPE_NAME'] ?? '';
+	if ($entityTypeName === '')
 	{
-		__CrmLeadEditEndResponse(array('ERROR' => 'Entity type is not specified.'));
+		__CrmLeadEditEndResponse(['ERROR' => 'Entity type is not specified.']);
 	}
 
 	$entityTypeID = CCrmOwnerType::ResolveID($entityTypeName);
-	if($entityTypeID === CCrmOwnerType::Undefined)
+	if ($entityTypeID === CCrmOwnerType::Undefined)
 	{
-		__CrmLeadEditEndResponse(array('ERROR' => 'Undefined entity type is specified.'));
+		__CrmLeadEditEndResponse(['ERROR' => 'Undefined entity type is specified.']);
 	}
 
-	if($entityTypeID !== CCrmOwnerType::Lead)
+	if ($entityTypeID !== CCrmOwnerType::Lead)
 	{
-		__CrmLeadEditEndResponse(array('ERROR' => "The '{$entityTypeName}' type is not supported in current context."));
+		__CrmLeadEditEndResponse(['ERROR' => "The '{$entityTypeName}' type is not supported in current context."]);
 	}
 
-	if(!(CCrmLead::CheckCreatePermission($userPermissions) || CCrmLead::CheckUpdatePermission(0, $userPermissions)))
+	if (!(CCrmLead::CheckCreatePermission($userPermissions) || CCrmLead::CheckUpdatePermission(0, $userPermissions)))
 	{
-		__CrmLeadEditEndResponse(array('ERROR' => 'Access denied.'));
+		__CrmLeadEditEndResponse(['ERROR' => 'Access denied.']);
 	}
 
 	$userProfileUrlTemplate = COption::GetOptionString("main", "TOOLTIP_PATH_TO_USER", "", SITE_ID);
 
 	$checker = new \Bitrix\Crm\Integrity\LeadDuplicateChecker();
-	$groupResults = array();
-	$groupData = isset($params['GROUPS']) && is_array($params['GROUPS']) ? $params['GROUPS'] : array();
-	foreach($groupData as &$group)
+	$groupResults = [];
+	$groupData = isset($params['GROUPS']) && is_array($params['GROUPS']) ? $params['GROUPS'] : [];
+	foreach ($groupData as &$group)
 	{
-		$fields = array();
-		$fieldNames = array();
-		if(isset($group['LAST_NAME']))
+		$fields = [];
+		$fieldNames = [];
+		if (isset($group['LAST_NAME']))
 		{
 			$fieldNames[] = 'LAST_NAME';
 			$fields['LAST_NAME'] = $group['LAST_NAME'];
 		}
-		if(isset($group['NAME']))
+		if (isset($group['NAME']))
 		{
 			$fieldNames[] = 'NAME';
 			$fields['NAME'] = $group['NAME'];
 		}
-		if(isset($group['SECOND_NAME']))
+		if (isset($group['SECOND_NAME']))
 		{
 			$fieldNames[] = 'SECOND_NAME';
 			$fields['SECOND_NAME'] = $group['SECOND_NAME'];
 		}
-		if(isset($group['COMPANY_TITLE']))
+		if (isset($group['COMPANY_TITLE']))
 		{
 			$fieldNames[] = 'COMPANY_TITLE';
 			$fields['COMPANY_TITLE'] = $group['COMPANY_TITLE'];
 		}
 
-		$phones = isset($group['PHONES']) ? $group['PHONES'] : (isset($group['PHONE']) ? $group['PHONE'] : null);
+		$phones = $group['PHONES'] ?? ($group['PHONE'] ?? null);
 		$hasPhones = is_array($phones) && !empty($phones);
 
-		$emails = isset($group['EMAILS']) ? $group['EMAILS'] : (isset($group['EMAIL']) ? $group['EMAIL'] : null);
+		$emails = $group['EMAILS'] ?? ($group['EMAIL'] ?? null);
 		$hasEmails = is_array($emails) && !empty($emails);
 
-		if($hasPhones || $hasEmails)
+		if ($hasPhones || $hasEmails)
 		{
-			$fields['FM'] = array();
-			if($hasPhones)
+			$fields['FM'] = [];
+			if ($hasPhones)
 			{
 				$fieldNames[] = 'FM.PHONE';
-				$fields['FM']['PHONE'] = array();
-				foreach($phones as $phone)
+				$fields['FM']['PHONE'] = [];
+				foreach ($phones as $phone)
 				{
-					if(is_string($phone) && $phone !== '')
+					if (is_string($phone) && $phone !== '')
 					{
-						$fields['FM']['PHONE'][] = array('VALUE' => $phone);
+						$fields['FM']['PHONE'][] = ['VALUE' => $phone];
 					}
 				}
 			}
-			if($hasEmails)
+			if ($hasEmails)
 			{
 				$fieldNames[] = 'FM.EMAIL';
-				$fields['FM']['EMAIL'] = array();
-				foreach($emails as $email)
+				$fields['FM']['EMAIL'] = [];
+				foreach ($emails as $email)
 				{
-					if(is_string($email) && $email !== '')
+					if (is_string($email) && $email !== '')
 					{
-						$fields['FM']['EMAIL'][] = array('VALUE' => $email);
+						$fields['FM']['EMAIL'][] = ['VALUE' => $email];
 					}
 				}
 			}
 		}
-		$adapter = \Bitrix\Crm\EntityAdapterFactory::create($fields, CCrmOwnerType::Lead);
-		$dups = $checker->findDuplicates($adapter, new \Bitrix\Crm\Integrity\DuplicateSearchParams($fieldNames));
+		$adapter = EntityAdapterFactory::create($fields, CCrmOwnerType::Lead);
+		$dups = $checker->findDuplicates($adapter, new DuplicateSearchParams($fieldNames));
 
 		$ignoredEntities = (array)($params['IGNORED_ITEMS'] ?? []);
-		$entityInfoByType = array();
-		foreach($dups as &$dup)
+		$entityInfoByType = [];
+		foreach ($dups as $dup)
 		{
-			if(!($dup instanceof \Bitrix\Crm\Integrity\Duplicate))
+			if (!($dup instanceof Duplicate))
 			{
 				continue;
 			}
 
 			$entities = $dup->getEntities();
-			if(!(is_array($entities) && !empty($entities)))
+			if (!(is_array($entities) && !empty($entities)))
 			{
 				continue;
 			}
 
 			//Each entity type limited by 50 items
-			foreach($entities as &$entity)
+			foreach ($entities as &$entity)
 			{
-				if(!($entity instanceof \Bitrix\Crm\Integrity\DuplicateEntity))
+				if (!($entity instanceof DuplicateEntity))
 				{
 					continue;
 				}
@@ -216,72 +228,76 @@ elseif($action === 'FIND_DUPLICATES')
 					continue;
 				}
 
-				if(!isset($entityInfoByType[$entityTypeID]))
+				if (!isset($entityInfoByType[$entityTypeID]))
 				{
-					$entityInfoByType[$entityTypeID] = array($entityID => array());
+					$entityInfoByType[$entityTypeID] = [$entityID => []];
 				}
-				elseif(count($entityInfoByType[$entityTypeID]) < 50 && !isset($entityInfoByType[$entityTypeID][$entityID]))
+				elseif (
+					count($entityInfoByType[$entityTypeID]) < 50
+					&& !isset($entityInfoByType[$entityTypeID][$entityID])
+				)
 				{
-					$entityInfoByType[$entityTypeID][$entityID] = array();
+					$entityInfoByType[$entityTypeID][$entityID] = [];
 				}
 			}
 		}
 
 		$totalEntities = 0;
-		$entityMultiFields = array();
-		foreach($entityInfoByType as $entityTypeID => &$entityInfos)
+		$entityMultiFields = [];
+		foreach ($entityInfoByType as $entityTypeID => &$entityInfos)
 		{
 			$totalEntities += count($entityInfos);
 			CCrmOwnerType::PrepareEntityInfoBatch(
 				$entityTypeID,
 				$entityInfos,
 				false,
-				array(
+				[
 					'ENABLE_RESPONSIBLE' => true,
 					'ENABLE_EDIT_URL' => true,
-				)
+					'PHOTO_SIZE' => ['WIDTH' => 20, 'HEIGHT' => 20],
+				]
 			);
 
 			$multiFieldResult = CCrmFieldMulti::GetListEx(
-				array(),
-				array(
+				[],
+				[
 					'=ENTITY_ID' => CCrmOwnerType::ResolveName($entityTypeID),
 					'@ELEMENT_ID' => array_keys($entityInfos),
-					'@TYPE_ID' => array('PHONE', 'EMAIL')
-				),
+					'@TYPE_ID' => ['PHONE', 'EMAIL'],
+				],
 				false,
 				false,
-				array('ELEMENT_ID', 'TYPE_ID', 'VALUE')
+				['ELEMENT_ID', 'TYPE_ID', 'VALUE']
 			);
 
-			if(is_object($multiFieldResult))
+			if (is_object($multiFieldResult))
 			{
-				$entityMultiFields[$entityTypeID] = array();
-				while($multiFields = $multiFieldResult->Fetch())
+				$entityMultiFields[$entityTypeID] = [];
+				while ($multiFields = $multiFieldResult->Fetch())
 				{
 					$entityID = isset($multiFields['ELEMENT_ID']) ? intval($multiFields['ELEMENT_ID']) : 0;
-					if($entityID <= 0)
+					if ($entityID <= 0)
 					{
 						continue;
 					}
 
-					if(!isset($entityMultiFields[$entityTypeID][$entityID]))
+					if (!isset($entityMultiFields[$entityTypeID][$entityID]))
 					{
-						$entityMultiFields[$entityTypeID][$entityID] = array();
+						$entityMultiFields[$entityTypeID][$entityID] = [];
 					}
 
-					$typeID = isset($multiFields['TYPE_ID']) ? $multiFields['TYPE_ID'] : '';
-					$value = isset($multiFields['VALUE']) ? $multiFields['VALUE'] : '';
-					if($typeID === '' || $value === '')
+					$typeID = $multiFields['TYPE_ID'] ?? '';
+					$value = $multiFields['VALUE'] ?? '';
+					if ($typeID === '' || $value === '')
 					{
 						continue;
 					}
 
-					if(!isset($entityMultiFields[$entityTypeID][$entityID][$typeID]))
+					if (!isset($entityMultiFields[$entityTypeID][$entityID][$typeID]))
 					{
-						$entityMultiFields[$entityTypeID][$entityID][$typeID] = array($value);
+						$entityMultiFields[$entityTypeID][$entityID][$typeID] = [$value];
 					}
-					elseif(count($entityMultiFields[$entityTypeID][$entityID][$typeID]) < 10)
+					elseif (count($entityMultiFields[$entityTypeID][$entityID][$typeID]) < 10)
 					{
 						$entityMultiFields[$entityTypeID][$entityID][$typeID][] = $value;
 					}
@@ -290,25 +306,46 @@ elseif($action === 'FIND_DUPLICATES')
 		}
 		unset($entityInfos);
 
-		$dupInfos = array();
-		foreach($dups as &$dup)
+		$dupInfos = [];
+		foreach ($dups as $dup)
 		{
-			if(!($dup instanceof \Bitrix\Crm\Integrity\Duplicate))
+			if (!($dup instanceof Duplicate))
 			{
 				continue;
 			}
 
 			$entities = $dup->getEntities();
 			$entityCount = is_array($entities) ? count($entities) : 0;
-			if($entityCount === 0)
+			if ($entityCount === 0)
 			{
 				continue;
 			}
 
-			$dupInfo = array('ENTITIES' => array());
-			foreach($entities as &$entity)
+			$dupInfo = ['ENTITIES' => []];
+			$criterionMatchType = '';
+			$criterionMatchValue = '';
+			$criterion = $dup->getCriterion();
+			if ($criterion instanceof DuplicateCriterion)
 			{
-				if(!($entity instanceof \Bitrix\Crm\Integrity\DuplicateEntity))
+				$matches = $criterion->getMatches();
+
+				if ($criterion instanceof DuplicateCommunicationCriterion)
+				{
+					$criterionMatchType = $matches['TYPE'];
+					$criterionMatchValue = DuplicateCommunicationCriterion::prepareCode(
+						$criterionMatchType,
+						$matches['VALUE']
+					);
+				}
+
+				$dupInfo['CRITERION'] = [
+					'TYPE_NAME' => $criterion->getTypeName(),
+					'MATCHES' => $matches,
+				];
+			}
+			foreach ($entities as $entity)
+			{
+				if (!($entity instanceof DuplicateEntity))
 				{
 					continue;
 				}
@@ -316,46 +353,55 @@ elseif($action === 'FIND_DUPLICATES')
 				$entityTypeID = $entity->getEntityTypeID();
 				$entityID = $entity->getEntityID();
 
-				$info = array(
+				$info = [
 					'ENTITY_TYPE_ID' => $entityTypeID,
-					'ENTITY_ID' => $entityID
-				);
+					'ENTITY_ID' => $entityID,
+				];
 
-				if(isset($entityInfoByType[$entityTypeID]) && isset($entityInfoByType[$entityTypeID][$entityID]))
+				if (isset($entityInfoByType[$entityTypeID]) && isset($entityInfoByType[$entityTypeID][$entityID]))
 				{
 					$entityInfo = $entityInfoByType[$entityTypeID][$entityID];
-					if(isset($entityInfo['TITLE']))
+					$info['CATEGORY_NAME'] = $entityInfo['CATEGORY_NAME'] ?? CCrmOwnerType::GetDescription($entityTypeID);
+					if (isset($entityInfo['TITLE']))
 					{
 						$info['TITLE'] = $entityInfo['TITLE'];
 					}
-					if(isset($entityInfo['RESPONSIBLE_ID']))
+					if (isset($entityInfo['RESPONSIBLE_ID']))
 					{
 						$responsibleID = $entityInfo['RESPONSIBLE_ID'];
 
 						$info['RESPONSIBLE_ID'] = $responsibleID;
-						if(isset($entityInfo['RESPONSIBLE_FULL_NAME']))
+						if (isset($entityInfo['RESPONSIBLE_FULL_NAME']))
 						{
 							$info['RESPONSIBLE_FULL_NAME'] = $entityInfo['RESPONSIBLE_FULL_NAME'];
 						}
-						if(isset($entityInfo['RESPONSIBLE_PHOTO_URL']))
+						if (isset($entityInfo['RESPONSIBLE_PHOTO_URL']))
 						{
 							$info['RESPONSIBLE_PHOTO_URL'] = $entityInfo['RESPONSIBLE_PHOTO_URL'];
 						}
 						$info['RESPONSIBLE_URL'] = CComponentEngine::MakePathFromTemplate(
 							$userProfileUrlTemplate,
-							array('user_id' => $responsibleID, 'USER_ID' => $responsibleID)
+							['user_id' => $responsibleID, 'USER_ID' => $responsibleID]
 						);
 					}
 
 					$entityTypeName = CCrmOwnerType::ResolveName($entityTypeID);
-					$isReadable = CCrmAuthorizationHelper::CheckReadPermission($entityTypeName, $entityID, $userPermissions);
-					$isEditable = CCrmAuthorizationHelper::CheckUpdatePermission($entityTypeName, $entityID, $userPermissions);
+					$isReadable = CCrmAuthorizationHelper::CheckReadPermission(
+						$entityTypeName,
+						$entityID,
+						$userPermissions
+					);
+					$isEditable = CCrmAuthorizationHelper::CheckUpdatePermission(
+						$entityTypeName,
+						$entityID,
+						$userPermissions
+					);
 
-					if($isEditable && isset($entityInfo['EDIT_URL']))
+					if ($isEditable && isset($entityInfo['EDIT_URL']))
 					{
 						$info['URL'] = $entityInfo['EDIT_URL'];
 					}
-					elseif($isReadable && isset($entityInfo['SHOW_URL']))
+					elseif ($isReadable && isset($entityInfo['SHOW_URL']))
 					{
 						$info['URL'] = $entityInfo['SHOW_URL'];
 					}
@@ -365,191 +411,206 @@ elseif($action === 'FIND_DUPLICATES')
 					}
 				}
 
-				if(isset($entityMultiFields[$entityTypeID])
-					&& isset($entityMultiFields[$entityTypeID][$entityID]))
+				if (
+					isset($entityMultiFields[$entityTypeID])
+					&& isset($entityMultiFields[$entityTypeID][$entityID])
+				)
 				{
 					$multiFields = $entityMultiFields[$entityTypeID][$entityID];
-					if(isset($multiFields['PHONE']))
+					foreach (['PHONE', 'EMAIL'] as $matchType)
 					{
-						$info['PHONE'] = $multiFields['PHONE'];
-					}
-					if(isset($multiFields['EMAIL']))
-					{
-						$info['EMAIL'] = $multiFields['EMAIL'];
+						if (isset($multiFields[$matchType]))
+						{
+							$info[$matchType] = $multiFields[$matchType];
+
+							if (
+								$criterionMatchType !== ''
+								&& $criterionMatchValue !== ''
+								&& $matchType === $criterionMatchType
+								&& is_array($info[$matchType])
+							)
+							{
+								foreach ($info[$matchType] as $index => $matchValue)
+								{
+									if (
+										$criterionMatchValue === DuplicateCommunicationCriterion::prepareCode(
+											$matchType,
+											$matchValue
+										)
+									)
+									{
+										if (!isset($info['MATCH_INDEX'][$matchType]))
+										{
+											$info['MATCH_INDEX'][$matchType] = [];
+										}
+										$info['MATCH_INDEX'][$matchType][] = $index;
+									}
+								}
+							}
+						}
 					}
 				}
 
 				$dupInfo['ENTITIES'][] = &$info;
 				unset($info);
 			}
-			unset($entity);
 
-			$criterion = $dup->getCriterion();
-			if($criterion instanceof \Bitrix\Crm\Integrity\DuplicateCriterion)
-			{
-				$dupInfo['CRITERION'] = array(
-					'TYPE_NAME' => $criterion->getTypeName(),
-					'MATCHES' => $criterion->getMatches()
-				);
-			}
 			$dupInfos[] = &$dupInfo;
 			unset($dupInfo);
 		}
-		unset($dup);
 
-		$groupResults[] = array(
+		$groupResults[] = [
 			'DUPLICATES' => &$dupInfos,
-			'GROUP_ID' => isset($group['GROUP_ID']) ? $group['GROUP_ID'] : '',
-			'FIELD_ID' => isset($group['FIELD_ID']) ? $group['FIELD_ID'] : '',
-			'HASH_CODE' => isset($group['HASH_CODE']) ? intval($group['HASH_CODE']) : 0,
+			'GROUP_ID' => $group['GROUP_ID'] ?? '',
+			'FIELD_ID' => $group['FIELD_ID'] ?? '',
+			'HASH_CODE' => (int)($group['HASH_CODE'] ?? 0),
 			'TOTAL_DUPLICATES' => $totalEntities,
-			'ENTITY_TOTAL_TEXT' => \Bitrix\Crm\Integrity\Duplicate::entityCountToText($totalEntities)
-		);
+			'ENTITY_TOTAL_TEXT' => Duplicate::entityCountToText($totalEntities),
+		];
 		unset($dupInfos);
 	}
 	unset($group);
 
-	__CrmLeadEditEndResponse(array('GROUP_RESULTS' => $groupResults));
+	__CrmLeadEditEndResponse(['GROUP_RESULTS' => $groupResults]);
 }
-elseif($action === 'FIND_LOCALITIES')
+elseif ($action === 'FIND_LOCALITIES')
 {
-	$localityType = isset($_POST['LOCALITY_TYPE']) ? $_POST['LOCALITY_TYPE'] : 'COUNTRY';
-	$needle = isset($_POST['NEEDLE']) ? $_POST['NEEDLE'] : '';
-	if($localityType === 'COUNTRY')
+	$localityType = $_POST['LOCALITY_TYPE'] ?? 'COUNTRY';
+	$needle = $_POST['NEEDLE'] ?? '';
+	if ($localityType === 'COUNTRY')
 	{
-		$result = \Bitrix\Crm\EntityAddress::getCountries(array('CAPTION' => $needle));
-		__CrmLeadEditEndResponse(array('DATA' => array('ITEMS' => $result)));
+		$result = EntityAddress::getCountries(['CAPTION' => $needle]);
+		__CrmLeadEditEndResponse(['DATA' => ['ITEMS' => $result]]);
 	}
 	else
 	{
-		__CrmLeadEditEndResponse(array('ERROR' => "Locality '{$localityType}' is not supported in current context."));
+		__CrmLeadEditEndResponse(['ERROR' => "Locality '$localityType' is not supported in current context."]);
 	}
 }
-elseif($action === 'GET_SECONDARY_ENTITY_INFOS')
+elseif ($action === 'GET_SECONDARY_ENTITY_INFOS')
 {
 	$userID = CCrmSecurityHelper::GetCurrentUserID();
 	$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-	if($userID <= 0 || !CCrmDeal::CheckReadPermission(0, $userPermissions))
+	if ($userID <= 0 || !CCrmDeal::CheckReadPermission(0, $userPermissions))
 	{
-		__CrmLeadEditEndResponse(array('ERROR' => 'Access denied.'));
+		__CrmLeadEditEndResponse(['ERROR' => 'Access denied.']);
 	}
 
+	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : [];
 
-	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : array();
-
-	$ownerTypeName = isset($params['OWNER_TYPE_NAME']) ? $params['OWNER_TYPE_NAME'] : '';
-	if($ownerTypeName === '')
+	$ownerTypeName = $params['OWNER_TYPE_NAME'] ?? '';
+	if ($ownerTypeName === '')
 	{
-		__CrmLeadEditEndResponse(array('ERROR' => 'Owner type is not specified.'));
+		__CrmLeadEditEndResponse(['ERROR' => 'Owner type is not specified.']);
 	}
 
 	$ownerTypeID = CCrmOwnerType::ResolveID($ownerTypeName);
-	if($ownerTypeID === CCrmOwnerType::Undefined)
+	if ($ownerTypeID === CCrmOwnerType::Undefined)
 	{
-		__CrmLeadEditEndResponse(array('ERROR' => 'Undefined owner type is specified.'));
+		__CrmLeadEditEndResponse(['ERROR' => 'Undefined owner type is specified.']);
 	}
 
-	if($ownerTypeID !== CCrmOwnerType::Lead)
+	if ($ownerTypeID !== CCrmOwnerType::Lead)
 	{
 		$typeName = CCrmOwnerType::ResolveName($ownerTypeID);
-		__CrmLeadEditEndResponse(array('ERROR' => "Type '{$typeName}' is not supported in current context."));
+		__CrmLeadEditEndResponse(['ERROR' => "Type '$typeName' is not supported in current context."]);
 	}
 
-	$primaryTypeName = isset($params['PRIMARY_TYPE_NAME']) ? $params['PRIMARY_TYPE_NAME'] : '';
-	if($primaryTypeName === '')
+	$primaryTypeName = $params['PRIMARY_TYPE_NAME'] ?? '';
+	if ($primaryTypeName === '')
 	{
-		__CrmLeadEditEndResponse(array('ERROR' => 'Primary type is not specified.'));
+		__CrmLeadEditEndResponse(['ERROR' => 'Primary type is not specified.']);
 	}
 
 	$primaryTypeID = CCrmOwnerType::ResolveID($primaryTypeName);
-	if($primaryTypeID !== CCrmOwnerType::Company)
+	if ($primaryTypeID !== CCrmOwnerType::Company)
 	{
-		__CrmLeadEditEndResponse(array('ERROR' => 'Primary type is not supported in current context.'));
+		__CrmLeadEditEndResponse(['ERROR' => 'Primary type is not supported in current context.']);
 	}
 
 	$primaryID = isset($params['PRIMARY_ID']) ? (int)$params['PRIMARY_ID'] : 0;
-	if($primaryID <= 0)
+	if ($primaryID <= 0)
 	{
-		__CrmLeadEditEndResponse(array('ERROR' => 'Primary ID is not specified.'));
+		__CrmLeadEditEndResponse(['ERROR' => 'Primary ID is not specified.']);
 	}
 
-	$secondaryTypeName = isset($params['SECONDARY_TYPE_NAME']) ? $params['SECONDARY_TYPE_NAME'] : '';
-	if($secondaryTypeName === '')
+	$secondaryTypeName = $params['SECONDARY_TYPE_NAME'] ?? '';
+	if ($secondaryTypeName === '')
 	{
-		__CrmLeadEditEndResponse(array('ERROR' => 'Secondary type is not specified.'));
+		__CrmLeadEditEndResponse(['ERROR' => 'Secondary type is not specified.']);
 	}
 
 	$secondaryTypeID = CCrmOwnerType::ResolveID($secondaryTypeName);
-	if($secondaryTypeID !== CCrmOwnerType::Contact)
+	if ($secondaryTypeID !== CCrmOwnerType::Contact)
 	{
-		__CrmLeadEditEndResponse(array('ERROR' => 'Secondary type is not supported in current context.'));
+		__CrmLeadEditEndResponse(['ERROR' => 'Secondary type is not supported in current context.']);
 	}
 
 	$dbResult = CCrmLead::GetListEx(
-		array('ID' => 'DESC'),
-		array(
+		['ID' => 'DESC'],
+		[
 			'=COMPANY_ID' => $primaryID,
 			'=ASSIGNED_BY_ID' => $userID,
 			'=IS_RETURN_CUSTOMER' => 'Y',
-			'CHECK_PERMISSIONS' => 'N'
-		),
+			'CHECK_PERMISSIONS' => 'N',
+		],
 		false,
-		array('nTopCount' => 5),
-		array('ID')
+		['nTopCount' => 5],
+		['ID']
 	);
 
-	$ownerIDs = array();
-	while($ary = $dbResult->Fetch())
+	$ownerIDs = [];
+	while ($ary = $dbResult->Fetch())
 	{
 		$ownerIDs[] = (int)$ary['ID'];
 	}
 
-	$secondaryIDs = array();
-	foreach($ownerIDs as $ownerID)
+	$secondaryIDs = [];
+	foreach ($ownerIDs as $ownerID)
 	{
-		$entityIDs = \Bitrix\Crm\Binding\LeadContactTable::getLeadContactIDs($ownerID);
-		foreach($entityIDs as $entityID)
+		$entityIDs = LeadContactTable::getLeadContactIDs($ownerID);
+		foreach ($entityIDs as $entityID)
 		{
-			if(CCrmContact::CheckReadPermission($entityID, $userPermissions))
+			if (CCrmContact::CheckReadPermission($entityID, $userPermissions))
 			{
 				$secondaryIDs[] = $entityID;
 			}
 		}
 
-		if(!empty($secondaryIDs))
+		if (!empty($secondaryIDs))
 		{
 			break;
 		}
 	}
 
-	if(empty($secondaryIDs))
+	if (empty($secondaryIDs))
 	{
-		$secondaryIDs = \Bitrix\Crm\Binding\ContactCompanyTable::getCompanyContactIDs($primaryID);
+		$secondaryIDs = ContactCompanyTable::getCompanyContactIDs($primaryID);
 	}
 
-	$secondaryInfos = array();
-	foreach($secondaryIDs as $entityID)
+	$secondaryInfos = [];
+	foreach ($secondaryIDs as $entityID)
 	{
-		if(!CCrmContact::CheckReadPermission($entityID, $userPermissions))
+		if (!CCrmContact::CheckReadPermission($entityID, $userPermissions))
 		{
 			continue;
 		}
 
-		$secondaryInfos[]  = CCrmEntitySelectorHelper::PrepareEntityInfo(
+		$secondaryInfos[] = CCrmEntitySelectorHelper::PrepareEntityInfo(
 			CCrmOwnerType::ContactName,
 			$entityID,
-			array(
+			[
 				'ENTITY_EDITOR_FORMAT' => true,
 				'REQUIRE_REQUISITE_DATA' => true,
 				'REQUIRE_MULTIFIELDS' => true,
-				'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
-			)
+				'NAME_TEMPLATE' => PersonNameFormatter::getFormat(),
+			]
 		);
 	}
 
-	__CrmLeadEditEndResponse(array('ENTITY_INFOS' => $secondaryInfos));
+	__CrmLeadEditEndResponse(['ENTITY_INFOS' => $secondaryInfos]);
 }
 else
 {
-	__CrmLeadEditEndResponse(array('ERROR' => "Action '{$action}' is not supported in current context."));
+	__CrmLeadEditEndResponse(['ERROR' => "Action '$action' is not supported in current context."]);
 }

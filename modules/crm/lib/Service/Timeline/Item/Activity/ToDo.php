@@ -2,18 +2,26 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\Activity;
 
+use Bitrix\Crm\Activity\Provider;
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
 use Bitrix\Crm\Service\Timeline\Item\Mixin\FileListPreparer;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockWithTitle;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\EditableDate;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\EditableDescription;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\FileList;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ItemSelector;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
 use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItem;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
 use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main\Localization\Loc;
-use CCrmActivity;
 use CCrmOwnerType;
 
 class ToDo extends Activity
@@ -57,6 +65,18 @@ class ToDo extends Activity
 		if (isset($deadlineBlock))
 		{
 			$result['deadline'] = $deadlineBlock;
+		}
+
+		$webPingSelectorBlock = $this->buildWebPingListBlock();
+		if (isset($webPingSelectorBlock))
+		{
+			$result['webPingSelector'] = $webPingSelectorBlock->setScopeWeb();
+		}
+
+		$mobilePingSelectorBlock = $this->buildMobilePingListBlock();
+		if (isset($mobilePingSelectorBlock))
+		{
+			$result['mobilePingSelector'] = $mobilePingSelectorBlock->setScopeMobile();
 		}
 
 		$descriptionBlock = $this->buildDescriptionBlock();
@@ -179,20 +199,126 @@ class ToDo extends Activity
 			;
 		}
 
-		return (new Layout\Body\ContentBlock\LineOfTextBlocks())
-			->addContentBlock(
-				'completeTo',
-				ContentBlockFactory::createTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_COMPLETE_TO'))
-			)
-			->addContentBlock(
-				'deadlineSelector',
-				(new Layout\Body\ContentBlock\EditableDate())
-					->setStyle(Layout\Body\ContentBlock\EditableDate::STYLE_PILL)
+		return (new ContentBlockWithTitle())
+			->setFixedWidth(false)
+			->setAlignItems('center')
+			->setTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_COMPLETE_TO'))
+			->setContentBlock(
+				(new EditableDate())
+					->setReadonly(!$this->isScheduled())
+					->setStyle(EditableDate::STYLE_PILL)
 					->setDate($deadline)
 					->setAction($updateDeadlineAction)
-					->setBackgroundColor($this->isScheduled() ? Layout\Body\ContentBlock\EditableDate::BACKGROUND_COLOR_WARNING : null)
-			)
+					->setBackgroundColor($this->isScheduled() ? EditableDate::BACKGROUND_COLOR_WARNING : null)
+				)
+			->setInline()
 		;
+	}
+
+	private function buildWebPingListBlock(): ?ContentBlock
+	{
+		if ($this->isScheduled() && $this->hasUpdatePermission())
+		{
+			return $this->buildChangeablePingSelectorBlock();
+		}
+
+		$blockText = $this->buildWebPingBlockText();
+		return $this->buildReadonlyPingSelectorBlock($blockText);
+	}
+
+	private function buildMobilePingListBlock(): ?ContentBlock
+	{
+		$emptyStateText = Loc::getMessage('CRM_TIMELINE_ITEM_TODO_PING_OFFSETS_EMPTY_STATE');
+		$selectorTitle = Loc::getMessage('CRM_TIMELINE_ITEM_TODO_PING_OFFSETS_SELECTOR_TITLE_MSGVER_1');
+
+		if ($this->isScheduled() && $this->hasUpdatePermission())
+		{
+			return $this->buildChangeablePingSelectorBlock($emptyStateText, $selectorTitle);
+		}
+
+		$blockText = $this->buildMobilePingBlockText($emptyStateText);
+		return $this->buildReadonlyPingSelectorBlock($blockText);
+	}
+
+	private function buildChangeablePingSelectorBlock($emptyStateText = null, $selectorTitle = null): ?ContentBlock
+	{
+		$offsets = $this->getPingOffsets();
+		return (new ContentBlockWithTitle())
+			->setFixedWidth(false)
+			->setTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_PING_OFFSETS_TITLE'))
+			->setContentBlock(
+				(new ItemSelector())
+					->setSelectorTitle($selectorTitle)
+					->setValuesList(array_map(
+						static fn($item) => ['id' => (string)$item['offset'], 'title' => $item['title']],
+						TodoPingSettingsProvider::getDefaultOffsetList()
+					))
+					->setValue(array_column($offsets, 'offset'))
+					->setEmptyState($emptyStateText)
+					->setAction(
+						(new Layout\Action\RunAjaxAction('crm.activity.todo.updatePingOffsets'))
+							->addActionParamInt('ownerTypeId', $this->getContext()->getIdentifier()->getEntityTypeId())
+							->addActionParamInt('ownerId', $this->getContext()->getIdentifier()->getEntityId())
+							->addActionParamInt('id', $this->getActivityId())
+					)
+			)
+			->setInline();
+	}
+
+	private function buildMobilePingBlockText($emptyStateText = null)
+	{
+		$offsets = array_column($this->getPingOffsets(), 'title');
+		if (count($offsets) === 0)
+		{
+			return $emptyStateText;
+		}
+
+		$blockText = mb_strtolower(implode(', ', array_slice($offsets, 0, 2)));
+		if (count($offsets) > 2)
+		{
+			$blockText = Loc::getMessage( 'CRM_TIMELINE_ITEM_TODO_PING_OFFSETS_MORE',
+				[
+					'#ITEMS#' => $blockText,
+					'#COUNT#' => count($offsets) - 2,
+				],
+			);
+		}
+
+		return $blockText;
+	}
+
+	private function buildWebPingBlockText($emptyStateText = null)
+	{
+		$offsets = $this->getPingOffsets();
+		$blockText = mb_strtolower(implode(', ', array_column($offsets, 'title')));
+		if ($blockText === '')
+		{
+			$blockText = $emptyStateText;
+		}
+
+		return $blockText;
+	}
+
+	private function buildReadonlyPingSelectorBlock($blockText = null): ?ContentBlock
+	{
+		if ((string)$blockText === '')
+		{
+			return null;
+		}
+
+		return (new LineOfTextBlocks())
+			->addContentBlock(
+				'remindTo',
+				ContentBlockFactory::createTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_PING_OFFSETS_TITLE'))
+			)
+			->addContentBlock(
+				'pingSelectorReadonly',
+				(new Text())
+					->setValue($blockText)
+					->setColor(Text::COLOR_BASE_70)
+					->setFontSize(Text::FONT_SIZE_XS)
+					->setFontWeight(Text::FONT_WEIGHT_MEDIUM)
+			);
 	}
 
 	private function buildDescriptionBlock(): ?ContentBlock
@@ -205,12 +331,11 @@ class ToDo extends Activity
 		}
 		$description = trim($description);
 
-		$editableDescriptionBlock = (new Layout\Body\ContentBlock\EditableDescription())
+		$editableDescriptionBlock = (new EditableDescription())
 			->setText($description)
 			->setEditable(false)
-			->setBackgroundColor(Layout\Body\ContentBlock\EditableDescription::BG_COLOR_YELLOW)
+			->setBackgroundColor(EditableDescription::BG_COLOR_YELLOW)
 		;
-
 
 		if ($this->isScheduled())
 		{
@@ -237,7 +362,7 @@ class ToDo extends Activity
 		$files = $this->prepareFiles($storageFiles);
 
 		$fileListBlock = (new FileList())
-			->setTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_FILES'))
+			->setTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_FILES_MSGVER_1'))
 			->setFiles($files);
 
 		if ($this->isScheduled() && $this->hasUpdatePermission())
@@ -257,42 +382,45 @@ class ToDo extends Activity
 
 	private function buildBaseActivityBlock(): ?ContentBlock
 	{
-		$associatedEntityId = $this->getAssociatedEntityModel()->get('ASSOCIATED_ENTITY_ID');
-		if (!isset($associatedEntityId))
+		$associatedActivityId = $this->getAssociatedEntityModel()?->get('ASSOCIATED_ENTITY_ID');
+		if (!isset($associatedActivityId))
 		{
 			return null;
 		}
 
-		$baseActivity = CCrmActivity::GetList(
-			[],
-			[
-				'=ID' => $associatedEntityId,
-				'CHECK_PERMISSIONS' => 'N'
-			],
-			false,
-			false,
-			[
-				'SUBJECT',
-				'ID'
-			]
-		)->Fetch();
-		if ($baseActivity)
+		$baseActivitySubject = Container::getInstance()
+			->getActivityBroker()
+			->getById($associatedActivityId)['SUBJECT'] ?? ''
+		;
+
+		if (empty($baseActivitySubject))
 		{
-			return (new Layout\Body\ContentBlock\LineOfTextBlocks())
-				->addContentBlock(
-					'createdFrom',
-					ContentBlockFactory::createTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_CREATED_FROM'))
-				)
-				->addContentBlock(
-					'baseActivity',
-					(new Layout\Body\ContentBlock\Text())
-						->setValue($baseActivity['SUBJECT'] ?: Loc::getMessage('CRM_COMMON_UNTITLED'))
-						->setIsBold(true)
-						->setColor(Layout\Body\ContentBlock\Text::COLOR_BASE_70)
-				)
-			;
+			return null;
 		}
 
-		return null;
+		return (new LineOfTextBlocks())
+			->addContentBlock(
+				'createdFrom',
+				ContentBlockFactory::createTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_CREATED_FROM'))
+			)
+			->addContentBlock(
+				'baseActivity',
+				(new Text())
+					->setValue($baseActivitySubject)
+					->setColor(Text::COLOR_BASE_70)
+					->setFontWeight(Text::FONT_WEIGHT_MEDIUM)
+			)
+		;
+	}
+
+	private function getPingOffsets(): array
+	{
+		$offsets = (array)($this->getAssociatedEntityModel()->get('PING_OFFSETS') ?? []);
+		if (empty($offsets))
+		{
+			$offsets = Provider\ToDo::getPingOffsets($this->getActivityId());
+		}
+
+		return TodoPingSettingsProvider::getValuesByOffsets($offsets);
 	}
 }

@@ -1,14 +1,18 @@
 (() => {
 	const require = (ext) => jn.require(ext);
 
+	const AppTheme = require('apptheme');
 	const { CrmProductTabShimmer } = require('layout/ui/detail-card/tabs/shimmer/crm-product');
-	const { ProductsStep } = require('crm/receive-payment/steps/products');
+	const { ContactStep } = require('crm/receive-payment/steps/contact');
+	const { ProductsStep } = require('crm/salescenter/products-step');
 	const { PaymentSystemsStep } = require('crm/receive-payment/steps/payment-systems');
 	const { SendMessageStep } = require('crm/receive-payment/steps/send-message');
 	const { FinishStep } = require('crm/receive-payment/steps/finish');
 	const { EventEmitter } = require('event-emitter');
 	const { Wizard } = require('layout/ui/wizard');
 	const { handleErrors } = require('crm/error');
+	const { Loc } = require('loc');
+	const { AnalyticsLabel } = require('analytics-label');
 
 	const Status = {
 		LOADING: 1,
@@ -32,7 +36,10 @@
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 			this.resendMessageMode = BX.prop.getBoolean(props, 'resendMessageMode', false);
-			this.document = props.document;
+			this.entityHasContact = BX.prop.getBoolean(props, 'entityHasContact', false);
+
+			this.stepsCount = 3;
+			this.currentStep = 1;
 
 			this.getStepForId = this.getStepForId.bind(this);
 		}
@@ -40,6 +47,14 @@
 		get productCount()
 		{
 			return Math.min(this.props.productCount, PRODUCTS_FOR_LOADER_COUNT);
+		}
+
+		/**
+		 * @returns {number}
+		 */
+		get paymentId()
+		{
+			return BX.prop.getInteger(this.props, 'paymentId', 0);
 		}
 
 		/**
@@ -51,6 +66,17 @@
 		getSteps()
 		{
 			const steps = [];
+
+			if (!this.entityHasContact)
+			{
+				this.stepsCount = 4;
+				steps.push(
+					{
+						id: 'contact',
+						component: ContactStep,
+					},
+				);
+			}
 
 			steps.push(
 				{
@@ -82,8 +108,89 @@
 			{
 				const props = this.stepProps[stepId] || {};
 				props.uid = this.uid;
-				props.parent = this;
-				props.resendMessageMode = this.resendMessageMode;
+
+				if (stepId === 'contact')
+				{
+					props.onMoveToNextStep = (data) => {
+						this.dataForSending.selectedContact = data.selectedContact;
+					};
+
+					props.progressBarSettings = {
+						number: this.currentStep,
+						count: this.stepsCount,
+					};
+					this.currentStep++;
+				}
+
+				if (stepId === 'product')
+				{
+					props.editable = !this.resendMessageMode;
+					props.title = Loc.getMessage('SALESCENTER_RECEIVE_PAYMENT_RECEIVE_PAYMENT');
+					props.progressBarSettings = {
+						title: {
+							text: Loc.getMessage('SALESCENTER_RECEIVE_PAYMENT_PRODUCT_STEP_PROGRESS_BAR_TITLE'),
+						},
+						number: this.currentStep,
+						count: this.stepsCount,
+					};
+					this.currentStep++;
+					props.onMoveToNextStep = (data) => {
+						const { products } = data;
+
+						if (!Array.isArray(products))
+						{
+							return;
+						}
+
+						this.dataForSending.products = products;
+					};
+					props.analytics = {
+						menuPrefix: 'receive_payment',
+						onProductRemoved: () => {
+							AnalyticsLabel.send({
+								event: 'onReceivePaymentProductRemoved',
+							});
+						},
+						onEnterStep: (data) => {
+							const { areProductsPreloaded } = data;
+
+							AnalyticsLabel.send({
+								event: 'onReceivePaymentProductsStepOpen',
+								areProductsPreloaded,
+							});
+						},
+					};
+				}
+
+				if (stepId === 'paySystems')
+				{
+					props.resendMessageMode = this.resendMessageMode;
+					props.progressBarSettings = {
+						number: this.currentStep,
+						count: this.stepsCount,
+					};
+					this.currentStep++;
+				}
+
+				if (stepId === 'sendMessage')
+				{
+					props.onMoveToNextStep = (data) => {
+						const {
+							sendingMethod,
+							sendingMethodDesc
+						} = data;
+
+						this.dataForSending.sendingMethod = sendingMethod;
+						this.dataForSending.sendingMethodDesc = sendingMethodDesc;
+					};
+					props.progressBarSettings = {
+						number: this.currentStep,
+						count: this.stepsCount,
+					};
+					props.root = this;
+					this.currentStep++;
+				}
+
 				if (stepId === 'finish')
 				{
 					props.sendMessage = this.sendMessage.bind(this);
@@ -92,6 +199,8 @@
 
 				return new step.component(props);
 			}
+
+			return null;
 		}
 
 		sendMessage()
@@ -122,7 +231,7 @@
 			return View(
 				{
 					style: {
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgSecondary,
 					},
 				},
 				this.state.status === Status.LOADING && this.renderLoader(),
@@ -144,8 +253,6 @@
 				parentLayout: layout,
 				steps: this.getSteps().map((step) => step.id),
 				stepForId: this.getStepForId,
-				useProgressBar: true,
-				hideProgressBarInLastTab: true,
 				isNavigationBarBorderEnabled: true,
 			});
 
@@ -153,17 +260,9 @@
 			{
 				wizard.openStepWidget('paySystems');
 				wizard.openStepWidget('sendMessage');
-				if (this.document.TYPE === 'PAYMENT')
-				{
-					this.dataForSending.paymentId = this.document.ID;
-					this.dataForSending.shipmentId = 0;
-				}
 
-				if (this.document.TYPE === 'SHIPMENT')
-				{
-					this.dataForSending.paymentId = 0;
-					this.dataForSending.shipmentId = this.document.ID;
-				}
+				this.dataForSending.paymentId = this.paymentId;
+				this.dataForSending.shipmentId = 0;
 			}
 
 			return wizard;
@@ -185,7 +284,7 @@
 					entityTypeId,
 					resendData: {
 						resendMessageMode: this.resendMessageMode,
-						documentId: this.document.ID,
+						documentId: this.paymentId,
 					},
 				};
 
@@ -197,22 +296,6 @@
 					.catch(handleErrors);
 			});
 		}
-
-		saveProductForSending(products)
-		{
-			if (!Array.isArray(products))
-			{
-				return;
-			}
-
-			this.dataForSending.products = products;
-		}
-
-		saveSendingMethodForSending({ sendingMethod, sendingMethodDesc })
-		{
-			this.dataForSending.sendingMethod = sendingMethod;
-			this.dataForSending.sendingMethodDesc = sendingMethodDesc;
-		}
 	}
 
 	BX.onViewLoaded(() => {
@@ -221,7 +304,8 @@
 				uid: BX.componentParameters.get('uid'),
 				productCount: BX.componentParameters.get('productCount', 0),
 				resendMessageMode: BX.componentParameters.get('resendMessageMode', false),
-				document: BX.componentParameters.get('document', {}),
+				paymentId: BX.componentParameters.get('paymentId', 0),
+				entityHasContact: BX.componentParameters.get('entityHasContact', false),
 			},
 		);
 		layout.enableNavigationBarBorder(true);

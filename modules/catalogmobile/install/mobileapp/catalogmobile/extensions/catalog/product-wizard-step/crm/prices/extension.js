@@ -28,17 +28,17 @@ jn.define('catalog/product-wizard-step/crm/prices', (require, exports, module) =
 			const defaultVatId = isTaxMode ? '' : BX.prop.getString(vatRates[0], 'value', '');
 
 			const measures = this.entity.getDictionaryValues('measures');
-			const defaultMeasure = measures.find(item => item.isDefault);
+			const defaultMeasure = measures.find((item) => item.isDefault);
 
 			this.setDefaultValues({
-				'BASE_PRICE': {
+				BASE_PRICE: {
 					amount: '',
 					currency: documentCurrency,
 				},
-				'QUANTITY': '',
-				'MEASURE_CODE': String(defaultMeasure ? defaultMeasure.value : ''),
-				'VAT_ID': defaultVatId,
-				'VAT_INCLUDED': false,
+				QUANTITY: '',
+				MEASURE_CODE: String(defaultMeasure ? defaultMeasure.value : ''),
+				VAT_ID: defaultVatId,
+				VAT_INCLUDED: false,
 			});
 
 			this.addField(
@@ -50,7 +50,7 @@ jn.define('catalog/product-wizard-step/crm/prices', (require, exports, module) =
 					config: {
 						selectionOnFocus: true,
 					},
-				}
+				},
 			);
 
 			if (!isTaxMode)
@@ -65,8 +65,8 @@ jn.define('catalog/product-wizard-step/crm/prices', (require, exports, module) =
 						required: true,
 						showRequired: false,
 						config: {
-							items: vatRates
-						}
+							items: vatRates,
+						},
 					},
 					{
 						id: 'VAT_INCLUDED',
@@ -90,7 +90,7 @@ jn.define('catalog/product-wizard-step/crm/prices', (require, exports, module) =
 						config: {
 							selectionOnFocus: true,
 							type: NumberPrecision.INTEGER,
-						}
+						},
 					},
 					{
 						id: 'MEASURE_CODE',
@@ -117,7 +117,7 @@ jn.define('catalog/product-wizard-step/crm/prices', (require, exports, module) =
 					{
 						style: {
 							marginTop: 12,
-						}
+						},
 					},
 					BannerButton({
 						title: Loc.getMessage('CRM_PRODUCT_WIZARD_PRICES_INVENTORY_CONTROL_TITLE'),
@@ -134,7 +134,7 @@ jn.define('catalog/product-wizard-step/crm/prices', (require, exports, module) =
 		{
 			return super.onMoveToNextStep()
 				.then(() => this.entity.save())
-				.then(() => BX.postComponentEvent("onCatalogProductWizardFinish", [this.entity.getFields()]));
+				.then(() => BX.postComponentEvent('onCatalogProductWizardFinish', [this.entity.getFields()]));
 		}
 
 		getNextStepButtonText()

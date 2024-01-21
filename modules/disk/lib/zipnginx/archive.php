@@ -8,11 +8,14 @@ use Bitrix\Disk\Folder;
 use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Disk\Type\ObjectCollection;
 use Bitrix\Main\Engine\Response;
+use Bitrix\Main\ModuleManager;
 
 class Archive extends Response\Zip\Archive
 {
 	public static function createByObjects(string $name, ObjectCollection $objectCollection, int $userId): static
 	{
+		$entryBuilder = new Response\Zip\EntryBuilder();
+
 		$archive = new static($name . '.zip');
 		foreach ($objectCollection as $object)
 		{
@@ -23,6 +26,13 @@ class Archive extends Response\Zip\Archive
 				{
 					continue;
 				}
+
+				if ($archive->isPossibleUseEmptyDirectory())
+				{
+					$directory = $entryBuilder->createEmptyDirectory($object->getName());
+					$archive->addEntry($directory);
+				}
+
 				$archive->collectDescendants($object, $securityContext, $object->getName() . '/');
 			}
 			if ($object instanceof File)
@@ -50,10 +60,18 @@ class Archive extends Response\Zip\Archive
 
 	private function collectDescendants(Folder $folder, SecurityContext $securityContext, string $currentPath = ''): void
 	{
+		$entryBuilder = new Response\Zip\EntryBuilder();
+
 		foreach ($folder->getChildren($securityContext) as $object)
 		{
 			if ($object instanceof Folder)
 			{
+				if ($this->isPossibleUseEmptyDirectory())
+				{
+					$directory = $entryBuilder->createEmptyDirectory($currentPath . $object->getName());
+					$this->addEntry($directory);
+				}
+
 				$this->collectDescendants(
 					$object,
 					$securityContext,
@@ -66,6 +84,13 @@ class Archive extends Response\Zip\Archive
 				$this->addEntry(ArchiveEntry::createFromFileModel($object, $currentPath . $object->getName()));
 			}
 		}
+	}
+
+	private function isPossibleUseEmptyDirectory(): bool
+	{
+		//right now we can use empty directory only in bitrix24, because we know that version of mod_zip is 1.3.0
+		//in future we can check version of mod_zip and use empty directory
+		return ModuleManager::isModuleInstalled('bitrix24');
 	}
 
 	/**

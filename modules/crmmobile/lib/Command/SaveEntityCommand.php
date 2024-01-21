@@ -104,10 +104,7 @@ final class SaveEntityCommand extends Command
 	{
 		$aliases = [];
 
-		if (
-			$this->factory->getEntityTypeId() === \CCrmOwnerType::Deal
-			|| $this->factory->getEntityTypeId() === \CCrmOwnerType::Lead
-		)
+		if ($this->factory->isObserversEnabled())
 		{
 			$aliases['OBSERVER_IDS'] = 'OBSERVER';
 		}
@@ -330,6 +327,7 @@ final class SaveEntityCommand extends Command
 	{
 		if (!empty($data) && is_array($data))
 		{
+			$uniqueEntityTypes = array_unique(array_map(static fn($val) => $val[0], $data));
 			foreach ($data as $key => $value)
 			{
 				if (!empty($value) && is_array($value))
@@ -348,8 +346,9 @@ final class SaveEntityCommand extends Command
 
 					if ($entityTypeAbbr)
 					{
-						$data[$key] = "{$entityTypeAbbr}_{$entityId}";
+						$data[$key] = count($uniqueEntityTypes) > 1 ? "{$entityTypeAbbr}_{$entityId}" : $entityId;
 					}
+
 				}
 				else
 				{
@@ -607,8 +606,7 @@ final class SaveEntityCommand extends Command
 			$existReserve =
 				isset($productRow['ID']) && is_numeric($productRow['ID'])
 					? $existReserves[(int)$productRow['ID']]
-					: null
-			;
+					: null;
 			if ($existReserve)
 			{
 				$isAuto = $isAutoReservation && $existReserve['IS_AUTO'] === 'Y' ? 'Y' : 'N';
@@ -620,8 +618,7 @@ final class SaveEntityCommand extends Command
 					|| $productRow['QUANTITY'] === 0
 					|| $isAutoReservation
 						? 'Y'
-						: 'N'
-				;
+						: 'N';
 			}
 			$fields['PRODUCT_ROWS'][$productRowIndex]['IS_AUTO'] = $isAuto;
 		}
@@ -630,7 +627,7 @@ final class SaveEntityCommand extends Command
 	private static function getReserves(array $productRowIds): ?array
 	{
 		$productRowsMap = [];
-		$dbResult =  ProductRowReservationTable::getList([
+		$dbResult = ProductRowReservationTable::getList([
 			'select' => [
 				'ROW_ID',
 				'IS_AUTO',
@@ -687,6 +684,7 @@ final class SaveEntityCommand extends Command
 			if (!$res->isSuccess())
 			{
 				$result->addErrors($res->getErrors());
+
 				return $result;
 			}
 		}
@@ -725,7 +723,7 @@ final class SaveEntityCommand extends Command
 			!(
 				is_null($address)
 				|| is_string($address))
-			)
+		)
 		{
 			return;
 		}
@@ -765,7 +763,7 @@ final class SaveEntityCommand extends Command
 			$this->entity->getId(),
 			EntityAddressType::Primary,
 			[
-				'LOC_ADDR' => $locAddr
+				'LOC_ADDR' => $locAddr,
 			]
 		);
 	}

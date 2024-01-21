@@ -19,7 +19,9 @@ export class Zoom
 		container: HTMLElement,
 		ownerTypeId: Number,
 		ownerId: Number,
-		onFinishEdit: Function
+		onFinishEdit: Function,
+		onStartSave: Function,
+		onFinishSave: Function
 	})
 	{
 		this.container = params.container;
@@ -27,6 +29,8 @@ export class Zoom
 		this.ownerId = params.ownerId;
 		this.userId = +Loc.getMessage('USER_ID');
 		this.onFinishEdit = params.onFinishEdit;
+		this.onStartSave = params.onStartSave;
+		this.onFinishSave = params.onFinishSave;
 
 		Dom.append(this.getFormContainer(), this.container);
 		Dom.append(this.renderButtons(), this.container);
@@ -293,7 +297,7 @@ export class Zoom
 	{
 		return this.cache.remember('saveButton', () => {
 			return Tag.render`
-				<button onclick="${this.save.bind(this)}" class="ui-btn ui-btn-xs ui-btn-primary">
+				<button onclick="${this.save.bind(this)}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round">
 					${Loc.getMessage('UI_BUTTONS_CREATE_BTN_TEXT')}
 				</button>
 			`;
@@ -322,7 +326,7 @@ export class Zoom
 	{
 		return this.cache.remember('cancelButton', () => {
 			return Tag.render`
-				<span onclick="${this.cancel.bind(this)}" class="ui-btn ui-btn-xs ui-btn-light-border">
+				<span onclick="${this.cancel.bind(this)}" class="ui-btn ui-btn-xs ui-btn-link">
 					${Loc.getMessage('UI_TIMELINE_EDITOR_COMMENT_CANCEL')}
 				</span>
 			`;
@@ -399,7 +403,10 @@ export class Zoom
 	save()
 	{
 		this.cleanError();
-		Dom.addClass(this.renderSaveButton(), "ui-btn-wait");
+		if (Type.isFunction(this.onStartSave))
+		{
+			this.onStartSave();
+		}
 
 		const entityId = this.ownerId;
 		const entityType = BX.CrmEntityType.resolveName(this.ownerTypeId);
@@ -447,16 +454,22 @@ export class Zoom
 					entityType: entityType,
 				},
 				analyticsLabel: {}
-			}).then(function (response) {
-				Dom.removeClass(this.renderSaveButton(), 'ui-btn-wait');
+			}).then((response) => {
+				if (Type.isFunction(this.onFinishSave))
+				{
+					this.onFinishSave();
+				}
 				this.cancel();
-			}.bind(this), function (response) {
-				Dom.removeClass(this.renderSaveButton(), 'ui-btn-wait');
+			}, (response) => {
+				if (Type.isFunction(this.onFinishSave))
+				{
+					this.onFinishSave();
+				}
 				this.errorMessages.push(`${Loc.getMessage('CRM_ZOOM_CREATE_MEETING_SERVER_RETURNS_ERROR')}`);
 				this.errorMessages.push(response.errors[0].message);
 				this.showError();
 				console.error(response.errors);
-			}.bind(this));
+			});
 		}
 	}
 
@@ -490,7 +503,11 @@ export class Zoom
 			Dom.append(this.errorElement, this.container.firstElementChild);
 			this.error = true;
 		}
-		Dom.removeClass(this.renderSaveButton(), 'ui-btn-wait');
+
+		if (Type.isFunction(this.onFinishSave))
+		{
+			this.onFinishSave();
+		}
 	}
 
 	cleanError()

@@ -34,10 +34,11 @@ abstract class LimitManager
 	 * Called on data export end.
 	 *
 	 * @param int $rowsCount How many data rows was exported.
+	 * @param string $supersetKey Check for alternate limits.
 	 *
-	 * @return void
+	 * @return bool
 	 */
-	abstract public function fixLimit($rowsCount);
+	abstract public function fixLimit($rowsCount, $supersetKey = '');
 
 	/**
 	 * Returns maximum allowed records count.

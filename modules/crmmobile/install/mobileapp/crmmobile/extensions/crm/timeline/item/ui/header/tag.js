@@ -2,6 +2,7 @@
  * @module crm/timeline/item/ui/header/tag
  */
 jn.define('crm/timeline/item/ui/header/tag', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const TagType = {
 		PRIMARY: 'primary',
 		SECONDARY: 'secondary',
@@ -12,24 +13,24 @@ jn.define('crm/timeline/item/ui/header/tag', (require, exports, module) => {
 
 	const TagColors = {
 		[TagType.PRIMARY]: {
-			backgroundColor: '#e5f9ff',
-			color: '#008dba',
+			backgroundColor: AppTheme.colors.accentSoftBlue2,
+			color: AppTheme.colors.accentSoftElementBlue1,
 		},
 		[TagType.SECONDARY]: {
-			backgroundColor: '#dfe0e3',
-			color: '#828b95',
+			backgroundColor: AppTheme.colors.base6,
+			color: AppTheme.colors.base3,
 		},
 		[TagType.SUCCESS]: {
-			backgroundColor: '#eaf6c3',
-			color: '#688800',
+			backgroundColor: AppTheme.colors.accentSoftGreen2,
+			color: AppTheme.colors.accentSoftElementGreen1,
 		},
 		[TagType.WARNING]: {
-			backgroundColor: '#fef3b8',
-			color: '#ae914b',
+			backgroundColor: AppTheme.colors.accentSoftOrange1,
+			color: AppTheme.colors.accentExtraBrown,
 		},
 		[TagType.FAILURE]: {
-			backgroundColor: '#ffe8e8',
-			color: '#c21b16',
+			backgroundColor: AppTheme.colors.accentSoftRed2,
+			color: AppTheme.colors.accentSoftElementRed1,
 		},
 		getColorByType(tagType)
 		{

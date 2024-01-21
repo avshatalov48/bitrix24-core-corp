@@ -53,6 +53,8 @@ BX.namespace('Tasks.Component');
 				this.checkNoWorkDays(this.getTaskData().MATCH_WORK_TIME === 'Y');
 
 				this.calendarSettings = this.option('calendarSettings');
+
+				this.aiCommandExecutor = null;
 			},
 
 			getUser: function()
@@ -311,8 +313,9 @@ BX.namespace('Tasks.Component');
 				this.bindControl('cancel-button', 'click', BX.delegate(this.onCancelButtonClick, this));
 				this.bindControl('title', 'keyup', BX.delegate(this.onTitleChange, this));
 				this.bindControl('to-checklist', 'click', BX.delegate(this.onToCheckListClick, this));
+				this.bindControl('ai-checklist', 'click', BX.delegate(this.onAiCheckListClick, this));
 
-				var elements = this.scope().getElementsByClassName("js-id-wg-optbar-flag-match-work-time");
+				const elements = this.scope().getElementsByClassName("js-id-wg-optbar-flag-match-work-time");
 				if (elements.length)
 				{
 					BX.bind(elements[0], "change", this.passCtx(this.onWorktimeChange));
@@ -324,9 +327,9 @@ BX.namespace('Tasks.Component');
 				this.bindNestedControls();
 				this.bindSliderEvents();
 
-				BX.Event.EventEmitter.subscribe('BX.Tasks.CheckListItem:CheckListChanged', function(eventData) {
-					var action = eventData.data.action;
-					var allowedActions = ['addAccomplice', 'fileUpload', 'tabIn'];
+				BX.Event.EventEmitter.subscribe('BX.Tasks.CheckListItem:CheckListChanged', (eventData) => {
+					const action = eventData.data.action;
+					const allowedActions = ['addAccomplice', 'fileUpload', 'tabIn'];
 
 					if (BX.util.in_array(action, allowedActions))
 					{
@@ -334,7 +337,7 @@ BX.namespace('Tasks.Component');
 					}
 
 					BX('checklistAnalyticsData').value = Object.keys(this.analyticsData).join(',');
-				}.bind(this));
+				});
 
 				BX.Tasks.Util.hintManager.bindHelp(this.control('options'));
 
@@ -342,12 +345,6 @@ BX.namespace('Tasks.Component');
 					'BX.Tasks.MemberSelector:projectSelected',
 					BX.delegate(this.onProjectSelected, this)
 				);
-
-
-				BX.Event.EventEmitter.subscribe('OnEditorInitedBefore', function (event) {
-					const [ editor ] = event.getData();
-					this.addAiButtons(editor);
-				}.bind(this));
 
 				BX.Event.EventEmitter.subscribe(
 					'BX.Tasks.MemberSelector:projectDeselected',
@@ -784,89 +781,6 @@ BX.namespace('Tasks.Component');
 				}
 			},
 
-			addAiButtons: function(editor)
-			{
-				if (Boolean(this.option('canShowAITextButton')))
-				{
-					editor.AddButton({
-						id: 'ai-text-generator',
-						name: 'text',
-						iconClassName: 'tasks-task-editor-btn-ai-text',
-						disabledForTextarea: false,
-						toolbarSort: 402,
-						handler: () => {
-							const aiTextPicker = new BX.AI.Picker({
-								moduleId: 'tasks',
-								contextId: 'tasks_ai_text_' + this.getUser().DATA.ID,
-								analyticLabel: 'tasks_ai_text',
-								history: true,
-								onSelect: (message) => {
-									const text = message.data;
-									if (editor.bbCode && editor.synchro.IsFocusedOnTextarea())
-									{
-										editor.textareaView.WrapWith(false, false, text);
-										editor.textareaView.Focus();
-									}
-									else
-									{
-										editor.action.actions.insertHTML.exec('insertHTML', text);
-										editor.Focus();
-									}
-								},
-							});
-							aiTextPicker.setLangSpace(BX.AI.Picker.LangSpace.text);
-							aiTextPicker.text();
-						}
-					});
-				}
-
-				if (Boolean(this.option('canShowAIImageButton')))
-				{
-					editor.AddButton({
-						id: 'ai-image-generator',
-						name: 'image',
-						iconClassName: 'tasks-task-editor-btn-ai-image',
-						disabledForTextarea: false,
-						toolbarSort: 401,
-						handler: () => {
-							const aiImagePicker = new BX.AI.Picker({
-								moduleId: 'tasks',
-								contextId: 'tasks_ai_image_' + this.getUser().DATA.ID,
-								analyticLabel: 'tasks_ai_image',
-								history: true,
-								onSelect: (imageURL) => {
-									BX.ajax.runAction('bitrix:tasks.task.ai.image.save', {
-										data: {
-											image: imageURL,
-										}
-									})
-										.then(response => {
-											const fileId = response.data.fileId;
-											const userFieldControl = BX.Disk.Uploader.UserFieldControl.getById('task-form');
-											const uploader = userFieldControl.getUploader();
-											uploader.addFile(fileId, {
-												events: {
-													onLoadComplete: (event) => {
-														const file = event.getTarget();
-														const item = userFieldControl.getItem(file.getId());
-														userFieldControl.getMainPostForm().getParser().insertFile(item);
-														userFieldControl.showUploaderPanel();
-													}
-												}
-											});
-										})
-										.catch(error => {
-											console.log(error);
-										})
-								},
-							});
-							aiImagePicker.setLangSpace(BX.AI.Picker.LangSpace.image);
-							aiImagePicker.image();
-						}
-					});
-				}
-			},
-
 			onToggleAdditionalBlock: function(node)
 			{
 				var opened = BX.hasClass(node, 'opened');
@@ -877,7 +791,7 @@ BX.namespace('Tasks.Component');
 
 			onToggleBlock: function(node)
 			{
-				var target = BX.data(node, 'target');
+				const target = BX.data(node, 'target');
 
 				if (typeof target != 'undefined' && BX.type.isNotEmptyString(target))
 				{
@@ -991,6 +905,10 @@ BX.namespace('Tasks.Component');
 						this.toggleOption('SAVE_AS_TEMPLATE', value);
 						this.switchOption('SAVE_AS_TEMPLATE', value);
 					}
+				}
+				else if (name === 'REGULAR')
+				{
+					BX.Tasks.Util.fadeSlideToggleByClass(this.control('regular-panel'));
 				}
 				else if (name == 'TASK_PARAM_1')
 				{
@@ -1250,6 +1168,23 @@ BX.namespace('Tasks.Component');
 				return text;
 			},
 
+			getEditorText: function()
+			{
+				const container = this.control('editor-container');
+				const isBbCode = (container.querySelector('.bxhtmled-iframe-cnt').style.display === 'none');
+
+				if (isBbCode)
+				{
+					const textArea = container.querySelector('.bxhtmled-textarea');
+
+					return textArea.value;
+				}
+
+				const editor = container.querySelector('.bx-editor-iframe').contentDocument;
+
+				return editor.body.innerText;
+			},
+
 			getTitlesFromText: function(text)
 			{
 				if (text === '')
@@ -1300,6 +1235,69 @@ BX.namespace('Tasks.Component');
 						items: this.getToCheckListPopupMenuItems(titles)
 					});
 					menu.show();
+				}
+			},
+
+			onAiCheckListClick: async function(event)
+			{
+				if (this.option('canUseAIChecklistButton'))
+				{
+					const commandExecutor = await this.getAiCommandExecutor();
+					if (commandExecutor.isProcessing)
+					{
+						return;
+					}
+
+					const makeChecklistBtn = event.target.parentElement;
+					BX.Dom.addClass(makeChecklistBtn, 'tasks-btn-ai-checklist-wait');
+					commandExecutor.isProcessing = true;
+
+					commandExecutor.makeChecklistFromText(this.getEditorText() || 'empty').then((checklistString) => {
+						const titles = this.getTitlesFromText(checklistString);
+						const items = this.getCheckListItemsFromTitles(titles);
+
+						BX.Tasks.CheckListInstance.addCheckList().then((newCheckList) => {
+							items.forEach((item) => newCheckList.addCheckListItem(item));
+							newCheckList.handleTaskOptions();
+						});
+
+						this.openCheckLists();
+					}).catch((err) => {
+						console.log(err);
+					}).finally(() => {
+						BX.Dom.removeClass(makeChecklistBtn, 'tasks-btn-ai-checklist-wait');
+						commandExecutor.isProcessing = false;
+					});
+				}
+				else
+				{
+					BX.UI.InfoHelper.show('limit_copilot_off', {
+						isLimit: true,
+					});
+				}
+
+			},
+
+			getAiCommandExecutor: async function()
+			{
+				if (!this.aiCommandExecutor)
+				{
+					const { CommandExecutor } = await BX.Runtime.loadExtension('ai.command-executor');
+
+					this.aiCommandExecutor = await new CommandExecutor({
+						moduleId: 'main',
+						contextId: 'tasks_field',
+					});
+				}
+
+				return this.aiCommandExecutor;
+			},
+
+			openCheckLists: function()
+			{
+				if (BX.hasClass(this.control('checklist'), 'invisible'))
+				{
+					this.toggleBlock('checklist');
 				}
 			},
 

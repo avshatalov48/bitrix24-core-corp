@@ -74,13 +74,15 @@ BX.ready(function ()
 		activityId: <?=intval($activity['ID']) ?>,
 		mailMessageId: <?=intval($activity['UF_MAIL_MESSAGE']) ?>,
 		ajaxUrl: '<?=$this->__component->getPath() ?>/ajax.php?site_id=<?=\CUtil::jsEscape(SITE_ID) ?>',
-		pageSize: <?=intval($arParams['PAGE_SIZE']) ?>
+		pageSize: <?=intval($arParams['PAGE_SIZE']) ?>,
+		ownerType: '<?= \CCrmOwnerType::ResolveName((int)$activity['OWNER_TYPE_ID']) ?>',
+		ownerId: <?= (int)($activity['OWNER_ID']) ?>
 	});
 });
 
 </script>
 
-<div class="crm-task-list-inner">
+<div class="crm-task-list-inner" style="margin: 0">
 	<div class="crm-task-list-mail crm-task-list-mail-slider">
 
 		<div class="crm-task-list-mail-item-separator crm-task-list-mail-item-separator-slider"
@@ -144,7 +146,9 @@ BX.message({
 
 BX.ready(function ()
 {
+	<?php if (!empty($arResult['LOG']['A'])): ?>
 	BXCrmActivityEmailController.scrollTo(BX('crm-activity-email-details-<?=intval($activity['ID']) ?>'));
+	<?php endif; ?>
 });
 
 </script>

@@ -6,10 +6,8 @@ jn.define('communication/email-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { copyToClipboard } = require('utils/copy');
 	const { stringify } = require('utils/string');
-
-	const pathToExtension = currentDomain + '/bitrix/mobileapp/mobile/extensions/bitrix/communication/email-menu/';
-	const imagePath = pathToExtension + 'images/banner.png';
-
+	const { Connector } = require('crm/mail/mailbox/connector');
+	const AppTheme = require('apptheme');
 	let menu = null;
 
 	/**
@@ -76,18 +74,18 @@ jn.define('communication/email-menu', (require, exports, module) => {
 		];
 	}
 
-	function showEmailBanner(parentWidget)
+	function showEmailBanner(parentWidget, successAction)
 	{
 		const banner = new ContextMenu({
 			banner: {
 				featureItems: [
-					Loc.getMessage('EMAIL_MENU_B24_BANNER_FEATURE_1'),
-					Loc.getMessage('EMAIL_MENU_B24_BANNER_FEATURE_2'),
-					Loc.getMessage('EMAIL_MENU_B24_BANNER_FEATURE_3'),
+					Loc.getMessage('EMAIL_MENU_B24_BANNER_FEATURE_1_2'),
+					Loc.getMessage('EMAIL_MENU_B24_BANNER_FEATURE_2_2'),
+					Loc.getMessage('EMAIL_MENU_B24_BANNER_FEATURE_3_2'),
 				],
-				imagePath,
-				qrauth: {
-					redirectUrl: currentDomain + '/mail/',
+				imageSvg: `<svg width="116" height="116" viewBox="0 0 116 116" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M116 58C116 90.0325 90.0325 116 58 116C25.9675 116 0 90.0325 0 58C0 25.9675 25.9675 0 58 0C90.0325 0 116 25.9675 116 58Z" fill="${AppTheme.colors.accentSoftBlue2}"/><g filter="url(#filter0_d_1040_61200)"><path d="M10.7908 22.8372C10.7908 18.4189 14.3725 14.8372 18.7908 14.8372H70.2324C74.6507 14.8372 78.2324 18.4189 78.2324 22.8372V57.4186C78.2324 61.8368 74.6507 65.4186 70.2324 65.4186H18.7908C14.3725 65.4186 10.7908 61.8368 10.7908 57.4186V22.8372Z" fill="#7FDEFC"/></g><path d="M44.329 50.6252C45.2282 50.3069 45.7267 49.364 45.5409 48.4284L44.9947 45.6782C44.9947 44.463 43.3578 43.0749 40.1343 42.266C39.0422 41.9704 38.0041 41.512 37.0569 40.9072C36.8498 40.7924 36.8813 39.7312 36.8813 39.7312L35.8431 39.5778C35.8431 39.4917 35.7543 38.219 35.7543 38.219C36.9965 37.814 36.8687 35.4245 36.8687 35.4245C37.6575 35.8492 38.1713 33.9583 38.1713 33.9583C39.1043 31.3312 37.7067 31.49 37.7067 31.49C37.9512 29.8862 37.9512 28.2563 37.7067 26.6525C37.0853 21.3323 27.7297 22.7766 28.839 24.5142C26.1047 24.0254 26.7286 30.0628 26.7286 30.0628L27.3217 31.6263C26.4997 32.1437 26.6611 32.7375 26.8414 33.4008C26.9166 33.6774 26.9951 33.966 27.0069 34.2662C27.0642 35.7728 28.0142 35.4606 28.0142 35.4606C28.0728 37.9472 29.3364 38.271 29.3364 38.271C29.5737 39.8326 29.4258 39.5668 29.4258 39.5668L28.3013 39.6988C28.3166 40.0539 28.2867 40.4095 28.2126 40.7576C27.5593 41.0401 27.1593 41.265 26.7633 41.4876C26.3579 41.7155 25.9566 41.9411 25.2919 42.2238C22.7535 43.3034 19.9946 44.7074 19.5042 46.5977C19.3703 47.1137 19.239 47.7956 19.1188 48.5145C18.9683 49.4151 19.4718 50.2984 20.3321 50.6047C23.7084 51.8071 27.5091 52.5191 31.5376 52.6046H33.1811C37.1867 52.5196 40.9671 51.8152 44.329 50.6252Z" fill="white"/><path fill-rule="evenodd" clip-rule="evenodd" d="M49.8838 24.9535C48.7792 24.9535 47.8838 25.8489 47.8838 26.9535V27C47.8838 28.1046 48.7792 29 49.8838 29H67.4652C68.5698 29 69.4652 28.1046 69.4652 27V26.9535C69.4652 25.8489 68.5698 24.9535 67.4652 24.9535H49.8838ZM49.8838 33.0465C48.7792 33.0465 47.8838 33.9419 47.8838 35.0465V35.093C47.8838 36.1976 48.7792 37.093 49.8838 37.093H61.3954C62.5 37.093 63.3954 36.1976 63.3954 35.093V35.0465C63.3954 33.9419 62.5 33.0465 61.3954 33.0465H49.8838Z" fill="white"/><g filter="url(#filter1_d_1040_61200)"><path d="M37.7678 56.5814C37.7678 53.2677 40.4541 50.5814 43.7678 50.5814H99.2094C102.523 50.5814 105.209 53.2677 105.209 56.5814V95.1628C105.209 98.4765 102.523 101.163 99.2094 101.163H43.7678C40.4541 101.163 37.7678 98.4765 37.7678 95.1628V56.5814Z" fill="white"/></g><rect x="88.3491" y="62.7209" width="4.72093" height="4.72093" rx="2" fill="#C3F0FF"/><rect x="88.3491" y="72.1628" width="4.72093" height="4.72093" rx="2" fill="#7FDEFC"/><rect x="88.3491" y="81.6047" width="4.72093" height="4.72093" rx="2" fill="#C3F0FF"/><path fill-rule="evenodd" clip-rule="evenodd" d="M64.8363 74.1959L52.9306 65.5033H76.742L64.8363 74.1959ZM78.9073 67.9746V67.5529L78.9073 67.9746L78.9073 67.9746ZM78.9073 67.9746L64.837 78.3792L50.7666 67.9746V83.8756C50.7666 84.8575 51.673 85.6512 52.7902 85.6512H76.8837C78.0036 85.6512 78.9073 84.8564 78.9073 83.8756L78.9073 67.9746Z" fill="#9DCF00"/><defs><filter id="filter0_d_1040_61200" x="6.79053" y="12.8372" width="75.4419" height="58.5814" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="2"/><feGaussianBlur stdDeviation="2"/><feComposite in2="hardAlpha" operator="out"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.12 0"/><feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1040_61200"/><feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1040_61200" result="shape"/></filter><filter id="filter1_d_1040_61200" x="33.7676" y="48.5814" width="75.4419" height="58.5814" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="2"/><feGaussianBlur stdDeviation="2"/><feComposite in2="hardAlpha" operator="out"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.12 0"/><feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1040_61200"/><feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1040_61200" result="shape"/></filter></defs></svg>`,
+				onCloseBanner() {
+					(new Connector({ parentWidget, successAction })).show();
 				},
 				positioning: 'vertical',
 				title: Loc.getMessage('EMAIL_MENU_B24_BANNER_TITLE'),
@@ -95,7 +93,7 @@ jn.define('communication/email-menu', (require, exports, module) => {
 				buttonText: Loc.getMessage('EMAIL_MENU_B24_BANNER_BUTTON'),
 			},
 			params: {
-				title: Loc.getMessage('EMAIL_MENU_B24_DISABLED'),
+				showCancelButton: false,
 			},
 		});
 

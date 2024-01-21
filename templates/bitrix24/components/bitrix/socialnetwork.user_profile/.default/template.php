@@ -52,7 +52,7 @@ else
 			&& $USER->GetID() != $arUser['ID']
 			&& !in_array($arUser["EXTERNAL_AUTH_ID"], \Bitrix\Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('email')))
 		):
-			?><a class="webform-small-button webform-small-button-accept" href="javascript:void(0)" onclick="if (BX.IM) { BXIM.openMessenger(<?=$arUser['ID']?>); return false; } else { window.open('<?echo $url ?>', '', 'status=no,scrollbars=yes,resizable=yes,width=700,height=550,top='+Math.floor((screen.height - 550)/2-14)+',left='+Math.floor((screen.width - 700)/2-5)); return false; }"><span class="webform-small-button-left"></span><span class="webform-small-button-text"><?=GetMessage("SONET_SEND_MESSAGE")?></span><span class="webform-small-button-right"></span></a><br/><br/><?
+			?><a class="webform-small-button webform-small-button-accept" href="javascript:void(0)" onclick="if (typeof BXIM !== 'undefined') { BXIM.openMessenger(<?=$arUser['ID']?>); return false; } else { window.open('<?echo $url ?>', '', 'status=no,scrollbars=yes,resizable=yes,width=700,height=550,top='+Math.floor((screen.height - 550)/2-14)+',left='+Math.floor((screen.width - 700)/2-5)); return false; }"><span class="webform-small-button-left"></span><span class="webform-small-button-text"><?=GetMessage("SONET_SEND_MESSAGE")?></span><span class="webform-small-button-right"></span></a><br/><br/><?
 
 			if (!in_array($arUser["EXTERNAL_AUTH_ID"], \Bitrix\Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector')))):
 				?><a class="webform-small-button webform-small-button-blue webform-small-button-video" id="im-call-button" href="javascript:void(0)" onclick="if (BXIM) { BXIM.callTo(<?=$arUser['ID']?>); return false; }"><span class="webform-small-button-icon"></span><span><?=GetMessage("SONET_VIDEO_CALL")?></span></a><br/><br/><?
@@ -431,7 +431,7 @@ else
 						<?endif;?>
 					</td>
 				</tr><?
-			
+
 			if (is_array($arResult["UserFieldsMain"]["DATA"]))
 			{
 				foreach ($arResult["UserFieldsMain"]["DATA"] as $field => $arUserField)

@@ -8,6 +8,7 @@ use Bitrix\Main\Localization\Loc;
 
 /**
  * @property \Bitrix\Crm\Contact entityObject
+ * @method array getCompanies()
  */
 class Contact extends Item
 {
@@ -37,7 +38,6 @@ class Contact extends Item
 	protected function getExternalizableFieldNames(): array
 	{
 		return array_diff(parent::getExternalizableFieldNames(), [
-			static::FIELD_NAME_PRODUCTS,
 			static::FIELD_NAME_CONTACT_BINDINGS,
 			static::FIELD_NAME_CONTACT_IDS,
 		]);

@@ -208,6 +208,25 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 			return null;
 		}
 
+		$userIds = array_map(
+			function ($el) {return (int)$el;},
+			$userIds
+		);
+
+		// just filter accessible only
+		$users = \Bitrix\Tasks\Integration\SocialNetwork\User::getUsers($userIds);
+
+		$userIds = [];
+		foreach ($users as $user)
+		{
+			$userIds[] = $user->getId();
+		}
+
+		if (empty($userIds))
+		{
+			return null;
+		}
+
 		return User::isAbsence($userIds);
 	}
 

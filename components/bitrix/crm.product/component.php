@@ -1,9 +1,24 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
+
+use Bitrix\Crm\Restriction\AvailabilityManager;
 
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
+	return;
+}
+
+$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+$isAvailable = $toolsManager->checkCrmAvailability();
+if (!$isAvailable)
+{
+	print AvailabilityManager::getInstance()->getCrmInaccessibilityContent();
+
 	return;
 }
 

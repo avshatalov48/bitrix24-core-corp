@@ -204,13 +204,25 @@ class MultifieldStorage
 	{
 		$result = new Result();
 
-		$isSuccess = $this->fieldMulti->CheckFields(Multifield\Assembler::databaseRowByValue($value));
+		$valueToValidate = clone $value;
+		if ($valueToValidate->getValue() === null)
+		{
+			// hack: 'CheckFields' will not throw error if value is not set, but it's still an error
+			$valueToValidate->setValue('');
+		}
+
+		$isSuccess = $this->fieldMulti->CheckFields(Multifield\Assembler::databaseRowByValue($valueToValidate));
 		if (!$isSuccess)
 		{
-			$result->addError(new Error((string)$this->compatibleApplication->GetException()));
+			$result->addError($this->getErrorFromApplication(['value' => $value]));
 		}
 
 		return $result;
+	}
+
+	private function getErrorFromApplication(?array $customData = null): Error
+	{
+		return new Error((string)$this->compatibleApplication->GetException(), 0, $customData);
 	}
 
 	/**
@@ -223,66 +235,140 @@ class MultifieldStorage
 	 */
 	final public function save(ItemIdentifier $owner, Multifield\Collection $values): Result
 	{
-		$actualCollection = $this->get($owner);
+		$result = new Result();
 
-		$valuesToSave = clone $values;
+		$actualValues = $this->get($owner);
+		if ($actualValues->isEqualTo($values))
+		{
+			return $result;
+		}
 
-		$result = $this->prepareValues($actualCollection, $valuesToSave);
+		[$toAdd, $toUpdate, $toDelete] = $this->separateValuesBySaveOperation($actualValues, $values);
 
-		//todo move saving logic from compatible class to this method. And then call this method in a compatible class
-		$this->fieldMulti->SetFields(
-			\CCrmOwnerType::ResolveName($owner->getEntityTypeId()),
-			$owner->getEntityId(),
-			$valuesToSave->toArray(),
-		);
+		foreach ($toAdd as $value)
+		{
+			$singleValidateResult = $this->validateSingle($value);
+			if (!$singleValidateResult->isSuccess())
+			{
+				$result->addErrors($singleValidateResult->getErrors());
+
+				$toAdd->remove($value);
+			}
+		}
+
+		foreach ($toUpdate as $value)
+		{
+			$singleValidateResult = $this->validateSingle($value);
+			if ($value->getId() <= 0)
+			{
+				$singleValidateResult->addError(
+					new Error('Cant update value without ID', 0, ['value' => $value])
+				);
+			}
+
+			if (!$singleValidateResult->isSuccess())
+			{
+				$result->addErrors($singleValidateResult->getErrors());
+
+				$toUpdate->remove($value);
+			}
+		}
+
+		$saveResult = $this->saveToDb($owner, $toAdd, $toUpdate, $toDelete);
+		if (!$saveResult->isSuccess())
+		{
+			$result->addErrors($saveResult->getErrors());
+		}
 
 		$this->clearCache($owner);
 
 		return $result;
 	}
 
-	/**
-	 * @todo remove it. validation and normalization logic should be moved to FieldsMultiTable
-	 */
-	private function prepareValues(
-		Multifield\Collection $actualValues,
-		Multifield\Collection $valuesToSave
+	private function separateValuesBySaveOperation(
+		Multifield\Collection $oldValues,
+		Multifield\Collection $newValues,
+	): array
+	{
+		$add = new Multifield\Collection();
+		$update = new Multifield\Collection();
+		$delete = new Multifield\Collection();
+
+		foreach ($newValues as $newValue)
+		{
+			$oldValuesHasSameValueAlready = $oldValues->has($newValue);
+			if ($newValue->getId() > 0)
+			{
+				$oldValue = $oldValues->getById($newValue->getId());
+
+				if ($oldValue?->isEqualTo($newValue))
+				{
+					// nothing to do here
+				}
+				elseif ($oldValuesHasSameValueAlready)
+				{
+					// after update this value will become a duplicate of another value, simply remove it
+					$delete->add($newValue);
+				}
+				elseif ($oldValue)
+				{
+					$update->add($newValue);
+				}
+				else
+				{
+					$newValue->setId(null);
+
+					$add->add($newValue);
+				}
+			}
+			elseif (!$oldValuesHasSameValueAlready)
+			{
+				$add->add($newValue);
+			}
+		}
+
+		foreach ($oldValues as $oldValue)
+		{
+			if (
+				// in case its being updated, we look if there is value with same id
+				!$newValues->getById($oldValue->getId())
+				&& !$newValues->has($oldValue)
+			)
+			{
+				$delete->add($oldValue);
+			}
+		}
+
+		return [$add, $update, $delete];
+	}
+
+	private function saveToDb(
+		ItemIdentifier $owner,
+		Multifield\Collection $toAdd,
+		Multifield\Collection $toUpdate,
+		Multifield\Collection $toDelete
 	): Result
 	{
-		$result = new Result();
-		$invalidValues = [];
-		foreach ($valuesToSave as $valueToSave)
+		$toAddCompatibleArray = [];
+		foreach ($toAdd as $value)
 		{
-			if (is_null($valueToSave->getValue()))
-			{
-				$valueToSave->setValue('');
-			}
-
-			$validateResult = $this->validateSingle($valueToSave);
-			if (!$validateResult->isSuccess())
-			{
-				$result->addErrors($validateResult->getErrors());
-				$invalidValues[] = $valueToSave;
-			}
+			$toAddCompatibleArray[] = Multifield\Assembler::databaseRowByValue($value);
 		}
 
-		foreach ($actualValues as $actualValue)
+		$toUpdateCompatibleArray = [];
+		foreach ($toUpdate as $value)
 		{
-			if (!$valuesToSave->getById($actualValue->getId()))
-			{
-				// delete value that was removed from actual collection
-				$actualValue->setValue('');
-				$valuesToSave->add($actualValue);
-			}
+			$toUpdateCompatibleArray[$value->getId()] = Multifield\Assembler::databaseRowByValue($value);
 		}
 
-		foreach ($invalidValues as $invalidValue)
-		{
-			//do not save (skip) invalid values
-			$valuesToSave->remove($invalidValue);
-		}
-
-		return $result;
+		//todo move saving and validation logic to FieldMultiTable
+		return $this->fieldMulti->saveBulk(
+			\CCrmOwnerType::ResolveName($owner->getEntityTypeId()),
+			$owner->getEntityId(),
+			$toAddCompatibleArray,
+			$toUpdateCompatibleArray,
+			array_map(fn(Multifield\Value $value) => $value->getId(), $toDelete->getAll()),
+		);
 	}
 
 	/**

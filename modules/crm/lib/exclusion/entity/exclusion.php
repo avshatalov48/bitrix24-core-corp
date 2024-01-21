@@ -129,7 +129,7 @@ class ExclusionTable extends Entity\DataManager
 		{
 			return;
 		}
-
+		$sqlHelper = Application::getConnection()->getSqlHelper();
 		foreach (static::divideList($updateList) as $list)
 		{
 			$keys = implode(', ', array_keys(current($list)));
@@ -149,7 +149,7 @@ class ExclusionTable extends Entity\DataManager
 			$values = implode('), (', $values);
 
 			$tableName = static::getTableName();
-			$sql = "INSERT IGNORE $tableName($keys) VALUES($values)";
+			$sql = $sqlHelper->getInsertIgnore($tableName, "($keys)", "VALUES($values)");
 			Application::getConnection()->query($sql);
 		}
 	}

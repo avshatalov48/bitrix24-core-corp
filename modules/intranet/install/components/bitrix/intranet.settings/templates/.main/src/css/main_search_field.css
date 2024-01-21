@@ -1,0 +1,172 @@
+/* SEARCH FIELD */
+.main-ui-filter-search {
+	position: relative;
+	float: left;
+	margin-top: 18px;
+	margin-bottom: 18px;
+	min-width: 420px;
+	border: 1px solid #c8d1d6;
+}
+
+.main-ui-filter-search .main-ui-filter-field-square {
+	margin: 4px 5px 4px 5px;
+	background: #bcedfc;
+}
+
+
+.main-ui-filter-search-filter {
+	position: relative;
+	z-index: 1;
+	box-sizing: border-box;
+	/*margin: 4px 1px;*/
+	padding: 0 55px 0 16px;
+	width: 100%;
+	height: 30px;
+	outline: none;
+	border: none;
+	border-radius: 2px;
+	background-color: #fff;
+	font: 15px/30px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	/*transition: background .3s;*/
+}
+
+.main-ui-filter-search-filter::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+	color: #b1b6bb;
+}
+
+.main-ui-filter-search-filter:hover::-webkit-input-placeholder { color: #80868e; }
+
+.pagetitle-wrap-filter-opened .main-ui-filter-search-filter:hover::-webkit-input-placeholder {
+	color: #b1b6bb;
+}
+
+.main-ui-filter-search-filter::-moz-placeholder { /* Firefox 19+ */
+	color: #b1b6bb;
+	opacity: 1;
+}
+
+.main-ui-filter-search-filter:hover::-moz-placeholder { color: #80868e; }
+
+.pagetitle-wrap-filter-opened .main-ui-filter-search-filter:hover::-moz-placeholder { color: #b1b6bb; }
+
+.main-ui-filter-search-filter:-ms-input-placeholder { /* IE 10+ */
+	color: #b1b6bb;
+}
+
+.main-ui-filter-search-filter:hover:-ms-input-placeholder { color: #80868e; }
+
+.pagetitle-wrap-filter-opened .main-ui-filter-search-filter:hover:-ms-input-placeholder { color: #b1b6bb; }
+
+.main-ui-filter-search-filter:-moz-placeholder { /* Firefox 18- */
+	color: #b1b6bb;
+	opacity: 1;
+}
+
+.main-ui-filter-search-filter:hover:-moz-placeholder { color: #80868e; }
+
+.pagetitle-wrap-filter-opened .main-ui-filter-search-filter:hover:-moz-placeholder { color: #b1b6bb; }
+
+/* END OF SEARCH FIELD */
+
+/* NEW BASIC CONTROLS */
+.main-ui-item-icon.main-ui-search {
+	position: absolute;
+	right: 8px;
+	z-index: 1;
+	width: 25px;
+	height: 39px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2215%22%20height%3D%2215%22%20viewBox%3D%220%200%2015%2015%22%3E%3Cpath%20fill%3D%22%23535C68%22%20fill-rule%3D%22evenodd%22%20d%3D%22M1.33%205.5c0-2.304%201.866-4.17%204.17-4.17S9.67%203.195%209.67%205.5c0%202.305-1.865%204.17-4.17%204.17-2.305%200-4.17-1.865-4.17-4.17m12.528%206.944l-3.816-3.817-.014-.008C10.64%207.73%2011%206.66%2011%205.5%2011%202.462%208.537%200%205.5%200S0%202.462%200%205.5%202.463%2011%205.5%2011c1.158%200%202.232-.36%203.118-.972.004.004.005.01.01.014l3.816%203.817c.372.37.982.37%201.354%200l.06-.063c.372-.372.372-.982%200-1.354%22/%3E%3C/svg%3E');
+	background-position: center 11px;
+	background-repeat: no-repeat;
+	opacity: .3;
+	top: 0;
+}
+
+.main-ui-item-icon.main-ui-search:hover { opacity: 1; }
+
+.main-ui-select .main-ui-search {
+	top: 50%;
+	left: 0;
+	width: 30px;
+	background-position: 6px -202px;
+	transform: translate(0, -50%);
+}
+
+.main-ui-filter-search .main-ui-delete {
+	right: 10px;
+	z-index: 1;
+}
+
+.main-ui-search-icon:before {
+	position: absolute;
+	top: 50%;
+	left: 0;
+	width: 30px;
+	height: 38px;
+	content: '';
+	opacity: .4;
+	-webkit-transform: translate(0, -50%);
+	transform: translate(0, -50%);
+}
+/* END OF NEW BASIC CONTROLS */
+
+.main-ui-filter-search {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	position: relative;
+	height: 39px;
+	border: 1px solid transparent;
+	border-radius: var(--main-ui-filter-search-border-radius, var(--ui-border-radius-2xs, 2px));
+	background: #fff;
+	font: 15px/39px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	box-sizing: border-box;
+	outline: none;
+	z-index: 1;
+	overflow: hidden;
+}
+
+.pagetitle-container-light .main-ui-filter-search {
+	-webkit-box-flex: 1;
+	-webkit-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+	max-width: 780px;
+	height: 38px;
+	-webkit-box-shadow: inset 0 0 0 1px #c8d1d6;
+	box-shadow: inset 0 0 0 1px #c8d1d6;
+	margin-right: 19px;
+}
+
+.main-ui-item-icon-block .main-ui-item-icon.main-ui-search,
+.main-ui-item-icon-block  .main-ui-item-icon.main-ui-delete {
+	transition: all 150ms;
+}
+
+.main-ui-item-icon-block  .main-ui-item-icon.main-ui-delete {
+	opacity: 0;
+	right: -30px;
+}
+
+.main-ui-show.main-ui-item-icon-block  .main-ui-item-icon.main-ui-search {
+	right: 25px;
+}
+
+.main-ui-show.main-ui-item-icon-block  .main-ui-item-icon.main-ui-delete {
+	right: 5px;
+	width: 20px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2212%22%20height%3D%2211%22%20viewBox%3D%220%200%2012%2011%22%3E%3Cpath%20fill%3D%22%23535C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M7.587%205.503l4.4-4.398-1.132-1.13-4.4%204.397L2.06-.026l-1.13%201.13%204.397%204.4L.927%209.9l1.13%201.132%204.4-4.398%204.398%204.398%201.13-1.13-4.398-4.4z%22/%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+	background-position: center 13px;
+	-webkit-transition: right .3s, opacity .3s;
+	transition: right .3s, opacity .3s;
+	opacity: .3;
+}
+
+.main-ui-show.main-ui-item-icon-block  .main-ui-item-icon.main-ui-delete:hover {
+	opacity: 1;
+}
+
+.ui-sidepanel-menu-item.--found .ui-sidepanel-menu-link .ui-sidepanel-menu-link-text {
+	color: yellow;
+}

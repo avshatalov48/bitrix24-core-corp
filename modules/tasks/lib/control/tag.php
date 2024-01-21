@@ -3,8 +3,11 @@
 namespace Bitrix\Tasks\Control;
 
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Access\TagAccessController;
-use Bitrix\Tasks\Internals\Log\Log;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\EO_TaskTag;
 use Bitrix\Tasks\Internals\Task\EO_TaskTag_Collection;
@@ -18,14 +21,18 @@ class Tag
 	public const TASK_TAGS_CACHE = 'task';
 	public const GROUP_TAGS_CACHE = 'group';
 
-	private int $userId;
 	private static array $storage = [];
 
-	public function __construct(int $userId)
+	public function __construct(private int $userId = 0)
 	{
-		$this->userId = $userId;
 	}
 
+	/**
+	 * @throws SystemException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws ArgumentException
+	 */
 	public function set(int $taskId, array $tags, int $oldGroupId = 0, int $newGroupId = 0, bool $onlyAdd = false): void
 	{
 		if (empty($taskId))
@@ -51,7 +58,7 @@ class Tag
 				&& empty(array_diff($tags, $currentTags))
 			)
 			{
-				self::invalidateCache();
+				self::invalidate();
 				return;
 			}
 		}
@@ -72,42 +79,37 @@ class Tag
 			$this->deleteFromGroupTask($taskId, $groupId, $delete);
 		}
 
-		self::invalidateCache();
+		self::invalidate();
 	}
 
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	public function getTaskTags(int $taskId): array
 	{
 		$this->cacheCurrentTags($taskId);
 		return $this->getNames(self::$storage[self::TASK_TAGS_CACHE]);
 	}
 
-	public function delete($tags): void
+	public function delete(array $tags): void
 	{
 		if (empty($tags))
 		{
 			return;
 		}
 
-		if (!is_array($tags))
-		{
-			$tags = [$tags];
-		}
-
-		TaskTagTable::deleteList([
-			'@TAG_ID' => $tags,
-		]);
-
-		LabelTable::deleteList([
-			'@ID' => $tags,
-		]);
-		foreach ($tags as $tagId)
-		{
-			TagAccessController::dropItemCache($tagId);
-		}
-
-		self::invalidateCache();
+		LabelTable::deleteByFilter(['@ID' => $tags]);
+		self::invalidate();
 	}
 
+	/**
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
 	private function deleteFromTask(int $taskId, array $tagsForDelete): void
 	{
 		if (empty($tagsForDelete))
@@ -130,7 +132,7 @@ class Tag
 			if (in_array($tag['NAME'], $forDelete, true))
 			{
 				$idList[] = $tag['ID'];
-				TagAccessController::dropItemCache($tag['ID']);
+				TagAccessController::invalidate($tag['ID']);
 			}
 		}
 
@@ -140,6 +142,12 @@ class Tag
 		]);
 	}
 
+	/**
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
 	private function deleteFromGroupTask(int $taskId, int $groupId, array $tagsForDelete): void
 	{
 		if (empty($tagsForDelete))
@@ -163,7 +171,7 @@ class Tag
 			if (in_array($tag['NAME'], $forDelete, true))
 			{
 				$idList[] = $tag['ID'];
-				TagAccessController::dropItemCache($tag['ID']);
+				TagAccessController::invalidate($tag['ID']);
 			}
 		}
 
@@ -173,39 +181,9 @@ class Tag
 		]);
 	}
 
-	public function getList(array $filter): array
-	{
-		$filter = $this->validate($filter);
-		if (empty($filter))
-		{
-			return [];
-		}
-
-		$rows = LabelTable::getList([
-			'select' => [
-				'ID',
-				'USER_ID',
-				'TASK_TAG_' => 'TASK_TAG',
-				'GROUP_ID',
-				'NAME',
-			],
-			'filter' => $filter
-		])->fetchAll();
-
-		if (empty($rows))
-		{
-			return [];
-		}
-
-		return array_map(fn (array $el): array => [
-			'ID' => $el['ID'],
-			'NAME' => $el['NAME'],
-			'USER_ID' => $el['USER_ID'],
-			'GROUP_ID' => $el['GROUP_ID'],
-			'TASK_ID' => $el[LabelTable::getRelationAlias() . '_TASK_ID'],
-		], $rows);
-	}
-
+	/**
+	 * @throws Exception
+	 */
 	public function edit(int $tagId, string $newName): void
 	{
 		$newName = trim($newName);
@@ -218,19 +196,28 @@ class Tag
 			'NAME' => $newName,
 		]);
 
-		TagAccessController::dropItemCache($tagId);
-		self::invalidateCache();
+		self::invalidate($tagId);
 	}
 
+	/**
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	public function unlinkTags(int $taskId): void
 	{
 		TaskTagTable::deleteList([
 			'=TASK_ID' => $taskId,
 		]);
 
-		self::invalidateCache();
+		self::invalidate();
 	}
 
+	/**
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	public function unlinkTag(int $taskId, int $tagId): void
 	{
 		TaskTagTable::deleteList([
@@ -238,9 +225,12 @@ class Tag
 			'=TAG_ID' => $tagId,
 		]);
 
-		self::invalidateCache();
+		self::invalidate();
 	}
 
+	/**
+	 * @throws Exception
+	 */
 	public function linkTag(int $taskId, int $tagId): void
 	{
 		TaskTagTable::add([
@@ -248,9 +238,14 @@ class Tag
 			'TAG_ID' => $tagId,
 		]);
 
-		self::invalidateCache();
+		self::invalidate();
 	}
 
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	public function linkTags(int $taskId, array $tagIds): void
 	{
 		$existingTags = LabelTable::getList([
@@ -278,9 +273,14 @@ class Tag
 
 		$collection->save(true);
 
-		self::invalidateCache();
+		self::invalidate();
 	}
 
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	public function isExistsByGroup(int $groupId, string $name): bool
 	{
 		$name = $this->prepareTag($name);
@@ -301,6 +301,11 @@ class Tag
 		return in_array($name, $groupTags, true);
 	}
 
+	/**
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
 	public function isExists(string $name, int $groupId, int $taskId): bool
 	{
 		if ($taskId > 0 && $this->isExistsByTask($taskId, $name))
@@ -315,6 +320,11 @@ class Tag
 		return $this->isExistsByUser($name);
 	}
 
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	public function isExistsByUser(string $name): bool
 	{
 		$name = $this->prepareTag($name);
@@ -329,6 +339,11 @@ class Tag
 		return in_array($name, $userTags, true);
 	}
 
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	public function isExistsByTask(int $taskId, string $name): bool
 	{
 		$name = $this->prepareTag($name);
@@ -343,37 +358,12 @@ class Tag
 		return in_array($name, $currentTags, true);
 	}
 
-	public function getByIdByUser(int $tagId): string
-	{
-		$this->cacheUserTags();
-		$tags = self::$storage[self::USER_TAGS_CACHE];
-		foreach ($tags as $tag)
-		{
-			if ((int)$tag['ID'] === $tagId)
-			{
-				return $tag['NAME'];
-			}
-		}
-
-		return '';
-	}
-
-	public function getByIdByGroup(int $groupId, int $tagId): string
-	{
-		$this->cacheGroupTags($groupId);
-		$tags = self::$storage[self::GROUP_TAGS_CACHE];
-		foreach ($tags as $tag)
-		{
-			if ((int)$tag['ID'] === $tagId)
-			{
-				return $tag['NAME'];
-			}
-		}
-
-		return '';
-	}
-
-	public function getIdByUser(array $tag, $userId = 0): int
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
+	public function getIdByUser(array $tag, int $userId = 0): int
 	{
 		$tagName = $this->prepareTag($tag['NAME']);
 		if (empty($userId))
@@ -395,6 +385,11 @@ class Tag
 		return 0;
 	}
 
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	public function getIdByGroup(int $groupId, $tag): int
 	{
 		$this->cacheGroupTags($groupId);
@@ -414,6 +409,11 @@ class Tag
 		return 0;
 	}
 
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	public function getIdByTask(int $taskId, $tag): int
 	{
 		$this->cacheCurrentTags($taskId);
@@ -432,6 +432,11 @@ class Tag
 		return 0;
 	}
 
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	private function getTagsForAdd(int $taskId, array $newTags): array
 	{
 		$this->cacheCurrentTags($taskId);
@@ -451,6 +456,11 @@ class Tag
 		return $add;
 	}
 
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	private function getTagsToDelete(int $taskId, array $newTags): array
 	{
 		$this->cacheCurrentTags($taskId);
@@ -491,6 +501,12 @@ class Tag
 		return 0;
 	}
 
+	/**
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
 	private function addToGroup(int $groupId, array $tags): array
 	{
 		if (empty($tags))
@@ -532,6 +548,12 @@ class Tag
 		return $idList;
 	}
 
+	/**
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
 	private function addToUser(int $userId, array $tags): array
 	{
 		if (empty($tags))
@@ -573,6 +595,9 @@ class Tag
 		return $idList;
 	}
 
+	/**
+	 * @throws Exception
+	 */
 	public function addTagToUser(string $tagName): void
 	{
 		$tagName = trim($tagName);
@@ -587,9 +612,12 @@ class Tag
 			'GROUP_ID' => 0,
 		]);
 
-		self::invalidateCache();
+		self::invalidate();
 	}
 
+	/**
+	 * @throws Exception
+	 */
 	public function addTag(string $tagName, int $groupId): void
 	{
 		if ($groupId > 0)
@@ -602,6 +630,11 @@ class Tag
 		}
 	}
 
+	/**
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	public function deleteGroupTags(int $groupId): void
 	{
 		LabelTable::deleteList([
@@ -609,9 +642,12 @@ class Tag
 			'=GROUP_ID' => $groupId,
 		]);
 
-		self::invalidateCache();
+		self::invalidate();
 	}
 
+	/**
+	 * @throws Exception
+	 */
 	public function addTagToGroup(string $tagName, int $groupId): void
 	{
 		$tagName = trim($tagName);
@@ -626,9 +662,15 @@ class Tag
 			'GROUP_ID' => $groupId,
 		]);
 
-		self::invalidateCache();
+		self::invalidate();
 	}
 
+	/**
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
 	public function addToGroupTask(int $taskId, int $groupId, array $tagsForAdd): void
 	{
 		if (empty($tagsForAdd))
@@ -679,6 +721,12 @@ class Tag
 		Application::getConnection()->query($sql);
 	}
 
+	/**
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
 	public function addToTask(int $taskId, array $tagsForAdd, int $userId = 0): void
 	{
 		if (empty($userId))
@@ -734,6 +782,11 @@ class Tag
 		Application::getConnection()->query($sql);
 	}
 
+	/**
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	private function moveToGroup(int $taskId, int $groupId): void
 	{
 		$this->cacheCurrentTags($taskId);
@@ -758,9 +811,15 @@ class Tag
 			'@TAG_ID' => $ids,
 		]);
 
-		self::invalidateCache();
+		self::invalidate();
 	}
 
+	/**
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
 	private function moveToUser(int $userId, int $taskId, int $groupId): void
 	{
 		if (empty($userId) || empty($taskId) || empty($groupId))
@@ -799,6 +858,11 @@ class Tag
 		]);
 	}
 
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	private function cacheUserTags(int $userId = 0): void
 	{
 		if (empty($userId))
@@ -821,6 +885,11 @@ class Tag
 		])->fetchAll();
 	}
 
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	private function cacheGroupTags(int $groupId): void
 	{
 		if (array_key_exists(self::GROUP_TAGS_CACHE, self::$storage))
@@ -844,6 +913,11 @@ class Tag
 		])->fetchAll();
 	}
 
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	private function cacheCurrentTags(int $taskId): void
 	{
 		if (array_key_exists(self::TASK_TAGS_CACHE, self::$storage))
@@ -863,66 +937,10 @@ class Tag
 		])->fetchAll();
 	}
 
-	private static function invalidateCache(): void
+	private static function invalidate(?int $tagId = null): void
 	{
 		self::$storage = [];
-	}
-
-	private function validate(array $filter): array
-	{
-		$validFilter = [];
-
-		foreach ($filter as $key => $value)
-		{
-			switch ($key)
-			{
-				case 'ID':
-				case 'TAG_ID':
-					if (empty($value))
-					{
-						break;
-					}
-					if (!is_array($value))
-					{
-						$value = [$value];
-					}
-					$value = array_map('intval', $value);
-					$validFilter['@ID'] = $value;
-					break;
-
-				case 'TASK_ID':
-					if (empty($value))
-					{
-						break;
-					}
-					if (!is_array($value))
-					{
-						$value = [$value];
-					}
-					$value = array_map('intval', $value);
-					$validFilter['@'. LabelTable::getRelationAlias() . '_' . $key] = $value;
-					break;
-
-				case 'NAME':
-					if (empty($value))
-					{
-						break;
-					}
-					$validFilter[$key] = '%' . $value . '%';
-					break;
-
-				case 'GROUP_ID':
-				case 'USER_ID':
-					if (empty($value))
-					{
-						break;
-					}
-					$validFilter['=' . $key] = (int)$value;
-					break;
-			}
-		}
-
-		return $validFilter;
+		TagAccessController::invalidate($tagId);
 	}
 
 	private function prepareTag(string $name): string

@@ -1,24 +1,25 @@
-import {Cash} from './cash'
-import {Check} from './check'
-import {CheckSent} from './check-sent'
-import {Payment} from './payment'
-import {Sent} from './sent'
-import {Watch} from './watch'
+import { Cash } from './cash';
+import { Check } from './check';
+import { CheckSent } from './check-sent';
+import { Custom } from './custom';
+import { Payment } from './payment';
+import { Sent } from './sent';
+import { Watch } from './watch';
 
-let items = [
+const items = [
 	Cash,
 	Check,
 	CheckSent,
+	Custom,
 	Payment,
 	Sent,
-	Watch
+	Watch,
 ];
 class Factory
 {
 	static create(options)
 	{
-		let item = items
-			.filter(item => options.type === item.type())[0];
+		const item = items.find((item) => options.type === item.type());
 
 		if (!item)
 		{
@@ -31,5 +32,5 @@ class Factory
 
 export
 {
-	Factory
+	Factory,
 };

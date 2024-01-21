@@ -3,15 +3,23 @@
  * @module crm/entity-detail/component/payment-automation-menu-item
  */
 jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, exports, module) => {
-	const { StageListItem } = require('crm/stage-list/item');
-	const { stayStageItem } = require('crm/stage-list');
-	const { StageListView } = require('crm/stage-list-view');
-	const { CategoryStorage } = require('crm/storage/category');
+	const AppTheme = require('apptheme');
+	const { CrmStageListItem } = require('crm/stage-list/item');
+	const { stayStageItem } = require('layout/ui/stage-list');
+	const { CrmStageListView } = require('crm/stage-list-view');
 	const { Loc } = require('loc');
 	const { getEntityMessage } = require('crm/loc');
 	const { WidgetHeaderButton } = require('layout/ui/widget-header-button');
 	const { NotifyManager } = require('notify-manager');
 	const { PlanRestriction } = require('layout/ui/plan-restriction');
+	const { connect } = require('statemanager/redux/connect');
+	const {
+		getCrmKanbanUniqId,
+		selectStagesIdsBySemantics,
+	} = require('crm/statemanager/redux/slices/kanban-settings');
+	const {
+		selectEntities,
+	} = require('crm/statemanager/redux/slices/stage-settings');
 
 	const pathToIcons = `${currentDomain}/bitrix/mobileapp/crmmobile/components/crm/crm.entity.details/icons/`;
 
@@ -56,21 +64,19 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 							entityId: this.props.entityId,
 							entityTypeId: this.props.entityTypeId,
 						},
-					})
-						.then((response) => {
-							this.setState({
-								stageOnOrderPaid: response.data.stageOnOrderPaid,
-								stageOnDeliveryFinished: response.data.stageOnDeliveryFinished,
-								loading: false,
-							});
-						})
-						.catch(() => {
-							this.setState({
-								stageOnOrderPaid: '',
-								stageOnDeliveryFinished: '',
-								loading: false,
-							});
+					}).then((response) => {
+						this.setState({
+							stageOnOrderPaid: response.data.stageOnOrderPaid,
+							stageOnDeliveryFinished: response.data.stageOnDeliveryFinished,
+							loading: false,
 						});
+					}).catch(() => {
+						this.setState({
+							stageOnOrderPaid: '',
+							stageOnDeliveryFinished: '',
+							loading: false,
+						});
+					});
 				},
 			);
 		}
@@ -110,15 +116,16 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 				activeStageId = stage.id;
 			}
 
-			void StageListView.open(
+			void CrmStageListView.open(
 				{
+					kanbanSettingsId: getCrmKanbanUniqId(this.props.entityTypeId, this.props.categoryId),
 					entityTypeId: this.props.entityTypeId,
 					categoryId: this.props.categoryId,
 					activeStageId,
 					readOnly: true,
 					canMoveStages: false,
 					enableStageSelect: true,
-					onStageSelect: ({ id }) => this.onSelectedStage(id, data),
+					onStageSelect: (id) => this.onSelectedStage(id, data),
 					stageParams: {
 						showTunnels: false,
 						showTotal: false,
@@ -128,7 +135,6 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 						showStayStageItem: true,
 					},
 				},
-				{},
 				this.layout,
 			);
 		}
@@ -223,7 +229,7 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 
 		getStageListItem(stage)
 		{
-			return new StageListItem({
+			return CrmStageListItem({
 				readOnly: true,
 				canMoveStages: false,
 				onSelectedStage: null,
@@ -237,15 +243,11 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 
 		getStages()
 		{
-			const { entityTypeId, categoryId } = this.props;
-
-			const category = CategoryStorage.getCategory(entityTypeId, categoryId);
+			const { stages } = this.props;
 
 			return [
 				stayStageItem(false),
-				...category.processStages,
-				...category.successStages,
-				...category.failedStages,
+				...Object.values(stages),
 			];
 		}
 
@@ -270,12 +272,11 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 							stageOnDeliveryFinished: this.state.stageOnDeliveryFinished,
 						},
 					},
-				})
-					.then((response) => {
-						resolve(response);
-						NotifyManager.hideLoadingIndicator(true);
-						setTimeout(() => this.layout.close(), 500);
-					});
+				}).then((response) => {
+					resolve(response);
+					NotifyManager.hideLoadingIndicator(true);
+					setTimeout(() => this.layout.close(), 500);
+				}).catch(console.error);
 			});
 		}
 
@@ -291,7 +292,10 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 					: this.renderCurrentStageItems(),
 				Text({
 					style: styles.stageHintText,
-					text: getEntityMessage('M_CRM_ACTION_PAYMENT_AUTOMATION_SELECT_STAGE_TEXT', this.props.entityTypeId),
+					text: getEntityMessage(
+						'M_CRM_ACTION_PAYMENT_AUTOMATION_SELECT_STAGE_TEXT',
+						this.props.entityTypeId,
+					),
 				}),
 			);
 		}
@@ -323,7 +327,7 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 
 	const openAutomationBackdrop = (entityId, entityTypeId, categoryId) => {
 		const widgetParams = {
-			backgroundColor: '#eef2f4',
+			backgroundColor: AppTheme.colors.bgSecondary,
 			backdrop: {
 				swipeAllowed: true,
 				forceDismissOnSwipeDown: false,
@@ -331,13 +335,13 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 				showOnTop: false,
 				adoptHeightByKeyboard: true,
 				shouldResizeContent: true,
-				navigationBarColor: '#eef2f4',
+				navigationBarColor: AppTheme.colors.bgSecondary,
 			},
 		};
 
 		PageManager.openWidget('layout', widgetParams)
 			.then((widget) => {
-				const layoutComponent = new AutomationStageComponent({
+				const layoutComponent = connect(mapStateToProps)(AutomationStageComponent)({
 					entityId,
 					entityTypeId,
 					categoryId,
@@ -348,15 +352,29 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 				});
 				widget.enableNavigationBarBorder(false);
 				widget.showComponent(layoutComponent);
-			});
+			}).catch(console.error);
+	};
+
+	const mapStateToProps = (state, { entityTypeId, categoryId }) => {
+		const stageIdsBySemantics = selectStagesIdsBySemantics(state, getCrmKanbanUniqId(entityTypeId, categoryId)) || {};
+
+		const stageIds = [
+			...stageIdsBySemantics.processStages,
+			...stageIdsBySemantics.successStages,
+			...stageIdsBySemantics.failedStages,
+		];
+
+		return {
+			stages: selectEntities(state, stageIds),
+		};
 	};
 
 	const styles = {
 		stagesContainer: {
-			backgroundColor: '#eef2f4',
+			backgroundColor: AppTheme.colors.bgSecondary,
 		},
 		currentStageContainer: {
-			backgroundColor: '#ffffff',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			paddingLeft: 16,
 			paddingRight: 16,
 			paddingTop: 6,
@@ -366,21 +384,21 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 			flexDirection: 'column',
 		},
 		currentStageTitle: {
-			color: '#a8adb4',
+			color: AppTheme.colors.base4,
 			fontSize: 10,
 			marginTop: 8,
 			marginBottom: 0,
 		},
 		currentStageItem: {},
 		separator: {
-			borderBottomColor: '#ebebeb',
+			borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
 			borderBottomWidth: 1,
 			marginBottom: 6,
 		},
 		loader: {
 			width: '100%',
 			height: '100%',
-			backgroundColor: '#eef2f4',
+			backgroundColor: AppTheme.colors.bgPrimary,
 			flexGrow: 1,
 			flexDirection: 'column',
 			justifyContent: 'center',
@@ -388,7 +406,7 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 		},
 		stageHintText: {
 			fontSize: 14,
-			color: '#a8adb4',
+			color: AppTheme.colors.base4,
 			marginTop: 12,
 			marginLeft: 16,
 			marginRight: 16,

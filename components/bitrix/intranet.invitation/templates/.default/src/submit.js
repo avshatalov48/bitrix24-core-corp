@@ -155,7 +155,7 @@ export class Submit extends EventEmitter
 	{
 		const selfForm = this.parent.contentBlocks["self"].querySelector("form");
 		let obRequestData = {
-			"allow_register": selfForm["allow_register"].checked ? "Y" : "N",
+			"allow_register": selfForm["allow_register"].value,
 			"allow_register_confirm": selfForm["allow_register_confirm"].checked ? "Y" : "N",
 			"allow_register_secret": selfForm["allow_register_secret"].value,
 			"allow_register_whitelist": selfForm["allow_register_whitelist"].value,
@@ -254,12 +254,13 @@ export class Submit extends EventEmitter
 	{
 		this.disableSubmitButton(true);
 		requestData["userOptions"] = this.parent.userOptions;
+		requestData["analyticsData"] = this.parent.analyticsLabel;
 
 		BX.ajax.runComponentAction(this.parent.componentName, action, {
 			signedParameters: this.parent.signedParameters,
 			mode: "ajax",
 			data: requestData,
-			analyticsLabel: analyticsLabel
+			analyticsLabel: analyticsLabel,
 		}).then((response) => {
 
 			this.disableSubmitButton(false);

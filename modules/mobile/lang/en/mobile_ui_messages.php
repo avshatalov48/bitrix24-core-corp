@@ -1,5 +1,5 @@
-<?
-$MESS["MUI_B24DISK"] = "Bitrix24.Drive";
+<?php
+$MESS["MUI_B24DISK_MSGVER_1"] = "Drive";
 $MESS["MUI_CAMERA_ROLL"] = "Take photo";
 $MESS["MUI_CANCEL"] = "Cancel";
 $MESS["MUI_CHOOSE_FILE_TITLE"] = "Files";
@@ -8,4 +8,3 @@ $MESS["MUI_COPY"] = "Copy";
 $MESS["MUI_COPY_TEXT"] = "Copy text";
 $MESS["MUI_PROCESSING"] = "Processing...";
 $MESS["MUI_TEXT_COPIED"] = "Text has been copied to the Clipboard";
-?>

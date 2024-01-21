@@ -16,7 +16,7 @@ use Bitrix\Tasks\Item;
 use Bitrix\Tasks\Item\Result;
 use Bitrix\Tasks\Provider\TaskList;
 use Bitrix\Tasks\Provider\TaskQuery;
-use Bitrix\Tasks\Replicator\Template\TaskProducer;
+use Bitrix\Tasks\Replicator\Template\Repetition\RegularTemplateTaskProducer;
 use Bitrix\Tasks\Util\Collection;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util;
@@ -28,7 +28,7 @@ Loc::loadMessages(__FILE__);
 
 /**
  * @deprecated
- * @see \Bitrix\Tasks\Replicator\Template\Replicators\RegularTaskReplicator
+ * @see \Bitrix\Tasks\Replicator\Template\Replicators\RegularTemplateTaskReplicator
  */
 
 final class FromTemplate extends Util\Replicator\Task
@@ -439,14 +439,7 @@ final class FromTemplate extends Util\Replicator\Task
 
 						$taskId = $task->getId();
 
-						if ($produceResult->getErrors()->isEmpty())
-						{
-							$createMessage = Loc::getMessage('TASKS_REPLICATOR_TASK_CREATED');
-						}
-						else
-						{
-							$createMessage = Loc::getMessage('TASKS_REPLICATOR_TASK_CREATED_WITH_ERRORS');
-						}
+                        $createMessage = Loc::getMessage('TASKS_REPLICATOR_TASK_CREATED');
 
 						if ($taskId)
 						{
@@ -465,7 +458,7 @@ final class FromTemplate extends Util\Replicator\Task
 					$createMessage = Loc::getMessage('TASKS_REPLICATOR_TASK_POSSIBLY_WAS_NOT_CREATED');
 					if ($taskId)
 					{
-						$createMessage = Loc::getMessage('TASKS_REPLICATOR_TASK_CREATED_WITH_ERRORS').' (#'.$taskId.')';
+						$createMessage = Loc::getMessage('TASKS_REPLICATOR_TASK_CREATED').' (#'.$taskId.')';
 					}
 
 					$result->addException($e, Loc::getMessage('TASKS_REPLICATOR_INTERNAL_ERROR'));

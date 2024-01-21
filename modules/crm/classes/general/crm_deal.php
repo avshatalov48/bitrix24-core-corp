@@ -9,6 +9,8 @@ use Bitrix\Crm\Category\DealCategoryChangeError;
 use Bitrix\Crm\CustomerType;
 use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
+use Bitrix\Crm\FieldContext\EntityFactory;
+use Bitrix\Crm\FieldContext\ValueFiller;
 use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\History\DealStageHistoryEntry;
 use Bitrix\Crm\Integration\Channel\DealChannelBinding;
@@ -2699,7 +2701,7 @@ class CAllCrmDeal
 				elseif($contactID > 0)
 				{
 					$connection->queryExecute(
-						"UPDATE b_crm_deal SET IS_RETURN_CUSTOMER = 'Y', IS_REPEATED_APPROACH = 'N' WHERE IS_RETURN_CUSTOMER = 'N' AND CONTACT_ID = {$contactID} AND IFNULL(COMPANY_ID, 0) = 0"
+						"UPDATE b_crm_deal SET IS_RETURN_CUSTOMER = 'Y', IS_REPEATED_APPROACH = 'N' WHERE IS_RETURN_CUSTOMER = 'N' AND CONTACT_ID = {$contactID} AND coalesce(COMPANY_ID, 0) = 0"
 					);
 				}
 				$connection->queryExecute("UPDATE b_crm_deal SET IS_RETURN_CUSTOMER = 'N' WHERE ID = {$primaryID}");
@@ -3594,6 +3596,13 @@ class CAllCrmDeal
 				}
 			}
 
+			if ($bResult)
+			{
+				$scope = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getScope();
+				$filler = new ValueFiller(CCrmOwnerType::Deal, $ID, $scope);
+				$filler->fill($options['CURRENT_FIELDS'], $arFields);
+			}
+
 			if ($bResult && !$syncStageSemantics)
 			{
 				$item = Crm\Kanban\Entity::getInstance(self::$TYPE_NAME)
@@ -3606,6 +3615,7 @@ class CAllCrmDeal
 						'CATEGORY_ID' => \CCrmDeal::GetCategoryID($ID),
 						'SKIP_CURRENT_USER' => ($userID !== 0),
 						'IGNORE_DELAY' => \CCrmBizProcHelper::isActiveDebugEntity(\CCrmOwnerType::Deal, $ID),
+						'EVENT_ID' => ($options['eventId'] ?? null),
 					]
 				);
 			}
@@ -3656,7 +3666,8 @@ class CAllCrmDeal
 
 		$hasDeletePerm = \Bitrix\Crm\Service\Container::getInstance()
 			->getUserPermissions($iUserId)
-			->checkDeletePermissions(CCrmOwnerType::Deal, $ID);
+			->checkDeletePermissions(CCrmOwnerType::Deal, $ID, $categoryID)
+		;
 
 		if (
 			$this->bCheckPermission
@@ -3827,6 +3838,12 @@ class CAllCrmDeal
 			while ($arEvent = $afterEvents->Fetch())
 			{
 				ExecuteModuleEventEx($arEvent, array($ID));
+			}
+
+			$fieldsContextEntity = EntityFactory::getInstance()->getEntity(CCrmOwnerType::Deal);
+			if ($fieldsContextEntity)
+			{
+				$fieldsContextEntity::deleteByItemId($ID);
 			}
 
 			$item = Crm\Kanban\Entity::getInstance(self::$TYPE_NAME)

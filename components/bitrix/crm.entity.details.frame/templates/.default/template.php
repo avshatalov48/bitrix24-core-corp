@@ -256,9 +256,10 @@ else
 	);
 }
 
-if($arResult['IFRAME'])
+if ($arResult['IFRAME'])
 {
-			?></div>
+	(new \Bitrix\Main\Event('crm', 'OnCrmEntityDetailsFrameBelowPage'))->send();
+	?></div>
 		</div>
 		</body>
 	</html><?

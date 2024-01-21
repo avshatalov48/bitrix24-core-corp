@@ -5,10 +5,23 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm;
+use Bitrix\Crm\Restriction\AvailabilityManager;
+use Bitrix\Crm\Restriction\RestrictionManager;
+
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
-	
+
+	return;
+}
+
+$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+$isAvailable = $toolsManager->checkCrmAvailability();
+if (!$isAvailable)
+{
+	print AvailabilityManager::getInstance()->getCrmInaccessibilityContent();
+
 	return;
 }
 
@@ -44,9 +57,6 @@ if (!CModule::IncludeModule('sale'))
 }
 
 global $APPLICATION;
-
-use Bitrix\Crm;
-use Bitrix\Crm\Restriction\RestrictionManager;
 
 $arDefaultUrlTemplates404 = [
 	'index' => 'index.php',

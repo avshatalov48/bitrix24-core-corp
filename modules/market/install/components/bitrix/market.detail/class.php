@@ -195,11 +195,11 @@ class RestMarketDetail extends CBitrixComponent
 		$this->arResult['PRICE_POLICY_SLIDER'] =  $appBySubscription ? Status::getSlider() : '';
 
 		$this->arResult['APP']['SLIDER_IMAGES'] = [];
-		if (isset($this->arResult['APP']['IMAGES']) && (is_array($this->arResult['APP']['IMAGES'])))
-		{
-			foreach ($this->arResult['APP']['IMAGES'] as $image) {
+		if (isset($this->arResult['APP']['SCREENSHOTS']) && (is_array($this->arResult['APP']['SCREENSHOTS']))) {
+			foreach ($this->arResult['APP']['SCREENSHOTS'] as $image) {
 				$this->arResult['APP']['SLIDER_IMAGES'][] = [
-					'IMG' => $image,
+					'IMG' => $image['FULL'],
+					'PREVIEW' => $image['PREVIEW'],
 					'LINK' => "#",
 				];
 			}

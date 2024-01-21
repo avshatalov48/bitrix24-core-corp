@@ -2,6 +2,7 @@
  * @module communication/menu
  */
 jn.define('communication/menu', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const ConnectionTypeSvg = require('assets/communication/menu');
 	const { ImType, PhoneType, EmailType, isOpenLine, getOpenLineTitle } = require('communication/connection');
 	const { CommunicationEvents } = require('communication/events');
@@ -13,10 +14,10 @@ jn.define('communication/menu', (require, exports, module) => {
 	const { getFormattedNumber } = require('utils/phone');
 	const { stringify } = require('utils/string');
 
-	let CrmType;
-	/** @var TypeName **/
-	let TypeName;
-	let EntitySvg;
+	let CrmType = null;
+	/** @var TypeName * */
+	let TypeName = null;
+	let EntitySvg = null;
 
 	try
 	{
@@ -30,8 +31,8 @@ jn.define('communication/menu', (require, exports, module) => {
 	}
 
 	const ENTITY_ICONS = {
-		[TypeName.Contact]: EntitySvg.contactCreate('#6a737f'),
-		[TypeName.Company]: EntitySvg.companyCreate('#6a737f'),
+		[TypeName.Contact]: EntitySvg.contactCreate(AppTheme.colors.base3),
+		[TypeName.Company]: EntitySvg.companyCreate(AppTheme.colors.base3),
 	};
 
 	const CLIENT_ACTIONS_CODE = 'CLIENT_ACTIONS';
@@ -54,7 +55,9 @@ jn.define('communication/menu', (require, exports, module) => {
 			this.setUid(uid);
 
 			this.titlesBySectionCode = {};
-			this.title = Type.isStringFilled(props.title) ? props.title : Loc.getMessage('M_CRM_COMMUNICATION_MENU_TITLE');
+			this.title = Type.isStringFilled(props.title) ? props.title : Loc.getMessage(
+				'M_CRM_COMMUNICATION_MENU_TITLE',
+			);
 			this.additionalItems = Array.isArray(props.additionalItems) ? props.additionalItems : [];
 
 			this.onCloseCommunicationMenu = this.handleOnCloseMenu.bind(this);
@@ -182,39 +185,36 @@ jn.define('communication/menu', (require, exports, module) => {
 					const stubActions = [];
 
 					this.connections.forEach((connectionType) => {
-							const connectionValue = clientValue[connectionType] || [];
-							const connectionValues = Array.isArray(connectionValue) ? connectionValue : [connectionValue];
+						const connectionValue = clientValue[connectionType] || [];
+						const connectionValues = Array.isArray(connectionValue) ? connectionValue : [connectionValue];
 
-							if (connectionValues.length === 0)
+						if (connectionValues.length === 0)
+						{
+							const stubItem = this.createStubItem(clientValue, connectionType);
+							if (stubItem)
 							{
-								const stubItem = this.createStubItem(clientValue, connectionType);
-								if (stubItem)
-								{
-									stubActions.push(stubItem);
-								}
+								stubActions.push(stubItem);
 							}
-							else
-							{
-								const clientItems = connectionValues
-									.map((connectionValue) => this.createItem({
-										...clientValue,
-										[connectionType]: connectionValue,
-										connectionType,
-									}))
-									.filter(Boolean);
+						}
+						else
+						{
+							const clientItems = connectionValues
+								.map((connectionValue) => this.createItem({
+									...clientValue,
+									[connectionType]: connectionValue,
+									connectionType,
+								}))
+								.filter(Boolean);
 
-								filledActions.push(...clientItems);
-							}
-
-						},
-					);
+							filledActions.push(...clientItems);
+						}
+					});
 
 					actions.push(...filledActions, ...stubActions);
 				});
 			});
 
-			actions.push(...this.addClientActions(actions));
-			actions.push(...this.addAdditionalItems(actions));
+			actions.push(...this.addClientActions(actions), ...this.addAdditionalItems(actions));
 
 			return actions;
 		}
@@ -278,7 +278,7 @@ jn.define('communication/menu', (require, exports, module) => {
 				sectionCode,
 				title,
 				data: {
-					svgIcon: ConnectionTypeSvg[connectionType]('#828b95'),
+					svgIcon: ConnectionTypeSvg[connectionType](AppTheme.colors.base3),
 				},
 				isSemitransparent: true,
 				isCustomIconColor: true,
@@ -435,11 +435,11 @@ jn.define('communication/menu', (require, exports, module) => {
 					style: {
 						fontSize: 14,
 						fontWeight: '400',
-						color: '#959ca4',
+						color: AppTheme.colors.base4,
 					},
 					numberOfLines: 1,
 					ellipsize: 'end',
-					value: `[COLOR=#525C69]${titleContactType}[/COLOR] ${entityTitle}`.trim(),
+					value: `[COLOR=${AppTheme.colors.base2}]${titleContactType}[/COLOR] ${entityTitle}`.trim(),
 				});
 			}
 		}
@@ -457,6 +457,7 @@ jn.define('communication/menu', (require, exports, module) => {
 				connectionValue = connectionValue[0];
 			}
 
+			// eslint-disable-next-line default-case
 			switch (connectionType)
 			{
 				case PhoneType:
@@ -465,9 +466,9 @@ jn.define('communication/menu', (require, exports, module) => {
 					const entityTypeName = menuValue.type.toUpperCase();
 
 					const params = {
-						'NAME': menuValue.title,
-						'ENTITY_TYPE_NAME': entityTypeName,
-						'ENTITY_ID': entityId,
+						NAME: menuValue.title,
+						ENTITY_TYPE_NAME: entityTypeName,
+						ENTITY_ID: entityId,
 					};
 
 					if (
@@ -546,12 +547,7 @@ jn.define('communication/menu', (require, exports, module) => {
 					return false;
 				}
 
-				if (type === 'company' && hasCompanies)
-				{
-					return false;
-				}
-
-				return true;
+				return !(type === 'company' && hasCompanies);
 			};
 
 			return this.clientOptions
@@ -564,10 +560,12 @@ jn.define('communication/menu', (require, exports, module) => {
 						data: { svgIcon: ENTITY_ICONS[entityTypeName] },
 						onClickCallback: () => {
 							const closeCallback = () => {
-								this.customEventEmitter.emit('UI.Fields.Client::select', [{
-									fieldName: name,
-									entityTypeName: entityTypeName.toLowerCase(),
-								}]);
+								this.customEventEmitter.emit('UI.Fields.Client::select', [
+									{
+										fieldName: name,
+										entityTypeName: entityTypeName.toLowerCase(),
+									},
+								]);
 							};
 
 							return Promise.resolve({ closeCallback });

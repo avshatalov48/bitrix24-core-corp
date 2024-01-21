@@ -1,9 +1,10 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,main_core,main_core_events,main_popup,ui_buttons) {
 	'use strict';
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5;
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -15,7 +16,9 @@ this.BX.Crm = this.BX.Crm || {};
 	var _isMy = /*#__PURE__*/new WeakMap();
 	var _entityUrl = /*#__PURE__*/new WeakMap();
 	var _relatedEntityTitle = /*#__PURE__*/new WeakMap();
+	var _responsible = /*#__PURE__*/new WeakMap();
 	var _communications = /*#__PURE__*/new WeakMap();
+	var _matchIndex = /*#__PURE__*/new WeakMap();
 	var _addCommunicationValue = /*#__PURE__*/new WeakSet();
 	var _addCommunicationList = /*#__PURE__*/new WeakSet();
 	var ItemInfo = /*#__PURE__*/function () {
@@ -51,13 +54,31 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: ""
 	    });
+	    _classPrivateFieldInitSpec(this, _responsible, {
+	      writable: true,
+	      value: void 0
+	    });
 	    _classPrivateFieldInitSpec(this, _communications, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _matchIndex, {
 	      writable: true,
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldSet(this, _communications, {
 	      phone: [],
 	      email: []
+	    });
+	    babelHelpers.classPrivateFieldSet(this, _matchIndex, {
+	      phone: [],
+	      email: []
+	    });
+	    babelHelpers.classPrivateFieldSet(this, _responsible, {
+	      id: 0,
+	      fullName: "",
+	      profileUrl: "",
+	      photoUrl: ""
 	    });
 	  }
 	  babelHelpers.createClass(ItemInfo, [{
@@ -71,18 +92,22 @@ this.BX.Crm = this.BX.Crm || {};
 	        isMy: babelHelpers.classPrivateFieldGet(this, _isMy),
 	        entityUrl: babelHelpers.classPrivateFieldGet(this, _entityUrl),
 	        relatedEntityTitle: babelHelpers.classPrivateFieldGet(this, _relatedEntityTitle),
-	        communications: babelHelpers.classPrivateFieldGet(this, _communications)
+	        responsible: babelHelpers.classPrivateFieldGet(this, _responsible),
+	        communications: babelHelpers.classPrivateFieldGet(this, _communications),
+	        matchIndex: babelHelpers.classPrivateFieldGet(this, _matchIndex)
 	      };
 	    }
 	  }, {
 	    key: "addPhones",
-	    value: function addPhones(values) {
-	      _classPrivateMethodGet(this, _addCommunicationList, _addCommunicationList2).call(this, "phone", values);
+	    value: function addPhones(values, matchIndex) {
+	      var matchIndexPhone = BX.prop.getArray(matchIndex, "PHONE", []);
+	      _classPrivateMethodGet(this, _addCommunicationList, _addCommunicationList2).call(this, "phone", values, matchIndexPhone);
 	    }
 	  }, {
 	    key: "addEmails",
-	    value: function addEmails(values) {
-	      _classPrivateMethodGet(this, _addCommunicationList, _addCommunicationList2).call(this, "email", values);
+	    value: function addEmails(values, matchIndex) {
+	      var matchIndexEmail = BX.prop.getArray(matchIndex, "EMAIL", []);
+	      _classPrivateMethodGet(this, _addCommunicationList, _addCommunicationList2).call(this, "email", values, matchIndexEmail);
 	    }
 	  }, {
 	    key: "entityTypeName",
@@ -140,21 +165,33 @@ this.BX.Crm = this.BX.Crm || {};
 	    get: function get() {
 	      return babelHelpers.classPrivateFieldGet(this, _relatedEntityTitle);
 	    }
+	  }, {
+	    key: "responsible",
+	    set: function set(value) {
+	      babelHelpers.classPrivateFieldSet(this, _responsible, value);
+	    },
+	    get: function get() {
+	      return babelHelpers.classPrivateFieldGet(this, _responsible);
+	    }
 	  }]);
 	  return ItemInfo;
 	}();
-	function _addCommunicationValue2(communicationType, value) {
+	function _addCommunicationValue2(communicationType, value, isMatched) {
 	  if (babelHelpers.classPrivateFieldGet(this, _communications)[communicationType].indexOf(value) < 0) {
+	    if (isMatched) {
+	      babelHelpers.classPrivateFieldGet(this, _matchIndex)[communicationType].push(babelHelpers.classPrivateFieldGet(this, _communications)[communicationType].length);
+	    }
 	    babelHelpers.classPrivateFieldGet(this, _communications)[communicationType].push(value);
 	  }
 	}
-	function _addCommunicationList2(communicationType, list) {
+	function _addCommunicationList2(communicationType, list, matchIndex) {
 	  for (var i = 0; i < list.length; i++) {
-	    _classPrivateMethodGet(this, _addCommunicationValue, _addCommunicationValue2).call(this, communicationType, list[i]);
+	    _classPrivateMethodGet(this, _addCommunicationValue, _addCommunicationValue2).call(this, communicationType, list[i], matchIndex.includes(i.toString()));
 	  }
 	}
 	var _handleWindowResize = /*#__PURE__*/new WeakMap();
 	var _getPopupBackgroundColor = /*#__PURE__*/new WeakSet();
+	var _renderResponsible = /*#__PURE__*/new WeakSet();
 	var _renderAddButton = /*#__PURE__*/new WeakSet();
 	var SummaryList = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(SummaryList, _EventEmitter);
@@ -163,6 +200,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classCallCheck(this, SummaryList);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SummaryList).call(this));
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _renderAddButton);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _renderResponsible);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getPopupBackgroundColor);
 	    _classPrivateFieldInitSpec(babelHelpers.assertThisInitialized(_this), _handleWindowResize, {
 	      writable: true,
@@ -193,7 +231,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        this.clientSearchBox = BX.prop.get(settings, "clientSearchBox", null);
 	        this.enableEntitySelect = BX.prop.getBoolean(settings, "enableEntitySelect", false);
 	      }
-	      this.padding = BX.prop.getInteger(settings, 'padding', 14);
+	      this.padding = BX.prop.getInteger(settings, 'padding', 11);
 	    }
 	  }, {
 	    key: "show",
@@ -206,9 +244,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        contentPadding: 0,
 	        content: this.getLayout(),
 	        closeIcon: {
-	          top: '10px',
+	          top: '11px',
 	          right: '5px'
 	        },
+	        borderRadius: '12px',
 	        closeByEsc: false,
 	        background: _classPrivateMethodGet(this, _getPopupBackgroundColor, _getPopupBackgroundColor2).call(this),
 	        animation: {
@@ -344,12 +383,22 @@ this.BX.Crm = this.BX.Crm || {};
 	      var entityTypeId = this.getEntityTypeId(entity);
 	      itemInfo.entityTypeName = BX.CrmEntityType.resolveName(entityTypeId);
 	      itemInfo.entityId = this.getEntityId(entity);
-	      itemInfo.entityTypeTitle = BX.CrmEntityType.getCaption(entityTypeId);
+	      itemInfo.entityTypeTitle = BX.prop.getString(entity, 'CATEGORY_NAME', BX.CrmEntityType.getCaption(entityTypeId));
 	      itemInfo.entityTitle = BX.prop.getString(entity, "TITLE", "");
 	      itemInfo.isMy = entityTypeId === BX.CrmEntityType.enumeration.company && BX.prop.getString(entity, "IS_MY_COMPANY", "") === "Y";
 	      itemInfo.entityUrl = BX.prop.getString(entity, "URL", "");
-	      itemInfo.addPhones(BX.prop.getArray(entity, "PHONE", []));
-	      itemInfo.addEmails(BX.prop.getArray(entity, "EMAIL", []));
+	      itemInfo.responsible = {
+	        id: BX.prop.getInteger(entity, "RESPONSIBLE_ID", 0),
+	        fullName: BX.prop.getString(entity, "RESPONSIBLE_FULL_NAME", ""),
+	        profileUrl: BX.prop.getString(entity, "RESPONSIBLE_URL", "#"),
+	        photoUrl: BX.prop.getString(entity, "RESPONSIBLE_PHOTO_URL", "#")
+	      };
+	      var matchIndex = BX.prop.getObject(entity, "MATCH_INDEX", {
+	        PHONE: [],
+	        EMAIL: []
+	      });
+	      itemInfo.addPhones(BX.prop.getArray(entity, "PHONE", []), matchIndex);
+	      itemInfo.addEmails(BX.prop.getArray(entity, "EMAIL", []), matchIndex);
 	      return itemInfo.toPlainObject();
 	    }
 	  }, {
@@ -357,23 +406,33 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function renderItemDetails(item) {
 	      var content = "";
 	      var communications = item["communications"];
-	      var needDots = false;
+	      var matchIndex = BX.prop.getObject(item, "matchIndex", {
+	        phone: [],
+	        email: []
+	      });
 	      ["phone", "email"].forEach(function (type) {
-	        if (!needDots && communications[type].length > 5) {
+	        var maxItems = 5;
+	        var needDots = false;
+	        if (!needDots && communications[type].length > maxItems) {
 	          needDots = true;
 	        }
 	        if (communications[type].length > 0) {
 	          for (var i = 0; i < communications[type].length; i++) {
+	            if (i >= maxItems) {
+	              break;
+	            }
 	            if (content.length > 0) {
 	              content += ", ";
 	            }
-	            content += communications[type][i];
+	            var isMatched = matchIndex[type].includes(i);
+	            var value = main_core.Text.encode(communications[type][i]);
+	            content += isMatched ? "<span class=\"crm-dups-item-details-matched\">" + value + "</span>" : value;
+	          }
+	          if (needDots) {
+	            content += ", ...";
 	          }
 	        }
 	      });
-	      if (needDots) {
-	        content += ", ...";
-	      }
 	      return content;
 	    }
 	  }, {
@@ -386,12 +445,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	      return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-dups-wrapper\">\n\t\t\t\t<div class=\"crm-dups-header\">", "</div>\n\t\t\t\t<div class=\"crm-dups-list\">", "</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(layoutData["title"]), layoutData["groups"].map(function (group) {
 	        return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-dups-group\">\n\t\t\t\t\t\t<div class=\"crm-dups-group-header\">", "</div>\n\t\t\t\t\t\t<div class=\"crm-dups-group-items\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Text.encode(group["title"]), group["items"].map(function (item) {
-	          return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<div class=\"crm-dups-item\">\n\t\t\t\t\t\t\t\t<div class=\"crm-dups-item-top\">\n\t\t\t\t\t\t\t\t\t<div class=\"crm-dups-item-header\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-dups-item-type\">", "</div>\n\t\t\t\t\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t\t\t\t\thref=\"", "\"\n\t\t\t\t\t\t\t\t\t\t\tclass=\"crm-dups-item-title\">", "</a>\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-dups-item-rel-title hidden\"></div>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"crm-dups-item-details\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t"])), main_core.Text.encode(item["entityTypeTitle"]), main_core.Text.encode(item["entityUrl"]), main_core.Text.encode(item["entityTitle"]), _classPrivateMethodGet(_this3, _renderAddButton, _renderAddButton2).call(_this3, {
+	          return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<div class=\"crm-dups-item\">\n\t\t\t\t\t\t\t\t<div class=\"crm-dups-item-top\">\n\t\t\t\t\t\t\t\t\t<div class=\"crm-dups-item-header\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-dups-item-type\">", "</div>\n\t\t\t\t\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t\t\t\t\thref=\"", "\"\n\t\t\t\t\t\t\t\t\t\t\tclass=\"crm-dups-item-title\">", "</a>\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-dups-item-rel-title hidden\"></div>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"crm-dups-item-details\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t"])), main_core.Text.encode(item["entityTypeTitle"]), main_core.Text.encode(item["entityUrl"]), main_core.Text.encode(item["entityTitle"]), _classPrivateMethodGet(_this3, _renderResponsible, _renderResponsible2).call(_this3, item["responsible"]), _this3.renderItemDetails(item), _classPrivateMethodGet(_this3, _renderAddButton, _renderAddButton2).call(_this3, {
 	            "type": item["entityTypeName"],
 	            "id": item["entityId"],
 	            "title": item["entityTitle"],
 	            "isMy": item["isMy"]
-	          }), main_core.Text.encode(_this3.renderItemDetails(item)));
+	          }));
 	        }));
 	      }));
 	    }
@@ -483,7 +542,18 @@ this.BX.Crm = this.BX.Crm || {};
 	}(main_core_events.EventEmitter);
 	function _getPopupBackgroundColor2() {
 	  var bodyStyles = getComputedStyle(document.body);
-	  return (bodyStyles === null || bodyStyles === void 0 ? void 0 : bodyStyles.getPropertyValue("--ui-color-palette-gray-03")) || '#F5F7F8';
+	  return (bodyStyles === null || bodyStyles === void 0 ? void 0 : bodyStyles.getPropertyValue("--ui-color-background-primary")) || '#FFFFFF';
+	}
+	function _renderResponsible2(options) {
+	  var isPhoto = main_core.Type.isStringFilled(options["photoUrl"]) && options["photoUrl"] !== "#";
+	  var noPhotoClass = isPhoto ? "" : " no-photo";
+	  var backgroundStyle = isPhoto ? " background: url('".concat(main_core.Text.encode(options["photoUrl"]), "') no-repeat center; background-size: cover;") : "";
+	  var responsibleContainer = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-dups-item-photo bx-ui-tooltip-photo\">\n\t\t\t<a\n\t\t\t\thref=\"", "\"\n\t\t\t\tclass=\"bx-ui-tooltip-info-data-photo", "\"\n\t\t\t\tstyle=\"width: 20px; height: 20px;", "\"\n\t\t\t\tdata-hint=\"", "\"\n\t\t\t\tdata-hint-no-icon\n\t\t\t></a>\n\t\t</div>"])), main_core.Text.encode(options["profileUrl"]), noPhotoClass, backgroundStyle, main_core.Text.encode(options["fullName"]));
+	  BX.UI.Hint.popupParameters = {
+	    padding: 10
+	  };
+	  BX.UI.Hint.init(responsibleContainer);
+	  return responsibleContainer;
 	}
 	function _renderAddButton2(options) {
 	  var _this4 = this;
@@ -505,7 +575,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      _this4.onAddButtonClick(btn.getContext());
 	    }
 	  });
-	  return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-dups-item-add-btn\">", "</div>"])), btn.render());
+	  return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-dups-item-add-btn\">", "</div>"])), btn.render());
 	}
 
 	exports.SummaryList = SummaryList;

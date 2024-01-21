@@ -2,6 +2,7 @@
  * @module crm/crm-mode/wizard/layouts/conversion/blocks/stage
  */
 jn.define('crm/crm-mode/wizard/layouts/conversion/blocks/stage', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { TypeId } = require('crm/type');
 	const { getEntityMessage } = require('crm/loc');
 	const { EntitySvg } = require('crm/assets/entity');
@@ -32,7 +33,7 @@ jn.define('crm/crm-mode/wizard/layouts/conversion/blocks/stage', (require, expor
 			openCategoryListView({
 				readOnly: false,
 				needConfirm: false,
-				categoryId: category.id,
+				categoryId: category.categoryId,
 				entityTypeId: TypeId.Deal,
 				parentWidget: getLayoutWidget(),
 				onChangeCategory: ({ category: selectedCategory, categoryListLayout }) => {
@@ -41,7 +42,7 @@ jn.define('crm/crm-mode/wizard/layouts/conversion/blocks/stage', (require, expor
 					this.setState(
 						{ category: selectedCategory },
 						() => {
-							onChange({ name: 'categoryId', value: Number(selectedCategory.id) });
+							onChange({ name: 'categoryId', value: Number(selectedCategory.categoryId) });
 						},
 					);
 				},
@@ -65,7 +66,7 @@ jn.define('crm/crm-mode/wizard/layouts/conversion/blocks/stage', (require, expor
 							justifyContent: 'center',
 							alignItems: 'center',
 							flexDirection: 'row',
-							backgroundColor: '#f2e9fe',
+							backgroundColor: AppTheme.colors.accentSoftRed2,
 							borderRadius: 8,
 							paddingHorizontal: 25,
 							paddingVertical: 12,
@@ -79,12 +80,13 @@ jn.define('crm/crm-mode/wizard/layouts/conversion/blocks/stage', (require, expor
 							marginRight: 8,
 						},
 						svg: {
-							content: EntitySvg.dealInverted('#a77bde'),
+							content: EntitySvg.dealInverted(AppTheme.colors.accentExtraPurple),
 						},
 					}),
 					Text({
 						style: {
 							fontSize: 16,
+							color: AppTheme.colors.base1,
 						},
 						text: getEntityMessage('MCRM_CRM_MODE_LAYOUTS_CONVERSION', TypeId.Deal),
 					}),
@@ -97,7 +99,7 @@ jn.define('crm/crm-mode/wizard/layouts/conversion/blocks/stage', (require, expor
 						marginHorizontal: 1,
 					},
 					svg: {
-						content: arrowRight('#a8adb4'),
+						content: arrowRight(AppTheme.colors.base4),
 					},
 				}),
 				View(
@@ -109,7 +111,7 @@ jn.define('crm/crm-mode/wizard/layouts/conversion/blocks/stage', (require, expor
 							paddingLeft: 10,
 							paddingRight: 8,
 							borderWidth: 1,
-							borderColor: '#2fc6f6',
+							borderColor: AppTheme.colors.accentBrandBlue,
 							borderRadius: 8,
 							flexDirection: 'row',
 						},
@@ -138,6 +140,7 @@ jn.define('crm/crm-mode/wizard/layouts/conversion/blocks/stage', (require, expor
 								fontSize: 16,
 								flexShrink: 2,
 								marginRight: 2,
+								color: AppTheme.colors.base1,
 							},
 							numberOfLines: 1,
 							ellipsize: 'end',
@@ -150,7 +153,7 @@ jn.define('crm/crm-mode/wizard/layouts/conversion/blocks/stage', (require, expor
 								flexShrink: 0,
 							},
 							svg: {
-								content: chevronDown('#a8adb4', { box: true }),
+								content: chevronDown(AppTheme.colors.base4, { box: true }),
 							},
 						}),
 					),

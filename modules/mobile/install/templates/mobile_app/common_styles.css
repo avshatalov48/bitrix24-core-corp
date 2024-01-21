@@ -217,7 +217,7 @@ a {
 }
 
 .post-item-top-wrap.post-item-follow {
-    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADoAAAA6CAMAAADWZboaAAABGlBMVEUAAACh0f+i0v+h0f+i0v+h0f+i0v+h0f+i0v+h0f+i0v+h0f+i0v+h0f+i0f+i0v+h0f+i0f+i0v+fz/6dzvyfz/2XyPiVxvWOwPCMvu6Mv++DtueDtuiAtOaCted/s+WAs+Z8sON8sOJ4rd95rd94rN9zqdxzqtxrotZpntNpn9Rkms9ims9gl81hl81elctalMlalMlZkshakshXkcZYkMZYkMdVjcNSi8JTi8JQicBPiL9PicBOiL9Mh75Nhr1GgrlHgbpHgrlHgrpEf7dFf7dDf7dDfbZBfbVBfbVCfbVAe7U/e7Q+ebM7drE7d7E6d7A6d686d7A6d686dq84da85dq84da43cq03c642cq03cq03c603c67U0Hx4AAAAXnRSTlMAExMUFBUVFhZLS0xMTU1NT09PUFFRVFVYWlpfX2BgYWFjZGZmZ2lpcHNzd3h5eX5/gIKCg4ODiIqKjY6Oj5GRmpqamp+foKKjpKSmqKuvr7CxsbKztLS2uLi5ubm5PHHdjAAAAtRJREFUSMfFldlCE0EQRUvckAly66rsAoooCiq4KyruogY3FDSp+f/f8KG7p2sCIcuL8zLpSZ/auuuWgAABaHgx/g4LgGEFkOG/+IyPiiQmPYwrMpsikp3AE+NnRSTurawn/xp8u+8pCoAToyIiAKBhFztcUzOSLRDBpwjqu1K4IGq5xUAJEOcDKZ2xpE3JjCJYZlWRiUgKaiWqTKBePGc9+RTRFFyt0nQGNAcEoKhIcfbpw/buNGfgSKlqAIBL6w/f/fj9a//n+0frS/ErfQE8KS605ZdNMyvNzKxsNV8u0x03AaIYdaTECwIuPP1uZlaWZcvMzKz1/ckC6M5LG96nSPprbdfMzP42X714vPWm+cfMzHbXfMpFnZSY6t0DK1vt5saN+SkQU/PXN5plu20HD7SKuB5tuE0K4p2ZNe/NOiez95ul2YfqAh4iJSTKpY+2NQcAmNl8tjlDEJh7bh8vx17pzDMfDrB4+yIA6MqOtWxnBQBw6c5iKtMRpPjrQ8XkW7O2tV9Pxn4NDXWoQhlVajzdq/tmZrZ/xV8ENk4fQQorISAArOxZq222d03ziaI4kpQsDQCA6U+lmbU+T7tGaJyRo9EkReF94dbXst36dvNC1TzajRSvXACB1e0v26tV25Fdog0BayV6QWuoueu0OymMopcFNysRgEZ3smo6AgqSWRWUx5MC3+uVosRUu1bI5+qkrBJ9FMeS4gQ/XgxNQ6I4eSwprLl0AaDRg0wXMU0yJUiSQHGqBymAwss9w1obPUnxEyUZUKBXnh0SHgco+iTFNU6W5N55do6rMGvZn88ccB6L/ZJSG4+k9nGe/iLSV7lfn1GHg0yw/wq5mVMVt9E/KYAyz+TiRP+kMKsQtRgZgBTfOIOR4gbEQNEmHSahA5NVq3PAaJ36D+wzeKViCDKe6zCkkBjOZzjXc0ORMjwpwNjIcKTo2JA+RYYnZUT+w/MPY+iNpDLEjAMAAAAASUVORK5CIIA=);
+    background-image: var(--feed-follow-icon);
     background-repeat: no-repeat;
     background-position: 0 0;
     background-size: 29px;
@@ -496,7 +496,7 @@ a {
 .lenta-item-pinned .bx-ilike-icon-new {
     min-width: 16px;
     min-height: 15px;
-    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2016%2015%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M15.623%207.017a1.082%201.082%200%2000-.78-1.161h-3.849a1.625%201.625%200%2001-.05-1.412%204.62%204.62%200%2000.098-2.677C10.799%201.16%2010.735.052%209.612%200a1.16%201.16%200%2000-.879.656v1.921a33.052%2033.052%200%2001-2.482%203.985c-.3.052-1.46.204-1.46.204v6.963h.338c.953.509%201.948.93%202.975%201.262h4.647a1.294%201.294%200%20001.058-1.215%202.25%202.25%200%2000-.237-1.062%201.21%201.21%200%20001.078-1.262%201.453%201.453%200%2000-.635-.91%201.377%201.377%200%20001.11-1.312%201.95%201.95%200%2000-.449-1.001c.557-.13.951-.633.947-1.212zM2.11%2014.991h1.455V5.876H.5l1.609%209.115z%22%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20opacity%3D%22.193%22/%3E%3C/svg%3E');
+    background-image: var(--feed-pinned-like-icon);
 }
 
 .lenta-item-pinned .post-item-informer-like .bx-you-like-button.bx-you-like-button-like .bx-ilike-icon-new {
@@ -507,7 +507,7 @@ a {
 .lenta-item-pinned .post-item-inform-icon {
     min-width: 14px;
     min-height: 14px;
-    background-image: url('data:image/svg+xml;charset=US-ASCII,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22UTF-8%22%3F%3E%0A%3Csvg%20viewBox%3D%220%200%2014%2014%22%20version%3D%221.1%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%3E%0A%20%20%20%20%3Cg%20id%3D%22Page-1%22%20stroke%3D%22none%22%20stroke-width%3D%221%22%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%20opacity%3D%220.192987351%22%3E%0A%20%20%20%20%20%20%20%20%3Cg%20id%3D%22__Badge-/-Lent-/-__Lent-01-Main%22%20transform%3D%22translate%28-123.000000%2C%20-123.000000%29%22%20fill%3D%22%23525C69%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cg%20id%3D%22__Badge-/-News-/-Parts-/-Post-01%22%20transform%3D%22translate%28-1.000000%2C%2065.000000%29%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cg%20id%3D%22Group-2%22%20transform%3D%22translate%2818.500000%2C%2055.000000%29%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cpath%20d%3D%22M118.518915%2C4.32241475%20C119.613702%2C5.61609049%20119.876598%2C11.9989849%20118.518915%2C13.3377513%20C117.786016%2C14.0604385%20114.686759%2C14.2823206%20111.797864%2C14.1826495%20C109.768438%2C16.0610639%20108.588394%2C17%20108.257852%2C17%20C107.910553%2C17%20107.899541%2C15.9546419%20108.224816%2C13.8639258%20C107.366212%2C13.722176%20106.725721%2C13.5432624%20106.464619%2C13.3377513%20C105.246307%2C12.3788297%20105.135349%2C5.69728407%20106.464619%2C4.32241475%20C107.793888%2C2.94754542%20117.424127%2C3.02873901%20118.518915%2C4.32241475%20Z%22%20id%3D%22Combined-Shape%22%3E%3C/path%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%3C/g%3E%0A%3C/svg%3E');
+	background-image: var(--feed-pinned-inform-icon);
 }
 
 .lenta-item-pinned .post-item-informers.post-item-inform-likes-active .post-item-inform-icon {
@@ -789,11 +789,11 @@ a {
 }
 
 .lenta-info-block {
-    border-radius: 2px;
     /*margin: 2px 17px 11px;*/
     min-height: 46px;
     padding: 9px 0 0;
     position: relative;
+    border-radius: var(--main-border-radius)
 }
 
 @media (max-width: 320px) {
@@ -1048,63 +1048,74 @@ a {
 .info-block-background.info-block-gratitude {
     background-position: top right;
     background-repeat: repeat-y;
-    background-size: 100% auto;
+    background-size: cover;
     background-color: var(--accent-soft-blue2);
 }
 
-.info-block-background.info-block-gratitude.info-block-gratitude-thumbsup {
+.info-block-background.info-block-gratitude:before {
+    content: "";
+    position: absolute;
+    background-size: cover;
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    left: 0px;
+    opacity: var(--medal-bg-icon-opacity);
+}
+
+.info-block-background.info-block-gratitude.info-block-gratitude-thumbsup:before {
     background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/01_thumbsup/background_mobile_mono.svg');
 }
 
-.info-block-background.info-block-gratitude.info-block-gratitude-flowers {
+.info-block-background.info-block-gratitude.info-block-gratitude-flowers:before {
     background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/02_flowers/background_mobile_mono.svg');
 }
 
-.info-block-background.info-block-gratitude.info-block-gratitude-smile {
+.info-block-background.info-block-gratitude.info-block-gratitude-smile:before {
     background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/03_smile/background_mobile_mono.svg');
 }
 
-.info-block-background.info-block-gratitude.info-block-gratitude-star {
+.info-block-background.info-block-gratitude.info-block-gratitude-star:before {
     background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/04_star/background_mobile_mono.svg');
 }
 
-.info-block-background.info-block-gratitude.info-block-gratitude-flag {
+.info-block-background.info-block-gratitude.info-block-gratitude-flag:before {
     background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/05_flag/background_mobile_mono.svg');
 }
 
-.info-block-background.info-block-gratitude.info-block-gratitude-thefirst {
+.info-block-background.info-block-gratitude.info-block-gratitude-thefirst:before {
     background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/06_thefirst/background_mobile_mono.svg');
 }
 
-.info-block-background.info-block-gratitude.info-block-gratitude-gift {
+.info-block-background.info-block-gratitude.info-block-gratitude-gift:before {
     background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/07_gift/background_mobile_mono.svg');
 }
 
-.info-block-background.info-block-gratitude.info-block-gratitude-crown {
+.info-block-background.info-block-gratitude.info-block-gratitude-crown:before {
     background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/08_crown/background_mobile_mono.svg');
 }
 
-.info-block-background.info-block-gratitude.info-block-gratitude-heart {
+.info-block-background.info-block-gratitude.info-block-gratitude-heart:before {
     background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/09_heart/background_mobile_mono.svg');
 }
 
-.info-block-background.info-block-gratitude.info-block-gratitude-cake {
+.info-block-background.info-block-gratitude.info-block-gratitude-cake:before {
     background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/10_cake/background_mobile_mono.svg');
 }
 
-.info-block-background.info-block-gratitude.info-block-gratitude-drink {
+.info-block-background.info-block-gratitude.info-block-gratitude-drink:before {
     background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/11_drink/background_mobile_mono.svg');
 }
 
-.info-block-background.info-block-gratitude.info-block-gratitude-money {
+.info-block-background.info-block-gratitude.info-block-gratitude-money:before {
     background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/12_money/background_mobile_mono.svg');
 }
 
-.info-block-background.info-block-gratitude.info-block-gratitude-cup {
+.info-block-background.info-block-gratitude.info-block-gratitude-cup:before {
     background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/13_cup/background_mobile_mono.svg');
 }
 
-.info-block-background.info-block-gratitude.info-block-gratitude-beer {
+.info-block-background.info-block-gratitude.info-block-gratitude-beer:before {
     background-image: url('/bitrix/templates/mobile_app/images/lenta/medal/14_beer/background_mobile_mono.svg');
 }
 
@@ -1191,6 +1202,7 @@ a {
 
 .post-item-inform-wrap-tree .feed-post-emoji-icon-item {
     border: 2px solid var(--bg-content-primary);
+    box-shadow: inset 0 0 4px 4px var(--bg-content-primary);
     width: 19px;
     height: 19px;
 }
@@ -3131,6 +3143,7 @@ table.forum-spoiler th {
     margin-left: -6px;
     background-size: cover;
     box-shadow: inset 0 0 4px 4px var(--bg-content-primary);
+    border-color: var(--bg-content-primary);
 }
 
 .post-comments-wrap .post-comment-block .feed-post-emoji-icon-item.feed-post-emoji-icon-item-1,
@@ -5371,6 +5384,7 @@ input.calendar-addevent-row-right {
     background: var(--accent-soft-blue3);
     padding: 7px 8px 0;
     margin: 0 17px;
+    border-radius: var(--main-border-radius)
 }
 
 @media (max-width: 320px) {
@@ -7082,10 +7096,9 @@ Legacy CRM styles
 }
 
 .crm_block_container.aqua_style {
-    border-style: solid;
-    border-width: 3px 3px 4px;
-    border-image: url(images/crm/cont_aqua.png) fill 6 6 8 stretch;
-    padding-bottom: 10px;
+	padding: 13px 12px;
+	background-color: var(--bg-content-tertiary);
+	border-radius: 4px;
 }
 
 .crm_block_container.blue_style {
@@ -7096,9 +7109,6 @@ Legacy CRM styles
 }
 
 .crm_block_container.blue_style_footer {
-    border-style: solid;
-    border-width: 0 4px 4px;
-    border-image: url(images/crm/cont_blue_footer.png) fill 0 8 8 fill repeat;
     margin-bottom: 10px;
     margin-top: 0;
 }
@@ -7201,15 +7211,18 @@ Legacy CRM styles
 }
 
 .crm_input_text {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    border: 1px solid var(--base4);
-    border-radius: 3px;
-    line-height: 26px;
-    padding: 2px;
-    margin: 5px 0;
-    box-shadow: inset 0 0 3px 0 rgba(var(--base2-rgb), 0.3);
+	background-color: var(--base8);
+	border: 1px solid var(--bg-separator-secondary);
+	border-radius: 4px;
+	box-sizing: border-box;
+	color: var(--base2);
+	font-size: 14px;
+	font-family: -apple-system, BlinkMacSystemFont, Helvetica, sans-serif;
+	margin: 0;
+	/*height: 98px;*/
+	padding: 11px 12px;
+	outline: none;
+	width: 100%;
 }
 
 textarea.crm_input_text {
@@ -7256,15 +7269,51 @@ textarea.crm_input_text {
 }
 
 .crm_input_select {
-    width: 25%;
-    border: 1px solid var(--base4);
-    height: 32px;
-    border-radius: 3px;
-    line-height: 26px;
-    padding: 2px;
-    margin: 5px 0;
-    box-shadow: inset 0 0 3px 0 rgba(var(--base2-rgb), 0.3);
+    /*width: 25%;*/
+    /*border: 1px solid var(--base4);*/
+    /*height: 32px;*/
+    /*border-radius: 3px;*/
+    /*line-height: 26px;*/
+    /*padding: 2px;*/
+    /*margin: 5px 0;*/
+    /*box-shadow: inset 0 0 3px 0 rgba(var(--base2-rgb), 0.3);*/
+	
+	/*position: absolute;*/
+	top: -3px;
+	right: 10px;
+	min-width: 150px;
+	max-width: 160px;
+	height: 24px;
+	border-radius: 3px;
+	background-color: var(--base7);
+	-webkit-appearance: none;
+	border: 0.5px solid var(--base8);
+	padding: 0px 7px;
+	color: var(--base2);
 }
+
+
+.flex-table {
+	display: flex;
+	flex-direction: column;
+}
+
+.flex-row {
+	display: flex;
+	flex-direction: row;
+}
+
+.flex-cell {
+	display: flex;
+	align-items: center; /* centering vertically */
+	padding: 8px; /* or whatever padding you want */
+}
+
+
+.fwb {
+	font-weight: bold; /* adding bold font-weight */
+}
+
 
 .crm_input_desc {
     font-size: 11px;
@@ -7453,7 +7502,7 @@ textarea.crm_input_text {
 
 .crm_block_title {
     padding: 2px 40px 0 10px;
-    font-size: 15px;
+    font-size: 12px;
     font-weight: bold;
     color: var(--base2);
     float: left;
@@ -7494,10 +7543,13 @@ textarea.crm_input_text {
     background: var(--accent-soft-blue1)
 }
 
-.crm_meeting_info,
 .crm_deals_info,
 .crm_contact_info {
     padding: 0 15px
+}
+
+.crm_meeting_info .crm_input_text {
+	margin-top: 10px;
 }
 
 .crm_contact_info strong {
@@ -7555,11 +7607,16 @@ textarea.crm_input_text {
     background-size: auto 25px
 }
 
+.crm-page {
+	background-color:var(--bg-content-primary)
+}
+
 .crm-page hr {
     display: block;
     border: none;
     border-top: 1px solid var(--bg-separator-secondary);
 }
+
 
 .crm_block_content {
 }
@@ -7804,9 +7861,19 @@ textarea.crm_input_text {
 }
 
 .crm_arrow {
-    background: url(images/crm/arrow.png) no-repeat 97% center;
+    background: url(images/crm/arrow.png?2) no-repeat 97% center;
     background-size: auto 12px;
 }
+
+.crm_arrow_new {
+	background: url(images/calendar/sprite.png) no-repeat -21px -322px;
+	background-size: 30px 750px;
+	height: 16px;
+	right: 25px;
+	position: absolute;
+	width: 9px;
+}
+
 
 .crm_list_tel.selected .crm_contactlist_tel_info.crm_arrow {
     background: url(images/crm/crm_v.png) no-repeat 97% center;
@@ -8083,6 +8150,7 @@ textarea.crm_input_text {
 .crm_search {
     position: relative;
     height: 50px;
+	display: flex;
     border-bottom: 0.5px solid var(--bg-separator-primary);
 }
 
@@ -8092,6 +8160,7 @@ textarea.crm_input_text {
     display: flex;
     align-items: center;
     padding: 0 12px;
+	flex-grow: 1;
 }
 
 .crm_lupe {
@@ -8109,6 +8178,7 @@ textarea.crm_input_text {
     font-size: 14px;
     padding-left: 30px;
     background: none;
+	color: var(--base1)
 }
 
 .crm_button {
@@ -8130,7 +8200,8 @@ textarea.crm_input_text {
     vertical-align: middle;
     border: 1px solid var(--bg-separator-primary);
     border-radius: 6px;
-    margin-left: 11px;
+    margin-right: 10px;
+	align-self: center;
 }
 
 .crm_clear {
@@ -8558,11 +8629,10 @@ table.crm-list-stage-bar-table-small td.crm-list-stage-bar-part:last-child div.c
 }
 
 .crm_people_cont_aqua_two {
-    padding: 4px;
-    border-style: solid;
-    border-width: 6px 5px 7px;
-    border-image: url(images/crm/cont_aqua_two.png) 12 10 14 fill stretch;
+    padding: 10px 10px;
+	border: 1px solid var(--bg-separator-primary);
     margin-bottom: 10px;
+	border-radius: 6px;
 }
 
 a.crm_people_cont_aqua_two {
@@ -8573,7 +8643,7 @@ a.crm_people_cont_aqua_two {
     text-shadow: 0 1px 0 rgba(var(--bg-content-primary-rgb), 0.2);
     font-weight: bold;
     font-size: 14px;
-    padding: 5px 20px;
+    padding: 10px 20px;
 }
 
 .crm_people_cont_noborder {
@@ -8740,3 +8810,17 @@ a.crm_people_cont_aqua_two {
 .bx-messenger-attach-blocks {
     color: var(--base1) !important;
 }
+
+
+/**
+reaction popup override
+ */
+
+.feed-post-emoji-popup-container {
+	background: var(--bg-content-secondary) !important;
+}
+
+.post-item-full-content .bx-font {
+	color: var(--base0)!important;
+}
+

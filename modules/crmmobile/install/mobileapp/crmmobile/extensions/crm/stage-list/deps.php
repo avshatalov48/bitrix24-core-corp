@@ -1,9 +1,8 @@
 <?php
+
 return [
 	'extensions' => [
-		'layout/ui/loading-screen',
+		'layout/ui/stage-list',
 		'crm:stage-list/item',
-		'crm:state-storage',
-		'utils/random',
-	]
+	],
 ];

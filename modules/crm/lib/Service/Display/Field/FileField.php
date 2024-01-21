@@ -4,8 +4,10 @@ namespace Bitrix\Crm\Service\Display\Field;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Options;
+use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\UserField\FileViewer;
 use Bitrix\Main\Loader;
+use Bitrix\Main\UI\Viewer\ItemAttributes;
 use Bitrix\Mobile\UI\File;
 
 class FileField extends BaseLinkedEntitiesField
@@ -22,7 +24,11 @@ class FileField extends BaseLinkedEntitiesField
 	{
 		$linkedEntitiesId = $linkedEntity['ID'];
 		$fieldType = $this->getType();
-		$linkedEntitiesValues[$fieldType] = Container::getInstance()->getFileBroker()->getBunchByIds($linkedEntitiesId);
+		$linkedEntitiesValues[$fieldType] = Container::getInstance()
+			->getFileBroker()
+			->setRequiredSrc(true)
+			->getBunchByIds($linkedEntitiesId)
+		;
 	}
 
 	public function getFormattedValue($fieldValue, ?int $itemId = null, ?Options $displayOptions = null)
@@ -64,6 +70,8 @@ class FileField extends BaseLinkedEntitiesField
 
 		$results = [];
 		$fieldValue = is_array($fieldValue) ? $fieldValue : [$fieldValue];
+		$groupName = 'crm-file-group-' . \Bitrix\Main\Security\Random::getString(6);
+
 		foreach ($fieldValue as $fileId)
 		{
 			if (
@@ -75,31 +83,26 @@ class FileField extends BaseLinkedEntitiesField
 			}
 			$file = $linkedEntitiesValues[$fileId];
 
+			$valueType = ($displayParams['VALUE_TYPE'] ?? null);
+			$isPreviewerEnabled = LayoutSettings::getCurrent()->isFilePreviewerInKanbanAndGridEnabled();
+
+			$fileUrl = $this->getFileUrl($file['ID'], $itemId, $displayOptions);
 			if (
-				isset($displayParams['VALUE_TYPE'])
-				&& $displayParams['VALUE_TYPE'] === self::VALUE_TYPE_IMAGE
+				$valueType === self::VALUE_TYPE_IMAGE
+				|| ($this->isFileIsImage($file) && $isPreviewerEnabled)
 			)
 			{
 				$resizedFile = \CFile::ResizeImageGet(
 					$file,
 					[
-						'width' => (int)($displayParams['IMAGE_WIDTH'] ?? 50),
-						'height' => (int)($displayParams['IMAGE_HEIGHT'] ?? 50),
+						'width' => (int)($displayParams['IMAGE_WIDTH'] ?? 70),
+						'height' => (int)($displayParams['IMAGE_HEIGHT'] ?? 70),
 					],
 					BX_RESIZE_IMAGE_PROPORTIONAL,
 					true
 				);
 
-				if (!$this->isMultiple())
-				{
-					return \CFile::ShowImage([
-						'SRC' => $resizedFile['src'],
-						'WIDTH' => $resizedFile['width'],
-						'HEIGHT' => $resizedFile['height'],
-					]);
-				}
-
-				$results[] = \CFile::ShowImage([
+				$content = \CFile::ShowImage([
 					'SRC' => $resizedFile['src'],
 					'WIDTH' => $resizedFile['width'],
 					'HEIGHT' => $resizedFile['height'],
@@ -107,19 +110,64 @@ class FileField extends BaseLinkedEntitiesField
 			}
 			else
 			{
-				$fileUrl = $this->getFileUrl($file['ID'], $itemId, $displayOptions);
 				$fileName = htmlspecialcharsbx($file['ORIGINAL_NAME'] ?? $file['FILE_NAME']);
 
-				if (!$this->isMultiple())
+				if ($isPreviewerEnabled)
 				{
-					return '<a href="' . htmlspecialcharsbx($fileUrl) . '" target="_blank">' . $fileName . '</a>';
+					$content = $fileName;
 				}
-
-				$results[] = '<a href="' . htmlspecialcharsbx($fileUrl) . '" target="_blank">' . $fileName . '</a>';
+				else
+				{
+					$content = '<a href="' . htmlspecialcharsbx($fileUrl) . '" target="_blank">' . $fileName . '</a>';
+				}
 			}
+
+			if (!$this->isMultiple())
+			{
+				return $isPreviewerEnabled ? $this->getFileHtml(
+					$file,
+					$fileUrl,
+					$content,
+					$this->getTitle(),
+				) : $content;
+			}
+
+			$results[] = $isPreviewerEnabled ? $this->getFileHtml(
+				$file,
+				$fileUrl,
+				$content,
+				$this->getTitle(),
+				$groupName,
+			) : $content;
 		}
 
 		return $results;
+	}
+
+	protected function isFileIsImage(array $file): bool
+	{
+		$fileSrc = \CFile::GetFileSRC($file);
+
+		return \CFile::IsImage($fileSrc, \CFile::GetContentType($fileSrc));
+	}
+
+	protected function getFileHtml(
+		array $file,
+		string $fileUrl,
+		string $content,
+		string $title,
+		string $groupName = null
+	): string
+	{
+		$itemAttributes = ItemAttributes::tryBuildByFileData($file, $fileUrl);
+		$itemAttributes->setTitle($title);
+		$itemAttributes->setAttribute('href', '#');
+		if ($groupName)
+		{
+			$itemAttributes->setGroupBy($groupName);
+		}
+
+		return "<a {$itemAttributes}>" . $content . '</a>';
 	}
 
 	protected function getFormattedValueForExport($fieldValue, int $itemId, Options $displayOptions): string
@@ -226,9 +274,13 @@ class FileField extends BaseLinkedEntitiesField
 	protected function getFileUrl(int $fileId, int $itemId, Options $displayOptions): string
 	{
 		$fileUrlTemplate = ($displayOptions->getFileUrlTemplate() ?? '');
-		if ($fileUrlTemplate !== '')
+		if ($fileUrlTemplate === '')
 		{
-			return \CComponentEngine::MakePathFromTemplate(
+			$url = $this->fileViewer->getUrl($itemId, $this->getId(), $fileId);
+		}
+		else
+		{
+			$url = \CComponentEngine::MakePathFromTemplate(
 				$fileUrlTemplate,
 				[
 					'owner_id' => $itemId,
@@ -238,6 +290,11 @@ class FileField extends BaseLinkedEntitiesField
 			);
 		}
 
-		return $this->fileViewer->getUrl($itemId, $this->getId(), $fileId);
+		if (!$this->isUserField())
+		{
+			$url .= '&dynamic=N';
+		}
+
+		return $url;
 	}
 }

@@ -5,6 +5,7 @@ jn.define('crm/entity-tab/type/entities/deal', (require, exports, module) => {
 	const { Base: BaseEntityType } = require('crm/entity-tab/type/entities/base');
 	const { excludeItem } = require('crm/entity-tab/type/traits/exclude-item');
 	const { TypeId, TypeName } = require('crm/type');
+	const { Loc } = require('loc');
 
 	/**
 	 * @class Deal
@@ -38,7 +39,7 @@ jn.define('crm/entity-tab/type/entities/deal', (require, exports, module) => {
 				...actions,
 				{
 					id: 'exclude',
-					title: BX.message('M_CRM_ENTITY_TAB_ACTION_EXCLUDE'),
+					title: Loc.getMessage('M_CRM_ENTITY_TAB_ACTION_EXCLUDE'),
 					sort: 500,
 					onClickCallback: excludeItem.bind(this),
 					onDisableClick: this.showForbiddenActionNotification.bind(this),
@@ -56,7 +57,7 @@ jn.define('crm/entity-tab/type/entities/deal', (require, exports, module) => {
 			if (this.params.categoriesCount > 1)
 			{
 				const entityTypeName = this.getName();
-				config.description = BX.message(`M_CRM_ENTITY_TAB_SEARCH_WITH_TWO_OR_MORE_CATEGORIES_EMPTY_${entityTypeName}_DESCRIPTION2`);
+				config.description = Loc.getMessage(`M_CRM_ENTITY_TAB_SEARCH_WITH_TWO_OR_MORE_CATEGORIES_EMPTY_${entityTypeName}_DESCRIPTION2`);
 			}
 
 			return config;

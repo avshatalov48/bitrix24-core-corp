@@ -4,6 +4,7 @@
 jn.define('im/messenger/lib/ui/base/loader', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const AppTheme = require('apptheme');
 
 	class LoaderItem extends LayoutComponent
 	{
@@ -46,7 +47,7 @@ jn.define('im/messenger/lib/ui/base/loader', (require, exports, module) => {
 						style: {
 							height: 24,
 						},
-						tintColor: '#80333333',
+						tintColor: AppTheme.colors.base3,
 						animating: true,
 						size: 'small',
 					}),
@@ -62,7 +63,7 @@ jn.define('im/messenger/lib/ui/base/loader', (require, exports, module) => {
 						Text(
 							{
 								style: {
-									color: '#80333333',
+									color: AppTheme.colors.base3,
 									fontSize: 18,
 								},
 								text: this.text,

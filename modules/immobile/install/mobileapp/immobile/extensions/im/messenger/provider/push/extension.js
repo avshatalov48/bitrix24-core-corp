@@ -5,10 +5,11 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
 	const { core } = require('im/messenger/core');
-	const { Logger } = require('im/messenger/lib/logger');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { EventType } = require('im/messenger/const');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('push-handler');
 
 	class PushHandler
 	{
@@ -43,12 +44,12 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 			const list = this.manager.get();
 			if (!list || !list['IM_MESS'] || list['IM_MESS'].length <= 0)
 			{
-				Logger.info('PushHandler.updateList: list is empty');
+				logger.info('PushHandler.updateList: list is empty');
 
 				return true;
 			}
 
-			Logger.info('PushHandler.updateList: parse push messages', list['IM_MESS']);
+			logger.info('PushHandler.updateList: parse push messages', list['IM_MESS']);
 
 			const isDialogOpen = this.store.getters['applicationModel/isDialogOpen'];
 
@@ -153,7 +154,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 				return false;
 			}
 
-			Logger.info('PushHandler.executeAction: execute push-notification', push);
+			logger.info('PushHandler.executeAction: execute push-notification', push);
 
 			const pushParams = ChatDataConverter.getPushFormat(push);
 

@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Activity\Provider;
 
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
+use Bitrix\Crm\Model\ActivityPingOffsetsTable;
 use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
@@ -97,6 +98,16 @@ class ToDo extends Base
 		}
 		
 		return TodoPingSettingsProvider::DEFAULT_OFFSETS;
+	}
+
+	public static function getPingOffsets(?int $activityId): array
+	{
+		if (isset($activityId))
+		{
+			return ActivityPingOffsetsTable::getOffsetsByActivityId($activityId);
+		}
+
+		return static::getDefaultPingOffsets();
 	}
 
 	public static function canUseCalendarEvents($providerTypeId = null): bool

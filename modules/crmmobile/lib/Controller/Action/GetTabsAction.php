@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Bitrix\CrmMobile\Controller\Action;
 
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Integration\IntranetManager;
@@ -63,6 +64,13 @@ class GetTabsAction extends Action
 		foreach (FactoryProvider::getAvailableFactories() as $factory)
 		{
 			$entityTypeId = $factory->getEntityTypeId();
+			$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+
+			if (!$toolsManager->checkEntityTypeAvailability($entityTypeId))
+			{
+				continue;
+			}
+
 			$isPossibleDynamicTypeId = \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId);
 			if (
 				$customSectionId === null
@@ -131,6 +139,7 @@ class GetTabsAction extends Action
 					'defaultFilterId' => $this->getDefaultFilterId($filterOptions),
 					'sortType' => $this->getSortType($entityTypeName, $categoryId),
 					'smartActivitySettings' => $this->getSmartActivitySettings($factory, $permissions),
+					'reminders' => (new TodoPingSettingsProvider($entityTypeId, (int)$categoryId))->fetchForJsComponent(),
 				],
 				'permissions' => $permissions,
 				'restrictions' => [

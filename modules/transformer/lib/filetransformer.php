@@ -48,7 +48,16 @@ abstract class FileTransformer implements InterfaceCallback
 		}
 		if(!$result->isSuccess())
 		{
-			Log::write($result->getErrorMessages());
+			Log::logger()->error(
+				'{errors}',
+				[
+					'errors' => $result->getErrorMessages(),
+					'file' => $file,
+					'formats' => $formats,
+					'fileTypeName' => $this->getFileTypeName(),
+				]
+			);
+
 			return $result;
 		}
 		$params['file'] = $publicPath;
@@ -59,8 +68,8 @@ abstract class FileTransformer implements InterfaceCallback
 		if($result->isSuccess())
 		{
 			$http = new Http();
-			$result = $command->send($http);
 			self::clearInfoCache($file);
+			$result = $command->send($http);
 		}
 		return $result;
 	}
@@ -115,6 +124,12 @@ abstract class FileTransformer implements InterfaceCallback
 					'id' => $command->getId(),
 					'params' => $command->getParams(),
 				);
+
+				$error = $command->getError();
+				if (!is_null($error))
+				{
+					$result['error'] = $error->jsonSerialize();
+				}
 			}
 			$cacheInstance->endDataCache($result);
 		}
@@ -158,8 +173,10 @@ abstract class FileTransformer implements InterfaceCallback
 	 */
 	public static function call($status, $command, $params, $result = array())
 	{
-		$str = 'callback '.__CLASS__.' called with status '.Command::getStatusText($status).' and results '.print_r($result, 1);
-		Log::write($str);
+		Log::logger()->debug(
+			'callback {class} called with status {status} ({statusText})',
+			['class' => static::class, 'status' => $status, 'statusText' => Command::getStatusText($status), 'result' => $result]
+		);
 		return true;
 	}
 }

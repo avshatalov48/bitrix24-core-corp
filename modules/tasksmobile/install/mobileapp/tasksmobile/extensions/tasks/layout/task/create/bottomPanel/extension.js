@@ -3,6 +3,8 @@
  */
 jn.define('tasks/layout/task/create/bottomPanel', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
+	const { clip } = require('assets/common');
 
 	class BottomPanel extends LayoutComponent
 	{
@@ -17,7 +19,7 @@ jn.define('tasks/layout/task/create/bottomPanel', (require, exports, module) => 
 
 			if (result.indexOf(currentDomain) !== 0)
 			{
-				result = result.replace(`${currentDomain}`, '');
+				result = result.replace(currentDomain, '');
 				result = (result.indexOf('http') === 0 ? result : `${currentDomain}${result}`);
 			}
 
@@ -45,6 +47,8 @@ jn.define('tasks/layout/task/create/bottomPanel', (require, exports, module) => 
 		render()
 		{
 			return new UI.BottomToolbar({
+				safeArea: Application.getPlatform() === 'ios',
+				shadow: true,
 				renderContent: () => View(
 					{
 						style: {
@@ -66,10 +70,13 @@ jn.define('tasks/layout/task/create/bottomPanel', (require, exports, module) => 
 						},
 						Image({
 							style: {
-								width: 28,
-								height: 28,
+								width: 18,
+								height: 18,
 							},
-							uri: BottomPanel.getImageUrl(`${this.props.pathToImages}/tasksmobile-layout-task-toolbar-attach-file.png`),
+							tintColor: AppTheme.colors.base3,
+							svg: {
+								content: clip,
+							},
 						}),
 						this.renderAttachmentButtonCounter(),
 					),
@@ -79,7 +86,7 @@ jn.define('tasks/layout/task/create/bottomPanel', (require, exports, module) => 
 								justifyContent: 'center',
 								paddingHorizontal: 28,
 								borderLeftWidth: 1,
-								borderLeftColor: '#eef2f4',
+								borderLeftColor: AppTheme.colors.bgSeparatorSecondary,
 							},
 							testId: 'taskCreateToolbar_allFieldsButton',
 							onClick: this.props.onExpandButtonClick,
@@ -88,7 +95,7 @@ jn.define('tasks/layout/task/create/bottomPanel', (require, exports, module) => 
 							style: {
 								fontSize: 16,
 								fontWeight: '500',
-								color: '#bdc1c6',
+								color: AppTheme.colors.base3,
 							},
 							text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_CREATE_BOTTOM_PANEL_ALL_FIELDS'),
 						}),
@@ -99,7 +106,7 @@ jn.define('tasks/layout/task/create/bottomPanel', (require, exports, module) => 
 								justifyContent: 'center',
 								paddingHorizontal: 28,
 								borderLeftWidth: 1,
-								borderLeftColor: '#eef2f4',
+								borderLeftColor: AppTheme.colors.bgSeparatorSecondary,
 							},
 							testId: 'taskCreateToolbar_createButton',
 							onClick: this.props.onCreateButtonClick,
@@ -108,7 +115,7 @@ jn.define('tasks/layout/task/create/bottomPanel', (require, exports, module) => 
 							style: {
 								fontSize: 18,
 								fontWeight: '500',
-								color: '#0b66c3',
+								color: AppTheme.colors.accentMainPrimary,
 							},
 							text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_CREATE_BOTTOM_PANEL_CREATE'),
 						}),
@@ -131,7 +138,7 @@ jn.define('tasks/layout/task/create/bottomPanel', (require, exports, module) => 
 			{
 				return Loader({
 					style: baseStyle,
-					tintColor: '#2fc6f6',
+					tintColor: AppTheme.colors.accentBrandBlue,
 					animating: true,
 					size: 'small',
 				});
@@ -148,7 +155,7 @@ jn.define('tasks/layout/task/create/bottomPanel', (require, exports, module) => 
 						...baseStyle,
 						justifyContent: 'center',
 						alignItems: 'center',
-						backgroundColor: '#2fc6f6',
+						backgroundColor: AppTheme.colors.accentBrandBlue,
 						borderRadius: 9,
 					},
 				},
@@ -156,7 +163,7 @@ jn.define('tasks/layout/task/create/bottomPanel', (require, exports, module) => 
 					style: {
 						fontSize: 12,
 						fontWeight: '500',
-						color: '#ffffff',
+						color: AppTheme.colors.base8,
 					},
 					text: String(this.state.attachmentCount),
 				}),

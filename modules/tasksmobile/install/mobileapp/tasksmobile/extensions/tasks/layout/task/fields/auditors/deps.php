@@ -2,8 +2,8 @@
 
 return [
 	'extensions' => [
-		'layout/ui/fields/user',
 		'loc',
 		'type',
+		'layout/ui/fields/user',
 	],
 ];

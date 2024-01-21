@@ -28,6 +28,9 @@
 
 .crm-timeline__card-container_info.--fixed-width .crm-timeline__card-container_info-title {
 	width: 100px;
+	align-self: start;
+	min-height: 19px;
+	line-height: 19px;
 }
 
 .crm-timeline__card-container_info-value {

@@ -1,4 +1,5 @@
 (() => {
+	const AppTheme = jn.require('apptheme');
 	const SECTION_DEFAULT = 'default';
 	const SECTION_SERVICE = 'service';
 	const svgIcons = {
@@ -80,7 +81,7 @@
 						marginLeft: navigationBarLeftMargin,
 						flexDirection: 'row',
 						borderBottomWidth: this.showTitleBorder ? 1 : 0,
-						borderBottomColor: '#edeef0',
+						borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
 						justifyContent: 'space-between',
 					},
 				},
@@ -145,7 +146,7 @@
 				Text({
 					style: {
 						fontSize: 14,
-						color: '#0065a3',
+						color: AppTheme.colors.accentMainLinks,
 						flexShrink: 2,
 					},
 					numberOfLines: 1,
@@ -188,7 +189,7 @@
 			const hasIcons = this.actions.some((action) => {
 				if (action.data)
 				{
-					return action.data.svgIcon || action.data.imgUri;
+					return action.data.svgIcon || action.data.svgUri || action.data.imgUri;
 				}
 
 				return false;
@@ -215,13 +216,13 @@
 	}
 
 	const styles = {
-		sectionView: (isService) => ({
-			backgroundColor: isService ? '#fbfbfc' : '#ffffff',
+		sectionView: () => ({
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			fontSize: 18,
 			borderRadius: 12,
 		}),
 		title: {
-			color: '#525c69',
+			color: AppTheme.colors.base2,
 			fontSize: 13,
 		},
 	};

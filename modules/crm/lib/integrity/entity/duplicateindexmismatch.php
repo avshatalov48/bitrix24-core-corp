@@ -84,53 +84,35 @@ class DuplicateIndexMismatchTable extends Entity\DataManager
 		$scope = (isset($data['SCOPE'])
 			&& $data['SCOPE'] !== DuplicateIndexType::DEFAULT_SCOPE
 			&& DuplicateIndexType::checkScopeValue($data['SCOPE'])) ?
-				$sqlHelper->forSql($data['SCOPE'], 6) : DuplicateIndexType::DEFAULT_SCOPE;
+			mb_substr($data['SCOPE'], 0, 6) : DuplicateIndexType::DEFAULT_SCOPE;
 
-		if($connection instanceof Main\DB\MysqlCommonConnection)
-		{
-			$connection->queryExecute(
-				"INSERT INTO b_crm_dp_index_mismatch(USER_ID, ENTITY_TYPE_ID, TYPE_ID, MATCH_HASH, L_ENTITY_ID, R_ENTITY_ID, SCOPE)
-					VALUES({$userID}, {$entityTypeID}, {$typeID}, '{$matchHash}', {$leftEntityID}, {$rightEntityID}, '{$scope}')
-					ON DUPLICATE KEY UPDATE L_ENTITY_ID = {$leftEntityID}, R_ENTITY_ID = {$rightEntityID}, SCOPE = '{$scope}'"
-			);
-		}
-		elseif($connection instanceof Main\DB\MssqlConnection)
-		{
-			$dbResult = $connection->query(
-				"SELECT 'X' FROM b_crm_dp_index_mismatch WHERE USER_ID = {$userID} AND ENTITY_TYPE_ID = {$entityTypeID} AND TYPE_ID = {$typeID} AND MATCH_HASH = '{$matchHash}' AND L_ENTITY_ID = {$leftEntityID} AND R_ENTITY_ID = {$rightEntityID} AND SCOPE = {$scope}"
-			);
-
-			if(!is_array($dbResult->fetch()))
-			{
-				$connection->queryExecute(
-					"INSERT INTO b_crm_dp_index_mismatch(USER_ID, ENTITY_TYPE_ID, TYPE_ID, MATCH_HASH, L_ENTITY_ID, R_ENTITY_ID, SCOPE)
-						VALUES({$userID}, {$entityTypeID}, {$typeID}, '{$matchHash}', {$leftEntityID}, {$rightEntityID}, '{$scope}')"
-				);
-			}
-		}
-		elseif($connection instanceof Main\DB\OracleConnection)
-		{
-			$connection->queryExecute("MERGE INTO b_crm_dp_index_mismatch USING (SELECT {$userID} USER_ID, {$entityTypeID} ENTITY_TYPE_ID, {$typeID} TYPE_ID, '{$matchHash}' MATCH_HASH, {$leftEntityID} L_ENTITY_ID, {$rightEntityID} R_ENTITY_ID, {$scope} SCOPE FROM dual)
-				source ON
-				(
-					source.USER_ID = b_crm_dp_index_mismatch.USER_ID
-					AND source.ENTITY_TYPE_ID = b_crm_dp_index_mismatch.ENTITY_TYPE_ID
-					AND source.TYPE_ID = b_crm_dp_index_mismatch.TYPE_ID
-					AND source.MATCH_HASH = b_crm_dp_index_mismatch.MATCH_HASH
-					AND source.L_ENTITY_ID = b_crm_dp_index_mismatch.L_ENTITY_ID
-					AND source.R_ENTITY_ID = b_crm_dp_index_mismatch.R_ENTITY_ID
-					AND source.SCOPE = b_crm_dp_index_mismatch.SCOPE
-				)
-				WHEN NOT MATCHED THEN
-					INSERT (USER_ID, ENTITY_TYPE_ID, TYPE_ID, MATCH_HASH, L_ENTITY_ID, R_ENTITY_ID, SCOPE)
-					VALUES({$userID}, {$entityTypeID}, {$typeID}, '{$matchHash}', {$leftEntityID}, {$rightEntityID}, '{$scope}')"
-			);
-		}
-		else
-		{
-			$dbType = $connection->getType();
-			throw new Main\NotSupportedException("The '{$dbType}' is not supported in current context");
-		}
+		$sql = $sqlHelper->prepareMerge(
+			'b_crm_dp_index_mismatch',
+			[
+				'USER_ID',
+				'ENTITY_TYPE_ID',
+				'TYPE_ID',
+				'MATCH_HASH',
+				'L_ENTITY_ID',
+				'R_ENTITY_ID',
+				'SCOPE',
+			],
+			[
+				'USER_ID' => $userID,
+				'ENTITY_TYPE_ID' => $entityTypeID,
+				'TYPE_ID' => $typeID,
+				'MATCH_HASH' => $matchHash,
+				'L_ENTITY_ID' => $leftEntityID,
+				'R_ENTITY_ID' => $rightEntityID,
+				'SCOPE' => $scope,
+			],
+			[
+				'L_ENTITY_ID' => $leftEntityID,
+				'R_ENTITY_ID' => $rightEntityID,
+				'SCOPE' => $scope,
+			]
+		);
+		$connection->queryExecute($sql[0]);
 	}
 	public static function deleteByEntity($entityTypeID, $entityID)
 	{

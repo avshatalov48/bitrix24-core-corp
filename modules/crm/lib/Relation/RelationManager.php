@@ -9,8 +9,8 @@ use Bitrix\Crm\Binding\LeadContactTable;
 use Bitrix\Crm\Conversion\Entity\EntityConversionMapTable;
 use Bitrix\Crm\Conversion\Entity\EO_EntityConversionMap;
 use Bitrix\Crm\Conversion\Entity\EO_EntityConversionMap_Collection;
-use Bitrix\Crm\Integration\Catalog\Contractor\StoreDocumentRelationStorageStrategy;
 use Bitrix\Crm\Integration\Catalog\Contractor\AgentContractRelationStorageStrategy;
+use Bitrix\Crm\Integration\Catalog\Contractor\StoreDocumentRelationStorageStrategy;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Relation;
@@ -938,6 +938,7 @@ class RelationManager
 	): array
 	{
 		$tabCodes = $this->getRelationTabCodes($parentEntityTypeId);
+		$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
 
 		$result = [];
 		foreach ($tabCodes as $tabCode => $entityTypeId)
@@ -951,7 +952,7 @@ class RelationManager
 			$factory = Container::getInstance()->getFactory($entityTypeId);
 			if ($factory && $serviceUrl)
 			{
-				$result[] = [
+				$tab = [
 					'id' => $tabCode,
 					'name' => $factory->getEntityDescriptionInPlural(),
 					'loader' => [
@@ -973,6 +974,19 @@ class RelationManager
 					],
 					'enabled' => !$isNew,
 				];
+
+				if (!$toolsManager->checkEntityTypeAvailability($entityTypeId))
+				{
+					$availabilityLock = \Bitrix\Crm\Restriction\AvailabilityManager::getInstance()
+						->getEntityTypeAvailabilityLock($entityTypeId);
+
+					if ($availabilityLock)
+					{
+						$tab['availabilityLock'] = $availabilityLock;
+					}
+				}
+
+				$result[] = $tab;
 			}
 		}
 

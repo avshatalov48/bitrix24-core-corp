@@ -2,7 +2,8 @@
 
 return [
 	'extensions' => [
-		'assets/common',
+		'apptheme',
 		'haptics',
+		'assets/common',
 	],
 ];

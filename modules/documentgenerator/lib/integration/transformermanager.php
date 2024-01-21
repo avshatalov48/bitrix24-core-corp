@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace Bitrix\DocumentGenerator\Integration;
 
@@ -10,12 +10,13 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Transformer\Command;
 use Bitrix\Transformer\DocumentTransformer;
 use Bitrix\Transformer\FileTransformer;
-use \Bitrix\Transformer\InterfaceCallback;
+use Bitrix\Transformer\InterfaceCallback;
 
 final class TransformerManager implements InterfaceCallback
 {
@@ -91,25 +92,8 @@ final class TransformerManager implements InterfaceCallback
 			}
 		}
 
-		$isTransformationError = $status === Command::STATUS_ERROR;
 		$data = $document->getFile(false)->getData();
-		$data['isTransformationError'] = $isTransformationError;
-		if($isTransformationError)
-		{
-			if(isset($result['command']))
-			{
-				$command = $result['command'];
-				if($command instanceof Command)
-				{
-					$error = $command->getError();
-					if($error)
-					{
-						$data['transformationErrorMessage'] = $error->getMessage();
-						$data['transformationErrorCode'] = $error->getCode();
-					}
-				}
-			}
-		}
+
 		static::addToStack($data);
 		$pdfId = null;
 		if(isset($updateData['PDF_ID']) && $updateData['PDF_ID'] > 0)
@@ -284,6 +268,46 @@ final class TransformerManager implements InterfaceCallback
 		}
 
 		return false;
+	}
+
+	final public function getLastTransformationResult(): ?Result
+	{
+		$this->loadTransformInfo();
+		if (!is_array($this->transformInfo))
+		{
+			return null;
+		}
+
+		$result = new Result();
+
+		$status = $this->transformInfo['status'] ?? null;
+
+		$isErrorStatus = $status === Command::STATUS_ERROR;
+		if (!$isErrorStatus)
+		{
+			return $result;
+		}
+
+		$error = $this->transformInfo['error'] ?? null;
+		if (!is_array($error))
+		{
+			$error = [];
+		}
+
+		$code = isset($error['code']) && is_int($error['code']) ? $error['code'] : Command::ERROR_CONTROLLER_UNKNOWN_ERROR;
+		if (isset($error['message']) && is_string($error['message']) && $error['message'] !== '')
+		{
+			$message = $error['message'];
+		}
+		else
+		{
+			$message = Loc::getMessage('DOCUMENTGENERATOR_TRANSFORMER_ERROR_UNKNOWN');
+		}
+		$customData = isset($error['customData']) && is_array($error['customData']) ? $error['customData'] : null;
+
+		$result->addError(new Error($message, $code, $customData));
+
+		return $result;
 	}
 
 	/**

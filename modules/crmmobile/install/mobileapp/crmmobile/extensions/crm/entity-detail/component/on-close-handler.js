@@ -2,10 +2,14 @@
  * @module crm/entity-detail/component/on-close-handler
  */
 jn.define('crm/entity-detail/component/on-close-handler', (require, exports, module) => {
-	const { CategoryStorage } = require('crm/storage/category');
 	const { TimelineScheduler } = require('crm/timeline/scheduler');
 	const { Haptics } = require('haptics');
 	const { TypeId } = require('crm/type');
+	const store = require('statemanager/redux/store');
+	const {
+		getCrmKanbanUniqId,
+		selectStagesIdsBySemantics,
+	} = require('crm/statemanager/redux/slices/kanban-settings');
 
 	/**
 	 * @param {DetailCardComponent} detailCard
@@ -56,8 +60,8 @@ jn.define('crm/entity-detail/component/on-close-handler', (require, exports, mod
 	const checkIfFinalStage = (detailCard) => {
 		const { entityTypeId, categoryId } = detailCard.getComponentParams();
 
-		const category = CategoryStorage.getCategory(entityTypeId, categoryId || 0);
-		if (!category)
+		const stages = selectStagesIdsBySemantics(store.getState(), getCrmKanbanUniqId(entityTypeId, categoryId));
+		if (!stages)
 		{
 			return true;
 		}
@@ -71,10 +75,10 @@ jn.define('crm/entity-detail/component/on-close-handler', (require, exports, mod
 
 		return (
 			[
-				...(category.successStages || []),
-				...(category.failureStages || []),
+				...(stages.successStages || []),
+				...(stages.failureStages || []),
 			]
-				.some(({ id }) => id === stageId)
+				.includes(stageId)
 		);
 	};
 
@@ -82,7 +86,12 @@ jn.define('crm/entity-detail/component/on-close-handler', (require, exports, mod
 	 * @param {DetailCardComponent} detailCard
 	 */
 	const showTodoNotification = (detailCard) => {
-		const { entityTypeId, entityId, categoryId, todoNotificationParams: { user } } = detailCard.getComponentParams();
+		const {
+			entityTypeId,
+			entityId,
+			categoryId,
+			todoNotificationParams: { user, reminders },
+		} = detailCard.getComponentParams();
 
 		return new Promise((resolve) => {
 			const timelineScheduler = new TimelineScheduler({
@@ -90,6 +99,7 @@ jn.define('crm/entity-detail/component/on-close-handler', (require, exports, mod
 				entity: {
 					id: entityId,
 					typeId: entityTypeId,
+					reminders,
 					categoryId,
 				},
 				onActivityCreate: resolve,

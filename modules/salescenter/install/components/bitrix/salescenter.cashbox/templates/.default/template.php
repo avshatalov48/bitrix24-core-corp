@@ -21,6 +21,7 @@ Extension::load([
 	'sidepanel',
 	'loader',
 	'ui.switcher',
+	'ui.dialogs.messagebox'
 ]);
 ?>
 

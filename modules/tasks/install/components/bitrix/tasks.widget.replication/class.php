@@ -1,25 +1,33 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Errorable;
+use Bitrix\Main\ErrorCollection;
+use Bitrix\Main\Loader;
+use Bitrix\Tasks\Access\Model\TemplateModel;
+use Bitrix\Tasks\Action\Filter\BooleanFilter;
 use Bitrix\Tasks\Item\Task\Template\Field\ReplicateParams;
 use Bitrix\Tasks\Internals\Task\Template\ReplicateParamsCorrector;
 use Bitrix\Tasks\Item\Task;
+use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Error;
 use Bitrix\Tasks\Item\Task\Template;
 use Bitrix\Tasks\Access\TemplateAccessController;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Util\User;
 
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
-class TasksWidgetReplicationComponent extends TasksBaseComponent
-	implements \Bitrix\Main\Errorable, \Bitrix\Main\Engine\Contract\Controllerable
+class TasksWidgetReplicationComponent extends TasksBaseComponent implements Errorable, Controllerable
 {
-	protected $errorCollection;
+	protected \Bitrix\Tasks\Util\Error\Collection $errorCollection;
 
-	public function configureActions()
+	public function configureActions(): array
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return [];
 		}
@@ -27,12 +35,12 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent
 		return [
 			'startReplication' => [
 				'+prefilters' => [
-					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+					new BooleanFilter(),
 				],
 			],
 			'stopReplication' => [
 				'+prefilters' => [
-					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+					new BooleanFilter(),
 				],
 			],
 		];
@@ -46,7 +54,7 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent
 
 	protected function init()
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -57,12 +65,11 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent
 
 	protected function setUserId()
 	{
-		$this->userId = (int) \Bitrix\Tasks\Util\User::getId();
+		$this->userId = CurrentUser::get()->getId();
 	}
 
 	public function getErrorByCode($code)
 	{
-		// TODO: Implement getErrorByCode() method.
 	}
 
 	public function getErrors()
@@ -74,20 +81,19 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent
 		return $this->errorCollection->toArray();
 	}
 
-	public function startReplicationAction($templateId)
+	public function startReplicationAction(int $templateId): ?array
 	{
-		$templateId = (int) $templateId;
-		if (!$templateId)
+		if ($templateId <= 0)
 		{
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
 
-		$templateModel = \Bitrix\Tasks\Access\Model\TemplateModel::createFromId($templateId);
+		$templateModel = TemplateModel::createFromId($templateId);
 		$isAccess = (new TemplateAccessController($this->userId))->check(ActionDictionary::ACTION_TEMPLATE_SAVE, $templateModel, $templateModel);
 		if (!$isAccess)
 		{
@@ -102,20 +108,19 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent
 		];
 	}
 
-	public function stopReplicationAction($templateId)
+	public function stopReplicationAction(int $templateId): ?array
 	{
-		$templateId = (int) $templateId;
-		if (!$templateId)
+		if ($templateId <= 0)
 		{
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
 
-		$templateModel = \Bitrix\Tasks\Access\Model\TemplateModel::createFromId($templateId);
+		$templateModel = TemplateModel::createFromId($templateId);
 		$isAccess = (new TemplateAccessController($this->userId))->check(ActionDictionary::ACTION_TEMPLATE_SAVE, $templateModel, $templateModel);
 		if (!$isAccess)
 		{
@@ -135,21 +140,17 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent
 		$this->errorCollection->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
 	}
 
-	private function toggleReplication($id, $way)
+	private function toggleReplication(int $templateId, bool $isReplication): void
 	{
-		$result = [];
+		$template = new Template($templateId);
+		$template['REPLICATE'] = $isReplication ? 'Y' : 'N';
 
-		$result['ID'] = $id;
-
-		$template = new Template($id);
-		$template['REPLICATE'] = $way ? 'Y' : 'N';
-
-		if($way)
+		if($isReplication)
 		{
 			$template['TPARAM_REPLICATION_COUNT'] = 0;
 		}
 
-		$taskId = intval($template['TASK_ID']);
+		$taskId = (int)$template['TASK_ID'];
 
 		$saveResult = $template->save();
 		$this->errorCollection->load($saveResult->getErrors());
@@ -162,7 +163,7 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent
 				$task = new Task($taskId);
 				if($task->canUpdate())
 				{
-					$task['REPLICATE'] = $way ? 'Y' : 'N';
+					$task['REPLICATE'] = $isReplication ? 'Y' : 'N';
 					$saveResult = $task->save(); // todo: DO NOT remove template in case of REPLICATE falls to N
 					$this->errorCollection->load($saveResult->getErrors()->transform(array(
 						'CODE' => 'TASK.#CODE#',
@@ -171,11 +172,9 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent
 				}
 			}
 		}
-
-		return $result;
 	}
 
-	protected function checkParameters()
+	protected function checkParameters(): bool
 	{
 		$this->arParams['DATA'] = ReplicateParams::createValueStructure($this->arParams['DATA'])->get();
 		$this->arResult['TASK_LIMIT_EXCEEDED'] = static::tryParseBooleanParameter($this->arParams['TASK_LIMIT_EXCEEDED']);
@@ -195,7 +194,7 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent
 			0 => 0, 1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5, 6 => 6
 		);
 
-		// wee need mapping because of different week start
+		// wee, need mapping because of different week start
 		if((string) $weekStart != '')
 		{
 			$wdStrMap = array(
@@ -219,8 +218,8 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent
 
 		$this->arResult['AUX_DATA']['WEEKDAY_MAP'] = $wdMap;
 
-		$currentTimeZoneOffset = \Bitrix\Tasks\Util\User::getTimeZoneOffset($this->arParams['USER_ID']);
-		$serverTimeZoneOffset = \Bitrix\Tasks\Util::getServerTimeZoneOffset();
+		$currentTimeZoneOffset = User::getTimeZoneOffset($this->arParams['USER_ID']);
+		$serverTimeZoneOffset = Util::getServerTimeZoneOffset();
 		$resultTimeZoneOffset = $currentTimeZoneOffset + $serverTimeZoneOffset;
 
 		$this->arResult['CURRENT_TIMEZONE_OFFSET'] = 0;
@@ -232,7 +231,7 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent
 		$timeZoneOffset = ($data['TIMEZONE_OFFSET'] ?? null);
 		$creator = $this->arParams['TEMPLATE_CREATED_BY'];
 
-		$creatorTimeZoneOffset = (isset($timeZoneOffset)? $timeZoneOffset : \Bitrix\Tasks\Util\User::getTimeZoneOffset($creator));
+		$creatorTimeZoneOffset = ($timeZoneOffset ?? User::getTimeZoneOffset($creator));
 
 		$serverTime = date('H:i', $time - $creatorTimeZoneOffset);
 		$serverStartDate = MakeTimeStamp($data['START_DATE'] ?? null);

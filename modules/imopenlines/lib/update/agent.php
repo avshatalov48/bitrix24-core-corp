@@ -83,9 +83,8 @@ final class Agent
 			&& Loader::IncludeModule('imopenlines')
 		)
 		{
-			$connection = \Bitrix\Main\Application::getInstance()->getConnection();
 			$configs = [];
-			$confList = $connection->query("SELECT ID FROM b_imopenlines_config");
+			$confList = \Bitrix\ImOpenLines\Model\ConfigTable::getList(['select' => ['ID']]);
 			while ($row = $confList->fetch())
 			{
 				$configs[] = (int)$row['ID'];
@@ -94,6 +93,7 @@ final class Agent
 			$type = \Bitrix\Im\Chat::TYPE_OPEN_LINE;
 			$chatType = \Bitrix\ImOpenLines\Chat::CHAT_TYPE_OPERATOR;
 
+			$connection = \Bitrix\Main\Application::getInstance()->getConnection();
 			$res = $connection->query("
 				SELECT 
 					c.ID, c.ENTITY_ID 
@@ -106,7 +106,7 @@ final class Agent
 					left join b_imopenlines_session s
 						on c.id = s.CHAT_ID
 					left join b_imopenlines_config g
-						on g.ID = cast(substring_index(substring_index(c.ENTITY_ID, '|', 2), '|', -1) as unsigned)
+						on g.ID = cast(substring_index(substring_index(c.ENTITY_ID, '|', 2), '|', -1) as decimal)
 				WHERE 
 					s.ID is null
 					AND g.ID is null

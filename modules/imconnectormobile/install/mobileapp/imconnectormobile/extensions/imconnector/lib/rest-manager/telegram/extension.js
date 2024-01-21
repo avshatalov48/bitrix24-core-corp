@@ -211,14 +211,14 @@ jn.define('imconnector/lib/rest-manager/telegram', (require, exports, module) =>
 		}
 
 		/**
-		 * @param {number} userId
+		 * @param {number|null} userId
 		 * @return {Promise<boolean>}
 		 */
-		hasAccess(userId)
+		hasAccess(userId = null)
 		{
 			return new Promise((resolve, reject) => {
 				BX.rest.callMethod(
-					'imconnector.openlines.hasAccess',
+					'imconnector.Openlines.hasAccess',
 					{
 						userId,
 					},
@@ -253,7 +253,7 @@ jn.define('imconnector/lib/rest-manager/telegram', (require, exports, module) =>
 							},
 						},
 						permissions: {
-							method: 'imconnector.openlines.hasAccess',
+							method: 'imconnector.Openlines.hasAccess',
 							params: {
 								userId,
 							},

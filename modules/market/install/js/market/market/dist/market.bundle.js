@@ -21,6 +21,7 @@ this.BX = this.BX || {};
 	          favNumbers: 0,
 	          numUpdates: 0,
 	          totalApps: 0,
+	          showMarketIcon: 'Y',
 	          skeleton: '',
 	          marketSlider: '',
 	          mainUri: '',
@@ -30,9 +31,8 @@ this.BX = this.BX || {};
 	          hideCategories: false,
 	          hideBreadcrumbs: false,
 	          showTitle: true,
-	          changeHistory: true,
-	          firstPageHistory: false,
-	          isHistoryMoving: false
+	          canChangeHistory: true,
+	          firstPageHistory: false
 	        };
 	      },
 	      computed: {
@@ -78,6 +78,7 @@ this.BX = this.BX || {};
 	        this.favNumbers = this.result.FAV_NUMBERS;
 	        this.numUpdates = this.result.NUM_UPDATES;
 	        this.totalApps = this.result.TOTAL_APPS;
+	        this.showMarketIcon = this.result.SHOW_MARKET_ICON;
 	        this.marketSlider = this.result.MARKET_SLIDER;
 	        if (this.params.CREATE_URI_SITE_TEMPLATE && this.params.CREATE_URI_SITE_TEMPLATE.length > 0) {
 	          this.siteTemplateUri = this.params.CREATE_URI_SITE_TEMPLATE;
@@ -95,7 +96,7 @@ this.BX = this.BX || {};
 	          this.showTitle = false;
 	        }
 	        if (this.params.CHANGE_HISTORY && this.params.CHANGE_HISTORY === 'N') {
-	          this.changeHistory = false;
+	          this.canChangeHistory = false;
 	        }
 	        if (this.params.ADDITIONAL_BODY_CLASS && this.params.ADDITIONAL_BODY_CLASS.length > 0) {
 	          document.body.classList.add(this.params.ADDITIONAL_BODY_CLASS);
@@ -105,26 +106,8 @@ this.BX = this.BX || {};
 	        this.$Bitrix.eventEmitter.subscribe('market:loadContent', this.loadContent);
 	        main_core_events.EventEmitter.subscribe('market:refreshUri', this.refreshUri);
 	        BX.addCustomEvent("SidePanel.Slider:onMessage", this.onMessageSlider);
-	        this.setParamsForFirstHistoryPage();
-	        BX.bind(top.window, 'popstate', this.onPopState.bind(this));
 	      },
 	      methods: {
-	        onPopState: function (event) {
-	          if (!event.state.uri || !event.state.skeleton) {
-	            return;
-	          }
-	          this.isHistoryMoving = true;
-	          this.updatePage(event.state.uri, event.state.skeleton);
-	        },
-	        setParamsForFirstHistoryPage: function () {
-	          if (!this.params.HISTORY || !this.params.HISTORY.uri || !this.params.HISTORY.skeleton) {
-	            return;
-	          }
-	          setTimeout(() => top.history.replaceState({
-	            uri: this.params.HISTORY.uri,
-	            skeleton: this.params.HISTORY.skeleton
-	          }, ''), 500);
-	        },
 	        getDetailUri: function (appCode, isSiteTemplate, from) {
 	          var _isSiteTemplate;
 	          isSiteTemplate = (_isSiteTemplate = isSiteTemplate) != null ? _isSiteTemplate : false;
@@ -205,11 +188,9 @@ this.BX = this.BX || {};
 	              if (BX.type.isObject(response.data.params) && BX.type.isObject(response.data.result)) {
 	                this.params = response.data.params;
 	                this.result = response.data.result;
-	                if (this.changeHistory && !this.isHistoryMoving) {
-	                  top.history.pushState({
-	                    uri: uri,
-	                    skeleton: skeleton
-	                  }, '', uri);
+	                if (this.canChangeHistory) {
+	                  BX.SidePanel.Instance.getTopSlider().setUrl(uri);
+	                  top.history.replaceState({}, '', uri);
 	                }
 	                if (this.showTitle && response.data.result.hasOwnProperty('TITLE')) {
 	                  top.document.title = response.data.result.TITLE;
@@ -226,11 +207,9 @@ this.BX = this.BX || {};
 	            }
 	            ui_vue3.nextTick(() => {
 	              this.skeleton = '';
-	              this.isHistoryMoving = false;
 	            });
 	          }, response => {
 	            this.skeleton = '';
-	            this.isHistoryMoving = false;
 	          });
 	        },
 	        onMessageSlider: function (event) {

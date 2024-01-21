@@ -6,7 +6,6 @@
 	min-height: 21px;
 	padding-left: 9px;
 	padding-right: 21px;
-	font-family: var(--ui-font-family-secondary, --ui-font-family-open-sans, 'Open Sans', sans-serif);
 	font-size: var(--ui-font-size-xs, 12px);
 	font-weight: var(--ui-font-weight-semi-bold, 600);
 	line-height: var(--ui-font-line-height-xl, 1.62);

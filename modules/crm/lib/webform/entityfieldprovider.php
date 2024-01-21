@@ -171,7 +171,7 @@ class EntityFieldProvider
 		return $fields;
 	}
 
-	public static function getAllFieldsDescription()
+	public static function getAllFieldsDescription(?int $requisitePresetId = null)
 	{
 		$result = [];
 
@@ -179,7 +179,7 @@ class EntityFieldProvider
 			\CCrmOwnerType::SmartDocument,
 		];
 
-		$availableFields = EntityFieldProvider::getFields($hiddenTypes);
+		$availableFields = EntityFieldProvider::getFields($hiddenTypes, $requisitePresetId);
 		foreach($availableFields as $fieldAvailable)
 		{
 			$result[] = self::getFieldDescription($fieldAvailable);
@@ -242,8 +242,9 @@ class EntityFieldProvider
 		$field['MULTIPLE_ORIGINAL'] = $fieldAvailable['multiple'];
 		$field['VALUE_TYPE_ORIGINAL'] = empty($fieldAvailable['value_type']) ? [] : $fieldAvailable['value_type'];
 
-		$isSetOriginalType = ($field['TYPE'] != 'section' && (!in_array($field['TYPE'], $stringTypes)));
-		$isSetOriginalType = $isSetOriginalType && !($field['TYPE'] == 'radio' && $fieldAvailable['type'] === 'checkbox');
+		$fieldType = $field['TYPE'] ?? null;
+		$isSetOriginalType = ($fieldType != 'section' && (!in_array($fieldType, $stringTypes)));
+		$isSetOriginalType = $isSetOriginalType && !($fieldType == 'radio' && $fieldAvailable['type'] === 'checkbox');
 		if($isSetOriginalType)
 		{
 			$field['TYPE'] = $fieldAvailable['type'];

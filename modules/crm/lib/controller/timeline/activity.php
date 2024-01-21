@@ -2,11 +2,14 @@
 
 namespace Bitrix\Crm\Controller\Timeline;
 
+use Bitrix\Crm\Controller\Base;
 use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Error;
+use CCrmActivity;
+use CCrmOwnerType;
 
-class Activity extends \Bitrix\Crm\Controller\Base
+class Activity extends Base
 {
 	public function completeAction(int $activityId, int $ownerTypeId, int $ownerId): void
 	{
@@ -16,23 +19,43 @@ class Activity extends \Bitrix\Crm\Controller\Base
 			return;
 		}
 
-		if(!\CCrmActivity::CheckCompletePermission(
-			$ownerTypeId,
-			$ownerId,
-			Container::getInstance()->getUserPermissions()->getCrmPermissions(),
-			['FIELDS' => $activity]
-		))
+		if (
+			!CCrmActivity::CheckCompletePermission(
+				$ownerTypeId,
+				$ownerId,
+				Container::getInstance()->getUserPermissions()->getCrmPermissions(),
+				['FIELDS' => $activity]
+			)
+		)
 		{
-			$provider = \CCrmActivity::GetActivityProvider($activity);
-			$error = is_null($provider) ? ErrorCode::getAccessDeniedError() : $provider::getCompletionDeniedError();
+			$provider = CCrmActivity::GetActivityProvider($activity);
+			$error = is_null($provider)
+				? ErrorCode::getAccessDeniedError()
+				: $provider::getCompletionDeniedError()
+			;
+
 			$this->addError($error);
 
 			return;
 		}
 
-		if (!\CCrmActivity::Complete($activityId, true, ['REGISTER_SONET_EVENT' => true]))
+		$result = CCrmActivity::Complete(
+			$activityId,
+			true,
+			[
+				'REGISTER_SONET_EVENT' => true,
+				'EXECUTOR_ID' => $this->getCurrentUser()?->getId(),
+			]
+		);
+
+		if (!$result)
 		{
-			$this->addError(new Error(implode(', ', \CCrmActivity::GetErrorMessages()), 'CAN_NOT_COMPLETE'));
+			$this->addError(
+				new Error(
+					implode(', ', CCrmActivity::GetErrorMessages()),
+					'CAN_NOT_COMPLETE'
+				)
+			);
 		}
 	}
 
@@ -44,23 +67,31 @@ class Activity extends \Bitrix\Crm\Controller\Base
 			return;
 		}
 
-		if(!\CCrmActivity::CheckUpdatePermission($ownerTypeId, $ownerId))
+		if (!$this->isUpdateEnable($ownerTypeId, $ownerId))
 		{
-			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
-
 			return;
 		}
 
 		if ($offset <= 0)
 		{
-			$this->addError(new Error('Offset must be greater than zero', 'WRONG_OFFSET'));
+			$this->addError(
+				new Error(
+					'Offset must be greater than zero',
+					'WRONG_OFFSET'
+				)
+			);
 
 			return;
 		}
 
-		if (!\CCrmActivity::Postpone($activityId, $offset, ['FIELDS' => $activity]))
+		if (!CCrmActivity::Postpone($activityId, $offset, ['FIELDS' => $activity]))
 		{
-			$this->addError(new Error(implode(', ', \CCrmActivity::GetErrorMessages()), 'CAN_NOT_POSTPONE'));
+			$this->addError(
+				new Error(
+					implode(', ', CCrmActivity::GetErrorMessages()),
+					'CAN_NOT_POSTPONE'
+				)
+			);
 		}
 	}
 
@@ -72,19 +103,18 @@ class Activity extends \Bitrix\Crm\Controller\Base
 			return;
 		}
 
-		if(!\CCrmActivity::CheckUpdatePermission($ownerTypeId, $ownerId))
+		if (!$this->isUpdateEnable($ownerTypeId, $ownerId))
 		{
-			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
-
 			return;
 		}
+
 		$deadline = $this->prepareDatetime($value);
 		if (!$deadline)
 		{
 			return;
 		}
 
-		\CCrmActivity::PostponeToDate($activity, $deadline, true);
+		CCrmActivity::PostponeToDate($activity, $deadline, true);
 	}
 
 	public function deleteAction(int $activityId, int $ownerTypeId, int $ownerId): void
@@ -94,36 +124,92 @@ class Activity extends \Bitrix\Crm\Controller\Base
 			return;
 		}
 
-		if(!\CCrmActivity::CheckUpdatePermission($ownerTypeId, $ownerId))
+		if (!$this->isUpdateEnable($ownerTypeId, $ownerId))
 		{
-			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
-
 			return;
 		}
 
-		if (!\CCrmActivity::Delete($activityId))
+		if (!CCrmActivity::Delete($activityId))
 		{
-			$this->addError(new Error(implode(', ', \CCrmActivity::GetErrorMessages()), 'CAN_NOT_DELETE'));
+			$this->addError(
+				new Error(
+					implode(', ', CCrmActivity::GetErrorMessages()),
+					'CAN_NOT_DELETE')
+			);
 		}
 	}
 
-	private function loadActivity(int $activityId, int $ownerTypeId, int $ownerId): ?array
+	final protected function loadActivity(int $activityId, int $ownerTypeId, int $ownerId): ?array
 	{
-		if(!\CCrmOwnerType::IsDefined($ownerTypeId) || $ownerId <= 0)
+		if ($activityId <= 0)
 		{
-			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getOwnerNotFoundError());
+			$this->addError(ErrorCode::getNotFoundError());
 
 			return null;
 		}
 
-		$activity = \CCrmActivity::GetByID($activityId);
+		if (!$this->isBindingsValid($activityId, $ownerTypeId, $ownerId))
+		{
+			$this->addError(ErrorCode::getOwnerNotFoundError());
+
+			return null;
+		}
+
+		if (!CCrmActivity::CheckReadPermission($ownerTypeId, $ownerId))
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+
+			return null;
+		}
+
+		$activity = Container::getInstance()->getActivityBroker()->getById($activityId);
 		if (!$activity)
 		{
-			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getNotFoundError());
+			$this->addError(ErrorCode::getNotFoundError());
 
 			return null;
 		}
 
 		return $activity;
+	}
+
+	protected function isUpdateEnable(int $ownerTypeId, int $ownerId): bool
+	{
+		if (!CCrmActivity::CheckUpdatePermission($ownerTypeId, $ownerId))
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+
+			return false;
+		}
+
+		return true;
+	}
+
+	private function isBindingsValid(int $activityId, int $ownerTypeId, int $ownerId): ?bool
+	{
+		if (
+			$ownerId <= 0
+			||!CCrmOwnerType::IsDefined($ownerTypeId)
+		)
+		{
+			return false;
+		}
+
+		$isExistBinding = false;
+		$bindingsData = CCrmActivity::GetBindings($activityId);
+		foreach ($bindingsData as $binding)
+		{
+			if (
+				(int)$binding['OWNER_TYPE_ID'] === $ownerTypeId
+				&& (int)$binding['OWNER_ID'] === $ownerId
+			)
+			{
+				$isExistBinding = true;
+
+				break;
+			}
+		}
+
+		return $isExistBinding;
 	}
 }

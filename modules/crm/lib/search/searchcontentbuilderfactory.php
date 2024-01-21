@@ -1,49 +1,57 @@
 <?php
+
 namespace Bitrix\Crm\Search;
-use Bitrix\Main;
+
+use Bitrix\Main\NotSupportedException;
+use CCrmOwnerType;
+
 class SearchContentBuilderFactory
 {
-	public static function create($entityTypeID)
+	public static function create(int $entityTypeId): SearchContentBuilder
 	{
-		if($entityTypeID === \CCrmOwnerType::Lead)
+		if ($entityTypeId === CCrmOwnerType::Lead)
 		{
-			return new LeadSearchContentBuilder();
+			$builder = new LeadSearchContentBuilder();
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Contact)
+		elseif ($entityTypeId === CCrmOwnerType::Contact)
 		{
-			return new ContactSearchContentBuilder();
+			$builder = new ContactSearchContentBuilder();
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Company)
+		elseif ($entityTypeId === CCrmOwnerType::Company)
 		{
-			return new CompanySearchContentBuilder();
+			$builder = new CompanySearchContentBuilder();
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Deal)
+		elseif ($entityTypeId === CCrmOwnerType::Deal)
 		{
-			return new DealSearchContentBuilder();
+			$builder = new DealSearchContentBuilder();
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Quote)
+		elseif ($entityTypeId === CCrmOwnerType::Quote)
 		{
-			return new QuoteSearchContentBuilder();
+			$builder = new QuoteSearchContentBuilder();
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Invoice)
+		elseif ($entityTypeId === CCrmOwnerType::Invoice)
 		{
-			return new InvoiceSearchContentBuilder();
+			$builder = new InvoiceSearchContentBuilder();
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Activity)
+		elseif ($entityTypeId === CCrmOwnerType::Activity)
 		{
-			return new ActivitySearchContentBuilder();
+			$builder = new ActivitySearchContentBuilder();
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Order)
+		elseif ($entityTypeId === CCrmOwnerType::Order)
 		{
-			return new OrderSearchContentBuilder();
+			$builder = new OrderSearchContentBuilder();
 		}
-		elseif (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeID))
+		elseif (CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 		{
-			return new DynamicTypeSearchContentBuilder($entityTypeID);
+			$builder = new DynamicTypeSearchContentBuilder($entityTypeId);
 		}
 		else
 		{
-			throw new Main\NotSupportedException("Type: '".\CCrmOwnerType::resolveName($entityTypeID)."' is not supported in current context");
+			throw new NotSupportedException(
+				"Type: '" . CCrmOwnerType::resolveName($entityTypeId) . "' is not supported in current context"
+			);
 		}
+
+		return $builder;
 	}
 }

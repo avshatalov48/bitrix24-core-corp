@@ -61,3 +61,9 @@ else
 		[]
 	);
 }
+?>
+<?php if ($arResult['META_RESTRICTION_LABEL']): ?>
+	<div class="intranet-contact-center-extremist-organization-label">
+		<span><?= Loc::getMessage("IMOPENLINES_REPORT_PAGE_META_RESTRICTION_RU") ?></span>
+	</div>
+<?php endif ?>

@@ -27,11 +27,6 @@ class documentgenerator extends CModule
 			$this->MODULE_VERSION = $arModuleVersion["VERSION"];
 			$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
 		}
-		else
-		{
-			$this->MODULE_VERSION = DOCUMENTGENERATOR_VERSION;
-			$this->MODULE_VERSION_DATE = DOCUMENTGENERATOR_VERSION;
-		}
 
 		$this->MODULE_NAME = GetMessage("DOCUMENTGENERATOR_MODULE_NAME");
 		$this->MODULE_DESCRIPTION = GetMessage("DOCUMENTGENERATOR_MODULE_DESCRIPTION");
@@ -77,11 +72,12 @@ class documentgenerator extends CModule
 	function InstallDB($params = [])
 	{
 		global $DB, $APPLICATION;
+		$connection = \Bitrix\Main\Application::getConnection();
 		$errors = false;
 
-		if (!$DB->Query("SELECT 'x' FROM b_documentgenerator_template", true))
+		if (!$DB->TableExists('b_documentgenerator_template'))
 		{
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/db/mysql/install.sql");
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/documentgenerator/install/db/' . $connection->getType() . '/install.sql');
 		}
 
 		if($errors !== false)
@@ -158,12 +154,12 @@ class documentgenerator extends CModule
 	function UnInstallDB($params = [])
 	{
 		global $DB, $APPLICATION;
-
+		$connection = \Bitrix\Main\Application::getConnection();
 		$errors = false;
 
 		if (!isset($params['savedata']) || $params['savedata'] !== "Y")
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/db/mysql/uninstall.sql");
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/db/' . $connection->getType() . '/uninstall.sql');
 		}
 
 		if($errors !== false)
@@ -184,5 +180,15 @@ class documentgenerator extends CModule
 	function UnInstallFiles()
 	{
 		return true;
+	}
+
+	public function InstallEvents()
+	{
+		parent::InstallEvents();
+	}
+
+	public function UnInstallEvents()
+	{
+		parent::UnInstallEvents();
 	}
 }

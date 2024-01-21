@@ -18,5 +18,6 @@ return [
 		'notify',
 		'catalog:store/document-type',
 		'loc',
+		'apptheme',
 	],
 ];

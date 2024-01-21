@@ -5,7 +5,31 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 	const { clone } = require('utils/object');
 	const { core } = require('im/messenger/core');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { DateHelper } = require('im/messenger/lib/helper');
+	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { Uuid } = require('utils/uuid');
+	const {
+		RecentItem,
+		ChatItem,
+		UserItem,
+		CallItem,
+		AnnouncementItem,
+		ExtranetItem,
+		Support24NotifierItem,
+		Support24QuestionItem,
+		CurrentUserItem,
+		BotItem,
+		SupportBotItem,
+		ConnectorUserItem,
+		ExtranetUserItem,
+		InvitedUserItem,
+		NetworkUserItem,
+	} = require('im/messenger/lib/element');
+	const {
+		DialogType,
+		BotType,
+	} = require('im/messenger/const');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('recent--converter');
 
 	/**
 	 * @class RecentConverter
@@ -26,36 +50,117 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 		{
 			const listItems = [];
 
-			ChatDataConverter.getListFormat(recentItems).forEach((item) => {
-				listItems.push(this.toListItem(item));
+			recentItems.forEach((item) => {
+				listItems.push(this.toItem(item));
 			});
 
 			return listItems;
 		}
 
-		toListItem(item)
+		toItem(item)
 		{
-			const formattedElem = ChatDataConverter.getElementFormat(item);
+			const modelItem = core.getStore().getters['recentModel/getById'](item.id);
+			const dialog = core.getStore().getters['dialoguesModel/getById'](modelItem.id);
+			if (!dialog)
+			{
+				logger.error(`RecentConverter.toItem: there is no dialog "${item.id}" in model`);
 
-			if (item.writing)
-			{
-				const dialogModel = core.getStore().getters['dialoguesModel/getById'](item.id);
-				if (dialogModel)
-				{
-					formattedElem.writingList = dialogModel.writingList.map((user) => user.userName);
-				}
-			}
-			else
-			{
-				formattedElem.writingList = [];
+				return new RecentItem(modelItem);
 			}
 
-			return formattedElem;
+			if (DialogHelper.isDialogId(dialog.dialogId))
+			{
+				return this.toChatItem(item);
+			}
+
+			return this.toUserItem(modelItem);
 		}
 
-		toCallListItem(callStatus, call)
+		toChatItem(modelItem)
 		{
-			const listItem = ChatDataConverter.getCallListElement(callStatus, call);
+			const dialog = core.getStore().getters['dialoguesModel/getById'](modelItem.id);
+			if (!dialog)
+			{
+				logger.error(`RecentConverter.toChatItem: there is no dialog "${modelItem.id}" in model`);
+
+				return new RecentItem(modelItem);
+			}
+
+			if (dialog.extranet === true)
+			{
+				return new ExtranetItem(modelItem);
+			}
+
+			if (dialog.type === DialogType.announcement)
+			{
+				return new AnnouncementItem(modelItem);
+			}
+
+			if (dialog.type === DialogType.support24Notifier)
+			{
+				return new Support24NotifierItem(modelItem);
+			}
+
+			if (dialog.type === DialogType.support24Question)
+			{
+				return new Support24QuestionItem(modelItem);
+			}
+
+			return new ChatItem(modelItem);
+		}
+
+		toUserItem(modelItem)
+		{
+			const user = core.getStore().getters['usersModel/getById'](modelItem.id);
+			if (!user)
+			{
+				logger.error(`RecentConverter.toUserItem: there is no user "${modelItem.id}" in model`);
+
+				return new RecentItem(modelItem);
+			}
+
+			if (user.id === core.getUserId())
+			{
+				return new CurrentUserItem(modelItem);
+			}
+
+			// eslint-disable-next-line es/no-optional-chaining
+			if (modelItem?.invitation?.isActive === true && user.lastActivityDate !== false)
+			{
+				return new InvitedUserItem(modelItem);
+			}
+
+			if (user.botData.type === BotType.support24)
+			{
+				return new SupportBotItem(modelItem);
+			}
+
+			if (user.network === true)
+			{
+				return new NetworkUserItem(modelItem);
+			}
+
+			if (user.bot === true)
+			{
+				return new BotItem(modelItem);
+			}
+
+			if (user.extranet === true)
+			{
+				return new ExtranetUserItem(modelItem);
+			}
+
+			if (user.connector === true)
+			{
+				return new ConnectorUserItem(modelItem);
+			}
+
+			return new UserItem(modelItem);
+		}
+
+		toCallItem(callStatus, call)
+		{
+			const listItem = new CallItem(callStatus, call);
 
 			const dialogId = call.associatedEntity.id;
 			const recentItem = core.getStore().getters['recentModel/getById'](dialogId);
@@ -116,13 +221,20 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 
 			if (typeof element.message !== 'undefined')
 			{
-				newElement.message.id = parseInt(element.message.id);
+				let id = element.message.id;
+				if (!Number.isInteger(element.message.id) && !Uuid.isV4(element.message.id))
+				{
+					id = parseInt(id);
+				}
+
+				newElement.message.id = id;
 				newElement.message.text = ChatMessengerCommon.purifyText(element.message.text, element.message.params);
 				newElement.message.author_id = element.message.senderId && element.message.system !== 'Y' ? element.message.senderId : 0;
 				newElement.message.date = new Date(element.message.date);
 				newElement.message.file = element.message.params && element.message.params.FILE_ID ? element.message.params.FILE_ID.length > 0 : false;
 				newElement.message.attach = element.message.params && element.message.params.ATTACH ? element.message.params.ATTACH : false;
 				newElement.message.status = element.message.status ? element.message.status : '';
+				newElement.message.subTitleIcon = element.message.subTitleIcon ? element.message.subTitleIcon : '';
 			}
 
 			if (typeof element.counter !== 'undefined')
@@ -174,11 +286,6 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 					newElement.lines.id = parseInt(element.lines.id);
 					newElement.lines.status = parseInt(element.lines.status);
 				}
-			}
-
-			if (element.date_update)
-			{
-				newElement.date_update = DateHelper.cast(element.date_update);
 			}
 
 			return newElement;

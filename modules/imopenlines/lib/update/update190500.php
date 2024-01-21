@@ -9,8 +9,10 @@ use \Bitrix\Main\Loader,
 	\Bitrix\Main\Update\Stepper,
 	\Bitrix\Main\Localization\Loc;
 
-Loc::loadMessages(__FILE__);
 
+/**
+ * @deprecated
+ */
 final class Update190500 extends Stepper
 {
 	const OPTION_NAME = "imopenlines_new_option_check_available";
@@ -21,15 +23,11 @@ final class Update190500 extends Stepper
 	 *
 	 * @param array $result
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function execute(array &$result)
 	{
+		return parent::FINISH_EXECUTION;
+		/*
 		$return = false;
 
 		if (Loader::includeModule(self::$moduleId))
@@ -60,9 +58,11 @@ final class Update190500 extends Stepper
 					$result["steps"] = "";
 					$result["count"] = $params["count"];
 
-					$sql = 'SELECT ID, TIMEMAN, CHECK_ONLINE FROM ' . ConfigTable::getTableName() . ' WHERE ID > ' . $params["lastId"] . ' ORDER BY ID ASC';
-
-					$cursor = $connection->query($sql, 0, 100);
+					$cursor = ConfigTable::getList([
+						'select' => ['ID', 'TIMEMAN', 'CHECK_ONLINE'],
+						'filter' => ['>ID' => $params["lastId"]],
+						'order' => ['ID' => 'ASC']
+					]);
 
 					$found = false;
 					while ($row = $cursor->fetch())
@@ -103,5 +103,6 @@ final class Update190500 extends Stepper
 		}
 
 		return $return;
+		*/
 	}
 }

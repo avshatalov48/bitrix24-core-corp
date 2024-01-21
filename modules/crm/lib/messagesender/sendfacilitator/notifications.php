@@ -5,6 +5,7 @@ namespace Bitrix\Crm\MessageSender\SendFacilitator;
 use Bitrix\Crm\Integration\NotificationsManager;
 use Bitrix\Crm\MessageSender\Channel;
 use Bitrix\Crm\MessageSender\SendFacilitator;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 
 final class Notifications extends SendFacilitator
@@ -12,7 +13,7 @@ final class Notifications extends SendFacilitator
 	private ?string $templateCode = null;
 	/** @var Array<string, mixed>  */
 	private array $placeholders = [];
-	private $languageId = LANGUAGE_ID;
+	private $languageId;
 
 	public function __construct(Channel $channel)
 	{
@@ -20,6 +21,8 @@ final class Notifications extends SendFacilitator
 		{
 			throw new ArgumentException('Channel should be from Notifications sender');
 		}
+
+        $this->languageId = Application::getInstance()->getLicense()->getRegion() ?? LANGUAGE_ID;
 
 		parent::__construct($channel);
 	}

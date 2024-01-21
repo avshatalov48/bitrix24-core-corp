@@ -4,35 +4,25 @@ namespace Bitrix\Tasks\Helper;
 
 use Bitrix\Main\Loader;
 use Bitrix\Socialnetwork\Item\Workgroup;
+use CTaskListState;
 
 abstract class Common
 {
-	protected static $instance = null;
-	private $id;
-	private $userId;
-	private $groupId;
+	protected static ?array $instance = null;
 
-	private function __construct($id, $userId, $groupId)
+	private ?bool $isGantt = null;
+	protected string $context = FilterRegistry::FILTER_GRID;
+	protected string $scope = '';
+
+	private function __construct(protected ?string $id, protected int $userId, protected ?int $groupId)
 	{
-		$this->setId($id);
-		$this->setGroupId($groupId);
-		$this->setUserId($userId);
 	}
 
-	/**
-	 * @param $userId
-	 * @param int $groupId
-	 * @param null $gridId
-	 *
-	 * @return self
-	 */
-	public static function getInstance($userId, $groupId = 0, $id = null)
+	public static function getInstance(int $userId, ?int $groupId = 0, ?string $id = null): static
 	{
-		$groupId = (int)$groupId;
-
-		if (!$id)
+		if (is_null($id))
 		{
-			$id = self::getDefaultId($groupId);
+			$id = static::getDefaultId($groupId);
 		}
 
 		if (is_null(static::$instance) || !array_key_exists($id, static::$instance))
@@ -43,52 +33,46 @@ abstract class Common
 		return static::$instance[$id];
 	}
 
-	/**
-	 * @param int $groupId
-	 * @return string
-	 */
-	private static function getDefaultId(int $groupId): string
+	protected static function getDefaultId(
+		?int $groupId,
+		string $scope = '',
+		string $name = FilterRegistry::FILTER_GRID
+	): string
 	{
-		return \Bitrix\Tasks\Helper\FilterRegistry::getId(\Bitrix\Tasks\Helper\FilterRegistry::FILTER_GRID, $groupId);
+		return FilterRegistry::getId($name, $groupId, $scope);
 	}
 
-	/**
-	 * @return mixed
-	 */
-	public function getId()
+	public function getId(): ?string
 	{
 		return $this->id;
 	}
 
-	/**
-	 * @param mixed $filterId
-	 */
-	protected function setId($id)
-	{
-		$this->id = $id;
-	}
-
-	/**
-	 * @return \CTaskListState|null
-	 */
-	public function getListStateInstance()
+	public function getListStateInstance(): ?CTaskListState
 	{
 		static $instance = null;
 
 		if (!$instance)
 		{
-			$instance = \CTaskListState::getInstance($this->getUserId());
+			$instance = CTaskListState::getInstance($this->getUserId());
 		}
 
 		return $instance;
 	}
 
-	/**
-	 * @return mixed
-	 */
-	public function getUserId()
+	public function getUserId(): int
 	{
 		return $this->userId;
+	}
+
+	public function getContext(): string
+	{
+		return $this->context;
+	}
+
+	public function setGanttMode(bool $isGantt): static
+	{
+		$this->isGantt = $isGantt;
+		return $this;
 	}
 
 	public function isScrumProject(): bool
@@ -103,28 +87,37 @@ abstract class Common
 		return false;
 	}
 
-	/**
-	 * @param mixed $userId
-	 */
-	protected function setUserId($userId)
+	protected function isGantt(): bool
 	{
-		$this->userId = $userId;
+		return $this->isGantt === true;
 	}
 
-	/**
-	 * @return mixed
-	 */
-	protected function getGroupId()
+	protected function isGrid(): bool
+	{
+		return $this->isGantt === false;
+	}
+
+	protected function getGroupId(): ?int
 	{
 		return $this->groupId;
 	}
 
-	/**
-	 * @param mixed $groupId
-	 */
-	protected function setGroupId($groupId)
+	public function setContext(string $context): static
 	{
-		$this->groupId = $groupId;
+		if (in_array($context, FilterRegistry::getList(), true))
+		{
+			$this->context = $context;
+			$this->resolveChangedContext();
+		}
+
+		return $this;
 	}
 
+	protected function resolveChangedContext(): void
+	{
+		unset(static::$instance[$this->id]);
+		$this->id = static::getDefaultId($this->groupId, $this->scope, $this->context);
+		$this->setGanttMode($this->context === FilterRegistry::FILTER_GANTT);
+		static::$instance[$this->id] = $this;
+	}
 }

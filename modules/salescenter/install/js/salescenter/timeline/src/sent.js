@@ -1,5 +1,5 @@
-import {Type} from 'main.core';
-import {Base} from './base'
+import { Type } from 'main.core';
+import { Base } from './base';
 
 class Sent extends Base
 {
@@ -8,14 +8,17 @@ class Sent extends Base
 		super(props);
 		this.url = Type.isString(props.url) && props.url.length > 0 ? props.url : '';
 	}
+
 	static type()
 	{
 		return 'sent';
 	}
+
 	getType()
 	{
 		return Sent.type();
 	}
+
 	getIcon()
 	{
 		return 'sent';
@@ -24,5 +27,5 @@ class Sent extends Base
 
 export
 {
-	Sent
-}
+	Sent,
+};

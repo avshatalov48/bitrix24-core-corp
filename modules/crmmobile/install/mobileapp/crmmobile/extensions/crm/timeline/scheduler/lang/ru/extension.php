@@ -12,7 +12,7 @@ $MESS['M_CRM_TIMELINE_SCHEDULER_TASK_MENU_FULL_TITLE'] = 'Поставить з�
 $MESS['M_CRM_TIMELINE_SCHEDULER_TASK_MENU_TITLE'] = 'Задача';
 $MESS['M_CRM_TIMELINE_SCHEDULER_MAIL_MENU_FULL_TITLE'] = 'Написать письмо';
 $MESS['M_CRM_TIMELINE_SCHEDULER_MAIL_MENU_DISABLED'] = 'Почта не подключена';
-$MESS['M_CRM_TIMELINE_SCHEDULER_MAIL_MENU_TITLE'] = 'Письмо';
+$MESS['M_CRM_TIMELINE_SCHEDULER_MAIL_MENU_TITLE_MSGVER_1'] = 'Письмо';
 $MESS['M_CRM_TIMELINE_SCHEDULER_COMMENT_MENU_FULL_TITLE'] = 'Оставить комментарий';
 $MESS['M_CRM_TIMELINE_SCHEDULER_COMMENT_MENU_TITLE'] = 'Комментарий';
 $MESS['M_CRM_TIMELINE_SCHEDULER_CALL_MENU_TITLE'] = 'Звонок';
@@ -78,3 +78,10 @@ $MESS['M_CRM_TIMELINE_SCHEDULER_DOCUMENT_PREVIOUS_NUMBER_TITLE'] = 'Выбери
 $MESS['M_CRM_TIMELINE_SCHEDULER_DOCUMENT_PREVIOUS_NUMBER_BODY'] = 'У вас уже есть документ по этому шаблону. Создать для нового документа новый номер или использовать предыдущий?';
 $MESS['M_CRM_TIMELINE_SCHEDULER_DOCUMENT_PREVIOUS_NUMBER_OLD_BUTTON'] = 'Использовать предыдущий';
 $MESS['M_CRM_TIMELINE_SCHEDULER_DOCUMENT_PREVIOUS_NUMBER_NEW_BUTTON'] = 'Создать новый';
+
+$MESS['M_CRM_TIMELINE_SCHEDULER_SHARING_TITLE'] = 'Создать встречу с клиентом';
+$MESS['M_CRM_TIMELINE_SCHEDULER_SHARING_MENU_FULL_TITLE'] = 'Отправить слоты';
+$MESS['M_CRM_TIMELINE_SCHEDULER_SHARING_MENU_TITLE'] = 'Слоты';
+
+$MESS['M_CRM_TIMELINE_SCHEDULER_REMINDERS_EMPTY'] = 'нет напоминаний';
+$MESS['M_CRM_TIMELINE_SCHEDULER_REMINDERS_TITLE_MSGVER_1'] = 'Напоминания';

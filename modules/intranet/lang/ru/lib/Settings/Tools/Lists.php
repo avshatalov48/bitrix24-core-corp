@@ -1,0 +1,2 @@
+<?php
+$MESS['INTRANET_SETTINGS_TOOLS_LISTS_MAIN'] = 'Списки';

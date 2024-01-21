@@ -2,10 +2,11 @@
  * @module crm/document/details/error-panel
  */
 jn.define('crm/document/details/error-panel', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const CrmDocumentDetailsErrorPanel = ({ title, subtitle }) => View(
 		{
 			style: {
-				backgroundColor: '#fff',
+				backgroundColor: AppTheme.colors.bgContentPrimary,
 				borderRadius: 12,
 				marginHorizontal: 16,
 				paddingVertical: 27,
@@ -17,7 +18,7 @@ jn.define('crm/document/details/error-panel', (require, exports, module) => {
 			text: title,
 			style: {
 				fontSize: 18,
-				color: '#333',
+				color: AppTheme.colors.base1,
 				textAlign: 'center',
 				marginBottom: 12,
 			},
@@ -26,7 +27,7 @@ jn.define('crm/document/details/error-panel', (require, exports, module) => {
 			text: subtitle,
 			style: {
 				fontSize: 15,
-				color: '#A8ADB4',
+				color: AppTheme.colors.base4,
 				textAlign: 'center',
 			},
 		}),

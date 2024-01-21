@@ -113,6 +113,12 @@ class GetListAction extends Action
 			($extra['filterParams']['CATEGORY_ID'] ?? 0),
 		];
 
+		if ($entityType === \CCrmOwnerType::QuoteName
+			|| $entityType === \CCrmOwnerType::LeadName)
+		{
+			array_pop($parts);
+		}
+
 		return implode('_', $parts);
 	}
 }

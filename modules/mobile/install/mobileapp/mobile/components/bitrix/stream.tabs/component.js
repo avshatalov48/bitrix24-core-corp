@@ -9,6 +9,7 @@
 				stream: 'stream',
 				disk: 'disk',
 				bp: 'bp',
+				bp2: 'bp2',
 				calendar: 'calendar',
 				video: 'video',
 				mail: 'mail',
@@ -20,6 +21,7 @@
 			return {
 				livefeed: '**',
 				bp: 'bp_tasks',
+				bp2: 'bp_tasks',
 			};
 		}
 
@@ -191,6 +193,10 @@
 			{
 				this.updateBPCounter(counters[StreamTabs.counterKeys.bp]);
 			}
+			if (typeof counters[StreamTabs.counterKeys.bp2] !== 'undefined')
+			{
+				this.updateBP2Counter(counters[StreamTabs.counterKeys.bp2]);
+			}
 		}
 
 		updateLivefeedCounter(value)
@@ -205,6 +211,15 @@
 		updateBPCounter(value)
 		{
 			this.tabs.updateItem(StreamTabs.tabNames.bp, {
+				title: BX.message('MOBILE_STREAM_TABS_BP_TITLE'),
+				counter: Number(value),
+				label: (value > 0 ? String(value) : ''),
+			});
+		}
+
+		updateBP2Counter(value)
+		{
+			this.tabs.updateItem(StreamTabs.tabNames.bp2, {
 				title: BX.message('MOBILE_STREAM_TABS_BP_TITLE'),
 				counter: Number(value),
 				label: (value > 0 ? String(value) : ''),

@@ -217,6 +217,9 @@ if(typeof(BX.InterfaceToolBarCommunicationButton) === "undefined")
 
 			this._isEnabled = this.hasData();
 
+			this.useClientSelector = BX.prop.getBoolean(this._settings, 'useClientSelector', false);
+			this.clientSelector = null;
+
 			BX.addCustomEvent(window, "onCrmEntityUpdate", BX.delegate(this.onCrmEntityUpdate, this));
 		},
 		getOwnerInfo: function()
@@ -295,31 +298,68 @@ if(typeof(BX.InterfaceToolBarCommunicationButton) === "undefined")
 
 			this._menuId = this._id.toLowerCase() + "_menu";
 
+			if (this.useClientSelector)
+			{
+				this.openClientSelector(menuItems);
+			}
+			else
+			{
+				this.openPopupMenu(menuItems);
+			}
+		},
+		openClientSelector: function(menuItems)
+		{
+			if (!this.clientSelector)
+			{
+				this.clientSelector = BX.Crm.ClientSelector.createFromItems({
+					targetNode: this._button,
+					items: menuItems,
+					events: {
+						onSelect: this.onClientSelectorSelect.bind(this),
+						onShow: () => this._isMenuOpened = true,
+						onHide: () => {
+							this.closeMenu();
+							this._isMenuOpened = false;
+						},
+					},
+				});
+			}
+
+			this.clientSelector.show();
+		},
+		onClientSelectorSelect: function({ data: { item } })
+		{
+			// may be implement in children classes
+		},
+		openPopupMenu: function(menuItems)
+		{
 			BX.PopupMenu.show(
 				this._menuId,
 				this._button,
 				menuItems,
 				{
-					"offsetTop": 0,
-					"offsetLeft": 0,
-					"events":
-						{
-							"onPopupShow": BX.delegate(this.onPopupShow, this),
-							"onPopupClose": BX.delegate(this.onPopupClose, this),
-							"onPopupDestroy": BX.delegate(this.onPopupDestroy, this)
-						}
-				}
+					offsetTop: 0,
+					offsetLeft: 0,
+					events: {
+						onPopupShow: BX.delegate(this.onPopupShow, this),
+						onPopupClose: BX.delegate(this.onPopupClose, this),
+						onPopupDestroy: BX.delegate(this.onPopupDestroy, this),
+					},
+				},
 			);
+
 			this._menuPopup = BX.PopupMenu.currentItem;
 		},
 		closeMenu: function()
 		{
-			if(this._menuPopup)
+			if (this._menuPopup && this._menuPopup.popupWindow)
 			{
-				if(this._menuPopup.popupWindow)
-				{
-					this._menuPopup.popupWindow.destroy();
-				}
+				this._menuPopup.popupWindow.destroy();
+			}
+
+			if (this.clientSelector)
+			{
+				this.clientSelector.hide();
 			}
 		},
 		onPopupShow: function()
@@ -401,33 +441,73 @@ if(typeof(BX.InterfaceToolBarPhoneButton) === "undefined")
 		this._menuItems = [];
 		this.openMenu();
 	};
+
 	BX.InterfaceToolBarPhoneButton.prototype.prepareMenuItem = function(key, value)
 	{
-		var	phoneText;
-		var phoneValue;
+		let	phoneText = value;
+		let phoneValue = value;
 
-		if(BX.type.isPlainObject(value))
+		if (BX.type.isPlainObject(value))
 		{
-			phoneText = BX.prop.getString(value, 'COMPLEX_NAME', '') + ': ' + BX.prop.getString(value, 'VALUE_FORMATTED', '');
+			const complexName = BX.prop.getString(value, 'COMPLEX_NAME', '');
+			const valueFormatted = BX.prop.getString(value, 'VALUE_FORMATTED', '');
+
+			phoneText = `${complexName}: ${valueFormatted}`;
 			phoneValue = BX.prop.getString(value, 'VALUE', '');
-		}
-		else
-		{
-			phoneText = value;
-			phoneValue = value;
+
+			if (this.useClientSelector)
+			{
+				return this.createClientSelectorMenuItem(value);
+			}
 		}
 
-		var menuItem = BX.InterfaceToolBarPhoneMenuItem.create(
-			{
-				owner: this,
-				entityKey: key,
+		return this.createPopupMenuItem(key, phoneValue, phoneText);
+	};
+
+	BX.InterfaceToolBarPhoneButton.prototype.createClientSelectorMenuItem = function(value)
+	{
+		const complexName = BX.prop.getString(value, 'COMPLEX_NAME', '');
+		const valueFormatted = BX.prop.getString(value, 'VALUE_FORMATTED', '');
+		const phoneValue = BX.prop.getString(value, 'VALUE', '');
+
+		const owner = BX.Type.isObjectLike(value.OWNER) ? value.OWNER : null;
+
+		return {
+			id: value.ID,
+			title: owner ? owner.TITLE : valueFormatted,
+			subtitle: owner ? `${valueFormatted}, ${complexName}` : complexName,
+			avatar: null,
+			customData: {
+				entityId: owner ? owner.ID : null,
+				entityTypeId: owner ? owner.TYPE_ID : null,
 				value: phoneValue,
-				text: phoneText
-			}
-		);
+			},
+		};
+	};
+
+	BX.InterfaceToolBarPhoneButton.prototype.createPopupMenuItem = function(entityKey, value, text)
+	{
+		const menuItem = BX.InterfaceToolBarPhoneMenuItem.create({
+			owner: this,
+			entityKey,
+			value,
+			text,
+		});
+
 		this._menuItems.push(menuItem);
+
 		return menuItem.createMenuItem();
 	};
+
+	BX.InterfaceToolBarPhoneButton.prototype.onClientSelectorSelect = function({ data: { item } })
+	{
+		const { customData } = item;
+		const entityKey = `${customData.get('entityTypeId')}_${customData.get('entityId')}`;
+		const value = customData.get('value');
+
+		this.addCall(entityKey, value);
+	};
+
 	BX.InterfaceToolBarPhoneButton.prototype.addCall = function(entityKey, phone)
 	{
 		if(typeof(window.top['BXIM']) === 'undefined')
@@ -677,7 +757,6 @@ if(typeof(BX.InterfaceToolBarMessengerMenuItem) === "undefined")
 	}
 }
 
-
 if(typeof(BX.InterfaceToolBarEmailButton) === "undefined")
 {
 	BX.InterfaceToolBarEmailButton = function()
@@ -685,13 +764,78 @@ if(typeof(BX.InterfaceToolBarEmailButton) === "undefined")
 		BX.InterfaceToolBarEmailButton.superclass.constructor.apply(this);
 	};
 	BX.extend(BX.InterfaceToolBarEmailButton, BX.InterfaceToolBarCommunicationButton);
-	BX.InterfaceToolBarEmailButton.prototype.onButtonClick = function(e)
+
+	BX.InterfaceToolBarEmailButton.prototype.onButtonClick = function()
 	{
-		if(this.isEnabled())
+		if (!this.isEnabled())
+		{
+			return;
+		}
+
+		if (!this.useClientSelector)
 		{
 			BX.CrmActivityEditor.addEmail(this.getOwnerInfo());
+
+			return;
 		}
+
+		const keys = Object.keys(this._data);
+		if (keys.length === 1)
+		{
+			const firstKey = keys[0];
+			const items = this._data[firstKey];
+			if (items.length === 1)
+			{
+				BX.CrmActivityEditor.addEmail(this.getOwnerInfo());
+
+				return;
+			}
+		}
+
+		this._menuItems = [];
+		this.openMenu();
 	};
+
+	BX.InterfaceToolBarEmailButton.prototype.prepareMenuItem = function(key, value)
+	{
+		if (!BX.type.isPlainObject(value) || !this.useClientSelector)
+		{
+			return;
+		}
+
+		return {
+			id: value.ID,
+			title: value.OWNER ? value.OWNER.TITLE : value.VALUE_FORMATTED,
+			subtitle: value.OWNER ? `${value.VALUE_FORMATTED}, ${value.COMPLEX_NAME}` : value.COMPLEX_NAME,
+			avatar: null,
+			customData: {
+				entityId: value.OWNER ? value.OWNER.ID : null,
+				entityTypeId: value.OWNER ? value.OWNER.TYPE_ID : null,
+				value: value.VALUE ?? null,
+				valueType: value.VALUE_TYPE ?? null,
+			},
+		};
+	};
+
+	BX.InterfaceToolBarEmailButton.prototype.onClientSelectorSelect = function({ data: { item } })
+	{
+		const { customData } = item;
+		const entityTypeId = customData.get('entityTypeId');
+
+		const data = this.getOwnerInfo();
+
+		data.mailDefaultCommunications = [{
+			ENTITY_ID: customData.get('entityId'),
+			ENTITY_TYPE_ID: entityTypeId,
+			ENTITY_TYPE_NAME: BX.CrmEntityType.resolveName(entityTypeId),
+			TYPE: this.getMultifieldTypeName(),
+			VALUE: customData.get('value'),
+			VALUE_TYPE: customData.get('valueType'),
+		}];
+
+		BX.CrmActivityEditor.addEmail(data);
+	};
+
 	BX.InterfaceToolBarEmailButton.prototype.getMultifieldTypeName = function()
 	{
 		return "EMAIL";

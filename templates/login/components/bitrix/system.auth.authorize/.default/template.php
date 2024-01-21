@@ -56,7 +56,7 @@ if ($arResult['ALLOW_QRCODE_AUTH'])
 						</div>
 						<div class="login-item --auth">
 							<!--[if IE]><span class="login-label"><?=GetMessage("AUTH_PASSWORD")?></span><![endif]-->
-							<input class="login-inp" type="password" name="USER_PASSWORD" placeholder="<?=GetMessage("AUTH_PASSWORD")?>" maxlength="255" autocomplete="new-password" />
+							<input class="login-inp" type="password" name="USER_PASSWORD" placeholder="<?=GetMessage("AUTH_PASSWORD")?>" maxlength="255" autocomplete="current-password" />
 						</div>
 					</div>
 

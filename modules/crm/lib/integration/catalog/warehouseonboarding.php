@@ -2,6 +2,9 @@
 
 namespace Bitrix\Crm\Integration\Catalog;
 
+use Bitrix\Catalog\Config\State;
+use Bitrix\Main\Loader;
+
 class WarehouseOnboarding
 {
 	private const ONBOARDING_CATEGORY_NAME = 'warehouse-onboarding';
@@ -201,13 +204,13 @@ class WarehouseOnboarding
 	 */
 	public static function isCrmWarehouseOnboardingAvailable(int $userID): bool
 	{
-		$crmPresetIsEnabled = false;
-		if (\Bitrix\Main\Loader::includeModule('catalog'))
+		$inventoryManagementEnabled = false;
+		if (Loader::includeModule('catalog'))
 		{
-			$crmPresetIsEnabled = (new \Bitrix\Catalog\Component\Preset\Crm())->isOn();
+			$inventoryManagementEnabled = State::isUsedInventoryManagement();
 		}
 
-		if (!$crmPresetIsEnabled)
+		if (!$inventoryManagementEnabled)
 		{
 			return false;
 		}

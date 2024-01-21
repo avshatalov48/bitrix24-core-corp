@@ -5,6 +5,11 @@ namespace Bitrix\Crm\Controller\Timeline\Calendar;
 use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar;
 use Bitrix\Crm\Integration\Calendar\EventData;
 use Bitrix\Crm\Integration\Calendar\Helper;
+use Bitrix\Crm\Integration\NotificationsManager;
+use Bitrix\Crm\Integration\SmsManager;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\MessageSender\Channel;
+use Bitrix\Crm\MessageSender\Channel\ChannelRepository;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
 
@@ -16,7 +21,8 @@ class Sharing extends Controller
 		int $ownerId,
 		int $ownerTypeId,
 		string $channelId,
-		string $senderId
+		string $senderId,
+		array $ruleArray
 	): bool
 	{
 		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkUpdatePermissions($ownerTypeId, $ownerId))
@@ -26,7 +32,7 @@ class Sharing extends Controller
 			return false;
 		}
 
-		$sendingResult = Helper::getInstance()->sendLinkToClient($ownerId, $contactId, $contactTypeId, $channelId, $senderId);
+		$sendingResult = Helper::getInstance()->sendLinkToClient($ownerId, $contactId, $contactTypeId, $channelId, $senderId, $ruleArray);
 		if ($sendingResult->getErrors())
 		{
 			$this->addErrors($sendingResult->getErrors());
@@ -56,6 +62,24 @@ class Sharing extends Controller
 		}
 
 		$timelineResult = Helper::getInstance()->addTimelineEntry($linkHash, EventData::SHARING_ON_LINK_COPIED);
+		if (!$timelineResult)
+		{
+			$this->addError(new Error('Timeline entry not created'));
+		}
+
+		return true;
+	}
+
+	public function onRuleUpdatedAction(string $linkHash, int $ownerId, int $ownerTypeId): bool
+	{
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkUpdatePermissions($ownerTypeId, $ownerId))
+		{
+			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
+
+			return false;
+		}
+
+		$timelineResult = Helper::getInstance()->addTimelineEntry($linkHash, EventData::SHARING_ON_RULE_UPDATED);
 		if (!$timelineResult)
 		{
 			$this->addError(new Error('Timeline entry not created'));
@@ -115,6 +139,94 @@ class Sharing extends Controller
 			$this->addError(new Error('Error while trying to cancel meeting'));
 		}
 
+		return $result;
+	}
+	
+	public function getConfigAction(int $entityTypeId, int $entityId): array
+	{
+		$result = [];
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkUpdatePermissions($entityTypeId, $entityId))
+		{
+			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
+			
+			return $result;
+		}
+		
+		if (!\Bitrix\Main\Loader::includeModule('calendar'))
+		{
+			$this->addError(new Error('Calendar module not found'));
+			
+			return $result;
+		}
+		
+		$context = new TimelineMenuBar\Context($entityTypeId, $entityId);
+		
+		$sharing = new TimelineMenuBar\Item\Sharing($context);
+		$result = $sharing->getSettings();
+		$result['smsConfig'] = $this->getSmsConfig($sharing, $context);
+		
+		return $result;
+	}
+	
+	private function getSmsConfig(TimelineMenuBar\Item\Sharing $sharing, TimelineMenuBar\Context $context): array
+	{
+		return [
+			'communications' => $this->getCommunications($sharing),
+			'contactCenterUrl' => \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getContactCenterUrl(),
+			'senders' => $this->getSmsSenders($context),
+		];
+	}
+	
+	private function getCommunications(TimelineMenuBar\Item\Sharing $sharing): array
+	{
+		$communications = $sharing->getCommunications();
+		
+		foreach ($communications as $key => $communication)
+		{
+			$phone = current($communication['phones']);
+			$communications[$key]['phones'] = [$phone];
+		}
+		
+		return $communications;
+	}
+	
+	private function getSmsSenders(TimelineMenuBar\Context $context): array
+	{
+		$senders = SmsManager::getSenderInfoList(true);
+		
+		$itemIdentifier = new ItemIdentifier($context->getEntityTypeId(), $context->getEntityId());
+		$repo = ChannelRepository::create($itemIdentifier);
+		$notificationChannel = $repo->getDefaultForSender(NotificationsManager::getSenderCode());
+		
+		if ($notificationChannel)
+		{
+			$senders[] = [
+				'id' => $notificationChannel->getId(),
+				'fromList' => $this->getFromList($notificationChannel),
+				'name' => $notificationChannel->getName(),
+				'shortName' => $notificationChannel->getShortName(),
+				'canUse' => $notificationChannel->getSender()::canUse(),
+			];
+		}
+		
+		return $senders;
+	}
+	
+	private function getFromList(Channel $channel): array
+	{
+		$fromList = $channel->getFromList();
+		
+		$result = [];
+		foreach ($fromList as $item)
+		{
+			$result[] = [
+				'id' => $item->getId(),
+				'name' => $item->getName(),
+				'description' => $item->getDescription(),
+				'default' => $item->isDefault(),
+			];
+		}
+		
 		return $result;
 	}
 

@@ -101,7 +101,9 @@ this.BX = this.BX || {};
 	        });
 	      }
 	      if (menu.length > 0) {
-	        this.contextMenu = main_popup.MenuManager.create('list-item-menu-' + this.getAppCode, this.$refs.listItemContextMenu, menu, {
+	        var menuId = 'list-item-menu-' + this.getAppCode;
+	        main_popup.MenuManager.destroy(menuId);
+	        this.contextMenu = main_popup.MenuManager.create(menuId, this.$refs.listItemContextMenu, menu, {
 	          closeByEsc: true,
 	          autoHide: true,
 	          angle: true,
@@ -150,7 +152,8 @@ this.BX = this.BX || {};
 	          appCode: this.getAppCode
 	        },
 	        analyticsLabel: {
-	          viewMode: 'list'
+	          viewMode: 'list',
+	          appCode: this.getAppCode
 	        }
 	      }).then(function (response) {
 	        if (response.data && typeof response.data.total !== 'undefined' && BX.type.isString(response.data.currentValue)) {

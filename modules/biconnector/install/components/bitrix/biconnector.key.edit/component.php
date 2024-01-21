@@ -14,7 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
-use Bitrix\BIConnector\Settings;
+use Bitrix\BiConnector\Settings;
 
 if (!$USER->CanDoOperation('biconnector_key_manage'))
 {
@@ -111,7 +111,9 @@ $keyList = \Bitrix\BIConnector\KeyTable::getList([
 		'=ID' => $arParams['ID'],
 	],
 ]);
-if ($aKey = $keyList->fetch())
+
+$converter = \Bitrix\Main\Text\Converter::getHtmlConverter();
+if ($aKey = $keyList->fetch($converter))
 {
 	$APPLICATION->SetTitle(Loc::getMessage('CC_BBKE_TITLE_EDIT'));
 	$arResult['FORM_DATA'] = $aKey;

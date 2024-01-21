@@ -45,7 +45,7 @@ class TaskChangeResponsibleRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			$newTask = $params;
 		}
 
-		if (!$this->canAssignTask($oldTask, RoleDictionary::ROLE_RESPONSIBLE, $newTask))
+		if (!$this->canAssignTask($oldTask, RoleDictionary::ROLE_RESPONSIBLE, $newTask, [$this->user->getUserId()]))
 		{
 			$this->controller->addError(static::class, 'Access to assign responsible denied');
 			return false;

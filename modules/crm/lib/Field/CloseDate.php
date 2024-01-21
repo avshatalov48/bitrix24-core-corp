@@ -7,7 +7,7 @@ use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Main\Result;
-use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Type\Date;
 
 class CloseDate extends Field
 {
@@ -32,7 +32,7 @@ class CloseDate extends Field
 		if (ComparerBase::isMovedToFinalStage($item->getEntityTypeId(), $previousStageId, $currentStageId))
 		{
 			// hack: some fields could be datetime, set them with time to maintain backward compatibility
-			$item->set($this->getName(), new DateTime());
+			$item->set($this->getName(), new Date());
 		}
 
 		return $result;

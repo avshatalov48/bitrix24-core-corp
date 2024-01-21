@@ -1,6 +1,12 @@
 import {ReactionType} from "../../../model/types/messages/reactions";
 import {ReactionServiceGetData} from "../../../provider/service/types/reaction";
 
+declare enum SummaryReaction
+{
+	all = 'all'
+}
+
+declare type AllReactions = ReactionType | SummaryReaction;
 declare interface ReactionViewerUser {
 	id: number;
 	reactionId: number;
@@ -8,43 +14,43 @@ declare interface ReactionViewerUser {
 	color: string;
 	avatar?: string;
 	reaction: ReactionType;
+	dateCreate: string,
 }
 
 type ReactionViewerProps = {
 	// @ts-ignore
-	users: Map<ReactionType,ReactionViewerUser[]>,
+	users: Map<AllReactions,ReactionViewerUser[]>,
 
 	// @ts-ignore
-	counters: Map<ReactionType, number>
-	currentReaction: ReactionType,
+	counters: Map<AllReactions, number>
+	currentReaction: AllReactions,
 	// @ts-ignore
 	hasNextPage: Map<ReactionType, boolean>
-	onReactionChange: (reactionType: ReactionType) => Promise<ReactionServiceGetData>
-	onLoadMore: (reactionType: ReactionType, lastReactionId: number) => Promise<ReactionServiceGetData>
+	onReactionChange: (reactionType: AllReactions) => Promise<ReactionServiceGetData>
+	onLoadMore: (reactionType: AllReactions, lastReactionId: number) => Promise<ReactionServiceGetData>
 	onReactionUserClick: (userId: number) => void
 }
 
 type ReactionViewerState = {
 
-	currentReaction: ReactionType,
+	currentReaction: AllReactions,
 	// @ts-ignore
-	visibleReactions: Map<ReactionType, string>,
+	visibleReactions: Map<AllReactions, string>,
 	// @ts-ignore
-	counters: Map<ReactionType, number>
+	counters: Map<AllReactions, number>
 	// @ts-ignore
-	reactionUsers: Map<ReactionType, ReactionViewerUser[]>
+	reactionUsers: Map<AllReactions, ReactionViewerUser[]>
 	// @ts-ignore
-	hasNextPage: Map<ReactionType, boolean>
+	hasNextPage: Map<AllReactions, boolean>
 }
 
 type ReactionItemProps = {
-	reactionType: ReactionType,
+	reactionType: AllReactions,
 	imageUrl: string,
 	isCurrent: boolean,
 	counter: number,
-	onClick: (reactionType: ReactionType) => void,
+	onClick: (reactionType: AllReactions) => void,
 	// @ts-ignore
-	eventEmitter: JNEventEmitter
 }
 
 type ReactionItemState = {
@@ -52,6 +58,8 @@ type ReactionItemState = {
 }
 
 type ReactionViewerListProps = {
+	assets: Record<ReactionType, string>
+	currentReaction: AllReactions,
 	users: ReactionViewerUser[],
 	hasNextPage: boolean,
 	onLoadMore: (lastReactionId) => Promise<ReactionServiceGetData>,

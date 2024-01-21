@@ -2,12 +2,12 @@
  * @module crm/state-storage/manager/activity-counters
  */
 jn.define('crm/state-storage/manager/activity-counters', (require, exports, module) => {
-	const { Base } = require('crm/state-storage/manager/base');
+	const { BaseManager } = require('storage/manager');
 
 	/**
 	 * @class ActivityCountersStoreManager
 	 */
-	class ActivityCountersStoreManager extends Base
+	class ActivityCountersStoreManager extends BaseManager
 	{
 		getCounters()
 		{

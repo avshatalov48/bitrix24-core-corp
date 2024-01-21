@@ -104,49 +104,20 @@ class EntityPSRequisiteRelation
 
 		$connection = Main\Application::getConnection();
 
-		if($connection instanceof Main\DB\MysqlCommonConnection
-			|| $connection instanceof Main\DB\MssqlConnection
-			|| $connection instanceof Main\DB\OracleConnection)
-		{
-			$tableName = PSRequisiteRelationTable::getTableName();
-			if ($connection instanceof Main\DB\MssqlConnection
-				|| $connection instanceof Main\DB\OracleConnection)
-			{
-				$tableName = mb_strtoupper($tableName);
-			}
-			$connection->queryExecute(
-				"DELETE FROM {$tableName} WHERE REQUISITE_ID = {$requisiteId}"
-			);
-		}
-		else
-		{
-			$dbType = $connection->getType();
-			throw new Main\NotSupportedException("The '{$dbType}' is not supported in current context");
-		}
+		$tableName = PSRequisiteRelationTable::getTableName();
+		$connection->queryExecute(
+			"DELETE FROM {$tableName} WHERE REQUISITE_ID = {$requisiteId}"
+		);
+
 	}
 
 	public static function unregisterAll()
 	{
 		$connection = Main\Application::getConnection();
 
-		if($connection instanceof Main\DB\MysqlCommonConnection
-			|| $connection instanceof Main\DB\MssqlConnection
-			|| $connection instanceof Main\DB\OracleConnection)
-		{
-			$tableName = PSRequisiteRelationTable::getTableName();
-			if ($connection instanceof Main\DB\MssqlConnection
-				|| $connection instanceof Main\DB\OracleConnection)
-			{
-				$tableName = mb_strtoupper($tableName);
-			}
-			$connection->queryExecute(
-				"DELETE FROM {$tableName}"
-			);
-		}
-		else
-		{
-			$dbType = $connection->getType();
-			throw new Main\NotSupportedException("The '{$dbType}' is not supported in current context");
-		}
+		$tableName = PSRequisiteRelationTable::getTableName();
+		$connection->queryExecute(
+			"DELETE FROM {$tableName}"
+		);
 	}
 }

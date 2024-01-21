@@ -5,15 +5,17 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
-use Bitrix\Tasks\Slider\Exception\SliderException;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Tasks\Helper\RestrictionUrl;
+use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
+use Bitrix\Tasks\Integration\Recyclebin\Task;
 use Bitrix\Tasks\UI\ScopeDictionary;
-use Bitrix\Tasks\Slider\Factory\SliderFactory;
 
 $isIFrame = isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y';
 
 Loc::loadMessages(__FILE__);
 
-\Bitrix\Main\UI\Extension::load([
+Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'popup',
@@ -24,6 +26,17 @@ Loc::loadMessages(__FILE__);
 	'CJSTask',
 	'ui.counter',
 ]);
+
+/** intranet-settings-support */
+if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
+{
+	$APPLICATION->IncludeComponent("bitrix:tasks.error", "limit", [
+		'LIMIT_CODE' => RestrictionUrl::TASK_LIMIT_OFF_SLIDER_URL,
+		'SOURCE' => 'calendar',
+	]);
+
+	return;
+}
 
 $APPLICATION->AddHeadScript("/bitrix/components/bitrix/tasks.list/templates/.default/script.js");
 $APPLICATION->AddHeadScript("/bitrix/components/bitrix/tasks.list/templates/.default/gantt-view.js");
@@ -84,7 +97,7 @@ if (Loader::IncludeModule('bitrix24'))
 
 	$billingCurrency = \CBitrix24::BillingCurrency();
 	$arProductPrices = \CBitrix24::getPrices($billingCurrency);
-	$price = \CBitrix24::ConvertCurrency($arProductPrices["TF1"]["PRICE"], $billingCurrency);
+	$price = \CBitrix24::ConvertCurrency($arProductPrices["TF1"]["PRICE"] ?? 0, $billingCurrency);
 
 	$trialTitle = GetMessageJS('TASKS_LIST_TRIAL_EXPIRED_TITLE_V2');
 	$trialMessage = preg_replace(
@@ -180,7 +193,7 @@ $APPLICATION->IncludeComponent("bitrix:calendar.interface.grid", "", Array(
 
 <script type="text/javascript">
 BX.message({
-	TASKS_DELETE_SUCCESS: '<?= Loc::getMessage('TASKS_DELETE_SUCCESS')?>',
+	TASKS_DELETE_SUCCESS: '<?= Task::getDeleteMessage((int)$arParams['USER_ID']) ?>',
 	TASKS_CALENDAR_NOTIFY_CHANGE_DEADLINE: '<?= Loc::getMessage('TASKS_CALENDAR_NOTIFY_CHANGE_DEADLINE')?>'
 });
 
@@ -394,6 +407,8 @@ if ($isBitrix24Template)
 	$this->SetViewTarget('inside_pagetitle');
 }
 ?>
+
+<?php if ($arResult['CONTEXT'] === Context::DEFAULT): ?>
 <?php $APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.header',
 	'',
@@ -437,13 +452,14 @@ if ($isBitrix24Template)
 		'SORT_FIELD_DIR'=>$arParams['SORT_FIELD_DIR'] ?? null,
 		'USE_LIVE_SEARCH' => 'Y',
 		'SHOW_SECTION_TEMPLATES'=> (isset($arParams['GROUP_ID']) && $arParams['GROUP_ID'] > 0) ? 'N' : 'Y',
-		'DEFAULT_ROLEID'=>$arParams['DEFAULT_ROLEID'] ?? null,
+		'DEFAULT_ROLEID'=> $arParams['DEFAULT_ROLEID'] ?? null,
 		'USE_AJAX_ROLE_FILTER'=>'Y',
 		'SCOPE' => ScopeDictionary::SCOPE_TASKS_CALENDAR,
 	),
 	$component,
 	array('HIDE_ICONS' => true)
 ); ?>
+<?php endif; ?>
 
 <?php
 if (

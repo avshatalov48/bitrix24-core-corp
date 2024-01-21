@@ -17,7 +17,7 @@ use Bitrix\Main\UI\Filter;
 use Bitrix\UI\Toolbar;
 use Bitrix\UI\Toolbar\Facade;
 use Bitrix\Main\Grid;
-use Bitrix\BIConnector\Settings;
+use Bitrix\BiConnector\Settings;
 
 class KeyListComponent extends CBitrixComponent implements Controllerable
 {
@@ -40,9 +40,9 @@ class KeyListComponent extends CBitrixComponent implements Controllerable
 
 	public function onPrepareComponentParams($arParams): array
 	{
-		$arParams['KEY_LIST_URL'] = $arParams['KEY_LIST_URL'] ?? 'key_list.php';
-		$arParams['KEY_ADD_URL'] = $arParams['KEY_ADD_URL'] ?? 'key_edit.php';
-		$arParams['KEY_EDIT_URL'] = $arParams['KEY_EDIT_URL'] ?? 'key_edit.php?key_id=#ID#';
+		$arParams['KEY_LIST_URL'] ??= 'key_list.php';
+		$arParams['KEY_ADD_URL'] ??= 'key_edit.php';
+		$arParams['KEY_EDIT_URL'] ??= 'key_edit.php?key_id=#ID#';
 
 		return parent::onPrepareComponentParams($arParams);
 	}

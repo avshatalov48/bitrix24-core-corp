@@ -152,7 +152,7 @@ class CommonActions extends BaseObject
 
 	public function downloadArchiveAction(Disk\Type\ObjectCollection $objectCollection): ZipNginx\Archive
 	{
-		$archiveName = 'archive' . date('y-m-d') . '.zip';
+		$archiveName = 'archive' . date('y-m-d');
 
 		return ZipNginx\Archive::createByObjects($archiveName, $objectCollection, $this->getCurrentUser()?->getId());
 	}

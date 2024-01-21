@@ -2,8 +2,8 @@
  * @module layout/ui/file-attachment
  */
 jn.define('layout/ui/file-attachment', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { clip } = require('assets/common');
-	const { transparent } = require('utils/color');
 	const { throttle } = require('utils/function');
 	const { Loc } = require('loc');
 	const { GridViewAdapter } = require('layout/ui/file-attachment/grid-view-adapter');
@@ -50,10 +50,10 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						backgroundColor: '#ffffff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						flex: 1,
 					},
-					safeArea: { bottom: true }
+					safeArea: { bottom: true },
 				},
 				this.renderFilesGrid(),
 				this.renderEmptyState(),
@@ -75,14 +75,16 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 			return new GridViewAdapter({
 				rowsCount,
 				items: attachments,
-				ref: (ref) => this.gridViewAdapter = ref,
+				ref: (ref) => {
+					this.gridViewAdapter = ref;
+				},
 				renderItem: (file) => View(
 					{
 						style: {
 							width: itemWidth,
 							flex: 1,
 							alignItems: 'center',
-						}
+						},
 					},
 					this.renderFile(file),
 				),
@@ -103,15 +105,15 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 						flex: 1,
 						alignItems: 'center',
 						justifyContent: 'center',
-					}
+					},
 				},
 				Text({
 					text: Loc.getMessage('UI_FILE_ATTACHMENT_NO_FILES'),
 					style: {
-						color: '#828B95',
+						color: AppTheme.colors.base3,
 						fontSize: 18,
-					}
-				})
+					},
+				}),
 			);
 		}
 
@@ -131,7 +133,7 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 						borderTopRightRadius: 12,
 					},
 					radius: 5,
-					color: transparent('#000000', 0.06),
+					// color: transparent(AppTheme.colors.base0, 0.06),
 					offset: {
 						x: 0,
 						y: -5,
@@ -147,7 +149,7 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 					{
 						style: {
 							flexDirection: 'row',
-							backgroundColor: '#fff',
+							backgroundColor: AppTheme.colors.bgContentPrimary,
 							paddingVertical: 12.5,
 							justifyContent: 'center',
 							alignItems: 'center',
@@ -159,7 +161,6 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 							style: {
 								width: 24,
 								height: 24,
-								backgroundColor: '#E1F3F9',
 								borderRadius: 12,
 								justifyContent: 'center',
 								alignItems: 'center',
@@ -169,7 +170,7 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 						Image({
 							style: {
 								width: 17,
-								height: 17,
+								height: 19,
 							},
 							svg: {
 								content: clip,
@@ -179,7 +180,7 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 					Text({
 						text,
 						style: {
-							color: '#828B95',
+							color: AppTheme.colors.base3,
 							fontSize: 18,
 						},
 					}),
@@ -233,7 +234,7 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 
 		onDeleteFile(id)
 		{
-			const index = this.state.attachments.findIndex(item => item.id === id);
+			const index = this.state.attachments.findIndex((item) => item.id === id);
 
 			this.useGridViewAdapter()
 				.then((adapter) => adapter.deleteRow(index))

@@ -2,24 +2,31 @@
 
 namespace Bitrix\Tasks\Access;
 
+use Bitrix\Main\Error;
+use Bitrix\Main\ErrorCollection;
+
 trait AccessErrorTrait
 {
-	protected $errorCollection = [];
+	protected array $errorCollection = [];
 
-	/**
-	 * @return array
-	 */
 	public function getErrors(): array
 	{
 		return $this->errorCollection;
 	}
 
-	/**
-	 * @param string $message
-	 * @return bool
-	 */
 	public function addError(string $class, string $message = ''): void
 	{
 		$this->errorCollection[] = $class .': '. $message;
+	}
+
+	public function getErrorCollection(): ErrorCollection
+	{
+		$collection = new ErrorCollection();
+		foreach ($this->errorCollection as $errorMessage)
+		{
+			$collection->setError(new Error($errorMessage));
+		}
+
+		return $collection;
 	}
 }

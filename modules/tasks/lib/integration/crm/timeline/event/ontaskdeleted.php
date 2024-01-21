@@ -20,7 +20,7 @@ class OnTaskDeleted implements TimeLineEvent
 	public function getPayload(): array
 	{
 		return [
-			'TASK_ID' => $this->task->getId(),
+			'TASK_ID' => $this->task?->getId(),
 			'AUTHOR_ID' => $this->userId,
 			'REFRESH_TASK_ACTIVITY' => false,
 		];

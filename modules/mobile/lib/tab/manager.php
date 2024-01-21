@@ -334,6 +334,27 @@ class Manager
 			$result = Json::decode($option);
 		}
 
+		if (Loader::includeModule("crm"))
+		{
+			$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+			if (!$toolsManager->checkExternalDynamicAvailability())
+			{
+				$customSections = [];
+				foreach ($result as $item => $i)
+				{
+					if (str_contains($item, "crm_custom_section"))
+					{
+						$customSections[] = $item;
+					}
+				}
+
+				foreach ($customSections as $customSection)
+				{
+					unset($result[$customSection]);
+				}
+			}
+		}
+
 		return $result;
 	}
 

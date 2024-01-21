@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Tasks\Integration\Intranet\Settings;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 $requiredModules = array('tasks', 'intranet', 'socialnetwork');
@@ -65,7 +67,6 @@ if (!isset($_GET['select_my_tasks']) && !isset($_GET['select_depts_tasks']) && !
 	}
 }
 
-
-
+$arResult['IS_TOOL_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['report']);
 
 $this->IncludeComponentTemplate();

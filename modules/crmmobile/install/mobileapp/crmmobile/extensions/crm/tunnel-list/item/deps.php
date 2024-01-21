@@ -2,8 +2,9 @@
 
 return [
 	'extensions' => [
-		'require-lazy',
 		'alert',
+		'apptheme',
+		'require-lazy',
 		'layout/ui/context-menu',
 		'qrauth/utils',
 		'utils/prop',

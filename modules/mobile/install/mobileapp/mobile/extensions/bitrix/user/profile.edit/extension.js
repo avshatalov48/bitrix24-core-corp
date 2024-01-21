@@ -1,9 +1,13 @@
 /**
- * @bxjs_lang_path extension.php
+ * @module user/profile.edit
  */
+jn.define('user/profile.edit', (require, exports, module) => {
+	const AppTheme = require('apptheme');
+	const { Profile } = require('user/profile');
+	const { getFile } = require('files/entry');
+	const { FileConverter } = require('files/converter');
+	const { openDeleteDialog } = require('user/account-delete');
 
-jn.define("user/profile.edit", (require, exports, module) => {
-	const { Profile } = jn.require("user/profile")
 	class ProfileEdit extends Profile
 	{
 		init()
@@ -14,7 +18,7 @@ jn.define("user/profile.edit", (require, exports, module) => {
 				if (this.form.setTitle)
 				{
 					this.form.setTitle({
-						text: BX.message("PROFILE_INFO")
+						text: BX.message('PROFILE_INFO'),
 					});
 				}
 			});
@@ -24,52 +28,54 @@ jn.define("user/profile.edit", (require, exports, module) => {
 
 		onItemSelected(item)
 		{
-			if (item.id === "delete_account")
+			if (item.id === 'delete_account')
 			{
-				let {openDeleteDialog} = jn.require("user/account-delete")
-				openDeleteDialog()
+				openDeleteDialog();
 			}
 		}
 
 		onItemChanged(data)
 		{
 			this.changed = true;
-			if (data.id === "delete_account")
+			if (data.id === 'delete_account')
 			{
 				this.onItemSelected(data);
+
 				return;
 			}
-			if (data.type === "userpic")
+
+			if (data.type === 'userpic')
 			{
-				if (data.value === "")
+				if (data.value === '')
 				{
-					this.updateAvatar(false)
+					this.updateAvatar(false);
 				}
 				else
 				{
-					let {FileConverter} = jn.require("files/converter")
-					let {getFile} = jn.require("files/entry")
-					let converter = new FileConverter()
-					converter.resize("avatarResize", {
+					const converter = new FileConverter();
+					converter.resize('avatarResize', {
 						url: data.value, width: 1000, height: 1000,
-					}).then(path => {
+					}).then((path) => {
 						getFile(path)
-							.then(file => {
+							.then((file) => {
 								file.readMode = BX.FileConst.READ_MODE.DATA_URL;
 								file.readNext()
-									.then(fileData => {
+									.then((fileData) => {
 										if (fileData.content)
 										{
-											let content = fileData.content;
+											const content = fileData.content;
 											this.updateAvatar(
-												["avatar.png", content.substr(content.indexOf("base64,") + 7,
-													content.length),]);
+												['avatar.png', content.substr(
+													content.indexOf('base64,') + 7,
+													content.length,
+												)],
+											);
 										}
 									})
-									.catch(e => console.error(e));
+									.catch(console.error);
 							})
-							.catch(e => console.error(e));
-					});
+							.catch(console.error);
+					}).catch(console.error);
 				}
 			}
 			else
@@ -80,28 +86,31 @@ jn.define("user/profile.edit", (require, exports, module) => {
 
 		showNotification(message)
 		{
-			include("InAppNotifier");
-			if (typeof InAppNotifier != "undefined")
+			include('InAppNotifier');
+			if (typeof InAppNotifier !== 'undefined')
 			{
-
 				InAppNotifier.showNotification({
-					title: BX.message("PROFILE_EDIT"), backgroundColor: "#004f69", time: 1, blur: true, message: message
-				})
+					title: BX.message('PROFILE_EDIT'),
+					backgroundColor: AppTheme.colors.accentSoftElementBlue1,
+					time: 1,
+					blur: true,
+					message,
+				});
 			}
 		}
 
 		updateAvatar(avatar)
 		{
-			let data = {PERSONAL_PHOTO: avatar, id: this.userId};
-			BX.rest.callMethod("user.update", data)
-				.then(e => {
-					this.showNotification(BX.message("AVATAR_CHANGED_SUCCESS"));
-					BX.postComponentEvent("shouldReloadMenu", null, "settings");
+			const data = { PERSONAL_PHOTO: avatar, id: this.userId };
+			BX.rest.callMethod('user.update', data)
+				.then((e) => {
+					this.showNotification(BX.message('AVATAR_CHANGED_SUCCESS'));
+					BX.postComponentEvent('shouldReloadMenu', null, 'settings');
 				})
-				.catch(response => {
+				.catch((response) => {
 					if (response.answer && response.answer.error_description)
 					{
-						this.error(response.answer.error_description.replace(/<br>/g, "").trim());
+						this.error(response.answer.error_description.replaceAll('<br>', '').trim());
 					}
 
 					console.error(response);
@@ -112,9 +121,10 @@ jn.define("user/profile.edit", (require, exports, module) => {
 		{
 			this.formSections = this.formSections.map((section) => {
 				section.styles = {
-					'title': {
-						'font': {
-							'color': '#777777', 'fontStyle': 'medium',
+					title: {
+						font: {
+							color: AppTheme.colors.base3,
+							fontStyle: 'medium',
 						},
 					},
 				};
@@ -122,143 +132,144 @@ jn.define("user/profile.edit", (require, exports, module) => {
 				return section;
 			});
 
-			Object.keys(this.formFields).forEach(fieldName => {
+			Object.keys(this.formFields).forEach((fieldName) => {
 				if (this.fieldsValues[fieldName])
 				{
-					this.formFields[fieldName]["value"] = this.fieldsValues[fieldName];
+					this.formFields[fieldName].value = this.fieldsValues[fieldName];
 				}
 
-				if (this.formFields[fieldName]["asterix"])
+				if (this.formFields[fieldName].asterix)
 				{
-					this.formFields[fieldName]['title'] = this.formFields[fieldName]['title'] + "*"
-					let sectionIndex = this.formSections.findIndex(
-						section => section.id === this.formFields[fieldName]['sectionCode'])
-					if (!this.formSections[sectionIndex]["footer"])
+					this.formFields[fieldName].title = `${this.formFields[fieldName].title}*`;
+					const sectionIndex = this.formSections.findIndex(
+						(section) => section.id === this.formFields[fieldName].sectionCode,
+					);
+					if (this.formSections[sectionIndex].footer)
 					{
-						this.formSections[sectionIndex]["footer"] = this.formFields[fieldName]["asterix"];
+						this.formSections[sectionIndex].footer += `\n${this.formFields[fieldName].asterix}`;
 					}
 					else
 					{
-						this.formSections[sectionIndex]["footer"] += "\n" + this.formFields[fieldName]["asterix"];
+						this.formSections[sectionIndex].footer = this.formFields[fieldName].asterix;
 					}
 				}
 
 				this.formFields[fieldName].styles = {
-					'title': {
-						'font': {
-							'color': '#777777', 'fontStyle': 'semibold', 'size': 14
+					title: {
+						font: {
+							color: AppTheme.colors.base3,
+							fontStyle: 'semibold',
+							size: 14,
 						},
 					},
 				};
 
-				if (!this.formFields[fieldName]["type"])
+				if (!this.formFields[fieldName].type)
 				{
-					delete this.formFields[fieldName]
+					delete this.formFields[fieldName];
 				}
 			});
 
-			let imageUrl = this.fieldsValues["PERSONAL_PHOTO"] ? encodeURI(this.fieldsValues["PERSONAL_PHOTO"]) : "";
-			this.formFields["PERSONAL_PHOTO"] = {
-				imageUrl: imageUrl,
+			const imageUrl = this.fieldsValues.PERSONAL_PHOTO ? encodeURI(this.fieldsValues.PERSONAL_PHOTO) : '';
+			this.formFields.PERSONAL_PHOTO = {
+				imageUrl,
 				value: imageUrl,
-				title: `${this.fieldsValues["NAME"]} ${this.fieldsValues["LAST_NAME"]}`,
-				subtitle: this.fieldsValues["WORK_POSITION"],
-				sectionCode: "top",
-				type: "userpic",
+				title: `${this.fieldsValues.NAME} ${this.fieldsValues.LAST_NAME}`,
+				subtitle: this.fieldsValues.WORK_POSITION,
+				sectionCode: 'top',
+				type: 'userpic',
 				height: 160,
 				imageHeight: 120,
 				useLetterImage: true,
-				color: "#2e455a"
+				color: AppTheme.colors.base2,
 			};
 
-			let items = Object.values(this.formFields);
-			if (this.userId === Number(env.userId) && Application.getPlatform() === "ios")
+			const items = Object.values(this.formFields);
+			if (this.userId === Number(env.userId) && Application.getPlatform() === 'ios')
 			{
-				let {isCloudAccount} = jn.require("user/account-delete")
+				const { isCloudAccount } = require('user/account-delete');
 				if (isCloudAccount())
 				{
 					items.push({
 						sectionCode: 'account',
-						type: "default",
+						type: 'default',
 						title: BX.message('DELETE_ACCOUNT'),
-						id: "delete_account",
+						id: 'delete_account',
 						styles: {
 							title: {
-								font: {color: "#fb0000"}
+								font: {
+									color: AppTheme.colors.accentSoftElementRed1,
+								},
 							},
-						}
-					})
+						},
+					});
 
-					this.formSections.push({id: "account", title: ""})
+					this.formSections.push({ id: 'account', title: '' });
 				}
 			}
 
 			this.form.setItems(items, this.formSections);
 
-			console.log(items, this.formSections);
 			this.form.setRightButtons([{
-				name: BX.message("SAVE_FORM"), callback: () => {
+				name: BX.message('SAVE_FORM'),
+				callback: () => {
 					if (!this.isBeingUpdated)
 					{
 						this.isBeingUpdated = true;
-						let data = {};
-						delete data["PERSONAL_PHOTO"];
+						const data = {};
+						delete data.PERSONAL_PHOTO;
 						this.form.getItems()
-							.filter(item => {
-								if (item.type === "userpic" || item.type === "default")
+							.filter((item) => {
+								if (item.type === 'userpic' || item.type === 'default')
 								{
 									return false;
 								}
-								let oldValue = this.formFields[item.id].value
-								if (typeof oldValue === "undefined")
+								let oldValue = this.formFields[item.id].value;
+								if (typeof oldValue === 'undefined')
 								{
-									oldValue = ""
+									oldValue = '';
 								}
 
 								return oldValue !== item.value;
 							})
-							.forEach(item => data[item["id"]] = item["value"]);
+							.forEach((item) => data[item.id] = item.value);
 
 						if (Object.values(data).length === 0)
 						{
 							this.isBeingUpdated = false;
 							this.form.back();
+
 							return;
 						}
 
-						data["ID"] = this.userId;
+						data.ID = this.userId;
 						dialogs.showLoadingIndicator();
-						BX.rest.callMethod("mobile.user.update", data)
-							.then(e => {
+						BX.rest.callMethod('mobile.user.update', data)
+							.then((e) => {
 								this.isBeingUpdated = false;
 								this.changed = false;
-								this.showNotification(BX.message("PROFILE_CHANGED_SUCCESS"));
-								BX.postComponentEvent("shouldReloadMenu", null, "settings");
+								this.showNotification(BX.message('PROFILE_CHANGED_SUCCESS'));
+								BX.postComponentEvent('shouldReloadMenu', null, 'settings');
 								dialogs.hideLoadingIndicator();
 								this.form.back();
 							})
-							.catch(response => {
-
+							.catch((response) => {
 								this.isBeingUpdated = false;
 								dialogs.hideLoadingIndicator();
-								if (response.answer && response.answer.error)
+								if (response.answer && response.answer.error && response.answer.error_description)
 								{
-									if (response.answer.error_description)
-									{
-										this.error(response.answer.error_description.replace("<br>", ""));
-										return;
-									}
+									this.error(response.answer.error_description.replace('<br>', ''));
+
+									return;
 								}
 
 								this.error();
-
 							});
 					}
-
-				}
+				},
 			}]);
 		}
 	}
 
-	module.exports = ProfileEdit
+	module.exports = ProfileEdit;
 });

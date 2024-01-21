@@ -6,10 +6,17 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 
 class ContentBlockWithTitle extends ContentBlock
 {
+	public const ALIGN_CENTER = 'center';
+	public const ALIGN_START = 'flex-start';
+	public const ALIGN_END = 'flex-end';
+	public const ALIGN_STRETCH = 'stretch';
+	public const ALIGN_BASELINE = 'baseline';
+
 	protected ?string $title = null;
 	protected ?bool $inline = null;
 	protected ?bool $wordWrap = null;
     protected bool $fixedWidth = true;
+	protected ?string $alignItems = null;
 	protected ?ContentBlock $contentBlock = null;
 
 	public function getRendererName(): string
@@ -53,6 +60,18 @@ class ContentBlockWithTitle extends ContentBlock
         return $this;
     }
 
+	public function getAlignItems(): ?string
+	{
+		return $this->alignItems;
+	}
+
+	public function setAlignItems(string $alignItems): self
+	{
+		$this->alignItems = $alignItems;
+
+		return $this;
+	}
+
 	public function getTitle(): ?string
 	{
 		return $this->title;
@@ -84,6 +103,7 @@ class ContentBlockWithTitle extends ContentBlock
 			'inline' => $this->getInline(),
 			'wordWrap' => $this->getWordWrap(),
             'fixedWidth' => $this->getFixedWidth(),
+			'alignItems' => $this->getAlignItems(),
 			'contentBlock' => $this->getContentBlock(),
 		];
 	}

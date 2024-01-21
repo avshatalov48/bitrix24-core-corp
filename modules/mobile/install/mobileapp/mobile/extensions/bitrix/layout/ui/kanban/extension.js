@@ -1,32 +1,22 @@
-(() => {
-
-	const require = (ext) => jn.require(ext);
-
+/**
+ * @module layout/ui/kanban
+ */
+jn.define('layout/ui/kanban', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { RefsContainer } = require('layout/ui/kanban/refs-container');
-	const { KanbanToolbar } = require('layout/ui/kanban/toolbar');
 	const {
 		clone,
-		merge,
 		mergeImmutable,
-		isEqual,
+		set,
 	} = require('utils/object');
-	const { useCallback } = require('utils/function');
 	const { PureComponent } = require('layout/pure-component');
 	const { StatefulList } = require('layout/ui/stateful-list');
 	const { ListItemType, ListItemsFactory } = require('layout/ui/simple-list/items');
 	const { Type } = require('type');
+	const { Alert } = require('alert');
+	const { assertDefined, assertFunction } = require('utils/validation');
 
-	let CategoryStorage;
-
-	try
-	{
-		CategoryStorage = require('crm/storage/category').CategoryStorage;
-	}
-	catch (e)
-	{
-		console.warn(e);
-	}
+	const nothing = () => {};
 
 	const animationTypes = {
 		default: 'fade',
@@ -35,17 +25,16 @@
 		top: 'top',
 	};
 
-	const UPDATE_ACTION = 'update';
-	const CREATE_ACTION = 'create';
-	const EXCLUDE_ACTION = 'excludeEntity';
-	const DELETE_ACTION = 'deleteEntity';
-
 	/**
-	 * @class UI.Kanban
+	 * @class Kanban
+	 * @typedef {LayoutComponent<KanbanProps, KanbanState>}
 	 */
 	class Kanban extends PureComponent
 	{
+		// region initialize
+
 		/**
+		 * @public
 		 * @param {KanbanProps} props
 		 */
 		constructor(props)
@@ -57,366 +46,231 @@
 
 			this.init(props);
 
-			this.props.layout.on('onViewShown', () => {
-				if (this.needExecuteOnNotViewableHandler)
-				{
-					this.needExecuteOnNotViewableHandler = false;
-					this.props.onNotViewableHandler();
-				}
-			});
-
-			this.getRuntimeParams = this.getRuntimeParamsHandler.bind(this);
-			this.changeColumn = this.changeColumnHandler.bind(this);
-			this.changeItemStageHandler = this.changeItemStage.bind(this);
-			this.reloadListCallbackHandler = this.initCounters.bind(this);
-			this.onUpdateItemHandler = this.onUpdateItem.bind(this);
-			this.onCreateItemHandler = this.onCreateItem.bind(this);
-			this.onAccessDeniedItemHandler = this.onAccessDeniedItem.bind(this);
+			this.getRuntimeParams = this.getRuntimeParams.bind(this);
+			this.setActiveStage = this.setActiveStage.bind(this);
+			this.onChangeItemStage = this.onChangeItemStage.bind(this);
+			this.onStatefulListReload = this.initCounters.bind(this);
+			this.bindRef = this.bindRef.bind(this);
+			this.bindToolbarRef = this.bindToolbarRef.bind(this);
 		}
 
 		/**
-		 * @return {KanbanProps}
-		 */
-		getProps()
-		{
-			return this.props;
-		}
-
-		initSlides(props = null)
-		{
-			this.slides = new Map([
-				[this.getSlideName('', props), this.getPreparedActionParams(props)],
-			]);
-		}
-
-		componentDidMount()
-		{
-			BX.addCustomEvent('DetailCard::onUpdate', this.onUpdateItemHandler);
-			BX.addCustomEvent('DetailCard::onCreate', this.onCreateItemHandler);
-			BX.addCustomEvent('DetailCard::onAccessDenied', this.onAccessDeniedItemHandler);
-
-			CategoryStorage && CategoryStorage
-				.subscribeOnChange(() => this.fillSlidesOrReload())
-				.markReady()
-			;
-		}
-
-		fillSlidesOrReload()
-		{
-			if (this.slides.size === this.getColumnsFromCurrentCategory().size + 1)
-			{
-				this.fillSlides();
-			}
-			else
-			{
-				this.reload(this.getCurrentSlideName());
-			}
-		}
-
-		componentWillUnmount()
-		{
-			BX.removeCustomEvent('DetailCard::onUpdate', this.onUpdateItemHandler);
-			BX.removeCustomEvent('DetailCard::onCreate', this.onCreateItemHandler);
-			BX.removeCustomEvent('DetailCard::onAccessDenied', this.onAccessDeniedItemHandler);
-		}
-
-		onUpdateItem(uid, params)
-		{
-			this.animateItemAfterBackFromDetail(params.actionName || UPDATE_ACTION, params);
-		}
-
-		onCreateItem(uid, params)
-		{
-			this.animateItemAfterBackFromDetail(CREATE_ACTION, params);
-		}
-
-		animateItemAfterBackFromDetail(action, params)
-		{
-			const { entityTypeId, onBeforeReload, getMenuButtons } = this.props;
-			const owner = BX.prop.getObject(params, 'owner', {});
-			const statefulList = this.getCurrentStatefulList();
-			const isBackFromSlaveEntityType = (owner.id && statefulList.hasItem(owner.id));
-
-			if (entityTypeId === params.entityTypeId || isBackFromSlaveEntityType)
-			{
-				const data = onBeforeReload ? onBeforeReload() : {};
-				const id = isBackFromSlaveEntityType ? owner.id : params.entityId;
-				const currentColumnId = this.getCurrentColumnId();
-
-				if (
-					!data.reload
-					&& entityTypeId === params.entityTypeId
-					&& (
-						action === EXCLUDE_ACTION
-						|| action === DELETE_ACTION
-						|| (currentColumnId && currentColumnId !== params.entityModel.STAGE_ID)
-						|| this.itemCategoryIsChanged(params)
-					)
-				)
-				{
-					void statefulList.deleteItem(id);
-
-					return;
-				}
-
-				if (!data.reload && action === UPDATE_ACTION)
-				{
-					void statefulList.updateItems([id], BX.prop.getBoolean(data, 'animate', true), false, false);
-
-					return;
-				}
-
-				statefulList.addToAnimateIds(id);
-
-				const reloadParams = {};
-				if (getMenuButtons)
-				{
-					reloadParams.menuButtons = getMenuButtons();
-				}
-				this.reload(this.currentSlideName, true, reloadParams);
-			}
-		}
-
-		itemCategoryIsChanged(params)
-		{
-			const category = this.getCurrentCategory();
-
-			if (!category || !category.categoriesEnabled)
-			{
-				return false;
-			}
-
-			const { filterParams } = this.props;
-
-			return (
-				Type.isNumber(filterParams.CATEGORY_ID)
-				&& params.categoryId !== filterParams.CATEGORY_ID
-			);
-		}
-
-		onAccessDeniedItem(uid, params)
-		{
-			if (this.props.entityTypeId === params.entityTypeId)
-			{
-				this.needExecuteOnNotViewableHandler = true;
-			}
-		}
-
-		/**
+		 * @private
 		 * @param {KanbanProps} newProps
 		 */
 		componentWillReceiveProps(newProps)
 		{
-			this.actions = newProps.actions;
-			this.slidePage = 0;
-
-			if (this.props.entityTypeName !== newProps.entityTypeName)
+			if (this.props.id !== newProps.id)
 			{
-				this.refsContainer.statefulLists = new Map();
-				this.refsContainer.toolbar = null;
-
 				this.init(newProps);
 			}
-
-			this.slides.forEach(slide => {
-				const presetId = BX.prop.getString(newProps.actionParams.loadItems.extra.filterParams, 'FILTER_PRESET_ID', null);
-				if (presetId)
-				{
-					slide.loadItems.extra.filterParams.FILTER_PRESET_ID = presetId;
-				}
-				return slide;
-			});
 		}
 
 		/**
+		 * @private
 		 * @param {KanbanProps} props
 		 */
 		init(props)
 		{
 			this.actions = props.actions || {};
-			this.currentSlideName = null;
-			this.columns = new Map();
-			this.needExecuteOnNotViewableHandler = false;
-			this.slidePage = 0;
+
+			assertDefined(this.actions.updateItemStage, '\'updateItemStage\' action must be defined');
+			assertDefined(this.actions.deleteItem, '\'deleteItem\' action must be defined');
+			assertDefined(this.actions.loadItems, '\'loadItems\' action must be defined');
+			assertFunction(props.stagesProvider, 'Expect \'stagesProvider\' property to be function');
+
+			/** @type {Filter|null} */
 			this.filter = null;
 
 			this.state = {
-				currentColumnId: null,
+				activeStageId: null,
 			};
+		}
 
-			this.initSlides(props);
+		// endregion
+
+		// region stages api
+
+		/**
+		 * @public
+		 * @return {KanbanStage[]}
+		 */
+		getStages()
+		{
+			return this.props.stagesProvider();
 		}
 
 		/**
-		 * @param {number} newColumnId
+		 * @public
+		 * @param {number} id
+		 * @return {KanbanStage|undefined}
 		 */
-		changeColumnHandler(newColumnId)
+		getStageById(id)
 		{
-			if (newColumnId === null)
-			{
-				return;
-			}
+			const stages = this.getStages();
 
-			let slideName;
-			if (newColumnId === 0)
-			{
-				slideName = this.getSlideName();
-			}
-			else
-			{
-				const newColumn = this.getColumnById(newColumnId);
-
-				if (newColumn === undefined)
-				{
-					const columns = this.getColumnsFromCurrentCategory();
-					for (const column of columns.values())
-					{
-						if (column.id === newColumnId)
-						{
-							const slideName = this.getSlideNameByColumn(column);
-							this.reload(slideName, true);
-							break;
-						}
-					}
-
-					return;
-				}
-
-				slideName = this.getSlideNameByColumn(newColumn);
-			}
-
-			const reloadParams = {
-				updateToolbarColumnId: true,
-				force: false,
-			};
-
-			this.reloadStatefulList(slideName, reloadParams, () => {
-				const page = Array.from(this.slides.keys()).indexOf(slideName);
-				this.scrollToPage(page);
-			});
+			return stages.find((stage) => stage.id === id);
 		}
 
 		/**
-		 * @param {Number|null} columnId
-		 * @returns {Object|null}
+		 * @public
+		 * @param {string} code
+		 * @return {KanbanStage|undefined}
 		 */
-		getColumnById(columnId)
+		getStageByCode(code)
 		{
-			if (columnId === null)
+			const stages = this.getStages();
+
+			return stages.find((stage) => stage.statusId === code);
+		}
+
+		/**
+		 * @public
+		 * @returns {null|KanbanStage}
+		 */
+		getActiveStage()
+		{
+			const stages = this.getStages();
+
+			if (stages.length === 0 || !this.getActiveStageId())
 			{
 				return null;
 			}
 
-			const columns = Array.from(this.columns.values());
-			return columns.find(column => Number(column.id) === columnId);
+			return this.getStageById(this.getActiveStageId()) || null;
 		}
 
 		/**
-		 * @param {Number} itemId
-		 * @param {String} columnName
-		 */
-		updateItemColumn(itemId, columnName)
-		{
-			const column = this.getColumnByName(columnName);
-			const item = this.getCurrentStatefulList().getItemComponent(itemId);
-			item.updateColumnId(column.id);
-		}
-
-		getCurrentColumnId()
-		{
-			return this.getColumnIdByName(this.getColumnStatusIdFromSlideName(this.getCurrentSlideName()));
-		}
-
-		/**
-		 * @param {String} columnName
+		 * @public
 		 * @returns {null|Number}
 		 */
-		getColumnIdByName(columnName)
+		getActiveStageId()
 		{
-			const column = this.getColumnByName(columnName);
-			if (column)
+			return this.state.activeStageId;
+		}
+
+		/**
+		 * @public
+		 * @return {boolean}
+		 */
+		isAllStagesDisplayed()
+		{
+			return this.getActiveStage() === null;
+		}
+
+		/**
+		 * @public
+		 * @param {number|null} newStageId
+		 */
+		setActiveStage(newStageId)
+		{
+			const stage = this.getStageById(newStageId);
+			const activeStageId = stage ? stage.id : null;
+
+			this.setState({ activeStageId }, () => this.reloadStatefulList());
+		}
+
+		// endregion
+
+		// region items interactions
+
+		/**
+		 * @public
+		 * @param {Number} itemId
+		 * @param {String} stageCode
+		 */
+		updateItemColumn(itemId, stageCode)
+		{
+			const stage = this.getStageByCode(stageCode);
+			const item = this.getCurrentStatefulList().getItemComponent(itemId);
+			if (stage && item)
 			{
-				return column.id;
-			}
-
-			return null;
-		}
-
-		/**
-		 * @param {String} columnName
-		 * @returns {Object|undefined}
-		 */
-		getColumnByName(columnName)
-		{
-			return this.columns.get(columnName);
-		}
-
-		/**
-		 * @param {Number} page
-		 */
-		scrollToPage(page)
-		{
-			if (this.slidePage !== page)
-			{
-				this.slidePage = page;
-				this.refsContainer.getSlider().scrollToPage(page);
+				item.updateColumnId(stage.id);
 			}
 		}
 
 		/**
-		 * @param {Number} stageId
-		 * @param {Object} category
-		 * @param {Object|null} data
-		 * @returns {Promise}
+		 * @public
+		 * @param {number} itemId
+		 * @param {object} params
+		 * @return {Promise}
 		 */
-		changeItemStage(stageId, category, { itemId })
+		deleteItem(itemId, params = {})
 		{
-			return this.moveItem(itemId, stageId);
+			const { deleteItem: deleteItemActionParams = {} } = this.getPreparedActionParams();
+
+			return new Promise((resolve, reject) => {
+				BX.ajax.runAction(this.actions.deleteItem, {
+					data: {
+						...deleteItemActionParams,
+						id: itemId,
+						params,
+					},
+				}).then((response) => {
+					if (response.errors && response.errors.length > 0)
+					{
+						// eslint-disable-next-line prefer-promise-reject-errors
+						reject({
+							errors: response.errors,
+							showErrors: true,
+						});
+					}
+					else
+					{
+						resolve({
+							action: 'delete',
+							id: itemId,
+						});
+					}
+				}).catch((response) => {
+					this.handleAjaxErrors(response.errors).finally(() => {
+						// eslint-disable-next-line prefer-promise-reject-errors
+						reject({
+							action: 'delete',
+							id: itemId,
+						});
+					});
+				});
+			});
 		}
 
 		/**
+		 * @public
 		 * @param {Number} itemId
 		 * @param {Number} columnId
 		 * @returns {Promise}
 		 */
 		moveItem(itemId, columnId)
 		{
-			const actionParams = this.getPreparedActionParams();
 			const oldItem = clone(this.getCurrentStatefulList().getItem(itemId));
-			const { entityTypeId, entityTypeName: entityType } = this.props;
-			const requiredParams = { entityId: itemId, entityTypeId };
-			return new Promise((resolve, reject) => {
-				if (!this.getColumnById(columnId))
-				{
-					this.fillSlides();
-				}
+			const { updateItemStage = {}, loadItems = {} } = this.getPreparedActionParams();
+
+			return new Promise((resolve) => {
+				const item = this.getCurrentStatefulList().getItem(itemId);
+				const prevStage = this.getItemStage(item);
+				const nextStage = this.getStageById(columnId);
 
 				this.setLoadingOfItem(itemId);
 
 				BX.ajax.runAction(this.actions.updateItemStage, {
-					data: {
+					data: mergeImmutable(updateItemStage, {
 						id: itemId,
 						stageId: columnId,
-						entityType,
-						extra: actionParams.loadItems.extra || {},
-					},
+						extra: loadItems.extra || {},
+					}),
 				}).then((response) => {
-					if (response.errors.length)
+					if (response.errors && response.errors.length > 0)
 					{
-						const action = this.errorProcessing(response.errors, requiredParams) ? resolve : reject;
-						action(columnId);
+						throw new Error(response);
 					}
+
+					this.mutateItemStage(item, nextStage);
 
 					let resolveParams = { columnId };
 
-					const item = this.getCurrentStatefulList().getItem(itemId);
-					const oldColumnStatusId = item.data.columnId;
-					const column = this.getColumnById(columnId);
-					item.data.columnId = column.statusId;
-
-					if (this.slidePage)
+					if (this.getActiveStageId() === prevStage.id)
 					{
-						const animationType = this.getAnimationType(oldColumnStatusId, columnId);
+						const animationType = this.getAnimationType(prevStage.statusId, nextStage.statusId);
 
 						this.deleteItemFromStatefulList(itemId, animationType);
 						resolveParams = {
@@ -426,765 +280,25 @@
 						};
 					}
 
-					BX.postComponentEvent('UI.Kanban::onItemMoved', [{
-						item,
-						oldItem,
-						resolveParams,
-					}]);
+					BX.postComponentEvent('UI.Kanban::onItemMoved', [
+						{
+							item,
+							oldItem,
+							resolveParams,
+							kanbanId: this.props.id,
+						},
+					]);
 
 					resolve(resolveParams);
-				}).catch((response) => {
-					this.errorProcessing(response.errors, requiredParams, {
-						itemId,
-						columnId,
-					}).then(resolve);
+				}).catch((response) => this.onMoveItemError({
+					errors: response.errors,
+					itemId,
+					prevStage,
+					nextStage,
+				})).finally(() => {
+					this.unsetLoadingOfItem(itemId, false);
 				});
 			});
-		}
-
-		errorProcessing(errors, params = {}, payload)
-		{
-			return new Promise(async (resolve, reject) => {
-				const { itemId } = payload;
-				const { RequiredFields } = await requireLazy('crm:required-fields') || {};
-
-				if (RequiredFields && RequiredFields.hasRequiredFields(errors))
-				{
-					const { columnId } = payload;
-					RequiredFields.show({
-						errors,
-						params: { ...params, uid: itemId },
-						onSave: () => this.moveItem(itemId, columnId).then(resolve),
-						onCancel: () => {
-							this.unsetLoadingOfItem(itemId, false);
-							reject();
-						},
-					});
-					return false;
-				}
-
-				const error = this.getPublicError(errors);
-				let title = Loc.getMessage('M_UI_KANBAN_ERROR_ON_SAVE');
-				if (!error)
-				{
-					title = Loc.getMessage('M_UI_KANBAN_ERROR_ON_SAVE_INTERNAL');
-				}
-
-				ErrorNotifier
-					.showErrors(error, {
-						title,
-						defaultErrorText: Loc.getMessage('M_UI_KANBAN_ERROR_ON_SAVE_INTERNAL_TEXT'),
-						addDefaultIfEmpty: true,
-					})
-					.then(() => this.unsetLoadingOfItem(itemId, false));
-				reject();
-			});
-		}
-
-		getPublicError(errors)
-		{
-			const error = errors.find(({ customData, message }) => customData && customData.public && message);
-
-			return error ? [error] : null;
-		}
-
-		deleteItem(itemId, params = {})
-		{
-			return new Promise((resolve, reject) => {
-				BX.ajax.runAction(this.actions.deleteItem, {
-					data: {
-						id: itemId,
-						entityType: this.props.entityTypeName,
-						params,
-					},
-				}).then(response => {
-					if (response.errors && response.errors.length)
-					{
-						reject({
-							errors: response.errors,
-							showErrors: true,
-						});
-					}
-
-					resolve({
-						action: 'delete',
-						id: itemId,
-					});
-				}).catch(response => {
-					ErrorNotifier.showErrors(response.errors);
-					reject({
-						action: 'delete',
-						id: itemId,
-					});
-				});
-			});
-		}
-
-		deleteItemFromStatefulList(itemId, animationType = animationTypes.top)
-		{
-			const statefulList = this.getCurrentStatefulList();
-			if (statefulList)
-			{
-				void statefulList.deleteItem(itemId, animationType);
-			}
-		}
-
-		/**
-		 * @returns {null|StatefulList}
-		 */
-		getCurrentStatefulList()
-		{
-			const toolbar = this.refsContainer.getToolbar();
-			if (!toolbar)
-			{
-				return this.getStatefulList(this.getSlideName());
-			}
-
-			const currentColumnId = toolbar.getActiveStageId();
-
-			if (!currentColumnId)
-			{
-				return this.getStatefulList(this.getSlideName());
-			}
-
-			const column = this.getColumnById(currentColumnId);
-			if (column)
-			{
-				const slideName = this.getSlideName(column.statusId);
-				return this.getStatefulList(slideName);
-			}
-
-			return null;
-		}
-
-		getStatefulList(slideName)
-		{
-			return this.refsContainer.getColumn(slideName);
-		}
-
-		getAnimationType(oldColumnStatusId, newColumnId)
-		{
-			const newColumnStatusId = this.getColumnById(newColumnId).statusId;
-
-			for (const columnId of this.columns.keys())
-			{
-				if (columnId === newColumnStatusId)
-				{
-					return animationTypes.left;
-				}
-
-				if (columnId === oldColumnStatusId)
-				{
-					return animationTypes.right;
-				}
-			}
-
-			return animationTypes.default;
-		}
-
-		render()
-		{
-			return View(
-				{
-					style: {
-						flex: 1,
-					},
-				},
-				...this.renderKanban(),
-			);
-		}
-
-		renderKanban()
-		{
-			const { entityTypeName } = this.props;
-
-			if (this.props.config.forbidden)
-			{
-				return [
-					this.renderForbiddenScreen(),
-				];
-			}
-
-			if (!entityTypeName)
-			{
-				return [
-					new LoadingScreenComponent(),
-				];
-			}
-
-			return [
-				Slider(
-					{
-						style: {
-							flex: 1,
-							marginTop: this.isEnabledKanbanToolbar() ? 52 : 0,
-						},
-						swipeEnabled: false,
-						onPageWillChange: (page, direction) => {
-							// Since we can't use the slider's internal pointer (page variable) due
-							// to kanban direction changes, we are forced to use a class field (this.slidePage)
-							let slidePage;
-							if (direction === 'right' && this.slides.size > this.slidePage + 1)
-							{
-								slidePage = this.slidePage + 1;
-							}
-							else if (direction === 'left' && this.slidePage)
-							{
-								slidePage = this.slidePage - 1;
-							}
-							else
-							{
-								return;
-							}
-
-							const slideName = this.getSlideNameByPage(slidePage);
-							const reloadParams = {
-								updateToolbarColumnId: false,
-							};
-							this.reloadStatefulList(slideName, reloadParams);
-						},
-						onPageChange: (page) => {
-							this.slidePage = page;
-							const slideName = this.getSlideNameByPage(page);
-							this.updateToolbarColumnId(slideName);
-						},
-						ref: ref => {
-							this.refsContainer.setSlider(ref);
-						},
-					},
-					...this.renderStatefulLists(),
-				),
-				this.renderKanbanToolbar(),
-			];
-		}
-
-		renderForbiddenScreen()
-		{
-			return View(
-				{
-					style: {
-						flexDirection: 'column',
-						justifyContent: 'center',
-						alignItems: 'center',
-						flex: 1,
-					},
-				},
-				Text({
-					text: BX.message('M_UI_KANBAN_FORBIDDEN_FOR_ALL_CATEGORIES'),
-				}),
-			);
-		}
-
-		/**
-		 * @param {Number} page
-		 * @returns {Object}
-		 */
-		getSlideNameByPage(page)
-		{
-			return Array.from(this.slides.keys())[page];
-		}
-
-		getSlideNameByColumn(column = null)
-		{
-			const columnId = (column ? column.statusId : '');
-			return this.getSlideName(columnId);
-		}
-
-		/**
-		 * @param {string} slideName
-		 * @returns {number}
-		 */
-		getPageBySlideName(slideName)
-		{
-			return Array.from(this.slides.keys()).indexOf(slideName);
-		}
-
-		renderStatefulLists()
-		{
-			const { entityTypeName } = this.props;
-			if (!this.slides.size && entityTypeName)
-			{
-				const actionParams = this.getPreparedActionParams();
-				this.slides.set(this.getSlideName(), actionParams);
-			}
-
-			const params = {
-				needInitMenu: this.props.needInitMenu,
-				itemParams: this.getPreparedItemParams(),
-			};
-
-			const statefulLists = [];
-
-			this.slides.forEach(actionParams => {
-				statefulLists.push(this.renderStatefulListInstance(actionParams, params));
-				params.needInitMenu = false;
-			});
-
-			return statefulLists;
-		}
-
-		/**
-		 * @returns {Object}
-		 */
-		getPreparedActionParams(props = null)
-		{
-			const actionParams = this.getDefaultActionParams(props);
-
-			actionParams.loadItems.extra = (actionParams.loadItems.extra || {});
-			actionParams.loadItems.extra.filterParams = (actionParams.loadItems.extra.filterParams || {});
-
-			if (this.state.currentColumnId)
-			{
-				actionParams.loadItems.extra.filterParams.stageId = this.state.currentColumnId;
-			}
-			else
-			{
-				delete actionParams.loadItems.extra.filterParams.stageId;
-			}
-
-			return actionParams;
-		}
-
-		/**
-		 * @returns {Object}
-		 */
-		getDefaultActionParams(props = null)
-		{
-			props = props || this.props;
-
-			const actionParams = {
-				loadItems: {
-					entityType: props.entityTypeName,
-				},
-			};
-
-			return mergeImmutable(props.actionParams, actionParams);
-		}
-
-		isEnabledKanbanToolbar()
-		{
-			const { enabled, componentClass } = (this.getProps().toolbar || {});
-
-			return enabled && componentClass && componentClass.prototype instanceof KanbanToolbar;
-		}
-
-		renderKanbanToolbar()
-		{
-			if (this.isEnabledKanbanToolbar())
-			{
-				const { componentClass: Toolbar, props = {} } = this.getProps().toolbar;
-
-				return new Toolbar({
-					...props,
-					onChangeStage: this.changeColumn,
-					ref: (ref) => ref && this.refsContainer.setToolbar(ref),
-				});
-			}
-
-			return null;
-		}
-
-		/**
-		 * @param {?Object} actionParams
-		 * @param {?Object} params
-		 * @returns {StatefulList}
-		 */
-		renderStatefulListInstance(actionParams, params)
-		{
-			actionParams = (actionParams || this.getPreparedActionParams());
-			params = (params || {});
-
-			const columnId = (
-				actionParams.loadItems.extra
-					? actionParams.loadItems.extra.filterParams.stageId
-					: ''
-			);
-
-			const slideName = this.getSlideName(columnId);
-			const testId = `KANBAN_${slideName}`.toUpperCase();
-
-			return new StatefulList({
-				testId,
-				actions: this.actions,
-				actionParams: actionParams,
-				itemLayoutOptions: this.props.itemLayoutOptions,
-				itemDetailOpenHandler: this.props.itemDetailOpenHandler,
-				itemCounterLongClickHandler: this.props.itemCounterLongClickHandler,
-				getItemCustomStyles: this.getItemCustomStyles,
-				isShowFloatingButton: BX.prop.getBoolean(this.props, 'isShowFloatingButton', true),
-				floatingButtonClickHandler: this.props.floatingButtonClickHandler,
-				floatingButtonLongClickHandler: this.props.floatingButtonLongClickHandler,
-				needInitMenu: (params.hasOwnProperty('needInitMenu') ? params.needInitMenu : true),
-				itemActions: (this.props.itemActions || []),
-				emptyListText: BX.message('M_UI_KANBAN_EMPTY_LIST_TEXT'),
-				emptySearchText: BX.message('M_UI_KANBAN_EMPTY_SEARCH_TEXT'),
-				layout: this.props.layout,
-				layoutOptions: this.props.layoutOptions,
-				cacheName: this.getStatefulListCacheName(columnId),
-				layoutMenuActions: this.props.layoutMenuActions,
-				menuButtons: (this.props.menuButtons || []),
-				itemType: (this.props.itemType || ListItemType.EXTENDED),
-				itemFactory: (this.props.itemFactory || ListItemsFactory),
-				itemParams: (params.itemParams || {}),
-				getEmptyListComponent: this.props.getEmptyListComponent || null,
-				getRuntimeParams: this.getRuntimeParams,
-				showEmptySpaceItem: this.isEnabledKanbanToolbar(),
-				pull: (this.props.pull || null),
-				onDetailCardUpdateHandler: this.props.onDetailCardUpdateHandler || null,
-				onDetailCardCreateHandler: this.props.onDetailCardCreateHandler || null,
-				onPanListHandler: this.props.onPanListHandler || null,
-				onNotViewableHandler: this.props.onNotViewableHandler || null,
-				reloadListCallbackHandler: this.reloadListCallbackHandler,
-				skipRenderIfEmpty: true,
-				context: {
-					slideName,
-				},
-				ref: useCallback((ref) => {
-					this.refsContainer.setColumn(slideName, ref);
-				}, [slideName]),
-				analyticsLabel: this.props.analyticsLabel || {}
-			});
-		}
-
-		getItemCustomStyles(item, section, row)
-		{
-			if (row > 1 || Application.getPlatform() !== 'android')
-			{
-				return {};
-			}
-
-			return {
-				wrapper: {
-					paddingTop: 20,
-				},
-			};
-		}
-
-		/**
-		 * @param {string} columnId
-		 * @returns {string}
-		 */
-		getStatefulListCacheName(columnId = 0)
-		{
-			return `${this.props.cacheName}.${String(columnId)}`;
-		}
-
-		/**
-		 * @returns {Object}
-		 */
-		getPreparedItemParams()
-		{
-			const itemParams = clone(this.props.itemParams);
-			itemParams.onChange = this.changeItemStageHandler;
-			itemParams.useStageFieldInSkeleton = true;
-
-			/** @type {KanbanToolbar|null} */
-			const toolbar = this.refsContainer.getToolbar();
-
-			if (toolbar)
-			{
-				const category = this.getCurrentCategory();
-
-				return mergeImmutable(itemParams, {
-					categoryId: category ? category.id : null,
-					activeStageId: toolbar.getActiveStageId(),
-					columns: toolbar.getColumns(),
-				});
-			}
-
-			return itemParams;
-		}
-
-		getRuntimeParamsHandler(data)
-		{
-			const cancelSearch = true;
-
-			return {
-				cancelSearch,
-			};
-		}
-
-		setFilter(filter)
-		{
-			this.filter = filter;
-		}
-
-		/**
-		 * @param {string} slideName
-		 * @param {boolean} force
-		 * @param {object} params
-		 */
-		reload(slideName = '', force = false, params = {})
-		{
-			if (params.skipFillSlides)
-			{
-				this.slides.forEach(slide => {
-					const { extra } = slide.loadItems;
-					extra.filter = this.filter;
-					extra.filterParams.FILTER_PRESET_ID = this.filter.presetId || null;
-				});
-			}
-			else
-			{
-				this.fillSlides();
-			}
-
-			if (this.slides.size <= 1)
-			{
-				return;
-			}
-
-			const currentColumnId = (slideName ? this.getColumnIdByName(this.getColumnStatusIdFromSlideName(slideName)) : null);
-
-			const menuButtons = BX.prop.getArray(params, 'menuButtons', null);
-			const skipUseCache = BX.prop.getBoolean(params, 'skipUseCache', false);
-			const skipInitCounters = BX.prop.getBoolean(params, 'skipInitCounters', false);
-			const updateToolbarColumnId = BX.prop.getBoolean(params, 'updateToolbarColumnId', true);
-			const initMenu = BX.prop.getBoolean(params, 'initMenu', false);
-			const forcedShowSkeleton = BX.prop.getBoolean(params, 'forcedShowSkeleton', false);
-
-			if (params.skipFillSlides)
-			{
-				this.state.currentColumnId = currentColumnId;
-				this.state.filterParams = this.props.filterParams;
-				this.synchronizeActionParams();
-
-				const reloadParams = {
-					updateToolbarColumnId,
-					force,
-					menuButtons,
-					skipUseCache,
-					forcedShowSkeleton,
-				};
-
-				this.reloadStatefulList(slideName, reloadParams, () => {
-					if (!skipInitCounters)
-					{
-						this.initCounters();
-					}
-
-					if (initMenu)
-					{
-						this.getCurrentStatefulList().initMenu();
-					}
-				});
-			}
-			else
-			{
-				this.setState({
-					currentColumnId,
-					filterParams: this.props.filterParams,
-				}, () => {
-
-					const reloadParams = {
-						updateToolbarColumnId: true,
-						force,
-						menuButtons,
-						skipUseCache,
-					};
-
-					this.reloadStatefulList(slideName, reloadParams, () => {
-						slideName = (slideName || this.getSlideName());
-
-						const newSlidePage = this.getPageBySlideName(slideName);
-						if (this.slidePage !== newSlidePage)
-						{
-							this.refsContainer.getSlider().scrollToPage(this.getPageBySlideName(slideName));
-						}
-						if (!skipInitCounters)
-						{
-							this.initCounters();
-						}
-					});
-				});
-			}
-		}
-
-		synchronizeActionParams()
-		{
-			this.refsContainer.statefulLists.forEach((statefulList, name) => {
-				statefulList.state.actionParams = this.slides.get(name);
-			});
-		}
-
-		fillSlides()
-		{
-			const columns = this.getColumnsFromCurrentCategory();
-			if (columns && !isEqual(this.columns, columns))
-			{
-				this.columns = columns;
-
-				const actionParams = this.getPreparedActionParams();
-
-				for (const columnId of this.columns.keys())
-				{
-					const params = clone(actionParams);
-					const stageFilter = {
-						filterParams: {
-							stageId: columnId,
-						},
-					};
-					params.loadItems.extra = merge(params.loadItems.extra, stageFilter);
-					this.slides.set(this.getSlideName(columnId), params);
-				}
-			}
-		}
-
-		initCounters()
-		{
-			if (this.props.initCountersHandler)
-			{
-				this.props.initCountersHandler({ filter: this.filter });
-			}
-		}
-
-		getColumnsFromCurrentCategory()
-		{
-			const columns = new Map();
-			const category = this.getCurrentCategory();
-
-			if (!category)
-			{
-				return columns;
-			}
-
-			const stages = [
-				...category.processStages,
-				...category.successStages,
-				...category.failedStages,
-			];
-
-			stages.map(stage => {
-				columns.set(stage.statusId, stage);
-			});
-
-			return columns;
-		}
-
-		getCurrentCategory()
-		{
-			return CategoryStorage && CategoryStorage.getCategory(
-				this.props.entityTypeId,
-				this.props.filterParams.CATEGORY_ID,
-			);
-		}
-
-		/**
-		 * @param {String} slideName
-		 * @param {Object} params
-		 * @param {Function|null} callback
-		 */
-		reloadStatefulList(
-			slideName = '',
-			params = {},
-			callback = null,
-		)
-		{
-			slideName = slideName || this.getSlideName();
-
-			const force = (params.force || false);
-			if (!force && slideName === this.currentSlideName && this.getColumnStatusIdFromSlideName(slideName))
-			{
-				return;
-			}
-
-			if (params.updateToolbarColumnId)
-			{
-				this.updateToolbarColumnId(slideName);
-			}
-
-			if (typeof callback !== 'function')
-			{
-				callback = () => {
-				};
-			}
-
-			const statefulList = this.getStatefulList(slideName);
-			if (!statefulList)
-			{
-				return;
-			}
-
-			const initialStateParams = {
-				itemParams: this.getPreparedItemParams(),
-				forcedShowSkeleton: BX.prop.getBoolean(params, 'forcedShowSkeleton', false),
-			};
-
-			if (params.menuButtons)
-			{
-				initialStateParams.menuButtons = params.menuButtons;
-			}
-
-			const useCache = (params.skipUseCache ? false : this.canUseCache());
-
-			statefulList.reload(
-				initialStateParams,
-				{
-					useCache,
-				},
-				callback,
-			);
-		}
-
-		canUseCache()
-		{
-			if (!this.filter)
-			{
-				return false;
-			}
-
-			const selectedNotDefaultPreset = this.filter.hasSelectedNotDefaultPreset();
-			if (selectedNotDefaultPreset)
-			{
-				return false;
-			}
-
-			return !Type.isStringFilled(this.filter.search);
-		}
-
-		/**
-		 * @param {String} slideName
-		 */
-		updateToolbarColumnId(slideName = '')
-		{
-			const toolbar = this.refsContainer.getToolbar();
-			if (!toolbar)
-			{
-				return;
-			}
-
-			this.currentSlideName = slideName;
-			const newColumnStatusId = this.getColumnStatusIdFromSlideName(slideName);
-			const newColumn = this.columns.get(newColumnStatusId);
-			const newColumnId = (newColumn ? newColumn.id : null);
-
-			toolbar.setActiveStage(newColumnId);
-		}
-
-		/**
-		 * @param {string} columnId
-		 * @returns {string}
-		 */
-		getSlideName(columnId = '', props = null)
-		{
-			props = props || this.props;
-			return props.entityTypeName + '-' + columnId;
-		}
-
-		/**
-		 * @param {string} slideName
-		 */
-		getColumnStatusIdFromSlideName(slideName)
-		{
-			return slideName.replace(this.props.entityTypeName + '-', '');
-		}
-
-		/**
-		 * @returns {String|Null}
-		 */
-		getCurrentSlideName()
-		{
-			return this.currentSlideName;
 		}
 
 		/**
@@ -1201,17 +315,597 @@
 			}
 		}
 
+		/**
+		 * @public
+		 * @param {number} itemId
+		 */
 		setLoadingOfItem(itemId)
 		{
 			this.getCurrentStatefulList().setLoadingOfItem(itemId);
 		}
 
+		/**
+		 * @public
+		 * @param {number} itemId
+		 * @param {boolean} blink
+		 */
 		unsetLoadingOfItem(itemId, blink = true)
 		{
 			this.getCurrentStatefulList().unsetLoadingOfItem(itemId, blink);
 		}
+
+		/**
+		 * @public
+		 * @returns {Object[]|null}
+		 */
+		getItems()
+		{
+			const statefulList = this.getCurrentStatefulList();
+			if (statefulList)
+			{
+				return statefulList.getItems();
+			}
+
+			return null;
+		}
+
+		/**
+		 * @public
+		 * @param {string|number} id
+		 * @return {boolean}
+		 */
+		hasItem(id)
+		{
+			const statefulList = this.getCurrentStatefulList();
+			if (statefulList)
+			{
+				return statefulList.hasItem(id);
+			}
+
+			return false;
+		}
+
+		/**
+		 * @public
+		 * @param {number[]|string[]} ids
+		 * @return {Promise}
+		 */
+		updateItems(ids = [])
+		{
+			const statefulList = this.getCurrentStatefulList();
+			if (statefulList)
+			{
+				return statefulList.updateItems(ids);
+			}
+
+			return Promise.resolve();
+		}
+
+		/**
+		 * @public
+		 * @param {object[]} items
+		 * @return {Promise}
+		 */
+		updateItemsData(items)
+		{
+			const statefulList = this.getCurrentStatefulList();
+			if (statefulList)
+			{
+				return statefulList.updateItemsData(items);
+			}
+
+			return Promise.resolve();
+		}
+
+		/**
+		 * @public
+		 * @param itemId
+		 * @returns {Promise}
+		 */
+		removeItem(itemId)
+		{
+			const statefulList = this.getCurrentStatefulList();
+			if (statefulList)
+			{
+				return statefulList.removeItem(itemId);
+			}
+
+			return Promise.resolve();
+		}
+
+		/**
+		 * @private
+		 * @param {object} item
+		 * @return {KanbanStage|undefined}
+		 */
+		getItemStage(item)
+		{
+			if (this.props.selectItemStageId)
+			{
+				const stageId = this.props.selectItemStageId(item);
+
+				return this.getStageById(stageId);
+			}
+
+			const stageCode = item.data.columnId;
+
+			return this.getStageByCode(stageCode);
+		}
+
+		/**
+		 * @private
+		 * @param {object} item
+		 * @param {KanbanStage} stage
+		 */
+		mutateItemStage(item, stage)
+		{
+			if (this.props.mutateItemStage)
+			{
+				this.props.mutateItemStage(item, stage);
+
+				return;
+			}
+
+			// eslint-disable-next-line no-param-reassign
+			item.data.columnId = stage.statusId;
+		}
+
+		// endregion
+
+		// region render
+
+		render()
+		{
+			return View(
+				{
+					style: {
+						flex: 1,
+					},
+				},
+				View(
+					{
+						style: {
+							flex: 1,
+							marginTop: this.isToolbarEnabled() ? 52 : 0,
+						},
+					},
+					this.renderCurrentStage(),
+				),
+				this.renderToolbar(),
+			);
+		}
+
+		renderCurrentStage()
+		{
+			return new StatefulList({
+				testId: 'KANBAN_STAGE',
+				actions: this.actions,
+				actionParams: this.getPreparedActionParams(),
+				itemsLoadLimit: this.props.itemsLoadLimit,
+				actionCallbacks: this.props.actionCallbacks,
+				itemLayoutOptions: this.props.itemLayoutOptions,
+				itemDetailOpenHandler: this.props.itemDetailOpenHandler,
+				onItemLongClick: this.props.onItemLongClick,
+				itemCounterLongClickHandler: this.props.itemCounterLongClickHandler,
+				getItemCustomStyles: this.getItemCustomStyles,
+				isShowFloatingButton: BX.prop.getBoolean(this.props, 'isShowFloatingButton', true),
+				onFloatingButtonClick: this.props.onFloatingButtonClick,
+				onFloatingButtonLongClick: this.props.onFloatingButtonLongClick,
+				needInitMenu: this.props.needInitMenu,
+				itemActions: this.props.itemActions || [],
+				emptyListText: Loc.getMessage('M_UI_KANBAN_EMPTY_LIST_TEXT'),
+				emptySearchText: Loc.getMessage('M_UI_KANBAN_EMPTY_SEARCH_TEXT'),
+				forcedShowSkeleton: this.props.forcedShowSkeleton ?? true,
+				layout: this.props.layout,
+				layoutOptions: this.props.layoutOptions,
+				layoutMenuActions: this.props.layoutMenuActions || [],
+				menuButtons: this.props.menuButtons || [],
+				itemType: this.props.itemType || ListItemType.EXTENDED,
+				itemFactory: this.props.itemFactory || ListItemsFactory,
+				itemParams: this.getPreparedItemParams(),
+				getEmptyListComponent: this.props.getEmptyListComponent,
+				getRuntimeParams: this.getRuntimeParams,
+				showEmptySpaceItem: this.isToolbarEnabled(),
+				pull: this.props.pull,
+				sortingConfig: this.props.sortingConfig,
+				onDetailCardUpdateHandler: this.props.onDetailCardUpdateHandler,
+				onDetailCardCreateHandler: this.props.onDetailCardCreateHandler,
+				onPanListHandler: this.props.onPanListHandler,
+				onNotViewableHandler: this.props.onNotViewableHandler,
+				onItemAdded: this.props.onItemAdded,
+				onItemDeleted: this.props.onItemDeleted,
+				changeItemsOperations: this.props.changeItemsOperations,
+				onBeforeItemsRender: this.props.onBeforeItemsRender,
+				onBeforeItemsSetState: this.props.onBeforeItemsSetState,
+				reloadListCallbackHandler: this.onStatefulListReload,
+				ref: this.bindRef,
+				analyticsLabel: this.props.analyticsLabel || {},
+				animationTypes: this.props.animationTypes,
+				onListReloaded: this.props.onListReloaded,
+				showTitleLoader: this.props.showTitleLoader,
+				hideTitleLoader: this.props.hideTitleLoader,
+			});
+		}
+
+		bindRef(ref)
+		{
+			this.refsContainer.setCurrentStage(ref);
+		}
+
+		addItem(item, animationType)
+		{
+			const statefulList = this.getCurrentStatefulList();
+			if (statefulList)
+			{
+				void statefulList.addItem(item, animationType);
+			}
+		}
+
+		renderToolbar()
+		{
+			if (this.isToolbarEnabled())
+			{
+				const { componentClass: Toolbar, props = {} } = this.props.toolbar;
+
+				return Toolbar({
+					...props,
+					layout: this.props.layout,
+					onChangeStage: this.setActiveStage,
+					ref: this.bindToolbarRef,
+				});
+			}
+
+			return null;
+		}
+
+		isToolbarEnabled()
+		{
+			const { enabled } = (this.props.toolbar || {});
+
+			return enabled;
+		}
+
+		bindToolbarRef(ref)
+		{
+			if (ref)
+			{
+				this.refsContainer.setToolbar(ref);
+			}
+		}
+
+		getItemCustomStyles(item, section, row)
+		{
+			return {};
+		}
+
+		// endregion
+
+		// region error handling
+
+		/**
+		 * @private
+		 * @param {KanbanBackendError[]} errors
+		 * @param {number} itemId
+		 * @param {KanbanStage} prevStage
+		 * @param {KanbanStage} nextStage
+		 * @return {Promise}
+		 */
+		onMoveItemError({ errors, itemId, prevStage, nextStage })
+		{
+			if (this.props.onMoveItemError)
+			{
+				return Promise.resolve(this.props.onMoveItemError({
+					errors,
+					itemId,
+					prevStage,
+					nextStage,
+					kanbanInstance: this,
+				}));
+			}
+
+			return this.handleAjaxErrors(errors);
+		}
+
+		/**
+		 * @public
+		 * @param {KanbanBackendError[]} errors
+		 * @return {Promise}
+		 */
+		handleAjaxErrors(errors)
+		{
+			const error = this.getPublicError(errors);
+			const title = error
+				? Loc.getMessage('M_UI_KANBAN_PUBLIC_ERROR_TITLE')
+				: Loc.getMessage('M_UI_KANBAN_INTERNAL_ERROR_TITLE');
+
+			const message = error ? error.message : Loc.getMessage('M_UI_KANBAN_INTERNAL_ERROR_TEXT');
+
+			return new Promise((resolve) => {
+				Alert.alert(
+					title,
+					message,
+					resolve,
+					Loc.getMessage('M_UI_KANBAN_INTERNAL_ERROR_GOT_IT'),
+				);
+			});
+		}
+
+		/**
+		 * @private
+		 * @param {KanbanBackendError[]} errors
+		 * @return {KanbanBackendError|undefined}
+		 */
+		getPublicError(errors)
+		{
+			return errors.find(({ customData, message }) => customData && customData.public && message);
+		}
+
+		// endregion
+
+		// region cache
+
+		/**
+		 * @private
+		 * @return {boolean}
+		 */
+		canUseCache()
+		{
+			if (this.filter)
+			{
+				if (this.filter.hasSelectedNotDefaultPreset())
+				{
+					return false;
+				}
+
+				if (Type.isStringFilled(this.filter.getSearchString()))
+				{
+					return false;
+				}
+			}
+
+			return this.isAllStagesDisplayed();
+		}
+
+		// endregion
+
+		/**
+		 * @public
+		 * @param {number} itemId
+		 * @param {string} animationType
+		 */
+		deleteItemFromStatefulList(itemId, animationType = animationTypes.top)
+		{
+			const statefulList = this.getCurrentStatefulList();
+			if (statefulList)
+			{
+				void statefulList.deleteItem(itemId, animationType);
+			}
+		}
+
+		/**
+		 * @public
+		 * @returns {null|StatefulList}
+		 */
+		getCurrentStatefulList()
+		{
+			return this.refsContainer.getCurrentStage();
+		}
+
+		/**
+		 * @private
+		 * @param {Number} stageId
+		 * @param {Object} category
+		 * @param {Object|null} data
+		 * @returns {Promise}
+		 */
+		onChangeItemStage(stageId, category, { itemId })
+		{
+			return this.moveItem(itemId, stageId);
+		}
+
+		/**
+		 * @public
+		 * @param {any} prevStageCode
+		 * @param {any} nextStageCode
+		 * @param {function|undefined} selectStageCode
+		 * @return {string}
+		 */
+		getAnimationType(prevStageCode, nextStageCode, selectStageCode)
+		{
+			const defaultSelector = (item) => item.statusId;
+			const stageCodes = this.getStages().map(selectStageCode || defaultSelector);
+
+			for (const code of stageCodes)
+			{
+				if (code === nextStageCode)
+				{
+					return animationTypes.left;
+				}
+
+				if (code === prevStageCode)
+				{
+					return animationTypes.right;
+				}
+			}
+
+			return animationTypes.default;
+		}
+
+		/**
+		 * @private
+		 * @returns {Object}
+		 */
+		getPreparedActionParams(props = null)
+		{
+			const { actionParams = {} } = (props || this.props);
+			const stage = this.getActiveStage();
+			const statusId = stage ? stage.statusId : null;
+
+			set(actionParams, 'loadItems.stageId', stage ? stage.id : null);
+			set(actionParams, 'loadItems.stageCode', statusId);
+
+			// todo remove backward compatibility
+			set(actionParams, 'loadItems.extra.filterParams.stageId', statusId);
+			if (!stage)
+			{
+				delete actionParams.loadItems.extra.filterParams.stageId;
+			}
+
+			if (this.filter)
+			{
+				set(actionParams, 'loadItems.extra.filter', this.filter);
+				set(actionParams, 'loadItems.extra.filterParams.FILTER_PRESET_ID', this.filter.getPresetId());
+			}
+
+			return actionParams;
+		}
+
+		/**
+		 * @private
+		 * @returns {Object}
+		 */
+		getPreparedItemParams()
+		{
+			const columns = new Map();
+			this.getStages().forEach((stage) => {
+				columns.set(stage.statusId, stage);
+			});
+
+			const itemParams = mergeImmutable(clone(this.props.itemParams), {
+				columns,
+				onChangeItemStage: this.onChangeItemStage,
+				useStageFieldInSkeleton: true,
+				activeStageId: this.getActiveStageId(),
+			});
+
+			if (this.props.onPrepareItemParams)
+			{
+				return this.props.onPrepareItemParams(itemParams);
+			}
+
+			return itemParams;
+		}
+
+		/**
+		 * @private
+		 * @param {object} data
+		 * @return {{cancelSearch: boolean}}
+		 */
+		getRuntimeParams(data)
+		{
+			return {
+				cancelSearch: true,
+			};
+		}
+
+		/**
+		 * @public
+		 * @param {Filter} filter
+		 */
+		setFilter(filter)
+		{
+			this.filter = filter;
+		}
+
+		/**
+		 * @public
+		 * @param {boolean} force
+		 * @param {object} params
+		 */
+		reload(force = false, params = {})
+		{
+			const menuButtons = BX.prop.getArray(params, 'menuButtons', null);
+			const skipUseCache = BX.prop.getBoolean(params, 'skipUseCache', false);
+			const skipInitCounters = BX.prop.getBoolean(params, 'skipInitCounters', false);
+			const initMenu = BX.prop.getBoolean(params, 'initMenu', false);
+			const forcedShowSkeleton = BX.prop.getBoolean(params, 'forcedShowSkeleton', skipUseCache);
+
+			const reloadParams = {
+				force,
+				menuButtons,
+				skipUseCache,
+				forcedShowSkeleton,
+			};
+
+			this.reloadStatefulList(reloadParams, () => {
+				if (!skipInitCounters)
+				{
+					this.initCounters();
+				}
+
+				if (initMenu)
+				{
+					this.getCurrentStatefulList().initMenu();
+				}
+			});
+		}
+
+		/**
+		 * @private
+		 * @param {{ menuButtons: [], forcedShowSkeleton: boolean, skipUseCache: boolean }} params
+		 * @param {Function|null} callback
+		 */
+		reloadStatefulList(params = {}, callback = null)
+		{
+			const statefulList = this.getCurrentStatefulList();
+			if (!statefulList)
+			{
+				return;
+			}
+
+			const useCache = (params.skipUseCache ? false : this.canUseCache());
+
+			const initialStateParams = {
+				actionParams: this.getPreparedActionParams(),
+				itemParams: this.getPreparedItemParams(),
+				forcedShowSkeleton: BX.prop.getBoolean(params, 'forcedShowSkeleton', !useCache),
+			};
+
+			if (params.menuButtons)
+			{
+				initialStateParams.menuButtons = params.menuButtons;
+			}
+
+			statefulList.reload(
+				initialStateParams,
+				{
+					useCache,
+				},
+				typeof callback === 'function' ? callback : nothing,
+			);
+		}
+
+		/**
+		 * @private
+		 */
+		initCounters()
+		{
+			if (this.props.initCountersHandler)
+			{
+				this.props.initCountersHandler({ filter: this.filter });
+			}
+		}
+
+		updateTopButtons(buttons)
+		{
+			const statefulList = this.getCurrentStatefulList();
+			if (statefulList)
+			{
+				statefulList.initMenu(null, buttons);
+			}
+		}
+
+		isLoading()
+		{
+			const statefulList = this.getCurrentStatefulList();
+			if (statefulList)
+			{
+				return statefulList.isLoading();
+			}
+
+			return true;
+		}
 	}
 
-	this.UI = (this.UI || {});
-	this.UI.Kanban = Kanban;
-})();
+	module.exports = { Kanban };
+});

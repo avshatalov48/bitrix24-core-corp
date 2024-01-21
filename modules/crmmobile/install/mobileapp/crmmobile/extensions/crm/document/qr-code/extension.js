@@ -4,6 +4,7 @@
 jn.define('crm/document/qr-code', (require, exports, module) => {
 	const { withCurrentDomain } = require('utils/url');
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { ShimmedImage } = require('crm/document/qr-code/shimmed-image');
 
 	const isAndroid = Application.getPlatform() === 'android';
@@ -26,7 +27,7 @@ jn.define('crm/document/qr-code', (require, exports, module) => {
 				.openWidget('layout', {
 					modal: true,
 					title: Loc.getMessage('M_CRM_DOCUMENT_QR_TITLE'),
-					backgroundColor: '#eef2f4',
+					backgroundColor: AppTheme.colors.bgSecondary,
 					backdrop: {
 						onlyMediumPosition: true,
 						showOnTop: true,
@@ -35,7 +36,7 @@ jn.define('crm/document/qr-code', (require, exports, module) => {
 						swipeAllowed: true,
 						swipeContentAllowed: true,
 						horizontalSwipeAllowed: false,
-						navigationBarColor: '#eef2f4',
+						navigationBarColor: AppTheme.colors.bgSecondary,
 					},
 				})
 				.then((layoutWidget) => {
@@ -62,7 +63,7 @@ jn.define('crm/document/qr-code', (require, exports, module) => {
 					style: {
 						flexDirection: 'column',
 						flexGrow: 1,
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgSecondary,
 					},
 				},
 				this.state.loadingError ? this.renderError() : this.renderContent(),
@@ -84,7 +85,7 @@ jn.define('crm/document/qr-code', (require, exports, module) => {
 				Text({
 					text: Loc.getMessage('M_CRM_DOCUMENT_QR_ERROR'),
 					style: {
-						color: '#F4403B',
+						color: AppTheme.colors.accentMainAlert,
 						fontSize: 17,
 						textAlign: 'center',
 					},
@@ -99,7 +100,7 @@ jn.define('crm/document/qr-code', (require, exports, module) => {
 					style: {
 						flexDirection: 'column',
 						flexGrow: 1,
-						backgroundColor: '#fff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						borderRadius: 12,
 					},
 					safeArea: { bottom: true },
@@ -110,7 +111,6 @@ jn.define('crm/document/qr-code', (require, exports, module) => {
 							flexDirection: 'column',
 							justifyContent: 'center',
 							alignItems: 'center',
-							flexGrow: 1,
 						},
 					},
 					this.renderTopText(),
@@ -132,7 +132,7 @@ jn.define('crm/document/qr-code', (require, exports, module) => {
 				Text({
 					text: Loc.getMessage('M_CRM_DOCUMENT_QR_DESCRIPTION'),
 					style: {
-						color: '#333',
+						color: AppTheme.colors.base1,
 						fontSize: 17,
 						textAlign: 'center',
 					},
@@ -162,7 +162,7 @@ jn.define('crm/document/qr-code', (require, exports, module) => {
 				Text({
 					text: Loc.getMessage('M_CRM_DOCUMENT_QR_BANK_APP_NOTE'),
 					style: {
-						color: '#A8ADB4',
+						color: AppTheme.colors.base4,
 						fontSize: 17,
 						textAlign: 'center',
 					},

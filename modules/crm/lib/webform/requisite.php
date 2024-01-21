@@ -609,7 +609,8 @@ class Requisite
 			return $result;
 		}
 
-		$id = (int) ($values['ID'] ?: $values['RQ_ID']);
+		$id = $values['ID'] ?? null;
+		$id = (int)($id ?: $values['RQ_ID']);
 		unset($values['ID']);
 		unset($values['RQ_ID']);
 
@@ -646,7 +647,7 @@ class Requisite
 					continue;
 				}
 
-				if ($key === 'LOC_ADDR_ID' && !$v)
+				if ($key === 'LOC_ADDR_ID')
 				{
 					continue;
 				}

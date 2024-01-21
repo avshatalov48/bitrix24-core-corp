@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\BIConnector\Integration\UI\EntitySelector\SupersetDashboardProvider;
+
 return [
 	'controllers' => [
 		'value' => [
@@ -8,5 +11,19 @@ return [
 			],
 		],
 		'readonly' => true,
-	]
+	],
+	'ui.entity-selector' => [
+		'value' => [
+			'entities' => [
+				[
+					'entityId' => 'biconnector-superset-dashboard',
+					'provider' => [
+						'moduleId' => 'biconnector',
+						'className' => SupersetDashboardProvider::class,
+					],
+				],
+			],
+		],
+		'readonly' => true,
+	],
 ];

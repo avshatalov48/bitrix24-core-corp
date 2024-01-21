@@ -3,6 +3,12 @@
 namespace Bitrix\Crm\Integration\Main\UISelector;
 
 use Bitrix\Main\DB;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Application;
+use CCrmCompany;
+use CCrmContact;
+use CCrmDeal;
+use CCrmLead;
 use CCrmOwnerType;
 use CDBResult;
 
@@ -11,24 +17,28 @@ class CrmBase extends \Bitrix\Main\UI\Selector\EntityBase
 	public const PREFIX_SHORT = '';
 	public const PREFIX_FULL = '';
 
-	protected static function getOwnerType()
+	protected const DATA_CLASS = '';
+	private const CACHE_TIME = 3600;
+	protected const CACHE_DIR = '';
+
+	protected static function getOwnerType(): int
 	{
 		return CCrmOwnerType::Undefined;
 	}
 
-	protected static function getOwnerTypeName()
+	protected static function getOwnerTypeName(): string
 	{
 		return CCrmOwnerType::ResolveName(static::getOwnerType());
 	}
 
-	protected static function getHandlerType()
+	protected static function getHandlerType(): string
 	{
 		return '';
 	}
 
 	protected function getEntityClassName(): string
 	{
-		$ownerTypeName = mb_strtolower($this->getOwnerTypeName());
+		$ownerTypeName = mb_strtolower(static::getOwnerTypeName());
 
 		return 'CCrm' . mb_strtoupper(mb_substr($ownerTypeName, 0, 1)) . mb_substr($ownerTypeName, 1);
 	}
@@ -166,5 +176,70 @@ class CrmBase extends \Bitrix\Main\UI\Selector\EntityBase
 		}
 
 		return $items;
+	}
+
+	protected function getEntitiesListEx
+	(
+		$order = [],
+		$filter = [],
+		$groupBy = false,
+		$navParams = [],
+		$select = [],
+		$entityOptions = [],
+	): array
+	{
+		/* @var CCrmContact|CCrmLead|CCrmCompany|CCrmDeal $dataClass */
+		$dataClass = static::DATA_CLASS;
+		if (!method_exists($dataClass, 'getListEx'))
+		{
+			return [];
+		}
+
+		$entitiesList = [];
+		$useCache = empty($filter['ID']) && empty($filter['@ID']) && empty($filter['=ID']);
+		if ($useCache)
+		{
+			$userId = Container::getInstance()->getContext()->getUserId();
+			$cache = Application::getInstance()->getManagedCache();
+			$cacheId = "crm_uiselector_data_{$userId}_" . md5(serialize($filter));
+
+			if ($cache->read(self::CACHE_TIME, $cacheId, static::CACHE_DIR))
+			{
+				return $cache->get($cacheId);
+			}
+
+			$ids = [];
+			$idsResult = $dataClass::getListEx($order, $filter, $groupBy, $navParams, ['ID']);
+			while($idsFields = $idsResult->fetch())
+			{
+				$ids[] = $idsFields['ID'];
+			}
+
+			if (empty($ids))
+			{
+				return [];
+			}
+
+			$filter = [
+				'@ID' => $ids,
+				'CHECK_PERMISSION' => 'N',
+			];
+		}
+
+		$prefix = static::getPrefix($entityOptions);
+		$entityResult = $dataClass::getListEx($order, $filter, $groupBy, $navParams, $select);
+		while ($entityFields = $entityResult->fetch())
+		{
+			$entitiesList[$prefix . $entityFields['ID']] =
+				static::prepareEntity($entityFields, $entityOptions)
+			;
+		}
+
+		if ($useCache)
+		{
+			$cache->set($cacheId, $entitiesList);
+		}
+
+		return $entitiesList;
 	}
 }

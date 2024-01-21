@@ -27,11 +27,6 @@ final class imbot extends \CModule
 			$this->MODULE_VERSION = $arModuleVersion["VERSION"];
 			$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
 		}
-		else
-		{
-			$this->MODULE_VERSION = IMBOT_VERSION;
-			$this->MODULE_VERSION_DATE = IMBOT_VERSION_DATE;
-		}
 
 		$this->MODULE_NAME = Loc::getMessage("IMBOT_MODULE_NAME");
 		$this->MODULE_DESCRIPTION = Loc::getMessage("IMBOT_MODULE_DESCRIPTION");
@@ -92,15 +87,12 @@ final class imbot extends \CModule
 	public function InstallDB($params = Array())
 	{
 		$this->errors = false;
+		$connection = \Bitrix\Main\Application::getConnection();
 
-		if (!$this->getInstanceDB()->query("SELECT 'x' FROM b_im_bot_network_session WHERE 1=0", true))
+		if (!$this->getInstanceDB()->TableExists('b_im_bot_network_session'))
 		{
-			$errors = $this->getInstanceDB()->runSqlBatch(sprintf(
-				'%s/bitrix/modules/%s/install/db/mysql/install.sql',
-				$_SERVER['DOCUMENT_ROOT'],
-				mb_strtolower($this->MODULE_ID)
-			));
-			if($errors !== false)
+			$errors = $this->getInstanceDB()->runSqlBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/imbot/install/db/' . $connection->getType() . '/install.sql');
+			if ($errors !== false)
 			{
 				if (!$this->errors)
 				{
@@ -155,10 +147,10 @@ final class imbot extends \CModule
 		$eventManager->registerEventHandlerCompatible('perfmon', 'OnGetTableSchema', 'imbot', 'imbot', 'getTableSchema');
 
 		/** @see \Bitrix\ImBot\DialogSession::clearClosedSessions */
-		\CAgent::AddAgent('\Bitrix\ImBot\DialogSession::clearClosedSessions();', 'imbot', 'N', 3600);
+		\CAgent::AddAgent('Bitrix\ImBot\DialogSession::clearClosedSessions();', 'imbot', 'N', 3600);
 
 		/** @see \Bitrix\ImBot\DialogSession::clearDeprecatedSessions */
-		\CAgent::AddAgent('\Bitrix\ImBot\DialogSession::clearDeprecatedSessions();', 'imbot');
+		\CAgent::AddAgent('Bitrix\ImBot\DialogSession::clearDeprecatedSessions();', 'imbot');
 
 		Loader::includeModule('imbot');
 
@@ -181,9 +173,7 @@ final class imbot extends \CModule
 		$botCount = 0;
 		if ($step < 2)
 		{
-			$result = $this->getInstanceDB()->Query("SELECT COUNT(1) CNT FROM b_user WHERE EXTERNAL_AUTH_ID = 'bot'");
-			$row = $result->Fetch();
-			$botCount = $row['CNT'];
+			$botCount = Main\UserTable::getCount(['=EXTERNAL_AUTH_ID' => 'bot']);
 		}
 		if ($botCount > 0)
 		{
@@ -245,8 +235,9 @@ final class imbot extends \CModule
 
 		if (!isset($arParams['savedata']) || $arParams['savedata'] !== true)
 		{
+			$connection = \Bitrix\Main\Application::getConnection();
 			$errors = $this->getInstanceDB()->runSqlBatch(sprintf(
-				'%s/bitrix/modules/%s/install/db/mysql/uninstall.sql',
+				'%s/bitrix/modules/%s/install/db/'.$connection->getType().'/uninstall.sql',
 				$_SERVER['DOCUMENT_ROOT'],
 				strtolower($this->MODULE_ID)
 			));

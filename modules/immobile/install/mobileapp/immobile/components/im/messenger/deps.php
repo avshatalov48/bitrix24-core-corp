@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'type',
 		'loc',
+		'feature',
 		'entity-ready',
 		'utils/object',
 		'list/selector',
@@ -17,7 +18,6 @@ return [
 		'im:messenger/lib/helper',
 		'im:messenger/controller/recent',
 		'im:messenger/controller/dialog',
-		'im:messenger/controller/dialog-selector',
 		'im:messenger/controller/chat-creator',
 		'im:messenger/controller/forward-selector',
 		'im:messenger/controller/dialog-creator',
@@ -41,6 +41,8 @@ return [
 		'im:messenger/widgets/participants-list',
 		'im:messenger/lib/ui/header',
 		'im:messenger/controller/search/experimental',
+		'im:messenger/lib/settings',
+		'im:messenger/lib/smile-manager'
 	],
 	'components' => [],
 	//'packer' => [],

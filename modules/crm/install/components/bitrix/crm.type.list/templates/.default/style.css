@@ -10,7 +10,9 @@
     display: none;
 }
 
-.crm-type-list-wrapper .crm-type-list-grid-empty #crm-type-list_table {
+.crm-type-list-wrapper .crm-type-list-grid-empty #crm-type-list_table,
+.crm-type-list-wrapper .crm-type-list-grid-empty #crm-type-list-external_table
+{
     min-height: auto !important;
 }
 

@@ -4,6 +4,7 @@
 jn.define('im/messenger/lib/ui/base/carousel', (require, exports, module) => {
 	const { CarouselItem } = require('im/messenger/lib/ui/base/carousel/carousel-item');
 	const { Type } = require('type');
+	const AppTheme = require('apptheme');
 	class Carousel extends LayoutComponent
 	{
 		/**
@@ -31,7 +32,8 @@ jn.define('im/messenger/lib/ui/base/carousel', (require, exports, module) => {
 			return GridView({
 				style: {
 					height: this.state.isVisible === true ? 100 : 0,
-					backgroundColor: '#F5F7F8',
+					backgroundColor: AppTheme.colors.bgContentTertiary,
+					paddingLeft: 12,
 				},
 				params: {
 					orientation: 'horizontal',

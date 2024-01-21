@@ -3,13 +3,14 @@
  */
 jn.define('layout/ui/detail-card/tabs/crm-product', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { Tab } = require('layout/ui/detail-card/tabs');
 	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
 	const { FloatingMenuItem } = require('layout/ui/detail-card/floating-button/menu/item');
 	const { DocumentType } = require('catalog/store/document-type');
 
 	/** @var CrmProductTab */
-	let CrmProductGrid;
+	let CrmProductGrid = null;
 
 	try
 	{
@@ -108,7 +109,7 @@ jn.define('layout/ui/detail-card/tabs/crm-product', (require, exports, module) =
 
 		onProductControllerModelLoad({ count = 0 } = {})
 		{
-			this.productCount = parseInt(count);
+			this.productCount = parseInt(count, 10);
 		}
 
 		handleCatalogDocumentStatusChanged(docType)
@@ -210,7 +211,7 @@ jn.define('layout/ui/detail-card/tabs/crm-product', (require, exports, module) =
 					style: {
 						flexDirection: 'column',
 						flexGrow: 1,
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgPrimary,
 					},
 				},
 				new CrmProductGrid({
@@ -265,7 +266,7 @@ jn.define('layout/ui/detail-card/tabs/crm-product', (require, exports, module) =
 						let canReadCatalog = true;
 						if (BX.type.isPlainObject(detailCard.componentParams.permissions))
 						{
-							canReadCatalog = !!detailCard.componentParams.permissions.productCatalogAccess;
+							canReadCatalog = Boolean(detailCard.componentParams.permissions.productCatalogAccess);
 						}
 
 						return !detailCard.isReadonly() && canReadCatalog;
@@ -289,7 +290,5 @@ jn.define('layout/ui/detail-card/tabs/crm-product', (require, exports, module) =
 		}
 	}
 
-	module.exports = {
-		CrmProductTab,
-	};
+	module.exports = { CrmProductTab };
 });

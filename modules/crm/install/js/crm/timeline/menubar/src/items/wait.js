@@ -12,7 +12,7 @@ export default class Wait extends WithEditor
 	{
 		this.#waitConfigContainer = Tag.render`<div class="crm-entity-stream-content-wait-conditions"></div>`;
 
-		this._saveButton = Tag.render`<button onclick="${this.onSaveButtonClick.bind(this)}" class="ui-btn ui-btn-xs ui-btn-primary" >${Loc.getMessage('CRM_TIMELINE_CREATE_WAITING')}</button>`;
+		this._saveButton = Tag.render`<button onclick="${this.onSaveButtonClick.bind(this)}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round" >${Loc.getMessage('CRM_TIMELINE_CREATE_WAITING')}</button>`;
 		this._cancelButton = Tag.render`<span onclick="${this.onCancelButtonClick.bind(this)}"  class="ui-btn ui-btn-xs ui-btn-link">${Loc.getMessage('CRM_TIMELINE_CANCEL_BTN')}</span>`;
 		this._input = Tag.render`<textarea rows="1" class="crm-entity-stream-content-wait-comment-textarea" placeholder="${Loc.getMessage('CRM_TIMELINE_WAIT_PLACEHOLDER')}"></textarea>`;
 

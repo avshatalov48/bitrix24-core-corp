@@ -1,5 +1,5 @@
 import sharingSlotsListItem from "./sharing-slots-list-item";
-import {Loc} from "main.core";
+
 export default {
 	props: {
 		listItems: {
@@ -12,10 +12,6 @@ export default {
 			required: true,
 			default: false,
 		},
-	},
-	data()
-	{
-
 	},
 	components: {
 		sharingSlotsListItem,

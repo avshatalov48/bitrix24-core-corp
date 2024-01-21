@@ -130,6 +130,7 @@ class LeadActivityStatisticEntry
 		$startTime = new DateTime($date->format(DateTime::getFormat()));
 		$endTime = new DateTime($date->format(DateTime::getFormat()));
 		$endTime->setTime(23, 59, 59);
+		$endTime->disableUserTime();
 
 		$query = new Query(Crm\ActivityTable::getEntity());
 		$query->addSelect('TYPE_ID');
@@ -140,7 +141,10 @@ class LeadActivityStatisticEntry
 		//$query->addFilter('=STATUS', \CCrmActivityStatus::Completed);
 
 		$query->addFilter('>=DEADLINE', $startTime);
-		$query->addFilter('<=DEADLINE', $endTime);
+		if ($year < 9999)
+		{
+			$query->addFilter('<=DEADLINE', $endTime);
+		}
 		$query->addGroup('TYPE_ID');
 
 		$subQuery = new Query(Crm\ActivityBindingTable::getEntity());
@@ -270,20 +274,11 @@ class LeadActivityStatisticEntry
 
 		$query = new Query(Crm\ActivityTable::getEntity());
 		$query->addFilter('=COMPLETED', 'Y');
+		$query->registerRuntimeField(
+			'',
+			new ExpressionField('DEADLINE_DATE', Main\Application::getConnection()->getSqlHelper()->getDatetimeToDateFunction('DEADLINE'))
+		);
 
-		$connection = Main\Application::getConnection();
-		if($connection instanceof Main\DB\MysqlCommonConnection)
-		{
-			$query->registerRuntimeField('', new ExpressionField('DEADLINE_DATE', 'DATE(DEADLINE)'));
-		}
-		elseif($connection instanceof Main\DB\MssqlConnection)
-		{
-			$query->registerRuntimeField('', new ExpressionField('DEADLINE_DATE', 'CAST(FLOOR(CAST(DEADLINE AS FLOAT)) AS DATETIME)'));
-		}
-		elseif($connection instanceof Main\DB\OracleConnection)
-		{
-			$query->registerRuntimeField('', new ExpressionField('DEADLINE_DATE', 'TRUNC(DEADLINE)'));
-		}
 		$query->addSelect('DEADLINE_DATE');
 		$query->addGroup('DEADLINE_DATE');
 

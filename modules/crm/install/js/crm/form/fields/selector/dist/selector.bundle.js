@@ -306,9 +306,13 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	var _getPromiseResolver = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPromiseResolver");
 	var _selectFirstCategory = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectFirstCategory");
 	var _getSliderId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSliderId");
+	var _onSliderCloseComplete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSliderCloseComplete");
 	class Selector extends main_core_events.EventEmitter {
 	  constructor(_options = {}) {
 	    super();
+	    Object.defineProperty(this, _onSliderCloseComplete, {
+	      value: _onSliderCloseComplete2
+	    });
 	    Object.defineProperty(this, _getSliderId, {
 	      value: _getSliderId2
 	    });
@@ -492,9 +496,7 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	          });
 	        },
 	        events: {
-	          onClose: () => {
-	            babelHelpers.classPrivateFieldLooseBase(this, _setSelectedFields)[_setSelectedFields]([]);
-	          }
+	          onCloseComplete: () => babelHelpers.classPrivateFieldLooseBase(this, _onSliderCloseComplete)[_onSliderCloseComplete]()
 	        }
 	      });
 	    }
@@ -959,6 +961,10 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].remember('sliderId', () => {
 	    return `crm.form.fields.selector-${main_core.Text.getRandom()}`;
 	  });
+	}
+	function _onSliderCloseComplete2() {
+	  this.emit('onSliderCloseComplete');
+	  babelHelpers.classPrivateFieldLooseBase(this, _setSelectedFields)[_setSelectedFields]([]);
 	}
 	Object.defineProperty(Selector, _defaultFilter, {
 	  writable: true,

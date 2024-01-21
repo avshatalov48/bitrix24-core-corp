@@ -4,6 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
 \Bitrix\Main\Page\Asset::getInstance()->addJs(getLocalPath('activities/bitrix/crmcreatedynamicactivity/script.js'));
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
 
@@ -11,8 +12,15 @@ $chosenEntityTypeId = (int)$dialog->getCurrentValue('dynamic_type_id', 0);
 $chosenEntityValues = $dialog->getCurrentValue('dynamic_entities_fields');
 
 $typeIdField = $dialog->getMap()['DynamicTypeId'];
-$entitiesFields = $dialog->getMap()['DynamicEntitiesFields']['Map'];
 
+$entitiesFields = [];
+foreach ($dialog->getMap()['DynamicEntitiesFields']['Map'] as $entityTypeId => $fieldsMap)
+{
+	$entitiesFields[$entityTypeId] = [
+		'documentType' => CCrmBizProcHelper::ResolveDocumentType($entityTypeId),
+		'fieldsMap' => $fieldsMap,
+	];
+}
 ?>
 <tr>
 	<td align="right" width="40%"><?=htmlspecialcharsbx($typeIdField['Name'])?>:</td>
@@ -33,37 +41,7 @@ $entitiesFields = $dialog->getMap()['DynamicEntitiesFields']['Map'];
 
 <tr>
 	<td colspan="2">
-		<?php
-			$originalDocType = $dialog->getDocumentType();
-			foreach ($entitiesFields as $entityTypeId => $fields):
-				$dialog->setDocumentType(\CCrmBizProcHelper::ResolveDocumentType($entityTypeId));
-			?>
-				<table
-					id="ccda-fields-map-<?= $entityTypeId ?>"
-					<?= $entityTypeId !== $chosenEntityTypeId ? 'hidden' : ''?>
-					border="0"
-					cellpadding="2"
-					cellspacing="2"
-				>
-					<?php foreach ($fields as $fieldId => $field): ?>
-						<tr>
-							<td align="right" width="40%"><?=htmlspecialcharsbx($field['Name'])?>:</td>
-							<td width="60%">
-								<?=
-								$dialog->renderFieldControl(
-									$field,
-									$dialog->getCurrentValue($field, $chosenEntityValues[$fieldId]),
-									true,
-									\Bitrix\Bizproc\FieldType::RENDER_MODE_DESIGNER
-								);
-								?>
-							</td>
-						</tr>
-					<?php endforeach; ?>
-				</table>
-			<?php endforeach;
-			$dialog->setDocumentType($originalDocType);
-			?>
+		<div id="fields-map-container"></div>
 	</td>
 </tr>
 
@@ -82,8 +60,10 @@ $entitiesFields = $dialog->getMap()['DynamicEntitiesFields']['Map'];
 	BX.ready(function()
 	{
 		var script = new BX.Crm.Activity.CrmCreateDynamicActivity({
+			isRobot: false,
 			formName: '<?=CUtil::JSEscape($dialog->getFormName())?>',
-			fieldsContainerIdPrefix: 'ccda-fields-map-',
+			entitiesFieldsMap: <?= \Bitrix\Main\Web\Json::encode($entitiesFields) ?>,
+			currentValues: <?= \Bitrix\Main\Web\Json::encode($chosenEntityValues) ?>,
 		});
 		script.init();
 	});

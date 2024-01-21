@@ -143,7 +143,7 @@ function prepareTaskRowActions($row, $arParams, $arResult)
 		}
 
 		$actions[] = [
-			'text' => Loc::getMessage('TASKS_TEMPLATES_ROW_ACTION_CREATE_TASK'),
+			'text' => Loc::getMessage('TASKS_TEMPLATES_ROW_ACTION_CREATE_TASK_V2'),
 			'href' => CComponentEngine::MakePathFromTemplate(
 				$urlTaskPath,
 				[

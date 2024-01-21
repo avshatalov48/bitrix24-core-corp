@@ -9,7 +9,6 @@
 	background-color: #fff;
 	box-sizing: border-box;
 	border-radius: var(--intranet-ustat-online-box-border-radius, var(--ui-border-radius-md, 0));
-	will-change: transform;
 }
 
 .intranet-ustat-online-badge {

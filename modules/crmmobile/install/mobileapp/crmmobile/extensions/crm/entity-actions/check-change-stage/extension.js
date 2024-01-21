@@ -10,10 +10,9 @@ jn.define('crm/entity-actions/check-change-stage', (require, exports, module) =>
 
 	const actionCheckChangeStage = (props) => new Promise((resolve, reject) => {
 		const {
-			category,
 			entityTypeId,
-			activeStageId,
-			selectedStageId,
+			isSelectedStageFinalConverted,
+			isActiveStageFinalConverted,
 		} = props;
 
 		const isLead = TypeId.Lead === entityTypeId;
@@ -23,17 +22,12 @@ jn.define('crm/entity-actions/check-change-stage', (require, exports, module) =>
 			return resolve();
 		}
 
-		const isFinalConvertedStage = (stageId) => category && category.successStages.find(({
-			id,
-			statusId,
-		}) => id === stageId && statusId === 'CONVERTED');
-
-		if (isFinalConvertedStage(selectedStageId))
+		if (isSelectedStageFinalConverted)
 		{
 			return showConversion(props);
 		}
 
-		if (isFinalConvertedStage(activeStageId) && !isFinalConvertedStage(selectedStageId))
+		if (isActiveStageFinalConverted && !isSelectedStageFinalConverted)
 		{
 			Alert.confirm(
 				Loc.getMessage('M_CRM_ENTITY_ACTION_CONFIRM_CHANGE_STAGE_TITLE'),

@@ -7,12 +7,9 @@ $MESS["IMCONNECTOR_COMPONENT_AVITO_CLIENT_SECRET"] = "Enter Client Secret:";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_CONNECTED"] = "Avito is connected";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">Procced</div>
 				<div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">to connecting</span> Avito account</div>";
-$MESS["IMCONNECTOR_COMPONENT_AVITO_CONNECT_STEP"] = "Create or use an existing <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">Avito account</a>
-to establish connetion with a Bitrix24 Open Channel. If you don't have an Avito account yet, we can help you create one and connect it to your Bitrix24 account in a few easy steps.";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_CONNECT_STEP_NEW"] = "You have to #LINK_START#create an account#LINK_END# or use the one you already have. If you don't have an account, we will help you create it and connect it to your Bitrix24.";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_CONNECT_TITLE"] = "Connect Avito to an Open Channel";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_FINAL_FORM_DESCRIPTION"] = "Avito has been succefully connected to your Open Channel. All requests will now be automatically forwarded to your Bitrix24 account.";
-$MESS["IMCONNECTOR_COMPONENT_AVITO_INDEX_ADDITIONAL_DESCRIPTION"] = "You have to <a href=\"#\" onclick=\"top.BX.Helper.show(\'#ID#\'); return false;\">create an account</a> or use the one you already have. If you don't have an account, we will help you create one and connect it to your Bitrix24.";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_INDEX_ADDITIONAL_DESCRIPTION_NEW"] = "You have to #LINK_START#create an account#LINK_END# or use the one you already have. If you don't have an account, we will help you create it and connect it to your Bitrix24.";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_INDEX_LIST_ITEM_1"] = "Handle inquiries received from Avito directly in Bitrix24";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_INDEX_LIST_ITEM_2"] = "Save contacts and communication history to the CRM";

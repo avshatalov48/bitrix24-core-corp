@@ -335,14 +335,14 @@
 
 		init()
 		{
-			// VIClient.getInstance().on(VIClient.Events.LogMessage, (m) => console.log(m));
+			// CallUtil.getSdkClient.getInstance().on(CallUtil.getSdkClient.Events.LogMessage, (m) => console.log(m));
 
 			BX.addCustomEvent("onPhoneTo", this.onPhoneTo.bind(this));
 			BX.addCustomEvent("onNumpadRequestShow", this.onNumpadRequestShow.bind(this));
 			BX.addCustomEvent("onPullEvent-voximplant", this.onPullEvent.bind(this));
 			BX.addCustomEvent("onAppActive", this.onAppActive.bind(this));
 
-			VIClient.getInstance().on(VIClient.Events.IncomingCall, this._onIncomingCall.bind(this))
+			CallUtil.getSdkClient().getInstance().on(CallUtil.getSdkClient().Events.IncomingCall, this._onIncomingCall.bind(this))
 
 			this._onNativeIncomingCallHandler = this._onNativeIncomingCall.bind(this);
 			if ("callservice" in window)
@@ -607,7 +607,7 @@
 					});
 				}
 			).then(
-				() => VIClientWrapper.getClient()
+				() => CallUtil.getSdkClientWrapper().getClient()
 			).then(
 				() =>
 				{
@@ -701,15 +701,15 @@
 
 			this.requestMicrophoneAccess().then(() =>
 			{
-				return VIClientWrapper.getClient();
+				return CallUtil.getSdkClientWrapper().getClient();
 			}).then(client =>
 			{
 				this.call = client.call(this.phoneNumber, this.phoneParams);
 
-				this.call.on(JNVICall.Events.Connected, this._onCallConnected.bind(this));
-				this.call.on(JNVICall.Events.Disconnected, this._onCallDisconnected.bind(this));
-				this.call.on(JNVICall.Events.Failed, this._onCallFailed.bind(this));
-				this.call.on(JNVICall.Events.Ringing, this._onCallProgressToneStart.bind(this));
+				this.call.on(CallUtil.getSdk().Events.Connected, this._onCallConnected.bind(this));
+				this.call.on(CallUtil.getSdk().Events.Disconnected, this._onCallDisconnected.bind(this));
+				this.call.on(CallUtil.getSdk().Events.Failed, this._onCallFailed.bind(this));
+				this.call.on(CallUtil.getSdk().Events.Ringing, this._onCallProgressToneStart.bind(this));
 				this.call.start();
 			}).catch((error) =>
 			{
@@ -1359,9 +1359,9 @@
 
 			this.call = call;
 
-			this.call.on(JNVICall.Events.Connected, this._onCallConnected.bind(this));
-			this.call.on(JNVICall.Events.Disconnected, this._onCallDisconnected.bind(this));
-			this.call.on(JNVICall.Events.Failed, this._onCallFailed.bind(this));
+			this.call.on(CallUtil.getSdk().Events.Connected, this._onCallConnected.bind(this));
+			this.call.on(CallUtil.getSdk().Events.Disconnected, this._onCallDisconnected.bind(this));
+			this.call.on(CallUtil.getSdk().Events.Failed, this._onCallFailed.bind(this));
 
 			this.requestMicrophoneAccess().then(() =>
 			{
@@ -1569,11 +1569,11 @@
 		{
 			if (speakerState)
 			{
-				JNVIAudioManager.selectAudioDevice("speaker");
+				CallUtil.getSdkAudioManager().selectAudioDevice("speaker");
 			}
 			else
 			{
-				JNVIAudioManager.selectAudioDevice("receiver");
+				CallUtil.getSdkAudioManager().selectAudioDevice("receiver");
 			}
 		}
 

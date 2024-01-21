@@ -1,4 +1,12 @@
-<?
+<?php
+
 return [
-    'db', 'rest', 'user/utils', 'utils', 'recipient'
+	'extensions' => [
+		'db',
+		'rest',
+		'utils',
+		'apptheme',
+		'recipient',
+		'user/utils',
+	],
 ];

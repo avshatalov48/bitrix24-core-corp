@@ -1,4 +1,4 @@
-import {Base} from './base'
+import { Base } from './base';
 
 class Watch extends Base
 {
@@ -6,10 +6,12 @@ class Watch extends Base
 	{
 		return 'watch';
 	}
+
 	getType()
 	{
 		return Watch.type();
 	}
+
 	getIcon()
 	{
 		return 'watch';
@@ -18,5 +20,5 @@ class Watch extends Base
 
 export
 {
-	Watch
-}
+	Watch,
+};

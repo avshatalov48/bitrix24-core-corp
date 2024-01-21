@@ -42,6 +42,7 @@ BX.namespace('Tasks.Component');
 
 				this.isScrumLimitExceeded = Boolean(this.option('isScrumLimitExceeded'));
 				this.isTaskAccessPermissionsLimit = Boolean(this.option('isTaskAccessPermissionsLimit'));
+				this.isRoleControlDisabled = Boolean(this.option('isRoleControlDisabled'));
 			},
 
 			bindEvents: function()
@@ -248,6 +249,11 @@ BX.namespace('Tasks.Component');
 
 			onFilterApply: function(filterId, data, ctx)
 			{
+				if (this.isRoleControlDisabled)
+				{
+					return;
+				}
+
 				try
 				{
 					var roleId = ctx.getFilterFieldsValues().ROLEID;

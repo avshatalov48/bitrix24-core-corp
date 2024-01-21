@@ -2,7 +2,7 @@
  * @module selector/widget
  */
 jn.define('selector/widget', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { uniqBy } = require('utils/array');
 	const { isEqual, get } = require('utils/object');
 	const { CommonSelectorProvider } = require('selector/providers/common');
@@ -19,19 +19,19 @@ jn.define('selector/widget', (require, exports, module) => {
 	class EntitySelectorWidget
 	{
 		constructor({
-						entityIds,
-						provider,
-						searchOptions,
-						createOptions,
-						selectOptions,
-						widgetParams,
-						allowMultipleSelection,
-						canUseRecent,
-						closeOnSelect,
-						events,
-						initSelectedIds,
-						returnKey,
-					})
+			entityIds,
+			provider,
+			searchOptions,
+			createOptions,
+			selectOptions,
+			widgetParams,
+			allowMultipleSelection,
+			canUseRecent,
+			closeOnSelect,
+			events,
+			initSelectedIds,
+			returnKey,
+		})
 		{
 			this.apiVersion = Application.getApiVersion();
 			this.isApiVersionGreaterThan44 = this.apiVersion >= 44;
@@ -65,7 +65,8 @@ jn.define('selector/widget', (require, exports, module) => {
 		{
 			initSelectedIds = Array.isArray(initSelectedIds) ? initSelectedIds : [];
 			initSelectedIds = initSelectedIds.map((data) => {
-				let entityId, id;
+				let entityId = '';
+				let id = '';
 
 				if (Array.isArray(data))
 				{
@@ -115,7 +116,8 @@ jn.define('selector/widget', (require, exports, module) => {
 
 			if (this.createOptions.enableCreation)
 			{
-				text = this.searchOptions.searchPlaceholderWithCreation || BX.message('PROVIDER_SEARCH_CREATE_PLACEHOLDER');
+				text = this.searchOptions.searchPlaceholderWithCreation || BX.message(
+					'PROVIDER_SEARCH_CREATE_PLACEHOLDER');
 			}
 
 			if (!text)
@@ -134,8 +136,8 @@ jn.define('selector/widget', (require, exports, module) => {
 					return resolve();
 				}
 
-				parentWidget = (parentWidget || PageManager);
-				parentWidget
+				const widgetManager = (parentWidget || PageManager);
+				widgetManager
 					.openWidget('selector', (widgetParams || this.widgetParams))
 					.then((widget) => {
 						this.widget = widget;
@@ -154,22 +156,24 @@ jn.define('selector/widget', (require, exports, module) => {
 							}
 						}
 
-						this.widget.setRightButtons([{
-							name: (
-								this.closeOnSelect
-									? BX.message('PROVIDER_WIDGET_CLOSE')
-									: BX.message('PROVIDER_WIDGET_SELECT')
-							),
-							type: 'text',
-							color: '#2066b0',
-							callback: () => this.close(),
-						}]);
+						this.widget.setRightButtons([
+							{
+								name: (
+									this.closeOnSelect
+										? BX.message('PROVIDER_WIDGET_CLOSE')
+										: BX.message('PROVIDER_WIDGET_SELECT')
+								),
+								type: 'text',
+								color: AppTheme.colors.accentMainLinks,
+								callback: () => this.close(),
+							},
+						]);
 
 						this.widget.allowMultipleSelection(this.allowMultipleSelection);
 						this.provider.loadRecent();
 
 						this.widget.setListener((eventName, data) => {
-							const callbackName = eventName + 'Listener';
+							const callbackName = `${eventName}Listener`;
 							if (typeof this[callbackName] === 'function')
 							{
 								this[callbackName].apply(this, [data]);
@@ -233,6 +237,7 @@ jn.define('selector/widget', (require, exports, module) => {
 
 			const buttonCode = item.params.code;
 
+			// eslint-disable-next-line default-case
 			switch (buttonCode)
 			{
 				case CREATE_BUTTON_CODE:
@@ -409,7 +414,8 @@ jn.define('selector/widget', (require, exports, module) => {
 		{
 			if (this.createOptions.enableCreation)
 			{
-				return this.searchOptions.startTypingWithCreationText || BX.message('PROVIDER_WIDGET_START_TYPING_TO_CREATE');
+				return this.searchOptions.startTypingWithCreationText || BX.message(
+					'PROVIDER_WIDGET_START_TYPING_TO_CREATE');
 			}
 
 			return this.searchOptions.startTypingText || BX.message('PROVIDER_WIDGET_START_TYPING_TO_SEARCH');
@@ -418,7 +424,7 @@ jn.define('selector/widget', (require, exports, module) => {
 		filterSelectedByItems(items)
 		{
 			return this.initSelectedIds.reduce((result, [entityId, selectedId]) => {
-				const selectedItem = items.find(item => {
+				const selectedItem = items.find((item) => {
 					if (!item.params || !item.params.id)
 					{
 						return false;
@@ -498,7 +504,7 @@ jn.define('selector/widget', (require, exports, module) => {
 			const sections = [];
 
 			const serviceItems = items.filter((item) => item.sectionCode === SERVICE_SECTION_CODE);
-			if (serviceItems.length)
+			if (serviceItems.length > 0)
 			{
 				serviceItems.forEach((item, index) => {
 					item.hideBottomLine = index === items.length - 1;
@@ -516,8 +522,7 @@ jn.define('selector/widget', (require, exports, module) => {
 					item.sectionCode = COMMON_SECTION_CODE;
 
 					return item;
-				})
-			;
+				});
 
 			const title = (
 				isRecent
@@ -532,7 +537,7 @@ jn.define('selector/widget', (require, exports, module) => {
 				title,
 				buttonText,
 				styles,
-				backgroundColor: '#ffffff',
+				backgroundColor: AppTheme.colors.bgContentPrimary,
 			});
 
 			if (!isEqual(this.currentSections, sections))
@@ -544,6 +549,7 @@ jn.define('selector/widget', (require, exports, module) => {
 			if (!isEqual(this.currentItems, items))
 			{
 				this.currentItems = items;
+
 				this.widget.setItems(this.currentItems);
 			}
 		}
@@ -566,13 +572,13 @@ jn.define('selector/widget', (require, exports, module) => {
 				title: {
 					font: {
 						size: 15,
-						color: '#525c69',
+						color: AppTheme.colors.base2,
 					},
 				},
 				button: {
 					font: {
 						size: 15,
-						color: this.getIsItemCreating() ? '#525c69' : '#2066b0',
+						color: this.getIsItemCreating() ? AppTheme.colors.base2 : AppTheme.colors.accentMainLinks,
 					},
 				},
 			};
@@ -742,7 +748,7 @@ jn.define('selector/widget', (require, exports, module) => {
 				type: 'button',
 				unselectable: true,
 				sectionCode: SERVICE_SECTION_CODE,
-				params: { 'code': CREATE_BUTTON_CODE },
+				params: { code: CREATE_BUTTON_CODE },
 			};
 		}
 

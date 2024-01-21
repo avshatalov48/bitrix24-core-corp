@@ -388,4 +388,30 @@ class Output extends Base\Output
 
 		return $result;
 	}
+
+	/**
+	 * Start new multidialog by operator.
+	 *
+	 * @param array $data
+	 * @return Result
+	 */
+	protected function operatorOpenNewDialog(array $data): Result
+	{
+		$result = clone $this->result;
+
+		if($result->isSuccess())
+		{
+			\Bitrix\ImBot\Service\Openlines::operatorOpenNewDialog([
+				'LINE_ID' => $data['LINE_ID'],
+				'GUID' => $data['GUID'],
+				'CHAT_ID' => $data['CHAT_ID'],
+				'OPERATOR_ID' => $data['OPERATOR_ID'],
+				'MESSAGE_ID' => $data['MESSAGE_ID'],
+				'QUOTED_MESSAGE' => $data['QUOTED_MESSAGE'],
+				'SESSION_ID' => $data['SESSION_ID'],
+			]);
+		}
+
+		return $result;
+	}
 }

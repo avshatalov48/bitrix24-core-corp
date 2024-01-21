@@ -1,3 +1,4 @@
+/* eslint-disable */
 BX.namespace("BX.Crm");
 
 //region EDITOR
@@ -67,6 +68,7 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 			throw this.eventsNamespace + ": Could not find settings param 'container'.";
 		}
 	};
+
 	BX.Crm.EntityEditor.prototype.initializeManagers = function()
 	{
 		BX.addCustomEvent("BX.UI.EntityConfigurationManager:onInitialize", this._configurationManagerInitializeHandler);
@@ -535,13 +537,19 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 			}
 		}
 
+		const ufLoadeerPromises = [];
 		for(var key in userFieldLoaders)
 		{
 			if(userFieldLoaders.hasOwnProperty(key))
 			{
-				userFieldLoaders[key].runBatch();
+				ufLoadeerPromises.push(userFieldLoaders[key].runBatch());
 			}
 		}
+
+		Promise.all(ufLoadeerPromises)
+			.then(() => {
+				BX.onCustomEvent(window, this.eventsNamespace + ":onUserFieldsDeployed", [ this ]);
+			});
 
 		if(this.getActiveControlCount() > 0)
 		{
@@ -566,7 +574,11 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 			}
 		}
 
-		if(this._mode === BX.UI.EntityEditorMode.edit && this._dupControlManager.isEnabled())
+		if (
+			this._mode === BX.UI.EntityEditorMode.edit
+			&& this._dupControlManager.isEnabled()
+			&& !this._dupControlManager.isSingleMode()
+		)
 		{
 			this._dupControlManager.search();
 		}
@@ -673,7 +685,18 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 
 		return eventArguments;
 	};
-	BX.Crm.EntityEditor.prototype.innerCancel = function() {
+	BX.Crm.EntityEditor.prototype.closeSearchSummary = function()
+	{
+		const dupControlManager = this.getDuplicateManager();
+		if (dupControlManager && dupControlManager._controller)
+		{
+			dupControlManager._controller._closeSearchSummary();
+		}
+	};
+	BX.Crm.EntityEditor.prototype.innerCancel = function()
+	{
+		this.closeSearchSummary();
+
 		if (this._isNew)
 		{
 			this._enableCloseConfirmation = false;
@@ -690,6 +713,8 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 	};
 	BX.Crm.EntityEditor.prototype.onSaveSuccess = function(result, params)
 	{
+		this.closeSearchSummary();
+		
 		//todo refactor it on parent class
 		this._isRequestRunning = false;
 
@@ -699,6 +724,11 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		{
 			this._toolPanel.setLocked(false);
 			this._toolPanel.clearErrors();
+		}
+
+		if (result.ADDITIONAL_FIELDS_DATA)
+		{
+			this.additionalFieldsData = BX.prop.getObject(result, 'ADDITIONAL_FIELDS_DATA', {});
 		}
 
 		//region Event Params
@@ -849,38 +879,52 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 			}
 		}
 
-		var redirectUrl = BX.prop.getString(result, "REDIRECT_URL", "");
+		const redirectUrl = BX.prop.getString(result, 'REDIRECT_URL', '');
+		const isOpenInNewSlide = BX.prop.getBoolean(result, 'OPEN_IN_NEW_SLIDE', false);
 
-		var additionalEventParams = BX.prop.getObject(result, "EVENT_PARAMS", null);
-		if(additionalEventParams)
+		const additionalEventParams = BX.prop.getObject(result, 'EVENT_PARAMS', null);
+		if (additionalEventParams)
 		{
-			var eventName = BX.prop.getString(additionalEventParams, "name", "");
-			var eventArgs = BX.prop.getObject(additionalEventParams, "args", null);
-			if(eventName !== "" && eventArgs !== null)
+			const eventName = BX.prop.getString(additionalEventParams, 'name', '');
+			const eventArgs = BX.prop.getObject(additionalEventParams, 'args', null);
+
+			if (BX.Type.isStringFilled(eventName) && eventArgs !== null)
 			{
-				if(redirectUrl !== "")
+				if (BX.Type.isStringFilled(redirectUrl))
 				{
-					eventArgs["redirectUrl"] = redirectUrl;
+					eventArgs.redirectUrl = redirectUrl;
 				}
 				BX.localStorage.set(eventName, eventArgs, 10);
 			}
 		}
 
-		if(this._isReleased)
+		if (this._isReleased)
 		{
 			return;
 		}
 
-		if(redirectUrl !== "" && !this._isEmbedded)
+		if (BX.Type.isStringFilled(redirectUrl))
 		{
 			eventParams.redirectUrl = redirectUrl;
-			BX.onCustomEvent(window, "beforeCrmEntityRedirect", [eventParams]);
-			window.location.replace(
-				BX.util.add_url_param(
-					redirectUrl,
-					{ "IFRAME": "Y", "IFRAME_TYPE": "SIDE_SLIDER" }
-				)
+			BX.onCustomEvent(window, 'beforeCrmEntityRedirect', [eventParams]);
+
+			const url = BX.util.add_url_param(
+				redirectUrl,
+				{
+					IFRAME: 'Y',
+					IFRAME_TYPE: 'SIDE_SLIDER',
+				},
 			);
+
+			const sidePanel = window.top.BX.SidePanel ? window.top.BX.SidePanel.Instance : null;
+			if (isOpenInNewSlide && sidePanel && sidePanel.isOpen())
+			{
+				sidePanel.close(false, () => BX.Crm.Page.open(url));
+			}
+			else
+			{
+				window.location.replace(url);
+			}
 		}
 		else
 		{

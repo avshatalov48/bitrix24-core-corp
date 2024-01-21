@@ -689,35 +689,12 @@ class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 			}
 			elseif ($documentFields[$key]['Type'] == 'file')
 			{
-				$arFileOptions = ['ENABLE_ID' => true];
-				foreach ($fields[$key] as &$value)
-				{
-					//Issue #40380. Secure URLs and file IDs are allowed.
-					$file = false;
-					$resultResolveFile = CCrmFileProxy::TryResolveFile($value, $file, $arFileOptions);
-					if ($isUpdate && $resultResolveFile)
-					{
-						global $USER_FIELD_MANAGER;
-						if ($USER_FIELD_MANAGER instanceof \CUserTypeManager)
-						{
-							$prevValue = $USER_FIELD_MANAGER->GetUserFieldValue(
-								\CCrmOwnerType::ResolveUserFieldEntityID(\CCrmOwnerType::Deal),
-								$key,
-								$documentInfo['ID']
-							);
-							if ($prevValue)
-							{
-								$file['old_id'] = $prevValue;
-							}
-						}
-					}
-					$value = $file;
-				}
-				unset($value);
-				if ($isUpdate)
-				{
-					unset($prevValue);
-				}
+				$fields[$key] = static::castFileFieldValues(
+					$documentInfo['ID'],
+					\CCrmOwnerType::Deal,
+					$key,
+					$fields[$key],
+				);
 			}
 			elseif ($documentFields[$key]['Type'] == 'S:HTML')
 			{

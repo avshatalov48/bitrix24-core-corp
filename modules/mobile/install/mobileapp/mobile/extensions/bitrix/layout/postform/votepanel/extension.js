@@ -1,4 +1,6 @@
-(function(){
+(function() {
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
 
 	this.votePanelRef = new VoteDataElementsManager();
 
@@ -15,7 +17,6 @@
 		postFormData,
 		rootScrollRef,
 	}) => {
-
 		if (
 			!Array.isArray(voteData.questions)
 			|| voteData.questions.length <= 0
@@ -26,7 +27,6 @@
 
 		const layout = [];
 		voteData.questions.forEach((question, questionIndex) => {
-
 			layout.push(renderSeparator({
 				voteData,
 				questionIndex,
@@ -34,17 +34,18 @@
 				onAddVoteQuestion,
 				onSetVoteQuestionMultiple,
 				menuCancelTextColor,
-				postFormData
+				postFormData,
 			}));
-			layout.push(renderQuestionRow({
-				voteData,
-				question,
-				questionIndex,
-				onSetVoteData,
-				inputTextColor,
-				placeholderTextColor,
-				onFocus,
-			}));
+			layout.push(
+				renderQuestionRow({
+					voteData,
+					question,
+					questionIndex,
+					onSetVoteData,
+					inputTextColor,
+					placeholderTextColor,
+					onFocus,
+				}));
 
 			if (
 				!question.answers
@@ -67,12 +68,11 @@
 					postFormData,
 					onFocus,
 					rootScrollRef,
-				}))
+				}));
 			});
-
 		});
 
-		if (layout.length == 0)
+		if (layout.length === 0)
 		{
 			return null;
 		}
@@ -81,17 +81,17 @@
 			{
 				style: {
 					paddingTop: 15,
-					paddingBottom: 15
+					paddingBottom: 15,
 				},
 				onLayout: ({ height }) => {
 					onLayout({ height });
 				},
 			},
-			...layout
+			...layout,
 		);
 	};
 
-	renderSeparator = ({
+	const renderSeparator = ({
 		voteData,
 		questionIndex,
 		onSetVoteData,
@@ -110,12 +110,12 @@
 					onSetVoteQuestionMultiple,
 					menuCancelTextColor,
 					postFormData,
-				})
-			}
-		})
+				});
+			},
+		});
 	};
 
-	renderQuestionRow = ({
+	const renderQuestionRow = ({
 		voteData,
 		question,
 		questionIndex,
@@ -133,34 +133,32 @@
 					marginBottom: 5,
 					alignItems: 'center',
 					flexDirection: 'row',
-				}
+				},
 			},
 			TextField({
-				ref: ref => {
+				ref: (ref) => {
 					setTimeout(() => {
 						this.votePanelRef.setQuestionElement(questionIndex, ref);
 					}, 100);
-
 				},
 				value: question.value,
 				multiline: false,
 				placeholder: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_VOTEPANEL_PLACEHOLDER_QUESTION'),
-				placeholderTextColor: placeholderTextColor,
+				placeholderTextColor,
 				returnKeyType: 'next',
 				style: {
 					flex: 1,
 					borderWidth: 1,
 					borderRadius: 4,
-					borderColor: '#DBDDE0',
+					borderColor: AppTheme.colors.bgSeparatorPrimary,
 					color: inputTextColor,
 					fontSize: 16,
 					fontWeight: 'normal',
 					margin: 5,
-					backgroundColor: '#00000000',
 					paddingTop: 8,
 					paddingBottom: 1,
 					paddingLeft: 5,
-					paddingRight: 5
+					paddingRight: 5,
 				},
 				onFocus,
 				onChangeText: (text) => {
@@ -168,8 +166,8 @@
 						voteData,
 						text,
 						questionIndex,
-						onSetVoteData
-					})
+						onSetVoteData,
+					});
 				},
 				onSubmitEditing: () => {
 					if (
@@ -184,11 +182,11 @@
 					this.votePanelRef.questions[questionIndex].answers[0].element.focus();
 				},
 				autoCapitalize: 'sentences',
-			})
-		)
+			}),
+		);
 	};
 
-	renderAnswerRow = ({
+	const renderAnswerRow = ({
 		voteData,
 		questionIndex,
 		answer,
@@ -209,10 +207,10 @@
 					marginBottom: 5,
 					flexDirection: 'row',
 					alignItems: 'center',
-				}
+				},
 			},
 			TextField({
-				ref: ref => {
+				ref: (ref) => {
 					setTimeout(() => { // wait for setState callback
 						this.votePanelRef.setAnswerElement(questionIndex, answerIndex, ref);
 					}, 1000);
@@ -220,22 +218,21 @@
 				value: answer.value,
 				multiline: false,
 				placeholder: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_VOTEPANEL_PLACEHOLDER_ANSWER'),
-				placeholderTextColor: placeholderTextColor,
+				placeholderTextColor,
 				returnKeyType: 'next',
 				style: {
 					borderWidth: 1,
 					borderRadius: 4,
-					borderColor: '#DBDDE0',
+					borderColor: AppTheme.colors.bgSeparatorPrimary,
 					color: inputTextColor,
 					fontSize: 16,
 					fontWeight: 'normal',
 					margin: 5,
-					backgroundColor: '#00000000',
 					flex: 1,
 					paddingTop: 8,
 					paddingBottom: 1,
 					paddingLeft: 5,
-					paddingRight: 5
+					paddingRight: 5,
 				},
 				onFocus,
 				onChangeText: (text) => {
@@ -244,8 +241,8 @@
 						text,
 						questionIndex,
 						answerIndex,
-						onSetVoteData
-					})
+						onSetVoteData,
+					});
 				},
 				onSubmitEditing: () => {
 					if (
@@ -260,8 +257,11 @@
 					this.votePanelRef.questions[questionIndex].answers[answerIndex + 1].element.focus();
 
 					if (
-						parseInt(questionIndex) === parseInt(this.votePanelRef.questions.length) - 1
-						&& parseInt(answerIndex) === parseInt(this.votePanelRef.questions[questionIndex].answers.length) - 2
+						parseInt(questionIndex, 10) === parseInt(this.votePanelRef.questions.length, 10) - 1
+						&& parseInt(
+							answerIndex,
+							10,
+						) === parseInt(this.votePanelRef.questions[questionIndex].answers.length, 10) - 2
 						&& rootScrollRef
 					)
 					{
@@ -274,7 +274,7 @@
 				{
 					style: {
 						alignItems: 'center',
-						flex: 0
+						flex: 0,
 					},
 					onClick: () => {
 						onOpenAnswerMenu({
@@ -283,22 +283,22 @@
 							answerIndex,
 							onSetVoteData,
 							menuCancelTextColor,
-							postFormData
-						})
-					}
+							postFormData,
+						});
+					},
 				},
 				Image({
 					named: 'icon_threedots',
 					style: {
 						width: 28,
-						height: 28
-					}
-				})
-			)
-		)
+						height: 28,
+					},
+				}),
+			),
+		);
 	};
 
-	onVoteSeparatorClick = ({
+	const onVoteSeparatorClick = ({
 		voteData,
 		questionIndex,
 		onSetVoteData,
@@ -307,116 +307,129 @@
 		menuCancelTextColor,
 		postFormData,
 	}) => {
-
 		const menu = dialogs.createPopupMenu();
 		const allowMultipleCurrentValue = voteData.questions[questionIndex].allowMultiSelect;
 
-		menu.setData([
+		menu.setData(
+			[
 				{
 					id: 'add',
 					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_VOTEPANEL_MENU_ADD'),
 					iconUrl: currentDomain + postFormData.menuPlusIcon,
-					sectionCode: '0'
+					sectionCode: '0',
 				},
 				{
 					id: 'multiple',
-					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_VOTEPANEL_MENU_MULTIPLE_' + (allowMultipleCurrentValue ? 'N' : 'Y')),
+					title: BX.message(`MOBILE_EXT_LAYOUT_POSTFORM_VOTEPANEL_MENU_MULTIPLE_${allowMultipleCurrentValue ? 'N' : 'Y'}`),
 					iconUrl: currentDomain + postFormData.menuMultiCheckIcon,
-					sectionCode: '0'
+					sectionCode: '0',
 				},
 				{
 					id: 'delete',
 					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_VOTEPANEL_MENU_DELETE'),
 					iconName: 'delete',
-					sectionCode: '0'
+					sectionCode: '0',
 				},
 				{
 					id: 'cancel',
 					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_VOTEPANEL_MENU_CANCEL'),
 					textColor: menuCancelTextColor,
-					sectionCode: '0'
-				}
+					sectionCode: '0',
+				},
 			],
 			[
-				{ id: '0' }
+				{ id: '0' },
 			],
 			(eventName, item) => {
 				if (eventName === 'onItemSelected')
 				{
 					const voteDataInstance = new VoteDataStateManager(voteData);
 
-					if (item.id === 'add')
+					// eslint-disable-next-line default-case
+					switch (item.id)
 					{
-						onAddVoteQuestion();
-					}
-					else if (item.id === 'delete')
-					{
-						this.votePanelRef.deleteQuestion(questionIndex);
-						voteDataInstance.deleteQuestion(questionIndex);
-						onSetVoteData(voteDataInstance.get());
-					}
-					else if (item.id === 'multiple')
-					{
-						onSetVoteQuestionMultiple(voteData, questionIndex, !allowMultipleCurrentValue);
+						case 'add':
+						{
+							onAddVoteQuestion();
+
+							break;
+						}
+
+						case 'delete':
+						{
+							this.votePanelRef.deleteQuestion(questionIndex);
+							voteDataInstance.deleteQuestion(questionIndex);
+							onSetVoteData(voteDataInstance.get());
+
+							break;
+						}
+
+						case 'multiple':
+						{
+							onSetVoteQuestionMultiple(voteData, questionIndex, !allowMultipleCurrentValue);
+
+							break;
+						}
+						// No default
 					}
 				}
-			}
+			},
 		);
 
 		menu.setPosition('center');
 		menu.show();
 	};
 
-	onOpenAnswerMenu = ({
+	const onOpenAnswerMenu = ({
 		voteData,
 		questionIndex,
 		answerIndex,
 		onSetVoteData,
 		menuCancelTextColor,
-		postFormData
+		postFormData,
 	}) => {
-
-		let menu = dialogs.createPopupMenu();
+		const menu = dialogs.createPopupMenu();
 
 		const arrayMove = (array, from, to) => {
 			array.splice(to, 0, array.splice(from, 1)[0]);
+
 			return array;
 		};
 
-		menu.setData([
+		menu.setData(
+			[
 				{
 					id: 'up',
 					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_VOTEPANEL_ANSWER_MENU_UP'),
 					sectionCode: '0',
 					iconUrl: currentDomain + (answerIndex === 0 ? postFormData.menuUpIconDisabled : postFormData.menuUpIcon),
-					disable: (answerIndex === 0)
+					disable: (answerIndex === 0),
 				},
 				{
 					id: 'down',
 					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_VOTEPANEL_ANSWER_MENU_DOWN'),
 					sectionCode: '0',
 					iconUrl: currentDomain + (answerIndex === 0 ? postFormData.menuDownIconDisabled : postFormData.menuDownIcon),
-					disable: (answerIndex === (voteData.questions[questionIndex].answers.length-1))
+					disable: (answerIndex === (voteData.questions[questionIndex].answers.length - 1)),
 				},
 				{
 					id: 'delete',
 					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_VOTEPANEL_ANSWER_MENU_DELETE'),
 					iconName: 'delete',
 					sectionCode: '0',
-					disable: (voteData.questions[questionIndex].answers[answerIndex].value === '')
+					disable: (voteData.questions[questionIndex].answers[answerIndex].value === ''),
 				},
 				{
 					id: 'cancel',
 					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_VOTEPANEL_ANSWER_MENU_CANCEL'),
 					textColor: menuCancelTextColor,
-					sectionCode: '0'
-				}
+					sectionCode: '0',
+				},
 			],
 			[
-				{ id: '0' }
+				{ id: '0' },
 			],
 			(eventName, item) => {
-
 				if (eventName === 'onItemSelected')
 				{
 					const voteDataInstance = new VoteDataStateManager(voteData);
@@ -437,22 +450,20 @@
 						onSetVoteData(voteDataInstance.get());
 					}
 				}
-			}
+			},
 		);
 
 		menu.setPosition('center');
 		menu.show();
-
 	};
 
-	onAnswerTextChange = ({
+	const onAnswerTextChange = ({
 		voteData,
 		text,
 		questionIndex,
 		answerIndex,
-		onSetVoteData
+		onSetVoteData,
 	}) => {
-
 		if (
 			!Array.isArray(voteData.questions)
 			|| voteData.questions.length <= 0
@@ -467,15 +478,15 @@
 		if (text.length === 0)
 		{
 			if (
-				answerIndex === voteData.questions[questionIndex].answers.length-2  // before last answer
-				&& voteData.questions[questionIndex].answers[answerIndex+1].value.length <= 0 // empty last item
+				answerIndex === voteData.questions[questionIndex].answers.length - 2 // before last answer
+				&& voteData.questions[questionIndex].answers[answerIndex + 1].value.length <= 0 // empty last item
 			)
 			{
 				this.votePanelRef.deleteLastAnswer(questionIndex);
 				voteDataInstance.deleteLastAnswer(questionIndex);
 			}
 			else if (
-				answerIndex < voteData.questions[questionIndex].answers.length-2  // before before last answer
+				answerIndex < voteData.questions[questionIndex].answers.length - 2 // before before last answer
 			)
 			{
 				this.votePanelRef.deleteAnswer(questionIndex, answerIndex);
@@ -484,7 +495,7 @@
 
 			onSetVoteData(voteDataInstance.get());
 		}
-		else if (answerIndex === voteData.questions[questionIndex].answers.length-1)  // last answer
+		else if (answerIndex === voteData.questions[questionIndex].answers.length - 1) // last answer
 		{
 			this.votePanelRef.addAnswer(questionIndex);
 			voteDataInstance.addAnswer(questionIndex);
@@ -493,13 +504,12 @@
 		}
 	};
 
-	onQuestionTextChange = ({
+	const onQuestionTextChange = ({
 		voteData,
 		text,
 		questionIndex,
-		onSetVoteData
+		onSetVoteData,
 	}) => {
-
 		if (
 			!Array.isArray(voteData.questions)
 			|| voteData.questions.length <= 0
@@ -514,14 +524,14 @@
 		if (text.length <= 0)
 		{
 			if (
-				questionIndex === voteData.questions.length-2  // before last question
-				&& voteData.questions[questionIndex+1].value.length <= 0 // empty last item
+				questionIndex === voteData.questions.length - 2 // before last question
+				&& voteData.questions[questionIndex + 1].value.length <= 0 // empty last item
 			)
 			{
 				this.votePanelRef.deleteLastQuestion();
 				voteDataInstance.deleteLastQuestion();
 			}
-			else if (questionIndex < voteData.questions.length-2)  // before before last question
+			else if (questionIndex < voteData.questions.length - 2) // before before last question
 			{
 				this.votePanelRef.deleteQuestion(questionIndex);
 				voteDataInstance.deleteQuestion(questionIndex);
@@ -530,5 +540,4 @@
 			onSetVoteData(voteDataInstance.get());
 		}
 	};
-
 })();

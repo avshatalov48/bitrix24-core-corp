@@ -34,6 +34,7 @@ final class Doctor
 		$result = [];
 
 		$db = Application::getConnection();
+		$helper = $db->getSqlHelper();
 
 		// load crm reserves
 		$crmReservesSql = '
@@ -45,7 +46,7 @@ final class Doctor
 				cpr.PRODUCT_NAME,
 				cprr.STORE_ID AS CRM_RESERVE_STORE_ID,
 				cprr.RESERVE_QUANTITY AS CRM_RESERVE_QUANTITY,
-				DATE(cprr.DATE_RESERVE_END) AS CRM_RESERVE_DATE_END,
+				' . $helper->getDatetimeToDateFunction('cprr.DATE_RESERVE_END') . ' AS CRM_RESERVE_DATE_END,
 				sbr.BASKET_ID
 			FROM
 				b_crm_product_row_reservation as cprr
@@ -88,7 +89,7 @@ final class Doctor
 					BASKET_ID,
 					STORE_ID AS SALE_RESERVE_STORE_ID,
 					QUANTITY AS SALE_RESERVE_QUANTITY,
-					DATE(DATE_RESERVE_END) AS SALE_RESERVE_DATE_END
+					" . $helper->getDatetimeToDateFunction('DATE_RESERVE_END') . " AS SALE_RESERVE_DATE_END
 				FROM
 					b_sale_basket_reservation
 				WHERE

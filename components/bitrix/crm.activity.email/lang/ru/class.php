@@ -33,6 +33,10 @@ $MESS["CRM_ACT_EMAIL_REPLY_EMPTY_RCPT"] = "Пожалуйста, укажите 
 $MESS["CRM_ACT_EMAIL_REPLY_UPLOADING"] = "Пожалуйста, дождитесь окончания загрузки вложений";
 $MESS["CRM_ACT_EMAIL_REPLY_SENT"] = "Письмо отправлено";
 $MESS["CRM_ACT_EMAIL_CREATE_TEMPLATE"] = "Шаблон";
+$MESS["CRM_ACT_EMAIL_TEMPLATE_SETTINGS_TITLE_MSGVER_1"] = "Настройка";
+$MESS["CRM_ACT_EMAIL_TEMPLATE_SAVE_LAST_TEMPLATE"] = "Запомнить последний";
+$MESS["CRM_ACT_EMAIL_TEMPLATE_SETTINGS_MSGVER_1"] = "Настроить";
+$MESS["CRM_ACT_EMAIL_TEMPLATE_LIST_TITLE"] = "Список шаблонов";
 $MESS["CRM_ACT_EMAIL_CREATE_NOTEMPLATE"] = "Без шаблона";
 $MESS["CRM_ACT_EMAIL_CREATE_SAVE_TEMPLATE"] = "Сохранить как шаблон";
 $MESS["CRM_ACT_EMAIL_CREATE_TO_MORE"] = "еще #NUM#";
@@ -64,6 +68,6 @@ $MESS["CRM_ACT_EMAIL_DELETE_CONFIRM"] = "Вы действительно хот�
 $MESS["CRM_ACT_EMAIL_SKIP_CONFIRM"] = "Вы действительно хотите удалить это письмо и добавить отправителя в список исключений?";
 $MESS["CRM_ACT_EMAIL_SPAM_CONFIRM"] = "Вы действительно хотите удалить это письмо и добавить отправителя в черный список?";
 
-$MESS["CRM_ACT_EMAIL_DISK_ACTION_SAVE_TO_OWN_FILES"] = "Сохранить на Битрикс24.Диск";
+$MESS["CRM_ACT_EMAIL_DISK_ACTION_SAVE_TO_OWN_FILES_MSGVER_1"] = "Сохранить на Битрикс24 Диск";
 $MESS["CRM_ACT_EMAIL_DISK_FILE_DOWNLOAD_ARCHIVE"] = "Скачать все файлы одним архивом";
 

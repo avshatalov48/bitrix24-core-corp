@@ -1,6 +1,6 @@
-import Context from './context';
-import { EventEmitter } from 'main.core.events';
 import { Dom } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import Context from './context';
 
 export default class Item
 {
@@ -18,6 +18,8 @@ export default class Item
 		this.#settings = settings;
 		this.#eventEmitter = new EventEmitter();
 		this.#eventEmitter.setEventNamespace('BX.Crm.Timeline.MenuBar');
+
+		this.initializeSettings();
 
 		if (!this.#context.isReadonly() && this.supportsLayout())
 		{
@@ -134,6 +136,34 @@ export default class Item
 		}
 	}
 
+	setLocked(isLocked: Boolean): void
+	{
+		const container = this.getContainer();
+		if (!container)
+		{
+			return;
+		}
+		if (isLocked)
+		{
+			Dom.addClass(container, '--locked');
+		}
+		else
+		{
+			Dom.removeClass(container, '--locked');
+		}
+	}
+
+	isLocked(): Boolean
+	{
+		const container = this.getContainer();
+		if (!container)
+		{
+			return false;
+		}
+
+		return Dom.hasClass(container, '--locked');
+	}
+
 	addFinishEditListener(callback)
 	{
 		this.#eventEmitter.subscribe(Item.ON_FINISH_EDIT_EVENT, callback);
@@ -148,6 +178,9 @@ export default class Item
 	{
 		throw new Error('Method createLayout() must be overridden');
 	}
+
+	initializeSettings(): void
+	{}
 
 	initializeLayout(): void
 	{}

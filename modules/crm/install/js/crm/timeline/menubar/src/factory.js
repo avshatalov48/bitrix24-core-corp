@@ -1,25 +1,27 @@
+import Context from './context';
 import Item from './item';
-import ToDo from './items/todo';
-import Comment from './items/comment';
-import Sms from './items/sms';
 import Call from './items/call';
+import Comment from './items/comment';
+import Delivery from './items/delivery';
 import Email from './items/email';
+import GoToChat from './items/gotochat/gotochat';
+import Market from './items/market';
 import Meeting from './items/meeting';
-import Task from './items/task';
+import RestPlacement from './items/restplacement';
 import Sharing from './items/sharing';
+import Sms from './items/sms';
+import Task from './items/task';
+import ToDo from './items/todo';
+import Visit from './items/visit';
 import Wait from './items/wait';
 import Zoom from './items/zoom';
-import Delivery from './items/delivery';
-import Visit from './items/visit';
-import RestPlacement from './items/restplacement';
-import Market from './items/market';
-import Context from './context';
 
 export default class Factory
 {
 	static createItem(id: String, context: Context, settings: ?Object): Item
 	{
-		let item = null;
+		let item;
+
 		switch (id)
 		{
 			case 'todo':
@@ -30,6 +32,9 @@ export default class Factory
 				break;
 			case 'sms':
 				item = new Sms();
+				break;
+			case 'gotochat':
+				item = new GoToChat();
 				break;
 			case 'call':
 				item = new Call();
@@ -61,9 +66,11 @@ export default class Factory
 			case 'activity_rest_applist':
 				item = new Market();
 				break;
+			default:
+				item = null;
 		}
 
-		if (!item && id.match(/^activity_rest_/))
+		if (!item && id.startsWith('activity_rest_'))
 		{
 			item = new RestPlacement();
 		}

@@ -12,6 +12,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
 use Bitrix\Socialnetwork\Item\Workgroup;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
@@ -30,7 +31,6 @@ use \Bitrix\Tasks\Util\User;
 use \Bitrix\Tasks\ActionFailedException;
 use \Bitrix\Tasks\ActionNotAllowedException;
 use \Bitrix\Tasks\ActionRestrictedException;
-use \Bitrix\Tasks\Integration\Bizproc;
 use \Bitrix\Tasks\Access\ActionDictionary;
 
 Loc::loadMessages(__FILE__);
@@ -163,39 +163,6 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 	private static $accessController;
 	private static $allowedActions;
-
-	/**
-	 * Pin the task in the Kanban stage for users.
-	 * @param int $taskId Task id.
-	 * @param array $taskData Task data.
-	 * @return void
-	 */
-	private static function pinInStage($taskId, $taskData = array())
-	{
-		if (empty($taskData))
-		{
-			\Bitrix\Tasks\Kanban\StagesTable::pinInStage($taskId);
-		}
-		else
-		{
-			$newUsers = array();
-			foreach (array('CREATED_BY', 'RESPONSIBLE_ID', 'AUDITORS', 'ACCOMPLICES') as $code)
-			{
-				if (isset($taskData[$code]))
-				{
-					if (!is_array($taskData[$code]))
-					{
-						$taskData[$code] = array($taskData[$code]);
-					}
-					$newUsers = array_merge($newUsers, $taskData[$code]);
-				}
-			}
-			if (!empty($newUsers))
-			{
-				\Bitrix\Tasks\Kanban\StagesTable::pinInStage($taskId, $newUsers);
-			}
-		}
-	}
 
 	public function getLastOperationResultData($operation = false)
 	{
@@ -339,11 +306,23 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			}
 		}
 
-		if (!\Bitrix\Tasks\Access\TaskAccessController::can($executiveUserId, ActionDictionary::ACTION_TASK_SAVE, null, \Bitrix\Tasks\Access\Model\TaskModel::createFromArray($arNewTaskData)))
+		if (!TaskAccessController::can($executiveUserId, ActionDictionary::ACTION_TASK_SAVE, null, \Bitrix\Tasks\Access\Model\TaskModel::createFromArray($arNewTaskData)))
 		{
 			throw new TasksException(
 				serialize(array(array('text' => GetMessage('TASKS_TASK_CREATE_ACCESS_DENIED'), 'id' => 'ERROR_TASK_CREATE_ACCESS_DENIED'))),
 				TasksException::TE_ACCESS_DENIED
+			);
+		}
+
+		$parentId = (int)($arNewTaskData['PARENT_ID'] ?? null);
+		if (
+			$parentId > 0 &&
+			!TaskAccessController::can($executiveUserId, ActionDictionary::ACTION_TASK_READ, $parentId)
+		)
+		{
+			throw new TasksException(
+				Loc::getMessage('TASKS_BAD_PARENT_ID'),
+				TasksException::TE_ACTION_NOT_ALLOWED
 			);
 		}
 
@@ -363,15 +342,9 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			static::throwExceptionVerbose($o->GetErrors());
 		}
 
-		self::pinInStage($rc);
-
 		try
 		{
 			$newTaskItem = new CTaskItem( (int) $rc, $executiveUserId);
-			if (!isset($parameters['DISABLE_BIZPROC_RUN']))
-			{
-				Bizproc\Listener::onTaskAdd($rc, $newTaskItem->getData());
-			}
 		}
 		catch (TasksException | CTaskAssertException $e)
 		{
@@ -735,7 +708,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		// read template data
 
-		if(is_array($parameters['TEMPLATE_DATA']) && !empty($parameters['TEMPLATE_DATA']))
+		if(is_array($parameters['TEMPLATE_DATA'] ?? null) && !empty($parameters['TEMPLATE_DATA'] ?? null))
 		{
 			$arTemplate = $parameters['TEMPLATE_DATA'];
 		}
@@ -1197,6 +1170,8 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 	/**
 	 * Get task data (read from DB on demand)
+	 *
+	 * @throws TasksException
 	 */
 	public function getData($returnEscapedData = true, array $parameters = [], bool $bCheckPermissions = true)
 	{
@@ -1533,7 +1508,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	{
 		if (!self::$accessController || !array_key_exists($executiveUserId, self::$accessController))
 		{
-			self::$accessController[$executiveUserId] = new \Bitrix\Tasks\Access\TaskAccessController((int) $executiveUserId);
+			self::$accessController[$executiveUserId] = new TaskAccessController((int) $executiveUserId);
 		}
 		return self::$accessController[$executiveUserId];
 	}
@@ -1571,8 +1546,6 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	}
 
 	/**
-	 * @param array $params
-	 *
 	 * @throws TasksException
 	 */
 	public function delete(array $params=array())
@@ -1598,8 +1571,6 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				'PARAMETERS' => $params
 			]
 		);
-
-		self::pinInStage($this->getId(), ['RESPONSIBLE_ID' => $newResponsibleId]);
 	}
 
 
@@ -1661,20 +1632,14 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		$this->proceedAction(self::ACTION_COMPLETE, ['PARAMETERS' => $params]);
 	}
 
-
+	/**
+	 * @throws TasksException
+	 */
 	public function update($arNewTaskData = [], array $parameters = array())
 	{
 		if (empty($arNewTaskData))
 		{
 			return;
-		}
-
-		if (
-			!array_key_exists('PIN_IN_STAGE', $parameters) ||
-			array_key_exists('PIN_IN_STAGE', $parameters) && $parameters['PIN_IN_STAGE']
-		)
-		{
-			self::pinInStage($this->getId(), $arNewTaskData);
 		}
 
 		$this->proceedAction(
@@ -1759,10 +1724,6 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		{
 			$userId = $this->executiveUserId;
 		}
-
-		self::pinInStage($this->getId(), array(
-			'AUDITORS' => $userId
-		));
 
 		// Am I auditor?
 		if ( ! in_array($userId, $arTask['AUDITORS']))
@@ -2180,6 +2141,10 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		}
 	}
 
+	/**
+	 * @throws CTaskAssertException
+	 * @throws TasksException
+	 */
 	private function proceedActionEdit($arActionArguments, $arTaskData)
 	{
 		$this->lastOperationResultData['UPDATE'] = array();
@@ -2210,6 +2175,18 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		{
 			throw new TasksException(
 				GetMessage('TASKS_ACCESS_DENIED_TO_TASK_UPDATE'),
+				TasksException::TE_ACTION_NOT_ALLOWED
+			);
+		}
+
+		$parentId = (int)($arFields['PARENT_ID'] ?? null);
+		if (
+			$parentId > 0 &&
+			!TaskAccessController::can($this->executiveUserId, ActionDictionary::ACTION_TASK_READ, $parentId)
+		)
+		{
+			throw new TasksException(
+				Loc::getMessage('TASKS_BAD_PARENT_ID'),
 				TasksException::TE_ACTION_NOT_ALLOWED
 			);
 		}

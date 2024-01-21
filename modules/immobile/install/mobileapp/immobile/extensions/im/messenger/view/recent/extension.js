@@ -23,6 +23,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 			this.loaderShown = false;
 			this.loadNextPageItemId = 'loadNextPage';
+			this.itemCollection = {};
 
 			this.subscribeEvents();
 			this.initTopMenu();
@@ -65,14 +66,12 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 			if (FeatureFlag.isDevelopmentEnvironment)
 			{
-				topMenuButtons.push([
-					{
-						id: 'developer-menu',
-						title: 'Developer menu',
-						sectionCode: 'general',
-						iconName: 'start',
-					},
-				]);
+				topMenuButtons.push({
+					id: 'developer-menu',
+					title: 'Developer menu',
+					sectionCode: 'general',
+					iconName: 'start',
+				});
 			}
 
 			const topMenuButtonHandler = (event, item) => {
@@ -89,16 +88,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 					&& item.id === 'developer-menu'
 				)
 				{
-					jn.import('im:messenger/lib/dev')
-						.then(() => {
-							const { showDeveloperMenu } = require('im/messenger/lib/dev');
-							showDeveloperMenu();
-						})
-						.catch((error) => {
-							// eslint-disable-next-line no-console
-							console.error(error);
-						})
-					;
+					showMessengerDeveloperMenu();
 				}
 			};
 
@@ -197,26 +187,42 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		addItems(items)
 		{
 			this.ui.addItems(items, true);
+			items.forEach((item) => {
+				this.itemCollection[item.id] = item;
+			});
 		}
 
 		updateItems(items)
 		{
 			this.ui.updateItems(items);
+			items.forEach((item) => {
+				this.itemCollection[item.element.id] = item.element;
+			});
 		}
 
 		updateItem(filter, fields)
 		{
 			this.ui.updateItem(filter, fields);
+			this.itemCollection[fields.id] = fields;
 		}
 
 		removeItem(itemFilter)
 		{
 			this.ui.removeItem(itemFilter);
+			if (itemFilter.id)
+			{
+				delete this.itemCollection[itemFilter.id];
+			}
 		}
 
 		findItem(filter, callback)
 		{
 			this.ui.findItem(filter, callback);
+		}
+
+		getItem(id)
+		{
+			return this.itemCollection[id];
 		}
 
 		stopRefreshing()
@@ -295,6 +301,19 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			this.emitCustomEvent(EventType.recent.createChat);
 		}
 	}
+
+	window.showMessengerDeveloperMenu = () => {
+		jn.import('im:messenger/lib/dev')
+			.then(() => {
+				const { showDeveloperMenu } = require('im/messenger/lib/dev');
+				showDeveloperMenu();
+			})
+			.catch((error) => {
+				// eslint-disable-next-line no-console
+				console.error(error);
+			})
+		;
+	};
 
 	module.exports = {
 		RecentView,

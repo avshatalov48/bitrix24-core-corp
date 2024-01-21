@@ -160,7 +160,7 @@ class CalendarSharing extends Activity
 					->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 					->addActionParamInt('ownerId', $this->getContext()->getEntityId())
 					->addActionParamString('status', ActivityHandler::SHARING_STATUS_MEETING_NOT_HELD)
-					->setAnimation(Layout\Action\Animation::showLoaderForItem()->setForever()
+					->setAnimation(Layout\Action\Animation::disableItem()->setForever()
 				)
 			);
 		}
@@ -175,8 +175,11 @@ class CalendarSharing extends Activity
 			->setScopeWeb()
 			->setAction(
 				(new Layout\Action\JsEvent($this->getType() . ':OpenCalendarEvent'))
-				->addActionParamInt('eventId', $this->getEventId())
-				->addActionParamBoolean('isSharing', $this->isCanceledByClient())
+					->addActionParamInt('eventId', $this->getEventId())
+					->addActionParamBoolean(
+						'isSharing',
+						$this->isCanceledByClient() || $this->isCanceledByManager()
+					)
 			);
 		}
 

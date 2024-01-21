@@ -2,6 +2,7 @@
  * @module layout/ui/simple-list/items/extended
  */
 jn.define('layout/ui/simple-list/items/extended', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Base } = require('layout/ui/simple-list/items/base');
 	const { FieldFactory } = require('layout/ui/fields');
 	const { FriendlyDate } = require('layout/ui/friendly-date');
@@ -22,7 +23,7 @@ jn.define('layout/ui/simple-list/items/extended', (require, exports, module) => 
 
 		static getMenuFilledColor(svg, counterValue)
 		{
-			const filledColor = Extended.hasCounter(counterValue) ? '#ff5752' : '#bdc1c6';
+			const filledColor = Extended.hasCounter(counterValue) ? AppTheme.colors.accentMainAlert : AppTheme.colors.base3;
 
 			return svg.content.replaceAll('%color%', filledColor);
 		}
@@ -76,6 +77,7 @@ jn.define('layout/ui/simple-list/items/extended', (require, exports, module) => 
 						onClick: () => this.showMenuHandler(data.id),
 					},
 					ImageButton({
+						tintColor: AppTheme.colors.base3,
 						testId: `${this.testId}_CONTEXT_MENU_BTN`,
 						style: this.styles.menu,
 						svg: {
@@ -259,11 +261,11 @@ jn.define('layout/ui/simple-list/items/extended', (require, exports, module) => 
 	const styles = {
 		wrapper: {
 			paddingBottom: 12,
-			backgroundColor: '#f5f7f8',
+			backgroundColor: AppTheme.colors.bgPrimary,
 		},
 		item: {
 			position: 'relative',
-			backgroundColor: '#ffffff',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			borderRadius: 12,
 		},
 		itemContent: {
@@ -277,7 +279,7 @@ jn.define('layout/ui/simple-list/items/extended', (require, exports, module) => 
 			marginLeft: 24,
 		},
 		title: {
-			color: '#000000',
+			color: AppTheme.colors.base0,
 			fontWeight: 'bold',
 			fontSize: 18,
 		},
@@ -288,7 +290,7 @@ jn.define('layout/ui/simple-list/items/extended', (require, exports, module) => 
 		date: {
 			flexShrink: 2,
 			fontSize: 13,
-			color: '#828b95',
+			color: AppTheme.colors.base3,
 			paddingTop: 4,
 		},
 		menu: {
@@ -302,7 +304,7 @@ jn.define('layout/ui/simple-list/items/extended', (require, exports, module) => 
 			width: 42,
 			height: 42,
 			padding: 9,
-			backgroundColor: (hasCounter ? '#ffdcdb' : ''),
+			backgroundColor: (hasCounter ? AppTheme.colors.accentSoftRed2 : ''),
 			borderRadius: 20,
 			justifyContent: 'center',
 			alignItems: 'center',
@@ -311,3 +313,4 @@ jn.define('layout/ui/simple-list/items/extended', (require, exports, module) => 
 
 	module.exports = { Extended };
 });
+

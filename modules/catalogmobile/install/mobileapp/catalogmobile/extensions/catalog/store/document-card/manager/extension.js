@@ -30,7 +30,7 @@ jn.define('catalog/store/document-card/manager', (require, exports, module) => {
 				},
 				widgetParams: {
 					titleParams: {
-						detailText: Loc.getMessage('MOBILE_STORE_DOCUMENT_CARD_MANAGER_REALIZATION_DETAIL_TEXT'),
+						detailText: Loc.getMessage('MOBILE_STORE_DOCUMENT_CARD_MANAGER_REALIZATION_DETAIL_TEXT_MSGVER_1'),
 						detailTextColor: '#a8adb4',
 						imageUrl: '/bitrix/mobileapp/catalogmobile/extensions/catalog/store/document-card/component/images/type_w.png',
 						text: params && params.title ? params.title : Loc.getMessage('MOBILE_STORE_DOCUMENT_CARD_MANAGER_REALIZATION_NEW_TITLE'),

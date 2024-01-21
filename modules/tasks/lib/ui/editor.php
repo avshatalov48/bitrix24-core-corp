@@ -76,15 +76,17 @@ final class Editor
 			//"SMILES" => array("VALUE" => $arSmiles),
 			"NAME_TEMPLATE" => $parameters['USER_NAME_FORMAT'],
 			//"AT_THE_END_HTML" => $htmlAfterTextarea,
-			"LHE" => array(
+			"LHE" => [
 				"id" => $parameters['ID'],
 				"iframeCss" => "body { padding: 12px 18px 8px 12px !important; color: #151515; line-height: var(--ui-font-line-height-lg, 22px); }",
 				"fontSize" => "14.5px",
 				"bInitByJS" => false,
 				"lazyLoad" => 'N',
 				"bbCode" => $parameters['BBCODE_MODE'], // set editor mode: bbcode or html
-				"setFocusAfterShow" => !!$parameters['ENTITY_ID'], // when creating task, we should not
-			),
+				"setFocusAfterShow" => (bool)$parameters['ENTITY_ID'], // when creating task, we should not
+				'isCopilotImageEnabledBySettings' => \Bitrix\Tasks\Integration\AI\Settings::isImageAvailable(),
+				'isCopilotTextEnabledBySettings' => \Bitrix\Tasks\Integration\AI\Settings::isTextAvailable(),
+			],
 			//"USE_CLIENT_DATABASE" => "Y",
 			//"ALLOW_EMAIL_INVITATION" => ($arResult["ALLOW_EMAIL_INVITATION"] ? 'Y' : 'N')
 		);
@@ -139,13 +141,14 @@ final class Editor
 
 	private static function getEditorButtons(array $parameters)
 	{
-		$buttons = array(
+		$buttons = [
 			"UploadImage",
 			"UploadFile",
 			"CreateLink",
+			'Copilot',
 			//(($arResult["allowVideo"] == "Y") ? "InputVideo" : ""),
 			//"InputTag",
-		);
+		];
 		if($parameters['BBCODE_MODE'])
 		{
 			$buttons[] = "Quote";

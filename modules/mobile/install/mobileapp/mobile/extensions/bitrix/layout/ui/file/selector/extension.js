@@ -3,6 +3,7 @@
  */
 jn.define('layout/ui/file/selector', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { FileField } = require('layout/ui/fields/file');
 	const { FileAttachment } = require('layout/ui/file-attachment');
 	const { WidgetHeaderButton } = require('layout/ui/widget-header-button');
@@ -48,7 +49,7 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 		refreshTitle()
 		{
 			const { title } = this.getProps();
-			let text;
+			let text = '';
 
 			if (typeof title === 'function')
 			{
@@ -57,7 +58,7 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 			else
 			{
 				text = title || Loc.getMessage('UI_FILE_SELECTOR_DEFAULT_TITLE');
-				text = text.replace(/#NUM#/gi, this.getFilesCount());
+				text = text.replaceAll(/#num#/gi, this.getFilesCount());
 			}
 
 			this.layout.setTitle({ text });
@@ -115,17 +116,17 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 
 			PageManager.openWidget('layout', {
 				modal: true,
-				backgroundColor: '#eef2f4',
+				backgroundColor: AppTheme.colors.bgSecondary,
 				backdrop: {
 					onlyMediumPosition: false,
 					showOnTop: files.length > 12,
 					mediumPositionHeight: 450,
-					navigationBarColor: '#EEF2F4',
+					navigationBarColor: AppTheme.colors.bgSecondary,
 					swipeAllowed: true,
 					swipeContentAllowed: false,
 					horizontalSwipeAllowed: false,
-				}}
-			).then(widget => {
+				},
+			}).then((widget) => {
 				widget.showComponent(new FileSelector({
 					layout: widget,
 					...options,
@@ -140,14 +141,14 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 					style: {
 						flexDirection: 'column',
 						flex: 1,
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgSecondary,
 					},
 					resizableByKeyboard: true,
 				},
 				View(
 					{
 						style: {
-							backgroundColor: '#ffffff',
+							backgroundColor: AppTheme.colors.bgContentPrimary,
 							flexDirection: 'column',
 							flex: 1,
 							borderTopLeftRadius: 12,
@@ -156,7 +157,7 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 					},
 					this.renderFileField(),
 					this.renderFileList(),
-				)
+				),
 			);
 		}
 
@@ -215,7 +216,9 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 				: device.screen.width * FILE_PREVIEW_MEASURE / MAX_RESIZABLE_SCREEN_WIDTH;
 
 			return new FileAttachment({
-				ref: (ref) => this.fileListRef = ref,
+				ref: (ref) => {
+					this.fileListRef = ref;
+				},
 				attachments: this.fileFieldRef.getFilesInfo(this.fileFieldRef.getValue()),
 				layoutWidget: this.layout,
 				onDeleteAttachmentItem: (index) => this.onDeleteFile(index),
@@ -235,8 +238,8 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 						position: 'absolute',
 						top: 8,
 						right: 9,
-						borderColor: hasError ? '#ff5752' : '#333333',
-						backgroundColor: hasError ? '#ff615c' : null,
+						borderColor: hasError ? AppTheme.colors.accentMainAlert : AppTheme.colors.bgSeparatorPrimary,
+						backgroundColor: hasError ? AppTheme.colors.accentMainAlert : null,
 						borderWidth: 1,
 						opacity: hasError ? 0.5 : 0.08,
 						borderRadius: 6,
@@ -280,7 +283,7 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 				return false;
 			}
 
-			return this.getProps().required ? Boolean(this.state.files.length) : true;
+			return this.getProps().required ? this.state.files.length > 0 : true;
 		}
 
 		hasUploadingFiles()
@@ -308,7 +311,7 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 				const result = this.getProps().onSave(this);
 				if (!(result instanceof Promise))
 				{
-					throw new Error("File selector: 'onSave' handler must return Promise");
+					throw new TypeError('File selector: \'onSave\' handler must return Promise');
 				}
 
 				return result.then(() => this.close());
@@ -323,7 +326,7 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 		 */
 		close()
 		{
-			return new Promise(resolve => {
+			return new Promise((resolve) => {
 				if (this.layout)
 				{
 					this.layout.close();
@@ -342,5 +345,4 @@ jn.define('layout/ui/file/selector', (require, exports, module) => {
 	}
 
 	module.exports = { FileSelector };
-
 });

@@ -1,4 +1,4 @@
-<?php
+<?
 $MESS['CC_BBKL_ERROR_INCLUDE_MODULE'] = 'Модуль biconnector не установлен';
 $MESS['CT_BBKL_KEY_BUTTON_CREATE_TITLE'] = 'Создать ключ';
 $MESS['CT_BBKL_KEY_EMPTYSTATE_TITLE'] = 'Здесь будут ключи к отчётам';

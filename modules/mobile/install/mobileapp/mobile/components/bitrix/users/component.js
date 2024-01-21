@@ -3,44 +3,42 @@
  * @let BaseList list
  */
 
-(() =>
-{
-	const { ProfileView } = jn.require("user/profile");
-	const storageId = "user.component.result";
-	let componentResult = {
+(() => {
+	const require = (ext) => jn.require(ext);
+
+	const AppTheme = require('apptheme');
+	const { ProfileView } = require('user/profile');
+	const storageId = 'user.component.result';
+	const componentResult = {
 		/**
 		 * @returns {{nameFormat:String}}
 		 */
-		get: function ()
+		get()
 		{
-			if (!this.result)
-			{
-				return result;
-			}
-			else
+			if (this.result)
 			{
 				return this.result;
 			}
+
+			return result;
 		},
-		update: function ()
+		update()
 		{
 			this.result = Application.storage.getObject(storageId);
-			BX.ajax({url: component.resultUrl, dataType: "json"})
-				.then(result =>
-				{
+			BX.ajax({ url: component.resultUrl, dataType: 'json' })
+				.then((result) => {
 					this.result = result;
 					Application.storage.setObject(storageId, result);
 				})
-				.catch(e => console.error(e));
-		}
+				.catch((e) => console.error(e));
+		},
 	};
 
 	componentResult.update();
 
-	if (BX.componentParameters.get("canInvite", false))
+	if (BX.componentParameters.get('canInvite', false))
 	{
-		let action = () =>
-		{
+		const action = () => {
 			if (Application.getApiVersion() >= 34)
 			{
 				IntranetInvite.openRegisterSlider({
@@ -55,94 +53,97 @@
 			else if (Application.getApiVersion() >= 29)
 			{
 				dialogs.showContactList().then(
-					users =>
-					{
-						let fields = {
-							PHONE:[],
-							PHONE_COUNTRY:[],
-							MESSAGE_TEXT:"",
-							DEPARTMENT_ID:1,
-							CONTEXT: 'mobile'
+					(users) => {
+						const fields = {
+							PHONE: [],
+							PHONE_COUNTRY: [],
+							MESSAGE_TEXT: '',
+							DEPARTMENT_ID: 1,
+							CONTEXT: 'mobile',
 						};
 						users.forEach(
-							user =>
-							{
+							(user) => {
 								fields.PHONE.push(user.phone);
 								fields.PHONE_COUNTRY.push(user.countryCode);
-							});
+							},
+						);
 
-						if(fields.PHONE.length > 0)
+						if (fields.PHONE.length > 0)
 						{
 							Notify.showIndicatorLoading();
-							BX.rest.callMethod("intranet.invite.register", {"fields":fields})
-								.then(res=>
-								{
-									let errors = res.answer.result.errors;
-									if(errors && errors.length > 0)
+							BX.rest.callMethod('intranet.invite.register', { fields })
+								.then((res) => {
+									const errors = res.answer.result.errors;
+									if (errors && errors.length > 0)
 									{
-										let errorText = errors.reduce((fullMessage, errorMessage)=>{
-											errorMessage = errorMessage.replace("<br/>:","\n").replace("<br/>","\n");
-											fullMessage +=`\n${errorMessage}`;
-											return fullMessage;
-										},"");
+										const errorText = errors.reduce((fullMessage, errorMessage) => {
+											errorMessage = errorMessage.replace('<br/>:', '\n').replace('<br/>', '\n');
+											fullMessage += `\n${errorMessage}`;
 
-										Notify.showIndicatorError({hideAfter: 30000, onTap:()=>Notify.hideCurrentIndicator(), text: errorText});
+											return fullMessage;
+										}, '');
+
+										Notify.showIndicatorError({
+											hideAfter: 30000,
+											onTap: () => Notify.hideCurrentIndicator(),
+											text: errorText,
+										});
 									}
 									else
 									{
-										Notify.showIndicatorSuccess({hideAfter: 2000});
+										Notify.showIndicatorSuccess({ hideAfter: 2000 });
 									}
-
 								})
-								.catch(res=>
-								{
-									Notify.showIndicatorError({hideAfter: 2000, text: res.answer.error_description});
-								})
+								.catch((res) => {
+									Notify.showIndicatorError({ hideAfter: 2000, text: res.answer.error_description });
+								});
 						}
-					}
+					},
 				);
 			}
 			else
 			{
 				PageManager.openPage({
-					url: "/mobile/users/invite.php?",
+					url: '/mobile/users/invite.php?',
 					cache: false,
 					modal: true,
-					title: BX.message("INVITE_USERS")
+					title: BX.message('INVITE_USERS'),
 				});
 			}
-
 		};
 
-		let addUserButton = {
-			type: "plus",
+		const addUserButton = {
+			type: 'plus',
 			callback: action,
-			icon: "plus",//for floating button
-			animation: "hide_on_scroll", //for floating button
-			color: "#47AADE"
+			icon: 'plus', // for floating button
+			animation: 'hide_on_scroll', // for floating button
+			color: AppTheme.colors.accentMainPrimaryalt,
 		};
 
-		BX.onViewLoaded(()=>{
-			if (Application.getPlatform() === "ios")
+		BX.onViewLoaded(() => {
+			if (Application.getPlatform() === 'ios')
 			{
-				list.setRightButtons([{type:"search", callback:()=> list.showSearchBar()}])
-				//button in navigation bar for iOS
-				if(Application.getApiVersion()>=33)
+				list.setRightButtons([{ type: 'search', callback: () => list.showSearchBar() }]);
+				// button in navigation bar for iOS
+				if (Application.getApiVersion() >= 33)
+				{
 					list.setFloatingButton(addUserButton);
+				}
 				else
+				{
 					list.setRightButtons([addUserButton]);
+				}
 			}
 			else
 			{
-				//floating button for Android
+				// floating button for Android
 				if (Application.getApiVersion() >= 24)
 				{
 					list.setFloatingButton(addUserButton);
 				}
 			}
-		})
+		});
 	}
-
 
 	class ListDelegate
 	{
@@ -162,18 +163,15 @@
 				{
 					userId: user.params.id,
 					imageUrl: encodeURI(user.imageUrl),
-					title: BX.message("PROFILE_INFO"),
+					title: BX.message('PROFILE_INFO'),
 					workPosition: user.subtitle,
 					name: user.title,
 					url: user.params.profileUrl,
-				}
+				},
 			);
-		};
+		}
 	}
-
 
 	this.userList = new UserList(list, new ListDelegate(), componentResult.get().nameFormat);
 	this.userList.init();
-
 })();
-

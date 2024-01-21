@@ -1,9 +1,10 @@
-import { DateTimeFormat } from 'main.date';
+import { DatetimeConverter } from 'crm.timeline.tools';
 import { Browser, Dom } from 'main.core';
 import { BaseEvent } from 'main.core.events';
-import { DatetimeConverter } from 'crm.timeline.tools';
+import { DateTimeFormat } from 'main.date';
 import { TodoEditorActionBtn } from './todo-editor-action-btn';
 import { TodoEditorActionDelimiter } from './todo-editor-action-delimiter';
+import { TodoEditorPingSelector } from './todo-editor-ping-selector';
 import { TodoEditorResponsibleUserSelector } from './todo-editor-responsible-user-selector';
 
 const TEXTAREA_MAX_HEIGHT = 126;
@@ -16,7 +17,8 @@ export const TodoEditor = {
 	components: {
 		TodoEditorActionBtn,
 		TodoEditorActionDelimiter,
-		TodoEditorResponsibleUserSelector
+		TodoEditorResponsibleUserSelector,
+		TodoEditorPingSelector,
 	},
 
 	props: {
@@ -32,6 +34,7 @@ export const TodoEditor = {
 		additionalButtons: Array,
 		popupMode: Boolean,
 		currentUser: Object,
+		pingSettings: Object,
 	},
 
 	data(): Object
@@ -39,6 +42,7 @@ export const TodoEditor = {
 		return {
 			description: this.defaultDescription,
 			currentDeadline: this.deadline ?? new Date(),
+			pingOffsets: this.pingSettings.selectedValues,
 			responsibleUserId: this.currentUser.userId,
 			showFileUploader: false,
 			isTextareaToLong: false,
@@ -69,7 +73,7 @@ export const TodoEditor = {
 			});
 		},
 	},
-	
+
 	methods: {
 		clearDescription(): void
 		{
@@ -135,9 +139,20 @@ export const TodoEditor = {
 			}
 		},
 
+		setPingOffsets(offsets: Array): void
+		{
+			this.pingOffsets = offsets;
+		},
+
 		setResponsibleUserId(userId: Number): void
 		{
 			this.responsibleUserId = userId;
+		},
+
+		resetPingOffsetsToDefault(): void
+		{
+			this.setPingOffsets(this.pingSettings.selectedValues);
+			this.$refs.pingSelector?.setValue(this.pingSettings.selectedValues);;
 		},
 
 		resetResponsibleUserToDefault(): void
@@ -157,6 +172,7 @@ export const TodoEditor = {
 				description: this.description,
 				deadline: this.currentDeadline,
 				responsibleUserId: this.responsibleUserId,
+				pingOffsets: this.$refs.pingSelector?.getValue(),
 			};
 		},
 
@@ -191,13 +207,28 @@ export const TodoEditor = {
 				:class="{ '--has-scroll': isTextareaToLong }"
 			></textarea>
 			<div class="crm-activity__todo-editor_tools" v-if="wasUsed">
-				<div
-					ref="deadline"
-					@click="onDeadlineClick"
-					class="crm-activity__todo-editor_deadline"
-				>
-					<span class="crm-activity__todo-editor_deadline-icon"><i></i></span>
-					<span class="crm-activity__todo-editor_deadline-text">{{ deadlineFormatted }}</span>
+				<div class="crm-activity__todo-editor_left_tools">
+					<div
+						ref="deadline"
+						@click="onDeadlineClick"
+						class="crm-activity__todo-editor_deadline"
+					>
+						<span class="crm-activity__todo-editor_deadline-icon"><i></i></span>
+						<span class="crm-activity__todo-editor_deadline-pill">
+							<span class="crm-activity__todo-editor_deadline-text">{{ deadlineFormatted }}</span>
+							<span class="crm-timeline__date-pill_caret"></span>
+						</span>
+					</div>
+					<div class="crm-activity__todo-editor_ping_selector_wrapper">
+						<span class="crm-activity__todo-editor_ping-selector-icon"><i></i></span>
+						<TodoEditorPingSelector
+							ref="pingSelector"
+							:valuesList="pingSettings.valuesList"
+							:selectedValues="pingSettings.selectedValues"
+							class="crm-activity__todo-editor_ping_selector"
+						>
+						</TodoEditorPingSelector>
+					</div>
 				</div>
 				<div class="crm-activity__todo-editor_action-btns">
 					<TodoEditorActionBtn

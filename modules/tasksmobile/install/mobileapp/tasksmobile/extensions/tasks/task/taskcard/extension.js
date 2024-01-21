@@ -464,7 +464,7 @@ include('InAppNotifier');
 
 			InAppNotifier.showNotification({
 				title: BX.message('TASKS_TASK_DETAIL_TASK_WAS_REMOVED_IN_ANOTHER_PLACE'),
-				backgroundColor: '#333333',
+				backgroundColor: AppTheme.colors.base1,
 			});
 			if (this.taskCardHandler)
 			{
@@ -1209,7 +1209,7 @@ include('InAppNotifier');
 					{
 						InAppNotifier.showNotification({
 							title: BX.message('TASKS_TASK_DETAIL_TASK_WAS_REMOVED'),
-							backgroundColor: '#333333',
+							backgroundColor: AppTheme.colors.base1,
 						});
 
 						void this.task.remove();
@@ -1352,7 +1352,7 @@ include('InAppNotifier');
 					action: this.onPauseAction,
 				},
 				disapprove: {
-					title: BX.message('TASKS_TASK_DETAIL_BTN_REDO_TASK'),
+					title: BX.message('TASKS_TASK_DETAIL_BTN_REDO_TASK_MSGVER_1'),
 					iconUrl: `${urlPrefix}renew.png`,
 					action: this.onDisapproveAction,
 				},
@@ -1418,7 +1418,6 @@ include('InAppNotifier');
 		{
 			BX.onViewLoaded(() => {
 				this.taskCardHandler = new TaskCardHandler(taskcard);
-				this.checklistController = new ChecklistController(this.taskId, this.userId, this.guid, this.mode);
 
 				const taskInfo = this.getTaskInfo();
 				delete taskInfo.project;
@@ -1452,8 +1451,6 @@ include('InAppNotifier');
 			this.mode = 'edit';
 
 			BX.onViewLoaded(() => {
-				this.checklistController = new ChecklistController(this.taskId, this.userId, this.guid, this.mode);
-
 				this.taskPopupMenu = dialogs.createPopupMenu();
 				this.taskPopupMenu.setPosition('center');
 				this.redrawTaskPopupMenu();

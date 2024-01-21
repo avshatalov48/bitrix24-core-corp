@@ -51,7 +51,11 @@ class Opportunity extends Field
 	{
 		if ($item->hasField(Item::FIELD_NAME_OPPORTUNITY_ACCOUNT))
 		{
-			$opportunityAccount = Currency\Conversion::toAccountCurrency($newOpportunityValue, $item->getCurrencyId());
+			$opportunityAccount = Currency\Conversion::toAccountCurrency(
+				$newOpportunityValue,
+				$item->getCurrencyId(),
+				$item->hasField(Item::FIELD_NAME_EXCH_RATE) ? $item->getExchRate() : null,
+			);
 
 			$result->setNewValue(Item::FIELD_NAME_OPPORTUNITY_ACCOUNT, $opportunityAccount);
 		}

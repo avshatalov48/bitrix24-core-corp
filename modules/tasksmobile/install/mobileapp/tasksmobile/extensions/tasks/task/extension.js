@@ -3,11 +3,19 @@
  */
 
 (() => {
-	const { Loc } = jn.require('loc');
-	const { Type } = jn.require('type');
-	const { Entry } = jn.require('tasks/entry');
+	const require = (ext) => jn.require(ext);
+
+	const { Loc } = require('loc');
+	const { Type } = require('type');
+	const { Entry } = require('tasks/entry');
+	const { RequestExecutor } = require('rest');
+	const AppTheme = require('apptheme');
+	const { showToast } = require('toast');
 
 	const pathToExtension = '/bitrix/mobileapp/tasksmobile/extensions/tasks/task/';
+
+	const pathToIcons = '/bitrix/mobileapp/tasksmobile/extensions/tasks/layout/action-menu/images';
+	const iconPrefix = `${currentDomain}${pathToIcons}/tasksmobile-layout-action-menu-`;
 
 	class Console
 	{
@@ -24,15 +32,19 @@
 			return {
 				expired: {
 					expired: 'expired',
+					mutedExpired: 'mutedExpired',
 					projectExpired: 'projectExpired',
 				},
 				newComments: {
 					newComments: 'newComments',
+					mutedNewComments: 'mutedNewComments',
 					projectNewComments: 'projectNewComments',
 				},
 				my: {
 					expired: 'expired',
+					mutedExpired: 'mutedExpired',
 					newComments: 'newComments',
+					mutedNewComments: 'mutedNewComments',
 				},
 				project: {
 					projectExpired: 'projectExpired',
@@ -56,6 +68,8 @@
 				counters: {
 					[Counter.types.my.expired]: 0,
 					[Counter.types.my.newComments]: 0,
+					[Counter.types.my.mutedExpired]: 0,
+					[Counter.types.my.mutedNewComments]: 0,
 					[Counter.types.project.projectExpired]: 0,
 					[Counter.types.project.projectNewComments]: 0,
 				},
@@ -233,6 +247,8 @@
 
 		set(actions)
 		{
+			this.actions = actions;
+
 			this.canChangeDeadline = (actions.changeDeadline || false);
 			this.canDelegate = (actions.delegate || false);
 			this.canStartTimer = ((actions['dayplan.timer.toggle'] && !this.task.isTimerRunningForCurrentUser) || false);
@@ -333,6 +349,7 @@
 		exportProperties()
 		{
 			return {
+				actions: this.actions,
 				canChangeDeadline: this.canChangeDeadline,
 				canDelegate: this.canDelegate,
 				canStartTimer: this.canStartTimer,
@@ -353,6 +370,7 @@
 
 		importProperties(properties)
 		{
+			this.actions = properties.actions;
 			this.canChangeDeadline = properties.canChangeDeadline;
 			this.canDelegate = properties.canDelegate;
 			this.canStartTimer = properties.canStartTimer;
@@ -423,7 +441,24 @@
 			});
 		}
 
-		update()
+		async update()
+		{
+			try
+			{
+				const updateTaskResponse = await this.updateTask();
+				const updateStageResponse = await this.updateStage();
+
+				return updateTaskResponse;
+			}
+			catch (error)
+			{
+				console.error(error);
+
+				throw error;
+			}
+		}
+
+		updateTask()
 		{
 			Console.log('Update task');
 
@@ -433,28 +468,68 @@
 				{
 					resolve();
 				}
-				(new RequestExecutor('tasks.task.update', {
-					taskId: this.task.id,
-					fields: fieldsToSave,
-				}))
-					.call()
-					.then(
-						(response) => {
-							Console.log(response);
+				else
+				{
+					(new RequestExecutor('tasks.task.update', {
+						taskId: this.task.id,
+						fields: fieldsToSave,
+					}))
+						.call()
+						.then(
+							(response) => {
+								Console.log(response);
 
-							const { task } = response.result;
-							this.task.updateData(task);
+								const { task } = response.result;
+								this.task.updateData(task);
 
-							resolve(response);
-						},
-						(response) => {
-							Console.log(response);
-							reject(response);
-						},
-					)
-					.catch((response) => reject(response))
-				;
+								resolve(response);
+							},
+							(response) => {
+								Console.log(response);
+								reject(response);
+							},
+						)
+						.catch((response) => reject(response))
+					;
+				}
 			});
+		}
+
+		updateStage()
+		{
+			const fieldsToSave = (
+				this.fieldChangesTracker.isEnabled
+					? this.fieldChangesTracker.getChangedFields()
+					: Object.values(Task.fields)
+			);
+
+			if (fieldsToSave.includes(Task.fields.stageId))
+			{
+				return new Promise((resolve, reject) => {
+					BX.ajax.runAction('tasksmobile.Task.updateProjectKanbanTaskStage', {
+						data: {
+							id: this.task.id,
+							stageId: this.task.currentStageId,
+							projectId: this.task.groupId,
+							order: 'ACTIVITY',
+							extra: {
+								filterParams: {},
+							},
+							searchParams: {
+								ownerId: this.task.currentUser.id,
+							},
+						},
+					})
+						.then((response) => {
+							resolve(response);
+						})
+						.catch((response) => {
+							reject(response);
+						});
+				});
+			}
+
+			return Promise.resolve();
 		}
 
 		getFieldsToSave()
@@ -481,39 +556,13 @@
 				[Task.fields.allowTaskControl]: () => (Type.isUndefined(this.task.allowTaskControl) ? {} : { TASK_CONTROL: (this.task.allowTaskControl ? 'Y' : 'N') }),
 				[Task.fields.allowTimeTracking]: () => (Type.isUndefined(this.task.allowTimeTracking) ? {} : { ALLOW_TIME_TRACKING: (this.task.allowTimeTracking ? 'Y' : 'N') }),
 
-				[Task.fields.isResultRequired]: () => {
-					if (!Type.isUndefined(this.task.isResultRequired))
-					{
-						return {
-							SE_PARAMETER: [
-								{
-									CODE: Task.parameterCodes.isResultRequired,
-									VALUE: (this.task.isResultRequired ? 'Y' : 'N'),
-								},
-							],
-						};
-					}
-
-					return {};
-				},
+				[Task.fields.isResultRequired]: () => (Type.isUndefined(this.task.isResultRequired) ? {} : { SE_PARAMETER: [{ CODE: Task.parameterCodes.isResultRequired, VALUE: (this.task.isResultRequired ? 'Y' : 'N') }] }),
 
 				[Task.fields.mark]: () => (Type.isUndefined(this.task.mark) ? {} : { MARK: (this.task.mark === Task.mark.none ? '' : this.task.mark) }),
 				[Task.fields.tags]: () => (Type.isUndefined(this.task.tags) ? {} : { TAGS: Object.values(this.task.tags).map((tag) => tag.title) }),
 				[Task.fields.crm]: () => (Type.isUndefined(this.task.crm) ? {} : { CRM: (Object.keys(this.task.crm).length > 0 ? this.task.crm : []) }),
 				[Task.fields.uploadedFiles]: () => (Type.isUndefined(this.task.uploadedFiles) ? {} : { UPLOADED_FILES: this.task.uploadedFiles.map((file) => file.token) }),
-				[Task.fields.files]: () => {
-					const filesFields = {};
-					if (!Type.isUndefined(this.task.diskFiles))
-					{
-						filesFields.UF_TASK_WEBDAV_FILES = this.task.diskFiles;
-					}
-					else if (!Type.isUndefined(this.task.files))
-					{
-						filesFields.UF_TASK_WEBDAV_FILES = this.task.files.map((file) => file.id);
-					}
-
-					return filesFields;
-				},
+				[Task.fields.files]: () => (Type.isUndefined(this.task.files) ? {} : { UF_TASK_WEBDAV_FILES: this.task.files.map((file) => file.id) }),
 				[Task.fields.parentTask]: () => (Type.isUndefined(this.task.parentId) ? {} : { PARENT_ID: (this.task.parentId || 0) }),
 			};
 			const fieldsToSave = (
@@ -523,17 +572,15 @@
 			);
 
 			return fieldsToSave.reduce((accumulator, field) => {
-				let result = accumulator;
-
 				if (Object.keys(fieldsValueGetters).includes(field))
 				{
-					result = {
-						...result,
+					return {
+						...accumulator,
 						...fieldsValueGetters[field](),
 					};
 				}
 
-				return result;
+				return accumulator;
 			}, {});
 		}
 
@@ -758,6 +805,10 @@
 		{
 			const oldStatus = this.task.status;
 			this.task.status = Task.statusList.completed;
+			if (this.task.allowTaskControl && !this.task.isPureCreator())
+			{
+				this.task.status = Task.statusList.waitCtrl;
+			}
 
 			return new Promise((resolve, reject) => {
 				(new RequestExecutor('tasks.task.complete', {
@@ -994,6 +1045,13 @@
 
 		ping()
 		{
+			showToast({
+				message: Loc.getMessage('MOBILE_TASKS_TASK_CARD_VIEW_ACTION_PING_NOTIFICATION'),
+				svg: {
+					url: `${iconPrefix}ping.svg`,
+				},
+			});
+
 			return new Promise((resolve, reject) => {
 				(new RequestExecutor('tasks.task.ping', { taskId: this.task.id }))
 					.call()
@@ -1141,57 +1199,57 @@
 				},
 				isDeferred: {
 					message: Loc.getMessage('MOBILE_TASKS_TASK_CARD_STATE_DEFERRED'),
-					fontColor: '#333333',
-					backgroundColor: '#FFFFFF',
+					fontColor: AppTheme.colors.base1,
+					backgroundColor: AppTheme.colors.base8,
 					border: {
-						color: '#A8ADB4',
+						color: AppTheme.colors.base4,
 						width: 2,
 					},
 				},
 				isSupposedlyCompleted: {
 					message: Loc.getMessage('MOBILE_TASKS_TASK_CARD_STATE_SUPPOSEDLY_COMPLETED'),
-					fontColor: '#333333',
-					backgroundColor: '#FFFFFF',
+					fontColor: AppTheme.colors.base1,
+					backgroundColor: AppTheme.colors.base8,
 					border: {
-						color: '#F7A700',
+						color: AppTheme.colors.accentMainWarning,
 						width: 2,
 					},
 				},
 				isExpired: {
 					message: this.getExpiredTimeText(),
-					fontColor: '#FFFFFF',
-					backgroundColor: '#FF6864',
+					fontColor: AppTheme.colors.base8,
+					backgroundColor: AppTheme.colors.accentMainAlert,
 				},
 				isToday: {
 					// eslint-disable-next-line sonarjs/no-nested-template-literals
 					message: `${Loc.getMessage(`${statePrefix}_TODAY`)} ${deadlineTime}`,
-					fontColor: '#FFFFFF',
-					backgroundColor: '#F9B933',
+					fontColor: AppTheme.colors.base8,
+					backgroundColor: AppTheme.colors.accentMainWarning,
 				},
 				isTomorrow: {
 					message: Loc.getMessage(`${statePrefix}_TOMORROW`),
-					fontColor: '#FFFFFF',
-					backgroundColor: '#A5C933',
+					fontColor: AppTheme.colors.base8,
+					backgroundColor: AppTheme.colors.accentMainSuccess,
 				},
 				isThisWeek: {
 					message: Loc.getMessage(`${statePrefix}_THIS_WEEK`),
-					fontColor: '#FFFFFF',
-					backgroundColor: '#59D1F8',
+					fontColor: AppTheme.colors.base8,
+					backgroundColor: AppTheme.colors.accentBrandBlue,
 				},
 				isNextWeek: {
 					message: Loc.getMessage(`${statePrefix}_NEXT_WEEK`),
-					fontColor: '#FFFFFF',
-					backgroundColor: '#3AD4CC',
+					fontColor: AppTheme.colors.base8,
+					backgroundColor: AppTheme.colors.accentExtraAqua,
 				},
 				isWoDeadline: {
 					message: Loc.getMessage(`${statePrefix}_NO_DEADLINE`),
-					fontColor: '#828B95',
-					backgroundColor: '#E2E9EC',
+					fontColor: AppTheme.colors.base3,
+					backgroundColor: AppTheme.colors.base6,
 				},
 				isMoreThanTwoWeeks: {
 					message: Loc.getMessage(`${statePrefix}_MORE_THAN_TWO_WEEKS`),
-					fontColor: '#FFFFFF',
-					backgroundColor: '#C2C6CB',
+					fontColor: AppTheme.colors.base8,
+					backgroundColor: AppTheme.colors.base5,
 				},
 			};
 		}
@@ -1444,18 +1502,18 @@
 		static get counterColors()
 		{
 			return {
-				danger: '#ff5752',
-				gray: '#a8adb4',
-				success: '#9dcf00',
+				danger: AppTheme.colors.accentMainAlert,
+				gray: AppTheme.colors.base4,
+				success: AppTheme.colors.accentMainSuccess,
 			};
 		}
 
 		static get backgroundColors()
 		{
 			return {
-				default: '#FFFFFF',
-				pinned: '#F4F5F7',
-				blinking: '#FFFEDF',
+				default: AppTheme.colors.bgContentPrimary,
+				pinned: AppTheme.colors.bgContentTertiary,
+				blinking: AppTheme.colors.accentSoftGreen3,
 			};
 		}
 
@@ -1468,13 +1526,13 @@
 					identifier: 'more',
 					title: Loc.getMessage(`${titlePrefix}_MORE`),
 					iconName: 'more',
-					color: '#848E9E',
+					color: AppTheme.colors.base3,
 					position: 'right',
 				},
 				cancel: {
 					id: 'cancel',
 					title: Loc.getMessage(`${titlePrefix}_CANCEL`),
-					textColor: '#828B95',
+					textColor: AppTheme.colors.base3,
 					sectionCode: 'default',
 					showTopSeparator: true,
 				},
@@ -1604,6 +1662,7 @@
 				endDatePlan: 'endDatePlan',
 
 				checkList: 'checkList',
+				stageId: 'stageId',
 			};
 		}
 
@@ -1634,6 +1693,7 @@
 			this.timeEstimate = undefined;
 			this.commentsCount = undefined;
 			this.serviceCommentsCount = undefined;
+			this.stageId = undefined;
 
 			this.status = undefined;
 			this.subStatus = undefined;
@@ -1650,7 +1710,6 @@
 			this.crm = undefined;
 			this.tags = undefined;
 			this.files = undefined;
-			this.diskFiles = undefined;
 			this.uploadedFiles = undefined;
 			this.parentId = undefined;
 			this.parentTask = undefined;
@@ -1675,6 +1734,7 @@
 			this.actions = {};
 
 			this.canSendMyselfOnOpen = true;
+			this.currentStageId = undefined;
 		}
 
 		setData(row)
@@ -1682,6 +1742,7 @@
 			const fieldMap = {
 				id: () => row.id,
 				title: () => row.title,
+				name: () => row.name,
 				description: () => row.description,
 				parsedDescription: () => row.parsedDescription,
 				groupId: () => row.groupId,
@@ -1757,6 +1818,7 @@
 					checker: () => !Type.isUndefined(row.action),
 					getter: () => row.action,
 				},
+				stageId: () => Number(row.stageId),
 			};
 			const baseChecker = (value) => !Type.isUndefined(value);
 
@@ -1825,7 +1887,7 @@
 
 						const accomplices = {};
 						Object.entries(row.accomplicesData).forEach(([id, user]) => {
-							accomplices[id] = {	id, ...user };
+							accomplices[id] = { id, ...user };
 							if (this.accomplices && this.accomplices[id])
 							{
 								const currentUserData = this.accomplices[id];
@@ -1914,6 +1976,7 @@
 					checker: () => has.call(row, 'action'),
 					getter: () => row.action,
 				},
+				stageId: () => row.stageId,
 			};
 			const baseChecker = (field) => has.call(row, field);
 
@@ -1963,7 +2026,6 @@
 				crm: this.crm,
 				tags: this.tags,
 				files: this.files,
-				diskFiles: this.diskFiles,
 				uploadedFiles: this.uploadedFiles,
 				parentId: this.parentId,
 				parentTask: this.parentTask,
@@ -2027,7 +2089,7 @@
 		tryUpdateCurrentUserIcon(user)
 		{
 			if (
-				Number(this.currentUser.id) === Number(user.id)
+				Number(this.currentUser.id) === Number(user?.id)
 				&& this.currentUser.icon !== user.icon
 			)
 			{
@@ -2265,140 +2327,140 @@
 					identifier: Action.types.changeDeadline,
 					title: Loc.getMessage(`${titlePrefix}_CHANGE_DEADLINE`),
 					iconName: 'action_term',
-					color: '#F2A100',
+					color: AppTheme.colors.accentMainWarning,
 					position: 'right',
 				},
 				approve: {
 					identifier: Action.types.approve,
 					title: Loc.getMessage(`${titlePrefix}_APPROVE`),
 					iconName: 'action_accept',
-					color: '#468EE5',
+					color: AppTheme.colors.accentExtraDarkblue,
 					position: 'right',
 				},
 				disapprove: {
 					identifier: Action.types.disapprove,
-					title: Loc.getMessage(`${titlePrefix}_DISAPPROVE_MSGVER_1`),
+					title: Loc.getMessage(`${titlePrefix}_DISAPPROVE_MSGVER_2`),
 					iconName: 'action_finish_up',
-					color: '#FF5752',
+					color: AppTheme.colors.accentMainAlert,
 					position: 'right',
 				},
 				changeResponsible: {
 					identifier: Action.types.changeResponsible,
 					title: Loc.getMessage(`${titlePrefix}_CHANGE_RESPONSIBLE`),
 					iconName: 'action_userlist',
-					color: '#2F72B9',
+					color: AppTheme.colors.accentMainLinks,
 					position: 'right',
 				},
 				delegate: {
 					identifier: Action.types.delegate,
 					title: Loc.getMessage(`${titlePrefix}_DELEGATE`),
 					iconName: 'action_userlist',
-					color: '#2F72B9',
+					color: AppTheme.colors.accentMainLinks,
 					position: 'right',
 				},
 				ping: {
 					identifier: Action.types.ping,
 					title: Loc.getMessage(`${titlePrefix}_PING`),
 					iconName: 'action_ping',
-					color: '#05b5ab',
+					color: AppTheme.colors.accentExtraAqua,
 					position: 'right',
 				},
 				share: {
 					identifier: Action.types.share,
 					title: Loc.getMessage(`${titlePrefix}_SHARE`),
 					iconName: 'action_share',
-					color: '#6E7B8F',
+					color: AppTheme.colors.base3,
 					position: 'right',
 				},
 				changeGroup: {
 					identifier: Action.types.changeGroup,
 					title: Loc.getMessage(`${titlePrefix}_CHANGE_GROUP`),
 					iconName: 'action_project',
-					color: '#1BA09B',
+					color: AppTheme.colors.accentExtraAqua,
 					position: 'right',
 				},
 				startTimer: {
 					identifier: Action.types.startTimer,
 					title: Loc.getMessage(`${titlePrefix}_START`),
 					iconName: 'action_start',
-					color: '#38C4D6',
+					color: AppTheme.colors.accentExtraAqua,
 					position: 'right',
 				},
 				pauseTimer: {
 					identifier: Action.types.pauseTimer,
 					title: Loc.getMessage(`${titlePrefix}_PAUSE`),
 					iconName: 'action_finish',
-					color: '#38C4D6',
+					color: AppTheme.colors.accentExtraAqua,
 					position: 'right',
 				},
 				start: {
 					identifier: Action.types.start,
 					title: Loc.getMessage(`${titlePrefix}_START`),
 					iconName: 'action_start',
-					color: '#38C4D6',
+					color: AppTheme.colors.accentExtraAqua,
 					position: 'right',
 				},
 				pause: {
 					identifier: Action.types.pause,
 					title: Loc.getMessage(`${titlePrefix}_PAUSE`),
 					iconName: 'action_finish',
-					color: '#38C4D6',
+					color: AppTheme.colors.accentExtraAqua,
 					position: 'right',
 				},
 				renew: {
 					identifier: Action.types.renew,
 					title: Loc.getMessage(`${titlePrefix}_RENEW`),
 					iconName: 'action_reload',
-					color: '#05b5ab',
+					color: AppTheme.colors.accentExtraAqua,
 					position: 'right',
 				},
 				mute: {
 					identifier: Action.types.mute,
 					title: Loc.getMessage(`${titlePrefix}_MUTE`),
 					iconName: 'action_mute',
-					color: '#8BC84B',
+					color: AppTheme.colors.accentMainSuccess,
 					position: 'right',
 				},
 				unmute: {
 					identifier: Action.types.unmute,
 					title: Loc.getMessage(`${titlePrefix}_UNMUTE`),
 					iconName: 'action_unmute',
-					color: '#8BC84B',
+					color: AppTheme.colors.accentMainSuccess,
 					position: 'right',
 				},
 				unfollow: {
 					identifier: Action.types.unfollow,
 					title: Loc.getMessage(`${titlePrefix}_DONT_FOLLOW`),
 					iconName: 'action_unfollow',
-					color: '#AF6D4D',
+					color: AppTheme.colors.accentExtraBrown,
 					position: 'right',
 				},
 				remove: {
 					identifier: Action.types.remove,
 					title: Loc.getMessage(`${titlePrefix}_REMOVE`),
 					iconName: 'action_remove',
-					color: '#6E7B8F',
+					color: AppTheme.colors.base3,
 					position: 'right',
 				},
 				read: {
 					identifier: Action.types.read,
 					title: Loc.getMessage(`${titlePrefix}_READ`),
 					iconName: 'action_read',
-					color: '#E57BB6',
+					color: AppTheme.colors.accentExtraPink,
 					position: 'left',
 				},
 				pin: {
 					identifier: Action.types.pin,
 					title: Loc.getMessage(`${titlePrefix}_PIN`),
 					iconName: 'action_pin',
-					color: '#468EE5',
+					color: AppTheme.colors.accentExtraDarkblue,
 					position: 'left',
 				},
 				unpin: {
 					identifier: Action.types.unpin,
 					title: Loc.getMessage(`${titlePrefix}_UNPIN`),
 					iconName: 'action_unpin',
-					color: '#468EE5',
+					color: AppTheme.colors.accentExtraDarkblue,
 					position: 'left',
 				},
 			};

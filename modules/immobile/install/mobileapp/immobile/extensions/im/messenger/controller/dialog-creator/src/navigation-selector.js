@@ -2,13 +2,13 @@
  * @module im/messenger/controller/dialog-creator/navigation-selector
  */
 jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { EventType } = require('im/messenger/const');
 	const { RecipientSelector } = require('im/messenger/controller/dialog-creator/recipient-selector');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { NavigationSelectorView } = require('im/messenger/controller/dialog-creator/navigation-selector/view');
 	const { DialogDTO } = require('im/messenger/controller/dialog-creator/dialog-dto');
+	const AppTheme = require('apptheme');
 
 	class NavigationSelector
 	{
@@ -18,7 +18,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 		 * @param {DialogDTO} DialogDTO
 		 * @param parentLayout
 		 */
-		static open({ userList}, parentLayout = null)
+		static open({ userList }, parentLayout = null)
 		{
 			const widget = new NavigationSelector(userList, parentLayout);
 			widget.show();
@@ -30,7 +30,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 			this.layout = parentLayout || null;
 
 			this.view = new NavigationSelectorView({
-				userList: userList,
+				userList,
 				onClose: () => {
 					this.layout.close();
 				},
@@ -39,7 +39,8 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 					this.layout.close();
 				},
 				onCreateOpenChat: () => {
-					RecipientSelector.open({
+					RecipientSelector.open(
+						{
 							dialogDTO: new DialogDTO().setType('OPEN'),
 							userList: ChatUtils.objectClone(this.userList),
 						},
@@ -47,7 +48,8 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 					);
 				},
 				onCreatePrivateChat: () => {
-					RecipientSelector.open({
+					RecipientSelector.open(
+						{
 							dialogDTO: (new DialogDTO()).setType('CHAT'),
 							userList: ChatUtils.objectClone(this.userList),
 						},
@@ -64,7 +66,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 						sharingMessage: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_SHARING_MESSAGE', ''),
 						parentLayout: this.layout,
 					});
-				}
+				},
 			});
 		}
 
@@ -74,14 +76,14 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 				title: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_CHAT_CREATE_TITLE'),
 				useLargeTitleMode: true,
 				modal: true,
+				backgroundColor: AppTheme.colors.bgNavigation,
 				backdrop: {
 					mediumPositionPercent: 85,
 					horizontalSwipeAllowed: false,
 					onlyMediumPosition: true,
 				},
-				onReady: layoutWidget =>
-				{
-					this.layout = layoutWidget
+				onReady: (layoutWidget) => {
+					this.layout = layoutWidget;
 					layoutWidget.showComponent(this.view);
 				},
 			};
@@ -91,7 +93,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 				this.layout.openWidget(
 					'layout',
 					config,
-				).then(layoutWidget => {
+				).then((layoutWidget) => {
 					this.configureWidget(layoutWidget);
 				});
 
@@ -101,7 +103,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 			PageManager.openWidget(
 				'layout',
 				config,
-			).then(layoutWidget => {
+			).then((layoutWidget) => {
 				this.configureWidget(layoutWidget);
 			});
 		}
@@ -109,13 +111,13 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 		configureWidget(layoutWidget)
 		{
 			layoutWidget.setTitle({
-				useLargeTitleMode: true
+				useLargeTitleMode: true,
 			});
 			layoutWidget.search.mode = 'bar';
 			layoutWidget.setRightButtons([
 				{
-					type: "search",
-					id: "search",
+					type: 'search',
+					id: 'search',
 					name: 'search',
 					callback: () => {
 						layoutWidget.search.show();
@@ -123,17 +125,18 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 					},
 				},
 			]);
-			layoutWidget.set
 			layoutWidget.search.on('cancel', () => {
 				this.view.searchClose();
 			});
-			layoutWidget.search.on('textChanged', text => {
-				this.view.search(text.text);
+			layoutWidget.search.on('textChanged', (text) => {
+				clearTimeout(this.searchTimeout);
+				this.searchTimeout = setTimeout(() => {
+					this.view.search(text.text);
+				}, 200);
 			});
+			layoutWidget.enableNavigationBarBorder(false);
 		}
 	}
-
-
 
 	module.exports = { NavigationSelector };
 });

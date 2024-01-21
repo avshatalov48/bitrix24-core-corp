@@ -1,4 +1,3 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,main_core_events,ui_sidepanel_layout,ui_label,ui_notification,main_core,ui_dialogs_messagebox) {
@@ -476,9 +475,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var _this18 = this;
 	      this.sidePanel = event.getSlider();
 	      var listContainer = this.sidePanel.getContainer().querySelector('.tasks-scrum-epic-tasks-list');
-	      main_core.Runtime.html(listContainer, this.listData.html).then(function () {
-	        main_core_events.EventEmitter.subscribe('Grid::beforeRequest', _this18.onBeforeGridRequest.bind(_this18));
-	      });
+	      if (this.listData) {
+	        main_core.Runtime.html(listContainer, this.listData.html).then(function () {
+	          main_core_events.EventEmitter.subscribe('Grid::beforeRequest', _this18.onBeforeGridRequest.bind(_this18));
+	        });
+	      }
 	    }
 	  }, {
 	    key: "onLoadViewForm",

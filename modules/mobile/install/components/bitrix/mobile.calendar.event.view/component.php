@@ -1,26 +1,31 @@
 <?if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 
-
 if(!CModule::IncludeModule('calendar') || (!(isset($GLOBALS['USER']) && is_object($GLOBALS['USER']) && $GLOBALS['USER']->IsAuthorized())))
+{
 	return;
+}
 
 $event = false;
 $userId = $GLOBALS['USER']->GetID();
 if (isset($_REQUEST['app_calendar_action']) && check_bitrix_sessid())
 {
 	$APPLICATION->RestartBuffer();
-	if ($_REQUEST['app_calendar_action'] == 'change_meeting_status' && $userId == $_REQUEST['user_id'])
+	if (
+		$_REQUEST['app_calendar_action'] === 'change_meeting_status'
+		&& !empty($userId)
+		&& (int)$userId === (int)$_REQUEST['user_id']
+	)
 	{
-		CCalendarEvent::SetMeetingStatus(array(
-			'userId' => $userId,
-			'eventId' => intval($_REQUEST['event_id']),
-			'status' => $_REQUEST['status'] == 'Y' ? 'Y' : 'N'
-		));
+		CCalendarEvent::SetMeetingStatus([
+			'userId' => (int)$userId,
+			'eventId' => (int)$_REQUEST['event_id'],
+			'status' => $_REQUEST['status'] === 'Y' ? 'Y' : 'N'
+		]);
 	}
-	die();
+	\Bitrix\Main\Application::getInstance()->end();
 }
 
-$eventId = intval($arParams['EVENT_ID']);
+$eventId = (int)$arParams['EVENT_ID'];
 if (isset($_REQUEST['date_from']))
 {
 	$fromTs = CCalendar::Timestamp($_REQUEST['date_from']);

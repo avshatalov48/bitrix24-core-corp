@@ -69,6 +69,7 @@
 
 		initItemsFromEventResult(result)
 		{
+			console.trace("initItemsFromEventResult");
 			const spotlights = result && result.hasOwnProperty('spotlights') ? result.spotlights : [];
 			this.setItemsFromArray(spotlights);
 			this.tryToShowSpotlight();

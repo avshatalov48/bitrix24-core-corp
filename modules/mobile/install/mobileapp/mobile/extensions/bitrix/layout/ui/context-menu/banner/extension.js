@@ -4,6 +4,7 @@
 jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const AppTheme = require('apptheme');
 
 	const BannerPositioning = {
 		Horizontal: 'horizontal',
@@ -35,6 +36,11 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 		get imagePath()
 		{
 			return BX.prop.getString(this.props.banner, 'imagePath', '');
+		}
+
+		get imageSvg()
+		{
+			return BX.prop.getString(this.props.banner, 'imageSvg', '');
 		}
 
 		get qrauthParameters()
@@ -102,6 +108,32 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 			return this.onCloseBanner;
 		}
 
+		renderImage()
+		{
+			const imageSvg = this.imageSvg;
+			const isHorizontalPositioning = this.isHorizontalPositioning();
+
+			if (imageSvg)
+			{
+				return Image({
+					svg: {
+						content: imageSvg,
+					},
+					style: {
+						marginTop: isHorizontalPositioning ? 0 : 20,
+						width: isHorizontalPositioning ? 116 : 120,
+						height: isHorizontalPositioning ? 116 : 120,
+					},
+				});
+			}
+
+			return View(
+				{
+					style: styles.icon(this.imagePath, isHorizontalPositioning),
+				},
+			);
+		}
+
 		render()
 		{
 			const isHorizontalPositioning = this.isHorizontalPositioning();
@@ -115,11 +147,7 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 					{
 						style: styles.listContainer(isHorizontalPositioning),
 					},
-					View(
-						{
-							style: styles.icon(this.imagePath, isHorizontalPositioning),
-						},
-					),
+					this.renderImage(),
 					this.renderTitle(),
 					View(
 						{
@@ -253,6 +281,7 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 
 			return View(
 				{
+					testId: 'context-menu-action-banner-button',
 					style: styles.button[buttonType],
 					onClick: action,
 				},
@@ -267,20 +296,20 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 	}
 
 	const SvgImages = {
-		featureItemIcon: '<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="9" fill="#D5F4FD"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8.18543 10.1948L10.0091 12.0185L14.0893 7.93896L15.2825 9.13221L10.0094 14.4053L6.99219 11.3881L8.18543 10.1948Z" fill="#2FC6F6"/></svg>',
+		featureItemIcon: `<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="9" fill="${AppTheme.colors.accentSoftBlue1}"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8.18543 10.1948L10.0091 12.0185L14.0893 7.93896L15.2825 9.13221L10.0094 14.4053L6.99219 11.3881L8.18543 10.1948Z" fill="${AppTheme.colors.accentMainPrimary}"/></svg>`,
 	};
 
 	const styles = {
-		container: (isHorizontalPositioning) => ({
+		container: () => ({
 			flexDirection: 'column',
 			marginBottom: 10,
 			paddingTop: 10,
 			paddingBottom: 28,
-			backgroundColor: isHorizontalPositioning ? '#f6fdff' : '#f8fafb',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			borderRadius: 12,
 		}),
 		title: (isHorizontalPositioning) => ({
-			color: '#000000',
+			color: AppTheme.colors.base1,
 			fontSize: 17,
 			fontWeight: '500',
 			textAlign: 'center',
@@ -288,14 +317,14 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 			marginBottom: isHorizontalPositioning ? 11 : 17,
 		}),
 		subtitle: {
-			color: '#525c69',
+			color: AppTheme.colors.base3,
 			fontSize: 13,
 			marginLeft: 20,
 			marginRight: 20,
 			marginBottom: 20,
 		},
 		subtext: {
-			color: '#525c69',
+			color: AppTheme.colors.base3,
 			fontSize: 13,
 			margin: 20,
 			marginBottom: 0,
@@ -337,13 +366,13 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 		}),
 		itemText: (isHorizontalPositioning) => ({
 			fontSize: isHorizontalPositioning ? 14 : 15,
-			color: '#000000',
+			color: AppTheme.colors.base1,
 			flexShrink: 2,
 		}),
 		button: {
 			activeGreen:
 				{
-					backgroundColor: '#93da07',
+					backgroundColor: AppTheme.colors.accentMainSuccess,
 					marginTop: 30,
 					paddingHorizontal: 32,
 					paddingVertical: 11,
@@ -353,7 +382,7 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 				},
 			transparent:
 				{
-					borderColor: '#828b95',
+					borderColor: AppTheme.colors.bgSeparatorPrimary,
 					marginTop: 30,
 					paddingHorizontal: 32,
 					paddingVertical: 11,
@@ -365,12 +394,12 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 		buttonText: {
 			activeGreen:
 				{
-					color: '#ffffff',
+					color: AppTheme.colors.baseWhiteFixed,
 					fontSize: 15,
 				},
 			transparent:
 				{
-					color: '#525c69',
+					color: AppTheme.colors.base2,
 					fontSize: 15,
 				},
 		},

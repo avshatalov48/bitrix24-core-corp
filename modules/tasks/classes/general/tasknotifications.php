@@ -1023,7 +1023,7 @@ class CTaskNotifications
 				return;
 			}
 			$controller = new \Bitrix\Tasks\Internals\Notification\Controller();
-			$controller->onTaskExpiresSoon($task, $taskData);
+			$controller->onTaskExpiresSoon($task);
 			$controller->push();
 			return;
 		}

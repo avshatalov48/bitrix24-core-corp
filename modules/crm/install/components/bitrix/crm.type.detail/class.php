@@ -91,6 +91,10 @@ class CrmTypeDetailComponent extends Base
 	{
 		/** @var Type $type */
 		$type = Service\Container::getInstance()->getDynamicTypeDataClass()::createObject();
+		$type->unset('CREATED_TIME');
+		$type->unset('UPDATED_TIME');
+		$type->unset('CREATED_BY');
+		$type->unset('UPDATED_BY');
 
 		return $type;
 	}
@@ -135,6 +139,7 @@ class CrmTypeDetailComponent extends Base
 		$this->arResult['relations'] = $this->getRelations();
 		$this->arResult['isCustomSectionsAvailable'] = Integration\IntranetManager::isCustomSectionsAvailable();
 		$this->arResult['linkedUserFields'] = $this->getLinkedUserFields();
+		$this->arResult['isExternal'] = $this->request->get('isExternal') === 'Y';
 
 		$this->includeComponentTemplate();
 	}

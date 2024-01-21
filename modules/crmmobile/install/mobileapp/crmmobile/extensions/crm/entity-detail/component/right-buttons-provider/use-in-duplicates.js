@@ -2,6 +2,7 @@
  * @module crm/entity-detail/component/right-buttons-provider/use-in-duplicates
  */
 jn.define('crm/entity-detail/component/right-buttons-provider/use-in-duplicates', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { EventEmitter } = require('event-emitter');
 
 	/**
@@ -24,7 +25,7 @@ jn.define('crm/entity-detail/component/right-buttons-provider/use-in-duplicates'
 			{
 				id: 'useDuplicate',
 				name: rightButtonName,
-				color: '#2066B0',
+				color: AppTheme.colors.accentMainLinks,
 				callback: () => {
 					customEventEmitter.emit('Duplicate::onUseContact', [entityId, entityTypeId]);
 					detailCard.close();

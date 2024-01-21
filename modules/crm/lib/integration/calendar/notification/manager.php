@@ -63,7 +63,7 @@ class Manager
 		}
 
 		$notificationChannel = $repo->getDefaultForSender(NotificationsManager::getSenderCode());
-		if ($notificationChannel && NotificationsManager::canSendMessage())
+		if ($notificationChannel && NotificationsManager::canUse())
 		{
 			$fromList = [];
 

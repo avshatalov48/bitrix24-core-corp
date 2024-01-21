@@ -10,6 +10,10 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 
 	const { Theme } = require('im/lib/theme');
 	const { core } = require('im/messenger/core');
+	const {
+		ChatAvatar,
+		ChatTitle,
+	} = require('im/messenger/lib/element');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { PushHandler } = require('im/messenger/provider/push');
@@ -64,51 +68,20 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 			});
 			chatSettings.backgroundType = Theme.getInstance().getId() === 'dark' ? 'DARK' : 'LIGHT_GRAY';
 
-
 			const backgroundConfig = { ...ChatDialogBackground[chatSettings.backgroundType] };
 			backgroundConfig.url = currentDomain + backgroundConfig.url;
 
-			let titleParams = {};
-			const imagePath = `${component.path}images`;
-			let dialogEntity = false;
-
+			let titleParams;
 			const recentItem = clone(core.getStore().getters['recentModel/getById'](dialogId));
 			if (recentItem)
 			{
+				const avatar = ChatAvatar.createFromDialogId(dialogId);
+				const title = ChatTitle.createFromDialogId(dialogId);
+
 				titleParams = {
-					text: recentItem.title,
-					imageUrl: encodeURI(recentItem.avatar),
-					useLetterImage: true,
-					callback: -1,
+					...avatar.getTitleParams(),
+					...title.getTitleParams(),
 				};
-
-				if (recentItem.avatar === '')
-				{
-					titleParams.imageColor = recentItem.color;
-				}
-
-				if (recentItem.type === 'user')
-				{
-					dialogEntity = JSON.stringify(recentItem.user);
-					titleParams.detailText = ChatMessengerCommon.getUserPosition(recentItem.user);
-				}
-				else if (recentItem.type === 'chat')
-				{
-					dialogEntity = JSON.stringify(recentItem.chat);
-
-					if (recentItem.chat.entity_type === 'GENERAL')
-					{
-						titleParams.imageUrl = `${imagePath}/avatar_general_x3.png`;
-					}
-
-					if (recentItem.chat.entity_type === 'SUPPORT24_QUESTION')
-					{
-						titleParams.imageUrl = `${imagePath}/avatar_24_question_x3.png`;
-						titleParams.detailText = '';
-					}
-
-					titleParams.detailText = ChatMessengerCommon.getChatDescription(recentItem.chat);
-				}
 			}
 			else if (dialogTitleParams)
 			{
@@ -131,7 +104,7 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 			const openDialogParams = {
 				PAGE_ID: `im-${dialogId}`,
 				DIALOG_ID: dialogId,
-				DIALOG_ENTITY: dialogEntity,
+				DIALOG_ENTITY: false,
 				USER_ID: MessengerParams.getUserId(),
 				SITE_ID: MessengerParams.get('SITE_ID', 's1'),
 				SITE_DIR: env.siteDir,

@@ -1,0 +1,7 @@
+<?php
+$MESS['TASKS_CREATION_MENU_CREATE_TASK'] = 'Задачу';
+$MESS['TASKS_CREATION_MENU_CREATE_TASK_BY_TEMPLATE'] = 'Задачу по шаблону';
+$MESS['TASKS_CREATION_MENU_EMPTY_TEMPLATE_LIST'] = 'Нет шаблонов задач';
+$MESS['TASKS_CREATION_MENU_ERROR_LOAD_TEMPLATE_LIST'] = 'Ошибка загрузки списка';
+$MESS['TASKS_CREATION_MENU_TEMPLATE_LIST'] = 'Список всех шаблонов';
+$MESS['TASKS_CREATION_MENU_LOAD_TEMPLATE_LIST'] = 'Загрузка списка...';

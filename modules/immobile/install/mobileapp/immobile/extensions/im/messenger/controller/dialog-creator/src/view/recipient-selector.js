@@ -5,6 +5,7 @@ jn.define('im/messenger/controller/dialog-creator/recipient-selector/view', (req
 
 	const { UserSearchController } = require('im/messenger/controller/search');
 	const { MultiSelector } = require('im/messenger/lib/ui/selector');
+	const { Loc } = require('loc');
 
 	class RecipientSelectorView extends LayoutComponent
 	{
@@ -14,6 +15,7 @@ jn.define('im/messenger/controller/dialog-creator/recipient-selector/view', (req
 			/** @type MultiSelector */
 			this.selectorRef = new MultiSelector(
 				{
+					recentText: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_RECENT_TEXT'),
 					itemList: props.userList,
 					searchMode: 'inline',
 					carouselSize: 'L',

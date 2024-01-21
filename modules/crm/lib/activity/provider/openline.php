@@ -52,20 +52,19 @@ class OpenLine extends Base
 
 	public static function getStatusAnchor()
 	{
-		$isBitrix24 = Main\Loader::includeModule('bitrix24');
 		if (static::isActive())
 		{
-			$text = Loc::getMessage('IMOPENLINES_ACTIVITY_PROVIDER_ACTIVE', Array('#NUMBER#' => static::$activeLine));
+			$text = Loc::getMessage('IMOPENLINES_ACTIVITY_PROVIDER_ACTIVE', ['#NUMBER#' => static::$activeLine]);
 		}
 		else
 		{
 			$text = Loc::getMessage('IMOPENLINES_ACTIVITY_PROVIDER_INACTIVE');
 		}
 
-		return array(
+		return [
 			'TEXT' => $text,
-			'URL' => $isBitrix24 ? '/contact_center/' : '/services/contact_center/'
-		);
+			'URL' => Container::getInstance()->getRouter()->getContactCenterUrl(),
+		];
 	}
 
 	/**

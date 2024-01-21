@@ -2,8 +2,9 @@
 
 return [
 	'extensions' => [
-		'animation',
 		'haptics',
+		'apptheme',
+		'animation',
 		'event-emitter',
 		'utils/object',
 		'utils/function',

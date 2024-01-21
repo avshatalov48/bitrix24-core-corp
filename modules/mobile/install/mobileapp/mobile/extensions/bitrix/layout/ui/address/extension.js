@@ -2,7 +2,7 @@
  * @module layout/ui/address
  */
 jn.define('layout/ui/address', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { location } = require('assets/common');
 	const { MapOpener } = require('layout/ui/map-opener');
 	const { stringify } = require('utils/string');
@@ -11,21 +11,25 @@ jn.define('layout/ui/address', (require, exports, module) => {
 		DEFAULT: 'default',
 		BLENDING: 'blending',
 		getTextColor: (type) => {
-			switch (type) {
+			// eslint-disable-next-line sonarjs/no-small-switch
+			switch (type)
+			{
 				case AddressViewType.BLENDING:
-					return '#828B95';
+					return AppTheme.colors.base3;
 				default:
-					return '#2066B0';
+					return AppTheme.colors.accentMainLinks;
 			}
 		},
 		getIconColor: (type) => {
-			switch (type) {
+			// eslint-disable-next-line sonarjs/no-small-switch
+			switch (type)
+			{
 				case AddressViewType.BLENDING:
-					return '#BDC1C6';
+					return AppTheme.colors.base5;
 				default:
-					return '#559BE6';
+					return AppTheme.colors.accentMainPrimary;
 			}
-		}
+		},
 	};
 
 	/**
@@ -72,7 +76,7 @@ jn.define('layout/ui/address', (require, exports, module) => {
 				style: {
 					flexShrink: 2,
 					fontSize: 14,
-					color: clickable ? AddressViewType.getTextColor(viewType) : '#828b95',
+					color: clickable ? AddressViewType.getTextColor(viewType) : AppTheme.colors.base3,
 					textDecorationLine: viewType === AddressViewType.BLENDING ? 'underline' : 'none',
 				},
 				text: address,
@@ -81,7 +85,7 @@ jn.define('layout/ui/address', (require, exports, module) => {
 				{
 					style: {
 						fontSize: 12,
-						color: '#A8ADB4',
+						color: AppTheme.colors.base4,
 						maxWidth: 90,
 						textAlign: 'right',
 						marginLeft: 5,
@@ -89,11 +93,10 @@ jn.define('layout/ui/address', (require, exports, module) => {
 					numberOfLines: 2,
 					ellipsize: 'end',
 					text: type,
-				}
-			)
+				},
+			),
 		);
 	};
 
 	module.exports = { AddressView, AddressViewType };
-
 });

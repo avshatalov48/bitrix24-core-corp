@@ -2,8 +2,10 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Localization\Loc;
+ use Bitrix\Main\UI\Extension;
+ use Bitrix\Tasks\Integration\Recyclebin\Task;
 
-\Bitrix\Main\UI\Extension::load([
+ Extension::load([
 	'ui.design-tokens',
 	'popup',
 	'ui.buttons',
@@ -87,7 +89,7 @@ $taskData = $arParams["TASK"];
 		</span><?
 
 		?><span data-bx-id="task-view-b-button" data-action="DISAPPROVE" class="task-view-button disapprove ui-btn ui-btn-danger">
-			<?=Loc::getMessage("TASKS_REDO_TASK")?>
+			<?=Loc::getMessage("TASKS_REDO_TASK_MSGVER_1")?>
 		</span><?
 
 		?><span data-bx-id="task-view-b-open-menu" class="task-more-button ui-btn ui-btn-light-border ui-btn-dropdown">
@@ -111,7 +113,7 @@ $taskData = $arParams["TASK"];
 	<script>
 		BX.message({
 			TASKS_REST_BUTTON_TITLE_2: '<?=Loc::getMessage('TASKS_REST_BUTTON_TITLE_2')?>',
-			TASKS_DELETE_SUCCESS: '<?=GetMessage('TASKS_DELETE_SUCCESS')?>'
+			TASKS_DELETE_SUCCESS: '<?= Task::getDeleteMessage((int)$arParams['USER_ID']) ?>'
 		});
 	</script>
 <?$helper->initializeExtension();?>

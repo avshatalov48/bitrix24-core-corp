@@ -3,10 +3,6 @@
 namespace Bitrix\CrmMobile\Controller\ReceivePayment;
 
 use Bitrix\Crm\Engine\ActionFilter\CheckReadPermission;
-use Bitrix\Crm\Item;
-use Bitrix\Crm\ItemIdentifier;
-use Bitrix\Crm\RelationIdentifier;
-use Bitrix\Crm\Service\Container;
 use Bitrix\CrmMobile\Controller\PrimaryAutoWiredEntity;
 use Bitrix\CrmMobile\Controller\PublicErrorsTrait;
 use Bitrix\Main\Engine\ActionFilter;
@@ -27,36 +23,5 @@ class Base extends JsonController
 			new ActionFilter\Scope(ActionFilter\Scope::NOT_REST),
 			new CheckReadPermission(),
 		];
-	}
-
-	protected function getOrderId(Item $entity): ?int
-	{
-		$relation = Container::getInstance()->getRelationManager()
-			->getRelation(
-				new RelationIdentifier(
-					$entity->getEntityTypeId(),
-					\CCrmOwnerType::Order
-				)
-			)
-		;
-		if (!$relation)
-		{
-			return null;
-		}
-
-		$result = null;
-
-		$orderIdentifiers = $relation->getChildElements(
-			new ItemIdentifier(
-				$entity->getEntityTypeId(),
-				$entity->getId()
-			)
-		);
-		foreach ($orderIdentifiers as $orderIdentifier)
-		{
-			$result = $orderIdentifier->getEntityId();
-		}
-
-		return $result;
 	}
 }

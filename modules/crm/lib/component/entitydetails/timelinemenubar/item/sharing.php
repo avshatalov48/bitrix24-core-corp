@@ -9,8 +9,9 @@ use Bitrix\Crm;
 use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\Item;
 use Bitrix\Crm\Integration\SmsManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Context;
 use Bitrix\Calendar;
-use Bitrix\Calendar\Sharing\Link\CrmDealLink;
+use Bitrix\Calendar\Sharing\Link;
 
 class Sharing extends Item
 {
@@ -45,8 +46,11 @@ class Sharing extends Item
 
 	public function prepareSettings(): array
 	{
+		$settings = \CCalendar::GetSettings();
+		
 		return [
 			'config' => [
+				'isResponsible' => $this->isResponsible(),
 				'link' => $this->prepareLink(),
 				'contacts' => $this->getPhoneContacts(),
 				'selectedChannelId' => $this->getSelectedChannelId(),
@@ -54,9 +58,38 @@ class Sharing extends Item
 				'isNotificationsAvailable' => $this->isNotificationsAvailable(),
 				'doPayAttentionToNewFeature' => $this->doPayAttentionToNewFeatureAction(),
 				'areCommunicationChannelsAvailable' => $this->areCommunicationChannelsAvailable(),
+				'calendarSettings' => [
+					'weekHolidays' => $settings['week_holidays'],
+					'weekStart' => \CCalendar::GetWeekStart(),
+					'workTimeStart' => $settings['work_time_start'],
+					'workTimeEnd' => $settings['work_time_end'],
+				],
 			],
 			'isAvailable' => \Bitrix\Crm\Restriction\RestrictionManager::getCalendarSharingRestriction()->hasPermission(),
 		];
+	}
+
+	protected function isResponsible(): bool
+	{
+		$currentUserId = (new Context())->getUserId();
+		return $this->getAssignedId() === $currentUserId;
+	}
+
+	protected function getAssignedId(): ?int
+	{
+		$entityBroker = Container::getInstance()->getEntityBroker($this->getEntityTypeId());
+		if (!$entityBroker)
+		{
+			return null;
+		}
+
+		$entity = $entityBroker->getById($this->getEntityId());
+		if (!$entity)
+		{
+			return null;
+		}
+
+		return $entity->getAssignedById();
 	}
 
 	protected function prepareLink(): array
@@ -82,7 +115,7 @@ class Sharing extends Item
 
 		$ownerId = $deal->getAssignedById();
 
-		/** @var CrmDealLink $crmDealLink  */
+		/** @var Link\CrmDealLink $crmDealLink  */
 		$crmDealLink = (new Calendar\Sharing\Link\Factory())->getCrmDealLink($entityId, $ownerId);
 		if ($crmDealLink === null)
 		{
@@ -92,6 +125,7 @@ class Sharing extends Item
 		return [
 			'hash' => $crmDealLink->getHash(),
 			'url' => Calendar\Sharing\Helper::getShortUrl($crmDealLink->getUrl()),
+			'rule' => (new Link\Rule\Mapper())->convertToArray($crmDealLink->getSharingRule()),
 		];
 	}
 
@@ -121,7 +155,7 @@ class Sharing extends Item
 		})[0];
 	}
 
-	protected function getCommunications(): array
+	public function getCommunications(): array
 	{
 		if ($this->communications === null)
 		{

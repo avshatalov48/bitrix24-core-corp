@@ -970,6 +970,11 @@ export class Manager
 		Manager.openHelper(event, 'redirect=detail&code=17615318', 'pay_smart_invoice');
 	}
 
+	static openHowTerminalWorks(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=18537646', 'terminal');
+	}
+
 	static openFormPagesHelp(event)
 	{
 		Manager.openHelper(event, 'redirect=detail&code=9606749', 'forms');
@@ -1136,27 +1141,22 @@ export class Manager
 
 	static openApplication(params = {})
 	{
-		let url = new Uri('/saleshub/app/');
-		if(Type.isPlainObject(params))
+		const url = new Uri('/saleshub/app/');
+		if (Type.isPlainObject(params))
 		{
 			url.setQueryParams(params);
 		}
 
-		let sliderOptions = params.hasOwnProperty('sliderOptions') ? params.sliderOptions : {};
+		const sliderOptions = params.hasOwnProperty('sliderOptions') ? params.sliderOptions : {};
 		if (!sliderOptions.hasOwnProperty('width'))
 		{
 			sliderOptions.width = 1140;
 		}
 
-		return new Promise((resolve, reject) =>
-		{
-			Manager.openSlider(url.toString(), sliderOptions).then((slider) =>
-			{
+		return new Promise((resolve, reject) => {
+			Manager.openSlider(url.toString(), sliderOptions).then((slider) => {
 				resolve(slider.getData());
-			}).catch((reason) =>
-			{
-
-			});
+			}).catch((reason) => {});
 		});
 	}
 

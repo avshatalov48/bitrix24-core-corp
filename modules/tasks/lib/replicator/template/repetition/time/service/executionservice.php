@@ -5,24 +5,25 @@ namespace Bitrix\Tasks\Replicator\Template\Repetition\Time\Service;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
-use Bitrix\Tasks\Replicator\Template\Parameter;
-use Bitrix\Tasks\Replicator\Replicator;
-use Bitrix\Tasks\Replicator\Template\Repetition\Time\Enum\RepeatType;
-use Bitrix\Tasks\Replicator\Template\Repetition\Time\Factory\ExecutionTimeFactory;
-use Bitrix\Tasks\Replicator\Template\ReplicateParameter;
-use Bitrix\Tasks\Replicator\Template\Repository;
+use Bitrix\Tasks\Replicator\AbstractReplicator;
+use Bitrix\Tasks\Replicator\Template\AbstractParameter;
+use Bitrix\Tasks\Replicator\Template\Time\Enum\RepeatType;
+use Bitrix\Tasks\Replicator\Template\Time\Factory\ExecutionTimeFactory;
+use Bitrix\Tasks\Replicator\Template\Repetition\Parameter\ReplicateParameter;
+use Bitrix\Tasks\Replicator\Template\Replicators\RegularTemplateTaskReplicator;
+use Bitrix\Tasks\Replicator\Template\RepositoryInterface;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\User;
 use CAgent;
 
 class ExecutionService
 {
-	private Parameter $replicateParameter;
+	private AbstractParameter $replicateParameter;
 	private Result $currentResult;
 	private string $agent;
 	private int $nextExecutionTimeTS;
 
-	public function __construct(private Repository $repository)
+	public function __construct(private RepositoryInterface $repository)
 	{
 		$this->init();
 	}
@@ -53,7 +54,7 @@ class ExecutionService
 
 	public function getTemplateNextExecutionTime(string $lastExecutionTime): Result
 	{
-		$template = $this->repository->getTemplate();
+		$template = $this->repository->getEntity();
 
 		// get users and their time zone offsets
 		$currentUserTimeZoneOffsetTS = User::getTimeZoneOffsetCurrentUser();
@@ -148,16 +149,16 @@ class ExecutionService
 
 	public function getCurrentAgentName(): string
 	{
-		$template = $this->repository->getTemplate();
+		$template = $this->repository->getEntity();
 		if (is_null($template))
 		{
 			return '';
 		}
 
-		return str_replace('#ID#', $template->getId(), Replicator::AGENT_TEMPLATE);
+		return str_replace('#ID#', $template->getId(), RegularTemplateTaskReplicator::AGENT_TEMPLATE);
 	}
 
-	public function getParameter(): Parameter
+	public function getParameter(): AbstractParameter
 	{
 		return $this->replicateParameter;
 	}

@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_core,main_popup,ui_buttons,crm_activity_todoEditor,main_core_events,ui_notification) {
+(function (exports,crm_activity_todoEditor,main_core,main_core_events,main_popup,ui_buttons,ui_notification) {
 	'use strict';
 
 	let _ = t => t,
@@ -17,6 +17,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _entityId = /*#__PURE__*/new WeakMap();
 	var _entityTypeId = /*#__PURE__*/new WeakMap();
 	var _currentUser = /*#__PURE__*/new WeakMap();
+	var _pingSettings = /*#__PURE__*/new WeakMap();
 	var _popup = /*#__PURE__*/new WeakMap();
 	var _popupContainer = /*#__PURE__*/new WeakMap();
 	var _todoEditor = /*#__PURE__*/new WeakMap();
@@ -29,9 +30,11 @@ this.BX.Crm = this.BX.Crm || {};
 	var _onChangeEditorDescription = /*#__PURE__*/new WeakSet();
 	var _onEditorSaveHotkeyPressed = /*#__PURE__*/new WeakSet();
 	var _onChangeUploaderContainerSize = /*#__PURE__*/new WeakSet();
+	var _onFocus = /*#__PURE__*/new WeakSet();
 	let AddingPopup = /*#__PURE__*/function () {
-	  function AddingPopup(entityTypeId, entityId, currentUser, params) {
+	  function AddingPopup(entityTypeId, entityId, currentUser, pingSettings, params) {
 	    babelHelpers.classCallCheck(this, AddingPopup);
+	    _classPrivateMethodInitSpec(this, _onFocus);
 	    _classPrivateMethodInitSpec(this, _onChangeUploaderContainerSize);
 	    _classPrivateMethodInitSpec(this, _onEditorSaveHotkeyPressed);
 	    _classPrivateMethodInitSpec(this, _onChangeEditorDescription);
@@ -49,6 +52,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      value: null
 	    });
 	    _classPrivateFieldInitSpec(this, _currentUser, {
+	      writable: true,
+	      value: null
+	    });
+	    _classPrivateFieldInitSpec(this, _pingSettings, {
 	      writable: true,
 	      value: null
 	    });
@@ -71,6 +78,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classPrivateFieldSet(this, _entityId, main_core.Text.toInteger(entityId));
 	    babelHelpers.classPrivateFieldSet(this, _entityTypeId, main_core.Text.toInteger(entityTypeId));
 	    babelHelpers.classPrivateFieldSet(this, _currentUser, currentUser);
+	    babelHelpers.classPrivateFieldSet(this, _pingSettings, pingSettings);
 	    babelHelpers.classPrivateFieldSet(this, _eventEmitter, new main_core_events.EventEmitter());
 	    babelHelpers.classPrivateFieldGet(this, _eventEmitter).setEventNamespace('Crm.Activity.AddingPopup');
 	    if (!main_core.Type.isPlainObject(params)) {
@@ -99,10 +107,12 @@ this.BX.Crm = this.BX.Crm || {};
 	          ownerTypeId: babelHelpers.classPrivateFieldGet(this, _entityTypeId),
 	          ownerId: babelHelpers.classPrivateFieldGet(this, _entityId),
 	          currentUser: babelHelpers.classPrivateFieldGet(this, _currentUser),
+	          pingSettings: babelHelpers.classPrivateFieldGet(this, _pingSettings),
 	          events: {
 	            onChangeDescription: _classPrivateMethodGet(this, _onChangeEditorDescription, _onChangeEditorDescription2).bind(this),
 	            onSaveHotkeyPressed: _classPrivateMethodGet(this, _onEditorSaveHotkeyPressed, _onEditorSaveHotkeyPressed2).bind(this),
-	            onChangeUploaderContainerSize: _classPrivateMethodGet(this, _onChangeUploaderContainerSize, _onChangeUploaderContainerSize2).bind(this)
+	            onChangeUploaderContainerSize: _classPrivateMethodGet(this, _onChangeUploaderContainerSize, _onChangeUploaderContainerSize2).bind(this),
+	            onFocus: _classPrivateMethodGet(this, _onFocus, _onFocus2).bind(this)
 	          },
 	          popupMode: true
 	        }));
@@ -272,8 +282,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classPrivateFieldGet(this, _popup).adjustPosition();
 	  }
 	}
+	function _onFocus2() {
+	  setTimeout(() => {
+	    const popup = _classPrivateMethodGet(this, _createPopupIfNotExists, _createPopupIfNotExists2).call(this);
+	    popup.adjustPosition({
+	      forceBindPosition: true
+	    });
+	  }, 0);
+	}
 
 	exports.AddingPopup = AddingPopup;
 
-}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX,BX.Main,BX.UI,BX.Crm.Activity,BX.Event,BX));
+}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Crm.Activity,BX,BX.Event,BX.Main,BX.UI,BX));
 //# sourceMappingURL=adding-popup.bundle.js.map

@@ -1,4 +1,6 @@
-(function(){
+(function() {
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
 
 	this.GratitudePanel = ({
 		onSetGratitudeEmployee,
@@ -9,9 +11,8 @@
 		medal,
 		menuCancelTextColor,
 		postFormData,
-		medalsList
+		medalsList,
 	}) => {
-
 		const config = {
 			medalSize: 62,
 			largeAvatarSize: 44,
@@ -23,7 +24,7 @@
 		};
 
 		let medalImage = null;
-		let medalBackgroundColor = '#ffffff';
+		let medalBackgroundColor = AppTheme.colors.bgContentPrimary;
 
 		if (medalsList[medal] !== undefined)
 		{
@@ -38,8 +39,7 @@
 
 		return View(
 			{
-				style: {
-				},
+				style: {},
 				onLayout: ({ height }) => {
 					onLayout({ height });
 				},
@@ -52,14 +52,14 @@
 						postFormData,
 						medal,
 						onSetGratitudeMedalWidget,
-						medalsList
-					})
-				}
+						medalsList,
+					});
+				},
 			}),
 			View(
 				{
 					style: {
-						flexDirection: 'row'
+						flexDirection: 'row',
 					},
 				},
 				View(
@@ -69,7 +69,7 @@
 							marginLeft: 16,
 							width: config.medalSize,
 							height: config.medalSize,
-							borderRadius: parseInt(config.medalSize / 2),
+							borderRadius: parseInt(config.medalSize / 2, 10),
 							backgroundImageSvgUrl: medalImage,
 							backgroundResizeMode: 'cover',
 							alignItems: 'center',
@@ -81,10 +81,10 @@
 								medal,
 								onSetGratitudeMedal,
 								onSetGratitudeMedalWidget,
-								medalsList
-							})
-						}
-					}
+								medalsList,
+							});
+						},
+					},
 				),
 				View(
 					{
@@ -92,32 +92,27 @@
 							flex: 1,
 							marginLeft: 5,
 							marginRight: 10,
-							marginTop: 9
+							marginTop: 9,
 						},
 					},
 					View(
-						{
-							style: {
-								backgroundColor: '#00000000',
-							}
-						},
-						...employeesLarge.map((employee) =>
-						{
+						{},
+						...employeesLarge.map((employee) => {
 							return renderGratitudeEmployeeItemLarge({
 								employee,
 								config,
-								defaultUserAvatar: currentDomain + postFormData.userAvatar
-							})
-						})
+								defaultUserAvatar: currentDomain + postFormData.userAvatar,
+							});
+						}),
 					),
 					renderGratitudeEmployeeListSmall({
 						employeesSmall,
 						smallListCount,
 						config,
 						medalBackgroundColor,
-						defaultUserAvatar: currentDomain + postFormData.userAvatar
-					})
-				)
+						defaultUserAvatar: currentDomain + postFormData.userAvatar,
+					}),
+				),
 			),
 			View(
 				{
@@ -139,23 +134,27 @@
 						onClick: () => {
 							(new FormEntitySelector('GRATITUDE', ['users']))
 								.setEntitiesOptions({
-									'user': {
-										'options': {
-											'intranetUsersOnly': true,
-											'emailUsers': false,
+									user: {
+										options: {
+											intranetUsersOnly: true,
+											emailUsers: false,
 										},
-										'searchable': true,
-										'dynamicLoad': true,
-										'dynamicSearch': true
-									}
+										searchable: true,
+										dynamicLoad: true,
+										dynamicSearch: true,
+									},
 								})
-								.open({selected: Utils.formatSelectedRecipients({users: employees})})
-								.then(recipients => onGratitudeEmployeeSelected({onSetGratitudeEmployee, recipients}))
-						}
+								.open({ selected: Utils.formatSelectedRecipients({ users: employees }) })
+								.then((recipients) => onGratitudeEmployeeSelected({
+									onSetGratitudeEmployee,
+									recipients,
+								}))
+								.catch(console.error);
+						},
 					},
 					Text({
 						style: {
-							marginRight: 5
+							marginRight: 5,
 						},
 						ellipsize: 'middle',
 						text: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_GRATITUDEPANEL_SELECT_EMPLOYEE_TITLE'),
@@ -164,9 +163,9 @@
 						named: 'icon_arrow_down',
 						style: {
 							width: 16,
-							height: 12
-						}
-					})
+							height: 12,
+						},
+					}),
 				),
 				View(
 					{
@@ -189,8 +188,8 @@
 								medal,
 								onSetGratitudeMedal,
 								onSetGratitudeMedalWidget,
-								medalsList
-							})
+								medalsList,
+							});
 						},
 					},
 					Text({
@@ -205,17 +204,17 @@
 						style: {
 							width: 16,
 							height: 12,
-						}
-					})
-				)
+						},
+					}),
+				),
 			),
 		);
 	};
 
-	renderGratitudeEmployeeItemLarge = ({
+	const renderGratitudeEmployeeItemLarge = ({
 		employee,
 		config,
-		defaultUserAvatar
+		defaultUserAvatar,
 	}) => {
 		return View(
 			{
@@ -224,14 +223,14 @@
 					flexDirection: 'row',
 					alignItems: 'center',
 					marginBottom: config.largeAvatarPadding,
-				}
+				},
 			},
 			Image({
 				style: {
-					backgroundColor: '#cccccc',
+					backgroundColor: AppTheme.colors.base5,
 					width: config.largeAvatarSize,
 					height: config.largeAvatarSize,
-					borderRadius: parseInt(config.largeAvatarSize / 2),
+					borderRadius: parseInt(config.largeAvatarSize / 2, 10),
 					marginRight: 9,
 				},
 				uri: (employee.imageUrl ? employee.imageUrl : defaultUserAvatar),
@@ -240,55 +239,53 @@
 			View(
 				{
 					style: {
-						flex: 1
-					}
+						flex: 1,
+					},
 				},
 				Text({
 					style: {
 						fontSize: 16,
-						color: '#333333',
+						color: AppTheme.colors.base1,
 					},
-					text: employee.title
+					text: employee.title,
 				}),
 				Text({
 					style: {
 						fontSize: 12,
-						color: '#e1525C69',
+						color: AppTheme.colors.accentMainAlert,
 					},
-					text: employee.subtitle
-				})
-			)
+					text: employee.subtitle,
+				}),
+			),
 		);
 	};
 
-	renderGratitudeEmployeeListSmall = ({
+	const renderGratitudeEmployeeListSmall = ({
 		employeesSmall,
 		smallListCount,
 		config,
 		medalBackgroundColor,
-		defaultUserAvatar
+		defaultUserAvatar,
 	}) => {
-
 		if (smallListCount <= 0)
 		{
 			return null;
 		}
 
-		const iconsListCount = Math.min(parseInt(smallListCount), parseInt(config.smallListLimit));
+		const iconsListCount = Math.min(parseInt(smallListCount, 10), parseInt(config.smallListLimit, 10));
 
 		return View(
 			{
 				style: {
 					flexDirection: 'row',
-				}
+				},
 			},
 			View(
 				{
 					style: {
-						backgroundColor: '#00000000',
 						width: (iconsListCount * config.smallAvatarSize - ((iconsListCount - 1) * config.smallAvatarShift)),
 						height: config.smallAvatarSize,
-					}
+					},
 				},
 				...employeesSmall.reverse().splice(0, config.smallListLimit).map((employee, index) => {
 					return renderGratitudeEmployeeItemSmall({
@@ -296,9 +293,9 @@
 						index,
 						medalBackgroundColor,
 						config,
-						defaultUserAvatar
+						defaultUserAvatar,
 					});
-				})
+				}),
 			),
 			View(
 				{
@@ -307,32 +304,35 @@
 						marginLeft: 5,
 						marginTop: 4,
 						borderRadius: 10,
-						backgroundColor: '#FFFFFF',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						height: 21,
 						justifyContent: 'center',
 						paddingLeft: 5,
 						paddingRight: 5,
-					}
+					},
 				},
 				Text(
 					{
 						style: {
-							color: '#525C69',
-							fontSize: 12
+							color: AppTheme.colors.base2,
+							fontSize: 12,
 						},
-						text: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_GRATITUDEPANEL_MEDALS_EMPLOYEES_SMALL_MORE').replace('#NUM#', (smallListCount - config.smallListLimit)),
-					}
-				)
-			)
+						text: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_GRATITUDEPANEL_MEDALS_EMPLOYEES_SMALL_MORE').replace(
+							'#NUM#',
+							(smallListCount - config.smallListLimit),
+						),
+					},
+				),
+			),
 		);
 	};
 
-	renderGratitudeEmployeeItemSmall = ({
+	const renderGratitudeEmployeeItemSmall = ({
 		employee,
 		index,
 		medalBackgroundColor,
 		config,
-		defaultUserAvatar
+		defaultUserAvatar,
 	}) => {
 		return View(
 			{
@@ -340,25 +340,25 @@
 				style: {
 					position: 'absolute',
 					top: 0,
-					right: index * (config.smallAvatarSize - config.smallAvatarShift)
-				}
+					right: index * (config.smallAvatarSize - config.smallAvatarShift),
+				},
 			},
 			Image({
 				style: {
-					backgroundColor: '#cccccc',
+					backgroundColor: AppTheme.colors.base5,
 					width: config.smallAvatarSize,
 					height: config.smallAvatarSize,
 					borderWidth: config.smallAvatarBorder,
 					borderColor: medalBackgroundColor,
-					borderRadius: parseInt(config.smallAvatarSize / 2),
+					borderRadius: parseInt(config.smallAvatarSize / 2, 10),
 				},
-				uri: (employee.imageUrl ? employee.imageUrl : defaultUserAvatar),
+				uri: employee.imageUrl || defaultUserAvatar,
 				resizeMode: 'cover',
-			})
+			}),
 		);
 	};
 
-	onGratitudeEmployeeSelected = ({
+	const onGratitudeEmployeeSelected = ({
 		onSetGratitudeEmployee,
 		recipients,
 	}) => {
@@ -366,39 +366,39 @@
 		onSetGratitudeEmployee(recipients.users);
 	};
 
-	onGratitudeSeparatorClick = ({
+	const onGratitudeSeparatorClick = ({
 		onSetGratitudeMedal,
 		menuCancelTextColor,
 		postFormData,
 		medal,
 		onSetGratitudeMedalWidget,
-		medalsList
+		medalsList,
 	}) => {
-
 		const menu = dialogs.createPopupMenu();
 
-		menu.setData([
+		menu.setData(
+			[
 				{
 					id: 'medal',
 					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_GRATITUDEPANEL_MENU_MEDAL'),
 					iconUrl: currentDomain + postFormData.menuMedalIcon,
-					sectionCode: '0'
+					sectionCode: '0',
 				},
 				{
 					id: 'close',
 					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_GRATITUDEPANEL_MENU_DELETE'),
 					iconUrl: currentDomain + postFormData.menuDeleteIcon,
-					sectionCode: '0'
+					sectionCode: '0',
 				},
 				{
 					id: 'cancel',
 					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_GRATITUDEPANEL_MENU_CANCEL'),
 					textColor: menuCancelTextColor,
-					sectionCode: '0'
-				}
+					sectionCode: '0',
+				},
 			],
 			[
-				{ id: '0' }
+				{ id: '0' },
 			],
 			(eventName, item) => {
 				if (eventName === 'onItemSelected')
@@ -413,24 +413,23 @@
 							medal,
 							onSetGratitudeMedal,
 							onSetGratitudeMedalWidget,
-							medalsList
-						})
+							medalsList,
+						});
 					}
 				}
-			}
+			},
 		);
 
 		menu.setPosition('center');
 		menu.show();
 	};
 
-	onOpenMedalSelector = ({
+	const onOpenMedalSelector = ({
 		medal,
 		onSetGratitudeMedal,
 		onSetGratitudeMedalWidget,
-		medalsList
+		medalsList,
 	}) => {
-
 		PageManager.openWidget(
 			'layout',
 			{
@@ -438,23 +437,22 @@
 				useLargeTitleMode: true,
 				modal: false,
 				backdrop: {
-					mediumPositionHeight: 570
+					mediumPositionHeight: 570,
 				},
-				onReady: (layoutWidget) =>
-				{
+				onReady: (layoutWidget) => {
 					onSetGratitudeMedalWidget(layoutWidget);
 
 					const medalSelector = new MedalSelectorComponent({
-						medal: medal,
-						medalsList: medalsList,
+						medal,
+						medalsList,
 						onSelectMedal: (medal) => {
 							onSetGratitudeMedal(medal);
-						}
+						},
 					});
 					layoutWidget.showComponent(medalSelector);
 				},
-				onError: error => reject(error),
-			}
+				onError: console.error,
+			},
 		);
 	};
 })();

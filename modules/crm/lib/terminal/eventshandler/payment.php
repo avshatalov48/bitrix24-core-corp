@@ -2,45 +2,40 @@
 
 namespace Bitrix\Crm\Terminal\EventsHandler;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Crm;
-use Bitrix\Crm\Terminal\PaymentHelper;
 
 class Payment
 {
-	private static ?bool $isAdd = null;
+	private static ?bool $isNew = null;
 
 	public static function onBeforeSalePaymentEntitySaved(Main\Event $event): void
 	{
 		/** @var Crm\Order\Payment $payment */
 		$payment = $event->getParameter('ENTITY');
-		if (!PaymentHelper::isPayment($payment))
+
+		if (!$payment instanceof Crm\Order\Payment)
 		{
 			return;
 		}
 
-		self::$isAdd = $payment->getId() <= 0;
+		self::$isNew = $payment->getId() === 0;
 	}
 
 	public static function onSalePaymentEntitySaved(Main\Event $event): void
 	{
 		/** @var Crm\Order\Payment $payment */
 		$payment = $event->getParameter('ENTITY');
-		if (!PaymentHelper::isPayment($payment) || $payment->getId() <= 0)
-		{
-			return;
-		}
 
-		if (PaymentHelper::isTerminalPayment($payment))
+		if (
+			$payment instanceof Crm\Order\Payment
+			&& $payment->getId() > 0
+			&& self::$isNew === false
+			&& Container::getInstance()->getTerminalPaymentService()->isTerminalPayment($payment->getId())
+		)
 		{
-			if (self::$isAdd)
-			{
-				Crm\Terminal\PullManager::add([$payment->getId()]);
-			}
-			else
-			{
-				Crm\Terminal\PullManager::update([$payment->getId()]);
-			}
+			Crm\Terminal\PullManager::update([$payment->getId()]);
 		}
 	}
 
@@ -48,13 +43,16 @@ class Payment
 	{
 		/** @var Crm\Order\Payment $payment */
 		$payment = $event->getParameter('ENTITY');
-		if (!PaymentHelper::isPayment($payment) || $payment->getId() <= 0)
-		{
-			return new Main\EventResult(Main\EventResult::SUCCESS);
-		}
 
-		if (PaymentHelper::isTerminalPayment($payment))
+		$terminalPaymentService = Container::getInstance()->getTerminalPaymentService();
+
+		if (
+			$payment instanceof Crm\Order\Payment
+			&& $payment->getId() > 0
+			&& $terminalPaymentService->isTerminalPayment($payment->getId())
+		)
 		{
+			$terminalPaymentService->unmarkPayment($payment->getId());
 			Crm\Terminal\PullManager::delete([$payment->getId()]);
 		}
 

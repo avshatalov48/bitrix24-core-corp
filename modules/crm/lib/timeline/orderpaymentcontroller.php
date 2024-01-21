@@ -4,11 +4,13 @@ namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm\Order;
 use Bitrix\Crm\Order\Payment;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Registry;
 use Bitrix\Sale\Cashbox;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Sale\Repository\PaymentRepository;
 
 Loc::loadMessages(__FILE__);
 
@@ -18,6 +20,10 @@ Loc::loadMessages(__FILE__);
  */
 class OrderPaymentController extends EntityController
 {
+	public const SENT_TO_TERMINAL = 'SENT_TO_TERMINAL';
+	public const PAY_SYSTEM_CLICK = 'PAY_SYSTEM_CLICK';
+	public const VIEWED_WAY_CUSTOMER_PAYMENT_PAY = 'VIEWED';
+
 	/**
 	 * @return int
 	 */
@@ -72,6 +78,7 @@ class OrderPaymentController extends EntityController
 				'ENTITY_ID' => (int)$fields['ORDER_ID'],
 			];
 		}
+		self::enrichSettingFields((int)$ownerID, $settings);
 
 		$authorID = self::resolveCreatorID($fields);
 		$bindings = [
@@ -125,11 +132,7 @@ class OrderPaymentController extends EntityController
 		}
 	}
 
-	/**
-	 * @param $ownerId
-	 * @param array $params
-	 */
-	public function onPaid($ownerId, array $params)
+	public function onPaid(int $ownerId, array $params): void
 	{
 		$params['SETTINGS']['CHANGED_ENTITY'] = \CCrmOwnerType::OrderPaymentName;
 		$this->notifyOrderPaymentEntry($ownerId, $params);
@@ -175,14 +178,10 @@ class OrderPaymentController extends EntityController
 		}
 	}
 
-	/**
-	 * @param $ownerId
-	 * @param array $params
-	 */
-	public function onClick($ownerId, array $params)
+	public function onClick(int $ownerId, array $params): void
 	{
 		$params['SETTINGS']['CHANGED_ENTITY'] = \CCrmOwnerType::OrderPaymentName;
-		$params['SETTINGS']['FIELDS']['PAY_SYSTEM_CLICK'] = 'Y';
+		$params['SETTINGS']['FIELDS'][self::PAY_SYSTEM_CLICK] = 'Y';
 		$this->notifyOrderPaymentEntry($ownerId, $params);
 	}
 
@@ -203,6 +202,8 @@ class OrderPaymentController extends EntityController
 		}
 
 		$settings = is_array($params['SETTINGS']) ? $params['SETTINGS'] : [];
+		self::enrichSettingFields((int)$ownerId, $settings);
+
 		$paymentFields = is_array($params['FIELDS']) ? $params['FIELDS'] : [];
 		$bindings = $params['BINDINGS'] ?? [];
 
@@ -338,14 +339,29 @@ class OrderPaymentController extends EntityController
 		return $authorId;
 	}
 
-	/**
-	 * @param $ownerId
-	 * @param $params
-	 */
-	public function onView($ownerId, $params)
+	public function onView(int $ownerId, array $params, string $viewedWay): void
+	{
+		$isValidViewedWay = in_array(
+			$viewedWay,
+			[
+				self::VIEWED_WAY_CUSTOMER_PAYMENT_PAY,
+			],
+			true
+		);
+		if (!$isValidViewedWay)
+		{
+			return;
+		}
+
+		$params['SETTINGS']['CHANGED_ENTITY'] = \CCrmOwnerType::OrderPaymentName;
+		$params['SETTINGS']['FIELDS'][$viewedWay] = 'Y';
+		$this->notifyOrderPaymentEntry($ownerId, $params);
+	}
+
+	public function onSentToTerminal(int $ownerId, array $params): void
 	{
 		$params['SETTINGS']['CHANGED_ENTITY'] = \CCrmOwnerType::OrderPaymentName;
-		$params['SETTINGS']['FIELDS']['VIEWED'] = 'Y';
+		$params['SETTINGS']['FIELDS'][self::SENT_TO_TERMINAL] = 'Y';
 		$this->notifyOrderPaymentEntry($ownerId, $params);
 	}
 
@@ -410,5 +426,33 @@ class OrderPaymentController extends EntityController
 		$data = array_merge($data, is_array($data['SETTINGS']) ? $data['SETTINGS'] : []);
 
 		return parent::prepareHistoryDataModel($data, $options);
+	}
+
+	private static function enrichSettingFields(int $paymentId, array &$settings): void
+	{
+		$payment = PaymentRepository::getInstance()->getById($paymentId);
+		if (!$payment)
+		{
+			return;
+		}
+
+		$settingsFields = [
+			'IS_TERMINAL_PAYMENT' =>
+				Container::getInstance()->getTerminalPaymentService()->isTerminalPayment($payment->getId())
+					? 'Y'
+					: 'N'
+			,
+		];
+		if (isset($settings['FIELDS']) && is_array($settings['FIELDS']))
+		{
+			$settings['FIELDS'] = array_merge(
+				$settings['FIELDS'],
+				$settingsFields
+			);
+		}
+		else
+		{
+			$settings['FIELDS'] = $settingsFields;
+		}
 	}
 }

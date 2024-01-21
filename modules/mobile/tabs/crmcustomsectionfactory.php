@@ -34,6 +34,7 @@ final class CrmCustomSectionFactory implements FactoryTabable
 			Loader::includeModule('crm')
 			&& Loader::includeModule('crmmobile')
 			&& IntranetManager::isCustomSectionsAvailable()
+			&& \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager()->checkExternalDynamicAvailability()
 		);
 	}
 

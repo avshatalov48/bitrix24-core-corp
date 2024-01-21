@@ -1,8 +1,8 @@
 <?php
-
+/**
+ * @param CMain $APPLICATION
+ */
 use Bitrix\Intranet;
-use Bitrix\Main\ModuleManager;
-use Bitrix\Main\Loader;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -10,16 +10,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 //These settings are set in intranet.configs
-$siteLogo = Intranet\Util::getClientLogo();
-$siteTitle = trim(COption::GetOptionString("bitrix24", "site_title", ""));
-if ($siteTitle == '')
-{
-	$siteTitle =
-		ModuleManager::isModuleInstalled("bitrix24")
-			? GetMessage('BITRIX24_SITE_TITLE_DEFAULT')
-			: COption::GetOptionString("main", "site_name", "")
-	;
-}
+$siteLogo = Intranet\Portal::getInstance()->getSettings()->getLogo();
+$siteTitle = Intranet\Portal::getInstance()->getSettings()->getTitle();
 
 $siteTitle = htmlspecialcharsbx($siteTitle);
 $siteUrl = htmlspecialcharsbx(SITE_DIR);
@@ -31,12 +23,11 @@ $logo24 = Intranet\Util::getLogo24()
 <div class="logo">
 <a href="<?=$siteUrl?>" title="<?=GetMessage("BITRIX24_LOGO_TOOLTIP")?>" class="logo-link"><?php
 
-	if ($siteLogo["logo"]):
+	if (isset($siteLogo['src'])):
 		?><span class="logo-image-container"><?php
-			?><img
-				src="<?=CFile::getPath($siteLogo["logo"])?>"
-				<?php if ($siteLogo["retina"]): ?>
-				srcset="<?=CFile::getPath($siteLogo["retina"])?> 2x"
+			?><img src="<?=$siteLogo['src']?>"
+				<?php if (isset($siteLogo['srcset'])): ?>
+					srcset="<?=$siteLogo['srcset']?> 2x"
 				<?php endif ?>
 			/><?php
 		?></span><?php
@@ -49,21 +40,10 @@ $logo24 = Intranet\Util::getLogo24()
 		?></span><?php
 	endif;?>
 </a>
-	<?php if (Loader::includeModule("bitrix24")):
-		if (\CBitrix24::IsPortalAdmin($USER->GetID()) && !\CBitrix24::isDomainChanged()):?>
-			<div class="header-logo-block-settings header-logo-block-settings-show" data-rename-portal="true">
-				<span
-					class="header-logo-block-settings-item"
-					onclick="BX.Bitrix24.renamePortal(this)"
-					title="<?=GetMessage('BITRIX24_SETTINGS_TITLE')?>"></span>
-			</div><?php
-		endif;
-
-		$APPLICATION->IncludeComponent(
-				'bitrix:bitrix24.holding',
-				'.default', [],
-				false,
-				['HIDE_ICONS' => 'Y']
-			);
-	endif;?>
+	<?php
+	$APPLICATION->IncludeComponent(
+		'bitrix:intranet.settings.widget',
+		'.default'
+	);
+	?>
 </div>

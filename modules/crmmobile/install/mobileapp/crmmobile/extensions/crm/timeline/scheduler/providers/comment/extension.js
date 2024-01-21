@@ -4,8 +4,10 @@
 jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module) => {
 	include('InAppNotifier');
 
-	const { Haptics } = require('haptics');
 	const { Loc } = require('loc');
+	const { Haptics } = require('haptics');
+	const { clip } = require('assets/common');
+	const AppTheme = require('apptheme');
 	const { TimelineSchedulerBaseProvider } = require('crm/timeline/scheduler/providers/base');
 	const {
 		Toolbar,
@@ -14,6 +16,7 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 	} = require('crm/timeline/ui/toolbar');
 	const { Textarea } = require('crm/timeline/ui/textarea');
 	const { FileField } = require('layout/ui/fields/file');
+	const { EntitySelectorFactory } = require('selector/widget/factory');
 
 	const isAndroid = Application.getPlatform() === 'android';
 
@@ -62,7 +65,7 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 
 		static getMenuIcon()
 		{
-			return '<svg width="31" height="31" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.702 8h17.596C25.238 8 26 8.653 26 9.459v10.082c0 .806-.762 1.459-1.702 1.459H15.5l-5.833 5v-5H6.702C5.762 21 5 20.347 5 19.54V9.46C5 8.653 5.762 8 6.702 8Z" fill="#767C87"/></svg>';
+			return `<svg width="31" height="31" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.702 8h17.596C25.238 8 26 8.653 26 9.459v10.082c0 .806-.762 1.459-1.702 1.459H15.5l-5.833 5v-5H6.702C5.762 21 5 20.347 5 19.54V9.46C5 8.653 5.762 8 6.702 8Z" fill="${AppTheme.colors.base3}"/></svg>`;
 		}
 
 		static getDefaultPosition()
@@ -97,9 +100,8 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 			return View(
 				{
 					style: {
-						flexDirection: 'column',
 						flex: 1,
-						backgroundColor: '#eef2f4',
+						flexDirection: 'column',
 					},
 					resizableByKeyboard: true,
 				},
@@ -107,7 +109,7 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 					{
 						style: {
 							flex: 1,
-							backgroundColor: '#ffffff',
+							backgroundColor: AppTheme.colors.bgContentPrimary,
 							borderTopLeftRadius: 12,
 							borderTopRightRadius: 12,
 						},
@@ -129,7 +131,9 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 					},
 				},
 				Textarea({
-					ref: (ref) => this.textInputRef = ref,
+					ref: (ref) => {
+						this.textInputRef = ref;
+					},
 					text: this.state.text,
 					placeholder: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_COMMENT_PLACEHOLDER_2'),
 					onChange: (text) => {
@@ -151,7 +155,9 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 					},
 				},
 				FileField({
-					ref: (ref) => this.fileFieldRef = ref,
+					ref: (ref) => {
+						this.fileFieldRef = ref;
+					},
 					showTitle: false,
 					showAddButton: false,
 					hasHiddenEmptyView: true,
@@ -182,7 +188,9 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 		{
 			return Toolbar({
 				right: () => new ToolbarButton({
-					ref: (ref) => this.createButtonRef = ref,
+					ref: (ref) => {
+						this.createButtonRef = ref;
+					},
 					text: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_COMMENT_CREATE'),
 					loadingText: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_COMMENT_CREATE_PROGRESS'),
 					disabled: !this.isSaveAllowed(),
@@ -193,13 +201,15 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 						style: { flexDirection: 'row' },
 					},
 					ToolbarIcon({
-						svg: '<svg width="17" height="19" viewBox="0 0 17 19" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.1313 7.48636C16.2696 7.62472 16.2696 7.84904 16.1313 7.98739L15.2028 8.91584C15.0645 9.05419 14.8401 9.05419 14.7018 8.91584L9.2344 3.44845C7.66198 1.87603 5.08893 1.87603 3.5165 3.44845C1.94408 5.02087 1.94408 7.59393 3.5165 9.16635L10.2236 15.8735C11.2097 16.8596 12.8112 16.8596 13.7973 15.8735C14.7834 14.8874 14.7834 13.2859 13.7973 12.2998L7.80493 6.3074C7.40456 5.90703 6.77582 5.90703 6.37545 6.3074C5.97509 6.70777 5.97509 7.33651 6.37545 7.73688L11.1281 12.4895C11.2665 12.6279 11.2665 12.8522 11.1281 12.9906L10.1997 13.919C10.0613 14.0574 9.83698 14.0574 9.69863 13.919L4.94598 9.16635C3.7594 7.97977 3.7594 6.0645 4.94598 4.87793C6.13256 3.69135 8.04783 3.69135 9.2344 4.87793L15.2268 10.8703C16.9991 12.6426 16.9991 15.5307 15.2268 17.303C13.4545 19.0752 10.5664 19.0752 8.79416 17.303L2.08703 10.5958C-0.271604 8.23719 -0.271604 4.37761 2.08703 2.01898C4.44566 -0.339659 8.30525 -0.339659 10.6639 2.01898L16.1313 7.48636Z" fill="#BDC1C6"/></svg>',
+						tintColor: AppTheme.colors.base5,
+						svg: clip,
 						width: 17,
 						height: 19,
 						onClick: () => this.fileFieldRef && this.fileFieldRef.openFilePicker(),
 					}),
 					ToolbarIcon({
-						svg: '<svg width="18" height="19" viewBox="0 0 18 19" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.16738 19C6.45494 19 4.24893 18.1952 2.54936 16.5856C0.849785 14.9586 0 12.7104 0 9.84116C0 6.98941 0.909871 4.63628 2.72961 2.78177C4.54936 0.927256 6.78112 0 9.42489 0C11.9828 0 14.0515 0.76105 15.6309 2.28315C17.2103 3.80525 18 5.67726 18 7.89917C18 9.75368 17.5193 11.3108 16.5579 12.5704C15.5966 13.8126 14.4549 14.4337 13.133 14.4337C12.6695 14.4337 12.2575 14.2937 11.897 14.0138C11.5365 13.7339 11.3219 13.3577 11.2532 12.8854C10.5665 13.9876 9.56223 14.5387 8.24034 14.5387C7.14163 14.5387 6.24893 14.1275 5.56223 13.3052C4.87554 12.483 4.53219 11.3982 4.53219 10.0511C4.53219 8.66897 4.96996 7.41805 5.84549 6.29834C6.7382 5.17864 7.85408 4.61878 9.19313 4.61878C10.3777 4.61878 11.2275 5.12615 11.7425 6.14088L11.9485 4.95994H14.2403L13.4163 9.39503C13.176 10.7072 13.0558 11.512 13.0558 11.8094C13.0558 12.2468 13.2017 12.4655 13.4936 12.4655C14.0773 12.4655 14.6094 12.0106 15.0901 11.1008C15.588 10.1911 15.8369 9.1326 15.8369 7.92541C15.8369 6.26335 15.2704 4.88996 14.1373 3.80525C13.0043 2.70304 11.4678 2.15193 9.5279 2.15193C7.43348 2.15193 5.71674 2.89549 4.37768 4.3826C3.03863 5.85221 2.3691 7.68048 2.3691 9.8674C2.3691 12.0718 2.97854 13.7864 4.19742 15.011C5.41631 16.2357 7.1073 16.8481 9.27039 16.8481C10.3863 16.8481 11.4421 16.7256 12.4378 16.4807L11.897 18.8163C11.1245 18.9388 10.2146 19 9.16738 19ZM8.62661 12.2818C9.36481 12.2818 9.96566 11.9494 10.4292 11.2845C10.9099 10.6022 11.1502 9.85865 11.1502 9.05387C11.1502 8.38904 10.9957 7.86418 10.6867 7.47928C10.3777 7.07689 9.9485 6.87569 9.39914 6.87569C8.66094 6.87569 8.0515 7.19061 7.57081 7.82044C7.09013 8.45027 6.84978 9.20258 6.84978 10.0773C6.84978 10.7422 7.00429 11.2758 7.3133 11.6782C7.63948 12.0806 8.07725 12.2818 8.62661 12.2818Z" fill="#BDC1C6"/></svg>',
+						tintColor: AppTheme.colors.base5,
+						svg: `<svg width="18" height="19" viewBox="0 0 18 19" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.16738 19C6.45494 19 4.24893 18.1952 2.54936 16.5856C0.849785 14.9586 0 12.7104 0 9.84116C0 6.98941 0.909871 4.63628 2.72961 2.78177C4.54936 0.927256 6.78112 0 9.42489 0C11.9828 0 14.0515 0.76105 15.6309 2.28315C17.2103 3.80525 18 5.67726 18 7.89917C18 9.75368 17.5193 11.3108 16.5579 12.5704C15.5966 13.8126 14.4549 14.4337 13.133 14.4337C12.6695 14.4337 12.2575 14.2937 11.897 14.0138C11.5365 13.7339 11.3219 13.3577 11.2532 12.8854C10.5665 13.9876 9.56223 14.5387 8.24034 14.5387C7.14163 14.5387 6.24893 14.1275 5.56223 13.3052C4.87554 12.483 4.53219 11.3982 4.53219 10.0511C4.53219 8.66897 4.96996 7.41805 5.84549 6.29834C6.7382 5.17864 7.85408 4.61878 9.19313 4.61878C10.3777 4.61878 11.2275 5.12615 11.7425 6.14088L11.9485 4.95994H14.2403L13.4163 9.39503C13.176 10.7072 13.0558 11.512 13.0558 11.8094C13.0558 12.2468 13.2017 12.4655 13.4936 12.4655C14.0773 12.4655 14.6094 12.0106 15.0901 11.1008C15.588 10.1911 15.8369 9.1326 15.8369 7.92541C15.8369 6.26335 15.2704 4.88996 14.1373 3.80525C13.0043 2.70304 11.4678 2.15193 9.5279 2.15193C7.43348 2.15193 5.71674 2.89549 4.37768 4.3826C3.03863 5.85221 2.3691 7.68048 2.3691 9.8674C2.3691 12.0718 2.97854 13.7864 4.19742 15.011C5.41631 16.2357 7.1073 16.8481 9.27039 16.8481C10.3863 16.8481 11.4421 16.7256 12.4378 16.4807L11.897 18.8163C11.1245 18.9388 10.2146 19 9.16738 19ZM8.62661 12.2818C9.36481 12.2818 9.96566 11.9494 10.4292 11.2845C10.9099 10.6022 11.1502 9.85865 11.1502 9.05387C11.1502 8.38904 10.9957 7.86418 10.6867 7.47928C10.3777 7.07689 9.9485 6.87569 9.39914 6.87569C8.66094 6.87569 8.0515 7.19061 7.57081 7.82044C7.09013 8.45027 6.84978 9.20258 6.84978 10.0773C6.84978 10.7422 7.00429 11.2758 7.3133 11.6782C7.63948 12.0806 8.07725 12.2818 8.62661 12.2818Z" fill="${AppTheme.colors.base5}"/></svg>`,
 						width: 18,
 						height: 19,
 						onClick: () => this.openUserSelector(),
@@ -222,11 +232,11 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 				},
 				widgetParams: {
 					title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_MENTION_USER_TITLE'),
-					backgroundColor: '#eef2f4',
+					backgroundColor: AppTheme.colors.bgSecondary,
 					backdrop: {
 						mediumPositionPercent: 70,
 						horizontalSwipeAllowed: false,
-						navigationBarColor: '#eef2f4',
+						navigationBarColor: AppTheme.colors.bgSecondary,
 					},
 				},
 			});
@@ -284,7 +294,7 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 
 		isSaveAllowed()
 		{
-			return this.state.text.length && !this.hasUploadingFiles();
+			return this.state.text.length > 0 && !this.hasUploadingFiles();
 		}
 
 		refreshSaveButton()
@@ -312,7 +322,7 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 						ENTITY_TYPE_ID: this.entity.typeId,
 						ENTITY_ID: this.entity.id,
 						COMMENT: this.comment,
-						//AUTHOR_ID:
+						// AUTHOR_ID:
 						FILES: this.files,
 					},
 				};
@@ -334,10 +344,14 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 		get comment()
 		{
 			const { text } = this.state;
+			const regExp = new RegExp(
+				`\\[URL=data:\\/\\/user=([0-9]+)]\\[COLOR=${AppTheme.colors.accentMainLinks}]\\[B](.*)\\[\\/B]\\[\\/COLOR]\\[\\/URL]`,
+				'gm',
+			);
 
 			return text.replaceAll(
-				/\[URL=data:\/\/user=([0-9]+)]\[COLOR=#0B66C3]\[B](.*)\[\/B]\[\/COLOR]\[\/URL]/gm,
-				'[USER=$1]$2[/USER]'
+				regExp,
+				'[USER=$1]$2[/USER]',
 			);
 		}
 

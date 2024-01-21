@@ -1,6 +1,11 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
 	die();
+}
+
+use Bitrix\Crm\Restriction\AvailabilityManager;
 
 /** @global CMain $APPLICATION */
 
@@ -9,6 +14,16 @@ if (!CModule::includeModule('crm'))
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
 	return;
 }
+
+$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+$isAvailable = $toolsManager->checkCrmAvailability();
+if (!$isAvailable)
+{
+	print AvailabilityManager::getInstance()->getCrmInaccessibilityContent();
+
+	return;
+}
+
 if (!CModule::includeModule('sale'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
@@ -19,6 +34,20 @@ if(!CCrmPerms::IsAccessEnabled())
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
+}
+
+$enableAICallProcessing = \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('enableAICallProcessing');
+if (
+	\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdmin()
+	&&  isset($enableAICallProcessing)
+)
+{
+	$enableAICallProcessing = strtolower($enableAICallProcessing);
+	\Bitrix\Crm\Integration\AI\AIManager::setAiCallProcessingEnabled(in_array($enableAICallProcessing, ['y', 'a'], true));
+	if (in_array($enableAICallProcessing, ['n', 'y', 'a'], true))
+	{
+		\Bitrix\Crm\Integration\AI\AIManager::setAiCallAutomaticProcessingAllowed($enableAICallProcessing === 'a' ? true : null);
+	}
 }
 
 $arResult['BITRIX24'] = \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24');

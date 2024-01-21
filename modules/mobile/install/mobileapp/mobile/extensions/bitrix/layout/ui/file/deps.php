@@ -5,6 +5,7 @@ return [
 		'utils/function',
 		'utils/object',
 		'utils/file',
+		'apptheme',
 		'alert',
 	],
 ];

@@ -4,9 +4,10 @@
  * @module im/messenger/model/users
  */
 jn.define('im/messenger/model/users', (require, exports, module) => {
-	const { UsersCache } = require('im/messenger/cache');
 	const { Type } = require('type');
-	const { Logger } = require('im/messenger/lib/logger');
+	const { DateHelper } = require('im/messenger/lib/helper');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('model--users');
 
 	const elementState = {
 		id: 0,
@@ -20,6 +21,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		extranet: false,
 		network: false,
 		bot: false,
+		botData: {},
 		connector: false,
 		externalAuthId: 'default',
 		status: '',
@@ -40,6 +42,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 			personalPhone: '',
 			innerPhone: '',
 		},
+		isCompleteInfo: true,
 	};
 
 	const usersModel = {
@@ -64,29 +67,147 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 				const userList = [];
 
 				Object.keys(state.collection).forEach((userId) => {
+					const user = state.collection[userId];
+					if (user.isCompleteInfo === true)
+					{
+						userList.push(user);
+					}
+				});
+
+				return userList;
+			},
+
+			/** @function usersModel/getByIdList */
+			getByIdList: (state, getters) => (idList) => {
+				if (!Type.isArrayFilled(idList))
+				{
+					return [];
+				}
+
+				const userList = [];
+				idList.forEach((id) => {
+					const dialog = getters.getById(id);
+					if (dialog)
+					{
+						userList.push(dialog);
+					}
+				});
+
+				return userList;
+			},
+
+			/** @function usersModel/getCollectionByIdList */
+			getCollectionByIdList: (state, getters) => (idList) => {
+				if (!Type.isArrayFilled(idList))
+				{
+					return [];
+				}
+
+				const collection = {};
+				idList.forEach((id) => {
+					const dialog = getters.getById(id);
+					if (dialog)
+					{
+						collection[id] = dialog;
+					}
+				});
+
+				return collection;
+			},
+
+			/**
+			 * @function usersModel/getListWithUncompleted
+			 * @return {UsersModelState[]}
+			 */
+			getListWithUncompleted: (state) => () => {
+				const userList = [];
+
+				Object.keys(state.collection).forEach((userId) => {
 					userList.push(state.collection[userId]);
 				});
 
 				return userList;
 			},
+
+			/**
+			 * @function usersModel/hasBirthday
+			 * @return boolean
+			 */
+			hasBirthday: (state) => (rawUserId) => {
+				const userId = Number.parseInt(rawUserId, 10);
+
+				const user = state.collection[userId];
+				if (userId <= 0 || !user)
+				{
+					return false;
+				}
+
+				const timestampInSeconds = Math.round(Date.now() / 1000);
+
+				return user.birthday === dateFormatter.get(timestampInSeconds, 'd-m');
+			},
+
+			/**
+			 * @function usersModel/hasVacation
+			 * @return boolean
+			 */
+			hasVacation: (state) => (rawUserId) => {
+				const userId = Number.parseInt(rawUserId, 10);
+
+				const user = state.collection[userId];
+				if (userId <= 0 || !user)
+				{
+					return false;
+				}
+
+				const absentDate = DateHelper.cast(user.absent, false);
+				if (absentDate === false)
+				{
+					return false;
+				}
+
+				return absentDate > new Date();
+			},
 		},
 		actions: {
 			/** @function usersModel/setState */
 			setState: (store, payload) => {
-				// broken keys invalidation, remove after immobile 23.1000.0
-				Object.keys(payload.collection).forEach((userId) => {
-					if (!Type.isNumber(userId))
-					{
-						delete payload.collection[userId];
-					}
-				});
-
 				store.commit('setState', {
 					actionName: 'setState',
 					data: {
 						collection: payload.collection,
 					},
 				});
+			},
+
+			/** @function usersModel/setFromLocalDatabase */
+			setFromLocalDatabase: (store, payload) => {
+				let result = [];
+				if (Type.isArray(payload))
+				{
+					result = payload.map((user) => {
+						return {
+							...elementState,
+							...validate(user, {
+								fromLocalDatabase: true,
+							}),
+						};
+					});
+				}
+
+				if (result.length === 0)
+				{
+					return false;
+				}
+
+				store.commit('set', {
+					actionName: 'setFromLocalDatabase',
+					data: {
+						userList: result,
+					},
+				});
+
+				return true;
 			},
 
 			/** @function usersModel/set */
@@ -98,6 +219,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 						return {
 							...elementState,
 							...validate(user),
+							isCompleteInfo: true,
 						};
 					});
 				}
@@ -117,6 +239,38 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 				return true;
 			},
 
+			/** @function usersModel/addShort */
+			addShort: (store, payload) => {
+				if (!Type.isArray(payload) && Type.isPlainObject(payload))
+				{
+					payload = [payload];
+				}
+
+				const userList = [];
+				payload.forEach((user) => {
+					const modelUser = validate(user);
+					const existingUser = store.state.collection[modelUser.id];
+					if (!existingUser)
+					{
+						modelUser.isCompleteInfo = false;
+						userList.push({
+							...elementState,
+							...modelUser,
+						});
+					}
+				});
+
+				if (Type.isArrayFilled(userList))
+				{
+					store.commit('set', {
+						actionName: 'addShort',
+						data: {
+							userList,
+						},
+					});
+				}
+			},
+
 			/** @function usersModel/update */
 			update: (store, payload) => {
 				const result = [];
@@ -129,6 +283,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 							result.push({
 								...store.state.collection[user.id],
 								...validate(user),
+								isCompleteInfo: true,
 							});
 						}
 					});
@@ -213,7 +368,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 			 * @param {MutationPayload} payload
 			 */
 			setState: (state, payload) => {
-				Logger.warn('usersModel: setState mutation', payload);
+				logger.log('usersModel: setState mutation', payload);
 
 				const {
 					collection,
@@ -227,7 +382,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 			 * @param {MutationPayload} payload
 			 */
 			set: (state, payload) => {
-				Logger.warn('usersModel: set mutation', payload);
+				logger.log('usersModel: set mutation', payload);
 
 				const {
 					userList,
@@ -236,8 +391,6 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 				userList.forEach((user) => {
 					state.collection[user.id] = user;
 				});
-
-				UsersCache.save(state);
 			},
 
 			/**
@@ -245,22 +398,23 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 			 * @param {MutationPayload} payload
 			 */
 			delete: (state, payload) => {
-				Logger.warn('usersModel: delete mutation', payload);
+				logger.log('usersModel: delete mutation', payload);
 
 				const {
 					id,
 				} = payload.data;
 
 				delete state.collection[id];
-
-				UsersCache.save(state);
 			},
 		},
 	};
 
-	function validate(fields)
+	function validate(fields, options = {})
 	{
 		const result = {};
+		const {
+			fromLocalDatabase,
+		} = options;
 
 		if (Type.isNumber(fields.id) || Type.isString(fields.id))
 		{
@@ -300,7 +454,14 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 
 		if (Type.isStringFilled(fields.avatar))
 		{
-			result.avatar = prepareAvatar(fields.avatar);
+			if (fromLocalDatabase === true)
+			{
+				result.avatar = fields.avatar;
+			}
+			else
+			{
+				result.avatar = prepareAvatar(fields.avatar);
+			}
 		}
 
 		if (Type.isStringFilled(fields.work_position))
@@ -336,6 +497,26 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		if (Type.isBoolean(fields.bot))
 		{
 			result.bot = fields.bot;
+		}
+
+		if (Type.isObject(fields.bot_data))
+		{
+			result.botData = {
+				appId: fields.bot_data.app_id,
+				code: fields.bot_data.code,
+				isHidden: fields.bot_data.is_hidden,
+				isSupportOpenline: fields.bot_data.is_support_openline,
+				type: fields.bot_data.type,
+			};
+		}
+		else
+		{
+			result.botData = {};
+		}
+
+		if (Type.isObject(fields.botData))
+		{
+			result.botData = fields.botData;
 		}
 
 		if (Type.isBoolean(fields.connector))
@@ -408,6 +589,11 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		if (Type.isPlainObject(fields.phones))
 		{
 			result.phones = preparePhones(fields.phones);
+		}
+
+		if (Type.isBoolean(fields.isCompleteInfo))
+		{
+			result.isCompleteInfo = fields.isCompleteInfo;
 		}
 
 		return result;

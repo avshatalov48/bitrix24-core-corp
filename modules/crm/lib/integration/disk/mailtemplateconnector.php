@@ -9,7 +9,7 @@ namespace Bitrix\Crm\Integration\Disk;
 use Bitrix\Disk\Uf;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Uf\FileUserType;
-
+use Bitrix\Crm\MailTemplate\MailTemplateAccess;
 
 class MailTemplateConnector extends Uf\StubConnector
 {
@@ -39,6 +39,8 @@ class MailTemplateConnector extends Uf\StubConnector
 			&& (
 				((int)$template['SCOPE'] === \CCrmMailTemplateScope::Common)
 				|| ((int)$template['OWNER_ID'] === (int)$userId)
+				|| ((int)$template['SCOPE'] === \CCrmMailTemplateScope::Limited
+					&& MailTemplateAccess::checkAccessToLimitedTemplate((int)$template['ID']))
 			)
 		)
 		{

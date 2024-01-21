@@ -117,6 +117,8 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 			this.isChanged = false;
 			this.entityDetailsUrl = BX.prop.getString(this.settings, 'entityDetailsUrl', '');
 
+			this.isEmbedded = BX.prop.getBoolean(props, 'isEmbedded', false);
+
 			this.customEventEmitter.emit('UI.EntityEditor::onInit', [{
 				readOnly: this.readOnly,
 			}]);
@@ -141,9 +143,35 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 		{
 			const { onScroll, showBottomPadding } = this.props;
 
+			const fadeView = new FadeView({
+				visible: false,
+				fadeInOnMount: true,
+				notVisibleOpacity: 0.5,
+				slot: () => {
+					return View(
+						{
+							style: {
+								flexDirection: 'column',
+								paddingTop: 12,
+							},
+						},
+						...this.renderControls(),
+						...this.initializeControllers(),
+						showBottomPadding && View({ style: { height: 80 } }),
+					);
+				},
+			});
+
+			if (this.isEmbedded)
+			{
+				return fadeView;
+			}
+
 			return ScrollView(
 				{
-					ref: (ref) => this.scrollViewRef = ref,
+					ref: (ref) => {
+						this.scrollViewRef = ref;
+					},
 					style: {
 						flex: 1,
 					},
@@ -159,24 +187,7 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 					},
 					scrollEventThrottle: 15,
 				},
-				new FadeView({
-					visible: false,
-					fadeInOnMount: true,
-					notVisibleOpacity: 0.5,
-					slot: () => {
-						return View(
-							{
-								style: {
-									flexDirection: 'column',
-									paddingTop: 12,
-								},
-							},
-							...this.renderControls(),
-							...this.initializeControllers(),
-							showBottomPadding && View({ style: { height: 80 } }),
-						);
-					},
-				}),
+				fadeView,
 			);
 		}
 
@@ -202,14 +213,22 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 			{
 				this.alreadyScrolledToInvalidField = true;
 
-				const position = this.scrollViewRef.getPosition(fieldView);
-				this.scrollTo(position, animated);
+				if (this.scrollViewRef)
+				{
+					const position = this.scrollViewRef.getPosition(fieldView);
+					this.scrollTo(position, animated);
+				}
+
+				if (this.isEmbedded)
+				{
+					this.customEventEmitter.emit('UI.EntityEditor::onScrollToInvalidField', [fieldView]);
+				}
 			}
 		}
 
 		scrollToFocusedField(fieldView, animated = true)
 		{
-			if (this.isScrollToViewEnabled)
+			if (this.isScrollToViewEnabled && this.scrollViewRef)
 			{
 				const { y } = this.scrollViewRef.getPosition(fieldView);
 
@@ -218,6 +237,11 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 					const positionY = y - 150;
 					this.scrollTo({ y: positionY }, animated);
 				}
+			}
+
+			if (this.isEmbedded)
+			{
+				this.customEventEmitter.emit('UI.EntityEditor::onScrollToFocusedField', [fieldView]);
 			}
 		}
 

@@ -1,7 +1,7 @@
 <?php
 $MESS["IMMOBILE_STATUS_ONLINE"] = "Онлайн";
 $MESS["IMMOBILE_STATUS_BOT"] = "Чат-бот";
-$MESS["IMMOBILE_STATUS_NETWORK"] = "Битрикс24.Network";
+$MESS["IMMOBILE_STATUS_NETWORK_MSGVER_1"] = "Битрикс24 Network";
 $MESS["IMMOBILE_STATUS_OFFLINE"] = "Не в сети";
 $MESS["IMMOBILE_STATUS_BREAK"] = "Перерыв";
 $MESS["IMMOBILE_STATUS_AWAY"] = "Отсутствую";

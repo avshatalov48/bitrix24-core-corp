@@ -180,15 +180,17 @@ export const Item = {
 		}
 	},
 	template: `
-		<div :data-id="id" :class="timelineCardClassname">
-			<div class="crm-timeline__card_fade" v-if="isFaded"></div>
+	  	<div class="crm-timeline__card-wrapper">
 			<div class="crm-timeline__card_icon_container">
 				<Icon v-bind="layout.icon"></Icon>
 			</div>
-			<Header v-if="layout.header" v-bind="layout.header" :use-short-time-format="useShortTimeFormat" ref="header"></Header>
-			<Body v-if="layout.body" v-bind="layout.body" ref="body"></Body>
-			<Footer v-if="layout.footer" v-bind="layout.footer" ref="footer"></Footer>
-			<MarketPanel v-if="layout.marketPanel" v-bind="layout.marketPanel"></MarketPanel>
+			<div :data-id="id" ref="timelineCard" :class="timelineCardClassname">
+				<div class="crm-timeline__card_fade" v-if="isFaded"></div>
+				<Header v-if="layout.header" v-bind="layout.header" :use-short-time-format="useShortTimeFormat" ref="header"></Header>
+				<Body v-if="layout.body" v-bind="layout.body" ref="body"></Body>
+				<Footer v-if="layout.footer" v-bind="layout.footer" ref="footer"></Footer>
+				<MarketPanel v-if="layout.marketPanel" v-bind="layout.marketPanel"></MarketPanel>
+			</div>
 		</div>
 	`
 };

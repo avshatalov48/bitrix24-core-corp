@@ -114,7 +114,14 @@ class All extends Queue
 			}
 			else
 			{
-				ImOpenLines\Queue::returnSessionToQueue($session['ID']);
+				if ($reasonReturn === ImOpenLines\Queue::REASON_OPERATOR_DAY_END)
+				{
+					ImOpenLines\Queue::returnSessionToQueue($session['ID'], ImOpenLines\Queue::REASON_OPERATOR_DAY_END_SILENT);
+				}
+				else
+				{
+					ImOpenLines\Queue::returnSessionToQueue($session['ID']);
+				}
 			}
 		}
 	}

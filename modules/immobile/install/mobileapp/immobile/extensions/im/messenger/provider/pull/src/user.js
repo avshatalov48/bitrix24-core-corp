@@ -5,9 +5,10 @@
  */
 jn.define('im/messenger/provider/pull/user', (require, exports, module) => {
 	const { PullHandler } = require('im/messenger/provider/pull/base');
-	const { Logger } = require('im/messenger/lib/logger');
 	const { RecentConverter } = require('im/messenger/lib/converter');
 	const { Counters } = require('im/messenger/lib/counters');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('pull-handler--user');
 
 	/**
 	 * @class UserPullHandler
@@ -16,7 +17,12 @@ jn.define('im/messenger/provider/pull/user', (require, exports, module) => {
 	{
 		handleUserInvite(params, extra, command)
 		{
-			Logger.info('UserPullHandler.handleUserInvite', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('UserPullHandler.handleUserInvite', params);
 
 			const user = ChatDataConverter.getElementByEntity('user', params.user);
 			user.avatar = user.avatar.url;
@@ -28,7 +34,12 @@ jn.define('im/messenger/provider/pull/user', (require, exports, module) => {
 
 		handleDeleteBot(params, extra, command)
 		{
-			Logger.info('UserPullHandler.handleUserUpdate', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('UserPullHandler.handleUserUpdate', params);
 
 			this.store.dispatch('recentModel/delete', { id: params.botId })
 				.then(() => Counters.update())
@@ -37,28 +48,48 @@ jn.define('im/messenger/provider/pull/user', (require, exports, module) => {
 
 		handleUserUpdate(params, extra, command)
 		{
-			Logger.info('UserPullHandler.handleUserUpdate', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('UserPullHandler.handleUserUpdate', params);
 
 			this.updateUser(params);
 		}
 
 		handleUpdateUser(params, extra, command)
 		{
-			Logger.info('UserPullHandler.handleUpdateUser', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('UserPullHandler.handleUpdateUser', params);
 
 			this.updateUser(params);
 		}
 
 		handleBotUpdate(params, extra, command)
 		{
-			Logger.info('UserPullHandler.handleBotUpdate', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('UserPullHandler.handleBotUpdate', params);
 
 			this.updateUser(params);
 		}
 
 		handleUpdateBot(params, extra, command)
 		{
-			Logger.info('UserPullHandler.handleUpdateBot', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('UserPullHandler.handleUpdateBot', params);
 
 			this.updateUser(params);
 		}

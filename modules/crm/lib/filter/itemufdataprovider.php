@@ -23,11 +23,13 @@ class ItemUfDataProvider extends UserFieldDataProvider
 	protected function getGridColumn(array $userField): array
 	{
 		$fieldName = $userField['FIELD_NAME'];
+		$isMultiple = $userField['MULTIPLE'] === 'Y';
 
 		$result = [
 			'id' => $fieldName,
 			'name' => $this->getFieldName($userField),
 			'default' => ($userField['SHOW_FILTER'] !== 'N'),
+			'sort' => $isMultiple ? false : $fieldName,
 		];
 
 		return $result;

@@ -26,14 +26,4 @@ class Dynamic extends Item
 			$dataClass::disableUserFieldsCheck();
 		}
 	}
-
-	protected function getExternalizableFieldNames(): array
-	{
-		return array_merge(
-			parent::getExternalizableFieldNames(),
-			[
-				$this->getEntityFieldNameByMap(Item::FIELD_NAME_OBSERVERS),
-			],
-		);
-	}
 }

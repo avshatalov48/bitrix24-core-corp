@@ -6,6 +6,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\DB\SqlQueryException;
 
 /**
  * Class AgentContractContractorTable
@@ -19,7 +20,20 @@ use Bitrix\Main\ORM\Fields\IntegerField;
  * </ul>
  *
  * @package Bitrix\Crm
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_AgentContractContractor_Query query()
+ * @method static EO_AgentContractContractor_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_AgentContractContractor_Result getById($id)
+ * @method static EO_AgentContractContractor_Result getList(array $parameters = [])
+ * @method static EO_AgentContractContractor_Entity getEntity()
+ * @method static \Bitrix\Crm\Integration\Catalog\Contractor\EO_AgentContractContractor createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Integration\Catalog\Contractor\EO_AgentContractContractor_Collection createCollection()
+ * @method static \Bitrix\Crm\Integration\Catalog\Contractor\EO_AgentContractContractor wakeUpObject($row)
+ * @method static \Bitrix\Crm\Integration\Catalog\Contractor\EO_AgentContractContractor_Collection wakeUpCollection($rows)
+ */
 class AgentContractContractorTable extends DataManager
 {
 	/**
@@ -128,19 +142,44 @@ class AgentContractContractorTable extends DataManager
 	{
 		$sqlHelper = Application::getConnection()->getSqlHelper();
 
-		Application::getConnection()->query(sprintf(
-			'
-			UPDATE IGNORE %s
+		try
+		{
+			Application::getConnection()->query(sprintf(
+				'
+			UPDATE %s
 			SET ENTITY_ID = %d
 			WHERE
 				ENTITY_TYPE_ID = %d
 				AND ENTITY_ID = %d
 			',
-			self::getTableName(),
-			$sqlHelper->convertToDbInteger($newEntityId),
-			$sqlHelper->convertToDbInteger($entityTypeId),
-			$sqlHelper->convertToDbInteger($oldEntityId)
-		));
+				self::getTableName(),
+				$sqlHelper->convertToDbInteger($newEntityId),
+				$sqlHelper->convertToDbInteger($entityTypeId),
+				$sqlHelper->convertToDbInteger($oldEntityId)
+			));
+		}
+		catch (SqlQueryException $e) // most likely there is a duplication of unique keys, so try to update every item separately
+		{
+			$items = self::query()
+				->setSelect(['ID'])
+				->where('ENTITY_TYPE_ID', $entityTypeId)
+				->where('ENTITY_ID', $oldEntityId)
+				->fetchAll()
+			;
+
+			foreach ($items as $item)
+			{
+				try
+				{
+					self::update($item['ID'], ['ENTITY_ID' => $newEntityId]);
+				}
+				catch (SqlQueryException $e)
+				{
+					// unique keys have been duplicated, so delete this duplicate:
+					self::delete($item['ID']);
+				}
+			}
+		}
 	}
 
 	/**
@@ -192,16 +231,16 @@ class AgentContractContractorTable extends DataManager
 				$sqlHelper->convertToDbInteger($documentId)
 			);
 		}
-
-		Application::getConnection()->query(sprintf(
-			'INSERT INTO %s (
-					ENTITY_TYPE_ID,
-					ENTITY_ID,
-					CONTRACT_ID
-				) VALUES %s
-				ON DUPLICATE KEY UPDATE ID = ID',
+		$sql = $sqlHelper->getInsertIgnore(
 			self::getTableName(),
-			implode(', ', $sqlValues)
-		));
+			'(
+				ENTITY_TYPE_ID,
+				ENTITY_ID,
+				CONTRACT_ID
+			)',
+			'VALUES ' . implode(', ', $sqlValues)
+		);
+
+		Application::getConnection()->query($sql);
 	}
 }

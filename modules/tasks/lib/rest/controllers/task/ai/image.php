@@ -106,7 +106,7 @@ class Image extends Controller
 	private function getRecord(Model\Image $image): array
 	{
 		$tempPath = CFile::GetTempName('', bx_basename($image->getUrl()));
-		$isDownloaded = $this->httpClient->download(
+		$isDownloaded = $this->httpClient->setPrivateIp(false)->download(
 			$image->getUrl(),
 			$tempPath
 		);

@@ -4,7 +4,6 @@ this.BX.Disk = this.BX.Disk || {};
 	'use strict';
 
 	var intersectionObserver;
-
 	function observeIntersection(entity, callback) {
 	  if (!intersectionObserver) {
 	    intersectionObserver = new IntersectionObserver(function (entries) {
@@ -20,7 +19,6 @@ this.BX.Disk = this.BX.Disk || {};
 	      threshold: 0
 	    });
 	  }
-
 	  entity.observedCallback = callback;
 	  intersectionObserver.observe(entity);
 	}
@@ -28,7 +26,6 @@ this.BX.Disk = this.BX.Disk || {};
 	var BackendInner = function BackendInner() {
 	  babelHelpers.classCallCheck(this, BackendInner);
 	};
-
 	babelHelpers.defineProperty(BackendInner, "idsForShared", {});
 	babelHelpers.defineProperty(BackendInner, "idsForExternalLinks", {});
 	babelHelpers.defineProperty(BackendInner, "sendForInfo", main_core.Runtime.debounce(function () {
@@ -39,7 +36,6 @@ this.BX.Disk = this.BX.Disk || {};
 	  BackendInner.idsForShared = {};
 	  BackendInner.idsForExternalLinks = {};
 	  var request = {};
-
 	  for (var action in requestData) {
 	    if (requestData.hasOwnProperty(action)) {
 	      for (var id in requestData[action]) {
@@ -50,7 +46,6 @@ this.BX.Disk = this.BX.Disk || {};
 	      }
 	    }
 	  }
-
 	  main_core.ajax.runComponentAction(Backend.component, 'getInfo', {
 	    mode: 'ajax',
 	    data: {
@@ -58,7 +53,6 @@ this.BX.Disk = this.BX.Disk || {};
 	    }
 	  }).then(function (_ref) {
 	    var data = _ref.data;
-
 	    for (var _action in requestData) {
 	      if (requestData.hasOwnProperty(_action)) {
 	        for (var _id in requestData[_action]) {
@@ -72,7 +66,6 @@ this.BX.Disk = this.BX.Disk || {};
 	    }
 	  })["catch"](function (_ref2) {
 	    var errors = _ref2.errors;
-
 	    for (var _action2 in requestData) {
 	      if (requestData.hasOwnProperty(_action2)) {
 	        for (var _id2 in requestData[_action2]) {
@@ -86,12 +79,10 @@ this.BX.Disk = this.BX.Disk || {};
 	    }
 	  });
 	}, 500));
-
 	var Backend = /*#__PURE__*/function () {
 	  function Backend() {
 	    babelHelpers.classCallCheck(this, Backend);
 	  }
-
 	  babelHelpers.createClass(Backend, null, [{
 	    key: "getShared",
 	    value: function getShared(id) {
@@ -143,7 +134,6 @@ this.BX.Disk = this.BX.Disk || {};
 	  }]);
 	  return Backend;
 	}();
-
 	babelHelpers.defineProperty(Backend, "component", 'bitrix:disk.documents');
 
 	var Sharing = /*#__PURE__*/function () {
@@ -154,7 +144,6 @@ this.BX.Disk = this.BX.Disk || {};
 	    this.init();
 	    this.observe();
 	  }
-
 	  babelHelpers.createClass(Sharing, [{
 	    key: "init",
 	    value: function init() {
@@ -164,21 +153,15 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "observe",
 	    value: function observe() {
 	      var _this = this;
-
 	      observeIntersection(this.node, function () {
 	        _this.showLoading();
-
 	        Backend[_this.actionName](_this.id).then(function (_ref) {
 	          var data = _ref.data;
-
 	          _this.hideLoading();
-
 	          _this.renderData(data);
 	        }, function (_ref2) {
 	          var errors = _ref2.errors;
-
 	          _this.hideLoading();
-
 	          var errorMessages = [];
 	          errors.forEach(function (error) {
 	            errorMessages.push(error.message);
@@ -219,12 +202,10 @@ this.BX.Disk = this.BX.Disk || {};
 
 	var ExternalLink = /*#__PURE__*/function (_Sharing) {
 	  babelHelpers.inherits(ExternalLink, _Sharing);
-
 	  function ExternalLink() {
 	    babelHelpers.classCallCheck(this, ExternalLink);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ExternalLink).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(ExternalLink, [{
 	    key: "init",
 	    value: function init() {
@@ -251,12 +232,12 @@ this.BX.Disk = this.BX.Disk || {};
 	  /**
 	   * @type {BX.TileGrid.Grid|BX.Main.grid}
 	   */
+
 	  function CommonGrid(options) {
 	    babelHelpers.classCallCheck(this, CommonGrid);
 	    babelHelpers.defineProperty(this, "gridInstance", null);
 	    this.gridInstance = options.gridInstance;
 	  }
-
 	  babelHelpers.createClass(CommonGrid, [{
 	    key: "getId",
 	    value: function getId() {
@@ -340,7 +321,6 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "reload",
 	    value: function reload(url, data) {
 	      data = data || {};
-
 	      if (this.isGrid()) {
 	        var promise = new BX.Promise();
 	        this.gridInstance.reloadTable("POST", data, function () {
@@ -358,7 +338,6 @@ this.BX.Disk = this.BX.Disk || {};
 	        return this.gridInstance.getRows().getById(itemId).getActionsMenu();
 	      } else {
 	        var item = this.gridInstance.getItem(itemId);
-
 	        if (item) {
 	          return item.getActionsMenu();
 	        }
@@ -377,21 +356,17 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "scrollTo",
 	    value: function scrollTo(id) {
 	      var contentNode;
-
 	      if (this.isGrid()) {
 	        var row = this.gridInstance.getRows().getById(id);
-
 	        if (row && row.node) {
 	          contentNode = row.node;
 	        }
 	      } else {
 	        var item = this.gridInstance.getItem(id);
-
 	        if (row && row.node) {
 	          contentNode = row.getContainer();
 	        }
 	      }
-
 	      if (contentNode) {
 	        new BX.easing({
 	          duration: 500,
@@ -412,29 +387,24 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "getActionById",
 	    value: function getActionById(id, menuItemId) {
 	      var item = this.getItemById(id);
-
 	      if (item) {
 	        var actions = item.getActions();
-
 	        for (var i = 0; i < actions.length; i++) {
 	          if (actions[i].id && actions[i].id === menuItemId) {
 	            return actions[i];
 	          }
 	        }
 	      }
-
 	      return null;
 	    }
 	  }, {
 	    key: "removeItemById",
 	    value: function removeItemById(itemId) {
 	      BX.fireEvent(document, 'click');
-
 	      if (this.isGrid()) {
 	        this.gridInstance.removeRow(itemId);
 	      } else {
 	        var item = this.gridInstance.getItem(itemId);
-
 	        if (item) {
 	          //todo here we have to remove item from server
 	          this.gridInstance.removeItem(item);
@@ -445,16 +415,13 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "selectItemById",
 	    value: function selectItemById(itemId) {
 	      var item;
-
 	      if (this.isGrid()) {
 	        item = this.gridInstance.getRows().getById(itemId);
-
 	        if (item) {
 	          item.select();
 	        }
 	      } else {
 	        item = this.gridInstance.getItem(itemId);
-
 	        if (item) {
 	          this.gridInstance.selectItem(item);
 	        }
@@ -480,7 +447,6 @@ this.BX.Disk = this.BX.Disk || {};
 	  function Options() {
 	    babelHelpers.classCallCheck(this, Options);
 	  }
-
 	  babelHelpers.createClass(Options, null, [{
 	    key: "getGridId",
 	    // $arParams['GRID_ID']
@@ -493,13 +459,11 @@ this.BX.Disk = this.BX.Disk || {};
 	    value: function getCommonGrid() {
 	      var gridInstance;
 	      var gridId = this.getGridId();
-
 	      if (main_core.Reflection.getClass('BX.Main.gridManager') && BX.Main.gridManager.getInstanceById(gridId)) {
 	        gridInstance = BX.Main.gridManager.getInstanceById(gridId);
 	      } else if (main_core.Reflection.getClass('BX.Main.tileGridManager') && BX.Main.tileGridManager.getInstanceById(gridId)) {
 	        gridInstance = BX.Main.tileGridManager.getInstanceById(gridId);
 	      }
-
 	      return new CommonGrid({
 	        gridInstance: gridInstance
 	      });
@@ -556,7 +520,6 @@ this.BX.Disk = this.BX.Disk || {};
 	  function Toolbar() {
 	    babelHelpers.classCallCheck(this, Toolbar);
 	  }
-
 	  babelHelpers.createClass(Toolbar, null, [{
 	    key: "reloadGridAndFocus",
 	    value: function reloadGridAndFocus(rowId) {
@@ -567,12 +530,10 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "runCreating",
 	    value: function runCreating(documentType, service) {
 	      var _this = this;
-
 	      if (BX.message('disk_restriction')) {
 	        //this.blockFeatures();
 	        return;
 	      }
-
 	      if (service === 'l' && BX.Disk.Document.Local.Instance.isEnabled()) {
 	        BX.Disk.Document.Local.Instance.createFile({
 	          type: documentType
@@ -581,7 +542,6 @@ this.BX.Disk = this.BX.Disk || {};
 	        });
 	        return;
 	      }
-
 	      var createProcess = new BX.Disk.Document.CreateProcess({
 	        typeFile: documentType,
 	        serviceCode: service,
@@ -599,15 +559,12 @@ this.BX.Disk = this.BX.Disk || {};
 	      if (!service) {
 	        service = BX.Disk.getDocumentService();
 	      }
-
 	      if (service) {
 	        return service;
 	      }
-
 	      if (BX.Disk.isAvailableOnlyOffice()) {
 	        return 'onlyoffice';
 	      }
-
 	      BX.Disk.InformationPopups.openWindowForSelectDocumentService({});
 	      return null;
 	    }
@@ -615,7 +572,6 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "createDocx",
 	    value: function createDocx(service) {
 	      var code = this.resolveServiceCode(service);
-
 	      if (code) {
 	        this.runCreating('docx', code);
 	      }
@@ -624,7 +580,6 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "createXlsx",
 	    value: function createXlsx(service) {
 	      var code = this.resolveServiceCode(service);
-
 	      if (code) {
 	        this.runCreating('xlsx', code);
 	      }
@@ -633,7 +588,6 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "createPptx",
 	    value: function createPptx(service) {
 	      var code = this.resolveServiceCode(service);
-
 	      if (code) {
 	        this.runCreating('pptx', code);
 	      }
@@ -650,36 +604,28 @@ this.BX.Disk = this.BX.Disk || {};
 
 	var Item = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Item, _EventEmitter);
-
 	  function Item(trackedObjectId, itemData) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, Item);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Item).call(this));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "data", {});
-
 	    _this.setEventNamespace('Disk:Documents:');
-
 	    _this.trackedObjectId = trackedObjectId;
 	    _this.data = Object.assign({}, itemData);
 	    _this.data['className'] = (_this.data['className'] || '') + ' disk-folder-list-context-menu-item';
-
 	    if (!_this.data['text']) {
 	      _this.data['text'] = _this.data['id'];
 	    }
-
 	    _this.objectId = _this.data['objectId'];
 	    delete _this.data['objectId'];
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(Item, [{
 	    key: "getData",
 	    value: function getData(key) {
 	      if (key) {
 	        return this.data[key];
 	      }
-
 	      return this.data;
 	    }
 	  }, {
@@ -719,45 +665,71 @@ this.BX.Disk = this.BX.Disk || {};
 	  return Item;
 	}(main_core_events.EventEmitter);
 
+	var ItemHistory = /*#__PURE__*/function (_Item) {
+	  babelHelpers.inherits(ItemHistory, _Item);
+	  function ItemHistory(trackedObjectId, itemData) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, ItemHistory);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ItemHistory).call(this, trackedObjectId, itemData));
+	    _this.object = {
+	      id: itemData.dataset.objectId,
+	      fileHistoryUrl: itemData.dataset.fileHistoryUrl,
+	      name: itemData.dataset.objectName,
+	      blockedByFeature: itemData.dataset.blockedByFeature
+	    };
+	    _this.data.onclick = _this.handleClick.bind(babelHelpers.assertThisInitialized(_this));
+	    return _this;
+	  }
+	  babelHelpers.createClass(ItemHistory, [{
+	    key: "handleClick",
+	    value: function handleClick() {
+	      this.emit('close');
+	      if (this.object.blockedByFeature) {
+	        top.BX.UI.InfoHelper.show('limit_office_version_storage');
+	        return;
+	      }
+	      var fileHistoryUrl = this.object.fileHistoryUrl;
+	      BX.SidePanel.Instance.open(fileHistoryUrl, {
+	        cacheable: false,
+	        allowChangeHistory: false
+	      });
+	    }
+	  }], [{
+	    key: "detect",
+	    value: function detect(itemData) {
+	      return itemData.id === 'history';
+	    }
+	  }]);
+	  return ItemHistory;
+	}(Item);
+
 	var ItemOpen = /*#__PURE__*/function (_Item) {
 	  babelHelpers.inherits(ItemOpen, _Item);
-
 	  function ItemOpen(objectId, itemData) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, ItemOpen);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ItemOpen).call(this, objectId, itemData));
 	    _this.data['dataset'] = _this.data['dataset'] || {};
 	    _this.data['dataset']['preventCloseContextMenu'] = true;
-
 	    _this.data['onclick'] = function () {
 	      var _this2 = this;
-
 	      if (this.data['href']) {
 	        return this.open();
 	      }
-
 	      this.showLoad();
 	      Backend.getMenuOpenAction(this.objectId).then(function (_ref) {
 	        var data = _ref.data;
-
 	        _this2.hideLoad();
-
 	        _this2.data['href'] = data;
-
 	        _this2.open();
 	      })["catch"](function (_ref2) {
 	        var errors = _ref2.errors;
-
 	        _this2.hideLoad();
-
 	        _this2.showError(errors);
 	      });
 	    }.bind(babelHelpers.assertThisInitialized(_this));
-
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(ItemOpen, [{
 	    key: "open",
 	    value: function open() {
@@ -781,17 +753,14 @@ this.BX.Disk = this.BX.Disk || {};
 
 	var ItemShareSection = /*#__PURE__*/function (_Item) {
 	  babelHelpers.inherits(ItemShareSection, _Item);
-
 	  function ItemShareSection(objectId, itemData) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, ItemShareSection);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ItemShareSection).call(this, objectId, itemData));
 	    _this.data['dataset'] = _this.data['dataset'] || {};
 	    _this.data['dataset']['preventCloseContextMenu'] = true;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(ItemShareSection, null, [{
 	    key: "detect",
 	    value: function detect(itemData) {
@@ -803,10 +772,8 @@ this.BX.Disk = this.BX.Disk || {};
 
 	var ItemInternalLink = /*#__PURE__*/function (_Item) {
 	  babelHelpers.inherits(ItemInternalLink, _Item);
-
 	  function ItemInternalLink(trackedObjectId, itemData) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, ItemInternalLink);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ItemInternalLink).call(this, trackedObjectId, itemData));
 	    _this.data['className'] += ' disk-documents-grid-actions-copy-internal-link';
@@ -814,23 +781,18 @@ this.BX.Disk = this.BX.Disk || {};
 	    delete _this.data['text'];
 	    _this.data['dataset'] = _this.data['dataset'] || {};
 	    _this.data['dataset']['preventCloseContextMenu'] = true;
-
 	    _this.data['onclick'] = function (event, menuItem) {
 	      var target = menuItem.getLayout().item;
 	      target.classList.add('menu-popup-item-accept', 'disk-folder-list-context-menu-item-accept-animate');
 	      target.style.minWidth = target.offsetWidth + 'px';
 	      var textNode = target.querySelector('.menu-popup-item-text');
-
 	      if (textNode) {
 	        textNode.textContent = this.data['dataset']['textCopied'];
 	      }
-
 	      BX.clipboard.copy(this.data['dataset']['internalLink']);
 	    }.bind(babelHelpers.assertThisInitialized(_this));
-
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(ItemInternalLink, null, [{
 	    key: "detect",
 	    value: function detect(itemData) {
@@ -842,29 +804,22 @@ this.BX.Disk = this.BX.Disk || {};
 
 	var ItemExternalLink = /*#__PURE__*/function (_Item) {
 	  babelHelpers.inherits(ItemExternalLink, _Item);
-
 	  function ItemExternalLink(objectId, itemData) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, ItemExternalLink);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ItemExternalLink).call(this, objectId, itemData));
 	    var shouldBlockFeature = itemData['dataset']['shouldBlockFeature'];
 	    var blocker = itemData['dataset']['blocker'];
-
 	    _this.data['onclick'] = function () {
 	      this.emit('close');
-
 	      if (shouldBlockFeature && blocker) {
 	        eval(blocker);
 	        return;
 	      }
-
 	      disk_externalLink.ExternalLinkForTrackedObject.showPopup(this.trackedObjectId);
 	    }.bind(babelHelpers.assertThisInitialized(_this));
-
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(ItemExternalLink, null, [{
 	    key: "detect",
 	    value: function detect(itemData) {
@@ -876,31 +831,24 @@ this.BX.Disk = this.BX.Disk || {};
 
 	var ItemRename = /*#__PURE__*/function (_Item) {
 	  babelHelpers.inherits(ItemRename, _Item);
-
 	  function ItemRename(trackedObjectId, itemData) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, ItemRename);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ItemRename).call(this, trackedObjectId, itemData));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "buffExtension", '');
-
 	    if (!_this.data['onclick']) {
 	      _this.data['onclick'] = _this.rename.bind(babelHelpers.assertThisInitialized(_this));
 	    }
-
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(ItemRename, [{
 	    key: "cutExtension",
 	    value: function cutExtension(name) {
 	      this.buffExtension = '';
-
 	      if (name.lastIndexOf('.') > 0) {
 	        this.buffExtension = name.substr(name.lastIndexOf('.'));
 	        return name.substr(0, name.lastIndexOf('.'));
 	      }
-
 	      return name;
 	    }
 	  }, {
@@ -914,29 +862,22 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "rename",
 	    value: function rename() {
 	      var _this2 = this;
-
 	      var grid = BX.Main.gridManager.getInstanceById(Options.getGridId());
 	      var row = grid.getRows().getById(this.trackedObjectId);
 	      row.edit();
 	      var editorContainer = BX.Grid.Utils.getByClass(row.getNode(), 'main-grid-editor-container', true);
 	      var input = editorContainer.querySelector('input');
-
 	      if (input) {
 	        input.value = this.cutExtension(input.value);
-
 	        var onBlur = function (event) {
 	          onBeforeSend(event);
 	        }.bind(this);
-
 	        var onBeforeSend = function onBeforeSend(event) {
 	          event.stopPropagation();
 	          event.preventDefault();
-
 	          var fullName = _this2.restoreExtension(input.value);
-
 	          Backend.renameAction(_this2.trackedObjectId, fullName).then(function (_ref) {
 	            var name = _ref.data.object.name;
-
 	            if (fullName !== name) {
 	              row.getNode().querySelector('#disk_obj_' + _this2.trackedObjectId).innerHTML = main_core.Text.encode(name);
 	              row.editData['NAME'] = name;
@@ -947,7 +888,6 @@ this.BX.Disk = this.BX.Disk || {};
 	          row.editData['NAME'] = fullName;
 	          row.editCancel();
 	        };
-
 	        input.addEventListener('keydown', function (event) {
 	          if (event.key === 'Enter') {
 	            onBeforeSend(event);
@@ -971,33 +911,27 @@ this.BX.Disk = this.BX.Disk || {};
 
 	var ItemSharing = /*#__PURE__*/function (_Item) {
 	  babelHelpers.inherits(ItemSharing, _Item);
-
 	  function ItemSharing(trackedObjectId, itemData) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, ItemSharing);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ItemSharing).call(this, trackedObjectId, itemData));
 	    var object = {
 	      id: itemData['dataset']['objectId'],
 	      name: itemData['dataset']['objectName']
 	    };
-
 	    _this.data['onclick'] = function () {
 	      _this.emit('close');
-
 	      switch (_this.data['dataset']['type']) {
 	        case disk_sharingLegacyPopup.SharingControlType.WITH_CHANGE_RIGHTS:
 	          new disk_sharingLegacyPopup.LegacyPopup().showSharingDetailWithChangeRights({
 	            object: object
 	          });
 	          break;
-
 	        case disk_sharingLegacyPopup.SharingControlType.WITH_SHARING:
 	          new disk_sharingLegacyPopup.LegacyPopup().showSharingDetailWithChangeRights({
 	            object: object
 	          });
 	          break;
-
 	        case disk_sharingLegacyPopup.SharingControlType.WITHOUT_EDIT:
 	          new disk_sharingLegacyPopup.LegacyPopup().showSharingDetailWithoutEdit({
 	            object: object
@@ -1005,10 +939,8 @@ this.BX.Disk = this.BX.Disk || {};
 	          break;
 	      }
 	    };
-
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(ItemSharing, null, [{
 	    key: "detect",
 	    value: function detect(itemData) {
@@ -1020,10 +952,8 @@ this.BX.Disk = this.BX.Disk || {};
 
 	var ItemDelete = /*#__PURE__*/function (_Item) {
 	  babelHelpers.inherits(ItemDelete, _Item);
-
 	  function ItemDelete(trackedObjectId, itemData) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, ItemDelete);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ItemDelete).call(this, trackedObjectId, itemData));
 	    _this.object = {
@@ -1033,7 +963,6 @@ this.BX.Disk = this.BX.Disk || {};
 	    _this.data['onclick'] = _this.handleClick.bind(babelHelpers.assertThisInitialized(_this));
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(ItemDelete, [{
 	    key: "handleClick",
 	    value: function handleClick() {
@@ -1053,7 +982,6 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "handleClickDelete",
 	    value: function handleClickDelete() {
 	      var _this2 = this;
-
 	      main_core.ajax.runAction('disk.api.commonActions.markDeleted', {
 	        analyticsLabel: 'folder.list.dd',
 	        data: {
@@ -1076,7 +1004,7 @@ this.BX.Disk = this.BX.Disk || {};
 	  return ItemDelete;
 	}(Item);
 
-	var itemMappings = [ItemOpen, ItemShareSection, ItemSharing, ItemInternalLink, ItemExternalLink, ItemRename, ItemDelete];
+	var itemMappings = [ItemOpen, ItemShareSection, ItemSharing, ItemInternalLink, ItemExternalLink, ItemHistory, ItemRename, ItemDelete];
 	function getMenuItem(trackedObjectId, itemData) {
 	  var itemClassName = Item;
 	  itemMappings.forEach(function (itemClass) {
@@ -1094,7 +1022,6 @@ this.BX.Disk = this.BX.Disk || {};
 	    this.addMenuActionLoader();
 	    this.bindEvents();
 	  }
-
 	  babelHelpers.createClass(List, [{
 	    key: "bindEvents",
 	    value: function bindEvents() {
@@ -1104,31 +1031,24 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "handleDocumentSaved",
 	    value: function handleDocumentSaved(event) {
 	      var _event$getCompatData = event.getCompatData(),
-	          _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 2),
-	          object = _event$getCompatData2[0],
-	          documentSession = _event$getCompatData2[1];
-
+	        _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 2),
+	        object = _event$getCompatData2[0],
+	        documentSession = _event$getCompatData2[1];
 	      var grid = BX.Main.gridManager.getInstanceById(Options.getGridId());
 	      var objectNode = grid.getBody().querySelector("span[data-object-id=\"".concat(object.id, "\"]"));
-
 	      if (!objectNode) {
 	        return;
 	      }
-
 	      var row = objectNode.closest('.main-grid-row');
-
 	      if (!row || !row.dataset.id) {
 	        return;
 	      }
-
 	      var rowId = row.dataset.id;
 	      grid.updateRow(rowId, null, null, function () {
 	        var rowNode = grid.getRows().getById(rowId).getNode();
-
 	        if (!rowNode) {
 	          return;
 	        }
-
 	        main_core.Dom.addClass(rowNode, 'main-grid-row-checked');
 	        setInterval(function () {
 	          main_core.Dom.removeClass(rowNode, 'main-grid-row-checked');
@@ -1147,12 +1067,10 @@ this.BX.Disk = this.BX.Disk || {};
 	    value: function addMenuActionLoader() {
 	      main_core_events.EventEmitter.subscribe('onPopupFirstShow', function (_ref) {
 	        var _ref$compatData = babelHelpers.slicedToArray(_ref.compatData, 1),
-	            popup = _ref$compatData[0];
-
+	          popup = _ref$compatData[0];
 	        if (popup.uniquePopupId.indexOf('menu-popup-main-grid-actions-menu-') !== 0) {
 	          return;
 	        }
-
 	        var objectId = popup.uniquePopupId.replace(/^menu-popup-main-grid-actions-menu-/, '');
 	        popup.getContentContainer().classList.add('disk-documents-animate');
 	        popup.getContentContainer().style.height = 80 + 'px';
@@ -1161,17 +1079,14 @@ this.BX.Disk = this.BX.Disk || {};
 	          var row = BX.Main.gridManager.getInstanceById(Options.getGridId()).getRows().getById(objectId);
 	          var menu = row.getActionsMenu();
 	          row.actions = [];
-
 	          var prepareActionMenu = function prepareActionMenu(item, index, ar) {
 	            if (item['items']) {
 	              item['items'].forEach(prepareActionMenu);
 	            }
-
 	            var menuItem = getMenuItem(objectId, item);
 	            menuItem.subscribe('close', function () {
 	              row.closeActionsMenu();
 	            });
-
 	            if (ar === data) {
 	              menuItem.addPopupMenuItem(menu);
 	              row.actions.push(menuItem.getData());
@@ -1179,7 +1094,6 @@ this.BX.Disk = this.BX.Disk || {};
 	              ar[index] = menuItem.getData();
 	            }
 	          };
-
 	          setTimeout(function () {
 	            popup.getContentContainer().style.height = data.length * 36 + 16 + 'px';
 	          });
@@ -1188,7 +1102,6 @@ this.BX.Disk = this.BX.Disk || {};
 	            popup.getContentContainer().style.height = '';
 	          });
 	          data.forEach(prepareActionMenu);
-
 	          if (menu) {
 	            menu.removeMenuItem('loader');
 	          }
@@ -1204,7 +1117,6 @@ this.BX.Disk = this.BX.Disk || {};
 	}();
 
 	var _templateObject;
-
 	var Tile = /*#__PURE__*/function () {
 	  function Tile() {
 	    babelHelpers.classCallCheck(this, Tile);
@@ -1212,18 +1124,16 @@ this.BX.Disk = this.BX.Disk || {};
 	    this.addMenuActionLoader();
 	    this.addFilterSequence();
 	  }
-
 	  babelHelpers.createClass(Tile, [{
 	    key: "addFilterSequence",
 	    value: function addFilterSequence() {
 	      main_core_events.EventEmitter.subscribe('BX.Main.Filter:apply', function (_ref) {
 	        var _ref$compatData = babelHelpers.slicedToArray(_ref.compatData, 5),
-	            filterId = _ref$compatData[0],
-	            data = _ref$compatData[1],
-	            filter = _ref$compatData[2],
-	            promise = _ref$compatData[3],
-	            params = _ref$compatData[4];
-
+	          filterId = _ref$compatData[0],
+	          data = _ref$compatData[1],
+	          filter = _ref$compatData[2],
+	          promise = _ref$compatData[3],
+	          params = _ref$compatData[4];
 	        if (filterId === Options.getFilterId()) {
 	          promise.then(function () {
 	            BX.Main.tileGridManager.getInstanceById(Options.getGridId()).reload();
@@ -1243,29 +1153,24 @@ this.BX.Disk = this.BX.Disk || {};
 	    value: function addMenuActionLoader() {
 	      main_core_events.EventEmitter.subscribe('Disk:Documents:TileGrid:MenuAction:FirstShow', function (_ref2) {
 	        var _ref2$compatData = babelHelpers.slicedToArray(_ref2.compatData, 3),
-	            row = _ref2$compatData[0],
-	            objectId = _ref2$compatData[1],
-	            menuPopup = _ref2$compatData[2];
-
+	          row = _ref2$compatData[0],
+	          objectId = _ref2$compatData[1],
+	          menuPopup = _ref2$compatData[2];
 	        Backend.getMenuActions(objectId).then(function (_ref3) {
 	          var data = _ref3.data;
 	          var menu = menuPopup;
 	          row.actions = [];
-
 	          var prepareActionMenu = function prepareActionMenu(item, index, ar) {
 	            if (item['items']) {
 	              item['items'].forEach(prepareActionMenu);
 	            }
-
 	            if (item['id'] === 'rename') {
 	              item['onclick'] = row.onRename.bind(row);
 	            }
-
 	            var menuItem = getMenuItem(objectId, item);
 	            menuItem.subscribe('close', function () {
 	              menu.close();
 	            });
-
 	            if (ar === data) {
 	              menuItem.addPopupMenuItem(menu);
 	              row.actions.push(menuItem.getData());
@@ -1273,9 +1178,7 @@ this.BX.Disk = this.BX.Disk || {};
 	              ar[index] = menuItem.getData();
 	            }
 	          };
-
 	          data.forEach(prepareActionMenu);
-
 	          if (menu) {
 	            menu.removeMenuItem('loader');
 	          }
@@ -1298,13 +1201,12 @@ this.BX.Disk = this.BX.Disk || {};
 	function showShared(objectId, node) {
 	  new Sharing(objectId, node);
 	}
-
 	function showExternalLink(objectId, node) {
 	  new ExternalLink(objectId, node);
 	}
-
 	var TileGridEmptyBlockGenerator = Tile.generateEmptyBlock;
 
+	//Template things
 	BX.ready(function () {
 	  if (BX.Main.gridManager && BX.Main.gridManager.getInstanceById(Options.getGridId())) {
 	    new List();
@@ -1313,22 +1215,19 @@ this.BX.Disk = this.BX.Disk || {};
 	  } else {
 	    main_core_events.EventEmitter.subscribeOnce(main_core_events.EventEmitter.GLOBAL_TARGET, 'Grid::ready', function (_ref) {
 	      var _ref$compatData = babelHelpers.slicedToArray(_ref.compatData, 1),
-	          instance = _ref$compatData[0];
-
+	        instance = _ref$compatData[0];
 	      if (instance && instance.getId() === Options.getGridId()) {
 	        new List();
 	      }
 	    });
 	    main_core_events.EventEmitter.subscribeOnce(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.TileGrid.Grid:initialized', function (_ref2) {
 	      var _ref2$compatData = babelHelpers.slicedToArray(_ref2.compatData, 1),
-	          instance = _ref2$compatData[0];
-
+	        instance = _ref2$compatData[0];
 	      if (instance && instance.getId() === Options.getGridId()) {
 	        new Tile();
 	      }
 	    });
 	  }
-
 	  if (document.querySelector('#disk-documents-control-panel')) {
 	    var ears = new ui_ears.Ears({
 	      container: document.querySelector('#disk-documents-control-panel'),
@@ -1337,30 +1236,25 @@ this.BX.Disk = this.BX.Disk || {};
 	    });
 	    ears.init();
 	  }
-
 	  var func = function func(id, uploader) {
 	    uploader.limits["uploadFileExt"] = Options.getEditableExt().join(',');
 	    uploader.limits["uploadFile"] = '.' + Options.getEditableExt().join(',.');
-
 	    if (uploader.fileInput) {
 	      uploader.fileInput.accept = uploader.limits["uploadFile"];
 	    }
 	  };
-
 	  if (BX.UploaderManager && BX.UploaderManager.getById('DiskDocuments')) {
 	    func('DiskDocuments', BX.UploaderManager.getById('DiskDocuments'));
 	  } else {
 	    var listener = function listener(_ref3) {
 	      var _ref3$compatData = babelHelpers.slicedToArray(_ref3.compatData, 2),
-	          id = _ref3$compatData[0],
-	          uploader = _ref3$compatData[1];
-
+	        id = _ref3$compatData[0],
+	        uploader = _ref3$compatData[1];
 	      setTimeout(function () {
 	        func(id, uploader);
 	      }, 200);
 	      main_core_events.EventEmitter.unsubscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'onUploaderIsInited', listener);
 	    };
-
 	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'onUploaderIsInited', listener);
 	  }
 	});

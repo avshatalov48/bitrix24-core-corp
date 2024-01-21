@@ -2,6 +2,7 @@
  * @module crm/entity-detail/toolbar/content/templates/single-action
  */
 jn.define('crm/entity-detail/toolbar/content/templates/single-action', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { ToolbarContentTemplateBase } = require('crm/entity-detail/toolbar/content/templates/base');
 
 	const { mergeImmutable } = require('utils/object');
@@ -61,7 +62,9 @@ jn.define('crm/entity-detail/toolbar/content/templates/single-action', (require,
 				{
 					style: this.styles.mainWrapper,
 					clickable: false,
-					ref: (ref) => this.ref = ref,
+					ref: (ref) => {
+						this.ref = ref;
+					},
 				},
 				this.renderPrimaryIcon(),
 				View(
@@ -151,7 +154,7 @@ jn.define('crm/entity-detail/toolbar/content/templates/single-action', (require,
 					style: this.styles.rightIcon,
 					onClick: this.state.visible && onHide,
 					svg: {
-						content: bigCross('#6a737f'),
+						content: bigCross(AppTheme.colors.base3),
 					},
 				}),
 			);
@@ -174,8 +177,8 @@ jn.define('crm/entity-detail/toolbar/content/templates/single-action', (require,
 			paddingRight: 12,
 			paddingLeft: 20,
 			borderBottomWidth: 1,
-			borderBottomColor: '#DFE0E3',
-			backgroundColor: '#fff',
+			borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			top: -HEIGHT,
 			height: HEIGHT,
 			position: 'absolute',
@@ -184,7 +187,7 @@ jn.define('crm/entity-detail/toolbar/content/templates/single-action', (require,
 		imageWrapper: {
 			width: 34,
 			height: 34,
-			backgroundColor: '#2FC6F6',
+			backgroundColor: AppTheme.colors.accentBrandBlue,
 			borderRadius: 30,
 			alignItems: 'center',
 			justifyContent: 'center',
@@ -216,7 +219,7 @@ jn.define('crm/entity-detail/toolbar/content/templates/single-action', (require,
 			width: big ? 34 : 23,
 			height: big ? 34 : 23,
 			borderRadius: 30,
-			backgroundColor: grey ? '#DFE0E3' : '#2FC6F6',
+			backgroundColor: grey ? AppTheme.colors.base6 : AppTheme.colors.accentBrandBlue,
 		}),
 		title: {
 			fontSize: 15,
@@ -225,13 +228,13 @@ jn.define('crm/entity-detail/toolbar/content/templates/single-action', (require,
 		subtitle: {
 			fontSize: 12,
 			fontWeight: '500',
-			color: '#A8ADB4',
+			color: AppTheme.colors.base4,
 		},
 		openButton: {
 			fontSize: 15,
 			fontWeight: '500',
-			color: '#FFFFFF',
-			backgroundColor: '#00A2E8',
+			color: AppTheme.colors.baseWhiteFixed,
+			backgroundColor: AppTheme.colors.accentMainPrimary,
 			height: 30,
 			borderRadius: 30,
 			paddingHorizontal: 10,

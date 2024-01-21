@@ -1,11 +1,12 @@
 <?php
 
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Text\HtmlFilter;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Web\Json;
 
 /**
  * @var array $arResult
@@ -42,7 +43,7 @@ $publicMode = (isset($arParams['PUBLIC_MODE']) && $arParams['PUBLIC_MODE'] === t
 				<?php
 				endif;
 				?>
-				<td class="field_crm_entity">
+				<td class="fields field_crm_entity">
 					<?php
 					$first = true;
 					if (empty($arEntity['items']))
@@ -68,15 +69,17 @@ $publicMode = (isset($arParams['PUBLIC_MODE']) && $arParams['PUBLIC_MODE'] === t
 									? '_no_photo' : '_' . $entityTypeLower
 								);
 								?>
-								<a
-									href="<?= HtmlFilter::encode($entity['ENTITY_LINK']) ?>"
-									target="_blank"
-									bx-tooltip-user-id="<?= ($entity['ENTITY_TYPE_ID_WITH_ENTITY_ID'] ?? $entityId) ?>"
-									bx-tooltip-loader="<?= $arEntity['tooltipLoaderUrl'] ?>"
-									bx-tooltip-classname="crm_balloon<?= $crmBalloonClass ?>"
-								>
-									<?= HtmlFilter::encode($entity['ENTITY_TITLE']) ?>
-								</a>
+								<span class="field-item" data-id="<?= $entity['SHORT_ENTITY_TYPE_ID_WITH_ENTITY_ID'] ?>">
+									<a
+										href="<?= HtmlFilter::encode($entity['ENTITY_LINK']) ?>"
+										target="_blank"
+										bx-tooltip-user-id="<?= ($entity['ENTITY_TYPE_ID_WITH_ENTITY_ID'] ?? $entityId) ?>"
+										bx-tooltip-loader="<?= $arEntity['tooltipLoaderUrl'] ?>"
+										bx-tooltip-classname="crm_balloon<?= $crmBalloonClass ?>"
+									>
+										<?= HtmlFilter::encode($entity['ENTITY_TITLE']) ?>
+									</a>
+								</span>
 								<?php
 							}
 							$first = false;

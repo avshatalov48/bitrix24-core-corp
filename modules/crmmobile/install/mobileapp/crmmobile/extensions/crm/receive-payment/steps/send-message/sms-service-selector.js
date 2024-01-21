@@ -3,6 +3,7 @@
  */
 jn.define('crm/receive-payment/steps/send-message/sms-service-selector', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
 	const { ImageAfterTypes } = require('layout/ui/context-menu/item');
 
@@ -24,14 +25,15 @@ jn.define('crm/receive-payment/steps/send-message/sms-service-selector', (requir
 			const selectedSmsSender = this.props.smsSenders.find((sender) => sender.id === this.state.selectedSmsSenderId);
 			const selectedSmsSenderName = selectedSmsSender.name;
 
-			let menu;
+			let contextMenu = null;
 			const actions = [];
+
 			this.props.smsSenders.forEach((smsSender) => {
 				actions.push({
 					id: smsSender.id,
 					title: smsSender.name,
 					onClickCallback: (id) => {
-						menu.close(() => {
+						contextMenu.close(() => {
 							this.setState({ selectedSmsSenderId: id });
 							this.props.onSelect(id);
 						});
@@ -49,7 +51,7 @@ jn.define('crm/receive-payment/steps/send-message/sms-service-selector', (requir
 					},
 				},
 				onClickCallback: (itemId) => {
-					menu.close(() => {
+					contextMenu.close(() => {
 						qrauth.open({
 							title: Loc.getMessage('M_RP_SM_SMS_SERVICE_SETTINGS_TITLE'),
 							redirectUrl: '/saleshub/',
@@ -57,7 +59,7 @@ jn.define('crm/receive-payment/steps/send-message/sms-service-selector', (requir
 					});
 				},
 			});
-			menu = new ContextMenu({
+			contextMenu = new ContextMenu({
 				actions,
 				params: {
 					title: Loc.getMessage('M_RP_SM_SMS_SERVICE_MENU_TITLE'),
@@ -80,7 +82,7 @@ jn.define('crm/receive-payment/steps/send-message/sms-service-selector', (requir
 				},
 				Text({
 					style: {
-						color: '#a8adb4',
+						color: AppTheme.colors.base4,
 						fontSize: 12,
 					},
 					text: `${sendingMethodText} `,
@@ -88,15 +90,15 @@ jn.define('crm/receive-payment/steps/send-message/sms-service-selector', (requir
 				View(
 					{
 						onClick: () => {
-							menu.show();
+							contextMenu.show();
 						},
 					},
 					Text({
 						style: {
-							color: '#828B95',
+							color: AppTheme.colors.base3,
 							fontSize: 12,
 							borderBottomWidth: 1,
-							borderBottomColor: '#cdd1d5',
+							borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
 							borderStyle: 'dash',
 							borderDashSegmentLength: 3,
 							borderDashGapLength: 3,

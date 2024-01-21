@@ -1,169 +1,256 @@
-import Shift from "./shift";
-import {Dom} from 'main.core';
-import CompatibleItem from "../items/compatible-item";
+import Shift from './shift';
+import { Dom, Tag, Type, bindOnce } from 'main.core';
+import CompatibleItem from '../items/compatible-item';
+import ConfigurableItem from '../../item/src/configurable-item';
 
 /** @memberof BX.Crm.Timeline.Animation */
 export default class ItemNew
 {
+	#startPosition: DOMRect;
+	#node: HTMLElement;
+	#anchor: HTMLElement;
+	#areAnimatedItemsVisible: boolean;
+	#id: string;
+	#initialItem: CompatibleItem | ConfigurableItem | null;
+	#finalItem: any;
+	#events: any;
+	#settings: any;
+	#stub: HTMLElement;
+
 	constructor()
 	{
-		this._id = "";
-		this._settings = {};
-		this._initialItem = null;
-		this._finalItem = null;
-		this._events = null;
-		this._areAnimatedItemsVisible = null;
+		this.#id = '';
+		this.#settings = {};
+		this.#initialItem = null;
+		this.#finalItem = null;
+		this.#events = null;
+		this.#areAnimatedItemsVisible = false;
 	}
 
 	initialize(id, settings)
 	{
-		this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
-		this._settings = settings ? settings : {};
+		this.#id = Type.isStringFilled(id) ? id : BX.util.getRandomString(4);
+		this.#settings = settings || {};
 
-		this._initialItem = this.getSetting("initialItem");
-		this._finalItem = this.getSetting("finalItem");
+		this.#initialItem = this.getSetting('initialItem');
+		this.#finalItem = this.getSetting('finalItem');
 
-		this._anchor = this.getSetting("anchor");
-		this._events = this.getSetting("events", {});
+		this.#anchor = this.getSetting('anchor');
+		this.#events = this.getSetting('events', {});
+
+		this.#node = this.#initialItem.getWrapper();
 	}
 
-	getId()
+	getId(): string
 	{
-		return this._id;
+		return this.#id;
 	}
 
-	getSetting(name, defaultval)
+	getSetting(name: string, defaultval): any
 	{
-		return this._settings.hasOwnProperty(name) ? this._settings[name] : defaultval;
+		return Object.hasOwn(this.#settings, name) ? this.#settings[name] : defaultval;
 	}
 
 	addHistoryItem()
 	{
-		if (this._finalItem instanceof CompatibleItem)
+		if (this.#finalItem.getWrapper() === null && !(this.#finalItem instanceof CompatibleItem))
 		{
-			const node = this._finalItem.getWrapper();
-			this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
+			this.#finalItem.initWrapper();
+			this.#finalItem.initLayoutApp({ add: false });
 		}
-		else
-		{
-			this._finalItem.initWrapper();
-			Dom.insertBefore(this._finalItem.getWrapper(), this._anchor.nextSibling);
-			this._finalItem.initLayoutApp({ add: false });
-		}
+
+		Dom.style(this.#anchor, {
+			height: 0,
+		});
+		this.#makeNodeStatic(this.#finalItem.getWrapper());
+		Dom.insertBefore(this.#finalItem.getWrapper(), this.#anchor.nextSibling);
+		requestAnimationFrame(() => {
+			Dom.style(this.#finalItem.getWrapper(), {
+				opacity: 1,
+			});
+		});
 	}
 
 	run()
 	{
-		this._node = this._initialItem.getWrapper();
-		this._areAnimatedItemsVisible = this._node.offsetParent !== null;
-		if (this._areAnimatedItemsVisible)
-		{
-			this.createStub();
-
-			BX.addClass(this._node, 'crm-entity-stream-section-animate-start');
-
-			this._startPosition = BX.pos(this._stub);
-
-			this._node.style.position = "absolute";
-			this._node.style.width = this._startPosition.width + "px";
-			this._node.style.height = this._startPosition.height + "px";
-			this._node.style.top = this._startPosition.top + "px";
-			this._node.style.left = this._startPosition.left + "px";
-			this._node.style.zIndex = 960;
-
-
-			document.body.appendChild(this._node);
-
-			const shift = Shift.create(
-				this._node,
-				this._anchor,
-				this._startPosition,
-				this._stub,
-				{complete: BX.delegate(this.finish, this)}
-			);
-			shift.run();
-		}
-		else
+		this.#areAnimatedItemsVisible = this.#isNodeVisible(this.#node);
+		if (this.#areAnimatedItemsVisible === false)
 		{
 			this.finish();
+
+			return;
 		}
+
+		this.#prepareInitialItemBeforeShift();
+		this.#prepareFinalItemBeforeShift();
+
+		setTimeout(() => {
+			this.shiftAndReplaceInitialWithFinal();
+			this.collapseStub();
+		}, 300);
 	}
 
-	createStub()
+	#prepareInitialItemBeforeShift(): void
 	{
-		this._stub = BX.create(
-			"DIV",
-			{
-				attrs: { className: "crm-entity-stream-section crm-entity-stream-section-planned crm-entity-stream-section-shadow" },
-				children :
-					[
-						BX.create("DIV", { attrs: { className: "crm-entity-stream-section-icon" } }),
-						BX.create(
-							"DIV",
-							{
-								props: { className: "crm-entity-stream-section-content" },
-								style: { height: this._initialItem._wrapper.clientHeight + "px" }
-							}
-						)
-					]
-			}
+		Dom.addClass(this.#node, 'crm-entity-stream-section-animate-start');
+
+		this.#startPosition = Dom.getPosition(this.#node);
+		this.#makeNodeAbsoluteWithSavePosition(this.#node);
+
+		this.addStubForInitialItem(this.#node);
+		Dom.append(this.#node, document.body);
+	}
+
+	#prepareFinalItemBeforeShift(): void
+	{
+		if (!(this.#finalItem instanceof CompatibleItem))
+		{
+			this.#finalItem.initWrapper();
+			this.#finalItem.initLayoutApp({ add: false });
+		}
+
+		Dom.style(this.#finalItem.getWrapper(), 'opacity', 0);
+		Dom.append(this.#finalItem.getWrapper(), document.body);
+		requestAnimationFrame(() => {
+			this.#makeNodeAbsoluteWithSavePosition(this.#finalItem.getWrapper(), this.#startPosition);
+		});
+	}
+
+	collapseStub(): void
+	{
+		bindOnce(this.#stub, 'transitionend', () => {
+			Dom.remove(this.#stub);
+		});
+
+		Dom.style(this.#stub, {
+			height: 0,
+			margin: 0,
+		});
+	}
+
+	shift(): void
+	{
+		const shift = Shift.create(
+			this.#node,
+			this.#anchor,
+			this.#startPosition,
+			this.#stub,
+			{ complete: this.finish.bind(this) },
 		);
 
-		this._node.parentNode.insertBefore(this._stub, this._node);
+		shift.run();
+
+		const heightDiff = Dom.getPosition(this.#finalItem.getWrapper()).height - this.#startPosition.height;
+
+		const newNodeShift = Shift.create(
+			this.#finalItem.getWrapper(),
+			this.#anchor,
+			Dom.getPosition(this.#finalItem.getWrapper()),
+			undefined,
+			undefined,
+			heightDiff + 1,
+		);
+
+		newNodeShift.run();
+	}
+
+	shiftAndReplaceInitialWithFinal(): void
+	{
+		this.shift();
+
+		setTimeout(() => {
+			this.#replaceInitialWithFinal();
+		}, 100);
+	}
+
+	#replaceInitialWithFinal(): void
+	{
+		Dom.style(this.#node, 'opacity', 0);
+		Dom.style(this.#finalItem.getWrapper(), 'opacity', 0.5);
+	}
+
+	addStubForInitialItem(node: HTMLElement): void
+	{
+		const wrapper = this.#initialItem.getWrapper();
+
+		this.#stub = Tag.render`
+			<div class="crm-entity-stream-section crm-entity-stream-section-planned crm-entity-stream-section-shadow">
+				<div
+					class="crm-entity-stream-section-content"
+					style="height: ${wrapper.clientHeight}px;"
+				></div>
+			</div>
+		`;
+
+		const height = Dom.getPosition(wrapper).height;
+
+		Dom.style(this.#stub, {
+			height: `${height}px`,
+			margin: getComputedStyle(wrapper).margin,
+			animation: 'none',
+			transition: 'height 0.2s ease-in-out',
+		});
+
+		Dom.insertBefore(this.#stub, node);
 	}
 
 	finish()
 	{
-		this._anchor.style.height = 0;
-		//this._anchor.parentNode.insertBefore(this._node, this._anchor.nextSibling);
-
-		if (this._areAnimatedItemsVisible)
+		if (this.#areAnimatedItemsVisible)
 		{
-			const stubContainer = this._stub.querySelector('.crm-entity-stream-section-content');
-			setTimeout(
-				BX.delegate(function()
-				{
-					BX.removeClass(this._node, 'crm-entity-stream-section-animate-start');
-				}, this),
-				0
-			);
-
-			this._node.style.opacity = 0;
-
-			setTimeout(BX.delegate(
-				function()
-				{
-					stubContainer.style.height = 0;
-					stubContainer.style.opacity = 0;
-					stubContainer.style.paddingTop = 0;
-					stubContainer.style.paddingBottom = 0;
-				},
-				this
-			), 120);
+			Dom.removeClass(this.#node, 'crm-entity-stream-section-animate-start');
 		}
-		setTimeout( BX.delegate(
-			function() {
-				if (this._areAnimatedItemsVisible)
-				{
-					BX.remove(this._stub);
-				}
-				BX.remove(this._node);
-				this.addHistoryItem();
+		setTimeout(() => {
+			this.#initialItem.clearLayout();
+			Dom.remove(this.#node);
 
-				if(BX.type.isFunction(this._events["complete"]))
-				{
-					this._events["complete"]();
-				}
-			},
-			this
-		), 420 );
+			this.addHistoryItem();
 
+			if (Type.isFunction(this.#events.complete))
+			{
+				this.#events.complete();
+			}
+		}, 500);
 	}
 
-	static create(id, settings)
+	#makeNodeAbsoluteWithSavePosition(node: HTMLElement, pos?: DOMRect): void
+	{
+		const nodePosition = Dom.getPosition(node);
+		const position = pos || nodePosition;
+
+		Dom.style(node, {
+			position: 'absolute',
+			width: `${position.width}px`,
+			height: `${nodePosition.height}px`,
+			top: `${position.top}px`,
+			left: `${position.left}px`,
+			zIndex: 960,
+		});
+	}
+
+	#makeNodeStatic(node: HTMLElement): void
+	{
+		Dom.style(node, {
+			position: null,
+			width: null,
+			height: null,
+			top: null,
+			left: null,
+		});
+	}
+
+	#isNodeVisible(node: HTMLElement): boolean
+	{
+		const nodePosition = Dom.getPosition(node);
+
+		return node.offsetParent !== null && nodePosition.height > 0 && nodePosition.width > 0;
+	}
+
+	static create(id: string, settings): this
 	{
 		const self = new ItemNew();
 		self.initialize(id, settings);
+
 		return self;
 	}
 }

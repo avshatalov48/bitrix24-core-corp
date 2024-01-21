@@ -59,22 +59,38 @@ class CrmActivityCallListComponent extends \CBitrixComponent
 			return $result;
 		}
 
+		$entityTypeId = CCrmOwnerType::ResolveID($entityType);
+		$hasAccess = false;
+		$userPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
 		try{
 			if(count($entityIds) == 0)
 			{
-				$callList = \Bitrix\Crm\CallList\CallList::createWithGridId($entityType, $gridId);
+				$hasAccess = $userPermissions->canReadType($entityTypeId);
+				if ($hasAccess)
+				{
+					$callList = \Bitrix\Crm\CallList\CallList::createWithGridId($entityType, $gridId);
+				}
 			}
 			else
 			{
-				$filterParams = '';
-				if($entityType === CCrmOwnerType::LeadName)
-					$filterParams = Loc::getMessage('CRM_CALL_LIST_ITEM_LEADS_HAND_SELECTED');
-				else if($entityType === CCrmOwnerType::ContactName)
-					$filterParams = Loc::getMessage('CRM_CALL_LIST_ITEM_CONTACTS_HAND_SELECTED');
-				else if($entityType === CCrmOwnerType::CompanyName)
-					$filterParams = Loc::getMessage('CRM_CALL_LIST_ITEM_COMPANIES_HAND_SELECTED');
-
-				$callList = \Bitrix\Crm\CallList\CallList::createWithEntities($entityType, $entityIds);
+				$availableItemsIds = [];
+				foreach ($entityIds as $entityId)
+				{
+					if ($userPermissions->checkReadPermissions($entityTypeId, (int)$entityId))
+					{
+						$availableItemsIds[] = (int)$entityId;
+					}
+				}
+				$hasAccess = !empty($availableItemsIds);
+				if ($hasAccess)
+				{
+					$callList = \Bitrix\Crm\CallList\CallList::createWithEntities($entityType, $availableItemsIds);
+				}
+			}
+			if (!$hasAccess)
+			{
+				$result->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
+				return $result;
 			}
 
 			$callList->persist();
@@ -316,7 +332,7 @@ class CrmActivityCallListComponent extends \CBitrixComponent
 					break;
 			}
 			$entityUrl = CCrmOwnerType::GetEntityShowPath($callList->getEntityTypeId(), $row['ID']);
-			$records[$row['ID']]['ENTITY_NAME'] = '<a href="'.$entityUrl.'" target="_blank">'.$formattedName.'</a>';
+			$records[$row['ID']]['ENTITY_NAME'] = '<a href="'.$entityUrl.'" target="_blank">'.htmlspecialcharsbx($formattedName).'</a>';
 		}
 		unset($row);
 

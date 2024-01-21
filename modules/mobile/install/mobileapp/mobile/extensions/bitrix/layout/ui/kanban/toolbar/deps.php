@@ -2,9 +2,11 @@
 
 return [
 	'extensions' => [
+		'loc',
 		'utils/object',
 		'layout/polyfill',
-		'loc',
+		'apptheme/extended',
+		'layout/pure-component',
 	],
 	'bundle' => [
 		'./filler',

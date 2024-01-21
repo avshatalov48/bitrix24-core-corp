@@ -11,6 +11,7 @@ namespace Bitrix\Tasks\Internals\Counter\Processor;
 
 use Bitrix\Main\Application;
 use Bitrix\Tasks\Internals\Counter\Exception\UnknownCounterException;
+use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Counter\Queue\Queue;
 use Bitrix\Tasks\Internals\Counter\Queue\Agent;
@@ -74,7 +75,7 @@ class UserProcessor
 			$this->crossTypeReset($types, $coverTypes, $groupIds);
 		}
 
-		CounterState::reload($this->userId);
+		Counter\State\Factory::reloadState($this->userId);
 	}
 
 	/**
@@ -127,7 +128,7 @@ class UserProcessor
 		self::reset($this->userId, $counterTypes, $taskIds);
 		$this->batchInsert($counters);
 
-		CounterState::getInstance($this->userId)->updateState($counters, $counterTypes, $taskIds);
+		Counter\State\Factory::getState($this->userId)->updateState($counters, $counterTypes, $taskIds);
 	}
 
 	/**

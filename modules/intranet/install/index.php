@@ -198,6 +198,11 @@ Class intranet extends CModule
 		$eventManager->registerEventHandler('calendar', 'OnAfterCalendarEntryUpdate', 'intranet', '\Bitrix\Intranet\Integration\Calendar', 'onCalendarEventUpdate');
 		$eventManager->registerEventHandler('calendar', 'OnAfterCalendarEventDelete', 'intranet', '\Bitrix\Intranet\Integration\Calendar', 'OnCalendarEventDelete');
 
+		//for side-panel integration
+		$eventManager->registerEventHandler('ui', 'OnSidepanelBelowPage', 'intranet', 'Bitrix\Intranet\UI\Sidepanel\EventHandler', 'onBelowPage');
+		$eventManager->registerEventHandler('crm', 'OnCrmEntityDetailsFrameBelowPage', 'intranet', 'Bitrix\Intranet\UI\Sidepanel\EventHandler', 'onBelowPage');
+		$eventManager->registerEventHandler('main', 'MainSenderSmtpLimitDecrease', 'intranet', 'Bitrix\Intranet\Integration\Main\EventHandler', 'onSenderSmtpLimitDecrease');
+
 		CAgent::AddAgent('\\Bitrix\\Intranet\\UStat\\UStat::recountHourlyCompanyActivity();', "intranet", "N", 60);
 		CAgent::AddAgent('\\Bitrix\\Intranet\\UStat\\UStat::recount();', "intranet", "N", 3600);
 

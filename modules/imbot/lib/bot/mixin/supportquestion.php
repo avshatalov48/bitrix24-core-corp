@@ -70,7 +70,7 @@ trait SupportQuestion
 	 * Permits adding new additional question.
 	 * @return bool
 	 */
-	public static function allowAdditionalQuestion(): bool
+	public static function allowAdditionalQuestion(?int $botId = null): bool
 	{
 		if (static::isEnabledQuestionFunctional())
 		{
@@ -109,19 +109,6 @@ trait SupportQuestion
 		}
 
 		return false;
-	}
-
-	/**
-	 * Returns the limit for additional questions.
-	 * @return int
-	 * -1 - Functional is disabled,
-	 * 0 - There is no limit,
-	 * 1 - Only one session allowed,
-	 * n - Max number for sessions allowed.
-	 */
-	public static function getQuestionLimit(): int
-	{
-		return (int)Option::get(static::MODULE_ID, OPTION_BOT_QUESTION_LIMIT, -1);
 	}
 
 	/**
@@ -215,7 +202,7 @@ trait SupportQuestion
 	 *
 	 * @return int
 	 */
-	public static function addSupportQuestion(): int
+	public static function addSupportQuestion(int $userId = 0, bool $showMenu = true, bool $fromOperator = false): int
 	{
 		/*
 		todo: Revert it if you need a slider
@@ -242,19 +229,31 @@ trait SupportQuestion
 			$title = Loc::getMessage('CHAT_QUESTION_TITLE', ['#NUMBER#' => $counter]);
 		}
 
+		if ($fromOperator)
+		{
+			$locDescription = static::getMessage('CHAT_QUESTION_DESC_FROM_OPERATOR') ?: Loc::getMessage('CHAT_QUESTION_DESC_FROM_OPERATOR');
+			$locMessage = static::getMessage('CHAT_QUESTION_GREETING') ?: Loc::getMessage('CHAT_QUESTION_GREETING');
+		}
+		else
+		{
+			$locDescription = static::getMessage('CHAT_QUESTION_DESC') ?: Loc::getMessage('CHAT_QUESTION_DESC');
+			$locMessage = static::getMessage('CHAT_QUESTION_GREETING') ?: Loc::getMessage('CHAT_QUESTION_GREETING');
+		}
+
 		$chatParams = [
 			'TYPE' => \IM_MESSAGE_CHAT,
 			'ENTITY_TYPE' => static::CHAT_ENTITY_TYPE,
 			'ENTITY_ID' => "question|{$counter}",
 			'USERS' => [
 				static::getBotId(),
-				static::getCurrentUser()->getId(),
+				$userId ?: static::getCurrentUser()->getId(),
 			],
 			'OWNER_ID' => static::getBotId(),
 			'TITLE' => $title,
-			'DESCRIPTION' => static::getMessage('CHAT_QUESTION_DESC') ?: Loc::getMessage('CHAT_QUESTION_DESC'),
-			'MESSAGE' => static::getMessage('CHAT_QUESTION_GREETING') ?: Loc::getMessage('CHAT_QUESTION_GREETING'),
+			'DESCRIPTION' => $locDescription,
+			'MESSAGE' => $locMessage,
 			'SKIP_ADD_MESSAGE' => 'Y',
+			'ACCESS_HISTORY' => $showMenu
 		];
 
 		$chatId = (new \CIMChat(static::getBotId()))->add($chatParams);
@@ -298,54 +297,9 @@ trait SupportQuestion
 	 */
 	public static function getSupportQuestionList(array $params): array
 	{
-		if (!static::isUserAdmin(static::getCurrentUser()->getId()))
-		{
-			static::addError(new Error(
-				__METHOD__,
-				'ACCESS_DENIED',
-				'You do not have access to create specified dialog'
-			));
-		}
+		$params['BOT_ID'] = static::getBotId();
 
-		$params = array_change_key_case($params, CASE_UPPER);
-
-		$filter = [
-			'=TYPE' => \IM_MESSAGE_CHAT,
-			'=ENTITY_TYPE' => static::CHAT_ENTITY_TYPE,
-			'=AUTHOR_ID' => static::getBotId(),
-		];
-
-		if (!empty($params['SEARCHQUERY']))
-		{
-			$filter['%TITLE'] = $params['SEARCHQUERY'];
-		}
-
-		$chatRes = Im\Model\ChatTable::getList([
-			'runtime' => [
-				new Main\ORM\Fields\Relations\Reference(
-					'RELATION',
-					Im\Model\RelationTable::class,
-					Main\ORM\Query\Join::on('ref.CHAT_ID', '=', 'this.ID')->where('ref.USER_ID', '=', static::getCurrentUser()->getId()),
-					['join_type' => 'INNER']
-				)
-			],
-			'select' => ['ID', 'TITLE'],
-			'filter' => $filter,
-			'order' => ['ID' => 'DESC'],
-			'limit' => $params['LIMIT'] ? (int)$params['LIMIT'] : 25,
-			'offset' => $params['OFFSET'] ? (int)$params['OFFSET'] : 0,
-		]);
-
-		$questions = [];
-		while ($chat = $chatRes->fetch())
-		{
-			$questions[] = [
-				'id' => (int)$chat['ID'],
-				'title' => $chat['TITLE'],
-			];
-		}
-
-		return $questions;
+		return parent::getQuestionList($params);
 	}
 
 	/**

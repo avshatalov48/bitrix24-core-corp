@@ -22,6 +22,7 @@ use Bitrix\Tasks\Internals\Counter\CounterState;
 use Bitrix\Tasks\Internals\Counter\CounterTable;
 use Bitrix\Tasks\Internals\Counter\Exception\UnknownCounterException;
 use Bitrix\Tasks\Internals\Counter\Provider\GroupProvider;
+use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 
 class ProjectProcessor
@@ -124,7 +125,7 @@ class ProjectProcessor
 		self::reset($userId, [$counter], $taskIds, $groupIds);
 		$this->batchInsert($counters);
 
-		CounterState::getInstance($userId)->updateState($counters, [$counter], $taskIds);
+		Counter\State\Factory::getState($userId)->updateState($counters, [$counter], $taskIds);
 	}
 
 	/**

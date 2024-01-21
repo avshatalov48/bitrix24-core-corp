@@ -45,14 +45,20 @@ $this->IncludeLangFile();
 					</div>
 				</div>
 				<div class="crm-sms-send-block crm-sms-send-block-textarea">
-					<textarea data-role="input" class="crm-sms-send-textarea" rows='1' placeholder="<?=GetMessage('CRM_SMS_SEND_MESSAGE')?>"><?=htmlspecialcharsbx($arResult['text']);?></textarea>
+					<textarea
+						data-role="input"
+						class="crm-sms-send-textarea <?= $arResult['isEditable'] ? '' : '--readonly' ?>"
+						rows='1'
+						placeholder="<?= Loc::getMessage('CRM_SMS_SEND_MESSAGE') ?>"
+						<?= $arResult['isEditable'] ? '' : 'readonly="readonly"'  ?>
+					><?= htmlspecialcharsbx($arResult['text']) ?></textarea>
 				</div>
 				<div class="crm-sms-send-block crm-sms-send-block-buttons">
 					<div class="crm-sms-send-buttons-inner">
 						<button type="button" data-role="button-save" class="ui-btn ui-btn-sm ui-btn-primary"><?=Loc::getMessage('CRM_SMS_SEND');?></button>
 						<button type="button" data-role="button-cancel" class="ui-btn ui-btn-sm ui-btn-link"><?=Loc::getMessage('CRM_SMS_CANCEL');?></button>
 					</div>
-					<div class="crm-sms-send-symbol">
+					<div class="crm-sms-send-symbol <?= $arResult['isEditable'] ? '' : '--hidden' ?>">
 						<span class="crm-sms-send-symbol-text">
 							<?=Loc::getMessage('CRM_SMS_SYMBOLS');?>
 							<span class="crm-sms-send-symbol-sum" data-role="message-length-counter" data-length-max="200">0</span>

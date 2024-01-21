@@ -365,7 +365,7 @@ class Call extends Base
 		{
 			return $phones[0]['VALUE'];
 		}
-		
+
 		return '';
 	}
 
@@ -415,6 +415,8 @@ class Call extends Base
 
 	public static function onAfterAdd($activityFields, array $params = null)
 	{
+		\Bitrix\Crm\Integration\AI\EventHandler::onAfterCallActivityAdd($activityFields);
+
 		$direction =
 			isset($activityFields['DIRECTION'])
 				? (int)$activityFields['DIRECTION']
@@ -425,6 +427,17 @@ class Call extends Base
 		{
 			\Bitrix\Crm\Automation\Trigger\OutgoingCallTrigger::execute($activityFields['BINDINGS'], $activityFields);
 		}
+	}
+
+	public static function onAfterUpdate(
+		int $id,
+		array $changedFields,
+		array $oldFields,
+		array $newFields,
+		array $params = null
+	)
+	{
+		\Bitrix\Crm\Integration\AI\EventHandler::onAfterCallActivityUpdate($changedFields, $newFields);
 	}
 
 	/**

@@ -627,20 +627,24 @@ class CTimeMan
 				$arSectionSettings = [];
 				foreach ($arSettings as $key)
 				{
-					$arSectionSettings[$key] = ($arRes[$key] && $arRes[$key] != '00:00'
+					$arSectionSettings[$key] = (
+						$arRes[$key] && $arRes[$key] != '00:00'
 						? (
-						isset($arUFValues[$arRes[$key]]) && !in_array($key, $arReportSettings)
-							? $arUFValues[$arRes[$key]]
-							: (
-						in_array($key, $arReportSettings)
-							? $arRes[$key]
-							: (
-						is_array($arRes[$key])
-							? $arRes[$key]
-							: self::MakeShortTS($arRes[$key])
-						)
-
-						)
+							(
+								!is_array($arRes[$key])
+								&& isset($arUFValues[$arRes[$key]])
+								&& !in_array($key, $arReportSettings)
+							)
+								? $arUFValues[$arRes[$key]]
+								: (
+									in_array($key, $arReportSettings)
+										? $arRes[$key]
+										: (
+											is_array($arRes[$key])
+												? $arRes[$key]
+												: self::MakeShortTS($arRes[$key])
+										)
+								)
 						)
 						: (
 						$arRes['IBLOCK_SECTION_ID'] > 0

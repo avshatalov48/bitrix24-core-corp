@@ -76,6 +76,12 @@ class Factory
 			return false;
 		}
 
+		$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+		if (!$toolsManager->checkRobotsAvailability())
+		{
+			return false;
+		}
+
 		if (!$ignoreLicense && Loader::includeModule('bitrix24'))
 		{
 			$feature = 'crm_automation_' . mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));

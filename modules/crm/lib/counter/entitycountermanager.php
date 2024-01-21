@@ -151,7 +151,7 @@ class EntityCounterManager
 			$results[] = "crm_{$entityName}_{$typeName}";
 		}
 
-		if ($factory instanceof Factory\Dynamic && CustomSectionProvider::hasCustomSection($factory))
+		if ($factory && $factory->isInCustomSection())
 		{
 			$settingsName = IntranetManager::preparePageSettingsForItemsList($factory->getEntityTypeId());
 			$results[] = CustomSectionProvider::COUNTER_PREFIX . $settingsName;

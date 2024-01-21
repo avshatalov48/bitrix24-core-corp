@@ -1,7 +1,9 @@
 (() => {
 	const pathToImages = `${currentDomain}/bitrix/mobileapp/mobile/extensions/bitrix/layout/socialnetwork/project/images/`;
 
-	const { ButtonsToolbar } = jn.require('layout/ui/buttons-toolbar');
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
+	const { ButtonsToolbar } = require('layout/ui/buttons-toolbar');
 
 	class ProjectView extends LayoutComponent
 	{
@@ -46,7 +48,7 @@
 				subjects: [],
 			};
 
-			BX.addCustomEvent('ProjectEdit:close', data => this.onProjectEditClose(data));
+			BX.addCustomEvent('ProjectEdit:close', (data) => this.onProjectEditClose(data));
 		}
 
 		onProjectEditClose(data)
@@ -63,14 +65,15 @@
 			{
 				(new RequestExecutor('mobile.disk.getUploadedFilesFolder'))
 					.call()
-					.then(response => this.setState({ userUploadedFilesFolder: response.result }))
+					.then((response) => this.setState({ userUploadedFilesFolder: response.result }))
 				;
 			}
-			if (!this.state.subjects.length)
+
+			if (this.state.subjects.length === 0)
 			{
 				(new RequestExecutor('sonet_group_subject.get'))
 					.call()
-					.then(response => this.setState({ subjects: response.result }))
+					.then((response) => this.setState({ subjects: response.result }))
 				;
 			}
 			this.updateProjectData({ updateModerators: true });
@@ -170,7 +173,7 @@
 					.call()
 					.then((response) => {
 						this.setState({
-							moderatorsData: response.result.relations.map(item => ({
+							moderatorsData: response.result.relations.map((item) => ({
 								id: item.userId,
 								title: item.formattedUserName,
 								imageUrl: item.image,
@@ -206,68 +209,66 @@
 			{
 				return View({}, new LoadingScreenComponent());
 			}
-			else
+
+			const themeImageStyle = {
+				backgroundResizeMode: 'cover',
+			};
+
+			if (this.state.themeData)
 			{
-				const themeImageStyle = {
-					backgroundResizeMode: 'cover',
-				};
+				const imageUrl = this.state.themeData.prefetchImages[0];
 
-				if (this.state.themeData)
+				if (imageUrl && imageUrl.split('.').pop())
 				{
-					const imageUrl = this.state.themeData.prefetchImages[0];
-
-					if (imageUrl && imageUrl.split('.').pop())
-					{
-						const extension = imageUrl.split('.').pop().toLowerCase();
-						if (extension !== 'svg')
-						{
-							themeImageStyle.backgroundImage = `${currentDomain}${imageUrl}`;
-						}
-						else
-						{
-							themeImageStyle.backgroundImageSvgUrl = `${currentDomain}${this.state.themeData.previewImage}`;
-							themeImageStyle.backgroundColor = this.state.themeData.previewColor;
-						}
-					}
-					else
+					const extension = imageUrl.split('.').pop().toLowerCase();
+					if (extension === 'svg')
 					{
 						themeImageStyle.backgroundImageSvgUrl = `${currentDomain}${this.state.themeData.previewImage}`;
 						themeImageStyle.backgroundColor = this.state.themeData.previewColor;
 					}
+					else
+					{
+						themeImageStyle.backgroundImage = `${currentDomain}${imageUrl}`;
+					}
 				}
+				else
+				{
+					themeImageStyle.backgroundImageSvgUrl = `${currentDomain}${this.state.themeData.previewImage}`;
+					themeImageStyle.backgroundColor = this.state.themeData.previewColor;
+				}
+			}
 
-				return View(
-					{},
-					ScrollView(
-						{
-							style: {
-								flex: 1,
-								backgroundColor: '#eef2f4',
-							},
+			return View(
+				{},
+				ScrollView(
+					{
+						style: {
+							flex: 1,
+							backgroundColor: AppTheme.colors.bgPrimary,
 						},
+					},
+					View(
+						{},
 						View(
-							{},
-							View(
-								{
-									style: themeImageStyle,
+							{
+								style: themeImageStyle,
+							},
+							this.renderFog(),
+							this.renderProjectInfo(),
+						),
+						View(
+							{
+								style: {
+									top: -12,
+									borderRadius: 12,
 								},
-								this.renderFog(),
-								this.renderProjectInfo(),
-							),
-							View(
-								{
-									style: {
-										top: -12,
-										borderRadius: 12,
-									},
-								},
-								this.renderProjectFields(this.state),
-							),
+							},
+							this.renderProjectFields(this.state),
 						),
 					),
-					this.renderButtonsToolbar(),
-				);
-			}
+				),
+				this.renderButtonsToolbar(),
+			);
 		}
 
 		renderFog()
@@ -280,7 +281,7 @@
 						top: 0,
 						width: '100%',
 						height: '100%',
-						backgroundColor: '#000',
+						backgroundColor: AppTheme.colors.base0,
 						opacity: 0.5,
 					},
 				},
@@ -353,7 +354,7 @@
 								this.layoutWidget,
 							);
 						});
-						resolve({closeMenu: false});
+						resolve({ closeMenu: false });
 					}),
 				},
 			];
@@ -415,6 +416,7 @@
 					}),
 				});
 			}
+
 			if (this.state.actions.LEAVE)
 			{
 				actions.push({
@@ -427,12 +429,13 @@
 						contextMenu.close();
 						resolve({ closeMenu: false });
 						Action.leave(this.state.id).then(
-							response => this.updateProjectData(),
-							response => console.log(response),
+							(response) => this.updateProjectData(),
+							(response) => console.log(response),
 						);
 					}),
 				});
 			}
+
 			if (this.state.actions.DELETE)
 			{
 				actions.push({
@@ -509,7 +512,7 @@
 			if (this.state.avatar)
 			{
 				uri = this.state.avatar;
-				uri = (uri.indexOf('http') !== 0 ? `${currentDomain}${uri}` : uri);
+				uri = (uri.indexOf('http') === 0 ? uri : `${currentDomain}${uri}`);
 			}
 			else if (this.state.avatarType)
 			{
@@ -533,7 +536,7 @@
 				style: {
 					fontSize: 20,
 					fontWeight: 'bold',
-					color: '#fff',
+					color: AppTheme.colors.bgContentPrimary,
 					marginTop: 18,
 				},
 				ellipsize: 'end',
@@ -547,7 +550,7 @@
 			return Text({
 				style: {
 					fontSize: 14,
-					color: '#fff',
+					color: AppTheme.colors.bgContentPrimary,
 					marginTop: 9,
 					minHeight: 50,
 				},
@@ -576,7 +579,7 @@
 				Text({
 					style: {
 						fontSize: 14,
-						color: '#fff',
+						color: AppTheme.colors.baseWhiteFixed,
 						marginLeft: 3,
 					},
 					numberOfLines: 1,
@@ -615,7 +618,7 @@
 				Text({
 					style: {
 						fontSize: 14,
-						color: '#fff',
+						color: AppTheme.colors.baseWhiteFixed,
 						marginLeft: 3,
 					},
 					numberOfLines: 1,
@@ -639,7 +642,7 @@
 			return View(
 				{
 					style: {
-						backgroundColor: '#fff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						paddingVertical: 10,
 						paddingHorizontal: 16,
 					},
@@ -746,10 +749,10 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response),
+						(response) => resolve(response),
+						(response) => reject(response),
 					)
-				;
+					.catch(console.error);
 			});
 		}
 
@@ -763,10 +766,10 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response),
+						(response) => resolve(response),
+						(response) => reject(response),
 					)
-				;
+					.catch(console.error);
 			});
 		}
 
@@ -778,10 +781,10 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response),
+						(response) => resolve(response),
+						(response) => reject(response),
 					)
-				;
+					.catch(console.error);
 			});
 		}
 	}
@@ -804,11 +807,11 @@
 					hideNavigationBar: true,
 					horizontalSwipeAllowed: false,
 				},
-				onError: error => console.log(error),
+				onError: console.error,
 			}).then((layoutWidget) => {
 				projectView.layoutWidget = layoutWidget;
 				layoutWidget.showComponent(projectView);
-			});
+			}).catch(console.error);
 		}
 
 		static openProjectMemberList(userId, projectId, params, parentWidget)
@@ -831,7 +834,7 @@
 						minSearchSize: 3,
 					});
 				},
-				onError: error => console.log(error),
+				onError: console.error,
 			});
 		}
 	}
@@ -839,3 +842,4 @@
 	this.ProjectView = ProjectView;
 	this.ProjectViewManager = ProjectViewManager;
 })();
+

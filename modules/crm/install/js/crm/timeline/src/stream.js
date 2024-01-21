@@ -369,6 +369,14 @@ export default class Steam
 		return new Promise((resolve) => {
 			const wrapperPosition = Dom.getPosition(item.getWrapper());
 
+			if (Dom.hasClass(item.getWrapper(), 'crm-entity-stream-section-planned'))
+			{
+				Dom.style(item.getWrapper(), {
+					animation: 'none',
+					opacity: 1,
+				});
+			}
+
 			const hideEvent = new BX.easing({
 				duration: 1000,
 				start: {height: wrapperPosition.height, opacity: 1, marginBottom: 15},

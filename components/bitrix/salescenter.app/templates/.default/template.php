@@ -52,22 +52,29 @@ if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
 			}
 		);
 	</script>
-	<?
+	<?php
 }
 
 $this->SetViewTarget('pagetitle');
 ?>
 	<div class="pagetitle-container pagetitle-align-right-container">
 		<?php
-		Bitrix24Manager::getInstance()->renderIntegrationRequestButton(
-			[
-				Bitrix24Manager::ANALYTICS_SENDER_PAGE => Bitrix24Manager::ANALYTICS_LABEL_SALESHUB_RECEIVING_PAYMENT
-			]
-		);
-		Bitrix24Manager::getInstance()->renderFeedbackButton();
+		if ($arResult['mode'] && $arResult['mode'] === 'terminal_payment')
+		{
+			Bitrix24Manager::getInstance()->renderFeedbackTerminalOfferButton();
+		}
+		else
+		{
+			Bitrix24Manager::getInstance()->renderIntegrationRequestButton(
+				[
+					Bitrix24Manager::ANALYTICS_SENDER_PAGE => Bitrix24Manager::ANALYTICS_LABEL_SALESHUB_RECEIVING_PAYMENT
+				]
+			);
+			Bitrix24Manager::getInstance()->renderFeedbackButton();
+		}
 		?>
 	</div>
-<?
+<?php
 $this->EndViewTarget();
 
 $this->SetViewTarget('below_pagetitle');
@@ -75,7 +82,7 @@ $this->SetViewTarget('below_pagetitle');
 	<div id="salescenter-app-order-selector" class="salescenter-app-order-selector is-hidden">
 		<span class="salescenter-app-order-selector-text" data-hint="" data-hint-no-icon></span>
 	</div>
-<?
+<?php
 $this->EndViewTarget();
 
 // todo a bit later
@@ -87,7 +94,7 @@ if (!empty($arResult['CURRENCIES']))
 	<script>
 		BX.Currency.setCurrencies(<?=CUtil::PhpToJSObject($arResult['CURRENCIES'])?>);
 	</script>
-	<?
+	<?php
 }
 ?>
 	<div id="salescenter-app-root"></div>
@@ -126,4 +133,3 @@ if (!empty($arResult['CURRENCIES']))
 		<?php
 	}
 	?>
-<?

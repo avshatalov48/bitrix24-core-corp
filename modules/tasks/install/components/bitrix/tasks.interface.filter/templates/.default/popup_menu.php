@@ -367,7 +367,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 		menuItemsOptions.push({
 			tabId: "popupMenuOptions",
 			text: '<?=GetMessageJS('TASKS_BTN_EXPORT')?>',
-			className: "<?=$groupBySubTasks ? 'menu-popup-item-none' : 'menu-popup-item-none'?>",
+			className: 'menu-popup-item-none',
 			items: [
 				{
 					tabId: "popupMenuOptions",
@@ -382,7 +382,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 		menuItemsOptions.push({
 			tabId: "popupMenuOptions",
 			text: '<?=GetMessageJS('TASKS_BTN_EXPORT_TO_EXCEL')?>',
-			className: "<?=$groupBySubTasks ? 'menu-popup-item-none' : 'menu-popup-item-none'?>",
+			className: 'menu-popup-item-none',
 			items: [
 				{
 					tabId: "popupMenuOptions",
@@ -414,7 +414,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 		menuItemsOptions.push({
 			tabId: "popupMenuOptions",
 			text: '<?=GetMessageJS('TASKS_BTN_SYNC')?>',
-			className: "<?=$groupBySubTasks ? 'menu-popup-item-none' : 'menu-popup-item-none'?>",
+			className: 'menu-popup-item-none',
 			items: [
 				{
 					tabId: "popupMenuOptions",

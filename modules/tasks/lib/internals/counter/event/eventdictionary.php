@@ -35,5 +35,7 @@ class EventDictionary
 		EVENT_PROJECT_USER_UPDATE		= 'onProjectUserUpdate',
 		EVENT_PROJECT_USER_DELETE		= 'onProjectUserDelete',
 
+		EVENT_TOTAL_COUNTER_UPDATED		= 'onTotalCounterUpdated',
+
 		EVENT_GARBAGE_COLLECT			= 'onGarbageCollect';
 }

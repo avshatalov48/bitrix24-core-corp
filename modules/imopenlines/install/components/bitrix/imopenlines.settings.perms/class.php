@@ -141,7 +141,7 @@ class CImOpenlinesPermsComponent extends CBitrixComponent
 		elseif ($iblocksCount > 20)
 		{
 			\CAgent::AddAgent(
-				'\Bitrix\Imopenlines\Update\Agent::updateRightsQuickAnswersAgent();',
+				'Bitrix\Imopenlines\Update\Agent::updateRightsQuickAnswersAgent();',
 				'imopenlines',
 				'N',
 				0,

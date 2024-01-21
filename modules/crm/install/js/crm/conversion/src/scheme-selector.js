@@ -1,8 +1,8 @@
 import { Event, Text } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import { MenuManager } from "main.popup";
-import { Converter } from "./converter";
-import { SchemeItem } from "./scheme-item";
+import { MenuManager } from 'main.popup';
+import { Converter } from './converter';
+import { SchemeItem } from './scheme-item';
 
 /**
  * @memberOf BX.Crm.Conversion

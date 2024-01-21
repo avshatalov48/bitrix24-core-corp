@@ -35,6 +35,7 @@ use CUser;
  */
 final class TaskTagProvider extends BaseProvider
 {
+	private const GROUP_LIMIT = 100;
 	private const LIMIT = 30;
 	private const MULTIPLIER = 50;
 	private const FAULT = 5;
@@ -174,9 +175,16 @@ final class TaskTagProvider extends BaseProvider
 
 		if ($this->groupId === 0 && $tagCollection->count() < self::LIMIT)
 		{
-			$groups = UserRegistry::getInstance($this->userId)->getUserGroups();
-			$groupIds = array_slice(array_keys($groups), 0, 100);
 			$groupTagsQuery = LabelTable::query();
+			$groups = UserRegistry::getInstance($this->userId)->getUserGroups();
+			$limit = self::GROUP_LIMIT;
+			if (!is_null($searchQuery))
+			{
+				$groupTagsQuery->whereLike('NAME', "%{$searchQuery->getQuery()}%");
+				$limit = null;
+			}
+
+			$groupIds = array_slice(array_keys($groups), 0, $limit);
 
 			$groupTagsQuery
 				->setSelect($this->getSelect())
@@ -185,7 +193,6 @@ final class TaskTagProvider extends BaseProvider
 				->where('USER_ID', 0)
 				->whereIn('GROUP_ID', $groupIds)
 			;
-			!is_null($searchQuery) && $groupTagsQuery->whereLike('NAME', "%{$searchQuery->getQuery()}%");
 
 			$groupTagCollection = $groupTagsQuery->exec()->fetchCollection();
 			$tagCollection->mergeByName($groupTagCollection);

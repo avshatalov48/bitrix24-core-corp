@@ -2,8 +2,9 @@
  * @module crm/required-fields
  */
 jn.define('crm/required-fields', (require, exports, module) => {
-	const { Haptics } = require('haptics');
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
+	const { Haptics } = require('haptics');
 	const { RequiredFieldsBackdrop } = require('crm/required-fields/required-backdrop');
 
 	const REQUIRED_ERROR_CODE = 'CRM_FIELD_ERROR_REQUIRED';
@@ -68,13 +69,13 @@ jn.define('crm/required-fields', (require, exports, module) => {
 
 			parentWidget.openWidget('layout', {
 				modal: true,
-				backgroundColor: '#eef2f4',
+				backgroundColor: AppTheme.colors.bgSecondary,
 				backdrop: {
 					swipeAllowed: false,
 					horizontalSwipeAllowed: false,
 					shouldResizeContent: true,
 					swipeContentAllowed: false,
-					navigationBarColor: '#eef2f4',
+					navigationBarColor: AppTheme.colors.bgSecondary,
 				},
 				onReady: (layout) => {
 					layout.showComponent(new RequiredFieldsBackdrop({

@@ -24,7 +24,8 @@ class IBlockElementProxyTable extends Entity\DataManager
 		return array(
 			'ID' => array(
 				'data_type' => 'integer',
-				'primary' => true
+				'primary' => true,
+				'autocomplete' => true,
 			),
 			'IBLOCK_ID' => array(
 				'data_type' => 'integer'
@@ -65,7 +66,8 @@ class IBlockElementGrcProxyTable extends Entity\DataManager
 		return array(
 			'ID' => array(
 				'data_type' => 'integer',
-				'primary' => true
+				'primary' => true,
+				'autocomplete' => true,
 			),
 			'NAME' => array(
 				'data_type' => 'string'

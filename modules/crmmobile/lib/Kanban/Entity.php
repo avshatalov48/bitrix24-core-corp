@@ -16,6 +16,7 @@ use Bitrix\CrmMobile\Kanban\ItemPreparer\CompanyPreparer;
 use Bitrix\CrmMobile\Kanban\ItemPreparer\ContactPreparer;
 use Bitrix\CrmMobile\Kanban\ItemPreparer\KanbanPreparer;
 use Bitrix\CrmMobile\Kanban\ItemPreparer\ListPreparer;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\UI\PageNavigation;
 
@@ -104,7 +105,7 @@ final class Entity
 		{
 			$preparer = new CompanyPreparer();
 		}
-		else if ($entityTypeId === \CCrmOwnerType::Contact)
+		elseif ($entityTypeId === \CCrmOwnerType::Contact)
 		{
 			$preparer = new ContactPreparer();
 		}
@@ -361,8 +362,10 @@ final class Entity
 		$data[] = [
 			'typeId' => '999',
 			'typeName' => 'MY_PENDING',
+			'title' => Loc::getMessage('M_CRM_KANBAN_ENTITY_COUNTER_CURRENT_USER_MY_PENDING'),
 			'code' => 'my_pending',
 			'value' => 0,
+			'showValue' => false,
 			'excludeUsers' => false,
 		];
 
@@ -380,9 +383,9 @@ final class Entity
 		$entityTypeId = $this->getEntityTypeId();
 
 		$allSupportedTypes = EntityCounterType::getAllSupported($entityTypeId, true);
-		foreach($allSupportedTypes as $typeId)
+		foreach ($allSupportedTypes as $typeId)
 		{
-			if(EntityCounterType::isGroupingForArray($typeId, $allSupportedTypes))
+			if (EntityCounterType::isGroupingForArray($typeId, $allSupportedTypes))
 			{
 				continue;
 			}
@@ -390,12 +393,23 @@ final class Entity
 			$counter = EntityCounterFactory::create($entityTypeId, $typeId, $userId, $extra);
 			$code = $counter->getCode();
 			$value = $counter->getValue(false);
+			$typeName = EntityCounterType::resolveName($typeId);
+			$title = !empty($extra['EXCLUDE_USERS'])
+				? Loc::getMessage("M_CRM_KANBAN_ENTITY_COUNTER_OTHER_USERS_$typeName")
+				: Loc::getMessage("M_CRM_KANBAN_ENTITY_COUNTER_CURRENT_USER_$typeName");
+
+			if (!$title)
+			{
+				continue;
+			}
 
 			$data[] = [
 				'typeId' => $typeId,
-				'typeName' => EntityCounterType::resolveName($typeId),
+				'typeName' => $typeName,
+				'title' => $title,
 				'code' => $code,
 				'value' => $value,
+				'showValue' => true,
 				'excludeUsers' => ($extra['EXCLUDE_USERS'] ?? false),
 			];
 		}
@@ -407,7 +421,7 @@ final class Entity
 		$entityTypeId = $this->getEntityTypeId();
 
 		$uPermissions = Container::getInstance()->getUserPermissions();
-		$permissionEntityType = $uPermissions::getPermissionEntityType($entityTypeId, (int) $categoryId);
+		$permissionEntityType = $uPermissions::getPermissionEntityType($entityTypeId, (int)$categoryId);
 
 		if ($uPermissions->isAdmin())
 		{
@@ -419,7 +433,7 @@ final class Entity
 		return $permissions >= $uPermissions::PERMISSION_ALL;
 	}
 
-	public function prepareFilter(\Bitrix\Crm\Kanban\Entity $entity):void
+	public function prepareFilter(\Bitrix\Crm\Kanban\Entity $entity): void
 	{
 		$this->getPreparedControllerStrategy()->prepareFilter($entity);
 	}

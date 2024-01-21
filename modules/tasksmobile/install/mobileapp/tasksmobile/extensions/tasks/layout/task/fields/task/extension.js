@@ -2,6 +2,7 @@
  * @module tasks/layout/task/fields/tasks
  */
 jn.define('tasks/layout/task/fields/tasks', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
 
 	class TaskField extends EntitySelectorFieldClass
@@ -71,7 +72,7 @@ jn.define('tasks/layout/task/fields/tasks', (require, exports, module) => {
 					flexDirection: 'column',
 				},
 				taskText: {
-					color: (this.canOpenEntity() ? '#0b66c3' : '#333333'),
+					color: (this.canOpenEntity() ? AppTheme.colors.accentMainLinks : AppTheme.colors.base1),
 					fontSize: 16,
 				},
 				emptyEntity: {

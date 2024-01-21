@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'apptheme',
 		'animation',
 		'layout/ui/context-menu',
 		'layout/ui/fields/focus-manager',

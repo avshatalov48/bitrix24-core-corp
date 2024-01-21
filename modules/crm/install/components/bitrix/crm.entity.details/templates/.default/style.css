@@ -32,6 +32,7 @@
 
 .pagetitile-button-container {
 	display: inline-block;
+	word-break: break-word;
 }
 
 .pagetitile-button-container * {

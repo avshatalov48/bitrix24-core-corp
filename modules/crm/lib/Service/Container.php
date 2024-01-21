@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Service;
 
 use Bitrix\Crm\Badge\Badge;
 use Bitrix\Crm\Conversion;
+use Bitrix\Crm\FieldContext\ContextManager;
 use Bitrix\Crm\Filter;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\PullManager;
@@ -13,6 +14,7 @@ use Bitrix\Crm\Relation\Registrar;
 use Bitrix\Crm\Relation\RelationManager;
 use Bitrix\Crm\Service\Factory\Dynamic;
 use Bitrix\Crm\Service\Sale\Shipment\ProductService;
+use Bitrix\Crm\Service\Sale\Terminal\PaymentService;
 use Bitrix\Crm\Timeline;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DI\ServiceLocator;
@@ -546,5 +548,20 @@ class Container
 	public function getShipmentProductService(): ProductService
 	{
 		return ServiceLocator::getInstance()->get('crm.shipment.product');
+	}
+
+	public function getIntranetToolsManager(): Integration\Intranet\ToolsManager
+	{
+		return ServiceLocator::getInstance()->get('crm.integration.intranet.toolsManager');
+	}
+
+	public function getFieldsContextManager(): ContextManager
+	{
+		return ServiceLocator::getInstance()->get('crm.fieldContext.contextManager');
+	}
+
+	public function getTerminalPaymentService(): PaymentService
+	{
+		return ServiceLocator::getInstance()->get('crm.terminal.payment');
 	}
 }

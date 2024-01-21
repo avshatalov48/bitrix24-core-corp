@@ -1,3 +1,2 @@
 <?php
-
-$MESS["TASKSMOBILE_LAYOUT_TASK_FIELDS_IS_RESULT_REQUIRED"] = "Не завершать задачу без результата";
+$MESS["TASKSMOBILE_LAYOUT_TASK_FIELDS_IS_RESULT_REQUIRED_MSGVER_1"] = "Не завершать задачу без результата";

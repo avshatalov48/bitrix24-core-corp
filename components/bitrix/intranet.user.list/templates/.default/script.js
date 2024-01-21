@@ -43,7 +43,9 @@
 			if (BX.type.isNotEmptyObject(taskIFramePopup))
 			{
 				taskIFramePopup.add({
-					RESPONSIBLE_ID: userId
+					RESPONSIBLE_ID: userId,
+					ta_sec: 'user',
+					ta_el: 'context_menu',
 				});
 			}
 		},

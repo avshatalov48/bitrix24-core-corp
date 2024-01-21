@@ -157,25 +157,48 @@ final class TypeFile
 			self::getByFile($file) : self::getByFilename($file);
 	}
 
-	public static function isImage($file)
+	/**
+	 * @param AttachedObject|File|string$file
+	 * @return bool
+	 * @throws \Bitrix\Main\NotImplementedException
+	 */
+	public static function isImage($file): bool
 	{
+		if ($file instanceof AttachedObject)
+		{
+			$attachedObject = $file;
+			if (!$attachedObject->isSpecificVersion())
+			{
+				return self::isImage($attachedObject->getFile());
+			}
+			$fileData = $attachedObject->getVersion()?->getFile();
+
+			return self::isImageByFileData($fileData);
+		}
+
 		if ($file instanceof File)
 		{
 			if (self::getByFile($file) === self::IMAGE)
 			{
 				$fileData = $file->getFile();
-				if (empty($fileData))
-				{
-					return false;
-				}
 
-				return !self::shouldTreatImageAsFile($fileData);
+				return self::isImageByFileData($fileData);
 			}
 
 			return false;
 		}
 
 		return self::getByFilename($file) === self::IMAGE;
+	}
+
+	private static function isImageByFileData(?array $fileData): bool
+	{
+		if (empty($fileData))
+		{
+			return false;
+		}
+
+		return !self::shouldTreatImageAsFile($fileData);
 	}
 
 	public static function shouldTreatImageAsFile(array $fileData): bool

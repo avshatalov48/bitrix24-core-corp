@@ -2,10 +2,12 @@
 
 return [
 	'extensions' => [
+		'apptheme',
 		'require-lazy',
 		'loc',
 		'type',
 		'alert',
+		'notify',
 		'ui/kanban',
 		'utils/random',
 		'utils/string',
@@ -15,6 +17,7 @@ return [
 		'layout/ui/simple-list/view-mode',
 		'pull/client/events',
 		'layout/ui/context-menu/item',
+		'layout/ui/kanban/filter',
 
 		'crm:type',
 		'crm:loc',
@@ -23,6 +26,7 @@ return [
 		'crm:assets/category',
 		'crm:category-list/actions',
 		'crm:entity-tab/type',
+		'crm:entity-tab/filter',
 		'crm:state-storage',
 		'crm:storage/category',
 		'crm:entity-detail/component/menu-provider',
@@ -31,7 +35,6 @@ return [
 		'crm:crm.entity.details',
 	],
 	'bundle' => [
-		'./filter',
 		'./pull-manager',
 		'./sort',
 	],

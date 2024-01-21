@@ -56,7 +56,6 @@ export default class Item
 				attrs: { className: "crm-entity-stream-section crm-entity-stream-section-planned crm-entity-stream-section-shadow" },
 				children :
 					[
-						BX.create("DIV", { attrs: { className: "crm-entity-stream-section-icon" } }),
 						BX.create(
 							"DIV",
 							{

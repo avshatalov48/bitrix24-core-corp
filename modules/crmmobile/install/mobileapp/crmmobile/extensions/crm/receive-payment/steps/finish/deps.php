@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'apptheme',
 		'analytics-label',
 		'layout/ui/wizard/step',
 		'layout/pure-component',

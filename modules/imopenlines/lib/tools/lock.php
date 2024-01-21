@@ -1,42 +1,23 @@
 <?php
 namespace Bitrix\ImOpenLines\Tools;
 
-use \Bitrix\Main\Application;
+use Bitrix\Main\Application;
+use Bitrix\Main\DB\SqlException;
+use Bitrix\ImOpenLines\Model\LockTable;
 
-use \Bitrix\ImOpenLines\Model\LockTable;
-
-/**
- * Class Lock
- * @package Bitrix\ImOpenLines
- */
 class Lock
 {
-	/** @var Lock */
-	private static $instance = false;
+	/** @var self */
+	private static $instance = null;
 	private $unigId = null;
 	private $connection = null;
 	private $sqlHelper = null;
+	private $table = null;
 
 	/**
-	 * @return string
+	 * @return self
 	 */
-	protected static function generateUniqId()
-	{
-		return md5(getmypid() . time() . randString(5));
-	}
-
-	/**
-	 * @return string
-	 */
-	protected function getUniqId()
-	{
-		return $this->unigId;
-	}
-
-	/**
-	 * @return Lock
-	 */
-	public static function getInstance()
+	public static function getInstance(): self
 	{
 		if (empty(self::$instance))
 		{
@@ -48,7 +29,6 @@ class Lock
 
 	/**
 	 * Lock constructor.
-	 * @throws \Bitrix\Main\Db\SqlQueryException
 	 */
 	private function __construct()
 	{
@@ -56,85 +36,110 @@ class Lock
 
 		$this->connection = Application::getConnection();
 		$this->sqlHelper = $this->connection->getSqlHelper();
+		$this->table = LockTable::getTableName();
 
-		$this->connection->queryExecute('DELETE FROM ' . LockTable::getTableName() . ' WHERE LOCK_TIME < NOW()');
+		$now = $this->sqlHelper->getCurrentDateTimeFunction();
+		$this->connection->queryExecute("DELETE FROM {$this->table} WHERE LOCK_TIME < {$now}");
 	}
 
 	/**
-	 * @param $name
-	 * @return bool
-	 * @throws \Bitrix\Main\Db\SqlQueryException
+	 * @return string
 	 */
-	public function isFree($name)
+	protected static function generateUniqId(): string
 	{
-		$result = false;
-		$row = $this->connection->queryScalar('SELECT ID FROM ' . LockTable::getTableName() . ' WHERE ID=\'' . $this->sqlHelper->forSql($name, 255) . '\' AND LOCK_TIME >= NOW()');
-
-		if($row == NULL)
-		{
-			$result = true;
-		}
-
-		return $result;
+		return md5(getmypid() . time() . randString(5));
 	}
 
 	/**
-	 * @param $name
+	 * @return string
+	 */
+	protected function getUniqId(): string
+	{
+		return $this->unigId;
+	}
+
+	/**
+	 * @param string $name
+	 * @return bool
+	 */
+	public function isFree(string $name): bool
+	{
+		$name = $this->sqlHelper->forSql($name, 255);
+		$now = $this->sqlHelper->getCurrentDateTimeFunction();
+
+		$row = $this->connection->queryScalar("SELECT ID FROM {$this->table} WHERE ID = '{$name}' AND LOCK_TIME >= {$now}");
+
+		return ($row === null);
+	}
+
+	/**
+	 * @param string $name
 	 * @param int $time
 	 * @return bool
 	 */
-	public function set($name, $time = 60)
+	public function set(string $name, int $time = 60): bool
 	{
 		$result = false;
 
-		$row = $this->connection->query('SELECT ID, (LOCK_TIME >= NOW()) as BLOCK, PID
-			FROM ' . LockTable::getTableName() . ' 
-			WHERE ID=\'' . $this->sqlHelper->forSql($name, 255) . '\' FOR UPDATE;
-		')->fetch();
+		$name = $this->sqlHelper->forSql($name, 255);
+		$uniqId = $this->sqlHelper->forSql($this->getUniqId(), 255);
+		$now = $this->sqlHelper->getCurrentDateTimeFunction();
+		$lockTime = $this->sqlHelper->addSecondsToDateTime($time, $now);
 
-		if($row == false)
+		$this->connection->startTransaction();
+
+		try
 		{
-			try
+			$sql = "
+				SELECT ID, PID, (CASE WHEN LOCK_TIME >= {$now} THEN 1 ELSE 0 END) as BLOCK 
+				FROM {$this->table} WHERE ID = '{$name}' 
+				FOR UPDATE
+			";
+			$res = $this->connection->query($sql);
+			$row = $res->fetch();
+
+			if ($row == false)
 			{
-				$this->connection->queryExecute('INSERT INTO ' . LockTable::getTableName() . ' 
-					SET ID=\'' . $this->sqlHelper->forSql($name, 255) . '\', 
-					DATE_CREATE=NOW(), 
-					LOCK_TIME=TIMESTAMPADD(SECOND, ' . $this->sqlHelper->forSql($time, 255) . ', NOW()), 
-					PID=\'' . $this->sqlHelper->forSql($this->getUniqId(), 255) . '\';
-				');
+				$this->connection->queryExecute("
+					INSERT INTO {$this->table} (ID, DATE_CREATE, LOCK_TIME, PID) 
+					VALUES ('{$name}', {$now}, {$lockTime}, '{$uniqId}')
+				");
 
 				$result = true;
 			}
-			catch (\Exception $e)
+			elseif ($row['BLOCK'] == 0 || $row['PID'] == $this->getUniqId())
 			{
-				$result = false;
-			}
-		}
-		elseif($row['BLOCK'] == 0 || $row['PID'] == $this->getUniqId())
-		{
-			$this->connection->queryExecute('UPDATE  ' . LockTable::getTableName() . ' 
-					SET DATE_CREATE=NOW(), 
-					LOCK_TIME=TIMESTAMPADD(SECOND, ' . $this->sqlHelper->forSql($time, 255) . ', NOW()), 
-					PID=\'' . $this->sqlHelper->forSql($this->getUniqId(), 255) . '\'
+				$this->connection->queryExecute("
+					UPDATE {$this->table} 
+					SET 
+						DATE_CREATE = {$now}, 
+						LOCK_TIME = {$lockTime}, 
+						PID = '{$uniqId}'
 					WHERE
-					ID=\'' . $this->sqlHelper->forSql($name, 255) . '\';
-				');
+						ID = '{$name}'
+				");
 
-			$result = true;
+				$result = true;
+			}
+
+			$this->connection->commitTransaction();
 		}
-
-		$this->connection->queryExecute('COMMIT;');
+		catch (SqlException $exception)
+		{
+			$this->connection->rollbackTransaction();
+		}
 
 		return $result;
 	}
 
 	/**
-	 * @param $name
+	 * @param string $name
 	 * @return bool
 	 */
-	public function delete($name)
+	public function delete(string $name): bool
 	{
-		$this->connection->queryExecute('DELETE FROM ' . LockTable::getTableName() . ' WHERE ID=\'' . $this->sqlHelper->forSql($name, 255) . '\'');
+		$name = $this->sqlHelper->forSql($name, 255);
+		$this->connection->queryExecute("DELETE FROM {$this->table} WHERE ID = '{$name}'");
 
 		return true;
 	}

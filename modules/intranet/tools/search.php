@@ -790,7 +790,7 @@ class CIntranetSearch
 
 		if(CModule::IncludeModule('search'))
 		{
-			$rsUser = CUser::GetByID($arFields["ID"]);
+			$rsUser = CUser::GetByID($arFields["ID"] ?? null);
 			$arOldUser = $rsUser->Fetch();
 			if($arOldUser)
 			{

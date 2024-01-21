@@ -9,7 +9,6 @@ use Bitrix\Main\Result;
 
 class DeleteAction extends BaseAction
 {
-
 	public static function getId(): ?string
 	{
 		return 'delete';

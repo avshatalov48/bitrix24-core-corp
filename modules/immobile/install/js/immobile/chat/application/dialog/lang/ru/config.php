@@ -6,7 +6,7 @@ $MESS["MOBILE_CHAT_ERROR_DESC"] = "Пожалуйста, попробуйте о
 $MESS["MOBILE_CHAT_PANEL_P"] = "Пожалуйста, попробуйте открыть чат позже.";
 
 $MESS['MOBILE_CHAT_PANEL_PLACEHOLDER'] = "Написать сообщение...";
-$MESS['MOBILE_CHAT_PANEL_UPLOAD_DISK'] = "Битрикс24.Диск";
+$MESS['MOBILE_CHAT_PANEL_UPLOAD_DISK_V2'] = "Битрикс24 Диск";
 $MESS['MOBILE_CHAT_PANEL_UPLOAD_DISK_FILES'] = "Файлы";
 $MESS['MOBILE_CHAT_PANEL_UPLOAD_GALLERY'] = "Выбрать из галереи";
 $MESS['MOBILE_CHAT_PANEL_UPLOAD_CAMERA'] = "Снять фото";

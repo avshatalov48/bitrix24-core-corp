@@ -16,17 +16,17 @@ class CrmOrders extends CrmBase
 	public const PREFIX_SHORT = 'O_';
 	public const PREFIX_FULL = 'CRMORDER';
 
-	protected static function getOwnerType()
+	protected static function getOwnerType(): int
 	{
 		return CCrmOwnerType::Order;
 	}
 
-	protected static function getHandlerType()
+	protected static function getHandlerType(): string
 	{
 		return Handler::ENTITY_TYPE_CRMORDERS;
 	}
 
-	protected static function prepareEntity($data, $options = [])
+	protected static function prepareEntity($data, $options = []): array
 	{
 		$prefix = static::getPrefix($options);
 		$result = [
@@ -56,7 +56,7 @@ class CrmOrders extends CrmBase
 		return $result;
 	}
 
-	public function getData($params = [])
+	public function getData($params = []): array
 	{
 		global $USER;
 
@@ -189,7 +189,7 @@ class CrmOrders extends CrmBase
 		return $result;
 	}
 
-	public function getTabList($params = [])
+	public function getTabList($params = []): array
 	{
 		$result = [];
 
@@ -212,7 +212,7 @@ class CrmOrders extends CrmBase
 		return $result;
 	}
 
-	public function search($params = [])
+	public function search($params = []): array
 	{
 		$result = [
 			'ITEMS' => [],

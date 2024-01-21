@@ -1,23 +1,20 @@
+/* eslint-disable */
 (function (exports,main_core,main_popup,salescenter_manager) {
 	'use strict';
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5;
 	var namespace = main_core.Reflection.namespace('BX.Salescenter');
-
 	var ControlPanel = /*#__PURE__*/function () {
 	  function ControlPanel() {
 	    babelHelpers.classCallCheck(this, ControlPanel);
 	  }
-
 	  babelHelpers.createClass(ControlPanel, null, [{
 	    key: "init",
 	    value: function init(options) {
 	      var _this = this;
-
 	      if (main_core.Type.isPlainObject(options)) {
 	        this.constructor.shopRoot = options.shopRoot;
 	      }
-
 	      main_core.Event.ready(function () {
 	        if (BX.SidePanel.Instance) {
 	          BX.SidePanel.Instance.bindAnchors(top.BX.clone({
@@ -31,9 +28,7 @@
 	            }]
 	          }));
 	        }
-
 	        var adminSidePanel = top.BX.adminSidePanel || BX.adminSidePanel;
-
 	        if (adminSidePanel) {
 	          if (!top.window["adminSidePanel"] || !BX.is_subclass_of(top.window["adminSidePanel"], adminSidePanel)) {
 	            top.window["adminSidePanel"] = new adminSidePanel({
@@ -58,7 +53,6 @@
 	    value: function adjustSidePanelOpener(event, link) {
 	      if (BX.SidePanel.Instance) {
 	        var isSidePanelParams = link.url.indexOf("IFRAME=Y&IFRAME_TYPE=SIDE_SLIDER") >= 0;
-
 	        if (!isSidePanelParams || isSidePanelParams && !BX.SidePanel.Instance.getTopSlider()) {
 	          event.preventDefault();
 	          link.url = BX.util.add_url_param(link.url, {
@@ -99,7 +93,6 @@
 	    key: "closeMenu",
 	    value: function closeMenu() {
 	      var menu = main_popup.PopupMenu.getCurrentMenu();
-
 	      if (menu) {
 	        menu.destroy();
 	      }
@@ -121,40 +114,31 @@
 	  }]);
 	  return ControlPanel;
 	}();
-
 	babelHelpers.defineProperty(ControlPanel, "shopRoot", '/shop/settings/');
 	babelHelpers.defineProperty(ControlPanel, "commonConnectionDependentTiles", []);
 	babelHelpers.defineProperty(ControlPanel, "pageMenuTiles", []);
-
 	var BaseItem = /*#__PURE__*/function (_BX$TileGrid$Item) {
 	  babelHelpers.inherits(BaseItem, _BX$TileGrid$Item);
-
 	  function BaseItem(options) {
 	    var _this2;
-
 	    babelHelpers.classCallCheck(this, BaseItem);
 	    _this2 = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(BaseItem).call(this, options));
 	    _this2.title = options.title;
 	    _this2.image = options.image;
 	    _this2.data = options.data || {};
-
 	    if (_this2.isDependsOnConnection()) {
 	      ControlPanel.addCommonConnectionDependentTile(babelHelpers.assertThisInitialized(_this2));
 	    }
-
 	    if (_this2.hasPagesMenu()) {
 	      ControlPanel.addPageMenuTile(babelHelpers.assertThisInitialized(_this2));
 	    }
-
 	    if (_this2.id === 'payment-systems') {
 	      ControlPanel.paymentSystemsTile = babelHelpers.assertThisInitialized(_this2);
 	    } else if (_this2.id === 'userconsent') {
 	      ControlPanel.userConsentTile = babelHelpers.assertThisInitialized(_this2);
 	    }
-
 	    return _this2;
 	  }
-
 	  babelHelpers.createClass(BaseItem, [{
 	    key: "isDependsOnConnection",
 	    value: function isDependsOnConnection() {
@@ -177,7 +161,6 @@
 	      if (!this.layout.innerContent) {
 	        return;
 	      }
-
 	      var contentNode = this.layout.innerContent.parentNode;
 	      contentNode.removeChild(this.layout.innerContent);
 	      contentNode.appendChild(this.getContent());
@@ -188,7 +171,6 @@
 	      if (this.isActive()) {
 	        return 'salescenter-item-selected';
 	      }
-
 	      return '';
 	    }
 	  }, {
@@ -205,16 +187,13 @@
 	    key: "onClick",
 	    value: function onClick() {
 	      var _this3 = this;
-
 	      if (!this.isActive()) {
 	        ControlPanel.connectShop(this.id);
 	      } else {
 	        var menu = this.getMenuItems();
-
 	        if (!menu) {
 	          this.reloadTile(true).then(function (response) {
 	            menu = _this3.getMenuItems();
-
 	            if (_this3.isActive() && menu) {
 	              _this3.showMenu();
 	            } else {
@@ -230,11 +209,9 @@
 	    key: "getContentStyles",
 	    value: function getContentStyles() {
 	      var styles = '';
-
 	      if (this.isActive() && this.data.activeColor && !this.isMarketplaceAll()) {
 	        styles = 'background-color: ' + this.data.activeColor;
 	      }
-
 	      return styles;
 	    }
 	  }, {
@@ -242,21 +219,16 @@
 	    value: function getImage() {
 	      var path = '';
 	      var className = 'salescenter-item-image';
-
 	      if (this.image) {
 	        path = this.image;
 	      }
-
 	      if (this.isActive() && this.data.activeImage) {
 	        path = this.data.activeImage;
 	      }
-
 	      path = encodeURI(path);
-
 	      if (this.isMarketplaceAll() && this.data.hasOwnProperty('hasOwnIcon') && this.data.hasOwnIcon) {
 	        className = 'salescenter-marketplace-item-image';
 	      }
-
 	      return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\" style=\"background-image:url(", ")\"></div>"])), className, path);
 	    }
 	  }, {
@@ -270,15 +242,12 @@
 	      if (this.needNewLabel()) {
 	        var className = 'salescenter-item-label-new';
 	        var classNameText = 'salescenter-item-label-new-text';
-
 	        if (this.isActive() && this.data.hasOwnProperty('activeColor')) {
 	          className = 'salescenter-item-label-new-active';
 	          classNameText = 'salescenter-item-label-new-text-active';
 	        }
-
 	        return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\"><div class=\"", "\">", "</div></div>"])), className, classNameText, BX.message('SALESCENTER_CONTROL_PANEL_ITEM_LABEL_NEW'));
 	      }
-
 	      return '';
 	    }
 	  }, {
@@ -319,7 +288,6 @@
 	      if (main_core.Type.isString(this.data.url)) {
 	        return this.data.url;
 	      }
-
 	      return null;
 	    }
 	  }, {
@@ -328,14 +296,12 @@
 	      if (main_core.Type.isPlainObject(this.data.sliderOptions)) {
 	        return this.data.sliderOptions;
 	      }
-
 	      return null;
 	    }
 	  }, {
 	    key: "reloadTile",
 	    value: function reloadTile() {
 	      var _this4 = this;
-
 	      var isClick = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 	      return new Promise(function (resolve) {
 	        if (main_core.Type.isString(_this4.data.reloadAction)) {
@@ -352,13 +318,10 @@
 	            if (!main_core.Type.isNil(response.data.active)) {
 	              _this4.data.active = response.data.active;
 	            }
-
 	            if (!main_core.Type.isNil(response.data.menu)) {
 	              _this4.data.menu = response.data.menu;
 	            }
-
 	            _this4.rerender();
-
 	            resolve();
 	          });
 	        } else {
@@ -385,7 +348,6 @@
 	        }
 	      }).then(function (response) {
 	        var app = response.data;
-
 	        if (app.TYPE === "A") {
 	          this.showRestApplication(appCode);
 	        } else {
@@ -405,49 +367,19 @@
 	  }, {
 	    key: "restAppErrorPopup",
 	    value: function restAppErrorPopup(title, text) {
-	      var popup = new BX.PopupWindow('rest-app-error-alert', null, {
-	        closeIcon: true,
-	        closeByEsc: true,
-	        autoHide: false,
-	        titleBar: title,
-	        content: text,
-	        zIndex: 16000,
-	        overlay: {
-	          color: 'gray',
-	          opacity: 30
-	        },
-	        buttons: [new BX.PopupWindowButton({
-	          'id': 'close',
-	          'text': BX.message('SALESCENTER_CONTROL_PANEL_POPUP_CLOSE'),
-	          'events': {
-	            'click': function click() {
-	              popup.close();
-	            }
-	          }
-	        })],
-	        events: {
-	          onPopupClose: function onPopupClose() {
-	            this.destroy();
-	          },
-	          onPopupDestroy: function onPopupDestroy() {
-	            popup = null;
-	          }
-	        }
-	      });
-	      popup.show();
+	      BX.UI.Dialogs.MessageBox.alert(text, title, function (messageBox) {
+	        return messageBox.close();
+	      }, BX.Loc.getMessage('SALESCENTER_CONTROL_PANEL_POPUP_CLOSE'));
 	    }
 	  }]);
 	  return BaseItem;
 	}(BX.TileGrid.Item);
-
 	var PaymentItem = /*#__PURE__*/function (_BaseItem) {
 	  babelHelpers.inherits(PaymentItem, _BaseItem);
-
 	  function PaymentItem() {
 	    babelHelpers.classCallCheck(this, PaymentItem);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(PaymentItem).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(PaymentItem, [{
 	    key: "dropMenu",
 	    value: function dropMenu() {
@@ -465,7 +397,6 @@
 	      } else if (this.opensSlider()) {
 	        var url = this.getUrl();
 	        var options = this.getSliderOptions();
-
 	        if (url) {
 	          salescenter_manager.Manager.openSlider(url, options).then(this.reloadTile.bind(this));
 	        }
@@ -511,15 +442,12 @@
 	  }]);
 	  return PaymentItem;
 	}(BaseItem);
-
 	var PaymentSystemItem = /*#__PURE__*/function (_BaseItem2) {
 	  babelHelpers.inherits(PaymentSystemItem, _BaseItem2);
-
 	  function PaymentSystemItem() {
 	    babelHelpers.classCallCheck(this, PaymentSystemItem);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(PaymentSystemItem).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(PaymentSystemItem, [{
 	    key: "onClick",
 	    value: function onClick() {
@@ -528,7 +456,6 @@
 	      } else if (this.id === 'userconsent') {
 	        if (!this.isActive()) {
 	          var url = this.getUrl();
-
 	          if (url) {
 	            salescenter_manager.Manager.openSlider(url).then(this.reloadTile.bind(this));
 	          }
@@ -537,7 +464,6 @@
 	        }
 	      } else {
 	        var _url = this.getUrl();
-
 	        if (_url) {
 	          salescenter_manager.Manager.openSlider(_url).then(this.reloadTile.bind(this));
 	        }
@@ -546,7 +472,6 @@
 	  }]);
 	  return PaymentSystemItem;
 	}(BaseItem);
-
 	namespace.ControlPanel = ControlPanel;
 	namespace.PaymentItem = PaymentItem;
 	namespace.PaymentSystemItem = PaymentSystemItem;

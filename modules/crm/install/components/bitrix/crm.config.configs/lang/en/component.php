@@ -30,6 +30,7 @@ $MESS["CRM_FIELD_ENABLE_ENTITY_CATALOG_PRICE_EDIT"] = "Allow to edit catalog pro
 $MESS["CRM_FIELD_ENABLE_ENTITY_CATALOG_PRICE_EDIT_2"] = "Allow users to edit product price inside CRM entities";
 $MESS["CRM_FIELD_ENABLE_ENTITY_CATALOG_PRICE_SAVE"] = "Save new product price from CRM entitiies to the catalog";
 $MESS["CRM_FIELD_ENABLE_EXPORT_EVENT"] = "Log export event";
+$MESS["CRM_FIELD_ENABLE_FILE_PREVIEWER_IN_KANBAN_AND_GRID"] = "Enable file viewer";
 $MESS["CRM_FIELD_ENABLE_FULL_CATALOG"] = "Enable new display grid and CRM product properties";
 $MESS["CRM_FIELD_ENABLE_LEAD_DELETION_EVENT2"] = "Log lead delete events";
 $MESS["CRM_FIELD_ENABLE_LEAD_DUP_CONTROL"] = "Enable duplicate control for leads";

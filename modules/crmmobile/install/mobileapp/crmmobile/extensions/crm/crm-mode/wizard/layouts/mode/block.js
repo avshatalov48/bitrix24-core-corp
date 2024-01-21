@@ -3,13 +3,14 @@
  */
 jn.define('crm/crm-mode/wizard/layouts/mode/block', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { TypeId } = require('crm/type');
 	const { getEntityMessage } = require('crm/loc');
 	const { applyCheck } = require('crm/assets/common');
 	const { plus, arrowRight } = require('assets/common');
 	const { label } = require('crm/crm-mode/wizard/layouts/mode/label');
-
-	const { EXTENSION_PATH, MODES, ENTITY_COLORS } = require('crm/crm-mode/wizard/layouts/constants');
+	const { MODES, ENTITY_COLORS } = require('crm/crm-mode/wizard/layouts/src/constants');
+	const { makeImagesPath } = require('crm/crm-mode/wizard/layouts/src/images');
 
 	/**
 	 * @class ModeBlock
@@ -53,7 +54,7 @@ jn.define('crm/crm-mode/wizard/layouts/mode/block', (require, exports, module) =
 							height: 12,
 						},
 						svg: {
-							content: arrowRight('#959ca4'),
+							content: arrowRight(AppTheme.colors.base4),
 						},
 					}),
 				),
@@ -64,7 +65,7 @@ jn.define('crm/crm-mode/wizard/layouts/mode/block', (require, exports, module) =
 						height: 12,
 					},
 					svg: {
-						content: plus('#959ca4'),
+						content: plus(AppTheme.colors.base4),
 					},
 				}),
 				this.renderLabelsOverlay([TypeId.Company, TypeId.Contact]),
@@ -102,7 +103,7 @@ jn.define('crm/crm-mode/wizard/layouts/mode/block', (require, exports, module) =
 				style: {
 					flex: 1,
 					borderTopWidth: 1,
-					borderTopColor: '#edeef0',
+					borderTopColor: AppTheme.colors.base7,
 					marginBottom: 14,
 					marginTop: 8,
 				},
@@ -122,7 +123,7 @@ jn.define('crm/crm-mode/wizard/layouts/mode/block', (require, exports, module) =
 						position: 'absolute',
 						top: 0,
 						right: 0,
-						backgroundColor: '#ffffff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						zIndex: 10,
 					},
 					svg: {
@@ -133,7 +134,7 @@ jn.define('crm/crm-mode/wizard/layouts/mode/block', (require, exports, module) =
 					{
 						style: {
 							borderWidth: 1,
-							borderColor: active ? '#2fc6f6' : '#dfe0e3',
+							borderColor: active ? AppTheme.colors.accentBrandBlue : AppTheme.colors.base6,
 							borderRadius: 12,
 							paddingTop: 14,
 							paddingBottom: 16,
@@ -158,7 +159,9 @@ jn.define('crm/crm-mode/wizard/layouts/mode/block', (require, exports, module) =
 								height: 52,
 								alignSelf: 'center',
 							},
-							uri: `${EXTENSION_PATH}/${mode.toLowerCase()}${active ? '-active' : ''}.png`,
+							svg: {
+								uri: makeImagesPath(mode.toLowerCase(), active),
+							},
 						}),
 						Text(
 							{
@@ -166,7 +169,7 @@ jn.define('crm/crm-mode/wizard/layouts/mode/block', (require, exports, module) =
 								style: {
 									marginLeft: 14,
 									fontSize: 18,
-									color: active ? '#333333' : '#828b95',
+									color: active ? AppTheme.colors.base1 : AppTheme.colors.base3,
 									alignSelf: 'center',
 								},
 							},
@@ -178,14 +181,13 @@ jn.define('crm/crm-mode/wizard/layouts/mode/block', (require, exports, module) =
 						{
 							text: Loc.getMessage(`MCRM_CRM_MODE_LAYOUTS_MODE_${mode}_DESCRIPTION`),
 							style: {
-								color: '#828b95',
+								color: AppTheme.colors.base3,
 								marginTop: 10,
 							},
 						},
 					),
 				),
-			)
-			;
+			);
 		}
 	}
 

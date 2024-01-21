@@ -37,6 +37,7 @@
 				'tasks_total': 'tasks_total',
 				'crm_all_no_orders': 'crm_all_no_orders',
 				'crm_activity_current_calltracker': 'crm_activity_current_calltracker',
+				'calendar': 'calendar',
 			};
 
 			this.userCounterMapTabName = {
@@ -46,6 +47,7 @@
 				'tasks_total': 'tasks_total',
 				'crm_all_no_orders': 'crm_all_no_orders',
 				'crm_activity_current_calltracker': 'crm_activity_current_calltracker',
+				'calendar': 'calendar',
 			};
 
 			this.sharedStorage = Application.sharedStorage();
@@ -318,7 +320,8 @@
 			if (Application.getApiVersion() >= 41)
 			{
 				this.counters['messages'] = this.counters['chats'] + this.counters['notifications'] + this.counters['openlines'];
-				this.counters['stream'] = this.counters['livefeed'] + (this.counters['bp_tasks'] ? this.counters['bp_tasks'] : 0);
+				const bpCounter = Application.getApiVersion() < 52 && this.counters['bp_tasks'] > 0 ? this.counters['bp_tasks'] : 0;
+				this.counters['stream'] = this.counters['livefeed'] + bpCounter;
 			}
 			else
 			{

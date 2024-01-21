@@ -2,15 +2,18 @@
 
 namespace Bitrix\SalesCenter\Integration;
 
-use Bitrix\Crm\Activity\Provider\Sms;
 use Bitrix\Crm\Activity\Provider\BaseMessage;
 use Bitrix\Crm\AddressTable;
 use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Order\BindingsMaker\ActivityBindingsMaker;
+use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Restriction\OrderRestriction;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Crm\Automation;
 use Bitrix\Crm\Order;
@@ -24,7 +27,6 @@ use Bitrix\Sale\Payment;
 use Bitrix\Salescenter\Analytics;
 use Bitrix\Main\PhoneNumber\Parser;
 use Bitrix\Crm;
-use Bitrix\Crm\Activity;
 use Bitrix\Crm\ClientInfo;
 use Bitrix\Crm\Workflow\PaymentWorkflow;
 use Bitrix\Crm\Workflow\PaymentStage;
@@ -746,6 +748,7 @@ class CrmManager extends Base
 							'PAYMENT' => $payment,
 							'SHIPMENT' => $shipment,
 						],
+						'CREATE_VIEWED_TIMELINE_ITEM' => true,
 						'BINDINGS' => ActivityBindingsMaker::makeByPayment(
 							$payment,
 							[
@@ -865,6 +868,47 @@ class CrmManager extends Base
 		return $result->isSuccess();
 	}
 
+	public function sendApplicationLinkBySms(string $phone, string $senderId, int $responsibleId, ItemIdentifier $entity): bool
+	{
+		$messageBody = Loc::getMessage(
+			'SALESCENTER_CRMMANAGER_TERMINAL_PAYMENT_APP_LINK_TEMPLATE',
+			[
+				'#MANAGER_NAME#' => Main\Engine\CurrentUser::get()->getFormattedName(),
+				'#APP_URL#' => MobileManager::MOBILE_APP_LINK,
+			],
+		);
+
+		$senders = [
+			Crm\Integration\SmsManager::getSenderCode() => [
+				'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_SALESCENTER_PAYMENT_SENT,
+				'MESSAGE_BODY' => $messageBody,
+				'SENDER_ID' => $senderId,
+			],
+		];
+
+		$result = Crm\MessageSender\MessageSender::send(
+			$senders,
+			[
+				'COMMON_OPTIONS' => [
+					'PHONE_NUMBER' => $phone,
+					'USER_ID' => $responsibleId,
+					'ADDITIONAL_FIELDS' => [
+						'BINDINGS' => [
+							[
+								'OWNER_TYPE_ID' => $entity->getEntityTypeId(),
+								'OWNER_ID' => $entity->getEntityId(),
+							],
+						],
+						'ACTIVITY_AUTHOR_ID' => Main\Engine\CurrentUser::get()->getId(),
+						'ACTIVITY_DESCRIPTION' => $messageBody,
+					],
+				],
+			]
+		);
+
+		return $result->isSuccess();
+	}
+
 	/**
 	 * @param string $destination
 	 * @param Main\Event $event
@@ -879,9 +923,11 @@ class CrmManager extends Base
 			return;
 		}
 
+		$createViewedTimelineItem = $additionalFields['CREATE_VIEWED_TIMELINE_ITEM'] ?? false;
+
 		/** @var Order\Payment $payment */
 		$payment = $additionalFields['ENTITIES']['PAYMENT'] ?? null;
-		if ($payment)
+		if ($createViewedTimelineItem && $payment)
 		{
 			$shipment = $additionalFields['ENTITIES']['SHIPMENT'] ?? null;
 
@@ -1074,7 +1120,7 @@ class CrmManager extends Base
 					'ORDER_ID' => $payment->getOrderId(),
 					'OWNER_ID' => $binding->getOwnerId(),
 					'OWNER_TYPE_ID' => $binding->getOwnerTypeId(),
-					'VIEWED' => 'N',
+					Timeline\OrderPaymentController::VIEWED_WAY_CUSTOMER_PAYMENT_PAY => 'N',
 					'DESTINATION' => $options['DESTINATION'] ?? '',
 					'PAYMENT_ID' => $options['PAYMENT_ID'] ?? '',
 					'SHIPMENT_ID' => $options['SHIPMENT_ID'] ?? '',
@@ -1346,7 +1392,7 @@ class CrmManager extends Base
 			return '';
 		}
 
-		return $this->getContactPhoneFormat($contact['CONTACT_ID']);
+		return self::getContactPhoneFormat($contact['CONTACT_ID']);
 	}
 
 	public function getItemContactFields(Crm\Item $item)
@@ -1373,7 +1419,7 @@ class CrmManager extends Base
 			return '';
 		}
 
-		return $this->getContactPhoneFormat($contactId);
+		return self::getContactPhoneFormat($contactId);
 	}
 	/**
 	 * @param Crm\Item $item
@@ -1392,7 +1438,11 @@ class CrmManager extends Base
 		}
 	}
 
-	private function getContactPhoneFormat(int $contactId)
+	/**
+	 * Does not actually format the phone; the function's name is kept for backwards compatibility
+	 * @see CrmManager::getFormattedContactPhone() if you need a formatted phone
+	 */
+	public static function getContactPhoneFormat(int $contactId): string
 	{
 		$phones = \CCrmFieldMulti::GetEntityFields(
 			'CONTACT',
@@ -1407,7 +1457,14 @@ class CrmManager extends Base
 			return '';
 		}
 
-		return $phone['VALUE'];
+		return isset($phone['VALUE']) ? (string)$phone['VALUE'] : '';
+	}
+
+	public static function getFormattedContactPhone(int $contactId): string
+	{
+		$phone = self::getContactPhoneFormat($contactId);
+
+		return empty($phone) ? '' : Parser::getInstance()->parse($phone)->format();
 	}
 
 	/**
@@ -1477,16 +1534,6 @@ class CrmManager extends Base
 		return Crm\Color\PhaseColorScheme::fillDefaultColors($result);
 	}
 
-	public function getTerminalPlatformId(): ?int
-	{
-		return
-			Crm\Order\TradingPlatform\Terminal::getInstanceByCode(
-				Crm\Order\TradingPlatform\Terminal::TRADING_PLATFORM_CODE
-			)
-				->getIdIfInstalled()
-		;
-	}
-
 	public function isTerminalAvailable(): bool
 	{
 		return Crm\Terminal\AvailabilityManager::getInstance()->isAvailable();
@@ -1494,7 +1541,10 @@ class CrmManager extends Base
 
 	public function isPaymentFromTerminal(\Bitrix\Sale\Payment $payment): bool
 	{
-		return $this->isEnabled() && Crm\Terminal\PaymentHelper::isTerminalPayment($payment);
+		return (
+			$this->isEnabled()
+			&& Container::getInstance()->getTerminalPaymentService()->isTerminalPayment($payment->getId())
+		);
 	}
 
 	/**
@@ -1530,5 +1580,45 @@ class CrmManager extends Base
 		}
 
 		return $result;
+	}
+
+	public static function getOrderIdByEntity(Item $entity): ?int
+	{
+		$relation = Container::getInstance()->getRelationManager()
+			->getRelation(
+				new RelationIdentifier(
+					$entity->getEntityTypeId(),
+					\CCrmOwnerType::Order
+				)
+			)
+		;
+		if (!$relation)
+		{
+			return null;
+		}
+
+		$result = null;
+
+		$orderIdentifiers = $relation->getChildElements(
+			new ItemIdentifier(
+				$entity->getEntityTypeId(),
+				$entity->getId()
+			)
+		);
+		foreach ($orderIdentifiers as $orderIdentifier)
+		{
+			$result = $orderIdentifier->getEntityId();
+		}
+
+		return $result;
+	}
+
+	public function getTerminalPaymentRuntimeReferenceField(): ?Main\Entity\ReferenceField
+	{
+		return
+			$this->isEnabled
+				? Container::getInstance()->getTerminalPaymentService()->getRuntimeReferenceField()
+				: null
+		;
 	}
 }

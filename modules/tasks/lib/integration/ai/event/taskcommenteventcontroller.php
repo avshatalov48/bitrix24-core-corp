@@ -10,6 +10,7 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Integration\AI\Event\Message\Message;
 use Bitrix\Tasks\Integration\AI\Event\Message\MessageCollection;
+use Bitrix\Tasks\Integration\AI\User\Author;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\TaskObject;
 use CTextParser;
@@ -32,10 +33,16 @@ class TaskCommentEventController implements EventControllerInterface
 		$this->init();
 	}
 
-	public function getMainMessage(): Message
+	public function getOriginalMessage(): Message
 	{
 		$description = $this->task->getDescription();
-		return new Message($this->parser::clearAllTags($description), true);
+		$author = new Author($this->task->getId());
+
+		return new Message(
+			$this->parser::clearAllTags($description),
+			true,
+			$author->toMeta(),
+		);
 	}
 
 	/**

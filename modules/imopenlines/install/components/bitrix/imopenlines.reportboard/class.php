@@ -54,6 +54,8 @@ class CImOpenLinesReportBoardComponent extends \CBitrixComponent
 	 */
 	public function executeComponent()
 	{
+		$this->arResult["META_RESTRICTION_LABEL"] = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion() === 'ru';
+
 		$this->includeComponentLang('class.php');
 		if(!Loader::includeModule('report'))
 		{

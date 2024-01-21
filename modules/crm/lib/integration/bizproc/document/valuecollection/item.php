@@ -3,6 +3,8 @@
 namespace Bitrix\Crm\Integration\BizProc\Document\ValueCollection;
 
 use Bitrix\Crm;
+use Bitrix\Main\Application;
+use Bitrix\Main\Type\DateTime;
 
 class Item extends Base
 {
@@ -76,6 +78,21 @@ class Item extends Base
 			{
 				$this->document['CONTACTS'][] = $contact->getId();
 			}
+		}
+	}
+
+	protected function loadTimeCreateValues(): void
+	{
+		$this->loadEntityValues();
+
+		$culture = Application::getInstance()->getContext()->getCulture();
+
+		$dateCreate = $this->document['CREATED_TIME'];
+		$isCorrectDate = isset($dateCreate) && is_string($dateCreate) && DateTime::isCorrect($dateCreate);
+		if ($isCorrectDate && $culture)
+		{
+			$dateCreateObject = new DateTime($dateCreate);
+			$this->document['TIME_CREATE'] = $dateCreateObject->format($culture->getShortTimeFormat());
 		}
 	}
 }

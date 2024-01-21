@@ -96,6 +96,7 @@ $isByLicense = Loader::includeModule('bitrix24') && \CBitrix24::getLicensePrefix
 </div>
 
 <script>
+	BX.CrmStart.OnecAppPaths = <?=CUtil::PhpToJSObject($arResult['PATH_TO_APPS'])?>;
     window.ONEC_APP_INACTIVE = <?=$arResult['APP_INACTIVE']?'true':'false'?>;
     window.ONEC_APP_SID = '<?=CUtil::JSEscape($sid)?>';
     BXOneCStart("backoffice");

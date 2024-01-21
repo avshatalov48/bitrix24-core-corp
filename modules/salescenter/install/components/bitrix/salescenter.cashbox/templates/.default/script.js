@@ -341,63 +341,30 @@
 
 		event.action = false;
 
-		if(this.popup)
+		if (this.isPopupShown)
 		{
-			this.popup.destroy();
-
+			return false;
 		}
 
-		this.popup = new BX.PopupWindow(
-			"salescenter_slider_close_confirmation",
-			null,
-			{
-				autoHide: false,
-				draggable: false,
-				closeByEsc: false,
-				offsetLeft: 0,
-				offsetTop: 0,
-				zIndex: event.slider.zIndex + 100,
-				bindOptions: { forceBindPosition: true },
-				titleBar: BX.message('SCP_POPUP_TITLE'),
-				content: BX.message('SCP_POPUP_CONTENT'),
-				buttons: [
-					new BX.PopupWindowButton(
-						{
-							text : BX.message('SCP_POPUP_BUTTON_CLOSE'),
-							className : "ui-btn ui-btn-success",
-							events: { click: BX.delegate(this.onCloseConfirmButtonClick.bind(this, 'close')) }
-						}
-					),
-					new BX.PopupWindowButtonLink(
-						{
-							text : BX.message('SCP_POPUP_BUTTON_CANCEL'),
-							className : "ui-btn ui-btn-link",
-							events: { click: BX.delegate(this.onCloseConfirmButtonClick.bind(this, 'cancel')) }
-						}
-					)
-				],
-				events: {
-					onPopupClose: function()
-					{
-						this.destroy();
-					}
-				}
-			}
+		BX.UI.Dialogs.MessageBox.confirm(
+			BX.Loc.getMessage('SCP_POPUP_CONTENT_MSGVER_1'),
+			(messageBox) => {
+				this.isPopupShown = false;
+				this.isClose = true;
+
+				BX.SidePanel.Instance.getTopSlider().close();
+				messageBox.close();
+			},
+			BX.Loc.getMessage('SCP_POPUP_BUTTON_CLOSE_MSGVER_1'),
+			(messageBox) => {
+				this.isPopupShown = false;
+				messageBox.close();
+			},
+			BX.Loc.getMessage('SCP_POPUP_BUTTON_STAY'),
 		);
-		this.popup.show();
+		this.isPopupShown = true;
 
 		return false;
-	};
-
-	BX.Salescenter.Cashbox.onCloseConfirmButtonClick = function(button)
-	{
-		this.popup.close();
-
-		if(button === "close")
-		{
-			this.isClose = true;
-			BX.SidePanel.Instance.getTopSlider().close();
-		}
 	};
 
 	BX.Salescenter.Cashbox.getAllFormData = function()

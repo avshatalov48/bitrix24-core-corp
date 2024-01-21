@@ -110,7 +110,11 @@ $arResult['STEXPORT_TOTAL_ITEMS'] = isset($arParams['STEXPORT_TOTAL_ITEMS']) ?
 
 $fieldRestrictionManager = new FieldRestrictionManager(
 	FieldRestrictionManager::MODE_GRID,
-	[FieldRestrictionManagerTypes::ACTIVITY]
+	[
+		FieldRestrictionManagerTypes::ACTIVITY,
+		FieldRestrictionManagerTypes::OBSERVERS,
+	],
+	\CCrmOwnerType::Contact,
 );
 
 $CCrmContact = new CCrmContact();
@@ -247,24 +251,7 @@ $arResult['NAVIGATION_CONTEXT_ID'] = isset($arParams['NAVIGATION_CONTEXT_ID']) ?
 $arResult['PRESERVE_HISTORY'] = isset($arParams['PRESERVE_HISTORY']) ? $arParams['PRESERVE_HISTORY'] : false;
 $arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
 $arResult['CRM_CUSTOM_PAGE_TITLE'] = $arParams['CRM_CUSTOM_PAGE_TITLE'] ?? null;
-
-if(LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
-{
-	$arResult['TIME_FORMAT'] = array(
-		'tommorow' => 'tommorow',
-		's' => 'sago',
-		'i' => 'iago',
-		'H3' => 'Hago',
-		'today' => 'today',
-		'yesterday' => 'yesterday',
-		//'d7' => 'dago',
-		'-' => Main\Type\DateTime::convertFormatToPhp(FORMAT_DATE)
-	);
-}
-else
-{
-	$arResult['TIME_FORMAT'] = preg_replace('/:s$/', '', Main\Type\DateTime::convertFormatToPhp(FORMAT_DATETIME));
-}
+$arResult['TIME_FORMAT'] = CCrmDateTimeHelper::getDefaultDateTimeFormat();
 
 CUtil::InitJSCore(array('ajax', 'tooltip'));
 
@@ -511,6 +498,11 @@ if (!$bInternal)
 		$effectiveFilterFieldIDs[] = 'ACTIVITY_RESPONSIBLE_IDS';
 	}
 
+	if(!in_array('ACTIVITY_FASTSEARCH_CREATED', $effectiveFilterFieldIDs, true))
+	{
+		$effectiveFilterFieldIDs[] = 'ACTIVITY_FASTSEARCH_CREATED';
+	}
+
 	if(!in_array('WEBFORM_ID', $effectiveFilterFieldIDs, true))
 	{
 		$effectiveFilterFieldIDs[] = 'WEBFORM_ID';
@@ -574,7 +566,13 @@ $arResult['HEADERS'] = array_merge(
 			'editable' => false,
 		],
 		array('id' => 'TYPE_ID', 'name' => GetMessage('CRM_COLUMN_TYPE'), 'sort' => 'type_id', 'type' => 'list', 'editable' => array('items' => CCrmStatus::GetStatusList('CONTACT_TYPE'))),
-		array('id' => 'ASSIGNED_BY', 'name' => GetMessage('CRM_COLUMN_ASSIGNED_BY'), 'sort' => 'assigned_by', 'default' => true, 'editable' => false, 'class' => 'username')
+		array('id' => 'ASSIGNED_BY', 'name' => GetMessage('CRM_COLUMN_ASSIGNED_BY'), 'sort' => 'assigned_by', 'default' => true, 'editable' => false, 'class' => 'username'),
+		[
+			'id' => Crm\Item::FIELD_NAME_OBSERVERS,
+			'name' => Loc::getMessage('CRM_TYPE_ITEM_FIELD_OBSERVERS'),
+			'sort' => false,
+			'editable' => false,
+		],
 	)
 );
 
@@ -687,14 +685,8 @@ if ($factory && $category)
 
 $CCrmUserType->appendGridHeaders($arResult['HEADERS']);
 
-$arResult['HEADERS_SECTIONS'] = [
-	[
-		'id' => 'CONTACT',
-		'name' => Loc::getMessage('CRM_COLUMN_CONTACT'),
-		'default' => true,
-		'selected' => true,
-	],
-];
+$arResult['HEADERS_SECTIONS'] = \Bitrix\Crm\Filter\HeaderSections::getInstance()
+	->sections($factory);
 
 $arBPData = array();
 if ($isBizProcInstalled)
@@ -728,6 +720,8 @@ if ($isBizProcInstalled)
 		CJSCore::Init('bp_starter');
 	}
 }
+
+$observersDataProvider = new \Bitrix\Crm\Component\EntityList\UserDataProvider\Observers(CCrmOwnerType::Contact);
 
 //region Check and fill fields restriction
 $arResult['RESTRICTED_FIELDS_ENGINE'] = $fieldRestrictionManager->fetchRestrictedFieldsEngine(
@@ -1009,7 +1003,7 @@ $arImmutableFilters = array(
 	'HAS_PHONE', 'HAS_EMAIL', 'RQ',
 	'SEARCH_CONTENT',
 	'FILTER_ID', 'FILTER_APPLIED', 'PRESET_ID',
-	'@CATEGORY_ID',
+	'@CATEGORY_ID', 'OBSERVER_IDS',
 );
 
 $arImmutableFiltersOperations = '!';
@@ -1743,6 +1737,8 @@ else
 	}
 }
 
+$observersDataProvider->prepareSelect($arSelect);
+
 if ($isInExportMode)
 {
 	CCrmComponentHelper::PrepareExportFieldsList(
@@ -2130,28 +2126,34 @@ else
 	}
 	else
 	{
+		$parameters = [
+			'select' => $arSelect,
+			'filter' => $arFilter,
+			'order' => $arSort,
+			'options' => [
+				'FIELD_OPTIONS' => $arOptions['FIELD_OPTIONS'] ?? [],
+				'IS_EXTERNAL_CONTEXT' => $arOptions['IS_EXTERNAL_CONTEXT'] ?? false,
+			],
+		];
+
 		if ($isInGadgetMode && isset($arNavParams['nTopCount']))
 		{
-			$navListOptions = array_merge($arOptions, array('QUERY_OPTIONS' => array('LIMIT' => $arNavParams['nTopCount'])));
+			$parameters['limit'] = $arNavParams['nTopCount'];
+			$parameters['offset'] = null;
+		}
+		elseif ($isInExportMode && !$isStExport)
+		{
+			$parameters['limit'] = null;
+			$parameters['offset'] = null;
 		}
 		else
 		{
-			$navListOptions = ($isInExportMode && !$isStExport)
-				? array()
-				: array_merge(
-					$arOptions,
-					array('QUERY_OPTIONS' => array('LIMIT' => $limit, 'OFFSET' => $pageSize * ($pageNum - 1)))
-				);
+			$parameters['limit'] = $limit;
+			$parameters['offset'] = $pageSize * ($pageNum - 1);
 		}
 
-		$dbResult = CCrmContact::GetListEx(
-			$arSort,
-			$arFilter,
-			false,
-			false,
-			$arSelect,
-			$navListOptions
-		);
+		$listEntity = \Bitrix\Crm\ListEntity\Entity::getInstance(\CCrmOwnerType::ContactName);
+		$dbResult = $listEntity->getItems($parameters);
 
 		$qty = 0;
 		while($arContact = $dbResult->GetNext())
@@ -2217,6 +2219,8 @@ if ($arResult['ENABLE_BIZPROC'] && !empty($arResult['CONTACT']))
 		$allDocumentStates[$documentState['DOCUMENT_ID'][2]][$stateId] = $documentState;
 	}
 }
+
+$observersDataProvider->appendResult($arResult['CONTACT']);
 
 $parentFieldValues = Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
 	\CCrmOwnerType::Contact,
@@ -2385,6 +2389,15 @@ foreach($arResult['CONTACT'] as &$arContact)
 		true,
 		false
 	);
+
+	if (!empty($arContact['OBSERVERS']))
+	{
+		$arContact['~OBSERVERS'] = $arContact['OBSERVERS'];
+		$arContact['OBSERVERS'] = implode(
+			"\n",
+			array_column($arContact['~OBSERVERS'], 'OBSERVER_USER_FORMATTED_NAME')
+		);
+	}
 
 	if ($arResult['ENABLE_TASK'])
 	{

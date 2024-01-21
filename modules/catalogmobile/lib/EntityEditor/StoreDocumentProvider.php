@@ -2,16 +2,21 @@
 
 namespace Bitrix\CatalogMobile\EntityEditor;
 
+use Bitrix\Catalog\Document\StoreDocumentTableManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
+use Bitrix\Mobile\Field\UserFieldEditorAdapter;
 use Bitrix\Mobile\UI\File;
 
 Loader::requireModule('catalog');
 
 class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEditor\StoreDocumentProvider
 {
+	const CATALOG_DOCUMENT_FILE_CONTROLLER = 'catalog-document';
+	protected UserFieldEditorAdapter $userFieldAdapter;
+
 	protected const GUID_PREFIX = 'MOBILE_STORE_DOCUMENT_DETAIL_';
 
 	private const USER_FIELD = 'user';
@@ -30,6 +35,18 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 	private const ENTITY_LIST_POSTFIX = '_ENTITY_LIST';
 	private const FILE_INFO_POSTFIX = '_FILE_INFO';
 
+	public function __construct(array $documentFields, array $config = [])
+	{
+		parent::__construct($documentFields, $config);
+		$this->loadDocument();
+		$this->userFieldAdapter = new UserFieldEditorAdapter(
+			$this->getUfEntityId(),
+			parent::getDocumentFields(),
+			$this->getUfEntityData(),
+		);
+		$this->userFieldAdapter->setFileControllerEntityId(self::CATALOG_DOCUMENT_FILE_CONTROLLER);
+	}
+
 	public function getEntityFieldsForListView(): array
 	{
 		$hiddenFields = [
@@ -37,6 +54,16 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 			'DATE_CREATE' => true,
 			'DOCUMENT_PRODUCTS' => true,
 		];
+
+		$documentType = $this->document['DOC_TYPE'] ?? '';
+		$entityId = StoreDocumentTableManager::getUfEntityIds()[$documentType] ?? null;
+		if ($entityId)
+		{
+			global $USER_FIELD_MANAGER;
+			$typeUF = $USER_FIELD_MANAGER->GetUserFields($entityId);
+			$typeUF = array_column($typeUF, 'FIELD_NAME');
+			$hiddenFields += array_fill_keys($typeUF, true);
+		}
 
 		$entityConfig = $this->getEntityConfig();
 		$fieldNames = $this->flattenConfigToFieldNames($entityConfig);
@@ -84,6 +111,11 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 
 		foreach ($fields as &$field)
 		{
+			if ($field['type'] === 'userField')
+			{
+				$field = $this->userFieldAdapter->getAdaptedUserField($field['name']);
+			}
+
 			if ($field['type'] === 'text')
 			{
 				$field['type'] = self::STRING_FIELD;
@@ -97,12 +129,18 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 				$enableTime = $field['data']['enableTime'] ?? true;
 				$field['type'] = $enableTime ? 'datetime' : 'date';
 			}
-			elseif (in_array($field['type'], ['money', 'moneyPay', 'document_total'], true))
+			elseif (
+				in_array($field['type'], ['money', 'moneyPay', 'document_total'], true)
+				&& !isset($field['data']['fieldInfo']['USER_TYPE_ID'])
+			)
 			{
 				$field['type'] = 'opportunity';
 			}
 
-			$field['multiple'] = $field['data']['multiple'] ?? false;
+			if (!isset($field['multiple']))
+			{
+				$field['multiple'] = $field['data']['multiple'] ?? false;
+			}
 		}
 
 		unset($field);
@@ -178,6 +216,17 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 		unset($field);
 
 		$data['DOC_STATUS'] = $this->getStatuses();
+
+		$ufInfos = $this->getUfEntityFields();
+		foreach ($ufInfos as $userField)
+		{
+			$fieldName = $userField['name'];
+			if (isset($data[$fieldName]))
+			{
+				$data[$fieldName] = $this->userFieldAdapter->getAdaptedUserFieldValue($fieldName);
+			}
+		}
+
 		return $data;
 	}
 
@@ -186,18 +235,12 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 		return [
 			'Y' => [
 				'name' => Loc::getMessage('CATALOG_STORE_DOCUMENT_DETAIL_FIELD_DOC_STATUS_CONDUCTED'),
-				'backgroundColor' => '#e0f5c2',
-				'color' => '#589309',
 			],
 			'N' => [
 				'name' => Loc::getMessage('CATALOG_STORE_DOCUMENT_DETAIL_FIELD_DOC_STATUS_NOT_CONDUCTED'),
-				'backgroundColor' => '#e0e2e4',
-				'color' => '#79818b',
 			],
 			'C' => [
 				'name' => Loc::getMessage('CATALOG_STORE_DOCUMENT_DETAIL_FIELD_DOC_STATUS_CANCELLED'),
-				'backgroundColor' => '#faf4a0',
-				'color' => '#9d7e2b',
 			],
 		];
 	}
@@ -208,7 +251,26 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 
 		foreach ($this->getEntityFields() as $field)
 		{
-			if ($field['type'] === self::FILE_FIELD && empty($this->config['skipFiles']))
+			if (
+				$field['type'] === self::ENTITY_SELECTOR_FIELD
+				&& $field['data']['selectorType'] === self::CONTRACTOR_SELECTOR_TYPE
+			)
+			{
+				$document[$field['name'] . self::ENTITY_LIST_POSTFIX] = [];
+
+				if (!empty($this->document[$field['name']]))
+				{
+					$document[$field['name'] . self::ENTITY_LIST_POSTFIX][] = [
+						'id' => $this->document[$field['name']],
+						'title' => $this->getContractorName(),
+					];
+				}
+			}
+			elseif (
+				$field['type'] === self::FILE_FIELD
+				&& empty($this->config['skipFiles'])
+				&& !isset($field['data']['fieldInfo']['USER_TYPE_ID'])
+			)
 			{
 				$document[$field['name'] . self::FILE_INFO_POSTFIX] = [];
 
@@ -388,12 +450,27 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 					],
 				];
 			}
-			elseif ($field['type'] === self::FILE_FIELD)
+			elseif ($field['type'] === self::ENTITY_SELECTOR_FIELD)
+			{
+				if ($field['data']['selectorType'] === self::CONTRACTOR_SELECTOR_TYPE)
+				{
+					$field['data'] = array_merge($field['data'], [
+						'entityListField' => $field['name'] . self::ENTITY_LIST_POSTFIX,
+						'provider' => [
+							'context' => self::CONTRACTOR_PROVIDER_CONTEXT,
+						],
+					]);
+				}
+			}
+			elseif (
+				$field['type'] === self::FILE_FIELD
+				&& !isset($field['data']['fieldInfo']['USER_TYPE_ID'])
+			)
 			{
 				$field['data'] = array_merge($field['data'], [
 					'fileInfoField' => $field['name'] . self::FILE_INFO_POSTFIX,
 					'controller' => [
-						'entityId' => 'catalog-document',
+						'entityId' => self::CATALOG_DOCUMENT_FILE_CONTROLLER,
 					],
 				]);
 			}

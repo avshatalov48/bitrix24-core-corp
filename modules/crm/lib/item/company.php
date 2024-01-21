@@ -31,9 +31,4 @@ class Company extends Item
 
 		return Loc::getMessage('CRM_COMPANY_DEFAULT_TITLE_TEMPLATE', ['%NUMBER%' => $number]);
 	}
-
-	protected function getExternalizableFieldNames(): array
-	{
-		return array_diff(parent::getExternalizableFieldNames(), [static::FIELD_NAME_PRODUCTS]);
-	}
 }

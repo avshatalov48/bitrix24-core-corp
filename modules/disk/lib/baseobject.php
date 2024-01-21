@@ -5,6 +5,7 @@ namespace Bitrix\Disk;
 use Bitrix\Disk\Document\Online\ObjectEvent;
 use Bitrix\Disk\Internals\Entity\ModelSynchronizer;
 use Bitrix\Disk\Internals\Error\Error;
+use Bitrix\Disk\Internals\ObjectNameService;
 use Bitrix\Disk\Internals\ObjectPathTable;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\SharingTable;
@@ -594,38 +595,43 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 	 * @return bool
 	 * @internal
 	 */
-	public function renameInternal($newName, $generateUniqueName = false)
+	public function renameInternal(string $newName, bool $generateUniqueName = false): bool
 	{
 		$this->errorCollection->clear();
 
-		if(!$newName)
+		if (!$newName)
 		{
-			$this->errorCollection->addOne(new Error('Empty name.'));
+			$this->errorCollection[] = new Error('Empty name.');
+
 			return false;
 		}
 
-		if($this->name === $newName)
+		if ($this->name === $newName)
 		{
 			return true;
 		}
-		if($generateUniqueName)
+
+		$nameService = new ObjectNameService($newName, $this->getParentId(), $this->getType());
+		$nameService->requireOpponentId();
+		$nameService->excludeId($this->getId());
+		if ($generateUniqueName)
 		{
-			$newName = static::generateUniqueName($newName, $this->getParentId());
+			$nameService->requireUniqueName();
 		}
 
-		$opponentId = null;
-		if(!static::isUniqueName($newName, $this->parentId, null, $opponentId))
+		$result = $nameService->prepareName();
+		if (!$result->isSuccess())
 		{
-			if($opponentId != $this->id)
-			{
-				$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_OBJECT_MODEL_ERROR_NON_UNIQUE_NAME'), self::ERROR_NON_UNIQUE_NAME)));
-				return false;
-			}
+			$this->errorCollection->add($result->getErrors());
+
+			return false;
 		}
+
+		$newName = $result->getName();
 
 		$oldName = $this->name;
-		$success = $this->update(array('NAME' => $newName, 'SYNC_UPDATE_TIME' => new DateTime()));
-		if(!$success)
+		$success = $this->update(['NAME' => $newName, 'SYNC_UPDATE_TIME' => new DateTime()]);
+		if (!$success)
 		{
 			return false;
 		}
@@ -634,7 +640,7 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 		Driver::getInstance()->getIndexManager()->changeName($this);
 		Driver::getInstance()->sendChangeStatusToSubscribers($this, 'quick');
 
-		$event = new Event(Driver::INTERNAL_MODULE_ID, "onAfterRenameObject", array($this, $oldName, $newName));
+		$event = new Event(Driver::INTERNAL_MODULE_ID, 'onAfterRenameObject', [$this, $oldName, $newName]);
 		$event->send();
 
 		return true;
@@ -761,18 +767,23 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 			return null;
 		}
 
-		$possibleNewName = $this->name;
-		if($generateUniqueName)
+		$nameService = new ObjectNameService($this->name, $realFolderId, $this->getType());
+		if ($generateUniqueName)
 		{
-			$possibleNewName = static::generateUniqueName($this->name, $realFolderId);
+			$nameService->requireUniqueName();
 		}
-		$needToRename = $possibleNewName != $this->name;
 
-		if(!static::isUniqueName($possibleNewName, $realFolderId))
+		$result = $nameService->prepareName();
+		if (!$result->isSuccess())
 		{
-			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_OBJECT_MODEL_ERROR_NON_UNIQUE_NAME'), self::ERROR_NON_UNIQUE_NAME)));
+			$this->errorCollection->add($result->getErrors());
+
 			return null;
 		}
+
+		$possibleNewName = $result->getName();
+		$needToRename = $possibleNewName != $this->name;
+
 		$this->name = $possibleNewName;
 
 		if($needToRename)
@@ -1063,10 +1074,19 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 			$nameAfterDelete = $this->getNameWithoutTrashCanSuffix();
 		}
 
-		if (!static::isUniqueName($nameAfterDelete, $this->getParentId(), $this->getId()))
+		$nameService = new ObjectNameService($nameAfterDelete, $this->getParentId(), $this->getType());
+		$nameService->requireUniqueName();
+		$nameService->excludeId($this->getId());
+
+		$result = $nameService->prepareName();
+		if (!$result->isSuccess())
 		{
-			$nameAfterDelete = static::generateUniqueName($nameAfterDelete, $this->getParentId());
+			$this->errorCollection->add($result->getErrors());
+
+			return false;
 		}
+
+		$nameAfterDelete = $result->getName();
 
 		$data = [
 			'CODE' => null,
@@ -1142,11 +1162,19 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 	 */
 	public function restoreInternal($restoredBy)
 	{
-		if(!static::isUniqueName($this->getNameWithoutTrashCanSuffix(), $this->parentId, $this->id))
+		$nameService = new ObjectNameService($this->getNameWithoutTrashCanSuffix(), $this->parentId, $this->getType());
+		$nameService->requireUniqueName();
+		$nameService->excludeId($this->id);
+
+		$result = $nameService->prepareName();
+		if (!$result->isSuccess())
 		{
-			$this->name = static::generateUniqueName($this->getNameWithoutTrashCanSuffix(), $this->parentId);
+			$this->errorCollection->add($result->getErrors());
+
+			return false;
 		}
 
+		$this->name = $result->getName();
 		/** @var ObjectTable $tableClassName */
 		$tableClassName = $this->getTableClassName();
 
@@ -1318,157 +1346,28 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 	 * @return bool
 	 * @throws \Bitrix\Main\ArgumentException
 	 */
-	public static function isUniqueName($name, $underObjectId, $excludeId = null, &$opponentId = null)
+	public static function isUniqueName($name, $underObjectId, $excludeId = null, &$opponentId = null): bool
 	{
-		$parameters = array(
-			'select' => array('NAME'),
-			'filter' => array(
-				'PARENT_ID' => $underObjectId,
-				'=NAME' => $name,
-			),
-			'limit' => 1,
+		$nameService = new ObjectNameService($name, $underObjectId);
+		if ($excludeId !== null)
+		{
+			$nameService->excludeId($excludeId);
+		}
+		$shouldReturnOpponentId = \func_num_args() >= 4;
+
+		$isUnique = $nameService->isUniqueName(
+			$excludeId,
+			$shouldReturnOpponentId,
 		);
 
-		if($excludeId !== null)
+		if (($shouldReturnOpponentId === false) || $isUnique->isSuccess())
 		{
-			$parameters['filter']['!ID'] = $excludeId;
+			return $isUnique->isSuccess();
 		}
 
-		if(func_num_args() >= 4)
-		{
-			$parameters['select'][] = 'ID';
-		}
-
-		$opponent = ObjectTable::getList($parameters)->fetch();
-		if(!$opponent)
-		{
-			return true;
-		}
-
-		if(func_num_args() >= 4)
-		{
-			$opponentId = $opponent['ID'];
-		}
+		$opponentId = $isUnique->getData()['opponentId'] ?? null;
 
 		return false;
-	}
-
-	private static function extractSuffixAndMainPart(string $name): array
-	{
-		$mainParts = explode('.', $name);
-		$partsCount = count($mainParts);
-		//name without extension
-		if ($partsCount <= 1)
-		{
-			return [$name, null];
-		}
-
-		$suffix = array_pop($mainParts);
-
-		//name with a few dots like "example.tar.gz"
-		if ($partsCount > 2 && preg_match('/^[a-zA-Z][a-zA-Z0-9]{1,2}$/', $mainParts[$partsCount - 2]))
-		{
-			$suffix = array_pop($mainParts)  . '.' . $suffix;
-		}
-
-		$mainPart = implode('.', $mainParts);
-
-		return [$mainPart, $suffix];
-	}
-
-	/**
-	 * Appends (1), (2), etc. if name is non unique in target dir
-	 * @param string $potentialName Potential name.
-	 * @param int $underObjectId Id of parent object.
-	 * @return string
-	 */
-	protected static function generateUniqueName(string $potentialName, int $underObjectId): string
-	{
-		$count = 0;
-		$newName = $potentialName;
-
-		[$mainPartName, $suffix] = self::extractSuffixAndMainPart($potentialName);
-		while (!static::isUniqueName($newName, $underObjectId))
-		{
-			$count++;
-			[$newName] = static::getNextGeneratedName($mainPartName, $suffix, $underObjectId, $count > 2);
-
-			if ($count > 10)
-			{
-				return static::generateFallbackName($mainPartName, $suffix);
-			}
-		}
-
-		return $newName;
-	}
-
-	private static function generateFallbackName($mainPartName, $suffix)
-	{
-		return implode('.', array_filter([
-			$mainPartName . ' ' . time(),
-			$suffix
-		]));
-	}
-
-	private static function getNextGeneratedName($mainPartName, $suffix, $underObjectId, $withoutLike = false)
-	{
-		$underObjectId = (int)$underObjectId;
-
-		$left = $mainPartName . ' (';
-		$right = ')';
-
-		if ($suffix)
-		{
-			$right = ').'. $suffix;
-		}
-		$lengthR = mb_strlen($right);
-		$lengthL = mb_strlen($left);
-
-		$connection = Application::getConnection();
-		$sqlHelper = $connection->getSqlHelper();
-
-		$filterByLike = "NAME LIKE '" . $sqlHelper->forSql($left) . "%' AND";
-		if ($withoutLike)
-		{
-			$filterByLike = '';
-		}
-
-		$sql = "
-			SELECT NAME FROM b_disk_object 
-			WHERE 
-				PARENT_ID = {$underObjectId} AND 
-				{$filterByLike}
-				LEFT(NAME, {$lengthL}) = '" . $sqlHelper->forSql($left) . "' AND
-				MID(NAME, {$lengthL} + 1, CHAR_LENGTH(NAME) - {$lengthL} - {$lengthR}) regexp '^[1-9][[:digit:]]*$' AND
-				RIGHT(NAME, {$lengthR}) = '" . $sqlHelper->forSql($right) . "'
-			ORDER BY CHAR_LENGTH(NAME) DESC, NAME DESC
-			LIMIT 1;
-		";
-
-		$row = $connection->query($sql)->fetch();
-		if (!$row)
-		{
-			$newName = $mainPartName . " (1)";
-			if ($suffix)
-			{
-				$newName .= "." . $suffix;
-			}
-
-			return [
-				$newName,
-				null,
-				1
-			];
-		}
-
-		$counter = mb_substr($row['NAME'], $lengthL, mb_strlen($row['NAME']) - $lengthL - $lengthR);
-		$counter = (int)$counter + 1;
-
-		return [
-			$left . $counter . $right,
-			$row['NAME'],
-			$counter
-		];
 	}
 
 	protected function updateLinksAttributes(array $attr)

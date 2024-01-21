@@ -2,21 +2,21 @@
  * @module utils/copy
  */
 jn.define('utils/copy', (require, exports, module) => {
-	const { Feature } = require('feature');
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
+	const { Feature } = require('feature');
 
 	const defaultParams = {
 		id: 'copySnackbar',
 		title: Loc.getMessage('MOBILE_COPY_DEFAULT_NOTIFICATION_TITLE'),
-		backgroundColor: '#e6000000',
-		textColor: '#ffffff',
+		backgroundColor: AppTheme.colors.baseBlackFixed,
+		textColor: AppTheme.colors.baseWhiteFixed,
 		showCloseButton: true,
 		hideOnTap: true,
 		autoHide: true,
 	};
 
-	const doNothing = () => {
-	};
+	const doNothing = () => {};
 
 	/**
 	 * Copies the value to the clipboard with a notification

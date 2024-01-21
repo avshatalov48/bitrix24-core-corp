@@ -4,10 +4,13 @@ namespace Bitrix\ImConnector\Connectors;
 use Bitrix\Disk\File;
 use Bitrix\ImOpenLines\Chat;
 use Bitrix\ImOpenLines\Connector;
+use Bitrix\Imopenlines\MessageParameter;
+use Bitrix\Main;
+use Bitrix\Main\Application;
+use Bitrix\Main\Config;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Bitrix\Main\UserTable;
-use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Im;
 use Bitrix\Im\User;
@@ -71,6 +74,7 @@ class Network extends Base
 				'fileLinks' => $message['FILES'],
 				'attach' => $message['ATTACH'],
 				'params' => $message['PARAMS'],
+				'extraData' => $message['EXTRA_DATA'] ?? null
 			];
 
 			if (isset($message['FILES_RAW']) && is_array($message['FILES_RAW']))
@@ -518,7 +522,7 @@ class Network extends Base
 	{
 		$result = new Result();
 
-		if (!Loader::includeModule('im'))
+		if (!Loader::includeModule('im') || !Loader::includeModule('imopenlines'))
 		{
 			$result->addError(new Error(
 				'Failed to load the im module',
@@ -552,7 +556,7 @@ class Network extends Base
 			}
 		}
 
-		$messageParams = ['IMOL_VOTE' => 0];
+		$messageParams = [MessageParameter::IMOL_VOTE_SID => 0];
 
 		if ($result->isSuccess())
 		{
@@ -563,8 +567,8 @@ class Network extends Base
 			}
 
 			if (
-				!isset($messageParams['IMOL_VOTE'])
-				|| $messageParams['IMOL_VOTE'] != $params['SESSION_ID']
+				!isset($messageParams[MessageParameter::IMOL_VOTE_SID])
+				|| $messageParams[MessageParameter::IMOL_VOTE_SID] != $params['SESSION_ID']
 			)
 			{
 				$result->addError(new Error(
@@ -758,12 +762,7 @@ class Network extends Base
 					)
 					{
 						$connection = Application::getConnection();
-						$connection->query(
-							'UPDATE b_user SET PERSONAL_PHOTO = '
-							. (int)$userAvatar
-							. ' WHERE ID = '
-							. (int)$userId
-						);
+						$connection->query('UPDATE b_user SET PERSONAL_PHOTO = ' . (int)$userAvatar . ' WHERE ID = ' . (int)$userId);
 						$updateFields['ID'] = $userId;
 					}
 				}
@@ -806,14 +805,8 @@ class Network extends Base
 				if ($userId && $params['PERSONAL_PHOTO'])
 				{
 					$userAvatar = User::uploadAvatar($params['PERSONAL_PHOTO'], $userId);
-
 					$connection = Application::getConnection();
-					$connection->query(
-						'UPDATE b_user SET PERSONAL_PHOTO = '
-						. (int)$userAvatar
-						. ' WHERE ID = '
-						. (int)$userId
-					);
+					$connection->query('UPDATE b_user SET PERSONAL_PHOTO = ' . (int)$userAvatar . ' WHERE ID = ' . (int)$userId);
 				}
 			}
 		}
@@ -828,7 +821,7 @@ class Network extends Base
 	 */
 	public static function isSearchEnabled(): bool
 	{
-		return \Bitrix\Main\Config\Option::get('imconnector', 'allow_search_network', 'Y') === 'Y';
+		return Config\Option::get('imconnector', 'allow_search_network', 'Y') === 'Y';
 	}
 
 	/**
@@ -837,7 +830,7 @@ class Network extends Base
 	 */
 	public static function setIsSearchEnabled(bool $enabled): void
 	{
-		\Bitrix\Main\Config\Option::set(
+		Config\Option::set(
 			'imconnector',
 			'allow_search_network',
 			$enabled ? 'Y' : 'N'

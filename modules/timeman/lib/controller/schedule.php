@@ -95,7 +95,7 @@ class Schedule extends Controller
 	{
 		$schedulesForEntityCodes = $this->scheduleRepository->findSchedulesByEntityCodes([$entityCode]);
 		$result = [];
-		foreach ((array)$schedulesForEntityCodes[$entityCode] as $schedule)
+		foreach ((array) ($schedulesForEntityCodes[$entityCode] ?? null) as $schedule)
 		{
 			$result[] =
 				array_merge(

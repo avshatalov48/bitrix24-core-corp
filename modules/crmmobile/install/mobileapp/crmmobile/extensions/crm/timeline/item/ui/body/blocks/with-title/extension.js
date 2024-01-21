@@ -2,6 +2,7 @@
  * @module crm/timeline/item/ui/body/blocks/with-title
  */
 jn.define('crm/timeline/item/ui/body/blocks/with-title', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 
 	/**
@@ -9,7 +10,8 @@ jn.define('crm/timeline/item/ui/body/blocks/with-title', (require, exports, modu
 	 */
 	class TimelineItemBodyWithTitleBlock extends TimelineItemBodyBlock
 	{
-		constructor(props, factory) {
+		constructor(props, factory)
+		{
 			super(props, factory);
 			this.fontSize = 13;
 		}
@@ -20,6 +22,7 @@ jn.define('crm/timeline/item/ui/body/blocks/with-title', (require, exports, modu
 				{
 					style: {
 						flexDirection: this.props.inline ? 'row' : 'column',
+						alignItems: itemAlignments.has(this.props.alignItems) ? this.props.alignItems : 'flex-start',
 						flexWrap: this.props.inline ? 'wrap' : 'no-wrap',
 					},
 				},
@@ -43,7 +46,7 @@ jn.define('crm/timeline/item/ui/body/blocks/with-title', (require, exports, modu
 					style: {
 						fontSize: this.fontSize,
 						fontWeight: '400',
-						color: '#828B95',
+						color: AppTheme.colors.base3,
 						marginRight: 4,
 					},
 				}),
@@ -68,6 +71,17 @@ jn.define('crm/timeline/item/ui/body/blocks/with-title', (require, exports, modu
 			);
 		}
 	}
+
+	const itemAlignments = new Set([
+		'auto',
+		'center',
+		'flex-start',
+		'flex-end',
+		'stretch',
+		'baseline',
+		'space-between',
+		'space-around',
+	]);
 
 	module.exports = { TimelineItemBodyWithTitleBlock };
 });

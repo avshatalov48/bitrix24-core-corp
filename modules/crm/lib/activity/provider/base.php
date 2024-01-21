@@ -6,6 +6,9 @@ use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Main;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
+use CCrmActivity;
+use CCrmActivityDirection;
+use CCrmActivityType;
 
 Loc::loadMessages(__FILE__);
 
@@ -618,7 +621,9 @@ class Base
 	public function createActivity(string $typeId, array $fields, array $options = []): Main\Result
 	{
 		$result = new Main\Result();
-		if (!static::isTypeValid($typeId))
+
+		$skipTypeCheck = (isset($options['skipTypeCheck']) && $options['skipTypeCheck']);
+		if (!($skipTypeCheck || static::isTypeValid($typeId)))
 		{
 			return $result->addError(new Main\Error('Invalid typeId: ' . $typeId));
 		}
@@ -694,5 +699,113 @@ class Base
 	public static function setCompletionDeniedError(string $errorMessage): void
 	{
 		self::$completionDeniedError = new Error($errorMessage, ErrorCode::ACCESS_DENIED);
+	}
+
+	public static function isActivitySearchSupported(): bool
+	{
+		return true;
+	}
+
+	public static function makeTypeCode(array $actFields): string
+	{
+		if (static::getId() === 'CRM_BASE')
+		{
+			throw new Main\NotSupportedException('Call from the base class method not eligible');
+		}
+
+		$typeId = $actFields['TYPE_ID'];
+		$direction = (int)$actFields['DIRECTION'];
+		$providerTypeId = $actFields['PROVIDER_TYPE_ID'];
+
+		$typesWithDigitalEncode = [
+			\CCrmActivityType::Meeting,
+			\CCrmActivityType::Call,
+			\CCrmActivityType::Task,
+			\CCrmActivityType::Email
+		];
+
+		if (in_array($typeId, $typesWithDigitalEncode))
+		{
+			return $typeId . ($direction > 0 ? '.' . $direction : '');
+		}
+		else
+		{
+			static $typesCache = [];
+
+			if (isset($typesCache[static::getId()]))
+			{
+				$providerPresets = $typesCache[static::getId()];
+			}
+			else
+			{
+				$providerPresets = static::getTypesFilterPresets();
+				$typesCache[static::getId()] = $providerPresets;
+			}
+
+			if (empty($providerPresets))
+			{
+				return static::getId() . '.*.*';
+			}
+
+			$filtered = array_filter($providerPresets, function ($preset) use ($providerTypeId, $direction) {
+
+				if (!isset($preset['PROVIDER_TYPE_ID']) && !isset($preset['DIRECTION']))
+				{
+					return false;
+				}
+
+				$providerTypeIsdOk = !isset($preset['PROVIDER_TYPE_ID'])
+					|| $preset['PROVIDER_TYPE_ID'] == $providerTypeId;
+
+				$directionIsdOk = !isset($preset['DIRECTION'])
+					|| $preset['DIRECTION'] == $direction;
+
+				return $providerTypeIsdOk && $directionIsdOk;
+			});
+
+			if (empty($filtered))
+			{
+				return static::getId() . '.*.*';
+			}
+
+			$filtered = current($filtered);
+
+			return
+				static::getId() . '.'
+				. ($filtered['PROVIDER_TYPE_ID'] ?? '*') . '.'
+				. ($filtered['DIRECTION'] ?? '*');
+		}
+	}
+
+	public static function makeTypeCodeNameList(): array
+	{
+		$typeListItems = [
+			strval(CCrmActivityType::Meeting) => CCrmActivityType::ResolveDescription(CCrmActivityType::Meeting),
+			strval(CCrmActivityType::Call).'.'.strval(CCrmActivityDirection::Incoming) => GetMessage('CRM_ACTIVITY_INCOMING_CALL'),
+			strval(CCrmActivityType::Call).'.'.strval(CCrmActivityDirection::Outgoing) => GetMessage('CRM_ACTIVITY_OUTGOING_CALL'),
+			strval(CCrmActivityType::Task) => CCrmActivityType::ResolveDescription(CCrmActivityType::Task),
+			strval(CCrmActivityType::Email).'.'.strval(CCrmActivityDirection::Incoming) => GetMessage('CRM_ACTIVITY_INCOMING_EMAIL'),
+			strval(CCrmActivityType::Email).'.'.strval(CCrmActivityDirection::Outgoing) => GetMessage('CRM_ACTIVITY_OUTGOING_EMAIL')
+		];
+
+		$providers = CCrmActivity::GetProviders();
+		foreach ($providers as $provider)
+		{
+			if (!$provider::isActive())
+			{
+				continue;
+			}
+
+			$providerPresets = $provider::getTypesFilterPresets();
+			foreach ($providerPresets as $preset)
+			{
+				$providerTypeId = $preset['PROVIDER_TYPE_ID'] ?? '*';
+				$direction = $preset['DIRECTION'] ?? '*';
+				$key = $provider::getId().'.'.$providerTypeId.'.'.$direction;
+				$typeListItems[$key] = $preset['NAME'];
+			}
+		}
+
+		return $typeListItems;
 	}
 }

@@ -6,6 +6,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
 use Bitrix\Bitrix24\Util;
+use Bitrix\Intranet;
 
 Loc::loadMessages(__FILE__);
 
@@ -117,26 +118,11 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 
 	private function prepareLinkRegisterData(): void
 	{
-		$registerSettings = array();
-		if(Loader::includeModule("socialservices"))
-		{
-			$registerSettings = \Bitrix\Socialservices\Network::getRegisterSettings();
-		}
+		$this->arResult["REGISTER_SETTINGS"] = Intranet\Invitation::getRegisterSettings();
+		$registerUri = Intranet\Invitation::getRegisterUri();
 
-		$this->arResult["REGISTER_SETTINGS"] = $registerSettings;
-
-		$request = \Bitrix\Main\Context::getCurrent()->getRequest();
-		$this->arResult["REGISTER_URL_BASE"] = ($request->isHttps() ? "https://" : "http://").
-			(defined('BX24_HOST_NAME') ? BX24_HOST_NAME : SITE_SERVER_NAME)."/?secret=";
-
-		if(strlen($this->arResult["REGISTER_SETTINGS"]["REGISTER_SECRET"]) > 0)
-		{
-			$this->arResult["REGISTER_URL"] = $this->arResult["REGISTER_URL_BASE"].urlencode($this->arResult["REGISTER_SETTINGS"]["REGISTER_SECRET"]);
-		}
-		else
-		{
-			$this->arResult["REGISTER_URL"] = $this->arResult["REGISTER_URL_BASE"]."yes";
-		}
+		$this->arResult["REGISTER_URL"] = $registerUri?->getUri();
+		$this->arResult["REGISTER_URL_BASE"] = $registerUri?->addParams(['secret' => ''])->getUri();
 	}
 
 	private function prepareUserData(): void

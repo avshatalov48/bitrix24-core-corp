@@ -3,6 +3,7 @@
  */
 jn.define('crm/product-grid/components/product-pricing', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { mergeImmutable } = require('utils/object');
 	const { debounce } = require('utils/function');
 	const {
@@ -11,7 +12,6 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 	} = require('layout/ui/product-grid/components/string-field');
 	const { DiscountPrice } = require('layout/ui/product-grid/components/discount-price');
 	const { notify } = require('layout/ui/product-grid/components/hint');
-	const { ProductRow } = require('crm/product-grid/model');
 	const { Haptics } = require('haptics');
 	const { DiscountType } = require('crm/product-calculator');
 
@@ -308,7 +308,7 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 
 			const style = {
 				fontSize: 12,
-				color: '#a8adb4',
+				color: AppTheme.colors.base4,
 				textAlign: 'right',
 			};
 
@@ -511,7 +511,7 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 				Text({
 					text: String(props.text),
 					style: {
-						color: '#828b95',
+						color: AppTheme.colors.base3,
 						fontSize: 16,
 					},
 				}),
@@ -538,3 +538,4 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 
 	module.exports = { ProductPricing };
 });
+

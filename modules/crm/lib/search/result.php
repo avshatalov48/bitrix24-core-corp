@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Search;
 
+use Bitrix\Main\NotSupportedException;
 
 class Result extends \Bitrix\Main\Result
 {
@@ -11,6 +12,7 @@ class Result extends \Bitrix\Main\Result
 		{
 			return [];
 		}
+		
 		return array_merge(...$this->data); // merge all subarrays of $this->data into single one
 	}
 
@@ -29,6 +31,7 @@ class Result extends \Bitrix\Main\Result
 		{
 			$priority = max(array_keys($this->data));
 		}
+
 		$this->addIdsByPriority($priority, $ids);
 	}
 
@@ -41,15 +44,16 @@ class Result extends \Bitrix\Main\Result
 	public function getPrioritizedIds(): array
 	{
 		ksort($this->data, SORT_NUMERIC);
+
 		return $this->data;
 	}
 
-	public function setData(array $data)
+	public function setData(array $data): void
 	{
-		throw new \Bitrix\Main\NotSupportedException();
+		throw new NotSupportedException();
 	}
 
-	public function getData()
+	public function getData(): array
 	{
 		return $this->getIds();
 	}

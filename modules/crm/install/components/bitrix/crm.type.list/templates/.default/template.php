@@ -25,8 +25,13 @@ if($this->getComponent()->getErrors())
 
 	return;
 }
-/** @see \Bitrix\Crm\Component\Base::addTopPanel() */
-$this->getComponent()->addTopPanel($this);
+if (!$arResult['isExternal'])
+{
+	print \Bitrix\Crm\Tour\ExternalDynamicTypes::getInstance()->build();
+
+	/** @see \Bitrix\Crm\Component\Base::addTopPanel() */
+	$this->getComponent()->addTopPanel($this);
+}
 
 /** @see \Bitrix\Crm\Component\Base::addToolbar() */
 $this->getComponent()->addToolbar($this);
@@ -70,15 +75,19 @@ UI\Toolbar\Facade\Toolbar::addFilter($arResult['filter']);
 			);
 		}
 		?>
+		<?php $welcome = $arResult['welcome']; ?>
 		<div class="crm-type-list-welcome" data-role="crm-type-list-welcome">
 			<div class="crm-type-list-welcome-title">
-				<?= Loc::getMessage('CRM_TYPE_LIST_WELCOME_TITLE')?>
+				<?= htmlspecialcharsbx($welcome['title']) ?>
 			</div>
 			<div class="crm-type-list-welcome-text">
-				<?= Loc::getMessage('CRM_TYPE_LIST_WELCOME_TEXT_MSGVER_1')?>
+				<?= htmlspecialcharsbx($welcome['text']) ?>
 			</div>
-			<div class="crm-type-list-welcome-help" onclick="BX.Crm.Router.Instance.openTypeHelpPage();">
-				<?= Loc::getMessage('CRM_TYPE_LIST_WELCOME_LINK_MSGVER_1')?>
+			<div
+				class="crm-type-list-welcome-help"
+				onclick="BX.Crm.Router.openHelper(null, <?= (int)$welcome['helpdeskCode'] ?>);"
+			>
+				<?= htmlspecialcharsbx($welcome['link']) ?>
 			</div>
 		</div>
 	</div>

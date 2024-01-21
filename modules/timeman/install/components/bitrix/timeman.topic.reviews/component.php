@@ -35,15 +35,18 @@ if ($arParams["FORUM_ID"])
 		{
 			$dbAuthor = CUser::GetByID($ar_res["AUTHOR_ID"]);
 			$arAuthor = $dbAuthor->Fetch();
-			$ar_res["AUTHOR_PHOTO"] =$arAuthor['PERSONAL_PHOTO'] > 0
-				? CIntranetUtils::InitImage($arAuthor['PERSONAL_PHOTO'], 100, 100, BX_RESIZE_IMAGE_EXACT)
-				: array();
-			$ar_res["AUTHOR_URL"] = str_replace(array('#ID#', '#USER_ID#'), $ar_res["AUTHOR_ID"], $user_url);
-			$ar_res["POST_MESSAGE_HTML"] = $parser->convert(
-				(COption::GetOptionString("forum", "FILTER", "Y") == "Y" ? $ar_res["POST_MESSAGE_FILTER"] : $ar_res["POST_MESSAGE"]),
-				$allow,
-				"html");
-			$arResult["COMMENTS"][] = $ar_res;
+			if ($arAuthor)
+			{
+				$ar_res["AUTHOR_PHOTO"] = $arAuthor['PERSONAL_PHOTO'] > 0
+					? CIntranetUtils::InitImage($arAuthor['PERSONAL_PHOTO'], 100, 100, BX_RESIZE_IMAGE_EXACT)
+					: array();
+				$ar_res["AUTHOR_URL"] = str_replace(array('#ID#', '#USER_ID#'), $ar_res["AUTHOR_ID"], $user_url);
+				$ar_res["POST_MESSAGE_HTML"] = $parser->convert(
+					(COption::GetOptionString("forum", "FILTER", "Y") == "Y" ? $ar_res["POST_MESSAGE_FILTER"] : $ar_res["POST_MESSAGE"]),
+					$allow,
+					"html");
+				$arResult["COMMENTS"][] = $ar_res;
+			}
 		}
 	}
 

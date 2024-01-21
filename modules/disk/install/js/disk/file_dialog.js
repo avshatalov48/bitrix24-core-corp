@@ -818,7 +818,7 @@ BX.DiskFileDialog.getItemsHtml = function(name, sortMode)
 							continue;
 						path += arPath[i]+'/';
 						html += '<span class="bx-file-dialog-content-path-seporator bx-file-dialog-icon bx-file-dialog-icon-seporator"></span>';
-						html +=	'<a href="#'+arPath[i]+'" onclick="return BX.DiskFileDialog.openSpecifiedFolder(\''+path+'\', \''+name+'\')" class="bx-file-dialog-content-path-link '+(i == c-1? 'bx-file-dialog-content-path-link-active':'')+'">'+arPath[i]+'</a>';
+						html +=	'<a href="#'+BX.util.htmlspecialchars(arPath[i])+'" onclick="return BX.DiskFileDialog.openSpecifiedFolder(\''+path+'\', \''+name+'\')" class="bx-file-dialog-content-path-link '+(i == c-1? 'bx-file-dialog-content-path-link-active':'')+'">'+BX.util.htmlspecialchars(arPath[i])+'</a>';
 					};
 					html += '</span></span>';
 		html +=	'</div>';

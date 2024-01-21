@@ -119,4 +119,5 @@ $MESS["TMR_PARENT"] = "(наследовать настройки отдела)"
 $MESS["TMR_SUCCESS"] = "Настройки сохранены";
 $MESS["TM_SETTINGS"] = "Настройка";
 $MESS["TM_SETTINGS_REPORT"] = "Настройка отчета";
+$MESS["TMR_REPORT_DATE_FILTER_TITLE"] = "#MONTH# #YEAR#";
 ?>

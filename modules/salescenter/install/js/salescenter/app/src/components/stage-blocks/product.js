@@ -1,31 +1,39 @@
-import {Block} from 'salescenter.component.stage-block';
+import { Block } from 'salescenter.component.stage-block';
 import Product from '../../product';
-import {StageMixin} from './stage-mixin';
+import { StageMixin } from './stage-mixin';
 
 export default {
 	props: {
 		status: {
 			type: String,
-			required: true
+			required: true,
 		},
 		counter: {
 			type: Number,
-			required: true
+			required: true,
 		},
 		title: {
 			type: String,
-			required: true
+			required: true,
 		},
 		hintTitle: {
 			type: String,
-			required: true
+			required: true,
+		},
+		additionalContainerClasses: {
+			type: Object,
+			required: false,
+			default()
+			{
+				return {};
+			},
 		},
 	},
-	mixins:[StageMixin],
+	mixins: [StageMixin],
 	components:
 		{
-			'stage-block-item':	Block,
-			'product':	Product,
+			'stage-block-item': Block,
+			product: Product,
 		},
 	methods:
 		{
@@ -36,7 +44,7 @@ export default {
 			onProductFormModeChange(event)
 			{
 				this.$emit('on-product-form-mode-change');
-			}
+			},
 		},
 	computed:
 		{
@@ -46,17 +54,24 @@ export default {
 					counter: this.counter,
 					checked: this.counterCheckedMixin,
 					showHint: true,
-				}
-			}
+				};
+			},
+			containerClasses()
+			{
+				return {
+					...this.statusClassMixin,
+					...this.additionalContainerClasses,
+				};
+			},
 		},
 	template: `
 		<stage-block-item
 			@on-item-hint.stop.prevent="onItemHint"
 			:config="configForBlock"
-			:class="statusClassMixin"
+			:class="containerClasses"
 		>
-			<template v-slot:block-title-title>{{title}}</template>
-			<template v-slot:block-hint-title>{{hintTitle}}</template>
+			<template v-slot:block-title-title>{{ title }}</template>
+			<template v-slot:block-hint-title>{{ hintTitle }}</template>
 			<template v-slot:block-container>
 				<div :class="containerClassMixin">
 					<div class="salescenter-app-payment-by-sms-item-container-payment">
@@ -67,5 +82,5 @@ export default {
 				</div>
 			</template>
 		</stage-block-item>
-	`
-}
+	`,
+};

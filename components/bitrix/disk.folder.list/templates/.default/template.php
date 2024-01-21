@@ -15,6 +15,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
 use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Integration\BizProcManager;
+use Bitrix\Disk\Integration\Socialnetwork\Context\Context;
 use Bitrix\Disk\Internals\BaseComponent;
 use Bitrix\Disk\Internals\Grid\FolderListOptions;
 use Bitrix\UI\Buttons\JsCode;
@@ -39,6 +40,7 @@ $isInIframe = Main\Context::getCurrent()->getRequest()->get('IFRAME') === 'Y';
 
 CJSCore::Init(array(
 	'ui.design-tokens',
+	'ui.icon-set.actions',
 	'ui.fonts.opensans',
 	'ui.viewer',
 	'disk',
@@ -88,17 +90,19 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 
 include('process.php');
 
-Toolbar::addFilter([
-   'GRID_ID' => $arResult['GRID']['ID'],
-   'FILTER_ID' => $arResult['FILTER']['FILTER_ID'],
-   'FILTER' => $arResult['FILTER']['FILTER'],
-   'FILTER_PRESETS' => $arResult['FILTER']['FILTER_PRESETS'],
-   'ENABLE_LIVE_SEARCH' => $arResult['FILTER']['ENABLE_LIVE_SEARCH'],
-   'ENABLE_LABEL' => $arResult['FILTER']['ENABLE_LABEL'],
-   'RESET_TO_DEFAULT_MODE' => $arResult['FILTER']['RESET_TO_DEFAULT_MODE'],
-]);
-Toolbar::setTitleMinWidth(158);
-
+if ($arResult['CONTEXT'] !== Context::SPACES)
+{
+	Toolbar::addFilter([
+		'GRID_ID' => $arResult['GRID']['ID'],
+		'FILTER_ID' => $arResult['FILTER']['FILTER_ID'],
+		'FILTER' => $arResult['FILTER']['FILTER'],
+		'FILTER_PRESETS' => $arResult['FILTER']['FILTER_PRESETS'],
+		'ENABLE_LIVE_SEARCH' => $arResult['FILTER']['ENABLE_LIVE_SEARCH'],
+		'ENABLE_LABEL' => $arResult['FILTER']['ENABLE_LABEL'],
+		'RESET_TO_DEFAULT_MODE' => $arResult['FILTER']['RESET_TO_DEFAULT_MODE'],
+	]);
+	Toolbar::setTitleMinWidth(158);
+}
 $uri = new Main\Web\Uri(Bitrix\Main\Context::getCurrent()->getRequest()->getRequestUri());
 
 $uriToTileM = (clone $uri);
@@ -174,7 +178,10 @@ $inverseDirection = mb_strtolower($direction) == 'desc'? 'asc' : 'desc';
 $sortLabel = $arResult['GRID']['COLUMN_FOR_SORTING'][$byColumn]['LABEL'];
 $isMixSorting = $arResult['GRID']['SORT_MODE'] === FolderListOptions::SORT_MODE_MIX;
 
-if (!empty($arResult['STORAGE']['FOR_SOCNET_GROUP']))
+if (
+	!empty($arResult['STORAGE']['FOR_SOCNET_GROUP'])
+	&& $arResult['CONTEXT'] !== Context::SPACES
+)
 {
 	$connectBtn = new Button([
 		"color" => Color::LIGHT_BORDER,
@@ -184,7 +191,7 @@ if (!empty($arResult['STORAGE']['FOR_SOCNET_GROUP']))
 			"BX.Disk.FolderListClass_{$component->getComponentId()}"
 		),
 		"text" => Loc::getMessage('DISK_FOLDER_LIST_LABEL_CONNECT_DISK'),
-    ]);
+	]);
 
 	if ($arResult['STORAGE']['CONNECTED_SOCNET_GROUP_OBJECT_ID'])
 	{
@@ -193,10 +200,13 @@ if (!empty($arResult['STORAGE']['FOR_SOCNET_GROUP']))
 		$connectBtn->removeClass(Icon::DISK);
 	}
 
-    Toolbar::addButton($connectBtn);
+	Toolbar::addButton($connectBtn);
 }
 
-if (empty($arResult['IS_TRASH_MODE']))
+if (
+	empty($arResult['IS_TRASH_MODE'])
+	&& $arResult['CONTEXT'] !== Context::SPACES
+)
 {
 	$trashBtn = new Button([
 		"color" => Color::LIGHT_BORDER,
@@ -211,40 +221,48 @@ if (empty($arResult['IS_TRASH_MODE']))
 		$trashBtn->addAttribute("target", "_blank");
 	}
 
-    Toolbar::addButton($trashBtn);
+	Toolbar::addButton($trashBtn);
 }
 
+?>
 
-Toolbar::addButton([
-	"className" => 'js-disk-settings-button',
-	"color" => Color::LIGHT_BORDER,
-	"icon" => Icon::SETTING,
-]);
+<?php if ($arResult['CONTEXT'] === Context::SPACES):?>
 
-if (empty($arResult['IS_TRASH_MODE']))
-{
-	$filterJsAction = $arResult['STORAGE']['BLOCK_ADD_BUTTONS'] ? Bitrix24Manager::filterJsAction('disk_common_storage', '') : '';
-	$addBtn = new Button([
-        "color" => Color::PRIMARY,
-		"className" => $filterJsAction? '' : 'js-disk-add-button',
-		"click" => new JsCode($filterJsAction),
-		"text" => Loc::getMessage('DISK_FOLDER_LIST_TITLE_ADD_COMPLEX'),
-    ]);
-	$addBtn->setDropdown();
+<?php require_once __DIR__ . '/spaces_toolbar.php'; ?>
 
-    Toolbar::addButton($addBtn);
-}
-else
-{
-    Toolbar::addButton([
-        "color" => Color::PRIMARY,
-		"click" => new JsHandler(
-			"BX.Disk.FolderListClass_{$component->getComponentId()}.openConfirmEmptyTrash",
-			"BX.Disk.FolderListClass_{$component->getComponentId()}"
-		),
-		"text" => Loc::getMessage('DISK_FOLDER_LIST_TITLE_EMPTY_TRASH'),
-    ]);
-}
+<?php else: ?>
+
+<?php
+	Toolbar::addButton([
+		"className" => 'js-disk-settings-button',
+		"color" => Color::LIGHT_BORDER,
+		"icon" => Icon::SETTING,
+	]);
+
+	if (empty($arResult['IS_TRASH_MODE']))
+	{
+		$filterJsAction = $arResult['STORAGE']['BLOCK_ADD_BUTTONS'] ? Bitrix24Manager::filterJsAction('disk_common_storage', '') : '';
+		$addBtn = new Button([
+			"color" => Color::PRIMARY,
+			"className" => $filterJsAction? '' : 'js-disk-add-button',
+			"click" => new JsCode($filterJsAction),
+			"text" => Loc::getMessage('DISK_FOLDER_LIST_TITLE_ADD_COMPLEX'),
+		]);
+		$addBtn->setDropdown();
+
+		Toolbar::addButton($addBtn);
+	}
+	else
+	{
+		Toolbar::addButton([
+			"color" => Color::PRIMARY,
+			"click" => new JsHandler(
+				"BX.Disk.FolderListClass_{$component->getComponentId()}.openConfirmEmptyTrash",
+				"BX.Disk.FolderListClass_{$component->getComponentId()}"
+			),
+			"text" => Loc::getMessage('DISK_FOLDER_LIST_TITLE_EMPTY_TRASH'),
+		]);
+	}
 ?>
 
 <? $isBitrix24Template && $this->setViewTarget('below_pagetitle'); ?>
@@ -279,6 +297,8 @@ else
 	</div>
 </div>
 <? $isBitrix24Template && $this->endViewTarget(); ?>
+
+<?php endif; ?>
 
 <? if($arResult['STATUS_BIZPROC'] && $arResult['WORKFLOW_TEMPLATES']) { ?>
 	<div style="display:none;">
@@ -554,38 +574,41 @@ BX(function () {
 	});
 
 	var btnSettings = document.querySelector('.js-disk-settings-button');
-	var buttonSettingsRect = btnSettings.getBoundingClientRect();
-	BX.bind(
-		btnSettings,
-		'click',
-		function(e){
-			BX.PreventDefault(e);
-			var menu = BX.PopupMenu.getMenuById('settings_disk');
-			if(menu && menu.popupWindow)
-			{
-				if(menu.popupWindow.isShown())
+	if (btnSettings)
+	{
+		var buttonSettingsRect = btnSettings.getBoundingClientRect();
+		BX.bind(
+			btnSettings,
+			'click',
+			function(e){
+				BX.PreventDefault(e);
+				var menu = BX.PopupMenu.getMenuById('settings_disk');
+				if(menu && menu.popupWindow)
 				{
-					BX.PopupMenu.destroy('settings_disk');
-					return;
-				}
-			}
-			BX.PopupMenu.show(
-				'settings_disk',
-				btnSettings,
-				<?= CUtil::PhpToJSObject($jsSettingsDropdown) ?>,
-				{
-					autoHide : true,
-					offsetTop: 0,
-					offsetLeft: buttonSettingsRect.width / 2,
-					angle: { offset: 25 },
-					events:
+					if(menu.popupWindow.isShown())
 					{
-						onPopupClose : function(){}
+						BX.PopupMenu.destroy('settings_disk');
+						return;
 					}
 				}
-			);
-		}
-	);
+				BX.PopupMenu.show(
+					'settings_disk',
+					btnSettings,
+					<?= CUtil::PhpToJSObject($jsSettingsDropdown) ?>,
+					{
+						autoHide : true,
+						offsetTop: 0,
+						offsetLeft: buttonSettingsRect.width / 2,
+						angle: { offset: 25 },
+						events:
+							{
+								onPopupClose : function(){}
+							}
+					}
+				);
+			}
+		);
+	}
 
 	var menuItemsLists = [];
 

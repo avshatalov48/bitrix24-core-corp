@@ -3,6 +3,7 @@
  */
 jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
 	const { LottieAnimations } = require('crm/receive-payment/steps/finish/lottie-animations');
 	const { Statuses } = require('crm/receive-payment/steps/finish/statuses');
@@ -42,7 +43,7 @@ jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, mo
 			return View(
 				{
 					style: {
-						backgroundColor: '#ffffff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						borderRadius: 12,
 						alignItems: 'center',
 						paddingBottom: 32,
@@ -86,7 +87,7 @@ jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, mo
 				text,
 				style: {
 					fontSize: 17,
-					color: '#a8adb4',
+					color: AppTheme.colors.base4,
 					marginTop: 15,
 					textAlign: 'center',
 				},
@@ -188,7 +189,7 @@ jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, mo
 				style: {
 					fontSize,
 					marginBottom,
-					color: '#525c69',
+					color: AppTheme.colors.base2,
 					textAlign: 'center',
 				},
 			});
@@ -220,16 +221,16 @@ jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, mo
 			if (this.state.sendingStatus === Statuses.FINISHING || this.state.sendingStatus === Statuses.FINISHED)
 			{
 				additionalStyle = {
-					color: '#ffffff',
-					backgroundColor: '#00a2e8',
+					color: AppTheme.colors.baseWhiteFixed,
+					backgroundColor: AppTheme.colors.accentMainPrimary,
 				};
 			}
 			else if (this.state.sendingStatus === Statuses.ERROR)
 			{
 				additionalStyle = {
-					color: '#333333',
-					backgroundColor: '#ffffff',
-					borderColor: '#dfe0e3',
+					color: AppTheme.colors.base1,
+					backgroundColor: AppTheme.colors.bgContentPrimary,
+					borderColor: AppTheme.colors.bgSeparatorPrimary,
 					borderWidth: 1,
 				};
 			}
@@ -260,3 +261,4 @@ jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, mo
 
 	module.exports = { StatusBlock };
 });
+

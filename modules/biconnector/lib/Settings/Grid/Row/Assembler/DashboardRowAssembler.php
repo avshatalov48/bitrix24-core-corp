@@ -52,5 +52,4 @@ class DashboardRowAssembler extends RowAssembler
 			]),
 		];
 	}
-
 }

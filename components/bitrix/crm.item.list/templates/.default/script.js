@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (exports,main_core,main_core_events,ui_dialogs_messagebox,crm_router) {
+(function (exports,crm_router,crm_settingsButtonExtender,main_core,main_core_events,ui_dialogs_messagebox) {
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -13,15 +13,16 @@
 	var _smartActivityNotificationSupported = /*#__PURE__*/new WeakMap();
 	var _isEmbedded = /*#__PURE__*/new WeakMap();
 	var _pingSettings = /*#__PURE__*/new WeakMap();
+	var _aiAutostartSettings = /*#__PURE__*/new WeakMap();
 	var _getToolbarComponent = /*#__PURE__*/new WeakSet();
-	var _initPushCrmSettings = /*#__PURE__*/new WeakSet();
+	var _initSettingsButtonExtender = /*#__PURE__*/new WeakSet();
 	var ItemListComponent = /*#__PURE__*/function () {
 	  // is the list is embedded in another entity detail tab
 
 	  function ItemListComponent(params) {
 	    var _this = this;
 	    babelHelpers.classCallCheck(this, ItemListComponent);
-	    _classPrivateMethodInitSpec(this, _initPushCrmSettings);
+	    _classPrivateMethodInitSpec(this, _initSettingsButtonExtender);
 	    _classPrivateMethodInitSpec(this, _getToolbarComponent);
 	    _classPrivateFieldInitSpec(this, _isIframe, {
 	      writable: true,
@@ -36,6 +37,10 @@
 	      value: false
 	    });
 	    _classPrivateFieldInitSpec(this, _pingSettings, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _aiAutostartSettings, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -77,6 +82,7 @@
 	      if (main_core.Type.isPlainObject(params.pingSettings)) {
 	        babelHelpers.classPrivateFieldSet(this, _pingSettings, params.pingSettings);
 	      }
+	      babelHelpers.classPrivateFieldSet(this, _aiAutostartSettings, main_core.Type.isString(params.aiAutostartSettings) ? params.aiAutostartSettings : null);
 	    }
 	    this.reloadGridTimeoutId = 0;
 	  }
@@ -84,7 +90,7 @@
 	    key: "init",
 	    value: function init() {
 	      this.bindEvents();
-	      _classPrivateMethodGet(this, _initPushCrmSettings, _initPushCrmSettings2).call(this);
+	      _classPrivateMethodGet(this, _initSettingsButtonExtender, _initSettingsButtonExtender2).call(this);
 	    }
 	  }, {
 	    key: "bindEvents",
@@ -290,8 +296,8 @@
 	  var component = main_core.Reflection.getClass('BX.Crm.ToolbarComponent');
 	  return component ? component.Instance : null;
 	}
-	function _initPushCrmSettings2() {
-	  var _this6 = this;
+	function _initSettingsButtonExtender2() {
+	  var _toolbar$getSettingsB;
 	  if (babelHelpers.classPrivateFieldGet(this, _isIframe) || babelHelpers.classPrivateFieldGet(this, _isEmbedded)) {
 	    return;
 	  }
@@ -300,20 +306,21 @@
 	    console.error('BX.Crm.ToolbarComponent not found');
 	    return;
 	  }
-	  main_core.Runtime.loadExtension('crm.push-crm-settings').then(function (_ref3) {
-	    var _toolbar$getSettingsB;
-	    var PushCrmSettings = _ref3.PushCrmSettings;
-	    /** @see BX.Crm.PushCrmSettings */
-	    new PushCrmSettings({
-	      smartActivityNotificationSupported: babelHelpers.classPrivateFieldGet(_this6, _smartActivityNotificationSupported),
-	      entityTypeId: _this6.entityTypeId,
-	      pingSettings: babelHelpers.classPrivateFieldGet(_this6, _pingSettings),
-	      rootMenu: (_toolbar$getSettingsB = toolbar.getSettingsButton()) === null || _toolbar$getSettingsB === void 0 ? void 0 : _toolbar$getSettingsB.getMenuWindow(),
-	      grid: _this6.grid
+	  var settingsMenu = (_toolbar$getSettingsB = toolbar.getSettingsButton()) === null || _toolbar$getSettingsB === void 0 ? void 0 : _toolbar$getSettingsB.getMenuWindow();
+	  if (settingsMenu) {
+	    /** @see BX.Crm.SettingsButtonExtender */
+	    new crm_settingsButtonExtender.SettingsButtonExtender({
+	      smartActivityNotificationSupported: babelHelpers.classPrivateFieldGet(this, _smartActivityNotificationSupported),
+	      entityTypeId: this.entityTypeId,
+	      categoryId: this.categoryId,
+	      aiAutostartSettings: babelHelpers.classPrivateFieldGet(this, _aiAutostartSettings),
+	      pingSettings: babelHelpers.classPrivateFieldGet(this, _pingSettings),
+	      rootMenu: settingsMenu,
+	      grid: this.grid
 	    });
-	  });
+	  }
 	}
 	namespace.ItemListComponent = ItemListComponent;
 
-}((this.window = this.window || {}),BX,BX.Event,BX.UI.Dialogs,BX.Crm));
+}((this.window = this.window || {}),BX.Crm,BX.Crm,BX,BX.Event,BX.UI.Dialogs));
 //# sourceMappingURL=script.js.map

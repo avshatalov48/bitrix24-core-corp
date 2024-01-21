@@ -3,6 +3,7 @@ import {userOptions, Loc, Dom, Event} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {Guide} from 'ui.tour';
 import 'spotlight';
+import {PopupWindowManager} from "main.popup";
 
 export type OnboardingData = {
 	chain: number;
@@ -49,8 +50,23 @@ export class DealOnboardingManager
 		return this.#getContentContainer().querySelector('.main-buttons');
 	}
 
+	#isHintCanBeShown(): boolean
+	{
+		if (PopupWindowManager && PopupWindowManager.isAnyPopupShown())
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 	processOnboarding(): void
 	{
+		if (!this.#isHintCanBeShown())
+		{
+			return;
+		}
+
 		const chain = this.#onboardingData.chain;
 		const step = this.#onboardingData.chainStep;
 		const successDealGuideIsOver = this.#onboardingData.successDealGuideIsOver;

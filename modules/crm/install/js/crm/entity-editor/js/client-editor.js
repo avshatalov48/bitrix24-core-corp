@@ -442,6 +442,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 			},
 			release: function()
 			{
+				this.closeSearchSummary();
 				this.releaseEntityEditor();
 			},
 			releaseEntityEditor: function()
@@ -983,10 +984,12 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 			{
 				const result =  BX.Runtime.clone(BX.prop.getObject(this._settings, "duplicateControl", {}));
 
-				result["enabled"] = (
-					result.hasOwnProperty("enabled")
-					&& this.getMode() === BX.Crm.EntityEditorClientMode.create
-				);
+				result["enabled"] = result.hasOwnProperty("enabled");
+
+				if (this._entityInfo && this._entityInfo.getId() > 0)
+				{
+					result["isSingleMode"] = true;
+				}
 
 				if (this._editor && this._editor.hasOwnProperty("_ajaxForm") && this._editor["_ajaxForm"])
 				{
@@ -1989,6 +1992,17 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				var extraData = BX.prop.getObject(phones[0], "VALUE_EXTRA", {});
 
 				return BX.prop.getString(extraData, "COUNTRY_CODE", "");
+			},
+			closeSearchSummary: function ()
+			{
+				if (this._clientEntityEditor)
+				{
+					const duplicateManager = this._clientEntityEditor.getDuplicateManager();
+					if (duplicateManager && duplicateManager._controller)
+					{
+						duplicateManager._controller._closeSearchSummary();
+					}
+				}
 			},
 		};
 	if(typeof(BX.Crm.EntityEditorClientSearchBox.messages) === "undefined")

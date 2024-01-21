@@ -128,7 +128,6 @@ class CrmTerminalPaymentList extends \CBitrixComponent implements Main\Engine\Co
 	private function getRows(): array
 	{
 		$listFilter = $this->getListFilter();
-		$listFilter += $this->getTradingPlatformFilter();
 
 		$select = array_merge(
 			[
@@ -141,6 +140,7 @@ class CrmTerminalPaymentList extends \CBitrixComponent implements Main\Engine\Co
 		);
 		$select = array_intersect($select, Crm\Order\Payment::getAllFields());
 		$select = array_merge($select, $this->getUserSelectColumns($this->getUserReferenceColumns()));
+		$select['PAY_SYSTEM_ACTION'] = 'PAY_SYSTEM.ACTION_FILE';
 
 		$paymentIterator = Sale\Payment::getList([
 			'select' => $select,
@@ -149,6 +149,9 @@ class CrmTerminalPaymentList extends \CBitrixComponent implements Main\Engine\Co
 			'limit' => $this->arResult['NAV_OBJECT']->getLimit(),
 			'order' => $this->getSort(),
 			'count_total' => true,
+			'runtime' => [
+				Crm\Service\Container::getInstance()->getTerminalPaymentService()->getRuntimeReferenceField()
+			],
 		]);
 
 		$this->arResult['NAV_OBJECT']->setRecordCount($paymentIterator->getCount());
@@ -189,16 +192,11 @@ class CrmTerminalPaymentList extends \CBitrixComponent implements Main\Engine\Co
 	{
 		return (bool)Sale\Payment::getList([
 			'select' => ['ID'],
-			'filter' => $this->getTradingPlatformFilter(),
+			'runtime' => [
+				Crm\Service\Container::getInstance()->getTerminalPaymentService()->getRuntimeReferenceField()
+			],
 			'limit' => 1,
 		])->fetch();
-	}
-
-	private function getTradingPlatformFilter(): array
-	{
-		return [
-			'=ORDER.TRADING_PLATFORM.TRADING_PLATFORM_ID' => (int)$this->getPlatformId()
-		];
 	}
 
 	private function getUserReferenceColumns(): array
@@ -220,13 +218,6 @@ class CrmTerminalPaymentList extends \CBitrixComponent implements Main\Engine\Co
 		}
 
 		return $result;
-	}
-
-	private function getPlatformId(): ?int
-	{
-		return Crm\Order\TradingPlatform\Terminal::getInstanceByCode(
-			Crm\Order\TradingPlatform\Terminal::TRADING_PLATFORM_CODE
-		)->getIdIfInstalled();
 	}
 
 	private function prepareToolbar(): void
@@ -314,7 +305,11 @@ class CrmTerminalPaymentList extends \CBitrixComponent implements Main\Engine\Co
 		$searchString = $filterOptions->getSearchString();
 		if ($searchString)
 		{
-			$preparedFilter['ACCOUNT_NUMBER'] = '%' . $searchString . '%';
+			$preparedFilter[] = [
+				'LOGIC' => 'OR',
+				['ACCOUNT_NUMBER' => '%' . $searchString . '%'],
+				['*ORDER.SEARCH_CONTENT' => $searchString]
+			];
 		}
 
 		if (isset($preparedFilter['CLIENT']))
@@ -492,19 +487,30 @@ class CrmTerminalPaymentList extends \CBitrixComponent implements Main\Engine\Co
 
 	private function getItemActions(array $item): array
 	{
-		$urlToPaymentDetail = $this->getDetailComponentPath($item['ID']);
-		$sliderOptions = [
-			'allowChangeHistory' => false,
-			'cacheable' => false,
-			'width' => 450,
-		];
-		$sliderOptions = \CUtil::PhpToJSObject($sliderOptions,false, false, true);
-
 		$actions[] = [
 			'TITLE' => Main\Localization\Loc::getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_ACTION_OPEN_TITLE'),
 			'TEXT' => Main\Localization\Loc::getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_ACTION_OPEN_TEXT'),
-			'ONCLICK' => "BX.SidePanel.Instance.open('" . $urlToPaymentDetail . "', " . $sliderOptions . ")",
+			'ONCLICK' => $this->getOpenPaymentJsCallback($item),
 			'DEFAULT' => true,
+		];
+
+		$actions[] = [
+			'TITLE' => Main\Localization\Loc::getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_ACTION_STATUS_TITLE'),
+			'TEXT' => Main\Localization\Loc::getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_ACTION_STATUS_TEXT'),
+			'MENU' => [
+				[
+					'TITLE' => Main\Localization\Loc::getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_STATUS_Y'),
+					'TEXT' => Main\Localization\Loc::getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_STATUS_Y'),
+					'ICONCLASS' => $item['PAID'] === 'Y' ? 'menu-popup-item-accept-sm' : '',
+					'ONCLICK' => $this->getSetStatusJsCallback($item, 'Y'),
+				],
+				[
+					'TITLE' => Main\Localization\Loc::getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_STATUS_N'),
+					'TEXT' => Main\Localization\Loc::getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_STATUS_N'),
+					'ICONCLASS' => $item['PAID'] === 'N' ? 'menu-popup-item-accept-sm' : '',
+					'ONCLICK' => $this->getSetStatusJsCallback($item, 'N'),
+				],
+			],
 		];
 
 		if ($item['PAID'] === 'N')
@@ -512,7 +518,7 @@ class CrmTerminalPaymentList extends \CBitrixComponent implements Main\Engine\Co
 			$actions[] = [
 				'TITLE' => Main\Localization\Loc::getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_ACTION_DELETE_TITLE'),
 				'TEXT' => Main\Localization\Loc::getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_ACTION_DELETE_TEXT'),
-				'ONCLICK' => "BX.Crm.Component.TerminalPaymentList.Instance.deletePayment(" . $item['ID'] . ")",
+				'ONCLICK' => "BX.Crm.Component.TerminalPaymentList.Instance.deletePayment(" . (int)$item['ID'] . ")",
 			];
 		}
 
@@ -523,8 +529,12 @@ class CrmTerminalPaymentList extends \CBitrixComponent implements Main\Engine\Co
 	{
 		$column = $item;
 
-		$urlToPaymentDetail = $this->getDetailComponentPath($item['ID']);
-		$column['ACCOUNT_NUMBER'] = '<a target="_top" href="' . $urlToPaymentDetail . '">' . htmlspecialcharsbx($column['ACCOUNT_NUMBER']) . '</a>';
+		$salescenterOptions = \CUtil::PhpToJSObject([
+			'paymentId' => $item['ID'],
+			'orderId' => $item['ORDER_ID'],
+		]);
+
+		$column['ACCOUNT_NUMBER'] = '<a href="#" onclick="' . $this->getOpenPaymentJsCallback($item) . '">' . htmlspecialcharsbx($column['ACCOUNT_NUMBER']) . '</a>';
 
 		if ($column['PAID'] === 'N')
 		{
@@ -587,7 +597,10 @@ class CrmTerminalPaymentList extends \CBitrixComponent implements Main\Engine\Co
 
 		$column['SUM'] = \CCurrencyLang::CurrencyFormat($column['SUM'], $column['CURRENCY']);
 
-		if ((int)$item['PAY_SYSTEM_ID'] === (int)Sale\PaySystem\Manager::getInnerPaySystemId())
+		if (
+			(int)$item['PAY_SYSTEM_ID'] === (int)Sale\PaySystem\Manager::getInnerPaySystemId()
+			|| $item['PAY_SYSTEM_ACTION'] === 'cash'
+		)
 		{
 			$column['PAY_SYSTEM_NAME'] = '';
 		}
@@ -597,6 +610,21 @@ class CrmTerminalPaymentList extends \CBitrixComponent implements Main\Engine\Co
 		}
 
 		return $column;
+	}
+
+	private function getOpenPaymentJsCallback(array $payment): string
+	{
+		$salescenterOptions = \CUtil::PhpToJSObject([
+			'paymentId' => $payment['ID'],
+			'orderId' => $payment['ORDER_ID'],
+		]);
+
+		return 'BX.Crm.Component.TerminalPaymentList.Instance.openPaymentInSalescenter(' . $salescenterOptions . ')';
+	}
+
+	private function getSetStatusJsCallback(array $payment, string $status): string
+	{
+		return 'BX.Crm.Component.TerminalPaymentList.Instance.setPaidStatus(' . implode(', ', [(int)$payment['ID'], \CUtil::PhpToJSObject($status)]) . ')';
 	}
 
 	private function prepareClient($clientData): string

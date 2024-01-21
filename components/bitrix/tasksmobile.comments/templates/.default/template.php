@@ -128,6 +128,7 @@ $taskId = (int)$arResult['TASK']['ID'];
 					[Status::SUPPOSEDLY_COMPLETED, Status::COMPLETED],
 					true
 				),
+				'isTabsMode' => $arResult['IS_TABS_MODE'],
 			]) ?>);
 		}
 	);

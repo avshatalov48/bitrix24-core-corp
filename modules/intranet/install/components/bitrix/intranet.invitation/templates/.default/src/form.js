@@ -5,13 +5,13 @@ import {Row} from "./row";
 import {Selector} from "./selector";
 import {EventEmitter} from "main.core.events";
 import {ActiveDirectory} from "./active-directory";
+import { Analytics } from './analytics';
 
 export default class Form extends EventEmitter
 {
 	constructor(formParams)
 	{
 		super();
-
 		const params = Type.isPlainObject(formParams) ? formParams : {};
 
 		this.signedParameters = params.signedParameters;
@@ -29,6 +29,8 @@ export default class Form extends EventEmitter
 		this.isCreatorEmailConfirmed = params.isCreatorEmailConfirmed === "Y";
 		this.regenerateUrlBase = params.regenerateUrlBase;
 		this.firstInvitationBlock = params.firstInvitationBlock;
+		this.isSelfRegisterEnabled = params.isSelfRegisterEnabled;
+		this.analyticsLabel = params.analyticsLabel;
 
 		if (Type.isDomNode(this.contentContainer))
 		{
@@ -69,6 +71,8 @@ export default class Form extends EventEmitter
 		this.submit.subscribe('onInputError', (event) => {
 			this.showErrorMessage(event.data.error);
 		});
+
+		this.analytics = new Analytics(this.analyticsLabel, this.isAdmin);
 
 		if (this.isCloud)
 		{

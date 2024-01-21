@@ -1,11 +1,11 @@
 /**
-* @bxjs_lang_path extension.php
-*/
-(()=>{
-
+ * @bxjs_lang_path extension.php
+ */
+(() => {
 	/**
 	 *  @interface ListDelegate
 	 * */
+
 	/**
 	 * @requires
 	 * @name  ListDelegate#searchDelegate
@@ -34,22 +34,28 @@
 			this.handlers = this.defaultHandlers;
 		}
 
+		getList()
+		{
+			return this._list;
+		}
+
 		sections(items)
 		{
-			return this.prepareSections([{title: "", id: this.listId}, {title: "", id: "service"}], items);
+			return this.prepareSections([{ title: '', id: this.listId }, { title: '', id: 'service' }], items);
 		}
 
 		setSearchDelegate(delegate)
 		{
-			this.searcher = new (this.searchClass());
+			this.searcher = new (this.searchClass())();
 			this.searcher.searcherId = this.listId;
 			this.searcher.setDelegate(delegate);
+
 			return this;
 		}
 
 		setHandlers(handlers)
 		{
-			if (typeof handlers === "object")
+			if (typeof handlers === 'object')
 			{
 				this.handlers = Object.assign(this.handlers, handlers);
 			}
@@ -57,36 +63,39 @@
 			return this;
 		}
 
-
-
 		init(enableEventListener = true, drawCachedItems = true)
 		{
-			return new Promise((resolve, reject)=>{
-				if(this._list == null || this.inited === true)
+			return new Promise((resolve, reject) => {
+				if (this._list == null || this.inited === true)
+				{
 					return reject();
+				}
 
 				BX.onViewLoaded(() => this._list.setSections(this.sections()));
-				if(enableEventListener)
+				if (enableEventListener)
+				{
 					this.listenToListEvents();
+				}
 
-				if(this.constructor.method())
+				if (this.constructor.method())
 				{
 					this.inited = true;
 					resolve();
 					this.request = new RequestExecutor(this.constructor.method(), this.params())
-						.setCacheHandler(cachedItems => {
+						.setCacheHandler((cachedItems) => {
 							this.items = cachedItems;
-							if(drawCachedItems)
+							if (drawCachedItems)
+							{
 								this.draw();
+							}
 						})
 						.setHandler(this.answerHandler.bind(this));
 
 					this.request.call(true);
-
 				}
 				else
 				{
-					throw new Error("Rest method should be defined!")
+					throw new Error('Rest method should be defined!');
 				}
 			});
 		}
@@ -96,9 +105,9 @@
 			this._list.setListener(this.callListener.bind(this));
 		}
 
-		callListener(event,data)
+		callListener(event, data)
 		{
-			if(event === "onItemSelected" && data.params && data.params.code === "more")
+			if (event === 'onItemSelected' && data.params && data.params.code === 'more')
 			{
 				this.request.callNext();
 			}
@@ -106,15 +115,19 @@
 			{
 				reflectFunction(this.handlers, event, this).call(this, data);
 			}
-
 		}
 
 		abortAllRequests()
 		{
-			if(this.searcher)
+			if (this.searcher)
+			{
 				this.searcher.searchRequest.abortCurrentRequest();
-			if(this.request)
+			}
+
+			if (this.request)
+			{
 				this.request.abortCurrentRequest();
+			}
 		}
 
 		reload(useCache = false)
@@ -127,7 +140,7 @@
 
 		answerHandler(items, isNextPage, error = null)
 		{
-			if (typeof this._list.stopRefreshing === "function")
+			if (typeof this._list.stopRefreshing === 'function')
 			{
 				this._list.stopRefreshing();
 			}
@@ -135,35 +148,38 @@
 
 			if (error != null)
 			{
-				console.warn("refresh error:", error);
+				console.warn('refresh error:', error);
+
 				return;
 			}
 
-			if(!isNextPage)
-			{
-				this.items = items;
-			}
-			else
+			if (isNextPage)
 			{
 				this.items = this.items.concat(items);
 				this.list.addItems(this.prepareItems(items));
 				if (this.request.hasNext())
 				{
-					this.list.updateItems([{
-						filter: {sectionCode: "service"},
-						element: {
-							title: BX.message("LOAD_MORE") + " (" + this.request.getNextCount() + ")",
-							type: "button",
-							unselectable: false,
-							sectionCode: "service",
-							params: {"code": "more"}
-						}
-					}]);
+					this.list.updateItems([
+						{
+							filter: { sectionCode: 'service' },
+							element: {
+								title: `${BX.message('LOAD_MORE')} (${this.request.getNextCount()})`,
+								type: 'button',
+								unselectable: false,
+								sectionCode: 'service',
+								params: { code: 'more' },
+							},
+						},
+					]);
 				}
 				else
 				{
-					this.list.removeItem({sectionCode: "service"});
+					this.list.removeItem({ sectionCode: 'service' });
 				}
+			}
+			else
+			{
+				this.items = items;
 			}
 
 			this.draw();
@@ -174,16 +190,17 @@
 			let items = this.prepareItems(this.items);
 			if (params.filter)
 			{
-				let ids = [];
-				let filterFunc = item =>
-				{
+				const ids = [];
+				const filterFunc = (item) => {
 					const match = (
-						ids.indexOf(item.params.id) < 0 &&
-						(item.title.toLowerCase().startsWith(params.filter.toLowerCase()))
+						!ids.includes(item.params.id)
+						&& (item.title.toLowerCase().startsWith(params.filter.toLowerCase()))
 					);
 
 					if (match)
+					{
 						ids.push(item.params.id);
+					}
 
 					return match;
 				};
@@ -191,32 +208,27 @@
 				items = items.filter(filterFunc);
 			}
 
-			BX.onViewLoaded(() => this._list.setItems(items,this.sections(items)));
+			BX.onViewLoaded(() => this._list.setItems(items, this.sections(items)));
 		}
 
 		prepareItems(items)
 		{
-			if(this.handlers["prepareItems"])
+			if (this.handlers.prepareItems)
 			{
-				return this.handlers.prepareItems.call(this,items)
+				return this.handlers.prepareItems.call(this, items);
 			}
-			else
-			{
-				return items.map(this.constructor.prepareItemForDrawing);
-			}
+
+			return items.map(this.constructor.prepareItemForDrawing);
 		}
 
 		prepareSections(defaultSections, items)
 		{
-			if(this.handlers["prepareSections"])
+			if (this.handlers.prepareSections)
 			{
-				return this.handlers.prepareSections.call(this, defaultSections, items)
-			}
-			else
-			{
-				return defaultSections;
+				return this.handlers.prepareSections.call(this, defaultSections, items);
 			}
 
+			return defaultSections;
 		}
 
 		get defaultHandlers()
@@ -237,8 +249,6 @@
 			return ListSearcher;
 		}
 
-
-
 		params()
 		{
 			return {};
@@ -246,25 +256,30 @@
 
 		static prepareItemForDrawing(item)
 		{
-			console.warn("This method should be overridden in subclass");
-			return {}
+			console.warn('This method should be overridden in subclass');
+
+			return {};
 		}
 
 		static method()
 		{
-			console.warn("This method should be overridden in subclass");
+			console.warn('This method should be overridden in subclass');
+
 			return null;
 		}
 
 		static id()
 		{
-			return "default"
+			return 'default';
 		}
-
-
 	}
 
-
-	jnexport(BaseList)
-
+	jnexport(BaseList);
 })();
+
+/**
+ * @module list
+ */
+jn.define('list', (require, exports, module) => {
+	module.exports = { BaseList: this.BaseList };
+});

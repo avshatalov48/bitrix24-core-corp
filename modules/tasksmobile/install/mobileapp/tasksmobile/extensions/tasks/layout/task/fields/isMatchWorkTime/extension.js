@@ -15,6 +15,8 @@ jn.define('tasks/layout/task/fields/isMatchWorkTime', (require, exports, module)
 				readOnly: props.readOnly,
 				isMatchWorkTime: props.isMatchWorkTime,
 			};
+
+			this.handleOnChange = this.handleOnChange.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -31,6 +33,13 @@ jn.define('tasks/layout/task/fields/isMatchWorkTime', (require, exports, module)
 				readOnly: newState.readOnly,
 				isMatchWorkTime: newState.isMatchWorkTime,
 			});
+		}
+
+		handleOnChange(value)
+		{
+			this.setState({ isMatchWorkTime: value });
+			this.props.onChange(value);
+			this.props.datesResolver.setIsMatchWorkTime(value);
 		}
 
 		render()
@@ -51,11 +60,7 @@ jn.define('tasks/layout/task/fields/isMatchWorkTime', (require, exports, module)
 						showSwitcher: true,
 					},
 					testId: 'isMatchWorkTime',
-					onChange: (value) => {
-						this.setState({ isMatchWorkTime: value });
-						this.props.onChange(value);
-						this.props.datesResolver.setIsMatchWorkTime(value);
-					},
+					onChange: this.handleOnChange,
 				}),
 			);
 		}

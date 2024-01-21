@@ -1,42 +1,46 @@
 /* eslint-disable no-param-reassign */
+/* eslint-disable es/no-optional-chaining */
 /**
  * @module im/messenger/model/recent
  */
 jn.define('im/messenger/model/recent', (require, exports, module) => {
 	const { Type } = require('type');
-	const { ChatTypes, MessageStatus } = require('im/messenger/const');
-	const { RecentCache } = require('im/messenger/cache');
+	const {
+		ChatTypes,
+		MessageStatus,
+	} = require('im/messenger/const');
 	const { DateHelper } = require('im/messenger/lib/helper');
+	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { searchModel } = require('im/messenger/model/recent/search');
-	const { Logger } = require('im/messenger/lib/logger');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('model--recent');
+	const { Uuid } = require('utils/uuid');
 
 	const elementState = {
 		id: 0,
-		type: ChatTypes.chat,
-		avatar: '',
-		color: '#048bd0',
-		title: '',
-		counter: 0,
-		pinned: false,
-		liked: false,
 		message: {
 			id: 0,
-			text: '',
-			date: new Date(),
 			senderId: 0,
+			date: new Date(),
 			status: MessageStatus.received,
+			subTitleIcon: '',
+			sending: false,
+			text: '',
+			params: {
+				withFile: false,
+				withAttach: false,
+			},
 		},
-		chat_id: 0,
-		chat: {},
-		user: { id: 0 },
-		writing: false,
+		dateMessage: null,
 		unread: false,
-		options: {},
+		pinned: false,
+		liked: false,
 		invitation: {
 			isActive: false,
 			originator: 0,
 			canResend: false,
 		},
+		options: {},
 	};
 
 	const recentModel = {
@@ -110,6 +114,104 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			isEmpty: (state) => () => {
 				return state.collection.length === 0;
 			},
+
+			/**
+			 * @function recentModel/needsBirthdayPlaceholder
+			 * @return {boolean}
+			 */
+			needsBirthdayPlaceholder: (state, getters, rootState, rootGetters) => (dialogId) => {
+				const currentItem = rootGetters['recentModel/getById'](dialogId);
+				if (!currentItem)
+				{
+					return false;
+				}
+
+				const dialog = rootGetters['dialoguesModel/getById'](dialogId);
+				if (!dialog || dialog.type !== ChatTypes.user)
+				{
+					return false;
+				}
+
+				const hasBirthday = rootGetters['usersModel/hasBirthday'](dialogId);
+				if (!hasBirthday)
+				{
+					return false;
+				}
+
+				const hasMessage = Uuid.isV4(currentItem.message.id) || currentItem.message.id > 0;
+				const hasTodayMessage = hasMessage && DateFormatter.isToday(currentItem.message.date);
+
+				return !hasTodayMessage && dialog.counter === 0;
+			},
+
+			/**
+			 * @function recentModel/needsBirthdayIcon
+			 * @return {boolean}
+			 */
+			needsBirthdayIcon: (state, getters, rootState, rootGetters) => (dialogId) => {
+				const currentItem = rootGetters['recentModel/getById'](dialogId);
+				if (!currentItem)
+				{
+					return false;
+				}
+
+				const dialog = rootGetters['dialoguesModel/getById'](dialogId);
+				if (!dialog || dialog.type !== ChatTypes.user)
+				{
+					return false;
+				}
+
+				return rootGetters['usersModel/hasBirthday'](dialogId);
+			},
+
+			/**
+			 * @function recentModel/needsVacationPlaceholder
+			 * @return {boolean}
+			 */
+			needsVacationPlaceholder: (state, getters, rootState, rootGetters) => (dialogId) => {
+				const currentItem = rootGetters['recentModel/getById'](dialogId);
+				if (!currentItem)
+				{
+					return false;
+				}
+
+				const dialog = rootGetters['dialoguesModel/getById'](dialogId);
+				if (!dialog || dialog.type !== ChatTypes.user)
+				{
+					return false;
+				}
+
+				const hasVacation = rootGetters['usersModel/hasVacation'](dialogId);
+				if (!hasVacation)
+				{
+					return false;
+				}
+
+				const hasMessage = Uuid.isV4(currentItem.message.id) || currentItem.message.id > 0;
+				const hasTodayMessage = hasMessage && DateFormatter.isToday(currentItem.message.date);
+
+				return !hasTodayMessage && dialog.counter === 0;
+			},
+
+			/**
+			 * @function recentModel/needsVacationIcon
+			 * @return {boolean}
+			 */
+			needsVacationIcon: (state, getters, rootState, rootGetters) => (dialogId) => {
+				const currentItem = rootGetters['recentModel/getById'](dialogId);
+				if (!currentItem)
+				{
+					return false;
+				}
+
+				const dialog = rootGetters['dialoguesModel/getById'](dialogId);
+				if (!dialog || dialog.type !== ChatTypes.user)
+				{
+					return false;
+				}
+
+				return rootGetters['usersModel/hasVacation'](dialogId);
+			},
 		},
 		actions: {
 			/** @function recentModel/setState */
@@ -117,8 +219,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 				if (Type.isPlainObject(payload) && Type.isArrayFilled(payload.collection))
 				{
 					payload.collection = payload.collection
-						.map((item) => {
-							item.writing = false;
+						.map(/** @param {RecentModelState} item */(item) => {
 							item.liked = false;
 
 							return {
@@ -321,12 +422,11 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 				const updatedItems = [];
 
 				store.state.collection.forEach((recentItem, index) => {
-					if (recentItem.counter === 0 && recentItem.unread === false)
+					if (recentItem.unread === false)
 					{
 						return;
 					}
 
-					recentItem.counter = 0;
 					recentItem.unread = false;
 
 					updatedItems.push({
@@ -375,7 +475,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			 * @param {MutationPayload} payload
 			 */
 			add: (state, payload) => {
-				Logger.warn('RecentModel.addMutation', payload);
+				logger.warn('RecentModel.addMutation', payload);
 				const {
 					recentItemList,
 				} = payload.data;
@@ -407,8 +507,6 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 
 					return true;
 				});
-
-				RecentCache.save(state);
 			},
 
 			/**
@@ -416,7 +514,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			 * @param {MutationPayload} payload
 			 */
 			update: (state, payload) => {
-				Logger.warn('RecentModel.updateMutation', payload);
+				logger.warn('RecentModel.updateMutation', payload);
 				const {
 					recentItemList,
 				} = payload.data;
@@ -424,16 +522,14 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 				recentItemList.forEach((item) => {
 					const currentElement = state.collection[item.index];
 
-					item.message = { ...currentElement.message, ...item.message };
-					item.options = { ...currentElement.options, ...item.options };
+					item.fields.message = { ...currentElement.message, ...item.fields.message };
+					item.fields.options = { ...currentElement.options, ...item.fields.options };
 
 					state.collection[item.index] = {
 						...state.collection[item.index],
 						...item.fields,
 					};
 				});
-
-				RecentCache.save(state);
 			},
 
 			/**
@@ -449,8 +545,6 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 				state.collection.splice(index, 1);
 
 				delete state.index[id];
-
-				RecentCache.save(state);
 			},
 		},
 	};
@@ -470,31 +564,6 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			result.id = fields.id.toString();
 		}
 
-		if (Type.isStringFilled(fields.type))
-		{
-			result.type = fields.type;
-		}
-
-		if (Type.isStringFilled(fields.avatar))
-		{
-			result.avatar = fields.avatar;
-		}
-
-		if (Type.isStringFilled(fields.color))
-		{
-			result.color = fields.color;
-		}
-
-		if (Type.isNumber(fields.title) || Type.isStringFilled(fields.title))
-		{
-			result.title = fields.title.toString();
-		}
-
-		if (Type.isNumber(fields.counter) || Type.isStringFilled(fields.counter))
-		{
-			result.counter = Number.parseInt(fields.counter, 10);
-		}
-
 		if (Type.isBoolean(fields.pinned))
 		{
 			result.pinned = fields.pinned;
@@ -505,62 +574,25 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			result.liked = fields.liked;
 		}
 
-		if (Type.isBoolean(fields.writing))
-		{
-			result.writing = fields.writing;
-		}
-
-		if (Type.isNumber(fields.chat_id) || Type.isStringFilled(fields.chat_id))
-		{
-			result.chat_id = Number.parseInt(fields.chatId, 10);
-		}
-
 		if (Type.isBoolean(fields.unread))
 		{
 			result.unread = fields.unread;
 		}
 
-		if (!Type.isUndefined(fields.date_update))
+		if (Type.isString(fields.dateMessage) || Type.isDate(fields.dateMessage))
 		{
-			result.date_update = DateHelper.cast(fields.date_update, null);
+			result.dateMessage = DateHelper.cast(fields.dateMessage, null);
+		}
+		else if (Type.isUndefined(fields.dateMessage) && Type.isPlainObject(fields.message))
+		{
+			result.dateMessage = DateHelper.cast(fields.message.date);
 		}
 
 		// TODO: move part to file model
 
 		if (Type.isPlainObject(fields.message))
 		{
-			result.message = fields.message;
-			if (result.message.id > 0)
-			{
-				result.message.date = DateHelper.cast(result.message.date);
-			}
-		}
-
-		// TODO: move to user and dialog model
-		if (Type.isPlainObject(fields.chat))
-		{
-			result.chat = fields.chat;
-			result.chat.date_create = DateHelper.cast(result.chat.date_create);
-		}
-
-		if (Type.isPlainObject(fields.user))
-		{
-			result.user = fields.user;
-
-			result.user.last_activity_date = DateHelper.cast(result.user.last_activity_date);
-			if (result.user.mobile_last_date)
-			{
-				result.user.mobile_last_date = DateHelper.cast(result.user.mobile_last_date);
-			}
-			else
-			{
-				result.user.mobile_last_date = new Date(0);
-			}
-
-			if (!result.user.status)
-			{
-				result.user.status = '';
-			}
+			result.message = prepareMessage(fields);
 		}
 
 		if (Type.isPlainObject(fields.invited))
@@ -584,7 +616,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 		else if (Type.isPlainObject(fields.invitation))
 		{
 			result.invitation = fields.invitation;
-			result.options.defaultUserRecord = true;
+			// result.options.defaultUserRecord = true;
 		}
 
 		if (Type.isPlainObject(fields.options))
@@ -611,6 +643,87 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 		}
 
 		return result;
+	}
+
+	function prepareMessage(fields)
+	{
+		const message = {};
+		const params = {};
+
+		if (
+			Type.isNumber(fields.message.id)
+			|| Type.isStringFilled(fields.message.id)
+			|| Uuid.isV4(fields.message.id)
+		)
+		{
+			message.id = fields.message.id;
+		}
+
+		if (Type.isString(fields.message.text))
+		{
+			message.text = fields.message.text;
+		}
+
+		if (
+			Type.isStringFilled(fields.message.attach)
+			|| Type.isBoolean(fields.message.attach)
+			|| Type.isArray(fields.message.attach)
+		)
+		{
+			params.withAttach = fields.message.attach;
+		}
+		else if (
+			Type.isStringFilled(fields.message.params?.withAttach)
+			|| Type.isBoolean(fields.message.params?.withAttach)
+			|| Type.isArray(fields.message.params?.withAttach)
+		)
+		{
+			params.withAttach = fields.message.params.withAttach;
+		}
+
+		if (Type.isBoolean(fields.message.file) || Type.isPlainObject(fields.message.file))
+		{
+			params.withFile = fields.message.file;
+		}
+		else if (Type.isBoolean(fields.message.params?.withFile) || Type.isPlainObject(fields.message.params?.withFile))
+		{
+			params.withFile = fields.message.params.withFile;
+		}
+
+		if (Type.isDate(fields.message.date) || Type.isString(fields.message.date))
+		{
+			message.date = DateHelper.cast(fields.message.date);
+		}
+
+		if (Type.isNumber(fields.message.author_id))
+		{
+			message.senderId = fields.message.author_id;
+		}
+		else if (Type.isNumber(fields.message.authorId))
+		{
+			message.senderId = fields.message.authorId;
+		}
+		else if (Type.isNumber(fields.message.senderId))
+		{
+			message.senderId = fields.message.senderId;
+		}
+
+		if (Type.isStringFilled(fields.message.status))
+		{
+			message.status = fields.message.status;
+		}
+
+		if (Type.isBoolean(fields.message.sending))
+		{
+			message.sending = fields.message.sending;
+		}
+
+		if (Object.keys(params).length > 0)
+		{
+			message.params = params;
+		}
+
+		return message;
 	}
 
 	/**

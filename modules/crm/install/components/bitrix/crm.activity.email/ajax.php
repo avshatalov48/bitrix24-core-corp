@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\Activity\Provider\Email;
 use Bitrix\Main\Config;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Activity\Mail\Message;
@@ -325,23 +326,9 @@ class CrmActivityEmailAjax
 
 		if ($error === false)
 		{
-			\Bitrix\Crm\Activity\Provider\Email::uncompressActivity($activity);
+			Email::uncompressActivity($activity);
 
-			switch ((int) $activity['DESCRIPTION_TYPE'])
-			{
-				case \CCrmContentType::BBCode:
-					$parser = new CTextParser();
-					$activity['DESCRIPTION_HTML'] = $parser->convertText($activity['DESCRIPTION']);
-					break;
-				case \CCrmContentType::Html:
-					$activity['DESCRIPTION_HTML'] = $activity['DESCRIPTION'];
-					break;
-				default:
-					$activity['DESCRIPTION_HTML'] = preg_replace(
-						'/[\r\n]+/'.BX_UTF_PCRE_MODIFIER, '<br>',
-						htmlspecialcharsbx($activity['DESCRIPTION'])
-					);
-			}
+			$activity['DESCRIPTION_HTML'] = Email::getDescriptionHtmlByActivityFields($activity);
 
 			$authorId = Message::getAssociatedUser($activity)['id'];
 
@@ -458,29 +445,7 @@ class CrmActivityEmailAjax
 			}
 
 			$templates = array();
-			$res = \CCrmMailTemplate::getList(
-				array('SORT' => 'ASC', 'ENTITY_TYPE_ID' => 'DESC', 'TITLE'=> 'ASC'),
-				array(
-					'IS_ACTIVE' => 'Y',
-					'__INNER_FILTER_TYPE' => array(
-						'LOGIC' => 'OR',
-						'__INNER_FILTER_TYPE_1' => array('ENTITY_TYPE_ID' => $activity['OWNER_TYPE_ID']),
-						'__INNER_FILTER_TYPE_2' => array('ENTITY_TYPE_ID' => 0),
-					),
-					'__INNER_FILTER_SCOPE' => array(
-						'LOGIC' => 'OR',
-						'__INNER_FILTER_PERSONAL' => array(
-							'OWNER_ID' => $USER->getId(),
-							'SCOPE'    => \CCrmMailTemplateScope::Personal,
-						),
-						'__INNER_FILTER_COMMON' => array(
-							'SCOPE' => \CCrmMailTemplateScope::Common,
-						),
-					),
-				),
-				false, false,
-				array('TITLE', 'SCOPE', 'ENTITY_TYPE_ID', 'BODY_TYPE')
-			);
+			$res = \CCrmMailTemplate::getUserAvailableTemplatesList((int)$activity['OWNER_TYPE_ID']);
 
 			while ($item = $res->fetch())
 			{

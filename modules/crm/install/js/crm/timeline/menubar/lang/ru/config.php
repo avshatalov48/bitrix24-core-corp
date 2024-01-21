@@ -52,6 +52,55 @@ $MESS["CRM_TIMELINE_SMS_UPLOAD_FILE"] = "Выбрать на компьютер�
 $MESS["CRM_TIMELINE_SMS_FIND_FILE"] = "Найти в Битрикс24";
 $MESS["CRM_TIMELINE_SMS_TEMPLATES_NOT_FOUND"] = "Нет подходящих шаблонов";
 
+$MESS["CRM_TIMELINE_GOTOCHAT_SELECTED_CLIENT_TITLE"] = "Пригласите #CLIENT_NAME# общаться в чате";
+$MESS["CRM_TIMELINE_GOTOCHAT_CLIENT_SELECTOR_TITLE"] = "[client]Добавьте клиента[/client] и пригласите его в чат";
+$MESS["CRM_TIMELINE_GOTOCHAT_CLIENT_SELECTOR_DESCRIPTION"] = "Выбирайте удобный для клиента формат общения. Пригласите его в мессенджер, чтобы продолжить диалог. Вся история общения сохранится в CRM.";
+
+$MESS["CRM_TIMELINE_GOTOCHAT_SERVICE_TELEGRAM"] = "Telegram";
+$MESS["CRM_TIMELINE_GOTOCHAT_SERVICE_WHATSAPP"] = "WhatsApp";
+$MESS["CRM_TIMELINE_GOTOCHAT_SERVICE_VK"] = "ВКонтакте";
+$MESS["CRM_TIMELINE_GOTOCHAT_SERVICE_FACEBOOK"] = "Facebook";
+
+$MESS["CRM_TIMELINE_GOTOCHAT_CONNECT_TELEGRAM"] = "Подключить чат Telegram";
+$MESS["CRM_TIMELINE_GOTOCHAT_CONNECT_WHATSAPP"] = "Подключить чат WhatsApp";
+$MESS["CRM_TIMELINE_GOTOCHAT_CONNECT_VK"] = "Подключить чат ВКонтакте";
+$MESS["CRM_TIMELINE_GOTOCHAT_CONNECT_FACEBOOK"] = "Подключить чат Facebook";
+
+$MESS["CRM_TIMELINE_GOTOCHAT_INVITE_TELEGRAM"] = "Пригласить в чат Telegram";
+$MESS["CRM_TIMELINE_GOTOCHAT_INVITE_WHATSAPP"] = "Пригласить в чат WhatsApp";
+$MESS["CRM_TIMELINE_GOTOCHAT_INVITE_VK"] = "Пригласить в чат ВКонтакте";
+$MESS["CRM_TIMELINE_GOTOCHAT_INVITE_FACEBOOK"] = "Пригласить в чат Facebook";
+$MESS["CRM_TIMELINE_GOTOCHAT_SOON_WHATSAPP"] = "WhatsApp скоро";
+$MESS["CRM_TIMELINE_GOTOCHAT_SOON_VK"] = "ВКонтакте скоро";
+$MESS["CRM_TIMELINE_GOTOCHAT_SOON_FACEBOOK"] = "Facebook скоро";
+$MESS["CRM_TIMELINE_GOTOCHAT_SETTINGS"] = "Параметры отправки";
+$MESS["CRM_TIMELINE_GOTOCHAT_SENDER_SELECTOR"] = "Через какой сервис";
+$MESS["CRM_TIMELINE_GOTOCHAT_NUMBER_SELECTOR"] = "С какого номера";
+$MESS["CRM_TIMELINE_GOTOCHAT_CONNECT_OTHER_SENDER_SERVICE"] = "Подключить другой сервис";
+$MESS["CRM_TIMELINE_GOTOCHAT_CLIENTS_TAB_TITLE"] = "Клиенты";
+
+$MESS["CRM_TIMELINE_GOTOCHAT_NO_SELECTED_CLIENT"] = "Не выбран клиент. Добавьте клиента в карточке элемента";
+$MESS["CRM_TIMELINE_GOTOCHAT_CLIENT_HAVE_NO_PHONE"] = "У выбранного клиента не указан номер телефона. Укажите номер в карточке клиента";
+$MESS["CRM_TIMELINE_GOTOCHAT_SEND_ERROR"] = "Не удалось отправить приглашение в чат. Обновите страницу и попробуйте снова";
+$MESS["CRM_TIMELINE_GOTOCHAT_CONFIG_ERROR"] = "Не удалось выполнить действие. Обновите страницу и попробуйте снова";
+$MESS["CRM_TIMELINE_GOTOCHAT_BIND_CLIENT_ERROR"] = "Не удалось привязать клиента. Обновите страницу и попробуйте снова";
+
+$MESS["CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_TEXT"] = "Сохранить изменения в элементе?";
+$MESS["CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_TEXT_LEAD"] = "Сохранить изменения в лиде?";
+$MESS["CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_TEXT_DEAL"] = "Сохранить изменения в сделке?";
+$MESS["CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_TEXT_CONTACT"] = "Сохранить изменения в контакте?";
+$MESS["CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_TEXT_COMPANY"] = "Сохранить изменения в компании?";
+$MESS["CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_TEXT_INVOICE"] = "Сохранить изменения в счёте?";
+$MESS["CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_TEXT_SMART_INVOICE"] = "Сохранить изменения в счёте?";
+$MESS["CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_TEXT_QUOTE"] = "Сохранить изменения в предложении?";
+$MESS["CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_SAVE_AND_CONTINUE"] = "Да, сохранить";
+$MESS["CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_FORCE_CONTINUE"] = "Продолжить без сохранения";
+
+$MESS["CRM_TIMELINE_GOTOCHAT_GUIDE_TITLE"] = "Пригласите клиента в чат";
+$MESS["CRM_TIMELINE_GOTOCHAT_GUIDE_TEXT"] = "Выбирайте удобный для клиента формат общения. Пригласите его в мессенджер, чтобы продолжить диалог. Вся история общения сохранится в этой сделке.";
+$MESS["CRM_TIMELINE_GOTOCHAT_GUIDE_ARTICLE_TITLE"] = "Как это работает";
+$MESS["CRM_TIMELINE_GOTOCHAT_SEND_SUCCESS"] = "Приглашение в чат отправлено";
+
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_INFO_TITLE'] = 'Отправьте клиенту ссылку для записи на встречу';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_INFO_ITEM_1'] = 'Клиент сам выберет удобный слот';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_INFO_ITEM_2'] = 'Встреча появится у вас в делах';

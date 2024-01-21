@@ -1,7 +1,7 @@
 import { ajax, clone, Loc, Type } from 'main.core';
+import Fasten from './animations/fasten';
+import CompatibleItem from './items/compatible-item';
 import Stream from './stream';
-import Fasten from "./animations/fasten";
-import CompatibleItem from "./items/compatible-item";
 
 declare type PullActionProcessorMessage = {
 	action: string,
@@ -17,6 +17,7 @@ declare type PullActionProcessorProps = {
 	historyStream: Stream,
 	ownerTypeId: number,
 	ownerId: number,
+	userId: number,
 };
 
 export default class PullActionProcessor
@@ -32,6 +33,8 @@ export default class PullActionProcessor
 
 	#ownerTypeId: number;
 	#ownerId: number;
+
+	#userId: number;
 
 	constructor(params: PullActionProcessorProps)
 	{
@@ -54,6 +57,7 @@ export default class PullActionProcessor
 		this.#historyStream = params.historyStream;
 		this.#ownerTypeId = params.ownerTypeId;
 		this.#ownerId = params.ownerId;
+		this.#userId = params.userId;
 	}
 
 	processAction(actionParams: PullActionProcessorMessage): void
@@ -78,11 +82,25 @@ export default class PullActionProcessor
 			return false;
 		}
 
+		const canBeReloaded = BX.prop.getBoolean(item, 'canBeReloaded', true);
+		if (!canBeReloaded)
+		{
+			return false;
+		}
+
 		const appLanguage = Loc.getMessage('LANGUAGE_ID').toLowerCase();
 		const languageId = BX.prop.getString(item, 'languageId', appLanguage).toLowerCase();
-		const canBeReloaded = BX.prop.getBoolean(item, 'canBeReloaded', true);
 
-		return (languageId !== appLanguage) && canBeReloaded;
+		// maybe item was built under user with different language
+		if (languageId !== appLanguage)
+		{
+			return true;
+		}
+
+		const targetUsersList = BX.prop.getArray(item, 'targetUsersList', []);
+
+		// maybe item has user-specific information
+		return targetUsersList.length > 0 && !targetUsersList.includes(this.#userId);
 	}
 
 	#addToQueue(actionParams: PullActionProcessorMessage)
@@ -150,7 +168,7 @@ export default class PullActionProcessor
 		})
 	}
 
-	#addItem(id: number, itemData: Object, stream: Stream): Promise
+	async #addItem(id: number, itemData: Object, stream: Stream): Promise
 	{
 		const existedStreamItem = stream.findItemById(id);
 		if (existedStreamItem)
@@ -165,8 +183,9 @@ export default class PullActionProcessor
 
 		const index = stream.calculateItemIndex(streamItem);
 		const anchor = stream.createAnchor(index);
-		stream.addItem(streamItem, index);
-		streamItem.layout({anchor: anchor});
+		await stream.addItem(streamItem, index);
+		streamItem.layout({ anchor });
+
 		return stream.animateItemAdding(streamItem);
 	}
 

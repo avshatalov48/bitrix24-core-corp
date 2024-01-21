@@ -143,6 +143,7 @@ $editorConfig = [
 
 	'items' => [],
 
+	'isInventoryManagementToolEnabled' => $arResult['IS_INVENTORY_MANAGEMENT_TOOL_ENABLED'],
 	'isReserveBlocked' => $arResult['IS_RESERVE_BLOCKED'],
 	'isReserveEqualProductQuantity' => $arResult['IS_RESERVE_EQUAL_PRODUCT_QUANTITY'],
 

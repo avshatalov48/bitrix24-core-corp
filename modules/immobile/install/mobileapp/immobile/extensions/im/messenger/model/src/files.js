@@ -1,17 +1,17 @@
 /* eslint-disable no-param-reassign */
-
 /**
  * @module im/messenger/model/files
  */
 jn.define('im/messenger/model/files', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DateHelper } = require('im/messenger/lib/helper');
-	const { FilesCache } = require('im/messenger/cache');
-	const { Logger } = require('im/messenger/lib/logger');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('model--files');
 
 	const {
 		FileStatus,
 		FileType,
+		FileImageType,
 	} = require('im/messenger/const');
 
 	const elementState = {
@@ -59,6 +59,14 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 			 */
 			getById: (state) => (fileId) => {
 				return state.collection[fileId];
+			},
+
+			/**
+			 * @function filesModel/getByIdList
+			 * @return {FilesModelState[]}
+			 */
+			getByIdList: (state, getters) => (fileIdList) => {
+				return fileIdList.map((fileId) => getters.getById(fileId));
 			},
 
 			/**
@@ -191,7 +199,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 			 * @param {MutationPayload} payload
 			 */
 			add: (state, payload) => {
-				Logger.warn('filesModel: add mutation', payload);
+				logger.log('filesModel: add mutation', payload);
 
 				const {
 					fileList,
@@ -200,8 +208,6 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 				fileList.forEach((file) => {
 					state.collection[file.id] = file;
 				});
-
-				FilesCache.save();
 			},
 
 			/**
@@ -209,7 +215,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 			 * @param {MutationPayload} payload
 			 */
 			update: (state, payload) => {
-				Logger.warn('filesModel: update mutation', payload);
+				logger.log('filesModel: update mutation', payload);
 
 				const {
 					fileList,
@@ -221,8 +227,6 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 						...file,
 					};
 				});
-
-				FilesCache.save();
 			},
 
 			/**
@@ -230,7 +234,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 			 * @param {MutationPayload} payload
 			 */
 			updateWithId: (state, payload) => {
-				Logger.warn('filesModel: updateWithId mutation', payload);
+				logger.log('filesModel: updateWithId mutation', payload);
 
 				const {
 					id,
@@ -244,8 +248,6 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 					...currentFile,
 					...fields,
 				};
-
-				FilesCache.save();
 			},
 
 			/**
@@ -253,13 +255,12 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 			 * @param {MutationPayload} payload
 			 */
 			delete: (state, payload) => {
-				Logger.warn('filesModel: delete mutation', payload);
+				logger.log('filesModel: delete mutation', payload);
 				const {
 					id,
 				} = payload.data;
 
 				delete state.collection[id];
-				FilesCache.save();
 			},
 		},
 	};
@@ -306,7 +307,28 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 
 		if (Type.isString(fields.extension))
 		{
-			result.extension = fields.extension.toString();
+			result.extension = fields.extension.toString().toLowerCase();
+
+			if (result.type === FileType.image
+				&& Application.getPlatform() === 'ios' // ios cant show webp and bmp and others type
+				&& (result.extension !== FileImageType.jpeg
+					&& result.extension !== FileImageType.jpg
+					&& result.extension !== FileImageType.png
+					&& result.extension !== FileImageType.gif
+					&& result.extension !== FileImageType.heif
+					&& result.extension !== FileImageType.heic)
+			)
+			{
+				result.type = FileType.file;
+			}
+
+			if (result.type === FileType.image
+				&& Application.getPlatform() !== 'ios'
+				&& (result.extension === FileImageType.heic || result.extension === FileImageType.heif)
+			)
+			{
+				result.type = FileType.file;
+			}
 		}
 
 		if (Type.isString(fields.name) || Type.isNumber(fields.name))

@@ -179,7 +179,11 @@ final class SignDocument extends Activity
 			->setAction($this->getOpenDocumentAction())
 		] : [];
 
-		if ($signDocument && $signDocument->canBeChanged())
+		if (
+			$signDocument
+			&& $signDocument->canBeChanged()
+			&& Storage::instance()->isAvailable() // tool can be disabled/enabled by portal administrator
+		)
 		{
 			$action = (new Layout\Action\JsEvent($this->getType() . ':Modify'))
 				->addActionParamInt('documentId', $this->getDocumentId());

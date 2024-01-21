@@ -1,5 +1,5 @@
-import { ButtonState } from '../enums/button-state';
 import { Button as UIButton } from 'ui.buttons';
+import { ButtonState } from '../enums/button-state';
 import { Action } from '../../action';
 
 export const BaseButton = {
@@ -14,25 +14,35 @@ export const BaseButton = {
 			required: false,
 			default: '',
 		},
+		tooltip: {
+			type: String,
+			required: false,
+			default: '',
+		},
 		state: {
 			type: String,
 			required: false,
 			default: ButtonState.DEFAULT,
 		},
+		props: Object,
 		action: Object,
 	},
-	data() {
+
+	data(): Object
+	{
 		return {
 			currentState: this.state,
-		}
+		};
 	},
 
 	computed: {
-		itemStateToButtonStateDict() {
+		itemStateToButtonStateDict(): Object
+		{
 			return {
 				[ButtonState.LOADING]: UIButton.State.WAITING,
 				[ButtonState.DISABLED]: UIButton.State.DISABLED,
-			}
+				[ButtonState.AI_LOADING]: UIButton.State.AI_WAITING,
+			};
 		},
 	},
 
@@ -76,23 +86,28 @@ export const BaseButton = {
 
 		executeAction(): void
 		{
-			if (this.action && this.currentState !== ButtonState.DISABLED && this.currentState !== ButtonState.LOADING)
+			if (
+				this.action && this.currentState !== ButtonState.DISABLED
+				&& this.currentState !== ButtonState.LOADING
+				&& this.currentState !== ButtonState.AI_LOADING
+			)
 			{
 				const action = new Action(this.action);
+
 				action.execute(this);
 			}
 		},
-
-
 	},
 
-	created() {
+	created(): void
+	{
 		this.$Bitrix.eventEmitter.subscribe('layout:updated', this.onLayoutUpdated);
 	},
+
 	beforeDestroy(): void
 	{
 		this.$Bitrix.eventEmitter.unsubscribe('layout:updated', this.onLayoutUpdated);
 	},
 
-	template: `<button></button>`
-}
+	template: `<button></button>`,
+};

@@ -23,7 +23,11 @@ class Strictly extends Queue
 			'filter' => [
 				'=SESSION.CONFIG_ID' => $this->configLine['ID'],
 				'=UNDISTRIBUTED' => 'Y'
-			]
+			],
+			'order' => [
+				'DATE_QUEUE' => 'ASC',
+				'SESSION_ID' => 'ASC',
+			],
 		])->fetchAll();
 
 		if (count($sessionList) > 0)

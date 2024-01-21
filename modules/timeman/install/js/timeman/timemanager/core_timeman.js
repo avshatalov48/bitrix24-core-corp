@@ -1410,7 +1410,8 @@ BX.CTimeManWindow.prototype.isMonitorEnabled = function()
 
 BX.CTimeManWindow.prototype.addPwt = function()
 {
-	if (BX.MessengerCommon.isDesktop())
+	const DesktopApi = BX.Reflection.getClass('BX.Messenger.v2.Lib.DesktopApi');
+	if (DesktopApi && DesktopApi.isDesktop())
 	{
 		return;
 	}
@@ -1418,56 +1419,6 @@ BX.CTimeManWindow.prototype.addPwt = function()
 	this.isMonitorAvailable().then(function(result) {
 		if (!result)
 		{
-			return;
-		}
-
-		if (BXIM.desktopVersion < 55)
-		{
-			BX('timeman_main').appendChild(
-				BX.create('div', {
-					props: {
-						id: 'timeman-pwt-container'
-					},
-					style: {
-						textAlign: 'center',
-						maxWidth: '450px',
-						marginLeft: '12px',
-						marginRight: '12px',
-					},
-					children: [
-						new BX.UI.Alert({
-							icon: BX.UI.Alert.Icon.INFO,
-							color: BX.UI.Alert.Color.SUCCESS,
-							text: BX.message("JS_CORE_TM_MONITOR_UPDATE_DESKTOP"),
-						}).getContainer(),
-						BX.create('button', {
-							props: {
-								className: 'ui-btn ui-btn-success ui-btn-icon-download',
-								id: 'timeman-pwt-get-desktop'
-							},
-							text: BX.message("JS_CORE_TM_MONITOR_GET_DESKTOP_BUTTON"),
-							style: {
-								marginBottom: '8px',
-							},
-							events: {
-								click : function() {
-									window.open('https://www.bitrix24.ru/features/desktop.php', '_blank');
-								}
-							}
-						})
-					],
-				})
-			);
-
-			BX.PULL.subscribe({
-				type: BX.PullClient.SubscriptionType.Server,
-				moduleId: 'im',
-				command: 'desktopOnline',
-				callback: function (params, extra, command) {
-					this.setPwtStateReadyToEnable();
-				}.bind(this)
-			});
-
 			return;
 		}
 
@@ -1489,14 +1440,6 @@ BX.CTimeManWindow.prototype.addPwt = function()
 			{
 				this.addPwtAlert();
 
-				return;
-			}
-
-			if (
-				BXIM === 'undefined'
-				|| BXIM.desktopVersion < 55
-			)
-			{
 				return;
 			}
 
@@ -1559,35 +1502,44 @@ BX.CTimeManWindow.prototype.addPwtAlert = function()
 
 BX.CTimeManWindow.prototype.openMonitorReport = function()
 {
-	var isUnsupportedApp =
-		typeof BXDesktopSystem !== 'undefined'
-		&& BXDesktopSystem.GetProperty('versionParts')[3] < 55;
-
-	if (BXIM.desktopVersion < 55 || isUnsupportedApp)
+	if (BX.Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager'))
 	{
-		BXIM.openConfirm({
-			title: BX.message('JS_CORE_TM_MONITOR'),
-			message: BX.message('JS_CORE_TM_MONITOR_OPEN_ERROR')
+		return new Promise((resolve) => {
+			const desktop = BX.Messenger.v2.Lib.DesktopManager.getInstance();
+			desktop.checkStatusInDifferentContext().then((result) => {
+				if (result)
+				{
+					desktop.openBxLink("bx://timemanpwt");
+				}
+				else
+				{
+					BX.UI.Notification.Center.notify({
+						content: '<b>' + BX.message('JS_CORE_TM_MONITOR') + '</b><br/>' + BX.message('JS_CORE_TM_MONITOR_DESKTOP_CLOSED_ERROR'),
+						autoHideDelay: 10000
+					});
+				}
+			});
 		});
-
-		return false;
 	}
 
-	BX.desktopUtils.runningCheck(
-		function()
-		{
-			BX.desktopUtils.goToBx("bx://timemanpwt");
-		},
-		function()
-		{
-			BXIM.openConfirm({
-				title: BX.message('JS_CORE_TM_MONITOR'),
-				message: BX.message('JS_CORE_TM_MONITOR_DESKTOP_CLOSED_ERROR')
-			});
+	if (BX.Reflection.getClass('BX.desktopUtils'))
+	{
+		BX.desktopUtils.runningCheck(
+			function()
+			{
+				BX.desktopUtils.goToBx("bx://timemanpwt");
+			},
+			function()
+			{
+				BXIM.openConfirm({
+					title: BX.message('JS_CORE_TM_MONITOR'),
+					message: BX.message('JS_CORE_TM_MONITOR_DESKTOP_CLOSED_ERROR')
+				});
 
-			return false;
-		}
-	);
+				return false;
+			}
+		);
+	}
 }
 
 BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
@@ -2336,35 +2288,52 @@ BX.CTimeManWindow.prototype.MainButtonClick = function(e)
 				return;
 			}
 
-			BX.desktopUtils.runningCheck(
-				function()
-				{
-					var notification = BX.UI.Notification.Center.notify({
-						content: BX.message('JS_CORE_TM_MONITOR_REPORT_NOTIFICATION'),
-						autoHideDelay: 5000,
-						actions: [
-							{
-								title: BX.message('JS_CORE_TM_MONITOR_REPORT_OPEN'),
-								events:
-									{
-										click: function() {
-											this.openMonitorReport();
-											notification.close();
-										}.bind(this),
-									}
-							},
-						],
-					});
-				}.bind(this),
-				function()
-				{
-					BX.UI.Notification.Center.notify({
-						content: BX.message('JS_CORE_TM_MONITOR_REPORT_NOTIFICATION_DESKTOP_DISABLED'),
-						autoHideDelay: 5000,
-					});
-				}.bind(this)
-			);
+			const successFunction = function() {
+				var notification = BX.UI.Notification.Center.notify({
+					content: BX.message('JS_CORE_TM_MONITOR_REPORT_NOTIFICATION'),
+					autoHideDelay: 5000,
+					actions: [
+						{
+							title: BX.message('JS_CORE_TM_MONITOR_REPORT_OPEN'),
+							events: {
+								click: function() {
+									this.openMonitorReport();
+									notification.close();
+								}.bind(this),
+							}
+						},
+					],
+				});
+			}.bind(this);
 
+			const failureFunction = function() {
+				BX.UI.Notification.Center.notify({
+					content: BX.message('JS_CORE_TM_MONITOR_REPORT_NOTIFICATION_DESKTOP_DISABLED'),
+					autoHideDelay: 5000,
+				});
+			}.bind(this);
+
+			if (BX.Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager'))
+			{
+				return new Promise((resolve) => {
+					const desktop = BX.Messenger.v2.Lib.DesktopManager.getInstance();
+					desktop.checkStatusInDifferentContext().then((result) => {
+						if (result)
+						{
+							successFunction();
+						}
+						else
+						{
+							failureFunction();
+						}
+					});
+				});
+			}
+
+			if (BX.Reflection.getClass('BX.desktopUtils'))
+			{
+				BX.desktopUtils.runningCheck(successFunction, failureFunction);
+			}
 		}.bind(this));
 	}
 
@@ -2924,6 +2893,7 @@ BX.CTimeManEditPopup = function(parent, params)
 	};
 
 	this.bChanged = false;
+	this.isWaiting = false;
 	params.popup_buttons = [
 		(this.SAVEBUTTON = new BX.PopupWindowButton({
 			text : BX.message('JS_CORE_TM_B_SAVE'),
@@ -3262,10 +3232,17 @@ BX.CTimeManEditPopup.prototype.setValue = function(e)
 	if (!this.bChanged)
 		return;
 
+	if (this.isWaiting)
+	{
+		return;
+	}
+
 	var v, r = this.free_mode ? '' : (this.mode == 'edit' ? BX.util.trim(this.REPORT.value) : 'modified by admin');
 
 	if (this.free_mode || r.length > 0)
 	{
+		this.isWaiting = true;
+
 		var data = {};
 
 		if (this.arInputs[this.CLOCK_ID].value != this.arInputs[this.CLOCK_ID].BXORIGINALVALUE)
@@ -3292,7 +3269,10 @@ BX.CTimeManEditPopup.prototype.setValue = function(e)
 		{
 			data.endUserDate = window.BXTIMEMAN.WND.endUserDate;
 		}
-		this.parent.PARENT.Query('save', data, BX.proxy(this.parent.PARENT._Update, this.parent.PARENT));
+		this.parent.PARENT.Query('save', data, (inputData, inputAction) => {
+			this.isWaiting = false;
+			this.parent.PARENT._Update(inputData, inputAction);
+		});
 
 		this.bChanged = false;
 		this.restoreButtons();

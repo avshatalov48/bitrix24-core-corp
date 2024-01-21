@@ -14,6 +14,8 @@ use \Bitrix\Main\Loader;
 use \Bitrix\Main\Application;
 
 use Bitrix\Tasks\Component\Kanban\ScrumManager;
+use Bitrix\Tasks\Integration\Intranet\Settings;
+use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
@@ -38,6 +40,7 @@ use Bitrix\Tasks\Scrum\Service\PushService;
 use Bitrix\Tasks\Scrum\Service\SprintService;
 use Bitrix\Tasks\Scrum\Service\TaskService;
 use Bitrix\Tasks\Scrum\Service\KanbanService;
+use Bitrix\Tasks\Scrum\Utility\ViewHelper;
 
 use \Bitrix\Tasks\Components\Kanban\UserSettings;
 use \Bitrix\Tasks\Components\Kanban\DisplayService;
@@ -249,7 +252,9 @@ class TasksKanbanComponent extends \CBitrixComponent
 
 			$params['IS_SCRUM'] = true;
 
-			$params['IS_ACTIVE_SPRINT'] = ($this->getActiveTab($params['GROUP_ID']) === 'active_sprint' ? 'Y' : 'N');
+			$viewHelper = new ViewHelper();
+
+			$params['IS_ACTIVE_SPRINT'] = ($viewHelper->getActiveView($params['GROUP_ID']) === 'active_sprint' ? 'Y' : 'N');
 		}
 
 		// force set last user group
@@ -403,6 +408,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 		$this->arResult['CALENDAR_SETTINGS']['deadlineTimeVisibility'] = (
 			(isset($deadlineTimeSettings['visibility']) && $deadlineTimeSettings['visibility'] == 'Y') ? 'Y' : 'N'
 		);
+
+		$this->arResult['IS_TOOL_AVAILABLE'] = $this->isToolAvailable();
+	}
+
+	private function isToolAvailable(): bool
+	{
+		return (new Settings())->isToolAvailable(Settings::TOOLS['base_tasks']);
 	}
 
 	/**
@@ -1208,27 +1220,24 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 */
 	protected function getColumns($assoc = false)
 	{
-		$columns = array();
-		$counts = array();
-		$canSort = $this->canSortTasks();
+		$columns = [];
+		$counts = [];
 		$timeLineMode = $this->arParams['TIMELINE_MODE'] == 'Y';
 		$filter = $this->getFilter();
+		$stageList = StagesTable::getStages($this->arParams['STAGES_ENTITY_ID']);
 
 		// get counts
 		if (!$timeLineMode)
 		{
-			$res = StagesTable::getStagesCount(
+			$counts = StagesTable::getStagesCount(
+				$stageList,
 				$filter,
 				$this->arParams['USER_ID'] ? $this->arParams['USER_ID'] : false
 			);
-			while ($row = $res->fetch())
-			{
-				$counts[$row['STAGE_ID']] = $row['CNT'];
-			}
 		}
 
 		// get columns
-		foreach (StagesTable::getStages($this->arParams['STAGES_ENTITY_ID']) as $stage)
+		foreach ($stageList as $stage)
 		{
 			$count = 0;
 
@@ -2064,6 +2073,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		$this->arResult['ITS_MY_TASKS'] = $this->itsMyTasks();
 		$this->arResult['TOURS'] = $this->processTours();
 		$this->arResult['ADMINS'] = [];
+		$this->arResult['CONTEXT'] = $this->arParams['CONTEXT'] ?? Context::DEFAULT;
 		if (!$this->isScrum())
 		{
 			// Kanban User Selected Fields

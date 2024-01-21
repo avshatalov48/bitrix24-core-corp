@@ -13,6 +13,7 @@ global $APPLICATION, $DB;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Internals\Task\Status;
+use Bitrix\Tasks\Replicator\Template\Option\Options;
 use Bitrix\Tasks\Template;
 
 Loc::loadMessages(__FILE__);
@@ -775,100 +776,10 @@ class CTaskTemplates
 
 	/**
 	 * @deprecated
+	 * @use Options
 	 */
 	public static function parseReplicationParams(array $params = []): array
 	{
-		// todo: use \Bitrix\Tasks\Item\Task\Template\Field\ReplicateParams::createValueStructure() here
-
-		$allowed = [
-			'PERIOD' => true,
-			'EVERY_DAY' => true,
-			'WORKDAY_ONLY' => true,
-			'EVERY_WEEK' => true,
-			'WEEK_DAYS' => true,
-			'MONTHLY_TYPE' => true,
-			'MONTHLY_DAY_NUM' => true,
-			'MONTHLY_MONTH_NUM_1' => true,
-			'MONTHLY_WEEK_DAY_NUM' => true,
-			'MONTHLY_WEEK_DAY' => true,
-			'MONTHLY_MONTH_NUM_2' => true,
-			'YEARLY_TYPE' => true,
-			'YEARLY_DAY_NUM' => true,
-			'YEARLY_MONTH_1' => true,
-			'YEARLY_WEEK_DAY_NUM' => true,
-			'YEARLY_WEEK_DAY' => true,
-			'YEARLY_MONTH_2' => true,
-			'START_DATE' => true,
-			'END_DATE' => true,
-			'TIME' => true,
-			'TIMEZONE_OFFSET' => true,
-			'DAILY_MONTH_INTERVAL' => true,
-			'REPEAT_TILL' => true,
-			'TIMES' => true,
-			'NEXT_EXECUTION_TIME' => true,
-		];
-		foreach ($params as $fld => $value)
-		{
-			if (!($allowed[$fld] ?? null))
-			{
-				unset($params[$fld]);
-			}
-		}
-
-		$params['EVERY_DAY'] = ((int)($params['EVERY_DAY'] ?? null) ?: 1);
-		$params['EVERY_WEEK'] = ((int)($params['EVERY_WEEK'] ?? null) ?: 1);
-		$params['MONTHLY_DAY_NUM'] = ((int)($params['MONTHLY_DAY_NUM'] ?? null) ?: 1);
-		$params['MONTHLY_MONTH_NUM_1'] = ((int)($params['MONTHLY_MONTH_NUM_1'] ?? null) ?: 1);
-		$params['MONTHLY_MONTH_NUM_2'] = ((int)($params['MONTHLY_MONTH_NUM_2'] ?? null) ?: 1);
-		$params['YEARLY_DAY_NUM'] = ((int)($params['YEARLY_DAY_NUM'] ?? null) ?: 1);
-
-		$params['PERIOD'] = (string)($params['PERIOD'] ?? null);
-		$params['WEEK_DAYS'] = ($params['WEEK_DAYS'] ?? null);
-		$params['TIME'] = ($params['TIME'] ?? '');
-		$params['WORKDAY_ONLY'] = (($params['WORKDAY_ONLY'] ?? null) === 'Y' ? 'Y' : 'N');
-		$params['END_DATE'] = ($params['END_DATE'] ?? null);
-
-		$params['MONTHLY_TYPE'] = static::parseTypeSelector($params['MONTHLY_TYPE'] ?? null);
-		$params['YEARLY_TYPE'] = static::parseTypeSelector($params['YEARLY_TYPE'] ?? null);
-
-        if ($params['PERIOD'] === '')
-        {
-            $params['PERIOD'] = 'daily';
-        }
-        if (!is_array($params['WEEK_DAYS']))
-        {
-            $params['WEEK_DAYS'] = [];
-        }
-
-		$time = 3600 * 5; // five hours
-		if (trim($params['TIME']) !== '')
-		{
-			$time = \Bitrix\Tasks\UI::parseTimeAmount($params['TIME'], 'HH:MI');
-		}
-		$params['TIME'] = \Bitrix\Tasks\UI::formatTimeAmount($time, 'HH:MI');
-
-		if (array_key_exists('TIMEZONE_OFFSET', $params))
-		{
-			$params['TIMEZONE_OFFSET'] = (int)$params['TIMEZONE_OFFSET'];
-		}
-
-		// for old templates
-		if (!array_key_exists('REPEAT_TILL', $params) && (string)$params['END_DATE'] !== '')
-		{
-			$params['REPEAT_TILL'] = 'date';
-		}
-
-		return $params;
+		return Options::validate($params);
 	}
-
-    private static function parseTypeSelector($type)
-    {
-        $type = intval($type);
-        if($type < 1 || $type > 2)
-        {
-            $type = 1;
-        }
-
-        return $type;
-    }
 }

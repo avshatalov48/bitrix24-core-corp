@@ -52,6 +52,20 @@
 	margin-right: unset;
 }
 
+.crm-timeline__card-action-btn:has(.ui-btn-icon-ai) {
+	min-width: 100px;
+}
+
+.crm-timeline__card-action-btn .ui-btn-icon-ai.ui-btn.ui-btn-disabled {
+	background-color: transparent;
+	border-color: #c6cdd3;
+	color: #535b69;
+}
+
+.crm-timeline__card-action-btn .ui-btn-icon-ai.ui-btn.ui-btn-disabled::after {
+	background-color: #535b69;
+}
+
 .crm-timeline__card_add-button {
 	width: 28px;
 	height: 28px;

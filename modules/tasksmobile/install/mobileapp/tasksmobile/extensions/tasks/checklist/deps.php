@@ -2,15 +2,8 @@
 
 return [
 	'extensions' => [
-		'cache',
-		'rest',
-		'notify',
-		'loc',
-		'uploader/const',
-		'list/*',
-		'reload/listeners',
-		'tasks:task/checklist/uploader/constants',
-		'tasks:task/checklist/storage',
-		'user/list',
+		'tasks:checklist/tree',
+		'tasks:checklist/flat-tree',
+		'tasks:checklist/controller',
 	],
 ];

@@ -69,6 +69,7 @@ class Favorites extends BaseTemplate
 		}
 
 		$this->result['TOTAL_APPS'] = NumberApps::get($response[Transport::METHOD_TOTAL_APPS]);
+		$this->result['SHOW_MARKET_ICON'] = $response[Transport::METHOD_TOTAL_APPS]['SHOW_MARKET_ICON'];
 	}
 
 	private function prepareApps($apps)

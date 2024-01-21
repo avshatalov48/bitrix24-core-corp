@@ -1,5 +1,6 @@
+/* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_popup,ui_buttons,main_core_events,main_core) {
+(function (exports,main_popup,ui_buttons,main_core_events,main_core,ui_dialogs_messagebox) {
 	'use strict';
 
 	var DocumentManager = /*#__PURE__*/function () {
@@ -47,44 +48,31 @@ this.BX = this.BX || {};
 	        top.BX.UI.InfoHelper.show(this.inventoryManagementFeatureCode);
 	        return;
 	      }
-	      var popup = new main_popup.Popup({
-	        id: 'crm_delete_document_popup',
-	        titleBar: main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_DELETE_TITLE'),
-	        content: main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_DELETE_CONTENT'),
-	        buttons: [new ui_buttons.Button({
-	          text: main_core.Loc.getMessage('DOCUMENT_GRID_CONTINUE'),
-	          color: ui_buttons.ButtonColor.SUCCESS,
-	          onclick: function onclick(button, event) {
-	            main_core.ajax.runAction('crm.api.realizationdocument.setRealization', {
-	              data: {
-	                id: documentId,
-	                value: 'N'
-	              },
-	              analyticsLabel: {
-	                action: 'delete',
-	                inventoryManagementSource: _this.inventoryManagementSource
-	              }
-	            }).then(function (response) {
-	              popup.destroy();
-	              _this.reloadGrid();
-	            })["catch"](function (response) {
-	              if (response.errors) {
-	                BX.UI.Notification.Center.notify({
-	                  content: BX.util.htmlspecialchars(response.errors[0].message)
-	                });
-	              }
-	              popup.destroy();
+	      ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_DELETE_CONTENT'), function (messageBox, button) {
+	        button.setWaiting();
+	        main_core.ajax.runAction('crm.api.realizationdocument.setRealization', {
+	          data: {
+	            id: documentId,
+	            value: 'N'
+	          },
+	          analyticsLabel: {
+	            action: 'delete',
+	            inventoryManagementSource: _this.inventoryManagementSource
+	          }
+	        }).then(function () {
+	          messageBox.close();
+	          _this.reloadGrid();
+	        })["catch"](function (response) {
+	          if (response.errors) {
+	            BX.UI.Notification.Center.notify({
+	              content: BX.util.htmlspecialchars(response.errors[0].message)
 	            });
 	          }
-	        }), new ui_buttons.Button({
-	          text: main_core.Loc.getMessage('DOCUMENT_GRID_CANCEL'),
-	          color: ui_buttons.ButtonColor.DANGER,
-	          onclick: function onclick(button, event) {
-	            popup.destroy();
-	          }
-	        })]
-	      });
-	      popup.show();
+	          messageBox.close();
+	        });
+	      }, main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_DELETE_BUTTON_CONFIRM'), function (messageBox) {
+	        return messageBox.close();
+	      }, main_core.Loc.getMessage('DOCUMENT_GRID_BUTTON_BACK'));
 	    }
 	  }, {
 	    key: "conductDocument",
@@ -98,44 +86,31 @@ this.BX = this.BX || {};
 	        this.openStoreMasterSlider();
 	        return;
 	      }
-	      var popup = new main_popup.Popup({
-	        id: 'crm_delete_document_popup',
-	        titleBar: main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CONDUCT_TITLE'),
-	        content: main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CONDUCT_CONTENT'),
-	        buttons: [new ui_buttons.Button({
-	          text: main_core.Loc.getMessage('DOCUMENT_GRID_CONTINUE'),
-	          color: ui_buttons.ButtonColor.SUCCESS,
-	          onclick: function onclick(button, event) {
-	            main_core.ajax.runAction('crm.api.realizationdocument.setShipped', {
-	              data: {
-	                id: documentId,
-	                value: 'Y'
-	              },
-	              analyticsLabel: {
-	                action: 'deduct',
-	                inventoryManagementSource: _this2.inventoryManagementSource
-	              }
-	            }).then(function (response) {
-	              popup.destroy();
-	              _this2.reloadGrid();
-	            })["catch"](function (response) {
-	              if (response.errors) {
-	                BX.UI.Notification.Center.notify({
-	                  content: BX.util.htmlspecialchars(response.errors[0].message)
-	                });
-	              }
-	              popup.destroy();
+	      ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CONDUCT_CONTENT'), function (messageBox, button) {
+	        button.setWaiting();
+	        main_core.ajax.runAction('crm.api.realizationdocument.setShipped', {
+	          data: {
+	            id: documentId,
+	            value: 'Y'
+	          },
+	          analyticsLabel: {
+	            action: 'deduct',
+	            inventoryManagementSource: _this2.inventoryManagementSource
+	          }
+	        }).then(function () {
+	          messageBox.close();
+	          _this2.reloadGrid();
+	        })["catch"](function (response) {
+	          if (response.errors) {
+	            BX.UI.Notification.Center.notify({
+	              content: BX.util.htmlspecialchars(response.errors[0].message)
 	            });
 	          }
-	        }), new ui_buttons.Button({
-	          text: main_core.Loc.getMessage('DOCUMENT_GRID_CANCEL'),
-	          color: ui_buttons.ButtonColor.DANGER,
-	          onclick: function onclick(button, event) {
-	            popup.destroy();
-	          }
-	        })]
-	      });
-	      popup.show();
+	          messageBox.close();
+	        });
+	      }, main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CONDUCT_BUTTON_CONFIRM'), function (messageBox) {
+	        return messageBox.close();
+	      }, main_core.Loc.getMessage('DOCUMENT_GRID_BUTTON_BACK'));
 	    }
 	  }, {
 	    key: "cancelDocument",
@@ -149,44 +124,31 @@ this.BX = this.BX || {};
 	        this.openStoreMasterSlider();
 	        return;
 	      }
-	      var popup = new main_popup.Popup({
-	        id: 'crm_delete_document_popup',
-	        titleBar: main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CANCEL_TITLE'),
-	        content: main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CANCEL_CONTENT'),
-	        buttons: [new ui_buttons.Button({
-	          text: main_core.Loc.getMessage('DOCUMENT_GRID_CONTINUE'),
-	          color: ui_buttons.ButtonColor.SUCCESS,
-	          onclick: function onclick(button, event) {
-	            main_core.ajax.runAction('crm.api.realizationdocument.setShipped', {
-	              data: {
-	                id: documentId,
-	                value: 'N'
-	              },
-	              analyticsLabel: {
-	                action: 'cancelDeduct',
-	                inventoryManagementSource: _this3.inventoryManagementSource
-	              }
-	            }).then(function (response) {
-	              popup.destroy();
-	              _this3.reloadGrid();
-	            })["catch"](function (response) {
-	              if (response.errors) {
-	                BX.UI.Notification.Center.notify({
-	                  content: BX.util.htmlspecialchars(response.errors[0].message)
-	                });
-	              }
-	              popup.destroy();
+	      ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CANCEL_CONTENT'), function (messageBox, button) {
+	        button.setWaiting();
+	        main_core.ajax.runAction('crm.api.realizationdocument.setShipped', {
+	          data: {
+	            id: documentId,
+	            value: 'N'
+	          },
+	          analyticsLabel: {
+	            action: 'cancelDeduct',
+	            inventoryManagementSource: _this3.inventoryManagementSource
+	          }
+	        }).then(function () {
+	          messageBox.close();
+	          _this3.reloadGrid();
+	        })["catch"](function (response) {
+	          if (response.errors) {
+	            BX.UI.Notification.Center.notify({
+	              content: BX.util.htmlspecialchars(response.errors[0].message)
 	            });
 	          }
-	        }), new ui_buttons.Button({
-	          text: main_core.Loc.getMessage('DOCUMENT_GRID_CANCEL'),
-	          color: ui_buttons.ButtonColor.DANGER,
-	          onclick: function onclick(button, event) {
-	            popup.destroy();
-	          }
-	        })]
-	      });
-	      popup.show();
+	          messageBox.close();
+	        });
+	      }, main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CANCEL_BUTTON_CONFIRM'), function (messageBox) {
+	        return messageBox.close();
+	      }, main_core.Loc.getMessage('DOCUMENT_GRID_BUTTON_BACK'));
 	    }
 	  }, {
 	    key: "deleteSelectedDocuments",
@@ -352,5 +314,5 @@ this.BX = this.BX || {};
 
 	exports.StoreDocumentGridManager = GridManager;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX.Main,BX.UI,BX.Event,BX));
+}((this.BX.Crm = this.BX.Crm || {}),BX.Main,BX.UI,BX.Event,BX,BX.UI.Dialogs));
 //# sourceMappingURL=store-document-grid-manager.bundle.js.map

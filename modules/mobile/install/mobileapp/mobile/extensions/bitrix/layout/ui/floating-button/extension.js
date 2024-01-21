@@ -1,6 +1,10 @@
 (() => {
-	const { Haptics } = jn.require('haptics');
-	const { HideOnScrollAnimator } = jn.require('animation/hide-on-scroll');
+	const require = (ext) => jn.require(ext);
+
+	const { withPressed } = require('utils/color');
+	const AppTheme = require('apptheme');
+	const { Haptics } = require('haptics');
+	const { HideOnScrollAnimator } = require('animation/hide-on-scroll');
 
 	/**
 	 * @class UI.FloatingButtonComponent
@@ -70,7 +74,9 @@
 		{
 			return View(
 				{
-					ref: (ref) => this.viewRef = ref,
+					ref: (ref) => {
+						this.viewRef = ref;
+					},
 					safeArea: {
 						bottom: true,
 						top: true,
@@ -149,7 +155,7 @@
 			height: Application.getPlatform() === 'android' ? 56 : 60,
 			width: Application.getPlatform() === 'android' ? 56 : 60,
 			borderRadius: 30,
-			backgroundColor: { default: '#2fc6f6', pressed: '#cc2fc6f6' },
+			backgroundColor: withPressed(AppTheme.colors.accentBrandBlue),
 			justifyContent: 'center',
 			alignItems: 'center',
 		},

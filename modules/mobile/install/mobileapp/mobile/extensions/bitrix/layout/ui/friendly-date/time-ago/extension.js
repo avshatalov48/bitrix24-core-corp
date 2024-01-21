@@ -34,5 +34,4 @@ jn.define('layout/ui/friendly-date/time-ago', (require, exports, module) => {
 	}
 
 	module.exports = { TimeAgo };
-
 });

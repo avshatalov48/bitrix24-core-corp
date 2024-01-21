@@ -2,6 +2,10 @@
 
 namespace Bitrix\Intranet\Controller;
 
+use Bitrix\Intranet\Settings\Tools\Crm;
+use Bitrix\Intranet\Settings\Tools\Sites;
+use Bitrix\Intranet\Settings\Tools\Tasks;
+use Bitrix\Intranet\Settings\Tools\TeamWork;
 use Bitrix\Main\Error;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Event;
@@ -557,6 +561,55 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 		}
 	}
 
+	private function enablePresetTool($preset): void
+	{
+		switch ($preset)
+		{
+			case 'tasks':
+				$taskMenu = new Tasks();
+
+				if (!$taskMenu->isEnabled())
+				{
+					$taskMenu->enableAllSubgroups();
+					$taskMenu->enable();
+				}
+
+				break;
+
+			case 'crm':
+				$crmMenu = new Crm();
+
+				if (!$crmMenu->isEnabled())
+				{
+					$crmMenu->enableAllSubgroups();
+					$crmMenu->enable();
+				}
+
+				break;
+
+			case 'sites':
+				$sitesMenu = new Sites();
+
+				if (!$sitesMenu->isEnabled())
+				{
+					$sitesMenu->enable();
+				}
+
+				break;
+
+			case 'social':
+				$socialMenu = new TeamWork();
+
+				if (!$socialMenu->isEnabled())
+				{
+					$socialMenu->enableAllSubgroups();
+					$socialMenu->enable();
+				}
+
+				break;
+		}
+	}
+
 	public function setPresetAction()
 	{
 		global $USER;
@@ -586,6 +639,8 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 				]
 			);
 			EventManager::getInstance()->send($event);
+
+			$this->enablePresetTool($_POST['preset']);
 		}
 		else
 		{
@@ -595,6 +650,11 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 			//	CUserOptions::DeleteOption('intranet', 'left_menu_self_items_'.$siteID);
 			//	CUserOptions::DeleteOption('intranet', 'left_menu_standard_items_'.$siteID);
 			\CUserOptions::DeleteOption('intranet', $this->getItemsSortOptionName());
+		}
+
+		if ($this->isCurrentUserAdmin())
+		{
+			$this->enablePresetTool($_POST['preset']);
 		}
 
 		$firstPageUrl = SITE_DIR . 'stream/';
@@ -611,11 +671,16 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 				{
 					$firstPageUrl = \Bitrix\Crm\Settings\EntityViewSettings::getDefaultPageUrl();
 				}
-
 				break;
 
 			case 'sites':
 				$firstPageUrl = SITE_DIR . 'sites/';
+
+				break;
+
+			case 'social':
+				$firstPageUrl = (new TeamWork())->getLeftMenuPath();
+
 				break;
 		}
 

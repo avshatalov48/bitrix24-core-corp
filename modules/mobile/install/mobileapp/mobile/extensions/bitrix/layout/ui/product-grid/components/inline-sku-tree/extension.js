@@ -2,9 +2,9 @@
  * @module layout/ui/product-grid/components/inline-sku-tree
  */
 jn.define('layout/ui/product-grid/components/inline-sku-tree', (require, exports, module) => {
-
 	const { Loc } = require('loc');
-	const { get, isArray } = require('utils/object');
+	const AppTheme = require('apptheme');
+	const { get } = require('utils/object');
 
 	class InlineSkuTree extends LayoutComponent
 	{
@@ -30,7 +30,7 @@ jn.define('layout/ui/product-grid/components/inline-sku-tree', (require, exports
 						justifyContent: 'space-between',
 						marginBottom: 12,
 						display: this.props.OFFERS_PROP ? 'flex' : 'none',
-					}
+					},
 				},
 				this.renderProps(
 					this.renderPictureProps(),
@@ -48,7 +48,7 @@ jn.define('layout/ui/product-grid/components/inline-sku-tree', (require, exports
 						flexDirection: 'row',
 						justifyContent: 'flex-start',
 						flexShrink: 1,
-					}
+					},
 				},
 				...children,
 			);
@@ -58,22 +58,23 @@ jn.define('layout/ui/product-grid/components/inline-sku-tree', (require, exports
 		{
 			const pictures = this.getPicturePropertyValues();
 
-			if (!pictures.length)
+			if (pictures.length === 0)
 			{
 				return null;
 			}
 
 			const prepareImagePath = (src) => {
 				src = src.startsWith('/') ? currentDomain + src : src;
+
 				return encodeURI(src);
-			}
+			};
 
 			return View(
 				{
 					style: {
 						flexDirection: 'row',
 						alignItems: 'center',
-					}
+					},
 				},
 				...pictures.flatMap((src, index, arr) => [
 					Image({
@@ -83,12 +84,12 @@ jn.define('layout/ui/product-grid/components/inline-sku-tree', (require, exports
 							borderRadius: 2,
 							marginRight: 6,
 							borderWidth: 1,
-							borderColor: '#e6e7e9',
+							borderColor: AppTheme.colors.bgSeparatorPrimary,
 						},
 						resizeMode: 'cover',
 						uri: prepareImagePath(src),
 					}),
-				])
+				]),
 			);
 		}
 
@@ -97,17 +98,17 @@ jn.define('layout/ui/product-grid/components/inline-sku-tree', (require, exports
 			const pictures = this.getPicturePropertyValues();
 			const textValues = this.getTextPropertyValues();
 
-			if (!pictures.length && !textValues.length)
+			if (pictures.length === 0 && textValues.length === 0)
 			{
 				return Text({
 					text: Loc.getMessage('PRODUCT_GRID_CONTROL_INLINE_SKU_TREE_VARIATION_NOT_SELECTED'),
 					ellipsize: 'end',
 					numberOfLines: 1,
 					style: {
-						color: '#525C69',
+						color: AppTheme.colors.base2,
 						fontSize: 16,
 						width: 200,
-					}
+					},
 				});
 			}
 
@@ -116,10 +117,10 @@ jn.define('layout/ui/product-grid/components/inline-sku-tree', (require, exports
 				ellipsize: 'end',
 				numberOfLines: 1,
 				style: {
-					color: '#525C69',
+					color: AppTheme.colors.base2,
 					fontSize: 16,
 					width: 200,
-				}
+				},
 			});
 		}
 
@@ -142,10 +143,10 @@ jn.define('layout/ui/product-grid/components/inline-sku-tree', (require, exports
 					text: Loc.getMessage('PRODUCT_GRID_CONTROL_INLINE_SKU_TREE_MAKE_CHANGE'),
 					style: {
 						fontSize: 13,
-						color: '#A8ADB4',
+						color: AppTheme.colors.base4,
 						textDecorationLine: 'underline',
-					}
-				})
+					},
+				}),
 			);
 		}
 
@@ -155,6 +156,8 @@ jn.define('layout/ui/product-grid/components/inline-sku-tree', (require, exports
 			{
 				return this.props.onChangeSku(this);
 			}
+
+			return null;
 		}
 
 		/**
@@ -190,22 +193,22 @@ jn.define('layout/ui/product-grid/components/inline-sku-tree', (require, exports
 			const selectedValues = get(this.props, 'SELECTED_VALUES', {});
 			const filteredProps = Object.values(allProps).filter(propertyTypeFilter);
 
-			if (!filteredProps.length)
+			if (filteredProps.length === 0)
 			{
 				return [];
 			}
 
 			const displayValues = [];
 
-			filteredProps.forEach(property => {
+			filteredProps.forEach((property) => {
 				const propertyId = property.ID;
 				const selectedValue = selectedValues[propertyId] || null;
 
-				if (selectedValue && property.VALUES && property.VALUES.length)
+				if (selectedValue && property.VALUES && property.VALUES.length > 0)
 				{
-					property.VALUES.forEach(singleValue => {
+					property.VALUES.forEach((singleValue) => {
 						const displayValue = valueFormatter(singleValue);
-						const match = isArray(selectedValue)
+						const match = Array.isArray(selectedValue)
 							? selectedValue.contains(singleValue.ID)
 							: selectedValue === singleValue.ID;
 

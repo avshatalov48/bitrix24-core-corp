@@ -2,7 +2,6 @@
  * @module alert
  */
 jn.define('alert', (require, exports, module) => {
-
 	const { AlertNavigator } = require('alert/alert');
 	const {
 		ConfirmNavigator,
@@ -27,7 +26,6 @@ jn.define('alert', (require, exports, module) => {
 		{
 			const confirm = new ConfirmNavigator({ title, description, buttons });
 			confirm.open();
-
 		}
 	}
 

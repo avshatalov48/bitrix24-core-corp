@@ -12,6 +12,7 @@ return [
 		'catalog:store/document-type',
 		'haptics',
 		'money',
+		'apptheme',
 		'utils/object',
 	]
 ];

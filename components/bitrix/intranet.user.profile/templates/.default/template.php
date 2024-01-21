@@ -822,7 +822,7 @@ if ($arResult["adminRightsRestricted"])
 	<div style="display: none">
 		<div id="adminRestrContent" >
 			<?php
-			if ($arResult["IS_COMPANY_TARIFF"])
+			if (isset($arResult["IS_COMPANY_TARIFF"]) && $arResult["IS_COMPANY_TARIFF"])
 			{
 				?>
 				<div style="padding-bottom: 20px;"><?=Loc::getMessage("INTRANET_USER_PROFILE_RIGHTS_RESTR_COMPANY_TEXT")?></div>
@@ -928,7 +928,7 @@ if ($arResult["adminRightsRestricted"])
 		gratPostListPageSize: <?= (int)$arParams['GRAT_POST_LIST_PAGE_SIZE'] ?>,
 		userId: <?= (int)$arResult["User"]["ID"] ?>,
 		userStatus: <?= CUtil::PhpToJSObject($arResult["User"]["STATUS"]) ?>,
-		isIntegratorUser: '<?=$arResult["User"]['IS_INTEGRATOR'] ? "Y" : "N"?>',
+		isIntegratorUser: '<?=($arResult["User"]['IS_INTEGRATOR'] ?? null) ? "Y" : "N"?>',
 		isOwnProfile: '<?=$arResult["IsOwnProfile"] ? "Y" : "N"?>',
 		urls: <?= CUtil::PhpToJSObject($arResult["Urls"]) ?>,
 		isSessionAdmin: "<?=($arResult["User"]["IS_SESSION_ADMIN"] ?? null) ? "Y" : "N"?>",

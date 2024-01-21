@@ -20,7 +20,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\BIConnector
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DictionaryData_Query query()
+ * @method static EO_DictionaryData_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_DictionaryData_Result getById($id)
+ * @method static EO_DictionaryData_Result getList(array $parameters = [])
+ * @method static EO_DictionaryData_Entity getEntity()
+ * @method static \Bitrix\BIConnector\EO_DictionaryData createObject($setDefaultValues = true)
+ * @method static \Bitrix\BIConnector\EO_DictionaryData_Collection createCollection()
+ * @method static \Bitrix\BIConnector\EO_DictionaryData wakeUpObject($row)
+ * @method static \Bitrix\BIConnector\EO_DictionaryData_Collection wakeUpCollection($rows)
+ */
 
 class DictionaryDataTable extends DataManager
 {

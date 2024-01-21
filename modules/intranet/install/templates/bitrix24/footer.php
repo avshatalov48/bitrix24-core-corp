@@ -11,7 +11,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
-
+if (!isset($isBitrix24Cloud))
+{
+	$isBitrix24Cloud = Loader::includeModule('bitrix24');
+}
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/templates/' . SITE_TEMPLATE_ID . '/footer.php');
 $isCompositeMode = defined('USE_HTML_STATIC_CACHE');
 $isIndexPage = $APPLICATION->GetCurPage(true) == SITE_DIR . 'stream/index.php';
@@ -39,7 +42,7 @@ if ($isCompositeMode)
 					<td class="bx-layout-inner-center">
 						<div id="footer">
 							<span id="copyright">
-                                <?if ($isBitrix24Cloud):?>
+								<? if ($isBitrix24Cloud):?>
 									<a id="bitrix24-logo" target="_blank" class="bitrix24-logo-<?=(LANGUAGE_ID == "ua") ? LANGUAGE_ID : Loc::getDefaultLang(LANGUAGE_ID)?>" href="<?=GetMessage("BITRIX24_URL")?>"></a>
 									<?
 									$b24Languages = [];
@@ -55,7 +58,7 @@ if ($isCompositeMode)
 										$cultures = Bitrix\Main\Localization\LanguageTable::getList([
 											'select' => [
 												'NAME',
-                                                'LID',
+												'CULTURE_CODE' => 'CULTURE.CODE',
 											],
 											'filter' => [
 												'=ACTIVE' => 'Y'
@@ -111,7 +114,7 @@ if ($isCompositeMode)
 										</table>
 									</div>
 								<?
-                                endif;
+								endif;
 								?><span class="bitrix24-copyright"><?=GetMessage("BITRIX24_COPYRIGHT2", array("#CURRENT_YEAR#" => date("Y")))?></span><?
 								if (Bitrix\Main\Loader::includeModule('bitrix24'))
 								{
@@ -171,12 +174,35 @@ $dynamicArea->setAssetMode(\Bitrix\Main\Page\AssetMode::STANDARD);
 $dynamicArea->startDynamicArea();
 $APPLICATION->IncludeComponent("bitrix:intranet.otp.info", "", array("PATH_TO_PROFILE_SECURITY" => $profileLink."/user/#user_id#/security/",), false, array("HIDE_ICONS" => "Y"));
 $dynamicArea->finishDynamicArea();
-$isBitrix24Cloud ? $APPLICATION->IncludeComponent('bitrix:bitrix24.notify.panel', '')
-	: $APPLICATION->IncludeComponent('bitrix:intranet.notify.panel', '');
+
+if ($isBitrix24Cloud)
+{
+	$APPLICATION->IncludeComponent('bitrix:bitrix24.notify.panel', '');
+}
+else
+{
+	$APPLICATION->IncludeComponent('bitrix:intranet.notify.panel', '');
+}
 
 $APPLICATION->IncludeComponent("bitrix:intranet.placement", "", array());
 $APPLICATION->IncludeComponent('bitrix:bizproc.debugger', '', []);
+$APPLICATION->IncludeComponent('bitrix:intranet.bitrix24.release', '', []); // remove after December 15 2023
 
+$imBarExists =
+	Loader::includeModule('im')
+	&& CBXFeatures::IsFeatureEnabled('WebMessenger')
+	&& !defined('BX_IM_FULLSCREEN')
+;
+
+$APPLICATION->IncludeComponent(
+	'bitrix:main.sidepanel.toolbar',
+	'',
+	[
+		'CONTEXT' => SITE_ID . '_' . SITE_TEMPLATE_ID,
+		'POSITION' => $imBarExists ? ['right' => '90px', 'bottom' => '20px'] : ['right' => '25px', 'bottom' => '20px'],
+		'SHIFTED_POSITION' => $imBarExists ? ['right' => '7px', 'bottom' => '20px'] : ['right' => '25px', 'bottom' => '20px'],
+	]
+);
 ?><script>
 	BX.message({
 		"BITRIX24_CS_ONLINE" : "<?=GetMessageJS("BITRIX24_CS_ONLINE")?>",

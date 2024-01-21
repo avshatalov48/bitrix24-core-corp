@@ -1,0 +1,15 @@
+<?php
+
+$MESS['M_CALENDAR_EVENT_LIST_RESTRICTION_SHARING_SLOTS_FREE'] = 'Свободные слоты';
+$MESS['M_CALENDAR_EVENT_LIST_NO_INVITATIONS_TITLE'] = 'Новых приглашений нет';
+$MESS['M_CALENDAR_EVENT_LIST_EMPTY_SEARCH_RESULT_TITLE'] = 'Таких событий нет';
+$MESS['M_CALENDAR_EVENT_LIST_EMPTY_SEARCH_RESULT_TEXT'] = 'Попробуйте выбрать другой фильтр или сформулировать иначе';
+$MESS['M_CALENDAR_EVENT_LIST_EMPTY_TITLE'] = 'Нет событий';
+
+$MESS['M_CALENDAR_EVENT_LIST_TILL_TIME'] = 'до #TIME#';
+$MESS['M_CALENDAR_EVENT_LIST_ALL_DAY'] = 'весь день';
+
+$MESS['M_CALENDAR_EVENT_LIST_TITLE_SEARCH'] = 'Календарь';
+$MESS['M_CALENDAR_EVENT_LIST_INVITATION'] = 'Приглашения';
+$MESS['M_CALENDAR_EVENT_LIST_SEARCH_RESULT'] = 'Результаты поиска';
+$MESS['M_CALENDAR_EVENT_LIST_SEARCH_RESULT_BY_QUERY'] = "Результаты поиска по \"#QUERY#\"";

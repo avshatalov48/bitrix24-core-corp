@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Kanban\Entity;
 
 use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Item;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
@@ -54,5 +55,13 @@ class DealActivities extends Deal
 	public function getRequiredFieldsByStages(array $stages): array
 	{
 		return [];
+	}
+
+	public function getItemsSelectPreset(): array
+	{
+		return array_merge(
+			parent::getItemsSelectPreset(),
+			[Item::FIELD_NAME_CATEGORY_ID]
+		);
 	}
 }

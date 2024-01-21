@@ -104,7 +104,7 @@ final class ExpandableListFactory
 					->addActionParamArray('options', [
 						'price' => $product->getPrice(),
 					])
-					->setAnimation(Action\Animation::showLoaderForItem())
+					->setAnimation(Action\Animation::disableItem())
 				;
 			}
 

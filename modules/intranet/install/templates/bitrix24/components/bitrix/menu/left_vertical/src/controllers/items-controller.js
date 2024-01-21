@@ -46,7 +46,7 @@ export default class ItemsController extends DefaultController{
 				.getAttribute('data-status') === 'hide'
 		)
 		{
-			this.#showHiddenContainer(true);
+			this.#showHiddenContainer(false);
 		}
 	}
 
@@ -502,6 +502,15 @@ export default class ItemsController extends DefaultController{
 				DesktopApi.setBrowserIconBadge(visibleValue);
 			}
 		}
+
+		[...this.items.entries()]
+			.forEach(([id, itemGroup]) => {
+				if (itemGroup instanceof ItemGroup)
+				{
+					itemGroup.updateCounter();
+				}
+			})
+		;
 	}
 
 	decrementCounter(counters)

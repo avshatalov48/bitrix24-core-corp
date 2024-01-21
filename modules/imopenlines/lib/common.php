@@ -532,4 +532,12 @@ class Common
 
 		return $users;
 	}
+
+	/**
+	 * @deprecated
+	 */
+	public static function deleteBrokenSession(): string
+	{
+		return \Bitrix\ImOpenLines\Session\Agent::class . '::deleteBrokenSession();';
+	}
 }

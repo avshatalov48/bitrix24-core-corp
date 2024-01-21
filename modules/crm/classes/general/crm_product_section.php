@@ -84,7 +84,11 @@ class CCrmProductSection
 		$section = new CIBlockSection();
 		if (!isset($sectionFields['CODE']))
 		{
-			$mnemonicCode = $section->generateMnemonicCode($sectionFields['NAME'], $sectionFields['IBLOCK_ID']);
+			// TODO: remove this merge after CIBlockSection::createMnemonicCode fix
+			$tmpSectionFields = $sectionFields;
+			$tmpSectionFields['ID'] ??= null;
+			// TODO: change $tmpSectionFields to $sectionFields after CIBlockSection::createMnemonicCode fix
+			$mnemonicCode = $section->createMnemonicCode($tmpSectionFields);
 			if ($mnemonicCode !== null)
 			{
 				$sectionFields['CODE'] = $mnemonicCode;

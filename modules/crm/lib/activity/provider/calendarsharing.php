@@ -8,6 +8,7 @@ use Bitrix\Crm\Badge\Type\CalendarSharingStatus;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Result;
 
 class CalendarSharing extends Base
 {
@@ -82,5 +83,19 @@ class CalendarSharing extends Base
 		{
 			$badge->unbindWithAnyValue($itemIdentifier, $sourceIdentifier);
 		}
+	}
+
+	public static function checkFields($action, &$fields, $id, $params = null): Result
+	{
+		if ($action === self::ACTION_UPDATE)
+		{
+			if (isset($fields['END_TIME']) && (string)($fields['END_TIME']) !== '')
+			{
+				$fields['START_TIME'] = $fields['END_TIME'];
+				$fields['DEADLINE'] = $fields['END_TIME'];
+			}
+		}
+
+		return new Result();
 	}
 }

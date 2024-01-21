@@ -939,22 +939,23 @@ class ContactCenter
 				}
 
 				//getting connected channel name
-				$channelInfo = $infoConnectors[$configItem["ID"]];
-				try
+				$channelName = '';
+				if (!empty($infoConnectors[$configItem["ID"]]['DATA']))
 				{
-					$channelData = JSON::decode($channelInfo['DATA']);
-					if (isset($channelData[$connectorCode]['name']) && is_string($channelData[$connectorCode]['name']))
+					try
 					{
-						$channelName = trim($channelData[$connectorCode]['name']);
+						$channelData = JSON::decode($infoConnectors[$configItem["ID"]]['DATA']);
+						if (
+							isset($channelData[$connectorCode]['name'])
+							&& is_string($channelData[$connectorCode]['name'])
+						)
+						{
+							$channelName = trim($channelData[$connectorCode]['name']);
+						}
 					}
-					else
+					catch (\Bitrix\Main\ArgumentException $exception)
 					{
-						$channelName = '';
 					}
-				}
-				catch (\Bitrix\Main\ArgumentException $exception)
-				{
-					$channelName = '';
 				}
 
 				$configItem["NAME"] = htmlspecialcharsbx($configItem["NAME"]);

@@ -1,12 +1,11 @@
 <?php
 namespace Bitrix\Crm\Merger;
-use Bitrix\Main;
 use Bitrix\Crm;
-use Bitrix\Crm\Integrity;
-use Bitrix\Crm\Recovery;
-use Bitrix\Crm\Conversion;
 use Bitrix\Crm\Binding;
+use Bitrix\Crm\Conversion;
+use Bitrix\Crm\Recovery;
 use Bitrix\Crm\Timeline;
+use Bitrix\Main;
 
 class LeadMerger extends EntityMerger
 {
@@ -558,6 +557,7 @@ class LeadMerger extends EntityMerger
 		Timeline\MarkEntry::rebind(\CCrmOwnerType::Lead, $seedID, $targID);
 		Timeline\CommentEntry::rebind(\CCrmOwnerType::Lead, $seedID, $targID);
 		Timeline\LogMessageEntry::rebind(\CCrmOwnerType::Lead, $seedID, $targID);
+		Timeline\AI\Call\Entry::rebind(\CCrmOwnerType::Lead, $seedID, $targID);
 
 		Crm\Tracking\Entity::rebindTrace(
 			\CCrmOwnerType::Lead, $seedID,

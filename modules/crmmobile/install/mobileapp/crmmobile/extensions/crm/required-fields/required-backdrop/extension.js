@@ -3,6 +3,7 @@
  */
 
 jn.define('crm/required-fields/required-backdrop', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { EntityManager } = require('layout/ui/entity-editor/manager');
 
 	/**
@@ -26,12 +27,14 @@ jn.define('crm/required-fields/required-backdrop', (require, exports, module) =>
 		{
 			this.layout.enableNavigationBarBorder(false);
 			this.layout.setTitle({ text: BX.message('CRM_REQUIRED_FIELDS') });
-			this.layout.setRightButtons([{
-				name: BX.message('CRM_REQUIRED_SAVE'),
-				type: 'text',
-				color: '#2066b0',
-				callback: this.onSave,
-			}]);
+			this.layout.setRightButtons([
+				{
+					name: BX.message('CRM_REQUIRED_SAVE'),
+					type: 'text',
+					color: AppTheme.colors.accentMainLinks,
+					callback: this.onSave,
+				},
+			]);
 			this.layout.setListener((eventName) => {
 				if (eventName === 'onViewHidden')
 				{
@@ -78,7 +81,6 @@ jn.define('crm/required-fields/required-backdrop', (require, exports, module) =>
 				{
 					style: {
 						flexDirection: 'column',
-						backgroundColor: '#eef2f4',
 					},
 					resizableByKeyboard: true,
 					safeArea: {
@@ -97,7 +99,9 @@ jn.define('crm/required-fields/required-backdrop', (require, exports, module) =>
 			const { editorData } = this.props;
 
 			return EntityManager.create({
-				refCallback: (ref) => this.refEntityManager = ref,
+				refCallback: (ref) => {
+					this.refEntityManager = ref;
+				},
 				componentId: 'crm.tabs',
 				layout: this.layout,
 				editorProps: {

@@ -78,7 +78,11 @@ $groupPopupExists = false;
 
 					if ($counterId)
 					{
-						$arAllItemsCounters[$counterId] = $isCompositeMode ? 0 : $counter;
+						if ($counter > 0)
+						{
+							$arAllItemsCounters[$counterId] = $counter;
+						}
+
 						if ($status == "hide")
 						{
 							$sumHiddenCounters += $counter;
@@ -202,8 +206,8 @@ $groupPopupExists = false;
 							href="<?=(isset($item["PARAMS"]["onclick"])) ? "javascript:void(0)" : $curLink?>"
 							<?if (isset($item["OPEN_IN_NEW_PAGE"]) && ($item["OPEN_IN_NEW_PAGE"] === "Y")):?>
 								target="_blank"
+								data-slider-ignore-autobinding="true"
 							<?endif?>
-							<?= (mb_strpos($curLink, SITE_DIR . 'workgroups/group/') === 0 ? 'data-slider-ignore-autobinding="true"' : '') ?>
 							onclick="<?if (isset($item["PARAMS"]["onclick"])):?>
 								<?=htmlspecialcharsbx($item["PARAMS"]["onclick"])?>
 							<?endif?>">
@@ -402,13 +406,12 @@ include($_SERVER["DOCUMENT_ROOT"].$this->GetFolder()."/menu_popup.php");
 $arJSParams = array(
 	"ajaxPath" => $this->GetFolder()."/ajax.php",
 	"isAdmin" => $arResult["IS_ADMIN"],
-	"hiddenCounters" => $arHiddenItemsCounters,
-	"allCounters" => $arAllItemsCounters,
 	"isExtranet" => $arResult["IS_EXTRANET"] ? "Y" : "N",
 	"isCollapsedMode" => CUserOptions::GetOption("intranet", "left_menu_collapsed") === "Y",
 	"isCustomPresetAvailable" => $arResult["IS_CUSTOM_PRESET_AVAILABLE"] ? "Y" : "N",
 	"customPresetExists" => !empty($arResult["CUSTOM_PRESET_EXISTS"]) ? "Y" : "N",
 	'workgroupsCounterData' => $arResult["WORKGROUP_COUNTER_DATA"],
+	'availablePresetTools' => $arResult['PRESET_TOOLS_AVAILABILITY'],
 );
 ?>
 
@@ -469,6 +472,7 @@ BX.message({
 	MENU_ITEM_MAIN_SECTION_PAGE: '<?=GetMessageJS("MENU_ITEM_MAIN_SECTION_PAGE")?>',
 	MENU_TOP_ITEM_LAST_HIDDEN: '<?=GetMessageJS("MENU_TOP_ITEM_LAST_HIDDEN")?>',
 	MENU_SAVE_CUSTOM_PRESET: '<?=GetMessageJS("MENU_SAVE_CUSTOM_PRESET2")?>',
+	MENU_EDIT_TOOLS: '<?=GetMessageJS("MENU_EDIT_TOOLS")?>',
 	MENU_DELETE_CUSTOM_PRESET: '<?=GetMessageJS("MENU_DELETE_CUSTOM_PRESET")?>',
 	MENU_CUSTOM_PRESET_POPUP_TITLE: '<?=GetMessageJS("MENU_CUSTOM_PRESET_POPUP_TITLE2")?>',
 	MENU_CUSTOM_PRESET_CURRENT_USER: '<?=GetMessageJS("MENU_CUSTOM_PRESET_CURRENT_USER")?>',
@@ -480,6 +484,7 @@ BX.message({
 	MENU_DELETE_CUSTOM_ITEM_FROM_ALL: '<?=GetMessageJS("MENU_DELETE_CUSTOM_ITEM_FROM_ALL")?>',
 	MENU_SETTINGS_MODE: '<?=GetMessageJS("MENU_SETTINGS_MODE")?>',
 	MENU_EDIT_READY_FULL: '<?=GetMessageJS("MENU_EDIT_READY_FULL")?>',
+	MENU_UNAVAILABLE_TOOL_POPUP_DESCRIPTION: '<?=GetMessageJS("MENU_UNAVAILABLE_TOOL_POPUP_DESCRIPTION")?>',
 	COUNTER_PROJECTS_MAJOR: '<?= \Bitrix\Main\Loader::includeModule('tasks') ? CUtil::JSEscape(TasksCounterDictionary::COUNTER_PROJECTS_MAJOR) : "" ?>',
 	COUNTER_SCRUM_TOTAL_COMMENTS: '<?= \Bitrix\Main\Loader::includeModule('tasks') ? CUtil::JSEscape(TasksCounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS) : "" ?>',
 });
@@ -519,12 +524,20 @@ if (
 		BX.Intranet.LeftMenu.initPagetitleStar()
 	});
 }
-
 </script>
 HTML;
 
 
 $APPLICATION->AddViewContent("below_pagetitle", $js, 10);
+
+
+$frame = $this->createFrame()->begin('');
+$counters = $isCompositeMode ? \CUtil::PhpToJSObject($arAllItemsCounters) : '{}';
+?>
+	<script>BX.Intranet.LeftMenu.updateCounters(<?=$counters?>);</script>
+<?
+$frame->end();
+
 
 if ($groupPopupExists):
 ?>
@@ -575,8 +588,3 @@ $filter = CUserOptions::GetOption("intranet", "left_menu_group_filter_".SITE_ID,
 	<div class="sitemap-close-link group-panel-close-link" id="group-panel-close-link"></div>
 </div><?
 endif;
-
-if ($arResult['SHOW_WHATS_NEW'])
-{
-	include(__DIR__ . '/whats-new/left-menu-new-structure.php');
-}

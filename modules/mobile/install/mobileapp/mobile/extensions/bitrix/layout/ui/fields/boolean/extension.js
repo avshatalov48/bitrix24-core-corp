@@ -2,6 +2,7 @@
  * @module layout/ui/fields/boolean
  */
 jn.define('layout/ui/fields/boolean', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Haptics } = require('haptics');
 	const { animate } = require('animation');
 	const { throttle } = require('utils/function');
@@ -16,13 +17,13 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 	};
 
 	const COLORS = {
-		TEXT_DEFAULT: '#333333',
+		TEXT_DEFAULT: AppTheme.colors.base1,
 
-		DEFAULT_TOGGLE: '#d5d7db',
-		ACTIVE_TOGGLE: '#2fc6f6',
+		DEFAULT_TOGGLE: AppTheme.colors.base6,
+		ACTIVE_TOGGLE: AppTheme.colors.accentBrandBlue,
 
-		DEFAULT_ICON: '#bdc1c6',
-		ACTIVE_ICON: '#ffc34d',
+		DEFAULT_ICON: AppTheme.colors.base3,
+		ACTIVE_ICON: AppTheme.colors.accentMainWarning,
 	};
 
 	/**
@@ -199,6 +200,23 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 			);
 		}
 
+		getImage()
+		{
+			const imageUri = this.getConfig()?.iconUri;
+			if (imageUri)
+			{
+				return { uri: this.getImageUrl(imageUri) };
+			}
+
+			const svg = this.getConfig()?.svg;
+			if (svg)
+			{
+				return { svg };
+			}
+
+			return {};
+		}
+
 		renderIcon()
 		{
 			return View(
@@ -210,7 +228,7 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 				},
 				Image({
 					style: this.styles.booleanIcon,
-					uri: this.getImageUrl(this.getConfig().iconUri),
+					...this.getImage(),
 				}),
 			);
 		}
@@ -322,7 +340,7 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 				...styles,
 				description: {
 					flexShrink: 2,
-					color: '#333333',
+					color: AppTheme.colors.base3,
 					fontSize: 16,
 				},
 			};

@@ -27,7 +27,7 @@ if (!empty($arResult['NEED_META_RESTRICTION_NOTE']) && !$arResult['ACTIVE_STATUS
 	$this->SetViewTarget('fb_meta_restriction_note');
 	?>
 	<div class="imconnector-restriction-note">
-		<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_RESTRICTIONS_META_RU')?>
+		<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_RESTRICTIONS_META_RU_MSGVER_1')?>
 	</div>
 	<?php
 	$this->EndViewTarget();
@@ -225,12 +225,12 @@ else:
 					</div>
 					<div class="imconnector-field-box" data-role="more-info">
 						<div class="imconnector-field-main-subtitle imconnector-field-section-main-subtitle">
-							<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_INDEX_TITLE')?>
+							<?= $lang['index_title']?>
 						</div>
 						<div class="imconnector-field-box-content">
 
 							<div class="imconnector-field-box-content-text-light">
-								<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_INDEX_SUBTITLE') ?>
+								<?= $lang['index_subtitle'] ?>
 							</div>
 
 							<ul class="imconnector-field-box-content-text-items">
@@ -241,7 +241,7 @@ else:
 							</ul>
 
 							<div class="imconnector-field-box-content-text-light">
-								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_INDEX_ADDITIONAL_DESCRIPTION')?>
+								<?=$lang['index_additional_description']?>
 							</div>
 
 							<div class="imconnector-field-box-content-btn">

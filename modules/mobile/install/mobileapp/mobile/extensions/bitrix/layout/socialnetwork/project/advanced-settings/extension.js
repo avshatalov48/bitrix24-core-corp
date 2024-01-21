@@ -1,4 +1,7 @@
 (() => {
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
+
 	class AdvancedSettings extends LayoutComponent
 	{
 		constructor(props)
@@ -26,7 +29,7 @@
 					resizableByKeyboard: true,
 					style: {
 						flex: 1,
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgPrimary,
 					},
 				},
 				ScrollView(
@@ -41,7 +44,7 @@
 					View(
 						{
 							style: {
-								backgroundColor: '#ffffff',
+								backgroundColor: AppTheme.colors.bgContentPrimary,
 								borderRadius: 12,
 								paddingVertical: 5,
 								paddingHorizontal: 15,
@@ -52,14 +55,14 @@
 							fields: [
 								new ProjectDescriptionField({
 									value: this.state.description,
-									onChange: text => this.setState({description: text}),
+									onChange: (text) => this.setState({ description: text }),
 								}),
 								(this.state.subjects.length > 1 && new ProjectSubjectField({
 									readOnly: false,
 									value: this.state.subject,
 									subjects: this.state.subjects,
 									parentWidget: this.layoutWidget,
-									onChange: (id, title) => this.setState({subject: id}),
+									onChange: (id, title) => this.setState({ subject: id }),
 								})),
 								new ProjectOwnerField({
 									readOnly: false,
@@ -81,37 +84,37 @@
 								}),
 								new ProjectModeratorsField({
 									readOnly: false,
-									value: this.state.moderatorsData.map(item => item.id),
+									value: this.state.moderatorsData.map((item) => item.id),
 									moderatorsData: this.state.moderatorsData,
 									parentWidget: this.layoutWidget,
 									onChange: (moderatorsIds, moderatorsData) => {
 										if (moderatorsIds)
 										{
-											this.setState({moderatorsData: moderatorsData});
+											this.setState({ moderatorsData });
 										}
 									},
 								}),
 								new ProjectDateStartField({
 									readOnly: false,
 									value: this.state.dateStart,
-									onChange: date => this.setState({dateStart: date}),
+									onChange: (date) => this.setState({ dateStart: date }),
 								}),
 								new ProjectDateFinishField({
 									readOnly: false,
 									value: this.state.dateFinish,
-									onChange: date => this.setState({dateFinish: date}),
+									onChange: (date) => this.setState({ dateFinish: date }),
 								}),
 								new ProjectTagsField({
 									readOnly: false,
 									value: this.state.tags,
 									projectId: 0,
 									parentWidget: this.layoutWidget,
-									onChange: tags => this.setState({tags: tags}),
+									onChange: (tags) => this.setState({ tags }),
 								}),
 								new ProjectInitiatePermsField({
 									value: this.state.initiatePerms,
 									parentWidget: this.layoutWidget,
-									onChange: (id, title) => this.setState({initiatePerms: id}),
+									onChange: (id, title) => this.setState({ initiatePerms: id }),
 								}),
 							],
 						}),
@@ -125,7 +128,7 @@
 			return {
 				name: BX.message('MOBILE_LAYOUT_PROJECT_ADVANCED_SETTINGS_HEADER_BUTTON_NEXT'),
 				callback: this.onSaveButtonClick.bind(this),
-				color: '#0b66c3',
+				color: AppTheme.colors.accentMainLinks,
 			};
 		}
 
@@ -154,13 +157,14 @@
 
 			parentWidget = (parentWidget || PageManager);
 			parentWidget.openWidget('layout', {
+				backgroundColor: AppTheme.colors.bgSecondary,
 				backdrop: {
 					bounceEnable: true,
 					swipeAllowed: true,
 					showOnTop: true,
 					hideNavigationBar: false,
 					horizontalSwipeAllowed: false,
-					navigationBarColor: '#eef2f4',
+					navigationBarColor: AppTheme.colors.bgSecondary,
 				},
 				title: BX.message('MOBILE_LAYOUT_PROJECT_ADVANCED_SETTINGS_HEADER'),
 				onReady: (layoutWidget) => {
@@ -170,7 +174,7 @@
 
 					advancedSettings.layoutWidget = layoutWidget;
 				},
-				onError: error => console.log(error),
+				onError: console.error,
 			});
 		}
 	}

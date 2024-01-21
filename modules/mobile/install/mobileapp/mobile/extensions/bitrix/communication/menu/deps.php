@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'apptheme',
 		'require-lazy',
 		'assets/communication/menu',
 		'communication/connection',

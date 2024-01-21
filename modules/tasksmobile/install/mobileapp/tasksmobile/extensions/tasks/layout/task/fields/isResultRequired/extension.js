@@ -15,6 +15,8 @@ jn.define('tasks/layout/task/fields/isResultRequired', (require, exports, module
 				readOnly: props.readOnly,
 				isResultRequired: props.isResultRequired,
 			};
+
+			this.handleOnChange = this.handleOnChange.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -33,6 +35,12 @@ jn.define('tasks/layout/task/fields/isResultRequired', (require, exports, module
 			});
 		}
 
+		handleOnChange(value)
+		{
+			this.setState({ isResultRequired: value });
+			this.props.onChange(value);
+		}
+
 		render()
 		{
 			return View(
@@ -47,14 +55,11 @@ jn.define('tasks/layout/task/fields/isResultRequired', (require, exports, module
 					config: {
 						deepMergeStyles: this.props.deepMergeStyles,
 						mode: BooleanMode.SWITCHER,
-						description: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_IS_RESULT_REQUIRED'),
+						description: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_IS_RESULT_REQUIRED_MSGVER_1'),
 						showSwitcher: true,
 					},
 					testId: 'isResultRequired',
-					onChange: (value) => {
-						this.setState({ isResultRequired: value });
-						this.props.onChange(value);
-					},
+					onChange: this.handleOnChange,
 				}),
 			);
 		}

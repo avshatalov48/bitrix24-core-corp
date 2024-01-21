@@ -76,6 +76,11 @@ final class Company extends Service\Factory
 		return true;
 	}
 
+	public function isObserversEnabled(): bool
+	{
+		return true;
+	}
+
 	public function isMultiFieldsEnabled(): bool
 	{
 		return true;
@@ -124,6 +129,7 @@ final class Company extends Service\Factory
 			Item::FIELD_NAME_UPDATED_BY => 'MODIFY_BY_ID',
 			Item::FIELD_NAME_TYPE_ID => 'COMPANY_TYPE',
 			Item::FIELD_NAME_CONTACT_IDS => 'CONTACT_ID',
+			Item::FIELD_NAME_OBSERVERS => 'OBSERVER_IDS',
 		];
 	}
 
@@ -284,6 +290,11 @@ final class Company extends Service\Factory
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Multiple],
 				'CLASS' => Field\Multifield::class,
 			],
+			Item::FIELD_NAME_OBSERVERS => [
+				'TYPE' => Field::TYPE_USER,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Multiple],
+				'CLASS' => Field\Observers::class,
+			],
 		];
 	}
 
@@ -407,6 +418,10 @@ final class Company extends Service\Factory
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\FillEntityFieldsContext()
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\ResetEntityCommunicationSettingsInActivities(),
 			)
 		;
@@ -454,6 +469,10 @@ final class Company extends Service\Factory
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\Compatible\SendEvent\Delete('OnAfterCrmCompanyDelete')
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\DeleteEntityFieldsContext()
 			)
 		;
 

@@ -290,6 +290,32 @@ class Template extends Base
 	}
 
 	/**
+	 * Install template if template with the same code does not already exist
+	 *
+	 * @param array $template
+	 * @return Result
+	 */
+	public function installDefaultTemplateIfNotExists(array $template): Result
+	{
+		$code = $template['CODE'] ?? null;
+		if (!empty($code))
+		{
+			$existedRecord = TemplateTable::query()
+				->where('CODE', $code)
+				->setSelect(['ID'])
+				->setLimit(1)
+				->fetch()
+			;
+			if ($existedRecord)
+			{
+				return new Result();
+			}
+		}
+
+		return $this->installDefaultTemplate($template);
+	}
+
+	/**
 	 * Install default template.
 	 *
 	 * @param array $template

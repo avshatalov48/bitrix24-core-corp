@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Component\EntityList\NearestActivity;
 
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
@@ -35,6 +36,7 @@ class Block
 		$preparedGridId = htmlspecialcharsbx(CUtil::JSescape($gridManagerId));
 		$entityTypeId = $this->itemIdentifier->getEntityTypeId();
 		$entityID = $this->itemIdentifier->getEntityId();
+		$categoryId = $this->itemIdentifier->getCategoryId() ?? 0;
 
 		$allowEdit = $this->allowEdit;
 
@@ -84,7 +86,13 @@ class Block
 			if ($allowEdit)
 			{
 				$currentUser = CUtil::PhpToJSObject(CCrmViewHelper::getUserInfo(true, false));
-				$jsOnClick = "BX.CrmUIGridExtension.showActivityAddingPopup(this, '" . $preparedGridId . "', " . (int)$entityTypeId . ", " . (int)$entityID . ", " . $currentUser . ");";
+				$pingSettings = CUtil::PhpToJSObject(
+					(new TodoPingSettingsProvider(
+						$entityTypeId,
+						$categoryId
+					))->fetchForJsComponent()
+				);
+				$jsOnClick = "BX.CrmUIGridExtension.showActivityAddingPopup(this, '" . $preparedGridId . "', " . (int)$entityTypeId . ", " . (int)$entityID . ", " . $currentUser . ", " . $pingSettings . ");";
 				$result .= '<div class="crm-nearest-activity-plus" onclick="' . $jsOnClick . ' return false;"></div>';
 			}
 
@@ -108,7 +116,13 @@ class Block
 		{
 			$hintText = $this->emptyStatePlaceholder;
 			$currentUser = CUtil::PhpToJSObject(CCrmViewHelper::getUserInfo(true, false));
-			$jsOnClick = "BX.CrmUIGridExtension.showActivityAddingPopup(this, '" . $preparedGridId . "', " . (int)$entityTypeId . ", " . (int)$entityID . ", " . $currentUser. ");";
+			$pingSettings = CUtil::PhpToJSObject(
+				(new TodoPingSettingsProvider(
+					$entityTypeId,
+					$categoryId
+				))->fetchForJsComponent()
+			);
+			$jsOnClick = "BX.CrmUIGridExtension.showActivityAddingPopup(this, '" . $preparedGridId . "', " . (int)$entityTypeId . ", " . (int)$entityID . ", " . $currentUser . ", " . $pingSettings . ");";
 
 			return '<span class="crm-activity-add-hint">' . htmlspecialcharsbx($hintText) . '</span>
 				<a class="crm-activity-add" onclick="' . $jsOnClick . ' return false;">' . htmlspecialcharsbx(Loc::getMessage('CRM_ENTITY_ADD_ACTIVITY')) . '</a>';

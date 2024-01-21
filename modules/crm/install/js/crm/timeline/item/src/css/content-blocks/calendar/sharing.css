@@ -1,10 +1,11 @@
 .crm-timeline-calendar-sharing-item-editable,
 .crm-timeline-calendar-sharing-item-non-editable {
 	position: relative;
-	display: inline-flex;
 	flex-direction: row;
 	align-items: center;
 	min-height: 21px;
+	margin-bottom: 5px;
+	width: max-content;
 	padding: 0 9px;
 	font-family: var(--ui-font-family-secondary, --ui-font-family-open-sans, 'Open Sans', sans-serif);
 	font-size: var(--ui-font-size-xs, 12px);

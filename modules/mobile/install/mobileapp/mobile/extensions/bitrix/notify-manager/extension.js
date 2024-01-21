@@ -2,7 +2,6 @@
  * @module notify-manager
  */
 jn.define('notify-manager', (require, exports, module) => {
-
 	const { Haptics } = require('haptics');
 
 	let loadingIndicatorIsShown = false;
@@ -37,10 +36,9 @@ jn.define('notify-manager', (require, exports, module) => {
 			errors = Array.isArray(errors) ? errors : [];
 			errors.forEach((error) => errorsSet.add(error.message));
 
-			const text =
-				errorsSet.size
-					? Array.from(errorsSet).join('\n')
-					: BX.message('DETAIL_CARD_DEFAULT_ERROR2')
+			const text = errorsSet.size > 0
+				? [...errorsSet].join('\n')
+				: BX.message('DETAIL_CARD_DEFAULT_ERROR2')
 			;
 
 			if (loadingIndicatorIsShown)

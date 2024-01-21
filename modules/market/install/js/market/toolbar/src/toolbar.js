@@ -451,7 +451,9 @@ export const Toolbar = {
 							<span class="market-toolbar__nav_text">{{ $Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_FAVORITES_TITLE') }}</span>
 						</a>
 					</div>
-					<div class="market-toolbar__nav_item">
+					<div class="market-toolbar__nav_item"
+						 v-if="$root.showMarketIcon === 'Y'"
+					>
 						<a href="#" class="market-toolbar__nav_link"
 						   @click="openSubscriptionSlider"
 						>

@@ -69,6 +69,7 @@ class CBPCrmUpdateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		$items = $factory->getItems([
 			'select' => ['ID'],
 			'filter' => $this->getOrmFilter($conditionGroup, $targetDocumentType),
+			'limit' => 1,
 		]);
 
 		return $items ? $items[0]->getId() : 0;

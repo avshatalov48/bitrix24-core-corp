@@ -3,13 +3,14 @@
  */
 jn.define('crm/receive-payment/steps/payment-systems/payment-methods', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { PaymentMethodEntry } = require('crm/receive-payment/steps/payment-systems/payment-method-entry');
 	const { NotifyManager } = require('notify-manager');
 	const { BackdropHeader } = require('layout/ui/banners');
 	const { BottomSheet } = require('bottom-sheet');
 	const { handleErrors } = require('crm/error');
-
-	const imagePath = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/payment-system/creation/actions/oauth/images/payment-banner.png`;
+	const { Random } = require('utils/random');
+	const { Oauth } = require('crm/payment-system/creation/actions/oauth');
 
 	/**
 	 * @class PaymentMethods
@@ -52,7 +53,7 @@ jn.define('crm/receive-payment/steps/payment-systems/payment-methods', (require,
 					BackdropHeader({
 						title: Loc.getMessage('M_RP_PS_METHODS_BANNER_TITLE'),
 						description: Loc.getMessage('M_RP_PS_METHODS_DESC'),
-						image: imagePath,
+						image: Oauth.createBannerImage('payments'),
 					}),
 					View(
 						{
@@ -100,28 +101,26 @@ jn.define('crm/receive-payment/steps/payment-systems/payment-methods', (require,
 					.alwaysOnTop()
 					.enableResizeContent()
 					.disableContentSwipe()
-					.open()
-				;
-			})
-				.catch((response) => {
-					NotifyManager.hideLoadingIndicatorWithoutFallback();
-					handleErrors(response);
-				});
+					.open();
+			}).catch((response) => {
+				NotifyManager.hideLoadingIndicatorWithoutFallback();
+				handleErrors(response);
+			});
 		}
 	}
 
 	const styles = {
 		backdrop: {
-			backgroundColor: '#EEF2F4',
+			backgroundColor: AppTheme.colors.bgPrimary,
 			flex: 1,
 		},
 		container: {
 			flex: 1,
-			backgroundColor: '#EEF2F4',
+			backgroundColor: AppTheme.colors.bgPrimary,
 			borderRadius: 12,
 		},
 		items: {
-			backgroundColor: '#FFFFFF',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			borderRadius: 12,
 			paddingBottom: 10,
 			marginTop: 10,

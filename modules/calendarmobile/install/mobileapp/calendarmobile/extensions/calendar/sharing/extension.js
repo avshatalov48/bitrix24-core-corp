@@ -2,18 +2,22 @@
  * @module calendar/sharing
  */
 jn.define('calendar/sharing', (require, exports, module) => {
-
-	const { SharingAjax } = jn.require('calendar/ajax');
-	const { ModelSharing, ModelSharingStatus, ModelRestrictionStatus } = jn.require('calendar/model/sharing');
+	const { SharingAjax } = require('calendar/ajax');
+	const { ModelSharing, ModelSharingStatus, ModelRestrictionStatus, SharingContext } = require('calendar/model/sharing');
 
 	/**
 	 * @class Sharing
 	 */
 	class Sharing
 	{
-		constructor()
+		constructor(props = {})
 		{
-			this.model = new ModelSharing();
+			this.model = new ModelSharing(props.type);
+
+			if (props.sharingInfo)
+			{
+				this.initFromProps(props.sharingInfo);
+			}
 		}
 
 		getModel()
@@ -21,60 +25,79 @@ jn.define('calendar/sharing', (require, exports, module) => {
 			return this.model;
 		}
 
+		initFromProps(sharingInfo)
+		{
+			const data = {
+				shortUrl: BX.prop.getString(sharingInfo, 'shortUrl', null),
+				isRestriction: BX.prop.getBoolean(sharingInfo, 'isRestriction', true),
+				isEnabled: BX.prop.getBoolean(sharingInfo, 'isEnabled', false),
+				settings: BX.prop.getObject(sharingInfo, 'settings', {}),
+			};
+
+			this.model.setFields(data);
+		}
+
 		init()
 		{
 			return new Promise((resolve) => {
+				// eslint-disable-next-line promise/catch-or-return
 				SharingAjax.isEnabled().then((response) => {
-					if (response.errors && response.errors.length)
-					{
-						// do noting
-					}
-					else
+					if (!(response.errors && response.errors.length > 0))
 					{
 						const fields = this.resolveAjaxResponse(response);
 						this.model.setFields(fields);
 					}
 
-					resolve(response)
-				})
+					resolve(response);
+				});
+			});
+		}
+
+		initCrm(entityTypeId, entityId)
+		{
+			return new Promise((resolve) => {
+				// eslint-disable-next-line promise/catch-or-return
+				SharingAjax.initCrm({ entityTypeId, entityId }).then((response) => {
+					if (!(response.errors && response.errors.length > 0))
+					{
+						const fields = this.resolveAjaxResponse(response);
+						this.model.setFields(fields);
+					}
+
+					resolve(response);
+				});
 			});
 		}
 
 		on()
 		{
 			return new Promise((resolve) => {
+				// eslint-disable-next-line promise/catch-or-return
 				SharingAjax.enable().then((response) => {
-					if (response.errors && response.errors.length)
+					if (!(response.errors && response.errors.length > 0))
 					{
-						// do noting
-					}
-					else
-					{
-						const {status, publicShortUrl} = this.resolveAjaxResponse(response);
-						this.model.setFields({status, publicShortUrl});
+						const fields = this.resolveAjaxResponse(response);
+						this.model.setFields(fields);
 					}
 
-					resolve(response)
-				})
+					resolve(response);
+				});
 			});
 		}
 
 		off()
 		{
 			return new Promise((resolve) => {
+				// eslint-disable-next-line promise/catch-or-return
 				SharingAjax.disable().then((response) => {
-					if (response.errors && response.errors.length)
+					if (!(response.errors && response.errors.length > 0))
 					{
-						// do noting
-					}
-					else
-					{
-						const {status} = this.resolveAjaxResponse(response);
-						this.model.setFields({status});
+						const fields = this.resolveAjaxResponse(response);
+						this.model.setFields(fields);
 					}
 
-					resolve(response)
-				})
+					resolve(response);
+				});
 			});
 		}
 
@@ -90,19 +113,9 @@ jn.define('calendar/sharing', (require, exports, module) => {
 
 		resolveAjaxResponse(response)
 		{
-			const result = {};
-			result.publicShortUrl = BX.prop.getString(response.data.sharing, 'shortUrl', null);
-			result.restrictionStatus = BX.prop.getString(response.data.sharing, 'isRestriction', true)
-				? ModelRestrictionStatus.ENABLE
-				: ModelRestrictionStatus.DISABLE
-			;
-			result.status = BX.prop.getBoolean(response.data.sharing, 'isEnabled', false)
-				? ModelSharingStatus.ENABLE
-				: ModelSharingStatus.DISABLE
-			;
-			return result
+			return response.data;
 		}
 	}
 
-	module.exports = { Sharing };
+	module.exports = { Sharing, SharingContext };
 });

@@ -3,7 +3,10 @@
  */
 jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
+	const { EmptyScreen } = require('layout/ui/empty-screen');
 	const { openChat } = require('crm/entity-tab/type/traits/open-chat');
+
 	/**
 	 * @class Base
 	 */
@@ -63,7 +66,7 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 					value: text,
 					linksUnderline: false,
 					style: {
-						color: '#525c69',
+						color: AppTheme.colors.base2,
 						fontSize: 15,
 						textAlign: 'center',
 						lineHeightMultiple: 1.2,
@@ -105,22 +108,18 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 		getEmptyColumnScreenTitle()
 		{
 			const entityTypeName = this.getName();
-			const messageCodeVer1 = `M_CRM_ENTITY_TAB_COLUMN_EMPTY_${entityTypeName}_TITLE_MSGVER_1`;
-			if (Loc.hasMessage(messageCodeVer1))
-			{
-				return Loc.getMessage(messageCodeVer1);
-			}
 
-			return Loc.getMessage(`M_CRM_ENTITY_TAB_COLUMN_EMPTY_${entityTypeName}_TITLE`);
+			return this.getLastMessageVer(`M_CRM_ENTITY_TAB_COLUMN_EMPTY_${entityTypeName}_TITLE`);
 		}
 
 		getEmptyColumnScreenDescription()
 		{
 			const entityTypeName = this.getName();
-			return this.getLastMessageVer(`M_CRM_ENTITY_TAB_COLUMN_EMPTY_${entityTypeName}_DESCRIPTION`)
+
+			return this.getLastMessageVer(`M_CRM_ENTITY_TAB_COLUMN_EMPTY_${entityTypeName}_DESCRIPTION`);
 		}
 
-		getUnsuitableStageScreenConfig(data)
+		getUnsuitableStageScreenConfig()
 		{
 			return {
 				title: this.getColumnUnsuitableForFilterTitle(),
@@ -133,14 +132,14 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 		{
 			const entityTypeName = this.getName();
 
-			return Loc.getMessage(`M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_${entityTypeName}`);
+			return this.getLastMessageVer(`M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_${entityTypeName}`);
 		}
 
 		getColumnUnsuitableForFilterDescription()
 		{
 			const entityTypeName = this.getName();
 
-			return Loc.getMessage(`M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_DESCRIPTION_${entityTypeName}`);
+			return this.getLastMessageVer(`M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_DESCRIPTION_${entityTypeName}`);
 		}
 
 		getEmptyImage()
@@ -150,28 +149,20 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 					width: 218,
 					height: 178,
 				},
-				uri: this.getPathToIcon(),
+				svg: {
+					uri: this.getPathToIcon(),
+				},
 			};
 		}
 
 		getPathToIcon()
 		{
-			return `${this.getPathToImages() + this.getIconName()}.png`;
+			return EmptyScreen.makeLibraryImagePath(`${this.getIconName()}.svg`, 'crm');
 		}
 
 		getIconName()
 		{
-			return 'common';
-		}
-
-		/**
-		 * @returns {String}
-		 */
-		getPathToImages()
-		{
-			const pathToExtension = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/entity-tab/type/`;
-
-			return `${pathToExtension}images/`;
+			return 'kanban';
 		}
 
 		/**
@@ -231,6 +222,7 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 					id: itemId,
 					typeId: this.getId(),
 					categoryId: this.getCategoryId(),
+					reminders: this.params.reminders,
 				},
 				user: this.getUserInfo(),
 			})).openActivityEditor();
@@ -284,15 +276,13 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 			return Loc.getMessage('M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION', {
 				'#URL#': this.getCommunicationChannelsRedirectUrl(),
 				'#MANY_ENTITY_TYPE_TITLE#': this.getManyEntityTypeTitle(),
-				'#SINGLE_ENTITY_TYPE_TITLE#': this.getSingleEntityTypeTitle()
+				'#SINGLE_ENTITY_TYPE_TITLE#': this.getSingleEntityTypeTitle(),
 			});
 		}
 
 		getManyEntityTypeTitle()
 		{
 			const entityTypeName = (this.getName() || 'COMMON');
-
-
 
 			return this.getLastMessageVer(`M_CRM_ENTITY_TAB_ENTITY_EMPTY_MANY_${entityTypeName}`);
 		}
@@ -301,7 +291,7 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 		{
 			const entityTypeName = (this.getName() || 'COMMON');
 
-			return Loc.getMessage(`M_CRM_ENTITY_TAB_ENTITY_EMPTY_SINGLE_${entityTypeName}`);
+			return this.getLastMessageVer(`M_CRM_ENTITY_TAB_ENTITY_EMPTY_SINGLE_${entityTypeName}`);
 		}
 
 		getMenuActions()
@@ -315,7 +305,8 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 			{
 				return Loc.getMessage(messageCode);
 			}
-			let messageWithVerText = `${messageCode}_MSGVER_`;
+
+			const messageWithVerText = `${messageCode}_MSGVER_`;
 			for (let ver = 1; ver <= verLimit; ver++)
 			{
 				if (Loc.hasMessage(messageWithVerText + ver.toString()))
@@ -330,8 +321,9 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 
 	function abstract(msg)
 	{
-		msg = msg || 'Abstract method must be implemented in child class';
-		throw new Error(msg);
+		const message = msg || 'Abstract method must be implemented in child class';
+
+		throw new Error(message);
 	}
 
 	module.exports = { Base };

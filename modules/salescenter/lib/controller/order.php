@@ -28,10 +28,8 @@ use Bitrix\Crm\Order\PersonType;
 use Bitrix\Crm\RequisiteAddress;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Sale\Delivery;
-use Bitrix\ImOpenLines;
 use Bitrix\Sale\Helpers\Order\Builder\Converter\CatalogJSProductForm;
 use Bitrix\Sale\PaySystem\PaymentAvailablesPaySystems;
-use Bitrix\Sale\Tax\VatCalculator;
 use Bitrix\SalesCenter\Component\VatRate;
 use CCrmLead;
 use CCrmOwnerType;
@@ -746,12 +744,126 @@ class Order extends Base
 		$converter->convert();
 	}
 
+	public function createTerminalPaymentAction(array $basketItems = [], array $options = [])
+	{
+		$ownerTypeId = (int)$options['ownerTypeId'];
+		$ownerId = (int)$options['ownerId'];
+
+		$factory = Crm\Service\Container::getInstance()->getFactory($ownerTypeId);
+		$item = $factory?->getItem($ownerId);
+		if (!$item)
+		{
+			$this->addError(new Error(
+				Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_TERMINAL_PAYMENT_CREATION_ERROR')
+			));
+			return [];
+		}
+
+		$paymentOptions = [
+			'currency' => $options['currency'],
+			'responsibleId' => (int)$options['paymentResponsibleId'],
+			'entity' => new ItemIdentifier($ownerTypeId, $ownerId),
+		];
+
+		$primaryContact = $item->getPrimaryContact();
+		if ($primaryContact)
+		{
+			$primaryContactId = $primaryContact->getId();
+
+			$contactPhoneNumber = CrmManager::getContactPhoneFormat($primaryContactId);
+			if ($contactPhoneNumber)
+			{
+				$paymentOptions['phoneNumber'] = $contactPhoneNumber;
+			}
+		}
+
+		$basketItems = VatRate::prepareTaxPrices($basketItems);
+		$basketItems = $this->processBasketItems($basketItems);
+		$products = CatalogJSProductForm::convertToBuilderFormat($basketItems);
+
+		$paymentResult = Container::getInstance()->getTerminalPaymentService()->createByProducts(
+			$products,
+			Crm\Service\Sale\Terminal\CreatePaymentOptions::createFromArray($paymentOptions),
+		);
+
+		if (!$paymentResult->isSuccess())
+		{
+			$this->addErrors($paymentResult->getErrors());
+
+			return [];
+		}
+
+		/* @var Sale\Payment $payment */
+		$payment = $paymentResult->getData()['payment'];
+		$order = $payment->getOrder();
+
+		if (isset($options['stageOnOrderPaid']))
+		{
+			CrmManager::getInstance()->saveTriggerOnOrderPaid(
+				$ownerId,
+				$ownerTypeId,
+				$options['stageOnOrderPaid']
+			);
+		}
+
+		$productManager = new Crm\Order\ProductManager((int)$options['ownerTypeId'], (int)$options['ownerId']);
+		$productManager->setOrder($order)->syncOrderProducts($basketItems);
+
+		$data = [
+			'order' => [
+				'number' => $order->getField('ACCOUNT_NUMBER'),
+				'id' => $order->getId(),
+				'paymentId' => $payment->getId(),
+			],
+		];
+
+		if ($ownerTypeId === CCrmOwnerType::Deal)
+		{
+			// back compatibility ??
+			$data['deal'] = $this->getEntityData($ownerTypeId, $ownerId);
+		}
+
+		$data['entity'] = $this->getEntityData($ownerTypeId, $ownerId);
+
+		return $data;
+	}
+
+	public function updateTerminalPaymentAction(int $paymentId, array $options = [])
+	{
+		$updateOptions =
+			(new Crm\Service\Sale\Terminal\UpdatePaymentOptions())
+				->setResponsibleId($options['paymentResponsibleId'])
+		;
+
+		$updateResult = Container::getInstance()->getTerminalPaymentService()->update($paymentId, $updateOptions);
+		if (!$updateResult->isSuccess())
+		{
+			$this->addErrors($updateResult->getErrors());
+
+			return [];
+		}
+
+		/* @var Sale\Payment $payment */
+		$payment = $updateResult->getData()['payment'];
+		$order = $payment->getOrder();
+
+		$data = [
+			'order' => [
+				'number' => $order->getField('ACCOUNT_NUMBER'),
+				'id' => $order->getId(),
+				'paymentId' => $payment->getId(),
+			],
+		];
+
+		return $data;
+	}
+
 	/**
 	 * @param array $basketItems
 	 * @param array $options
 	 * @return array|null
 	 */
-	public function createPaymentAction(array $basketItems = array(), array $options = [])
+	public function createPaymentAction(array $basketItems = [], array $options = [])
 	{
 		if (Bitrix24Manager::getInstance()->isPaymentsLimitReached())
 		{
@@ -1057,7 +1169,7 @@ class Order extends Base
 	 * @param array $options
 	 * @return array|null
 	 */
-	public function createShipmentAction(array $basketItems = array(), array $options = [])
+	public function createShipmentAction(array $basketItems = [], array $options = [])
 	{
 		if ((int)$options['orderId'] <= 0 && CrmManager::getInstance()->isOrderLimitReached())
 		{

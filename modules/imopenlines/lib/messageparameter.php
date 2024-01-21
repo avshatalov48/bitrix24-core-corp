@@ -23,7 +23,8 @@ class MessageParameter
 		IMOL_TIME_LIMIT_VOTE = 'IMOL_TIME_LIMIT_VOTE',
 		IMOL_VOTE_SID = 'IMOL_VOTE_SID',
 		IMOL_VOTE_USER = 'IMOL_VOTE_USER',
-		IMOL_SID = 'IMOL_SID'
+		IMOL_SID = 'IMOL_SID',
+		IMOL_FORCE_OPERATOR = 'IMOL_FORCE_OPERATOR'
 	;
 
 	public static function onInitTypes(Event $event): EventResult
@@ -89,6 +90,10 @@ class MessageParameter
 			],
 			// OL session Id
 			self::IMOL_SID => [
+				'type' => Param::TYPE_INT,
+			],
+			// OL operator Id
+			self::IMOL_FORCE_OPERATOR => [
 				'type' => Param::TYPE_INT,
 			],
 		];

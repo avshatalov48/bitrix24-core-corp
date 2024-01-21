@@ -423,13 +423,13 @@ abstract class DocumentHandler implements IErrorable
 		return true;
 	}
 
-	protected function recoverExtensionInName(&$fileName, $mimeType)
+	protected function recoverExtensionInName(string &$fileName, string $mimeType): bool
 	{
 		$originalExtension = TypeFile::getExtensionByMimeType($mimeType);
 		$newExtension = mb_strtolower(trim(getFileExtension($fileName), '.'));
-		if ($originalExtension != $newExtension)
+		if ($originalExtension !== $newExtension)
 		{
-			$fileName = getFileNameWithoutExtension($fileName) . '.' . $originalExtension;
+			$fileName .= '.' . $originalExtension;
 
 			return true;
 		}

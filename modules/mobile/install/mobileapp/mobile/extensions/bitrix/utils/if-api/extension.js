@@ -1,14 +1,12 @@
 (() => {
-
-	let resolveArgs = function ()
-	{
+	const resolveArgs = function() {
 		let version = null;
 		let func = null;
-		let functionDetect = (arg) =>
-		{
-			if (typeof arg !== "function")
+
+		const functionDetect = (arg) => {
+			if (typeof arg !== 'function')
 			{
-				throw new Error("The argument must be \"function\" type" + arg);
+				throw new TypeError(`The argument must be "function" type ${arg}`);
 			}
 
 			return arg;
@@ -16,7 +14,7 @@
 
 		if (arguments.length === 0)
 		{
-			throw new Error("Arguments not passed");
+			throw new Error('Arguments not passed');
 		}
 
 		if (arguments.length === 1)
@@ -29,7 +27,7 @@
 			version = arguments[0];
 		}
 
-		return {func, version}
+		return { func, version };
 	};
 
 	class apiExec
@@ -39,7 +37,7 @@
 			this.func = func;
 			this.ver = ver;
 			this.preventElse = false;
-			this.executeFunction()
+			this.executeFunction();
 		}
 
 		/**
@@ -55,7 +53,7 @@
 				return this;
 			}
 
-			return this.next.apply(this, arguments)
+			return this.next.apply(this, arguments);
 		}
 
 		/**
@@ -71,8 +69,7 @@
 				return this;
 			}
 
-			return this.next.call(this, null, func)
-
+			return this.next.call(this, null, func);
 		}
 
 		/**
@@ -81,36 +78,34 @@
 		 */
 		next(ver = null, func = null)
 		{
-			let resolvedArgs = resolveArgs.apply(null, arguments);
-			this.ver = resolvedArgs["version"];
-			this.func = resolvedArgs["func"];
+			const resolvedArgs = resolveArgs.apply(null, arguments);
+			this.ver = resolvedArgs.version;
+			this.func = resolvedArgs.func;
 			this.executeFunction();
+
 			return this;
 		}
 
 		executeFunction()
 		{
-			if (this.ver !== false)
-			{
-				if (Application.getApiVersion() >= this.ver || this.ver == null)
-				{
-					this.preventElse = true;
-					this.func.apply();
-				}
-			}
-			else
+			if (this.ver === false)
 			{
 				this.preventElse = true;
+			}
+			else if (Application.getApiVersion() >= this.ver || this.ver == null)
+			{
+				this.preventElse = true;
+				this.func.apply();
 			}
 		}
 
 		static call()
 		{
-			let resolvedArgs = resolveArgs.apply(null, arguments);
-			return new apiExec(resolvedArgs["version"], resolvedArgs["func"]);
+			const resolvedArgs = resolveArgs.apply(null, arguments);
+
+			return new apiExec(resolvedArgs.version, resolvedArgs.func);
 		}
 	}
 
 	window.ifApi = apiExec.call;
-
 })();

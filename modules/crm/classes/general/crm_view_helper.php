@@ -1,6 +1,8 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Color\PhaseColorScheme;
 use Bitrix\Crm\Conversion\LeadConversionType;
@@ -562,7 +564,8 @@ class CCrmViewHelper
 
 		$entityTypeName = isset($arParams['ENTITY_TYPE_NAME'])? mb_strtolower($arParams['ENTITY_TYPE_NAME']) : '';
 		$entityTypeId = CCrmOwnerType::ResolveID($arParams['ENTITY_TYPE_NAME']);
-		$entityID = isset($arParams['ENTITY_ID']) ? $arParams['ENTITY_ID'] : '';
+		$entityID = $arParams['ENTITY_ID'] ?? '';
+		$categoryId = $arParams['CATEGORY_ID'] ?? 0;
 
 		$allowEdit = isset($arParams['ALLOW_EDIT']) ? $arParams['ALLOW_EDIT'] : false;
 		$menuItems = isset($arParams['MENU_ITEMS']) ? $arParams['MENU_ITEMS'] : array();
@@ -626,7 +629,13 @@ class CCrmViewHelper
 					if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled())
 					{
 						$currentUser = CUtil::PhpToJSObject(static::getUserInfo(true, false));
-						$jsOnClick = "BX.CrmUIGridExtension.showActivityAddingPopup(this, '".$preparedGridId."', " . (int)$entityTypeId . ", " . (int)$entityID . ", " . $currentUser . ");";
+						$pingSettings = CUtil::PhpToJSObject(
+							(new TodoPingSettingsProvider(
+								$entityTypeId,
+								$categoryId
+							))->fetchForJsComponent()
+						);
+						$jsOnClick = "BX.CrmUIGridExtension.showActivityAddingPopup(this, '".$preparedGridId."', " . (int)$entityTypeId . ", " . (int)$entityID . ", " . $currentUser . ", " . $pingSettings . ");";
 					}
 					else
 					{
@@ -694,7 +703,13 @@ class CCrmViewHelper
 				if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled())
 				{
 					$currentUser = CUtil::PhpToJSObject(static::getUserInfo(true, false));
-					$jsOnClick = "BX.CrmUIGridExtension.showActivityAddingPopup(this, '".$preparedGridId."', " . (int)$entityTypeId . ", " . (int)$entityID . ", " . $currentUser . ");";
+					$pingSettings = CUtil::PhpToJSObject(
+						(new TodoPingSettingsProvider(
+							$entityTypeId,
+							$categoryId
+						))->fetchForJsComponent()
+					);
+					$jsOnClick = "BX.CrmUIGridExtension.showActivityAddingPopup(this, '".$preparedGridId."', " . (int)$entityTypeId . ", " . (int)$entityID . ", " . $currentUser . ", " . $pingSettings . ");";
 				}
 				else
 				{
@@ -3336,12 +3351,19 @@ class CCrmViewHelper
 			. 'BX.ready(' . PHP_EOL
 			. '    function ()' . PHP_EOL
 			. '    {' . PHP_EOL
+			. '       const detectCrmSliderWidth = function () {' . PHP_EOL
+			. '           if (window.innerWidth < 1500) {'. PHP_EOL
+			. '               return null;' . PHP_EOL
+			. '           }' . PHP_EOL
+			. '           return 1500 + Math.floor((window.innerWidth - 1500) / 3);' . PHP_EOL
+			. '        };' . PHP_EOL
 			. '        BX.Crm.Page.initialize();' . PHP_EOL
 			. '        BX.SidePanel.Instance.open(' . PHP_EOL
 			. "            \"$url\"," . PHP_EOL
 			. '            {' . PHP_EOL
 			. '                cacheable: false,' . PHP_EOL
 			. '                loader: "crm-entity-details-loader",' . PHP_EOL
+			. '                width: detectCrmSliderWidth(),' . PHP_EOL
 			. '                events: {' . PHP_EOL
 			. '                    onCloseComplete: function () {' . PHP_EOL
 			. '                        let themePicker = '. PHP_EOL

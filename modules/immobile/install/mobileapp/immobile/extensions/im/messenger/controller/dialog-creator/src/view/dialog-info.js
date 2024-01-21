@@ -9,9 +9,9 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 	const { cross } = require('im/messenger/assets/common');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
+	const AppTheme = require('apptheme');
 
-
-	const previewIcon = `<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M40 80C62.0914 80 80 62.0914 80 40C80 17.9086 62.0914 0 40 0C17.9086 0 0 17.9086 0 40C0 62.0914 17.9086 80 40 80Z" fill="#D7D7D7"/><path fill-rule="evenodd" clip-rule="evenodd" d="M55.75 28.75H47.875C47.3125 26.5 46.75 24.25 44.5 24.25H35.5C33.25 24.25 32.6875 26.5 32.125 28.75H24.25C23.0125 28.75 22 29.7625 22 31V51.25C22 52.4875 23.0125 53.5 24.25 53.5H55.75C56.9874 53.5 58 52.4875 58 51.25V31C57.9999 29.7625 56.9874 28.75 55.75 28.75ZM33.9367 41.1974C33.9367 44.577 36.6764 47.3167 40.056 47.3167C43.4355 47.3167 46.1753 44.577 46.1753 41.1974C46.1753 37.8178 43.4356 35.0782 40.056 35.0782C36.6764 35.0782 33.9367 37.8178 33.9367 41.1974ZM40.056 49.5526C35.4416 49.5526 31.7008 45.8119 31.7008 41.1974C31.7008 36.583 35.4415 32.8422 40.056 32.8422C44.6705 32.8422 48.4112 36.5829 48.4112 41.1974C48.4111 45.8119 44.6705 49.5526 40.056 49.5526ZM54.9554 33.6663H51.8658V31.5738H54.9554V33.6663Z" fill="white"/></svg>`;
+	const previewIcon = `<svg width="76" height="76" viewBox="0 0 76 76" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="76" height="76" rx="38" fill="${AppTheme.colors.bgContentTertiary}"/><path fill-rule="evenodd" clip-rule="evenodd" d="M48.5509 30.6862H43.2754C42.8986 29.2028 42.5218 27.7194 41.0145 27.7194H34.9855C33.4782 27.7194 33.1014 29.2028 32.7246 30.6862H27.4491C26.6202 30.6862 25.9419 31.3538 25.9419 32.1696V45.5202C25.9419 46.3361 26.6202 47.0036 27.4491 47.0036H48.5509C49.3799 47.0036 50.0582 46.3361 50.0582 45.5202V32.1696C50.0581 31.3538 49.3799 30.6862 48.5509 30.6862ZM34.1328 38.6111C34.1328 40.7131 35.8642 42.4171 38 42.4171C40.1358 42.4171 41.8673 40.7131 41.8673 38.6111C41.8673 36.5091 40.1359 34.8051 38 34.8051C35.8642 34.8051 34.1328 36.5091 34.1328 38.6111ZM38 43.8078C35.0838 43.8078 32.7197 41.4812 32.7197 38.6111C32.7197 35.741 35.0838 33.4144 38 33.4144C40.9163 33.4144 43.2803 35.741 43.2803 38.6111C43.2803 41.4812 40.9163 43.8078 38 43.8078ZM47.4512 34.3456H45.4987V33.0441H47.4512V34.3456Z" fill="${AppTheme.colors.base5}"/></svg>`;
 
 	class DialogInfoView extends LayoutComponent
 	{
@@ -39,13 +39,18 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 				View(
 					{
 						style: {
-							paddingTop: 15,
-							paddingLeft: 20,
+							paddingTop: 16,
+							paddingLeft: 18,
+							paddingBottom: 16,
+							paddingRight: 18,
 							flexDirection: 'row',
 							alignItems: 'center',
 							flexWrap: 2,
-							justifyContent: 'space-between'
-						}
+							justifyContent: 'space-between',
+							backgroundColor: AppTheme.colors.bgContentPrimary,
+							borderRadius: 12,
+							marginBottom: 20,
+						},
 					},
 					this.getAvatarButton(),
 
@@ -65,28 +70,8 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 							flex: 1
 						}
 					},
-					View(
-						{
-							style: {
-								backgroundColor: '#f6f7f8',
-								paddingLeft: 15,
-								marginTop: 15,
-								height: 30,
-								alignContent: 'center',
-
-							}
-						},
-						Text(
-							{
-								style: {
-									marginTop: 5,
-									color: '#666'
-								},
-								text: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_RECIPIENT_COUNT') + recipientList.length,
-							}
-						)
-					),
 					new List({
+						recentText: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_RECIPIENT_COUNT') + recipientList.length,
 						itemList: recipientList,
 						isScrollable: () => recipientList.length > 6,
 					}),
@@ -99,7 +84,6 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 			const recipientList = [];
 			recipientList.push(this.getCreatorItem());
 
-			console.log(this.dialogDTO.getRecipientList());
 			return recipientList.concat(
 				this.dialogDTO
 					.getRecipientList()
@@ -132,7 +116,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 		{
 			const creatorData = this.store.getters['usersModel/getById'](MessengerParams.getUserId());
 
-			const chatTitle = ChatTitle.createFromDialogId(MessengerParams.getUserId(), {showItsYou: true});
+			const chatTitle = ChatTitle.createFromDialogId(MessengerParams.getUserId());
 			const chatAvatar = ChatAvatar.createFromDialogId(MessengerParams.getUserId());
 
 			return {
@@ -142,6 +126,8 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 					subtitle: chatTitle.getDescription(),
 					avatarUri: chatAvatar.getAvatarUrl(),
 					avatarColor: creatorData.color,
+					isYou: true,
+					isYouTitle: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_IS_YOU'),
 				},
 				type: 'chats',
 				selected: false,
@@ -170,9 +156,9 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 				Image(
 					{
 						style: {
-							height: 80,
-							width: 80,
-							borderRadius: 40,
+							height: 76,
+							width: 76,
+							borderRadius: 38,
 						},
 						resizeMode: 'cover',
 						uri: this.state.avatar,
@@ -212,17 +198,17 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 						flexDirection: 'row',
 						flexGrow: 2,
 						borderBottomWidth: 1,
-						borderBottomColor: '#e9e9e9',
+						borderBottomColor: AppTheme.colors.bgSeparatorSecondary,
 					},
 				},
 				TextField({
 					placeholder: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_CHAT_TITLE_PLACEHOLDER'),
-					placeholderTextColor: '#cacacb',
+					placeholderTextColor: AppTheme.colors.base5,
 					value: this.dialogDTO.getTitle(),
 					multiline: false,
 					style: {
 						flexGrow: 2,
-						color: '#333333',
+						color: AppTheme.colors.base1,
 						fontSize: 18,
 						marginRight: 5,
 					},
@@ -243,8 +229,8 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 				View(
 					{
 						style: {
-							marginRight: 10,
 							justifyContent: 'flex-end',
+							marginBottom: 4,
 						},
 						clickable: true,
 						onClick: () => {
@@ -260,7 +246,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 							},
 							resizeMode: 'contain',
 							svg: {
-								content: cross({ color: '#cbcbcb', strokeWight: 0 }),
+								content: cross({ color: AppTheme.colors.base4, strokeWight: 0 }),
 							},
 						}
 					),

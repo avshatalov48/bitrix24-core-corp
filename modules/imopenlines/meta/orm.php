@@ -1,6 +1,6 @@
 <?php
 
-/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\DialogStatTable:imopenlines/lib/integrations/report/statistics/entity/dialogstat.php:9b0ca97d6da69753bb73429e4b39ab90 */
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\DialogStatTable:imopenlines\lib\integrations\report\statistics\entity\dialogstat.php */
 namespace Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity {
 	/**
 	 * EO_DialogStat
@@ -227,6 +227,8 @@ namespace Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_DialogStat_Collection merge(?EO_DialogStat_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_DialogStat_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\DialogStatTable */
@@ -260,7 +262,7 @@ namespace Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity {
 	 */
 	class EO_DialogStat_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\StatisticQueueTable:imopenlines/lib/integrations/report/statistics/entity/statisticqueue.php:526a02160bf11664f71e331be0ca83cb */
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\StatisticQueueTable:imopenlines\lib\integrations\report\statistics\entity\statisticqueue.php */
 namespace Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity {
 	/**
 	 * EO_StatisticQueue
@@ -391,6 +393,8 @@ namespace Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_StatisticQueue_Collection merge(?EO_StatisticQueue_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_StatisticQueue_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\StatisticQueueTable */
@@ -424,7 +428,7 @@ namespace Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity {
 	 */
 	class EO_StatisticQueue_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\TreatmentByHourStatTable:imopenlines/lib/integrations/report/statistics/entity/treatmentbyhourstat.php:c49d90a3fb9151bd765c30d3bf2c2985 */
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\TreatmentByHourStatTable:imopenlines\lib\integrations\report\statistics\entity\treatmentbyhourstat.php */
 namespace Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity {
 	/**
 	 * EO_TreatmentByHourStat
@@ -537,6 +541,8 @@ namespace Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_TreatmentByHourStat_Collection merge(?EO_TreatmentByHourStat_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_TreatmentByHourStat_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity\TreatmentByHourStatTable */
@@ -570,7 +576,137 @@ namespace Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity {
 	 */
 	class EO_TreatmentByHourStat_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\ConfigTable:imopenlines/lib/model/config.php:7a9a132ebd5a634fbb3d742b495d3ace */
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\ChatIndexTable:imopenlines\lib\model\chatindex.php */
+namespace Bitrix\ImOpenLines\Model {
+	/**
+	 * EO_ChatIndex
+	 * @see \Bitrix\ImOpenLines\Model\ChatIndexTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getChatId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_ChatIndex setChatId(\int|\Bitrix\Main\DB\SqlExpression $chatId)
+	 * @method bool hasChatId()
+	 * @method bool isChatIdFilled()
+	 * @method bool isChatIdChanged()
+	 * @method \string getSearchTitle()
+	 * @method \Bitrix\ImOpenLines\Model\EO_ChatIndex setSearchTitle(\string|\Bitrix\Main\DB\SqlExpression $searchTitle)
+	 * @method bool hasSearchTitle()
+	 * @method bool isSearchTitleFilled()
+	 * @method bool isSearchTitleChanged()
+	 * @method \string remindActualSearchTitle()
+	 * @method \string requireSearchTitle()
+	 * @method \Bitrix\ImOpenLines\Model\EO_ChatIndex resetSearchTitle()
+	 * @method \Bitrix\ImOpenLines\Model\EO_ChatIndex unsetSearchTitle()
+	 * @method \string fillSearchTitle()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\ImOpenLines\Model\EO_ChatIndex set($fieldName, $value)
+	 * @method \Bitrix\ImOpenLines\Model\EO_ChatIndex reset($fieldName)
+	 * @method \Bitrix\ImOpenLines\Model\EO_ChatIndex unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\ImOpenLines\Model\EO_ChatIndex wakeUp($data)
+	 */
+	class EO_ChatIndex {
+		/* @var \Bitrix\ImOpenLines\Model\ChatIndexTable */
+		static public $dataClass = '\Bitrix\ImOpenLines\Model\ChatIndexTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\ImOpenLines\Model {
+	/**
+	 * EO_ChatIndex_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getChatIdList()
+	 * @method \string[] getSearchTitleList()
+	 * @method \string[] fillSearchTitle()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\ImOpenLines\Model\EO_ChatIndex $object)
+	 * @method bool has(\Bitrix\ImOpenLines\Model\EO_ChatIndex $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\ImOpenLines\Model\EO_ChatIndex getByPrimary($primary)
+	 * @method \Bitrix\ImOpenLines\Model\EO_ChatIndex[] getAll()
+	 * @method bool remove(\Bitrix\ImOpenLines\Model\EO_ChatIndex $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\ImOpenLines\Model\EO_ChatIndex_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\ImOpenLines\Model\EO_ChatIndex current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method EO_ChatIndex_Collection merge(?EO_ChatIndex_Collection $collection)
+	 * @method bool isEmpty()
+	 */
+	class EO_ChatIndex_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\ImOpenLines\Model\ChatIndexTable */
+		static public $dataClass = '\Bitrix\ImOpenLines\Model\ChatIndexTable';
+	}
+}
+namespace Bitrix\ImOpenLines\Model {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_ChatIndex_Result exec()
+	 * @method \Bitrix\ImOpenLines\Model\EO_ChatIndex fetchObject()
+	 * @method \Bitrix\ImOpenLines\Model\EO_ChatIndex_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_ChatIndex_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\ImOpenLines\Model\EO_ChatIndex fetchObject()
+	 * @method \Bitrix\ImOpenLines\Model\EO_ChatIndex_Collection fetchCollection()
+	 */
+	class EO_ChatIndex_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\ImOpenLines\Model\EO_ChatIndex createObject($setDefaultValues = true)
+	 * @method \Bitrix\ImOpenLines\Model\EO_ChatIndex_Collection createCollection()
+	 * @method \Bitrix\ImOpenLines\Model\EO_ChatIndex wakeUpObject($row)
+	 * @method \Bitrix\ImOpenLines\Model\EO_ChatIndex_Collection wakeUpCollection($rows)
+	 */
+	class EO_ChatIndex_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\ConfigTable:imopenlines\lib\model\config.php */
 namespace Bitrix\ImOpenLines\Model {
 	/**
 	 * EO_Config
@@ -1414,6 +1550,76 @@ namespace Bitrix\ImOpenLines\Model {
 	 * @method \Bitrix\ImOpenLines\Model\EO_Config resetKpiCheckOperatorActivity()
 	 * @method \Bitrix\ImOpenLines\Model\EO_Config unsetKpiCheckOperatorActivity()
 	 * @method \boolean fillKpiCheckOperatorActivity()
+	 * @method \boolean getSendNotificationEmptyQueue()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config setSendNotificationEmptyQueue(\boolean|\Bitrix\Main\DB\SqlExpression $sendNotificationEmptyQueue)
+	 * @method bool hasSendNotificationEmptyQueue()
+	 * @method bool isSendNotificationEmptyQueueFilled()
+	 * @method bool isSendNotificationEmptyQueueChanged()
+	 * @method \boolean remindActualSendNotificationEmptyQueue()
+	 * @method \boolean requireSendNotificationEmptyQueue()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config resetSendNotificationEmptyQueue()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config unsetSendNotificationEmptyQueue()
+	 * @method \boolean fillSendNotificationEmptyQueue()
+	 * @method \boolean getUseWelcomeForm()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config setUseWelcomeForm(\boolean|\Bitrix\Main\DB\SqlExpression $useWelcomeForm)
+	 * @method bool hasUseWelcomeForm()
+	 * @method bool isUseWelcomeFormFilled()
+	 * @method bool isUseWelcomeFormChanged()
+	 * @method \boolean remindActualUseWelcomeForm()
+	 * @method \boolean requireUseWelcomeForm()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config resetUseWelcomeForm()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config unsetUseWelcomeForm()
+	 * @method \boolean fillUseWelcomeForm()
+	 * @method \int getWelcomeFormId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config setWelcomeFormId(\int|\Bitrix\Main\DB\SqlExpression $welcomeFormId)
+	 * @method bool hasWelcomeFormId()
+	 * @method bool isWelcomeFormIdFilled()
+	 * @method bool isWelcomeFormIdChanged()
+	 * @method \int remindActualWelcomeFormId()
+	 * @method \int requireWelcomeFormId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config resetWelcomeFormId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config unsetWelcomeFormId()
+	 * @method \int fillWelcomeFormId()
+	 * @method \boolean getWelcomeFormDelay()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config setWelcomeFormDelay(\boolean|\Bitrix\Main\DB\SqlExpression $welcomeFormDelay)
+	 * @method bool hasWelcomeFormDelay()
+	 * @method bool isWelcomeFormDelayFilled()
+	 * @method bool isWelcomeFormDelayChanged()
+	 * @method \boolean remindActualWelcomeFormDelay()
+	 * @method \boolean requireWelcomeFormDelay()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config resetWelcomeFormDelay()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config unsetWelcomeFormDelay()
+	 * @method \boolean fillWelcomeFormDelay()
+	 * @method \boolean getSendWelcomeEachSession()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config setSendWelcomeEachSession(\boolean|\Bitrix\Main\DB\SqlExpression $sendWelcomeEachSession)
+	 * @method bool hasSendWelcomeEachSession()
+	 * @method bool isSendWelcomeEachSessionFilled()
+	 * @method bool isSendWelcomeEachSessionChanged()
+	 * @method \boolean remindActualSendWelcomeEachSession()
+	 * @method \boolean requireSendWelcomeEachSession()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config resetSendWelcomeEachSession()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config unsetSendWelcomeEachSession()
+	 * @method \boolean fillSendWelcomeEachSession()
+	 * @method \boolean getConfirmClose()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config setConfirmClose(\boolean|\Bitrix\Main\DB\SqlExpression $confirmClose)
+	 * @method bool hasConfirmClose()
+	 * @method bool isConfirmCloseFilled()
+	 * @method bool isConfirmCloseChanged()
+	 * @method \boolean remindActualConfirmClose()
+	 * @method \boolean requireConfirmClose()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config resetConfirmClose()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config unsetConfirmClose()
+	 * @method \boolean fillConfirmClose()
+	 * @method \boolean getIgnoreWelcomeFormResponsible()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config setIgnoreWelcomeFormResponsible(\boolean|\Bitrix\Main\DB\SqlExpression $ignoreWelcomeFormResponsible)
+	 * @method bool hasIgnoreWelcomeFormResponsible()
+	 * @method bool isIgnoreWelcomeFormResponsibleFilled()
+	 * @method bool isIgnoreWelcomeFormResponsibleChanged()
+	 * @method \boolean remindActualIgnoreWelcomeFormResponsible()
+	 * @method \boolean requireIgnoreWelcomeFormResponsible()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config resetIgnoreWelcomeFormResponsible()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Config unsetIgnoreWelcomeFormResponsible()
+	 * @method \boolean fillIgnoreWelcomeFormResponsible()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -1625,6 +1831,20 @@ namespace Bitrix\ImOpenLines\Model {
 	 * @method \string[] fillKpiFurtherAnswerText()
 	 * @method \boolean[] getKpiCheckOperatorActivityList()
 	 * @method \boolean[] fillKpiCheckOperatorActivity()
+	 * @method \boolean[] getSendNotificationEmptyQueueList()
+	 * @method \boolean[] fillSendNotificationEmptyQueue()
+	 * @method \boolean[] getUseWelcomeFormList()
+	 * @method \boolean[] fillUseWelcomeForm()
+	 * @method \int[] getWelcomeFormIdList()
+	 * @method \int[] fillWelcomeFormId()
+	 * @method \boolean[] getWelcomeFormDelayList()
+	 * @method \boolean[] fillWelcomeFormDelay()
+	 * @method \boolean[] getSendWelcomeEachSessionList()
+	 * @method \boolean[] fillSendWelcomeEachSession()
+	 * @method \boolean[] getConfirmCloseList()
+	 * @method \boolean[] fillConfirmClose()
+	 * @method \boolean[] getIgnoreWelcomeFormResponsibleList()
+	 * @method \boolean[] fillIgnoreWelcomeFormResponsible()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -1650,6 +1870,8 @@ namespace Bitrix\ImOpenLines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Config_Collection merge(?EO_Config_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Config_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\ImOpenLines\Model\ConfigTable */
@@ -1683,7 +1905,7 @@ namespace Bitrix\ImOpenLines\Model {
 	 */
 	class EO_Config_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\ConfigAutomaticMessagesTable:imopenlines/lib/model/configautomaticmessages.php:ea8886d3189c8703e1522b388cb028d5 */
+/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\ConfigAutomaticMessagesTable:imopenlines\lib\model\configautomaticmessages.php */
 namespace Bitrix\Imopenlines\Model {
 	/**
 	 * EO_ConfigAutomaticMessages
@@ -1697,6 +1919,16 @@ namespace Bitrix\Imopenlines\Model {
 	 * @method bool hasId()
 	 * @method bool isIdFilled()
 	 * @method bool isIdChanged()
+	 * @method \boolean getActive()
+	 * @method \Bitrix\Imopenlines\Model\EO_ConfigAutomaticMessages setActive(\boolean|\Bitrix\Main\DB\SqlExpression $active)
+	 * @method bool hasActive()
+	 * @method bool isActiveFilled()
+	 * @method bool isActiveChanged()
+	 * @method \boolean remindActualActive()
+	 * @method \boolean requireActive()
+	 * @method \Bitrix\Imopenlines\Model\EO_ConfigAutomaticMessages resetActive()
+	 * @method \Bitrix\Imopenlines\Model\EO_ConfigAutomaticMessages unsetActive()
+	 * @method \boolean fillActive()
 	 * @method \int getConfigId()
 	 * @method \Bitrix\Imopenlines\Model\EO_ConfigAutomaticMessages setConfigId(\int|\Bitrix\Main\DB\SqlExpression $configId)
 	 * @method bool hasConfigId()
@@ -1861,6 +2093,8 @@ namespace Bitrix\Imopenlines\Model {
 	 * ---------------
 	 *
 	 * @method \int[] getIdList()
+	 * @method \boolean[] getActiveList()
+	 * @method \boolean[] fillActive()
 	 * @method \int[] getConfigIdList()
 	 * @method \int[] fillConfigId()
 	 * @method \int[] getTimeTaskList()
@@ -1910,6 +2144,8 @@ namespace Bitrix\Imopenlines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_ConfigAutomaticMessages_Collection merge(?EO_ConfigAutomaticMessages_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_ConfigAutomaticMessages_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Imopenlines\Model\ConfigAutomaticMessagesTable */
@@ -1943,7 +2179,7 @@ namespace Bitrix\Imopenlines\Model {
 	 */
 	class EO_ConfigAutomaticMessages_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\ConfigCategoryTable:imopenlines/lib/model/configcategory.php:bd8827f6f161cff1000787bf4873028b */
+/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\ConfigCategoryTable:imopenlines\lib\model\configcategory.php */
 namespace Bitrix\Imopenlines\Model {
 	/**
 	 * EO_ConfigCategory
@@ -2074,6 +2310,8 @@ namespace Bitrix\Imopenlines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_ConfigCategory_Collection merge(?EO_ConfigCategory_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_ConfigCategory_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Imopenlines\Model\ConfigCategoryTable */
@@ -2107,7 +2345,7 @@ namespace Bitrix\Imopenlines\Model {
 	 */
 	class EO_ConfigCategory_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\ConfigQueueTable:imopenlines/lib/model/configqueue.php:61b2c7bf33fc7f7ca53c0187899c46dc */
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\ConfigQueueTable:imopenlines\lib\model\configqueue.php */
 namespace Bitrix\ImOpenLines\Model {
 	/**
 	 * EO_ConfigQueue
@@ -2251,6 +2489,8 @@ namespace Bitrix\ImOpenLines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_ConfigQueue_Collection merge(?EO_ConfigQueue_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_ConfigQueue_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\ImOpenLines\Model\ConfigQueueTable */
@@ -2284,7 +2524,7 @@ namespace Bitrix\ImOpenLines\Model {
 	 */
 	class EO_ConfigQueue_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\ConfigStatisticTable:imopenlines/lib/model/configstatistic.php:53ca45aa32a193a293b05ad309e98aff */
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\ConfigStatisticTable:imopenlines\lib\model\configstatistic.php */
 namespace Bitrix\ImOpenLines\Model {
 	/**
 	 * EO_ConfigStatistic
@@ -2427,6 +2667,8 @@ namespace Bitrix\ImOpenLines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_ConfigStatistic_Collection merge(?EO_ConfigStatistic_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_ConfigStatistic_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\ImOpenLines\Model\ConfigStatisticTable */
@@ -2460,7 +2702,7 @@ namespace Bitrix\ImOpenLines\Model {
 	 */
 	class EO_ConfigStatistic_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\EventLogTable:imopenlines/lib/model/eventlog.php:28a97e52a3c50f30285c7469ae92e396 */
+/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\EventLogTable:imopenlines\lib\model\eventlog.php */
 namespace Bitrix\Imopenlines\Model {
 	/**
 	 * EO_EventLog
@@ -2639,6 +2881,8 @@ namespace Bitrix\Imopenlines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_EventLog_Collection merge(?EO_EventLog_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_EventLog_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Imopenlines\Model\EventLogTable */
@@ -2672,7 +2916,7 @@ namespace Bitrix\Imopenlines\Model {
 	 */
 	class EO_EventLog_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\ExecLogTable:imopenlines/lib/model/execlog.php:bd8506fe2bb4089ba42f0bf68393a7ad */
+/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\ExecLogTable:imopenlines\lib\model\execlog.php */
 namespace Bitrix\Imopenlines\Model {
 	/**
 	 * EO_ExecLog
@@ -2791,6 +3035,8 @@ namespace Bitrix\Imopenlines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_ExecLog_Collection merge(?EO_ExecLog_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_ExecLog_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Imopenlines\Model\ExecLogTable */
@@ -2824,7 +3070,7 @@ namespace Bitrix\Imopenlines\Model {
 	 */
 	class EO_ExecLog_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\LivechatTable:imopenlines/lib/model/livechat.php:ef8c2bb4e54da002c1c1531c19e83d49 */
+/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\LivechatTable:imopenlines\lib\model\livechat.php */
 namespace Bitrix\Imopenlines\Model {
 	/**
 	 * EO_Livechat
@@ -3100,6 +3346,8 @@ namespace Bitrix\Imopenlines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Livechat_Collection merge(?EO_Livechat_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Livechat_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Imopenlines\Model\LivechatTable */
@@ -3133,7 +3381,7 @@ namespace Bitrix\Imopenlines\Model {
 	 */
 	class EO_Livechat_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\LockTable:imopenlines/lib/model/lock.php:e8dba3a0364a9a5978a376f44ac831b3 */
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\LockTable:imopenlines\lib\model\lock.php */
 namespace Bitrix\ImOpenLines\Model {
 	/**
 	 * EO_Lock
@@ -3252,6 +3500,8 @@ namespace Bitrix\ImOpenLines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Lock_Collection merge(?EO_Lock_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Lock_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\ImOpenLines\Model\LockTable */
@@ -3285,7 +3535,7 @@ namespace Bitrix\ImOpenLines\Model {
 	 */
 	class EO_Lock_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\LogTable:imopenlines/lib/model/log.php:49996ccd9d4736084cdcdbce8a2c72a6 */
+/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\LogTable:imopenlines\lib\model\log.php */
 namespace Bitrix\Imopenlines\Model {
 	/**
 	 * EO_Log
@@ -3452,6 +3702,8 @@ namespace Bitrix\Imopenlines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Log_Collection merge(?EO_Log_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Log_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Imopenlines\Model\LogTable */
@@ -3485,7 +3737,7 @@ namespace Bitrix\Imopenlines\Model {
 	 */
 	class EO_Log_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\OperatorTransferTable:imopenlines/lib/model/operatortransfer.php:8d89fe1f75111c01547ce78c904da782 */
+/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\OperatorTransferTable:imopenlines\lib\model\operatortransfer.php */
 namespace Bitrix\Imopenlines\Model {
 	/**
 	 * EO_OperatorTransfer
@@ -3664,6 +3916,8 @@ namespace Bitrix\Imopenlines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_OperatorTransfer_Collection merge(?EO_OperatorTransfer_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_OperatorTransfer_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Imopenlines\Model\OperatorTransferTable */
@@ -3697,7 +3951,7 @@ namespace Bitrix\Imopenlines\Model {
 	 */
 	class EO_OperatorTransfer_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\QueueTable:imopenlines/lib/model/queue.php:d4f957db5ac44c11120eba5b1f6ef3e6 */
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\QueueTable:imopenlines\lib\model\queue.php */
 namespace Bitrix\ImOpenLines\Model {
 	/**
 	 * EO_Queue
@@ -3926,6 +4180,8 @@ namespace Bitrix\ImOpenLines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Queue_Collection merge(?EO_Queue_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Queue_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\ImOpenLines\Model\QueueTable */
@@ -3959,7 +4215,206 @@ namespace Bitrix\ImOpenLines\Model {
 	 */
 	class EO_Queue_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\RestNetworkLimitTable:imopenlines/lib/model/restnetworklimit.php:712ffd7126c3a95281a297fa8d92f489 */
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\RecentTable:imopenlines\lib\model\recent.php */
+namespace Bitrix\ImOpenLines\Model {
+	/**
+	 * EO_Recent
+	 * @see \Bitrix\ImOpenLines\Model\RecentTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getUserId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
+	 * @method bool hasUserId()
+	 * @method bool isUserIdFilled()
+	 * @method bool isUserIdChanged()
+	 * @method \int getChatId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent setChatId(\int|\Bitrix\Main\DB\SqlExpression $chatId)
+	 * @method bool hasChatId()
+	 * @method bool isChatIdFilled()
+	 * @method bool isChatIdChanged()
+	 * @method \int getMessageId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent setMessageId(\int|\Bitrix\Main\DB\SqlExpression $messageId)
+	 * @method bool hasMessageId()
+	 * @method bool isMessageIdFilled()
+	 * @method bool isMessageIdChanged()
+	 * @method \int remindActualMessageId()
+	 * @method \int requireMessageId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent resetMessageId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent unsetMessageId()
+	 * @method \int fillMessageId()
+	 * @method \int getSessionId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent setSessionId(\int|\Bitrix\Main\DB\SqlExpression $sessionId)
+	 * @method bool hasSessionId()
+	 * @method bool isSessionIdFilled()
+	 * @method bool isSessionIdChanged()
+	 * @method \int remindActualSessionId()
+	 * @method \int requireSessionId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent resetSessionId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent unsetSessionId()
+	 * @method \int fillSessionId()
+	 * @method \Bitrix\Main\Type\DateTime getDateCreate()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent setDateCreate(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $dateCreate)
+	 * @method bool hasDateCreate()
+	 * @method bool isDateCreateFilled()
+	 * @method bool isDateCreateChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualDateCreate()
+	 * @method \Bitrix\Main\Type\DateTime requireDateCreate()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent resetDateCreate()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent unsetDateCreate()
+	 * @method \Bitrix\Main\Type\DateTime fillDateCreate()
+	 * @method \Bitrix\Im\Model\EO_Chat getChat()
+	 * @method \Bitrix\Im\Model\EO_Chat remindActualChat()
+	 * @method \Bitrix\Im\Model\EO_Chat requireChat()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent setChat(\Bitrix\Im\Model\EO_Chat $object)
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent resetChat()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent unsetChat()
+	 * @method bool hasChat()
+	 * @method bool isChatFilled()
+	 * @method bool isChatChanged()
+	 * @method \Bitrix\Im\Model\EO_Chat fillChat()
+	 * @method \Bitrix\Im\Model\EO_Message getMessage()
+	 * @method \Bitrix\Im\Model\EO_Message remindActualMessage()
+	 * @method \Bitrix\Im\Model\EO_Message requireMessage()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent setMessage(\Bitrix\Im\Model\EO_Message $object)
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent resetMessage()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent unsetMessage()
+	 * @method bool hasMessage()
+	 * @method bool isMessageFilled()
+	 * @method bool isMessageChanged()
+	 * @method \Bitrix\Im\Model\EO_Message fillMessage()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Session getSession()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Session remindActualSession()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Session requireSession()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent setSession(\Bitrix\ImOpenLines\Model\EO_Session $object)
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent resetSession()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent unsetSession()
+	 * @method bool hasSession()
+	 * @method bool isSessionFilled()
+	 * @method bool isSessionChanged()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Session fillSession()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent set($fieldName, $value)
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent reset($fieldName)
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\ImOpenLines\Model\EO_Recent wakeUp($data)
+	 */
+	class EO_Recent {
+		/* @var \Bitrix\ImOpenLines\Model\RecentTable */
+		static public $dataClass = '\Bitrix\ImOpenLines\Model\RecentTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\ImOpenLines\Model {
+	/**
+	 * EO_Recent_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getUserIdList()
+	 * @method \int[] getChatIdList()
+	 * @method \int[] getMessageIdList()
+	 * @method \int[] fillMessageId()
+	 * @method \int[] getSessionIdList()
+	 * @method \int[] fillSessionId()
+	 * @method \Bitrix\Main\Type\DateTime[] getDateCreateList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillDateCreate()
+	 * @method \Bitrix\Im\Model\EO_Chat[] getChatList()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent_Collection getChatCollection()
+	 * @method \Bitrix\Im\Model\EO_Chat_Collection fillChat()
+	 * @method \Bitrix\Im\Model\EO_Message[] getMessageList()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent_Collection getMessageCollection()
+	 * @method \Bitrix\Im\Model\EO_Message_Collection fillMessage()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Session[] getSessionList()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent_Collection getSessionCollection()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Session_Collection fillSession()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\ImOpenLines\Model\EO_Recent $object)
+	 * @method bool has(\Bitrix\ImOpenLines\Model\EO_Recent $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent getByPrimary($primary)
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent[] getAll()
+	 * @method bool remove(\Bitrix\ImOpenLines\Model\EO_Recent $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\ImOpenLines\Model\EO_Recent_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method EO_Recent_Collection merge(?EO_Recent_Collection $collection)
+	 * @method bool isEmpty()
+	 */
+	class EO_Recent_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\ImOpenLines\Model\RecentTable */
+		static public $dataClass = '\Bitrix\ImOpenLines\Model\RecentTable';
+	}
+}
+namespace Bitrix\ImOpenLines\Model {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_Recent_Result exec()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent fetchObject()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_Recent_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent fetchObject()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent_Collection fetchCollection()
+	 */
+	class EO_Recent_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent createObject($setDefaultValues = true)
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent_Collection createCollection()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent wakeUpObject($row)
+	 * @method \Bitrix\ImOpenLines\Model\EO_Recent_Collection wakeUpCollection($rows)
+	 */
+	class EO_Recent_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\RestNetworkLimitTable:imopenlines\lib\model\restnetworklimit.php */
 namespace Bitrix\Imopenlines\Model {
 	/**
 	 * EO_RestNetworkLimit
@@ -4078,6 +4533,8 @@ namespace Bitrix\Imopenlines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_RestNetworkLimit_Collection merge(?EO_RestNetworkLimit_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_RestNetworkLimit_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Imopenlines\Model\RestNetworkLimitTable */
@@ -4111,7 +4568,7 @@ namespace Bitrix\Imopenlines\Model {
 	 */
 	class EO_RestNetworkLimit_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\RoleTable:imopenlines/lib/model/role.php:6521bb2b76d7d984c7e78e6c27dedbf7 */
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\RoleTable:imopenlines\lib\model\role.php */
 namespace Bitrix\ImOpenLines\Model {
 	/**
 	 * EO_Role
@@ -4218,6 +4675,8 @@ namespace Bitrix\ImOpenLines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Role_Collection merge(?EO_Role_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Role_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\ImOpenLines\Model\RoleTable */
@@ -4251,7 +4710,7 @@ namespace Bitrix\ImOpenLines\Model {
 	 */
 	class EO_Role_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\RoleAccessTable:imopenlines/lib/model/roleaccess.php:e41f14f6d6ea52e80a634287a31fdd72 */
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\RoleAccessTable:imopenlines\lib\model\roleaccess.php */
 namespace Bitrix\ImOpenLines\Model {
 	/**
 	 * EO_RoleAccess
@@ -4371,6 +4830,8 @@ namespace Bitrix\ImOpenLines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_RoleAccess_Collection merge(?EO_RoleAccess_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_RoleAccess_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\ImOpenLines\Model\RoleAccessTable */
@@ -4404,7 +4865,7 @@ namespace Bitrix\ImOpenLines\Model {
 	 */
 	class EO_RoleAccess_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\RolePermissionTable:imopenlines/lib/model/rolepermission.php:46ce73a013d5f570add7f9685036d838 */
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\RolePermissionTable:imopenlines\lib\model\rolepermission.php */
 namespace Bitrix\ImOpenLines\Model {
 	/**
 	 * EO_RolePermission
@@ -4561,6 +5022,8 @@ namespace Bitrix\ImOpenLines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_RolePermission_Collection merge(?EO_RolePermission_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_RolePermission_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\ImOpenLines\Model\RolePermissionTable */
@@ -4594,7 +5057,7 @@ namespace Bitrix\ImOpenLines\Model {
 	 */
 	class EO_RolePermission_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\SessionTable:imopenlines/lib/model/session.php:ac4172be59e80563c2feedc6c20a2b1a */
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\SessionTable:imopenlines\lib\model\session.php */
 namespace Bitrix\ImOpenLines\Model {
 	/**
 	 * EO_Session
@@ -4758,6 +5221,16 @@ namespace Bitrix\ImOpenLines\Model {
 	 * @method \Bitrix\ImOpenLines\Model\EO_Session resetEndId()
 	 * @method \Bitrix\ImOpenLines\Model\EO_Session unsetEndId()
 	 * @method \int fillEndId()
+	 * @method \int getLastSendMailId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Session setLastSendMailId(\int|\Bitrix\Main\DB\SqlExpression $lastSendMailId)
+	 * @method bool hasLastSendMailId()
+	 * @method bool isLastSendMailIdFilled()
+	 * @method bool isLastSendMailIdChanged()
+	 * @method \int remindActualLastSendMailId()
+	 * @method \int requireLastSendMailId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Session resetLastSendMailId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_Session unsetLastSendMailId()
+	 * @method \int fillLastSendMailId()
 	 * @method \boolean getCrm()
 	 * @method \Bitrix\ImOpenLines\Model\EO_Session setCrm(\boolean|\Bitrix\Main\DB\SqlExpression $crm)
 	 * @method bool hasCrm()
@@ -5374,6 +5847,8 @@ namespace Bitrix\ImOpenLines\Model {
 	 * @method \int[] fillStartId()
 	 * @method \int[] getEndIdList()
 	 * @method \int[] fillEndId()
+	 * @method \int[] getLastSendMailIdList()
+	 * @method \int[] fillLastSendMailId()
 	 * @method \boolean[] getCrmList()
 	 * @method \boolean[] fillCrm()
 	 * @method \boolean[] getCrmCreateList()
@@ -5513,6 +5988,8 @@ namespace Bitrix\ImOpenLines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Session_Collection merge(?EO_Session_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Session_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\ImOpenLines\Model\SessionTable */
@@ -5546,7 +6023,7 @@ namespace Bitrix\ImOpenLines\Model {
 	 */
 	class EO_Session_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\SessionAutomaticTasksTable:imopenlines/lib/model/sessionautomatictasks.php:77f5c0820b7e1161907f856b19fa4f79 */
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\SessionAutomaticTasksTable:imopenlines\lib\model\sessionautomatictasks.php */
 namespace Bitrix\ImOpenLines\Model {
 	/**
 	 * EO_SessionAutomaticTasks
@@ -5691,6 +6168,8 @@ namespace Bitrix\ImOpenLines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_SessionAutomaticTasks_Collection merge(?EO_SessionAutomaticTasks_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_SessionAutomaticTasks_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\ImOpenLines\Model\SessionAutomaticTasksTable */
@@ -5724,7 +6203,7 @@ namespace Bitrix\ImOpenLines\Model {
 	 */
 	class EO_SessionAutomaticTasks_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\SessionCheckTable:imopenlines/lib/model/sessioncheck.php:eb03d645c1e80aecd16e954945703ad4 */
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\SessionCheckTable:imopenlines\lib\model\sessioncheck.php */
 namespace Bitrix\ImOpenLines\Model {
 	/**
 	 * EO_SessionCheck
@@ -5892,6 +6371,8 @@ namespace Bitrix\ImOpenLines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_SessionCheck_Collection merge(?EO_SessionCheck_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_SessionCheck_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\ImOpenLines\Model\SessionCheckTable */
@@ -5925,7 +6406,7 @@ namespace Bitrix\ImOpenLines\Model {
 	 */
 	class EO_SessionCheck_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\SessionIndexTable:imopenlines/lib/model/sessionindex.php:0e7518d8a1224f8a2a361f6f192c8eb4 */
+/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\SessionIndexTable:imopenlines\lib\model\sessionindex.php */
 namespace Bitrix\Imopenlines\Model {
 	/**
 	 * EO_SessionIndex
@@ -6020,6 +6501,8 @@ namespace Bitrix\Imopenlines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_SessionIndex_Collection merge(?EO_SessionIndex_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_SessionIndex_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Imopenlines\Model\SessionIndexTable */
@@ -6053,7 +6536,7 @@ namespace Bitrix\Imopenlines\Model {
 	 */
 	class EO_SessionIndex_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\SessionKpiMessagesTable:imopenlines/lib/model/sessionkpimessages.php:45eb7936be5a5fe32258ef7d2d9a09f7 */
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\SessionKpiMessagesTable:imopenlines\lib\model\sessionkpimessages.php */
 namespace Bitrix\ImOpenLines\Model {
 	/**
 	 * EO_SessionKpiMessages
@@ -6257,6 +6740,8 @@ namespace Bitrix\ImOpenLines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_SessionKpiMessages_Collection merge(?EO_SessionKpiMessages_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_SessionKpiMessages_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\ImOpenLines\Model\SessionKpiMessagesTable */
@@ -6290,7 +6775,7 @@ namespace Bitrix\ImOpenLines\Model {
 	 */
 	class EO_SessionKpiMessages_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\TrackerTable:imopenlines/lib/model/tracker.php:f6ca398a897f34edafdb42b902b3af2a */
+/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\TrackerTable:imopenlines\lib\model\tracker.php */
 namespace Bitrix\Imopenlines\Model {
 	/**
 	 * EO_Tracker
@@ -6354,6 +6839,16 @@ namespace Bitrix\Imopenlines\Model {
 	 * @method \Bitrix\Imopenlines\Model\EO_Tracker resetUserId()
 	 * @method \Bitrix\Imopenlines\Model\EO_Tracker unsetUserId()
 	 * @method \int fillUserId()
+	 * @method \string getTrackId()
+	 * @method \Bitrix\Imopenlines\Model\EO_Tracker setTrackId(\string|\Bitrix\Main\DB\SqlExpression $trackId)
+	 * @method bool hasTrackId()
+	 * @method bool isTrackIdFilled()
+	 * @method bool isTrackIdChanged()
+	 * @method \string remindActualTrackId()
+	 * @method \string requireTrackId()
+	 * @method \Bitrix\Imopenlines\Model\EO_Tracker resetTrackId()
+	 * @method \Bitrix\Imopenlines\Model\EO_Tracker unsetTrackId()
+	 * @method \string fillTrackId()
 	 * @method \string getAction()
 	 * @method \Bitrix\Imopenlines\Model\EO_Tracker setAction(\string|\Bitrix\Main\DB\SqlExpression $action)
 	 * @method bool hasAction()
@@ -6384,6 +6879,46 @@ namespace Bitrix\Imopenlines\Model {
 	 * @method \Bitrix\Imopenlines\Model\EO_Tracker resetCrmEntityId()
 	 * @method \Bitrix\Imopenlines\Model\EO_Tracker unsetCrmEntityId()
 	 * @method \int fillCrmEntityId()
+	 * @method \int getCrmContactId()
+	 * @method \Bitrix\Imopenlines\Model\EO_Tracker setCrmContactId(\int|\Bitrix\Main\DB\SqlExpression $crmContactId)
+	 * @method bool hasCrmContactId()
+	 * @method bool isCrmContactIdFilled()
+	 * @method bool isCrmContactIdChanged()
+	 * @method \int remindActualCrmContactId()
+	 * @method \int requireCrmContactId()
+	 * @method \Bitrix\Imopenlines\Model\EO_Tracker resetCrmContactId()
+	 * @method \Bitrix\Imopenlines\Model\EO_Tracker unsetCrmContactId()
+	 * @method \int fillCrmContactId()
+	 * @method \int getCrmCompanyId()
+	 * @method \Bitrix\Imopenlines\Model\EO_Tracker setCrmCompanyId(\int|\Bitrix\Main\DB\SqlExpression $crmCompanyId)
+	 * @method bool hasCrmCompanyId()
+	 * @method bool isCrmCompanyIdFilled()
+	 * @method bool isCrmCompanyIdChanged()
+	 * @method \int remindActualCrmCompanyId()
+	 * @method \int requireCrmCompanyId()
+	 * @method \Bitrix\Imopenlines\Model\EO_Tracker resetCrmCompanyId()
+	 * @method \Bitrix\Imopenlines\Model\EO_Tracker unsetCrmCompanyId()
+	 * @method \int fillCrmCompanyId()
+	 * @method \int getCrmDealId()
+	 * @method \Bitrix\Imopenlines\Model\EO_Tracker setCrmDealId(\int|\Bitrix\Main\DB\SqlExpression $crmDealId)
+	 * @method bool hasCrmDealId()
+	 * @method bool isCrmDealIdFilled()
+	 * @method bool isCrmDealIdChanged()
+	 * @method \int remindActualCrmDealId()
+	 * @method \int requireCrmDealId()
+	 * @method \Bitrix\Imopenlines\Model\EO_Tracker resetCrmDealId()
+	 * @method \Bitrix\Imopenlines\Model\EO_Tracker unsetCrmDealId()
+	 * @method \int fillCrmDealId()
+	 * @method \int getCrmLeadId()
+	 * @method \Bitrix\Imopenlines\Model\EO_Tracker setCrmLeadId(\int|\Bitrix\Main\DB\SqlExpression $crmLeadId)
+	 * @method bool hasCrmLeadId()
+	 * @method bool isCrmLeadIdFilled()
+	 * @method bool isCrmLeadIdChanged()
+	 * @method \int remindActualCrmLeadId()
+	 * @method \int requireCrmLeadId()
+	 * @method \Bitrix\Imopenlines\Model\EO_Tracker resetCrmLeadId()
+	 * @method \Bitrix\Imopenlines\Model\EO_Tracker unsetCrmLeadId()
+	 * @method \int fillCrmLeadId()
 	 * @method \string getFieldId()
 	 * @method \Bitrix\Imopenlines\Model\EO_Tracker setFieldId(\string|\Bitrix\Main\DB\SqlExpression $fieldId)
 	 * @method bool hasFieldId()
@@ -6478,12 +7013,22 @@ namespace Bitrix\Imopenlines\Model {
 	 * @method \int[] fillMessageOriginId()
 	 * @method \int[] getUserIdList()
 	 * @method \int[] fillUserId()
+	 * @method \string[] getTrackIdList()
+	 * @method \string[] fillTrackId()
 	 * @method \string[] getActionList()
 	 * @method \string[] fillAction()
 	 * @method \string[] getCrmEntityTypeList()
 	 * @method \string[] fillCrmEntityType()
 	 * @method \int[] getCrmEntityIdList()
 	 * @method \int[] fillCrmEntityId()
+	 * @method \int[] getCrmContactIdList()
+	 * @method \int[] fillCrmContactId()
+	 * @method \int[] getCrmCompanyIdList()
+	 * @method \int[] fillCrmCompanyId()
+	 * @method \int[] getCrmDealIdList()
+	 * @method \int[] fillCrmDealId()
+	 * @method \int[] getCrmLeadIdList()
+	 * @method \int[] fillCrmLeadId()
 	 * @method \string[] getFieldIdList()
 	 * @method \string[] fillFieldId()
 	 * @method \string[] getFieldTypeList()
@@ -6517,6 +7062,8 @@ namespace Bitrix\Imopenlines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_Tracker_Collection merge(?EO_Tracker_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Tracker_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Imopenlines\Model\TrackerTable */
@@ -6550,7 +7097,329 @@ namespace Bitrix\Imopenlines\Model {
 	 */
 	class EO_Tracker_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\UserRelationTable:imopenlines/lib/model/userrelation.php:0995d31f2178a9e8e44b5c6ab47c391f */
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\UserLogTable:imopenlines\lib\model\userlog.php */
+namespace Bitrix\ImOpenLines\Model {
+	/**
+	 * EO_UserLog
+	 * @see \Bitrix\ImOpenLines\Model\UserLogTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \int getUserId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
+	 * @method bool hasUserId()
+	 * @method bool isUserIdFilled()
+	 * @method bool isUserIdChanged()
+	 * @method \int remindActualUserId()
+	 * @method \int requireUserId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog resetUserId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog unsetUserId()
+	 * @method \int fillUserId()
+	 * @method \string getType()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog setType(\string|\Bitrix\Main\DB\SqlExpression $type)
+	 * @method bool hasType()
+	 * @method bool isTypeFilled()
+	 * @method bool isTypeChanged()
+	 * @method \string remindActualType()
+	 * @method \string requireType()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog resetType()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog unsetType()
+	 * @method \string fillType()
+	 * @method \string getData()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog setData(\string|\Bitrix\Main\DB\SqlExpression $data)
+	 * @method bool hasData()
+	 * @method bool isDataFilled()
+	 * @method bool isDataChanged()
+	 * @method \string remindActualData()
+	 * @method \string requireData()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog resetData()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog unsetData()
+	 * @method \string fillData()
+	 * @method \Bitrix\Main\Type\DateTime getDateCreate()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog setDateCreate(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $dateCreate)
+	 * @method bool hasDateCreate()
+	 * @method bool isDateCreateFilled()
+	 * @method bool isDateCreateChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualDateCreate()
+	 * @method \Bitrix\Main\Type\DateTime requireDateCreate()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog resetDateCreate()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog unsetDateCreate()
+	 * @method \Bitrix\Main\Type\DateTime fillDateCreate()
+	 * @method \Bitrix\Main\EO_User getUser()
+	 * @method \Bitrix\Main\EO_User remindActualUser()
+	 * @method \Bitrix\Main\EO_User requireUser()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog setUser(\Bitrix\Main\EO_User $object)
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog resetUser()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog unsetUser()
+	 * @method bool hasUser()
+	 * @method bool isUserFilled()
+	 * @method bool isUserChanged()
+	 * @method \Bitrix\Main\EO_User fillUser()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog set($fieldName, $value)
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog reset($fieldName)
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\ImOpenLines\Model\EO_UserLog wakeUp($data)
+	 */
+	class EO_UserLog {
+		/* @var \Bitrix\ImOpenLines\Model\UserLogTable */
+		static public $dataClass = '\Bitrix\ImOpenLines\Model\UserLogTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\ImOpenLines\Model {
+	/**
+	 * EO_UserLog_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \int[] getUserIdList()
+	 * @method \int[] fillUserId()
+	 * @method \string[] getTypeList()
+	 * @method \string[] fillType()
+	 * @method \string[] getDataList()
+	 * @method \string[] fillData()
+	 * @method \Bitrix\Main\Type\DateTime[] getDateCreateList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillDateCreate()
+	 * @method \Bitrix\Main\EO_User[] getUserList()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog_Collection getUserCollection()
+	 * @method \Bitrix\Main\EO_User_Collection fillUser()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\ImOpenLines\Model\EO_UserLog $object)
+	 * @method bool has(\Bitrix\ImOpenLines\Model\EO_UserLog $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog getByPrimary($primary)
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog[] getAll()
+	 * @method bool remove(\Bitrix\ImOpenLines\Model\EO_UserLog $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\ImOpenLines\Model\EO_UserLog_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method EO_UserLog_Collection merge(?EO_UserLog_Collection $collection)
+	 * @method bool isEmpty()
+	 */
+	class EO_UserLog_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\ImOpenLines\Model\UserLogTable */
+		static public $dataClass = '\Bitrix\ImOpenLines\Model\UserLogTable';
+	}
+}
+namespace Bitrix\ImOpenLines\Model {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_UserLog_Result exec()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog fetchObject()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_UserLog_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog fetchObject()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog_Collection fetchCollection()
+	 */
+	class EO_UserLog_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog createObject($setDefaultValues = true)
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog_Collection createCollection()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog wakeUpObject($row)
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserLog_Collection wakeUpCollection($rows)
+	 */
+	class EO_UserLog_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\ImOpenLines\Model\UserOptionTable:imopenlines\lib\model\useroption.php */
+namespace Bitrix\ImOpenLines\Model {
+	/**
+	 * EO_UserOption
+	 * @see \Bitrix\ImOpenLines\Model\UserOptionTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getUserId()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
+	 * @method bool hasUserId()
+	 * @method bool isUserIdFilled()
+	 * @method bool isUserIdChanged()
+	 * @method \boolean getPause()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption setPause(\boolean|\Bitrix\Main\DB\SqlExpression $pause)
+	 * @method bool hasPause()
+	 * @method bool isPauseFilled()
+	 * @method bool isPauseChanged()
+	 * @method \boolean remindActualPause()
+	 * @method \boolean requirePause()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption resetPause()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption unsetPause()
+	 * @method \boolean fillPause()
+	 * @method \Bitrix\Main\EO_User getUser()
+	 * @method \Bitrix\Main\EO_User remindActualUser()
+	 * @method \Bitrix\Main\EO_User requireUser()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption setUser(\Bitrix\Main\EO_User $object)
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption resetUser()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption unsetUser()
+	 * @method bool hasUser()
+	 * @method bool isUserFilled()
+	 * @method bool isUserChanged()
+	 * @method \Bitrix\Main\EO_User fillUser()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption set($fieldName, $value)
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption reset($fieldName)
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\ImOpenLines\Model\EO_UserOption wakeUp($data)
+	 */
+	class EO_UserOption {
+		/* @var \Bitrix\ImOpenLines\Model\UserOptionTable */
+		static public $dataClass = '\Bitrix\ImOpenLines\Model\UserOptionTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\ImOpenLines\Model {
+	/**
+	 * EO_UserOption_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getUserIdList()
+	 * @method \boolean[] getPauseList()
+	 * @method \boolean[] fillPause()
+	 * @method \Bitrix\Main\EO_User[] getUserList()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption_Collection getUserCollection()
+	 * @method \Bitrix\Main\EO_User_Collection fillUser()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\ImOpenLines\Model\EO_UserOption $object)
+	 * @method bool has(\Bitrix\ImOpenLines\Model\EO_UserOption $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption getByPrimary($primary)
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption[] getAll()
+	 * @method bool remove(\Bitrix\ImOpenLines\Model\EO_UserOption $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\ImOpenLines\Model\EO_UserOption_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method EO_UserOption_Collection merge(?EO_UserOption_Collection $collection)
+	 * @method bool isEmpty()
+	 */
+	class EO_UserOption_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\ImOpenLines\Model\UserOptionTable */
+		static public $dataClass = '\Bitrix\ImOpenLines\Model\UserOptionTable';
+	}
+}
+namespace Bitrix\ImOpenLines\Model {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_UserOption_Result exec()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption fetchObject()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_UserOption_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption fetchObject()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption_Collection fetchCollection()
+	 */
+	class EO_UserOption_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption createObject($setDefaultValues = true)
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption_Collection createCollection()
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption wakeUpObject($row)
+	 * @method \Bitrix\ImOpenLines\Model\EO_UserOption_Collection wakeUpCollection($rows)
+	 */
+	class EO_UserOption_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Imopenlines\Model\UserRelationTable:imopenlines\lib\model\userrelation.php */
 namespace Bitrix\Imopenlines\Model {
 	/**
 	 * EO_UserRelation
@@ -6669,6 +7538,8 @@ namespace Bitrix\Imopenlines\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_UserRelation_Collection merge(?EO_UserRelation_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_UserRelation_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Imopenlines\Model\UserRelationTable */

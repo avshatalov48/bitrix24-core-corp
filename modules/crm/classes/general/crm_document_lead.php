@@ -592,30 +592,12 @@ class CCrmDocumentLead extends CCrmDocument
 			}
 			elseif ($fieldType == "file")
 			{
-				$arFileOptions = array('ENABLE_ID' => true);
-				foreach ($arFields[$key] as &$value)
-				{
-					//Issue #40380. Secure URLs and file IDs are allowed.
-					$file = false;
-					if (\CCrmFileProxy::TryResolveFile($value, $file, $arFileOptions))
-					{
-						global $USER_FIELD_MANAGER;
-						if ($USER_FIELD_MANAGER instanceof \CUserTypeManager)
-						{
-							$prevValue = $USER_FIELD_MANAGER->GetUserFieldValue(
-								\CCrmOwnerType::ResolveUserFieldEntityID(\CCrmOwnerType::Lead),
-								$key,
-								$arDocumentID['ID']
-							);
-							if ($prevValue)
-							{
-								$file['old_id'] = $prevValue;
-							}
-						}
-					}
-					$value = $file;
-				}
-				unset($value, $prevValue);
+				$arFields[$key] = static::castFileFieldValues(
+					$arDocumentID['ID'],
+					\CCrmOwnerType::Lead,
+					$key,
+					$arFields[$key],
+				);
 			}
 			elseif ($fieldType == "S:HTML")
 			{

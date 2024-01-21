@@ -43,7 +43,6 @@ jn.define('alert/alert', (require, exports, module) => {
 				buttonName,
 			);
 		}
-
 	}
 
 	module.exports = { AlertNavigator };

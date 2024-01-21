@@ -107,7 +107,7 @@ jn.define('im/messenger/controller/search/experimental/service/local-search-serv
 			const recentItem = {
 				dialogId: item.id,
 				dialog,
-				dateUpdate: item.date_update,
+				dateMessage: item.dateMessage,
 			};
 
 			if (isUser)

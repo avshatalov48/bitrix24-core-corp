@@ -14,7 +14,6 @@ export default class ItemActive
 
 	constructor()
 	{
-		this.highlight = Runtime.debounce(this.highlight, 200, this);
 		this.#actualLink = new Uri(window.location.href);
 	}
 

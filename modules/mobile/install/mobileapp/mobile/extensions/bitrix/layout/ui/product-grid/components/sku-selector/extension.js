@@ -3,7 +3,8 @@
  */
 jn.define('layout/ui/product-grid/components/sku-selector', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { isArray, get, clone, mergeImmutable, isEqual } = require('utils/object');
+	const AppTheme = require('apptheme');
+	const { get, clone, mergeImmutable, isEqual } = require('utils/object');
 	const { FocusContext } = require('layout/ui/product-grid/services/focus-context');
 	const {
 		BottomPanel,
@@ -13,6 +14,7 @@ jn.define('layout/ui/product-grid/components/sku-selector', (require, exports, m
 		SkuTreeProperty,
 		SkuTreePropertyValue,
 	} = require('layout/ui/product-grid/components/sku-selector/elements');
+	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 
 	class SkuSelector extends LayoutComponent
 	{
@@ -31,7 +33,7 @@ jn.define('layout/ui/product-grid/components/sku-selector', (require, exports, m
 			this.preloadSkuCollection().then(() => {
 				const nextState = this.buildState(props);
 				this.setState(nextState, () => this.fadeIn());
-			});
+			}).catch(console.error);
 			this.initLayout();
 		}
 
@@ -85,6 +87,7 @@ jn.define('layout/ui/product-grid/components/sku-selector', (require, exports, m
 		get selectedPropertyValues()
 		{
 			const offer = this.skuTree.OFFERS.find((item) => item.ID === this.state.selectedVariationId);
+
 			return offer ? offer.TREE : {};
 		}
 
@@ -105,12 +108,14 @@ jn.define('layout/ui/product-grid/components/sku-selector', (require, exports, m
 		wrap(contentFn)
 		{
 			const children = this.state.loading
-				? [new LoadingScreenComponent({ backgroundColor: '#eef2f4' })]
+				? [new LoadingScreenComponent({ backgroundColor: AppTheme.colors.bgSecondary })]
 				: contentFn();
 
 			return View(
 				{
-					ref: (ref) => this.wrapperRef = ref,
+					ref: (ref) => {
+						this.wrapperRef = ref;
+					},
 					style: {
 						flexDirection: 'column',
 						opacity: this.state.loading ? 1 : 0,
@@ -140,7 +145,7 @@ jn.define('layout/ui/product-grid/components/sku-selector', (require, exports, m
 			const existingValues = this.filterAllowedToChoosePropertyValues(property, index);
 			const selectedValues = this.selectedPropertyValues[property.ID] || [];
 
-			const isSelected = (val) => (isArray(selectedValues)
+			const isSelected = (val) => (Array.isArray(selectedValues)
 				? selectedValues.includes(val)
 				: selectedValues === val);
 
@@ -166,7 +171,8 @@ jn.define('layout/ui/product-grid/components/sku-selector', (require, exports, m
 
 		renderSavePanel()
 		{
-			const saveButtonCaption = this.props.saveButtonCaption || Loc.getMessage('PRODUCT_GRID_CONTROL_SKU_SELECTOR_SAVE');
+			const saveButtonCaption = this.props.saveButtonCaption || Loc.getMessage(
+				'PRODUCT_GRID_CONTROL_SKU_SELECTOR_SAVE');
 
 			return BottomPanel({
 				saveButtonCaption,
@@ -194,12 +200,14 @@ jn.define('layout/ui/product-grid/components/sku-selector', (require, exports, m
 						return false;
 					}
 				}
+
 				return true;
 			};
 
 			const offerExists = (tree) => this.skuTree.OFFERS.find((offer) => isPartOf(tree, offer.TREE));
 			const possiblePropertyValues = () => {
 				const existingValues = this.skuTree.OFFERS.map((offer) => offer.TREE[property.ID]);
+
 				return [...new Set(existingValues)];
 			};
 			const currentlySelectedValues = this.selectedPropertyValues;
@@ -232,7 +240,10 @@ jn.define('layout/ui/product-grid/components/sku-selector', (require, exports, m
 		toggleSelection(propertyId, valueId)
 		{
 			const propertyValue = this.preparePropertyValue(propertyId, valueId);
-			const nextVariationPropertyValues = mergeImmutable(this.selectedPropertyValues, { [propertyId]: propertyValue });
+			const nextVariationPropertyValues = mergeImmutable(
+				this.selectedPropertyValues,
+				{ [propertyId]: propertyValue },
+			);
 			const nextVariation = this.findNextVariation(propertyId, propertyValue, nextVariationPropertyValues);
 
 			if (nextVariation !== null && this.productVariations[nextVariation.ID])
@@ -240,6 +251,7 @@ jn.define('layout/ui/product-grid/components/sku-selector', (require, exports, m
 				this.setState({
 					selectedVariationId: nextVariation.ID,
 				});
+
 				return;
 			}
 
@@ -255,7 +267,7 @@ jn.define('layout/ui/product-grid/components/sku-selector', (require, exports, m
 		{
 			let nextValue = clone(this.selectedPropertyValues[propertyId]);
 
-			if (isArray(nextValue))
+			if (Array.isArray(nextValue))
 			{
 				const index = nextValue.indexOf(valueId);
 				if (index > -1)
@@ -291,6 +303,7 @@ jn.define('layout/ui/product-grid/components/sku-selector', (require, exports, m
 				{
 					nextVariation = offer;
 				}
+
 				if (offer.TREE[propertyId] && isEqual(offer.TREE[propertyId], propertyValue))
 				{
 					alternativeOptions.push(offer);

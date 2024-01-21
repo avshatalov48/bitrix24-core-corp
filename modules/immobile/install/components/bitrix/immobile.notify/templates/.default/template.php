@@ -10,6 +10,18 @@ CJSCore::Init("fx");
 	padding: 20px;
 	padding-left: 15px;
 }
+
+.bx-messenger-attach-user .bx-messenger-attach-user-name {
+	color: var(--base1) !important;
+}
+
+.bx-messenger-attach-blocks {
+	color: var(--base1);
+}
+
+.bx-messenger-attach-message {
+	color: var(--base0);
+}
 </style>
 <script type="text/javascript">
 	console.warn('Notify page loaded');
@@ -46,12 +58,14 @@ if(empty($arResult['NOTIFY'])):?>
 				);
 			}
 
-			$arFormat = Array(
-				"tommorow" => "tommorow, ".GetMessage('NM_FORMAT_TIME'),
-				"today" => "today, ".GetMessage('NM_FORMAT_TIME'),
-				"yesterday" => "yesterday, ".GetMessage('NM_FORMAT_TIME'),
-				"" => GetMessage('NM_FORMAT_DATE')
-			);
+			/** @see im.v2.lib.date-formatter */
+			$arFormat = [
+				"tommorow" => "tommorow, " . $arResult['DATE_FORMATS']['shortTimeFormat'],
+				"today" => "today, " . $arResult['DATE_FORMATS']['shortTimeFormat'],
+				"yesterday" => "yesterday, " . $arResult['DATE_FORMATS']['shortTimeFormat'],
+				"" => $arResult['DATE_FORMATS']['longDateFormat'] . ', ' . $arResult['DATE_FORMATS']['shortTimeFormat'],
+			];
+
 			$maxId = $data['id'] > $maxId? $data['id']: $maxId;
 			$data['date'] = FormatDate($arFormat, $data['date']);
 
@@ -519,11 +533,11 @@ function decodeBbCode($text, $safe = true)
 	$text = str_replace(['[BR]', '[br]', '#br#'], '<br>', $text);
 
 	$text = preg_replace_callback("/\\[url\\s*=\\s*((?:[^\\[\\]]++|\\[ (?: (?>[^\\[\\]]+) | (?:\\1) )* \\])+)\\s*\\](.*?)\\[\\/url\\]/ixs", function($match) {
-		return '<span data-url="'.$match[1].'" onclick="urlValidation(this)" style="color: #2067b0;font-weight: bold;">'.$match[2].'</span>';
+		return '<span data-url="'.$match[1].'" onclick="urlValidation(this)" style="color: var(--accent-main-links);font-weight: bold;">'.$match[2].'</span>';
 	}, $text);
 
 	$text = preg_replace_callback('/\[url\](.*?)\[\/url\]/i', function($match) {
-		return '<span data-url="'.$match[1].'" onclick="urlValidation(this)" style="color: #2067b0;font-weight: bold;">'.$match[1].'</span>';
+		return '<span data-url="'.$match[1].'" onclick="urlValidation(this)" style="color: var(--accent-main-links);font-weight: bold;">'.$match[1].'</span>';
 	}, $text);
 
 	$text = preg_replace(
@@ -674,7 +688,7 @@ function getNotifyParamsHtml($params)
 		}
 		if ($blockResult)
 		{
-			$color = $attachBlock['COLOR']? htmlspecialcharsbx($attachBlock['COLOR']): '#818181';
+			$color = $attachBlock['COLOR']? htmlspecialcharsbx($attachBlock['COLOR']): 'var(--base3)';
 			$result .= '<div class="bx-messenger-attach" style="border-color:'.$color.'">'.$blockResult.'</div>';
 		}
 	}

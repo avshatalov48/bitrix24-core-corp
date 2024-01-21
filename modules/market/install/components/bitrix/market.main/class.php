@@ -112,6 +112,7 @@ class MarketMain extends CBitrixComponent implements Controllerable, Loadable
 
 		if (isset($response[Transport::METHOD_TOTAL_APPS])) {
 			$this->arResult['TOTAL_APPS'] = NumberApps::get($response[Transport::METHOD_TOTAL_APPS]);
+			$this->arResult['SHOW_MARKET_ICON'] = $response[Transport::METHOD_TOTAL_APPS]['SHOW_MARKET_ICON'];
 		}
 	}
 

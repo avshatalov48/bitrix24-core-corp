@@ -20,6 +20,7 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 		sending: 'sending',
 		sent: 'sent',
 		viewed: 'viewed',
+		error: 'error',
 	});
 
 	module.exports = {

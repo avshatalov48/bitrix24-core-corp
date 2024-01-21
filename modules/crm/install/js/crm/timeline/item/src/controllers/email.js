@@ -79,6 +79,14 @@ export class Email extends Base
 
 	static isItemSupported(item: ConfigurableItem): boolean
 	{
-		return (item.getType() === 'ContactList' || item.getType() === 'Activity:Email' || item.getType() === 'EmailActivitySuccessfullyDelivered');
+		const supportedItemTypes = [
+			'ContactList',
+			'Activity:Email',
+			'EmailActivitySuccessfullyDelivered',
+			'EmailActivityNonDelivered',
+			'EmailLogIncomingMessage',
+		];
+
+		return supportedItemTypes.includes(item.getType());
 	}
 }

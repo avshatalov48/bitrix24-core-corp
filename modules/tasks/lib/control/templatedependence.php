@@ -17,16 +17,11 @@ class TemplateDependence
 
 	private const FIELD_DEPEND = 'DEPENDS_ON';
 
-	private $userId;
-	private $templateId;
-
 	/* @var TemplateObject $template */
 	private $template;
 
-	public function __construct(int $userId, int $templateId)
+	public function __construct(private int $userId, private int $templateId)
 	{
-		$this->userId = $userId;
-		$this->templateId = $templateId;
 	}
 
 	/**

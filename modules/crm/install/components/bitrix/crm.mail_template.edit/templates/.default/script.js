@@ -1,3 +1,4 @@
+
 if(typeof(BX.CrmEntityFieldSelector) == "undefined")
 {
 	BX.CrmEntityFieldSelector = function()
@@ -371,8 +372,71 @@ if(typeof(BX.CrmEntityFieldSelector) == "undefined")
 				editor.InsertHTML("#" + path + "#");
 			}
 			return false;
-		}
+		},
+		setPreselectedItems: (NodeId, items, ownerId) => {
+			const selectItem = () => {
+				const userId = ownerId;
+				const selectedItems = tagSelector.getDialog().getSelectedItems();
+				if (BX.type.isArray(selectedItems))
+				{
+					const result = [];
+					selectedItems.forEach((item) => {
+						if (item.entityId === 'user' && item.id === userId)
+						{
+							BX.UI.Notification.Center.notify({
+								content: BX.Loc.getMessage('CRM_MAIL_TEMPLATE_ENTITY_FIELD_SELECTOR_OWNER_ADD_ERROR'),
+							});
+							tagSelector.getDialog().removeItem(item);
+						}
+						else
+						{
+							result.push([item.entityId, item.id]);
+						}
+					});
+					BX(NodeId).value = JSON.stringify(result);
+				}
+			};
 
+			const tagSelector = new BX.UI.EntitySelector.TagSelector({
+				dialogOptions: {
+					context: 'PROVIDING-ACCESS-TO-TEMPLATE',
+					events: {
+						'Item:onSelect': selectItem,
+						'Item:onDeselect': selectItem,
+					},
+					entities: [
+						{
+							id: 'user',
+							options: {
+								inviteEmployeeLink: false,
+								'!userId': [Number(ownerId)],
+							},
+						},
+						{
+							id: 'department',
+							options: {
+								selectMode: 'usersAndDepartments',
+							},
+						},
+						{
+							id: 'meta-user',
+							options: {
+								'all-users': true,
+							},
+						},
+					],
+					preselectedItems: items,
+				},
+			});
+
+			BX.ready(() => {
+				const element = document.querySelector('[name = "ACCESS_SELECTOR"]');
+				const container = element.closest('td');
+				container.id = 'template-access-selector';
+				container.innerHTML = '';
+				tagSelector.renderTo(document.getElementById('template-access-selector'));
+			});
+		},
 	};
 
 	if(typeof(BX.CrmEntityFieldSelector.messages) == "undefined")

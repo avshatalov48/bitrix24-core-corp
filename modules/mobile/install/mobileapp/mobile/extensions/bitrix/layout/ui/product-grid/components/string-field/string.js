@@ -2,7 +2,7 @@
  * @module layout/ui/product-grid/components/string-field/string
  */
 jn.define('layout/ui/product-grid/components/string-field/string', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { isEqual } = require('utils/object');
 	const { stringify } = require('utils/string');
 	const { FocusContext } = require('layout/ui/product-grid/services/focus-context');
@@ -16,9 +16,10 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 		constructor(props)
 		{
 			super(props);
+
 			this.state = this.buildState(props);
 			this.textFieldRef = null;
-			this.testId = props.testId ? props.testId : '';
+			this.testId = props.testId || '';
 		}
 
 		buildState(props)
@@ -53,7 +54,7 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 					style: {
 						flexGrow: 1,
 						flexDirection: 'row',
-					}
+					},
 				},
 				this.renderDecrementButton(),
 				this.renderField(),
@@ -83,14 +84,14 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 					style: {
 						width: 26,
 						height: 26,
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgContentTertiary,
 						borderRadius: 47,
 						opacity: this.props.disabled ? 0.6 : 1,
 					},
 					svg: {
-						content: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M13 11H14H17V13L14 13L13 13H11L10 13H7V11H10H11H13Z" fill="#828B95"/></svg>`
-					}
-				})
+						content: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M13 11H14H17V13L14 13L13 13H11L10 13H7V11H10H11H13Z" fill="#828B95"/></svg>',
+					},
+				}),
 			);
 		}
 
@@ -116,14 +117,14 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 					style: {
 						width: 26,
 						height: 26,
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgContentTertiary,
 						borderRadius: 47,
 						opacity: this.props.disabled ? 0.6 : 1,
 					},
 					svg: {
-						content: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 7H13V17H11V7Z" fill="#828B95"/><path d="M17 11V13L7 13L7 11L17 11Z" fill="#828B95"/></svg>`
-					}
-				})
+						content: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 7H13V17H11V7Z" fill="#828B95"/><path d="M17 11V13L7 13L7 11L17 11Z" fill="#828B95"/></svg>',
+					},
+				}),
 			);
 		}
 
@@ -142,7 +143,9 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 				View(
 					{
 						style: {
-							borderColor: this.props.disabled ? '#EEF2F4' : '#bdc1c6',
+							borderColor: this.props.disabled
+								? AppTheme.colors.bgSeparatorPrimary
+								: AppTheme.colors.base5,
 							borderWidth: 1,
 							borderRadius: 3,
 							paddingLeft: 10,
@@ -152,8 +155,8 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 							flexGrow: 1,
 							flexDirection: 'row',
 							justifyContent: 'space-between',
-							backgroundColor: this.props.disabled ? '#EEF2F4' : 'transparent',
-						}
+							backgroundColor: this.props.disabled ? AppTheme.colors.bgContentTertiary : 'transparent',
+						},
 					},
 					this.renderLeftBlock(),
 					this.props.disabled ? this.renderDisabledField() : this.renderEnabledField(),
@@ -171,7 +174,7 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 				{
 					style: {
 						flexGrow: 1,
-					}
+					},
 				},
 				Text({
 					text,
@@ -179,10 +182,10 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 					style: {
 						fontSize: 17,
 						textAlign: this.textPosition,
-						color: '#828B95',
+						color: AppTheme.colors.base3,
 						fontWeight: this.style.fontWeight || 'normal',
-					}
-				})
+					},
+				}),
 			);
 		}
 
@@ -197,8 +200,8 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 		getNativeFieldProps()
 		{
 			return {
-				ref: ref => {
-					FocusContext.registerField({ref});
+				ref: (ref) => {
+					FocusContext.registerField({ ref });
 					this.textFieldRef = ref;
 				},
 				placeholder: this.props.placeholder || '',
@@ -208,6 +211,7 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 					textAlign: this.textPosition,
 					flexGrow: 1,
 					fontWeight: this.style.fontWeight || 'normal',
+					color: AppTheme.colors.base1,
 				},
 				onBlur: () => {
 					this.setState({}, () => this.onBlur());
@@ -233,7 +237,7 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 
 		defaultFormatter()
 		{
-			return val => val;
+			return (val) => val;
 		}
 
 		renderLeftBlock()
@@ -253,14 +257,13 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 				return null;
 			}
 
-			const positions = {left: 'flex-start', right: 'flex-end', center: 'center'};
+			const positions = { left: 'flex-start', right: 'flex-end', center: 'center' };
 			const position = this.props.labelAlign && positions[this.props.labelAlign]
 				? positions[this.props.labelAlign]
 				: positions.left;
 
 			const margin = this.props.disabled ? 0 : 8;
-			let padding = this.props.disabled ? 10 : 4;
-
+			const padding = this.props.disabled ? 10 : 4;
 
 			return View(
 				{
@@ -271,12 +274,14 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 						width: '100%',
 						flexDirection: 'row',
 						justifyContent: position,
-					}
+					},
 				},
 				View(
 					{
 						style: {
-							backgroundColor: this.props.disabled ? '#EEF2F4' : '#ffffff',
+							backgroundColor: this.props.disabled
+								? AppTheme.colors.bgContentTertiary
+								: AppTheme.colors.bgContentPrimary,
 							borderRadius: 4,
 							paddingLeft: padding,
 							paddingRight: padding,
@@ -285,16 +290,16 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 							marginLeft: margin,
 							marginRight: margin,
 							flexShrink: 1,
-						}
+						},
 					},
 					Text({
 						text: this.props.label,
 						style: {
-							color: '#A8ADB4',
+							color: AppTheme.colors.base4,
 							fontSize: 12,
-						}
-					})
-				)
+						},
+					}),
+				),
 			);
 		}
 
@@ -319,7 +324,7 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 
 			Haptics.impactMedium();
 
-			this.setState({rawValue: next}, () => {
+			this.setState({ rawValue: next }, () => {
 				this.onIncrement();
 				this.onChange();
 			});
@@ -346,7 +351,7 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 
 			Haptics.impactMedium();
 
-			this.setState({rawValue: next}, () => {
+			this.setState({ rawValue: next }, () => {
 				this.onDecrement();
 				this.onChange();
 			});
@@ -435,12 +440,14 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 			{
 				return true;
 			}
+
 			return false;
 		}
 
 		get textPosition()
 		{
 			const positions = ['left', 'right', 'center'];
+
 			return this.props.textAlign && positions.includes(this.props.textAlign)
 				? this.props.textAlign
 				: 'left';
@@ -453,5 +460,4 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 	}
 
 	module.exports = { ProductGridStringField };
-
 });

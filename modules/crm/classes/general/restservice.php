@@ -9764,6 +9764,11 @@ class CCrmLiveFeedMessageRestProxy extends CCrmRestProxyBase
 {
 	public function processMethodRequest($name, $nameDetails, $arParams, $nav, $server)
 	{
+		if (!\Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper::isAvailable())
+		{
+			throw new RestException('Livefeed is no longer supported');
+		}
+
 		global $USER;
 
 		$name = mb_strtoupper($name);

@@ -2,8 +2,9 @@
  * @module im/messenger/lib/element/dialog/message/video
  */
 jn.define('im/messenger/lib/element/dialog/message/video', (require, exports, module) => {
-	const { Message } = require('im/messenger/lib/element/dialog/message/base');
 	const { Type } = require('type');
+
+	const { Message } = require('im/messenger/lib/element/dialog/message/base');
 
 	/**
 	 * @class VideoMessage
@@ -18,13 +19,36 @@ jn.define('im/messenger/lib/element/dialog/message/video', (require, exports, mo
 		constructor(modelMessage = {}, options = {}, file = {})
 		{
 			super(modelMessage, options);
+
+			/* region deprecated properties */
 			this.videoUrl = null;
 			this.localVideoUrl = null;
 			this.previewImage = null;
+			this.previewParams = {
+				height: 0,
+				width: 0,
+			};
+			/* end region */
+
+			this.video = {
+				id: 0,
+				localUrl: null,
+				url: null,
+				previewParams: {
+					height: 0,
+					width: 0,
+				},
+				size: 0,
+			};
 
 			if (modelMessage.text !== '')
 			{
 				this.setMessage(modelMessage.text);
+			}
+
+			if (Type.isNumber(file.id))
+			{
+				this.setVideoId(file.id);
 			}
 
 			if (Type.isStringFilled(file.urlShow))
@@ -42,9 +66,25 @@ jn.define('im/messenger/lib/element/dialog/message/video', (require, exports, mo
 				this.setPreviewImage(file.urlPreview);
 			}
 
+			if (Type.isNumber(file.size))
+			{
+				this.setSize(file.size);
+			}
+
 			this.setPreviewParams(file.image);
 
 			this.setShowTail(true);
+			this.setLoadText();
+		}
+
+		setVideoId(videoId)
+		{
+			if (!Type.isNumber(videoId))
+			{
+				return;
+			}
+
+			this.video.id = videoId.toString();
 		}
 
 		/**
@@ -54,6 +94,7 @@ jn.define('im/messenger/lib/element/dialog/message/video', (require, exports, mo
 		setVideoUrl(value)
 		{
 			this.videoUrl = value;
+			this.video.url = value;
 		}
 
 		/**
@@ -63,6 +104,7 @@ jn.define('im/messenger/lib/element/dialog/message/video', (require, exports, mo
 		setLocalVideoUrl(value)
 		{
 			this.localVideoUrl = value;
+			this.video.localUrl = value;
 		}
 
 		/**
@@ -88,6 +130,11 @@ jn.define('im/messenger/lib/element/dialog/message/video', (require, exports, mo
 					height: param.height || 0,
 					width: param.width || 0,
 				};
+
+				this.video.previewParams = {
+					height: param.height || 0,
+					width: param.width || 0,
+				};
 			}
 			else
 			{
@@ -95,7 +142,17 @@ jn.define('im/messenger/lib/element/dialog/message/video', (require, exports, mo
 					height: 0,
 					width: 0,
 				};
+
+				this.video.previewParams = {
+					height: 0,
+					width: 0,
+				};
 			}
+		}
+
+		setSize(size)
+		{
+			this.video.size = size;
 		}
 
 		getType()
@@ -112,5 +169,4 @@ jn.define('im/messenger/lib/element/dialog/message/video', (require, exports, mo
 	module.exports = {
 		VideoMessage,
 	};
-})
-;
+});

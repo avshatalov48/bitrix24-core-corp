@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bitrix\CrmMobile\Controller;
 
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Factory;
@@ -40,16 +41,22 @@ class Timeline extends Controller
 			\CPullWatch::Add($currentUser->getId(), $pushTag);
 		}
 
+		$typeId = $entity->getEntityTypeId();
+		$categoryId = $factory->isCategoriesSupported() ? $entity->getCategoryId() : null;
+
+		$reminders = (new TodoPingSettingsProvider($typeId, (int)$categoryId))->fetchForJsComponent();
+
 		return [
 			'entity' => [
 				'id' => $entity->getId(),
-				'typeId' => $entity->getEntityTypeId(),
-				'categoryId' => $factory->isCategoriesSupported() ? $entity->getCategoryId() : null,
+				'typeId' => $typeId,
+				'categoryId' => $categoryId,
 				'title' => $entity->getHeading(),
 				'pushTag' => $pushTag,
-				'detailPageUrl' => \CCrmOwnerType::GetDetailsUrl($entity->getEntityTypeId(), $entity->getId()),
+				'detailPageUrl' => \CCrmOwnerType::GetDetailsUrl($typeId, $entity->getId()),
 				'isEditable' => $this->isEntityEditable($entity),
-				'documentGeneratorProvider' => $this->getDocumentGeneratorProvider($entity->getEntityTypeId()),
+				'documentGeneratorProvider' => $this->getDocumentGeneratorProvider($typeId),
+				'reminders' => $reminders,
 			],
 			'scheduled' => $scheduled,
 			'pinned' => $pinned,

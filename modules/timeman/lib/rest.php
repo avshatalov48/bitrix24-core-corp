@@ -1,11 +1,8 @@
 <?php
 namespace Bitrix\Timeman;
 
-use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
-use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\Type\Date;
-use Bitrix\Rest\AccessException;
 use Bitrix\Rest\RestException;
 
 Loader::includeModule('rest');
@@ -151,7 +148,10 @@ class Rest extends \IRestService
 
 					if(!static::checkDate($timeInfo, ConvertTimeStamp()))
 					{
-						throw new DateTimeException('Day open date should correspond to the current date', DateTimeException::ERROR_WRONG_DATETIME);
+						throw new RestException(
+							'Day open date should correspond to the current date',
+							DateTimeException::ERROR_WRONG_DATETIME
+						);
 					}
 
 					$result = $tmUser->openDay($timeInfo['TIME'], $query['REPORT']);
@@ -170,7 +170,7 @@ class Rest extends \IRestService
 			{
 				if(isset($query['TIME']))
 				{
-					throw new ArgumentException('Unable to set time, work day is paused', 'TIME');
+					throw new RestException('Unable to set time, work day is paused', 'TIME');
 				}
 
 				$currentInfo = $tmUser->getCurrentInfo();
@@ -213,7 +213,10 @@ class Rest extends \IRestService
 
 			if(!static::checkDate($timeInfo, ConvertTimeStamp(MakeTimeStamp($currentInfo['DATE_START'], FORMAT_DATETIME))))
 			{
-				throw new DateTimeException('Day close date should correspond to the day open date', DateTimeException::ERROR_WRONG_DATETIME);
+				throw new RestException(
+					'Day close date should correspond to the day open date',
+					DateTimeException::ERROR_WRONG_DATETIME
+				);
 			}
 
 			$result = $tmUser->CloseDay($timeInfo['TIME'], trim($query['REPORT']));
@@ -259,7 +262,11 @@ class Rest extends \IRestService
 	{
 		if (!self::isAdmin())
 		{
-			throw new \Bitrix\Rest\RestException("You don't have access to user this method", "ACCESS_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException(
+				"You don't have access to user this method",
+				"ACCESS_ERROR",
+				\CRestServer::STATUS_WRONG_REQUEST
+			);
 		}
 
 		return \Bitrix\Timeman\Common::getOptionNetworkRange();
@@ -269,7 +276,11 @@ class Rest extends \IRestService
 	{
 		if (!self::isAdmin())
 		{
-			throw new \Bitrix\Rest\RestException("You don't have access to user this method", "ACCESS_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException(
+				"You don't have access to user this method",
+				"ACCESS_ERROR",
+				\CRestServer::STATUS_WRONG_REQUEST
+			);
 		}
 
 		$query = static::prepareQuery($query);
@@ -281,7 +292,11 @@ class Rest extends \IRestService
 		$result = \Bitrix\Timeman\Common::checkOptionNetworkRange($query['RANGES']);
 		if (!$result)
 		{
-			throw new \Bitrix\Rest\RestException("A wrong format for the RANGES field is passed", "INVALID_FORMAT", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException(
+				"A wrong format for the RANGES field is passed",
+				"INVALID_FORMAT",
+				\CRestServer::STATUS_WRONG_REQUEST
+			);
 		}
 		if (count($result['ERROR']) > 0)
 		{
@@ -305,7 +320,11 @@ class Rest extends \IRestService
 	{
 		if (!self::isAdmin())
 		{
-			throw new \Bitrix\Rest\RestException("You don't have access to user this method", "ACCESS_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException(
+				"You don't have access to user this method",
+				"ACCESS_ERROR",
+				\CRestServer::STATUS_WRONG_REQUEST
+			);
 		}
 
 		$query = static::prepareQuery($query);
@@ -332,7 +351,11 @@ class Rest extends \IRestService
 			$result = \Bitrix\Timeman\Model\AbsenceTable::getById($absenceId)->fetch();
 			if ($result['USER_ID'] != $userId)
 			{
-				throw new \Bitrix\Rest\RestException("You don't have access for this report", "ACCESS_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+				throw new RestException(
+					"You don't have access for this report",
+					"ACCESS_ERROR",
+					\CRestServer::STATUS_WRONG_REQUEST
+				);
 			}
 		}
 
@@ -343,7 +366,11 @@ class Rest extends \IRestService
 		$text = trim($text);
 		if ($text == '')
 		{
-			throw new \Bitrix\Rest\RestException("Text can't be empty", "TEXT_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException(
+				"Text can't be empty",
+				"TEXT_EMPTY",
+				\CRestServer::STATUS_WRONG_REQUEST
+			);
 		}
 
 
@@ -357,7 +384,11 @@ class Rest extends \IRestService
 	{
 		if (!self::isAdmin())
 		{
-			throw new \Bitrix\Rest\RestException("You don't have access to user this method", "ACCESS_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException(
+				"You don't have access to user this method",
+				"ACCESS_ERROR",
+				\CRestServer::STATUS_WRONG_REQUEST
+			);
 		}
 
 		return Array(
@@ -383,7 +414,11 @@ class Rest extends \IRestService
 	{
 		if (!self::isAdmin())
 		{
-			throw new \Bitrix\Rest\RestException("You don't have access to user this method", "ACCESS_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException(
+				"You don't have access to user this method",
+				"ACCESS_ERROR",
+				\CRestServer::STATUS_WRONG_REQUEST
+			);
 		}
 
 		$query = static::prepareQuery($query);
@@ -572,12 +607,20 @@ class Rest extends \IRestService
 		}
 		else
 		{
-			throw new \Bitrix\Rest\RestException("You don't have access to this method", "ACCESS_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException(
+				"You don't have access to this method",
+				"ACCESS_ERROR",
+				\CRestServer::STATUS_WRONG_REQUEST
+			);
 		}
 
 		if (!\Bitrix\Timeman\Absence::hasAccessToReport($userId))
 		{
-			throw new \Bitrix\Rest\RestException("You don't have access to report for this user", "USER_ACCESS_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException(
+				"You don't have access to report for this user",
+				"USER_ACCESS_ERROR",
+				\CRestServer::STATUS_WRONG_REQUEST
+			);
 		}
 
 		if ($reportViewType != 'head')
@@ -673,7 +716,7 @@ class Rest extends \IRestService
 	 * @param array $query
 	 *
 	 * @return \CTimeManUser
-	 * @throws AccessException
+	 * @throws RestException
 	 */
 	protected static function getUserInstance(array $query)
 	{
@@ -683,12 +726,12 @@ class Rest extends \IRestService
 		{
 			if(!\CTimeMan::isAdmin())
 			{
-				throw new AccessException('User does not have access to managing other users work time');
+				throw new RestException('User does not have access to managing other users work time');
 			}
 
 			if(!static::checkUser($query['USER_ID']))
 			{
-				throw new ObjectNotFoundException('User not found');
+				throw new RestException('User not found');
 			}
 
 			return new \CTimeManUser($query['USER_ID']);
@@ -789,7 +832,10 @@ class Rest extends \IRestService
 		$date = \DateTime::createFromFormat(\DateTime::ATOM, $isoTime);
 		if(!$date)
 		{
-			throw new DateTimeException('Wrong datetime format', DateTimeException::ERROR_WRONG_DATETIME_FORMAT);
+			throw new RestException(
+				'Wrong datetime format',
+				DateTimeException::ERROR_WRONG_DATETIME_FORMAT
+			);
 		}
 
 		return array(

@@ -2,9 +2,11 @@
  * @module crm/crm-mode/wizard/layouts/conversion/layout
  */
 jn.define('crm/crm-mode/wizard/layouts/conversion/layout', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
+	const { UIScrollView } = require('layout/ui/scroll-view');
 	const { BackdropHeader } = require('layout/ui/banners');
-	const { EXTENSION_PATH } = require('crm/crm-mode/wizard/layouts/constants');
+	const { BannerImage } = require('crm/crm-mode/wizard/layouts/src/images');
 	const { stageBlock } = require('crm/crm-mode/wizard/layouts/conversion/blocks/stage');
 	const { entityBlock } = require('crm/crm-mode/wizard/layouts/conversion/blocks/entity');
 	const { caseBlock } = require('crm/crm-mode/wizard/layouts/conversion/blocks/case');
@@ -22,7 +24,7 @@ jn.define('crm/crm-mode/wizard/layouts/conversion/layout', (require, exports, mo
 			this.category = getCategory();
 
 			this.result = {
-				categoryId: this.category.id || categoryId,
+				categoryId: this.category.categoryId || categoryId,
 				moveCase,
 				selectedEntities,
 			};
@@ -47,7 +49,7 @@ jn.define('crm/crm-mode/wizard/layouts/conversion/layout', (require, exports, mo
 			return View(
 				{
 					style: {
-						backgroundColor: '#ffffff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						paddingHorizontal: 16,
 						paddingVertical: 10,
 						borderRadius: 12,
@@ -58,6 +60,7 @@ jn.define('crm/crm-mode/wizard/layouts/conversion/layout', (require, exports, mo
 					{
 						text: title,
 						style: {
+							color: AppTheme.colors.base1,
 							fontSize: 16,
 						},
 					},
@@ -81,7 +84,7 @@ jn.define('crm/crm-mode/wizard/layouts/conversion/layout', (require, exports, mo
 						text: description,
 						style: {
 							fontSize: 14,
-							color: '#828b95',
+							color: AppTheme.colors.base4,
 						},
 					},
 				),
@@ -90,45 +93,43 @@ jn.define('crm/crm-mode/wizard/layouts/conversion/layout', (require, exports, mo
 
 		render()
 		{
-			return ScrollView(
+			return UIScrollView(
 				{
 					style: {
 						height: '100%',
-						backgroundColor: '#eef2f4',
 					},
-				},
-				View(
-					{},
-					View(
-						{
-							style: {
-								marginBottom: 12,
-								borderRadius: 12,
+					children: [
+						View(
+							{
+								style: {
+									marginBottom: 12,
+									borderRadius: 12,
+								},
 							},
-						},
-						BackdropHeader({
-							title: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_CONVERSION_HEADER_TITLE'),
-							description: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_CONVERSION_HEADER_DESCRIPTION'),
-							image: `${EXTENSION_PATH}/conversion.png`,
-							position: 'flex-start',
+							BackdropHeader({
+								title: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_CONVERSION_HEADER_TITLE'),
+								description: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_CONVERSION_HEADER_DESCRIPTION'),
+								image: BannerImage('conversion'),
+								position: 'flex-start',
+							}),
+						),
+						this.renderBlock({
+							title: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_CONVERSION_STAGE_BLOCK_TITLE'),
+							description: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_CONVERSION_STAGE_BLOCK_DESCRIPTION'),
+							body: stageBlock,
 						}),
-					),
-					this.renderBlock({
-						title: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_CONVERSION_STAGE_BLOCK_TITLE'),
-						description: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_CONVERSION_STAGE_BLOCK_DESCRIPTION'),
-						body: stageBlock,
-					}),
-					this.renderBlock({
-						title: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_CONVERSION_ENTITIES_BLOCK_TITLE'),
-						description: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_CONVERSION_ENTITIES_BLOCK_DESCRIPTION'),
-						body: entityBlock,
-					}),
-					this.renderBlock({
-						title: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_CONVERSION_CASE_BLOCK_TITLE'),
-						description: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_CONVERSION_CASE_BLOCK_DESCRIPTION'),
-						body: caseBlock,
-					}),
-				),
+						this.renderBlock({
+							title: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_CONVERSION_ENTITIES_BLOCK_TITLE'),
+							description: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_CONVERSION_ENTITIES_BLOCK_DESCRIPTION'),
+							body: entityBlock,
+						}),
+						this.renderBlock({
+							title: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_CONVERSION_CASE_BLOCK_TITLE'),
+							description: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_CONVERSION_CASE_BLOCK_DESCRIPTION'),
+							body: caseBlock,
+						}),
+					],
+				},
 			);
 		}
 	}

@@ -2,9 +2,11 @@
  * @module layout/ui/wizard
  */
 jn.define('layout/ui/wizard', (require, exports, module) => {
+	const AppTheme = require('apptheme');
+
 	const BUTTON_COLORS = {
-		ENABLED: '#0065a3',
-		DISABLED: '#d5d7db',
+		ENABLED: AppTheme.colors.accentMainLinks,
+		DISABLED: AppTheme.colors.base6,
 	};
 
 	const { StepLayout } = require('layout/ui/wizard/step-layout');
@@ -19,6 +21,7 @@ jn.define('layout/ui/wizard', (require, exports, module) => {
 		 * @param {Object[]} props.steps
 		 * @param {Object} props.stepForId
 		 * @param {Object} props.parentLayout
+		 * @param {Boolean} props.showNextStepButtonAtBottom
 		 */
 		constructor(props)
 		{
@@ -28,6 +31,9 @@ jn.define('layout/ui/wizard', (require, exports, module) => {
 			this.currentStepId = null;
 			this.currentLayout = this.getLayoutWidget();
 			this.parentManager = this.getPageManager();
+
+			this.stepLayoutRef = null;
+			this.showNextStepButtonAtBottom = props.showNextStepButtonAtBottom || false;
 
 			/** @type {Map<string,WizardStep>} */
 			this.steps = new Map();
@@ -230,7 +236,7 @@ jn.define('layout/ui/wizard', (require, exports, module) => {
 						detailText: step.isNeedToSkip() ? null : step.getSubTitle(),
 					},
 					animate: !step.isNeedToSkip(),
-					backgroundColor: '#eef2f4',
+					backgroundColor: AppTheme.colors.bgSecondary,
 				})
 				.then((layoutWidget) => {
 					if (!step.isPrevStepEnabled())
@@ -240,11 +246,19 @@ jn.define('layout/ui/wizard', (require, exports, module) => {
 
 					this.onLayoutViewShown(layoutWidget, stepId);
 
-					layoutWidget.enableNavigationBarBorder(this.isNavigationBarBorderEnabled());
+					layoutWidget.enableNavigationBarBorder(
+						step.isNavigationBarBorderEnabled() === null
+							? this.isNavigationBarBorderEnabled()
+							: step.isNavigationBarBorderEnabled(),
+					);
 					layoutWidget.showComponent(new StepLayout({
 						layoutWidget,
 						step,
 						wizard: this,
+						showNextStepButtonAtBottom: this.showNextStepButtonAtBottom,
+						ref: (ref) => {
+							this.stepLayoutRef = ref;
+						},
 					}));
 				}).catch(console.error);
 		}
@@ -344,23 +358,34 @@ jn.define('layout/ui/wizard', (require, exports, module) => {
 			}
 
 			const isEnabled = currentStep.isNextStepEnabled() && isNextStepEnabled && !this.isLoading;
-			const nextStepButtonText = currentStep.getNextStepButtonText();
 
-			this.currentLayout.setRightButtons([
+			if (this.showNextStepButtonAtBottom)
+			{
+				if (this.stepLayoutRef)
 				{
-					name: nextStepButtonText,
-					type: 'text',
-					color: isEnabled ? BUTTON_COLORS.ENABLED : BUTTON_COLORS.DISABLED,
-					callback: () => {
-						if (isEnabled)
-						{
-							this.moveToNextStep();
-						}
-					},
-				},
-			]);
+					this.stepLayoutRef.toggleChangeStepButton(isEnabled);
+				}
+			}
+			else
+			{
+				const nextStepButtonText = currentStep.getNextStepButtonText();
 
-			const leftButtons = this.getPrevStepIndex() >= 0 ? [
+				this.currentLayout.setRightButtons([
+					{
+						name: nextStepButtonText,
+						type: 'text',
+						color: isEnabled ? BUTTON_COLORS.ENABLED : BUTTON_COLORS.DISABLED,
+						callback: () => {
+							if (isEnabled)
+							{
+								this.moveToNextStep();
+							}
+						},
+					},
+				]);
+			}
+
+			const leftButtons = this.getPrevStepIndex() >= 0 && currentStep.isPrevStepEnabled() ? [
 				{
 					type: 'back',
 					callback: async () => {
@@ -389,6 +414,10 @@ jn.define('layout/ui/wizard', (require, exports, module) => {
 			return new StepLayout({
 				step: this.getCurrentStep(),
 				wizard: this,
+				showNextStepButtonAtBottom: this.showNextStepButtonAtBottom,
+				ref: (ref) => {
+					this.stepLayoutRef = ref;
+				},
 			});
 		}
 

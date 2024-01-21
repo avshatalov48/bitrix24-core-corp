@@ -32,4 +32,5 @@ class TimelineType
 	public const LOG_MESSAGE = 25;
 	public const CALENDAR_SHARING = 26;
 	public const TASK = 27;
+	public const AI_CALL_PROCESSING = 28;
 }

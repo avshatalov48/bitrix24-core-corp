@@ -3,7 +3,7 @@
  */
 jn.define('crm/simple-list/items/crm-entity', (require, exports, module) => {
 	const { Extended } = require('layout/ui/simple-list/items/extended');
-	const { FieldFactory, CrmStageType, ClientType, StatusType } = require('layout/ui/fields');
+	const { FieldFactory, CrmStageSelectorType, ClientType, StatusType } = require('layout/ui/fields');
 	const { get } = require('utils/object');
 	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
 	const { CounterComponent } = require('layout/ui/kanban/counter');
@@ -36,6 +36,7 @@ jn.define('crm/simple-list/items/crm-entity', (require, exports, module) => {
 			/** @var {CommunicationButton} */
 			this.communicationButtonRef = null;
 			this.showCommunicationButton = this.showCommunicationButton.bind(this);
+			this.onChangeStageHandler = this.onChangeStage.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -131,35 +132,44 @@ jn.define('crm/simple-list/items/crm-entity', (require, exports, module) => {
 
 			if (has.call(this.params, 'categoryId') && data.columnId)
 			{
-				const column = this.params.columns.get(data.columnId);
-				if (column)
-				{
-					const permissions = BX.prop.getObject(data, 'permissions', {});
-					const emptyCallback = () => {};
+				const permissions = BX.prop.getObject(data, 'permissions', {});
 
-					return FieldFactory.create(CrmStageType, {
-						showTitle: false,
-						value: this.state.columnId,
-						readOnly: (!permissions.write || false),
-						config: {
-							entityId: data.id,
-							entityTypeId: this.params.entityTypeId,
-							categoryId: this.params.categoryId,
-							data: {
-								itemId: data.id,
-							},
-							uid: CrmEntity.getUidForStageSliderField(data.id, data.columnId),
-							useStageChangeMenu: true,
-							showReadonlyNotification: true,
-							animationMode: 'animateBeforeUpdate',
-						},
-						onChange: (this.params.onChange || emptyCallback),
-						forceUpdate: this.forceUpdateCrmStagesHandler,
-					});
-				}
+				return FieldFactory.create(CrmStageSelectorType, this.getStageProps(data, permissions));
 			}
 
 			return null;
+		}
+
+		getStageProps(data, permissions)
+		{
+			return {
+				showTitle: false,
+				value: this.state.columnId,
+				columnCode: data.columnId,
+				readOnly: (!permissions.write || false),
+				entityTypeId: this.params.entityTypeId,
+				categoryId: this.params.categoryId,
+				showReadonlyNotification: true,
+				config: {
+					uid: CrmEntity.getUidForStageSliderField(data.id, data.columnId),
+					useStageChangeMenu: true,
+					showReadonlyNotification: true,
+					animationMode: 'animateBeforeUpdate',
+					parentWidget: this.layout,
+					entityId: data.id,
+				},
+				onChange: this.onChangeStageHandler,
+				forceUpdate: this.forceUpdateCrmStagesHandler,
+			};
+		}
+
+		onChangeStage(stageId)
+		{
+			const emptyCallback = () => {};
+
+			return this.params.onChangeItemStage
+				? this.params.onChangeItemStage(stageId, {}, { itemId: this.props.item.id })
+				: emptyCallback();
 		}
 
 		forceUpdateCrmStages(params)
@@ -260,6 +270,7 @@ jn.define('crm/simple-list/items/crm-entity', (require, exports, module) => {
 						justifyContent: 'center',
 						width: 76,
 					},
+					testId: 'CrmListItemCommunicationButton',
 					onClick: this.showCommunicationButton,
 				},
 				new CommunicationButton({

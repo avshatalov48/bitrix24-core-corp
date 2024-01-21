@@ -11,6 +11,7 @@ final class ControlPanelMenuMapper
 	public const MENU_ID_CRM_INTEGRATIONS = 'crm_integrations';
 	public const MENU_ID_CRM_SALES = 'crm_sales';
 	public const MENU_ID_CRM_SETTINGS = 'crm_settings';
+	public const MENU_ID_CRM_BI = 'crm_bi';
 	public const MENU_ID_CRM_ANALYTICS = 'crm_analytics';
 	public const MENU_ID_CRM_STORE_CONTRACTORS = 'menu_crm_store_contractors';
 	public const MENU_ID_DYNAMIC_LIST = 'dynamic_list';

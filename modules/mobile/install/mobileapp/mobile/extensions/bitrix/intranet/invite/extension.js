@@ -1,16 +1,15 @@
-"use strict";
+'use strict';
 
-if (typeof IntranetInvite != 'undefined' && typeof IntranetInvite.cleaner != 'undefined')
+if (typeof IntranetInvite !== 'undefined' && typeof IntranetInvite.cleaner !== 'undefined')
 {
 	IntranetInvite.cleaner();
 }
 
 var IntranetInvite = {
-	event: {}
+	event: {},
 };
 
-IntranetInvite.init = function()
-{
+IntranetInvite.init = function() {
 	this.canInvite = false;
 	this.registerUrl = '';
 	this.rootStructureSectionId = 1;
@@ -25,22 +24,21 @@ IntranetInvite.init = function()
 		this.initRegisterUrl();
 	}
 
-	BX.addCustomEvent("onSendInvite", this.onSendInvite.bind(this));
+	BX.addCustomEvent('onSendInvite', this.onSendInvite.bind(this));
 };
 
-IntranetInvite.isRecentComponent = function()
-{
-	if (BX.componentParameters.get('COMPONENT_CODE') === "im.messenger")
+IntranetInvite.isRecentComponent = function() {
+	if (BX.componentParameters.get('COMPONENT_CODE') === 'im.messenger')
 	{
 		return true;
 	}
 
-	if (BX.componentParameters.get('COMPONENT_CODE') === "im.recent")
+	if (BX.componentParameters.get('COMPONENT_CODE') === 'im.recent')
 	{
 		return true;
 	}
 
-	if (BX.componentParameters.get('COMPONENT_CODE') === "im.openlines.recent")
+	if (BX.componentParameters.get('COMPONENT_CODE') === 'im.openlines.recent')
 	{
 		return true;
 	}
@@ -48,64 +46,51 @@ IntranetInvite.isRecentComponent = function()
 	return false;
 };
 
-IntranetInvite.setCanInvite = function(value)
-{
-	this.canInvite = !!value;
+IntranetInvite.setCanInvite = function(value) {
+	this.canInvite = Boolean(value);
 };
 
-IntranetInvite.getCanInvite = function()
-{
-	return !!this.canInvite;
+IntranetInvite.getCanInvite = function() {
+	return Boolean(this.canInvite);
 };
 
-IntranetInvite.setRegisterUrl = function(value)
-{
+IntranetInvite.setRegisterUrl = function(value) {
 	if (Utils.isNotEmptyString(value))
 	{
 		this.registerUrl = value;
 	}
 };
-IntranetInvite.getRegisterUrl = function()
-{
+
+IntranetInvite.getRegisterUrl = function() {
 	return this.registerUrl;
 };
 
-IntranetInvite.setAdminConfirm = function(value)
-{
+IntranetInvite.setAdminConfirm = function(value) {
 	this.adminConfirm = value;
 };
-IntranetInvite.getAdminConfirm = function()
-{
+
+IntranetInvite.getAdminConfirm = function() {
 	return this.adminConfirm;
 };
 
-IntranetInvite.getData = function(params)
-{
+IntranetInvite.getData = function(params) {
 	BX.ajax.runAction('intranet.invite.getData', {
-		data: {}
-	}).then((response) =>
-	{
-		if (response.status === 'success')
+		data: {},
+	}).then((response) => {
+		if (response.status === 'success'
+			&& Utils.isNotEmptyObject(params)
+			&& Utils.isFunction(params.callback)
+		)
 		{
-			if (
-				Utils.isNotEmptyObject(params)
-				&& Utils.isFunction(params.callback)
-			)
-			{
-				params.callback(response.data);
-			}
+			params.callback(response.data);
 		}
-	}).catch((error) => {
-
-	});
+	}).catch(console.error);
 };
 
-IntranetInvite.initRegisterUrl = function(params)
-{
+IntranetInvite.initRegisterUrl = function(params) {
 	BX.ajax.runAction('intranet.invite.getRegisterUrl', {
-		data: {}
-	}).then((response) =>
-	{
+		data: {},
+	}).then((response) => {
 		if (response.status === 'success')
 		{
 			this.setRegisterUrl(response.data.result);
@@ -117,18 +102,16 @@ IntranetInvite.initRegisterUrl = function(params)
 				params.callback(response.data.result);
 			}
 		}
-	}).catch((response) => {
-	});
+	}).catch(console.error);
 };
 
-IntranetInvite.openRegisterSlider = function(params)
-{
-	let settings = {
+IntranetInvite.openRegisterSlider = function(params) {
+	const settings = {
 		objectName: 'inviteComponent',
 		link: (Utils.isNotEmptyObject(params) && Utils.isNotEmptyString(params.registerUrl) ? params.registerUrl : ''),
-		adminConfirm: (Utils.isNotEmptyObject(params) ? !!params.adminConfirm : false),
-		disableAdminConfirm: (Utils.isNotEmptyObject(params) ? !!params.disableAdminConfirm : false),
-		rootStructureSectionId: (Utils.isNotEmptyObject(params) ? parseInt(params.rootStructureSectionId) : 0)
+		adminConfirm: (Utils.isNotEmptyObject(params) ? Boolean(params.adminConfirm) : false),
+		disableAdminConfirm: (Utils.isNotEmptyObject(params) ? Boolean(params.disableAdminConfirm) : false),
+		rootStructureSectionId: (Utils.isNotEmptyObject(params) ? parseInt(params.rootStructureSectionId) : 0),
 	};
 
 	this.setAdminConfirm(settings.adminConfirm);
@@ -145,16 +128,16 @@ IntranetInvite.openRegisterSlider = function(params)
 	}
 
 	const componentConfig = {
-		scriptPath: availableComponents["intranet.invite"].publicUrl,
+		scriptPath: availableComponents['intranet.invite'].publicUrl,
 		params: {
 			ORIGINATOR: (Utils.isNotEmptyObject(params) && Utils.isNotEmptyString(params.originator) ? params.originator : ''),
 			DISABLE_ADMIN_CONFIRM: settings.disableAdminConfirm,
 		},
-		componentCode: "invite",
+		componentCode: 'invite',
 		rootWidget: {
 			name: 'invite',
-			settings: settings,
-		}
+			settings,
+		},
 	};
 
 	if (params.parentLayout)
@@ -162,7 +145,7 @@ IntranetInvite.openRegisterSlider = function(params)
 		PageManager.openComponent(
 			'JSStackComponent',
 			componentConfig,
-			params.parentLayout
+			params.parentLayout,
 		);
 
 		return;
@@ -174,10 +157,10 @@ IntranetInvite.openRegisterSlider = function(params)
 	);
 };
 
-IntranetInvite.onSendInvite = function(params)
-{
-	if (typeof analytics != "undefined") {
-		analytics.send("invite")
+IntranetInvite.onSendInvite = function(params) {
+	if (typeof analytics !== 'undefined')
+	{
+		analytics.send('invite');
 	}
 
 	if (
@@ -188,11 +171,11 @@ IntranetInvite.onSendInvite = function(params)
 		return;
 	}
 
-	const phoneList = params.recipients.map(function(item) {
+	const phoneList = params.recipients.map((item) => {
 		return item.phone;
 	});
 
-	const countryCodeList = params.recipients.map(function(item) {
+	const countryCodeList = params.recipients.map((item) => {
 		return item.countryCode;
 	});
 
@@ -209,31 +192,31 @@ IntranetInvite.onSendInvite = function(params)
 				PHONE: phoneList,
 				PHONE_COUNTRY: countryCodeList,
 				DEPARTMENT_ID: this.rootStructureSectionId,
-				CONTEXT: 'mobile'
-			}
-		}
-	}).then(response => {
-		let errors = response.errors;
-		if(errors && errors.length > 0)
+				CONTEXT: 'mobile',
+			},
+		},
+	}).then((response) => {
+		const errors = response.errors;
+		if (errors && errors.length > 0)
 		{
 			Notify.showIndicatorError({
 				type: 'error',
 				hideAfter: 10000,
 				onTap: Notify.hideCurrentIndicator,
-				text: this.getAjaxErrorText(errors)
+				text: this.getAjaxErrorText(errors),
 			});
 		}
 		else
 		{
-			Notify.showIndicatorSuccess({hideAfter: 2000});
+			Notify.showIndicatorSuccess({ hideAfter: 2000 });
 		}
-	}).catch(response => {
-		let errors = response.errors;
-		if(errors && errors.length > 0)
+	}).catch((response) => {
+		const errors = response.errors;
+		if (errors && errors.length > 0)
 		{
 			Notify.showIndicatorError({
 				hideAfter: 2000,
-				text: this.getAjaxErrorText(errors)
+				text: this.getAjaxErrorText(errors),
 			});
 		}
 		else
@@ -243,25 +226,21 @@ IntranetInvite.onSendInvite = function(params)
 	});
 };
 
-IntranetInvite.cleaner = function()
-{
+IntranetInvite.cleaner = function() {
 	return true;
 };
 
-IntranetInvite.getAjaxErrorText = function(errors)
-{
+IntranetInvite.getAjaxErrorText = function(errors) {
 	return errors.map((errorMessage) => {
 		if (errorMessage.message)
 		{
-			return errorMessage.message.replace("<br/>:","\n").replace("<br/>","\n");
+			return errorMessage.message.replace('<br/>:', '\n').replace('<br/>', '\n');
 		}
-		else
-		{
-			return errorMessage.replace("<br/>:","\n").replace("<br/>","\n");
-		}
+
+		return errorMessage.replace('<br/>:', '\n').replace('<br/>', '\n');
 	}).filter((errorMessage) => {
 		return errorMessage.length > 0;
-	}).join("\n");
+	}).join('\n');
 };
 
 if (!IntranetInvite.isRecentComponent())
@@ -269,11 +248,10 @@ if (!IntranetInvite.isRecentComponent())
 	IntranetInvite.init();
 }
 
-IntranetInvite.event.init = function (params)
-{
+IntranetInvite.event.init = function(params) {
 	this.inviteComponent = params.inviteComponent;
 	this.originator = params.originator;
-	this.disableAdminConfirm = !!params.disableAdminConfirm;
+	this.disableAdminConfirm = Boolean(params.disableAdminConfirm);
 
 	this.inviteComponent.setListener(this.router.bind(this));
 
@@ -283,39 +261,38 @@ IntranetInvite.event.init = function (params)
 		onAdminConfirm: this.onAdminConfirm,
 		onShareLink: this.onShareLink,
 		onHelpInvite: this.onHelpInvite,
-		onHelpLink: this.onHelpLink
+		onHelpLink: this.onHelpLink,
 	};
 
-	let inviteCallback = function(data) {
-		if (typeof data.adminConfirm != 'undefined')
+	const inviteCallback = function(data) {
+		if (typeof data.adminConfirm !== 'undefined')
 		{
 			IntranetInvite.setAdminConfirm(data.adminConfirm);
 			this.setAdminConfirm(data.adminConfirm);
 		}
-		if (typeof data.registerUrl != 'undefined')
+
+		if (typeof data.registerUrl !== 'undefined')
 		{
 			IntranetInvite.setRegisterUrl(data.registerUrl);
 			this.updateLink(data.registerUrl);
 		}
 	}.bind(this.inviteComponent);
 
-	IntranetInvite.getData({callback: inviteCallback});
+	IntranetInvite.getData({ callback: inviteCallback });
 };
 
-IntranetInvite.event.router = function(eventName, eventResult)
-{
+IntranetInvite.event.router = function(eventName, eventResult) {
 	if (this.handlersList[eventName])
 	{
-		this.handlersList[eventName].apply(this, [eventResult])
+		this.handlersList[eventName].apply(this, [eventResult]);
 	}
 	else if (this.debug)
 	{
-		console.info('IntranetInviteInterface.event.router: skipped event - '+eventName+' '+JSON.stringify(eventResult));
+		console.info(`IntranetInviteInterface.event.router: skipped event - ${eventName} ${JSON.stringify(eventResult)}`);
 	}
 };
 
-IntranetInvite.event.onSendInvite = function(params)
-{
+IntranetInvite.event.onSendInvite = function(params) {
 	if (
 		!Utils.isNotEmptyObject(params)
 		|| !Array.isArray(params.recipients)
@@ -324,32 +301,31 @@ IntranetInvite.event.onSendInvite = function(params)
 		return;
 	}
 
-	this.inviteComponent.close(function() {
+	this.inviteComponent.close(() => {
 		if (Utils.isNotEmptyString(this.originator))
 		{
-			BX.postComponentEvent("onSendInvite", [
-				params
+			BX.postComponentEvent('onSendInvite', [
+				params,
 			], this.originator);
 		}
-	}.bind(this));
+	});
 };
 
-IntranetInvite.event.onUpdateLink = function()
-{
+IntranetInvite.event.onUpdateLink = function() {
 	BX.ajax.runAction('intranet.invite.setRegisterSettings', {
 		data: {
 			params: {
-				SECRET: Utils.getRandom(8)
-			}
-		}
-	}).then(response => {
-		let errors = response.data.errors;
-		if(errors && errors.length > 0)
+				SECRET: Utils.getRandom(8),
+			},
+		},
+	}).then((response) => {
+		const errors = response.data.errors;
+		if (errors && errors.length > 0)
 		{
 			Notify.showIndicatorError({
 				hideAfter: 10000,
 				onTap: Notify.hideCurrentIndicator,
-				text: this.getAjaxErrorText(errors)
+				text: this.getAjaxErrorText(errors),
 			});
 		}
 		else
@@ -357,37 +333,37 @@ IntranetInvite.event.onUpdateLink = function()
 			IntranetInvite.initRegisterUrl({
 				callback: function(value) {
 					this.updateLink(value);
-				}.bind(this.inviteComponent)
+				}.bind(this.inviteComponent),
 			});
 		}
-	}).catch(response => {
-		let errors = response.errors;
-		if(errors && errors.length > 0)
+	}).catch((response) => {
+		const errors = response.errors;
+		if (errors && errors.length > 0)
 		{
 			Notify.showIndicatorError({
 				hideAfter: 2000,
-				text: this.getAjaxErrorText(errors)
+				text: this.getAjaxErrorText(errors),
 			});
 		}
 	});
 };
 
-IntranetInvite.event.onAdminConfirm = function(value)
-{
+IntranetInvite.event.onAdminConfirm = function(value) {
 	if (this.disableAdminConfirm)
 	{
 		this.inviteComponent.setAdminConfirm(!value);
+
 		return;
 	}
 
 	BX.ajax.runAction('intranet.invite.setRegisterSettings', {
 		data: {
 			params: {
-				CONFIRM: (value ? 'Y' : 'N')
-			}
-		}
-	}).then(response => {
-		let errors = response.data.errors;
+				CONFIRM: (value ? 'Y' : 'N'),
+			},
+		},
+	}).then((response) => {
+		const errors = response.data.errors;
 
 		if (
 			(errors && errors.length > 0)
@@ -401,50 +377,44 @@ IntranetInvite.event.onAdminConfirm = function(value)
 			this.inviteComponent.setAdminConfirm(value); // because object property doesn't set when chaning flag in the form
 		}
 
-		if(errors && errors.length > 0)
+		if (errors && errors.length > 0)
 		{
 			Notify.showIndicatorError({
 				hideAfter: 10000,
 				onTap: Notify.hideCurrentIndicator,
-				text: this.getAjaxErrorText(errors)
+				text: this.getAjaxErrorText(errors),
 			});
 		}
-	}).catch(response => {
+	}).catch((response) => {
 		this.inviteComponent.setAdminConfirm(!value);
 
-		let errors = response.errors;
-		if(errors && errors.length > 0)
+		const errors = response.errors;
+		if (errors && errors.length > 0)
 		{
 			Notify.showIndicatorError({
 				hideAfter: 2000,
-				text: this.getAjaxErrorText(errors)
+				text: this.getAjaxErrorText(errors),
 			});
 		}
 	});
 };
 
-IntranetInvite.event.onShareLink = function(params)
-{
+IntranetInvite.event.onShareLink = function(params) {
 	BX.ajax.runAction('intranet.invite.copyRegisterUrl', {
-		data: {
-		}
-	}).then(response => {
-	}).catch(response => {
-
-	});
+		data: {},
+	}).then((response) => {}).catch(console.error);
 };
 
-IntranetInvite.event.onHelpInvite = function (params)
-{
+IntranetInvite.event.onHelpInvite = function(params) {
 	if (Application.getApiVersion() >= 35)
 	{
-		Application.openHelpArticle("mh_invite_user", "invite_user")
+		Application.openHelpArticle('mh_invite_user', 'invite_user');
 	}
 };
-IntranetInvite.event.onHelpLink = function (params)
-{
+
+IntranetInvite.event.onHelpLink = function(params) {
 	if (Application.getApiVersion() >= 35)
 	{
-		Application.openHelpArticle("mh_invite_user", "copy_link")
+		Application.openHelpArticle('mh_invite_user', 'copy_link');
 	}
 };

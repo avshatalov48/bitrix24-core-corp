@@ -191,7 +191,7 @@ endforeach;
 			<?
 			if ($arUser['CAN_MESSAGE'] && $arParams['PM_URL']):
 				?>
-				<li class="bx-icon bx-icon-message"><a href="<?echo ($url = str_replace('#USER_ID#', $arUser['ID'], $arParams['PM_URL']))?>" onclick="if (BX.IM) { BXIM.openMessenger(<?=$arUser['ID']?>); return false; } else {window.open('<?echo $url ?>', '', 'status=no,scrollbars=yes,resizable=yes,width=700,height=550,top='+Math.floor((screen.height - 550)/2-14)+',left='+Math.floor((screen.width - 700)/2-5)); return false;}"><?echo GetMessage('INTR_ISP_PM')?></a></li>
+				<li class="bx-icon bx-icon-message"><a href="<?echo ($url = str_replace('#USER_ID#', $arUser['ID'], $arParams['PM_URL']))?>" onclick="if (typeof BXIM !== 'undefined') { BXIM.openMessenger(<?=$arUser['ID']?>); return false; } else {window.open('<?echo $url ?>', '', 'status=no,scrollbars=yes,resizable=yes,width=700,height=550,top='+Math.floor((screen.height - 550)/2-14)+',left='+Math.floor((screen.width - 700)/2-5)); return false;}"><?echo GetMessage('INTR_ISP_PM')?></a></li>
 				<?
 			endif;
 			?>

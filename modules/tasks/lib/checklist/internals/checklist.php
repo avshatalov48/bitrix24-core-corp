@@ -48,7 +48,7 @@ class CheckList extends CompositeTreeItem
 	 *
 	 * @param mixed $nodeId
 	 * @param int $userId
-	 * @param CheckListFacade $facade
+	 * @param CheckListFacade|string $facade
 	 * @param array $fields
 	 * @throws NotImplementedException
 	 */

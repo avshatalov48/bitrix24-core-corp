@@ -2,7 +2,6 @@
  * @module in-app-url/routes
  */
 jn.define('in-app-url/routes', (require, exports, module) => {
-
 	const { ProfileView } = require('user/profile');
 
 	/**
@@ -20,11 +19,11 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 			BX.postComponentEvent('onDiskFolderOpen', [], 'background');
 		}).name('disk:personal');
 
-		inAppUrl.register(`/workgroups/group/:ownerId/disk/path/`, ({ ownerId }) => {
+		inAppUrl.register('/workgroups/group/:ownerId/disk/path/', ({ ownerId }) => {
 			BX.postComponentEvent('onDiskFolderOpen', [{ entityType: 'group', ownerId }], 'background');
 		}).name('disk:group');
 
-		inAppUrl.register(`/docs/:folder/`, ({ folder }) => {
+		inAppUrl.register('/docs/:folder/', ({ folder }) => {
 			const folders = ['shared', 'path'];
 			let params = [];
 
@@ -55,10 +54,7 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 			}
 
 			PageManager.openWidget('list', widgetParams)
-				.then(list => ProfileView.open({ userId, backdrop }, list));
-
+				.then((list) => ProfileView.open({ userId, backdrop }, list));
 		}).name('open:user');
-
 	};
-
 });

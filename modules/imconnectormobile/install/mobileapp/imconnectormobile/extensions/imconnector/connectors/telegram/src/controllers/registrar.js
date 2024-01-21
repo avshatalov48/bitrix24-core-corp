@@ -3,8 +3,10 @@
  */
 jn.define('imconnector/connectors/telegram/controllers/registrar', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { RegistryView, stages } = require('imconnector/connectors/telegram/view/registry');
 	const { TelegramRestManager } = require('imconnector/lib/rest-manager/telegram');
+
 	class TelegramRegistrar
 	{
 		/**
@@ -34,11 +36,11 @@ jn.define('imconnector/connectors/telegram/controllers/registrar', (require, exp
 				'layout',
 				{
 					title: Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_REGISTRY_TITLE'),
-					backgroundColor: '#eef2f4',
+					backgroundColor: AppTheme.colors.bgSecondary,
 					backdrop: {
 						mediumPositionHeight: RegistryView.getWidgetHeight(),
 						onlyMediumPosition: true,
-						navigationBarColor: '#eef2f4',
+						navigationBarColor: AppTheme.colors.bgSecondary,
 					},
 					onReady: (layoutWidget) => {
 						this.layoutWidget = layoutWidget;
@@ -46,7 +48,9 @@ jn.define('imconnector/connectors/telegram/controllers/registrar', (require, exp
 							this.view = new RegistryView({
 								layoutWidget,
 								bannerIcon: params.bannerIcon,
-								onTokenSubmit: (token) => this.token = token,
+								onTokenSubmit: (token) => {
+									this.token = token;
+								},
 								onTokenSubmitFromClipboard: (token) => this.onTokenSubmitFromClipboard(token),
 							}),
 						);
@@ -66,26 +70,30 @@ jn.define('imconnector/connectors/telegram/controllers/registrar', (require, exp
 					this.view.unregisterEventHandler();
 				});
 
-				layoutWidget.setRightButtons([{
-					id: 'continue',
-					color: '#2066B0',
-					name: Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_REGISTRY_CONTINUE'),
-					callback: () => {
-						if (this.readyToRegister)
-						{
-							return;
-						}
-						this.readyToRegister = true;
-						this.registry()
-							.then((settings) => {
-								this.connectorSettings = settings;
-								this.changeConnectorStage(stages.complete)
-									.then(() => setTimeout(() => this.layoutWidget.close(), 1500))
-								;
-							})
-						;
+				layoutWidget.setRightButtons([
+					{
+						id: 'continue',
+						color: AppTheme.colors.accentMainLinks,
+						name: Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_REGISTRY_CONTINUE'),
+						callback: () => {
+							if (this.readyToRegister)
+							{
+								return;
+							}
+							this.readyToRegister = true;
+							this.registry()
+								.then((settings) => {
+									this.connectorSettings = settings;
+									this.changeConnectorStage(stages.complete)
+										.then(() => setTimeout(
+											() => this.layoutWidget.close(),
+											1500,
+										)).catch(console.error);
+								}).catch(console.error)
+							;
+						},
 					},
-				}]);
+				]);
 			});
 		}
 
@@ -105,8 +113,10 @@ jn.define('imconnector/connectors/telegram/controllers/registrar', (require, exp
 						.then((settings) => {
 							this.connectorSettings = settings;
 							this.changeConnectorStage(stages.complete)
-								.then(() => setTimeout(() => this.layoutWidget.close(), 1500))
-							;
+								.then(() => setTimeout(
+									() => this.layoutWidget.close(),
+									1500,
+								)).catch(console.error);
 						})
 					;
 				},
@@ -118,21 +128,25 @@ jn.define('imconnector/connectors/telegram/controllers/registrar', (require, exp
 		{
 			this.isRegistryButtonDisabled = false;
 
-			this.layoutWidget.setRightButtons([{
-				id: 'continue',
-				color: '#2066B0',
-				name: Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_REGISTRY_CONTINUE'),
-				callback: () => {
-					this.registry()
-						.then((settings) => {
-							this.connectorSettings = settings;
-							this.changeConnectorStage(stages.complete)
-								.then(() => setTimeout(() => this.layoutWidget.close(), 1500))
-							;
-						})
-					;
+			this.layoutWidget.setRightButtons([
+				{
+					id: 'continue',
+					color: AppTheme.colors.accentMainLinks,
+					name: Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_REGISTRY_CONTINUE'),
+					callback: () => {
+						this.registry()
+							.then((settings) => {
+								this.connectorSettings = settings;
+								this.changeConnectorStage(stages.complete)
+									.then(() => setTimeout(
+										() => this.layoutWidget.close(),
+										1500,
+									)).catch(console.error);
+							})
+						;
+					},
 				},
-			}]);
+			]);
 		}
 
 		disableRegistryButton()
@@ -140,12 +154,14 @@ jn.define('imconnector/connectors/telegram/controllers/registrar', (require, exp
 			if (!this.isRegistryButtonDisabled)
 			{
 				this.isRegistryButtonDisabled = true;
-				this.layoutWidget.setRightButtons([{
-					id: 'continue',
-					color: '#BEC2C7',
-					name: Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_REGISTRY_CONTINUE'),
-					callback: () => {},
-				}]);
+				this.layoutWidget.setRightButtons([
+					{
+						id: 'continue',
+						color: AppTheme.colors.base5,
+						name: Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_REGISTRY_CONTINUE'),
+						callback: () => {},
+					},
+				]);
 			}
 		}
 
@@ -162,6 +178,7 @@ jn.define('imconnector/connectors/telegram/controllers/registrar', (require, exp
 					this.isRegistry = false;
 					this.view.invalidTokenAlert();
 					reject();
+
 					return;
 				}
 
@@ -188,12 +205,15 @@ jn.define('imconnector/connectors/telegram/controllers/registrar', (require, exp
 			this.enableRegistryButton();
 			switch (error.ex.error)
 			{
-				case errors.invalidToken: {
+				case errors.invalidToken:
+				{
 					this.changeConnectorStage(stages.registry).then(() => this.view.invalidTokenAlert());
 
 					return;
 				}
-				default: {
+
+				default:
+				{
 					this.changeConnectorStage(stages.registry).then(() => this.view.unknownErrorAlert());
 				}
 			}

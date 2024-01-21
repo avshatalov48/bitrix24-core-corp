@@ -15,6 +15,7 @@ class ContactController extends BaseController
 	use ActivityControllerMixin;
 	use AddressControllerMixin;
 	use RequisiteControllerMixin;
+	use ObserverControllerMixin;
 
 	/** @var ContactController|null  */
 	protected static $instance = null;
@@ -298,8 +299,13 @@ class ContactController extends BaseController
 		$this->suspendRequisites($entityID, $recyclingEntityID);
 		$this->suspendUtm($entityID, $recyclingEntityID);
 		$this->suspendTracing($entityID, $recyclingEntityID);
+		$this->suspendObservers($entityID, $recyclingEntityID);
 		$this->suspendCustomRelations((int)$entityID, (int)$recyclingEntityID);
 		$this->suspendBadges((int)$entityID, (int)$recyclingEntityID);
+		\Bitrix\Crm\Integration\AI\EventHandler::onItemMoveToBin(
+			new Crm\ItemIdentifier($this->getEntityTypeID(), $entityID),
+			new Crm\ItemIdentifier($this->getSuspendedEntityTypeID(), $recyclingEntityID),
+		);
 
 		//region Relations
 		foreach($relations as $relation)
@@ -450,8 +456,13 @@ class ContactController extends BaseController
 		$this->recoverRequisites($recyclingEntityID, $newEntityID);
 		$this->recoverUtm($recyclingEntityID, $newEntityID);
 		$this->recoverTracing($recyclingEntityID, $newEntityID);
+		$this->recoverObservers($recyclingEntityID, $newEntityID);
 		$this->recoverCustomRelations((int)$recyclingEntityID, (int)$newEntityID);
 		$this->recoverBadges((int)$recyclingEntityID, (int)$newEntityID);
+		\Bitrix\Crm\Integration\AI\EventHandler::onItemRestoreFromRecycleBin(
+			new Crm\ItemIdentifier($this->getEntityTypeID(), $newEntityID),
+			new Crm\ItemIdentifier($this->getSuspendedEntityTypeID(), $recyclingEntityID),
+		);
 
 		$requisiteLinks = isset($slots['REQUISITE_LINKS']) ? $slots['REQUISITE_LINKS'] : null;
 		if(is_array($requisiteLinks) && !empty($requisiteLinks))
@@ -527,9 +538,13 @@ class ContactController extends BaseController
 		$this->eraseSuspendedRequisites($recyclingEntityID);
 		$this->eraseSuspendedUtm($recyclingEntityID);
 		$this->eraseSuspendedTracing($recyclingEntityID);
+		$this->eraseSuspendedObservers($recyclingEntityID);
 		$this->eraseSuspendedUserFields($recyclingEntityID);
 		$this->eraseSuspendedCustomRelations($recyclingEntityID);
 		$this->eraseSuspendedBadges($recyclingEntityID);
+		\Bitrix\Crm\Integration\AI\EventHandler::onItemDelete(
+			new Crm\ItemIdentifier($this->getSuspendedEntityTypeID(), $recyclingEntityID),
+		);
 
 		//region Files
 		if(isset($params['FILES']) && is_array($params['FILES']) && !empty($params['FILES']))

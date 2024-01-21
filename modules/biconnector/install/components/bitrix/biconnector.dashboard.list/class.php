@@ -69,10 +69,10 @@ class DashboardListComponent extends CBitrixComponent implements Controllerable
 
 	public function onPrepareComponentParams($arParams): array
 	{
-		$arParams['DASHBOARD_LIST_URL'] = $arParams['DASHBOARD_LIST_URL'] ?? 'dashboard_list.php';
-		$arParams['DASHBOARD_ADD_URL'] = $arParams['DASHBOARD_ADD_URL'] ?? 'dashboard_edit.php';
-		$arParams['DASHBOARD_EDIT_URL'] = $arParams['DASHBOARD_EDIT_URL'] ?? 'dashboard_edit.php?dashboard_id=#ID#';
-		$arParams['DASHBOARD_VIEW_URL'] = $arParams['DASHBOARD_VIEW_URL'] ?? 'dashboard.php?id=#ID#';
+		$arParams['DASHBOARD_LIST_URL'] ??= 'dashboard_list.php';
+		$arParams['DASHBOARD_ADD_URL'] ??= 'dashboard_edit.php';
+		$arParams['DASHBOARD_EDIT_URL'] ??= 'dashboard_edit.php?dashboard_id=#ID#';
+		$arParams['DASHBOARD_VIEW_URL'] ??= 'dashboard.php?id=#ID#';
 
 		return parent::onPrepareComponentParams($arParams);
 	}

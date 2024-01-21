@@ -26,6 +26,8 @@ Library::loadMessages();
  */
 class Connector
 {
+	private const META_RU_SUFFIX = '_RESTRICTION_RU';
+
 	/** @var Connectors\Base[] */
 	private static array $connectors = [];
 
@@ -159,10 +161,22 @@ class Connector
 		$connectors[Library::ID_VKGROUP_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VK_GROUP');
 		$connectors[Library::ID_OK_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_OK');
 		$connectors[Library::ID_OLX_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_OLX');
-		$connectors[Library::ID_FB_MESSAGES_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_PAGE');
-		$connectors[Library::ID_FB_COMMENTS_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_COMMENTS_PAGE');
-		$connectors[Library::ID_FBINSTAGRAMDIRECT_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAMDIRECT');
-		$connectors[Library::ID_FBINSTAGRAM_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM');
+
+		if (\Bitrix\Main\Application::getInstance()->getLicense()->getRegion() === 'ru')
+		{
+			$connectors[Library::ID_FB_MESSAGES_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_PAGE' . self::META_RU_SUFFIX);
+			$connectors[Library::ID_FB_COMMENTS_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_COMMENTS_PAGE' . self::META_RU_SUFFIX);
+			$connectors[Library::ID_FBINSTAGRAMDIRECT_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAMDIRECT' . self::META_RU_SUFFIX);
+			$connectors[Library::ID_FBINSTAGRAM_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM' . self::META_RU_SUFFIX);
+		}
+		else
+		{
+			$connectors[Library::ID_FB_MESSAGES_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_PAGE');
+			$connectors[Library::ID_FB_COMMENTS_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_COMMENTS_PAGE');
+			$connectors[Library::ID_FBINSTAGRAMDIRECT_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAMDIRECT');
+			$connectors[Library::ID_FBINSTAGRAM_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM');
+		}
+
 		$connectors[Library::ID_NETWORK_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_NETWORK');
 		if ($serviceLocator->has('ImConnector.toolsNotifications'))
 		{
@@ -1639,7 +1653,7 @@ class Connector
 	 */
 	public static function needRestrictionNote(string $connector, string $region, string $lang): bool
 	{
-		if (mb_strtolower($lang) !== 'ru')
+		if (!in_array(mb_strtolower($lang), ['ru', 'en'], true))
 		{
 			return false;
 		}

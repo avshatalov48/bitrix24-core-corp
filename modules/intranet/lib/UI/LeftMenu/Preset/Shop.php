@@ -23,6 +23,7 @@ class Shop extends Social
 				'menu_files',
 				'menu_external_mail',
 				'menu_all_groups',
+				'menu_all_spaces',
 			],
 			'menu_company',
 			'menu_bizproc_sect',

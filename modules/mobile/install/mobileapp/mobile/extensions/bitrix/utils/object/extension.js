@@ -219,9 +219,10 @@
 	 * Performs a deep comparison between two values to determine if they are equivalent.
 	 * @param {*} value
 	 * @param {*} other
+	 * @param {boolean} logDifference
 	 * @returns {boolean}
 	 */
-	function isEqual(value, other)
+	function isEqual(value, other, logDifference = false)
 	{
 		if (Object.is(value, other))
 		{
@@ -277,7 +278,7 @@
 				return false;
 			}
 
-			return objectEquals(value, other);
+			return objectEquals(value, other, logDifference);
 		}
 
 		return false;
@@ -403,15 +404,30 @@
 	 * @private
 	 * @param {object} obj1
 	 * @param {object} obj2
+	 * @param {boolean} logDifference
 	 * @returns {boolean}
 	 */
-	function objectEquals(obj1, obj2)
+	function objectEquals(obj1, obj2, logDifference = false)
 	{
 		const props1 = Object.keys(obj1);
 		const props2 = Object.keys(obj2);
 
 		if (props1.length !== props2.length)
 		{
+			if (logDifference)
+			{
+				// eslint-disable-next-line no-console
+				console.warn('isEqual diff', {
+					reason: 'different size',
+					keysDiff: [
+						...props1.filter((x) => !props2.includes(x)),
+						...props2.filter((x) => !props1.includes(x)),
+					],
+					value1: obj1,
+					value2: obj2,
+				});
+			}
+
 			return false;
 		}
 
@@ -423,6 +439,16 @@
 			key = props1[index];
 			if (!props2.includes(key))
 			{
+				if (logDifference)
+				{
+					// eslint-disable-next-line no-console
+					console.warn('isEqual diff', {
+						path: key,
+						value1: obj1[key],
+						value2: obj2[key],
+					});
+				}
+
 				return false;
 			}
 		}
@@ -433,8 +459,18 @@
 			const value1 = obj1[key];
 			const value2 = obj2[key];
 
-			if (!isEqual(value1, value2))
+			if (!isEqual(value1, value2, logDifference))
 			{
+				if (logDifference)
+				{
+					// eslint-disable-next-line no-console
+					console.warn('isEqual diff', {
+						path: key,
+						value1,
+						value2,
+					});
+				}
+
 				return false;
 			}
 		}

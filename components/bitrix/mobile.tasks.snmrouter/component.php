@@ -51,6 +51,7 @@ if (Loader::includeModule('tasks') && Loader::includeModule('mobileapp'))
 		'FRAGMENT_TYPE' => ($this->request->getQuery('FRAGMENT_TYPE') ?? ''),
 		'FRAGMENT_ID' => ($this->request->getQuery('FRAGMENT_ID') ?? ''),
 		'RESULT_ID' => ($this->request->getQuery('RESULT_ID') ?? ''),
+		'IS_TABS_MODE' => ($this->request->getQuery('IS_TABS_MODE') ?? true),
 	];
 
 	foreach ($params as $key => $value)

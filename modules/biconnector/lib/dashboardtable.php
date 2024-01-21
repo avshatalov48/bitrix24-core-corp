@@ -24,10 +24,26 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\BIConnector
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Dashboard_Query query()
+ * @method static EO_Dashboard_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_Dashboard_Result getById($id)
+ * @method static EO_Dashboard_Result getList(array $parameters = [])
+ * @method static EO_Dashboard_Entity getEntity()
+ * @method static \Bitrix\BIConnector\EO_Dashboard createObject($setDefaultValues = true)
+ * @method static \Bitrix\BIConnector\EO_Dashboard_Collection createCollection()
+ * @method static \Bitrix\BIConnector\EO_Dashboard wakeUpObject($row)
+ * @method static \Bitrix\BIConnector\EO_Dashboard_Collection wakeUpCollection($rows)
+ */
 
 class DashboardTable extends DataManager
 {
+	const MAX_NAME_LENGTH = 50;
+	const MAX_URL_LENGTH = 1024;
+
 	/**
 	 * Returns DB table name for entity.
 	 *
@@ -133,7 +149,7 @@ class DashboardTable extends DataManager
 	public static function validateName()
 	{
 		return [
-			new LengthValidator(null, 50),
+			new LengthValidator(null, static::MAX_NAME_LENGTH),
 		];
 	}
 
@@ -145,7 +161,7 @@ class DashboardTable extends DataManager
 	public static function validateUrl()
 	{
 		return [
-			new LengthValidator(null, 1024),
+			new LengthValidator(null, static::MAX_URL_LENGTH),
 		];
 	}
 }

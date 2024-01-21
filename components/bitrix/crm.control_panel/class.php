@@ -1,11 +1,13 @@
 <?php
 
+use Bitrix\Catalog;
 use Bitrix\Crm\Component\ControlPanel\ControlPanelMenuMapper;
 use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory\SmartDocument;
+use Bitrix\Intranet;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
@@ -81,10 +83,7 @@ class CrmControlPanel extends CBitrixComponent
 				'ID' => ControlPanelMenuMapper::MENU_ID_CRM_CATALOGUE,
 				'TEXT' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_STORE_DOCS'),
 				'IS_DISABLED' => $this->isCatalogSectionDisabled(),
-				'SUB_ITEMS' => [
-					['ID' => 'CATALOGUE'],
-					['ID' => 'STORE_DOCUMENTS'],
-				],
+				'SUB_ITEMS' => $this->getCatalogSubItems(),
 			],
 			[
 				'ID' => ControlPanelMenuMapper:: MENU_ID_CRM_CLIENT,
@@ -106,6 +105,24 @@ class CrmControlPanel extends CBitrixComponent
 					['ID' => 'QUOTE'],
 					['ID' => 'SALES_CENTER', 'SLIDER_MODE' => true],
 					['ID' => 'TERMINAL'],
+				],
+			],
+			[
+				'ID' => ControlPanelMenuMapper::MENU_ID_CRM_BI,
+				'TEXT' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_BI'),
+				'URL' => '',
+				'SUB_ITEMS' => [
+					['ID' => 'BI_REPORT_DEALS'],
+					['ID' => 'BI_REPORT_LEADS'],
+					['ID' => 'BI_REPORT_SALES'],
+					['ID' => 'BI_REPORT_SALES_STRUCT'],
+					['ID' => 'BI_REPORT_TELEPHONY'],
+					['IS_DELIMITER' => true],
+					['ID' => 'BI_REPORT_LIST'],
+					['IS_DELIMITER' => true],
+					['ID' => 'BI_REPORT_MARKET'],
+					['ID' => 'BI_REPORT_ORDER'],
+					['ID' => 'BI_REPORT_SETTINGS'],
 				],
 			],
 			[
@@ -140,7 +157,7 @@ class CrmControlPanel extends CBitrixComponent
 					['ID' => 'DEVOPS', 'SLIDER_MODE' => true],
 				],
 			],
-			['ID' => 'DYNAMIC_ADD'],
+			['ID' => 'DYNAMIC_ITEMS'],
 			[
 				'ID' => ControlPanelMenuMapper::MENU_ID_CRM_SETTINGS,
 				'TEXT' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SETTINGS'),
@@ -157,7 +174,6 @@ class CrmControlPanel extends CBitrixComponent
 					],
 					['ID' => 'SALES_CENTER_PAYMENT', 'SLIDER_MODE' => true],
 					['ID' => 'SALES_CENTER_DELIVERY', 'SLIDER_MODE' => true],
-					['ID' => 'DYNAMIC_LIST'],
 				],
 			],
 			['ID' => 'RECYCLE_BIN'],
@@ -329,9 +345,9 @@ class CrmControlPanel extends CBitrixComponent
 
 		unset($item['ACTIONS']);
 
-		$item['TEXT'] = $item['TEXT'] ?? $item['NAME'];
-		$item['IS_ACTIVE'] = $this->arResult['ACTIVE_ITEM_ID'] === $item['ID'];
-		$item['ID'] = $item['MENU_ID'] ?? $item['ID'];
+		$item['TEXT'] = $item['TEXT'] ?? ($item['NAME'] ?? '');
+		$item['IS_ACTIVE'] = $this->arResult['ACTIVE_ITEM_ID'] === ($item['ID'] ?? null);
+		$item['ID'] = $item['MENU_ID'] ?? ($item['ID'] ?? null);
 		$item['SUB_LINK'] = $itemActions;
 		$item['COUNTER'] = (isset($item['COUNTER']) && (int)$item['COUNTER'] > 0) ? $item['COUNTER'] : false;
 		$item['COUNTER_ID'] = $item['COUNTER_ID'] ?? '';
@@ -473,7 +489,16 @@ class CrmControlPanel extends CBitrixComponent
 				continue;
 			}
 
-			$item = $standardItems[$mapItem['ID']] ?? $mapItem;
+			if (
+				class_exists('Bitrix\Intranet\Settings\Tools\ToolsManager')
+				&& isset($mapItem['ID'])
+				&& !Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByMenuId($mapItem['ID'])
+			)
+			{
+				continue;
+			}
+
+			$item = $standardItems[$mapItem['ID'] ?? null] ?? $mapItem;
 			if (!isset($item['NAME']) && !isset($item['TEXT']) && !isset($item['IS_DELIMITER']))
 			{
 				continue;
@@ -481,8 +506,8 @@ class CrmControlPanel extends CBitrixComponent
 
 			if (empty($mapItem['SUB_ITEMS']) && empty($item['SUB_ITEMS']))
 			{
-				$item['IS_ACTIVE'] = $this->arParams["ACTIVE_ITEM_ID"] === $item['ID'];
-				$item['TEXT'] = $item['TEXT'] ?? $item['NAME'];
+				$item['IS_ACTIVE'] = $this->arParams["ACTIVE_ITEM_ID"] === ($item['ID'] ?? null);
+				$item['TEXT'] = $item['TEXT'] ?? ($item['NAME'] ?? '');
 
 				if (isset($mapItem['SLIDER_MODE']) && $mapItem['SLIDER_MODE'] === true)
 				{
@@ -584,5 +609,25 @@ class CrmControlPanel extends CBitrixComponent
 		}
 
 		return $result;
+	}
+
+	private function getCatalogSubItems(): array
+	{
+		$items = [
+			['ID' => 'CATALOGUE'],
+		];
+
+		if (Loader::includeModule('catalog'))
+		{
+			$isInventoryManagementEnabled = Catalog\Restriction\ToolAvailabilityManager::getInstance()
+				->checkInventoryManagementAvailability()
+			;
+			if ($isInventoryManagementEnabled)
+			{
+				$items[] = ['ID' => 'STORE_DOCUMENTS'];
+			}
+		}
+
+		return $items;
 	}
 }

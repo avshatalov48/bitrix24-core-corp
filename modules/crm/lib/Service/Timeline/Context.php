@@ -2,9 +2,11 @@
 
 namespace Bitrix\Crm\Service\Timeline;
 
+use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\UserPermissions;
+use Bitrix\Crm\Settings\Mode;
 
 class Context
 {
@@ -57,8 +59,29 @@ class Context
 		return $this->userPermissions;
 	}
 
+	public function getCurrentCrmMode(bool $useAnalyticsMap = true): string
+	{
+		$map = $useAnalyticsMap
+			? [
+				Mode::CLASSIC => 'crmMode_classic',
+				Mode::SIMPLE => 'crmMode_simple',
+			]
+			: [
+				Mode::CLASSIC => 'classic',
+				Mode::SIMPLE => 'simple',
+			]
+		;
+
+		return $map[Mode::getCurrent()] ?? '';
+	}
+
 	public function canReadEntity(): bool
 	{
 		return $this->getUserPermissions()->checkReadPermissions($this->getEntityTypeId(), $this->getEntityId());
+	}
+
+	final public function isClosedEntity(): bool
+	{
+		return ComparerBase::isClosed($this->getIdentifier());
 	}
 }

@@ -2,14 +2,17 @@
 
 return [
 	'extensions' => [
-		'layout/ui/detail-card/tabs',
-		'utils/error-notifier',
-		'catalog:barcode-scanner',
 		'loc',
 		'notify',
+		'apptheme',
+		'utils/error-notifier',
 		'helpers/component',
-		'crm:product-grid',
 		'layout/ui/detail-card/floating-button/menu/item',
+		'layout/ui/detail-card/tabs',
+
+		'crm:product-grid',
+
+		'catalog:barcode-scanner',
 		'catalog:store/document-type',
 	],
 	'bundle' => [

@@ -2,10 +2,11 @@
 
 return [
 	'extensions' => [
-		'feature',
-		'haptics',
 		'loc',
 		'type',
+		'feature',
+		'haptics',
+		'apptheme',
 		'crm:communication/communication-selector',
 		'crm:loc',
 		'crm:multi-field-drawer',
@@ -13,6 +14,7 @@ return [
 		'crm:timeline/ui/senders-selector',
 		'crm:timeline/scheduler/providers/base',
 		'crm:timeline/ui/textarea',
+		'assets/common',
 		'assets/communication/menu',
 		'layout/polyfill',
 		'layout/ui/widget-header-button',

@@ -2,6 +2,7 @@
  * @module crm/document/qr-code/shimmed-image
  */
 jn.define('crm/document/qr-code/shimmed-image', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	class ShimmedImage extends LayoutComponent
 	{
 		constructor(props)
@@ -53,7 +54,7 @@ jn.define('crm/document/qr-code/shimmed-image', (require, exports, module) => {
 				style: {
 					width: this.width,
 					height: this.height,
-					backgroundColor: '#DFE0E3',
+					backgroundColor: AppTheme.colors.base6,
 				},
 				onFailure: () => this.onFailure(),
 			});
@@ -94,7 +95,7 @@ jn.define('crm/document/qr-code/shimmed-image', (require, exports, module) => {
 						style: {
 							width: this.width,
 							height: this.height,
-							backgroundColor: '#DFE0E3',
+							backgroundColor: AppTheme.colors.base6,
 						},
 					},
 				),
@@ -126,3 +127,4 @@ jn.define('crm/document/qr-code/shimmed-image', (require, exports, module) => {
 
 	module.exports = { ShimmedImage };
 });
+

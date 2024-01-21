@@ -598,7 +598,7 @@ class Menu
 					$langList = \Bitrix\Rest\Lang::listLanguage();
 					foreach ($langList as $lang)
 					{
-						if ($placementLangAll[$lang])
+						if (!empty($placementLangAll[$lang]))
 						{
 							$placementLang = $placementLangAll[$lang];
 							break;

@@ -2,7 +2,7 @@
 
 namespace Bitrix\CrmMobile\Terminal;
 
-use Bitrix\Crm\Order\Payment;
+use Bitrix\Sale\Payment;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -11,8 +11,6 @@ use Bitrix\Sale\Internals\PaySystemRestHandlersTable;
 use Bitrix\Sale\PaySystem;
 use Bitrix\Sale\Registry;
 use Sale\Handlers\PaySystem\YandexCheckoutHandler;
-
-LocHelper::loadMessages();
 
 class PaymentSystemRepository
 {

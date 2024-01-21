@@ -21,6 +21,7 @@ use Bitrix\Tasks\Internals\Task\CheckListTable;
 use Bitrix\Tasks\Internals\Task\Mark;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\Priority;
+use Bitrix\Tasks\Internals\Task\RegularParametersTable;
 use Bitrix\Tasks\Internals\Task\Result\ResultTable;
 use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\Task\ScenarioTable;
@@ -45,17 +46,12 @@ Loc::loadMessages(__FILE__);
  * @method static EO_Task_Result getList(array $parameters = [])
  * @method static EO_Task_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\TaskObject createObject($setDefaultValues = true)
- * @method static \Bitrix\Tasks\Internals\EO_Task_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\TaskCollection createCollection()
  * @method static \Bitrix\Tasks\Internals\TaskObject wakeUpObject($row)
- * @method static \Bitrix\Tasks\Internals\EO_Task_Collection wakeUpCollection($rows)
+ * @method static \Bitrix\Tasks\Internals\TaskCollection wakeUpCollection($rows)
  */
 class TaskTable extends TaskDataManager
 {
-	public static function getObjectClass()
-	{
-		return TaskObject::class;
-	}
-
 	/**
 	 * Returns userfield entity code, to make userfields work with orm
 	 *
@@ -244,6 +240,9 @@ class TaskTable extends TaskDataManager
 				'data_type' => 'boolean',
 				'values' => array('N', 'Y'),
 			),
+			(new Entity\BooleanField('IS_REGULAR'))
+				->configureValues('N', 'Y')
+				->configureDefaultValue(null),
 
 			// references
 			'CREATOR' => array(
@@ -280,7 +279,14 @@ class TaskTable extends TaskDataManager
 					ScenarioTable::class,
 					Join::on('this.ID', 'ref.TASK_ID')
 				)
-			)->configureJoinType('left'),
+			)->configureJoinType(Join::TYPE_LEFT),
+			(
+				new Reference(
+					'REGULAR',
+				RegularParametersTable::class,
+					Join::on('this.ID', 'ref.TASK_ID')
+				)
+			)->configureJoinType(Join::TYPE_LEFT),
 
 			// socialnetwork module should be present
 			'GROUP' => array(
@@ -477,5 +483,15 @@ class TaskTable extends TaskDataManager
 		{
 
 		}
+	}
+
+	public static function getObjectClass(): string
+	{
+		return TaskObject::class;
+	}
+
+	public static function getCollectionClass(): string
+	{
+		return TaskCollection::class;
 	}
 }

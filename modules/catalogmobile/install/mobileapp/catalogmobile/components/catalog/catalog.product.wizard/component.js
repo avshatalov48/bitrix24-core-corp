@@ -1,5 +1,6 @@
 (() => {
 	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
 	const { Wizard } = require('layout/ui/wizard');
 	const { CrmProductPricesStep } = require('catalog/product-wizard-step/crm/prices');
 	const { CatalogProductPhotoStep } = require('catalog/product-wizard-step/photo');
@@ -18,7 +19,7 @@
 			super(props);
 			this.product = this.makeProductEntity();
 			const initialProductData = BX.componentParameters.get('entityData', {});
-			Object.keys(initialProductData).forEach(fieldId => {
+			Object.keys(initialProductData).forEach((fieldId) => {
 				this.product.set(fieldId, initialProductData[fieldId]);
 			});
 		}
@@ -58,12 +59,12 @@
 			return View(
 				{
 					style: {
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgSecondary,
 					},
 				},
 				new Wizard({
 					parentLayout: layout,
-					steps: this.getSteps().map(step => step.id),
+					steps: this.getSteps().map((step) => step.id),
 					stepForId: this.getStepForId.bind(this),
 				}),
 			);

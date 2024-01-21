@@ -2,14 +2,15 @@
  * @module layout/ui/floating-button/multipurpose
  */
 jn.define('layout/ui/floating-button/multipurpose', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { Haptics } = require('haptics');
 	const { md5 } = require('utils/hash');
+	const { withPressed } = require('utils/color');
 	const { isObjectLike } = require('utils/object');
 
 	const defaultAction = {
 		id: 'default',
-		icon: `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.875 0H6.125V6.125H0V7.875H6.125V14H7.875V7.875H14V6.125H7.875V0Z" fill="white"/></svg>`,
+		icon: '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.875 0H6.125V6.125H0V7.875H6.125V14H7.875V7.875H14V6.125H7.875V0Z" fill="white"/></svg>',
 		hint: null,
 	};
 
@@ -19,19 +20,19 @@ jn.define('layout/ui/floating-button/multipurpose', (require, exports, module) =
 		NEVER: 'never',
 	};
 
-    /**
-     * @class MultipurposeFloatingButton
-     */
-    class MultipurposeFloatingButton extends LayoutComponent
-    {
-        constructor(props)
-        {
-            super(props);
+	/**
+	 * @class MultipurposeFloatingButton
+	 */
+	class MultipurposeFloatingButton extends LayoutComponent
+	{
+		constructor(props)
+		{
+			super(props);
 
-            this.state = {
-            	actionIndex: this.initialActionIndex,
+			this.state = {
+				actionIndex: this.initialActionIndex,
 			};
-        }
+		}
 
 		get initialActionIndex()
 		{
@@ -39,12 +40,13 @@ jn.define('layout/ui/floating-button/multipurpose', (require, exports, module) =
 			if (this.props.rememberSelected)
 			{
 				const lastUsedAction = this.lastUsedAction;
-				const lastUsedActionIndex = this.actions.findIndex(item => item.id === lastUsedAction);
+				const lastUsedActionIndex = this.actions.findIndex((item) => item.id === lastUsedAction);
 				if (lastUsedActionIndex > -1)
 				{
 					actionIndex = lastUsedActionIndex;
 				}
 			}
+
 			return actionIndex;
 		}
 
@@ -91,6 +93,7 @@ jn.define('layout/ui/floating-button/multipurpose', (require, exports, module) =
 			{
 				return this.props.hintMode;
 			}
+
 			return defaultValue;
 		}
 
@@ -109,15 +112,15 @@ jn.define('layout/ui/floating-button/multipurpose', (require, exports, module) =
 			return View(
 				{
 					testId: this.props.testId,
-					style: { ...Styles.container, ...this.position }
+					style: { ...Styles.container, ...this.position },
 				},
 				Shadow(
 					{
 						radius: 2,
-						color: '#CCCCCC',
+						color: AppTheme.colors.base5,
 						offset: {
 							x: 0,
-							y: 0
+							y: 0,
 						},
 						style: Styles.shadow,
 					},
@@ -132,10 +135,10 @@ jn.define('layout/ui/floating-button/multipurpose', (require, exports, module) =
 							resizeMode: 'cover',
 							svg: {
 								content: isObjectLike(this.action.icon) ? this.action.icon.content : this.action.icon,
-							}
+							},
 						}),
-					)
-				)
+					),
+				),
 			);
 		}
 
@@ -154,14 +157,14 @@ jn.define('layout/ui/floating-button/multipurpose', (require, exports, module) =
 
 		toggleAction()
 		{
-			if (!this.actions.length)
+			if (this.actions.length === 0)
 			{
 				return;
 			}
 
 			const mutate = (oldState) => ({ actionIndex: next(oldState.actionIndex) });
 
-			const next = (prev) => this.actions[prev + 1] ? prev + 1 : 0;
+			const next = (prev) => (this.actions[prev + 1] ? prev + 1 : 0);
 
 			const finalize = () => {
 				this.vibrate();
@@ -212,9 +215,9 @@ jn.define('layout/ui/floating-button/multipurpose', (require, exports, module) =
 		{
 			// You can display some hint for current action here.
 		}
-    }
+	}
 
-    const isAndroid = Application.getPlatform() === 'android';
+	const isAndroid = Application.getPlatform() === 'android';
 
 	const Styles = {
 		container: {
@@ -229,9 +232,9 @@ jn.define('layout/ui/floating-button/multipurpose', (require, exports, module) =
 			height: isAndroid ? 56 : 60,
 			width: isAndroid ? 56 : 60,
 			borderRadius: 30,
-			backgroundColor: {default: '#61C5F2', pressed: '#55b3de'},
+			backgroundColor: withPressed(AppTheme.colors.accentBrandBlue),
 			justifyContent: 'center',
-			alignItems: 'center'
+			alignItems: 'center',
 		},
 		icon: (props) => {
 			const width = isObjectLike(props) && props.width ? props.width : 14;
@@ -241,9 +244,8 @@ jn.define('layout/ui/floating-button/multipurpose', (require, exports, module) =
 				width,
 				height,
 			};
-		}
+		},
 	};
 
-    module.exports = { MultipurposeFloatingButton };
-
+	module.exports = { MultipurposeFloatingButton };
 });

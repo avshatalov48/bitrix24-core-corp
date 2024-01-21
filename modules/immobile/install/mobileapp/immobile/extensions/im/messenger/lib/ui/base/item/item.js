@@ -5,7 +5,9 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 	const { Avatar } = require('im/messenger/lib/ui/base/avatar');
 	const { ItemInfo } = require('im/messenger/lib/ui/base/item/item-info');
 	const { styles: itemStyles } = require('im/messenger/lib/ui/base/item/style');
-	const { buttonIcons, arrowRight } = require('im/messenger/assets/common');
+	const { withPressed } = require('utils/color');
+	const { ChatTitle } = require('im/messenger/lib/element');
+	const { Logger } = require('im/messenger/lib/logger');
 
 	/**
 	 * @typedef {Object} ItemData
@@ -19,7 +21,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 	class Item extends LayoutComponent
 	{
 		/**
-		 * @param {ItemProps} props
+		 * @param {MessengerItemProps} props
 		 */
 		constructor(props)
 		{
@@ -33,13 +35,20 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 				return this.props.data.style;
 			}
 
+			let style = {};
 			const size = this.props.size === 'L' ? 'L' : 'M';
 			if (size === 'L')
 			{
-				return itemStyles.large;
+				style = itemStyles.large;
+			}
+			else
+			{
+				style = itemStyles.medium;
 			}
 
-			return itemStyles.medium;
+			style.itemInfo.title.color = ChatTitle.createFromDialogId(this.props.data.id).getTitleColor();
+
+			return style;
 		}
 
 		render()
@@ -50,7 +59,9 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 				{
 					style: {
 						flexDirection: 'column',
-						backgroundColor: style.parentView.backgroundColor,
+						backgroundColor: this.props.isPressed
+							? withPressed(style.parentView.backgroundColor)
+							: style.parentView.backgroundColor,
 					},
 					clickable: true,
 					onClick: () => {
@@ -99,8 +110,6 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 						{
 							style: style.itemInfoContainer || {
 								flexDirection: 'row',
-								borderBottomWidth: 1,
-								borderBottomColor: '#e9e9e9',
 								flexGrow: 2,
 								alignItems: 'center',
 								marginBottom: 6,
@@ -119,8 +128,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 								iconSubtitle: this.props.data.iconSubtitle,
 							},
 						),
-						this.getArrowRightImage(),
-						this.getEllipsisButton(),
+						this.getAdditionalComponent(),
 					),
 				),
 			);
@@ -147,13 +155,13 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 						style: {
 							width: 18,
 							height: 18,
-							marginBottom: 14,
+							marginBottom: 10,
 						},
 						svg: { content: this.props.data.crownStatus },
 						onFailure: (e) => Logger.error(e),
 					})
 					: null,
-				Image({
+				!!this.props.data.status && Image({
 					style: {
 						width: 18,
 						height: 18,
@@ -164,63 +172,14 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 			);
 		}
 
-		getArrowRightImage()
+		getAdditionalComponent()
 		{
-			if (!this.props.nextTo)
+			if (!this.props.additionalComponent)
 			{
 				return null;
 			}
 
-			return View(
-				{
-					style: {
-						alignSelf: 'flex-end',
-						alignItems: 'center',
-						justifyContent: 'center',
-						marginRight: 20,
-						height: '100%',
-					},
-				},
-				Image({
-					style: {
-						width: 9,
-						height: 12,
-					},
-					svg: {
-						content: arrowRight(),
-					},
-				}),
-			);
-		}
-
-		getEllipsisButton()
-		{
-			if (!this.props.isEllipsis)
-			{
-				return null;
-			}
-
-			return View(
-				{
-					style: {
-						alignSelf: 'center',
-					},
-				},
-				ImageButton({
-					style: {
-						width: 24,
-						height: 24,
-					},
-					svg: { content: buttonIcons.ellipsis() },
-					onClick: () => {
-						if (this.props.onEllipsisClick)
-						{
-							this.props.onEllipsisClick(this.props.data);
-						}
-					},
-					testId: 'ITEM_ELLIPSIS_BUTTON',
-				}),
-			);
+			return this.props.additionalComponent;
 		}
 	}
 

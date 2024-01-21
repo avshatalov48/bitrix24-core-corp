@@ -42,6 +42,11 @@ class EfficiencyProcessor
 	 */
 	public function recount(array $ids)
 	{
+		if (!Effective::isEnabled())
+		{
+			return;
+		}
+
 		$eventCollection = EventCollection::getInstance();
 		$deletedTasks = $eventCollection->getTasksByEventType(EventDictionary::EVENT_AFTER_TASK_DELETE);
 		$addedTasks = $eventCollection->getTasksByEventType(EventDictionary::EVENT_AFTER_TASK_ADD);

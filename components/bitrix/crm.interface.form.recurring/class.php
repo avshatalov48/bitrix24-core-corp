@@ -117,7 +117,7 @@ class CrmInterfaceFormRecurring extends CBitrixComponent
 
 			$this->arResult['EMAIL_LIST'] = $this->loadPayerMailList();
 			$this->arResult['EMAIL_TEMPLATES'] = $this->loadMailTemplateList();
-			$this->arResult['EMAIL_TEMPLATE_LAST'] = \CCrmMailTemplate::GetLastUsedTemplateID(\CCrmOwnerType::Invoice);
+			$this->arResult['EMAIL_TEMPLATE_LAST'] = \CCrmMailTemplate::GetLastUsedTemplateID(\CCrmOwnerType::Deal);
 			$this->arResult['PATH_TO_EMAIL_TEMPLATE_ADD'] = rtrim(SITE_DIR, '/') . '/crm/configs/mailtemplate/add/';
 		}
 	}
@@ -240,27 +240,8 @@ class CrmInterfaceFormRecurring extends CBitrixComponent
 	{
 		global $USER;
 		$mailList = array();
-		$mailTemplateData = \CCrmMailTemplate::GetList(
-			array(),
-			array(
-				'IS_ACTIVE' => 'Y',
-				'__INNER_FILTER_TYPE' => array(
-					'LOGIC' => 'OR',
-					'__INNER_FILTER_TYPE_1' => array('ENTITY_TYPE_ID' => \CCrmOwnerType::Invoice),
-					'__INNER_FILTER_TYPE_2' => array('ENTITY_TYPE_ID' => 0),
-					),
-				'__INNER_FILTER_SCOPE' => array(
-					'LOGIC' => 'OR',
-					'__INNER_FILTER_PERSONAL' => array(
-						'OWNER_ID' => $USER->getId(),
-						'SCOPE'    => \CCrmMailTemplateScope::Personal,
-					),
-					'__INNER_FILTER_COMMON' => array(
-						'SCOPE' => \CCrmMailTemplateScope::Common,
-					),
-				),
-			)
-		);
+
+		$mailTemplateData = \CCrmMailTemplate::getUserAvailableTemplatesList(\CCrmOwnerType::Invoice);
 
 		while ($template = $mailTemplateData->Fetch())
 		{

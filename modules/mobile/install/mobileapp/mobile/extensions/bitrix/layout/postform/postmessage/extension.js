@@ -115,7 +115,6 @@
 				marginBottom,
 				marginTop,
 				fontSize: (coloredMessage ? 26 : 18),
-				backgroundColor: '#00000000',
 				textAlign: (coloredMessage ? 'center' : 'left'),
 				textAlignVertical: (coloredMessage ? 'center' : 'top'),
 				...(coloredMessage ? { height: coloredTextHeight } : {}),
@@ -151,7 +150,6 @@
 				? View(
 					{
 						style: {
-							backgroundColor: '#00000000',
 							height: coloredTextHeight + 20,
 							...coloredMessageBackgroundData,
 						},

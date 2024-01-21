@@ -1,92 +1,53 @@
 <?php
+
 namespace Bitrix\Crm\Search;
 
+use Bitrix\Crm\Entity\Index;
 use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\LeadAddress;
 use Bitrix\Crm\LeadTable;
+use CCrmCurrency;
+use CCrmLead;
+use CCrmOwnerType;
 
-class LeadSearchContentBuilder extends SearchContentBuilder
+final class LeadSearchContentBuilder extends SearchContentBuilder
 {
-	public function getEntityTypeID()
-	{
-		return \CCrmOwnerType::Lead;
-	}
-	protected function getUserFieldEntityID()
-	{
-		return \CCrmLead::GetUserFieldEntityID();
-	}
-	public function isFullTextSearchEnabled()
-	{
-		return LeadTable::getEntity()->fullTextIndexEnabled('SEARCH_CONTENT');
-	}
-	protected function prepareEntityFields($entityID)
-	{
-		$dbResult = \CCrmLead::GetListEx(
-			array(),
-			array('=ID' => $entityID, 'CHECK_PERMISSIONS' => 'N'),
-			false,
-			false,
-			array('*'/*, 'UF_*'*/)
-		);
+	protected string $entityClassName = CCrmLead::class;
+	protected string $entityIndexTableClassName = Index\LeadTable::class;
+	protected string $entityIndexTable = 'b_crm_lead_index';
+	protected string $entityIndexTablePrimaryColumn = 'LEAD_ID';
 
-		$fields = $dbResult->Fetch();
-		return is_array($fields) ? $fields : null;
-	}
-	public function prepareEntityFilter(array $params)
+	public function getEntityTypeId(): int
 	{
-		$value = isset($params['SEARCH_CONTENT']) ? $params['SEARCH_CONTENT'] : '';
-		if(!is_string($value) || $value === '')
-		{
-			return array();
-		}
+		return CCrmOwnerType::Lead;
+	}
 
-		$operation = $this->isFullTextSearchEnabled() ? '*' : '*%';
-		return array("{$operation}SEARCH_CONTENT" => SearchEnvironment::prepareToken($value));
-	}
-	/**
-	 * Convert entity list filter values.
-	 * @param array $filter List Filter.
-	 * @return void
-	 */
-	public function convertEntityFilterValues(array &$filter)
+	public function convertEntityFilterValues(array &$filter): void
 	{
-		$this->transferEntityFilterKeys(array('FIND', 'PHONE'), $filter);
+		$this->transferEntityFilterKeys(['FIND', 'PHONE'], $filter);
 	}
-	/**
-	 * Prepare search map.
-	 * @param array $fields Entity Fields.
-	 * @param array|null $options Options.
-	 * @return SearchMap
-	 */
-	protected function prepareSearchMap(array $fields, array $options = null)
+	
+	protected function prepareSearchMap(array $fields, array $options = null): SearchMap
 	{
 		$map = new SearchMap();
-
-		$entityID = isset($fields['ID']) ? (int)$fields['ID'] : 0;
-		if($entityID <= 0)
+		$entityId = (int)($fields['ID'] ?? 0);
+		if ($entityId <= 0)
 		{
 			return $map;
 		}
 
 		$isShortIndex = ($options['isShortIndex'] ?? false);
-
 		if (!$isShortIndex)
 		{
-			$map->add($entityID);
+			$map->add($entityId);
 		}
 
-		$title = isset($fields['TITLE']) ? $fields['TITLE'] : '';
-		if($title !== '')
-		{
-			$map->addText($title);
-			$map->addText(SearchEnvironment::prepareSearchContent($title));
-
-			$customerNumber = $this->parseCustomerNumber($title, \CCrmLead::GetDefaultTitleTemplate());
-			if($customerNumber != $entityID)
-			{
-				$map->addTextFragments($customerNumber);
-			}
-		}
+		$map = $this->addTitleToSearchMap(
+			$entityId,
+			$fields['TITLE'] ?? '',
+			CCrmLead::GetDefaultTitleTemplate(),
+			$map
+		);
 
 		$map->addField($fields, 'LAST_NAME');
 		$map->addField($fields, 'NAME');
@@ -96,61 +57,37 @@ class LeadSearchContentBuilder extends SearchContentBuilder
 		{
 			$map->addField($fields, 'COMPANY_TITLE');
 			$map->addField($fields, 'OPPORTUNITY');
-			$map->add(
-				\CCrmCurrency::GetCurrencyName(
-					isset($fields['CURRENCY_ID']) ? $fields['CURRENCY_ID'] : ''
-				)
-			);
+			$map->add(CCrmCurrency::GetCurrencyName($fields['CURRENCY_ID'] ?? ''));
 
-			if(isset($fields['ASSIGNED_BY_ID']))
+			if (isset($fields['ASSIGNED_BY_ID']))
 			{
 				$map->addUserByID($fields['ASSIGNED_BY_ID']);
 			}
 		}
 
-		$multiFields = $this->getEntityMultiFields($entityID);
-		if(isset($multiFields[\CCrmFieldMulti::PHONE]))
-		{
-			foreach($multiFields[\CCrmFieldMulti::PHONE] as $multiField)
-			{
-				if(isset($multiField['VALUE']))
-				{
-					$map->addPhone($multiField['VALUE']);
-				}
-			}
-		}
-		if(isset($multiFields[\CCrmFieldMulti::EMAIL]))
-		{
-			foreach($multiFields[\CCrmFieldMulti::EMAIL] as $multiField)
-			{
-				if(isset($multiField['VALUE']))
-				{
-					$map->addEmail($multiField['VALUE']);
-				}
-			}
-		}
+		$map = $this->addPhonesAndEmailsToSearchMap($entityId, $map);
 
 		if (!$isShortIndex)
 		{
 			//region Status
-			if(isset($fields['STATUS_ID']))
+			if (isset($fields['STATUS_ID']))
 			{
 				$map->addStatus('STATUS', $fields['STATUS_ID']);
 			}
 
-			if(isset($fields['STATUS_DESCRIPTION']))
+			if (isset($fields['STATUS_DESCRIPTION']))
 			{
 				$map->addText($fields['STATUS_DESCRIPTION'], 1024);
 			}
 			//endregion
 
 			//region Source
-			if(isset($fields['SOURCE_ID']))
+			if (isset($fields['SOURCE_ID']))
 			{
 				$map->addStatus('SOURCE', $fields['SOURCE_ID']);
 			}
 
-			if(isset($fields['SOURCE_DESCRIPTION']))
+			if (isset($fields['SOURCE_DESCRIPTION']))
 			{
 				$map->addText($fields['SOURCE_DESCRIPTION'], 1024);
 			}
@@ -163,24 +100,26 @@ class LeadSearchContentBuilder extends SearchContentBuilder
                     LeadAddress::mapEntityFields($fields)
                 )
             );
-			if($address !== '')
+
+			if ($address !== '')
 			{
 				$map->add($address);
 			}
 			//endregion
 
-			if(isset($fields['COMMENTS']))
+			if (isset($fields['COMMENTS']))
 			{
 				$map->addHtml($fields['COMMENTS'], 1024);
 			}
 
-			if(isset($fields['IS_RETURN_CUSTOMER']) && $fields['IS_RETURN_CUSTOMER'] === 'Y')
+			if (isset($fields['IS_RETURN_CUSTOMER']) && $fields['IS_RETURN_CUSTOMER'] === 'Y')
 			{
-				$map->add(\CCrmLead::GetFieldCaption('IS_RETURN_CUSTOMER'));
+				$map->add(CCrmLead::GetFieldCaption('IS_RETURN_CUSTOMER'));
 			}
 
 			//region UserFields
-			foreach($this->getUserFields($entityID) as $userField)
+			$userFields = SearchEnvironment::getUserFields($entityId, $this->getUserFieldEntityId());
+			foreach($userFields as $userField)
 			{
 				$map->addUserField($userField);
 			}
@@ -189,58 +128,12 @@ class LeadSearchContentBuilder extends SearchContentBuilder
 
 		return $map;
 	}
-	/**
-	 * Prepare required data for bulk build.
-	 * @param array $entityIDs Entity IDs.
-	 */
-	protected function prepareForBulkBuild(array $entityIDs)
+
+	protected function save(int $entityId, SearchMap $map): void
 	{
-		$dbResult = \CCrmLead::GetListEx(
-			array(),
-			array('@ID' => $entityIDs, 'CHECK_PERMISSIONS' => 'N'),
-			array('ASSIGNED_BY_ID'),
-			false,
-			array('ASSIGNED_BY_ID')
+		LeadTable::update(
+			$entityId,
+			$this->prepareUpdateData(LeadTable::getTableName(), $map->getString())
 		);
-
-		$userIDs = array();
-		while($fields = $dbResult->Fetch())
-		{
-			$userIDs[] = (int)$fields['ASSIGNED_BY_ID'];
-		}
-
-		if(!empty($userIDs))
-		{
-			SearchMap::cacheUsers($userIDs);
-		}
-	}
-	protected function save($entityID, SearchMap $map)
-	{
-		LeadTable::update($entityID, array('SEARCH_CONTENT' => $map->getString()));
-	}
-
-	protected function saveShortIndex(int $entityId, SearchMap $map, bool $checkExist = false): \Bitrix\Main\DB\Result
-	{
-		$connection = \Bitrix\Main\Application::getConnection();
-		$helper = $connection->getSqlHelper();
-
-		$searchContent = $map->getString();
-		$insert = [
-			'LEAD_ID' => $entityId,
-			'SEARCH_CONTENT' => $searchContent,
-		];
-		$update = [
-			'SEARCH_CONTENT' => $searchContent,
-		];
-		$merge = $helper->prepareMerge('b_crm_lead_index', ['LEAD_ID'], $insert, $update);
-
-		return $connection->query($merge[0]);
-	}
-
-	public function removeShortIndex(int $entityId): \Bitrix\Main\ORM\Data\Result
-	{
-		return \Bitrix\Crm\Entity\Index\LeadTable::delete([
-			'LEAD_ID' => $entityId,
-		]);
 	}
 }

@@ -1,12 +1,12 @@
-import Scheduled from "./items/scheduled";
-import {Item} from "crm.timeline.item";
-import EntityChat from "./streams/entitychat";
-import AudioPlaybackRateSelector from "./tools/audio-playback-rate-selector";
-import Schedule from "./streams/schedule";
-import FixedHistory from "./streams/fixedhistory";
-import History from "./streams/history";
-import Expand from "./animations/expand";
-import PullActionProcessor from './pull-action-processor'
+import { Item } from 'crm.timeline.item';
+import Expand from './animations/expand';
+import Scheduled from './items/scheduled';
+import PullActionProcessor from './pull-action-processor';
+import EntityChat from './streams/entitychat';
+import FixedHistory from './streams/fixedhistory';
+import History from './streams/history';
+import Schedule from './streams/schedule';
+import AudioPlaybackRateSelector from './tools/audio-playback-rate-selector';
 
 /** @memberof BX.Crm.Timeline */
 export default class Manager
@@ -32,6 +32,7 @@ export default class Manager
 		this._userId = 0;
 		this._readOnly = false;
 		this._currentUser = null;
+		this._pingSettings = null;
 		this._pullTagName = "";
 	}
 
@@ -62,6 +63,7 @@ export default class Manager
 		this._userId = BX.prop.getInteger(this._settings, "userId", 0);
 		this._readOnly = BX.prop.getBoolean(this._settings, "readOnly", false);
 		this._currentUser = BX.prop.getObject(this._settings, "currentUser", null);
+		this._pingSettings = BX.prop.getObject(this._settings, "pingSettings", null);
 
 		const activityEditorId = this.getSetting("activityEditorId");
 		if (BX.type.isNotEmptyString(activityEditorId))
@@ -162,6 +164,7 @@ export default class Manager
 				historyStream: this._history,
 				ownerTypeId: this._ownerTypeId,
 				ownerId: this._ownerId,
+				userId: this._userId,
 			});
 		}
 
@@ -813,12 +816,22 @@ export default class Manager
 
 	getCurrentUser(): ?Object
 	{
-		if (BX.type.isObject(this._currentUser) && this._userId > 0)
+		if (BX.type.isObjectLike(this._currentUser) && this._userId > 0)
 		{
 			this._currentUser.userId = this._userId;
 		}
-		
+
 		return this._currentUser;
+	}
+
+	getPingSettings(): ?Object
+	{
+		if (BX.type.isObjectLike(this._pingSettings) && Object.keys(this._pingSettings).length > 0)
+		{
+			return this._pingSettings;
+		}
+
+		return null;
 	}
 
 	getAudioPlaybackRateSelector()

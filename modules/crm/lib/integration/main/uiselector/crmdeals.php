@@ -12,17 +12,20 @@ class CrmDeals extends CrmBase
 	public const PREFIX_SHORT = 'D_';
 	public const PREFIX_FULL = 'CRMDEAL';
 
-	protected static function getOwnerType()
+	protected const DATA_CLASS = CCrmDeal::class;
+	protected const CACHE_DIR = 'b_crm_deal';
+
+	protected static function getOwnerType(): int
 	{
 		return CCrmOwnerType::Deal;
 	}
 
-	protected static function getHandlerType()
+	protected static function getHandlerType(): string
 	{
 		return Handler::ENTITY_TYPE_CRMDEALS;
 	}
 
-	protected static function prepareEntity($data, $options = [])
+	protected static function prepareEntity($data, $options = []): array
 	{
 		$prefix = static::getPrefix($options);
 		$descList = [];
@@ -64,7 +67,7 @@ class CrmDeals extends CrmBase
 		return $result;
 	}
 
-	public function getData($params = [])
+	public function getData($params = []): array
 	{
 		$entityType = static::getHandlerType();
 
@@ -121,8 +124,6 @@ class CrmDeals extends CrmBase
 		$dealsIdList = array_slice($dealsIdList, 0, max(count($selectedDealsIdList), 20));
 		$dealsIdList = array_unique($dealsIdList);
 
-		$dealsList = [];
-
 		$filter = ['CHECK_PERMISSIONS' => 'Y'];
 		$order = [];
 
@@ -145,18 +146,14 @@ class CrmDeals extends CrmBase
 			$filter['=HAS_EMAIL'] = 'Y';
 		}
 
-		$res = CCrmDeal::getListEx(
+		$dealsList = $this->getEntitiesListEx(
 			$order,
 			$filter,
 			false,
 			$navParams,
-			$this->getSearchSelect()
+			$this->getSearchSelect(),
+			$entityOptions,
 		);
-
-		while ($dealFields = $res->fetch())
-		{
-			$dealsList[$prefix . $dealFields['ID']] = static::prepareEntity($dealFields, $entityOptions);
-		}
 
 		if (empty($lastDealsIdList))
 		{
@@ -231,7 +228,7 @@ class CrmDeals extends CrmBase
 		return $result;
 	}
 
-	public function search($params = [])
+	public function search($params = []): array
 	{
 		$result = [
 			'ITEMS' => [],
@@ -297,7 +294,7 @@ class CrmDeals extends CrmBase
 		];
 	}
 
-	protected function getSearchFilter(string $search, array $options)
+	protected function getSearchFilter(string $search, array $options): array
 	{
 		$filter = [
 			'SEARCH_CONTENT' => $search,

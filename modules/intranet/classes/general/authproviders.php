@@ -1,10 +1,13 @@
 <?php
+
 /**
  * Bitrix Framework
  * @package bitrix
  * @subpackage intranet
- * @copyright 2001-2013 Bitrix
+ * @copyright 2001-2023 Bitrix
  */
+
+use Bitrix\Main\Application;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -24,7 +27,7 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 
 		$USER_ID = intval($USER_ID);
 
-		$iblockId = (int) COption::getOptionInt('intranet', 'iblock_structure', 0);
+		$iblockId = COption::getOptionInt('intranet', 'iblock_structure', 0);
 
 		$res = CUserTypeEntity::GetList(array(), array("ENTITY_ID"=>"IBLOCK_".$iblockId."_SECTION", "FIELD_NAME"=>"UF_HEAD"));
 		if($res->Fetch())
@@ -41,61 +44,69 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 
 			$arDep = array_unique($arDep);
 
-			if(is_array($arDep) && !empty($arDep))
+			if (!empty($arDep))
 			{
+				$connection = Application::getConnection();
+				$helper = $connection->getSqlHelper();
+
 				//user's department ('D') and all departments above ('DR')
-				$DB->Query("
-					INSERT INTO b_user_access (USER_ID, PROVIDER_ID, ACCESS_CODE)
-					SELECT ".$USER_ID.", '".$DB->ForSQL($this->id)."', ".$DB->Concat("T1.ROLE_X", ($DB->type == "MSSQL" ? "CAST(T1.ID as varchar(17))": "T1.ID"))."
-					FROM (
-						SELECT DISTINCT BS2.ID ID, (case when BS.ID = BS2.ID then 'D' else 'DR' end) ROLE_X
-						FROM b_iblock_section BS
-							LEFT JOIN b_iblock_section BS2 ON BS2.IBLOCK_ID = BS.IBLOCK_ID AND BS2.LEFT_MARGIN <= BS.LEFT_MARGIN AND BS2.RIGHT_MARGIN >= BS.RIGHT_MARGIN
-						WHERE BS.ID IN (".implode(",", $arDep).")
-							AND BS.IBLOCK_ID = ".$iblockId."
-							AND BS2.GLOBAL_ACTIVE = 'Y'
-						UNION
-						SELECT BS.ID ID, 'DR' ROLE_X
-						FROM b_iblock_section BS
-						WHERE BS.ID IN (".implode(",", $arDep).")
-							AND BS.IBLOCK_ID = ".$iblockId."
-							AND BS.GLOBAL_ACTIVE = 'Y'
-					) T1
-				");
+				$sql = $helper->getInsertIgnore(
+					'b_user_access',
+					'(USER_ID, PROVIDER_ID, ACCESS_CODE)',
+					"SELECT ".$USER_ID.", '".$DB->ForSQL($this->id)."', ".$DB->Concat("T1.ROLE_X", "T1.ID")."
+						FROM (
+							SELECT DISTINCT BS2.ID ID, (case when BS.ID = BS2.ID then 'D' else 'DR' end) ROLE_X
+							FROM b_iblock_section BS
+								LEFT JOIN b_iblock_section BS2 ON BS2.IBLOCK_ID = BS.IBLOCK_ID AND BS2.LEFT_MARGIN <= BS.LEFT_MARGIN AND BS2.RIGHT_MARGIN >= BS.RIGHT_MARGIN
+							WHERE BS.ID IN (".implode(",", $arDep).")
+								AND BS.IBLOCK_ID = ".$iblockId."
+								AND BS2.GLOBAL_ACTIVE = 'Y'
+							UNION
+							SELECT BS.ID ID, 'DR' ROLE_X
+							FROM b_iblock_section BS
+							WHERE BS.ID IN (".implode(",", $arDep).")
+								AND BS.IBLOCK_ID = ".$iblockId."
+								AND BS.GLOBAL_ACTIVE = 'Y'
+						) T1"
+				);
+				$DB->Query($sql);
 
 				//intranet user himself ('IU')
-				$DB->Query("
-					INSERT INTO b_user_access (USER_ID, PROVIDER_ID, ACCESS_CODE)
-					VALUES (".$USER_ID.", '".$DB->ForSQL($this->id)."', 'IU".$USER_ID."')
-				");
+				$sql = $helper->getInsertIgnore(
+					'b_user_access',
+					'(USER_ID, PROVIDER_ID, ACCESS_CODE)',
+					"VALUES (".$USER_ID.", '".$DB->ForSQL($this->id)."', 'IU".$USER_ID."')"
+				);
+				$DB->Query($sql);
 
 				//if the user is a boss let's add all his subordinates ('IU')
-				$DB->Query("
-					INSERT INTO b_user_access (USER_ID, PROVIDER_ID, ACCESS_CODE)
-					SELECT DISTINCT ".$USER_ID.", '".$DB->ForSQL($this->id)."', ".$DB->Concat("'IU'", ($DB->type == "MSSQL" ? "CAST(U.ID as varchar(17))": "U.ID"))."
-					FROM
-						b_user U
-						INNER JOIN b_utm_user BUF1 ON BUF1.VALUE_ID = U.ID
-						INNER JOIN b_user_field UF ON UF.ID = BUF1.FIELD_ID
-						INNER JOIN (SELECT BS2.ID AS ID
-							FROM
-								b_iblock_section BS
-								INNER JOIN b_uts_iblock_".$iblockId."_section BUF ON BUF.VALUE_ID = BS.ID
-								LEFT JOIN b_iblock_section BS2 ON BS2.IBLOCK_ID = BS.IBLOCK_ID AND BS2.LEFT_MARGIN >= BS.LEFT_MARGIN AND BS2.RIGHT_MARGIN <= BS.RIGHT_MARGIN
-							WHERE
-								BS.IBLOCK_ID = ".$iblockId."
-								AND BS2.GLOBAL_ACTIVE = 'Y'
-								AND BUF.UF_HEAD = ".$USER_ID."
-						) S ON S.ID = BUF1.VALUE_INT
-					WHERE
-						UF.FIELD_NAME = 'UF_DEPARTMENT'
-						AND U.ID <> ".$USER_ID."
-				");
+				$sql = $helper->getInsertIgnore(
+					'b_user_access',
+					'(USER_ID, PROVIDER_ID, ACCESS_CODE)',
+					"SELECT DISTINCT ".$USER_ID.", '".$DB->ForSQL($this->id)."', ".$DB->Concat("'IU'", "U.ID")."
+						FROM b_user U
+							INNER JOIN b_utm_user BUF1 ON BUF1.VALUE_ID = U.ID
+							INNER JOIN b_user_field UF ON UF.ID = BUF1.FIELD_ID
+							INNER JOIN (SELECT BS2.ID AS ID
+								FROM
+									b_iblock_section BS
+									INNER JOIN b_uts_iblock_".$iblockId."_section BUF ON BUF.VALUE_ID = BS.ID
+									LEFT JOIN b_iblock_section BS2 ON BS2.IBLOCK_ID = BS.IBLOCK_ID AND BS2.LEFT_MARGIN >= BS.LEFT_MARGIN AND BS2.RIGHT_MARGIN <= BS.RIGHT_MARGIN
+								WHERE
+									BS.IBLOCK_ID = ".$iblockId."
+									AND BS2.GLOBAL_ACTIVE = 'Y'
+									AND BUF.UF_HEAD = ".$USER_ID."
+							) S ON S.ID = BUF1.VALUE_INT
+						WHERE
+							UF.FIELD_NAME = 'UF_DEPARTMENT'
+							AND U.ID <> ".$USER_ID
+				);
+				$DB->Query($sql);
 			}
 		}
 	}
 
-	public static function OnSearchCheckPermissions($FIELD)
+	public static function OnSearchCheckPermissions()
 	{
 		global $USER;
 
@@ -129,7 +140,7 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 				&& !CExtranet::IsIntranetUser($arParams["SITE_ID"])
 			)
 			{
-				$arExtranetUsers = CExtranet::GetMyGroupsUsersFull(CExtranet::GetExtranetSiteID(), false);
+				$arExtranetUsers = CExtranet::GetMyGroupsUsersFull(CExtranet::GetExtranetSiteID());
 				$dbRes = new CDBResult;
 				$dbRes->InitFromArray($arExtranetUsers);
 			}
@@ -154,33 +165,13 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 
 			while ($arUser = $dbRes->Fetch())
 			{
-				$arPhoto = array('IMG' => '');
+				$arPhoto = static::getUserPhoto((int)$arUser['PERSONAL_PHOTO'], (string)$arUser['PERSONAL_GENDER']);
 
-				if (!$arUser['PERSONAL_PHOTO'])
-				{
-					switch ($arUser['PERSONAL_GENDER'])
-					{
-						case "M":
-							$suffix = "male";
-							break;
-						case "F":
-							$suffix = "female";
-							break;
-						default:
-							$suffix = "unknown";
-					}
-					$arUser['PERSONAL_PHOTO'] = COption::GetOptionInt("socialnetwork", "default_user_picture_".$suffix, false, SITE_ID);
-				}
-
-				if ($arUser['PERSONAL_PHOTO'] > 0)
-				{
-					$arPhoto = CIntranetUtils::InitImage($arUser['PERSONAL_PHOTO'], 30);
-				}
 				$arItem = Array(
 					"ID" => "IU".$arUser["ID"],
 					"NAME" => CUser::FormatName(CSite::GetNameFormat(false), $arUser, true, false),
 					"AVATAR" => $arPhoto['CACHE']['src'] ?? '',
-					"DESC" => $arUser['WORK_POSITION'] ? $arUser['WORK_POSITION'] : $arUser['PERSONAL_PROFESSION'],
+					"DESC" => $arUser['WORK_POSITION'] ?: $arUser['PERSONAL_PROFESSION'],
 				);
 				$elements .= CFinder::GetFinderItem($arFinderParams, $arItem);
 			}
@@ -287,33 +278,13 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 				);
 				while ($arUser = $dbRes->Fetch())
 				{
-					$arPhoto = array('IMG' => '');
+					$arPhoto = static::getUserPhoto((int)$arUser['PERSONAL_PHOTO'], (string)$arUser['PERSONAL_GENDER']);
 
-					if (!$arUser['PERSONAL_PHOTO'])
-					{
-						switch ($arUser['PERSONAL_GENDER'])
-						{
-							case "M":
-								$suffix = "male";
-								break;
-							case "F":
-								$suffix = "female";
-								break;
-							default:
-								$suffix = "unknown";
-						}
-						$arUser['PERSONAL_PHOTO'] = COption::GetOptionInt("socialnetwork", "default_user_picture_".$suffix, false, SITE_ID);
-					}
-
-					if ($arUser['PERSONAL_PHOTO'] > 0)
-					{
-						$arPhoto = CIntranetUtils::InitImage($arUser['PERSONAL_PHOTO'], 30);
-					}
 					$arItem = Array(
 						"ID" => "IU".$arUser["ID"],
 						"NAME" => CUser::FormatName(CSite::GetNameFormat(false), $arUser, true, false),
 						"AVATAR" => $arPhoto['CACHE']['src'],
-						"DESC" => $arUser['WORK_POSITION'] ? $arUser['WORK_POSITION'] : $arUser['PERSONAL_PROFESSION'],
+						"DESC" => $arUser['WORK_POSITION'] ?: $arUser['PERSONAL_PROFESSION'],
 					);
 					$elements .= CFinder::GetFinderItem($arFinderParams, $arItem);
 				}
@@ -405,33 +376,13 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 				);
 				while($arUser = $res->Fetch())
 				{
-					$arPhoto = array('IMG' => '');
+					$arPhoto = static::getUserPhoto((int)$arUser['PERSONAL_PHOTO'], (string)$arUser['PERSONAL_GENDER']);
 
-					if (!$arUser['PERSONAL_PHOTO'])
-					{
-						switch ($arUser['PERSONAL_GENDER'])
-						{
-							case "M":
-								$suffix = "male";
-								break;
-							case "F":
-								$suffix = "female";
-								break;
-							default:
-								$suffix = "unknown";
-						}
-						$arUser['PERSONAL_PHOTO'] = COption::GetOptionInt("socialnetwork", "default_user_picture_".$suffix, false, SITE_ID);
-					}
-
-					if ($arUser['PERSONAL_PHOTO'] > 0)
-					{
-						$arPhoto = CIntranetUtils::InitImage($arUser['PERSONAL_PHOTO'], 30);
-					}
 					$arItem = Array(
 						"ID" => "IU".$arUser["ID"],
 						"NAME" => CUser::FormatName(CSite::GetNameFormat(false), $arUser, true, false),
 						"AVATAR" => $arPhoto['CACHE']['src'],
-						"DESC" => $arUser['WORK_POSITION'] ? $arUser['WORK_POSITION'] : $arUser['PERSONAL_PROFESSION'],
+						"DESC" => $arUser['WORK_POSITION'] ?: $arUser['PERSONAL_PROFESSION'],
 					);
 					$elements .= CFinder::GetFinderItem($arFinderParams, $arItem);
 				}
@@ -547,8 +498,8 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 
 	private static function InEmployeeDrawStructure($arStructure, $arSections, $key)
 	{
-		$bOpen = $key == 0? true: false;
-		$bHideItem = $key == 0? true: false;
+		$bOpen = $key == 0;
+		$bHideItem = $key == 0;
 		$arItems = Array();
 		foreach ($arStructure[$key] as $ID)
 		{
@@ -615,7 +566,7 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 			// recalculate for user himself
 			CAccess::RecalculateForUser($arFields["ID"], self::ID);
 
-			// recalculate for users's managers
+			// recalculate for users' managers
 			static::RecalculateManagers($arFields["UF_DEPARTMENT"], $arFields["ID"]);
 		}
 	}
@@ -693,5 +644,38 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 				"CLASS" => "CIntranetAuthProvider",
 			),
 		);
+	}
+
+	/**
+	 * @param int $photo
+	 * @param string $gender
+	 * @return array
+	 */
+	protected static function getUserPhoto(int $photo, string $gender): array
+	{
+		$arPhoto = ['IMG' => ''];
+
+		if (!$photo)
+		{
+			switch ($gender)
+			{
+				case "M":
+					$suffix = "male";
+					break;
+				case "F":
+					$suffix = "female";
+					break;
+				default:
+					$suffix = "unknown";
+			}
+			$photo = COption::GetOptionInt("socialnetwork", "default_user_picture_" . $suffix, false, SITE_ID);
+		}
+
+		if ($photo > 0)
+		{
+			$arPhoto = CIntranetUtils::InitImage($photo, 30);
+		}
+
+		return $arPhoto;
 	}
 }

@@ -28,6 +28,17 @@ $APPLICATION->SetPageProperty(
 	($bodyClass ? $bodyClass.' ' : '').'no-all-paddings'
 );
 
+/** intranet-settings-support */
+if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
+{
+	$APPLICATION->IncludeComponent("bitrix:tasks.error", "limit", [
+		'LIMIT_CODE' => RestrictionUrl::TASK_LIMIT_OFF_SLIDER_URL,
+		'SOURCE' => 'templates',
+	]);
+
+	return;
+}
+
 if ($arParams['ENABLE_MENU_TOOLBAR'])
 {
 	$APPLICATION->IncludeComponent(

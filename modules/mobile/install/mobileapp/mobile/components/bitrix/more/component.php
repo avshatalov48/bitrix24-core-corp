@@ -290,15 +290,6 @@ $showStressItemCondition =(!Loader::includeModule('bitrix24') || \Bitrix\Bitrix2
 $arResult["releaseStressLevel"] = $showStressItemCondition;
 if(Loader::includeModule('socialnetwork') && $showStressItemCondition)
 {
-	$arResult['spotlights'][] = [
-		'id' => 'stress',
-		'minApiVersion' => 31,
-		'delayCount' => 3,
-		'menuId' => 'more',
-		'text' => Loc::getMessage('WELLTORY_SPOTLIGHT'),
-		'icon' => 'lightning'
-	];
-
 	$favoriteSection = &$arResult["menu"][0];
 	$colors = [
 		"green" => "#9DCF00",
@@ -385,7 +376,7 @@ JS;
 	{
 		$favoriteSection["items"] = [];
 	}
-	array_unshift($favoriteSection["items"], $stressItem);
+	$favoriteSection["items"][] = $stressItem;
 }
 
 usort($arResult["menu"], 'sortMenu');

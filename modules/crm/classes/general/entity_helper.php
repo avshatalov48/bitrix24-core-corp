@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Crm\Filter\EntityDataProvider;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service;
@@ -442,7 +443,7 @@ class CCrmEntityHelper
 	public static function transformOperationErrorsToCheckExceptions(array $errors): array
 	{
 		static $fieldNameAliases = [
-			\Bitrix\Crm\Item::FIELD_NAME_OBSERVERS => 'OBSERVER',
+			Item::FIELD_NAME_OBSERVERS => 'OBSERVER',
 		];
 
 		$messages = [];
@@ -504,6 +505,8 @@ class CCrmEntityHelper
 			$provider->applyCounterFilter($entityTypeId, $arFilter, $extras);
 
 			$provider->applyActivityResponsibleFilter($entityTypeId, $arFilter);
+
+			$provider->applyActivityFastSearchFilter($entityTypeId, $arFilter);
 		}
 
 		unset($filterFactory, $provider);

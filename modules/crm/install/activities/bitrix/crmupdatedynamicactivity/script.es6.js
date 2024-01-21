@@ -286,9 +286,25 @@ class CrmUpdateDynamicActivity
 				fields: Object.values(this.filterFieldsMap.get(this.currentEntityTypeId)),
 				fieldPrefix: this.filteringFieldsPrefix,
 				onOpenMenu: this.onOpenFilterFieldsMenu,
+				caption: {
+					head: Loc.getMessage('CRM_UDA_FILTERING_FIELDS_PROPERTY'),
+					collapsed: Loc.getMessage('CRM_UDA_FILTERING_FIELDS_COLLAPSED_TEXT'),
+				},
 			});
 
-			this.filterFieldsContainer.appendChild(selector.createNode());
+			// todo: remove 2024 with this.filterFieldsContainer.parentNode.firstElementChild
+			if (selector.modern && this.filterFieldsContainer && this.filterFieldsContainer.parentNode)
+			{
+				const element = (
+					this.filterFieldsContainer.parentNode.firstElementChild === this.filterFieldsContainer
+						? this.filterFieldsContainer.parentNode.parentNode.firstElementChild
+						: this.filterFieldsContainer.parentNode.firstElementChild
+				);
+
+				Dom.clean(element);
+			}
+
+			Dom.append(selector.createNode(), this.filterFieldsContainer);
 		}
 	}
 

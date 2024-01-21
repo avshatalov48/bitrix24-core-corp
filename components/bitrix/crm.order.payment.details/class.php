@@ -1114,22 +1114,7 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 			'items' => []
 		];
 
-		if(Crm\Settings\LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
-		{
-			$timeFormat = array(
-				'tommorow' => 'tommorow',
-				's' => 'sago',
-				'i' => 'iago',
-				'H3' => 'Hago',
-				'today' => 'today',
-				'yesterday' => 'yesterday',
-				'-' => Main\Type\DateTime::convertFormatToPhp(FORMAT_DATE)
-			);
-		}
-		else
-		{
-			$timeFormat = preg_replace('/:s$/', '', Main\Type\DateTime::convertFormatToPhp(FORMAT_DATETIME));
-		}
+		$timeFormat = CCrmDateTimeHelper::getDefaultDateTimeFormat();
 
 		$params = [
 			'filter' => [

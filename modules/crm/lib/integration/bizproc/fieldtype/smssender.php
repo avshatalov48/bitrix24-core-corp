@@ -173,6 +173,7 @@ HTML;
 		$controlIdJs = \CUtil::JSEscape($controlId);
 		$labelIdJs = \CUtil::JSEscape($labelId);
 		$marketJs = \CUtil::JSEscape(Loc::getMessage('CRM_BP_FIELDTYPE_SMS_SENDER_MARKETPLACE'));
+		$marketLink = \CUtil::JSEscape(\Bitrix\Crm\Integration\Market\Router::getCategoryPath('crm_robot_sms'));
 
 		return <<<HTML
 			<script>
@@ -334,7 +335,7 @@ HTML;
 			
 						menuItems.push({delimiter: true}, {
 							text: '{$marketJs}',
-							href: '/marketplace/category/crm_robot_sms/',
+							href: '{$marketLink}',
 							target: '_blank'
 						});
 			

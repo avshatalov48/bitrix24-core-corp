@@ -12,7 +12,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 	const { SidebarUserService } = require('im/messenger/controller/sidebar/sidebar-user-service');
 	const { SidebarRestService } = require('im/messenger/controller/sidebar/sidebar-rest-service');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { EventType } = require('im/messenger/const');
+	const { EventType, DialogType, BBCode } = require('im/messenger/const');
 
 	/**
 	 * @class ParticipantsService
@@ -37,8 +37,8 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 		}
 
 		/**
-		 * @desc
-		 * @return
+		 * @desc Get participants from store or rest query
+		 * @return {array}
 		 */
 		getParticipants()
 		{
@@ -64,19 +64,32 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 			}
 
 			let usersData = [];
-
-			const limitRestQuery = 50; // this limit use for RestMethod.imDialogUsersList
-			if (dialogState.participants.length < limitRestQuery
-				&& dialogState.participants.length !== dialogState.userCounter)
-			{
-				return [];
-			}
-
 			if (this.isGroupDialog)
 			{
+				if (dialogState.lastLoadParticipantId === 0)
+				{
+					return [];
+				}
+
 				usersData = dialogState.participants.map(
 					(userId) => this.store.getters['usersModel/getById'](userId),
 				);
+
+				for (const user of usersData)
+				{
+					if (Type.isUndefined(user))
+					{
+						this.store.dispatch('dialoguesModel/update', {
+							dialogId: this.dialogId,
+							fields: {
+								lastLoadParticipantId: 0,
+								participants: [],
+							},
+						});
+
+						return [];
+					}
+				}
 			}
 			else
 			{
@@ -143,9 +156,14 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 			const statusSvg = this.sidebarUserService.getUserStatus(user.id);
 			const isAdmin = this.isGroupDialog ? ownerId === user.id : false;
 			const crownStatus = isAdmin ? this.sidebarUserService.getStatusCrown() : null;
+			let userId = user.id;
+			if (Type.isUndefined(userId) && user.type === DialogType.user)
+			{
+				userId = parseInt(user.dialogId, 10);
+			}
 
 			return {
-				id: user.id,
+				id: userId,
 				title: userTitle.title,
 				isYouTitle: isYou ? isYouTitle : null,
 				desc: userTitle.desc,
@@ -201,6 +219,16 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 		}
 
 		/**
+		 * @desc check is bot user by id
+		 * @param {number} userId
+		 * @return {boolean}
+		 */
+		isBotById(userId)
+		{
+			return this.sidebarUserService.isBotById(userId);
+		}
+
+		/**
 		 * @desc Handler on click open notes user from participants menu
 		 * @return void
 		 */
@@ -220,12 +248,26 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 					(result) => {
 						if (result)
 						{
-							BX.onCustomEvent('onDestroySidebar');
-							MessengerEmitter.emit(EventType.messenger.destroyDialog);
+							try
+							{
+								PageManager.getNavigator().popTo('im.tabs')
+									// eslint-disable-next-line promise/no-nesting
+									.catch((err) => {
+										Logger.error('ParticipantsService.onClickLeaveChat.popTo.catch error', err);
+										BX.onCustomEvent('onDestroySidebar');
+										MessengerEmitter.emit(EventType.messenger.destroyDialog);
+									});
+							}
+							catch (e)
+							{
+								Logger.error('ParticipantsService.onClickLeaveChat.getNavigator()', e);
+								BX.onCustomEvent('onDestroySidebar');
+								MessengerEmitter.emit(EventType.messenger.destroyDialog);
+							}
 						}
 					},
 				)
-				.catch((err) => Logger.error('leaveChat', err));
+				.catch((err) => Logger.error('ParticipantsService.onClickLeaveChat.sidebarRestService.leaveChat', err));
 		}
 
 		/**
@@ -238,8 +280,30 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: userId });
 		}
 
-		onClickPingUser()
-		{}
+		/**
+		 * @desc Handler on click mention user from participants menu
+		 * @param {number|string} userId
+		 * @return void
+		 */
+		onClickPingUser(userId)
+		{
+			try
+			{
+				PageManager.getNavigator().popTo('im.dialog')
+					// eslint-disable-next-line promise/no-nesting
+					.catch((err) => {
+						Logger.error('ParticipantsService.onClickPingUser.popTo.catch error', err);
+						BX.onCustomEvent('onDestroySidebar');
+					});
+			}
+			catch (e)
+			{
+				Logger.error('ParticipantsService.onClickPingUser.getNavigator()', e);
+				BX.onCustomEvent('onDestroySidebar');
+			}
+
+			BX.onCustomEvent(EventType.dialog.external.mention, [userId, BBCode.user]);
+		}
 	}
 
 	module.exports = {

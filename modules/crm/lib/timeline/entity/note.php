@@ -38,7 +38,7 @@ class NoteTable extends Entity\DataManager
 	public static function getMap()
 	{
 		return [
-			new IntegerField('ID', ['primary' => true]),
+			new IntegerField('ID', ['primary' => true, 'autocomplete' => true,]),
 			new IntegerField('ITEM_TYPE', ['required' => true]),
 			new IntegerField('ITEM_ID', ['required' => true]),
 			new IntegerField('CREATED_BY_ID', ['required' => true]),

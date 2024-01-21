@@ -14,13 +14,12 @@ jn.define('crm/in-app-url/url', (require, exports, module) => {
 		{
 			const { url } = props;
 
-			this.url = new Url(url);
-			this.controller = this.getUrlController({ ...props, url: this.url });
+			this.controller = this.getUrlController({ ...props, url: new Url(url) });
 		}
 
 		static createUrl(props)
 		{
-			const crmUrl = new this(props);
+			const crmUrl = new CrmUrl(props);
 
 			return crmUrl.toString();
 		}

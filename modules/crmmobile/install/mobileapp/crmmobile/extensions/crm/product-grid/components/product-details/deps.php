@@ -2,9 +2,10 @@
 
 return [
 	'extensions' => [
-		'alert',
 		'loc',
-		'crm/loc',
+		'alert',
+		'apptheme',
+		'assets/common',
 		'layout/ui/fields/barcode',
 		'layout/ui/fields/boolean',
 		'layout/ui/fields/combined',
@@ -17,15 +18,17 @@ return [
 		'layout/ui/fields/string',
 		'layout/ui/fields-wrapper',
 		'layout/ui/islands',
+		'layout/ui/plan-restriction',
 		'qrauth/utils',
 		'utils/object',
 		'utils/function',
 		'utils/date',
+
+		'catalog:product-type',
+
+		'notify',
+		'crm:loc',
 		'crm:product-grid/model',
 		'crm:product-calculator',
-		'layout/ui/plan-restriction',
-		'assets/common',
-		'catalog:product-type',
-		'notify',
 	],
 ];

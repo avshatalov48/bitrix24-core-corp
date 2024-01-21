@@ -184,6 +184,11 @@ export default class ConfigurableItem extends TimelineItem
 		}
 	}
 
+	getLayoutComponent(): ?Object
+	{
+		return this.#layoutComponent;
+	}
+
 	forceRefreshLayout(): void
 	{
 		const bindTo = this.getWrapper()?.nextSibling;

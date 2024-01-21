@@ -2,12 +2,13 @@
  * @module layout/ui/product-grid/components/sku-selector/elements/scrollable
  */
 jn.define('layout/ui/product-grid/components/sku-selector/elements/scrollable', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	function Scrollable(...children)
 	{
 		return ScrollView(
 			{
 				style: {
-					backgroundColor: '#EEF2F4',
+					backgroundColor: AppTheme.colors.bgPrimary,
 					flexDirection: 'column',
 					flexGrow: 1,
 				},
@@ -15,7 +16,7 @@ jn.define('layout/ui/product-grid/components/sku-selector/elements/scrollable', 
 			View(
 				{
 					style: {
-						backgroundColor: '#ffffff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						borderRadius: 12,
 						padding: 16,
 						paddingBottom: 195,

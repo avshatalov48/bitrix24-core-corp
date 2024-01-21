@@ -2,9 +2,11 @@
 
 return [
 	'extensions' => [
+		'apptheme',
 		'event-emitter',
-		'crm:duplicates',
 		'utils/object',
+
+		'crm:duplicates',
 	],
 	'bundle' => [
 		'./duplicate',

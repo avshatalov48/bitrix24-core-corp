@@ -97,7 +97,8 @@ class ReplicateParams extends \Bitrix\Tasks\Item\Field\Scalar
 				$value = \Bitrix\Main\Type\DateTime::createFromUserTime($value)->toString();
 				return UI::checkDateTime($value);
 			}),
-			"NEXT_EXECUTION_TIME" => array('VALUE' => StructureChecker::TYPE_STRING, 'DEFAULT' => '')
+			"NEXT_EXECUTION_TIME" => array('VALUE' => StructureChecker::TYPE_STRING, 'DEFAULT' => ''),
+			'DEADLINE_OFFSET' => ['VALUE' => StructureChecker::TYPE_INT_POSITIVE, 'DEFAULT' => 0],
 		));
 
 		return $structure;

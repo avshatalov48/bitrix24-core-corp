@@ -2,7 +2,7 @@
  * @module layout/ui/fields/client/elements/action
  */
 jn.define('layout/ui/fields/client/elements/action', (require, exports, module) => {
-
+	const { AppTheme } = require('apptheme/extended');
 	const { pen } = require('assets/common');
 
 	/**
@@ -15,7 +15,7 @@ jn.define('layout/ui/fields/client/elements/action', (require, exports, module) 
 		return View(
 			{
 				style: {
-					width: !readOnly ? 38 : 0,
+					width: readOnly ? 0 : 38,
 					alignItems: 'flex-end',
 				},
 			},
@@ -33,8 +33,9 @@ jn.define('layout/ui/fields/client/elements/action', (require, exports, module) 
 						height: 15,
 						width: 15,
 					},
+					tintColor: AppTheme.colors.base3,
 					svg: {
-						content: pen,
+						content: pen(),
 					},
 				}),
 			),
@@ -42,5 +43,4 @@ jn.define('layout/ui/fields/client/elements/action', (require, exports, module) 
 	}
 
 	module.exports = { ClientItemAction };
-
 });

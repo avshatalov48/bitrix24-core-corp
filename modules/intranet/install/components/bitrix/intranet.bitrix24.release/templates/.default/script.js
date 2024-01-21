@@ -1,6 +1,7 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,main_core_events,main_core) {
+(function (exports,main_core,main_core_events) {
 	'use strict';
 
 	let _ = t => t,
@@ -165,7 +166,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _handleEarClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleEarClick");
 	var _handleFrameMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleFrameMessage");
 	class Release {
-	  constructor(options) {
+	  constructor(releaseOptions) {
 	    Object.defineProperty(this, _handleFrameMessage, {
 	      value: _handleFrameMessage2
 	    });
@@ -186,7 +187,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: ''
 	    });
-	    options = main_core.Type.isPlainObject(options) ? options : {};
+	    const options = main_core.Type.isPlainObject(releaseOptions) ? releaseOptions : {};
 	    if (!main_core.Type.isStringFilled(options.url)) {
 	      throw new Error('Release: the "url" parameter is required.');
 	    }
@@ -205,6 +206,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        onClick: babelHelpers.classPrivateFieldLooseBase(this, _handleEarClick)[_handleEarClick].bind(this)
 	      }
 	    });
+	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpen', () => {
+	      this.getEar().hide();
+	    });
+	    const onClose = () => {
+	      if (BX.SidePanel.Instance.getOpenSlidersCount() === 0) {
+	        this.getEar().show(true);
+	      }
+	    };
+	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', onClose);
+	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onDestroy', onClose);
 	  }
 	  show(mode = 'ear') {
 	    if (mode === 'slider') {
@@ -213,7 +224,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        context: 'auto'
 	      });
 	    } else {
-	      this.getEar().show();
+	      if (BX.SidePanel.Instance.getOpenSlidersCount() === 0) {
+	        this.getEar().show();
+	      }
 	    }
 	  }
 	  getSlider() {
@@ -227,21 +240,24 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return main_core.ajax.runComponentAction('bitrix:intranet.bitrix24.release', action, {
 	    mode: 'class',
 	    data,
-	    analyticsLabel: Object.assign({
+	    analyticsLabel: {
 	      module: 'intranet',
 	      service: babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1],
-	      action: action
-	    }, labels)
+	      action,
+	      ...labels
+	    }
 	  });
 	}
 	function _handleSliderClose2() {
-	  this.getEar().show(true);
-	  babelHelpers.classPrivateFieldLooseBase(this, _runAction)[_runAction]('close');
+	  if (BX.SidePanel.Instance.getOpenSlidersCount() === 0) {
+	    this.getEar().show(true);
+	  }
+	  void babelHelpers.classPrivateFieldLooseBase(this, _runAction)[_runAction]('close');
 	}
 	function _handleEarClick2() {
 	  this.getEar().hide();
 	  this.getSlider().show();
-	  babelHelpers.classPrivateFieldLooseBase(this, _runAction)[_runAction]('show', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _runAction)[_runAction]('show', {
 	    context: 'ear-click'
 	  });
 	}
@@ -258,10 +274,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _deactivated)[_deactivated] = false;
 	    });
 	  }
-	  if (message.command === 'openHelper') {
-	    if (BX.Helper) {
-	      BX.Helper.show(message.options);
-	    }
+	  if (message.command === 'openHelper' && BX.Helper) {
+	    BX.Helper.show(message.options);
 	  }
 	}
 
@@ -269,5 +283,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 	exports.ReleaseSlider = ReleaseSlider;
 	exports.ReleaseEar = ReleaseEar;
 
-}((this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {}),BX.Event,BX));
+}((this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {}),BX,BX.Event));
 //# sourceMappingURL=script.js.map

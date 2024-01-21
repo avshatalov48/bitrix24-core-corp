@@ -89,10 +89,13 @@ class WebFormScenarioService
 		$result = [];
 		foreach ($menuItems as $item)
 		{
-			$result[] = $item + [
-					'text' => Loc::getMessage(
-						'CRM_SERVICE_FORM_MENU_ITEM_' . mb_strtoupper(str_replace("-", "_", $item['id']))),
-				];
+			$itemCode =  mb_strtoupper(str_replace("-", "_", $item['id']));
+			$sidebarMenuItemText =
+				Loc::getMessage("CRM_SERVICE_FORM_MENU_ITEM_{$itemCode}")
+				?? Loc::getMessage("CRM_SERVICE_FORM_MENU_ITEM_{$itemCode}_MSGVER_1")
+			;
+
+			$result[] = $item + ['text' => $sidebarMenuItemText];
 		}
 
 		return $result;

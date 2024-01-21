@@ -1,11 +1,15 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
-	die();
+<?php
 
-use Bitrix\Main;
-use Bitrix\Main\Localization\Loc;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 use Bitrix\Crm;
 use Bitrix\Crm\Integration\Recyclebin\RecyclingManager;
+use Bitrix\Crm\Restriction\AvailabilityManager;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
@@ -18,6 +22,15 @@ class CCrmRecyclebinListComponent extends \CBitrixComponent
 
 	public function executeComponent()
 	{
+		$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+		$isAvailable = $toolsManager->checkCrmAvailability();
+		if (!$isAvailable)
+		{
+			print AvailabilityManager::getInstance()->getCrmInaccessibilityContent();
+
+			return;
+		}
+
 		$this->arResult['GRID_ID'] = 'CRM_RECYCLE_BIN';
 		$this->arResult['TTL'] = self::TTL;
 

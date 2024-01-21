@@ -3,15 +3,16 @@
  */
 jn.define('im/messenger/lib/ui/base/checkbox/style', (require, exports, module) => {
 
+	const AppTheme = require('apptheme');
 	const checkboxStyle = {
 		size: 24,
-		borderColor: '#d2d5d9',
+		borderColor: AppTheme.colors.base5,
 		alignContent: 'center',
 		justifyContent: 'center',
 		icon: {
-			enable: '#559BE6',
-			disable: '#d2d5d9',
-		}
+			enable: AppTheme.colors.accentMainPrimary,
+			disable: AppTheme.colors.accentSoftGray2,
+		},
 	};
 
 	module.exports = { checkboxStyle };

@@ -123,7 +123,8 @@ $APPLICATION->IncludeComponent(
 			'SERVICE_URL' => '/bitrix/components/bitrix/crm.order.details/ajax.php?'.bitrix_sessid_get(),
 			'EXTERNAL_CONTEXT_ID' => $arResult['EXTERNAL_CONTEXT_ID'],
 			'CONTEXT_ID' => $arResult['CONTEXT_ID'],
-			'CONTEXT' => $editorContext
+			'CONTEXT' => $editorContext,
+			'ENABLE_PAGE_TITLE_CONTROLS' => $arResult['COMPONENT_MODE'] === ComponentMode::MODIFICATION,
 		),
 		'TIMELINE' => array(
 			'GUID' => "{$guid}_timeline",

@@ -4,6 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
+use Bitrix\Catalog\Product\Store\BatchManager;
+use Bitrix\Catalog\StoreBatchDocumentElementTable;
 use Bitrix\Catalog\Url\InventoryManagementSourceBuilder;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
@@ -14,6 +16,7 @@ use Bitrix\Crm\Integration\Catalog\Contractor\Provider;
 use Bitrix\Main;
 use Bitrix\Crm\Order;
 use Bitrix\Crm\Service\EditorAdapter;
+use Bitrix\Main\Config\Option;
 use Bitrix\Sale;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Component\ComponentError;
@@ -367,6 +370,8 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			'conduct' => $this->checkDocumentConductRight(),
 			'cancel' => $this->checkDocumentCancelRight(),
 		];
+
+		$this->arResult['IS_PRODUCT_BATCH_METHOD_SELECTED'] = \Bitrix\Catalog\Config\State::isProductBatchMethodSelected();
 
 		$this->arResult['IS_READ_ONLY'] = !$this->checkDocumentModifyRight();
 		$this->arResult['UI_ENTITY_CARD_SETTINGS_EDITABLE'] = AccessController::getCurrent()->check(ActionDictionary::ACTION_STORE_DOCUMENT_CARD_EDIT);
@@ -1338,7 +1343,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 				'STORE_TO' => 0,
 				'STORE_FROM' => 0,
 				'ELEMENT_ID' => $basketItem->getProductId(),
-				'PURCHASING_PRICE' => $basketItem->getBasePrice(),
+				'PURCHASING_PRICE' => 0,
 				'BASE_PRICE' => $basketItem->getPrice(),
 				'BASE_PRICE_EXTRA' => '',
 				'BASE_PRICE_EXTRA_RATE' => '',
@@ -1348,8 +1353,28 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			];
 
 			$shipmentItemStoreCollection = $shipmentItem->getShipmentItemStoreCollection();
+			$batchManager = new BatchManager($basketItem->getProductId());
 			if ($shipmentItemStoreCollection && !$shipmentItemStoreCollection->isEmpty())
 			{
+				$shipmentIds = array_column($shipmentItemStoreCollection->toArray(), 'ID');
+				$shipmentBatchPrices = [];
+				$shipmentBatchData = StoreBatchDocumentElementTable::getList([
+					'filter' => ['=SHIPMENT_ITEM_STORE_ID' => $shipmentIds],
+					'select' => ['SHIPMENT_ITEM_STORE_ID', 'BATCH_PRICE', 'AMOUNT'],
+				]);
+				while ($priceMap = $shipmentBatchData->fetch())
+				{
+					$shipmentBatchPrices[$priceMap['SHIPMENT_ITEM_STORE_ID']] ??= [
+						'AMOUNT' => 0,
+						'COST_SUM' => 0,
+					];
+
+					$amount = -$priceMap['AMOUNT'];
+					$costSum = $amount * $priceMap['BATCH_PRICE'];
+					$shipmentBatchPrices[$priceMap['SHIPMENT_ITEM_STORE_ID']]['AMOUNT'] += $amount;
+					$shipmentBatchPrices[$priceMap['SHIPMENT_ITEM_STORE_ID']]['COST_SUM'] += $costSum;
+				}
+
 				/** @var Crm\Order\ShipmentItemStore $shipmentItemStore */
 				foreach ($shipmentItemStoreCollection as $shipmentItemStore)
 				{
@@ -1360,6 +1385,23 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 					$documentProduct['AMOUNT'] = $shipmentItemStore->getQuantity();
 					$documentProduct['BARCODE'] = $shipmentItemStore->getBarcode();
+					$documentProduct['PURCHASING_PRICE'] = 0;
+					if (isset($shipmentBatchPrices[$shipmentItemStore->getId()]))
+					{
+						$batchInfo = $shipmentBatchPrices[$shipmentItemStore->getId()];
+						$costPrice = $batchInfo['COST_SUM'] / $batchInfo['AMOUNT'];
+						$precision = (int)Option::get('sale', 'value_precision', 2);
+						$documentProduct['PURCHASING_PRICE'] = round($costPrice, $precision);
+					}
+
+					if (!$this->shipment->isShipped())
+					{
+						$documentProduct['PURCHASING_PRICE'] = $batchManager->calculateCostPrice(
+							$documentProduct['AMOUNT'],
+							$documentProduct['STORE_FROM'],
+							$basketItem->getCurrency()
+						);
+					}
 
 					$products[] = $documentProduct;
 				}
@@ -1382,6 +1424,14 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 				}
 
 				$documentProduct['AMOUNT'] = $shipmentItem->getQuantity();
+				if (!$this->shipment->isShipped() && !empty($documentProduct['STORE_FROM']))
+				{
+					$documentProduct['PURCHASING_PRICE'] = $batchManager->calculateCostPrice(
+						$documentProduct['AMOUNT'],
+						$documentProduct['STORE_FROM'],
+						$basketItem->getCurrency()
+					);
+				}
 
 				$products[] = $documentProduct;
 			}
@@ -1455,6 +1505,13 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 					continue;
 				}
 
+				$batchManager = new \Bitrix\Catalog\Product\Store\BatchManager($deliverableProduct['PRODUCT_ID']);
+				$costPrice = $batchManager->calculateCostPrice(
+					$quantity,
+					$deliverableProduct['STORE_ID'],
+					$deliverableProduct['CURRENCY']
+				);
+
 				$products[] = [
 					'ID' => uniqid('bx_', true),
 					'STORE_FROM' => $deliverableProduct['STORE_ID'],
@@ -1462,7 +1519,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 					'ELEMENT_ID' => $deliverableProduct['PRODUCT_ID'],
 					'BASKET_ID' => $deliverableProduct['BASKET_CODE'],
 					'AMOUNT' => $quantity,
-					'PURCHASING_PRICE' => $deliverableProduct['BASE_PRICE'],
+					'PURCHASING_PRICE' => $costPrice,
 					'BASE_PRICE' => $deliverableProduct['PRICE'],
 					'BASE_PRICE_EXTRA' => '',
 					'BASE_PRICE_EXTRA_RATE' => '',

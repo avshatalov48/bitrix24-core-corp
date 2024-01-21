@@ -37,7 +37,7 @@ class TriggerAppTable extends Main\Entity\DataManager
 	public static function getMap()
 	{
 		return array(
-			'ID' => array('primary' => true, 'data_type' => 'integer'),
+			'ID' => array('primary' => true, 'data_type' => 'integer', 'autocomplete' => true,),
 			'APP_ID' => array('data_type' => 'integer', 'required' => true),
 			'NAME' => array('data_type' => 'string', 'required' => true),
 			'CODE' => array('data_type' => 'string', 'required' => true),

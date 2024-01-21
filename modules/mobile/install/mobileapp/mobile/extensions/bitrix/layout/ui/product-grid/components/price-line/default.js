@@ -1,5 +1,7 @@
+/**
+ * @module layout/ui/product-grid/components/price-line/default
+ */
 jn.define('layout/ui/product-grid/components/price-line/default', (require, exports, module) => {
-
 	const { Styles } = require('layout/ui/product-grid/components/price-line/styles');
 
 	class PriceLine extends LayoutComponent
@@ -30,18 +32,18 @@ jn.define('layout/ui/product-grid/components/price-line/default', (require, expo
 		{
 			return View(
 				{
-					style: this.styles().titleContainer
+					style: this.styles().titleContainer,
 				},
 				Text({
 					text: this.props.title,
-					style: this.styles().titleText
+					style: this.styles().titleText,
 				}),
 			);
 		}
 
 		renderValue()
 		{
-			let {amount, currency} = this.props.value;
+			let { amount, currency } = this.props.value;
 
 			amount = parseFloat(amount);
 
@@ -52,19 +54,19 @@ jn.define('layout/ui/product-grid/components/price-line/default', (require, expo
 
 			return View(
 				{
-					style: this.styles().valueContainer
+					style: this.styles().valueContainer,
 				},
 				MoneyView({
-					money: Money.create({amount, currency}),
+					money: Money.create({ amount, currency }),
 					renderAmount: (formattedAmount) => Text({
 						text: formattedAmount,
-						style: this.styles().amount
+						style: this.styles().amount,
 					}),
 					renderCurrency: (formattedCurrency) => Text({
 						text: formattedCurrency,
 						style: this.styles().currency,
 					}),
-				})
+				}),
 			);
 		}
 
@@ -75,5 +77,4 @@ jn.define('layout/ui/product-grid/components/price-line/default', (require, expo
 	}
 
 	module.exports = { PriceLine };
-
 });

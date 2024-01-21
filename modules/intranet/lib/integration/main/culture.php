@@ -5,6 +5,7 @@ namespace Bitrix\Intranet\Integration\Main;
 use Bitrix\Main;
 use Bitrix\Main\Localization\CultureTable;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\DateTime;
 
 final class Culture
 {
@@ -22,6 +23,9 @@ final class Culture
 			include_once $fileName;
 		}
 
+		$userDateTime = new DateTime();
+		$userDateTime->toUserTime();
+
 		while($culture = $data->fetch())
 		{
 			$langCultures[$culture['ID']] = [
@@ -31,9 +35,14 @@ final class Culture
 				'SHORT_DATE_FORMAT' => $culture["SHORT_DATE_FORMAT"] !== ''
 					? htmlspecialcharsbx(FormatDate($culture["SHORT_DATE_FORMAT"]))
 					: '',
-
 				'LONG_DATE_FORMAT' => $culture["LONG_DATE_FORMAT"] !== ''
 					? htmlspecialcharsbx(FormatDate($culture["LONG_DATE_FORMAT"]))
+					: '',
+				'LONG_DATE_FORMAT_USER' => $culture["LONG_DATE_FORMAT"] !== ''
+					? htmlspecialcharsbx(FormatDate($culture["LONG_DATE_FORMAT"], $userDateTime->format("U")))
+					: '',
+				'SHORT_DATE_FORMAT_USER' => $culture["SHORT_DATE_FORMAT"] !== ''
+					? htmlspecialcharsbx(FormatDate($culture["SHORT_DATE_FORMAT"], $userDateTime->format("U")))
 					: '',
 			];
 		}

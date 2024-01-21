@@ -2,6 +2,7 @@
  * @module crm/mail/chain/action-panel
  */
 jn.define('crm/mail/chain/action-panel', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
 	const { throttle } = require('utils/function');
 	const height = 70;
@@ -41,7 +42,7 @@ jn.define('crm/mail/chain/action-panel', (require, exports, module) => {
 				style: {
 					alignSelf: 'center',
 					fontSize: 13,
-					color: '#828b95',
+					color: AppTheme.colors.base3,
 				},
 				text,
 			});
@@ -69,7 +70,7 @@ jn.define('crm/mail/chain/action-panel', (require, exports, module) => {
 
 		if (circleWrap)
 		{
-			const circleDiameter = 53;
+			const circleDiameter = 54;
 
 			wrapStyle = {
 				alignSelf: 'center',
@@ -81,13 +82,8 @@ jn.define('crm/mail/chain/action-panel', (require, exports, module) => {
 			};
 
 			shadowProps = {
-				radius: 2,
-				color: '#e8e8e8',
-				offset: {
-					x: 0,
-					y: 1,
-				},
 				style: {
+					backgroundColor: AppTheme.colors.bgSeparatorPrimary,
 					width: circleDiameter,
 					height: circleDiameter,
 					borderRadius: 100,
@@ -95,7 +91,7 @@ jn.define('crm/mail/chain/action-panel', (require, exports, module) => {
 			};
 		}
 
-		return Shadow(
+		return View(
 			shadowProps,
 			View(
 				{
@@ -105,8 +101,8 @@ jn.define('crm/mail/chain/action-panel', (require, exports, module) => {
 					},
 					style: {
 						...wrapStyle,
-						marginLeft: 5,
-						marginRight: 5,
+						marginLeft: circleWrap ? 0 : 5,
+						marginRight: circleWrap ? 0 : 5,
 					},
 				},
 				Image({
@@ -155,20 +151,16 @@ jn.define('crm/mail/chain/action-panel', (require, exports, module) => {
 					paddingRight: 12,
 					paddingTop: 6,
 					paddingBottom: 6,
-					backgroundColor: '#fff',
+					backgroundColor: AppTheme.colors.bgContentPrimary,
 					height,
 				};
 			}
 			else
 			{
 				shadowProps = {
-					radius: 4,
-					color: '#bbbbbb',
-					offset: {
-						x: 0,
-						y: 2,
-					},
 					style: {
+						borderWidth: 1,
+						borderColor: AppTheme.colors.base5,
 						borderRadius: 12,
 					},
 				};
@@ -180,7 +172,7 @@ jn.define('crm/mail/chain/action-panel', (require, exports, module) => {
 					paddingTop: 6,
 					paddingBottom: 6,
 					borderRadius: 12,
-					backgroundColor: '#fff',
+					backgroundColor: AppTheme.colors.bgContentPrimary,
 					height,
 				};
 			}
@@ -236,7 +228,7 @@ jn.define('crm/mail/chain/action-panel', (require, exports, module) => {
 						width: '100%',
 					},
 				},
-				Shadow(
+				View(
 					shadowProps,
 					View(
 						{

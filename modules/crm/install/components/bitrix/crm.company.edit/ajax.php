@@ -1,4 +1,14 @@
 <?php
+
+use Bitrix\Crm\EntityAdapterFactory;
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\Integrity\CompanyDuplicateChecker;
+use Bitrix\Crm\Integrity\Duplicate;
+use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
+use Bitrix\Crm\Integrity\DuplicateCriterion;
+use Bitrix\Crm\Integrity\DuplicateEntity;
+use Bitrix\Crm\Integrity\DuplicateSearchParams;
+
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);
@@ -161,33 +171,37 @@ elseif($action === 'FIND_DUPLICATES')
 	$entityTypeName = $params['ENTITY_TYPE_NAME'] ?? '';
 	if ($entityTypeName === '')
 	{
-		__CrmCompanyEditEndResponse(array('ERROR' => 'Entity type is not specified.'));
+		__CrmCompanyEditEndResponse(['ERROR' => 'Entity type is not specified.']);
 	}
 
 	$entityTypeID = CCrmOwnerType::ResolveID($entityTypeName);
 	if ($entityTypeID === CCrmOwnerType::Undefined)
 	{
-		__CrmCompanyEditEndResponse(array('ERROR' => 'Undefined entity type is specified.'));
+		__CrmCompanyEditEndResponse(['ERROR' => 'Undefined entity type is specified.']);
 	}
 
 	if ($entityTypeID !== CCrmOwnerType::Company)
 	{
-		__CrmCompanyEditEndResponse(array('ERROR' => "The '{$entityTypeName}' type is not supported in current context."));
+		__CrmCompanyEditEndResponse(['ERROR' => "The '{$entityTypeName}' type is not supported in current context."]);
 	}
 
-	if (!(CCrmCompany::CheckCreatePermission($userPermissions) || CCrmCompany::CheckUpdatePermission(0, $userPermissions)))
+	if (
+		!(CCrmCompany::CheckCreatePermission($userPermissions)
+			|| CCrmCompany::CheckUpdatePermission(0, $userPermissions)
+		)
+	)
 	{
-		__CrmCompanyEditEndResponse(array('ERROR' => 'Access denied.'));
+		__CrmCompanyEditEndResponse(['ERROR' => 'Access denied.']);
 	}
 
 	$userProfileUrlTemplate = COption::GetOptionString("main", "TOOLTIP_PATH_TO_USER", "", SITE_ID);
 
-	$checker = new \Bitrix\Crm\Integrity\CompanyDuplicateChecker();
+	$checker = new CompanyDuplicateChecker();
 	$checker->setStrictComparison(false);
 
 	$groupResults = [];
 	$groupData = isset($params['GROUPS']) && is_array($params['GROUPS']) ? $params['GROUPS'] : [];
-	foreach ($groupData as &$group)
+	foreach ($groupData as $group)
 	{
 		$fields = [];
 		$fieldNames = [];
@@ -197,10 +211,10 @@ elseif($action === 'FIND_DUPLICATES')
 			$fields['TITLE'] = $group['TITLE'];
 		}
 
-		$phones = $group['PHONES'] ?? (isset($group['PHONE']) ? $group['PHONE'] : null);
+		$phones = $group['PHONES'] ?? ($group['PHONE'] ?? null);
 		$hasPhones = is_array($phones) && !empty($phones);
 
-		$emails = $group['EMAILS'] ?? (isset($group['EMAIL']) ? $group['EMAIL'] : null);
+		$emails = $group['EMAILS'] ?? ($group['EMAIL'] ?? null);
 		$hasEmails = is_array($emails) && !empty($emails);
 
 		if ($hasPhones || $hasEmails)
@@ -214,7 +228,7 @@ elseif($action === 'FIND_DUPLICATES')
 				{
 					if (is_string($phone) && $phone !== '')
 					{
-						$fields['FM']['PHONE'][] = array('VALUE' => $phone);
+						$fields['FM']['PHONE'][] = ['VALUE' => $phone];
 					}
 				}
 			}
@@ -226,7 +240,7 @@ elseif($action === 'FIND_DUPLICATES')
 				{
 					if (is_string($email) && $email !== '')
 					{
-						$fields['FM']['EMAIL'][] = array('VALUE' => $email);
+						$fields['FM']['EMAIL'][] = ['VALUE' => $email];
 					}
 				}
 			}
@@ -234,34 +248,38 @@ elseif($action === 'FIND_DUPLICATES')
 
 		// region Requisites
 		$requisiteList = [];
-		
+
 		$duplicateRequsiiteFieldsMap = Bitrix\Crm\EntityRequisite::getDuplicateCriterionFieldsMap();
 		foreach ($duplicateRequsiiteFieldsMap as $countryId => $requisiteDupFields)
 		{
 			foreach ($requisiteDupFields as $requsiiteDupFieldName)
 			{
-				$groupId = $requsiiteDupFieldName.'|'.$countryId;
+				$groupId = $requsiiteDupFieldName . '|' . $countryId;
 				if (isset($group[$groupId]) && is_array($group[$groupId]))
 				{
 					foreach ($group[$groupId] as $requisiteFields)
 					{
-						if (!empty($requisiteFields['ID']) && $requisiteFields['PRESET_ID'] > 0 &&
-							$requisiteFields['PRESET_COUNTRY_ID'] > 0 && count($requisiteFields) > 3)
+						if (
+							!empty($requisiteFields['ID'])
+							&& $requisiteFields['PRESET_ID'] > 0
+							&& $requisiteFields['PRESET_COUNTRY_ID'] > 0
+							&& count($requisiteFields) > 3
+						)
 						{
 							$requisitePseudoId = $requisiteFields['ID'];
 							$presetId = (int)$requisiteFields['PRESET_ID'];
 							$presetCountryId = (int)$requisiteFields['PRESET_COUNTRY_ID'];
 							foreach ($requisiteFields as $fieldName => $value)
 							{
-								if (in_array($fieldName, $duplicateRequsiiteFieldsMap[$countryId], true))
+								if (in_array($fieldName, $requisiteDupFields, true))
 								{
 									if (!isset($requisiteList[$requisitePseudoId]))
 									{
-										$requisiteList[$requisitePseudoId] = array(
+										$requisiteList[$requisitePseudoId] = [
 											'ID' => $requisitePseudoId,
 											'PRESET_ID' => $presetId,
-											'PRESET_COUNTRY_ID' => $presetCountryId
-										);
+											'PRESET_COUNTRY_ID' => $presetCountryId,
+										];
 									}
 									$requisiteList[$requisitePseudoId][$fieldName] = $value;
 								}
@@ -291,14 +309,17 @@ elseif($action === 'FIND_DUPLICATES')
 		{
 			foreach ($bankDetailDupFields as $bankDetailDupFieldName)
 			{
-				$groupId = $bankDetailDupFieldName.'|'.$countryId;
+				$groupId = $bankDetailDupFieldName . '|' . $countryId;
 				if (isset($group[$groupId]) && is_array($group[$groupId]))
 				{
 					foreach ($group[$groupId] as $bankDetailFields)
 					{
-						if (!empty($bankDetailFields['ID']) && !empty($bankDetailFields['REQUISITE_ID'])
-							&& $bankDetailFields['PRESET_ID'] > 0 && $bankDetailFields['PRESET_COUNTRY_ID'] > 0
-							&& count($bankDetailFields) > 4)
+						if (
+							!empty($bankDetailFields['ID']) && !empty($bankDetailFields['REQUISITE_ID'])
+							&& $bankDetailFields['PRESET_ID'] > 0
+							&& $bankDetailFields['PRESET_COUNTRY_ID'] > 0
+							&& count($bankDetailFields) > 4
+						)
 						{
 							$bankDetailPseudoId = $bankDetailFields['ID'];
 							$requisitePseudoId = $bankDetailFields['REQUISITE_ID'];
@@ -306,27 +327,29 @@ elseif($action === 'FIND_DUPLICATES')
 							$presetCountryId = (int)$bankDetailFields['PRESET_COUNTRY_ID'];
 							foreach ($bankDetailFields as $fieldName => $value)
 							{
-								if (in_array($fieldName, $duplicateBankDetailFieldsMap[$countryId], true))
+								if (in_array($fieldName, $bankDetailDupFields, true))
 								{
 									if (!isset($requisiteList[$requisitePseudoId]))
 									{
-										$requisiteList[$requisitePseudoId] = array(
+										$requisiteList[$requisitePseudoId] = [
 											'ID' => $requisitePseudoId,
 											'PRESET_ID' => $presetId,
-											'PRESET_COUNTRY_ID' => $presetCountryId
-										);
+											'PRESET_COUNTRY_ID' => $presetCountryId,
+										];
 									}
 									if (!isset($requisiteList[$requisitePseudoId]['BD']))
+									{
 										$requisiteList[$requisitePseudoId]['BD'] = [];
+									}
 									$bankDetailList = &$requisiteList[$requisitePseudoId]['BD'];
 									if (!isset($bankDetailList[$bankDetailPseudoId]))
 									{
-										$bankDetailList[$bankDetailPseudoId] = array(
+										$bankDetailList[$bankDetailPseudoId] = [
 											'ID' => $bankDetailPseudoId,
 											'ENTITY_TYPE_ID' => CCrmOwnerType::Requisite,
 											'ENTITY_ID' => $requisitePseudoId,
-											'COUNTRY_ID' => $presetCountryId
-										);
+											'COUNTRY_ID' => $presetCountryId,
+										];
 									}
 									$bankDetailList[$bankDetailPseudoId][$fieldName] = $value;
 									unset($bankDetailList);
@@ -359,14 +382,13 @@ elseif($action === 'FIND_DUPLICATES')
 		}
 		// endregion Requisites
 
-		$adapter = \Bitrix\Crm\EntityAdapterFactory::create($fields, CCrmOwnerType::Company);
-		$dups = $checker->findDuplicates($adapter, new \Bitrix\Crm\Integrity\DuplicateSearchParams($fieldNames));
+		$adapter = EntityAdapterFactory::create($fields, CCrmOwnerType::Company);
+		$dups = $checker->findDuplicates($adapter, new DuplicateSearchParams($fieldNames));
 
 		$ignoredEntities = (array)($params['IGNORED_ITEMS'] ?? []);
 		$entityInfoByType = [];
-		foreach ($dups as &$dup)
+		foreach ($dups as $dup)
 		{
-			/** @var \Bitrix\Crm\Integrity\Duplicate $dup */
 			$entities = $dup->getEntities();
 			if (!(is_array($entities) && !empty($entities)))
 			{
@@ -374,9 +396,9 @@ elseif($action === 'FIND_DUPLICATES')
 			}
 
 			//Each entity type limited by 50 items
-			foreach ($entities as &$entity)
+			foreach ($entities as $entity)
 			{
-				/** @var \Bitrix\Crm\Integrity\DuplicateEntity $entity */
+				/** @var DuplicateEntity $entity */
 				$entityTypeID = $entity->getEntityTypeID();
 				$entityID = $entity->getEntityID();
 
@@ -399,15 +421,17 @@ elseif($action === 'FIND_DUPLICATES')
 
 				if (!isset($entityInfoByType[$entityTypeID]))
 				{
-					$entityInfoByType[$entityTypeID] = array($entityID => array());
+					$entityInfoByType[$entityTypeID] = [$entityID => []];
 				}
-				elseif(count($entityInfoByType[$entityTypeID]) < 50 && !isset($entityInfoByType[$entityTypeID][$entityID]))
+				elseif (
+					count($entityInfoByType[$entityTypeID]) < 50
+					&& !isset($entityInfoByType[$entityTypeID][$entityID])
+				)
 				{
 					$entityInfoByType[$entityTypeID][$entityID] = [];
 				}
 			}
 		}
-		unset($dup);
 
 		$totalEntities = 0;
 		$entityMultiFields = [];
@@ -418,19 +442,20 @@ elseif($action === 'FIND_DUPLICATES')
 				$entityTypeID,
 				$entityInfos,
 				false,
-				array(
+				[
 					'ENABLE_RESPONSIBLE' => true,
 					'ENABLE_EDIT_URL' => true,
-				)
+					'PHOTO_SIZE' => ['WIDTH' => 20, 'HEIGHT' => 20],
+				]
 			);
 
 			$multiFieldResult = CCrmFieldMulti::GetListEx(
 				[],
-				array(
+				[
 					'=ENTITY_ID' => CCrmOwnerType::ResolveName($entityTypeID),
 					'@ELEMENT_ID' => array_keys($entityInfos),
-					'@TYPE_ID' => ['PHONE', 'EMAIL']
-				),
+					'@TYPE_ID' => ['PHONE', 'EMAIL'],
+				],
 				false,
 				false,
 				['ELEMENT_ID', 'TYPE_ID', 'VALUE']
@@ -461,9 +486,9 @@ elseif($action === 'FIND_DUPLICATES')
 
 					if (!isset($entityMultiFields[$entityTypeID][$entityID][$typeID]))
 					{
-						$entityMultiFields[$entityTypeID][$entityID][$typeID] = array($value);
+						$entityMultiFields[$entityTypeID][$entityID][$typeID] = [$value];
 					}
-					elseif(count($entityMultiFields[$entityTypeID][$entityID][$typeID]) < 10)
+					elseif (count($entityMultiFields[$entityTypeID][$entityID][$typeID]) < 10)
 					{
 						$entityMultiFields[$entityTypeID][$entityID][$typeID][] = $value;
 					}
@@ -473,9 +498,9 @@ elseif($action === 'FIND_DUPLICATES')
 		unset($entityInfos);
 
 		$dupInfos = [];
-		foreach ($dups as &$dup)
+		foreach ($dups as $dup)
 		{
-			if (!($dup instanceof \Bitrix\Crm\Integrity\Duplicate))
+			if (!($dup instanceof Duplicate))
 			{
 				continue;
 			}
@@ -487,10 +512,31 @@ elseif($action === 'FIND_DUPLICATES')
 				continue;
 			}
 
-			$dupInfo = array('ENTITIES' => array());
+			$dupInfo = ['ENTITIES' => []];
+			$criterionMatchType = '';
+			$criterionMatchValue = '';
+			$criterion = $dup->getCriterion();
+			if ($criterion instanceof DuplicateCriterion)
+			{
+				$matches = $criterion->getMatches();
+
+				if ($criterion instanceof DuplicateCommunicationCriterion)
+				{
+					$criterionMatchType = $matches['TYPE'];
+					$criterionMatchValue = DuplicateCommunicationCriterion::prepareCode(
+						$criterionMatchType,
+						$matches['VALUE']
+					);
+				}
+
+				$dupInfo['CRITERION'] = [
+					'TYPE_NAME' => $criterion->getTypeName(),
+					'MATCHES' => $matches,
+				];
+			}
 			foreach ($entities as &$entity)
 			{
-				if (!($entity instanceof \Bitrix\Crm\Integrity\DuplicateEntity))
+				if (!($entity instanceof DuplicateEntity))
 				{
 					continue;
 				}
@@ -498,10 +544,10 @@ elseif($action === 'FIND_DUPLICATES')
 				$entityTypeID = $entity->getEntityTypeID();
 				$entityID = $entity->getEntityID();
 
-				$info = array(
+				$info = [
 					'ENTITY_TYPE_ID' => $entityTypeID,
-					'ENTITY_ID' => $entityID
-				);
+					'ENTITY_ID' => $entityID,
+				];
 
 				if (isset($entityInfoByType[$entityTypeID]) && isset($entityInfoByType[$entityTypeID][$entityID]))
 				{
@@ -510,6 +556,7 @@ elseif($action === 'FIND_DUPLICATES')
 					{
 						$info['TITLE'] = $entityInfo['TITLE'];
 					}
+					$info['CATEGORY_NAME'] = $entityInfo['CATEGORY_NAME'] ?? CCrmOwnerType::GetDescription($entityTypeID);
 					if ($entityTypeID === CCrmOwnerType::Company)
 					{
 						$info['IS_MY_COMPANY'] = $entityInfo['IS_MY_COMPANY'] ? 'Y' : 'N';
@@ -529,18 +576,26 @@ elseif($action === 'FIND_DUPLICATES')
 						}
 						$info['RESPONSIBLE_URL'] = CComponentEngine::MakePathFromTemplate(
 							$userProfileUrlTemplate,
-							array('user_id' => $responsibleID, 'USER_ID' => $responsibleID)
+							['user_id' => $responsibleID, 'USER_ID' => $responsibleID]
 						);
 
 						$entityTypeName = CCrmOwnerType::ResolveName($entityTypeID);
-						$isReadable = CCrmAuthorizationHelper::CheckReadPermission($entityTypeName, $entityID, $userPermissions);
-						$isEditable = CCrmAuthorizationHelper::CheckUpdatePermission($entityTypeName, $entityID, $userPermissions);
+						$isReadable = CCrmAuthorizationHelper::CheckReadPermission(
+							$entityTypeName,
+							$entityID,
+							$userPermissions
+						);
+						$isEditable = CCrmAuthorizationHelper::CheckUpdatePermission(
+							$entityTypeName,
+							$entityID,
+							$userPermissions
+						);
 
 						if ($isEditable && isset($entityInfo['EDIT_URL']))
 						{
 							$info['URL'] = $entityInfo['EDIT_URL'];
 						}
-						elseif($isReadable && isset($entityInfo['SHOW_URL']))
+						elseif ($isReadable && isset($entityInfo['SHOW_URL']))
 						{
 							$info['URL'] = $entityInfo['SHOW_URL'];
 						}
@@ -551,67 +606,82 @@ elseif($action === 'FIND_DUPLICATES')
 					}
 				}
 
-				if (isset($entityMultiFields[$entityTypeID])
-					&& isset($entityMultiFields[$entityTypeID][$entityID]))
+				if (
+					isset($entityMultiFields[$entityTypeID])
+					&& isset($entityMultiFields[$entityTypeID][$entityID])
+				)
 				{
 					$multiFields = $entityMultiFields[$entityTypeID][$entityID];
-					if (isset($multiFields['PHONE']))
+					foreach (['PHONE', 'EMAIL'] as $matchType)
 					{
-						$info['PHONE'] = $multiFields['PHONE'];
-					}
-					if (isset($multiFields['EMAIL']))
-					{
-						$info['EMAIL'] = $multiFields['EMAIL'];
+						if (isset($multiFields[$matchType]))
+						{
+							$info[$matchType] = $multiFields[$matchType];
+
+							if (
+								$criterionMatchType !== ''
+								&& $criterionMatchValue !== ''
+								&& $matchType === $criterionMatchType
+								&& is_array($info[$matchType])
+							)
+							{
+								foreach ($info[$matchType] as $index => $matchValue)
+								{
+									if (
+										$criterionMatchValue === DuplicateCommunicationCriterion::prepareCode(
+											$matchType,
+											$matchValue
+										)
+									)
+									{
+										if (!isset($info['MATCH_INDEX'][$matchType]))
+										{
+											$info['MATCH_INDEX'][$matchType] = [];
+										}
+										$info['MATCH_INDEX'][$matchType][] = $index;
+									}
+								}
+							}
+						}
 					}
 				}
-
 				$dupInfo['ENTITIES'][] = &$info;
 				unset($info);
 			}
 			unset($entity);
 
-			$criterion = $dup->getCriterion();
-			if ($criterion instanceof \Bitrix\Crm\Integrity\DuplicateCriterion)
-			{
-				$dupInfo['CRITERION'] = array(
-					'TYPE_NAME' => $criterion->getTypeName(),
-					'MATCHES' => $criterion->getMatches()
-				);
-			}
 			$dupInfos[] = &$dupInfo;
 			unset($dupInfo);
 		}
-		unset($dup);
 
-		$groupResults[] = array(
+		$groupResults[] = [
 			'DUPLICATES' => &$dupInfos,
 			'GROUP_ID' => $group['GROUP_ID'] ?? '',
 			'FIELD_ID' => $group['FIELD_ID'] ?? '',
-			'HASH_CODE' => isset($group['HASH_CODE']) ? (int)($group['HASH_CODE']) : 0,
+			'HASH_CODE' => (int)($group['HASH_CODE'] ?? 0),
 			'TOTAL_DUPLICATES' => $totalEntities,
-			'ENTITY_TOTAL_TEXT' => \Bitrix\Crm\Integrity\Duplicate::entityCountToText($totalEntities)
-		);
+			'ENTITY_TOTAL_TEXT' => Duplicate::entityCountToText($totalEntities),
+		];
 		unset($dupInfos);
 	}
-	unset($group);
 
-	__CrmCompanyEditEndResponse(array('GROUP_RESULTS' => $groupResults));
+	__CrmCompanyEditEndResponse(['GROUP_RESULTS' => $groupResults]);
 }
-elseif($action === 'FIND_LOCALITIES')
+elseif ($action === 'FIND_LOCALITIES')
 {
 	$localityType = $_POST['LOCALITY_TYPE'] ?? 'COUNTRY';
 	$needle = $_POST['NEEDLE'] ?? '';
 	if ($localityType === 'COUNTRY')
 	{
-		$result = \Bitrix\Crm\EntityAddress::getCountries(array('CAPTION' => $needle));
-		__CrmCompanyEditEndResponse(array('DATA' => array('ITEMS' => $result)));
+		$result = EntityAddress::getCountries(['CAPTION' => $needle]);
+		__CrmCompanyEditEndResponse(['DATA' => ['ITEMS' => $result]]);
 	}
 	else
 	{
-		__CrmCompanyEditEndResponse(array('ERROR' => "Locality '{$localityType}' is not supported in current context."));
+		__CrmCompanyEditEndResponse(['ERROR' => "Locality '$localityType' is not supported in current context."]);
 	}
 }
 else
 {
-	__CrmCompanyEditEndResponse(array('ERROR' => "Action '{$action}' is not supported in current context."));
+	__CrmCompanyEditEndResponse(['ERROR' => "Action '$action' is not supported in current context."]);
 }

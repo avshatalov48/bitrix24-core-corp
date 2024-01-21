@@ -177,7 +177,7 @@ class CompanyTable extends Entity\DataManager
 				'EMPLOYEES_BY',
 				StatusTable::class,
 				Join::on('this.EMPLOYEES', 'ref.STATUS_ID')
-					->where('ref.ENTITY_ID', StatusTable::class)
+					->where('ref.ENTITY_ID', StatusTable::ENTITY_ID_EMPLOYEES)
 				,
 			)),
 
@@ -224,6 +224,8 @@ class CompanyTable extends Entity\DataManager
 			))
 				->configureTitle(Loc::getMessage('CRM_COMPANY_ENTITY_EVENT_RELATION_FIELD'))
 			,
+
+			$fieldRepository->getObservers('COMPANY', 'OBSERVER_IDS'),
 
 			$fieldRepository->getMultifieldValue(
 				'EMAIL_HOME',

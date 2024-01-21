@@ -2,6 +2,10 @@
  * @module im/messenger/provider/service/classes/message/load
  */
 jn.define('im/messenger/provider/service/classes/message/load', (require, exports, module) => {
+	const { Type } = require('type');
+
+	const { core } = require('im/messenger/core');
+	const { Settings } = require('im/messenger/lib/settings');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { UserManager } = require('im/messenger/lib/user-manager');
 	const { RestMethod } = require('im/messenger/const/rest');
@@ -17,14 +21,17 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			return 50;
 		}
 
-		constructor({ store, chatId })
+		constructor({ chatId })
 		{
-			this.store = store;
+			this.store = core.getStore();
 			this.chatId = chatId;
+			this.messageRepository = core.getRepository().message;
+			this.tempMessageRepository = core.getRepository().tempMessage;
 
 			this.preparedHistoryMessages = [];
 			this.preparedUnreadMessages = [];
 			this.isLoading = false;
+			this.isLoadingFromDb = false;
 			this.userManager = new UserManager(this.store);
 			this.reactions = null;
 		}
@@ -59,7 +66,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 
 			return runAction(RestMethod.imV2ChatMessageTail, { data: query }).then((result) => {
 				Logger.warn('LoadService: loadUnread result', result);
-				this.preparedUnreadMessages = result.messages;
+				this.preparedUnreadMessages = result.messages.sort((a, b) => a.id - b.id);
 				this.reactions = {
 					reactions: result.reactions,
 					usersShort: result.usersShort,
@@ -77,8 +84,26 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			});
 		}
 
-		loadHistory()
+		async loadHistory()
 		{
+			if (Settings.isLocalStorageEnabled && this.isLoadingFromDb === false)
+			{
+				this.isLoadingFromDb = true;
+
+				try
+				{
+					await this.loadHistoryMessagesFromDb();
+				}
+				catch (error)
+				{
+					Logger.error('LoadService.loadHistoryMessagesFromDb error: ', error);
+				}
+				finally
+				{
+					this.isLoadingFromDb = false;
+				}
+			}
+
 			if (this.isLoading || !this.getDialog().hasPrevPage)
 			{
 				return Promise.resolve(false);
@@ -107,7 +132,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 
 			return runAction(RestMethod.imV2ChatMessageTail, { data: query }).then((result) => {
 				Logger.warn('LoadService: loadHistory result', result);
-				this.preparedHistoryMessages = result.messages;
+				this.preparedHistoryMessages = result.messages.sort((a, b) => a.id - b.id);
 				this.reactions = {
 					reactions: result.reactions,
 					usersShort: result.usersShort,
@@ -126,6 +151,52 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				Logger.error('LoadService: loadHistory error:', error);
 				this.isLoading = false;
 			});
+		}
+
+		async loadHistoryMessagesFromDb()
+		{
+			const lastHistoryMessageId = this.store.getters['messagesModel/getFirstId'](this.chatId);
+			const options = {
+				chatId: this.chatId,
+				limit: 51,
+				lastId: lastHistoryMessageId,
+				direction: 'top',
+			};
+
+			Logger.log('LoadService: loadHistoryMessagesFromDb', options);
+			const result = await this.messageRepository.getList(options);
+			if (Type.isArrayFilled(result.userList))
+			{
+				await this.store.dispatch('usersModel/setFromLocalDatabase', result.userList);
+			}
+
+			if (Type.isArrayFilled(result.fileList))
+			{
+				await this.store.dispatch('filesModel/set', result.fileList);
+			}
+
+			if (Type.isArrayFilled(result.reactionList))
+			{
+				await this.store.dispatch('messagesModel/reactionsModel/set', {
+					reactions: result.reactionList,
+				});
+			}
+
+			if (Type.isArrayFilled(result.messageList))
+			{
+				await this.store.dispatch('messagesModel/setChatCollection', {
+					messages: result.messageList,
+				});
+			}
+
+			const resultTemp = await this.tempMessageRepository.getList();
+
+			if (Type.isArrayFilled(resultTemp.messageList))
+			{
+				await this.store.dispatch('messagesModel/setTemporaryMessages', {
+					messages: resultTemp.messageList,
+				});
+			}
 		}
 
 		hasPreparedUnreadMessages()
@@ -186,6 +257,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			const {
 				files,
 				users,
+				usersShort,
 				hasPrevPage,
 				hasNextPage,
 				additionalMessages,
@@ -198,14 +270,17 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 					hasNextPage,
 				},
 			});
-			const usersPromise = this.userManager.setUsersToModel(users);
+			const usersPromise = [
+				this.userManager.setUsersToModel(users),
+				this.userManager.addShortUsersToModel(usersShort),
+			];
 			const filesPromise = this.store.dispatch('filesModel/set', files);
-			const additionalMessagesPromise = this.store.dispatch('messagesModel/store', additionalMessages);
+			const additionalMessagesPromise = this.store.dispatch('messagesModel/store', additionalMessages.sort((a, b) => a.id - b.id));
 
 			return Promise.all([
 				dialogPromise,
+				Promise.all(usersPromise),
 				filesPromise,
-				usersPromise,
 				additionalMessagesPromise,
 			]);
 		}

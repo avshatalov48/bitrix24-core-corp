@@ -14,5 +14,6 @@ return [
 		'./src/date',
 		'./src/object',
 		'./src/color',
+		'./src/emoji-regex',
 	],
 ];

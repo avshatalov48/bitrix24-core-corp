@@ -1,7 +1,7 @@
 <?php
 $MESS['CRM_OPEN_LINE_SEND_MESSAGE'] = 'Отправить сообщение';
 $MESS['CRM_OPEN_LINE_LIVECHAT'] = 'Онлайн-чат';
-$MESS['CRM_OPEN_LINE_NETWORK'] = 'Битрикс24.Network';
+$MESS['CRM_OPEN_LINE_NETWORK_MSGVER_1'] = 'Битрикс24 Network';
 $MESS['CRM_OPEN_LINE_TELEGRAMBOT'] = 'Telegram';
 $MESS['CRM_OPEN_LINE_VKGROUP'] = 'ВКонтакте';
 $MESS['CRM_OPEN_LINE_FACEBOOK'] = 'Facebook';

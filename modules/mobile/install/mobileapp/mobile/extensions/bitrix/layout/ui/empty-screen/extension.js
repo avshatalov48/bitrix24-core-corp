@@ -2,21 +2,25 @@
  * @module layout/ui/empty-screen
  */
 jn.define('layout/ui/empty-screen', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { stringify } = require('utils/string');
 	const { mergeImmutable } = require('utils/object');
+	const { PureComponent } = require('layout/pure-component');
+
+	const RELATIVE_PATH = `${currentDomain}/bitrix/mobileapp`;
+	const IMAGE_PATH = `${RELATIVE_PATH}/mobile/extensions/bitrix/assets/empty-states`;
 
 	/**
 	 * @class EmptyScreen
 	 */
-	class EmptyScreen extends LayoutComponent
+	class EmptyScreen extends PureComponent
 	{
 		/**
 		 * @return {string}
 		 */
 		get backgroundColor()
 		{
-			return this.props.backgroundColor || 'transparent';
+			return this.props.backgroundColor || AppTheme.colors.bgContentPrimary;
 		}
 
 		/**
@@ -101,11 +105,28 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 		/**
 		 * @public
 		 * @param {string} filename
+		 * @param {string} moduleId
 		 * @return {string}
 		 */
-		static makeLibraryImagePath(filename)
+		static makeLibraryImagePathByModule(filename, moduleId)
 		{
-			return `${currentDomain}/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/empty-screen/images/${filename}`;
+			return `${RELATIVE_PATH}/${moduleId}mobile/extensions/${moduleId}/assets/empty-states/${AppTheme.id}/${filename}`;
+		}
+
+		/**
+		 * @public
+		 * @param {string} filename
+		 * @param {string} moduleId
+		 * @return {string}
+		 */
+		static makeLibraryImagePath(filename, moduleId)
+		{
+			if (moduleId)
+			{
+				return EmptyScreen.makeLibraryImagePathByModule(filename, moduleId);
+			}
+
+			return `${IMAGE_PATH}/${AppTheme.id}/${filename}`;
 		}
 
 		render()
@@ -140,7 +161,7 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 						this.renderIcon(),
 						this.renderTitle(),
 						this.renderDescription(),
-					)
+					),
 				),
 			);
 		}
@@ -154,9 +175,9 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 
 			return View(
 				{
-					style: this.iconStyle
+					style: this.iconStyle,
 				},
-				Image(this.image)
+				Image(this.image),
 			);
 		}
 
@@ -165,16 +186,17 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 			const title = this.title;
 			if (typeof title === 'string')
 			{
-				return title.length && Text({
+				return title.length > 0 && Text({
 					text: jnComponent.convertHtmlEntities(title),
 					style: {
-						color: '#525C69',
+						color: AppTheme.colors.base1,
 						fontSize: 25,
 						textAlign: 'center',
 						marginBottom: 12,
-					}
+					},
 				});
 			}
+
 			return title;
 		}
 
@@ -183,20 +205,20 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 			const description = this.description;
 			if (typeof description === 'string')
 			{
-				return description.length && Text({
+				return description.length > 0 && Text({
 					text: jnComponent.convertHtmlEntities(description),
 					style: {
-						color: '#525C69',
+						color: AppTheme.colors.base3,
 						fontSize: 15,
 						textAlign: 'center',
 						lineHeightMultiple: 1.2,
-					}
+					},
 				});
 			}
+
 			return description;
 		}
 	}
 
 	module.exports = { EmptyScreen };
-
 });

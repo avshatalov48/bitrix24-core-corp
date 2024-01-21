@@ -47,9 +47,9 @@ $arResult['SORT'] = ['ID' => 'DESC'];
 $arResult['ROWS'] = [];
 
 $filter = [];
-if (isset($_GET['rownum']) && $_GET['rownum'] > 0)
+if (isset($_GET['over_limit']) && $_GET['over_limit'] === 'Y')
 {
-	$filter['>ROW_NUM'] = (int)$_GET['rownum'];
+	$filter['=IS_OVER_LIMIT'] = 'Y';
 }
 
 $gridOptions = new Bitrix\Main\Grid\Options($arResult['GRID_ID']);

@@ -3,6 +3,7 @@
 namespace Bitrix\Mobile\AppTabs;
 
 use Bitrix\CalendarMobile\JSComponent;
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -11,36 +12,48 @@ use Bitrix\Mobile\Context;
 use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\Mobile\Tab\Utils;
 use Bitrix\MobileApp\Janative\Manager;
+use Bitrix\MobileApp\Mobile;
 
 class Calendar implements Tabable
 {
-	private const INITIAL_COMPONENT = 'calendar:calendar.events';
+	private const INITIAL_COMPONENT = 'calendar:calendar.event.list';
+	private const OLD_COMPONENT = 'calendar:calendar.events';
+	private const MINIMAL_API_VERSION = 52;
+
 
 	/** @var Context $context */
 	private $context;
 
 	public function isAvailable(): bool
 	{
+		$enabled = Loader::includeModule('intranet') && ToolsManager::getInstance()->checkAvailabilityByToolId('calendar');
+
 		if (
-			ModuleManager::isModuleInstalled('socialnetwork')
-			&& (new SocNetFeatures($this->context->userId))->isEnabledForGroup('calendar')
-			&& $this->isCalendarMobileEnabled()
-			&& !$this->context->extranet
+			!$enabled
+			|| !Loader::includeModule('calendar')
+			|| !$this->isCalendarMobileEnabled()
+			|| !ModuleManager::isModuleInstalled('socialnetwork')
+			|| !(new SocNetFeatures($this->context->userId))->isEnabledForGroup('calendar')
 		)
 		{
-			return true;
+			return false;
 		}
 
-		return false;
+		return !$this->context->extranet;
 	}
 
-	public function getData(): array
+	public function getData(): ?array
 	{
+		if (!$this->isAvailable())
+		{
+			return null;
+		}
+
 		return [
 			'id' => $this->getId(),
 			'sort' => $this->defaultSortValue(),
-			'imageName' => 'calendar',
-			'badgeCode' => 'calendar_all_no_events',
+			'imageName' => $this->getId(),
+			'badgeCode' => $this->getId(),
 			'component' => $this->getComponentParams(),
 		];
 	}
@@ -50,18 +63,18 @@ class Calendar implements Tabable
 		return [
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,
-			'color' => '#00ace3',
+			'color' => '#F5A200',
 			'imageUrl' => 'favorite/icon-calendar.png',
 			'params' => [
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
-				'counter' => 'calendar_all_no_events',
+				'counter' => $this->getId(),
 			]
 		];
 	}
 
 	public function shouldShowInMenu(): bool
 	{
-		return false;
+		return Loader::includeModule('intranet') && ToolsManager::getInstance()->checkAvailabilityByToolId('calendar');
 	}
 
 	public function canBeRemoved(): bool
@@ -101,17 +114,35 @@ class Calendar implements Tabable
 
 	private function getComponentParams(): array
 	{
+		if (Mobile::getApiVersion() < self::MINIMAL_API_VERSION)
+		{
+			return [
+				'name' => 'JSStackComponent',
+				'title' => $this->getTitle(),
+				'componentCode' => $this->getId(),
+				'scriptPath' => Manager::getComponentPath(self::OLD_COMPONENT),
+				'rootWidget' => [
+					'name' => 'list',
+					'settings' => [
+						'title' => $this->getTitle(),
+						'useLargeTitleMode' => true,
+						'objectName' => 'list',
+					],
+				],
+				'params' => [],
+			];
+		}
+
 		return [
 			'name' => 'JSStackComponent',
 			'title' => $this->getTitle(),
-			'componentCode' => $this->getId(),
+			'componentCode' => self::INITIAL_COMPONENT,
 			'scriptPath' => Manager::getComponentPath(self::INITIAL_COMPONENT),
 			'rootWidget' => [
-				'name' => 'list',
+				'name' => 'layout',
 				'settings' => [
-					'title' => $this->getTitle(),
 					'useLargeTitleMode' => true,
-					'objectName' => 'list',
+					'objectName' => 'layout',
 				],
 			],
 			'params' => [],

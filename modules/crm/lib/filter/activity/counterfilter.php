@@ -88,6 +88,7 @@ final class CounterFilter
 				'MASTER_IDENTITY' => null,
 				'USER_IDS' => $counterUserIds,
 				'EXCLUDE_USERS' => $isExcludeUsers,
+				'STAGE_SEMANTIC_ID' => $filterFields['STAGE_SEMANTIC_ID'] ?? null,
 			]
 		);
 		$filterFields[] = ['@ID' => new SqlExpression($activitySubQuery)];
@@ -107,6 +108,7 @@ final class CounterFilter
 				'MASTER_IDENTITY' => 'ID',
 				'USER_IDS' => $counterUserIds,
 				'EXCLUDE_USERS' => $isExcludeUsers,
+				'STAGE_SEMANTIC_ID' => $filterFields['STAGE_SEMANTIC_ID'] ?? null,
 			]
 		);
 	}

@@ -19,7 +19,14 @@ final class ThemePickerConvert extends Stepper
 		$result = 0;
 		$connection = Application::getInstance()->getConnection();
 
-		$queryObject = $connection->query("SELECT COUNT(`ID`) AS CNT FROM `b_user_option` WHERE `CATEGORY` = 'intranet' AND `NAME` LIKE 'bitrix24\_theme\_%' ORDER BY ID ASC");
+		global $DB;
+		$queryObject = $connection->query(
+			"SELECT COUNT(" . $DB->quote('ID') . ")
+			AS CNT FROM " . $DB->quote('b_user_option') . "
+			WHERE " . $DB->quote('CATEGORY') . " = 'intranet'
+			AND " . $DB->quote('NAME') . " LIKE 'bitrix24\_theme\_%'
+			ORDER BY ID ASC"
+		);
 		if ($fields = $queryObject->fetch())
 		{
 			$result = (int)$fields['CNT'];
@@ -62,8 +69,17 @@ final class ThemePickerConvert extends Stepper
 
 			$connection = Application::getInstance()->getConnection();
 
-			$queryObject = $connection->query("SELECT `ID`, `USER_ID`, `NAME`, `VALUE` FROM `b_user_option` WHERE `CATEGORY` = 'intranet' AND `NAME` LIKE 'bitrix24\_theme\_%' AND `ID` > " . (int)$params['lastId'] . " ORDER BY ID ASC LIMIT 0, " . (int)$this->limit);
-
+			global $DB;
+			$queryObject = $connection->query("SELECT 
+				" . $DB->quote('ID') . ", 
+				" . $DB->quote('USER_ID') . ", 
+				" . $DB->quote('USER_ID') . ", 
+				" . $DB->quote('VALUE') . "
+				FROM " . $DB->quote('b_user_option') . "
+				WHERE " . $DB->quote('CATEGORY') . " = 'intranet' 
+				AND " . $DB->quote('NAME') . " LIKE 'bitrix24\_theme\_%' 
+				AND " . $DB->quote('ID') . " > " . (int)$params['lastId'] . "
+				ORDER BY ID ASC LIMIT 0, " . (int)$this->limit);
 			$found = false;
 			while ($record = $queryObject->fetch())
 			{

@@ -26,33 +26,33 @@ else:
 			}
 		}
 	}
-	
-	foreach ($arResult['USERS'] as $key => $arUser):		
+
+	foreach ($arResult['USERS'] as $key => $arUser):
 		$APPLICATION->IncludeComponent(
 			'bitrix:intranet.system.person',
 			'modern',
 			array(
 				'USER' => $arUser,
-				'LIST_MODE' => $arParams['SHOW_USER'], 
+				'LIST_MODE' => $arParams['SHOW_USER'] ?? null,
 				'USER_PROPERTY' => $arParams['USER_PROPERTY'],
-				'PM_URL' => $arParams['PM_URL'],
-				'STRUCTURE_PAGE' => $arParams['STRUCTURE_PAGE'],
-				'STRUCTURE_FILTER' => $arParams['STRUCTURE_FILTER'],
-				'USER_PROP' => $arResult['USER_PROP'],
-				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
-				'SHOW_LOGIN' => $arParams['SHOW_LOGIN'],
-				'LIST_OBJECT' => $arParams['LIST_OBJECT'],
-				'SHOW_FIELDS_TOOLTIP' => $arParams['SHOW_FIELDS_TOOLTIP'],
-				'USER_PROPERTY_TOOLTIP' => $arParams['USER_PROPERTY_TOOLTIP'],
-				"DATE_FORMAT" => $arParams["DATE_FORMAT"],
-				"DATE_FORMAT_NO_YEAR" => $arParams["DATE_FORMAT_NO_YEAR"],
-				"DATE_TIME_FORMAT" => $arParams["DATE_TIME_FORMAT"],
-				"SHOW_YEAR" => $arParams["SHOW_YEAR"],
-				"CACHE_TYPE" => $arParams["CACHE_TYPE"],
-				"CACHE_TIME" => $arParams["CACHE_TIME"],
-				"PATH_TO_CONPANY_DEPARTMENT" => $arParams["~PATH_TO_CONPANY_DEPARTMENT"],
-				"PATH_TO_VIDEO_CALL" => $arParams["~PATH_TO_VIDEO_CALL"],
-				"PATH_TO_USER_EDIT" => $arParams["PATH_TO_USER_EDIT"],
+				'PM_URL' => $arParams['PM_URL'] ?? null,
+				'STRUCTURE_PAGE' => $arParams['STRUCTURE_PAGE'] ?? null,
+				'STRUCTURE_FILTER' => $arParams['STRUCTURE_FILTER'] ?? null,
+				'USER_PROP' => $arResult['USER_PROP'] ?? null,
+				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? null,
+				'SHOW_LOGIN' => $arParams['SHOW_LOGIN'] ?? null,
+				'LIST_OBJECT' => $arParams['LIST_OBJECT'] ?? null,
+				'SHOW_FIELDS_TOOLTIP' => $arParams['SHOW_FIELDS_TOOLTIP'] ?? null,
+				'USER_PROPERTY_TOOLTIP' => $arParams['USER_PROPERTY_TOOLTIP'] ?? null,
+				"DATE_FORMAT" => $arParams["DATE_FORMAT"] ?? null,
+				"DATE_FORMAT_NO_YEAR" => $arParams["DATE_FORMAT_NO_YEAR"] ?? null,
+				"DATE_TIME_FORMAT" => $arParams["DATE_TIME_FORMAT"] ?? null,
+				"SHOW_YEAR" => $arParams["SHOW_YEAR"] ?? null,
+				"CACHE_TYPE" => $arParams["CACHE_TYPE"] ?? null,
+				"CACHE_TIME" => $arParams["CACHE_TIME"] ?? null,
+				"PATH_TO_CONPANY_DEPARTMENT" => $arParams["~PATH_TO_CONPANY_DEPARTMENT"] ?? null,
+				"PATH_TO_VIDEO_CALL" => $arParams["~PATH_TO_VIDEO_CALL"] ?? null,
+				"PATH_TO_USER_EDIT" => $arParams["PATH_TO_USER_EDIT"] ?? null,
 			),
 			null,
 			array('HIDE_ICONS' => 'Y')

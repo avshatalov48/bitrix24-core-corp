@@ -115,8 +115,11 @@ export const ListItem = {
 			}
 
 			if (menu.length > 0) {
+				const menuId = 'list-item-menu-' + this.getAppCode;
+				MenuManager.destroy(menuId);
+
 				this.contextMenu = MenuManager.create(
-					'list-item-menu-' + this.getAppCode,
+					menuId,
 					this.$refs.listItemContextMenu,
 					menu,
 					{
@@ -170,6 +173,7 @@ export const ListItem = {
 				},
 				analyticsLabel: {
 					viewMode: 'list',
+					appCode: this.getAppCode,
 				},
 			}).then(
 				response => {

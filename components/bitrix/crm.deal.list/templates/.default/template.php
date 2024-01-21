@@ -16,6 +16,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  */
 
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
+use Bitrix\Crm\Component\EntityList\ActionManager;
+use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
@@ -234,14 +236,30 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 					unset($arSchemeDescriptions[\Bitrix\Crm\Conversion\DealConversionScheme::INVOICE_NAME]);
 				}
 				$arSchemeList = [];
+
+				$toolsManager = Container::getInstance()->getIntranetToolsManager();
+				$availabilityManager = AvailabilityManager::getInstance();
+				$curPage = CUtil::JSEscape($APPLICATION->GetCurPage());
+
 				foreach ($arSchemeDescriptions as $name => $description)
 				{
-					$arSchemeList[] = array(
+					$entityTypeId = \CCrmOwnerType::ResolveID($name);
+					if ($toolsManager->checkEntityTypeAvailability($entityTypeId))
+					{
+						$onClick = "BX.CrmDealConverter.getCurrent().convert({$arDeal['ID']}, BX.CrmDealConversionScheme.createConfig('{$name}'), '" . $curPage . "');";
+					}
+					else
+					{
+						$onClick = $availabilityManager->getEntityTypeAvailabilityLock($entityTypeId);
+					}
+
+					$arSchemeList[] = [
 						'TITLE' => $description,
 						'TEXT' => $description,
-						'ONCLICK' => "BX.CrmDealConverter.getCurrent().convert({$arDeal['ID']}, BX.CrmDealConversionScheme.createConfig('{$name}'), '".CUtil::JSEscape($APPLICATION->GetCurPage())."');"
-					);
+						'ONCLICK' => $onClick,
+					];
 				}
+
 				if (!empty($arSchemeList))
 				{
 					$arActions[] = array('SEPARATOR' => true);
@@ -266,14 +284,17 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 
 		if ($arDeal['EDIT'])
 		{
-			if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled())
-			{
-				$currentUser = CUtil::PhpToJSObject(CCrmViewHelper::getUserInfo(true, false));
-				$arActivitySubMenuItems[] = [
-					'TEXT' => GetMessage('CRM_DEAL_ADD_TODO'),
-					'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Deal . ", " . (int)$arDeal['ID'] . ", " . $currentUser . ");"
-				];
-			}
+			$baseCategoryId = (int)($arResult['CATEGORY_ID'] ?? 0);
+			$dealCategoryId = $baseCategoryId === -1 ? (int)$arDeal['CATEGORY_ID'] : $baseCategoryId;
+
+			$currentUser = CUtil::PhpToJSObject(CCrmViewHelper::getUserInfo(true, false));
+			$pingSettings = CUtil::PhpToJSObject(
+				(new TodoPingSettingsProvider(\CCrmOwnerType::Deal, $dealCategoryId))->fetchForJsComponent()
+			);
+			$arActivitySubMenuItems[] = [
+				'TEXT' => GetMessage('CRM_DEAL_ADD_TODO'),
+				'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Deal . ", " . (int)$arDeal['ID'] . ", " . $currentUser . ", " . $pingSettings . ");"
+			];
 
 			if (RestrictionManager::isHistoryViewPermitted())
 			{
@@ -934,8 +955,9 @@ if (!$isInternal
 	if ($allowWrite)
 	{
 		//region Edit Button
-		$controlPanel['GROUPS'][0]['ITEMS'][] = $snippet->getEditButton();
-		$actionList[] = $snippet->getEditAction();
+		$actionManager = new ActionManager($gridManagerID);
+		$controlPanel['GROUPS'][0]['ITEMS'][] = $actionManager->getEditButton();
+		$actionList[] = $actionManager->getEditAction();
 		//endregion
 
 		//region Mark as Opened
@@ -1174,6 +1196,7 @@ $APPLICATION->IncludeComponent(
 			'ID' => $gridManagerID,
 			'CONFIG' => [
 				'ownerTypeName' => CCrmOwnerType::DealName,
+				'categoryId' => (int)($arResult['CATEGORY_ID'] ?? 0),
 				'gridId' => $arResult['GRID_ID'],
 				'activityEditorId' => $activityEditorID,
 				'activityServiceUrl' => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
@@ -1281,6 +1304,7 @@ if (
 	&& !$isRecurring
 	&& \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('IFRAME') !== 'Y'
 ):
+	Extension::load(['crm.settings-button-extender', 'crm.toolbar-component']);
 	$todoCreateNotificationSkipPeriod =
 		(new \Bitrix\Crm\Activity\TodoCreateNotification(\CCrmOwnerType::Deal))
 			->getCurrentSkipPeriod()
@@ -1289,23 +1313,32 @@ if (
 	BX.ready(
 		function()
 		{
-			BX.Runtime.loadExtension(['crm.push-crm-settings', 'crm.toolbar-component']).then((exports) => {
-				/** @see BX.Crm.ToolbarComponent */
-				const settingsButton = exports.ToolbarComponent.Instance.getSettingsButton();
-
-				/** @see BX.Crm.PushCrmSettings */
-				new exports.PushCrmSettings({
+			const settingsButton = BX.Crm.ToolbarComponent.Instance.getSettingsButton();
+			const settingsMenu = settingsButton ? settingsButton.getMenuWindow() : undefined;
+			if (settingsMenu)
+			{
+				new BX.Crm.SettingsButtonExtender({
 					smartActivityNotificationSupported: <?= Container::getInstance()->getFactory(\CCrmOwnerType::Deal)->isSmartActivityNotificationSupported() ? 'true' : 'false' ?>,
-						entityTypeId: <?= \CCrmOwnerType::Deal ?>,
-						pingSettings: <?= \CUtil::PhpToJSObject((new TodoPingSettingsProvider(\CCrmOwnerType::Deal, (int)($arResult['CATEGORY_ID'] ?? 0)))->fetchAll()) ?>,
-						rootMenu: settingsButton ? settingsButton.getMenuWindow() : undefined,
-						grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
-						<?php if (is_string($todoCreateNotificationSkipPeriod)): ?>
-						todoCreateNotificationSkipPeriod: '<?= \CUtil::JSEscape($todoCreateNotificationSkipPeriod) ?>',
-						<?php endif; ?>
-					});
+					entityTypeId: <?= \CCrmOwnerType::Deal ?>,
+					categoryId: <?= isset($arResult['CATEGORY_ID']) ? (int)$arResult['CATEGORY_ID'] : 'null' ?>,
+					pingSettings: <?= \CUtil::PhpToJSObject((new TodoPingSettingsProvider(\CCrmOwnerType::Deal, (int)($arResult['CATEGORY_ID'] ?? 0)))->fetchAll()) ?>,
+					rootMenu: settingsMenu,
+					grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
+					<?php if (is_string($todoCreateNotificationSkipPeriod)): ?>
+					todoCreateNotificationSkipPeriod: '<?= \CUtil::JSEscape($todoCreateNotificationSkipPeriod) ?>',
+					<?php endif; ?>
+					<?php if (
+						\Bitrix\Crm\Integration\AI\AIManager::isAiCallAutomaticProcessingAllowed()
+						&& in_array(\CCrmOwnerType::Deal, \Bitrix\Crm\Integration\AI\AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
+						&& Container::getInstance()->getUserPermissions()->isAdmin()
+						&& isset($arResult['CATEGORY_ID'])
+						&& (int)$arResult['CATEGORY_ID'] >= 0
+					): ?>
+					aiAutostartSettings: '<?= \Bitrix\Main\Web\Json::encode(\Bitrix\Crm\Integration\AI\Operation\AutostartSettings::get(\CCrmOwnerType::Deal, (int)$arResult['CATEGORY_ID'])) ?>',
+					<?php endif; ?>
 				});
 			}
+		}
 	);
 </script><?php
 endif;

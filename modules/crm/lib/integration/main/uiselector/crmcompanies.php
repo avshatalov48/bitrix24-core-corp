@@ -12,20 +12,38 @@ use CFile;
 
 class CrmCompanies extends CrmEntity
 {
+	use GetEntityIdsByEmailTrait;
+
 	public const PREFIX_SHORT = 'CO_';
 	public const PREFIX_FULL = 'CRMCOMPANY';
 
-	protected static function getOwnerType()
+	protected const SORT_SELECTED = 200;
+	protected const DATA_CLASS = CCrmCompany::class;
+	protected const CACHE_DIR = 'b_crm_company';
+
+	protected static function getOwnerType(): int
 	{
 		return CCrmOwnerType::Company;
 	}
 
-	protected static function getHandlerType()
+	protected static function getHandlerType(): string
 	{
 		return Handler::ENTITY_TYPE_CRMCOMPANIES;
 	}
 
-	protected static function prepareEntity($data, $options = [])
+	protected function getGroupsList(): array
+	{
+		return [
+			'crmcompanies' => [
+				'TITLE' => Loc::getMessage('MAIN_UI_SELECTOR_TITLE_CRMCOMPANIES'),
+				'TYPE_LIST' => [ static::getHandlerType() ],
+				'DESC_LESS_MODE' => 'N',
+				'SORT' => 20,
+			],
+		];
+	}
+
+	protected static function prepareEntity($data, $options = []): array
 	{
 		static
 			$companyTypeList = null,
@@ -129,235 +147,7 @@ class CrmCompanies extends CrmEntity
 		return $result;
 	}
 
-	public function getData($params = [])
-	{
-		$entityType = static::getHandlerType();
-
-		$result = [
-			'ITEMS' => [],
-			'ITEMS_LAST' => [],
-			'ITEMS_HIDDEN' => [],
-			'ADDITIONAL_INFO' => [
-				'GROUPS_LIST' => [
-					'crmcompanies' => [
-						'TITLE' => Loc::getMessage('MAIN_UI_SELECTOR_TITLE_CRMCOMPANIES'),
-						'TYPE_LIST' => [ $entityType ],
-						'DESC_LESS_MODE' => 'N',
-						'SORT' => 20
-					]
-				],
-				'SORT_SELECTED' => 200
-			]
-		];
-
-		$entityOptions = (!empty($params['options']) ? $params['options'] : []);
-		$prefix = static::getPrefix($entityOptions);
-
-		$lastItems = (!empty($params['lastItems']) ? $params['lastItems'] : []);
-		$selectedItems = (!empty($params['selectedItems']) ? $params['selectedItems'] : []);
-
-		$lastEntitiesIdList = [];
-		if(!empty($lastItems[$entityType]))
-		{
-			$result["ITEMS_LAST"] = array_map(
-				function($code) use ($prefix)
-				{
-					return preg_replace('/^'.self::PREFIX_FULL . '(\d+)$/', $prefix . '$1', $code);
-				},
-				array_values($lastItems[$entityType])
-			);
-			foreach ($lastItems[$entityType] as $value)
-			{
-				$lastEntitiesIdList[] = str_replace(self::PREFIX_FULL, '', $value);
-			}
-		}
-		if(!empty($lastItems[$entityType . '_MULTI']))
-		{
-			$result["ITEMS_LAST"] = array_merge(
-				$result["ITEMS_LAST"],
-				array_map(
-					function($code) use ($prefix)
-					{
-						return preg_replace_callback(
-							'/^'.self::PREFIX_FULL . '(\d+)( . +)$/',
-							function($matches) use ($prefix)
-							{
-								return $prefix . $matches[1] . mb_strtolower($matches[2]);
-							},
-							$code
-						);
-					},
-					array_values($lastItems[$entityType . '_MULTI'])
-				)
-			);
-			foreach ($lastItems[$entityType . '_MULTI'] as $value)
-			{
-				$lastEntitiesIdList[] = preg_replace('/^'.self::PREFIX_FULL . '(\d+)(:([A-F0-9]{8}))$/', '$1', $value);
-			}
-		}
-
-		$selectedEntitiesIdList = [];
-
-		if(!empty($selectedItems[$entityType]))
-		{
-			foreach ($selectedItems[$entityType] as $value)
-			{
-				$selectedEntitiesIdList[] = str_replace($prefix, '', $value);
-			}
-		}
-		if(!empty($selectedItems[$entityType . '_MULTI']))
-		{
-			foreach ($selectedItems[$entityType . '_MULTI'] as $value)
-			{
-				$selectedEntitiesIdList[] =
-					preg_replace('/^'.self::PREFIX_FULL . '(\d+)(:([a-fA-F0-9]{8}))$/', '$1', $value)
-				;
-			}
-			$selectedItems[$entityType] =
-				array_map(function($item) { return self::PREFIX_FULL . $item; }, $selectedEntitiesIdList)
-			;
-			unset($selectedItems[$entityType . '_MULTI']);
-		}
-
-		$entitiesIdList = array_merge($selectedEntitiesIdList, $lastEntitiesIdList);
-		$entitiesIdList = array_slice($entitiesIdList, 0, max(count($selectedEntitiesIdList), 20));
-		$entitiesIdList = array_unique($entitiesIdList);
-
-		$entitiesList = [];
-
-		$filter = [
-			'CHECK_PERMISSIONS' => 'Y',
-			'@CATEGORY_ID' => 0,
-		];
-		$order = [];
-		$select = $this->getSearchSelect();
-
-		if (!empty($entitiesIdList))
-		{
-			$filter['ID'] = $entitiesIdList;
-			$navParams = false;
-		}
-		else
-		{
-			$order = ['ID' => 'DESC'];
-			$navParams = ['nTopCount' => 10];
-		}
-
-		if (
-			isset($entityOptions['onlyMy'])
-			&& $entityOptions['onlyMy'] === 'Y'
-		)
-		{
-			$filter['=IS_MY_COMPANY'] = 'Y';
-		}
-
-		if (
-			isset($entityOptions['onlyWithEmail'])
-			&& $entityOptions['onlyWithEmail'] == 'Y'
-		)
-		{
-			$filter['=HAS_EMAIL'] = 'Y';
-		}
-
-		$res = CCrmCompany::getListEx(
-			$order,
-			$filter,
-			false,
-			$navParams,
-			$select
-		);
-
-		while ($entityFields = $res->fetch())
-		{
-			$entitiesList[$prefix . $entityFields['ID']] = static::prepareEntity($entityFields, $entityOptions);
-		}
-
-		if (
-			!empty($entitiesIdList)
-			&& count($entitiesList) < 3
-		)
-		{
-			unset($filter['ID']);
-			$res = CCrmCompany::getListEx(
-				[ 'ID' => 'DESC' ],
-				$filter,
-				false,
-				[ 'nTopCount' => 10 ],
-				$select
-			);
-
-			while ($entityFields = $res->fetch())
-			{
-				if (!isset($entitiesList[$prefix . $entityFields['ID']]))
-				{
-					$entitiesList[$prefix . $entityFields['ID']] = static::prepareEntity($entityFields, $entityOptions);
-				}
-			}
-		}
-
-		$entitiesList = static::processMultiFields($entitiesList, $entityOptions);
-
-		if (empty($lastEntitiesIdList))
-		{
-			$result["ITEMS_LAST"] = array_keys($entitiesList);
-		}
-
-		$result['ITEMS'] = $entitiesList;
-
-		if (!empty($selectedItems[$entityType]))
-		{
-			$hiddenItemsList = array_diff($selectedItems[$entityType], array_keys($entitiesList));
-			$hiddenItemsList = array_map(
-				function($code) use ($prefix)
-				{
-					return preg_replace('/^' . $prefix . '(\d+)$/', '$1', $code);
-				},
-				$hiddenItemsList
-			);
-
-			if (!empty($hiddenItemsList))
-			{
-				$hiddenEntitiesList = [];
-
-				$filter = [
-					'@ID' => $hiddenItemsList,
-					'CHECK_PERMISSIONS' => 'N'
-				];
-
-				if (
-					isset($entityOptions['onlyWithEmail'])
-					&& $entityOptions['onlyWithEmail'] == 'Y'
-				)
-				{
-					$filter['=HAS_EMAIL'] = 'Y';
-				}
-
-				$res = CCrmCompany::getListEx(
-					[],
-					$filter,
-					false,
-					false,
-					$select
-				);
-				while($entityFields = $res->fetch())
-				{
-					$hiddenEntitiesList[$prefix . $entityFields['ID']] =
-						static::prepareEntity($entityFields, $entityOptions)
-					;
-				}
-
-				if (!empty($hiddenEntitiesList))
-				{
-					$hiddenEntitiesList = static::processMultiFields($hiddenEntitiesList, $entityOptions);
-					$result['ITEMS'] = array_merge($result['ITEMS'], $hiddenEntitiesList);
-				}
-			}
-		}
-
-		return $result;
-	}
-
-	public function getTabList($params = [])
+	public function getTabList($params = []): array
 	{
 		$result = [];
 
@@ -380,7 +170,7 @@ class CrmCompanies extends CrmEntity
 		return $result;
 	}
 
-	public function search($params = [])
+	public function search($params = []): array
 	{
 		$result = [
 			'ITEMS' => [],
@@ -472,19 +262,7 @@ class CrmCompanies extends CrmEntity
 
 		if (check_email($search, true))
 		{
-			$entityIdList = [];
-			$res = CCrmFieldMulti::getList(
-				[],
-				[
-					'ENTITY_ID' => CCrmOwnerType::CompanyName,
-					'TYPE_ID' => CCrmFieldMulti::EMAIL,
-					'VALUE' => $search
-				]
-			);
-			while($multiFields = $res->fetch())
-			{
-				$entityIdList[] = $multiFields['ELEMENT_ID'];
-			}
+			$entityIdList = $this->getEntityIdsByEmail($search);
 			if (!empty($entityIdList))
 			{
 				$filter = ['@ID' => $entityIdList];

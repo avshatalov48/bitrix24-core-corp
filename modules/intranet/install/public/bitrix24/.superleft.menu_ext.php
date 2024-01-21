@@ -12,6 +12,7 @@ use \Bitrix\Landing\Rights;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/.superleft.menu_ext.php");
 CModule::IncludeModule("intranet");
@@ -38,6 +39,12 @@ if (defined("BX_COMP_MANAGED_CACHE"))
 	$CACHE_MANAGER->registerTag("USER_NAME_".$userId);
 }
 
+$isNewLiveFeedCounterAvailable = (
+	Loader::includeModule('socialnetwork')
+	&& \Bitrix\Socialnetwork\Space\Service::isAvailable()
+	&& \Bitrix\Socialnetwork\Internals\LiveFeed\Counter\CounterController::isEnabled((int)$userId)
+);
+
 $arMenu = [
 	[
 		GetMessage("MENU_LIVE_FEED2"),
@@ -45,7 +52,7 @@ $arMenu = [
 		[],
 		[
 			"name" => "live_feed",
-			"counter_id" => "live-feed",
+			"counter_id" => $isNewLiveFeedCounterAvailable ? 'sonet_total' : 'live-feed',
 			"menu_item_id" => "menu_live_feed",
 		],
 		""
@@ -62,7 +69,7 @@ $arMenu = [
 			"name" => "tasks",
 			"counter_id" => "tasks_total",
 			"menu_item_id" => "menu_tasks",
-			"sub_link" => SITE_DIR."company/personal/user/".$userId."/tasks/task/edit/0/",
+			"sub_link" => SITE_DIR."company/personal/user/".$userId."/tasks/task/edit/0/?ta_sec=left_menu&ta_el=create_button",
 			"top_menu_id" => "tasks_panel_menu",
 		],
 		""
@@ -70,8 +77,9 @@ $arMenu = [
 ];
 
 if (
-	\Bitrix\Main\Config\Option::get('intranet', 'left_menu_crm_store_menu', 'Y') === 'Y'
-	&& Loader::includeModule('catalog')
+	Loader::includeModule('catalog')
+	&& AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
+	&& AccessController::getCurrent()->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
 )
 {
 	$arMenu[] = array(
@@ -153,6 +161,7 @@ if (CModule::IncludeModule("crm") && CCrmPerms::IsAccessEnabled())
 		[
 			"/crm/",
 			\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') ? '/contact_center/' : SITE_DIR . 'services/contact_center/',
+			'/bi/dashboard/',
 		],
 		[
 			"real_link" => \Bitrix\Crm\Settings\EntityViewSettings::getDefaultPageUrl(),
@@ -181,39 +190,43 @@ else
 	];
 }
 
-$landingAvailable = Loader::includeModule('landing') && Rights::hasAdditionalRight(Rights::ADDITIONAL_RIGHTS['menu24']);
-if (Loader::includeModule('crm') && CCrmSaleHelper::isShopAccess())
+if (ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_shop'))
 {
-	$arMenu[] = [
-		GetMessage('MENU_SITES_AND_STORES'),
-		'/shop/menu/',
-		[
-			'/shop/',
-			'/sites/'
-		],
-		[
-			'real_link' => getLeftMenuItemLink(
-				'store',
-				$landingAvailable ? '/sites/' : '/shop/orders/menu/'
-			),
-			'menu_item_id' => 'menu_shop',
-			'top_menu_id' => 'store',
-			'counter_id' => CCrmSaleHelper::isWithOrdersMode() ? 'shop_all' : '',
-		],
-		''
-	];
-}
-else if ($landingAvailable)
-{
-	$arMenu[] = [
-		Loc::getMessage('MENU_SITES'),
-		'/sites/',
-		[],
-		[
-			'menu_item_id' => 'menu_sites',
-		],
-		''
-	];
+	$landingAvailable = Loader::includeModule('landing') && Rights::hasAdditionalRight(Rights::ADDITIONAL_RIGHTS['menu24']);
+
+	if (Loader::includeModule('crm') && CCrmSaleHelper::isShopAccess())
+	{
+		$arMenu[] = [
+			GetMessage('MENU_SITES_AND_STORES'),
+			'/shop/menu/',
+			[
+				'/shop/',
+				'/sites/'
+			],
+			[
+				'real_link' => getLeftMenuItemLink(
+					'store',
+					$landingAvailable ? '/sites/' : '/shop/orders/menu/'
+				),
+				'menu_item_id' => 'menu_shop',
+				'top_menu_id' => 'store',
+				'counter_id' => CCrmSaleHelper::isWithOrdersMode() ? 'shop_all' : '',
+			],
+			''
+		];
+	}
+	elseif ($landingAvailable)
+	{
+		$arMenu[] = [
+			Loc::getMessage('MENU_SITES'),
+			'/sites/',
+			[],
+			[
+				'menu_item_id' => 'menu_sites',
+			],
+			''
+		];
+	}
 }
 
 if (CModule::IncludeModule("sender") && \Bitrix\Sender\Security\User::current()->hasAccess())
@@ -298,6 +311,23 @@ $arMenu[] = [
 	""
 ];
 
+$isSpacesAvailable = (
+	Loader::includeModule('socialnetwork')
+	&& \Bitrix\Socialnetwork\Space\Service::isAvailable(true)
+);
+if ($isSpacesAvailable)
+{
+	$arMenu[] = [
+		GetMessage('MENU_GROUP_SPACES'),
+		'/spaces/',
+		[],
+		[
+			'menu_item_id' => 'menu_all_spaces',
+			'counter_id' => 'spaces',
+		],
+		''
+	];
+}
 
 if (Loader::includeModule('intranet') && AutomationSection::isAvailable())
 {
@@ -406,12 +436,12 @@ if (
 {
 	$arMenu[] = array(
 		GetMessage("MENU_SETTINGS_SECTION"),
-		"/settings/configs/",
+		"/settings/configs/?analyticContext=left_menu_main",
 		array(),
 		array(
 			"real_link" => getLeftMenuItemLink(
 				"top_menu_id_settings_configs",
-				"/settings/configs/"
+				"/settings/configs/?analyticContext=left_menu_main"
 			),
 			"class" => "menu-settings",
 			"menu_item_id" => "menu_configs_sect",

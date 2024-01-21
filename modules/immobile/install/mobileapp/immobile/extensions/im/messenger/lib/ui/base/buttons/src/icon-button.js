@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/lib/ui/base/buttons/icon-button', (require, exports, module) => {
 	const { withPressed } = require('utils/color');
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @class IconButton
@@ -33,8 +34,8 @@ jn.define('im/messenger/lib/ui/base/buttons/icon-button', (require, exports, mod
 
 		render()
 		{
-			const backgroundColor = this.props.style?.backgroundColor || '#FFFFFF';
-			const borderColor = this.props.disable ? '#F5F7F8' : this.props.style?.border?.color;
+			const backgroundColor = this.props.style?.backgroundColor || AppTheme.colors.bgContentPrimary;
+			const borderColor = this.props.disable ? AppTheme.colors.base7 : this.props.style?.border?.color;
 			const backgroundColorChange = this.props.disable ? backgroundColor : withPressed(backgroundColor);
 
 			return View(
@@ -47,7 +48,7 @@ jn.define('im/messenger/lib/ui/base/buttons/icon-button', (require, exports, mod
 						flexDirection: 'column',
 						justifyContent: 'center',
 						borderWidth: this.props.style?.border?.width || 1,
-						borderColor: borderColor || '#E1F3F9',
+						borderColor: borderColor || AppTheme.colors.accentSoftBlue2,
 					},
 					clickable: !this.props.disable,
 					onClick: () => this.onClick(),
@@ -66,7 +67,7 @@ jn.define('im/messenger/lib/ui/base/buttons/icon-button', (require, exports, mod
 						text: this.props.text || '',
 						style: this.props.style?.text || {
 							alignSelf: 'center',
-							color: this.props.disable ? '#C9CCD0' : '#11A9D9',
+							color: this.props.disable ? AppTheme.colors.base6 : AppTheme.colors.accentMainPrimaryalt,
 							fontSize: 12,
 							fontWeight: 500,
 							marginBottom: 12,

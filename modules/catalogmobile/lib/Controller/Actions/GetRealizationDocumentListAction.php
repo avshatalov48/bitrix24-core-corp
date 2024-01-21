@@ -57,7 +57,7 @@ class GetRealizationDocumentListAction extends GetBaseDocumentListAction
 		];
 
 		$filter = [
-			'SHIPMENT_REALIZATION.IS_REALIZATION' => 'Y',
+			'=SHIPMENT_REALIZATION.IS_REALIZATION' => 'Y',
 			'=SYSTEM' => 'N',
 		];
 

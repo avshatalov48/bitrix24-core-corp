@@ -176,6 +176,7 @@
 }
 
 .grid-mode .crm-volume-info-control-panel {
+	width: auto;
 	margin: -15px -15px 15px -15px;
 }
 

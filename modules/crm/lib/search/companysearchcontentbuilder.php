@@ -1,123 +1,64 @@
 <?php
+
 namespace Bitrix\Crm\Search;
-use \Bitrix\Crm\CompanyTable;
-use Bitrix\Main\Application;
 
-class CompanySearchContentBuilder extends SearchContentBuilder
+use Bitrix\Crm\CompanyTable;
+use Bitrix\Crm\Entity\Index;
+use CCrmCompany;
+use CCrmOwnerType;
+
+final class CompanySearchContentBuilder extends SearchContentBuilder
 {
-	public function getEntityTypeID()
-	{
-		return \CCrmOwnerType::Company;
-	}
-	protected function getUserFieldEntityID()
-	{
-		return \CCrmCompany::GetUserFieldEntityID();
-	}
-	public function isFullTextSearchEnabled()
-	{
-		return CompanyTable::getEntity()->fullTextIndexEnabled('SEARCH_CONTENT');
-	}
-	protected function prepareEntityFields($entityID)
-	{
-		$dbResult = \CCrmCompany::GetListEx(
-			array(),
-			array('=ID' => $entityID, 'CHECK_PERMISSIONS' => 'N'),
-			false,
-			false,
-			array('*'/*, 'UF_*'*/)
-		);
+	protected string $entityClassName = CCrmCompany::class;
+	protected string $entityIndexTableClassName = Index\CompanyTable::class;
+	protected string $entityIndexTable = 'b_crm_company_index';
+	protected string $entityIndexTablePrimaryColumn = 'COMPANY_ID';
 
-		$fields = $dbResult->Fetch();
-		return is_array($fields) ? $fields : null;
-	}
-	public function prepareEntityFilter(array $params)
+	public function getEntityTypeId(): int
 	{
-		$value = isset($params['SEARCH_CONTENT']) ? $params['SEARCH_CONTENT'] : '';
-		if(!is_string($value) || $value === '')
-		{
-			return array();
-		}
+		return CCrmOwnerType::Company;
+	}
 
-		$operation = $this->isFullTextSearchEnabled() ? '*' : '*%';
-		return array("{$operation}SEARCH_CONTENT" => SearchEnvironment::prepareToken($value));
-	}
-	/**
-	 * Convert entity list filter values.
-	 * @param array $filter List Filter.
-	 * @return void
-	 */
-	public function convertEntityFilterValues(array &$filter)
+	public function convertEntityFilterValues(array &$filter): void
 	{
-		$this->transferEntityFilterKeys(array('FIND', 'PHONE'), $filter);
+		$this->transferEntityFilterKeys(['FIND', 'PHONE'], $filter);
 	}
-	/**
-	 * Prepare search map.
-	 * @param array $fields Entity Fields.
-	 * @param array|null $options Options.
-	 * @return SearchMap
-	 */
-	protected function prepareSearchMap(array $fields, array $options = null)
+
+	protected function prepareSearchMap(array $fields, array $options = null): SearchMap
 	{
 		$map = new SearchMap();
-
-		$entityID = isset($fields['ID']) ? (int)$fields['ID'] : 0;
-		if($entityID <= 0)
+		$entityId = (int)($fields['ID'] ?? 0);
+		if ($entityId <= 0)
 		{
 			return $map;
 		}
 
 		$isShortIndex = ($options['isShortIndex'] ?? false);
-		if(!$isShortIndex)
+		if (!$isShortIndex)
 		{
-			$map->add($entityID);
+			$map->add($entityId);
 		}
 
-		$title = isset($fields['TITLE']) ? $fields['TITLE'] : '';
-		if($title !== '')
-		{
-			$map->addText($title);
-			$map->addText(SearchEnvironment::prepareSearchContent($title));
+		$map = $this->addTitleToSearchMap(
+			$entityId,
+			$fields['TITLE'] ?? '',
+			CCrmCompany::GetAutoTitleTemplate(),
+			$map
+		);
 
-			$customerNumber = $this->parseCustomerNumber($title, \CCrmCompany::GetAutoTitleTemplate());
-			if($customerNumber != $entityID)
-			{
-				$map->addTextFragments($customerNumber);
-			}
-		}
-
-		if(isset($fields['ASSIGNED_BY_ID']) && !$isShortIndex)
+		if (isset($fields['ASSIGNED_BY_ID']) && !$isShortIndex)
 		{
 			$map->addUserByID($fields['ASSIGNED_BY_ID']);
 		}
 
-		$multiFields = $this->getEntityMultiFields($entityID);
-		if(isset($multiFields[\CCrmFieldMulti::PHONE]))
-		{
-			foreach($multiFields[\CCrmFieldMulti::PHONE] as $multiField)
-			{
-				if(isset($multiField['VALUE']))
-				{
-					$map->addPhone($multiField['VALUE']);
-				}
-			}
-		}
-		if(isset($multiFields[\CCrmFieldMulti::EMAIL]))
-		{
-			foreach($multiFields[\CCrmFieldMulti::EMAIL] as $multiField)
-			{
-				if(isset($multiField['VALUE']))
-				{
-					$map->addEmail($multiField['VALUE']);
-				}
-			}
-		}
+		$map = $this->addPhonesAndEmailsToSearchMap($entityId, $map);
 
-		if(isset($fields['INDUSTRY']) && !$isShortIndex)
+		if (isset($fields['INDUSTRY']) && !$isShortIndex)
 		{
 			$map->addStatus('INDUSTRY', $fields['INDUSTRY']);
 		}
 
-		if(isset($fields['COMMENTS']) && !$isShortIndex)
+		if (isset($fields['COMMENTS']) && !$isShortIndex)
 		{
 			$map->addHtml($fields['COMMENTS'], 1024);
 		}
@@ -125,7 +66,8 @@ class CompanySearchContentBuilder extends SearchContentBuilder
 		//region UserFields
 		if (!$isShortIndex)
 		{
-			foreach($this->getUserFields($entityID) as $userField)
+			$userFields = SearchEnvironment::getUserFields($entityId, $this->getUserFieldEntityId());
+			foreach ($userFields as $userField)
 			{
 				$map->addUserField($userField);
 			}
@@ -134,54 +76,12 @@ class CompanySearchContentBuilder extends SearchContentBuilder
 
 		return $map;
 	}
-	/**
-	 * Prepare required data for bulk build.
-	 * @param array $entityIDs Entity IDs.
-	 */
-	protected function prepareForBulkBuild(array $entityIDs)
+
+	protected function save(int $entityId, SearchMap $map): void
 	{
-		$dbResult = \CCrmCompany::GetListEx(
-			array(),
-			array('@ID' => $entityIDs, 'CHECK_PERMISSIONS' => 'N'),
-			array('ASSIGNED_BY_ID'),
-			false,
-			array('ASSIGNED_BY_ID')
+		CompanyTable::update(
+			$entityId,
+			$this->prepareUpdateData(CompanyTable::getTableName(), $map->getString())
 		);
-
-		$userIDs = array();
-		while($fields = $dbResult->Fetch())
-		{
-			$userIDs[] = (int)$fields['ASSIGNED_BY_ID'];
-		}
-
-		if(!empty($userIDs))
-		{
-			SearchMap::cacheUsers($userIDs);
-		}
-	}
-	protected function save($entityID, SearchMap $map)
-	{
-		CompanyTable::update($entityID, array('SEARCH_CONTENT' => $map->getString()));
-	}
-
-	protected function saveShortIndex(int $entityId, SearchMap $map, bool $checkExist = false): \Bitrix\Main\DB\Result
-	{
-		$connection = \Bitrix\Main\Application::getConnection();
-		$helper = $connection->getSqlHelper();
-
-		$update = [
-			'COMPANY_ID' => $entityId,
-			'SEARCH_CONTENT' => $map->getString(),
-		];
-		$merge = $helper->prepareMerge('b_crm_company_index', ['COMPANY_ID'], $update, $update);
-
-		return $connection->query($merge[0]);
-	}
-
-	public function removeShortIndex(int $entityId): \Bitrix\Main\ORM\Data\Result
-	{
-		return \Bitrix\Crm\Entity\Index\CompanyTable::delete([
-			'COMPANY_ID' => $entityId,
-		]);
 	}
 }

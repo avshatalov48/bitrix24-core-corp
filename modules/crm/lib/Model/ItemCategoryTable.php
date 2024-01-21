@@ -6,7 +6,11 @@ use Bitrix\Crm\Category\Entity\ItemCategory;
 use Bitrix\Crm\Category\ItemCategoryUserField;
 use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Factory\SmartDocument;
+use Bitrix\Main\Application;
+use Bitrix\Main\DB\SqlException;
 use Bitrix\Main\Entity\BooleanField;
+use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\EntityError;
@@ -18,6 +22,7 @@ use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Web\Json;
 
 /**
  * Class ItemCategoryTable
@@ -255,5 +260,74 @@ class ItemCategoryTable extends DataManager
 		}
 
 		return $categories;
+	}
+
+	public static function installBundledCategoriesIfNotExists(): Result
+	{
+		$result = new Result();
+
+		$contactCategoryForSign =
+			self::query()
+				->setSelect(['ID'])
+				->where('IS_SYSTEM', true)
+				->where('CODE', SmartDocument::CONTACT_CATEGORY_CODE)
+				->fetchObject()
+		;
+
+		if (!$contactCategoryForSign)
+		{
+			$settings = [
+				'disabledFieldNames' => [
+					'COMPANY',
+				],
+				'isTrackingEnabled' => false,
+				'uiSettings' => [
+					'grid' => [
+						'defaultFields' => [
+							'CONTACT_SUMMARY',
+							'ACTIVITY_ID',
+							'POST',
+							'PHONE',
+							'EMAIL',
+						],
+					],
+					'filter' => [
+						'defaultFields' => [
+							'NAME',
+							'SECOND_NAME',
+							'LAST_NAME',
+							'PHONE',
+							'EMAIL',
+						],
+					],
+				],
+			];
+
+			try
+			{
+				// we cant add system category via DataManager because of onBeforeAdd
+				Application::getConnection()->add(
+					self::getTableName(),
+					[
+						'CODE' => SmartDocument::CONTACT_CATEGORY_CODE,
+						'IS_SYSTEM' => 'Y',
+						'ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
+						'CREATED_DATE' => new DateTime(),
+						'NAME' => '',
+						'SORT' => 500,
+						'SETTINGS' => Json::encode($settings),
+					],
+				);
+
+				self::cleanCache();
+				Container::getInstance()->getFactory(\CCrmOwnerType::Contact)?->clearCategoriesCache();
+			}
+			catch (SqlException $exception)
+			{
+				$result->addError(new Error($exception->getMessage(), $exception->getCode()));
+			}
+		}
+
+		return $result;
 	}
 }

@@ -9,12 +9,12 @@ import { Utils } from 'im.v2.lib.utils';
 import { showKickUserConfirm } from 'im.v2.lib.confirm';
 import { ChatService } from 'im.v2.provider.service';
 
-import type { ImModelUser, ImModelDialog } from 'im.v2.model';
+import type { ImModelUser, ImModelChat } from 'im.v2.model';
 import type { MenuItem } from 'im.v2.lib.menu';
 
 type AvatarMenuContext = {
 	user: ImModelUser,
-	dialog: ImModelDialog
+	dialog: ImModelChat
 };
 
 export class AvatarMenu extends BaseMenu
@@ -88,7 +88,7 @@ export class AvatarMenu extends BaseMenu
 
 	getKickItem(): ?MenuItem
 	{
-		const canKick = this.permissionManager.canPerformKick(this.context.dialog.dialogId, this.context.user.id);
+		const canKick = this.permissionManager.canPerformAction(ChatActionType.kick, this.context.dialog.dialogId);
 		if (!canKick)
 		{
 			return null;

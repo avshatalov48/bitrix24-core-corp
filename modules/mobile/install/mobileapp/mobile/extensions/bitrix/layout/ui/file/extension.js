@@ -1,8 +1,8 @@
 (() => {
-
-	const require = ext => jn.require(ext);
+	const require = (ext) => jn.require(ext);
 
 	const { Alert } = require('alert');
+	const AppTheme = require('apptheme');
 	const { throttle } = require('utils/function');
 	const { clone, merge } = require('utils/object');
 	const {
@@ -18,7 +18,7 @@
 
 	function getFileIconType(extension)
 	{
-		let result;
+		let result = null;
 
 		switch (extension)
 		{
@@ -84,7 +84,10 @@
 	{
 		return (
 			files
-				.filter(({ type, name }) => getNativeViewerMediaType(getMimeType(type, name)) === NativeViewerMediaTypes.IMAGE)
+				.filter(({ type, name }) => getNativeViewerMediaType(getMimeType(
+					type,
+					name,
+				)) === NativeViewerMediaTypes.IMAGE)
 				.map((image) => {
 					// primarily - find by id (we can have same images in different positions)
 					if (image.id && id)
@@ -161,15 +164,14 @@
 					Text({
 						testId: 'pinnedFileName',
 						style: {
-							color: hasError ? '#ff615c' : '#a8adb4',
+							color: hasError ? AppTheme.colors.accentMainAlert : AppTheme.colors.base4,
 							fontWeight: '500',
 							fontSize: 10,
-							backgroundColor: '#00000000',
 							textAlign: 'center',
 						},
 						text: name,
 						numberOfLines: 2,
-						ellipsize: Application.getPlatform() !== "android" ? 'middle' : 'end',
+						ellipsize: Application.getPlatform() === 'android' ? 'end' : 'middle',
 					}),
 				),
 			),
@@ -177,7 +179,7 @@
 				{
 					style: {
 						...styles.imageOutline(false),
-						backgroundColor: '#ffffff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						borderColor: null,
 						opacity: 0.5,
 					},
@@ -187,7 +189,7 @@
 						width: styles.imagePreview.width,
 						height: styles.imagePreview.height,
 					},
-					tintColor: '#000000',
+					tintColor: AppTheme.colors.base0,
 					animating: true,
 					size: 'small',
 				}),
@@ -217,7 +219,7 @@
 						width: styles.deleteButtonWrapper.width,
 						height: styles.deleteButtonWrapper.height,
 					},
-				})
+				}),
 			),
 		);
 	}
@@ -234,7 +236,7 @@
 			onDeleteAttachmentItem,
 		} = options;
 
-		let {url, attachmentFileIconFolder} = options;
+		let { url, attachmentFileIconFolder } = options;
 
 		url = encodeURI(url);
 		attachmentFileIconFolder = getAbsolutePath(attachmentFileIconFolder);
@@ -273,7 +275,7 @@
 								height: styles.imagePreview.height ? styles.imagePreview.height / 2 : 20,
 							},
 							svg: {
-								uri: attachmentFileIconFolder + icon + '.svg',
+								uri: `${attachmentFileIconFolder + icon}.svg`,
 							},
 							resizeMode: 'contain',
 						},
@@ -291,15 +293,14 @@
 					Text({
 						testId: 'pinnedFileName',
 						style: {
-							color: hasError ? '#ff615c' : '#a8adb4',
+							color: hasError ? AppTheme.colors.accentMainAlert : AppTheme.colors.base4,
 							fontWeight: '500',
 							fontSize: 10,
-							backgroundColor: '#00000000',
 							textAlign: 'center',
 						},
 						text: name,
 						numberOfLines: 2,
-						ellipsize: Application.getPlatform() !== "android" ? 'middle' : 'end',
+						ellipsize: Application.getPlatform() === 'android' ? 'end' : 'middle',
 					}),
 				),
 			),
@@ -308,7 +309,7 @@
 					testId: 'pinnedFileLoader',
 					style: {
 						...styles.imageOutline(false),
-						backgroundColor: '#ffffff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						borderColor: null,
 						opacity: 0.5,
 					},
@@ -318,7 +319,7 @@
 						width: styles.imagePreview.width,
 						height: styles.imagePreview.height,
 					},
-					tintColor: '#000000',
+					tintColor: AppTheme.colors.base0,
 					animating: true,
 					size: 'small',
 				}),
@@ -351,7 +352,7 @@
 			size,
 		} = options;
 
-		let {url, attachmentFileIconFolder} = options;
+		let { url, attachmentFileIconFolder } = options;
 
 		url = encodeURI(url);
 		attachmentFileIconFolder = getAbsolutePath(attachmentFileIconFolder);
@@ -396,10 +397,9 @@
 						testId: 'pinnedFileName',
 						style: {
 							flex: 1,
-							color: (hasError ? '#ff615c' : '#a8adb4'),
+							color: (hasError ? AppTheme.colors.accentMainAlert : AppTheme.colors.base4),
 							fontWeight: '400',
 							fontSize: 16,
-							backgroundColor: '#00000000',
 							marginLeft: 8,
 							marginRight: 12,
 						},
@@ -411,10 +411,9 @@
 				Text({
 					testId: 'pinnedFileSize',
 					style: {
-						color: (hasError ? '#ff615c' : '#a8adb4'),
+						color: (hasError ? AppTheme.colors.accentMainAlert : AppTheme.colors.base4),
 						fontWeight: '400',
 						fontSize: 16,
-						backgroundColor: '#00000000',
 					},
 					text: size.toUpperCase(),
 					numberOfLines: 1,
@@ -451,7 +450,6 @@
 			imagePreview: {
 				width: 40,
 				height: 40,
-				backgroundColor: '#00000000',
 				flexDirection: 'column',
 				alignItems: 'center',
 				justifyContent: 'center',
@@ -463,10 +461,10 @@
 				position: 'absolute',
 				top: 8,
 				left: 9,
-				borderColor: hasError ? '#ff5752' : '#333333',
-				backgroundColor: hasError ? '#ff615c' : null,
+				borderColor: hasError ? AppTheme.colors.accentMainAlert : AppTheme.colors.bgSeparatorPrimary,
+				backgroundColor: hasError ? AppTheme.colors.accentMainAlert : null,
 				borderWidth: 1,
-				opacity: hasError ? 0.5 : 0.08,
+				opacity: 0.5,
 				borderRadius: 6,
 			}),
 			deleteButtonWrapper: {
@@ -486,7 +484,7 @@
 		return styles;
 	}
 
-	const DEFAULT_CLOSE_ICON = `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8.5" fill="#D5D7DB" stroke="white"/><path fill-rule="evenodd" clip-rule="evenodd" d="M10.125 9L12.375 11.25L11.25 12.375L9 10.125L6.75 12.375L5.625 11.25L7.875 9L5.625 6.75L6.75 5.625L9 7.875L11.25 5.625L12.375 6.75L10.125 9Z" fill="white"/></svg>`;
+	const DEFAULT_CLOSE_ICON = `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8.5" fill="${AppTheme.colors.base6}" stroke="${AppTheme.colors.bgContentPrimary}"/><path fill-rule="evenodd" clip-rule="evenodd" d="M10.125 9L12.375 11.25L11.25 12.375L9 10.125L6.75 12.375L5.625 11.25L7.875 9L5.625 6.75L6.75 5.625L9 7.875L11.25 5.625L12.375 6.75L10.125 9Z" fill="${AppTheme.colors.bgContentPrimary}"/></svg>`;
 	const DEFAULT_FILE_ICONS_FOLDER = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/file/images/file/';
 
 	/**
@@ -510,7 +508,7 @@
 	 */
 	function File(options)
 	{
-		const { url, type, name, showName } = options;
+		const { url, type, name, showName, isInLine } = options;
 		let { imageUri, attachmentCloseIcon, attachmentFileIconFolder, styles } = options;
 
 		styles = buildStyles(styles);
@@ -540,7 +538,7 @@
 			});
 		}
 
-		if (options.isInLine)
+		if (isInLine)
 		{
 			return renderFileInLine({
 				...options,

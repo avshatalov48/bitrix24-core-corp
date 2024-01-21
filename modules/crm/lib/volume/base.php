@@ -1864,17 +1864,17 @@ abstract class Base
 				/**
 				 * @var ORM\Data\DataManager $entityClass
 				 */
-				$entityQuery = $entityClass::query();
+				$queryCnt = $entityClass::query()
+					->addSelect('ID')
+					->setLimit(500000)
+					->getQuery();
 
-				$row0 = $entityQuery
-					->registerRuntimeField(new ORM\Fields\ExpressionField('CNT', 'COUNT(*)'))
-					->addSelect('CNT')
-					->exec()
-					->fetch();
+				$queryCnt = "SELECT COUNT(*) AS CNT FROM ($queryCnt) tbl";
+				$row0 = Main\Application::getConnection()->query($queryCnt)->fetch();
 
 				if ($row0)
 				{
-					if ((int)$row0['CNT'] > 500000)
+					if ((int)$row0['CNT'] >= 500000)
 					{
 						$maxIdRange = 100000;
 					}
@@ -1905,13 +1905,13 @@ abstract class Base
 				 */
 				$query = $entityClass::query();
 
-				$month = new ORM\Fields\ExpressionField('YY', "YEAR(%s)", $dateFieldAlias);
+				$month = new ORM\Fields\ExpressionField('YY', "EXTRACT(YEAR from %s)", $dateFieldAlias);
 				$query->registerRuntimeField($month)->addSelect('YY');
 
-				$month = new ORM\Fields\ExpressionField('MM', "MONTH(%s)", $dateFieldAlias);
+				$month = new ORM\Fields\ExpressionField('MM', "EXTRACT(MONTH from %s)", $dateFieldAlias);
 				$query->registerRuntimeField($month)->addSelect('MM');
 
-				$month = new ORM\Fields\ExpressionField('DD', "DAY(%s)", $dateFieldAlias);
+				$month = new ORM\Fields\ExpressionField('DD', "EXTRACT(DAY from %s)", $dateFieldAlias);
 				$query->registerRuntimeField($month)->addSelect('DD');
 
 				$border = new ORM\Fields\ExpressionField('BRDR', 'MAX(%s)', 'ID');

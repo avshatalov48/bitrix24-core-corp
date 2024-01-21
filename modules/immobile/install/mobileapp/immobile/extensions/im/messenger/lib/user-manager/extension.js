@@ -51,6 +51,16 @@ jn.define('im/messenger/lib/user-manager', (require, exports, module) => {
 			return Promise.all([usersPromise, dialoguesPromise]);
 		}
 
+		addShortUsersToModel(usersShort)
+		{
+			if (Type.isPlainObject(usersShort))
+			{
+				usersShort = [usersShort];
+			}
+
+			return this.store.dispatch('usersModel/addShort', usersShort);
+		}
+
 		filterUsers(users)
 		{
 			return users.filter((user) => {

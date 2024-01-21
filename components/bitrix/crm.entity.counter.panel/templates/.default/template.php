@@ -53,8 +53,6 @@ $phrases = Loc::loadLanguageFile(__FILE__);
 $phrases['NEW_CRM_COUNTER_TYPE_CURRENT'] = $phrases['NEW_CRM_COUNTER_TYPE_CURRENT2'];
 unset($phrases['NEW_CRM_COUNTER_TYPE_CURRENT2']);
 
-echo (Tour\AhaMomentCounterLightTime::getInstance())->build();
-
 $lockedCallback = '';
 $activityFieldRestrictionManager = new ActivityFieldRestrictionManager();
 if ($activityFieldRestrictionManager->hasRestrictions())

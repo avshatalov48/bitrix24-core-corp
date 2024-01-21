@@ -3,6 +3,7 @@
  */
 jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (require, exports, module) => {
 	const { EventEmitter } = require('event-emitter');
+	const AppTheme = require('apptheme');
 	const { throttle, debounce } = require('utils/function');
 	const { Loc } = require('loc');
 	const { Feature } = require('feature');
@@ -313,7 +314,7 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 					View(
 						{
 							style: {
-								backgroundColor: '#fff',
+								backgroundColor: AppTheme.colors.bgContentPrimary,
 								flex: 1,
 								flexDirection: 'row',
 								paddingHorizontal: 12,
@@ -321,7 +322,7 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 								justifyContent: 'center',
 
 								borderBottomWidth: 1,
-								borderBottomColor: '#dfe0e3',
+								borderBottomColor: AppTheme.colors.base6,
 							},
 							clickable: false,
 						},
@@ -376,7 +377,7 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 				},
 				Text({
 					style: {
-						color: '#000',
+						color: AppTheme.colors.base0,
 						fontSize: 15,
 					},
 					numberOfLines: 1,
@@ -392,7 +393,7 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 					},
 					Text({
 						style: {
-							color: this.state.play ? '#2fc6f6' : '#a8adb4',
+							color: this.state.play ? AppTheme.colors.accentBrandBlue : AppTheme.colors.base4,
 							fontSize: 12,
 							minWidth: this.currentTimeWidth,
 							textAlign: 'right',
@@ -404,7 +405,7 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 					}),
 					Text({
 						style: {
-							color: '#a8adb4',
+							color: AppTheme.colors.base4,
 							fontSize: 12,
 						},
 						text: ` / ${this.convertSecondsToTime(this.state.duration)}`,
@@ -616,7 +617,7 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 					View(
 						{
 							style: {
-								backgroundColor: '#2fc6f6',
+								backgroundColor: AppTheme.colors.accentBrandBlue,
 								flex: 1,
 							},
 							clickable: false,
@@ -656,7 +657,7 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 							width: this.state.isTouchEnd ? MARKER_SIZE : 30,
 							height: this.state.isTouchEnd ? MARKER_SIZE : 30,
 							borderRadius: 30,
-							backgroundColor: '#ffffff',
+							backgroundColor: AppTheme.colors.bgContentPrimary,
 							justifyContent: 'center',
 							alignItems: 'center',
 
@@ -665,7 +666,7 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 							left: markerOffset.left,
 
 							borderBottomWidth: 0.5,
-							borderBottomColor: '#dfe0e3',
+							borderBottomColor: AppTheme.colors.base6,
 						},
 						clickable: false,
 					},
@@ -675,7 +676,7 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 								width: this.state.isTouchEnd ? 8 : 14,
 								height: this.state.isTouchEnd ? 8 : 14,
 								borderRadius: 7,
-								backgroundColor: '#2fc6f6',
+								backgroundColor: AppTheme.colors.accentBrandBlue,
 							},
 							clickable: false,
 						},
@@ -683,44 +684,28 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 				);
 			}
 
-			return Shadow(
+			return View(
 				{
-					offset: {
-						x: 0,
-						y: 2,
-					},
-					radius: 4,
-					color: '#e0e0e0',
 					style: {
-						position: 'absolute',
-						top: markerOffset.top,
-						left: markerOffset.left,
+						width: this.state.isTouchEnd ? MARKER_SIZE : 30,
+						height: this.state.isTouchEnd ? MARKER_SIZE : 30,
 						borderRadius: 30,
+						backgroundColor: AppTheme.colors.bgContentPrimary,
+						justifyContent: 'center',
+						alignItems: 'center',
 					},
+					clickable: false,
 				},
 				View(
 					{
 						style: {
-							width: this.state.isTouchEnd ? MARKER_SIZE : 30,
-							height: this.state.isTouchEnd ? MARKER_SIZE : 30,
-							borderRadius: 30,
-							backgroundColor: '#ffffff',
-							justifyContent: 'center',
-							alignItems: 'center',
+							width: this.state.isTouchEnd ? 8 : 14,
+							height: this.state.isTouchEnd ? 8 : 14,
+							borderRadius: 7,
+							backgroundColor: AppTheme.colors.accentBrandBlue,
 						},
 						clickable: false,
 					},
-					View(
-						{
-							style: {
-								width: this.state.isTouchEnd ? 8 : 14,
-								height: this.state.isTouchEnd ? 8 : 14,
-								borderRadius: 7,
-								backgroundColor: '#2fc6f6',
-							},
-							clickable: false,
-						},
-					),
 				),
 			);
 		}

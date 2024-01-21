@@ -2,6 +2,7 @@
  * @module catalog/product-wizard-step/title
  */
 jn.define('catalog/product-wizard-step/title', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { BarcodeType } = require('layout/ui/fields/barcode');
 	const { StringType } = require('layout/ui/fields/string');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
@@ -20,7 +21,8 @@ jn.define('catalog/product-wizard-step/title', (require, exports, module) => {
 
 		render()
 		{
-			return View({
+			return View(
+				{
 					style: CatalogProductWizardStepStyles.footer.container,
 				},
 				this.renderSections(),
@@ -29,9 +31,10 @@ jn.define('catalog/product-wizard-step/title', (require, exports, module) => {
 
 		renderSections()
 		{
-			const sections = this.state.sections.map(section => section.title);
+			const sections = this.state.sections.map((section) => section.title);
 
-			return View({
+			return View(
+				{
 					style: {
 						paddingTop: 20,
 					},
@@ -39,14 +42,14 @@ jn.define('catalog/product-wizard-step/title', (require, exports, module) => {
 				},
 				Text({
 					style: CatalogProductWizardStepStyles.footer.link,
-					text: Loc.getMessage('WIZARD_STEP_FOOTER_BIND_TO_SECTION')
+					text: Loc.getMessage('WIZARD_STEP_FOOTER_BIND_TO_SECTION'),
 				}),
-				sections.length ?
-					Text({
+				sections.length > 0
+					? Text({
 						style: {
 							paddingTop: 8,
 							fontSize: 13,
-							color: '#a8adb4',
+							color: AppTheme.colors.base4,
 
 						},
 						text: Loc.getMessage('WIZARD_STEP_FOOTER_SECTION_BINDINGS').replace('#SECTIONS#', sections.join(', ')),
@@ -66,7 +69,7 @@ jn.define('catalog/product-wizard-step/title', (require, exports, module) => {
 				createOptions: {
 					enableCreation: true,
 				},
-				initSelectedIds: this.state.sections.map(section => section.id),
+				initSelectedIds: this.state.sections.map((section) => section.id),
 				events: {
 					onClose: (sections) => {
 						this.setState({ sections });
@@ -124,9 +127,9 @@ jn.define('catalog/product-wizard-step/title', (require, exports, module) => {
 		{
 			return new FooterComponent({
 				onChangeSection: (sections) => {
-					const sectionIds = sections.map(section => section.id);
-					this.onChange('SECTION_ID', sectionIds.length ? sectionIds[0] : 0);
-					this.onChange('SECTION', sections.length ? sections[0] : null);
+					const sectionIds = sections.map((section) => section.id);
+					this.onChange('SECTION_ID', sectionIds.length > 0 ? sectionIds[0] : 0);
+					this.onChange('SECTION', sections.length > 0 ? sections[0] : null);
 				},
 				iblockId: this.entity.getIblockId(),
 			});

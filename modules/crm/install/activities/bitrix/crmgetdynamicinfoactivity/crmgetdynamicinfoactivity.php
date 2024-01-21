@@ -15,6 +15,15 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 
+/**
+ * @property-write string Title
+ * @property-write int DynamicTypeId
+ * @property-write int DynamicId
+ * @property-write array DynamicFilterFields
+ * @property-write array ReturnFields
+ * @property-write string OnlyDynamicEntities
+ * @property-write array|null DynamicEntityFields
+ */
 class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 {
 	use \Bitrix\Bizproc\Activity\Mixins\EntityFilter;
@@ -56,17 +65,18 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 
 	protected function findEntityId(): int
 	{
-		$conditionGroup = new ConditionGroup($this->DynamicFilterFields);
-		$conditionGroup->internalizeValues($this->getDocumentType());
-
 		$targetDocumentType = CCrmBizProcHelper::ResolveDocumentType($this->DynamicTypeId);
 		$factory = Container::getInstance()->getFactory($this->DynamicTypeId);
 		$items = [];
 		if (isset($factory))
 		{
+            $conditionGroup = new ConditionGroup($this->DynamicFilterFields);
+            $conditionGroup->internalizeValues($targetDocumentType);
+
 			$items = $factory->getItems([
 				'select' => ['ID'],
 				'filter' => $this->getOrmFilter($conditionGroup, $targetDocumentType),
+				'limit' => 1,
 			]);
 		}
 

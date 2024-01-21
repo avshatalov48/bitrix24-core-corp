@@ -853,6 +853,10 @@ select.crm-entity-product-control-select-field:hover {
 }
 
 .crm-entity-product-list-locked-field {
+	pointer-events: none;
+}
+
+.crm-entity-product-list-locked-field-wrapper {
 	cursor: pointer !important;
 }
 

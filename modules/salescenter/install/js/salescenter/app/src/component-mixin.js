@@ -38,8 +38,9 @@ export default {
 					buttonsPanel,
 					{
 						fixBottom: this.$root.$app.isFrame,
-						fullWidth: this.$root.$app.isFrame
-					}
+						fullWidth: this.$root.$app.isFrame,
+						anchorBottom: '.salescenter-app-pinner-anchor',
+					},
 				);
 			}
 		},

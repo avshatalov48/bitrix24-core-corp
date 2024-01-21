@@ -65,7 +65,7 @@ class OrderEntityTable extends Main\ORM\Data\DataManager
 
 	/**
 	 * @param $orderId
-	 * @return int|false
+	 * @return array|false
 	 * @throws Main\ArgumentException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
@@ -164,7 +164,7 @@ class OrderEntityTable extends Main\ORM\Data\DataManager
 
 	public static function rebind(int $entityTypeId, int $oldEntityId, int $newEntityId): void
 	{
-		$sql = "UPDATE IGNORE b_crm_order_entity SET  OWNER_ID = {$newEntityId} WHERE OWNER_TYPE_ID = {$entityTypeId} AND OWNER_ID = {$oldEntityId}";
+		$sql = "UPDATE b_crm_order_entity SET  OWNER_ID = {$newEntityId} WHERE OWNER_TYPE_ID = {$entityTypeId} AND OWNER_ID = {$oldEntityId}";
 		Application::getConnection()->query($sql);
 	}
 }

@@ -39,7 +39,7 @@ $arMenu = array(
 			"counter_id" => "tasks_total",
 			"top_menu_id" => "tasks_panel_menu",
 			"menu_item_id"=>"menu_tasks",
-			"sub_link" => "/extranet/contacts/personal/user/".$USER_ID."/tasks/task/edit/0/"
+			"sub_link" => "/extranet/contacts/personal/user/".$USER_ID."/tasks/task/edit/0/?ta_sec=left_menu&ta_el=create_button",
 		),
 		""
 	),

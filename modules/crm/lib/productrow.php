@@ -4,7 +4,6 @@ namespace Bitrix\Crm;
 
 use Bitrix\Crm\Comparer\ProductRowComparer;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Reservation;
 use Bitrix\Main\Error;
 use Bitrix\Main\ORM\Fields\FieldTypeMask;
 use Bitrix\Main\ORM\Objectify\EntityObject;
@@ -151,10 +150,11 @@ class ProductRow extends EO_ProductRow implements \JsonSerializable
 	 * Normalize this product
 	 *
 	 * @param string $currencyId - id of a currency that set in an owner Item (quote, dynamic, etc.)
+	 * @param float|null $exchRate - custom exchange rate from currencyId to crm base currency
 	 *
 	 * @return Result
 	 */
-	public function normalize(string $currencyId): Result
+	public function normalize(string $currencyId, ?float $exchRate = null): Result
 	{
 		$normalizationResult = new Result();
 
@@ -163,7 +163,7 @@ class ProductRow extends EO_ProductRow implements \JsonSerializable
 		$this->normalizeDiscount($normalizationResult);
 		$this->normalizePriceNetto();
 		$this->normalizePriceBrutto();
-		$this->normalizePriceAccount($currencyId);
+		$this->normalizePriceAccount($currencyId, $exchRate);
 
 		return $normalizationResult;
 	}
@@ -342,12 +342,9 @@ class ProductRow extends EO_ProductRow implements \JsonSerializable
 		$this->setPriceBrutto($priceBrutto);
 	}
 
-	/**
-	 * @param string $currencyId - currency of an owner Item (quote, dynamic, etc.)
-	 */
-	protected function normalizePriceAccount(string $currencyId): void
+	protected function normalizePriceAccount(string $currencyId, ?float $exchRate): void
 	{
-		$priceAccount = Currency\Conversion::toAccountCurrency($this->getPrice(), $currencyId);
+		$priceAccount = Currency\Conversion::toAccountCurrency($this->getPrice(), $currencyId, $exchRate);
 
 		$this->setPriceAccount($priceAccount);
 	}

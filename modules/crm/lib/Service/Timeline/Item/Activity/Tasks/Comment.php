@@ -193,7 +193,7 @@ class Comment extends Activity
 			->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 			->addActionParamInt('ownerId', $this->getContext()->getEntityId())
 			->setAnalytics(new Layout\Action\Analytics(['scenario' => 'comm_close'], $this->analyticsHit))
-			->setAnimation(Layout\Action\Animation::showLoaderForItem()->setForever())
+			->setAnimation(Layout\Action\Animation::disableItem()->setForever())
 			;
 	}
 }

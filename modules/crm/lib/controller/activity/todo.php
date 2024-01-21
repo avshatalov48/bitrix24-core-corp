@@ -5,8 +5,8 @@ namespace Bitrix\Crm\Controller\Activity;
 use Bitrix\Crm\Activity\Entity;
 use Bitrix\Crm\Activity\Settings\Manager;
 use Bitrix\Crm\Activity\Settings\Section\Calendar;
-use Bitrix\Crm\Activity\Settings\Section\Ping;
 use Bitrix\Crm\Activity\TodoCreateNotification;
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Controller\Base;
 use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\FileUploader\TodoActivityUploaderController;
@@ -56,19 +56,28 @@ class ToDo extends Base
 		?int $responsibleId = null,
 		?int $parentActivityId = null,
 		array $fileTokens = [],
-		array $settings = []
+		array $settings = [],
+		array $pingOffsets = []
 	): ?array
 	{
 		$todo = new Entity\ToDo(
 			new ItemIdentifier($ownerTypeId, $ownerId)
 		);
 
-		$todo = $this->getPreparedEntity($todo, $description, $deadline, $parentActivityId, $responsibleId);
+		$todo = $this->getPreparedEntity(
+			$todo,
+			$description,
+			$deadline,
+			$parentActivityId,
+			$responsibleId,
+			$pingOffsets
+		);
 		if (!$todo)
 		{
 			return null;
 		}
 
+		/*
 		$settingsManager = Manager::createFromEntity($todo);
 		$todo = $settingsManager->getPreparedEntity($settings);
 		$options = $settingsManager->getEntityOptions($settings);
@@ -79,7 +88,7 @@ class ToDo extends Base
 			return null;
 		}
 
-		$settingsManager->saveAll($settings);
+		$settingsManager->saveAll($settings);*/
 
 		if (!empty($fileTokens))
 		{
@@ -122,7 +131,8 @@ class ToDo extends Base
 		?int $responsibleId = null,
 		?int $parentActivityId = null,
 		array $fileTokens = [],
-		array $settings = []
+		array $settings = [],
+		array $pingOffsets = []
 	): ?array
 	{
 		$todo = $this->loadEntity($ownerTypeId, $ownerId, $id);
@@ -140,7 +150,14 @@ class ToDo extends Base
 		
 		$prevResponsibleId = $todo->getResponsibleId();
 
-		$todo = $this->getPreparedEntity($todo, $description, $deadline, $parentActivityId, $responsibleId);
+		$todo = $this->getPreparedEntity(
+			$todo,
+			$description,
+			$deadline,
+			$parentActivityId,
+			$responsibleId,
+			$pingOffsets
+		);
 		if (!$todo)
 		{
 			return null;
@@ -201,7 +218,8 @@ class ToDo extends Base
 		string $description,
 		string $deadline,
 		?int $parentActivityId,
-		?int $responsibleId = null
+		?int $responsibleId = null,
+		?array $pingOffsets = null
 	): ?Entity\ToDo
 	{
 		$todo->setDescription($description);
@@ -218,6 +236,12 @@ class ToDo extends Base
 		if ($responsibleId)
 		{
 			$todo->setResponsibleId($responsibleId);
+		}
+
+		if (isset($pingOffsets))
+		{
+			$pingOffsets = TodoPingSettingsProvider::filterOffsets($pingOffsets);
+			$todo->setAdditionalFields(['PING_OFFSETS' => $pingOffsets]);
 		}
 
 		return $todo;
@@ -349,6 +373,34 @@ class ToDo extends Base
 		return $result;
 	}
 
+	public function updatePingOffsetsAction(int $ownerTypeId, int $ownerId, int $id, array $value = []): ?array
+	{
+		$todo = $this->loadEntity($ownerTypeId, $ownerId, $id);
+		if (!$todo)
+		{
+			return null;
+		}
+
+		if ($todo->isCompleted())
+		{
+			$this->addError(new Error( Loc::getMessage('CRM_ACTIVITY_TODO_UPDATE_PING_OFFSETS_ERROR')));
+
+			return null;
+		}
+
+		$filteredValue = TodoPingSettingsProvider::filterOffsets($value);
+		if (!empty($value) && empty($filteredValue))
+		{
+			$this->addError(new Error( Loc::getMessage('CRM_ACTIVITY_TODO_WRONG_PING_OFFSETS_FORMAT')));
+
+			return null; // nothing to do - wrong input
+		}
+
+		$todo->setAdditionalFields(['PING_OFFSETS' => $filteredValue]);
+
+		return $this->saveTodo($todo);
+	}
+
 	protected function loadEntity(int $ownerTypeId, int $ownerId, int $id): ?Entity\ToDo
 	{
 		$itemIdentifier = new ItemIdentifier($ownerTypeId, $ownerId);
@@ -477,7 +529,6 @@ class ToDo extends Base
 	{
 		return [
 			Calendar::TYPE_NAME,
-			Ping::TYPE_NAME,
 		];
 	}
 

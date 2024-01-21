@@ -36,6 +36,7 @@ Extension::load([
 	'ui.sidepanel-content',
 	'ui.notification',
 	'main.popup',
+	'ui.dialogs.messagebox',
 ]);
 ?>
 
@@ -68,9 +69,9 @@ Extension::load([
 			<div class="ui-slider-content-box">
 				<?php
 				$title =
-					Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_'.$arResult['PAYSYSTEM_HANDLER_FULL'].'_TITLE')
-					?: Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_'.mb_strtoupper($arResult['PAYSYSTEM_HANDLER']).'_TITLE')
-					?: $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['FULL_NAME'];
+					$arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['FULL_NAME']
+                    ?: $arResult['PAYSYSTEM_HANDLER_FULL']
+					?: $arResult['PAYSYSTEM_HANDLER'];
 				?>
 				<div style="display: flex; align-items: center" class="ui-slider-heading-4">
 					<?=htmlspecialcharsbx($title)?>
@@ -87,16 +88,7 @@ Extension::load([
 				</div>
 				<div class="ui-slider-inner-box">
 					<?php
-					$description = Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_'.$arResult['PAYSYSTEM_HANDLER_FULL'].'_DESCRIPTION');
-					if (!$description)
-					{
-						$description = Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_'.mb_strtoupper($arResult['PAYSYSTEM_HANDLER']).'_DESCRIPTION');
-					}
-
-					if (!$description)
-					{
-						$description = $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['DESCRIPTION'];
-					}
+					$description = $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['DESCRIPTION'];
 
 					$sanitizer = new CBXSanitizer();
 					$sanitizer->SetLevel(\CBXSanitizer::SECURE_LEVEL_LOW);
@@ -192,24 +184,12 @@ Extension::load([
 			}
 			else
 			{
-				$name = Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_'.$arResult['PAYSYSTEM_HANDLER_FULL'].'_PUBLIC_NAME');
-				if (!$name)
-				{
-					$name = $arResult['PAYSYSTEM_PS_MODE']
-						? $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['MODE_NAME']
-						: $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['NAME'];
-				}
+				$name = $arResult['PAYSYSTEM_PS_MODE']
+					? $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['MODE_NAME']
+					: $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['NAME'];
 			}
 
-			$description = '';
-			if (isset($arResult['PAYSYSTEM']['DESCRIPTION']))
-			{
-				$description = $arResult['PAYSYSTEM']['DESCRIPTION'];
-			}
-			else
-			{
-				$description = Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_'.$arResult['PAYSYSTEM_HANDLER_FULL'].'_PUBLIC_DESCRIPTION');
-			}
+			$description = $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['PUBLIC_DESCRIPTION'];
 
 			$sanitizer = new CBXSanitizer();
 			$sanitizer->SetLevel(\CBXSanitizer::SECURE_LEVEL_LOW);

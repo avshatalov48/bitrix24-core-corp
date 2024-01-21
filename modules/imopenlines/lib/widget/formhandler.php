@@ -149,8 +149,7 @@ class FormHandler
 			'SKIP_CREATE' => 'Y'
 		]);
 
-		$crmManager = new Crm($session);
-		$assignedUserId = $crmManager->getResponsibleCrmId();
+		$assignedUserId = $session->getCrmManager()->getResponsibleCrmId();
 
 		$event->addResult(new EventResult(EventResult::SUCCESS, [
 			'assignedById' => $assignedUserId
@@ -560,7 +559,7 @@ class FormHandler
 			return false;
 		}
 
-		$crmManager = new Crm($this->session);
+		$crmManager = $this->session->getCrmManager();
 		$bindings = [];
 		$entities = [];
 		foreach ($this->crmEntities as $entity)

@@ -574,9 +574,9 @@ class CCrmUserType
 		}
 	}
 
-	public function GetEntityFields($ID)
+	public function GetEntityFields($ID, $userId = false)
 	{
-		return $this->GetUserFields($this->sEntityID, $ID, LANGUAGE_ID);
+		return $this->GetUserFields($this->sEntityID, $ID, LANGUAGE_ID, $userId);
 	}
 	public function AddFields(&$arFilterFields, $ID, $sFormName = 'form1', $bVarsFromForm = false, $bShow = false, $bParentComponent = false, $arOptions = array())
 	{
@@ -1345,116 +1345,30 @@ class CCrmUserType
 		return $values;
 	}
 
-	public function appendGridHeaders(array &$headers): void
-	{
-		$this->ListAddHeaders($headers);
-
-		foreach ($headers as &$header)
-		{
-			$header['name'] = htmlspecialcharsback($header['name']);
-		}
-		unset($header);
-	}
-
+	/**
+	 * @deprecated
+	 * @see \Bitrix\Crm\Component\EntityList\UserField\GridHeaders::append
+	 */
 	public function ListAddHeaders(&$arHeaders, $bImport = false)
 	{
-		$arUserFields = $this->GetAbstractFields();
-		foreach($arUserFields as $FIELD_NAME => $arUserField)
-		{
-			//NOTE: SHOW_IN_LIST affect only default fields. All fields are allowed in list.
-			//if(!isset($arUserField['SHOW_IN_LIST']) || $arUserField['SHOW_IN_LIST'] !== 'Y')
-			//	continue;
+		(new \Bitrix\Crm\Component\EntityList\UserField\GridHeaders($this))
+			->setForImport((bool)$bImport)
+			->setWithEnumFieldValues(true)
+			->append($arHeaders)
+		;
+	}
 
-			$editable = true;
-			$sType = $arUserField['USER_TYPE']['BASE_TYPE'];
-			if ($arUserField['EDIT_IN_LIST'] === 'N'
-				|| $arUserField['MULTIPLE'] === 'Y'
-				||$arUserField['USER_TYPE']['BASE_TYPE'] === 'file'
-				|| $arUserField['USER_TYPE']['USER_TYPE_ID'] === 'employee'
-				|| $arUserField['USER_TYPE']['USER_TYPE_ID'] === 'crm')
-				$editable = false;
-			else if (in_array($arUserField['USER_TYPE']['USER_TYPE_ID'], array('enumeration', 'iblock_section', 'iblock_element')))
-			{
-				$sType = 'list';
-				$editable = array(
-					'items' => array('' => '')
-				);
-				if (is_callable(array($arUserField['USER_TYPE']['CLASS_NAME'], 'GetList')))
-				{
-					$rsEnum = call_user_func_array(array($arUserField['USER_TYPE']['CLASS_NAME'], 'GetList'), array($arUserField));
-					if(is_object($rsEnum) && is_subclass_of($rsEnum, 'CAllDBResult'))
-					{
-						$maxEditableCount = (int)\Bitrix\Main\Config\Option::get('crm', '~enumeration_max_editable_inline_count', 1000);
-						if ($rsEnum->SelectedRowsCount() <= $maxEditableCount)
-						{
-							while ($ar = $rsEnum->GetNext())
-							{
-								$editable['items'][$ar['ID']] = htmlspecialcharsback($ar['VALUE']);
-							}
-						}
-						else
-						{
-							$editable = false;
-						}
-					}
-				}
-			}
-			else if ($arUserField['USER_TYPE']['USER_TYPE_ID'] == 'boolean')
-			{
-				$sType = 'list';
-				//Default value must be placed at first position.
-				$defaultValue = isset($arUserField['SETTINGS']['DEFAULT_VALUE']) ? (int)$arUserField['SETTINGS']['DEFAULT_VALUE'] : 0;
-				if($defaultValue === 1)
-				{
-					$editable = array('items' => array('1' => GetMessage('MAIN_YES'), '0' => GetMessage('MAIN_NO')));
-				}
-				else
-				{
-					$editable = array('items' => array('0' => GetMessage('MAIN_NO'), '1' => GetMessage('MAIN_YES')));
-				}
-			}
-			else if ($arUserField['USER_TYPE']['BASE_TYPE'] == 'datetime')
-				$sType = 'date';
-			elseif ($arUserField['USER_TYPE']['USER_TYPE_ID'] == 'crm_status')
-			{
-				$ar = CCrmStatus::GetStatusList($arUserField['SETTINGS']['ENTITY_TYPE']);
-				$sType = 'list';
-				$editable = array(
-					'items' => Array('' => '') + $ar
-				);
-			}
-			elseif(mb_substr($arUserField['USER_TYPE']['USER_TYPE_ID'], 0, 5) === 'rest_')
-			{
-				// skip REST type fields here
-				continue;
-			}
-
-			if($sType === 'string')
-			{
-				$sType = 'text';
-			}
-			elseif($sType === 'int' || $sType === 'double')
-			{
-				//HACK: \CMainUIGrid::prepareEditable does not recognize 'number' type
-				$sType = 'int';
-			}
-
-			$fieldLabel = $arUserField['LIST_COLUMN_LABEL']
-				?? $arUserField['EDIT_FORM_LABEL']
-				?? $arUserField['LIST_FILTER_LABEL'];
-
-			$arHeaders[$FIELD_NAME] = array(
-				'id' => $FIELD_NAME,
-				'name' => htmlspecialcharsbx($fieldLabel),
-				'sort' => $arUserField['MULTIPLE'] == 'N' ? $FIELD_NAME : false,
-				'default' => $arUserField['SHOW_IN_LIST'] == 'Y',
-				'editable' => $editable,
-				'type' => $sType
-			);
-
-			if ($bImport)
-				$arHeaders[$FIELD_NAME]['mandatory'] = $arUserField['MANDATORY'] === 'Y' ? 'Y' : 'N';
-		}
+	/**
+	 * @deprecated
+	 * @see \Bitrix\Crm\Component\EntityList\UserField\GridHeaders::append
+	 */
+	public function appendGridHeaders(array &$headers): void
+	{
+		(new \Bitrix\Crm\Component\EntityList\UserField\GridHeaders($this))
+			->setWithEnumFieldValues(false)
+			->setWithHtmlSpecialchars(false)
+			->append($headers)
+		;
 	}
 
 	// Get Fields Metadata

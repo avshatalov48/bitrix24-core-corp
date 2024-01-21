@@ -6,7 +6,6 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Text\Emoji;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Entity\ExpressionField;
 
 use Bitrix\Bitrix24\Feature;
 
@@ -121,11 +120,8 @@ class Config
 		}
 		elseif ($mode == self::MODE_ADD)
 		{
-			$configCount = Model\ConfigTable::getList(array(
-				'select' => array('CNT'),
-				'runtime' => array(new ExpressionField('CNT', 'COUNT(*)'))
-			))->fetch();
-			if ($configCount['CNT'] == 0)
+			$configCount = Model\ConfigTable::getCount();
+			if ($configCount == 0)
 			{
 				$fields['LINE_NAME'] = Loc::getMessage('IMOL_CONFIG_LINE_NAME', Array('#NAME#' => $companyName));
 			}
@@ -1009,7 +1005,8 @@ class Config
 		{
 			$date = new DateTime();
 			$date->add('8 HOUR');
-			\CAgent::AddAgent('\Bitrix\ImOpenLines\Config::deleteTemporaryConfigAgent('.$configId.');', "imopenlines", "N", 28800, "", "Y", $date);
+			/** @see \Bitrix\ImOpenLines\Config::deleteTemporaryConfigAgent */
+			\CAgent::AddAgent('Bitrix\ImOpenLines\Config::deleteTemporaryConfigAgent('.$configId.');', "imopenlines", "N", 28800, "", "Y", $date);
 		}
 
 		self::sendUpdateForQueueList(Array(
@@ -1448,6 +1445,11 @@ class Config
 	public static function canViewLine($configId, $userId = null)
 	{
 		return self::canDoOperation($configId, Security\Permissions::ENTITY_LINES, Security\Permissions::ACTION_VIEW, $userId);
+	}
+
+	public static function canViewHistory($configId, $userId = null)
+	{
+		return self::canDoOperation($configId, Security\Permissions::ENTITY_HISTORY, Security\Permissions::ACTION_VIEW, $userId);
 	}
 
 	public static function canEditLine($configId, $userId = null)
@@ -2191,7 +2193,7 @@ class Config
 		return new self();
 	}
 
-	public static function deleteTemporaryConfigAgent($configId)
+	public static function deleteTemporaryConfigAgent($configId): string
 	{
 		$orm = Model\ConfigTable::getList([
 			'filter'=> [
@@ -2248,14 +2250,7 @@ class Config
 
 	public static function available()
 	{
-		$orm = Model\ConfigTable::getList(Array(
-			'select' => Array('CNT'),
-			'runtime' => array(
-				new ExpressionField('CNT', 'COUNT(*)')
-			),
-		));
-		$row = $orm->fetch();
-		return ($row['CNT'] > 0);
+		return (Model\ConfigTable::getCount() > 0);
 	}
 
 	private static function getSla($configId)

@@ -20,6 +20,7 @@ jn.define('im/messenger/controller/user-add/view', (require, exports, module) =>
 				onSearchShow: () => this.onSearchShow(),
 				onSearchClose: () => this.onSearchClose(),
 				onChangeText: (text) => this.search(text),
+				carouselSize: 'L',
 			});
 
 			this.saveButton = new WidgetHeaderButton({

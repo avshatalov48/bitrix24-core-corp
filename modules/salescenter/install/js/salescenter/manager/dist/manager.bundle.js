@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,rest_client,main_core,ui_buttons) {
 	'use strict';
@@ -788,6 +789,11 @@ this.BX = this.BX || {};
 	    key: "openHowPaySmartInvoiceWorks",
 	    value: function openHowPaySmartInvoiceWorks(event) {
 	      Manager.openHelper(event, 'redirect=detail&code=17615318', 'pay_smart_invoice');
+	    }
+	  }, {
+	    key: "openHowTerminalWorks",
+	    value: function openHowTerminalWorks(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=18537646', 'terminal');
 	    }
 	  }, {
 	    key: "openFormPagesHelp",

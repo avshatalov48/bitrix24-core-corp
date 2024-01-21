@@ -2,13 +2,13 @@
 
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Crm;
+use Bitrix\Crm\Counter\EntityCounterType;
+use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm;
-use Bitrix\Crm\EntityAddress;
-use Bitrix\Crm\Counter\EntityCounterType;
 
 Loc::loadMessages(__FILE__);
 
@@ -212,7 +212,14 @@ class CompanyDataProvider extends EntityDataProvider implements FactoryOptionabl
 					'default' => true,
 					'partial' => true,
 				]
-			)
+			),
+			'OBSERVER_IDS' => $this->createField(
+				'OBSERVER_IDS',
+				[
+					'type' => 'entity_selector',
+					'partial' => true,
+				]
+			),
 		];
 
 		if ($this->isActivityResponsibleEnabled())
@@ -378,6 +385,14 @@ class CompanyDataProvider extends EntityDataProvider implements FactoryOptionabl
 			$result[$code] = $this->createField($code, $parentField);
 		}
 
+		foreach ($this->settings->unsupportedFields() as $unsupportedField)
+		{
+			if (isset($result[$unsupportedField]))
+			{
+				unset($result[$unsupportedField]);
+			}
+		}
+
 		return $result;
 	}
 
@@ -416,11 +431,11 @@ class CompanyDataProvider extends EntityDataProvider implements FactoryOptionabl
 				'items' => \CCrmStatus::GetStatusList('EMPLOYEES')
 			);
 		}
-		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID', 'ACTIVITY_RESPONSIBLE_IDS'], true))
+		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID', 'ACTIVITY_RESPONSIBLE_IDS', 'OBSERVER_IDS'], true))
 		{
 			$referenceClass = ($this->factory ? $this->factory->getDataClass() : null);
 
-			if ($fieldID === 'ACTIVITY_RESPONSIBLE_IDS')
+			if (in_array($fieldID, ['ACTIVITY_RESPONSIBLE_IDS', 'OBSERVER_IDS'], true))
 			{
 				$referenceClass = null;
 			}

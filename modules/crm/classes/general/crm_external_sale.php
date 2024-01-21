@@ -578,15 +578,7 @@ class CCrmExternalSale
 			if ($strSqlOrderBy <> '')
 				$strSqlOrderBy .= ", ";
 
-			if($DB->type == "ORACLE")
-			{
-				if(mb_substr($arSqlOrder[$i], -3) == "ASC")
-					$strSqlOrderBy .= $arSqlOrder[$i]." NULLS FIRST";
-				else
-					$strSqlOrderBy .= $arSqlOrder[$i]." NULLS LAST";
-			}
-			else
-				$strSqlOrderBy .= $arSqlOrder[$i];
+			$strSqlOrderBy .= $arSqlOrder[$i];
 		}
 		// <-- ORDER BY
 

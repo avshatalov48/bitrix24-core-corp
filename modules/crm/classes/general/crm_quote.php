@@ -7,6 +7,8 @@ use Bitrix\Crm\CompanyAddress;
 use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\FieldContext\EntityFactory;
+use Bitrix\Crm\FieldContext\ValueFiller;
 use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\Integration\StorageManager;
@@ -660,9 +662,11 @@ class CAllCrmQuote
 		if (!$this->bCheckPermission)
 			$arFilterTmp['CHECK_PERMISSIONS'] = 'N';
 
-		$obRes = self::GetList(array(), $arFilterTmp);
+		$obRes = self::GetList([], $arFilterTmp, false, false, ['*', 'UF_*']);
 		if (!($arRow = $obRes->Fetch()))
 			return false;
+
+		$currentFields = $arRow;
 
 		$iUserId = CCrmSecurityHelper::GetCurrentUserID();
 
@@ -1025,6 +1029,10 @@ class CAllCrmQuote
 			{
 				foreach (GetModuleEvents('crm', 'OnAfterCrmQuoteUpdate', true) as $arEvent)
 					ExecuteModuleEventEx($arEvent, array(&$arFields));
+
+				$scope = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getScope();
+				$filler = new ValueFiller(CCrmOwnerType::Quote, $ID, $scope);
+				$filler->fill($currentFields, $arFields);
 			}
 		}
 		return $bResult;
@@ -1158,6 +1166,12 @@ class CAllCrmQuote
 			{
 				ExecuteModuleEventEx($arEvent, array($ID));
 			}
+
+			$fieldsContextEntity = EntityFactory::getInstance()->getEntity(CCrmOwnerType::Quote);
+			if ($fieldsContextEntity)
+			{
+				$fieldsContextEntity::deleteByItemId($ID);
+			}
 		}
 		return true;
 	}
@@ -1183,18 +1197,7 @@ class CAllCrmQuote
 				$maxLastID = 0;
 				$strSql = '';
 
-				switch($DB->type)
-				{
-					case "MYSQL":
-						$strSql = "SELECT ID, QUOTE_NUMBER FROM b_crm_quote WHERE QUOTE_NUMBER IS NOT NULL ORDER BY ID DESC LIMIT 1";
-						break;
-					case "ORACLE":
-						$strSql = "SELECT ID, QUOTE_NUMBER FROM b_crm_quote WHERE QUOTE_NUMBER IS NOT NULL AND ROWNUM <= 1 ORDER BY ID DESC";
-						break;
-					case "MSSQL":
-						$strSql = "SELECT TOP 1 ID, QUOTE_NUMBER FROM b_crm_quote WHERE QUOTE_NUMBER IS NOT NULL ORDER BY ID DESC";
-						break;
-				}
+				$strSql = "SELECT ID, QUOTE_NUMBER FROM b_crm_quote WHERE QUOTE_NUMBER IS NOT NULL ORDER BY ID DESC LIMIT 1";
 
 				$dbres = $DB->Query($strSql, true);
 				if ($arRes = $dbres->GetNext())
@@ -1225,20 +1228,8 @@ class CAllCrmQuote
 				if ($arRes = $dbres->GetNext())
 				{
 					$userID = intval($arRes["ASSIGNED_BY_ID"]);
-					$strSql = '';
 
-					switch($DB->type)
-					{
-						case "MYSQL":
-							$strSql = "SELECT MAX(CAST(SUBSTRING(QUOTE_NUMBER, LENGTH('".$userID."_') + 1) as UNSIGNED)) as NUM_ID FROM b_crm_quote WHERE QUOTE_NUMBER LIKE '".$userID."\_%'";
-							break;
-						case "ORACLE":
-							$strSql = "SELECT MAX(CAST(SUBSTR(QUOTE_NUMBER, LENGTH('".$userID."_') + 1) as NUMBER)) as NUM_ID FROM b_crm_quote WHERE QUOTE_NUMBER LIKE '".$userID."_%'";
-							break;
-						case "MSSQL":
-							$strSql = "SELECT MAX(CAST(SUBSTRING(QUOTE_NUMBER, LEN('".$userID."_') + 1, LEN(QUOTE_NUMBER)) as INT)) as NUM_ID FROM b_crm_quote WHERE QUOTE_NUMBER LIKE '".$userID."_%'";
-							break;
-					}
+					$strSql = "SELECT MAX(" . $DB->toNumber("SUBSTRING(QUOTE_NUMBER, LENGTH('".$userID."_') + 1)") . ") as NUM_ID FROM b_crm_quote WHERE QUOTE_NUMBER LIKE '".$userID."\_%'";
 
 					$dbres = $DB->Query($strSql, true);
 					if ($arRes = $dbres->GetNext())
@@ -1272,19 +1263,7 @@ class CAllCrmQuote
 						break;
 				}
 
-				$strSql = '';
-				switch($DB->type)
-				{
-					case "MYSQL":
-						$strSql = "SELECT MAX(CAST(SUBSTRING(QUOTE_NUMBER, LENGTH('".$date." / ') + 1) as UNSIGNED)) as NUM_ID FROM b_crm_quote WHERE QUOTE_NUMBER LIKE '".$date." / %'";
-						break;
-					case "ORACLE":
-						$strSql = "SELECT MAX(CAST(SUBSTR(QUOTE_NUMBER, LENGTH('".$date." / ') + 1) as NUMBER)) as NUM_ID FROM b_crm_quote WHERE QUOTE_NUMBER LIKE '".$date." / %'";
-						break;
-					case "MSSQL":
-						$strSql = "SELECT MAX(CAST(SUBSTRING(QUOTE_NUMBER, LEN('".$date." / ') + 1, LEN(QUOTE_NUMBER)) as INT)) as NUM_ID FROM b_crm_quote WHERE QUOTE_NUMBER LIKE '".$date." / %'";
-						break;
-				}
+				$strSql = "SELECT MAX(" . $DB->ToNumber("SUBSTRING(QUOTE_NUMBER, LENGTH('".$date." / ') + 1)") . ") as NUM_ID FROM b_crm_quote WHERE QUOTE_NUMBER LIKE '".$date." / %'";
 
 				$dbres = $DB->Query($strSql, true);
 				if ($arRes = $dbres->GetNext())
@@ -1388,7 +1367,7 @@ class CAllCrmQuote
 				$maxLastIdIsSet = false;
 				for ($i = 0; $i < 10; $i++)
 				{
-					$sql = 'SELECT MAX(CAST(QUOTE_NUMBER AS UNSIGNED)) AS LAST_NUMBER FROM b_crm_quote';
+					$sql = 'SELECT MAX(' . $DB->ToNumber('QUOTE_NUMBER') . ') AS LAST_NUMBER FROM b_crm_quote';
 					$resLastId = $DB->Query($sql, true);
 					if ($row = $resLastId->fetch())
 					{

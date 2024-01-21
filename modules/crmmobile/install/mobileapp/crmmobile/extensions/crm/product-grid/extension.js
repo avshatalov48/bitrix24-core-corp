@@ -53,10 +53,12 @@ jn.define('crm/product-grid', (require, exports, module) => {
 				totalRows: count,
 			} = this.getSummary();
 
-			this.customEventEmitter.emit('StoreEvents.ProductList.TotalChanged', [{
-				count,
-				total: { amount, currency },
-			}]);
+			this.customEventEmitter.emit('StoreEvents.ProductList.TotalChanged', [
+				{
+					count,
+					total: { amount, currency },
+				},
+			]);
 		}
 
 		/**
@@ -230,7 +232,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 		{
 			this.loadProductModel(productId).then(({ productRow }) => {
 				this.addItem(productRow);
-			});
+			}).catch(console.error);
 		}
 
 		/**
@@ -247,7 +249,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 					productRow.recalculate((calc) => calc.calculateBasePrice(basePrice));
 				}
 				this.addItem(productRow);
-			});
+			}).catch(console.error);
 		}
 
 		/**
@@ -311,13 +313,15 @@ jn.define('crm/product-grid', (require, exports, module) => {
 		{
 			if (this.getItems().length === 0)
 			{
-				this.customEventEmitter.emit('StoreEvents.ProductList.TotalChanged', [{
-					count: 0,
-					total: {
-						amount: 0,
-						currency: this.state.currencyId,
+				this.customEventEmitter.emit('StoreEvents.ProductList.TotalChanged', [
+					{
+						count: 0,
+						total: {
+							amount: 0,
+							currency: this.state.currencyId,
+						},
 					},
-				}]);
+				]);
 
 				return;
 			}
@@ -348,10 +352,12 @@ jn.define('crm/product-grid', (require, exports, module) => {
 							totalRows: count,
 						} = response.data;
 
-						this.customEventEmitter.emit('StoreEvents.ProductList.TotalChanged', [{
-							count,
-							total: { amount, currency },
-						}]);
+						this.customEventEmitter.emit('StoreEvents.ProductList.TotalChanged', [
+							{
+								count,
+								total: { amount, currency },
+							},
+						]);
 
 						resolve(response.data);
 					})
@@ -478,12 +484,12 @@ jn.define('crm/product-grid', (require, exports, module) => {
 						entity.id,
 						entity.typeId,
 						this.getItems(),
-						currencyId
+						currencyId,
 					)
 					.then((products) => {
 						this.setStateWithNotification({ products, currencyId }, () => this.fetchTotals());
 					})
-				;
+					.catch(console.error);
 			}
 		}
 
@@ -499,16 +505,14 @@ jn.define('crm/product-grid', (require, exports, module) => {
 						entityId: entity.id,
 						entityTypeId: entity.typeId,
 					},
-				}
+				},
 			)
 				.then((response) => {
 					this.setState({
-						products: response.data.map((props) => ProductRow.createRecalculated(props))
+						products: response.data.map((props) => ProductRow.createRecalculated(props)),
 					});
 				})
-				.catch((err) => {
-					console.error(err);
-				});
+				.catch(console.error);
 		}
 
 		getEntityTypeId()
@@ -551,6 +555,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 
 		handleFloatingMenuAction(actionId)
 		{
+			// eslint-disable-next-line default-case
 			switch (actionId)
 			{
 				case MenuItemId.SELECTOR:

@@ -24,6 +24,14 @@ abstract class Entity
 			{
 				$instance = ServiceLocator::getInstance()->get('crm.listEntity.entity.deal');
 			}
+			elseif($entityTypeName === \CCrmOwnerType::ContactName)
+			{
+				$instance = ServiceLocator::getInstance()->get('crm.listEntity.entity.contact');
+			}
+			elseif($entityTypeName === \CCrmOwnerType::CompanyName)
+			{
+				$instance = ServiceLocator::getInstance()->get('crm.listEntity.entity.company');
+			}
 			elseif($entityTypeName === \CCrmOwnerType::InvoiceName)
 			{
 				$instance = ServiceLocator::getInstance()->get('crm.listEntity.entity.invoice');
@@ -86,13 +94,23 @@ abstract class Entity
 		$method = method_exists($provider, 'getListEx') ? 'getListEx' : 'getList';
 
 		$options = [];
+		if (isset($parameters['options']))
+		{
+			if (isset($parameters['options']['FIELD_OPTIONS']))
+			{
+				$options['FIELD_OPTIONS'] = $parameters['options']['FIELD_OPTIONS'];
+			}
+			if (isset($parameters['options']['IS_EXTERNAL_CONTEXT']))
+			{
+				$options['IS_EXTERNAL_CONTEXT'] = $parameters['options']['IS_EXTERNAL_CONTEXT'];
+			}
+		}
+
 		if(isset($parameters['limit'], $parameters['offset']))
 		{
-			$options = [
-				'QUERY_OPTIONS' => [
-					'LIMIT' => $parameters['limit'],
-					'OFFSET' => $parameters['offset'],
-				],
+			$options['QUERY_OPTIONS'] = [
+				'LIMIT' => $parameters['limit'],
+				'OFFSET' => $parameters['offset'],
 			];
 		}
 		$filter = $parameters['filter'];
@@ -101,8 +119,48 @@ abstract class Entity
 			$filter['@CATEGORY_ID'] = $filter['CATEGORY_ID'];
 			unset($filter['CATEGORY_ID']);
 		}
+		$resourceBookingFilter = null;
+		if (is_array($filter) && (isset($filter['CALENDAR_FIELD'])) && (isset($filter['CALENDAR_DATE_FROM'])) && (isset($filter['CALENDAR_DATE_TO'])))
+		{
+			$resourceBookingFilter = [
+				'CALENDAR_DATE_FROM' => $filter['CALENDAR_DATE_FROM'],
+				'CALENDAR_DATE_TO' => $filter['CALENDAR_DATE_TO'],
+				'CALENDAR_FIELD' => $filter['CALENDAR_FIELD']
+			];
+		}
 
-		return $provider::$method($parameters['order'], $filter, false, false, $parameters['select'], $options);
+		$fieldsSelect = array_unique($parameters['select']);
+		if (count($fieldsSelect) > 1 || !isset($fieldsSelect['ID']))
+		{
+			$onlyIdsSelect = ['ID'];
+			$idsResult = $provider::$method($parameters['order'], $filter, false, false, $onlyIdsSelect, $options);
+
+			$ids = [];
+			while ($item = $idsResult->Fetch())
+			{
+				$ids[] = $item['ID'];
+			}
+
+			if (empty($ids))
+			{
+				return new \CDBResult();
+			}
+
+			if (isset($options['QUERY_OPTIONS']))
+			{
+				unset($options['QUERY_OPTIONS']);
+			}
+			$filter = [
+				'@ID' => $ids,
+				'CHECK_PERMISSIONS' => 'N',
+			];
+			if (is_array($resourceBookingFilter))
+			{
+				$filter = array_merge($filter, $resourceBookingFilter);
+			}
+		}
+
+		return $provider::$method($parameters['order'], $filter, false, false, $fieldsSelect, $options);
 	}
 
 	/**

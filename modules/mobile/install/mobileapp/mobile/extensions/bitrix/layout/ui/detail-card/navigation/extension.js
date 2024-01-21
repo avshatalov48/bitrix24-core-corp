@@ -1,7 +1,10 @@
 (() => {
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
+
 	const defaultParams = {
 		useLargeTitleMode: false,
-		detailTextColor: '#a8adb4',
+		detailTextColor: AppTheme.colors.base4,
 	};
 
 	class DetailCardNavigation

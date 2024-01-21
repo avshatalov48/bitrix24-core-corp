@@ -1,0 +1,337 @@
+.crm-audio-player-container {
+	--crm-audio-player__transition-duration: 0.2s;
+	--crm-audio-player__transition-timing-function: 0.2s;
+	position: static;
+	height: 40px;
+	padding: 8px 0 12px 0;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: horizontal;
+	-webkit-box-direction: normal;
+	    -ms-flex-direction: row;
+	        flex-direction: row;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	-webkit-box-pack: center;
+	    -ms-flex-pack: center;
+	        justify-content: center;
+}
+
+.crm-audio-player-container.--mini {
+	padding: 0;
+	height: auto;
+}
+
+.crm-audio-player-container .ui-vue-audioplayer-controls-container {
+	width: auto;
+	height: auto;
+	min-width: auto;
+	min-height: auto;
+	max-width: -webkit-max-content;
+	max-width: -moz-max-content;
+	max-width: max-content;
+}
+
+.crm-audio-player-container .ui-vue-audioplayer-control {
+	--border-width: 1px;
+	width: calc(var(--ui-size-2xl, 28px) - var(--border-width));
+	height: calc(var(--ui-size-2xl, 28px) - var(--border-width));
+	border: none;
+	background: var(--ui-color-primary, #2fc6f6);
+	background-image: none;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: horizontal;
+	-webkit-box-direction: normal;
+	    -ms-flex-direction: row;
+	        flex-direction: row;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	-webkit-box-pack: center;
+	    -ms-flex-pack: center;
+	        justify-content: center;
+	-webkit-transition-property: border-color, fill, background-color, background;
+	-o-transition-property: border-color, fill, background-color, background;
+	transition-property: border-color, fill, background-color, background;
+	-webkit-transition-duration: var(--crm-audio-player__transition-duration);
+	     -o-transition-duration: var(--crm-audio-player__transition-duration);
+	        transition-duration: var(--crm-audio-player__transition-duration);
+	-webkit-transition-timing-function: var(--crm-audio-player__transition-timing-function);
+	     -o-transition-timing-function: var(--crm-audio-player__transition-timing-function);
+	        transition-timing-function: var(--crm-audio-player__transition-timing-function);
+}
+
+.crm-audio-player-container.--mini .ui-vue-audioplayer-control,
+.crm-audio-player-container.--mini .ui-vue-audioplayer-control:hover {
+	width: 40px;
+	height: 20px;
+	border-radius: 512px;
+	background-color: var(--ui-color-background-primary);
+	border: var(--ui-border-width-thin) solid var(--ui-color-palette-blue-40);
+}
+
+.crm-audio-player-container.--mini .ui-vue-audioplayer-control:hover {
+	border-color: var(--ui-color-palette-blue-60);
+}
+
+.crm-audio-player-container .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause {
+	-webkit-transition-duration: var(--crm-audio-player__transition-duration);
+	     -o-transition-duration: var(--crm-audio-player__transition-duration);
+	        transition-duration: var(--crm-audio-player__transition-duration);
+}
+
+.crm-audio-player-container.--mini .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause,
+.crm-audio-player-container.--mini .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause:hover {
+	-webkit-transition-duration: var(--crm-audio-player__transition-duration);
+	     -o-transition-duration: var(--crm-audio-player__transition-duration);
+	        transition-duration: var(--crm-audio-player__transition-duration);
+	background-color: var(--ui-color-background-primary);
+	border-color: var(--ui-color-base-40);
+	fill: var(--ui-color-base-solid-rgb);
+}
+
+.crm-audio-player-container.--mini .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause svg,
+.crm-audio-player-container.--mini .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause:hover svg {
+	fill: var(--ui-color-base-solid-rgb);
+}
+.crm-audio-player-container.--mini .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause:hover {
+	border-color: var(--ui-color-base-60);
+	-webkit-transition-duration: 0s;
+	     -o-transition-duration: 0s;
+	        transition-duration: 0s;
+}
+
+.crm-audio-player-container .ui-vue-audioplayer-control:hover {
+	-webkit-transition-duration: 0s;
+	     -o-transition-duration: 0s;
+	        transition-duration: 0s;
+	border-color: var(--ui-color-base-50, #a8adb4);
+	background: -webkit-gradient(linear, left bottom, left top, from(rgba(255, 255, 255, 0.2)), to(rgba(255, 255, 255, 0.2))), #2FC6F6;
+	background: -o-linear-gradient(bottom, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)), #2FC6F6;
+	background: linear-gradient(0deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)), #2FC6F6;
+}
+
+.crm-audio-player-container .ui-vue-audioplayer-control.ui-vue-audioplayer-control-pause:hover {
+	fill: var(--ui-color-palette-blue-60, #1aa9d6);
+}
+
+.crm-audio-player-container.--mini .ui-vue-audioplayer-control-loader {
+	-webkit-animation: none;
+	        animation: none;
+}
+
+
+.crm-audio-player-container .ui-vue-audioplayer-control-icon {
+	margin-left: 2px;
+	fill: var(--ui-color-on-primary, #fff);
+	-webkit-transition-duration: var(--crm-audio-player__transition-duration);
+	     -o-transition-duration: var(--crm-audio-player__transition-duration);
+	        transition-duration: var(--crm-audio-player__transition-duration);
+}
+
+.crm-audio-player-container.--mini .ui-vue-audioplayer-control-icon {
+	fill: var(--ui-color-primary);
+}
+
+.crm-audio-player-container .ui-vue-audioplayer-control:hover .ui-vue-audioplayer-control-icon {
+	-webkit-transition-duration: 0s;
+	     -o-transition-duration: 0s;
+	        transition-duration: 0s;
+}
+
+.crm-audio-player-container .ui-vue-audioplayer-timeline-container {
+	--seek-size: var(--ui-size-lg, 20px);
+	height: auto;
+	margin-left: calc(var(--ui-space-inline-md, 16px));
+	padding-left: 0;
+}
+
+.crm-audio-player-container.--mini .ui-vue-audioplayer-timeline-container {
+	margin-left: var(--ui-space-inline-xs);
+}
+
+.crm-audio-player-container .ui-vue-audioplayer-track-container {
+	margin-top: 10px;
+	position: relative;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: auto;
+}
+
+.crm-audio-player-container .ui-vue-audioplayer-track-mask {
+	position: static;
+	height: 6px;
+	border-radius: 33px;
+	background: var(--ui-color-primary, #2fc6f6);
+	opacity: 0.3;
+}
+.crm-audio-player-container .ui-vue-audioplayer-track {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 6px;
+	border-radius: 33px;
+	background: var(--ui-color-primary, #2fc6f6);
+}
+
+
+.crm-audio-player-container .ui-vue-audioplayer-track-seek {
+	width: auto;
+	height: auto;
+	border: none;
+	border-radius: 0;
+	background-color: transparent;
+	opacity: 1;
+	top: calc(-50% - 5px);
+}
+
+.crm-audio-player-container .ui-vue-audioplayer-track-seek-icon {
+	width: var(--seek-size);
+	height: var(--seek-size);
+	border: 1px solid var(--ui-color-base-30, #d5d7db);
+	border-radius: 50%;
+	-webkit-box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.05);
+	        box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.05);
+	background-color: var(--ui-color-background-primary, #FFFFFF);
+	opacity: 0.94;
+	-webkit-transition-property: opacity, border-color;
+	-o-transition-property: opacity, border-color;
+	transition-property: opacity, border-color;
+	-webkit-transition-duration: var(--crm-audio-player__transition-duration);
+	     -o-transition-duration: var(--crm-audio-player__transition-duration);
+	        transition-duration: var(--crm-audio-player__transition-duration);
+	-webkit-transition-timing-function: var(--crm-audio-player__transition-timing-function);
+	     -o-transition-timing-function: var(--crm-audio-player__transition-timing-function);
+	        transition-timing-function: var(--crm-audio-player__transition-timing-function);
+}
+
+.crm-audio-player-container .ui-vue-audioplayer-track-seek-icon:hover {
+	-webkit-transition-duration: 0s;
+	     -o-transition-duration: 0s;
+	        transition-duration: 0s;
+	border-color: var(--ui-color-base-40, #bdc1c6);
+	opacity: 1;
+}
+
+.crm-audio-player-container .ui-vue-audioplayer-time-current {
+	position: relative;
+	top: 0;
+	left: 0;
+	-webkit-transition: color var(--crm-audio-player__transition-duration) var(--crm-audio-player__transition-timing-function);
+	-o-transition: color var(--crm-audio-player__transition-duration) var(--crm-audio-player__transition-timing-function);
+	transition: color var(--crm-audio-player__transition-duration) var(--crm-audio-player__transition-timing-function);
+}
+
+.crm-audio-player-container .ui-vue-audioplayer-time-current.--is-playing {
+	color: var(--ui-color-primary, #2FC6F6);
+}
+
+.crm-audio-player-container.--mini .ui-vue-audioplayer-time-current.--is-playing {
+	color: var(--ui-color-text-secondary);
+}
+
+.crm-audio-player-container.--mini .ui-vue-audioplayer-time-divider {
+	color: var(--ui-color-base-30);
+	font-size: inherit;
+	line-height: inherit;
+	font-family: inherit;
+}
+
+.crm-audio-player-container .ui-vue-audioplayer-total-time {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: horizontal;
+	-webkit-box-direction: normal;
+	    -ms-flex-direction: row;
+	        flex-direction: row;
+	-webkit-box-pack: justify;
+	    -ms-flex-pack: justify;
+	        justify-content: space-between;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	margin-top: 12px;
+	color: var(--ui-color-base-50);
+	font: 10px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
+}
+
+.crm-audio-player-container.--mini .ui-vue-audioplayer-total-time {
+	margin-top: 0;
+	font-size: var(--ui-font-size-3xs);
+}
+
+.ui-vue-audioplayer-total-time.--hidden {
+	opacity: 0;
+}
+
+.crm-audio-player__playback-speed-menu_scope {
+	--crm-audio-player__playback-menu-font-size: var(--ui-font-size-3xs, 11px);
+}
+.crm-audio-player-container .playback-speed-button {
+	min-width: 50px;
+	font-size: var(--crm-audio-player__playback-menu-font-size);
+	height: 20px;
+	padding-left: 6px;
+	padding-right: 15px;
+}
+
+.ui-vue-audioplayer_playback-speed-menu-container {
+	min-width: 40px;
+	font-size: var(--ui-font-size-md, 14px);
+	font-weight: var(--ui-font-weight-bold, 700);
+	color: var(--ui-color-base-40, #bdc1c6);
+	margin-left: var(--ui-space-inline-sm, 12px);
+	text-align: left;
+	cursor: pointer;
+	letter-spacing: var(--ui-text-letter-spacing-neg-3, -0.03em);
+	-webkit-transition: color 0.2s linear;
+	-o-transition: color 0.2s linear;
+	transition: color 0.2s linear;
+}
+
+.ui-vue-audioplayer_playback-speed-menu-container:hover {
+	-webkit-transition-duration: unset;
+	     -o-transition-duration: unset;
+	        transition-duration: unset;
+	color: var(--ui-color-base-60, #959ca4);
+}
+
+.crm-audio-player-container .playback-speed-button:before {
+	margin-top: 0;
+	right: 6px;
+	width: 5px;
+	height: 5px;
+	border-bottom-width: 1px;
+	border-left-width: 1px;
+}
+
+.playback-speed-menu-item .menu-popup-item-text {
+	line-height: var(--ui-font-line-height-md, 1.4);
+	font-size: var(--crm-audio-player__playback-menu-font-size);
+}
+
+.crm-audio-player-container .ui-vue-audioplayer-record-name {
+	font: 10px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
+	color: var(--ui-color-base-50, #a8adb4);
+	text-align: end;
+	height: 12px;
+	white-space: nowrap;
+	display: block;
+	overflow: hidden;
+	-o-text-overflow: ellipsis;
+	   text-overflow: ellipsis;
+	max-width: 100%;
+}

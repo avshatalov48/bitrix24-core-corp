@@ -4,6 +4,19 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 if (!CModule::IncludeModule('intranet'))
 	return;
 
+if (!\Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByToolId('absence'))
+{
+	$APPLICATION->IncludeComponent('bitrix:intranet.settings.tool.stub', '.default',
+		[
+			'LIMIT_CODE' => 'limit_office_absence_off',
+			'MODULE' => 'intranet',
+			'SOURCE' => 'absence'
+		]
+	);
+
+	return;
+}
+
 $arParams['VIEW_START'] = isset($arParams['VIEW_START']) ? $arParams['VIEW_START'] : 'month';
 if (!isset($arParams['FIRST_DAY']))
 	$arParams['FIRST_DAY'] = 1;
@@ -42,15 +55,15 @@ if ($arParams['DAY_FINISH'] < $arParams['DAY_START'])
 	$arParams['DAY_START'] = $tmp;
 }
 
-if (!$arParams['SITE_ID'] && defined('SITE_ID'))
+if (empty($arParams['SITE_ID']) && defined('SITE_ID'))
 	$arParams['SITE_ID'] = SITE_ID;
 
-$arParams['PAGE_NUMBER'] = (int) $arParams['PAGE_NUMBER'];
+$arParams['PAGE_NUMBER'] = isset($arParams['PAGE_NUMBER']) ? (int)$arParams['PAGE_NUMBER'] : 0;
 if ($arParams['PAGE_NUMBER'] < 1)
 	$arParams['PAGE_NUMBER'] = 0;
 $arParams['PAGE_COUNT'] = 0;
 
-$arParams['DAY_SHOW_NONWORK'] = $arParams['DAY_SHOW_NONWORK'] == 'Y' ? 'Y' : 'N';
+$arParams['DAY_SHOW_NONWORK'] = isset($arParams['DAY_SHOW_NONWORK']) && $arParams['DAY_SHOW_NONWORK'] == 'Y' ? 'Y' : 'N';
 
 $arFullControlsList = array('DATEPICKER', 'TYPEFILTER', 'SHOW_ALL');
 
@@ -70,15 +83,15 @@ foreach ($arFullControlsList as $control)
 $arParams['DETAIL_URL_PERSONAL'] = isset($arParams['DETAIL_URL_PERSONAL']) ? $arParams['DETAIL_URL_PERSONAL'] : '/company/personal/user/#USER_ID#/calendar/?EVENT_ID=#EVENT_ID#';
 $arParams['DETAIL_URL_DEPARTMENT'] = isset($arParams['DETAIL_URL_DEPARTMENT']) ? $arParams['DETAIL_URL_DEPARTMENT'] : '/company/structure.php?set_filter_structure=Y&structure_UF_DEPARTMENT=#ID#';
 
-if ($arParams['IBLOCK_TYPE'] == '')
+if (empty($arParams['IBLOCK_TYPE']))
 	$arParams['IBLOCK_TYPE'] = COption::GetOptionString('intranet', 'iblock_type');
-$arParams['IBLOCK_ID'] = intval($arParams['IBLOCK_ID']);
+$arParams['IBLOCK_ID'] = intval($arParams['IBLOCK_ID'] ?? 0);
 if ($arParams['IBLOCK_ID'] <= 0)
 	$arParams['IBLOCK_ID'] = COption::GetOptionInt('intranet', 'iblock_absence');
 
 $arParams['IBLOCK_CHANGED'] = $arParams['IBLOCK_ID'] != COption::GetOptionInt('intranet', 'iblock_absence');
 
-$arParams['CALENDAR_IBLOCK_ID'] = intval($arParams['CALENDAR_IBLOCK_ID']);
+$arParams['CALENDAR_IBLOCK_ID'] = intval($arParams['CALENDAR_IBLOCK_ID'] ?? 0);
 if ($arParams['CALENDAR_IBLOCK_ID'] !== -1)
 {
 	if ($arParams['CALENDAR_IBLOCK_ID'] <= 0)
@@ -94,7 +107,7 @@ while ($arTypeValue = $dbTypeRes->GetNext())
 
 $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
 
-if (!$arParams['DATE_FORMAT'])
+if (empty($arParams['DATE_FORMAT']))
 {
 	$arParams['DATE_FORMAT'] = (
 		isset($_SESSION['intranet_absence_calendar_date_format'])
@@ -102,12 +115,12 @@ if (!$arParams['DATE_FORMAT'])
 		: CComponentUtil::GetDateFormatDefault()
 	);
 }
-elseif (!$arParams['AJAX_CALL'])
+elseif(empty($arParams['AJAX_CALL']))
 {
 	$_SESSION['intranet_absence_calendar_date_format'] = $arParams['DATE_FORMAT'];
 }
 
-if (!$arParams['DATETIME_FORMAT'])
+if (empty($arParams['DATETIME_FORMAT']))
 {
 	$arParams['DATETIME_FORMAT'] = (
 		isset($_SESSION['intranet_absence_calendar_datetime_format'])
@@ -115,12 +128,12 @@ if (!$arParams['DATETIME_FORMAT'])
 		: CComponentUtil::GetDateTimeFormatDefault()
 	);
 }
-elseif (!$arParams['AJAX_CALL'])
+elseif (empty($arParams['AJAX_CALL']))
 {
 	$_SESSION['intranet_absence_calendar_datetime_format'] = $arParams['DATETIME_FORMAT'];
 }
 
-if ($arParams['AJAX_CALL'] == 'DATA')
+if (isset($arParams['AJAX_CALL']) && $arParams['AJAX_CALL'] == 'DATA')
 {
 	if (!check_bitrix_sessid())
 		return;
@@ -273,8 +286,12 @@ if ($arParams['AJAX_CALL'] == 'DATA')
 							$arEntry['DATE_ACTIVE_FROM'] = MakeTimeStamp($arEntry['DATE_ACTIVE_FROM']);
 							$arEntry['DATE_ACTIVE_TO']   = MakeTimeStamp($arEntry['DATE_ACTIVE_TO']);
 
-							$arEntry['TYPE'] = is_array($arResult['ABSENCE_TYPES'][$arEntry['PROPERTY_ABSENCE_TYPE_ENUM_ID']])
-								? $arResult['ABSENCE_TYPES'][$arEntry['PROPERTY_ABSENCE_TYPE_ENUM_ID']]['XML_ID'] : '';
+							$arEntry['TYPE'] =
+								isset($arResult['ABSENCE_TYPES'][$arEntry['PROPERTY_ABSENCE_TYPE_ENUM_ID']])
+								&& is_array($arResult['ABSENCE_TYPES'][$arEntry['PROPERTY_ABSENCE_TYPE_ENUM_ID']])
+									? $arResult['ABSENCE_TYPES'][$arEntry['PROPERTY_ABSENCE_TYPE_ENUM_ID']]['XML_ID']
+									: ''
+							;
 						}
 						elseif ($arEntry['ENTRY_TYPE'] == BX_INTRANET_ABSENCE_PERSONAL)
 						{
@@ -337,7 +354,7 @@ if ($arParams['AJAX_CALL'] == 'DATA')
 /////////////////////////////////////////
 // TODO: make extranet checks here too //
 /////////////////////////////////////////
-elseif ($arParams['AJAX_CALL'] == 'INFO')
+elseif (isset($arParams['AJAX_CALL']) && $arParams['AJAX_CALL'] == 'INFO')
 {
 	if (!check_bitrix_sessid())
 		return;
@@ -435,9 +452,11 @@ elseif ($arParams['AJAX_CALL'] == 'INFO')
 		if ($arParams['TYPE'] == 1)
 		{
 			$arResult['ENTRY']['TYPE'] =
-				is_array($arResult['ABSENCE_TYPES'][$arResult['ENTRY']['PROPERTY_ABSENCE_TYPE_ENUM_ID']])
-				? $arResult['ABSENCE_TYPES'][$arResult['ENTRY']['PROPERTY_ABSENCE_TYPE_ENUM_ID']]['XML_ID']
-				: '';
+				isset($arResult['ABSENCE_TYPES'][$arResult['ENTRY']['PROPERTY_ABSENCE_TYPE_ENUM_ID']])
+				&& is_array($arResult['ABSENCE_TYPES'][$arResult['ENTRY']['PROPERTY_ABSENCE_TYPE_ENUM_ID']])
+					? $arResult['ABSENCE_TYPES'][$arResult['ENTRY']['PROPERTY_ABSENCE_TYPE_ENUM_ID']]['XML_ID']
+					: ''
+			;
 
 			$dbRes = CUser::GetByID($arResult['ENTRY']['PROPERTY_USER_VALUE']);
 		}

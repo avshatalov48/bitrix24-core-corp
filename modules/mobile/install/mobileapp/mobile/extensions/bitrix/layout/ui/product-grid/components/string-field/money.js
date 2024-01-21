@@ -2,7 +2,6 @@
  * @module layout/ui/product-grid/components/string-field/money
  */
 jn.define('layout/ui/product-grid/components/string-field/money', (require, exports, module) => {
-
 	const { ProductGridStringField } = require('layout/ui/product-grid/components/string-field/string');
 	const { stringify } = require('utils/string');
 
@@ -23,7 +22,7 @@ jn.define('layout/ui/product-grid/components/string-field/money', (require, expo
 				...this.getNativeFieldProps(),
 				useGroupSeparator: true,
 				groupSize: 3,
-				groupSeparator: Boolean(groupSeparator) ? groupSeparator : ' ',
+				groupSeparator: groupSeparator || ' ',
 				decimalDigits: moneyFormat.DECIMALS,
 				decimalSeparator: moneyFormat.DEC_POINT,
 				hideZero: moneyFormat.HIDE_ZERO === 'Y',
@@ -42,11 +41,11 @@ jn.define('layout/ui/product-grid/components/string-field/money', (require, expo
 			return (raw) => {
 				const amount = String(raw).replace(',', '.').trim();
 				const { currency } = this.props;
-				return Money.create({amount, currency}).formattedAmount;
+
+				return Money.create({ amount, currency }).formattedAmount;
 			};
 		}
 	}
 
 	module.exports = { ProductGridMoneyField };
-
 });

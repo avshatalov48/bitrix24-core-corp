@@ -5,6 +5,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
+use Bitrix\Tasks\Replicator\Template\Replicators\RegularTaskReplicator;
 
 Loc::loadMessages(__FILE__);
 
@@ -140,6 +141,13 @@ $canReadGroupTasks = (
 			<div class="task-detail-sidebar-item-title"><?=Loc::getMessage("TASKS_SIDEBAR_CREATED_DATE")?>:</div>
 			<div class="task-detail-sidebar-item-value"><?=$templateData["CREATED_DATE"]?></div>
 		</div>
+
+		<?php if (RegularTaskReplicator::isEnabled()):?>
+		<div class="task-detail-sidebar-item">
+			<div class="task-detail-sidebar-item-title">Regularity start time:</div>
+			<div class="task-detail-sidebar-item-value"><?=(new \Bitrix\Tasks\Internals\TaskObject(['ID' => $taskData['ID']]))->getRegularityStartTime()?->toString()?></div>
+		</div>
+		<?php endif;?>
 
 		<? if ($taskData["ALLOW_TIME_TRACKING"] === "Y"): ?>
 			<div class="task-detail-sidebar-item">

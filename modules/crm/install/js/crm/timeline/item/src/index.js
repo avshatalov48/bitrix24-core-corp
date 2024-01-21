@@ -1,9 +1,9 @@
-import Item from './item'
-import ConfigurableItem from './configurable-item'
-import {StreamType} from './stream-type';
+import Item from './item';
+import ConfigurableItem from './configurable-item';
+import { StreamType } from './stream-type';
 import ControllerManager from './controller-manager';
-import {Base as BaseController} from './controllers/base';
-import "./controller-registry"
+import { Base as BaseController } from './controllers/base';
+import './controller-registry';
 import './css/common-vars.css';
 import './css/layout/icon.css';
 import './css/layout/header.css';
@@ -15,7 +15,6 @@ import './css/layout/note.css';
 import './css/content-blocks/with-title.css';
 import './css/content-blocks/file-list.css';
 import './css/layout/market.css';
-import './css/content-blocks/timeline-audio.css';
 import './css/layout/footer.css';
 import './css/content-blocks/text.css';
 import './css/layout/body/calendar-icon.css';
@@ -36,5 +35,5 @@ export {
 	ConfigurableItem,
 	StreamType,
 	ControllerManager,
-	BaseController
+	BaseController,
 };

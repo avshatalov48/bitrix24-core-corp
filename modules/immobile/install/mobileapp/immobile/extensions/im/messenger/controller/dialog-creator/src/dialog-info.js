@@ -12,6 +12,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 	const { getFile } = require('files/entry');
 	const { FileConverter } = require('files/converter')
 	const { DialogInfoView } = require('im/messenger/controller/dialog-creator/dialog-info/view');
+	const AppTheme = require('apptheme');
 
 
 	class DialogInfo
@@ -38,6 +39,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 		show()
 		{
 			const config = {
+				title: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_DIALOG_INFO_TITLE'),
 				onReady: layoutWidget =>
 				{
 					this.layout = layoutWidget;
@@ -75,7 +77,8 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 					name: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_BUTTON_CREATE'),
 					callback: () => {
 						this.createChat();
-					}
+					},
+					color: AppTheme.colors.accentMainLinks,
 				},
 			]);
 		}

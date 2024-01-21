@@ -8,3 +8,4 @@ $MESS['CRM_GDIA_FILTERING_FIELDS_PROPERTY'] = 'Фильтр по полям';
 $MESS['CRM_GDIA_ENTITY_TYPE_ERROR'] = 'Выбран неверный тип сущности';
 $MESS['CRM_GDIA_ENTITY_EXISTENCE_ERROR'] = 'При заданном фильтре не найдено ни одного элемента';
 $MESS['CRM_GDIA_FILTERING_FIELDS_PROPERTY'] = 'Фильтр по полям';
+$MESS['CRM_GDIA_FILTERING_FIELDS_COLLAPSED_TEXT'] = 'Фильтр выбран, для просмотра нажмите Развернуть';

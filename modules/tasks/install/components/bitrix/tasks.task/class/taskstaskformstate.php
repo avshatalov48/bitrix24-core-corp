@@ -2,59 +2,68 @@
 
 namespace Bitrix\Tasks\Component\Task;
 
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-
-if(!\Bitrix\Main\Loader::includeModule('tasks'))
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
-use \Bitrix\Tasks\Manager\Task;
-use \Bitrix\Tasks\Util;
+use Bitrix\Main\Loader;
+use Bitrix\Tasks\Manager;
+use Bitrix\Tasks\Manager\Task;
+use Bitrix\Tasks\Replicator\Template\Replicators\RegularTaskReplicator;
+use Bitrix\Tasks\Util\Type;
+use Bitrix\Tasks\Util\User;
+use CTasksTools;
+use CUserOptions;
+
+if (!Loader::includeModule('tasks'))
+{
+	die();
+}
 
 // todo: refactor this class
 
 final class TasksTaskFormState
 {
-	const O_CHOSEN = 'C';
-	const O_OPENED = 'O';
-	const O_HIDDEN = 'H';
+	public const O_CHOSEN = 'C';
+	public const O_OPENED = 'O';
+	public const O_HIDDEN = 'H';
 
-	const OPT_NAME = 'task_edit_form_state';
+	public const OPT_NAME = 'task_edit_form_state';
 
-	public static function get()
+	public static function get(): array
 	{
-		$value = Util\Type::unSerializeArray(Util\User::getOption(self::OPT_NAME));
+		$value = Type::unSerializeArray(User::getOption(self::OPT_NAME));
 
-		if(!is_array($value) || empty($value))
+		if (!is_array($value) || empty($value))
 		{
 			return self::getDefault();
 		}
 		else
 		{
-			return self::merge(static::getDefault(), $value); // merging helps to introduce new blocks
+			return self::merge(self::getDefault(), $value); // merging helps to introduce new blocks
 		}
 	}
 
-	public static function set(array $newState)
+	public static function set(array $newState): void
 	{
 		$newState = self::filter($newState);
 		$toSave = self::merge(self::get(), $newState);
 
-		Util\User::setOption(self::OPT_NAME, serialize($toSave));
+		User::setOption(self::OPT_NAME, serialize($toSave));
 	}
 
-	private static function merge(array $currentState, array $newState)
+	private static function merge(array $currentState, array $newState): array
 	{
-		foreach($currentState as $typeId => &$type)
+		foreach ($currentState as $typeId => &$type)
 		{
-			if(array_key_exists($typeId, $newState))
+			if (array_key_exists($typeId, $newState))
 			{
-				foreach($type as $i => &$value)
+				foreach ($type as $i => &$value)
 				{
-					if(array_key_exists($i, $newState[$typeId]))
+					if (array_key_exists($i, $newState[$typeId]))
 					{
-						if(is_array($value))
+						if (is_array($value))
 						{
 							$value = array_merge($value, $newState[$typeId][$i]);
 						}
@@ -72,53 +81,52 @@ final class TasksTaskFormState
 		return $currentState;
 	}
 
-	public static function reset()
+	public static function reset(): void
 	{
-		\CUserOptions::SetOption(
+		CUserOptions::SetOption(
 			'tasks',
 			self::OPT_NAME,
 			''
 		);
 	}
 
-	private static function filter(array $state)
+	private static function filter(array $state): array
 	{
 		$default = self::getDefault();
 
-		foreach($state as $section => $vars)
+		foreach ($state as $section => $vars)
 		{
-			if($section != 'BLOCKS' && $section != 'FLAGS')
+			if ($section != 'BLOCKS' && $section != 'FLAGS')
 			{
 				unset($state[$section]);
-				continue;
 			}
 		}
 
-		if(is_array($state['BLOCKS']))
+		if (is_array($state['BLOCKS']))
 		{
-			foreach($state['BLOCKS'] as $blockName => &$blockOpts)
+			foreach ($state['BLOCKS'] as $blockName => &$blockOpts)
 			{
-				if(!array_key_exists($blockName, $default['BLOCKS'])) // no such block
+				if (!array_key_exists($blockName, $default['BLOCKS'])) // no such block
 				{
 					unset($state['BLOCKS'][$blockName]);
 					continue;
 				}
 
-				if(!is_array($blockOpts)) // value is not an array
+				if (!is_array($blockOpts)) // value is not an array
 				{
 					unset($state['BLOCKS'][$blockName]);
 					continue;
 				}
 
-				foreach($blockOpts as $type => &$value)
+				foreach ($blockOpts as $type => &$value)
 				{
-					if(!array_key_exists($type, $default['BLOCKS'][$blockName])) // no such type
+					if (!array_key_exists($type, $default['BLOCKS'][$blockName])) // no such type
 					{
 						unset($blockOpts[$type]);
 						continue;
 					}
 
-					$value = static::convertToBoolean($value);
+					$value = self::convertToBoolean($value);
 				}
 				unset($value);
 			}
@@ -129,17 +137,17 @@ final class TasksTaskFormState
 			unset($state['BLOCKS']);
 		}
 
-		if(is_array($state['FLAGS']))
+		if (is_array($state['FLAGS']))
 		{
-			foreach($state['FLAGS'] as $flag => &$value)
+			foreach ($state['FLAGS'] as $flag => &$value)
 			{
-				if(!array_key_exists($flag, $default['FLAGS'])) // no such flag
+				if (!array_key_exists($flag, $default['FLAGS'])) // no such flag
 				{
 					unset($state['FLAGS'][$flag]);
 					continue;
 				}
 
-				$value = static::convertToBoolean($value);
+				$value = self::convertToBoolean($value);
 			}
 			unset($value);
 		}
@@ -151,83 +159,103 @@ final class TasksTaskFormState
 		return $state;
 	}
 
-	private static function convertToBoolean($value)
+	private static function convertToBoolean($value): bool
 	{
 		return $value === true || $value === 'true' || $value === '1' || $value == 'Y';
 	}
 
-	private static function getDefault()
+	private static function getDefault(): array
 	{
-		$popupOpts = \CTasksTools::getPopupOptions();
 
-		return array(
-			'BLOCKS' => array(
-				// match task fields
-				Task::SE_PREFIX.'CHECKLIST' => 	array(
-					self::O_CHOSEN => false,
-				),
-				Task::SE_PREFIX.'ORIGINATOR' => array(
-					self::O_CHOSEN => false,
-				),
-				Task::SE_PREFIX.'AUDITOR' => 	array(
-					self::O_CHOSEN => false,
-				),
-				Task::SE_PREFIX.'ACCOMPLICE' => 	array(
-					self::O_CHOSEN => false,
-				),
-				'DATE_PLAN' =>  	array(
-					self::O_CHOSEN => false,
-				),
-				'OPTIONS' => array(
-					self::O_CHOSEN => false,
-				),
-				Task::SE_PREFIX.'PROJECT' => 	array(
-					self::O_CHOSEN => false,
-				),
-				'TIMEMAN' =>  	array(
-					self::O_CHOSEN => false,
-				),
-				Task::SE_PREFIX.'REMINDER' => array(
-					self::O_CHOSEN => false,
-				),
-				Task::SE_PREFIX.'TEMPLATE' =>  	array(
-					self::O_CHOSEN => false,
-				),
-				Task::SE_PREFIX.'PROJECTDEPENDENCE' => array(
-					self::O_CHOSEN => false,
-				),
-				'UF_CRM_TASK' =>  	array(
-					self::O_CHOSEN => false,
-				),
-				Task\ParentTask::getCode(true) => array(
-					self::O_CHOSEN => false,
-				),
-				Task::SE_PREFIX.'TAG' => array(
-					self::O_CHOSEN => false,
-				),
-				'EPIC' => [
-					self::O_CHOSEN => false,
-					self::O_HIDDEN => true,
-				],
-				'USER_FIELDS' => array(
-					self::O_CHOSEN => false,
-				),
-				Task::SE_PREFIX.'RELATEDTASK' => array(
-					self::O_CHOSEN => false,
-				),
-				Task::SE_PREFIX.'REQUIRE_RESULT' => [
-					self::O_CHOSEN => true,
-				],
-			),
-			'FLAGS' => array(
-				'ALLOW_TIME_TRACKING' => $popupOpts['time_tracking'] == 'Y',
-				'TASK_CONTROL' => $popupOpts['task_control'] == 'Y',
-				'ALLOW_CHANGE_DEADLINE' => true,
-				'MATCH_WORK_TIME' => false,
-				'FORM_FOOTER_PIN' => false,
-				'REQUIRE_RESULT' => false,
-				'TASK_PARAM_3' => false,
-			)
-		);
+		return [
+			'BLOCKS' => self::getBlocks(),
+			'FLAGS' => self::getFlags(),
+		];
+	}
+
+	private static function getBlocks(): array
+	{
+		$blocks = [
+			// match task fields
+			Manager::SE_PREFIX . 'CHECKLIST' => [
+				self::O_CHOSEN => false,
+			],
+			Manager::SE_PREFIX . 'ORIGINATOR' => [
+				self::O_CHOSEN => false,
+			],
+			Manager::SE_PREFIX . 'AUDITOR' => [
+				self::O_CHOSEN => false,
+			],
+			Manager::SE_PREFIX . 'ACCOMPLICE' => [
+				self::O_CHOSEN => false,
+			],
+			'DATE_PLAN' => [
+				self::O_CHOSEN => false,
+			],
+			'OPTIONS' => [
+				self::O_CHOSEN => false,
+			],
+			Manager::SE_PREFIX . 'PROJECT' => [
+				self::O_CHOSEN => false,
+			],
+			'TIMEMAN' => [
+				self::O_CHOSEN => false,
+			],
+			Manager::SE_PREFIX . 'REMINDER' => [
+				self::O_CHOSEN => false,
+			],
+			Manager::SE_PREFIX . 'TEMPLATE' => [
+				self::O_CHOSEN => false,
+			],
+			Manager::SE_PREFIX . 'PROJECTDEPENDENCE' => [
+				self::O_CHOSEN => false,
+			],
+			'UF_CRM_TASK' => [
+				self::O_CHOSEN => false,
+			],
+			Task\ParentTask::getCode(true) => [
+				self::O_CHOSEN => false,
+			],
+			Manager::SE_PREFIX . 'TAG' => [
+				self::O_CHOSEN => false,
+			],
+			'EPIC' => [
+				self::O_CHOSEN => false,
+				self::O_HIDDEN => true,
+			],
+			'USER_FIELDS' => [
+				self::O_CHOSEN => false,
+			],
+			Manager::SE_PREFIX . 'RELATEDTASK' => [
+				self::O_CHOSEN => false,
+			],
+			Manager::SE_PREFIX . 'REQUIRE_RESULT' => [
+				self::O_CHOSEN => true,
+			],
+		];
+
+		if (RegularTaskReplicator::isEnabled())
+		{
+			$blocks['REGULAR'] = [
+				self::O_CHOSEN => false
+			];
+		}
+
+		return $blocks;
+	}
+
+	private static function getFlags(): array
+	{
+		$popupOpts = CTasksTools::getPopupOptions();
+
+		return [
+			'ALLOW_TIME_TRACKING' => $popupOpts['time_tracking'] == 'Y',
+			'TASK_CONTROL' => $popupOpts['task_control'] == 'Y',
+			'ALLOW_CHANGE_DEADLINE' => true,
+			'MATCH_WORK_TIME' => false,
+			'FORM_FOOTER_PIN' => false,
+			'REQUIRE_RESULT' => false,
+			'TASK_PARAM_3' => false,
+		];
 	}
 }

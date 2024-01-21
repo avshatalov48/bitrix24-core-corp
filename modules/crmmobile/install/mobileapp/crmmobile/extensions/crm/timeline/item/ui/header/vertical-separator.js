@@ -2,6 +2,8 @@
  * @module crm/timeline/item/ui/header/vertical-separator
  */
 jn.define('crm/timeline/item/ui/header/vertical-separator', (require, exports, module) => {
+	const AppTheme = require('apptheme');
+
 	function VerticalSeparator()
 	{
 		return View(
@@ -15,7 +17,7 @@ jn.define('crm/timeline/item/ui/header/vertical-separator', (require, exports, m
 			View(
 				{
 					style: {
-						backgroundColor: '#dfe0e3',
+						backgroundColor: AppTheme.colors.bgSeparatorPrimary,
 						flex: 1,
 					},
 				},

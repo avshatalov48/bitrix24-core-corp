@@ -7,12 +7,20 @@ class LimitManagerBitrix24 extends LimitManager
 	 * Called on data export end.
 	 *
 	 * @param int $rowsCount How many data rows was exported.
+	 * @param string $supersetKey Check for alternate limits.
 	 *
-	 * @return void
+	 * @return bool
 	 */
-	public function fixLimit($rowsCount)
+	public function fixLimit($rowsCount, $supersetKey = '')
 	{
-		$limit = $this->getLimit();
+		$isSuperset = false;
+		if ($supersetKey)
+		{
+			$configParams = \Bitrix\Main\Config\Configuration::getValue('biconnector');
+			$isSuperset = isset($configParams['superset_key']) && $configParams['superset_key'] === $supersetKey;
+		}
+
+		$limit = $this->getLimit($isSuperset);
 		if ($limit > 0 && $rowsCount > $limit)
 		{
 			\Bitrix\Main\Config\Option::set('biconnector', 'last_limit_ts', time());
@@ -29,6 +37,7 @@ class LimitManagerBitrix24 extends LimitManager
 					\Bitrix\Main\Config\Option::set('biconnector', 'disable_data_connection', 'Y');
 				}
 			}
+			return true;
 		}
 		else
 		{
@@ -38,6 +47,7 @@ class LimitManagerBitrix24 extends LimitManager
 				\Bitrix\Main\Config\Option::delete('biconnector', [ 'name' => 'last_limit_ts' ]);
 				\Bitrix\Main\Config\Option::delete('biconnector', [ 'name' => 'over_limit_ts' ]);
 			}
+			return false;
 		}
 	}
 
@@ -45,11 +55,14 @@ class LimitManagerBitrix24 extends LimitManager
 	 * Returns maximum allowed records count.
 	 * 0 - unlimited.
 	 *
+	 * @param bool $isSuperset Check for alternate limits.
+	 *
 	 * @return int
 	 */
-	public function getLimit()
+	public function getLimit($isSuperset = false)
 	{
-		$limit = (int)\Bitrix\Bitrix24\Feature::getVariable('biconnector_limit');
+		$variableName = $isSuperset ? 'biconnector_limit_superset' : 'biconnector_limit';
+		$limit = (int)\Bitrix\Bitrix24\Feature::getVariable($variableName);
 
 		return $limit;
 	}

@@ -149,20 +149,11 @@ class CompanyActivityStatisticEntry
 
 		$query = new Query(Crm\ActivityTable::getEntity());
 		$query->addFilter('=COMPLETED', 'Y');
+		$query->registerRuntimeField(
+			'',
+			new ExpressionField('DEADLINE_DATE', Main\Application::getConnection()->getSqlHelper()->getDatetimeToDateFunction('DEADLINE'))
+		);
 
-		$connection = Main\Application::getConnection();
-		if($connection instanceof Main\DB\MysqlCommonConnection)
-		{
-			$query->registerRuntimeField('', new ExpressionField('DEADLINE_DATE', 'DATE(DEADLINE)'));
-		}
-		elseif($connection instanceof Main\DB\MssqlConnection)
-		{
-			$query->registerRuntimeField('', new ExpressionField('DEADLINE_DATE', 'CAST(FLOOR(CAST(DEADLINE AS FLOAT)) AS DATETIME)'));
-		}
-		elseif($connection instanceof Main\DB\OracleConnection)
-		{
-			$query->registerRuntimeField('', new ExpressionField('DEADLINE_DATE', 'TRUNC(DEADLINE)'));
-		}
 		$query->addSelect('DEADLINE_DATE');
 		$query->addGroup('DEADLINE_DATE');
 

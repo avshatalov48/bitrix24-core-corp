@@ -123,7 +123,10 @@ BX.IntranetVS.prototype._undoCheckScroll = function()
 BX.IntranetVS.prototype.ondragstart = function(new_mirror)
 {
 	if (this.mirror && this.mirror.parentNode)
+	{
 		this.mirror.parentNode.removeChild(this.mirror);
+		BX.ZIndexManager.unregister(this.mirror);
+	}
 
 	if (this.employeesPopup)
 		this.employeesPopup.close();
@@ -302,18 +305,19 @@ BX.IntranetVSBlock.prototype.showEmployees = function()
 				if (data.firstChild)
 				{
 					data.insertBefore(obEmployee, data.firstChild);
+					BX.ZIndexManager.register(obEmployee);
 					continue;
 				}
 			}
 
 			data.appendChild(obEmployee);
+			BX.ZIndexManager.register(obEmployee);
 		}
 
 		this.employeesPopup = new BX.PopupWindow('vis_emp_' + Math.random(), BX.proxy_context, {
 			closeByEsc: true,
 			autoHide: true,
 			lightShadow: true,
-			zIndex: this.baseZindex,
 			content: data,
 			offsetLeft: 50,
 			angle : true
@@ -386,21 +390,21 @@ BX.IntranetVSBlock.prototype._showNext = function (data) {
 		this.clone = BX.create('DIV', {
 			style: {
 				height: obPos.height + 'px',
-				width: obPos.width + 'px'
+				width: obPos.width + 'px',
 			}
 		});
-
+		BX.ZIndexManager.unregister(this.node);
 		this.node.parentNode.replaceChild(this.clone, this.node);
-
+		BX.ZIndexManager.register(this.clone);
 		BX.addClass(this.node, 'bx-current');
 		BX.removeClass(this.node, 'structure-dept-nesting');
 
-		this.node.style.zIndex = this.baseZindex + 30 * this.section_level;
+		// this.node.style.zIndex = this.baseZindex + 300 * this.section_level;
 
 		this.node.style.top = obPos.top + 'px';
 		this.node.style.left = obPos.left + 'px';
 
-		document.body.appendChild(this.node);
+
 
 		var windowSize = BX.GetWindowScrollSize();
 
@@ -411,7 +415,6 @@ BX.IntranetVSBlock.prototype._showNext = function (data) {
 				left: '0px',
 				width: windowSize.scrollWidth + "px",
 				height: windowSize.scrollHeight + "px",
-				zIndex: this.baseZindex + 25 * this.section_level
 			}
 		}));
 		BX.bind(window, "resize", BX.proxy(_onresize, this.overlay));
@@ -421,13 +424,15 @@ BX.IntranetVSBlock.prototype._showNext = function (data) {
 			style: {
 				position: 'absolute',
 				top: (obPos.top - 20) + 'px',
-				zIndex: this.baseZindex + 28 * this.section_level,
 				padding: (obPos.height + 30) + "px 100px 20px 20px"
 			},
 			html: data
 		}));
-
+		BX.ZIndexManager.register(this.shadow, { overlay: this.overlay });
 		setTimeout(BX.proxy(_onresize, this.overlay), 0);
+
+		document.body.appendChild(this.node);
+		BX.ZIndexManager.register(this.node, { overlay: this.shadow });
 
 		var obPosSelf = BX.pos(this.shadow);
 		var left = parseInt(obPos.left + (obPos.right-obPos.left)/2 - (obPosSelf.right-obPosSelf.left)/2);
@@ -440,13 +445,11 @@ BX.IntranetVSBlock.prototype._showNext = function (data) {
 		this.stick = document.body.appendChild(BX.create('DIV', {
 			props: {className: 'bx-str-stick'},
 			style: {
-				zIndex: this.baseZindex + 29 * this.section_level,
 				top: (obPos.bottom - 3) + 'px',
 				left: parseInt((obPos.right+obPos.left)/2) + 'px'
 			}
 		}));
-
-
+		BX.ZIndexManager.register(this.stick);
 		obPosSelf = BX.pos(this.shadow);
 
 		if (obPosSelf.right < obPos.right + 10)
@@ -490,12 +493,17 @@ BX.IntranetVSBlock.prototype.closeNext = function(bSkipPop)
 
 	BX.removeClass(this.node, 'bx-current');
 	BX.addClass(this.node, 'structure-dept-nesting');
-	this.node.style.zIndex = '';
 	this.node.style.top = '';
 	this.node.style.left = '';
 
 	if (this.clone && this.clone.parentNode)
+	{
+		BX.ZIndexManager.unregister(this.clone);
+		BX.ZIndexManager.unregister(this.node);
 		this.clone.parentNode.replaceChild(this.node, this.clone);
+		BX.ZIndexManager.register(this.node);
+	}
+
 
 	BX.cleanNode(this.shadow, true);
 	BX.cleanNode(this.clone, true);
@@ -714,12 +722,12 @@ BX.IntranetVSBlock.prototype.ddStart = function()
 	BX.addClass(this.node, 'structure-move-dept');
 
 	this.mirror = document.body.appendChild(BX.clone(this.node));
+	BX.ZIndexManager.register(this.mirror);
 	BX.adjust(this.mirror, {
 		style: {
 			position: 'absolute',
 			top: pos.top + 'px',
 			left: pos.left + 'px',
-			zIndex: 2500
 		}
 	});
 
@@ -740,7 +748,10 @@ BX.IntranetVSBlock.prototype.ddDrag = function(x, y)
 BX.IntranetVSBlock.prototype.ddFinish = function()
 {
 	if (!!this.mirror && !!this.mirror.parentNode)
+	{
+		BX.ZIndexManager.unregister(this.mirror);
 		this.mirror.parentNode.removeChild(this.mirror);
+	}
 
 	this.mirror = null;
 
@@ -952,11 +963,10 @@ BX.IntranetVSUser = {
 			style: {
 				top: pos.top + 'px',
 				left: pos.left + 'px',
-				zIndex: 2500
 			},
 			html: '<span' + (this.__bxemployee.PHOTO ? ' style="background: url(\''+this.__bxemployee.PHOTO+'\') no-repeat scroll center center transparent; background-size: cover;"' : '') + ' class="structure-avatar"></span><div class="structure-employee-name">'+this.__bxemployee.NAME +'</div><div class="structure-employee-post">'+BX.util.htmlspecialchars(this.__bxemployee.POSITION)+'</div>'
 		}));
-
+		BX.ZIndexManager.register(BX.IntranetVSUser.mirror);
 		BX.IntranetVS.get().ondragstart(BX.IntranetVSUser.mirror);
 	},
 
@@ -975,7 +985,10 @@ BX.IntranetVSUser = {
 	onbxdragfinish: function ()
 	{
 		if (BX.IntranetVSUser.mirror && BX.IntranetVSUser.mirror.parentNode)
+		{
+			BX.ZIndexManager.unregister(BX.IntranetVSUser.mirror);
 			BX.IntranetVSUser.mirror.parentNode.removeChild(BX.IntranetVSUser.mirror);
+		}
 
 		BX.IntranetVSUser.mirror = null;
 

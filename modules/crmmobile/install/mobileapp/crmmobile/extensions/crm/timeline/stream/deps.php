@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'loc',
+		'apptheme',
 		'utils/object',
 		'crm:timeline/item',
 		'crm:timeline/item/ui/styles',

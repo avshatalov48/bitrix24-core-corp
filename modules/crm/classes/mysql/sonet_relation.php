@@ -287,10 +287,18 @@ class CCrmSonetRelation extends CAllCrmSonetRelation
 			return;
 		}
 
-		global $DB;
-		$tableName = self::TABLE_NAME;
-		$sql = "UPDATE {$tableName} R INNER JOIN b_sonet_log L ON R.SL_ID = L.ID SET R.SL_LAST_UPDATED = L.LOG_UPDATE WHERE R.SL_ID = {$logEntityID}";
-		$DB->Query($sql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$connection = \Bitrix\Main\Application::getConnection();
+		$sql = $connection->getSqlHelper()->prepareCorrelatedUpdate(
+			self::TABLE_NAME,
+			'R',
+			[
+				'SL_LAST_UPDATED' => 'L.LOG_UPDATE',
+			],
+			' b_sonet_log L ',
+			'R.SL_ID = L.ID AND R.SL_ID = '.$logEntityID
+		);
+
+		$connection->query($sql);
 	}
 	public function Rebind($entityTypeID, $srcEntityID, $dstEntityID)
 	{

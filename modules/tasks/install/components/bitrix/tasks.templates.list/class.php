@@ -9,6 +9,7 @@ use Bitrix\Main\Grid;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter;
+use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Internals\Task\Template\TemplateTagTable;
 use Bitrix\Tasks\Item\Task\Template;
 use Bitrix\Tasks\Manager;
@@ -21,6 +22,7 @@ CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 class TasksTemplatesListComponent extends TasksBaseComponent
 	implements \Bitrix\Main\Errorable, \Bitrix\Main\Engine\Contract\Controllerable
 {
+	private const FILTER_ID = 'TASKS_TEMPLATES_FILTER_ID';
 	private const DEFAULT_LIMIT = 10;
 
 	protected $errorCollection;
@@ -136,6 +138,16 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 		return ['success' => true];
 	}
 
+	protected static function checkIfToolAvailable(array &$arParams, array &$arResult, \Bitrix\Tasks\Util\Error\Collection $errors, array $auxParams): void
+	{
+		parent::checkIfToolAvailable($arParams, $arResult, $errors, $auxParams);
+
+		if ($arResult['IS_TOOL_AVAILABLE'])
+		{
+			$arResult['IS_TOOL_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['templates']);
+		}
+	}
+
 	/**
 	 * @param $select
 	 * @param $order
@@ -226,7 +238,7 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 
 		static::tryParseStringParameter($this->arParams['NEED_GROUP_BY_GROUPS'], 'Y');
 
-		static::tryParseStringParameter($this->arParams['FILTER_ID'], 'TASKS_TEMPLATES_FILTER_ID');
+		static::tryParseStringParameter($this->arParams['FILTER_ID'], static::FILTER_ID);
 		static::tryParseStringParameter($this->arParams['GRID_ID'], $this->arParams['FILTER_ID']);
 
 		return $this->errors->checkNoFatals();
@@ -631,7 +643,7 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 		if ($request->get('by') != null)
 		{
 			$sortResult[$request->get('by')] = $request->get('order') ? $request->get('order') : 'asc';
-			$this->getGridOptions()->setSorting($request->get('by'), $sortResult[$request->get('order')]);
+			$this->getGridOptions()->setSorting($request->get('by'), $sortResult[$request->get('order')] ?? null);
 			$this->getGridOptions()->save();
 		}
 		else

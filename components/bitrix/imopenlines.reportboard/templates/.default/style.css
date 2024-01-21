@@ -29,3 +29,10 @@
     max-width: 670px;
     margin: 40px auto 45px auto;
 }
+
+.intranet-contact-center-extremist-organization-label {
+	color: #A8ADB4;
+}
+.bitrix24-light-theme .no-background .intranet-contact-center-extremist-organization-label {
+	color: #fff;
+}

@@ -20,6 +20,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatPermission, UserPermission } = require('im/messenger/lib/permission-manager');
+	const AppTheme = require('apptheme');
 
 	class SidebarController
 	{
@@ -264,7 +265,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 				isShowCallBtn
 					? ButtonFactory.createIconButton(
 						{
-							icon: this.isDisableCallBtn ? buttonIcons.video('#C9CCD0') : buttonIcons.video(),
+							icon: this.isDisableCallBtn ? buttonIcons.video(AppTheme.colors.base7) : buttonIcons.video(),
 							text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_BTN_VIDEO'),
 							callback: () => this.onClickVideoBtn(),
 							disable: this.isDisableCallBtn,
@@ -275,7 +276,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 				isShowCallBtn
 					? ButtonFactory.createIconButton(
 						{
-							icon: this.isDisableCallBtn ? buttonIcons.calling('#C9CCD0') : buttonIcons.calling(),
+							icon: this.isDisableCallBtn ? buttonIcons.calling(AppTheme.colors.base7) : buttonIcons.calling(),
 							text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_BTN_CALL'),
 							callback: () => this.onClickCallBtn(),
 							disable: this.isDisableCallBtn,
@@ -286,7 +287,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 				this.createMuteBtn(),
 				ButtonFactory.createIconButton(
 					{
-						icon: buttonIcons.search('#C9CCD0'),
+						icon: buttonIcons.search(AppTheme.colors.base7),
 						text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_BTN_SEARCH'),
 						callback: () => this.onClickSearchBtn(),
 						disable: true,
@@ -438,6 +439,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 				const locValue = Loc.getMessage(`IMMOBILE_DIALOG_SIDEBAR_NOTICE_CALL_ERROR_${errorCode}`);
 				InAppNotifier.showNotification(
 					{
+						backgroundColor: AppTheme.colors.baseBlackFixed,
 						message: locValue,
 					},
 				);
@@ -456,6 +458,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 				const locValue = Loc.getMessage(`IMMOBILE_DIALOG_SIDEBAR_NOTICE_CALL_ERROR_${errorCode}`);
 				InAppNotifier.showNotification(
 					{
+						backgroundColor: AppTheme.colors.baseBlackFixed,
 						message: locValue,
 					},
 				);
@@ -467,6 +470,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 			const locValue = Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_NOTICE_COMING_SOON');
 			InAppNotifier.showNotification(
 				{
+					backgroundColor: AppTheme.colors.baseBlackFixed,
 					message: locValue,
 				},
 			);

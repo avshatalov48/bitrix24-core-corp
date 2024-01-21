@@ -9,14 +9,11 @@ $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_ESHOP"] = "Connect online store
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_ESHOP_MORE"] = "Details";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">I'd like to</div>
 				<div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">Connect</span> a Telegram bot</div>";
-$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_STEP"] = "Before connection, you have to <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">create a Telegram bot</a>,
- or connect an existing one. We can help you create a public account and connect it to your Bitrix24";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_STEP_NEW"] = "You have to #LINK_START#create a Telegram bot#LINK_END# or use the one you already have. If you don't have a bot, we will help you create one and connect it to your Bitrix24.";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_TITLE"] = "Connect Telegram to your Open Channel";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CREATE_BOT"] = "<span class=\"imconnector-field-box-text-bold\">Create a Telegram bot</span>";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_ESHOP_LINK"] = "Online store link";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_FINAL_FORM_DESCRIPTION"] = "Telegram is now connected to your Open channel. All messages sent via the bot will end up in Bitrix24";
-$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_ADDITIONAL_DESCRIPTION"] = "You have to <a href=\"#\" onclick=\"top.BX.Helper.show(\'#ID#\'); return false;\">create a Telegram bot</a> or use the one you already have. If you don't have a bot, we will help you create one and connect it to your Bitrix24.";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_ADDITIONAL_DESCRIPTION_NEW_MSGVER_2"] = "To connect Telegram to your Bitrix24, #LINK_START#create a Telegram bot#LINK_END# or connect the one you already have. If you don't have a public account, we'll help you create it in a few steps.";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_1"] = "Save contacts and communication history to the CRM";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_2"] = "Guide the customer through the sales funnel in the CRM";

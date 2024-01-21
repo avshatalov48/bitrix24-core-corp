@@ -142,4 +142,13 @@ export class Entry
 
 		Dom.addClass(item, 'menu-popup-item-accept');
 	}
+
+	changeShortView(isShortView: 'Y' | 'N')
+	{
+		const view = this.getView();
+		if (view instanceof View)
+		{
+			this.getView().changeShortView(isShortView);
+		}
+	}
 }

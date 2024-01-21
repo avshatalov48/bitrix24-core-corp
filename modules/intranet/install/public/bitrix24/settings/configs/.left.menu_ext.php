@@ -70,15 +70,4 @@ if ($GLOBALS['USER']->CanDoOperation('bitrix24_config'))
 			""
 		);
 	}
-	/*if (IsModuleInstalled("bitrix24"))
-	{
-		$aMenuLinks[] = Array(
-			GetMessage("MENU_UPDATE_DESC"),
-			"/settings/configs/update_desc.php",
-			Array(),
-			Array("menu_item_id" => "menu_update_desc"),
-			""
-		);
-	}*/
 }
-?>

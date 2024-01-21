@@ -8,6 +8,7 @@ use Bitrix\Main\ORM\Fields\FloatField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\TextField;
 use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
 
 /**
@@ -31,7 +32,20 @@ use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
  * </ul>
  *
  * @package Bitrix\BIConnector
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Log_Query query()
+ * @method static EO_Log_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_Log_Result getById($id)
+ * @method static EO_Log_Result getList(array $parameters = [])
+ * @method static EO_Log_Entity getEntity()
+ * @method static \Bitrix\BIConnector\EO_Log createObject($setDefaultValues = true)
+ * @method static \Bitrix\BIConnector\EO_Log_Collection createCollection()
+ * @method static \Bitrix\BIConnector\EO_Log wakeUpObject($row)
+ * @method static \Bitrix\BIConnector\EO_Log_Collection wakeUpCollection($rows)
+ */
 
 class LogTable extends DataManager
 {
@@ -139,6 +153,14 @@ class LogTable extends DataManager
 				'REAL_TIME',
 				[
 					'title' => Loc::getMessage('LOG_ENTITY_REAL_TIME_FIELD'),
+				]
+			),
+			new BooleanField(
+				'IS_OVER_LIMIT',
+				[
+					'values' => ['N', 'Y'],
+					'default' => 'N',
+					'title' => Loc::getMessage('LOG_ENTITY_IS_OVER_LIMIT_FIELD')
 				]
 			),
 		];

@@ -2,17 +2,15 @@
 
 namespace Bitrix\CrmMobile\Controller\Document;
 
-use Bitrix\Crm\Workflow\EntityStageTable;
-use Bitrix\Crm\Workflow\PaymentWorkflow;
-use Bitrix\CrmMobile\Controller\ReceivePayment\SalescenterControllerWrapper;
+use Bitrix\CrmMobile\Integration\Sale\Check\GetPaymentChecksQuery;
+use Bitrix\CrmMobile\Integration\Sale\Payment\GetPaymentQuery;
 use Bitrix\Sale\Registry;
 use Bitrix\Sale\Repository\PaymentRepository;
 use Bitrix\Sale\PayableShipmentItem;
+use Bitrix\Crm\Order\Permissions;
 
 class Payment extends Base
 {
-	use SalescenterControllerWrapper;
-
 	public function setPaidAction(int $documentId, string $value)
 	{
 		return $this->forward(
@@ -38,38 +36,37 @@ class Payment extends Base
 
 	public function getDocumentDataAction(int $documentId): array
 	{
+		$hasReadPermission = Permissions\Payment::checkReadPermission($documentId);
+		if (!$hasReadPermission)
+		{
+			return [];
+		}
+
+		/** @var \Bitrix\Crm\Order\Payment $payment */
+		$payment = PaymentRepository::getInstance()->getById($documentId);
+		if (!$payment)
+		{
+			return [];
+		}
+
 		$result = parent::getDocumentDataAction($documentId);
-		$result['payment'] = $this->getPaymentData($documentId);
+
+		$result['payment'] = (new GetPaymentQuery($payment))->execute();
+		$result['checks'] = (new GetPaymentChecksQuery($payment))->execute();
+
+		$binding = $payment->getOrder()->getEntityBinding();
+		if ($binding)
+		{
+			$result['entity'] = [
+				'id' => $binding->getOwnerId(),
+				'typeId' => $binding->getOwnerTypeId(),
+			];
+		}
 
 		$shipmentData = $this->getShipmentData($documentId);
 		if (!empty($shipmentData))
 		{
 			$result['shipment'] = $shipmentData;
-		}
-
-		return $result;
-	}
-
-	private function getPaymentData(int $paymentId): array
-	{
-		$payment = PaymentRepository::getInstance()->getById($paymentId);
-		if (!$payment)
-		{
-			return [];
-		}
-		$result = $payment->getFieldValues();
-		if (isset($result['DATE_PAID']))
-		{
-			$result['FORMATTED_DATE_PAID'] = ConvertTimeStamp($result['DATE_PAID']->getTimestamp(), 'FULL');
-		}
-
-		$paymentStages = EntityStageTable::getRow([
-			'select' => ['ENTITY_ID', 'STAGE'],
-			'filter' => ['=ENTITY_ID' => $payment->getId(), '=WORKFLOW_CODE' => PaymentWorkflow::getWorkflowCode()],
-		]);
-		if (isset($paymentStages['STAGE']))
-		{
-			$result['STAGE'] = $paymentStages['STAGE'];
 		}
 
 		return $result;

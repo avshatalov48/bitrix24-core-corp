@@ -6,15 +6,16 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Service\Timeline\Item;
 use Bitrix\Crm\Service\Timeline\Item\Model;
-use Bitrix\Crm\Settings\Crm;
+use Bitrix\Crm\Timeline\AI;
+use Bitrix\Crm\Timeline\CalendarSharing;
 use Bitrix\Crm\Timeline\DeliveryCategoryType;
 use Bitrix\Crm\Timeline\LogMessageType;
 use Bitrix\Crm\Timeline\OrderCategoryType;
 use Bitrix\Crm\Timeline\ProductCompilationType;
-use Bitrix\Crm\Timeline\Tasks\CategoryType;
+use Bitrix\Crm\Timeline\Tasks;
 use Bitrix\Crm\Timeline\TimelineType;
-use Bitrix\Crm\Timeline\CalendarSharing;
 use CCrmOwnerType;
+use Bitrix\Crm\Timeline\OrderPaymentController;
 
 class HistoryItem
 {
@@ -54,18 +55,18 @@ class HistoryItem
 
 		if ($typeId === TimelineType::CREATION)
 		{
-			if ($assocEntityTypeId === \CCrmOwnerType::Deal)
+			if ($assocEntityTypeId === CCrmOwnerType::Deal)
 			{
-				if (!empty($model->getAssociatedEntityModel()->get('ORDER')))
+				if (!empty($model->getAssociatedEntityModel()?->get('ORDER')))
 				{
 					return new Item\LogMessage\DealCreationByOrder($context, $model);
 				}
 			}
-			elseif ($assocEntityTypeId === \CCrmOwnerType::OrderPayment)
+			elseif ($assocEntityTypeId === CCrmOwnerType::OrderPayment)
 			{
 				return new Item\LogMessage\PaymentCreation($context, $model);
 			}
-			elseif ($assocEntityTypeId === \CCrmOwnerType::OrderShipment)
+			elseif ($assocEntityTypeId === CCrmOwnerType::OrderShipment)
 			{
 				return new Item\LogMessage\ShipmentCreation($context, $model);
 			}
@@ -147,6 +148,22 @@ class HistoryItem
 					return new Item\LogMessage\CalendarSharing\LinkCopied($context, $model);
 				case LogMessageType::EMAIL_ACTIVITY_STATUS_SUCCESSFULLY_DELIVERED:
 					return new Item\LogMessage\EmailActivityStatuses\SuccessfullyDelivered($context, $model);
+				case LogMessageType::CALENDAR_SHARING_RULE_UPDATED:
+					return new Item\LogMessage\CalendarSharing\RuleUpdated($context, $model);
+				case LogMessageType::EMAIL_NON_DELIVERED:
+					return new Item\LogMessage\EmailActivityStatuses\NonDelivered($context, $model);
+				case LogMessageType::EMAIL_INCOMING_MESSAGE:
+					return new Item\LogMessage\EmailActivityStatuses\IncomingMessage($context, $model);
+				case LogMessageType::AI_CALL_START_RECORD_TRANSCRIPT:
+					return new Item\LogMessage\AI\Call\RecordTranscriptStarted($context, $model);
+				case LogMessageType::AI_CALL_START_RECORD_TRANSCRIPT_SUMMARY:
+					return new Item\LogMessage\AI\Call\RecordTranscriptSummaryStarted($context, $model);
+				case LogMessageType::AI_CALL_START_FILLING_ENTITY_FIELDS:
+					return new Item\LogMessage\AI\Call\FillingEntityFieldsStarted($context, $model);
+				case LogMessageType::AI_CALL_FINISH_FILLING_ENTITY_FIELDS:
+					return new Item\LogMessage\AI\Call\FillingEntityFieldsFinished($context, $model);
+				case LogMessageType::AI_CALL_LAUNCH_ERROR:
+					return new Item\LogMessage\AI\Call\LaunchError($context, $model);
 			}
 		}
 
@@ -167,7 +184,7 @@ class HistoryItem
 			}
 		}
 
-		if ($typeId === TimelineType::DOCUMENT && Crm::isUniversalActivityScenarioEnabled())
+		if ($typeId === TimelineType::DOCUMENT)
 		{
 			if ($typeCategoryId === TimelineType::MODIFICATION && Item\LogMessage\DocumentViewed::isActive())
 			{
@@ -189,7 +206,7 @@ class HistoryItem
 
 		if ($typeId === TimelineType::ORDER)
 		{
-			$historyItemFields = $model->getHistoryItemModel()->get('FIELDS');
+			$historyItemFields = $model->getHistoryItemModel()?->get('FIELDS');
 			$historyItemFields = $historyItemFields ?? [];
 
 			if ($typeCategoryId === TimelineType::CREATION)
@@ -204,8 +221,8 @@ class HistoryItem
 				if ($assocEntityTypeId === CCrmOwnerType::OrderPayment)
 				{
 					if (
-						isset($historyItemFields['PAY_SYSTEM_CLICK'])
-						&& $historyItemFields['PAY_SYSTEM_CLICK'] === 'Y'
+						isset($historyItemFields[OrderPaymentController::PAY_SYSTEM_CLICK])
+						&& $historyItemFields[OrderPaymentController::PAY_SYSTEM_CLICK] === 'Y'
 					)
 					{
 						return new Item\LogMessage\CustomerSelectedPaymentMethod($context, $model);
@@ -219,14 +236,23 @@ class HistoryItem
 						return new Item\LogMessage\CheckManualCreation($context, $model);
 					}
 
-					if (isset($historyItemFields['VIEWED']))
+
+					if (isset($historyItemFields[OrderPaymentController::VIEWED_WAY_CUSTOMER_PAYMENT_PAY]))
 					{
-						if ($historyItemFields['VIEWED'] === 'Y')
+						if ($historyItemFields[OrderPaymentController::VIEWED_WAY_CUSTOMER_PAYMENT_PAY] === 'Y')
 						{
 							return new Item\LogMessage\PaymentViewed($context, $model);
 						}
 
 						return new Item\LogMessage\PaymentNotViewed($context, $model);
+					}
+
+					if (
+						isset($historyItemFields[OrderPaymentController::SENT_TO_TERMINAL])
+						&& $historyItemFields[OrderPaymentController::SENT_TO_TERMINAL] === 'Y'
+					)
+					{
+						return new Item\LogMessage\PaymentSentToTerminal($context, $model);
 					}
 
 					if (
@@ -321,7 +347,7 @@ class HistoryItem
 
 			if ($model->getAssociatedEntityId())
 			{
-				if ($model->getHistoryItemModel()->get('PRINTED') === 'Y')
+				if ($model->getHistoryItemModel()?->get('PRINTED') === 'Y')
 				{
 					return new Item\OrderCheckPrinted($context, $model);
 				}
@@ -383,54 +409,64 @@ class HistoryItem
 		{
 			switch ($typeCategoryId)
 			{
-				case CategoryType::DESCRIPTION_CHANGED:
+				case Tasks\CategoryType::DESCRIPTION_CHANGED:
 					return new Item\LogMessage\Tasks\TaskDescriptionChanged($context, $model);
 
-				case CategoryType::RESULT_ADDED:
+				case Tasks\CategoryType::RESULT_ADDED:
 					return new Item\LogMessage\Tasks\TaskResultAdded($context, $model);
 
-				case CategoryType::CHECKLIST_ADDED:
+				case Tasks\CategoryType::CHECKLIST_ADDED:
 					return new Item\LogMessage\Tasks\TaskChecklistAdded($context, $model);
 
-				case CategoryType::DEADLINE_CHANGED:
+				case Tasks\CategoryType::DEADLINE_CHANGED:
 					return new Item\LogMessage\Tasks\TaskDeadlineChanged($context, $model);
 
-				case CategoryType::VIEWED:
+				case Tasks\CategoryType::VIEWED:
 					return new Item\LogMessage\Tasks\TaskViewed($context, $model);
 
-				case CategoryType::PING_SENT:
+				case Tasks\CategoryType::PING_SENT:
 					return new Item\LogMessage\Tasks\TaskPingSent($context, $model);
 
-				case CategoryType::COMMENT_ADD:
+				case Tasks\CategoryType::COMMENT_ADD:
 					return new Item\LogMessage\Tasks\TaskCommentAdded($context, $model);
 
-				case CategoryType::ALL_COMMENT_VIEWED:
+				case Tasks\CategoryType::ALL_COMMENT_VIEWED:
 					return new Item\LogMessage\Tasks\TaskCommentsViewed($context, $model);
 
-				case CategoryType::TASK_ADDED:
+				case Tasks\CategoryType::TASK_ADDED:
 					return new Item\LogMessage\Tasks\TaskCreation($context, $model);
 
-				case CategoryType::STATUS_CHANGED:
+				case Tasks\CategoryType::STATUS_CHANGED:
 					return new Item\LogMessage\Tasks\TaskStatusChanged($context, $model);
 
-				case CategoryType::EXPIRED:
+				case Tasks\CategoryType::EXPIRED:
 					return new Item\LogMessage\Tasks\TaskDeadlineExpired($context, $model);
 
-				case CategoryType::DISAPPROVED:
+				case Tasks\CategoryType::DISAPPROVED:
 					return new Item\LogMessage\Tasks\TaskDisapproved($context, $model);
 
-				case CategoryType::RESPONSIBLE_CHANGED:
+				case Tasks\CategoryType::RESPONSIBLE_CHANGED:
 					return new Item\LogMessage\Tasks\TaskResponsibleChanged($context, $model);
 
-				case CategoryType::ACCOMPLICE_ADDED:
+				case Tasks\CategoryType::ACCOMPLICE_ADDED:
 					return new Item\LogMessage\Tasks\TaskAccompliceAdded($context, $model);
 
-				case CategoryType::AUDITOR_ADDED:
+				case Tasks\CategoryType::AUDITOR_ADDED:
 					return new Item\LogMessage\Tasks\TaskAuditorAdded($context, $model);
 
-				case CategoryType::GROUP_CHANGED:
+				case Tasks\CategoryType::GROUP_CHANGED:
 					return new Item\LogMessage\Tasks\TaskGroupChanged($context, $model);
 			}
+		}
+
+		if ($typeId === TimelineType::AI_CALL_PROCESSING)
+		{
+			return match ($typeCategoryId)
+			{
+				AI\Call\CategoryType::RECORD_TRANSCRIPT_FINISHED => new Item\AI\Call\TranscriptResult($context, $model),
+				AI\Call\CategoryType::RECORD_TRANSCRIPT_SUMMARY_FINISHED => new Item\AI\Call\TranscriptSummaryResult($context, $model),
+				AI\Call\CategoryType::FILLING_ENTITY_FIELDS_FINISHED => new Item\AI\Call\EntityFieldsFillingResult($context, $model),
+			};
 		}
 
 		return new Item\Compatible\HistoryItem(

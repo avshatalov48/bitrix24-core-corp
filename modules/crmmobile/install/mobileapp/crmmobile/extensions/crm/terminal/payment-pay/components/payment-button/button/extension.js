@@ -2,9 +2,11 @@
  * @module crm/terminal/payment-pay/components/payment-button/button
  */
 jn.define('crm/terminal/payment-pay/components/payment-button/button', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { EventEmitter } = require('event-emitter');
 	const { PureComponent } = require('layout/pure-component');
 	const { withPressed } = require('utils/color');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @class PaymentButton
@@ -33,8 +35,8 @@ jn.define('crm/terminal/payment-pay/components/payment-button/button', (require,
 						paddingBottom: 10,
 						borderRadius: 6,
 						borderWidth: 1,
-						borderColor: '#00A2E8',
-						backgroundColor: withPressed('#EEF2F4'),
+						borderColor: AppTheme.colors.accentMainPrimary,
+						backgroundColor: withPressed(AppTheme.colors.bgPrimary),
 						flexDirection: 'row',
 						alignItems: 'center',
 						justifyContent: 'center',
@@ -60,7 +62,7 @@ jn.define('crm/terminal/payment-pay/components/payment-button/button', (require,
 				),
 				this.text && Text({
 					style: {
-						color: '#333333',
+						color: AppTheme.colors.base1,
 						fontSize: 17,
 						fontWeight: '500',
 						numberOfLines: 1,

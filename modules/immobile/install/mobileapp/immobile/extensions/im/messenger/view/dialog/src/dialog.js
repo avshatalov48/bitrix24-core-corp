@@ -44,6 +44,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				EventType.dialog.loadBottomPage,
 				EventType.dialog.visibleMessagesChanged,
 				EventType.dialog.statusFieldTap,
+				EventType.dialog.chatJoinButtonTap,
 			]);
 
 			/**
@@ -62,6 +63,10 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			 */
 			this.visibilityManager = VisibilityManager.getInstance();
 			/**
+			 * @type {Array<Message>}
+			 */
+			this.messageList = [];
+			/**
 			 * @private
 			 * @type {Array<Message>}
 			 */
@@ -71,11 +76,6 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			 * @type {Array<number>}
 			 */
 			this.messageIndexListOnScreen = [];
-			/**
-			 * @private
-			 * @type {number}
-			 */
-			this.messagesCount = 0;
 			/**
 			 * @private
 			 * @type {number}
@@ -106,19 +106,34 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			 * @type {boolean}
 			 */
 			this.scrollToFirstUnreadCompleted = false;
+
 			/**
 			 * @private
-			 * @type {Message | null}
+			 * @type {boolean}
 			 */
-			this.topMessage = null;
-			/**
-			 * @private
-			 * @type {Message | null}
-			 */
-			this.bottomMessage = null;
+			this.isWelcomeScreenShown = false;
 
 			this.subscribeEvents();
 		}
+
+		/* region nested objects */
+		/**
+		 * @return {DialogTextField}
+		 */
+		get textField()
+		{
+			return this.ui.textField;
+		}
+
+		/**
+		 * @return {MentionPanel}
+		 */
+		get mentionPanel()
+		{
+			return this.ui.mentionPanel;
+		}
+
+		/* endregion nested objects */
 
 		/* region Events */
 
@@ -131,8 +146,15 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				.on(EventType.view.show, this.onViewShown.bind(this))
 			;
 
-			this.ui.statusField
-				.on(EventType.view.statusField.tap, this.onStatusFieldTap.bind(this))
+			if (this.ui.statusField)
+			{
+				this.ui.statusField
+					.on(EventType.dialog.statusField.tap, this.onStatusFieldTap.bind(this))
+				;
+			}
+
+			this.ui.chatJoinButton
+				.on(EventType.dialog.chatJoinButton.tap, this.onChatJoinButtonTap.bind(this))
 			;
 		}
 
@@ -190,7 +212,6 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		}
 
 		/**
-		 * @private
 		 * @param {Array<Message>} messageList
 		 */
 		readVisibleUnreadMessages(messageList)
@@ -234,6 +255,11 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.emitCustomEvent(EventType.dialog.statusFieldTap);
 		}
 
+		onChatJoinButtonTap()
+		{
+			this.emitCustomEvent(EventType.dialog.chatJoinButtonTap);
+		}
+
 		onViewShown()
 		{
 			if (!this.shouldEmitMessageRead)
@@ -266,26 +292,42 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		}
 
 		/**
+		 * @return {{messageList: Array<Message>, indexList: Array<number>} || null}
+		 */
+		getCompletelyVisibleMessages()
+		{
+			if (this.ui.getCompletelyVisibleMessages)
+			{
+				return this.ui.getCompletelyVisibleMessages();
+			}
+
+			return null;
+		}
+
+		/**
 		 * @param {Array<Message>} messageList
 		 */
 		setMessages(messageList)
 		{
+			if (Type.isArrayFilled(messageList))
+			{
+				this.hideWelcomeScreen();
+			}
+
 			this.unreadSeparatorAdded = messageList.some((message) => message.id === UnreadSeparatorMessage.getDefaultId());
 			this.ui.setMessages(messageList);
+			this.setMessageList(messageList);
 
-			this.topMessage = messageList[messageList.length - 1];
-			this.bottomMessage = messageList[0];
-			this.messagesCount = messageList.length;
-
-			this.scrollToFirstUnreadMessage(
-				false,
-				() => this.afterSetMessages(true),
-			);
-
-			if (!this.unreadSeparatorAdded)
-			{
-				this.afterSetMessages(false);
-			}
+			setTimeout(() => {
+				this.scrollToFirstUnreadMessage(
+					false,
+					() => this.afterSetMessages(true),
+				);
+				if (!this.unreadSeparatorAdded)
+				{
+					this.afterSetMessages(false);
+				}
+			}, 0);
 		}
 
 		/**
@@ -297,11 +339,11 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 			if (this.unreadSeparatorAdded)
 			{
-				Logger.warn('DialogView: scroll to the first unread completed');
+				Logger.log('DialogView: scroll to the first unread completed');
 			}
 			else
 			{
-				Logger.warn('DialogView: scrolling to the first unread is not required, everything is read');
+				Logger.log('DialogView: scrolling to the first unread is not required, everything is read');
 			}
 
 			if (!this.messageIndexListOnScreen.includes(0))
@@ -316,7 +358,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				} = this.getViewableMessages();
 				this.shouldEmitMessageRead = true;
 
-				Logger.warn('DialogView.afterSetMessages: visible messages ', messageList);
+				Logger.log('DialogView.afterSetMessages: visible messages ', messageList);
 
 				this.readVisibleUnreadMessages(messageList);
 			}, 200);
@@ -327,10 +369,13 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		 */
 		pushMessages(messageList)
 		{
-			this.ui.pushMessages(messageList);
+			if (Type.isArrayFilled(messageList))
+			{
+				this.hideWelcomeScreen();
+			}
 
-			this.messagesCount += messageList.length;
-			this.topMessage = messageList[messageList.length - 1];
+			this.ui.pushMessages(messageList);
+			this.pushMessageList(messageList);
 		}
 
 		/**
@@ -338,37 +383,38 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		 */
 		addMessages(messageList)
 		{
-			this.shouldShowScrollToNewMessagesButton = false;
-
-			this.ui.addMessages(messageList);
-
-			this.messagesCount += messageList.length;
-			this.bottomMessage = messageList[0];
-
-			if (this.messageIndexListOnScreen.includes(0))
+			if (Type.isArrayFilled(messageList))
 			{
-				this.visibilityManager.checkIsDialogVisible(this.dialogId).then((isDialogVisible) => {
-					if (!isDialogVisible)
-					{
-						this.shouldShowScrollToNewMessagesButton = true;
-						this.showScrollToNewMessagesButton();
-
-						return;
-					}
-
-					this.scrollToBottomSmoothly(() => {
-						// timeout to prevent a race condition between the end of the scroll and viewableMessagesChanged.
-						// If you remove it when adding a message, the scroll down button may start blinking.
-						setTimeout(() => {
-							this.shouldShowScrollToNewMessagesButton = true;
-						}, 300);
-					});
-				});
-
-				return;
+				this.hideWelcomeScreen();
 			}
 
-			this.shouldShowScrollToNewMessagesButton = true;
+			this.disableShowScrollButton();
+
+			this.ui.addMessages(messageList);
+			this.addMessageList(messageList);
+
+			this.visibilityManager.checkIsDialogVisible(this.dialogId).then((isDialogVisible) => {
+				if (isDialogVisible)
+				{
+					return;
+				}
+
+				this.enableShowScrollButton();
+				this.showScrollToNewMessagesButton();
+			});
+
+			this.enableShowScrollButton();
+		}
+
+		/**
+		 *
+		 * @param {string || number} pointedId
+		 * @param {Array<Message>} messageList
+		 * @param {'above' || 'below'} position
+		 */
+		insertMessages(pointedId, messageList, position)
+		{
+			this.ui.insertMessages(pointedId, messageList, position);
 		}
 
 		getTopMessageOnScreen()
@@ -385,6 +431,16 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		updateMessageById(id, message)
 		{
 			this.ui.updateMessageById(id, message);
+			this.updateMessageListById(id, message);
+		}
+
+		/**
+		 * @desc update messages
+		 * @param {object} messages
+		 */
+		updateMessagesByIds(messages)
+		{
+			this.ui.updateMessagesByIds(messages);
 		}
 
 		/**
@@ -402,17 +458,13 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 			const removeIdList = idList.map((id) => String(id));
 			this.ui.removeMessagesByIds(removeIdList);
+			this.removeMessageListByIds(removeIdList);
+			if (this.messageList.length === 0)
+			{
+				this.showWelcomeScreen();
+			}
 
 			return true;
-		}
-
-		/**
-		 * @param {number} id
-		 * @return {boolean}
-		 */
-		removeMessageById(id)
-		{
-			return this.removeMessagesByIds([id]);
 		}
 
 		/**
@@ -447,61 +499,178 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.ui.showMenuForMessage(message, menu);
 		}
 
+		/* endregion Message */
+
+		/* region ViewMessageList */
+
+		/**
+		 * @param {array} messageList
+		 */
+		setMessageList(messageList)
+		{
+			this.messageList = Type.isArrayFilled(messageList) ? messageList : [];
+		}
+
+		/**
+		 * @param {array} messageList
+		 */
+		addMessageList(messageList)
+		{
+			this.messageList.unshift(...messageList);
+		}
+
+		/**
+		 * @param {array} messageList
+		 */
+		pushMessageList(messageList)
+		{
+			this.messageList.push(...messageList);
+		}
+
+		/**
+		 * @param {string} id
+		 * @param {object} message
+		 */
+		updateMessageListById(id, message)
+		{
+			this.messageList = this.messageList.map((viewMessage) => {
+				if (viewMessage.id === id)
+				{
+					return message;
+				}
+
+				return viewMessage;
+			});
+		}
+
+		/**
+		 * @param {array<string>} idList
+		 */
+		removeMessageListByIds(idList)
+		{
+			this.messageList = this.messageList.filter((message) => {
+				return !idList.includes(message.id);
+			});
+		}
+
+		/**
+		 * @param {string} id
+		 */
+		getMessageAboveSelectedById(id)
+		{
+			const selectedId = String(id);
+			const messageIndex = this.messageList.findIndex((message) => {
+				return message.id === selectedId;
+			});
+
+			if (messageIndex === -1)
+			{
+				return null;
+			}
+
+			const aboveMessage = this.messageList[messageIndex + 1];
+			if (aboveMessage)
+			{
+				return aboveMessage;
+			}
+
+			return null;
+		}
+
+		getMessagesCount()
+		{
+			return this.messageList.length;
+		}
+
 		getTopMessage()
 		{
-			return this.topMessage;
+			if (!Type.isArrayFilled(this.messageList))
+			{
+				return null;
+			}
+
+			return this.messageList[this.messageList.length - 1];
 		}
 
 		getBottomMessage()
 		{
-			return this.bottomMessage;
+			if (!Type.isArrayFilled(this.messageList))
+			{
+				return null;
+			}
+
+			return this.messageList[0];
 		}
 
-		/* endregion Message */
+		/* endregion ViewMessageList */
 
 		/* region Input */
 
 		clearInput()
 		{
-			this.ui.clearInput();
+			this.ui.textField.clear();
 		}
 
 		setInputPlaceholder(text)
 		{
-			this.ui.setInputPlaceholder(text);
+			this.ui.textField.setPlaceholder(text);
 		}
 
 		setInputQuote(message, type, openKeyboard = true)
 		{
 			if (InputQuoteType[type])
 			{
-				this.ui.setInputQuote(message, type, openKeyboard);
+				this.ui.textField.setQuote(message, type, openKeyboard);
 			}
 			else
 			{
-				this.ui.setInputQuote(message);
+				this.ui.textField.setQuote(message);
 			}
 		}
 
 		removeInputQuote()
 		{
 			return new Promise((resolve) => {
-				this.ui.once(EventType.dialog.quoteRemoveAnimationEnd, () => {
+				this.ui.textField.once(EventType.dialog.textField.quoteRemoveAnimationEnd, () => {
 					resolve();
 				});
 
-				this.ui.removeInputQuote();
+				this.ui.textField.removeQuote();
 			});
 		}
 
 		setInput(text)
 		{
-			this.ui.setInput(text);
+			this.ui.textField.setText(text);
 		}
 
 		getInput()
 		{
-			return this.ui.getInput();
+			return this.ui.textField.getText();
+		}
+
+		// Input === textField
+		hideTextField(isAnimated = false)
+		{
+			this.ui.textField.hide({ animated: isAnimated });
+		}
+
+		showTextField(isAnimated = false)
+		{
+			this.ui.textField.show({ animated: isAnimated });
+		}
+
+		/**
+		 * @param {string} text - text button
+		 */
+		showChatJoinButton(text)
+		{
+			this.ui.chatJoinButton.show({ text });
+		}
+
+		hideChatJoinButton(isAnimated = false)
+		{
+			this.ui.chatJoinButton.hide({ animated: isAnimated });
 		}
 
 		/* endregion Input */
@@ -521,6 +690,16 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				this.ui.showScrollToNewMessagesButton();
 				this.isScrollToNewMessageButtonVisible = true;
 			}
+		}
+
+		disableReadingEvent()
+		{
+			this.shouldEmitMessageRead = false;
+		}
+
+		enableReadingEvent()
+		{
+			this.shouldEmitMessageRead = true;
 		}
 
 		checkIsScrollToNewMessageButtonVisible()
@@ -548,13 +727,17 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.ui.scrollToMessageById(id, withAnimation, afterScrollEndCallback, position);
 		}
 
-		scrollToFirstUnreadMessage(withAnimation = false, afterScrollEndCallback = () => {})
+		scrollToFirstUnreadMessage(
+			withAnimation = false,
+			afterScrollEndCallback = () => {},
+			position = AfterScrollMessagePosition.top,
+		)
 		{
 			this.scrollToMessageById(
 				UnreadSeparatorMessage.getDefaultId(),
 				withAnimation,
 				afterScrollEndCallback,
-				AfterScrollMessagePosition.top,
+				position,
 			);
 		}
 
@@ -572,6 +755,16 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		)
 		{
 			this.scrollToMessageById(this.readingMessageId, true, afterScrollEndCallback, position);
+		}
+
+		disableShowScrollButton()
+		{
+			this.shouldShowScrollToNewMessagesButton = false;
+		}
+
+		enableShowScrollButton()
+		{
+			this.shouldShowScrollToNewMessagesButton = true;
 		}
 
 		/* endregion Scroll */
@@ -599,6 +792,25 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		setTitle(titleParams)
 		{
 			this.ui.setTitle(titleParams);
+		}
+
+		/**
+		 * @param {{imageUrl?: string, defaultIconSvg?: string}} currentUserAvatar
+		 */
+		setCurrentUserAvatar(currentUserAvatar)
+		{
+			if (this.ui.setCurrentUserAvatar)
+			{
+				this.ui.setCurrentUserAvatar(currentUserAvatar);
+			}
+		}
+
+		setReadingMessageId(lastReadId)
+		{
+			if (lastReadId > this.readingMessageId)
+			{
+				this.readingMessageId = lastReadId;
+			}
 		}
 
 		showMessageListLoader()
@@ -654,13 +866,10 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 							},
 							{
 								id: 'disk',
-								name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_DISK'),
+								name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_DISK_V2'),
 								dataSource: {
 									multiple: false,
-									url:
-										`${MessengerParams.getSiteDir()
-										 }mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${
-										 MessengerParams.getUserId()}`,
+									url: `${MessengerParams.getSiteDir()}mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${MessengerParams.getUserId()}`,
 									TABLE_SETTINGS: {
 										searchField: true,
 										showtitle: true,
@@ -677,6 +886,41 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			dialogs.showImagePicker(imagePickerParams, selectedFilesHandler);
 		}
 
+		showWelcomeScreen()
+		{
+			if (!this.ui.welcomeScreen)
+			{
+				return false;
+			}
+
+			this.ui.welcomeScreen.show({
+				title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_WELCOME_SCREEN_TITLE'),
+				text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_WELCOME_SCREEN_TEXT'),
+			});
+
+			this.isWelcomeScreenShown = true;
+
+			return true;
+		}
+
+		hideWelcomeScreen()
+		{
+			if (!this.ui.welcomeScreen)
+			{
+				return false;
+			}
+
+			if (this.isWelcomeScreenShown === false)
+			{
+				return true;
+			}
+
+			this.ui.welcomeScreen.hide();
+			this.isWelcomeScreenShown = false;
+
+			return true;
+		}
+
 		setNewMessageCounter(counter)
 		{
 			this.ui.setNewMessageCounter(counter);
@@ -687,12 +931,12 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		 */
 		checkNeedToLoadTopPage()
 		{
-			if (this.messagesCount < (messagesCountToPageLoad * 2))
+			if (this.getMessagesCount() < (messagesCountToPageLoad * 2))
 			{
 				return false;
 			}
 
-			const topIndexToLoad = this.messagesCount - messagesCountToPageLoad;
+			const topIndexToLoad = this.getMessagesCount() - messagesCountToPageLoad;
 			const index = this.messageIndexListOnScreen.findIndex((messageIndex) => {
 				return messageIndex >= topIndexToLoad;
 			});
@@ -705,7 +949,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		 */
 		checkNeedToLoadBottomPage()
 		{
-			if (this.messagesCount < (messagesCountToPageLoad * 2))
+			if (this.getMessagesCount() < (messagesCountToPageLoad * 2))
 			{
 				return false;
 			}
@@ -756,7 +1000,11 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			{
 				return false;
 			}
-			this.ui.statusField.set({ iconType, text });
+
+			if (this.ui.statusField)
+			{
+				this.ui.statusField.set({ iconType, text });
+			}
 
 			return true;
 		}
@@ -767,7 +1015,10 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		 */
 		clearStatusField()
 		{
-			this.ui.statusField.clear();
+			if (this.ui.statusField)
+			{
+				this.ui.statusField.clear();
+			}
 
 			return true;
 		}

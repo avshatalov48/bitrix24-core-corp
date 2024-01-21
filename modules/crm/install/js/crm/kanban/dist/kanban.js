@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,crm_kanban_sort,main_core_events,ui_notification,main_popup,main_core) {

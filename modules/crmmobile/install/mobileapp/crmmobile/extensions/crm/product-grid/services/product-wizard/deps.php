@@ -2,8 +2,9 @@
 
 return [
 	'extensions' => [
-		'utils/random',
 		'loc',
+		'apptheme',
+		'utils/random',
 		'helpers/component',
 	]
 ];

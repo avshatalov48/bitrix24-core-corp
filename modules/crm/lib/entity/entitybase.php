@@ -70,7 +70,12 @@ abstract class EntityBase
 		}
 
 		static $cache;
-		$cacheKey = md5(serialize($params) . $this->getEntityTypeID());
+		$cacheKeyParams = $params;
+		if (isset($params['userPermissions']))
+		{
+			$cacheKeyParams['userPermissions'] = $params['userPermissions']->GetUserID();
+		}
+		$cacheKey = md5(serialize($cacheKeyParams) . $this->getEntityTypeID());
 		if (isset($cache[$cacheKey]))
 		{
 			return $cache[$cacheKey];

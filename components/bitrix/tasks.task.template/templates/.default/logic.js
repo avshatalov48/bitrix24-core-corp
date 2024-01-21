@@ -23,7 +23,16 @@ BX.namespace('Tasks.Component');
 				{
 					this.vars.prevResponsibles = [this.option('currentUser')];
 				}
-				this.vars.parentType = ((!parseInt(this.option('template').BASE_TEMPLATE_ID) && parseInt(this.option('template').PARENT_ID))? 'task' : 'template');
+
+				// http://jabber.bx/view.php?id=119356
+				if (this.option('template').REPLICATE === 'Y')
+				{
+					this.vars.parentType = 'task';
+				}
+				else
+				{
+					this.vars.parentType = ((!parseInt(this.option('template').BASE_TEMPLATE_ID) && parseInt(this.option('template').PARENT_ID))? 'task' : 'template');
+				}
 				this.vars.currentLock = false;
 				this.vars.taskLimitExceeded = this.option('taskLimitExceeded');
 				this.vars.templateTaskRecurrentLimitExceeded = this.option('templateTaskRecurrentLimitExceeded');

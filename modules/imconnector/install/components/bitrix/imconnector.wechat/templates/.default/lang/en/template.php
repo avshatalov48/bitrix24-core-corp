@@ -6,7 +6,6 @@ $MESS["IMCONNECTOR_COMPONENT_WECHAT_CHANGE_ANY_TIME"] = "You can edit or disconn
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_CONNECTED"] = "WeChat is now connected";
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">I'd like to</div>
 	<div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">connect a</span> Wechat account</div>";
-$MESS["IMCONNECTOR_COMPONENT_WECHAT_CONNECT_STEP"] = "You need to have an official account to connect. If you don't have one, you have to <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">create an official account</a>. We can help you create an official account and connect it to your Bitrix24 account.";
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_CONNECT_STEP_NEW"] = "You will have to #LINK_START#create an official account#LINK_END# or use an existing one to connect. If you don't have an account, we will help you create one and connect it to your Bitrix24.";
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_CONNECT_TITLE"] = "Connect WeChat to Open Channel";
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_COPY"] = "Copy";

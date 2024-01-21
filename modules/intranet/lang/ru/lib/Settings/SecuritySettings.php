@@ -1,0 +1,4 @@
+<?php
+$MESS['INTRANET_SETTINGS_SECURITY_MODULE_ERROR'] = 'Отсутствует модуль security';
+$MESS['INTRANET_SETTINGS_SECURITY_WRONG_IP_ERROR'] = 'Неверно введен IP';
+$MESS['INTRANET_SETTINGS_SECURITY_UNLIMITED_DAYS'] = 'Неограниченно';

@@ -1,4 +1,3 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,ui_shortView,ui_entitySelector,ui_hint,main_polyfill_intersectionobserver,main_popup,ui_dialogs_messagebox,ui_draganddrop_draggable,pull_client,main_loader,main_core,main_core_events) {
@@ -581,7 +580,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function setDisplayPriority(value) {
 	      var availableValues = new Set(['backlog', 'sprint']);
 	      if (!availableValues.has(value)) {
-	        throw Error('Invalid parameter to set display priority');
+	        throw new Error('Invalid parameter to set display priority');
+	      }
+	    }
+	  }, {
+	    key: "changeShortView",
+	    value: function changeShortView(isShortView) {
+	      var availableValues = new Set(['Y', 'N']);
+	      if (!availableValues.has(isShortView)) {
+	        throw new Error('Invalid parameter to set short view');
 	      }
 	    }
 	  }, {
@@ -9788,6 +9795,39 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      });
 	    }
 	  }, {
+	    key: "changeShortView",
+	    value: function changeShortView(isShortView) {
+	      var _this3 = this;
+	      babelHelpers.get(babelHelpers.getPrototypeOf(Plan.prototype), "changeShortView", this).call(this, isShortView);
+	      this.planBuilder.setShortView(isShortView);
+	      this.destroyActionPanel();
+	      var entities = this.entityStorage.getAllEntities();
+	      entities.forEach(function (entity) {
+	        if (!entity.isCompleted()) {
+	          entity.deactivateGroupMode();
+	          entity.fadeOut();
+	        }
+	      });
+	      this.requestSender.saveShortView({
+	        isShortView: isShortView
+	      }).then(function (response) {
+	        entities.forEach(function (entity) {
+	          if (!entity.isCompleted()) {
+	            entity.setShortView(isShortView);
+	            entity.adjustListItemsWidth();
+	            entity.fadeIn();
+	          }
+	        });
+	      })["catch"](function (response) {
+	        entities.forEach(function (entity) {
+	          if (!entity.isCompleted()) {
+	            entity.fadeIn();
+	          }
+	        });
+	        _this3.requestSender.showErrorAlert(response);
+	      });
+	    }
+	  }, {
 	    key: "subscribeToPull",
 	    value: function subscribeToPull() {
 	      pull_client.PULL.subscribe(this.pullSprint);
@@ -9798,7 +9838,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "bindHandlers",
 	    value: function bindHandlers() {
-	      var _this3 = this;
+	      var _this4 = this;
 	      this.entityStorage.getBacklog().subscribe('showInput', this.onShowBacklogInput.bind(this));
 	      this.entityStorage.getBacklog().subscribe('openAddTaskForm', this.onOpenAddTaskForm.bind(this));
 	      this.entityStorage.getBacklog().subscribe('updateItem', this.onUpdateItem.bind(this));
@@ -9815,7 +9855,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.entityStorage.getBacklog().subscribe('filterByTag', this.onFilterByTag.bind(this));
 	      this.entityStorage.getBacklog().subscribe('loadItems', function (baseEvent) {
 	        var entity = baseEvent.getTarget();
-	        _this3.planBuilder.loadItems(entity);
+	        _this4.planBuilder.loadItems(entity);
 	      });
 	      this.entityStorage.getBacklog().subscribe('toggleActionPanel', this.onToggleActionPanel.bind(this));
 	      this.entityStorage.getBacklog().subscribe('showLinked', this.onShowLinked.bind(this));
@@ -9823,13 +9863,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.entityStorage.getBacklog().subscribe('showBlank', this.onShowBlank.bind(this));
 	      this.entityStorage.getBacklog().subscribe('deactivateGroupMode', this.onDeactivateGroupMode.bind(this));
 	      this.entityStorage.getSprints().forEach(function (sprint) {
-	        return _this3.subscribeToSprint(sprint);
+	        return _this4.subscribeToSprint(sprint);
 	      });
 	      this.epic.subscribe('filterByTag', this.onFilterByTag.bind(this));
 	      this.itemMover.subscribe('dragStart', function () {
-	        _this3.destroyActionPanel();
-	        if (_this3.searchItems.isActive()) {
-	          _this3.searchItems.stop();
+	        _this4.destroyActionPanel();
+	        if (_this4.searchItems.isActive()) {
+	          _this4.searchItems.stop();
 	        }
 	      });
 	      document.onkeydown = this.onDocumentKeyDown.bind(this);
@@ -9838,7 +9878,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "subscribeToSprint",
 	    value: function subscribeToSprint(sprint) {
-	      var _this4 = this;
+	      var _this5 = this;
 	      sprint.subscribe('showInput', this.onShowSprintInput.bind(this));
 	      sprint.subscribe('createSprint', this.onCreateSprint.bind(this));
 	      sprint.subscribe('updateItem', this.onUpdateItem.bind(this));
@@ -9863,7 +9903,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      sprint.subscribe('showSprintCreateMenu', this.onOpenSprintAddMenu.bind(this));
 	      sprint.subscribe('loadItems', function (baseEvent) {
 	        var entity = baseEvent.getTarget();
-	        _this4.planBuilder.loadItems(entity);
+	        _this5.planBuilder.loadItems(entity);
 	      });
 	      sprint.subscribe('toggleActionPanel', this.onToggleActionPanel.bind(this));
 	      sprint.subscribe('showLinked', this.onShowLinked.bind(this));
@@ -10002,7 +10042,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onCreateTaskItem",
 	    value: function onCreateTaskItem(baseEvent) {
-	      var _this5 = this;
+	      var _this6 = this;
 	      var input = baseEvent.getTarget();
 	      var entity = input.getEntity();
 	      var newItem = null;
@@ -10050,11 +10090,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.pullItem.addTmpIdToSkipAdding(newItem.getId());
 	      this.pullItem.addTmpIdToSkipSorting(newItem.getId());
 	      this.sendRequestToCreateTask(entity, newItem).then(function (response) {
-	        _this5.fillItemAfterCreation(newItem, response.data);
+	        _this6.fillItemAfterCreation(newItem, response.data);
 	        entity.setItem(newItem);
-	        _this5.updateEntityCounters(entity);
-	        if (_this5.decomposition) {
-	          var _parentItem = _this5.decomposition.getParentItem();
+	        _this6.updateEntityCounters(entity);
+	        if (_this6.decomposition) {
+	          var _parentItem = _this6.decomposition.getParentItem();
 	          if (!entity.isBacklog()) {
 	            var subTasks = _parentItem.getSubTasks();
 	            subTasks.addTask(newItem);
@@ -10075,31 +10115,31 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        input.unDisable();
 	        input.focus();
 	        entity.adjustListItemsWidth();
-	        _this5.planBuilder.adjustSprintListWidth();
+	        _this6.planBuilder.adjustSprintListWidth();
 	      })["catch"](function (response) {
-	        _this5.requestSender.showErrorAlert(response);
+	        _this6.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "onUpdateItem",
 	    value: function onUpdateItem(baseEvent) {
-	      var _this6 = this;
+	      var _this7 = this;
 	      var entity = baseEvent.getTarget();
 	      var updateData = baseEvent.getData();
 	      this.pullItem.addIdToSkipUpdating(updateData.itemId);
 	      this.requestSender.updateItem(baseEvent.getData()).then(function () {
 	        var isStoryPointsUpdated = !main_core.Type.isUndefined(updateData.storyPoints);
 	        if (isStoryPointsUpdated) {
-	          _this6.updateEntityCounters(entity);
+	          _this7.updateEntityCounters(entity);
 	        }
 	      })["catch"](function (response) {
-	        _this6.requestSender.showErrorAlert(response);
+	        _this7.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "onGetSubTasks",
 	    value: function onGetSubTasks(baseEvent) {
-	      var _this7 = this;
+	      var _this8 = this;
 	      var sprint = baseEvent.getTarget();
 	      var subTasks = baseEvent.getData();
 	      sprint.appendNodeAfterItem(subTasks.render(), subTasks.getParentItem().getNode());
@@ -10114,15 +10154,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        });
 	        subTasks.getParentItem().showSubTasks();
 	        sprint.deactivateSubTaskLoading(subTasks.getParentItem());
-	        _this7.planBuilder.adjustSprintListWidth();
+	        _this8.planBuilder.adjustSprintListWidth();
 	      })["catch"](function (response) {
-	        _this7.requestSender.showErrorAlert(response);
+	        _this8.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "onChangeTaskResponsible",
 	    value: function onChangeTaskResponsible(baseEvent) {
-	      var _this8 = this;
+	      var _this9 = this;
 	      var item = baseEvent.getData();
 	      this.pullItem.addIdToSkipUpdating(item.getId());
 	      this.requestSender.changeTaskResponsible({
@@ -10130,7 +10170,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        sourceId: item.getSourceId(),
 	        responsible: item.getResponsible().getValue()
 	      })["catch"](function (response) {
-	        _this8.requestSender.showErrorAlert(response);
+	        _this9.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
@@ -10160,7 +10200,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onCompleteSprint",
 	    value: function onCompleteSprint() {
-	      var _this9 = this;
+	      var _this10 = this;
 	      var sprintSidePanel = new SprintSidePanel({
 	        sidePanel: this.sidePanel,
 	        groupId: this.groupId,
@@ -10168,13 +10208,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      });
 	      sprintSidePanel.showCompletionForm();
 	      sprintSidePanel.subscribe('showTask', function (innerBaseEvent) {
-	        _this9.sidePanel.openSidePanelByUrl(_this9.getPathToTask().replace('#task_id#', innerBaseEvent.getData()));
+	        _this10.sidePanel.openSidePanelByUrl(_this10.getPathToTask().replace('#task_id#', innerBaseEvent.getData()));
 	      });
 	    }
 	  }, {
 	    key: "onRemoveSprint",
 	    value: function onRemoveSprint(baseEvent) {
-	      var _this10 = this;
+	      var _this11 = this;
 	      var sprint = baseEvent.getTarget();
 	      this.pullSprint.addIdToSkipRemoving(sprint.getId());
 	      this.requestSender.removeSprint({
@@ -10185,30 +10225,30 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          babelHelpers.toConsumableArray(sprint.getItems().values()).map(function (item) {
 	            sprint.addItemToGroupMode(item);
 	          });
-	          _this10.itemMover.moveToWithGroupMode(sprint, _this10.entityStorage.getBacklog(), null, false, false);
+	          _this11.itemMover.moveToWithGroupMode(sprint, _this11.entityStorage.getBacklog(), null, false, false);
 	        }
-	        _this10.destroyActionPanel();
+	        _this11.destroyActionPanel();
 	        sprint.removeYourself();
-	        _this10.entityStorage.removeSprint(sprint.getId());
-	        _this10.planBuilder.adjustSprintListWidth();
+	        _this11.entityStorage.removeSprint(sprint.getId());
+	        _this11.planBuilder.adjustSprintListWidth();
 	      })["catch"](function (response) {
-	        _this10.requestSender.showErrorAlert(response);
+	        _this11.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "onChangeSprintName",
 	    value: function onChangeSprintName(baseEvent) {
-	      var _this11 = this;
+	      var _this12 = this;
 	      var requestData = baseEvent.getData();
 	      this.pullSprint.addIdToSkipUpdating(requestData.sprintId);
 	      this.requestSender.changeSprintName(requestData)["catch"](function (response) {
-	        _this11.requestSender.showErrorAlert(response);
+	        _this12.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "onChangeSprintDeadline",
 	    value: function onChangeSprintDeadline(baseEvent) {
-	      var _this12 = this;
+	      var _this13 = this;
 	      var sprint = baseEvent.getTarget();
 	      var requestData = baseEvent.getData();
 	      this.pullSprint.addIdToSkipUpdating(requestData.sprintId);
@@ -10219,13 +10259,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        sprint.setDateStart(sprintData.dateStart);
 	        sprint.setDateEnd(sprintData.dateEnd);
 	      })["catch"](function (response) {
-	        _this12.requestSender.showErrorAlert(response);
+	        _this13.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "onGetSprintCompletedItems",
 	    value: function onGetSprintCompletedItems(baseEvent) {
-	      var _this13 = this;
+	      var _this14 = this;
 	      var sprint = baseEvent.getTarget();
 	      var listItemsNode = sprint.getListItemsNode();
 	      var listPosition = main_core.Dom.getPosition(listItemsNode);
@@ -10263,7 +10303,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        sprint.showContent(sprint.getContentContainer());
 	      })["catch"](function (response) {
 	        loader.hide();
-	        _this13.requestSender.showErrorAlert(response);
+	        _this14.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
@@ -10281,7 +10321,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onOpenSprintAddMenu",
 	    value: function onOpenSprintAddMenu(baseEvent) {
-	      var _this14 = this;
+	      var _this15 = this;
 	      var entity = baseEvent.getTarget();
 	      var button = baseEvent.getData().getNode();
 	      if (this.sprintAddMenu) {
@@ -10303,23 +10343,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.sprintAddMenu.addMenuItem({
 	        text: main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_SPRINT_FIRST_ADD'),
 	        onclick: function onclick(event, menuItem) {
-	          _this14.onShowSprintInput(new main_core_events.BaseEvent().setTarget(entity));
+	          _this15.onShowSprintInput(new main_core_events.BaseEvent().setTarget(entity));
 	          menuItem.getMenuWindow().close();
 	        }
 	      });
 	      this.sprintAddMenu.addMenuItem({
 	        text: main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_SPRINT_SECOND_ADD'),
 	        onclick: function onclick(event, menuItem) {
-	          _this14.planBuilder.createSprint();
+	          _this15.planBuilder.createSprint();
 	          menuItem.getMenuWindow().close();
 	        }
 	      });
 	      this.sprintAddMenu.getPopupWindow().subscribe('onClose', function () {
-	        _this14.sprintAddMenu.getPopupWindow().destroy();
-	        _this14.sprintAddMenu = null;
+	        _this15.sprintAddMenu.getPopupWindow().destroy();
+	        _this15.sprintAddMenu = null;
 	      });
 	      this.sprintAddMenu.getPopupWindow().subscribe('onShow', function () {
-	        var angle = _this14.sprintAddMenu.getMenuContainer().querySelector('.popup-window-angly');
+	        var angle = _this15.sprintAddMenu.getMenuContainer().querySelector('.popup-window-angly');
 	        main_core.Dom.style(angle, 'pointerEvents', 'none');
 	      });
 	      this.sprintAddMenu.show();
@@ -10399,35 +10439,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onChangeShortView",
 	    value: function onChangeShortView(baseEvent) {
-	      var _this15 = this;
 	      var isShortView = baseEvent.getData();
-	      this.planBuilder.setShortView(isShortView);
-	      this.destroyActionPanel();
-	      var entities = this.entityStorage.getAllEntities();
-	      entities.forEach(function (entity) {
-	        if (!entity.isCompleted()) {
-	          entity.deactivateGroupMode();
-	          entity.fadeOut();
-	        }
-	      });
-	      this.requestSender.saveShortView({
-	        isShortView: isShortView
-	      }).then(function (response) {
-	        entities.forEach(function (entity) {
-	          if (!entity.isCompleted()) {
-	            entity.setShortView(isShortView);
-	            entity.adjustListItemsWidth();
-	            entity.fadeIn();
-	          }
-	        });
-	      })["catch"](function (response) {
-	        entities.forEach(function (entity) {
-	          if (!entity.isCompleted()) {
-	            entity.fadeIn();
-	          }
-	        });
-	        _this15.requestSender.showErrorAlert(response);
-	      });
+	      this.changeShortView(isShortView);
 	    }
 	  }, {
 	    key: "onToggleActionPanel",
@@ -11542,6 +11555,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        main_core.Dom.removeClass(element, 'menu-popup-item-accept');
 	      });
 	      main_core.Dom.addClass(item, 'menu-popup-item-accept');
+	    }
+	  }, {
+	    key: "changeShortView",
+	    value: function changeShortView(isShortView) {
+	      var view = this.getView();
+	      if (view instanceof View) {
+	        this.getView().changeShortView(isShortView);
+	      }
 	    }
 	  }]);
 	  return Entry;

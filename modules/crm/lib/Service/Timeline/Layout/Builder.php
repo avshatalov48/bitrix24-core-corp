@@ -86,8 +86,7 @@ class Builder
 	protected function buildFooter(): ?Layout\Footer
 	{
 		$footer = new Layout\Footer();
-
-		$buttons = $this->item->getButtons();
+		$buttons = array_filter($this->item->getButtons() ?? []);
 		if (!empty($buttons))
 		{
 			$currentSort = 0;
@@ -169,14 +168,24 @@ class Builder
 
 	private function getExtensionsMenu(): ?Menu\MenuItem
 	{
+		$context = [
+			'ENTITY_ID' => $this->item->getContext()->getEntityId(),
+		];
+		if ($this->item instanceof Configurable)
+		{
+			$model = $this->item->getModel();
+			$context['TYPE_ID'] = $model->getTypeId();
+			$context['TYPE_CATEGORY_ID'] = $model->getTypeCategoryId();
+			$context['ASSOCIATED_ENTITY_ID'] = $model->getAssociatedEntityId();
+			$context['ASSOCIATED_ENTITY_TYPE_ID'] = $model->getAssociatedEntityTypeId();
+			$context['TIMELINE_ITEM_ID'] = $model->isScheduled() ? null : $model->getId();
+		}
 		$menu = \Bitrix\Intranet\Binding\Menu::getMenuItems(
 			SectionCode::TIMELINE,
 			CodeBuilder::getMenuCode($this->item->getContext()->getEntityTypeId()),
 			[
 				'inline' => true,
-				'context' => [
-					'ENTITY_ID' => $this->item->getContext()->getEntityId(),
-				]
+				'context' => $context,
 			]
 		);
 		if (empty($menu) || empty($menu['items']))

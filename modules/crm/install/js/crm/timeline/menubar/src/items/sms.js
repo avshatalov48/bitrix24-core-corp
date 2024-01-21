@@ -18,11 +18,11 @@ export default class Sms extends WithEditor
 	#renderEditor(): HTMLElement
 	{
 		const config = this.getSetting('smsConfig', {})
-		const enableSalesCenter =  BX.prop.getBoolean(config, 'isSalescenterEnabled', false);
+		const enableSalesCenter = BX.prop.getBoolean(config, 'isSalescenterEnabled', false);
 		const enableDocuments = BX.prop.getBoolean(config, 'isDocumentsEnabled', false);
 		const enableFiles = this.getSetting('enableFiles', false);
 
-		this._saveButton = Tag.render`<button onclick="${this.onSaveButtonClick.bind(this)}" class="ui-btn ui-btn-xs ui-btn-primary" >${Loc.getMessage('CRM_TIMELINE_SEND')}</button>`;
+		this._saveButton = Tag.render`<button onclick="${this.onSaveButtonClick.bind(this)}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round" >${Loc.getMessage('CRM_TIMELINE_SEND')}</button>`;
 		this._cancelButton = Tag.render`<span onclick="${this.onCancelButtonClick.bind(this)}"  class="ui-btn ui-btn-xs ui-btn-link">${Loc.getMessage('CRM_TIMELINE_CANCEL_BTN')}</span>`;
 		this._input = Tag.render`<textarea class="crm-entity-stream-content-new-sms-textarea" rows='1' placeholder="${Loc.getMessage('CRM_TIMELINE_SMS_ENTER_MESSAGE')}"></textarea>`;
 
@@ -77,7 +77,7 @@ export default class Sms extends WithEditor
 
 	#renderSetupText(): HTMLElement
 	{
-		const enableSalesCenter =  BX.prop.getBoolean(this.getSetting('smsConfig', {}), 'isSalescenterEnabled', false);
+		const enableSalesCenter = BX.prop.getBoolean(this.getSetting('smsConfig', {}), 'isSalescenterEnabled', false);
 
 		return Tag.render`<div class="crm-entity-stream-content-sms-conditions-container">
 			<div class="crm-entity-stream-content-sms-conditions">
@@ -364,7 +364,7 @@ export default class Sms extends WithEditor
 			}
 			menuItems.push({delimiter: true}, {
 				text: BX.message('CRM_TIMELINE_SMS_REST_MARKETPLACE'),
-				href: '/marketplace/category/crm_robot_sms/',
+				href: BX.message('MARKET_BASE_PATH') + 'category/crm_robot_sms/',
 				target: '_blank'
 			});
 		}
@@ -898,6 +898,17 @@ export default class Sms extends WithEditor
 
 	startSalescenterApplication()
 	{
+		const isSalescenterToolEnabled = BX.prop.getBoolean(this.getSetting('smsConfig', {}), 'isSalescenterToolEnabled', false);
+		if (!isSalescenterToolEnabled)
+		{
+			BX.loadExt('salescenter.tool-availability-manager').then(() =>
+			{
+				BX.Salescenter.ToolAvailabilityManager.openSalescenterToolDisabledSlider();
+			});
+
+			return;
+		}
+
 		BX.loadExt('salescenter.manager').then(function()
 		{
 			BX.Salescenter.Manager.openApplication({

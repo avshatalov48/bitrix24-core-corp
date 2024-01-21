@@ -2,6 +2,7 @@
  * @module layout/ui/detail-card/tabs/shimmer/crm-product
  */
 jn.define('layout/ui/detail-card/tabs/shimmer/crm-product', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { ShimmerView } = require('layout/polyfill');
 	const { BaseShimmer } = require('layout/ui/detail-card/tabs/shimmer');
 
@@ -33,7 +34,7 @@ jn.define('layout/ui/detail-card/tabs/shimmer/crm-product', (require, exports, m
 						bottom: 0,
 					},
 				},
-				new LoadingScreenComponent({ backgroundColor: '#eef2f4' }),
+				new LoadingScreenComponent({ backgroundColor: AppTheme.colors.bgContentPrimary }),
 			);
 		}
 
@@ -60,7 +61,7 @@ jn.define('layout/ui/detail-card/tabs/shimmer/crm-product', (require, exports, m
 			return View(
 				{
 					style: {
-						backgroundColor: '#ffffff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						borderRadius: 12,
 						padding: 16,
 						marginTop: 0,
@@ -97,7 +98,7 @@ jn.define('layout/ui/detail-card/tabs/shimmer/crm-product', (require, exports, m
 							justifyContent: 'center',
 							alignItems: 'center',
 							borderRadius: 4,
-							backgroundColor: '#dfe0e3',
+							backgroundColor: AppTheme.colors.base6,
 						},
 					}),
 				),
@@ -186,7 +187,7 @@ jn.define('layout/ui/detail-card/tabs/shimmer/crm-product', (require, exports, m
 						marginBottom: 10,
 					},
 				},
-				this.renderInput(0, 13, '#eef2f4'),
+				this.renderInput(0, 13, AppTheme.colors.base6),
 				View(
 					{
 						style: {
@@ -210,12 +211,12 @@ jn.define('layout/ui/detail-card/tabs/shimmer/crm-product', (require, exports, m
 						justifyContent: 'space-between',
 					},
 				},
-				this.renderInput(0, 8, '#eef2f4'),
-				this.renderInput(8, 0, '#eef2f4'),
+				this.renderInput(0, 8, AppTheme.colors.base6),
+				this.renderInput(8, 0, AppTheme.colors.base6),
 			);
 		}
 
-		renderInput(marginLeft = 0, marginRight = 0, backgroundColor = '#dfe0e3')
+		renderInput(marginLeft = 0, marginRight = 0, backgroundColor = AppTheme.colors.base6)
 		{
 			const { animating } = this.props;
 
@@ -261,7 +262,7 @@ jn.define('layout/ui/detail-card/tabs/shimmer/crm-product', (require, exports, m
 			return View(
 				{
 					style: {
-						backgroundColor: '#ffffff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						borderRadius: 12,
 						padding: 12,
 					},
@@ -300,3 +301,4 @@ jn.define('layout/ui/detail-card/tabs/shimmer/crm-product', (require, exports, m
 
 	module.exports = { CrmProductTabShimmer };
 });
+

@@ -1131,6 +1131,10 @@ class CCrmEntitySelectorHelper
 			isset($options['ADDRESS_AS_JSON'])
 			&& ($options['ADDRESS_AS_JSON'] === true || $options['ADDRESS_AS_JSON'] === 'Y')
 		);
+		$skipCheckMyCompanyPermission = (
+			isset($options['SKIP_CHECK_MY_COMPANY_PERMISSION'])
+			&& $options['SKIP_CHECK_MY_COMPANY_PERMISSION'] === true
+		);
 
 		$result = array();
 
@@ -1138,7 +1142,14 @@ class CCrmEntitySelectorHelper
 		$preset = new \Bitrix\Crm\EntityPreset();
 		$fieldsInfo = $requisite->getFormFieldsInfo();
 
-		if ($requisite->validateEntityReadPermission($entityTypeId, $entityId))
+		if (
+			(
+				$skipCheckMyCompanyPermission
+				&& $entityTypeId === CCrmOwnerType::Company
+				&& CCrmCompany::isMyCompany($entityId)
+			)
+			|| $requisite->validateEntityReadPermission($entityTypeId, $entityId)
+		)
 		{
 			// selected
 			$requisiteIdSelected = 0;

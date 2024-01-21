@@ -9,11 +9,11 @@ return [
 	'css' => 'dist/adding-popup.bundle.css',
 	'js' => 'dist/adding-popup.bundle.js',
 	'rel' => [
+		'crm.activity.todo-editor',
 		'main.core',
+		'main.core.events',
 		'main.popup',
 		'ui.buttons',
-		'crm.activity.todo-editor',
-		'main.core.events',
 		'ui.notification',
 	],
 	'skip_core' => false,

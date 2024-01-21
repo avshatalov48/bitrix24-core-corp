@@ -3,7 +3,7 @@
 	padding-right: 66px;
 }
 
-.page-header .ui-toolbar,
+/*.page-header .ui-toolbar,
 .page-header .pagetitle-wrap,
 .page-header .pagetitle-below,
 .page-header .profile-menu-top,
@@ -14,7 +14,7 @@
 
 .main-buttons {
 	--mib-background: rgba(255, 255, 255, 0.96);
-}
+}*/
 
 #header {
 	background: transparent;

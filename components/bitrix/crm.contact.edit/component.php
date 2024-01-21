@@ -3,6 +3,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\EntityBankDetail;
+use Bitrix\Crm\Integrity\DuplicateControl;
+use Bitrix\Crm\Settings\ContactSettings;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -21,7 +23,6 @@ if (IsModuleInstalled('bizproc'))
 	}
 }
 
-use Bitrix\Crm\Settings\ContactSettings;
 /**
  * Bitrix vars
  *
@@ -931,7 +932,8 @@ $arResult['EDIT'] = $isEditMode;
 $arResult['IS_COPY'] = $isCopyMode;
 $arResult['DUPLICATE_CONTROL'] = array();
 $enableDupControl = $arResult['DUPLICATE_CONTROL']['ENABLED'] =
-	!$isEditMode && \Bitrix\Crm\Integrity\DuplicateControl::isControlEnabledFor(CCrmOwnerType::Contact);
+	DuplicateControl::isControlEnabledFor(CCrmOwnerType::Contact)
+;
 
 $arResult['FIELDS'] = array();
 $arResult['FIELDS']['tab_1'][] = array(

@@ -3,7 +3,7 @@
  */
 jn.define('crm/entity-tab/list', (require, exports, module) => {
 	const { EntityTab } = require('crm/entity-tab');
-	const { Filter } = require('crm/entity-tab/filter');
+	const { Filter } = require('layout/ui/kanban/filter');
 	const { ListItemType, ListItemsFactory } = require('crm/simple-list/items');
 	const { TypePull } = require('crm/entity-tab/pull-manager');
 	const { StatefulList } = require('layout/ui/stateful-list');
@@ -36,6 +36,7 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 					isClientEnabled: this.isClientEnabled(),
 					...this.props.itemParams,
 				},
+				forcedShowSkeleton: false,
 				getItemCustomStyles: this.getItemCustomStyles,
 				emptyListText: BX.message('M_CRM_LIST_EMPTY_LIST_TEXT'),
 				emptySearchText: BX.message('M_CRM_LIST_EMPTY_SEARCH_TEXT'),
@@ -44,22 +45,20 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 				menuButtons: this.getMenuButtons(),
 				cacheName: this.getCacheName(),
 				layoutMenuActions: this.getMenuActions(),
-				itemDetailOpenHandler: this.handleItemDetailOpen.bind(this),
 				itemCounterLongClickHandler: this.getCounterLongClickHandler(),
-				onDetailCardUpdateHandler: this.onDetailCardUpdate.bind(this),
-				onDetailCardCreateHandler: this.onDetailCardCreate.bind(this),
 				onNotViewableHandler: this.onNotViewable,
 				onPanListHandler: this.props.onPanList || null,
 				isShowFloatingButton: this.isShowFloatingButton(),
-				floatingButtonClickHandler: this.handleFloatingButtonClick.bind(this),
-				floatingButtonLongClickHandler: this.handleFloatingButtonLongClick.bind(this),
-				getEmptyListComponent: this.getEmptyListComponent.bind(this),
+				getEmptyListComponent: this.getEmptyListComponent,
 				itemType: ListItemType.CRM_ENTITY,
 				itemFactory: ListItemsFactory,
 				pull: this.getPullConfig(),
-				ref: (ref) => {
-					this.viewComponent = ref;
-				},
+				onFloatingButtonClick: this.onFloatingButtonClickHandler,
+				onFloatingButtonLongClick: this.onFloatingButtonLongClickHandler,
+				itemDetailOpenHandler: this.itemDetailOpenHandler,
+				onDetailCardUpdateHandler: this.onDetailCardUpdateHandler,
+				onDetailCardCreateHandler: this.onDetailCardCreateHandler,
+				ref: this.bindRef,
 				analyticsLabel: {
 					module: 'crm',
 					source: 'crm-entity-tab',
@@ -88,13 +87,13 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 				eventId: this.pullManager.registerRandomEventId(),
 			};
 
-			const { actions } = this.props;
+			const { actions, entityTypeName } = this.props;
 
 			return new Promise((resolve, reject) => {
 				BX.ajax.runAction(actions.deleteItem, {
 					data: {
 						id: itemId,
-						entityType: this.props.entityTypeName,
+						entityType: entityTypeName,
 						params,
 					},
 				}).then((response) => {
@@ -125,7 +124,7 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 			return this.viewComponent;
 		}
 
-		isCurrentSlideName(slideName)
+		isCurrentStage(stageCode)
 		{
 			return true;
 		}
@@ -140,6 +139,11 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 			}
 
 			return command === this.getPullCommand(TypePull.Command);
+		}
+
+		hasColumnChangesInItem(item, oldItem)
+		{
+			return false;
 		}
 
 		onDetailCardUpdate(params)
@@ -168,25 +172,23 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 			this.setState({
 				forceRenderSwitcher: !this.state.forceRenderSwitcher,
 			}, () => {
-				const selectedNotDefaultPreset = this.filter.hasSelectedNotDefaultPreset();
-				const canUseCache = !selectedNotDefaultPreset && !Type.isStringFilled(this.filter.search);
+				let useCache = false;
+
+				// Note: disabled cache for now, because of the bug with the filter cancellation
+				if (!params.filterCancelled)
+				{
+					const selectedNotDefaultPreset = this.filter.hasSelectedNotDefaultPreset();
+					useCache = !selectedNotDefaultPreset && !Type.isStringFilled(this.filter.getSearchString());
+				}
 
 				this.getViewComponent().reload(
 					{
-						forcedShowSkeleton: BX.prop.getBoolean(params, 'forcedShowSkeleton', false),
+						forcedShowSkeleton: BX.prop.getBoolean(params, 'forcedShowSkeleton', !useCache),
 					},
-					{
-						useCache: canUseCache,
-					},
+					{ useCache },
 					() => initMenu && this.getViewComponent().initMenu(),
 				);
 			});
-		}
-
-		scrollToTop()
-		{
-			const simpleList = this.getViewComponent().getSimpleList();
-			this.scrollSimpleListToTop(simpleList);
 		}
 
 		getMenuActions()
@@ -206,6 +208,11 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 			}
 
 			return [...menuActions, ...parentMenu];
+		}
+
+		isAllStagesDisplayed()
+		{
+			return true;
 		}
 	}
 

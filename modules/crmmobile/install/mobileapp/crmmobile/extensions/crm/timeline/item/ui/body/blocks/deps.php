@@ -24,6 +24,7 @@ return [
 		'crm:timeline/item/ui/body/blocks/ecommerce-documents-list',
 		'crm:timeline/item/ui/body/blocks/sms-message',
 		'crm:timeline/item/ui/body/blocks/mail-contact-list',
+		'crm:timeline/item/ui/body/blocks/item-selector',
 		'money',
 	],
 ];

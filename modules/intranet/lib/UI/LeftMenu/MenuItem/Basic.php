@@ -111,6 +111,11 @@ abstract class Basic
 		return $this->PARENT;
 	}
 
+	public function getLink(): ?string
+	{
+		return $this->LINK;
+	}
+
 	public function hasParent(): bool
 	{
 		return $this->PARENT instanceof LeftMenu\MenuItem\Group;

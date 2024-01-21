@@ -4,7 +4,6 @@ return [
 	'extensions' => [
 		'require-lazy',
 		'communication/connection',
-		'communication/email-menu',
 		'communication/phone-menu',
 		'in-app-url',
 		'notify-manager',

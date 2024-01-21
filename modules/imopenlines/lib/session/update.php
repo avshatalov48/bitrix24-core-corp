@@ -11,6 +11,8 @@ use Bitrix\ImOpenLines\Debug;
 use Bitrix\ImOpenLines\Mail;
 use Bitrix\ImOpenLines\Model\SessionCheckTable;
 use Bitrix\ImOpenLines\Model\SessionTable;
+use Bitrix\ImOpenLines\Recent;
+use Bitrix\ImOpenLines\Relation;
 use Bitrix\ImOpenLines\Session;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Loader;
@@ -20,6 +22,8 @@ class Update
 {
 	private array $updateCheckTable = [];
 	private array $updateChatSession = [];
+	private array $oldSessionState;
+	private bool $skipRecent = false;
 	private ?DateTime $updateDateCrmClose = null;
 	private array $newData;
 	private Session $session;
@@ -30,6 +34,7 @@ class Update
 	)
 	{
 		$this->session = $session;
+		$this->oldSessionState = $this->session->getSession();
 	}
 
 	public function setData(array $newData): self
@@ -41,6 +46,8 @@ class Update
 
 	public function save(): bool
 	{
+		$this->prepareFields();
+
 		$this->setConfig();
 
 		$this->updateSessionDate();
@@ -62,6 +69,8 @@ class Update
 
 		$this->saveData();
 
+		$this->updateRecent();
+
 		$this->responseOperator();
 
 		Debug::addSession($this->session,  __METHOD__, [
@@ -72,6 +81,11 @@ class Update
 		]);
 
 		return true;
+	}
+
+	private function prepareFields(): void
+	{
+		$this->skipRecent = isset($this->newData['SKIP_RECENT']) && $this->newData['SKIP_RECENT'];
 	}
 
 	private function checkIfWaitAction(): bool
@@ -283,7 +297,7 @@ class Update
 			&& $this->session->getSessionField('CRM_ACTIVITY_ID')
 		)
 		{
-			$crmManager = new Crm($this->session);
+			$crmManager = $this->session->getCrmManager();
 			if ($crmManager->isLoaded())
 			{
 				$crmManager->setSessionDataClose($this->updateDateCrmClose);
@@ -315,6 +329,20 @@ class Update
 		}
 	}
 
+	private function updateRecent(): void
+	{
+		if (
+			$this->oldSessionState['STATUS'] < Session::STATUS_ANSWER
+			&& $this->session->getSessionField('STATUS') >= Session::STATUS_ANSWER
+			&& !$this->skipRecent
+		)
+		{
+			$relation = new Relation($this->session->getSessionField('CHAT_ID'));
+			$relation->removeAllRelations(false, [(int)$this->session->getSessionField('OPERATOR_ID')]);
+			Recent::clearRecent($this->session->getSessionField('ID'));
+		}
+	}
+
 	private function updateStatus(): void
 	{
 		if (
@@ -330,6 +358,7 @@ class Update
 			$this->newData['USER_ID'],
 			$this->newData['SKIP_DATE_CLOSE'],
 			$this->newData['SKIP_CHANGE_STATUS'],
+			$this->newData['SKIP_RECENT'],
 			$this->newData['FORCE_CLOSE'],
 			$this->newData['INPUT_MESSAGE']
 		);
@@ -433,7 +462,7 @@ class Update
 					$dateCheckClose->add($this->session->getConfig('AUTO_CLOSE_TIME').' SECONDS');
 					$dateCheckClose->add('1 DAY');
 
-					$crmManager = new Crm($this->session);
+					$crmManager = $this->session->getCrmManager();
 					if ($crmManager->isLoaded())
 					{
 						$crmManager->setSessionDataClose($dateCheckClose);
@@ -702,6 +731,7 @@ class Update
 			if ($config)
 			{
 				$this->session->setConfig($config);
+				$this->updateChatSession['LINE_ID'] = $this->newData['CONFIG_ID'];
 			}
 			else
 			{

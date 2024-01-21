@@ -4,9 +4,10 @@
 jn.define('crm/product-grid/components/product-details', (require, exports, module) => {
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { getEntityMessage } = require('crm/loc');
 	const { ProductRow } = require('crm/product-grid/model');
-	const { ProductCalculator, DiscountType } = require('crm/product-calculator');
+	const { DiscountType } = require('crm/product-calculator');
 	const { Container, Island, Title, FormGroup } = require('layout/ui/islands');
 	const { BarcodeField } = require('layout/ui/fields/barcode');
 	const { BooleanField } = require('layout/ui/fields/boolean');
@@ -92,7 +93,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 				{
 					name: closeButtonText,
 					type: 'text',
-					color: '#0b66c3',
+					color: AppTheme.colors.accentMainLinks,
 					callback: () => this.close(),
 				},
 			]);
@@ -197,7 +198,9 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 		{
 			return StringField({
 				testId: 'ProductGridProductDetailsNameField',
-				ref: (ref) => this.nameFieldRef = ref,
+				ref: (ref) => {
+					this.nameFieldRef = ref;
+				},
 				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_NAME'),
 				value: this.productRow.getProductName(),
 				readOnly: !this.isCatalogProductFieldEditable(),
@@ -452,11 +455,13 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 			let rateReadonly = this.isReadonly();
 			if (vatRates.length === 0)
 			{
-				vatRates = [{
-					id: 0,
-					name: `${this.productRow.getTaxRate()}%`,
-					value: this.productRow.getTaxRate(),
-				}];
+				vatRates = [
+					{
+						id: 0,
+						name: `${this.productRow.getTaxRate()}%`,
+						value: this.productRow.getTaxRate(),
+					},
+				];
 				rateReadonly = true;
 			}
 
@@ -573,8 +578,8 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 			if (this.state.productRow.hasStoreAccess())
 			{
 				config.styles = {
-					externalWrapperBackgroundColor: this.isReadonly() ? '#FCFCFD' : '#F8FAFB',
-					externalWrapperBorderColor: '#DFE0E3',
+					externalWrapperBackgroundColor: AppTheme.colors.bgContentSecondary,
+					externalWrapperBorderColor: AppTheme.colors.bgSeparatorPrimary,
 					externalWrapperMarginHorizontal: 0,
 				};
 
@@ -603,6 +608,9 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 					return View(
 						{},
 						Text({
+							style: {
+								color: AppTheme.colors.base1,
+							},
 							text: Loc.getMessage(
 								'PRODUCT_GRID_PRODUCT_DETAILS_FIELD_STORE_AVAILABLE_AMOUNT',
 								{
@@ -612,6 +620,9 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 							),
 						}),
 						Text({
+							style: {
+								color: AppTheme.colors.base1,
+							},
 							text: Loc.getMessage(
 								'PRODUCT_GRID_PRODUCT_DETAILS_FIELD_STORE_AMOUNT',
 								{
@@ -659,7 +670,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 		{
 			return NumberField({
 				testId: 'ProductGridProductDetailsInputReserveQuantityField',
-				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_INPUT_RESERVE_QUANTITY'),
+				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_INPUT_RESERVE_QUANTITY_MSGVER_1'),
 				placeholder: '0',
 				readOnly: this.isReadonly(),
 				config: {
@@ -721,7 +732,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 				testId: 'ProductGridProductDetailsRowReservedField',
 				title: getEntityMessage(
 					'PRODUCT_GRID_PRODUCT_DETAILS_FIELD_ROW_RESERVED',
-					this.getProps().entityTypeId
+					this.getProps().entityTypeId,
 				),
 				value: this.productRow.getRowReserved(),
 				readOnly: true,
@@ -902,12 +913,13 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 		{
 			PlanRestriction.open(
 				{
-					title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_RESERVATION_TARIFF_LIMIT')
+					title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_RESERVATION_TARIFF_LIMIT'),
 				},
-				this.layout
+				this.layout,
 			);
 		}
 	}
 
 	module.exports = { ProductDetails };
 });
+

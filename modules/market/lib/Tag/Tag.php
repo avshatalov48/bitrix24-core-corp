@@ -11,7 +11,6 @@ use Bitrix\Main\ORM\Fields\DateField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
-use Bitrix\Rest\Api\UserFieldType;
 
 /**
  * Class TagTable
@@ -36,27 +35,14 @@ class TagTable extends DataManager
 
 	public const MARKET_INDEX_TAG = 'market_index';
 
-	/**
-	 * @var bool
-	 */
-	private static $holdInserting = false;
+	private static bool $holdInserting = false;
 
-	/**
-	 * Returns DB table name for entity.
-	 *
-	 * @return string
-	 */
-	public static function getTableName()
+	public static function getTableName(): string
 	{
 		return 'b_market_tag';
 	}
 
-	/**
-	 * Returns entity map definition.
-	 *
-	 * @return array
-	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
 		return [
 			new IntegerField(
@@ -103,11 +89,6 @@ class TagTable extends DataManager
 		];
 	}
 
-	/**
-	 * Returns validators for TYPE field.
-	 *
-	 * @return array
-	 */
 	public static function validateType(): array
 	{
 		return [
@@ -115,11 +96,6 @@ class TagTable extends DataManager
 		];
 	}
 
-	/**
-	 * Returns validators for MODULE_ID field.
-	 *
-	 * @return array
-	 */
 	public static function validateModuleId(): array
 	{
 		return [
@@ -127,11 +103,6 @@ class TagTable extends DataManager
 		];
 	}
 
-	/**
-	 * Returns validators for CODE field.
-	 *
-	 * @return array
-	 */
 	public static function validateCode(): array
 	{
 		return [
@@ -139,11 +110,6 @@ class TagTable extends DataManager
 		];
 	}
 
-	/**
-	 * Returns validators for VALUE field.
-	 *
-	 * @return array
-	 */
 	public static function validateValue(): array
 	{
 		return [
@@ -151,63 +117,35 @@ class TagTable extends DataManager
 		];
 	}
 
-	/**
-	 * Blocks methods add and update
-	 * @return bool
-	 */
-	public static function blockSave(): bool
+	public static function blockSave()
 	{
-		static::$holdInserting = false;
-
-		return true;
+		self::$holdInserting = false;
 	}
 
-	/**
-	 * Unblocks methods add and update
-	 * @return bool
-	 */
-	public static function unblockSave(): bool
+	public static function unblockSave()
 	{
-		static::$holdInserting = true;
-
-		return true;
+		self::$holdInserting = true;
 	}
 
-	/**
-	 * @param Event $event
-	 * @return EventResult
-	 */
-	protected static function check(Event $event): EventResult
+	public static function onBeforeAdd(Event $event): EventResult
+	{
+		return self::check();
+	}
+
+	public static function onBeforeUpdate(Event $event): EventResult
+	{
+		return self::check();
+	}
+
+	protected static function check(): EventResult
 	{
 		$result = new EventResult();
-		if (static::$holdInserting === false)
-		{
-			$result->addError(
-				new EntityError(
-					'Use \Bitrix\Market\Tag\Manager'
-				)
-			);
+
+		if (self::$holdInserting === false) {
+			$result->addError(new EntityError('Use \Bitrix\Market\Tag\Manager'));
 		}
 
 		return $result;
-	}
-
-	/**
-	 * @param Event $event
-	 * @return EventResult
-	 */
-	public static function onBeforeUpdate(Event $event): EventResult
-	{
-		return static::check($event);
-	}
-
-	/**
-	 * @param Event $event
-	 * @return EventResult
-	 */
-	public static function onBeforeAdd(Event $event): EventResult
-	{
-		return static::check($event);
 	}
 
 	public static function getAll(): array
@@ -215,54 +153,12 @@ class TagTable extends DataManager
 		$result = [];
 
 		$dbTag = TagTable::getList();
-		while ($tag = $dbTag->fetch())
-		{
+		while ($tag = $dbTag->fetch()) {
 			$result[$tag['CODE']] = $tag['VALUE'];
 		}
 
 		$result['date_create'] = Option::get('main', '~controller_date_create', 0);
 
 		return $result;
-	}
-
-	public static function getByPlacement($placement): array
-	{
-		$tag = [];
-
-		if($placement <> '')
-		{
-			if(mb_substr($placement, 0, 4) === 'CRM_' || $placement === UserFieldType::PLACEMENT_UF_TYPE)
-			{
-				if($placement !== 'CRM_ROBOT_TRIGGERS')
-				{
-					$tag[] = 'placement';
-				}
-				else
-				{
-					$tag[] = 'automation';
-				}
-
-				$tag[] = 'crm';
-			}
-			elseif(mb_substr($placement, 0, 5) === 'CALL_')
-			{
-				$tag[] = 'placement';
-				$tag[] = 'telephony';
-			}
-			elseif(mb_substr($placement, 0, 5) === 'TASK_')
-			{
-				$tag[] = 'placement';
-				$tag[] = 'task';
-			}
-			elseif(mb_substr($placement, 0, 6) === 'SONET_')
-			{
-				$tag[] = 'placement';
-				$tag[] = 'sonet';
-			}
-		}
-
-		$tag[] = $placement;
-
-		return $tag;
 	}
 }

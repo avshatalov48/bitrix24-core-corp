@@ -3,15 +3,13 @@
 namespace Bitrix\Tasks\Helper;
 
 use Bitrix\Main\Grid as MainGrid;
+use Bitrix\Tasks\Grid\Scope\Scope;
 
 class Grid extends Common
 {
-	protected static $instance = null;
+	protected static ?array $instance = null;
 
-	/**
-	 * @return array
-	 */
-	public function getVisibleColumns()
+	public function getVisibleColumns(): array
 	{
 		$columns = $this->getOptions()->GetVisibleColumns();
 
@@ -23,10 +21,7 @@ class Grid extends Common
 		return $columns;
 	}
 
-	/**
-	 * @return MainGrid\Options
-	 */
-	public function getOptions()
+	public function getOptions(): ?MainGrid\Options
 	{
 		static $instance = null;
 
@@ -38,26 +33,15 @@ class Grid extends Common
 		return $instance;
 	}
 
-	/**
-	 * @return array
-	 */
-	private function getDefaultVisibleColumns()
+	public function setScope(string $scope): static
 	{
-		$defaultColumns = [
-			'TITLE',
-			'ACTIVITY_DATE',
-			'DEADLINE',
-			'ORIGINATOR_NAME',
-			'RESPONSIBLE_NAME',
-			'GROUP_NAME',
-			'TAG',
-		];
+		if (in_array($scope, Scope::getAll(true), true))
+		{
+			$this->scope = $scope;
+			$this->resolveChangedScope();
+		}
 
-		/*break;
-}
-*/
-
-		return $defaultColumns;
+		return $this;
 	}
 
 	public function getAllColumns(): array
@@ -93,6 +77,26 @@ class Grid extends Common
 
 			'PARENT_ID',
 			'PARENT_TITLE',
+		];
+	}
+
+	protected function resolveChangedScope(): void
+	{
+		unset(static::$instance[$this->id]);
+		$this->id = static::getDefaultId($this->groupId, $this->scope, $this->context);
+		static::$instance[$this->id] = $this;
+	}
+
+	private function getDefaultVisibleColumns(): array
+	{
+		return [
+			'TITLE',
+			'ACTIVITY_DATE',
+			'DEADLINE',
+			'ORIGINATOR_NAME',
+			'RESPONSIBLE_NAME',
+			'GROUP_NAME',
+			'TAG',
 		];
 	}
 }

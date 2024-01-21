@@ -3,4 +3,5 @@ export class ButtonType {
 	static PRIMARY = 'primary';
 	static SECONDARY = 'secondary';
 	static LIGHT = 'light';
+	static AI = 'ai';
 }

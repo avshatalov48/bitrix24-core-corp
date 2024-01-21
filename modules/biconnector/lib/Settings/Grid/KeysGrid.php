@@ -16,7 +16,6 @@ use Bitrix\Main\Grid\Row\Rows;
  */
 class KeysGrid extends Grid
 {
-
 	protected function createColumns(): Column\Columns
 	{
 		return new Column\Columns(

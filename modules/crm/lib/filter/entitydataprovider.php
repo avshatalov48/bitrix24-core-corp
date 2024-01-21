@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Filter;
 
 use Bitrix\Crm\Entity\EntityManager;
+use Bitrix\Crm\Filter\Activity;
 use Bitrix\Crm\Filter\Activity\CounterFilter;
 use Bitrix\Crm\Filter\Activity\FilterByActivityResponsible;
 use Bitrix\Crm\Filter\FieldsTransform\UserBasedField;
@@ -108,6 +109,20 @@ abstract class EntityDataProvider extends Main\Filter\EntityDataProvider
 		$counterFilter = new CounterFilter($dataProviderQueryApproach);
 		$counterExtras = array_merge($extras, $this->getCounterExtras());
 		$counterFilter->applyCounterFilter($entityTypeId, $filterFields, $counterExtras);
+	}
+
+	public function applyActivityFastSearchFilter(int $entityTypeId, array &$filterFields): void
+	{
+		$dataProviderQueryApproach = $this->getDataProviderQueryApproach($entityTypeId);
+
+		if ($dataProviderQueryApproach === null)
+		{
+			return;
+		}
+
+		$actFastSearchFilter = new Activity\FastSearchSubFilter($dataProviderQueryApproach);
+
+		$actFastSearchFilter->applyFilter($entityTypeId, $filterFields);
 	}
 
 	private function getDataProviderQueryApproach(int $entityTypeId): ?string

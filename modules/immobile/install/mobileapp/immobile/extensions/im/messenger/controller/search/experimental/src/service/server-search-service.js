@@ -3,12 +3,14 @@
  */
 
 jn.define('im/messenger/controller/search/experimental/service/server-search-service', (require, exports, module) => {
-	const { Logger } = require('im/messenger/lib/logger');
+	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { RecentSearchItem } = require('im/messenger/controller/search/experimental/search-item');
 	const { StoreUpdater } = require('im/messenger/controller/search/experimental/store-updater');
 
 	const ENTITY_ID = 'im-recent-v2';
+
+	const logger = LoggerManager.getInstance().getLogger('recent-search');
 
 	class RecentServerSearchService
 	{
@@ -51,7 +53,7 @@ jn.define('im/messenger/controller/search/experimental/service/server-search-ser
 					return this.getDialogIds(processedItems);
 				})
 				.catch((error) => {
-					Logger.error('RecentProvider.loadRecent error', error);
+					logger.error('RecentProvider.loadRecent error', error);
 				})
 			;
 		}
@@ -66,7 +68,7 @@ jn.define('im/messenger/controller/search/experimental/service/server-search-ser
 			 * @type {RecentSearchResult}
 			 */
 			const response = await runAction(this.config.getLoadLatestResultEndpoint(), this.config.getConfig());
-			Logger.warn('RecentProvider.loadRecent response', response);
+			logger.warn('RecentProvider.loadRecent response', response);
 
 			return response;
 		}
@@ -78,19 +80,15 @@ jn.define('im/messenger/controller/search/experimental/service/server-search-ser
 		 */
 		async search(searchingWords, originalQuery)
 		{
-			console.log('async search(searchingWords, originalQuery)', searchingWords, originalQuery);
-
 			return this.searchRequest(searchingWords, originalQuery)
 				.then((response) => {
-					console.log('after resp', response);
+					logger.log('after resp', response);
 					const { items } = response.dialog;
 					const itemsCollection = this.createItemsMap(items);
 
 					return this.processSearchResponse(itemsCollection);
 				})
 				.then((items) => {
-					console.log('this.getDialogIds(items);');
-
 					return this.getDialogIds(items);
 				})
 			;
@@ -124,7 +122,7 @@ jn.define('im/messenger/controller/search/experimental/service/server-search-ser
 			 * @type {RecentSearchResult}
 			 */
 			const response = await runAction(this.config.getSearchRequestEndpoint(), config);
-			Logger.warn('RecentProvider.search response', response);
+			logger.warn('RecentProvider.search response', response);
 
 			return response;
 		}

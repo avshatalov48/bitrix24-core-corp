@@ -2,6 +2,7 @@
  * @module im/messenger/provider/service/classes/chat/mute
  */
 jn.define('im/messenger/provider/service/classes/chat/mute', (require, exports, module) => {
+	const { core } = require('im/messenger/core');
 	const { restManager: generalRestManager } = require('im/messenger/lib/rest-manager');
 	const { RestMethod } = require('im/messenger/const/rest');
 	const { Runtime } = require('runtime');
@@ -22,9 +23,9 @@ jn.define('im/messenger/provider/service/classes/chat/mute', (require, exports, 
 		 * @param {object} [restManager=generalRestManager] - instance new RestManager()
 		 * @param {Function} [errorCallback] - callback for handle error response
 		 */
-		constructor(store, restManager = generalRestManager, errorCallback)
+		constructor(restManager = generalRestManager, errorCallback)
 		{
-			this.store = store;
+			this.store = core.getStore();
 			this.restManager = restManager;
 			this.errorCallback = errorCallback;
 			this.sendMuteRequestDebounced = Runtime.debounce(this.sendMuteRequest, 500);

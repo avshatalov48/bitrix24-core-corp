@@ -27,3 +27,4 @@ DROP TABLE if exists b_imopenlines_lock;
 DROP TABLE if exists b_imopenlines_chat_index;
 DROP TABLE if exists b_imopenlines_user_option;
 DROP TABLE if exists b_imopenlines_user_log;
+DROP TABLE if exists b_imopenlines_recent;

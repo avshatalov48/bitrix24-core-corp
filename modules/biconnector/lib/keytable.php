@@ -27,7 +27,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\BIConnector
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Key_Query query()
+ * @method static EO_Key_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_Key_Result getById($id)
+ * @method static EO_Key_Result getList(array $parameters = [])
+ * @method static EO_Key_Entity getEntity()
+ * @method static \Bitrix\BIConnector\EO_Key createObject($setDefaultValues = true)
+ * @method static \Bitrix\BIConnector\EO_Key_Collection createCollection()
+ * @method static \Bitrix\BIConnector\EO_Key wakeUpObject($row)
+ * @method static \Bitrix\BIConnector\EO_Key_Collection wakeUpCollection($rows)
+ */
 
 class KeyTable extends DataManager
 {

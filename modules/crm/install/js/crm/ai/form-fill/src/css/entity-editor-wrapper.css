@@ -1,0 +1,33 @@
+.bx-crm-ai-merge-fields .ui-entity-editor-section-content >
+.bx-crm-ai-merge-fields-ee-control-ai-value:before {
+	content: '';
+	position: absolute;
+	top: -6px;
+	left: -8px;
+	right: -8px;
+	bottom: -6px;
+	border-radius: 10px;
+	border: 1px solid rgb(167, 123, 222, 0.3);
+	pointer-events: none;
+	background-color: #fff;
+}
+
+.bx-crm-ai-merge-fields .ui-entity-editor-section-content > .bx-crm-ai-merge-fields-ee-control-outline:before {
+	content: '';
+	position: absolute;
+	top: -6px;
+	left: -8px;
+	right: -8px;
+	bottom: -6px;
+	border-radius: 10px;
+	border: 1px solid #A77BDE;
+	background-color: #fff;
+	box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.05);
+	pointer-events: none;
+}
+
+.bx-crm-ai-merge-fields .ui-entity-editor-section-content >
+.bx-crm-ai-merge-fields-ee-control-ai-value .ui-entity-editor-content-block {
+	color: #8E52EC;
+}
+

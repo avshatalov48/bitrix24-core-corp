@@ -2,6 +2,9 @@
 
 return [
 	'extensions' => [
+		'qrauth',
+		'notify',
+		'apptheme',
 		'layout/socialnetwork/project/edit',
 		'layout/socialnetwork/project/fields/*',
 		'layout/ui/buttons/cancel',
@@ -10,8 +13,6 @@ return [
 		'layout/ui/context-menu',
 		'layout/ui/buttons-toolbar',
 		'layout/ui/loading-screen',
-		'notify',
 		'project/member.list',
-		'qrauth',
 	],
 ];

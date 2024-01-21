@@ -1,3 +1,4 @@
+/* eslint-disable */
 if (typeof(BX.FilterEntitySelector) === "undefined")
 {
 	BX.FilterEntitySelector = function ()
@@ -119,8 +120,8 @@ if (typeof(BX.TasksGroupsSelectorInit) === "undefined")
 			selectorId = settings.selectorId,
 			buttonAddId = settings.buttonAddId,
 			pathTaskAdd = settings.pathTaskAdd.indexOf("?") === -1
-							? settings.pathTaskAdd + "?GROUP_ID="
-							: settings.pathTaskAdd + "&GROUP_ID=",
+				? settings.pathTaskAdd + "?GROUP_ID="
+				: settings.pathTaskAdd + "&GROUP_ID=",
 			messages = settings.messages,
 			groups = settings.groups,
 			currentGroup = settings.currentGroup,
@@ -391,15 +392,110 @@ if (typeof BX.Tasks.SprintSelector === 'undefined')
 if (typeof BX.Tasks.ProjectSelector === "undefined")
 {
 	BX.Tasks.ProjectSelector =
-	{
-		reloadProject: function(groupId)
 		{
-			var url = document.location.href;
-			url = BX.util.add_url_param(url, {
-				group_id: groupId
-			});
+			reloadProject: function(groupId)
+			{
+				var url = document.location.href;
+				url = BX.util.add_url_param(url, {
+					group_id: groupId
+				});
 
-			document.location.href = url;
+				document.location.href = url;
+			}
 		}
-	}
 }
+
+
+this.BX = this.BX || {};
+(function (exports,ui_tour,main_core) {
+	'use strict';
+
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _filterId = /*#__PURE__*/new WeakMap();
+	var _filter = /*#__PURE__*/new WeakMap();
+	var _init = /*#__PURE__*/new WeakSet();
+	var _setFilter = /*#__PURE__*/new WeakSet();
+	var _setGuide = /*#__PURE__*/new WeakSet();
+	var _markViewed = /*#__PURE__*/new WeakSet();
+	var _log = /*#__PURE__*/new WeakSet();
+	var Preset = /*#__PURE__*/function () {
+	  function Preset(options) {
+	    babelHelpers.classCallCheck(this, Preset);
+	    _classPrivateMethodInitSpec(this, _log);
+	    _classPrivateMethodInitSpec(this, _markViewed);
+	    _classPrivateMethodInitSpec(this, _setGuide);
+	    _classPrivateMethodInitSpec(this, _setFilter);
+	    _classPrivateMethodInitSpec(this, _init);
+	    _classPrivateFieldInitSpec(this, _filterId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _filter, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldSet(this, _filterId, options.filterId);
+	    _classPrivateMethodGet(this, _init, _init2).call(this);
+	  }
+	  babelHelpers.createClass(Preset, [{
+	    key: "payAttention",
+	    value: function payAttention() {
+	      var _this = this;
+	      setTimeout(function () {
+	        _this.guide.showNextStep();
+	        _classPrivateMethodGet(_this, _markViewed, _markViewed2).call(_this);
+	      }, Preset.DELAY);
+	    }
+	  }]);
+	  return Preset;
+	}();
+	function _init2() {
+	  var _classPrivateMethodGe;
+	  _classPrivateMethodGet(_classPrivateMethodGe = _classPrivateMethodGet(this, _setFilter, _setFilter2).call(this), _setGuide, _setGuide2).call(_classPrivateMethodGe);
+	}
+	function _setFilter2() {
+	  babelHelpers.classPrivateFieldSet(this, _filter, BX.Main.filterManager.getById(babelHelpers.classPrivateFieldGet(this, _filterId)));
+	  return this;
+	}
+	function _setGuide2() {
+	  this.guide = new ui_tour.Guide({
+	    simpleMode: true,
+	    onEvents: true,
+	    steps: [{
+	      target: babelHelpers.classPrivateFieldGet(this, _filter).getPopupBindElement(),
+	      title: main_core.Loc.getMessage('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TITLE'),
+	      text: main_core.Loc.getMessage('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TEXT'),
+	      position: 'bottom',
+	      condition: {
+	        top: true,
+	        bottom: false,
+	        color: 'primary'
+	      }
+	    }]
+	  });
+	  this.guide.getPopup().setWidth(420);
+	  return this;
+	}
+	function _markViewed2() {
+	  var _this2 = this;
+	  main_core.ajax.runComponentAction('bitrix:tasks.interface.filter', 'markPresetAhaMomentViewed', {
+	    mode: 'class',
+	    data: {}
+	  })["catch"](function (error) {
+	    _classPrivateMethodGet(_this2, _log, _log2).call(_this2, error);
+	  });
+	}
+	function _log2(error) {
+	  console.log(error);
+	}
+	babelHelpers.defineProperty(Preset, "DELAY", 1000);
+
+	exports.Preset = Preset;
+
+}((this.BX.Tasks = this.BX.Tasks || {}),BX.UI.Tour,BX));
+
+
+//# sourceMappingURL=script.js.map

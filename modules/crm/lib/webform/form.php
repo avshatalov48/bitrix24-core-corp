@@ -597,17 +597,17 @@ class Form
 		foreach($fields as $field)
 		{
 			$field['FORM_ID'] = $this->id;
-
+			$fieldWithoutId = $field;
+			unset($fieldWithoutId['ID']);
 			if($field['ID'] > 0)
 			{
 				$fieldId = $field['ID'];
-				unset($field['ID']);
-				$fieldResult = Internals\FieldTable::update($fieldId, $field);
+				$fieldResult = Internals\FieldTable::update($fieldId, $fieldWithoutId);
 				$newFieldList[] = $fieldId;
 			}
 			else
 			{
-				$fieldResult = Internals\FieldTable::add($field);
+				$fieldResult = Internals\FieldTable::add($fieldWithoutId);
 			}
 
 			$this->prepareResult('FIELDS', $fieldResult);

@@ -2,7 +2,8 @@
 
 return [
 	'extensions' => [
-		'utils/object'
+		'apptheme',
+		'utils/object',
 	],
 	'bundle' => [
 		'./src/style',

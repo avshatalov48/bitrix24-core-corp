@@ -1,4 +1,4 @@
-import {Loc, Reflection} from 'main.core';
+import { Loc, Reflection } from 'main.core';
 
 const namespace = Reflection.namespace('BX.Crm.Component');
 
@@ -35,6 +35,8 @@ class CrmSmsSend
 		this._commEntityTypeId = null;
 		this._commEntityId = null;
 		this._to = null;
+		this._templateCode = null;
+		this._templatePlaceholders = null;
 
 		this._fromList = [];
 		this._toList = [];
@@ -78,6 +80,9 @@ class CrmSmsSend
 		this._ownerId = BX.prop.getInteger(settings, 'ownerId', 0);
 		this._senderId = BX.prop.getString(settings, 'providerId');
 		this._isSenderFixed = BX.prop.getBoolean(settings, 'isProviderFixed', false);
+		this._templateCode = BX.prop.getString(settings, 'templateCode');
+		this._templatePlaceholders = BX.prop.getObject(settings, 'templatePlaceholders');
+		this._linkToMarket = BX.prop.getString(settings, 'linkToMarket');
 
 		this._title = this._container.querySelector('[data-role="sender-title"]');
 		this._senderContainerNode = this._container.querySelector('[data-role="sender-container"]');
@@ -175,7 +180,7 @@ class CrmSmsSend
 			}
 			menuItems.push({delimiter: true}, {
 				text: Loc.getMessage('CRM_SMS_REST_MARKETPLACE'),
-				href: '/marketplace/category/crm_robot_sms/',
+				href: this._linkToMarket,
 				target: '_blank'
 			});
 		}
@@ -450,32 +455,32 @@ class CrmSmsSend
 		}
 
 		this._isRequestRunning = true;
-		BX.ajax(
-			{
-				url: BX.util.add_url_param(this._serviceUrl, {
-					"action": "save_sms_message",
-					"sender": this._senderId
-				}),
-				method: "POST",
-				dataType: "json",
-				data:
-					{
-						'site': Loc.getMessage('SITE_ID'),
-						'sessid': BX.bitrix_sessid(),
-						"ACTION": "SAVE_SMS_MESSAGE",
-						"SENDER_ID": this._senderId,
-						"MESSAGE_FROM": this._from,
-						"MESSAGE_TO": this._to,
-						"MESSAGE_BODY": text,
-						"OWNER_TYPE_ID": this._ownerTypeId,
-						"OWNER_ID": this._ownerId,
-						"TO_ENTITY_TYPE_ID": this._commEntityTypeId,
-						"TO_ENTITY_ID": this._commEntityId
-					},
-				onsuccess: this.onSaveSuccess.bind(this),
-				onfailure: this.onSaveFailure.bind(this),
-			}
-		);
+
+		BX.ajax({
+			url: BX.util.add_url_param(this._serviceUrl, {
+				action: 'save_sms_message',
+				sender: this._senderId,
+			}),
+			method: 'POST',
+			dataType: 'json',
+			data: {
+				site: Loc.getMessage('SITE_ID'),
+				sessid: BX.bitrix_sessid(),
+				ACTION: 'SAVE_SMS_MESSAGE',
+				SENDER_ID: this._senderId,
+				MESSAGE_FROM: this._from,
+				MESSAGE_TO: this._to,
+				MESSAGE_BODY: text,
+				MESSAGE_TEMPLATE: this._templateCode,
+				MESSAGE_PLACEHOLDERS: this._templatePlaceholders,
+				OWNER_TYPE_ID: this._ownerTypeId,
+				OWNER_ID: this._ownerId,
+				TO_ENTITY_TYPE_ID: this._commEntityTypeId,
+				TO_ENTITY_ID: this._commEntityId,
+			},
+			onsuccess: this.onSaveSuccess.bind(this),
+			onfailure: this.onSaveFailure.bind(this),
+		});
 	}
 
 	cancel()

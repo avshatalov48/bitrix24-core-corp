@@ -15,6 +15,8 @@ jn.define('tasks/layout/task/fields/datePlanIs', (require, exports, module) => {
 				readOnly: props.readOnly,
 				isDatePlan: props.isDatePlan,
 			};
+
+			this.handleOnChange = this.handleOnChange.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -31,6 +33,12 @@ jn.define('tasks/layout/task/fields/datePlanIs', (require, exports, module) => {
 				readOnly: newState.readOnly,
 				isDatePlan: newState.isDatePlan,
 			});
+		}
+
+		handleOnChange(value)
+		{
+			this.setState({ isDatePlan: value });
+			this.props.onChange(value);
 		}
 
 		render()
@@ -53,10 +61,7 @@ jn.define('tasks/layout/task/fields/datePlanIs', (require, exports, module) => {
 					showSwitcher: true,
 				},
 				testId: 'datePlanIs',
-				onChange: (value) => {
-					this.setState({ isDatePlan: value });
-					this.props.onChange(value);
-				},
+				onChange: this.handleOnChange,
 			});
 		}
 	}

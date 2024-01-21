@@ -4,6 +4,7 @@
 jn.define('imconnector/connector/telegram/layout-components/queue-field', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const AppTheme = require('apptheme');
 	const { UserField, UserFieldMode } = require('layout/ui/fields/user');
 	class QueueField extends LayoutComponent
 	{
@@ -18,7 +19,7 @@ jn.define('imconnector/connector/telegram/layout-components/queue-field', (requi
 			return View(
 				{
 					style: {
-						borderBottomColor: '#A8ADB4',
+						borderBottomColor: AppTheme.colors.base4,
 						borderBottomWidth: 0.5,
 						marginBottom: 6,
 					},

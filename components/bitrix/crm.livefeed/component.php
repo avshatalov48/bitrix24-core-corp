@@ -20,12 +20,12 @@ if (
 try
 {
 	$oFormat = new CCrmLiveFeedComponent(array(
-		"FIELDS" => $arParams["~FIELDS"], 
+		"FIELDS" => $arParams["~FIELDS"],
 		"PARAMS" => $arParams["~PARAMS"],
 		"EVENT_PARAMS" => $arEventParams
 	));
 }
-catch (Exception $e) 
+catch (Exception $e)
 {
 	return false;
 }
@@ -53,5 +53,6 @@ if (!empty($aFields))
 	}
 }
 
+$arResult['LOG_ID'] = $arParams['FIELDS']['ID'] ?? null;
+
 $this->IncludeComponentTemplate();
-?>

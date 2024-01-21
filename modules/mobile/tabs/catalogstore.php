@@ -2,6 +2,7 @@
 namespace Bitrix\Mobile\AppTabs;
 
 use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Restriction\ToolAvailabilityManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Mobile\Context;
 use Bitrix\Mobile\Tab\Tabable;
@@ -28,6 +29,7 @@ class CatalogStore implements Tabable {
 			&& \CModule::IncludeModule('catalog')
 			&& AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
 			&& AccessController::getCurrent()->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
+			&& ToolAvailabilityManager::getInstance()->checkInventoryManagementAvailability()
 		);
 	}
 

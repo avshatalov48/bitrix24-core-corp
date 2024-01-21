@@ -338,10 +338,10 @@ export default {
 				}
 				if (this.$root.$app.options.mode === 'payment')
 				{
-					return this.localize.SALESCENTER_LEFT_PAYMENT_ADD_2;
+					return this.localize.SALESCENTER_LEFT_PAYMENT_ADD_2_MSGVER_1;
 				}
 
-				return this.localize.SALESCENTER_LEFT_PAYMENT_AND_DELIVERY;
+				return this.localize.SALESCENTER_LEFT_PAYMENT_AND_DELIVERY_MSGVER_1;
 			},
 			showPaymentForm()
 			{

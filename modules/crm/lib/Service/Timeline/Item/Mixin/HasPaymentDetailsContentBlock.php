@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Service\Timeline\Item\Mixin;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\AssociatedEntityModel;
+use Bitrix\Crm\Service\Timeline\Item\HistoryItemModel;
 use Bitrix\Crm\Service\Timeline\Item\Model;
 use Bitrix\Crm\Service\Timeline\Layout\Action;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
@@ -12,7 +13,6 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Service\Sale\EntityLinkBuilder\EntityLinkBuilder;
 use Bitrix\Main\Web\Uri;
-use Bitrix\Sale\Repository\PaymentRepository;
 
 Loc::loadMessages(__DIR__ . '/../Ecommerce.php');
 
@@ -36,12 +36,18 @@ trait HasPaymentDetailsContentBlock
 				'#DATE#' => $this->getAssociatedEntityModel()->get('DATE'),
 			]
 		);
-		$entityNameBlock =
-			(new ContentBlock\Text())
-				->setValue(Loc::getMessage('CRM_TIMELINE_ECOMMERCE_PAYMENT_ENTITY_NAME'))
-		;
-		$action = $this->getPaymentDetailsEntityNameAction();
 
+		$entityNameLocPhrase =
+			$this->isTerminalPayment()
+				? 'CRM_TIMELINE_ECOMMERCE_PAYMENT_ENTITY_NAME_VIA_TERMINAL'
+				: 'CRM_TIMELINE_ECOMMERCE_PAYMENT_ENTITY_NAME'
+		;
+
+		$entityNameBlock = (new ContentBlock\Text())->setValue(
+			Loc::getMessage($entityNameLocPhrase)
+		);
+
+		$action = $this->getPaymentDetailsEntityNameAction();
 		if ($action)
 		{
 			$entityNameBlock
@@ -101,16 +107,7 @@ trait HasPaymentDetailsContentBlock
 
 	abstract protected function getAssociatedEntityModel(): ?AssociatedEntityModel;
 
-	private function getPayment(): ?\Bitrix\Sale\Payment
-	{
-		$paymentId = $this->getAssociatedEntityModel()->get('ID');
-		if (!$paymentId)
-		{
-			return null;
-		}
-
-		return PaymentRepository::getInstance()->getById($paymentId);
-	}
+	abstract protected function getHistoryItemModel(): ?HistoryItemModel;
 
 	private function getPaymentDetailsEntityNameAction(): ?Action
 	{
@@ -129,29 +126,37 @@ trait HasPaymentDetailsContentBlock
 		if ($factory && $factory->isPaymentsEnabled())
 		{
 			$ownerTypeId = $this->getContext()->getEntityTypeId();
-			$payment = $this->getPayment();
-			$formattedDate = $payment ? ConvertTimeStamp($payment->getField('DATE_BILL')->getTimestamp()) : null;
-			$accountNumber = $payment ? $payment->getField('ACCOUNT_NUMBER') : null;
+
+			if ($this->isTerminalPayment())
+			{
+				$mode = 'terminal_payment';
+			}
+			elseif ($ownerTypeId === \CCrmOwnerType::Deal)
+			{
+				$mode = 'payment_delivery';
+			}
+			else
+			{
+				$mode = 'payment';
+			}
 
 			return
 				(new JsEvent('SalescenterApp:Start'))
-					->addActionParamString(
-						'mode',
-						$ownerTypeId === \CCrmOwnerType::Deal
-							? 'payment_delivery'
-							: 'payment'
-					)
+					->addActionParamString('mode', $mode)
 					->addActionParamInt('orderId', $this->getAssociatedEntityModel()->get('ORDER_ID'))
 					->addActionParamInt('paymentId', $this->getAssociatedEntityModel()->get('ID'))
 					->addActionParamInt('ownerTypeId', $ownerTypeId)
 					->addActionParamInt('ownerId', $this->getContext()->getEntityId())
-					->addActionParamString('formattedDate', $formattedDate)
-					->addActionParamString('accountNumber', $accountNumber)
+					->addActionParamString(
+						'isTerminalPayment',
+						$this->isTerminalPayment() ? 'Y' : 'N'
+					)
+					->addActionParamString('isPaid', $this->getAssociatedEntityModel()->get('PAID'))
 					->addActionParamString(
 						'analyticsLabel',
 						\CCrmOwnerType::isUseDynamicTypeBasedApproach($ownerTypeId)
-							? 'crmDealTimelineSmsResendPaymentSlider'
-							: 'crmDynamicTypeTimelineSmsResendPaymentSlider'
+							? 'crmDynamicTypeTimelineSmsResendPaymentSlider'
+							: 'crmDealTimelineSmsResendPaymentSlider'
 					)
 				;
 		}
@@ -165,5 +170,12 @@ trait HasPaymentDetailsContentBlock
 		}
 
 		return null;
+	}
+
+	private function isTerminalPayment(): bool
+	{
+		$fields = $this->getHistoryItemModel()->get('FIELDS');
+
+		return ($fields['IS_TERMINAL_PAYMENT'] ?? 'N') === 'Y';
 	}
 }

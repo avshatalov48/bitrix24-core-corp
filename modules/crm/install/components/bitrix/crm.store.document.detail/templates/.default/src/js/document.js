@@ -1,6 +1,7 @@
-import { Loc, Reflection, Tag } from 'main.core';
+import { Dom, Event, Loc, Reflection, Tag, Text } from 'main.core';
 import { BaseCard } from 'catalog.entity-card';
 import { EventEmitter } from 'main.core.events';
+import { Popup } from 'main.popup';
 import { Button, ButtonColor, ButtonState } from 'ui.buttons';
 import { DocumentOnboardingManager, OnboardingData } from './document.onboarding.manager';
 
@@ -11,6 +12,8 @@ export class Document extends BaseCard
 	static saveAndDeductAction = 'saveAndDeduct';
 	static deductAction = 'deduct';
 	static cancelDeductAction = 'cancelDeduct';
+
+	static HELP_COST_CALCULATION_MODE_ARTICLE_ID = 17858278;
 
 	#documentOnboardingManager: DocumentOnboardingManager | null = null;
 
@@ -24,6 +27,8 @@ export class Document extends BaseCard
 		this.permissions = settings.permissions;
 		this.isInventoryManagementDisabled = settings.isInventoryManagementDisabled;
 		this.inventoryManagementFeatureCode = settings.inventoryManagementFeatureCode;
+		this.lockedCancellation = settings.isProductBatchMethodSelected;
+
 		this.addCopyLinkPopup();
 
 		EventEmitter.subscribe('BX.Crm.EntityEditor:onFailedValidation', (event) => {
@@ -274,7 +279,10 @@ export class Document extends BaseCard
 					const controllers = editor.getControllers();
 					const errorCollection = [];
 					controllers.forEach((controller) => {
-						if (controller instanceof BX.Crm.EntityStoreDocumentProductListController && !controller.validateProductList())
+						if (
+							controller instanceof BX.Crm.EntityStoreDocumentProductListController
+							&& !controller.validateProductList()
+						)
 						{
 							errorCollection.push(...controller.getErrorCollection());
 						}
@@ -354,6 +362,14 @@ export class Document extends BaseCard
 
 						return;
 					}
+
+					if (this.isLockedCancellation())
+					{
+						this.showCancellationInfo();
+
+						return;
+					}
+
 					button.setState(ButtonState.CLOCKING);
 					savePanel.setLocked(true);
 
@@ -486,6 +502,75 @@ export class Document extends BaseCard
 		}
 	}
 
+	isLockedCancellation(): boolean
+	{
+		return this.lockedCancellation;
+	}
+
+	showCancellationInfo(): void
+	{
+		const popup = new Popup(null, null, {
+			events: {
+				onPopupClose: () => {
+					popup.destroy();
+				},
+			},
+			content: this.getCancellationPopupContent(),
+			overlay: true,
+			buttons: [
+				new Button({
+					text: Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_YES'),
+					color: Button.Color.PRIMARY,
+					onclick: () => {
+						this.lockedCancellation = false;
+
+						if (this.deductButton)
+						{
+							this.deductButton.click();
+						}
+
+						popup.close();
+					},
+				}),
+				new BX.UI.Button({
+					text: Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_NO'),
+					color: BX.UI.Button.Color.LINK,
+					onclick: () => {
+						popup.close();
+					},
+				}),
+			],
+		});
+
+		popup.show();
+	}
+
+	getCancellationPopupContent(): HTMLElement
+	{
+		const moreLink = Tag.render`<a href="#" class="ui-form-link">${Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_LINK')}</a>`;
+
+		Event.bind(moreLink, 'click', () => {
+			if (top.BX.Helper)
+			{
+				top.BX.Helper.show(`redirect=detail&code=${Document.HELP_COST_CALCULATION_MODE_ARTICLE_ID}`);
+			}
+		});
+
+		const descriptionHtml = Tag.render`
+			<div>${Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_HINT').replace('#HELP_LINK#', '<help-link></help-link>')}</div>
+		`;
+
+		Dom.replace(descriptionHtml.querySelector('help-link'), moreLink);
+
+		return Tag.render`
+			<div>
+				<h3>${Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_TITLE')}</h3>
+				<div>${Text.encode(Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_QUESTION'))}
+				<br>${descriptionHtml}<div>
+			</div>
+		`;
+	}
+
 	setViewModeButtons(editor)
 	{
 		if (editor._toolPanel && editor._toolPanel.hasOwnProperty('_cancelButton'))
@@ -577,7 +662,8 @@ export class Document extends BaseCard
 		);
 		popup.show();
 
-		setTimeout(() => { popup.close();
+		setTimeout(() => 
+                     { popup.close();
 		}, 1500);
 	}
 

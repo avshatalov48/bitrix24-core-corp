@@ -84,4 +84,22 @@ interface NetworkBot extends ChatBot
 	 * @return bool
 	 */
 	public static function onSessionVote(array $params): bool;
+
+	/**
+	 * Returns the limit for additional questions.
+	 * @param int|null $botId
+	 * @return int
+	 * -1 - Functional is disabled,
+	 * 0 - There is no limit,
+	 * 1 - Only one session allowed,
+	 * n - Max number for sessions allowed.
+	 */
+	public static function getQuestionLimit(?int $botId = null): int;
+
+	/**
+	 * Permits adding new question.
+	 * @param int|null $botId
+	 * @return bool
+	 */
+	public static function allowAdditionalQuestion(?int $botId = null): bool;
 }

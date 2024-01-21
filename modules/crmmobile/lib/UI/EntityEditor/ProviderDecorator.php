@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Bitrix\CrmMobile\UI\EntityEditor;
 
@@ -200,7 +200,7 @@ final class ProviderDecorator implements ReturnsEditorFields
 	{
 		$aliases = $this->factory->getFieldsMap();
 
-		if ($this->getEntityTypeId() === \CCrmOwnerType::Deal || $this->getEntityTypeId() === \CCrmOwnerType::Lead)
+		if ($this->factory->isObserversEnabled())
 		{
 			$aliases[Item::FIELD_NAME_OBSERVERS] = 'OBSERVER';
 		}

@@ -2,8 +2,11 @@
 
 return [
 	'extensions' => [
-		'animation',
+		'loc',
+		'core',
 		'haptics',
+		'apptheme',
+		'animation',
 		'layout/ui/fields/focus-manager',
 		'layout/pure-component',
 		'utils/function',
@@ -14,6 +17,5 @@ return [
 		'utils/prop',
 		'assets/common',
 		'utils/copy',
-		'loc',
 	],
 ];

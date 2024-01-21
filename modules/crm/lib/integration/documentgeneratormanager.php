@@ -10,6 +10,7 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Crm\Timeline\DocumentController;
+use Bitrix\DocumentGenerator\Body\PlainText;
 use Bitrix\DocumentGenerator\CreationMethod;
 use Bitrix\DocumentGenerator\Document;
 use Bitrix\DocumentGenerator\Driver;
@@ -19,6 +20,7 @@ use Bitrix\DocumentGenerator\Model\TemplateProviderTable;
 use Bitrix\DocumentGenerator\Model\TemplateTable;
 use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\DocumentGenerator\Service\ActualizeQueue;
+use Bitrix\DocumentGenerator\VirtualDocument;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Error;
@@ -909,5 +911,45 @@ class DocumentGeneratorManager
 			ActualizeQueue\Task::createByDocument($document)
 				->setPosition(ActualizeQueue\Task::ACTUALIZATION_POSITION_IMMEDIATELY)
 		);
+	}
+
+	public function replacePlaceholdersInText(int $entityTypeId, int $entityId, string $text): ?string
+	{
+		if (!$this->isEnabled)
+		{
+			return null;
+		}
+
+		if (
+			$entityTypeId <= 0
+			|| $entityId <= 0
+			|| empty($text)
+		)
+		{
+			return null;
+		}
+
+		$template = \Bitrix\DocumentGenerator\Template::loadFromArray([
+			'BODY_TYPE' => PlainText::class,
+			'BODY_CONTENT' => $text
+		]);
+		$providerClassName = $this->getCrmOwnerTypeProvidersMap()[$entityTypeId] ?? null;
+		if (!$providerClassName)
+		{
+			return null;
+		}
+		$template->setSourceType($providerClassName);
+
+		$document = VirtualDocument::createByTemplate($template, $entityId,);
+		if ($document)
+		{
+			$result = $document->getProcessedResult();
+
+			return $result->isSuccess()
+				? $result->getData()['BODY']->getContent()
+				: null;
+		}
+
+		return null;
 	}
 }

@@ -7,8 +7,10 @@ use Bitrix\Im\Model\RecentTable;
 use Bitrix\Im\Model\RelationTable;
 use Bitrix\Im\V2\Entity\User\User;
 use Bitrix\ImOpenLines\Model\ChatIndexTable;
+use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\ORM\Query\Filter\Helper;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\Search\Content;
@@ -101,20 +103,44 @@ class ChatProvider extends BaseProvider
 		}
 		$result = [];
 		$query = ChatTable::query()
-			->setSelect(['ID', 'RECENT_DATE_UPDATE' => 'RECENT.DATE_UPDATE'])
+			->setSelect([
+				'ID',
+				'RECENT_DATE_UPDATE' => 'RECENT.DATE_UPDATE',
+				'RECENT_DATE_UPDATE_OL' => 'RECENT_OL.DATE_CREATE',
+			])
 			->setLimit(self::LIMIT)
 			->registerRuntimeField(
 				new Reference(
 					'RECENT',
 					RecentTable::class,
 					Join::on('this.ID', 'ref.ITEM_CID')->where('ref.USER_ID', User::getCurrent()->getId()),
-					['join_type' => Join::TYPE_INNER]
+					['join_type' => isset($this->preparedSearchString) ? Join::TYPE_LEFT : Join::TYPE_INNER]
+				)
+			)
+			->registerRuntimeField(
+				new Reference(
+					'RECENT_OL',
+					\Bitrix\ImOpenLines\Model\RecentTable::class,
+					Join::on('this.ID', 'ref.CHAT_ID')->where('ref.USER_ID', User::getCurrent()->getId()),
+					['join_type' => Join::TYPE_LEFT]
 				)
 			)
 		;
 		if (isset($this->preparedSearchString))
 		{
+			$condition = (new ConditionTree())
+				->logic(ConditionTree::LOGIC_OR)
+				->where('RECENT.USER_ID', User::getCurrent()->getId())
+				->where('RECENT_OL.USER_ID', User::getCurrent()->getId())
+			;
+
 			$query
+				->registerRuntimeField(new ExpressionField(
+						'RECENT_DATE_UPDATE_ORDER',
+						'COALESCE(%s, %s)',
+						['RECENT.DATE_UPDATE', 'RECENT_OL.DATE_CREATE']
+					)
+				)
 				->registerRuntimeField(
 					new Reference(
 						'OL_INDEX',
@@ -124,7 +150,8 @@ class ChatProvider extends BaseProvider
 					)
 				)
 				->whereMatch('OL_INDEX.SEARCH_TITLE', $this->preparedSearchString)
-				->setOrder(['RECENT.DATE_UPDATE' => 'ASC'])
+				->where($condition)
+				->setOrder(['RECENT_DATE_UPDATE_ORDER' => 'ASC'])
 			;
 		}
 		elseif (isset($this->chatIds) && !empty($this->chatIds))
@@ -140,7 +167,7 @@ class ChatProvider extends BaseProvider
 
 		foreach ($raw as $row)
 		{
-			$result[(int)$row['ID']] = $row['RECENT_DATE_UPDATE'];
+			$result[(int)$row['ID']] = $row['RECENT_DATE_UPDATE'] ?: $row['RECENT_DATE_UPDATE_OL'];
 		}
 
 		return $result;

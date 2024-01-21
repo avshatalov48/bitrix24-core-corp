@@ -87,6 +87,7 @@
 			this.userId = parseInt(BX.componentParameters.get('USER_ID', 0), 10);
 			this.taskId = parseInt(BX.componentParameters.get('TASK_ID', 0), 10);
 			this.guid = (BX.componentParameters.get('GUID') || TaskTabs.createGuid());
+			this.isTabsMode = BX.componentParameters.get('IS_TABS_MODE');
 
 			this.pull = new Pull(this.tabs, this.taskId, this.userId);
 			this.pull.subscribe();
@@ -158,6 +159,7 @@
 				userId: this.userId,
 				taskId: this.taskId,
 				guid: this.guid,
+				isTabsMode: true,
 				taskObject,
 			});
 		}

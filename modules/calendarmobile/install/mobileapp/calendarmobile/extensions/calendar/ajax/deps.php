@@ -5,7 +5,8 @@ return [
 	],
 	'bundle' => [
 		'./base',
+		'./event',
 		'./sharing',
-		'./worktime',
+		'./sync',
 	],
 ];

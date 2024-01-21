@@ -19,7 +19,7 @@ Extension::load([
 
 \Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__);
 
-$APPLICATION->SetTitle(Loc::getMessage('SC_CRM_STORE_TITLE_2'));
+$APPLICATION->SetTitle(Loc::getMessage('SC_CRM_STORE_TITLE_2_MSGVER_1'));
 ?>
 
 <?php $this->setViewTarget("inside_pagetitle_below", 100); ?>
@@ -34,11 +34,11 @@ $APPLICATION->SetTitle(Loc::getMessage('SC_CRM_STORE_TITLE_2'));
 
 <div class="salescenter-crmstore-container" id="salescenter-crmstore-container">
 	<div class="salescenter-crmstore-title"><?=Loc::getMessage('SC_CRM_STORE_CONTAINER_TITLE')?></div>
-	<div class="salescenter-crmstore-sub-title"><?=Loc::getMessage('SC_CRM_STORE_CONTAINER_SUB_TITLE_2')?></div>
+	<div class="salescenter-crmstore-sub-title"><?=Loc::getMessage('SC_CRM_STORE_CONTAINER_SUB_TITLE_2_MSGVER_1')?></div>
 	<div class="salescenter-crmstore-video">
 		<iframe width="560" height="315" src="<?=$arResult['URL']?>" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe>
 	</div>
-	<div class="salescenter-crmstore-contnet salescenter-crmstore-contnet--line"><?=Loc::getMessage('SC_CRM_STORE_CONTAINER_CONTENT_2')?></div>
+	<div class="salescenter-crmstore-contnet salescenter-crmstore-contnet--line"><?=Loc::getMessage('SC_CRM_STORE_CONTAINER_CONTENT_2_MSGVER_1')?></div>
     <div class="salescenter-crmstore-contnet salescenter-crmstore-contnet--bg"><?=Loc::getMessage('SC_CRM_STORE_CONTAINER_GO_TO_DEAL')?></div>
 	<div class="salescenter-crmstore-contnet">
 		<span class="ui-btn ui-btn-lg ui-btn-success ui-btn-round" id="start-sell-btn" ><?=Loc::getMessage('SC_CRM_STORE_CONTAINER_START_SELL')?></span>

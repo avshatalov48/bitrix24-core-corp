@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Crm;
 
@@ -33,6 +34,14 @@ class CrmTerminalPaymentControllerComponent extends \CBitrixComponent
 
 	public function executeComponent()
 	{
+		$toolsManager = Container::getInstance()->getIntranetToolsManager();
+		if (!$toolsManager->checkTerminalAvailability())
+		{
+			$this->includeComponentTemplate('tool_disabled');
+
+			return;
+		}
+
 		$this->initConfig();
 
 		if (Main\Loader::includeModule('crm'))

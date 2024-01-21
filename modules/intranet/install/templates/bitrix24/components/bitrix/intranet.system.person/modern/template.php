@@ -9,10 +9,12 @@ $this->addExternalCss(SITE_TEMPLATE_PATH."/css/employee.css");
 $arUser = $arParams["USER"];
 $name = CUser::FormatName(str_replace(array("#NOBR#", "#/NOBR#"), "", $arParams['NAME_TEMPLATE']), $arUser, $arResult["bUseLogin"], false);
 
+$arUser['EXTERNAL_AUTH_ID'] = $arUser['EXTERNAL_AUTH_ID'] ?? null;
+
 $arUserData = array();
 foreach ($arParams['USER_PROPERTY'] as $key)
 {
-	if ($arUser[$key])
+	if (!empty($arUser[$key]))
 	{
 		$arUserData[$key] = $arUser[$key];
 	}
@@ -26,7 +28,7 @@ $user_action_menu_number = rand();
 			<div class="user-avatar user-default-avatar" <?if ($arUser['PERSONAL_PHOTO_SOURCE']):?>style="background: url('<?=Uri::urnEncode($arUser['PERSONAL_PHOTO_SOURCE'])?>') no-repeat center center; background-size: cover;"<?endif;?>></div>
 			<? endif ?>
 			<div class="employee-name<?=($arUser["EXTRANET"] ? ' employee-name-extranet' : '')?>"><a class="employee-name-link" href="<?=$arUser['DETAIL_URL']?>"><?=$name?></a><?if ($arResult['CAN_EDIT_USER'] || $arUser["ACTIVITY_STATUS"] != "inactive"):?><span class="employee-user-action" onclick="user_action_menu<?=$user_action_menu_number?>(this,<?=$arUser['ID'].rand()?>, <?=$arUser['ID']?>, '<?=($arUser["EXTRANET"] ? "1" : "0")?>')"></span><?endif?></div>
-			<div class="employee-post"><?=$arUser['WORK_POSITION']?></div>
+			<div class="employee-post"><?=($arUser['WORK_POSITION'] ?? '')?></div>
 			<div class="employee-state">
 				<?=($arUser['IS_ONLINE'] ? GetMessage('INTR_ISP_IS_ONLINE') : GetMessage('INTR_ISP_IS_OFFLINE'));?><?if ($arUser['IS_ABSENT']):?> (<?=GetMessage('INTR_ISP_IS_ABSENT');?>)<?endif?>
 			</div>
@@ -61,7 +63,7 @@ $user_action_menu_number = rand();
 		{
 			if (in_array($key, array('PERSONAL_PHOTO')))
 				continue;
-			echo $arParams['USER_PROP'][$key] ? $arParams['USER_PROP'][$key] : GetMessage('ISL_'.$key); ?>:
+			echo !empty($arParams['USER_PROP'][$key]) ? $arParams['USER_PROP'][$key] : GetMessage('ISL_'.$key); ?>:
 			<? switch($key)
 			{
 				case 'EMAIL':
@@ -210,7 +212,7 @@ function user_action_menu<?=$user_action_menu_number?> (button, number, user_id,
 				{ text : "<?=GetMessage("INTR_ISP_TASK")?>", onclick : function() { this.popupWindow.close(); taskIFramePopup.add({RESPONSIBLE_ID: user_id});}},
 			<?endif?>
 			<?if ($arResult["CAN_MESSAGE"]):?>
-				{ text : "<?=GetMessage("INTR_ISP_PM")?>", onclick : function() {if (BX.IM) { BXIM.openMessenger(user_id); return false; } else { window.open('<?echo $url ?>', '', 'status=no,scrollbars=yes,resizable=yes,width=700,height=550,top='+Math.floor((screen.height - 550)/2-14)+',left='+Math.floor((screen.width - 700)/2-5)); return false; }}},
+				{ text : "<?=GetMessage("INTR_ISP_PM")?>", onclick : function() {if (typeof BXIM !== 'undefined') { BXIM.openMessenger(user_id); return false; } else { window.open('<?echo ($url ?? null) ?>', '', 'status=no,scrollbars=yes,resizable=yes,width=700,height=550,top='+Math.floor((screen.height - 550)/2-14)+',left='+Math.floor((screen.width - 700)/2-5)); return false; }}},
 			<?endif?>
 		<?elseif ($arUser["ACTIVITY_STATUS"] == "inactive" && (!IsModuleInstalled("bitrix24") && $USER->CanDoOperation('edit_all_users') || $USER->CanDoOperation('bitrix24_invite') && CModule::IncludeModule('bitrix24'))):?>
 			{ text : "<?=GetMessage("INTR_ISP_INVITE")?>", onclick : function() {

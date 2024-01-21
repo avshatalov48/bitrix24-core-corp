@@ -68,7 +68,7 @@ $arParams['PATH_TO_CONTACT_PORTRAIT'] = CrmCheckPath(
 	$arParams['PATH_TO_CONTACT_PORTRAIT'] ?? '',
 	$APPLICATION->GetCurPage().'?contact_id=#contact_id#&portrait'
 );
-$arParams['PATH_TO_MIGRATION'] = SITE_DIR . "marketplace/category/migration/";
+$arParams['PATH_TO_MIGRATION'] = \Bitrix\Crm\Integration\Market\Router::getCategoryPath('migration');
 
 $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE'])
 	? CSite::GetNameFormat(false)

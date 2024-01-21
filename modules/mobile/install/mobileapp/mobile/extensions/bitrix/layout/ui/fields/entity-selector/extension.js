@@ -2,12 +2,13 @@
  * @module layout/ui/fields/entity-selector
  */
 jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { chevronDown, pen } = require('assets/common');
 	const { Haptics } = require('haptics');
 	const { BaseField } = require('layout/ui/fields/base');
 	const { isEqual } = require('utils/object');
 	const { isNil } = require('utils/type');
+	const { EntitySelectorFactory } = require('selector/widget/factory');
 
 	const CastType = {
 		STRING: 'string',
@@ -110,10 +111,8 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 
 		prepareEntityList(entityList)
 		{
-			const list =
-				Utils.objectClone(entityList)
-					.filter((entity) => BX.type.isPlainObject(entity) && !isNil(entity.id))
-			;
+			const list = Utils.objectClone(entityList)
+				.filter((entity) => BX.type.isPlainObject(entity) && !isNil(entity.id));
 
 			if (this.getConfig().castType === CastType.STRING)
 			{
@@ -142,7 +141,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 			{
 				return (
 					this.prepareEntityList(entityList)
-						.filter((entity) => entitiesIds.indexOf(entity.id) !== -1)
+						.filter((entity) => entitiesIds.includes(entity.id))
 				);
 			}
 
@@ -214,6 +213,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 					text: BX.message('FIELDS_SELECTOR_CONTROL_SELECT'),
 				}),
 				this.shouldShowChevronDown() && Image({
+					tintColor: AppTheme.colors.base3,
 					style: {
 						height: 5,
 						width: 7,
@@ -229,10 +229,13 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 
 		renderEntityContent()
 		{
-			let showAllButton;
+			let showAllButton = null;
 			if (this.isMultiple())
 			{
-				const hiddenEntitiesCount = this.isMultiple() && this.getValue().filter((item, index) => index > 3).length;
+				const hiddenEntitiesCount = this.isMultiple() && this.getValue().filter((
+					item,
+					index,
+				) => index > 3).length;
 				showAllButton = this.renderShowAllButton(hiddenEntitiesCount);
 			}
 
@@ -311,7 +314,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 						borderRadius: 2.5,
 						marginLeft: 5,
 						marginRight: 5,
-						backgroundColor: '#a8adb4',
+						backgroundColor: AppTheme.colors.base4,
 					},
 				}),
 			);
@@ -325,7 +328,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 		getValueWhileReady()
 		{
 			return new Promise((resolve) => {
-				let values;
+				let values = null;
 
 				if (this.isComplexSelector())
 				{
@@ -346,14 +349,11 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 		}
 
 		openEntity(id)
-		{
+		{}
 
-		}
-
-		openSelector()
+		openSelector(forceSelectorType = false)
 		{
 			const {
-				selectorType,
 				provider,
 				enableCreation,
 				closeAfterCreation,
@@ -361,6 +361,15 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 				canUseRecent,
 				selectorTitle,
 			} = this.getConfig();
+
+			let {
+				selectorType,
+			} = this.getConfig();
+
+			if (forceSelectorType !== false)
+			{
+				selectorType = forceSelectorType;
+			}
 
 			return (
 				EntitySelectorFactory
@@ -548,8 +557,9 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 							height: 15,
 							width: 14,
 						},
+						tintColor: AppTheme.colors.base3,
 						svg: {
-							content: pen,
+							content: pen(),
 						},
 					},
 				),
@@ -582,7 +592,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 				value: {
 					...styles.value,
 					flex: null,
-					color: this.isReadOnly() && this.canOpenEntity() ? '#0b66c3' : styles.value.color,
+					color: this.isReadOnly() && this.canOpenEntity() ? AppTheme.colors.accentMainLinks : styles.value.color,
 				},
 				wrapper: {
 					...styles.wrapper,
@@ -646,7 +656,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 		getSvgImages()
 		{
 			return {
-				defaultAvatar: (color = '#a8adb4') => {
+				defaultAvatar: (color = AppTheme.colors.base4) => {
 					return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 23.9989C18.6275 23.9989 24 18.6266 24 11.9995C24 5.37234 18.6275 0 12 0C5.37258 0 0 5.37234 0 11.9995C0 18.6266 5.37258 23.9989 12 23.9989Z" fill="${color}"/><path d="M17.5985 17.7266C18.2812 17.5141 18.6554 16.84 18.5169 16.1729L18.3223 15.2352C18.2245 14.6491 17.5047 13.9911 15.8947 13.6045C15.3492 13.4632 14.8307 13.2442 14.3576 12.9551C14.2542 12.9002 14.2699 12.3931 14.2699 12.3931L13.7514 12.3198C13.7514 12.2786 13.707 11.6704 13.707 11.6704C14.3275 11.4768 14.2636 10.3349 14.2636 10.3349C14.6576 10.5378 14.9142 9.63411 14.9142 9.63411C15.3803 8.37859 14.6822 8.4545 14.6822 8.4545C14.8043 7.68804 14.8043 6.90905 14.6822 6.14258C14.3718 3.6 9.69898 4.29025 10.2531 5.12064C8.88737 4.88706 9.199 7.77243 9.199 7.77243L9.49522 8.51962C9.08464 8.7669 9.16527 9.0507 9.25533 9.36771C9.29288 9.49987 9.33207 9.6378 9.33799 9.78127C9.3666 10.5013 9.84112 10.3521 9.84112 10.3521C9.87036 11.5405 10.5015 11.6952 10.5015 11.6952C10.62 12.4415 10.5461 12.3145 10.5461 12.3145L9.98451 12.3776C9.99211 12.5473 9.97722 12.7172 9.94017 12.8836C9.61386 13.0186 9.41409 13.1261 9.2163 13.2325C9.01381 13.3414 8.81339 13.4492 8.48141 13.5843C7.21353 14.1003 5.94196 14.3891 5.697 15.2925C5.64066 15.5002 5.55931 15.8574 5.48111 16.2352C5.34884 16.8741 5.72138 17.5055 6.37443 17.711C7.96659 18.2121 9.73498 18.5076 11.6013 18.5455H12.4216C14.2684 18.508 16.0194 18.2183 17.5985 17.7266Z" fill="white"/></svg>`;
 				},
 			};
@@ -659,5 +669,4 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 		EntitySelectorField: (props) => new EntitySelectorField(props),
 		CastType,
 	};
-
 });

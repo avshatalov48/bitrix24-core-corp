@@ -1,7 +1,8 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.Store = this.BX.Crm.Store || {};
-(function (exports,ui_designTokens,catalog_entityCard,ui_buttons,main_core,main_core_events) {
+(function (exports,ui_designTokens,catalog_entityCard,main_popup,ui_buttons,main_core,main_core_events) {
 	'use strict';
 
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
@@ -128,7 +129,7 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	  return [];
 	}
 
-	var _templateObject;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4;
 	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
 	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
@@ -162,6 +163,7 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	    _this.permissions = settings.permissions;
 	    _this.isInventoryManagementDisabled = settings.isInventoryManagementDisabled;
 	    _this.inventoryManagementFeatureCode = settings.inventoryManagementFeatureCode;
+	    _this.lockedCancellation = settings.isProductBatchMethodSelected;
 	    _this.addCopyLinkPopup();
 	    main_core_events.EventEmitter.subscribe('BX.Crm.EntityEditor:onFailedValidation', function (event) {
 	      main_core_events.EventEmitter.emit('BX.Catalog.EntityCard.TabManager:onOpenTab', {
@@ -404,6 +406,10 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	              _this2.openMasterSlider();
 	              return;
 	            }
+	            if (_this2.isLockedCancellation()) {
+	              _this2.showCancellationInfo();
+	              return;
+	            }
 	            button.setState(ui_buttons.ButtonState.CLOCKING);
 	            savePanel.setLocked(true);
 	            var actionName = Document.cancelDeductAction;
@@ -506,6 +512,56 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	      }
 	    }
 	  }, {
+	    key: "isLockedCancellation",
+	    value: function isLockedCancellation() {
+	      return this.lockedCancellation;
+	    }
+	  }, {
+	    key: "showCancellationInfo",
+	    value: function showCancellationInfo() {
+	      var _this3 = this;
+	      var popup = new main_popup.Popup(null, null, {
+	        events: {
+	          onPopupClose: function onPopupClose() {
+	            popup.destroy();
+	          }
+	        },
+	        content: this.getCancellationPopupContent(),
+	        overlay: true,
+	        buttons: [new ui_buttons.Button({
+	          text: main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_YES'),
+	          color: ui_buttons.Button.Color.PRIMARY,
+	          onclick: function onclick() {
+	            _this3.lockedCancellation = false;
+	            if (_this3.deductButton) {
+	              _this3.deductButton.click();
+	            }
+	            popup.close();
+	          }
+	        }), new BX.UI.Button({
+	          text: main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_NO'),
+	          color: BX.UI.Button.Color.LINK,
+	          onclick: function onclick() {
+	            popup.close();
+	          }
+	        })]
+	      });
+	      popup.show();
+	    }
+	  }, {
+	    key: "getCancellationPopupContent",
+	    value: function getCancellationPopupContent() {
+	      var moreLink = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<a href=\"#\" class=\"ui-form-link\">", "</a>"])), main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_LINK'));
+	      main_core.Event.bind(moreLink, 'click', function () {
+	        if (top.BX.Helper) {
+	          top.BX.Helper.show("redirect=detail&code=".concat(Document.HELP_COST_CALCULATION_MODE_ARTICLE_ID));
+	        }
+	      });
+	      var descriptionHtml = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>", "</div>\n\t\t"])), main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_HINT').replace('#HELP_LINK#', '<help-link></help-link>'));
+	      main_core.Dom.replace(descriptionHtml.querySelector('help-link'), moreLink);
+	      return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<h3>", "</h3>\n\t\t\t\t<div>", "\n\t\t\t\t<br>", "<div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_TITLE'), main_core.Text.encode(main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_QUESTION')), descriptionHtml);
+	    }
+	  }, {
 	    key: "setViewModeButtons",
 	    value: function setViewModeButtons(editor) {
 	      if (editor._toolPanel && editor._toolPanel.hasOwnProperty('_cancelButton')) {
@@ -548,13 +604,13 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	  }, {
 	    key: "addCopyLinkPopup",
 	    value: function addCopyLinkPopup() {
-	      var _this3 = this;
+	      var _this4 = this;
 	      var copyLinkButton = document.getElementById(this.settings.copyLinkButtonId);
 	      if (!copyLinkButton) {
 	        return;
 	      }
 	      copyLinkButton.onclick = function () {
-	        _this3.copyDocumentLinkToClipboard();
+	        _this4.copyDocumentLinkToClipboard();
 	      };
 	    }
 	  }, {
@@ -650,8 +706,9 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	babelHelpers.defineProperty(Document, "saveAndDeductAction", 'saveAndDeduct');
 	babelHelpers.defineProperty(Document, "deductAction", 'deduct');
 	babelHelpers.defineProperty(Document, "cancelDeductAction", 'cancelDeduct');
+	babelHelpers.defineProperty(Document, "HELP_COST_CALCULATION_MODE_ARTICLE_ID", 17858278);
 
 	exports.Document = Document;
 
-}((this.BX.Crm.Store.DocumentCard = this.BX.Crm.Store.DocumentCard || {}),BX,BX.Catalog.EntityCard,BX.UI,BX,BX.Event));
+}((this.BX.Crm.Store.DocumentCard = this.BX.Crm.Store.DocumentCard || {}),BX,BX.Catalog.EntityCard,BX.Main,BX.UI,BX,BX.Event));
 //# sourceMappingURL=script.js.map

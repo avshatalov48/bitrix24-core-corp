@@ -43,8 +43,14 @@ if($elementID > 0)
 {
 	$element = CCrmMailTemplate::GetByID($elementID);
 	if(!$element
-		|| (!\CCrmPerms::isAdmin() && $element['OWNER_ID'] != $userID && \CCrmMailTemplateScope::Common != $element['SCOPE']))
-	{
+		|| (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdmin()
+			&& $element['OWNER_ID'] != $userID
+			&& \CCrmMailTemplateScope::Common !== (int)$element['SCOPE']
+			&& !(\CCrmMailTemplateScope::Limited === (int)$element['SCOPE']
+				&& \Bitrix\Crm\MailTemplate\MailTemplateAccess::checkAccessToLimitedTemplate($elementID)
+			)
+			)
+	){
 		ShowError(GetMessage('CRM_MAIL_TEMPLATE_NOT_FOUND'));
 		@define('ERROR_404', 'Y');
 		if($arParams['SET_STATUS_404'] === 'Y')
@@ -54,6 +60,26 @@ if($elementID > 0)
 		return;
 	}
 	$elementID = $element['ID'];
+	$element['ACCESS'] = \Bitrix\Crm\MailTemplate\MailTemplateAccess::getAccessDataByTemplateID($elementID);
+	foreach($element['ACCESS'] as $item)
+	{
+		$arResult['ACCESS'][] = [
+			$item->entityType,
+			$item->entityId,
+		];
+	}
+
+	if((int)$element['SCOPE'] === \CCrmMailTemplateScope::Common)
+	{
+		if(!empty($arResult['ACCESS']))
+		{
+			array_unshift($arResult['ACCESS'], \Bitrix\Crm\MailTemplate\MailTemplateAccess::ALL_USERS_ENTITY);
+		}
+		else
+		{
+			$arResult['ACCESS'][] = \Bitrix\Crm\MailTemplate\MailTemplateAccess::ALL_USERS_ENTITY;
+		}
+	}
 
 	$arResult['CAN_EDIT'] = \CCrmPerms::isAdmin() || $element['OWNER_ID'] == $userID;
 	if (!$arResult['CAN_EDIT'] && \CCrmMailTemplateScope::Common == $element['SCOPE'])
@@ -95,6 +121,14 @@ if(check_bitrix_sessid())
 			? intval($_POST['ENTITY_TYPE_ID']) : 0;
 		$element['BODY_TYPE'] = isset($_POST['BODY_TYPE']) ? intval($_POST['BODY_TYPE']) : \CCrmContentType::BBCode;
 		$element['BODY'] = isset($_POST['BODY']) ? $_POST['BODY'] : '';
+		try
+		{
+			$element['ACCESS'] = (array)\Bitrix\Main\Web\Json::decode((string)$_POST['ACCESS']) ?? [];
+		}
+		catch (\Bitrix\Main\SystemException $e)
+		{
+			$element['ACCESS'] = [];
+		}
 
 		if (\CCrmContentType::Html == $element['BODY_TYPE'])
 		{
@@ -122,7 +156,28 @@ if(check_bitrix_sessid())
 			$element['BODY'] = preg_replace('/https?:\/\/bxacid:(n?\d+)/i', 'bxacid:\1', $element['BODY']);
 		}
 
+		$element['SCOPE'] = \CCrmMailTemplateScope::setTemplateScope($element['ACCESS']);
+
 		$element['UF_ATTACHMENT'] = empty($_REQUEST['FILES']) || !is_array($_REQUEST['FILES']) ? array() : $_REQUEST['FILES'];
+
+		if((!empty($element['ACCESS'])
+				|| (isset($curElement['SCOPE'])
+					&& (int)$curElement['SCOPE'] !== CCrmMailTemplateScope::Personal))
+			&& empty($errors))
+		{
+			$accessEntities = [];
+			foreach ($element['ACCESS'] as $key => &$entity)
+			{
+				if($entity !== \Bitrix\Crm\MailTemplate\MailTemplateAccess::ALL_USERS_ENTITY)
+				{
+					$entity = new \Bitrix\Crm\Dto\MailTemplate\AccessEntity($entity[1],$entity[0]);
+				}
+				else
+				{
+					unset($element['ACCESS'][$key]);
+				}
+			}
+		}
 
 		if (!$isNew)
 		{
@@ -281,7 +336,7 @@ if(CCrmPerms::IsAdmin())
 {
 	$arResult['FIELDS']['tab_1'][] = array(
 		'ID' => 'SCOPE',
-		'NAME' => GetMessage('CRM_MAIL_TEMPLATE_SCOPE'),
+		'NAME' => GetMessage('CRM_MAIL_TEMPLATE_SCOPE_MSGVER_1'),
 		'VALUE' => isset($element['SCOPE']) ? $element['SCOPE'] : CCrmMailTemplateScope::Personal,
 		'ALL_VALUES' => CCrmMailTemplateScope::GetAllDescriptions()
 	);
@@ -344,5 +399,18 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'VALUE' => isset($element['BODY']) ? $element['BODY'] : '',
 	'VALUE_TYPE' => isset($element['BODY_TYPE']) ? $element['BODY_TYPE'] : '',
 );
+
+if (\Bitrix\Main\Loader::includeModule('mail') && class_exists('\Bitrix\Mail\Integration\AI\Settings'))
+{
+	$arResult['COPILOT_PARAMS'] = \Bitrix\Mail\Integration\AI\Settings::instance()->getMailCrmCopilotParams(
+		\Bitrix\Mail\Integration\AI\Settings::MAIL_CRM_NEW_MESSAGE_CONTEXT_ID,
+	);
+}
+else
+{
+	$arResult['COPILOT_PARAMS'] = [
+		'isCopilotEnabled' => false,
+	];
+}
 
 $this->IncludeComponentTemplate();

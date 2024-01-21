@@ -19,6 +19,38 @@ abstract class Dto implements \JsonSerializable, \Bitrix\Main\Type\Contract\Arra
 		}
 	}
 
+	public function __clone(): void
+	{
+		$this->validationErrors = clone $this->validationErrors;
+
+		$self = new \ReflectionClass($this);
+		$publicFields = $self->getProperties(\ReflectionProperty::IS_PUBLIC);
+
+		foreach ($publicFields as $property)
+		{
+			if (
+				$property->isStatic()
+				// when a typed non-initialized prop is accessed, we get runtime error
+				|| ($property->hasType() && !$property->isInitialized($this))
+			)
+			{
+				continue;
+			}
+
+			$value = $property->getValue($this);
+			$name = $property->getName();
+
+			if ($value instanceof Dto)
+			{
+				$this->$name = clone $value;
+			}
+			elseif (is_array($value) && current($value) instanceof Dto)
+			{
+				$this->$name = \Bitrix\Main\Type\Collection::clone($value);
+			}
+		}
+	}
+
 	public function toArray(): array
 	{
 		$fields = [];

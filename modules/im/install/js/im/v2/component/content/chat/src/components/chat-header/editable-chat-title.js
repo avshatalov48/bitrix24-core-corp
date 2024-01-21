@@ -2,7 +2,7 @@ import { ChatTitle } from 'im.v2.component.elements';
 import { ChatActionType } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
 
-import type { ImModelDialog } from 'im.v2.model';
+import type { ImModelChat } from 'im.v2.model';
 
 const INPUT_PADDING = 5;
 
@@ -29,9 +29,9 @@ export const EditableChatTitle = {
 	},
 	computed:
 	{
-		dialog(): ImModelDialog
+		dialog(): ImModelChat
 		{
-			return this.$store.getters['dialogues/get'](this.dialogId, true);
+			return this.$store.getters['chats/get'](this.dialogId, true);
 		},
 		canBeRenamed(): boolean
 		{

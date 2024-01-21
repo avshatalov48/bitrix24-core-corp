@@ -4,7 +4,6 @@ namespace Bitrix\Crm\Integrity;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\DB\MysqlCommonConnection;
 use Bitrix\Main\Entity\BooleanField;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\IntegerField;
@@ -83,14 +82,25 @@ class DuplicateIndexTypeSettingsTable extends DataManager
 
 		$connection = Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
-
-		$dataString = $sqlHelper->forSql(serialize($data));
-		
-		$connection->queryExecute(
-			"INSERT INTO b_crm_dp_index_type_settings "
-			. "(ID, ACTIVE, DESCRIPTION, ENTITY_TYPE_ID, STATE_ID, FIELD_PATH, FIELD_NAME, PROGRESS_DATA) "
-			. "VALUES ($volatileTypeId, 'N', '', 0, 0, '', '', '$dataString') "
-			. "ON DUPLICATE KEY UPDATE PROGRESS_DATA = '$dataString'"
+		$sql = $sqlHelper->prepareMerge(
+			'b_crm_dp_index_type_settings',
+			[
+				'ID',
+			],
+			[
+				'ID' => $volatileTypeId,
+				'ACTIVE' => 'N',
+				'DESCRIPTION' => '',
+				'ENTITY_TYPE_ID' => 0,
+				'STATE_ID' => 0,
+				'FIELD_PATH' => '',
+				'FIELD_NAME' => '',
+				'PROGRESS_DATA' => serialize($data),
+			],
+			[
+				'PROGRESS_DATA' => serialize($data),
+			]
 		);
+		$connection->queryExecute($sql[0]);
 	}
 }

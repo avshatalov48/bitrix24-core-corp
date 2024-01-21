@@ -3,6 +3,7 @@
  */
 jn.define('tasks/layout/task/fields/title', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { ReadOnlyElementType } = require('layout/ui/fields/string');
 	const { TextAreaField } = require('layout/ui/fields/textarea');
 
 	class Title extends LayoutComponent
@@ -15,17 +16,8 @@ jn.define('tasks/layout/task/fields/title', (require, exports, module) => {
 				readOnly: props.readOnly,
 				title: props.title,
 			};
-			this.flag = false;
-		}
 
-		componentDidUpdate(prevProps, prevState)
-		{
-			// temporary fix for bug with auto height
-			if (!this.flag)
-			{
-				this.flag = true;
-				this.setState({});
-			}
+			this.handleOnChange = this.handleOnChange.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -44,41 +36,60 @@ jn.define('tasks/layout/task/fields/title', (require, exports, module) => {
 			});
 		}
 
+		handleOnChange(text)
+		{
+			const { onChange } = this.props;
+			this.setState({ title: text });
+
+			if (onChange)
+			{
+				onChange(text);
+			}
+		}
+
 		render()
 		{
+			const { onViewRef, focus, onLayout, style = {}, deepMergeStyles = {} } = this.props;
+			const { readOnly, title } = this.state;
+			const valueStyle = {
+				fontSize: 18,
+				fontWeight: '400',
+			};
+
 			return View(
 				{
-					ref: (ref) => (this.props.onViewRef && this.props.onViewRef(ref)),
-					style: (this.props.style || {}),
+					ref: (ref) => {
+						if (ref && onViewRef)
+						{
+							onViewRef(ref);
+						}
+					},
+					style,
+					onLayout,
 					onLongClick: (
-						this.state.readOnly && Application.getPlatform() === 'android' && Application.getApiVersion() < 51
+						readOnly && Application.getPlatform() === 'android' && Application.getApiVersion() < 51
 							? () => this.copyTitle()
 							: () => {}
 					),
 				},
 				TextAreaField({
-					readOnly: this.state.readOnly,
+					focus,
+					readOnly,
 					required: true,
-					focus: this.props.focus,
 					showTitle: false,
 					placeholder: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_TITLE_PLACEHOLDER'),
 					config: {
 						showAll: true,
 						deepMergeStyles: {
-							...this.props.deepMergeStyles,
-							editableValue: {
-								fontSize: 17,
-								fontWeight: '700',
-							},
+							...deepMergeStyles,
+							value: valueStyle,
+							editableValue: valueStyle,
 						},
-						onSubmitEditing: () => {},
+						readOnlyElementType: ReadOnlyElementType.TEXT_INPUT,
 					},
-					value: this.state.title,
+					value: title,
 					testId: 'title',
-					onChange: (text) => {
-						this.setState({ title: text });
-						this.props.onChange(text);
-					},
+					onChange: this.handleOnChange,
 				}),
 			);
 		}

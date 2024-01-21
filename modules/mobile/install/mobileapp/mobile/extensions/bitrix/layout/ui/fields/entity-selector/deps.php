@@ -1,6 +1,7 @@
 <?php
 return [
 	'extensions' => [
+		'apptheme',
 		'assets/common',
 		'haptics',
 		'layout/ui/fields/base',

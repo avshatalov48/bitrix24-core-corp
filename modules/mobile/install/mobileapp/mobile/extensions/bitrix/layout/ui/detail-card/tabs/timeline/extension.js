@@ -3,12 +3,13 @@
  */
 jn.define('layout/ui/detail-card/tabs/timeline', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { Tab } = require('layout/ui/detail-card/tabs');
 	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
 	const { FloatingMenuItem } = require('layout/ui/detail-card/floating-button/menu/item');
 
 	/** @var Timeline */
-	let Timeline;
+	let Timeline = null;
 
 	try
 	{
@@ -96,7 +97,7 @@ jn.define('layout/ui/detail-card/tabs/timeline', (require, exports, module) => {
 					style: {
 						flexDirection: 'column',
 						flexGrow: 1,
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgPrimary,
 					},
 				},
 				new Timeline({
@@ -145,3 +146,4 @@ jn.define('layout/ui/detail-card/tabs/timeline', (require, exports, module) => {
 
 	module.exports = { TimelineTab };
 });
+

@@ -182,10 +182,20 @@ class UserQueue
 		{
 			$class = static::getDataManagerClass();
 			$tableName = $class::getTableName();
-			$sql = "INSERT IGNORE $tableName(ENTITY_TYPE, ENTITY_ID, LAST_ITEM) "
-				. "VALUES('$type', '$id', '$item') "
-				. "ON DUPLICATE KEY UPDATE LAST_ITEM = '$item' ";
-			Application::getConnection()->query($sql);
+			$sql = $sqlHelper->prepareMerge(
+				$tableName,
+				['ENTITY_TYPE', 'ENTITY_ID', 'LAST_ITEM'],
+				[
+					'ENTITY_TYPE' => $type,
+					'ENTITY_ID' => $id,
+					'LAST_ITEM' => $item
+				],
+				['LAST_ITEM' => $item]
+			);
+			if ($sql[0] !== "")
+			{
+				Application::getConnection()->query($sql[0]);
+			}
 		}
 		else
 		{

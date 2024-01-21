@@ -4,8 +4,8 @@ use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Bizproc\FieldType;
 use Bitrix\Crm;
 use Bitrix\Main\Error;
-use Bitrix\Main\Result;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Result;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -179,7 +179,12 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			$entityTypeId = (int)$currentValues['DynamicTypeId'];
 
 			$originalDocType = $dialog->getDocumentType();
-			$dialog->setDocumentType(\CCrmBizProcHelper::ResolveDocumentType($entityTypeId));
+			$entityDocumentType = \CCrmBizProcHelper::ResolveDocumentType($entityTypeId);
+
+			if ($entityDocumentType)
+			{
+				$dialog->setDocumentType($entityDocumentType);
+			}
 
 			$extractingFieldsResult = parent::extractPropertiesValues(
 				$dialog,
@@ -319,7 +324,12 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 
 		foreach (static::getDocumentService()->GetDocumentFields($documentType) as $fieldId => $field)
 		{
-			$isIgnoredField = !$field['Editable'] || static::isInternalField($fieldId) || static::isMultiField($field);
+			$isIgnoredField = (
+				!isset($field['Editable'])
+				|| !$field['Editable']
+				|| static::isInternalField($fieldId)
+				|| static::isMultiField($field)
+			);
 
 			if (!$isIgnoredField || static::isRequiredFieldId($fieldId))
 			{

@@ -39,10 +39,11 @@ class timeman extends CModule
 	function InstallDB()
 	{
 		global $DB, $APPLICATION;
+		$connection = \Bitrix\Main\Application::getConnection();
 
-		if (!$DB->Query("SELECT 'x' FROM b_timeman_entries", true))
+		if (!$DB->TableExists('b_timeman_entries'))
 		{
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/'.$this->MODULE_ID.'/install/db/mysql/install.sql');
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/timeman/install/db/' . $connection->getType() . '/install.sql');
 
 			if (!empty($errors))
 			{
@@ -64,7 +65,14 @@ class timeman extends CModule
 		RegisterModuleDependences('socialnetwork', 'OnFillSocNetAllowedSubscribeEntityTypes', 'timeman', 'CTimeManNotify', 'OnFillSocNetAllowedSubscribeEntityTypes');
 		RegisterModuleDependences("im", "OnGetNotifySchema", "timeman", "CTimemanNotifySchema", "OnGetNotifySchema");
 
-		RegisterModuleDependences('main', 'OnAfterUserUpdate', 'timeman', 'CTimeManNotify', 'OnAfterUserUpdate');
+		RegisterModuleDependences(
+			'main',
+			'OnAfterUserUpdate',
+			'timeman',
+			'CTimeManNotify',
+			'OnAfterUserUpdate',
+			200
+		);
 		RegisterModuleDependences('main', 'OnAfterUserUpdate', 'timeman', 'CReportNotifications', 'OnAfterUserUpdate');
 		RegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'timeman', '\Bitrix\Timeman\Rest', 'onRestServiceBuildDescription');
 
@@ -102,7 +110,7 @@ class timeman extends CModule
 	function UnInstallDB($arParams = array())
 	{
 		global $DB, $APPLICATION;
-
+		$connection = \Bitrix\Main\Application::getConnection();
 		$errors = null;
 
 		if ((true == array_key_exists("savedata", $arParams)) && ($arParams["savedata"] != 'Y'))
@@ -125,7 +133,7 @@ class timeman extends CModule
 				}
 			}
 
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/'.$this->MODULE_ID.'/install/db/mysql/uninstall.sql');
+			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/timeman/install/db/' . $connection->getType() . '/uninstall.sql');
 
 			if (!empty($errors))
 			{

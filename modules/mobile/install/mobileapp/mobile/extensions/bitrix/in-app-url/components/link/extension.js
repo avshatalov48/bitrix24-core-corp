@@ -2,7 +2,6 @@
  * @module in-app-url/components/link
  */
 jn.define('in-app-url/components/link', (require, exports, module) => {
-
 	const { inAppUrl } = require('in-app-url');
 
 	/**
@@ -43,10 +42,9 @@ jn.define('in-app-url/components/link', (require, exports, module) => {
 				: Text({
 					text,
 					style,
-				})
+				}),
 		);
 	}
 
 	module.exports = { InAppLink };
-
 });

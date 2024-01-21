@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 (function (exports,immobile_chat_application_core,main_date,mobile_pull_client,im_model,im_provider_rest,im_lib_localstorage,pull_component_status,ui_fonts_opensans,ui_vue,im_component_dialog,im_view_quotepanel,ui_vue_vuex,ui_vue_components_smiles,im_lib_utils,main_core_events,im_const,im_eventHandler,im_lib_logger,im_lib_timer) {
@@ -2069,7 +2070,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        attachButton: {
 	          items: [{
 	            id: 'disk',
-	            name: this.getLocalize('MOBILE_CHAT_PANEL_UPLOAD_DISK'),
+	            name: this.getLocalize('MOBILE_CHAT_PANEL_UPLOAD_DISK_V2'),
 	            dataSource: {
 	              multiple: false,
 	              url: "".concat(siteDir, "mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=").concat(this.controller.application.getUserId()),

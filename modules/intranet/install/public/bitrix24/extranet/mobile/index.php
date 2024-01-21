@@ -1,4 +1,5 @@
-<?
+<?php
+
 define("BX_MOBILE_LOG", true);
 
 require($_SERVER["DOCUMENT_ROOT"]."/mobile/headers.php");
@@ -7,6 +8,9 @@ AddEventHandler("blog", "BlogImageSize", "ResizeMobileLogImages", 100, $_SERVER[
 
 if (IsModuleInstalled("bitrix24"))
 	GetGlobalID();
+
+\CModule::IncludeModule('intranet');
+use Bitrix\Intranet\Integration\Wizards\Portal\Ids;
 
 if (isset($_POST["ACTION"]) && ($_POST["ACTION"] == "ADD_POST" || $_POST["ACTION"] == "EDIT_POST"))
 {
@@ -100,7 +104,7 @@ if (isset($_POST["ACTION"]) && ($_POST["ACTION"] == "ADD_POST" || $_POST["ACTION
 			"PATH_TO_POST" => "/company/personal/user/".$GLOBALS["USER"]->GetID()."/blog/#post_id#/", // search index
 			"USE_SOCNET" => "Y",
 			"SOCNET_GROUP_ID" => intval($_REQUEST["group_id"] ?? 0),
-			"GROUP_ID" => (IsModuleInstalled("bitrix24") ? $GLOBAL_BLOG_GROUP[SITE_ID] : false),
+			"GROUP_ID" => (IsModuleInstalled("bitrix24") ? ids::getBlogId() : false),
 			"MOBILE" => "Y"
 		),
 		false,

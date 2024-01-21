@@ -20,5 +20,7 @@ $MESS["CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE_ORDER"] = "You are no longer resp
 $MESS["CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE_QUOTE_MSGVER_1"] = "You are no longer responsible for activity \"#subject#\" in estimate \"#entityName#\"";
 $MESS["CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE_SMART_INVOICE"] = "You are no longer responsible for activity \"#subject#\" in invoice \"#entityName#\"";
 $MESS["CRM_ACTIVITY_TODO_UPDATE_FILES_ERROR"] = "Cannot update files in a completed activity.";
+$MESS["CRM_ACTIVITY_TODO_UPDATE_PING_OFFSETS_ERROR"] = "Cannot change reminders in a completed activity.";
 $MESS["CRM_ACTIVITY_TODO_UPDATE_RESPONSIBLE_USER_ERROR"] = "Cannot change responsible person because the activity is completed.";
 $MESS["CRM_ACTIVITY_TODO_WRONG_DATE_FORMAT"] = "Incorrect date format.";
+$MESS["CRM_ACTIVITY_TODO_WRONG_PING_OFFSETS_FORMAT"] = "Reminder parameters are incorrect.";

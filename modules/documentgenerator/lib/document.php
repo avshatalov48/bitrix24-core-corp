@@ -372,33 +372,41 @@ class Document
 			{
 				$data['provider'] = get_class($provider);
 			}
-			if($sendToTransformation)
+			if ($sendToTransformation && (!$this->PDF_ID || !$this->IMAGE_ID))
 			{
-				if(!$this->PDF_ID || !$this->IMAGE_ID)
+				$transformResult = $this->transform();
+			}
+			else
+			{
+				$transformResult = $this->getTransformer()?->getLastTransformationResult() ?? new Result();
+			}
+
+			if($transformResult->isSuccess())
+			{
+				$data['isTransformationError'] = false;
+				$cancelReason = $transformResult->getData()['cancelReason'] ?? null;
+				if ($cancelReason)
 				{
-					$transformResult = $this->transform();
-					if($transformResult->isSuccess())
-					{
-						$data['isTransformationError'] = false;
-						$cancelReason = $transformResult->getData()['cancelReason'] ?? null;
-						if ($cancelReason)
-						{
-							$data['transformationCancelReason'] = $cancelReason;
-						}
-					}
-					else
-					{
-						$data['isTransformationError'] = true;
-						$error = $transformResult->getErrors()[0];
-						$data['transformationErrorMessage'] = $error->getMessage();
-						$data['transformationErrorCode'] = $error->getCode();
-						if(!$skipTransformationError)
-						{
-							$this->result->addErrors($transformResult->getErrors());
-						}
-					}
+					$data['transformationCancelReason'] = $cancelReason;
 				}
 			}
+			else
+			{
+				$data['isTransformationError'] = true;
+
+				$error = current($transformResult->getErrors());
+				if ($error)
+				{
+					$data['transformationErrorMessage'] = $error->getMessage();
+					$data['transformationErrorCode'] = $error->getCode();
+				}
+
+				if(!$skipTransformationError)
+				{
+					$this->result->addErrors($transformResult->getErrors());
+				}
+			}
+
 			$pullTag = $this->getPullTag();
 			if($pullTag)
 			{

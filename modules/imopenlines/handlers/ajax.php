@@ -379,6 +379,26 @@ else if($request->isPost() &&
 			));
 		}
 	}
+	//start new multidialog by operator
+	else if ($request->getPost('COMMAND') == 'openNewDialogByMessage')
+	{
+		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
+		$result = $control->openNewDialogByMessage($request->getPost('MESSAGE_ID'));
+
+		if ($result)
+		{
+			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
+				'ERROR' => ''
+			));
+		}
+		else
+		{
+			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
+				'CODE' => $control->getError()->code,
+				'ERROR' => $control->getError()->msg
+			));
+		}
+	}
 	else if ($request->getPost('COMMAND') == 'saveToQuickAnswers')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);

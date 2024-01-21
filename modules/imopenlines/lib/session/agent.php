@@ -21,7 +21,6 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\ORM\Fields\ExpressionField;
 
 use Bitrix\Pull;
 
@@ -110,7 +109,7 @@ class Agent
 	 * @param int $offset
 	 * @return string
 	 */
-	public static function transferToNextInQueue($nextExec = 0, $offset = 0)
+	public static function transferToNextInQueue($nextExec = 0, $offset = 0): string
 	{
 		Debug::addAgent('start ' . __METHOD__);
 
@@ -142,7 +141,7 @@ class Agent
 	 * @param $nextExec
 	 * @return string
 	 */
-	public static function closeByTime($nextExec = 0)
+	public static function closeByTime($nextExec = 0): string
 	{
 		Debug::addAgent('start ' . __METHOD__);
 
@@ -159,12 +158,8 @@ class Agent
 			return $emptyResultReturn;
 		}
 
-		$configCount = SessionCheckTable::getList(array(
-			'select' => array('CNT'),
-			'runtime' => array(new ExpressionField('CNT', 'COUNT(*)')),
-			'filter' => array('!=DATE_CLOSE' => null)
-		))->fetch();
-		if ($configCount['CNT'] <= 0)
+		$configCount = SessionCheckTable::getCount(['!=DATE_CLOSE' => null]);
+		if ($configCount <= 0)
 		{
 			Session::setQueueFlagCache(Session::CACHE_CLOSE);
 			ExecLog::setExecFunction(__METHOD__);
@@ -227,7 +222,7 @@ class Agent
 	 *
 	 * @return string
 	 */
-	public static function sendMessageNoAnswer()
+	public static function sendMessageNoAnswer(): string
 	{
 		Debug::addAgent('start ' . __METHOD__);
 
@@ -259,7 +254,7 @@ class Agent
 	 * @param $nextExec
 	 * @return string
 	 */
-	public static function mailByTime($nextExec = 0)
+	public static function mailByTime($nextExec = 0): string
 	{
 		Debug::addAgent('start ' . __METHOD__);
 
@@ -276,12 +271,8 @@ class Agent
 			return $emptyResultReturn;
 		}
 
-		$configCount = SessionCheckTable::getList(array(
-			'select' => array('CNT'),
-			'runtime' => array(new ExpressionField('CNT', 'COUNT(*)')),
-			'filter' => array('!=DATE_MAIL' => null)
-		))->fetch();
-		if ($configCount['CNT'] <= 0)
+		$configCount = SessionCheckTable::getCount(['!=DATE_MAIL' => null]);
+		if ($configCount <= 0)
 		{
 			Session::setQueueFlagCache(Session::CACHE_MAIL);
 			ExecLog::setExecFunction(__METHOD__);
@@ -322,10 +313,12 @@ class Agent
 	{
 		Debug::addAgent('start ' . __METHOD__);
 
-		$emptyResultReturn = '\Bitrix\ImOpenLines\Session::dismissedOperatorAgent(0);';
+		$emptyResultReturn = 'Bitrix\ImOpenLines\Session::dismissedOperatorAgent(0);';
 
 		if (self::isCronCall() && self::isExecModeAgent() || !self::isCronCall() && self::isExecModeCron())
+		{
 			return $emptyResultReturn;
+		}
 
 		$res = SessionCheckTable::getList(Array(
 			'select' => Array('SESSION_ID', 'CHAT_ID' => 'SESSION.CHAT_ID', 'OPERATOR_ID' => 'SESSION.OPERATOR_ID', 'SESSION.OPERATOR.ID', 'SESSION.OPERATOR.ACTIVE', 'DATE_LAST_MESSAGE' => 'SESSION.DATE_LAST_MESSAGE'),
@@ -380,7 +373,7 @@ class Agent
 				}
 				else
 				{
-					\CAgent::AddAgent('\Bitrix\ImOpenLines\Session::dismissedOperatorAgent(1);', "imopenlines", "N", 60, "", "Y", ConvertTimeStamp(time()+\CTimeZone::GetOffset()+60, "FULL"));
+					\CAgent::AddAgent('Bitrix\ImOpenLines\Session::dismissedOperatorAgent(1);', "imopenlines", "N", 60, "", "Y", ConvertTimeStamp(time()+\CTimeZone::GetOffset()+60, "FULL"));
 				}
 			}
 		}
@@ -403,7 +396,7 @@ class Agent
 	/**
 	 * @return string
 	 */
-	public static function sendAutomaticMessage()
+	public static function sendAutomaticMessage(): string
 	{
 		Debug::addAgent('start ' . __METHOD__);
 
@@ -607,7 +600,7 @@ class Agent
 		]);
 		$query->setFilter([
 			'<STATUS' => Session::STATUS_CLOSE,
-			'CLOSED' => 'Y'
+			'=CLOSED' => 'Y'
 		]);
 		$query->setLimit(100);
 

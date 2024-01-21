@@ -1,4 +1,7 @@
 (() => {
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
+
 	/**
 	 * @class SuccessButton
 	 */
@@ -10,12 +13,12 @@
 			{
 				return {
 					button: {
-						borderColor: '#9dcf00',
-						backgroundColor: '#9dcf00',
+						borderColor: AppTheme.colors.accentMainSuccess,
+						backgroundColor: AppTheme.colors.accentMainSuccess,
 					},
 					icon: {},
 					text: {
-						color: '#ffffff',
+						color: AppTheme.colors.baseWhiteFixed,
 					},
 				};
 			}
@@ -26,7 +29,7 @@
 				text: {
 					fontWeight: '500',
 					fontSize: 18,
-					color: '#9dcf00',
+					color: AppTheme.colors.accentMainSuccess,
 				},
 			};
 		}

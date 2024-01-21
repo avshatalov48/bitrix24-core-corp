@@ -8,6 +8,7 @@
 
 namespace Bitrix\Tasks\Integration\SocialNetwork;
 
+use Bitrix\Socialnetwork\Integration\UI\EntitySelector\UserProvider;
 use Bitrix\Socialnetwork\UserToGroupTable;
 
 final class User extends \Bitrix\Tasks\Integration\SocialNetwork
@@ -55,5 +56,17 @@ final class User extends \Bitrix\Tasks\Integration\SocialNetwork
 		}
 
 		return array_unique($users);
+	}
+
+	public static function getUsers(array $userIds)
+	{
+		if(!static::includeModule())
+		{
+			return [];
+		}
+
+		return UserProvider::getUsers([
+			'userId' => $userIds,
+		]);
 	}
 }

@@ -15,6 +15,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\UI\Filter;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Tasks\Component\Scrum\TeamSpeed\BaseActionFilter;
+use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Service\EntityService;
@@ -69,6 +70,13 @@ class TasksScrumTeamSpeedComponent extends \CBitrixComponent implements Controll
 
 			$this->setTitle();
 			$this->init();
+
+			if (!$this->isScrumEnabled())
+			{
+				$this->includeComponentTemplate('scrum_disabled');
+
+				return;
+			}
 
 			if (!$this->canReadGroupTasks($this->arResult['groupId']))
 			{
@@ -176,6 +184,11 @@ class TasksScrumTeamSpeedComponent extends \CBitrixComponent implements Controll
 	private function init()
 	{
 		$this->userId = Util\User::getId();
+	}
+
+	private function isScrumEnabled(): bool
+	{
+		return (new Settings())->isToolAvailable(Settings::TOOLS['scrum']);
 	}
 
 	private function canReadGroupTasks(int $groupId): bool

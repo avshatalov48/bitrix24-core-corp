@@ -27,11 +27,6 @@ Class transformer extends CModule
 			$this->MODULE_VERSION = $arModuleVersion["VERSION"];
 			$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
 		}
-		else
-		{
-			$this->MODULE_VERSION = TRANSFORMER_VERSION;
-			$this->MODULE_VERSION_DATE = TRANSFORMER_VERSION_DATE;
-		}
 
 		$this->MODULE_NAME = GetMessage("TRANSFORMER_MODULE_NAME");
 		$this->MODULE_DESCRIPTION = GetMessage("TRANSFORMER_MODULE_DESCRIPTION");
@@ -60,19 +55,21 @@ Class transformer extends CModule
 	function InstallDB($params = Array())
 	{
 		global $DB, $APPLICATION;
+		$connection = \Bitrix\Main\Application::getConnection();
 		$errors = false;
+
+		if (!$DB->TableExists('b_transformer_command'))
+		{
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/transformer/install/db/' . $connection->getType() . '/install.sql');
+		}
+
 		if ($params['PUBLIC_URL'] <> '' && mb_strlen($params['PUBLIC_URL']) < 12)
 		{
 			if (!$errors)
 			{
-				$errors = Array();
+				$errors = [];
 			}
-			$errors[] = GetMessage('TRANSFORMER_CHECK_PUBLIC_PATH');
-		}
-
-		if (!$DB->Query("SELECT 'x' FROM b_transformer_command WHERE 1=0", true))
-		{
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/transformer/install/db/mysql/install.sql");
+			array_unshift($errors, GetMessage('TRANSFORMER_CHECK_PUBLIC_PATH'));
 		}
 
 		if($errors !== false)
@@ -124,11 +121,11 @@ Class transformer extends CModule
 	function UnInstallDB($params = array())
 	{
 		global $DB, $APPLICATION;
-
+		$connection = \Bitrix\Main\Application::getConnection();
 		$errors = false;
 
 		if (!isset($params['savedata']) || $params['savedata'] !== "Y")
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/transformer/install/db/mysql/uninstall.sql");
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/transformer/install/db/".$connection->getType()."/uninstall.sql");
 
 		if($errors !== false)
 		{

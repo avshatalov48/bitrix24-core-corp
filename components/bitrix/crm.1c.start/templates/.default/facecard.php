@@ -150,5 +150,6 @@ if(count($jsMessagesCodes)>0)
 		CBitrix24::initLicenseInfoPopupJS();
     }
 	?>
+	BX.CrmStart.OnecAppPaths = <?=CUtil::PhpToJSObject($arResult['PATH_TO_APPS'])?>;
     BXOneCStart();
 </script>

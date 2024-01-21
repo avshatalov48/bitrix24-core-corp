@@ -7,6 +7,8 @@
 	position: relative;
 	padding-top: var(--ui-space-inset-sm, 12px);
 	padding-bottom: var(--ui-space-inset-sm, 12px);
+	overflow: hidden;
+	box-sizing: border-box;
 }
 
 .crm-timeline__card.--stream-type-pinned {
@@ -28,6 +30,24 @@
 	--crm-timeline__logo-background: var(--ui-color-palette-gray-10, rgba(130, 139, 149, .7));
 }
 
+.crm-timeline__card_overlay {
+	position: absolute;
+	inset: 0;
+	z-index: 9999;
+	background-color: var(--crm-timeline__card-color-background);
+	transition: opacity 500ms ease;
+	opacity: 1;
+	border-radius: var(--crm-timeline__card-border-radius);
+}
+
+.crm-entity-stream-section-planned .crm-timeline__card_overlay {
+	background-color: #FFFEEF;
+}
+
+.crm-timeline__card-wrapper {
+	border-radius: var(--crm-timeline__card-border-radius);
+}
+
 .crm-timeline__card .crm-timeline__card_fade {
 	position: absolute;
 	top: 0;
@@ -37,7 +57,11 @@
 	background: rgba(255, 255 ,255, .5);
 	border-radius: var(--crm-timeline__card-border-radius);
 	z-index: 2;
-	animation: timeline__card-fade-background 160ms ease;
+	animation: timeline__card-fade-background 160ms ease forwards;
+}
+
+.crm-entity-stream-section-animate-start .crm-timeline__card .crm-timeline__card_fade {
+	animation: none;
 }
 
 .crm-timeline__card-tags {
@@ -86,6 +110,7 @@
 	text-decoration-color: transparent !important;
 	cursor: pointer;
 	transition: var(--crm-timeline__transition-hover);
+	word-break: break-all;
 }
 
 .crm-timeline__card_link.--bold {
@@ -144,4 +169,8 @@
 	100% {
 		background: rgba(255, 255 ,255, .5);
 	}
+}
+
+.crm-timeline-block-line-of-texts .crm-timeline__card_link {
+	word-break: break-all;
 }

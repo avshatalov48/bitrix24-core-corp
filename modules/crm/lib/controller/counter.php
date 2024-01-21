@@ -7,7 +7,6 @@ use Bitrix\Crm\Counter\EntityCounterManager;
 use Bitrix\Crm\Integration\Intranet\CustomSectionProvider;
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\Factory\Dynamic;
 
 class Counter extends Base
 {
@@ -61,7 +60,7 @@ class Counter extends Base
 		$currentUserId = $this->getCurrentUser()->getId();
 		$enabledCounterTypes = $factory->getCountersSettings()->getEnabledCountersTypes();
 
-		if ($factory instanceof Dynamic && CustomSectionProvider::hasCustomSection($factory))
+		if ($factory->isInCustomSection())
 		{
 			$settingsName = IntranetManager::preparePageSettingsForItemsList($factory->getEntityTypeId());
 			CustomSectionProvider::getAllCustomSectionIdsByEntityTypeId($factory->getEntityTypeId());

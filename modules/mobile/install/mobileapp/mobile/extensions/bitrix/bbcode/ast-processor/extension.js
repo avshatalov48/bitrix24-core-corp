@@ -6,10 +6,12 @@
  * If you need to make some changes, then make edits to the `ui.bbcode.ast-processor`
  * and run the build using 'bitrix build'.
  * During the build, the code will be automatically ported to `bbcode/ast-processor'.
- * @module bbcode/ast-processor
  */
+
+/** @module bbcode/ast-processor */
 jn.define('bbcode/ast-processor', (require, exports, module) => {
-	const {Type} = jn.require('type');
+	const {Type} = require('type');
+
 	class AstProcessor {
 	  /**
 	   * Makes flat list from AST

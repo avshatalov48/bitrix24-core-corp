@@ -1,6 +1,5 @@
 <?php
 namespace Bitrix\Crm\Settings;
-use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Main\Loader;
 
@@ -21,6 +20,7 @@ class LayoutSettings
 	private $enableSimpleTimeFormat = null;
 	/** @var BooleanSetting */
 	private $enableUserNameSorting = null;
+	private ?BooleanSetting $enableFilePreviewerInKanbanAndGrid = null;
 	/** @var IntegerSetting */
 	private $clientLayoutType = null;
 	/** @var BooleanSetting */
@@ -37,6 +37,7 @@ class LayoutSettings
 		$this->enableCatalogPriceSave = new BooleanSetting('enable_catalog_price_save', false);
 		$this->enableSimpleTimeFormat = new BooleanSetting('enable_simple_time_format', true);
 		$this->enableUserNameSorting = new BooleanSetting('enable_user_name_sorting', false);
+		$this->enableFilePreviewerInKanbanAndGrid = new BooleanSetting('enable_file_previewer_in_kanban_and_grid', true);
 		$this->clientLayoutType = new IntegerSetting(
 			'client_layout_type',
 			Crm\Layout\ClientLayoutType::CONTACT_COMPANY
@@ -194,6 +195,17 @@ class LayoutSettings
 	{
 		$this->enableUserNameSorting->set($enabled);
 	}
+
+	public function isFilePreviewerInKanbanAndGridEnabled(): bool
+	{
+		return $this->enableFilePreviewerInKanbanAndGrid->get();
+	}
+
+	public function enableFilePreviewerInKanbanAndGrid(bool $enabled): void
+	{
+		$this->enableFilePreviewerInKanbanAndGrid->set($enabled);
+	}
+
 	/**
 	 * Get client layout type
 	 * @return int

@@ -30,7 +30,7 @@ ChatMessengerCommon.getUserStatus = function(userData, onlyStatus) // after chan
 	else if (userData.network)
 	{
 		status = 'network';
-		statusText = BX.message('IM_STATUS_NETWORK');
+		statusText = BX.message('IM_STATUS_NETWORK_MSGVER_1');
 	}
 	else if (userData.bot)
 	{

@@ -3,8 +3,9 @@
 return [
 	'extensions' => [
 		'alert',
-		'assets/common',
 		'haptics',
+		'apptheme',
+		'assets/common',
 		'layout/ui/fields/base',
 		'layout/ui/fields/file/file-preview',
 		'layout/ui/file',

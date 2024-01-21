@@ -96,7 +96,7 @@ if($arResult['PERM_CONFIG'])
 	$items['tab_content_printed_forms_of_documents']['PS']['URL'] = $siteDir.'/crm/configs/ps/';
 	$items['tab_content_printed_forms_of_documents']['PS']['ICON_CLASS'] = 'img-payment';
 	$items['tab_content_printed_forms_of_documents']['PS']['NAME'] = GetMessage("CRM_CONFIGS_PS");
-	$items['tab_content_printed_forms_of_documents']['PS_MARKETPLACE']['URL'] = $siteDir.'/marketplace/category/payment/';
+	$items['tab_content_printed_forms_of_documents']['PS_MARKETPLACE']['URL'] = \Bitrix\Crm\Integration\Market\Router::getCategoryPath('payment');
 	$items['tab_content_printed_forms_of_documents']['PS_MARKETPLACE']['ICON_CLASS'] = 'img-app';
 	$items['tab_content_printed_forms_of_documents']['PS_MARKETPLACE']['NAME'] = GetMessage("CRM_CONFIGS_TAB_APPS_2");
 
@@ -104,9 +104,14 @@ if($arResult['PERM_CONFIG'])
 	$items['tab_content_rights']['PERMS']['ICON_CLASS'] = 'img-permissions';
 	$items['tab_content_rights']['PERMS']['NAME'] = GetMessage("CRM_CONFIGS_PERMS");
 
-	$bpHelperUrl = 'javascript:BX.CrmConfigClass.showInfoHelper(\'limit_crm_bp_automation\', event)';
-	$automationHelperUrl = 'javascript:BX.CrmConfigClass.showInfoHelper(\'limit_crm_robots\', event)';
-	$automationOrderHelperUrl = 'javascript:BX.CrmConfigClass.showInfoHelper(\'limit_shop_robots\', event)';
+	$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+	$bpHelperId = $toolsManager->checkBizprocAvailability() ? 'limit_crm_bp_automation' : $toolsManager::BIZPROC_SLIDER_CODE;
+	$automationHelperId = $toolsManager->checkRobotsAvailability() ? 'limit_crm_robots' : $toolsManager::ROBOTS_SLIDER_CODE;
+	$automationOrderHelperId = $toolsManager->checkRobotsAvailability() ? 'limit_shop_robots' : $toolsManager::ROBOTS_SLIDER_CODE;
+
+	$bpHelperUrl = 'javascript:BX.CrmConfigClass.showInfoHelper(\'' . $bpHelperId . '\', event)';
+	$automationHelperUrl = 'javascript:BX.CrmConfigClass.showInfoHelper(\''. $automationHelperId . '\', event)';
+	$automationOrderHelperUrl = 'javascript:BX.CrmConfigClass.showInfoHelper(\'' . $automationOrderHelperId . '\', event)';
 
 	$items['tab_content_automation']['BP']['URL'] = $siteDir.'/crm/configs/bp/';
 	$items['tab_content_automation']['BP']['ICON_CLASS'] = 'img-bp';
@@ -215,14 +220,17 @@ if($arResult['PERM_CONFIG'])
 			$items['tab_content_integration']['SMS_LIMITS']['NAME'] = GetMessage('CRM_CONFIGS_SMS_LIMITS');
 		}
 
-		$items['tab_content_integration']['SMS_MARKETPLACE']['URL'] = $siteDir.'/marketplace/category/crm_robot_sms/';
+		$items['tab_content_integration']['SMS_MARKETPLACE']['URL'] = \Bitrix\Crm\Integration\Market\Router::getCategoryPath('crm_robot_sms');
 		$items['tab_content_integration']['SMS_MARKETPLACE']['ICON_CLASS'] = 'img-app';
 		$items['tab_content_integration']['SMS_MARKETPLACE']['NAME'] = GetMessage('CRM_CONFIGS_SMS_MARKETPLACE');
 	}
 
-	$items['tab_content_other']['VOLUME']['URL'] = $siteDir.'/crm/configs/volume/';
-	$items['tab_content_other']['VOLUME']['ICON_CLASS'] = 'img-volume';
-	$items['tab_content_other']['VOLUME']['NAME'] = Loc::getMessage('CRM_CONFIGS_VOLUME');
+	if (!(\Bitrix\Main\Application::getConnection() instanceof \Bitrix\Main\DB\PgsqlConnection))
+	{
+		$items['tab_content_other']['VOLUME']['URL'] = $siteDir . '/crm/configs/volume/';
+		$items['tab_content_other']['VOLUME']['ICON_CLASS'] = 'img-volume';
+		$items['tab_content_other']['VOLUME']['NAME'] = Loc::getMessage('CRM_CONFIGS_VOLUME');
+	}
 
 	$items['tab_content_other']['CONFIG']['URL'] = $siteDir.'/crm/configs/config/';
 	$items['tab_content_other']['CONFIG']['ICON_CLASS'] = 'img-other';
@@ -272,10 +280,10 @@ if($arResult['PERM_CONFIG'])
 
 	if($arResult['BITRIX24'])
 	{
-		$items['tab_content_apps']['CRM_APPLICATION']['URL'] = $siteDir.'/marketplace/category/crm/';
+		$items['tab_content_apps']['CRM_APPLICATION']['URL'] = \Bitrix\Crm\Integration\Market\Router::getCategoryPath('crm');
 		$items['tab_content_apps']['CRM_APPLICATION']['ICON_CLASS'] = 'img-app';
 		$items['tab_content_apps']['CRM_APPLICATION']['NAME'] = GetMessage("CRM_CONFIGS_CRM_APPLICATION");
-		$items['tab_content_apps']['MIGRATION_OTHER_CRM']['URL'] = $siteDir.'/marketplace/category/migration/';
+		$items['tab_content_apps']['MIGRATION_OTHER_CRM']['URL'] = \Bitrix\Crm\Integration\Market\Router::getCategoryPath('migration');
 		$items['tab_content_apps']['MIGRATION_OTHER_CRM']['ICON_CLASS'] = 'img-migration';
 		$items['tab_content_apps']['MIGRATION_OTHER_CRM']['NAME'] = GetMessage("CRM_CONFIGS_MIGRATION_OTHER_CRM");
 	}

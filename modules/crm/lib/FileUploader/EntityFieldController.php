@@ -53,7 +53,11 @@ final class EntityFieldController extends EntityController
 		}
 		elseif (!empty($settings['EXTENSIONS']))
 		{
-			$configuration->setAcceptedFileTypes(array_keys($settings['EXTENSIONS']));
+			$acceptedFileExtensions = array_map(
+				static fn ($extension) => '.' . ltrim($extension, '. '),
+				array_keys($settings['EXTENSIONS'])
+			);
+			$configuration->setAcceptedFileTypes($acceptedFileExtensions);
 		}
 
 		if (!empty($settings['MAX_ALLOWED_SIZE']))

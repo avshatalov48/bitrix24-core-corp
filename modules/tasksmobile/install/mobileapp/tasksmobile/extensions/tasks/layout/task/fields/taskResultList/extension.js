@@ -2,8 +2,9 @@
  * @module tasks/layout/task/fields/taskResultList
  */
 jn.define('tasks/layout/task/fields/taskResultList', (require, exports, module) => {
-	const { TaskResult } = require('tasks/layout/task/fields/taskResultList/taskResult');
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
+	const { TaskResult } = require('tasks/layout/task/fields/taskResultList/taskResult');
 
 	class TaskResultList extends LayoutComponent
 	{
@@ -46,8 +47,8 @@ jn.define('tasks/layout/task/fields/taskResultList', (require, exports, module) 
 			return View(
 				{
 					style: {
-						backgroundColor: '#eef2f4',
-						paddingBottom: (isMore ? 18 : 12),
+						display: 'flex',
+						paddingBottom: isMore ? 18 : 12,
 					},
 				},
 				new TaskResult({
@@ -69,9 +70,9 @@ jn.define('tasks/layout/task/fields/taskResultList', (require, exports, module) 
 							position: 'absolute',
 							alignSelf: 'center',
 							bottom: 6,
-							backgroundColor: '#ffffff',
+							backgroundColor: AppTheme.colors.bgContentPrimary,
 							borderWidth: 1,
-							borderColor: '#1a6a737f',
+							borderColor: AppTheme.colors.accentSoftElementBlue1,
 							borderRadius: 20,
 							paddingHorizontal: 12,
 							paddingVertical: 4,
@@ -82,7 +83,6 @@ jn.define('tasks/layout/task/fields/taskResultList', (require, exports, module) 
 						style: {
 							fontSize: 14,
 							fontWeight: '500',
-							color: '#99525c69',
 						},
 						text: (
 							this.state.showAll

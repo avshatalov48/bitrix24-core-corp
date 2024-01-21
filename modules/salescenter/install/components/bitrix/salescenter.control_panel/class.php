@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Loader;
@@ -15,6 +16,7 @@ use Bitrix\SalesCenter\Integration\CatalogManager;
 use Bitrix\Rest;
 use Bitrix\SalesCenter;
 use Bitrix\Catalog;
+use Bitrix\Salescenter\Restriction\ToolAvailabilityManager;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
@@ -37,6 +39,7 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 			ShowError(Loc::getMessage('SALESCENTER_CONTROL_PANEL_MODULE_ERROR'));
 			return;
 		}
+
 		if (Loader::includeModule('crm'))
 		{
 			CAllCrmInvoice::installExternalEntities();
@@ -46,6 +49,13 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		{
 			$this->arResult['isShowFeature'] = true;
 			$this->includeComponentTemplate('limit');
+			return;
+		}
+
+		if (!ToolAvailabilityManager::getInstance()->checkSalescenterAvailability())
+		{
+			$this->includeComponentTemplate('tool_disabled');
+
 			return;
 		}
 
@@ -91,6 +101,7 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		if (
 			CrmManager::getInstance()->isEnabled()
 			&& CrmManager::getInstance()->isTerminalAvailable()
+			&& Container::getInstance()->getIntranetToolsManager()->checkTerminalAvailability()
 		)
 		{
 			$tiles[] = $this->getTerminalTile();
@@ -252,7 +263,7 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 
 		return [
 			'id' => 'crmstore',
-			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CRM_STORE_TILE_2'),
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_CRM_STORE_TILE_2_MSGVER_1'),
 			'image' => $this->getImagePath().'crm-store-active.svg',
 			'data' => [
 				'isDependsOnConnection' => true,
@@ -1132,13 +1143,17 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 	protected function getTerminalTile(): array
 	{
 		$terminalPath = '/terminal/';
+		$terminalPaymentReferenceField = CrmManager::getInstance()->getTerminalPaymentRuntimeReferenceField();
 
-		$platformId = CrmManager::getInstance()->getTerminalPlatformId();
+		$runtime = [];
+		if ($terminalPaymentReferenceField)
+		{
+			$runtime[] = $terminalPaymentReferenceField;
+		}
+
 		$terminalPayment = Sale\Payment::getList([
 			'select' => ['ID'],
-			'filter' => [
-				'=ORDER.TRADING_PLATFORM.TRADING_PLATFORM_ID' => $platformId,
-			],
+			'runtime' => $runtime,
 			'limit' => 1,
 		])->fetch();
 

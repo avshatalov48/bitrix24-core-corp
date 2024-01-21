@@ -2,9 +2,10 @@
  * @module im/messenger/lib/ui/search/input
  */
 jn.define('im/messenger/lib/ui/search/input', (require, exports, module) => {
-
 	const { lens, cross } = require('im/messenger/assets/common');
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
+	const { transparent } = require('utils/color');
 
 	class SearchInput extends LayoutComponent
 	{
@@ -32,7 +33,7 @@ jn.define('im/messenger/lib/ui/search/input', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						backgroundColor: '#e6e7e9',
+						backgroundColor: transparent(AppTheme.colors.base5, 0.25),
 						flexDirection: 'row',
 						padding: 8,
 						borderRadius: 8,
@@ -65,28 +66,33 @@ jn.define('im/messenger/lib/ui/search/input', (require, exports, module) => {
 					TextInput({
 						testId: 'search_field',
 						placeholder: Loc.getMessage('IMMOBILE_MESSENGER_UI_SEARCH_INPUT_PLACEHOLDER_TEXT'),
-						placeholderTextColor: '#8e8d92',
+						placeholderTextColor: AppTheme.colors.base4,
 						multiline: false,
 						style: {
-							color: '#333333',
+							color: AppTheme.colors.base1,
 							fontSize: 18,
 							backgroundColor: '#00000000',
 						},
 						onChangeText: (text) => {
 							if (text !== '' && this.state.isTextEmpty)
 							{
-								this.setState({isTextEmpty: false});
+								this.setState({ isTextEmpty: false });
 							}
+
 							if (text === '' && !this.state.isTextEmpty)
 							{
-								this.setState({isTextEmpty: true});
+								this.setState({ isTextEmpty: true });
 							}
-							this.props.onChangeText(text);
+
+							clearTimeout(this.timeout);
+							this.timeout = setTimeout(() => {
+								this.props.onChangeText(text);
+							}, 200);
 						},
 						onSubmitEditing: () => this.textRef.blur(),
 						onFocus: () => this.props.onSearchShow(),
-						ref: ref => this.textRef = ref,
-					})
+						ref: (ref) => this.textRef = ref,
+					}),
 				),
 				View(
 					{

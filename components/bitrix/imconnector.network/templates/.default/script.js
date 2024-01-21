@@ -10,6 +10,18 @@
 		});
 	};
 
+	window.toggleMultidialogCount = function()
+	{
+		if (BX('imconnector-network-multidialog').checked == true)
+		{
+			BX('imconnector-network-multidialog-count').classList.remove("invisible");
+		}
+		else
+		{
+			BX('imconnector-network-multidialog-count').classList.add("invisible");
+		}
+	};
+
 	BX.ready(function() {
 		avatarImagesChange();
 		BX.bindDelegate(
@@ -29,6 +41,11 @@
 			'submit',
 			{tag: 'form'},
 			addPreloader
+		);
+		BX.bind(
+			BX('imconnector-network-multidialog'),
+			'change',
+			toggleMultidialogCount
 		);
 	});
 })(window);

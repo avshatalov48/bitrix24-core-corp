@@ -4,11 +4,11 @@ namespace Bitrix\Tasks\Member\Repository;
 
 use Bitrix\Tasks\Internals\Task\Template\EO_TemplateMember_Collection;
 use Bitrix\Tasks\Internals\Task\Template\TemplateObject;
-use Bitrix\Tasks\Member\Repository;
+use Bitrix\Tasks\Member\RepositoryInterface;
 use Bitrix\Tasks\Provider\TemplateProvider;
 use Exception;
 
-class TemplateRepository implements Repository
+class TemplateRepository implements RepositoryInterface
 {
 	private ?TemplateObject $template = null;
 

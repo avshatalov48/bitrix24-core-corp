@@ -2,7 +2,8 @@
 
 return [
 	'extensions' => [
-		'crm:terminal/payment-pay/components/payment-button/button',
+		'apptheme',
 		'utils/color',
+		'crm:terminal/payment-pay/components/payment-button/button',
 	],
 ];

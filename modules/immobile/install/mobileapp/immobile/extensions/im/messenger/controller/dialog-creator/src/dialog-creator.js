@@ -43,6 +43,9 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 
 		getUserList()
 		{
+			/**
+			 * @type {Array<UsersModelState>}
+			 */
 			const userItems = [];
 
 			const recentUserList = ChatUtils.objectClone(this.store.getters['recentModel/getUserList']());
@@ -69,7 +72,24 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 				});
 			}
 
-			return userItems.filter(userItem => userItem.id !== MessengerParams.getUserId());
+			return userItems.filter((userItem) => {
+				if (userItem.id === MessengerParams.getUserId())
+				{
+					return false;
+				}
+
+				if (userItem.connector)
+				{
+					return false;
+				}
+
+				if (userItem.network)
+				{
+					return false;
+				}
+
+				return true;
+			});
 		}
 
 		prepareItems(itemList)
@@ -89,7 +109,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 					type: 'chats',
 					selected: false,
 					disable: false,
-
+					isPressed: true,
 				};
 			});
 		}

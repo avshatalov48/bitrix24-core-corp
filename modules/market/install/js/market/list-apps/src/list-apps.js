@@ -149,7 +149,7 @@ export const ListApps = {
 		onClosePopup: function () {
 			if (this.installStep === 2 || this.installStep === 3) {
 				clearTimeout(this.timer);
-				this.reloadSlider();
+				this.$root.updatePage(this.$root.getInstalledUri, 'list');
 			}
 		},
 		initBottomLoader: function () {
@@ -364,7 +364,6 @@ export const ListApps = {
 				targetPosition.right > windowPosition.left &&
 				targetPosition.left < windowPosition.right;
 		},
-		...mapActions(marketInstallState, ['reloadSlider',]),
 	},
 	template: `
 		<img class="market-skeleton-img"

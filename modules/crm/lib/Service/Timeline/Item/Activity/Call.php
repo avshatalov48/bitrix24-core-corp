@@ -4,10 +4,13 @@ namespace Bitrix\Crm\Service\Timeline\Item\Activity;
 
 use Bitrix\Crm\Activity\StatisticsMark;
 use Bitrix\Crm\Format\Duration;
+use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\AI\Operation\Orchestrator;
 use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Config;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
+use Bitrix\Crm\Service\Timeline\Item\Payload;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Redirect;
@@ -27,6 +30,7 @@ use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
 use Bitrix\Crm\Service\Timeline\Layout\Menu;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
 use Bitrix\Crm\Settings\WorkTime;
+use Bitrix\Crm\Tour\CopilotInCall;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\PhoneNumber;
 use Bitrix\Main\Type\DateTime;
@@ -35,6 +39,7 @@ use CCrmActivityDirection;
 use CCrmDateTimeHelper;
 use CCrmFieldMulti;
 use CCrmOwnerType;
+use CFile;
 
 class Call extends Activity
 {
@@ -80,7 +85,7 @@ class Call extends Activity
 				// set call end time to correct title in header
 				if ($this->isScheduled())
 				{
-					$userTime = (string)$this->getAssociatedEntityModel()->get('END_TIME');
+					$userTime = (string)$this->getAssociatedEntityModel()?->get('END_TIME');
 					if (!empty($userTime) && !CCrmDateTimeHelper::IsMaxDatabaseDate($userTime))
 					{
 						$this->getModel()->setDate(DateTime::createFromUserTime($userTime));
@@ -109,7 +114,7 @@ class Call extends Activity
 		$isAudioExist = !empty($recordUrls);
 
 		$changePlayerStateAction = (new JsEvent('Call:ChangePlayerState'))
-			->addActionParamInt('recordId', $this->getAssociatedEntityModel()->get('ID'))
+			->addActionParamInt('recordId', $this->getAssociatedEntityModel()?->get('ID'))
 			->addActionParamString('recordUri', $isAudioExist ? (string)$recordUrls[0] : null)
 		;
 
@@ -121,10 +126,10 @@ class Call extends Activity
 					return $isAudioExist
 						? (Layout\Common\Logo::getInstance(Layout\Common\Logo::CALL_PLAY_RECORD))
 							->createLogo()
-							->setAction($changePlayerStateAction)
+							?->setAction($changePlayerStateAction)
 						: Layout\Common\Logo::getInstance(Layout\Common\Logo::CALL_DEFAULT)
 							->createLogo()
-							->setIconType(Layout\Body\Logo::ICON_TYPE_FAILURE)
+							?->setIconType(Layout\Body\Logo::ICON_TYPE_FAILURE)
 							->setAdditionalIconType(Layout\Body\Logo::ICON_TYPE_FAILURE)
 							->setAdditionalIconCode('arrow')
 					;
@@ -133,7 +138,7 @@ class Call extends Activity
 				return $isAudioExist
 					? Layout\Common\Logo::getInstance(Layout\Common\Logo::CALL_PLAY_RECORD)
 						->createLogo()
-						->setAction($changePlayerStateAction)
+						?->setAction($changePlayerStateAction)
 					: Layout\Common\Logo::getInstance(Layout\Common\Logo::CALL_INCOMING)
 						->createLogo()
 				;
@@ -141,7 +146,7 @@ class Call extends Activity
 			case CCrmActivityDirection::Outgoing:
 				$logo = $isAudioExist
 					? Layout\Common\Logo::getInstance(Layout\Common\Logo::CALL_PLAY_RECORD)
-						->createLogo()->setAction($changePlayerStateAction)
+						->createLogo()?->setAction($changePlayerStateAction)
 					: Layout\Common\Logo::getInstance(Layout\Common\Logo::CALL_OUTGOING)
 						->createLogo()
 				;
@@ -149,8 +154,8 @@ class Call extends Activity
 				if (!$this->isPlanned() && !$this->fetchInfo()['SUCCESSFUL'])
 				{
 					$logo
-						->setAdditionalIconType(Layout\Body\Logo::ICON_TYPE_FAILURE)
-						->setAdditionalIconCode('cross')
+						?->setAdditionalIconType(Layout\Body\Logo::ICON_TYPE_FAILURE)
+						?->setAdditionalIconCode('cross')
 					;
 				}
 
@@ -176,7 +181,7 @@ class Call extends Activity
 
 			$result['deadline'] = (new ContentBlockWithTitle())
 				->setTitle(Loc::getMessage('CRM_TIMELINE_ITEM_CALL_COMPLETE_TO'))
-				->setInline(true)
+				->setInline()
 				->setContentBlock(
 					(new ContentBlock\EditableDate())
 						->setStyle(ContentBlock\EditableDate::STYLE_PILL)
@@ -216,10 +221,10 @@ class Call extends Activity
 		if (!empty($recordUrls))
 		{
 			// show first audio record
-			$audio = (new Audio())->setId($this->getAssociatedEntityModel()->get('ID'))->setSource($recordUrls[0]);
+			$audio = (new Audio())->setId($this->getAssociatedEntityModel()?->get('ID'))->setSource($recordUrls[0]);
 			if (isset($clientBlock))
 			{
-				$communication = $this->getAssociatedEntityModel()->get('COMMUNICATION') ?? [];
+				$communication = $this->getAssociatedEntityModel()?->get('COMMUNICATION') ?? [];
 				$title = (new Client($communication, $clientBlockOptions))->getName();
 				if (!empty($title))
 				{
@@ -231,7 +236,7 @@ class Call extends Activity
 					$photo = Container::getInstance()->getContactBroker()->getById($communication['ENTITY_ID'])['PHOTO'];
 					if ($photo)
 					{
-						$photoUrl = \CFile::ResizeImageGet($photo, ["width" => 2000, "height" => 2000], BX_RESIZE_IMAGE_PROPORTIONAL,false, false, true);
+						$photoUrl = CFile::ResizeImageGet($photo, ["width" => 2000, "height" => 2000], BX_RESIZE_IMAGE_PROPORTIONAL,false, false, true);
 						$audio->setImageUrl($photoUrl['src']);
 					}
 				}
@@ -253,7 +258,7 @@ class Call extends Activity
 		}
 
 		$description = $this->fetchDescription(
-			(string)$this->getAssociatedEntityModel()->get($this->isScheduled() ? 'DESCRIPTION' : 'DESCRIPTION_RAW')
+			(string)$this->getAssociatedEntityModel()?->get($this->isScheduled() ? 'DESCRIPTION' : 'DESCRIPTION_RAW')
 		);
 
 		if (!empty($description))
@@ -280,18 +285,20 @@ class Call extends Activity
 
 	public function getButtons(): array
 	{
-		$communication = $this->getAssociatedEntityModel()->get('COMMUNICATION') ?? [];
+		$communication = $this->getAssociatedEntityModel()?->get('COMMUNICATION') ?? [];
 
 		$nearestWorkday = (new WorkTime())->detectNearestWorkDateTime(3, 1);
 		$scheduleButton = (new Button(Loc::getMessage('CRM_TIMELINE_BUTTON_CALL_SCHEDULE'), Button::TYPE_SECONDARY))
 			->setAction((new JsEvent('Call:Schedule'))
 				->addActionParamInt('activityId', $this->getActivityId())
 				->addActionParamString('scheduleDate', $nearestWorkday->toString())
-				->addActionParamInt('scheduleTs', $nearestWorkday->getTimestamp()))
+				->addActionParamInt('scheduleTs', $nearestWorkday->getTimestamp())
+			)
 		;
 		$doneButton = (new Button(Loc::getMessage('CRM_TIMELINE_BUTTON_CALL_COMPLETE'), Button::TYPE_PRIMARY))
 			->setAction($this->getCompleteAction())
 		;
+		$aiButton = $this->getAIButton();
 
 		switch ($this->fetchDirection())
 		{
@@ -321,19 +328,30 @@ class Call extends Activity
 						: [
 							'doneButton' => $doneButton,
 							'scheduleButton' => $scheduleButton,
+							'aiButton' => $this->getAIButton(),
 						];
 				}
 
 				return empty($communication)
-					? []
-					: ['callButton' => $this->getCallButton($communication, Button::TYPE_SECONDARY)];
+					? [
+						'aiButton' => $aiButton,
+					]
+					: [
+						'callButton' => $this->getCallButton($communication, Button::TYPE_SECONDARY),
+						'aiButton' => $this->getAIButton(),
+					];
 			case CCrmActivityDirection::Outgoing:
-				$callButton = $this->getCallButton(
-					$communication,
-					$this->isScheduled() ? Button::TYPE_PRIMARY : Button::TYPE_SECONDARY
-				);
-
-				return empty($communication) ? [] : ['callButton' => $callButton];
+				return empty($communication)
+					? [
+						'aiButton' => $aiButton,
+					]
+					: [
+						'callButton' => $this->getCallButton(
+							$communication,
+							$this->isScheduled() ? Button::TYPE_PRIMARY : Button::TYPE_SECONDARY
+						),
+						'aiButton' => $aiButton,
+					];
 		}
 
 		return [];
@@ -342,7 +360,7 @@ class Call extends Activity
 	public function getAdditionalIconButton(): ?IconButton
 	{
 		$callInfo = $this->fetchInfo();
-		if ($this->isTranscripted($callInfo))
+		if ($this->isTranscribed($callInfo))
 		{
 			return (new IconButton('script', Loc::getMessage('CRM_TIMELINE_BUTTON_TIP_TRANSCRIPT')))
 				->setScopeWeb()
@@ -382,7 +400,7 @@ class Call extends Activity
 			foreach ($records as $index => $record)
 			{
 				$menuItemName = $isSingleRecord ? null : $record['NAME'];
-				$items["downloadFile_{$index}"] = MenuItemFactory::createDownloadFileMenuItem($menuItemName)
+				$items["downloadFile_$index"] = MenuItemFactory::createDownloadFileMenuItem($menuItemName)
 					->setAction(
 						(new JsEvent('Call:DownloadRecord'))
 							->addActionParamString('url', $record['VIEW_URL'])
@@ -407,11 +425,25 @@ class Call extends Activity
 		}
 
 		$callInfo = $this->fetchInfo();
-		if ($this->isTranscripted($callInfo) && $callInfo['TRANSCRIPT_PENDING'])
+		if ($this->isTranscribed($callInfo) && $callInfo['TRANSCRIPT_PENDING'])
 		{
 			$tags['transcriptPending'] = new Tag(
 				Loc::getMessage('CRM_TIMELINE_TAG_TRANSCRIPT_PENDING'),
 				Tag::TYPE_WARNING
+			);
+		}
+
+		$entityTypeId = $this->getContext()->getIdentifier()->getEntityTypeId();
+		if (AIManager::isLaunchOperationsSuccess(
+				$entityTypeId,
+				$this->getContext()->getIdentifier()->getEntityId(),
+				$this->getActivityId()
+			)
+		)
+		{
+			$tags['copilotDone'] = new Tag(
+				Loc::getMessage('CRM_TIMELINE_TAG_COPILOT_DONE'),
+				Tag::TYPE_LAVENDER
 			);
 		}
 
@@ -423,24 +455,43 @@ class Call extends Activity
 		return true;
 	}
 
-	protected function getDeleteConfirmationText(): string
+	public function getPayload(): ?Payload
 	{
-		$title = $this->getAssociatedEntityModel()->get('SUBJECT') ?? '';
+		$aiButton = $this->getAIButton();
 
-		switch ($this->fetchDirection())
+		if ($aiButton === null || $aiButton->getState() === Layout\Button::STATE_DISABLED)
 		{
-			case CCrmActivityDirection::Incoming:
-				return Loc::getMessage('CRM_TIMELINE_INCOMING_CALL_DELETION_CONFIRM', ['#TITLE#' => $title]);
-			case CCrmActivityDirection::Outgoing:
-				return Loc::getMessage('CRM_TIMELINE_OUTGOING_CALL_DELETION_CONFIRM', ['#TITLE#' => $title]);
+			return null;
 		}
 
-		return parent::getDeleteConfirmationText();
+		$isCopilotTourCanShow = (CopilotInCall::getInstance())
+			->setEntityTypeId($this->getContext()->getIdentifier()->getEntityTypeId())
+			->isCopilotTourCanShow()
+		;
+
+		return (new Payload())
+			->addValueBoolean(
+				'isCopilotTourCanShow',
+				$isCopilotTourCanShow
+			)
+		;
+	}
+
+	protected function getDeleteConfirmationText(): string
+	{
+		$title = $this->getAssociatedEntityModel()?->get('SUBJECT') ?? '';
+
+		return match ($this->fetchDirection())
+		{
+			CCrmActivityDirection::Incoming => Loc::getMessage('CRM_TIMELINE_INCOMING_CALL_DELETION_CONFIRM', ['#TITLE#' => $title]),
+			CCrmActivityDirection::Outgoing => Loc::getMessage('CRM_TIMELINE_OUTGOING_CALL_DELETION_CONFIRM', ['#TITLE#' => $title]),
+			default => parent::getDeleteConfirmationText(),
+		};
 	}
 
 	private function buildResponsibleUserBlock(): ?ContentBlock
 	{
-		$data = $this->getUserData($this->getAssociatedEntityModel()->get('RESPONSIBLE_ID'));
+		$data = $this->getUserData($this->getAssociatedEntityModel()?->get('RESPONSIBLE_ID'));
 		if (empty($data))
 		{
 			return null;
@@ -458,7 +509,7 @@ class Call extends Activity
 
 	private function buildSubjectBlock(): ?ContentBlock
 	{
-		$subject = $this->getAssociatedEntityModel()->get('SUBJECT');
+		$subject = $this->getAssociatedEntityModel()?->get('SUBJECT');
 		if (empty($subject))
 		{
 			return null;
@@ -495,7 +546,7 @@ class Call extends Activity
 
 		// 1st element - phone number
 		$portalNumber = $callInfo['PORTAL_LINE']['FULL_NAME'] ?? $callInfo['PORTAL_NUMBER'];
-		$formattedValue = PhoneNumber\Parser::getInstance()->parse($portalNumber)->format();
+		$formattedValue = PhoneNumber\Parser::getInstance()?->parse($portalNumber)->format();
 		if (!empty($formattedValue))
 		{
 			$block
@@ -556,7 +607,7 @@ class Call extends Activity
 
 	private function buildClientMarkBlock():  ?ContentBlock
 	{
-		$clientMark = $this->mapClientMark((int)$this->getAssociatedEntityModel()->get('RESULT_MARK'));
+		$clientMark = $this->mapClientMark((int)$this->getAssociatedEntityModel()?->get('RESULT_MARK'));
 		if (!isset($clientMark))
 		{
 			return null;
@@ -621,24 +672,111 @@ class Call extends Activity
 		return $button;
 	}
 
+	private function getAIButton(): ?Button
+	{
+		$ownerTypeId = $this->getContext()->getIdentifier()->getEntityTypeId();
+		$ownerId = $this->getContext()->getIdentifier()->getEntityId();
+		$activityId = $this->getActivityId();
+
+		// don't show the button
+		//	- if call processing with AI not enabled
+		//	- OR if user has no update rights
+		//	- OR if the entity type is not supported
+		//	- OR if there are no audio recordings
+		//	- OR if the entity is closed
+		//	- OR if there is another entity that is selected as target for this call
+		$isButtonVisible = AIManager::isAiCallProcessingEnabled()
+			&& $this->hasUpdatePermission()
+			&& in_array($ownerTypeId, AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
+			&& count($this->fetchAudioRecordList()) > 0
+			&& !$this->getContext()->isClosedEntity()
+			&& (new Orchestrator())->findPossibleFillFieldsTarget($activityId)?->getHash() === $this->getContext()->getIdentifier()->getHash()
+		;
+
+		if (!$isButtonVisible)
+		{
+			return null;
+		}
+
+		$button = (new Button(Loc::getMessage('CRM_COMMON_COPILOT'), Button::TYPE_AI))
+			->setIcon(Button::TYPE_AI)
+			->setAction(
+				(new JsEvent('Call:LaunchCallRecordingTranscription'))
+					->addActionParamInt('activityId', $activityId)
+					->addActionParamInt('ownerTypeId', $ownerTypeId)
+					->addActionParamInt('ownerId', $ownerId)
+					// analytic metrics
+					->addActionParamString('callId', $this->fetchInfo()['CALL_ID'])
+					->addActionParamString('crmMode', $this->getContext()->getCurrentCrmMode())
+			)
+			->setScopeWeb()
+		;
+
+		if (
+			!AIManager::isAiLicenceExceededAccepted() &&
+			!$this->getContext()->getUserPermissions()->isAdmin()
+		)
+		{
+			$button->setProps([
+				'data-bitrix24-license-feature' => AIManager::AI_LICENCE_FEATURE_NAME,
+			]);
+		}
+
+		if (AIManager::isLaunchOperationsPending($ownerTypeId, $ownerId, $activityId))
+		{
+			$button->setAction(null);
+			$button->setState(Layout\Button::STATE_AI_LOADING);
+
+			return $button;
+		}
+
+		$isErrorOccurred = AIManager::isLaunchOperationsErrorsLimitExceeded($ownerTypeId, $ownerId, $activityId);
+		if (
+			$isErrorOccurred
+			|| AIManager::isLaunchOperationsSuccess($ownerTypeId, $ownerId, $activityId)
+		)
+		{
+			$button->setAction(null);
+			$button->setState(Layout\Button::STATE_DISABLED);
+			$button->setTooltip(
+				Loc::getMessage(
+					$isErrorOccurred
+						? 'CRM_TIMELINE_ITEM_COPILOT_ERROR_TOOLTIP'
+						: 'CRM_TIMELINE_BUTTON_TIP_COPILOT',
+				)
+			);
+		}
+
+		$checkForSuitableAudiosResult = AIManager::checkForSuitableAudios(
+			(string)$this->getAssociatedEntityModel()->get('ORIGIN_ID'),
+			(int)$this->getAssociatedEntityModel()->get('STORAGE_TYPE_ID'),
+			(string)$this->getAssociatedEntityModel()->get('STORAGE_ELEMENT_IDS')
+		);
+
+		if (!$checkForSuitableAudiosResult->isSuccess())
+		{
+			$button->setAction(null);
+			$button->setState(Layout\Button::STATE_DISABLED);
+			$button->setTooltip(Loc::getMessage('CRM_TIMELINE_ITEM_COPILOT_ERROR_TOOLTIP'));
+		}
+
+		return $button;
+	}
+
 	private function mapClientMark(int $callVote): ?string
 	{
-		switch ($callVote)
+		return match ($callVote)
 		{
-			case StatisticsMark::Negative:
-				return ClientMark::NEGATIVE;
-			case StatisticsMark::Neutral:
-				return ClientMark::NEUTRAL;
-			case StatisticsMark::Positive:
-				return ClientMark::POSITIVE;
-			default:
-				return null;
-		}
+			StatisticsMark::Negative => ClientMark::NEGATIVE,
+			StatisticsMark::Neutral => ClientMark::NEUTRAL,
+			StatisticsMark::Positive => ClientMark::POSITIVE,
+			default => null,
+		};
 	}
 
 	private function fetchInfo(): array
 	{
-		$result = $this->getAssociatedEntityModel()->get('CALL_INFO') ?? [];
+		$result = $this->getAssociatedEntityModel()?->get('CALL_INFO') ?? [];
 		if (!empty($result))
 		{
 			return $result;
@@ -659,10 +797,10 @@ class Call extends Activity
 			return [];
 		}
 
-		if (!empty($this->getAssociatedEntityModel()->get('MEDIA_FILE_INFO')['URL']))
+		if (!empty($this->getAssociatedEntityModel()?->get('MEDIA_FILE_INFO')['URL']))
 		{
 			return [[
-				'VIEW_URL' => (string)$this->getAssociatedEntityModel()->get('MEDIA_FILE_INFO')['URL']
+				'VIEW_URL' => (string)$this->getAssociatedEntityModel()?->get('MEDIA_FILE_INFO')['URL']
 			]];
 		}
 
@@ -701,7 +839,7 @@ class Call extends Activity
 				'ID' => $fields['ID'],
 				'VALUE' => $value,
 				'VALUE_TYPE' => $fields['VALUE_TYPE'],
-				'VALUE_FORMATTED' => PhoneNumber\Parser::getInstance()->parse($value)->format(),
+				'VALUE_FORMATTED' => PhoneNumber\Parser::getInstance()?->parse($value)->format(),
 				'COMPLEX_ID' => $fields['COMPLEX_ID'],
 				'COMPLEX_NAME' => CCrmFieldMulti::GetEntityNameByComplex($fields['COMPLEX_ID'], false)
 			];
@@ -717,19 +855,19 @@ class Call extends Activity
 			return '';
 		}
 
-		$settings = $this->getAssociatedEntityModel()->get('SETTINGS');
+		$settings = $this->getAssociatedEntityModel()?->get('SETTINGS');
 		if (isset($settings['IS_DESCRIPTION_ONLY']) && $settings['IS_DESCRIPTION_ONLY']) // new description format
 		{
 			return trim($input);
 		}
 
 		$parts = explode("\n", $input);
-		if (mb_strpos($parts[0], Loc::getMessage('CRM_TIMELINE_BLOCK_DESCRIPTION_EXCLUDE_1')) === 0)
+		if (str_starts_with($parts[0], Loc::getMessage('CRM_TIMELINE_BLOCK_DESCRIPTION_EXCLUDE_1')))
 		{
 			return '';
 		}
 
-		if (mb_strpos($parts[0], Loc::getMessage('CRM_TIMELINE_BLOCK_DESCRIPTION_EXCLUDE_2')) === 0)
+		if (str_starts_with($parts[0], Loc::getMessage('CRM_TIMELINE_BLOCK_DESCRIPTION_EXCLUDE_2')))
 		{
 			return '';
 		}
@@ -739,27 +877,27 @@ class Call extends Activity
 
 	private function fetchDirection(): int
 	{
-		return (int)$this->getAssociatedEntityModel()->get('DIRECTION');
+		return (int)$this->getAssociatedEntityModel()?->get('DIRECTION');
 	}
 
 	private function fetchOriginId(): string
 	{
-		return (string)$this->getAssociatedEntityModel()->get('ORIGIN_ID');
+		return (string)$this->getAssociatedEntityModel()?->get('ORIGIN_ID');
 	}
 
 	private function isMissedCall(): bool
 	{
-		$settings = $this->getAssociatedEntityModel()->get('SETTINGS');
+		$settings = $this->getAssociatedEntityModel()?->get('SETTINGS');
 
 		return isset($settings['MISSED_CALL']) && $settings['MISSED_CALL'];
 	}
 
 	private function isVoxImplant(?string $originId): bool
 	{
-		return isset($originId) && mb_strpos($originId, 'VI_') !== false;
+		return isset($originId) && str_contains($originId, 'VI_');
 	}
 
-	private function isTranscripted(array $input): bool
+	private function isTranscribed(array $input): bool
 	{
 		return isset($input['HAS_TRANSCRIPT']) && $input['HAS_TRANSCRIPT'];
 	}

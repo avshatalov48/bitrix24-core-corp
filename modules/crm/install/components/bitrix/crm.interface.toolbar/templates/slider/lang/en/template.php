@@ -1,4 +1,20 @@
-<?
-$MESS["CRM_TOOLBAR_TELEPHONY_NOT_SUPPORTED"] = "Phone calls are not supported in this context.";
+<?php
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL"] = "Add a customer and with their phone number to make a call";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_COMPANY"] = "Add a customer and their phone number to the company to make a call";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_CONTACT"] = "Add a phone number to the contact to make a call";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_DEAL"] = "Add a customer and their phone number to the deal to make a call";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_INVOICE"] = "Add a customer and their phone number to the invoice to make a call";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_LEAD"] = "Add a customer and their phone number to the lead to make a call";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_QUOTE"] = "Add a customer and their phone number to the estimate to make a call";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_SMART_INVOICE"] = "Add a customer and their phone number to the invoice to make a call";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND"] = "Add a customer and their email address to send an email message";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_COMPANY"] = "Add a customer and their email address to the company to send an email message";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_CONTACT"] = "Add an email address to the contact to send an email message";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_DEAL"] = "Add a customer and their email address to the deal to send an email message";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_INVOICE"] = "Add a customer and their email address to the invoice to send an email message";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_LEAD"] = "Add a customer and their email address to the lead to send an email message";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_QUOTE"] = "Add a customer and their email address to the estimate to send an email message";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_SMART_INVOICE"] = "Add a customer and their email address to the invoice to send an email message";
 $MESS["CRM_TOOLBAR_BIZPROC_STARTER_LABEL"] = "Run Workflow";
-?>
+$MESS["CRM_TOOLBAR_INSTALL_CALENDAR_FOR_CALL"] = "Install the Calendar module to make calls.";
+$MESS["CRM_TOOLBAR_TELEPHONY_NOT_SUPPORTED"] = "Phone calls are not supported in this context.";

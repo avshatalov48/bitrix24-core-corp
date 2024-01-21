@@ -2,7 +2,9 @@
 
 return [
 	'extensions' => [
-		'layout/ui/bottom-toolbar',
 		'loc',
+		'apptheme',
+		'assets/common',
+		'layout/ui/bottom-toolbar',
 	],
 ];

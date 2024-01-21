@@ -2,6 +2,7 @@
  * @module layout/ui/file-attachment/grid-view-adapter
  */
 jn.define('layout/ui/file-attachment/grid-view-adapter', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { isEqual } = require('utils/object');
 
 	/**
@@ -304,10 +305,13 @@ jn.define('layout/ui/file-attachment/grid-view-adapter', (require, exports, modu
 		render()
 		{
 			return GridView({
-				ref: (ref) => this.gridViewRef = ref,
+				ref: (ref) => {
+					this.gridViewRef = ref;
+				},
 				style: {
 					flex: 1,
 					paddingTop: 12,
+					backgroundColor: AppTheme.colors.bgContentPrimary,
 				},
 				params: { orientation: 'vertical', rows: this.props.rowsCount },
 				data: [{ items: this.state.items }],

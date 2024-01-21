@@ -28,7 +28,7 @@ if (!isset($arParams["~USER"]["DETAIL_URL"]))
 
 if (
 	($GLOBALS["USER"]->GetID() != $arParams["USER"]["ID"])
-	&& ($arParams["USER"]["ACTIVE"] != "N")
+	&& (!isset($arParams["USER"]["ACTIVE"]) || $arParams["USER"]["ACTIVE"] != "N")
 	&& CBXFeatures::IsFeatureEnabled("WebMessenger")
 	&& (IsModuleInstalled("im"))
 )

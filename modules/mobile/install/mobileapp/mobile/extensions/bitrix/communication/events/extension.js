@@ -2,7 +2,6 @@
  * @module communication/events
  */
 jn.define('communication/events', (require, exports, module) => {
-
 	const { BaseEvent } = require('communication/events/base');
 	const { WebEvent } = require('communication/events/web');
 	const { PhoneEvent } = require('communication/events/phone');

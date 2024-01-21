@@ -13,6 +13,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Event;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\Type\Collection;
 
 final class SubscriberManager
 {
@@ -118,10 +119,13 @@ final class SubscriberManager
 				";
 			}
 
-			$finalQuery = $finalQuery . $where . " ORDER BY {$aliasTable}.ID";
+			$finalQuery .= $where;
+
+			$rows = $connection->query($finalQuery)->fetchAll();
+			Collection::sortByColumn($rows, 'ID');
 
 			$ids = [];
-			foreach ($connection->query($finalQuery) as $row)
+			foreach ($rows as $row)
 			{
 				$ids[] = $row['ID'];
 
@@ -295,7 +299,7 @@ final class SubscriberManager
 			$linkObject = $sharing->getLinkObject();
 			if ($linkObject)
 			{
-				list($type, $id) = Sharing::parseEntityValue($sharing->getToEntity());
+				[$type, $id] = Sharing::parseEntityValue($sharing->getToEntity());
 				if($type === Sharing::TYPE_TO_USER)
 				{
 					$subscribers[$linkObject->getStorageId()] = $id;

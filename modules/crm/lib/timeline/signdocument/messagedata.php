@@ -52,8 +52,10 @@ final class MessageData implements \JsonSerializable, Arrayable
 		{
 			$messageData->setAuthor($data['author']);
 		}
-		if ($data['integrityState']
-			&& in_array($data['integrityState'], [self::INTEGRITY_STATE_SUCCESS, self::INTEGRITY_STATE_FAIL]))
+		if (
+			($data['integrityState'] ?? null)
+			&& in_array($data['integrityState'], [self::INTEGRITY_STATE_SUCCESS, self::INTEGRITY_STATE_FAIL])
+		)
 		{
 			$messageData->setIntegrityState($data['integrityState']);
 		}

@@ -111,6 +111,11 @@ $htmlButtons = [
 	"ToCheckList" => '<span data-bx-id="task-edit-to-checklist">' . Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_TO_CHECKLIST') . '</span>',
 ];
 
+if ($arResult['CAN_SHOW_AI_CHECKLIST_BUTTON'] ?? false)
+{
+	$htmlButtons['AiCheckList'] = '<span data-bx-id="task-edit-ai-checklist" class="tasks-btn-ai-checklist">' . Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_CHECKLIST') . '</span>';
+}
+
 if($bbCode)
 {
 	$buttons[] = "Quote";
@@ -118,12 +123,22 @@ if($bbCode)
 }
 $buttons[] = "Checklist";
 $buttons[] = "ToCheckList";
+$buttons[] = 'Copilot';
 
-$arResult['AUX_TEMPLATE_DATA']['EDITOR_PARAMETERS'] = array(
+$arResult['AUX_TEMPLATE_DATA']['EDITOR_PARAMETERS'] = [
 	"FORM_ID" => 'task-form',
 	"SHOW_MORE" => "N",
-	"PARSER" => array("Bold", "Italic", "Underline", "Strike", "ForeColor",
-		"FontList", "FontSizeList", "RemoveFormat", "Quote", "Code",
+	"PARSER" => [
+		"Bold",
+		"Italic",
+		"Underline",
+		"Strike",
+		"ForeColor",
+		"FontList",
+		"FontSizeList",
+		"RemoveFormat",
+		"Quote",
+		"Code",
 		//(($arParams["USE_CUT"] == "Y") ? "InsertCut" : ""),
 		"CreateLink",
 		"Image",
@@ -136,26 +151,22 @@ $arResult['AUX_TEMPLATE_DATA']['EDITOR_PARAMETERS'] = array(
 		"UploadImage",
 		//(($arResult["allowVideo"] == "Y") ? "InputVideo" : ""),
 		"MentionUser",
-	),
+	],
 	"BUTTONS" => $buttons,
 	"BUTTONS_HTML" => $htmlButtons,
-	"FILES" => Array(
-		"VALUE" => array(),
+	"FILES" => [
+		"VALUE" => [],
 		"DEL_LINK" => '',
 		"SHOW" => "N"
-	),
-
-	"TEXT" => array(
+	],
+	"TEXT" => [
 		"INPUT_NAME" => "ACTION[0][ARGUMENTS][data][DESCRIPTION]",
 		"VALUE" => $description,
 		"HEIGHT" => "120px"
-	),
-
-	"PROPERTIES" => array(),//$editorProps,
-	"UPLOAD_FILE" => (
-		true
-	),
-	"UPLOAD_FILE_PARAMS" => array('width' => 400, 'height' => 400),
+	],
+	"PROPERTIES" => [],//$editorProps,
+	"UPLOAD_FILE" => true,
+	"UPLOAD_FILE_PARAMS" => ['width' => 400, 'height' => 400],
 	/*
 	"TAGS" => Array(
 		"ID" => "TAGS",
@@ -168,18 +179,20 @@ $arResult['AUX_TEMPLATE_DATA']['EDITOR_PARAMETERS'] = array(
 	//"SMILES" => array("VALUE" => $arSmiles),
 	"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
 	//"AT_THE_END_HTML" => $htmlAfterTextarea,
-	"LHE" => array(
+	"LHE" => [
 		"id" => $arResult['TEMPLATE_DATA']['ID'],
 		"iframeCss" => "body { padding: 12px 18px 8px 12px !important; color: #151515; line-height: var(--ui-font-line-height-lg, 22px); }",
 		"fontSize" => "14.5px",
 		"bInitByJS" => false,
 		"lazyLoad" => 'N',
 		"bbCode" => $bbCode, // set editor mode: bbcode or html
-		"setFocusAfterShow" => !!intval($arResult['DATA']['TASK']['ID'] ?? null), // when creating task, we should not
-	),
+		"setFocusAfterShow" => (bool)(int)($arResult['DATA']['TASK']['ID'] ?? null), // when creating task, we should not
+		'isCopilotImageEnabledBySettings' => \Bitrix\Tasks\Integration\AI\Settings::isImageAvailable(),
+		'isCopilotTextEnabledBySettings' => \Bitrix\Tasks\Integration\AI\Settings::isTextAvailable(),
+	],
 	//"USE_CLIENT_DATABASE" => "Y",
 	//"ALLOW_EMAIL_INVITATION" => ($arResult["ALLOW_EMAIL_INVITATION"] ? 'Y' : 'N')
-);
+];
 
 if(is_array($arResult['AUX_DATA']['USER_FIELDS'] ?? null))
 {
@@ -229,7 +242,7 @@ $this->__component->tryParseBooleanParameter($arParams["ENABLE_FOOTER_UNPIN"], t
 $this->__component->tryParseBooleanParameter($arParams["ENABLE_CANCEL_BUTTON"], true);
 $this->__component->tryParseBooleanParameter($arParams["ENABLE_MENU_TOOLBAR"], true);
 
-if ($taskType == "user")
+if ($taskType === "user")
 {
 	$arParams["PATH_TO_TASKS"] = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER_TASKS"]);
 	$arParams["PATH_TO_TASKS_TASK"] = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER_TASKS_TASK"]);
@@ -241,17 +254,14 @@ else
 }
 
 $arParams['PATH_TO_TASKS_TASK_ORIGINAL'] = $arParams['PATH_TO_TASKS_TASK'];
-if (is_array($arParams['TASK_URL_PARAMETERS'] ?? null) && !empty($arParams['TASK_URL_PARAMETERS']))
+if (is_array($arParams['TASK_URL_PARAMETERS'] ?? null) && !empty($arParams['TASK_URL_PARAMETERS']) && (string)$arParams['PATH_TO_TASKS_TASK'] !== '')
 {
-	if((string) $arParams['PATH_TO_TASKS_TASK'] != '')
-	{
-		$arParams['PATH_TO_TASKS_TASK'] = \Bitrix\Tasks\Util::replaceUrlParameters($arParams['PATH_TO_TASKS_TASK'], $arParams['TASK_URL_PARAMETERS']);
-	}
+	$arParams['PATH_TO_TASKS_TASK'] = \Bitrix\Tasks\Util::replaceUrlParameters($arParams['PATH_TO_TASKS_TASK'], $arParams['TASK_URL_PARAMETERS']);
 }
 
 // title & nav chain
 $sTitle = "";
-if (intval($arParams["ID"])) // edit
+if ((int)$arParams["ID"]) // edit
 {
 	$sTitle = str_replace("#TASK_ID#", $arParams["ID"], GetMessage("TASKS_TASK_COMPONENT_TEMPLATE_EDIT_TASK_TITLE"));
 }
@@ -267,7 +277,7 @@ if ($arParams["SET_TITLE"])
 
 if ($arParams["SET_NAVCHAIN"])
 {
-	if ($taskType == "user")
+	if ($taskType === "user")
 	{
 		$APPLICATION->AddChainItem(CUser::FormatName($arParams["NAME_TEMPLATE"], $arResult['DATA']['USER'][$arParams["USER_ID"]] ?? null), CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_PROFILE"], array("user_id" => $arParams["USER_ID"])));
 		$APPLICATION->AddChainItem($sTitle);
@@ -288,10 +298,7 @@ $APPLICATION->SetPageProperty("BodyClass", $bodyClass);
 // URLs
 
 // backurl (aka success url)
-if(
-	isset($arResult['COMPONENT_DATA']['BACKURL'])
-	&& (string) $arResult['COMPONENT_DATA']['BACKURL'] != ''
-)
+if(!empty($arResult['COMPONENT_DATA']['BACKURL']))
 {
     $backUrl = $arResult['COMPONENT_DATA']['BACKURL'];
 }
@@ -299,25 +306,19 @@ else
 {
     $backUrl = $arParams['PATH_TO_TASKS_TASK'];
 }
-if(intval($arResult['DATA']['TASK']['ID'] ?? null))
+if((int)($arResult['DATA']['TASK']['ID'] ?? null))
 {
-    $backUrl = str_replace('#task_id#', intval($arResult['DATA']['TASK']['ID']), $backUrl);
+    $backUrl = str_replace('#task_id#', (int)$arResult['DATA']['TASK']['ID'], $backUrl);
 }
 $arResult['TEMPLATE_DATA']['BACKURL'] = $backUrl;
 
 // cancelurl
 $cancelUrl = $arParams['PATH_TO_TASKS'];
-if(
-	isset($request['CANCELURL'])
-	&& (string) $request['CANCELURL'] != ''
-)
+if (!empty($request['CANCELURL']))
 {
 	$cancelUrl = $request['CANCELURL'];
 }
-elseif(
-	isset($request['BACKURL'])
-	&& (string) $request['BACKURL'] != ''
-)
+elseif(!empty($request['BACKURL']))
 {
 	$cancelUrl = $request['BACKURL'];
 }
@@ -335,9 +336,8 @@ $additionalBlocks = array();
 if(
 	isset($arResult['COMPONENT_DATA']['STATE']['BLOCKS'])
 	&& is_array($arResult['COMPONENT_DATA']['STATE']['BLOCKS'])
-	&& isset($arResult['DATA']['TASK'])
-	&& is_array($arResult['DATA']['TASK'])
 	&& !empty($arResult['DATA']['TASK'])
+	&& is_array($arResult['DATA']['TASK'])
 )
 {
 	$baseBlocks = array(
@@ -360,17 +360,21 @@ if(
 		{
 			// one of real task fields
 			// except for originator: he is always present, but we dont want to see him every time because usually its the current user
-			if(array_key_exists($block, $taskData) && !empty($taskData[$block]) && $block != 'SE_ORIGINATOR')
+			if(array_key_exists($block, $taskData) && !empty($taskData[$block]) && $block !== 'SE_ORIGINATOR')
 			{
-				if($block == 'SE_TEMPLATE')
+				if($block === 'SE_TEMPLATE')
 				{
-					$filled = $taskData['REPLICATE'] == 'Y';
+					$filled = $taskData['REPLICATE'] === 'Y';
 				}
-				elseif($block == 'UF_CRM_TASK')
+				elseif($block === 'UF_CRM_TASK')
 				{
 					// this value can come as a single-empty-element array, must normalize first
 					$normalData = \Bitrix\Tasks\Util\Type::normalizeArray($taskData[$block]);
 					$filled = !empty($normalData);
+				}
+				elseif ($block === 'REGULAR')
+				{
+					$filler = $taskData['IS_REGULAR'] === 'Y';
 				}
 				else
 				{
@@ -379,21 +383,21 @@ if(
 			}
 			else // "special" cases
 			{
-				if($block == 'SE_ORIGINATOR')
+				if($block === 'SE_ORIGINATOR')
 				{
 					// field value is interesting to view only if originator != you
 					$filled = $taskData['SE_ORIGINATOR']['ID'] != \Bitrix\Tasks\Util\User::getId();
 				}
-				if($block == 'DATE_PLAN')
+				if($block === 'DATE_PLAN')
 				{
 					$filled = !empty($taskData['START_DATE_PLAN']) || !empty($taskData['END_DATE_PLAN']);
 				}
-                if($block == 'OPTIONS')
+                if($block === 'OPTIONS')
                 {
                     $filled = false; // always hidden, unsure if this is correct
 	                //$taskData['ALLOW_CHANGE_DEADLINE'] == 'Y' || $taskData['MATCH_WORK_TIME'] == 'Y' || $taskData['TASK_CONTROL'] == 'Y' || $taskData['ADD_TO_FAVORITE'] == 'Y' || $taskData['ADD_TO_TIMEMAN'] == 'Y';
                 }
-                if($block == 'USER_FIELDS')
+                if($block === 'USER_FIELDS')
                 {
                     foreach($taskData as $field => $value)
                     {
@@ -404,7 +408,7 @@ if(
                         }
                     }
                 }
-                if($block == 'TIMEMAN')
+                if($block === 'TIMEMAN')
                 {
                     $filled = intval($taskData['TIME_ESTIMATE'] ?? null) > 0;
                 }

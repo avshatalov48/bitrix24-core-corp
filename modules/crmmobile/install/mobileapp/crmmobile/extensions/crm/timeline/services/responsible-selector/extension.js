@@ -4,6 +4,8 @@
 jn.define('crm/timeline/services/responsible-selector', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const AppTheme = require('apptheme');
+	const { EntitySelectorFactory } = require('selector/widget/factory');
 
 	/**
 	 * @class ResponsibleSelector
@@ -61,7 +63,7 @@ jn.define('crm/timeline/services/responsible-selector', (require, exports, modul
 						backdrop: {
 							mediumPositionPercent: 70,
 							horizontalSwipeAllowed: false,
-							navigationBarColor: '#eef2f4',
+							navigationBarColor: AppTheme.colors.bgSecondary,
 						},
 					},
 				},

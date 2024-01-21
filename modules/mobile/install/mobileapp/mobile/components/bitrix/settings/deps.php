@@ -9,8 +9,9 @@ return [
 		"im:chat/settings/notify",
 		"settings/sync",
 		"im:chat/settings/chat",
+		"tasks:settings/task",
 		"settings/tabs",
 		"settings/system",
 		"settings/calltracker",
-	]
+	],
 ];

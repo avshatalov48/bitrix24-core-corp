@@ -2,9 +2,10 @@
  * @module layout/ui/wizard/backdrop
  */
 jn.define('layout/ui/wizard/backdrop', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 
 	const MEDIUM_POSITION_PERCENT = 65;
-	const BACKGROUND_COLOR = '#eef2f4';
+	const BACKGROUND_COLOR = AppTheme.colors.bgSecondary;
 
 	const { Wizard } = require('layout/ui/wizard');
 
@@ -13,7 +14,6 @@ jn.define('layout/ui/wizard/backdrop', (require, exports, module) => {
 	 */
 	class BackdropWizard extends LayoutComponent
 	{
-
 		constructor(props)
 		{
 			super(props);
@@ -55,13 +55,14 @@ jn.define('layout/ui/wizard/backdrop', (require, exports, module) => {
 						layoutWidget.enableNavigationBarBorder(false);
 
 						resolve({ layoutWidget, wizard: widgetWizard.getWizard() });
-					});
+					}).catch(console.error);
 			});
 		}
 
 		static getWidgetParams(widgetParams)
 		{
 			return {
+				backgroundColor: BACKGROUND_COLOR,
 				backdrop: {
 					forceDismissOnSwipeDown: true,
 					hideNavigationBar: false,
@@ -95,7 +96,6 @@ jn.define('layout/ui/wizard/backdrop', (require, exports, module) => {
 		{
 			return this.getWizard();
 		}
-
 	}
 
 	module.exports = { BackdropWizard };

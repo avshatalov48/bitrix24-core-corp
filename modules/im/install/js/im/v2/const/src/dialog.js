@@ -15,6 +15,7 @@ export const DialogType = Object.freeze({
 	thread: 'thread',
 	mail: 'mail',
 	lines: 'lines',
+	copilot: 'copilot',
 });
 
 export const DialogScrollThreshold = Object.freeze({

@@ -1,4 +1,5 @@
 import {Event, Type, Dom, Text, Loc} from "main.core";
+import {Switcher} from 'ui.switcher';
 
 export class SelfRegister
 {
@@ -10,6 +11,17 @@ export class SelfRegister
 		{
 			this.selfBlock = this.parent.contentBlocks["self"];
 			this.bindActions();
+
+			const switcherNode = this.selfBlock.querySelector('.invite-dialog-fast-reg-control-switcher');
+			this.switcher = new Switcher({
+				inputName: 'allow_register',
+				id: 'allow_register',
+				checked: parent.isSelfRegisterEnabled,
+				node: switcherNode,
+				handlers: {
+					toggled: this.toggleSettings.bind(this),
+				},
+			});
 		}
 	}
 
@@ -29,15 +41,6 @@ export class SelfRegister
 		{
 			Event.bind(copyRegisterUrlButton, 'click', () => {
 				this.copyRegisterUrl();
-			});
-		}
-
-		const selfToggleSettingsButton = this.selfBlock.querySelector("[data-role='selfToggleSettingsButton']");
-		if (Type.isDomNode(selfToggleSettingsButton))
-		{
-			Event.bind(selfToggleSettingsButton, 'change', () => {
-				this.parent.activateButton();
-				this.toggleSettings(selfToggleSettingsButton);
 			});
 		}
 
@@ -87,6 +90,8 @@ export class SelfRegister
 			BX.ajax.runAction('intranet.controller.invite.copyregisterurl', {
 				data: {}
 			}).then(function (response) {}, function (response) {});
+
+			this.parent.analytics.send();
 		}
 	}
 
@@ -118,8 +123,9 @@ export class SelfRegister
 		}).show();
 	}
 
-	toggleSettings(inputElement)
+	toggleSettings()
 	{
+		this.parent.activateButton();
 		const controlBlock = this.selfBlock.querySelector(".js-invite-dialog-fast-reg-control-container");
 		if (Type.isDomNode(controlBlock))
 		{
@@ -134,7 +140,7 @@ export class SelfRegister
 		const settingsBlock = this.selfBlock.querySelector("[data-role='selfSettingsBlock']");
 		if (Type.isDomNode(settingsBlock))
 		{
-			Dom.style(settingsBlock, 'display', inputElement.checked ? 'block' : 'none');
+			Dom.style(settingsBlock, 'display', this.switcher.checked ? 'block' : 'none');
 		}
 	}
 

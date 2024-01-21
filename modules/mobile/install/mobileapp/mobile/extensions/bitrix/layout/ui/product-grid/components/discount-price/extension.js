@@ -2,6 +2,7 @@
  * @module layout/ui/product-grid/components/discount-price
  */
 jn.define('layout/ui/product-grid/components/discount-price', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @param {{
@@ -13,8 +14,9 @@ jn.define('layout/ui/product-grid/components/discount-price', (require, exports,
 	 */
 	function DiscountPrice(props)
 	{
-		const { oldPrice, discount } = props;
-		const customStyle = props.style || {};
+		const { oldPrice, discount, style } = props;
+
+		const customStyle = style || {};
 		const sign = discount.amount > 0 ? '−' : '+';
 		const discountAbs = new Money({
 			amount: Math.abs(discount.amount),
@@ -38,8 +40,8 @@ jn.define('layout/ui/product-grid/components/discount-price', (require, exports,
 					testId: 'product-grid-summary-discount-price',
 					text: `${sign}${discountAbs.formatted}`,
 					style: Styles.discountText(customStyle),
-				})
-			)
+				}),
+			),
 		);
 	}
 
@@ -48,14 +50,14 @@ jn.define('layout/ui/product-grid/components/discount-price', (require, exports,
 			flexDirection: 'row',
 		},
 		oldPrice: (props) => ({
-			color: BX.prop.getString(props, 'color', '#A8ADB4'),
+			color: BX.prop.getString(props, 'color', AppTheme.colors.base4),
 			fontSize: BX.prop.getInteger(props, 'fontSize', 12),
 			fontWeight: BX.prop.getString(props, 'fontWeight', 'normal'),
 			textDecorationLine: 'line-through',
 			marginRight: 5,
 		}),
 		discountContainer: (amount, props) => ({
-			backgroundColor: BX.prop.getString(props, 'backgroundColor', amount > 0 ? '#9DCF00' : '#FF5752'),
+			backgroundColor: BX.prop.getString(props, 'backgroundColor', amount > 0 ? AppTheme.colors.accentMainSuccess : AppTheme.colors.accentMainAlert),
 			borderRadius: 4,
 			paddingLeft: 3,
 			paddingRight: 3,
@@ -63,12 +65,11 @@ jn.define('layout/ui/product-grid/components/discount-price', (require, exports,
 			paddingTop: 1,
 		}),
 		discountText: (props) => ({
-			color: '#ffffff',
+			color: AppTheme.colors.baseWhiteFixed,
 			fontWeight: BX.prop.getString(props, 'fontWeight', 'bold'),
 			fontSize: BX.prop.getInteger(props, 'fontSize', 12),
-		})
+		}),
 	};
 
 	module.exports = { DiscountPrice };
-
 });

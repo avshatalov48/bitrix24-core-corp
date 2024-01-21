@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Mobile\AppTabs;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Mobile\Tab\Tabable;
@@ -22,6 +23,7 @@ class Terminal implements Tabable {
 	{
 		return (!$this->context->extranet
 			&& Loader::includeModule('crm')
+			&& Container::getInstance()->getIntranetToolsManager()->checkTerminalAvailability()
 			&& AvailabilityManager::getInstance()->isAvailable()
 			&& Mobile::getApiVersion() >= self::MINIMAL_API_VERSION
 		);

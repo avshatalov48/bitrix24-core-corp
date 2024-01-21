@@ -5,10 +5,10 @@ namespace Bitrix\Tasks\Member\Repository;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\EO_Member_Collection;
 use Bitrix\Tasks\Internals\TaskObject;
-use Bitrix\Tasks\Member\Repository;
+use Bitrix\Tasks\Member\RepositoryInterface;
 use Exception;
 
-class TaskRepository implements Repository
+class TaskRepository implements RepositoryInterface
 {
 	private ?TaskObject $task = null;
 

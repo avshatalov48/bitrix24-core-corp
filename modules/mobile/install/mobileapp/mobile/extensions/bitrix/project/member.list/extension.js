@@ -1,4 +1,8 @@
 (() => {
+	const require = (ext) => jn.require(ext);
+
+	const AppTheme = require('apptheme');
+	const colorUtils = require('utils/color');
 	const apiVersion = Application.getApiVersion();
 	const platform = Application.getPlatform();
 	const caches = new Map();
@@ -11,6 +15,7 @@
 		static debounce(fn, timeout, ctx)
 		{
 			let timer = 0;
+
 			return function() {
 				clearTimeout(timer);
 				timer = setTimeout(() => fn.apply(ctx, arguments), timeout);
@@ -38,8 +43,8 @@
 			if (this.isEnabled())
 			{
 				dialogs.showSpinnerIndicator({
-					color: '#777777',
-					backgroundColor: '#77ffffff',
+					color: AppTheme.colors.base3,
+					backgroundColor: colorUtils.transparent(AppTheme.colors.base8, 0.7),
 				});
 			}
 		}
@@ -106,38 +111,38 @@
 				folded: false,
 				badgeValue: 0,
 				sortItemParams: {},
-				backgroundColor: '#f0f2f5',
+				backgroundColor: AppTheme.colors.bgPrimary,
 				height: 40,
-				styles: {title: {font: {size: 12}}},
+				styles: { title: { font: { size: 12 } } },
 			};
 
 			this.items = {
 				default: {
-					...{id: SectionHandler.sections.default},
+					id: SectionHandler.sections.default,
 					...defaultSectionParams,
 				},
 				owners: {
-					...{id: SectionHandler.sections.owners},
+					id: SectionHandler.sections.owners,
 					...defaultSectionParams,
 					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SECTION_OWNER'),
 				},
 				moderators: {
-					...{id: SectionHandler.sections.moderators},
+					id: SectionHandler.sections.moderators,
 					...defaultSectionParams,
 					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SECTION_MODERATORS'),
 				},
 				departments: {
-					...{id: SectionHandler.sections.departments},
+					id: SectionHandler.sections.departments,
 					...defaultSectionParams,
 					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SECTION_DEPARTMENTS'),
 				},
 				members: {
-					...{id: SectionHandler.sections.members},
+					id: SectionHandler.sections.members,
 					...defaultSectionParams,
 					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SECTION_MEMBERS'),
 				},
-				more: {...{id: SectionHandler.sections.more}, ...defaultSectionParams},
-				empty: {...{id: SectionHandler.sections.empty}, ...defaultSectionParams},
+				more: { id: SectionHandler.sections.more, ...defaultSectionParams },
+				empty: { id: SectionHandler.sections.empty, ...defaultSectionParams },
 			};
 		}
 
@@ -306,13 +311,13 @@
 					break;
 
 				default:
-					if (!this.list.isOwner)
+					if (this.list.isOwner)
 					{
-						filter.INVITED_BY_ME = 'Y';
+						filter.ROLE.push(ProjectMember.roles.request);
 					}
 					else
 					{
-						filter.ROLE.push(ProjectMember.roles.request);
+						filter.INVITED_BY_ME = 'Y';
 					}
 					break;
 			}
@@ -399,7 +404,7 @@
 						contextMenu.close(() => this.onClearFilterClick());
 						resolve({ closeMenu: false });
 					}),
-				}
+				},
 			];
 			const contextMenu = new ContextMenu({
 				params: {
@@ -420,7 +425,7 @@
 					{
 						(new RequestExecutor('sonet_group.user.invite', {
 							GROUP_ID: this.list.projectId,
-							USER_ID: recipients.user.map(user => user.id),
+							USER_ID: recipients.user.map((user) => user.id),
 						}))
 							.call()
 							.then(() => this.list.reload())
@@ -435,7 +440,7 @@
 			this.filter.setRequestInitiatingType(
 				this.filter.getRequestInitiatingType() === ProjectMember.requestInitiatingType.user
 					? null
-					: ProjectMember.requestInitiatingType.user
+					: ProjectMember.requestInitiatingType.user,
 			);
 			this.list.updateTitle();
 			this.list.setTopButtons();
@@ -447,7 +452,7 @@
 			this.filter.setRequestInitiatingType(
 				this.filter.getRequestInitiatingType() === ProjectMember.requestInitiatingType.group
 					? null
-					: ProjectMember.requestInitiatingType.group
+					: ProjectMember.requestInitiatingType.group,
 			);
 			this.list.updateTitle();
 			this.list.setTopButtons();
@@ -473,42 +478,42 @@
 					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SWIPE_APPOINT'),
 					iconName: 'action_userlist',
 					iconUrl: `${imagePrefix}swipe-appoint.png`,
-					color: '#2f72b9',
+					color: AppTheme.colors.accentMainLinks,
 				},
 				exclude: {
 					identifier: 'exclude',
 					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SWIPE_EXCLUDE'),
 					iconName: 'action_delete',
 					iconUrl: `${imagePrefix}swipe-cancel.png`,
-					color: '#ff5752',
+					color: AppTheme.colors.accentMainAlert,
 				},
 				repeatInvite: {
 					identifier: 'repeatInvite',
 					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SWIPE_REPEAT_INVITE'),
 					iconName: 'action_reload',
 					iconUrl: `${imagePrefix}swipe-repeat.png`,
-					color: '#05b5ab',
+					color: AppTheme.colors.accentExtraAqua,
 				},
 				cancelInvite: {
 					identifier: 'cancelInvite',
 					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SWIPE_CANCEL_INVITE'),
 					iconName: 'action_delete',
 					iconUrl: `${imagePrefix}swipe-cancel.png`,
-					color: '#ff5752',
+					color: AppTheme.colors.accentMainAlert,
 				},
 				acceptRequest: {
 					identifier: 'acceptRequest',
 					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SWIPE_ACCEPT_REQUEST'),
 					iconName: 'action_accept',
 					iconUrl: `${imagePrefix}swipe-accept-request.png`,
-					color: '#05b5ab',
+					color: AppTheme.colors.accentExtraAqua,
 				},
 				denyRequest: {
 					identifier: 'denyRequest',
 					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SWIPE_DENY_REQUEST'),
 					iconName: 'action_delete',
 					iconUrl: `${imagePrefix}swipe-cancel.png`,
-					color: '#ff5752',
+					color: AppTheme.colors.accentMainAlert,
 				},
 			};
 		}
@@ -521,21 +526,21 @@
 					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SWIPE_SET_OWNER'),
 					iconName: 'action_userlist',
 					iconUrl: `${imagePrefix}swipe-appoint.png`,
-					color: '#05b5ab',
+					color: AppTheme.colors.accentExtraAqua,
 				},
 				setModerator: {
 					identifier: 'setModerator',
 					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SWIPE_SET_MODERATOR'),
 					iconName: 'action_userlist',
 					iconUrl: `${imagePrefix}swipe-moderator.png`,
-					color: '#05b5ab',
+					color: AppTheme.colors.accentExtraAqua,
 				},
 				removeModerator: {
 					identifier: 'removeModerator',
 					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SWIPE_REMOVE_MODERATOR'),
 					iconName: 'action_delete',
 					iconUrl: `${imagePrefix}swipe-moderator.png`,
-					color: '#05b5ab',
+					color: AppTheme.colors.accentExtraAqua,
 				},
 			};
 		}
@@ -550,13 +555,17 @@
 
 		fillForMember(member, itemData)
 		{
-			if (platform !== 'ios')
+			if (platform === 'ios')
 			{
-				let actions =
-					Object.values({...Action.popupActions, ...Action.swipeActions})
-						.filter(action => member.actions[action.identifier])
+				itemData.menuMode = 'swipe';
+				itemData.actions = Object.values(Action.swipeActions).filter((action) => member.actions[action.identifier]);
+			}
+			else
+			{
+				const actions = Object.values({ ...Action.popupActions, ...Action.swipeActions })
+					.filter((action) => member.actions[action.identifier])
 				;
-				const appointActionIndex = actions.findIndex(action => action.identifier === 'appoint');
+				const appointActionIndex = actions.findIndex((action) => action.identifier === 'appoint');
 				if (appointActionIndex >= 0)
 				{
 					actions.splice(appointActionIndex, 1);
@@ -564,11 +573,6 @@
 
 				itemData.menuMode = 'dialog';
 				itemData.actions = actions;
-			}
-			else
-			{
-				itemData.menuMode = 'swipe';
-				itemData.actions = Object.values(Action.swipeActions).filter(action => member.actions[action.identifier]);
 			}
 
 			return itemData;
@@ -587,10 +591,10 @@
 					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SWIPE_EXCLUDE_DEPARTMENT'),
 					iconName: 'action_delete',
 					iconUrl: `${imagePrefix}swipe-cancel.png`,
-					color: '#ff5752',
+					color: AppTheme.colors.accentMainAlert,
 				},
 			];
-			itemData.menuMode = (platform !== 'ios' ? 'dialog' : 'swipe');
+			itemData.menuMode = (platform === 'ios' ? 'swipe' : 'dialog');
 
 			return itemData;
 		}
@@ -667,7 +671,7 @@
 			});
 
 			this.popupMenu = dialogs.createPopupMenu();
-			this.popupMenu.setData(popupItems, [{id: 'default'}], (eventName, item) => {
+			this.popupMenu.setData(popupItems, [{ id: 'default' }], (eventName, item) => {
 				if (eventName === 'onItemSelected')
 				{
 					this.onPopupItemSelected(item, member);
@@ -749,11 +753,11 @@
 				}))
 					.call()
 					.then(
-						response => {
+						() => {
 							this.list.departmentList.delete(departmentId);
 							this.list.reload();
 						},
-						response => console.error(response)
+						(error) => console.error(error),
 					)
 				;
 			}
@@ -787,12 +791,14 @@
 				const searchResultItems = [].concat(
 					this.renderMemberItems(),
 					this.renderDepartmentItems(),
-					this.renderLoadingItems()
+					this.renderLoadingItems(),
 				);
-				const sections = [{
-					id: 'default',
-					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SEARCH_RESULTS'),
-				}];
+				const sections = [
+					{
+						id: 'default',
+						title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SEARCH_RESULTS'),
+					},
+				];
 				this.setSearchResultItems(searchResultItems, sections);
 
 				(new RequestExecutor('socialnetwork.api.usertogroup.list', {
@@ -801,7 +807,7 @@
 					order: this.list.order.getForSearch(),
 				}))
 					.call()
-					.then(response => this.onSearchSuccess(response, text))
+					.then((response) => this.onSearchSuccess(response, text))
 				;
 			}, 100, this);
 		}
@@ -840,7 +846,7 @@
 
 		renderList(fromCache = false)
 		{
-			console.log('ProjectMemberList.Search:renderList', {projects: this.memberList.size});
+			console.log('ProjectMemberList.Search:renderList', { projects: this.memberList.size });
 
 			let searchResultItems = this.renderEmptyResultItems();
 
@@ -861,11 +867,13 @@
 				searchResultItems = this.renderEmptyCacheItems();
 			}
 
-			const sections = [{
-				id: 'default',
-				title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SEARCH_RESULTS'),
-				backgroundColor: '#ffffff',
-			}];
+			const sections = [
+				{
+					id: 'default',
+					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SEARCH_RESULTS'),
+					backgroundColor: AppTheme.colors.bgContentPrimary,
+				},
+			];
 			this.setSearchResultItems(searchResultItems, sections);
 		}
 
@@ -897,35 +905,41 @@
 
 		renderLoadingItems()
 		{
-			return [{
-				id: 0,
-				type: 'loading',
-				title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SEARCH_LOADING'),
-				sectionCode: 'default',
-				unselectable: true,
-			}];
+			return [
+				{
+					id: 0,
+					type: 'loading',
+					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SEARCH_LOADING'),
+					sectionCode: 'default',
+					unselectable: true,
+				},
+			];
 		}
 
 		renderEmptyCacheItems()
 		{
-			return [{
-				id: 0,
-				type: 'button',
-				title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SEARCH_HINT'),
-				sectionCode: 'default',
-				unselectable: true,
-			}];
+			return [
+				{
+					id: 0,
+					type: 'button',
+					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SEARCH_HINT'),
+					sectionCode: 'default',
+					unselectable: true,
+				},
+			];
 		}
 
 		renderEmptyResultItems()
 		{
-			return [{
-				id: 0,
-				type: 'button',
-				title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SEARCH_EMPTY_RESULT'),
-				sectionCode: 'default',
-				unselectable: true,
-			}];
+			return [
+				{
+					id: 0,
+					type: 'button',
+					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_SEARCH_EMPTY_RESULT'),
+					sectionCode: 'default',
+					unselectable: true,
+				},
+			];
 		}
 
 		setSearchResultItems(items, sections)
@@ -955,6 +969,7 @@
 						});
 					}
 					this.renderList(this.text === '');
+
 					return;
 				}
 				this.debounceFunction(this.text);
@@ -968,7 +983,7 @@
 
 			this.list.memberList.forEach((member) => {
 				added[member.id] = false;
-				const searchString = `${member.name}`.toLowerCase();
+				const searchString = String(member.name).toLowerCase();
 				searchString.split(' ').forEach((word) => {
 					if (!added[member.id] && word.search(text.toLowerCase()) === 0)
 					{
@@ -988,11 +1003,11 @@
 
 			this.list.departmentList.forEach((name, id) => {
 				added[id] = false;
-				const searchString = `${name}`.toLowerCase();
+				const searchString = String(name).toLowerCase();
 				searchString.split(' ').forEach((word) => {
 					if (!added[id] && word.search(text.toLowerCase()) === 0)
 					{
-						localSearches.push({ID: id, NAME: name});
+						localSearches.push({ ID: id, NAME: name });
 						added[id] = true;
 					}
 				});
@@ -1154,27 +1169,33 @@
 			this.updateTitle(true);
 
 			const batchOperations = {
-				users: ['socialnetwork.api.usertogroup.list', {
-					select: ProjectMemberList.select,
-					filter: this.filter.getForMembers(),
-					order: this.order.getForMembers(),
-					start: offset,
-				}],
+				users: [
+					'socialnetwork.api.usertogroup.list', {
+						select: ProjectMemberList.select,
+						filter: this.filter.getForMembers(),
+						order: this.order.getForMembers(),
+						start: offset,
+					},
+				],
 			};
 
 			if (!this.filter.getRequestInitiatingType())
 			{
-				batchOperations.group = ['socialnetwork.api.workgroup.get', {
-					params: {
-						groupId: this.projectId,
-						select: ['DEPARTMENTS'],
+				batchOperations.group = [
+					'socialnetwork.api.workgroup.get', {
+						params: {
+							groupId: this.projectId,
+							select: ['DEPARTMENTS'],
+						},
 					},
-				}];
-				batchOperations.headers = ['socialnetwork.api.usertogroup.list', {
-					select: ProjectMemberList.select,
-					filter: this.filter.getForHeaders(),
-					order: this.order.getForHeaders(),
-				}];
+				];
+				batchOperations.headers = [
+					'socialnetwork.api.usertogroup.list', {
+						select: ProjectMemberList.select,
+						filter: this.filter.getForHeaders(),
+						order: this.order.getForHeaders(),
+					},
+				];
 			}
 
 			BX.rest.callBatch(batchOperations, (result) => {
@@ -1196,7 +1217,7 @@
 			}
 			this.updateSections(isFirstPage);
 
-			const {group, headers, users} = response;
+			const { group, headers, users } = response;
 			const departments = (group ? group.answer.result.DEPARTMENTS : []) || [];
 			const headerMembers = (headers ? headers.answer.result.relations : []) || [];
 			const userMembers = (users ? users.answer.result.relations : []) || [];
@@ -1261,8 +1282,8 @@
 				sectionCode: SectionHandler.sections.members,
 				type: 'info',
 				styles: {
-					title: {font: {size: 16}},
-					subtitle: {font: {size: 13}},
+					title: { font: { size: 16 } },
+					subtitle: { font: { size: 13 } },
 				},
 				params: {
 					type: 'user',
@@ -1297,14 +1318,14 @@
 				if (member.isAccessRequestingByMe())
 				{
 					itemData.subtitle = BX.message('MOBILE_PROJECT_MEMBER_LIST_TAG_WAITING');
-					itemData.styles.subtitle.font.color = '#ff5752';
-					itemData.styles.subtitle.backgroundColor = '#ffe6e5';
+					itemData.styles.subtitle.font.color = AppTheme.colors.accentMainAlert;
+					itemData.styles.subtitle.backgroundColor = AppTheme.colors.accentSoftRed2;
 				}
 				else
 				{
 					itemData.subtitle = BX.message('MOBILE_PROJECT_MEMBER_LIST_TAG_INVITED');
-					itemData.styles.subtitle.font.color = '#739f00';
-					itemData.styles.subtitle.backgroundColor = '#e3f3cc';
+					itemData.styles.subtitle.font.color = AppTheme.colors.accentSoftElementGreen1;
+					itemData.styles.subtitle.backgroundColor = AppTheme.colors.accentSoftGreen2;
 				}
 			}
 
@@ -1327,7 +1348,7 @@
 				sectionCode: SectionHandler.sections.departments,
 				type: 'info',
 				styles: {
-					title: {font: {size: 16}},
+					title: { font: { size: 16 } },
 				},
 				params: {
 					type: 'department',
@@ -1348,13 +1369,16 @@
 		{
 			if (items.length <= 0)
 			{
-				this.list.setItems([{
-					id: '-none-',
-					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_NOTHING_FOUND'),
-					type: 'button',
-					sectionCode: SectionHandler.sections.default,
-					unselectable: true,
-				}]);
+				this.list.setItems([
+					{
+						id: '-none-',
+						title: BX.message('MOBILE_PROJECT_MEMBER_LIST_NOTHING_FOUND'),
+						type: 'button',
+						sectionCode: SectionHandler.sections.default,
+						unselectable: true,
+					},
+				]);
+
 				return;
 			}
 
@@ -1364,18 +1388,20 @@
 			}
 			else
 			{
-				this.list.removeItem({id: '-more-'});
+				this.list.removeItem({ id: '-more-' });
 				this.list.addItems(items);
 			}
 
 			if (isNextPageExist)
 			{
-				this.list.addItems([{
-					id: '-more-',
-					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_NEXT_PAGE'),
-					type: 'button',
-					sectionCode: SectionHandler.sections.more,
-				}]);
+				this.list.addItems([
+					{
+						id: '-more-',
+						title: BX.message('MOBILE_PROJECT_MEMBER_LIST_NEXT_PAGE'),
+						type: 'button',
+						sectionCode: SectionHandler.sections.more,
+					},
+				]);
 			}
 		}
 
@@ -1404,11 +1430,11 @@
 			if (item.id === '-more-')
 			{
 				this.list.updateItem(
-					{id: '-more-'},
+					{ id: '-more-' },
 					{
 						type: 'loading',
 						title: BX.message('MOBILE_PROJECT_MEMBER_LIST_LOADING'),
-					}
+					},
 				);
 				this.reload(this.start);
 			}

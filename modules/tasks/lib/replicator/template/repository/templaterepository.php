@@ -4,10 +4,11 @@ namespace Bitrix\Tasks\Replicator\Template\Repository;
 
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Internals\Task\Template\TemplateObject;
-use Bitrix\Tasks\Replicator\Template\Repository;
+use Bitrix\Tasks\Internals\TaskObject;
+use Bitrix\Tasks\Replicator\Template\RepositoryInterface;
 use Bitrix\Tasks\TemplateTable;
 
-class TemplateRepository implements Repository
+class TemplateRepository implements RepositoryInterface
 {
 	private ?TemplateObject $template = null;
 
@@ -15,7 +16,7 @@ class TemplateRepository implements Repository
 	{
 	}
 
-	public function getTemplate(): ?TemplateObject
+	public function getEntity(): ?TemplateObject
 	{
 		if (!is_null($this->template))
 		{
@@ -38,5 +39,18 @@ class TemplateRepository implements Repository
 		}
 
 		return $this->template;
+	}
+
+	public function drop(): void
+	{
+		$this->template = null;
+	}
+
+	public function inject(TaskObject|TemplateObject $object): void
+	{
+		if ($object instanceof TemplateObject)
+		{
+			$this->template = $object;
+		}
 	}
 }

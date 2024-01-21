@@ -412,7 +412,7 @@ abstract class BaseComponent extends Crm\Component\Base
 	{
 		$wizard = null;
 		//todo temporary only for new invoices. remove after complete refactoring
-		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($this->getEntityTypeID()))
+		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($conversionSource->getEntityTypeId()))
 		{
 			$wizard = Conversion\ConversionManager::loadWizard(
 				$conversionSource,

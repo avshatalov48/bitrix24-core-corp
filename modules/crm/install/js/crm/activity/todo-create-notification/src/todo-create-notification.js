@@ -332,6 +332,7 @@ export class TodoCreateNotification
 			ownerTypeId: this.#entityTypeId,
 			ownerId: this.#entityId,
 			currentUser: this.#timeline.getCurrentUser(),
+			pingSettings: this.#timeline.getPingSettings(),
 			events: {
 				onChangeDescription: this.#onChangeDescription.bind(this),
 				onSaveHotkeyPressed: this.#onSaveHotkeyPressed.bind(this),

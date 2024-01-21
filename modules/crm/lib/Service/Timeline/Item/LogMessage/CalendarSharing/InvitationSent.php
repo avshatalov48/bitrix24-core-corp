@@ -7,7 +7,6 @@ use Bitrix\Crm\Service\Timeline\Item\Configurable;
 use Bitrix\Crm\Service\Timeline\Item\Mixin\CalendarSharing;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Client;
-use Bitrix\Crm\Settings\WorkTime;
 use CCrmOwnerType;
 
 class InvitationSent extends Configurable
@@ -52,7 +51,9 @@ class InvitationSent extends Configurable
 		return [
 			'guest' => $guestContentBlock,
 			'communicationChannel' => $this->getCommunicationChannelContentBlock(),
-			'accessibility' => $this->getAccessibilityContentBlock()->setScopeWeb(),
+			'accessibilityTitleMobile' => $this->getAccessibilityTitleBlock()->setScopeMobile(),
+			'accessibilityMobile' => $this->getSlotsListBlock()->setScopeMobile(),
+			'accessibilityWeb' => $this->getAccessibilityContentBlock()->setScopeWeb(),
 		];
 	}
 
@@ -131,11 +132,6 @@ class InvitationSent extends Configurable
 		return $result;
 	}
 
-	public function getSlotDefaultSize(): int
-	{
-		return 60;
-	}
-
 	public function needShowNotes(): bool
 	{
 		return true;
@@ -155,31 +151,47 @@ class InvitationSent extends Configurable
 		;
 	}
 
+	private function getAccessibilityTitleBlock(): Layout\Body\ContentBlock
+	{
+		$text = $this->getMessage('CRM_TIMELINE_CALENDAR_SHARING_ACCESSIBILITY');
+
+		return Layout\Body\ContentBlock\ContentBlockFactory::createTitle($text);
+	}
+
 	private function getAccessibilityContentBlock(): Layout\Body\ContentBlock
 	{
-		$workTimeData = (new WorkTime())->getData();
-		$timeFrom = $workTimeData['TIME_FROM'];
-		$timeTo = $workTimeData['TIME_TO'];
-
 		return (new Layout\Body\ContentBlock\ContentBlockWithTitle())
 			->setInline()
 			->setTitle(
-				$this->getMessage('CRM_TIMELINE_CALENDAR_SHARING_ACCESSIBILITY')
+				$this->getMessage('CRM_TIMELINE_CALENDAR_SHARING_ACCESSIBILITY_SHORT')
 			)
 			->setContentBlock(
-				(new Layout\Body\ContentBlock\Calendar\SharingSlotsList())
-					->addListItem((new Layout\Body\ContentBlock\Calendar\SharingSlotsListItem())
-						->setType(Layout\Body\ContentBlock\Calendar\SharingSlotsListItem::WORK_DAYS_TYPE)
-						->setTimeStart($this->getMinutesFromWorkTimeObject($timeFrom))
-						->setTimeEnd($this->getMinutesFromWorkTimeObject($timeTo))
-						->setSlotLength($this->getSlotDefaultSize())
-					)
+				$this->getSlotsListBlock()
 			)
 		;
 	}
 
-	private function getMinutesFromWorkTimeObject($workTime): int
+	private function getSlotsListBlock(): Layout\Body\ContentBlock\Calendar\SharingSlotsList
 	{
-		return $workTime->hours * 60 + $workTime->minutes;
+		$rule = $this->getLinkRule();
+
+		$slotsListBlock = new Layout\Body\ContentBlock\Calendar\SharingSlotsList();
+
+		foreach ($rule['ranges'] as $range)
+		{
+			$ruleArray = [
+				'from' => $range['from'],
+				'to' => $range['to'],
+				'weekdays' => $range['weekdays'],
+				'weekdaysTitle' => $range['weekdaysTitle'],
+				'slotSize' => $rule['slotSize'],
+			];
+			$slotListItem = (new Layout\Body\ContentBlock\Calendar\SharingSlotsListItem())
+				->setRule($ruleArray);
+
+			$slotsListBlock->addListItem($slotListItem);
+		}
+
+		return $slotsListBlock;
 	}
 }

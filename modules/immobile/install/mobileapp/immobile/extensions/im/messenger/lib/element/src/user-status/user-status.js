@@ -4,6 +4,7 @@
 jn.define('im/messenger/lib/element/user-status', (require, exports, module) => {
 	const { core } = require('im/messenger/core');
 	const { userStatuses } = require('im/messenger/assets/common');
+	const { Type } = require('type');
 
 	/**
 	 * @class UserStatus
@@ -23,14 +24,37 @@ jn.define('im/messenger/lib/element/user-status', (require, exports, module) => 
 		/**
 		 * @desc Get svg user`s status by user id
 		 * @param {string} userId
+		 * @param {boolean} [isAllStatus=true]
 		 * @return {string}
 		 */
-		static getStatusByUserId(userId)
+		static getStatusByUserId(userId, isAllStatus = true)
 		{
 			UserStatus.store = core.getStore();
 			const userData = UserStatus.store.getters['usersModel/getById'](userId);
 
-			return userData ? userStatuses[userData.status] : '';
+			if (userData.birthday && Type.isStringFilled(userData.birthday))
+			{
+				const dateNow = new Date().toISOString();
+				const normalUserDate = [userData.birthday.slice(3), '-', userData.birthday.slice(0, 2)].join('');
+				const isBirthday = dateNow.includes(normalUserDate);
+
+				if (isBirthday)
+				{
+					return userStatuses.birthday;
+				}
+			}
+
+			if (userData.absent)
+			{
+				return userData ? userStatuses.absent : '';
+			}
+
+			if (isAllStatus)
+			{
+				return userData ? userStatuses[userData.status] : '';
+			}
+
+			return '';
 		}
 
 		/**

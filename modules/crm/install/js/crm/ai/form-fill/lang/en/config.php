@@ -1,0 +1,16 @@
+<?php
+$MESS["CRM_AI_FORM_FILL_MERGER_CANCEL"] = "Cancel";
+$MESS["CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_CANCEL"] = "Cancel";
+$MESS["CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_CLOSE"] = "Close";
+$MESS["CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_TEXT"] = "The changes have not been saved. Are you sure you want to close the page?";
+$MESS["CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_TITLE"] = "Unsaved changes";
+$MESS["CRM_AI_FORM_FILL_MERGER_REPLACE_BTN_BACK"] = "Restore";
+$MESS["CRM_AI_FORM_FILL_MERGER_REPLACE_BTN_FORTH"] = "Replace";
+$MESS["CRM_AI_FORM_FILL_MERGER_RESUME"] = "Summary";
+$MESS["CRM_AI_FORM_FILL_MERGER_SAVE"] = "Save";
+$MESS["CRM_AI_FORM_FILL_MERGER_SAVE_ERROR"] = "Cannot save because an error occurred.";
+$MESS["CRM_AI_FORM_FILL_MERGER_TITLE"] = "CoPilot suggests new field values";
+$MESS["CRM_AI_FORM_FILL_MERGER_TRANSCRIPTION"] = "Transcript";
+$MESS["CRM_AI_FORM_FILL_TOOLBAR_BUTTON_APPLY_ALL"] = "Apply all suggestions";
+$MESS["CRM_AI_FORM_FILL_TOOLBAR_BUTTON_ROLLBACK"] = "Restore previous values";
+$MESS["CRM_AI_FORM_FILL_TOOLBAR_CONFLICT_COUNT_TITLE"] = "Suggested new field values:";

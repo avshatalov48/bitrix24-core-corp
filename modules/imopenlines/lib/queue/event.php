@@ -890,20 +890,20 @@ class Event
 	 * @param bool $recursion
 	 * @return array
 	 */
-	public static function getLineIsDepartmentQueue($departments, $recursion = true)
+	public static function getLineIsDepartmentQueue($departments, bool $recursion = true): array
 	{
 		$result = [];
 
 		$fullDepartments = self::getParentDepartments($departments, $recursion);
 
-		if($fullDepartments)
+		if ($fullDepartments)
 		{
 			$queueListManager = ConfigQueueTable::getList(
 				[
 					'select' => ['CONFIG_ID'],
 					'filter' => [
-						'ENTITY_TYPE' => 'department',
-						'ENTITY_ID' => array_keys($fullDepartments)
+						'=ENTITY_TYPE' => 'department',
+						'=ENTITY_ID' => array_keys($fullDepartments)
 					],
 					'order' => [
 						'SORT' => 'ASC',

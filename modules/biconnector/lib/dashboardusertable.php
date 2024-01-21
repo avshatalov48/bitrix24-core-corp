@@ -24,7 +24,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\BIConnector
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DashboardUser_Query query()
+ * @method static EO_DashboardUser_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_DashboardUser_Result getById($id)
+ * @method static EO_DashboardUser_Result getList(array $parameters = [])
+ * @method static EO_DashboardUser_Entity getEntity()
+ * @method static \Bitrix\BIConnector\EO_DashboardUser createObject($setDefaultValues = true)
+ * @method static \Bitrix\BIConnector\EO_DashboardUser_Collection createCollection()
+ * @method static \Bitrix\BIConnector\EO_DashboardUser wakeUpObject($row)
+ * @method static \Bitrix\BIConnector\EO_DashboardUser_Collection wakeUpCollection($rows)
+ */
 
 class DashboardUserTable extends DataManager
 {

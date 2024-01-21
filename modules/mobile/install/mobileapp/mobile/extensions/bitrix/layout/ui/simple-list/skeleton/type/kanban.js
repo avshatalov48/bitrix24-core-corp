@@ -2,6 +2,8 @@
  * @module layout/ui/simple-list/skeleton/type/kanban
  */
 jn.define('layout/ui/simple-list/skeleton/type/kanban', (require, exports, module) => {
+
+	const AppTheme = require('apptheme');
 	const DEFAULT_LENGTH = 2;
 
 	/**
@@ -15,7 +17,7 @@ jn.define('layout/ui/simple-list/skeleton/type/kanban', (require, exports, modul
 				{
 					style: {
 						width: '100%',
-						marginTop: 20,
+						marginTop: this.props.fullScreen ? 20 : 0,
 					},
 				},
 
@@ -26,7 +28,8 @@ jn.define('layout/ui/simple-list/skeleton/type/kanban', (require, exports, modul
 		renderItems()
 		{
 			const length = (this.props.length || DEFAULT_LENGTH);
-			return Array(length).fill(this.renderItem());
+
+			return new Array(length).fill(this.renderItem());
 		}
 
 		renderItem()
@@ -37,7 +40,7 @@ jn.define('layout/ui/simple-list/skeleton/type/kanban', (require, exports, modul
 			return View(
 				{
 					style: {
-						backgroundColor: '#ffffff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						paddingTop: 23,
 						paddingLeft: 25,
 						paddingBottom: 25,
@@ -90,7 +93,7 @@ jn.define('layout/ui/simple-list/skeleton/type/kanban', (require, exports, modul
 								marginLeft: -10,
 							},
 							svg: {
-								content: '<svg width="25" height="34" viewBox="0 0 25 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M0 6C0 2.68629 2.68629 0 6 0H12.1383C14.2817 0 16.2623 1.1434 17.3342 2.99956L24.5526 15.4998C25.0887 16.4281 25.0887 17.5719 24.5526 18.5002L17.3342 31.0004C16.2623 32.8566 14.2817 34 12.1383 34H6C2.68629 34 0 31.3137 0 28V6Z" fill="#DFE0E3"/></svg>',
+								content: `<svg width="25" height="34" viewBox="0 0 25 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M0 6C0 2.68629 2.68629 0 6 0H12.1383C14.2817 0 16.2623 1.1434 17.3342 2.99956L24.5526 15.4998C25.0887 16.4281 25.0887 17.5719 24.5526 18.5002L17.3342 31.0004C16.2623 32.8566 14.2817 34 12.1383 34H6C2.68629 34 0 31.3137 0 28V6Z" fill="${AppTheme.colors.base6}"/></svg>`,
 							},
 						}),
 					),
@@ -196,7 +199,7 @@ jn.define('layout/ui/simple-list/skeleton/type/kanban', (require, exports, modul
 						height: 14,
 						width: 14,
 						borderRadius: 7,
-						backgroundColor: active ? '#dfe0e3' : '#eceaea',
+						backgroundColor: active ? AppTheme.colors.base6 : AppTheme.colors.base7,
 						position: 'relative',
 					},
 				}),
@@ -209,12 +212,14 @@ jn.define('layout/ui/simple-list/skeleton/type/kanban', (require, exports, modul
 				width,
 				height,
 				borderRadius: 3,
-				backgroundColor: '#dfe0e3',
+				backgroundColor: AppTheme.colors.base6,
 			};
+
 			if (marginTop)
 			{
 				style.marginTop = marginTop;
 			}
+
 			if (marginBottom)
 			{
 				style.marginBottom = marginBottom;
@@ -227,5 +232,4 @@ jn.define('layout/ui/simple-list/skeleton/type/kanban', (require, exports, modul
 	}
 
 	module.exports = { Kanban };
-
 });

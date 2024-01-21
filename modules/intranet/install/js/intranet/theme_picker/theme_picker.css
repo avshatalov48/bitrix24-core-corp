@@ -47,8 +47,8 @@
 
 .theme-dialog-item-default {
 	position: absolute;
-	top: 0;
-	right: 0;
+	top: 2px;
+	right: 2px;
 	padding: 0 10px;
 	line-height: 25px;
 	height: 25px;
@@ -57,10 +57,29 @@
 	font-size: 12px;
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-semi-bold, 600);
-	border-radius: var(--theme-dialog-item-border-radius, var(--ui-border-radius-md));
+	border-radius: var(--theme-dialog-item-border-radius, var(--ui-border-radius-pill));
 	-webkit-transition: .2s;
 	-o-transition: .2s;
 	transition: .2s;
+}
+
+.theme-dialog-item-new {
+	position: absolute;
+	bottom: 2px;
+	left: 2px;
+	padding: 0 10px;
+	line-height: 25px;
+	height: 25px;
+	background: rgba(255,255,255,.8);
+	color: #22709b;
+	font-size: 12px;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+	border-radius: var(--theme-dialog-item-border-radius, var(--ui-border-radius-pill));
+}
+
+.theme-dialog-item:hover .theme-dialog-item-new {
+	display: none;
 }
 
 .theme-dialog-item-video:before {

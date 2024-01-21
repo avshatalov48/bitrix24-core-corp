@@ -20,6 +20,7 @@ Extension::load([
 	'salescenter.app',
 	'salescenter.lib',
 	'ui.design-tokens',
+	'ui.dialogs.messagebox',
 	'ui.fonts.opensans',
 ]);
 ?>

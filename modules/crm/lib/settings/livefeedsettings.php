@@ -15,7 +15,7 @@ class LiveFeedSettings
 	/**
 	 * @return LiveFeedSettings
 	 */
-	public static function getCurrent()
+	public static function getCurrent(): LiveFeedSettings
 	{
 		if(self::$current === null)
 		{

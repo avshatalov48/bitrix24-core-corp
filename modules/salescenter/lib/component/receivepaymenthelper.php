@@ -4,13 +4,24 @@ namespace Bitrix\SalesCenter\Component;
 
 use Bitrix\Crm\Activity\Provider\BaseMessage;
 use Bitrix\Crm\Activity\Provider\Sms;
+use Bitrix\Crm\Integration\SmsManager;
+use Bitrix\Crm\MessageSender\SenderRepository;
 use Bitrix\Crm\Order\Payment;
+use Bitrix\Main\Loader;
+use Bitrix\MessageService\Message;
+use Bitrix\SalesCenter\Integration\CrmManager;
+use Bitrix\SalesCenter\Integration\ImOpenLinesManager;
 
 class ReceivePaymentHelper
 {
 	public static function getSendersData(): ?array
 	{
-		$senders = \Bitrix\Crm\MessageSender\SenderRepository::getPrioritizedList();
+		if (!Loader::includeModule('crm'))
+		{
+			return null;
+		}
+
+		$senders = SenderRepository::getPrioritizedList();
 		if (empty($senders))
 		{
 			return null;
@@ -26,7 +37,7 @@ class ReceivePaymentHelper
 				'connectUrl' => $sender::getConnectUrl(),
 				'usageErrors' =>  $sender::getUsageErrors()
 			];
-			if ($sender::getSenderCode() === \Bitrix\Crm\Integration\SmsManager::getSenderCode())
+			if ($sender::getSenderCode() === SmsManager::getSenderCode())
 			{
 				$senderData['smsSenders'] = self::getSmsSenderList();
 			}
@@ -73,19 +84,19 @@ class ReceivePaymentHelper
 
 			return [
 				'provider' => in_array($provider, $availableProviders) ? $provider : $defaultProvider,
-				'text' => $lastPaymentSms ?? \Bitrix\SalesCenter\Integration\CrmManager::getInstance()->getSmsTemplate(),
-				'defaultText' => \Bitrix\SalesCenter\Integration\CrmManager::getInstance()->getDefaultSmsTemplate(),
-				'defaultTextWrapped' => \Bitrix\SalesCenter\Integration\CrmManager::getInstance()->getDefaultWrappedSmsTemplate(),
+				'text' => $lastPaymentSms ?? CrmManager::getInstance()->getSmsTemplate(),
+				'defaultText' => CrmManager::getInstance()->getDefaultSmsTemplate(),
+				'defaultTextWrapped' => CrmManager::getInstance()->getDefaultWrappedSmsTemplate(),
 				'sent' => (bool)$lastPaymentSms,
-				'text_modes' => \Bitrix\SalesCenter\Integration\CrmManager::getInstance()->getAllSmsTemplates(),
+				'text_modes' => CrmManager::getInstance()->getAllSmsTemplates(),
 			];
 		}
 
 		if ($type === 'chat')
 		{
 			return [
-				'text' => \Bitrix\SalesCenter\Integration\ImOpenLinesManager::getInstance()->getImMessagePreview(),
-				'text_modes' => \Bitrix\SalesCenter\Integration\ImOpenLinesManager::getInstance()->getAllImMessagePreviews(),
+				'text' => ImOpenLinesManager::getInstance()->getImMessagePreview(),
+				'text_modes' => ImOpenLinesManager::getInstance()->getAllImMessagePreviews(),
 			];
 		}
 
@@ -94,7 +105,7 @@ class ReceivePaymentHelper
 
 	private static function getLastPaymentSmsParams(?Payment $payment = null): ?array
 	{
-		if (!$payment || !\Bitrix\Main\Loader::includeModule('messageservice'))
+		if (!$payment || !Loader::includeModule('messageservice'))
 		{
 			return null;
 		}
@@ -123,7 +134,7 @@ class ReceivePaymentHelper
 			return null;
 		}
 
-		$message = \Bitrix\MessageService\Message::getFieldsById((int)$activity['ASSOCIATED_ENTITY_ID']);
+		$message = Message::getFieldsById((int)$activity['ASSOCIATED_ENTITY_ID']);
 
 		return is_array($message) ? $message : null;
 	}
@@ -147,7 +158,7 @@ class ReceivePaymentHelper
 		$result = [];
 		$restSender = null;
 
-		$senderList = \Bitrix\Crm\Integration\SmsManager::getSenderInfoList(true);
+		$senderList = SmsManager::getSenderInfoList(true);
 		foreach ($senderList as $sender)
 		{
 			if ($sender['canUse'])

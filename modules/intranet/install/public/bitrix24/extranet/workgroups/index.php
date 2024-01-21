@@ -1,5 +1,7 @@
-<?
+<?php
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
+\CModule::IncludeModule('intranet');
+use Bitrix\Intranet;
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/extranet/workgroups/index.php");
 $APPLICATION->SetTitle(GetMessage("TITLE"));
 ?>
@@ -48,8 +50,8 @@ $APPLICATION->IncludeComponent("bitrix:socialnetwork_group", "", array(
 	"USER_PROPERTY_PERSONAL" => array(
 	),
 	"AJAX_LONG_TIMEOUT" => "60",
-	"BLOG_GROUP_ID" => $GLOBAL_BLOG_GROUP[SITE_ID],
-	"FORUM_ID" => $GLOBAL_FORUM_ID["USERS_AND_GROUPS"],//"#FORUM_ID#",
+	"BLOG_GROUP_ID" => Intranet\Integration\Wizards\Portal\Ids::getBlogId(),
+	"FORUM_ID" => Intranet\Integration\Wizards\Portal\Ids::getForumId('USERS_AND_GROUPS'),//"#FORUM_ID#",
 	"CALENDAR_ALLOW_SUPERPOSE" => "Y",
 	"CALENDAR_ALLOW_RES_MEETING" => "Y",
 	// "CALENDAR_IBLOCK_TYPE" => "events",
@@ -68,18 +70,18 @@ $APPLICATION->IncludeComponent("bitrix:socialnetwork_group", "", array(
 	// "CALENDAR_SUPERPOSE_GROUPS_CALS" => "Y",
 	// "CALENDAR_ALLOW_RES_MEETING" => "N",
 	// "CALENDAR_ALLOW_VIDEO_MEETING" => "N",
-	"TASK_FORUM_ID" => $GLOBAL_FORUM_ID["GROUPS_AND_USERS_TASKS_COMMENTS_EXTRANET"],// "#TASKS_FORUM_ID#",
+	"TASK_FORUM_ID" => Intranet\Integration\Wizards\Portal\Ids::getForumId('GROUPS_AND_USERS_TASKS_COMMENTS_EXTRANET'),// "#TASKS_FORUM_ID#",
 	"FILES_GROUP_IBLOCK_TYPE" => "library",
-	"FILES_GROUP_IBLOCK_ID" => $GLOBAL_IBLOCK_ID["group_files"],//"#FILES_GROUP_IBLOCK_ID#",
+	"FILES_GROUP_IBLOCK_ID" => Intranet\Integration\Wizards\Portal\Ids::getIblockId('group_files'),
 	"FILES_USE_AUTH" => "Y",
 	"NAME_FILE_PROPERTY" => "FILE",
 	"FILES_UPLOAD_MAX_FILESIZE" => "1024",
 	"FILES_UPLOAD_MAX_FILE" => "5",
 	"FILES_USE_COMMENTS" => "Y",
-	"FILES_FORUM_ID" => $GLOBAL_FORUM_ID["GROUPS_AND_USERS_FILES_COMMENTS"],//"#FILES_FORUM_ID#",
+	"FILES_FORUM_ID" => Intranet\Integration\Wizards\Portal\Ids::getForumId('GROUPS_AND_USERS_FILES_COMMENTS'),//"#FILES_FORUM_ID#",
 	"FILES_USE_CAPTCHA" => "Y",
 	"PHOTO_GROUP_IBLOCK_TYPE" => "photos",
-	"PHOTO_GROUP_IBLOCK_ID" => $GLOBAL_IBLOCK_ID["group_photogallery"],//"#PHOTO_GROUP_IBLOCK_ID#",
+	"PHOTO_GROUP_IBLOCK_ID" => Intranet\Integration\Wizards\Portal\Ids::getIblockId('group_photogallery'),
 	"PHOTO_UPLOAD_MAX_FILESIZE" => "64",
 	"PHOTO_UPLOAD_MAX_FILE" => "4",
 	"PHOTO_ALBUM_PHOTO_THUMBS_SIZE" => "100",
@@ -92,7 +94,7 @@ $APPLICATION->IncludeComponent("bitrix:socialnetwork_group", "", array(
 	"PHOTO_USE_COMMENTS" => "Y",
 	"PHOTO_ORIGINAL_SIZE" => "1024",
 	"PHOTO_UPLOADER_TYPE" => "form",
-	"PHOTO_FORUM_ID" => $GLOBAL_FORUM_ID["PHOTOGALLERY_COMMENTS"],//"#PHOTOGALLERY_FORUM_ID#",
+	"PHOTO_FORUM_ID" => Intranet\Integration\Wizards\Portal\Ids::getForumId('PHOTOGALLERY_COMMENTS'),//"#PHOTOGALLERY_FORUM_ID#",
 	"PHOTO_USE_CAPTCHA" => "Y",
 	"AJAX_OPTION_ADDITIONAL" => "",
 	"SEF_URL_TEMPLATES" => array(

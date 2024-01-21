@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Bitrix\CrmMobile\Kanban;
-
 
 use Bitrix\Crm\Traits\Singleton;
 use Bitrix\Main\ArgumentException;
@@ -40,11 +38,9 @@ final class ItemIndicator
 		return [
 			self::OWN_TYPE => [
 				'id' => self::OWN_TYPE,
-				'color' => '#0091e3',
 			],
 			self::SOMEONE_TYPE => [
 				'id' => self::SOMEONE_TYPE,
-				'color' => '#bdc1c6',
 			],
 		];
 	}

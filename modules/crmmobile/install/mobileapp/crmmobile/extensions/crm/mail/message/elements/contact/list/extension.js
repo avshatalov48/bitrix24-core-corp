@@ -2,6 +2,7 @@
  * @module crm/mail/message/elements/contact/list
  */
 jn.define('crm/mail/message/elements/contact/list', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { ContactCard } = require('crm/mail/message/elements/contact/card');
 	const { PureComponent } = require('layout/pure-component');
 
@@ -29,7 +30,7 @@ jn.define('crm/mail/message/elements/contact/list', (require, exports, module) =
 						paddingRight: 3,
 						fontWeight: '400',
 						fontSize: 13,
-						color: '#959CA4',
+						color: AppTheme.colors.base4,
 					},
 					text: title,
 				});

@@ -38,6 +38,7 @@ abstract class RecyclableEntity implements Recyclebin\Internals\Contracts\Recycl
 
 	/**
 	 * Prepare entity view.
+	 *
 	 * @param Recyclebin\Internals\Entity $entity
 	 * @return boolean|void
 	 * @throws Main\NotImplementedException

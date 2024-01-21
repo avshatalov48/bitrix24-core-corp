@@ -409,7 +409,7 @@ class DialogSession
 		}
 
 		$filter['=CLOSED'] = 0;
-		$filter['>SESSION_ID'] = 0;
+		$filter['!=SESSION_ID'] = 0;
 		$days = self::EXPIRES_DAYS;
 		$filter['>DATE_CREATE'] = (new \Bitrix\Main\Type\DateTime())->add("-{$days}D");
 

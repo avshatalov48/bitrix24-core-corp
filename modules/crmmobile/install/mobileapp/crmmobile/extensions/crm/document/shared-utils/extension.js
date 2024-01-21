@@ -3,6 +3,7 @@
  */
 jn.define('crm/document/shared-utils', (require, exports, module) => {
 	const { hashCode } = require('utils/hash');
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @param {string|function():string|null} message
@@ -10,16 +11,18 @@ jn.define('crm/document/shared-utils', (require, exports, module) => {
 	function showTooltip(message)
 	{
 		const title = typeof message === 'function' ? message() : message;
+
 		if (!title)
 		{
 			return;
 		}
+
 		const params = {
 			title,
 			showCloseButton: true,
 			id: String(hashCode(title)),
-			backgroundColor: '#000000',
-			textColor: '#ffffff',
+			backgroundColor: AppTheme.colors.bgPrimary,
+			textColor: AppTheme.colors.base0,
 			hideOnTap: true,
 			autoHide: true,
 		};

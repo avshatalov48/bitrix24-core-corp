@@ -32,7 +32,7 @@ final class EventHandler
 			);
 
 			$messages = $controller->getAdditionalMessages();
-			$messages->add($controller->getMainMessage());
+			$messages->add($controller->getOriginalMessage());
 		}
 		catch (Throwable $throwable)
 		{

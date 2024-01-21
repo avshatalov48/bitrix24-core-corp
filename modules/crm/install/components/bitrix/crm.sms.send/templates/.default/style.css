@@ -83,6 +83,15 @@
 	overflow: auto;
 }
 
+.crm-sms-send-textarea.--readonly {
+	resize: none;
+	cursor: default;
+}
+
+.crm-sms-send-symbol.--hidden {
+	display: none;
+}
+
 .crm-sms-send-symbol-text {
 	color: #b0b7bd;
 	font: 12px/20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));

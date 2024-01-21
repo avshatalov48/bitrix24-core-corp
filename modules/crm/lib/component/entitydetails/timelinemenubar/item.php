@@ -57,6 +57,11 @@ abstract class Item
 		return $this->context->getEntityId();
 	}
 
+	protected function getEntityCategoryId(): ?int
+	{
+		return $this->context->getEntityCategoryId();
+	}
+
 	protected function prepareSettings(): array
 	{
 		return [];

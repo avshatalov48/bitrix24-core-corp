@@ -9,8 +9,6 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Type\Date;
-use function Symfony\Component\String\s;
-
 
 class RestrictionManager
 {

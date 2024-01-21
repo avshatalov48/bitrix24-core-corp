@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Uf;
 
+use Bitrix\Disk\Integration\Calendar\EventConnectorHelperHandler;
 use Bitrix\Disk\Ui;
 use Bitrix\Main\Localization\Loc;
 
@@ -10,6 +11,14 @@ Loc::loadMessages(__FILE__);
 final class CalendarEventConnector extends StubConnector
 {
 	private $canRead = null;
+	private string $xmlId = '';
+
+	public function setXmlId(string $xmlId): self
+	{
+		$this->xmlId = $xmlId;
+
+		return $this;
+	}
 
 	public function canRead($userId)
 	{
@@ -17,7 +26,15 @@ final class CalendarEventConnector extends StubConnector
 		{
 			return $this->canRead;
 		}
-		$this->canRead = \CCalendarEvent::canView($this->entityId, $userId);
+		$eventConnectorHelper = EventConnectorHelperHandler::getHandler($userId, $this->xmlId);
+
+		$actualEventId = $eventConnectorHelper?->findActualEventId();
+		if ($actualEventId > 0)
+		{
+			$this->entityId = $actualEventId;
+		}
+
+		$this->canRead = $eventConnectorHelper?->canView($this->entityId, $userId) ?? false;
 
 		return $this->canRead;
 	}

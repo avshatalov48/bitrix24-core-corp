@@ -1,0 +1,84 @@
+.intranet-settings-widget__logo-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-left: 2px;
+	min-width: 24px;
+	height: 24px;
+	cursor: pointer;
+}
+
+/* -- Spotlight usage only  -- */
+.header-logo-block .intranet-settings-widget__logo-btn {
+	visibility: hidden;
+}
+
+.menu-collapsed-mode .header-logo-block .intranet-settings-widget__logo-btn {
+	visibility: visible;
+}
+
+.menu-scroll-mode.menu-logo-mask-mode .menu-items-block .intranet-settings-widget__logo-btn {
+	visibility: hidden;
+}
+/* -- -- */
+
+.intranet-settings-widget__logo-btn .ui-icon-set {
+	margin-top: 3px;
+	--ui-icon-set__icon-size: 19px;
+	--ui-icon-set__icon-color: rgba(var(--ui-color-background-primary-rgb), var(--ui-opacity-50));
+	transition: background-color .3s;
+}
+
+.intranet-settings-widget__logo-btn .ui-icon-set:hover {
+	--ui-icon-set__icon-color: rgba(var(--ui-color-background-primary-rgb), var(--ui-opacity-70));
+}
+
+.bitrix24-dark-theme .intranet-settings-widget__logo-btn .ui-icon-set {
+	--ui-icon-set__icon-color: rgba(var(--ui-color-base-90-rgb), var(--ui-opacity-70));
+}
+
+.bitrix24-dark-theme .intranet-settings-widget__logo-btn .ui-icon-set:hover {
+	--ui-icon-set__icon-color: rgba(var(--ui-color-base-90-rgb), var(--ui-opacity-90));
+}
+
+
+.intranet-settings-widget__container {
+	overflow: hidden;
+}
+
+.intranet-settings-widget__skeleton,
+.intranet-settings-widget__skeleton-not-admin,
+.intranet-settings-widget__skeleton-no-holding,
+.intranet-settings-widget__skeleton-no-requisite,
+.intranet-settings-widget__skeleton-no-requisite-holding {
+	width: 404px !important;
+	margin-top: -28px;
+	margin-left: -39px;
+	margin-bottom: -13px;
+}
+
+.intranet-settings-widget__skeleton {
+	background-image: url("images/intranet-settings-widget-skeleton-xl.svg");
+	height: 354px !important;
+	margin-left: -33px;
+}
+
+.intranet-settings-widget__skeleton-no-requisite {
+	background-image: url("images/intranet-settings-widget-skeleton-sm.svg");
+	height: 292px !important;
+}
+
+.intranet-settings-widget__skeleton-no-holding {
+	background-image: url("images/intranet-settings-widget-skeleton-md.svg");
+	height: 278px !important;
+}
+
+.intranet-settings-widget__skeleton-no-requisite-holding {
+	background-image: url("images/intranet-settings-widget-skeleton-xs.svg");
+	height: 215px !important;
+}
+
+.intranet-settings-widget__skeleton-not-admin {
+	background-image: url("images/intranet-settings-widget-skeleton-2xs.svg");
+	height: 230px !important;
+}

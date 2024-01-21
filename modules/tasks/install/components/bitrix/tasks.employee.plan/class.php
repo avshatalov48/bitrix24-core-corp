@@ -10,6 +10,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserTable;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Util\Result;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\Error;
@@ -207,6 +208,18 @@ class TasksEmployeePlanComponent extends TasksBaseComponent
 		}
 
 		return $errors->checkHasFatals();
+	}
+
+	protected static function checkIfToolAvailable(array &$arParams, array &$arResult, Collection $errors, array $auxParams): void
+	{
+		parent::checkIfToolAvailable($arParams, $arResult, $errors, $auxParams);
+
+		if (!$arResult['IS_TOOL_AVAILABLE'])
+		{
+			return;
+		}
+
+		$arResult['IS_TOOL_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['employee_plan']);
 	}
 
 	protected function getData()

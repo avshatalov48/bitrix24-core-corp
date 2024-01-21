@@ -4,27 +4,24 @@ IncludeModuleLangFile(__FILE__);
 
 class CIntranetUtils
 {
+	private static array $cache = [];
+
 	private static $SECTIONS_SETTINGS_CACHE = null;
 
-	public static function GetUserDepartments($USER_ID)
+	public static function GetUserDepartments(int $userId)
 	{
-		static $cache = array();
-		$USER_ID = intval($USER_ID);
-		if (!isset($cache[$USER_ID]))
+		if (!isset(self::$cache[$userId])
+			&&
+			($arRes = CUser::GetList('ID', 'ASC',
+				['ID' => $userId],
+				['SELECT' => ['UF_DEPARTMENT'], 'FIELDS' => ['ID']]
+			)->Fetch())
+		)
 		{
-			$dbRes = CUser::GetList(
-				'ID', 'ASC',
-				array('ID' => $USER_ID),
-				array('SELECT' => array('UF_DEPARTMENT'), 'FIELDS' => array('ID'))
-			);
-			$arRes = $dbRes->Fetch();
-			if ($arRes)
-			{
-				$cache[$USER_ID] = $arRes['UF_DEPARTMENT'];
-			}
+			self::$cache[$userId] = $arRes['UF_DEPARTMENT'];
 		}
 
-		return $cache[$USER_ID];
+		return self::$cache[$userId] ?? null;
 	}
 
 
@@ -324,6 +321,7 @@ class CIntranetUtils
 
 		$imageID = intval($imageID);
 
+		$arFileTmp = [];
 		if($imageID > 0)
 		{
 			$imageFile = CFile::GetFileArray($imageID);
@@ -1057,9 +1055,9 @@ class CIntranetUtils
 
 		$cnt = 0;
 
-		$arSection = self::$SECTIONS_SETTINGS_CACHE['DATA'][$section_id];
+		$arSection = self::$SECTIONS_SETTINGS_CACHE['DATA'][$section_id] ?? null;
 
-		if (is_array($arSection['EMPLOYEES']))
+		if ($arSection && is_array($arSection['EMPLOYEES']))
 		{
 			if (!is_array($arAccessUsers))
 				$cnt = count($arSection['EMPLOYEES']);
@@ -1068,7 +1066,9 @@ class CIntranetUtils
 		}
 
 		if (
-			$arSection['UF_HEAD'] > 0 && !in_array($arSection['UF_HEAD'], $arSection['EMPLOYEES'])
+			$arSection
+			&& $arSection['UF_HEAD'] > 0
+			&& !in_array($arSection['UF_HEAD'], $arSection['EMPLOYEES'])
 			&& (
 				!$arAccessUsers
 				|| $arSection['UF_HEAD'] > 0 && is_array($arAccessUsers) && in_array($arSection['UF_HEAD'], $arAccessUsers)
@@ -1078,7 +1078,7 @@ class CIntranetUtils
 			$cnt++;
 		}
 
-		if (self::$SECTIONS_SETTINGS_CACHE['TREE'][$section_id])
+		if (array_key_exists($section_id, self::$SECTIONS_SETTINGS_CACHE['TREE']) && self::$SECTIONS_SETTINGS_CACHE['TREE'][$section_id])
 		{
 			foreach (self::$SECTIONS_SETTINGS_CACHE['TREE'][$section_id] as $dpt)
 				$cnt += self::GetEmployeesCountForSorting ($dpt, 0, $arAccessUsers);
@@ -1110,7 +1110,7 @@ class CIntranetUtils
 
 	private static function _GetEmployeesForSorting($section_id, &$amount, &$start, &$arUserIDs, $arAccessUsers)
 	{
-		if (self::$SECTIONS_SETTINGS_CACHE['DATA'][$section_id])
+		if (array_key_exists($section_id, self::$SECTIONS_SETTINGS_CACHE['DATA']) && self::$SECTIONS_SETTINGS_CACHE['DATA'][$section_id])
 		{
 			if (self::$SECTIONS_SETTINGS_CACHE['DATA'][$section_id]['UF_HEAD'])
 			{

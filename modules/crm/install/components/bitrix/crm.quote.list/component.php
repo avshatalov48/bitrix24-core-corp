@@ -146,24 +146,7 @@ if($arResult['CAN_CONVERT'])
 	$arResult['CONVERSION_CONFIG'] = $config;
 }
 
-
-if(LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
-{
-	$arResult['TIME_FORMAT'] = array(
-		'tommorow' => 'tommorow',
-		's' => 'sago',
-		'i' => 'iago',
-		'H3' => 'Hago',
-		'today' => 'today',
-		'yesterday' => 'yesterday',
-		//'d7' => 'dago',
-		'-' => Main\Type\DateTime::convertFormatToPhp(FORMAT_DATE)
-	);
-}
-else
-{
-	$arResult['TIME_FORMAT'] = preg_replace('/:s$/', '', Main\Type\DateTime::convertFormatToPhp(FORMAT_DATETIME));
-}
+$arResult['TIME_FORMAT'] = CCrmDateTimeHelper::getDefaultDateTimeFormat();
 
 CUtil::InitJSCore(array('ajax', 'tooltip'));
 
@@ -273,6 +256,11 @@ if (!$bInternal)
 		$effectiveFilterFieldIDs[] = 'ACTIVITY_RESPONSIBLE_IDS';
 	}
 
+	if(!in_array('ACTIVITY_FASTSEARCH_CREATED', $effectiveFilterFieldIDs, true))
+	{
+		$effectiveFilterFieldIDs[] = 'ACTIVITY_FASTSEARCH_CREATED';
+	}
+
 	Tracking\UI\Filter::appendEffectiveFields($effectiveFilterFieldIDs);
 	//endregion
 
@@ -342,15 +330,6 @@ foreach ($utmList as $utmCode => $utmName)
 
 $CCrmUserType->ListAddHeaders($arResult['HEADERS']);
 
-$arResult['HEADERS_SECTIONS'] = [
-	[
-		'id' => 'QUOTE',
-		'name' => Loc::getMessage('CRM_COLUMN_QUOTE_MSGVER_1'),
-		'default' => true,
-		'selected' => true,
-	],
-];
-
 Crm\Service\Container::getInstance()->getParentFieldManager()->prepareGridHeaders(
 	\CCrmOwnerType::Quote,
 	$arResult['HEADERS']
@@ -365,6 +344,10 @@ if (
 {
 	$arResult['HEADERS'][] = ['id' => Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME, 'name' => $factory->getFieldCaption(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'sort' => mb_strtolower(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'first_order' => 'desc', 'class' => 'datetime'];
 }
+
+$arResult['HEADERS_SECTIONS'] = \Bitrix\Crm\Filter\HeaderSections::getInstance()
+	->sections($factory);
+
 unset($factory);
 
 //region Check and fill fields restriction

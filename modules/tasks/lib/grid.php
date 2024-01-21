@@ -1,6 +1,9 @@
 <?php
 namespace Bitrix\Tasks;
 
+use Bitrix\Tasks\Grid\Scope\ScopeFactory;
+use Bitrix\Tasks\Grid\ScopeInterface;
+
 /**
  * Class Grid
  *
@@ -8,13 +11,11 @@ namespace Bitrix\Tasks;
  */
 abstract class Grid
 {
-	protected $rows = [];
-	protected $parameters = [];
+	protected array $headers = [];
+	protected ?ScopeInterface $scope = null;
 
-	public function __construct(array $rows = [], array $parameters = [])
+	public function __construct(protected array $rows = [], protected array $parameters = [])
 	{
-		$this->rows = $rows;
-		$this->parameters = $parameters;
 	}
 
 	abstract public function prepareHeaders(): array;
@@ -26,9 +27,9 @@ abstract class Grid
 		return $this->rows;
 	}
 
-	public function setRows(array $rows): void
+	public function getHeaders(): array
 	{
-		$this->rows = $rows;
+		return $this->headers;
 	}
 
 	public function getParameters(): array
@@ -36,8 +37,24 @@ abstract class Grid
 		return $this->parameters;
 	}
 
+	public function setRows(array $rows): void
+	{
+		$this->rows = $rows;
+	}
+
 	public function setParameters(array $parameters): void
 	{
 		$this->parameters = $parameters;
+	}
+
+	public function setScope(?string $scope): static
+	{
+		$this->scope = ScopeFactory::getScope((string)$scope, $this);
+		return $this;
+	}
+
+	public function isInScope(): bool
+	{
+		return !is_null($this->scope);
 	}
 }

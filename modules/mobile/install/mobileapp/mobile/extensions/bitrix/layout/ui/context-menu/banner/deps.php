@@ -3,8 +3,9 @@
 return [
 	'extensions' => [
 		'loc',
-		'utils/prop',
-		'qrauth',
 		'type',
+		'qrauth',
+		'apptheme',
+		'utils/prop',
 	],
 ];

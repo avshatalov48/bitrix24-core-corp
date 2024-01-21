@@ -34,7 +34,7 @@ abstract class GetBaseDocumentListAction extends BaseAction
 	{
 		if (empty($documentTypes))
 		{
-			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_ERROR_DOCUMENTS_NOT_FOUND')));
+			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_ERROR_DOCUMENTS_NOT_FOUND_MSGVER_2')));
 
 			return $this->showErrors();
 		}

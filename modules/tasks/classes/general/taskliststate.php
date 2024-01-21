@@ -92,14 +92,12 @@ class CTaskListState
 	private $userId = null;
 	private static $instancesOfSelf = array();
 
-
 	/**
 	 * Get instance of multiton
 	 *
-	 * @param integer $userId
-	 * @return CTaskListState
+	 * @throws CTaskAssertException
 	 */
-	public static function getInstance($userId, int $groupId = 0)
+	public static function getInstance($userId, int $groupId = 0): static
 	{
 		CTaskAssert::assertLaxIntegers($userId);
 		CTaskAssert::assert($userId > 0);

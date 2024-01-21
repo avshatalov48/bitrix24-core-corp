@@ -61,11 +61,7 @@ class Sms extends Base
 		return [
 			'enable' => SmsManager::canUse(),
 			'manageUrl' => SmsManager::getManageUrl(),
-			'contactCenterUrl' => (
-				Loader::includeModule('bitrix24')
-					? '/contact_center/'
-					: '/services/contact_center/'
-			),
+			'contactCenterUrl' => Container::getInstance()->getRouter()->getContactCenterUrl(),
 			'canSendMessage' => SmsManager::canSendMessage(),
 			'statusDescription' => SmsManager::getMessageStatusDescriptions(),
 			'statusSemantics' => SmsManager::getMessageStatusSemantics(),

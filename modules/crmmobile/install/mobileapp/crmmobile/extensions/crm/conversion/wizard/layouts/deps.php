@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'loc',
+		'apptheme',
 		'utils/array',
 		'assets/common',
 		'notify-manager',

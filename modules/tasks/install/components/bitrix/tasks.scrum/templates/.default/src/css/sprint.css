@@ -389,9 +389,35 @@
 	padding-top: 7px;
 }
 
+.sn-spaces .tasks-scrum__container .tasks-scrum__sprint--btn-run.ui-btn {
+	width: 46px;
+	font-size: 0;
+	background-repeat: no-repeat;
+	background-position: 51% center;
+	background-image: url(data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='13'%3E%3Cpath fill='%23FFF' fill-rule='evenodd' d='M2.252.471l8.917 5.164a1 1 0 010 1.73L2.252 12.53a1 1 0 01-1.501-.866V1.337A1 1 0 012.252.47z'/%3E%3C/svg%3E);
+}
+
+.sn-spaces .tasks-scrum__container .tasks-scrum__sprints--active .tasks-scrum__sprint--btn-run.ui-btn {
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='11' viewBox='0 0 13 11'%3E%3Crect width='12' height='11' x='17.5' y='10' fill='%23FFF' fill-rule='evenodd' rx='1' transform='translate(-17 -10)'/%3E%3C/svg%3E");
+}
+
 @media (max-width: 1795px) {
 	.bx-layout-table:not(.menu-collapsed-mode) .tasks-scrum__container.--width-priority-backlog .tasks-scrum__name-container {
 		max-width: 32%;
+	}
+}
+
+@media (max-width: 1630px) {
+	.sn-spaces:not(.--list-collapsed-mode) .tasks-scrum__sprint--btn-run.ui-btn {
+		width: 46px;
+		font-size: 0;
+		background-repeat: no-repeat;
+		background-position: 51% center;
+		background-image: url(data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='13'%3E%3Cpath fill='%23FFF' fill-rule='evenodd' d='M2.252.471l8.917 5.164a1 1 0 010 1.73L2.252 12.53a1 1 0 01-1.501-.866V1.337A1 1 0 012.252.47z'/%3E%3C/svg%3E);
+	}
+
+	.sn-spaces:not(.--list-collapsed-mode) .tasks-scrum__sprints--active .tasks-scrum__sprint--btn-run.ui-btn {
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='11' viewBox='0 0 13 11'%3E%3Crect width='12' height='11' x='17.5' y='10' fill='%23FFF' fill-rule='evenodd' rx='1' transform='translate(-17 -10)'/%3E%3C/svg%3E");
 	}
 }
 
@@ -414,8 +440,62 @@
 	.bx-layout-table:not(.menu-collapsed-mode) .tasks-scrum__container.--width-priority-backlog .tasks-scrum__sprints--planned .tasks-scrum__sprint--btn-run.ui-btn {
 		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='13' viewBox='0 0 12 13'%3E%3Cpath fill='%23FFF' fill-rule='evenodd' d='M20.2520295,9.47114528 L29.1693089,14.6346086 C29.6472514,14.9113565 29.8103518,15.5231539 29.5336039,16.0010964 C29.4460735,16.1522611 29.3204735,16.277861 29.1693089,16.3653914 L20.2520295,21.5288547 C19.774087,21.8056026 19.1622895,21.6425022 18.8855416,21.1645597 C18.7973656,21.0122801 18.7509331,20.8394294 18.7509331,20.6634633 L18.7509331,10.3365367 C18.7509331,9.78425198 19.1986483,9.33653673 19.7509331,9.33653673 C19.9268992,9.33653673 20.0997499,9.38296926 20.2520295,9.47114528 Z' transform='translate(-18 -9)'/%3E%3C/svg%3E");
 	}
+
+	.sn-spaces:not(.--list-collapsed-mode) .tasks-scrum__container.--width-priority-backlog .tasks-scrum__sprint--event-content {
+		display: none;
+	}
+
+	.sn-spaces:not(.--list-collapsed-mode) .tasks-scrum__container.--width-priority-backlog .tasks-scrum__sprint--info {
+		min-width: 25px;
+		gap: 7px;
+	}
+
+	.sn-spaces:not(.--list-collapsed-mode) .tasks-scrum__container.--width-priority-backlog .tasks-scrum__name-container {
+		max-width: 50%;
+	}
 }
 
+@media (max-width: 1570px) {
+	.sn-spaces:not(.--list-collapsed-mode) .tasks-scrum__name-container {
+		max-width: 26%;
+	}
+
+	.bx-layout-table:not(.menu-collapsed-mode) .sn-spaces .tasks-scrum__container .tasks-scrum__sprint--btn-run.ui-btn {
+		width: 46px;
+		font-size: 0;
+		background-repeat: no-repeat;
+		background-position: 51% center;
+		background-image: url(data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='13'%3E%3Cpath fill='%23FFF' fill-rule='evenodd' d='M2.252.471l8.917 5.164a1 1 0 010 1.73L2.252 12.53a1 1 0 01-1.501-.866V1.337A1 1 0 012.252.47z'/%3E%3C/svg%3E);
+	}
+
+	.bx-layout-table:not(.menu-collapsed-mode) .sn-spaces .tasks-scrum__container .tasks-scrum__sprints--active .tasks-scrum__sprint--btn-run.ui-btn {
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='11' viewBox='0 0 13 11'%3E%3Crect width='12' height='11' x='17.5' y='10' fill='%23FFF' fill-rule='evenodd' rx='1' transform='translate(-17 -10)'/%3E%3C/svg%3E");
+	}
+}
+
+@media (max-width: 1450px) {
+	.sn-spaces:not(.--list-collapsed-mode) .tasks-scrum__name-container {
+		max-width: 56%;
+	}
+
+	.sn-spaces:not(.--list-collapsed-mode) .tasks-scrum__backlog-btn.ui-btn {
+		font-size: 0;
+		padding-right: 10px;
+	}
+
+	.sn-spaces:not(.--list-collapsed-mode) .tasks-scrum__backlog-btn.ui-btn::after {
+		left: 9px;
+	}
+
+	.sn-spaces:not(.--list-collapsed-mode) .tasks-scrum__sprint--info {
+		min-width: 25px;
+		gap: 7px;
+	}
+
+	.sn-spaces:not(.--list-collapsed-mode) .tasks-scrum__sprint--event-content {
+		display: none;
+	}
+}
 
 @media (max-width: 1420px) {
 	.bx-layout-table:not(.menu-collapsed-mode) .tasks-scrum__name-container {
@@ -473,5 +553,36 @@
 
 	.bx-layout-table:not(.menu-collapsed-mode) .tasks-scrum__container.--width-priority-backlog .tasks-scrum__name-container {
 		max-width: calc(100% - 35px - 56px - 142px);
+	}
+
+	.sn-spaces:not(.--list-collapsed-mode) .tasks-scrum__content.--with-header .tasks-scrum__name-container {
+		max-width: 53%;
+	}
+
+	.sn-spaces:not(.--list-collapsed-mode) .tasks-scrum__container.--width-priority-backlog .tasks-scrum__sprint--info {
+		min-width: 25px;
+	}
+}
+
+@media (max-width: 1380px) {
+	.sn-spaces:not(.--list-collapsed-mode) .tasks-scrum__sprint--info {
+		min-width: 25px;
+		gap: 7px;
+	}
+
+	.sn-spaces:not(.--list-collapsed-mode) .tasks-scrum__sprint--event-content {
+		display: none;
+	}
+
+	.sn-spaces:not(.--list-collapsed-mode) .tasks-scrum__content.--with-header .tasks-scrum__name-container {
+		max-width: 50%;
+	}
+
+	.sn-spaces:not(.--list-collapsed-mode) .tasks-scrum__sprint--btn-burn-down-chart {
+		display: none;
+	}
+
+	.sn-spaces.--list-collapsed-mode .tasks-scrum__sprint--btn-burn-down-chart {
+		display: none;
 	}
 }

@@ -2,12 +2,13 @@
  * @module crm/timeline/item/ui/body/blocks/client-mark
  */
 jn.define('crm/timeline/item/ui/body/blocks/client-mark', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 
 	const ClientMarkColor = {
-		positive: '#9dcf00',
-		neutral: '#ffa900',
-		negative: '#ff5752',
+		positive: AppTheme.colors.accentMainSuccess,
+		neutral: AppTheme.colors.accentMainWarning,
+		negative: AppTheme.colors.accentMainAlert,
 	};
 
 	const Mark = {
@@ -74,3 +75,4 @@ jn.define('crm/timeline/item/ui/body/blocks/client-mark', (require, exports, mod
 
 	module.exports = { TimelineItemBodyClientMark };
 });
+

@@ -20,3 +20,4 @@ $MESS["BITRIX24_THEME_UNKNOWN_ERROR"] = "Невозможно выполнить
 $MESS["BITRIX24_THEME_DEFAULT_THEME_FOR_ALL"] = "Включить всем по умолчанию";
 $MESS["BITRIX24_THEME_DEFAULT_THEME"] = "По умолчанию";
 $MESS["BITRIX24_THEME_REMOVE_THEME"] = "Удалить тему";
+$MESS["BITRIX24_THEME_NEW_THEME"] = "Новая";

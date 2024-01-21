@@ -25,12 +25,12 @@ use Bitrix\Main\Entity\TextField;
  */
 class StatisticQueueTable extends DataManager
 {
-	public static function getTableName()
+	public static function getTableName(): string
 	{
 		return 'b_imopenlines_statistic_queue';
 	}
 
-	public static function getMap()
+	public static function getMap(): array
 	{
 		return array(
 			new IntegerField('ID', array('primary' => true, 'autocomplete' => true)),
@@ -41,10 +41,8 @@ class StatisticQueueTable extends DataManager
 		);
 	}
 
-	public static function clean()
+	public static function clean(): void
 	{
-		$tableName = self::getTableName();
-		global $DB;
-		$DB->Query('TRUNCATE TABLE ' . $tableName . ';');
+		\Bitrix\Main\Application::getInstance()->getConnection()->truncateTable(self::getTableName());
 	}
 }

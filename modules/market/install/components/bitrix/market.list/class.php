@@ -70,6 +70,10 @@ class MarketList extends CBitrixComponent implements Controllerable, Loadable
 
 		$isCollectionId = isset($params['COLLECTION']) && (int)$params['COLLECTION'] > 0;
 		$isCollectionCode = !empty($params['COLLECTION_CODE']);
+		if (is_string($params['COLLECTION']) && preg_match("/^[a-z][a-z_0-9]+$/", $params['COLLECTION'])) {
+			$isCollectionCode = true;
+			$params['COLLECTION_CODE'] = $params['COLLECTION'];
+		}
 
 		$rp = $params['REQUEST'] ?? [];
 		if (isset($params['IS_FAVORITES']) && $params['IS_FAVORITES'] == 'Y') {

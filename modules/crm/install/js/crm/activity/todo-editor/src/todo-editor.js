@@ -1,17 +1,16 @@
-import { ajax as Ajax, Dom, Loc, Reflection, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
-import { BitrixVue } from 'ui.vue3';
-import { TodoEditor as TodoEditorComponent } from './components/todo-editor';
-import { UI } from 'ui.notification';
-import { DateTimeFormat } from 'main.date';
-import { DatetimeConverter } from 'crm.timeline.tools';
-import { TodoEditorBorderColor } from './enums/border-color';
 import { FileUploader as TodoEditorFileUploader } from 'crm.activity.file-uploader';
 import {
 	Calendar as SettingsPopupCalendar,
-	SettingsPopup as TodoEditorSettingsPopup
+	SettingsPopup as TodoEditorSettingsPopup,
 } from 'crm.activity.settings-popup';
-import { Ping as SettingsPopupPing } from 'crm.activity.settings-popup';
+import { DatetimeConverter } from 'crm.timeline.tools';
+import { ajax as Ajax, Dom, Loc, Reflection, Type } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+import { DateTimeFormat } from 'main.date';
+import { UI } from 'ui.notification';
+import { BitrixVue } from 'ui.vue3';
+import { TodoEditor as TodoEditorComponent } from './components/todo-editor';
+import { TodoEditorBorderColor } from './enums/border-color';
 
 import './todo-editor.css';
 
@@ -22,6 +21,7 @@ declare type TodoEditorParams = {
 	events?: { [event: string]: (event) => {} },
 	ownerId: number,
 	currentUser?: Object,
+	pingSettings?: Object,
 	ownerTypeId: number,
 	borderColor: string,
 	enableCalendarSync: boolean,
@@ -68,6 +68,7 @@ export class TodoEditor
 	#ownerTypeId: Number = null;
 	#ownerId: Number = null;
 	#currentUser: Object = null;
+	#pingSettings: Object = null;
 	#defaultDescription: String = null;
 	#deadline: Date = null;
 	#parentActivityId: Number = null;
@@ -106,11 +107,17 @@ export class TodoEditor
 		}
 		this.#ownerId = params.ownerId;
 
-		if (!Type.isObject(params.currentUser))
+		if (!Type.isObjectLike(params.currentUser))
 		{
 			throw new Error('Current user must be set');
 		}
 		this.#currentUser = params.currentUser;
+
+		if (!Type.isObjectLike(params.pingSettings) || Object.keys(params.pingSettings).length === 0)
+		{
+			throw new Error('Ping settings must be set');
+		}
+		this.#pingSettings = params.pingSettings || {};
 
 		this.#defaultDescription = Type.isString(params.defaultDescription) ? params.defaultDescription : this.#getDefaultDescription();
 
@@ -162,6 +169,7 @@ export class TodoEditor
 			additionalButtons: this.#getAdditionalButtons(),
 			popupMode: this.#popupMode,
 			currentUser: this.#currentUser,
+			pingSettings: this.#pingSettings
 		});
 
 		this.#layoutComponent = this.#layoutApp.mount(this.#container);
@@ -285,6 +293,7 @@ export class TodoEditor
 					parentActivityId: this.#parentActivityId,
 					fileTokens: this.#fileUploader ? this.#fileUploader.getServerFileIds() : [],
 					settings,
+					pingOffsets: userData.pingOffsets,
 				}
 
 				if (this.#mode === TodoEditorMode.UPDATE)
@@ -347,13 +356,6 @@ export class TodoEditor
 
 	#getSectionSettings(): ReadonlyArray<SectionSettings>
 	{
-		const ping = {
-			id: SettingsPopupPing.methods.getId(),
-			component: SettingsPopupPing,
-			active: true,
-			showToggleSelector: false,
-		};
-
 		const calendar = {
 			id: SettingsPopupCalendar.methods.getId(),
 			component: SettingsPopupCalendar,
@@ -362,17 +364,6 @@ export class TodoEditor
 		if (this.#settingsPopup)
 		{
 			const settings = this.#settingsPopup.getSettings();
-
-			if (settings.ping)
-			{
-				const pingSettings = settings.ping;
-				ping.params = {
-					selectedItems: pingSettings.selectedItems,
-				};
-				ping.active = true;
-				ping.showToggleSelector = false;
-			}
-
 			if (settings.calendar)
 			{
 				const calendarSettings = settings.calendar;
@@ -385,11 +376,6 @@ export class TodoEditor
 			}
 		}
 
-		if (!ping.params)
-		{
-			ping.params = this.#getDefaultPingParams();
-		}
-
 		if (!calendar.params)
 		{
 			calendar.params = this.#getDefaultCalendarParams();
@@ -397,7 +383,6 @@ export class TodoEditor
 		}
 
 		return [
-			ping,
 			calendar,
 		];
 	}
@@ -413,14 +398,6 @@ export class TodoEditor
 			from,
 			duration,
 			to,
-		}
-	}
-
-	#getDefaultPingParams(): Object
-	{
-		// TODO: get real default values from server-side
-		return  {
-			selectedItems: ['at_the_time_of_the_onset', 'in_15_minutes']
 		}
 	}
 
@@ -507,26 +484,21 @@ export class TodoEditor
 	{
 		this.#layoutComponent.clearDescription();
 		this.#parentActivityId = null;
-		this.setDefaultDeadLine();
-		this.#layoutComponent.resetResponsibleUserToDefault();
-		Dom.removeClass(this.#container, '--is-edit');
-		if (this.#fileUploader)
-		{
-			Dom.removeClass(this.#fileUploader.getContainer(), '--is-displayed');
-		}
 
-		this.#fileUploader = null;
-		this.#settingsPopup = null;
-
-		return new Promise((resolve) => {
-			setTimeout(resolve, 10);
-		});
+		return this.#clearData();
 	}
 
 	resetToDefaults(): Promise
 	{
 		this.#layoutComponent.setDescription(this.#getDefaultDescription());
+
+		return this.#clearData();
+	}
+
+	#clearData(): Promise
+	{
 		this.setDefaultDeadLine();
+		this.#layoutComponent.resetPingOffsetsToDefault();
 		this.#layoutComponent.resetResponsibleUserToDefault();
 
 		Dom.removeClass(this.#container, '--is-edit');

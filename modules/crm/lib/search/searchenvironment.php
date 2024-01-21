@@ -1,22 +1,40 @@
 <?php
+
 namespace Bitrix\Crm\Search;
 
-use Bitrix\Main;
+use CCrmUserType;
 
 class SearchEnvironment
 {
-	public static function prepareToken($str)
+	private static array $supportedUserFieldTypeIds = [
+		'address',
+		'string',
+		'integer',
+		'double',
+		'boolean',
+		'date',
+		'datetime',
+		'enumeration',
+		'employee',
+		'file',
+		'url',
+		'crm',
+		'crm_status',
+		'iblock_element',
+		'iblock_section'
+	];
+
+	public static function prepareToken(string $str): string
 	{
 		return str_rot13($str);
 	}
 
-	public static function prepareEntityFilter($entityTypeID, array $params)
+	public static function prepareEntityFilter(int $entityTypeId, array $params): array
 	{
-		$builder = SearchContentBuilderFactory::create($entityTypeID);
-		return $builder->prepareEntityFilter($params);
+		return SearchContentBuilderFactory::create($entityTypeId)->prepareEntityFilter($params);
 	}
 
-	public static function prepareSearchFilter($entityTypeID, &$filter, array $options = [])
+	public static function prepareSearchFilter(int $entityTypeId, &$filter, array $options = []): void
 	{
 		if (!is_array($filter))
 		{
@@ -27,50 +45,77 @@ class SearchEnvironment
 		{
 			if (is_array($value))
 			{
-				self::prepareSearchFilter($entityTypeID, $value, $options);
+				self::prepareSearchFilter($entityTypeId, $value, $options);
 			}
 		}
+		unset($value);
 
-		if(isset($filter['SEARCH_CONTENT']) && !is_array($filter['SEARCH_CONTENT']) && $filter['SEARCH_CONTENT'] !== '')
+		if (
+			isset($filter['SEARCH_CONTENT'])
+			&& !is_array($filter['SEARCH_CONTENT'])
+			&& $filter['SEARCH_CONTENT'] !== ''
+		)
 		{
-			$searchFilter = SearchEnvironment::prepareEntityFilter(
-				$entityTypeID,
-				array(
-					'SEARCH_CONTENT' => SearchEnvironment::prepareSearchContent($filter['SEARCH_CONTENT'], $options)
-				)
+			$searchFilter = self::prepareEntityFilter(
+				$entityTypeId,
+				[
+					'SEARCH_CONTENT' => self::prepareSearchContent($filter['SEARCH_CONTENT'], $options)
+				]
 			);
+
 			unset($filter['SEARCH_CONTENT']);
 			$filter[] = $searchFilter;
 			unset($searchFilter);
 		}
 	}
 
-	public static function convertEntityFilterValues($entityTypeID, array &$fields)
+	public static function convertEntityFilterValues(int $entityTypeId, array &$fields): void
 	{
-		$builder = SearchContentBuilderFactory::create($entityTypeID);
-		$builder->convertEntityFilterValues($fields);
-	}
-
-	public static function isFullTextSearchEnabled($entityTypeID)
-	{
-		$builder = SearchContentBuilderFactory::create($entityTypeID);
-		return $builder->isFullTextSearchEnabled();
+		SearchContentBuilderFactory::create($entityTypeId)->convertEntityFilterValues($fields);
 	}
 
 	public static function prepareSearchContent($str, array $options = [])
 	{
-		if(
+		if (
 			!isset($options['ENABLE_PHONE_DETECTION'])
 			|| $options['ENABLE_PHONE_DETECTION'] !== false
 		)
 		{
 			$numCount = mb_strlen(preg_replace('/[^0-9]/', '', $str));
-			if($numCount >= 3 && $numCount <= 15 && preg_match('/^[0-9\(\)\+\-\#\;\,\*\s]+$/', $str) === 1)
+			if (
+				$numCount >= 3 
+				&& $numCount <= 15 
+				&& preg_match('/^[0-9\(\)\+\-\#\;\,\*\s]+$/', $str) === 1
+			)
 			{
-				$str = \NormalizePhone($str, 3);
+				$str = NormalizePhone($str, 3);
 			}
 		}
 
 		return $str;
+	}
+
+	public static function getUserFields(int $entityId, string $userFieldEntityId): array
+	{
+		if (empty($userFieldEntityId))
+		{
+			return [];
+		}
+
+		global $USER_FIELD_MANAGER;
+
+		$userTypeEntity = new CCrmUserType($USER_FIELD_MANAGER, $userFieldEntityId);
+		$userTypeMap = array_fill_keys(self::$supportedUserFieldTypeIds, true);
+		$userFields = $userTypeEntity->GetEntityFields($entityId);
+		$results = [];
+		foreach ($userFields as $userField)
+		{
+			if (isset($userTypeMap[$userField['USER_TYPE_ID']]))
+			{
+				$results[] = $userField;
+			}
+		}
+
+		return $results;
 	}
 }

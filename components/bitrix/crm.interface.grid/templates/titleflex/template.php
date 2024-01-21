@@ -109,6 +109,9 @@ if(isset($arParams['~ENABLE_ROW_COUNT_LOADER']) && $arParams['~ENABLE_ROW_COUNT_
 }
 //endregion
 
+$headerSections = \Bitrix\Crm\Filter\HeaderSections::getInstance()
+	->filterGridSupportedSections($arParams['~HEADERS_SECTIONS'] ?? []);
+
 //region Grid
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',
@@ -116,7 +119,7 @@ $APPLICATION->IncludeComponent(
 	[
 		'GRID_ID' => $gridID,
 		'HEADERS' => $arParams['~HEADERS'] ?? [],
-		'HEADERS_SECTIONS' => $arParams['~HEADERS_SECTIONS'] ?? [],
+		'HEADERS_SECTIONS' => $headerSections,
 		'ENABLE_FIELDS_SEARCH' => $arParams['~ENABLE_FIELDS_SEARCH'] ?? 'N',
 		'SORT' => $arParams['~SORT'] ?? [],
 		'SORT_VARS' => $arParams['~SORT_VARS'] ?? [],

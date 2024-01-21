@@ -9,6 +9,7 @@ $MESS["M_CRM_TL_PAYMENT_PAY_FAILURE_ERROR_TEXT"] = "Cannot process payment";
 $MESS["M_CRM_TL_PAYMENT_PAY_FAILURE_GET_NEW_QR_GET_NEW_QR"] = "Get a new QR code";
 $MESS["M_CRM_TL_PAYMENT_PAY_PAYMENT_SYSTEM_CREATION_ERROR_MESSAGE"] = "Error creating payment system";
 $MESS["M_CRM_TL_PAYMENT_PAY_PLEASE_WAIT"] = "Please wait";
+$MESS["M_CRM_TL_PAYMENT_PAY_PRODUCTS_CNT"] = "Products: #CNT#";
 $MESS["M_CRM_TL_PAYMENT_PAY_SCAN_QR"] = "Ask customer to scan QR code with their phone";
 $MESS["M_CRM_TL_PAYMENT_PAY_SUCCESS_BACK_TO_LIST"] = "Back to payments";
 $MESS["M_CRM_TL_PAYMENT_PAY_SUCCESS_PAYMENT_PAID"] = "Payment ##NUMBER# completed";

@@ -16,7 +16,6 @@ use Bitrix\Crm;
  */
 final class CompressMailStepper extends Main\Update\Stepper
 {
-	private const LIMIT = 50;
 	protected static $moduleId = 'crm';
 
 	public function execute(array &$option)
@@ -40,7 +39,7 @@ final class CompressMailStepper extends Main\Update\Stepper
 		$ids = [];
 		$listIDResult = \Bitrix\Crm\ActivityTable::getList([
 			'order' => ['ID' => 'ASC'],
-			'limit' => self::LIMIT,
+			'limit' => $this->getLimit(),
 			'filter' => ['>ID' => $lastId],
 			'select' => ['ID', 'TYPE_ID', 'ASSOCIATED_ENTITY_ID'],
 		]);
@@ -87,5 +86,10 @@ final class CompressMailStepper extends Main\Update\Stepper
 			(int)$activity['DIRECTION'] === \CCrmActivityDirection::Outgoing
 			&& isset($activity['SETTINGS']['BP_ACTIVITY_ID'])
 		);
+	}
+
+	private function getLimit(): int
+	{
+		return (int)Main\Config\Option::get('crm',  'compress_mail_act_step_limit', 50);
 	}
 }

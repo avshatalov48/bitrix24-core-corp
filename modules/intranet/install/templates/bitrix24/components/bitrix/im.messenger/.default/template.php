@@ -7,9 +7,10 @@ if (defined('BX_IM_FULLSCREEN'))
 }
 use Bitrix\Main\Localization\Loc;
 
-$enabledMessengerV2 = (isset($arResult['MESSENGER_V2']) && $arResult['MESSENGER_V2'] === true);
+$v2MessengerEnabled = isset($arResult['MESSENGER_V2']) && $arResult['MESSENGER_V2'] === true;
+$copilotAvailable = $v2MessengerEnabled && isset($arResult['COPILOT_AVAILABLE']) && $arResult['COPILOT_AVAILABLE'] === true;
 
-if ($enabledMessengerV2)
+if ($v2MessengerEnabled)
 {
 	\Bitrix\Main\UI\Extension::load("im.v2.application.quick-access");
 }
@@ -96,7 +97,7 @@ $this->SetViewTarget("im-fullscreen");
 <?
 $this->SetViewTarget("im", 100);
 ?>
-<div class="bx-im-bar bx-im-bar-with-ol" id="bx-im-bar">
+<div class="bx-im-bar bx-im-bar-with-ol <? if ($copilotAvailable): ?><?= 'bx-im-bar-with-copilot' ?><? endif ?>" id="bx-im-bar">
 	<div class="help-block bx-im-border-b" id="bx-help-block" title="<?=GetMessage("AUTH_HELP")?>">
 		<div class="help-icon-border"></div>
 		<div class="help-block-icon"></div>
@@ -120,6 +121,11 @@ $this->SetViewTarget("im", 100);
 	}
 	?>
 	<div class="bx-im-helper-block bx-im-border-b">
+		<? if ($copilotAvailable): ?>
+			<div id="bx-im-bar-copilot" class="bx-im-informer bx-im-informer-copilot">
+				<div class="bx-im-informer-copilot-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_COPILOT');?>"></div>
+			</div>
+		<? endif ?>
 		<div id="bx-im-bar-notify" class="bx-im-informer">
 			<div class="bx-im-informer-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_NOTIFY');?>">
 				<div class="bx-im-informer-num"></div>
@@ -204,7 +210,7 @@ if (\Bitrix\Main\Loader::includeModule("ui"))
 ?>
 <script>
 	BX.ready(function() {
-		BX.Intranet.Bitrix24.ImBar.init(<?= \Bitrix\Main\Web\Json::encode($enabledMessengerV2) ?>);
+		BX.Intranet.Bitrix24.ImBar.init(<?= \Bitrix\Main\Web\Json::encode($v2MessengerEnabled) ?>);
 		if(BX.UI && BX.UI.Tutor && BX.UI.Tutor.Manager)
 		{
 			BX.UI.Tutor.Manager.init(
@@ -215,7 +221,7 @@ if (\Bitrix\Main\Loader::includeModule("ui"))
 		}
 	});
 	<?php
-		if ($enabledMessengerV2)
+		if ($v2MessengerEnabled)
 		{
 			echo CIMMessenger::GetV2TemplateJS($arResult);
 		}

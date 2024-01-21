@@ -1,10 +1,11 @@
-import { Tag, Event, Loc, Type, Dom } from 'main.core';
+import { Tag, Event, Loc, Type, Dom, Text } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { MenuManager } from "main.popup";
 import WithEditor from "./witheditor";
 import { Guide } from "ui.tour";
 import Context from "../context";
 import { DialogNew } from 'calendar.sharing.interface';
+import { ConditionChecker, Types as SenderTypes, OpenLineCodes } from 'crm.messagesender';
 
 /** @memberof BX.Crm.Timeline.MenuBar */
 export default class Sharing extends WithEditor
@@ -19,17 +20,12 @@ export default class Sharing extends WithEditor
 		const config = settings.config;
 
 		this.link = config.link;
-
+		this.calendarSettings = config.calendarSettings;
+		this.isResponsible = config.isResponsible;
 		this.setContacts(config.contacts);
-
 		this.isNotificationsAvailable = config.isNotificationsAvailable;
-
 		this.areCommunicationChannelsAvailable = config.areCommunicationChannelsAvailable;
-		if (this.areCommunicationChannelsAvailable)
-		{
-			this.setCommunicationChannels(config.communicationChannels, config.selectedChannelId);
-		}
-
+		this.setCommunicationChannels(config.communicationChannels, config.selectedChannelId);
 		this.doPayAttentionToNewFeature = config.doPayAttentionToNewFeature;
 
 		super.initialize(context, settings);
@@ -60,6 +56,7 @@ export default class Sharing extends WithEditor
 	bindEvents()
 	{
 		EventEmitter.subscribe('CalendarSharing:LinkCopied', () => this.onLinkCopied());
+		EventEmitter.subscribe('CalendarSharing:RuleUpdated', () => this.onRuleUpdated());
 		EventEmitter.subscribe('BX.Crm.MessageSender.ReceiverRepository:OnReceiversChanged', this.onContactsChangedHandler.bind(this));
 	}
 
@@ -85,7 +82,7 @@ export default class Sharing extends WithEditor
 		};
 
 		return Tag.render`
-			<div class="crm-entity-stream-content-sharing --hidden">
+			<div class="crm-entity-stream-content-sharing crm-entity-stream-content-wait-detail --hidden">
 				<div id="_sharing_content_container">
 					<div class="crm-entity-stream-calendar-sharing-container">
 						<div class="crm-entity-stream-calendar-sharing-main">
@@ -163,7 +160,7 @@ export default class Sharing extends WithEditor
 	createSendButton()
 	{
 		this.DOM.sendButton = Tag.render`
-			<button class="ui-btn ui-btn-xs ui-btn-primary">
+			<button class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round">
 				${Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_SEND_BUTTON')}
 			</button>
 		`;
@@ -210,18 +207,66 @@ export default class Sharing extends WithEditor
 		this.showSettingsPopup();
 	}
 
-	onSendButtonClick()
+	async onSendButtonClick()
 	{
 		if (!this.isContactAvailable())
 		{
 			this.showWarningNoContact();
+
 			return;
+		}
+
+		if (
+			!this.areCommunicationChannelsAvailable
+			&& this.isNotificationsAvailable
+			&& this.isChannelsAvailable()
+		)
+		{
+			const bitrix24Channel = this.channels.find((channel) => {
+				return this.isChannelBitrix24(channel);
+			});
+
+			if (bitrix24Channel)
+			{
+				const isApproved = await this.isBitrix24Approved();
+
+				if (isApproved)
+				{
+					this.channel = bitrix24Channel;
+					this.updateSenderList();
+					this.onSaveButtonClick();
+
+					return;
+				}
+			}
 		}
 
 		if (!this.areCommunicationChannelsAvailable)
 		{
 			this.showWarningNoCommunicationChannels();
+
 			return;
+		}
+
+		if (
+			this.isNotificationsAvailable
+			&& this.isChannelBitrix24(this.channel)
+		)
+		{
+			const isApproved = await this.isBitrix24Approved();
+
+			if (isApproved)
+			{
+				this.onSaveButtonClick();
+
+				return;
+			}
+			else
+			{
+				this.showWarningNoCommunicationChannels();
+
+				return;
+			}
 		}
 
 		this.onSaveButtonClick();
@@ -232,6 +277,11 @@ export default class Sharing extends WithEditor
 		this.saveLinkAction({
 			isActionCopy: true,
 		});
+	}
+
+	onRuleUpdated()
+	{
+		this.onRuleUpdatedAction();
 	}
 
 	onMoreInfoButtonClick()
@@ -246,7 +296,11 @@ export default class Sharing extends WithEditor
 			this.newDialog = new DialogNew({
 				bindElement: this.DOM.configureSlotsButton,
 				sharingUrl: this.link.url,
+				sharingRule: this.link.rule,
+				linkHash: this.link.hash,
 				context: "crm",
+				readOnly: !this.isResponsible,
+				calendarSettings: this.calendarSettings,
 			});
 		}
 		this.newDialog.show();
@@ -326,7 +380,7 @@ export default class Sharing extends WithEditor
 		const isSelected = contact.entityId === this.contact.entityId && contact.entityTypeId === this.contact.entityTypeId;
 		const itemHtml = Tag.render`
 			<div class="crm-entity-stream-calendar-sharing-settings-check">
-				<div>${contact.name} (${contact.phone})</div>
+				<div>${Text.encode(`${contact.name} (${contact.phone})`)}</div>
 			</div>
 		`;
 		contact.check = Tag.render`
@@ -349,7 +403,7 @@ export default class Sharing extends WithEditor
 		const isSelected = channel.id === this.channel.id;
 		const itemHtml = Tag.render`
 			<div class="crm-entity-stream-calendar-sharing-settings-check">
-				<div>${channel.name}</div>
+				<div>${Text.encode(channel.name)}</div>
 			</div>
 		`;
 		channel.check = Tag.render`
@@ -374,7 +428,7 @@ export default class Sharing extends WithEditor
 		const isSelected = from.id === this.currentFrom.id;
 		const itemHtml = Tag.render`
 			<div class="crm-entity-stream-calendar-sharing-settings-check">
-				<div>${from.name}</div>
+				<div>${Text.encode(from.name)}</div>
 			</div>
 		`;
 		from.check = Tag.render`
@@ -410,7 +464,7 @@ export default class Sharing extends WithEditor
 		{
 			title = Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_CUSTOM_COMMUNICATION_CHANNELS_WARNING_TITLE');
 			text = `
-				<div>${Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_CUSTOM_COMMUNICATION_CHANNELS_WARNING_TITLE_1')}</div>
+				<div>${Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_CUSTOM_COMMUNICATION_CHANNELS_WARNING_TITLE_1').replaceAll('/marketplace/', Loc.getMessage('MARKET_BASE_PATH'))}</div>
 				</br>
 				<div>${Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TEXT_2')}</div>
 			`;
@@ -472,6 +526,7 @@ export default class Sharing extends WithEditor
 		let data = {
 			ownerId: this.getEntityId(),
 			ownerTypeId: this.getEntityTypeId(),
+			ruleArray: this.getSharingRule(),
 		};
 
 		if (this.isContactAvailable() && this.isChannelsAvailable() && !options.isActionCopy)
@@ -500,6 +555,25 @@ export default class Sharing extends WithEditor
 			console.error(error);
 			return false;
 		});
+	}
+
+	onRuleUpdatedAction()
+	{
+		return BX.ajax.runAction('crm.api.timeline.calendar.sharing.onRuleUpdated', {
+			data: {
+				linkHash: this.link.hash,
+				ownerId: this.getEntityId(),
+				ownerTypeId: this.getEntityTypeId(),
+			},
+		}).then((response) => {}, (error) => {
+			console.error(error);
+			return false;
+		});
+	}
+
+	getSharingRule()
+	{
+		return this.newDialog?.getSettingsControlRule() ?? this.link.rule;
 	}
 
 	onContactsChangedHandler(event)
@@ -582,6 +656,19 @@ export default class Sharing extends WithEditor
 	isChannelsAvailable()
 	{
 		return Type.isArrayFilled(this.channels);
+	}
+
+	isChannelBitrix24(channel)
+	{
+		return channel.id === SenderTypes.bitrix24;
+	}
+
+	async isBitrix24Approved()
+	{
+		return await ConditionChecker.checkIsApproved({
+			openLineCode: OpenLineCodes.notifications,
+			senderType: SenderTypes.bitrix24,
+		});
 	}
 
 	openHelpDesk()

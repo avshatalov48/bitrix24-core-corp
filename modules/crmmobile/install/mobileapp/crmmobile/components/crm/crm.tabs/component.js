@@ -1,6 +1,7 @@
 (() => {
 	const require = (ext) => jn.require(ext);
 
+	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
 	const {
 		clone,
@@ -12,10 +13,15 @@
 	const { throttle } = require('utils/function');
 	const { KanbanTab } = require('crm/entity-tab/kanban');
 	const { ListTab } = require('crm/entity-tab/list');
-	const { Search } = require('crm/entity-tab/search');
+	const { ListItemType } = require('crm/simple-list/items');
 	const { ActivityCountersStoreManager } = require('crm/state-storage');
 	const { Type } = require('crm/type');
 	const { LoadingProgressBar } = require('crm/ui/loading-progress');
+	const { getEntityMessage } = require('crm/loc');
+	const { SearchBar } = require('layout/ui/search-bar');
+	const { SkeletonFactory } = require('layout/ui/simple-list/skeleton');
+
+	SkeletonFactory.alias('Kanban', ListItemType.CRM_ENTITY);
 
 	const TAB_BIG_LABEL = '99+';
 
@@ -32,6 +38,8 @@
 
 			this.kanbanTabRef = null;
 			this.listTabRef = null;
+
+			/** @type {SearchBar|null} */
 			this.searchRef = null;
 
 			const tabsCacheName = `crm:crm.tabs.list.${env.userId}.v2`;
@@ -66,7 +74,7 @@
 			};
 
 			this.currentMoneyFormats = Money.formats;
-			this.rightButtonsIsSetted = false;
+			this.rightButtonsIsSet = false;
 
 			this.userInfo = null;
 
@@ -79,6 +87,11 @@
 			this.updateCounters = this.updateCounters.bind(this);
 			this.setActiveTab = this.setActiveTab.bind(this);
 			this.updateEntityTypeData = this.updateEntityTypeData.bind(this);
+			this.bindKanbanRef = this.bindKanbanRef.bind(this);
+			this.bindListRef = this.bindListRef.bind(this);
+			this.bindSearchRef = this.bindSearchRef.bind(this);
+			this.onMoreButtonClick = this.onMoreButtonClick.bind(this);
+			this.onCheckRestrictions = this.onCheckRestrictions.bind(this);
 
 			this.scrollOnTop = throttle(this.scrollOnTop, 500, this);
 		}
@@ -273,6 +286,14 @@
 				return null;
 			}
 
+			if (!activeTab)
+			{
+				return null;
+			}
+
+			const entityTypeName = activeTab.typeName;
+			const categoryId = get(activeTab, 'data.currentCategoryId', null);
+
 			return View(
 				{
 					resizableByKeyboard: true,
@@ -280,13 +301,15 @@
 				TabView({
 					style: {
 						height: 44,
-						backgroundColor: '#f5f7f8',
+						backgroundColor: AppTheme.colors.bgNavigation,
 					},
-					ref: (ref) => this.tabViewRef = ref,
+					ref: (ref) => {
+						this.tabViewRef = ref;
+					},
 					params: {
 						styles: {
 							tabTitle: {
-								underlineColor: '#207ede',
+								underlineColor: AppTheme.colors.accentExtraDarkblue,
 							},
 						},
 						items: this.getTabItems(),
@@ -294,22 +317,47 @@
 					onTabSelected: (tab, changed) => this.handleTabSelected(tab, changed),
 				}),
 				activeTabTypeName && activeTab && this.renderTab(),
-				activeTabTypeName && activeTab && new Search({
-					entityTypeName: activeTab.typeName,
-					categoryId: activeTab.data.currentCategoryId,
-					getSearchDataAction: result.actions.getSearchData,
-					link: activeTab.link,
-					restrictions: BX.prop.getObject(activeTab.restrictions || {}, 'search', {}),
-					layout,
-					ref: (ref) => {
-						if (ref)
-						{
-							this.searchRef = ref;
-						}
+				activeTabTypeName && activeTab && new SearchBar({
+					id: `${entityTypeName}_${categoryId}`,
+					cacheId: `Crm.SearchBar.${entityTypeName}.${categoryId || 'all'}.${env.userId}`,
+					searchDataAction: result.actions.getSearchData,
+					searchDataActionParams: {
+						entityTypeName,
+						categoryId,
 					},
+					layout,
+					ref: this.bindSearchRef,
+					onMoreButtonClick: this.onMoreButtonClick,
+					onCheckRestrictions: this.onCheckRestrictions,
 				}),
 				new LoadingProgressBar(),
 			);
+		}
+
+		bindSearchRef(ref)
+		{
+			if (ref)
+			{
+				this.searchRef = ref;
+			}
+		}
+
+		onMoreButtonClick()
+		{
+			const { typeName, link } = this.getActiveTab() || {};
+
+			this.showFilterSettings(typeName, link);
+		}
+
+		onCheckRestrictions()
+		{
+			const hasRestrictions = get(this.getActiveTab(), 'restrictions.search.isExceeded', false);
+			if (hasRestrictions)
+			{
+				void this.showPlanRestriction(BX.message('M_CRM_ET_SEARCH_PLAN_RESTRICTION_TITLE'));
+			}
+
+			return hasRestrictions;
 		}
 
 		async showPlanRestriction(title)
@@ -338,10 +386,7 @@
 		{
 			if (this.searchRef && this.searchRef.isVisible())
 			{
-				this.searchRef.fadeOut().then(() => {
-					layout.search.close();
-					this.searchRef.onHide();
-				});
+				void this.searchRef.fadeOut();
 			}
 		}
 
@@ -351,7 +396,7 @@
 			{
 				featureCounter = 0;
 
-				this.rightButtonsIsSetted = false;
+				this.rightButtonsIsSet = false;
 				const typeId = this.getTabByTypeName(tab.id).id;
 
 				let promise;
@@ -419,23 +464,6 @@
 			else
 			{
 				this.scrollOnTop();
-				this.countFeatureToggle();
-			}
-		}
-
-		countFeatureToggle()
-		{
-			featureCounter++;
-
-			if (featureCounter >= 10)
-			{
-				featureCounter = 0;
-
-				const storage = Application.storageById('crm/entity-detail/feature/');
-				const feature = storage.getBoolean('backdropEnabled', false);
-
-				storage.setBoolean('backdropEnabled', !feature);
-				console.info('Feature updated', !feature);
 			}
 		}
 
@@ -559,14 +587,24 @@
 		{
 			this.listTabRef = null;
 
-			return new KanbanTab(this.getEntityTabConfig((ref) => this.kanbanTabRef = ref));
+			return new KanbanTab(this.getEntityTabConfig(this.bindKanbanRef));
+		}
+
+		bindKanbanRef(ref)
+		{
+			this.kanbanTabRef = ref;
 		}
 
 		createList()
 		{
 			this.kanbanTabRef = null;
 
-			return new ListTab(this.getEntityTabConfig((ref) => this.listTabRef = ref));
+			return new ListTab(this.getEntityTabConfig(this.bindListRef));
+		}
+
+		bindListRef(ref)
+		{
+			this.listTabRef = ref;
 		}
 
 		getTabItems()
@@ -613,9 +651,12 @@
 
 		getEntityTabConfig(ref)
 		{
-			const rightButtonsIsSetted = this.rightButtonsIsSetted;
-			this.rightButtonsIsSetted = true;
+			const rightButtonsIsSet = this.rightButtonsIsSet;
+			this.rightButtonsIsSet = true;
 			const { activeTabId, activeTabTypeName } = this.state;
+			const activeTab = this.getActiveTab() || {};
+
+			const categoryId = get(activeTab, 'data.currentCategoryId', null);
 
 			return {
 				entityTypeName: activeTabTypeName,
@@ -628,15 +669,22 @@
 					loadItems: {
 						entityType: activeTabTypeName,
 					},
+					updateItemStage: {
+						entityType: activeTabTypeName,
+					},
+					deleteItem: {
+						entityType: activeTabTypeName,
+					},
 				},
 				permissions: this.getPermissions(),
 				restrictions: this.getRestrictions(),
 				itemParams: this.getItemParams(),
 				cacheName: `crm:crm.kanban.${env.userId}.${activeTabTypeName}`,
 				layout,
-				needInitMenu: !rightButtonsIsSetted,
+				needInitMenu: !rightButtonsIsSet,
 				onPanList: this.onPanBySearch,
 				searchRef: this.searchRef,
+				searchBarId: `${activeTabTypeName}_${categoryId}`,
 				userInfo: this.userInfo,
 				ref,
 			};
@@ -733,7 +781,7 @@
 				modifyData.data = modifyData.data || {};
 				modifyData.data.sortType = sortType;
 
-				this.rightButtonsIsSetted = false;
+				this.rightButtonsIsSet = false;
 				needUpdateState = true;
 			}
 
@@ -761,6 +809,41 @@
 					}
 				});
 			}
+		}
+
+		/**
+		 * @private
+		 * @param {string} entityTypeName
+		 * @param {string} redirectUrl
+		 */
+		showFilterSettings(entityTypeName, redirectUrl)
+		{
+			const pathToExtension = `${currentDomain}/bitrix/mobileapp/crmmobile/components/crm/crm.tabs`;
+			const imagePath = `${pathToExtension}/images/settings.png`;
+
+			const menu = new ContextMenu({
+				banner: {
+					featureItems: [
+						BX.message('M_CRM_ENTITY_TAB_SEARCH_FILTER_SETTINGS_CREATE_FILTER'),
+						BX.message('M_CRM_ENTITY_TAB_SEARCH_FILTER_SETTINGS_MORE_SETTINGS'),
+						BX.message('M_CRM_ENTITY_TAB_SEARCH_FILTER_SETTINGS_RESPONSIBLE'),
+						getEntityMessage(
+							'M_CRM_ENTITY_TAB_SEARCH_FILTER_SETTINGS_CUSTOMIZATION',
+							entityTypeName,
+						),
+					],
+					imagePath,
+					qrauth: {
+						redirectUrl,
+						type: 'crm',
+					},
+				},
+				params: {
+					title: BX.message('M_CRM_ENTITY_TAB_SEARCH_FILTER_SETTINGS_TITLE'),
+				},
+			});
+
+			void menu.show(PageManager);
 		}
 	}
 

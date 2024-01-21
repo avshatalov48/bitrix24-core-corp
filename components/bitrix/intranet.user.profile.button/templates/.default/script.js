@@ -1,6 +1,7 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,ui_popupcomponentsmaker,main_qrcode,ui_avatarEditor,main_loader,ui_qrauthorization,main_core,main_popup,main_core_events) {
+(function (exports,ui_popupcomponentsmaker,main_qrcode,ui_avatarEditor,main_loader,ui_qrauthorization,main_core,main_popup,main_core_events,im_v2_lib_desktopApi) {
 	'use strict';
 
 	var Options = function Options() {
@@ -667,7 +668,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      };
 	      var button = isInstalled ? main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>"])), _onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_TURNED_ON')) : main_core.Tag.render(_templateObject2$4 || (_templateObject2$4 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>"])), _onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_TURN_ON'));
 	      var onclickHelp = function onclickHelp() {
-	        top.BX.Helper.show('redirect=detail&code=6641271');
+	        top.BX.Helper.show('redirect=detail&code=17728602');
 	        main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, Options.eventNameSpace + ':onOpen');
 	      };
 	      if (this.isSingle !== true) {
@@ -1327,18 +1328,26 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	function _getLogoutContainer2() {
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getLogoutContainer', function () {
-	    var backUrl = new main_core.Uri(window.location.pathname);
-	    backUrl.removeQueryParam(['logout', 'login', 'back_url_pub', 'user_lang']);
-	    var newUrl = new main_core.Uri('/auth/?logout=yes');
-	    newUrl.setQueryParam('sessid', BX.bitrix_sessid());
-	    newUrl.setQueryParam('backurl', encodeURIComponent(backUrl.toString()));
+	    var onclickLogout = function onclickLogout() {
+	      if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
+	        im_v2_lib_desktopApi.DesktopApi.logout();
+	      } else {
+	        var backUrl = new main_core.Uri(window.location.pathname);
+	        backUrl.removeQueryParam(['logout', 'login', 'back_url_pub', 'user_lang']);
+	        var newUrl = new main_core.Uri('/auth/?logout=yes');
+	        newUrl.setQueryParam('sessid', BX.bitrix_sessid());
+	        newUrl.setQueryParam('backurl', encodeURIComponent(backUrl.toString()));
+	        document.location.href = newUrl;
+	      }
+	    };
+
 	    //TODO
-	    return main_core.Tag.render(_templateObject15 || (_templateObject15 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --logout\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<a href=\"", "\" class=\"system-auth-form__item-link-all\"></a>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('AUTH_LOGOUT'), newUrl.toString());
+	    return main_core.Tag.render(_templateObject15 || (_templateObject15 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --logout\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<a onclick=\"", "\" class=\"system-auth-form__item-link-all\"></a>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('AUTH_LOGOUT'), onclickLogout);
 	  });
 	}
 	babelHelpers.defineProperty(Widget, "instance", null);
 
 	exports.Widget = Widget;
 
-}((this.BX.Intranet.UserProfile = this.BX.Intranet.UserProfile || {}),BX.UI,BX,BX.UI.AvatarEditor,BX,BX.UI,BX,BX.Main,BX.Event));
+}((this.BX.Intranet.UserProfile = this.BX.Intranet.UserProfile || {}),BX.UI,BX,BX.UI.AvatarEditor,BX,BX.UI,BX,BX.Main,BX.Event,BX.Messenger.v2.Lib));
 //# sourceMappingURL=script.js.map

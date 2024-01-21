@@ -3,7 +3,9 @@
 return [
 	'extensions' => [
 		'loc',
-		'crm:duplicates/panel',
+		'apptheme',
 		'event-emitter',
+
+		'crm:duplicates/panel',
 	],
 ];

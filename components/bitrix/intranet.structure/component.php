@@ -10,17 +10,17 @@ $arDefaultVariableAliases = array(
 );
 
 $arParams['LIST_URL'] = $APPLICATION->GetCurPage();
-if (!$arParams['DETAIL_URL']) $arParams['DETAIL_URL'] = $arParams['LIST_URL'].'?ID=#USER_ID#';
+if (empty($arParams['DETAIL_URL'])) $arParams['DETAIL_URL'] = $arParams['LIST_URL'].'?ID=#USER_ID#';
 
-if (!$arParams['FILTER_NAME'])
+if (empty($arParams['FILTER_NAME']))
 	$arParams['FILTER_NAME'] = 'USER_FILTER';
 
-$perm = CIBlock::GetPermission($arParams['IBLOCK_ID'] ? $arParams['IBLOCK_ID'] : COption::GetOptionInt('intranet', 'iblock_structure', 0));
+$perm = CIBlock::GetPermission(!empty($arParams['IBLOCK_ID']) ? $arParams['IBLOCK_ID'] : COption::GetOptionInt('intranet', 'iblock_structure', 0));
 $arResult['USER_CAN_SET_HEAD'] = $perm >= 'W';
 
-if (trim($arParams["NAME_TEMPLATE"]) == '')
+if (empty($arParams["NAME_TEMPLATE"]) || trim($arParams["NAME_TEMPLATE"]) == '')
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
-$arParams['SHOW_LOGIN'] = $arParams['SHOW_LOGIN'] != "N" ? "Y" : "N";
+$arParams['SHOW_LOGIN'] = !isset($arParams['SHOW_LOGIN']) || $arParams['SHOW_LOGIN'] != "N" ? "Y" : "N";
 
 if (!array_key_exists("PM_URL", $arParams))
 	$arParams["PM_URL"] = "/company/personal/messages/chat/#USER_ID#/";

@@ -5,8 +5,10 @@ namespace Bitrix\Crm\Settings;
 use Bitrix\Crm\Relation;
 use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\Application;
+use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Result;
 
 class Crm
 {
@@ -79,40 +81,82 @@ class Crm
 			return;
 		}
 
-		\Bitrix\Main\Config\Option::set(self::OPTION_MODULE, self::DOCUMENT_SIGNING_OPTION_NAME, $isEnabled);
+		$logErrors = static function (Result $result) use ($isEnabled): void {
+			AddMessage2Log(
+				[
+					'message' => $isEnabled
+						? 'Error adding DEAL-SMART_DOCUMENT relation when enabling signing'
+						: 'Error deleting DEAL-SMART_DOCUMENT relation when disabling signing'
+					,
+					'errors' => $result->getErrors(),
+				],
+				'crm',
+			);
+		};
+
+		$logWarning = static function (Result $result) use ($isEnabled): void {
+			AddMessage2Log(
+				[
+					'message' => $isEnabled
+						? 'Warning adding DEAL-SMART_DOCUMENT relation when enabling signing'
+						: 'Warning deleting DEAL-SMART_DOCUMENT relation when disabling signing'
+					,
+					'errors' => $result->getErrors(),
+				],
+				'crm',
+			);
+		};
+
+		$connection = Application::getConnection();
+		if (!$connection->lock('crm_set_document_singing_enabled'))
+		{
+			$result = (new Result())->addError(new Error('Could not acquire lock'));
+
+			$logErrors($result);
+
+			return;
+		}
 
 		$relationManager = Container::getInstance()->getRelationManager();
 		$relationIdentifier = new RelationIdentifier(\CCrmOwnerType::Deal, \CCrmOwnerType::SmartDocument);
-
 		if ($isEnabled)
 		{
-			if (!$relationManager->areTypesBound($relationIdentifier))
-			{
-				try
-				{
-					$relationManager->bindTypes(
-						new Relation(
-							$relationIdentifier,
-							(new Relation\Settings())
-								->setRelationType(Relation\RelationType::CONVERSION)
-								->setIsChildrenListEnabled(false)
-							,
-						)
-					);
-				}
-				catch (SqlQueryException $e)
-				{
-					if (mb_strpos($e->getMessage(), 'Duplicate entry') === false)
-					{
-						throw $e;
-					}
-				}
-			}
+			$result = $relationManager->bindTypes(
+				new Relation(
+					$relationIdentifier,
+					(new Relation\Settings())
+						->setRelationType(Relation\RelationType::CONVERSION)
+						->setIsChildrenListEnabled(false)
+					,
+				)
+			);
 		}
 		else
 		{
-			$relationManager->unbindTypes($relationIdentifier);
+			$result = $relationManager->unbindTypes($relationIdentifier);
 		}
+
+		if (
+			$result->isSuccess()
+			// those errors are kinda okay
+			|| $result->getErrorCollection()->getErrorByCode(Relation\RelationManager::ERROR_CODE_BIND_TYPES_TYPES_ALREADY_BOUND)
+			|| $result->getErrorCollection()->getErrorByCode(Relation\RelationManager::ERROR_CODE_UNBIND_TYPES_TYPES_NOT_BOUND)
+		)
+		{
+			if (!$result->isSuccess())
+			{
+				$logWarning($result);
+			}
+
+			\Bitrix\Main\Config\Option::set(self::OPTION_MODULE, self::DOCUMENT_SIGNING_OPTION_NAME, $isEnabled);
+		}
+		else
+		{
+			// could not create/delete relation - dont set option
+			$logErrors($result);
+		}
+
+		$connection->unlock('crm_set_document_singing_enabled');
 	}
 
 	public static function isLiveFeedRecordsGenerationEnabled(): bool

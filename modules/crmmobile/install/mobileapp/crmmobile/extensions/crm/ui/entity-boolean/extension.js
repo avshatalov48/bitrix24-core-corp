@@ -2,6 +2,7 @@
  * @module crm/ui/entity-boolean
  */
 jn.define('crm/ui/entity-boolean', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { BooleanField } = require('layout/ui/fields/boolean');
 	const { TypeId } = require('crm/type');
 	const { EntitySvg } = require('crm/assets/entity');
@@ -15,24 +16,24 @@ jn.define('crm/ui/entity-boolean', (require, exports, module) => {
 	};
 
 	const ENTITY_COLORS = {
-		[TypeId.Deal]: '#8c78ef',
-		[TypeId.Contact]: '#9dcf00',
-		[TypeId.Company]: '#e89b06',
-		[TypeId.Quote]: '#00b4ac',
-		[TypeId.SmartInvoice]: '#1e6ec2',
+		[TypeId.Deal]: AppTheme.colors.accentExtraPurple,
+		[TypeId.Contact]: AppTheme.colors.accentMainSuccess,
+		[TypeId.Company]: AppTheme.colors.accentMainWarning,
+		[TypeId.Quote]: AppTheme.colors.accentExtraAqua,
+		[TypeId.SmartInvoice]: AppTheme.colors.accentMainLinks,
 	};
 
 	const ENTITY_BACKGROUND_COLORS = {
-		[TypeId.Deal]: '#f2e9fe',
-		[TypeId.Company]: '#fff1d6',
-		[TypeId.Contact]: '#f1fbd0',
-		[TypeId.Quote]: '#d3f9f7',
-		[TypeId.SmartInvoice]: '#deeeff',
+		[TypeId.Deal]: AppTheme.colors.accentSoftRed2,
+		[TypeId.Company]: AppTheme.colors.accentSoftOrange2,
+		[TypeId.Contact]: AppTheme.colors.accentSoftGreen2,
+		[TypeId.Quote]: AppTheme.colors.accentSoftBlue1,
+		[TypeId.SmartInvoice]: AppTheme.colors.accentSoftBlue2,
 	};
 
 	const DISABLED_COLOR = {
-		color: '#bdc1c6',
-		backgroundColor: '#f1f4f6',
+		color: AppTheme.colors.base5,
+		backgroundColor: AppTheme.colors.bgContentTertiary,
 	};
 
 	/**
@@ -40,9 +41,16 @@ jn.define('crm/ui/entity-boolean', (require, exports, module) => {
 	 */
 	class EntityBoolean extends LayoutComponent
 	{
+		constructor(props)
+		{
+			super(props);
+
+			this.handleOnChange = this.handleOnChange.bind(this);
+		}
+
 		getBooleanFieldsProps()
 		{
-			const { enable, entityTypeId, onChange, simple } = this.props;
+			const { enable, entityTypeId, simple } = this.props;
 
 			const styles = simple ? {} : {
 				activeToggleColor: ENTITY_COLORS[entityTypeId],
@@ -65,16 +73,21 @@ jn.define('crm/ui/entity-boolean', (require, exports, module) => {
 				},
 				showTitle: false,
 				readOnly: false,
-				onChange: () => {
-					onChange(entityTypeId, !enable);
-				},
+				onChange: this.handleOnChange,
 			};
+		}
+
+		handleOnChange()
+		{
+			const { enable, entityTypeId, onChange } = this.props;
+
+			onChange(entityTypeId, !enable);
 		}
 
 		renderText()
 		{
 			const { enable, text, disabledText } = this.props;
-			const color = enable ? '#333333' : '#bdc1c6';
+			const color = enable ? AppTheme.colors.base1 : AppTheme.colors.base5;
 
 			return View(
 				{

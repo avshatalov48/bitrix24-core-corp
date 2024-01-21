@@ -1,9 +1,9 @@
-import { ajax, Type, Dom } from 'main.core';
-import {rest as Rest} from 'rest.client';
+import { DatetimeConverter } from 'crm.timeline.tools';
+import { ajax, Dom, Type } from 'main.core';
+import { DateTimeFormat } from 'main.date';
+import { rest as Rest } from 'rest.client';
 import { UI } from 'ui.notification';
-import { Menu } from "./components/layout/menu";
-import { DateTimeFormat } from "main.date";
-import { DatetimeConverter } from "crm.timeline.tools";
+import { Menu } from './components/layout/menu';
 
 declare type AnimationParams = {
 	target: string,
@@ -224,6 +224,14 @@ export class Action
 
 				resolve(true);
 			}
+			else if (this.isShowInfoHelper())
+			{
+				BX.UI.InfoHelper?.show(this.#value);
+
+				this.#sendAnalytics();
+
+				resolve(true);
+			}
 			else {
 				reject(false);
 			}
@@ -253,6 +261,11 @@ export class Action
 	isRedirect(): boolean
 	{
 		return (this.#type === 'redirect');
+	}
+
+	isShowInfoHelper(): boolean
+	{
+		return (this.#type === 'showInfoHelper');
 	}
 
 	isShowMenu(): boolean

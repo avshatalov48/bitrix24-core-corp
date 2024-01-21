@@ -1,26 +1,26 @@
-<?
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Localization\Loc;
-
 use Bitrix\ImConnector\Connector;
 
-/** @var array $arParams */
-/** @var array $arResult */
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-/** @global CDatabase $DB */
-/** @var CBitrixComponentTemplate $this */
-/** @var string $templateName */
-/** @var string $templateFile */
-/** @var string $templateFolder */
-/** @var string $componentPath */
-/** @var CBitrixComponent $component */
-/** $arResult['CONNECTION_STATUS']; */
-/** $arResult['REGISTER_STATUS']; */
-/** $arResult['ERROR_STATUS']; */
-/** $arResult['SAVE_STATUS']; */
+/**
+ * @var array $arParams
+ * @var array $arResult
+ * @global \CMain $APPLICATION
+ * @global \CUser $USER
+ * @global \CDatabase $DB
+ * @var \CBitrixComponentTemplate $this
+ * @var string $templateName
+ * @var string $templateFile
+ * @var string $templateFolder
+ * @var string $componentPath
+ * @var \CBitrixComponent|\ImConnectorNetwork $component
+ */
 
 Loc::loadMessages(__FILE__);
 
@@ -241,13 +241,28 @@ elseif(!empty($arResult['ACTIVE_STATUS']))
 						</div>
 					</div>
 
-					<div class="imconnector-field-box imconnector-public-link-inner-copy-inner">
-						<div class="imconnector-public-link-inner-copy-field">
-							<span class="imconnector-public-link-title imconnector-field-box-subtitle"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_FIELD_5')?>:</span>
-							<input class="imconnector-public-link-settings-inner-option-field" style="margin-top: 16px;" type="checkbox" name="searchable" value="Y"<?=($arResult['FORM']['SEARCHABLE']? 'checked': '')?>>
+					<div class="imconnector-field-container">
+						<input id="imconnector-network-multidialog" class="imconnector-public-link-settings-inner-option-field" type="checkbox" name="multidialog" value="Y"<?=($arResult['FORM']['MULTIDIALOG']? 'checked': '')?>>
+						<div class="imconnector-field-box-subtitle" style="display: inline-block">
+							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_FIELD_7_MSGVER_1')?><span data-hint="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_FIELD_7_TIP')?>" class="ui-hint"></span>
 						</div>
 					</div>
 
+					<div class="imconnector-field-box<?= $arResult['FORM']['MULTIDIALOG'] ? '' : ' invisible' ?>" id="imconnector-network-multidialog-count">
+                            <span class="imconnector-field-box-subtitle">
+                                <?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_FIELD_8_MSGVER_1')?>
+                            </span>
+							<select name="max_dialogs_count" id="imconnector-network-multidialog-count-input" class="imconnector-field-control-input imconnector-field-control-select" style="margin-bottom: 14px;">
+								<?php foreach ([2, 5, 7, 10, 15] as $value): ?>
+									<option value="<?= $value ?>" <?php if($arResult['FORM']['MAX_DIALOGS_COUNT'] == $value) echo 'selected' ?>>
+										<?= $value ?>
+									</option>
+								<?php endforeach; ?>
+								<option value="0" <?php if($arResult['FORM']['MAX_DIALOGS_COUNT'] == 0 || $arResult['FORM']['MAX_DIALOGS_COUNT'] > 15) echo 'selected' ?>>
+									<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_MAX_DIALOGS_INFINITE')?>
+								</option>
+							</select>
+					</div>
 					<?
 					if (!empty($arResult['FORM']['CODE']))
 					{

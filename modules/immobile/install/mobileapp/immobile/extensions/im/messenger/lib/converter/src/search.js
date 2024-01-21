@@ -4,8 +4,9 @@
  * @module im/messenger/lib/converter/search
  */
 jn.define('im/messenger/lib/converter/search', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
-	const { Theme } = require('im/lib/theme');
+
 	/**
 	 * @class SearchConverter
 	 */
@@ -42,16 +43,14 @@ jn.define('im/messenger/lib/converter/search', (require, exports, module) => {
 			item.shortTitle = preparedUser.firstName ? preparedUser.firstName : preparedUser.name;
 			item.subtitle = preparedUser.workPosition ? preparedUser.workPosition : '';
 
-			if (preparedUser.extranet)
-			{
-				item.styles = {
-					title: {
-						font: {
-							color: '#ca8600',
-						},
+			item.styles = {
+				title: {
+					font: {
+						color: ChatTitle.createFromDialogId(preparedUser.id).getTitleColor(),
+						useColor: true,
 					},
-				};
-			}
+				},
+			};
 
 			return item;
 		}
@@ -63,10 +62,11 @@ jn.define('im/messenger/lib/converter/search', (require, exports, module) => {
 		 */
 		toUserSearchItem(user, sectionCode)
 		{
+			const chatTitle = ChatTitle.createFromDialogId(user.id);
 			const item = {
 				id: `user/${user.id}`,
 				title: user.name,
-				subtitle: ChatTitle.createFromDialogId(user.id).getDescription(),
+				subtitle: chatTitle.getDescription(),
 				name: user.name,
 				lastName: user.lastName,
 				secondName: user.lastName,
@@ -92,22 +92,17 @@ jn.define('im/messenger/lib/converter/search', (require, exports, module) => {
 
 			if (item.imageUrl !== '')
 			{
-				item.color = Theme.getInstance().isSupported
-					? Theme.getInstance().getColors().bgContentPrimary
-					: '#FFFFFF'
-				;
+				item.color = AppTheme.colors.bgContentPrimary;
 			}
 
-			if (user.extranet)
-			{
-				item.styles = {
-					title: {
-						font: {
-							color: '#ca8600',
-						},
+			item.styles = {
+				title: {
+					font: {
+						color: chatTitle.getTitleColor(),
+						useColor: true,
 					},
-				};
-			}
+				},
+			};
 
 			return item;
 		}
@@ -119,9 +114,10 @@ jn.define('im/messenger/lib/converter/search', (require, exports, module) => {
 		 */
 		toDialogSearchItem(dialog, sectionCode)
 		{
+			const chatTitle = ChatTitle.createFromDialogId(dialog.dialogId);
 			const item = {
 				title: dialog.name,
-				subtitle: ChatTitle.createFromDialogId(dialog.dialogId).getDescription(),
+				subtitle: chatTitle.getDescription(),
 				sectionCode,
 				height: 64,
 				color: dialog.color,
@@ -140,11 +136,17 @@ jn.define('im/messenger/lib/converter/search', (require, exports, module) => {
 
 			if (item.imageUrl !== '')
 			{
-				item.color = Theme.getInstance().isSupported
-					? Theme.getInstance().getColors().bgContentPrimary
-					: '#FFFFFF'
-				;
+				item.color = AppTheme.colors.bgContentPrimary;
 			}
+
+			item.styles = {
+				title: {
+					font: {
+						color: chatTitle.getTitleColor(),
+						useColor: true,
+					},
+				},
+			};
 
 			return item;
 		}

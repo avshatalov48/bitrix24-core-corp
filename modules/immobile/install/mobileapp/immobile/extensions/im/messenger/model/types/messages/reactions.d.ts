@@ -29,13 +29,13 @@ type ReactionsModelSetPayload = {
 
 type ReactionsModelSetReactionPayload = {
 	messageId: number,
-	user: ReactionUser,
+	userId: number,
 	reaction: ReactionType,
 }
 
 type ReactionsModelRemoveReactionPayload = {
 	messageId: number,
-	user: ReactionUser,
+	userId: number,
 	reaction: ReactionType,
 }
 
@@ -45,7 +45,7 @@ type ReactionsModelState = {
 	ownReactions: Set<ReactionType>,
 	reactionCounters: Record<ReactionType, number>,
 	// @ts-ignore
-	reactionUsers: Map<ReactionType, ReactionUser[]>,
+	reactionUsers: Map<ReactionType, number[]>,
 }
 
 export type ReactionsModelActions =

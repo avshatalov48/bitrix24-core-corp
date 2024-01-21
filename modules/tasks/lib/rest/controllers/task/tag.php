@@ -5,6 +5,7 @@ namespace Bitrix\Tasks\Rest\Controllers\Task;
 use Bitrix\Main\Error;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Rest\Controllers\Base;
 
@@ -44,7 +45,7 @@ class Tag extends Base
 		if (!$tagService->isExistsByGroup($groupId, $tag))
 		{
 			$tagService->addTagToGroup($tag, $groupId);
-			$this->sendPush('tag_added', ['groupId' => $groupId]);
+			$this->sendPush(PushCommand::TAG_ADDED, ['groupId' => $groupId]);
 		}
 
 		return ['id' => $tagService->getIdByGroup($groupId, $tag)];
@@ -56,7 +57,7 @@ class Tag extends Base
 		if (!$tagService->isExistsByUser($tag))
 		{
 			$tagService->addTagToUser($tag);
-			$this->sendPush('tag_added');
+			$this->sendPush(PushCommand::TAG_ADDED);
 		}
 
 		return ['id' => $tagService->getIdByUser(['NAME' => $tag])];

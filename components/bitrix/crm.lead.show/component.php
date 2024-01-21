@@ -832,50 +832,53 @@ $CCrmUserType->AddFields(
 
 
 // LIVE FEED SECTION -->
-$arResult['FIELDS']['tab_live_feed'][] = array(
-	'id' => 'section_live_feed',
-	'name' => GetMessage('CRM_SECTION_LIVE_FEED'),
-	'type' => 'section'
-);
-
-$liveFeedHtml = '';
-if($arParams['ELEMENT_ID'] > 0)
+if (\Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper::isAvailable())
 {
-	if(CCrmLiveFeedComponent::needToProcessRequest($_SERVER['REQUEST_METHOD'], $_REQUEST))
-	{
-		ob_start();
-		$APPLICATION->IncludeComponent('bitrix:crm.entity.livefeed',
-			'',
-			array(
-				'DATE_TIME_FORMAT' => (LANGUAGE_ID=='en'?"j F Y g:i a":(LANGUAGE_ID=='de' ? "j. F Y, G:i" : "j F Y G:i")),
-				'CAN_EDIT' => $arResult['CAN_EDIT'],
-				'ENTITY_TYPE_ID' => CCrmOwnerType::Lead,
-				'ENTITY_ID' => $arParams['ELEMENT_ID'],
-				'FORM_ID' => $arResult['FORM_ID'],
-				'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE']
-			),
-			null,
-			array('HIDE_ICONS' => 'Y')
-		);
-		$liveFeedHtml = ob_get_contents();
-		ob_end_clean();
-		$arResult['ENABLE_LIVE_FEED_LAZY_LOAD'] = false;
-	}
-	else
-	{
-		$liveFeedContainerID = $arResult['LIVE_FEED_CONTAINER_ID'] = $arResult['FORM_ID'].'_live_feed_wrapper';
-		$liveFeedHtml = '<div id="'.htmlspecialcharsbx($liveFeedContainerID).'"></div>';
-		$arResult['ENABLE_LIVE_FEED_LAZY_LOAD'] = true;
-	}
-}
+	$arResult['FIELDS']['tab_live_feed'][] = [
+		'id' => 'section_live_feed',
+		'name' => GetMessage('CRM_SECTION_LIVE_FEED'),
+		'type' => 'section'
+	];
 
-$arResult['FIELDS']['tab_live_feed'][] = array(
-	'id' => 'LIVE_FEED',
-	'name' => GetMessage('CRM_FIELD_LIVE_FEED'),
-	'colspan' => true,
-	'type' => 'custom',
-	'value' => $liveFeedHtml
-);
+	$liveFeedHtml = '';
+	if ($arParams['ELEMENT_ID'] > 0)
+	{
+		if (CCrmLiveFeedComponent::needToProcessRequest($_SERVER['REQUEST_METHOD'], $_REQUEST))
+		{
+			ob_start();
+			$APPLICATION->IncludeComponent('bitrix:crm.entity.livefeed',
+				'',
+				[
+					'DATE_TIME_FORMAT' => (LANGUAGE_ID == 'en' ? "j F Y g:i a" : (LANGUAGE_ID == 'de' ? "j. F Y, G:i" : "j F Y G:i")),
+					'CAN_EDIT' => $arResult['CAN_EDIT'],
+					'ENTITY_TYPE_ID' => CCrmOwnerType::Lead,
+					'ENTITY_ID' => $arParams['ELEMENT_ID'],
+					'FORM_ID' => $arResult['FORM_ID'],
+					'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE']
+				],
+				null,
+				['HIDE_ICONS' => 'Y']
+			);
+			$liveFeedHtml = ob_get_contents();
+			ob_end_clean();
+			$arResult['ENABLE_LIVE_FEED_LAZY_LOAD'] = false;
+		}
+		else
+		{
+			$liveFeedContainerID = $arResult['LIVE_FEED_CONTAINER_ID'] = $arResult['FORM_ID'] . '_live_feed_wrapper';
+			$liveFeedHtml = '<div id="' . htmlspecialcharsbx($liveFeedContainerID) . '"></div>';
+			$arResult['ENABLE_LIVE_FEED_LAZY_LOAD'] = true;
+		}
+	}
+
+	$arResult['FIELDS']['tab_live_feed'][] = [
+		'id' => 'LIVE_FEED',
+		'name' => GetMessage('CRM_FIELD_LIVE_FEED'),
+		'colspan' => true,
+		'type' => 'custom',
+		'value' => $liveFeedHtml
+	];
+}
 // <-- LIVE FEED SECTION
 
 $arResult['FIELDS']['tab_activity'][] = array(

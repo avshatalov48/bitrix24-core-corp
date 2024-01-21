@@ -108,6 +108,9 @@ final class FieldRepository
 		return
 			(new DatetimeField($fieldName))
 				->configureTitle(Loc::getMessage($messageCode))
+				->configureDefaultValue(static function () {
+					return new DateTime();
+				})
 		;
 	}
 
@@ -248,7 +251,7 @@ final class FieldRepository
 				return $defaultMyCompanyId;
 			}
 
-			return null;
+			return 0;
 		};
 
 		return
@@ -438,16 +441,9 @@ final class FieldRepository
 		;
 	}
 
-	/**
-	 * @deprecated This field is not used anymore
-	 *
-	 * @param string $fieldName
-	 * @return ScalarField
-	 */
-	public function getExchRate(string $fieldName = 'EXCH_RATE'): ScalarField
+	public function getExchRate(string $fieldName = Item::FIELD_NAME_EXCH_RATE): ScalarField
 	{
 		return
-			/** @deprecated */
 			(new FloatField($fieldName))
 				->configureScale(4)
 				->configureDefaultValue(1)

@@ -157,6 +157,7 @@ class Task extends Activity
 		{
 			$contentBlockObject = new EditableDate();
 			$contentBlockObject
+				->setReadonly(!$this->isScheduled())
 				->setStyle(EditableDate::STYLE_PILL)
 				->setDate($deadline)
 				->setAction($action)
@@ -169,6 +170,7 @@ class Task extends Activity
 			$contentBlockObject->setValue(Loc::getMessage('TASKS_TASK_DEAL_EMPTY_DEADLINE'));
 		}
 		$deadlineBlockObject
+			->setAlignItems('center')
 			->setInline()
 			->setTitle(Loc::getMessage('TASKS_TASK_DEAL_DEADLINE'))
 			->setContentBlock($contentBlockObject)
@@ -183,7 +185,7 @@ class Task extends Activity
 		$deadlineBlockObject = new ContentBlockWithTitle();
 		$deadlineBlockObject
 			->setInline()
-			->setTitle(Loc::getMessage('TASKS_TASK_DEAL_RESPONSIBLE'))
+			->setTitle(Loc::getMessage('TASKS_TASK_DEAL_ASSIGNEE'))
 			->setContentBlock(
 				(new Link())
 					->setValue($this->getUserName($task->getResponsibleMemberId()))

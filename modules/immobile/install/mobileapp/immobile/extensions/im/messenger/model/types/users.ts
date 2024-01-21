@@ -10,6 +10,13 @@ export type UsersModelState = {
 	extranet: boolean,
 	network: boolean,
 	bot: boolean,
+	botData: {
+		appId?: string | null,
+		code?: string,
+		isHidden?: boolean,
+		isSupportOpenline?: boolean,
+		type?: string,
+	},
 	connector: boolean,
 	externalAuthId: string,
 	status: string,
@@ -38,8 +45,11 @@ export type UsersModelActions =
 	| 'usersModel/update'
 	| 'usersModel/delete'
 	| 'usersModel/merge'
+	| 'usersModel/addShort'
+	| 'usersModel/setFromLocalDatabase'
 
 export type UsersModelMutation =
 	'usersModel/set'
 	| 'usersModel/setState'
 	| 'usersModel/delete'
+	| 'usersModel/merge'

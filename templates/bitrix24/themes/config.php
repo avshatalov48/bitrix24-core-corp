@@ -6,6 +6,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+$new = time() < strtotime('15 January 2024');
+
 return array(
 
 	"baseThemes" => array(
@@ -23,6 +25,179 @@ return array(
 	),
 
 	"subThemes" => array(
+		"light:jupiter" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_JUPITER"),
+			"prefetchImages" => array("jupiter.jpg"),
+			"previewImage" => "jupiter-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:video-jupiter" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_VIDEO_JUPITER"),
+			"previewImage" => "jupiter-preview.jpg",
+			"prefetchImages" => array("jupiter-poster.jpg"),
+			"video" => array(
+				// "poster" => "jupiter-poster.jpg",
+				"sources" => array(
+					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-jupiter/jupiter.webm",
+					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-jupiter/jupiter.mp4"
+				)
+			),
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:orbital-symphony" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_ORBITAL_SYMPHONY"),
+			"prefetchImages" => array("orbital-symphony.jpg"),
+			"previewImage" => "orbital-symphony-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:flickering-way" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_FLICKERING_WAY"),
+			"prefetchImages" => array("flickering-way.jpg"),
+			"previewImage" => "flickering-way-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:mysterious-vega" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_MYSTERIOUS_VEGA"),
+			"prefetchImages" => array("mysterious-vega.jpg"),
+			"previewImage" => "mysterious-vega-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:saturn" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_SATURN"),
+			"prefetchImages" => array("saturn.jpg"),
+			"previewImage" => "saturn-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:video-saturn" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_VIDEO_SATURN"),
+			"previewImage" => 'saturn-preview.jpg',
+			"prefetchImages" => array("saturn-poster.jpg"),
+			"video" => array(
+				// "poster" => "saturn-poster.jpg",
+				"sources" => array(
+					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-saturn/saturn.webm",
+					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-saturn/saturn.mp4"
+				)
+			),
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:sapphire-whirlwind" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_SAPPHIRE_WHIRLWIND"),
+			"prefetchImages" => array("sapphire-whirlwind.jpg"),
+			"previewImage" => "sapphire-whirlwind-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:orion-nebula" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_ORION_NEBULA"),
+			"prefetchImages" => array("orion-nebula.jpg"),
+			"previewImage" => "orion-nebula-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:cosmic-string" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_COSMIC_STRING"),
+			"prefetchImages" => array("cosmic-string.jpg"),
+			"previewImage" => "cosmic-string-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+		"light:neptune" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_NEPTUNE"),
+			"prefetchImages" => array("neptune.jpg"),
+			"previewImage" => "neptune-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:video-neptune" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_VIDEO_NEPTUNE"),
+			"previewImage" => "neptune-preview.jpg",
+			"prefetchImages" => array("neptune-poster.jpg"),
+			"video" => array(
+				// "poster" => "neptune-poster.jpg",
+				"sources" => array(
+					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-neptune/neptune.webm",
+					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-neptune/neptune.mp4"
+				)
+			),
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:pluto" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_PLUTO"),
+			"prefetchImages" => array("pluto.jpg"),
+			"previewImage" => "pluto-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:andromeda-galaxy" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_ANDROMEDA_GALAXY"),
+			"prefetchImages" => array("andromeda-galaxy.jpg"),
+			"previewImage" => "andromeda-galaxy-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:galactic-harmony" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_GALACTIC_HARMONY"),
+			"prefetchImages" => array("galactic-harmony.jpg"),
+			"previewImage" => "galactic-harmony-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:foggy-horizon" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_FOGGY_HORIZON"),
+			"prefetchImages" => array("foggy-horizon.jpg"),
+			"previewImage" => "foggy-horizon-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
 
 		"light:milky-way" => array(
 			"title" => Loc::getMessage("BITRIX24_THEME_MILKY_WAY"),

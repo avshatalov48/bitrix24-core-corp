@@ -17,17 +17,54 @@ class Payment extends Entity
 	{
 		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
 		$actionArguments = $action->getArguments();
-		$id = $actionArguments['payment'] ? $actionArguments['payment']->getId() : 0;
 
-		if (!Crm\Order\Permissions\Payment::checkUpdatePermission($id, $userPermissions))
+		if ($action->getName() === 'setPaid')
 		{
-			$this->addError(
-				new Main\Error(
-					Main\Localization\Loc::getMessage('CRM_CONTROLLER_PAYMENT_DOCUMENT_ACCESS_DENIED'),
-					self::PAYMENT_ACCESS_DENIED_ERROR_CODE
-				)
-			);
-			return false;
+			$id = $actionArguments['payment'] ? $actionArguments['payment']->getId() : 0;
+
+			if (!Crm\Order\Permissions\Payment::checkUpdatePermission($id, $userPermissions))
+			{
+				$this->addError(
+					new Main\Error(
+						Main\Localization\Loc::getMessage('CRM_CONTROLLER_PAYMENT_DOCUMENT_ACCESS_DENIED'),
+						self::PAYMENT_ACCESS_DENIED_ERROR_CODE
+					)
+				);
+				return false;
+			}
+		}
+		elseif (in_array($action->getName(), ['delete', 'deleteList'], true))
+		{
+			$ids = [];
+
+			if ($action->getName() === 'delete')
+			{
+				$ids[] = $actionArguments['payment'] ? $actionArguments['payment']->getId() : 0;
+			}
+			elseif ($action->getName() === 'deleteList')
+			{
+				$paymentList = $actionArguments['paymentList'] ?: [];
+				/** @var Crm\Order\Payment $payment */
+				foreach ($paymentList as $payment)
+				{
+					$ids[] = $payment->getId();
+				}
+			}
+
+			foreach ($ids as $id)
+			{
+				if (!Crm\Order\Permissions\Payment::checkDeletePermission($id, $userPermissions))
+				{
+					$this->addError(
+						new Main\Error(
+							Main\Localization\Loc::getMessage('CRM_CONTROLLER_PAYMENT_DOCUMENT_ACCESS_DENIED'),
+							self::PAYMENT_ACCESS_DENIED_ERROR_CODE
+						)
+					);
+
+					return false;
+				}
+			}
 		}
 
 		$this->temporarilyDisableAutomationIfNeeded();
@@ -42,12 +79,14 @@ class Payment extends Entity
 		parent::processAfterAction($action, $result);
 	}
 
-	public function getPrimaryAutoWiredParameter()
+	public function getAutoWiredParameters()
 	{
-		return new Main\Engine\AutoWire\ExactParameter(
+		$autoWiredParameters = parent::getAutoWiredParameters();
+
+		$autoWiredParameters[] = new Main\Engine\AutoWire\ExactParameter(
 			Crm\Order\Payment::class,
 			'payment',
-			function($className, $id) {
+			function($className, int $id) {
 				$payment = Sale\Repository\PaymentRepository::getInstance()->getById($id);
 
 				if ($payment)
@@ -59,7 +98,48 @@ class Payment extends Entity
 				return null;
 			}
 		);
+
+		$autoWiredParameters[] = new Main\Engine\AutoWire\ExactParameter(
+			Main\Type\Dictionary::class,
+			'paymentList',
+			function($className, array $ids) {
+				$paymentList = [];
+
+				foreach ($ids as $id)
+				{
+					$payment = Sale\Repository\PaymentRepository::getInstance()->getById($id);
+
+					if ($payment)
+					{
+						$paymentList[] = $payment;
+					}
+					else
+					{
+						$this->addError(new Main\Error('payment not found'));
+					}
+				}
+
+				$paymentDictionary = new Main\Type\Dictionary();
+				$paymentDictionary->setValues($paymentList);
+
+				return $paymentDictionary;
+			}
+		);
+
+		return $autoWiredParameters;
 	}
+
+
+
+
+
+
+
+
+
+
+
+
 
 	public function setPaidAction(Crm\Order\Payment $payment, string $value): void
 	{
@@ -81,6 +161,20 @@ class Payment extends Entity
 	}
 
 	public function deleteAction(Crm\Order\Payment $payment): void
+	{
+		$this->deletePayment($payment);
+	}
+
+	public function deleteListAction(Main\Type\Dictionary $paymentList): void
+	{
+		/** @var Crm\Order\Payment $payment */
+		foreach ($paymentList as $payment)
+		{
+			$this->deletePayment($payment);
+		}
+	}
+
+	private function deletePayment(Crm\Order\Payment $payment): void
 	{
 		$order = $payment->getOrder();
 

@@ -4,6 +4,7 @@
 jn.define('imconnector/connectors/telegram/controllers/editor', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const AppTheme = require('apptheme');
 	const { EditView } = require('imconnector/connectors/telegram/view/edit');
 	const { TelegramRestManager } = require('imconnector/lib/rest-manager/telegram');
 
@@ -37,7 +38,7 @@ jn.define('imconnector/connectors/telegram/controllers/editor', (require, export
 					params.connectorSettings.users = userList;
 					this.show(parentWidget, params);
 				})
-			;
+				.catch(console.error);
 		}
 
 		/**
@@ -81,20 +82,22 @@ jn.define('imconnector/connectors/telegram/controllers/editor', (require, export
 			).then((layoutWidget) => {
 				if (params.connectorSettings.canEditLine)
 				{
-					layoutWidget.setRightButtons([{
-						id: 'continue',
-						color: '#2066B0',
-						name: Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_EDIT_SAVE'),
-						callback: () => {
-							params.connectorSettings.users = this.tmpQueue;
-							params.onSave(params.connectorSettings);
-							layoutWidget.close();
+					layoutWidget.setRightButtons([
+						{
+							id: 'continue',
+							color: AppTheme.colors.accentMainLinks,
+							name: Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_EDIT_SAVE'),
+							callback: () => {
+								params.connectorSettings.users = this.tmpQueue;
+								params.onSave(params.connectorSettings);
+								layoutWidget.close();
+							},
 						},
-					}]);
+					]);
 				}
 
 				layoutWidget.enableNavigationBarBorder(false);
-			});
+			}).catch(console.error);
 		}
 	}
 

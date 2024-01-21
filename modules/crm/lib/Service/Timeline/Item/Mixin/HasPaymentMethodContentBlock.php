@@ -24,6 +24,8 @@ trait HasPaymentMethodContentBlock
 			return $result;
 		}
 
+		$fields = $this->getHistoryItemModel()->get('FIELDS');
+
 		$result
 			->addContentBlock(
 				'title',
@@ -35,7 +37,7 @@ trait HasPaymentMethodContentBlock
 			->addContentBlock(
 				'value',
 				(new Text())
-					->setValue((string)$this->getAssociatedEntityModel()->get('PAY_SYSTEM_NAME'))
+					->setValue((string)($fields['PAY_SYSTEM_NAME'] ?? ''))
 					->setColor(Text::COLOR_BASE_90)
 			)
 		;

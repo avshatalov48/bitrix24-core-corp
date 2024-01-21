@@ -13,10 +13,10 @@
 					title: BX.message('MOBILE_LAYOUT_PROJECT_FIELDS_DATE_START_TITLE'),
 					value: this.props.value,
 					config: {
-						enableTime: false
+						enableTime: false,
 					},
-					onChange: date => this.props.onChange(date),
-				})
+					onChange: (date) => this.props.onChange(date),
+				}),
 			);
 		}
 	}

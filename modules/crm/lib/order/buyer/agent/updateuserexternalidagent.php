@@ -74,8 +74,9 @@ class UpdateUserExternalIdAgent
 
 		$usersWithOrdersIds = join(',', $usersWithOrdersIds);
 		$sql = new SqlExpression(
-			"UPDATE ?# SET `EXTERNAL_AUTH_ID` = ? WHERE ID IN ({$usersWithOrdersIds})",
+			"UPDATE ?# SET ?# = ? WHERE ID IN ({$usersWithOrdersIds})",
 			UserTable::getTableName(),
+			'EXTERNAL_AUTH_ID',
 			Buyer::AUTH_ID
 		);
 

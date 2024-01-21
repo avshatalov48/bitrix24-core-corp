@@ -1,7 +1,7 @@
 import Item from "../item";
-import {Tag, Dom, Type, Loc} from "main.core";
-import {BaseEvent} from "main.core.events";
-import {TodoEditor} from "crm.activity.todo-editor";
+import { Dom, Loc, Tag, Type } from "main.core";
+import { BaseEvent } from "main.core.events";
+import { TodoEditor } from "crm.activity.todo-editor";
 
 /** @memberof BX.Crm.Timeline.MenuBar */
 export default class ToDo extends Item
@@ -14,7 +14,7 @@ export default class ToDo extends Item
 	{
 		this.#todoEditorContainer = Tag.render`<div></div>`;
 
-		this.#saveButton = Tag.render`<button onclick="${this.onSaveButtonClick.bind(this)}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-disabled" >${Loc.getMessage('CRM_TIMELINE_SAVE_BUTTON')}</button>`;
+		this.#saveButton = Tag.render`<button onclick="${this.onSaveButtonClick.bind(this)}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round ui-btn-disabled" >${Loc.getMessage('CRM_TIMELINE_SAVE_BUTTON')}</button>`;
 
 		return Tag.render`<div class="crm-entity-stream-content-new-detail crm-entity-stream-content-new-detail-todo --hidden">
 			${this.#todoEditorContainer}
@@ -33,19 +33,18 @@ export default class ToDo extends Item
 	onSaveButtonClick(e)
 	{
 		if (
-			Dom.hasClass(this.#saveButton, 'ui-btn-wait')
+			this.isLocked()
 			|| Dom.hasClass(this.#saveButton, 'ui-btn-disabled')
 		)
 		{
 			return;
 		}
-		Dom.addClass(this.#saveButton, 'ui-btn-wait');
-		const removeButtonWaitClass = () => Dom.removeClass(this.#saveButton, 'ui-btn-wait');
+		this.setLocked(true);
 
 		this.save().then(
-			() => removeButtonWaitClass(),
-			() => removeButtonWaitClass()
-		);
+			() => this.setLocked(false),
+			() => this.setLocked(false),
+		).catch(() => this.setLocked(false));
 	}
 
 	onCancelButtonClick()
@@ -61,6 +60,7 @@ export default class ToDo extends Item
 			ownerTypeId: this.getEntityTypeId(),
 			ownerId: this.getEntityId(),
 			currentUser: this.getSetting('currentUser'),
+			pingSettings: this.getSetting('pingSettings'),
 			events: {
 				onFocus: this.setFocused.bind(this, true),
 				onChangeDescription: this.#onChangeDescription.bind(this),

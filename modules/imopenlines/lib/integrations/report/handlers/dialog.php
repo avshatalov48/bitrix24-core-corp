@@ -93,9 +93,18 @@ class Dialog extends Base implements IReportSingleData, IReportMultipleData, IRe
 	protected function getGeneratedDemoData()
 	{
 		$result = array();
-		$providers = array(
-			'viber', 'facebook', 'vkgroup', 'livechat'
-		);
+		if (\Bitrix\Main\Application::getInstance()->getLicense()->getRegion() === 'ru')
+		{
+			$providers = [
+				'viber', 'facebook*', 'vkgroup', 'livechat'
+			];
+		}
+		else
+		{
+			$providers = [
+				'viber', 'facebook', 'vkgroup', 'livechat'
+			];
+		}
 		for ($i = 0; $i < 30; $i++)
 		{
 			$result[] =	array(

@@ -2,4 +2,8 @@
 $MESS['CRM_ACTIVITY_PROVIDER_BASE_SUBJECT'] = 'Новое дело (#DATE#)';
 $MESS['CRM_ACTIVITY_PROVIDER_BASE_SOURCE_NONE'] = '(нет)';
 $MESS['CRM_ACTIVITY_PROVIDER_COMMUNICATIONS_LABEL'] = 'С кем';
+$MESS['CRM_ACTIVITY_INCOMING_CALL'] = 'Звонок (входящий)';
+$MESS['CRM_ACTIVITY_INCOMING_EMAIL'] = 'Письмо (полученное)';
+$MESS['CRM_ACTIVITY_OUTGOING_CALL'] = 'Звонок (исходящий)';
+$MESS['CRM_ACTIVITY_OUTGOING_EMAIL'] = 'Письмо (отправленное)';
 ?>

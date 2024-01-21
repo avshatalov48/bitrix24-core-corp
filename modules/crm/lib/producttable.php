@@ -42,7 +42,8 @@ class ProductTable extends Entity\DataManager
 		return array(
 			'ID' => array(
 				'data_type' => 'integer',
-				'primary' => true
+				'primary' => true,
+				'autocomplete' => true,
 			),
 			'IBLOCK_ELEMENT' => array(
 				'data_type' => 'IBlockElementProxy',

@@ -7,10 +7,11 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 	const { clone } = require('utils/object');
 	const { PullHandler } = require('im/messenger/provider/pull/base');
 	const { EventType } = require('im/messenger/const');
-	const { Logger } = require('im/messenger/lib/logger');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { Counters } = require('im/messenger/lib/counters');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('pull-handler--dialog');
 
 	/**
 	 * @class DialogPullHandler
@@ -19,7 +20,12 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 	{
 		handleReadAllChats(params, extra, command)
 		{
-			Logger.info('DialogPullHandler.handleReadAllChats');
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('DialogPullHandler.handleReadAllChats');
 
 			this.store.dispatch('dialoguesModel/clearAllCounters')
 				.then(() => this.store.dispatch('recentModel/clearAllCounters'))
@@ -29,22 +35,31 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 
 		handleChatPin(params, extra, command)
 		{
-			Logger.info('DialogPullHandler.handleChatPin', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('DialogPullHandler.handleChatPin', params);
 
 			this.store.dispatch('recentModel/set', [{
 				id: params.dialogId,
 				pinned: params.active,
-				date_update: new Date(),
 			}]);
 		}
 
 		handleChatMuteNotify(params, extra, command)
 		{
-			Logger.info('DialogPullHandler.handleChatMuteNotify', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('DialogPullHandler.handleChatMuteNotify', params);
 
 			if (params.lines)
 			{
-				Logger.info('DialogPullHandler.handleChatMuteNotify skip openline mute', params);
+				logger.info('DialogPullHandler.handleChatMuteNotify skip openline mute', params);
 
 				return;
 			}
@@ -62,16 +77,6 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 				muteList.delete(MessengerParams.getUserId());
 			}
 
-			// TODO remove after RecentConverter implementation, only the dialoguesModel should change
-			const recentMuteList = {};
-			muteList.forEach((userId) => {
-				recentMuteList[userId] = true;
-			});
-			recentItem.chat.mute_list = recentMuteList;
-			this.store.dispatch('recentModel/set', [recentItem])
-				.then(() => Counters.update())
-			;
-
 			this.store.dispatch('dialoguesModel/set', [{
 				dialogId: params.dialogId,
 				muteList: [...muteList],
@@ -85,7 +90,12 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 
 		handleChatHide(params, extra, command)
 		{
-			Logger.info('DialogPullHandler.handleChatHide', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('DialogPullHandler.handleChatHide', params);
 
 			this.store.dispatch('recentModel/delete', { id: params.dialogId })
 				.then(() => Counters.updateDelayed())
@@ -94,7 +104,12 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 
 		handleChatRename(params, extra, command)
 		{
-			Logger.info('DialogPullHandler.handleChatRename', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('DialogPullHandler.handleChatRename', params);
 
 			const dialogId = `chat${params.chatId}`;
 			const name = params.name;
@@ -118,14 +133,24 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 
 		handleDialogChange(params, extra, command)
 		{
-			Logger.info('DialogPullHandler.handleDialogChange', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('DialogPullHandler.handleDialogChange', params);
 
 			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: params.dialogId });
 		}
 
 		handleGeneralChatId(params, extra, command)
 		{
-			Logger.info('DialogPullHandler.handleGeneralChatId', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('DialogPullHandler.handleGeneralChatId', params);
 
 			// TODO: Remove after converter implementation
 			if (ChatDataConverter)
@@ -138,7 +163,12 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 
 		handleChatUnread(params, extra, command)
 		{
-			Logger.info('DialogPullHandler.handleChatUnread', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('DialogPullHandler.handleChatUnread', params);
 
 			const dialogId = params.dialogId;
 
@@ -158,13 +188,17 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 				id: dialogId,
 				unread: params.active,
 				counter,
-				date_update: new Date(),
 			}]).then(() => Counters.update());
 		}
 
 		handleChatUserAdd(params, extra, command)
 		{
-			Logger.info('DialogPullHandler.handleChatUserAdd', params, extra);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('DialogPullHandler.handleChatUserAdd', params, extra);
 			const dialogId = params.dialogId;
 
 			this.store.dispatch('usersModel/set', Object.values(params.users));
@@ -175,20 +209,32 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 			});
 		}
 
-		handleChatUserLeave(params, extra, command)
+		async handleChatUserLeave(params, extra, command)
 		{
-			Logger.info('DialogPullHandler.handleChatUserLeave', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('DialogPullHandler.handleChatUserLeave', params);
 
 			const dialogId = params.dialogId;
+			const chatId = params.chatId;
 
 			delete Counters.chatCounter.detail[params.dialogId];
 			delete Counters.openlinesCounter.detail[params.dialogId];
 
 			if (Number(params.userId) === MessengerParams.getUserId())
 			{
-				this.store.dispatch('recentModel/delete', { id: dialogId })
-					.then(() => Counters.update())
-				;
+				await this.store.dispatch('recentModel/delete', { id: dialogId });
+				Counters.update();
+
+				MessengerEmitter.emit(EventType.dialog.external.close, {
+					dialogId,
+				});
+
+				await this.store.dispatch('dialoguesModel/delete', { dialogId });
+				await this.store.dispatch('messagesModel/deleteByChatId', { chatId });
 			}
 
 			this.store.dispatch('dialoguesModel/removeParticipants', {
@@ -200,7 +246,12 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 
 		handleChatAvatar(params, extra, command)
 		{
-			Logger.info('DialogPullHandler.handleChatAvatar', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('DialogPullHandler.handleChatAvatar', params);
 
 			const dialogId = `chat${params.chatId}`;
 
@@ -219,7 +270,12 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 
 		handleChatChangeColor(params, extra, command)
 		{
-			Logger.info('DialogPullHandler.handleChatChangeColor', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('DialogPullHandler.handleChatChangeColor', params);
 
 			const dialogId = `chat${params.chatId}`;
 

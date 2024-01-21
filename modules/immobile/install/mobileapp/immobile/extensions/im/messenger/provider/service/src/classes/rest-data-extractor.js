@@ -63,6 +63,11 @@ jn.define('im/messenger/provider/service/classes/rest-data-extractor', (require,
 			return this.rawUsers;
 		}
 
+		getUsersShort()
+		{
+			return this.usersShort;
+		}
+
 		getDialogues()
 		{
 			return Object.values(this.dialogues);
@@ -70,12 +75,12 @@ jn.define('im/messenger/provider/service/classes/rest-data-extractor', (require,
 
 		getMessages()
 		{
-			return Object.values(this.messages);
+			return Object.values(this.messages).sort((a, b) => a.id - b.id);
 		}
 
 		getMessagesToStore()
 		{
-			return Object.values(this.messagesToStore);
+			return Object.values(this.messagesToStore).sort((a, b) => a.id - b.id);
 		}
 
 		getFiles()

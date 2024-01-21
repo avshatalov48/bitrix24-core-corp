@@ -2,7 +2,7 @@
  * @module layout/ui/fields/multiple-combined
  */
 jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { cross, pen } = require('assets/common');
 	const { AddButton } = require('layout/ui/buttons/add-button');
 	const { BaseMultipleField } = require('layout/ui/fields/base-multiple');
@@ -137,12 +137,13 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 						},
 					},
 					Image({
+						tintColor: AppTheme.colors.base3,
 						style: {
 							width: 12,
 							height: 12,
 						},
 						svg: {
-							content: pen,
+							content: pen(),
 						},
 					}),
 				);
@@ -175,7 +176,7 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 
 			return AddButton({
 				text: BX.prop.getString(this.getConfig(), 'addButtonText', ''),
-				color: '#a8adb4',
+				color: AppTheme.colors.base4,
 				onClick: this.handleAddButtonClick,
 				deepMergeStyles: this.styles.addButton,
 			});
@@ -211,10 +212,11 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 					onClick: () => this.handleDeleteButtonClick(index),
 				},
 				Image({
+					tintColor: AppTheme.colors.base3,
 					style: this.styles.buttonContainer,
 					resizeMode: 'cover',
 					svg: {
-						content: cross('#bdc1c6'),
+						content: cross(),
 					},
 				}),
 			);
@@ -224,33 +226,30 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 		{
 			const type = this.getConfig().primaryField.type;
 
-			if (titleIcons.hasOwnProperty(type))
+			if (titleIcons.hasOwnProperty(type) && this.isEmptyEditable() && !this.state.focus)
 			{
-				if (this.isEmptyEditable() && !this.state.focus)
-				{
-					return View(
+				return View(
+					{
+						style: {
+							width: 24,
+							height: 24,
+							justifyContent: 'center',
+							alignItems: 'center',
+							marginRight: 8,
+						},
+					},
+					Image(
 						{
 							style: {
-								width: 24,
-								height: 24,
-								justifyContent: 'center',
-								alignItems: 'center',
-								marginRight: 8,
+								width: titleIcons[type].width,
+								height: titleIcons[type].height,
+							},
+							svg: {
+								content: titleIcons[type].content(this.getTitleColor()),
 							},
 						},
-						Image(
-							{
-								style: {
-									width: titleIcons[type].width,
-									height: titleIcons[type].height,
-								},
-								svg: {
-									content: titleIcons[type].content(this.getTitleColor()),
-								},
-							},
-						),
-					);
-				}
+					),
+				);
 			}
 
 			return null;
@@ -294,7 +293,7 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 				},
 				multipleCombinedTitle: {
 					fontSize: 10,
-					color: '#a8adb4',
+					color: AppTheme.colors.base4,
 					marginTop: 4,
 					paddingBottom: 6,
 				},
@@ -356,5 +355,4 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 		MultipleCombinedType: 'multiple-combined',
 		MultipleCombinedField: (props) => new MultipleCombinedField(props),
 	};
-
 });

@@ -5,5 +5,5 @@ type RecentLocalItem = {
 	dialogId: string,
 	dialog: DialoguesModelState,
 	user?: UsersModelState,
-	dateUpdate: string,
+	dateMessage: string,
 }

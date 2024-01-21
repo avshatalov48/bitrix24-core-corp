@@ -2,6 +2,7 @@
  * @module layout/ui/fields/tag
  */
 jn.define('layout/ui/fields/tag', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
 
 	/**
@@ -59,19 +60,21 @@ jn.define('layout/ui/fields/tag', (require, exports, module) => {
 					alignItems: 'center',
 					height: 24,
 					borderRadius: 12,
-					backgroundColor: '#e5f9ff',
+					backgroundColor: AppTheme.colors.accentSoftBlue2,
 					paddingVertical: 3,
 					paddingHorizontal: 12,
 					marginRight: 4,
 					marginBottom: 5,
+					flexShrink: 2,
 				},
 				numberSign: {
-					color: '#bdc1c6',
+					color: AppTheme.colors.base5,
 					fontSize: 14,
 					marginRight: 2,
 				},
 				tagTitle: {
 					fontSize: 14,
+					flexShrink: 2,
 				},
 				wrapper: {
 					paddingTop: (this.isLeftTitlePosition() ? 10 : 7),

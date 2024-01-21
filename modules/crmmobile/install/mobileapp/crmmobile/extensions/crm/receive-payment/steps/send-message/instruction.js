@@ -2,8 +2,9 @@
  * @module crm/receive-payment/steps/send-message/instruction
  */
 jn.define('crm/receive-payment/steps/send-message/instruction', (require, exports, module) => {
-	const { PureComponent } = require('layout/pure-component');
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
+	const { PureComponent } = require('layout/pure-component');
 
 	/**
 	 * @class Instruction
@@ -24,7 +25,7 @@ jn.define('crm/receive-payment/steps/send-message/instruction', (require, export
 				text: Loc.getMessage(this.state.isEditing ? 'M_RP_SM_INSTRUCTION_EDITING' : 'M_RP_SM_INSTRUCTION_READ_ONLY'),
 				style: {
 					marginTop: 12,
-					color: '#525C69',
+					color: AppTheme.colors.base2,
 					fontSize: 14,
 					marginLeft: 16,
 					marginRight: 16,

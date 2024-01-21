@@ -6,6 +6,7 @@ jn.define('crm/document/details/loading-screen', (require, exports, module) => {
 	const { CrmDocumentDownloadLink } = require('crm/document/details/download-link');
 	const { Loc } = require('loc');
 	const { animate } = require('animation');
+	const AppTheme = require('apptheme');
 	const Spacer = () => View({ style: { height: 1 } });
 	const LoadingMode = {
 		Document: 1,
@@ -63,7 +64,7 @@ jn.define('crm/document/details/loading-screen', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						backgroundColor: '#EEF2F4',
+						backgroundColor: AppTheme.colors.bgPrimary,
 						flexDirection: 'column',
 						justifyContent: 'space-between',
 						flexGrow: 1,
@@ -73,7 +74,7 @@ jn.define('crm/document/details/loading-screen', (require, exports, module) => {
 				View(
 					{
 						style: {
-							backgroundColor: '#fff',
+							backgroundColor: AppTheme.colors.bgContentPrimary,
 							borderRadius: 12,
 							marginHorizontal: 16,
 							paddingTop: 32,
@@ -142,7 +143,7 @@ jn.define('crm/document/details/loading-screen', (require, exports, module) => {
 					text: Loc.getMessage('M_CRM_DOCUMENT_SHARED_PHRASES_LOADING'),
 					style: {
 						fontSize: 15,
-						color: '#A8ADB4',
+						color: AppTheme.colors.base4,
 						textAlign: 'center',
 					},
 				}),
@@ -173,7 +174,7 @@ jn.define('crm/document/details/loading-screen', (require, exports, module) => {
 					text: line,
 					style: {
 						fontSize: 15,
-						color: '#A8ADB4',
+						color: AppTheme.colors.base4,
 						textAlign: 'center',
 					},
 				})),

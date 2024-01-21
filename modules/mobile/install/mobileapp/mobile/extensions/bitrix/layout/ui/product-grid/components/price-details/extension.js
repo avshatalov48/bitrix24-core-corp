@@ -2,8 +2,8 @@
  * @module layout/ui/product-grid/components/price-details
  */
 jn.define('layout/ui/product-grid/components/price-details', (require, exports, module) => {
-
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 
 	class PriceDetails extends LayoutComponent
 	{
@@ -17,7 +17,7 @@ jn.define('layout/ui/product-grid/components/price-details', (require, exports, 
 
 		initLayout()
 		{
-			this.layout.setTitle({text: this.props.title || Loc.getMessage('PRODUCT_GRID_CONTROL_PRICE_DETAILS')});
+			this.layout.setTitle({ text: this.props.title || Loc.getMessage('PRODUCT_GRID_CONTROL_PRICE_DETAILS') });
 			this.layout.enableNavigationBarBorder(false);
 		}
 
@@ -66,27 +66,26 @@ jn.define('layout/ui/product-grid/components/price-details', (require, exports, 
 		return View(
 			{
 				style: {
-					backgroundColor: '#EEF2F4',
-				}
+					backgroundColor: AppTheme.colors.bgContentPrimary,
+				},
 			},
 			View(
 				{
 					style: {
-						backgroundColor: '#ffffff',
 						borderRadius: 12,
 						paddingLeft: 20,
 						paddingRight: 20,
-					}
+					},
 				},
-				...children
-			)
+				...children,
+			),
 		);
 	}
 
 	function MoneyRow({ title, amount, currency })
 	{
 		const style = {
-			borderBottomColor: '#edeef0',
+			borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
 			borderBottomWidth: 1,
 		};
 
@@ -101,18 +100,18 @@ jn.define('layout/ui/product-grid/components/price-details', (require, exports, 
 						text: formattedAmount,
 						style: {
 							fontSize: 18,
-							color: '#525C69',
-						}
+							color: AppTheme.colors.base2,
+						},
 					}),
 					renderCurrency: (formattedCurrency) => Text({
 						text: formattedCurrency,
 						style: {
 							fontSize: 18,
-							color: '#828B95',
-						}
+							color: AppTheme.colors.base3,
+						},
 					}),
 				}),
-			)
+			),
 		);
 	}
 
@@ -120,7 +119,7 @@ jn.define('layout/ui/product-grid/components/price-details', (require, exports, 
 	{
 		return RowWrap(
 			{},
-			Title(title, { color: '#525C69', fontSize: 20 }),
+			Title(title, { color: AppTheme.colors.base2, fontSize: 20 }),
 			View(
 				{},
 				MoneyView({
@@ -129,30 +128,34 @@ jn.define('layout/ui/product-grid/components/price-details', (require, exports, 
 						text: formattedAmount,
 						style: {
 							fontSize: 20,
-							color: '#333333',
+							color: AppTheme.colors.base1,
 							fontWeight: 'bold',
-						}
+						},
 					}),
 					renderCurrency: (formattedCurrency) => Text({
 						text: formattedCurrency,
 						style: {
 							fontSize: 20,
-							color: '#828B95',
+							color: AppTheme.colors.base3,
 							fontWeight: 'bold',
-						}
+						},
 					}),
 				}),
-			)
+			),
 		);
 	}
 
 	function Title(text, style = {})
 	{
-		style = { color: '#A8ADB4', fontSize: 18, ...style };
+		style = {
+			color: AppTheme.colors.base4,
+			fontSize: 18,
+			...style,
+		};
 
 		return View(
 			{},
-			Text({ text, style })
+			Text({ text, style }),
 		);
 	}
 
@@ -170,5 +173,4 @@ jn.define('layout/ui/product-grid/components/price-details', (require, exports, 
 	}
 
 	module.exports = { PriceDetails };
-
 });

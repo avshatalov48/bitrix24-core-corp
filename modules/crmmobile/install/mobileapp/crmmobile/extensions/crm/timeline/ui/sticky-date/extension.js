@@ -2,6 +2,7 @@
  * @module crm/timeline/ui/sticky-date
  */
 jn.define('crm/timeline/ui/sticky-date', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Moment } = require('utils/date');
 	const { DateDivider } = require('crm/timeline/ui/date-divider');
 
@@ -139,7 +140,9 @@ jn.define('crm/timeline/ui/sticky-date', (require, exports, module) => {
 		{
 			return View(
 				{
-					ref: (ref) => this.containerRef = ref,
+					ref: (ref) => {
+						this.containerRef = ref;
+					},
 					style: {
 						position: 'absolute',
 						top: 0,
@@ -148,29 +151,16 @@ jn.define('crm/timeline/ui/sticky-date', (require, exports, module) => {
 						display: this.state.visible ? 'flex' : 'none',
 					},
 				},
-				Shadow(
+				View(
 					{
-						color: '#e6e7e9',
-						radius: 3,
-						offset: {
-							y: 3,
-						},
-						inset: {
-							left: 3,
-							right: 3,
+						style: {
+							paddingTop: INNER_PADDING,
 						},
 					},
-					View(
-						{
-							style: {
-								paddingTop: INNER_PADDING,
-							},
-						},
-						DateDivider({
-							moment: this.state.moment,
-							showLine: false,
-						}),
-					),
+					DateDivider({
+						moment: this.state.moment,
+						showLine: false,
+					}),
 				),
 			);
 		}

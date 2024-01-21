@@ -30,12 +30,13 @@
 		getChecklistQueue(checklistItemId)
 		{
 			this.addChecklistQueue(checklistItemId);
+
 			return this.queue.get(checklistItemId);
 		}
 
 		getArrayChecklistQueue(checklistItemId)
 		{
-			return Array.from(this.getChecklistQueue(checklistItemId));
+			return [...this.getChecklistQueue(checklistItemId)];
 		}
 
 		addFile(checklistItemId, file)
@@ -45,7 +46,7 @@
 
 		removeFile(file)
 		{
-			this.queue.forEach(checklistQueue => checklistQueue.delete(file));
+			this.queue.forEach((checklistQueue) => checklistQueue.delete(file));
 		}
 	}
 
@@ -178,7 +179,7 @@
 			{
 				preparedItem.actions = [{
 					title: BX.message('TASKS_TASK_DETAIL_CHECKLIST_FILES_LIST_REMOVE'),
-					color: '#fb5d54',
+					color: AppTheme.colors.accentMainAlert,
 					identifier: 'remove',
 				}];
 			}
@@ -261,7 +262,7 @@
 				},
 				actions: [{
 					title: BX.message('TASKS_TASK_DETAIL_CHECKLIST_FILES_LIST_REMOVE'),
-					color: '#fb5d54',
+					color: AppTheme.colors.accentMainAlert,
 					identifier: 'remove',
 				}],
 				type: 'info',
@@ -291,7 +292,7 @@
 			}
 			else if (type === 'image')
 			{
-				viewer.openImageCollection([{url, previewUrl, name}]);
+				viewer.openImageCollection([{ url, previewUrl, name }]);
 			}
 			else
 			{
@@ -313,8 +314,8 @@
 			this.files.forEach((file) => {
 				if (
 					file.id.indexOf('taskChecklist-') !== 0
-					&& !items.find(item => item.ID === file.id)
-					&& !this.filesStorage.getArrayFiles().find(item => item.id === file.id)
+					&& !items.find((item) => item.ID === file.id)
+					&& !this.filesStorage.getArrayFiles().find((item) => item.id === file.id)
 					&& !this.filesToShow.has(file.id)
 				)
 				{
@@ -404,8 +405,8 @@
 				this.list.setRightButtons([{
 					name: BX.message('TASKS_TASK_DETAIL_CHECKLIST_FILES_LIST_ADD'),
 					callback: () => {
-						const {nodeId} = this.checklistData;
-						this.checklistController.addFile(this.checklistData, {nodeId});
+						const { nodeId } = this.checklistData;
+						this.checklistController.addFile(this.checklistData, { nodeId });
 					},
 				}]);
 			}
@@ -452,12 +453,12 @@
 
 		addRealFile(taskId, file)
 		{
-			const preparedItem = Object.assign(this.prepareItem(file), {unselectable: false});
+			const preparedItem = Object.assign(this.prepareItem(file), { unselectable: false });
 
-			this.list.findItem({id: taskId}, (item) => {
+			this.list.findItem({ id: taskId }, (item) => {
 				if (item)
 				{
-					this.list.updateItem({id: taskId}, preparedItem);
+					this.list.updateItem({ id: taskId }, preparedItem);
 				}
 				else
 				{
@@ -480,7 +481,7 @@
 				return;
 			}
 
-			const {previewUrl, type} = item.params;
+			const { previewUrl, type } = item.params;
 			ChecklistFilesList.openFile(previewUrl, previewUrl, type, item.title);
 		}
 
@@ -501,10 +502,10 @@
 				return;
 			}
 
-			const {ajaxData} = this.checklistData;
-			const {checkListItemId} = ajaxData;
+			const { ajaxData } = this.checklistData;
+			const { checkListItemId } = ajaxData;
 
-			this.list.removeItem({id: fileId});
+			this.list.removeItem({ id: fileId });
 			this.filesToRemoveQueue.addFile(checkListItemId, fileId);
 			this.filesToShow.delete(fileId);
 			this.files.delete(fileId);
@@ -532,7 +533,7 @@
 
 		removeFileInViewMode(ajaxData, fileId)
 		{
-			const {entityId, entityTypeId, checkListItemId} = ajaxData;
+			const { entityId, entityTypeId, checkListItemId } = ajaxData;
 
 			BX.ajax.runAction('tasks.task.checklist.removeAttachments', {
 				data: {
@@ -543,9 +544,9 @@
 			}).then((response) => {
 				if (response.status === 'success')
 				{
-					const {attachments} = response.data.checkListItem;
+					const { attachments } = response.data.checkListItem;
 
-					this.attachmentsIds = this.attachmentsIds.filter(id => id !== fileId);
+					this.attachmentsIds = this.attachmentsIds.filter((id) => id !== fileId);
 					this.filesToRemoveQueue.removeFile(fileId);
 
 					BX.postWebEvent('tasks.view.native::checklist.removeFiles', {
@@ -571,7 +572,7 @@
 
 		removeFileInEditMode(ajaxData, fileId)
 		{
-			const {checkListItemId} = ajaxData;
+			const { checkListItemId } = ajaxData;
 
 			this.filesToRemoveQueue.removeFile(fileId);
 
@@ -596,7 +597,7 @@
 		{
 			function s4()
 			{
-				return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+				return Math.floor((1 + Math.random()) * 0x10000).toString(16).slice(1);
 			}
 
 			return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
@@ -621,7 +622,7 @@
 			this.filesStorage.getArrayFiles().forEach((file) => {
 				if (this.checkEvent(file.params.taskId))
 				{
-					const {checkListItemId} = file.params.ajaxData;
+					const { checkListItemId } = file.params.ajaxData;
 					this.filesToAddQueue.addFile(checkListItemId, file.id);
 				}
 			});
@@ -648,6 +649,7 @@
 			{
 				idCheck = (Number(this.taskId) === Number(taskId));
 			}
+
 			if (taskGuid !== null)
 			{
 				guidCheck = (this.taskGuid === taskGuid);
@@ -670,7 +672,7 @@
 
 		onChecklistInit(eventData)
 		{
-			const {taskId, taskGuid} = eventData;
+			const { taskId, taskGuid } = eventData;
 
 			if (this.checkEvent(taskId, taskGuid))
 			{
@@ -684,7 +686,7 @@
 			{
 				InAppNotifier.showNotification({
 					message: BX.message('TASKS_TASK_DETAIL_CHECKLIST_NOTIFICATION_AJAX_ERROR'),
-					backgroundColor: '#333333',
+					backgroundColor: AppTheme.colors.base1,
 					time: 5,
 				});
 			}
@@ -692,8 +694,8 @@
 
 		onChecklistAttachmentsClick(checklistData)
 		{
-			const {taskId, taskGuid, ajaxData} = checklistData;
-			const {checkListItemId} = ajaxData;
+			const { taskId, taskGuid, ajaxData } = checklistData;
+			const { checkListItemId } = ajaxData;
 
 			if (!this.checkEvent(taskId, taskGuid))
 			{
@@ -712,14 +714,14 @@
 					this.filesList = new ChecklistFilesList(list, this.userId, checklistData, this);
 					this.filesList.init(false);
 				},
-				onError: error => console.log(error),
+				onError: (error) => console.log(error),
 			});
 		}
 
 		onChecklistSettingsClick(checklistData)
 		{
-			const {taskId, taskGuid, ajaxData, popupMenuItems, popupMenuSections} = checklistData;
-			const {checkListItemId} = ajaxData;
+			const { taskId, taskGuid, ajaxData, popupMenuItems, popupMenuSections } = checklistData;
+			const { checkListItemId } = ajaxData;
 
 			if (!this.checkEvent(taskId, taskGuid))
 			{
@@ -743,7 +745,7 @@
 
 		onPopupMenuItemSelected(checklistData, itemId)
 		{
-			const webEventData = {nodeId: checklistData.nodeId};
+			const webEventData = { nodeId: checklistData.nodeId };
 
 			switch (itemId)
 			{
@@ -770,12 +772,13 @@
 		{
 			UserList.openPicker({
 				allowMultipleSelection: false,
-				listOptions:{
-					users:{
-						hideUnnamed:true,
-						useRecentSelected:true
-					}
-				}}).then((data) => {
+				listOptions: {
+					users: {
+						hideUnnamed: true,
+						useRecentSelected: true,
+					},
+				},
+			}).then((data) => {
 				if (data.length > 0)
 				{
 					const user = data[0];
@@ -836,14 +839,14 @@
 
 		moveToAnotherChecklist(checklistData, webEventData)
 		{
-			const {popupChecklists} = checklistData;
+			const { popupChecklists } = checklistData;
 
 			if (popupChecklists.length > 1)
 			{
 				const checklistChooser = dialogs.createPopupMenu();
 
 				checklistChooser.setPosition('center');
-				checklistChooser.setData(popupChecklists, [{id: '0'}], (eventName, checklist) => {
+				checklistChooser.setData(popupChecklists, [{ id: '0' }], (eventName, checklist) => {
 					if (eventName === 'onItemSelected')
 					{
 						webEventData.checklistId = checklist.id;
@@ -881,7 +884,7 @@
 							items: [
 								{
 									id: 'disk',
-									name: BX.message('TASKS_TASK_DETAIL_IMAGE_PICKER_BITRIX24_DISK'),
+									name: BX.message('TASKS_TASK_DETAIL_IMAGE_PICKER_BITRIX24_DISK_MSGVER_1'),
 									dataSource: {
 										multiple: true,
 										url: `/mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${this.userId}`,
@@ -897,13 +900,13 @@
 				},
 				(filesMetaArray) => {
 					this.onImagePickerFileChoose(checklistData, webEventData, filesMetaArray);
-				}
+				},
 			);
 		}
 
 		onImagePickerFileChoose(checklistData, webEventData, files)
 		{
-			const {disk, ajaxData} = checklistData;
+			const { disk, ajaxData } = checklistData;
 			const diskAttachments = [];
 			const diskAttachmentsIds = [];
 			const localAttachments = [];
@@ -945,7 +948,7 @@
 			else
 			{
 				this.filesStorage.addFiles(localAttachments);
-				BX.postComponentEvent('onFileUploadTaskReceived', [{files: localAttachments}], 'background');
+				BX.postComponentEvent('onFileUploadTaskReceived', [{ files: localAttachments }], 'background');
 			}
 		}
 
@@ -965,7 +968,7 @@
 
 		attachDiskFilesInEditMode(ajaxData, diskAttachments, webEventData)
 		{
-			const {checkListItemId} = ajaxData;
+			const { checkListItemId } = ajaxData;
 
 			diskAttachments.forEach((file) => {
 				const fileId = file.dataAttributes.ID;
@@ -995,9 +998,9 @@
 
 		sendFakeAttachFilesEvent(ajaxData, diskAttachments, webEventData)
 		{
-			const {checkListItemId} = ajaxData;
+			const { checkListItemId } = ajaxData;
 
-			diskAttachments.forEach(file => this.filesToAddQueue.addFile(checkListItemId, file.dataAttributes.ID));
+			diskAttachments.forEach((file) => this.filesToAddQueue.addFile(checkListItemId, file.dataAttributes.ID));
 
 			BX.postWebEvent('tasks.view.native::checklist.fakeAttachFiles', {
 				nodeId: webEventData.nodeId,
@@ -1008,7 +1011,7 @@
 
 		runAjaxAttachingFilesFromDisk(ajaxData, diskAttachments, webEventData)
 		{
-			const {entityTypeId, entityId, checkListItemId, attachmentsIds} = ajaxData;
+			const { entityTypeId, entityId, checkListItemId, attachmentsIds } = ajaxData;
 
 			BX.ajax.runAction('tasks.task.checklist.addAttachmentsFromDisk', {
 				data: {
@@ -1019,7 +1022,7 @@
 			}).then((response) => {
 				if (response.status === 'success')
 				{
-					const {attachments} = response.data.checkListItem;
+					const { attachments } = response.data.checkListItem;
 
 					diskAttachments.forEach((file) => {
 						const fileId = file.dataAttributes.ID;
@@ -1029,7 +1032,7 @@
 							this.filesToAddQueue.removeFile(fileId);
 							if (this.filesList && this.filesList.checkListItemId === checkListItemId)
 							{
-								file.dataAttributes.ID = Object.keys(attachments).find(id => attachments[id] === `n${fileId}`);
+								file.dataAttributes.ID = Object.keys(attachments).find((id) => attachments[id] === `n${fileId}`);
 								this.filesList.addDiskFile(file.dataAttributes);
 							}
 						}
@@ -1091,7 +1094,7 @@
 		onFileUploadStart(eventData, taskId)
 		{
 			const file = eventData.file.params;
-			const {checkListItemId, mode} = file.ajaxData;
+			const { checkListItemId, mode } = file.ajaxData;
 
 			if (!this.checkEvent(file.taskId) || mode !== this.mode)
 			{
@@ -1116,14 +1119,14 @@
 
 		handleSuccessUploadInViewMode(eventData, taskId)
 		{
-			const {file} = eventData;
-			const {checkListItem} = eventData.result;
-			const {attachments} = checkListItem;
+			const { file } = eventData;
+			const { checkListItem } = eventData.result;
+			const { attachments } = checkListItem;
 			const checkListItemId = checkListItem.id;
 
 			if (this.filesList && this.filesList.checkListItemId === checkListItemId)
 			{
-				const fileId = Object.keys(attachments).find(id => attachments[id] === `n${file.id}`);
+				const fileId = Object.keys(attachments).find((id) => attachments[id] === `n${file.id}`);
 				if (fileId)
 				{
 					file.id = fileId;
@@ -1145,8 +1148,8 @@
 
 		handleSuccessUploadInEditMode(eventData, taskId)
 		{
-			const {file} = eventData;
-			const {checkListItemId} = eventData.result;
+			const { file } = eventData;
+			const { checkListItemId } = eventData.result;
 
 			if (this.filesList && this.filesList.checkListItemId === checkListItemId)
 			{
@@ -1175,7 +1178,7 @@
 		onFileUploadSuccess(eventData, taskId)
 		{
 			const fileParams = eventData.file.extra.params;
-			const {mode} = fileParams.ajaxData;
+			const { mode } = fileParams.ajaxData;
 
 			if (!this.checkEvent(fileParams.taskId) || mode !== this.mode)
 			{

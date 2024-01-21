@@ -1,178 +1,115 @@
 <?php
+
 namespace Bitrix\Crm\Search;
 
-use Bitrix\Crm;
-use Bitrix\Crm\DealTable;
 use Bitrix\Crm\Binding\DealContactTable;
-class DealSearchContentBuilder extends SearchContentBuilder
+use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\DealTable;
+use Bitrix\Crm\Entity\Index;
+use CCrmCurrency;
+use CCrmDeal;
+use CCrmOwnerType;
+
+final class DealSearchContentBuilder extends SearchContentBuilder
 {
-	public function getEntityTypeID()
-	{
-		return \CCrmOwnerType::Deal;
-	}
-	protected function getUserFieldEntityID()
-	{
-		return \CCrmDeal::GetUserFieldEntityID();
-	}
-	public function isFullTextSearchEnabled()
-	{
-		return DealTable::getEntity()->fullTextIndexEnabled('SEARCH_CONTENT');
-	}
-	protected function prepareEntityFields($entityID)
-	{
-		$dbResult = \CCrmDeal::GetListEx(
-			array(),
-			array('=ID' => $entityID, 'CHECK_PERMISSIONS' => 'N'),
-			false,
-			false,
-			array('*'/*, 'UF_*'*/)
-		);
+	protected string $entityClassName = CCrmDeal::class;
+	protected string $entityIndexTableClassName = Index\DealTable::class;
+	protected string $entityIndexTable = 'b_crm_deal_index';
+	protected string $entityIndexTablePrimaryColumn = 'DEAL_ID';
 
-		$fields = $dbResult->Fetch();
-		return is_array($fields) ? $fields : null;
-	}
-	public function prepareEntityFilter(array $params)
+	public function getEntityTypeId(): int
 	{
-		$value = isset($params['SEARCH_CONTENT']) ? $params['SEARCH_CONTENT'] : '';
-		if(!is_string($value) || $value === '')
-		{
-			return array();
-		}
-
-		$operation = $this->isFullTextSearchEnabled() ? '*' : '*%';
-		return array("{$operation}SEARCH_CONTENT" => SearchEnvironment::prepareToken($value));
+		return CCrmOwnerType::Deal;
 	}
-
-	/**
-	 * Prepare search map.
-	 * @param array $fields Entity Fields.
-	 * @param array|null $options Options.
-	 * @return SearchMap
-	 * @throws \Bitrix\Main\ArgumentException
-	 */
-	protected function prepareSearchMap(array $fields, array $options = null)
+	
+	protected function prepareSearchMap(array $fields, array $options = null): SearchMap
 	{
 		$map = new SearchMap();
-
-		$entityID = isset($fields['ID']) ? (int)$fields['ID'] : 0;
-		if($entityID <= 0)
+		$entityId = (int)($fields['ID'] ?? 0);
+		if ($entityId <= 0)
 		{
 			return $map;
 		}
 
 		$isShortIndex = ($options['isShortIndex'] ?? false);
-
 		if (!$isShortIndex)
 		{
-			$map->add($entityID);
+			$map->add($entityId);
 		}
 
-		$title = isset($fields['TITLE']) ? $fields['TITLE'] : '';
-		if($title !== '')
-		{
-			$map->addText($title);
-			$map->addText(SearchEnvironment::prepareSearchContent($title));
-			$customerNumber = $this->parseCustomerNumber($title, \CCrmDeal::GetDefaultTitleTemplate());
-			if($customerNumber != $entityID)
-			{
-				$map->addTextFragments($customerNumber);
-			}
-		}
+		$map = $this->addTitleToSearchMap(
+			$entityId,
+			$fields['TITLE'] ?? '',
+			CCrmDeal::GetDefaultTitleTemplate(),
+			$map
+		);
 
 		$map->addField($fields, 'OPPORTUNITY');
 
 		if (!$isShortIndex)
 		{
-			$map->add(
-				\CCrmCurrency::GetCurrencyName(
-					isset($fields['CURRENCY_ID']) ? $fields['CURRENCY_ID'] : ''
-				)
-			);
+			$map->add(CCrmCurrency::GetCurrencyName($fields['CURRENCY_ID'] ?? ''));
 
-			if(isset($fields['ASSIGNED_BY_ID']))
+			if (isset($fields['ASSIGNED_BY_ID']))
 			{
 				$map->addUserByID($fields['ASSIGNED_BY_ID']);
 			}
 		}
 
 		//region Company
-		$companyID = isset($fields['COMPANY_ID']) ? (int)$fields['COMPANY_ID'] : 0;
-		if($companyID > 0)
+		$companyId = (int)($fields['COMPANY_ID'] ?? 0);
+		if ($companyId > 0)
 		{
-			$map->add(
-				\CCrmOwnerType::GetCaption(\CCrmOwnerType::Company, $companyID, false)
-			);
-
-			$map->addEntityMultiFields(
-				\CCrmOwnerType::Company,
-				$companyID,
-				array(\CCrmFieldMulti::PHONE, \CCrmFieldMulti::EMAIL)
-			);
+			$map->addCompany($companyId);
 		}
 		//endregion
 
 		//region Contacts
-		$contactIDs = DealContactTable::getDealContactIDs($entityID);
-		foreach($contactIDs as $contactID)
-		{
-			$map->add(
-				\CCrmOwnerType::GetCaption(\CCrmOwnerType::Contact, $contactID, false)
-			);
-
-			$map->addEntityMultiFields(
-				\CCrmOwnerType::Contact,
-				$contactID,
-				array(\CCrmFieldMulti::PHONE, \CCrmFieldMulti::EMAIL)
-			);
-		}
+		$map->addContacts(DealContactTable::getDealContactIDs($entityId));
 		//endregion
 
 		if (!$isShortIndex)
 		{
-			if(isset($fields['TYPE_ID']))
+			if (isset($fields['TYPE_ID']))
 			{
 				$map->addStatus('DEAL_TYPE', $fields['TYPE_ID']);
 			}
 
-			if(isset($fields['STAGE_ID']))
+			if (isset($fields['STAGE_ID']))
 			{
-				$map->add(
-					Crm\Category\DealCategory::getStageName(
-						$fields['STAGE_ID'],
-						isset($fields['CATEGORY_ID']) ? $fields['CATEGORY_ID'] : -1
-					)
-				);
+				$map->add(DealCategory::getStageName($fields['STAGE_ID'], $fields['CATEGORY_ID'] ?? -1));
 			}
 
-			if(isset($fields['BEGINDATE']))
+			if (isset($fields['BEGINDATE']))
 			{
 				$map->add($fields['BEGINDATE']);
 			}
 
-			if(isset($fields['CLOSEDATE']))
+			if (isset($fields['CLOSEDATE']))
 			{
 				$map->add($fields['CLOSEDATE']);
 			}
 
-			if(isset($fields['COMMENTS']))
+			if (isset($fields['COMMENTS']))
 			{
 				$map->addHtml($fields['COMMENTS'], 1024);
 			}
 
 			//region Source
-			if(isset($fields['SOURCE_ID']))
+			if (isset($fields['SOURCE_ID']))
 			{
 				$map->addStatus('SOURCE', $fields['SOURCE_ID']);
 			}
 
-			if(isset($fields['SOURCE_DESCRIPTION']))
+			if (isset($fields['SOURCE_DESCRIPTION']))
 			{
 				$map->addText($fields['SOURCE_DESCRIPTION'], 1024);
 			}
 			//endregion
 
 			//region UserFields
-			foreach($this->getUserFields($entityID) as $userField)
+			$userFields = SearchEnvironment::getUserFields($entityId, $this->getUserFieldEntityId());
+			foreach ($userFields as $userField)
 			{
 				$map->addUserField($userField);
 			}
@@ -181,58 +118,12 @@ class DealSearchContentBuilder extends SearchContentBuilder
 
 		return $map;
 	}
-	/**
-	 * Prepare required data for bulk build.
-	 * @param array $entityIDs Entity IDs.
-	 */
-	protected function prepareForBulkBuild(array $entityIDs)
+
+	protected function save(int $entityId, SearchMap $map): void
 	{
-		$dbResult = \CCrmDeal::GetListEx(
-			array(),
-			array('@ID' => $entityIDs, 'CHECK_PERMISSIONS' => 'N'),
-			array('ASSIGNED_BY_ID'),
-			false,
-			array('ASSIGNED_BY_ID')
+		DealTable::update(
+			$entityId,
+			$this->prepareUpdateData(DealTable::getTableName(), $map->getString())
 		);
-
-		$userIDs = array();
-		while($fields = $dbResult->Fetch())
-		{
-			$userIDs[] = (int)$fields['ASSIGNED_BY_ID'];
-		}
-
-		if(!empty($userIDs))
-		{
-			SearchMap::cacheUsers($userIDs);
-		}
-	}
-	protected function save($entityID, SearchMap $map)
-	{
-		DealTable::update($entityID, array('SEARCH_CONTENT' => $map->getString()));
-	}
-
-	protected function saveShortIndex(int $entityId, SearchMap $map, bool $checkExist = false): \Bitrix\Main\DB\Result
-	{
-		$connection = \Bitrix\Main\Application::getConnection();
-		$helper = $connection->getSqlHelper();
-
-		$searchContent = $map->getString();
-		$insert = [
-			'DEAL_ID' => $entityId,
-			'SEARCH_CONTENT' => $searchContent,
-		];
-		$update = [
-			'SEARCH_CONTENT' => $searchContent,
-		];
-		$merge = $helper->prepareMerge('b_crm_deal_index', ['DEAL_ID'], $insert, $update);
-
-		return $connection->query($merge[0]);
-	}
-
-	public function removeShortIndex(int $entityId): \Bitrix\Main\ORM\Data\Result
-	{
-		return \Bitrix\Crm\Entity\Index\DealTable::delete([
-			'DEAL_ID' => $entityId,
-		]);
 	}
 }

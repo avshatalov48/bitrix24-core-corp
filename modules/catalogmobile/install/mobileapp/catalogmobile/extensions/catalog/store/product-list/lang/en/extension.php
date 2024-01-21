@@ -1,7 +1,5 @@
 <?php
 $MESS["CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION"] = "Create product in web version";
-$MESS["CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION_MSGVER_1"] = "Create product in web version";
-$MESS["CSPL_DOCUMENT_HAS_NO_PRODUCTS"] = "Inventory object has no products";
 $MESS["CSPL_DOCUMENT_HAS_NO_PRODUCTS_V2"] = "Inventory object has no products";
 $MESS["CSPL_EMPTY_PRODUCTS_ARRIVAL_DESCRIPTION"] = "Create or select a product, enter the price, quantity and destination warehouse";
 $MESS["CSPL_EMPTY_PRODUCTS_DEDUCT_DESCRIPTION"] = "Select a product, enter the quantity and select the warehouse to perform write-off at";

@@ -38,6 +38,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Request;
 use Bitrix\Main\Result;
 use Bitrix\Main\UserField\Dispatcher;
+use Bitrix\Main\UserField\Types\BooleanType;
 use Bitrix\Main\Web\Json;
 use CCrmComponentHelper;
 use CCrmOwnerType;
@@ -1395,6 +1396,11 @@ class EditorAdapter
 			{
 				$fieldValue = array_values($fieldValue);
 			}
+			elseif ($fieldParams['USER_TYPE_ID'] === BooleanType::USER_TYPE_ID)
+			{
+				$fieldValue = $fieldValue ? '1' : '0';
+			}
+
 			$fieldParams['VALUE'] = $fieldValue;
 		}
 
@@ -1842,6 +1848,11 @@ class EditorAdapter
 		$opportunityEntityData['FORMATTED_' . static::FIELD_OPPORTUNITY] = Money::format(
 			$item->getOpportunity(), $item->getCurrencyId()
 		);
+
+		$opportunityEntityData['IS_SALESCENTER_TOOL_ENABLED'] =
+			Loader::includeModule('salescenter')
+			&& \Bitrix\Salescenter\Restriction\ToolAvailabilityManager::getInstance()->checkSalescenterAvailability()
+		;
 
 		return $opportunityEntityData;
 	}

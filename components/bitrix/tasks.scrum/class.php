@@ -30,6 +30,7 @@ use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Component\Scrum;
 use Bitrix\Tasks\Control\Tag;
 use Bitrix\Tasks\Integration\Bizproc\Automation\Factory;
+use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
@@ -51,6 +52,7 @@ use Bitrix\Tasks\Scrum\Service\SprintService;
 use Bitrix\Tasks\Scrum\Service\TaskService;
 use Bitrix\Tasks\Scrum\Service\UserService;
 use Bitrix\Tasks\Scrum\Utility\StoryPoints;
+use Bitrix\Tasks\Scrum\Utility\ViewHelper;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction;
 
@@ -218,6 +220,8 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		}
 		$params['GROUP_ID'] = (is_numeric($params['GROUP_ID']) ? (int) $params['GROUP_ID'] : 0);
 
+		$params['CONTEXT'] = ($params['CONTEXT'] ?? 'group');
+
 		$params['SET_TITLE'] = (isset($params['SET_TITLE']) && $params['SET_TITLE'] == 'Y');
 
 		$params['OWNER_ID'] = (!empty($params['USER_ID']) ? (int)$params['USER_ID'] : 0);
@@ -239,6 +243,13 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		$this->setTitle();
 		$this->init();
 
+		if (!$this->isScrumEnabled())
+		{
+			$this->includeComponentTemplate('scrum_disabled');
+
+			return;
+		}
+
 		if (!$this->canReadGroupTasks($groupId))
 		{
 			$this->includeErrorTemplate(Loc::getMessage('TASKS_SCRUM_ACCESS_TO_GROUP_DENIED'));
@@ -251,8 +262,9 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		$this->debugMode = ($request->get('debug') == 'y');
 		$this->frameMode = ($request->get('IFRAME') == 'Y');
 
-		$this->saveActiveTab();
-		$activeTab = $this->getActiveTab($groupId);
+		$viewHelper = new ViewHelper();
+		$viewHelper->saveActiveView($request->get('tab'), $groupId);
+		$activeTab = $viewHelper->getActiveView($groupId);
 
 		$this->subscribeUserToPull($this->userId, $groupId);
 
@@ -2035,6 +2047,11 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		return Group::canReadGroupTasks($this->userId, $groupId);
 	}
 
+	private function isScrumEnabled(): bool
+	{
+		return (new Settings())->isToolAvailable(Settings::TOOLS['scrum']);
+	}
+
 	private function includePlanTemplate(int $groupId): void
 	{
 		$this->arResult['isShortView'] = $this->getShortViewState($groupId);
@@ -2089,7 +2106,9 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$firstSprint = $this->createNewSprintForThisProject($groupId);
 		}
 
-		$this->syncItemsWithTasks($backlog->getId(), $this->userId, $groupId);
+		$entityIdsOfCurrentGroup = $entityService->getEntityIds($groupId);
+
+		$this->syncItemsWithTasks($backlog->getId(), $entityIdsOfCurrentGroup, $this->userId, $groupId);
 
 		$this->arResult['sprints'] = $this->getSprints(
 			$groupId,
@@ -2211,6 +2230,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 		if ($sprint->isActiveSprint())
 		{
+
 			$this->arResult['activeSprintId'] = ($sprintService->getErrors() ? 0 : $sprint->getId());
 
 			$this->restoreStagesLastCompletedSprint($this->userId, $groupId, $sprint->getId());
@@ -2615,21 +2635,23 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		$uri->addParams(['tab' => 'completed_sprint']);
 		$completedSprintUrl = $uri->getUri();
 
+		$viewHelper = new ViewHelper();
+
 		return [
 			'plan' => [
 				'name' => Loc::getMessage('TASKS_SCRUM_TAB_PLAN'),
 				'url' => $planningUrl,
-				'active' => ($this->getActiveTab($groupId) == 'plan')
+				'active' => ($viewHelper->getActiveView($groupId) == 'plan')
 			],
 			'activeSprint' => [
 				'name' => Loc::getMessage('TASKS_SCRUM_TAB_SPRINT'),
 				'url' => $activeSprintUrl,
-				'active' => ($this->getActiveTab($groupId) == 'active_sprint')
+				'active' => ($viewHelper->getActiveView($groupId) == 'active_sprint')
 			],
 			'completedSprint' => [
 				'name' => Loc::getMessage('TASKS_SCRUM_TAB_COMPLETED_SPRINT'),
 				'url' => $completedSprintUrl,
-				'active' => ($this->getActiveTab($groupId) == 'completed_sprint')
+				'active' => ($viewHelper->getActiveView($groupId) == 'completed_sprint')
 			],
 		];
 	}
@@ -2639,35 +2661,10 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		$culture = Context::getCurrent()->getCulture();
 
 		return [
-			'dayMonthFormat' => $culture->getDayMonthFormat(),
-			'longDateFormat' => $culture->getLongDateFormat(),
-			'shortTimeFormat' => $culture->getShortTimeFormat(),
+			'dayMonthFormat' => stripslashes($culture->getDayMonthFormat()),
+			'longDateFormat' => stripslashes($culture->getLongDateFormat()),
+			'shortTimeFormat' => stripslashes($culture->getShortTimeFormat()),
 		];
-	}
-
-	private function saveActiveTab()
-	{
-		$request = Context::getCurrent()->getRequest();
-
-		if ($request->get('tab') == 'plan')
-		{
-			CUserOptions::setOption('tasks.scrum.'.$this->arParams['GROUP_ID'], 'active_tab', 'plan');
-		}
-
-		if ($request->get('tab') == 'active_sprint')
-		{
-			CUserOptions::setOption('tasks.scrum.'.$this->arParams['GROUP_ID'], 'active_tab', 'active_sprint');
-		}
-
-		if ($request->get('tab') == 'completed_sprint')
-		{
-			CUserOptions::setOption('tasks.scrum.'.$this->arParams['GROUP_ID'], 'active_tab', 'completed_sprint');
-		}
-	}
-
-	private function getActiveTab(int $groupId)
-	{
-		return CUserOptions::getOption('tasks.scrum.'.$groupId, 'active_tab', 'plan');
 	}
 
 	private function getShortViewState(int $groupId)
@@ -3014,7 +3011,8 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 		$pullService->addSubscriber($userId);
 
-		if ($this->getActiveTab($groupId) === 'plan')
+		$viewHelper = new ViewHelper();
+		if ($viewHelper->getActiveView($groupId) === 'plan')
 		{
 			$pullService->subscribeToEntityActions();
 		}
@@ -3022,7 +3020,12 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		$pullService->subscribeToItemActions();
 	}
 
-	private function syncItemsWithTasks(int $backlogId, int $userId, int $groupId): void
+	private function syncItemsWithTasks(
+		int $backlogId,
+		array $entityIdsOfCurrentGroup,
+		int $userId,
+		int $groupId
+	): void
 	{
 		$taskService = new TaskService($userId);
 
@@ -3034,22 +3037,34 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 		$itemService = new ItemService();
 
-		$itemIds = $itemService->getItemIdsBySourceIds($currentTaskIds);
+		$itemIds = $itemService->getItemIdsBySourceIds($currentTaskIds, $entityIdsOfCurrentGroup);
 
 		if (count($currentTaskIds) > count($itemIds))
 		{
 			foreach ($currentTaskIds as $taskId)
 			{
 				$item = $itemService->getItemBySourceId($taskId);
-				if (!$itemService->getErrors() && $item->isEmpty())
+				if (!$itemService->getErrors())
 				{
-					$scrumItem = new ItemForm();
+					if ($item->isEmpty())
+					{
+						$scrumItem = new ItemForm();
 
-					$scrumItem->setCreatedBy($userId);
-					$scrumItem->setEntityId($backlogId);
-					$scrumItem->setSourceId($taskId);
+						$scrumItem->setCreatedBy($userId);
+						$scrumItem->setEntityId($backlogId);
+						$scrumItem->setSourceId($taskId);
 
-					$itemService->createTaskItem($scrumItem);
+						$itemService->createTaskItem($scrumItem);
+					}
+					else
+					{
+						if (!in_array($item->getEntityId(), $entityIdsOfCurrentGroup, true))
+						{
+							$item->setEntityId($backlogId);
+
+							$itemService->changeItem($item);
+						}
+					}
 				}
 			}
 		}

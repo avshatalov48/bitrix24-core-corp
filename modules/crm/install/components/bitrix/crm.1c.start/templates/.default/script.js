@@ -71,15 +71,15 @@ function BXOneCStart(type)
 {
 	if (type === "doc")
 	{
-		var app_url = '/marketplace/detail/bitrix.1cdoc/';
+		var app_url = BX.CrmStart.OnecAppPaths.doc || '';
 	}
 	else if (type === "backoffice")
 	{
-		var app_url = '/marketplace/detail/bitrix.1ctotal/';
+		var app_url = BX.CrmStart.OnecAppPaths.backoffice || '';
 	}
 	else
 	{
-		var app_url = '/marketplace/detail/bitrix.1c/';
+		var app_url = BX.CrmStart.OnecAppPaths.default || '';
 	}
 
     BX.ready(function () {

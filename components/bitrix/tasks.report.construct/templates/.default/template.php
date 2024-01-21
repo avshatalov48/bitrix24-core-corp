@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Tasks\Helper\RestrictionUrl;
+use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Internals\Task\Status;
@@ -7,6 +9,18 @@ use Bitrix\Tasks\Internals\Task\Status;
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
+}
+
+/** intranet-settings-support */
+$settings = new Settings();
+if (!$settings->isToolAvailable(Settings::TOOLS['base_tasks']) || !$settings->isToolAvailable(Settings::TOOLS['report']))
+{
+	$APPLICATION->IncludeComponent("bitrix:tasks.error", "limit", [
+		'LIMIT_CODE' => RestrictionUrl::TASK_LIMIT_OFF_SLIDER_URL,
+		'SOURCE' => 'report-construct',
+	]);
+
+	return;
 }
 
 $arResult['enumValues'] = [

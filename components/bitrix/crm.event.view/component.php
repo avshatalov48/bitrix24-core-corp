@@ -1,13 +1,33 @@
-<?
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Service\Container;
 
 /** @var CrmEventViewComponent $this */
 
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
+	return;
+}
+
+$entityType = $arParams['ENTITY_TYPE'] ?? null;
+$toolsManager = Container::getInstance()->getIntranetToolsManager();
+$isAvailable = (
+	$entityType
+		? $toolsManager->checkEntityTypeAvailability(CCrmOwnerType::ResolveID($entityType))
+		: $toolsManager->checkCrmAvailability()
+);
+if(!$isAvailable)
+{
+	print AvailabilityManager::getInstance()->getCrmInaccessibilityContent();
+
 	return;
 }
 
@@ -792,7 +812,7 @@ $_SESSION['CRM_GRID_DATA'][$arResult['GRID_ID']] = array('FILTER' => $arFilter);
 
 if ($arResult['EVENT_ENTITY_LINK'] == 'Y')
 {
-	$router = \Bitrix\Crm\Service\Container::getInstance()->getRouter();
+	$router = Container::getInstance()->getRouter();
 	foreach ($arEntityList as $typeName => $ids)
 	{
 		if (empty($ids))
@@ -804,7 +824,7 @@ if ($arResult['EVENT_ENTITY_LINK'] == 'Y')
 		{
 			continue;
 		}
-		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		$factory = Container::getInstance()->getFactory($entityTypeId);
 		if (!$factory)
 		{
 			continue;
@@ -839,5 +859,3 @@ if ($arResult['EVENT_ENTITY_LINK'] == 'Y')
 $this->IncludeComponentTemplate();
 
 return $obRes->SelectedRowsCount();
-
-?>

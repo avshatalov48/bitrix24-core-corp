@@ -2,14 +2,16 @@
 
 return [
 	'extensions' => [
-		'crm:product-grid',
-		'crm:product-grid/model',
+		'apptheme',
+		'utils/object',
 		'layout/ui/amount',
 		'layout/ui/product-grid',
 		'layout/ui/product-grid/components/inline-sku-tree',
 		'layout/ui/product-grid/components/product-card',
 		'layout/ui/product-grid/components/summary',
-		'utils/object',
+
+		'crm:product-grid/model',
+		'crm:product-grid',
 	],
 	'bundle' => [
 		'./product-card',

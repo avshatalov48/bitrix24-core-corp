@@ -21,3 +21,5 @@ $MESS['M_CRM_TL_PAYMENT_PAY_SUCCESS_BACK_TO_LIST'] = 'Вернуться к сп
 $MESS['M_CRM_TL_PAYMENT_PAY_FAILURE_ERROR_TEXT'] = 'Не удалось принять оплату';
 $MESS['M_CRM_TL_PAYMENT_PAY_FAILURE_GET_NEW_QR_GET_NEW_QR'] = 'Получить новый QR-код';
 $MESS['M_CRM_TL_PAYMENT_PAY_FAILURE_CHOOSE_OTHER_PAYMENT_METHOD'] = 'Выбрать другой способ оплаты';
+
+$MESS['M_CRM_TL_PAYMENT_PAY_PRODUCTS_CNT'] = 'Товары: #CNT#';

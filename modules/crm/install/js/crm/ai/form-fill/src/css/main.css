@@ -1,0 +1,54 @@
+.bx-crm-ai-merge-fields {
+	--layout-border-radius: 16px 16px 0 0;
+}
+
+.bx-crm-ai-merge-fields {
+	background-color: rgba(255, 255, 255, 0.40);
+	backdrop-filter: blur(16px);
+	padding: 12px 0 12px 12px;
+	border-radius: var(--layout-border-radius);
+}
+
+.bx-crm-ai-merge-fields-layout {
+	display: flex;
+	height: calc(100vh - 175px);
+	overflow-y: scroll;
+	scrollbar-color: #FFF #FFF;
+}
+
+.bx-crm-ai-merge-fields-layout::-webkit-scrollbar {
+	width: 6px;
+}
+
+.bx-crm-ai-merge-fields-layout::-webkit-scrollbar-track {}
+
+.bx-crm-ai-merge-fields-layout::-webkit-scrollbar-thumb {
+	border-radius: 20px;
+	background: #EDEEF0;
+}
+
+
+.bx-crm-ai-merge-fields-layout__ee_column {
+	min-width: 315px;
+	flex-grow: 0;
+	flex-basis: 406px;
+	margin-right: 2px;
+}
+
+@media screen and (max-width: 1160px) {
+	.bx-crm-ai-merge-fields-layout__ee_column {
+		flex-basis: 315px;
+	}
+}
+
+.bx-crm-ai-merge-fields-layout__aifields_column {
+	position: relative;
+	flex-grow: 1;
+}
+
+.bx-crm-ai-merge-fields-layout__floating-button_column {
+	flex-grow: 0;
+	flex-basis: 54px;
+	width: 54px;
+	display: flex;
+}

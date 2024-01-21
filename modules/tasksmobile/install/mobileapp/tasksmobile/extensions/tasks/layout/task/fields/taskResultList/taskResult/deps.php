@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'apptheme',
 		'in-app-url',
 		'layout/ui/file',
 		'layout/ui/file-attachment',

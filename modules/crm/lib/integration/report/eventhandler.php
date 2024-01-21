@@ -2,6 +2,9 @@
 
 namespace Bitrix\Crm\Integration\Report;
 
+use Bitrix\Crm\Agent\History\DealStageSupposedHistory;
+use Bitrix\Crm\Agent\History\LeadStatusSupposedHistory;
+use Bitrix\Crm\Integration\Intranet\ToolsManager;
 use Bitrix\Crm\Integration\Report\AnalyticBoard\MyReports\ActivityAnalyticBoard;
 use Bitrix\Crm\Integration\Report\AnalyticBoard\MyReports\CompanyAnalyticBoard;
 use Bitrix\Crm\Integration\Report\AnalyticBoard\MyReports\ContactAnalyticBoard;
@@ -11,27 +14,25 @@ use Bitrix\Crm\Integration\Report\AnalyticBoard\MyReports\InvoiceAnalyticBoard;
 use Bitrix\Crm\Integration\Report\AnalyticBoard\MyReports\LeadAnalyticBoard;
 use Bitrix\Crm\Integration\Report\Dashboard\Customers\FinancialRating;
 use Bitrix\Crm\Integration\Report\Dashboard\Customers\RegularCustomers;
-use Bitrix\Crm\Integration\Report\Dashboard\Managers\ManagersRating;
-use Bitrix\Crm\Integration\Report\Dashboard\MyReports;
 use Bitrix\Crm\Integration\Report\Dashboard\LeadAnalytic\CommonLead;
 use Bitrix\Crm\Integration\Report\Dashboard\LeadAnalytic\NewLead;
 use Bitrix\Crm\Integration\Report\Dashboard\LeadAnalytic\RepeatLead;
-use Bitrix\Crm\Integration\Report\Dashboard\Sales\SalesFunnelByStageHistory;
-use Bitrix\Crm\Integration\Report\Dashboard\ShopReports\SalesOrderFunnelBoard;
-use Bitrix\Crm\Integration\Report\Dashboard\ShopReports\SalesOrderFunnelByStageHistory;
-use Bitrix\Crm\Integration\Report\Dashboard\ShopReports\SalesOrderBuyerBoard;
-use Bitrix\Crm\Integration\Report\Dashboard\Sales\SalesPeriodCompare;
+use Bitrix\Crm\Integration\Report\Dashboard\Managers\ManagersRating;
+use Bitrix\Crm\Integration\Report\Dashboard\MyReports;
 use Bitrix\Crm\Integration\Report\Dashboard\Sales\SalesDynamic;
 use Bitrix\Crm\Integration\Report\Dashboard\Sales\SalesFunnelBoard;
+use Bitrix\Crm\Integration\Report\Dashboard\Sales\SalesFunnelByStageHistory;
+use Bitrix\Crm\Integration\Report\Dashboard\Sales\SalesPeriodCompare;
 use Bitrix\Crm\Integration\Report\Dashboard\Sales\SalesPlanBoard;
-use Bitrix\Crm\Integration\Report\Filter\ClientBaseFilter;
+use Bitrix\Crm\Integration\Report\Dashboard\ShopReports\SalesOrderBuyerBoard;
+use Bitrix\Crm\Integration\Report\Dashboard\ShopReports\SalesOrderFunnelBoard;
+use Bitrix\Crm\Integration\Report\Dashboard\ShopReports\SalesOrderFunnelByStageHistory;
 use Bitrix\Crm\Integration\Report\Filter\Customers\DealBasedFilter;
 use Bitrix\Crm\Integration\Report\Filter\Deal\SalesDynamicFilter;
 use Bitrix\Crm\Integration\Report\Filter\Deal\SalesPeriodCompareFilter;
 use Bitrix\Crm\Integration\Report\Filter\Lead\CommonLead as CommonLeadFilter;
 use Bitrix\Crm\Integration\Report\Filter\Lead\NewLead as NewLeadFilter;
 use Bitrix\Crm\Integration\Report\Filter\Lead\RepeatLead as RepeatLeadBoard;
-use Bitrix\Crm\Integration\Report\Filter\ManagerEfficiencyFilter;
 use Bitrix\Crm\Integration\Report\Filter\MyReportsFilter;
 use Bitrix\Crm\Integration\Report\Filter\SalesFunnelFilter;
 use Bitrix\Crm\Integration\Report\Filter\SalesOrderFunnelFilter;
@@ -40,10 +41,15 @@ use Bitrix\Crm\Integration\Report\Handler\Company;
 use Bitrix\Crm\Integration\Report\Handler\Contact;
 use Bitrix\Crm\Integration\Report\Handler\Deal;
 use Bitrix\Crm\Integration\Report\Handler\Lead;
-use Bitrix\Crm\Integration\Report\Handler\Managers\Rating;
 use Bitrix\Crm\Integration\Rest\AppPlacement;
+use Bitrix\Crm\Integration\Rest\AppPlacementManager;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Crm\Settings\LeadSettings;
+use Bitrix\Crm\Tracking;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Report\VisualConstructor as VC;
 use Bitrix\Report\VisualConstructor\AnalyticBoard;
 use Bitrix\Report\VisualConstructor\AnalyticBoardBatch;
 use Bitrix\Report\VisualConstructor\BoardButton;
@@ -56,11 +62,6 @@ use Bitrix\Report\VisualConstructor\Handler\BaseWidget;
 use Bitrix\Report\VisualConstructor\Helper\Util;
 use Bitrix\Report\VisualConstructor\Views\Component\Number;
 use Bitrix\Report\VisualConstructor\Views\JsComponent\AmChart\LinearGraph;
-
-use Bitrix\Report\VisualConstructor as VC;
-
-use Bitrix\Crm\Tracking;
-
 use Bitrix\Voximplant\Integration\Report\Dashboard\CallDynamics\CallDynamicsBoard;
 
 /**
@@ -172,7 +173,7 @@ class EventHandler
 
 		$batchList[] = $myReports;
 
-		$restApps = \Bitrix\Crm\Integration\Rest\AppPlacementManager::getHandlerInfos(AppPlacement::ANALYTICS_MENU);
+		$restApps = AppPlacementManager::getHandlerInfos(AppPlacement::ANALYTICS_MENU);
 		$i = 0;
 		foreach (array_keys($restApps) as $categoryName)
 		{
@@ -195,14 +196,15 @@ class EventHandler
 		return $batchList;
 	}
 
-	protected static function getLimitComponentParams($board)
+	protected static function getLimitComponentParams($board, ?string $sliderCode = null)
 	{
 		return [
 			'NAME' => 'bitrix:crm.report.analytics.limit',
 			'PARAMS' => [
 				'BOARD_ID' => $board,
-				'LIMITS' => Limit::getLimitationParams($board)
-			]
+				'LIMITS' => Limit::getLimitationParams($board),
+				'SLIDER_CODE' => $sliderCode,
+			],
 		];
 	}
 
@@ -213,205 +215,20 @@ class EventHandler
 	{
 		$analyticPageList = [];
 
-		$showLeadsInSales = \CUserOptions::GetOption('crm', SalesFunnelBoard::SHOW_LEADS_OPTION, 'Y') === 'Y';
+		$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
 
-		$userPermission = \CCrmPerms::GetCurrentUserPermissions();
-		if (LeadSettings::isEnabled() && \CCrmAuthorizationHelper::CheckReadPermission(\CCrmOwnerType::Lead, 0, $userPermission))
-		{
-			$leadAnalytics = new AnalyticBoard(CommonLead::BOARD_KEY);
-			$leadAnalytics->setBatchKey(self::BATCH_LEAD);
-			$leadAnalytics->setTitle(Loc::getMessage('CRM_REPORT_COMMON_LEAD_BOARD_TITLE'));
-			$leadAnalytics->setFilter(new CommonLeadFilter(CommonLead::BOARD_KEY));
+		$isReportsAvailable = $toolsManager->checkReportsAnalyticsAvailability();
+		$isCrmAvailable = $isReportsAvailable || $toolsManager->checkCrmAvailability();
+		$isAvailable = $isCrmAvailable && $isReportsAvailable;
+		$availabilitySliderCode = (
+			$isCrmAvailable
+				? ToolsManager::REPORTS_ANALYTICS_SLIDER_CODE
+				: ToolsManager::CRM_SLIDER_CODE
+		);
 
-			if (method_exists($leadAnalytics, 'setGroup'))
-			{
-				$leadAnalytics->setGroup(self::BATCH_GROUP_CRM_GENERAL);
-			}
-
-			$leadAnalytics->addFeedbackButton();
-			$leadAnalytics->setLimit(static::getLimitComponentParams(CommonLead::BOARD_KEY), Limit::isAnalyticsLimited(CommonLead::BOARD_KEY));
-			$leadAnalytics->setStepperEnabled(true);
-			$leadAnalytics->setStepperIds(['crm' => ['Bitrix\Crm\Agent\History\LeadStatusSupposedHistory']]);
-			$analyticPageList[] = $leadAnalytics;
-
-			$leadAnalytics = new AnalyticBoard(NewLead::BOARD_KEY);
-			$leadAnalytics->setBatchKey(self::BATCH_LEAD);
-			$leadAnalytics->setTitle(Loc::getMessage('CRM_REPORT_NEW_LEAD_BOARD_TITLE'));
-			$leadAnalytics->setFilter(new NewLeadFilter(NewLead::BOARD_KEY));
-
-			if (method_exists($leadAnalytics, 'setGroup'))
-			{
-				$leadAnalytics->setGroup(self::BATCH_GROUP_CRM_GENERAL);
-			}
-
-			$leadAnalytics->addFeedbackButton();
-			$leadAnalytics->setLimit(static::getLimitComponentParams(NewLead::BOARD_KEY), Limit::isAnalyticsLimited(NewLead::BOARD_KEY));
-			$leadAnalytics->setStepperEnabled(true);
-			$leadAnalytics->setStepperIds(['crm' => ['Bitrix\Crm\Agent\History\LeadStatusSupposedHistory']]);
-			$analyticPageList[] = $leadAnalytics;
-
-			if(LeadSettings::getCurrent()->isAutoGenRcEnabled())
-			{
-				$leadAnalytics = new AnalyticBoard(RepeatLead::BOARD_KEY);
-				$leadAnalytics->setBatchKey(self::BATCH_LEAD);
-				$leadAnalytics->setTitle(Loc::getMessage('CRM_REPORT_REPEATED_LEAD_BOARD_TITLE'));
-				$leadAnalytics->setFilter(new RepeatLeadBoard(RepeatLead::BOARD_KEY));
-
-				if (method_exists($leadAnalytics, 'setGroup'))
-				{
-					$leadAnalytics->setGroup(self::BATCH_GROUP_CRM_GENERAL);
-				}
-
-				$leadAnalytics->addFeedbackButton();
-				$leadAnalytics->setStepperEnabled(true);
-				$leadAnalytics->setStepperIds(['crm' => ['Bitrix\Crm\Agent\History\LeadStatusSupposedHistory']]);
-				$analyticPageList[] = $leadAnalytics;
-			}
-		}
-
-		$salesFunnelOptions = [];
-		if (LeadSettings::isEnabled())
-		{
-			$salesFunnelOptions[] = [
-				'TITLE' => $showLeadsInSales
-					? Loc::getMessage('CRM_REPORT_SALES_HIDE_LEADS')
-					: Loc::getMessage('CRM_REPORT_SALES_SHOW_LEADS'),
-				'NAME' => SalesFunnelBoard::SHOW_LEADS_OPTION,
-				'VALUE' => $showLeadsInSales
-			];
-		}
-		$salesFunnel = new AnalyticBoard(SalesFunnelBoard::BOARD_KEY, $salesFunnelOptions);
-		$salesFunnel->setBatchKey(self::BATCH_SALES);
-		$salesFunnel->setTitle(Loc::getMessage('CRM_REPORT_SALES_FUNNEL_BY_HISTORY_BOARD_TITLE'));
-		$salesFunnel->setFilter(new SalesFunnelFilter(SalesFunnelBoard::BOARD_KEY));
-
-		if (method_exists($salesFunnel, 'setGroup'))
-		{
-			$salesFunnel->setGroup(self::BATCH_GROUP_SALES_GENERAL);
-		}
-
-		$salesFunnel->setLimit(static::getLimitComponentParams(SalesFunnelBoard::BOARD_KEY), Limit::isAnalyticsLimited(SalesFunnelBoard::BOARD_KEY));
-		$salesFunnel->setStepperEnabled(true);
-		$salesFunnel->setStepperIds(['crm' => [
-			'Bitrix\Crm\Agent\History\LeadStatusSupposedHistory',
-			'Bitrix\Crm\Agent\History\DealStageSupposedHistory'
-		]]);
-		$salesFunnel->addFeedbackButton();
-		if (method_exists($salesFunnel, 'registerSetOptionsCallback'))
-		{
-			$salesFunnel->registerSetOptionsCallback(function($name, $value)
-			{
-				if ($name === SalesFunnelBoard::SHOW_LEADS_OPTION)
-				{
-					\CUserOptions::SetOption('crm', SalesFunnelBoard::SHOW_LEADS_OPTION, $value ? 'Y' : 'N');
-				}
-			});
-		}
-
-		$analyticPageList[] = $salesFunnel;
-
-		$salesFunnelHistoryOptions = [];
-		if (LeadSettings::isEnabled())
-		{
-			$salesFunnelHistoryOptions[] = [
-				'TITLE' => $showLeadsInSales
-					? Loc::getMessage('CRM_REPORT_SALES_HIDE_LEADS')
-					: Loc::getMessage('CRM_REPORT_SALES_SHOW_LEADS'),
-				'NAME' => SalesFunnelBoard::SHOW_LEADS_OPTION,
-				'VALUE' => $showLeadsInSales
-			];
-		}
-		$salesFunnelWithHistory = new AnalyticBoard(SalesFunnelByStageHistory::BOARD_KEY, $salesFunnelHistoryOptions);
-		$salesFunnelWithHistory->setBatchKey(self::BATCH_SALES);
-		$salesFunnelWithHistory->setTitle(Loc::getMessage('CRM_REPORT_SALES_FUNNEL_BOARD_TITLE'));
-		$salesFunnelWithHistory->setFilter(new SalesFunnelFilter(SalesFunnelByStageHistory::BOARD_KEY));
-
-		if (method_exists($salesFunnelWithHistory, 'setGroup'))
-		{
-			$salesFunnelWithHistory->setGroup(self::BATCH_GROUP_SALES_GENERAL);
-		}
-
-		$salesFunnelWithHistory->addFeedbackButton();
-		$salesFunnelWithHistory->setStepperEnabled(true);
-		$salesFunnelWithHistory->setStepperIds(['crm' => [
-			'Bitrix\Crm\Agent\History\LeadStatusSupposedHistory',
-			'Bitrix\Crm\Agent\History\DealStageSupposedHistory'
-		]]);
-		$salesFunnelWithHistory->setLimit(static::getLimitComponentParams(SalesFunnelByStageHistory::BOARD_KEY), Limit::isAnalyticsLimited(SalesFunnelByStageHistory::BOARD_KEY));
-		if (method_exists($salesFunnelWithHistory, 'registerSetOptionsCallback'))
-		{
-			$salesFunnelWithHistory->registerSetOptionsCallback(function($name, $value)
-			{
-				if ($name === SalesFunnelByStageHistory::SHOW_LEADS_OPTION)
-				{
-					\CUserOptions::SetOption('crm', SalesFunnelByStageHistory::SHOW_LEADS_OPTION, $value ? 'Y' : 'N');
-				}
-			});
-		}
-		$analyticPageList[] = $salesFunnelWithHistory;
-
-		$salesPlan = new AnalyticBoard(SalesPlanBoard::BOARD_KEY);
-		$salesPlan->setBatchKey(self::BATCH_SALES);
-		$salesPlan->setTitle(Loc::getMessage('CRM_REPORT_SALES_TARGET_BOARD_TITLE'));
-
-		if (method_exists($salesPlan, 'setGroup'))
-		{
-			$salesPlan->setGroup(self::BATCH_GROUP_SALES_GENERAL);
-		}
-
-		//$salesPlan->setDisabled(false);
-		$salesPlan->addFeedbackButton();
-		$salesPlan->setLimit(static::getLimitComponentParams(SalesPlanBoard::BOARD_KEY), Limit::isAnalyticsLimited(SalesPlanBoard::BOARD_KEY));
-		$analyticPageList[] = $salesPlan;
-
-		$salesDynamic = new AnalyticBoard(SalesDynamic::BOARD_KEY);
-		$salesDynamic->setBatchKey(self::BATCH_SALES);
-		$salesDynamic->setTitle(Loc::getMessage('CRM_REPORT_SALES_DYNAMIC_BOARD_TITLE'));
-		$salesDynamic->setBoardKey(SalesDynamic::BOARD_KEY);
-		$salesDynamic->setFilter(new SalesDynamicFilter(SalesDynamic::BOARD_KEY . "_" . SalesDynamic::VERSION));
-
-		if (method_exists($salesDynamic, 'setGroup'))
-		{
-			$salesDynamic->setGroup(self::BATCH_GROUP_SALES_GENERAL);
-		}
-
-		$salesDynamic->addFeedbackButton();
-		$salesDynamic->setLimit(static::getLimitComponentParams(SalesDynamic::BOARD_KEY), Limit::isAnalyticsLimited(SalesDynamic::BOARD_KEY));
-		$salesDynamic->setStepperEnabled(true);
-		$salesDynamic->setStepperIds(['crm' => ['Bitrix\Crm\Agent\History\DealStageSupposedHistory']]);
-		$analyticPageList[] = $salesDynamic;
-
-		$salesPeriodCompare = new AnalyticBoard(SalesPeriodCompare::BOARD_KEY);
-		$salesPeriodCompare->setBatchKey(self::BATCH_SALES);
-		$salesPeriodCompare->setTitle(Loc::getMessage('CRM_REPORT_PERIOD_COMPARE_BOARD_TITLE'));
-		$salesPeriodCompare->setBoardKey(SalesPeriodCompare::BOARD_KEY);
-		$salesPeriodCompare->setFilter(new SalesPeriodCompareFilter(SalesPeriodCompare::BOARD_KEY));
-
-		if (method_exists($salesPeriodCompare, 'setGroup'))
-		{
-			$salesPeriodCompare->setGroup(self::BATCH_GROUP_SALES_GENERAL);
-		}
-
-		$salesPeriodCompare->addFeedbackButton();
-		$salesPeriodCompare->setLimit(static::getLimitComponentParams(SalesPeriodCompare::BOARD_KEY), Limit::isAnalyticsLimited(SalesPeriodCompare::BOARD_KEY));
-		$salesPeriodCompare->setStepperEnabled(true);
-		$salesPeriodCompare->setStepperIds(['crm' => ['Bitrix\Crm\Agent\History\DealStageSupposedHistory']]);
-		$analyticPageList[] = $salesPeriodCompare;
-
-		$managerEfficiency = new AnalyticBoard();
-		$managerEfficiency->setBatchKey(self::BATCH_MANAGER_EFFICIENCY);
-		$managerEfficiency->setTitle(Loc::getMessage('CRM_REPORT_MANAGER_EFFICIENCY_BOARD_TITLE'));
-		$managerEfficiency->setBoardKey(ManagersRating::BOARD_KEY);
-		$managerEfficiency->setFilter(new DealBasedFilter(ManagersRating::BOARD_KEY));
-
-		if (method_exists($managerEfficiency, 'setGroup'))
-		{
-			$managerEfficiency->setGroup(self::BATCH_GROUP_CRM_GENERAL);
-		}
-
-		$managerEfficiency->addFeedbackButton();
-		$managerEfficiency->setLimit(static::getLimitComponentParams(self::MANAGER_EFFICIENCY_BOARD_KEY), Limit::isAnalyticsLimited(self::MANAGER_EFFICIENCY_BOARD_KEY));
-		$analyticPageList[] = $managerEfficiency;
+		self::appendLeadPageList($analyticPageList, $isAvailable, $availabilitySliderCode);
+		self::appendSalesPageList($analyticPageList, $isAvailable, $availabilitySliderCode);
+		self::appendManagerEfficiencyPageList($analyticPageList, $isAvailable, $availabilitySliderCode);
 
 		/*$contactDynamic = new AnalyticBoard();
 		$contactDynamic->setBatchKey(self::BATCH_CLIENTS);
@@ -433,6 +250,304 @@ class EventHandler
 		$companyDynamic->setLimit(static::getLimitComponentParams('company_dynamic'), Limit::isAnalyticsLimited('company_dynamic'));
 		$analyticPageList[] = $companyDynamic;*/
 
+		self::appendCustomersPageList($analyticPageList, $isAvailable, $availabilitySliderCode);
+		self::appendCrossCuttingPageList($analyticPageList);
+		self::appendMyReportsPageList($analyticPageList, $isAvailable, $availabilitySliderCode);
+		self::appendSaleOrdersPageList($analyticPageList);
+		self::appendRestAppsPageList($analyticPageList);
+		self::appendTelephonyPageList($analyticPageList);
+		self::appendOpenLinesPageList($analyticPageList);
+
+		return $analyticPageList;
+	}
+
+	protected static function appendLeadPageList(
+		array &$analyticPageList,
+		bool $isAvailable,
+		string $availabilitySliderCode
+	): void
+	{
+		if (!LeadSettings::isEnabled())
+		{
+			return;
+		}
+
+		$userPermission = \CCrmPerms::GetCurrentUserPermissions();
+		if (!\CCrmAuthorizationHelper::CheckReadPermission(
+			\CCrmOwnerType::Lead,
+			0,
+			$userPermission
+		))
+		{
+			return;
+		}
+
+		$leadAnalytics = new AnalyticBoard(CommonLead::BOARD_KEY);
+		$leadAnalytics->setBatchKey(self::BATCH_LEAD);
+		$leadAnalytics->setTitle(Loc::getMessage('CRM_REPORT_COMMON_LEAD_BOARD_TITLE'));
+		$leadAnalytics->setFilter(new CommonLeadFilter(CommonLead::BOARD_KEY));
+
+		if (method_exists($leadAnalytics, 'setGroup'))
+		{
+			$leadAnalytics->setGroup(self::BATCH_GROUP_CRM_GENERAL);
+		}
+
+		$leadAnalytics->addFeedbackButton();
+
+		self::setLimit($leadAnalytics, $isAvailable, $availabilitySliderCode);
+
+		$leadAnalytics->setStepperEnabled(true);
+		$leadAnalytics->setStepperIds([
+			'crm' => [LeadStatusSupposedHistory::class],
+		]);
+		$analyticPageList[] = $leadAnalytics;
+
+		$leadAnalytics = new AnalyticBoard(NewLead::BOARD_KEY);
+		$leadAnalytics->setBatchKey(self::BATCH_LEAD);
+		$leadAnalytics->setTitle(Loc::getMessage('CRM_REPORT_NEW_LEAD_BOARD_TITLE'));
+		$leadAnalytics->setFilter(new NewLeadFilter(NewLead::BOARD_KEY));
+
+		if (method_exists($leadAnalytics, 'setGroup'))
+		{
+			$leadAnalytics->setGroup(self::BATCH_GROUP_CRM_GENERAL);
+		}
+
+		$leadAnalytics->addFeedbackButton();
+
+		self::setLimit($leadAnalytics, $isAvailable, $availabilitySliderCode);
+
+		$leadAnalytics->setStepperEnabled(true);
+		$leadAnalytics->setStepperIds([
+			'crm' => [LeadStatusSupposedHistory::class],
+		]);
+		$analyticPageList[] = $leadAnalytics;
+
+		if (LeadSettings::getCurrent()?->isAutoGenRcEnabled())
+		{
+			$leadAnalytics = new AnalyticBoard(RepeatLead::BOARD_KEY);
+			$leadAnalytics->setBatchKey(self::BATCH_LEAD);
+			$leadAnalytics->setTitle(Loc::getMessage('CRM_REPORT_REPEATED_LEAD_BOARD_TITLE'));
+			$leadAnalytics->setFilter(new RepeatLeadBoard(RepeatLead::BOARD_KEY));
+
+			if (method_exists($leadAnalytics, 'setGroup'))
+			{
+				$leadAnalytics->setGroup(self::BATCH_GROUP_CRM_GENERAL);
+			}
+
+			if (!$isAvailable)
+			{
+				self::setLimit($leadAnalytics, false, $availabilitySliderCode);
+			}
+
+			$leadAnalytics->addFeedbackButton();
+			$leadAnalytics->setStepperEnabled(true);
+			$leadAnalytics->setStepperIds([
+				'crm' => [LeadStatusSupposedHistory::class],
+			]);
+			$analyticPageList[] = $leadAnalytics;
+		}
+	}
+
+	protected static function appendSalesPageList(
+		array &$analyticPageList,
+		bool $isAvailable,
+		string $availabilitySliderCode
+	): void
+	{
+		$showLeadsInSales = \CUserOptions::GetOption('crm', SalesFunnelBoard::SHOW_LEADS_OPTION, 'Y') === 'Y';
+		$isLeadEnabled = LeadSettings::isEnabled();
+
+		$salesFunnelOptions = [];
+		if ($isLeadEnabled)
+		{
+			$salesFunnelOptions[] = [
+				'TITLE' => $showLeadsInSales
+					? Loc::getMessage('CRM_REPORT_SALES_HIDE_LEADS')
+					: Loc::getMessage('CRM_REPORT_SALES_SHOW_LEADS'),
+				'NAME' => SalesFunnelBoard::SHOW_LEADS_OPTION,
+				'VALUE' => $showLeadsInSales,
+			];
+		}
+		$salesFunnel = new AnalyticBoard(SalesFunnelBoard::BOARD_KEY, $salesFunnelOptions);
+		$salesFunnel->setBatchKey(self::BATCH_SALES);
+		$salesFunnel->setTitle(Loc::getMessage('CRM_REPORT_SALES_FUNNEL_BY_HISTORY_BOARD_TITLE'));
+		$salesFunnel->setFilter(new SalesFunnelFilter(SalesFunnelBoard::BOARD_KEY));
+
+		if (method_exists($salesFunnel, 'setGroup'))
+		{
+			$salesFunnel->setGroup(self::BATCH_GROUP_SALES_GENERAL);
+		}
+
+		self::setLimit($salesFunnel, $isAvailable, $availabilitySliderCode);
+
+		$salesFunnel->setStepperEnabled(true);
+		$salesFunnel->setStepperIds([
+			'crm' => [
+				LeadStatusSupposedHistory::class,
+				DealStageSupposedHistory::class,
+			],
+		]);
+		$salesFunnel->addFeedbackButton();
+		if (method_exists($salesFunnel, 'registerSetOptionsCallback'))
+		{
+			$salesFunnel->registerSetOptionsCallback(function($name, $value){
+				if ($name === SalesFunnelBoard::SHOW_LEADS_OPTION)
+				{
+					$optionValue = $value ? 'Y' : 'N';
+					\CUserOptions::SetOption(
+						'crm',
+						SalesFunnelBoard::SHOW_LEADS_OPTION,
+						$optionValue
+					);
+				}
+			});
+		}
+
+		$analyticPageList[] = $salesFunnel;
+
+		$salesFunnelHistoryOptions = [];
+		if ($isLeadEnabled)
+		{
+			$salesFunnelHistoryOptions[] = [
+				'TITLE' => $showLeadsInSales
+					? Loc::getMessage('CRM_REPORT_SALES_HIDE_LEADS')
+					: Loc::getMessage('CRM_REPORT_SALES_SHOW_LEADS'),
+				'NAME' => SalesFunnelBoard::SHOW_LEADS_OPTION,
+				'VALUE' => $showLeadsInSales
+			];
+		}
+		$salesFunnelWithHistory = new AnalyticBoard(
+			SalesFunnelByStageHistory::BOARD_KEY,
+			$salesFunnelHistoryOptions
+		);
+		$salesFunnelWithHistory->setBatchKey(self::BATCH_SALES);
+		$salesFunnelWithHistory->setTitle(Loc::getMessage('CRM_REPORT_SALES_FUNNEL_BOARD_TITLE'));
+		$salesFunnelWithHistory->setFilter(
+			new SalesFunnelFilter(SalesFunnelByStageHistory::BOARD_KEY)
+		);
+
+		if (method_exists($salesFunnelWithHistory, 'setGroup'))
+		{
+			$salesFunnelWithHistory->setGroup(self::BATCH_GROUP_SALES_GENERAL);
+		}
+
+		$salesFunnelWithHistory->addFeedbackButton();
+		$salesFunnelWithHistory->setStepperEnabled(true);
+		$salesFunnelWithHistory->setStepperIds([
+			'crm' => [
+				LeadStatusSupposedHistory::class,
+				DealStageSupposedHistory::class,
+			],
+		]);
+
+		self::setLimit($salesFunnelWithHistory, $isAvailable, $availabilitySliderCode);
+
+		if (method_exists($salesFunnelWithHistory, 'registerSetOptionsCallback'))
+		{
+			$salesFunnelWithHistory->registerSetOptionsCallback(function($name, $value)
+			{
+				if ($name === SalesFunnelBoard::SHOW_LEADS_OPTION)
+				{
+					$optionValue = $value ? 'Y' : 'N';
+					\CUserOptions::SetOption(
+						'crm',
+						SalesFunnelBoard::SHOW_LEADS_OPTION,
+						$optionValue
+					);
+				}
+			});
+		}
+		$analyticPageList[] = $salesFunnelWithHistory;
+
+		$salesPlan = new AnalyticBoard(SalesPlanBoard::BOARD_KEY);
+		$salesPlan->setBatchKey(self::BATCH_SALES);
+		$salesPlan->setTitle(Loc::getMessage('CRM_REPORT_SALES_TARGET_BOARD_TITLE'));
+
+		if (method_exists($salesPlan, 'setGroup'))
+		{
+			$salesPlan->setGroup(self::BATCH_GROUP_SALES_GENERAL);
+		}
+
+		//$salesPlan->setDisabled(false);
+		$salesPlan->addFeedbackButton();
+
+		self::setLimit($salesPlan, $isAvailable, $availabilitySliderCode);
+
+		$analyticPageList[] = $salesPlan;
+
+		$salesDynamic = new AnalyticBoard(SalesDynamic::BOARD_KEY);
+		$salesDynamic->setBatchKey(self::BATCH_SALES);
+		$salesDynamic->setTitle(Loc::getMessage('CRM_REPORT_SALES_DYNAMIC_BOARD_TITLE'));
+		$salesDynamic->setFilter(
+			new SalesDynamicFilter(SalesDynamic::BOARD_KEY . '_' . SalesDynamic::VERSION)
+		);
+
+		if (method_exists($salesDynamic, 'setGroup'))
+		{
+			$salesDynamic->setGroup(self::BATCH_GROUP_SALES_GENERAL);
+		}
+
+		$salesDynamic->addFeedbackButton();
+
+		self::setLimit($salesDynamic, $isAvailable, $availabilitySliderCode);
+
+		$salesDynamic->setStepperEnabled(true);
+		$salesDynamic->setStepperIds([
+			'crm' => [DealStageSupposedHistory::class],
+		]);
+		$analyticPageList[] = $salesDynamic;
+
+		$salesPeriodCompare = new AnalyticBoard(SalesPeriodCompare::BOARD_KEY);
+		$salesPeriodCompare->setBatchKey(self::BATCH_SALES);
+		$salesPeriodCompare->setTitle(Loc::getMessage('CRM_REPORT_PERIOD_COMPARE_BOARD_TITLE'));
+		$salesPeriodCompare->setFilter(new SalesPeriodCompareFilter(SalesPeriodCompare::BOARD_KEY));
+
+		if (method_exists($salesPeriodCompare, 'setGroup'))
+		{
+			$salesPeriodCompare->setGroup(self::BATCH_GROUP_SALES_GENERAL);
+		}
+
+		$salesPeriodCompare->addFeedbackButton();
+
+		self::setLimit($salesPeriodCompare, $isAvailable, $availabilitySliderCode);
+
+		$salesPeriodCompare->setStepperEnabled(true);
+		$salesPeriodCompare->setStepperIds([
+			'crm' => [DealStageSupposedHistory::class],
+		]);
+		$analyticPageList[] = $salesPeriodCompare;
+	}
+
+	protected static function appendManagerEfficiencyPageList(
+		array &$analyticPageList,
+		bool $isAvailable,
+		string $availabilitySliderCode
+	): void
+	{
+		$managerEfficiency = new AnalyticBoard();
+		$managerEfficiency->setBatchKey(self::BATCH_MANAGER_EFFICIENCY);
+		$managerEfficiency->setTitle(Loc::getMessage('CRM_REPORT_MANAGER_EFFICIENCY_BOARD_TITLE'));
+		$managerEfficiency->setBoardKey(ManagersRating::BOARD_KEY);
+		$managerEfficiency->setFilter(new DealBasedFilter(ManagersRating::BOARD_KEY));
+
+		if (method_exists($managerEfficiency, 'setGroup'))
+		{
+			$managerEfficiency->setGroup(self::BATCH_GROUP_CRM_GENERAL);
+		}
+
+		$managerEfficiency->addFeedbackButton();
+
+		self::setLimit($managerEfficiency, $isAvailable, $availabilitySliderCode);
+
+		$analyticPageList[] = $managerEfficiency;
+	}
+
+	protected static function appendCustomersPageList(
+		array &$analyticPageList,
+		bool $isAvailable,
+		string $availabilitySliderCode
+	): void
+	{
 		$stableCustomers = new AnalyticBoard();
 		$stableCustomers->setBatchKey(self::BATCH_CLIENTS);
 		$stableCustomers->setTitle(Loc::getMessage('CRM_REPORT_STABLE_CLIENTS_BOARD_TITLE'));
@@ -442,6 +557,11 @@ class EventHandler
 		if (method_exists($stableCustomers, 'setGroup'))
 		{
 			$stableCustomers->setGroup(self::BATCH_GROUP_CRM_GENERAL);
+		}
+
+		if (!$isAvailable)
+		{
+			self::setLimit($stableCustomers, false, $availabilitySliderCode);
 		}
 
 		$stableCustomers->addFeedbackButton();
@@ -458,9 +578,17 @@ class EventHandler
 			$financeRating->setGroup(self::BATCH_GROUP_CRM_GENERAL);
 		}
 
+		if (!$isAvailable)
+		{
+			self::setLimit($financeRating, false, $availabilitySliderCode);
+		}
+
 		$financeRating->addFeedbackButton();
 		$analyticPageList[] = $financeRating;
+	}
 
+	protected static function appendCrossCuttingPageList(array &$analyticPageList): void
+	{
 		$board = new AnalyticBoard();
 		$board->setTitle(Loc::getMessage('CRM_REPORT_ADVERTISE_SUM_EFFECT_BOARD_TITLE'));
 		$board->setBoardKey(Dashboard\Ad\AdPayback::BOARD_KEY);
@@ -473,7 +601,10 @@ class EventHandler
 
 		$board->setBatchKey(self::BATCH_BOARD_CROSS_ANALYTICS);
 		$board->setDisabled(!Tracking\Manager::isAccessible());
-		$board->setLimit(static::getLimitComponentParams(Dashboard\Ad\AdPayback::BOARD_KEY), Limit::isAnalyticsLimited(Dashboard\Ad\AdPayback::BOARD_KEY));
+		$board->setLimit(
+			static::getLimitComponentParams(Dashboard\Ad\AdPayback::BOARD_KEY),
+			Limit::isAnalyticsLimited(Dashboard\Ad\AdPayback::BOARD_KEY)
+		);
 		$board->addFeedbackButton();
 		$board->addButton(
 			new BoardButton(
@@ -487,7 +618,9 @@ class EventHandler
 		$board = new AnalyticBoard();
 		$board->setTitle(Loc::getMessage('CRM_REPORT_TRAFFIC_EFFECT_BOARD_TITLE'));
 		$board->setBoardKey(Dashboard\Ad\TrafficEfficiency::BOARD_KEY);
-		$board->setFilter(new Filter\TrafficEffectFilter(Dashboard\Ad\TrafficEfficiency::BOARD_KEY));
+		$board->setFilter(
+			new Filter\TrafficEffectFilter(Dashboard\Ad\TrafficEfficiency::BOARD_KEY)
+		);
 
 		if (method_exists($board, 'setGroup'))
 		{
@@ -496,7 +629,10 @@ class EventHandler
 
 		$board->setBatchKey(self::BATCH_BOARD_CROSS_ANALYTICS);
 		$board->setDisabled(!Tracking\Manager::isAccessible());
-		$board->setLimit(static::getLimitComponentParams(Dashboard\Ad\TrafficEfficiency::BOARD_KEY), Limit::isAnalyticsLimited(Dashboard\Ad\TrafficEfficiency::BOARD_KEY));
+		$board->setLimit(
+			static::getLimitComponentParams(Dashboard\Ad\TrafficEfficiency::BOARD_KEY),
+			Limit::isAnalyticsLimited(Dashboard\Ad\TrafficEfficiency::BOARD_KEY)
+		);
 		$board->addFeedbackButton();
 		$board->addButton(
 			new BoardButton(
@@ -506,9 +642,16 @@ class EventHandler
 			)
 		);
 		$analyticPageList[] = $board;
+	}
 
+	protected static function appendMyReportsPageList(
+		array &$analyticPageList,
+		bool $isAvailable,
+		string $availabilitySliderCode
+	): void
+	{
 		$myReportsStart = new CrmStartAnalyticBoard(MyReports\CrmStartBoard::BOARD_KEY);
-		$myReportsStart->setTitle(Loc::getMessage("CRM_REPORT_MY_REPORTS_START"));
+		$myReportsStart->setTitle(Loc::getMessage('CRM_REPORT_MY_REPORTS_START'));
 		$myReportsStart->addFeedbackButton();
 		$myReportsStart->setBoardKey(MyReports\CrmStartBoard::BOARD_KEY);
 		$myReportsStart->setFilter(new MyReportsFilter(MyReports\CrmStartBoard::BOARD_KEY));
@@ -518,6 +661,11 @@ class EventHandler
 			$myReportsStart->setGroup(self::BATCH_GROUP_CRM_GENERAL);
 		}
 
+		if (!$isAvailable)
+		{
+			self::setLimit($myReportsStart, false, $availabilitySliderCode);
+		}
+
 		$myReportsStart->setBatchKey(self::BATCH_MY_REPORTS);
 		$myReportsStart->addButton(static::getAddWidgetButton());
 		$analyticPageList[] = $myReportsStart;
@@ -525,7 +673,7 @@ class EventHandler
 		if (LeadSettings::isEnabled())
 		{
 			$myReportsLead = new LeadAnalyticBoard(MyReports\LeadBoard::BOARD_KEY);
-			$myReportsLead->setTitle(Loc::getMessage("CRM_REPORT_MY_REPORTS_LEAD"));
+			$myReportsLead->setTitle(Loc::getMessage('CRM_REPORT_MY_REPORTS_LEAD'));
 			$myReportsLead->setBoardKey(MyReports\LeadBoard::BOARD_KEY);
 			$myReportsLead->setFilter(new MyReportsFilter(MyReports\LeadBoard::getPanelGuid()));
 
@@ -534,13 +682,18 @@ class EventHandler
 				$myReportsLead->setGroup(self::BATCH_GROUP_CRM_GENERAL);
 			}
 
+			if (!$isAvailable)
+			{
+				self::setLimit($myReportsLead, false, $availabilitySliderCode);
+			}
+
 			$myReportsLead->setBatchKey(self::BATCH_MY_REPORTS);
 			$myReportsLead->addButton(static::getAddWidgetButton());
 			$analyticPageList[] = $myReportsLead;
 		}
 
 		$myReportsDeal = new DealAnalyticBoard(MyReports\DealBoard::BOARD_KEY);
-		$myReportsDeal->setTitle(Loc::getMessage("CRM_REPORT_MY_REPORTS_DEAL"));
+		$myReportsDeal->setTitle(Loc::getMessage('CRM_REPORT_MY_REPORTS_DEAL'));
 		$myReportsDeal->setBoardKey(MyReports\DealBoard::BOARD_KEY);
 		$myReportsDeal->setFilter(new MyReportsFilter(MyReports\DealBoard::getPanelGuid()));
 
@@ -549,12 +702,17 @@ class EventHandler
 			$myReportsDeal->setGroup(self::BATCH_GROUP_CRM_GENERAL);
 		}
 
+		if (!$isAvailable)
+		{
+			self::setLimit($myReportsDeal, false, $availabilitySliderCode);
+		}
+
 		$myReportsDeal->setBatchKey(self::BATCH_MY_REPORTS);
 		$myReportsDeal->addButton(
 			new BoardButton('
 				<div class="ui-btn-split ui-btn-light-border ui-btn-themes"> 
 					<button id="crm-report-deal-category" class="ui-btn-main">
-						'.htmlspecialcharsbx(MyReports\DealBoard::getCurrentCategoryName()).'
+						' . htmlspecialcharsbx(MyReports\DealBoard::getCurrentCategoryName()) . '
 					</button> 
 					<button class="ui-btn-menu" onclick="BX.Crm.Report.DealWidgetBoard.onSelectCategoryButtonClick(this);"></button> 
 				</div>
@@ -564,7 +722,7 @@ class EventHandler
 		$analyticPageList[] = $myReportsDeal;
 
 		$myReportsContact = new ContactAnalyticBoard(MyReports\ContactBoard::BOARD_KEY);
-		$myReportsContact->setTitle(Loc::getMessage("CRM_REPORT_MY_REPORTS_CONTACT"));
+		$myReportsContact->setTitle(Loc::getMessage('CRM_REPORT_MY_REPORTS_CONTACT'));
 		$myReportsContact->setBoardKey(MyReports\ContactBoard::BOARD_KEY);
 		$myReportsContact->setFilter(new MyReportsFilter(MyReports\ContactBoard::getPanelGuid()));
 
@@ -573,12 +731,17 @@ class EventHandler
 			$myReportsContact->setGroup(self::BATCH_GROUP_CRM_GENERAL);
 		}
 
+		if (!$isAvailable)
+		{
+			self::setLimit($myReportsContact, false, $availabilitySliderCode);
+		}
+
 		$myReportsContact->setBatchKey(self::BATCH_MY_REPORTS);
 		$myReportsContact->addButton(static::getAddWidgetButton());
 		$analyticPageList[] = $myReportsContact;
 
 		$myReportsCompany = new CompanyAnalyticBoard(MyReports\CompanyBoard::BOARD_KEY);
-		$myReportsCompany->setTitle(Loc::getMessage("CRM_REPORT_MY_REPORTS_COMPANY"));
+		$myReportsCompany->setTitle(Loc::getMessage('CRM_REPORT_MY_REPORTS_COMPANY'));
 		$myReportsCompany->setBoardKey(MyReports\CompanyBoard::BOARD_KEY);
 		$myReportsCompany->setFilter(new MyReportsFilter(MyReports\CompanyBoard::getPanelGuid()));
 
@@ -587,12 +750,17 @@ class EventHandler
 			$myReportsCompany->setGroup(self::BATCH_GROUP_CRM_GENERAL);
 		}
 
+		if (!$isAvailable)
+		{
+			self::setLimit($myReportsCompany, false, $availabilitySliderCode);
+		}
+
 		$myReportsCompany->setBatchKey(self::BATCH_MY_REPORTS);
 		$myReportsCompany->addButton(static::getAddWidgetButton());
 		$analyticPageList[] = $myReportsCompany;
 
 		$myReportsInvoice = new InvoiceAnalyticBoard(MyReports\InvoiceBoard::BOARD_KEY);
-		$myReportsInvoice->setTitle(Loc::getMessage("CRM_REPORT_MY_REPORTS_INVOICE"));
+		$myReportsInvoice->setTitle(Loc::getMessage('CRM_REPORT_MY_REPORTS_INVOICE'));
 		$myReportsInvoice->setBoardKey(MyReports\InvoiceBoard::BOARD_KEY);
 		$myReportsInvoice->setFilter(new MyReportsFilter(MyReports\InvoiceBoard::getPanelGuid()));
 
@@ -601,12 +769,40 @@ class EventHandler
 			$myReportsInvoice->setGroup(self::BATCH_GROUP_CRM_GENERAL);
 		}
 
+		$isInvoiceAvailable = true;
+		$invoiceAvailabilitySliderCode = $availabilitySliderCode;
+		if ($isAvailable)
+		{
+			$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+
+			$invoiceTypeId = (
+				InvoiceSettings::getCurrent()->isSmartInvoiceEnabled()
+					? \CCrmOwnerType::SmartInvoice
+					: \CCrmOwnerType::Invoice
+			);
+
+			if (!$toolsManager->checkEntityTypeAvailability($invoiceTypeId))
+			{
+				$isInvoiceAvailable = false;
+				$invoiceAvailabilitySliderCode = ToolsManager::INVOICE_SLIDER_CODE;
+			}
+		}
+		else
+		{
+			$isInvoiceAvailable = false;
+		}
+
+		if (!$isInvoiceAvailable)
+		{
+			self::setLimit($myReportsInvoice, false, $invoiceAvailabilitySliderCode);
+		}
+
 		$myReportsInvoice->setBatchKey(self::BATCH_MY_REPORTS);
 		$myReportsInvoice->addButton(static::getAddWidgetButton());
 		$analyticPageList[] = $myReportsInvoice;
 
 		$myReportActivity = new ActivityAnalyticBoard(MyReports\ActivityBoard::BOARD_KEY);
-		$myReportActivity->setTitle(Loc::getMessage("CRM_REPORT_MY_REPORTS_ACTIVITY"));
+		$myReportActivity->setTitle(Loc::getMessage('CRM_REPORT_MY_REPORTS_ACTIVITY'));
 		$myReportActivity->setBoardKey(MyReports\ActivityBoard::BOARD_KEY);
 		$myReportActivity->setFilter(new MyReportsFilter(MyReports\ActivityBoard::getPanelGuid()));
 
@@ -615,65 +811,116 @@ class EventHandler
 			$myReportActivity->setGroup(self::BATCH_GROUP_CRM_GENERAL);
 		}
 
+		if (!$isAvailable)
+		{
+			self::setLimit($myReportActivity, false, $availabilitySliderCode);
+		}
+
 		$myReportActivity->setBatchKey(self::BATCH_MY_REPORTS);
 		$myReportActivity->addButton(static::getAddWidgetButton());
 		$analyticPageList[] = $myReportActivity;
+	}
 
-		if (\Bitrix\Main\Loader::includeModule('sale'))
+	protected static function setLimit(
+		AnalyticBoard $board,
+		bool $isAvailable,
+		string $availabilitySliderCode
+	): void
+	{
+		$boardKey = $board->getBoardKey();
+		if ($isAvailable)
 		{
-			$salesOrderFunnel = new AnalyticBoard(SalesOrderFunnelBoard::BOARD_KEY);
-			$salesOrderFunnel->setBatchKey(self::BATCH_INTERNET_SHOP);
-			$salesOrderFunnel->setBoardKey(SalesOrderFunnelBoard::BOARD_KEY);
-			$salesOrderFunnel->setTitle(Loc::getMessage('CRM_REPORT_SALES_FUNNEL_BY_HISTORY_BOARD_TITLE'));
-			$salesOrderFunnel->setFilter(new SalesOrderFunnelFilter(SalesOrderFunnelBoard::BOARD_KEY));
+			$board->setLimit(
+				static::getLimitComponentParams($boardKey),
+				Limit::isAnalyticsLimited($boardKey)
+			);
 
-			if (method_exists($salesOrderFunnel, 'setGroup'))
-			{
-				$salesOrderFunnel->setGroup(self::BATCH_GROUP_SALES_GENERAL);
-			}
-
-			$salesOrderFunnel->setLimit(static::getLimitComponentParams(SalesOrderFunnelBoard::BOARD_KEY), Limit::isAnalyticsLimited(SalesOrderFunnelBoard::BOARD_KEY));
-			$salesOrderFunnel->addFeedbackButton();
-
-			$analyticPageList[] = $salesOrderFunnel;
-
-			$salesOrderFunnelWithHistory = new AnalyticBoard(SalesOrderFunnelByStageHistory::BOARD_KEY);
-			$salesOrderFunnelWithHistory->setBatchKey(self::BATCH_INTERNET_SHOP);
-			$salesOrderFunnelWithHistory->setBoardKey(SalesOrderFunnelByStageHistory::BOARD_KEY);
-			$salesOrderFunnelWithHistory->setTitle(Loc::getMessage('CRM_REPORT_SALES_FUNNEL_BOARD_TITLE'));
-			$salesOrderFunnelWithHistory->setFilter(new SalesOrderFunnelFilter(SalesOrderFunnelByStageHistory::BOARD_KEY));
-
-			if (method_exists($salesOrderFunnelWithHistory, 'setGroup'))
-			{
-				$salesOrderFunnelWithHistory->setGroup(self::BATCH_GROUP_SALES_GENERAL);
-			}
-
-			$salesOrderFunnelWithHistory->addFeedbackButton();
-			$salesOrderFunnelWithHistory->setLimit(static::getLimitComponentParams(SalesOrderFunnelByStageHistory::BOARD_KEY), Limit::isAnalyticsLimited(SalesOrderFunnelByStageHistory::BOARD_KEY));
-			$analyticPageList[] = $salesOrderFunnelWithHistory;
-
-			$salesOrderBuyer = new AnalyticBoard(SalesOrderBuyerBoard::BOARD_KEY);
-			$salesOrderBuyer->setBatchKey(self::BATCH_INTERNET_SHOP);
-			$salesOrderBuyer->setBoardKey(SalesOrderBuyerBoard::BOARD_KEY);
-			$salesOrderBuyer->setTitle(Loc::getMessage('CRM_REPORT_SALES_ORDER_BUYER_BOARD_TITLE'));
-			$salesOrderBuyer->setFilter(new SalesOrderFunnelFilter(SalesOrderBuyerBoard::BOARD_KEY));
-
-			if (method_exists($salesOrderBuyer, 'setGroup'))
-			{
-				$salesOrderBuyer->setGroup(self::BATCH_GROUP_SALES_GENERAL);
-			}
-
-			$salesOrderBuyer->addFeedbackButton();
-			$salesOrderBuyer->setLimit(static::getLimitComponentParams(SalesOrderBuyerBoard::BOARD_KEY), Limit::isAnalyticsLimited(SalesOrderBuyerBoard::BOARD_KEY));
-			$analyticPageList[] = $salesOrderBuyer;
+			return;
 		}
 
-		$restApps = \Bitrix\Crm\Integration\Rest\AppPlacementManager::getHandlerInfos(AppPlacement::ANALYTICS_MENU);
+		$board->setLimit(
+			static::getLimitComponentParams($boardKey, $availabilitySliderCode),
+			true
+		);
+	}
+
+	protected static function appendSaleOrdersPageList(array &$analyticPageList): void
+	{
+		if (!Loader::includeModule('sale'))
+		{
+			return;
+		}
+
+		$salesOrderFunnel = new AnalyticBoard(SalesOrderFunnelBoard::BOARD_KEY);
+		$salesOrderFunnel->setBatchKey(self::BATCH_INTERNET_SHOP);
+		$salesOrderFunnel->setBoardKey(SalesOrderFunnelBoard::BOARD_KEY);
+		$salesOrderFunnel->setTitle(Loc::getMessage('CRM_REPORT_SALES_FUNNEL_BY_HISTORY_BOARD_TITLE'));
+		$salesOrderFunnel->setFilter(new SalesOrderFunnelFilter(SalesOrderFunnelBoard::BOARD_KEY));
+
+		if (method_exists($salesOrderFunnel, 'setGroup'))
+		{
+			$salesOrderFunnel->setGroup(self::BATCH_GROUP_SALES_GENERAL);
+		}
+
+		$salesOrderFunnel->setLimit(
+			static::getLimitComponentParams(SalesOrderFunnelBoard::BOARD_KEY),
+			Limit::isAnalyticsLimited(SalesOrderFunnelBoard::BOARD_KEY)
+		);
+		$salesOrderFunnel->addFeedbackButton();
+
+		$analyticPageList[] = $salesOrderFunnel;
+
+		$salesOrderFunnelWithHistory = new AnalyticBoard(SalesOrderFunnelByStageHistory::BOARD_KEY);
+		$salesOrderFunnelWithHistory->setBatchKey(self::BATCH_INTERNET_SHOP);
+		$salesOrderFunnelWithHistory->setBoardKey(SalesOrderFunnelByStageHistory::BOARD_KEY);
+		$salesOrderFunnelWithHistory->setTitle(Loc::getMessage('CRM_REPORT_SALES_FUNNEL_BOARD_TITLE'));
+		$salesOrderFunnelWithHistory->setFilter(
+			new SalesOrderFunnelFilter(SalesOrderFunnelByStageHistory::BOARD_KEY)
+		);
+
+		if (method_exists($salesOrderFunnelWithHistory, 'setGroup'))
+		{
+			$salesOrderFunnelWithHistory->setGroup(self::BATCH_GROUP_SALES_GENERAL);
+		}
+
+		$salesOrderFunnelWithHistory->addFeedbackButton();
+		$salesOrderFunnelWithHistory->setLimit(
+			static::getLimitComponentParams(SalesOrderFunnelByStageHistory::BOARD_KEY),
+			Limit::isAnalyticsLimited(SalesOrderFunnelByStageHistory::BOARD_KEY)
+		);
+		$analyticPageList[] = $salesOrderFunnelWithHistory;
+
+		$salesOrderBuyer = new AnalyticBoard(SalesOrderBuyerBoard::BOARD_KEY);
+		$salesOrderBuyer->setBatchKey(self::BATCH_INTERNET_SHOP);
+		$salesOrderBuyer->setBoardKey(SalesOrderBuyerBoard::BOARD_KEY);
+		$salesOrderBuyer->setTitle(Loc::getMessage('CRM_REPORT_SALES_ORDER_BUYER_BOARD_TITLE'));
+		$salesOrderBuyer->setFilter(new SalesOrderFunnelFilter(SalesOrderBuyerBoard::BOARD_KEY));
+
+		if (method_exists($salesOrderBuyer, 'setGroup'))
+		{
+			$salesOrderBuyer->setGroup(self::BATCH_GROUP_SALES_GENERAL);
+		}
+
+		$salesOrderBuyer->addFeedbackButton();
+		$salesOrderBuyer->setLimit(
+			static::getLimitComponentParams(SalesOrderBuyerBoard::BOARD_KEY),
+			Limit::isAnalyticsLimited(SalesOrderBuyerBoard::BOARD_KEY)
+		);
+		$analyticPageList[] = $salesOrderBuyer;
+	}
+
+	protected static function appendRestAppsPageList(array &$analyticPageList): void
+	{
+		$restApps = AppPlacementManager::getHandlerInfos(AppPlacement::ANALYTICS_MENU);
 		foreach ($restApps as $categoryName => $apps)
 		{
 			foreach ($apps as $appInfo)
 			{
-				$boardKey = str_replace(['#APP_ID#', '#HANDLER_ID#'],[$appInfo['APP_ID'], $appInfo['ID']], static::REST_BOARD_KEY_TEMPLATE) ;
+				$boardKey = str_replace(
+					['#APP_ID#', '#HANDLER_ID#'],
+					[$appInfo['APP_ID'], $appInfo['ID']],
+					static::REST_BOARD_KEY_TEMPLATE
+				);
 				$batchKey = static::REST_BOARD_BATCH_KEY_TEMPLATE . $categoryName;
 				$board = new VC\RestAppBoard();
 				$board->setTitle($appInfo['TITLE']);
@@ -691,43 +938,45 @@ class EventHandler
 				$analyticPageList[] = $board;
 			}
 		}
+	}
 
-		if (\Bitrix\Main\Loader::includeModule('voximplant'))
+	protected static function appendTelephonyPageList(array &$analyticPageList): void
+	{
+		if (!Loader::includeModule('voximplant'))
 		{
-			$telephonyExternalLink = new AnalyticBoard();
-			$telephonyExternalLink->setBoardKey('crm_telephony_external_link');
-			$telephonyExternalLink->setTitle(Loc::getMessage('CRM_REPORT_EXTERNAL_LINK_TELEPHONY_BOARD_TITLE'));
-			$telephonyExternalLink->setExternal(true);
-			$telephonyExternalLink->setExternalUrl(
-				'/report/telephony/?analyticBoardKey=' . CallDynamicsBoard::BOARD_KEY
-			);
-			$telephonyExternalLink->setGroup(self::BATCH_GROUP_CRM_GENERAL);
-			$analyticPageList[] = $telephonyExternalLink;
+			return;
 		}
 
-		if (\Bitrix\Main\Loader::includeModule('imopenlines'))
+		$telephonyExternalLink = new AnalyticBoard();
+		$telephonyExternalLink->setBoardKey('crm_telephony_external_link');
+		$telephonyExternalLink->setTitle(Loc::getMessage('CRM_REPORT_EXTERNAL_LINK_TELEPHONY_BOARD_TITLE'));
+		$telephonyExternalLink->setExternal(true);
+		$telephonyExternalLink->setExternalUrl(
+			'/report/telephony/?analyticBoardKey=' . CallDynamicsBoard::BOARD_KEY
+		);
+		$telephonyExternalLink->setGroup(self::BATCH_GROUP_CRM_GENERAL);
+		$analyticPageList[] = $telephonyExternalLink;
+	}
+
+	protected static function appendOpenLinesPageList(array &$analyticPageList): void
+	{
+		if (!Loader::includeModule('imopenlines'))
 		{
-			$openlinesExternalLink = new AnalyticBoard();
-			$openlinesExternalLink->setBoardKey('crm_openlines_external_link');
-			$openlinesExternalLink->setTitle(Loc::getMessage('CRM_REPORT_EXTERNAL_LINK_OPENLINES_BOARD_TITLE'));
-			$openlinesExternalLink->setExternal(true);
-
-			if (IsModuleInstalled("bitrix24"))
-			{
-				$openlinesExternalLink->setExternalUrl('/contact_center/dialog_statistics');
-			}
-			else
-			{
-				$openlinesExternalLink->setExternalUrl('/services/contact_center/dialog_statistics');
-			}
-
-			$openlinesExternalLink->setSliderSupport(false);
-
-			$openlinesExternalLink->setGroup(self::BATCH_GROUP_CRM_GENERAL);
-			$analyticPageList[] = $openlinesExternalLink;
+			return;
 		}
 
-		return $analyticPageList;
+		$openLinesExternalLink = new AnalyticBoard();
+		$openLinesExternalLink->setBoardKey('crm_openlines_external_link');
+		$openLinesExternalLink->setTitle(Loc::getMessage('CRM_REPORT_EXTERNAL_LINK_OPENLINES_BOARD_TITLE'));
+		$openLinesExternalLink->setExternal(true);
+
+		$contactCenterUrl = Container::getInstance()->getRouter()->getContactCenterUrl();
+		$openLinesExternalLink->setExternalUrl($contactCenterUrl . 'dialog_statistics/');
+
+		$openLinesExternalLink->setSliderSupport(false);
+
+		$openLinesExternalLink->setGroup(self::BATCH_GROUP_CRM_GENERAL);
+		$analyticPageList[] = $openLinesExternalLink;
 	}
 
 	/**

@@ -202,6 +202,7 @@ export const DetailComponent = {
 				},
 				analyticsLabel: {
 					viewMode: 'detail',
+					appCode: this.result.APP.CODE,
 				},
 			}).then(
 				response => {

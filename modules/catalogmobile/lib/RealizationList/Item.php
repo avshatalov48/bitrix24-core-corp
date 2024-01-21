@@ -35,7 +35,7 @@ class Item
 		return $this->buildItemDto([
 			'id' => $id,
 			'docType' => StoreDocumentTable::TYPE_SALES_ORDERS,
-			'name' => Loc::getMessage('CATALOG_REALIZATION_LIST_TITLE', ['#DOCUMENT_ID#' => $document['ACCOUNT_NUMBER']]),
+			'name' => Loc::getMessage('CATALOG_REALIZATION_LIST_TITLE_MSGVER_1', ['#DOCUMENT_ID#' => $document['ACCOUNT_NUMBER']]),
 			'date' => $document['DATE_INSERT']->getTimestamp(),
 			'statuses' => $this->getStatus($document),
 			'fields' => $fields,
@@ -158,29 +158,33 @@ class Item
 
 	private function prepareCurrencyList(): array
 	{
-		$result = [];
+		static $currencyList = [];
+		if (!empty($currencyList))
+		{
+			return $currencyList;
+		}
 
 		$existingCurrencies = CurrencyTable::getList([
 			'select' => [
 				'CURRENCY',
 				'FULL_NAME' => 'CURRENT_LANG_FORMAT.FULL_NAME',
-				'SORT',
 			],
 			'order' => [
 				'BASE' => 'DESC',
 				'SORT' => 'ASC',
 				'CURRENCY' => 'ASC',
 			],
+			'cache' => ['ttl' => 86400],
 		])->fetchAll();
 		foreach ($existingCurrencies as $currency)
 		{
-			$result[] = [
+			$currencyList[] = [
 				'name' => $currency['FULL_NAME'],
 				'value' => $currency['CURRENCY'],
 			];
 		}
 
-		return $result;
+		return $currencyList;
 	}
 
 	private function prepareResponsible(array &$document): void

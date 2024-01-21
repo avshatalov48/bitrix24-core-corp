@@ -235,4 +235,12 @@ $MESS["TASKS_COMMENT_MESSAGE_ADD_PUSH_F"] = "#USER_NAME# добавила ком
 $MESS["TASKS_COMMENT_MESSAGE_ADD_WITH_TEXT_PUSH_M"] = "#USER_NAME# добавил комментарий к задаче #TASK_TITLE# cо следующим текстом: #TASK_COMMENT_TEXT#";
 $MESS["TASKS_COMMENT_MESSAGE_ADD_WITH_TEXT_PUSH_F"] = "#USER_NAME# добавила комментарий к задаче #TASK_TITLE# cо следующим текстом: #TASK_COMMENT_TEXT#";
 
+
+$MESS["TASKS_REGULAR_TASK_REPLICATED_N"] = "Создана новая регулярная задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# #BR# #TASK_EXTRA#";
+$MESS["TASKS_REGULAR_TASK_REPLICATED_M"] = "Создана новая регулярная задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# #BR# #TASK_EXTRA#";
+$MESS["TASKS_REGULAR_TASK_REPLICATED_F"] = "Создана новая регулярная задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# #BR# #TASK_EXTRA#";
+
+$MESS["TASKS_REGULAR_TASK_STARTED_N"] = "Наступило время выполнения регулярной задачи #TASK_URL_BEGIN##TASK_TITLE##URL_END# #BR# #TASK_EXTRA#";
+$MESS["TASKS_REGULAR_TASK_STARTED_M"] = "Наступило время выполнения регулярной задачи #TASK_URL_BEGIN##TASK_TITLE##URL_END# #BR# #TASK_EXTRA#";
+$MESS["TASKS_REGULAR_TASK_STARTED_F"] = "Наступило время выполнения регулярной задачи #TASK_URL_BEGIN##TASK_TITLE##URL_END# #BR# #TASK_EXTRA#";
 ?>

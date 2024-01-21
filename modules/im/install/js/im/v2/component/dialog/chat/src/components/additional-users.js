@@ -3,7 +3,7 @@ import {UserListPopup} from 'im.v2.component.elements';
 
 import {UserService} from '../classes/user-servlce';
 
-import type {ImModelDialog} from 'im.v2.model';
+import type {ImModelChat} from 'im.v2.model';
 
 // @vue/component
 export const AdditionalUsers = {
@@ -33,9 +33,9 @@ export const AdditionalUsers = {
 	},
 	computed:
 	{
-		dialog(): ImModelDialog
+		dialog(): ImModelChat
 		{
-			return this.$store.getters['dialogues/get'](this.dialogId, true);
+			return this.$store.getters['chats/get'](this.dialogId, true);
 		},
 	},
 	watch:

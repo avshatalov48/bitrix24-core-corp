@@ -16,7 +16,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 */
 
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
+use Bitrix\Crm\Component\EntityList\ActionManager;
 use Bitrix\Crm\Integration;
+use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
@@ -163,6 +165,11 @@ if ($arResult['NEED_ADD_ACTIVITY_BLOCK'] ?? false)
 	$arResult['CONTACT'] = (new \Bitrix\Crm\Component\EntityList\NearestActivity\Manager(CCrmOwnerType::Contact))->appendNearestActivityBlock($arResult['CONTACT']);
 }
 
+$toolsManager = Container::getInstance()->getIntranetToolsManager();
+$availabilityManager = AvailabilityManager::getInstance();
+$isQuoteAvailable = $toolsManager->checkEntityTypeAvailability(\CCrmOwnerType::Quote);
+$isInvoiceAvailable = $toolsManager->checkEntityTypeAvailability(\CCrmOwnerType::Invoice);
+
 foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 {
 	$arEntitySubMenuItems = array();
@@ -217,14 +224,24 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 			);
 		}
 
+
 		if($arResult['PERM_QUOTE'] && !$arResult['CATEGORY_ID'])
 		{
+			if ($isQuoteAvailable)
+			{
+				$onClick = "jsUtils.Redirect([], '" . CUtil::JSEscape($arContact['PATH_TO_QUOTE_ADD']) . "');";
+			}
+			else
+			{
+				$onClick = $availabilityManager->getEntityTypeAvailabilityLock(\CCrmOwnerType::Quote);
+			}
+
 			$quoteAction = [
 				'TITLE' => GetMessage('CRM_CONTACT_ADD_QUOTE_TITLE_MSGVER_1'),
 				'TEXT' => GetMessage('CRM_CONTACT_ADD_QUOTE_MSGVER_1'),
-				'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arContact['PATH_TO_QUOTE_ADD'])."');"
+				'ONCLICK' => $onClick,
 			];
-			if (\Bitrix\Crm\Settings\QuoteSettings::getCurrent()->isFactoryEnabled())
+			if ($isQuoteAvailable && \Bitrix\Crm\Settings\QuoteSettings::getCurrent()->isFactoryEnabled())
 			{
 				unset($quoteAction['ONCLICK']);
 				$link = \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
@@ -246,11 +263,20 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 			&& !$arResult['CATEGORY_ID']
 		)
 		{
+			if ($isInvoiceAvailable)
+			{
+				$onClick = "jsUtils.Redirect([], '" . CUtil::JSEscape($arContact['PATH_TO_INVOICE_ADD']) . "');";
+			}
+			else
+			{
+				$onClick = $availabilityManager->getEntityTypeAvailabilityLock(\CCrmOwnerType::Invoice);
+			}
+
 			$localization = \Bitrix\Crm\Service\Container::getInstance()->getLocalization();
 			$arEntitySubMenuItems[] = array(
 				'TITLE' => $localization->appendOldVersionSuffix(GetMessage('CRM_DEAL_ADD_INVOICE_TITLE')),
 				'TEXT' => $localization->appendOldVersionSuffix(GetMessage('CRM_DEAL_ADD_INVOICE')),
-				'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arContact['PATH_TO_INVOICE_ADD'])."');"
+				'ONCLICK' => $onClick,
 			);
 		}
 		if (
@@ -258,10 +284,14 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 			&& !$arResult['CATEGORY_ID']
 		)
 		{
-			$arEntitySubMenuItems[] = [
+			$subMenuItem = [
 				'TITLE' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
 				'TEXT' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
-				'HREF' => \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+			];
+
+			if ($isInvoiceAvailable)
+			{
+				$subMenuItem['HREF'] = \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
 					\CCrmOwnerType::SmartInvoice,
 					0,
 					null,
@@ -269,8 +299,14 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 						\CCrmOwnerType::Contact,
 						$arContact['ID']
 					)
-				),
-			];
+				);
+			}
+			else
+			{
+				$subMenuItem['ONCLICK'] = $availabilityManager->getEntityTypeAvailabilityLock(\CCrmOwnerType::SmartInvoice);
+			}
+
+			$arEntitySubMenuItems[] = $subMenuItem;
 		}
 
 		if(!empty($arEntitySubMenuItems))
@@ -286,14 +322,14 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 
 		if($arContact['EDIT'])
 		{
-			if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled())
-			{
-				$currentUser = CUtil::PhpToJSObject(CCrmViewHelper::getUserInfo(true, false));
-				$arActivitySubMenuItems[] = [
-					'TEXT' => GetMessage('CRM_CONTACT_ADD_TODO'),
-					'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Contact . ", " . (int)$arContact['ID'] . ", " . $currentUser . ");"
-				];
-			}
+			$currentUser = CUtil::PhpToJSObject(CCrmViewHelper::getUserInfo(true, false));
+			$pingSettings = CUtil::PhpToJSObject(
+				(new TodoPingSettingsProvider(\CCrmOwnerType::Contact, (int)($arResult['CATEGORY_ID'] ?? 0)))->fetchForJsComponent()
+			);
+			$arActivitySubMenuItems[] = [
+				'TEXT' => GetMessage('CRM_CONTACT_ADD_TODO'),
+				'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Contact . ", " . (int)$arContact['ID'] . ", " . $currentUser . ", " . $pingSettings . ");"
+			];
 
 			if (RestrictionManager::isHistoryViewPermitted() && !$arResult['CATEGORY_ID'])
 			{
@@ -506,6 +542,7 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 						'USER_PROFILE_URL' => $arContact['PATH_TO_USER_MODIFIER']
 					)
 				) : '',
+			'OBSERVERS' => CCrmViewHelper::renderObservers(\CCrmOwnerType::Contact, $arContact['ID'], $arContact['~OBSERVERS'] ?? []),
 		) + CCrmViewHelper::RenderListMultiFields($arContact, "CONTACT_{$arContact['ID']}_", array('ENABLE_SIP' => true, 'SIP_PARAMS' => array('ENTITY_TYPE' => 'CRM_'.CCrmOwnerType::ContactName, 'ENTITY_ID' => $arContact['ID']))) + $arResult['CONTACT_UF'][$sKey]
 	];
 
@@ -758,9 +795,11 @@ if(!$isInternal
 	if($allowWrite)
 	{
 		//region Edit Button
-		$controlPanel['GROUPS'][0]['ITEMS'][] = $snippet->getEditButton();
-		$actionList[] = $snippet->getEditAction();
+		$actionManager = new ActionManager($gridManagerID);
+		$controlPanel['GROUPS'][0]['ITEMS'][] = $actionManager->getEditButton();
+		$actionList[] = $actionManager->getEditAction();
 		//endregion
+
 		//region Mark as Opened
 		$actionList[] = array(
 			'NAME' => GetMessage('CRM_CONTACT_MARK_AS_OPENED'),
@@ -915,6 +954,7 @@ $APPLICATION->IncludeComponent(
 			'ID' => $gridManagerID,
 			'CONFIG' => array(
 				'ownerTypeName' => CCrmOwnerType::ContactName,
+				'categoryId' => (int)($arResult['CATEGORY_ID'] ?? 0),
 				'gridId' => $arResult['GRID_ID'],
 				'activityEditorId' => $activityEditorID,
 				'activityServiceUrl' => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
@@ -956,24 +996,36 @@ BX.ready(
 <?php if(
 	!$isInternal
 	&& \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('IFRAME') !== 'Y'
-): ?>
+):
+	\Bitrix\Main\UI\Extension::load(['crm.settings-button-extender', 'crm.toolbar-component']);
+	?>
 <script type="text/javascript">
 	BX.ready(
 		function()
 		{
-			BX.Runtime.loadExtension(['crm.push-crm-settings', 'crm.toolbar-component']).then((exports) => {
-				/** @see BX.Crm.ToolbarComponent */
-				const settingsButton = exports.ToolbarComponent.Instance.getSettingsButton();
-
-				/** @see BX.Crm.PushCrmSettings */
-				new exports.PushCrmSettings({
+			const settingsButton = BX.Crm.ToolbarComponent.Instance.getSettingsButton();
+			const settingsMenu = settingsButton ? settingsButton.getMenuWindow() : undefined;
+			if (settingsMenu)
+			{
+				new BX.Crm.SettingsButtonExtender({
 					smartActivityNotificationSupported: <?= Container::getInstance()->getFactory(\CCrmOwnerType::Contact)->isSmartActivityNotificationSupported() ? 'true' : 'false' ?>,
 					entityTypeId: <?= \CCrmOwnerType::Contact ?>,
+					categoryId: <?= isset($arResult['CATEGORY_ID']) ? (int)$arResult['CATEGORY_ID'] : 'null' ?>,
 					pingSettings: <?= CUtil::PhpToJSObject((new TodoPingSettingsProvider(\CCrmOwnerType::Contact, (int)($arResult['CATEGORY_ID'] ?? 0)))->fetchAll()) ?>,
-					rootMenu: settingsButton ? settingsButton.getMenuWindow() : undefined,
+					rootMenu: settingsMenu,
 					grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
+					<?php if (
+						\Bitrix\Crm\Integration\AI\AIManager::isAiCallAutomaticProcessingAllowed()
+						&& in_array(\CCrmOwnerType::Contact, \Bitrix\Crm\Integration\AI\AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
+						&& Container::getInstance()->getUserPermissions()->isAdmin()
+					): ?>
+					aiAutostartSettings: '<?= \Bitrix\Main\Web\Json::encode(\Bitrix\Crm\Integration\AI\Operation\AutostartSettings::get(
+						\CCrmOwnerType::Contact,
+						isset($arResult['CATEGORY_ID']) ? (int)$arResult['CATEGORY_ID'] : null
+					)) ?>',
+					<?php endif; ?>
 				});
-			});
+			}
 		}
 	);
 </script>

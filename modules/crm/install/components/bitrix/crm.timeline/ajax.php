@@ -1,7 +1,8 @@
 <?php
 
+use Bitrix\Crm\Activity\Provider\Sms\MessageDto;
+use Bitrix\Crm\Activity\Provider\Sms\TemplatePlaceholderDto;
 use Bitrix\Crm\ItemIdentifier;
-use Bitrix\Crm\Order\BindingsMaker\ActivityBindingsMaker;
 
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
@@ -455,14 +456,30 @@ elseif($action == 'SAVE_SMS_MESSAGE')
 	$messageFrom = isset($_REQUEST['MESSAGE_FROM']) ? (string)$_REQUEST['MESSAGE_FROM'] : null;
 	$messageTo = isset($_REQUEST['MESSAGE_TO']) ? (string)$_REQUEST['MESSAGE_TO'] : null;
 	$messageBody = isset($_REQUEST['MESSAGE_BODY']) ? (string)$_REQUEST['MESSAGE_BODY'] : null;
-	$messageTemplate = $_REQUEST['MESSAGE_TEMPLATE'] ?? null;
-	$message = new \Bitrix\Crm\Activity\Provider\Sms\MessageDto([
+	$messageTemplateCode = $_REQUEST['MESSAGE_TEMPLATE'] ?? null;
+
+	$message = new MessageDto([
 		'senderId' => $senderId,
 		'from' => $messageFrom,
 		'to' => $messageTo,
 		'body' => $messageBody,
-		'template' => $messageTemplate,
+		'template' => $messageTemplateCode,
 	]);
+
+	$messagePlaceholders = $_REQUEST['MESSAGE_PLACEHOLDERS'] ?? [];
+	if (!empty($messagePlaceholders))
+	{
+		$placeholders = [];
+		foreach ($messagePlaceholders as $key => $value)
+		{
+			$placeholders[] = new TemplatePlaceholderDto([
+				'name' => $key,
+				'value' => $value,
+			]);
+		}
+
+		$message->placeholders = $placeholders;
+	}
 
 	$sender = (new \Bitrix\Crm\Activity\Provider\Sms\Sender($owner, $message));
 

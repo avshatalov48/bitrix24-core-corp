@@ -5,6 +5,7 @@ jn.define('crm/entity-detail/toolbar/content/templates/im', (require, exports, m
 	const { ToolbarContentTemplateSingleAction } = require('crm/entity-detail/toolbar/content/templates/single-action');
 	const { CommunicationEvents } = require('communication/events');
 	const { im } = require('assets/communication');
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @class ActivityPinnedIm
@@ -23,7 +24,7 @@ jn.define('crm/entity-detail/toolbar/content/templates/im', (require, exports, m
 
 		getPrimaryIconSvgContent()
 		{
-			return im('#FFFFFF');
+			return im(AppTheme.colors.baseWhiteFixed);
 		}
 
 		handlePrimaryAction()

@@ -3,9 +3,9 @@
 namespace Bitrix\Tasks\Member\Role;
 
 use Bitrix\Tasks\Access\Role\RoleDictionary;
-use Bitrix\Tasks\Member\MemberManager;
+use Bitrix\Tasks\Member\AbstractMemberManager;
 
-class Responsibles extends MemberManager
+class Responsibles extends AbstractMemberManager
 {
 	public function getRole(): string
 	{

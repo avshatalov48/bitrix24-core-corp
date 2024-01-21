@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Filter\HeaderSections;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
@@ -18,7 +19,7 @@ use Bitrix\Main\Web\Json;
  * @var array $arResult
  */
 
-Extension::load(['ui.dialogs.messagebox', 'crm_common']);
+Extension::load(['ui.dialogs.messagebox', 'crm_common', 'crm.settings-button-extender']);
 
 Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
@@ -73,6 +74,9 @@ $this->getComponent()->addToolbar($this);
 					]
 				);
 			}
+
+			$arResult['grid']['HEADERS_SECTIONS'] = HeaderSections::getInstance()
+				->filterGridSupportedSections($arResult['grid']['HEADERS_SECTIONS'] ?? []);
 
 			$APPLICATION->IncludeComponent(
 				"bitrix:main.ui.grid",

@@ -69,7 +69,7 @@ $arParams['PATH_TO_LEAD_DEDUPE'] = CrmCheckPath(
 	$curPage
 );
 
-$arParams['PATH_TO_MIGRATION'] = SITE_DIR . "marketplace/category/migration/";
+$arParams['PATH_TO_MIGRATION'] = \Bitrix\Crm\Integration\Market\Router::getCategoryPath('migration');
 
 $arResult['PATH_TO_LEAD_WIDGET'] = CrmCheckPath(
 	'PATH_TO_LEAD_WIDGET',

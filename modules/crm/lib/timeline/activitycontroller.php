@@ -82,6 +82,44 @@ class ActivityController extends EntityController
 			}
 		}
 
+		if (!isset($fields['CREATED']))
+		{
+			$fields['CREATED'] = (new DateTime())->toString();
+		}
+
+		$enableSchedulePush =
+			($params['ENABLE_PUSH'] ?? true)
+			&& self::isActivitySupported($fields)
+			&& $status === \CCrmActivityStatus::Waiting
+		;
+
+		if ($enableSchedulePush)
+		{
+			$pullEventData = [$ownerID => $fields];
+			\Bitrix\Crm\Timeline\EntityController::loadCommunicationsAndMultifields(
+				$pullEventData,
+				Crm\Service\Container::getInstance()
+					->getUserPermissions($params['CURRENT_USER'] ?? null)
+					->getCrmPermissions(),
+				[
+					'ENABLE_PERMISSION_CHECK' => false,
+				]
+			);
+
+			foreach($bindings as $binding)
+			{
+				$entityItemIdentifier = Crm\ItemIdentifier::createFromArray($binding);
+				if ($entityItemIdentifier)
+				{
+					$this->sendPullEventOnAddScheduled(
+						$entityItemIdentifier,
+						$pullEventData[$ownerID],
+						$params['CURRENT_USER'] ?? null
+					);
+				}
+			}
+		}
+
 		$historyEntryID = 0;
 		if($typeID === \CCrmActivityType::Email)
 		{
@@ -177,63 +215,30 @@ class ActivityController extends EntityController
 					$params['CURRENT_USER'] ?? null
 				);
 			}
-
-
 		}
 
-		if(isset($params['ENABLE_PUSH']) && $params['ENABLE_PUSH'] === false)
-		{
-			return;
-		}
+		$enableHistoryPush =
+			($params['ENABLE_PUSH'] ?? true)
+			&& $historyEntryID > 0
+		;
 
-		$enableHistoryPush = $historyEntryID > 0;
-		$enableSchedulePush = self::isActivitySupported($fields) && $status === \CCrmActivityStatus::Waiting;
-
-		if (!isset($fields['CREATED']))
+		if ($enableHistoryPush)
 		{
-			$fields['CREATED'] = (new DateTime())->toString();
-		}
-		$pullEventData = [$ownerID => $fields];
-
-		if ($enableSchedulePush)
-		{
-			\Bitrix\Crm\Timeline\EntityController::loadCommunicationsAndMultifields(
-				$pullEventData,
-				Crm\Service\Container::getInstance()
-					->getUserPermissions($params['CURRENT_USER'] ?? null)
-					->getCrmPermissions(),
-				[
-					'ENABLE_PERMISSION_CHECK' => false,
-				]
-			);
-		}
-
-		foreach($bindings as $binding)
-		{
-			$entityItemIdentifier = Crm\ItemIdentifier::createFromArray($binding);
-			if (!$entityItemIdentifier)
+			foreach($bindings as $binding)
 			{
-				continue;
-			}
-
-			if ($enableSchedulePush)
-			{
-				$this->sendPullEventOnAddScheduled(
-					$entityItemIdentifier,
-					$pullEventData[$ownerID],
-					$params['CURRENT_USER'] ?? null
-				);
-			}
-			if ($enableHistoryPush)
-			{
-				$this->sendPullEventOnAdd(
-					$entityItemIdentifier,
-					$historyEntryID,
-					$params['CURRENT_USER'] ?? null
-				);
+				$entityItemIdentifier = Crm\ItemIdentifier::createFromArray($binding);
+				if ($entityItemIdentifier)
+				{
+					$this->sendPullEventOnAdd(
+						$entityItemIdentifier,
+						$historyEntryID,
+						$params['CURRENT_USER'] ?? null
+					);
+				}
 			}
 		}
 	}
+
 	public function onModify($ownerID, array $params)
 	{
 		if(!is_int($ownerID))
@@ -863,15 +868,19 @@ class ActivityController extends EntityController
 	}
 	public static function prepareEntityDataModel($ID, array $fields, array $options = null)
 	{
-		if(!is_array($options))
+		if (!is_array($options))
 		{
-			$options = array();
+			$options = [];
 		}
 
-		$typeID = isset($fields['TYPE_ID']) ? (int)$fields['TYPE_ID'] : 0;
-		$providerID = isset($fields['PROVIDER_ID']) ? $fields['PROVIDER_ID'] : '';
+		$typeID = (int)($fields['TYPE_ID'] ?? 0);
+		$providerID = $fields['PROVIDER_ID'] ?? '';
 
-		if ($providerID !== Activity\Provider\ToDo::getId())
+		if ($providerID === Activity\Provider\ToDo::getId())
+		{
+			$fields['PING_OFFSETS'] = Activity\Provider\ToDo::getPingOffsets($ID);
+		}
+		else
 		{
 			$notLimitedDescriptionProviders = [
 				Activity\Provider\Call::getId(),

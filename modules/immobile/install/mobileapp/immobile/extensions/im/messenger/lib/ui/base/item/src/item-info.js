@@ -29,7 +29,7 @@ jn.define('im/messenger/lib/ui/base/item/item-info', (require, exports, module) 
 					style: {
 						height: 16,
 						width: 16,
-						marginBottom: 2,
+						marginBottom: 1,
 						marginRight: 4,
 					},
 					uri: getStatus(this.props.status),

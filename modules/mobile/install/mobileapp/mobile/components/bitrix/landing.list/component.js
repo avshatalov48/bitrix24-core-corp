@@ -1,4 +1,3 @@
-
 class LandingListMenu extends LayoutComponent
 {
 	constructor(params)
@@ -12,7 +11,7 @@ class LandingListMenu extends LayoutComponent
 		QRCodeAuthComponent.open(layoutWidget, {
 			redirectUrl: this.getTabDesktopUrl(),
 			showHint: true,
-			title: BX.message('MOBILE_LANDING_TITLE_' + this.getType().toUpperCase()),
+			title: BX.message(`MOBILE_LANDING_TITLE_${this.getType().toUpperCase()}`),
 		});
 	}
 
@@ -30,20 +29,22 @@ class LandingListMenu extends LayoutComponent
 				iconName: '',
 				style: {},
 				onClick: () => {
-					dialogs.showSharingDialog({ message: this.item['PUBLIC_URL'] });
+					dialogs.showSharingDialog({ message: this.item.PUBLIC_URL });
 				},
 				text: BX.message('MOBILE_LANDING_ACTION_SHARE'),
 			}),
 			ImageButton({
 				iconName: '',
 				style: {},
-				onClick: () => {},
+				onClick: () => {
+				},
 				text: 'Public',
 			}),
 			ImageButton({
 				iconName: '',
 				style: {},
-				onClick: () => {},
+				onClick: () => {
+				},
 				text: 'Delete',
 			}),
 		);
@@ -90,7 +91,7 @@ class LandingList extends LayoutComponent
 				name: '...',
 				type: 'text',
 				color: '#2066b0',
-				callback: () => this.onExternalAction('/', BX.message('MOBILE_LANDING_TITLE_' + this.getType().toUpperCase())),
+				callback: () => this.onExternalAction('/', BX.message(`MOBILE_LANDING_TITLE_${this.getType().toUpperCase()}`)),
 			},
 		]);
 	}
@@ -100,7 +101,7 @@ class LandingList extends LayoutComponent
 		QRCodeAuthComponent.open(layoutWidget, {
 			redirectUrl: this.getUrlPrefix() + url,
 			showHint: true,
-			title: title + ' @ ' + url,
+			title: `${title} @ ${url}`,
 		});
 	}
 
@@ -117,7 +118,7 @@ class LandingList extends LayoutComponent
 					'ID', 'TITLE', 'PUBLIC_URL', 'PREVIEW_PICTURE', 'TYPE', 'PHONE',
 				],
 				filter: {
-					'TYPE': this.getType().toUpperCase(),
+					TYPE: this.getType().toUpperCase(),
 				},
 				order: {
 					DATE_MODIFY: 'desc',
@@ -126,27 +127,28 @@ class LandingList extends LayoutComponent
 		};
 
 		BX.rest.callMethod('landing.site.getList', data)
-			.then(response => {
-
+			.then((response) => {
 				if (0)
-				ErrorNotifier.showError(response.answer.result[0]['TYPE']).then(() => {
-					console.log('Ok button pressed');
-				});
+				{
+					ErrorNotifier.showError(response.answer.result[0].TYPE).then(() => {
+						console.log('Ok button pressed');
+					});
+				}
 				// return;
 
-				//const items = this.state.items;
+				// const items = this.state.items;
 				const items = [];
 
-				response.answer.result.map(item => {
+				response.answer.result.map((item) => {
 					items.push(item);
 				});
 
 				this.setState({
 					...this.state,
-					items
+					items,
 				});
 			})
-			.catch(error => console.log(error));
+			.catch((error) => console.log(error));
 	}
 
 	showTileMenu(item)
@@ -162,11 +164,11 @@ class LandingList extends LayoutComponent
 					new LandingListMenu({
 						parentWidget: layout,
 						item,
-					})
+					}),
 				);
 			},
-			onError: error => console.log(error),
-		})
+			onError: (error) => console.log(error),
+		});
 	}
 
 	showTile3Dots(item)
@@ -178,12 +180,12 @@ class LandingList extends LayoutComponent
 					top: 0,
 					right: 10,
 					zIndex: 666,
-				}
+				},
 			},
 			Button({
 				style: {
 					backgroundColor: '#ffffff',
-					color: '#000',
+					color: '#000000',
 					borderRadius: 4,
 				},
 				text: '...',
@@ -200,7 +202,7 @@ class LandingList extends LayoutComponent
 					position: 'relative',
 					paddingRight: 10,
 					paddingLeft: 10,
-				}
+				},
 			},
 			this.showTile3Dots(item),
 			Image({
@@ -211,7 +213,7 @@ class LandingList extends LayoutComponent
 					borderRadius: 10,
 				},
 				resizeMode: 'cover',
-				uri: item['PREVIEW_PICTURE'],
+				uri: item.PREVIEW_PICTURE,
 			}),
 		);
 	}
@@ -228,7 +230,7 @@ class LandingList extends LayoutComponent
 					borderRadius: 6,
 				},
 				clickable: true,
-				onClick: () => this.onExternalAction(`/site/contacts/${item['ID']}/?width=600`, item['TITLE']),
+				onClick: () => this.onExternalAction(`/site/contacts/${item.ID}/?width=600`, item.TITLE),
 			},
 			Shadow(
 				{
@@ -236,7 +238,7 @@ class LandingList extends LayoutComponent
 					color: '#cdcdcd',
 					offset: { x: 0, y: 0 },
 					style: {
-						backgroundColor: '#fff',
+						backgroundColor: '#ffffff',
 						borderRadius: 6,
 					},
 				},
@@ -246,7 +248,7 @@ class LandingList extends LayoutComponent
 							// backgroundImage: 'put_here_icon_src',
 							// backgroundResizeMode: 'cover',
 							// backgroundPosition: 'right',
-						}
+						},
 					},
 					Text({
 						style: {
@@ -254,7 +256,7 @@ class LandingList extends LayoutComponent
 							margin: 10,
 							marginBottom: 0,
 						},
-						text: item['TITLE'],
+						text: item.TITLE,
 					}),
 					Text({
 						style: {
@@ -263,7 +265,7 @@ class LandingList extends LayoutComponent
 							marginTop: 0,
 							color: '#999fa8',
 						},
-						text: item['PHONE'],
+						text: item.PHONE,
 					}),
 				),
 			),
@@ -329,7 +331,7 @@ class LandingList extends LayoutComponent
 				color: '#000000',
 				borderRadius: 2,
 			},
-			onClick: () => this.onExternalAction(`/site/settings/${item['ID']}/#cookies`, item['TITLE']),
+			onClick: () => this.onExternalAction(`/site/settings/${item.ID}/#cookies`, item.TITLE),
 			text: 'Cookies',
 		});
 	}
@@ -346,14 +348,14 @@ class LandingList extends LayoutComponent
 						marginRight: 15,
 						marginLeft: 15,
 						borderRadius: 4,
-					}
+					},
 				},
 				View(
 					{
 						style: {
 							width: '50%',
 							paddingRight: 10,
-						}
+						},
 					},
 					this.showPublicationButton(),
 				),
@@ -362,9 +364,9 @@ class LandingList extends LayoutComponent
 						style: {
 							width: '50%',
 							paddingLeft: 10,
-						}
+						},
 					},
-					this.showShareButton(item['PUBLIC_URL']),
+					this.showShareButton(item.PUBLIC_URL),
 				),
 			),
 			View(
@@ -376,14 +378,14 @@ class LandingList extends LayoutComponent
 						marginBottom: 20,
 						marginLeft: 15,
 						borderRadius: 4,
-					}
+					},
 				},
 				View(
 					{
 						style: {
 							width: '50%',
 							paddingRight: 10,
-						}
+						},
 					},
 					this.showDealsButton(),
 				),
@@ -392,11 +394,11 @@ class LandingList extends LayoutComponent
 						style: {
 							width: '50%',
 							paddingLeft: 10,
-						}
+						},
 					},
 					this.showCookiesButton(item),
 				),
-			)
+			),
 		);
 	}
 
@@ -409,7 +411,7 @@ class LandingList extends LayoutComponent
 					paddingRight: 10,
 					paddingBottom: 10,
 					paddingLeft: 10,
-				}
+				},
 			},
 			Shadow(
 				{
@@ -431,30 +433,29 @@ class LandingList extends LayoutComponent
 					this.showImage(item),
 					this.showTitle(item),
 					this.showButtons(item),
-				)
-			)
+				),
+			),
 		);
 	}
 
 	onButtonClick(index)
 	{
-		let items = this.state.items;
+		const items = this.state.items;
 
 		items[index].loader = true;
 
 		this.setState({
 			...this.state,
-			items
+			items,
 		});
 
 		BX.rest.callMethod('landing.site.getList', {})
-			.then(newItems => {
+			.then((newItems) => {
 				ErrorNotifier.showError('Some error text').then(() => {
 					console.log('Ok button pressed');
 				});
 
-
-				let items = this.state.items;
+				const items = this.state.items;
 
 				items[index].title = 'updated';
 				items[index].color = '#ff0000';
@@ -462,30 +463,30 @@ class LandingList extends LayoutComponent
 
 				this.setState({
 					...this.state,
-					items
+					items,
 				});
 			})
-			.catch(error => console.log(error));
-
+			.catch((error) => console.log(error));
 	}
 
 	render()
 	{
 		return ListView({
 			style: {
-				backgroundColor: '#f2f2f6'
+				backgroundColor: '#f2f2f6',
 			},
 			data: [{ items: this.state.items }],
 			isRefreshing: this.state.isRefreshing,
 			renderItem: (item) => this.showTile(item),
 			onLoadMore: () => this.onLoadMore(),
-			onRefresh: () => {},
+			onRefresh: () => {
+			},
 		});
 	}
 }
 
-const LandingListComponent = new LandingList()
+const LandingListComponent = new LandingList();
 
 BX.onViewLoaded(() => {
-	layoutWidget.showComponent(LandingListComponent)
+	layoutWidget.showComponent(LandingListComponent);
 });

@@ -7,6 +7,8 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Main\Entity\ExpressionField;
+use Bitrix\Main\Type;
 use Bitrix\UI\Buttons;
 use Bitrix\UI\Toolbar;
 
@@ -17,7 +19,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 {
 	protected const GRID_ID = 'crm-type-list';
+	protected const EXTERNAL_GRID_ID = 'crm-type-list-external';
 	protected const DEFAULT_PAGE_SIZE = 10;
+
+	protected const INTERNAL_DYNAMIC_TYPES_TITLE = 'CRM_TYPE_LIST_TITLE_MSGVER_1';
+	protected const EXTERNAL_DYNAMIC_TYPES_TITLE = 'CRM_TYPE_LIST_EXTERNAL_DYNAMIC_TYPES_TITLE';
 
 	/** @var Filter\TypeDataProvider */
 	protected $provider;
@@ -28,6 +34,8 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 	];
 	protected $navParamName = 'page';
 	protected $users;
+	protected $isExternalDynamicTypes;
+	protected $gridId;
 
 	private CustomSectionQueries $customSectionQueries;
 
@@ -50,10 +58,19 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 			return;
 		}
 
+		$isExternalDynamicTypes = isset($this->arParams['isExternal']) && $this->arParams['isExternal'] === true;
+		$this->gridId = $isExternalDynamicTypes ? static::EXTERNAL_GRID_ID : static::GRID_ID;
+
 		/** @var Filter\TypeSettings $settings */
-		$settings = new Filter\TypeSettings(['ID' => static::GRID_ID]);
+		$settings = new Filter\TypeSettings([
+			'ID' => $this->gridId,
+			'IS_EXTERNAL_DYNAMICAL_TYPES' => $isExternalDynamicTypes,
+		]);
+
 		$this->provider = new Filter\TypeDataProvider($settings);
 		$this->filter = new Filter\Filter($settings->getID(), $this->provider);
+
+		$this->isExternalDynamicTypes = $this->provider->getSettings()->getIsExternalDynamicalTypes();
 	}
 
 	public function executeComponent()
@@ -66,23 +83,48 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 			return;
 		}
 
-		$this->getApplication()->SetTitle(Loc::getMessage('CRM_TYPE_LIST_TITLE_MSGVER_1'));
+		$title = $this->isExternalDynamicTypes
+			? Loc::getMessage(static::EXTERNAL_DYNAMIC_TYPES_TITLE)
+			: Loc::getMessage(static::INTERNAL_DYNAMIC_TYPES_TITLE)
+		;
+		$this->getApplication()->SetTitle($title);
 
+		$this->arResult['isExternal'] = $this->isExternalDynamicTypes;
 		$this->arResult['grid'] = $this->prepareGrid();
 		$this->arResult['isEmptyList'] = empty($this->arResult['grid']['ROWS']);
 		$this->arResult['filter'] = $this->prepareFilter();
+		$this->arResult['welcome'] = $this->getPreparedEmptyState();
 		$this->includeComponentTemplate();
+	}
+
+	protected function getPreparedEmptyState(): array
+	{
+		if ($this->isExternalDynamicTypes)
+		{
+			return [
+				'title' => Loc::getMessage('CRM_TYPE_LIST_CLASS_EXTERNAL_WELCOME_TITLE'),
+				'text' => Loc::getMessage('CRM_TYPE_LIST_CLASS_EXTERNAL_WELCOME_TEXT'),
+				'link' => Loc::getMessage('CRM_TYPE_LIST_CLASS_EXTERNAL_WELCOME_LINK'),
+				'helpdeskCode' => 18913896,
+			];
+		}
+
+		return [
+			'title' => Loc::getMessage('CRM_TYPE_LIST_CLASS_WELCOME_TITLE'),
+			'text' =>  Loc::getMessage('CRM_TYPE_LIST_CLASS_WELCOME_TEXT'),
+			'link' => Loc::getMessage('CRM_TYPE_LIST_CLASS_WELCOME_LINK'),
+			'helpdeskCode' => 13315798,
+		];
 	}
 
 	protected function prepareGrid(): array
 	{
 		$grid = [];
-		$gridId = static::GRID_ID;
-		$grid['GRID_ID'] = $gridId;
+		$grid['GRID_ID'] = $this->gridId;
 		$grid['COLUMNS'] = $this->provider->getGridColumns();
 		$grid['ROWS'] = [];
 
-		$gridOptions = new Bitrix\Main\Grid\Options($gridId);
+		$gridOptions = new Bitrix\Main\Grid\Options($this->gridId);
 		$navParams = $gridOptions->getNavParams(['nPageSize' => static::DEFAULT_PAGE_SIZE]);
 		$pageSize = (int)$navParams['nPageSize'];
 		$gridSort = $gridOptions->GetSorting(['sort' => $this->defaultGridSort]);
@@ -101,10 +143,14 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 
 		if(count($list) > 0)
 		{
+			$format = CCrmDateTimeHelper::getDefaultDateTimeFormat();
+			$currentTime = time() + CTimeZone::GetOffset();
+
 			$typeIds = [];
 			foreach($list as $item)
 			{
 				$userIds[$item['CREATED_BY']] = $item['CREATED_BY'];
+				$userIds[$item['UPDATED_BY']] = $item['UPDATED_BY'];
 				$typeIds[] = $item['ENTITY_TYPE_ID'];
 			}
 
@@ -131,6 +177,11 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 						'HREF' => Container::getInstance()->getRouter()->getUserFieldListUrl($item['ENTITY_TYPE_ID']),
 					];
 				}
+
+				$item['LAST_ACTIVITY_TIME'] = FormatDate($format, CCrmDateTimeHelper::getUserTime($this->getLastActivityTime($item)), $currentTime);
+				$item['CREATED_TIME'] = FormatDate($format, CCrmDateTimeHelper::getUserTime($item['CREATED_TIME']), $currentTime);
+				$item['UPDATED_TIME'] = FormatDate($format, CCrmDateTimeHelper::getUserTime($item['UPDATED_TIME']), $currentTime);
+
 				$grid['ROWS'][] = [
 					'id' => $item['ID'],
 					'data' => $item,
@@ -168,6 +219,45 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 		return $grid;
 	}
 
+	/**
+	 * @param array $item
+	 * @return Type\DateTime
+	 */
+	protected function getLastActivityTime(array $item) : Type\DateTime
+	{
+		$entityTypeId = (int)$item['ENTITY_TYPE_ID'];
+		$createdTime = $item['CREATED_TIME'];
+
+		$cacheManager = \Bitrix\Main\Application::getInstance()->getManagedCache();
+		$ttl = 86400;
+		$cacheDir = "crm_dynamic_type_{$entityTypeId}";
+		$cacheTag = "{$cacheDir}_last_activity_datetime";
+
+		if ($cacheManager->read($ttl, $cacheTag, $cacheDir))
+		{
+			$lastActivityTimestamp = $cacheManager->get($cacheTag);
+			return Type\DateTime::createFromTimestamp($lastActivityTimestamp);
+		}
+
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			$cacheManager->set($cacheTag, $createdTime->getTimestamp());
+			return $createdTime;
+		}
+
+		$lastActivityTime = $factory->getDataClass()::getList([
+			'select' => ['MAX'],
+			'runtime' => [
+				new ExpressionField('MAX', 'MAX(UPDATED_TIME)')
+			],
+		])->fetch();
+		$lastActivityTime = $lastActivityTime['MAX'] ?? $createdTime;
+		$cacheManager->set($cacheTag, $lastActivityTime->getTimestamp());
+
+		return $lastActivityTime;
+	}
+
 	protected function getPageNavigation(int $pageSize): PageNavigation
 	{
 		$pageNavigation = new PageNavigation($this->navParamName);
@@ -178,7 +268,7 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 
 	protected function getListFilter(): array
 	{
-		$filterOptions = new Options(static::GRID_ID);
+		$filterOptions = new Options($this->gridId);
 		$requestFilter = $filterOptions->getFilter($this->filter->getFieldArrays());
 
 		$filter = [];
@@ -191,8 +281,8 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 	protected function prepareFilter(): array
 	{
 		return [
-			'FILTER_ID' => static::GRID_ID,
-			'GRID_ID' => static::GRID_ID,
+			'FILTER_ID' => $this->gridId,
+			'GRID_ID' => $this->gridId,
 			'FILTER' => $this->filter->getFieldArrays(),
 			'DISABLE_SEARCH' => false,
 			'ENABLE_LABEL' => true,
@@ -205,14 +295,18 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 	protected function getItemColumn(array $item): array
 	{
 		$createdBy = $item['CREATED_BY'];
-		if(isset($this->users[$createdBy]))
-		{
-			$item['CREATED_BY'] = $this->prepareUserDataForGrid($this->users[$createdBy]);
-		}
-		else
-		{
-			$item['CREATED_BY'] = '';
-		}
+		$updatedBy = $item['UPDATED_BY'];
+
+		$item['CREATED_BY'] = isset($this->users[$createdBy])
+			? $this->prepareUserDataForGrid($this->users[$createdBy])
+			: ''
+		;
+
+		$item['UPDATED_BY'] =
+			isset($this->users[$updatedBy])
+			?  $this->prepareUserDataForGrid($this->users[$updatedBy])
+			: ''
+		;
 
 		$detailUrl = htmlspecialcharsbx(Container::getInstance()->getRouter()->getItemListUrlInCurrentView($item['ENTITY_TYPE_ID']));
 		$item['TITLE'] = '<a href="'.$detailUrl.'">'.htmlspecialcharsbx($item['TITLE']).'</a>';
@@ -244,7 +338,7 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 
 		$title = htmlspecialcharsbx($title);
 
-		$filterOptions = new Options(static::GRID_ID);
+		$filterOptions = new Options($this->gridId);
 		$requestFilter = $filterOptions->getFilter($this->filter->getFieldArrays());
 
 		$activeClass = 'crm-type-grid-custom-section-'
@@ -270,10 +364,16 @@ HTML;
 		$buttons = [];
 		if(Container::getInstance()->getUserPermissions()->canAddType())
 		{
+			$createUrl = Container::getInstance()->getRouter()->getTypeDetailUrl(0);
+			if ($this->isExternalDynamicTypes)
+			{
+				$createUrl->addParams(['isExternal' => 'Y']);
+			}
+
 			$buttons[Toolbar\ButtonLocation::AFTER_TITLE][] = new Buttons\Button([
 				'color' => Buttons\Color::SUCCESS,
 				'text' => Loc::getMessage('CRM_COMMON_ACTION_CREATE'),
-				'link' => Container::getInstance()->getRouter()->getTypeDetailUrl(0)->getUri(),
+				'link' => $createUrl->getUri(),
 			]);
 		}
 

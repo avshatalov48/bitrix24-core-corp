@@ -2,7 +2,7 @@ import { Core } from 'im.v2.application.core';
 import { DialogBlockType as BlockType, MessageType, Settings, DialogAlignment } from 'im.v2.const';
 import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
 
-import type { ImModelMessage, ImModelDialog } from 'im.v2.model';
+import type { ImModelMessage, ImModelChat } from 'im.v2.model';
 
 export type FormattedCollectionItem = {
 	type: BlockType.dateGroup,
@@ -54,10 +54,10 @@ export class CollectionManager
 		let lastAuthorId = null;
 		let lastAuthorItems = null;
 
-		const dialog: ImModelDialog = this.store.getters['dialogues/get'](this.dialogId);
+		const dialog: ImModelChat = this.store.getters['chats/get'](this.dialogId);
 		const { markedId, inited } = dialog;
 		let markInserted = false;
-		const lastReadId = this.store.getters['dialogues/getLastReadId'](this.dialogId);
+		const lastReadId = this.store.getters['chats/getLastReadId'](this.dialogId);
 
 		if (this.firstIteration)
 		{

@@ -99,7 +99,7 @@ class ChatIndexTable extends DataManager
 			$updateData
 		);
 
-		if ($update[0] !== '')
+		if ($update[0] === '')
 		{
 			return;
 		}

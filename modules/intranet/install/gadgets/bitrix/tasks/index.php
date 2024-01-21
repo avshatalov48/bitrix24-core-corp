@@ -81,7 +81,7 @@ if($arGadgetParams["SHOW"] == "Y"):
 
 	$arP["FILTER"]["STATUS"] = array(-2, -1, 1, 2, 3);
 	$arP["SET_NAVCHAIN"] = "N";
-	$arP["ORDER"] = array((($o == "C") ? "CREATED_DATE" : (($o == "P") ? "PRIORITY" : "DEADLINE")) => (($o == "C") ? "DESC" : (($o == "P") ? "ASC" : "ASC")));
+	$arP["ORDER"] = array(($o == "C" ? "CREATED_DATE" : ($o == "P" ? "PRIORITY" : "DEADLINE")) => ($o == "C" ? "DESC" : "ASC"));
 
 	$APPLICATION->IncludeComponent(
 		"bitrix:tasks.list",

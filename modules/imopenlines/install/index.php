@@ -14,6 +14,8 @@ final class imopenlines extends \CModule
 	public $MODULE_ID = "imopenlines";
 	public $MODULE_GROUP_RIGHTS = "Y";
 
+	private $errors = [];
+
 	public function __construct()
 	{
 		$arModuleVersion = [];
@@ -97,7 +99,7 @@ final class imopenlines extends \CModule
 			}
 		}
 
-		if (is_array($this->errors) && !empty($this->errors))
+		if (!empty($this->errors))
 		{
 			$APPLICATION->ThrowException(implode("<br>", $this->errors));
 			return false;
@@ -110,25 +112,26 @@ final class imopenlines extends \CModule
 	{
 		global $DB, $APPLICATION;
 		$connection = \Bitrix\Main\Application::getConnection();
-		$this->errors = false;
+
+		$this->errors = [];
 
 		if ($params['PUBLIC_URL'] <> '' && mb_strlen($params['PUBLIC_URL']) < 12)
 		{
-			if (!$this->errors)
-			{
-				$this->errors = [];
-			}
 			$this->errors[] = Loc::getMessage('IMOPENLINES_CHECK_PUBLIC_PATH');
 		}
 
-		if (!$this->errors && !$DB->TableExists('b_imopenlines_config'))
+		if (empty($this->errors) && !$DB->TableExists('b_imopenlines_config'))
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/imopenlines/install/db/' . $connection->getType() . '/install.sql');
+			$arSQLErrors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/imopenlines/install/db/' . $connection->getType() . '/install.sql');
+			if (!empty($arSQLErrors))
+			{
+				$this->errors = $arSQLErrors;
+			}
 		}
 
-		if ($this->errors !== false)
+		if (!empty($this->errors))
 		{
-			$APPLICATION->ThrowException(implode("", $this->errors));
+			$APPLICATION->ThrowException(implode('', $this->errors));
 			return false;
 		}
 
@@ -217,31 +220,34 @@ final class imopenlines extends \CModule
 		$eventManager->registerEventHandler('crm', 'onSiteFormFilledOpenlines', 'imopenlines', '\Bitrix\ImOpenLines\Widget\FormHandler', 'onOpenlinesFormFilled');
 		$eventManager->registerEventHandler('crm', 'onSiteFormFillOpenlines', 'imopenlines', '\Bitrix\ImOpenLines\Widget\FormHandler', 'onOpenlinesFormFill');
 
-		\CAgent::AddAgent('\Bitrix\ImOpenLines\Integrations\Report\Statistics\Manager::calculateStatisticsInQueue();', 'imopenlines', 'N');
+		/** @see \Bitrix\ImOpenLines\Integrations\Report\Statistics\Manager::calculateStatisticsInQueue */
+		\CAgent::AddAgent('Bitrix\ImOpenLines\Integrations\Report\Statistics\Manager::calculateStatisticsInQueue();', 'imopenlines', 'N');
 
 		/** @see \Bitrix\ImOpenLines\Session\Agent::transferToNextInQueue */
-		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::transferToNextInQueue(0);', 'imopenlines', "N", 60);
+		\CAgent::AddAgent('Bitrix\ImOpenLines\Session\Agent::transferToNextInQueue(0);', 'imopenlines', "N", 60);
 		/** @see \Bitrix\ImOpenLines\Session\Agent::closeByTime */
-		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::closeByTime(0);', 'imopenlines', "N", 60);
+		\CAgent::AddAgent('Bitrix\ImOpenLines\Session\Agent::closeByTime(0);', 'imopenlines', "N", 60);
 		/** @see \Bitrix\ImOpenLines\Session\Agent::mailByTime */
-		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::mailByTime(0);', 'imopenlines', "N", 60);
+		\CAgent::AddAgent('Bitrix\ImOpenLines\Session\Agent::mailByTime(0);', 'imopenlines', "N", 60);
 		/** @see \Bitrix\ImOpenLines\Session\Agent::deleteBrokenSession */
-		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::deleteBrokenSession();', 'imopenlines', "N", 86400, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+86400, "FULL"));
+		\CAgent::AddAgent('Bitrix\ImOpenLines\Session\Agent::deleteBrokenSession();', 'imopenlines', "N", 86400, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+86400, "FULL"));
 		/** @see \Bitrix\ImOpenLines\Session\Agent::sendMessageNoAnswer */
-		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::sendMessageNoAnswer();', 'imopenlines', "N", 60);
+		\CAgent::AddAgent('Bitrix\ImOpenLines\Session\Agent::sendMessageNoAnswer();', 'imopenlines', "N", 60);
 		/** @see \Bitrix\ImOpenLines\Session\Agent::sendAutomaticMessage */
-		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::sendAutomaticMessage();', 'imopenlines', 'N', 60);
+		\CAgent::AddAgent('Bitrix\ImOpenLines\Session\Agent::sendAutomaticMessage();', 'imopenlines', 'N', 60);
 		/** @see \Bitrix\ImOpenLines\KpiManager::setExpiredMessagesAgent */
-		\CAgent::AddAgent('\Bitrix\ImOpenLines\KpiManager::setExpiredMessagesAgent();', 'imopenlines', "N", 60, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+60, "FULL"));
+		\CAgent::AddAgent('Bitrix\ImOpenLines\KpiManager::setExpiredMessagesAgent();', 'imopenlines', "N", 60, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+60, "FULL"));
 		/** @see \Bitrix\ImOpenLines\Session\Agent::correctionStatusClosedSessionsAgent */
-		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::correctionStatusClosedSessionsAgent();', 'imopenlines', "N", 86400, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+86400, "FULL"));
+		\CAgent::AddAgent('Bitrix\ImOpenLines\Session\Agent::correctionStatusClosedSessionsAgent();', 'imopenlines', "N", 86400, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+86400, "FULL"));
 
 		if (!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'))
 		{
-			\CAgent::AddAgent('\Bitrix\ImOpenLines\Security\Helper::installRolesAgent();', "imopenlines", "N", 60, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+60, "FULL"));
+			/** @see Bitrix\ImOpenLines\Security\Helper::installRolesAgent */
+			\CAgent::AddAgent('Bitrix\ImOpenLines\Security\Helper::installRolesAgent();', "imopenlines", "N", 60, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+60, "FULL"));
 		}
 
 		\Bitrix\Main\Loader::includeModule("imopenlines");
+
 		$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/imopenlines/install/db/' . $connection->getType() . '/install_ft.sql');
 		if ($errors === false)
 		{
@@ -255,8 +261,8 @@ final class imopenlines extends \CModule
 
 		$this->InstallEvents();
 
-		/** @see \imopenlines::delayInstall */
-		\CAgent::AddAgent('\imopenlines::delayInstall(0);', 'imopenlines', 'N', 60, '', 'Y', \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+120, "FULL"));
+		/** @see imopenlines::delayInstall */
+		\CAgent::AddAgent('imopenlines::delayInstall(0);', 'imopenlines', 'N', 60, '', 'Y', \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+120, "FULL"));
 
 		\Bitrix\ImOpenLines\Integrations\Report\Statistic::bind();
 
@@ -385,11 +391,7 @@ final class imopenlines extends \CModule
 
 	public function UnInstallEvents()
 	{
-		global $DB;
-
 		include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/events/del_events.php");
-
-		return true;
 	}
 
 	public function DoUninstall()
@@ -419,22 +421,21 @@ final class imopenlines extends \CModule
 	{
 		global $APPLICATION, $DB;
 		$connection = \Bitrix\Main\Application::getConnection();
-		$this->errors = false;
 
-		if (!$arParams['savedata'])
+		$this->errors = [];
+
+		if (empty($arParams['savedata']))
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/imopenlines/install/db/' . $connection->getType() . '/uninstall.sql');
+			$arSQLErrors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/imopenlines/install/db/' . $connection->getType() . '/uninstall.sql');
+			if (!empty($arSQLErrors))
+			{
+				$this->errors = $arSQLErrors;
+			}
 		}
 
-		if (is_array($this->errors))
+		if (!empty($this->errors))
 		{
-			$arSQLErrors = $this->errors;
-		}
-
-		if (!empty($arSQLErrors))
-		{
-			$this->errors = $arSQLErrors;
-			$APPLICATION->ThrowException(implode("", $arSQLErrors));
+			$APPLICATION->ThrowException(implode('', $this->errors));
 			return false;
 		}
 
@@ -465,7 +466,6 @@ final class imopenlines extends \CModule
 		$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'imopenlines', '\Bitrix\ImOpenLines\Rest', 'onRestServiceBuildDescription');
 		$eventManager->unRegisterEventHandler('main', 'Bitrix\Disk\Controller\File::'.\Bitrix\Main\Engine\Controller::EVENT_ON_BEFORE_ACTION, 'imopenlines', '\Bitrix\ImOpenLines\Widget\Auth', 'onDiskCheckAuth');
 		$eventManager->unRegisterEventHandler('rest', 'onRestCheckAuth', 'imopenlines', '\Bitrix\ImOpenLines\Widget\Auth', 'onRestCheckAuth');
-		$eventManager->unRegisterEventHandler('rest', 'onRestCheckAuth', 'rest', '\Bitrix\ImOpenLines\Widget\Auth', 'onRestCheckAuth');
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnImopenlineChangeQueueType', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueTypeChange');
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnQueueOperatorsAdd', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueOperatorsAdd');
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnQueueOperatorsDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueOperatorsDelete');

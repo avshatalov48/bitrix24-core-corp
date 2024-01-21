@@ -1,21 +1,25 @@
 <?php
+
 namespace Bitrix\Crm\Comparer;
 
+use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service\Container;
 
 class ComparerBase
 {
-	public static function areFieldsEquals(array $left, array $right, $name)
+	public static function areFieldsEquals(array $left, array $right, $name): bool
 	{
-		if(!isset($left[$name]) && !isset($right[$name]))
+		if (!isset($left[$name]) && !isset($right[$name]))
 		{
 			return true;
 		}
-		return isset($left[$name]) && isset($right[$name]) && $left[$name] == $right[$name];
+
+		return isset($left[$name], $right[$name]) && $left[$name] == $right[$name];
 	}
 
-	public function areEquals(array $a, array $b)
+	public function areEquals(array $a, array $b): bool
 	{
 		return false;
 	}
@@ -98,5 +102,33 @@ class ComparerBase
 			$previousSemantics !== $currentSemantics
 			&& PhaseSemantics::isLost($currentSemantics)
 		);
+	}
+
+	public static function isClosed(ItemIdentifier $identifier): bool
+	{
+		$factory = Container::getInstance()->getFactory($identifier->getEntityTypeId());
+		if (!$factory || !$factory->isStagesSupported())
+		{
+			return true;
+		}
+
+		$item = current(
+			$factory->getItems([
+				'select' => [Item::FIELD_NAME_ID, Item::FIELD_NAME_STAGE_ID],
+				'filter' => ['=ID' => $identifier->getEntityId()]
+			]),
+		);
+		if (!$item)
+		{
+			return true;
+		}
+
+		$semantics = $factory->getStageSemantics((string)$item->getStageId());
+		if (!$semantics)
+		{
+			return true;
+		}
+
+		return PhaseSemantics::isFinal($semantics);
 	}
 }

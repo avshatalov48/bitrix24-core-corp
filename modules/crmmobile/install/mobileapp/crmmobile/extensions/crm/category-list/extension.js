@@ -2,10 +2,10 @@
  * @module crm/category-list
  */
 jn.define('crm/category-list', (require, exports, module) => {
+	const AppTheme = require('apptheme');
+	const { lock } = require('assets/common');
 	const { CategoryListItem } = require('crm/category-list/item');
 	const { CategorySelectActions } = require('crm/category-list/actions');
-	const { clone } = require('utils/object');
-	const { lock } = require('assets/common');
 
 	/**
 	 * @class CategoryList
@@ -27,6 +27,11 @@ jn.define('crm/category-list', (require, exports, module) => {
 			this.onSelectCategoryHandler = this.onSelectCategory.bind(this);
 			this.onEditCategoryHandler = this.editCategory.bind(this);
 			this.onCreateCategoryHandler = this.onCreateCategory.bind(this);
+		}
+
+		get entityTypeId()
+		{
+			return BX.prop.getNumber(this.props, 'entityTypeId', null);
 		}
 
 		componentWillReceiveProps(props)
@@ -52,21 +57,6 @@ jn.define('crm/category-list', (require, exports, module) => {
 		isReadOnly()
 		{
 			return BX.prop.getBoolean(this.props, 'readOnly', false);
-		}
-
-		isEnabledSelect()
-		{
-			return BX.prop.getBoolean(this.props, 'enableSelect', false);
-		}
-
-		componentDidMount()
-		{
-			BX.addCustomEvent('Crm.CategoryDetail::onCreateCategory', this.setNewCategory.bind(this));
-			BX.addCustomEvent('Crm.CategoryDetail::onUpdateCategory', this.onUpdateCategory.bind(this));
-			BX.addCustomEvent('Crm.CategoryDetail::onDeleteCategory', this.onDeleteCategory.bind(this));
-			BX.addCustomEvent('Crm.StageDetail::onUpdateStage', this.onUpdateStage.bind(this));
-			BX.addCustomEvent('Crm.StageDetail::onDeleteStage', this.onDeleteStage.bind(this));
-			BX.addCustomEvent('Crm.StageDetail::onUpdateTunnels', this.onUpdateTunnels.bind(this));
 		}
 
 		render()
@@ -110,17 +100,18 @@ jn.define('crm/category-list', (require, exports, module) => {
 					text: BX.message('CRM_CATEGORY_CREATE_CATEGORY2'),
 					style: {
 						button: {
-							borderColor: '#ffffff',
+							borderColor: AppTheme.colors.bgContentPrimary,
 							justifyContent: 'flex-start',
 						},
 						icon: {
+							tintColor: AppTheme.colors.base3,
 							marginRight: this.canUserAddCategory() ? 22 : 12,
 							marginLeft: this.canUserAddCategory() ? 28 : 22,
 							width: this.canUserAddCategory() ? 12 : 28,
 							height: this.canUserAddCategory() ? 12 : 28,
 						},
 						text: {
-							color: '#333333',
+							color: AppTheme.colors.base1,
 							fontWeight: 'normal',
 							fontSize: 18,
 						},
@@ -142,9 +133,10 @@ jn.define('crm/category-list', (require, exports, module) => {
 			const showBottomBorder = !isLast || (!this.isReadOnly() && canUserEditCategory);
 
 			return new CategoryListItem({
+				entityTypeId: this.entityTypeId,
 				category,
 				layout: this.layout,
-				active: this.state.currentCategoryId === category.id,
+				active: this.state.currentCategoryId === category.categoryId,
 				onSelectCategory: this.onSelectCategoryHandler,
 				onEditCategory: this.onEditCategoryHandler,
 				readOnly: this.isReadOnly(),
@@ -158,7 +150,7 @@ jn.define('crm/category-list', (require, exports, module) => {
 
 		isCategoryEnabled(category)
 		{
-			return this.state.enabled && !this.disabledCategoryIds.includes(category.id);
+			return this.state.enabled && !this.disabledCategoryIds.includes(category.categoryId);
 		}
 
 		get disabledCategoryIds()
@@ -191,7 +183,6 @@ jn.define('crm/category-list', (require, exports, module) => {
 						break;
 
 					case CategorySelectActions.CreateTunnel:
-						BX.postComponentEvent('Crm.TunnelList::selectCategoryOnCreateTunnel', params);
 						if (typeof openStageListHandler === 'function')
 						{
 							openStageListHandler(category);
@@ -199,7 +190,6 @@ jn.define('crm/category-list', (require, exports, module) => {
 						break;
 
 					case CategorySelectActions.SelectTunnelDestination:
-						BX.postComponentEvent(`Crm.TunnelListItem::selectTunnelDestinationCategory-${uid}`, params);
 						if (typeof openStageListHandler === 'function')
 						{
 							openStageListHandler(category);
@@ -247,189 +237,12 @@ jn.define('crm/category-list', (require, exports, module) => {
 				onEditCategory(categoryId, this.state.categories);
 			}
 		}
-
-		setNewCategory(data)
-		{
-			this.setState({
-				categories: [
-					...this.state.categories,
-					data.category,
-				],
-			});
-		}
-
-		onDeleteCategory(categoryId)
-		{
-			const categoryIndex = this.state.categories.findIndex((category) => category.id === categoryId);
-			if (categoryIndex !== -1)
-			{
-				const categories = [...this.state.categories];
-				categories.splice(categoryIndex, 1);
-				this.setState({ categories });
-			}
-		}
-
-		onUpdateCategory(data)
-		{
-			const categories = [...this.state.categories];
-			const categoryIndex = this.state.categories.findIndex((category) => category.id === data.category.id);
-			if (categoryIndex !== -1)
-			{
-				categories[categoryIndex] = data.category;
-			}
-
-			for (const category of categories)
-			{
-				category.tunnels = category.tunnels.reduce((acc, tunnel) => {
-					if (tunnel.dstCategoryId === data.category.id)
-					{
-						return [
-							...acc,
-							{
-								...tunnel,
-								dstCategoryName: data.category.name,
-							},
-						];
-					}
-
-					return [...acc, tunnel];
-				}, []);
-			}
-
-			this.setState({
-				categories,
-			});
-		}
-
-		onUpdateStage(stage)
-		{
-			const categories = [...this.state.categories];
-
-			for (let i = 0; i < categories.length; i++)
-			{
-				const tunnels = categories[i].tunnels.reduce((acc, tunnel) => {
-					if (tunnel.dstStageId === stage.id)
-					{
-						return [
-							...acc,
-							{
-								...tunnel,
-								dstStageName: stage.name,
-								dstStageColor: stage.color,
-							},
-						];
-					}
-
-					return [...acc, tunnel];
-				}, []);
-
-				categories[i] = {
-					...categories[i],
-					tunnels,
-				};
-			}
-
-			this.setState({
-				categories: [
-					...categories,
-				],
-			});
-		}
-
-		onDeleteStage(stage)
-		{
-			const categories = [...this.state.categories];
-
-			for (let i = 0; i < categories.length; i++)
-			{
-				const tunnelIndex = categories[i].tunnels
-					.findIndex((tunnel) => tunnel.dstStageId === stage.id || tunnel.srcStageId === stage.id);
-
-				if (tunnelIndex !== -1)
-				{
-					const tunnels = [...categories[i].tunnels];
-					tunnels.splice(tunnelIndex, 1);
-					categories[i] = {
-						...categories[i],
-						tunnels,
-					};
-				}
-			}
-
-			this.setState({
-				categories: [
-					...categories,
-				],
-			});
-		}
-
-		onDeleteTunnel(tunnel)
-		{
-			const categories = [...this.state.categories];
-			const categoryIndex = categories.findIndex((category) => {
-				return category.tunnels.find((item) => item.srcCategoryId === tunnel.srcCategoryId);
-			});
-			if (categoryIndex !== -1)
-			{
-				const tunnels = [...categories[categoryIndex].tunnels];
-				const tunnelIndex = tunnels.findIndex((item) => item.robot.name === tunnel.robot.name);
-				if (tunnelIndex !== -1)
-				{
-					tunnels.splice(tunnelIndex, 1);
-					categories[categoryIndex] = {
-						...categories[categoryIndex],
-						tunnels,
-					};
-
-					this.setState({
-						categories,
-					});
-				}
-			}
-		}
-
-		onCreateTunnel(tunnel)
-		{
-			if (this.isEnabledSelect())
-			{
-				this.layout.close();
-			}
-
-			const categories = [...this.state.categories];
-			const categoryIndex = categories.findIndex(((category) => category.id === tunnel.srcCategoryId));
-			if (categoryIndex !== -1)
-			{
-				categories[categoryIndex].tunnels = [...categories[categoryIndex].tunnels, tunnel];
-
-				this.setState({
-					categories,
-				});
-			}
-		}
-
-		onUpdateTunnels(tunnels, categoryId)
-		{
-			const { categories } = this.state;
-			const modifiedCategories = clone(categories);
-			const categoryIndex = modifiedCategories.findIndex((category) => category.id === categoryId);
-			if (categoryIndex !== -1)
-			{
-				modifiedCategories[categoryIndex] = {
-					...categories[categoryIndex],
-					tunnels,
-				};
-
-				this.setState({
-					categories: modifiedCategories,
-				});
-			}
-		}
 	}
 
 	const styles = {
 		listContainer: {
 			flexDirection: 'column',
-			backgroundColor: '#ffffff',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			borderRadius: 12,
 		},
 	};

@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace Bitrix\Transformer;
 
@@ -8,8 +8,8 @@ namespace Bitrix\Transformer;
  *
  * Make transformation of a document (.doc, .xls, .pdf and others formats) supported by Libre Office
  * Correct transformation:
- * .doc|.docx|.ods => pdf|jpg|txt|text
- * .xls|.xlsx|.odt => pdf|jpg|csv
+ * .doc|.docx|.odt => pdf|jpg|txt|text
+ * .xls|.xlsx|.ods => pdf|jpg
  * .pdf => jpg.
  *
  * @package Bitrix\Transformer

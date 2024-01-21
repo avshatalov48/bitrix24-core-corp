@@ -4,6 +4,8 @@
 jn.define('im/messenger/lib/ui/selector/multi-selected-list', (require, exports, module) => {
 	const { SelectedItem, EmptySearchItem } = require('im/messenger/lib/ui/base/item');
 	const { List } = require('im/messenger/lib/ui/base/list');
+	const { LoaderItem } = require('im/messenger/lib/ui/base/loader');
+	const AppTheme = require('apptheme');
 
 	class MultiSelectedList extends List
 	{
@@ -33,19 +35,27 @@ jn.define('im/messenger/lib/ui/selector/multi-selected-list', (require, exports,
 				{
 					style: {
 						flex: 1,
+						backgroundColor: AppTheme.colors.bgContentTertiary,
+						borderTopRightRadius: 12,
+						borderTopLeftRadius: 12,
 					},
 				},
 				this.renderRecentText(),
 				ListView({
 					style: {
 						flex: 1,
-						backgroundColor: '#FFFFFF',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 					},
 					data: [{ items: this.state.itemList }],
 					renderItem: (props) => {
 						if (props.type === 'empty')
 						{
 							return new EmptySearchItem();
+						}
+
+						if (props.type === 'loader')
+						{
+							return new LoaderItem({ enable: true });
 						}
 
 						return new SelectedItem(
@@ -64,41 +74,7 @@ jn.define('im/messenger/lib/ui/selector/multi-selected-list', (require, exports,
 							},
 						);
 					},
-					onLoadMore: () => {},
-					renderLoadMore: () => {
-						return this.loader;
-					},
 					ref: (ref) => this.listRef = ref,
-				}),
-			);
-		}
-
-		renderRecentText()
-		{
-			if (!this.props.recentText)
-			{
-				return null;
-			}
-
-			return View(
-				{
-					style: {
-						backgroundColor: '#FFFFFF',
-						borderTopRightRadius: 12,
-						borderTopLeftRadius: 12,
-						paddingLeft: 20,
-						paddingVertical: 10,
-					},
-				},
-				Text({
-					text: this.props.recentText,
-					style: {
-						color: '#525C69',
-						fontSize: 14,
-						fontWeight: 400,
-						textStyle: 'normal',
-						textAlign: 'start',
-					},
 				}),
 			);
 		}

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\UserField;
 
+use Bitrix\Crm\Entity\FieldDataProvider;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Type\DateTime;
@@ -52,12 +53,15 @@ class UserFieldHistory
 		self::$items[$entityTypeID] = new DateTime();
 		self::save();
 
+		$entityTypeID = (int)$entityTypeID;
 		// clear cache on any uf settings change
-		$factory = Container::getInstance()->getFactory((int)$entityTypeID);
+		$factory = Container::getInstance()->getFactory($entityTypeID);
 		if ($factory)
 		{
 			$factory->clearFieldsCollectionCache();
 		}
+		
+		(new FieldDataProvider($entityTypeID))->invalidateFieldDataCache();
 	}
 	protected static function load()
 	{

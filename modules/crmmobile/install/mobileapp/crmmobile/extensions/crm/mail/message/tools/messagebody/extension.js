@@ -2,6 +2,7 @@
  * @module crm/mail/message/tools/messagebody
  */
 jn.define('crm/mail/message/tools/messagebody', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
 	const { FileField } = require('layout/ui/fields/file');
 	const {
@@ -17,7 +18,7 @@ jn.define('crm/mail/message/tools/messagebody', (require, exports, module) => {
 
 		const galleryInfo = {};
 		const galleryValue = props.files.map((file) => {
-			if (file.id && Number.isInteger(parseInt(file.id)))
+			if (file.id && Number.isInteger(parseInt(file.id, 10)))
 			{
 				galleryInfo[file.id] = clone(file);
 
@@ -88,7 +89,7 @@ jn.define('crm/mail/message/tools/messagebody', (require, exports, module) => {
 			style: {
 				height: 1,
 				borderTopWidth: 1,
-				borderTopColor: '#dbdde0',
+				borderTopColor: AppTheme.colors.bgSeparatorPrimary,
 				marginLeft: 12,
 				marginRight: 12,
 			},
@@ -191,7 +192,7 @@ jn.define('crm/mail/message/tools/messagebody', (require, exports, module) => {
 						style: {
 							fontSize: 16,
 							fontWeight: '700',
-							color: '#000000',
+							color: AppTheme.colors.base0,
 						},
 						text: this.props.subject,
 					}),

@@ -2,7 +2,7 @@
  * @module layout/ui/widget-header-button
  */
 jn.define('layout/ui/widget-header-button', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { isEqual, merge } = require('utils/object');
 
 	/**
@@ -29,6 +29,7 @@ jn.define('layout/ui/widget-header-button', (require, exports, module) => {
 			{
 				throw new Error("WidgetHeaderButton: 'widget' property is required");
 			}
+
 			if (!props.text)
 			{
 				throw new Error("WidgetHeaderButton: 'text' property is required");
@@ -60,7 +61,7 @@ jn.define('layout/ui/widget-header-button', (require, exports, module) => {
 		{
 			this.widget.setRightButtons([
 				{
-					color: this.state.disabled || this.state.loading ? '#bdc1c6' : '#0b66c3',
+					color: this.state.disabled || this.state.loading ? AppTheme.colors.base5 : AppTheme.colors.accentMainLinks,
 					callback: () => this.onClick(),
 					name: this.state.text,
 					id: 'WidgetHeaderButton_save',
@@ -80,6 +81,7 @@ jn.define('layout/ui/widget-header-button', (require, exports, module) => {
 			if (disabled && !loading && onDisabledClick)
 			{
 				onDisabledClick();
+
 				return;
 			}
 
@@ -173,5 +175,4 @@ jn.define('layout/ui/widget-header-button', (require, exports, module) => {
 	}
 
 	module.exports = { WidgetHeaderButton };
-
 });

@@ -65,7 +65,7 @@ $readOnly = ($arParams['READ_ONLY'] ? 'readonly' : '');
 			<input
 				class="js-id-task-sel-is-sole-input"
 				type="hidden"
-				name="<?=htmlspecialcharsbx($arParams["INPUT_PREFIX"])?><?=htmlspecialcharsbx($arParams['TASK'] ? $arParams['SOLE_INPUT_TASK_POSTFIX'] : $arParams['SOLE_INPUT_TASK_POSTFIX'])?>"
+				name="<?=htmlspecialcharsbx($arParams["INPUT_PREFIX"])?><?=htmlspecialcharsbx($arParams['SOLE_INPUT_TASK_POSTFIX'])?>"
 				value="<?=intval($arResult['TEMPLATE_DATA']['IDS'][0])?>"
 			/>
 		<?else:?>

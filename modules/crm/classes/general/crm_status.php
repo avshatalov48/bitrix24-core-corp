@@ -771,11 +771,13 @@ class CCrmStatus
 		if(!empty($prefix))
 		{
 			$offset = mb_strlen($prefix) + 2;
-			$sql = "SELECT SUBSTRING(STATUS_ID, {$offset}) AS MAX_STATUS_ID FROM b_crm_status WHERE ENTITY_ID = '{$DB->ForSql($this->entityId)}' AND CAST(SUBSTRING(STATUS_ID, {$offset}) AS UNSIGNED) > 0 ORDER BY CAST(SUBSTRING(STATUS_ID, {$offset}) AS UNSIGNED) DESC LIMIT 1";
+			$castedStatus = $DB->ToNumber("SUBSTRING(STATUS_ID, {$offset})");
+			$sql = "SELECT SUBSTRING(STATUS_ID, {$offset}) AS MAX_STATUS_ID FROM b_crm_status WHERE ENTITY_ID = '{$DB->ForSql($this->entityId)}' AND $castedStatus > 0 ORDER BY $castedStatus DESC LIMIT 1";
 		}
 		else
 		{
-			$sql = "SELECT STATUS_ID AS MAX_STATUS_ID FROM b_crm_status WHERE ENTITY_ID = '{$DB->ForSql($this->entityId)}' AND CAST(STATUS_ID AS UNSIGNED) > 0 ORDER BY CAST(STATUS_ID AS UNSIGNED) DESC LIMIT 1";
+			$castedStatus = $DB->ToNumber("STATUS_ID");
+			$sql = "SELECT STATUS_ID AS MAX_STATUS_ID FROM b_crm_status WHERE ENTITY_ID = '{$DB->ForSql($this->entityId)}' AND $castedStatus > 0 ORDER BY $castedStatus DESC LIMIT 1";
 		}
 
 		$res = $DB->Query($sql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);

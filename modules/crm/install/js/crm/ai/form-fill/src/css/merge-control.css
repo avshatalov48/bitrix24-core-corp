@@ -1,0 +1,138 @@
+
+.bx-crm-ai-form-fill-merge-control__container {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	transition: top 300ms linear;
+	width: 100%;
+}
+
+.bx-crm-ai-form-fill-merge-control__container.expanded {
+	z-index: 1;
+}
+
+.bx-crm-ai-form-fill-merge-control__container.covered {
+	opacity: 35%;
+	filter: blur(2px);
+}
+
+.bx-crm-ai-form-fill-merge-control-icon {
+	margin-top: 7px;
+	flex-basis: 24px;
+	flex-grow: 0;
+	width: 24px;
+	height: 24px;
+	min-width: 24px;
+	border-radius: 25px;
+	background-color: rgba(167, 123, 222, 0.80);
+	background-image: url("../images/ai-from-fill_swap-btn.svg");
+	background-position: center;
+	cursor: pointer;
+}
+
+.bx-crm-ai-form-fill-merge-control-icon:hover {
+	background-color: #8E52EC;
+}
+
+
+.bx-crm-ai-form-fill-merge-control-field {
+	flex-grow: 1;
+	flex-basis: 374px;
+	display: flex;
+	padding: 3px 8px;
+	flex-direction: column;
+	align-items: flex-start;
+	border-radius: 10px;
+	background: #FFF;
+	width: calc(100% - 169px);
+}
+
+.bx-crm-ai-form-fill-merge-control-field-title {
+	width: 100%;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	color: #828B95;
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: normal;
+}
+
+.bx-crm-ai-form-fill-merge-control-field-value-container {
+	position: relative;
+	width: 100%;
+}
+
+.bx-crm-ai-form-fill-merge-control-field-value-container__control {
+	position: absolute;
+	width: 14px;
+	height: 14px;
+	bottom: 0;
+	right: 0;
+	cursor: pointer;
+	background-image: url("../images/ai-from-fill_swap-shevron-down.svg");
+}
+
+.bx-crm-ai-form-fill-merge-control-field-value-container__control.expanded {
+	background-image: url("../images/ai-from-fill_swap-shevron-up.svg");
+}
+
+
+.bx-crm-ai-form-fill-merge-control-field-value-container__value {
+	font-size: 15px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 19px;
+	width: calc(100% - 15px);
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	transition: height 300ms linear;
+}
+
+.bx-crm-ai-form-fill-merge-control-field-value-container__value.expanded {
+	text-overflow: unset;
+	overflow: unset;
+	white-space: unset;
+	max-height: 300px;
+	overflow-y: auto;
+	padding: 0 0 2px 0;
+}
+
+
+.bx-crm-ai-form-fill-merge-control-field-value-container__value.ai-value {
+	color: #8E52EC;
+}
+
+.bx-crm-ai-form-fill-merge-control-right-column {
+	flex-grow: 0;
+	flex-basis: 113px;
+	width: 113px;
+}
+
+.bx-crm-ai-form-fill-merge-control-button {
+	margin-top: 8px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	border-radius: 64px;
+	border: 1px solid #A77BDE;
+	background-color: #A77BDE;
+	padding: 6px 22px 7px 22px;
+	cursor: pointer;
+	color: #FFF;
+
+	font-feature-settings: 'clig' off, 'liga' off;
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 700;
+	line-height: 10px;
+	text-transform: uppercase;
+	flex-grow: 0;
+}
+
+.bx-crm-ai-form-fill-merge-control-button:hover {
+	background-color: #8E52EC;
+	border: 1px solid #8E52EC;
+}

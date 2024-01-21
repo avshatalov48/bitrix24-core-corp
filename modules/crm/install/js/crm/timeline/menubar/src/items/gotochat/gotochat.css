@@ -1,0 +1,195 @@
+
+.crm-entity-stream-content-new-detail.crm-entity-stream-content-new-detail-gotochat{
+	padding: 16px 25px;
+}
+
+.crm-entity-stream-content-new-detail-gotochat.--skeleton
+{
+	background: url('images/skeleton.svg');
+}
+
+.crm-entity-stream-content-new-detail-gotochat-container.hidden{
+	opacity: 0;
+}
+
+.crm-entity-stream-content-new-detail-gotochat-guide-link{
+	color: var(--ui-color-link-primary-base, #2066b0);
+	font-size: 16px;
+	border-bottom-style: dashed !important;
+}
+
+.crm-entity-stream-content-gotochat-settings-container{
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: flex-start;
+}
+
+.crm-entity-stream-content-gotochat-clients-selector-description{
+	color: var(--ui-color-text-subtle, #828b95);
+	font-size: 13px;
+	line-height: 17px;
+	letter-spacing: 0.2px;
+	padding: 18px 0;
+}
+
+.crm-entity-stream-content-gotochat-toolbar-container{
+	flex-shrink: 0;
+}
+
+.crm-entity-stream-content-gotochat-toolbar-container>button{
+	opacity: .5;
+}
+
+.crm-entity-stream-content-gotochat-toolbar-container>button:hover
+{
+	opacity: .8;
+}
+
+.crm-entity-stream-content-gotochat-toolbar-container .ui-btn-icon-setting{
+	margin-left: 3px;
+}
+
+.crm-entity-stream-content-gotochat-buttons-container{
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	align-items: center;
+	justify-content: flex-start;
+}
+
+.crm-entity-stream-content-gotochat-button{
+	width: 100%;
+	max-width: 82%;
+	margin-bottom: 12px;
+}
+
+.crm-entity-stream-content-gotochat-button:last-child {
+	margin-bottom: 0;
+}
+
+.crm-entity-stream-content-new-detail-gotochat_button {
+	--crm-entity-stream-content-new-detail-gotochat_button-color: var(--ui-color-primary);
+
+	position: relative;
+	width: 100%;
+	height: 44px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	border: var(--ui-border-width-thin) solid var(--crm-entity-stream-content-new-detail-gotochat_button-color);
+	background-color: var(--ui-color-background-primary);
+	color: var(--ui-color-text-secondary);
+	border-radius: var(--ui-border-radius-xs);
+	outline: none;
+}
+
+.crm-entity-stream-content-new-detail-gotochat_button.--disabled {
+	--crm-entity-stream-content-new-detail-gotochat_button-color: var(--ui-color-base-04);
+	background-color: var(--crm-entity-stream-content-new-detail-gotochat_button-color);
+	color: rgba(var(--ui-color-text-secondary-rgb), 0.3);
+}
+
+.crm-entity-stream-content-new-detail-gotochat_button.--ready {
+	--ui-color-background-primary: #2FC6F6;
+	color: var(--ui-color-on-primary);
+}
+
+.crm-entity-stream-content-new-detail-gotochat_button.--loading {
+	opacity: .4;
+	cursor: not-allowed;
+}
+
+.crm-entity-stream-content-new-detail-gotochat_button:hover {
+	cursor: pointer;
+}
+
+.crm-entity-stream-content-new-detail-gotochat_button.--disabled {
+	pointer-events: none;
+	cursor: default;
+}
+
+.crm-entity-stream-content-new-detail-gotochat_button-icon {
+	width: 40px;
+	height: 40px;
+	margin-right: 2px;
+}
+
+.crm-entity-stream-content-new-detail-gotochat_button-text {
+	font-weight: var(--ui-font-weight-bold);
+	font-size: var(--ui-font-size-xs);
+	text-transform: var(--ui-text-transform-uppercase);
+}
+
+.crm-entity-stream-content-gotochat-clients-selector-title{
+	font-size: 16px;
+}
+
+.crm-entity-stream-content-gotochat-clients-selector-title>span{
+	display: flex;
+	gap: 5px;
+	flex-wrap: wrap;
+}
+
+.crm-entity-stream-content-gotochat-user-selector-link{
+	color: var(--ui-color-link-primary-base, #2066B0);
+	border-bottom: dashed 1px var(--ui-color-link-primary-base, #2066B0);
+	cursor: pointer;
+}
+
+.crm-entity-stream-content-gotochat-user-selector-link.--selected{
+	border-bottom: none;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.crm-entity-stream-content-gotochat-client-avatar{
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	overflow: hidden;
+	margin-right: 5px;
+}
+
+.crm-entity-stream-content-gotochat-client-chevron{
+	background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 14 14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Cpath id='Icon' fill-rule='evenodd' clip-rule='evenodd' d='M10.306 4.75421L7.66523 7.39499L6.99993 8.04999L6.34724 7.39499L3.70646 4.75421L2.77461 5.68607L7.0062 9.91766L11.2378 5.68607L10.306 4.75421Z' fill='%232066B0'/%3E%3C/g%3E%3C/svg%3E");
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	margin-left: 2px;
+}
+
+.crm-agreement-terms-popup{
+	height: 700px;
+}
+
+.crm-agreement-terms-popup .popup-window-titlebar{
+	text-align: center;
+	height: auto;
+}
+
+.crm-agreement-terms-popup .popup-window-titlebar-text{
+	color: var(--ui-color-text-primary, #333);
+	font-size: 16px;
+	font-weight: 500;
+	padding: 5px 0;
+}
+
+.crm-agreement-terms-popup .popup-window-content{
+	padding-top: 0;
+}
+
+.crm-agreement-terms-popup .popup-window-buttons{
+	border-top: var(--ui-color-base-15, #E6E7E9) solid 1px;
+	padding: 20px 0;
+	margin: 0 20px;
+}
+
+.popup-window-ui-tour.--hidden{
+	display: none !important;
+}

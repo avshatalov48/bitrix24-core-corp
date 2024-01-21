@@ -1,6 +1,7 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,main_core,ui_entitySelector,main_core_events) {
+(function (exports,ui_switcher,ui_entitySelector,main_core_events,main_core,ui_analytics) {
 	'use strict';
 
 	var Submit = /*#__PURE__*/function (_EventEmitter) {
@@ -141,7 +142,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    value: function submitSelf() {
 	      var selfForm = this.parent.contentBlocks["self"].querySelector("form");
 	      var obRequestData = {
-	        "allow_register": selfForm["allow_register"].checked ? "Y" : "N",
+	        "allow_register": selfForm["allow_register"].value,
 	        "allow_register_confirm": selfForm["allow_register_confirm"].checked ? "Y" : "N",
 	        "allow_register_secret": selfForm["allow_register_secret"].value,
 	        "allow_register_whitelist": selfForm["allow_register_whitelist"].value
@@ -225,6 +226,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      var _this3 = this;
 	      this.disableSubmitButton(true);
 	      requestData["userOptions"] = this.parent.userOptions;
+	      requestData["analyticsData"] = this.parent.analyticsLabel;
 	      BX.ajax.runComponentAction(this.parent.componentName, action, {
 	        signedParameters: this.parent.signedParameters,
 	        mode: "ajax",
@@ -280,6 +282,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (main_core.Type.isDomNode(this.parent.contentBlocks["self"])) {
 	      this.selfBlock = this.parent.contentBlocks["self"];
 	      this.bindActions();
+	      var switcherNode = this.selfBlock.querySelector('.invite-dialog-fast-reg-control-switcher');
+	      this.switcher = new ui_switcher.Switcher({
+	        inputName: 'allow_register',
+	        id: 'allow_register',
+	        checked: parent.isSelfRegisterEnabled,
+	        node: switcherNode,
+	        handlers: {
+	          toggled: this.toggleSettings.bind(this)
+	        }
+	      });
 	    }
 	  }
 	  babelHelpers.createClass(SelfRegister, [{
@@ -297,13 +309,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      if (main_core.Type.isDomNode(copyRegisterUrlButton)) {
 	        main_core.Event.bind(copyRegisterUrlButton, 'click', function () {
 	          _this.copyRegisterUrl();
-	        });
-	      }
-	      var selfToggleSettingsButton = this.selfBlock.querySelector("[data-role='selfToggleSettingsButton']");
-	      if (main_core.Type.isDomNode(selfToggleSettingsButton)) {
-	        main_core.Event.bind(selfToggleSettingsButton, 'change', function () {
-	          _this.parent.activateButton();
-	          _this.toggleSettings(selfToggleSettingsButton);
 	        });
 	      }
 	      var allowRegisterConfirm = this.selfBlock.querySelector("[data-role='allowRegisterConfirm']");
@@ -343,6 +348,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        BX.ajax.runAction('intranet.controller.invite.copyregisterurl', {
 	          data: {}
 	        }).then(function (response) {}, function (response) {});
+	        this.parent.analytics.send();
 	      }
 	    }
 	  }, {
@@ -373,7 +379,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	  }, {
 	    key: "toggleSettings",
-	    value: function toggleSettings(inputElement) {
+	    value: function toggleSettings() {
+	      this.parent.activateButton();
 	      var controlBlock = this.selfBlock.querySelector(".js-invite-dialog-fast-reg-control-container");
 	      if (main_core.Type.isDomNode(controlBlock)) {
 	        if (!main_core.Dom.hasClass(controlBlock, 'disallow-registration')) {
@@ -384,7 +391,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }
 	      var settingsBlock = this.selfBlock.querySelector("[data-role='selfSettingsBlock']");
 	      if (main_core.Type.isDomNode(settingsBlock)) {
-	        main_core.Dom.style(settingsBlock, 'display', inputElement.checked ? 'block' : 'none');
+	        main_core.Dom.style(settingsBlock, 'display', this.switcher.checked ? 'block' : 'none');
 	      }
 	    }
 	  }, {
@@ -701,6 +708,64 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return ActiveDirectory;
 	}();
 
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _cSection = /*#__PURE__*/new WeakMap();
+	var _isAdmin = /*#__PURE__*/new WeakMap();
+	var _getAdminAllowMode = /*#__PURE__*/new WeakSet();
+	var _getIsAdmin = /*#__PURE__*/new WeakSet();
+	var _getCSection = /*#__PURE__*/new WeakSet();
+	var Analytics = /*#__PURE__*/function () {
+	  function Analytics(cSection, isAdmin) {
+	    babelHelpers.classCallCheck(this, Analytics);
+	    _classPrivateMethodInitSpec(this, _getCSection);
+	    _classPrivateMethodInitSpec(this, _getIsAdmin);
+	    _classPrivateMethodInitSpec(this, _getAdminAllowMode);
+	    _classPrivateFieldInitSpec(this, _cSection, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _isAdmin, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldSet(this, _cSection, cSection);
+	    babelHelpers.classPrivateFieldSet(this, _isAdmin, isAdmin);
+	  }
+	  babelHelpers.createClass(Analytics, [{
+	    key: "send",
+	    value: function send() {
+	      ui_analytics.sendData({
+	        tool: Analytics.TOOLS,
+	        category: Analytics.CATEGORY_INVITATION,
+	        event: Analytics.EVENT_COPY,
+	        c_section: _classPrivateMethodGet(this, _getCSection, _getCSection2).call(this),
+	        p1: _classPrivateMethodGet(this, _getIsAdmin, _getIsAdmin2).call(this),
+	        p2: _classPrivateMethodGet(this, _getAdminAllowMode, _getAdminAllowMode2).call(this)
+	      });
+	    }
+	  }]);
+	  return Analytics;
+	}();
+	function _getAdminAllowMode2() {
+	  return document.querySelector('#allow_register_confirm').checked ? Analytics.ADMIN_ALLOW_MODE_Y : Analytics.ADMIN_ALLOW_MODE_N;
+	}
+	function _getIsAdmin2() {
+	  return babelHelpers.classPrivateFieldGet(this, _isAdmin) ? Analytics.IS_ADMIN_Y : Analytics.IS_ADMIN_N;
+	}
+	function _getCSection2() {
+	  return babelHelpers.classPrivateFieldGet(this, _cSection).source;
+	}
+	babelHelpers.defineProperty(Analytics, "TOOLS", 'Invitation');
+	babelHelpers.defineProperty(Analytics, "CATEGORY_INVITATION", 'invitation');
+	babelHelpers.defineProperty(Analytics, "EVENT_COPY", 'copy_invitation_link');
+	babelHelpers.defineProperty(Analytics, "ADMIN_ALLOW_MODE_Y", 'askAdminToAllow_Y');
+	babelHelpers.defineProperty(Analytics, "ADMIN_ALLOW_MODE_N", 'askAdminToAllow_N');
+	babelHelpers.defineProperty(Analytics, "IS_ADMIN_Y", 'isAdmin_Y');
+	babelHelpers.defineProperty(Analytics, "IS_ADMIN_N", 'isAdmin_N');
+
 	var Form = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Form, _EventEmitter);
 	  function Form(formParams) {
@@ -721,6 +786,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    _this.isCreatorEmailConfirmed = params.isCreatorEmailConfirmed === "Y";
 	    _this.regenerateUrlBase = params.regenerateUrlBase;
 	    _this.firstInvitationBlock = params.firstInvitationBlock;
+	    _this.isSelfRegisterEnabled = params.isSelfRegisterEnabled;
+	    _this.analyticsLabel = params.analyticsLabel;
 	    if (main_core.Type.isDomNode(_this.contentContainer)) {
 	      var blocks = Array.prototype.slice.call(_this.contentContainer.querySelectorAll(".js-intranet-invitation-block"));
 	      (blocks || []).forEach(function (block) {
@@ -748,6 +815,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    _this.submit.subscribe('onInputError', function (event) {
 	      _this.showErrorMessage(event.data.error);
 	    });
+	    _this.analytics = new Analytics(_this.analyticsLabel, _this.isAdmin);
 	    if (_this.isCloud) {
 	      _this.selfRegister = new SelfRegister(babelHelpers.assertThisInitialized(_this));
 	    }
@@ -997,5 +1065,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	exports.Form = Form;
 
-}((this.BX.Intranet.Invitation = this.BX.Intranet.Invitation || {}),BX,BX.UI.EntitySelector,BX.Event));
+}((this.BX.Intranet.Invitation = this.BX.Intranet.Invitation || {}),BX.UI,BX.UI.EntitySelector,BX.Event,BX,BX.UI.Analytics));
 //# sourceMappingURL=script.js.map

@@ -2,6 +2,7 @@
 $MESS["MESSAGE_SEND_BUTTON_SEND"] = "Send";
 $MESS["MESSAGE_SEND_BUTTON_SENDING"] = "Sending...";
 $MESS["MESSAGE_SEND_BUTTON_UPLOADING_FILES"] = "Uploading files...";
+$MESS["MESSAGE_SEND_CONNECT_NEW_MAILBOX"] = "Add sender";
 $MESS["MESSAGE_SEND_CONTACT_PLACEHOLDER"] = "Enter email address";
 $MESS["MESSAGE_SEND_EXIT_ALERT_CANCEL"] = "Continue editing";
 $MESS["MESSAGE_SEND_EXIT_ALERT_DISCARD"] = "Exit without saving";
@@ -18,6 +19,9 @@ $MESS["MESSAGE_SEND_FIELD_SUBJECT"] = "Subject";
 $MESS["MESSAGE_SEND_FIELD_SUBJECT_ERROR"] = "Email subject is required";
 $MESS["MESSAGE_SEND_FIELD_SUBJECT_PLACEHOLDER"] = "Enter subject here";
 $MESS["MESSAGE_SEND_FIELD_TO"] = "To";
+$MESS["MESSAGE_SEND_SELECT_SENDER_TITLE"] = "Select sender";
 $MESS["MESSAGE_SEND_TITLE_FORWARD"] = "Forward";
 $MESS["MESSAGE_SEND_TITLE_NEW"] = "New message";
 $MESS["MESSAGE_SEND_TITLE_REPLY"] = "Reply";
+$MESS["MESSAGE_SEND_WARNING_EMPTY_RECIPIENT_TEXT"] = "Return to details and add an email address";
+$MESS["MESSAGE_SEND_WARNING_EMPTY_RECIPIENT_TITLE"] = "No email address to send the message";

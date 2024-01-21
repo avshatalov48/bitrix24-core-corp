@@ -5,6 +5,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Routes\RouteDictionary;
 use Bitrix\Tasks\Util\Type\DateTime;
 
 class CTasksDepartmentsOverviewComponent extends CBitrixComponent
@@ -151,7 +152,7 @@ class CTasksDepartmentsOverviewComponent extends CBitrixComponent
 				}
 
 				$tasksHref = CComponentEngine::MakePathFromTemplate(
-					$this->arResult['PATH_TO_USER_TASKS'],
+					RouteDictionary::PATH_TO_USER_TASKS_LIST,
 					array('user_id' => $userId)
 				);
 
@@ -191,13 +192,13 @@ class CTasksDepartmentsOverviewComponent extends CBitrixComponent
 					'ORIGINATORS_NOTICED_TASKS' => 0,
 					'AUDITORS_TOTAL_TASKS' => 0,
 					'AUDITORS_NOTICED_TASKS' => 0,
-					'RESPONSIBLES_TOTAL_HREF' => $tasksHref.'?F_CANCEL=Y&F_STATE=sR400',
+					'RESPONSIBLES_TOTAL_HREF' => $tasksHref . '?F_CANCEL=Y&F_STATE=' . Counter\Role::RESPONSIBLE_STATE,
 					'RESPONSIBLES_NOTICED_HREF' => null,
-					'ACCOMPLICES_TOTAL_HREF' => $tasksHref.'?F_CANCEL=Y&F_STATE=sR800',
+					'ACCOMPLICES_TOTAL_HREF' => $tasksHref . '?F_CANCEL=Y&F_STATE=' . Counter\Role::ACCOMPLICE_STATE,
 					'ACCOMPLICES_NOTICED_HREF' => null,
-					'ORIGINATORS_TOTAL_HREF' => $tasksHref.'?F_CANCEL=Y&F_STATE=sRg00',
+					'ORIGINATORS_TOTAL_HREF' => $tasksHref . '?F_CANCEL=Y&F_STATE=' . Counter\Role::ORIGINATOR_STATE,
 					'ORIGINATORS_NOTICED_HREF' => null,
-					'AUDITORS_TOTAL_HREF' => $tasksHref.'?F_CANCEL=Y&F_STATE=sRc00',
+					'AUDITORS_TOTAL_HREF' => $tasksHref . '?F_CANCEL=Y&F_STATE=' . Counter\Role::AUDITOR_STATE,
 					'AUDITORS_NOTICED_HREF' => null,
 					'EFFECTIVE_HREF' => $tasksHref.'effective/'
 				);

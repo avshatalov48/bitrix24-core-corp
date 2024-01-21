@@ -2,7 +2,6 @@
  * @module in-app-url
  */
 jn.define('in-app-url', (require, exports, module) => {
-
 	const { InAppUrl } = require('in-app-url/in-app-url');
 
 	const inAppUrl = new InAppUrl();
@@ -18,8 +17,7 @@ jn.define('in-app-url', (require, exports, module) => {
 		'in-app-url/routes',
 	];
 
-	routes.map(ext => {
-
+	routes.forEach((ext) => {
 		try
 		{
 			if (jn.define.moduleMap[ext])
@@ -36,9 +34,7 @@ jn.define('in-app-url', (require, exports, module) => {
 		{
 			console.error(`in-app-url: unable to load routes extension: ${ext}`, err);
 		}
-
 	});
 
 	module.exports = { inAppUrl };
-
 });

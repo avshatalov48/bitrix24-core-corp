@@ -19,6 +19,8 @@ final class ActionDto extends \Bitrix\Crm\Dto\Dto
 	public ?array $actionParams = null; // for `restEvent` and `openRestApp` actions
 	public ?string $animationType = null; // for `restEvent` action
 
+	public ?ActionSliderParamsDto $sliderParams = null;
+
 	public function getCastByPropertyName(string $propertyName): ?\Bitrix\Crm\Dto\Caster
 	{
 		switch ($propertyName)

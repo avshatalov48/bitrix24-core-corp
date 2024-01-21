@@ -118,7 +118,7 @@ jn.define('crm/entity-tab/type/entities/dynamic', (require, exports, module) => 
 				{
 					type: UI.Menu.Types.HELPDESK,
 					data: {
-						articleCode: '18098934',
+						articleCode: '18109574',
 					},
 				},
 			];

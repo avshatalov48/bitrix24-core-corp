@@ -339,38 +339,12 @@
 
 		restAppErrorPopup: function(title, text)
 		{
-			var popup = new BX.PopupWindow('rest-app-error-alert', null, {
-				closeIcon: true,
-				closeByEsc: true,
-				autoHide: false,
-				titleBar: title,
-				content: text,
-				zIndex: 16000,
-				overlay: {
-					color: 'gray',
-					opacity: 30
-				},
-				buttons: [
-					new BX.PopupWindowButton({
-						'id': 'close',
-						'text': BX.message('SPP_SALESCENTER_JS_POPUP_CLOSE'),
-						'events': {
-							'click': function(){
-								popup.close();
-							}
-						}
-					})
-				],
-				events: {
-					onPopupClose: function() {
-						this.destroy();
-					},
-					onPopupDestroy: function() {
-						popup = null;
-					}
-				}
-			});
-			popup.show();
+			BX.UI.Dialogs.MessageBox.alert(
+				text,
+				title,
+				(messageBox) => messageBox.close(),
+				BX.Loc.getMessage('SPP_SALESCENTER_JS_POPUP_CLOSE'),
+			);
 		},
 
 		onClick: function()

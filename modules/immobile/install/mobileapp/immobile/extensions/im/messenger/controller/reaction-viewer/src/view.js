@@ -6,6 +6,7 @@ jn.define('im/messenger/controller/reaction-viewer/view', (require, exports, mod
 	const { ReactionUserList } = require('im/messenger/controller/reaction-viewer/user-list');
 	const { ReactionType } = require('im/messenger/const');
 	const { ReactionAssets } = require('im/messenger/assets/common');
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @class ReactionViewerView
@@ -26,7 +27,6 @@ jn.define('im/messenger/controller/reaction-viewer/view', (require, exports, mod
 				reactionUsers: this.props.users,
 				hasNextPage: this.props.hasNextPage,
 			};
-			this.eventEmmiter = new JNEventEmitter();
 		}
 
 		render()
@@ -35,16 +35,16 @@ jn.define('im/messenger/controller/reaction-viewer/view', (require, exports, mod
 				{
 					style: {
 						flexDirection: 'column',
+						backgroundColor: AppTheme.colors.bgNavigation,
 					},
 				},
 				GridView(
 					{
 						style: {
-							height: 57,
+							height: 46,
 							paddingLeft: 10,
 							paddingRight: 10,
-							borderBottomColor: '#D5D7DB',
-							borderBottomWidth: 2,
+							backgroundColor: AppTheme.colors.bgNavigation,
 						},
 						params: {
 							orientation: 'horizontal',
@@ -63,13 +63,14 @@ jn.define('im/messenger/controller/reaction-viewer/view', (require, exports, mod
 										this.list.setUsers(
 											this.state.reactionUsers.get(reactionType),
 											this.state.hasNextPage.get(reactionType),
+											reactionType
 										);
 
 										return;
 									}
 									this.props.onReactionChange(reactionType).then((data) => {
 										this.state.reactionUsers.set(reactionType, data.reactionViewerUsers);
-										this.list.setUsers(data.reactionViewerUsers, data.hasNextPage);
+										this.list.setUsers(data.reactionViewerUsers, data.hasNextPage, reactionType);
 
 										this.state.currentReaction = reactionType;
 									});
@@ -79,25 +80,36 @@ jn.define('im/messenger/controller/reaction-viewer/view', (require, exports, mod
 
 					},
 				),
-				this.list = new ReactionUserList({
-					users: this.state.reactionUsers.get(this.state.currentReaction),
-					hasNextPage: this.state.hasNextPage.get(this.state.currentReaction),
-					onReactionUserClick: this.props.onReactionUserClick,
-					onLoadMore: (lastId) => {
-						return new Promise((resolve) => {
-							this.props.onLoadMore(this.state.currentReaction, lastId).then((data) => {
-								const { reactionViewerUsers, hasNextPage } = data;
-
-								const currentUsers = this.state.reactionUsers.get(this.state.currentReaction);
-								this.state.reactionUsers.set(this.state.currentReaction, [...currentUsers, ...reactionViewerUsers]);
-								this.state.hasNextPage.set(this.state.currentReaction, hasNextPage);
-
-								resolve(data);
-							});
-						});
+				View(
+					{
+						style: {
+							borderRadius: 12,
+							flex: 1,
+							backgroundColor: AppTheme.colors.bgContentPrimary,
+							paddingTop: 12,
+						},
 					},
-				}),
+					this.list = new ReactionUserList({
+						assets: this.getAssets(),
+						currentReaction: this.state.currentReaction,
+						users: this.state.reactionUsers.get(this.state.currentReaction),
+						hasNextPage: this.state.hasNextPage.get(this.state.currentReaction),
+						onReactionUserClick: this.props.onReactionUserClick,
+						onLoadMore: (lastId) => {
+							return new Promise((resolve) => {
+								this.props.onLoadMore(this.state.currentReaction, lastId).then((data) => {
+									const { reactionViewerUsers, hasNextPage } = data;
 
+									const currentUsers = this.state.reactionUsers.get(this.state.currentReaction);
+									this.state.reactionUsers.set(this.state.currentReaction, [...currentUsers, ...reactionViewerUsers]);
+									this.state.hasNextPage.set(this.state.currentReaction, hasNextPage);
+
+									resolve(data);
+								});
+							});
+						},
+					}),
+				),
 			);
 		}
 
@@ -168,17 +180,29 @@ jn.define('im/messenger/controller/reaction-viewer/view', (require, exports, mod
 		 */
 		prepareReactionItems()
 		{
-			return [...this.state.visibleReactions.keys()].map((reactionType, index) => {
-				return {
+			const result = [];
+			result.push({
+				imageUrl: '',
+				reactionType: 'all',
+				isCurrent: this.state.currentReaction === 'all',
+				counter: this.props.counters.get('all'),
+				eventEmitter: this.eventEmmiter,
+				key: '0',
+				type: 'reaction',
+			});
+
+			[...this.state.visibleReactions.keys()].forEach((reactionType, index) => {
+				result.push({
 					imageUrl: this.state.visibleReactions.get(reactionType),
 					reactionType,
 					isCurrent: this.state.currentReaction === reactionType,
 					counter: this.props.counters.get(reactionType),
-					eventEmitter: this.eventEmmiter,
-					key: index.toString(),
+					key: (index + 1).toString(),
 					type: 'reaction',
-				};
+				});
 			});
+
+			return result;
 		}
 	}
 

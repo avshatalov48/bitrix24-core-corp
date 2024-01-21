@@ -210,6 +210,11 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 
 	saveTheme: function(themeId)
 	{
+		BX.onCustomEvent('Intranet.ThemePicker:onSaveTheme', [{
+			themeId: themeId,
+			setDefaultTheme: this.isCheckboxChecked()
+		}]);
+
 		this.ajax({
 			action: "save",
 			themeId: themeId,
@@ -350,9 +355,10 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 
 		var themeId = item.dataset.themeId;
 
-		[].forEach.call(item.parentNode.children, function(item) {
-			BX.removeClass(item, "theme-dialog-item-selected");
-		});
+		this.getContentContainer()
+			.querySelectorAll('div.theme-dialog-item[data-theme-id]')
+			.forEach((item) => BX.removeClass(item, "theme-dialog-item-selected"))
+		;
 
 		BX.addClass(item, "theme-dialog-item-selected");
 
@@ -664,7 +670,8 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 							null
 					]
 				}),
-				theme["default"] === true ? this.createDefaultLabel() : null
+				theme["default"] === true ? this.createDefaultLabel() : null,
+				theme["new"] === true ? this.createNewLabel() : null,
 			],
 			events: {
 				click: this.handleItemClick.bind(this)
@@ -692,6 +699,16 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 				className: "theme-dialog-item-default"
 			},
 			text: BX.message("BITRIX24_THEME_DEFAULT_THEME")
+		});
+	},
+
+	createNewLabel: function()
+	{
+		return BX.create("div", {
+			props: {
+				className: "theme-dialog-item-new"
+			},
+			text: BX.message('BITRIX24_THEME_NEW_THEME'),
 		});
 	},
 
@@ -1285,7 +1302,10 @@ BX.Intranet.Bitrix24.NewThemeDialog.prototype =
 		}
 
 		this.colorPicker = new BX.ColorPicker({
-			onColorSelected: this.handleBgColorSelect.bind(this)
+			onColorSelected: this.handleBgColorSelect.bind(this),
+			popupOptions: {
+				fixed: true,
+			},
 		});
 
 		return this.colorPicker;
@@ -1407,7 +1427,7 @@ BX.Intranet.Bitrix24.NewThemeDialog.prototype =
 	showError: function(error)
 	{
 		BX.addClass(this.getControl("form-alert"), "theme-dialog-form-alert-show");
-		this.getControl("form-alert-content").textContent = error;
+		this.getControl("form-alert-content").innerHTML = error;
 	},
 
 	hideError: function()

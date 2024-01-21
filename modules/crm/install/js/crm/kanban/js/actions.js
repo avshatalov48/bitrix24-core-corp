@@ -516,25 +516,41 @@
 		 */
 		task: function(grid)
 		{
-			if (typeof window["taskIFramePopup"] !== "undefined")
+			const gridData = grid.getData();
+			let communications = '';
+			const ids = grid.getCheckedId();
+			const entityType = gridData.entityType;
+
+			for (let i = 0, c = ids.length; i < c; i++)
 			{
-				var gridData = grid.getData();
-				var communications = "";
-				var ids = grid.getCheckedId();
+				communications +=
+					BX.CrmOwnerTypeAbbr.resolve(entityType) +
+					"_" +
+					ids[i] + ";";
+			}
+			const taskData = {
+				UF_CRM_TASK: communications,
+				TITLE: "CRM: ",
+				TAGS: "crm",
+				ta_sec: 'crm',
+				ta_sub: entityType.toLowerCase(),
+				ta_el: 'context_menu',
+			};
 
-				for (var i = 0, c = ids.length; i < c; i++)
-				{
-					communications +=
-						BX.CrmOwnerTypeAbbr.resolve(gridData.entityType) +
-						"_" +
-						ids[i] + ";";
-				}
+			let taskCreatePath = BX.message("CRM_TASK_CREATION_PATH");
+			taskCreatePath = taskCreatePath.replace("#user_id#", BX.message("USER_ID"));
+			taskCreatePath = BX.util.add_url_param(
+				taskCreatePath,
+				taskData
+			);
 
-				window["taskIFramePopup"].add({
-					UF_CRM_TASK: communications,
-					TITLE: "CRM: ",
-					TAGS: "crm"
-				});
+			if (BX.SidePanel)
+			{
+				BX.SidePanel.Instance.open(taskCreatePath);
+			}
+			else
+			{
+				window.top.location.href = taskCreatePath;
 			}
 		},
 

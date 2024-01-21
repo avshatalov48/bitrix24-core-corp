@@ -3,7 +3,7 @@
 namespace Bitrix\Intranet\Site\Sections;
 
 use Bitrix\Bitrix24\Feature;
-use Bitrix\Main\Config\Option;
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -12,6 +12,17 @@ use COption;
 
 class TimemanSection
 {
+	public const MENU_ITEMS_ID = [
+		'worktime' => 'menu_timeman',
+		'work_report' => 'menu_work_report',
+		'schedules' => 'menu_schedules_list',
+		'monitor_report' => 'menu_pwt_report',
+		'bitrix24_time' => 'menu_bitrix24time',
+		'meetings' => 'menu_meeting',
+		'absence' => 'menu_absence',
+		'timeman_permissions' => 'menu_worktime_settings_permissions',
+		'login_history' => 'menu_login_history',
+	];
 	public static function getItems(): array
 	{
 		return [
@@ -51,7 +62,7 @@ class TimemanSection
 			'url' => $absenceUrl,
 			'locked' => $locked,
 			'menuData' => [
-				'menu_item_id' => 'menu_absence',
+				'menu_item_id' => self::MENU_ITEMS_ID['absence'],
 				'is_locked' => $locked,
 				'onclick' => $onclick,
 			],
@@ -84,7 +95,7 @@ class TimemanSection
 			'locked' => $locked,
 			'menuData' => [
 				'is_locked' => $locked,
-				'menu_item_id' => 'menu_login_history',
+				'menu_item_id' => self::MENU_ITEMS_ID['login_history'],
 				'onclick' => $onclick,
 			],
 		];
@@ -92,17 +103,12 @@ class TimemanSection
 
 	public static function getWorkTime(): array
 	{
-		$available =
-			static::isBitrix24()
-				? static::isTimemanAvailable()
-				: static::isTimemanInstalled() && \CBXFeatures::isFeatureEnabled('timeman')
-		;
-
+		$available = static::isBitrix24() || (static::isTimemanInstalled() && \CBXFeatures::isFeatureEnabled('timeman'));
 		$locked = false;
 		$onclick = '';
 		$workTimeUrl = SITE_DIR . 'timeman/timeman.php';
 
-		if (static::isBitrix24() && !static::isTimemanInstalled())
+		if (static::isBitrix24() && (!Feature::isFeatureEnabled('timeman') || !static::isTimemanInstalled()))
 		{
 			$locked = true;
 			$workTimeUrl = '';
@@ -116,7 +122,7 @@ class TimemanSection
 			'url' => $workTimeUrl,
 			'locked' => $locked,
 			'menuData' => [
-				'menu_item_id' => 'menu_timeman',
+				'menu_item_id' => self::MENU_ITEMS_ID['worktime'],
 				'is_locked' => $locked,
 				'onclick' => $onclick,
 			],
@@ -125,11 +131,7 @@ class TimemanSection
 
 	public static function getBitrix24Time(): array
 	{
-		$available =
-			static::isBitrix24()
-				? static::isTimemanAvailable() && static::isBitrix24TimeAvailable()
-				: static::isBitrix24TimeAvailable()
-		;
+		$available = static::isBitrix24TimeAvailable();
 
 		return [
 			'id' => 'bitrix24_time',
@@ -137,7 +139,7 @@ class TimemanSection
 			'available' => $available,
 			'url' => static::isBitrix24() ? '/timeman/bitrix24time.php' : SITE_DIR . 'timeman/b24time.php',
 			'menuData' => [
-				'menu_item_id' => 'menu_bitrix24time',
+				'menu_item_id' => self::MENU_ITEMS_ID['bitrix24_time'],
 			],
 		];
 	}
@@ -179,23 +181,20 @@ class TimemanSection
 			'available' => $available,
 			'url' => SITE_DIR . 'timeman/monitor_report.php',
 			'menuData' => [
-				'menu_item_id' => 'menu_pwt_report',
+				'menu_item_id' => self::MENU_ITEMS_ID['monitor_report'],
 			],
 		];
 	}
 
 	public static function getWorkReport(): array
 	{
-		$available =
-			static::isBitrix24()
-				? static::isTimemanAvailable()
-				: static::isTimemanInstalled() && \CBXFeatures::isFeatureEnabled('timeman')
-		;
+		$available = static::isBitrix24() || (static::isTimemanInstalled() && \CBXFeatures::isFeatureEnabled('timeman'));
 
 		$onclick = '';
 		$locked = false;
 		$workReportUrl = SITE_DIR . 'timeman/work_report.php';
-		if (static::isBitrix24() && !static::isTimemanInstalled())
+
+		if (static::isBitrix24() && (!Feature::isFeatureEnabled('timeman') || !static::isTimemanInstalled()))
 		{
 			$locked = true;
 			$workReportUrl = '';
@@ -209,7 +208,7 @@ class TimemanSection
 			'url' => $workReportUrl,
 			'locked' => $locked,
 			'menuData' => [
-				'menu_item_id' => 'menu_work_report',
+				'menu_item_id' => self::MENU_ITEMS_ID['work_report'],
 				'is_locked' => $locked,
 				'onclick' => $onclick,
 			],
@@ -219,6 +218,7 @@ class TimemanSection
 	public static function getSchedules(): array
 	{
 		$canReadSchedules = false;
+
 		if (Loader::includeModule('timeman'))
 		{
 			global $USER;
@@ -230,10 +230,12 @@ class TimemanSection
 		$locked = false;
 		$onclick = '';
 		$workSchedulesUrl = SITE_DIR . 'timeman/schedules/';
+
 		if (static::isBitrix24())
 		{
-			$available = static::isTimemanAvailable();
-			if (!static::isTimemanInstalled())
+			$available = true;
+
+			if ((!Feature::isFeatureEnabled('timeman') || !static::isTimemanInstalled()))
 			{
 				$locked = true;
 				$workSchedulesUrl = '';
@@ -256,7 +258,7 @@ class TimemanSection
 			'url' => $workSchedulesUrl,
 			'locked' => $locked,
 			'menuData' => [
-				'menu_item_id' => 'menu_schedules_list',
+				'menu_item_id' => self::MENU_ITEMS_ID['schedules'],
 				'is_locked' => $locked,
 				'onclick' => $onclick,
 			],
@@ -266,6 +268,7 @@ class TimemanSection
 	public static function getPermissions(): array
 	{
 		$available = false;
+
 		if (Loader::includeModule('timeman'))
 		{
 			global $USER;
@@ -273,9 +276,9 @@ class TimemanSection
 			$available = $permissionsManager->canUpdateSettings();
 		}
 
-		if ($available && !static::isBitrix24())
+		if ($available)
 		{
-			$available = \CBXFeatures::isFeatureEnabled('timeman');
+			$available = static::isBitrix24() ? Feature::isFeatureEnabled('timeman') : \CBXFeatures::isFeatureEnabled('timeman');
 		}
 
 		return [
@@ -284,23 +287,19 @@ class TimemanSection
 			'available' => $available,
 			'url' => SITE_DIR . 'timeman/settings/permissions/',
 			'menuData' => [
-				'menu_item_id' => 'menu_worktime_settings_permissions',
+				'menu_item_id' => self::MENU_ITEMS_ID['timeman_permissions'],
 			],
 		];
 	}
 
 	public static function getMeetings(): array
 	{
-		$available =
-			static::isBitrix24()
-				? static::isMeetingAvailable()
-				: static::isMeetingInstalled() && \CBXFeatures::isFeatureEnabled('Meeting')
-		;
+		$available = static::isBitrix24() || (static::isMeetingInstalled() && \CBXFeatures::isFeatureEnabled('Meeting'));
 		$locked = false;
 		$onclick = '';
 		$meetingUrl = SITE_DIR . 'timeman/meeting/';
 
-		if (static::isBitrix24() && !static::isMeetingInstalled())
+		if (static::isBitrix24() && (!Feature::isFeatureEnabled('meeting') || !static::isMeetingInstalled()))
 		{
 			$locked = true;
 			$meetingUrl = '';
@@ -314,7 +313,7 @@ class TimemanSection
 			'url' => $meetingUrl,
 			'locked' => $locked,
 			'menuData' => [
-				'menu_item_id' => 'menu_meeting',
+				'menu_item_id' => self::MENU_ITEMS_ID['meetings'],
 				'is_locked' => $locked,
 				'onclick' => $onclick,
 			],
@@ -326,32 +325,27 @@ class TimemanSection
 		return ModuleManager::isModuleInstalled('timeman');
 	}
 
-	public static function isTimemanAvailable(): bool
-	{
-		return Option::get('bitrix24', 'feature_timeman') !== 'N';
-	}
-
 	public static function isMeetingInstalled(): bool
 	{
 		return ModuleManager::isModuleInstalled('meeting');
 	}
 
-	public static function isMeetingAvailable(): bool
-	{
-		return Option::get('bitrix24', 'feature_meeting') !== 'N';
-	}
-
 	public static function isBitrix24(): bool
 	{
-		return \Bitrix\Main\Loader::includeModule('bitrix24');
+		return Loader::includeModule('bitrix24');
 	}
 
 	public static function isAvailable(): bool
 	{
 		$items = static::getItems();
+
 		foreach ($items as $item)
 		{
-			if (isset($item['available']) && $item['available'] === true)
+			if (
+				isset($item['available'], $item['id'])
+				&& $item['available'] === true
+				&& ToolsManager::getInstance()->checkAvailabilityByToolId($item['id'])
+			)
 			{
 				return true;
 			}
@@ -368,9 +362,10 @@ class TimemanSection
 	public static function getRootMenuItem(): array
 	{
 		$extraUrls = [];
+
 		foreach (static::getItems() as $item)
 		{
-			if ($item['available'])
+			if ($item['available'] && ToolsManager::getInstance()->checkAvailabilityByToolId($item['id']))
 			{
 				if (isset($item['url']) && is_string($item['url']))
 				{

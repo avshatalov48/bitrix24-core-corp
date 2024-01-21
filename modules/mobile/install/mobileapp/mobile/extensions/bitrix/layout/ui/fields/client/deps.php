@@ -2,9 +2,10 @@
 
 return [
 	'extensions' => [
-		'require-lazy',
 		'loc',
 		'alert',
+		'apptheme',
+		'require-lazy',
 		'utils/array',
 		'utils/string',
 		'event-emitter',
@@ -15,6 +16,6 @@ return [
 		'crm:loc',
 		'layout/ui/buttons/add-button',
 		'assets/common',
-		'selector/widget/factory'
+		'selector/widget/factory',
 	],
 ];

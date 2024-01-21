@@ -30,7 +30,7 @@ class IncomingChannel
 
 	/**
 	 * @param int[] $activityIds
-	 * @return array
+	 * @return int[]
 	 */
 	public function getIncomingChannelActivityIds(array $activityIds): array
 	{
@@ -40,13 +40,12 @@ class IncomingChannel
 			return [];
 		}
 
-		$items = IncomingChannelTable::query()
+		return IncomingChannelTable::query()
 			->whereIn('ACTIVITY_ID', $activityIds)
 			->setSelect(['ACTIVITY_ID'])
-			->fetchAll()
+			->fetchCollection()
+			->getActivityIdList()
 		;
-
-		return array_column($items, 'ACTIVITY_ID');
 	}
 
 	public function register(int $activityId, int $responsibleId, bool $isComplete): void

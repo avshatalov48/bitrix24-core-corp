@@ -2,8 +2,9 @@
 
 use Bitrix\Crm\Component\Base;
 use Bitrix\Crm\FieldMultiTable;
-use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Integration;
+use Bitrix\Crm\Integration\Bitrix24\Product;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Multifield\Type\Email;
 use Bitrix\Crm\Multifield\Type\Phone;
 use Bitrix\Crm\RelationIdentifier;
@@ -29,7 +30,9 @@ class CrmChannelSelectorComponent extends Base
 		$id = $arParams['id'] ?? 'channel-selector-' . \Bitrix\Main\Security\Random::getString(5);
 
 		$arParams['id'] = $id;
+		$arParams['documentTitle'] = $arParams['documentTitle'] ?? '';
 		$arParams['body'] = $arParams['body'] ?? '';
+		$arParams['fullBody'] = $arParams['fullBody'] ?? '';
 		$arParams['title'] = $arParams['title'] ?? '';
 		$arParams['link'] = $arParams['link'] ?? '';
 		$arParams['isLinkObtainable'] = ($arParams['isLinkObtainable'] ?? null) === true;
@@ -43,6 +46,8 @@ class CrmChannelSelectorComponent extends Base
 		$arParams['config'] = (array)($arParams['config'] ?? null);
 		$arParams['isForceDefaultConfig'] = (bool)($arParams['isForceDefaultConfig'] ?? false);
 		$arParams['skipTemplate'] = (bool)($arParams['skipTemplate'] ?? false);
+		$arParams['templateCode'] = (string)($arParams['templateCode'] ?? null);
+		$arParams['templatePlaceholders'] = (array)($arParams['templatePlaceholders'] ?? []);
 
 		return parent::onPrepareComponentParams($arParams);
 	}
@@ -111,7 +116,9 @@ class CrmChannelSelectorComponent extends Base
 			'id' => $this->arParams['id'],
 			'channels' => $channels,
 			'communications' => $communications,
+			'documentTitle' => $this->arParams['documentTitle'],
 			'body' => $this->arParams['body'],
+			'fullBody' => $this->arParams['fullBody'],
 			'title' => $this->arParams['title'],
 			'link' => $this->arParams['link'],
 			'isLinkObtainable' => $this->arParams['isLinkObtainable'],
@@ -132,6 +139,25 @@ class CrmChannelSelectorComponent extends Base
 	{
 		$channels = [];
 
+		$userId = Service\Container::getInstance()->getContext()->getUserId();
+
+		if (!empty($this->arParams['templateCode']) && Product::isRegionRussian(true))
+		{
+			foreach(Integration\NotificationsManager::getChannelsList([], $userId) as $channel)
+			{
+				$channels[] = [
+					'type' => Phone::ID,
+					'title' => $channel->getShortName(),
+					'canBeShown' => Integration\NotificationsManager::canUse(),
+					'isAvailable' => Integration\NotificationsManager::canSendMessage(),
+					'id' => $channel->getId(),
+					'templateCode' => $this->arParams['templateCode'],
+					'templatePlaceholders' => $this->arParams['templatePlaceholders'],
+					'categoryTitle' => Loc::getMessage('CRM_CHANNEL_SELECTOR_CATEGORY_SMS_2'),
+				];
+			}
+		}
+
 		foreach (Integration\SmsManager::getSenderInfoList() as $senderInfo)
 		{
 			// template based providers can not send links
@@ -144,11 +170,9 @@ class CrmChannelSelectorComponent extends Base
 				'type' => Phone::ID,
 				'title' => $senderInfo['name'],
 				'canBeShown' => $senderInfo['canUse'],
-				'isAvailable' =>
-					$senderInfo['canUse']
-					&& !empty($communications[Phone::ID])
-				,
+				'isAvailable' => $senderInfo['canUse'] && !empty($communications[Phone::ID]),
 				'id' => $senderInfo['id'],
+				'categoryTitle' => Loc::getMessage('CRM_CHANNEL_SELECTOR_CATEGORY_SMS'),
 			];
 		}
 

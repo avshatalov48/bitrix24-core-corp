@@ -1,7 +1,8 @@
-import {Action} from "../../../action";
-import {Label} from 'ui.label';
-import {TagType} from '../../enums/tag-type';
-import {Dom, Type} from 'main.core';
+import { Label } from 'ui.label';
+import { Dom, Type } from 'main.core';
+
+import { Action } from '../../../action';
+import { TagType } from '../../enums/tag-type';
 
 export const Tag = {
 	props: {
@@ -28,43 +29,51 @@ export const Tag = {
 		state: String,
 	},
 	computed: {
-		className(): Object {
+		className(): Object
+		{
 			return {
 				'crm-timeline__card-status': true,
 				'--clickable': !!this.action,
 				'--hint': !!this.hint,
-			}
+			};
 		},
 
-		tagTypeToLabelColorDict() {
+		tagTypeToLabelColorDict(): Object
+		{
 			return {
 				[TagType.PRIMARY]: Label.Color.LIGHT_BLUE,
 				[TagType.SECONDARY]: Label.Color.LIGHT,
+				[TagType.LAVENDER]: Label.Color.LAVENDER,
 				[TagType.SUCCESS]: Label.Color.LIGHT_GREEN,
 				[TagType.WARNING]: Label.Color.LIGHT_YELLOW,
 				[TagType.FAILURE]: Label.Color.LIGHT_RED,
 			};
 		},
 
-		tagContainerRef() {
+		tagContainerRef(): HTMLDivElement
+		{
 			return this.$refs.tag;
-		}
+		},
 	},
 	methods: {
 
-		getLabelColorFromTagType(tagType) {
+		getLabelColorFromTagType(tagType)
+		{
 			const lowerCaseTagType = tagType ? tagType.toLowerCase() : '';
 			const labelColor = this.tagTypeToLabelColorDict[lowerCaseTagType];
-			return labelColor ? labelColor : Label.Color.LIGHT;
+
+			return labelColor || Label.Color.LIGHT;
 		},
 
-		renderTag(tagOptions): HTMLElement | null {
-			if (!tagOptions || !this.tagContainerRef) {
+		// eslint-disable-next-line consistent-return
+		renderTag(tagOptions): HTMLElement | null
+		{
+			if (!tagOptions || !this.tagContainerRef)
+			{
 				return null;
 			}
 
-
-			const {title, type} = tagOptions;
+			const { title, type } = tagOptions;
 
 			const uppercaseTitle = title && Type.isString(title) ? title.toUpperCase() : '';
 			const label = new Label({
@@ -77,8 +86,10 @@ export const Tag = {
 			Dom.append(label.render(), this.tagContainerRef);
 		},
 
-		executeAction() {
-			if (!this.action) {
+		executeAction(): void
+		{
+			if (!this.action)
+			{
 				return;
 			}
 
@@ -86,14 +97,18 @@ export const Tag = {
 			action.execute(this);
 		},
 	},
-	mounted() {
-		this.renderTag({title: this.title, type: this.type});
+
+	mounted(): void
+	{
+		this.renderTag({ title: this.title, type: this.type });
 	},
 
-	updated() {
-		this.renderTag({title: this.title, type: this.type})
+	updated(): void
+	{
+		this.renderTag({ title: this.title, type: this.type });
 	},
+
 	template: `
 		<div ref="tag" :title="hint" :class="className" @click="executeAction"></div>
-	`
+	`,
 };

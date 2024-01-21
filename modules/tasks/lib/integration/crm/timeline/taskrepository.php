@@ -59,13 +59,21 @@ class TaskRepository implements BackGroundJob
 	 * @uses Controller::onTaskTitleUpdated
 	 * @uses Controller::onTaskCommentDeleted
 	 */
-	public function addToBackgroundJobs(array $payload, string $endpoint = '', int $priority = 0): void
+	public function addToBackgroundJobs(
+		array $payload,
+		string $endpoint = '',
+		int $priority = 0,
+		bool $isImmediately = false
+	): void
 	{
 		if (!$endpoint)
 		{
 			return;
 		}
-		if (isset($payload['IMMEDIATELY']) && $payload['IMMEDIATELY'] === true)
+		if (
+			(isset($payload['IMMEDIATELY']) && $payload['IMMEDIATELY'] === true)
+			|| $isImmediately
+		)
 		{
 			$this->controller->$endpoint($this->getBindings(), $payload);
 		}

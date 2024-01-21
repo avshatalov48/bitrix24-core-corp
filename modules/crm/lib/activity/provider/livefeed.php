@@ -797,6 +797,11 @@ class Livefeed extends Base
 		}
 	}
 
+	public static function isActivitySearchSupported(): bool
+	{
+		return false;
+	}
+
 	public static function getSupportedCommunicationStatistics()
 	{
 		return array(

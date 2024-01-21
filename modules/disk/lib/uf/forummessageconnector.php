@@ -374,6 +374,7 @@ final class ForumMessageConnector extends StubConnector
 					if(Loader::includeModule("calendar"))
 					{
 						$connector = new CalendarEventConnector($entityId);
+						$connector->setXmlId($topic["XML_ID"] ?? '');
 						$this->canRead = $connector->canRead($userId);
 
 						return $this->canRead;

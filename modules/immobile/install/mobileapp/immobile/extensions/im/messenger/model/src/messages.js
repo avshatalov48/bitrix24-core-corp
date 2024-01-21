@@ -7,10 +7,13 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 	const { Type } = require('type');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DateHelper } = require('im/messenger/lib/helper');
-	const { Logger } = require('im/messenger/lib/logger');
 	const { Uuid } = require('utils/uuid');
-	const { get } = require('utils/object');
+	const { get, clone } = require('utils/object');
 	const { reactionsModel } = require('im/messenger/model/messages/reactions');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { ObjectUtils } = require('im/messenger/lib/utils');
+
+	const logger = LoggerManager.getInstance().getLogger('model--messages');
 
 	const TEMPORARY_MESSAGE_PREFIX = 'temporary';
 
@@ -30,9 +33,13 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 		viewedByOthers: false,
 		sending: false,
 		error: false,
+		errorReason: 0, // code from rest/classes/general/rest.php:25
 		retry: false,
 		audioPlaying: false,
 		playingTime: 0,
+		attach: [],
+		richLinkId: null,
+		forward: {},
 	};
 
 	const messagesModel = {
@@ -41,6 +48,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 			collection: {},
 			chatCollection: {},
 			pinnedMessages: {},
+			temporaryMessages: {},
 		}),
 		modules: {
 			reactionsModel,
@@ -61,19 +69,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 						...state.collection[messageId],
 						reactions: rootGetters['messagesModel/reactionsModel/getByMessageId'](messageId),
 					};
-				}).sort((a, b) => {
-					if (Type.isNumber(a.id) && Type.isNumber(b.id))
-					{
-						return a.id - b.id;
-					}
-
-					if (Uuid.isV4(a.id) || Uuid.isV4(b.id))
-					{
-						return a.date - b.date;
-					}
-
-					return 0;
-				});
+				}).sort((a, b) => sortCollection(a, b));
 			},
 
 			/**
@@ -125,6 +121,10 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				});
 			},
 
+			/**
+			 * @function messagesModel/isInChatCollection
+			 * @return {Boolean}
+			 */
 			isInChatCollection: (state) => (payload) => {
 				const { messageId } = payload;
 				const message = state.collection[messageId];
@@ -196,6 +196,72 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				return lastId;
+			},
+
+			/** @function messagesModel/getBreakMessages */
+			getBreakMessages: (state) => (chatId) => {
+				const allCollectionList = clone(state.collection);
+
+				if (!allCollectionList || !Type.isNumber(chatId))
+				{
+					return [];
+				}
+
+				const list = [];
+				for (const messageId of Object.keys(allCollectionList))
+				{
+					const message = allCollectionList[messageId];
+					if (message.chatId === chatId && message.error && message.sending)
+					{
+						list.push(message);
+					}
+				}
+
+				return list;
+			},
+
+			/** @function messagesModel/getTemporaryMessagesMessages */
+			getTemporaryMessagesMessages: (state) => {
+				return clone(state.temporaryMessages);
+			},
+
+			/** @function messagesModel/getTemporaryMessageById */
+			getTemporaryMessageById: (state) => (messageId) => {
+				if (!Type.isNumber(messageId) && !Type.isStringFilled(messageId))
+				{
+					return null;
+				}
+
+				const message = state.temporaryMessages[messageId.toString()];
+				if (!message)
+				{
+					return null;
+				}
+
+				return clone(message);
+			},
+
+			/**
+			 * @function messagesModel/getFirstUnreadId
+			 * @return {number || null}
+			 */
+			getFirstUnreadId: (state) => (chatId) => {
+				if (!state.chatCollection[chatId])
+				{
+					return null;
+				}
+				const messageIds = [...state.chatCollection[chatId]].sort();
+
+				for (const messageId of messageIds)
+				{
+					const message = state.collection[messageId];
+					if (message.unread)
+					{
+						return messageId;
+					}
+				}
+
+				return null;
 			},
 		},
 		actions: {
@@ -298,6 +364,45 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				});
 			},
 
+			/** @function messagesModel/addToChatCollection */
+			addToChatCollection: (store, payload) => {
+				if (!store.state.collection[payload.id])
+				{
+					return;
+				}
+
+				const message = {
+					...messageState,
+					...validate(payload),
+				};
+
+				store.commit('setChatCollection', {
+					actionName: 'addToChatCollection',
+					data: {
+						messageList: [message],
+					},
+				});
+			},
+
+			/** @function messagesModel/setTemporaryMessages */
+			setTemporaryMessages: (store, messages) => {
+				if (!Array.isArray(messages) && Type.isPlainObject(messages))
+				{
+					messages = [messages];
+				}
+
+				messages = messages.map((message) => {
+					return { ...messageState, ...validate(message) };
+				});
+
+				store.commit('setTemporaryMessages', {
+					actionName: 'setTemporaryMessages',
+					data: {
+						messageList: messages,
+					},
+				});
+			},
+
 			/** @function messagesModel/setPinned */
 			setPinned: (store, { chatId, pinnedMessages }) => {
 				if (pinnedMessages.length === 0)
@@ -347,13 +452,35 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				});
 			},
 
+			/** @function messagesModel/deleteByChatId */
+			deleteByChatId: (store, payload) => {
+				const chatId = parseInt(payload.chatId, 10);
+
+				store.commit('deleteByChatId', {
+					actionName: 'deleteByChatId',
+					data: {
+						chatId,
+					},
+				});
+			},
+
+			/** @function messagesModel/deleteByIdList */
+			deleteByIdList: (store, payload) => {
+				const { idList } = payload;
+
+				idList.forEach((id) => {
+					store.commit('delete', {
+						actionName: 'deleteByIdList',
+						data: {
+							id,
+						},
+					});
+				});
+			},
+
 			/** @function messagesModel/delete */
 			delete: (store, payload) => {
 				const { id } = payload;
-				if (!store.state.collection[id])
-				{
-					return false;
-				}
 
 				store.commit('delete', {
 					actionName: 'delete',
@@ -361,8 +488,114 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 						id,
 					},
 				});
+			},
 
-				return true;
+			/** @function messagesModel/clearCollectionByDialogId */
+			clearCollectionByDialogId: (store, dialogId) => {
+				store.commit('clearCollection', { dialogId });
+			},
+
+			/** @function messagesModel/setReaction */
+			setReaction: (store, payload) => {
+				const {
+					messageId,
+					reactionId,
+					userList,
+				} = payload;
+
+				const message = store.rootGetters['messagesModel/getMessageById'](messageId);
+				if (!message)
+				{
+					return;
+				}
+
+				const reactionCollection = {};
+				reactionCollection[reactionId] = userList;
+
+				if (!message.params.REACTION)
+				{
+					message.params.REACTION = {};
+				}
+				message.params.REACTION = reactionCollection;
+
+				store.commit('update', {
+					id: messageId,
+					fields: message,
+				});
+			},
+
+			/** @function messagesModel/addReaction */
+			addReaction: (store, payload) => {
+				const {
+					messageId,
+					reactionId,
+					userList,
+				} = payload;
+
+				const message = store.rootGetters['messagesModel/getMessageById'](messageId);
+				if (!message)
+				{
+					return;
+				}
+
+				let reactionUserList = get(message, `params.REACTION.${reactionId}`, []);
+				reactionUserList = [...new Set(reactionUserList.concat(userList))];
+
+				const reactionCollection = {};
+				reactionCollection[reactionId] = reactionUserList;
+
+				if (!message.params.REACTION)
+				{
+					message.params.REACTION = {};
+				}
+				message.params.REACTION = reactionCollection;
+
+				store.commit('update', {
+					id: messageId,
+					fields: message,
+				});
+			},
+
+			/** @function messagesModel/removeReaction */
+			removeReaction: (store, payload) => {
+				const {
+					messageId,
+					reactionId,
+					userList,
+				} = payload;
+
+				const message = store.rootGetters['messagesModel/getMessageById'](messageId);
+				if (!message)
+				{
+					return;
+				}
+
+				const userListIndex = {};
+				userList.forEach((userId) => {
+					userListIndex[userId] = true;
+				});
+
+				let reactionUserList = get(message, `params.REACTION.${reactionId}`, []);
+				if (reactionUserList.length === 0)
+				{
+					return;
+				}
+
+				reactionUserList = reactionUserList.filter((userId) => !userListIndex[userId]);
+
+				const reactionCollection = {};
+				reactionCollection[reactionId] = reactionUserList;
+
+				if (!message.params.REACTION)
+				{
+					message.params.REACTION = {};
+				}
+				message.params.REACTION = reactionCollection;
+
+				store.commit('update', {
+					id: messageId,
+					fields: message,
+				});
 			},
 
 			/** @function messagesModel/readMessages */
@@ -505,6 +738,74 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 					},
 				});
 			},
+			/** @function messagesModel/deleteAttach */
+			deleteAttach: (store, payload) => {
+				const { messageId, attachId } = payload;
+
+				/** @type {MessagesModelState} */
+				const message = store.state.collection[messageId];
+
+				if (!Type.isArray(message?.attach))
+				{
+					return;
+				}
+
+				const attach = message.attach.filter((attachItem) => {
+					return attachItem.id !== attachId;
+				});
+
+				store.commit('update', {
+					actionName: 'deleteAttach',
+					data: {
+						id: messageId,
+						fields: {
+							attach,
+							richLinkId: null,
+						},
+					},
+				});
+			},
+
+			/** @function messagesModel/deleteTemporaryMessage */
+			deleteTemporaryMessage: (store, payload) => {
+				const { id } = payload;
+				if (!Type.isNumber(id) && !Type.isStringFilled(id))
+				{
+					return false;
+				}
+
+				if (!store.state.temporaryMessages[id])
+				{
+					return false;
+				}
+
+				store.commit('deleteTemporaryMessage', {
+					actionName: 'deleteTemporaryMessage',
+					data: {
+						id,
+					},
+				});
+
+				return true;
+			},
+
+			/** @function messagesModel/deleteTemporaryMessages */
+			deleteTemporaryMessages: (store, payload) => {
+				const { ids } = payload;
+				if (!Type.isArray(ids) && !Type.isArrayFilled(ids))
+				{
+					return false;
+				}
+
+				store.commit('deleteTemporaryMessages', {
+					actionName: 'deleteTemporaryMessages',
+					data: {
+						ids,
+					},
+				});
+
+				return true;
+			},
 		},
 		mutations: {
 			/**
@@ -512,7 +813,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 			 * @param {MutationPayload} payload
 			 */
 			setChatCollection: (state, payload) => {
-				Logger.warn('messagesModel: setChatCollection mutation', payload);
+				logger.log('messagesModel: setChatCollection mutation', payload);
 
 				const {
 					messageList,
@@ -532,7 +833,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 			 * @param {MutationPayload} payload
 			 */
 			store: (state, payload) => {
-				Logger.warn('messagesModel: store mutation', payload);
+				logger.log('messagesModel: store mutation', payload);
 
 				const {
 					messageList,
@@ -549,8 +850,26 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 			 * @param state
 			 * @param {MutationPayload} payload
 			 */
+			setTemporaryMessages: (state, payload) => {
+				logger.log('messagesModel: setTemporaryMessages mutation', payload);
+
+				const {
+					messageList,
+				} = payload.data;
+
+				messageList.forEach((message) => {
+					message.params = { ...messageState.params, ...message.params };
+
+					state.temporaryMessages[message.id] = message;
+				});
+			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			setPinned: (state, payload) => {
-				Logger.warn('messagesModel: setPinned mutation', payload);
+				logger.log('messagesModel: setPinned mutation', payload);
 
 				const {
 					chatId,
@@ -572,7 +891,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 			 * @param {MutationPayload} payload
 			 */
 			updateWithId: (state, payload) => {
-				Logger.warn('messagesModel: updateWithId mutation', payload);
+				logger.log('messagesModel: updateWithId mutation', payload);
 
 				const {
 					id,
@@ -586,8 +905,9 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				if (state.chatCollection[currentMessage.chatId].has(id))
 				{
 					state.chatCollection[currentMessage.chatId].delete(id);
-					state.chatCollection[currentMessage.chatId].add(fields.id);
 				}
+
+				state.chatCollection[currentMessage.chatId].add(fields.id);
 			},
 
 			/**
@@ -595,7 +915,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 			 * @param {MutationPayload} payload
 			 */
 			update: (state, payload) => {
-				Logger.warn('messagesModel: update mutation', payload);
+				logger.log('messagesModel: update mutation', payload);
 
 				const {
 					id,
@@ -613,11 +933,18 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 			 * @param {MutationPayload} payload
 			 */
 			delete: (state, payload) => {
-				Logger.warn('messagesModel: delete mutation', payload);
+				logger.log('messagesModel: delete mutation', payload);
 				const {
 					id,
 				} = payload.data;
-				const { chatId } = state.collection[id];
+
+				const message = state.collection[id];
+				if (!message)
+				{
+					return;
+				}
+
+				const { chatId } = message;
 
 				state.chatCollection[chatId].delete(id);
 				delete state.collection[id];
@@ -627,8 +954,53 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 			 * @param state
 			 * @param {MutationPayload} payload
 			 */
+			deleteByChatId: (state, payload) => {
+				logger.log('messagesModel: deleteByChatId mutation', payload);
+				const {
+					chatId,
+				} = payload.data;
+
+				delete state.chatCollection[chatId];
+				Object.entries(state.collection).forEach(([messageId, message]) => {
+					if (message.chatId === chatId)
+					{
+						delete state.collection[messageId];
+					}
+				});
+			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
+			deleteTemporaryMessage: (state, payload) => {
+				logger.log('messagesModel: deleteTemporaryMessage mutation', payload);
+				const {
+					id,
+				} = payload.data;
+
+				delete state.temporaryMessages[id.toString()];
+			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
+			deleteTemporaryMessages: (state, payload) => {
+				logger.log('messagesModel: deleteTemporaryMessages mutation', payload);
+				const {
+					ids,
+				} = payload.data;
+
+				ids.forEach((id) => delete state.temporaryMessages[id.toString()]);
+			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			clearCollection: (state, payload) => {
-				Logger.warn('messagesModel: clear collection mutation', payload);
+				logger.log('messagesModel: clear collection mutation', payload.chatId);
 				const {
 					chatId,
 				} = payload.data;
@@ -645,11 +1017,12 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 		if (Type.isNumber(fields.id))
 		{
 			result.id = fields.id;
+			result.templateId = (Uuid.isV4(fields.templateId) || Uuid.isV4(fields.uuid)) ? (fields.templateId || fields.uuid) : '';
 		}
-		else if (Uuid.isV4(fields.templateId))
+		else if (Uuid.isV4(fields.templateId) || Uuid.isV4(fields.uuid))
 		{
 			result.id = fields.templateId;
-			result.templateId = fields.templateId;
+			result.templateId = fields.templateId || fields.uuid;
 		}
 		else if (Uuid.isV4(fields.id))
 		{
@@ -711,11 +1084,38 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 			}
 		}
 
+		if (Type.isArray(fields.attach))
+		{
+			result.attach = fields.attach;
+		}
+
+		if (Type.isNumber(fields.richLinkId) || Type.isNull(fields.richLinkId))
+		{
+			result.richLinkId = fields.richLinkId;
+		}
+
 		if (Type.isPlainObject(fields.params))
 		{
-			const { params, fileIds } = validateParams(fields.params);
+			const { params, fileIds, attach, richLinkId } = validateParams(fields.params);
 			result.params = params;
 			result.files = fileIds;
+			result.richLinkId = richLinkId;
+
+			if (Type.isUndefined(result.attach))
+			{
+				result.attach = attach;
+			}
+
+			if (Type.isUndefined(result.richLinkId))
+			{
+				result.richLinkId = richLinkId;
+			}
+		}
+
+		// passed when a file is received from the local database
+		if (Type.isArrayFilled(fields.files))
+		{
+			result.files = fields.files;
 		}
 
 		if (Type.isPlainObject(fields.reactionCollection))
@@ -765,6 +1165,11 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 			result.error = fields.error;
 		}
 
+		if (Type.isNumber(fields.errorReason))
+		{
+			result.errorReason = fields.errorReason;
+		}
+
 		if (Type.isBoolean(fields.retry))
 		{
 			result.retry = fields.retry;
@@ -780,6 +1185,11 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 			result.playingTime = fields.playingTime;
 		}
 
+		if (Type.isObject(fields.forward) && fields.forward.id)
+		{
+			result.forward = fields.forward;
+		}
+
 		return result;
 	}
 
@@ -787,6 +1197,9 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 	{
 		const params = {};
 		let fileIds = [];
+		let attach = [];
+		let richLinkId = null;
+
 		Object.entries(rawParams).forEach(([key, value]) => {
 			if (key === 'COMPONENT_ID' && Type.isStringFilled(value))
 			{
@@ -804,13 +1217,43 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 			{
 				params.replyId = Type.isString(value) ? parseInt(value, 10) : value;
 			}
+			else if (key === 'ATTACH')
+			{
+				attach = ObjectUtils.convertKeysToCamelCase(clone(value), true);
+				params.ATTACH = value;
+			}
+			else if (key === 'URL_ID')
+			{
+				richLinkId = value[0] ? Number(value[0]) : null;
+				params.URL_ID = value;
+			}
 			else
 			{
 				params[key] = value;
 			}
 		});
 
-		return { params, fileIds };
+		return { params, fileIds, attach, richLinkId };
+	}
+
+	function sortCollection(a, b)
+	{
+		if (Uuid.isV4(a.id) && !Uuid.isV4(b.id))
+		{
+			return 1;
+		}
+
+		if (!Uuid.isV4(a.id) && Uuid.isV4(b.id))
+		{
+			return -1;
+		}
+
+		if (Uuid.isV4(a.id) && Uuid.isV4(b.id))
+		{
+			return a.date.getTime() - b.date.getTime();
+		}
+
+		return a.id - b.id;
 	}
 
 	module.exports = {

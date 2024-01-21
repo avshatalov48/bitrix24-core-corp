@@ -9,6 +9,8 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 	const { SidebarTabView } = require('im/messenger/controller/sidebar/tabs/tab-view');
 	const { SidebarProfileUserCounter } = require('im/messenger/controller/sidebar/sidebar-profile-user-counter');
 	const { Type } = require('type');
+	const { ChatTitle } = require('im/messenger/lib/element');
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @class SidebarView
@@ -62,7 +64,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 			return View(
 				{
 					style: {
-						backgroundColor: '#FFFFFF',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						justifyContent: 'flex-start',
 						alignItems: 'center',
 						flexDirection: 'column',
@@ -172,7 +174,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 				},
 				Text({
 					style: {
-						color: '#333333',
+						color: ChatTitle.createFromDialogId(this.props.dialogId).getTitleColor(),
 						fontSize: 18,
 						fontWeight: 500,
 						textStyle: 'normal',
@@ -196,7 +198,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 			}
 
 			const styleText = {
-				color: '#333333',
+				color: AppTheme.colors.base1,
 				fontSize: 14,
 				fontWeight: 400,
 				textStyle: 'normal',
@@ -252,7 +254,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 			const departmentName = this.getUserDepartmentName(this.state.userData.departmentName);
 
 			const styleText = {
-				color: '#959CA4',
+				color: AppTheme.colors.base3,
 				fontSize: 14,
 				fontWeight: 400,
 				textStyle: 'normal',
@@ -278,7 +280,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 						style: {
 							width: 80,
 							height: 8,
-							backgroundColor: '#A8ADB4',
+							backgroundColor: AppTheme.colors.base7,
 							borderRadius: 2,
 						},
 					}),
@@ -304,7 +306,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 			const { userData } = this.state;
 
 			const textStyle = {
-				color: '#959CA4',
+				color: AppTheme.colors.base3,
 				fontSize: 14,
 				fontWeight: 400,
 				textStyle: 'normal',

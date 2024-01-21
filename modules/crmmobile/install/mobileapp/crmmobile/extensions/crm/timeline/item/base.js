@@ -2,6 +2,7 @@
  * @module crm/timeline/item/base
  */
 jn.define('crm/timeline/item/base', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { MarketBanner } = require('crm/timeline/item/ui/market-banner');
 	const { TimelineItemHeader } = require('crm/timeline/item/ui/header');
 	const { TimelineItemIcon } = require('crm/timeline/item/ui/icon');
@@ -99,13 +100,15 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 		{
 			return View(
 				{
-					ref: (ref) => this.containerRef = ref,
+					ref: (ref) => {
+						this.containerRef = ref;
+					},
 					testId: `${this.model.type}_${this.model.id}`,
 					style: {
 						borderRadius: 12,
 						padding: 0,
 						marginBottom: 16,
-						borderColor: '#dfe0e3',
+						borderColor: AppTheme.colors.bgSeparatorPrimary,
 						borderWidth: this.model.hasLowPriority ? 1 : 0,
 					},
 				},
@@ -310,3 +313,4 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 
 	module.exports = { TimelineItemBase };
 });
+

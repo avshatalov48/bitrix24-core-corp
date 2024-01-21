@@ -4,8 +4,9 @@
 jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const AppTheme = require('apptheme');
 	const { CommunicationSelector } = require('crm/communication/communication-selector');
-	const { line } = require('utils/skeleton');
+	const { Line } = require('utils/skeleton');
 
 	/**
 	 * @class ClientsSelector
@@ -31,7 +32,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (requi
 					this.renderLabel(),
 					!this.props.showShimmer && this.renderClient(),
 					!this.props.showShimmer && this.renderAddPhoneLink(),
-					this.props.showShimmer && line(100, 11, 4, 3),
+					this.props.showShimmer && Line(100, 11, 4, 3),
 				),
 			);
 		}
@@ -60,7 +61,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (requi
 					},
 					BBCodeText({
 						style: styles.client,
-						value: `[C type=dot textColor=#828B95 lineColor=#828B95][COLOR="#828B95"][URL="#"]${name}[/URL][/COLOR][/C]`,
+						value: `[C type=dot textColor=${AppTheme.colors.base3} lineColor=${AppTheme.colors.base3}][COLOR=${AppTheme.colors.base3}][URL="#"]${name}[/URL][/COLOR][/C]`,
 						onLinkClick: this.showSelector,
 						linksUnderline: false,
 						numberOfLines: 1,
@@ -132,7 +133,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (requi
 
 			return BBCodeText({
 				style: styles.addPhone,
-				value: `[C type=dot textColor=#C48300 lineColor=#C48300][COLOR="#C48300"][URL="#"]${addPhoneTitle}[/URL][/COLOR][/C]`,
+				value: `[C type=dot textColor=${AppTheme.colors.accentSoftElementOrange1} lineColor=${AppTheme.colors.accentSoftElementOrange1}][COLOR=${AppTheme.colors.accentMainWarning}][URL="#"]${addPhoneTitle}[/URL][/COLOR][/C]`,
 				onLinkClick: showAddPhoneToContactDrawer,
 				linksUnderline: false,
 			});
@@ -229,7 +230,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (requi
 	}
 
 	const icons = {
-		arrow: '<svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.3065 0.753906L5.66572 3.39469L5.00042 4.04969L4.34773 3.39469L1.70695 0.753906L0.775096 1.68576L5.00669 5.91735L9.23828 1.68576L8.3065 0.753906Z" fill="#BDC1C6"/></svg>',
+		arrow: `<svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.3065 0.753906L5.66572 3.39469L5.00042 4.04969L4.34773 3.39469L1.70695 0.753906L0.775096 1.68576L5.00669 5.91735L9.23828 1.68576L8.3065 0.753906Z" fill="${AppTheme.colors.base5}"/></svg>`,
 	};
 
 	const styles = {
@@ -239,7 +240,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (requi
 		},
 		label: {
 			fontSize: 14,
-			color: '#959ca4',
+			color: AppTheme.colors.base4,
 			marginRight: 4,
 		},
 		clientOuterContainer: {
@@ -250,15 +251,15 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (requi
 		},
 		clientContainer: (hasCommunicationsSelection) => ({
 			marginRight: hasCommunicationsSelection ? 12 : 4,
-			color: '#828B95',
+			color: AppTheme.colors.base3,
 		}),
 		client: {
 			fontSize: 14,
-			color: '#828b95',
+			color: AppTheme.colors.base3,
 		},
 		addPhone: {
 			fontSize: 14,
-			color: '#c48300',
+			color: AppTheme.colors.accentMainWarning,
 		},
 		arrow: {
 			width: 10,

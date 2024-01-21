@@ -17,3 +17,6 @@ $MESS['IMMOBILE_DIALOG_CREATOR_CHANNEL_NEW'] = 'Канал';
 $MESS['IMMOBILE_DIALOG_CREATOR_CHAT_NEW'] = 'Групповой чат';
 $MESS["IMMOBILE_DIALOG_CREATOR_CONNECTION_ERROR"] = "Ошибка соединения с Битрикс24, проверьте параметры подключения к сети.";
 $MESS["IMMOBILE_DIALOG_CREATOR_API_ERROR"] = "Во время создания чата произошла ошибка, попробуйте позже.";
+$MESS["IMMOBILE_DIALOG_CREATOR_RECENT_TEXT"] = "Недавние";
+$MESS["IMMOBILE_DIALOG_CREATOR_DIALOG_INFO_TITLE"] = "Название";
+$MESS['IMMOBILE_DIALOG_CREATOR_IS_YOU'] = '(Это вы)';

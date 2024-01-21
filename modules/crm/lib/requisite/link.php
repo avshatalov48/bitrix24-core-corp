@@ -36,89 +36,46 @@ class LinkTable extends Entity\DataManager
 			'MC_BANK_DETAIL_ID' => array('data_type' => 'integer')
 		);
 	}
+
 	public static function upsert(array $data)
 	{
 		$connection = Main\Application::getConnection();
 
-		$entityTypeId = isset($data['ENTITY_TYPE_ID']) ? (int)$data['ENTITY_TYPE_ID'] : 0;
-		$entityId = isset($data['ENTITY_ID']) ? (int)$data['ENTITY_ID'] : 0;
-		$requisiteId = isset($data['REQUISITE_ID']) ? (int)$data['REQUISITE_ID'] : 0;
-		$bankDetailId = isset($data['BANK_DETAIL_ID']) ? (int)$data['BANK_DETAIL_ID'] : 0;
-		$mcRequisiteId = isset($data['MC_REQUISITE_ID']) ? (int)$data['MC_REQUISITE_ID'] : 0;
-		$mcBankDetailId = isset($data['MC_BANK_DETAIL_ID']) ? (int)$data['MC_BANK_DETAIL_ID'] : 0;
+		$entityTypeId = (int)($data['ENTITY_TYPE_ID'] ?? 0);
+		$entityId = (int)($data['ENTITY_ID'] ?? 0);
+		$requisiteId = (int)($data['REQUISITE_ID'] ?? 0);
+		$bankDetailId = (int)($data['BANK_DETAIL_ID'] ?? 0);
+		$mcRequisiteId = (int)($data['MC_REQUISITE_ID'] ?? 0);
+		$mcBankDetailId = (int)($data['MC_BANK_DETAIL_ID'] ?? 0);
 
-		if($connection instanceof Main\DB\MysqlCommonConnection)
-		{
-			$connection->queryExecute( /** @lang MySQL */
-				"INSERT INTO b_crm_requisite_link (ENTITY_TYPE_ID, ENTITY_ID, REQUISITE_ID, BANK_DETAIL_ID, ".
-				"MC_REQUISITE_ID, MC_BANK_DETAIL_ID)".PHP_EOL.
-				"VALUES ({$entityTypeId}, {$entityId}, {$requisiteId}, {$bankDetailId}, {$mcRequisiteId}, ".
-				"{$mcBankDetailId})".PHP_EOL.
-				"ON DUPLICATE KEY UPDATE ".
-				"REQUISITE_ID = {$requisiteId}, BANK_DETAIL_ID = {$bankDetailId}, ".
-				"MC_REQUISITE_ID = {$mcRequisiteId}, MC_BANK_DETAIL_ID = {$mcBankDetailId}".PHP_EOL
-			);
-		}
-		elseif($connection instanceof Main\DB\MssqlConnection)
-		{
-			$dbResult = $connection->query( /** @lang TSQL */
-				"SELECT 'X'".PHP_EOL.
-				"FROM B_CRM_REQUISITE_LINK".PHP_EOL.
-				"WHERE ENTITY_TYPE_ID = {$entityTypeId} AND ENTITY_ID = {$entityId}".PHP_EOL
-			);
-
-			if(is_array($dbResult->fetch()))
-			{
-				$connection->queryExecute( /** @lang TSQL */
-					"UPDATE B_CRM_REQUISITE_LINK".PHP_EOL.
-					"  SET REQUISITE_ID = {$requisiteId}, BANK_DETAIL_ID = {$bankDetailId}, ".
-					"MC_REQUISITE_ID = {$mcRequisiteId}, MC_BANK_DETAIL_ID = {$mcBankDetailId}".PHP_EOL.
-					"WHERE ENTITY_TYPE_ID = {$entityTypeId} AND ENTITY_ID = {$entityId}".PHP_EOL
-				);
-			}
-			else
-			{
-				$connection->queryExecute( /** @lang TSQL */
-					"INSERT INTO B_CRM_REQUISITE_LINK (ENTITY_TYPE_ID, ENTITY_ID, REQUISITE_ID, BANK_DETAIL_ID, ".
-					"MC_REQUISITE_ID, MC_BANK_DETAIL_ID)".PHP_EOL.
-					"VALUES ({$entityTypeId}, {$entityId}, {$requisiteId}, {$bankDetailId}, {$mcRequisiteId}, ".
-					"{$mcBankDetailId})".PHP_EOL
-				);
-			}
-		}
-		elseif($connection instanceof Main\DB\OracleConnection)
-		{
-			$connection->queryExecute( /** @lang Oracle */
-				"MERGE INTO B_CRM_REQUISITE_LINK".PHP_EOL.
-				"USING (SELECT {$entityTypeId} ENTITY_TYPE_ID, {$entityId} ENTITY_ID, {$requisiteId} REQUISITE_ID, ".
-				"{$bankDetailId} BANK_DETAIL_ID, {$mcRequisiteId} MC_REQUISITE_ID, ".
-				"{$mcBankDetailId} MC_BANK_DETAIL_ID FROM dual) source".PHP_EOL.
-				"ON (".PHP_EOL.
-				"	source.ENTITY_TYPE_ID = B_CRM_REQUISITE_LINK.ENTITY_TYPE_ID".PHP_EOL.
-				"	AND source.ENTITY_ID = B_CRM_REQUISITE_LINK.ENTITY_ID".PHP_EOL.
-				")".PHP_EOL.
-				"WHEN MATCHED THEN".PHP_EOL.
-				"  UPDATE SET B_CRM_REQUISITE_LINK.REQUISITE_ID = {$requisiteId}, ".
-				"B_CRM_REQUISITE_LINK.BANK_DETAIL_ID = {$bankDetailId}, ".
-				"B_CRM_REQUISITE_LINK.MC_REQUISITE_ID = {$mcRequisiteId}, ".
-				"B_CRM_REQUISITE_LINK.MC_BANK_DETAIL_ID = {$mcBankDetailId}".PHP_EOL.
-				"WHEN NOT MATCHED THEN".PHP_EOL.
-				"  INSERT (ENTITY_TYPE_ID, ENTITY_ID, REQUISITE_ID, BANK_DETAIL_ID, MC_REQUISITE_ID, ".
-				"MC_BANK_DETAIL_ID)".PHP_EOL.
-				"  VALUES ({$entityTypeId}, {$entityId}, {$requisiteId}, {$bankDetailId}, {$mcRequisiteId}, ".
-				"{$mcBankDetailId})".PHP_EOL
-			);
-		}
-		else
-		{
-			$dbType = $connection->getType();
-			throw new Main\NotSupportedException("The '{$dbType}' is not supported in current context");
-		}
+		$sql = $connection->getSqlHelper()->prepareMerge(
+			'b_crm_requisite_link',
+			[
+				'ENTITY_TYPE_ID',
+				'ENTITY_ID',
+			],
+			[
+				'ENTITY_TYPE_ID' => $entityTypeId,
+				'ENTITY_ID' => $entityId,
+				'REQUISITE_ID' => $requisiteId,
+				'BANK_DETAIL_ID' => $bankDetailId,
+				'MC_REQUISITE_ID' => $mcRequisiteId,
+				'MC_BANK_DETAIL_ID' => $mcBankDetailId,
+			],
+			[
+				'REQUISITE_ID' => $requisiteId,
+				'BANK_DETAIL_ID' => $bankDetailId,
+				'MC_REQUISITE_ID' => $mcRequisiteId,
+				'MC_BANK_DETAIL_ID' => $mcBankDetailId,
+			]
+		);
+		$connection->queryExecute($sql[0]);
 	}
+
 	public static function updateDependencies(array $newFields, array $oldFields)
 	{
-		$setFields = array();
-		$filterFields = array();
+		$setFields = [];
+		$filterFields = [];
 		if (isset($newFields['REQUISITE_ID']) && isset($oldFields['REQUISITE_ID']))
 		{
 			$newRequisiteId = $newFields['REQUISITE_ID'];
@@ -177,17 +134,9 @@ class LinkTable extends Entity\DataManager
 				$whereSql .= "{$fieldName} = {$value}";
 			}
 			$connection = Main\Application::getConnection();
-			if($connection instanceof Main\DB\MysqlCommonConnection)
-			{
-				$connection->queryExecute(
-					"UPDATE b_crm_requisite_link SET {$setSql} WHERE {$whereSql}"
-				);
-			}
-			else
-			{
-				$dbType = $connection->getType();
-				throw new Main\NotSupportedException("The '{$dbType}' is not supported in current context");
-			}
+			$connection->queryExecute(
+				"UPDATE b_crm_requisite_link SET {$setSql} WHERE {$whereSql}"
+			);
 		}
 	}
 }

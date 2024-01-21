@@ -157,7 +157,7 @@ class CrmGetDynamicInfoActivity
 
 					if (property.Visibility && visibilityNames[property.Visibility])
 					{
-						field.Expression = `{{${visibilityNames[property.Visibility]}:${property.Name}}}`;
+						field.Expression = `{{${visibilityNames[property.Visibility]}: ${property.Name}}}`;
 					}
 
 					return {
@@ -271,10 +271,26 @@ class CrmGetDynamicInfoActivity
 				fields: Object.values(this.filterFieldsMap.get(this.currentEntityTypeId)),
 				fieldPrefix: this.filteringFieldsPrefix,
 				onOpenMenu: this.onOpenFilterFieldsMenu,
+				caption: {
+					head: Loc.getMessage('CRM_GDIA_FILTERING_FIELDS_PROPERTY'),
+					collapsed: Loc.getMessage('CRM_GDIA_FILTERING_FIELDS_COLLAPSED_TEXT'),
+				},
 			});
 
+			// todo: remove 2024 with this.filterFieldsContainer.parentNode.firstElementChild
+			if (selector.modern && this.filterFieldsContainer && this.filterFieldsContainer.parentNode)
+			{
+				const element = (
+					this.filterFieldsContainer.parentNode.firstElementChild === this.filterFieldsContainer
+						? this.filterFieldsContainer.parentNode.parentNode.firstElementChild
+						: this.filterFieldsContainer.parentNode.firstElementChild
+				);
+
+				Dom.clean(element);
+			}
+
 			Dom.clean(this.filterFieldsContainer);
-			this.filterFieldsContainer.appendChild(selector.createNode());
+			Dom.append(selector.createNode(), this.filterFieldsContainer);
 		}
 	}
 

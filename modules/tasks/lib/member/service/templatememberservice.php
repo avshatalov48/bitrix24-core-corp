@@ -2,13 +2,14 @@
 
 namespace Bitrix\Tasks\Member\Service;
 
-use Bitrix\Tasks\Member\MemberService;
-use Bitrix\Tasks\Member\Repository;
+use Bitrix\Tasks\Member\AbstractMemberService;
+use Bitrix\Tasks\Member\Repository\TemplateRepository;
+use Bitrix\Tasks\Member\RepositoryInterface;
 
-class TemplateMemberService extends MemberService
+class TemplateMemberService extends AbstractMemberService
 {
-	public function getRepository(): Repository
+	public function getRepository(): RepositoryInterface
 	{
-		return new Repository\TemplateRepository($this->entityId);
+		return new TemplateRepository($this->entityId);
 	}
 }

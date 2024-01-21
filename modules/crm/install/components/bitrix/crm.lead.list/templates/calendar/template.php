@@ -462,7 +462,14 @@ BX.ready(function(){
 			BX.SidePanel.Instance.open(params.entry.data.OPEN_URL,
 				{
 					cacheable: false,
-					loader: "crm-entity-details-loader"
+					loader: "crm-entity-details-loader",
+					label: {
+						text: "<?= Loc::getMessage('CRM_COMMON_LEAD')?>",
+						bgColor: "#55D0E0",
+					},
+					width: window.innerWidth < 1500
+						? null
+						: 1500 + Math.floor((window.innerWidth - 1500) / 3)
 				});
 		}
 	});
@@ -488,7 +495,20 @@ BX.ready(function(){
 				url = url.replace('#DATE_TO#', to);
 			}
 
-			BX.SidePanel.Instance.open(url, {cacheable: false, loader: "crm-entity-details-loader"});
+			BX.SidePanel.Instance.open(
+				url,
+				{
+					cacheable: false,
+					loader: "crm-entity-details-loader",
+					label: {
+						text: "<?= Loc::getMessage('CRM_COMMON_LEAD')?>",
+						bgColor: "#55D0E0",
+					},
+					width: window.innerWidth < 1500
+						? null
+						: 1500 + Math.floor((window.innerWidth - 1500) / 3)
+				}
+			);
 		}
 	});
 	<?endif;?>

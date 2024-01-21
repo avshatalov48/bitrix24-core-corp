@@ -14,6 +14,16 @@ class FieldSet extends Main\Engine\JsonController
 
 	public function loadAction(int $entityTypeId, int $entityId, ?int $presetId = null): array
 	{
+		$hasReadAccessToEntity = Crm\Service\Container::getInstance()->getUserPermissions()
+			->checkReadPermissions($entityTypeId, $entityId)
+		;
+		if (!$hasReadAccessToEntity)
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+
+			return [];
+		}
+
 		$item = Crm\Integration\Sign\Form::getFieldSet($entityTypeId, $presetId);
 		if (!$item)
 		{

@@ -264,6 +264,10 @@ class KeyManager
 					return $createdResult->getData()['ACCESS_KEY'] ?? null;
 				}
 			}
+			else
+			{
+				return $accessKey;
+			}
 		}
 
 		return null;

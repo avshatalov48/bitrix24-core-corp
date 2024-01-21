@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,main_core,main_core_events,ui_dialogs_messagebox,ui_stageflow,crm_stageModel,main_loader,main_popup,crm_messagesender) {
+(function (exports,crm_messagesender,crm_stageModel,main_core,main_core_events,main_loader,main_popup,ui_dialogs_messagebox,ui_stageflow) {
 	'use strict';
 
 	var _templateObject, _templateObject2, _templateObject3;
@@ -292,15 +292,17 @@ this.BX = this.BX || {};
 	        moduleId: 'crm',
 	        command: this.pullTag,
 	        callback: function callback(params) {
-	          if (params && params.item && params.item.data) {
-	            var columnId = params.item.data.columnId;
-	            if (_this4.stageflowChart && _this4.stageflowChart.isActive) {
-	              var currentStage = _this4.getStageById(_this4.stageflowChart.currentStage);
-	              if (currentStage && currentStage.statusId !== columnId) {
-	                var newStage = _this4.getStageByStatusId(columnId);
-	                if (newStage) {
-	                  _this4.updateStage(newStage);
-	                }
+	          var _params$item, _this4$stageflowChart;
+	          if (!(params !== null && params !== void 0 && (_params$item = params.item) !== null && _params$item !== void 0 && _params$item.data)) {
+	            return;
+	          }
+	          var columnId = params.item.data.columnId;
+	          if ((_this4$stageflowChart = _this4.stageflowChart) !== null && _this4$stageflowChart !== void 0 && _this4$stageflowChart.isActive) {
+	            var currentStage = _this4.getStageById(_this4.stageflowChart.currentStage);
+	            if ((currentStage === null || currentStage === void 0 ? void 0 : currentStage.statusId) !== columnId) {
+	              var newStage = _this4.getStageByStatusId(columnId);
+	              if (newStage) {
+	                _this4.updateStage(newStage);
 	              }
 	            }
 	          }
@@ -607,5 +609,5 @@ this.BX = this.BX || {};
 
 	exports.ItemDetailsComponent = ItemDetailsComponent;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX,BX.Event,BX.UI.Dialogs,BX.UI,BX.Crm.Models,BX,BX.Main,BX.Crm.MessageSender));
+}((this.BX.Crm = this.BX.Crm || {}),BX.Crm.MessageSender,BX.Crm.Models,BX,BX.Event,BX,BX.Main,BX.UI.Dialogs,BX.UI));
 //# sourceMappingURL=item-details-component.bundle.js.map

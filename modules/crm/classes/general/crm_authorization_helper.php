@@ -5,12 +5,14 @@ class CCrmAuthorizationHelper
 
 	public static function GetUserPermissions()
 	{
-		if(self::$USER_PERMISSIONS === null)
+		$userId = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId();
+
+		if(!isset(self::$USER_PERMISSIONS[$userId]))
 		{
-			self::$USER_PERMISSIONS = CCrmPerms::GetCurrentUserPermissions();
+			self::$USER_PERMISSIONS[$userId] = CCrmPerms::GetCurrentUserPermissions();
 		}
 
-		return self::$USER_PERMISSIONS;
+		return self::$USER_PERMISSIONS[$userId];
 	}
 
 	public static function CheckCreatePermission($entityTypeName, $userPermissions = null)

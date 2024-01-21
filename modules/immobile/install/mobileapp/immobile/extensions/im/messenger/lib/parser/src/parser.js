@@ -24,9 +24,10 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 	const { parserImage } = require('im/messenger/lib/parser/functions/image');
 	const { parserDisk } = require('im/messenger/lib/parser/functions/disk');
 	const { parsedElements } = require('im/messenger/lib/parser/utils/parsed-elements');
+	const { parserSmile } = require('im/messenger/lib/parser/functions/smile');
 
 	const parser = {
-		decodeMessageFromText(text)
+		decodeMessageFromText(text, options = {})
 		{
 			if (!Type.isStringFilled(text))
 			{
@@ -43,8 +44,16 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			text = parserCall.simplify(text);
 
 			//TODO: support bb code [chat]
-			text = text.replace(/\[CHAT=(imol\|)?([0-9]{1,})\](.*?)\[\/CHAT\]/ig, (whole, imol, chatId, text) => text);
+			text = text.replace(/\[CHAT=(imol\|)?([0-9]{1,})\](.*?)\[\/CHAT\]/ig, (whole, imol, chatId, text) => {
+				if (imol)
+				{
+					return text;
+				}
 
+				return whole;
+			});
+
+			text = parserSmile.decodeSmile(text, options);
 			text = parserMention.decode(text);
 			text = parserQuote.decodeArrowQuote(text);
 			text = parserQuote.decodeQuote(text);

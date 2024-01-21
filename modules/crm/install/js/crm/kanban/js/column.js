@@ -751,10 +751,14 @@
 				}.bind(this));
 
 				BX.bind(window, "keyup", function(ev) {
-					if(	ev.code === "MetaRight" ||
-						ev.code === "MetaLeft" ||
-						ev.code === "ControlRight" ||
-						ev.code === "ControlRight" )
+					const codes = [
+						'MetaRight',
+						'MetaLeft',
+						'ControlRight',
+						'ControlLeft',
+					];
+
+					if (codes.includes(ev.code))
 					{
 						this.isKeyMetaPressed = false;
 					}

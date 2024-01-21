@@ -1690,7 +1690,7 @@ export class MobileDialogApplication
 			[
 				{
 					id: 'disk',
-					name: this.getLocalize('MOBILE_CHAT_PANEL_UPLOAD_DISK'),
+					name: this.getLocalize('MOBILE_CHAT_PANEL_UPLOAD_DISK_V2'),
 					dataSource:
 					{
 						multiple: false,

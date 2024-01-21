@@ -3,9 +3,11 @@
  */
 jn.define('tasks/layout/task/fields/status', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { chevronDown } = require('assets/common');
+	const AppTheme = require('apptheme');
+	const { BaseField } = require('layout/ui/fields/base');
 	const { ActionMenu } = require('tasks/layout/task/actionMenu');
 	const { ActionButton } = require('tasks/layout/task/fields/status/actionButton');
-	const { BaseField } = require('layout/ui/fields/base');
 
 	class Status extends LayoutComponent
 	{
@@ -16,23 +18,23 @@ jn.define('tasks/layout/task/fields/status', (require, exports, module) => {
 			return {
 				[Task.statusList.pending]: {
 					title: Loc.getMessage(`${locPrefix}_PENDING`),
-					backgroundColor: '#55d0e0',
+					backgroundColor: AppTheme.colors.accentExtraAqua,
 				},
 				[Task.statusList.inprogress]: {
 					title: Loc.getMessage(`${locPrefix}_IN_PROGRESS`),
-					backgroundColor: '#9dcf00',
+					backgroundColor: AppTheme.colors.accentMainSuccess,
 				},
 				[Task.statusList.waitCtrl]: {
 					title: Loc.getMessage(`${locPrefix}_SUPPOSEDLY_COMPLETED`),
-					backgroundColor: '#ffa900',
+					backgroundColor: AppTheme.colors.accentMainWarning,
 				},
 				[Task.statusList.completed]: {
 					title: Loc.getMessage(`${locPrefix}_COMPLETED`),
-					backgroundColor: '#a8adb4',
+					backgroundColor: AppTheme.colors.base4,
 				},
 				[Task.statusList.deferred]: {
 					title: Loc.getMessage(`${locPrefix}_DEFERRED`),
-					backgroundColor: '#a8adb4',
+					backgroundColor: AppTheme.colors.base4,
 				},
 			};
 		}
@@ -49,6 +51,8 @@ jn.define('tasks/layout/task/fields/status', (require, exports, module) => {
 				timeElapsed: props.timeElapsed,
 				timeEstimate: props.timeEstimate,
 			};
+
+			this.handleOnContentClick = this.handleOnContentClick.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -61,6 +65,16 @@ jn.define('tasks/layout/task/fields/status', (require, exports, module) => {
 				timeElapsed: props.timeElapsed,
 				timeEstimate: props.timeEstimate,
 			};
+		}
+
+		handleOnContentClick()
+		{
+			const { readOnly } = this.state;
+
+			if (!readOnly)
+			{
+				this.actionMenu.show();
+			}
 		}
 
 		updateState(newState)
@@ -114,15 +128,9 @@ jn.define('tasks/layout/task/fields/status', (require, exports, module) => {
 						isTimerRunning: this.state.isTimerRunning,
 						timeElapsed: Number(this.state.timeElapsed),
 						timeEstimate: Number(this.state.timeEstimate),
-						balloonArrowDownUri: `${this.props.pathToImages}/tasksmobile-layout-task-balloon-arrow-down.png`,
 					},
 					testId: 'status',
-					onContentClick: () => {
-						if (!this.state.readOnly)
-						{
-							this.actionMenu.show();
-						}
-					},
+					onContentClick: this.handleOnContentClick,
 				}),
 			);
 		}
@@ -136,7 +144,7 @@ jn.define('tasks/layout/task/fields/status', (require, exports, module) => {
 
 			if (result.indexOf(currentDomain) !== 0)
 			{
-				result = result.replace(`${currentDomain}`, '');
+				result = result.replace(currentDomain, '');
 				result = (result.indexOf('http') === 0 ? result : `${currentDomain}${result}`);
 			}
 
@@ -165,15 +173,18 @@ jn.define('tasks/layout/task/fields/status', (require, exports, module) => {
 						ellipsize: 'end',
 						numberOfLines: 1,
 					}),
-					(!this.isReadOnly() && Image({
+					!this.isReadOnly() && Image({
 						style: {
 							width: 14,
 							height: 14,
 							alignSelf: 'center',
 							marginLeft: 2,
 						},
-						uri: StatusField.getImageUrl(this.getConfig().balloonArrowDownUri),
-					})),
+						tintColor: AppTheme.colors.base8,
+						svg: {
+							content: chevronDown(AppTheme.colors.base8, { box: true }),
+						},
+					}),
 				),
 				new ActionButton({
 					isReadOnly: this.isReadOnly(),
@@ -209,9 +220,9 @@ jn.define('tasks/layout/task/fields/status', (require, exports, module) => {
 					...styles.value,
 					flex: (config.isTimerExisting ? 1 : undefined),
 					fontSize: 12,
-					fontColor: '#ffffff',
+					fontColor: AppTheme.colors.base8,
 					fontWeight: '600',
-					color: '#ffffff',
+					color: AppTheme.colors.base8,
 				},
 			};
 		}

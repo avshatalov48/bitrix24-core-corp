@@ -3,6 +3,7 @@
  */
 jn.define('crm/receive-payment/steps/payment-systems/main-block-layout', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { ExpandableList } = require('crm/receive-payment/steps/payment-systems/expandable-list');
 	const { EventEmitter } = require('event-emitter');
 
@@ -81,7 +82,7 @@ jn.define('crm/receive-payment/steps/payment-systems/main-block-layout', (requir
 							width: 77,
 						},
 					},
-					this.renderIconImageLayout(icon, additionalStyle.iconImage),
+					this.renderIconImageLayout(icon, additionalStyle.iconImage, !this.isFilledList),
 				),
 				View(
 					{
@@ -97,16 +98,19 @@ jn.define('crm/receive-payment/steps/payment-systems/main-block-layout', (requir
 			);
 		}
 
-		renderIconImageLayout(imageName, additionalStyle)
+		renderIconImageLayout(imageName, additionalStyle, disabled)
 		{
 			return Image({
+				tintColor: disabled ? AppTheme.colors.base3 : null,
 				style: {
 					width: imageName === 'cashbox.svg' ? 44 : 43,
 					height: 45,
 					marginRight: imageName === 'cashbox.svg' ? 0 : 1,
 					...additionalStyle,
 				},
-				svg: { uri: `${pathToExtension}/images/${imageName}` },
+				svg: {
+					uri: `${pathToExtension}/images/${imageName}`,
+				},
 			});
 		}
 
@@ -125,7 +129,7 @@ jn.define('crm/receive-payment/steps/payment-systems/main-block-layout', (requir
 				!this.isFilledList && Text({
 					style: {
 						fontSize: 13,
-						color: this.isFilledList ? '#6a737f' : '#959ca4',
+						color: AppTheme.colors.base3,
 						lineHeightMultiple: 1.05,
 					},
 					text: description,
@@ -137,8 +141,7 @@ jn.define('crm/receive-payment/steps/payment-systems/main-block-layout', (requir
 		{
 			return this.isFilledList
 				? this.renderSettingsLinkLayout(onClick, webRedirect)
-				: this.renderSettingsButtonLayout(onClick, webRedirect)
-			;
+				: this.renderSettingsButtonLayout(onClick, webRedirect);
 		}
 
 		renderSettingsLinkLayout(onClick, webRedirect)
@@ -155,12 +158,13 @@ jn.define('crm/receive-payment/steps/payment-systems/main-block-layout', (requir
 					Text({
 						style: {
 							fontSize: 13,
-							color: '#a8adb4',
+							color: AppTheme.colors.base4,
 						},
 						text: Loc.getMessage('M_RP_PS_SETTINGS_LINK_TITLE'),
 					}),
 				),
 				webRedirect && Image({
+					tintColor: AppTheme.colors.base3,
 					style: {
 						width: 10,
 						height: 10,
@@ -182,11 +186,12 @@ jn.define('crm/receive-payment/steps/payment-systems/main-block-layout', (requir
 				Text({
 					style: {
 						fontSize: 14,
-						color: '#333333',
+						color: AppTheme.colors.base1,
 					},
 					text: Loc.getMessage('M_RP_PS_SETTINGS_BUTTON_TITLE'),
 				}),
 				Image({
+					tintColor: AppTheme.colors.base3,
 					style: {
 						width: 15,
 						height: 15,
@@ -203,7 +208,9 @@ jn.define('crm/receive-payment/steps/payment-systems/main-block-layout', (requir
 	const styles = {
 		container: (isFilledList) => {
 			return {
-				backgroundColor: isFilledList ? '#ffffff' : '#98ffffff',
+				backgroundColor: isFilledList
+					? AppTheme.colors.bgContentPrimary
+					: AppTheme.colors.bgContentTertiary,
 				borderRadius: 12,
 				marginTop: 12,
 				alignItems: 'flex-start',
@@ -217,7 +224,7 @@ jn.define('crm/receive-payment/steps/payment-systems/main-block-layout', (requir
 			return {
 				fontSize: 16,
 				fontWeight: '500',
-				color: isFilledList ? '#333333' : '#828b95',
+				color: isFilledList ? AppTheme.colors.base1 : AppTheme.colors.base3,
 				marginTop: 18,
 				marginBottom: 5,
 			};
@@ -231,7 +238,7 @@ jn.define('crm/receive-payment/steps/payment-systems/main-block-layout', (requir
 			alignItems: 'center',
 		},
 		linkText: {
-			borderBottomColor: '#a8adb4',
+			borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
 			borderBottomWidth: 1,
 			borderStyle: 'dash',
 			borderDashSegmentLength: 3,
@@ -241,7 +248,7 @@ jn.define('crm/receive-payment/steps/payment-systems/main-block-layout', (requir
 			marginTop: 13,
 			marginBottom: 23,
 			borderWidth: 1,
-			borderColor: '#828b95',
+			borderColor: AppTheme.colors.bgSeparatorPrimary,
 			borderRadius: 6,
 			flexDirection: 'row',
 			height: 29,

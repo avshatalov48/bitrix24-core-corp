@@ -86,7 +86,13 @@ final class Activity extends Broker
 			],
 			false,
 			false,
-			array_keys(\CCrmActivity::GetFieldsInfo()),
+			array_merge(
+				array_keys(\CCrmActivity::GetFieldsInfo()),
+				[
+					'STORAGE_TYPE_ID',
+					'STORAGE_ELEMENT_IDS',
+				],
+			),
 		);
 
 		$result = [];

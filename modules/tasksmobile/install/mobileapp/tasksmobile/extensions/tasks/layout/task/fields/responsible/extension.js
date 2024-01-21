@@ -16,6 +16,8 @@ jn.define('tasks/layout/task/fields/responsible', (require, exports, module) => 
 				readOnly: props.readOnly,
 				responsible: props.responsible,
 			};
+
+			this.handleOnChange = this.handleOnChange.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -34,59 +36,78 @@ jn.define('tasks/layout/task/fields/responsible', (require, exports, module) => 
 			});
 		}
 
+		handleOnChange(responsibleId, responsibleData)
+		{
+			if (Number(responsibleId) !== Number(this.state.responsible.id))
+			{
+				const responsible = {
+					id: responsibleId,
+					name: responsibleData[0].title,
+					icon: responsibleData[0].imageUrl,
+					workPosition: responsibleData[0].customData.position,
+				};
+				this.setState({ responsible });
+				const { onChange } = this.props;
+
+				if (onChange)
+				{
+					onChange(responsible);
+				}
+			}
+		}
+
+		getUsersList()
+		{
+			const { responsible = {} } = this.state;
+
+			return [
+				{
+					id: responsible.id,
+					title: responsible.name,
+					imageUrl: (
+						!Type.isString(responsible.icon)
+						|| !Type.isStringFilled(responsible.icon)
+						|| responsible.icon.includes('default_avatar.png')
+							? null
+							: responsible.icon
+					),
+					customData: {
+						position: responsible.workPosition,
+					},
+				},
+			];
+		}
+
 		render()
 		{
+			const { deepMergeStyles, style, parentWidget } = this.props;
+			const { readOnly, responsible = {} } = this.state;
+
 			return View(
 				{
-					style: (this.props.style || {}),
+					style: (style || {}),
 				},
 				UserField({
-					readOnly: this.state.readOnly,
-					showEditIcon: !this.state.readOnly,
-					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_RESPONSIBLE'),
+					readOnly,
+					showEditIcon: !readOnly,
+					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_RESPONSIBLE_V2'),
 					multiple: false,
-					value: this.state.responsible.id,
+					value: responsible.id,
 					titlePosition: 'left',
 					config: {
-						deepMergeStyles: this.props.deepMergeStyles,
+						deepMergeStyles,
+						useLettersForEmptyAvatar: true,
 						provider: {
 							context: 'TASKS_MEMBER_SELECTOR_EDIT_responsible',
 						},
-						entityList: [
-							{
-								id: this.state.responsible.id,
-								title: this.state.responsible.name,
-								imageUrl: (
-									!Type.isString(this.state.responsible.icon)
-									|| !Type.isStringFilled(this.state.responsible.icon)
-									|| this.state.responsible.icon.includes('default_avatar.png')
-										? null
-										: this.state.responsible.icon
-								),
-								customData: {
-									position: this.state.responsible.workPosition,
-								},
-							},
-						],
-						selectorTitle: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_RESPONSIBLE'),
+						entityList: this.getUsersList(),
+						parentWidget,
+						selectorTitle: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_RESPONSIBLE_V2'),
 						canUnselectLast: false,
 						reloadEntityListFromProps: true,
-						parentWidget: this.props.parentWidget,
 					},
 					testId: 'responsible',
-					onChange: (responsibleId, responsibleData) => {
-						if (Number(responsibleId) !== Number(this.state.responsible.id))
-						{
-							const responsible = {
-								id: responsibleId,
-								name: responsibleData[0].title,
-								icon: responsibleData[0].imageUrl,
-								workPosition: responsibleData[0].customData.position,
-							};
-							this.setState({ responsible });
-							this.props.onChange(responsible);
-						}
-					},
+					onChange: this.handleOnChange,
 				}),
 			);
 		}

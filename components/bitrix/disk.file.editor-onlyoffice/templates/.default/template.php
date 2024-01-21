@@ -58,6 +58,7 @@ Extension::load([
 	'ui.notification',
 	'popup',
     'ui.dialogs.messagebox',
+	'ui.icon-set.main',
 ]);
 
 Asset::getInstance()->addString('<script type="text/javascript" src="' . $arResult['SERVER'] . '/web-apps/apps/api/documents/api.js"></script>');
@@ -125,8 +126,10 @@ $setupSharingButton = Button::create();
 $wayToSharing = [
 	[
 		'id' => 'ext-link',
-		'text' => Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_SHARING_EXT_LINK'),
-		'className' => 'disk-fe-office-access-setting-popup-item disk-fe-office-icon-docs',
+		'html' => '<div class="disk-fe-office-access-setting-popup-icon-box">'
+			. '<div class="ui-icon-set --share-1"></div>'
+			. '<div> ' . Loc::getMessage("DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_SHARING_EXT_LINK") .' </div>'
+			.'</div>',
 		'dataset' => [
 			'shouldBlockExternalLinkFeature' => (int)$arResult['SHOULD_BLOCK_EXTERNAL_LINK_FEATURE'],
 			'blockerExternalLinkFeature' => $arResult['BLOCKER_EXTERNAL_LINK_FEATURE'] ?: '',
@@ -134,8 +137,10 @@ $wayToSharing = [
 	],
 	[
 		'id' => 'sharing',
-		'text' => Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_SHARING_SHARE_MSGVER_1'),
-		'className' => 'disk-fe-office-access-setting-popup-item disk-fe-office-icon-link',
+		'html' => '<div class="disk-fe-office-access-setting-popup-icon-box">'
+			. '<div class="ui-icon-set --person-plus-3"></div>'
+			. '<div> ' . Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_SHARING_SHARE_MSGVER_1') .' </div>'
+			.'</div>',
 	],
 ];
 if (empty($arResult['SHARING_CONTROL_TYPE']))
@@ -239,7 +244,7 @@ $GLOBALS['APPLICATION']->SetTitle($arResult['OBJECT']['NAME']);
 		object: {
 			id: <?= $arResult['OBJECT']['ID'] ?>,
 			name: '<?= \CUtil::JSEscape($arResult['OBJECT']['NAME']) ?>',
-			size: '<?= $arResult['OBJECT']['SIZE'] ?>',
+			size: <?= (int)$arResult['OBJECT']['SIZE'] ?>,
 		},
 		attachedObject: {
 			id: <?= $arResult['ATTACHED_OBJECT']['ID'] ?: 'null' ?>,

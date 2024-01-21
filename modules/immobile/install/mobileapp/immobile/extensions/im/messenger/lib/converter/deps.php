@@ -2,9 +2,9 @@
 
 return [
 	'extensions' => [
+		'apptheme',
 		'type',
 		'utils/object',
-		'im:lib/theme',
 		'im:chat/utils',
 		'im:chat/messengercommon',
 		'im:chat/dataconverter',
@@ -15,6 +15,8 @@ return [
 		'im:messenger/lib/helper',
 		'im:messenger/lib/date-formatter',
 		'im:messenger/lib/element',
+		'im:messenger/lib/logger',
+		'im:messenger/lib/smile-manager',
 	],
 	'bundle' => [
 		'./src/recent',

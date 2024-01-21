@@ -36,13 +36,15 @@ abstract class PrototypeItemIndex extends ORM\Data\DataManager
 
 		$preparedSearchContent = $DB->forSql($searchContent);
 		$encryptedSearchContent = sha1($searchContent);
+
+		$tableName =static::getEntity()->getDBTableName();
 		$updateData = [
-			'SEARCH_CONTENT' => new SqlExpression("IF(SHA1(SEARCH_CONTENT) = '{$encryptedSearchContent}', SEARCH_CONTENT, '{$preparedSearchContent}')"),
+			'SEARCH_CONTENT' => new SqlExpression("CASE WHEN " . $helper->getSha1Function('?#.?#') . " = '{$encryptedSearchContent}' THEN ?#.?# ELSE '{$preparedSearchContent}' END", $tableName, 'SEARCH_CONTENT', $tableName, 'SEARCH_CONTENT'),
 			'UPDATED_TIME' => $updatedTime,
 		];
 
 		$merge = $helper->prepareMerge(
-			static::getEntity()->getDBTableName(),
+			$tableName,
 			['ITEM_ID'],
 			$insertData,
 			$updateData

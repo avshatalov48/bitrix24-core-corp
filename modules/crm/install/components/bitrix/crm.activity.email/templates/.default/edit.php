@@ -2,6 +2,7 @@
 
 use Bitrix\Mail\Helper;
 use Bitrix\Main\Loader;
+use Bitrix\Crm\Tour;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 global $APPLICATION;
@@ -36,6 +37,8 @@ $rcptLast = array(
 	'deals' => array(),
 	'leads' => array(),
 );
+
+echo (Tour\AhaMomentSaveLastTemplate::getInstance())->build();
 
 $communications = array_merge(
 	(array) $activity['__communications'],
@@ -147,20 +150,19 @@ foreach ($arParams['DOCS_BINDINGS'] as $item)
 	$docsSelected[$id] = $type;
 }
 
-if (!empty($arParams['TEMPLATES']))
-{
+
+
 	$this->setViewTarget('planner_slider_header');
 
 	?>
 	<div class="crm-activity-planner-slider-header-control-item crm-activity-planner-slider-header-control-select crm-activity-email-create-template">
 		<div class="crm-activity-planner-slider-header-control-description"><?=getMessage('CRM_ACT_EMAIL_CREATE_TEMPLATE') ?>:</div>
-		<div class="crm-activity-planner-slider-header-control-text"><?=getMessage('CRM_ACT_EMAIL_CREATE_NOTEMPLATE') ?></div>
+		<div class="crm-activity-planner-slider-header-control-text"><?=htmlspecialcharsbx($arParams['LAST_USED_TEMPLATE_TITLE'] ?? \Bitrix\Main\Localization\Loc::getMessage('CRM_ACT_EMAIL_CREATE_NOTEMPLATE'))?></div>
 		<div class="crm-activity-planner-slider-header-control-triangle"></div>
 	</div>
 	<?
 
 	$this->endViewTarget();
-}
 
 ?>
 
@@ -171,6 +173,7 @@ if (!empty($arParams['TEMPLATES']))
 	<input type="hidden" name="ACTION" value="SAVE_EMAIL">
 	<input type="hidden" name="DATA[ownerType]" value="<?=\CCrmOwnerType::resolveName($activity['OWNER_TYPE_ID']) ?>">
 	<input type="hidden" name="DATA[ownerID]" value="<?=$activity['OWNER_ID'] ?>">
+	<input id="crm_act_email_create_last_used_template_id" type="hidden" name="DATA[lastUsedTemplateID]" value="<?=(int)$arParams['LAST_USED_TEMPLATE_ID']?>">
 	<? if (preg_grep(sprintf('/^%s:/i', preg_quote($ownerUid, '/')), array_keys($rcptSelected + $rcptCcSelected))): ?>
 		<input type="hidden" name="DATA[ownerRcpt]" value="Y">
 	<? endif ?>
@@ -182,7 +185,7 @@ if (!empty($arParams['TEMPLATES']))
 	<? endif ?>
 	<input type="hidden" name="DATA[content_type]" value="<?=\CCrmContentType::Html ?>">
 
-	<? 
+	<?
 
 	$inlineFiles = array();
 	$quote = preg_replace_callback(
@@ -296,6 +299,8 @@ if (!empty($arParams['TEMPLATES']))
 			'FOLD_FILES' => ($activity['REPLIED_ID'] ?? null) > 0,
 			'EDITOR_TOOLBAR' => true,
 			'USE_SIGNATURES' => true,
+			'USE_CALENDAR_SHARING' => true,
+			'COPILOT_PARAMS' => $arParams['COPILOT_PARAMS'],
 			'FIELDS' => array(
 				array(
 					'name'     => 'DATA[from]',
@@ -394,6 +399,24 @@ if (!empty($arParams['TEMPLATES']))
 
 <script type="text/javascript">
 
+if(BX.SidePanel)
+{
+	BX.SidePanel.Instance.bindAnchors(top.BX.clone({
+		rules: [
+			{
+				condition: [
+					'/crm/configs/mailtemplate/add/',
+					'/crm/configs/mailtemplate/edit/',
+				],
+				options: {
+					cacheable: false,
+					width: 1080
+				}
+			}
+		]
+	}));
+}
+
 BX.message({
 	CRM_ACT_EMAIL_REPLY_EMPTY_RCPT: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_REPLY_EMPTY_RCPT')) ?>',
 	CRM_ACT_EMAIL_REPLY_UPLOADING: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_REPLY_UPLOADING')) ?>',
@@ -402,19 +425,29 @@ BX.message({
 		'CRM_ACTIVITY_EMAIL_MAX_SIZE_EXCEED',
 		['#SIZE#' => \CFile::formatSize(Helper\Message::getMaxAttachedFilesSizeAfterEncoding(),1)]
 	)) ?>',
-	CRM_ACT_EMAIL_CREATE_NOTEMPLATE: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_CREATE_NOTEMPLATE')) ?>'
+	CRM_ACT_EMAIL_CREATE_NOTEMPLATE: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_CREATE_NOTEMPLATE')) ?>',
+	CRM_ACT_EMAIL_TEMPLATE_SETTINGS: '<?=\CUtil::jsEscape(\Bitrix\Main\Localization\Loc::getMessage('CRM_ACT_EMAIL_TEMPLATE_SETTINGS_MSGVER_1')) ?>',
+	CRM_ACT_EMAIL_TEMPLATE_SAVE_LAST_TEMPLATE: '<?=\CUtil::jsEscape(\Bitrix\Main\Localization\Loc::getMessage('CRM_ACT_EMAIL_TEMPLATE_SAVE_LAST_TEMPLATE')) ?>',
+	CRM_ACT_EMAIL_TEMPLATE_LIST_TITLE: '<?=\CUtil::jsEscape(\Bitrix\Main\Localization\Loc::getMessage('CRM_ACT_EMAIL_TEMPLATE_LIST_TITLE')) ?>',
+	CRM_ACT_EMAIL_TEMPLATE_SETTINGS_TITLE: '<?=\CUtil::jsEscape(\Bitrix\Main\Localization\Loc::getMessage('CRM_ACT_EMAIL_TEMPLATE_SETTINGS_TITLE_MSGVER_1')) ?>'
 });
 
 BX.ready(function ()
 {
 	BXCrmActivityEmailController.init({
 		activityId: <?=intval($activity['ID'] ?? null) ?>,
+		activityOwnerTypeId: <?=(int)$activity['OWNER_TYPE_ID'] ?? null ?>,
 		type: 'edit',
-		templates: <?=\Bitrix\Main\Web\Json::encode($arParams['TEMPLATES_BY_TYPE']) ?>
+		templates: <?=\Bitrix\Main\Web\Json::encode($arParams['TEMPLATES_WITH_TYPE']) ?>,
+		isEnabledSavingLastUsedTemplate: 'Y',
+		saveLastUsedTemplate: <?=\Bitrix\Main\Web\Json::encode($arParams['SAVE_LAST_USED_TEMPLATE'])?>,
+		ownerType: '<?= \CCrmOwnerType::ResolveName((int)$activity['OWNER_TYPE_ID']) ?>',
+		ownerId: <?= (int)($activity['OWNER_ID']) ?>,
 	});
 	var instance = new BXCrmActivityEmail({
 		activityId: <?=intval($activity['ID'] ?? null) ?>,
-		formId: '<?=\CUtil::jsEscape($formId) ?>'
+		formId: '<?=\CUtil::jsEscape($formId) ?>',
+		calendarLink: '<?= $activity['CALENDAR_SHARING_URL'] ?>'
 	});
 
 	setTimeout(function ()
@@ -428,17 +461,32 @@ BX.ready(function ()
 			instance.batch(this.checked);
 		});
 
-		var wrapper  = BX.findChildByClassName(document, 'crm-activity-email-create-template', true);
-		var selector = BX.findChildByClassName(wrapper, 'crm-activity-planner-slider-header-control-text', true);
-		BX.bind(wrapper, 'click', function ()
+	}, 10);
+
+	var wrapper  = BX.findChildByClassName(document, 'crm-activity-email-create-template', true);
+	var selector = BX.findChildByClassName(wrapper, 'crm-activity-planner-slider-header-control-text', true);
+	BX.bind(wrapper, 'click', function ()
+	{
+		if(!instance.ctrl.templateLoader.isShown())
 		{
 			instance.templateMenu(
 				'<?=\CUtil::jsEscape($activity['INITIAL_OWNER_TYPE']) ?>',
 				<?=intval($activity['INITIAL_OWNER_ID']) ?>,
 				selector
 			);
-		});
-	}, 10);
+		}
+	});
+
+	<?php if ($arParams['SAVE_LAST_USED_TEMPLATE'] === 'Y' && $arParams['LAST_USED_TEMPLATE_ID'] > 0):?>
+	instance.activateTemplate(null,
+		{__id: <?=(int)$arParams['LAST_USED_TEMPLATE_ID']?>},
+		'<?=\CUtil::jsEscape($formId) ?>',
+		'<?=\CUtil::jsEscape($activity['INITIAL_OWNER_TYPE']) ?>',
+		<?=(int)$activity['INITIAL_OWNER_ID'] ?>,
+		selector,
+	);
+	<?php endif?>
+
 });
 
 </script>

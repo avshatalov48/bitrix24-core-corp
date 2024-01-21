@@ -14,8 +14,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TemplateAccessController;
-use Bitrix\Tasks\Slider\Exception\SliderException;
-use Bitrix\Tasks\Slider\Factory\SliderFactory;
+use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
@@ -60,7 +59,16 @@ $templateAddUrl = CComponentEngine::MakePathFromTemplate(
 	]
 );
 
+/** intranet-settings-support */
+if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
+{
+	$APPLICATION->IncludeComponent("bitrix:tasks.error", "limit", [
+		'LIMIT_CODE' => RestrictionUrl::TASK_LIMIT_OFF_SLIDER_URL,
+		'SOURCE' => 'templates',
+	]);
 
+	return;
+}
 
 ?>
 
@@ -299,6 +307,7 @@ if ($hideFilter !== 'Y')
 				TASKS_TEMPLATE_LIST_GROUP_ACTION_REMOVE_CONFIRM: '<?= GetMessageJS('TASKS_TEMPLATE_LIST_GROUP_ACTION_REMOVE_CONFIRM'); ?>',
 				TASKS_TEMPLATES_LIST_TITLE_ERROR: '<?= Loc::getMessage('TASKS_TEMPLATES_LIST_TITLE_ERROR')?>',
 				TASKS_TEMPLATES_LIST_CLOSE: '<?= Loc::getMessage('TASKS_TEMPLATES_LIST_CLOSE')?>',
+				TEMPLATE_MOVED_TO_RECYCLEBIN: '<?=  Bitrix\Tasks\Integration\Recyclebin\Template::getDeleteMessage($arParams["USER_ID"]) ?>',
 			});
 		</script>
 	<? endif ?>

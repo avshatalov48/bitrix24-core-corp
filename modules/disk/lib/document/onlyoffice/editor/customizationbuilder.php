@@ -13,6 +13,8 @@ final class CustomizationBuilder
 	public const REVIEW_DISPLAY_SIMPLE = 'simple';
 	public const REVIEW_DISPLAY_FINAL = 'final';
 	public const REVIEW_DISPLAY_ORIGINAL = 'original';
+	public const LOGO_CUSTOMER_RU_PNG = 'disk_doceditor_logo_customer_ru.png';
+	public const LOGO_CUSTOMER_EN_PNG = 'disk_doceditor_logo_customer_en.png';
 
 	/** @var Uri */
 	private $baseUrl;
@@ -22,11 +24,13 @@ final class CustomizationBuilder
 	protected $infoText;
 	/** @var array */
 	private $customization;
+	private ?string $portalZone;
 
-	public function __construct(Uri $baseUrl, array $customization = [])
+	public function __construct(Uri $baseUrl, array $customization = [], string $portalZone = null)
 	{
 		$this->baseUrl = $baseUrl;
 		$this->customization = $customization;
+		$this->portalZone = $portalZone;
 	}
 
 	public function setBaseUrlToLogo(Uri $url): self
@@ -114,13 +118,12 @@ final class CustomizationBuilder
 
 	protected function getLogoForCustomerSection(): string
 	{
-		$countryCode = Context::getCurrent()->getLanguage();
-		if ($countryCode === 'ru')
+		if ($this->portalZone === 'ru')
 		{
-			return $this->buildUrlToImage('disk_doceditor_logo_customer_ru.png');
+			return $this->buildUrlToImage(self::LOGO_CUSTOMER_RU_PNG);
 		}
 
-		return $this->buildUrlToImage('disk_doceditor_logo_customer_en.png');
+		return $this->buildUrlToImage(self::LOGO_CUSTOMER_EN_PNG);
 	}
 
 	protected function buildUrlToImage(string $name): string

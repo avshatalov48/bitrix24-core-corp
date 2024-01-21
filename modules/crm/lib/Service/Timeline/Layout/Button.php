@@ -12,15 +12,18 @@ class Button extends Base
 	public const STATE_HIDDEN = 'hidden';
 	public const STATE_DISABLED = 'disabled';
 	public const STATE_LOADING = 'loading';
+	public const STATE_AI_LOADING = 'ai-loading';
 
 	public const SCOPE_WEB = 'web';
 	public const SCOPE_MOBILE = 'mobile';
 
 	protected string $title;
 	protected ?string $state = null;
+	protected ?array $props = null;
 	protected ?string $scope = null;
 	protected ?bool $hideIfReadonly = null;
 	protected ?int $sort = null;
+	protected ?string $tooltip = null;
 
 	public function __construct(string $title)
 	{
@@ -32,6 +35,18 @@ class Button extends Base
 		return $this->title;
 	}
 
+	public function getTooltip(): ?string
+	{
+		return $this->tooltip;
+	}
+
+	public function setTooltip(?string $hint): self
+	{
+		$this->tooltip = $hint;
+
+		return $this;
+	}
+
 	public function getState(): ?string
 	{
 		return $this->state;
@@ -40,6 +55,18 @@ class Button extends Base
 	public function setState(?string $state): self
 	{
 		$this->state = $state;
+
+		return $this;
+	}
+
+	public function getProps(): ?array
+	{
+		return $this->props;
+	}
+
+	public function setProps(?array $props): self
+	{
+		$this->props = $props;
 
 		return $this;
 	}
@@ -104,7 +131,9 @@ class Button extends Base
 	{
 		return [
 			'title' => $this->getTitle(),
+			'tooltip' => $this->getTooltip(),
 			'state' => $this->getState(),
+			'props' => $this->getProps(),
 			'action' => $this->getAction(),
 			'hideIfReadonly' => $this->getHideIfReadonly(),
 			'sort' => $this->getSort(),

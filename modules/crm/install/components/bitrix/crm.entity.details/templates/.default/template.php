@@ -97,7 +97,11 @@ $tabContainerId = "{$guid}_tabs";
 	//endregion
 	$menuTabs = array_map(function ($tab) use ($guid) {
 		$locked = false;
-		if (isset($tab['tariffLock']) && is_string($tab['tariffLock']) && $tab['tariffLock'] !== '')
+		if (!empty($tab['availabilityLock']) && is_string($tab['availabilityLock']))
+		{
+			$onClickValue = $tab['availabilityLock'];
+		}
+		elseif (!empty($tab['tariffLock']) && is_string($tab['tariffLock']))
 		{
 			$onClickValue = $tab['tariffLock'];
 			$locked = true;

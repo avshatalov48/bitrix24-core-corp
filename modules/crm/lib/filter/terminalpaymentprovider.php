@@ -2,8 +2,8 @@
 
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
-use Bitrix\Crm;
 use Bitrix\Sale;
 
 class TerminalPaymentProvider extends Main\Filter\EntityDataProvider
@@ -139,25 +139,20 @@ class TerminalPaymentProvider extends Main\Filter\EntityDataProvider
 
 		if ($fieldID === 'PAY_SYSTEM_NAME')
 		{
-			$platformId = (int)Crm\Order\TradingPlatform\Terminal::getInstanceByCode(
-				Crm\Order\TradingPlatform\Terminal::TRADING_PLATFORM_CODE
-			)->getIdIfInstalled();
-
 			$items = [];
-			if ($platformId)
+			$paymentIterator = Sale\Payment::getList([
+				'select' => ['PAY_SYSTEM_ID', 'PAY_SYSTEM_NAME'],
+				'filter' => [
+					'!=PAY_SYSTEM_ID' => Sale\PaySystem\Manager::getInnerPaySystemId(),
+				],
+				'group' => ['PAY_SYSTEM_ID', 'PAY_SYSTEM_NAME'],
+				'runtime' => [
+					Container::getInstance()->getTerminalPaymentService()->getRuntimeReferenceField()
+				],
+			]);
+			while ($paymentData = $paymentIterator->fetch())
 			{
-				$paymentIterator = Sale\Payment::getList([
-					'select' => ['PAY_SYSTEM_ID', 'PAY_SYSTEM_NAME'],
-					'filter' => [
-						'=ORDER.TRADING_PLATFORM.TRADING_PLATFORM_ID' => $platformId,
-						'!=PAY_SYSTEM_ID' => Sale\PaySystem\Manager::getInnerPaySystemId(),
-					],
-					'group' => ['PAY_SYSTEM_ID', 'PAY_SYSTEM_NAME'],
-				]);
-				while ($paymentData = $paymentIterator->fetch())
-				{
-					$items[$paymentData['PAY_SYSTEM_ID']] = $paymentData['PAY_SYSTEM_NAME'];
-				}
+				$items[$paymentData['PAY_SYSTEM_ID']] = $paymentData['PAY_SYSTEM_NAME'];
 			}
 
 			return [

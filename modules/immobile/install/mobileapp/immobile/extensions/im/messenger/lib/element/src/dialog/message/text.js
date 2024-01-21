@@ -17,6 +17,7 @@ jn.define('im/messenger/lib/element/dialog/message/text', (require, exports, mod
 		{
 			super(modelMessage, options);
 
+			// this.setMessage(modelMessage.text + `\n\n ID: [b]${modelMessage.id}[/b]`);
 			this.setMessage(modelMessage.text);
 			this.setShowTail(true);
 		}

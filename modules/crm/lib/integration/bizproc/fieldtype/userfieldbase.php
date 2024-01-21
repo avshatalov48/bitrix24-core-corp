@@ -84,7 +84,7 @@ class UserFieldBase extends BaseType\Base
 			array('HIDE_ICONS' => 'Y')
 		);
 
-		return HTMLToTxt(ob_get_clean());
+		return HTMLToTxt(ob_get_clean(), maxlen: 0);
 	}
 
 	/**

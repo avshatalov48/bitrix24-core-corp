@@ -36,8 +36,9 @@ $config = [
 
 $config = array_merge($config, [
 	'presetOptionalTabs' => [
-		'task' => ["crm"],
+		'task' => ["crm", "stream"],
 		'stream' => ["crm"],
+		'crm' => ["stream"],
 	],
 	'defaultUserPreset' => [
 		'chat' => 100,

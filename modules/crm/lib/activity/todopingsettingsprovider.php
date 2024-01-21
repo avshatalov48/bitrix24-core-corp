@@ -56,11 +56,46 @@ final class TodoPingSettingsProvider
 		];
 	}
 
+	public static function filterOffsets(array $offsets): array
+	{
+		$allowedOffsets = array_column(self::getDefaultOffsetList(), 'offset');
+
+		return array_unique(array_intersect($offsets, $allowedOffsets));
+	}
+
+	public static function getValuesByOffsets(array $offsets): array
+	{
+		if (empty($offsets))
+		{
+			return [];
+		}
+
+		return array_values(
+			array_filter(
+				self::getDefaultOffsetList(),
+				static fn($row) => in_array($row['offset'], $offsets)
+			)
+		);
+	}
+
+	public static function getOffsetsByValues(array $values): array
+	{
+		if (empty($values))
+		{
+			return [];
+		}
+
+		$filtered = array_filter(
+			self::getDefaultOffsetList(),
+			static fn($row) => in_array($row['id'], $values)
+		);
+
+		return array_column($filtered, 'offset');
+	}
+
 	public function fetchAll(): array
 	{
-		return [];
-		
-		/*$isAllCategoriesSelected = $this->categoryId === -1
+		$isAllCategoriesSelected = $this->categoryId === -1
 			|| (CCrmOwnerType::isPossibleDynamicTypeId($this->entityTypeId) && $this->categoryId === 0);
 
 		if ($isAllCategoriesSelected)
@@ -72,7 +107,29 @@ final class TodoPingSettingsProvider
 			'optionName' => $this->getOptionName(),
 			'offsetList' => self::getDefaultOffsetList(),
 			'currentOffsets' => $this->getCurrentOffsets(),
-		];*/
+		];
+	}
+
+	/**
+	 * Get data for crm.field.item-selector component
+	 *
+	 * @return array
+	 */
+	public function fetchForJsComponent(): array
+	{
+		$settings = $this->fetchAll();
+		if (empty($settings))
+		{
+			return [];
+		}
+
+		return [
+			'valuesList' => array_map(
+				static fn($item) => ['id' => (string)$item['offset'], 'title' => $item['title']],
+				$settings['offsetList']
+			),
+			'selectedValues' => $settings['currentOffsets'],
+		];
 	}
 
 	public function getCurrentOffsets(): array
@@ -88,10 +145,8 @@ final class TodoPingSettingsProvider
 		{
 			return self::DEFAULT_OFFSETS;
 		}
-		
-		$allowedOffsets = array_column(self::getDefaultOffsetList(), 'offset');
 
-		return array_unique(array_intersect($offsets, $allowedOffsets));
+		return self::filterOffsets($offsets);
 	}
 
 	private function getOptionName(): string

@@ -53,6 +53,13 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 					return;
 				}
 
+				if (Application.isBackground())
+				{
+					resolve(false);
+
+					return;
+				}
+
 				VisibilityManager.getNavigationContext()
 					.then((context) => {
 						const isCurrentTabVisible = context.navigationIsVisible;

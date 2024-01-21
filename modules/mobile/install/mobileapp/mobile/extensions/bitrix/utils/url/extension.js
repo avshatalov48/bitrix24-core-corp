@@ -2,7 +2,6 @@
  * @module utils/url
  */
 jn.define('utils/url', (require, exports, module) => {
-
 	const { punycode } = require('utils/url/punycode');
 	const { stringify } = require('utils/string');
 
@@ -15,7 +14,7 @@ jn.define('utils/url', (require, exports, module) => {
 	{
 		href = prepareLink(href);
 
-		const match = href.match(/^(https?\:)\/\/(([^:\/?#]*)(?:\:([0-9]+))?)(\/?[^?#]*)(\?[^#]*|)(#.*|)$/i);
+		const match = href.match(/^(https?:)\/\/(([^#/:?]*)(?::(\d+))?)(\/?[^#?]*)(\?[^#]*|)(#.*|)$/i);
 		if (!match || !Array.isArray(match))
 		{
 			return {};
@@ -26,7 +25,7 @@ jn.define('utils/url', (require, exports, module) => {
 
 		return {
 			href,
-			origin: protocol + '//' + hostname,
+			origin: `${protocol}//${hostname}`,
 			protocol,
 			host: stringify(match[2]),
 			hostname,
@@ -46,13 +45,37 @@ jn.define('utils/url', (require, exports, module) => {
 	{
 		const url = stringify(link.trim());
 
-		//Checks for if url doesn't match either of: http://example.com, https://example.com AND //example.com
+		// Checks for if url doesn't match either of: http://example.com, https://example.com AND //example.com
 		if (Boolean(url) && !/^(https?:)?\/\//i.test(url))
 		{
 			return `http://${url}`;
 		}
 
 		return link;
+	}
+
+	/**
+	 * @function getParameterByName
+	 * @param {String} name
+	 * @param{String} url
+	 * @return {String}
+	 */
+	function getParameterByName(url, name)
+	{
+		name = name.replace(/[[\]]/g, '\\$&');
+		const regex = new RegExp(`[?&]${name}(=([^&#]*)|&|#|$)`);
+		const results = regex.exec(url);
+		if (!results)
+		{
+			return null;
+		}
+
+		if (!results[2])
+		{
+			return '';
+		}
+
+		return decodeURIComponent(results[2].replaceAll('+', ' '));
 	}
 
 	/**
@@ -96,8 +119,13 @@ jn.define('utils/url', (require, exports, module) => {
 	 * @param {string} uri
 	 * @return {string}
 	 */
-	function withCurrentDomain(uri = '/')
+	function withCurrentDomain(uri)
 	{
+		if (typeof uri !== 'string')
+		{
+			return uri;
+		}
+
 		return uri.startsWith('/') ? currentDomain + uri : uri;
 	}
 
@@ -108,6 +136,6 @@ jn.define('utils/url', (require, exports, module) => {
 		isValidEmail,
 		getHttpPath,
 		withCurrentDomain,
+		getParameterByName,
 	};
-
 });

@@ -1,10 +1,12 @@
 <?php
 
+use Bitrix\Crm\Binding\EntityContactTable;
+use Bitrix\Crm\Counter\EntityCountableActivityTable;
+use Bitrix\Crm\Item;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Factory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Item;
-use Bitrix\Crm\Service\Factory;
-use Bitrix\Crm\Service\Container;
 
 class CCrmSipHelper
 {
@@ -95,37 +97,28 @@ class CCrmSipHelper
 		return $entityByType;
 	}
 
-	public static function getEntityFields($entityTypeID, $entityID, $params = array())
+	public static function getEntityFields(int $entityTypeId, int $entityId, array $params = []): ?array
 	{
 		$fields = null;
-
-		$userID = isset($params['USER_ID']) ? intval($params['USER_ID']) : 0;
-		if ($userID <= 0)
+		$userId = (int)($params['USER_ID'] ?? 0);
+		if ($userId <= 0)
 		{
-			$userID = CCrmPerms::GetCurrentUserID();
+			$userId = Container::getInstance()->getContext()->getUserId();
 		}
 
-		$isAdmin = CCrmPerms::IsAdmin($userID);
+		$userPermissions = Container::getInstance()->getUserPermissions($userId);
+		$isAdmin = $userPermissions->isAdmin();
+		$enableExtendedMode = !isset($params['ENABLE_EXTENDED_MODE']) || (bool)$params['ENABLE_EXTENDED_MODE'];
 
-		$userPermissions = CCrmPerms::GetUserPermissions($userID);
-		$enableExtendedMode = isset($params['ENABLE_EXTENDED_MODE']) ? (bool)$params['ENABLE_EXTENDED_MODE'] : true;
-
-		if ($entityTypeID === CCrmOwnerType::Contact)
+		if ($entityTypeId === CCrmOwnerType::Contact)
 		{
-			$contactFactory = Container::getInstance()->getFactory(\CCrmOwnerType::Contact);
-			if (!$contactFactory)
-			{
-				return null;
-			}
-
-			$contactItem = $contactFactory->getItem($entityID);
+			$contactItem = Container::getInstance()->getFactory(\CCrmOwnerType::Contact)?->getItem($entityId);
 			if (!$contactItem)
 			{
 				return null;
 			}
 
 			$companyId = $contactItem->getCompanyId();
-
 			$fields = [
 				'ID' => $contactItem->getId(),
 				'FORMATTED_NAME' => $contactItem->getHeading() ?? '',
@@ -134,14 +127,20 @@ class CCrmSipHelper
 				'COMPANY_TITLE' => static::getCompanyTitle($companyId) ?? '',
 				'POST' => $contactItem->getPost() ?? '',
 				'ASSIGNED_BY_ID' => $contactItem->getAssignedById() ?? 0,
-				'CAN_READ' => CCrmContact::CheckReadPermission($entityID, $userPermissions)
+				'CAN_READ' => $userPermissions->checkReadPermissions(CCrmOwnerType::Contact, $entityId),
 			];
 
 			if ($fields['CAN_READ'] && $enableExtendedMode)
 			{
-				self::setFieldsEntities($fields, $entityTypeID, $entityID, $userID, $isAdmin);
+				self::setFieldsEntities(
+					$fields,
+					$entityTypeId,
+					$entityId,
+					$userId,
+					$isAdmin
+				);
 
-				$invoiceIds = \Bitrix\Crm\Binding\EntityContactTable::getEntityIds(\CCrmOwnerType::SmartInvoice, $entityID);
+				$invoiceIds = EntityContactTable::getEntityIds(\CCrmOwnerType::SmartInvoice, $entityId);
 				if (!empty($invoiceIds))
 				{
 					$fields['SMART_INVOICES'] = static::loadSmartInvoices([
@@ -150,41 +149,38 @@ class CCrmSipHelper
 				}
 			}
 		}
-		elseif ($entityTypeID === CCrmOwnerType::Company)
+		elseif ($entityTypeId === CCrmOwnerType::Company)
 		{
-			$companyFactory = Container::getInstance()->getFactory(\CCrmOwnerType::Company);
-			if (!$companyFactory)
-			{
-				return null;
-			}
-
-			$companyItem = $companyFactory->getItem($entityID);
+			$companyItem = Container::getInstance()->getFactory(\CCrmOwnerType::Company)?->getItem($entityId);
 			if (!$companyItem)
 			{
 				return null;
 			}
 
-			$companyTitle = $companyItem->getTitle();
-			$companyLogo = $companyItem->get(Item\Company::FIELD_NAME_LOGO);
-			$companyAssignedBy = $companyItem->getAssignedById();
 			$fields = [
 				'ID' => $companyItem->getId(),
-				'TITLE' => $companyTitle ?? '',
-				'LOGO' => $companyLogo ?? 0,
-				'ASSIGNED_BY_ID' => $companyAssignedBy ?? 0,
-				'CAN_READ' => CCrmCompany::CheckReadPermission($entityID, $userPermissions)
+				'TITLE' => $companyItem->getTitle() ?? '',
+				'LOGO' => $companyItem->get(Item\Company::FIELD_NAME_LOGO) ?? 0,
+				'ASSIGNED_BY_ID' => $companyItem->getAssignedById() ?? 0,
+				'CAN_READ' => $userPermissions->checkReadPermissions(CCrmOwnerType::Company, $entityId),
 			];
 
 			if ($fields['CAN_READ'] && $enableExtendedMode)
 			{
-				self::setFieldsEntities($fields, $entityTypeID, $entityID, $userID, $isAdmin);
+				self::setFieldsEntities(
+					$fields,
+					$entityTypeId,
+					$entityId,
+					$userId,
+					$isAdmin
+				);
 
 				$fields['SMART_INVOICES'] = static::loadSmartInvoices([
-					'=COMPANY_ID' => $entityID,
+					'=COMPANY_ID' => $entityId,
 				]);
 			}
 		}
-		elseif ($entityTypeID === CCrmOwnerType::Lead)
+		elseif ($entityTypeId === CCrmOwnerType::Lead)
 		{
 			$leadFactory = Container::getInstance()->getFactory(\CCrmOwnerType::Lead);
 			if (!$leadFactory)
@@ -192,7 +188,7 @@ class CCrmSipHelper
 				return null;
 			}
 
-			$leadItem = $leadFactory->getItem($entityID);
+			$leadItem = $leadFactory->getItem($entityId);
 			if (!$leadItem)
 			{
 				return null;
@@ -207,7 +203,7 @@ class CCrmSipHelper
 				'COMPANY_TITLE' => static::getCompanyTitle($companyId) ?? '',
 				'POST' => $leadItem->getPost() ?? '',
 				'ASSIGNED_BY_ID' => $leadItem->getAssignedById() ?? 0,
-				'CAN_READ' => CCrmLead::CheckReadPermission($entityID, $userPermissions),
+				'CAN_READ' => $userPermissions->checkReadPermissions(CCrmOwnerType::Lead, $entityId),
 				'IS_FINAL' => \Bitrix\Crm\PhaseSemantics::isFinal(CCrmLead::GetSemanticID($leadItem->get(Item\Lead::FIELD_NAME_STATUS_ID))),
 				'STATUS_TEXT' => static::getStatusText(\CCrmOwnerType::Lead, $leadItem->getIsReturnCustomer(), false),
 				'STATUS_COLOR' => static::getStatusColor(\CCrmOwnerType::Lead),
@@ -223,9 +219,9 @@ class CCrmSipHelper
 
 		if ($fields['CAN_READ'] && $enableExtendedMode)
 		{
-			$showUrl = $fields['SHOW_URL'] = CCrmOwnerType::GetEntityShowPath($entityTypeID, $entityID);
+			$showUrl = $fields['SHOW_URL'] = CCrmOwnerType::GetEntityShowPath($entityTypeId, $entityId);
 			$defaultFormId = '';
-			switch ($entityTypeID)
+			switch ($entityTypeId)
 			{
 				case CCrmOwnerType::Lead:
 					$defaultFormId = CCrmLead::DEFAULT_FORM_ID;
@@ -238,7 +234,7 @@ class CCrmSipHelper
 					break;
 			}
 			
-			if ($showUrl !== '' && $defaultFormId != '')
+			if ($showUrl !== '' && $defaultFormId !== '')
 			{
 				$fields['ACTIVITY_LIST_URL'] = CCrmUrlUtil::AddUrlParams(
 					$showUrl,
@@ -250,48 +246,89 @@ class CCrmSipHelper
 					array("{$defaultFormId}_active_tab" => 'tab_invoice')
 				);
 
-				if ($entityTypeID === CCrmOwnerType::Contact || $entityTypeID === CCrmOwnerType::Company)
+				if (in_array($entityTypeId, [CCrmOwnerType::Contact, CCrmOwnerType::Company], true))
 				{
 					$fields['DEAL_LIST_URL'] = CCrmUrlUtil::AddUrlParams(
 						$showUrl,
-						array("{$defaultFormId}_active_tab" => 'tab_deal')
+						["{$defaultFormId}_active_tab" => 'tab_deal']
 					);
 				}
 			}
 
-			$activities = array();
+			$activitiesLimit = 4;
+			$activities = [];
+			$data = EntityCountableActivityTable::query()
+				->setSelect([
+					'ACTIVITY_ID',
+				])
+				->where('ENTITY_ID', $entityId)
+				->where('ENTITY_TYPE_ID', $entityTypeId)
+				->setLimit($activitiesLimit)
+				->setOrder(['ACTIVITY_DEADLINE' => 'ASC'])
+				->fetchAll()
+			;
+			$activityIds = array_column($data, 'ACTIVITY_ID');
 
-			// We can skip permissions check, because user should be able to read activities,
-			// bound to the entity, that he is able to read (see $fields['CAN_READ'])
-			$dbActivity = CCrmActivity::GetList(
-				array('DEADLINE' => 'ASC'),
-				array(
-					'COMPLETED' => 'N',
-					'BINDINGS' => array(array('OWNER_TYPE_ID' => $entityTypeID, 'OWNER_ID' => $entityID)),
-					'CHECK_PERMISSIONS' => 'N'
-				),
-				false,
-				array('nTopCount' => 4),
-				array('ID', 'SUBJECT', 'START_TIME', 'END_TIME', 'DEADLINE'),
-				array('PERMS' => $userPermissions)
-			);
-
-			if (is_object($dbActivity))
+			if ($activitiesLimit - count($activityIds) > 0)
 			{
-				while ($activityFields = $dbActivity->Fetch())
+				// need to select activities where the deadline is not set
+				$dbActivityIdsObject = CCrmActivity::GetList(
+					[],
+					[
+						'COMPLETED' => 'N',
+						'CHECK_PERMISSIONS' => 'N',
+						'DEADLINE' => CCrmDateTimeHelper::GetMaxDatabaseDate(false),
+						'BINDINGS' => [['OWNER_TYPE_ID' => $entityTypeId, 'OWNER_ID' => $entityId]],
+					],
+					false,
+					['nTopCount' => $activitiesLimit - count($activityIds)],
+					['ID']
+				);
+				if (is_object($dbActivityIdsObject))
 				{
-					$activityFields['SHOW_URL'] = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Activity, $activityFields['ID']);
-					if(CCrmDateTimeHelper::IsMaxDatabaseDate($activityFields['DEADLINE']))
+					while ($activityIdField = $dbActivityIdsObject->Fetch())
 					{
-						$activityFields['DEADLINE'] = '';
+						$activityIds[] = $activityIdField['ID'];
 					}
-					$activities[] = &$activityFields;
-					unset($activityFields);
 				}
 			}
 
-			$fields['ACTIVITIES'] = &$activities;
-			unset($activities);
+			if (!empty($activityIds))
+			{
+				// We can skip permissions check, because user should be able to read activities,
+				// bound to the entity, that he is able to read (see $fields['CAN_READ'])
+				$dbActivityObject = CCrmActivity::GetList(
+					['DEADLINE' => 'ASC'],
+					[
+						'@ID' => $activityIds,
+						'COMPLETED' => 'N',
+						'CHECK_PERMISSIONS' => 'N',
+					],
+					false,
+					[],
+					['ID', 'SUBJECT', 'START_TIME', 'END_TIME', 'DEADLINE']
+				);
+
+				if (is_object($dbActivityObject))
+				{
+					while ($activityFields = $dbActivityObject->Fetch())
+					{
+						$activityFields['SHOW_URL'] = CCrmOwnerType::GetEntityShowPath(
+							CCrmOwnerType::Activity,
+							$activityFields['ID']
+						);
+						if (CCrmDateTimeHelper::IsMaxDatabaseDate($activityFields['DEADLINE']))
+						{
+							$activityFields['DEADLINE'] = '';
+						}
+						$activities[] = &$activityFields;
+						unset($activityFields);
+					}
+				}
+
+				$fields['ACTIVITIES'] = &$activities;
+				unset($activities);
+			}
 		}
 
 		return $fields;

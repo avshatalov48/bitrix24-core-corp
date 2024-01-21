@@ -67,58 +67,7 @@ class All extends Queue
 	 */
 	public function getOperatorsQueue($currentOperator = 0): array
 	{
-		$queueTime = $this->getQueueTime();
-
-		$result = [
-			'RESULT' => false,
-			'OPERATOR_ID' => 0,
-			'OPERATOR_LIST' => [],
-			'DATE_QUEUE' => (new DateTime())->add($queueTime . ' SECONDS'),
-			'QUEUE_HISTORY' => [],
-		];
-
-		$operatorList = [];
-		$queueHistory = [];
-		$fullCountOperators = 0;
-
-		$res = ImOpenLines\Queue::getList([
-			'select' => [
-				'ID',
-				'USER_ID'
-			],
-			'filter' => [
-				'=CONFIG_ID' => $this->config['ID']
-			],
-			'order' => [
-				'SORT' => 'ASC',
-				'ID' => 'ASC'
-			],
-		]);
-
-		while($queueUser = $res->fetch())
-		{
-			$fullCountOperators++;
-			if($this->isOperatorAvailable($queueUser['USER_ID'], $currentOperator))
-			{
-				$operatorList[] = $queueUser['USER_ID'];
-				$queueHistory[$queueUser['USER_ID']] = true;
-			}
-		}
-
-		$this->processingEmptyQueue($this->config['ID'], $fullCountOperators);
-
-		if(!empty($operatorList))
-		{
-			$result = [
-				'RESULT' => true,
-				'OPERATOR_ID' => 0,
-				'OPERATOR_LIST' => $operatorList,
-				'DATE_QUEUE' => (new DateTime())->add($queueTime . ' SECONDS'),
-				'QUEUE_HISTORY' => $queueHistory,
-			];
-		}
-
-		return $result;
+		return $this->getAllOperatorsQueue($currentOperator);
 	}
 
 	/**
@@ -148,6 +97,14 @@ class All extends Queue
 				$resultOperatorQueue = $this->getOperatorsQueue();
 
 				$reasonReturn = SessionCheckTable::getById($this->session['ID'])->fetch()['REASON_RETURN'];
+
+				if (
+					$this->session['STATUS'] > Session::STATUS_SKIP
+					|| in_array($reasonReturn, [ImOpenLines\Queue::REASON_OPERATOR_DAY_END, ImOpenLines\Queue::REASON_OPERATOR_DAY_END_SILENT], true)
+				)
+				{
+					$this->prepareToQueue();
+				}
 
 				//Event
 				$resultOperatorQueue = self::sendEventOnBeforeSessionTransfer(
@@ -233,5 +190,13 @@ class All extends Queue
 		ImOpenLines\Debug::addQueue($this->config['ID'], $this->session['ID'], 'stop' . __METHOD__);
 
 		return $result;
+	}
+
+	protected function prepareToQueue(): void
+	{
+		parent::prepareToQueue();
+
+		$fakeRelations = new ImOpenLines\Relation((int)$this->session['CHAT_ID']);
+		$fakeRelations->removeAllRelations(true);
 	}
 }

@@ -40,7 +40,7 @@ class TemplateTable extends Main\Entity\DataManager
 	public static function getMap()
 	{
 		return array(
-			'ID' => array('primary' => true, 'data_type' => 'integer'),
+			'ID' => array('primary' => true, 'data_type' => 'integer', 'autocomplete' => true,),
 			'ENTITY_TYPE_ID' => array('data_type' => 'integer'),
 			'ENTITY_STATUS' => array('data_type' => 'string'),
 			'TEMPLATE_ID' => array('data_type' => 'integer'),

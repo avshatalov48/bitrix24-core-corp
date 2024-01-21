@@ -8,6 +8,7 @@ import {DraftModelActions, DraftModelMutation} from "../../model/types/draft";
 import {ReactionsModelActions, ReactionsModelMutation} from "../../model/types/messages/reactions";
 import {SidebarModelActions} from "../../model/types/sidebar";
 import {RecentSearchModelActions, RecentSearchModelMutation} from "../../model/types/recent/search";
+import {QueueModelActions, QueueModelMutation} from "../../model/types/queue";
 
 
 type MessengerStoreActions =
@@ -21,6 +22,7 @@ type MessengerStoreActions =
 	| ReactionsModelActions
 	| SidebarModelActions
 	| RecentSearchModelActions
+	| QueueModelActions
 
 type MessengerStoreMutation =
 	ApplicationModelMutation
@@ -33,6 +35,7 @@ type MessengerStoreMutation =
 	| ReactionsModelMutation
 	| SidebarModelActions
 	| RecentSearchModelMutation
+	| QueueModelMutation
 
 type MessengerCoreStore = {
 	dispatch(actionName: MessengerStoreActions, params?: any) : Promise<any>,

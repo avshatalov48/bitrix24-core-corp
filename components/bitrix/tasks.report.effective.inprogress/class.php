@@ -8,6 +8,7 @@ use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
@@ -77,6 +78,18 @@ class TasksReportEffectiveInprogressComponent extends TasksReportEffectiveDetail
 		}
 
 		return $errors->checkNoFatals();
+	}
+
+	protected static function checkIfToolAvailable(array &$arParams, array &$arResult, Collection $errors, array $auxParams): void
+	{
+		parent::checkIfToolAvailable($arParams, $arResult, $errors, $auxParams);
+
+		if (!$arResult['IS_TOOL_AVAILABLE'])
+		{
+			return;
+		}
+
+		$arResult['IS_TOOL_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['effective']);
 	}
 
 	/**

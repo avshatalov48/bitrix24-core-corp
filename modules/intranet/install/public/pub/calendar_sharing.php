@@ -1,5 +1,5 @@
 <?php
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
+require($_SERVER["DOCUMENT_ROOT"].'/bitrix/header.php');
 global $APPLICATION;
 
 $APPLICATION->SetPageProperty("BodyClass", "flexible-mode--linear-blue--v2");
@@ -15,3 +15,5 @@ if (\Bitrix\Main\Loader::includeModule('calendar'))
 		]
 	);
 }
+
+require($_SERVER['DOCUMENT_ROOT'].'/bitrix/footer.php');

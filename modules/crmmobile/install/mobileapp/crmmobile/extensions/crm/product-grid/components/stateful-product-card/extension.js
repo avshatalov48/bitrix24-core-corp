@@ -3,10 +3,10 @@
  */
 jn.define('crm/product-grid/components/stateful-product-card', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { isEmpty } = require('utils/object');
 	const { ProductCard } = require('layout/ui/product-grid/components/product-card');
 	const { InlineSkuTree } = require('layout/ui/product-grid/components/inline-sku-tree');
-	const { ProductRow } = require('crm/product-grid/model');
 	const { ProductPricing } = require('crm/product-grid/components/product-pricing');
 	const { ProductCalculator } = require('crm/product-calculator');
 	const { ProductDetails } = require('crm/product-grid/components/product-details');
@@ -89,12 +89,13 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 			return View(
 				{
 					style: {
-						backgroundColor: '#eef2f4',
 						paddingTop: this.getProps().index === 0 ? 12 : 0,
 					},
 				},
 				new ProductCard({
-					ref: (ref) => this.statelessProductCardRef = ref,
+					ref: (ref) => {
+						this.statelessProductCardRef = ref;
+					},
 					index: this.getProps().index + 1,
 					id: this.state.productRow.getProductId(),
 					name: this.state.productRow.getProductName(),
@@ -113,7 +114,10 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 							onChangeSum: (newValue) => this.onChangeSum(newValue),
 							onChangeQuantity: (newValue) => this.onChangeQuantity(newValue),
 							onChangeDiscountValue: (newValue) => this.onChangeDiscountValue(newValue),
-							onChangeDiscountType: (discountType, discountValue) => this.onChangeDiscountType(discountType, discountValue),
+							onChangeDiscountType: (discountType, discountValue) => this.onChangeDiscountType(
+								discountType,
+								discountValue,
+							),
 							showTax: this.getProps().showTax,
 						}),
 					),
@@ -188,48 +192,38 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 				BARCODE: variationData.BARCODE,
 				STORES: variationData.hasOwnProperty('STORES')
 					? variationData.STORES
-					: []
-				,
+					: [],
 				HAS_STORE_ACCESS: variationData.hasOwnProperty('HAS_STORE_ACCESS')
 					? variationData.HAS_STORE_ACCESS
-					: null
-				,
+					: null,
 				STORE_ID: variationData.hasOwnProperty('STORE_ID')
 					? variationData.STORE_ID
-					: null
-				,
+					: null,
 				STORE_NAME: variationData.hasOwnProperty('STORE_NAME')
 					? variationData.STORE_NAME
-					: null
-				,
+					: null,
 				STORE_AMOUNT: variationData.hasOwnProperty('STORE_AMOUNT')
 					? variationData.STORE_AMOUNT
-					: null
-				,
+					: null,
 				STORE_AVAILABLE_AMOUNT: variationData.hasOwnProperty('STORE_AVAILABLE_AMOUNT')
 					? variationData.STORE_AVAILABLE_AMOUNT
-					: null
-				,
+					: null,
 				INPUT_RESERVE_QUANTITY: variationData.hasOwnProperty('SHOULD_SYNC_RESERVE_QUANTITY')
 					? (
 						variationData.SHOULD_SYNC_RESERVE_QUANTITY === true
-						? quantity
-						: 0
+							? quantity
+							: 0
 					)
-					: null
-				,
+					: null,
 				ROW_RESERVED: variationData.hasOwnProperty('ROW_RESERVED')
 					? variationData.ROW_RESERVED
-					: null
-				,
+					: null,
 				DEDUCTED_QUANTITY: variationData.hasOwnProperty('STORE_ID')
 					? variationData.DEDUCTED_QUANTITY
-					: null
-				,
+					: null,
 				SHOULD_SYNC_RESERVE_QUANTITY: variationData.hasOwnProperty('SHOULD_SYNC_RESERVE_QUANTITY')
 					? variationData.SHOULD_SYNC_RESERVE_QUANTITY
-					: null
-				,
+					: null,
 				DATE_RESERVE_END:
 					(
 						variationData.hasOwnProperty('SHOULD_SYNC_RESERVE_QUANTITY')
@@ -293,11 +287,11 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 
 			PageManager.openWidget('layout', {
 				modal: true,
-				backgroundColor: '#eef2f4',
+				backgroundColor: AppTheme.colors.bgSecondary,
 				backdrop: {
 					onlyMediumPosition: false,
 					mediumPositionPercent: 80,
-					navigationBarColor: '#eef2f4',
+					navigationBarColor: AppTheme.colors.bgSecondary,
 					swipeAllowed: true,
 					swipeContentAllowed: false,
 					horizontalSwipeAllowed: false,
@@ -340,11 +334,12 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 				swipeAllowed: true,
 				swipeContentAllowed: false,
 				mediumPositionPercent: 80,
-				navigationBarColor: '#eef2f4',
+				navigationBarColor: AppTheme.colors.bgSecondary,
+				hideNavigationBar: true,
 			};
 			const widgetParams = {
 				modal: true,
-				backgroundColor: '#eef2f4',
+				backgroundColor: AppTheme.colors.bgSecondary,
 				backdrop,
 			};
 
@@ -394,7 +389,7 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 
 		hasAccess(permission)
 		{
-			return !!this.props.permissions[permission];
+			return Boolean(this.props.permissions[permission]);
 		}
 	}
 

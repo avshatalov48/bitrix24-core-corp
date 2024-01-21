@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'apptheme',
 		'catalog:product-wizard-step',
 		'layout/ui/fields/barcode',
 		'layout/ui/fields/string',

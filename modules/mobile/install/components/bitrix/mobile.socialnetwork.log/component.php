@@ -437,7 +437,10 @@ if (
 		$arFilter["EVENT_ID"][] = $event_id_tmp;
 	}
 
-	$arFeatures = CSocNetFeatures::GetActiveFeatures(($arParams["GROUP_ID"] > 0 ? SONET_ENTITY_GROUP : SONET_ENTITY_GROUP), ($arParams["GROUP_ID"] > 0 ? $arParams["GROUP_ID"] : $arParams["USER_ID"]));
+	$arFeatures = CSocNetFeatures::GetActiveFeatures(
+		($arParams["GROUP_ID"] > 0 ? SONET_ENTITY_GROUP : SONET_ENTITY_USER),
+		($arParams["GROUP_ID"] > 0 ? $arParams["GROUP_ID"] : $arParams["USER_ID"])
+	);
 	foreach($arFeatures as $feature_id)
 	{
 		$arSocNetFeaturesSettings = CSocNetAllowed::GetAllowedFeatures();

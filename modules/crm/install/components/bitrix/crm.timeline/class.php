@@ -1,7 +1,12 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm;
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
@@ -195,7 +200,10 @@ class CCrmTimelineComponent extends CBitrixComponent
 		$this->arResult['READ_ONLY'] = isset($this->arParams['~READ_ONLY']) && $this->arParams['~READ_ONLY'] === true;
 		$this->arResult['USER_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
 		$this->arResult['LAYOUT_CURRENT_USER'] = Crm\Service\Timeline\Layout\User::current()->toArray();
-
+		$this->arResult['PING_SETTINGS'] = (new TodoPingSettingsProvider(
+			$this->entityTypeID,
+			$this->extras['CATEGORY_ID'] ?? 0
+		))->fetchForJsComponent();
 		$this->arResult['CURRENCIES'] = $this->getCurrency();
 
 		$this->prepareScheduleItems();

@@ -1201,6 +1201,8 @@ final class CCrmEntityProductListComponent
 		$this->arResult['PRODUCT_DATA_FIELD_NAME'] = $this->arParams['PRODUCT_DATA_FIELD_NAME'];
 		$this->arResult['DEFAULT_DATE_RESERVATION'] = (string)ReservationService::getInstance()->getDefaultDateReserveEnd();
 
+		$this->arResult['IS_INVENTORY_MANAGEMENT_TOOL_ENABLED'] = Catalog\Restriction\ToolAvailabilityManager::getInstance()->checkInventoryManagementAvailability();
+
 		if(
 			Bitrix\Main\Loader::includeModule('pull')
 			&& $this->entity['TYPE_NAME'] === CCrmOwnerType::DealName
@@ -3081,29 +3083,6 @@ final class CCrmEntityProductListComponent
 			'desc' => '',
 			'action' => 'grid',
 		];
-
-		if (\CCrmSaleHelper::isWithOrdersMode())
-		{
-			return $items;
-		}
-
-		$isInventoryControlEnabled = \Bitrix\Catalog\Component\UseStore::isUsed();
-		$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.warehouse.master.clear');
-		$sliderPath = getLocalPath('components' . $sliderPath . '/slider.php');
-
-		if (AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_SETTINGS_ACCESS))
-		{
-			$items[] = [
-				'id' => 'SLIDER',
-				'checked' => $isInventoryControlEnabled,
-				'disabled' => $isInventoryControlEnabled,
-				'title' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_SETTING_WAREHOUSE_TITLE'),
-				'url' => $sliderPath,
-				'desc' => '',
-				'hint' => $isInventoryControlEnabled ? Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_SETTING_WAREHOUSE_HINT') : '',
-				'action' => 'grid',
-			];
-		}
 
 		return $items;
 	}

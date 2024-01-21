@@ -43,7 +43,7 @@ class Giphy extends Controller
 			return null;
 		}
 
-		return $result->getData();
+		return $this->formatResult($result->getData());
 	}
 
 	/**
@@ -60,11 +60,29 @@ class Giphy extends Controller
 			return null;
 		}
 
-		return $result->getData();
+		return $this->formatResult($result->getData());
 	}
 
 	private function getLimit(int $limit): int
 	{
 		return ($limit > 0 && $limit <= 50) ? $limit : self::DEFAULT_LIMIT;
+	}
+
+	private function formatResult(array $rawResult): array
+	{
+		$result = [];
+
+		foreach ($rawResult as $row)
+		{
+			if (isset($row['preview'], $row['original']) && is_string($row['preview']) && is_string($row['original']))
+			{
+				$result[] = [
+					'preview' => $row['preview'],
+					'original' => $row['original'],
+				];
+			}
+		}
+
+		return $result;
 	}
 }

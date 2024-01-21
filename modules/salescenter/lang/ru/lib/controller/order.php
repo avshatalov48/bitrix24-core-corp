@@ -6,3 +6,4 @@ $MESS["SALESCENTER_CONTROLLER_ORDER_BUILD_ERROR"] = "Ошибка формиро
 $MESS["SALESCENTER_CONTROLLER_ORDER_CANT_SEND_SMS_PAYMENT_NOT_CREATED"] = "Не удалось создать оплату. Сообщение не было отправлено";
 $MESS["SALESCENTER_CONTROLLER_ORDER_CANT_SEND_SMS_PAYMENT_NOT_FOUND"] = "Не удалось найти оплату. Сообщение не было отправлено";
 $MESS["SALESCENTER_CONTROLLER_ORDER_CANT_BUILD_ORDER"] = "Не удалось сформировать заказ";
+$MESS["SALESCENTER_CONTROLLER_ORDER_TERMINAL_PAYMENT_CREATION_ERROR"] = "Не удалось выполнить действие. Обновите страницу и попробуйте снова";

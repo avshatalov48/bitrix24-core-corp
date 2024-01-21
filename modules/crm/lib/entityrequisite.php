@@ -3,22 +3,22 @@
 namespace Bitrix\Crm;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Component\EntityDetails;
 use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Format\RequisiteAddressFormatter;
 use Bitrix\Crm\Integrity\DuplicateBankDetailCriterion;
 use Bitrix\Crm\Integrity\DuplicateRequisiteCriterion;
-use Bitrix\Crm\Requisite\Country;
 use Bitrix\Crm\Integrity\DuplicateVolatileCriterion;
 use Bitrix\Crm\Integrity\Volatile\FieldCategory;
+use Bitrix\Crm\Requisite\Country;
 use Bitrix\Crm\Requisite\EntityLink;
+use Bitrix\Location\Entity\Address;
 use Bitrix\Main;
-use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Localization\Translation;
 use Bitrix\Main\Result;
 use Bitrix\Main\Text\Encoding;
-use Bitrix\Location\Entity\Address;
 use CCrmFieldInfoAttr;
 use CCrmInstantEditorHelper;
 use CCrmOwnerType;
@@ -153,9 +153,9 @@ class EntityRequisite
 		}
 
 		// rewrite select
-		if (is_array($params['select']))
+		if (isset($params['select']) && is_array($params['select']))
 		{
-			$newSelect = array();
+			$newSelect = [];
 			foreach ($params['select'] as $k => $v)
 			{
 				if ($v !== self::ADDRESS)
@@ -7934,9 +7934,10 @@ class EntityRequisite
 
 		return $result;
 	}
+
 	public function getDuplicateCriterionFieldsDescriptions($scopeKeys = true)
 	{
-		$result = array();
+		$result = [];
 
 		$fieldTitleMap = $this->getRqFieldTitleMap();
 
@@ -7945,19 +7946,28 @@ class EntityRequisite
 			foreach ($fields as $fieldName)
 			{
 				$key = $scopeKeys ? self::formatDuplicateCriterionScope($countryId) : $countryId;
-				if (isset($fieldTitleMap[$fieldName][$countryId]))
+				if (!isset($fieldTitleMap[$fieldName][$countryId]))
 				{
-					if (!is_array($result[$fieldName]))
-						$result[$fieldName] = array();
-					if (!is_array($result[$fieldName][$key]))
-						$result[$fieldName][$key] = array();
-					$result[$fieldName][$key] = $fieldTitleMap[$fieldName][$countryId];
+					continue;
 				}
+
+				if (!isset($result[$fieldName]) || !is_array($result[$fieldName]))
+				{
+					$result[$fieldName] = [];
+				}
+
+				if (!isset($result[$fieldName][$key]) || !is_array($result[$fieldName][$key]))
+				{
+					$result[$fieldName][$key] = [];
+				}
+
+				$result[$fieldName][$key] = $fieldTitleMap[$fieldName][$countryId];
 			}
 		}
 
 		return $result;
 	}
+
 	public static function prepareEntityInfoBatch($entityTypeId, &$entityInfos, $scope, $typeName, $options = null)
 	{
 		if (!($entityTypeId === CCrmOwnerType::Company || $entityTypeId === CCrmOwnerType::Contact))
@@ -8335,6 +8345,10 @@ class EntityRequisite
 	{
 		// No need to do anything yet
 		// it is possible to delete list field items in the future
+
+		$primary = $event->getParameter('primary');
+		$presetId = (is_array($primary) && isset($primary['ID'])) ? (int)$primary['ID'] : 0;
+		EntityDetails\Config\Scope::onRequisitePresetDelete($presetId);
 	}
 
 	public static function getFileFields(): array

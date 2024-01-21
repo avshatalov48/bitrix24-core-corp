@@ -2,9 +2,14 @@
  * @module im/messenger/lib/element/dialog/message-menu/action
  */
 jn.define('im/messenger/lib/element/dialog/message-menu/action', (require, exports, module) => {
-
 	const { Loc } = require('loc');
-	const imagePath = currentDomain + '/bitrix/mobileapp/immobile/extensions/im/messenger/lib/element/src/dialog/message-menu/images/';
+	const AppTheme = require('apptheme');
+	const { icon } = require('im/messenger/lib/element/dialog/message-menu/icons');
+
+	const baseColor = AppTheme.colors.base1;
+	const deleteColor = Application.getPlatform() === 'ios' ? AppTheme.colors.accentMainAlert : baseColor;
+
+	const imagePath = `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/lib/element/src/dialog/message-menu/images/`;
 
 	const ActionType = Object.freeze({
 		button: 'button',
@@ -16,9 +21,10 @@ jn.define('im/messenger/lib/element/dialog/message-menu/action', (require, expor
 		testId: 'MESSAGE_MENU_ACTION_REPLY',
 		type: ActionType.button,
 		text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_MENU_REPLY'),
-		imageUrl: '',
+		iconSvg: icon.quote,
+		imageUrl: `${imagePath}reply.png`,
 		style: {
-			fontColor: '#333333',
+			fontColor: baseColor,
 		},
 	};
 
@@ -26,10 +32,33 @@ jn.define('im/messenger/lib/element/dialog/message-menu/action', (require, expor
 		id: 'copy',
 		testId: 'MESSAGE_MENU_ACTION_COPY',
 		type: ActionType.button,
-		text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_MENU_COPY_V2'),
-		imageUrl: imagePath + 'copy.png',
+		text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_MENU_COPY_V3'),
+		iconSvg: icon.copy,
+		imageUrl: `${imagePath}copy.png`,
 		style: {
-			fontColor: '#333333',
+			fontColor: baseColor,
+		},
+	};
+
+	const PinAction = {
+		id: 'pin',
+		testId: 'MESSAGE_MENU_ACTION_PIN',
+		type: ActionType.button,
+		text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_MENU_PIN'),
+		iconSvg: icon.pin,
+		style: {
+			fontColor: baseColor,
+		},
+	};
+
+	const ForwardAction = {
+		id: 'forward',
+		testId: 'MESSAGE_MENU_ACTION_FORWARD',
+		type: ActionType.button,
+		text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_MENU_FORWARD'),
+		iconSvg: icon.forward,
+		style: {
+			fontColor: baseColor,
 		},
 	};
 
@@ -38,9 +67,10 @@ jn.define('im/messenger/lib/element/dialog/message-menu/action', (require, expor
 		testId: 'MESSAGE_MENU_ACTION_DOWNLOAD_TO_DEVICE',
 		type: ActionType.button,
 		text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_DEVICE'),
-		imageUrl: imagePath + 'download.png',
+		iconSvg: icon.download,
+		imageUrl: `${imagePath}download.png`,
 		style: {
-			fontColor: '#333333',
+			fontColor: baseColor,
 		},
 	};
 
@@ -49,9 +79,10 @@ jn.define('im/messenger/lib/element/dialog/message-menu/action', (require, expor
 		testId: 'MESSAGE_MENU_ACTION_DOWNLOAD_TO_DISK',
 		type: ActionType.button,
 		text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_DISK'),
-		imageUrl: imagePath + 'disk.png',
+		iconSvg: icon.downloadToDisk,
+		imageUrl: `${imagePath}disk.png`,
 		style: {
-			fontColor: '#333333',
+			fontColor: baseColor,
 		},
 	};
 
@@ -60,9 +91,10 @@ jn.define('im/messenger/lib/element/dialog/message-menu/action', (require, expor
 		testId: 'MESSAGE_MENU_ACTION_QUOTE',
 		type: ActionType.button,
 		text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_MENU_QUOTE'),
-		imageUrl: imagePath + 'reply.png',
+		iconSvg: icon.quote,
+		imageUrl: `${imagePath}reply.png`,
 		style: {
-			fontColor: '#333333',
+			fontColor: baseColor,
 		},
 	};
 
@@ -71,9 +103,10 @@ jn.define('im/messenger/lib/element/dialog/message-menu/action', (require, expor
 		testId: 'MESSAGE_MENU_ACTION_PROFILE',
 		type: ActionType.button,
 		text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_MENU_PROFILE'),
-		imageUrl: imagePath + 'profile.png',
+		iconSvg: icon.profile,
+		imageUrl: `${imagePath}profile.png`,
 		style: {
-			fontColor: '#333333',
+			fontColor: baseColor,
 		},
 	};
 
@@ -82,9 +115,10 @@ jn.define('im/messenger/lib/element/dialog/message-menu/action', (require, expor
 		testId: 'MESSAGE_MENU_ACTION_EDIT',
 		type: ActionType.button,
 		text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_MENU_EDIT'),
-		imageUrl: imagePath + 'edit.png',
+		imageUrl: `${imagePath}edit.png`,
+		iconSvg: icon.edit,
 		style: {
-			fontColor: '#333333',
+			fontColor: baseColor,
 		},
 	};
 
@@ -93,9 +127,11 @@ jn.define('im/messenger/lib/element/dialog/message-menu/action', (require, expor
 		testId: 'MESSAGE_MENU_ACTION_DELETE',
 		type: ActionType.button,
 		text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_MENU_DELETE'),
-		imageUrl: imagePath + 'delete.png',
+		iconSvg: icon.delete,
+		imageUrl: `${imagePath}delete.png`,
 		style: {
-			fontColor: '#FF5752',
+			fontColor: deleteColor,
+			iconColor: deleteColor,
 		},
 	};
 
@@ -107,6 +143,8 @@ jn.define('im/messenger/lib/element/dialog/message-menu/action', (require, expor
 		ActionType,
 		ReplyAction,
 		CopyAction,
+		PinAction,
+		ForwardAction,
 		DownloadToDeviceAction,
 		DownloadToDiskAction,
 		QuoteAction,

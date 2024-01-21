@@ -45,7 +45,6 @@ const Cashbox = {
 				'salescenter-app-payment-by-sms-item-disabled-bg': this.installed === false
 			}
 		},
-
 		title()
 		{
 			return this.installed === true
@@ -63,7 +62,7 @@ const Cashbox = {
 				showHint: !this.installed,
 				initialCollapseState: this.initialCollapseState,
 			}
-		}
+		},
 	},
 	methods:
 	{
@@ -85,10 +84,23 @@ const Cashbox = {
 			@on-adjust-collapsed="saveCollapsedOption"
 		>
 			<template v-slot:block-title-title>{{title}}</template>
-			<template v-slot:block-hint-title>${Loc.getMessage('SALESCENTER_CASHBOX_BLOCK_SETTINGS_TITLE')}</template>
+			<template v-slot:block-hint-title>
+				${Loc.getMessage('SALESCENTER_CASHBOX_BLOCK_SETTINGS_TITLE')}
+			</template>
 			<template v-slot:block-container>
+				<div
+					v-if="!installed"
+					class="salescenter-app-explanation"
+				>
+					<div class="salescenter-app-explanation-img"></div>
+					<div class="salescenter-app-explanation-area">
+						<div class="salescenter-app-explanation-text">
+							${Loc.getMessage('SALESCENTER_TERMINAL_CASHBOX_SETUP_HINT')}
+						</div>
+					</div>
+				</div>
 				<div :class="containerClassMixin">
-					<tile-collection-uninstalled-block 	:tiles="tiles" v-if="!installed"/>
+					<tile-collection-uninstalled-block 	:tiles="tiles" v-if="!installed" v-on:on-tile-slider-close="onSliderClose"/>
 					<tile-collection-installed-block :tiles="tiles" v-on:on-tile-slider-close="onSliderClose" v-else />
 				</div>
 			</template>

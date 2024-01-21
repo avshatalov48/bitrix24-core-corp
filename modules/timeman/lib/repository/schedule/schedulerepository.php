@@ -517,7 +517,7 @@ class ScheduleRepository
 		}
 		foreach ($entityCodesParams as $entityCode)
 		{
-			if ($res[$entityCode] === null)
+			if (($res[$entityCode] ?? null) === null)
 			{
 				$res[$entityCode] = [];
 			}

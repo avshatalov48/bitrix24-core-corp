@@ -7,6 +7,10 @@ jn.define('im/messenger/lib/ui/base/item/selected-item', (require, exports, modu
 	const { ItemInfo } = require('im/messenger/lib/ui/base/item/item-info');
 	const { styles: itemStyles, selectedItemStyles } = require('im/messenger/lib/ui/base/item/style');
 	const { Item } = require('im/messenger/lib/ui/base/item/item');
+	const AppTheme = require('apptheme');
+
+
+	const selectedIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.34211 19.351L2.86523 13.0388L5.13214 10.8295L9.34211 14.9325L18.8677 5.64899L21.1346 7.85827L9.34211 19.351Z" fill="${AppTheme.colors.base4}"/></svg>`;
 
 	class SelectedItem extends Item
 	{
@@ -15,7 +19,7 @@ jn.define('im/messenger/lib/ui/base/item/selected-item', (require, exports, modu
 		 * @param{Object} props
 		 * @param{boolean} props.selected
 		 * @param{JNEventEmitter} props.eventEmitter
-		 * @param{boolean} [props.disabled[
+		 * @param{boolean} [props.disabled]
 		 */
 		constructor(props)
 		{
@@ -63,7 +67,7 @@ jn.define('im/messenger/lib/ui/base/item/selected-item', (require, exports, modu
 			return this.state.selected
 				? selectedItemStyles.unselectColor
 				: selectedItemStyles.selectColor
-				;
+			;
 		}
 
 		toggleSelect()
@@ -85,77 +89,127 @@ jn.define('im/messenger/lib/ui/base/item/selected-item', (require, exports, modu
 					onClick: () => this.toggleSelect(),
 					style: {
 						flexDirection: 'row',
-						backgroundColor: this.state.currentColor,
-					}
-				},
-				View(
-					{
-						style: {
-							marginLeft: 15,
-							marginRight: 5,
-							alignItems: 'center',
-							justifyContent: 'center',
-							backgroundColor: this.state.currentColor,
-						},
-						clickable: false,
+						maxHeight: 70,
 					},
-					new CheckBox({
-						checked: this.state.selected,
-						disabled: this.props.disabled,
-						onClick: () => this.toggleSelect()
-					}),
-				),
-				View(
+				},
+				View( //checkBox
 					{
 						style: {
-							...style.itemContainer,
-							borderBottomWidth: 1,
-							borderBottomColor: '#e9e9e9',
-							flexGrow: 2,
+							flexDirection: 'row',
+							justifyContent: 'center',
+							alignItems: 'center',
 						},
 					},
 					View(
 						{
 							style: {
-								marginBottom: 6,
+								height: 58,
+								marginLeft: 6,
 								marginTop: 6,
-							}
+								marginBottom: 6,
+								backgroundColor: this.state.currentColor,
+								borderTopLeftRadius: 8,
+								borderBottomLeftRadius: 8,
+								paddingLeft: 12,
+								paddingTop: 16.5,
+								paddingBottom: 17.5,
+								paddingRight: 12,
+								flexDirection: 'row',
+								justifyContent: 'center',
+								alignItems: 'center',
+								backgroundOpacity: this.state.selected ? 0.6 : 1,
+							},
 						},
-						new Avatar({
-							text: this.props.data.title,
-							uri: this.props.data.avatarUri,
-							color: this.props.data.avatarColor,
-							size: this.props.size,
+						new CheckBox({
+							checked: this.state.selected,
+							disabled: this.props.disabled,
+							onClick: () => this.toggleSelect(),
 						}),
 					),
+				),
+				View( //itemInfo
+					{
+						style: {
+							flexDirection: 'row',
+							justifyContent: 'center',
+							alignItems: 'center',
+							flex: 1,
+							borderBottomWidth: 1,
+							borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
+						},
+					},
 					View(
 						{
 							style: {
-								flexDirection: 'row',
-								flexGrow: 2,
-								alignItems: 'center',
-								marginBottom: 6,
+								flex: 1,
+								height: 58,
 								marginTop: 6,
-								height: '100%',
-							}
+								marginRight: 6,
+								marginBottom: 6,
+								backgroundColor: this.state.currentColor,
+								borderTopRightRadius: 8,
+								borderBottomRightRadius: 8,
+								paddingRight: 12,
+								paddingTop: 8.5,
+								paddingBottom: 9.5,
+								flexDirection: 'row',
+								justifyContent: 'center',
+								alignItems: 'center',
+								backgroundOpacity: this.state.selected ? 0.6 : 1,
+							},
 						},
-						new ItemInfo(
+						View(
 							{
-								title: this.props.data.title,
-								subtitle: this.props.data.subtitle,
-								size: this.props.data.size,
-								style: style.itemInfo,
-								status: this.props.data.status,
-							}
+								style: {
+									marginRight: -1, //pixel perfect
+								},
+							},
+							new Avatar({
+								text: this.props.data.title,
+								uri: this.props.data.avatarUri,
+								color: this.props.data.avatarColor,
+								size: this.props.size,
+							}),
 						),
-						this.getArrowRightImage(),
+						View(
+							{
+								style: {
+									flexDirection: 'row',
+									flexGrow: 2,
+									alignItems: 'center',
+								},
+							},
+							new ItemInfo(
+								{
+									title: this.props.data.title,
+									subtitle: this.props.data.subtitle,
+									size: this.props.data.size,
+									style: style.itemInfo,
+									status: this.props.data.status,
+								},
+							),
+						),
+						View(
+							{
+								style: {
+									opacity: this.state.selected ? 1 : 0,
+								},
+							},
+							Image({
+								style: {
+									width: 24,
+									height: 24,
+								},
+								svg: {
+									content: selectedIcon,
+								},
+							}),
+						),
 					),
 				),
 			);
 		}
 	}
-
-
 
 	module.exports = { SelectedItem };
 });

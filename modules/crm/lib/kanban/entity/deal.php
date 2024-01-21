@@ -392,7 +392,11 @@ class Deal extends Entity
 		$fields = parent::getPopupFields($viewType);
 		foreach ($fields as $i => $field)
 		{
-			if (mb_strpos($field['NAME'], 'CONTACT_') === 0 || mb_strpos($field['NAME'], 'COMPANY_') === 0)
+			if (
+				mb_strpos($field['NAME'], 'CONTACT_') === 0
+				|| mb_strpos($field['NAME'], 'COMPANY_') === 0
+				|| mb_strpos($field['NAME'], 'ACTIVITY_FASTSEARCH_') === 0
+			)
 			{
 				unset($fields[$i]);
 			}

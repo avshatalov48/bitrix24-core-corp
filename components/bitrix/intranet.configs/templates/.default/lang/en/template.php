@@ -84,10 +84,10 @@ $MESS["CONFIG_GDRP_TITLE3"] = "Personal data processing apps:";
 $MESS["CONFIG_HEADER_GDRP"] = "GDPR Compliance";
 $MESS["CONFIG_HEADER_SECUTIRY"] = "Security settings";
 $MESS["CONFIG_HEADER_SETTINGS"] = "Settings";
-$MESS["CONFIG_IM_CHAT_RIGHTS"] = "Allow users to send messages to General chat";
-$MESS["CONFIG_IM_GENERSL_CHAT_MESSAGE_ADMIN_RIGHTS"] = "Post administrator assigned and administrator changed notifications to General chat";
-$MESS["CONFIG_IM_GENERSL_CHAT_MESSAGE_JOIN"] = "Notify about new hires in General chat";
-$MESS["CONFIG_IM_GENERSL_CHAT_MESSAGE_LEAVE"] = "Notify about employee/user dismissal in General chat";
+$MESS["CONFIG_IM_CHAT_RIGHTS"] = "Allow users to send messages to the General chat";
+$MESS["CONFIG_IM_GENERSL_CHAT_MESSAGE_ADMIN_RIGHTS"] = "Post administrator assigned and administrator changed notifications to the General chat";
+$MESS["CONFIG_IM_GENERSL_CHAT_MESSAGE_JOIN"] = "Notify about new hires in the General chat";
+$MESS["CONFIG_IM_GENERSL_CHAT_MESSAGE_LEAVE"] = "Notify about employee/user dismissal in the General chat";
 $MESS["CONFIG_IP_HELP_TEXT2"] = "Users without admin permissions won't be able to access this Bitrix24 from any IP address that doesn't match the specified range.
 Once logged in, the user will see an error page informing them that access from their IP was denied.
 You can watch attempts to log on to Bitrix24 from any IP address in the Event log.";

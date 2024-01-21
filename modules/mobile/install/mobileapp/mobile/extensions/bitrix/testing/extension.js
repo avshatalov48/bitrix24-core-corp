@@ -2,7 +2,6 @@
  * @module testing
  */
 jn.define('testing', (require, exports, module) => {
-
 	const { TestSuite } = require('testing/test-suite');
 	const { TestCase } = require('testing/test-case');
 	const { TestingExpectation } = require('testing/expectation');
@@ -16,10 +15,11 @@ jn.define('testing', (require, exports, module) => {
 
 	/** @type {function():TestSuite} */
 	const currentSuite = () => {
-		if (!testSuites.length)
+		if (testSuites.length === 0)
 		{
 			testSuites.push(new TestSuite('Default test suite', report));
 		}
+
 		return testSuites[testSuites.length - 1];
 	};
 
@@ -45,6 +45,7 @@ jn.define('testing', (require, exports, module) => {
 	const it = (title, callback) => {
 		const testCase = new TestCase(title, callback, 'it', report);
 		currentSuite().testCases.push(testCase);
+
 		return testCase;
 	};
 
@@ -56,6 +57,7 @@ jn.define('testing', (require, exports, module) => {
 	const test = (title, callback) => {
 		const testCase = new TestCase(title, callback, 'test', report);
 		currentSuite().testCases.push(testCase);
+
 		return testCase;
 	};
 
@@ -83,5 +85,4 @@ jn.define('testing', (require, exports, module) => {
 		ConsolePrinter,
 		JnLayoutPrinter,
 	};
-
 });

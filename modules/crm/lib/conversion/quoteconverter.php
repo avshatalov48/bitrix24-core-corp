@@ -35,6 +35,8 @@ class QuoteConverter extends EntityConverter
 	 */
 	public function initialize()
 	{
+		parent::initialize();
+
 		$this->determineStartingPhase();
 
 		if(!\CCrmQuote::Exists($this->entityID))
@@ -569,8 +571,18 @@ class QuoteConverter extends EntityConverter
 	 * Get Supported Destination Types.
 	 * @return array
 	 */
-	public function getSupportedDestinationTypeIDs()
+	public function getSupportedDestinationTypeIDs(): array
 	{
 		return array(\CCrmOwnerType::Deal, \CCrmOwnerType::Invoice);
+	}
+
+	/**
+	 * Returns true if activities from Quote entity should be copied to destination entity
+	 *
+	 * @return bool
+	 */
+	public function isAttachingSourceActivitiesEnabled(): bool
+	{
+		return false;
 	}
 }

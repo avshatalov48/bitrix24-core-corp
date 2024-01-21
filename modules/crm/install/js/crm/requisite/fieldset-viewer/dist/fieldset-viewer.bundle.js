@@ -1,4 +1,3 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,main_core,main_core_events,main_popup,main_loader,ui_buttons,crm_field_listEditor) {
@@ -32,7 +31,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    return this.cache.get('data', {});
 	  }
 	  load() {
-	    return new Promise(resolve => {
+	    return new Promise((resolve, reject) => {
 	      var _fieldListEditorOptio, _fieldListEditorOptio2;
 	      const {
 	        entityTypeId,
@@ -48,6 +47,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      }).then(result => {
 	        resolve(result.data);
+	      }).catch(result => {
+	        reject(result.errors);
 	      });
 	    });
 	  }
@@ -101,6 +102,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        ...result
 	      });
 	      popup.setContent(this.createPopupContent(result));
+	    }).catch(errors => {
+	      this.emit('onFieldSetLoadError', {
+	        requestErrors: errors
+	      });
 	    });
 	    popup.show();
 	  }
@@ -162,6 +167,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }));
 	  }
 	  createListItem(options) {
+	    var _Object$values;
 	    const editButton = (() => {
 	      var _options$editing;
 	      if (main_core.Type.isStringFilled(options == null ? void 0 : (_options$editing = options.editing) == null ? void 0 : _options$editing.url)) {
@@ -187,6 +193,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	      return '';
 	    })();
+	    const value = main_core.Type.isObject(options == null ? void 0 : options.value) ? (_Object$values = Object.values(options == null ? void 0 : options.value)) == null ? void 0 : _Object$values.reduce((a, b) => {
+	      return `${a}, ${b}`;
+	    }) : options == null ? void 0 : options.value;
 	    return main_core.Tag.render(_t6 || (_t6 = _`
 			<div class="crm-requisite-fieldset-viewer-list-item">
 				<div class="crm-requisite-fieldset-viewer-list-item-left">
@@ -197,7 +206,7 @@ this.BX.Crm = this.BX.Crm || {};
 					${0}
 				</div>
 			</div>
-		`), main_core.Text.encode(options == null ? void 0 : options.label), main_core.Text.encode(options == null ? void 0 : options.value), editButton);
+		`), main_core.Text.encode(options == null ? void 0 : options.label), main_core.Text.encode(value), editButton);
 	  }
 	  createCloseButton() {
 	    return this.cache.remember('closeButton', () => {

@@ -16,28 +16,28 @@ use Bitrix\Crm\Settings\OrderSettings;
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
-	
+
 	return;
 }
 
 if (!CModule::IncludeModule('currency'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED_CURRENCY'));
-	
+
 	return;
 }
 
 if (!CModule::IncludeModule('catalog'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED_CATALOG'));
-	
+
 	return;
 }
 
 if (!CModule::IncludeModule('sale'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED_SALE'));
-	
+
 	return;
 }
 

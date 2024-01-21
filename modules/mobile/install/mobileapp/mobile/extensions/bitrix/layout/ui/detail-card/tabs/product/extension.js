@@ -2,12 +2,13 @@
  * @module layout/ui/detail-card/tabs/product
  */
 jn.define('layout/ui/detail-card/tabs/product', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Tab } = require('layout/ui/detail-card/tabs');
 	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
 	const { stringify } = require('utils/string');
 
 	/** @var StoreProductGrid */
-	let StoreProductList;
+	let StoreProductList = null;
 
 	try
 	{
@@ -90,7 +91,7 @@ jn.define('layout/ui/detail-card/tabs/product', (require, exports, module) => {
 			{
 				const errors = [];
 
-				this.productsRef.getItems().map((row, index) => {
+				this.productsRef.getItems().forEach((row, index) => {
 					const item = row.getRawValues();
 					if (stringify(item.name) === '')
 					{
@@ -160,7 +161,7 @@ jn.define('layout/ui/detail-card/tabs/product', (require, exports, module) => {
 					style: {
 						flexDirection: 'column',
 						flexGrow: 1,
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgPrimary,
 					},
 				},
 				new StoreProductList({
@@ -184,3 +185,4 @@ jn.define('layout/ui/detail-card/tabs/product', (require, exports, module) => {
 
 	module.exports = { ProductTab };
 });
+

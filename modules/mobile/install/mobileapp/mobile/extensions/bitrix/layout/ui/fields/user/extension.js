@@ -2,10 +2,13 @@
  * @module layout/ui/fields/user
  */
 jn.define('layout/ui/fields/user', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { lock } = require('assets/common');
 	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
+	const { EntitySelectorFactory } = require('selector/widget/factory');
 	const { ProfileView } = require('user/profile');
 	const { UserListManager } = require('layout/ui/user-list');
+	const { EmptyAvatar } = require('layout/ui/user/empty-avatar');
 
 	const EMPTY_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/empty-avatar.png';
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/default-avatar.png';
@@ -137,7 +140,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 						style: {
 							fontSize: 11,
 							fontWeight: '400',
-							color: '#828b95',
+							color: AppTheme.colors.base3,
 							marginLeft: 6,
 						},
 						text: `+${this.state.entityList.length - 5}`,
@@ -150,7 +153,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 
 		renderEntity(user = {}, showPadding = false)
 		{
-			const onClick = this.openEntity.bind(this, user.id);
+			const onClick = () => this.openEntity(user.id);
 
 			return View(
 				{
@@ -161,11 +164,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 					},
 					testId: `${this.testId}_USER_${user.id}`,
 				},
-				Image({
-					style: this.styles.userImage,
-					uri: this.getImageUrl(user.imageUrl || DEFAULT_AVATAR),
-					onClick,
-				}),
+				this.renderEntityIcon({ user, onClick }),
 				(!this.isIconsMode() && View(
 					{
 						style: {
@@ -196,12 +195,45 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 			);
 		}
 
+		renderEntityIcon({ user, onClick })
+		{
+			if (user.imageUrl || user.avatar)
+			{
+				return Image({
+					style: this.styles.userImage,
+					uri: this.getImageUrl(user.imageUrl || user.avatar),
+					onClick,
+				});
+			}
+
+			if (this.getConfig().useLettersForEmptyAvatar)
+			{
+				const { width, marginRight } = this.styles.userImage;
+
+				return EmptyAvatar({
+					onClick,
+					id: user.id,
+					name: user.title,
+					size: width,
+					additionalStyles: {
+						marginRight,
+					},
+				});
+			}
+
+			return Image({
+				style: this.styles.userImage,
+				uri: this.getImageUrl(DEFAULT_AVATAR),
+				onClick,
+			});
+		}
+
 		getImageUrl(imageUrl)
 		{
 			if (imageUrl.indexOf(currentDomain) !== 0)
 			{
-				imageUrl = imageUrl.replace(`${currentDomain}`, '');
-				imageUrl = (imageUrl.indexOf('http') !== 0 ? `${currentDomain}${imageUrl}` : imageUrl);
+				imageUrl = imageUrl.replace(String(currentDomain), '');
+				imageUrl = (imageUrl.indexOf('http') === 0 ? imageUrl : `${currentDomain}${imageUrl}`);
 			}
 
 			if (imageUrl === (currentDomain + DEFAULT_SELECTOR_AVATAR))
@@ -219,8 +251,12 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 
 		openEntity(userId)
 		{
-			this
-				.getPageManager()
+			if (!userId)
+			{
+				return;
+			}
+
+			this.getPageManager()
 				.openWidget('list', {
 					groupStyle: true,
 					backdrop: {
@@ -231,8 +267,8 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 						horizontalSwipeAllowed: false,
 					},
 				})
-				.then(list => ProfileView.open({ userId, isBackdrop: true }, list))
-			;
+				.then((list) => ProfileView.open({ userId, isBackdrop: true }, list))
+				.catch(console.error);
 		}
 
 		shouldShowEditIcon()
@@ -324,12 +360,12 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 					marginRight: (this.isIconsMode() ? 2 : 0),
 				},
 				userTitle: {
-					color: '#0b66c3',
+					color: AppTheme.colors.accentMainLinks,
 					fontSize: 16,
 					flexShrink: 2,
 				},
 				userSubtitle: {
-					color: '#a8adb4',
+					color: AppTheme.colors.base4,
 					fontSize: 12,
 					flexShrink: 2,
 				},
@@ -340,6 +376,6 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 	module.exports = {
 		UserType: 'user',
 		UserFieldMode: Mode,
-		UserField: props => new UserField(props),
+		UserField: (props) => new UserField(props),
 	};
 });

@@ -13,10 +13,10 @@ use Bitrix\Main\Localization\Loc;
 
 class CBPCrmCopyDynamicActivity extends CBPActivity
 {
-	protected static $cycleCounter = [];
+	protected static array $cycleCounter = [];
 	const CYCLE_LIMIT = 150;
 
-	protected $preparedProperties = [];
+	protected array $preparedProperties = [];
 
 	public function __construct($name)
 	{
@@ -52,7 +52,7 @@ class CBPCrmCopyDynamicActivity extends CBPActivity
 		[$sourceItemType, $sourceItemId] = mb_split('_(?=[^_]*$)', $documentId[2]);
 
 		$factory = static::getFactoryByType($sourceItemType);
-		$item = isset($factory) ? $factory->getItem($sourceItemId) : null;
+		$item = $factory?->getItem($sourceItemId);
 
 		if (is_null($item))
 		{
@@ -294,8 +294,11 @@ class CBPCrmCopyDynamicActivity extends CBPActivity
 		);
 
 		$stageId = $properties['StageId'];
-		$categoryPrefixLength = mb_strpos($stageId, ':') + 1;
-		$properties['StageId'] = mb_substr($stageId, $categoryPrefixLength);
+        if (!static::isExpression($stageId))
+        {
+            $categoryPrefixLength = mb_strpos($stageId, ':') + 1;
+            $properties['StageId'] = mb_substr($stageId, $categoryPrefixLength);
+        }
 
 		if ($errors)
 		{
@@ -392,6 +395,11 @@ class CBPCrmCopyDynamicActivity extends CBPActivity
 				'Options' => $options,
 				'Default' => key($options),
 				'Getter' => function($dialog, $property, $currentActivity, $compatible) {
+					if (CBPActivity::isExpression($currentActivity['Properties']['StageId']))
+					{
+						return $currentActivity['Properties']['StageId'];
+					}
+
 					if (!array_key_exists('CategoryId', $currentActivity['Properties']))
 					{
 						$defaultStageId = $property['Default'];

@@ -1,4 +1,5 @@
 <?php
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\CurrentUser;
@@ -12,8 +13,6 @@ use Bitrix\SalesCenter\Integration\SaleManager;
 use Bitrix\SalesCenter\Model\PageTable;
 use \Bitrix\Main\Service\GeoIp;
 
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
-
 class SalesCenterFeedbackComponent extends CBitrixComponent
 {
 	private const FEEDBACK_TYPE_FEEDBACK = 'feedback';
@@ -22,11 +21,12 @@ class SalesCenterFeedbackComponent extends CBitrixComponent
 	private const FEEDBACK_TYPE_PAYSYSTEM_SBP_OFFER = 'paysystem_sbp_offer';
 	private const FEEDBACK_TYPE_SMSPROVIDER_OFFER = 'smsprovider_offer';
 	private const FEEDBACK_TYPE_DELIVERY_OFFER = 'delivery_offer';
+	private const FEEDBACK_TYPE_TERMINAL_OFFER = 'terminal_offer';
 	private const FEEDBACK_TYPE_INTEGRATION_REQUEST = 'integration_request';
 
 	private $template = '';
 
-	public function onPrepareComponentParams($arParams)
+	public function onPrepareComponentParams($arParams): array
 	{
 		if (empty($arParams['FEEDBACK_TYPE']))
 		{
@@ -36,6 +36,16 @@ class SalesCenterFeedbackComponent extends CBitrixComponent
 		if ($arParams['FEEDBACK_TYPE'] === self::FEEDBACK_TYPE_PAYSYSTEM_SBP_OFFER)
 		{
 			$this->template = 'newform';
+		}
+
+		$arParams['SENDER_PAGE'] ??= '';
+		if (!is_string($arParams['SENDER_PAGE']))
+		{
+			$arParams['SENDER_PAGE'] = '';
+		}
+		if (!preg_match("/^[A-Za-z_]+$/", $arParams['SENDER_PAGE']))
+		{
+			$arParams['SENDER_PAGE'] = '';
 		}
 
 		return parent::onPrepareComponentParams($arParams);
@@ -76,6 +86,10 @@ class SalesCenterFeedbackComponent extends CBitrixComponent
 		{
 			$this->arResult = Bitrix24Manager::getInstance()->getFeedbackDeliveryOfferFormInfo(LANGUAGE_ID);
 		}
+		elseif ($this->arParams['FEEDBACK_TYPE'] === self::FEEDBACK_TYPE_TERMINAL_OFFER)
+		{
+			$this->arResult = Bitrix24Manager::getInstance()->getFeedbackTerminalOfferFormInfo(LANGUAGE_ID);
+		}
 		elseif ($this->arParams['FEEDBACK_TYPE'] === self::FEEDBACK_TYPE_PAYSYSTEM_SBP_OFFER)
 		{
 			$this->arResult = Bitrix24Manager::getInstance()->getFeedbackPaySystemSbpOfferFormInfo(LANGUAGE_ID);
@@ -96,7 +110,7 @@ class SalesCenterFeedbackComponent extends CBitrixComponent
 				'c_email' => CurrentUser::get()->getEmail(),
 				'city' => implode(' / ', $this->getUserGeoData()),
 				'partner_id' => \Bitrix\Main\Config\Option::get('bitrix24', 'partner_id', 0),
-				'sender_page' => $this->arParams['SENDER_PAGE'] ?? '',
+				'sender_page' => $this->arParams['SENDER_PAGE'],
 			];
 		}
 		else
@@ -107,12 +121,13 @@ class SalesCenterFeedbackComponent extends CBitrixComponent
 				'b24_plan' => Bitrix24Manager::getInstance()->getLicenseType(),
 				'b24_zone' => Bitrix24Manager::getInstance()->getPortalZone(),
 				'c_name' => CurrentUser::get()->getFullName(),
-				'user_status' => $this->getBooleanPhrase(CurrentUser::get()->isAdmin()),
-				'is_created_eshop' => $this->getBooleanPhrase(LandingManager::getInstance()->isSiteExists()),
-				'is_payment_system' => $this->getBooleanPhrase($this->hasPaymentSystemConfigured()),
-				'is_cashbox' => $this->getBooleanPhrase($this->hasCashboxConfigured()),
-				'is_own_url' => $this->getBooleanPhrase($this->hasPagesWithCustomUrl()),
-				'is_other_website_url' => $this->getBooleanPhrase($this->hasPagesFromAnotherSite()),
+				'user_status' => CurrentUser::get()->isAdmin() ? 'yes' : 'no',
+				'is_created_eshop' => LandingManager::getInstance()->isSiteExists() ? 'yes' : 'no',
+				'is_payment_system' => $this->hasPaymentSystemConfigured() ? 'yes' : 'no',
+				'is_cashbox' => $this->hasCashboxConfigured() ? 'yes' : 'no',
+				'is_own_url' => $this->hasPagesWithCustomUrl() ? 'yes' : 'no',
+				'is_other_website_url' => $this->hasPagesFromAnotherSite() ? 'yes' : 'no',
+				'sender_page' => $this->arParams['SENDER_PAGE'],
 			];
 		}
 
@@ -140,23 +155,9 @@ class SalesCenterFeedbackComponent extends CBitrixComponent
 	}
 
 	/**
-	 * @param $value bool
-	 * @return string
-	 */
-	protected function getBooleanPhrase($value)
-	{
-		if($value)
-		{
-			return 'yes';
-		}
-
-		return 'no';
-	}
-
-	/**
 	 * @return bool
 	 */
-	protected function hasPaymentSystemConfigured()
+	protected function hasPaymentSystemConfigured(): bool
 	{
 		if(SaleManager::getInstance()->isEnabled())
 		{
@@ -171,7 +172,7 @@ class SalesCenterFeedbackComponent extends CBitrixComponent
 	/**
 	 * @return bool
 	 */
-	protected function hasCashboxConfigured()
+	protected function hasCashboxConfigured(): bool
 	{
 		if(SaleManager::getInstance()->isEnabled())
 		{
@@ -186,7 +187,7 @@ class SalesCenterFeedbackComponent extends CBitrixComponent
 	/**
 	 * @return bool
 	 */
-	protected function hasPagesWithCustomUrl()
+	protected function hasPagesWithCustomUrl(): bool
 	{
 		return (PageTable::getCount(Driver::getInstance()->getFilterForCustomUrlPages()) > 0);
 	}
@@ -194,7 +195,7 @@ class SalesCenterFeedbackComponent extends CBitrixComponent
 	/**
 	 * @return bool
 	 */
-	protected function hasPagesFromAnotherSite()
+	protected function hasPagesFromAnotherSite(): bool
 	{
 		return PageTable::getCount(Driver::getInstance()->getFilterForAnotherSitePages()) > 0;
 	}

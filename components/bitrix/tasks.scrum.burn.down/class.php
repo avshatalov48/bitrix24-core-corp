@@ -14,6 +14,7 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Scrum\Service\ItemService;
 use Bitrix\Tasks\Scrum\Service\KanbanService;
@@ -65,6 +66,13 @@ class TasksScrumBurnDownComponent extends \CBitrixComponent implements Controlle
 
 			$this->setTitle();
 			$this->init();
+
+			if (!$this->isScrumEnabled())
+			{
+				$this->includeComponentTemplate('scrum_disabled');
+
+				return;
+			}
 
 			if (!$this->canReadGroupTasks($this->arResult['groupId']))
 			{
@@ -152,6 +160,11 @@ class TasksScrumBurnDownComponent extends \CBitrixComponent implements Controlle
 	private function init()
 	{
 		$this->userId = Util\User::getId();
+	}
+
+	private function isScrumEnabled(): bool
+	{
+		return (new Settings())->isToolAvailable(Settings::TOOLS['scrum']);
 	}
 
 	private function canReadGroupTasks(int $groupId): bool

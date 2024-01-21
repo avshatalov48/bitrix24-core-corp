@@ -67,7 +67,7 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 	{
 		if (!Loader::includeModule('salescenter'))
 		{
-			$this->showError(Loc::getMessage('SPP_SALESCENTER_MODULE_ERROR'));
+			$this->showError(Loc::getMessage('SPP_SALESCENTER_MODULE_ERROR_MSGVER_1'));
 			return;
 		}
 

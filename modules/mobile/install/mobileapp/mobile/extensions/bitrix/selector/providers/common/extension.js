@@ -2,70 +2,22 @@
  * @module selector/providers/common
  */
 jn.define('selector/providers/common', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
+	const { withCurrentDomain } = require('utils/url');
 	const { mergeImmutable } = require('utils/object');
 	const { uniqBy, unique } = require('utils/array');
 	const { debounce } = require('utils/function');
 	const { stringify } = require('utils/string');
+	const { BasePickerCache } = require('selector/utils/picker-cache');
+	const { BaseSelectorProvider } = require('selector/providers/base');
+	const { Color } = require('selector/providers/common/src/entity-color');
 
-	const specialChars = `!"#$%&'()*+,-.\/:;<=>?@[\\]^_\`{|}`;
+	const specialChars = '!"#$%&\'()*+,-.\/:;<=>?@[\\]^_`{|}';
 	const specialCharsRegExp = new RegExp(`[${specialChars}]`, 'g');
 
-	const Color = (function() {
-		const Colors = {
-			background: {
-				user: '#d5f1fc',
-				userExtranet: '#ffa900',
-				userAll: '#dbf188',
-				'meta-user': '#dbf188',
-				group: '#ade7e4',
-				project: '#ade7e4',
-				'project-tag': '#bdc1c6',
-				'task-tag': '#bdc1c6',
-				groupExtranet: '#ffa900',
-				department: '#e2e3e5',
-				section: '#ccbcbe',
-				product: '#ffffff',
-				contractor: '#8e52ec',
-				store: '#8e52ec',
-				lead: '#2cc6da',
-				deal: '#8c78ef',
-				contact: '#9dcf00',
-				company: '#e89b06',
-				quote: '#00b4ac',
-				smart_invoice: '#1e6ec2',
-				order: '#af9245',
-				dynamic: '#5095de',
-				default: '#ccbcbe',
-			},
-			subtitle: {
-				userExtranet: '#ca8600',
-				groupExtranet: '#ca8600',
-			},
-			title: {
-				userExtranet: '#ca8600',
-				groupExtranet: '#ca8600',
-			},
-			tag: {
-				groupExtranet: '#fff599',
-			},
+	const getImage = (name) => {
+		const path = '/bitrix/mobileapp/mobile/extensions/bitrix/selector/providers/common/images/';
 
-		};
-
-		return function(code, group = 'background') {
-			try
-			{
-				return Colors[group][code] || Colors[group]['default'];
-			}
-			catch (e)
-			{
-				return '#f0f0f0';
-			}
-		};
-	})();
-
-	const getImage = function(name) {
-		const path = `/bitrix/mobileapp/mobile/extensions/bitrix/selector/providers/common/images/`;
 		return `${currentDomain}${path}${name}.png`;
 	};
 
@@ -87,9 +39,9 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			this.searchFields = ['position', 'secondName', 'lastName', 'name'];
 			this.entityWeight = {
 				'meta-user': 100,
-				'user': 90,
-				'project': 80,
-				'department': 70,
+				user: 90,
+				project: 80,
+				department: 70,
 			};
 			this.handlerPrepareItem = null;
 			this.collator = undefined;
@@ -186,10 +138,12 @@ jn.define('selector/providers/common', (require, exports, module) => {
 				{
 					return -1;
 				}
+
 				if (entry1.sort < entry2.sort)
 				{
 					return 1;
 				}
+
 				return 0;
 			});
 
@@ -217,17 +171,17 @@ jn.define('selector/providers/common', (require, exports, module) => {
 				const queryWords = this.splitQueryByWords(query);
 				const uniqueQueryWords = unique(queryWords);
 
-				return items.map(item => {
+				return items.map((item) => {
 					let sort = this.getItemBaseSort(item);
 
 					const matchedWords = [];
 
-					if (this.searchFields.length && query)
+					if (this.searchFields.length > 0 && query)
 					{
 						let fieldWeight = 0;
-						const reverse = this.searchFields.slice(0).reverse();
+						const reverse = [...this.searchFields].reverse();
 
-						reverse.forEach(name => {
+						reverse.forEach((name) => {
 							if (excludeFields.includes(name))
 							{
 								return;
@@ -247,8 +201,8 @@ jn.define('selector/providers/common', (require, exports, module) => {
 							{
 								const fieldWords = this.splitQueryByWords(field);
 
-								const result = fieldWords.filter(word => {
-									const items = queryWords.filter(queryWord => {
+								const result = fieldWords.filter((word) => {
+									const items = queryWords.filter((queryWord) => {
 										const match = this.compareWords(queryWord, word);
 										if (match && !matchedWords.includes(queryWord))
 										{
@@ -278,25 +232,24 @@ jn.define('selector/providers/common', (require, exports, module) => {
 					item.sort = matchedWords.length >= uniqueQueryWords.length ? sort : -1;
 
 					return item;
-				})
-					.filter(item => item.sort >= 0)
-					.sort((item1, item2) => {
-						if (item1.sort > item2.sort)
-						{
-							return -1;
-						}
+				}).filter((item) => item.sort >= 0).sort((item1, item2) => {
+					if (item1.sort > item2.sort)
+					{
+						return -1;
+					}
 
-						if (item1.sort < item2.sort)
-						{
-							return 1;
-						}
+					if (item1.sort < item2.sort)
+					{
+						return 1;
+					}
 
-						return 0;
-					});
+					return 0;
+				});
 			}
 			catch (e)
 			{
 				console.error(e);
+
 				return items;
 			}
 		}
@@ -306,7 +259,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			const collator = this.getCollator();
 			if (collator)
 			{
-				word = word.substring(0, queryWord.length);
+				word = word.slice(0, Math.max(0, queryWord.length));
 
 				return collator.compare(queryWord, word) === 0;
 			}
@@ -326,7 +279,6 @@ jn.define('selector/providers/common', (require, exports, module) => {
 				{
 					this.collator = null;
 				}
-
 			}
 
 			return this.collator;
@@ -348,13 +300,13 @@ jn.define('selector/providers/common', (require, exports, module) => {
 
 			this.listener.onFetchResult(cachedItems, true);
 
-			if (!this.emptyResults.includes(query))
+			if (this.emptyResults.includes(query))
 			{
-				this.runSearchActionDebounced(query);
+				this.listener.onFetchResult(cachedItems, false);
 			}
 			else
 			{
-				this.listener.onFetchResult(cachedItems, false);
+				this.runSearchActionDebounced(query);
 			}
 		}
 
@@ -362,15 +314,15 @@ jn.define('selector/providers/common', (require, exports, module) => {
 		{
 			const clearedQuery = (
 				query
-					.replace(specialCharsRegExp, ' ')
-					.replace(/\s\s+/g, ' ')
+					.replaceAll(specialCharsRegExp, ' ')
+					.replaceAll(/\s\s+/g, ' ')
 			);
 
 			return (
 				clearedQuery
 					.toLowerCase()
 					.split(' ')
-					.filter(word => word !== '')
+					.filter((word) => word !== '')
 			);
 		}
 
@@ -396,7 +348,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			})
 				.then((response) => {
 					const items = this.prepareItems(response.data.dialog.items);
-					if (items.length)
+					if (items.length > 0)
 					{
 						this.addItems(items);
 					}
@@ -419,7 +371,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 						this.listener.onFetchResult(sortedItems);
 					}
 				})
-				.catch(e => {
+				.catch((e) => {
 					console.error(e);
 				});
 		}
@@ -429,7 +381,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			const currentItems = this.cache.get('items');
 			const mergedItems = [...currentItems, ...items];
 
-			this.cache.save(mergedItems, 'items', {saveDisk, unique: true});
+			this.cache.save(mergedItems, 'items', { saveDisk, unique: true });
 		}
 
 		getAllItems()
@@ -448,13 +400,13 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			{
 				let recentItems = this.cache.get('recent', true);
 
-				if (this.preselectedItems.length)
+				if (this.preselectedItems.length > 0)
 				{
 					const allItems = this.getAllItems();
 					const preselectedItems = (
 						this.preselectedItems
-							.map(preselectedItem => allItems.find(item => item.id === `${preselectedItem[0]}/${preselectedItem[1]}`))
-							.filter(item => item)
+							.map((preselectedItem) => allItems.find((item) => item.id === `${preselectedItem[0]}/${preselectedItem[1]}`))
+							.filter((item) => item)
 					);
 
 					if (preselectedItems.length === this.preselectedItems.length)
@@ -487,7 +439,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 					context: this.context,
 				},
 			}).then((response) => {
-				let recentItems;
+				let recentItems = null;
 
 				if (this.canUseRecent)
 				{
@@ -498,12 +450,12 @@ jn.define('selector/providers/common', (require, exports, module) => {
 					recentItems = this.getItemsFromResponse(response.data.dialog, 'items');
 
 					const items = this.prepareItems(response.data.dialog.items);
-					if (items.length)
+					if (items.length > 0)
 					{
 						this.addItems(items, true);
 					}
 				}
-				this.cache.save(recentItems, 'recent', {saveDisk: true});
+				this.cache.save(recentItems, 'recent', { saveDisk: true });
 
 				const preselectedItems = this.getItemsFromResponse(response.data.dialog, 'preselectedItems');
 				this.addItems(preselectedItems);
@@ -537,19 +489,19 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			{
 				result = result.map((item) => {
 					const [entityId, id] = item;
-					return dialog.items.find(item => item.entityId === entityId && item.id.toString() === id.toString());
+
+					return dialog.items.find((item) => item.entityId === entityId && item.id.toString() === id.toString());
 				});
 			}
-			result = result.filter(item => item);
+			result = result.filter((item) => item);
 
-			return (
-				this
-					.prepareItems(result)
-					.map((item) => {
-						item.params.priorityPass = true;
-						return item;
-					})
-			);
+			return this
+				.prepareItems(result)
+				.map((item) => {
+					item.params.priorityPass = true;
+
+					return item;
+				});
 		}
 
 		prepareRecentResult(preselectedItems, recentItems)
@@ -580,11 +532,11 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			{
 				return Object.keys(selected)
 					.reduce((result, entityId) => {
-						const groupSelected = selected[entityId].map(original => {
-							const item = Object.assign({}, original);
+						const groupSelected = selected[entityId].map((original) => {
+							const item = { ...original };
 							if (typeof item.id !== 'undefined')
 							{
-								item.id = entityId + '/' + item.id;
+								item.id = `${entityId}/${item.id}`;
 							}
 
 							if (!item.imageUrl)
@@ -593,11 +545,11 @@ jn.define('selector/providers/common', (require, exports, module) => {
 							}
 
 							item.color = Color(entityId);
+
 							return item;
 						});
 
 						return result.concat(groupSelected);
-
 					}, []);
 			}
 
@@ -611,7 +563,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			const result = items.reduce((result, item) => {
 				const [entityId, id] = item.id.split('/');
 
-				if (this.preselectedItems.length && this.preselectedItems.some(preselectedItem => item.id === `${preselectedItem[0]}/${preselectedItem[1]}`))
+				if (this.preselectedItems.some((preselectedItem) => item.id === `${preselectedItem[0]}/${preselectedItem[1]}`))
 				{
 					return result;
 				}
@@ -632,7 +584,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 					}
 					result[entityId].push({
 						id,
-						title: title,
+						title,
 						subtitle: item.subtitle,
 						shortTitle: item.shortTitle,
 						params: item.params,
@@ -644,14 +596,15 @@ jn.define('selector/providers/common', (require, exports, module) => {
 				return result;
 			}, {});
 
-			if (recentItems.length)
+			if (recentItems.length > 0)
 			{
 				this.updateRecentCache(items);
-				this.addRecentItems(recentItems).then(() => this.loadRecent(true));
+				this.addRecentItems(recentItems)
+					.then(() => this.loadRecent(true))
+					.catch(console.error);
 			}
 
 			return result;
-
 		}
 
 		addRecentItems(recentItems)
@@ -662,8 +615,8 @@ jn.define('selector/providers/common', (require, exports, module) => {
 					BX.ajax.runAction('ui.entityselector.saveRecentItems', {
 						json: { dialog: this.getAjaxDialog(), recentItems },
 						getParameters: { context: this.context },
-					}).then(result => resolve(result))
-						.catch(e => reject(e));
+					}).then((result) => resolve(result))
+						.catch((e) => reject(e));
 				}
 				else
 				{
@@ -678,13 +631,14 @@ jn.define('selector/providers/common', (require, exports, module) => {
 
 			if (recent.length > 0)
 			{
-				const lastSelectedIds = items.map(item => item.id);
+				const lastSelectedIds = new Set(items.map((item) => item.id));
 				const lastSelectedItems = [];
 
-				recent = recent.filter(item => {
-					if (lastSelectedIds.includes(item.id))
+				recent = recent.filter((item) => {
+					if (lastSelectedIds.has(item.id))
 					{
 						lastSelectedItems.push(item);
+
 						return false;
 					}
 
@@ -712,74 +666,105 @@ jn.define('selector/providers/common', (require, exports, module) => {
 				height: 64,
 				color: Color(entity.entityId),
 				styles: {
-					title: { font: { size: 16 } },
+					title: {
+						font: {
+							size: 16,
+						},
+					},
 					subtitle: {},
 				},
 				useLetterImage: true,
 				id: `${entity.entityId}/${entity.id}`,
-				imageUrl: entity.avatar,
+				imageUrl: withCurrentDomain(entity.avatar),
 				params: {
 					title: stringify(entity.title),
 					type: entity.entityId,
 					id: entity.id,
-					customData: entity.customData ? entity.customData : {},
+					customData: entity.customData || {},
 				},
 			};
 
-			if (entity.entityId === 'user')
+			switch (entity.entityId)
 			{
-				if (entity.entityType === 'extranet')
+				case 'user':
 				{
-					item.styles.title.font = { color: Color('userExtranet', 'title') };
-					item.color = Color('userExtranet');
-				}
-				item.subtitle = stringify(entity.customData.position);
-				item.shortTitle = stringify(entity.customData.name);
-				item.lastName = stringify(entity.customData.lastName);
-				item.name = stringify(entity.customData.name);
+					if (entity.entityType === 'extranet')
+					{
+						item.styles.title.font = { color: Color('userExtranet', 'title') };
+						item.color = Color('userExtranet');
+					}
+					item.subtitle = stringify(entity.customData.position);
+					item.shortTitle = stringify(entity.customData.name);
+					item.lastName = stringify(entity.customData.lastName);
+					item.name = stringify(entity.customData.name);
 
-				item.position = stringify(entity.customData.position);
-			}
+					item.position = stringify(entity.customData.position);
 
-			else if (entity.entityId === 'project')
-			{
-				item.subtitle = entity.title;
-				item.title = BX.message('PROVIDER_COMMON_PROJECT');
-				item.shortTitle = entity.title;
-				item.name = entity.title;
-				item.styles.title.font = { size: 12, color: '#b1b6bb', fontStyle: 'bold' };
-				item.styles.subtitle.font = { size: 17, color: '#333' };
-
-				if (entity.entityType === 'extranet')
-				{
-					item.styles.subtitle.font.color = Color('groupExtranet', 'title');
-					item.color = Color('groupExtranet');
-				}
-			}
-			else if (entity.entityId === 'department')
-			{
-				item.subtitle = entity.title;
-				item.shortTitle = entity.title;
-				item.name = entity.title;
-				item.title = BX.message('PROVIDER_COMMON_DEPARTMENT');
-				item.styles.title.font = { size: 12, color: '#b1b6bb', fontStyle: 'bold' };
-				item.styles.subtitle.font = { size: 17, color: '#333' };
-			}
-			else if (entity.entityId === 'product' || entity.entityId === 'store')
-			{
-				const parts = [];
-
-				if (entity.caption && entity.caption.text)
-				{
-					parts.push(jnComponent.convertHtmlEntities(entity.caption.text));
+					break;
 				}
 
-				if (entity.supertitle)
+				case 'project':
 				{
-					parts.push(entity.supertitle);
+					item.subtitle = entity.title;
+					item.title = BX.message('PROVIDER_COMMON_PROJECT');
+					item.shortTitle = entity.title;
+					item.name = entity.title;
+					item.styles.title.font = {
+						size: 12,
+						color: AppTheme.colors.base4,
+						fontStyle: 'bold',
+					};
+					item.styles.subtitle.font = {
+						size: 17,
+						color: AppTheme.colors.base1,
+					};
+
+					if (entity.entityType === 'extranet')
+					{
+						item.styles.subtitle.font.color = Color('groupExtranet', 'title');
+						item.color = Color('groupExtranet');
+					}
+
+					break;
 				}
 
-				item.subtitle = parts.join(' - ');
+				case 'department':
+				{
+					item.subtitle = entity.title;
+					item.shortTitle = entity.title;
+					item.name = entity.title;
+					item.title = BX.message('PROVIDER_COMMON_DEPARTMENT');
+					item.styles.title.font = {
+						size: 12,
+						color: AppTheme.colors.base4,
+						fontStyle: 'bold',
+					};
+					item.styles.subtitle.font = {
+						size: 17,
+						color: AppTheme.colors.base1,
+					};
+
+					break;
+				}
+				case 'product':
+				case 'store':
+				{
+					const parts = [];
+
+					if (entity.caption && entity.caption.text)
+					{
+						parts.push(jnComponent.convertHtmlEntities(entity.caption.text));
+					}
+
+					if (entity.supertitle)
+					{
+						parts.push(entity.supertitle);
+					}
+
+					item.subtitle = parts.join(' - ');
+					break;
+				}
+				// No default
 			}
 
 			if (item.imageUrl || item.avatar)
@@ -787,7 +772,8 @@ jn.define('selector/providers/common', (require, exports, module) => {
 				item.color = null;
 			}
 
-			if (!item.imageUrl)
+			// Note: Android doesn't support svg images in selector widget
+			if (!item.imageUrl || item.imageUrl.endsWith('.svg'))
 			{
 				item.imageUrl = getImage(entity.entityId);
 			}
@@ -800,6 +786,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			if (this.handlerPrepareItem)
 			{
 				const preparedItem = this.handlerPrepareItem(entity);
+
 				return mergeImmutable(item, preparedItem);
 			}
 

@@ -4,6 +4,8 @@
 jn.define('imconnector/lib/ui/setting-step', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const AppTheme = require('apptheme');
+
 	/**
 	 * @param {SettingStepProps} props
 	 * @constructor
@@ -20,7 +22,7 @@ jn.define('imconnector/lib/ui/setting-step', (require, exports, module) => {
 		return View(
 			{
 				style: {
-					backgroundColor: '#fff',
+					backgroundColor: AppTheme.colors.bgContentPrimary,
 					borderRadius: 12,
 					flexDirection: 'row',
 					alignItems: 'center',
@@ -60,7 +62,7 @@ jn.define('imconnector/lib/ui/setting-step', (require, exports, module) => {
 					props.withStep
 						? Text({
 							style: {
-								color: '#008DBA',
+								color: AppTheme.colors.accentSoftElementBlue1,
 								fontSize: 16,
 								fontWeight: '500',
 								numberOfLines: 1,
@@ -73,7 +75,7 @@ jn.define('imconnector/lib/ui/setting-step', (require, exports, module) => {
 					Text(
 						{
 							style: {
-								color: '#333333',
+								color: AppTheme.colors.base1,
 								fontSize: 16,
 								fontWeight: '500',
 								numberOfLines: 1,
@@ -93,7 +95,7 @@ jn.define('imconnector/lib/ui/setting-step', (require, exports, module) => {
 					BBCodeText({
 						style: {
 							width: '100%',
-							color: '#6A737F',
+							color: AppTheme.colors.base3,
 							fontSize: 13,
 							numberOfLines: 0,
 						},
@@ -110,7 +112,6 @@ jn.define('imconnector/lib/ui/setting-step', (require, exports, module) => {
 					},
 					...additionalComponents,
 				),
-
 			),
 		);
 	}

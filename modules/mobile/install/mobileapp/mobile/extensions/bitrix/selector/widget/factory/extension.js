@@ -37,6 +37,9 @@
 		CRM_ELEMENT: 'crm-element',
 		DOCUMENTGENERATOR_TEMPLATE: 'documentgenerator-template',
 		TASK_TAG: 'task_tag',
+		MAIL_CONTACT: 'mail_contact',
+		IBLOCK_PROPERTY_ELEMENT: 'iblock-property-element',
+		IBLOCK_PROPERTY_SECTION: 'iblock-property-section',
 		IBLOCK_ELEMENT_USER_FIELD: 'iblock-element-user-field',
 		IBLOCK_SECTION_USER_FIELD: 'iblock-section-user-field',
 	};
@@ -106,6 +109,16 @@
 			if (type === Type.TASK_TAG)
 			{
 				return TaskTagSelector.make(data);
+			}
+
+			if (type === Type.IBLOCK_PROPERTY_ELEMENT)
+			{
+				return IblockElementSelector.make(data);
+			}
+
+			if (type === Type.IBLOCK_PROPERTY_SECTION)
+			{
+				return IblockSectionSelector.make(data);
 			}
 
 			if (type === Type.IBLOCK_ELEMENT_USER_FIELD)

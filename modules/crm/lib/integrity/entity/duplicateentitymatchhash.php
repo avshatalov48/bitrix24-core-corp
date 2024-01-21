@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Integrity\Entity;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\SystemException;
 
 Loc::loadMessages(__FILE__);
 
@@ -92,14 +93,36 @@ class DuplicateEntityMatchHashTable extends Entity\DataManager
 
 		$scope = isset($data['SCOPE']) ? $sqlHelper->forSql($data['SCOPE'], 6) : '';
 
-		$dateModify = (isset($data['DATE_MODIFY']) && $data['DATE_MODIFY'] instanceof Main\Type\DateTime) ? $data['DATE_MODIFY'] : new Main\Type\DateTime();
-		$dateModify = $sqlHelper->convertToDbDateTime($dateModify);
+		$dateModify = (isset($data['DATE_MODIFY']) && $data['DATE_MODIFY'] instanceof Main\Type\DateTime)
+			? $data['DATE_MODIFY']
+			: new Main\Type\DateTime();
 
-		$connection->queryExecute(
-			"INSERT INTO b_crm_dp_entity_hash(ENTITY_ID, ENTITY_TYPE_ID, TYPE_ID, MATCH_HASH, SCOPE, IS_PRIMARY, DATE_MODIFY)
-				VALUES({$entityID}, {$entityTypeID}, {$typeID}, '{$matchHash}', '{$scope}', '{$isPrimary}', {$dateModify})
-			"
-		);
+		$updateFields = [
+			'IS_PRIMARY' => $isPrimary,
+			'DATE_MODIFY' => $dateModify
+		];
+
+		$keyFields = [
+			'ENTITY_ID' => $entityID,
+			'ENTITY_TYPE_ID' => $entityTypeID,
+			'TYPE_ID' => $typeID,
+			'MATCH_HASH' => $matchHash,
+			'SCOPE' => $scope,
+		];
+
+		$upsertSql = $sqlHelper->prepareMerge(
+			'b_crm_dp_entity_hash',
+			array_keys($keyFields),
+			array_merge($keyFields, $updateFields),
+			$updateFields
+		)[0] ?? null;
+
+		if (empty($upsertSql))
+		{
+			throw new SystemException("Generate upsert sql to b_crm_dp_entity_hash table was failed.");
+		}
+
+		$connection->queryExecute($upsertSql);
 
 	}
 	public static function deleteByFilter(array $filter)

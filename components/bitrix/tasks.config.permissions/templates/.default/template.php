@@ -5,13 +5,15 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Tasks\Helper\RestrictionUrl;
 
 $APPLICATION->SetTitle(GetMessage('TASKS_CONFIG_PERMISSIONS'));
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-background no-all-paddings');
 
 \Bitrix\Main\Loader::includeModule('ui');
-\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.icons', 'ui.notification', 'ui.accessrights']);
+Extension::load(['ui.buttons', 'ui.icons', 'ui.notification', 'ui.accessrights']);
 
 Loc::loadMessages(__FILE__);
 
@@ -22,6 +24,16 @@ $openPopupEvent = 'tasks:onComponentOpen';
 
 $hasFatals = false;
 
+/** intranet-settings-support */
+if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
+{
+	$APPLICATION->IncludeComponent("bitrix:tasks.error", "limit", [
+		'LIMIT_CODE' => RestrictionUrl::TASK_LIMIT_OFF_SLIDER_URL,
+		'SOURCE' => 'permissions',
+	]);
+
+	return;
+}
 
 $isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
 if ($isBitrix24Template)

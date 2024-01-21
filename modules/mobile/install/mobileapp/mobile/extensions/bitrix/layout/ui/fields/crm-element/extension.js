@@ -2,17 +2,18 @@
  * @module layout/ui/fields/crm-element
  */
 jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
-
 	const { EntitySelectorFieldClass, CastType } = require('layout/ui/fields/entity-selector');
 	const { get, clone } = require('utils/object');
 	const { stringify } = require('utils/string');
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
+	const { EntitySelectorFactory } = require('selector/widget/factory');
 
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/crm-element/images/default-avatar.png';
 
-	let Type;
-	let TypeId;
-	let openCrmEntityInAppUrl;
+	let Type = null;
+	let TypeId = null;
+	let openCrmEntityInAppUrl = null;
 
 	try
 	{
@@ -110,7 +111,7 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 		{
 			if (type === 'dynamic_multiple' && id)
 			{
-				return parseInt(id.split(':')[0]) || null;
+				return parseInt(id.split(':')[0], 10) || null;
 			}
 
 			return Type.resolveIdByName(type);
@@ -185,8 +186,8 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 
 			if (imageUrl.indexOf(currentDomain) !== 0)
 			{
-				imageUrl = imageUrl.replace(`${currentDomain}`, '');
-				imageUrl = (imageUrl.indexOf('http') !== 0 ? `${currentDomain}${imageUrl}` : imageUrl);
+				imageUrl = imageUrl.replace(String(currentDomain), '');
+				imageUrl = (imageUrl.indexOf('http') === 0 ? imageUrl : `${currentDomain}${imageUrl}`);
 				imageUrl = encodeURI(imageUrl);
 			}
 
@@ -200,15 +201,15 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 				return;
 			}
 
-			let entityTypeId;
-			let entityId;
+			let entityTypeId = null;
+			let entityId = null;
 
 			const { type, id } = entity;
 
 			if (type === 'dynamic_multiple' && id)
 			{
-				entityTypeId = parseInt(id.split(':')[0]) || null;
-				entityId = parseInt(id.split(':')[1]) || null;
+				entityTypeId = parseInt(id.split(':')[0], 10) || null;
+				entityId = parseInt(id.split(':')[1], 10) || null;
 			}
 			else
 			{
@@ -257,12 +258,12 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 					marginRight: 6,
 				},
 				entityTitle: (clickable) => ({
-					color: clickable ? '#0b66c3' : '#333333',
+					color: clickable ? AppTheme.colors.accentMainLinks : AppTheme.colors.base1,
 					fontSize: 16,
 					flexShrink: 2,
 				}),
 				entitySubtitle: {
-					color: '#a8adb4',
+					color: AppTheme.colors.base4,
 					fontSize: 12,
 					flexShrink: 2,
 				},
@@ -274,5 +275,4 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 		CrmElementType: 'crm',
 		CrmElementField: (props) => new CrmElementField(props),
 	};
-
 });

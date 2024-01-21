@@ -126,11 +126,11 @@ class ResultTable extends DataManager
 		return $query->exec()->fetchCollection();
 	}
 
-	public static function getByCommentId(int $commentId): Result
+	public static function getByCommentId(int $commentId): ?Result
 	{
 		$query = self::query();
 		$query
-			->setSelect(['ID', 'COMMENT_ID'])
+			->setSelect(['ID', 'COMMENT_ID', 'TASK_ID'])
 			->where('COMMENT_ID', $commentId)
 		;
 

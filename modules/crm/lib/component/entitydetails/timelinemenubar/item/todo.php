@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\Item;
 
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\Item;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Engine\CurrentUser;
@@ -36,6 +37,10 @@ class ToDo extends Item
 				'detailUrl' => $currentUser['SHOW_URL'] ?? '',
 				'imageUrl' => $currentUser['PHOTO_URL'] ?? '',
 			],
+			'pingSettings' => (new TodoPingSettingsProvider(
+				$this->getEntityTypeId(),
+				$this->getEntityCategoryId() ?? 0
+			))->fetchForJsComponent(),
 			'enableTodoCalendarSync' => \Bitrix\Crm\Settings\Crm::isTimelineToDoCalendarSyncEnabled(),
 		];
 	}

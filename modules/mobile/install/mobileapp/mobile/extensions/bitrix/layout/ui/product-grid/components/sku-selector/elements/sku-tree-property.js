@@ -2,6 +2,7 @@
  * @module layout/ui/product-grid/components/sku-selector/elements/sku-tree-property
  */
 jn.define('layout/ui/product-grid/components/sku-selector/elements/sku-tree-property', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	function SkuTreeProperty(name, ...children)
 	{
 		return View(
@@ -19,7 +20,7 @@ jn.define('layout/ui/product-grid/components/sku-selector/elements/sku-tree-prop
 				Text({
 					text: name,
 					style: {
-						color: '#525C69',
+						color: AppTheme.colors.base2,
 						fontSize: 16,
 					},
 				}),

@@ -23,22 +23,6 @@ $component = new class {
 	private const CONDUCTED = 'Y';
 	private const CANCELLED = 'C';
 
-	private const NOT_CONDUCTED_STATUS_PARAMS = [
-		'value' => self::NOT_CONDUCTED,
-		'textColor' => '#828b95',
-		'backgroundColor' => '#dfe0e3',
-	];
-	private const CONDUCTED_STATUS_PARAMS = [
-		'value' => self::CONDUCTED,
-		'textColor' => '#688800',
-		'backgroundColor' => '#eaf6c3',
-	];
-	private const CANCELLED_STATUS_PARAMS = [
-		'value' => self::CANCELLED,
-		'textColor' => '#ae914b',
-		'backgroundColor' => '#fef3b8',
-	];
-
 	private const TYPE_LOGO_PATTERN = '/bitrix/mobileapp/catalogmobile/extensions/catalog/store/document-card/component/images/type_#DOCUMENT_TYPE#.png';
 
 	use ErrorableImplementation;
@@ -84,7 +68,7 @@ $component = new class {
 
 		$typeList = array_merge(
 			StoreDocumentTable::getTypeList(true),
-			['W' => Loc::getMessage('M_CSDL_TAB_REALIZATION_DESC')]
+			['W' => Loc::getMessage('M_CSDL_TAB_REALIZATION_DESC_MSGVER_1')]
 		);
 
 		foreach ($typeList as $type => $name)
@@ -212,7 +196,6 @@ $component = new class {
 				'storeDocumentActions' => StoreDocumentList::getActionsList(),
 				'realizationDocumentActions' => RealizationDocumentList::getActionsList(),
 			],
-			'statuses' => $this->prepareStatuses(),
 			'permissions' => PermissionsProvider::getInstance()->getPermissions(),
 			'floatingMenuTypes' => $this->getFloatingMenuTypes(),
 		];
@@ -241,19 +224,6 @@ $component = new class {
 				'id' => StoreDocumentTable::TYPE_DEDUCT,
 				'title' => Loc::getMessage('M_CSDL_TAB_MENU_DEDUCT'),
 			],
-		];
-	}
-
-	private function prepareStatuses(): array
-	{
-		$conducted = self::CONDUCTED_STATUS_PARAMS + ['title' => Loc::getMessage('M_CSDL_STATUS_CONDUCTED')];
-		$notConducted = self::NOT_CONDUCTED_STATUS_PARAMS + ['title' => Loc::getMessage('M_CSDL_STATUS_NOT_CONDUCTED')];
-		$cancelled = self::CANCELLED_STATUS_PARAMS + ['title' => Loc::getMessage('M_CSDL_STATUS_CANCELLED')];
-
-		return [
-			self::CONDUCTED => $conducted,
-			self::NOT_CONDUCTED => $notConducted,
-			self::CANCELLED => $cancelled,
 		];
 	}
 };

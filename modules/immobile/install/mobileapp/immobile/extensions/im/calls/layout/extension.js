@@ -1791,8 +1791,8 @@
 			});*/
 			menuItems.push({
 				text: BX.message("MOBILE_CALL_MENU_SOUND_OUTPUT")
-					.replace("#DEVICE_NAME#", this.getSoundDeviceName(JNVIAudioManager.currentDevice)),
-				iconClass: this.getSoundDeviceIcon(JNVIAudioManager.currentDevice),
+					.replace("#DEVICE_NAME#", this.getSoundDeviceName(CallUtil.getSdkAudioManager().currentDevice)),
+				iconClass: this.getSoundDeviceIcon(CallUtil.getSdkAudioManager().currentDevice),
 				onClick: () =>
 				{
 					if (callMenu)
@@ -1860,12 +1860,12 @@
 		showSoundOutputMenu()
 		{
 			let soundMenu;
-			let menuItems = JNVIAudioManager.availableAudioDevices.map(deviceAlias =>
+			let menuItems = CallUtil.getSdkAudioManager().availableAudioDevices.map(deviceAlias =>
 			{
 				return {
 					text: this.getSoundDeviceName(deviceAlias),
 					iconClass: this.getSoundDeviceIcon(deviceAlias),
-					selected: deviceAlias === JNVIAudioManager.currentDevice,
+					selected: deviceAlias === CallUtil.getSdkAudioManager().currentDevice,
 					onClick: () =>
 					{
 						if (soundMenu)

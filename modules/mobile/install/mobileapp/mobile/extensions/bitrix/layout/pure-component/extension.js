@@ -18,13 +18,19 @@ jn.define('layout/pure-component', (require, exports, module) => {
 			// some version of Android had a bug with nextState wrapped in an array
 			nextState = Array.isArray(nextState) ? nextState[0] : nextState;
 
-			const hasChanged = !isEqual(this.props, nextProps) || !isEqual(this.state, nextState);
-			if (hasChanged)
+			const hasStateChanged = !isEqual(this.state, nextState);
+			if (hasStateChanged)
+			{
+				return true;
+			}
+
+			const hasPropsChanged = !isEqual(this.props, nextProps);
+			if (hasPropsChanged)
 			{
 				this.logComponentDifference(this.props, nextProps, this.state, nextState);
 			}
 
-			return hasChanged;
+			return hasPropsChanged;
 		}
 
 		/**
@@ -39,7 +45,7 @@ jn.define('layout/pure-component', (require, exports, module) => {
 			const isLogEnabled = (isBeta && !this.isLogSuppressed()) || PURE_COMPONENT_DEBUG;
 			if (isLogEnabled)
 			{
-				log(this.constructor.name, prevProps, nextProps, prevState, nextState);
+				log(this.getComponentDisplayName(), prevProps, nextProps, prevState, nextState);
 			}
 		}
 
@@ -50,6 +56,15 @@ jn.define('layout/pure-component', (require, exports, module) => {
 		isLogSuppressed()
 		{
 			return false;
+		}
+
+		/**
+		 * @protected
+		 * @return {string}
+		 */
+		getComponentDisplayName()
+		{
+			return this.constructor.name;
 		}
 	}
 

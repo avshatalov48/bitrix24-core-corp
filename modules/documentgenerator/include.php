@@ -1,4 +1,5 @@
 <?php
+
 CJSCore::RegisterExt('documentpreview', [
 	'js' => '/bitrix/js/documentgenerator/documentpreview.js',
 	'css' => '/bitrix/js/documentgenerator/css/documentpreview.css',

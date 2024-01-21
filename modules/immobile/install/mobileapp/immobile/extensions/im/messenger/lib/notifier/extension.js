@@ -87,10 +87,9 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 				data: options,
 			};
 
-			const avatar = ChatUtils.getAvatar(options.avatar);
-			if (avatar)
+			if (options.avatar)
 			{
-				notification.imageUrl = avatar;
+				notification.imageUrl = options.avatar;
 			}
 
 			InAppNotifier.showNotification(notification);

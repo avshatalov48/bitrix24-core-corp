@@ -65,7 +65,7 @@ class ProductRowReservation extends Crm\Reservation\Internals\EO_ProductRowReser
 
 	private static function prepareFields(Crm\ProductRow $productRow, array $fields): array
 	{
-		if (isset($fields[self::ID]) && $fields[self::ID] > 0)
+		if (isset($fields[self::ID]))
 		{
 			unset($fields['ID']);
 		}

@@ -10,6 +10,7 @@ use Bitrix\Crm\Service\Timeline\Repository\Result;
 use Bitrix\Crm\Timeline\Entity\NoteTable;
 use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
 use Bitrix\Crm\Timeline\Entity\TimelineTable;
+use Bitrix\Crm\Timeline\EntityController;
 use Bitrix\Crm\Timeline\TimelineManager;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Type\DateTime;
@@ -44,31 +45,8 @@ class Repository
 			return new Result();
 		}
 
-		$dbResult = \CCrmActivity::GetList(
-			[
-				'DEADLINE' => 'ASC',
-			],
-			$filter,
-			false,
-			false,
-			[
-				'ID',
-			],
-			[
-				'QUERY_OPTIONS' => [
-					'LIMIT' => 100,
-					'OFFSET' => 0,
-				],
-			]
-		);
-
 		$items = [];
-		$activityIds = [];
-		while ($fields = $dbResult->Fetch())
-		{
-			$activityIds[] = (int)$fields['ID'];
-		}
-
+		$activityIds = $this->getActivityIds($filter);
 		if (!empty($activityIds))
 		{
 			$dbResult = \CCrmActivity::GetList(
@@ -114,6 +92,7 @@ class Repository
 			{
 				$activities[$fields['ID']] = $fields;
 			}
+
 			foreach ($activityIds as $activityId)
 			{
 				if (!isset($activities[$activityId]))
@@ -124,7 +103,7 @@ class Repository
 			}
 		}
 
-		\Bitrix\Crm\Timeline\EntityController::loadCommunicationsAndMultifields(
+		EntityController::loadCommunicationsAndMultifields(
 			$items,
 			$this->context->getUserPermissions()->getCrmPermissions()
 		);
@@ -403,4 +382,30 @@ class Repository
 		});
 	}
 
+	private function getActivityIds(array $filter): array
+	{
+		$dbResult = \CCrmActivity::GetList(
+			[], // use php sort after fetch data (see http://jabber.bx/view.php?id=175956)
+			$filter,
+			false,
+			false,
+			[
+				'ID',
+			],
+			[
+				'QUERY_OPTIONS' => [
+					'LIMIT' => 100,
+					'OFFSET' => 0,
+				],
+			]
+		);
+
+		$result = [];
+		while ($fields = $dbResult->Fetch())
+		{
+			$result[] = (int)$fields['ID'];
+		}
+
+		return $result;
+	}
 }

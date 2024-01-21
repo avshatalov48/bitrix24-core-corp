@@ -2,12 +2,12 @@
  * @module crm/state-storage/manager/category-counters
  */
 jn.define('crm/state-storage/manager/category-counters', (require, exports, module) => {
-	const { Base } = require('crm/state-storage/manager/base');
+	const { BaseManager } = require('storage/manager');
 
 	/**
 	 * @class CategoryCountersStoreManager
 	 */
-	class CategoryCountersStoreManager extends Base
+	class CategoryCountersStoreManager extends BaseManager
 	{
 		getStage(id)
 		{
@@ -17,6 +17,15 @@ jn.define('crm/state-storage/manager/category-counters', (require, exports, modu
 		getStages()
 		{
 			return this.store.getters['categoryCountersModel/getStages'];
+		}
+
+		getData()
+		{
+			return {
+				categoryCounters: [
+					...this.store.getters['categoryCountersModel/getStages'],
+				],
+			};
 		}
 
 		updateStage(stageId, data)

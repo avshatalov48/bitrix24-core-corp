@@ -26,20 +26,20 @@ if (CModule::IncludeModule('socialnetwork') && $GLOBALS["USER"]->IsAuthorized())
 
 	if (
 		($GLOBALS["USER"]->GetID() != $arParams["USER"]["ID"])
-		&& ($arParams["USER"]["ACTIVE"] != "N")
-		&& CBXFeatures::IsFeatureEnabled("WebMessenger") 
+		&& (!isset($arParams["USER"]["ACTIVE"]) || $arParams["USER"]["ACTIVE"] != "N")
+		&& CBXFeatures::IsFeatureEnabled("WebMessenger")
 		&& (IsModuleInstalled("im"))
 	)
 	{
 		$arResult['CAN_MESSAGE'] = true;
 		$arResult['CAN_VIDEO_CALL'] = true;
 	}
-		
+
 	if ($arResult["CurrentUserPerms"]["Operations"]["viewprofile"])
 		$arResult['CAN_VIEW_PROFILE'] = true;
 }
 
-$arResult["Urls"]["VideoCall"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_VIDEO_CALL"], array("user_id" => $arParams["USER"]["ID"], "USER_ID" => $arParams["USER"]["ID"], "ID" => $arParams["USER"]["ID"]));
+$arResult["Urls"]["VideoCall"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_VIDEO_CALL"] ?? '', array("user_id" => $arParams["USER"]["ID"], "USER_ID" => $arParams["USER"]["ID"], "ID" => $arParams["USER"]["ID"]));
 
 $arResult['Urls']['TooltipCall'] = $APPLICATION->GetCurPageParam("", array("bxajaxid", "logout"));
 

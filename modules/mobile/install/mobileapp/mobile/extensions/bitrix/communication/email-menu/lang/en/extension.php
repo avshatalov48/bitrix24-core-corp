@@ -1,9 +1,9 @@
 <?php
 $MESS["EMAIL_MENU_B24"] = "Send using Bitrix24";
 $MESS["EMAIL_MENU_B24_BANNER_BUTTON"] = "Connect email";
-$MESS["EMAIL_MENU_B24_BANNER_FEATURE_1"] = "Send and receive emails, save messaging history in the CRM";
-$MESS["EMAIL_MENU_B24_BANNER_FEATURE_2"] = "Automated email sending using automation rules";
-$MESS["EMAIL_MENU_B24_BANNER_FEATURE_3"] = "Automatically create leads or deals from incoming emails";
+$MESS["EMAIL_MENU_B24_BANNER_FEATURE_1_2"] = "Send and receive emails in the CRM";
+$MESS["EMAIL_MENU_B24_BANNER_FEATURE_2_2"] = "Send emails using automation rules";
+$MESS["EMAIL_MENU_B24_BANNER_FEATURE_3_2"] = "Create leads and deals from emails";
 $MESS["EMAIL_MENU_B24_BANNER_TITLE"] = "Emails in Bitrix24";
 $MESS["EMAIL_MENU_B24_DISABLED"] = "Email not connected";
 $MESS["EMAIL_MENU_COPY"] = "Copy";

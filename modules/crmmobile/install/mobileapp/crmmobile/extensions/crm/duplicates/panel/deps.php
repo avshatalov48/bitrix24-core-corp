@@ -3,9 +3,11 @@
 return [
 	'extensions' => [
 		'loc',
-		'utils/string',
+		'apptheme',
 		'utils/color',
+		'utils/string',
 		'layout/ui/fields/client/elements',
+
 		'crm:type',
 		'crm:in-app-url/open',
 	],

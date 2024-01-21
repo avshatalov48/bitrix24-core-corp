@@ -1,6 +1,8 @@
 (() => {
-	const { StringField } = jn.require('layout/ui/fields/string');
-	const { MenuSelectField } = jn.require('layout/ui/fields/menu-select');
+	const require = (ext) => jn.require(ext);
+
+	const { StringField } = require('layout/ui/fields/string');
+	const { MenuSelectField } = require('layout/ui/fields/menu-select');
 
 	class ProjectSubjectField extends LayoutComponent
 	{
@@ -14,13 +16,13 @@
 						readOnly: true,
 						title: BX.message('MOBILE_LAYOUT_PROJECT_FIELDS_SUBJECT_TITLE'),
 						value: this.props.value,
-					})
+					}),
 				);
 			}
 
 			const selectedSubject = (
 				this.props.value
-					? this.props.subjects.find(subject => Number(subject.ID) === Number(this.props.value))
+					? this.props.subjects.find((subject) => Number(subject.ID) === Number(this.props.value))
 					: this.props.subjects[0]
 			);
 
@@ -39,7 +41,7 @@
 						})),
 						parentWidget: this.props.parentWidget,
 					},
-				})
+				}),
 			);
 		}
 	}

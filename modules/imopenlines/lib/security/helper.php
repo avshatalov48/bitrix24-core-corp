@@ -141,11 +141,13 @@ class Helper
 		return $permissions->canModifySettings();
 	}
 
-	public static function installRolesAgent()
+	public static function installRolesAgent(): string
 	{
 		$checkCursor = \Bitrix\ImOpenlines\Model\RoleTable::getList(array('limit' => 1));
-		if($checkCursor->fetch())
+		if ($checkCursor->fetch())
+		{
 			return "";
+		}
 
 		$defaultRoles = array(
 			'ADMIN' => array(
@@ -222,7 +224,7 @@ class Helper
 						Permissions::ACTION_MODIFY => Permissions::PERMISSION_NONE,
 					),
 					Permissions::ENTITY_CONNECTORS => array(
-						Permissions::ACTION_MODIFY => Permissions::PERMISSION_ALLOW,
+						Permissions::ACTION_MODIFY => Permissions::PERMISSION_NONE,
 					),
 					Permissions::ENTITY_SESSION => array(
 						Permissions::ACTION_VIEW => Permissions::PERMISSION_SELF,

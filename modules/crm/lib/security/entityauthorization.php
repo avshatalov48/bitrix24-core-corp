@@ -122,7 +122,6 @@ class EntityAuthorization
 			{
 				return
 					AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
-					&& AccessController::getCurrent()->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
 					&& AccessController::getCurrent()->checkByValue(
 						ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY,
 						\Bitrix\Catalog\StoreDocumentTable::TYPE_SALES_ORDERS
@@ -248,7 +247,6 @@ class EntityAuthorization
 			{
 				return
 					AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
-					&& AccessController::getCurrent()->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
 					&& AccessController::getCurrent()->checkByValue(
 						ActionDictionary::ACTION_STORE_DOCUMENT_VIEW,
 						\Bitrix\Catalog\StoreDocumentTable::TYPE_SALES_ORDERS
@@ -348,7 +346,6 @@ class EntityAuthorization
 			{
 				return
 					AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
-					&& AccessController::getCurrent()->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
 					&& AccessController::getCurrent()->checkByValue(
 						ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY,
 						\Bitrix\Catalog\StoreDocumentTable::TYPE_SALES_ORDERS
@@ -441,7 +438,6 @@ class EntityAuthorization
 			{
 				return
 					AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
-					&& AccessController::getCurrent()->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
 					&& AccessController::getCurrent()->checkByValue(
 						ActionDictionary::ACTION_STORE_DOCUMENT_DELETE,
 						\Bitrix\Catalog\StoreDocumentTable::TYPE_SALES_ORDERS

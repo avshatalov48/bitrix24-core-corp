@@ -23,6 +23,8 @@ $APPLICATION->restartBuffer();
 
 \CJSCore::init(array('crm_activity_planner'));
 
+\Bitrix\Main\UI\Extension::load(['ui.sidepanel.page-swapper']);
+
 ?><!DOCTYPE html>
 	<html>
 	<head><? $APPLICATION->showHead(); ?></head>
@@ -35,7 +37,7 @@ $APPLICATION->restartBuffer();
 				<div class="crm-activity-planner-slider-header-control-block">
 					<div class="crm-activity-planner-slider-header-control-item">
 						<input class="crm-activity-planner-slider-header-control-checkbox" type="checkbox" id="<?=($inputId = uniqid('inp_')) ?>" data-role="field-completed" <? if ($activity['COMPLETED'] == 'Y'): ?> checked<? endif ?>>
-						<label class="crm-activity-planner-slider-header-control-text crm-activity-planner-slider-header-control-label" for="<?=$inputId ?>"><?=getMessage('CRM_ACTIVITY_PLANNER_COMPLETED_SLIDER') ?></label>
+						<label class="crm-activity-planner-slider-header-control-text crm-activity-planner-slider-header-control-label" for="<?= $inputId ?>" style="margin: 0;"><?= getMessage('CRM_ACTIVITY_PLANNER_COMPLETED_SLIDER') ?></label>
 					</div>
 					<div class="crm-activity-planner-slider-header-control-item crm-activity-planner-slider-header-control-important crm-activity-planner-slider-header-control-select crm-activity-planner-slider-header-icon-flame<? if ($options['important']): ?>-active<? endif ?>" data-role="field-important">
 						<div class="crm-activity-planner-slider-header-control-text"><?=getMessage('CRM_ACTIVITY_PLANNER_IMPORTANT_SLIDER') ?></div>
@@ -45,7 +47,8 @@ $APPLICATION->restartBuffer();
 						<div class="crm-activity-planner-slider-header-control-text"><?=getMessage('CRM_ACTIVITY_PLANNER_MORE_SLIDER') ?></div>
 						<div class="crm-activity-planner-slider-header-control-triangle"></div>
 					</div>
-					<? if (\CCrmActivityType::Email == $activity['TYPE_ID'] && $activity['UF_MAIL_MESSAGE'] > 0): ?>
+					<? if (\CCrmActivityType::Email == $activity['TYPE_ID']): ?>
+						<div id="crm-activity-planner-slider-header-page-swapper" style="padding: 0 8px"></div>
 						<? $APPLICATION->includeComponent(
 							'bitrix:mail.message.actions',
 							'',
@@ -56,7 +59,11 @@ $APPLICATION->restartBuffer();
 					<? endif ?>
 				</div>
 			</div><!--crm-task-list-header-->
-			<div class="crm-activity-slider-container">
+			<div class="crm-activity-slider-container"
+				<? if (\CCrmActivityType::Email == $activity['TYPE_ID']): ?>
+					style="padding: 0;"
+				<? endif; ?>
+			>
 			<div class="crm-task-list-inner" data-role="additional-fields" style="display: none; ">
 				<div class="crm-task-list-mail-additionally-info">
 					<div class="crm-task-list-mail-additionally-info-title"><?=getMessage('CRM_ACTIVITY_PLANNER_ADDITIONAL2') ?></div>
@@ -426,6 +433,61 @@ $APPLICATION->restartBuffer();
 
 			<? endif ?>
 
+			<?php if (\CCrmActivityType::Email === (int)$activity['TYPE_ID']): ?>
+
+			setPageSwapper();
+
+			function setPageSwapper()
+			{
+				const slider = BX.SidePanel.Instance.getTopSlider();
+				const container = slider.iframe.contentDocument.getElementById('crm-activity-planner-slider-header-page-swapper');
+
+				if(!container)
+				{
+					return;
+				}
+				if (!slider || !BX.UI.SidePanel.PageSwapper)
+				{
+					container.remove();
+
+					return;
+				}
+
+				const pageSwapper = new BX.UI.SidePanel.PageSwapper({
+					slider,
+					container,
+					useLoader: true,
+					pageType: 'mail',
+				});
+				pageSwapper.init();
+
+				BX.ajax.runAction(
+					'crm.api.mail.ActivityMailMessage.getMessageNeighbors',
+					{
+						data: {
+							ownerId: <?= (int)$activity['OWNER_ID'] ?>,
+							ownerTypeId: <?= (int)$activity['OWNER_TYPE_ID'] ?>,
+							elementId: <?= (int)$arParams['ELEMENT_ID'] ?>,
+						}
+					}
+				).then((response) => {
+					const previousPage = response.data['PREV'];
+					const nextPage = response.data['NEXT'];
+					if (previousPage)
+					{
+						pageSwapper.setPrevPage(previousPage.ID, previousPage.HREF);
+					}
+					if (nextPage)
+					{
+						pageSwapper.setNextPage(nextPage.ID, nextPage.HREF)
+					}
+					if (!previousPage && !nextPage)
+					{
+						pageSwapper.hideLoader();
+					}
+				});
+			}
+			<?php endif; ?>
 		});
 	</script>
 	</body>

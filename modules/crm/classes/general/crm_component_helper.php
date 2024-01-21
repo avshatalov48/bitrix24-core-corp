@@ -7,13 +7,13 @@ use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Integration\ClientResolver;
+use Bitrix\Crm\Integration\OpenLineManager;
 use Bitrix\Crm\Integrity\DuplicateControl;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
-use \Bitrix\Crm\Integration\OpenLineManager;
 
 Loc::loadMessages(__FILE__);
 
@@ -649,6 +649,8 @@ class CCrmComponentHelper
 		}
 		$phoneCountryList = CCrmFieldMulti::GetPhoneCountryList($multiFieldIds);
 
+		$ownerTitles = self::getOwnerTitles($entityTypeId, $entityIds);
+
 		$dbResult = CCrmFieldMulti::GetListEx(['ID' => 'asc'], $filter);
 		while ($fields = $dbResult->fetch())
 		{
@@ -697,6 +699,11 @@ class CCrmComponentHelper
 					'COMPLEX_ID' => $complexID,
 					'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($complexID, false),
 					'TITLE' => OpenLineManager::isImOpenLinesValue($value) ? OpenLineManager::getOpenLineTitle($value) : '',
+					'OWNER' => [
+						'ID' => $elementID,
+						'TYPE_ID' => $entityTypeId,
+						'TITLE' => $ownerTitles[$elementID] ?? '',
+					],
 				];
 			}
 
@@ -735,6 +742,34 @@ class CCrmComponentHelper
 				];
 			}
 		}
+	}
+
+	/**
+	 * @param int $entityTypeId
+	 * @param int[] $entityIds
+	 * @return array
+	 */
+	private static function getOwnerTitles(int $entityTypeId, array $entityIds): array
+	{
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory || !\CcrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
+		{
+			return [];
+		}
+
+		$items = $factory->getItemsFilteredByPermissions([
+			'filter' => [
+				'@ID' => $entityIds,
+			],
+		]);
+
+		$result = [];
+		foreach ($items as $item)
+		{
+			$result[$item->getId()] = $item->getHeading();
+		}
+
+		return $result;
 	}
 
 	/**

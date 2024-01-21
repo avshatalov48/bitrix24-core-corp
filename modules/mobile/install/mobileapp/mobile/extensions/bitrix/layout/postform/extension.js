@@ -1,4 +1,10 @@
 (() => {
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
+	AppTheme.extend('medalSelector', {
+		Opacity: [1, 0.1],
+	});
+
 	this.NewPostComponent = class NewPostComponent extends LayoutComponent
 	{
 		constructor(props)
@@ -6,11 +12,11 @@
 			super(props);
 
 			this.styles = {
-				menuCancelTextColor: '#aaaaaa',
-				inputTextColor: '#333333',
-				inputColoredTextColor: '#ffffff',
-				placeholderTextColor: '#80333333',
-				placeholderColoredTextColor: '#ffffff33',
+				menuCancelTextColor: AppTheme.colors.base4,
+				inputTextColor: AppTheme.colors.base1,
+				inputColoredTextColor: AppTheme.colors.bgContentPrimary,
+				placeholderTextColor: AppTheme.colors.base4,
+				placeholderColoredTextColor: AppTheme.colors.baseWhiteFixed,
 			};
 
 			const postData = BX.componentParameters.get('POST_DATA', {});
@@ -125,7 +131,7 @@
 			this.keyboardPanelRecipientsCountLimit = 3;
 			// this.actionSheetRecipientsCountLimit = 3;
 
-			this.pageId = (postData.pageId ? postData.pageId : false);
+			this.pageId = postData.pageId || false;
 			this.postId = (parseInt(postData.postId, 10) > 0 ? parseInt(postData.postId, 10) : 0);
 			this.groupId = (parseInt(postData.groupId, 10) > 0 ? parseInt(postData.groupId, 10) : 0);
 
@@ -1723,11 +1729,12 @@
 
 			const medalsList = BX.componentParameters.get('MEDALS_LIST', {});
 			const backgroundCommon = BX.componentParameters.get('BACKGROUND_COMMON', {});
-
 			if (medalsList[medal] !== undefined)
 			{
 				return {
+					backgroundColor: AppTheme.colors.accentSoftBlue2,
 					outer: {
+						opacity: AppTheme.colors.medalSelectorOpacity,
 						backgroundImageSvgUrl: currentDomain + medalsList[medal].backgroundUrl,
 					},
 					inner: {
@@ -1921,12 +1928,19 @@
 					},
 					resizableByKeyboard: true,
 					style: {
-						backgroundColor: '#ffffff',
-						backgroundResizeMode: 'cover',
-						...(coloredMessage ? {} : backgroundData.outer),
+						backgroundColor: backgroundData.backgroundColor ?? AppTheme.colors.bgContentPrimary,
 					},
 					onLayout: this.processRootViewLayoutChange.bind(this),
 				},
+				View({
+					style: {
+						backgroundResizeMode: 'cover',
+						position: 'absolute',
+						height: '100%',
+						width: '100%',
+						...(coloredMessage ? {} : backgroundData.outer),
+					},
+				}),
 				ScrollView(
 					{
 						ref: (ref) => {
@@ -1964,7 +1978,6 @@
 								color: this.getStyle('inputTextColor'),
 								fontSize: 20,
 								margin: this.config.postTitleMargin,
-								backgroundColor: '#00000000',
 								textAlign: 'left',
 								textAlignVertical: 'top',
 							},

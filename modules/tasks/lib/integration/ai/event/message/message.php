@@ -6,7 +6,7 @@ use Bitrix\Main\Type\Contract\Arrayable;
 
 class Message implements Arrayable
 {
-	public function __construct(private string $content, private bool $isMain = false)
+	public function __construct(private string $content, private bool $isOriginal = false, private array $meta = [])
 	{
 	}
 
@@ -14,7 +14,8 @@ class Message implements Arrayable
 	{
 		return [
 			'content' => $this->content,
-			'is_original_message' => $this->isMain
+			'is_original_message' => $this->isOriginal,
+			'meta' => $this->meta,
 		];
 	}
 }

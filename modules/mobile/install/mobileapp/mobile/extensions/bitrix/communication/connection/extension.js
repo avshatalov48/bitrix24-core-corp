@@ -60,7 +60,10 @@ jn.define('communication/connection', (require, exports, module) => {
 			return Loc.getMessage('CRM_OPEN_LINE_SEND_MESSAGE');
 		}
 
-		let phrase = Loc.getMessage(`CRM_OPEN_LINE_${type.toUpperCase()}`);
+		let phrase = Loc.hasMessage(`CRM_OPEN_LINE_${type.toUpperCase()}_MSGVER_1`)
+			? Loc.getMessage(`CRM_OPEN_LINE_${type.toUpperCase()}_MSGVER_1`)
+			: Loc.getMessage(`CRM_OPEN_LINE_${type.toUpperCase()}`);
+
 		if (!phrase && useDefaultPhrase)
 		{
 			phrase = Loc.getMessage('CRM_OPEN_LINE_SEND_MESSAGE');

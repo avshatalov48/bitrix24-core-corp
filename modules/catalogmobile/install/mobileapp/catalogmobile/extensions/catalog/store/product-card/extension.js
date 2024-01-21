@@ -2,6 +2,7 @@
  * @module catalog/store/product-card
  */
 jn.define('catalog/store/product-card', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { InlineSkuTree } = require('layout/ui/product-grid/components/inline-sku-tree');
 	const { isEmpty } = require('utils/object');
 	const { ProductCard } = require('layout/ui/product-grid/components/product-card');
@@ -102,7 +103,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 				backdrop: {
 					onlyMediumPosition: false,
 					mediumPositionPercent: 80,
-					navigationBarColor: '#EEF2F4',
+					navigationBarColor: AppTheme.colors.bgSecondary,
 					horizontalSwipeAllowed: false,
 					swipeAllowed: true,
 					swipeContentAllowed: false,
@@ -118,14 +119,14 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 							document,
 							onChange: (productData) => {
 								productRow.setFields(productData);
-								this.setState({productRow}, () => {
+								this.setState({ productRow }, () => {
 									this.blink();
 									this.onChange();
 								});
 							},
-						})
+						}),
 					);
-				}
+				},
 			});
 		}
 
@@ -133,7 +134,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 		{
 			Haptics.impactLight();
 
-			let menu = new StoreDocumentProductContextMenu({
+			const menu = new StoreDocumentProductContextMenu({
 				editable: Boolean(this.props.document.editable),
 				onChooseOpen: () => this.showProductDetailsBackdrop(),
 				onChooseEdit: () => this.showProductDetailsBackdrop(),
@@ -202,10 +203,10 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 				swipeAllowed: true,
 				swipeContentAllowed: false,
 				mediumPositionPercent: 80,
-				navigationBarColor: '#EEF2F4',
+				navigationBarColor: AppTheme.colors.bgSecondary,
 			};
 
-			PageManager.openWidget('layout', { backdrop }).then(layout => {
+			PageManager.openWidget('layout', { backdrop }).then((layout) => {
 				layout.showComponent(new StoreSkuSelector({
 					layout,
 					selectedVariationId: productRow.getProductId(),
@@ -235,7 +236,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 			return false;
 		}
 
-		changeVariation(recordId, {variationData, skuTree})
+		changeVariation(recordId, { variationData, skuTree })
 		{
 			const productRow = this.state.productRow;
 			const productId = variationData.ID;
@@ -255,24 +256,24 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 
 			return new Promise((resolve, reject) => {
 				BX.ajax.runAction(action, queryConfig)
-					.then(response => {
+					.then((response) => {
 						Notify.hideCurrentIndicator();
 
 						const newFields = response.data;
 						newFields.id = recordId;
 						const storeFields = ['amount', 'storeFromId', 'storeFrom', 'storeToId', 'storeTo'];
-						storeFields.forEach(field => delete newFields[field]);
+						storeFields.forEach((field) => delete newFields[field]);
 
-						productRow.setFields({...productRow.getRawValues(), ...newFields});
+						productRow.setFields({ ...productRow.getRawValues(), ...newFields });
 
-						this.setState({productRow}, () => {
+						this.setState({ productRow }, () => {
 							this.blink();
 							this.onChange();
 						});
 
 						resolve();
 					})
-					.catch(err => {
+					.catch((err) => {
 						Notify.hideCurrentIndicator();
 						console.error(err);
 						ErrorNotifier.showError(BX.message('CSPL_UPDATE_TAB_ERROR'));
@@ -285,10 +286,10 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 		{
 			if (
 				!(
-					this.props.permissions['catalog_store_all']
-					|| this.props.permissions['catalog_store'].includes(this.state.productRow.getStoreToId())
+					this.props.permissions.catalog_store_all
+					|| this.props.permissions.catalog_store.includes(this.state.productRow.getStoreToId())
 				)
-				&& !this.props.permissions['catalog_purchas_info']
+				&& !this.props.permissions.catalog_purchas_info
 			)
 			{
 				return View({
@@ -305,8 +306,8 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 		{
 			if (
 				!(
-					this.props.permissions['catalog_store_all']
-					|| this.props.permissions['catalog_store'].includes(this.state.productRow.getStoreToId())
+					this.props.permissions.catalog_store_all
+					|| this.props.permissions.catalog_store.includes(this.state.productRow.getStoreToId())
 				)
 			)
 			{
@@ -325,7 +326,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 			return [
 				View(
 					{
-						style: Styles.amount.wrapper
+						style: Styles.amount.wrapper,
 					},
 					this.renderStoreName(),
 					View(
@@ -334,7 +335,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 								width: '50%',
 								flexDirection: 'row',
 								justifyContent: 'flex-end',
-							}
+							},
 						},
 						Text({
 							text: `${amount} `,
@@ -342,12 +343,12 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 							numberOfLines: 1,
 						}),
 						Text({
-							text: `${measure}`,
-							style: {...Styles.amount.value, color: '#828B95'},
+							text: String(measure),
+							style: { ...Styles.amount.value, color: AppTheme.colors.base3 },
 							numberOfLines: 1,
-						})
-					)
-				)
+						}),
+					),
+				),
 			];
 		}
 
@@ -368,15 +369,13 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 			}
 			else if (documentType === DocumentType.Moving && storeFrom && storeTo)
 			{
-				const storeFromTitle =
-					storeFrom.title
-						? storeFrom.title
-						: BX.message('CSPL_STORE_EMPTY')
+				const storeFromTitle =					storeFrom.title
+					? storeFrom.title
+					: BX.message('CSPL_STORE_EMPTY')
 				;
-				const storeToTitle =
-					storeTo.title
-						? storeTo.title
-						: BX.message('CSPL_STORE_EMPTY')
+				const storeToTitle =					storeTo.title
+					? storeTo.title
+					: BX.message('CSPL_STORE_EMPTY')
 				;
 
 				return View(
@@ -387,27 +386,27 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 						{
 							onClick: () => {
 								this.showHint(storeFromTitle);
-							}
+							},
 						},
 						Text({
 							text: storeFromTitle,
 							style: Styles.summaryRow.title,
 							ellipsize: 'end',
 							numberOfLines: 1,
-						})
+						}),
 					),
 					View(
 						{
 							onClick: () => {
 								this.showHint(storeToTitle);
-							}
+							},
 						},
 						Text({
 							text: storeToTitle,
 							style: Styles.summaryRow.title,
 							ellipsize: 'end',
 							numberOfLines: 1,
-						})
+						}),
 					),
 				);
 			}
@@ -419,7 +418,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 						style: Styles.summaryRow.leftWrapper,
 						onClick: () => {
 							this.showHint(storeTitle);
-						}
+						},
 					},
 					Text({
 						text: storeTitle,
@@ -447,40 +446,40 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 				style: {
 					height: 1,
 					width: '100%',
-					backgroundColor: '#F0F2F5',
+					backgroundColor: AppTheme.colors.bgSeparatorPrimary,
 					marginTop: 4,
-					marginBottom: 6
-				}
+					marginBottom: 6,
+				},
 			});
 		}
 
 		renderPurchasePrice()
 		{
-			if (!this.props.permissions['catalog_purchas_info'])
+			if (!this.props.permissions.catalog_purchas_info)
 			{
 				return [];
 			}
 
 			const title = () => View(
 				{
-					style: Styles.summaryRow.leftWrapper
+					style: Styles.summaryRow.leftWrapper,
 				},
 				Text({
 					text: BX.message('CSPL_PURCHASE_PRICE'),
-					style: Styles.summaryRow.title
+					style: Styles.summaryRow.title,
 				}),
 			);
 
 			const value = () => {
 				let node;
-				let {amount, currency} = this.props.productRow.getPurchasePrice();
+				let { amount, currency } = this.props.productRow.getPurchasePrice();
 
 				amount = parseFloat(amount);
 
 				if (isFinite(amount))
 				{
 					node = MoneyView({
-						money: Money.create({amount, currency}),
+						money: Money.create({ amount, currency }),
 						renderAmount: (formattedAmount) => Text({
 							text: formattedAmount,
 							style: Styles.summaryRow.mainPrice,
@@ -494,14 +493,14 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 				else
 				{
 					node = Text({
-						text: `${BX.message('CSPL_PRICE_EMPTY')}`,
+						text: String(BX.message('CSPL_PRICE_EMPTY')),
 						style: Styles.summaryRow.mainPriceEmpty,
 					});
 				}
 
 				return View(
 					{
-						style: Styles.summaryRow.rightWrapper
+						style: Styles.summaryRow.rightWrapper,
 					},
 					node,
 				);
@@ -524,7 +523,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 			const documentType = this.props.document ? this.props.document.type : '';
 			const title = () => View(
 				{
-					style: Styles.summaryRow.leftWrapper
+					style: Styles.summaryRow.leftWrapper,
 				},
 				Text({
 					text: BX.message('CSPL_SELLING_PRICE'),
@@ -534,14 +533,14 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 
 			const value = () => {
 				let node;
-				let {amount, currency} = this.state.productRow.getSellPrice();
+				let { amount, currency } = this.state.productRow.getSellPrice();
 
 				amount = parseFloat(amount);
 
 				if (isFinite(amount))
 				{
 					node = MoneyView({
-						money: Money.create({amount, currency}),
+						money: Money.create({ amount, currency }),
 						renderAmount: (formattedAmount) => Text({
 							text: formattedAmount,
 							style: documentType === 'W' ? Styles.summaryRow.mainPrice : Styles.summaryRow.secondaryPrice,
@@ -555,14 +554,14 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 				else
 				{
 					node = Text({
-						text: `${BX.message('CSPL_PRICE_EMPTY')}`,
-						style: Styles.summaryRow.secondaryPrice
-					})
+						text: String(BX.message('CSPL_PRICE_EMPTY')),
+						style: Styles.summaryRow.secondaryPrice,
+					});
 				}
 
 				return View(
 					{
-						style: Styles.summaryRow.rightWrapper
+						style: Styles.summaryRow.rightWrapper,
 					},
 					node,
 				);
@@ -572,7 +571,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 				{
 					style: {
 						flexDirection: 'row',
-					}
+					},
 				},
 				title(),
 				value(),
@@ -585,8 +584,8 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 				title: message,
 				showCloseButton: true,
 				id: 'catalog-store-product-card-hint',
-				backgroundColor: '#000000',
-				textColor: '#ffffff',
+				backgroundColor: AppTheme.colors.base0,
+				textColor: AppTheme.colors.bgContentPrimary,
 				hideOnTap: true,
 				autoHide: true,
 			};
@@ -600,7 +599,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 	const Styles = {
 		container: {
 			outer: {
-				backgroundColor: '#F0F2F5',
+				backgroundColor: AppTheme.colors.bgSecondary,
 			},
 		},
 
@@ -612,8 +611,8 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 				fontSize: 18,
 				fontWeight: 'bold',
 				textAlign: 'right',
-				color: '#333333',
-			}
+				color: AppTheme.colors.base1,
+			},
 		},
 
 		summaryRow: {
@@ -637,38 +636,38 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 			},
 			title: {
 				fontSize: 16,
-				color: '#828B95',
+				color: AppTheme.colors.base3,
 				textAlign: 'right',
 			},
 			secondaryTitle: {
 				fontSize: 14,
-				color: '#bdc1c6',
+				color: AppTheme.colors.base5,
 				textAlign: 'right',
 			},
 			mainPrice: {
 				fontSize: 18,
-				color: '#333333',
+				color: AppTheme.colors.base1,
 				fontWeight: 'bold',
 			},
 			mainPriceCurrency: {
 				fontSize: 18,
-				color: '#828B95',
+				color: AppTheme.colors.base3,
 				fontWeight: 'bold',
 			},
 			mainPriceEmpty: {
 				fontSize: 16,
 				fontWeight: 'bold',
-				color: '#A8ADB4',
+				color: AppTheme.colors.base4,
 			},
 			secondaryPrice: {
 				fontSize: 14,
-				color: '#A8ADB4',
+				color: AppTheme.colors.base4,
 				fontWeight: 'bold',
 			},
 			secondaryPriceCurrency: {
 				fontSize: 14,
 				fontWeight: 'bold',
-				color: '#bdc1c6',
+				color: AppTheme.colors.base5,
 			},
 		},
 	};

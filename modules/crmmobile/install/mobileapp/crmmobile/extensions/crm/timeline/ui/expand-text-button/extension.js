@@ -2,7 +2,7 @@
  * @module crm/timeline/ui/expand-text-button
  */
 jn.define('crm/timeline/ui/expand-text-button', (require, exports, module) => {
-	const { transparent } = require('utils/color');
+	const AppTheme = require('apptheme');
 	const ExpandTextButton = ({ onClick, backgroundColor, text }) => View(
 		{
 			onClick,
@@ -16,39 +16,26 @@ jn.define('crm/timeline/ui/expand-text-button', (require, exports, module) => {
 				justifyContent: 'center',
 			},
 		},
-		Shadow(
+		View(
 			{
 				style: {
+					backgroundColor,
 					borderRadius: 64,
-				},
-				radius: 2,
-				color: transparent('#000', 0.08),
-				offset: {
-					x: 0,
-					y: 1,
+					borderWidth: 1,
+					borderColor: AppTheme.colors.bgSeparatorPrimary,
+					paddingVertical: 4,
+					paddingHorizontal: 12,
+					minWidth: 140,
 				},
 			},
-			View(
-				{
-					style: {
-						backgroundColor,
-						borderRadius: 64,
-						borderWidth: 1,
-						borderColor: transparent('#000', 0.1),
-						paddingVertical: 4,
-						paddingHorizontal: 12,
-						minWidth: 140,
-					},
+			Text({
+				text,
+				style: {
+					color: AppTheme.colors.base3,
+					fontSize: 13,
+					textAlign: 'center',
 				},
-				Text({
-					text,
-					style: {
-						color: '#828B95',
-						fontSize: 13,
-						textAlign: 'center',
-					},
-				}),
-			),
+			}),
 		),
 	);
 

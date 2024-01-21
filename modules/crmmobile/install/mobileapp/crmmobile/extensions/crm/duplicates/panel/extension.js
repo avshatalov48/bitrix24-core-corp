@@ -2,14 +2,15 @@
  * @module crm/duplicates/panel
  */
 jn.define('crm/duplicates/panel', (require, exports, module) => {
-	const { ClientItem } = require('layout/ui/fields/client/elements');
 	const { Loc } = require('loc');
 	const { Type } = require('crm/type');
+	const AppTheme = require('apptheme');
 	const { capitalize } = require('utils/string');
-	const { transparent } = require('utils/color');
+	const { ClientItem } = require('layout/ui/fields/client/elements');
 	const { openCrmEntityInAppUrl } = require('crm/in-app-url/open');
 
-	const BACKGROUND_COLOR = '#eef2f4';
+	const IS_ANDROID = Application.getPlatform() === 'android';
+	const BACKGROUND_COLOR = AppTheme.colors.bgSecondary;
 
 	/**
 	 * @class DuplicatesPanel
@@ -44,7 +45,11 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 					},
 				},
 				View(
-					{},
+					{
+						style: {
+							backgroundColor: AppTheme.colors.bgContentPrimary,
+						},
+					},
 					...this.renderItems(this.sections),
 				),
 			);
@@ -53,7 +58,7 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 		renderItems(sections)
 		{
 			const border = {
-				borderBottomColor: '#e6e7e9',
+				borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
 				borderBottomWidth: 1,
 			};
 
@@ -62,7 +67,6 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 					style: {
 						width: '100%',
 						marginBottom: 16,
-						backgroundColor: '#ffffff',
 						borderRadius: 12,
 						paddingHorizontal: 16,
 					},
@@ -154,8 +158,8 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 				onClick,
 				element: Button({
 					style: {
-						color: '#fff',
-						backgroundColor: '#29A8DF',
+						color: AppTheme.colors.baseWhiteFixed,
+						backgroundColor: AppTheme.colors.accentMainPrimaryalt,
 						fontSize: 13,
 						textAlign: 'center',
 						marginTop: 12,
@@ -221,25 +225,26 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 			);
 		}
 
-		open(layoutWidget = PageManager)
+		open(parentWidget = PageManager)
 		{
 			if (this.sections.length === 0)
 			{
 				return;
 			}
 
-			layoutWidget.openWidget('layout', this.getWidgetParams())
+			parentWidget.openWidget('layout', this.getWidgetParams())
 				.then((layoutWidget) => {
 					this.layoutWidget = layoutWidget;
 					this.layoutWidget.enableNavigationBarBorder(false);
 					layoutWidget.showComponent(this);
-				});
+				})
+				.catch(console.error);
 		}
 
 		getWidgetParams()
 		{
 			return {
-				title: Loc.getMessage('MCRM_DUPLICATES_PANEL_TITLE'),
+				title: Loc.getMessage('MCRM_DUPLICATES_PANEL_TITLE_MSGVER_1'),
 				backdrop: {
 					forceDismissOnSwipeDown: true,
 					hideNavigationBar: false,
@@ -265,11 +270,10 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 		calcBackdropHeight()
 		{
 			const dividerHeight = this.sections.length * 15;
+			const safeAreaAndroid = IS_ANDROID ? 38 : 0;
+			let itemHeight = 78;
 
-			// eslint-disable-next-line unicorn/no-array-reduce
 			return this.sections.flat().reduce((height, item) => {
-				let itemHeight = 78;
-
 				if (item.subtitle)
 				{
 					itemHeight += 20;
@@ -281,7 +285,7 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 				}
 
 				return height + itemHeight;
-			}, 36) + dividerHeight;
+			}, 36) + dividerHeight + safeAreaAndroid;
 		}
 
 		get shouldCloseOnEntityOpen()

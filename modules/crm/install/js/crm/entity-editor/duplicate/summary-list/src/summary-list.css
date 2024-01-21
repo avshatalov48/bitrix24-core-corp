@@ -20,13 +20,14 @@
 }
 
 .crm-dups-wrapper {
+	margin-top: 7px;
 	width: 500px;
 }
 
 .crm-dups-list {
-	background-color: var(--ui-color-base-10);
+	background-color: var(--ui-color-base-03);
 	border-radius: var(--ui-border-radius-lg);
-	padding: 14px;
+	padding: 17px 20px 17px 20px;
 	max-height: 480px;
 	overflow-y: auto;
 }
@@ -35,26 +36,31 @@
 	font-weight: var(--ui-font-weight-bold);
 	color: var(--ui-color-text-subtle);
 	margin-right: 20px;
+	margin-left: 3px;
 }
 
 .crm-dups-header,
 .crm-dups-group-header {
-	margin-bottom: 14px;
+	margin-bottom: 15px;
 	font-size: var(--ui-font-size-md);
 	line-height: var(--ui-font-line-height-3xs);
 	word-break: break-word;
 }
 
 .crm-dups-group-header {
-	color: var(--ui-color-text-secondary);
+	margin-bottom: 16px;
+	font-size: var(--ui-font-size-3xs);
+	color: var(--ui-color-base-50);
+	font-weight: var(--ui-font-weight-semi-bold);
+	text-transform: uppercase;
 }
 
 .crm-dups-item {
 	display: block;
 	background-color: white;
-	padding: 11px 16px 8px 16px;
-	border-radius: var(--ui-border-radius-sm, 2px);
-	margin-bottom: 14px;
+	padding: 8px 16px 16px 15px;
+	border-radius: var(--ui-border-radius-md, 2px);
+	margin-bottom: 12px;
 	transition: 250ms linear all;
 	position: relative;
 }
@@ -71,6 +77,7 @@
 }
 
 .crm-dups-item-header {
+	margin-top: 4px;
 	margin-right: 20px;
 }
 
@@ -111,7 +118,7 @@
 }
 
 .crm-dups-item-add-btn {
-	margin-top: 4px;
+	margin-top: 15px;
 }
 
 .crm-dups-item-type {
@@ -149,13 +156,22 @@
 }
 
 .crm-dups-item-details {
-	margin-top: 8px;
+	margin-top: 6px;
 	font-size: var(--ui-font-size-sm);
 	line-height: var(--ui-font-line-height-xl);
 	color: var(--ui-color-text-subtle);
 	word-break: break-word;
 }
 
+.crm-dups-item-details-matched {
+	color: #41484F;
+	font-weight: 650;
+}
+
 .crm-dups-item .hidden {
 	display: none;
+}
+
+.crm-dups-item-photo .no-photo {
+	opacity: 0.5;
 }

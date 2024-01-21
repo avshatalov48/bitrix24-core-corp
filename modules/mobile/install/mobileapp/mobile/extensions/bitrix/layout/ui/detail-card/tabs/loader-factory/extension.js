@@ -14,6 +14,7 @@ jn.define('layout/ui/detail-card/tabs/loader-factory', (require, exports, module
 	{
 		static createLoader(type, props = {})
 		{
+			// eslint-disable-next-line default-case
 			switch (type)
 			{
 				case TabType.EDITOR:

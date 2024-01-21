@@ -18,11 +18,6 @@ class PingQueue extends Base
 		}
 
 		$offsets = ActivityPingOffsetsTable::getOffsetsByActivityId($activityId);
-		if (empty($offsets))
-		{
-			return;
-		}
-
 		$deadLine = DateTime::createFromUserTime($deadLine);
 		$offsets = array_values(array_unique($offsets));
 		$existedIds = $this->getIdsByActivityId($activityId);
@@ -30,18 +25,15 @@ class PingQueue extends Base
 		{
 			$this->addToQueue($activityId, $deadLine, $offsets);
 		}
+		elseif (count($existedIds) === count($offsets))
+		{
+			$this->updateQueue($deadLine, $existedIds, $offsets);
+		}
 		else
 		{
-			if (count($existedIds) === count($offsets))
-			{
-				$this->updateQueue($deadLine, $existedIds, $offsets);
-			}
-			else
-			{
-				// clear all for activity and add again
-				ActivityPingQueueTable::deleteByActivityId($activityId);
-				$this->addToQueue($activityId, $deadLine, $offsets);
-			}
+			// clear all for activity and add again
+			ActivityPingQueueTable::deleteByActivityId($activityId);
+			$this->addToQueue($activityId, $deadLine, $offsets);
 		}
 	}
 
@@ -50,7 +42,7 @@ class PingQueue extends Base
 		ActivityPingQueueTable::deleteByActivityId($activityId);
 	}
 
-	protected function getEventNamePrefix(): string
+	final protected function getEventNamePrefix(): string
 	{
 		return ActivityPingQueueTable::getEntity()->getNamespace() . ActivityPingQueueTable::getEntity()->getName();
 	}
@@ -67,6 +59,11 @@ class PingQueue extends Base
 
 	private function addToQueue(int $activityId, DateTime $deadLine, array $offsets): void
 	{
+		if (empty($offsets))
+		{
+			return;
+		}
+
 		foreach ($offsets as $offset)
 		{
 			$deadlineClone = clone $deadLine; // to avoid influence of ->add(...) to original $deadLine

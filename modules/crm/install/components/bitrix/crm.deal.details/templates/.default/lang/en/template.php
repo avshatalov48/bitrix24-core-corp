@@ -21,5 +21,5 @@ $MESS["CRM_DEAL_DETAIL_WAREHOUSE_AUTOMATIC_RESERVATION_GUIDE_TEXT"] = "Inventory
 $MESS["CRM_DEAL_DETAIL_WAREHOUSE_AUTOMATIC_RESERVATION_GUIDE_TITLE"] = "Reserve product items";
 $MESS["CRM_DEAL_DETAIL_WAREHOUSE_PRODUCT_STORE_GUIDE_TEXT"] = "Select multiple warehouses if the required quantity cannot be picked from a single warehouse.";
 $MESS["CRM_DEAL_DETAIL_WAREHOUSE_PRODUCT_STORE_GUIDE_TITLE"] = "Select a warehouse you want to reserve stock at";
-$MESS["CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TEXT"] = "It will be created automatically as soon as the deal has been closed successfully.";
+$MESS["CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TEXT"] = "The object has been created automatically after the deal has closed.";
 $MESS["CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TITLE"] = "Sale inventory object";

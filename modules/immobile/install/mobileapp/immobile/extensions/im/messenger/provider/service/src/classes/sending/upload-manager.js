@@ -2,6 +2,10 @@
  * @module im/messenger/provider/service/classes/sending/upload-manager
  */
 jn.define('im/messenger/provider/service/classes/sending/upload-manager', (require, exports, module) => {
+	include('MediaConverter');
+
+	const { Type } = require('type');
+
 	const {
 		FileType,
 	} = require('im/messenger/const');
@@ -71,7 +75,23 @@ jn.define('im/messenger/provider/service/classes/sending/upload-manager', (requi
 				diskFolderId,
 			} = messageWithFile;
 
-			const fileInfo = await Filesystem.getFile(deviceFile.url);
+			let deviceFileUrl = deviceFile.url;
+			const isiCloudFile = (
+				deviceFile.url.startsWith('icloudvideo://')
+				|| deviceFile.url.startsWith('icloudimage://')
+			);
+
+			if (
+				Application.getPlatform() === 'ios'
+				&& isiCloudFile
+				&& Type.isFunction(MediaConverter.getUrliCloudFile)
+			)
+			{
+				const iCloudFile = await MediaConverter.getUrliCloudFile(deviceFile.url);
+				deviceFileUrl = iCloudFile.url;
+			}
+
+			const fileInfo = await Filesystem.getFile(deviceFileUrl);
 
 			const taskOptions = {
 				taskId: temporaryFileId,
@@ -133,7 +153,24 @@ jn.define('im/messenger/provider/service/classes/sending/upload-manager', (requi
 				diskFolderId,
 			} = messageWithFile;
 
-			const fileInfo = await Filesystem.getFile(deviceFile.url);
+			let deviceFileUrl = deviceFile.url;
+			const isiCloudFile = (
+				deviceFile.url.startsWith('icloudvideo://')
+				|| deviceFile.url.startsWith('icloudimage://')
+			);
+
+			if (
+				Application.getPlatform() === 'ios'
+				&& isiCloudFile
+				&& Type.isFunction(MediaConverter.getUrliCloudFile)
+			)
+			{
+				const iCloudFile = await MediaConverter.getUrliCloudFile(deviceFile.url);
+				deviceFileUrl = iCloudFile.url;
+			}
+
+			const fileInfo = await Filesystem.getFile(deviceFileUrl);
+
 			const taskOptions = {
 				taskId: temporaryFileId,
 				resize: false,

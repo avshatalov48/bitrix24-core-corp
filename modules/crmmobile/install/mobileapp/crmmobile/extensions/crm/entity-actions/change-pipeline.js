@@ -4,6 +4,7 @@
 jn.define('crm/entity-actions/change-pipeline', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Alert } = require('alert');
+	const AppTheme = require('apptheme');
 	const { EventEmitter } = require('event-emitter');
 	const { Type } = require('type');
 	const { Type: CrmType } = require('crm/type');
@@ -17,7 +18,7 @@ jn.define('crm/entity-actions/change-pipeline', (require, exports, module) => {
 	 * @param imageColor string
 	 * @returns {Object}
 	 */
-	const getActionToChangePipeline = (imageColor = '#6a737f') => {
+	const getActionToChangePipeline = (imageColor = AppTheme.colors.base3) => {
 		const id = 'changeCategory';
 
 		const title = Loc.getMessage('M_CRM_ENTITY_ACTION_CHANGE_CATEGORY');
@@ -56,7 +57,7 @@ jn.define('crm/entity-actions/change-pipeline', (require, exports, module) => {
 							return;
 						}
 
-						const selectedCategoryId = Number(category.id);
+						const selectedCategoryId = Number(category.categoryId);
 						if (!itemId && !Type.isNumber(categoryId))
 						{
 							reject();

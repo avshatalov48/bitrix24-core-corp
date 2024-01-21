@@ -1,11 +1,14 @@
 <?php
 return [
 	'extensions' => [
-		'layout/ui/buttons-toolbar',
+		'apptheme',
 		'loc',
 		'notify',
 		'rest',
-		'tasks:entry',
 		'type',
+		'layout/ui/buttons-toolbar',
+		'toast',
+
+		'tasks:entry',
 	],
 ];

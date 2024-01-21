@@ -6,13 +6,15 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Internals\Task\CheckListTable;
+use Bitrix\Tasks\Internals\Task\RegularParametersObject;
+use Bitrix\Tasks\Internals\Task\RegularParametersTable;
 use Bitrix\Tasks\Internals\Task\Result\Result;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
 use Bitrix\Tasks\Internals\Task\Result\ResultTable;
 use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\Task\UtsTasksTaskTable;
-use Bitrix\Tasks\Member\MemberService;
+use Bitrix\Tasks\Member\AbstractMemberService;
 use Bitrix\Tasks\Member\Service\TaskMemberService;
 use Bitrix\Tasks\Util\Entity\DateTimeField;
 use Bitrix\Tasks\Util\Type\DateTime;
@@ -73,6 +75,15 @@ class TaskObject extends EO_Task
 		}
 
 		return $object;
+	}
+
+	public static function createFromFields(array $fields): static
+	{
+		return (new static())
+			->setId($fields['ID'] ?? 0)
+			->setCreatedBy($fields['CREATED_BY'] ?? 0)
+			->setResponsibleId($fields['RESPONSIBLE_ID'] ?? 0)
+			->setIsRegular($fields['IS_REGULAR'] ?? false);
 	}
 
 	/**
@@ -160,29 +171,47 @@ class TaskObject extends EO_Task
 		return !is_null(ScenarioTable::getList($params)->fetchObject());
 	}
 
-	public function getCrmFields(): array
+	public function getCrmFields(bool $forceFetch = true): array
 	{
 		//first of all, try to get crm data from loaded data
-		try
+		$crmObject = $this->getUtsData();
+		if (is_null($crmObject) && $forceFetch)
 		{
-			$crmObject = $this->getUtsData() ?? UtsTasksTaskTable::getById($this->getId())->fetchObject();
-			if (!is_null($crmObject))
-			{
-				$ufCrm = $crmObject->getUfCrmTask();
-				if (empty($ufCrm))
-				{
-					return [];
-				}
-
-				return unserialize($crmObject->getUfCrmTask(), ['allow_classes' => false]);
-			}
+			$crmObject = UtsTasksTaskTable::getById($this->getId())->fetchObject();
 		}
-		catch (\Exception $exception)
+		if (empty($crmObject?->getUfCrmTask()))
 		{
 			return [];
 		}
+		return unserialize($crmObject->getUfCrmTask(), ['allowed_classes' => false]);
+	}
 
-		return [];
+	public function getRegularFields(bool $forceFetch = true): ?RegularParametersObject
+	{
+		//first of all, try to get crm data from loaded data
+		$regularObject = $this->getRegular();
+		if (is_null($regularObject) && $forceFetch)
+		{
+			$regularObject = RegularParametersTable::getByTaskId($this->getId());
+		}
+
+		return $regularObject;
+	}
+
+	public function getRegularDeadlineOffset(): ?int
+	{
+		if (!$this->isRegular())
+		{
+			return null;
+		}
+
+		$regularFields = $this->getRegularFields()?->getRegularParameters();
+		if (is_null($regularFields))
+		{
+			return null;
+		}
+
+		return (int)$regularFields['DEADLINE_OFFSET'];
 	}
 
 	public function getFileFields(): array
@@ -196,12 +225,19 @@ class TaskObject extends EO_Task
 			{
 				return [];
 			}
-			$ufFiles = unserialize($ufFiles, ['allow_classes' => false]);
+			$ufFiles = unserialize($ufFiles, ['allowed_classes' => false]);
 
 			return is_array($ufFiles) ? $ufFiles : [];
 		}
 
 		return [];
+	}
+
+	public function isRegular(): bool
+	{
+		return
+			$this->getIsRegular()
+			?? TaskTable::getByPrimary($this->getId(), ['select' => ['ID', 'IS_REGULAR']])->fetchObject()->getIsRegular();
 	}
 
 	/**
@@ -264,8 +300,30 @@ class TaskObject extends EO_Task
 		return ResultManager::requireResult($this->getId());
 	}
 
-	public function getMemberService(): MemberService
+	public function getMemberService(): AbstractMemberService
 	{
 		return new TaskMemberService($this->getId());
+	}
+
+	public function getRegularityStartTime(): ?Main\Type\DateTime
+	{
+		if (!$this->isRegular())
+		{
+			return null;
+		}
+
+		return $this->getRegularFields()?->getStartTime();
+	}
+
+	public function isInGroup(): bool
+	{
+		$this->fillGroupId();
+		return $this->getGroupId() !== 0;
+	}
+
+	public function isInGroupStage(): bool
+	{
+		$this->fillStageId();
+		return $this->getStageId() !== 0;
 	}
 }

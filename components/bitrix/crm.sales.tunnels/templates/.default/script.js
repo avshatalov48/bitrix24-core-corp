@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,d3,main_kanban,ui_notification,main_popup,main_core) {
@@ -299,6 +300,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMarkerRootMousePosition",
 	    value: function getMarkerRootMousePosition() {
+	      if (main_core.Type.isFunction(d3.pointer)) {
+	        var _d3$pointer = d3.pointer(this.getMarkerRootMouseMoveEvent(), this.getMarkerRoot().node()),
+	          _d3$pointer2 = babelHelpers.slicedToArray(_d3$pointer, 2),
+	          _x = _d3$pointer2[0],
+	          _y = _d3$pointer2[1];
+	        return {
+	          x: _x,
+	          y: _y
+	        };
+	      }
 	      var _d3$mouse = d3.mouse(this.getMarkerRoot().node()),
 	        _d3$mouse2 = babelHelpers.slicedToArray(_d3$mouse, 2),
 	        x = _d3$mouse2[0],
@@ -336,10 +347,21 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.getMarkerLine().attr('x1', middleX).attr('y1', middleY).attr('x2', middleX).attr('y2', middleY);
 	      this.getMarkerRoot().style('z-index', '222').on('mousemove', this.onMarkerRootMouseMove).on('mouseup', this.onMarkerRootMouseUp);
 	      this.emit('Marker:dragStart');
+	    }
+	  }, {
+	    key: "setMarkerRootMouseMoveEvent",
+	    value: function setMarkerRootMouseMoveEvent(event) {
+	      this.cache.set('markerRootMouseMoveEvent', event);
+	    }
+	  }, {
+	    key: "getMarkerRootMouseMoveEvent",
+	    value: function getMarkerRootMouseMoveEvent() {
+	      return this.cache.get('markerRootMouseMoveEvent');
 	    } /** @private */
 	  }, {
 	    key: "onMarkerRootMouseMove",
-	    value: function onMarkerRootMouseMove() {
+	    value: function onMarkerRootMouseMove(event) {
+	      this.setMarkerRootMouseMoveEvent(event);
 	      var _this$getMarkerRootMo = this.getMarkerRootMousePosition(),
 	        x = _this$getMarkerRootMo.x,
 	        y = _this$getMarkerRootMo.y;

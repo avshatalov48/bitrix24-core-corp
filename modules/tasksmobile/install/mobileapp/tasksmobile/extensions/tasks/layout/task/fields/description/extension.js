@@ -3,8 +3,9 @@
  */
 jn.define('tasks/layout/task/fields/description', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { TextAreaField } = require('layout/ui/fields/textarea');
 	const { inAppUrl } = require('in-app-url');
+	const { ReadOnlyElementType } = require('layout/ui/fields/string');
+	const { TextAreaField } = require('layout/ui/fields/textarea');
 
 	class Description extends LayoutComponent
 	{
@@ -40,6 +41,9 @@ jn.define('tasks/layout/task/fields/description', (require, exports, module) => 
 				description: props.description,
 				parsedDescription: props.parsedDescription,
 			};
+
+			this.handleOnChange = this.handleOnChange.bind(this);
+			this.handleOnLinkClick = this.handleOnLinkClick.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -74,6 +78,17 @@ jn.define('tasks/layout/task/fields/description', (require, exports, module) => 
 			};
 		}
 
+		handleOnChange(text)
+		{
+			this.setState({ description: text });
+			const { onChange } = this.props;
+
+			if (onChange)
+			{
+				onChange(text);
+			}
+		}
+
 		render()
 		{
 			return View(
@@ -91,20 +106,17 @@ jn.define('tasks/layout/task/fields/description', (require, exports, module) => 
 					placeholder: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_DESCRIPTION_PLACEHOLDER'),
 					config: {
 						deepMergeStyles: this.getDeepMergeStyles(),
-						readOnlyElementType: 'BBCodeText',
-						onLinkClick: ({ url }) => this.onLinkClick(url),
+						readOnlyElementType: ReadOnlyElementType.BB_CODE_TEXT,
+						onLinkClick: this.handleOnLinkClick,
 					},
 					value: (this.state.readOnly ? this.state.parsedDescription : this.state.description),
 					testId: 'description',
-					onChange: (text) => {
-						this.setState({ description: text });
-						this.props.onChange(text);
-					},
+					onChange: this.handleOnChange,
 				}),
 			);
 		}
 
-		onLinkClick(url)
+		handleOnLinkClick({ url })
 		{
 			const files = this.props.task.files.reduce((accumulator, file) => {
 				const result = accumulator;
@@ -145,6 +157,7 @@ jn.define('tasks/layout/task/fields/description', (require, exports, module) => 
 					`TASKSMOBILE_LAYOUT_TASK_FIELDS_DESCRIPTION_CONTENT_${type.toUpperCase()}`,
 					{ '#INDEX#': Number(id) },
 				),
+				backgroundColor: AppTheme.colors.bgSecondary,
 				backdrop: {
 					bounceEnable: false,
 					swipeAllowed: false,

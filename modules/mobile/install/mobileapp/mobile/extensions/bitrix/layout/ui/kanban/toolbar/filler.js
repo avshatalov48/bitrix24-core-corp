@@ -2,6 +2,7 @@
  * @module layout/ui/kanban/toolbar/filler
  */
 jn.define('layout/ui/kanban/toolbar/filler', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { mergeImmutable } = require('utils/object');
 	const { ShimmerView } = require('layout/polyfill');
 
@@ -34,7 +35,7 @@ jn.define('layout/ui/kanban/toolbar/filler', (require, exports, module) => {
 			width,
 			height: 6,
 			borderRadius: 3,
-			backgroundColor: '#dfe0e3',
+			backgroundColor: AppTheme.colors.base6,
 		},
 	});
 

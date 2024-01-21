@@ -2,6 +2,7 @@
  * @module layout/ui/context-menu/item/badge
  */
 jn.define('layout/ui/context-menu/item/badge', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Type } = require('type');
 
 	/**
@@ -11,12 +12,12 @@ jn.define('layout/ui/context-menu/item/badge', (require, exports, module) => {
 	{
 		render()
 		{
-			const { color, backgroundColor } = this.props;
+			const { color, backgroundColor, title } = this.props;
 
 			return View(
 				{
 					style: {
-						backgroundColor: Type.isStringFilled(backgroundColor) ? backgroundColor : '#ffffff',
+						backgroundColor: Type.isStringFilled(backgroundColor) ? backgroundColor : AppTheme.colors.bgContentPrimary,
 						paddingHorizontal: 6,
 						paddingVertical: 2,
 						borderRadius: 12,
@@ -25,12 +26,12 @@ jn.define('layout/ui/context-menu/item/badge', (require, exports, module) => {
 				},
 				Text({
 					style: {
-						color: Type.isStringFilled(color) ? color : '#000000',
+						color: Type.isStringFilled(color) ? color : AppTheme.colors.base3,
 						textAlign: 'center',
 						fontSize: 8,
 						fontWeight: '700',
 					},
-					text: this.props.title.toLocaleUpperCase(env.languageId),
+					text: title.toLocaleUpperCase(env.languageId),
 				}),
 			);
 		}
@@ -38,3 +39,4 @@ jn.define('layout/ui/context-menu/item/badge', (require, exports, module) => {
 
 	module.exports = { Badge };
 });
+

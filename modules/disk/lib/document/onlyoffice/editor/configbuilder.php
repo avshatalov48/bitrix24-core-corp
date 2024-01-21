@@ -11,6 +11,7 @@ use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Context;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\UrlManager;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\JWT;
@@ -257,9 +258,23 @@ final class ConfigBuilder
 		return true;
 	}
 
+	protected function getPortalZone(): string
+	{
+		if (Loader::includeModule('bitrix24'))
+		{
+			return \CBitrix24::getPortalZone();
+		}
+		if (Loader::includeModule('intranet'))
+		{
+			return \CIntranetUtils::getPortalZone() ?? 'unknown';
+		}
+
+		return 'unknown';
+	}
+
 	protected function getCustomizationSection(Uri $baseUrl): array
 	{
-		$customizationBuilder = new CustomizationBuilder($baseUrl, $this->customization);
+		$customizationBuilder = new CustomizationBuilder($baseUrl, $this->customization, $this->getPortalZone());
 		$customizationBuilder->setInfoText(Loc::getMessage('DISK_ONLYOFFICE_CONFIGBUILDER_CUSTOMER_INFO'));
 
 		if ($this->baseUrlToLogo)

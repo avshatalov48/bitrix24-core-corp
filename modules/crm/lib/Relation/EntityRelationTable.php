@@ -6,10 +6,12 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Entity\Event;
+use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\EnumField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\Result;
+use Bitrix\Main\DB\SqlQueryException;
 
 /**
  * Class EntityRelationTable
@@ -143,10 +145,72 @@ class EntityRelationTable extends DataManager
 		$connection = Application::getConnection();
 		$tableName = $connection->getSqlHelper()->quote(static::getTableName());
 
-		$srcSql = "UPDATE IGNORE {$tableName} SET  SRC_ENTITY_ID = {$toId} WHERE SRC_ENTITY_ID = {$fromId} AND SRC_ENTITY_TYPE_ID = {$entityTypeId}";
-		$dstSql = "UPDATE IGNORE {$tableName} SET  DST_ENTITY_ID = {$toId} WHERE DST_ENTITY_ID = {$fromId} AND DST_ENTITY_TYPE_ID = {$entityTypeId}";
-		$connection->query($srcSql);
-		$connection->query($dstSql);
+		try
+		{
+			$srcSql = "UPDATE {$tableName} SET SRC_ENTITY_ID = {$toId} WHERE SRC_ENTITY_ID = {$fromId} AND SRC_ENTITY_TYPE_ID = {$entityTypeId}";
+			$connection->query($srcSql);
+		}
+		catch (SqlQueryException $e) // most likely there is a duplication of unique keys, so try to update every item separately
+		{
+			$items = self::query()
+				->setSelect(['SRC_ENTITY_TYPE_ID', 'SRC_ENTITY_ID', 'DST_ENTITY_TYPE_ID', 'DST_ENTITY_ID'])
+				->where('SRC_ENTITY_ID', $fromId)
+				->where('SRC_ENTITY_TYPE_ID', $entityTypeId)
+				->fetchAll()
+			;
+
+			foreach ($items as $item)
+			{
+				try
+				{
+					$itemSrcEntityTypeId = (int)$item['SRC_ENTITY_TYPE_ID'];
+					$itemSrcEntityId = (int)$item['SRC_ENTITY_ID'];
+					$itemDstEntityTypeId = (int)$item['DST_ENTITY_TYPE_ID'];
+					$itemDstEntityId = (int)$item['DST_ENTITY_ID'];
+					$sql = "UPDATE {$tableName} SET SRC_ENTITY_ID = {$toId} WHERE SRC_ENTITY_TYPE_ID = {$itemSrcEntityTypeId} AND SRC_ENTITY_ID = {$itemSrcEntityId} AND DST_ENTITY_TYPE_ID = {$itemDstEntityTypeId} AND DST_ENTITY_ID={$itemDstEntityId}";
+					$connection->query($sql);
+				}
+				catch (SqlQueryException $e)
+				{
+					// unique keys have been duplicated, so delete this duplicate:
+					self::delete($item);
+				}
+			}
+		}
+
+		try
+		{
+			$dstSql = "UPDATE {$tableName} SET DST_ENTITY_ID = {$toId} WHERE DST_ENTITY_ID = {$fromId} AND DST_ENTITY_TYPE_ID = {$entityTypeId}";
+			$connection->query($dstSql);
+		}
+		catch (SqlQueryException $e) // most likely there is a duplication of unique keys, so try to update every item separately
+		{
+			$items = self::query()
+				->setSelect(['SRC_ENTITY_TYPE_ID', 'SRC_ENTITY_ID', 'DST_ENTITY_TYPE_ID', 'DST_ENTITY_ID'])
+				->where('DST_ENTITY_ID', $fromId)
+				->where('DST_ENTITY_TYPE_ID', $entityTypeId)
+				->fetchAll()
+			;
+
+			foreach ($items as $item)
+			{
+				try
+				{
+					$itemSrcEntityTypeId = (int)$item['SRC_ENTITY_TYPE_ID'];
+					$itemSrcEntityId = (int)$item['SRC_ENTITY_ID'];
+					$itemDstEntityTypeId = (int)$item['DST_ENTITY_TYPE_ID'];
+					$itemDstEntityId = (int)$item['DST_ENTITY_ID'];
+					// orm does not support updates that change primary key parts, so plain sql:
+					$sql = "UPDATE {$tableName} SET DST_ENTITY_ID = {$toId} WHERE SRC_ENTITY_TYPE_ID = {$itemSrcEntityTypeId} AND SRC_ENTITY_ID = {$itemSrcEntityId} AND DST_ENTITY_TYPE_ID = {$itemDstEntityTypeId} AND DST_ENTITY_ID={$itemDstEntityId}";
+					$connection->query($sql);
+				}
+				catch (SqlQueryException $e)
+				{
+					// unique keys have been duplicated, so delete this duplicate:
+					self::delete($item);
+				}
+			}
+		}
 	}
 
 	public static function onBeforeAdd(Event $event)
@@ -191,31 +255,46 @@ class EntityRelationTable extends DataManager
 
 	public static function clearDuplicateSourceElements(int $dstEntityTypeId, int $limit = 100): void
 	{
+		$queryResult = self::query()
+			->setSelect([
+				'SRC_ENTITY_TYPE_ID',
+				'DST_ENTITY_TYPE_ID',
+				'DST_ENTITY_ID',
+			])
+			->registerRuntimeField('', new ExpressionField('CNT_SRC_ENTITY_TYPE_ID', 'COUNT(%s)', 'SRC_ENTITY_TYPE_ID'))
+			->registerRuntimeField('', new ExpressionField('CNT_DST_ENTITY_TYPE_ID', 'COUNT(%s)', 'DST_ENTITY_TYPE_ID'))
+			->registerRuntimeField('', new ExpressionField('CNT_DST_ENTITY_ID', 'COUNT(%s)', 'DST_ENTITY_ID'))
+			->where('DST_ENTITY_TYPE_ID', $dstEntityTypeId)
+			->having('CNT_SRC_ENTITY_TYPE_ID', '>', 1)
+			->having('CNT_DST_ENTITY_TYPE_ID', '>', 1)
+			->having('CNT_DST_ENTITY_ID', '>', 1)
+			->setGroup([
+				'SRC_ENTITY_TYPE_ID',
+				'DST_ENTITY_TYPE_ID',
+				'DST_ENTITY_ID',
+			])
+			->setLimit($limit)
+			->exec()
+		;
+
 		$connection = Application::getConnection();
-		$tableName = $connection->getSqlHelper()->quote(static::getTableName());
-
-		$srcSql = "SELECT 
-       		SRC_ENTITY_ID,
-			SRC_ENTITY_TYPE_ID, COUNT(SRC_ENTITY_TYPE_ID),
-			DST_ENTITY_TYPE_ID, COUNT(DST_ENTITY_TYPE_ID), 
-			DST_ENTITY_ID, COUNT(DST_ENTITY_ID)
-			FROM ${tableName}
-			WHERE DST_ENTITY_TYPE_ID = ${dstEntityTypeId}
-			GROUP BY 
-			SRC_ENTITY_TYPE_ID,
-			DST_ENTITY_TYPE_ID,
-			DST_ENTITY_ID
-			HAVING
-			COUNT(SRC_ENTITY_TYPE_ID) > 1 AND
-			COUNT(DST_ENTITY_TYPE_ID) > 1 AND
-			COUNT(DST_ENTITY_ID) > 1
-			LIMIT ${limit}
-		";
-
-		$queryResult = $connection->query($srcSql);
 		$helper = $connection->getSqlHelper();
+
 		while ($record = $queryResult->fetch())
 		{
+			$existedSrcEntityId = self::query()
+				->where('SRC_ENTITY_TYPE_ID', $record['SRC_ENTITY_TYPE_ID'])
+				->where('DST_ENTITY_TYPE_ID', $record['DST_ENTITY_TYPE_ID'])
+				->where('DST_ENTITY_ID', $record['DST_ENTITY_ID'])
+				->setSelect(['SRC_ENTITY_ID'])
+				->setLimit(1)
+				->fetch()['SRC_ENTITY_ID'] ?? null;
+
+			if (!$existedSrcEntityId)
+			{
+				continue;
+			}
+
 			$sql = sprintf(
 				'DELETE FROM %s WHERE 
 					SRC_ENTITY_TYPE_ID = %d 
@@ -225,7 +304,7 @@ class EntityRelationTable extends DataManager
 				',
 				$helper->quote(static::getTableName()),
 				$helper->convertToDbInteger($record['SRC_ENTITY_TYPE_ID']),
-				$helper->convertToDbInteger($record['SRC_ENTITY_ID']),
+				$helper->convertToDbInteger($existedSrcEntityId),
 				$helper->convertToDbInteger($record['DST_ENTITY_TYPE_ID']),
 				$helper->convertToDbInteger($record['DST_ENTITY_ID'])
 			);

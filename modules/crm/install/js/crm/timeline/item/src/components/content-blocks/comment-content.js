@@ -430,6 +430,7 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 				v-if="!isEdit && isFilesBlockDisplayed"
 				ref="files"
 				class="crm-timeline__comment_files_wrapper"
+				:class="{'--long-comment': isLongText}"
 				v-html="filesHtmlBlock"
 			>
 			</div>

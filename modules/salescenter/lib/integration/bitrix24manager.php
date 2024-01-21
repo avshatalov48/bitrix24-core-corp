@@ -258,6 +258,24 @@ class Bitrix24Manager extends Base
 		return ['id' => 247, 'lang' => 'en', 'sec' => 'jy7wgu'];
 	}
 
+	public function getFeedbackTerminalOfferFormInfo(string $region): array
+	{
+			if ($region === 'ru')
+			{
+				return ['id' => 628, 'lang' => 'ru', 'zones' => ['ru'], 'code' => 'b5309667', 'sec' => 'rgyboj'];
+			}
+			if ($region === 'en')
+			{
+				return ['id' => 630, 'lang' => 'en', 'zones' => ['en'], 'code' => 'b5309667', 'sec' => 'ypq6nz'];
+			}
+			if ($region === 'com.br')
+			{
+				return ['id' => 632, 'lang' => 'com.br', 'zones' => ['com.br'], 'code' => 'b5309667', 'sec' => 'ama2ql'];
+			}
+
+			return ['id' => 628, 'lang' => 'ru', 'zones' => ['ru'], 'code' => 'b5309667', 'sec' => 'rgyboj'];
+	}
+
 	public function getFeedbackPaySystemSbpOfferFormInfo($region)
 	{
 		return ['id' => 263, 'sec' => '7q205j', 'code' => 'b5309667'];
@@ -315,9 +333,9 @@ class Bitrix24Manager extends Base
 	}
 
 	/**
-	 * @return string
+	 * @return string|null
 	 */
-	public function getLicenseType()
+	public function getLicenseType(): ?string
 	{
 		if($this->isEnabled())
 		{
@@ -331,7 +349,7 @@ class Bitrix24Manager extends Base
 	 * @param $userId
 	 * @return bool
 	 */
-	public function IsPortalAdmin($userId)
+	public function IsPortalAdmin($userId): bool
 	{
 		if($this->isEnabled())
 		{
@@ -345,7 +363,7 @@ class Bitrix24Manager extends Base
 	 * @param array|string $zone
 	 * @return bool
 	 */
-	public function isCurrentZone($zone)
+	public function isCurrentZone(array|string $zone): bool
 	{
 		if ($this->isEnabled())
 		{
@@ -362,7 +380,7 @@ class Bitrix24Manager extends Base
 		return false;
 	}
 
-	public function addFeedbackButtonToToolbar()
+	public function addFeedbackButtonToToolbar(): void
 	{
 		if($this->isEnabled() && Loader::includeModule('ui'))
 		{
@@ -378,7 +396,7 @@ class Bitrix24Manager extends Base
 		}
 	}
 
-	public function addIntegrationRequestButtonToToolbar($params = [])
+	public function addIntegrationRequestButtonToToolbar($params = []): void
 	{
 		if ($this->isEnabled() && $this->isIntegrationRequestPossible() && Loader::includeModule('ui'))
 		{
@@ -422,7 +440,7 @@ class Bitrix24Manager extends Base
 		return "data-" . self::ANALYTICS_DATA_SET_INTEGRATION . "=" . self::prepareParamsIntegrationRequest($params);
 	}
 
-	public function renderFeedbackButton()
+	public function renderFeedbackButton(): void
 	{
 		if($this->isEnabled() && Loader::includeModule('ui'))
 		{
@@ -431,7 +449,7 @@ class Bitrix24Manager extends Base
 		}
 	}
 
-	public function renderIntegrationRequestButton(array $params = [])
+	public function renderIntegrationRequestButton(array $params = []): void
 	{
 		if($this->isEnabled() && $this->isIntegrationRequestPossible() && Loader::includeModule('ui'))
 		{
@@ -440,7 +458,7 @@ class Bitrix24Manager extends Base
 		}
 	}
 
-	public function renderFeedbackSmsProviderOfferButton()
+	public function renderFeedbackSmsProviderOfferButton(): void
 	{
 		if($this->isEnabled() && Loader::includeModule('ui'))
 		{
@@ -449,7 +467,7 @@ class Bitrix24Manager extends Base
 		}
 	}
 
-	public function renderFeedbackPayOrderOfferButton()
+	public function renderFeedbackPayOrderOfferButton(): void
 	{
 		if($this->isEnabled() && Loader::includeModule('ui'))
 		{
@@ -458,12 +476,21 @@ class Bitrix24Manager extends Base
 		}
 	}
 
-	public function renderFeedbackDeliveryOfferButton()
+	public function renderFeedbackDeliveryOfferButton(): void
 	{
 		if($this->isEnabled() && Loader::includeModule('ui'))
 		{
 			Extension::load(['salescenter.manager']);
 			echo '<button class="ui-btn ui-btn-sm ui-btn-light-border" onclick="BX.Salescenter.Manager.openFeedbackFormParams(event, '.\CUtil::PhpToJSObject(['feedback_type'=>'delivery_offer']).', '.\CUtil::PhpToJSObject(['width'=>intval(735)], false, false, true).');">'.Loc::getMessage('SALESCENTER_FEEDBACK').'</button>';
+		}
+	}
+
+	public function renderFeedbackTerminalOfferButton(): void
+	{
+		if($this->isEnabled() && Loader::includeModule('ui'))
+		{
+			Extension::load(['salescenter.manager']);
+			echo '<button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.Salescenter.Manager.openFeedbackFormParams(event, '.\CUtil::PhpToJSObject(['feedback_type'=>'terminal_offer', 'sender_page'=>'terminal']).', '.\CUtil::PhpToJSObject(['width'=>intval(735)], false, false, true).');">'.Loc::getMessage('SALESCENTER_FEEDBACK').'</button>';
 		}
 	}
 }

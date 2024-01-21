@@ -9,6 +9,7 @@ namespace Bitrix\Crm\Binding;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Entity;
+use Bitrix\Main\DB\SqlQueryException;
 
 /**
  * Class OrderContactCompanyTable
@@ -46,7 +47,8 @@ class OrderContactCompanyTable extends Entity\DataManager
 		return [
 			'ID' => [
 				'primary' => true,
-				'data_type' => 'integer'
+				'data_type' => 'integer',
+				'autocomplete' => true,
 			],
 			'ORDER_ID' => [
 				'data_type' => 'integer'
@@ -81,8 +83,33 @@ class OrderContactCompanyTable extends Entity\DataManager
 
 	public static function rebind(int $entityTypeId, int $oldEntityId, int $newEntityId): void
 	{
-		$sql = "UPDATE IGNORE b_crm_order_contact_company SET ENTITY_ID = {$newEntityId} WHERE ENTITY_TYPE_ID = {$entityTypeId} AND ENTITY_ID = {$oldEntityId}";
-		Application::getConnection()->query($sql);
+		$sql = "UPDATE b_crm_order_contact_company SET ENTITY_ID = {$newEntityId} WHERE ENTITY_TYPE_ID = {$entityTypeId} AND ENTITY_ID = {$oldEntityId}";
+		try
+		{
+			Application::getConnection()->query($sql);
+		}
+		catch (SqlQueryException $e) // most likely there is a duplication of unique keys, so try to update every item separately
+		{
+			$items = self::query()
+				->setSelect(['ID'])
+				->where('ENTITY_TYPE_ID', $entityTypeId)
+				->where('ENTITY_ID', $oldEntityId)
+				->fetchAll()
+			;
+
+			foreach ($items as $item)
+			{
+				try
+				{
+					self::update($item['ID'], ['ENTITY_ID' => $newEntityId]);
+				}
+				catch (SqlQueryException $e)
+				{
+					// unique keys have been duplicated, so delete this duplicate:
+					self::delete($item['ID']);
+				}
+			}
+		}
 	}
 
 	public static function unbind(int $entityTypeId, int $entityId): void

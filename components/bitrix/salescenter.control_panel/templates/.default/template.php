@@ -26,6 +26,7 @@ Extension::load([
 	'ajax',
 	'applayout',
 	'ui.design-tokens',
+	'ui.dialogs.messagebox',
 	'ui.fonts.opensans',
 ]);
 

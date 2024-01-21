@@ -23,11 +23,11 @@
 					event.DT_FROM_TS -= event['~USER_OFFSET_FROM'] * 1000;
 					event.DT_TO_TS -= event['~USER_OFFSET_TO'] * 1000;
 				}
-				this.pFrom.innerHTML = this.GetFromHtml(event.DT_FROM_TS, event.DT_SKIP_TIME);
+				this.pFrom.innerHTML = this.GetFromHtml(event.DT_FROM_TS, event.DT_SKIP_TIME).replaceAll(/\\/g, '');
 			}
 			else // Copatibility with old records
 			{
-				this.pFrom.innerHTML = this.GetFromHtml(this.config.EVENT.DT_FROM_TS, this.config.EVENT.DT_SKIP_TIME);
+				this.pFrom.innerHTML = this.GetFromHtml(this.config.EVENT.DT_FROM_TS, this.config.EVENT.DT_SKIP_TIME).replaceAll(/\\/g, '');
 			}
 
 			// Invite controls

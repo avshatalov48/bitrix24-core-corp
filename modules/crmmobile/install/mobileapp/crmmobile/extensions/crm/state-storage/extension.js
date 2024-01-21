@@ -2,7 +2,6 @@
  * @module crm/state-storage
  */
 jn.define('crm/state-storage', (require, exports, module) => {
-	const { createStore } = require('statemanager/vuex');
 	const stateModels = require('crm/state-storage/model');
 	const {
 		CategoryCountersStoreManager,
@@ -10,25 +9,9 @@ jn.define('crm/state-storage', (require, exports, module) => {
 		ConversionWizardStoreManager,
 	} = require('crm/state-storage/manager');
 
-	/**
-	 * @class StateStorage
-	 */
-	class StateStorage
-	{
-		constructor()
-		{
-			this.store = createStore({
-				modules: stateModels,
-			});
-		}
+	const { StateStorage } = require('storage/state-storage');
 
-		subscribe(handler)
-		{
-			return this.store.subscribe(handler);
-		}
-	}
-
-	const stateStorage = new StateStorage();
+	const stateStorage = new StateStorage({ stateModels });
 
 	module.exports = {
 		StateStorage: stateStorage,

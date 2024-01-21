@@ -86,10 +86,6 @@ class Factory
 		{
 			return new InvoiceDataProvider($settings);
 		}
-		if ($settings instanceof DealSettings)
-		{
-			return new DealDataProvider($settings);
-		}
 		if ($settings instanceof OrderSettings)
 		{
 			return new OrderDataProvider($settings);
@@ -153,23 +149,8 @@ class Factory
 		{
 			throw $this->getNotSupportedException($settings->getEntityTypeName());
 		}
-		$additionalProviders = [];
-		if (!($settings instanceof TimelineSettings))
-		{
-			$additionalProviders[] = $this->getUserFieldDataProvider($settings);
-		}
-		if ($settings instanceof ContactSettings || $settings instanceof CompanySettings)
-		{
-			$additionalProviders[] = $this->getRequisiteDataProvider($settings);
-		}
-		if (
-			$settings instanceof DealSettings
-			&& !$settings->checkFlag(DealSettings::FLAG_RECURRING)
-			&& $settings->checkFlag(DealSettings::FLAG_ENABLE_CLIENT_FIELDS)
-		)
-		{
-			$additionalProviders = array_merge($additionalProviders, $this->getClientDataProviders($settings));
-		}
+
+		$additionalProviders = HeaderSections::getInstance()->additionalProviders($settings, $this);
 
 		$parameters['filterFieldsCallback'] = null;
 		$parameters['modifyFieldsCallback'] = null;

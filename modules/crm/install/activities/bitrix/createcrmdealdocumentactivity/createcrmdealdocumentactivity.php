@@ -55,7 +55,7 @@ class CBPCreateCrmDealDocumentActivity extends CBPCreateDocumentActivity
 					if ($fieldTypeObject)
 					{
 						$fields[$dateFields] = $fieldTypeObject->externalizeValue(
-							'Document',
+							'Document', // FieldType::EXTERNALIZE_CONTEXT_DOCUMENT
 							$fields[$dateFields]
 						);
 					}

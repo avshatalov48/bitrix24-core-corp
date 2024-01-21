@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Timeman\Integration\Intranet\Settings;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 if (!CBXFeatures::IsFeatureEnabled('timeman') || !CModule::IncludeModule('timeman'))
@@ -10,7 +13,7 @@ $arResult['arAccessUsers2'] = CTimeMan::GetAccessSettings();
 $arResult['arDirectUsers'] = CTimeMan::GetDirectAccess();
 if (count($arResult['arAccessUsers']['READ']) > 0)
 {
-	CUtil::InitJSCore(array('timeman'));
+	CUtil::InitJSCore(array('timeman', 'date'));
 
 	$arUserFields = $GLOBALS['USER_FIELD_MANAGER']->GetUserFields('USER', 0, LANGUAGE_ID);
 	$arResult['TASKS_ENABLED'] = CBXFeatures::IsFeatureEnabled('Tasks') && CModule::IncludeModule('tasks');
@@ -25,6 +28,12 @@ if (count($arResult['arAccessUsers']['READ']) > 0)
 		$arResult['SHOW_ALL'] = CUserOptions::GetOption("timeman.report.weekly", "show_all", "Y", $USER->GetID());
 		$arResult['DEPARTMENT_ID'] = CUserOptions::GetOption("timeman.report.weekly", "department_id", "", $USER->GetID());
 	}
-	$this->IncludeComponentTemplate();
+	$componentPage = '';
+	if (!(new Settings())->isToolAvailable(Settings::TOOLS['worktime']))
+	{
+		$componentPage = 'tool-disabled';
+	}
+
+	$this->IncludeComponentTemplate($componentPage);
 }
 ?>

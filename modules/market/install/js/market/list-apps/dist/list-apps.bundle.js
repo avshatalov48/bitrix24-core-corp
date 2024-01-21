@@ -142,7 +142,7 @@ this.BX = this.BX || {};
 	    onClosePopup: function () {
 	      if (this.installStep === 2 || this.installStep === 3) {
 	        clearTimeout(this.timer);
-	        this.reloadSlider();
+	        this.$root.updatePage(this.$root.getInstalledUri, 'list');
 	      }
 	    },
 	    initBottomLoader: function () {
@@ -330,8 +330,7 @@ this.BX = this.BX || {};
 	        bottom: window.pageYOffset + document.documentElement.clientHeight
 	      };
 	      return targetPosition.bottom > windowPosition.top && targetPosition.top < windowPosition.bottom && targetPosition.right > windowPosition.left && targetPosition.left < windowPosition.right;
-	    },
-	    ...ui_vue3_pinia.mapActions(market_installStore.marketInstallState, ['reloadSlider'])
+	    }
 	  },
 	  template: `
 		<img class="market-skeleton-img"

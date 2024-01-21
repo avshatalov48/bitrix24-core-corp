@@ -13,6 +13,7 @@ use Bitrix\Crm\Controller\Action\Entity\SearchAction;
 use Bitrix\Crm\Conversion\LeadConversionWizard;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\Tracking;
@@ -40,6 +41,7 @@ class CCrmCompanyDetailsComponent
 	use Traits\InitializeGuid;
 	use Traits\InitializeMode;
 	use Traits\InitializeUFConfig;
+	use Traits\InitializeAdditionalFieldsData;
 	use Crm\Entity\Traits\VisibilityConfig;
 
 	/** @var string */
@@ -320,7 +322,7 @@ class CCrmCompanyDetailsComponent
 						)
 					);
 
-					$this->arResult['TABS'][] = [
+					$tabQuote = [
 						'id' => 'tab_quote',
 						'name' => Loc::getMessage('CRM_COMPANY_TAB_QUOTE_MSGVER_1'),
 						'loader' => [
@@ -341,19 +343,37 @@ class CCrmCompanyDetailsComponent
 									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? '',
 									'ENABLE_TOOLBAR' => true,
 									'PRESERVE_HISTORY' => true,
-									'ADD_EVENT_NAME' => 'CrmCreateQuoteFromCompany'
-								], 'crm.quote.list')
-							]
-						]
+									'ADD_EVENT_NAME' => 'CrmCreateQuoteFromCompany',
+								], 'crm.quote.list'),
+							],
+						],
 					];
+
+					$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+					if (!$toolsManager->checkEntityTypeAvailability(\CCrmOwnerType::Quote))
+					{
+						$availabilityLock = \Bitrix\Crm\Restriction\AvailabilityManager::getInstance()
+							->getEntityTypeAvailabilityLock(\CCrmOwnerType::Quote)
+						;
+						$tabQuote['availabilityLock'] = $availabilityLock;
+					}
+					$this->arResult['TABS'][] = $tabQuote;
 				}
-				if (Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled() && !$this->arResult['CATEGORY_ID'])
+
+				if (
+					!$this->arResult['CATEGORY_ID']
+					&& Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled()
+				)
 				{
-					$this->arResult['TABS'][] = [
+					$tabInvoice = [
 						'id' => 'tab_invoice',
 						'name' => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::Invoice),
 						'loader' => [
-							'serviceUrl' => '/bitrix/components/bitrix/crm.invoice.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
+							'serviceUrl' => '/bitrix/components/bitrix/crm.invoice.list/lazyload.ajax.php?&site'
+								.SITE_ID
+								.'&'
+								.bitrix_sessid_get()
+							,
 							'componentData' => [
 								'template' => '',
 								'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
@@ -371,12 +391,23 @@ class CCrmCompanyDetailsComponent
 									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? '',
 									'ENABLE_TOOLBAR' => 'Y',
 									'PRESERVE_HISTORY' => true,
-									'ADD_EVENT_NAME' => 'CrmCreateInvoiceFromCompany'
-								], 'crm.invoice.list')
-							]
-						]
+									'ADD_EVENT_NAME' => 'CrmCreateInvoiceFromCompany',
+								], 'crm.invoice.list'),
+							],
+						],
 					];
+
+					$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+					if (!$toolsManager->checkEntityTypeAvailability(\CCrmOwnerType::Invoice))
+					{
+						$availabilityLock = \Bitrix\Crm\Restriction\AvailabilityManager::getInstance()
+							->getEntityTypeAvailabilityLock(\CCrmOwnerType::Invoice)
+						;
+						$tabInvoice['availabilityLock'] = $availabilityLock;
+					}
+					$this->arResult['TABS'][] = $tabInvoice;
 				}
+
 				if (
 					CModule::IncludeModule('sale')
 					&& CCrmSaleHelper::isWithOrdersMode()
@@ -661,6 +692,7 @@ class CCrmCompanyDetailsComponent
 							array('name' => 'EMPLOYEES'),
 							array('name' => 'OPENED'),
 							array('name' => 'ASSIGNED_BY_ID'),
+							array('name' => 'OBSERVER'),
 							array('name' => 'COMMENTS'),
 							array('name' => self::UTM_FIELD_CODE),
 						),
@@ -753,6 +785,8 @@ class CCrmCompanyDetailsComponent
 			return $this->entityFieldInfos;
 		}
 
+		$observersRestriction = RestrictionManager::getObserversRestriction();
+
 		$fakeValue = '';
 		$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams(
 			CCrmOwnerType::Company,
@@ -790,6 +824,23 @@ class CCrmCompanyDetailsComponent
 					'pathToProfile' => $this->arResult['PATH_TO_USER_PROFILE']
 				),
 				'enableAttributes' => false
+			),
+			array(
+				'name' => 'OBSERVER',
+				'title' => Loc::getMessage('CRM_TYPE_ITEM_FIELD_OBSERVERS'),
+				'type' => 'multiple_user',
+				'editable' => true,
+				'data' => array(
+					'enableEditInView' => true,
+					'map' => array('data' => 'OBSERVER_IDS'),
+					'infos' => 'OBSERVER_INFOS',
+					'pathToProfile' => $this->arResult['PATH_TO_USER_PROFILE'] ?? null,
+					'messages' => array('addObserver' => Loc::getMessage('CRM_COMMON_ACTION_ADD_OBSERVER')),
+					'restriction' => [
+						'isRestricted' => !$observersRestriction->hasPermission(),
+						'action' => $observersRestriction->prepareInfoHelperScript(),
+					],
+				)
 			),
 			array(
 				'name' => 'LOGO',
@@ -1365,6 +1416,7 @@ class CCrmCompanyDetailsComponent
 					'BANKING_DETAILS',                   // text
 					Tracking\UI\Details::SourceId,       // custom
 					'EMPLOYEES',                         // list
+					'OBSERVER',                          // multiple_user
 					'COMMENTS'                           // html or bb
 				];
 				if (in_array($fieldName, $fieldsToCheck, true))
@@ -1417,6 +1469,19 @@ class CCrmCompanyDetailsComponent
 								if (is_array($this->entityData['CLIENT_INFO'])
 									&& (!is_array($this->entityData['CLIENT_INFO']['CONTACT_DATA'])
 										|| empty($this->entityData['CLIENT_INFO']['CONTACT_DATA'])))
+								{
+									$result = true;
+									$isResultReady = true;
+								}
+							}
+							break;
+						case 'multiple_user':
+							if ($fieldName === 'OBSERVER')
+							{
+								$dataFieldName = 'OBSERVER_IDS';
+								if (array_key_exists($dataFieldName, $this->entityData)
+									&& (!is_array($this->entityData[$dataFieldName])
+										|| empty($this->entityData[$dataFieldName])))
 								{
 									$result = true;
 									$isResultReady = true;
@@ -1576,6 +1641,13 @@ class CCrmCompanyDetailsComponent
 				unset($this->entityData['LOGO']);
 			}
 
+			//region Observers
+			$this->entityData['OBSERVER_IDS'] = Crm\Observer\ObserverManager::getEntityObserverIDs(
+				CCrmOwnerType::Company,
+				$this->entityID
+			);
+			//endregion
+
 			$this->entityData = Crm\Entity\CommentsHelper::prepareFieldsFromDetailsToView(
 				\CCrmOwnerType::Company,
 				$this->entityID,
@@ -1733,6 +1805,26 @@ class CCrmCompanyDetailsComponent
 				$this->arResult['PATH_TO_USER_PROFILE'],
 				array('user_id' => $assignedByID)
 			);
+		}
+		//endregion
+		//region Observers
+		if (isset($this->entityData['OBSERVER_IDS']) && !empty($this->entityData['OBSERVER_IDS']))
+		{
+			$userBroker = Container::getInstance()->getUserBroker();
+
+			$users = $userBroker->getBunchByIds($this->entityData['OBSERVER_IDS']);
+
+			$this->entityData['OBSERVER_INFOS'] = [];
+			foreach ($users as $singleUser)
+			{
+				$this->entityData['OBSERVER_INFOS'][] = [
+					'ID' => $singleUser['ID'],
+					'FORMATTED_NAME' => $singleUser['FORMATTED_NAME'],
+					'WORK_POSITION' => $singleUser['WORK_POSITION'] ?? '',
+					'SHOW_URL' => (string)$singleUser['SHOW_URL'],
+					'PHOTO_URL' => $singleUser['PHOTO_URL'],
+				];
+			}
 		}
 		//endregion
 		//region Contact Data & Multifield Data
@@ -2058,13 +2150,11 @@ class CCrmCompanyDetailsComponent
 
 	private function initializeDuplicateControl(): void
 	{
-		$this->enableDupControl = (
-			!$this->isEditMode
-			&& Crm\Integrity\DuplicateControl::isControlEnabledFor(CCrmOwnerType::Company)
-		);
+		$this->enableDupControl = (Crm\Integrity\DuplicateControl::isControlEnabledFor(CCrmOwnerType::Company));
 
 		$this->arResult['DUPLICATE_CONTROL'] = [
 			'enabled' => $this->enableDupControl,
+			'isSingleMode' => $this->isEditMode,
 		];
 
 		if ($this->enableDupControl)
@@ -2090,9 +2180,16 @@ class CCrmCompanyDetailsComponent
 				],
 			];
 
-			if (!$this->entityID)
+			$this->arResult['DUPLICATE_CONTROL']['ignoredItems'] = [];
+			if ($this->entityID)
 			{
-				$this->arResult['DUPLICATE_CONTROL']['ignoredItems'] = [];
+				$this->arResult['DUPLICATE_CONTROL']['ignoredItems'][] = [
+					'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+					'ENTITY_ID' => $this->entityID,
+				];
+			}
+			else
+			{
 				$this->arResult['DUPLICATE_CONTROL']['ignoredItems'][] = [
 					'ENTITY_TYPE_ID' => CCrmOwnerType::Lead,
 					'ENTITY_ID' => $this->leadID,
@@ -2203,7 +2300,8 @@ class CCrmCompanyDetailsComponent
 		return [
 			'ENTITY_ID' => $this->getEntityID(),
 			'ENTITY_DATA' => $this->prepareEntityData(),
-			'ENTITY_INFO' => $this->prepareEntityInfo()
+			'ENTITY_INFO' => $this->prepareEntityInfo(),
+			'ADDITIONAL_FIELDS_DATA' => $this->getAdditionalFieldsData(),
 		];
 	}
 

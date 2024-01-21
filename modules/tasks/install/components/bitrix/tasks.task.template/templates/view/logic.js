@@ -205,12 +205,11 @@ BX.namespace('Tasks.Component');
 							{
 								return;
 							}
-
-							BX.UI.Notification.Center.notify({
-								content: BX.message('TASKS_NOTIFY_TASK_DELETED')
+							top.BX.UI.Notification.Center.notify({
+								content: BX.message('TEMPLATE_MOVED_TO_RECYCLEBIN')
 							});
-
-							window.location = this.option('backUrl');
+							top.BX.onCustomEvent(window, 'onTasksTemplateDeleted');
+							BX.SidePanel.Instance.getTopSlider().close();
 						}.bind(this),
 						function(response)
 						{
@@ -227,14 +226,14 @@ BX.namespace('Tasks.Component');
 				{
 					BX.Tasks.each(this.controlAll('file-area'), function(area){
 
-						top.BX.viewElementBind(
-							area,
-							{},
-							function(node){
-								return BX.type.isElementNode(node) &&
-									(node.getAttribute("data-bx-viewer") || node.getAttribute("data-bx-image"));
-							}
-						);
+						top.BX.Runtime.loadExtension('viewer').then(() => {
+							top.BX.viewElementBind(
+								area,
+								{},
+								(node) => BX.type.isElementNode(node)
+									&& (node.getAttribute("data-bx-viewer") || node.getAttribute("data-bx-image"))
+							);
+						});
 
 					});
 				}

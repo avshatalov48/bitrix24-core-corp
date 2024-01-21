@@ -39,21 +39,6 @@ class InvoiceSpecTable extends Entity\DataManager
 	{
 		global $DB;
 
-		if (function_exists('___dbCastIntToChar') !== true)
-		{
-			eval(
-				'function ___dbCastIntToChar($dbtype, $param)'.
-				'{'.
-				'   $result = $param;'.
-				'   if (ToLower($dbtype) === "mssql")'.
-				'   {'.
-				'       $result = "CAST(".$param." AS VARCHAR)";'.
-				'   }'.
-				'   return $result;'.
-				'}'
-			);
-		}
-
 		return array(
 			'ID' => array(
 				'data_type' => 'integer',
@@ -86,9 +71,9 @@ class InvoiceSpecTable extends Entity\DataManager
 			),
 			'NAME_WITH_IDENT' => array(
 				'data_type' => 'string',
-				'expression' => array(
-					$DB->concat('%s', '\' [\'', ___dbCastIntToChar('mysql', '%s'), '\']\''), 'NAME', 'PRODUCT_ID'
-				)
+				'expression' => [
+					$DB->concat('%s', "' ['", '%s', "']'"), 'NAME', 'PRODUCT_ID'
+				],
 			),
 			'IBLOCK_ELEMENT' => array(
 				'data_type' => 'IBlockElementProxy',

@@ -1,14 +1,13 @@
-import {Vue} from "ui.vue";
+import { Vue } from 'ui.vue';
 
 const TimeLineItemContentBlock = {
-	props:['item'],
-	computed:
+	props: ['item'],
+	computed: {
+		localize()
 		{
-			localize()
-			{
-				return Vue.getFilteredPhrases('SALESCENTER_TIMELINE_ITEM_CONTENT_');
-			},
+			return Vue.getFilteredPhrases('SALESCENTER_TIMELINE_ITEM_CONTENT_');
 		},
+	},
 	template: `
 		<div class="salescenter-app-payment-by-sms-timeline-content">
 			<span class="salescenter-app-payment-by-sms-timeline-content-text">
@@ -18,9 +17,9 @@ const TimeLineItemContentBlock = {
 				</a>
 			</span>
 		</div>
-	`
+	`,
 };
 
 export {
 	TimeLineItemContentBlock,
-}
+};

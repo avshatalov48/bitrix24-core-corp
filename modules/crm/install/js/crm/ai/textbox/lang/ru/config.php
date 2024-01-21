@@ -1,0 +1,3 @@
+<?php
+
+$MESS['CRM_COPILOT_TEXTBOX_SEARCH_PLACEHOLDER'] = 'Поиск';

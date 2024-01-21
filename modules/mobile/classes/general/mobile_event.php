@@ -252,6 +252,16 @@ class MobileApplication extends Bitrix\Main\Authentication\Application
 					'/bitrix/components/bitrix/crm.quote.show/show_file.php',
 				]);
 		}
+
+		if (ModuleManager::isModuleInstalled('mail'))
+		{
+			$this->validUrls = array_merge(
+				$this->validUrls,
+				[
+					'/bitrix/tools/mobile_oauth.php',
+					'/bitrix/tools/mail_oauth.php',
+				]);
+		}
 	}
 
 	public static function OnApplicationsBuildList()

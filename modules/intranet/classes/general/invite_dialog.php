@@ -82,7 +82,7 @@ class CIntranetInviteDialog
 		$strEmail = trim($arFields["ADD_EMAIL"]);
 		$strName = trim($arFields["ADD_NAME"]);
 		$strLastName = trim($arFields["ADD_LAST_NAME"]);
-		$strPosition = trim($arFields["ADD_POSITION"]);
+		$strPosition = trim($arFields["ADD_POSITION"] ?? '');
 
 		if ($strEmail !== '')
 		{

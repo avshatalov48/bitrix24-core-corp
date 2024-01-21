@@ -4,55 +4,54 @@
 /**
  * @bxjs_lang_path ../extension.php
  */
-jn.define("tab.presets/utils", (require, exports, module) => {
+jn.define('tab.presets/utils', (require, exports, module) => {
 	const TabPresetUtils = {
-		presetLoader: () => new RequestExecutor("mobile.tabs.getdata", {}).setCacheId(TabPresetUtils.cacheId()),
-		cacheId: () => "tab.settings.user." + env.userId,
-		setCurrentPreset: name => {
+		presetLoader: () => new RequestExecutor('mobile.tabs.getdata', {}).setCacheId(TabPresetUtils.cacheId()),
+		cacheId: () => `tab.settings.user.${env.userId}`,
+		setCurrentPreset: (name) => {
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor("mobile.tabs.setpreset", {name}))
+				(new RequestExecutor('mobile.tabs.setpreset', { name }))
 					.setHandler((result, more, error) => {
-						console.error(result, more, error)
+						console.error(result, more, error);
 						if (result && !error)
 						{
-							resolve(result)
+							resolve(result);
 						}
 						else
 						{
-							reject({message: BX.message("TAB_PRESET_APPLY_ERROR"), object: error})
+							reject({ message: BX.message('TAB_PRESET_APPLY_ERROR'), object: error });
 						}
 					})
 					.call(false);
-			})
+			});
 		},
-		setUserConfig: config => {
-			return new RequestExecutor("mobile.tabs.setconfig", {config }).call(false);
+		setUserConfig: (config) => {
+			return new RequestExecutor('mobile.tabs.setconfig', { config }).call(false);
 		},
 		getSortedPresets: (list, current) => {
-			const keys = Object.keys(list).filter(preset => preset !== current)
-			const result = {}
+			const keys = Object.keys(list).filter((preset) => preset !== current);
+			const result = {};
 			if (list[current])
 			{
-				keys.unshift(current)
+				keys.unshift(current);
 			}
-			keys.forEach(preset => result[preset] = list[preset])
+			keys.forEach((preset) => result[preset] = list[preset]);
 
-			return result
+			return result;
 		},
-		changeCurrentPreset: name => {
-			Application.storage.updateObject(TabPresetUtils.cacheId(), {}, saved =>
-			{
-				if (saved["presets"])
+		changeCurrentPreset: (name) => {
+			Application.storage.updateObject(TabPresetUtils.cacheId(), {}, (saved) => {
+				if (saved.presets)
 				{
-					saved["presets"]["current"] = name;
+					saved.presets.current = name;
 				}
 
 				return saved;
 			});
 
-			BX.onCustomEvent("onPresetChanged", [name]);
-		}
-	}
+			BX.onCustomEvent('onPresetChanged', [name]);
+		},
+	};
 
-	module.exports = TabPresetUtils
-})
+	module.exports = TabPresetUtils;
+});

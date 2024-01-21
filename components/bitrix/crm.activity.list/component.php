@@ -225,30 +225,8 @@ $arResult['HEADERS'][] = array('id' => 'CREATED', 'type'=> 'date', 'name' => Get
 $arResult['FILTER'] = array();
 $arResult['FILTER_PRESETS'] = array();
 
-$typeListItems = array(
-	strval(CCrmActivityType::Meeting) => CCrmActivityType::ResolveDescription(CCrmActivityType::Meeting),
-	strval(CCrmActivityType::Call).'.'.strval(CCrmActivityDirection::Incoming) => GetMessage('CRM_ACTIVITY_INCOMING_CALL'),
-	strval(CCrmActivityType::Call).'.'.strval(CCrmActivityDirection::Outgoing) => GetMessage('CRM_ACTIVITY_OUTGOING_CALL'),
-	strval(CCrmActivityType::Task) => CCrmActivityType::ResolveDescription(CCrmActivityType::Task),
-	strval(CCrmActivityType::Email).'.'.strval(CCrmActivityDirection::Incoming) => GetMessage('CRM_ACTIVITY_INCOMING_EMAIL'),
-	strval(CCrmActivityType::Email).'.'.strval(CCrmActivityDirection::Outgoing) => GetMessage('CRM_ACTIVITY_OUTGOING_EMAIL')
-);
 
-$providers = CCrmActivity::GetProviders();
-foreach ($providers as $provider)
-{
-	if (!$provider::isActive())
-		continue;
-
-	$providerPresets = $provider::getTypesFilterPresets();
-	foreach ($providerPresets as $preset)
-	{
-		$providerTypeId = isset($preset['PROVIDER_TYPE_ID']) ? $preset['PROVIDER_TYPE_ID'] : '*';
-		$direction = isset($preset['DIRECTION']) ? $preset['DIRECTION'] : '*';
-		$key = $provider::getId().'.'.$providerTypeId.'.'.$direction;
-		$typeListItems[$key] = $preset['NAME'];
-	}
-}
+$typeListItems = \Bitrix\Crm\Activity\Provider\Base::makeTypeCodeNameList();
 
 $arResult['FILTER'] = array(
 	array('id' => "{$filterFieldPrefix}ID", 'name' => 'ID', 'default' => false),
@@ -502,13 +480,7 @@ $arNavParams = $gridOptions->GetNavParams($arNavParams);
 $arNavParams['bShowAll'] = false;
 
 $arGridFilter = $filterOptions->getFilter($arResult['FILTER']);
-if (
-	is_array($arGridFilter['TYPE_ID'] ?? null)
-	&& in_array(CCrmActivityType::Task, $arGridFilter['TYPE_ID'])
-)
-{
-	$arGridFilter['TYPE_ID'][] = Task::getKey();
-}
+Task::transformTaskInFilter($arGridFilter);
 if(!$enableWidgetFilter)
 {
 	$arFilter += $arGridFilter;

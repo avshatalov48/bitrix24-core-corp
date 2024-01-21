@@ -2,14 +2,13 @@
  * @module utils/color
  */
 jn.define('utils/color', (require, exports, module) => {
-
 	const DEFAULT_OPACITY = 0.12;
 
 	/**
 	 * Converts hex color to argb
 	 *
 	 * @param {string} hexColor with leading #-sign
-	 * @param {number} opacity from 0 to 1
+	 * @param {number} [opacity] from 0 to 1
 	 * @returns {string} argb color with leading #-sign
 	 */
 	function transparent(hexColor, opacity = 0)
@@ -37,12 +36,14 @@ jn.define('utils/color', (require, exports, module) => {
 	{
 		if (hexColor.length === 4)
 		{
-			hexColor = hexColor.replace(/#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])/g, '#$1$1$2$2$3$3');
+			hexColor = hexColor.replaceAll(/#([\dA-Fa-f])([\dA-Fa-f])([\dA-Fa-f])/g, '#$1$1$2$2$3$3');
 		}
 
 		if (!hexColor.startsWith('#') || hexColor.length < 7)
 		{
-			throw new TypeError('Parameter "hexColor" must be fully qualified HEX-representation of color with leading #-sign');
+			throw new TypeError(
+				'Parameter "hexColor" must be fully qualified HEX-representation of color with leading #-sign',
+			);
 		}
 
 		return hexColor;
@@ -96,7 +97,7 @@ jn.define('utils/color', (require, exports, module) => {
 	 * Converts to lightened color with provided opacity
 	 *
 	 * @param {string} hexColor with leading #-sign
-	 * @param {number} opacity from 0 to 1
+	 * @param {number} [opacity] from 0 to 1
 	 * @returns {string} hex color with leading #-sign
 	 */
 	function lighten(hexColor, opacity = DEFAULT_OPACITY)
@@ -113,7 +114,7 @@ jn.define('utils/color', (require, exports, module) => {
 	 * Converts to darkened color with provided opacity
 	 *
 	 * @param {string} hexColor with leading #-sign
-	 * @param {number} opacity from 0 to 1
+	 * @param {number} [opacity] from 0 to 1
 	 * @returns {string} hex color with leading #-sign
 	 */
 	function darken(hexColor, opacity = DEFAULT_OPACITY)
@@ -130,7 +131,7 @@ jn.define('utils/color', (require, exports, module) => {
 	 * Converts color to pressed color
 	 *
 	 * @param {string} hexColor with leading #-sign
-	 * @param {number} opacity from 0 to 1
+	 * @param {number} [opacity] from 0 to 1
 	 * @returns {string} hex color with leading #-sign
 	 */
 	function getPressedColor(hexColor, opacity = DEFAULT_OPACITY)
@@ -147,7 +148,7 @@ jn.define('utils/color', (require, exports, module) => {
 	 * Returns object with default and pressed colors
 	 *
 	 * @param {string} hexColor with leading #-sign
-	 * @param {number} opacity from 0 to 1
+	 * @param {number} [opacity] from 0 to 1
 	 * @returns {object}
 	 */
 	function withPressed(hexColor, opacity = DEFAULT_OPACITY)
@@ -169,5 +170,4 @@ jn.define('utils/color', (require, exports, module) => {
 		withPressed,
 		prepareHexColor,
 	};
-
 });

@@ -15,8 +15,15 @@ jn.define('im/messenger/const/recent', (require, exports, module) => {
 		error: 'error',
 	});
 
+	const SubTitleIconType = Object.freeze({
+		reply: 'reply',
+		wait: 'wait',
+		error: 'error',
+	});
+
 	module.exports = {
 		ChatTypes,
 		MessageStatus,
+		SubTitleIconType,
 	};
 });

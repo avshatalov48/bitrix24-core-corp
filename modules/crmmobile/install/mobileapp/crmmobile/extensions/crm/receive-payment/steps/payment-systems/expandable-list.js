@@ -3,8 +3,9 @@
  */
 jn.define('crm/receive-payment/steps/payment-systems/expandable-list', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { chevronDown } = require('assets/common');
+	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
-	const pathToExtension = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/receive-payment/steps/payment-systems`;
 
 	/**
 	 * @class ExpandableList
@@ -40,7 +41,7 @@ jn.define('crm/receive-payment/steps/payment-systems/expandable-list', (require,
 				viewElementList.push(Text({
 					style: {
 						fontSize: 13,
-						color: '#6a737f',
+						color: AppTheme.colors.base3,
 						lineHeightMultiple: 1.05,
 					},
 					text: this.list[itemIndex].NAME,
@@ -79,13 +80,16 @@ jn.define('crm/receive-payment/steps/payment-systems/expandable-list', (require,
 				Text({
 					style: {
 						fontSize: 13,
-						color: '#6a737f',
+						color: AppTheme.colors.base3,
 						lineHeightMultiple: 1.05,
 					},
 					text: Loc.getMessage('M_RP_PS_SHOW_MORE', { '#COUNT#': this.list.length - 4 }),
 				}),
 				Image({
-					svg: { uri: `${pathToExtension}/images/arrow.svg` },
+					svg: {
+						content: chevronDown(),
+					},
+					tintColor: AppTheme.colors.base3,
 					style: {
 						marginTop: 7,
 						marginLeft: 5,

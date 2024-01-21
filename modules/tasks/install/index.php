@@ -157,7 +157,9 @@ Class tasks extends CModule
 		// bitrix24
 		$eventManager->registerEventHandler('bitrix24', 'onFeedbackCollectorCheckCanRun', 'tasks', '\Bitrix\Tasks\Integration\Bitrix24\FeedbackCollector', 'onFeedbackCollectorCheckCanRun');
 
+		// ai
 		$eventManager->registerEventHandler('ai', 'onContextGetMessages', 'tasks', '\Bitrix\Tasks\Integration\AI\EventHandler', 'onContextGetMessages');
+		$eventManager->registerEventHandler('ai', 'onTuningLoad', 'tasks', '\Bitrix\Tasks\Integration\AI\Settings', 'onTuningLoad');
 
 		$this->InstallTasks();
 
@@ -714,7 +716,9 @@ Class tasks extends CModule
 		// bitrix24
 		$eventManager->unRegisterEventHandler('bitrix24', 'onFeedbackCollectorCheckCanRun', 'tasks', '\Bitrix\Tasks\Integration\Bitrix24\FeedbackCollector', 'onFeedbackCollectorCheckCanRun');
 
+		// ai
 		$eventManager->unRegisterEventHandler('ai', 'onContextGetMessages', 'tasks', '\Bitrix\Tasks\Integration\AI\EventHandler', 'onContextGetMessages');
+		$eventManager->unRegisterEventHandler('ai', 'onTuningLoad', 'tasks', '\Bitrix\Tasks\Integration\AI\Settings', 'onTuningLoad');
 
 		// remove tasks from socnetlog table
 		if (

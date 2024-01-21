@@ -16,6 +16,7 @@ class EditableDate extends Date
 
 	private string $style = self::STYLE_TEXT;
 	private ?string $backgroundColor = null;
+	protected ?bool $readonly = null;
 
 	public function getRendererName(): string
 	{
@@ -50,6 +51,18 @@ class EditableDate extends Date
 		return $this;
 	}
 
+	public function isReadonly(): ?bool
+	{
+		return $this->readonly;
+	}
+
+	public function setReadonly(bool $isReadonly): self
+	{
+		$this->readonly = $isReadonly;
+
+		return $this;
+	}
+
 	protected function getProperties(): array
 	{
 		return array_merge(
@@ -57,6 +70,7 @@ class EditableDate extends Date
 			[
 				'action' => $this->getAction(),
 				'backgroundColor' => $this->getBackgroundColor(),
+				'isReadonly' => $this->isReadonly(),
 			]
 		);
 	}

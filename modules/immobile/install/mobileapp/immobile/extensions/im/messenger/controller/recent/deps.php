@@ -8,6 +8,8 @@ return [
 		'im:messenger/core',
 		'im:messenger/const',
 		'im:messenger/provider/rest',
+		'im:messenger/provider/service',
+		'im:messenger/lib/settings',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/converter',
 		'im:messenger/lib/page-navigation',

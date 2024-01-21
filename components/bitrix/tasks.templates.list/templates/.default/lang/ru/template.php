@@ -18,6 +18,7 @@ $MESS['TASKS_TEMPLATE_CREATE'] = 'Создать';
 
 $MESS["TASKS_TEMPLATES_ROW_ACTION_VIEW"] = "Просмотреть";
 $MESS["TASKS_TEMPLATES_ROW_ACTION_CREATE_TASK"] = "Добавить задачу по шаблону";
+$MESS["TASKS_TEMPLATES_ROW_ACTION_CREATE_TASK_V2"] = "Создать задачу по шаблону";
 $MESS["TASKS_TEMPLATES_ROW_ACTION_CREATE_SUB_TEMPLATE"] = "Добавить подзадачу для шаблона";
 $MESS["TASKS_TEMPLATES_ROW_ACTION_COPY"] = "Копировать";
 $MESS["TASKS_TEMPLATES_ROW_ACTION_EDIT"] = "Редактировать";

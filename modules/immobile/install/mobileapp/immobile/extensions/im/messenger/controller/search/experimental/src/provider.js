@@ -33,52 +33,55 @@ jn.define('im/messenger/controller/search/experimental/provider', (require, expo
 			 */
 			this.store = core.getStore();
 			/**
-			 * @private
+			 * @protected
 			 * @type {RecentConfig}
 			 */
-			this.config = new RecentConfig();
+			this.config = null;
 			/**
-			 * @private
+			 * @protected
 			 * @type {RecentServerSearchService}
 			 */
-			this.serverService = new RecentServerSearchService(this.config);
+			this.serverService = null;
 			/**
-			 * @private
+			 * @protected
 			 * @type {RecentLocalSearchService}
 			 */
-			this.localService = new RecentLocalSearchService();
+			this.localService = null;
 
 			/**
-			 * @private
+			 * @protected
 			 * @type {(function(Array<string>, string): Promise<Array<string>>)}
 			 */
 			this.searchOnServerDelayed = debounce(this.searchOnServer, 400, this);
 
 			/**
-			 * @private
+			 * @protected
 			 * @type {number}
 			 */
 			this.minSearchSize = MessengerParams.get('MIN_SEARCH_SIZE', 3);
 			/**
-			 * @private
+			 * @protected
 			 * @type {function(): void}
 			 */
 			this.loadLatestSearchProcessedCallback = params.loadLatestSearchProcessed ?? nothing;
 			/**
-			 * @private
+			 * @protected
 			 * @type {function(Array<string>): void}
 			 */
 			this.loadLatestSearchCompleteCallback = params.loadLatestSearchComplete ?? nothing;
 			/**
-			 * @private
+			 * @protected
 			 * @type {function(Array<string>, boolean): void}
 			 */
 			this.loadSearchProcessedCallback = params.loadSearchProcessed ?? nothing;
 			/**
-			 * @private
+			 * @protected
 			 * @type {function(Array<string>, string): void}
 			 */
 			this.loadSearchCompleteCallBack = params.loadSearchComplete ?? nothing;
+
+			this.initConfig();
+			this.initServices();
 		}
 
 		/**
@@ -140,6 +143,7 @@ jn.define('im/messenger/controller/search/experimental/provider', (require, expo
 				{
 					return;
 				}
+
 				if (user)
 				{
 					recentUsers.push(user.id);
@@ -152,6 +156,35 @@ jn.define('im/messenger/controller/search/experimental/provider', (require, expo
 		async saveItemToRecent(dialogId)
 		{
 			return this.serverService.saveItemToRecent(dialogId);
+		}
+
+		/**
+		 * @protected
+		 */
+		initServices()
+		{
+			/**
+			 * @protected
+			 * @type {RecentServerSearchService}
+			 */
+			this.serverService = new RecentServerSearchService(this.config);
+			/**
+			 * @protected
+			 * @type {RecentLocalSearchService}
+			 */
+			this.localService = new RecentLocalSearchService();
+		}
+
+		/**
+		 * @protected
+		 */
+		initConfig()
+		{
+			/**
+			 * @protected
+			 * @type {RecentConfig}
+			 */
+			this.config = new RecentConfig();
 		}
 
 		/**
@@ -192,8 +225,8 @@ jn.define('im/messenger/controller/search/experimental/provider', (require, expo
 				const secondItem = this.store.getters['recentModel/getById'](secondId)
 					?? this.store.getters['recentModel/searchModel/getById'](secondId)
 				;
-				const firstDate = DateHelper.cast(firstItem.date_update ?? null, null);
-				const secondDate = DateHelper.cast(secondItem.date_update ?? null, null);
+				const firstDate = DateHelper.cast(firstItem.dateMessage ?? null, null);
+				const secondDate = DateHelper.cast(secondItem.dateMessage ?? null, null);
 
 				if (!firstDate || !secondDate)
 				{

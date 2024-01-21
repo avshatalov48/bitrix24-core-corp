@@ -74,7 +74,7 @@ const PaySystem = {
 			return this.installed === true
 				? Loc.getMessage('SALESCENTER_PAYSYSTEM_SET_BLOCK_TITLE')
 				: Loc.getMessage('SALESCENTER_PAYSYSTEM_BLOCK_TITLE');
-		}
+		},
 	},
 
 	template: `
@@ -86,10 +86,23 @@ const PaySystem = {
 			@on-adjust-collapsed="saveCollapsedOption"
 		>
 			<template v-slot:block-title-title>{{title}}</template>
-			<template v-slot:block-hint-title>${Loc.getMessage('SALESCENTER_PAYSYSTEM_BLOCK_SETTINGS_TITLE')}</template>
+			<template v-slot:block-hint-title>
+				${Loc.getMessage('SALESCENTER_PAYSYSTEM_BLOCK_SETTINGS_TITLE')}
+			</template>
 			<template v-slot:block-container>
+				<div
+					v-if="!installed"
+					class="salescenter-app-explanation"
+				>
+					<div class="salescenter-app-explanation-img"></div>
+					<div class="salescenter-app-explanation-area">
+						<div class="salescenter-app-explanation-text">
+							${Loc.getMessage('SALESCENTER_TERMINAL_PAYMENT_SYSTEM_SETUP_HINT')}
+						</div>
+					</div>
+				</div>
 				<div :class="containerClassMixin">
-					<tile-collection-uninstalled-block 	:tiles="tiles" v-if="!installed"/>
+					<tile-collection-uninstalled-block 	:tiles="tiles" v-if="!installed" v-on:on-tile-slider-close="onSliderClose"/>
 					<tile-collection-installed-block :tiles="tiles" v-on:on-tile-slider-close="onSliderClose" v-else />
 				</div>
 			</template>

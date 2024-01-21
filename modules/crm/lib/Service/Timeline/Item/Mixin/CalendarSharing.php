@@ -9,6 +9,7 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Date;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
+use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
@@ -178,7 +179,7 @@ trait CalendarSharing
 
 		if (!$linkHash)
 		{
-			$historyItemModel = $linkHash = $this->getModel()->getHistoryItemModel();
+			$historyItemModel = $this->getModel()->getHistoryItemModel();
 			if ($historyItemModel)
 			{
 				$linkHash = $historyItemModel->get('LINK_HASH');
@@ -191,6 +192,38 @@ trait CalendarSharing
 		}
 
 		return $result;
+	}
+
+	public function getLinkRule(): array
+	{
+		$linkRuleArray = $this->getModel()->getSettings()['LINK_RULE'] ?? null;
+
+		if (!$linkRuleArray)
+		{
+			$historyItemModel = $this->getModel()->getHistoryItemModel();
+			if ($historyItemModel)
+			{
+				$linkRuleArray = $historyItemModel->get('LINK_RULE');
+			}
+		}
+
+		// for compatibility
+		if (!$linkRuleArray)
+		{
+			$linkRuleArray = [
+				'ranges' => [
+					[
+						'from' => 540,
+						'to' => 1080,
+						'weekdays' => [1, 2, 3, 4, 5],
+						'weekdaysTitle' => $this->getMessage('CRM_TIMELINE_CALENDAR_SHARING_WORKDAYS'),
+					],
+				],
+				'slotSize' => 60,
+			];
+		}
+
+		return $linkRuleArray;
 	}
 
 	private function getSharingLinkUrl(string $hash): string
@@ -224,6 +257,36 @@ trait CalendarSharing
 			($this->getModel()->getSettings()['CONTACT_ID'] ?? null)
 			&& ($this->getModel()->getSettings()['CONTACT_TYPE_ID'] ?? null)
 		;
+	}
+
+	public function formatTime(int $minutes): string
+	{
+		$now = time();
+		$dayStart = $now - $now % 86400 - FormatDate('Z');
+
+		$culture = Main\Application::getInstance()->getContext()->getCulture();
+		$timeFormat = $culture->get('SHORT_TIME_FORMAT');
+
+		return FormatDate($timeFormat, $dayStart + $minutes * 60);
+	}
+
+	public function formatDuration(int $diffMinutes): string
+	{
+		$now = time();
+		$hours = (int)($diffMinutes / 60);
+		$minutes = $diffMinutes % 60;
+
+		$hint = FormatDate('idiff', $now - $minutes * 60);
+		if ($hours > 0)
+		{
+			$hint = FormatDate('Hdiff', $now - $hours * 60 * 60);
+			if ($minutes > 0)
+			{
+				$hint .= ' ' . FormatDate('idiff', $now - $minutes * 60);
+			}
+		}
+
+		return $hint;
 	}
 
 	protected function getMessage(string $messageCode): string

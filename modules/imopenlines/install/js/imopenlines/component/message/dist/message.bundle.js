@@ -146,7 +146,7 @@
 	        return true;
 	      }
 	      if (this.message.params.IMOL_FORM === FormType$1.like) {
-	        if (parseInt(this.message.params.IMOL_VOTE) === this.widget.dialog.sessionId && this.widget.dialog.userVote === VoteType$1.none) {
+	        if (parseInt(this.message.params.IMOL_VOTE_SID) === this.widget.dialog.sessionId && this.widget.dialog.userVote === VoteType$1.none) {
 	          main_core_events.EventEmitter.emit(WidgetEventType.showForm, {
 	            type: FormType$1.like,
 	            delayed: true

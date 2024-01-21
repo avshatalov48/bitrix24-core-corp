@@ -4002,6 +4002,7 @@ if(typeof(BX.CrmDupController) === "undefined")
 		this._entityTypeName = "";
 		this._entityId = 0;
 		this._enable = true;
+		this._isSingleMode = false;
 		this._groups = {};
 		this._requestIsRunning = false;
 		this._request = null;
@@ -4014,6 +4015,7 @@ if(typeof(BX.CrmDupController) === "undefined")
 		this._lastSubmit = null;
 		this._submitClickHandler = BX.delegate(this._onSubmitClick, this);
 		this._beforeFormSubmitHandler = BX.delegate(this._onBeforeFormSubmit, this);
+		this._onEntityDetailsTabShowHandler = BX.delegate(this._onEntityDetailsTabShow, this);
 		this._startDestroy = false;
 	};
 	BX.CrmDupController.prototype =
@@ -4028,6 +4030,8 @@ if(typeof(BX.CrmDupController) === "undefined")
 			{
 				throw "BX.CrmDupController. Could not find service url.";
 			}
+
+			this._isSingleMode = BX.prop.getBoolean(this._settings, "isSingleMode", false);
 
 			this._bind();
 
@@ -4076,7 +4080,10 @@ if(typeof(BX.CrmDupController) === "undefined")
 
 			this._afterInitialize();
 
-			this.initialSearch();
+			if (!this._isSingleMode)
+			{
+				this.initialSearch();
+			}
 		},
 		initialSearch: function(customGroups)
 		{
@@ -4110,6 +4117,8 @@ if(typeof(BX.CrmDupController) === "undefined")
 		},
 		destroy: function()
 		{
+			BX.removeCustomEvent(window, "onEntityDetailsTabShow", this._onEntityDetailsTabShowHandler);
+
 			this._startDestroy = true;
 			this._unbind();
 			for(var key in this._groups)
@@ -4120,7 +4129,16 @@ if(typeof(BX.CrmDupController) === "undefined")
 		},
 		_afterInitialize: function()
 		{
+			BX.addCustomEvent(window, "onEntityDetailsTabShow", this._onEntityDetailsTabShowHandler);
 			BX.onCustomEvent("CrmDupControllerAfterInitialize", [this]);
+		},
+		_onEntityDetailsTabShow: function(entityDetailTab)
+		{
+			this._stopSearchRequest();
+			if (this._searchSummary)
+			{
+				this._searchSummary.close();
+			}
 		},
 		getId: function()
 		{
@@ -4145,6 +4163,10 @@ if(typeof(BX.CrmDupController) === "undefined")
 		setSetting: function (name, val)
 		{
 			this._settings[name] = val;
+		},
+		isSingleMode: function ()
+		{
+			return this._isSingleMode;
 		},
 		registerGroup: function(groupId, settings)
 		{
@@ -4242,10 +4264,13 @@ if(typeof(BX.CrmDupController) === "undefined")
 			var params = group.prepareSearchParams();
 			if(!params)
 			{
-				if(typeof(this._searchData[groupId]) !== "undefined" && field)
+				if(typeof(this._searchData[groupId]) !== "undefined")
 				{
 					delete this._searchData[groupId];
-					this._refreshSearchSummary(groupId, field.getId());
+					if (field)
+					{
+						this._refreshSearchSummary(groupId, field.getId());
+					}
 				}
 				return;
 			}
@@ -4744,6 +4769,7 @@ if(typeof(BX.CrmDupCtrlField) === "undefined")
 		this._elementKeyUpHandler = BX.delegate(this._onElementKeyUp, this);
 		this._elementFocusHandler = BX.delegate(this._onElementFocus, this);
 		this._elementBlurHandler = BX.delegate(this._onElementBlur, this);
+		this._onEntityDetailsTabShowHandler = BX.delegate(this._onEntityDetailsTabShow, this);
 		this._initialized = false;
 	};
 	BX.CrmDupCtrlField.prototype =
@@ -4772,6 +4798,8 @@ if(typeof(BX.CrmDupCtrlField) === "undefined")
 				this._elementTitle = elementTitle;
 			}
 
+			BX.addCustomEvent(window, "onEntityDetailsTabShow", this._onEntityDetailsTabShowHandler);
+
 			this._initialized = true;
 		},
 		release: function()
@@ -4780,6 +4808,8 @@ if(typeof(BX.CrmDupCtrlField) === "undefined")
 			BX.unbind(this._element, "focus", this._elementFocusHandler);
 			BX.unbind(this._element, "blur", this._elementBlurHandler);
 			this._element = null;
+
+			BX.removeCustomEvent(window, "onEntityDetailsTabShow", this._onEntityDetailsTabShowHandler);
 
 			this._initialized = false;
 		},
@@ -4811,6 +4841,19 @@ if(typeof(BX.CrmDupCtrlField) === "undefined")
 		{
 			return this._element.value;
 		},
+		isSingleMode: function()
+		{
+			if (this._group)
+			{
+				const controller = this._group.getController();
+				if (controller)
+				{
+					return controller.isSingleMode();
+				}
+			}
+
+			return false;
+		},
 		_onElementKeyUp: function(e)
 		{
 			var c = e.keyCode;
@@ -4825,11 +4868,7 @@ if(typeof(BX.CrmDupCtrlField) === "undefined")
 			}
 			this._value = this._element.value;
 
-			if(this._elementTimeoutId > 0)
-			{
-				window.clearTimeout(this._elementTimeoutId);
-				this._elementTimeoutId = 0;
-			}
+			this._clearElementTimeout();
 			this._elementTimeoutId = window.setTimeout(this._elementTimeoutHandler, 1500);
 
 			if(!this._hasFosus)
@@ -4840,6 +4879,12 @@ if(typeof(BX.CrmDupCtrlField) === "undefined")
 		_onElementFocus: function(e)
 		{
 			this._hasFosus = true;
+
+			if (this.isSingleMode())
+			{
+				return;
+			}
+
 			if(this._group)
 			{
 				this._group.processFieldFocusGain(this);
@@ -4847,11 +4892,12 @@ if(typeof(BX.CrmDupCtrlField) === "undefined")
 		},
 		_onElementBlur: function(e)
 		{
-			if(this._elementTimeoutId > 0)
+			if (this.isSingleMode())
 			{
-				window.clearTimeout(this._elementTimeoutId);
-				this._elementTimeoutId = 0;
+				return;
 			}
+
+			this._clearElementTimeout();
 
 			this._hasFosus = false;
 			if(this._group)
@@ -4859,7 +4905,15 @@ if(typeof(BX.CrmDupCtrlField) === "undefined")
 				this._group.processFieldFocusLoss(this);
 			}
 		},
-		_onElementTimeout: function()
+		_clearElementTimeout: function ()
+		{
+			if(this._elementTimeoutId > 0)
+			{
+				window.clearTimeout(this._elementTimeoutId);
+				this._elementTimeoutId = 0;
+			}
+		},
+		_onElementTimeout: function ()
 		{
 			if(this._elementTimeoutId <= 0)
 			{
@@ -4871,7 +4925,11 @@ if(typeof(BX.CrmDupCtrlField) === "undefined")
 			{
 				this._group.processFieldDelay(this);
 			}
-		}
+		},
+		_onEntityDetailsTabShow: function(entityDetailTab)
+		{
+			this._clearElementTimeout();
+		},
 	};
 	BX.CrmDupCtrlField.create = function(id, element, elementTitle)
 	{
@@ -9681,6 +9739,12 @@ if(typeof(BX.CrmEntityConverter) === "undefined")
 			if(!data)
 			{
 				return;
+			}
+
+			var dataResult = BX.type.isPlainObject(data["RESULT"]) ? data["RESULT"] : {};
+			if (BX.type.isPlainObject(dataResult["ERROR"]))
+			{
+				this.showError(dataResult["ERROR"]);
 			}
 
 			var redirectUrl = BX.prop.getString(data, "URL", "");

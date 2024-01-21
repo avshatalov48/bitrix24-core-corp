@@ -2,7 +2,7 @@
  * @module layout/ui/fields/requisite/requisite-details
  */
 jn.define('layout/ui/fields/requisite/requisite-details', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { Container, Island, Title, FormGroup } = require('layout/ui/islands');
 	const { StringField } = require('layout/ui/fields/string');
 	const { Loc } = require('loc');
@@ -28,7 +28,7 @@ jn.define('layout/ui/fields/requisite/requisite-details', (require, exports, mod
 				{
 					name: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_CLOSE'),
 					type: 'text',
-					color: '#0b66c3',
+					color: AppTheme.colors.accentMainLinks,
 					callback: () => this.layout.close(),
 				},
 			]);
@@ -75,7 +75,7 @@ jn.define('layout/ui/fields/requisite/requisite-details', (require, exports, mod
 			{
 				return new EmptyScreen({
 					image: {
-						uri: EmptyScreen.makeLibraryImagePath('emptyList.png'),
+						uri: EmptyScreen.makeLibraryImagePath('empty-list.svg'),
 						style: {
 							width: 95,
 							height: 95,
@@ -84,7 +84,7 @@ jn.define('layout/ui/fields/requisite/requisite-details', (require, exports, mod
 					title: () => Text({
 						style: {
 							fontWeight: '400',
-							color: '#828B95',
+							color: AppTheme.colors.base3,
 							fontSize: 17,
 							textAlign: 'center',
 						},
@@ -103,5 +103,4 @@ jn.define('layout/ui/fields/requisite/requisite-details', (require, exports, mod
 	}
 
 	module.exports = { RequisiteDetails };
-
 });

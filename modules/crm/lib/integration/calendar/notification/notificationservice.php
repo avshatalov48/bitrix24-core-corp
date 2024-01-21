@@ -2,17 +2,22 @@
 
 namespace Bitrix\Crm\Integration\Calendar\Notification;
 
+use Bitrix\Calendar\Core\Managers\Duration\DurationManager;
 use Bitrix\Crm\Integration\NotificationsManager;
 use Bitrix\Crm\MessageSender;
 use Bitrix\Calendar\Sharing;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Calendar\Core\Event;
+use Bitrix\Calendar\Core;
 
 class NotificationService extends AbstractService
 {
-	private const TEMPLATE_SHARING_EVENT_INVITATION = 'SHARING_EVENT_INVITATION';
-	private const TEMPLATE_SHARING_EVENT_AUTO_ACCEPTED = 'SHARING_EVENT_ACCEPTED_2';
-	private const TEMPLATE_SHARING_EVENT_CANCELLED_LINK_ACTIVE = 'SHARING_EVENT_CANCELLED_1';
-	private const TEMPLATE_SHARING_EVENT_CANCELLED = 'SHARING_EVENT_CANCELLED_2';
+	public const TEMPLATE_SHARING_EVENT_INVITATION = 'SHARING_EVENT_INVITATION';
+	public const TEMPLATE_SHARING_EVENT_AUTO_ACCEPTED = 'SHARING_EVENT_ACCEPTED_2';
+	public const TEMPLATE_SHARING_EVENT_CANCELLED_LINK_ACTIVE = 'SHARING_EVENT_CANCELLED_1';
+	public const TEMPLATE_SHARING_EVENT_CANCELLED = 'SHARING_EVENT_CANCELLED_2';
+	public const TEMPLATE_SHARING_EVENT_EDITED = 'SHARING_EVENT_EDITED';
 
 	/**
 	 * @param ItemIdentifier $entity
@@ -28,7 +33,7 @@ class NotificationService extends AbstractService
 			return false;
 		}
 
-		return NotificationsManager::canSendMessage();
+		return NotificationsManager::canUse();
 	}
 
 
@@ -122,6 +127,43 @@ class NotificationService extends AbstractService
 	}
 
 	/**
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	public function sendCrmSharingEdited(): bool
+	{
+		$manager = Sharing\Helper::getOwnerInfo($this->crmDealLink->getOwnerId());
+
+		$locEdited = Loc::getMessage('CRM_CALENDAR_SHARING_EVENT_EDITED_ACTION');
+		if ($manager['gender'] === 'M')
+		{
+			$locEdited = Loc::getMessage('CRM_CALENDAR_SHARING_EVENT_EDITED_ACTION_M');
+		}
+		else if ($manager['gender'] === 'F')
+		{
+			$locEdited = Loc::getMessage('CRM_CALENDAR_SHARING_EVENT_EDITED_ACTION_F');
+		}
+
+		$oldEvent = $this->oldEvent;
+		$newEvent = $this->event;
+		$durationManager = new DurationManager($newEvent->getStart(), $newEvent->getEnd());
+		$hasDurationChanged = !$durationManager->areDurationsEqual($oldEvent->getStart(), $oldEvent->getEnd());
+		$oldDate = $this->formatEditedEventDate($oldEvent, $hasDurationChanged);
+		$newDate = $this->formatEditedEventDate($newEvent, $hasDurationChanged);
+
+		$placeholders = [
+			'NAME' => Sharing\Helper::getPersonFullNameLoc($manager['name'], $manager['lastName']),
+			'EVENT_URL' => Sharing\Helper::getShortUrl($this->eventLink->getUrl()),
+			'VIDEOCONFERENCE_URL' => Sharing\Helper::getShortUrl($this->eventLink->getUrl() . Sharing\Helper::ACTION_CONFERENCE),
+			'LOC_EDITED' => $locEdited,
+			'OLD_DATE' => $oldDate,
+			'NEW_DATE' => $newDate,
+		];
+
+		return $this->sendMessage(self::TEMPLATE_SHARING_EVENT_EDITED, $placeholders);
+	}
+
+	/**
 	 * @param ItemIdentifier $entity
 	 * @return MessageSender\Channel|null
 	 */
@@ -135,5 +177,30 @@ class NotificationService extends AbstractService
 		}
 
 		return $channel;
+	}
+
+	protected function formatEditedEventDate(Event\Event $event, $hasDurationChanged): string
+	{
+		if ($event->isFullDayEvent())
+		{
+			$result = Loc::getMessage(
+				'CRM_CALENDAR_SHARING_EVENT_FULL_DAY_INFO',
+				['#EVENT_DATE#' => Sharing\Helper::formatDateWithoutTime($event->getStart())]
+			);
+		}
+		else if ($hasDurationChanged)
+		{
+			$durationManager = new DurationManager($event->getStart(), $event->getEnd());
+			$formattedDate = Sharing\Helper::formatDate($event->getStart());
+			$formattedDuration = $durationManager->getFormattedDuration();
+
+			$result = "{$formattedDate} ({$formattedDuration})";
+		}
+		else
+		{
+			$result = Sharing\Helper::formatDate($event->getStart());
+		}
+
+		return $result;
 	}
 }

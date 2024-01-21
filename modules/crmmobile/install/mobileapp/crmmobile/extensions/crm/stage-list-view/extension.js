@@ -2,198 +2,111 @@
  * @module crm/stage-list-view
  */
 jn.define('crm/stage-list-view', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
-	const { isEqual, get, mergeImmutable } = require('utils/object');
-	const { NavigationLoader } = require('navigation-loader');
-	const { getEntityMessage } = require('crm/loc');
-	const { CategoryStorage } = require('crm/storage/category');
-	const { StageList } = require('crm/stage-list');
-	const { edit } = require('crm/assets/common');
-	const { CategorySvg } = require('crm/assets/category');
-	const { StageSelectActions } = require('crm/stage-list/actions');
-	const { throttle } = require('utils/function');
+	const { StageListView, StageSelectActions } = require('layout/ui/stage-list-view');
 	const { stringify } = require('utils/string');
 	const { TypeId } = require('crm/type');
+	const { getEntityMessage } = require('crm/loc');
+	const { CrmStageList } = require('crm/stage-list');
+	const { NotifyManager } = require('notify-manager');
+
+	const { connect } = require('statemanager/redux/connect');
+	const {
+		selectById,
+		selectStagesIdsBySemantics,
+		fetchCrmKanban,
+	} = require('crm/statemanager/redux/slices/kanban-settings');
 
 	/**
-	 * @class StageListView
+	 * @class CrmStageSelector
 	 */
-	class StageListView extends LayoutComponent
+	class CrmStageListView extends StageListView
 	{
-		static open(props, widgetParams = {}, parentWidget = PageManager)
+		static open(params, parentWidget)
 		{
-			return new Promise((resolve) => {
-				const params = {
-					modal: true,
-					backgroundColor: '#eef2f4',
-					backdrop: {
-						showOnTop: true,
-						forceDismissOnSwipeDown: true,
-						horizontalSwipeAllowed: false,
-						swipeContentAllowed: false,
-						navigationBarColor: '#eef2f4',
-					},
-					titleParams: {
-						svg: {
-							content: CategorySvg.funnelForTitle(),
-						},
-					},
-				};
-
+			return new Promise((resolve, reject) => {
 				parentWidget
-					.openWidget('layout', mergeImmutable(params, widgetParams))
+					.openWidget('layout', this.getWidgetParams())
 					.then((layout) => {
 						layout.enableNavigationBarBorder(false);
-						layout.showComponent(new this({ ...props, layout }));
+						layout.showComponent(connect(mapStateToProps, mapDispatchToProps)(this)({ layout, ...params }));
 						resolve(layout);
 					})
-				;
+					.catch((error) => {
+						console.error(error);
+					});
 			});
 		}
 
-		constructor(props)
+		get entityTypeId()
 		{
-			super(props);
-
-			this.layout = props.layout || layout;
-
-			const category = this.getCategoryByProps(props);
-			this.state = { category };
-
-			this.selectedStage = null;
-
-			this.isClosing = false;
-
-			this.onSelectedStage = this.handlerOnSelectedStage.bind(this);
-			this.onOpenStageDetail = this.handlerOnOpenStageDetail.bind(this);
-			this.saveOnCreateTunnelHandler = throttle(this.saveOnCreateTunnel, 1000, this);
-			this.saveOnChangeTunnelDestinationHandler = throttle(this.saveOnChangeTunnelDestination, 1000, this);
+			return BX.prop.getNumber(this.props, 'entityTypeId', null);
 		}
 
-		getCategoryByProps(props)
+		get categoriesEnabled()
 		{
-			const { entityTypeId, categoryId } = props;
-
-			return CategoryStorage.getCategory(entityTypeId, categoryId);
+			return BX.prop.getBoolean(this.props, 'categoriesEnabled', false);
 		}
 
-		getSelectStageAction()
+		get isNewEntity()
 		{
-			return this.props.selectAction || StageSelectActions.ChangeEntityStage;
+			return BX.prop.getBoolean(this.props, 'isNewEntity', false);
+		}
+
+		get tunnels()
+		{
+			return BX.prop.getArray(this.props, 'tunnels', []);
+		}
+
+		get categoryId()
+		{
+			return BX.prop.getInteger(this.props, 'categoryId', null);
+		}
+
+		get activeStageId()
+		{
+			return BX.prop.getInteger(this.props, 'activeStageId', null);
 		}
 
 		componentDidMount()
 		{
-			CategoryStorage
-				.subscribeOnChange(() => this.reloadCategory())
-				.subscribeOnLoading(({ status }) => NavigationLoader.setLoading(status, this.layout))
-				.markReady()
-			;
-
-			this.layout.setListener((eventName) => {
-				if (eventName === 'onViewHidden' || eventName === 'onViewRemoved')
-				{
-					this.handleOnViewHidden();
-				}
-			});
-
-			this.bindEvents();
-			this.initNavigation();
-		}
-
-		reloadCategory()
-		{
-			const category = this.getCategoryByProps(this.props);
-			if (!isEqual(this.state.category, category))
+			if (this.stageIdsBySemantics.processStages.length === 0 && this.categoryId)
 			{
-				this.setState({ category }, () => this.initNavigation());
-			}
-		}
-
-		handleOnViewHidden()
-		{
-			const { onViewHidden } = this.props;
-			if (typeof onViewHidden === 'function')
-			{
-				onViewHidden({
-					stageAction: this.selectedStage ? this.getSelectStageAction() : null,
+				this.navigationLoader.setLoading(true);
+				this.props.fetchCrmKanban({
+					entityTypeId: this.entityTypeId,
+					categoryId: this.categoryId,
+				}).then(() => {
+					this.navigationLoader.setLoading(false);
+				}).catch(() => {
+					this.navigationLoader.setLoading(false);
+					NotifyManager.showDefaultError();
 				});
 			}
+
+			super.componentDidMount();
 		}
 
 		bindEvents()
 		{
-			BX.addCustomEvent('Crm.CategoryDetail::onClose', (category) => {
-				if (!this.isClosing)
-				{
-					this.setState({ category });
-				}
-			});
-
-			BX.addCustomEvent('Crm.CategoryDetail::onDeleteCategory', (categoryId) => {
-				if (!this.state.category || this.state.category.id === categoryId)
+			BX.addCustomEvent('Crm.CategoryDetail::onDeleteCategory', (kanbanSettingsId) => {
+				if (this.kanbanSettingsId === kanbanSettingsId)
 				{
 					this.closeLayout();
 				}
 			});
-
-			BX.addCustomEvent('Crm.StageDetail::onUpdateStage', (stage) => {
-				this.setState((state) => {
-					if (
-						!this.hasStageChanged(state.category, 'processStages', stage)
-						&& !this.hasStageChanged(state.category, 'failedStages', stage)
-						&& !this.hasStageChanged(state.category, 'successStages', stage)
-					)
-					{
-						return;
-					}
-
-					return {
-						category: state.category,
-					};
-				}, () => {
-					BX.postComponentEvent(
-						'Crm.StageList::onStageInCategoryUpdated',
-						[
-							this.state.category,
-							stage,
-						],
-					);
-				});
-			});
 		}
 
-		closeLayout()
+		getTitleForNavigation(title)
 		{
-			if (this.isClosing)
+			if (!this.categoriesEnabled)
 			{
-				return;
+				return this.kanbanSettingsName;
 			}
 
-			this.isClosing = true;
-			this.layout.back();
-
-			return new Promise((resolve) => {
-				this.layout.close(resolve);
-			});
-		}
-
-		getTitleForNavigation()
-		{
-			const { category } = this.state;
-
-			if (!category)
-			{
-				return BX.message('CRM_STAGE_LIST_VIEW_FUNNEL_NOT_LOADED_TITLE2');
-			}
-
-			if (!category.categoriesEnabled)
-			{
-				return category.name;
-			}
-
-			const name = stringify(category.name).trim();
+			const name = stringify(title).trim();
 
 			return (
 				name === ''
@@ -202,294 +115,108 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 			);
 		}
 
-		isEditable()
+		onChangeEntityStage(stage, statusId)
 		{
-			return Boolean(get(this.state.category, 'editable', false));
-		}
-
-		initNavigation()
-		{
-			this.layout.enableNavigationBarBorder(false);
-
-			this.layout.setTitle({
-				text: this.getTitleForNavigation(),
-				svg: {
-					content: CategorySvg.funnelForTitle(),
-				},
-			});
-
-			if (this.isEditable() && this.getSelectStageAction() === StageSelectActions.ChangeEntityStage)
+			if (this.isNewLead() && this.getSuccessStagesIds().includes(stage))
 			{
-				this.layout.setRightButtons([
-					{
-						type: 'edit',
-						svg: {
-							content: edit(),
-						},
-						callback: () => this.handlerCategoryEditOpen(),
-					},
-				]);
-			}
-		}
+				Alert.confirm(
+					Loc.getMessage('CRM_STAGE_LIST_VIEW_CHANGE_NEW_LEAD_SUCCESS_STAGE_NOTIFY_TITLE'),
+					Loc.getMessage('CRM_STAGE_LIST_VIEW_CHANGE_NEW_LEAD_SUCCESS_STAGE_NOTIFY'),
+				);
 
-		saveOnCreateTunnel()
-		{
-			BX.postComponentEvent('Crm.TunnelList::onCreateTunnel', []);
-		}
-
-		saveOnChangeTunnelDestination(uid)
-		{
-			BX.postComponentEvent(`Crm.TunnelListItem::onChangeTunnelDestination-${uid}`, []);
-		}
-
-		refreshTitle()
-		{
-			if (this.state.category)
-			{
-				this.layout.setTitle({ text: this.getTitleForNavigation() }, true);
-			}
-		}
-
-		/**
-		 * @param {Object} category
-		 * @param {String} stagesGroupName
-		 * @param {Object} stage
-		 * @returns {Boolean}
-		 */
-		hasStageChanged(category, stagesGroupName, stage)
-		{
-			const currentStage = category[stagesGroupName].find((item) => item.id === stage.id);
-			if (!currentStage)
-			{
-				return false;
-			}
-			const index = category[stagesGroupName].indexOf(currentStage);
-			category[stagesGroupName][index] = stage;
-
-			return true;
-		}
-
-		componentWillReceiveProps(newProps)
-		{
-			this.state.category = this.getCategoryByProps(newProps);
-		}
-
-		handlerOnSelectedStage(stage)
-		{
-			const { category } = this.state;
-			const { data, uid } = this.props;
-
-			switch (this.getSelectStageAction())
-			{
-				case StageSelectActions.ChangeEntityStage:
-					if (this.isNewLead() && this.getSuccessStagesIds().includes(stage.id))
-					{
-						Alert.confirm(
-							Loc.getMessage('CRM_STAGE_LIST_VIEW_CHANGE_NEW_LEAD_SUCCESS_STAGE_NOTIFY_TITLE'),
-							Loc.getMessage('CRM_STAGE_LIST_VIEW_CHANGE_NEW_LEAD_SUCCESS_STAGE_NOTIFY'),
-						);
-
-						return;
-					}
-
-					const { onStageSelect } = this.props;
-
-					if (onStageSelect)
-					{
-						this.closeLayout().then(() => {
-							onStageSelect(stage, category, data, uid);
-						});
-					}
-					break;
-
-				case StageSelectActions.CreateTunnel:
-					this.selectedStage = stage;
-
-					BX.postComponentEvent('Crm.TunnelList::selectStageOnCreateTunnel', [stage]);
-
-					if (this.selectedStage)
-					{
-						this.saveOnCreateTunnelHandler();
-					}
-
-					this.closeLayout();
-
-					break;
-
-				case StageSelectActions.SelectTunnelDestination:
-					this.selectedStage = stage;
-
-					BX.postComponentEvent(`Crm.TunnelListItem::selectTunnelDestinationStage-${uid}`, [stage]);
-
-					if (this.selectedStage)
-					{
-						this.saveOnChangeTunnelDestinationHandler(uid);
-					}
-
-					this.closeLayout();
-
-					break;
-			}
-		}
-
-		handlerCategoryEditOpen()
-		{
-			const { entityTypeId } = this.props;
-			const { category } = this.state;
-
-			ComponentHelper.openLayout({
-				name: 'crm:crm.category.detail',
-				componentParams: {
-					entityTypeId,
-					categoryId: category.id,
-				},
-				widgetParams: {
-					modal: true,
-					backgroundColor: '#eef2f4',
-					backdrop: {
-						showOnTop: true,
-						swipeContentAllowed: false,
-						horizontalSwipeAllowed: false,
-						navigationBarColor: '#eef2f4',
-					},
-				},
-			}, this.layout);
-		}
-
-		render()
-		{
-			this.refreshTitle();
-
-			const { category } = this.state;
-			const {
-				stageParams,
-				canMoveStages,
-				activeStageId,
-			} = this.props;
-
-			return ScrollView(
-				{
-					resizableByKeyboard: true,
-					safeArea: {
-						bottom: true,
-						top: true,
-						left: true,
-						right: true,
-					},
-					style: {
-						flexDirection: 'column',
-						backgroundColor: '#eef2f4',
-					},
-				},
-				category === null
-					? new LoadingScreenComponent({ backgroundColor: '#eef2f4' })
-					: new StageList({
-						title: this.getStageListTitle(),
-						readOnly: this.getStageReadOnly(),
-						canMoveStages,
-						stageParams,
-						category,
-						activeStageId,
-						unsuitableStages: this.getUnsuitableStages(),
-						processStages: category.processStages,
-						finalStages: [...category.successStages, ...category.failedStages],
-						onSelectedStage: this.onSelectedStage,
-						onOpenStageDetail: this.onOpenStageDetail,
-						enableStageSelect: this.props.enableStageSelect,
-						disabledStageIds: this.getDisabledStageIdsByCategory(category),
-					}),
-			);
-		}
-
-		getUnsuitableStages()
-		{
-			const { unsuitableStages } = this.props;
-			let unsuitableStagesIds = unsuitableStages;
-
-			if (!Array.isArray(unsuitableStagesIds))
-			{
-				unsuitableStagesIds = [];
+				return;
 			}
 
-			const successStagesIds = this.getSuccessStagesIds();
-			if (this.isNewLead() && successStagesIds.length > 0)
-			{
-				unsuitableStagesIds = [...unsuitableStagesIds, ...successStagesIds];
-			}
-
-			return unsuitableStagesIds;
-		}
-
-		getSuccessStagesIds()
-		{
-			const { category } = this.state;
-
-			if (!Array.isArray(category.successStages))
-			{
-				return [];
-			}
-
-			return category.successStages.map(({ id }) => id);
+			super.onChangeEntityStage(stage, statusId);
 		}
 
 		isNewLead()
 		{
-			const { entityTypeId, isNewEntity } = this.props;
-
-			return isNewEntity && entityTypeId === TypeId.Lead;
+			return this.isNewEntity && this.entityTypeId === TypeId.Lead;
 		}
 
-		getDisabledStageIdsByCategory(category)
+		getSuccessStagesIds()
 		{
-			const selectStageAction = this.getSelectStageAction();
-			const actions = [StageSelectActions.SelectTunnelDestination, StageSelectActions.CreateTunnel];
-			if (actions.includes(selectStageAction))
-			{
-				const stages = [...category.processStages, ...category.successStages, ...category.failedStages];
-				const disabledStages = [];
-				stages.map((stage) => {
-					if (this.hasSameDstStage(stage.tunnels, this.disabledStageIds))
-					{
-						disabledStages.push(stage.id);
-					}
-				});
+			const { successStages } = this.stageIdsBySemantics;
 
-				return disabledStages;
+			if (!Array.isArray(successStages))
+			{
+				return [];
 			}
 
-			return [];
+			return successStages;
 		}
 
-		hasSameDstStage(tunnels, dstStageIds)
+		onCreateTunnel(stage)
 		{
-			const intersection = tunnels.filter((tunnel) => dstStageIds.includes(tunnel.dstStageId));
-
-			return intersection.length > 0;
+			this.selectedStage = stage;
+			this.layout.close();
 		}
 
-		get disabledStageIds()
+		onSelectTunnelDestination(stage)
 		{
-			return BX.prop.getArray(this.props, 'disabledStageIds', []);
+			this.selectedStage = stage;
+			this.layout.close();
 		}
 
 		getStageListTitle()
 		{
 			if (
-				this.getSelectStageAction() === StageSelectActions.SelectTunnelDestination
-				|| this.getSelectStageAction() === StageSelectActions.CreateTunnel
+				this.selectAction === StageSelectActions.SelectTunnelDestination
+				|| this.selectAction === StageSelectActions.CreateTunnel
 			)
 			{
-				return BX.message('CRM_STAGE_LIST_VIEW_BACKDROP_TUNNEL_TITLE');
+				return BX.message('STAGE_LIST_VIEW_BACKDROP_TUNNEL_TITLE');
 			}
 
-			return getEntityMessage('CRM_STAGE_LIST_VIEW_TITLE', this.props.entityTypeId);
+			return getEntityMessage('CRM_STAGE_LIST_VIEW_TITLE', this.entityTypeId);
+		}
+
+		renderStageList()
+		{
+			const {
+				stageParams,
+				canMoveStages,
+			} = this.props;
+
+			return new CrmStageList({
+				tunnels: this.tunnels,
+				title: this.getStageListTitle(),
+				readOnly: this.getStageReadOnly(),
+				stageIdsBySemantics: this.stageIdsBySemantics,
+				canMoveStages,
+				stageParams,
+				activeStageId: this.getActiveStageId(),
+				onSelectedStage: this.onSelectedStageHandler,
+				onOpenStageDetail: this.onOpenStageDetailHandler,
+				enableStageSelect: this.enableStageSelect,
+				disabledStageIds: this.getDisabledStageIdsByCategory(),
+				isNewLead: this.isNewLead(),
+				kanbanSettingsId: this.kanbanSettingsId,
+			});
+		}
+
+		getActiveStageId()
+		{
+			const stageIdExist = this.getStages().includes(this.activeStageId);
+
+			return stageIdExist ? this.activeStageId : null;
+		}
+
+		getStages()
+		{
+			const processStages = BX.prop.getArray(this.stageIdsBySemantics, 'processStages', []);
+			const successStages = BX.prop.getArray(this.stageIdsBySemantics, 'successStages', []);
+			const failedStages = BX.prop.getArray(this.stageIdsBySemantics, 'failedStages', []);
+
+			return [...processStages, ...successStages, ...failedStages];
 		}
 
 		getStageReadOnly()
 		{
 			if (
-				this.getSelectStageAction() === StageSelectActions.SelectTunnelDestination
-				|| this.getSelectStageAction() === StageSelectActions.CreateTunnel
+				this.selectAction === StageSelectActions.SelectTunnelDestination
+				|| this.selectAction === StageSelectActions.CreateTunnel
 			)
 			{
 				return true;
@@ -498,28 +225,84 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 			return this.props.readOnly;
 		}
 
-		handlerOnOpenStageDetail(stage)
+		onSelectedStage(stage)
 		{
-			ComponentHelper.openLayout({
-				name: 'crm:crm.stage.detail',
-				componentParams: {
-					entityTypeId: this.props.entityTypeId,
-					stage,
-				},
-				widgetParams: {
-					modal: true,
-					backgroundColor: '#eef2f4',
-					backdrop: {
-						showOnTop: true,
-						forceDismissOnSwipeDown: true,
-						horizontalSwipeAllowed: false,
-						swipeContentAllowed: true,
-						navigationBarColor: '#eef2f4',
+			switch (this.selectAction)
+			{
+				case StageSelectActions.ChangeEntityStage:
+					this.onChangeEntityStage(stage.id, stage.statusId);
+
+					break;
+				case StageSelectActions.CreateTunnel:
+					this.onCreateTunnel(stage);
+
+					break;
+				case StageSelectActions.SelectTunnelDestination:
+					this.onSelectTunnelDestination(stage);
+
+					break;
+				default:
+					break;
+			}
+		}
+
+		async handlerOnOpenStageDetail(stage)
+		{
+			const { CrmKanbanStageSettings } = await requireLazy('crm:kanban/stage-settings') || {};
+
+			if (CrmKanbanStageSettings)
+			{
+				await CrmKanbanStageSettings.open(
+					{
+						entityTypeId: this.entityTypeId,
+						stage,
 					},
-				},
-			});
+					this.layout,
+				);
+			}
+		}
+
+		async handlerCategoryEditOpen()
+		{
+			const { CrmKanbanSettings } = await requireLazy('crm:kanban/settings') || {};
+
+			if (CrmKanbanSettings)
+			{
+				CrmKanbanSettings.open(
+					{
+						entityTypeId: this.entityTypeId,
+						kanbanSettingsId: this.kanbanSettingsId,
+					},
+					this.layout,
+				);
+			}
 		}
 	}
 
-	module.exports = { StageListView };
+	const mapStateToProps = (state, ownProps) => {
+		const {
+			name = '',
+			categoriesEnabled = false,
+			editable = false,
+			tunnels,
+			categoryId,
+		} = selectById(state, ownProps.kanbanSettingsId) || {};
+
+		return {
+			stageIdsBySemantics: selectStagesIdsBySemantics(state, ownProps.kanbanSettingsId),
+			kanbanSettingsName: name,
+			categoriesEnabled,
+			editable,
+			tunnels,
+			categoryId,
+		};
+	};
+
+	const mapDispatchToProps = ({
+		fetchCrmKanban,
+	});
+
+	module.exports = {
+		CrmStageListView,
+	};
 });

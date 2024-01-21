@@ -7,8 +7,8 @@
  */
 namespace Bitrix\Crm;
 
-use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Application;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
@@ -76,7 +76,13 @@ class ProductRowTable extends DataManager
 				->configurePrimary()
 				->configureAutocomplete(),
 			(new IntegerField('OWNER_ID'))
-				->configureRequired(),
+				/** @see \Bitrix\Crm\Model\FieldRepository::getProductRows */
+				// because of CascadePolicy::NO_ACTION OWNER_ID could not be required. when product is unbound from owner,
+				// this field will be set to null
+				// actual deletion is handled in
+				/** @see self::handleOwnerUpdate() */
+				// ->configureRequired()
+			,
 			(new StringField('OWNER_TYPE'))
 				->configureRequired()
 				->configureSize(3),
@@ -276,6 +282,20 @@ class ProductRowTable extends DataManager
 					foreach ($deleteResult->getErrors() as $error)
 					{
 						$result->addError(new EntityError($error->getMessage()));
+					}
+				}
+
+				/** @var \Bitrix\Crm\Reservation\ProductRowReservation $productRowReservation */
+				$productRowReservation = $changedObject->get(Item::FIELD_NAME_PRODUCT_RESERVATION);
+				if ($productRowReservation)
+				{
+					$deleteResult = $productRowReservation->delete();
+					if (!$deleteResult->isSuccess())
+					{
+						foreach ($deleteResult->getErrors() as $error)
+						{
+							$result->addError(new EntityError($error->getMessage()));
+						}
 					}
 				}
 			}

@@ -7,6 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\Tasks\Helper\RestrictionUrl;
 
 Extension::load(['ui.icons', 'ui.fonts.opensans']);
 
@@ -20,6 +21,18 @@ $APPLICATION->SetPageProperty(
 	'BodyClass',
 	($bodyClass ? $bodyClass.' ' : '').' no-background no-all-paddings pagetitle-toolbar-field-view '
 );
+
+/** intranet-settings-support */
+if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
+{
+	$APPLICATION->IncludeComponent("bitrix:tasks.error", "limit", [
+		'LIMIT_CODE' => RestrictionUrl::TASK_LIMIT_OFF_SLIDER_URL,
+		'SOURCE' => 'departments',
+	]);
+
+	return;
+}
+
 $isBitrix24Template = (SITE_TEMPLATE_ID === "bitrix24");
 $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 
@@ -27,6 +40,7 @@ if ($taskLimitExceeded)
 {
 	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 }
+
 
 if (isset($arResult["ERROR"]) && !empty($arResult["ERROR"]))
 {

@@ -5,6 +5,7 @@ use Bitrix\DocumentGenerator\Document;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\Controller;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Request;
@@ -65,6 +66,12 @@ class Sign extends Controller
 	public function getLinkedBlankAction(int $documentId): array
 	{
 		if (!Loader::includeModule('documentgenerator'))
+		{
+			return [];
+		}
+
+		$currentUserId = CurrentUser::get()->getId();
+		if (!$this->signService->checkUserPermissionToDealDocumentByDocument($documentId, $currentUserId))
 		{
 			return [];
 		}

@@ -4,9 +4,12 @@
 jn.define('crm/crm-mode/wizard/layouts/mode/layout', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Alert } = require('alert');
+	const { UIScrollView } = require('layout/ui/scroll-view');
+	const AppTheme = require('apptheme');
 	const { BackdropHeader } = require('layout/ui/banners');
 	const { ModeBlock } = require('crm/crm-mode/wizard/layouts/mode/block');
-	const { EXTENSION_PATH, MODES } = require('crm/crm-mode/wizard/layouts/constants');
+	const { MODES } = require('crm/crm-mode/wizard/layouts/src/constants');
+	const { BannerImage } = require('crm/crm-mode/wizard/layouts/src/images');
 
 	/**
 	 * @class ModeLayout
@@ -73,45 +76,51 @@ jn.define('crm/crm-mode/wizard/layouts/mode/layout', (require, exports, module) 
 
 		render()
 		{
-			return View(
-				{},
-				View(
-					{
-						style: {
-							marginBottom: 12,
-							borderRadius: 12,
-						},
+			return UIScrollView(
+				{
+					style: {
+						height: '100%',
 					},
-					BackdropHeader({
-						title: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_MODE_HEADER_TITLE'),
-						description: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_MODE_HEADER_DESCRIPTION'),
-						image: `${EXTENSION_PATH}/mode.png`,
-						position: 'flex-start',
-					}),
-				),
-				View(
-					{
-						style: {
-							backgroundColor: '#ffffff',
-							paddingTop: 14,
-							paddingBottom: 12,
-							paddingHorizontal: 12,
-							borderRadius: 12,
-						},
-					},
-					Text(
-						{
-							text: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_MODE_HEADER'),
-							style: {
-								color: '#333333',
-								fontSize: 16,
-								marginBottom: 14,
+					children: [
+						View(
+							{
+								style: {
+									marginBottom: 12,
+									borderRadius: 12,
+								},
 							},
-						},
-					),
-					this.renderModeBlock(MODES.simple),
-					this.renderModeBlock(MODES.classic),
-				),
+							BackdropHeader({
+								title: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_MODE_HEADER_TITLE'),
+								description: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_MODE_HEADER_DESCRIPTION'),
+								image: BannerImage('mode'),
+								position: 'flex-start',
+							}),
+						),
+						View(
+							{
+								style: {
+									backgroundColor: AppTheme.colors.bgContentPrimary,
+									paddingTop: 14,
+									paddingBottom: 12,
+									paddingHorizontal: 12,
+									borderRadius: 12,
+								},
+							},
+							Text(
+								{
+									text: Loc.getMessage('MCRM_CRM_MODE_LAYOUTS_MODE_HEADER'),
+									style: {
+										color: AppTheme.colors.base1,
+										fontSize: 16,
+										marginBottom: 14,
+									},
+								},
+							),
+							this.renderModeBlock(MODES.simple),
+							this.renderModeBlock(MODES.classic),
+						),
+					],
+				},
 			);
 		}
 	}

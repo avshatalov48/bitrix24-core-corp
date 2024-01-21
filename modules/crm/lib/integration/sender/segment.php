@@ -142,7 +142,7 @@ class Segment extends Main\Engine\Controller
 				return [];
 		}
 
-		$listDb = $entityObject->getListEx([], ['ID' => $entities], false, false, ['ID', 'NAME', 'TITLE', 'CONTACT_NAME']);
+		$listDb = $entityObject->getListEx([], ['@ID' => $entities], false, false, ['ID', 'NAME', 'TITLE', 'CONTACT_NAME']);
 		$entities = [];
 		while ($entity = $listDb->Fetch())
 		{

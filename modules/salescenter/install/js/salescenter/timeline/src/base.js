@@ -1,4 +1,4 @@
-import {Type} from 'main.core';
+import { Type } from 'main.core';
 
 class Base
 {
@@ -14,6 +14,7 @@ class Base
 	{
 		return '';
 	}
+
 	getIcon()
 	{
 		return '';
@@ -21,5 +22,5 @@ class Base
 }
 
 export {
-	Base
-}
+	Base,
+};

@@ -2,8 +2,9 @@
 
 return [
 	'extensions' => [
-		'utils/url',
 		'loc',
+		'apptheme',
+		'utils/url',
 	],
 	'bundle' => [
 		'./src/shimmed-image',

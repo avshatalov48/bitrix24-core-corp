@@ -70,20 +70,19 @@ export default class WithEditor extends Item
 
 	onSaveButtonClick(e)
 	{
-		Dom.addClass(this._saveButton, 'ui-btn-wait');
-		const removeButtonWaitClass = () => Dom.removeClass(this._saveButton, 'ui-btn-wait');
+		this.setLocked(true);
 
 		const saveResult = this.save();
 		if (saveResult instanceof BX.Promise || saveResult instanceof Promise)
 		{
 			saveResult.then(
-				() => removeButtonWaitClass(),
-				() => removeButtonWaitClass()
-			);
+				() => this.setLocked(false),
+				() => this.setLocked(false),
+			).catch(() => this.setLocked(false));
 		}
 		else
 		{
-			removeButtonWaitClass();
+			this.setLocked(false);
 		}
 	}
 

@@ -653,7 +653,7 @@ BX.Scheduler.Event = (function() {
 		this.className = BX.type.isNotEmptyString(config.className) ? config.className : "";
 		this.id = config.id || Event.getUniqueId();
 		this.index = 0;
-		this.onclick = BX.type.isFunction(config.onclick) ? config.onclick : null;
+		this.pathToTask = config.pathToTask || null;
 
 		/** @var {BX.Scheduler.EventStore} */
 		this.store = null;
@@ -735,7 +735,7 @@ BX.Scheduler.Event = (function() {
 		 */
 		render: function() {
 
-			var resource = this.getResource();
+			const resource = this.getResource();
 			var timeline = resource.getTimeline();
 
 			var left = timeline.getPixelsFromDate(this.getStartDate());
@@ -745,17 +745,17 @@ BX.Scheduler.Event = (function() {
 			var width = right - left;
 			width = Math.max(width, minBarWidth);
 
-			var top = resource.isCollapsed() ? 0 : this.index * timeline.getRowHeight();
-			var events = null;
-			if (this.onclick !== null)
+			const top = resource.isCollapsed() ? 0 : this.index * timeline.getRowHeight();
+			let events = null;
+			if (this.pathToTask !== null)
 			{
 				events = {
-					click: BX.proxy(this.onclick, this)
+					click: BX.proxy(this.openTask, this)
 				};
 			}
 
-			var className = "scheduler-event";
-			if (this.onclick !== null)
+			let className = 'scheduler-event';
+			if (this.pathToTask !== null)
 			{
 				className += " scheduler-event-clickable";
 			}
@@ -780,7 +780,19 @@ BX.Scheduler.Event = (function() {
 				events: events,
 				text : width > 30 ? this.getName() : ""
 			});
-		}
+		},
+
+		openTask: function()
+		{
+			if (BX.SidePanel)
+			{
+				BX.SidePanel.Instance.open(this.pathToTask);
+			}
+			else
+			{
+				window.top.location.href = this.pathToTask;
+			}
+		},
 	};
 
 	return Event;

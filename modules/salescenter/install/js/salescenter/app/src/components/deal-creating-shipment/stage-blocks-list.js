@@ -1,4 +1,4 @@
-import {Loc} from 'main.core';
+import {ajax as Ajax, Loc} from 'main.core';
 import {StatusTypes as Status} from 'salescenter.component.stage-block';
 import {UI} from 'ui.notification';
 import {MixinTemplatesType} from '../templates-type-mixin';
@@ -106,7 +106,7 @@ export default {
 
 			stageRefresh(e, type)
 			{
-				BX.ajax.runComponentAction(
+				Ajax.runComponentAction(
 					"bitrix:salescenter.app",
 					"getAjaxData",
 					{

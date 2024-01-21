@@ -3,7 +3,6 @@ namespace Bitrix\Crm\Service;
 
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\ItemIdentifier;
-use Bitrix\Crm\Kanban;
 use Bitrix\Crm\Service\Router\ParseResult;
 use Bitrix\Crm\Settings\EntityViewSettings;
 use Bitrix\Intranet\Util;
@@ -13,6 +12,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\Response\DataType\ContentUri;
 use Bitrix\Main\Event;
 use Bitrix\Main\HttpRequest;
+use Bitrix\Main\IO\Directory;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Loader;
 use Bitrix\Main\SiteTable;
@@ -39,6 +39,9 @@ class Router
 
 	protected const MODULE_ID = 'crm';
 	protected const DEFAULT_ROOT = '/' . self::MODULE_ID . '/';
+
+	protected const TYPE_BITRIX24 = 'B24';
+	protected const TYPE_CP = 'CP';
 
 	protected $siteId;
 	protected $root;
@@ -426,6 +429,11 @@ class Router
 		return Path::combine($this->getSiteFolder(), $root, $folder) . '/';
 	}
 
+	public function getExternalTypeListUrl(): Uri
+	{
+		return new Uri('/automation/type/');
+	}
+
 	public function getTypeListUrl(): ?Uri
 	{
 		return $this->getUrlForTemplate('bitrix:crm.type.list');
@@ -504,7 +512,7 @@ class Router
 
 	protected function getKanbanUrlWithNewRouting(int $entityTypeId, int $categoryId = null): ?Uri
 	{
-		return $this->getKanbanUrlViaViewModeWithNewRouting($entityTypeId, $categoryId, \Bitrix\Crm\Kanban\ViewMode::MODE_STAGES);
+		return $this->getKanbanUrlViaViewModeWithNewRouting($entityTypeId, $categoryId);
 	}
 
 	protected function getKanbanUrlWithOldRouting(int $entityTypeId, int $categoryId = null): ?Uri
@@ -1239,6 +1247,11 @@ class Router
 		if (preg_match('#type/(\d+)/(list|kanban)?#', $path, $matches))
 		{
 			$entityTypeId = (int)$matches[1];
+			if (!\CCrmOwnerType::isCorrectEntityTypeId($entityTypeId))
+			{
+				return null;
+			}
+
 			if (isset($matches[2]))
 			{
 				$viewType = mb_strtoupper($matches[2]);
@@ -1377,5 +1390,31 @@ class Router
 		]);
 
 		return $url;
+	}
+
+	public function getContactCenterUrl(): ?Uri
+	{
+		$contactCenter = '/contact_center/';
+
+		if (
+			$this->getPortalType() === self::TYPE_BITRIX24
+			|| Directory::isDirectoryExists(Path::combine(Application::getDocumentRoot(), $contactCenter))
+		)
+		{
+			return new Uri($contactCenter);
+		}
+
+		return new Uri(SITE_DIR . 'services' . $contactCenter);
+	}
+
+	private function getPortalType(): string
+	{
+		$type = self::TYPE_CP;
+		if (defined('BX24_HOST_NAME'))
+		{
+			$type = self::TYPE_BITRIX24;
+		}
+
+		return $type;
 	}
 }

@@ -1,0 +1,46 @@
+.bx-crm-ai-form-fill__toolbar {
+	display: flex;
+	height: 20px;
+	padding: 9px;
+	font-size: 18px;
+	line-height: 18px;
+	border-radius: 8px;
+	border: 1px solid #B095DC;
+	background: #fff;
+	margin-bottom: 16px;
+	align-items: center;
+	gap: 12px;
+}
+
+.bx-crm-ai-form-fill__toolbar__conflict_count {
+	color: #525C69;
+	font-feature-settings: 'clig' off, 'liga' off;
+	/* Helvetica/Text 14px 200 */
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 19px;
+	padding-right: 12px;
+	border-right: 1px solid grey;
+}
+
+.bx-crm-ai-form-fill__toolbar__conflict_count__count {
+	color: #959CA4;
+	font-feature-settings: 'clig' off, 'liga' off;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 19px;
+	margin-left: 6px;
+}
+.bx-crm-ai-form-fill__toolbar__button {
+	color: #525C69;
+	font-feature-settings: 'clig' off, 'liga' off;
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 700;
+	line-height: 19px;
+	text-transform: uppercase;
+	margin-left: 10px;
+	cursor: pointer;
+}

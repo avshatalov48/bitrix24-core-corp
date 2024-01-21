@@ -1,5 +1,5 @@
 const TimeLineItemPaymentBlock = {
-	props:['item'],
+	props: ['item'],
 	template: `
 		<div class="salescenter-app-payment-by-sms-timeline-item salescenter-app-payment-by-sms-timeline-item-payment"
 			:class="{
@@ -11,11 +11,15 @@ const TimeLineItemPaymentBlock = {
 				<div class="salescenter-app-payment-by-sms-item-counter-icon " 
 					:class="'salescenter-app-payment-by-sms-item-counter-icon-'+item.icon"></div>
 			</div>
-			
+	
 			<div class="salescenter-app-payment-by-sms-timeline-content">
 				<span class="salescenter-app-payment-by-sms-timeline-content-price">
 					<span v-html="item.sum"></span>
-					<span class="salescenter-app-payment-by-sms-timeline-content-price-cur" v-html="item.currency"></span>
+					<span
+						class="salescenter-app-payment-by-sms-timeline-content-price-cur"
+						:class="{ 'salescenter-app-payment-by-sms-timeline-content-price-cur-ruble': item.currencyCode === 'RUB' }"
+						v-html="item.currency">
+					</span>
 				</span>
 				<span class="salescenter-app-payment-by-sms-timeline-content-text-strong">
 					{{item.title}}
@@ -25,9 +29,9 @@ const TimeLineItemPaymentBlock = {
 				</span>
 			</div>
 		</div>
-	`
+	`,
 };
 
 export {
 	TimeLineItemPaymentBlock,
-}
+};

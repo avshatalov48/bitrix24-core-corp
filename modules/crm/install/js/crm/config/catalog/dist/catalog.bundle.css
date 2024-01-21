@@ -98,3 +98,11 @@
 .catalog-settings-new-productcard-popup-content a {
 	cursor: pointer;
 }
+
+.catalog-settings-cost-price-method-selector:invalid {
+	color: #a9adb2;
+}
+
+.catalog-settings-cost-price-method-selector option {
+	color: #535c69;
+}

@@ -7,7 +7,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm;
 use Bitrix\Crm\Order;
-use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -208,24 +207,7 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 			]
 		]);
 		$this->arResult['ENABLE_TOOLBAR'] = (bool)$dbRes->fetch() && $this->arResult['PERM']['ADD'];
-
-		if (LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
-		{
-			$this->arResult['TIME_FORMAT'] = array(
-				'tommorow' => 'tommorow',
-				's' => 'sago',
-				'i' => 'iago',
-				'H3' => 'Hago',
-				'today' => 'today',
-				'yesterday' => 'yesterday',
-				'-' => Main\Type\DateTime::convertFormatToPhp(FORMAT_DATE)
-			);
-		}
-		else
-		{
-			$this->arResult['TIME_FORMAT'] = preg_replace('/:s$/', '', Main\Type\DateTime::convertFormatToPhp(FORMAT_DATETIME));
-		}
-
+		$this->arResult['TIME_FORMAT'] = CCrmDateTimeHelper::getDefaultDateTimeFormat();
 		$this->arResult['HEADERS'] = $this->getHeaders();
 
 		$this->arResult['OWNER_TYPE'] = ($this->arParams['OWNER_TYPE'] > 0) ? $this->arParams['OWNER_TYPE'] : \CCrmOwnerType::Order;

@@ -822,7 +822,11 @@ elseif($action === 'SAVE')
 			Tracking\UI\Details::appendEntityFieldValue($fields, $_POST);
 
 			$entity = new \CCrmDeal(!CCrmPerms::IsAdmin());
-			$saveOptions = ['REGISTER_SONET_EVENT' => true];
+			$saveOptions = [
+				'REGISTER_SONET_EVENT' => true,
+				'eventId' => $request->getPost('EVENT_ID'),
+			];
+
 			if(!$enableRequiredUserFieldCheck)
 			{
 				$saveOptions['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
@@ -832,9 +836,6 @@ elseif($action === 'SAVE')
 			{
 				$fields[\Bitrix\Crm\Item::FIELD_NAME_PRODUCTS] = $productRows;
 			}
-
-			// @todo will be need in the future, when realtime mode is enabled for current user too
-			$saveOptions['EVENT_ID'] = $request->getPost('EVENT_ID');
 
 			if($isNew)
 			{
@@ -1230,7 +1231,11 @@ elseif($action === 'SAVE')
 			$url = $conversionWizard->getRedirectUrl();
 			if($url !== '')
 			{
-				$responseData = array('ENTITY_ID' => $ID, 'REDIRECT_URL' => $url);
+				$responseData = [
+					'ENTITY_ID' => $ID,
+					'REDIRECT_URL' => $url,
+					'OPEN_IN_NEW_SLIDE' => !$conversionWizard->isFinished(),
+				];
 				$eventParams = $conversionWizard->getClientEventParams();
 				if(is_array($eventParams))
 				{
@@ -1748,7 +1753,13 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 
 	$isReadOnly = isset($_POST['READ_ONLY']) && mb_strtoupper($_POST['READ_ONLY']) === 'Y';
 	$showEmptyFields = isset($_POST['SHOW_EMPTY_FIELDS']) && mb_strtoupper($_POST['SHOW_EMPTY_FIELDS']) === 'Y';
-	$initialMode = isset($_POST['INITIAL_MODE']) ? $_POST['INITIAL_MODE'] : '';
+	$initialMode = $_POST['INITIAL_MODE'] ?? '';
+
+	$moduleId = $_POST['MODULE_ID'] ?? null;
+	if (!in_array($moduleId, ['crm']))
+	{
+		$moduleId = null;
+	}
 
 	CBitrixComponent::includeComponentClass('bitrix:crm.deal.details');
 	$component = new CCrmDealDetailsComponent();
@@ -1851,6 +1862,7 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 			'SCOPE_PREFIX' => $scopePrefix,
 			'OPTION_PREFIX' => $optionPrefix,
 			'FORCE_DEFAULT_CONFIG' => $forceDefaultConfig,
+			'~FORCE_DEFAULT_CONFIG' => $forceDefaultConfig,
 			'ENTITY_CONFIG' => $entityConfig,
 			'ENTITY_FIELDS' => $component->prepareFieldInfos(),
 			'ENTITY_DATA' => $component->prepareEntityData(),
@@ -1880,6 +1892,7 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 			'SHOW_EMPTY_FIELDS' => $showEmptyFields,
 			'IS_EMBEDDED' =>$isEmbedded,
 			'CONTEXT' => $context,
+			'MODULE_ID' => $moduleId
 		)
 	);
 

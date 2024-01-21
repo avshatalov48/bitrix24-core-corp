@@ -1,4 +1,9 @@
+/**
+ * @module tasks/layout/task/view
+ */
 jn.define('tasks/layout/task/view', (require, exports, module) => {
+	const AppTheme = require('apptheme');
+	const { chevronDown, chevronUp } = require('assets/common');
 	const { Creator } = require('tasks/layout/task/fields/creator');
 	const { Responsible } = require('tasks/layout/task/fields/responsible');
 	const { Accomplices } = require('tasks/layout/task/fields/accomplices');
@@ -24,9 +29,11 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 	const { SubTasks } = require('tasks/layout/task/fields/subTasks');
 	const { Comments } = require('tasks/layout/task/fields/comments');
 	const { TaskResultList } = require('tasks/layout/task/fields/taskResultList');
-	const { CheckList } = require('tasks/layout/task/fields/checkList');
+	const { FieldChecklist } = require('tasks/layout/task/fields/checklist');
+	const { StageSelector } = require('tasks/layout/task/fields/stageSelector');
+	const { StickyTitle } = require('tasks/layout/task/fields/sticky-title');
 
-	const { ActionMenu } = require('tasks/layout/task/actionMenu');
+	const { ActionMenu, ActionMenuButton } = require('tasks/layout/task/actionMenu');
 	const { CheckListTree } = require('tasks/checklist');
 
 	const { CalendarSettings } = require('tasks/task/calendar');
@@ -37,6 +44,13 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { AnalyticsLabel } = require('analytics-label');
+	const { NotifyManager } = require('notify-manager');
+	const { RequestExecutor } = require('rest');
+	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
+
+	const { dispatch } = require('statemanager/redux/store');
+	const { taskUpdatedFromOldTaskModel } = require('tasks/statemanager/redux/slices/tasks');
+	const { setTaskStage } = require('tasks/statemanager/redux/slices/tasks-stages');
 
 	const fieldHeight = 66;
 
@@ -139,8 +153,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 						this.taskView.updateViewTab();
 						this.taskView.updateFields();
 					})
-					.catch(() => {})
-				;
+					.catch(console.error);
 			}
 		}
 
@@ -165,7 +178,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 					this.taskView.updateCommentsValues();
 					this.taskView.updateFields();
 				})
-				.catch(() => {})
+				.catch(console.error)
 			;
 		}
 
@@ -239,8 +252,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 			{
 				this.taskView.getTaskResultData()
 					.then(() => this.taskView.updateFields([TaskView.field.taskResultList]))
-					.catch(() => {})
-				;
+					.catch(console.error);
 				this.task.updateData({
 					taskRequireResult: data.taskRequireResult,
 					taskHasOpenResult: data.taskHasOpenResult,
@@ -338,6 +350,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 
 				'RELATED_TASKS',
 				'SUB_TASKS',
+				'STAGE_ID',
 			];
 		}
 
@@ -358,6 +371,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 		{
 			return {
 				title: 'title',
+				stageSelector: 'stageSelector',
 				creator: 'creator',
 				responsible: 'responsible',
 				deadline: 'deadline',
@@ -396,7 +410,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 
 			if (result.indexOf(currentDomain) !== 0)
 			{
-				result = result.replace(`${currentDomain}`, '');
+				result = result.replace(String(currentDomain), '');
 				result = (result.indexOf('http') === 0 ? result : `${currentDomain}${result}`);
 			}
 
@@ -439,7 +453,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 			{
 				style.marginHorizontal = 6;
 				style.borderWidth = 1;
-				style.borderColor = '#e6e7e9';
+				style.borderColor = AppTheme.colors.bgSeparatorPrimary;
 				style.borderRadius = 7;
 			}
 
@@ -466,6 +480,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 				userId: data.userId,
 				taskId: data.taskId,
 				guid: data.guid,
+				isTabsMode: data.isTabsMode,
 				taskObject: data.taskObject,
 				showLoading: !data.taskObject,
 			});
@@ -488,7 +503,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 			this.taskId = Number(props.taskId);
 			this.guid = props.guid;
 			this.diskFolderId = Number(props.diskFolderId);
-			this.pathToImages = '/bitrix/mobileapp/tasksmobile/extensions/tasks/layout/task/images';
+			this.pathToImages = `${currentDomain}/bitrix/mobileapp/tasksmobile/extensions/tasks/layout/task/images`;
 
 			this.deadlines = [];
 			if (TaskView.getDeadlinesCachedOption())
@@ -502,6 +517,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 			}
 
 			this.componentEventEmitter = EventEmitter.createWithUid(this.guid);
+			this.checkListTree = null;
 			this.checkList = CheckListTree.buildTree();
 			this.checkList.setLoading(true);
 
@@ -527,11 +543,36 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 				isMatchWorkTime: this.task.isMatchWorkTime,
 			});
 
-			this.setLeftButtons();
+			this.onCommentsClick = this.onCommentsClick.bind(this);
+
+			if (props.isTabsMode)
+			{
+				this.setLeftButtons();
+			}
+			else
+			{
+				this.layoutWidget.preventBottomSheetDismiss(true);
+				this.layoutWidget.on('preventDismiss', () => this.onButtonCloseClick());
+			}
+
+			/** @type {ScrollViewMethods} */
+			this.scrollViewRef = null;
+			this.updateRightButtons();
+
+			/** @type {StickyTitle|null} */
+			this.stickyTitleRef = null;
+
+			/** @type {ActionMenuButton|null} */
+			this.actionMenuButtonRef = null;
 		}
 
 		componentDidMount()
 		{
+			if (!this.props.isTabsMode)
+			{
+				this.layoutWidget.enableNavigationBarBorder(false);
+			}
+
 			Promise.allSettled([
 				this.getTaskData(),
 				this.getTaskResultData(),
@@ -541,7 +582,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 				CalendarSettings.loadSettings(),
 			])
 				.then(() => this.doFinalInitAction())
-				.catch(() => {})
+				.catch(console.error)
 			;
 		}
 
@@ -598,10 +639,12 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 							Alert.confirm(
 								Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_NO_TASK_ALERT_TITLE'),
 								Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_NO_TASK_ALERT_DESCRIPTION'),
-								[{
-									text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_NO_TASK_ALERT_BUTTON_OK'),
-									onPress: () => this.close(),
-								}],
+								[
+									{
+										text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_NO_TASK_ALERT_BUTTON_OK'),
+										onPress: () => this.close(),
+									},
+								],
 							);
 						}
 
@@ -613,6 +656,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 
 							if (has.call(task, 'checkListTree'))
 							{
+								this.checkListTree = task.checkListTree;
 								this.checkList = CheckListTree.buildTree(task.checkListTree);
 							}
 
@@ -635,8 +679,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 						this.componentEventEmitter.emit('tasks.task.view:updateTitle', { title: task.title });
 						resolve();
 					})
-					.catch(() => {})
-				;
+					.catch(console.error);
 			});
 		}
 
@@ -699,28 +742,30 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 						this.taskResultList = response.result;
 						resolve();
 					})
-					.catch(() => {})
-				;
+					.catch(console.error);
 			});
 		}
 
 		getDiskFolderId()
 		{
-			return new Promise((resolve) => {
+			return new Promise((resolve, reject) => {
 				if (this.diskFolderId)
 				{
 					resolve();
 
 					return;
 				}
+
 				(new RequestExecutor('mobile.disk.getUploadedFilesFolder'))
 					.call()
 					.then((response) => {
 						this.diskFolderId = Number(response.result);
 						resolve();
 					})
-					.catch(() => {})
-				;
+					.catch((e) => {
+						console.error(e);
+						reject();
+					});
 			});
 		}
 
@@ -741,6 +786,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 
 					return;
 				}
+
 				(new RequestExecutor('mobile.tasks.deadlines.get'))
 					.call()
 					.then((response) => {
@@ -756,14 +802,13 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 						});
 						resolve();
 					})
-					.catch(() => {})
-				;
+					.catch(console.error);
 			});
 		}
 
 		getCurrentUserData()
 		{
-			return new Promise((resolve) => {
+			return new Promise((resolve, reject) => {
 				if (this.currentUser)
 				{
 					resolve();
@@ -776,8 +821,10 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 						this.currentUser = response.result[this.userId];
 						resolve();
 					})
-					.catch(() => {})
-				;
+					.catch((e) => {
+						console.error(e);
+						reject();
+					});
 			});
 		}
 
@@ -963,12 +1010,14 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 
 		setLeftButtons()
 		{
-			this.layoutWidget.setLeftButtons([{
-				svg: {
-					content: '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.722 6.79175L10.9495 10.5643L9.99907 11.5L9.06666 10.5643L5.29411 6.79175L3.96289 8.12297L10.008 14.1681L16.0532 8.12297L14.722 6.79175Z" fill="#A8ADB4"/></svg>',
+			this.layoutWidget.setLeftButtons([
+				{
+					svg: {
+						content: '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.722 6.79175L10.9495 10.5643L9.99907 11.5L9.06666 10.5643L5.29411 6.79175L3.96289 8.12297L10.008 14.1681L16.0532 8.12297L14.722 6.79175Z" fill="#A8ADB4"/></svg>',
+					},
+					callback: () => this.onButtonCloseClick(),
 				},
-				callback: () => this.onButtonCloseClick(),
-			}]);
+			]);
 		}
 
 		onButtonCloseClick()
@@ -1010,32 +1059,29 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 
 		updateRightButtons()
 		{
-			const buttons = [];
+			const action = this.makeActionMenuButtonAction();
 
+			this.actionMenuButtonRef?.setAction(action);
+		}
+
+		makeActionMenuButtonAction()
+		{
 			if (this.task.haveChangedFields())
 			{
-				buttons.push({
-					type: 'text',
-					name: Loc.getMessage(
-						this.isSaving
-							? 'TASKSMOBILE_LAYOUT_TASK_VIEW_SAVING_BUTTON'
-							: 'TASKSMOBILE_LAYOUT_TASK_VIEW_SAVE_BUTTON',
-					),
-					color: (this.isSaving ? '#bdc1c6' : '#2066b0'),
+				return {
+					type: this.isSaving ? 'saving' : 'save',
+					text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_SAVE_BUTTON'),
 					callback: () => {
 						void this.save();
 					},
-				});
-			}
-			else
-			{
-				buttons.push({
-					type: 'more',
-					callback: () => this.actionMenu.show(),
-				});
+				};
 			}
 
-			this.layoutWidget.setRightButtons(buttons);
+			return {
+				type: 'more',
+				text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_SAVE_BUTTON'),
+				callback: () => this.actionMenu && this.actionMenu.show(),
+			};
 		}
 
 		checkCanSave()
@@ -1077,9 +1123,10 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 
 					return;
 				}
+
 				this.isSaving = true;
 				this.updateRightButtons();
-				Notify.showIndicatorLoading();
+				NotifyManager.showLoadingIndicator();
 
 				if (
 					this.task.isFieldChanged(Task.fields.checkList)
@@ -1094,7 +1141,10 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 							},
 							() => reject(),
 						)
-						.catch(() => reject())
+						.catch((error) => {
+							console.error(error);
+							reject();
+						})
 					;
 				}
 				else if (!this.task.actions.edit && this.task.actions.changeDeadline)
@@ -1121,6 +1171,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 					this.task.save()
 						.then(
 							() => {
+								NotifyManager.hideLoadingIndicatorWithoutFallback();
 								this.onSaveSuccess(this.task.isFieldChanged(Task.fields.checkList));
 								resolve();
 							},
@@ -1145,10 +1196,45 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 				void this.checkList.save(this.task.id);
 			}
 			this.isSaving = false;
-			this.task.clearChangedFields();
 			this.task.updateData({ uploadedFiles: [] });
-			this.updateRightButtons();
 			Notify.showIndicatorSuccess({ hideAfter: 1000 });
+
+			let checklistRealTotalCount = 0;
+			let checklistRealCompletedCount = 0;
+			if (!this.checkList.isEmpty())
+			{
+				checklistRealTotalCount = this.checkList.countRealTotalCount(true);
+				checklistRealCompletedCount = this.checkList.countRealCompletedCount(true);
+			}
+
+			dispatch(
+				taskUpdatedFromOldTaskModel({
+					task: {
+						...this.task.exportProperties(),
+						checklist: {
+							completed: checklistRealCompletedCount,
+							uncompleted: checklistRealTotalCount - checklistRealCompletedCount,
+						},
+					},
+				}),
+			);
+
+			if (this.task.isFieldChanged(Task.fields.stageId))
+			{
+				dispatch(
+					setTaskStage({
+						nextStageId: this.task.currentStageId,
+						prevStageId: this.prevStageId,
+						projectId: Number(this.task.groupId),
+						taskId: this.task.id,
+						userId: this.userId,
+						viewMode: 'KANBAN',
+					}),
+				);
+			}
+
+			this.task.clearChangedFields();
+			this.updateRightButtons();
 		}
 
 		onSaveFail(response)
@@ -1157,7 +1243,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 			this.updateRightButtons();
 			Notify.showIndicatorError({
 				hideAfter: 3000,
-				text: response.error.description.replace(/<\/?[^>]+(>|$)/g, ''),
+				text: response.error.description.replaceAll(/<\/?[^>]+(>|$)/g, ''),
 			});
 		}
 
@@ -1173,7 +1259,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 
 		renderLoadingScreen()
 		{
-			return View({}, new LoadingScreenComponent());
+			return View({}, new LoadingScreenComponent({ backgroundColor: AppTheme.colors.bgSecondary }));
 		}
 
 		renderTaskViewScreen()
@@ -1183,12 +1269,9 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 					resizableByKeyboard: true,
 					style: {
 						flex: 1,
-						backgroundColor: '#eef2f4',
-						paddingBottom: Comments.getHeight() + 5,
+						backgroundColor: AppTheme.colors.bgSecondary,
 					},
-					safeArea: {
-						bottom: true,
-					},
+					onClick: () => Keyboard.dismiss(),
 				},
 				ScrollView(
 					{
@@ -1203,19 +1286,78 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 						showsVerticalScrollIndicator: false,
 						onScroll: (params) => {
 							this.scrollY = params.contentOffset.y;
+							this.stickyTitleRef?.toggle(this.scrollY);
 						},
 					},
-					View({}, ...this.renderSections()),
+					View(
+						{
+							style: {
+								paddingBottom: 90,
+							},
+						},
+						...this.renderSections(),
+					),
 				),
+				new StickyTitle({
+					title: this.task.title,
+					testId: 'stickyTitle',
+					ref: (ref) => {
+						this.stickyTitleRef = ref;
+					},
+					onClick: () => {
+						this.scrollViewRef?.scrollToBegin(true);
+					},
+				}),
+				new ActionMenuButton({
+					testId: 'actionMenuButton',
+					action: this.makeActionMenuButtonAction(),
+					ref: (ref) => {
+						this.actionMenuButtonRef = ref;
+					},
+				}),
 				new Comments({
 					commentsCount: (this.task.commentsCount - this.task.serviceCommentsCount),
 					newCommentsCounter: this.getNewCommentsCounterData(),
 					ref: (ref) => {
 						this.commentsRef = ref;
 					},
-					onClick: () => this.componentEventEmitter.emit('tasks.task.view:setActiveTab', { tab: 'comments' }),
+					onClick: this.onCommentsClick,
 				}),
 			);
+		}
+
+		onCommentsClick()
+		{
+			if (this.props.isTabsMode)
+			{
+				this.componentEventEmitter.emit('tasks.task.view:setActiveTab', { tab: 'comments' });
+			}
+			else
+			{
+				PageManager.openPage({
+					backgroundColor: AppTheme.colors.bgSecondary,
+					url: `${env.siteDir}mobile/tasks/snmrouter/?routePage=comments&TASK_ID=${this.taskId}&IS_TABS_MODE=false`,
+					backdrop: {
+						mediumPositionPercent: 84,
+						onlyMediumPosition: true,
+						forceDismissOnSwipeDown: true,
+						swipeAllowed: true,
+						swipeContentAllowed: true,
+						horizontalSwipeAllowed: false,
+						navigationBarColor: AppTheme.colors.bgSecondary,
+						enableNavigationBarBorder: false,
+					},
+					titleParams: {
+						text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_COMMENTS'),
+					},
+					enableNavigationBarBorder: false,
+					loading: {
+						type: 'comments',
+					},
+					modal: true,
+					cache: true,
+				});
+			}
 		}
 
 		renderSections()
@@ -1229,6 +1371,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 						[TaskView.field.responsible]: fieldsContent[TaskView.field.responsible],
 						[TaskView.field.deadline]: fieldsContent[TaskView.field.deadline],
 						[TaskView.field.status]: fieldsContent[TaskView.field.status],
+						[TaskView.field.stageSelector]: fieldsContent[TaskView.field.stageSelector],
 					},
 				},
 				[TaskView.section.result]: {
@@ -1270,11 +1413,11 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 				return View(
 					{
 						style: {
-							backgroundColor: '#ffffff',
+							backgroundColor: AppTheme.colors.bgContentPrimary,
 							borderRadius: 12,
 							paddingTop: (name === TaskView.section.main || name === TaskView.section.result ? 0 : 6),
 							paddingBottom: (name === TaskView.section.main || name === TaskView.section.result ? 0 : 6),
-							marginTop: (name === TaskView.section.common ? 0 : 12),
+							marginTop: (name === TaskView.section.main || name === TaskView.section.common ? 0 : 12),
 						},
 						testId: `taskViewSection_${name}`,
 					},
@@ -1315,7 +1458,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 					style: {
 						...TaskView.getStyleForField(),
 						height: 0.5,
-						backgroundColor: '#e6e7e9',
+						backgroundColor: AppTheme.colors.bgSeparatorPrimary,
 					},
 				}),
 				content,
@@ -1324,28 +1467,28 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 
 		getSectionMoreHeader()
 		{
-			const arrowDirection = (this.state.isMoreExpanded ? 'up' : 'down');
-			const arrowUri = `${this.pathToImages}/tasksmobile-layout-task-section-more-arrow-${arrowDirection}.png`;
+			const { isMoreExpanded } = this.state;
+			const chevronSvg = isMoreExpanded ? chevronUp : chevronDown;
 
 			return View(
 				{
 					ref: (ref) => {
 						this.sectionMoreRef = ref;
 					},
+					testId: `taskViewSection_${TaskView.section.more}_header`,
 					style: {
 						...TaskView.getStyleForField(),
 						flexDirection: 'row',
 						height: 54,
 						justifyContent: 'space-between',
-						paddingBottom: (this.state.isMoreExpanded ? 6 : 0),
+						paddingBottom: isMoreExpanded ? 6 : 0,
 					},
-					testId: `taskViewSection_${TaskView.section.more}_header`,
 					onClick: () => {
 						this.setState(
-							{ isMoreExpanded: !this.state.isMoreExpanded },
+							{ isMoreExpanded: !isMoreExpanded },
 							() => {
 								if (
-									this.state.isMoreExpanded
+									isMoreExpanded
 									&& this.scrollViewRef
 									&& this.sectionMoreRef
 								)
@@ -1373,13 +1516,15 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 							height: 24,
 							marginRight: 8,
 						},
-						uri: TaskView.getImageUrl(`${this.pathToImages}/tasksmobile-layout-task-section-more-icon.png`),
+						svg: {
+							content: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="14" cy="14" r="14" fill="${AppTheme.colors.base3}"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8 7C7.44772 7 7 7.44772 7 8V12C7 12.5523 7.44772 13 8 13H12C12.5523 13 13 12.5523 13 12V8C13 7.44772 12.5523 7 12 7H8ZM16 7C15.4477 7 15 7.44772 15 8V12C15 12.5523 15.4477 13 16 13H20C20.5523 13 21 12.5523 21 12V8C21 7.44772 20.5523 7 20 7H16ZM7 16C7 15.4477 7.44772 15 8 15H12C12.5523 15 13 15.4477 13 16V20C13 20.5523 12.5523 21 12 21H8C7.44772 21 7 20.5523 7 20V16ZM16 15C15.4477 15 15 15.4477 15 16V20C15 20.5523 15.4477 21 16 21H20C20.5523 21 21 20.5523 21 20V16C21 15.4477 20.5523 15 20 15H16Z" fill="${AppTheme.colors.baseWhiteFixed}"/></svg>`,
+						},
 					}),
 					Text({
 						style: {
 							fontSize: 16,
 							fontWeight: '400',
-							color: '#a8adb4',
+							color: AppTheme.colors.base3,
 						},
 						text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_SECTION_MORE'),
 					}),
@@ -1390,7 +1535,10 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 						width: 24,
 						height: 24,
 					},
-					uri: TaskView.getImageUrl(arrowUri),
+					tintColor: AppTheme.colors.base3,
+					svg: {
+						content: chevronSvg(AppTheme.colors.base3, { box: true }),
+					},
 				}),
 			);
 		}
@@ -1402,16 +1550,60 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 					readOnly: this.state.readOnly,
 					title: this.task.title,
 					focus: null,
-					style: TaskView.getStyleForField(TaskView.field.title),
-					deepMergeStyles: TaskView.getDeepMergeStylesForField(true),
+					style: {
+						...TaskView.getStyleForField(TaskView.field.title),
+						marginRight: 115,
+					},
+					deepMergeStyles: {
+						...TaskView.getDeepMergeStylesForField(true),
+						externalWrapper: {
+							paddingTop: 4,
+							paddingBottom: 4,
+						},
+					},
 					ref: (ref) => {
 						this.titleRef = ref;
 					},
 					onChange: (title) => {
 						this.task.updateData({ title });
 						this.task.addChangedFields(Task.fields.title);
+						this.stickyTitleRef?.setTitle(this.task.title);
 						this.updateRightButtons();
 					},
+					onLayout: ({ y, height }) => {
+						this.stickyTitleRef?.setBreakpoint(y + height - 48);
+					},
+				}),
+				[TaskView.field.stageSelector]: new StageSelector({
+					title: this.task.title,
+					readOnly: this.state.readOnly,
+					stageId: this.getStageId(),
+					style: TaskView.getStyleForField(TaskView.field.stageSelector),
+					view: 'KANBAN',
+					projectId: Number(this.task.groupId),
+					ownerId: this.userId,
+					taskId: Number(this.task.id),
+					ref: (ref) => {
+						this.stageSelectorRef = ref;
+					},
+					onChange: (stageId, isDefaultStage = false) => {
+						if (!this.prevStageId)
+						{
+							this.prevStageId = this.task.stageId;
+						}
+						this.task.currentStageId = stageId;
+
+						// to prevent double stage update
+						if (isDefaultStage)
+						{
+							return;
+						}
+
+						this.task.updateData({ stageId });
+						this.task.addChangedFields(Task.fields.stageId);
+						this.updateRightButtons();
+					},
+					parentWidget: this.layoutWidget,
 				}),
 				[TaskView.field.creator]: new Creator({
 					readOnly: this.state.readOnly,
@@ -1504,8 +1696,9 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 						this.taskResultListRef = ref;
 					},
 				}),
-				[TaskView.field.checklist]: new CheckList({
+				[TaskView.field.checklist]: new FieldChecklist({
 					checkList: this.checkList,
+					checkListTree: this.checkListTree,
 					taskId: this.task.id,
 					taskGuid: this.task.guid,
 					userId: this.userId,
@@ -1548,7 +1741,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 					onChange: (groupId, group) => {
 						this.task.updateData({ groupId, group });
 						this.task.addChangedFields(Task.fields.group);
-						this.updateFields([TaskView.field.tags]);
+						this.updateFields([TaskView.field.tags, TaskView.field.stageSelector]);
 						this.updateRightButtons();
 					},
 				}),
@@ -1848,6 +2041,22 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 			};
 		}
 
+		getStageId()
+		{
+			if (Number.isInteger(this.task.currentStageId))
+			{
+				return this.task.currentStageId;
+			}
+
+			const stageId = parseInt(this.task.stageId, 10);
+			if (Number.isInteger(stageId))
+			{
+				return stageId;
+			}
+
+			return null;
+		}
+
 		updateFields(fields = [])
 		{
 			const fieldRefs = {
@@ -2075,6 +2284,14 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 					newState: {
 						commentsCount: (this.task.commentsCount - this.task.serviceCommentsCount),
 						newCommentsCounter: this.getNewCommentsCounterData(),
+					},
+				},
+				[TaskView.field.stageSelector]: {
+					ref: this.stageSelectorRef,
+					newState: {
+						readOnly: this.state.readOnly,
+						projectId: Number(this.task.groupId),
+						stageId: this.getStageId(),
 					},
 				},
 			};

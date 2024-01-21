@@ -2,16 +2,16 @@
 
 namespace Bitrix\Transformer;
 
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Main\Error;
+use Bitrix\Main\InvalidOperationException;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
-use Bitrix\Main\Error;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Transformer\Entity\CommandTable;
-use Bitrix\Main\ArgumentNullException;
-use Bitrix\Main\ArgumentTypeException;
-use Bitrix\Main\InvalidOperationException;
-use Bitrix\Main\ArgumentOutOfRangeException;
-use Bitrix\Main\Loader;
 
 /**
  * Class Command
@@ -19,31 +19,37 @@ use Bitrix\Main\Loader;
  */
 class Command
 {
-	const STATUS_CREATE = 100;
-	const STATUS_SEND = 200;
-	const STATUS_UPLOAD = 300;
-	const STATUS_SUCCESS = 400;
-	const STATUS_ERROR = 1000;
+	public const STATUS_CREATE = 100;
+	public const STATUS_SEND = 200;
+	public const STATUS_UPLOAD = 300;
+	public const STATUS_SUCCESS = 400;
+	public const STATUS_ERROR = 1000;
 
-	const ERROR_CONNECTION = 50;
-	const ERROR_CONNECTION_COUNT = 51;
-	const ERROR_CONNECTION_RESPONSE = 60;
-	const ERROR_CONTROLLER_DOWNLOAD_STATUS = 100;
-	const ERROR_CONTROLLER_DOWNLOAD_TYPE = 101;
-	const ERROR_CONTROLLER_DOWNLOAD_SIZE = 102;
-	const ERROR_CONTROLLER_BANNED = 103;
-	const ERROR_CONTROLLER_QUEUE_CANCELED_BY_EVENT = 150;
-	const ERROR_CONTROLLER_QUEUE_ADD_FAIL = 151;
-	const ERROR_CONTROLLER_STATUS_AFTER_DOWNLOAD = 200;
-	const ERROR_CONTROLLER_DOWNLOAD = 201;
-	const ERROR_CONTROLLER_AFTER_DOWNLOAD_SIZE = 202;
-	const ERROR_CONTROLLER_UPLOAD = 203;
-	const ERROR_CONTROLLER_TRANSFORMATION = 300;
-	const ERROR_CONTROLLER_TRANSFORMATION_COMMAND = 301;
-	const ERROR_CONTROLLER_COMMAND_NOT_FOUND = 302;
-	const ERROR_CONTROLLER_COMMAND_ERROR = 303;
-	const ERROR_CONTROLLER_UNKNOWN_ERROR = 250;
-	const ERROR_CALLBACK = 400;
+	public const ERROR_CONNECTION = 50;
+	public const ERROR_CONNECTION_COUNT = 51;
+	public const ERROR_CONNECTION_RESPONSE = 60;
+	public const ERROR_CONTROLLER_DOWNLOAD_STATUS = 100;
+	public const ERROR_CONTROLLER_DOWNLOAD_TYPE = 101;
+	public const ERROR_CONTROLLER_DOWNLOAD_SIZE = 102;
+	public const ERROR_CONTROLLER_BANNED = 103;
+	public const ERROR_CONTROLLER_QUEUE_CANCELED_BY_EVENT = 150;
+	public const ERROR_CONTROLLER_QUEUE_ADD_FAIL = 151;
+	public const ERROR_CONTROLLER_QUEUE_NOT_FOUND = 152;
+	public const ERROR_CONTROLLER_MODULE_NOT_INSTALLED = 153;
+	public const ERROR_CONTROLLER_RIGHT_CHECK_FAILED = 154;
+	public const ERROR_CONTROLLER_LIMIT_EXCEED = 155;
+	public const ERROR_CONTROLLER_STATUS_AFTER_DOWNLOAD = 200;
+	public const ERROR_CONTROLLER_DOWNLOAD = 201;
+	public const ERROR_CONTROLLER_AFTER_DOWNLOAD_SIZE = 202;
+	public const ERROR_CONTROLLER_UPLOAD = 203;
+	public const ERROR_CONTROLLER_TRANSFORMATION = 300;
+	public const ERROR_CONTROLLER_TRANSFORMATION_COMMAND = 301;
+	public const ERROR_CONTROLLER_COMMAND_NOT_FOUND = 302;
+	public const ERROR_CONTROLLER_COMMAND_ERROR = 303;
+	public const ERROR_CONTROLLER_UNKNOWN_ERROR = 250;
+	public const ERROR_CALLBACK = 400;
+
+	private static ?array $errorMessagesCache = null;
 
 	protected $command;
 	protected $params;
@@ -160,9 +166,13 @@ class Command
 
 		foreach($this->module as $module)
 		{
-			if(!\Bitrix\Main\Loader::includeModule($module))
+			if(!Loader::includeModule($module))
 			{
-				Log::write('callback cant load module '.$module);
+				Log::logger()->critical(
+					'callback cant load module {module}',
+					['module' => $module, 'guid' => $this->guid]
+				);
+
 				return false;
 			}
 		}
@@ -173,18 +183,15 @@ class Command
 		{
 			if(is_a($callback, 'Bitrix\Transformer\InterfaceCallback', true))
 			{
+				$throwable = null;
 				try
 				{
 					/* @var $callback InterfaceCallback*/
 					$resultCallback = $callback::call($this->status, $this->command, $this->params, $result);
 				}
-				catch(\Exception $exception)
+				catch (\Throwable $throwable)
 				{
-					$resultCallback = $exception->getMessage();
-				}
-				catch (\Error $error)
-				{
-					$resultCallback = $error->getMessage();
+					$resultCallback = $throwable->getMessage();
 				}
 				if($resultCallback === true)
 				{
@@ -192,12 +199,25 @@ class Command
 				}
 				else
 				{
-					Log::write('Error doing callback. Result: '.$resultCallback);
+					Log::logger()->error(
+						'Error doing callback. Result: {resultCallback}',
+						[
+							'resultCallback' => $resultCallback,
+							'guid' => $this->guid,
+							'isThrowable' => $throwable instanceof \Throwable,
+						],
+					);
 				}
 			}
 			else
 			{
-				Log::write($callback.' does not implements Bitrix\Transformer\InterfaceCallback');
+				Log::logger()->error(
+					'{callback} does not implements Bitrix\Transformer\InterfaceCallback',
+					[
+						'callback' => $callback,
+						'guid' => $this->guid,
+					],
+				);
 			}
 		}
 		return ($count == $success);
@@ -229,17 +249,22 @@ class Command
 		{
 			throw new InvalidOperationException('command should be saved before update');
 		}
-		Log::write('updateStatus in '.$this->guid.' from '.$this->status.' to '.$status);
+		Log::logger()->info(
+			'updateStatus in {guid} from {status} to {newStatus}',
+			['guid' => $this->guid, 'status' => $this->status, 'newStatus' => $status]
+		);
 		$this->status = $status;
 		$data = array('STATUS' => $status, 'UPDATE_TIME' => new DateTime());
 		if(!empty($error))
 		{
 			$data['ERROR'] = $error;
+			$this->error = $error;
 		}
 		if(!empty($errorCode))
 		{
 			$errorCode = intval($errorCode);
 			$data['ERROR_CODE'] = $errorCode;
+			$this->errorCode = $errorCode;
 		}
 		return CommandTable::update($this->id, $data);
 	}
@@ -264,30 +289,22 @@ class Command
 	 */
 	protected function processError($errorCode = 0, $message = '')
 	{
-		if(!$errorCode)
-		{
-			$errorCode = Command::ERROR_CONTROLLER_UNKNOWN_ERROR;
-		}
-		if(!$message && $errorCode > 0)
-		{
-			$message = $this->getErrorMessages()[$errorCode];
-		}
-		if(!$message)
-		{
-			$message = $this->getErrorMessages()[Command::ERROR_CONTROLLER_UNKNOWN_ERROR];
-		}
-		$result = new Result();
-		$result->addError(new Error($message, $errorCode));
-		Log::write($message);
+		$error = $this->constructError($errorCode, $message);
+
+		$newMessage = $error->getCustomData()['originalMessage'] ?: $error->getMessage();
+
+		Log::logger()->error('{error}', ['error' => $message, 'errorCode' => $errorCode]);
+
 		if($this->id > 0)
 		{
-			$this->updateStatus(self::STATUS_ERROR, $message, $errorCode);
+			$this->updateStatus(self::STATUS_ERROR, $newMessage, $error->getCode());
 		}
 		if(!empty($this->callback))
 		{
 			$this->callback();
 		}
-		return $result;
+
+		return (new Result())->addError($error);
 	}
 
 	/**
@@ -467,53 +484,77 @@ class Command
 	 */
 	public function getError()
 	{
-		if($this->status === static::STATUS_ERROR)
+		if ($this->status === static::STATUS_ERROR)
 		{
-			$message = null;
-			if($this->errorCode)
-			{
-				$message = $this->getErrorMessages()[$this->errorCode];
-			}
-			if(!$message)
-			{
-				$message = $this->error;
-			}
-			if(!$message)
-			{
-				$message = $this->getErrorMessages()[static::ERROR_CONTROLLER_UNKNOWN_ERROR];
-			}
-
-			return new Error($message, $this->errorCode, ['originalMessage' => $this->error]);
+			return $this->constructError($this->errorCode, $this->error);
 		}
 
 		return null;
 	}
 
+	private function constructError($errorCode = 0, $message = ''): Error
+	{
+		$errorMessages = $this->getErrorMessages();
+
+		if (!isset($errorMessages[$errorCode]))
+		{
+			// we've got an invalid/unknown error code
+			$errorCode = self::ERROR_CONTROLLER_UNKNOWN_ERROR;
+		}
+
+		return new Error($errorMessages[$errorCode], (int)$errorCode, ['originalMessage' => $message]);
+	}
+
 	/**
+	 * Returns a map of error code to a UI-friendly description of the error
+	 *
 	 * @return array
 	 */
 	protected function getErrorMessages()
 	{
-		return [
-			static::ERROR_CONNECTION => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_CONNECTION'),
-			static::ERROR_CONNECTION_COUNT => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_CONNECTION_COUNT'),
-			static::ERROR_CONNECTION_RESPONSE => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_CONNECTION_RESPONSE'),
-			static::ERROR_CONTROLLER_DOWNLOAD_STATUS => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_DOWNLOAD_STATUS'),
-			static::ERROR_CONTROLLER_DOWNLOAD_TYPE => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_DOWNLOAD_TYPE'),
-			static::ERROR_CONTROLLER_DOWNLOAD_SIZE => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_DOWNLOAD_SIZE'),
-			static::ERROR_CONTROLLER_BANNED => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_BANNED'),
-			static::ERROR_CONTROLLER_QUEUE_CANCELED_BY_EVENT => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_QUEUE_CANCELED_BY_EVENT'),
-			static::ERROR_CONTROLLER_QUEUE_ADD_FAIL => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_QUEUE_ADD_FAIL'),
-			static::ERROR_CONTROLLER_STATUS_AFTER_DOWNLOAD => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_DOWNLOAD'),
-			static::ERROR_CONTROLLER_DOWNLOAD => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_DOWNLOAD'),
-			static::ERROR_CONTROLLER_AFTER_DOWNLOAD_SIZE => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_DOWNLOAD_SIZE'),
-			static::ERROR_CONTROLLER_UPLOAD => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_UPLOAD'),
-			static::ERROR_CONTROLLER_TRANSFORMATION => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_TRANSFORMATION'),
-			static::ERROR_CONTROLLER_TRANSFORMATION_COMMAND => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_TRANSFORMATION'),
-			static::ERROR_CONTROLLER_COMMAND_NOT_FOUND => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_COMMAND_NOT_FOUND'),
-			static::ERROR_CONTROLLER_COMMAND_ERROR => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_COMMAND_ERROR'),
-			static::ERROR_CONTROLLER_UNKNOWN_ERROR => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_UNKNOWN'),
-			static::ERROR_CALLBACK => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_CALLBACK'),
-		];
+		if (!self::$errorMessagesCache)
+		{
+			$tryLater = Loc::getMessage('TRANSFORMER_COMMAND_TRY_LATER');
+
+			self::$errorMessagesCache = [
+				static::ERROR_CONNECTION => Loc::getMessage('TRANSFORMER_COMMAND_REFRESH_AND_TRY_LATER'),
+				static::ERROR_CONNECTION_COUNT => $tryLater,
+				static::ERROR_CONNECTION_RESPONSE => $tryLater,
+				static::ERROR_CONTROLLER_DOWNLOAD_STATUS => Loc::getMessage('TRANSFORMER_COMMAND_CANT_DOWNLOAD_FILE'),
+				static::ERROR_CONTROLLER_DOWNLOAD_TYPE => Loc::getMessage('TRANSFORMER_COMMAND_CANT_DOWNLOAD_FILE'),
+				static::ERROR_CONTROLLER_DOWNLOAD_SIZE => Loc::getMessage('TRANSFORMER_COMMAND_FILE_TOO_BIG'),
+				static::ERROR_CONTROLLER_BANNED => $tryLater,
+				static::ERROR_CONTROLLER_QUEUE_CANCELED_BY_EVENT => Loc::getMessage('TRANSFORMER_COMMAND_CHECK_SERVER_SETTINGS'),
+				static::ERROR_CONTROLLER_QUEUE_ADD_FAIL => $tryLater,
+				static::ERROR_CONTROLLER_QUEUE_NOT_FOUND => Loc::getMessage('TRANSFORMER_COMMAND_ASK_SUPPORT'),
+				static::ERROR_CONTROLLER_MODULE_NOT_INSTALLED => Loc::getMessage('TRANSFORMER_COMMAND_INSTALL_TRANSFORMERCONTROLLER'),
+				static::ERROR_CONTROLLER_LIMIT_EXCEED => $tryLater,
+				static::ERROR_CONTROLLER_STATUS_AFTER_DOWNLOAD => Loc::getMessage('TRANSFORMER_COMMAND_CANT_DOWNLOAD_FILE'),
+				static::ERROR_CONTROLLER_DOWNLOAD => Loc::getMessage('TRANSFORMER_COMMAND_CANT_DOWNLOAD_FILE'),
+				static::ERROR_CONTROLLER_AFTER_DOWNLOAD_SIZE => Loc::getMessage('TRANSFORMER_COMMAND_FILE_TOO_BIG'),
+				static::ERROR_CONTROLLER_UPLOAD => $tryLater,
+				static::ERROR_CONTROLLER_TRANSFORMATION => Loc::getMessage('TRANSFORMER_COMMAND_FILE_CORRUPTED'),
+				static::ERROR_CONTROLLER_TRANSFORMATION_COMMAND => Loc::getMessage('TRANSFORMER_COMMAND_FILE_CORRUPTED'),
+				static::ERROR_CONTROLLER_COMMAND_NOT_FOUND => Loc::getMessage('TRANSFORMER_COMMAND_ASK_ADMIN'),
+				static::ERROR_CONTROLLER_COMMAND_ERROR => Loc::getMessage('TRANSFORMER_COMMAND_ASK_ADMIN'),
+				static::ERROR_CONTROLLER_UNKNOWN_ERROR => $tryLater,
+				static::ERROR_CALLBACK => $tryLater,
+			];
+
+			if (Loader::includeModule('bitrix24'))
+			{
+				self::$errorMessagesCache[static::ERROR_CONTROLLER_RIGHT_CHECK_FAILED] = $tryLater;
+			}
+			elseif (Http::isDefaultCloudControllerUsed())
+			{
+				self::$errorMessagesCache[static::ERROR_CONTROLLER_RIGHT_CHECK_FAILED] = Loc::getMessage('TRANSFORMER_COMMAND_CHECK_LICENSE');
+			}
+			else
+			{
+				self::$errorMessagesCache[static::ERROR_CONTROLLER_RIGHT_CHECK_FAILED] = Loc::getMessage('TRANSFORMER_COMMAND_ADD_TO_ALLOWED_LIST');
+			}
+		}
+
+		return self::$errorMessagesCache;
 	}
 }

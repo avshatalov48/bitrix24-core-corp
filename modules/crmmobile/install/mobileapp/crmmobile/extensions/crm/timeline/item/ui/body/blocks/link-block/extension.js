@@ -4,6 +4,7 @@
 jn.define('crm/timeline/item/ui/body/blocks/link-block', (require, exports, module) => {
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { TimelineFontWeight } = require('crm/timeline/item/ui/styles');
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @class TimelineItemBodyLinkBlock
@@ -22,7 +23,7 @@ jn.define('crm/timeline/item/ui/body/blocks/link-block', (require, exports, modu
 					numberOfLines: this.props.inline ? 1 : 0,
 					style: {
 						fontSize: 14,
-						color: '#0B66C3',
+						color: AppTheme.colors.accentMainLinks,
 						fontWeight: this.props.bold ? TimelineFontWeight.BOLD : TimelineFontWeight.NORMAL,
 					},
 				}),

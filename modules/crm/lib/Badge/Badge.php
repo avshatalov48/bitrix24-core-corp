@@ -3,8 +3,10 @@
 namespace Bitrix\Crm\Badge;
 
 use Bitrix\Crm\Badge\Model\BadgeTable;
+use Bitrix\Crm\Badge\Type\AiCallFieldsFillingResult;
 use Bitrix\Crm\Badge\Type\CalendarSharingStatus;
 use Bitrix\Crm\Badge\Type\CallStatus;
+use Bitrix\Crm\Badge\Type\MailMessageDeliveryStatus;
 use Bitrix\Crm\Badge\Type\OpenLineStatus;
 use Bitrix\Crm\Badge\Type\PaymentStatus;
 use Bitrix\Crm\Badge\Type\RestAppStatus;
@@ -25,6 +27,8 @@ abstract class Badge
 	public const SMS_STATUS_TYPE = 'sms_status';
 	public const CALENDAR_SHARING_STATUS_TYPE = 'calendar_sharing_status';
 	public const TASK_STATUS_TYPE = 'task_status';
+	public const MAIL_MESSAGE_DELIVERY_STATUS_TYPE = 'mail_message_delivery_status';
+	public const AI_CALL_FIELDS_FILLING_RESULT = 'ai_call_fields_filling_result';
 
 	public static function createByType(string $type, string $value): Badge
 	{
@@ -66,6 +70,16 @@ abstract class Badge
 		if ($type === self::TASK_STATUS_TYPE)
 		{
 			return new TaskStatus($value);
+		}
+
+		if ($type === self::MAIL_MESSAGE_DELIVERY_STATUS_TYPE)
+		{
+			return new MailMessageDeliveryStatus($value);
+		}
+
+		if ($type === self::AI_CALL_FIELDS_FILLING_RESULT)
+		{
+			return new AiCallFieldsFillingResult($value);
 		}
 
 		throw new ArgumentException('Unknown badge type: ' . $type);

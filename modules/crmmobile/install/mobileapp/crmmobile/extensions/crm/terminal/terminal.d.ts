@@ -1,7 +1,12 @@
-type TerminalPayment = {
+type Payment = {
+	id: number,
+	name?: string,
+	date: number,
 	accountNumber?: string,
 	sum?: number,
 	currency?: string,
+	hasEntityBinding?: boolean,
+	productsCnt?: number,
 	phoneNumber?: string,
 	companyId?: number,
 	contactIds?: number[],
@@ -12,7 +17,16 @@ type TerminalPayment = {
 	accessCode?: string,
 	slipLink?: string,
 	permissions: object,
-	paymentSystems: TerminalPaymentSystem[],
+	isTerminalPayment?: boolean,
+	terminalPaymentSystems: TerminalPaymentSystem[],
+	fields: [],
+};
+
+type Check = {
+	id: number,
+	name?: string,
+	date: number,
+	url?: string,
 };
 
 type TerminalCreatePaymentProps = {
@@ -21,6 +35,13 @@ type TerminalCreatePaymentProps = {
 	phoneNumber?: string,
 	client?: TerminalClientProps,
 	clientName?: string,
+};
+
+type TerminalEntityCreatePaymentProps = {
+	entityTypeId: number,
+	entityId: number,
+	products: Object[],
+	responsibleId: number,
 };
 
 type TerminalClientProps = {

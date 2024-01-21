@@ -30,7 +30,19 @@ class CurrentUser
 	private Main\Engine\CurrentUser $currentUser;
 	private ?array $userFields;
 
+	private static CurrentUser $instance;
+
 	public static function get(): CurrentUser
+	{
+		if (!isset(static::$instance))
+		{
+			static::$instance = static::create();
+		}
+
+		return static::$instance;
+	}
+
+	public static function create(): CurrentUser
 	{
 		$self = new static();
 		$self->currentUser = Main\Engine\CurrentUser::get();
@@ -88,5 +100,10 @@ class CurrentUser
 	public function getWorkPosition(): ?string
 	{
 		return isset($this->userFields['WORK_POSITION']) ? (string)$this->userFields['WORK_POSITION'] : null;
+	}
+
+	public function getExternalAuthId(): ?string
+	{
+		return isset($this->userFields['EXTERNAL_AUTH_ID']) ? (string)$this->userFields['EXTERNAL_AUTH_ID'] : null;
 	}
 }

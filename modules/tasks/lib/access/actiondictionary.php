@@ -35,7 +35,7 @@ class ActionDictionary
 	public const ACTION_TASK_RATE = 'task_rate';
 	public const ACTION_TASK_CHANGE_STATUS = 'task_change_status';
 	public const ACTION_TASK_REMINDER = 'task_reminder';
-	public const ACTION_TASK_AUDITORS_ADD = 'task_auditors_add';
+	public const ACTION_TASK_ADD_AUDITORS = 'task_add_auditors';
 
 	public const ACTION_TASK_ELAPSED_TIME = 'task_elapsed_time';
 	public const ACTION_TASK_FAVORITE_ADD = 'task_favorite_add';

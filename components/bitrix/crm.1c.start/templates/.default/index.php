@@ -140,5 +140,6 @@ $jsParams = array(
 <script>
 	BX.ready(function () {
 		BX.CrmStart.Onec.initTile(<?=CUtil::PhpToJSObject($jsParams)?>);
+		BX.CrmStart.OnecAppPaths = <?=CUtil::PhpToJSObject($arResult['PATH_TO_APPS'])?>;
 	});
 </script>

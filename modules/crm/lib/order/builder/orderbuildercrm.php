@@ -92,6 +92,8 @@ class OrderBuilderCrm extends OrderBuilder
 			->setRelatedProperties()
 			->setDiscounts() //?
 			->finalActions();
+
+		return $this;
 	}
 
 	/**

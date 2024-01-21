@@ -9,6 +9,8 @@ Main\Loader::includeModule('sale');
 
 final class Payment
 {
+	private static bool $isExecutionEnabled = true;
+
 	public static function OnBeforeSalePaymentEntitySaved(Main\Event $event)
 	{
 		$payment = $event->getParameter('ENTITY');
@@ -45,6 +47,22 @@ final class Payment
 		return
 			$payment->getId() === 0
 			&& $payment->getPayableItemCollection()->isEmpty()
+			&& self::isExecutionEnabled()
 		;
+	}
+
+	public static function isExecutionEnabled() : bool
+	{
+		return self::$isExecutionEnabled === true;
+	}
+
+	public static function disableExecution() : void
+	{
+		self::$isExecutionEnabled = false;
+	}
+
+	public static function enableExecution() : void
+	{
+		self::$isExecutionEnabled = true;
 	}
 }

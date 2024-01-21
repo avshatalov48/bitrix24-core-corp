@@ -58,5 +58,4 @@ export default class ReleaseEar extends EventEmitter
 	{
 		this.emit('onClick');
 	}
-
 }

@@ -2,8 +2,10 @@
 
 return [
 	'extensions' => [
+		'apptheme',
 		'event-emitter',
-		'layout/pure-component',
 		'utils/color',
+		'utils/random',
+		'layout/pure-component',
 	],
 ];

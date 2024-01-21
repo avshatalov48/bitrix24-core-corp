@@ -79,6 +79,16 @@ final class Controller extends Timeline\Controller
 		);
 	}
 
+	public function onRuleUpdated(ItemIdentifier $identifier, EventData $eventData): ?int
+	{
+		return $this->handleCalendarSharingEvent(
+			Timeline\LogMessageType::CALENDAR_SHARING_RULE_UPDATED,
+			Timeline\TimelineType::LOG_MESSAGE,
+			$identifier,
+			$eventData
+		);
+	}
+
 	protected function handleCalendarSharingEvent(
 		int $typeCategoryId,
 		int $typeId,
@@ -138,6 +148,11 @@ final class Controller extends Timeline\Controller
 		if ($eventData->getLinkHash())
 		{
 			$result['LINK_HASH'] = $eventData->getLinkHash();
+		}
+
+		if ($eventData->getSharingRuleArray())
+		{
+			$result['LINK_RULE'] = $eventData->getSharingRuleArray();
 		}
 
 		if ($eventData->getContactCommunication())

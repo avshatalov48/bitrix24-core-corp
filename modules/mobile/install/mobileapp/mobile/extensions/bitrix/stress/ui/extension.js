@@ -87,7 +87,7 @@
 					font: {color: AppTheme.colors.base2, size: 18, fontStyle: "semibold"},
 					border: {
 						width: 1,
-						color: AppTheme.colors.bgSeparatorSecondary,
+						color: AppTheme.colors.bgSeparatorPrimary,
 					},
 					margin: margin,
 					size: {

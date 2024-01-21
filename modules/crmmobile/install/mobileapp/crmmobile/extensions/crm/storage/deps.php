@@ -5,7 +5,4 @@ return [
 		'utils/storage',
 		'utils/hash',
 	],
-	'bundle' => [
-		'./base',
-	],
 ];

@@ -2,6 +2,7 @@
  * @module crm/multi-field-drawer
  */
 jn.define('crm/multi-field-drawer', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { BottomSheet } = require('bottom-sheet');
 	const { CombinedV2Field } = require('layout/ui/fields/combined-v2');
 	const { EmailField } = require('layout/ui/fields/email');
@@ -51,7 +52,10 @@ jn.define('crm/multi-field-drawer', (require, exports, module) => {
 			const state = {};
 
 			this.getMultiFieldsToShow().forEach((field) => {
-				let fieldState;
+				let fieldState = {
+					value: '',
+					type: null,
+				};
 
 				if (field === MultiFieldType.PHONE)
 				{
@@ -60,13 +64,6 @@ jn.define('crm/multi-field-drawer', (require, exports, module) => {
 
 					fieldState = {
 						value: { phone, countryCode },
-						type: null,
-					};
-				}
-				else
-				{
-					fieldState = {
-						value: '',
 						type: null,
 					};
 				}
@@ -240,7 +237,7 @@ jn.define('crm/multi-field-drawer', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgPrimary,
 					},
 				},
 				this.hasWarningBlock() && this.renderWarningBlock(),
@@ -270,7 +267,11 @@ jn.define('crm/multi-field-drawer', (require, exports, module) => {
 
 		getWarningBlockDescription()
 		{
-			return get(this.props, 'warningBlock.description', Loc.getMessage('MCRM_MULTI_FIELD_DRAWER_WARNING_DESCRIPTION'));
+			return get(
+				this.props,
+				'warningBlock.description',
+				Loc.getMessage('MCRM_MULTI_FIELD_DRAWER_WARNING_DESCRIPTION'),
+			);
 		}
 
 		isShowWarningBlockTitle()
@@ -292,7 +293,7 @@ jn.define('crm/multi-field-drawer', (require, exports, module) => {
 								paddingLeft: 17,
 								paddingRight: 40,
 								paddingVertical: 23,
-								backgroundColor: '#f8fafb',
+								backgroundColor: AppTheme.colors.bgPrimary,
 								borderRadius: 12,
 							},
 						},

@@ -3,5 +3,6 @@
 return [
 	'extensions' => [
 		'in-app-url',
+		'apptheme',
 	],
 ];

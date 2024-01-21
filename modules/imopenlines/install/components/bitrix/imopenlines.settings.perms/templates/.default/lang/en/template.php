@@ -4,7 +4,6 @@ $MESS["IMOL_PERM_ADD_ACCESS_CODE"] = "Add access permission";
 $MESS["IMOL_PERM_DELETE"] = "Delete";
 $MESS["IMOL_PERM_EDIT"] = "Edit";
 $MESS["IMOL_PERM_ERROR"] = "Error";
-$MESS["IMOL_PERM_RESTRICTION"] = "Please upgrade to one of the <a target=\"_blank\" href=\"https://www.bitrix24.com/prices/\">commercial plans</a> to assign access permissions to the employees.";
 $MESS["IMOL_PERM_RESTRICTION_MSGVER_1"] = "Please upgrade to one of the <a target=\"_blank\" href=\"https://www.bitrix24.com/prices/\">major plans</a> to assign employee access permissions to use Open Channels.";
 $MESS["IMOL_PERM_ROLE"] = "Role";
 $MESS["IMOL_PERM_ROLE_CANCEL"] = "Cancel";

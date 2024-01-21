@@ -195,7 +195,7 @@ if ((int)$arResult["TASK"]["REAL_STATUS"] === \Bitrix\Tasks\Internals\Task\Statu
 					<?php echo (int) $arResult['TASK']['ID']; ?>,
 					'disapprove'
 				);
-				return false;" href="javascript:void(0);" class="webform-small-button webform-small-button-decline"><span class="webform-small-button-left"></span><span class="webform-small-button-text"><?php echo GetMessage("TASKS_REDO_TASK")?></span><span class="webform-small-button-right"></span></a><?php
+				return false;" href="javascript:void(0);" class="webform-small-button webform-small-button-decline"><span class="webform-small-button-left"></span><span class="webform-small-button-text"><?php echo GetMessage("TASKS_REDO_TASK_MSGVER_1")?></span><span class="webform-small-button-right"></span></a><?php
 		}
 
 		$copyUrl = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_TASKS_TASK"], array("task_id" => 0, "action" => "edit"));

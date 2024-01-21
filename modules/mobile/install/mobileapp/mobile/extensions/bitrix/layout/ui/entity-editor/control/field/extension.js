@@ -2,7 +2,6 @@
  * @module layout/ui/entity-editor/control/field
  */
 jn.define('layout/ui/entity-editor/control/field', (require, exports, module) => {
-
 	const {
 		FieldFactory,
 		BooleanType,
@@ -13,21 +12,20 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 		UrlType,
 		AddressType,
 		MoneyType,
+		CrmStageSelectorType,
 	} = require('layout/ui/fields');
-
+	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
-	const { isEqual, get } = require('utils/object');
+	const { isEqual, get, isFunction } = require('utils/object');
 	const { stringify } = require('utils/string');
+	const { useCallback } = require('utils/function');
 	const { PlanRestriction } = require('layout/ui/plan-restriction');
 	const { DuplicateTooltip } = require('layout/ui/entity-editor/tooltip/duplicate');
-	const { useCallback } = require('utils/function');
 	const { EntityEditorBaseControl } = require('layout/ui/entity-editor/control/base');
 	const { EntityEditorControlOptions } = require('layout/ui/entity-editor/editor-enum/control-options');
 	const { EntityEditorMode } = require('layout/ui/entity-editor/editor-enum/mode');
 	const { EntityEditorModeOptions } = require('layout/ui/entity-editor/editor-enum/mode-options');
-
-	const EDIT_MODE_FIELD_BACKGROUND_COLOR = '#f8fafb';
 
 	const INLINE_FIELDS = new Set([
 		StringType,
@@ -53,6 +51,7 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 			this.fieldRef = null;
 			this.fieldViewRef = null;
 			this.bindRef = this.bindRef.bind(this);
+			this.bindForwardedRef = this.bindForwardedRef.bind(this);
 			this.onChangeState = this.onChangeState.bind(this);
 			this.onFocusIn = this.onFocusIn.bind(this);
 			this.onFocusOut = this.onFocusOut.bind(this);
@@ -103,6 +102,7 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 
 			return {
 				ref: this.bindRef,
+				forwardedRef: this.bindForwardedRef,
 				id,
 				uid: this.getUid(),
 				type: this.type,
@@ -126,6 +126,9 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 				hasHiddenEmptyView: true,
 				tooltip: isFunction(tooltip) ? useCallback(tooltip) : null,
 				renderAdditionalContent: this.renderAdditionalContent,
+				entityTypeId: this.getDataParam('entityTypeId', 0),
+				categoryId: this.getDataParam('categoryId', 0),
+				isNewEntity: this.isNewEntity(),
 			};
 		}
 
@@ -147,18 +150,33 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 
 		hasDuplicate()
 		{
-			return DuplicateTooltip.isEnabledDuplicateControl(this.schemeElement.getData(), this.editor.getEntityTypeName());
+			return DuplicateTooltip.isEnabledDuplicateControl(
+				this.schemeElement.getData(),
+				this.editor.getEntityTypeName(),
+			);
 		}
 
 		bindRef(ref)
 		{
-			this.fieldRef = ref;
+			if (ref && !ref.isConnected)
+			{
+				this.fieldRef = ref;
+			}
+		}
+
+		bindForwardedRef(ref)
+		{
+			if (ref && ref.isConnected)
+			{
+				this.fieldRef = ref;
+			}
 		}
 
 		isReadOnly()
 		{
 			const readonly = !this.isEditable();
 			const showReadOnlyOnInitialize = this.isInitialReadOnly() && this.getMode() === EntityEditorMode.view;
+
 			return readonly || showReadOnlyOnInitialize;
 		}
 
@@ -206,7 +224,9 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 					style: {
 						display: this.isVisible() ? 'flex' : 'none',
 					},
-					ref: (ref) => this.fieldViewRef = ref,
+					ref: (ref) => {
+						this.fieldViewRef = ref;
+					},
 					onClick: this.onFieldClick,
 				},
 				this.renderField(),
@@ -227,12 +247,22 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 					externalWrapperBackgroundColor: this.getFieldBackgroundColor(),
 					externalWrapperBorderColor: this.getFieldBorderColor(),
 				},
-				deepMergeStyles: {
-					externalWrapper: this.showBorder ? {} : {
-						marginHorizontal: 16,
-					},
-				},
+				deepMergeStyles: this.getDeepMergeStyles(),
 				ellipsize: true,
+			};
+		}
+
+		getDeepMergeStyles()
+		{
+			if (this.showBorder || this.type === CrmStageSelectorType)
+			{
+				return {};
+			}
+
+			return {
+				externalWrapper: {
+					marginHorizontal: 16,
+				},
 			};
 		}
 
@@ -240,7 +270,7 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 		{
 			if (this.hasSolidBorderContainer())
 			{
-				return this.parent.isInEditMode() ? EDIT_MODE_FIELD_BACKGROUND_COLOR : '#fcfcfd';
+				return AppTheme.colors.bgContentPrimary;
 			}
 
 			return null;
@@ -253,12 +283,12 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 				return this.getSolidBorderContainerColor();
 			}
 
-			return this.parent.isInEditMode() ? '#e4e6e7' : '#edeef0';
+			return this.parent.isInEditMode() ? AppTheme.colors.bgSeparatorPrimary : AppTheme.colors.base7;
 		}
 
 		getSolidBorderContainerColor()
 		{
-			return '#dfe0e3';
+			return AppTheme.colors.bgSeparatorPrimary;
 		}
 
 		onChangeState(value)
@@ -283,7 +313,7 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 						setTimeout(() => this.editor.scrollToFocusedField(this.fieldViewRef), 300);
 					}
 				})
-			;
+				.catch(console.error);
 		}
 
 		onFocusOut()
@@ -301,11 +331,11 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 
 			if (this.isEditRestricted() && this.getFeatureSlider())
 			{
-				promise.then(() => this.showFeatureSlider());
+				promise.then(() => this.showFeatureSlider()).catch(console.error);
 			}
 			else
 			{
-				promise.then(() => this.switchToSingleEditMode());
+				promise.then(() => this.switchToSingleEditMode()).catch(console.error);
 			}
 		}
 
@@ -396,10 +426,12 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 				return new Promise((resolve) => {
 					this.setState({ value }, () => {
 						this.markAsChanged();
-						this.customEventEmitter.emit('UI.EntityEditor.Field::onChangeState', [{
-							fieldName: this.getName(),
-							fieldValue: value,
-						}]);
+						this.customEventEmitter.emit('UI.EntityEditor.Field::onChangeState', [
+							{
+								fieldName: this.getName(),
+								fieldValue: value,
+							},
+						]);
 
 						resolve();
 					});
@@ -480,6 +512,11 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 				return stringify(amount) !== '';
 			}
 
+			if (this.type === CrmStageSelectorType)
+			{
+				return true;
+			}
+
 			const fieldInstance = this.getFieldInstance(value);
 
 			return !fieldInstance.isEmpty();
@@ -538,7 +575,7 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 				return Promise.resolve();
 			}
 
-			return new Promise(resolve => {
+			return new Promise((resolve) => {
 				this.setState({ mode }, () => {
 					let promise = Promise.resolve();
 
@@ -553,7 +590,7 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 					promise.then(() => {
 						this.processControlModeChange(notify);
 						resolve();
-					});
+					}).catch(console.error);
 				});
 			});
 		}
@@ -622,7 +659,9 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 			},
 			wrapper: {
 				borderBottomWidth: showBorder ? 0.5 : 0,
-				borderBottomColor: parentMode === EntityEditorMode.edit ? '#e4e6e7' : '#edeef0',
+				borderBottomColor: parentMode === EntityEditorMode.edit
+					? AppTheme.colors.bgSeparatorPrimary
+					: AppTheme.colors.base7,
 			},
 		}),
 	};

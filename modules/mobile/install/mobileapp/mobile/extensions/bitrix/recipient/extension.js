@@ -1,35 +1,37 @@
 /**
-* @bxjs_lang_path extension.php
-*/
-(() =>
-{
+ * @bxjs_lang_path extension.php
+ */
+(() => {
+	const require = (ext) => jn.require(ext);
+
+	const AppTheme = require('apptheme');
 	/**
 	 * @typedef {string} RecipientDataSet {{GROUPS: string, USERS: string, DEPARTMENTS: string}}
 	 * @enum {RecipientDataSet}
 	 */
 	const RecipientDataSet = {
-		USERS: "users",
-		GROUPS: "groups",
-		DEPARTMENTS: "departments"
+		USERS: 'users',
+		GROUPS: 'groups',
+		DEPARTMENTS: 'departments',
 	};
 
 	const RecipientColorSet = {
-		user: "#d5f1fc",
-		userExtranet: "#ffa900",
-		userAll: "#dbf188",
-		group: "#ade7e4",
-		groupExtranet: "#ffa900",
-		department: "#e2e3e5"
+		user: AppTheme.colors.accentSoftBlue1,
+		userExtranet: AppTheme.colors.accentMainWarning,
+		userAll: AppTheme.colors.accentSoftGreen1,
+		group: AppTheme.colors.accentSoftBlue1,
+		groupExtranet: AppTheme.colors.accentMainWarning,
+		department: AppTheme.colors.bgSeparatorSecondary,
 	};
 
 	const RecipientTitleColorSet = {
-		userExtranet: "#ca8600",
-		groupExtranet: "#ca8600",
+		userExtranet: AppTheme.colors.accentMainWarning,
+		groupExtranet: AppTheme.colors.accentMainWarning,
 	};
 
 	const RecipientSubtitleColorSet = {
-		userExtranet: "#ca8600",
-		groupExtranet: "#ca8600",
+		userExtranet: AppTheme.colors.accentMainWarning,
+		groupExtranet: AppTheme.colors.accentMainWarning,
 	};
 
 	/**
@@ -41,24 +43,24 @@
 		 * @param {array<RecipientDataSet>} data
 		 * @param options
 		 * @return {null}
-		 **/
+		 * */
 		constructor(data = null, options = {})
 		{
 			this.internalResolve = null;
-			if (data == null)  {
+			if (data == null)
+			{
 				return null;
 			}
 
 			this.ui = dialogs.createRecipientPicker();
 			this.currentScope = null;
 			this.datasets = {};
-			let entries = Object.values(RecipientDataSet);
-			let scopes = [];
-			data.forEach(item =>
-			{
-				if (entries.indexOf(item) >= 0)
+			const entries = Object.values(RecipientDataSet);
+			const scopes = [];
+			data.forEach((item) => {
+				if (entries.includes(item))
 				{
-					scopes.push({title: BX.message(`RECIPIENT_SCOPE_${item.toUpperCase()}`), id: item});
+					scopes.push({ title: BX.message(`RECIPIENT_SCOPE_${item.toUpperCase()}`), id: item });
 					if (scopes.length === 1)
 					{
 						this.currentScope = item;
@@ -72,21 +74,22 @@
 				this.ui.setScopes(scopes);
 			}
 			this.ui.setListener((event, data) => this.eventHandler(event, data));
-			let dataset = this.datasets[this.currentScope];
-			reflectFunction(dataset, "init", dataset).call(dataset, false);
+			const dataset = this.datasets[this.currentScope];
+			reflectFunction(dataset, 'init', dataset).call(dataset, false);
 		}
 
 		createDepartmentsObject(options)
 		{
-			let departmentsList = new DepartmentsList(this.ui);
-			let prepareItems = (items) => {
+			const departmentsList = new DepartmentsList(this.ui);
+			const prepareItems = (items) => {
 				let result = [];
 				if (Array.isArray(items))
 				{
-					result = items.map(item => {
+					result = items.map((item) => {
 						item = DepartmentsList.prepareItemForDrawing(item);
 						item.id = `${DepartmentsList.id()}/${item.id}`;
 						item.color = RecipientUtils.getColor('department');
+
 						return item;
 					});
 				}
@@ -97,32 +100,33 @@
 				{
 					prepareItems(items)
 					{
-						return prepareItems(items)
+						return prepareItems(items);
 					},
-					onListFill: function (data)
+					onListFill(data)
 					{
-						if (data.text === "")
+						if (data.text === '')
 						{
 							this.draw();
 						}
 						else
 						{
-							this.draw({filter: data.text});
-							this.searcher.fetchResults(data)
+							this.draw({ filter: data.text });
+							this.searcher.fetchResults(data);
 						}
 					},
-					onFocusLost: function ()
+					onFocusLost()
 					{
 						this.abortAllRequests();
 					},
-				})
+				},
+			)
 				.setSearchDelegate(
 					new (
 						class extends BaseListSearchDelegate
 						{
 							prepareItems(items)
 							{
-								return prepareItems(items)
+								return prepareItems(items);
 							}
 
 							onSearchRequestStart(items, sections)
@@ -135,15 +139,15 @@
 							{
 								return {
 									LIMIT: 50,
-									FIND: query
-								}
+									FIND: query,
+								};
 							}
 
 							getSearchMethod()
 							{
-								return "mobile.intranet.departments.get";
+								return 'mobile.intranet.departments.get';
 							}
-						})(this.ui)
+						})(this.ui),
 				);
 
 			return departmentsList;
@@ -154,13 +158,13 @@
 			return new GroupList(this.ui)
 				.setHandlers(
 					{
-						prepareItems:(items) => {
+						prepareItems: (items) => {
 							let result = [];
 							if (!Array.isArray(items))
 							{
 								return result;
 							}
-							result = items.map(item=>{
+							result = items.map((item) => {
 								item = GroupList.prepareItemForDrawing(item);
 								item.id = `${GroupList.id()}/${item.id}`;
 								item.color = (item.params.extranet ? RecipientUtils.getColor('groupExtranet') : RecipientUtils.getColor('group'));
@@ -170,73 +174,70 @@
 										title: {
 											font: {
 												color: RecipientUtils.getTitleColor('groupExtranet'),
-											}
+											},
 										},
 									};
 								}
 
 								return item;
 							});
+
 							return result;
 						},
-						onListFill: function (data)
+						onListFill(data)
 						{
-							if (data.text === "")
+							if (data.text === '')
 							{
 								this.draw();
 							}
 							else
 							{
-								this.draw({filter: data.text});
+								this.draw({ filter: data.text });
 							}
 						},
-						onFocusLost: function ()
+						onFocusLost()
 						{
 							this.abortAllRequests();
 						},
-					});
-
+					},
+				);
 		}
 
 		createUsersObject(options = {})
 		{
-			let userList = new UserList(this.ui, {
-				filterUserList: (items, loadMore) =>
-				{
+			const userList = new UserList(this.ui, {
+				filterUserList: (items, loadMore) => {
 					userList.recent.read();
-					if(userList.searcher.currentQueryString === "" && options.useRecentSelected)
+					if (userList.searcher.currentQueryString === '' && options.useRecentSelected)
 					{
 						return userList.recent.get();
 					}
-					else
-					{
-						userList.recent.read();
-					}
+
+					userList.recent.read();
 
 					let hasAllRecipients = false;
 
-					if(!loadMore && !hasAllRecipients && userList.searcher.currentQueryString.length  === 0 && options.showAll === true)
+					if (!loadMore && !hasAllRecipients && userList.searcher.currentQueryString.length === 0 && options.showAll === true)
 					{
 						items.unshift({
-							title: BX.message("RECIPIENT_ALL"),
-							subtitle: "",
+							title: BX.message('RECIPIENT_ALL'),
+							subtitle: '',
 							color: RecipientUtils.getColor('userAll'),
-							id: "A",
-							params: {id: "A"},
-							sectionCode: "people",
-							sortValues:{
-								name: BX.message("RECIPIENT_ALL")
+							id: 'A',
+							params: { id: 'A' },
+							sectionCode: 'people',
+							sortValues: {
+								name: BX.message('RECIPIENT_ALL'),
 							},
 						});
 					}
 
-					let modifiedItems = items
-						.filter(item => options.hideUnnamed ? item.hasName : true)
-						.map(item =>
-						{
+					return items
+						.filter((item) => (options.hideUnnamed ? item.hasName : true))
+						.map((item) => {
 							if (item.params.id)
 							{
-								if (item.params.id === "A" && options.showAll === true)
+								if (item.params.id === 'A' && options.showAll === true)
 								{
 									item.color = RecipientUtils.getColor('userAll');
 									hasAllRecipients = true;
@@ -250,7 +251,7 @@
 										title: {
 											font: {
 												color: RecipientUtils.getTitleColor('userExtranet'),
-											}
+											},
 										},
 									};
 									item.color = RecipientUtils.getColor('userExtranet');
@@ -265,14 +266,11 @@
 
 							return item;
 						});
-
-					return modifiedItems;
 				},
-				onSearchResult: (items, sections, list, state) =>
-				{
-					if (state === "searching")
+				onSearchResult: (items, sections, list, state) => {
+					if (state === 'searching')
 					{
-						this.ui.addItems(items, false)
+						this.ui.addItems(items, false);
 					}
 					else
 					{
@@ -282,13 +280,13 @@
 				eventHandlers()
 				{
 					return {
-						onFocusLost: function ()
+						onFocusLost()
 						{
 							this.abortAllRequests();
 						},
-						onListFill: function (data)
+						onListFill(data)
 						{
-							if (data.text === "")
+							if (data.text === '')
 							{
 								if (options.useRecentSelected)
 								{
@@ -299,59 +297,62 @@
 							}
 							else
 							{
-								this.draw({filter: data.text});
+								this.draw({ filter: data.text });
 								this.searcher.fetchResults(data);
 							}
-						}
-					}
-				}
+						},
+					};
+				},
 			});
 
 			userList.setOptions({
 				disablePagination: true,
-				filter: (options.filter ? options.filter : {})
+				filter: (options.filter ? options.filter : {}),
 			});
 			userList.recent = {
-				limit:10,
-				read:function(){
-					this.lastSelected = Application.storageById("recipients").getObject("last", {users:[]});
+				limit: 10,
+				read()
+				{
+					this.lastSelected = Application.storageById('recipients').getObject('last', { users: [] });
 				},
-				get:function()
+				get()
 				{
 					this.read();
-					return this.lastSelected.users.map(user =>{
-						user.hasName = user.title !== "";
+
+					return this.lastSelected.users.map((user) => {
+						user.hasName = user.title !== '';
 						delete user.checked;
-						user.sectionCode = "people";
+						user.sectionCode = 'people';
+
 						return user;
 					});
 				},
-				add:function(users)
+				add(users)
 				{
-					let lastSelected = this.lastSelected["users"];
-					users.forEach(user=>
-					{
-						if(!lastSelected.find(selected=>user.id === selected.id))
+					const lastSelected = this.lastSelected.users;
+					users.forEach((user) => {
+						if (!lastSelected.find((selected) => user.id === selected.id))
 						{
 							lastSelected.unshift(user);
 						}
 					});
 
-					while(lastSelected.length > this.limit)
+					while (lastSelected.length > this.limit)
 					{
 						lastSelected.pop();
 					}
 
-					Application.storageById("recipients").setObject("last", {users: lastSelected});
+					Application.storageById('recipients').setObject('last', { users: lastSelected });
+
 					return this.lastSelected;
-				}
+				},
 			};
 
-
-			BX.addCustomEvent("onRecipientSelected", (selectedData)=>
-			{
-				if(selectedData.users)
+			BX.addCustomEvent('onRecipientSelected', (selectedData) => {
+				if (selectedData.users)
+				{
 					userList.recent.add(selectedData.users);
+				}
 			});
 
 			return userList;
@@ -359,114 +360,118 @@
 
 		eventHandler(event, data)
 		{
-			if (event === "onScopeChanged")
+			if (event === 'onScopeChanged')
 			{
-				let prevDataSet = this.datasets[this.currentScope];
-				reflectFunction(prevDataSet.eventHandlers, "onFocusLost", prevDataSet).call(prevDataSet, false);
+				const prevDataSet = this.datasets[this.currentScope];
+				reflectFunction(prevDataSet.eventHandlers, 'onFocusLost', prevDataSet).call(prevDataSet, false);
 				this.currentScope = data.scope.id;
-				let dataset = this.datasets[this.currentScope];
-				reflectFunction(dataset, "init", dataset).call(dataset, false);
-				reflectFunction(dataset.eventHandlers, "onListFill", dataset).call(dataset, data);
+				const dataset = this.datasets[this.currentScope];
+				reflectFunction(dataset, 'init', dataset).call(dataset, false);
+				reflectFunction(dataset.eventHandlers, 'onListFill', dataset).call(dataset, data);
 			}
-			else if(event === "onSelectedChanged")
+			else if (event === 'onSelectedChanged')
 			{
-				if(this.singleChoose) {
-					this.ui.close(()=>this.callResolve(data.items));
+				if (this.singleChoose)
+				{
+					this.ui.close(() => this.callResolve(data.items));
 				}
 			}
 			else
 			{
-
-
-				let dataset = this.datasets[this.currentScope];
-				reflectFunction(dataset.eventHandlers, event, dataset).call(dataset, data)
+				const dataset = this.datasets[this.currentScope];
+				reflectFunction(dataset.eventHandlers, event, dataset).call(dataset, data);
 			}
 		}
 
 		/**
 		 * @return {Promise}
 		 */
-		open(options = {}) {
-			let title = options.title || BX.message("RECIPIENT_TITLE");
-			this.singleChoose = options.singleChoose || false
-			this.ui.setTitle({text: title});
+		open(options = {})
+		{
+			const title = options.title || BX.message('RECIPIENT_TITLE');
+			this.singleChoose = options.singleChoose || false;
+			this.ui.setTitle({ text: title });
 			let selected = [];
-			if(typeof options.selected === "object"){
+			if (typeof options.selected === 'object')
+			{
 				selected = Object.keys(options.selected)
-					.reduce((result, key) =>
-					{
-						let selected = options.selected[key].map(item => {
-							if (typeof item.id !== "undefined")
-								item.id = key + "/" + item.id;
-							return item
+					.reduce((result, key) => {
+						const selected = options.selected[key].map((item) => {
+							if (typeof item.id !== 'undefined')
+							{
+								item.id = `${key}/${item.id}`;
+							}
+
+							return item;
 						});
 
-						return result.concat(selected)
-
-					}, [])
+						return result.concat(selected);
+					}, []);
 			}
 
-			this.options = {returnShortFormat: false, allowMultipleSelection: true, singleChoose: false};
-			if(typeof options === "object") {
+			this.options = { returnShortFormat: false, allowMultipleSelection: true, singleChoose: false };
+			if (typeof options === 'object')
+			{
 				this.options = Object.assign(this.options, options);
 			}
 
-			return new Promise((resolve, reject) =>
-			{
+			return new Promise((resolve, reject) => {
 				this.internalResolve = resolve;
 				this.ui.allowMultipleSelection(this.options.allowMultipleSelection);
 
-				if(this.options.title)
+				if (this.options.title)
 				{
-					if(typeof this.options.title === "string")
-						this.ui.setTitle({text: this.options.title});
+					if (typeof this.options.title === 'string')
+					{
+						this.ui.setTitle({ text: this.options.title });
+					}
 					else
-						this.ui.setTitle(this.options.title)
+					{
+						this.ui.setTitle(this.options.title);
+					}
 				}
 				this.ui.show()
-					.then(data => this.callResolve(data))
-					.catch(e => {
-							console.error(e);
-							reject(e);
-						}
-					);
-				setTimeout(()=>{
+					.then((data) => this.callResolve(data))
+					.catch((e) => {
+						console.error(e);
+						reject(e);
+					});
+				setTimeout(() => {
 					this.ui.setSelected(selected);
-				} , 0)
+				}, 0);
 			});
-
 		}
 
-		callResolve(data) {
-			let scopes = Object.keys(this.datasets);
-			let initDataFunction = ()=>scopes.reduce((result, value) =>
-			{
+		callResolve(data)
+		{
+			const scopes = Object.keys(this.datasets);
+			const initDataFunction = () => scopes.reduce((result, value) => {
 				result[value] = [];
+
 				return result;
 			}, {});
-			let initResult = initDataFunction();
-			let rawResult = initDataFunction();
-			let result = data.reduce((result, item) =>
-			{
-				let splitData = item.id.split("/");
+			const initResult = initDataFunction();
+			const rawResult = initDataFunction();
+			const result = data.reduce((result, item) => {
+				const splitData = item.id.split('/');
 				if (splitData.length > 1)
 				{
-					let scope = splitData[0];
-					let id = splitData[1];
-					if (scopes.indexOf(scope) >= 0)
+					const scope = splitData[0];
+					const id = splitData[1];
+					if (scopes.includes(scope))
 					{
-						if(this.options.returnShortFormat === true)
+						if (this.options.returnShortFormat === true)
 						{
-							result[scope].push(id)
+							result[scope].push(id);
 						}
 						else
 						{
 							result[scope].push({
-								"title": item.title,
-								"subtitle": item.subtitle,
-								"id": id,
-								"params": item.params,
-								"imageUrl": item.imageUrl,
+								title: item.title,
+								subtitle: item.subtitle,
+								id,
+								params: item.params,
+								imageUrl: item.imageUrl,
 							});
 						}
 
@@ -477,24 +482,28 @@
 				return result;
 			}, initResult);
 
-			BX.onCustomEvent("onRecipientSelected", [rawResult]);
-			this.internalResolve.call(null, result)
+			BX.onCustomEvent('onRecipientSelected', [rawResult]);
+			this.internalResolve.call(null, result);
 		}
 	}
 
 	const RecipientUtils = {
-		getColor(type) {
+		getColor(type)
+		{
 			return (RecipientColorSet[type] ? RecipientColorSet[type] : '');
 		},
-		getTitleColor(type) {
+		getTitleColor(type)
+		{
 			return (RecipientTitleColorSet[type] ? RecipientTitleColorSet[type] : '');
 		},
-		getSubtitleColor(type) {
+		getSubtitleColor(type)
+		{
 			return (RecipientSubtitleColorSet[type] ? RecipientSubtitleColorSet[type] : '');
-		}
+		},
 	};
 
 	this.RecipientUtils = RecipientUtils;
 
 	jnexport(RecipientList);
 })();
+

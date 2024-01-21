@@ -2,6 +2,7 @@
  * @module layout/ui/wizard/progress-bar
  */
 jn.define('layout/ui/wizard/progress-bar', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @class ProgressBar
@@ -14,6 +15,17 @@ jn.define('layout/ui/wizard/progress-bar', (require, exports, module) => {
 
 			this.settings = props.step.getProgressBarSettings();
 			this.step = props.step;
+		}
+
+		componentWillReceiveProps(props)
+		{
+			super.componentWillReceiveProps(props);
+
+			if (props.step)
+			{
+				this.settings = props.step.getProgressBarSettings();
+				this.step = props.step;
+			}
 		}
 
 		render()
@@ -103,10 +115,10 @@ jn.define('layout/ui/wizard/progress-bar', (require, exports, module) => {
 				style: {
 					marginLeft: 11,
 					marginTop: 4,
-					fontWeight: 500,
+					fontWeight: '500',
 					flexShrink: 1,
 					fontSize: 16,
-					color: '#333333',
+					color: AppTheme.colors.base1,
 					...title.style,
 				},
 			});

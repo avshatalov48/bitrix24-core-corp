@@ -1,6 +1,8 @@
 (() => {
+	const require = (ext) => jn.require(ext);
 
-	const { get } = jn.require('utils/object');
+	const { get } = require('utils/object');
+	const { AppTheme } = require('apptheme/extended');
 
 	const styles = {
 		container: {
@@ -10,7 +12,7 @@
 			bottom: 0,
 		},
 		shadow: (componentStyle) => ({
-			color: get(componentStyle, 'shadowColor', '#e6e7e9'),
+			color: get(componentStyle, 'shadowColor', AppTheme.colors.shadowPrimary),
 			radius: 3,
 			offset: {
 				y: -3,
@@ -29,7 +31,7 @@
 				borderTopRightRadius: get(componentStyle, 'borderRadius', 12),
 				borderTopLeftRadius: get(componentStyle, 'borderRadius', 12),
 				flexDirection: 'row',
-				backgroundColor: get(componentStyle, 'backgroundColor', '#ffffff'),
+				backgroundColor: get(componentStyle, 'backgroundColor', AppTheme.colors.bgContentPrimary),
 				alignItems: 'center',
 				paddingLeft: get(componentStyle, 'paddingLeft', 8),
 				paddingRight: get(componentStyle, 'paddingRight', 8),
@@ -46,8 +48,9 @@
 	{
 		render()
 		{
-			const { toolbarRef } = this.props;
+			const { toolbarRef, shadow = true } = this.props;
 			const safeArea = BX.prop.getBoolean(this.props, 'safeArea', true);
+			const ViewType = shadow ? Shadow : View;
 
 			return View(
 				{
@@ -59,7 +62,7 @@
 					},
 					style: styles.container,
 				},
-				Shadow(
+				ViewType(
 					styles.shadow(this.componentStyle),
 					View(
 						{
@@ -99,5 +102,4 @@
 
 	this.UI = this.UI || {};
 	this.UI.BottomToolbar = BottomToolbar;
-
 })();

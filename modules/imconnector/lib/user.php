@@ -13,7 +13,7 @@ class User
 
 		foreach ($searchIds as $id)
 		{
-			$agentName = '\Bitrix\ImOpenLines\Session\Agent::replacementUserAgent(' . $replaceId . ', ' . $id . ');';
+			$agentName = 'Bitrix\ImOpenLines\Session\Agent::replacementUserAgent(' . $replaceId . ', ' . $id . ');';
 
 			$isAgent = \CAgent::getList([], [
 				'MODULE_ID' => $moduleId,

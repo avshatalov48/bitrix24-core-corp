@@ -15,7 +15,7 @@ class DashboardDataProvider extends DataProvider
 	}
 
 	public function getSettings(): Settings
-    {
+	{
 		return $this->settings;
 	}
 

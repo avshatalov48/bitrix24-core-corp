@@ -30,6 +30,8 @@ use Bitrix\Tasks\Internals\Registry\TagRegistry;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\Task\TaskTagTable;
+use Bitrix\Tasks\Provider\Tag\TagList;
+use Bitrix\Tasks\Provider\Tag\TagQuery;
 use Bitrix\Tasks\Provider\TaskProvider;
 use Bitrix\Main\Error;
 
@@ -43,7 +45,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 	public const TAGS_PAGE_SIZE = 10;
 	public const TASKS_PAGE_SIZE = 10;
 	private Tag $tagService;
-
+	private TagList $list;
 	private ErrorCollection $errorCollection;
 	private int $userId;
 	private int $groupId;
@@ -75,6 +77,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 			$this->canUseGridActions = $this->canUseGridActions($this->groupId);
 		}
 		$this->errorCollection = new ErrorCollection();
+		$this->list = new TagList();
 	}
 
 	private function setTagService(): void
@@ -85,11 +88,6 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 	private function setGroupId(): void
 	{
 		$this->groupId = (int)$this->request->get('GROUP_ID');
-	}
-
-	private function getTag(): Tag
-	{
-		return new Tag($this->userId);
 	}
 
 	private function setUserId(): void
@@ -128,16 +126,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 			return [];
 		}
 
-		if ($groupId > 0)
-		{
-			$curName = $this->getTag()->getByIdByGroup($groupId, $tagId);
-		}
-		else
-		{
-			$curName = $this->getTag()->getByIdByUser($tagId);
-		}
-
-		$this->getTag()->delete($tagId);
+		$this->tagService->delete([$tagId]);
 
 		$members = $this->getGroupMembers($groupId);
 		$members[] = $this->userId;
@@ -148,7 +137,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 			'command' => PushCommand::TAG_UPDATED,
 			'params' => [
 				'newTagName' => '',
-				'oldTagName' => $curName,
+				'oldTagName' => '',
 				'groupId' => $groupId,
 				'userId' => $this->userId,
 			],
@@ -168,7 +157,20 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 			$this->addForbiddenError();
 			return [];
 		}
-		return $this->getTag()->getTaskTags($taskId);
+
+		$query = new TagQuery();
+		$query
+			->setSelect(['NAME'])
+			->setWhere(['TASK_ID' => $taskId]);
+
+		$collection = $this->list->getCollection($query);
+		$names = [];
+		foreach ($collection as $tagObject)
+		{
+			$names[] = $tagObject->getName();
+		}
+
+		return $names;
 	}
 
 	public function addTagAction(string $newTag, int $groupId, int $taskId): ?array
@@ -271,18 +273,21 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 				'error' => Loc::getMessage('TAG_ACTION_NOT_ALLOWED'),
 			];
 		}
+
+		$query = new TagQuery();
+		$query->setSelect(['NAME'])->setWhere(['ID' => $tagId]);
+		$collection = $this->list->getCollection($query);
+
+		$currentName = (string)$collection->getByPrimary($tagId)?->getName();
+		if ($currentName === $newName)
+		{
+			return [
+				'success' => false,
+				'error' => '',
+			];
+		}
 		if ($groupId > 0)
 		{
-			$curName = $this->tagService->getByIdByGroup($groupId, $tagId);
-
-			if ($curName === $newName)
-			{
-				return [
-					'success' => false,
-					'error' => '',
-				];
-			}
-
 			if ($this->tagService->isExistsByGroup($groupId, $newName))
 			{
 				return [
@@ -297,16 +302,6 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 		}
 		else
 		{
-			$curName = $this->tagService->getByIdByUser($tagId);
-
-			if ($curName === $newName)
-			{
-				return [
-					'success' => false,
-					'error' => '',
-				];
-			}
-
 			if ($this->tagService->isExistsByUser($newName))
 			{
 				return [
@@ -318,13 +313,13 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 			$recipients = $this->userId;
 		}
 
-		$this->getTag()->edit($tagId, $newName);
+		$this->tagService->edit($tagId, $newName);
 
 		PushService::addEvent($recipients, [
 			'module_id' => 'tasks',
 			'command' => PushCommand::TAG_UPDATED,
 			'params' => [
-				'oldTagName' => $curName,
+				'oldTagName' => $currentName,
 				'newTagName' => $newName,
 				'groupId' => $groupId,
 			],
@@ -366,7 +361,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 
 		if ($isSuccessfully)
 		{
-			$this->getTag()->delete($tags);
+			$this->tagService->delete($tags);
 
 			$members = $this->getGroupMembers($groupId);
 			$members[] = $this->userId;
@@ -615,7 +610,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 				'id' => (int)$task['ID'],
 				'columns' => [
 					'NAME' =>
-						$this->prepareTaskGridRow((int)$task['ID'], $task['TITLE'], $pathToTask, $groupId),
+						$this->prepareTaskGridRow((int)$task['ID'], $task['TITLE'], $pathToTask),
 					'RESPONSIBLE_ID' =>
 						$this->prepareTaskGridResponsible($task['RESPONSIBLE_ID'], $fullName, $pathToUser),
 					'STATUS' =>
@@ -702,7 +697,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 		];
 	}
 
-	private function prepareTaskGridRow(int $taskId, ?string $name, string $pathToTask, string $groupId): string
+	private function prepareTaskGridRow(int $taskId, ?string $name, string $pathToTask): string
 	{
 		$pathToTask =
 			str_replace(['#user_id#', '#action#', '#task_id#'], [$this->userId, 'view', $taskId], $pathToTask);

@@ -24,6 +24,7 @@ final class ImManager
 			[
 				'TO_CHAT_ID' => $chatId,
 				'FROM_USER_ID' => $fromUserId,
+				'SKIP_USER_CHECK' => 'Y',
 			]
 		);
 

@@ -12,7 +12,7 @@ jn.define('crm/timeline/item/ui/body/blocks', (require, exports, module) => {
 	const { TimelineItemBodyCommentContentBlock: CommentContent } = require('crm/timeline/item/ui/body/blocks/comment-content');
 	const { TimelineItemBodyAudioBlock: TimelineAudio } = require('crm/timeline/item/ui/body/blocks/audio-block');
 	const { TimelineItemBodyClientMark: ClientMark } = require('crm/timeline/item/ui/body/blocks/client-mark');
-	const { TimelineItemBodyDatePillBlock: DatePill } = require('crm/timeline/item/ui/body/blocks/date-pill');
+	const { TimelineItemBodyDatePill: DatePill } = require('crm/timeline/item/ui/body/blocks/date-pill');
 	const { TimelineItemBodyDateBlock: DateBlock } = require('crm/timeline/item/ui/body/blocks/date-block');
 	const { TimelineItemBodyPlayerAlertBlock: PlayerAlert } = require('crm/timeline/item/ui/body/blocks/player-alert');
 	const { TimelineItemBodyEditableDescriptionBlock: EditableDescription } = require('crm/timeline/item/ui/body/blocks/editable-description');
@@ -22,6 +22,7 @@ jn.define('crm/timeline/item/ui/body/blocks', (require, exports, module) => {
 	const { TimelineItemBodyMoneyPill: MoneyPill } = require('crm/timeline/item/ui/body/blocks/money-pill');
 	const { TimelineItemBodyEcommerceDocumentsList: EcommerceDocumentsList } = require('crm/timeline/item/ui/body/blocks/ecommerce-documents-list');
 	const { TimelineMailContactListBlock: ContactList } = require('crm/timeline/item/ui/body/blocks/mail-contact-list');
+	const { TimelineItemBodyItemSelector: ItemSelector } = require('crm/timeline/item/ui/body/blocks/item-selector');
 
 	const AvailableBlocks = {
 		TextBlock,
@@ -34,7 +35,6 @@ jn.define('crm/timeline/item/ui/body/blocks', (require, exports, module) => {
 		CommentContent,
 		TimelineAudio,
 		ClientMark,
-		DatePill,
 		DateBlock,
 		PlayerAlert,
 		EditableDescription,
@@ -44,6 +44,8 @@ jn.define('crm/timeline/item/ui/body/blocks', (require, exports, module) => {
 		MoneyPill,
 		EcommerceDocumentsList,
 		ContactList,
+		ItemSelector,
+		DatePill,
 	};
 
 	/**

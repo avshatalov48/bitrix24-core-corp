@@ -230,6 +230,7 @@ $tabContainerClassName .= ' ui-entity-stream-section-planned-above-overlay';
 				permissions: <?= CUtil::PhpToJSObject($arResult['DOCUMENT_PERMISSIONS']) ?>,
 				masterSliderUrl: <?= CUtil::PhpToJSObject($arResult['MASTER_SLIDER_URL']) ?>,
 				isInventoryManagementDisabled: <?= CUtil::PhpToJSObject($arResult['IS_INVENTORY_MANAGEMENT_DISABLED']) ?>,
+				isProductBatchMethodSelected: <?= CUtil::PhpToJSObject($arResult['IS_PRODUCT_BATCH_METHOD_SELECTED']) ?>,
 				inventoryManagementFeatureCode: <?= CUtil::PhpToJSObject($arResult['INVENTORY_MANAGEMENT_FEATURE_SLIDER_CODE']) ?>,
 				copyLinkButtonId: 'page_url_copy_btn',
 				inventoryManagementSource: <?= CUtil::PhpToJSObject($arResult['INVENTORY_MANAGEMENT_SOURCE']) ?>,

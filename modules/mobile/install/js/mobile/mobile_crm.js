@@ -1,44 +1,52 @@
-BX.namespace("BX.Mobile.Crm");
-
+BX.namespace('BX.Mobile.Crm');
 
 /**
  * @bxjs_lang_path crm_js_messages.php
  */
 BX.Mobile.Crm = {
-	loadPageBlank: function(url)
+	loadPageBlank(url)
 	{
 		if (!url)
+		{
 			return;
+		}
 
+		// eslint-disable-next-line no-undef
 		BXMobileApp.PageManager.loadPageBlank({
-			url: url,
-			bx24ModernStyle:true
+			url,
+			bx24ModernStyle: true,
 		});
 	},
 
-	loadPageModal: function(url)
+	loadPageModal(url)
 	{
 		if (!url)
+		{
 			return;
+		}
 
+		// eslint-disable-next-line no-undef
 		BXMobileApp.PageManager.loadPageModal({
-			url: url
+			url,
 		});
 	},
 
-
-	showErrorAlert: function(text)
+	showErrorAlert(text)
 	{
-		if (!text)
+		if (!url)
+		{
 			return;
+		}
 
-		app.alert({title: BX.message("CRM_JS_ERROR"), text: text});
+		app.alert({ title: BX.message('CRM_JS_ERROR'), text });
 	},
 
-	showRecursiveActionSheet : function(buttons)
+	showRecursiveActionSheet(buttons)
 	{
-		if (typeof buttons !== "object")
+		if (typeof buttons !== 'object')
+		{
 			return;
+		}
 
 		var buttonsToShow = [];
 		var num = 0;
@@ -50,12 +58,12 @@ BX.Mobile.Crm = {
 				if (num >= 5)
 				{
 					buttonsToShow.push({
-						title: BX.message("CRM_JS_MORE"),
+						title: BX.message('CRM_JS_MORE'),
 						callback: BX.proxy(function()
 						{
 							var moreButtons = this.buttons.slice(5);
 							BX.Mobile.Crm.showRecursiveActionSheet(moreButtons);
-						}, {buttons: buttons})
+						}, { buttons }),
 					});
 					break;
 				}
@@ -68,47 +76,56 @@ BX.Mobile.Crm = {
 			}
 		}
 
+		// eslint-disable-next-line no-undef
 		new BXMobileApp.UI.ActionSheet({
-				buttons: buttonsToShow
-			}, 'actionSheetStatus'
-		).show();
+			buttons: buttonsToShow,
+		}, 'actionSheetStatus').show();
 	},
 
-	deleteItem : function(itemId, ajaxPath, mode, event)
+	deleteItem(itemId, ajaxPath, mode, event)
 	{
 		if (!itemId)
+		{
 			return;
+		}
 
-		if (mode != 'list' && mode != 'detail')
+		if (mode !== 'list' && mode !== 'detail')
+		{
 			return;
+		}
 
 		app.confirm({
-			title : BX.message("CRM_JS_DELETE_CONFIRM_TITLE"),
-			text : BX.message("CRM_JS_DELETE_CONFIRM"),
+			title: BX.message('CRM_JS_DELETE_CONFIRM_TITLE'),
+			text: BX.message('CRM_JS_DELETE_CONFIRM'),
 
-			callback : BX.proxy(function(a) {
-				if (a == 2)
-					return false;
-				else if (a == 1)
+			callback: BX.proxy(function(a) {
+				if (Number(a) === 2)
 				{
+					return false;
+				}
+				else if (Number(a) === 1)
+				{
+					// eslint-disable-next-line no-undef
 					BXMobileApp.UI.Page.LoadingScreen.show();
 
 					BX.ajax({
 						url: ajaxPath,
-						method: "POST",
-						dataType: "json",
+						method: 'POST',
+						dataType: 'json',
 						data: {
-							itemId: itemId,
+							itemId,
 							sessid: BX.bitrix_sessid(),
-							action: "delete"
+							action: 'delete',
 						},
-						onsuccess: function(json)
+						onsuccess(json)
 						{
+							// eslint-disable-next-line no-undef
 							BXMobileApp.UI.Page.LoadingScreen.hide();
 
 							if (!BX.type.isPlainObject(json))
 							{
-								BX.Mobile.Crm.showErrorAlert(BX.message("CRM_JS_ERROR_DELETE"));
+								BX.Mobile.Crm.showErrorAlert(BX.message('CRM_JS_ERROR_DELETE'));
+
 								return;
 							}
 
@@ -120,43 +137,45 @@ BX.Mobile.Crm = {
 							{
 								if (event)
 								{
+									// eslint-disable-next-line no-undef
 									BXMobileApp.onCustomEvent(event, {}, true);
 								}
 
-								if (mode == 'list')
+								if (mode === 'list')
 								{
 									BX.Mobile.Crm.List.onDeleteItemHandler(itemId);
 								}
-								else if (mode == 'detail')
+								else if (mode === 'detail')
 								{
 									BX.Mobile.Crm.Detail.onDeleteItemHandler(itemId);
 								}
 							}
 						},
-						onfailure:function(){
-							BX.Mobile.Crm.showErrorAlert(BX.message("CRM_JS_ERROR_DELETE"));
+						onfailure() {
+							BX.Mobile.Crm.showErrorAlert(BX.message('CRM_JS_ERROR_DELETE'));
+							// eslint-disable-next-line no-undef
 							BXMobileApp.UI.Page.LoadingScreen.hide();
-						}
+						},
 					});
 				}
 			}, this),
-			buttons : [BX.message("CRM_JS_BUTTON_OK"), BX.message("CRM_JS_BUTTON_CANCEL")]
+			buttons: [BX.message('CRM_JS_BUTTON_OK'), BX.message('CRM_JS_BUTTON_CANCEL')],
 		});
-	}
+	},
 };
 
-BX.namespace("BX.Mobile.Crm.List");
+BX.namespace('BX.Mobile.Crm.List');
 BX.Mobile.Crm.List = {
-	init: function(params)
+	init(params)
 	{
-		this.ajaxPath = "";
-		this.sortPath = "";
-		this.fieldsPath = "";
-		this.filterPath = "";
-		this.filterAjaxPath = "";
-		this.contextMenuTitle = "";
+		this.ajaxPath = '';
+		this.sortPath = '';
+		this.fieldsPath = '';
+		this.filterPath = '';
+		this.filterAjaxPath = '';
+		this.contextMenuTitle = '';
 
-		if (typeof params === "object" && params)
+		if (typeof params === 'object' && params)
 		{
 			this.ajaxPath = params.ajaxPath;
 			this.sortPath = params.sortPath;
@@ -167,59 +186,65 @@ BX.Mobile.Crm.List = {
 		}
 	},
 
-	showContextMenu : function(customItems)
+	showContextMenu(customItems)
 	{
 		var items = [];
 
-		if (typeof customItems == "object")
+		if (typeof customItems === 'object')
 		{
-			for(var i=0, l=customItems.length; i<l; i++)
+			for(var i = 0, l = customItems.length; i < l; i++)
 			{
 				items.push(customItems[i]);
 			}
 		}
 
-		items.push({
-			name: BX.message("CRM_JS_GRID_FILTER"),
-			image: "/bitrix/js/mobile/images/settings.png",
-			action: BX.proxy(function()
+		items.push(
 			{
-				BX.Mobile.Crm.loadPageModal(this.filterPath);
-			}, this)
-		});
-
-		items.push({
-			name: BX.message("CRM_JS_GRID_FIELDS"),
-			image: "/bitrix/js/mobile/images/fields.png",
-			action: BX.proxy(function()
+				name: BX.message('CRM_JS_GRID_FILTER'),
+				image: '/bitrix/js/mobile/images/settings.png',
+				action: BX.proxy(function()
+				{
+					BX.Mobile.Crm.loadPageModal(this.filterPath);
+				}, this),
+			},
 			{
-				BX.Mobile.Crm.loadPageModal(this.fieldsPath);
-			}, this)
-		});
-
-		items.push({
-			name: BX.message("CRM_JS_GRID_SORT"),
-			image: "/bitrix/js/mobile/images/sort.png",
-			action: BX.proxy(function()
+				name: BX.message('CRM_JS_GRID_FIELDS'),
+				image: '/bitrix/js/mobile/images/fields.png',
+				action: BX.proxy(function()
+				{
+					BX.Mobile.Crm.loadPageModal(this.fieldsPath);
+				}, this),
+			},
 			{
-				BX.Mobile.Crm.loadPageModal(this.sortPath);
-			}, this)
-		});
+				name: BX.message('CRM_JS_GRID_SORT'),
+				image: '/bitrix/js/mobile/images/sort.png',
+				action: BX.proxy(function()
+				{
+					BX.Mobile.Crm.loadPageModal(this.sortPath);
+				}, this),
+			},
+		);
 
+		// eslint-disable-next-line no-undef
 		var menu = new BXMobileApp.UI.Menu({
-			items: items
-		}, "crmMobileMenu");
+			items,
+		}, 'crmMobileMenu');
+		// eslint-disable-next-line no-undef
 		BXMobileApp.UI.Page.TopBar.title.setText(this.contextMenuTitle);
+		// eslint-disable-next-line no-undef
 		BXMobileApp.UI.Page.TopBar.title.show();
-		BXMobileApp.UI.Page.TopBar.title.setCallback(function (){
+		// eslint-disable-next-line no-undef
+		BXMobileApp.UI.Page.TopBar.title.setCallback(() => {
 			menu.show();
 		});
 	},
 
-	showStatusList : function(itemId, statusList, onAfterUpdateEventName)
+	showStatusList(itemId, statusList, onAfterUpdateEventName)
 	{
-		if (typeof statusList !== "object")
+		if (typeof statusList !== 'object')
+		{
 			return;
+		}
 
 		var buttons = [];
 
@@ -229,15 +254,17 @@ BX.Mobile.Crm.List = {
 			{
 				buttons.push({
 					title: statusList[item].NAME,
-					callback:BX.proxy(function()
+					callback: BX.proxy(function()
 					{
-						params = {STATUS_ID: this.status.STATUS_ID, NAME: this.status.NAME, COLOR: this.status.COLOR};
+						params = { STATUS_ID: this.status.STATUS_ID, NAME: this.status.NAME, COLOR: this.status.COLOR };
 						BX.Mobile.Crm.List.changeStatus(itemId, params);
 
-						if (onAfterUpdateEventName){
-							BXMobileApp.addCustomEvent(onAfterUpdateEventName, {});}
-
-					}, {status:statusList[item]})
+						if (onAfterUpdateEventName)
+						{
+							// eslint-disable-next-line no-undef
+							BXMobileApp.addCustomEvent(onAfterUpdateEventName, {});
+						}
+					}, { status: statusList[item] }),
 				});
 			}
 		}
@@ -245,48 +272,56 @@ BX.Mobile.Crm.List = {
 		BX.Mobile.Crm.showRecursiveActionSheet(buttons);
 	},
 
-	applyListFilter: function(filterCode, gridId)
+	applyListFilter(filterCode, gridId)
 	{
+		// eslint-disable-next-line no-undef
 		BXMobileApp.UI.Page.LoadingScreen.show();
 		BX.ajax.post(
 			this.filterAjaxPath,
 			{
 				sessid: BX.bitrix_sessid(),
-				filterCode: filterCode,
-				action: "applyFilter",
-				gridId: gridId
+				filterCode,
+				action: 'applyFilter',
+				gridId,
 			},
-			function()
-			{
+			() => {
+				// eslint-disable-next-line no-undef
 				BXMobileApp.UI.Page.reload();
+				// eslint-disable-next-line no-undef
 				BXMobileApp.UI.Page.LoadingScreen.hide();
-			}
+			},
 		);
 	},
 
-	changeStatus : function(itemId, params)
+	changeStatus(itemId, params)
 	{
-		if (isNaN(itemId) || !(typeof params === "object"))
+		if (Number.isNaN(itemId) || !(typeof params === 'object'))
+		{
 			return;
+		}
 
+		// eslint-disable-next-line no-undef
 		BXMobileApp.UI.Page.PopupLoader.show();
 
 		BX.ajax({
 			url: this.ajaxPath,
-			method: "POST",
-			dataType: "json",
+			method: 'POST',
+			dataType: 'json',
 			data: {
-				itemId: itemId,
+				itemId,
 				sessid: BX.bitrix_sessid(),
-				action: "changeStatus",
-				statusId: params.STATUS_ID
+				action: 'changeStatus',
+				statusId: params.STATUS_ID,
 			},
-			onsuccess: function (json)
+			onsuccess(json)
 			{
+				// eslint-disable-next-line no-undef
 				BXMobileApp.UI.Page.PopupLoader.hide();
 
 				if (!BX.type.isPlainObject(json))
+				{
 					return;
+				}
 
 				if (json.ERROR)
 				{
@@ -294,11 +329,11 @@ BX.Mobile.Crm.List = {
 				}
 				else
 				{
-					var statusNode = document.querySelector("[data-role='mobile-crm-status-entity-" + itemId + "']");
+					var statusNode = document.querySelector(`[data-role='mobile-crm-status-entity-${itemId}']`);
 					if (statusNode)
 					{
-						var statusNameNode = document.querySelector("[data-role='mobile-crm-status-name-" + itemId + "']");
-						var statusBlocks = BX.findChildren(statusNode, {tagName: "span"}, true);
+						var statusNameNode = document.querySelector(`[data-role='mobile-crm-status-name-${itemId}']`);
+						var statusBlocks = BX.findChildren(statusNode, { tagName: 'span'}, true);
 
 						var stopColor = false;
 						if (statusBlocks)
@@ -306,14 +341,15 @@ BX.Mobile.Crm.List = {
 							for (var i = 0; i < statusBlocks.length; i++)
 							{
 								if (stopColor)
-									statusBlocks[i].style.background = "";
+									statusBlocks[i].style.background = '';
 								else
 									statusBlocks[i].style.background = params.COLOR;
 
-								if (statusBlocks[i].getAttribute("data-role") == "mobile-crm-status-block-" + params.STATUS_ID)
+								if (statusBlocks[i].getAttribute('data-role') === `mobile-crm-status-block-${params.STATUS_ID}`)
 									stopColor = true;
 							}
 						}
+
 						if (statusNameNode)
 						{
 							statusNameNode.innerHTML = BX.util.htmlspecialchars(params.NAME);
@@ -321,10 +357,10 @@ BX.Mobile.Crm.List = {
 					}
 					else
 					{
-						var curItem = document.querySelector("[data-id='mobile-grid-item-" + itemId + "']");
+						var curItem = document.querySelector(`[data-id='mobile-grid-item-${itemId}']`);
 						if (curItem)
 						{
-							var statusIcon = BX.findChild(curItem, {className: "mobile-grid-field-title-icon"}, true, false);
+							var statusIcon = BX.findChild(curItem, { className: 'mobile-grid-field-title-icon' }, true, false);
 
 							if (statusIcon)
 							{
@@ -334,25 +370,28 @@ BX.Mobile.Crm.List = {
 					}
 				}
 			},
-			onfailure: function(){
+			onfailure() {
+				// eslint-disable-next-line no-undef
 				BXMobileApp.UI.Page.LoadingScreen.hide();
-			}
+			},
 		});
 	},
 
-	onDeleteItemHandler : function(itemId)
+	onDeleteItemHandler(itemId)
 	{
 		if (!itemId)
+		{
 			return;
+		}
 
-		var itemNode = document.querySelector("[data-id='mobile-grid-item-"+itemId+"']");
+		var itemNode = document.querySelector(`[data-id='mobile-grid-item-${itemId}']`);
 		if (itemNode)
 		{
 			if (
-				BX.hasClass(BX.previousSibling(itemNode), "mobile-grid-change")
+				BX.hasClass(BX.previousSibling(itemNode), 'mobile-grid-change')
 				&&
 				(
-					BX.hasClass(BX.nextSibling(itemNode), "mobile-grid-change")
+					BX.hasClass(BX.nextSibling(itemNode), 'mobile-grid-change')
 					|| !BX.nextSibling(itemNode)
 				)
 			)
@@ -360,38 +399,39 @@ BX.Mobile.Crm.List = {
 
 			BX.remove(itemNode);
 		}
-	}
+	},
 };
 
-BX.namespace("BX.Mobile.Crm.Detail");
+BX.namespace('BX.Mobile.Crm.Detail');
 BX.Mobile.Crm.Detail = {
-	onDeleteItemHandler : function()
+	onDeleteItemHandler()
 	{
-		BXMobileApp.UI.Page.close({drop:true});
+		// eslint-disable-next-line no-undef
+		BXMobileApp.UI.Page.close({ drop: true });
 	},
 
-	collectInterfaceFormData: function(form, dataFormValues)
+	collectInterfaceFormData(form, dataFormValues)
 	{
 		var multivalueCounter = {};
 		for (var i = 0; i < form.elements.length; i++)
 		{
-			if (form[i].tagName === "SELECT")
+			if (form[i].tagName === 'SELECT')
 			{
 				dataFormValues[form[i].name] = '';
 				var options = form[i].options;
-				for (var j = 0; j < options.length; j++){
+				for (var j = 0; j < options.length; j++) {
 					if (options[j].selected && options[j].value){
-						var optionName = (form[i].name).replace('[]','['+j+']');
+						var optionName = (form[i].name).replace('[]', `[${j}]`);
 						dataFormValues[optionName] = options[j].value;
 					}
 				}
 			}
-			else if (form[i].tagName == "INPUT" && form[i].type == "checkbox")
+			else if (form[i].tagName === 'INPUT' && form[i].type === 'checkbox')
 			{
 				if (form[i].checked)
 					dataFormValues[form[i].name] = form[i].value;
 				else
-					dataFormValues[form[i].name] = "";
+					dataFormValues[form[i].name] = '';
 			}
 			else
 			{
@@ -407,11 +447,11 @@ BX.Mobile.Crm.Detail = {
 					{
 						multivalueCounter[fieldName] = 0;
 					}
-					var realFieldName = fieldName + '[' + multivalueCounter[fieldName] + ']';
+					var realFieldName = `${fieldName}[${multivalueCounter[fieldName]}]`;
 					while (dataFormValues.hasOwnProperty(realFieldName))
 					{
 						multivalueCounter[fieldName]++;
-						realFieldName = fieldName + '[' + multivalueCounter[fieldName] + ']';
+						realFieldName = `${fieldName}[${multivalueCounter[fieldName]}]`;
 					}
 					fieldName = realFieldName;
 				}
@@ -420,10 +460,10 @@ BX.Mobile.Crm.Detail = {
 		}
 
 		return dataFormValues;
-	}
+	},
 };
 
-BX.namespace("BX.Mobile.Crm.EntityEditor");
+BX.namespace('BX.Mobile.Crm.EntityEditor');
 
 BX.Mobile.Crm.EntityEditor = (function()
 {

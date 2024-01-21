@@ -52,6 +52,7 @@ class TasksMobileCommentsComponent extends CBitrixComponent
 		$this->arResult['DATE_TIME_FORMAT'] = $this->arParams['DATE_TIME_FORMAT'];
 		$this->arResult['GUID'] = $this->arParams['GUID'];
 		$this->arResult['PATH_TEMPLATE_TO_USER_PROFILE'] = $this->arParams['PATH_TEMPLATE_TO_USER_PROFILE'];
+		$this->arResult['IS_TABS_MODE'] = ($this->arParams['IS_TABS_MODE'] !== 'false');
 	}
 
 	public function getData(): void

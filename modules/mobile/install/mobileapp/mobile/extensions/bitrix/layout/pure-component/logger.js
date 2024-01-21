@@ -7,31 +7,20 @@ jn.define('layout/pure-component/logger', (require, exports, module) => {
 
 	const isAndroid = Application.getPlatform() === 'android';
 
+	const LOG_ALL_DIFFERENCES = false;
+
 	const FONT = {
-		NAME: 'color: #ffcc00; background: #000; font-weight: bold;',
+		NAME: 'color: #ffcc00; background: #000000; font-weight: bold;',
 		CHANGED: 'color: #cc3300; font-weight: bold;',
 		NOT_CHANGED: 'color: #339900; font-weight: bold;',
 	};
 
 	const log = (name, prevProps, nextProps, prevState, nextState) => {
 		const propsChanged = !isEqual(prevProps, nextProps);
-		const stateChanged = !isEqual(prevState, nextState);
-
-		// Android console doesn't support groupCollapsed
-		const consoleGroup = isAndroid ? console.group : console.groupCollapsed;
-		consoleGroup(...getMainMessage(name, propsChanged, stateChanged));
-
 		if (propsChanged)
 		{
-			showDiffMessage('PROPS: ', prevProps, nextProps);
+			showDiffMessage(name, prevProps, nextProps);
 		}
-
-		if (stateChanged)
-		{
-			showDiffMessage('STATE: ', prevState, nextState);
-		}
-
-		console.groupEnd();
 	};
 
 	const getMainMessage = (name, hasPropsChanged, hasStateChanged) => {
@@ -63,7 +52,7 @@ jn.define('layout/pure-component/logger', (require, exports, module) => {
 		// Android console doesn't support font styles
 		if (isAndroid)
 		{
-			message = message.replace(/%c/g, '');
+			message = message.replaceAll('%c', '');
 		}
 
 		return [message, ...styles];
@@ -71,7 +60,16 @@ jn.define('layout/pure-component/logger', (require, exports, module) => {
 
 	const showDiffMessage = (name, prevProps, nextProps) => {
 		const diffProps = findDiffRecursive(prevProps, nextProps);
-		console.log(...diffProps);
+
+		if (diffProps.length > 0)
+		{
+			// Android console doesn't support groupCollapsed
+			const consoleGroup = isAndroid ? console.group : console.groupCollapsed;
+
+			consoleGroup(...getMainMessage(name, true, false));
+			console.log(...diffProps);
+			console.groupEnd();
+		}
 	};
 
 	const findDiffRecursive = (prev, next, path = []) => {
@@ -93,14 +91,14 @@ jn.define('layout/pure-component/logger', (require, exports, module) => {
 					{
 						diff.push(...findDiffRecursive(prevValue, nextValue, [...path, key]));
 					}
-					else if (Type.isFunction(prevValue) && Type.isFunction(nextValue))
+					else if (Type.isFunction(prevValue) || Type.isFunction(nextValue))
 					{
 						diff.push({
 							path: [...path, key],
 							warning: 'Function changes every render, use .bind(this) in constructor instead (or useCallback() if you have some deps).',
 						});
 					}
-					else
+					else if (LOG_ALL_DIFFERENCES)
 					{
 						diff.push({
 							path: [...path, key],

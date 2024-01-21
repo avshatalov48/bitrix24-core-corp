@@ -1,5 +1,8 @@
 <?php
 
 return [
-	'layout/ui/buttons',
+	'extensions' => [
+		'apptheme',
+		'layout/ui/buttons',
+	],
 ];

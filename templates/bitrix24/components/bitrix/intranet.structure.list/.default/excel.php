@@ -75,7 +75,7 @@ endforeach;
 				case 'PERSONAL_MOBILE':
 				case 'PERSONAL_FAX':
 				case 'PERSONAL_PHONE':
-					$arResult['USERS'][$i][$key] = ($arResult['USERS'][$i][$key]{0} == '+' ? '&nbsp;' : '').$arResult['USERS'][$i][$key];
+					$arResult['USERS'][$i][$key] = ($arResult['USERS'][$i][$key][0] == '+' ? '&nbsp;' : '').$arResult['USERS'][$i][$key];
 				break;
 
 				default: $arResult['USERS'][$i][$key] = htmlspecialcharsbx($arResult['USERS'][$i][$key]); break;

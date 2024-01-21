@@ -13,4 +13,5 @@ $MESS["OL_STAT_FILTER_CANCEL_TITLE"] = "Reset filter";
 $MESS["OL_STAT_TITLE"] = "#LINE_NAME# - Statistics";
 $MESS["OL_STAT_USER_ID_CANCEL"] = "Reset employee filter";
 $MESS["OL_STAT_USER_ID_CANCEL_TITLE"] = "Reset employee filter";
+$MESS["OL_STAT_META_RESTRICTION_RU"] = "* The owner, Meta Platforms, Inc., is banned in Russian Federation.";
 ?>

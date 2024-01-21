@@ -37,6 +37,9 @@ use Bitrix\ImBot\Error;
  * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorQueueNumber
  * @method bool operatorQueueNumber(array $params)
  *
+ * @see \Bitrix\Botcontroller\Bot\Network\Command\OperatorOpenNewDialog
+ * @method bool operatorOpenNewDialog(array $params)
+ *
  */
 class Openlines
 {
@@ -50,7 +53,8 @@ class Openlines
 		COMMAND_OPERATOR_START_WRITING = 'operatorStartWriting',
 		COMMAND_START_DIALOG_SESSION = 'startDialogSession',
 		COMMAND_FINISH_DIALOG_SESSION = 'finishDialogSession',
-		COMMAND_OPERATOR_QUEUE_NUMBER = 'operatorQueueNumber'
+		COMMAND_OPERATOR_QUEUE_NUMBER = 'operatorQueueNumber',
+		COMMAND_OPERATOR_OPEN_NEW_DIALOG = 'operatorOpenNewDialog'
 	;
 
 	/** @var ImBot\Http */
@@ -205,6 +209,16 @@ class Openlines
 		{
 			$http = self::instanceHttpClient();
 			$query = $http->query($command, $params, true);
+
+			if (isset($query['error']))
+			{
+				$error = new \Bitrix\ImBot\Error(
+					__METHOD__,
+					$query['error']['code'],
+					$query['error']['msg'],
+				);
+				\Bitrix\ImBot\Bot\Network::addError($error);
+			}
 
 			return !isset($query->error);
 		}

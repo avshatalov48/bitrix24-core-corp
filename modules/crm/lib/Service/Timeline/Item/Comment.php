@@ -27,6 +27,11 @@ class Comment extends Configurable
 		return 'Comment';
 	}
 
+	protected function isBuiltOnlyForCurrentUser(): bool
+	{
+		return true;
+	}
+
 	public function getTitle(): ?string
 	{
 		return Loc::getMessage('CRM_TIMELINE_COMMENT_TITLE');

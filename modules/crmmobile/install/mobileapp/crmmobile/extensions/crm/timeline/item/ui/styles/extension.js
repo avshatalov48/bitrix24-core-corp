@@ -2,12 +2,13 @@
  * @module crm/timeline/item/ui/styles
  */
 jn.define('crm/timeline/item/ui/styles', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { stringify } = require('utils/string');
 
 	const TimelineItemBackground = {
-		PINNED: '#FAFDED',
-		SCHEDULED: '#fefcee',
-		DEFAULT: '#FFFFFF',
+		PINNED: AppTheme.colors.accentSoftOrange3,
+		SCHEDULED: AppTheme.colors.accentSoftOrange3,
+		DEFAULT: AppTheme.colors.bgContentPrimary,
 
 		/**
 		 * @param {TimelineItemModel} model
@@ -24,10 +25,10 @@ jn.define('crm/timeline/item/ui/styles', (require, exports, module) => {
 	};
 
 	const TimelineFontColor = {
-		GREEN: '#688800',
-		BASE_50: '#A8ADB4',
-		BASE_70: '#828B95',
-		BASE_90: '#525C69',
+		GREEN: AppTheme.colors.accentSoftElementGreen1,
+		BASE_50: AppTheme.colors.base4,
+		BASE_70: AppTheme.colors.base3,
+		BASE_90: AppTheme.colors.base2,
 
 		/**
 		 * @param {string} code
@@ -113,3 +114,4 @@ jn.define('crm/timeline/item/ui/styles', (require, exports, module) => {
 		isScopeMobile,
 	};
 });
+

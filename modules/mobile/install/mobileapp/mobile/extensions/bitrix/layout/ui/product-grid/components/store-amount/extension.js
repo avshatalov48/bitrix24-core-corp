@@ -1,22 +1,18 @@
 jn.define('layout/ui/product-grid/components/store-amount', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { get } = require('utils/object');
 	const { hint } = require('layout/ui/product-grid/components/hint');
 
+	/**
+	 * @class StoreAmount
+	 * @param {{
+	 *     title,
+	 *     amount,
+	 *     measure,
+	 * }} props
+	 */
 	class StoreAmount extends LayoutComponent
 	{
-		/**
-		 * @param {{
-		 *     title,
-		 *     amount,
-		 *     measure,
-		 * }} props
-		 */
-		constructor(props)
-		{
-			super(props);
-		}
-
 		render()
 		{
 			let amount = Number(get(this.props, 'amount', 0));
@@ -29,12 +25,12 @@ jn.define('layout/ui/product-grid/components/store-amount', (require, exports, m
 
 			return View(
 				{
-					style: Styles.wrapper
+					style: Styles.wrapper,
 				},
 				View(
 					{
 						style: Styles.titleContainer,
-						onClick: () => hint(this.props.title)
+						onClick: () => hint(this.props.title),
 					},
 					Text({
 						text: this.props.title,
@@ -45,7 +41,7 @@ jn.define('layout/ui/product-grid/components/store-amount', (require, exports, m
 				),
 				View(
 					{
-						style: Styles.valueContainer
+						style: Styles.valueContainer,
 					},
 					Text({
 						text: `${amount} `,
@@ -53,11 +49,11 @@ jn.define('layout/ui/product-grid/components/store-amount', (require, exports, m
 						numberOfLines: 1,
 					}),
 					Text({
-						text: `${measure}`,
-						style: {...Styles.valueText, color: '#828B95'},
+						text: String(measure),
+						style: { ...Styles.valueText, color: AppTheme.colors.base3 },
 						numberOfLines: 1,
-					})
-				)
+					}),
+				),
 			);
 		}
 	}
@@ -80,17 +76,16 @@ jn.define('layout/ui/product-grid/components/store-amount', (require, exports, m
 		},
 		titleText: {
 			fontSize: 16,
-			color: '#828B95',
+			color: AppTheme.colors.base3,
 			textAlign: 'right',
 		},
 		valueText: {
 			fontSize: 18,
 			fontWeight: 'bold',
 			textAlign: 'right',
-			color: '#333333'
+			color: AppTheme.colors.base1,
 		},
 	};
 
 	module.exports = { StoreAmount };
-
 });

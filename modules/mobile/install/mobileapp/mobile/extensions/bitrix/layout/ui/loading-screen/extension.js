@@ -1,22 +1,15 @@
 (() => {
+	const AppTheme = jn.require('apptheme');
 
 	/**
 	 * @class LoadingScreenComponent
 	 */
 	class LoadingScreenComponent extends LayoutComponent
 	{
-		constructor(props)
-		{
-			props = props || {};
-			props.backgroundColor = props.backgroundColor || '#f5f7f8';
-			props.loaderColor = props.loaderColor || '#828b95';
-			props.loaderSize = props.loaderSize || 'small';
-
-			super(props);
-		}
-
 		render()
 		{
+			const { backgroundColor, loaderSize, loaderColor } = this.props;
+
 			return View(
 				{
 					style: {
@@ -24,7 +17,7 @@
 						flexGrow: 1,
 						justifyContent: 'center',
 						alignItems: 'center',
-						backgroundColor: this.props.backgroundColor,
+						backgroundColor: backgroundColor || AppTheme.colors.bgPrimary,
 					},
 				},
 				Loader({
@@ -32,14 +25,20 @@
 						width: 50,
 						height: 50,
 					},
-					tintColor: this.props.loaderColor,
+					tintColor: loaderColor || AppTheme.colors.base3,
 					animating: true,
-					size: this.props.loaderSize,
-				})
-			)
+					size: loaderSize || 'small',
+				}),
+			);
 		}
 	}
 
 	jnexport(LoadingScreenComponent);
 
+	/**
+	 * @module layout/ui/loading-screen
+	 */
+	jn.define('layout/ui/loading-screen', (require, exports, module) => {
+		module.exports = { LoadingScreenComponent };
+	});
 })();

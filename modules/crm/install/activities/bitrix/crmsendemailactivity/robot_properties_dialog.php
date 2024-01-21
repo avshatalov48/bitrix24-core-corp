@@ -95,6 +95,7 @@ if ($from): ?>
 			array('id' => 'ChangeView',  'compact' => true, 'sort' => 220),
 			array('id' => 'More',  'compact' => true, 'sort' => 400)
 		),
+		'isCopilotEnabled' => false,
 	));
 	?></div>
 </div>

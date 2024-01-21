@@ -1,13 +1,26 @@
 <?php
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+use Bitrix\Crm\Restriction\AvailabilityManager;
+use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Service\Container;
+
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
+	return;
+}
+
+$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+$isAvailable = $toolsManager->checkCrmAvailability();
+if (!$isAvailable)
+{
+	print AvailabilityManager::getInstance()->getCrmInaccessibilityContent();
+
 	return;
 }
 
@@ -31,8 +44,6 @@ if (!CModule::IncludeModule('sale'))
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED_SALE'));
 	return;
 }
-
-use Bitrix\Crm\Restriction\RestrictionManager;
 
 /** @var array $arParams */
 /** @global CMain $APPLICATION */
@@ -137,6 +148,11 @@ $arResult = array_merge(
 	$arResult
 );
 
-$this->IncludeComponentTemplate($componentPage);
+$toolsManager = Container::getInstance()->getIntranetToolsManager();
+$isAvailable = $toolsManager->checkReportsConstructAvailability();
+if (!$isAvailable)
+{
+	$componentPage = 'disabled';
+}
 
-?>
+$this->IncludeComponentTemplate($componentPage);

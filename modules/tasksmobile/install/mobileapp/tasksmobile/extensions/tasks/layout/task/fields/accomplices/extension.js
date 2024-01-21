@@ -16,7 +16,7 @@ jn.define('tasks/layout/task/fields/accomplices', (require, exports, module) => 
 				readOnly: props.readOnly,
 				accomplices: props.accomplices,
 			};
-			props.checkList.on('accompliceAdd', (user) => {
+			props.checkList?.on('accompliceAdd', (user) => {
 				if (!Object.keys(this.state.accomplices).includes(user.id.toString()))
 				{
 					const accomplices = {
@@ -31,6 +31,8 @@ jn.define('tasks/layout/task/fields/accomplices', (require, exports, module) => 
 					this.props.onChange(accomplices);
 				}
 			});
+
+			this.handleOnChange = this.handleOnChange.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -49,6 +51,36 @@ jn.define('tasks/layout/task/fields/accomplices', (require, exports, module) => 
 			});
 		}
 
+		handleOnChange(accomplicesIds, accomplicesData)
+		{
+			const accomplices = accomplicesData.reduce((accumulator, user) => {
+				const result = accumulator;
+				result[user.id] = {
+					id: user.id,
+					name: user.title,
+					icon: user.imageUrl,
+					workPosition: user.customData.position,
+				};
+
+				return result;
+			}, {});
+			const newAccomplices = Object.keys(accomplices);
+			const oldAccomplices = Object.keys(this.state.accomplices);
+			const difference = [
+				...newAccomplices.filter((id) => !oldAccomplices.includes(id)),
+				...oldAccomplices.filter((id) => !newAccomplices.includes(id)),
+			];
+			const { onChange } = this.props;
+			if (difference.length > 0)
+			{
+				this.setState({ accomplices });
+				if (onChange)
+				{
+					onChange(accomplices);
+				}
+			}
+		}
+
 		render()
 		{
 			return View(
@@ -63,6 +95,7 @@ jn.define('tasks/layout/task/fields/accomplices', (require, exports, module) => 
 					value: Object.keys(this.state.accomplices),
 					config: {
 						mode: UserFieldMode.ICONS,
+						useLettersForEmptyAvatar: true,
 						deepMergeStyles: this.props.deepMergeStyles,
 						provider: {
 							context: 'TASKS_MEMBER_SELECTOR_EDIT_accomplice',
@@ -86,30 +119,7 @@ jn.define('tasks/layout/task/fields/accomplices', (require, exports, module) => 
 						parentWidget: this.props.parentWidget,
 					},
 					testId: 'accomplices',
-					onChange: (accomplicesIds, accomplicesData) => {
-						const accomplices = accomplicesData.reduce((accumulator, user) => {
-							const result = accumulator;
-							result[user.id] = {
-								id: user.id,
-								name: user.title,
-								icon: user.imageUrl,
-								workPosition: user.customData.position,
-							};
-
-							return result;
-						}, {});
-						const newAccomplices = Object.keys(accomplices);
-						const oldAccomplices = Object.keys(this.state.accomplices);
-						const difference = [
-							...newAccomplices.filter((id) => !oldAccomplices.includes(id)),
-							...oldAccomplices.filter((id) => !newAccomplices.includes(id)),
-						];
-						if (difference.length > 0)
-						{
-							this.setState({ accomplices });
-							this.props.onChange(accomplices);
-						}
-					},
+					onChange: this.handleOnChange,
 				}),
 			);
 		}

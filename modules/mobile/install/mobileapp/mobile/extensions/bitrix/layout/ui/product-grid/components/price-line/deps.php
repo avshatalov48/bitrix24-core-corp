@@ -2,13 +2,14 @@
 
 return [
 	'extensions' => [
-		'layout/ui/money',
+		'apptheme',
 		'money',
+		'layout/ui/money',
 		'utils/object',
 	],
 	'bundle' => [
 		'default',
 		'small',
 		'styles',
-	]
+	],
 ];

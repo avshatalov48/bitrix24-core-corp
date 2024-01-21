@@ -2645,8 +2645,18 @@ elseif($action == 'SAVE_EMAIL')
 			),
 			'SORT'           => 100,
 		];
-		\CCrmMailTemplate::add($templateFields);
+		$templateID = \CCrmMailTemplate::add($templateFields);
 	}
+	else
+	{
+		$templateID = (int)($data['lastUsedTemplateID'] ?? 0);
+	}
+
+	if(\CUserOptions::GetOption('crm', 'save_last_used_mail_template') === 'Y')
+	{
+		\CCrmMailTemplate::SetLastUsedTemplateID($templateID, \CCrmOwnerType::Deal);
+	}
+
 
 	//Save user email in settings -->
 	if($from !== CUserOptions::GetOption('crm', 'activity_email_addresser', ''))
@@ -3695,8 +3705,11 @@ elseif($action == 'PREPARE_MAIL_TEMPLATE')
 	$templateOwnerID = isset($fields['OWNER_ID']) ? intval($fields['OWNER_ID']) : 0;
 	$templateScope = isset($fields['SCOPE']) ? intval($fields['SCOPE']) : CCrmMailTemplateScope::Undefined;
 
+	$availableTemplatesId = \Bitrix\Crm\MailTemplate\MailTemplateAccess::getAllAvailableSharedTemplatesId($curUser->GetID());
+
 	if($templateScope !== CCrmMailTemplateScope::Common
-		&& $templateOwnerID !== intval($curUser->GetID()))
+		&& $templateOwnerID !== (int)($curUser->GetID())
+		&& !in_array($templateID, $availableTemplatesId,true))
 	{
 		__CrmActivityEditorEndResponse(array('ERROR' => 'Invalid data'));
 	}

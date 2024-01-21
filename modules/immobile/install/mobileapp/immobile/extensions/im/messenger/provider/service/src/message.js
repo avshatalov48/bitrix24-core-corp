@@ -5,7 +5,11 @@ jn.define('im/messenger/provider/service/message', (require, exports, module) =>
 	const { LoadService } = require('im/messenger/provider/service/classes/message/load');
 	const { ReactionService } = require('im/messenger/provider/service/classes/message/reaction');
 	const { StatusService } = require('im/messenger/provider/service/classes/message/status');
+	const { ActionService } = require('im/messenger/provider/service/classes/message/action');
 	const { RestMethod } = require('im/messenger/const/rest');
+	const { runAction } = require('im/messenger/lib/rest');
+	const { Logger } = require('im/messenger/lib/logger');
+	const { RichService } = require('im/messenger/provider/service/classes/message/rich');
 
 	/**
 	 * @class MessageService
@@ -70,19 +74,19 @@ jn.define('im/messenger/provider/service/message', (require, exports, module) =>
 			return this.reactionService.remove(reactionId, messageId);
 		}
 
-		updateText(messageId, text)
+		deleteRichLink(messageId, attachId)
 		{
-			return BX.rest.callMethod(RestMethod.imMessageUpdate, {
-				MESSAGE_ID: messageId,
-				MESSAGE: text,
-			});
+			return this.richService.deleteRichLink(messageId, attachId);
 		}
 
-		delete(messageId)
+		updateText(message, text, dialogId)
 		{
-			return BX.rest.callMethod(RestMethod.imV2ChatMessageDelete, {
-				id: messageId,
-			});
+			return this.actionService.updateText(message, text, dialogId);
+		}
+
+		delete(message, dialogId)
+		{
+			return this.actionService.delete(message, dialogId);
 		}
 
 		openUsersReadMessageList(messageId)
@@ -101,12 +105,10 @@ jn.define('im/messenger/provider/service/message', (require, exports, module) =>
 		initServices()
 		{
 			this.loadService = new LoadService({
-				store: this.store,
 				chatId: this.chatId,
 			});
 
 			this.reactionService = new ReactionService({
-				store: this.store,
 				chatId: this.chatId,
 			});
 
@@ -114,6 +116,10 @@ jn.define('im/messenger/provider/service/message', (require, exports, module) =>
 				store: this.store,
 				chatId: this.chatId,
 			});
+
+			this.richService = new RichService();
+
+			this.actionService = new ActionService();
 		}
 	}
 

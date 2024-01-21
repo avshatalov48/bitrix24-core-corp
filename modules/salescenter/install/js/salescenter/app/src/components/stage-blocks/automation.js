@@ -1,19 +1,19 @@
-import {Loc} 								from 'main.core';
-import {Block} 		from 'salescenter.component.stage-block';
-import {StageList} 							from 'salescenter.component.stage-block.automation';
-import * as AutomationStage 				from 'salescenter.automation-stage';
-import {StageMixin} 						from "./stage-mixin";
-import {MixinTemplatesType} 			from "../templates-type-mixin";
+import { Loc } from 'main.core';
+import { Block } from 'salescenter.component.stage-block';
+import { StageList } from 'salescenter.component.stage-block.automation';
+import * as AutomationStage from 'salescenter.automation-stage';
+import { StageMixin } from './stage-mixin';
+import { MixinTemplatesType } from '../templates-type-mixin';
 
 const Automation = {
 	props: {
 		status: {
 			type: String,
-			required: true
+			required: true,
 		},
 		counter: {
 			type: Number,
-			required: true
+			required: true,
 		},
 		stageOnOrderPaid: {
 			type: String,
@@ -25,25 +25,25 @@ const Automation = {
 		},
 		items: {
 			type: Array,
-			required: true
+			required: true,
 		},
 		initialCollapseState: {
 			type: Boolean,
-			required: true
+			required: true,
 		},
 	},
-	mixins:[StageMixin, MixinTemplatesType],
+	mixins: [StageMixin, MixinTemplatesType],
 	data()
 	{
 		return {
 			paymentStages: [],
 			shipmentStages: [],
-		}
+		};
 	},
 	components:
 		{
-			'stage-block-item'			:	Block,
-			'stage-item-list'			:	StageList
+			'stage-block-item':	Block,
+			'stage-item-list':	StageList,
 		},
 	methods:
 		{
@@ -54,7 +54,7 @@ const Automation = {
 
 			updatePaymentStage(e)
 			{
-				let newStageId = e.data;
+				const newStageId = e.data;
 				this.paymentStages.forEach((stage) => {
 					stage.selected = stage.id === newStageId;
 				});
@@ -64,7 +64,7 @@ const Automation = {
 
 			updateShipmentStage(e)
 			{
-				let newStageId = e.data;
+				const newStageId = e.data;
 				this.shipmentStages.forEach((stage) => {
 					stage.selected = stage.id === newStageId;
 				});
@@ -73,14 +73,14 @@ const Automation = {
 			},
 			initStages(stages, currentValue)
 			{
-				Object.values(this.items).forEach(options => {
+				Object.values(this.items).forEach((options) => {
 					options.selected = (
 						(!currentValue && !options.hasOwnProperty('id'))
 						|| (options.id === currentValue)
 					);
 					stages.push(AutomationStage.Factory.create(options));
 				});
-			}
+			},
 		},
 	computed:
 		{
@@ -92,14 +92,13 @@ const Automation = {
 					collapsible: true,
 					initialCollapseState: this.initialCollapseState,
 					titleName: this.selectedStage.name,
-				}
+				};
 			},
 			selectedStage()
 			{
-				let stages = this.isPayment ? this.paymentStages : this.shipmentStages;
+				const stages = this.isPayment ? this.paymentStages : this.shipmentStages;
 
-				return stages.find((stage) =>
-				{
+				return stages.find((stage) => {
 					return stage.selected;
 				});
 			},
@@ -108,12 +107,13 @@ const Automation = {
 				return (
 					this.$root.$app.options.mode === 'payment_delivery'
 					|| this.$root.$app.options.mode === 'payment'
+					|| this.$root.$app.options.mode === 'terminal_payment'
 				);
 			},
 			isHideDeliveryStage()
 			{
-				return this.$root.$app.options.mode === 'payment';
-			}
+				return this.$root.$app.options.mode === 'payment' || this.$root.$app.options.mode === 'terminal_payment';
+			},
 		},
 	created()
 	{
@@ -153,11 +153,10 @@ const Automation = {
 						</stage-item-list>
 					</div>
 				</div>
-
 			</template>
 		</stage-block-item>
-	`
+	`,
 };
 export {
-	Automation
-}
+	Automation,
+};

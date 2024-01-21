@@ -102,4 +102,22 @@ class Helper
 
 		return Stepper::getHtml($res, Loc::getMessage('IMOL_UI_HELPER_STAT_INDEX'));
 	}
+
+	public static function getMigrateQueueStepper()
+	{
+		$res = array(
+			"imopenlines" => array('Bitrix\Imopenlines\Update\MigrateQueue')
+		);
+
+		return Stepper::getHtml($res, Loc::getMessage('IMOL_UI_HELPER_MIGRATE_QUEUE'));
+	}
+
+	public static function getFixRecentDuplicatesStepper()
+	{
+		$res = array(
+			"imopenlines" => array('Bitrix\Imopenlines\Update\FixRecentDuplicates')
+		);
+
+		return Stepper::getHtml($res, Loc::getMessage('IMOL_UI_HELPER_MIGRATE_QUEUE'));
+	}
 }

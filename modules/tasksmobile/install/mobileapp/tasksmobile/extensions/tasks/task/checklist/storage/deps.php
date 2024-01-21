@@ -1,7 +1,9 @@
 <?php
 
 return [
-	'reload/listeners',
-	'tasks:task/checklist/storage/constants',
-	'utils',
+	'extensions' => [
+		'utils',
+		'reload/listeners',
+		'tasks:task/checklist/storage/constants',
+	],
 ];

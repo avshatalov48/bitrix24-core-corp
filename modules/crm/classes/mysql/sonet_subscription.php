@@ -43,9 +43,9 @@ class CCrmSonetSubscription extends CAllCrmSonetSubscription
 			$DB->Query($deleteSql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
 		}
 
-		$insertSql = "INSERT INTO {$tableName}(USER_ID, SL_ENTITY_TYPE, ENTITY_ID, TYPE_ID)
-			VALUES({$userID}, '{$slEntityType}', {$entityID}, {$typeID})
-			ON DUPLICATE KEY UPDATE USER_ID = {$userID}, SL_ENTITY_TYPE = '{$slEntityType}', ENTITY_ID = {$entityID}, TYPE_ID = {$typeID}";
+		$connection = \Bitrix\Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
+		$insertSql = $helper->getInsertIgnore($tableName, "(USER_ID, SL_ENTITY_TYPE, ENTITY_ID, TYPE_ID)", "VALUES ({$userID}, '{$slEntityType}', {$entityID}, {$typeID})");
 		$dbResult = $DB->Query($insertSql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
 		return is_object($dbResult) && $dbResult->AffectedRowsCount() > 0;
 	}
@@ -72,7 +72,7 @@ class CCrmSonetSubscription extends CAllCrmSonetSubscription
 		global $DB;
 		$tableName = self::TABLE_NAME;
 		$slEntityType = $DB->ForSql(CCrmLiveFeedEntity::GetByEntityTypeID($entityTypeID));
-		$updateSql = "UPDATE {$tableName} SET USER_ID = {$userID} WHERE SL_ENTITY_TYPE = '{$slEntityType}' AND ENTITY_ID = {$entityID} AND TYPE_ID = {$typeID} LIMIT 1";
+		$updateSql = "UPDATE {$tableName} SET USER_ID = {$userID} WHERE SL_ENTITY_TYPE = '{$slEntityType}' AND ENTITY_ID = {$entityID} AND TYPE_ID = {$typeID}";
 		$dbResult = $DB->Query($updateSql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
 		return is_object($dbResult) && $dbResult->AffectedRowsCount() > 0;
 	}
@@ -217,7 +217,7 @@ class CCrmSonetSubscription extends CAllCrmSonetSubscription
 			CSqlUtil::PrepareSelectTop($selectSql, $top, self::DB_TYPE);
 		}
 
-		$deleteSql = "DELETE QUICK FROM {$tableName} WHERE SL_ENTITY_TYPE = '{$slEntityType}' AND TYPE_ID = $typeID";
+		$deleteSql = "DELETE FROM {$tableName} WHERE SL_ENTITY_TYPE = '{$slEntityType}' AND TYPE_ID = $typeID";
 		if($userID > 0)
 		{
 			$deleteSql .= " AND USER_ID = {$userID}";

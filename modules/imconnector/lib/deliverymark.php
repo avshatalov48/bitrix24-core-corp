@@ -2,7 +2,6 @@
 namespace Bitrix\ImConnector;
 
 use Bitrix\ImConnector\Model\DeliveryMarkTable;
-use Bitrix\Main\Application;
 
 class DeliveryMark
 {
@@ -26,14 +25,9 @@ class DeliveryMark
 	 */
 	public static function unsetDeliveryMark(int $messageId, int $chatId): void
 	{
-		$connection = Application::getInstance()->getConnection();
-		$query = '
-			DELETE
-			FROM b_imconnectors_delivery_mark
-			WHERE
-				CHAT_ID = ' . $chatId . '
-				AND MESSAGE_ID <= ' . $messageId . '
-		';
-		$connection->queryExecute($query);
+		DeliveryMarkTable::deleteByFilter([
+			'=CHAT_ID' => $chatId,
+			'<=MESSAGE_ID' => $messageId,
+		]);
 	}
 }

@@ -16,17 +16,18 @@
 		static openList(options = {})
 		{
 			let widgetParams = {};
-			widgetParams.name = "list";
+			widgetParams.name = 'list';
 			let canOpenInDefault = options.canOpenInDefault || false;
-			widgetParams.settings =  options.widgetParams || {};
+			widgetParams.settings = options.widgetParams || {};
 			widgetParams.settings.objectName = options.object;
-			PageManager.openComponent("JSStackComponent",
+			PageManager.openComponent(
+				'JSStackComponent',
 				{
-					scriptPath: "/mobileapp/jn/" + options.name + "/?version=" + options.version,
+					scriptPath: `/mobileapp/jn/${options.name}/?version=${options.version}`,
 					componentCode: options.name,
 					canOpenInDefault: canOpenInDefault,
 					params: options.componentParams,
-					rootWidget: widgetParams
+					rootWidget: widgetParams,
 				});
 		}
 
@@ -43,15 +44,16 @@
 		static openForm(options = {})
 		{
 			let widgetParams = {};
-			widgetParams.name = "form";
-			widgetParams.settings =  options.widgetParams || {};
+			widgetParams.name = 'form';
+			widgetParams.settings = options.widgetParams || {};
 			widgetParams.settings.objectName = options.object;
-			PageManager.openComponent("JSStackComponent",
+			PageManager.openComponent(
+				'JSStackComponent',
 				{
-					scriptPath: "/mobileapp/jn/" + options.name + "/?version=" + options.version,
+					scriptPath: `/mobileapp/jn/${options.name}/?version=${options.version}`,
 					componentCode: options.name,
 					params: options.componentParams,
-					rootWidget: widgetParams
+					rootWidget: widgetParams,
 				});
 		}
 
@@ -76,27 +78,24 @@
 			let version = options.version;
 			if (!version)
 			{
-				version =
-					availableComponents[options.name] && availableComponents[options.name].version
-					|| '1.0'
-				;
+				version = availableComponents[options.name] && availableComponents[options.name].version || '1.0';
 			}
 
 			let widgetParams = {};
-			widgetParams.name = "layout";
-			widgetParams.settings =  options.widgetParams || {};
-			widgetParams.settings.objectName = "layout";
+			widgetParams.name = 'layout';
+			widgetParams.settings = options.widgetParams || {};
+			widgetParams.settings.objectName = 'layout';
 
 			PageManager.openComponent(
-				"JSStackComponent",
+				'JSStackComponent',
 				{
-					scriptPath: "/mobileapp/jn/" + options.name + "/?version=" + version,
+					scriptPath: `/mobileapp/jn/${options.name}/?version=${version}`,
 					componentCode: options.name,
 					canOpenInDefault: canOpenInDefault,
 					params: options.componentParams,
 					rootWidget: widgetParams,
 				},
-				parentWidget
+				parentWidget,
 			);
 		}
 	}

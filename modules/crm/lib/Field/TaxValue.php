@@ -36,7 +36,11 @@ class TaxValue extends Field
 		$result->setNewValue($this->getName(), $taxValue);
 		if ($item->hasField(Item::FIELD_NAME_TAX_VALUE_ACCOUNT))
 		{
-			$taxValueAccount = Currency\Conversion::toAccountCurrency($taxValue, $item->getCurrencyId());
+			$taxValueAccount = Currency\Conversion::toAccountCurrency(
+				$taxValue,
+				$item->getCurrencyId(),
+				$item->hasField(Item::FIELD_NAME_EXCH_RATE) ? $item->getExchRate() : null,
+			);
 			$result->setNewValue(Item::FIELD_NAME_TAX_VALUE_ACCOUNT, $taxValueAccount);
 		}
 

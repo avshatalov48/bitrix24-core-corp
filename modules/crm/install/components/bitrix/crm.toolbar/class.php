@@ -27,11 +27,13 @@ class CrmToolbarComponent extends Bitrix\Crm\Component\Base
 				'idSuffix' => '_email',
 				'className' => 'ui-btn-icon-mail',
 				'class' => 'BX.InterfaceToolBarEmailButton',
+				'useClientSelector' => true,
 			],
 			'PHONE' => [
 				'idSuffix' => '_call',
 				'className' => 'ui-btn-icon-phone-call',
 				'class' => 'BX.InterfaceToolBarPhoneButton',
+				'useClientSelector' => true,
 				'messages' => [
 					'telephonyNotSupported' => Loc::getMessage('CRM_TOOLBAR_TELEPHONY_NOT_SUPPORTED'),
 				]
@@ -115,6 +117,7 @@ class CrmToolbarComponent extends Bitrix\Crm\Component\Base
 					'data' => $multiFields[$type] ?? null,
 					'ownerInfo' => $this->arResult['communications']['ownerInfo'] ?? [],
 					'class' => $info['class'],
+					'useClientSelector' => $info['useClientSelector'] ?? false,
 				];
 				if(!isset($this->arResult['buttons'][ButtonLocation::AFTER_TITLE]))
 				{

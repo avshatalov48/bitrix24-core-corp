@@ -81,6 +81,8 @@ class CTimeManNotify
 
 			$arRes = $dbRes->Fetch();
 
+			$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
+			$dayMonthFormat = $culture->getDayMonthFormat();
 			$bSend = false;
 			if ($arRes)
 			{
@@ -98,7 +100,7 @@ class CTimeManNotify
 					if (IsModuleInstalled("im") && $sendNotifications)
 					{
 						$arEntry["LOG_ID"] = $logID;
-						$arEntry["DATE_TEXT"] = FormatDate("j F", MakeTimeStamp($arEntry["DATE_START"], FORMAT_DATETIME));
+						$arEntry["DATE_TEXT"] = FormatDate($dayMonthFormat, MakeTimeStamp($arEntry["DATE_START"], FORMAT_DATETIME));
 
 						if ($SEND_TYPE == "U")
 							self::NotifyImApprove($arEntry);
@@ -126,7 +128,7 @@ class CTimeManNotify
 						)
 						{
 							$arEntry["LOG_ID"] = $logID;
-							$arEntry["DATE_TEXT"] = FormatDate("j F", MakeTimeStamp($arEntry["DATE_START"], FORMAT_DATETIME));
+							$arEntry["DATE_TEXT"] = FormatDate($dayMonthFormat, MakeTimeStamp($arEntry["DATE_START"], FORMAT_DATETIME));
 							self::NotifyImNew($arEntry);
 						}
 						$bSend = true;
@@ -401,6 +403,8 @@ class CTimeManNotify
 		if ($gender == '')
 			$gender = 'N';
 
+		$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
+		$dayMonthFormat = $culture->getDayMonthFormat();
 		if(!$bMail)
 		{
 			if(defined("BX_COMP_MANAGED_CACHE"))
@@ -430,7 +434,7 @@ class CTimeManNotify
 					'EVENT' => $arFields,
 					'EVENT_FORMATTED' => array(
 						'TITLE_24' => GetMessage('TIMEMAN_ENTRY_LF_TITLE'.($arEntry['INACTIVE_OR_ACTIVATED'] == 'N' ? '_COMMENT' : ($arFields['ENTITY_ID'] == $arFields['USER_ID'] ? '' : '2')).$gender."_24_MOBILE", array(
-							'#DATE#' => FormatDate('j F', MakeTimeStamp($arEntry['DATE_START'])),
+							'#DATE#' => FormatDate($dayMonthFormat, MakeTimeStamp($arEntry['DATE_START'])),
 						)),
 						"MESSAGE" => htmlspecialcharsbx($html_message),
 						"IS_IMPORTANT" => false,
@@ -450,11 +454,11 @@ class CTimeManNotify
 					'EVENT_FORMATTED' => array(
 						'TITLE' => GetMessage('TIMEMAN_ENTRY_LF_TITLE'.($arEntry['INACTIVE_OR_ACTIVATED'] == 'N' ? '_COMMENT' : ($arFields['ENTITY_ID'] == $arFields['USER_ID'] ? '' : '2')).$gender, array(
 							'#URL#' => $href,
-							'#DATE#' => FormatDate('j F', MakeTimeStamp($arEntry['DATE_START'])),
+							'#DATE#' => FormatDate($dayMonthFormat, MakeTimeStamp($arEntry['DATE_START'])),
 						)),
 						'TITLE_24' => GetMessage('TIMEMAN_ENTRY_LF_TITLE'.($arEntry['INACTIVE_OR_ACTIVATED'] == 'N' ? '_COMMENT' : ($arFields['ENTITY_ID'] == $arFields['USER_ID'] ? '' : '2')).$gender."_24", array(
 							'#URL#' => $href,
-							'#DATE#' => FormatDate('j F', MakeTimeStamp($arEntry['DATE_START'])),
+							'#DATE#' => FormatDate($dayMonthFormat, MakeTimeStamp($arEntry['DATE_START'])),
 						)),
 						'URL' => $href,
 						"MESSAGE" => $html_message,
@@ -490,7 +494,7 @@ class CTimeManNotify
 			$arResult["ENTITY"]["TYPE_MAIL"] = GetMessage("TIMEMAN_TITLE_FOR_MAIL");
 			$arResult['EVENT_FORMATTED'] = array(
 				"TITLE" => $arChanger["NAME"]." ".GetMessage('TIMEMAN_ENTRY_LF_TITLE'.($arEntry['INACTIVE_OR_ACTIVATED'] == 'N' ? '_COMMENT' : ($arFields['ENTITY_ID'] == $arFields['USER_ID'] ? '' : '2')).'_MAIL'.$gender, array(
-					'#DATE#' => FormatDate('j F', MakeTimeStamp($arEntry['DATE_START'])),
+					'#DATE#' => FormatDate($dayMonthFormat, MakeTimeStamp($arEntry['DATE_START'])),
 				)),
 				"URL" => $URL,
 				"MESSAGE" => $arFields["TITLE"],
@@ -520,9 +524,11 @@ class CTimeManNotify
 			$arLog["ENTITY_TYPE"] = $arFields["ENTITY_TYPE"];
 		}
 
+		$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
+		$dayMonthFormat = $culture->getDayMonthFormat();
 		$news_tmp = $arLog["TITLE"] ?? '';
 		$title_tmp = GetMessage("TIMEMAN_NEW_COMMENT", array(
-			'#DATE#' => FormatDate('j F', MakeTimeStamp($arEntry['DATE_START'])),
+			'#DATE#' => FormatDate($dayMonthFormat, MakeTimeStamp($arEntry['DATE_START'])),
 		))."\n";
 
 		$title_tmp.= GetMessage("COMMENT_AUTHOR").CUser::FormatName(CSite::GetNameFormat(false),
@@ -901,7 +907,9 @@ class CTimeManNotify
 			$dbEntry = CTimeManEntry::GetList(array(), array("ID" => $arFields["ENTRY_ID"]));
 			if ($arEntry = $dbEntry->Fetch())
 			{
-				$date_text = FormatDate("j F", MakeTimeStamp($arEntry["DATE_START"], FORMAT_DATETIME));
+				$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
+				$dayMonthFormat = $culture->getDayMonthFormat();
+				$date_text = FormatDate($dayMonthFormat, MakeTimeStamp($arEntry["DATE_START"], FORMAT_DATETIME));
 
 				$arMessageFields = array(
 					"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,

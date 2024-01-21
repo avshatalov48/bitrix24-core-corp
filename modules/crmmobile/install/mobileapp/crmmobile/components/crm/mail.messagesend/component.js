@@ -9,26 +9,38 @@
 		return contacts.map((item) => ({ value: item.email }));
 	}
 
-	function buildContactMapForBindings(contacts)
+	function buildContactListForBindings(contacts)
 	{
-		const bindingsMap = {};
+		const bindingsList = [];
 		Object.entries(contacts).forEach(([key, item]) => {
 			const {
-				email = '',
 				typeName = 'contacts',
 				id = '',
 				name = '',
 			} = item;
 
-			bindingsMap[item.email] = {
+			let {
+				email = [],
+			} = item;
+
+			if (!Array.isArray(email))
+			{
+				email = [
+					{
+						value: email,
+					},
+				];
+			}
+
+			bindingsList.push({
 				email,
 				typeName,
 				id,
 				name,
-			};
+			});
 		});
 
-		return bindingsMap;
+		return bindingsList;
 	}
 
 	BX.onViewLoaded(() => {
@@ -39,16 +51,15 @@
 		const isSendFiles = BX.componentParameters.get('isSendFiles', false);
 		const senders = BX.componentParameters.get('senders', []);
 		const clients = BX.componentParameters.get('clients', []);
+		const clientIdsByType = BX.componentParameters.get('clientIdsByType', {
+			contacts: [],
+			company: [],
+		});
 
 		let to = BX.componentParameters.get('contacts', []);
 		let cc = BX.componentParameters.get('cc', []);
 
-		const bindingsData = {
-			...buildContactMapForBindings(cc),
-			...buildContactMapForBindings(to),
-			//The information from "clients" is given higher priority since, as a rule, it contains more comprehensive contact details.
-			...buildContactMapForBindings(clients),
-		};
+		const bindingsData = buildContactListForBindings(clients);
 
 		to = to.length > 0 ? buildContactSetForFields(to) : [EMPTY_CONTACT];
 		cc = cc.length > 0 ? buildContactSetForFields(cc) : [EMPTY_CONTACT];
@@ -56,6 +67,7 @@
 		const sendingForm = new SendingForm({
 			bindingsData,
 			senders,
+			clientIdsByType,
 			clients,
 			replyMessageBody,
 			to,

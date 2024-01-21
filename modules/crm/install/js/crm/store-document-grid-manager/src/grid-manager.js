@@ -1,8 +1,9 @@
-import { ajax, Loc } from 'main.core';
+import { ajax, Dom, Event, Extension, Loc, Tag } from 'main.core';
 import { Popup } from 'main.popup';
 import { Button, ButtonColor } from 'ui.buttons';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { DocumentManager } from './document-manager';
+import { MessageBox } from 'ui.dialogs.messagebox';
 
 export class GridManager
 {
@@ -34,51 +35,39 @@ export class GridManager
 			return;
 		}
 
-		const popup = new Popup({
-			id: 'crm_delete_document_popup',
-			titleBar: Loc.getMessage('DOCUMENT_GRID_DOCUMENT_DELETE_TITLE'),
-			content: Loc.getMessage('DOCUMENT_GRID_DOCUMENT_DELETE_CONTENT'),
-			buttons: [
-				new Button({
-					text: Loc.getMessage('DOCUMENT_GRID_CONTINUE'),
-					color: ButtonColor.SUCCESS,
-					onclick: (button, event) => {
-						ajax.runAction(
-							'crm.api.realizationdocument.setRealization',
-							{
-								data: {
-									id: documentId,
-									value: 'N',
-								},
-								analyticsLabel: {
-									action: 'delete',
-									inventoryManagementSource: this.inventoryManagementSource,
-								},
-							},
-						).then((response) => {
-							popup.destroy();
-							this.reloadGrid();
-						}).catch((response) => {
-							if (response.errors)
-							{
-								BX.UI.Notification.Center.notify({
-									content: BX.util.htmlspecialchars(response.errors[0].message),
-								});
-							}
-							popup.destroy();
+		MessageBox.confirm(
+			Loc.getMessage('DOCUMENT_GRID_DOCUMENT_DELETE_CONTENT'),
+			(messageBox, button) => {
+				button.setWaiting();
+				ajax.runAction(
+					'crm.api.realizationdocument.setRealization',
+					{
+						data: {
+							id: documentId,
+							value: 'N',
+						},
+						analyticsLabel: {
+							action: 'delete',
+							inventoryManagementSource: this.inventoryManagementSource,
+						},
+					},
+				).then(() => {
+					messageBox.close();
+					this.reloadGrid();
+				}).catch((response) => {
+					if (response.errors)
+					{
+						BX.UI.Notification.Center.notify({
+							content: BX.util.htmlspecialchars(response.errors[0].message),
 						});
-					},
-				}),
-				new Button({
-					text: Loc.getMessage('DOCUMENT_GRID_CANCEL'),
-					color: ButtonColor.DANGER,
-					onclick: (button, event) => {
-						popup.destroy();
-					},
-				}),
-			],
-		});
-		popup.show();
+					}
+					messageBox.close();
+				});
+			},
+			Loc.getMessage('DOCUMENT_GRID_DOCUMENT_DELETE_BUTTON_CONFIRM'),
+			(messageBox) => messageBox.close(),
+			Loc.getMessage('DOCUMENT_GRID_BUTTON_BACK'),
+		);
 	}
 
 	conductDocument(documentId)
@@ -96,51 +85,40 @@ export class GridManager
 
 			return;
 		}
-		const popup = new Popup({
-			id: 'crm_delete_document_popup',
-			titleBar: Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CONDUCT_TITLE'),
-			content: Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CONDUCT_CONTENT'),
-			buttons: [
-				new Button({
-					text: Loc.getMessage('DOCUMENT_GRID_CONTINUE'),
-					color: ButtonColor.SUCCESS,
-					onclick: (button, event) => {
-						ajax.runAction(
-							'crm.api.realizationdocument.setShipped',
-							{
-								data: {
-									id: documentId,
-									value: 'Y',
-								},
-								analyticsLabel: {
-									action: 'deduct',
-									inventoryManagementSource: this.inventoryManagementSource,
-								},
-							},
-						).then((response) => {
-							popup.destroy();
-							this.reloadGrid();
-						}).catch((response) => {
-							if (response.errors)
-							{
-								BX.UI.Notification.Center.notify({
-									content: BX.util.htmlspecialchars(response.errors[0].message),
-								});
-							}
-							popup.destroy();
+
+		MessageBox.confirm(
+			Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CONDUCT_CONTENT'),
+			(messageBox, button) => {
+				button.setWaiting();
+				ajax.runAction(
+					'crm.api.realizationdocument.setShipped',
+					{
+						data: {
+							id: documentId,
+							value: 'Y',
+						},
+						analyticsLabel: {
+							action: 'deduct',
+							inventoryManagementSource: this.inventoryManagementSource,
+						},
+					},
+				).then(() => {
+					messageBox.close();
+					this.reloadGrid();
+				}).catch((response) => {
+					if (response.errors)
+					{
+						BX.UI.Notification.Center.notify({
+							content: BX.util.htmlspecialchars(response.errors[0].message),
 						});
-					},
-				}),
-				new Button({
-					text: Loc.getMessage('DOCUMENT_GRID_CANCEL'),
-					color: ButtonColor.DANGER,
-					onclick: (button, event) => {
-						popup.destroy();
-					},
-				}),
-			],
-		});
-		popup.show();
+					}
+					messageBox.close();
+				});
+			},
+			Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CONDUCT_BUTTON_CONFIRM'),
+			(messageBox) => messageBox.close(),
+			Loc.getMessage('DOCUMENT_GRID_BUTTON_BACK'),
+		);
 	}
 
 	cancelDocument(documentId)
@@ -158,51 +136,40 @@ export class GridManager
 
 			return;
 		}
-		const popup = new Popup({
-			id: 'crm_delete_document_popup',
-			titleBar: Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CANCEL_TITLE'),
-			content: Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CANCEL_CONTENT'),
-			buttons: [
-				new Button({
-					text: Loc.getMessage('DOCUMENT_GRID_CONTINUE'),
-					color: ButtonColor.SUCCESS,
-					onclick: (button, event) => {
-						ajax.runAction(
-							'crm.api.realizationdocument.setShipped',
-							{
-								data: {
-									id: documentId,
-									value: 'N',
-								},
-								analyticsLabel: {
-									action: 'cancelDeduct',
-									inventoryManagementSource: this.inventoryManagementSource,
-								},
-							},
-						).then((response) => {
-							popup.destroy();
-							this.reloadGrid();
-						}).catch((response) => {
-							if (response.errors)
-							{
-								BX.UI.Notification.Center.notify({
-									content: BX.util.htmlspecialchars(response.errors[0].message),
-								});
-							}
-							popup.destroy();
+
+		MessageBox.confirm(
+			Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CANCEL_CONTENT'),
+			(messageBox, button) => {
+				button.setWaiting();
+				ajax.runAction(
+					'crm.api.realizationdocument.setShipped',
+					{
+						data: {
+							id: documentId,
+							value: 'N',
+						},
+						analyticsLabel: {
+							action: 'cancelDeduct',
+							inventoryManagementSource: this.inventoryManagementSource,
+						},
+					},
+				).then(() => {
+					messageBox.close();
+					this.reloadGrid();
+				}).catch((response) => {
+					if (response.errors)
+					{
+						BX.UI.Notification.Center.notify({
+							content: BX.util.htmlspecialchars(response.errors[0].message),
 						});
-					},
-				}),
-				new Button({
-					text: Loc.getMessage('DOCUMENT_GRID_CANCEL'),
-					color: ButtonColor.DANGER,
-					onclick: (button, event) => {
-						popup.destroy();
-					},
-				}),
-			],
-		});
-		popup.show();
+					}
+					messageBox.close();
+				});
+			},
+			Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CANCEL_BUTTON_CONFIRM'),
+			(messageBox) => messageBox.close(),
+			Loc.getMessage('DOCUMENT_GRID_BUTTON_BACK'),
+		);
 	}
 
 	deleteSelectedDocuments()

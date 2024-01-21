@@ -5,7 +5,6 @@ namespace Bitrix\Crm\Item;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\Item;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Result;
 
 /**
  * @method int|null getQuoteId()
@@ -36,15 +35,5 @@ class Deal extends Item
 		$number = ($this->getId() > 0) ? $this->getId() : '';
 
 		return Loc::getMessage('CRM_DEAL_DEFAULT_TITLE_TEMPLATE', ['%NUMBER%' => $number]);
-	}
-
-	protected function getExternalizableFieldNames(): array
-	{
-		return array_merge(
-			parent::getExternalizableFieldNames(),
-			[
-				$this->getEntityFieldNameByMap(Item::FIELD_NAME_OBSERVERS),
-			],
-		);
 	}
 }

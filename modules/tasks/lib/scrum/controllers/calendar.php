@@ -107,9 +107,9 @@ class Calendar extends Controller
 			'defaultSprintDuration' => $defaultSprintDuration,
 			'calendarSettings' => $this->getCalendarSettings($defaultSprintDuration),
 			'culture'=> [
-				'dayMonthFormat' => $culture->getDayMonthFormat(),
-				'longDateFormat' => $culture->getLongDateFormat(),
-				'shortTimeFormat' => $culture->getShortTimeFormat(),
+				'dayMonthFormat' => stripslashes($culture->getDayMonthFormat()),
+				'longDateFormat' => stripslashes($culture->getLongDateFormat()),
+				'shortTimeFormat' => stripslashes($culture->getShortTimeFormat()),
 			],
 		];
 	}

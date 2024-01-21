@@ -54,9 +54,17 @@ class TagModel implements AccessibleTag
 		return $tag['USER_ID'];
 	}
 
-	public static function invalidateCache(int $tagId): void
+	public static function invalidate(?int $tagId = null): void
 	{
-		unset(self::$cache[$tagId]);
-		TagRegistry::getInstance()->drop($tagId);
+		if (is_null($tagId))
+		{
+			static::$cache = [];
+		}
+		else
+		{
+			unset(self::$cache[$tagId]);
+		}
+
+		TagRegistry::getInstance()->invalidate($tagId);
 	}
 }

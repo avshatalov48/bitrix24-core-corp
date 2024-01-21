@@ -10,15 +10,16 @@ final class ScalarCollectionField extends Validator
 {
 	protected string $fieldToCheck;
 	protected ?int $maxCount;
+	protected bool $onlyNotEmptyValues;
 
-	public function __construct(Dto $dto, string $fieldToCheck, int $maxCount = null)
+	public function __construct(Dto $dto, string $fieldToCheck, int $maxCount = null, bool $onlyNotEmptyValues = false)
 	{
 		parent::__construct($dto);
 
 		$this->fieldToCheck = $fieldToCheck;
 		$this->maxCount = $maxCount;
+		$this->onlyNotEmptyValues = $onlyNotEmptyValues;
 	}
-
 
 	public function validate(array $fields): Result
 	{
@@ -38,7 +39,7 @@ final class ScalarCollectionField extends Validator
 					{
 						$result->addError($keyValidationError);
 					}
-					if (!is_scalar($fieldValue))
+					if (!is_scalar($fieldValue) || ($this->onlyNotEmptyValues && empty($fieldValue)))
 					{
 						$result->addError($this->getWrongFieldError($this->fieldToCheck . '[' . $fieldKey . ']', $this->dto->getName()));
 					}

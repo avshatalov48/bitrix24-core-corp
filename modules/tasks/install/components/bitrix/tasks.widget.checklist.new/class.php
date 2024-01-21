@@ -153,7 +153,7 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 		$optionName = static::$map[$entityType]['OPTIONS']['PREFIX'].$option;
 		$optionValue = (is_callable($typeCallback) ? $typeCallback($value) : $value);
 
-		User::setOption($optionName, $optionValue, $userId);
+		User::setOption($optionName, $optionValue, $this->userId);
 	}
 
 	public function saveChecklistAction($taskId, $items = [], $params = [])

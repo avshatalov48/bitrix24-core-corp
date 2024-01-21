@@ -1,8 +1,11 @@
+/**
+ * @module layout/ui/product-grid/components/price-line/small
+ */
 jn.define('layout/ui/product-grid/components/price-line/small', (require, exports, module) => {
-
 	const { merge } = require('utils/object');
 	const { PriceLine } = require('layout/ui/product-grid/components/price-line/default');
 	const { Styles } = require('layout/ui/product-grid/components/price-line/styles');
+	const AppTheme = require('apptheme');
 
 	class SmallPriceLine extends PriceLine
 	{
@@ -11,20 +14,19 @@ jn.define('layout/ui/product-grid/components/price-line/small', (require, export
 			return merge({}, Styles, {
 				titleText: {
 					fontSize: 14,
-					color: '#bdc1c6',
+					color: AppTheme.colors.base5,
 				},
 				amount: {
 					fontSize: 14,
-					color: '#A8ADB4',
+					color: AppTheme.colors.base4,
 				},
 				currency: {
 					fontSize: 14,
-					color: '#bdc1c6',
+					color: AppTheme.colors.base5,
 				},
 			});
 		}
 	}
 
 	module.exports = { SmallPriceLine };
-
 });

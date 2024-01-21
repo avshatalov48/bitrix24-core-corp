@@ -4,6 +4,7 @@
 jn.define('crm/terminal/payment-create', (require, exports, module) => {
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
 	const { EventEmitter } = require('event-emitter');
 	const { Haptics } = require('haptics');
@@ -19,6 +20,7 @@ jn.define('crm/terminal/payment-create', (require, exports, module) => {
 		FieldNameClientName,
 	} = require('crm/terminal/services/field-manager');
 	const { AnalyticsLabel } = require('analytics-label');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @class PaymentCreate
@@ -33,7 +35,7 @@ jn.define('crm/terminal/payment-create', (require, exports, module) => {
 			this.paymentService = new PaymentService();
 			this.findsClientService = new FindsClientService();
 
-			/** @type {TerminalPayment|null} */
+			/** @type {Payment|null} */
 			this.payment = null;
 			/** @type {TerminalClientProps|null} */
 			this.client = null;
@@ -170,6 +172,7 @@ jn.define('crm/terminal/payment-create', (require, exports, module) => {
 		renderBottomPanel()
 		{
 			return new UI.BottomToolbar({
+				shadow: false,
 				renderContent: () => View(
 					{
 						style: styles.bottomPanel.container,
@@ -232,7 +235,8 @@ jn.define('crm/terminal/payment-create', (require, exports, module) => {
 					}
 
 					this.openDuplicatesPanel({ ENTITIES: duplicates });
-				});
+				})
+				.catch(console.error);
 		}
 
 		openDuplicatesPanel(duplicates)
@@ -311,33 +315,30 @@ jn.define('crm/terminal/payment-create', (require, exports, module) => {
 					phoneNumber: this.state.phone.phoneNumber,
 					client: this.client,
 					clientName: this.client ? null : this.state.name,
-				})
-					.then((payment) => {
-						Haptics.notifySuccess();
-						AnalyticsLabel.send({ event: 'terminal-new-payment-created' });
-						Keyboard.dismiss();
+				}).then((payment) => {
+					Haptics.notifySuccess();
+					AnalyticsLabel.send({ event: 'terminal-new-payment-created' });
+					Keyboard.dismiss();
 
-						this.layout.setTitle({ text: payment.name });
-						this.payment = payment;
-						this.setState({
-							step: Steps.created,
-						});
-
-						this.customEventEmitter.emit('TerminalPayment::onCreated', [this.payment.id]);
-					})
-					.catch(() => {
-						Haptics.notifyFailure();
-						this.setState({
-							step: Steps.create,
-						});
-						Alert.alert(
-							Loc.getMessage('M_CRM_TL_PAYMENT_CREATE_ERROR_TITLE'),
-							Loc.getMessage('M_CRM_TL_PAYMENT_CREATE_ERROR_TEXT'),
-						);
-					})
-					.finally(() => {
-						Notify.hideCurrentIndicator();
+					this.layout.setTitle({ text: payment.name });
+					this.payment = payment;
+					this.setState({
+						step: Steps.created,
 					});
+
+					this.customEventEmitter.emit('TerminalPayment::onCreated', [this.payment.id]);
+				}).catch(() => {
+					Haptics.notifyFailure();
+					this.setState({
+						step: Steps.create,
+					});
+					Alert.alert(
+						Loc.getMessage('M_CRM_TL_PAYMENT_CREATE_ERROR_TITLE'),
+						Loc.getMessage('M_CRM_TL_PAYMENT_CREATE_ERROR_TEXT'),
+					);
+				}).finally(() => {
+					Notify.hideCurrentIndicator();
+				});
 			});
 		}
 
@@ -390,7 +391,7 @@ jn.define('crm/terminal/payment-create', (require, exports, module) => {
 		hasSolidBorderContainer: true,
 		config: {
 			styles: {
-				externalWrapperBorderColor: '#D5D7DB',
+				externalWrapperBorderColor: AppTheme.colors.base6,
 			},
 			deepMergeStyles: {
 				externalWrapper: {
@@ -404,11 +405,9 @@ jn.define('crm/terminal/payment-create', (require, exports, module) => {
 	const minPhoneSearchLength = 5;
 
 	const styles = {
-		container: {
-			backgroundColor: '#EEF2F4',
-		},
+		container: {},
 		paymentCreateContainer: {
-			backgroundColor: '#FFFFFF',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			borderRadius: 12,
 			paddingVertical: 18,
 		},
@@ -427,7 +426,7 @@ jn.define('crm/terminal/payment-create', (require, exports, module) => {
 				text: {
 					fontSize: 18,
 					fontWeight: '500',
-					color: '#525C69',
+					color: AppTheme.colors.base2,
 					textAlign: 'center',
 				},
 			},
@@ -437,13 +436,13 @@ jn.define('crm/terminal/payment-create', (require, exports, module) => {
 					alignContent: 'center',
 					flexBasis: '50%',
 					borderLeftWidth: 1,
-					borderLeftColor: '#EEF2F4',
+					borderLeftColor: AppTheme.colors.bgSeparatorPrimary,
 				},
 				text: (isValid) => {
 					return {
 						fontSize: 18,
 						fontWeight: '500',
-						color: '#0B66C3',
+						color: AppTheme.colors.accentMainLinks,
 						opacity: isValid ? 1 : 0.3,
 						textAlign: 'center',
 					};

@@ -9,15 +9,15 @@
 		static get defaultFormat()
 		{
 			return {
-				'FORMAT_STRING': '#',
-				'DEC_POINT': '.',
-				'THOUSANDS_SEP': ' ',
-				'DECIMALS': 2,
-				'HIDE_ZERO': 'N',
-				'TEMPLATE': {
-					'PARTS': ['#'],
-					'SINGLE': '#',
-					'VALUE_INDEX': 0,
+				FORMAT_STRING: '#',
+				DEC_POINT: '.',
+				THOUSANDS_SEP: ' ',
+				DECIMALS: 2,
+				HIDE_ZERO: 'N',
+				TEMPLATE: {
+					PARTS: ['#'],
+					SINGLE: '#',
+					VALUE_INDEX: 0,
 				},
 			};
 		}
@@ -83,7 +83,7 @@
 		get formatted()
 		{
 			let result = this.numberFormat();
-			result = this.format.FORMAT_STRING.replace(/(^|[^&])#/, '$1' + result);
+			result = this.format.FORMAT_STRING.replace(/(^|[^&])#/, `$1${result}`);
 
 			return jnComponent.convertHtmlEntities(result);
 		}
@@ -137,5 +137,4 @@
 	Money.init();
 
 	jnexport(Money);
-
 })();

@@ -9,6 +9,12 @@ abstract class Base
 {
 	protected const FIELD_FORMATTED_NAME = 'FORMATTED_NAME';
 	protected const FIELD_SHOW_URL = 'SHOW_URL';
+	private const SUPPORTED_TYPES = [
+		CCrmOwnerType::Lead,
+		CCrmOwnerType::Deal,
+		CCrmOwnerType::Contact,
+		CCrmOwnerType::Company,
+	];
 
 	protected int $entityTypeId;
 	protected array $addToResultFields = [];
@@ -19,7 +25,7 @@ abstract class Base
 
 	public function __construct(int $entityTypeId)
 	{
-		if (!in_array($entityTypeId, [CCrmOwnerType::Lead, CCrmOwnerType::Deal], true))
+		if (!in_array($entityTypeId, self::SUPPORTED_TYPES, true))
 		{
 			throw new NotSupportedException(CCrmOwnerType::ResolveName($entityTypeId) . 'is not supported entity');
 		}

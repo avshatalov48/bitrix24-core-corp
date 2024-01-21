@@ -2,74 +2,48 @@
 
 namespace Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Calendar;
 
+use Bitrix\Crm\Service\Timeline\Item\Mixin\CalendarSharing;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
-use Bitrix\Main\Type\DateTime;
 
 class SharingSlotsListItem extends ContentBlock
 {
-	public const WORK_DAYS_TYPE = 'work_days';
-	protected ?string $type = null;
-	protected ?int $timeStart = null;
+	use CalendarSharing;
 
-	protected ?int $timeEnd = null;
-	protected ?int $slotLength = null;
+	protected ?array $rule = null;
 
 	public function getRendererName(): string
 	{
 		return 'SharingSlotsListItem';
 	}
 
-	public function getType(): ?string
+	public function getRule(): ?array
 	{
-		return $this->type;
+		return $this->rule;
 	}
 
-	public function setType(?string $type): self
+	public function setRule(?array $rule): self
 	{
-		$this->type = $type;
-		return $this;
-	}
+		$this->rule = $rule;
 
-	public function getTimeStart(): ?int
-	{
-		return $this->timeStart;
-	}
-
-	public function setTimeStart(int $timeStart): self
-	{
-		$this->timeStart = $timeStart;
-		return $this;
-	}
-
-	public function getTimeEnd(): ?int
-	{
-		return $this->timeEnd;
-	}
-
-	public function setTimeEnd(?int $timeEnd): self
-	{
-		$this->timeEnd = $timeEnd;
-		return $this;
-	}
-
-	public function getSlotLength(): ?int
-	{
-		return $this->slotLength;
-	}
-
-	public function setSlotLength(?int $slotLength): self
-	{
-		$this->slotLength = $slotLength;
 		return $this;
 	}
 
 	protected function getProperties(): ?array
 	{
 		return [
-			'type' => $this->getType(),
-			'timeStart' => $this->getTimeStart(),
-			'timeEnd' => $this->getTimeEnd(),
-			'slotLength' => $this->getSlotLength(),
+			'rule' => $this->getRule(),
+			'durationFormatted' => $this->getDurationFormatted(),
+			'weekdaysFormatted' => $this->getWeekdaysFormatted(),
 		];
+	}
+
+	protected function getDurationFormatted(): string
+	{
+		return $this->formatDuration($this->getRule()['slotSize']);
+	}
+
+	protected function getWeekdaysFormatted(): string
+	{
+		return $this->getRule()['weekdaysTitle'];
 	}
 }

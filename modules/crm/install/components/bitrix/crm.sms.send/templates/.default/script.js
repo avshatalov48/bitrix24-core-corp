@@ -1,8 +1,8 @@
+/* eslint-disable */
 (function (exports,main_core) {
 	'use strict';
 
 	var namespace = main_core.Reflection.namespace('BX.Crm.Component');
-
 	/**
 	 * @memberof BX.Crm.Component.CrmSmsSend
 	 */
@@ -14,6 +14,8 @@
 	    this._commEntityTypeId = null;
 	    this._commEntityId = null;
 	    this._to = null;
+	    this._templateCode = null;
+	    this._templatePlaceholders = null;
 	    this._fromList = [];
 	    this._toList = [];
 	    this._input = null;
@@ -35,7 +37,6 @@
 	    this._ownerTypeId = '';
 	    this._ownerId = '';
 	  }
-
 	  babelHelpers.createClass(CrmSmsSend, [{
 	    key: "init",
 	    value: function init(settings) {
@@ -53,6 +54,9 @@
 	      this._ownerId = BX.prop.getInteger(settings, 'ownerId', 0);
 	      this._senderId = BX.prop.getString(settings, 'providerId');
 	      this._isSenderFixed = BX.prop.getBoolean(settings, 'isProviderFixed', false);
+	      this._templateCode = BX.prop.getString(settings, 'templateCode');
+	      this._templatePlaceholders = BX.prop.getObject(settings, 'templatePlaceholders');
+	      this._linkToMarket = BX.prop.getString(settings, 'linkToMarket');
 	      this._title = this._container.querySelector('[data-role="sender-title"]');
 	      this._senderContainerNode = this._container.querySelector('[data-role="sender-container"]');
 	      this._senderSelectorNode = this._container.querySelector('[data-role="sender-selector"]');
@@ -66,7 +70,6 @@
 	      this._input = this._container.querySelector('[data-role="input"]');
 	      this.saveButton = this._container.querySelector('[data-role="button-save"]');
 	      this.cancelButton = this._container.querySelector('[data-role="button-cancel"]');
-
 	      if (this._canUse && this._canSendMessage) {
 	        this.initSenderSelector();
 	        this.initFromSelector();
@@ -83,14 +86,12 @@
 	    value: function switchToFixedSenderAppearance(sender) {
 	      this.setSender(sender);
 	      var subtitleNode = document.querySelector('.ui-side-panel-wrap-below');
-
 	      if (subtitleNode) {
 	        subtitleNode.classList.add('crm-sms-send-subtitle');
 	        subtitleNode.innerHTML = main_core.Loc.getMessage('CRM_SMS_SEND_SENDER_SUBTITLE', {
 	          '#SENDER#': '<span class="crm-sms-send-subtitle-sender">' + sender.name + '</span>'
 	        });
 	      }
-
 	      this._senderSelectorBlockNode.style.display = 'none';
 	      this._senderContainerNode.style.display = 'inline';
 	      this._clientContainerNode.style.display = 'inline';
@@ -99,23 +100,19 @@
 	    key: "initSenderSelector",
 	    value: function initSenderSelector() {
 	      var _this$_senderId;
-
 	      var defaultSenderId = (_this$_senderId = this._senderId) !== null && _this$_senderId !== void 0 ? _this$_senderId : this._defaults.senderId;
 	      var defaultSender = this._senders[0].canUse ? this._senders[0] : null;
 	      var restSender = null;
 	      var menuItems = [];
 	      var handler = this.onSenderSelectorClick.bind(this);
-
 	      for (var i = 0; i < this._senders.length; ++i) {
 	        if (this._senders[i].canUse && this._senders[i].fromList.length && (this._senders[i].id === defaultSenderId || !defaultSender)) {
 	          defaultSender = this._senders[i];
 	        }
-
 	        if (this._senders[i].id === 'rest') {
 	          restSender = this._senders[i];
 	          continue;
 	        }
-
 	        menuItems.push({
 	          text: this._senders[i].name,
 	          sender: this._senders[i],
@@ -123,18 +120,15 @@
 	          className: !this._senders[i].canUse || !this._senders[i].fromList.length ? 'crm-sms-send-popup-menu-item-disabled menu-popup-no-icon' : ''
 	        });
 	      }
-
 	      if (defaultSender && this._isSenderFixed) {
 	        this.switchToFixedSenderAppearance(defaultSender);
 	        return;
 	      }
-
 	      if (restSender) {
 	        if (restSender.fromList.length > 0) {
 	          menuItems.push({
 	            delimiter: true
 	          });
-
 	          for (var _i = 0; _i < restSender.fromList.length; ++_i) {
 	            menuItems.push({
 	              text: restSender.fromList[_i].name,
@@ -144,20 +138,17 @@
 	            });
 	          }
 	        }
-
 	        menuItems.push({
 	          delimiter: true
 	        }, {
 	          text: main_core.Loc.getMessage('CRM_SMS_REST_MARKETPLACE'),
-	          href: '/marketplace/category/crm_robot_sms/',
+	          href: this._linkToMarket,
 	          target: '_blank'
 	        });
 	      }
-
 	      if (defaultSender) {
 	        this.setSender(defaultSender);
 	      }
-
 	      BX.bind(this._senderSelectorNode, 'click', this.openMenu.bind(this, 'sender', this._senderSelectorNode, menuItems));
 	    }
 	  }, {
@@ -168,12 +159,10 @@
 	          window.open(item.sender.manageUrl);
 	          return;
 	        }
-
 	        this.setSender(item.sender, true);
 	        var from = item.from ? item.from : item.sender.fromList[0];
 	        this.setFrom(from, true);
 	      }
-
 	      this._menu.close();
 	    }
 	  }, {
@@ -184,7 +173,6 @@
 	      this._senderSelectorNode.textContent = sender.shortName ? sender.shortName : sender.name;
 	      var visualFn = sender.id === 'rest' ? 'hide' : 'show';
 	      BX[visualFn](this._fromContainerNode);
-
 	      if (setAsDefault) {
 	        BX.userOptions.save("crm", "sms_manager_editor", "senderId", this._senderId);
 	      }
@@ -195,18 +183,15 @@
 	      if (this._fromList.length > 0) {
 	        var defaultFromId = this._defaults.from || this._fromList[0].id;
 	        var defaultFrom = null;
-
 	        for (var i = 0; i < this._fromList.length; ++i) {
 	          if (this._fromList[i].id === defaultFromId || !defaultFrom) {
 	            defaultFrom = this._fromList[i];
 	          }
 	        }
-
 	        if (defaultFrom) {
 	          this.setFrom(defaultFrom);
 	        }
 	      }
-
 	      BX.bind(this._fromSelectorNode, 'click', this.onFromSelectorClick.bind(this));
 	    }
 	  }, {
@@ -214,7 +199,6 @@
 	    value: function onFromSelectorClick(e) {
 	      var menuItems = [];
 	      var handler = this.onFromSelectorItemClick.bind(this);
-
 	      for (var i = 0; i < this._fromList.length; ++i) {
 	        menuItems.push({
 	          text: this._fromList[i].name,
@@ -222,7 +206,6 @@
 	          onclick: handler
 	        });
 	      }
-
 	      this.openMenu('from_' + this._senderId, this._fromSelectorNode, menuItems, e);
 	    }
 	  }, {
@@ -231,20 +214,17 @@
 	      if (item.from) {
 	        this.setFrom(item.from, true);
 	      }
-
 	      this._menu.close();
 	    }
 	  }, {
 	    key: "setFrom",
 	    value: function setFrom(from, setAsDefault) {
 	      this._from = from.id;
-
 	      if (this._senderId === 'rest') {
 	        this._senderSelectorNode.textContent = from.name;
 	      } else {
 	        this._fromSelectorNode.textContent = from.name;
 	      }
-
 	      if (setAsDefault) {
 	        BX.userOptions.save("crm", "sms_manager_editor", "from", this._from);
 	      }
@@ -261,19 +241,16 @@
 	    value: function initClientSelector() {
 	      var menuItems = [];
 	      var handler = this.onClientSelectorClick.bind(this);
-
 	      for (var i = 0; i < this._communications.length; ++i) {
 	        menuItems.push({
 	          text: this._communications[i].caption,
 	          client: this._communications[i],
 	          onclick: handler
 	        });
-
 	        if (i === 0) {
 	          this.setClient(this._communications[i]);
 	        }
 	      }
-
 	      BX.bind(this._clientSelectorNode, 'click', this.openMenu.bind(this, 'comm', this._clientSelectorNode, menuItems));
 	    }
 	  }, {
@@ -282,7 +259,6 @@
 	      if (item.client) {
 	        this.setClient(item.client);
 	      }
-
 	      this._menu.close();
 	    }
 	  }, {
@@ -304,7 +280,6 @@
 	    value: function onToSelectorClick(e) {
 	      var menuItems = [];
 	      var handler = this.onToSelectorItemClick.bind(this);
-
 	      for (var i = 0; i < this._toList.length; ++i) {
 	        menuItems.push({
 	          text: this._toList[i].valueFormatted || this._toList[i].value,
@@ -312,7 +287,6 @@
 	          onclick: handler
 	        });
 	      }
-
 	      this.openMenu('to_' + this._commEntityTypeId + '_' + this._commEntityId, this._toSelectorNode, menuItems, e);
 	    }
 	  }, {
@@ -321,7 +295,6 @@
 	      if (item.to) {
 	        this.setTo(item.to);
 	      }
-
 	      this._menu.close();
 	    }
 	  }, {
@@ -336,13 +309,10 @@
 	      if (this._shownMenuId === menuId) {
 	        return;
 	      }
-
 	      if (this._shownMenuId !== null && this._menu) {
 	        this._menu.close();
-
 	        this._shownMenuId = null;
 	      }
-
 	      BX.PopupMenu.show(this._id + menuId, bindElement, menuItems, {
 	        offsetTop: 0,
 	        offsetLeft: 36,
@@ -387,40 +357,38 @@
 	    key: "save",
 	    value: function save() {
 	      var text = this._input.value;
-
 	      if (text === "") {
 	        return;
 	      }
-
 	      if (!this._communications.length) {
 	        alert(main_core.Loc.getMessage('CRM_SMS_ERROR_NO_COMMUNICATIONS'));
 	        return;
 	      }
-
 	      if (this._isRequestRunning) {
 	        return;
 	      }
-
 	      this._isRequestRunning = true;
 	      BX.ajax({
 	        url: BX.util.add_url_param(this._serviceUrl, {
-	          "action": "save_sms_message",
-	          "sender": this._senderId
+	          action: 'save_sms_message',
+	          sender: this._senderId
 	        }),
-	        method: "POST",
-	        dataType: "json",
+	        method: 'POST',
+	        dataType: 'json',
 	        data: {
-	          'site': main_core.Loc.getMessage('SITE_ID'),
-	          'sessid': BX.bitrix_sessid(),
-	          "ACTION": "SAVE_SMS_MESSAGE",
-	          "SENDER_ID": this._senderId,
-	          "MESSAGE_FROM": this._from,
-	          "MESSAGE_TO": this._to,
-	          "MESSAGE_BODY": text,
-	          "OWNER_TYPE_ID": this._ownerTypeId,
-	          "OWNER_ID": this._ownerId,
-	          "TO_ENTITY_TYPE_ID": this._commEntityTypeId,
-	          "TO_ENTITY_ID": this._commEntityId
+	          site: main_core.Loc.getMessage('SITE_ID'),
+	          sessid: BX.bitrix_sessid(),
+	          ACTION: 'SAVE_SMS_MESSAGE',
+	          SENDER_ID: this._senderId,
+	          MESSAGE_FROM: this._from,
+	          MESSAGE_TO: this._to,
+	          MESSAGE_BODY: text,
+	          MESSAGE_TEMPLATE: this._templateCode,
+	          MESSAGE_PLACEHOLDERS: this._templatePlaceholders,
+	          OWNER_TYPE_ID: this._ownerTypeId,
+	          OWNER_ID: this._ownerId,
+	          TO_ENTITY_TYPE_ID: this._commEntityTypeId,
+	          TO_ENTITY_ID: this._commEntityId
 	        },
 	        onsuccess: this.onSaveSuccess.bind(this),
 	        onfailure: this.onSaveFailure.bind(this)
@@ -431,7 +399,6 @@
 	    value: function cancel() {
 	      if (BX.SidePanel) {
 	        var curSlider = BX.SidePanel.Instance.getSliderByWindow(window);
-
 	        if (curSlider) {
 	          curSlider.close();
 	        }
@@ -442,12 +409,10 @@
 	    value: function onSaveSuccess(data) {
 	      this._isRequestRunning = false;
 	      var error = BX.prop.getString(data, "ERROR", "");
-
 	      if (error !== "") {
 	        alert(error);
 	        return;
 	      }
-
 	      this.cancel();
 	    }
 	  }, {
@@ -458,7 +423,6 @@
 	  }]);
 	  return CrmSmsSend;
 	}();
-
 	namespace.CrmSmsSend = CrmSmsSend;
 
 }((this.window = this.window || {}),BX));

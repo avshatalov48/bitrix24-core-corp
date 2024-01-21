@@ -1,20 +1,19 @@
 import { FormMode, ProductForm } from 'catalog.product-form';
 import 'currency';
 import { MixinTemplatesType } from './components/templates-type-mixin';
-import { Runtime, Type, Text } from 'main.core';
+import { ajax as Ajax, Runtime, Type, Text, Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import type { BaseEvent } from 'main.core.events';
-import { Loc } from 'main.core';
 import { ModeDictionary } from './const/mode-dictionary';
 
 export default {
-	mixins:[MixinTemplatesType],
+	mixins: [MixinTemplatesType],
 	mounted()
 	{
 		const editable = this.$root.$app.options.templateMode !== 'view';
 		const isCompilationMode = this.$root.$app.compilation !== null;
 
-		this.$root.$emit("on-change-editable", editable);
+		this.$root.$emit('on-change-editable', editable);
 		if (this.productForm)
 		{
 			this.productForm.setEditable(editable, isCompilationMode);
@@ -41,6 +40,7 @@ export default {
 			});
 			this.$store.commit('orderCreation/setBasket', fields);
 		}
+
 		if (Type.isObject(this.$root.$app.options.totals))
 		{
 			this.$store.commit('orderCreation/setTotal', this.$root.$app.options.totals);
@@ -76,7 +76,7 @@ export default {
 				dialogId: this.$root.$app.options.dialogId,
 				sessionId: this.$root.$app.options.sessionId,
 				isShortProductViewFormat: true,
-			}
+			},
 		);
 
 		this.checkProductErrors();
@@ -84,19 +84,19 @@ export default {
 		EventEmitter.subscribe(
 			this.productForm,
 			'ProductForm:onBasketChange',
-			Runtime.debounce(this.onBasketChange, 500, this)
+			Runtime.debounce(this.onBasketChange, 500, this),
 		);
 
 		EventEmitter.subscribe(
 			this.productForm,
 			'ProductForm:onErrorsChange',
-			Runtime.debounce(this.checkProductErrors, 500, this)
+			Runtime.debounce(this.checkProductErrors, 500, this),
 		);
 
 		EventEmitter.subscribe(
 			this.productForm,
 			'ProductForm:onModeChange',
-			this.onProductFormModeChange
+			this.onProductFormModeChange,
 		);
 
 		EventEmitter.subscribe(
@@ -128,7 +128,7 @@ export default {
 		},
 		onBasketChange(event: BaseEvent)
 		{
-			let processRefreshRequest = (data) => {
+			const processRefreshRequest = (data) => {
 				if (this.productForm)
 				{
 					const preparedBasket = [];
@@ -143,12 +143,16 @@ export default {
 						});
 					});
 
-					this.productForm.setData({...data, ...{basket: preparedBasket}});
+					this.productForm.setData({
+						...data,
+						basket: preparedBasket,
+					});
 
 					if (Type.isArray(data.basket))
 					{
 						this.$store.commit('orderCreation/setBasket', data.basket);
 					}
+
 					if (Type.isObject(data.total))
 					{
 						this.$store.commit('orderCreation/setTotal', data.total);
@@ -175,6 +179,7 @@ export default {
 			if (this.isNeedDisableSubmit())
 			{
 				this.$store.commit('orderCreation/disableSubmit');
+
 				return;
 			}
 
@@ -182,14 +187,14 @@ export default {
 
 			const requestId = Text.getRandom(20);
 			this.refreshId = requestId;
-			BX.ajax.runAction(
-				"salescenter.api.order.refreshBasket",
+			Ajax.runAction(
+				'salescenter.api.order.refreshBasket',
 				{
 					data: {
-						orderId : this.$root.$app.orderId,
-						basketItems: fields
-					}
-				}
+						orderId: this.$root.$app.orderId,
+						basketItems: fields,
+					},
+				},
 			)
 				.then((result) => {
 					if (this.refreshId !== requestId)
@@ -197,26 +202,26 @@ export default {
 						return;
 					}
 
-					const data = BX.prop.getObject(result,"data", {});
+					const data = BX.prop.getObject(result, 'data', {});
 					processRefreshRequest({
 						total: BX.prop.getObject(
 							data,
-							"total",
+							'total',
 							{
 								discount: 0,
 								result: 0,
 								sum: 0,
-								//resultNumeric: 0,
-							}
+								// resultNumeric: 0,
+							},
 						),
-						basket: BX.prop.get(data,"items",[])
+						basket: BX.prop.get(data, 'items', []),
 					});
 				})
 				.catch((result) => {
-					const data = BX.prop.getObject(result,"data", {});
+					const data = BX.prop.getObject(result, 'data', {});
 					processRefreshRequest({
-						errors: BX.prop.get(result,"errors", []),
-						basket: BX.prop.get(data,"items",[])
+						errors: BX.prop.get(result, 'errors', []),
+						basket: BX.prop.get(data, 'items', []),
 					});
 				});
 		},
@@ -226,14 +231,13 @@ export default {
 			const productIds = basketItems.map((basketItem) => {
 				return basketItem.skuId;
 			});
-			const compilationId =
-				this.$root.$app.compilation
-					? this.$root.$app.compilation.ID
-					: this.$root.$app.newCompilationId
+			const compilationId = this.$root.$app.compilation
+				? this.$root.$app.compilation.ID
+				: this.$root.$app.newCompilationId
 			;
 			if (compilationId)
 			{
-				BX.ajax.runAction(
+				Ajax.runAction(
 					'salescenter.compilation.updateCompilation',
 					{
 						data: {
@@ -252,7 +256,7 @@ export default {
 			}
 			else
 			{
-				this.$store.commit('orderCreation/enableSubmit')
+				this.$store.commit('orderCreation/enableSubmit');
 			}
 		},
 		isNeedDisableSubmit()
@@ -261,7 +265,7 @@ export default {
 
 			if (
 				basket.length <= 0
-				//|| !this.$root.$app.hasClientContactInfo()
+				// || !this.$root.$app.hasClientContactInfo()
 				|| (this.productForm && Type.isFunction(this.productForm.hasErrors) && this.productForm.hasErrors())
 			)
 			{
@@ -273,7 +277,7 @@ export default {
 			});
 
 			return filledProducts.length <= 0;
-		}
+		},
 	},
 	template: `
 		<div class="salescenter-app-payment-side">
@@ -283,4 +287,4 @@ export default {
 			</div>
 		</div>
 	`,
-}
+};

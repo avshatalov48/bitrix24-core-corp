@@ -14,6 +14,7 @@ class Group extends Disk
 {
 	private $group;
 	private $photoCache = array();
+	private string $sefUrl = '';
 
 	/**
 	 * Potential opportunity to attach object to external entity
@@ -25,19 +26,24 @@ class Group extends Disk
 	}
 
 	/**
+	 * Sets the root url for building url to listing folders, trashcan, etc.
+	 *
+	 * @param string $sefUrl Root url.
+	 * @return void
+	 */
+	public function setSefUrl(string $sefUrl): void
+	{
+		$this->sefUrl = $sefUrl;
+	}
+
+	/**
 	 * Get url to view entity of storage (ex. user profile, group profile, etc)
 	 * By default: folder list
 	 * @return string
 	 */
 	public function getEntityUrl()
 	{
-		$groupPage = \COption::getOptionString("socialnetwork", "workgroups_page", false, SITE_ID);
-		if(!$groupPage)
-		{
-			$groupPage = SITE_DIR . 'workgroups/';
-		}
-
-		return $groupPage . 'group/' .  $this->entityId . '/';
+		return $this->getSefUrl() . 'group/' .  $this->entityId . '/';
 	}
 
 	/**
@@ -164,5 +170,21 @@ class Group extends Disk
 		}
 
 		return (bool)$this->group['IS_EXTRANET'];
+	}
+
+	private function getSefUrl()
+	{
+		if ($this->sefUrl)
+		{
+			return $this->sefUrl;
+		}
+
+		$sefUrl = \COption::getOptionString('socialnetwork', 'workgroups_page', false, SITE_ID);
+		if(!$sefUrl)
+		{
+			$sefUrl = SITE_DIR . 'workgroups/';
+		}
+
+		return $sefUrl;
 	}
 }

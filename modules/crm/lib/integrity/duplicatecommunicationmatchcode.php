@@ -141,84 +141,18 @@ class DuplicateCommunicationMatchCodeTable extends Entity\DataManager
 
 		if(!empty($insertItems))
 		{
-			if($connection instanceof \Bitrix\Main\DB\MysqlCommonConnection)
+			$valueData = [];
+			foreach($insertItems as $item)
 			{
-				$valueData = array();
-				foreach($insertItems as $item)
-				{
-					$typeSql = $sqlHelper->forSql($item['type']);
-					$valueSql = $sqlHelper->forSql($item['value']);
-					$valueData[] = "({$entityTypeID}, {$entityID}, '{$typeSql}', '{$valueSql}')";
-				}
+				$typeSql = $sqlHelper->forSql($item['type']);
+				$valueSql = $sqlHelper->forSql($item['value']);
+				$valueData[] = "({$entityTypeID}, {$entityID}, '{$typeSql}', '{$valueSql}')";
+			}
 
-				$valuesSql = implode(', ', $valueData);
-				$connection->queryExecute(
-					"INSERT INTO b_crm_dp_comm_mcd(ENTITY_TYPE_ID, ENTITY_ID, TYPE, VALUE) VALUES {$valuesSql}"
-				);
-			}
-			elseif($connection instanceof \Bitrix\Main\DB\MssqlConnection)
-			{
-				if(count($insertItems) > 1)
-				{
-					$valueData = array();
-					foreach($insertItems as $item)
-					{
-						$typeSql = $sqlHelper->forSql($item['type']);
-						$valueSql = $sqlHelper->forSql($item['value']);
-						$valueData[] = "SELECT {$entityTypeID}, {$entityID}, '{$typeSql}', '{$valueSql}'";
-					}
-					$valuesSql = implode(' UNION ALL ', $valueData);
-
-					if($valuesSql !== '')
-					{
-						$connection->queryExecute(
-							"INSERT INTO b_crm_dp_comm_mcd(ENTITY_TYPE_ID, ENTITY_ID, TYPE, VALUE) {$valuesSql}"
-						);
-					}
-				}
-				else
-				{
-					$item = $insertItems[0];
-					$typeSql = $sqlHelper->forSql($item['type']);
-					$valueSql = $sqlHelper->forSql($item['value']);
-					$valuesSql = "({$entityTypeID}, {$entityID}, '{$typeSql}', '{$valueSql}')";
-					$connection->queryExecute(
-						"INSERT INTO b_crm_dp_comm_mcd(ENTITY_TYPE_ID, ENTITY_ID, TYPE, VALUE) VALUES {$valuesSql}"
-					);
-				}
-			}
-			elseif($connection instanceof \Bitrix\Main\DB\OracleConnection)
-			{
-				if(count($insertItems) > 1)
-				{
-					$valueData = array();
-					foreach($insertItems as $item)
-					{
-						$typeSql = $sqlHelper->forSql($item['type']);
-						$valueSql = $sqlHelper->forSql($item['value']);
-						$valueData[] = "SELECT {$entityTypeID}, {$entityID}, '{$typeSql}', '{$valueSql}' FROM dual";
-					}
-					$valuesSql = implode(' UNION ALL ', $valueData);
-					$connection->queryExecute(
-						"INSERT INTO b_crm_dp_comm_mcd(ENTITY_TYPE_ID, ENTITY_ID, TYPE, VALUE) {$valuesSql}"
-					);
-				}
-				else
-				{
-					$item = $insertItems[0];
-					$typeSql = $sqlHelper->forSql($item['type']);
-					$valueSql = $sqlHelper->forSql($item['value']);
-					$valuesSql = "({$entityTypeID}, {$entityID}, '{$typeSql}', '{$valueSql}')";
-					$connection->queryExecute(
-						"INSERT INTO b_crm_dp_comm_mcd(ENTITY_TYPE_ID, ENTITY_ID, TYPE, VALUE) VALUES {$valuesSql}"
-					);
-				}
-			}
-			else
-			{
-				$dbType = $connection->getType();
-				throw new Main\NotSupportedException("The '{$dbType}' is not supported in current context");
-			}
+			$valuesSql = implode(', ', $valueData);
+			$connection->queryExecute(
+				"INSERT INTO b_crm_dp_comm_mcd(ENTITY_TYPE_ID, ENTITY_ID, TYPE, VALUE) VALUES {$valuesSql}"
+			);
 		}
 	}
 	public static function replaceValues($entityTypeID, $entityID, $type, array $values)
@@ -276,78 +210,17 @@ class DuplicateCommunicationMatchCodeTable extends Entity\DataManager
 
 		if(!empty($insertValues))
 		{
-			if($connection instanceof \Bitrix\Main\DB\MysqlCommonConnection)
+			$valueData = [];
+			foreach($insertValues as $value)
 			{
-				$valueData = array();
-				foreach($insertValues as $value)
-				{
-					$valueSql = $sqlHelper->forSql($value);
-					$valueData[] = "({$entityTypeID}, {$entityID}, '{$typeSql}', '{$valueSql}')";
-				}
+				$valueSql = $sqlHelper->forSql($value);
+				$valueData[] = "({$entityTypeID}, {$entityID}, '{$typeSql}', '{$valueSql}')";
+			}
 
-				$valuesSql = implode(', ', $valueData);
-				$connection->queryExecute(
-					"INSERT INTO b_crm_dp_comm_mcd(ENTITY_TYPE_ID, ENTITY_ID, TYPE, VALUE) VALUES {$valuesSql}"
-				);
-			}
-			elseif($connection instanceof \Bitrix\Main\DB\MssqlConnection)
-			{
-				if(count($insertValues) > 1)
-				{
-					$valueData = array();
-					foreach($insertValues as $value)
-					{
-						$valueSql = $sqlHelper->forSql($value);
-						$valueData[] = "SELECT {$entityTypeID}, {$entityID}, '{$typeSql}', '{$valueSql}'";
-					}
-					$valuesSql = implode(' UNION ALL ', $valueData);
-
-					if($valuesSql !== '')
-					{
-						$connection->queryExecute(
-							"INSERT INTO b_crm_dp_comm_mcd(ENTITY_TYPE_ID, ENTITY_ID, TYPE, VALUE) {$valuesSql}"
-						);
-					}
-				}
-				else
-				{
-					$valueSql = $sqlHelper->forSql($insertValues[0]);
-					$valuesSql = "({$entityTypeID}, {$entityID}, '{$typeSql}', '{$valueSql}')";
-					$connection->queryExecute(
-						"INSERT INTO b_crm_dp_comm_mcd(ENTITY_TYPE_ID, ENTITY_ID, TYPE, VALUE) VALUES {$valuesSql}"
-					);
-				}
-			}
-			elseif($connection instanceof \Bitrix\Main\DB\OracleConnection)
-			{
-				if(count($insertValues) > 1)
-				{
-					$valueData = array();
-					foreach($insertValues as $value)
-					{
-						$valueSql = $sqlHelper->forSql($value);
-						$valueData[] = "SELECT {$entityTypeID}, {$entityID}, '{$typeSql}', '{$valueSql}' FROM dual";
-					}
-
-					$valuesSql = implode(' UNION ALL ', $valueData);
-					$connection->queryExecute(
-						"INSERT INTO b_crm_dp_comm_mcd(ENTITY_TYPE_ID, ENTITY_ID, TYPE, VALUE) {$valuesSql}"
-					);
-				}
-				else
-				{
-					$valueSql = $sqlHelper->forSql($insertValues[0]);
-					$valuesSql = "({$entityTypeID}, {$entityID}, '{$typeSql}', '{$valueSql}')";
-					$connection->queryExecute(
-						"INSERT INTO b_crm_dp_comm_mcd(ENTITY_TYPE_ID, ENTITY_ID, TYPE, VALUE) VALUES {$valuesSql}"
-					);
-				}
-			}
-			else
-			{
-				$dbType = $connection->getType();
-				throw new Main\NotSupportedException("The '{$dbType}' is not supported in current context");
-			}
+			$valuesSql = implode(', ', $valueData);
+			$connection->queryExecute(
+				"INSERT INTO b_crm_dp_comm_mcd(ENTITY_TYPE_ID, ENTITY_ID, TYPE, VALUE) VALUES {$valuesSql}"
+			);
 		}
 	}
 }

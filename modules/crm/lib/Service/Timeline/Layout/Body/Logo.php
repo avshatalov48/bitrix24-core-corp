@@ -12,6 +12,7 @@ class Logo extends Base
 	public const ICON_TYPE_DEFAULT = 'default';
 	public const ICON_TYPE_FAILURE = 'failure';
 	public const ICON_TYPE_SUCCESS = 'success';
+	public const ICON_TYPE_PURPLE = 'purple';
 
 	protected const BODY_LOGO_BACKGROUND_SIZE = 60;
 

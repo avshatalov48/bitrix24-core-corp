@@ -2,6 +2,7 @@
  * @module layout/ui/detail-card/tabs/shimmer
  */
 jn.define('layout/ui/detail-card/tabs/shimmer', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { ShimmerView } = require('layout/polyfill');
 	const { PureComponent } = require('layout/pure-component');
 
@@ -57,7 +58,7 @@ jn.define('layout/ui/detail-card/tabs/shimmer', (require, exports, module) => {
 							height: size,
 							width: size,
 							borderRadius: size / 2,
-							backgroundColor: '#dfe0e3',
+							backgroundColor: AppTheme.colors.base6,
 							position: 'relative',
 							left: 0,
 							top: 0,
@@ -74,7 +75,7 @@ jn.define('layout/ui/detail-card/tabs/shimmer', (require, exports, module) => {
 				width,
 				height,
 				borderRadius: height / 2,
-				backgroundColor: '#dfe0e3',
+				backgroundColor: AppTheme.colors.base6,
 			};
 			const outerViewStyle = {
 				width,
@@ -105,3 +106,4 @@ jn.define('layout/ui/detail-card/tabs/shimmer', (require, exports, module) => {
 
 	module.exports = { BaseShimmer };
 });
+

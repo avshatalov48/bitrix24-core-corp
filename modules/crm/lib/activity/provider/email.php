@@ -6,12 +6,19 @@ use Bitrix\Crm;
 use Bitrix\Crm\Activity;
 use Bitrix\Crm\Activity\CommunicationStatistics;
 use Bitrix\Crm\Automation\Trigger\EmailSentTrigger;
+use Bitrix\Crm\Service\Timeline;
 use Bitrix\Mail\Message;
 use Bitrix\Main\Config;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
 class Email extends Activity\Provider\Base
 {
+
+	/**
+	 * Size of html description can cause long sanitizing
+	 */
+	public const HTML_SIZE_LONG_SANITIZE_THRESHOLD = 50000;
 
 	public const ERROR_TYPE_PARTIAL = "partial";
 	public const ERROR_TYPE_FULL = "full";
@@ -50,16 +57,47 @@ class Email extends Activity\Provider\Base
 		];
 	}
 
-	public static function getMessageQuote($activityFields, $quotedText): string
+	/**
+	 * Format email quote for answer editor
+	 *
+	 * @param array $activityFields Fields of activity
+	 * @param string $quotedText Html text of previous email
+	 * @param bool $uncompressed Is activity fields were uncompressed already
+	 * @param bool $sanitized Is quited text sanitized already
+	 *
+	 * @return string
+	 */
+	public static function getMessageQuote(
+		array $activityFields,
+		string $quotedText,
+		bool $uncompressed = false,
+		bool $sanitized = false): string
 	{
-		static::uncompressActivity($activityFields);
+		if (!IsModuleInstalled('mail'))
+		{
+			return '';
+		}
+
+		if (!$uncompressed)
+		{
+			static::uncompressActivity($activityFields);
+		}
 		$header = Activity\Mail\Message::getHeader([
 			'OWNER_TYPE_ID' => (int)$activityFields['OWNER_TYPE_ID'],
 			'OWNER_ID' => (int)$activityFields['OWNER_ID'],
 			'ID' => $activityFields['ID'],
 			'SETTINGS' => $activityFields['SETTINGS'],
 		], false)->getData();
-		return Message::wrapTheMessageWithAQuote($quotedText, $activityFields['SUBJECT'], $activityFields['START_TIME'], $header['from'], $header['to'], $header['cc']);
+
+		return Message::wrapTheMessageWithAQuote(
+			$quotedText,
+			$activityFields['SUBJECT'] ?? '',
+			$activityFields['START_TIME'] ?? null,
+			$header['from'],
+			$header['to'],
+			$header['cc'],
+			$sanitized,
+		);
 	}
 
 	public static function getName()
@@ -138,6 +176,18 @@ class Email extends Activity\Provider\Base
 		if ($direction === \CCrmActivityDirection::Outgoing && Crm\Automation\Factory::canUseAutomation())
 		{
 			EmailSentTrigger::execute($activityFields['BINDINGS'], $activityFields);
+		}
+
+		if ($direction === \CCrmActivityDirection::Outgoing)
+		{
+			$badge = Crm\Service\Container::getInstance()->getBadge(
+				Crm\Badge\Badge::MAIL_MESSAGE_DELIVERY_STATUS_TYPE,
+				Crm\Badge\Type\MailMessageDeliveryStatus::MAIL_MESSAGE_DELIVERY_ERROR_VALUE,
+			);
+
+			$itemIdentifier = new Crm\ItemIdentifier((int)$activityFields['OWNER_TYPE_ID'], (int)$activityFields['OWNER_ID']);
+			$badge->deleteByEntity($itemIdentifier, $badge->getType(), $badge->getValue());
+			Timeline\Monitor::getInstance()->onBadgesSync($itemIdentifier);
 		}
 	}
 
@@ -344,4 +394,96 @@ class Email extends Activity\Provider\Base
 
 		return parent::deleteAssociatedEntity($entityId, $activity, $options);
 	}
+
+	/**
+	 * Sanitize email message body html
+	 *
+	 * @param string $html Raw html of email body
+	 *
+	 * @return string
+	 */
+	protected static function sanitizeBody(string $html): string
+	{
+		if (IsModuleInstalled('mail') && Loader::includeModule('mail'))
+		{
+			return \Bitrix\Mail\Helper\Message::sanitizeHtml($html, true);
+		}
+		$sanitizer = new \CBXSanitizer();
+		$sanitizer->setLevel(\CBXSanitizer::SECURE_LEVEL_LOW);
+		$sanitizer->applyDoubleEncode(false);
+		$sanitizer->addTags(['style' => []]);
+
+		return $sanitizer->sanitizeHtml($html);
+	}
+
+	/**
+	 * Get description html according to description type
+	 *
+	 * @param string $description Description text
+	 * @param int $type Description type
+	 * @param bool $needSanitize Is need to sanotize html tags
+	 *
+	 * @return string
+	 */
+	public static function getDescriptionHtmlByType(string $description, int $type, bool $needSanitize): string
+	{
+		return match ($type)
+		{
+			\CCrmContentType::BBCode => (new \CTextParser())->convertText($description),
+			\CCrmContentType::Html => ($needSanitize) ? static::sanitizeBody($description) : $description,
+			default => preg_replace('/[\r\n]+/' . BX_UTF_PCRE_MODIFIER,
+				'<br>',
+				htmlspecialcharsbx($description)
+			),
+		};
+	}
+
+	/**
+	 * Get description field from activity fields
+	 *
+	 * @param array $activity Activity fields data
+	 *
+	 * @return string
+	 */
+	public static function getDescriptionHtmlByActivityFields(array $activity): string
+	{
+		$description = (string)($activity['DESCRIPTION'] ?? '');
+		$type = (int)($activity['DESCRIPTION_TYPE'] ?? \CCrmContentType::PlainText);
+		$needSanitize = (bool)($activity['SETTINGS']['SANITIZE_ON_VIEW'] ?? false);
+
+		return self::getDescriptionHtmlByType($description, $type, $needSanitize);
+	}
+
+	/**
+	 * Is sanitizing can be long?
+	 *
+	 * @param array $activity Activity fields data
+	 *
+	 * @return bool
+	 */
+	public static function isSanitizingCanBeLong(array $activity): bool
+	{
+		$description = (string)($activity['DESCRIPTION'] ?? '');
+		$type = (int)($activity['DESCRIPTION_TYPE'] ?? \CCrmContentType::PlainText);
+		$needSanitize = (bool)($activity['SETTINGS']['SANITIZE_ON_VIEW'] ?? false);
+
+		return $needSanitize
+			&& $type === \CCrmContentType::Html
+			&& mb_strlen(trim($description)) > self::HTML_SIZE_LONG_SANITIZE_THRESHOLD;
+	}
+
+	/**
+	 * Get fast process fallback for description, instead of sanitize
+	 *
+	 * @param string $description Html description
+	 *
+	 * @return string
+	 */
+	public static function getFallbackHtmlDescription(string $description): string
+	{
+		$textLikeTextBody = html_entity_decode(htmlToTxt($description), ENT_QUOTES | ENT_HTML401);
+
+		return preg_replace('/(\s*(\r\n|\n|\r))+/', '<br>', htmlspecialcharsbx($textLikeTextBody));
+	}
+
 }

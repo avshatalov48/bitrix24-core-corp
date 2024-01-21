@@ -14,6 +14,7 @@ return [
 		'im:messenger/lib/element/chat-avatar',
 		'im:messenger/lib/element/chat-avatar',
 		'im:messenger/lib/emitter',
+		'im:messenger/lib/date-formatter',
 	],
 	'bundle' => [
 		'./src/config',
@@ -24,5 +25,6 @@ return [
 		'./src/service/local-search-service',
 		'./src/service/server-search-service',
 		'./src/helper/get-words-from-text',
+		'./src/helper/search-date-formatter',
 	],
 ];

@@ -40,6 +40,8 @@ Class mobile extends CModule
 			"calendar",
 			"imconnector",
 			"catalog",
+			'bizproc',
+			'lists',
 		];
 	}
 
@@ -132,12 +134,14 @@ Class mobile extends CModule
 					$mobileAppFound = true;
 					$template = $arAppTempalate;
 				}
+
 				$arFields["TEMPLATE"][] = array(
 					"TEMPLATE" => $template['TEMPLATE'],
 					"SORT" => $template['SORT'],
 					"CONDITION" => $template['CONDITION']
 				);
 			}
+
 			if (!$mobileAppFound)
 			{
 				$arFields["TEMPLATE"][] = $arAppTempalate;

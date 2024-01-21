@@ -11,6 +11,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\DB\SqlExpression;
 
 /**
  * This is the first part of the agent to populate the LIGHT_TIME fields for counters.
@@ -128,7 +129,7 @@ SQL;
 		$offsets = ActivityPingOffsetsTable::query()
 			->addSelect('ACTIVITY_ID')
 			->addSelect('MAX_OFFSET')
-			->registerRuntimeField('', new ExpressionField('MAX_OFFSET', 'MAX(OFFSET)'))
+			->registerRuntimeField('', new ExpressionField('MAX_OFFSET', new SqlExpression('MAX(?#)', 'OFFSET')))
 			->whereIn('ACTIVITY_ID', $activitiesIds)
 			->setGroup('ACTIVITY_ID')
 			->fetchAll();

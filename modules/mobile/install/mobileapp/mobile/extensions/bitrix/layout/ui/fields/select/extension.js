@@ -2,7 +2,7 @@
  * @module layout/ui/fields/select
  */
 jn.define('layout/ui/fields/select', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { chevronDown } = require('assets/common');
 	const { BaseSelectField } = require('layout/ui/fields/base-select');
 	const { stringify } = require('utils/string');
@@ -17,8 +17,8 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 
 	const SELECTOR_SECTION_ID = 'all';
 
-	const pathToIcons = `/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/select/icons/`;
-	const DEFAULT_SELECTED_ICON = currentDomain + pathToIcons + 'selected.png';
+	const pathToIcons = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/select/icons/';
+	const DEFAULT_SELECTED_ICON = `${currentDomain}${pathToIcons}selected.png`;
 
 	/**
 	 * @class SelectField
@@ -83,7 +83,8 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 				mode: this.prepareMode(config),
 				items: BX.prop.getArray(config, 'items', []),
 				defaultListTitle: BX.prop.getString(config, 'defaultListTitle', this.props.title || ''),
-				selectShowImages: BX.prop.getString(config, 'selectShowImages', true),
+				selectShowImages: BX.prop.getBoolean(config, 'selectShowImages', true),
+				isSearchEnabled: BX.prop.getBoolean(config, 'isSearchEnabled', true),
 			};
 		}
 
@@ -158,6 +159,11 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 			return selectedText;
 		}
 
+		getValueStyle()
+		{
+			return this.styles.value || { color: AppTheme.colors.base1 };
+		}
+
 		renderReadOnlyContent()
 		{
 			if (this.isEmpty())
@@ -170,7 +176,7 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 					onLongClick: this.getContentLongClickHandler(),
 				},
 				Text({
-					style: this.styles.value,
+					style: this.getValueStyle(),
 					numberOfLines: 1,
 					ellipsize: 'end',
 					text: this.getSelectedItemsText(),
@@ -193,7 +199,7 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 					onClick: () => this.handleAdditionalFocusActions(),
 				},
 				Text({
-					style: this.styles.value,
+					style: this.getValueStyle(),
 					numberOfLines: 1,
 					ellipsize: 'end',
 					text: this.getSelectedItemsText(),
@@ -203,6 +209,7 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 						style: this.styles.arrowImageContainer,
 					},
 					Image({
+						tintColor: AppTheme.colors.base3,
 						style: this.styles.arrowImage,
 						svg: {
 							content: chevronDown(),
@@ -229,7 +236,6 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 
 		handleAdditionalFocusActions()
 		{
-
 			if (this.isSelector())
 			{
 				return this.handleSelectorFocusAction();
@@ -254,8 +260,7 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 							{
 								this.handleChange(item.value);
 							}
-						})
-					;
+						});
 				},
 			);
 
@@ -263,6 +268,14 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 		}
 
 		handleSelectorFocusAction()
+		{
+			return this.openSelector();
+		}
+
+		/**
+		 * @public
+		 */
+		openSelector()
 		{
 			return new Promise((resolve, reject) => {
 				if (this.selector)
@@ -292,31 +305,32 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 							this.selector = widget;
 
 							this.selector.enableNavigationBarBorder(false);
-							this.selector.setRightButtons([{
-								name: (
-									this.isMultiple()
-										? BX.message('FIELDS_SELECT_CHOOSE')
-										: BX.message('FIELDS_SELECT_SELECTOR_DONE')
-								),
-								type: 'text',
-								color: '#0b66c3',
-								callback: () => this.applyChangesAndCloseSelector(),
-							}]);
-							this.selector.setSearchEnabled(true);
+							this.selector.setRightButtons([
+								{
+									name: (
+										this.isMultiple()
+											? BX.message('FIELDS_SELECT_CHOOSE')
+											: BX.message('FIELDS_SELECT_SELECTOR_DONE')
+									),
+									type: 'text',
+									color: AppTheme.colors.accentMainLinks,
+									callback: () => this.applyChangesAndCloseSelector(),
+								},
+							]);
+							this.selector.setSearchEnabled(this.getConfig().isSearchEnabled);
 							this.selector.allowMultipleSelection(this.isMultiple());
 							this.selectorSetItems(items);
 							this.selectorSelectedItems = this.getSelectedSelectorItems();
 							this.selector.setSelected(this.selectorSelectedItems);
 
 							this.selector.setListener((eventName, data) => {
-								const callbackName = eventName + 'Listener';
+								const callbackName = `${eventName}Listener`;
 
 								if (this[callbackName])
 								{
 									this[callbackName].apply(this, [data]);
 								}
 							});
-
 						}
 						resolve();
 					})
@@ -328,7 +342,7 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 		onListFillListener({ text })
 		{
 			const selectorItems = this.getSelectorItems();
-			if (!selectorItems.length)
+			if (selectorItems.length === 0)
 			{
 				return;
 			}
@@ -338,7 +352,7 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 			if (text.trim())
 			{
 				const foundItems = search(selectorItems, text, ['title']);
-				items = foundItems.length ? foundItems : [this.getEmptyResultButtonItem()];
+				items = foundItems.length > 0 ? foundItems : [this.getEmptyResultButtonItem()];
 			}
 
 			this.selectorSetItems(items);
@@ -358,7 +372,7 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 			widget.showComponent(
 				new EmptyScreen({
 					image: {
-						uri: EmptyScreen.makeLibraryImagePath('emptyList.png'),
+						uri: EmptyScreen.makeLibraryImagePath('empty-list.svg'),
 						style: {
 							width: 95,
 							height: 95,
@@ -367,7 +381,7 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 					title: () => Text({
 						style: {
 							fontWeight: '400',
-							color: '#828B95',
+							color: AppTheme.colors.base3,
 							fontSize: 17,
 							textAlign: 'center',
 						},
@@ -424,7 +438,7 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 						this.selector = null;
 						resolve();
 					})
-				;
+					.catch(console.error);
 			});
 		}
 
@@ -557,7 +571,7 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 					height: 5,
 				},
 				value: {
-					color: this.isEmpty() ? '#a8adb4' : '#333333',
+					color: this.isEmpty() ? AppTheme.colors.base4 : AppTheme.colors.base1,
 					fontSize: 16,
 					flexShrink: 2,
 				},
@@ -620,5 +634,4 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 		SelectType: 'select',
 		SelectField: (props) => new SelectField(props),
 	};
-
 });

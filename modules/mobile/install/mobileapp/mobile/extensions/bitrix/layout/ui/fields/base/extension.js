@@ -2,7 +2,7 @@
  * @module layout/ui/fields/base
  */
 jn.define('layout/ui/fields/base', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { transition } = require('animation');
 	const { Haptics } = require('haptics');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
@@ -14,8 +14,8 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 	const { chevronDown, chevronUp } = require('assets/common');
 	const { copyToClipboard } = require('utils/copy');
 	const { Loc } = require('loc');
-	const ERROR_TEXT_COLOR = '#ff5752';
-	const TOOLTIP_COLOR = '#e89b06';
+	const ERROR_TEXT_COLOR = AppTheme.colors.accentMainAlert;
+	const TOOLTIP_COLOR = AppTheme.colors.accentMainWarning;
 
 	const TitlePosition = {
 		top: 'top',
@@ -33,14 +33,8 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		option: 'easeOut',
 	})();
 
-	const tooltipTriangle = (color) => `<svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg">
-		<path fill-rule="evenodd" clip-rule="evenodd" d="M2.60352 2.97461L0 0V4H4.86133C3.99634 4 3.17334 3.62695 2.60352 2.97461Z" fill="${color}"/>
-	</svg>`;
+	const tooltipTriangle = (color) => `<svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.60352 2.97461L0 0V4H4.86133C3.99634 4 3.17334 3.62695 2.60352 2.97461Z" fill="${color}"/></svg>`;
 
-	/**
-	 * @class BaseField
-	 * @abstract
-	 */
 	class BaseField extends PureComponent
 	{
 		constructor(props)
@@ -110,7 +104,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 				}
 
 				// componentDidUpdate still doesn't work correctly on Android, so we use this workaround
-				setTimeout(() => this.handleAdditionalFocusActions(), 0/*30*/);
+				setTimeout(() => this.handleAdditionalFocusActions(), 0/* 30 */);
 			}
 		}
 
@@ -314,11 +308,11 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return Promise.resolve();
 		}
 
-		onBeforeHandleChange()
+		onBeforeHandleChange(actionParams)
 		{
 			if (typeof this.props.onBeforeChange === 'function')
 			{
-				return this.props.onBeforeChange();
+				return this.props.onBeforeChange(actionParams);
 			}
 
 			return Promise.resolve();
@@ -353,15 +347,15 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 				flex: 1,
 				fontSize: 16,
 				fontWeight: '400',
-				color: '#333333',
+				color: AppTheme.colors.base1,
 			};
 			const emptyValue = {
 				...base,
-				color: '#a8adb4',
+				color: AppTheme.colors.base4,
 			};
 			const value = {
 				...base,
-				color: this.isDisabled() ? '#828b95' : '#333333',
+				color: this.isDisabled() ? AppTheme.colors.base3 : AppTheme.colors.base1,
 			};
 
 			let styles = this.getBaseFieldStyles();
@@ -436,7 +430,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 					alignSelf: 'flex-start',
 				},
 				errorText: {
-					color: '#fff',
+					color: AppTheme.colors.baseWhiteFixed,
 					fontSize: 13,
 				},
 				iconBeforeTitle: {
@@ -544,7 +538,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		{
 			if (this.state.focus && this.canFocusTitle())
 			{
-				return '#0b66c3';
+				return AppTheme.colors.accentMainLinks;
 			}
 
 			if (this.hasErrorMessage())
@@ -552,7 +546,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 				return ERROR_TEXT_COLOR;
 			}
 
-			return '#a8adb4';
+			return AppTheme.colors.base3;
 		}
 
 		render()
@@ -578,7 +572,9 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return View(
 				{
 					style: this.styles.externalWrapper,
-					ref: (ref) => this.fieldContainerRef = ref,
+					ref: (ref) => {
+						this.fieldContainerRef = ref;
+					},
 				},
 				View(
 					{
@@ -633,7 +629,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 				{
 					style: this.styles.innerWrapper,
 				},
-				!this.showTitle() ? null : View(
+				this.showTitle() ? View(
 					{
 						testId: `${this.testId}_TITLE`,
 						style: {
@@ -642,7 +638,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 					},
 					this.renderTitle(),
 					this.renderRequired(),
-				),
+				) : null,
 				this.renderContentBlock(),
 			);
 		}
@@ -786,7 +782,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 					}
 
 					resolve();
-				}));
+				})).catch(console.error);
 			});
 
 			return (
@@ -833,7 +829,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 
 					this.debouncedValidation();
 					resolve();
-				}));
+				})).catch(console.error);
 			});
 		}
 
@@ -886,8 +882,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			if (this.isMultiple())
 			{
 				return (
-					value.length === 0
-					|| value.every((value) => this.isEmptyValue(value))
+					value.every((value) => this.isEmptyValue(value))
 				);
 			}
 
@@ -984,7 +979,9 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 
 		hasErrorMessage()
 		{
-			return typeof this.state.errorMessage === 'string' && this.state.errorMessage.length;
+			const { errorMessage } = this.state;
+
+			return typeof errorMessage === 'string' && errorMessage.length > 0;
 		}
 
 		hasErrorOrTooltip()
@@ -1011,6 +1008,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		renderTooltip()
 		{
 			const tooltipMessage = this.getTooltipMessage();
+
 			return View(
 				{
 					style: this.styles.tooltipWrapper,
@@ -1034,7 +1032,8 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 								text: this.getTooltipMessage(),
 								numberOfLines: 1,
 								ellipsize: 'end',
-							})
+							},
+						)
 						: tooltipMessage,
 				),
 			);
@@ -1048,7 +1047,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			{
 				tooltip(this).then(({ message, color }) => {
 					this.setTooltip(message, color);
-				});
+				}).catch(console.error);
 			}
 		}
 
@@ -1068,8 +1067,9 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 
 		hasTooltipMessage()
 		{
-			return (typeof this.state.tooltipMessage === 'string' && this.state.tooltipMessage.length)
-				|| this.state.tooltipMessage instanceof LayoutComponent;
+			const { tooltipMessage } = this.state;
+
+			return (typeof tooltipMessage === 'string' && tooltipMessage.length > 0) || tooltipMessage instanceof LayoutComponent;
 		}
 
 		getTooltipMessage()
@@ -1382,7 +1382,8 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 
 		renderShowAllButton(hiddenFieldsCount = null)
 		{
-			if (this.showAllFromProps || this.state.showAll || isNil(hiddenFieldsCount) || Number.isInteger(hiddenFieldsCount) && hiddenFieldsCount <= 0)
+			if (this.showAllFromProps || this.state.showAll || isNil(hiddenFieldsCount) || Number.isInteger(
+				hiddenFieldsCount) && hiddenFieldsCount <= 0)
 			{
 				return null;
 			}
@@ -1423,7 +1424,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 				Text({
 					style: {
 						flex: 1,
-						color: '#a8adb4',
+						color: AppTheme.colors.base4,
 						fontSize: 13,
 					},
 					text: `${BX.message('FIELDS_BASE_SHOW_ALL')} ${this.showAllCount() ? hiddenFieldsCount : ''}`,
@@ -1471,10 +1472,10 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 					Text({
 						style: {
 							flex: 1,
-							color: '#a8adb4',
+							color: AppTheme.colors.base4,
 							fontSize: 13,
 						},
-						text: `${BX.message('FIELDS_BASE_HIDE')}`,
+						text: String(BX.message('FIELDS_BASE_HIDE')),
 					}),
 				);
 			}

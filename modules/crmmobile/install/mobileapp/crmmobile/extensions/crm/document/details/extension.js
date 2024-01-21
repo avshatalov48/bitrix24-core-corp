@@ -4,7 +4,9 @@
 jn.define('crm/document/details', (require, exports, module) => {
 	const { FadeView } = require('animation/components/fade-view');
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { Moment } = require('utils/date');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { shortTime, date } = require('utils/date/formats');
 	const { CrmDocumentEditor } = require('crm/document/edit');
 	const { CrmDocumentQrCode } = require('crm/document/qr-code');
@@ -168,7 +170,7 @@ jn.define('crm/document/details', (require, exports, module) => {
 			return FadeIn(() => View(
 				{
 					style: {
-						backgroundColor: '#EEF2F4',
+						backgroundColor: AppTheme.colors.bgSecondary,
 						flexDirection: 'column',
 						justifyContent: 'center',
 						flexGrow: 1,
@@ -187,7 +189,7 @@ jn.define('crm/document/details', (require, exports, module) => {
 				{
 					style: {
 						flex: 1,
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgSecondary,
 					},
 				},
 				CrmDocumentDetailsPdfView({
@@ -447,7 +449,8 @@ jn.define('crm/document/details', (require, exports, module) => {
 
 		renderWidgetTitle()
 		{
-			const text = this.document.title || this.props.title || Loc.getMessage('M_CRM_DOCUMENT_SHARED_PHRASES_LOADING');
+			const text = this.document.title || this.props.title || Loc.getMessage(
+				'M_CRM_DOCUMENT_SHARED_PHRASES_LOADING');
 			const createdAtTimestamp = this.document.createTime || this.props.createdAt;
 			let detailText = null;
 			if (createdAtTimestamp)
@@ -499,14 +502,15 @@ jn.define('crm/document/details', (require, exports, module) => {
 						swipeContentAllowed: false,
 						horizontalSwipeAllowed: false,
 						hideNavigationBar: false,
-						navigationBarColor: '#eef2f4',
+						navigationBarColor: AppTheme.colors.bgSecondary,
 						helpUrl: helpdesk.getArticleUrl('17393988'),
 					},
 				})
 				.then((layoutWidget) => layoutWidget.showComponent(new CrmDocumentDetails({
 					...props,
 					layoutWidget,
-				})));
+				})))
+				.catch(console.error);
 		}
 	}
 
@@ -515,8 +519,8 @@ jn.define('crm/document/details', (require, exports, module) => {
 		download: '<svg width="29" height="28" viewBox="0 0 29 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.7082 23.3333C19.8629 23.3333 24.0415 19.1547 24.0415 14C24.0415 8.84534 19.8629 4.66666 14.7082 4.66666C9.55355 4.66666 5.37488 8.84534 5.37488 14C5.37488 19.1547 9.55355 23.3333 14.7082 23.3333ZM13.7623 9.33333C13.5186 9.33333 13.3211 9.54942 13.3211 9.81599V13.9474H10.3068C10.0648 13.9474 9.94969 14.2732 10.1287 14.4513L14.1147 18.4156C14.4512 18.7503 14.9652 18.7503 15.3017 18.4156L19.2877 14.4513C19.4667 14.2732 19.3516 13.9474 19.1096 13.9474H16.0953V9.81599C16.0953 9.54942 15.8978 9.33333 15.6542 9.33333H13.7623Z" fill="#A8ADB4"/></svg>',
 		print: '<svg width="29" height="28" viewBox="0 0 29 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.0172 10.525C22.4681 10.525 22.8353 10.9153 22.8353 11.3945V17.4804C22.8353 17.9596 22.4681 18.3498 22.0172 18.3498H21.1992V21.2751C21.1992 21.7543 20.832 22.1445 20.3811 22.1445H8.9285C8.47761 22.1445 8.11045 21.7543 8.11045 21.2751V18.3498H7.29241C6.84152 18.3498 6.47437 17.9596 6.47437 17.4804V11.3945C6.47437 10.9153 6.84152 10.525 7.29241 10.525H22.0172ZM19.5631 17.4804H9.74654V20.4057H19.5631V17.4804ZM20.3811 12.2639C19.9302 12.2639 19.5631 12.6541 19.5631 13.1333C19.5631 13.6125 19.9302 14.0027 20.3811 14.0027C20.832 14.0027 21.1992 13.6125 21.1992 13.1333C21.1992 12.6541 20.832 12.2639 20.3811 12.2639ZM20.1732 5.7661C20.3551 5.7661 20.4987 5.92818 20.4987 6.1255V8.98665C20.4987 9.18749 20.3519 9.34605 20.1732 9.34605H9.13718C8.95845 9.34605 8.81164 9.18749 8.81164 8.99017V6.1255C8.81164 5.92818 8.95845 5.7661 9.13718 5.7661L20.1732 5.7661Z" fill="#A8ADB4"/></svg>',
 		edit: '<svg width="29" height="28" viewBox="0 0 29 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M19.0067 6.37557C19.2028 6.18013 19.5203 6.18122 19.7151 6.378L22.4292 9.1207C22.6229 9.31648 22.6218 9.63209 22.4268 9.82653L11.8065 20.412L8.38896 16.9585L19.0067 6.37557ZM6.80182 21.5653C6.7695 21.6876 6.80413 21.8168 6.89185 21.9068C6.98187 21.9968 7.11114 22.0314 7.23348 21.9968L11.0538 20.9676L7.83135 17.7461L6.80182 21.5653Z" fill="#A8ADB4"/></svg>',
-		title: '<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="15" cy="15" r="14.5" fill="white" stroke="#EEF2F4"/><g clip-path="url(#clip0_105_129)"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 7C9 5.89543 9.89543 5 11 5H17.5029C18.0658 5 18.6026 5.2372 18.9816 5.65338L21.4787 8.39544C21.8141 8.76374 22 9.24394 22 9.74207V22C22 23.1046 21.1046 24 20 24H11C9.89543 24 9 23.1046 9 22V7Z" fill="white"/><path opacity="0.54" d="M11 6H17.5029C17.7843 6 18.0527 6.1186 18.2422 6.32669L20.7394 9.06875C20.9071 9.2529 21 9.493 21 9.74207V22C21 22.5523 20.5523 23 20 23H11C10.4477 23 10 22.5523 10 22V7C10 6.44772 10.4477 6 11 6Z" fill="black" fill-opacity="0.01" stroke="#2FC6F6" stroke-width="2"/><rect x="11.7368" y="8.95833" width="5.47368" height="0.791667" rx="0.395833" fill="#2FC6F6"/><rect x="11.7368" y="12.125" width="6.8421" height="0.791667" rx="0.395833" fill="#8FE0FA"/><rect x="11.7368" y="15.2917" width="6.8421" height="0.791666" rx="0.395833" fill="#8FE0FA"/><rect x="11.7368" y="13.7083" width="6.1579" height="0.791667" rx="0.395833" fill="#8FE0FA"/><path fill-rule="evenodd" clip-rule="evenodd" d="M16.4338 18.5551C16.5552 18.6861 16.5574 18.9009 16.4386 19.0349L15.5791 20.0042C15.5197 20.0712 15.4379 20.1081 15.353 20.1062C15.2681 20.1043 15.1877 20.0638 15.1308 19.9943L14.7711 19.5545L14.0625 20.4718C14.0051 20.5461 13.9214 20.5896 13.8328 20.5909C13.7442 20.5923 13.6594 20.5515 13.6001 20.479L13.0355 19.7888L12.2728 20.7213C12.159 20.8604 11.9645 20.8715 11.8384 20.7459C11.7122 20.6204 11.7022 20.4059 11.816 20.2668L12.8072 19.055C12.8655 18.9837 12.9485 18.943 13.0355 18.943C13.1226 18.943 13.2056 18.9837 13.2639 19.055L13.8218 19.7371L14.5304 18.8199C14.5878 18.7455 14.6716 18.7021 14.7601 18.7007C14.8487 18.6993 14.9335 18.7401 14.9929 18.8127L15.3682 19.2716L15.9988 18.5604C16.1176 18.4264 16.3123 18.424 16.4338 18.5551Z" fill="#2FC6F6"/></g><defs><clipPath id="clip0_105_129"><rect width="13" height="19" fill="white" transform="translate(9 5)"/></clipPath></defs></svg>',
-		contextMenu: '<svg width="26" height="25" viewBox="0 0 26 25" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.74996 14.5834C7.90055 14.5834 8.83329 13.6506 8.83329 12.5C8.83329 11.3494 7.90055 10.4167 6.74996 10.4167C5.59937 10.4167 4.66663 11.3494 4.66663 12.5C4.66663 13.6506 5.59937 14.5834 6.74996 14.5834Z" fill="#A8ADB4"/><path d="M13 14.5834C14.1506 14.5834 15.0833 13.6506 15.0833 12.5C15.0833 11.3494 14.1506 10.4167 13 10.4167C11.8494 10.4167 10.9166 11.3494 10.9166 12.5C10.9166 13.6506 11.8494 14.5834 13 14.5834Z" fill="#A8ADB4"/><path d="M21.3333 12.5C21.3333 13.6506 20.4006 14.5834 19.25 14.5834C18.0994 14.5834 17.1666 13.6506 17.1666 12.5C17.1666 11.3494 18.0994 10.4167 19.25 10.4167C20.4006 10.4167 21.3333 11.3494 21.3333 12.5Z" fill="#A8ADB4"/></svg>',
+		title: `<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="15" cy="15" r="14.5" fill="${AppTheme.colors.bgContentPrimary}" /><g clip-path="url(#clip0_105_129)"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 7C9 5.89543 9.89543 5 11 5H17.5029C18.0658 5 18.6026 5.2372 18.9816 5.65338L21.4787 8.39544C21.8141 8.76374 22 9.24394 22 9.74207V22C22 23.1046 21.1046 24 20 24H11C9.89543 24 9 23.1046 9 22V7Z" fill="${AppTheme.colors.bgContentPrimary}"/><path opacity="0.54" d="M11 6H17.5029C17.7843 6 18.0527 6.1186 18.2422 6.32669L20.7394 9.06875C20.9071 9.2529 21 9.493 21 9.74207V22C21 22.5523 20.5523 23 20 23H11C10.4477 23 10 22.5523 10 22V7C10 6.44772 10.4477 6 11 6Z" fill="black" fill-opacity="0.01" stroke="${AppTheme.colors.accentBrandBlue}" stroke-width="2"/><rect x="11.7368" y="8.95833" width="5.47368" height="0.791667" rx="0.395833" fill="${AppTheme.colors.accentBrandBlue}"/><rect x="11.7368" y="12.125" width="6.8421" height="0.791667" rx="0.395833" fill="${AppTheme.colors.accentSoftBlue1}"/><rect x="11.7368" y="15.2917" width="6.8421" height="0.791666" rx="0.395833" fill="${AppTheme.colors.accentSoftBlue1}"/><rect x="11.7368" y="13.7083" width="6.1579" height="0.791667" rx="0.395833" fill="${AppTheme.colors.accentSoftBlue1}"/><path fill-rule="evenodd" clip-rule="evenodd" d="M16.4338 18.5551C16.5552 18.6861 16.5574 18.9009 16.4386 19.0349L15.5791 20.0042C15.5197 20.0712 15.4379 20.1081 15.353 20.1062C15.2681 20.1043 15.1877 20.0638 15.1308 19.9943L14.7711 19.5545L14.0625 20.4718C14.0051 20.5461 13.9214 20.5896 13.8328 20.5909C13.7442 20.5923 13.6594 20.5515 13.6001 20.479L13.0355 19.7888L12.2728 20.7213C12.159 20.8604 11.9645 20.8715 11.8384 20.7459C11.7122 20.6204 11.7022 20.4059 11.816 20.2668L12.8072 19.055C12.8655 18.9837 12.9485 18.943 13.0355 18.943C13.1226 18.943 13.2056 18.9837 13.2639 19.055L13.8218 19.7371L14.5304 18.8199C14.5878 18.7455 14.6716 18.7021 14.7601 18.7007C14.8487 18.6993 14.9335 18.7401 14.9929 18.8127L15.3682 19.2716L15.9988 18.5604C16.1176 18.4264 16.3123 18.424 16.4338 18.5551Z" fill="${AppTheme.colors.accentBrandBlue}"/></g><defs><clipPath id="clip0_105_129"><rect width="13" height="19" fill="${AppTheme.colors.bgContentPrimary}" transform="translate(9 5)"/></clipPath></defs></svg>`,
+		contextMenu: `<svg width="26" height="25" viewBox="0 0 26 25" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.74996 14.5834C7.90055 14.5834 8.83329 13.6506 8.83329 12.5C8.83329 11.3494 7.90055 10.4167 6.74996 10.4167C5.59937 10.4167 4.66663 11.3494 4.66663 12.5C4.66663 13.6506 5.59937 14.5834 6.74996 14.5834Z" fill="#A8ADB4"/><path d="M13 14.5834C14.1506 14.5834 15.0833 13.6506 15.0833 12.5C15.0833 11.3494 14.1506 10.4167 13 10.4167C11.8494 10.4167 10.9166 11.3494 10.9166 12.5C10.9166 13.6506 11.8494 14.5834 13 14.5834Z" fill="#A8ADB4"/><path d="M21.3333 12.5C21.3333 13.6506 20.4006 14.5834 19.25 14.5834C18.0994 14.5834 17.1666 13.6506 17.1666 12.5C17.1666 11.3494 18.0994 10.4167 19.25 10.4167C20.4006 10.4167 21.3333 11.3494 21.3333 12.5Z" fill="${AppTheme.colors.base4}"/></svg>`,
 	};
 
 	module.exports = { CrmDocumentDetails };

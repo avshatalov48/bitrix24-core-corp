@@ -36,6 +36,7 @@ class FormTable extends Entity\DataManager
 			'ID' => array(
 				'data_type' => 'integer',
 				'primary' => true,
+				'autocomplete' => true,
 			),
 			'PERSON_TYPE_ID' => array(
 				'data_type' => 'integer',

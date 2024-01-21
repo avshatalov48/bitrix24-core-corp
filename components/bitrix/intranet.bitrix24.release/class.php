@@ -11,30 +11,30 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 class IntranetReleaseComponent extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\Controllerable
 {
-	protected string $id = 'sirius';
+	protected string $id = 'vega';
 	protected array $releaseMap = [
-		'ru' => ['https://sirius.bitrix24.tech/slider/', '21.04.2023 10:00'],
-		'by' => ['https://sirius.bitrix24promo.by/slider/', '21.04.2023 10:00'],
-		'kz' => ['https://sirius.bitrix24kz.works/slider/', '21.04.2023 10:00'],
+		'ru' => ['https://vega.bitrix24.tech/slider/', '17.11.2023 10:00'],
+		'by' => ['https://vega.bitrix24promo.by/slider/', '17.11.2023 10:00'],
+		'kz' => ['https://vega.bitrix24kz.works/slider/', '17.11.2023 10:00'],
 
-		'uk' => ['https://www.bitrix24.uk/promo/spring_2023_release_slider/', '27.04.2023 13:00'],
-		'in' => ['https://www.bitrix24.in/promo/spring_2023_release_slider/', '27.04.2023 11:00'],
-		'eu' => ['https://www.bitrix24.eu/promo/spring_2023_release_slider/', '27.04.2023 13:00'],
-		'br' => ['https://www.bitrix24.com.br/promo/spring_2023_release_slider/', '27.04.2023 17:00'],
-		'la' => ['https://www.bitrix24.es/promo/spring_2023_release_slider/', '27.04.2023 14:00'],
-		'mx' => ['https://www.bitrix24.mx/promo/spring_2023_release_slider/', '27.04.2023 18:00'],
-		'co' => ['https://www.bitrix24.co/promo/spring_2023_release_slider/', '27.04.2023 18:00'],
-		'tr' => ['https://www.bitrix24.com.tr/promo/spring_2023_release_slider/', '27.04.2023 12:00'],
-		'fr' => ['https://www.bitrix24.fr/promo/spring_2023_release_slider/', '27.04.2023 12:00'],
-		'it' => ['https://www.bitrix24.it/promo/spring_2023_release_slider/', '27.04.2023 16:00'],
-		'pl' => ['https://www.bitrix24.pl/promo/spring_2023_release_slider/', '27.04.2023 16:00'],
-		'de' => ['https://www.bitrix24.de/promo/spring_2023_release_slider/', '27.04.2023 15:00'],
+		'uk' => ['https://www.bitrix24.uk/promo/fall-2023-release-slider/', '29.11.2023 13:00'],
+		'in' => ['https://www.bitrix24.in/promo/fall-2023-release-slider/', '29.11.2023 11:00'],
+		'eu' => ['https://www.bitrix24.eu/promo/fall-2023-release-slider/', '29.11.2023 13:00'],
+		'br' => ['https://www.bitrix24.com.br/promo/fall-2023-release-slider/', '29.11.2023 17:00'],
+		'la' => ['https://www.bitrix24.es/promo/fall-2023-release-slider/', '29.11.2023 14:00'],
+		'mx' => ['https://www.bitrix24.mx/promo/fall-2023-release-slider/', '29.11.2023 18:00'],
+		'co' => ['https://www.bitrix24.co/promo/fall-2023-release-slider/', '29.11.2023 18:00'],
+		'tr' => ['https://www.bitrix24.com.tr/promo/fall-2023-release-slider/', '29.11.2023 12:00'],
+		'fr' => ['https://www.bitrix24.fr/promo/fall-2023-release-slider/', '29.11.2023 12:00'],
+		'it' => ['https://www.bitrix24.it/promo/fall-2023-release-slider/', '29.11.2023 16:00'],
+		'pl' => ['https://www.bitrix24.pl/promo/fall-2023-release-slider/', '29.11.2023 16:00'],
+		'de' => ['https://www.bitrix24.de/promo/fall-2023-release-slider/', '29.11.2023 15:00'],
 
-		'en' => ['https://www.bitrix24.com/promo/spring_2023_release_slider/', '27.04.2023 13:00'],
-		'cn' => ['https://www.bitrix24.com/promo/spring_2023_release_slider/', '27.04.2023 11:00'],
-		'vn' => ['https://www.bitrix24.com/promo/spring_2023_release_slider/', '27.04.2023 11:00'],
-		'jp' => ['https://www.bitrix24.com/promo/spring_2023_release_slider/', '27.04.2023 11:00'],
-		'id' => ['https://www.bitrix24.com/promo/spring_2023_release_slider/', '27.04.2023 11:00'],
+		'en' => ['https://www.bitrix24.com/promo/fall-2023-release-slider/', '29.11.2023 13:00'],
+		'cn' => ['https://www.bitrix24.com/promo/fall-2023-release-slider/', '29.11.2023 11:00'],
+		'vn' => ['https://www.bitrix24.com/promo/fall-2023-release-slider/', '29.11.2023 11:00'],
+		'jp' => ['https://www.bitrix24.com/promo/fall-2023-release-slider/', '29.11.2023 11:00'],
+		'id' => ['https://www.bitrix24.com/promo/fall-2023-release-slider/', '29.11.2023 11:00'],
 	];
 
 	public function __construct($component = null)
@@ -56,6 +56,21 @@ class IntranetReleaseComponent extends \CBitrixComponent implements \Bitrix\Main
 		{
 			$this->arResult['show_time'] = true;
 			$this->arResult['options'] = $this->getOptions();
+
+			// First set a new theme
+			if ($this->getSliderModeCnt() === -1)
+			{
+				$this->incSliderModeCnt();
+				if ($this->setDefaultTheme())
+				{
+					if (Loader::includeModule('intranet'))
+					{
+						\Bitrix\Intranet\Composite\CacheProvider::deleteUserCache();
+					}
+
+					LocalRedirect($GLOBALS['APPLICATION']->getCurUri());
+				}
+			}
 
 			// Show Slider for the first hit
 			if ($this->getSliderModeCnt() === 0)
@@ -221,6 +236,11 @@ class IntranetReleaseComponent extends \CBitrixComponent implements \Bitrix\Main
 		return "release_{$this->id}:deactivated";
 	}
 
+	protected function getStopChangeDefaultThemeOption(): string
+	{
+		return "release_{$this->id}:stop_change_default_theme";
+	}
+
 	protected function isDeactivated(): bool
 	{
 		return \CUserOptions::getOption('intranet', $this->getDeactivatedOption()) === 'Y';
@@ -248,14 +268,66 @@ class IntranetReleaseComponent extends \CBitrixComponent implements \Bitrix\Main
 		\CUserOptions::setOption('intranet', $this->getLastShowTimeOption(), time());
 	}
 
+	protected function shouldChangeDefaultTheme(): bool
+	{
+		return Option::get('intranet', $this->getStopChangeDefaultThemeOption(), 'N') !== 'Y';
+	}
+
+	protected function stopChangeDefaultTheme(): void
+	{
+		Option::set('intranet', $this->getStopChangeDefaultThemeOption(), 'Y');
+	}
+
 	protected function getSliderModeCnt(): ?int
 	{
-		return (int)\CUserOptions::getOption('intranet', $this->getSliderModeCntOption(), 0);
+		return (int)\CUserOptions::getOption('intranet', $this->getSliderModeCntOption(), -1);
 	}
 
 	protected function incSliderModeCnt(): void
 	{
 		\CUserOptions::setOption('intranet', $this->getSliderModeCntOption(), $this->getSliderModeCnt() + 1);
+	}
+
+	protected function setDefaultTheme(): bool
+	{
+		if (!Loader::includeModule('intranet'))
+		{
+			return false;
+		}
+
+		$newDefaultThemeId = (
+			in_array($this->getZone(), ['ru', 'kz', 'by'])
+				? 'light:video-jupiter'
+				: 'light:orbital-symphony'
+		);
+
+		$theme = new \Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker('bitrix24', 's1');
+
+		$currentDefaultThemeId = $theme->getDefaultThemeId();
+		$currentThemeId = $theme->getCurrentThemeId();
+
+		// Try to change the default theme only for the first time
+		if ($currentDefaultThemeId !== $newDefaultThemeId && !$theme->isCustomThemeId($currentDefaultThemeId))
+		{
+			if ($this->shouldChangeDefaultTheme())
+			{
+				$theme->setDefaultTheme($newDefaultThemeId);
+			}
+		}
+
+		$this->stopChangeDefaultTheme();
+
+		if ($currentThemeId !== $newDefaultThemeId && !$theme->isCustomThemeId($currentThemeId))
+		{
+			if ($currentDefaultThemeId !== $currentThemeId)
+			{
+				$theme->setCurrentThemeId($newDefaultThemeId);
+			}
+
+			return true;
+		}
+
+		return false;
 	}
 
 	public function configureActions()

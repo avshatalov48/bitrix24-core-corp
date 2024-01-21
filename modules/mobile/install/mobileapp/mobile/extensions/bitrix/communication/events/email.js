@@ -4,7 +4,6 @@
 
 jn.define('communication/events/email', (require, exports, module) => {
 	const { BaseEvent } = require('communication/events/base');
-	const { openEmailMenu } = require('communication/email-menu');
 	const { inAppUrl } = require('in-app-url');
 	const { Type } = require('type');
 	const { stringify } = require('utils/string');
@@ -45,16 +44,7 @@ jn.define('communication/events/email', (require, exports, module) => {
 				return;
 			}
 
-			const isActive = await this.isBitrixMailActive();
-
-			if (isActive)
-			{
-				void this.openSendingForm();
-			}
-			else
-			{
-				openEmailMenu(this.getValue());
-			}
+			void this.openSendingForm();
 		}
 
 		async openSendingForm()
@@ -89,7 +79,7 @@ jn.define('communication/events/email', (require, exports, module) => {
 			const { MailOpener } = await requireLazy('crm:mail/opener') || {};
 
 			return MailOpener && MailOpener.isActiveMail();
-		};
+		}
 	}
 
 	module.exports = { EmailEvent };

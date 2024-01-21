@@ -2,7 +2,6 @@
  * @module layout/ui/fields/combined-v2
  */
 jn.define('layout/ui/fields/combined-v2', (require, exports, module) => {
-
 	const { isOpenLine, getOpenLineTitle } = require('communication/connection');
 	const { CommunicationEvents } = require('communication/events');
 	const { CombinedFieldClass } = require('layout/ui/fields/combined');
@@ -12,6 +11,7 @@ jn.define('layout/ui/fields/combined-v2', (require, exports, module) => {
 	const { WebType, WebFieldClass } = require('layout/ui/fields/web');
 	const { get } = require('utils/object');
 	const { getHttpPath } = require('utils/url');
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @class CombinedV2Field
@@ -48,7 +48,7 @@ jn.define('layout/ui/fields/combined-v2', (require, exports, module) => {
 			primaryField.config.deepMergeStyles = {
 				...primaryField.config.deepMergeStyles,
 				value: {
-					color: '#2066b0',
+					color: AppTheme.colors.accentMainLinks,
 				},
 				wrapper: {
 					paddingTop: 0,
@@ -106,8 +106,7 @@ jn.define('layout/ui/fields/combined-v2', (require, exports, module) => {
 
 			if (!entityTypes.hasOwnProperty(primaryType))
 			{
-				return () => {
-				};
+				return () => {};
 			}
 
 			return (valueType) => entityTypes[primaryType].getImage({ valueType });
@@ -133,10 +132,11 @@ jn.define('layout/ui/fields/combined-v2', (require, exports, module) => {
 			const primaryType = primaryField.type;
 			const primaryConfig = primaryField.config;
 
+			// eslint-disable-next-line default-case
 			switch (primaryType)
 			{
 				case ImType:
-					let params;
+					let params = null;
 
 					if (isOpenLine(LINK))
 					{
@@ -159,23 +159,19 @@ jn.define('layout/ui/fields/combined-v2', (require, exports, module) => {
 					return {
 						number: VALUE.phoneNumber || '',
 						params: {
-							'ENTITY_TYPE_NAME': primaryConfig.entityTypeName,
-							'ENTITY_ID': primaryConfig.entityId,
+							ENTITY_TYPE_NAME: primaryConfig.entityTypeName,
+							ENTITY_ID: primaryConfig.entityId,
 						},
 						alert: true,
 					};
 				case EmailType:
-					const {
-						entityTypeName,
-						entityId
-					} = primaryConfig;
 					return {
 						email: VALUE,
 						params: {
 							owner: {
-								ownerType: entityTypeName,
-								ownerId: entityId,
-							}
+								ownerType: primaryConfig.entityTypeName,
+								ownerId: primaryConfig.entityId,
+							},
 						},
 					};
 
@@ -237,7 +233,7 @@ jn.define('layout/ui/fields/combined-v2', (require, exports, module) => {
 					marginBottom: 0,
 				},
 				secondaryFieldValue: {
-					color: '#a8adb4',
+					color: AppTheme.colors.base3,
 					fontSize: 12,
 				},
 				secondaryArrowImage: {
@@ -251,5 +247,4 @@ jn.define('layout/ui/fields/combined-v2', (require, exports, module) => {
 		CombinedV2Type: 'combined-v2',
 		CombinedV2Field: (props) => new CombinedV2Field(props),
 	};
-
 });

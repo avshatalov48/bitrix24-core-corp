@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'apptheme',
 		'layout/polyfill',
 		'layout/pure-component',
 		'layout/ui/detail-card/tabs',

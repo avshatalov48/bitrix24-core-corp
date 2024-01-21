@@ -71,6 +71,8 @@ class LeadConverter extends EntityConverter
 	 */
 	public function initialize()
 	{
+		parent::initialize();
+
 		if(!self::checkReadPermission(\CCrmOwnerType::LeadName, $this->entityID))
 		{
 			throw new EntityConversionException(
@@ -684,7 +686,17 @@ class LeadConverter extends EntityConverter
 					&& is_array($fields['PRODUCT_ROWS'])
 					&& !empty($fields['PRODUCT_ROWS']))
 				{
-					\CCrmDeal::SaveProductRows($entityID, $fields['PRODUCT_ROWS'], false, false, false);
+					$saveProductRowsResult = \CCrmDeal::SaveProductRows($entityID, $fields['PRODUCT_ROWS'], false, false, false);
+
+					if(!$saveProductRowsResult)
+					{
+						/** @var \CApplicationException $ex */
+						$ex = $GLOBALS['APPLICATION']->GetException();
+
+						$this->resultData['ERROR'] = [
+							'MESSAGE' => $ex ? $ex->GetString() : Main\Localization\Loc::getMessage('CRM_LEAD_CONVERTER_PRODUCT_ROWS_SAVING_ERROR'),
+						];
+					}
 				}
 
 				// requisite link
@@ -1107,7 +1119,7 @@ class LeadConverter extends EntityConverter
 	 * Get Supported Destination Types
 	 * @return array
 	 */
-	public function getSupportedDestinationTypeIDs()
+	public function getSupportedDestinationTypeIDs(): array
 	{
 		return array(\CCrmOwnerType::Contact, \CCrmOwnerType::Company, \CCrmOwnerType::Deal);
 	}

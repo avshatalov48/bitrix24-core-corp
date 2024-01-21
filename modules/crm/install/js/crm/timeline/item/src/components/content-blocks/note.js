@@ -123,8 +123,9 @@ export const Note = {
 		{
 			if (this.isSaving)
 			{
-				return ButtonState.LOADING;
+				return ButtonState.DISABLED;
 			}
+
 			if (this.note.trim().length > 0)
 			{
 				return ButtonState.DEFAULT;

@@ -2,11 +2,13 @@
  * @module crm/terminal/payment-pay
  */
 jn.define('crm/terminal/payment-pay', (require, exports, module) => {
-	const { EventEmitter } = require('event-emitter');
 	const { Loc } = require('loc');
-	const { withPressed } = require('utils/color');
 	const { Alert } = require('alert');
+	const AppTheme = require('apptheme');
+	const { Random } = require('utils/random');
 	const { Haptics } = require('haptics');
+	const { withPressed } = require('utils/color');
+	const { EventEmitter } = require('event-emitter');
 	const { PureComponent } = require('layout/pure-component');
 	const { PaymentButtonFactory } = require('crm/terminal/payment-pay/components/payment-button/factory');
 	const { PaymentButton } = require('crm/terminal/payment-pay/components/payment-button/button');
@@ -16,6 +18,8 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 	const { Before } = require('crm/payment-system/creation/actions/before');
 	const { PaymentSystemService } = require('crm/terminal/services/payment-system');
 	const { PaymentService } = require('crm/terminal/services/payment');
+	const { ProductList } = require('crm/terminal/product-list');
+
 	const {
 		FieldManagerService,
 		FieldNameSum,
@@ -59,7 +63,7 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 				step: 'view',
 				qrCode: null,
 				paymentMethod,
-				paymentSystems: this.payment.paymentSystems,
+				paymentSystems: this.payment.terminalPaymentSystems,
 			};
 
 			this.pullUnsubscribe = null;
@@ -113,6 +117,53 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 				this.fieldManagerService.renderField(FieldNameSum, {
 					testId: 'TerminalPaymentPayFieldSum',
 					readOnly: true,
+					config: {
+						styles: {
+							moneyValueWrapper: {
+								flex: 1,
+							},
+						},
+					},
+					renderAdditionalRightContent: () => {
+						if (
+							!(
+								this.payment.hasEntityBinding
+								&& this.payment.productsCnt > 0
+							)
+						)
+						{
+							return;
+						}
+
+						return View(
+							{
+								style: {
+									flex: 1,
+									alignItems: 'flex-end',
+									alignSelf: 'flex-end',
+								},
+								onClick: () => {
+									ProductList.open({
+										id: this.payment.id,
+										uid: this.uid,
+										productsCnt: this.payment.productsCnt,
+									}, this.layout);
+								},
+							},
+							Text({
+								style: {
+									fontSize: 13,
+									color: AppTheme.colors.accentMainLinks,
+								},
+								text: Loc.getMessage(
+									'M_CRM_TL_PAYMENT_PAY_PRODUCTS_CNT',
+									{
+										'#CNT#': this.payment.productsCnt,
+									},
+								),
+							}),
+						);
+					},
 				}),
 				this.fieldManagerService.renderField(FieldNamePhone, {
 					testId: 'TerminalPaymentPayFieldPhone',
@@ -125,13 +176,10 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 						parentWidget: this.layout,
 					},
 				}),
-				(
-					this.isStatusVisible
-					&& this.fieldManagerService.renderField(FieldNameStatus, {
-						testId: 'TerminalPaymentPayFieldStatus',
-						readOnly: true,
-					})
-				),
+				this.isStatusVisible && this.fieldManagerService.renderField(FieldNameStatus, {
+					testId: 'TerminalPaymentPayFieldStatus',
+					readOnly: true,
+				}),
 			);
 		}
 
@@ -163,7 +211,7 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 				},
 				Loader({
 					style: styles.loader,
-					tintColor: '#2FC6F6',
+					tintColor: AppTheme.colors.accentBrandBlue,
 					animating: true,
 					size: 'large',
 				}),
@@ -549,6 +597,9 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 			{
 				this.layout.enableNavigationBarBorder(false);
 				this.layout.setBottomSheetHeight(this.getHeight());
+				this.layout.setTitle({
+					text: this.payment.name,
+				});
 			}
 
 			this.customEventEmitter.on(
@@ -646,7 +697,7 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 
 		getHeight()
 		{
-			const buttonsCount = this.payment.paymentSystems.length + 1;
+			const buttonsCount = this.payment.terminalPaymentSystems.length + 1;
 
 			const result = TITLE_HEIGHT
 				+ FIELDS_HEIGHT
@@ -696,16 +747,14 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 	const styles = {
 		container: {
 			flex: 1,
+			backgroundColor: AppTheme.colors.bgSecondary,
 		},
-		paymentContainer: (isLoading) => {
-			return {
-				flex: 1,
-				opacity: isLoading ? 0.3 : 1,
-				backgroundColor: '#EEF2F4',
-			};
-		},
+		paymentContainer: (isLoading) => ({
+			flex: 1,
+			opacity: isLoading ? 0.3 : 1,
+		}),
 		fieldsContainer: {
-			backgroundColor: '#FFFFFF',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			borderRadius: 12,
 			paddingTop: 14,
 			paddingBottom: 8,
@@ -713,7 +762,7 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 		},
 		loaderContainer: {
 			marginTop: 116,
-			backgroundColor: '#EEF2F4',
+			backgroundColor: AppTheme.colors.bgSecondary,
 			alignItems: 'center',
 		},
 		loader: {
@@ -726,25 +775,24 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 		loaderBottomText: {
 			fontWeight: '400',
 			fontSize: 18,
-			color: '#333333',
+			color: AppTheme.colors.base1,
 		},
 		paymentQrContainer: {
 			flex: 1,
 			justifyContent: 'space-evenly',
 			alignItems: 'center',
-			backgroundColor: '#EEF2F4',
 		},
 		paymentQrText: {
 			marginHorizontal: 30,
 			fontWeight: '700',
 			fontSize: 18,
-			color: '#333333',
+			color: AppTheme.colors.base1,
 			textAlign: 'center',
 		},
 		paymentQrImageContainer: {
 			width: 218,
 			height: 218,
-			backgroundColor: '#FFFFFF',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			borderRadius: 12,
 			flexDirection: 'row',
 			justifyContent: 'center',
@@ -764,8 +812,8 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 			paddingBottom: 9,
 			borderRadius: 6,
 			borderWidth: 1,
-			borderColor: '#828B95',
-			backgroundColor: withPressed('#EEF2F4'),
+			borderColor: AppTheme.colors.base3,
+			backgroundColor: withPressed(AppTheme.colors.bgPrimary),
 			height: 42,
 		},
 		backToPaymentMethodsButtonIconContainer: {
@@ -779,7 +827,7 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 			height: 15,
 		},
 		backToPaymentMethodsButtonText: {
-			color: '#333333',
+			color: AppTheme.colors.base1,
 			fontSize: 17,
 			fontWeight: '400',
 		},

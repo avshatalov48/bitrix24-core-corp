@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'apptheme',
 		'communication/events',
 		'layout/ui/fields/combined',
 		'layout/ui/fields/im',

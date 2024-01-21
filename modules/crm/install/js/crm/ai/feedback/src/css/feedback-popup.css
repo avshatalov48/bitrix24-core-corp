@@ -1,0 +1,20 @@
+.bx-crm-ai-feedback-popup-content {
+	display: flex;
+	gap: 15px;
+}
+
+.bx-crm-ai-feedback-popup-content__icon {
+	flex-grow: 0;
+	flex-shrink: 0;
+	flex-basis: 77px;
+	background-image: url("../images/ai-form-fill-feedback-icon.svg");
+	background-repeat: no-repeat;
+	min-height: 81px;
+}
+
+.bx-crm-ai-feedback-popup-content__text {
+	flex-grow: 1;
+	flex-shrink: 1;
+	flex-basis: 0;
+	font-size: var(--ui-font-size-md);
+}

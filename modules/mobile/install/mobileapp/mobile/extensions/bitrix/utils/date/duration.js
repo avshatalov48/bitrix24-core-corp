@@ -166,6 +166,22 @@ jn.define('utils/date/duration', (require, exports, module) => {
 		{
 			return { s: 'SECOND', i: 'MINUTE', H: 'HOUR', d: 'DAY', m: 'MONTH', Y: 'YEAR' }[unitStr];
 		}
+
+		/**
+		 * Length formats
+		 * @returns {{MONTH: number, YEAR: number, HOUR: number, SECOND: number, MINUTE: number, DAY: number}}
+		 */
+		static getLengthFormat()
+		{
+			return {
+				SECOND: SECOND_LENGTH,
+				MINUTE: MINUTE_LENGTH,
+				HOUR: HOUR_LENGTH,
+				DAY: DAY_LENGTH,
+				MONTH: MONTH_LENGTH,
+				YEAR: YEAR_LENGTH,
+			};
+		}
 	}
 
 	module.exports = { Duration };

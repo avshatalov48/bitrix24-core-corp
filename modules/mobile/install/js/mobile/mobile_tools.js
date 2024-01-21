@@ -1,128 +1,128 @@
-(function (window)
+(function(window)
 {
-	if (window.BX.MobileTools) return;
+	if (window.BX.MobileTools)
+	{
+		return;
+	}
 
 	BX.MobileTools = {
-		getTextBlock: function(block)
+		getTextBlock(block)
 		{
-			function decodeHtml(html) {
-				var txt = document.createElement("textarea");
+			function decodeHtml(html)
+			{
+				var txt = document.createElement('textarea');
 				txt.innerHTML = html;
+
 				return txt.value;
 			}
 
-			var text = block.innerHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').replace(/<br\s*[\/]?>/gi, "~~~---~~~").replace(/~~~---~~~/g, "\n");
-			text = text.replace(/<a\s+href="([^"]+)"[^>]*>([^<]+)<\/a>/ig, function (str, key1, key2) {
-				if (key2.match(/^http/ig))
+			var text = block.innerHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').replace(/<br\s*[\/]?>/gi, "~~~---~~~").replace(/~~~---~~~/g, '\n');
+			text = text.replace(/<a\s+href="([^"]+)"[^>]*>([^<]+)<\/a>/ig, (str, key1, key2) => {
+				if (/^http/gi.test(key2))
 				{
-					return '<a href="' + key1 + '">' + key1 + '</a>'
+					return `<a href="${key1}">${key1}</a>`;
 				}
-				else
-				{
-					return str;
-				}
+
+				return str;
 			});
 
 			return decodeHtml(BX.util.strip_tags(text));
 		},
-		openChat: function (dialogId, dialogTitleParams)
+		openChat(dialogId, dialogTitleParams)
 		{
 			dialogTitleParams = dialogTitleParams || false;
 			if (!dialogId)
+			{
 				return false;
-
-			if (typeof Application == "undefined")
-			{
-            	Application = BXMobileAppContext;
 			}
 
-			if (Application.getApiVersion() >= 25)
+			if (typeof Application === 'undefined')
 			{
-				console.info('BX.MobileTools.openChat: open chat in JSNative component');
-				BXMobileApp.Events.postToComponent("onOpenDialog", {
-					dialogId : dialogId,
-					dialogTitleParams : dialogTitleParams? {
-						name: dialogTitleParams.name || '',
-						avatar: dialogTitleParams.avatar || '',
-						color: dialogTitleParams.color || '',
-						description: dialogTitleParams.description || ''
-					}: false
-				}, 'im.recent');
-
-				const openDialogOptions = {
-					dialogId,
-				};
-
-				if (dialogTitleParams)
-				{
-					openDialogOptions.dialogTitleParams = dialogTitleParams;
-				}
-
-				BXMobileApp.Events.postToComponent(
-					'ImMobile.Messenger.Dialog:open',
-					openDialogOptions,
-					'im.messenger'
-				);
+				Application = BXMobileAppContext;
 			}
-			else
+
+			console.info('BX.MobileTools.openChat: open chat in JSNative component');
+			// eslint-disable-next-line no-undef
+			BXMobileApp.Events.postToComponent('onOpenDialog', {
+				dialogId,
+				dialogTitleParams: dialogTitleParams ? {
+					name: dialogTitleParams.name || '',
+					avatar: dialogTitleParams.avatar || '',
+					color: dialogTitleParams.color || '',
+					description: dialogTitleParams.description || '',
+				} : false,
+			}, 'im.recent');
+
+			const openDialogOptions = {
+				dialogId,
+			};
+
+			if (dialogTitleParams)
 			{
-				console.info('BX.MobileTools.openChat: open new browser page (legacy)');
-				BXMobileApp.PageManager.loadPageUnique({
-					url : (BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') : '/') + 'mobile/im/dialog.php'+(!app.enableInVersion(11)? "?id="+dialogId:""),
-					bx24ModernStyle : true,
-					data: {dialogId: dialogId}
-				});
+				openDialogOptions.dialogTitleParams = dialogTitleParams;
 			}
+
+			// eslint-disable-next-line no-undef
+			BXMobileApp.Events.postToComponent(
+				'ImMobile.Messenger.Dialog:open',
+				openDialogOptions,
+				'im.messenger',
+			);
 
 			return true;
 		},
-		phoneTo: function (number, params)
+		phoneTo(number, params)
 		{
-			params = typeof(params) == 'object' ? params : {};
+			params = typeof params === 'object' ? params : {};
 
 			if (!this.canUseTelephony())
 			{
 				params.callMethod = 'device';
 			}
 
-			if (params.callMethod == 'telephony')
+			if (params.callMethod === 'telephony')
 			{
-				BXMobileApp.onCustomEvent("onPhoneTo", {number: number, params: params}, true);
+				// eslint-disable-next-line no-undef
+				BXMobileApp.onCustomEvent('onPhoneTo', { number, params }, true);
 			}
-			else if (params.callMethod == 'device')
+			else if (params.callMethod === 'device')
 			{
-				document.location.href = "tel:" + this.correctNumberForPstn(number);
+				document.location.href = `tel:${this.correctNumberForPstn(number)}`;
 			}
 			else
 			{
 				var sheetButtons = [];
 
-				sheetButtons.push({
-					title: BX.message("MOBILE_CALL_BY_B24"),
-					callback: function ()
+				sheetButtons.push(
 					{
-						params.callMethod = 'telephony';
-						this.phoneTo(number, params);
-					}.bind(this)
-				});
-				sheetButtons.push({
-					title: BX.message("MOBILE_CALL_BY_MOBILE"),
-					callback: function ()
+						title: BX.message('MOBILE_CALL_BY_B24'),
+						callback: function()
+						{
+							params.callMethod = 'telephony';
+							this.phoneTo(number, params);
+						}.bind(this),
+					},
 					{
-						params.callMethod = 'device';
-						this.phoneTo(number, params);
-					}.bind(this)
-				});
+						title: BX.message('MOBILE_CALL_BY_MOBILE'),
+						callback: function()
+						{
+							params.callMethod = 'device';
+							this.phoneTo(number, params);
+						}.bind(this),
+					},
+				);
 
-				(new BXMobileApp.UI.ActionSheet({buttons: sheetButtons}, "im-phone-menu")).show();
+				// eslint-disable-next-line no-undef
+				(new BXMobileApp.UI.ActionSheet({ buttons: sheetButtons }, 'im-phone-menu')).show();
 			}
 		},
-		callTo: function (userId, video)
+		callTo(userId, video)
 		{
-			video = typeof(video) == 'undefined' ? false : video;
-			BXMobileApp.onCustomEvent("onCallInvite", {userId: userId, video: video}, true);
+			video = typeof video === 'undefined' ? false : video;
+			// eslint-disable-next-line no-undef
+			BXMobileApp.onCustomEvent('onCallInvite', { userId, video }, true);
 		},
-		correctNumberForPstn: function (number)
+		correctNumberForPstn(number)
 		{
 			if (!BX.type.isNotEmptyString(number))
 			{
@@ -146,103 +146,103 @@
 
 			if (number.substr(0, 2) === '82')
 			{
-				return '+' + number;
+				return `+${number}`;
 			}
 			else if (number.substr(0, 1) === '8')
 			{
 				return number;
 			}
 
-			return '+' + number;
+			return `+${number}`;
 		},
-		canUseTelephony: function ()
+		canUseTelephony()
 		{
 			return BX.message('can_perform_calls') === 'Y';
 		},
-		getMobileUrlParams: function (url)
+		getMobileUrlParams(url)
 		{
 			var mobileRegReplace = [
 				{
 					exp: /\/company\/personal\/user\/(\d+)\/calendar\/\?EVENT_ID=(\d+).*/gi,
-					replace: "/mobile/calendar/view_event.php?event_id=$2",
-					useNewStyle: false
+					replace: '/mobile/calendar/view_event.php?event_id=$2',
+					useNewStyle: false,
 				},
 				{
 					exp: /\/company\/personal\/user\/(\d+)\/tasks\/task\/view\/(\d+)\//gi,
-					replace: "/mobile/tasks/snmrouter/?routePage=view&USER_ID=$1&GROUP_ID=0&TASK_ID=$2",
-					useNewStyle: true
+					replace: '/mobile/tasks/snmrouter/?routePage=view&USER_ID=$1&GROUP_ID=0&TASK_ID=$2',
+					useNewStyle: true,
 				},
 				{
 					exp: /\/company\/personal\/user\/(\d+)\/tasks\/task\/view\/(\d+)\/\?commentAction=([a-zA-z]+)/gi,
-					replace: "/mobile/tasks/snmrouter/?routePage=view&USER_ID=$1&GROUP_ID=0&TASK_ID=$2",
-					useNewStyle: true
+					replace: '/mobile/tasks/snmrouter/?routePage=view&USER_ID=$1&GROUP_ID=0&TASK_ID=$2',
+					useNewStyle: true,
 				},
 				{
 					exp: /\/company\/personal\/user\/(\d+)\/tasks\//gi,
-					replace: "/mobile/tasks/snmrouter/?routePage=list&USER_ID=$1",
-					useNewStyle: true
+					replace: '/mobile/tasks/snmrouter/?routePage=list&USER_ID=$1',
+					useNewStyle: true,
 				},
 				{
 					exp: /\/company\/personal\/user\/(\d+)\/tasks\/effective\//gi,
-					replace: "/mobile/tasks/snmrouter/?routePage=efficiency",
-					useNewStyle: true
+					replace: '/mobile/tasks/snmrouter/?routePage=efficiency',
+					useNewStyle: true,
 				},
 				{
 					exp: /\/workgroups\/group\/(\d+)\/tasks\/task\/view\/(\d+)\//gi,
-					replace: "/mobile/tasks/snmrouter/?routePage=view&GROUP_ID=$1&TASK_ID=$2",
-					useNewStyle: true
+					replace: '/mobile/tasks/snmrouter/?routePage=view&GROUP_ID=$1&TASK_ID=$2',
+					useNewStyle: true,
 				},
 				{
 					exp: /\/company\/personal\/user\/(\d+)\/blog\/(\d+)\/\?commentId=(\d+)#com(\d+)/gi,
-					replace: "/mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=BLOG_POST&ENTITY_ID=$2&commentId=$3#com$4",
-					useNewStyle: true
+					replace: '/mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=BLOG_POST&ENTITY_ID=$2&commentId=$3#com$4',
+					useNewStyle: true,
 				},
 				{
 					exp: /\/company\/personal\/user\/(\d+)\/blog\/(\d+)\//gi,
-					replace: "/mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=BLOG_POST&ENTITY_ID=$2",
-					useNewStyle: true
+					replace: '/mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=BLOG_POST&ENTITY_ID=$2',
+					useNewStyle: true,
 				},
 				{
 					exp: /\/company\/personal\/log\/(\d+)\//gi,
-					replace: "/mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=LOG_ENTRY&ENTITY_ID=$1",
-					useNewStyle: true
+					replace: '/mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=LOG_ENTRY&ENTITY_ID=$1',
+					useNewStyle: true,
 				},
 				{
 					exp: /\/company\/personal\/user\/(\d+)\/[$|#]/gi,
-					replace: "/mobile/users/?user_id=$1",
-					useNewStyle: true
+					replace: '/mobile/users/?user_id=$1',
+					useNewStyle: true,
 				},
 				{
 					exp: /\/crm\/(deal|lead|company|contact)\/(?:show|details)\/(\d+)\//gi,
-					replace: "/mobile/crm/$1/?page=view&$1_id=$2",
-					useNewStyle: true
+					replace: '/mobile/crm/$1/?page=view&$1_id=$2',
+					useNewStyle: true,
 				},
 				{
 					exp: /\/workgroups\/group\/(\d+)\//gi,
-					replace: "/mobile/?group_id=$1",
+					replace: '/mobile/?group_id=$1',
 					useNewStyle: true,
-					params:{
-						useSearchBar:true,
-						cache:false
-					}
+					params: {
+						useSearchBar: true,
+						cache: false,
+					},
 				},
 				{
 					exp: /\/mobile\/log\/\?group_id=(\d+)/gi,
-					replace: "/mobile/?group_id=$1",
+					replace: '/mobile/?group_id=$1',
 					useNewStyle: true,
-					params:{
-						useSearchBar:true,
-						cache:false
-					}
+					params: {
+						useSearchBar: true,
+						cache: false,
+					},
 				},
 				{
 					exp: /(^.*\/((?!mobile\/)[\w.,@?^=%&:\/~+#-])*)(\/knowledge)([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])/gi,
-					replace: "$1/mobile$3$4",
-					useNewStyle: true
+					replace: '$1/mobile$3$4',
+					useNewStyle: true,
 				},
 				{
 					exp: /(\/mobile\/knowledge\/[\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])/gi,
-					replace: "$1",
+					replace: '$1',
 					useNewStyle: true,
 					notRequireChanges: true,
 				},
@@ -254,16 +254,16 @@
 				var mobileLink = url.replace(mobileRegReplace[i].exp, mobileRegReplace[i].replace);
 				var matchUrl = url.match(mobileRegReplace[i].exp);
 				if (
-					mobileLink != url
+					mobileLink !== url
 					|| (mobileRegReplace[i].notRequireChanges && matchUrl !== null)
 				)
 				{
 					params = {
 						url: mobileLink,
-						bx24ModernStyle: mobileRegReplace[i].useNewStyle
+						bx24ModernStyle: mobileRegReplace[i].useNewStyle,
 					};
 
-					if(typeof mobileRegReplace[i].params == "object" && mobileRegReplace[i].params != null)
+					if (typeof mobileRegReplace[i].params === 'object' && mobileRegReplace[i].params != null)
 					{
 						params = Object.assign(params, mobileRegReplace[i].params);
 					}
@@ -273,55 +273,60 @@
 
 			return params;
 		},
-		getOpenFunction: function (url)
+		getOpenFunction(url)
 		{
 			var resultOpenFunction = null;
 			var resolveList = [
 				{
 					resolveFunction: BX.MobileTools.userIdFromUrl,
-					openFunction: function(userId) {
-						BXMobileApp.Events.postToComponent("onUserProfileOpen", [userId]);
-					}
+					openFunction(userId) {
+						// eslint-disable-next-line no-undef
+						BXMobileApp.Events.postToComponent('onUserProfileOpen', [userId]);
+					},
 				},
 				{
 					resolveFunction: BX.MobileTools.actionFromTaskActionUrl,
-					openFunction: function(data) {
-						BXMobileApp.Events.postToComponent("task.view.onCommentAction", data, "tasks.view");
-						BXMobileApp.Events.postToComponent("task.view.onCommentAction", data, "tasks.task.tabs");
-					}
+					openFunction(data) {
+						// eslint-disable-next-line no-undef
+						BXMobileApp.Events.postToComponent('task.view.onCommentAction', data);
+					},
 				},
 				{
 					resolveFunction: BX.MobileTools.taskIdFromUrl,
-					openFunction: function(data) {
-						BXMobileApp.Events.postToComponent("taskbackground::task::open", data, "background");
-					}
+					openFunction(data) {
+						// eslint-disable-next-line no-undef
+						BXMobileApp.Events.postToComponent('taskbackground::task::open', data, 'background');
+					},
 				},
 				{
 					resolveFunction: BX.MobileTools.userIdFromTaskEfficiencyUrl,
-					openFunction: function(data) {
-						BXMobileApp.Events.postToComponent("taskbackground::efficiency::open", data, "background");
-					}
+					openFunction(data) {
+						// eslint-disable-next-line no-undef
+						BXMobileApp.Events.postToComponent('taskbackground::efficiency::open', data, 'background');
+					},
 				},
 				{
 					resolveFunction: BX.MobileTools.diskFromUrl,
-					openFunction: function(params) {
-						BXMobileApp.Events.postToComponent("onDiskFolderOpen", [params], "background");
-					}
+					openFunction(params) {
+						// eslint-disable-next-line no-undef
+						BXMobileApp.Events.postToComponent('onDiskFolderOpen', [params], 'background');
+					},
 				},
 				{
 					resolveFunction: BX.MobileTools.diskFileIdFromUrl,
-					openFunction: function(fileId) {
+					openFunction(fileId) {
+						// eslint-disable-next-line no-undef
 						BXMobileApp.UI.Document.open({
-							url: "/mobile/ajax.php?mobile_action=disk_download_file&action=downloadFile&fileId=" + fileId
-						})
-					}
+							url: `/mobile/ajax.php?mobile_action=disk_download_file&action=downloadFile&fileId=${fileId}`,
+						});
+					},
 				},
 				{
 					resolveFunction: BX.MobileTools.diskFileKnowledge,
-					openFunction: function(data) {
-						const fileId = data['fileId'];
-						const scope = data['scope'];
-						const landingId = data['landingId'];
+					openFunction(data) {
+						const fileId = data.fileId;
+						const scope = data.scope;
+						const landingId = data.landingId;
 						const path = '/bitrix/services/main/ajax.php?action=landing.api.diskFile.info&fileId='
 							+ fileId
 							+ '&scope='
@@ -341,37 +346,35 @@
 							}
 
 							app.openDocument({
-								url: "/mobile/ajax.php?mobile_action=disk_download_file&action=downloadFile&fileId=" + fileId,
-								filename: data.data.NAME ? data.data.NAME : "File"
+								url: `/mobile/ajax.php?mobile_action=disk_download_file&action=downloadFile&fileId=${fileId}`,
+								filename: data.data.NAME ? data.data.NAME : 'File',
 							});
 						});
 
 						return false;
-					}
+					},
 				},
 				{
 					resolveFunction: BX.MobileTools.blockLinkKnowledge,
-					openFunction: function(url) {
+					openFunction(url) {
 						if (url)
 						{
 							window.location.href = url;
 						}
-					}
+					},
 				},
 				{
 					resolveFunction: BX.MobileTools.projectIdFromUrl,
-					openFunction: function(data) {
+					openFunction(data) {
 						data.siteId = BX.message('SITE_ID');
 						data.siteDir = BX.message('SITE_DIR');
+						// eslint-disable-next-line no-undef
 						BXMobileApp.Events.postToComponent('projectbackground::project::action', data, 'background');
 					},
 				},
 			];
 
-			if (Application.getApiVersion() >= 45)
-			{
-				resolveList.push(BX.MobileTools.resolverCrmCondition);
-			}
+			resolveList.push(BX.MobileTools.resolverCrmCondition);
 
 			var resolveData = null;
 			var inputData = null;
@@ -380,29 +383,29 @@
 				resolveData = resolveList[i];
 				inputData = resolveData.resolveFunction.apply(null, [url]);
 
-				if(inputData)
+				if (inputData)
 				{
 					break;
 				}
 			}
 
-			if(inputData)
+			if (inputData)
 			{
 				resultOpenFunction = function(){resolveData.openFunction.apply(this, [inputData])};
 			}
 
-
 			return resultOpenFunction;
 		},
-		resolveOpenFunction: function(url, loadParams = {})
+		resolveOpenFunction(url, loadParams = {})
 		{
 			const openFunction = BX.MobileTools.getOpenFunction(url);
 
-			if(!openFunction)
+			if (!openFunction)
 			{
 				const mobileUrlParams = BX.MobileTools.getMobileUrlParams(url);
 				const pageLoadParams = mobileUrlParams || { url, ...loadParams };
 
+				// eslint-disable-next-line no-undef
 				return () => BXMobileApp.PageManager.loadPageBlank(pageLoadParams, true);
 			}
 
@@ -412,7 +415,7 @@
 			resolveFunction: (props) => {
 				const url = BX.type.isString(props) ? props : props.url;
 
-				if(!url || !BX.type.isStringFilled(url.trim()))
+				if (!url || !BX.type.isStringFilled(url.trim()))
 				{
 					return null;
 				}
@@ -434,27 +437,29 @@
 					return { url, eventName };
 				}
 
-				const isValidLink = /\/crm\/(deal|company|contact|lead|type)/gi.test(url);
-				if(isValidLink)
+				const isCrmBaseLink = /\/crm\/(deal|company|contact|lead|type)/gi.test(url);
+				const isCrmTypeLink = /\/page\/(.*)\/(.*)\/type\/(\d+)\/details\/(\d+)/gi.test(url);
+
+				if (isCrmBaseLink || isCrmTypeLink)
 				{
 					return { url };
 				}
 
 				return null;
-
 			},
 			openFunction: (props) => {
+				// eslint-disable-next-line no-undef
 				BXMobileApp.Events.postToComponent('crmbackground::router', props, 'background');
 			},
 		}),
 
-		userIdFromUrl:function(url)
+		userIdFromUrl(url)
 		{
 			var regs = [
 				/\/company\/personal\/user\/(\d+)\/($|\?)/i,
-				/\/mobile\/users\/\?.*user_id=(\d+)/i
+				/\/mobile\/users\/\?.*user_id=(\d+)/i,
 			];
-			var replace =  "$1";
+			var replace = '$1';
 			var userId = null;
 
 			for (var i = 0; i < regs.length; i++)
@@ -470,7 +475,7 @@
 
 			return userId;
 		},
-		taskIdFromUrl:function(url)
+		taskIdFromUrl(url)
 		{
 			var
 				messageId = 0,
@@ -478,20 +483,21 @@
 
 			if (messageIdRes)
 			{
-				messageId = parseInt(messageIdRes[1]);
+				messageId = parseInt(messageIdRes[1], 10);
 			}
+
 			if (messageId <= 0)
 			{
 				messageIdRes = url.match(/\A?commentId=([^#&]+)/);
 				if (messageIdRes)
 				{
-					messageId = parseInt(messageIdRes[1]);
+					messageId = parseInt(messageIdRes[1], 10);
 				}
 			}
 
 			var regs = [
 				/\/company\/personal\/user\/(\d+)\/tasks\/task\/view\/(\d+)\//i,
-				/\/workgroups\/group\/(\d+)\/tasks\/task\/view\/(\d+)\//i
+				/\/workgroups\/group\/(\d+)\/tasks\/task\/view\/(\d+)\//i,
 			];
 
 			for (var i = 0; i < regs.length; i++)
@@ -501,12 +507,12 @@
 				{
 					return {
 						taskId: result[2],
-						messageId: messageId
+						messageId,
 					};
 				}
 			}
 		},
-		actionFromTaskActionUrl: function(url)
+		actionFromTaskActionUrl(url)
 		{
 			var regs = [
 				/\/company\/personal\/user\/(\d+)\/tasks\/task\/view\/(\d+)\/\?commentAction=([a-zA-Z]+)&deadline=([0-9]+)/i,
@@ -521,27 +527,27 @@
 						userId: result[1],
 						taskId: result[2],
 						action: result[3],
-						deadline: result[4]
+						deadline: result[4],
 					};
 				}
 			}
 
 			return null;
 		},
-		userIdFromTaskEfficiencyUrl: function(url)
+		userIdFromTaskEfficiencyUrl(url)
 		{
 			var result = url.match(/\/company\/personal\/user\/(\d+)\/tasks\/effective\//i);
 			if (result)
 			{
 				return {
 					userId: result[1],
-					groupId: 0
+					groupId: 0,
 				};
 			}
 
 			return null;
 		},
-		diskFromUrl:function(url)
+		diskFromUrl(url)
 		{
 			const regExpMap = [
 				{
@@ -550,12 +556,12 @@
 						{
 							name: 'folderId',
 							key: 2,
-						}
+						},
 					],
 				},
 				{
 					regExp: /\/company\/personal\/user\/(\d+)\/disk\/path\//i,
-					result: {}
+					result: {},
 				},
 				{
 					regExp: /\/workgroups\/group\/(\d+)\/disk\/path\//i,
@@ -567,14 +573,14 @@
 							name: 'ownerId',
 							key: 1,
 						},
-					]
+					],
 				},
 				{
 					regExp: /\/docs\/(path|shared)\//i,
 					result: {
 						entityType: 'common',
-						ownerId: `shared_files_${BX.message('SITE_ID')}`
-					}
+						ownerId: `shared_files_${BX.message('SITE_ID')}`,
+					},
 				},
 			];
 
@@ -583,35 +589,35 @@
 				const params = regExpMap[i].params;
 				const result = regExpMap[i].result || {};
 
-				if(!found) {
+				if (!found)
+				{
 					continue;
 				}
 
-				if(Array.isArray(params))
+				if (Array.isArray(params))
 				{
-					params.forEach(({key, name}) => {
+					params.forEach(({ key, name }) => {
 						result[name] = found[key];
 					});
 				}
 
 				return result;
-
 			}
 
 			return null;
 		},
 
-		diskFileIdFromUrl:function(url)
+		diskFileIdFromUrl(url)
 		{
 			var result = url.match(/\/disk\/showFile\/(\d+)\//i);
-			if(result)
+			if (result)
 			{
 				return result[1];
 			}
 
 			return null;
 		},
-		diskFileKnowledge:function(url)
+		diskFileKnowledge(url)
 		{
 			const data = [];
 			const landingId = document.body.getAttribute('data-landing-id');
@@ -620,26 +626,25 @@
 
 			if (scope && landingId && result)
 			{
-				data['scope'] = scope;
-				data['landingId'] = landingId;
-				data['fileId'] = result[2];
+				data.scope = scope;
+				data.landingId = landingId;
+				data.fileId = result[2];
+
 				return data;
 			}
-			else
-			{
-				return null;
-			}
+
+			return null;
 		},
-		blockLinkKnowledge:function(url)
+		blockLinkKnowledge(url)
 		{
-			if (url.match(/\/knowledge\/.*#.*$/i))
+			if (/\/knowledge\/.*#.*$/i.test(url))
 			{
 				return url;
 			}
 
 			return null;
 		},
-		projectIdFromUrl: function(url)
+		projectIdFromUrl(url)
 		{
 			var regs = [
 				/\/mobile\/log\/\?group_id=(\d+)/i,
@@ -651,7 +656,7 @@
 				if (result)
 				{
 					return {
-						projectId: parseInt(result[1]),
+						projectId: parseInt(result[1], 10),
 						action: 'view',
 					};
 				}
@@ -659,77 +664,76 @@
 
 			return null;
 		},
-		createCardScanner: function (options)
+		createCardScanner(options)
 		{
 			return new (function scanner()
 			{
-
-				this.onError = function (e)
+				this.onError = function(e)
 				{
-					console.error("Error", e);
+					console.error('Error', e);
 				};
 
 				this.stripEmptyFields = options.stripEmptyFields || false;
 				this.options = options;
 				this.imageData = null;
 
-				if (options["onResult"])
+				if (options.onResult)
 				{
-					this.onResult = options["onResult"];
+					this.onResult = options.onResult;
 				}
 
-				if (options["onError"])
+				if (options.onError)
 				{
-					this.onError = options["onError"];
+					this.onError = options.onError;
 				}
-				if (options["onImageGet"])
+
+				if (options.onImageGet)
 				{
-					this.onImageGet = options["onImageGet"];
+					this.onImageGet = options.onImageGet;
 				}
-				this.open = function ()
+
+				this.open = function()
 				{
-					app.exec("openBusinessCardScanner", {
-						callback: BX.proxy(function (data)
+					app.exec('openBusinessCardScanner', {
+						callback: BX.proxy(function(data)
 						{
-
 							if (data.canceled != 1 && data.url.length > 0)
 							{
 								this.imageData = data;
 
-								if (this.options["onImageGet"])
+								if (this.options.onImageGet)
 								{
 									this.onImageGet(data);
 								}
 
 								this.send();
 							}
-
-						}, this)
+						}, this),
 					});
 				};
 
-				this.send = function ()
+				this.send = function()
 				{
 					if (this.options.url)
 					{
 						var uploadOptions = new FileUploadOptions();
-						uploadOptions.fileKey = "card_file";
-						uploadOptions.fileName = "image.jpg";
-						uploadOptions.mimeType = "image/jpeg";
+						uploadOptions.fileKey = 'card_file';
+						uploadOptions.fileName = 'image.jpg';
+						uploadOptions.mimeType = 'image/jpeg';
 						uploadOptions.chunkedMode = false;
 						uploadOptions.params = {
-							image: "Y"
+							image: 'Y',
 						};
 
 						var ft = new FileTransfer();
 
-						ft.upload(this.imageData.url, this.options.url, BX.proxy(function (data)
+						ft.upload(this.imageData.url, this.options.url, BX.proxy(function(data)
 						{
 							try
 							{
 								var response = JSON.parse(data.response);
 								this.UNIQUE_ID = response.UNIQUE_ID;
-								if (response.STATUS != "success")
+								if (response.STATUS !== 'success')
 								{
 									if (response.ERROR)
 									{
@@ -738,46 +742,43 @@
 
 									return;
 								}
-								else
-								{
-									this.options["onImageUploaded"](response);
-								}
 
-								BXMobileApp.addCustomEvent("onPull-bizcard", this.handler);
+								this.options.onImageUploaded(response);
+
+								// eslint-disable-next-line no-undef
+								BXMobileApp.addCustomEvent('onPull-bizcard', this.handler);
 							}
 							catch (e)
 							{
 								this.onError(e);
 							}
-						}, this), BX.proxy(function (data)
+						}, this), BX.proxy(function(data)
 						{
 							this.onError({
-								"code": data.code,
-								"message": "Can't upload image"
+								code: data.code,
+								message: "Can't upload image",
 							});
-
 						}, this), uploadOptions);
 					}
-
 				};
 
-				this.handler = BX.proxy(function (recognizeData)
+				this.handler = BX.proxy(function(recognizeData)
 				{
 					var result = recognizeData.params.RESULT;
 
-					if (!result.ERROR && result.UNIQUE_ID == this.UNIQUE_ID)
+					if (!result.ERROR && result.UNIQUE_ID === this.UNIQUE_ID)
 					{
-						BX.removeCustomEvent("onPull-bizcard", this.handler);
+						BX.removeCustomEvent('onPull-bizcard', this.handler);
 
-						if (typeof this.onResult == "function")
+						if (typeof this.onResult === 'function')
 						{
 							var data = result.DATA;
 							var modifiedResult = {
 								DATA: {},
-								CARD_ID: result.CARD_ID
+								CARD_ID: result.CARD_ID,
 							};
 
-							if (typeof data == "object")
+							if (typeof data === 'object')
 							{
 								if (this.stripEmptyFields)
 								{
@@ -785,7 +786,7 @@
 
 									for (var key in data)
 									{
-										if (data[key] != "")
+										if (data[key] !== '')
 										{
 											strippedResult[key] = data[key];
 										}
@@ -798,55 +799,56 @@
 									modifiedResult.DATA = data;
 								}
 
-								this.onResult(modifiedResult)
+								this.onResult(modifiedResult);
 							}
 							else
 							{
 								this.onError(result);
 							}
-
 						}
 					}
 				}, this);
-
 			})();
 		},
-		requestUserCounters: function ()
+		requestUserCounters()
 		{
-			BXMobileApp.onCustomEvent("requestUserCounters", {web: true}, true);
+			// eslint-disable-next-line no-undef
+			BXMobileApp.onCustomEvent('requestUserCounters', { web: true }, true);
 		},
-		getDesktopStatus: function()
+		getDesktopStatus()
 		{
-			return new Promise(function(resolve)
-			{
+			return new Promise((resolve) => {
 				var responseHandler = function(response)
 				{
 					resolve(response);
-					BXMobileApp.Events.unsubscribe("onRequestDesktopStatus");
+					// eslint-disable-next-line no-undef
+					BXMobileApp.Events.unsubscribe('onRequestDesktopStatus');
 				};
-				BXMobileApp.Events.addEventListener("onRequestDesktopStatus", responseHandler);
-				BXMobileApp.Events.postToComponent("requestDesktopStatus", {
-					web: true
+				// eslint-disable-next-line no-undef
+				BXMobileApp.Events.addEventListener('onRequestDesktopStatus', responseHandler);
+				// eslint-disable-next-line no-undef
+				BXMobileApp.Events.postToComponent('requestDesktopStatus', {
+					web: true,
 				}, 'communication');
 			});
 		},
-		openDesktopPage: function(url)
+		openDesktopPage(url)
 		{
-			return BX.rest.callMethod('im.desktop.page.open', {url: url});
-		}
+			return BX.rest.callMethod('im.desktop.page.open', { url });
+		},
 	};
 
 	var pageViewEvents = {
-		onLiveFeedFavoriteView: /\/mobile\/index.php\?favorites=Y/gi,
+		onLiveFeedFavoriteView: /\/mobile\/index.php\?favorites=y/gi,
 		onCalendarEventView: /\/mobile\/calendar\/view_event.php\?event_id=(\d+)*/gi,
-		//tasks
-		onTaskView: /\/mobile\/tasks\/snmrouter\/\?routePage=view(.*)TASK_ID=/gi,
-		onTaskListView: /\/mobile\/tasks\/snmrouter\/\?routePage=roles/gi,
-		onTaskCreate: /\/mobile\/tasks\/snmrouter\/\?routePage=edit(.*)TASK_ID=0/gi,
-		onTaskEdit: /\/mobile\/tasks\/snmrouter\/\?routePage=edit(.*)TASK_ID=(\d+)/gi,
-		//profile
+		// tasks
+		onTaskView: /\/mobile\/tasks\/snmrouter\/\?routepage=view(.*)task_id=/gi,
+		onTaskListView: /\/mobile\/tasks\/snmrouter\/\?routepage=roles/gi,
+		onTaskCreate: /\/mobile\/tasks\/snmrouter\/\?routepage=edit(.*)task_id=0/gi,
+		onTaskEdit: /\/mobile\/tasks\/snmrouter\/\?routepage=edit(.*)task_id=(\d+)/gi,
+		// profile
 		onUserProfileView: /\/mobile\/users\/\?user_id=(.*)/gi,
-		//crm
+		// crm
 		onCRMInvoiceList: /\/mobile\/crm\/invoice/gi,
 		onCRMLeadList: /\/mobile\/crm\/lead/gi,
 		onCRMDealList: /\/mobile\/crm\/deal/gi,
@@ -860,14 +862,14 @@
 		onCRMQuoteView: /\/mobile\/crm\/quote\/\?page=view&quote_id=/gi,
 		onCRMProductView: /\/mobile\/crm\/product\/\?page=view&product_id=/gi,
 		onGroupView: /\/mobile\/\?group_id=(.*)/gi,
-		onBizProcListView: /\/mobile\/bp\/\?USER_STATUS=0$/gi
+		onBizProcListView: /\/mobile\/bp\/\?user_status=0$/gi,
 	};
 
-	var getEventByUrl = function (url)
+	var getEventByUrl = function(url)
 	{
 		for (var eventName in pageViewEvents)
 		{
-			if (url.match(pageViewEvents[eventName]))
+			if (pageViewEvents[eventName].test(url))
 			{
 				return eventName;
 			}
@@ -876,7 +878,7 @@
 		return null;
 	};
 
-	//Analytics
+	// Analytics
 
 	var originalLoadPageBlank = app.loadPageBlank;
 	var originalLoadPageStart = app.loadPageStart;
@@ -885,45 +887,43 @@
 	if (window.mwebrtc)
 	{
 		var origCallInvite = window.mwebrtc.callInvite;
-		window.mwebrtc.callInvite = function ()
+		window.mwebrtc.callInvite = function()
 		{
-			var eventName = "Outgoing" + (arguments[1] === true ? "Video" : "Audio") + "Call";
+			var eventName = `Outgoing${arguments[1] === true ? 'Video' : 'Audio'}Call`;
 			origCallInvite.apply(window.mwebrtc, arguments);
 
-			if (eventName && typeof fabric != "undefined")
+			if (eventName && typeof fabric !== 'undefined')
 			{
 				fabric.Answers.sendCustomEvent(eventName, {});
 			}
-		}
+		};
 	}
 
-	var fixEventByUrl = function (params)
+	const fixEventByUrl = function(params)
 	{
-		var url = (typeof params == "object") ? params.url : params;
-		var eventName = getEventByUrl(url);
-		if (eventName && typeof fabric != "undefined")
+		const url = (typeof params === 'object') ? params.url : params;
+		const eventName = getEventByUrl(url);
+		if (eventName && typeof fabric !== 'undefined')
 		{
 			fabric.Answers.sendCustomEvent(eventName, {});
 		}
 	};
 
-	app.showModalDialog = function (params)
+	app.showModalDialog = function(params)
 	{
-
 		BX.proxy(originalShowModalDialog, app)(params);
 		fixEventByUrl(params);
 	};
 
-	app.loadPageBlank = function (params)
+	app.loadPageBlank = function(params)
 	{
 		BX.proxy(originalLoadPageBlank, app)(params);
 		fixEventByUrl(params);
 	};
 
-	app.loadPageStart = function (params)
+	app.loadPageStart = function(params)
 	{
 		BX.proxy(originalLoadPageStart, app)(params);
 		fixEventByUrl(params);
 	};
-
 })(window);

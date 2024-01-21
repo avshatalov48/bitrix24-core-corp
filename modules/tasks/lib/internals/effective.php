@@ -28,6 +28,16 @@ Loc::loadMessages(__FILE__);
  */
 class Effective
 {
+	private const TASKS_EFFECTIVE_DISABLE_KEY = 'tasks_effective_disable';
+
+	/**
+	 * @return bool
+	 */
+	public static function isEnabled(): bool
+	{
+		return Option::get('tasks', self::TASKS_EFFECTIVE_DISABLE_KEY, 'null', '-') === 'null';
+	}
+
 	/**
 	 * Returns filter id on efficiency page
 	 *
@@ -218,6 +228,11 @@ class Effective
 	 */
 	public static function checkActiveViolations($taskId = null, $userId = null, $groupId = null)
 	{
+		if (!self::isEnabled())
+		{
+			return [];
+		}
+
 		if (!$taskId && !$userId && !$groupId)
 		{
 			return [];
@@ -260,6 +275,11 @@ class Effective
 		bool $recountEfficiency = true
 	): bool
 	{
+		if (!self::isEnabled())
+		{
+			return true;
+		}
+
 		$deadline = $taskData['DEADLINE'];
 		$createdBy = $taskData['CREATED_BY'];
 
@@ -303,6 +323,11 @@ class Effective
 	 */
 	public static function recountEfficiencyUserCounter($userId)
 	{
+		if (!self::isEnabled())
+		{
+			return;
+		}
+
 		$efficiency = static::getAverageEfficiency(null, null, $userId);
 		static::setEfficiencyToUserCounter($userId, $efficiency);
 
@@ -325,6 +350,11 @@ class Effective
 	 */
 	public static function createAgentForNextEfficiencyRecount()
 	{
+		if (!self::isEnabled())
+		{
+			return;
+		}
+
 		$date = new \DateTime();
 		$date = $date->modify('first day of next month')->format('d.m.Y 00:00:01');
 
@@ -346,6 +376,11 @@ class Effective
 	 */
 	public static function runEfficiencyRecount()
 	{
+		if (!self::isEnabled())
+		{
+			return;
+		}
+
 		Option::set("tasks", "needEfficiencyRecount", "Y");
 		EfficiencyRecount::bind();
 	}
@@ -361,6 +396,11 @@ class Effective
 	 */
 	public static function repair($taskId, $userId = 0, $userType = 'R')
 	{
+		if (!self::isEnabled())
+		{
+			return true;
+		}
+
 		$taskId = (int)$taskId;
 
 		$sql = "UPDATE b_tasks_effective 
@@ -405,6 +445,11 @@ class Effective
 	 */
 	public static function agent($date = '')
 	{
+		if (!self::isEnabled())
+		{
+			return '';
+		}
+
 		$date = ($date? new DateTime($date, 'Y-m-d') : new DateTime());
 
 		$sql = "
@@ -467,6 +512,11 @@ class Effective
 		string $groupBy = 'DATE'
 	)
 	{
+		if (!self::isEnabled())
+		{
+			return [];
+		}
+
 		if ($groupBy !== 'HOUR')
 		{
 			$groupBy = 'DATE';
@@ -510,6 +560,11 @@ class Effective
 	 */
 	public static function getEfficiencyForNow($userId, $groupId = 0)
 	{
+		if (!self::isEnabled())
+		{
+			return 100;
+		}
+
 		static $cache = [];
 
 		if (array_key_exists($userId, $cache) && array_key_exists($groupId, $cache[$userId]))
@@ -656,6 +711,11 @@ class Effective
 	 */
 	public static function getAverageEfficiency(DateTime $dateFrom = null, DateTime $dateTo = null, $userId = 0, $groupId = 0)
 	{
+		if (!self::isEnabled())
+		{
+			return 100;
+		}
+
 		if (!$dateFrom || !$dateTo)
 		{
 			// DO NOT USE DEFAULT FILTER FOR NOW
@@ -715,6 +775,15 @@ class Effective
 	 */
 	public static function getCountersByRange(DateTime $dateFrom, DateTime $dateTo, $userId = 0, $groupId = 0)
 	{
+		if (!self::isEnabled())
+		{
+			return [
+				'VIOLATIONS' => 0,
+				'IN_PROGRESS' => 0,
+				'COMPLETED' => 0
+			];
+		}
+
 		$userId = intval($userId);
 		$groupId = intval($groupId);
 
@@ -899,6 +968,14 @@ class Effective
 		array $groupIds = []
 	): array
 	{
+
+		$efficiencies = array_fill_keys($groupIds, 100);
+
+		if (!self::isEnabled())
+		{
+			return $efficiencies;
+		}
+
 		if (!$dateFrom || !$dateTo)
 		{
 			$datesRange = static::getDatesRange();
@@ -910,7 +987,6 @@ class Effective
 		$violations = static::getViolationsCountForGroups($dateFrom, $dateTo, $userId, $groupIds);
 		$inProgress = static::getInProgressCountForGroups($dateFrom, $dateTo, $userId, $groupIds);
 
-		$efficiencies = array_fill_keys($groupIds, 100);
 		foreach ($efficiencies as $groupId => $efficiency)
 		{
 			if ($inProgress[$groupId] > 0)

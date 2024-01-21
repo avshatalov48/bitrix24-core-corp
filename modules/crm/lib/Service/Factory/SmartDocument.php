@@ -208,7 +208,9 @@ class SmartDocument extends Dynamic
 	{
 		return [
 			(new Fields\StringField(Item\SmartDocument::FIELD_NAME_NUMBER))
-				->configureTitle(Loc::getMessage('CRM_TYPE_SMART_DOCUMENT_FIELD_NUMBER')),
+				->configureTitle(Loc::getMessage('CRM_TYPE_SMART_DOCUMENT_FIELD_NUMBER'))
+				->configureDefaultValue('')
+			,
 		];
 	}
 

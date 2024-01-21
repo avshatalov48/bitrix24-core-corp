@@ -30,6 +30,7 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Integration\CRM\Timeline\Bindings;
 use CCrmActivity;
+use CCrmDateTimeHelper;
 use CCrmLiveFeed;
 use CCrmLiveFeedEvent;
 use CCrmOwnerType;
@@ -114,7 +115,7 @@ final class Task extends Base
 
 		$desiredDeadline = (isset($timelineParams['DEADLINE']) && $timelineParams['DEADLINE'] instanceof DateTime)
 			? $timelineParams['DEADLINE']->toString()
-			: \CCrmDateTimeHelper::GetMaxDatabaseDate(false);
+			: CCrmDateTimeHelper::GetMaxDatabaseDate(false);
 
 		$this->update(
 			$activity->getId(),
@@ -224,18 +225,11 @@ final class Task extends Base
 
 		$updateData = [];
 		$activityStartTime = is_null($activity->getStartTime()) ? '' : $activity->getStartTime()->toString();
-		$activityEndTime = is_null($activity->getEndTime()) ? '' : $activity->getEndTime()->toString();
 		$taskStartDatePlan = is_null($task->getStartDatePlan()) ? '' : $task->getStartDatePlan()->toString();
-		$taskEndDatePlan = is_null($task->getEndDatePlan()) ? '' : $task->getEndDatePlan()->toString();
 
 		if ($activityStartTime !== $taskStartDatePlan)
 		{
 			$updateData['START_TIME'] = $taskStartDatePlan;
-		}
-
-		if ($activityEndTime !== $taskEndDatePlan)
-		{
-			$updateData['END_TIME'] = $taskEndDatePlan;
 		}
 
 		if ($activity->getResponsibleId() !== $task->getResponsibleMemberId())
@@ -341,7 +335,7 @@ final class Task extends Base
 		}
 		else
 		{
-			$fields['DEADLINE'] = null;
+			$fields['DEADLINE'] = CCrmDateTimeHelper::GetMaxDatabaseDate(false);
 		}
 
 		return $result;
@@ -482,7 +476,10 @@ final class Task extends Base
 
 		if (!empty($updateData))
 		{
-			$handler = TaskHandler::getHandler($responsibleId);
+			$executorId = (int)($options['EXECUTOR_ID'] ?? null);
+			$executorId = $executorId > 0 ? $executorId : $responsibleId;
+
+			$handler = TaskHandler::getHandler($executorId);
 			try
 			{
 				$handler->update($taskId, $updateData);
@@ -1009,7 +1006,7 @@ final class Task extends Base
 		return TaskAccessController::canEdit($taskId, $userId);
 	}
 
-	public static function onTriggered(int $taskId, array &$currentTaskFields, array &$previousTaskFields): bool
+	public static function onTriggered(int $taskId, ?array $currentTaskFields, ?array $previousTaskFields): bool
 	{
 		if ($taskId <= 0 || !Loader::includeModule('tasks'))
 		{
@@ -1086,10 +1083,6 @@ final class Task extends Base
 					'OWNER_TYPE_ID' => $ownerTypeId,
 					'OWNER_ID' => $ownerId,
 				];
-				$bindingMap = array_merge(
-					$bindingMap,
-					\CCrmActivity::getSubsidiaryEntityBindingMap($ownerTypeId, $ownerId)
-				);
 			}
 			$bindings = array_values($bindingMap);
 			if (count($bindings) > 1)
@@ -1230,5 +1223,26 @@ final class Task extends Base
 		TaskHandler::getHandler()->update($taskId,[
 			self::TASK_CRM_FIELD => $crmFields
 		]);
+	}
+
+	/**
+	 * There are two kind of task. Old with type = 3 and new with provider_id = CRM_TASKS_TASK
+	 * We have to query both when selected 'Task' in the filter.
+	 */
+	public static function transformTaskInFilter(
+		array &$filter,
+		string $typeFieldName = 'TYPE_ID',
+		bool $allTaskBased = false
+	): void
+	{
+		if (
+			is_array($filter[$typeFieldName] ?? null)
+			&& in_array(\CCrmActivityType::Task, $filter[$typeFieldName])
+		)
+		{
+			$filter[$typeFieldName][] = $allTaskBased
+				? self::getId() . '.*.*'
+				: Task::getKey();
+		}
 	}
 }

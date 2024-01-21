@@ -2,8 +2,9 @@
  * @module assets/communication/connection
  */
 jn.define('assets/communication/connection', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 
-	const getColor = (enabled) => enabled ? '#0091e3' : '#d5d7db';
+	const getColor = (enabled) => (enabled ? AppTheme.colors.accentExtraDarkblue : AppTheme.colors.base6);
 
 	/**
 	 * @class ConnectionSvg

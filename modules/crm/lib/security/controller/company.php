@@ -35,6 +35,13 @@ class Company extends Base
 		return (isset($fields['IS_MY_COMPANY']) && $fields['IS_MY_COMPANY'] === 'Y');
 	}
 
+	//region Observable
+	public function isObservable(): bool
+	{
+		return true;
+	}
+	//endregion
+
 	protected static function getEnabledFlagOptionName(): string
 	{
 		return '~CRM_SECURITY_COMPANY_CONTROLLER_ENABLED';

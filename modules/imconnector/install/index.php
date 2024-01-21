@@ -1,8 +1,7 @@
 <?php
 
-use Bitrix\ImConnector\Rest\Status;
+use Bitrix\ImConnector\Rest;
 use Bitrix\ImConnector\InfoConnectors;
-use Bitrix\ImConnector\Rest\CustomConnectors;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\EventManager;
@@ -104,26 +103,45 @@ if (!class_exists('imconnector'))
 			ModuleManager::registerModule($this->MODULE_ID);
 
 			$eventManager = EventManager::getInstance();
-			$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'imconnector',
-				CustomConnectors::class, 'OnRestServiceBuildDescription');
-			$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'imconnector',
-				Status::class, 'OnRestServiceBuildDescription');
-			$eventManager->registerEventHandler('imconnector', 'OnUpdateStatusConnector', 'imconnector',
-				InfoConnectors::class, 'onUpdateStatusConnector');
-			$eventManager->registerEventHandler('imconnector', 'OnDeleteStatusConnector', 'imconnector',
-				InfoConnectors::class, 'onChangeStatusConnector');
-			$eventManager->registerEventHandler('imopenlines', 'OnImopenlineCreate', 'imconnector',
-				InfoConnectors::class, 'onImopenlineCreate');
-			$eventManager->registerEventHandler('imopenlines', 'OnImopenlineDelete', 'imconnector',
-				InfoConnectors::class, 'onImopenlineDelete');
-			$eventManager->registerEventHandler('rest', 'OnRestAppDelete', 'imconnector',
-				CustomConnectors::class, 'OnRestAppDelete');
 
-			CAgent::AddAgent('\Bitrix\ImConnector\InfoConnectors::infoConnectorsUpdateAgent();', 'imconnector', 'Y', 21600, '', 'Y', ConvertTimeStamp((time() + 21600), 'FULL'));
-			CAgent::AddAgent('\Bitrix\ImConnector\Status::cleanupDuplicates();', 'imconnector', 'N', 60, '', 'Y', ConvertTimeStamp(time()+CTimeZone::GetOffset()+600, 'FULL'));
-			CAgent::AddAgent('\Bitrix\ImConnector\Connectors\Olx::initializeReceiveMessages();', 'imconnector', 'N', 60, '', 'Y', ConvertTimeStamp(time()+CTimeZone::GetOffset()+600, 'FULL'));
+			/** @see  Rest\CustomConnectors::OnRestServiceBuildDescription */
+			$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'imconnector', Rest\CustomConnectors::class, 'OnRestServiceBuildDescription');
+
+			/** @see  Rest\Status::OnRestServiceBuildDescription */
+			$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'imconnector', Rest\Status::class, 'OnRestServiceBuildDescription');
+
+			/** @see  Rest\Status::OnRestServiceBuildDescription */
+			$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'imconnector', Rest\Common::class, 'OnRestServiceBuildDescription');
+
+			/** @see  InfoConnectors::onUpdateStatusConnector */
+			$eventManager->registerEventHandler('imconnector', 'OnUpdateStatusConnector', 'imconnector', InfoConnectors::class, 'onUpdateStatusConnector');
+
+			/** @see  InfoConnectors::onChangeStatusConnector */
+			$eventManager->registerEventHandler('imconnector', 'OnDeleteStatusConnector', 'imconnector', InfoConnectors::class, 'onChangeStatusConnector');
+
+			/** @see  InfoConnectors::onImopenlineCreate */
+			$eventManager->registerEventHandler('imopenlines', 'OnImopenlineCreate', 'imconnector', InfoConnectors::class, 'onImopenlineCreate');
+
+			/** @see  InfoConnectors::onImopenlineDelete */
+			$eventManager->registerEventHandler('imopenlines', 'OnImopenlineDelete', 'imconnector', InfoConnectors::class, 'onImopenlineDelete');
+
+			/** @see  Rest\CustomConnectors::onRestAppDelete */
+			$eventManager->registerEventHandler('rest', 'OnRestAppDelete', 'imconnector', Rest\CustomConnectors::class, 'OnRestAppDelete');
+
+			/** @see  Rest\CustomConnectors::onRestAppUpdate */
+			$eventManager->registerEventHandler('rest', 'OnRestAppUpdate', 'imconnector', Rest\CustomConnectors::class, 'onRestAppUpdate');
+
+			/** @see InfoConnectors::infoConnectorsUpdateAgent */
+			\CAgent::AddAgent('Bitrix\ImConnector\InfoConnectors::infoConnectorsUpdateAgent();', 'imconnector', 'Y', 21600, '', 'Y', ConvertTimeStamp((time() + 21600), 'FULL'));
+
+			/** @see \Bitrix\ImConnector\Status::cleanupDuplicates */
+			\CAgent::AddAgent('Bitrix\ImConnector\Status::cleanupDuplicates();', 'imconnector', 'N', 60, '', 'Y', ConvertTimeStamp(time()+CTimeZone::GetOffset()+600, 'FULL'));
+
+			/** @see \Bitrix\ImConnector\Connectors\Olx::initializeReceiveMessages */
+			\CAgent::AddAgent('Bitrix\ImConnector\Connectors\Olx::initializeReceiveMessages();', 'imconnector', 'N', 60, '', 'Y', ConvertTimeStamp(time()+CTimeZone::GetOffset()+600, 'FULL'));
+
 			/** @see \Bitrix\ImConnector\Agent::notifyUndelivered */
-			CAgent::AddAgent('\Bitrix\ImConnector\Agent::notifyUndelivered();', 'imconnector', 'N', 60);
+			\CAgent::AddAgent('Bitrix\ImConnector\Agent::notifyUndelivered();', 'imconnector', 'N', 60);
 
 			return true;
 		}
@@ -169,22 +187,32 @@ if (!class_exists('imconnector'))
 			}
 
 			$eventManager = EventManager::getInstance();
-			$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'imconnector',
-				CustomConnectors::class, 'onRestServiceBuildDescription');
-			$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'imconnector',
-				Status::class, 'onRestServiceBuildDescription');
-			$eventManager->unRegisterEventHandler('imconnector', 'OnUpdateStatusConnector', 'imconnector',
-				InfoConnectors::class, 'onUpdateStatusConnector');
-			$eventManager->unRegisterEventHandler('imconnector', 'OnDeleteStatusConnector', 'imconnector',
-				InfoConnectors::class, 'onChangeStatusConnector');
-			$eventManager->unRegisterEventHandler('imopenlines', 'OnImopenlineCreate', 'imconnector',
-				InfoConnectors::class, 'onImopenlineCreate');
-			$eventManager->unRegisterEventHandler('imopenlines', 'OnImopenlineDelete', 'imconnector',
-				InfoConnectors::class, 'onImopenlineDelete');
-			$eventManager->unRegisterEventHandler('rest', 'OnRestAppDelete', 'imconnector',
-				CustomConnectors::class, 'OnRestAppDelete');
 
-			CAgent::RemoveModuleAgents($this->MODULE_ID);
+			/** @see  Rest\CustomConnectors::onRestServiceBuildDescription */
+			$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'imconnector', Rest\CustomConnectors::class, 'onRestServiceBuildDescription');
+
+			/** @see  Rest\Status::onRestServiceBuildDescription */
+			$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'imconnector', Rest\Status::class, 'onRestServiceBuildDescription');
+
+			/** @see  Rest\Common::onRestServiceBuildDescription */
+			$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'imconnector', Rest\Common::class, 'OnRestServiceBuildDescription');
+
+			/** @see  InfoConnectors::onUpdateStatusConnector */
+			$eventManager->unRegisterEventHandler('imconnector', 'OnUpdateStatusConnector', 'imconnector', InfoConnectors::class, 'onUpdateStatusConnector');
+
+			/** @see  InfoConnectors::onChangeStatusConnector */
+			$eventManager->unRegisterEventHandler('imconnector', 'OnDeleteStatusConnector', 'imconnector', InfoConnectors::class, 'onChangeStatusConnector');
+
+			/** @see  InfoConnectors::onImopenlineCreate */
+			$eventManager->unRegisterEventHandler('imopenlines', 'OnImopenlineCreate', 'imconnector', InfoConnectors::class, 'onImopenlineCreate');
+
+			/** @see  InfoConnectors::onImopenlineDelete */
+			$eventManager->unRegisterEventHandler('imopenlines', 'OnImopenlineDelete', 'imconnector', InfoConnectors::class, 'onImopenlineDelete');
+
+			/** @see  Rest\CustomConnectors::OnRestAppDelete */
+			$eventManager->unRegisterEventHandler('rest', 'OnRestAppDelete', 'imconnector', Rest\CustomConnectors::class, 'OnRestAppDelete');
+
+			\CAgent::RemoveModuleAgents($this->MODULE_ID);
 			ModuleManager::unRegisterModule($this->MODULE_ID);
 
 			return true;
@@ -257,11 +285,11 @@ if (!class_exists('imconnector'))
 
 				$request = $context->getRequest();
 
-				if ((int)$request['step']<2)
+				if ((int)$request['step'] < 2)
 				{
 					$APPLICATION->IncludeAdminFile(Loc::getMessage('IMCONNECTOR_UNINSTALL_TITLE'), $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/imconnector/install/unstep1.php');
 				}
-				elseif ((int)$request['step']===2)
+				elseif ((int)$request['step'] === 2)
 				{
 					$this->UnInstallFiles();
 					$this->UnInstallEvents();

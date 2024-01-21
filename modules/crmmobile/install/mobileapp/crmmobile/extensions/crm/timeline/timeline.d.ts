@@ -26,6 +26,7 @@ type TimelineEntityProps = {
 	isEditable: boolean,
 	pushTag: string | null,
 	documentGeneratorProvider: string | null,
+	reminders?: object,
 };
 
 type TimelineItemProps = {

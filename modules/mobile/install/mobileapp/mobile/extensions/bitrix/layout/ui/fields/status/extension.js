@@ -2,7 +2,6 @@
  * @module layout/ui/fields/status
  */
 jn.define('layout/ui/fields/status', (require, exports, module) => {
-
 	const { chevronRight } = require('assets/common');
 	const { BaseField } = require('layout/ui/fields/base');
 
@@ -57,16 +56,16 @@ jn.define('layout/ui/fields/status', (require, exports, module) => {
 				},
 				statusItem: (readOnly, index, lastIndex, backgroundColor) => ({
 					height: 21,
+					backgroundColor,
+					paddingVertical: 1,
 					borderRadius: 10.5,
 					paddingHorizontal: 8,
-					paddingVertical: 1,
 					justifyContent: 'center',
 					marginBottom: readOnly ? 1 : 4,
-					marginRight: lastIndex !== index ? 10 : 0,
-					backgroundColor: backgroundColor.replace(/[^#0-9a-fA-F]/g, ''),
+					marginRight: lastIndex === index ? 0 : 10,
 				}),
 				statusItemText: (color) => ({
-					color: color.replace(/[^#0-9a-fA-F]/g, ''),
+					color,
 					fontSize: 9,
 					fontWeight: '700',
 				}),
@@ -117,5 +116,4 @@ jn.define('layout/ui/fields/status', (require, exports, module) => {
 		StatusType: 'status',
 		StatusField: (props) => new StatusField(props),
 	};
-
 });

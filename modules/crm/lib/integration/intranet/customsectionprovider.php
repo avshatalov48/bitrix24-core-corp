@@ -155,7 +155,6 @@ class CustomSectionProvider extends Provider
 
 	private static function customSectionsCache(): CrmCustomSectionCache
 	{
-		\Bitrix\Intranet\CustomSection\Entity\CustomSectionPageTable::cleanCache();
 		if (self::$allAvailableCustomSections === null)
 		{
 			$sections = CustomSectionPageTable::getList([

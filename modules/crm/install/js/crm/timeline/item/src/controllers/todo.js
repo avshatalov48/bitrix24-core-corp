@@ -5,7 +5,6 @@ import { UI } from 'ui.notification';
 import { FileUploaderPopup } from 'crm.activity.file-uploader-popup';
 import { SettingsPopup as TodoEditorSettingsPopup } from 'crm.activity.settings-popup';
 import { Calendar as SettingsPopupCalendar } from 'crm.activity.settings-popup';
-import { Ping as SettingsPopupPing } from 'crm.activity.settings-popup';
 import { SectionSettings } from 'crm.activity.todo-editor';
 
 import { Base } from './base';
@@ -108,7 +107,7 @@ export class ToDo extends Base
 		{
 			return;
 		}
-		
+
 		this.#responsibleUserSelectorDialog = new Dialog({
 			id: 'responsible-user-selector-dialog-' + actionData.id,
 			targetNode: item.getLayoutFooterMenu().$el,
@@ -174,13 +173,6 @@ export class ToDo extends Base
 
 	#getSectionSettings(): ReadonlyArray<SectionSettings>
 	{
-		const ping = {
-			id: SettingsPopupPing.methods.getId(),
-			component: SettingsPopupPing,
-			active: true,
-			showToggleSelector: false,
-		};
-
 		const calendar = {
 			id: SettingsPopupCalendar.methods.getId(),
 			component: SettingsPopupCalendar,
@@ -190,14 +182,6 @@ export class ToDo extends Base
 		if (this.#settingsPopup)
 		{
 			const settings = this.#settingsPopup.getSettings();
-			if (settings.ping)
-			{
-				const pingSettings = settings.ping;
-				ping.params = {
-					selectedItems: pingSettings.selectedItems,
-				};
-			}
-
 			if (settings.calendar)
 			{
 				const calendarSettings = settings.calendar;
@@ -211,7 +195,6 @@ export class ToDo extends Base
 		}
 
 		return [
-			ping,
 			calendar,
 		];
 	}

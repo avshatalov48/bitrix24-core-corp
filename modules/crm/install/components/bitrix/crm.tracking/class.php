@@ -1,16 +1,16 @@
-<?
+<?php
 
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ErrorCollection;
-use Bitrix\Main\Loader;
-use Bitrix\Main\Error;
-
-use Bitrix\Crm\Tracking;
-
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
+use Bitrix\Crm\Restriction\AvailabilityManager;
+use Bitrix\Crm\Tracking;
+use Bitrix\Main\Error;
+use Bitrix\Main\ErrorCollection;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
@@ -170,6 +170,15 @@ class CrmTrackingComponent extends CBitrixComponent
 		{
 			$this->printErrors();
 			return;
+		}
+
+		$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+		$isAvailable = $toolsManager->checkCrmAvailability();
+		if (!$isAvailable)
+		{
+			print AvailabilityManager::getInstance()->getCrmInaccessibilityContent();
+
+			return false;
 		}
 
 		if (!$this->prepareResult())

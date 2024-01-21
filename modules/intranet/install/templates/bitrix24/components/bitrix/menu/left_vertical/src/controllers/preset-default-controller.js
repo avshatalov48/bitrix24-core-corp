@@ -5,10 +5,12 @@ import DefaultController from './default-controller';
 import Options from "../options";
 import Utils from "../utils";
 import {CancelButton, CreateButton} from 'ui.buttons';
+import {MessageBox, MessageBoxButtons} from "ui.dialogs.messagebox";
 
 export default class PresetDefaultController extends DefaultController
 {
 	isReady: boolean = true;
+	#unavailableToolPopup: ?MessageBox;
 
 	createPopup(mode): Popup
 	{
@@ -65,6 +67,15 @@ export default class PresetDefaultController extends DefaultController
 							})
 						;
 					}
+
+					if (!Options.isAdmin && Options.availablePresetTools && Options.availablePresetTools[currentPreset] === false)
+					{
+						button.setWaiting(false);
+						this.showUnavailableToolPopup();
+
+						return;
+					}
+
 					EventEmitter.emit(this, Options.eventName('onPresetIsSet'),
 						{presetId: currentPreset, mode})
 						.forEach((promise) => {
@@ -94,5 +105,18 @@ export default class PresetDefaultController extends DefaultController
 					} }),
 			]
 		});
+	}
+
+	showUnavailableToolPopup(): void
+	{
+		if (!(this.#unavailableToolPopup instanceof MessageBox))
+		{
+			this.#unavailableToolPopup = MessageBox.create({
+				message: Loc.getMessage('MENU_UNAVAILABLE_TOOL_POPUP_DESCRIPTION'),
+				buttons: MessageBoxButtons.OK,
+			});
+		}
+
+		this.#unavailableToolPopup.show();
 	}
 }

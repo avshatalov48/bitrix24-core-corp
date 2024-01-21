@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,main_core,crm_model) {
@@ -229,6 +230,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "setCustomSections",
 	    value: function setCustomSections(customSections) {
 	      this.data.customSections = customSections;
+	    }
+	  }, {
+	    key: "setIsExternalDynamicalType",
+	    value: function setIsExternalDynamicalType(isExternal) {
+	      this.data.isExternal = isExternal;
+	    }
+	  }, {
+	    key: "setIsSaveFromTypeDetail",
+	    value: function setIsSaveFromTypeDetail(isSaveFromTypeDetail) {
+	      this.data.isSaveFromTypeDetail = isSaveFromTypeDetail;
 	    }
 	  }, {
 	    key: "setConversionMap",

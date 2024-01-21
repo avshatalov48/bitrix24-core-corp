@@ -188,44 +188,31 @@ class EntityLink
 			$factory = Service\Container::getInstance()->getFactory($entityTypeId);
 			if ($factory)
 			{
-				$item = $factory->getItem($entityId);
-				if ($item)
+				if (
+					!$getParentEntityFields
+					|| empty($parentFileds)
+					|| $entityTypeId != \CCrmOwnerType::SmartInvoice
+				)
 				{
-					$companyId = $item->getCompanyId();
-					$contactId = $item->getContactId();
-					if ($companyId > 0)
-					{
-						$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Company;
-						$result['CLIENT_ENTITY_ID'] = $companyId;
-					}
-					elseif($contactId > 0)
-					{
-						$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Contact;
-						$result['CLIENT_ENTITY_ID'] = $contactId;
-					}
-					if ($item->hasField(Crm\Item::FIELD_NAME_MYCOMPANY_ID))
-					{
-						$myCompanyId = $item->getMycompanyId();
-						if ($myCompanyId > 0)
-						{
-							$result['MYCOMPANY_ID'] = $myCompanyId;
-						}
-					}
-
-					if ($getParentEntityFields)
-					{
-						foreach ($parentFileds as $fieldName)
-						{
-							if ($item->hasField($fieldName) && $item->get($fieldName) > 0)
-							{
-								$result[$fieldName] = $item->get($fieldName);
-							}
-						}
-					}
+					list($result, $entityNotFound) = self::clientSellerInfoByOrm(
+						$factory,
+						$entityId,
+						$result,
+						$getParentEntityFields,
+						$parentFileds,
+						$entityNotFound
+					);
 				}
 				else
 				{
-					$entityNotFound = true;
+					list($result, $entityNotFound) = self::clientSellerInfoByFactory(
+						$factory,
+						$entityId,
+						$result,
+						$getParentEntityFields,
+						$parentFileds,
+						$entityNotFound
+					);
 				}
 			}
 			else
@@ -595,37 +582,23 @@ class EntityLink
 
 		$connection = Main\Application::getConnection();
 
-		if($connection instanceof Main\DB\MysqlCommonConnection
-			|| $connection instanceof Main\DB\MssqlConnection
-			|| $connection instanceof Main\DB\OracleConnection)
-		{
-			$tableName = LinkTable::getTableName();
-			if ($connection instanceof Main\DB\MssqlConnection
-				|| $connection instanceof Main\DB\OracleConnection)
-			{
-				$tableName = mb_strtoupper($tableName);
-			}
-			$connection->queryExecute(
-				"DELETE FROM {$tableName} WHERE (REQUISITE_ID = {$requisiteId} AND MC_REQUISITE_ID = 0) OR ".
-				"(MC_REQUISITE_ID = {$requisiteId} AND REQUISITE_ID = 0) OR ".
-				"(MC_REQUISITE_ID = {$requisiteId} AND REQUISITE_ID = {$requisiteId})"
-			);
-			$connection->queryExecute(
-				"UPDATE {$tableName} ".
-				"SET REQUISITE_ID = 0, BANK_DETAIL_ID = 0 ".
-				"WHERE REQUISITE_ID = {$requisiteId} AND MC_REQUISITE_ID > 0"
-			);
-			$connection->queryExecute(
-				"UPDATE {$tableName} ".
-				"SET MC_REQUISITE_ID = 0, MC_BANK_DETAIL_ID = 0 ".
-				"WHERE MC_REQUISITE_ID = {$requisiteId} AND REQUISITE_ID > 0"
-			);
-		}
-		else
-		{
-			$dbType = $connection->getType();
-			throw new Main\NotSupportedException("The '{$dbType}' is not supported in current context");
-		}
+		$tableName = LinkTable::getTableName();
+
+		$connection->queryExecute(
+			"DELETE FROM {$tableName} WHERE (REQUISITE_ID = {$requisiteId} AND MC_REQUISITE_ID = 0) OR ".
+			"(MC_REQUISITE_ID = {$requisiteId} AND REQUISITE_ID = 0) OR ".
+			"(MC_REQUISITE_ID = {$requisiteId} AND REQUISITE_ID = {$requisiteId})"
+		);
+		$connection->queryExecute(
+			"UPDATE {$tableName} ".
+			"SET REQUISITE_ID = 0, BANK_DETAIL_ID = 0 ".
+			"WHERE REQUISITE_ID = {$requisiteId} AND MC_REQUISITE_ID > 0"
+		);
+		$connection->queryExecute(
+			"UPDATE {$tableName} ".
+			"SET MC_REQUISITE_ID = 0, MC_BANK_DETAIL_ID = 0 ".
+			"WHERE MC_REQUISITE_ID = {$requisiteId} AND REQUISITE_ID > 0"
+		);
 	}
 
 	public static function getSelectedRequisiteLink($entityTypeId, $entityId): array
@@ -1906,5 +1879,134 @@ class EntityLink
 			$mcRequisiteId,
 			$mcBankDetailId,
 		];
+	}
+
+	private static function clientSellerInfoByFactory(
+		Service\Factory $factory,
+		int $entityId,
+		array $result,
+		bool $getParentEntityFields,
+		array $parentFields,
+		bool $entityNotFound
+	): array
+	{
+		$item = $factory->getItem($entityId);
+		if ($item)
+		{
+			$companyId = $item->getCompanyId();
+			$contactId = $item->getContactId();
+			if ($companyId > 0)
+			{
+				$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Company;
+				$result['CLIENT_ENTITY_ID'] = $companyId;
+			}
+			elseif ($contactId > 0)
+			{
+				$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Contact;
+				$result['CLIENT_ENTITY_ID'] = $contactId;
+			}
+
+			if ($item->hasField(Crm\Item::FIELD_NAME_MYCOMPANY_ID))
+			{
+				$myCompanyId = $item->getMycompanyId();
+				if ($myCompanyId > 0)
+				{
+					$result['MYCOMPANY_ID'] = $myCompanyId;
+				}
+			}
+
+			if ($getParentEntityFields)
+			{
+				foreach ($parentFields as $fieldName)
+				{
+					if ($item->hasField($fieldName) && $item->get($fieldName) > 0)
+					{
+						$result[$fieldName] = $item->get($fieldName);
+					}
+				}
+			}
+		}
+		else
+		{
+			$entityNotFound = true;
+		}
+		return array($result, $entityNotFound);
+	}
+
+	private static function clientSellerInfoByOrm(
+		Service\Factory $factory,
+		int $entityId,
+		array $result,
+		bool $getParentEntityFields,
+		array $parentFields,
+		bool $entityNotFound
+	): array
+	{
+		$select = [
+			Item::FIELD_NAME_ID,
+		];
+
+		$myCompanyFieldName = $factory->getEntityFieldNameByMap(Item::FIELD_NAME_MYCOMPANY_ID);
+
+		$companyIdFieldName = $factory->getEntityFieldNameByMap(Item::FIELD_NAME_COMPANY_ID);
+		if ($factory->isFieldExists($companyIdFieldName))
+		{
+			$select[] = $companyIdFieldName;
+		}
+
+		$contactIdFieldName = $factory->getEntityFieldNameByMap(Item::FIELD_NAME_CONTACT_ID);
+		if ($factory->isFieldExists($contactIdFieldName))
+		{
+			$select[] = $contactIdFieldName;
+		}
+
+		foreach ($parentFields as $parentField)
+		{
+			if ($factory->isFieldExists($parentField))
+			{
+				$select[] = $parentField;
+			}
+		}
+
+		$item = $factory->getDataClass()::query()
+			->setSelect($select)
+			->where('ID', $entityId)
+			->fetch();
+
+		if ($item)
+		{
+			$companyId = $item[$companyIdFieldName] ?? 0;
+			$contactId = $item[$contactIdFieldName] ?? 0;
+			if ($companyId > 0)
+			{
+				$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Company;
+				$result['CLIENT_ENTITY_ID'] = $companyId;
+			}
+			elseif ($contactId > 0)
+			{
+				$result['CLIENT_ENTITY_TYPE_ID'] = \CCrmOwnerType::Contact;
+				$result['CLIENT_ENTITY_ID'] = $contactId;
+			}
+
+			$myCompanyId = $item[$myCompanyFieldName] ?? 0;
+			if ($myCompanyId > 0)
+			{
+				$result['MYCOMPANY_ID'] = $myCompanyId;
+			}
+
+			if ($getParentEntityFields) {
+				foreach ($parentFields as $fieldName) {
+					if (isset($item[$fieldName]) && $item[$fieldName] > 0)
+					{
+						$result[$fieldName] = $item[$fieldName];
+					}
+				}
+			}
+		}
+		else {
+			$entityNotFound = true;
+		}
+
+		return array($result, $entityNotFound);
 	}
 }

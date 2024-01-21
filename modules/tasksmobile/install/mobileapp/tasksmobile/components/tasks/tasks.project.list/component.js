@@ -1,18 +1,17 @@
 (() => {
 	const require = (ext) => jn.require(ext);
+
+	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { debounce } = require('utils/function');
 	const { EntityReady } = require('entity-ready');
-	const { Loc } = require('loc');
 	const { Logger, LogType } = require('utils/logger');
 	const { magnifierWithMenuAndDot } = require('assets/common');
 	const { PresetList } = require('tasks/layout/presetList');
 	const { Project } = require('tasks/project');
 	const { StorageCache } = require('storage-cache');
 
-	const apiVersion = Application.getApiVersion();
 	const platform = Application.getPlatform();
-
-	const isSearchByPresetsEnable = (apiVersion >= 49);
 
 	const Mode = {
 		PROJECT: 'tasks_project',
@@ -36,8 +35,8 @@
 			if (!this.isShowedForList)
 			{
 				dialogs.showSpinnerIndicator({
-					color: '#777777',
-					backgroundColor: '#77ffffff',
+					color: AppTheme.colors.base3,
+					backgroundColor: AppTheme.colors.bgContentPrimary,
 				});
 				this.isShowedForList = true;
 			}
@@ -115,7 +114,7 @@
 				folded: false,
 				badgeValue: 0,
 				sortItemParams: { activityDate: 'desc' },
-				backgroundColor: '#ffffff',
+				backgroundColor: AppTheme.colors.bgContentPrimary,
 				styles: {
 					title: {
 						font: {
@@ -207,19 +206,19 @@
 			this.counter = Filter.counterTypes.none;
 			this.counters = {};
 			this.searchText = '';
-			this.isShowMine = !isSearchByPresetsEnable;
+			this.isShowMine = false;
 
 			this.cache = new StorageCache(this.list.mode, 'filterCounters');
 			this.total = this.cache.get().counterValue || 0;
 
-			EntityReady.wait('chat').then(() => this.updateCounters()).catch(() => {});
+			EntityReady.wait('chat').then(() => this.updateCounters()).catch(console.error);
 		}
 
 		updateCounters()
 		{
 			logger.log('ProjectList.Filter.updateCounters');
 
-			(new RequestExecutor('tasksmobile.Task.Counter.get'))
+			(new RequestExecutor('tasksmobile.Task.Counter.getByType'))
 				.call()
 				.then((response) => {
 					this.counters = {};
@@ -242,8 +241,7 @@
 					this.setVisualCounters();
 					this.saveCache();
 				})
-				.catch(() => {})
-			;
+				.catch(console.error);
 		}
 
 		pseudoUpdateCounters(value)
@@ -370,9 +368,9 @@
 		static get counterColors()
 		{
 			return {
-				gray: '#a8adb4',
-				green: '#9dcf00',
-				red: '#ff5752',
+				gray: AppTheme.colors.base4,
+				green: AppTheme.colors.accentMainSuccess,
+				red: AppTheme.colors.accentMainAlert,
 			};
 		}
 
@@ -471,15 +469,6 @@
 			];
 			const items = (this.list.isScrum() ? scrumListItems : projectListItems);
 
-			if (!isSearchByPresetsEnable)
-			{
-				items.push({
-					id: 'toggleShowMine',
-					title: Loc.getMessage(`MOBILE_TASKS_PROJECT_LIST_ACTION_SHOW_${this.filter.getIsShowMine() ? 'ALL' : 'MINE'}`),
-					sectionCode: 'default',
-					showTopSeparator: true,
-				});
-			}
 			items.push({
 				id: 'readAll',
 				title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_READ_ALL'),
@@ -554,8 +543,7 @@
 						);
 					}
 				})
-				.catch(() => {})
-			;
+				.catch(console.error);
 		}
 	}
 
@@ -571,7 +559,7 @@
 					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_ABOUT'),
 					iconName: 'action_project',
 					iconUrl: `${imagePrefix}about.png`,
-					color: '#f2a100',
+					color: AppTheme.colors.accentMainWarning,
 					position: 'right',
 				},
 				members: {
@@ -579,7 +567,7 @@
 					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_MEMBERS'),
 					iconName: 'action_userlist',
 					iconUrl: `${imagePrefix}members.png`,
-					color: '#2f72b9',
+					color: AppTheme.colors.accentMainLinks,
 					position: 'right',
 				},
 				join: {
@@ -587,7 +575,7 @@
 					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_JOIN'),
 					iconName: 'action_accept',
 					iconUrl: `${imagePrefix}join.png`,
-					color: '#468ee5',
+					color: AppTheme.colors.accentMainLinks,
 					position: 'right',
 				},
 				// leave: {
@@ -595,7 +583,7 @@
 				// 	title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_LEAVE'),
 				// 	iconName: 'action_skip',
 				// 	iconUrl: `${imagePrefix}leave.png`,
-				// 	color: '#848e9e',
+				// 	color: AppTheme.colors.base4,
 				// 	position: 'right',
 				// },
 				read: {
@@ -603,7 +591,7 @@
 					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_READ'),
 					iconName: 'action_read',
 					iconUrl: `${imagePrefix}read.png`,
-					color: '#e57bb6',
+					color: AppTheme.colors.accentExtraPink,
 					position: 'left',
 				},
 				pin: {
@@ -611,7 +599,7 @@
 					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_PIN'),
 					iconName: 'action_pin',
 					iconUrl: `${imagePrefix}pin.png`,
-					color: '#468ee5',
+					color: AppTheme.colors.accentMainLinks,
 					position: 'left',
 				},
 				unpin: {
@@ -619,7 +607,7 @@
 					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_UNPIN'),
 					iconName: 'action_unpin',
 					iconUrl: `${imagePrefix}unpin.png`,
-					color: '#468ee5',
+					color: AppTheme.colors.accentMainLinks,
 					position: 'left',
 				},
 			};
@@ -763,7 +751,7 @@
 
 			if (project.isOpened)
 			{
-				project.joinProject().then(() => this.list.updateItem(projectId)).catch(() => {});
+				project.joinProject().then(() => this.list.updateItem(projectId)).catch(console.error);
 
 				const projectItem = ProjectList.prepareListItem(project);
 				projectItem.joinButtonState = 'animated';
@@ -827,7 +815,7 @@
 			this.canExecute = true;
 
 			this.extendWatch();
-			this.startWatch().then(() => this.subscribe()).catch(() => {});
+			this.startWatch().then(() => this.subscribe()).catch(console.error);
 		}
 
 		getEventHandlers()
@@ -1141,7 +1129,7 @@
 		{
 			this.clear();
 			this.extendWatch();
-			this.startWatch().then(() => this.setCanExecute(true)).catch(() => {});
+			this.startWatch().then(() => this.setCanExecute(true)).catch(console.error);
 		}
 	}
 
@@ -1153,17 +1141,17 @@
 		static get backgroundColors()
 		{
 			return {
-				default: '#ffffff',
-				pinned: '#f4f5f7',
+				default: AppTheme.colors.accentMainLinks,
+				pinned: AppTheme.colors.bgContentTertiary,
 			};
 		}
 
 		static get counterColors()
 		{
 			return {
-				danger: '#ff5752',
-				gray: '#a8adb4',
-				success: '#9dcf00',
+				danger: AppTheme.colors.accentMainAlert,
+				gray: AppTheme.colors.base4,
+				success: AppTheme.colors.accentMainSuccess,
 			};
 		}
 
@@ -1337,11 +1325,6 @@
 
 		getPresets()
 		{
-			if (!isSearchByPresetsEnable)
-			{
-				return;
-			}
-
 			const methodName = (this.isScrum() ? 'getScrumListPresets' : 'getProjectListPresets');
 
 			(new RequestExecutor(`tasksmobile.Filter.${methodName}`))
@@ -1356,8 +1339,7 @@
 						});
 					}
 				})
-				.catch(() => {})
-			;
+				.catch(console.error);
 		}
 
 		setTopButtons()
@@ -1369,7 +1351,10 @@
 					type: 'search',
 					badgeCode: `${this.mode}_SearchButton`,
 					svg: {
-						content: magnifierWithMenuAndDot('#a8adb4', (isDefaultSearch ? null : '#2fc6f6')),
+						content: magnifierWithMenuAndDot(
+							AppTheme.colors.base4,
+							(isDefaultSearch ? null : AppTheme.colors.accentMainLinks),
+						),
 					},
 					callback: () => this.onSearchClick(),
 				},
@@ -1384,74 +1369,45 @@
 
 		onSearchClick()
 		{
-			if (isSearchByPresetsEnable)
+			if (!this.isSearchInit)
 			{
-				if (!this.isSearchInit)
-				{
-					this.isSearchInit = true;
+				this.isSearchInit = true;
 
-					this.list.search.mode = 'layout';
-					this.list.search.on('textChanged', ({ text }) => this.debounceSearch(text));
-					this.list.search.on('cancel', () => {
-						if (
-							this.filter.getSearchText()
+				this.list.search.mode = 'layout';
+				this.list.search.on('textChanged', ({ text }) => this.debounceSearch(text));
+				this.list.search.on('cancel', () => {
+					if (
+						this.filter.getSearchText()
 							|| this.filter.getPreset() !== Filter.presetTypes.default
-						)
-						{
-							this.filter.setSearchText('');
-							this.filter.setPreset(Filter.presetTypes.default);
+					)
+					{
+						this.filter.setSearchText('');
+						this.filter.setPreset(Filter.presetTypes.default);
 
-							this.setTopButtons();
-							this.reload(0, true);
-						}
-					});
-				}
-				this.searchLayout = new PresetList({
-					presets: this.presets,
-					currentPreset: this.filter.getPreset(),
-				});
-				this.searchLayout.on('presetSelected', (preset) => {
-					if (preset.id === this.filter.getPreset())
-					{
-						this.filter.setPreset(Filter.presetTypes.none);
+						this.setTopButtons();
+						this.reload(0, true);
 					}
-					else
-					{
-						this.filter.setPreset(preset.id);
-						this.filter.setCounter(Filter.counterTypes.none);
-					}
-					this.setTopButtons();
-					this.reload(0, true);
 				});
-				this.list.search.text = this.filter.getSearchText();
-				this.list.search.show(this.searchLayout, 46);
 			}
-			else
-			{
-				if (!this.isSearchInit)
+			this.searchLayout = new PresetList({
+				presets: this.presets,
+				currentPreset: this.filter.getPreset(),
+			});
+			this.searchLayout.on('presetSelected', (preset) => {
+				if (preset.id === this.filter.getPreset())
 				{
-					this.isSearchInit = true;
-
-					this.list.search.mode = 'bar';
-					this.list.search.on('textChanged', ({ text }) => this.debounceSearch(text));
-					this.list.search.on('cancel', () => {
-						if (
-							this.filter.getSearchText()
-							|| this.filter.getPreset() !== Filter.presetTypes.default
-						)
-						{
-							this.filter.setSearchText('');
-							this.filter.setPreset(Filter.presetTypes.default);
-
-							this.setTopButtons();
-							this.reload(0, true);
-						}
-					});
-					this.list.search.on('clickEnter', () => this.list.search.close());
+					this.filter.setPreset(Filter.presetTypes.none);
 				}
-				this.list.search.text = this.filter.getSearchText();
-				this.list.search.show();
-			}
+				else
+				{
+					this.filter.setPreset(preset.id);
+					this.filter.setCounter(Filter.counterTypes.none);
+				}
+				this.setTopButtons();
+				this.reload(0, true);
+			});
+			this.list.search.text = this.filter.getSearchText();
+			this.list.search.show(this.searchLayout, 46);
 		}
 
 		setFloatingButton()
@@ -1462,8 +1418,7 @@
 					(response) => this.renderFloatingButton(response.result),
 					(response) => logger.error(response),
 				)
-				.catch((response) => logger.error(response))
-			;
+				.catch((response) => logger.error(response));
 		}
 
 		renderFloatingButton(isExist = false)
@@ -1505,10 +1460,7 @@
 				},
 				onScroll: {
 					callback: () => {
-						if (isSearchByPresetsEnable)
-						{
-							this.list.search.close();
-						}
+						this.list.search.close();
 					},
 					context: this,
 				},
@@ -1562,12 +1514,10 @@
 			const params = {
 				mode: this.mode,
 			};
-			if (isSearchByPresetsEnable)
-			{
-				params.siftThroughFilter = {
-					presetId: this.filter.getPreset(),
-				};
-			}
+
+			params.siftThroughFilter = {
+				presetId: this.filter.getPreset(),
+			};
 
 			BX.rest.callMethod(
 				'tasksmobile.Project.list',
@@ -1658,12 +1608,14 @@
 
 			if (isNextPageExist)
 			{
-				this.list.addItems([{
-					id: '-more-',
-					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_NEXT_PAGE'),
-					type: 'button',
-					sectionCode: Section.type.more,
-				}]);
+				this.list.addItems([
+					{
+						id: '-more-',
+						title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_NEXT_PAGE'),
+						type: 'button',
+						sectionCode: Section.type.more,
+					},
+				]);
 			}
 		}
 
@@ -1855,8 +1807,7 @@
 								this.pull.setCanExecute(true);
 								this.pull.freeQueue().then(() => resolve()).catch(() => reject());
 							})
-							.catch(() => reject())
-						;
+							.catch(() => reject());
 					}),
 				];
 				if (projectIds.length > 0)
@@ -1871,8 +1822,7 @@
 				}
 				Promise.allSettled(promises)
 					.then(() => this.loading.hideForTitle())
-					.catch(() => this.loading.hideForTitle())
-				;
+					.catch(() => this.loading.hideForTitle());
 			}, 1000);
 		}
 
@@ -1882,12 +1832,11 @@
 				const params = {
 					mode: this.mode,
 				};
-				if (isSearchByPresetsEnable)
-				{
-					params.siftThroughFilter = {
-						presetId: this.filter.getPreset(),
-					};
-				}
+
+				params.siftThroughFilter = {
+					presetId: this.filter.getPreset(),
+				};
+
 				(new RequestExecutor('tasksmobile.Project.list', {
 					select: ProjectList.select,
 					filter: { ...this.filter.get(), ID: projectIds },
@@ -1907,8 +1856,7 @@
 					.catch((response) => {
 						logger.error(response);
 						reject();
-					})
-				;
+					});
 			});
 		}
 

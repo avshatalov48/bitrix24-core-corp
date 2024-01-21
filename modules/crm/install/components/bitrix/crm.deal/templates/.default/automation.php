@@ -4,6 +4,17 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var array $arParams */
 /** @var array $arResult */
 
+use Bitrix\Crm\Restriction\AvailabilityManager;
+
+$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+$isAvailable = $toolsManager->checkRobotsAvailability();
+if (!$isAvailable)
+{
+	print AvailabilityManager::getInstance()->getRobotsInaccessibilityContent();
+
+	return;
+}
+
 $cmpParams = [
 	'ENTITY_TYPE_ID' => CCrmOwnerType::Deal,
 	'ENTITY_CATEGORY' => $arResult['VARIABLES']['category_id'] ?? 0,

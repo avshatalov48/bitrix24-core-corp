@@ -3,10 +3,10 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
-use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\DI\ServiceLocator;
 
+use Bitrix\ImConnector;
 use Bitrix\ImConnector\Output;
 use Bitrix\ImConnector\Status;
 use Bitrix\ImConnector\Connector;
@@ -17,39 +17,41 @@ class ImConnectorNetwork extends \CBitrixComponent
 	private $cacheId;
 
 	private $connector = 'network';
+
+	/** @var string[] */
 	private $error = [];
+
+	/** @var string[] */
 	private $messages = [];
-	/** @var Output */
+
+	/** @var Output|ImConnector\Provider\Network\Output */
 	private $connectorOutput;
+
 	/** @var Status */
 	private $status;
 
-	protected $pageId = 'page_nw';
+	private $pageId = 'page_nw';
 
 	/**
 	 * Check the connection of the necessary modules.
 	 * @return bool
-	 * @throws LoaderException
 	 */
 	protected function checkModules(): bool
 	{
-		if (Loader::includeModule('imconnector') && Loader::includeModule('imopenlines'))
+		if (!Loader::includeModule('imconnector'))
 		{
-			return true;
-		}
-		else
-		{
-			if(!Loader::includeModule('imconnector'))
-			{
-				ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_MODULE_IMCONNECTOR_NOT_INSTALLED'));
-			}
-			if(!Loader::includeModule('imopenlines'))
-			{
-				ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_MODULE_IMOPENLINES_NOT_INSTALLED'));
-			}
+			\ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_MODULE_IMCONNECTOR_NOT_INSTALLED'));
 
 			return false;
 		}
+		if (!Loader::includeModule('imopenlines'))
+		{
+			\ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_MODULE_IMOPENLINES_NOT_INSTALLED'));
+
+			return false;
+		}
+
+		return true;
 	}
 
 	protected function initialization()
@@ -76,20 +78,21 @@ class ImConnectorNetwork extends \CBitrixComponent
 		Connector::cleanCacheConnector($this->arParams['LINE'], $this->cacheId);
 	}
 
+	/**
+	 * If been sent the current form
+	 */
 	public function saveForm()
 	{
-		//If been sent the current form
 		if ($this->request->isPost() && !empty($this->request[$this->connector. '_form']))
 		{
-			//If the session actual
-			if(check_bitrix_sessid())
+			if (\check_bitrix_sessid())
 			{
 				//Activation bot
-				if($this->request[$this->connector. '_active'] && empty($this->arResult["ACTIVE_STATUS"]))
+				if ($this->request[$this->connector. '_active'] && empty($this->arResult["ACTIVE_STATUS"]))
 				{
 					$resultRegister = $this->connectorOutput->register();
 
-					if($resultRegister->isSuccess())
+					if ($resultRegister->isSuccess())
 					{
 						$this->status->setActive(true);
 						$this->arResult["ACTIVE_STATUS"] = true;
@@ -107,72 +110,73 @@ class ImConnectorNetwork extends \CBitrixComponent
 						$this->error[] = Loc::getMessage("IMCONNECTOR_COMPONENT_NETWORK_NO_ACTIVE");
 					}
 
-					//Reset cache
 					$this->cleanCache();
 				}
 
-				if(!empty($this->arResult["ACTIVE_STATUS"]))
+				if (!empty($this->arResult["ACTIVE_STATUS"]))
 				{
-					//If saving
-					if($this->request[$this->connector. '_save'])
+					if ($this->request[$this->connector. '_save'])
 					{
-						$this->arResult["FORM"] = array(
+						$this->arResult["FORM"] = [
 							'NAME' => $this->request['name'],
 							'DESCRIPTION' => $this->request['description'],
 							'WELCOME_MESSAGE' => $this->request['welcome_message'],
-						);
+						];
 
-						$dataUpdate = array(
+						$dataUpdate = [
 							'NAME' => $this->request['name'],
 							'DESC' => $this->request['description'],
 							'FIRST_MESSAGE' => $this->request['welcome_message'],
-						);
+						];
 
-						if(empty($this->request['searchable']))
-						{
-							$dataUpdate['HIDDEN'] = 'Y';
-							$this->arResult["FORM"]['SEARCHABLE'] = false;
-						}
-						else
-						{
-							$dataUpdate['HIDDEN'] = 'N';
-							$this->arResult["FORM"]['SEARCHABLE'] = true;
-						}
+						$dataUpdate['MULTIDIALOG'] = empty($this->request['multidialog']) ? 'N' : 'Y';
+						$this->arResult['FORM']['MULTIDIALOG'] = !empty($this->request['multidialog']);
 
+						$this->arResult['FORM']['MAX_DIALOGS_COUNT'] = (int)$this->request['max_dialogs_count'] ?? 0;
+						$dataUpdate['MAX_DIALOGS_COUNT'] = $this->arResult['FORM']['MAX_DIALOGS_COUNT'];
 
 						//avatar
-						if($this->request->get('avatar_del') == 'Y' && $this->arResult["DATA_STATUS"]['AVATAR'] > 0)
+						if ($this->request->get('avatar_del') == 'Y' && $this->arResult["DATA_STATUS"]['AVATAR'] > 0)
 						{
-							CFile::Delete($this->arResult["DATA_STATUS"]['AVATAR']);
+							\CFile::Delete($this->arResult["DATA_STATUS"]['AVATAR']);
 							$dataUpdate['AVATAR'] = '';
+							$dataUpdate['AVATAR_DEL'] = 'Y';
 							$this->arResult["DATA_STATUS"]['AVATAR'] = '';
 						}
 
 						$file = $this->request->getFile('avatar');
 
-						if(!empty($file))
+						if (!empty($file) && empty($file['error']))
 						{
-							if (!$file['error'])
+							if (!in_array($file['type'], ['image/png', 'image/jpeg']))
 							{
-								if($file["type"] != "image/png" && $file["type"] != "image/jpeg")
+								$this->error[] = Loc::getMessage("IMCONNECTOR_COMPONENT_NETWORK_FILE_IS_NOT_A_SUPPORTED_TYPE");
+							}
+							elseif (
+								!($imageCheck = (new \Bitrix\Main\File\Image($file['tmp_name']))->getInfo())
+								|| !$imageCheck->getWidth()
+								|| $imageCheck->getWidth() > 5000
+								|| !$imageCheck->getHeight()
+								|| $imageCheck->getHeight() > 5000
+							)
+							{
+								$this->error[] = Loc::getMessage("IMCONNECTOR_COMPONENT_NETWORK_FILE_IS_NOT_A_SUPPORTED_TYPE");
+							}
+							else
+							{
+								$file['MODULE_ID'] = "imopenlines";
+
+								if ($this->arResult["DATA_STATUS"]['AVATAR'] > 0)
 								{
-									$this->error[] = Loc::getMessage("IMCONNECTOR_COMPONENT_NETWORK_FILE_IS_NOT_A_SUPPORTED_TYPE");
+									$file['del'] = 'Y';
+									$file['old_file'] = $this->arResult["DATA_STATUS"]['AVATAR'];
 								}
-								else
+
+								if ($fileId = \CFile::saveFile($file, 'imopenlines/network'))
 								{
-									$file['MODULE_ID'] = "imopenlines";
-
-									if($this->arResult["DATA_STATUS"]['AVATAR'] > 0)
-									{
-										$file['del'] = 'Y';
-										$file['old_file'] = $this->arResult["DATA_STATUS"]['AVATAR'];
-									}
-
-									if($fileId = CFile::SaveFile($file, 'imopenlines/network'))
-									{
-										$dataUpdate['AVATAR'] = $fileId;
-										$this->arResult["DATA_STATUS"]['AVATAR'] = $fileId;
-									}
+									unset($dataUpdate['AVATAR_DEL']);
+									$dataUpdate['AVATAR'] = $fileId;
+									$this->arResult["DATA_STATUS"]['AVATAR'] = $fileId;
 								}
 							}
 						}
@@ -180,7 +184,7 @@ class ImConnectorNetwork extends \CBitrixComponent
 
 						$resultUpdate = $this->connectorOutput->update($dataUpdate);
 
-						if($resultUpdate->isSuccess())
+						if ($resultUpdate->isSuccess())
 						{
 							$this->messages[] = Loc::getMessage("IMCONNECTOR_COMPONENT_NETWORK_OK_SAVE");
 							$this->arResult["SAVE_STATUS"] = true;
@@ -211,15 +215,14 @@ class ImConnectorNetwork extends \CBitrixComponent
 							$this->arResult["STATUS"] = false;
 						}
 
-						//Reset cache
 						$this->cleanCache();
 					}
 
-					if($this->request[$this->connector. '_del'])
+					if ($this->request[$this->connector. '_del'])
 					{
 						$resultDelete = $this->connectorOutput->delete();
 
-						if($resultDelete->isSuccess())
+						if ($resultDelete->isSuccess())
 						{
 							//$this->messages[] = Loc::getMessage("IMCONNECTOR_COMPONENT_SETTINGS_OK_DISABLE");
 						}
@@ -254,13 +257,13 @@ class ImConnectorNetwork extends \CBitrixComponent
 
 		$this->arResult['NAME'] = Connector::getNameConnectorReal($this->connector);
 
-		$this->arResult['URL']['DELETE'] = $APPLICATION->GetCurPageParam('', [$this->pageId, 'open_block', 'action']);
-		$this->arResult['URL']['SIMPLE_FORM'] = $APPLICATION->GetCurPageParam($this->pageId . '=simple_form', [$this->pageId, 'open_block', 'action']);
-		$this->arResult['URL']['SIMPLE_FORM_EDIT'] = $APPLICATION->GetCurPageParam($this->pageId . '=simple_form', [$this->pageId, 'open_block', 'action']);
+		$this->arResult['URL']['DELETE'] = $APPLICATION->getCurPageParam('', [$this->pageId, 'open_block', 'action']);
+		$this->arResult['URL']['SIMPLE_FORM'] = $APPLICATION->getCurPageParam($this->pageId . '=simple_form', [$this->pageId, 'open_block', 'action']);
+		$this->arResult['URL']['SIMPLE_FORM_EDIT'] = $APPLICATION->getCurPageParam($this->pageId . '=simple_form', [$this->pageId, 'open_block', 'action']);
 
-		if(!empty($this->arResult['DATA_STATUS']))
+		if (!empty($this->arResult['DATA_STATUS']))
 		{
-			if(empty($this->arResult['DATA_STATUS']['CODE']))
+			if (empty($this->arResult['DATA_STATUS']['CODE']))
 			{
 				$this->arResult['FORM']['CODE'] = '';
 			}
@@ -270,14 +273,14 @@ class ImConnectorNetwork extends \CBitrixComponent
 			}
 
 			$serviceLocator = ServiceLocator::getInstance();
-			if($serviceLocator->has('ImConnector.toolsNetwork'))
+			if ($serviceLocator->has('ImConnector.toolsNetwork'))
 			{
 				/** @var \Bitrix\ImConnector\Tools\Connectors\Network $toolsNetwork */
 				$toolsNetwork = $serviceLocator->get('ImConnector.toolsNetwork');
 				$this->arResult['FORM']['URL'] = $toolsNetwork->getPublicLink($this->arResult['FORM']['CODE']);
 			}
 
-			if(empty($this->arResult['DATA_STATUS']['NAME']))
+			if (empty($this->arResult['DATA_STATUS']['NAME']))
 			{
 				$this->arResult['FORM']['NAME'] = '';
 			}
@@ -286,7 +289,7 @@ class ImConnectorNetwork extends \CBitrixComponent
 				$this->arResult['FORM']['NAME'] = $this->arResult['DATA_STATUS']['NAME'];
 			}
 
-			if(empty($this->arResult['DATA_STATUS']['DESC']))
+			if (empty($this->arResult['DATA_STATUS']['DESC']))
 			{
 				$this->arResult['FORM']['DESCRIPTION'] = '';
 			}
@@ -295,7 +298,7 @@ class ImConnectorNetwork extends \CBitrixComponent
 				$this->arResult['FORM']['DESCRIPTION'] = $this->arResult['DATA_STATUS']['DESC'];
 			}
 
-			if(empty($this->arResult['DATA_STATUS']['FIRST_MESSAGE']))
+			if (empty($this->arResult['DATA_STATUS']['FIRST_MESSAGE']))
 			{
 				$this->arResult['FORM']['WELCOME_MESSAGE'] = '';
 			}
@@ -304,7 +307,7 @@ class ImConnectorNetwork extends \CBitrixComponent
 				$this->arResult['FORM']['WELCOME_MESSAGE'] = $this->arResult['DATA_STATUS']['FIRST_MESSAGE'];
 			}
 
-			if(empty($this->arResult['DATA_STATUS']['AVATAR']))
+			if (empty($this->arResult['DATA_STATUS']['AVATAR']))
 			{
 				$this->arResult['FORM']['AVATAR'] = NULL;
 				$this->arResult['FORM']['AVATAR_LINK'] = NULL;
@@ -315,16 +318,24 @@ class ImConnectorNetwork extends \CBitrixComponent
 				$this->arResult['FORM']['AVATAR_LINK'] = CFile::GetPath($this->arResult['DATA_STATUS']['AVATAR']);
 			}
 
-
-			if(
-				empty($this->arResult['DATA_STATUS']['HIDDEN'])
-				|| $this->arResult['DATA_STATUS']['HIDDEN'] === 'N')
+			if (
+				empty($this->arResult['DATA_STATUS']['MULTIDIALOG'])
+				|| $this->arResult['DATA_STATUS']['MULTIDIALOG'] === 'N')
 			{
-				$this->arResult['FORM']['SEARCHABLE'] = true;
+				$this->arResult['FORM']['MULTIDIALOG'] = false;
 			}
 			else
 			{
-				$this->arResult['FORM']['SEARCHABLE'] = false;
+				$this->arResult['FORM']['MULTIDIALOG'] = true;
+			}
+
+			if (empty($this->arResult['DATA_STATUS']['MAX_DIALOGS_COUNT']))
+			{
+				$this->arResult['FORM']['MAX_DIALOGS_COUNT'] = 0;
+			}
+			else
+			{
+				$this->arResult['FORM']['MAX_DIALOGS_COUNT'] = (int)$this->arResult['DATA_STATUS']['MAX_DIALOGS_COUNT'];
 			}
 
 			$uri = new Uri($this->arResult['URL']['DELETE']);
@@ -350,9 +361,9 @@ class ImConnectorNetwork extends \CBitrixComponent
 	{
 		$this->includeComponentLang('class.php');
 
-		if($this->checkModules())
+		if ($this->checkModules())
 		{
-			if(Connector::isConnector($this->connector))
+			if (Connector::isConnector($this->connector))
 			{
 				$this->initialization();
 
@@ -361,18 +372,22 @@ class ImConnectorNetwork extends \CBitrixComponent
 
 				$this->constructionForm();
 
-				if(!empty($this->error))
+				if (!empty($this->error))
+				{
 					$this->arResult['error'] = $this->error;
+				}
 
-				if(!empty($this->messages))
+				if (!empty($this->messages))
+				{
 					$this->arResult['messages'] = $this->messages;
+				}
 
 				$this->includeComponentTemplate();
 			}
 			else
 			{
-				ShowError(Loc::getMessage("IMCONNECTOR_COMPONENT_NETWORK_NO_ACTIVE_CONNECTOR"));
+				\ShowError(Loc::getMessage("IMCONNECTOR_COMPONENT_NETWORK_NO_ACTIVE_CONNECTOR"));
 			}
 		}
 	}
-};
+}

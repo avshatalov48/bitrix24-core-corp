@@ -1,9 +1,10 @@
-<?php declare(strict_types=1);
+<?php
 
 namespace Bitrix\ImBot\Bot;
 
 use Bitrix\ImBot\DialogSession;
 use Bitrix\Main;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
 use Bitrix\Im;
 use Bitrix\ImBot;
@@ -65,15 +66,13 @@ class Partner24 extends Network implements SupportBot
 	/**
 	 * Register bot at portal.
 	 *
-	 * @param array $params
-	 * @param string $params['CODE']
-	 * @param string $params['NAME']
+	 * @param array{CODE: string, NAME: string} $params
 	 *
 	 * @return bool|int
 	 */
 	public static function register(array $params = [])
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -144,7 +143,7 @@ class Partner24 extends Network implements SupportBot
 	 */
 	public static function unRegister($code = '', $notifyController = true)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -220,7 +219,7 @@ class Partner24 extends Network implements SupportBot
 		static $result;
 		if (empty($result))
 		{
-			if (Main\Loader::includeModule('bitrix24'))
+			if (Loader::includeModule('bitrix24'))
 			{
 				if (\CBitrix24::isDemoLicense())
 				{
@@ -235,19 +234,19 @@ class Partner24 extends Network implements SupportBot
 			}
 
 			$result = [];
-			$mirrors = [
-				self::OPTION_BOT_NAME => 'partner24_name',
-				self::OPTION_BOT_DESC => 'partner24_desc',
-				self::OPTION_BOT_AVATAR => 'partner24_avatar',
-				self::OPTION_BOT_FOR_ALL => 'partner24_for_all',
-				self::OPTION_BOT_MESSAGES => 'partner24_messages',
-				self::OPTION_BOT_REGULAR_SUPPORT => 'partner24_regular_support',
+			$props = [
+				self::OPTION_BOT_NAME,
+				self::OPTION_BOT_DESC,
+				self::OPTION_BOT_AVATAR,
+				self::OPTION_BOT_FOR_ALL,
+				self::OPTION_BOT_MESSAGES,
+				self::OPTION_BOT_REGULAR_SUPPORT,
 			];
-			foreach ($mirrors as $prop => $alias)
+			foreach ($props as $prop)
 			{
-				if (isset($settings[$alias]))
+				if (isset($settings[$prop]))
 				{
-					$result[$prop] = $settings[$alias];
+					$result[$prop] = $settings[$prop];
 				}
 			}
 		}
@@ -294,17 +293,7 @@ class Partner24 extends Network implements SupportBot
 	}
 
 	/**
-	 * Is bot enabled.
-	 *
-	 * @return bool
-	 */
-	public static function isEnabled(): bool
-	{
-		return self::getBotId() > 0;
-	}
-
-	/**
-	 * @return bool|int
+	 * @return int
 	 */
 	public static function getBotId(): int
 	{
@@ -338,7 +327,7 @@ class Partner24 extends Network implements SupportBot
 	/**
 	 * @return bool
 	 */
-	public static function isActiveSupport()
+	public static function isActiveSupport(): bool
 	{
 		return (bool)Option::get(self::MODULE_ID, self::OPTION_BOT_ACTIVE, false);
 	}
@@ -346,7 +335,7 @@ class Partner24 extends Network implements SupportBot
 	/**
 	 * @return bool
 	 */
-	public static function isWaitingActivation()
+	public static function isWaitingActivation(): bool
 	{
 		return (bool)Option::get(self::MODULE_ID, self::OPTION_BOT_WAIT_ACTIVATION, false);
 	}
@@ -356,7 +345,7 @@ class Partner24 extends Network implements SupportBot
 	 *
 	 * @return bool
 	 */
-	public static function isActiveSupportForAll()
+	public static function isActiveSupportForAll(): bool
 	{
 		return (bool)Option::get(self::MODULE_ID, self::OPTION_BOT_FOR_ALL, false);
 	}
@@ -380,14 +369,14 @@ class Partner24 extends Network implements SupportBot
 	 *
 	 * @return bool
 	 */
-	public static function isActiveSupportForUser($userId)
+	public static function isActiveSupportForUser($userId): bool
 	{
 		if (!self::isActiveSupport())
 		{
 			return false;
 		}
 
-		if (!Main\Loader::includeModule('bitrix24'))
+		if (!Loader::includeModule('bitrix24'))
 		{
 			return false;
 		}
@@ -478,7 +467,7 @@ class Partner24 extends Network implements SupportBot
 	 */
 	public static function onChatStart($dialogId, $joinFields)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -552,7 +541,7 @@ class Partner24 extends Network implements SupportBot
 	 */
 	public static function onMessageAdd($messageId, $messageFields)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -640,12 +629,12 @@ class Partner24 extends Network implements SupportBot
 	 */
 	public static function onAfterSupportCodeChange($currentCode = '', $previousCode = '')
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
 
-		if (!Main\Loader::includeModule('bitrix24'))
+		if (!Loader::includeModule('bitrix24'))
 		{
 			return false;
 		}
@@ -737,12 +726,12 @@ class Partner24 extends Network implements SupportBot
 	 */
 	public static function sendRequestFinalizeSession(array $params = [])
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
 
-		if (!Main\Loader::includeModule('bitrix24'))
+		if (!Loader::includeModule('bitrix24'))
 		{
 			return false;
 		}
@@ -780,7 +769,7 @@ class Partner24 extends Network implements SupportBot
 	 */
 	public static function updateBotProperties()
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -914,7 +903,7 @@ class Partner24 extends Network implements SupportBot
 	 */
 	public static function activate(int $userId, string $supportCode, string $supportName = null)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -960,7 +949,7 @@ class Partner24 extends Network implements SupportBot
 	 */
 	public static function deactivate(int $userId)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -1000,7 +989,7 @@ class Partner24 extends Network implements SupportBot
 	 */
 	public static function change(int $userId, string $supportCode, string $supportName = null)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}

@@ -425,7 +425,7 @@ BX.Intranet.SearchTitle = function(arParams)
 						events: {
 							"click" : BX.proxy(function ()
 							{
-								if (BX.IM)
+								if (typeof BXIM !== 'undefined')
 								{
 									BXIM.openMessenger(this.userId);
 								}

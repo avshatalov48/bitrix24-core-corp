@@ -8,20 +8,25 @@ return [
 	'css' => 'src/channel-selector.css',
 	'js' => 'dist/channel-selector.bundle.js',
 	'rel' => [
-		'main.core',
-		'main.popup',
-		'main.core.events',
 		'crm.router',
+		'main.core',
+		'main.core.events',
 		'main.loader',
-		'ui.menu-configurable',
+		'main.popup',
 		'ui.icons.service',
+		'ui.menu-configurable',
 		'ui.notification',
 	],
 	'oninit' => function() {
 		if (\Bitrix\Main\Loader::includeModule('crm'))
 		{
 			return [
-				'lang_additional' => \Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages(),
+				'lang_additional' => array_merge(
+					\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages(),
+					[
+						'MARKET_BASE_PATH' => \Bitrix\Crm\Integration\Market\Router::getBasePath(),
+					]
+				),
 			];
 		}
 	},

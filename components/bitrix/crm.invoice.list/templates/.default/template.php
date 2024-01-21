@@ -1,5 +1,8 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * Bitrix vars
@@ -16,6 +19,7 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 	CBitrix24::initLicenseInfoPopupJS();
 }
 
+use Bitrix\Crm\Component\EntityList\ActionManager;
 use Bitrix\Crm\UI\NavigationBarPanel;
 
 CJSCore::Init(array('crm_activity_planner', 'ui.fonts.opensans'));
@@ -451,7 +455,8 @@ if(!$isInternal
 	if($allowWrite)
 	{
 		//region Edit Button
-		$controlPanel['GROUPS'][0]['ITEMS'][] = $snippet->getEditButton();
+		$actionManager = new ActionManager($gridManagerID);
+		$controlPanel['GROUPS'][0]['ITEMS'][] = $actionManager->getEditButton();
 		//endregion
 	}
 

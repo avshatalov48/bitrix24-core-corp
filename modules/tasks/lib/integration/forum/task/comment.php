@@ -573,7 +573,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 			&& !empty($arData['PARAMS']['UF_FORUM_MESSAGE_VER'])
 		);
 		$messageId  = $arData['MESSAGE_ID'];
-		$strMessage = $arData['PARAMS']['POST_MESSAGE'];
+		$strMessage = (string) ($arData['PARAMS']['POST_MESSAGE'] ?? '');
 
 		if ($parser === null)
 		{
@@ -953,7 +953,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 				'command' => PushCommand::COMMENT_ADDED,
 				'params' => [
 					'taskId' => $taskId,
-					'entityXmlId' => $arData['PARAMS']['XML_ID'],
+					'entityXmlId' => $arData['PARAMS']['XML_ID'] ?? '',
 					'ownerId' => $occurAsUserId,
 					'messageId' => $messageId,
 					'groupId' => $groupId,
@@ -1413,7 +1413,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		$arFields = array(
 			'TASK_ID'      => $taskId,
 			'MESSAGE_ID'   => $commentId,
-			'COMMENT_TEXT' => $fields['MESSAGE']['POST_MESSAGE'],
+			'COMMENT_TEXT' => $fields['MESSAGE']['POST_MESSAGE'] ?? '',
 			'FILES'        => $arFilesIds,
 			'URL_PREVIEW'  => $urlPreviewId,
 		);

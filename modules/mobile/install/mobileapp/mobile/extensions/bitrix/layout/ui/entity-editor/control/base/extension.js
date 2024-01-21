@@ -2,7 +2,6 @@
  * @module layout/ui/entity-editor/control/base
  */
 jn.define('layout/ui/entity-editor/control/base', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { EventEmitter } = require('event-emitter');
 	const { PureComponent } = require('layout/pure-component');
@@ -42,7 +41,7 @@ jn.define('layout/ui/entity-editor/control/base', (require, exports, module) => 
 			/** @type {EventEmitter} */
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 
-			this.settings = settings ? settings : {};
+			this.settings = settings || {};
 
 			/** @type {EntityEditor} */
 			this.editor = BX.prop.get(this.settings, 'editor', null);
@@ -69,13 +68,11 @@ jn.define('layout/ui/entity-editor/control/base', (require, exports, module) => 
 
 		getRandomString(id)
 		{
-			return Type.isStringFilled(id) ? id : Random.getString()
+			return Type.isStringFilled(id) ? id : Random.getString();
 		}
 
 		initializeStateFromModel()
-		{
-
-		}
+		{}
 
 		getUid()
 		{
@@ -222,7 +219,7 @@ jn.define('layout/ui/entity-editor/control/base', (require, exports, module) => 
 		 */
 		doSetMode(mode, options, notify)
 		{
-			return new Promise(resolve => {
+			return new Promise((resolve) => {
 				this.setState({ mode }, () => {
 					this.processControlModeChange(notify);
 					resolve();
@@ -319,7 +316,7 @@ jn.define('layout/ui/entity-editor/control/base', (require, exports, module) => 
 		switchControlsToViewMode(controlToSkip = null)
 		{
 			return Promise.all(
-				this.getControls().map(control => {
+				this.getControls().map((control) => {
 					if (controlToSkip && controlToSkip === control)
 					{
 						return Promise.resolve();
@@ -338,7 +335,7 @@ jn.define('layout/ui/entity-editor/control/base', (require, exports, module) => 
 			}
 
 			return Promise.all(
-				this.getControls().map(control => control.blurInlineFields(fieldToSkip)),
+				this.getControls().map((control) => control.blurInlineFields(fieldToSkip)),
 			);
 		}
 

@@ -1666,16 +1666,10 @@ this.BX.Disk = this.BX.Disk || {};
 	            if (response.status !== 'success') {
 	              return;
 	            }
-	            if (fileData && fileData.object) {
-	              this.uploader.addFile(`n${fileData.object.id}`, {
-	                name: fileData.object.name,
-	                size: fileData.object.sizeInt,
-	                preload: true
-	              });
-	              this.userFieldControl.showUploaderPanel();
-	            } else if (response.objectId) {
-	              this.uploader.addFile(`n${response.objectId}`, {
-	                name: Type.isStringFilled(response.newName) ? response.newName : '',
+	            if (response.object) {
+	              this.uploader.addFile(`n${response.object.id}`, {
+	                name: response.object.name,
+	                size: response.object.size,
 	                preload: true
 	              });
 	              this.userFieldControl.showUploaderPanel();

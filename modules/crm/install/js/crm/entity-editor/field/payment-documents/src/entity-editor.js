@@ -1,12 +1,12 @@
 // @flow
 
-import { Tag, Loc, Type, ajax, debounce, Text } from 'main.core';
-import {EventEmitter} from 'main.core.events';
-import {MenuManager} from 'main.popup';
-import {CurrencyCore} from 'currency.currency-core';
-import {MessageBox, MessageBoxButtons} from 'ui.dialogs.messagebox';
-import {Label, LabelColor} from 'ui.label';
-import DocumentManager from "./document-manager";
+import { Tag, Loc, Type, ajax, debounce, Text, Runtime } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { MenuManager } from 'main.popup';
+import { CurrencyCore } from 'currency.currency-core';
+import { MessageBox } from 'ui.dialogs.messagebox';
+import { Label, LabelColor } from 'ui.label';
+import DocumentManager from './document-manager';
 
 declare var BX: {[key: string]: any};
 
@@ -53,7 +53,7 @@ type EntityEditorPaymentDocumentsOptions = {
 	OWNER_TYPE_ID: number,
 	OWNER_ID: number,
 	ENTITY_AMOUNT: number,
-	DOCUMENTS: Array<PaymentDocument|CheckDocument>,
+	DOCUMENTS: Array<PaymentDocument | CheckDocument>,
 	ORDERS: Array<OrderDocument>,
 	ORDER_IDS: Array<number>,
 	PARENT_CONTEXT: StartsSalescenterApp,
@@ -62,6 +62,7 @@ type EntityEditorPaymentDocumentsOptions = {
 	SALES_ORDERS_RIGHTS: {},
 	IS_INVENTORY_MANAGEMENT_RESTRICTED: boolean,
 	IS_WITH_ORDERS_MODE: boolean,
+	SHOULD_SHOW_CASHBOX_CHECKS: boolean,
 	PHRASES: Phrases,
 	PAID_AMOUNT: number,
 	TOTAL_AMOUNT: number,
@@ -86,14 +87,15 @@ const SPECIFIC_REALIZATION_ERROR_CODES = [
 	'CRM_REALIZATION_NOT_ENOUGH_PRODUCTS',
 ];
 
-const SPECIFIC_ERROR_CODES = SPECIFIC_REALIZATION_ERROR_CODES.concat([
+const SPECIFIC_ERROR_CODES = [...SPECIFIC_REALIZATION_ERROR_CODES,
 	'DEDUCTION_STORE_ERROR1',
 	'SALE_PROVIDER_SHIPMENT_QUANTITY_NOT_ENOUGH',
 	'SALE_SHIPMENT_EXIST_SHIPPED',
 	'SALE_PAYMENT_DELETE_EXIST_PAID',
 	'DDCT_DEDUCTION_QUANTITY_STORE_ERROR',
 	'CRM_REALIZATION_NOT_ENOUGH_PRODUCTS',
-]);
+	'BX_ERROR',
+];
 
 type AjaxHandler = (...args: Array<any>) => any;
 
@@ -101,6 +103,7 @@ export class EntityEditorPaymentDocuments
 {
 	_options: EntityEditorPaymentDocumentsOptions;
 	_isDeliveryAvailable: boolean;
+	_isTerminalAvailable: boolean;
 	_parentContext: StartsSalescenterApp;
 	_callContext: string;
 	_rootNode: HTMLElement;
@@ -117,6 +120,7 @@ export class EntityEditorPaymentDocuments
 			this._phrases = options.PHRASES;
 		}
 		this._isDeliveryAvailable = this._options.IS_DELIVERY_AVAILABLE;
+		this._isTerminalAvailable = this._options.IS_TERMINAL_AVAILABLE;
 		this._parentContext = options.PARENT_CONTEXT;
 		this._callContext = options.CONTEXT;
 		this._rootNode = Tag.render`<div class="${this.constructor._rootNodeClass}"></div>`;
@@ -125,6 +129,10 @@ export class EntityEditorPaymentDocuments
 		this._salesOrderRights = this._options.SALES_ORDERS_RIGHTS;
 		this._isInventoryManagementRestricted = this._options.IS_INVENTORY_MANAGEMENT_RESTRICTED;
 		this._isWithOrdersMode = this._options.IS_WITH_ORDERS_MODE;
+		this._isInventoryManagementToolEnabled = this._options.IS_INVENTORY_MANAGEMENT_TOOL_ENABLED;
+		this._isSalescenterToolEnabled = this._options.IS_SALESCENTER_TOOL_ENABLED;
+		this._isTerminalToolEnabled = this._options.IS_TERMINAL_TOOL_ENABLED;
+		this._shouldShowCashboxChecks = this._options.SHOULD_SHOW_CASHBOX_CHECKS;
 
 		this._subscribeToGlobalEvents();
 	}
@@ -136,28 +144,21 @@ export class EntityEditorPaymentDocuments
 
 	render(): HTMLElement
 	{
-		this._menus.forEach(menu => menu.destroy());
+		this._menus.forEach((menu) => menu.destroy());
 		this._rootNode.innerHTML = '';
 		this._setupCurrencyFormat();
 
-		if (this._isUsedInventoryManagement || this.hasContent())
-		{
-			this._rootNode.classList.remove('is-hidden');
-			this._rootNode.append(Tag.render`
-				<div class="crm-entity-widget-content-block-inner-container">
-					<div class="crm-entity-widget-payment">
-						${this._renderTitle()}
-						${this._renderDocuments()}
-						${this._renderAddDocument()}
-						${this._renderTotalSum()}
-					</div>
+		this._rootNode.classList.remove('is-hidden');
+		this._rootNode.append(Tag.render`
+			<div class="crm-entity-widget-content-block-inner-container">
+				<div class="crm-entity-widget-payment">
+					${this._renderTitle()}
+					${this._renderDocuments()}
+					${this._renderAddDocument()}
+					${this._renderTotalSum()}
 				</div>
-			`);
-		}
-		else
-		{
-			this._rootNode.classList.add('is-hidden');
-		}
+			</div>
+		`);
 
 		return this._rootNode;
 	}
@@ -177,24 +178,28 @@ export class EntityEditorPaymentDocuments
 		const data = {
 			data: {
 				ownerTypeId: this._options.OWNER_TYPE_ID,
-				ownerId: this._options.OWNER_ID
-			}
+				ownerId: this._options.OWNER_ID,
+			},
 		};
 
-		const successCallback = response => {
+		const successCallback = (response) => {
 			this._loading(false);
-			if (response.data) {
+			if (response.data)
+			{
 				this.setOptions(response.data);
 				this.render();
-				if (onSuccess && Type.isFunction(onSuccess)) {
+				if (onSuccess && Type.isFunction(onSuccess))
+				{
 					onSuccess(response);
 				}
 
 				this._emitChangeDocumentsEvent();
-
-			} else {
+			}
+			else
+			{
 				this._showCommonError();
-				if (onError && Type.isFunction(onError)) {
+				if (onError && Type.isFunction(onError))
+				{
 					onError();
 				}
 			}
@@ -203,7 +208,8 @@ export class EntityEditorPaymentDocuments
 		const errorCallback = () => {
 			this._loading(false);
 			this._showCommonError();
-			if (onError && Type.isFunction(onError)) {
+			if (onError && Type.isFunction(onError))
+			{
 				onError();
 			}
 		};
@@ -225,8 +231,8 @@ export class EntityEditorPaymentDocuments
 	_renderDocuments(): HTMLElement[]
 	{
 		const nodes = [];
-		this._docs().forEach(doc => {
-			if (doc.TYPE === 'PAYMENT')
+		this._docs().forEach((doc) => {
+			if (doc.TYPE === 'PAYMENT' || doc.TYPE === 'TERMINAL_PAYMENT')
 			{
 				nodes.push(this._renderPaymentDocument(doc));
 			}
@@ -239,16 +245,17 @@ export class EntityEditorPaymentDocuments
 				nodes.push(this._renderRealizationDocument(doc));
 			}
 		});
+
 		return nodes;
 	}
 
 	_renderPaymentDocument(doc: PaymentDocument): HTMLElement
 	{
 		const title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_DATE_MSGVER_1')
-			.replace(/#DATE#/gi, doc.FORMATTED_DATE)
-			.replace(/#ACCOUNT_NUMBER#/gi, doc.ACCOUNT_NUMBER)
+			.replaceAll(/#date#/gi, doc.FORMATTED_DATE)
+			.replaceAll(/#account_number#/gi, doc.ACCOUNT_NUMBER)
 		;
-		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
+		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replaceAll(/#sum#/gi, this._renderMoney(doc.SUM));
 		const labelOptions = {
 			text: Loc.getMessage(`CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STAGE_${doc.STAGE}`),
 			customClass: 'crm-entity-widget-payment-label',
@@ -272,29 +279,33 @@ export class EntityEditorPaymentDocuments
 		}
 
 		let popupMenu;
-		let menuItems = [];
-		if (this._isDeliveryAvailable)
+		const menuItems = [];
+		if (this._isDeliveryAvailable && doc.TYPE === 'PAYMENT')
 		{
 			menuItems.push({
 				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CHOOSE_DELIVERY'),
 				title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CHOOSE_DELIVERY'),
-				onclick: () => this._chooseDeliverySlider(doc.ORDER_ID)
+				onclick: () => this._chooseDeliverySlider(doc.ORDER_ID),
 			});
 		}
 
 		const realizationMenuItem = this._getRealizationMenuItem(
 			Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_REALIZATION'),
-			() => this._createRealizationSlider({paymentId: doc.ID})
+			() => this._createRealizationSlider({ paymentId: doc.ID }),
 		);
 		if (realizationMenuItem)
 		{
 			menuItems.push(realizationMenuItem);
 		}
 
-		menuItems.push({
-			text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_RESEND'),
-			onclick: () => this._resendPaymentSlider(doc.ORDER_ID, doc.ID)
-		});
+		if (doc.TYPE === 'PAYMENT')
+		{
+			menuItems.push({
+				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_RESEND'),
+				onclick: () => this._resendPaymentSlider(doc.ORDER_ID, doc.ID),
+			});
+		}
+
 		menuItems.push({
 			text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CHANGE_PAYMENT_STATUS'),
 			items: [
@@ -304,7 +315,7 @@ export class EntityEditorPaymentDocuments
 					onclick: () => {
 						this._setPaymentPaidStatus(doc, true);
 						popupMenu.close();
-					}
+					},
 				},
 				{
 					text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STATUS_NOT_PAID'),
@@ -312,15 +323,18 @@ export class EntityEditorPaymentDocuments
 					onclick: () => {
 						this._setPaymentPaidStatus(doc, false);
 						popupMenu.close();
-					}
-				}
-			]
+					},
+				},
+			],
 		});
 
-		menuItems.push({
-			text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CASHBOX_CHECKS'),
-			onclick: () => this._openPaymentChecksListSlider(doc.ID)
-		});
+		if (this._shouldShowCashboxChecks)
+		{
+			menuItems.push({
+				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CASHBOX_CHECKS'),
+				onclick: () => this._openPaymentChecksListSlider(doc.ID),
+			});
+		}
 
 		menuItems.push({
 			text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE'),
@@ -331,30 +345,36 @@ export class EntityEditorPaymentDocuments
 					return false;
 				}
 				popupMenu.close();
-				MessageBox.show({
-					title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE_MSGVER_1'),
-					message: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_PAYMENT_CONFIRM_TEXT_MSGVER_1'),
-					modal: true,
-					buttons: MessageBoxButtons.OK_CANCEL,
-					onOk: messageBox => {
+				MessageBox.confirm(
+					Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_PAYMENT_CONFIRM_TEXT_MSGVER_2'),
+					(messageBox) => {
 						messageBox.close();
 						this._removeDocument(doc);
 					},
-					onCancel: messageBox => {
-						messageBox.close();
-					},
-				});
+					Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_PAYMENT_BUTTON_CONFIRM'),
+					(messageBox) => messageBox.close(),
+					Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_PAYMENT_BUTTON_BACK'),
+				);
 			}
 		});
 
-		const openSlider = () => this._resendPaymentSlider(doc.ORDER_ID, doc.ID);
+		const openSlider = () => {
+			if (doc.TYPE === 'TERMINAL_PAYMENT')
+			{
+				this._viewTerminalPaymentSlider(doc.ORDER_ID, doc.ID);
+			}
+			else
+			{
+				this._resendPaymentSlider(doc.ORDER_ID, doc.ID);
+			}
+		}
 
-		const openMenu = event => {
+		const openMenu = (event) => {
 			event.preventDefault();
 			popupMenu = MenuManager.create({
-				id: 'payment-documents-payment-action-' + doc.ID,
+				id: `payment-documents-payment-action-${doc.ID}`,
 				bindElement: event.target,
-				items: menuItems
+				items: menuItems,
 			});
 			popupMenu.show();
 
@@ -396,13 +416,13 @@ export class EntityEditorPaymentDocuments
 			labelOptions.color = LabelColor.LIGHT_GREEN;
 		}
 		const title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DELIVERY_DATE_MSGVER_1')
-			.replace(/#DATE#/gi, doc.FORMATTED_DATE)
-			.replace(/#ACCOUNT_NUMBER#/gi, doc.ACCOUNT_NUMBER)
+			.replaceAll(/#date#/gi, doc.FORMATTED_DATE)
+			.replaceAll(/#account_number#/gi, doc.ACCOUNT_NUMBER)
 		;
-		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
+		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replaceAll(/#sum#/gi, this._renderMoney(doc.SUM));
 
 		let popupMenu;
-		let menuItems = [
+		const menuItems = [
 			{
 				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CHANGE_DELIVERY_STATUS'),
 				items: [
@@ -412,7 +432,7 @@ export class EntityEditorPaymentDocuments
 						onclick: () => {
 							this._setShipmentShippedStatus(doc, true);
 							popupMenu.close();
-						}
+						},
 					},
 					{
 						text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STATUS_WAITING_MSGVER_1'),
@@ -420,9 +440,9 @@ export class EntityEditorPaymentDocuments
 						onclick: () => {
 							this._setShipmentShippedStatus(doc, false);
 							popupMenu.close();
-						}
-					}
-				]
+						},
+					},
+				],
 			},
 			{
 				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE'),
@@ -433,31 +453,28 @@ export class EntityEditorPaymentDocuments
 						return false;
 					}
 					popupMenu.close();
-					MessageBox.show({
-						title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE_MSGVER_1'),
-						message: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_DELIVERY_CONFIRM_TEXT_MSGVER_1'),
-						modal: true,
-						buttons: MessageBoxButtons.OK_CANCEL,
-						onOk: messageBox => {
+					MessageBox.confirm(
+						Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_DELIVERY_CONFIRM_TEXT_MSGVER_2'),
+						(messageBox) => {
 							messageBox.close();
 							this._removeDocument(doc);
 						},
-						onCancel: messageBox => {
-							messageBox.close();
-						},
-					});
+						Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_DELIVERY_BUTTON_CONFIRM'),
+						(messageBox) => messageBox.close(),
+						Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_DELIVERY_BUTTON_BACK'),
+					);
 				}
 			}
 		];
 
 		const openSlider = () => this._viewDeliverySlider(doc.ORDER_ID, doc.ID);
 
-		const openMenu = event => {
+		const openMenu = (event) => {
 			event.preventDefault();
 			popupMenu = MenuManager.create({
-				id: 'payment-documents-delivery-action-' + doc.ID,
+				id: `payment-documents-delivery-action-${doc.ID}`,
 				bindElement: event.target,
-				items: menuItems
+				items: menuItems,
 			});
 			popupMenu.show();
 
@@ -499,27 +516,25 @@ export class EntityEditorPaymentDocuments
 			labelOptions.color = LabelColor.LIGHT_GREEN;
 		}
 		else
+		if (doc.EMP_DEDUCTED_ID)
 		{
-			if (doc.EMP_DEDUCTED_ID)
-			{
-				labelOptions.text = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_CANCELLED');
-				labelOptions.color = LabelColor.LIGHT_ORANGE;
-			}
-			else
-			{
-				labelOptions.text = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_DRAFT');
-				labelOptions.color = LabelColor.LIGHT;
-			}
+			labelOptions.text = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_CANCELLED');
+			labelOptions.color = LabelColor.LIGHT_ORANGE;
+		}
+		else
+		{
+			labelOptions.text = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_DRAFT');
+			labelOptions.color = LabelColor.LIGHT;
 		}
 
-		let title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE_MSGVER_1').replace(/#DATE#/gi, doc.FORMATTED_DATE);
-		title = title.replace(/#DOCUMENT_ID#/gi, doc.ACCOUNT_NUMBER);
+		let title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE_MSGVER_1').replaceAll(/#date#/gi, doc.FORMATTED_DATE);
+		title = title.replaceAll(/#document_id#/gi, doc.ACCOUNT_NUMBER);
 		title = BX.util.htmlspecialchars(title);
 
-		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
+		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_AMOUNT').replaceAll(/#sum#/gi, this._renderMoney(doc.SUM));
 
 		let popupMenu;
-		let menuItems = [];
+		const menuItems = [];
 
 		if (this._salesOrderRights?.view)
 		{
@@ -533,10 +548,9 @@ export class EntityEditorPaymentDocuments
 						onclick: () => {
 							this._setRealizationDeductedStatus(doc, false);
 							popupMenu.close();
-						}
+						},
 					});
 				}
-
 			}
 			else if (doc.DEDUCTED !== 'Y' && this._salesOrderRights?.cancel)
 			{
@@ -546,7 +560,7 @@ export class EntityEditorPaymentDocuments
 					onclick: () => {
 						this._setRealizationDeductedStatus(doc, true);
 						popupMenu.close();
-					}
+					},
 				});
 			}
 
@@ -561,19 +575,16 @@ export class EntityEditorPaymentDocuments
 							return false;
 						}
 						popupMenu.close();
-						MessageBox.show({
-							title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE_MSGVER_1'),
-							message: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_CONFIRM_REMOVE_TEXT'),
-							modal: true,
-							buttons: MessageBoxButtons.OK_CANCEL,
-							onOk: messageBox => {
+						MessageBox.confirm(
+							Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_CONFIRM_REMOVE_TEXT_MSGVER_1'),
+							(messageBox) => {
 								messageBox.close();
 								this._removeDocument(doc);
 							},
-							onCancel: messageBox => {
-								messageBox.close();
-							},
-						});
+							Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_CONFIRM_REMOVE_BUTTON_CONFIRM'),
+							(messageBox) => messageBox.close(),
+							Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_CONFIRM_REMOVE_BUTTON_BACK'),
+						);
 					}
 				});
 			}
@@ -581,12 +592,12 @@ export class EntityEditorPaymentDocuments
 
 		const openSlider = () => this._viewRealizationSlider(doc.ID);
 
-		const openMenu = event => {
+		const openMenu = (event) => {
 			event.preventDefault();
 			popupMenu = MenuManager.create({
-				id: 'payment-documents-realization-action-' + doc.ID,
+				id: `payment-documents-realization-action-${doc.ID}`,
 				bindElement: event.target,
-				items: menuItems
+				items: menuItems,
 			});
 			popupMenu.show();
 
@@ -601,15 +612,13 @@ export class EntityEditorPaymentDocuments
 			this._menus.push(popupMenu);
 		};
 
-
-		const actionMenu =
-			menuItems.length > 0
-				? Tag.render`
-					<div class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action" onclick="${openMenu}">
-						<span class="ui-label-inner">${Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU')}</span>
-					</div>
-				`
-				:''
+		const actionMenu =			menuItems.length > 0
+			? Tag.render`
+				<div class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action" onclick="${openMenu}">
+					<span class="ui-label-inner">${Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU')}</span>
+				</div>
+			`
+			: ''
 		;
 
 		return Tag.render`
@@ -639,31 +648,42 @@ export class EntityEditorPaymentDocuments
 		if (this._isDeliveryAvailable)
 		{
 			menuItems.push({
-				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_DELIVERY'),
-				onclick: () => this._createDeliverySlider(latestOrderId),
-			});
-
-			menuItems.push({
 				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_PAYMENT_DELIVERY'),
 				onclick: () => this._createPaymentDeliverySlider(latestOrderId),
 			});
 		}
 
+		if (this._isTerminalAvailable)
+		{
+			menuItems.push({
+				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_TERMINAL_PAYMENT'),
+				onclick: () => this._createTerminalPaymentSlider(latestOrderId),
+			});
+		}
+
+		if (this._isDeliveryAvailable)
+		{
+			menuItems.push({
+				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_DELIVERY'),
+				onclick: () => this._createDeliverySlider(latestOrderId),
+			});
+		}
+
 		const realizationMenuItem = this._getRealizationMenuItem(
 			Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_SHIPMENT_DOCUMENT'),
-			() => this._createRealizationSlider({orderId: latestOrderId})
+			() => this._createRealizationSlider({ orderId: latestOrderId }),
 		);
 		if (realizationMenuItem)
 		{
 			menuItems.push(realizationMenuItem);
 		}
 
-		const openMenu = event => {
+		const openMenu = (event) => {
 			event.preventDefault();
 			const popupMenu = MenuManager.create({
 				id: 'payment-documents-create-document-action',
 				bindElement: event.target,
-				items: menuItems
+				items: menuItems,
 			});
 			popupMenu.show();
 			this._menus.push(popupMenu);
@@ -692,6 +712,15 @@ export class EntityEditorPaymentDocuments
 				menuItem.onclick = () => top.BX.UI.InfoHelper.show('limit_store_crm_integration');
 				menuItem.className = 'realization-document-tariff-lock';
 			}
+			else if (!this._isInventoryManagementToolEnabled)
+			{
+				menuItem.onclick = () => {
+					Runtime.loadExtension('catalog.tool-availability-manager').then((exports) => {
+						const { ToolAvailabilityManager } = exports;
+						ToolAvailabilityManager.openInventoryManagementToolDisabledSlider();
+					});
+				};
+			}
 			else
 			{
 				menuItem.onclick = onclick;
@@ -705,7 +734,7 @@ export class EntityEditorPaymentDocuments
 
 	_renderTotalSum(): HTMLElement
 	{
-		let totalSum = this._options.TOTAL_AMOUNT;
+		const totalSum = this._options.TOTAL_AMOUNT;
 
 		const node = Tag.render`
 			<div class="crm-entity-widget-payment-total">
@@ -720,7 +749,7 @@ export class EntityEditorPaymentDocuments
 		BX.UI.Hint.init(node);
 
 		return node;
-	};
+	}
 
 	_renderMoney(sum: number): string
 	{
@@ -731,9 +760,9 @@ export class EntityEditorPaymentDocuments
 		return fullPrice.replace(currency, `<span class="crm-entity-widget-payment-currency">${currency}</span>`);
 	}
 
-	_docs(): Array<PaymentDocument|CheckDocument>
+	_docs(): Array<PaymentDocument | CheckDocument>
 	{
-		if (this._options && this._options.DOCUMENTS && this._options.DOCUMENTS.length)
+		if (this._options && this._options.DOCUMENTS && this._options.DOCUMENTS.length > 0)
 		{
 			return this._options.DOCUMENTS;
 		}
@@ -743,7 +772,7 @@ export class EntityEditorPaymentDocuments
 
 	_orders(): Array<OrderDocument>
 	{
-		if (this._options && this._options.ORDERS && this._options.ORDERS.length)
+		if (this._options && this._options.ORDERS && this._options.ORDERS.length > 0)
 		{
 			return this._options.ORDERS;
 		}
@@ -758,10 +787,11 @@ export class EntityEditorPaymentDocuments
 
 	_orderIds(): Array<number>
 	{
-		if (this._options && this._options.ORDER_IDS && this._options.ORDER_IDS.length)
+		if (this._options && this._options.ORDER_IDS && this._options.ORDER_IDS.length > 0)
 		{
-			return this._options.ORDER_IDS.map(id => parseInt(id));
+			return this._options.ORDER_IDS.map((id) => parseInt(id));
 		}
+
 		return [];
 	}
 
@@ -769,6 +799,7 @@ export class EntityEditorPaymentDocuments
 	_latestOrderId(): number
 	{
 		const latestOrder = parseInt(Math.max(...this._orderIds()));
+
 		return latestOrder > 0 ? latestOrder : 0;
 	}
 
@@ -818,6 +849,16 @@ export class EntityEditorPaymentDocuments
 
 	_createPaymentSlider(orderId: number)
 	{
+		if (!this._isSalescenterToolEnabled)
+		{
+			Runtime.loadExtension('salescenter.tool-availability-manager').then((exports) => {
+				const { ToolAvailabilityManager } = exports;
+				ToolAvailabilityManager.openSalescenterToolDisabledSlider();
+			});
+
+			return;
+		}
+
 		const options = this._defaultCreatePaymentDocumentOptions();
 		options.mode = 'payment';
 		options.analyticsLabel = this._generateAnalyticsLabel('create_payment');
@@ -828,6 +869,16 @@ export class EntityEditorPaymentDocuments
 
 	_createDeliverySlider(orderId: number)
 	{
+		if (!this._isSalescenterToolEnabled)
+		{
+			Runtime.loadExtension('salescenter.tool-availability-manager').then((exports) => {
+				const { ToolAvailabilityManager } = exports;
+				ToolAvailabilityManager.openSalescenterToolDisabledSlider();
+			});
+
+			return;
+		}
+
 		const options = this._defaultCreatePaymentDocumentOptions();
 		options.mode = 'delivery';
 		options.analyticsLabel = this._generateAnalyticsLabel('create_delivery');
@@ -838,6 +889,16 @@ export class EntityEditorPaymentDocuments
 
 	_createPaymentDeliverySlider(orderId: number)
 	{
+		if (!this._isSalescenterToolEnabled)
+		{
+			Runtime.loadExtension('salescenter.tool-availability-manager').then((exports) => {
+				const { ToolAvailabilityManager } = exports;
+				ToolAvailabilityManager.openSalescenterToolDisabledSlider();
+			});
+
+			return;
+		}
+
 		const options = this._defaultCreatePaymentDocumentOptions();
 		options.mode = 'payment_delivery';
 		options.analyticsLabel = this._generateAnalyticsLabel('create_payment_delivery');
@@ -864,10 +925,29 @@ export class EntityEditorPaymentDocuments
 			},
 		};
 
-		DocumentManager.openNewRealizationDocument(options).then(function (result) {
+		DocumentManager.openNewRealizationDocument(options).then((result) => {
 			this.reloadModel();
 			this._reloadOwner();
-		}.bind(this));
+		});
+	}
+
+	_createTerminalPaymentSlider(orderId)
+	{
+		if (!this._isTerminalToolEnabled)
+		{
+			Runtime.loadExtension('ui.info-helper').then(() => {
+				top.BX.UI.InfoHelper.show('limit_crm_terminal_off');
+			});
+
+			return;
+		}
+
+		const options = this._defaultCreatePaymentDocumentOptions();
+		options.mode = 'terminal_payment';
+		options.analyticsLabel = this._generateAnalyticsLabel('create_terminal_payment');
+		options.orderId = orderId;
+
+		this._context().startSalescenterApplication(orderId, options);
 	}
 
 	_chooseDeliverySlider(orderId: number)
@@ -884,14 +964,14 @@ export class EntityEditorPaymentDocuments
 	{
 		BX.SidePanel.Instance.open(
 			BX.Uri.addParam('/crm/payment/checks/list.php', {
-				'owner_id': paymentId,
-				'owner_type': BX.CrmEntityType.enumeration.orderpayment,
+				owner_id: paymentId,
+				owner_type: BX.CrmEntityType.enumeration.orderpayment,
 			}),
 			{
 				width: 1500,
 				allowChangeHistory: false,
 				cacheable: false,
-			}
+			},
 		);
 	}
 
@@ -905,8 +985,8 @@ export class EntityEditorPaymentDocuments
 			templateMode: 'view',
 			ownerTypeId: this._ownerTypeId(),
 			ownerId: this._options.OWNER_ID,
-			orderId: orderId,
-			paymentId: paymentId,
+			orderId,
+			paymentId,
 		};
 		this._context().startSalescenterApplication(orderId, options);
 	}
@@ -920,8 +1000,8 @@ export class EntityEditorPaymentDocuments
 			analyticsLabel: this._generateAnalyticsLabel('view_delivery'),
 			ownerTypeId: this._ownerTypeId(),
 			ownerId: this._options.OWNER_ID,
-			orderId: orderId,
-			shipmentId: shipmentId,
+			orderId,
+			shipmentId,
 		};
 		this._context().startSalescenterApplication(orderId, options);
 	}
@@ -939,9 +1019,24 @@ export class EntityEditorPaymentDocuments
 			},
 		};
 
-		DocumentManager.openRealizationDetailDocument(documentId, options).then(function (result) {
+		DocumentManager.openRealizationDetailDocument(documentId, options).then((result) => {
 			this._reloadOwner();
-		}.bind(this));
+		});
+	}
+
+	_viewTerminalPaymentSlider(orderId: number, paymentId: number)
+	{
+		const options = {
+			context: 'deal',
+			mode: 'terminal_payment',
+			analyticsLabel: this._generateAnalyticsLabel('view_terminal_payment'),
+			templateMode: 'view',
+			ownerTypeId: this._ownerTypeId(),
+			ownerId: this._options.OWNER_ID,
+			orderId,
+			paymentId,
+		};
+		this._context().startSalescenterApplication(orderId, options);
 	}
 
 	_setPaymentPaidStatus(payment: PaymentDocument, isPaid: boolean)
@@ -949,20 +1044,22 @@ export class EntityEditorPaymentDocuments
 		const strPaid = isPaid ? 'Y' : 'N';
 		const stage = isPaid ? 'PAID' : 'CANCEL';
 
-		if (payment.PAID && payment.PAID === strPaid) {
+		if (payment.PAID && payment.PAID === strPaid)
+		{
 			return;
 		}
 
 		// positive approach - render success first, then do actual query
-		this._docs().forEach(doc => {
-			if (doc.TYPE === 'PAYMENT' && doc.ID === payment.ID) {
+		this._docs().forEach((doc) => {
+			if (doc.TYPE === 'PAYMENT' && doc.ID === payment.ID)
+			{
 				doc.PAID = strPaid;
 				doc.STAGE = stage;
 			}
 		});
 		this.render();
 
-		const callEventOnSuccess = response => {
+		const callEventOnSuccess = (response) => {
 			EventEmitter.emit('PaymentDocuments.EntityEditor:changePaymentPaidStatus', {
 				entityTypeId: this._options.OWNER_TYPE_ID,
 				entityId: this._options.OWNER_ID,
@@ -970,7 +1067,8 @@ export class EntityEditorPaymentDocuments
 
 			this._emitChangeDocumentsEvent();
 		};
-		const reloadModelOnError = response => {
+
+		const reloadModelOnError = (response) => {
 			this._showErrorOnAction(response);
 			this.reloadModel();
 		};
@@ -979,7 +1077,7 @@ export class EntityEditorPaymentDocuments
 			data: {
 				id: payment.ID,
 				value: strPaid,
-			}
+			},
 		}).then(callEventOnSuccess, reloadModelOnError);
 	}
 
@@ -987,18 +1085,20 @@ export class EntityEditorPaymentDocuments
 	{
 		const strShipped = isShipped ? 'Y' : 'N';
 
-		if (shipment.DEDUCTED && shipment.DEDUCTED === strShipped) {
+		if (shipment.DEDUCTED && shipment.DEDUCTED === strShipped)
+		{
 			return;
 		}
 
-		this._docs().forEach(doc => {
-			if (doc.TYPE === 'SHIPMENT' && doc.ID === shipment.ID) {
+		this._docs().forEach((doc) => {
+			if (doc.TYPE === 'SHIPMENT' && doc.ID === shipment.ID)
+			{
 				doc.DEDUCTED = strShipped;
 			}
 		});
 		this.render();
 
-		const callEventOnSuccess = response => {
+		const callEventOnSuccess = (response) => {
 			EventEmitter.emit('PaymentDocuments.EntityEditor:changeShipmentShippedStatus', {
 				entityTypeId: this._options.OWNER_TYPE_ID,
 				entityId: this._options.OWNER_ID,
@@ -1006,7 +1106,8 @@ export class EntityEditorPaymentDocuments
 
 			this._emitChangeDocumentsEvent();
 		};
-		const reloadModelOnError = response => {
+
+		const reloadModelOnError = (response) => {
 			this._showShipmentStatusError(response, shipment.ID);
 			this.reloadModel();
 		};
@@ -1021,7 +1122,7 @@ export class EntityEditorPaymentDocuments
 			data: {
 				id: shipment.ID,
 				value: strShipped,
-			}
+			},
 		}).then(callEventOnSuccess, reloadModelOnError);
 	}
 
@@ -1029,18 +1130,20 @@ export class EntityEditorPaymentDocuments
 	{
 		const strShipped = isShipped ? 'Y' : 'N';
 
-		if (shipment.DEDUCTED && shipment.DEDUCTED === strShipped) {
+		if (shipment.DEDUCTED && shipment.DEDUCTED === strShipped)
+		{
 			return;
 		}
 
-		this._docs().forEach(doc => {
-			if (doc.TYPE === 'SHIPMENT_DOCUMENT' && doc.ID === shipment.ID) {
+		this._docs().forEach((doc) => {
+			if (doc.TYPE === 'SHIPMENT_DOCUMENT' && doc.ID === shipment.ID)
+			{
 				doc.DEDUCTED = strShipped;
 			}
 		});
 		this.render();
 
-		const callEventOnSuccess = response => {
+		const callEventOnSuccess = (response) => {
 			EventEmitter.emit('PaymentDocuments.EntityEditor:changeRealizationDeductedStatus', {
 				entityTypeId: this._options.OWNER_TYPE_ID,
 				entityId: this._options.OWNER_ID,
@@ -1048,7 +1151,8 @@ export class EntityEditorPaymentDocuments
 
 			this._emitChangeDocumentsEvent();
 		};
-		const reloadModelOnError = response => {
+
+		const reloadModelOnError = (response) => {
 			this._showErrorOnAction(response);
 			this.reloadModel();
 		};
@@ -1057,15 +1161,15 @@ export class EntityEditorPaymentDocuments
 			data: {
 				id: shipment.ID,
 				value: strShipped,
-			}
+			},
 		}).then(callEventOnSuccess, reloadModelOnError);
 	}
 
 	_removeDocument(doc: PaymentDocument)
 	{
 		let action;
-		let data = {
-			id: doc.ID
+		const data = {
+			id: doc.ID,
 		};
 
 		action = this._resolveRemoveDocumentActionName(doc.TYPE);
@@ -1074,27 +1178,29 @@ export class EntityEditorPaymentDocuments
 			return;
 		}
 
-		if (doc.TYPE === 'SHIPMENT_DOCUMENT') {
+		if (doc.TYPE === 'SHIPMENT_DOCUMENT')
+		{
 			data.value = 'N';
 		}
 
 		// positive approach - render success first, then do actual query
-		this._options.DOCUMENTS = this._options.DOCUMENTS.filter(item => {
+		this._options.DOCUMENTS = this._options.DOCUMENTS.filter((item) => {
 			return !(item.TYPE === doc.TYPE && item.ID === doc.ID);
 		});
 		this.render();
 
-		const onSuccess = response => {
+		const onSuccess = (response) => {
 			this._reloadOwner();
 			this._emitChangeDocumentsEvent();
 		};
-		const reloadModelOnError = response => {
+
+		const reloadModelOnError = (response) => {
 			this._showErrorOnAction(response);
 			this.reloadModel();
 		};
 
 		ajax.runAction(action, {
-			data: data
+			data,
 		}).then(onSuccess, reloadModelOnError);
 	}
 
@@ -1102,11 +1208,16 @@ export class EntityEditorPaymentDocuments
 	{
 		let action = '';
 
-		if (type === 'PAYMENT') {
+		if (type === 'PAYMENT' || type === 'TERMINAL_PAYMENT')
+		{
 			action = 'crm.order.payment.delete';
-		} else if (type === 'SHIPMENT') {
+		}
+		else if (type === 'SHIPMENT')
+		{
 			action = 'crm.order.shipment.delete';
-		} else if (type === 'SHIPMENT_DOCUMENT') {
+		}
+		else if (type === 'SHIPMENT_DOCUMENT')
+		{
 			action = 'crm.api.realizationdocument.setRealization';
 		}
 
@@ -1119,12 +1230,13 @@ export class EntityEditorPaymentDocuments
 
 		if (this._isUsedInventoryManagement)
 		{
-			response.errors.forEach(error => {
-				if (SPECIFIC_ERROR_CODES.indexOf(error.code) > -1) {
+			response.errors.forEach((error) => {
+				if (SPECIFIC_ERROR_CODES.has(error.code))
+				{
 					showCommonError = false;
 
 					let notifyMessage = error.message;
-					if (SPECIFIC_REALIZATION_ERROR_CODES.indexOf(error.code) === -1)
+					if (!SPECIFIC_REALIZATION_ERROR_CODES.includes(error.code))
 					{
 						notifyMessage = BX.util.htmlspecialchars(notifyMessage);
 					}
@@ -1136,13 +1248,12 @@ export class EntityEditorPaymentDocuments
 							{
 								title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_OPEN_REALIZATION_DOCUMENT'),
 								events: {
-									click: (event, balloon, action) =>
-									{
+									click: (event, balloon, action) => {
 										this._viewRealizationSlider(shipmentId);
 										balloon.close();
-									}
-								}
-							}
+									},
+								},
+							},
 						],
 					});
 				}
@@ -1159,8 +1270,9 @@ export class EntityEditorPaymentDocuments
 	{
 		let showCommonError = true;
 
-		response.errors.forEach(error => {
-			if (SPECIFIC_ERROR_CODES.indexOf(error.code) > -1) {
+		response.errors.forEach((error) => {
+			if (SPECIFIC_ERROR_CODES.includes(error.code))
+			{
 				showCommonError = false;
 				this._showSpecificError(error.code, error.message);
 			}
@@ -1175,20 +1287,20 @@ export class EntityEditorPaymentDocuments
 	_showSpecificError(code, message)
 	{
 		let notifyMessage = message;
-		if (SPECIFIC_REALIZATION_ERROR_CODES.indexOf(code) === -1)
+		if (!SPECIFIC_REALIZATION_ERROR_CODES.includes(code))
 		{
 			notifyMessage = BX.util.htmlspecialchars(notifyMessage);
 		}
 
 		BX.UI.Notification.Center.notify({
-			content: notifyMessage
+			content: notifyMessage,
 		});
 	}
 
 	_showCommonError()
 	{
 		BX.UI.Notification.Center.notify({
-			content: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_COMMON_ERROR_MSGVER_1')
+			content: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_COMMON_ERROR_MSGVER_1'),
 		});
 	}
 
@@ -1211,28 +1323,30 @@ export class EntityEditorPaymentDocuments
 	{
 		EventEmitter.emit('PaymentDocuments.EntityEditor:changeDocuments', {
 			entityTypeId: this._options.OWNER_TYPE_ID,
-			entityId: this._options.OWNER_ID
+			entityId: this._options.OWNER_ID,
 		});
 	}
 
 	_subscribeToGlobalEvents()
 	{
-		const events = [
+		const events = new Set([
 			'salescenter.app:onshipmentcreated',
 			'salescenter.app:onpaymentcreated',
-			'salescenter.app:onpaymentresend'
-		];
+			'salescenter.app:onpaymentresend',
+			'salescenter.app:onterminalpaymentcreated',
+		]);
 		const timeout = 500;
 		const reloadWidget = debounce(() => {
 			this.reloadModel();
 		}, timeout);
-		const inCompatMode = {compatMode: true};
+		const inCompatMode = { compatMode: true };
 
 		let sliderJustClosed = false;
 
-		EventEmitter.subscribe('SidePanel.Slider:onMessage', event => {
+		EventEmitter.subscribe('SidePanel.Slider:onMessage', (event) => {
 			const eventId = event.getEventId();
-			if (events.indexOf(eventId) > -1) {
+			if (events.has(eventId))
+			{
 				reloadWidget();
 				sliderJustClosed = true;
 				setTimeout(() => {
@@ -1264,7 +1378,7 @@ export class EntityEditorPaymentDocuments
 			if (params && params.ORDER_ID)
 			{
 				orderId = parseInt(params.ORDER_ID);
-				if (orderIds.indexOf(orderId) > -1)
+				if (orderIds.includes(orderId))
 				{
 					reloadWidget();
 				}
@@ -1274,12 +1388,9 @@ export class EntityEditorPaymentDocuments
 
 	_setupCurrencyFormat()
 	{
-		if (this._options)
+		if (this._options && this._options.CURRENCY_ID && this._options.CURRENCY_FORMAT)
 		{
-			if (this._options.CURRENCY_ID && this._options.CURRENCY_FORMAT)
-			{
-				CurrencyCore.setCurrencyFormat(this._options.CURRENCY_ID, this._options.CURRENCY_FORMAT);
-			}
+			CurrencyCore.setCurrencyFormat(this._options.CURRENCY_ID, this._options.CURRENCY_FORMAT);
 		}
 	}
 
@@ -1288,7 +1399,7 @@ export class EntityEditorPaymentDocuments
 		if (this._parentContext instanceof BX.Crm.EntityEditorMoneyPay)
 		{
 			this._parentContext._editor.reload();
-			this._parentContext._editor.tapController('PRODUCT_LIST', function(controller) {
+			this._parentContext._editor.tapController('PRODUCT_LIST', (controller) => {
 				controller.reinitializeProductList();
 			});
 		}

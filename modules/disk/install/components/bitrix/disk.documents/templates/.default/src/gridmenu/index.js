@@ -1,4 +1,5 @@
 import Item from './item';
+import ItemHistory from './item-history';
 import ItemOpen from './itemopen';
 import ItemShareSection from './itemsharesection';
 import ItemInternalLink from './iteminternallink';
@@ -13,6 +14,7 @@ const itemMappings = [
 	ItemSharing,
 	ItemInternalLink,
 	ItemExternalLink,
+	ItemHistory,
 	ItemRename,
 	ItemDelete,
 ];

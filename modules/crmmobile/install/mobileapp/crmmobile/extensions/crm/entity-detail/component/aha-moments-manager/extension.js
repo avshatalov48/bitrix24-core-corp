@@ -37,14 +37,15 @@ jn.define('crm/entity-detail/component/aha-moments-manager', (require, exports, 
 
 		chooseAhaMoment(context)
 		{
-			let moment;
+			let moment = null;
 			const contextAhaMoments = context.getAvailableAhaMoments();
+
 			for (const index in contextAhaMoments)
 			{
 				if (this.getAvailableAhaMoments().hasOwnProperty(contextAhaMoments[index]))
 				{
-					const momentClass = this.getAhaMomentClassByName(contextAhaMoments[index]);
-					moment = new momentClass({
+					const MomentClass = this.getAhaMomentClassByName(contextAhaMoments[index]);
+					moment = new MomentClass({
 						detailCard: context,
 					});
 

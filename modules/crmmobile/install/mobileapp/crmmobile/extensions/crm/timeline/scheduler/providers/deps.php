@@ -16,5 +16,6 @@ return [
 		'crm:timeline/scheduler/providers/document',
 		'crm:timeline/scheduler/providers/go-to-chat',
 		'crm:timeline/scheduler/providers/receive-payment',
+		'crm:timeline/scheduler/providers/sharing',
 	],
 ];

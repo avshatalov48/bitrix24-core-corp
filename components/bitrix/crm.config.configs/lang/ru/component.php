@@ -83,6 +83,7 @@ $MESS["CRM_FIELD_ENABLE_SIMPLE_TIME_FORMAT"] = "Отображать время 
 $MESS["CRM_FIELD_AUTO_GEN_RC"] = "Включить автоматическую регистрацию повторных продаж";
 $MESS["CRM_FIELD_AUTO_USING_FINISHED_LEAD"] = "Включить устаревший сценарий создания лидов";
 $MESS["CRM_FIELD_ENABLE_USER_NAME_SORTING2"] = "Включить сортировку по имени пользователя";
+$MESS["CRM_FIELD_ENABLE_FILE_PREVIEWER_IN_KANBAN_AND_GRID"] = "Открывать файлы для предпросмотра";
 $MESS["CRM_FIELD_ENABLE_LEAD_RECYCLE_BIN"] = "Включить корзину для лидов";
 $MESS["CRM_FIELD_ENABLE_CONTACT_RECYCLE_BIN"] = "Включить корзину для контактов";
 $MESS["CRM_FIELD_ENABLE_COMPANY_RECYCLE_BIN"] = "Включить корзину для компаний";

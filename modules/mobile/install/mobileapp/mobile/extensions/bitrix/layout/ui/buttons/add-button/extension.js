@@ -4,7 +4,8 @@
 jn.define('layout/ui/buttons/add-button', (require, exports, module) => {
 	const { plus, chevronRight } = require('assets/common');
 	const { merge } = require('utils/object');
-	const color = '#A8ADB4';
+	const AppTheme = require('apptheme');
+	const color = AppTheme.colors.base4;
 
 	/**
 	 * @function AddButton
@@ -57,7 +58,8 @@ jn.define('layout/ui/buttons/add-button', (require, exports, module) => {
 				ellipsize: 'end',
 				text,
 			}),
-			showArrow && View({
+			showArrow && View(
+				{
 					style: styles.arrowWrapper,
 				},
 				Image({

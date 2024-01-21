@@ -9,7 +9,6 @@ namespace Bitrix\Crm;
 
 use Bitrix\Crm\History\Entity\LeadStatusHistoryTable;
 use Bitrix\Crm\History\Entity\LeadStatusHistoryWithSupposedTable;
-use Bitrix\Crm\Multifield;
 use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
@@ -203,7 +202,6 @@ class LeadTable extends Main\ORM\Data\DataManager
 
 			$fieldRepository->getComments(),
 
-			/** @deprecated */
 			$fieldRepository->getExchRate(),
 
 			$fieldRepository->getWebformId(),

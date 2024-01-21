@@ -42,6 +42,7 @@ use Bitrix\Main\ORM\Query\Result as QueryResult;
 use Bitrix\Main\Result;
 use Bitrix\Main\Security\Random;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserField;
 
 /**
@@ -112,7 +113,7 @@ class TypeTable extends UserField\Internal\TypeDataManager
 				return Container::getInstance()->getContext()->getUserId();
 			});
 		$fieldsMap[] = (new ORM\Fields\IntegerField('ENTITY_TYPE_ID'))
-			->configureTitle(Loc::getMessage('CRM_TYPE_ENTITY_TYPE_ID_TITLE'))
+			->configureTitle(Loc::getMessage('CRM_TYPE_ENTITY_TYPE_ID_TITLE_MSGVER_1'))
 			->configureRequired()
 			->configureUnique()
 			->addValidator([static::class, 'validateEntityTypeId'])
@@ -211,6 +212,25 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			->configureDefaultValue('N')
 			->configureRequired()
 			->configureTitle(Loc::getMessage('CRM_TYPE_TYPE_IS_COUNTERS_ENABLED_TITLE'));
+		$fieldsMap[] = (new ORM\Fields\DatetimeField('CREATED_TIME'))
+			->configureTitle(Loc::getMessage('CRM_COMMON_CREATED_TIME'))
+			->configureRequired()
+			->configureDefaultValue(static function () {
+				return new DateTime();
+			});
+		$fieldsMap[] = (new ORM\Fields\DatetimeField('UPDATED_TIME'))
+			->configureTitle(Loc::getMessage('CRM_COMMON_MODIFY_DATE'))
+			->configureRequired()
+			->configureDefaultValue(static function () {
+				return new DateTime();
+			});
+		$fieldsMap[] = (new ORM\Fields\IntegerField('UPDATED_BY'))
+			->configureTitle(Loc::getMessage('CRM_COMMON_UPDATED_BY'))
+			->configureRequired()
+			->configureDefaultValue(static function()
+			{
+				return Container::getInstance()->getContext()->getUserId();
+			});
 
 		return $fieldsMap;
 	}
@@ -322,13 +342,13 @@ class TypeTable extends UserField\Internal\TypeDataManager
 		if (!$result->getErrors())
 		{
 			$type = $event->getParameter('object');
+
 			static::createIndexes($type->getId());
 			static::createItemIndexTable($type->getId());
+			static::createItemFieldsContextTable($type->getId());
+
 			$factory = Container::getInstance()->getFactory($type->getEntityTypeId());
-			if ($factory)
-			{
-				$factory->createDefaultCategoryIfNotExist();
-			}
+			$factory?->createDefaultCategoryIfNotExist();
 
 			static::clearBindingMenuCache();
 		}
@@ -346,6 +366,7 @@ class TypeTable extends UserField\Internal\TypeDataManager
 		static::getTemporaryStorage()->saveData($primary, $typeData);
 
 		static::deleteItemIndexTable($typeData);
+		static::deleteItemFieldsContextTable($typeData);
 
 		$entityTypeId = (int)$typeData['ENTITY_TYPE_ID'];
 
@@ -437,7 +458,7 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			return $result;
 		}
 
-		if (!$DB->Query('CREATE FULLTEXT INDEX '.$entity->getDBTableName().'_search ON '.$entity->getDBTableName().'(SEARCH_CONTENT)', true))
+		if (!$DB->CreateIndex($entity->getDBTableName().'_search', $entity->getDBTableName(), ['SEARCH_CONTENT'], false, true))
 		{
 			$result->addError(new Error('Could not create item fulltext index'));
 		}
@@ -456,6 +477,63 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			{
 				Application::getConnection()->dropTable($tableName);
 			}
+		}
+
+		return $result;
+	}
+
+	public static function createItemFieldsContextTable($type): Result
+	{
+		$result = new Result();
+
+		$entity = static::compileItemFieldsContextEntity($type);
+		$tableName = $entity->getDBTableName();
+
+		$connection = Application::getConnection();
+		if ($connection->isTableExists($tableName))
+		{
+			return $result;
+		}
+
+		$entity->createDbTable();
+
+		if (!$connection->isTableExists($tableName))
+		{
+			$result->addError(new Error('Could not create item fields context table'));
+
+			return $result;
+		}
+
+		$tableNameInUpperCase = mb_strtoupper($tableName);
+
+		try
+		{
+			$connection->createIndex($tableName, 'IX_' . $tableNameInUpperCase . '_FIELD_NAME', ['FIELD_NAME']);
+		}
+		catch(\Exception $e)
+		{
+			$result->addError(new Error('Could not create item fields context index'));
+		}
+
+		return $result;
+	}
+
+	public static function deleteItemFieldsContextTable($type): Result
+	{
+		$result = new Result();
+
+		$entity = static::compileItemFieldsContextEntity($type);
+		if (!$entity)
+		{
+			return $result;
+		}
+
+		$tableName = $entity->getDBTableName();
+		$connection = Application::getConnection();
+
+		if ($connection->isTableExists($tableName))
+		{
+			$connection->dropTable($tableName);
 		}
 
 		return $result;
@@ -548,6 +626,11 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			}
 		}
 
+		$result->modifyFields([
+			'UPDATED_TIME' => new DateTime(),
+			'UPDATED_BY' => Container::getInstance()->getContext()->getUserId(),
+		]);
+
 		return $result;
 	}
 
@@ -607,9 +690,39 @@ class TypeTable extends UserField\Internal\TypeDataManager
 
 	public static function compileItemIndexEntity($type): ORM\Entity
 	{
+		$type = self::checkAndResolveType($type);
+
+		$factory = ServiceLocator::getInstance()->get('crm.type.factory');
+		$entityName = $factory->getUserFieldEntityPrefix() . $type['NAME'].'Index';
+		$entityTableName = static::prepareItemIndexTableName($type['TABLE_NAME']);
+		$dataClass = $factory->getItemIndexPrototypeDataClass();
+
+		return self::buildEntity($entityName, $entityTableName, $dataClass);
+	}
+
+	protected static function prepareItemIndexTableName(string $typeTableName): string
+	{
+		return $typeTableName.'_index';
+	}
+
+	public static function compileItemFieldsContextEntity($type): ORM\Entity
+	{
+		$type = self::checkAndResolveType($type);
+
+		$factory = ServiceLocator::getInstance()->get('crm.type.factory');
+		$entityName = $factory->getUserFieldEntityPrefix() . $type['NAME'] . 'FieldsContext';
+		$entityTableName = static::prepareItemFieldsContextTableName($type['TABLE_NAME']);
+		$dataClass = $factory->getItemFieldsContextPrototypeDataClass();
+
+		return self::buildEntity($entityName, $entityTableName, $dataClass);
+	}
+
+	protected static function checkAndResolveType($type): array
+	{
 		$rawType = $type;
 		$type = static::resolveType($type);
-		if(empty($type))
+
+		if (empty($type))
 		{
 			throw new SystemException(
 				sprintf(
@@ -618,30 +731,34 @@ class TypeTable extends UserField\Internal\TypeDataManager
 				)
 			);
 		}
-		$factory = ServiceLocator::getInstance()->get('crm.type.factory');
-		$dataClass = $factory->getItemIndexPrototypeDataClass();
-		$entityName = $factory->getUserFieldEntityPrefix().$type['NAME'].'Index';
-		$entityClassName = $entityName.'Table';
-		$entityTableName = static::prepareItemIndexTableName($type['TABLE_NAME']);
-		if(class_exists($entityClassName))
-		{
-			ORM\Entity::destroy($entityClassName);
-			$entity = ORM\Entity::getInstance($entityClassName);
-		}
-		else
-		{
-			$entity = ORM\Entity::compileEntity($entityName, [], [
-				'table_name' => $entityTableName,
-				'parent' => $dataClass,
-			]);
-		}
 
-		return $entity;
+		return $type;
 	}
 
-	protected static function prepareItemIndexTableName(string $typeTableName): string
+	protected static function buildEntity(
+		string $entityName,
+		string $entityTableName,
+		string $dataClass
+	): Entity
 	{
-		return $typeTableName.'_index';
+		$entityClassName = $entityName . 'Table';
+
+		if (class_exists($entityClassName))
+		{
+			ORM\Entity::destroy($entityClassName);
+
+			return ORM\Entity::getInstance($entityClassName);
+		}
+
+		return ORM\Entity::compileEntity($entityName, [], [
+			'table_name' => $entityTableName,
+			'parent' => $dataClass,
+		]);
+	}
+
+	protected static function prepareItemFieldsContextTableName(string $typeTableName): string
+	{
+		return $typeTableName.'_fields_context';
 	}
 
 	protected static function createIndexes($type): void
@@ -802,7 +919,10 @@ class TypeTable extends UserField\Internal\TypeDataManager
 					->where('this.ENTITY_TYPE_ID', new SqlExpression('?i', $factory->getEntityTypeId()))
 			));
 		}
-		$oneToManyAssigned = new ORM\Fields\Relations\OneToMany('ASSIGNED', AssignedTable::class, $localFieldName);
+		$oneToManyAssigned =
+			(new ORM\Fields\Relations\OneToMany('ASSIGNED', AssignedTable::class, $localFieldName))
+				->configureCascadeDeletePolicy(ORM\Fields\Relations\CascadePolicy::FOLLOW)
+		;
 		// $localEntity is rebuilt on every compileEntity call, we have to add the reference field anyway
 		$localEntity->addField($oneToManyAssigned);
 
@@ -880,7 +1000,7 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			'ENTITY_TYPE_ID' => [
 				'TYPE' => Field::TYPE_INTEGER,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Required, \CCrmFieldInfoAttr::Unique, \CCrmFieldInfoAttr::Immutable],
-				'TITLE' => Loc::getMessage('CRM_TYPE_ENTITY_TYPE_ID_TITLE'),
+				'TITLE' => Loc::getMessage('CRM_TYPE_ENTITY_TYPE_ID_TITLE_MSGVER_1'),
 			],
 			'IS_CATEGORIES_ENABLED' => [
 				'TYPE' => Field::TYPE_BOOLEAN,
@@ -941,6 +1061,19 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			'IS_SET_OPEN_PERMISSIONS' => [
 				'TYPE' => Field::TYPE_BOOLEAN,
 				'TITLE' => Loc::getMessage('CRM_TYPE_TYPE_IS_SET_OPEN_PERMISSIONS_TITLE'),
+			],
+			'CREATED_TIME' => [
+				'TYPE' => Field::TYPE_DATETIME,
+				'TITLE' => Loc::getMessage('CRM_COMMON_CREATED_TIME'),
+			],
+			'UPDATED_TIME' => [
+				'TYPE' => Field::TYPE_DATETIME,
+				'TITLE' => Loc::getMessage('CRM_COMMON_MODIFY_DATE'),
+			],
+			'UPDATED_BY' => [
+				'TYPE' => Field::TYPE_USER,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+				'TITLE' => Loc::getMessage('CRM_COMMON_UPDATED_BY'),
 			],
 		];
 	}

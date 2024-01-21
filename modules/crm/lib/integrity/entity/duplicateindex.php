@@ -211,30 +211,28 @@ class DuplicateIndexTable extends Entity\DataManager
 		$connection = Main\Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
 
-		$userID = isset($data['USER_ID']) ? intval($data['USER_ID']) : 0;
-		$entityTypeID = isset($data['ENTITY_TYPE_ID']) ? intval($data['ENTITY_TYPE_ID']) : 0;
-		$typeID = isset($data['TYPE_ID']) ? intval($data['TYPE_ID']) : 0;
-		$matchHash = isset($data['MATCH_HASH']) ? $sqlHelper->forSql($data['MATCH_HASH'], 32) : '';
-		$scope = isset($data['SCOPE']) ? $data['SCOPE'] : DuplicateIndexType::DEFAULT_SCOPE;
-
-		$matches = isset($data['MATCHES']) ? $sqlHelper->forSql($data['MATCHES']) : '';
-		$qty = isset($data['QUANTITY']) ? intval($data['QUANTITY']) : 0;
-		$statusID = isset($data['STATUS_ID']) ? intval($data['STATUS_ID']) : DuplicateStatus::UNDEFINED;
-
-		$rootEntityID = isset($data['ROOT_ENTITY_ID']) ? intval($data['ROOT_ENTITY_ID']) : 0;
-		$rootEntityName = isset($data['ROOT_ENTITY_NAME']) ? $sqlHelper->forSql($data['ROOT_ENTITY_NAME'], 256) : '';
-		$rootEntityTitle = isset($data['ROOT_ENTITY_TITLE']) ? $sqlHelper->forSql($data['ROOT_ENTITY_TITLE'], 256) : '';
-		$rootEntityPhone = isset($data['ROOT_ENTITY_PHONE']) ? $sqlHelper->forSql($data['ROOT_ENTITY_PHONE'], 256) : '';
-		$rootEntityEmail = isset($data['ROOT_ENTITY_EMAIL']) ? $sqlHelper->forSql($data['ROOT_ENTITY_EMAIL'], 256) : '';
-		$rootEntityRqInn = isset($data['ROOT_ENTITY_RQ_INN']) ? $sqlHelper->forSql($data['ROOT_ENTITY_RQ_INN'], 15) : '';
-		$rootEntityRqOgrn = isset($data['ROOT_ENTITY_RQ_OGRN']) ? $sqlHelper->forSql($data['ROOT_ENTITY_RQ_OGRN'], 13) : '';
-		$rootEntityRqOgrnip = isset($data['ROOT_ENTITY_RQ_OGRNIP']) ? $sqlHelper->forSql($data['ROOT_ENTITY_RQ_OGRNIP'], 15) : '';
-		$rootEntityRqBin = isset($data['ROOT_ENTITY_RQ_BIN']) ? $sqlHelper->forSql($data['ROOT_ENTITY_RQ_BIN'], 12) : '';
-		$rootEntityRqEdrpou = isset($data['ROOT_ENTITY_RQ_EDRPOU']) ? $sqlHelper->forSql($data['ROOT_ENTITY_RQ_EDRPOU'], 10) : '';
-		$rootEntityRqVatId = isset($data['ROOT_ENTITY_RQ_VAT_ID']) ? $sqlHelper->forSql($data['ROOT_ENTITY_RQ_VAT_ID'], 20) : '';
-		$rootEntityRqAccNum = isset($data['ROOT_ENTITY_RQ_ACC_NUM']) ? $sqlHelper->forSql($data['ROOT_ENTITY_RQ_ACC_NUM'], 34) : '';
-		$rootEntityRqIban = isset($data['ROOT_ENTITY_RQ_IBAN']) ? $sqlHelper->forSql($data['ROOT_ENTITY_RQ_IBAN'], 34) : '';
-		$rootEntityRqIik = isset($data['ROOT_ENTITY_RQ_IIK']) ? $sqlHelper->forSql($data['ROOT_ENTITY_RQ_IIK'], 20) : '';
+		$userID = (int)($data['USER_ID'] ?? 0);
+		$entityTypeID = (int)($data['ENTITY_TYPE_ID'] ?? 0);
+		$typeID = (int)($data['TYPE_ID'] ?? 0);
+		$matchHash = mb_substr((string)($data['MATCH_HASH'] ?? ''), 0, 32);
+		$scope = $data['SCOPE'] ?? DuplicateIndexType::DEFAULT_SCOPE;
+		$matches = $data['MATCHES'] ?? '';
+		$qty = (int)($data['QUANTITY'] ?? 0);
+		$statusID = (int)($data['STATUS_ID'] ?? DuplicateStatus::UNDEFINED);
+		$rootEntityID = (int)($data['ROOT_ENTITY_ID'] ?? 0);
+		$rootEntityName = mb_substr((string)($data['ROOT_ENTITY_NAME'] ?? ''), 0, 256);
+		$rootEntityTitle = mb_substr((string)($data['ROOT_ENTITY_TITLE'] ?? ''), 0, 256);
+		$rootEntityPhone = mb_substr((string)($data['ROOT_ENTITY_PHONE'] ?? ''), 0, 256);
+		$rootEntityEmail = mb_substr((string)($data['ROOT_ENTITY_EMAIL'] ?? ''), 0, 256);
+		$rootEntityRqInn = mb_substr((string)($data['ROOT_ENTITY_RQ_INN'] ?? ''), 0, 15);
+		$rootEntityRqOgrn = mb_substr((string)($data['ROOT_ENTITY_RQ_OGRN'] ?? ''), 0, 13);
+		$rootEntityRqOgrnip = mb_substr((string)($data['ROOT_ENTITY_RQ_OGRNIP'] ?? ''), 0, 15);
+		$rootEntityRqBin = mb_substr((string)($data['ROOT_ENTITY_RQ_BIN'] ?? ''), 0, 12);
+		$rootEntityRqEdrpou = mb_substr((string)($data['ROOT_ENTITY_RQ_EDRPOU'] ?? ''), 0, 10);
+		$rootEntityRqVatId = mb_substr((string)($data['ROOT_ENTITY_RQ_VAT_ID'] ?? ''), 0, 20);
+		$rootEntityRqAccNum = mb_substr((string)($data['ROOT_ENTITY_RQ_ACC_NUM'] ?? ''), 0, 34);
+		$rootEntityRqIban = mb_substr((string)($data['ROOT_ENTITY_RQ_IBAN'] ?? ''), 0, 34);
+		$rootEntityRqIik = mb_substr((string)($data['ROOT_ENTITY_RQ_IIK'] ?? ''), 0, 20);
 
 		$rootEntityNameFlg = $rootEntityName !== '' ? '0' : '1';
 		$rootEntityTitleFlg = $rootEntityTitle !== '' ? '0' : '1';
@@ -250,41 +248,86 @@ class DuplicateIndexTable extends Entity\DataManager
 		$rootEntityRqIbanFlg = $rootEntityRqIban !== '' ? '0' : '1';
 		$rootEntityRqIikFlg = $rootEntityRqIik !== '' ? '0' : '1';
 
-		$connection->queryExecute(
-			"INSERT INTO b_crm_dp_index(USER_ID, ENTITY_TYPE_ID, TYPE_ID, SCOPE, MATCH_HASH, MATCHES, QUANTITY, ROOT_ENTITY_ID, " .
-			"ROOT_ENTITY_NAME_FLAG, ROOT_ENTITY_NAME, ROOT_ENTITY_TITLE_FLAG, ROOT_ENTITY_TITLE, " .
-			"ROOT_ENTITY_PHONE_FLAG, ROOT_ENTITY_PHONE, ROOT_ENTITY_EMAIL_FLAG, ROOT_ENTITY_EMAIL, " .
-			"ROOT_ENTITY_RQ_INN_FLAG, ROOT_ENTITY_RQ_INN, ROOT_ENTITY_RQ_OGRN_FLAG, ROOT_ENTITY_RQ_OGRN, " .
-			"ROOT_ENTITY_RQ_OGRNIP_FLAG, ROOT_ENTITY_RQ_OGRNIP, ROOT_ENTITY_RQ_BIN_FLAG, ROOT_ENTITY_RQ_BIN, " .
-			"ROOT_ENTITY_RQ_EDRPOU_FLAG, ROOT_ENTITY_RQ_EDRPOU, ROOT_ENTITY_RQ_VAT_ID_FLAG, ROOT_ENTITY_RQ_VAT_ID, " .
-			"ROOT_ENTITY_RQ_ACC_NUM_FLAG, ROOT_ENTITY_RQ_ACC_NUM, ROOT_ENTITY_RQ_IBAN_FLAG, ROOT_ENTITY_RQ_IBAN, " .
-			"ROOT_ENTITY_RQ_IIK_FLAG, ROOT_ENTITY_RQ_IIK, " .
-			"STATUS_ID)
-			VALUES({$userID}, {$entityTypeID}, {$typeID}, '{$scope}', '{$matchHash}', '{$matches}', {$qty}, {$rootEntityID}, " .
-			"'{$rootEntityNameFlg}', '{$rootEntityName}', '{$rootEntityTitleFlg}', '{$rootEntityTitle}', " .
-			"'{$rootEntityPhoneFlg}', '{$rootEntityPhone}', '{$rootEntityEmailFlg}', '{$rootEntityEmail}', " .
-			"'{$rootEntityRqInnFlg}', '{$rootEntityRqInn}', '{$rootEntityRqOgrnFlg}', '{$rootEntityRqOgrn}', " .
-			"'{$rootEntityRqOgrnipFlg}', '{$rootEntityRqOgrnip}', '{$rootEntityRqBinFlg}', '{$rootEntityRqBin}', " .
-			"'{$rootEntityRqEdrpouFlg}', '{$rootEntityRqEdrpou}', '{$rootEntityRqVatIdFlg}', '{$rootEntityRqVatId}', " .
-			"'{$rootEntityRqAccNumFlg}', '{$rootEntityRqAccNum}', '{$rootEntityRqIbanFlg}', '{$rootEntityRqIban}', " .
-			"'{$rootEntityRqIikFlg}', '{$rootEntityRqIik}', " .
-			"{$statusID})
-			ON DUPLICATE KEY UPDATE QUANTITY = {$qty}, ROOT_ENTITY_ID = {$rootEntityID}, " .
-			"ROOT_ENTITY_NAME_FLAG = '{$rootEntityNameFlg}', ROOT_ENTITY_NAME = '{$rootEntityName}', " .
-			"ROOT_ENTITY_TITLE_FLAG = '{$rootEntityTitleFlg}', ROOT_ENTITY_TITLE = '{$rootEntityTitle}', " .
-			"ROOT_ENTITY_PHONE_FLAG = '{$rootEntityPhoneFlg}', ROOT_ENTITY_PHONE = '{$rootEntityPhone}', " .
-			"ROOT_ENTITY_EMAIL_FLAG = '{$rootEntityEmailFlg}', ROOT_ENTITY_EMAIL = '{$rootEntityEmail}', " .
-			"ROOT_ENTITY_RQ_INN_FLAG = '{$rootEntityRqInnFlg}', ROOT_ENTITY_RQ_INN = '{$rootEntityRqInn}', " .
-			"ROOT_ENTITY_RQ_OGRN_FLAG = '{$rootEntityRqOgrnFlg}', ROOT_ENTITY_RQ_OGRN = '{$rootEntityRqOgrn}', " .
-			"ROOT_ENTITY_RQ_OGRNIP_FLAG = '{$rootEntityRqOgrnipFlg}', ROOT_ENTITY_RQ_OGRNIP = '{$rootEntityRqOgrnip}', " .
-			"ROOT_ENTITY_RQ_BIN_FLAG = '{$rootEntityRqBinFlg}', ROOT_ENTITY_RQ_BIN = '{$rootEntityRqBin}', " .
-			"ROOT_ENTITY_RQ_EDRPOU_FLAG = '{$rootEntityRqEdrpouFlg}', ROOT_ENTITY_RQ_EDRPOU = '{$rootEntityRqEdrpou}', " .
-			"ROOT_ENTITY_RQ_VAT_ID_FLAG = '{$rootEntityRqVatIdFlg}', ROOT_ENTITY_RQ_VAT_ID = '{$rootEntityRqVatId}', " .
-			"ROOT_ENTITY_RQ_ACC_NUM_FLAG = '{$rootEntityRqAccNumFlg}', ROOT_ENTITY_RQ_ACC_NUM = '{$rootEntityRqAccNum}', " .
-			"ROOT_ENTITY_RQ_IBAN_FLAG = '{$rootEntityRqIbanFlg}', ROOT_ENTITY_RQ_IBAN = '{$rootEntityRqIban}', " .
-			"ROOT_ENTITY_RQ_IIK_FLAG = '{$rootEntityRqIikFlg}', ROOT_ENTITY_RQ_IIK = '{$rootEntityRqIik}'" .
-			($statusID !== DuplicateStatus::UNDEFINED ? ", STATUS_ID = {$statusID}" : "")
+		$sql = $sqlHelper->prepareMerge(
+			'b_crm_dp_index',
+			[
+				'USER_ID',
+				'ENTITY_TYPE_ID',
+				'TYPE_ID',
+				'MATCH_HASH',
+				'SCOPE',
+			],
+			[
+				'USER_ID' => $userID,
+				'ENTITY_TYPE_ID' => $entityTypeID,
+				'TYPE_ID' => $typeID,
+				'SCOPE' => $scope,
+				'MATCH_HASH' => $matchHash,
+				'MATCHES' => $matches,
+				'QUANTITY' => $qty,
+				'ROOT_ENTITY_ID' => $rootEntityID,
+				'ROOT_ENTITY_NAME_FLAG' => $rootEntityNameFlg,
+				'ROOT_ENTITY_NAME' => $rootEntityName,
+				'ROOT_ENTITY_TITLE_FLAG' => $rootEntityTitleFlg,
+				'ROOT_ENTITY_TITLE' => $rootEntityTitle,
+				'ROOT_ENTITY_PHONE_FLAG' => $rootEntityPhoneFlg,
+				'ROOT_ENTITY_PHONE' => $rootEntityPhone,
+				'ROOT_ENTITY_EMAIL_FLAG' => $rootEntityEmailFlg,
+				'ROOT_ENTITY_EMAIL' => $rootEntityEmail,
+				'ROOT_ENTITY_RQ_INN_FLAG' => $rootEntityRqInnFlg,
+				'ROOT_ENTITY_RQ_INN' => $rootEntityRqInn,
+				'ROOT_ENTITY_RQ_OGRN_FLAG' => $rootEntityRqOgrnFlg,
+				'ROOT_ENTITY_RQ_OGRN' => $rootEntityRqOgrn,
+				'ROOT_ENTITY_RQ_OGRNIP_FLAG' => $rootEntityRqOgrnipFlg,
+				'ROOT_ENTITY_RQ_OGRNIP' => $rootEntityRqOgrnip,
+				'ROOT_ENTITY_RQ_BIN_FLAG' => $rootEntityRqBinFlg,
+				'ROOT_ENTITY_RQ_BIN' => $rootEntityRqBin,
+				'ROOT_ENTITY_RQ_EDRPOU_FLAG' => $rootEntityRqEdrpouFlg,
+				'ROOT_ENTITY_RQ_EDRPOU' => $rootEntityRqEdrpou,
+				'ROOT_ENTITY_RQ_VAT_ID_FLAG' => $rootEntityRqVatIdFlg,
+				'ROOT_ENTITY_RQ_VAT_ID' => $rootEntityRqVatId,
+				'ROOT_ENTITY_RQ_ACC_NUM_FLAG' => $rootEntityRqAccNumFlg,
+				'ROOT_ENTITY_RQ_ACC_NUM' => $rootEntityRqAccNum,
+				'ROOT_ENTITY_RQ_IBAN_FLAG' => $rootEntityRqIbanFlg,
+				'ROOT_ENTITY_RQ_IBAN' => $rootEntityRqIban,
+				'ROOT_ENTITY_RQ_IIK_FLAG' => $rootEntityRqIikFlg,
+				'ROOT_ENTITY_RQ_IIK' => $rootEntityRqIik,
+				'STATUS_ID' => $statusID,
+			],
+			[
+				'QUANTITY' => $qty,
+				'ROOT_ENTITY_ID' => $rootEntityID,
+				'ROOT_ENTITY_NAME_FLAG' => $rootEntityNameFlg,
+				'ROOT_ENTITY_NAME' => $rootEntityName,
+				'ROOT_ENTITY_TITLE_FLAG' => $rootEntityTitleFlg,
+				'ROOT_ENTITY_TITLE' => $rootEntityTitle,
+				'ROOT_ENTITY_PHONE_FLAG' => $rootEntityPhoneFlg,
+				'ROOT_ENTITY_PHONE' => $rootEntityPhone,
+				'ROOT_ENTITY_EMAIL_FLAG' => $rootEntityEmailFlg,
+				'ROOT_ENTITY_EMAIL' => $rootEntityEmail,
+				'ROOT_ENTITY_RQ_INN_FLAG' => $rootEntityRqInnFlg,
+				'ROOT_ENTITY_RQ_INN' => $rootEntityRqInn,
+				'ROOT_ENTITY_RQ_OGRN_FLAG' => $rootEntityRqOgrnFlg,
+				'ROOT_ENTITY_RQ_OGRN' => $rootEntityRqOgrn,
+				'ROOT_ENTITY_RQ_OGRNIP_FLAG' => $rootEntityRqOgrnipFlg,
+				'ROOT_ENTITY_RQ_OGRNIP' => $rootEntityRqOgrnip,
+				'ROOT_ENTITY_RQ_BIN_FLAG' => $rootEntityRqBinFlg,
+				'ROOT_ENTITY_RQ_BIN' => $rootEntityRqBin,
+				'ROOT_ENTITY_RQ_EDRPOU_FLAG' => $rootEntityRqEdrpouFlg,
+				'ROOT_ENTITY_RQ_EDRPOU' => $rootEntityRqEdrpou,
+				'ROOT_ENTITY_RQ_VAT_ID_FLAG' => $rootEntityRqVatIdFlg,
+				'ROOT_ENTITY_RQ_VAT_ID' => $rootEntityRqVatId,
+				'ROOT_ENTITY_RQ_ACC_NUM_FLAG' => $rootEntityRqAccNumFlg,
+				'ROOT_ENTITY_RQ_ACC_NUM' => $rootEntityRqAccNum,
+				'ROOT_ENTITY_RQ_IBAN_FLAG' => $rootEntityRqIbanFlg,
+				'ROOT_ENTITY_RQ_IBAN' => $rootEntityRqIban,
+				'ROOT_ENTITY_RQ_IIK_FLAG' => $rootEntityRqIikFlg,
+				'ROOT_ENTITY_RQ_IIK' => $rootEntityRqIik,
+				'STATUS_ID' => $statusID,
+			]
 		);
+
+		$connection->queryExecute($sql[0]);
 	}
 
 	public static function deleteByFilter(array $filter)

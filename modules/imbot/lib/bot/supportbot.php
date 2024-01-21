@@ -10,13 +10,6 @@ namespace Bitrix\Imbot\Bot;
 interface SupportBot extends NetworkBot
 {
 	/**
-	 * Is bot enabled.
-	 *
-	 * @return bool
-	 */
-	public static function isEnabled(): bool;
-
-	/**
 	 * Detects client's support level.
 	 * @return string
 	 */

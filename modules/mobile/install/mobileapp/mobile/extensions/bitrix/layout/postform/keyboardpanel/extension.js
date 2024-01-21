@@ -1,4 +1,6 @@
-(function(){
+(function() {
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
 
 	this.KeyboardPanel = ({
 		attachmentPanel,
@@ -14,13 +16,12 @@
 		onClickBackgroundMenuItem,
 		onKeyboardClick,
 		onRecipientsLayout,
-	}) =>
-	{
+	}) => {
 		const iconWidth = 40;
 		const iconHeightNormal = 40;
 		const iconHeightSmall = 30;
-		const backgroundColor = '#ffffff';
-		const dividerColor = '#dbdde0';
+		const backgroundColor = AppTheme.colors.bgContentPrimary;
+		const dividerColor = AppTheme.colors.base6;
 
 		const config = {
 			paddingLeftRight: 17,
@@ -30,9 +31,9 @@
 			marginLeftArrow: 5,
 			marginRightArrow: 5,
 			marginLeftRightAttachmentIcon: 5,
-			destinationColor: '#595959',
-			destinationAllColor: '#000000',
-			destinationPrefixColor: '#ababab',
+			destinationColor: AppTheme.colors.base2,
+			destinationAllColor: AppTheme.colors.base0,
+			destinationPrefixColor: AppTheme.colors.base4,
 		};
 
 		const BBCodeVersion = 38;
@@ -40,17 +41,19 @@
 		if (Application.getApiVersion() >= BBCodeVersion)
 		{
 			recipientsString = recipientsString
-				.replace(/&nbsp;/g, ' ')
+				.replaceAll('&nbsp;', ' ')
 				.replace('#PREFIX_BEGIN#', `[COLOR=${config.destinationPrefixColor}]`).replace('#PREFIX_END#', '[/COLOR]')
-				.replace('#ALL_BEGIN#', `[B][COLOR=${config.destinationAllColor}]`).replace('#ALL_END#', '[/COLOR][/B]');
+				.replace('#ALL_BEGIN#', `[B][COLOR=${config.destinationAllColor}]`)
+				.replace('#ALL_END#', '[/COLOR][/B]');
 		}
 		else
 		{
 			recipientsString = recipientsString
-				.replace(/</g, '&lt;')
-				.replace(/>/g, '&gt;')
+				.replaceAll('<', '&lt;')
+				.replaceAll('>', '&gt;')
 				.replace('#PREFIX_BEGIN#', `<font color="${config.destinationPrefixColor}">`).replace('#PREFIX_END#', '</font>')
-				.replace('#ALL_BEGIN#', `<b><font color="${config.destinationAllColor}">`).replace('#ALL_END#', '</font></b>');
+				.replace('#ALL_BEGIN#', `<b><font color="${config.destinationAllColor}">`)
+				.replace('#ALL_END#', '</font></b>');
 		}
 
 		return View(
@@ -71,31 +74,31 @@
 					style: {
 						paddingLeft: 12,
 						paddingRight: 12,
-					}
+					},
 				},
 				View(
 					{
 						style: {
 							height: 0.5,
 							backgroundColor: dividerColor,
-						}
-					}
-				)
+						},
+					},
+				),
 			),
 			View(
 				{
 					safeArea: {
-						bottom: true
+						bottom: true,
 					},
 					style: {
-						backgroundColor: backgroundColor,
+						backgroundColor,
 						justifyContent: 'space-between',
 						flexDirection: 'row',
 						paddingTop: 10,
 						paddingBottom: 10,
 						paddingLeft: config.paddingLeftRight,
 						paddingRight: config.paddingLeftRight,
-					}
+					},
 				},
 				View(
 					{
@@ -111,7 +114,7 @@
 							width: iconWidth,
 							height: iconHeightNormal,
 						},
-						onClick: onClickDestinationMenuItem
+						onClick: onClickDestinationMenuItem,
 					}),
 				),
 				View(
@@ -169,7 +172,8 @@
 						)
 						,
 					),
-					View({
+					View(
+						{
 							style: {
 								flex: 1,
 								flexDirection: 'row',
@@ -183,9 +187,9 @@
 								width: config.widthArrow,
 								height: 12,
 								flex: 0,
-							}
-						})
-					)
+							},
+						}),
+					),
 				),
 				View(
 					{
@@ -195,42 +199,40 @@
 						},
 					},
 					ImageButton({
-						iconName: "post_attachment",
+						iconName: 'post_attachment',
 						style: {
 							width: iconWidth,
-							height: (attachments.length ? iconHeightSmall : iconHeightNormal),
+							height: (attachments.length > 0 ? iconHeightSmall : iconHeightNormal),
 							marginLeft: config.marginLeftRightAttachmentIcon,
 							marginRight: config.marginLeftRightAttachmentIcon,
 						},
-						onClick: onClickAttachmentMenuItem
+						onClick: onClickAttachmentMenuItem,
 					}),
 					Text({
 						style: {
-							display: attachments.length ? 'flex' : 'none',
+							display: attachments.length > 0 ? 'flex' : 'none',
 							fontSize: 9,
-							fontColor: '#000000',
-							textAlign: 'center'
+							fontColor: AppTheme.colors.base0,
+							textAlign: 'center',
 						},
 						text: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_KEYBOARDPANEL_ITEM_ATTACH_COUNTER')
 							.toLocaleUpperCase(env.languageId)
-							.replace('#NUM#', attachments.length)
-					})
+							.replace('#NUM#', attachments.length),
+					}),
 				),
 				ImageButton({
 					testId: 'openActionSheetButton',
 					svg: {
-						uri: currentDomain + postFormData.keyboardEllipsisIcon
+						uri: currentDomain + postFormData.keyboardEllipsisIcon,
 					},
 					style: {
 						flex: 0,
 						width: config.widthEllipsisButton,
 						height: 40,
-						backgroundColor: '#00000000'
 					},
-					onClick: onKeyboardClick
-				})
-			)
+					onClick: onKeyboardClick,
+				}),
+			),
 		);
-	}
-
+	};
 })();

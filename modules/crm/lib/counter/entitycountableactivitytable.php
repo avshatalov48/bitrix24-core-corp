@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Counter;
 
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Settings\CounterSettings;
 use Bitrix\Main\Application;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\BooleanField;
@@ -97,6 +98,23 @@ class EntityCountableActivityTable extends DataManager
 		self::cleanCache();
 	}
 
+	public static function deleteByIds(array $ids): void
+	{
+		$ids = array_filter($ids, 'is_numeric');
+
+		if (empty($ids))
+		{
+			return;
+		}
+
+		$ids = array_map(fn($val) => (int)$val, $ids);
+		$sql = 'delete from b_crm_entity_countable_act where ID in ('. implode(',', $ids) . ')';
+
+		Application::getConnection()->query($sql);
+		self::cleanCache();
+
+	}
+
 	public static function updateEntityAssignedBy(ItemIdentifier $identifier, int $assignedById): void
 	{
 		$sql = 'update ' . self::getTableName()
@@ -117,5 +135,17 @@ class EntityCountableActivityTable extends DataManager
 		;
 		Application::getConnection()->query($sql);
 		self::cleanCache();
+	}
+
+	public static function getActivityResponsible(array $fields): ?int
+	{
+		if (CounterSettings::getInstance()->useActivityResponsible())
+		{
+			return (int)$fields['ACTIVITY_RESPONSIBLE_ID'] ?? null;
+		}
+		else
+		{
+			return (int)$fields['ENTITY_ASSIGNED_BY_ID'] ?? null;
+		}
 	}
 }

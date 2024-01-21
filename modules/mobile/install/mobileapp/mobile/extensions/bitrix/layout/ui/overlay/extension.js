@@ -1,31 +1,35 @@
 (() => {
-	const pathToExtension = `/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/overlay/`;
+	const require = (ext) => jn.require(ext);
+
+	const AppTheme = require('apptheme');
+	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/overlay/';
 
 	class Overlay extends LayoutComponent
 	{
 		render()
 		{
 			return View({
-					style:{
-						position: "absolute",
-						height: "100%",
-						width: "100%",
-						opacity: 0.0,
-						justifyContent: "center",
-						backgroundColor:"#9DCF00"
-					},
-					ref: (view) => this.view = view
-				},Image({
-					style:{
-						alignSelf:'center',
-						alignItems: "center",
-						resizeMode:'contain',
-						width:180,
-						height:180
-					},
-					svg:{uri: `${currentDomain}${pathToExtension}images/${this.props.type}.svg`}
-				})
-			)
+				style: {
+					position: 'absolute',
+					height: '100%',
+					width: '100%',
+					opacity: 0,
+					justifyContent: 'center',
+					backgroundColor: AppTheme.colors.accentMainSuccess,
+				},
+				ref: (view) => {
+					this.view = view;
+				},
+			}, Image({
+				style: {
+					alignSelf: 'center',
+					alignItems: 'center',
+					resizeMode: 'contain',
+					width: 180,
+					height: 180,
+				},
+				svg: { uri: `${currentDomain}${pathToExtension}images/${this.props.type}.svg` },
+			}));
 		}
 
 		show(options = {})
@@ -34,8 +38,8 @@
 
 			return new Promise((resolve) => {
 				this.view.animate({
-					duration: duration,
-					opacity: 0.8
+					duration,
+					opacity: 0.8,
 				}, () => {
 					resolve();
 				});
@@ -46,8 +50,8 @@
 		{
 			return new Promise((resolve) => {
 				this.view.animate({
-					duration:300,
-					opacity:0
+					duration: 300,
+					opacity: 0,
 				}, () => {
 					resolve();
 				});

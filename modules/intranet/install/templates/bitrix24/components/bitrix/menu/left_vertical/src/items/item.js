@@ -103,7 +103,11 @@ export default class Item
 		const linkNode = this.container.querySelector('a');
 		if (linkNode)
 		{
-			linkNode.setAttribute('href', Text.encode(link));
+			if (Type.isString(link))
+			{
+				linkNode.setAttribute('href', Text.encode(link));
+			}
+
 			linkNode.setAttribute('target', openInNewPage === 'Y' ? '_blank' : '_self');
 		}
 		this.container.querySelector("[data-role='item-text']").innerHTML = Text.encode(text);

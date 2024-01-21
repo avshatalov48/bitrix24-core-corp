@@ -1,0 +1,73 @@
+.ui-toolbar-after-title-buttons {
+	flex-shrink: 0;
+	margin-left: 0 !important;
+}
+
+.ui-label-inner {
+	text-transform: uppercase;
+}
+
+.biconnector-grid-avatar.ui-icon.ui-icon-common-user,
+.biconnector-grid-avatar.ui-icon.ui-icon-common-user-group {
+	width: 22px;
+	min-width: 22px;
+	height: 22px;
+}
+
+.dashboard-status-label-wrapper {
+	display: flex;
+}
+
+.dashboard-status-label-error {
+	margin-right: 4px;
+}
+
+
+.dashboard-status-label-error-btn {
+	background: #DFE0E3;
+	border-radius: 20px;
+	height: 20px;
+	width: 20px;
+	display: flex;
+	align-items: center;
+	transition: background-color .2s;
+	cursor: pointer;
+}
+
+.dashboard-status-label-error-btn:hover {
+	background: rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-status-label-error-btn__loading {
+	transition: transform 0.5s ease-in-out;
+	cursor: default;
+	background: rgba(0, 0, 0, 0.05);
+
+	animation: rotate 0.8s linear infinite;
+	-webkit-transform-origin: center;
+	transform-origin: center;
+}
+
+.dashboard-status-label-error-btn__loading:hover {
+	background: rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-status-label-error-icon {
+	height: 17px;
+	margin-left: 1px;
+	width: 17px;
+	background: #828B95;
+}
+
+.dashboard-status-label-error-icon:hover {
+}
+
+@keyframes rotate {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+

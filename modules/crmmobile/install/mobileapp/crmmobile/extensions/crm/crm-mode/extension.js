@@ -4,11 +4,13 @@
 jn.define('crm/crm-mode', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Haptics } = require('haptics');
+	const AppTheme = require('apptheme');
 	const { Type, TypeId } = require('crm/type');
 	const { withPressed } = require('utils/color');
 	const { capitalize } = require('utils/string');
 	const { NotifyManager } = require('notify-manager');
-	const { CategoryStorage } = require('crm/storage/category');
+	const store = require('statemanager/redux/store');
+	const { fetchCrmKanbanList } = require('crm/statemanager/redux/slices/kanban-settings');
 	const { BackdropWizard } = require('layout/ui/wizard/backdrop');
 	const { prepareConversionFields, createConversionConfig } = require('crm/conversion/utils');
 	const { wizardSteps, ModeStep, MODE, MODES, CONVERSION, FIELDS } = require('crm/crm-mode/wizard/steps');
@@ -116,6 +118,7 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 				...this.result[stepId],
 			};
 
+			// eslint-disable-next-line default-case
 			switch (stepId)
 			{
 				case MODE:
@@ -189,20 +192,20 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 					completeActivities: moveCase ? 'Y' : 'N',
 					...entityData,
 				},
-			})
-				.then(() => this.prepareConversionLeads(entities))
-				.then((conversionData) => {
-					this.conversionData = conversionData;
-					const { DATA, ERRORS } = conversionData;
-					if (Array.isArray(ERRORS) && ERRORS.length > 0)
-					{
-						NotifyManager.showErrors(ERRORS);
+			}).then(
+				() => this.prepareConversionLeads(entities),
+			).then((conversionData) => {
+				this.conversionData = conversionData;
+				const { DATA, ERRORS } = conversionData;
+				if (Array.isArray(ERRORS) && ERRORS.length > 0)
+				{
+					NotifyManager.showErrors(ERRORS);
 
-						return Promise.reject('error conversion leads');
-					}
+					return Promise.reject('error conversion leads');
+				}
 
-					return Promise.resolve({ finish: !DATA.REQUIRES_SYNCHRONIZATION });
-				});
+				return Promise.resolve({ finish: !DATA.REQUIRES_SYNCHRONIZATION });
+			}).catch(console.error);
 		}
 
 		prepareConversionLeads(entityTypeIds)
@@ -260,34 +263,34 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 						CONFIG: config,
 					},
 				},
-			})
-				.then((result) => {
-					const { ERRORS, STATUS } = result;
-					if (Array.isArray(ERRORS) && ERRORS.length > 0)
-					{
+			}).then((result) => {
+				const { ERRORS, STATUS } = result;
+				if (Array.isArray(ERRORS) && ERRORS.length > 0)
+				{
+					this.onError();
+
+					return Promise.reject('error conversion leads');
+				}
+
+				// eslint-disable-next-line default-case
+				switch (STATUS)
+				{
+					case 'PROGRESS':
+						this.showProgress(result);
+
+						return this.runConversionLeads();
+					case 'COMPLETED':
+						this.showProgress(result);
+
+						return this.runChangeMode();
+					case 'ERROR':
 						this.onError();
 
 						return Promise.reject('error conversion leads');
-					}
+				}
 
-					switch (STATUS)
-					{
-						case 'PROGRESS':
-							this.showProgress(result);
-
-							return this.runConversionLeads();
-						case 'COMPLETED':
-							this.showProgress(result);
-
-							return this.runChangeMode();
-						case 'ERROR':
-							this.onError();
-
-							return Promise.reject('error conversion leads');
-					}
-
-					return Promise.reject();
-				});
+				return Promise.reject();
+			}).catch(console.error);
 		}
 
 		onError(errors)
@@ -334,7 +337,7 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 						fontSize: 17,
 						paddingVertical: Application.getPlatform() === 'android' ? 2 : 8,
 						paddingHorizontal: 34,
-						backgroundColor: withPressed('#ffffff'),
+						backgroundColor: withPressed(AppTheme.colors.bgContentPrimary),
 					},
 				},
 			};
@@ -368,9 +371,11 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 			this.isProgress = false;
 			this.reloadTabs(success);
 			this.unBindEvents();
-			BX.postComponentEvent('Crm.LoadingProgress::updateProgress', [{
-				show: false,
-			}]);
+			BX.postComponentEvent('Crm.LoadingProgress::updateProgress', [
+				{
+					show: false,
+				},
+			]);
 		}
 
 		ajaxPromise({ url, data })
@@ -382,13 +387,11 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 					method: 'POST',
 					dataType: 'json',
 					tokenSaveRequest: true,
-				})
-					.then(resolve)
-					.catch((error) => {
-						NotifyManager.showDefaultError();
-						console.error(error);
-						reject();
-					});
+				}).then(resolve).catch((error) => {
+					NotifyManager.showDefaultError();
+					console.error(error);
+					reject();
+				});
 			});
 		}
 
@@ -408,27 +411,27 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 				},
 			}).then((result) => {
 				this.finishChangeMode(result, crmType);
-			});
+			}).catch(console.error);
 		}
 
 		finishChangeMode({ success, error }, crmType)
 		{
-			success = success === 'Y';
+			const isSuccess = success === 'Y';
 
 			if (error)
 			{
 				this.onError([{ message: Loc.getMessage('MCRM_CRM_MODE_PROGRESS_ERROR') }]);
 			}
 
-			if (success)
+			if (isSuccess)
 			{
 				if (this.isProgress)
 				{
 					this.closeProgressBar(true);
 				}
 
-				this.reloadTabs(success);
-				this.hapticsNotify(success);
+				this.reloadTabs(isSuccess);
+				this.hapticsNotify(isSuccess);
 				void this.loadEntities();
 
 				console.log(`change crm to to ${crmType} success`);
@@ -460,22 +463,13 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 
 		async getCategories()
 		{
-			const getCategoryStorage = () => CategoryStorage.getCategoryList(TypeId.Deal);
-
 			return new Promise((resolve) => {
-				const categoryStorage = getCategoryStorage();
-				if (categoryStorage)
-				{
-					resolve(categoryStorage);
-
-					return;
-				}
-
-				CategoryStorage.subscribeOnLoading(({ status }) => {
-					if (!status)
-					{
-						resolve(getCategoryStorage());
-					}
+				store.dispatch(fetchCrmKanbanList({
+					entityTypeId: TypeId.Deal,
+				})).then((response) => {
+					resolve(response.payload.data);
+				}).catch((error) => {
+					console.error(error);
 				});
 			});
 		}

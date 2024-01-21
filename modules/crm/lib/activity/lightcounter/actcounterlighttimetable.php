@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Activity\LightCounter;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
@@ -41,6 +42,22 @@ class ActCounterLightTimeTable extends DataManager
 				->configureStorageValues('N', 'Y')
 				->configureRequired(),
 		];
+	}
+
+	public static function deleteByIds(array $ids): void
+	{
+		$ids = array_filter($ids, 'is_numeric');
+
+		if (empty($ids))
+		{
+			return;
+		}
+
+		$ids = array_map(fn($val) => (int)$val, $ids);
+		$sql = 'delete from b_crm_act_counter_light where ACTIVITY_ID in ('. implode(',', $ids) . ')';
+
+		Application::getConnection()->query($sql);
+		self::cleanCache();
 	}
 
 }

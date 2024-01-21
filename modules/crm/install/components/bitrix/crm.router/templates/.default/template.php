@@ -63,7 +63,7 @@ if (!$arResult['isIframe'])
 			},
 			{
 				condition: [
-					"type/detail/(\\d+)/?$"
+					"type/detail/(\\d+)/?(\\?isExternal=Y)?$"
 				],
 				options: {
 					width: 876,

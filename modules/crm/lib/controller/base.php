@@ -11,6 +11,7 @@ use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
+use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
@@ -22,6 +23,42 @@ abstract class Base extends Controller
 		parent::init();
 
 		Container::getInstance()->getLocalization()->loadMessages();
+	}
+
+	protected function processBeforeAction(Action $action)
+	{
+		$this->checkModules();
+
+		return count($this->getErrors()) === 0;
+	}
+
+	private function checkModules() : void
+	{
+		$requiredModules = $this->getRequiredModules();
+		if (!$requiredModules)
+		{
+			return;
+		}
+
+		foreach ($requiredModules as $module)
+		{
+			if (!Loader::includeModule($module))
+			{
+				$this->addError(
+					new Error(
+						Loc::getMessage(
+							'CRM_CONTROLLER_BASE_MODULE_NO_INSTALLED',
+							['#MODULE_ID#' => $module]
+						)
+					)
+				);
+			}
+		}
+	}
+
+	protected function getRequiredModules() : array
+	{
+		return [];
 	}
 
 	public function getAutoWiredParameters(): array

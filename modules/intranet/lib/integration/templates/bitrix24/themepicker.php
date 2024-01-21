@@ -39,7 +39,7 @@ class ThemePicker
 		self::BEHAVIOUR_RETURN,
 	];
 
-	public const DEFAULT_THEME_ID = 'light:milky-way';
+	public const DEFAULT_THEME_ID = 'light:video-jupiter';
 
 	private static $instance = null;
 	private static $config = null;
@@ -247,7 +247,7 @@ class ThemePicker
 		}
 
 		echo '<div class="theme-video-container" data-theme-id="'.$theme["id"].'">';
-		echo '<video poster="'.$theme["video"]["poster"].'" class="theme-video" autoplay loop muted playsinline>';
+		echo '<video poster="'.$theme["video"]["poster"].'" class="theme-video" pip="false" autoplay loop muted playsinline>';
 
 		foreach ($theme["video"]["sources"] as $type => $source)
 		{
@@ -285,7 +285,7 @@ class ThemePicker
 
 	public function getCurrentThemeId()
 	{
-		return $this->currentTheme !== null ? $this->currentTheme["id"] : self::DEFAULT_THEME_ID;
+		return $this->currentTheme !== null ? $this->currentTheme["id"] : $this->getInitialDefaultThemeId();
 	}
 
 	public function getCurrentTheme()
@@ -583,7 +583,8 @@ class ThemePicker
 		$customTheme = array(
 			"id" => $customThemeId,
 			"css" => $this->getBaseThemeCss($baseThemeId),
-			"removable" => true
+			"removable" => true,
+			"new" => false,
 		);
 
 		$style = "body { ";
@@ -684,6 +685,7 @@ class ThemePicker
 		$theme = is_array($config["subThemes"][$themeId]) ? $config["subThemes"][$themeId] : array();
 		$theme["id"] = $themeId;
 		$theme["removable"] = false;
+		$theme["new"] = isset($theme["new"]) && is_bool($theme["new"]) && $theme["new"];
 
 		$themePath = $this->getThemesPath()."/".$baseThemeId.($subThemeId ? "/".$subThemeId : "");
 		if (isset($theme["previewImage"]))
@@ -783,13 +785,29 @@ class ThemePicker
 			}
 		}
 
-		return $theme ?: $this->getStandardTheme(self::DEFAULT_THEME_ID);
+		return $theme ?: $this->getStandardTheme($this->getInitialDefaultThemeId());
 	}
 
 	public function getDefaultThemeId()
 	{
 		$defaultTheme = $this->getDefaultTheme();
-		return $defaultTheme ? $defaultTheme["id"] : self::DEFAULT_THEME_ID;
+		return $defaultTheme ? $defaultTheme["id"] : $this->getInitialDefaultThemeId();
+	}
+
+	public function getInitialDefaultThemeId(): string
+	{
+		if (in_array($this->getZoneId(), ['ru', 'kz', 'by']))
+		{
+			return 'light:video-jupiter';
+		}
+
+		$westernReleaseDate = \DateTime::createFromFormat('d.m.Y H:i', '29.11.2023 10:00', new \DateTimeZone('Europe/Moscow'));
+		if (time() > $westernReleaseDate->getTimestamp())
+		{
+			return 'light:orbital-symphony';
+		}
+
+		return 'light:milky-way';
 	}
 
 	public function setDefaultTheme($themeId, $currentUserId = 0): bool
@@ -806,19 +824,6 @@ class ThemePicker
 		if ($currentUserId <= 0)
 		{
 			$currentUserId = (is_object($GLOBALS["USER"]) ? (int)$GLOBALS["USER"]->getID() : 0);
-		}
-
-		if ($currentUserThemeFields = ThemeTable::getList([
-			'filter' => [
-				'=USER_ID' => $currentUserId,
-				'=ENTITY_TYPE' => $this->getEntityType(),
-				'=ENTITY_ID' => $currentUserId,
-				'=CONTEXT' => $this->getContext(),
-			],
-			'select' => [ 'ID' ]
-		])->fetch())
-		{
-			ThemeTable::delete($currentUserThemeFields['ID']);
 		}
 
 		return ThemeTable::set([

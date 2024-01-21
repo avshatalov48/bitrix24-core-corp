@@ -3,6 +3,7 @@
  */
 jn.define('crm/entity-document/product/product-card', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { InlineSkuTree } = require('layout/ui/product-grid/components/inline-sku-tree');
 	const { ProductCard } = require('layout/ui/product-grid/components/product-card');
 	const { DiscountPrice } = require('layout/ui/product-grid/components/discount-price');
@@ -74,7 +75,7 @@ jn.define('crm/entity-document/product/product-card', (require, exports, module)
 					text: productRow.getQuantity().toString(),
 					style: {
 						fontSize: 16,
-						color: '#333333',
+						color: AppTheme.colors.base1,
 						fontWeight: '700',
 						marginRight: 5,
 					},
@@ -83,7 +84,7 @@ jn.define('crm/entity-document/product/product-card', (require, exports, module)
 					text: productRow.getMeasureName(),
 					style: {
 						fontSize: 16,
-						color: '#828B95',
+						color: AppTheme.colors.base3,
 						fontWeight: '700',
 					},
 				}),
@@ -122,7 +123,7 @@ jn.define('crm/entity-document/product/product-card', (require, exports, module)
 						text: formattedAmount,
 						style: {
 							fontSize: 16,
-							color: '#333333',
+							color: AppTheme.colors.base1,
 							fontWeight: '700',
 						},
 					}),
@@ -130,7 +131,7 @@ jn.define('crm/entity-document/product/product-card', (require, exports, module)
 						text: formattedCurrency,
 						style: {
 							fontSize: 16,
-							color: '#828B95',
+							color: AppTheme.colors.base3,
 							fontWeight: '700',
 						},
 					}),
@@ -187,7 +188,7 @@ jn.define('crm/entity-document/product/product-card', (require, exports, module)
 
 	const styles = {
 		productCard: {
-			backgroundColor: '#eef2f4',
+			backgroundColor: AppTheme.colors.bgSecondary,
 			borderRadius: 12,
 		},
 		innerContent: {
@@ -201,20 +202,20 @@ jn.define('crm/entity-document/product/product-card', (require, exports, module)
 			},
 			totalText: {
 				flexDirection: 'row',
-				color: '#A8ADB4',
+				color: AppTheme.colors.base4,
 				fontSize: 12,
 			},
 			total: {
 				quantity: {
 					fontSize: 22,
 					fontWeight: '700',
-					color: '#333333',
+					color: AppTheme.colors.base1,
 					marginRight: 5,
 				},
 				measure: {
 					fontSize: 22,
 					fontWeight: '700',
-					color: '#A8ADB4',
+					color: AppTheme.colors.base4,
 				},
 			},
 			prices: {

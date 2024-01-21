@@ -11,6 +11,7 @@ final class MenuIdResolver
 
 	public static function getMenuId(int $entityTypeId, string $userId, ?int $categoryId = null): string
 	{
+		$configScope = 0;
 		try
 		{
 			$entityEditorConfig = EntityEditorConfig::createWithCurrentScope($entityTypeId, [

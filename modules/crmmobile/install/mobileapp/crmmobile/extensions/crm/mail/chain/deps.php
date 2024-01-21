@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'apptheme',
 		'helpers/component',
 		'layout/ui/context-menu',
 		'layout/ui/file',
@@ -18,5 +19,6 @@ return [
 		'crm:mail/message/elements/icon',
 		'crm:mail/message/elements/avatar',
 		'crm:mail/opener',
+		'notify-manager',
 	],
 ];

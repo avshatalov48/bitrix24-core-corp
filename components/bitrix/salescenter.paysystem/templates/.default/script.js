@@ -798,43 +798,12 @@
 				}
 			);
 
-			var popup = new BX.PopupWindow(
-				"paysystem_error_popup_" + BX.util.getRandomString(),
-				null,
-				{
-					autoHide: false,
-					draggable: false,
-					closeByEsc: true,
-					offsetLeft: 0,
-					offsetTop: 0,
-					zIndex: 10000,
-					bindOptions: {
-						forceBindPosition: true
-					},
-					titleBar: BX.message('SALESCENTER_SP_ERROR_POPUP_TITLE'),
-					content: contentNode,
-					buttons: [
-						new BX.PopupWindowButton({
-							'id': 'close',
-							'text': BX.message('SALESCENTER_SP_BUTTON_CLOSE'),
-							'events': {
-								'click': function(){
-									popup.close();
-								}
-							}
-						})
-					],
-					events: {
-						onPopupClose: function() {
-							this.destroy();
-						},
-						onPopupDestroy: function() {
-							popup = null;
-						}
-					}
-				}
+			BX.UI.Dialogs.MessageBox.alert(
+				contentNode,
+				BX.Loc.getMessage('SALESCENTER_SP_ERROR_POPUP_TITLE'),
+				(messageBox) => messageBox.close(),
+				BX.Loc.getMessage('SALESCENTER_SP_BUTTON_CLOSE'),
 			);
-			popup.show();
 		},
 
 		showError: function(errors)
@@ -916,67 +885,34 @@
 
 			event.action = false;
 
-			this.popup = new BX.PopupWindow(
-				"salescenter_sp_slider_close_confirmation",
-				null,
-				{
-					autoHide: false,
-					draggable: false,
-					closeByEsc: false,
-					offsetLeft: 0,
-					offsetTop: 0,
-					zIndex: event.slider.zIndex + 100,
-					bindOptions: {
-						forceBindPosition: true
-					},
-					titleBar: BX.message('SALESCENTER_SP_POPUP_TITLE'),
-					content: BX.message('SALESCENTER_SP_POPUP_CONTENT'),
-					buttons: [
-						new BX.PopupWindowButton(
-							{
-								text : BX.message('SALESCENTER_SP_POPUP_BUTTON_CLOSE'),
-								className : "ui-btn ui-btn-success",
-								events: {
-									click: BX.delegate(this.onCloseConfirmButtonClick.bind(this, 'close'))
-								}
-							}
-						),
-						new BX.PopupWindowButtonLink(
-							{
-								text : BX.message('SALESCENTER_SP_POPUP_BUTTON_CANCEL'),
-								className : "ui-btn ui-btn-link",
-								events: {
-									click: BX.delegate(this.onCloseConfirmButtonClick.bind(this, 'cancel'))
-								}
-							}
-						)
-					],
-					events: {
-						onPopupClose: function()
-						{
-							this.destroy();
-						}
-					}
-				}
+			if (this.isPopupShown)
+			{
+				return false;
+			}
+
+			BX.UI.Dialogs.MessageBox.confirm(
+				BX.Loc.getMessage('SALESCENTER_SP_POPUP_CONTENT_MSGVER_1'),
+				(messageBox) => {
+					this.isPopupShown = false;
+					this.isClose = true;
+
+					messageBox.close();
+
+					BX.SidePanel.Instance.getTopSlider().close();
+				},
+				BX.Loc.getMessage('SALESCENTER_SP_POPUP_BUTTON_CLOSE_MSGVER_1'),
+				(messageBox) => {
+					this.isPopupShown = false;
+
+					messageBox.close();
+
+					BX.SidePanel.Instance.getTopSlider().focus();
+				},
+				BX.Loc.getMessage('SALESCENTER_SP_POPUP_BUTTON_STAY'),
 			);
-			this.popup.show();
+			this.isPopupShown = true;
 
 			return false;
-		},
-
-		onCloseConfirmButtonClick: function(button)
-		{
-			this.popup.close();
-			if (BX.SidePanel.Instance.getTopSlider())
-			{
-				BX.SidePanel.Instance.getTopSlider().focus();
-			}
-
-			if(button === "close")
-			{
-				this.isClose = true;
-				BX.SidePanel.Instance.getTopSlider().close();
-			}
 		},
 
 		isObject: function(value)

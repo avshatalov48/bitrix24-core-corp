@@ -264,6 +264,9 @@ return array(
 			'crm.integration.pullmanager' => [
 				'className' => '\\Bitrix\\Crm\\Integration\\PullManager',
 			],
+			'crm.integration.intranet.toolsManager' => [
+				'className' => '\\Bitrix\\Crm\\Integration\\Intranet\\ToolsManager',
+			],
 			'crm.integration.rest.eventManager' => [
 				'className' => '\\Bitrix\\Crm\\Integration\\Rest\\EventManager',
 			],
@@ -357,7 +360,13 @@ return array(
 			],
 			'crm.filter.fieldsTransform.userBasedField' => [
 				'className' => \Bitrix\Crm\Filter\FieldsTransform\UserBasedField::class,
-			]
+			],
+			'crm.fieldContext.contextManager' => [
+				'className' => \Bitrix\Crm\FieldContext\ContextManager::class,
+			],
+			'crm.terminal.payment' => [
+				'className' => \Bitrix\Crm\Service\Sale\Terminal\PaymentService::class,
+			],
 		],
 		'readonly' => true,
 	],

@@ -1122,11 +1122,6 @@ class CDiskExternalLinkComponent extends DiskComponent
 		$securityContext = $storage->getSecurityContext($createdBy);
 
 		$zipArchive = ZipNginx\Archive::createFromFolder($folder, $securityContext);
-		if($zipArchive->isEmpty())
-		{
-			$this->errorCollection[] = new Error('Archive is empty');
-			$this->sendJsonErrorResponse();
-		}
 
 		$this->restartBuffer();
 		$zipArchive->send();

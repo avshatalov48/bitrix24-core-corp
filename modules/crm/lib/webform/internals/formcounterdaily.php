@@ -10,6 +10,7 @@ namespace Bitrix\Crm\WebForm\Internals;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\DB\SqlExpression;
 
 Loc::loadMessages(__FILE__);
 
@@ -65,38 +66,28 @@ class FormCounterDailyTable extends Entity\DataManager
 
 	public static function resetCounters(Date $date, int $formId)
 	{
-		return \Bitrix\Main\Application::getInstance()->getConnection()->query('
+		$connection = \Bitrix\Main\Application::getInstance()->getConnection();
+
+		return $connection->query('
 			DELETE FROM '.self::getTableName().'
 				WHERE FORM_ID = '.$formId.'
-				AND DATE_STAT <= "'.$date->format('Y-m-d').'"
-		');
+				AND DATE_STAT <= '.$connection->getSqlHelper()->convertToDbDate($date)
+		);
 	}
 
 	public static function incrementViews(Date $date, int $formId, int $count = 1)
 	{
-		return \Bitrix\Main\Application::getInstance()->getConnection()->query('
-			INSERT INTO '.self::getTableName().' (DATE_STAT, FORM_ID, VIEWS)
-				VALUES("'.$date->format('Y-m-d').'", '.$formId.', '. $count .')
-				ON DUPLICATE KEY UPDATE VIEWS = VIEWS + '.$count.'
-		');
+		return self::incrementFieldValue($date, $formId, 'VIEWS', $count);
 	}
 
 	public static function incrementStartFill(Date $date, int $formId, int $count = 1)
 	{
-		return \Bitrix\Main\Application::getInstance()->getConnection()->query('
-			INSERT INTO '.self::getTableName().' (DATE_STAT, FORM_ID, START_FILL)
-				VALUES("'.$date->format('Y-m-d').'", '.$formId.', '.$count.')
-				ON DUPLICATE KEY UPDATE START_FILL = START_FILL + '.$count.'
-		');
+		return self::incrementFieldValue($date, $formId, 'START_FILL', $count);
 	}
 
 	public static function incrementEndFill(Date $date, int $formId, int $count = 1)
 	{
-		return \Bitrix\Main\Application::getInstance()->getConnection()->query('
-			INSERT INTO '.self::getTableName().' (DATE_STAT, FORM_ID, END_FILL)
-				VALUES("'.$date->format('Y-m-d').'", '.$formId.', '.$count.')
-				ON DUPLICATE KEY UPDATE END_FILL = END_FILL + '.$count.'
-		');
+		return self::incrementFieldValue($date, $formId, 'END_FILL', $count);
 	}
 
 	public static function deleteByFormId(int $formId)
@@ -104,5 +95,29 @@ class FormCounterDailyTable extends Entity\DataManager
 		return \Bitrix\Main\Application::getInstance()->getConnection()->query(
 			'DELETE FROM '.self::getTableName().' WHERE FORM_ID = '.$formId
 		);
+	}
+
+	private static function incrementFieldValue(Date $date, int $formId, string $fieldName, int $count = 1)
+	{
+		$connection = \Bitrix\Main\Application::getConnection();
+		$tableName = self::getTableName();
+		$sql = $connection->getSqlHelper()->prepareMergeSelect(
+			$tableName,
+			[
+				'DATE_STAT',
+				'FORM_ID',
+			],
+			[
+				'DATE_STAT',
+				'FORM_ID',
+				$fieldName,
+			],
+			" VALUES('".$date->format('Y-m-d')."', '$formId', '$count')",
+			[
+				$fieldName => new \Bitrix\Main\DB\SqlExpression("$tableName." . '?# + ?i', $fieldName, $count)
+			]
+		);
+
+		return $connection->query($sql);
 	}
 }

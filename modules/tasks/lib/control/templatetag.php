@@ -17,16 +17,11 @@ class TemplateTag
 
 	private const FIELD_TAGS = 'TAGS';
 
-	private $userId;
-	private $templateId;
-
 	/* @var TemplateObject $template */
 	private $template;
 
-	public function __construct(int $userId, int $templateId)
+	public function __construct(private int $userId, private int $templateId)
 	{
-		$this->userId = $userId;
-		$this->templateId = $templateId;
 	}
 
 	/**

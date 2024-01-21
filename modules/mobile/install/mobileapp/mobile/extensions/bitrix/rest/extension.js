@@ -1,4 +1,7 @@
 (() => {
+	const require = jn.require;
+	const { RunActionExecutor } = require('rest/run-action-executor');
+
 	/**
 	 * @class RequestExecutor
 	 * @alias RestExecutor
@@ -25,15 +28,18 @@
 			return new Promise((resolve, reject) => {
 				this.abortCurrentRequest();
 				this.currentAnswer = null;
+
 				let cacheExists = false;
+
 				if (this.onCacheFetched && useCache)
 				{
 					if (!this.cacheId)
 					{
-						this.cacheId = Object.toMD5(this.options) + '/' + this.method;
+						this.cacheId = `${Object.toMD5(this.options)}/${this.method}`;
 					}
+
 					const cache = Application.storage.getObject(this.cacheId, null);
-					if (cache != null)
+					if (cache !== null)
 					{
 						cacheExists = true;
 						this.onCacheFetched(cache);
@@ -44,21 +50,22 @@
 				{
 					this.onRequestStart(cacheExists);
 				}
+
 				BX.rest.callMethod(this.method, this.options, null, this.onRequestCreate.bind(this))
-					.then(res => {
+					.then((res) => {
 						const result = res.answer.result;
-						if (this.cacheId && res.answer.error == null)
+
+						if (this.cacheId && !res.answer.error)
 						{
 							Application.storage.setObject(this.cacheId, result);
 						}
 
 						return this.__internalHandler(res, false, resolve);
 					})
-					.catch(res => {
+					.catch((res) => {
 						this.__internalHandler(res, false, reject);
 					});
 			});
-
 		}
 
 		callNext()
@@ -76,7 +83,6 @@
 						});
 				}
 			});
-
 		}
 
 		abortCurrentRequest()
@@ -102,6 +108,7 @@
 			if (this.hasNext())
 			{
 				const countLeft = this.currentAnswer.answer.total - this.currentAnswer.answer.next;
+
 				return countLeft > 50 ? 50 : countLeft;
 			}
 
@@ -119,7 +126,6 @@
 		}
 
 		/**
-		 *
 		 * @param ajaxAnswer
 		 * @param loadMore
 		 * @param promiseCallback
@@ -147,51 +153,52 @@
 		}
 
 		/**
-		 *
 		 * @param {function<object>} func
 		 * @returns {RequestExecutor}
 		 */
 		setHandler(func)
 		{
 			this.handler = func;
+
 			return this;
 		}
 
 		/**
-		 *
 		 * @param {function<object>} func
 		 * @returns {RequestExecutor}
 		 */
 		setCacheHandler(func)
 		{
 			this.onCacheFetched = func;
+
 			return this;
 		}
 
 		/**
-		 *
 		 * @param {function<object>} func
 		 * @returns {RequestExecutor}
 		 */
 		setStartRequestHandler(func)
 		{
 			this.onRequestStart = func;
+
 			return this;
 		}
 
 		/**
-		 *
 		 * @param {String} id
 		 */
 		setCacheId(id)
 		{
 			this.cacheId = id;
+
 			return this;
 		}
 
 		setOptions(options = {})
 		{
 			this.options = options;
+
 			return this;
 		}
 	}
@@ -232,48 +239,46 @@
 		call()
 		{
 			this.abortCurrentRequest();
+
 			return new Promise((resolve, reject) => {
 				this.timeoutId = setTimeout(() => super.call().then().catch(reject), this.delay);
 			});
-
 		}
 	}
 
-	const ActionPromiseWrapper = promise => {
-		return new Promise((resolve, reject) =>
-			promise
-				.then(result => {
-					if (result['status'] === 'error')
-					{
-						reject(result);
-					}
-					else
-					{
-						resolve(result);
-					}
-				})
-				.catch(result => {
-					if (result && result.status && result.hasOwnProperty('data'))
-					{
-						reject(result);
-					}
-					else
-					{
-						reject({
-							status: 'error',
-							data: {
-								ajaxRejectData: result,
+	const ActionPromiseWrapper = (promise) => {
+		return new Promise((resolve, reject) => promise
+			.then((result) => {
+				if (result.status === 'error')
+				{
+					reject(result);
+				}
+				else
+				{
+					resolve(result);
+				}
+			})
+			.catch((result) => {
+				if (result && result.status && result.hasOwnProperty('data'))
+				{
+					reject(result);
+				}
+				else
+				{
+					reject({
+						status: 'error',
+						data: {
+							ajaxRejectData: result,
+						},
+						errors: [
+							{
+								code: 'NETWORK_ERROR',
+								message: 'Network error',
 							},
-							errors: [
-								{
-									code: 'NETWORK_ERROR',
-									message: 'Network error',
-								},
-							],
-						});
-					}
-				}),
-		);
+						],
+					});
+				}
+			}));
 	};
 
 	/**
@@ -299,13 +304,11 @@
 	 * @param {function} [config.onCreate]
 	 */
 	BX.ajax.runAction = (action, config = {}) => {
-
 		const getParameters = prepareAjaxGetParameters(config);
 		getParameters.action = action;
 
-		const onCreate = typeof config['onCreate'] === 'function' ? config['onCreate'] : () => {
-		};
-		const url = '/bitrix/services/main/ajax.php?' + BX.ajax.prepareData(getParameters, null, false);
+		const onCreate = typeof config.onCreate === 'function' ? config.onCreate : () => {};
+		const url = `/bitrix/services/main/ajax.php?${BX.ajax.prepareData(getParameters, null, false)}`;
 		let prepareData = true;
 
 		if (typeof config.prepareData !== 'undefined')
@@ -322,19 +325,19 @@
 		}
 
 		config = {
-			url: url,
+			url,
 			method: 'POST',
 			uploadBinary: Boolean(config.binary),
 			dataType: 'json',
 			data: config.data,
 			headers: config.headers,
-			onUploadProgress: config.onprogressupload || function() {
-			},
-			prepareData: prepareData,
+			onUploadProgress: config.onprogressupload || function() {},
+			prepareData,
 		};
 
 		const ajaxPromise = BX.ajax(config);
 		onCreate(config.xhr);
+
 		return ActionPromiseWrapper(ajaxPromise);
 	};
 
@@ -358,8 +361,8 @@
 		const getParameters = prepareAjaxGetParameters(config);
 		getParameters.action = action;
 		getParameters.c = component;
-		const onCreate = typeof config['onCreate'] === 'function' ? config['onCreate'] : () => {};
-		const url = '/bitrix/services/main/ajax.php?' + BX.ajax.prepareData(
+		const onCreate = typeof config.onCreate === 'function' ? config.onCreate : () => {};
+		const url = `/bitrix/services/main/ajax.php?${BX.ajax.prepareData(
 			getParameters,
 			null,
 			/**
@@ -369,9 +372,9 @@
 			 * Until we are passing URL here without domain here we are safe to not encode parameters
 			 */
 			false,
-		);
+		)}`;
 		config = {
-			url: url,
+			url,
 			method: 'POST',
 			dataType: 'json',
 			data: config.data,
@@ -379,12 +382,13 @@
 
 		const ajaxPromise = BX.ajax(config);
 		onCreate(config.xhr);
+
 		return ActionPromiseWrapper(ajaxPromise);
 	};
 
 	BX.ajax.prepareData = (originalData, prefix, encode = true) => {
 		let data = '';
-		if (null !== originalData)
+		if (originalData !== null)
 		{
 			for (const paramName in originalData)
 			{
@@ -397,19 +401,21 @@
 					let name = encode ? encodeURIComponent(paramName) : paramName;
 					if (prefix)
 					{
-						name = prefix + '[' + name + ']';
+						name = `${prefix}[${name}]`;
 					}
+
 					if (typeof originalData[paramName] === 'object')
 					{
 						data += BX.ajax.prepareData(originalData[paramName], name, encode);
 					}
 					else
 					{
-						data += name + '=' + (encode ? encodeURIComponent(originalData[paramName]) : originalData[paramName]);
+						data += `${name}=${encode ? encodeURIComponent(originalData[paramName]) : originalData[paramName]}`;
 					}
 				}
 			}
 		}
+
 		return data;
 	};
 
@@ -434,10 +440,10 @@
 		{
 			if (config.navigation.page)
 			{
-				getParameters.nav = 'page-' + config.navigation.page;
+				getParameters.nav = `page-${config.navigation.page}`;
 			}
 
-			if (config.navigation.size)
+			if (config.navigation.size > 0)
 			{
 				if (getParameters.nav)
 				{
@@ -447,170 +453,12 @@
 				{
 					getParameters.nav = '';
 				}
-				getParameters.nav += 'size-' + config.navigation.size;
+				getParameters.nav += `size-${config.navigation.size}`;
 			}
 		}
 
 		return getParameters;
 	};
-
-	/**
-	 * @class RunActionExecutor
-	 */
-	class RunActionExecutor
-	{
-		constructor(action, options, navigation = {})
-		{
-			this.action = action;
-			this.options = options || {};
-			this.navigation = navigation || {};
-			this.handler = null;
-			/**
-			 *
-			 * @type {function}
-			 */
-			this.onCacheFetched = null;
-			this.cacheId = null;
-			this.uid = null;
-			this.jsonEnabled = false;
-		}
-
-		enableJson()
-		{
-			this.jsonEnabled = true;
-
-			return this;
-		}
-
-		call(useCache = false)
-		{
-			this.abortCurrentRequest();
-			if (this.onCacheFetched)
-			{
-				if (!this.cacheId)
-				{
-					this.cacheId = Object.toMD5(this.options) + '/' + Object.toMD5(this.navigation) + '/' + this.action;
-				}
-				if (useCache)
-				{
-					const cache = Application.storage.getObject(this.cacheId, null);
-					if (cache !== null)
-					{
-						this.onCacheFetched(cache, this.uid);
-					}
-				}
-			}
-
-			const dataKey = this.jsonEnabled ? 'json' : 'data';
-
-			BX.ajax.runAction(this.action, {
-					[dataKey]: this.options,
-					navigation: this.navigation,
-					onCreate: this.onRequestCreate.bind(this),
-				})
-				.then(response => {
-					if (this.cacheId && (!response.errors || response.errors.length === 0))
-					{
-						Application.storage.setObject(this.cacheId, response);
-					}
-					return this.__internalHandler(response);
-				})
-				.catch(response => this.__internalHandler(response));
-		}
-
-		abortCurrentRequest()
-		{
-			if (this.currentAjaxObject != null)
-			{
-				this.currentAjaxObject.abort();
-			}
-		}
-
-		onRequestCreate(ajax)
-		{
-			this.currentAjaxObject = ajax;
-		}
-
-		/**
-		 *
-		 * @param ajaxAnswer
-		 * @private
-		 */
-		__internalHandler(ajaxAnswer)
-		{
-			if (typeof this.handler === 'function')
-			{
-				this.handler(ajaxAnswer, this.uid);
-			}
-		}
-
-		/**
-		 *
-		 * @param {function<object>} func
-		 * @returns {RunActionExecutor}
-		 */
-		setHandler(func)
-		{
-			this.handler = func;
-			return this;
-		}
-
-		/**
-		 *
-		 * @param {function<object>} func
-		 * @returns {RunActionExecutor}
-		 */
-		setCacheHandler(func)
-		{
-			this.onCacheFetched = func;
-			return this;
-		}
-
-		/**
-		 *
-		 * @param {String} id
-		 */
-		setCacheId(id)
-		{
-			this.cacheId = id;
-			return this;
-		}
-
-		/**
-		 * @param {String} uid
-		 */
-		setUid(uid)
-		{
-			this.uid = uid;
-
-			return this;
-		}
-
-		getUid()
-		{
-			return this.uid;
-		}
-
-		updateOptions(options = null)
-		{
-			if (options != null && typeof options === 'object')
-			{
-				this.options = Object.assign(this.options, options);
-			}
-
-			return this;
-		}
-
-		updateNavigation(navigation = null)
-		{
-			if (navigation !== null && typeof navigation === 'object')
-			{
-				this.navigation = Object.assign(this.navigation, navigation);
-			}
-
-			return this;
-		}
-	}
 
 	/**
 	 * @class RunActionDelayedExecutor
@@ -644,5 +492,13 @@
 		DelayedRestRequest,
 		[RequestExecutor, 'RestExecutor'],
 	);
-
 })();
+
+/**
+ * @module rest
+ */
+jn.define('rest', (require, exports, module) => {
+	module.exports = {
+		RequestExecutor: this.RequestExecutor,
+	};
+});

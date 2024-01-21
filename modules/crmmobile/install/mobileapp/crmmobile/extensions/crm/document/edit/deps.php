@@ -5,6 +5,7 @@ return [
 		'rest',
 		'loc',
 		'alert',
+		'apptheme',
 		'utils/object',
 		'utils/hash',
 		'utils/function',

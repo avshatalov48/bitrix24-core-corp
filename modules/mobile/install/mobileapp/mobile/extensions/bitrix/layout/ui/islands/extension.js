@@ -2,13 +2,14 @@
  * @module layout/ui/islands
  */
 jn.define('layout/ui/islands', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 
 	function Container(...children)
 	{
 		return View(
 			{
 				style: {
-					backgroundColor: '#eef2f4',
+					backgroundColor: AppTheme.colors.bgPrimary,
 				},
 				resizableByKeyboard: true,
 			},
@@ -34,7 +35,7 @@ jn.define('layout/ui/islands', (require, exports, module) => {
 				style: {
 					padding: 16,
 					paddingTop: 0,
-					backgroundColor: '#ffffff',
+					backgroundColor: AppTheme.colors.bgContentPrimary,
 					borderRadius: 12,
 					marginBottom: 12,
 				},
@@ -47,7 +48,7 @@ jn.define('layout/ui/islands', (require, exports, module) => {
 	{
 		return Text({
 			style: {
-				color: '#333333',
+				color: AppTheme.colors.base1,
 				fontWeight: 'bold',
 				fontSize: 16,
 				width: '100%',

@@ -17,7 +17,8 @@
 		'#ffe600',
 		'#5d5f74',
 	];
-
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
 	/**
 	 * @class UI.ColorPicker
 	 */
@@ -35,7 +36,14 @@
 
 		getCurrentColor()
 		{
-			return BX.prop.getString(this.props, 'currentColor', null);
+			const currentColor = BX.prop.getString(this.props, 'currentColor', null);
+
+			if (currentColor)
+			{
+				return currentColor.toLowerCase();
+			}
+
+			return currentColor;
 		}
 
 		getColors()
@@ -45,7 +53,14 @@
 				return [...this.getColorsFromProps(), ...ColorPalette];
 			}
 
-			return [this.getCurrentColor(), ...this.getColorsFromProps(), ...ColorPalette];
+			const currentColor = this.getCurrentColor();
+
+			if (currentColor)
+			{
+				return [this.getCurrentColor(), ...this.getColorsFromProps(), ...ColorPalette];
+			}
+
+			return [...this.getColorsFromProps(), ...ColorPalette];
 		}
 
 		isDefaultColor()
@@ -137,28 +152,19 @@
 				{
 					style: styles.menuButton(this.isMenuColor()),
 					onClick: () => {
-						PageManager.openWidget('layout', {
-							modal: true,
-							backdrop: {
-								mediumPositionPercent: 65,
-								horizontalSwipeAllowed: false,
+						UI.ColorMenu.open(
+							{
+								currentColor: this.state.currentColor,
+								onChangeColor: (color) => {
+									this.setState({
+										currentColor: color,
+									}, () => {
+										this.onChangeColor();
+									});
+								},
 							},
-							onReady: (layoutWidget) => {
-								layoutWidget.showComponent(
-									new UI.ColorMenu({
-										layoutWidget,
-										currentColor: this.state.currentColor,
-										onChangeColor: (color) => {
-											this.setState({
-												currentColor: color,
-											}, () => {
-												this.onChangeColor();
-											});
-										},
-									}),
-								);
-							},
-						});
+							this.props.layout,
+						);
 					},
 				},
 				View(
@@ -187,12 +193,12 @@
 		colorPickerContainer: {
 			flexDirection: 'column',
 			borderRadius: 12,
-			backgroundColor: '#ffffff',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			paddingTop: 10,
 			paddingBottom: 16,
 		},
 		colorPickerTitle: {
-			color: '#525c69',
+			color: AppTheme.colors.base1,
 			fontSize: 15,
 			fontWeight: '500',
 			marginBottom: 9,
@@ -209,9 +215,9 @@
 		colorPaletteContainer: (currentColor, color, index) => ({
 			marginRight: 2,
 			marginLeft: index === 0 ? 20 : 0,
-			backgroundColor: '#ffffff',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			borderWidth: 3,
-			borderColor: currentColor === color ? '#2fc6f6' : '#ffffff',
+			borderColor: currentColor === color ? AppTheme.colors.accentBrandBlue : AppTheme.colors.bgContentPrimary,
 			borderRadius: 25,
 			justifyContent: 'center',
 			alignItems: 'center',
@@ -226,9 +232,9 @@
 		}),
 		menuButton: (isDefaultColor) => ({
 			marginRight: 20,
-			backgroundColor: '#ffffff',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			borderWidth: 3,
-			borderColor: isDefaultColor ? '#2fc6f6' : '#ffffff',
+			borderColor: isDefaultColor ? AppTheme.colors.accentBrandBlue : AppTheme.colors.bgContentPrimary,
 			borderRadius: 25,
 			justifyContent: 'center',
 			alignItems: 'center',
@@ -239,7 +245,7 @@
 			width: 30,
 			height: 30,
 			borderRadius: 15,
-			backgroundColor: '#56fb7d',
+			backgroundColor: AppTheme.colors.accentBrandGreen,
 			justifyContent: 'center',
 			alignItems: 'center',
 		},

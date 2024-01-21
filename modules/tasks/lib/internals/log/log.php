@@ -8,9 +8,12 @@
 
 namespace Bitrix\Tasks\Internals\Log;
 
+use Bitrix\Main\Loader;
+use Exception;
+
 class Log
 {
-	private const DEFAULT_MARKER = 'DEBUG_TASKS';
+	public const DEFAULT_MARKER = 'DEBUG_TASKS';
 
 	private $marker;
 	private $currentPortal = '';
@@ -21,10 +24,6 @@ class Log
 		$this->marker = $marker;
 	}
 
-	/**
-	 * @param string|array $portal
-	 * @return $this
-	 */
 	public function addPortals($portals): self
 	{
 		if (is_string($portals))
@@ -48,7 +47,7 @@ class Log
 	{
 		try
 		{
-			if (!\Bitrix\Main\Loader::includeModule('intranet'))
+			if (!Loader::includeModule('intranet'))
 			{
 				return $this;
 			}
@@ -57,17 +56,13 @@ class Log
 
 			$this->checkPortal() && $this->save($data);
 		}
-		catch (\Exception $e)
+		catch (Exception)
 		{
 			return $this;
 		}
 		return $this;
 	}
 
-	/**
-	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
-	 */
 	private function checkPortal(): bool
 	{
 		if (!$this->currentPortal)
@@ -83,10 +78,7 @@ class Log
 		return in_array($this->currentPortal, $this->portals);
 	}
 
-	/**
-	 * @param $data
-	 */
-	private function save($data)
+	private function save($data): void
 	{
 		if (!is_scalar($data))
 		{

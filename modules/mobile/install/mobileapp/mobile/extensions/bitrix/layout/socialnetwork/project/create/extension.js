@@ -1,4 +1,8 @@
 (() => {
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
+	const LoadingScreenComponent = require('layout/ui/loading-screen');
+
 	class ProjectCreate extends LayoutComponent
 	{
 		static get projectTypes()
@@ -57,7 +61,7 @@
 		getGuid()
 		{
 			const s4 = function() {
-				return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+				return Math.floor((1 + Math.random()) * 0x10000).toString(16).slice(1);
 			};
 
 			return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
@@ -70,7 +74,7 @@
 				this.getUploadedFilesFolder(),
 				this.getSubjects(),
 				this.getOwnerData(),
-			]).then(() => this.setState({showLoading: false}));
+			]).then(() => this.setState({ showLoading: false })).catch(console.error);
 		}
 
 		getAvatarDefaultTypes()
@@ -83,10 +87,9 @@
 				(new RequestExecutor('socialnetwork.api.workgroup.getAvatarTypes'))
 					.call()
 					.then((response) => {
-						this.setState({avatarDefaultTypes: response.result});
+						this.setState({ avatarDefaultTypes: response.result });
 						resolve();
-					})
-				;
+					}).catch(console.error);
 			});
 		}
 
@@ -100,10 +103,9 @@
 				(new RequestExecutor('mobile.disk.getUploadedFilesFolder'))
 					.call()
 					.then((response) => {
-						this.setState({userUploadedFilesFolder: response.result});
+						this.setState({ userUploadedFilesFolder: response.result });
 						resolve();
-					})
-				;
+					}).catch(console.error);
 			});
 		}
 
@@ -117,10 +119,9 @@
 				(new RequestExecutor('sonet_group_subject.get'))
 					.call()
 					.then((response) => {
-						this.setState({subjects: response.result});
+						this.setState({ subjects: response.result });
 						resolve();
-					})
-				;
+					}).catch(console.error);
 			});
 		}
 
@@ -131,7 +132,7 @@
 				{
 					return resolve();
 				}
-				(new RequestExecutor('mobile.user.get', {filter: {ID: this.state.userId}}))
+				(new RequestExecutor('mobile.user.get', { filter: { ID: this.state.userId } }))
 					.call()
 					.then((response) => {
 						const user = response.result[0];
@@ -143,8 +144,7 @@
 							},
 						});
 						resolve();
-					})
-				;
+					}).catch(console.error);
 			});
 		}
 
@@ -154,75 +154,73 @@
 			{
 				return View({}, new LoadingScreenComponent());
 			}
-			else
-			{
-				return View(
+
+			return View(
+				{
+					resizableByKeyboard: true,
+					style: {
+						flex: 1,
+						backgroundColor: AppTheme.colors.bgSecondary,
+					},
+				},
+				ScrollView(
 					{
-						resizableByKeyboard: true,
 						style: {
 							flex: 1,
-							backgroundColor: '#eef2f4',
+							borderRadius: 12,
+							marginBottom: 15,
 						},
+						bounces: false,
+						showsVerticalScrollIndicator: true,
 					},
-					ScrollView(
-						{
-							style: {
-								flex: 1,
-								borderRadius: 12,
-								marginBottom: 15,
-							},
-							bounces: false,
-							showsVerticalScrollIndicator: true,
-						},
+					View(
+						{},
 						View(
-							{},
-							View(
-								{
-									style: {
-										backgroundColor: '#ffffff',
-										borderRadius: 12,
-										paddingVertical: 5,
-										paddingHorizontal: 15,
-									},
+							{
+								style: {
+									backgroundColor: AppTheme.colors.bgContentPrimary,
+									borderRadius: 12,
+									paddingVertical: 5,
+									paddingHorizontal: 15,
 								},
-								FieldsWrapper({
-									fields: [
-										new ProjectNameField({
-											value: this.state.name,
-											focus: true,
-											onChange: text => this.setState({name: text}),
-										}),
-										new ProjectAvatarField({
-											userId: this.state.userId,
-											guid: this.state.guid,
-											value: this.state.avatarSelected,
-											loaded: this.state.avatarPreview,
-											isLoading: this.state.avatarIsLoading,
-											defaultImages: this.state.avatarDefaultTypes,
-											userUploadedFilesFolder: this.state.userUploadedFilesFolder,
-											onChange: (selected, loaded, isLoading, diskFileId) => {
-												this.setState({
-													avatarPreview: (loaded || this.state.avatarPreview),
-													avatarSelected: selected,
-													avatarIsLoading: (typeof isLoading === 'boolean' ? isLoading : this.state.avatarIsLoading),
-													avatarFileId: diskFileId,
-												});
-											},
-										}),
-										new ProjectTypeField({
-											value: this.state.type,
-											parentWidget: this.layoutWidget,
-											onChange: (id, title) => this.setState({type: id}),
-										}),
-									],
-								}),
-							),
-							this.renderAdvancedSettingsButton(),
-							this.renderAdvancedSettingsFilledFields(),
+							},
+							FieldsWrapper({
+								fields: [
+									new ProjectNameField({
+										value: this.state.name,
+										focus: true,
+										onChange: (text) => this.setState({ name: text }),
+									}),
+									new ProjectAvatarField({
+										userId: this.state.userId,
+										guid: this.state.guid,
+										value: this.state.avatarSelected,
+										loaded: this.state.avatarPreview,
+										isLoading: this.state.avatarIsLoading,
+										defaultImages: this.state.avatarDefaultTypes,
+										userUploadedFilesFolder: this.state.userUploadedFilesFolder,
+										onChange: (selected, loaded, isLoading, diskFileId) => {
+											this.setState({
+												avatarPreview: (loaded || this.state.avatarPreview),
+												avatarSelected: selected,
+												avatarIsLoading: (typeof isLoading === 'boolean' ? isLoading : this.state.avatarIsLoading),
+												avatarFileId: diskFileId,
+											});
+										},
+									}),
+									new ProjectTypeField({
+										value: this.state.type,
+										parentWidget: this.layoutWidget,
+										onChange: (id, title) => this.setState({ type: id }),
+									}),
+								],
+							}),
 						),
+						this.renderAdvancedSettingsButton(),
+						this.renderAdvancedSettingsFilledFields(),
 					),
-				);
-			}
+				),
+			);
 		}
 
 		renderAdvancedSettingsButton()
@@ -246,19 +244,21 @@
 								ownerData: this.state.ownerData,
 								moderatorsData: this.state.moderatorsData,
 								tags: this.state.tags,
-								onFieldsSave: fields => this.setState(fields),
+								onFieldsSave: (fields) => this.setState(fields),
 							},
-							this.layoutWidget
+							this.layoutWidget,
 						);
 					},
 				},
 				BBCodeText({
 					style: {
 						fontSize: 13,
-						color: '#bdc1c6',
+						color: AppTheme.colors.base5,
 					},
-					value: `[d type=dot color=#bdc1c6]${BX.message('MOBILE_LAYOUT_PROJECT_CREATE_ADVANCED_SETTINGS_BUTTON')}[/d]`,
-				})
+					value: `[d type=dot color=#bdc1c6]${BX.message(
+						'MOBILE_LAYOUT_PROJECT_CREATE_ADVANCED_SETTINGS_BUTTON',
+					)}[/d]`,
+				}),
 			);
 		}
 
@@ -298,15 +298,14 @@
 					message: BX.message('MOBILE_LAYOUT_PROJECT_CREATE_ADVANCED_SETTINGS_FILLED_FIELDS_INITIATE_PERMS'),
 				},
 			};
-			const filledFields =
-				Object.values(fields).reduce((result, field) => {
-					if (!field.isEmpty)
-					{
-						result.push(field.message);
-					}
-					return result;
-				}, []).join(', ')
-			;
+			const filledFields = Object.values(fields).reduce((result, field) => {
+				if (!field.isEmpty)
+				{
+					result.push(field.message);
+				}
+
+				return result;
+			}, []).join(', ');
 
 			return View(
 				{
@@ -318,14 +317,18 @@
 				Text({
 					style: {
 						fontSize: 13,
-						color: '#a8adb4',
+						color: AppTheme.colors.base4,
 					},
-					text: BX.message('MOBILE_LAYOUT_PROJECT_CREATE_ADVANCED_SETTINGS_FILLED_FIELDS').replace('#FIELDS#', filledFields),
+					text: BX.message('MOBILE_LAYOUT_PROJECT_CREATE_ADVANCED_SETTINGS_FILLED_FIELDS').replace(
+						'#FIELDS#',
+						filledFields,
+					),
 				}),
 			);
 		}
 
-		close(callback = () => {})
+		close(callback = () => {
+		})
 		{
 			if (this.layoutWidget)
 			{
@@ -338,7 +341,7 @@
 			return {
 				name: BX.message('MOBILE_LAYOUT_PROJECT_CREATE_HEADER_BUTTON_NEXT'),
 				callback: this.onNextButtonClick.bind(this),
-				color: '#0b66c3',
+				color: AppTheme.colors.accentMainLinks,
 			};
 		}
 
@@ -355,14 +358,17 @@
 					text: BX.message('MOBILE_LAYOUT_PROJECT_CREATE_ERROR_NO_TITLE'),
 					hideAfter: 3000,
 				});
+
 				return;
 			}
+
 			if (this.state.avatarSelected === 'loaded' && this.state.avatarIsLoading)
 			{
 				Notify.showIndicatorError({
 					text: BX.message('MOBILE_LAYOUT_PROJECT_CREATE_ERROR_AVATAR_IS_UPLOADING'),
 					hideAfter: 3000,
 				});
+
 				return;
 			}
 
@@ -370,11 +376,11 @@
 				title: BX.message('MOBILE_LAYOUT_PROJECT_CREATE_HEADER_TITLE_ADD_MEMBERS'),
 			}).then((selector) => {
 				let items = [];
-				selector.on('onSelectedChanged', data => items = data.items);
+				selector.on('onSelectedChanged', (data) => items = data.items);
 				selector.setRightButtons([
 					{
 						name: BX.message('MOBILE_LAYOUT_PROJECT_CREATE_HEADER_BUTTON_CREATE'),
-						color: '#0b66c3',
+						color: AppTheme.colors.accentMainLinks,
 						callback: () => {
 							if (this.isCreating)
 							{
@@ -400,7 +406,7 @@
 										this.isCreating = false;
 										this.layoutWidget.back();
 									}, 3000);
-								}
+								},
 							);
 						},
 					},
@@ -459,25 +465,24 @@
 		{
 			return new Promise((resolve, reject) => {
 				(new RequestExecutor('sonet_group.create', {
-					...{
-						NAME: fields.name,
-						DESCRIPTION: fields.description,
-						IMAGE_FILE_ID: (fields.avatarSelected === 'loaded' ? fields.avatarFileId : null),
-						AVATAR_TYPE: (fields.avatarSelected === 'loaded' ? null : fields.avatarSelected),
-						PROJECT: 'Y',
-						GROUP_THEME_ID: '',
-						SUBJECT_ID: (fields.subject || null),
-						PROJECT_DATE_START: (fields.dateStart ? new Date(fields.dateStart * 1000).toISOString() : null),
-						PROJECT_DATE_FINISH: (fields.dateFinish ? new Date(fields.dateFinish * 1000).toISOString() : null),
-						INITIATE_PERMS: fields.initiatePerms,
-						KEYWORDS: fields.tags.join(','),
-					},
+
+					NAME: fields.name,
+					DESCRIPTION: fields.description,
+					IMAGE_FILE_ID: (fields.avatarSelected === 'loaded' ? fields.avatarFileId : null),
+					AVATAR_TYPE: (fields.avatarSelected === 'loaded' ? null : fields.avatarSelected),
+					PROJECT: 'Y',
+					GROUP_THEME_ID: '',
+					SUBJECT_ID: (fields.subject || null),
+					PROJECT_DATE_START: (fields.dateStart ? new Date(fields.dateStart * 1000).toISOString() : null),
+					PROJECT_DATE_FINISH: (fields.dateFinish ? new Date(fields.dateFinish * 1000).toISOString() : null),
+					INITIATE_PERMS: fields.initiatePerms,
+					KEYWORDS: fields.tags.join(','),
 					...Action.typeToFields(fields.type),
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response)
+						(response) => resolve(response),
+						(response) => reject(response),
 					)
 				;
 			});
@@ -485,9 +490,9 @@
 
 		static inviteMembers(moderators, members, projectId)
 		{
-			const moderatorsIds = moderators.map(item => item.id);
-			const users = members.filter(item => item.params.type === 'user').map(item => item.params.id);
-			const departments = members.filter(item => item.params.type === 'department').map(item => item.params.id);
+			const moderatorsIds = moderators.map((item) => item.id);
+			const users = members.filter((item) => item.params.type === 'user').map((item) => item.params.id);
+			const departments = members.filter((item) => item.params.type === 'department').map((item) => item.params.id);
 
 			return Promise.allSettled([
 				Action.inviteModerators(moderatorsIds, projectId),
@@ -505,10 +510,9 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response)
-					)
-				;
+						(response) => resolve(response),
+						(response) => reject(response),
+					).catch(console.error);
 			});
 		}
 
@@ -522,8 +526,8 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response)
+						(response) => resolve(response),
+						(response) => reject(response),
 					)
 				;
 			});
@@ -538,10 +542,9 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response)
-					)
-				;
+						(response) => resolve(response),
+						(response) => reject(response),
+					).catch(console.error);
 			});
 		}
 
@@ -559,10 +562,9 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response)
-					)
-				;
+						(response) => resolve(response),
+						(response) => reject(response),
+					).catch(console.error);
 			});
 		}
 
@@ -597,26 +599,27 @@
 	{
 		static open(userId)
 		{
-			const projectCreate = new ProjectCreate({userId});
+			const projectCreate = new ProjectCreate({ userId });
 
 			PageManager.openWidget('layout', {
+				backgroundColor: AppTheme.colors.bgSecondary,
 				backdrop: {
 					bounceEnable: true,
 					swipeAllowed: true,
 					showOnTop: true,
 					hideNavigationBar: false,
 					horizontalSwipeAllowed: false,
-					navigationBarColor: '#eef2f4',
+					navigationBarColor: AppTheme.colors.bgSecondary,
 				},
 				onReady: (layoutWidget) => {
-					layoutWidget.setTitle({text: BX.message('MOBILE_LAYOUT_PROJECT_CREATE_HEADER_TITLE_CREATE')});
+					layoutWidget.setTitle({ text: BX.message('MOBILE_LAYOUT_PROJECT_CREATE_HEADER_TITLE_CREATE') });
 					layoutWidget.setRightButtons([projectCreate.getNextButton()]);
 					layoutWidget.enableNavigationBarBorder(false);
 					layoutWidget.showComponent(projectCreate);
 
 					projectCreate.layoutWidget = layoutWidget;
 				},
-				onError: error => reject(error),
+				onError: console.error,
 			});
 		}
 	}

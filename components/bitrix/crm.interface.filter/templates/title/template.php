@@ -109,6 +109,8 @@ if (isset($arParams['~FILTER']) && is_array($arParams['~FILTER']))
 }
 //endregion
 
+$APPLICATION->includeComponent('bitrix:crm.filterdependent.wrapper', '');
+
 //region Filter Navigation Bar
 $isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
 $navigationBarId = htmlspecialcharsbx("{$filterIDLc}_nav_bar");

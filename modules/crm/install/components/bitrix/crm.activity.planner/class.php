@@ -5,6 +5,7 @@ use Bitrix\Crm\Integration;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\Emoji;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -86,6 +87,15 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 	protected function getStorageElementIds()
 	{
 		return (isset($this->arParams['STORAGE_ELEMENT_IDS']) && is_array($this->arParams['STORAGE_ELEMENT_IDS'])) ? $this->arParams['STORAGE_ELEMENT_IDS'] : [];
+	}
+
+	protected function getCommunications(): array
+	{
+		return (
+			(isset($this->arParams['COMMUNICATIONS']) && is_array($this->arParams['COMMUNICATIONS']))
+				? $this->arParams['COMMUNICATIONS']
+				: []
+		);
 	}
 
 	protected function getActivityData(): array
@@ -340,6 +350,7 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 				'PROVIDER_TYPE_ID' => $this->getProviderTypeId(),
 				'STORAGE_TYPE_ID' => $this->getStorageTypeId(),
 				'STORAGE_ELEMENT_IDS' => $this->getStorageElementIds(),
+				'COMMUNICATIONS' => $this->getCommunications(),
 			);
 
 			if($this->getAssociatedEntityId() > 0)
@@ -479,10 +490,7 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 
 						$activity['DESCRIPTION'] = $fromActivity['DESCRIPTION'];
 						$activity['DESCRIPTION_TYPE'] = $fromActivity['DESCRIPTION_TYPE'];
-						$activity['DESCRIPTION_HTML'] = $this->makeDescriptionHtml(
-							$fromActivity['DESCRIPTION'],
-							$fromActivity['DESCRIPTION_TYPE']
-						);
+						$activity['DESCRIPTION_HTML'] = $this->makeDescriptionHtml($fromActivity);
 					}
 					if ($activity['TYPE_ID'] == CCrmActivityType::Meeting)
 						$activity['LOCATION'] = $fromActivity['LOCATION'];
@@ -501,6 +509,14 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 						}
 					}
 				}
+			}
+			elseif (
+				!empty($this->arParams['COMMUNICATIONS'])
+				&& is_array($this->arParams['COMMUNICATIONS'])
+				&& empty($activity['COMMUNICATIONS'])
+			)
+			{
+				$activity['COMMUNICATIONS'] = $this->arParams['COMMUNICATIONS'];
 			}
 		}
 		$this->getActivityAdditionalData($activityId, $activity, $provider);
@@ -588,10 +604,7 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 			Activity\Provider\Email::uncompressActivity($activity);
 		}
 
-		$activity['DESCRIPTION_HTML'] = $this->makeDescriptionHtml(
-			$activity['DESCRIPTION'],
-			$activity['DESCRIPTION_TYPE']
-		);
+		$activity += $this->getHtmlDescriptionFields($activity);
 		$activity['COMMUNICATIONS'] = $this->prepareCommunicationsForView($activity['COMMUNICATIONS']);
 
 		$this->arResult['COMMUNICATIONS'] = $activity['COMMUNICATIONS'];
@@ -626,7 +639,7 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 			$this->arResult['IS_SLIDER_ENABLED'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
 		}
 
-		if(isset($this->arResult['ACTIVITY']['SUBJECT'])) $this->arResult['ACTIVITY']['SUBJECT'] = \Bitrix\Main\Text\Emoji::decode($this->arResult['ACTIVITY']['SUBJECT']);
+		if(isset($this->arResult['ACTIVITY']['SUBJECT'])) $this->arResult['ACTIVITY']['SUBJECT'] = Emoji::decode($this->arResult['ACTIVITY']['SUBJECT']);
 
 		$this->includeComponentTemplate($template);
 	}
@@ -1256,10 +1269,30 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 			return $result;
 		}
 
+		$isNew = ($ID <= 0);
+
 		if($provider::checkOwner() && !CCrmActivity::CheckUpdatePermission($ownerTypeID, $ownerId))
 		{
 			$result->addError(new Main\Error(Loc::getMessage('CRM_ACTIVITY_PLANNER_NO_UPDATE_PERMISSION')));
 			return $result;
+		}
+		if (!$provider::checkOwner())
+		{
+			$fieldsToCheckPermissions = $activity;
+			if ($isNew)
+			{
+				$providerFormResult = $provider::postForm($fieldsToCheckPermissions, $data);
+				if (!$providerFormResult->isSuccess())
+				{
+					return $providerFormResult;
+				}
+			}
+
+			if (!$provider::checkUpdatePermission($fieldsToCheckPermissions))
+			{
+				$result->addError(new Main\Error(Loc::getMessage('CRM_ACTIVITY_PLANNER_NO_UPDATE_PERMISSION')));
+				return $result;
+			}
 		}
 
 		$responsibleID = isset($data['responsibleId']) ? intval($data['responsibleId']) : 0;
@@ -1335,7 +1368,6 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 		$arFields['NOTIFY_TYPE'] = isset($data['notifyType']) ? (int)$data['notifyType'] : CCrmActivityNotifyType::Min;
 		$arFields['NOTIFY_VALUE'] = isset($data['notifyValue']) ? (int)$data['notifyValue'] : 15;
 
-		$isNew = $ID <= 0;
 		$arPreviousFields = $ID > 0 ? CCrmActivity::GetByID($ID) : array();
 
 		$disableStorageEdit = isset($data['disableStorageEdit']) && mb_strtoupper($data['disableStorageEdit']) === 'Y';
@@ -1922,24 +1954,58 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 
 		return $communications;
 	}
-	private function makeDescriptionHtml($description, $type)
+
+	/**
+	 * Make html description from activity fields
+	 *
+	 * @param array $activity Activity fields
+	 *
+	 * @return string
+	 */
+	private function makeDescriptionHtml(array $activity): string
 	{
-		$type = (int)$type;
-		if($type === CCrmContentType::BBCode)
+		$html = '';
+		if (Activity\Provider\Email::isSanitizingCanBeLong($activity))
 		{
-			$bbCodeParser = new CTextParser();
-			$html = $bbCodeParser->convertText($description);
+			$html = (new Activity\Mail\SanitizedDescriptionCache())->get($activity['ID']);
 		}
-		elseif($type === CCrmContentType::Html)
+		if (!$html)
 		{
-			//Already sanitaized
-			$html = $description;
+			$html = Activity\Provider\Email::getDescriptionHtmlByActivityFields($activity);
 		}
-		else//CCrmContentType::PlainText and other
+		return Emoji::decode($html);
+	}
+
+
+	/**
+	 * Get Html description fields (or fallback)
+	 *
+	 * @param array $activity Activity fields
+	 *
+	 * @return array{DESCRIPTION_HTML: string, IS_AJAX_EMAIL_BODY?: bool}
+	 */
+	private function getHtmlDescriptionFields(array $activity): array
+	{
+		if (Activity\Provider\Email::isSanitizingCanBeLong($activity))
 		{
-			$html = preg_replace("/[\r\n]+/".BX_UTF_PCRE_MODIFIER, "<br>", htmlspecialcharsbx($description));
+			$cached = (new Activity\Mail\SanitizedDescriptionCache())->get($activity['ID']);
+			if ($cached)
+			{
+				return [
+					'DESCRIPTION_HTML' => Emoji::decode($cached),
+				];
+			}
+
+			$fallbackHtml = Activity\Provider\Email::getFallbackHtmlDescription($activity['DESCRIPTION'] ?? '');
+
+			return [
+				'IS_AJAX_EMAIL_BODY' => true,
+				'DESCRIPTION_HTML' => Emoji::decode($fallbackHtml),
+			];
 		}
 
-		return \Bitrix\Main\Text\Emoji::decode($html);
+		return [
+			'DESCRIPTION_HTML' => $this->makeDescriptionHtml($activity),
+		];
 	}
 }

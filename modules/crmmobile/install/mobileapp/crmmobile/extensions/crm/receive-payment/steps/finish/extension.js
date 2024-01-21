@@ -3,12 +3,11 @@
  */
 jn.define('crm/receive-payment/steps/finish', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { WizardStep } = require('layout/ui/wizard/step');
 	const { StatusBlock } = require('crm/receive-payment/steps/finish/status-block');
 	const { Statuses } = require('crm/receive-payment/steps/finish/statuses');
 	const { AnalyticsLabel } = require('analytics-label');
-
-	const pathToExtension = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/receive-payment/steps/finish`;
 
 	/**
 	 * @class FinishStep
@@ -73,6 +72,11 @@ jn.define('crm/receive-payment/steps/finish', (require, exports, module) => {
 			return false;
 		}
 
+		isNavigationBarBorderEnabled()
+		{
+			return false;
+		}
+
 		createLayout(props)
 		{
 			if (this.sendingStatus === Statuses.NONE && this.sendMessage)
@@ -109,7 +113,7 @@ jn.define('crm/receive-payment/steps/finish', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgPrimary,
 					},
 				},
 				new StatusBlock({
@@ -141,3 +145,4 @@ jn.define('crm/receive-payment/steps/finish', (require, exports, module) => {
 
 	module.exports = { FinishStep };
 });
+

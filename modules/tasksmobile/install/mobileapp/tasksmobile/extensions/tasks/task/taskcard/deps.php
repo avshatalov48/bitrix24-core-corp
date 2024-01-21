@@ -10,7 +10,7 @@ return [
 		'user/list',
 	],
 	'components' => [
-		'tasks:tasks.list',
+		'tasks:tasks.dashboard',
 		'tasks:tasks.view',
 	]
 ];

@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -387,17 +387,26 @@ final class Calendar
 		return $settings;
 	}
 
-    public static function getDefaultSettings()
+    public static function getDefaultSettings(): array
 	{
-		return array(
-			'HOURS' => array(
-				'START' => array('H' => 9, 'M' => 0, 'S' => 0),
-				'END' => array('H' => 19, 'M' => 0, 'S' => 0),
-			),
-			'HOLIDAYS' => array(),
-			'WEEKEND' => array('SA', 'SU'),
-			'WEEK_START' => 'MO'
-		);
+		return [
+			'HOURS' => [
+				'START' => [
+					'H' => 9,
+					'M' => 0,
+					'S' => 0,
+				],
+				'END' => [
+					'H' => 19,
+					'M' => 0,
+					'S' => 0,
+				],
+			],
+			'HOLIDAYS' => [],
+			'WEEKEND' => ['SA', 'SU'],
+			'WEEK_START' => 'MO',
+			'SERVER_OFFSET' => (new \DateTime())->getOffset(),
+		];
 	}
 
 	public static function getSettings($siteId = false)

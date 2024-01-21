@@ -15,6 +15,7 @@ class Social extends PresetAbstract
 				'menu_files',
 				'menu_external_mail',
 				'menu_all_groups',
+				'menu_all_spaces',
 			],
 			'menu_tasks',
 			'menu_crm_favorite',

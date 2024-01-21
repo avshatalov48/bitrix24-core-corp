@@ -12,6 +12,8 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper/dialog');
 	const { UserAddView } = require('im/messenger/controller/user-add/view');
+	const { runAction } = require('im/messenger/lib/rest');
+	const AppTheme = require('apptheme');
 
 	class UserAdd
 	{
@@ -96,6 +98,16 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 					return false;
 				}
 
+				if (user.connector)
+				{
+					return false;
+				}
+
+				if (user.network)
+				{
+					return false;
+				}
+
 				return user.id !== Number(this.dialogId);
 			});
 		}
@@ -120,7 +132,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 		{
 			// eslint-disable-next-line es/no-optional-chaining
 			const mediumPositionPercent = this.options.widgetOptions?.mediumPositionPercent || 50;
-			const backgroundColor = this.options.widgetOptions?.backgroundColor || '#EEF2F4';
+			const backgroundColor = AppTheme.colors.bgContentTertiary;
 			const widgetConfig = {
 				title: this.title,
 				backgroundColor,
@@ -175,28 +187,31 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 
 		addUser()
 		{
-			return new Promise((resolve) => {
-				BX.rest.callMethod(
-					RestMethod.imChatUserAdd,
-					{
-						CHAT_ID: this.dialogId.replace('chat', ''),
-						USERS: this.view.selector.getSelectedItems().map((user) => user.id),
-					},
-					(result) => {
-						resolve();
+			const chatSettings = Application.storage.getObject('settings.chat', {
+				historyShow: true,
+			});
 
+			return new Promise((resolve) => {
+				const addUserData = {
+					id: this.dialogId.replace('chat', ''),
+					userIds: this.view.selector.getSelectedItems().map((user) => user.id),
+					hideHistory: chatSettings.historyShow ? 'N' : 'Y',
+				};
+
+				runAction(RestMethod.imV2ChatAddUsers, { data: addUserData })
+					.then((response) => {
+						resolve();
 						if (this.options.callback.onAddUser)
 						{
-							this.options.callback.onAddUser(result);
+							this.options.callback.onAddUser(response);
 						}
 
-						if (result.answer.error)
-						{
-							Logger.error('UserAdd.Rest.imChatUserAdd.error', result.answer.error_description);
-						}
 						this.widget.close();
-					},
-				);
+					})
+					.catch((errors) => {
+						Logger.error('UserAdd.addUser error: ', errors);
+					})
+				;
 			});
 		}
 

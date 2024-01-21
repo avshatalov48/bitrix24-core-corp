@@ -1,4 +1,7 @@
 (() => {
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
+
 	/**
 	 * @class CancelButton
 	 */
@@ -10,12 +13,12 @@
 			{
 				return {
 					button: {
-						borderColor: '#828b95',
-						backgroundColor: '#ffffff',
+						borderColor: AppTheme.colors.bgSeparatorPrimary,
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 					},
 					icon: {},
 					text: {
-						color: '#525c69',
+						color: AppTheme.colors.base2,
 					},
 				};
 			}
@@ -26,7 +29,7 @@
 				text: {
 					fontWeight: '500',
 					fontSize: 18,
-					color: '#525c69',
+					color: AppTheme.colors.base2,
 				},
 			};
 		}
@@ -34,3 +37,4 @@
 
 	this.CancelButton = CancelButton;
 })();
+

@@ -1,3 +1,5 @@
+import { Dom } from 'main.core';
+
 /** @memberof BX.Crm.Timeline.Animation */
 export default class Shift
 {
@@ -10,7 +12,7 @@ export default class Shift
 		this._events = null;
 	}
 
-	initialize(node, anchor, startPosition, shadowNode, events)
+	initialize(node, anchor, startPosition, shadowNode, events, additionalShift)
 	{
 		this._node = node;
 		this._shadowNode = shadowNode;
@@ -18,7 +20,7 @@ export default class Shift
 		this._nodeParent  = node.parentNode;
 		this._startPosition = startPosition;
 		this._events = BX.type.isPlainObject(events) ? events : {};
-
+		this.additionalShift = additionalShift ?? 0;
 	}
 
 	run()
@@ -35,19 +37,38 @@ export default class Shift
 			0
 		);
 
+		// const nodeHeight = Dom.getPosition(this._node).height;
+		const nodeHeight = Dom.getPosition(this._node).height;
+		const nodeMarginBottom = parseFloat(getComputedStyle(this._node).marginBottom);
+		const nodeMarginTop = parseFloat(getComputedStyle(this._node).marginTop);
+		const nodeHeightWithMargin = nodeHeight + nodeMarginBottom + nodeMarginTop;
+
+		const expandPlaceEvent = new BX.easing({
+			duration: 600,
+			start: { height: 0 },
+			finish: { height: nodeHeightWithMargin },
+			transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
+			step: (state) => {
+				this._anchor.style.height = state.height + "px";
+			},
+		});
+
 		const movingEvent = new BX.easing({
-			duration: 1500,
-			start: {top: this._startPosition.top, height: 0},
-			finish: {top: this._anchorPosition.top, height: this._startPosition.height + 20},
+			duration: 1000,
+			start: { top: this._startPosition.top },
+			finish: {
+				top: this._anchorPosition.top - nodeHeightWithMargin + this.additionalShift,
+			},
 			transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
 			step: BX.proxy(function (state) {
 				this._node.style.top = state.top + "px";
-				this._anchor.style.height = state.height + "px";
 			}, this),
 			complete: BX.proxy(function () {
 				this.finish();
 			}, this)
 		});
+
+		expandPlaceEvent.animate();
 		movingEvent.animate();
 	}
 
@@ -63,10 +84,10 @@ export default class Shift
 		}
 	}
 
-	static create(node, anchor, startPosition, shadowNode, events)
+	static create(node, anchor, startPosition, shadowNode, events, additionalShift: number)
 	{
 		const self = new Shift();
-		self.initialize(node, anchor, startPosition, shadowNode, events);
+		self.initialize(node, anchor, startPosition, shadowNode, events, additionalShift);
 		return self;
 	}
 }

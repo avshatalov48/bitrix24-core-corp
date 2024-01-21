@@ -28,28 +28,32 @@ class AppTypeTable extends Entity\DataManager
 	}
 	public static function getMap()
 	{
-		return array(
-			'ID' => array(
+		return [
+			'ID' => [
 				'data_type' => 'integer',
 				'primary' => true,
-				'autocomplete' => true
-			),
-			'APP_ID' => array(
+				'autocomplete' => true,
+			],
+			'APP_ID' => [
 				'data_type' => 'integer',
 				'required' => true,
-			),
-			'TYPE_ID' => array(
+			],
+			'TYPE_ID' => [
 				'data_type' => 'string',
 				'required' => true,
-				'validation' => array(__CLASS__, 'validateType')
-			),
-			'NAME' => array(
+				'validation' => [__CLASS__, 'validateType'],
+			],
+			'IS_CONFIGURABLE_TYPE' => [
+				'data_type' => 'boolean',
+				'values' => ['N', 'Y'],
+			],
+			'NAME' => [
 				'data_type' => 'string',
 				'required' => true,
-				'validation' => array(__CLASS__, 'validateName')
-			),
-			'ICON_ID' => array('data_type' => 'integer')
-		);
+				'validation' => [__CLASS__, 'validateName'],
+			],
+			'ICON_ID' => ['data_type' => 'integer'],
+		];
 	}
 	/**
 	 * Create validators for NAME field.

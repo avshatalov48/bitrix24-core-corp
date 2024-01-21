@@ -9,6 +9,7 @@ use Bitrix\Tasks\Internals\Counter\CounterController;
 use Bitrix\Tasks\Internals\Counter\CounterService;
 use Bitrix\Tasks\Internals\Counter\CounterState;
 use Bitrix\Tasks\Internals\Counter\Event\EventDictionary;
+use Bitrix\Tasks\Internals\Counter\State\Factory;
 use Bitrix\Tasks\Internals\Registry\UserRegistry;
 use Bitrix\Tasks\Util\User;
 use CTasks;
@@ -625,6 +626,6 @@ class Counter
 	 */
 	private function getState(): CounterState
 	{
-		return CounterState::getInstance($this->userId);
+		return Factory::getState($this->userId);
 	}
 }

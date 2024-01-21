@@ -1,10 +1,11 @@
 /**
-* @bxjs_lang_path extension.php
-*/
+ * @bxjs_lang_path extension.php
+ */
 
+(() => {
 
-(()=>{
-
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
 	/**
 	 *  @interface ListSearcherDelegate
 	 * */
@@ -73,36 +74,37 @@
 
 		getSearchMethod()
 		{
-			return "";
+			return '';
 		}
+
 		onSearchRequestStart(items, sections)
 		{
-			this.list.setItems(items, sections)
+			this.list.setItems(items, sections);
 		}
 
 		onSearchResultEmpty(items, sections)
 		{
-			this.list.setItems(items, sections)
+			this.list.setItems(items, sections);
 		}
 
 		onSearchResultReady(items, sections)
 		{
-			this.list.setItems(items, sections)
+			this.list.setItems(items, sections);
 		}
 
 		onSearchResultReadyNext(items, sections)
 		{
-			this.list.setItems(items, sections)
+			this.list.setItems(items, sections);
 		}
 
 		onSearchResultRecent(items, sections)
 		{
-			this.list.setItems(items, sections)
+			this.list.setItems(items, sections);
 		}
-		
+
 		getSearchQueryOption()
 		{
-			return "";
+			return '';
 		}
 	}
 
@@ -125,30 +127,38 @@
 			 */
 			this.setDelegate(delegate);
 			this.currentSearchItems = [];
-			if(searcherId)
-				this.lastSearchItems = Application.storage.getObject(searcherId+"_last_search", {items: []})["items"];
+			if (searcherId)
+			{
+				this.lastSearchItems = Application.storage.getObject(
+					searcherId + '_last_search',
+					{ items: [] },
+				)['items'];
+			}
 		}
 
 		set searcherId(value)
 		{
 			this._searcherId = value;
-			if(value)
-				this.lastSearchItems = Application.storage.getObject(value+"_last_search", {items: []})["items"];
+			if (value)
+			{
+				this.lastSearchItems = Application.storage.getObject(value + '_last_search', { items: [] })['items'];
+			}
 		}
 
 		get searcherId()
 		{
-			return this._searcherId
+			return this._searcherId;
 		}
 
 		setDelegate(delegate)
 		{
-			if(delegate != null)
+			if (delegate != null)
 			{
 				this.delegate = delegate;
 				this.searchRequest = new DelayedRestRequest(this.delegate.getSearchMethod());
 			}
 		}
+
 		fetchResults(data)
 		{
 			this.currentQueryString = data.text;
@@ -156,53 +166,59 @@
 			{
 				this.currentSearchItems = [];
 				this.searchRequest.options = this.delegate.getSearchQueryOption(data.text);
-				this.searchRequest.handler = (result, loadMore, error) =>
-				{
+				this.searchRequest.handler = (result, loadMore, error) => {
 					if (result)
 					{
 						if (!result.length)
 						{
-							this.sendResult([{
-								title: BX.message("SEARCH_EMPTY_RESULT"),
-								unselectable: true,
-								type: "button",
-								params: {"code": "skip_handle"}
-							}], [], "result_empty");
+							this.sendResult([
+								{
+									title: BX.message('SEARCH_EMPTY_RESULT'),
+									unselectable: true,
+									type: 'button',
+									params: { 'code': 'skip_handle' },
+								},
+							], [], 'result_empty');
 						}
 						else
 						{
 							let items = this.postProgressing(result, data.text);
 							this.currentSearchItems = items;
-							items = SearchUtils.setServiceCell(items,
+							items = SearchUtils.setServiceCell(
+								items,
 								this.searchRequest.hasNext()
 									? SearchUtils.Const.SEARCH_MORE_RESULTS
-									: null
+									: null,
 							);
 
-							this.sendResult(items, [{id:this.searcherId}, {id: "service"}], "result_ready")
+							this.sendResult(items, [{ id: this.searcherId }, { id: 'service' }], 'result_ready');
 						}
 					}
 					else if (error)
 					{
-						if (error.code !== "REQUEST_CANCELED")
+						if (error.code !== 'REQUEST_CANCELED')
 						{
-							this.sendResult([{
-								title: BX.message("SEARCH_EMPTY_RESULT"),
-								unselectable: true,
-								type: "button",
-								params: {"code": "skip_handle"}
-							}], [], "result_empty");
+							this.sendResult([
+								{
+									title: BX.message('SEARCH_EMPTY_RESULT'),
+									unselectable: true,
+									type: 'button',
+									params: { code: 'skip_handle' },
+								},
+							], [], 'result_empty');
 						}
 					}
 				};
 
-				this.sendResult([{
-					title: BX.message("SEARCH_LOADING"),
-					unselectable: true,
-					sectionCode: "service",
-					type: "loading",
-					params: {"code": "skip_handle"}
-				}], [{id: "service"}, {id:this.searcherId}], "searching");
+				this.sendResult([
+					{
+						title: BX.message('SEARCH_LOADING'),
+						unselectable: true,
+						sectionCode: 'service',
+						type: 'loading',
+						params: { 'code': 'skip_handle' },
+					},
+				], [{ id: 'service' }, { id: this.searcherId }], 'searching');
 				this.searchRequest.call();
 
 			}
@@ -215,18 +231,18 @@
 		sendResult(items, sections, state)
 		{
 			const events = {
-				"searching":"onSearchRequestStart",
-				"result_ready":"onSearchResultReady",
-				"result_ready_next":"onSearchResultReadyNext",
-				"result_empty":"onSearchResultEmpty",
-				"result_recent":"onSearchResultRecent",
+				'searching': 'onSearchRequestStart',
+				'result_ready': 'onSearchResultReady',
+				'result_ready_next': 'onSearchResultReadyNext',
+				'result_empty': 'onSearchResultEmpty',
+				'result_recent': 'onSearchResultRecent',
 			};
 
 			let contentItems = this.delegate.prepareItems(items.filter(item => !item.sectionCode));
 			items = contentItems.concat(items.filter(item => item.sectionCode));
-			if(events[state])
+			if (events[state])
 			{
-				reflectFunction(this.delegate, events[state], this.delegate).call(this.delegate, items, sections)
+				reflectFunction(this.delegate, events[state], this.delegate).call(this.delegate, items, sections);
 			}
 		}
 
@@ -234,8 +250,7 @@
 		{
 			if (this.searchRequest.hasNext())
 			{
-				this.searchRequest.handler = (result, error) =>
-				{
+				this.searchRequest.handler = (result, error) => {
 					let items = this.currentSearchItems;
 					if (result)
 					{
@@ -243,63 +258,64 @@
 						items = items.concat(moreItems);
 						this.currentSearchItems = items;
 					}
-					items = SearchUtils.setServiceCell(items,
+					items = SearchUtils.setServiceCell(
+						items,
 						this.searchRequest.hasNext()
 							? SearchUtils.Const.SEARCH_MORE_RESULTS
-							: null
+							: null,
 					);
-					this.sendResult(items, [{id: this.searcherId}, {id: "service"}], "result_ready_next")
+					this.sendResult(items, [{ id: this.searcherId }, { id: 'service' }], 'result_ready_next');
 				};
 
 				let items = this.currentSearchItems;
 				items = SearchUtils.setServiceCell(items, SearchUtils.Const.SEARCH_LOADING);
-				this.sendResult(items, [{id: "service"}, {id:this.searcherId}], "result_loading");
+				this.sendResult(items, [{ id: 'service' }, { id: this.searcherId }], 'result_loading');
 				this.searchRequest.callNext();
 			}
 		}
 
 		showRecentResults()
 		{
-			let preparedLastSearchItems = this.lastSearchItems.map(item =>
-			{
-				item.actions = [{
-					title: BX.message("ACTION_DELETE"),
-					identifier: "delete",
-					destruct: true,
-					color: "#df532d"
-				}];
+			let preparedLastSearchItems = this.lastSearchItems.map(item => {
+				item.actions = [
+					{
+						title: BX.message('ACTION_DELETE'),
+						identifier: 'delete',
+						destruct: true,
+						color: AppTheme.colors.accentMainAlert,
+					},
+				];
 				return item;
 			});
 			this.sendResult(preparedLastSearchItems, [
 				{
 					id: this.searcherId,
-					title: this.lastSearchItems.length > 0 ? BX.message("RECENT_SEARCH") : ""
-				}
-			], "result_recent")
+					title: this.lastSearchItems.length > 0 ? BX.message('RECENT_SEARCH') : '',
+				},
+			], 'result_recent');
 		}
 
 		addRecentSearchItem(data)
 		{
 			this.lastSearchItems = this.lastSearchItems.filter(item => item.params.id !== data.params.id);
 			this.lastSearchItems.unshift(data);
-			Application.storage.setObject(this.searcherId+"_last_search", {items: this.lastSearchItems});
+			Application.storage.setObject(this.searcherId + '_last_search', { items: this.lastSearchItems });
 		}
 
 		removeRecentSearchItem(data)
 		{
 			this.lastSearchItems = this.lastSearchItems.filter(item => item.params.id !== data.item.params.id);
-			Application.storage.setObject(this.searcherId+"_last_search", {items: this.lastSearchItems});
+			Application.storage.setObject(this.searcherId + '_last_search', { items: this.lastSearchItems });
 		}
 
 		postProgressing(searchResult, query)
 		{
 			let weights = this.delegate.getFieldWeights();
 			let finalResult = searchResult;
-			if(weights)
+			if (weights)
 			{
 				finalResult = searchResult
-					.map(result =>
-					{
+					.map(result => {
 						let weight = 0;
 
 						for (let key in weights)
@@ -324,21 +340,25 @@
 
 	let SearchUtils = {
 		Const: {
-			SEARCH_LOADING: {title: BX.message("SEARCH_LOADING"), code: "loading", type: "loading", unselectable: true},
-			SEARCH_MORE_RESULTS: {title: BX.message("LOAD_MORE_RESULT"), code: "more_search_result", type: "button"},
+			SEARCH_LOADING: {
+				title: BX.message('SEARCH_LOADING'),
+				code: 'loading',
+				type: 'loading',
+				unselectable: true,
+			},
+			SEARCH_MORE_RESULTS: { title: BX.message('LOAD_MORE_RESULT'), code: 'more_search_result', type: 'button' },
 		},
-		setServiceCell: function (items, data, customParams)
-		{
-			items = items.filter(item => item.sectionCode !== "service");
+		setServiceCell: function(items, data, customParams) {
+			items = items.filter(item => item.sectionCode !== 'service');
 			if (data)
 			{
 				let params = customParams || {};
 				params.code = data.code;
 				items.push({
 					title: data.title,
-					sectionCode: "service",
+					sectionCode: 'service',
 					type: data.type,
-					params: {"code": data.code}
+					params: { 'code': data.code },
 				});
 			}
 
@@ -347,6 +367,6 @@
 
 	};
 
-	jnexport(ListSearcher, BaseListSearchDelegate)
+	jnexport(ListSearcher, BaseListSearchDelegate);
 
 })();

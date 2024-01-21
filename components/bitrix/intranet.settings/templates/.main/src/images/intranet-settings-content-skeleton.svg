@@ -1,0 +1,84 @@
+<svg width="100%" height="768" viewBox="0 0 100% 768" fill="none"
+	 xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg"
+	 preserveAspectRatio="xMinYMin meet">
+	<svg height="768px">
+		<rect width="100%" height="768" fill="#EEF2F4"/>
+
+		<g clip-path="url(#clip1_5372_95299)">
+			<g clip-path="url(#clip3_5372_95299)">
+				<rect x="21" y="136" width="754" height="65" rx="10" fill="white"/>
+			</g>
+			<g clip-path="url(#clip4_5372_95299)">
+				<rect x="21" y="213" width="754" height="65" rx="10" fill="white"/>
+			</g>
+			<g clip-path="url(#clip5_5372_95299)">
+				<rect x="21" y="290" width="754" height="65" rx="10" fill="white"/>
+			</g>
+			<g clip-path="url(#clip6_5372_95299)">
+				<rect x="21" y="367" width="754" height="65" rx="10" fill="white"/>
+			</g>
+			<g clip-path="url(#clip7_5372_95299)">
+				<rect x="21" y="444" width="754" height="65" rx="10" fill="white"/>
+			</g>
+		</g>
+	</svg>
+
+	<svg height="768px" id="animated-elements">
+		<defs>
+			<g id="lines">
+				<rect x="26" y="16" width="252" height="15" rx="7.5" fill="#DFE0E3"/>
+				<rect x="26" y="53" width="500" height="8" rx="4" fill="#DFE0E3"/>
+				<rect x="26" y="73" width="500" height="8" rx="4" fill="#DFE0E3"/>
+				<rect x="26" y="95" width="396" height="8" rx="4" fill="#DFE0E3"/>
+			</g>
+
+			<g id="card">
+				<rect x="75" y="163" width="328" height="12" rx="6" fill="#DFE0E3"/>
+				<circle cx="53" cy="169" r="12" fill="#DFE0E3"/>
+				<circle cx="749" cy="169" r="6" fill="#DFE0E3"/>
+			</g>
+			<g id="card-2">
+				<rect x="75" y="241" width="328" height="12" rx="6" fill="#DFE0E3"/>
+				<circle cx="53" cy="247" r="12" fill="#DFE0E3"/>
+				<circle cx="749" cy="247" r="6" fill="#DFE0E3"/>
+			</g>
+			<g id="card-3">
+				<rect x="75" y="319" width="328" height="12" rx="6" fill="#DFE0E3"/>
+				<circle cx="53" cy="325" r="12" fill="#DFE0E3"/>
+				<circle cx="749" cy="325" r="6" fill="#DFE0E3"/>
+			</g>
+			<g id="card-4">
+				<rect x="75" y="396" width="328" height="12" rx="6" fill="#DFE0E3"/>
+				<circle cx="53" cy="402" r="12" fill="#DFE0E3"/>
+				<circle cx="749" cy="402" r="6" fill="#DFE0E3"/>
+			</g>
+			<g id="card-5">
+				<rect x="75" y="473" width="328" height="12" rx="6" fill="#DFE0E3"/>
+				<circle cx="53" cy="479" r="12" fill="#DFE0E3"/>
+				<circle cx="749" cy="479" r="6" fill="#DFE0E3"/>
+			</g>
+		</defs>
+
+		<use xlink:href="#lines"></use>
+		<use xlink:href="#card"></use>
+		<use xlink:href="#card-2"></use>
+		<use xlink:href="#card-3"></use>
+		<use xlink:href="#card-4"></use>
+		<use xlink:href="#card-5"></use>
+	</svg>
+
+
+	<rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="768"/>
+
+	<mask id="headerMsk" fill="white">
+		<use xlink:href="#animated-elements"/>
+	</mask>
+
+	<linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+		<stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+		<stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+		<stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+	</linearGradient>
+
+	<animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+</svg>

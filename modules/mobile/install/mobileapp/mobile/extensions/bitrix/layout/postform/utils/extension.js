@@ -1,30 +1,33 @@
-(() =>
-{
+(() => {
+	const require = (ext) => jn.require(ext);
+	const { transparent } = require('utils/color');
+	const AppTheme = require('apptheme');
+
 	this.Utils = {
 		getFileMimeType: (fileType) => {
 			fileType = fileType.toString().toLowerCase();
 
-			if (fileType.indexOf('/') !== -1) // iOS old form
+			if (fileType.includes('/')) // iOS old form
 			{
 				return fileType;
 			}
 
 			const mimeTypeMap = {
-				'png': 'image/png',
-				'gif': 'image/gif',
-				'jpg': 'image/jpeg',
-				'jpeg': 'image/jpeg',
-				'heic': 'image/heic',
-				'mp3': 'audio/mpeg',
-				'mp4': 'video/mp4',
-				'mpeg': 'video/mpeg',
-				'ogg': 'video/ogg',
-				'mov': 'video/quicktime',
-				'zip': 'application/zip',
-				'php': 'text/php',
-			}
+				png: 'image/png',
+				gif: 'image/gif',
+				jpg: 'image/jpeg',
+				jpeg: 'image/jpeg',
+				heic: 'image/heic',
+				mp3: 'audio/mpeg',
+				mp4: 'video/mp4',
+				mpeg: 'video/mpeg',
+				ogg: 'video/ogg',
+				mov: 'video/quicktime',
+				zip: 'application/zip',
+				php: 'text/php',
+			};
 
-			return mimeTypeMap[fileType]? mimeTypeMap[fileType] : '';
+			return mimeTypeMap[fileType] ? mimeTypeMap[fileType] : '';
 		},
 
 		getResizeOptions: (type) => {
@@ -34,14 +37,14 @@
 			const resizeOptions = {
 				quality: 80,
 				width: 1920,
-				height: 1080
+				height: 1080,
 			};
 
-			return shouldBeConverted ?  resizeOptions : null;
+			return shouldBeConverted ? resizeOptions : null;
 		},
 
 		getType: (mimeType) => {
-			let result = mimeType.substring(0, mimeType.indexOf('/'));
+			let result = mimeType.slice(0, Math.max(0, mimeType.indexOf('/')));
 			if (!['image', 'video', 'audio'].includes(result))
 			{
 				result = 'file';
@@ -52,14 +55,14 @@
 
 		formatSelectedRecipients: (recipients) => {
 			return Object.keys(recipients)
-				.filter(type => Array.isArray(recipients[type]))
-				.reduce((result, type)=> {
-					result[type] = recipients[type].map(item => {
+				.filter((type) => Array.isArray(recipients[type]))
+				.reduce((result, type) => {
+					result[type] = recipients[type].map((item) => {
 						const colors = {
-							'users': RecipientUtils.getColor('user'),
-							'groups': RecipientUtils.getColor('group'),
-							'departments':RecipientUtils.getColor('department')
-						}
+							users: RecipientUtils.getColor('user'),
+							groups: RecipientUtils.getColor('group'),
+							departments: RecipientUtils.getColor('department'),
+						};
 
 						if (item.id === 'A')
 						{
@@ -67,30 +70,28 @@
 						}
 						else
 						{
-							item.color = colors[type] ? colors[type] : ''
+							item.color = colors[type] ? colors[type] : '';
 						}
 
 						return item;
-					})
+					});
 
 					return result;
 				}, {});
 		},
 
-		sanitizeText: (text) =>
-		{
+		sanitizeText: (text) => {
 			return text
-				.replace(/\[USER=(\d+)\]|\[\/USER\]/gi, '')
-				.replace(/\[PROJECT=(\d+)\]|\[\/PROJECT\]/gi, '')
-				.replace(/\[DEPARTMENT=(\d+)\]|\[\/DEPARTMENT\]/gi, '');
+				.replaceAll(/\[user=(\d+)]|\[\/user]/gi, '')
+				.replaceAll(/\[project=(\d+)]|\[\/project]/gi, '')
+				.replaceAll(/\[department=(\d+)]|\[\/department]/gi, '');
 		},
 
 		getForAllValue: ({
 			postData,
 			forAllAllowed,
 			forAllDefault,
-		}) =>
-		{
+		}) => {
 			if (
 				typeof postData.recipients !== 'undefined'
 				&& typeof postData.recipients.users !== 'undefined'
@@ -101,17 +102,15 @@
 					return item.id === 'A';
 				}) !== -1);
 			}
-			else
-			{
-				return (forAllAllowed && forAllDefault);
-			}
+
+			return (forAllAllowed && forAllDefault);
 		},
 
-		getRecipientsCountValue: ({recipients}) =>
-		{
-			let entityList = ['users', 'groups', 'departments']
+		getRecipientsCountValue: ({ recipients }) => {
+			const entityList = ['users', 'groups', 'departments'];
+
 			return entityList
-				.filter(item => Array.isArray(recipients[item]))
+				.filter((item) => Array.isArray(recipients[item]))
 				.reduce((result, item) => result + recipients[item].length, 0);
 		},
 
@@ -120,7 +119,6 @@
 			forAllAllowed,
 			forAllDefault,
 		}) => {
-
 			if (postData.recipients)
 			{
 				if (Array.isArray(postData.recipients.users))
@@ -135,7 +133,7 @@
 						if (item.avatar)
 						{
 							item.imageUrl = item.avatar;
-							if (item.imageUrl.indexOf('http') === -1)
+							if (!item.imageUrl.includes('http'))
 							{
 								item.imageUrl = currentDomain + encodeURI(item.imageUrl);
 							}
@@ -149,12 +147,11 @@
 				if (Array.isArray(postData.recipients.groups))
 				{
 					postData.recipients.groups = postData.recipients.groups.map((item) => {
-
 						item.imageUrl = '';
 						if (item.avatar)
 						{
 							item.imageUrl = item.avatar;
-							if (item.imageUrl.indexOf('http') === -1)
+							if (!item.imageUrl.includes('http'))
 							{
 								item.imageUrl = currentDomain + encodeURI(item.imageUrl);
 							}
@@ -171,13 +168,15 @@
 			return (
 				(forAllAllowed && forAllDefault)
 					? {
-						users: [{
-							id: 'A',
-							title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_UTIL_VALUE_ALL_SELECTED')
-						}]
+						users: [
+							{
+								id: 'A',
+								title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_UTIL_VALUE_ALL_SELECTED'),
+							},
+						],
 					}
 					: {
-						users: []
+						users: [],
 					}
 			);
 		},
@@ -187,8 +186,8 @@
 		}) => {
 			let result = (Array.isArray(postData.hiddenRecipients) ? postData.hiddenRecipients : []);
 
-			result = result.filter(item => {
-				return (item !== 'U' + postData.post.post_user_id);
+			result = result.filter((item) => {
+				return (item !== `U${postData.post.post_user_id}`);
 			});
 
 			return result;
@@ -202,7 +201,6 @@
 			if (postData.post && Array.isArray(postData.post.PostFiles))
 			{
 				result = postData.post.PostFiles.map((item) => {
-
 					const fileData = {
 						ID: item.id,
 						NAME: item.name,
@@ -210,7 +208,7 @@
 							EXTERNAL: 'YES',
 							URL: item.url,
 						},
-						VALUE: item.objectId
+						VALUE: item.objectId,
 					};
 
 					if (typeof item.previewImageUrl !== 'undefined')
@@ -223,7 +221,7 @@
 						name: item.name,
 						type: item.type,
 						url: item.url,
-						previewUrl: (typeof item.previewImageUrl !== 'undefined' ? item.previewImageUrl : null)
+						previewUrl: (typeof item.previewImageUrl === 'undefined' ? null : item.previewImageUrl),
 					};
 				});
 			}
@@ -279,14 +277,14 @@
 				&& typeof postData.post.PostImportantData.endDate !== 'undefined'
 			)
 			{
-				result = parseInt(postData.post.PostImportantData.endDate) * 1000;
+				result = parseInt(postData.post.PostImportantData.endDate, 10) * 1000;
 			}
 
 			return result;
 		},
 
 		getMedalValue: ({
-			postData
+			postData,
 		}) => {
 			let result = null;
 
@@ -296,9 +294,9 @@
 			)
 			{
 				result = (
-					typeof postData.post.PostGratitudeData.gratitude !== 'undefined'
-						? postData.post.PostGratitudeData.gratitude
-						: null
+					typeof postData.post.PostGratitudeData.gratitude === 'undefined'
+						? null
+						: postData.post.PostGratitudeData.gratitude
 				);
 			}
 
@@ -306,7 +304,7 @@
 		},
 
 		getGratitudeEmployeesValue: ({
-			postData
+			postData,
 		}) => {
 			let result = [];
 
@@ -327,7 +325,7 @@
 		},
 
 		getVoteValue: ({
-			postData
+			postData,
 		}) => {
 			let result = {
 				questions: [],
@@ -344,8 +342,9 @@
 				{
 					result.questions.map((question) => {
 						question.allowMultiSelect = (question.allowMultiSelect === 'Y');
+
 						return question;
-					})
+					});
 				}
 			}
 
@@ -356,11 +355,11 @@
 			errorText,
 			callback,
 		}) => {
-			include("InAppNotifier");
+			include('InAppNotifier');
 
 			InAppNotifier.showNotification({
 				title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_UTIL_PUBLICATION_ERROR'),
-				backgroundColor: "#affb0000",
+				backgroundColor: transparent(AppTheme.colors.baseBlackFixed, 0),
 				message: errorText,
 			});
 		},
@@ -374,7 +373,6 @@
 			attachmentFileIconFolder,
 			onDeleteAttachmentItem,
 		}) => {
-
 			if (
 				url
 				&& url.indexOf('file://') !== 0
@@ -391,7 +389,8 @@
 				&& imageUri.length > 0
 			)
 			{
-				result = View({
+				result = View(
+					{
 						testId: 'pinnedFileContainer',
 						style: {
 							width: 70,
@@ -421,14 +420,14 @@
 							top: 8,
 						},
 						uri: imageUri,
-						resizeMode: 'cover'
+						resizeMode: 'cover',
 					}),
 					Image({
 						testId: 'pinnedFileDetach',
 						uri: attachmentCloseIcon,
 						resizeMode: 'cover',
 						style: {
-							borderColor: '#000000',
+							borderColor: AppTheme.colors.bgSeparatorPrimary,
 							position: 'absolute',
 							width: 25,
 							height: 25,
@@ -436,24 +435,25 @@
 							top: 0,
 							paddingRight: 10,
 							paddingTop: 10,
-							backgroundColor: '#00000000',
+							backgroundColor: transparent(AppTheme.colors.baseBlackFixed, 0),
 						},
-						onClick: onDeleteAttachmentItem
-					})
+						onClick: onDeleteAttachmentItem,
+					}),
 				);
 			}
 			else
 			{
 				const extension = this.Utils.getExtension({
-					uri: (name ? name : url),
+					uri: (name || url),
 				});
 
 				let icon = this.Utils.getFileType({
 					extension,
 				});
-				icon = (icon ? icon : 'empty');
+				icon = (icon || 'empty');
 
-				result = View({
+				result = View(
+					{
 						testId: 'pinnedFileContainer',
 						style: {
 							width: 70,
@@ -481,8 +481,8 @@
 							left: 0,
 							top: 8,
 							borderWidth: 1,
-							borderColor: '#e6e7e9',
-							backgroundColor: '#ffffff',
+							borderColor: AppTheme.colors.bgSeparatorPrimary,
+							backgroundColor: AppTheme.colors.bgContentPrimary,
 						},
 					}),
 					View({
@@ -493,31 +493,31 @@
 							height: 30,
 							left: 14,
 							top: 16,
-							backgroundColor: '#00000000',
-							backgroundImageSvgUrl: attachmentFileIconFolder + icon + '.svg',
+							backgroundColor: transparent(AppTheme.colors.baseBlackFixed, 0),
+							backgroundImageSvgUrl: `${attachmentFileIconFolder + icon}.svg`,
 						},
 					}),
 					Text({
 						testId: 'pinnedFileName',
 						style: {
 							position: 'absolute',
-							color: '#a8adb4',
+							color: AppTheme.colors.base4,
 							fontWeight: 'normal',
 							fontSize: 10,
 							textAlign: 'center',
 							width: 45,
 							left: 4,
 							top: 46,
-							backgroundColor: '#00000000',
+							backgroundColor: transparent(AppTheme.colors.baseBlackFixed, 0),
 						},
-						text: name.substring(0, 6) + (name.length > 6 ? '...' : ''),
+						text: name.slice(0, 6) + (name.length > 6 ? '...' : ''),
 					}),
 					Image({
 						testId: 'pinnedFileDetach',
 						uri: attachmentCloseIcon,
 						resizeMode: 'cover',
 						style: {
-							borderColor: '#000000',
+							borderColor: AppTheme.colors.base0,
 							position: 'absolute',
 							width: 25,
 							height: 25,
@@ -525,18 +525,19 @@
 							top: 0,
 							paddingRight: 10,
 							paddingTop: 10,
-							backgroundColor: '#00000000',
+							backgroundColor: transparent(AppTheme.colors.baseBlackFixed, 0),
 						},
 						onClick: onDeleteAttachmentItem,
-					})
+					}),
 				);
 			}
 
 			return result;
 		},
 
-		getExtension({ uri }) {
-			return (uri && uri.indexOf('.') >= 0 ? uri.split('.').pop().toLowerCase() : '');
+		getExtension({ uri })
+		{
+			return (uri && uri.includes('.') ? uri.split('.').pop().toLowerCase() : '');
 		},
 
 		getFileType({
@@ -636,7 +637,6 @@
 				oneWeek: nowDate + aDay * 7,
 				oneMonth: nowDate + aDay * 30,
 			};
-		}
-	}
-
+		},
+	};
 })();

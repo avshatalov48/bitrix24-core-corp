@@ -2,6 +2,7 @@
  * @module crm/entity-detail/toolbar/content/templates/base
  */
 jn.define('crm/entity-detail/toolbar/content/templates/base', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { transition, pause, chain } = require('animation');
 
 	/**
@@ -29,7 +30,9 @@ jn.define('crm/entity-detail/toolbar/content/templates/base', (require, exports,
 		render()
 		{
 			return View({
-				ref: (ref) => this.ref = ref,
+				ref: (ref) => {
+					this.ref = ref;
+				},
 			});
 		}
 
@@ -59,15 +62,17 @@ jn.define('crm/entity-detail/toolbar/content/templates/base', (require, exports,
 
 			const toGrey = transition(this.ref, {
 				duration: 200,
-				backgroundColor: '#dfe0e3',
+				backgroundColor: AppTheme.colors.base6,
 			});
 
 			const toWhite = transition(this.ref, {
 				duration: 200,
-				backgroundColor: '#ffffff',
+				backgroundColor: AppTheme.colors.bgContentPrimary,
 			});
 
-			const start = () => new Promise((resolve) => this.setState({ visible: true }, resolve));
+			const start = () => new Promise((resolve) => {
+				this.setState({ visible: true }, resolve);
+			});
 
 			const none = () => Promise.resolve();
 

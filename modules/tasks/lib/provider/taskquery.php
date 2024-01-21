@@ -12,28 +12,22 @@ use CTasks;
 class TaskQuery
 	implements TaskQueryInterface
 {
-	public const SORT_ASC = 'ASC';
-	public const SORT_DESC = 'DESC';
-
-	private $id;
-
-	private $userId = 0;
-	private $behalfUser = 0;
-
-	private $skipAccessCheck = false;
+	private string $id;
+	private int $userId;
+	private int $behalfUser = 0;
+	private bool $skipAccessCheck = false;
 	private bool $skipUfEscape = false;
 	private bool $skipTitleEscape = false;
 	private bool $makeAccessFilter = false;
 	private bool $distinct = false;
-	private $params = [];
+	private array $params = [];
 
-	private
-		$select = [],
-		$order = [],
-		$groupBy = [],
-		$where = [],
-		$limit = 0,
-		$offset = 0;
+	private array $select = [];
+	private array $order = [];
+	private array $groupBy = [];
+	private array $where = [];
+	private int $limit = 0;
+	private int $offset = 0;
 
 	public function __construct(int $userId = 0)
 	{
@@ -280,7 +274,7 @@ class TaskQuery
 	/**
 	 * @return array
 	 */
-	public function getOrder(): array
+	public function getOrderBy(): array
 	{
 		return $this->order;
 	}

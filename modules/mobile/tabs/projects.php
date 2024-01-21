@@ -2,12 +2,14 @@
 
 namespace Bitrix\Mobile\AppTabs;
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Mobile\Context;
 use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\Mobile\Tab\Utils;
 use Bitrix\MobileApp\Janative\Manager;
 use Bitrix\Main\ORM\Query\Filter;
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 
 class Projects implements Tabable
 {
@@ -19,12 +21,19 @@ class Projects implements Tabable
 
 	public function isAvailable(): bool
 	{
-		if (\CModule::IncludeModule('socialnetwork'))
+		if (Loader::includeModule('socialnetwork'))
 		{
 			$arUserActiveFeatures = \CSocNetFeatures::getActiveFeatures(SONET_ENTITY_USER, $this->context->userId);
 			$arSocNetFeaturesSettings = \CSocNetAllowed::getAllowedFeatures();
+			$enabled = true;
+			if (Loader::includeModule('intranet'))
+			{
+				$toolsManager = ToolsManager::getInstance();
+				$enabled = $toolsManager->checkAvailabilityByToolId('projects') && $toolsManager->checkAvailabilityByToolId('tasks');
+			}
 
 			return
+				$enabled &&
 				array_key_exists('tasks', $arSocNetFeaturesSettings) &&
 				array_key_exists('allowed', $arSocNetFeaturesSettings['tasks']) &&
 				in_array(SONET_ENTITY_USER, $arSocNetFeaturesSettings['tasks']['allowed']) &&

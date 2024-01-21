@@ -195,7 +195,7 @@ BX.Tasks.Util.Base.extend = function(parameters){
 
 	// here "this" refers to the class constructor function
 
-	if(typeof parameters == 'undefined' || !BX.type.isPlainObject(parameters)) 
+	if(typeof parameters == 'undefined' || !BX.type.isPlainObject(parameters))
 	{
 		parameters = {};
 	}

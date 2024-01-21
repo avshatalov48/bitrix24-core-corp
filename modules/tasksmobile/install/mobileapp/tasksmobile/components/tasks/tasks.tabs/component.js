@@ -142,16 +142,6 @@
 
 	class TasksTabs
 	{
-		static get tabNames()
-		{
-			return {
-				tasks: 'tasks.list',
-				projects: 'tasks.project.list',
-				scrum: 'tasks.scrum.list',
-				efficiency: 'tasks.efficiency',
-			};
-		}
-
 		static createGuid()
 		{
 			const s4 = function() {
@@ -206,6 +196,7 @@
 			this.tabs = tabs;
 			this.userId = parseInt(BX.componentParameters.get('USER_ID', 0), 10);
 			this.showScrumList = BX.componentParameters.get('SHOW_SCRUM_LIST', false);
+			this.tabCodes = BX.componentParameters.get('TAB_CODES');
 			this.guid = TasksTabs.createGuid();
 
 			this.pull = new Pull(this, this.userId);
@@ -292,7 +283,7 @@
 			{
 				BX.postComponentEvent('tasks.tabs:onTabSelected', [{ tabId }]);
 			}
-			else if (tabId === TasksTabs.tabNames.scrum)
+			else if (tabId === this.tabCodes.SCRUM)
 			{
 				qrauth.open({
 					redirectUrl: `/company/personal/user/${this.userId}/tasks/scrum/`,
@@ -300,7 +291,7 @@
 					title: BX.message('MOBILE_TASKS_TABS_TAB_SCRUM'),
 				});
 			}
-			else if (tabId === TasksTabs.tabNames.efficiency)
+			else if (tabId === this.tabCodes.EFFICIENCY)
 			{
 				Entry.openEfficiency({ userId: this.userId });
 			}
@@ -340,7 +331,7 @@
 				this.updateScrumCounter(cachedScrumCounters.counterValue);
 			}
 
-			(new RequestExecutor('tasksmobile.Task.Counter.get'))
+			(new RequestExecutor('tasksmobile.Task.Counter.getByType'))
 				.call()
 				.then(
 					(response) => {
@@ -365,7 +356,7 @@
 
 		updateTasksCounter(value)
 		{
-			this.tabs.updateItem(TasksTabs.tabNames.tasks, {
+			this.tabs.updateItem(this.tabCodes.TASKS, {
 				title: BX.message('MOBILE_TASKS_TABS_TAB_TASKS'),
 				counter: Number(value),
 				label: (value > 0 ? String(value) : ''),
@@ -374,7 +365,7 @@
 
 		updateProjectsCounter(value)
 		{
-			this.tabs.updateItem(TasksTabs.tabNames.projects, {
+			this.tabs.updateItem(this.tabCodes.PROJECTS, {
 				title: BX.message('MOBILE_TASKS_TABS_TAB_PROJECTS'),
 				counter: Number(value),
 				label: (value > 0 ? String(value) : ''),
@@ -388,7 +379,7 @@
 				return;
 			}
 
-			this.tabs.updateItem(TasksTabs.tabNames.scrum, {
+			this.tabs.updateItem(this.tabCodes.SCRUM, {
 				title: BX.message('MOBILE_TASKS_TABS_TAB_SCRUM'),
 				counter: Number(value),
 				label: (value > 0 ? String(value) : ''),
@@ -397,7 +388,7 @@
 
 		updateEfficiencyCounter(value)
 		{
-			this.tabs.updateItem(TasksTabs.tabNames.efficiency, {
+			this.tabs.updateItem(this.tabCodes.EFFICIENCY, {
 				title: BX.message('MOBILE_TASKS_TABS_TAB_EFFICIENCY'),
 				label: (value || value === 0 ? `${String(value)}%` : ''),
 				selectable: false,

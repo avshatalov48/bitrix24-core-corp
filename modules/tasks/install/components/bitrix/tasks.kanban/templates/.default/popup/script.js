@@ -1,8 +1,10 @@
-BX.ready(function ()
+const showPopup = function ()
 {
-	var ajaxPath = BX.data(BX("kanban-popup"), "ajax");
-	var kanbanType = BX.data(BX("kanban-popup"), "type");
-	
+	const nodes = document.querySelectorAll('#kanban-popup');
+	const kanbanNode = Array.from(nodes).find(node => node.className === 'tasks-kanban-popup');
+	var ajaxPath = BX.data(kanbanNode, "ajax");
+	var kanbanType = BX.data(kanbanNode, "type");
+
 	var closeHandler = BX.delegate(function()
 	{
 		BX.PopupWindowManager.getCurrentPopup().close();
@@ -15,16 +17,16 @@ BX.ready(function ()
 			}
 		});
 	}, this);
-	
+
 	BX.PopupWindowManager.create("kanban-popup", null, {
-		content: BX("kanban-popup"),
+		content: kanbanNode,
 		closeIcon: false,
 		lightShadow: true,
 		offsetLeft: 100,
 		overlay: true,
 		buttons: [
 			new BX.PopupWindowButton({
-				text: BX.data(BX("kanban-popup"), "close"),
+				text: BX.data(kanbanNode, "close"),
 				className: "webform-button webform-button-blue",
 				events: {
 					click: closeHandler
@@ -32,7 +34,7 @@ BX.ready(function ()
 			})
 		]
 	}).show();
-	
+
 	BX.bind(BX("kanban-readmore"), "click", BX.delegate(function(e)
 	{
 		var helpId = BX.data(BX.proxy_context, "helpId");
@@ -40,4 +42,4 @@ BX.ready(function ()
 		closeHandler();
 		BX.PreventDefault(e);
 	}, this));
-});
+};

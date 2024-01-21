@@ -1760,7 +1760,7 @@ class CCrmOwnerType
 					return false;
 				}
 
-				$date = new Bitrix\Main\Type\Date($arRes['DATE_CREATE']);
+				$date = Bitrix\Main\Type\DateTime::createFromUserTime($arRes['DATE_CREATE']);
 
 				self::$INFOS[$key] = array(
 					'TITLE' => $arRes['TITLE'],
@@ -1942,22 +1942,22 @@ class CCrmOwnerType
 			case self::Contact:
 			{
 				$dbRes = CCrmContact::GetListEx(
-					array(),
-					array('@ID' => $IDs, 'CHECK_PERMISSIONS' => $checkPermissions ? 'Y' : 'N'),
+					[],
+					['@ID' => $IDs, 'CHECK_PERMISSIONS' => $checkPermissions ? 'Y' : 'N'],
 					false,
 					false,
-					array('ID', 'HONORIFIC', 'NAME', 'POST', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_ID', 'COMPANY_TITLE', 'PHOTO', 'ASSIGNED_BY_ID')
+					['ID', 'HONORIFIC', 'NAME', 'POST', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_ID', 'COMPANY_TITLE', 'PHOTO', 'ASSIGNED_BY_ID', 'CATEGORY_ID']
 				);
 				break;
 			}
 			case self::Company:
 			{
 				$dbRes = CCrmCompany::GetListEx(
-					array(),
-					array('@ID' => $IDs, 'CHECK_PERMISSIONS' => $checkPermissions ? 'Y' : 'N'),
+					[],
+					['@ID' => $IDs, 'CHECK_PERMISSIONS' => $checkPermissions ? 'Y' : 'N'],
 					false,
 					false,
-					array('ID', 'TITLE', 'COMPANY_TYPE', 'INDUSTRY',  'LOGO', 'ASSIGNED_BY_ID', 'IS_MY_COMPANY')
+					['ID', 'TITLE', 'COMPANY_TYPE', 'INDUSTRY',  'LOGO', 'ASSIGNED_BY_ID', 'IS_MY_COMPANY', 'CATEGORY_ID']
 				);
 				break;
 			}
@@ -2010,15 +2010,23 @@ class CCrmOwnerType
 			}
 			case self::OrderPayment:
 			{
-				$orderDB = \Bitrix\Crm\Order\Payment::getList(
-					array(
-						'filter' => array('=ID' => $IDs),
-						'select' => [
-							'ID', 'ACCOUNT_NUMBER', 'ORDER_ID', 'PAY_SYSTEM_NAME',
-							'DATE_BILL', 'RESPONSIBLE_ID', 'SUM', 'CURRENCY', 'PAY_SYSTEM_ID'
-						]
-					)
-				);
+				$orderDB = \Bitrix\Crm\Order\Payment::getList([
+					'filter' => [
+						'=ID' => $IDs,
+					],
+					'select' => [
+						'ID',
+						'ACCOUNT_NUMBER',
+						'ORDER_ID',
+						'PAY_SYSTEM_NAME',
+						'DATE_BILL',
+						'RESPONSIBLE_ID',
+						'SUM',
+						'CURRENCY',
+						'PAY_SYSTEM_ID',
+						'PAID',
+					]
+				]);
 				$dbRes = new \CDBResult($orderDB);
 				break;
 			}
@@ -2348,6 +2356,11 @@ class CCrmOwnerType
 						),
 					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Contact),
 				);
+				$categoryId = $arRes['CATEGORY_ID'] ?? 0;
+				if ($categoryId > 0)
+				{
+					$result['CATEGORY_NAME'] = Container::getInstance()->getFactory(CCrmOwnerType::Contact)->getCategory($categoryId)?->getSingleNameIfPossible();
+				}
 				if($enableEditUrl)
 				{
 					$result['EDIT_URL'] =
@@ -2396,6 +2409,11 @@ class CCrmOwnerType
 					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Company),
 					'IS_MY_COMPANY' => isset($arRes['IS_MY_COMPANY']) ? ($arRes['IS_MY_COMPANY'] === 'Y') : false,
 				);
+				$categoryId = $arRes['CATEGORY_ID'] ?? 0;
+				if ($categoryId > 0)
+				{
+					$result['CATEGORY_NAME'] = Container::getInstance()->getFactory(CCrmOwnerType::Company)->getCategory($categoryId)?->getSingleNameIfPossible();
+				}
 				if($enableEditUrl)
 				{
 					$result['EDIT_URL'] =
@@ -2559,7 +2577,7 @@ class CCrmOwnerType
 				{
 					$dateInsert = FormatDate($culture->getLongDateFormat(), $arRes['DATE_BILL']->getTimestamp());
 				}
-				$result = array(
+				$result = [
 					'ID' => $arRes['ID'],
 					'ORDER_ID' => $arRes['ORDER_ID'],
 					'TITLE' => isset($arRes['ACCOUNT_NUMBER']) ?  $arRes['ACCOUNT_NUMBER'] : '',
@@ -2584,7 +2602,8 @@ class CCrmOwnerType
 					'RAW_CURRENCY' => $arRes['CURRENCY'],
 					'SUM_WITH_CURRENCY' => \CCrmCurrency::MoneyToString($arRes['SUM'], $arRes['CURRENCY']),
 					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::OrderPayment),
-				);
+					'PAID' => $arRes['PAID'],
+				];
 				if ($enableEditUrl)
 				{
 					$result['EDIT_URL'] = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()

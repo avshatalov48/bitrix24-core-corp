@@ -32,14 +32,14 @@ jn.define('im/messenger/lib/ui/base/avatar/style', (require, exports, module) =>
 		'M': {
 			justifyContent: 'center',
 			icon: {
-				width: 44,
-				height: 44,
-				borderRadius: 22,
+				width: 40,
+				height: 40,
+				borderRadius: 20,
 			},
 			defaultIcon: {
-				width: 44,
-				height: 44,
-				borderRadius: 22,
+				width: 40,
+				height: 40,
+				borderRadius: 20,
 				alignContent: 'center',
 				justifyContent: 'center',
 				text: {
@@ -63,7 +63,7 @@ jn.define('im/messenger/lib/ui/base/avatar/style', (require, exports, module) =>
 				alignContent: 'center',
 				justifyContent: 'center',
 				text: {
-					fontSize: 20,
+					fontSize: 24,
 					alignSelf: 'center',
 					color: '#FFF',
 				}

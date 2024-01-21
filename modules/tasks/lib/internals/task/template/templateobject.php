@@ -3,22 +3,32 @@
 namespace Bitrix\Tasks\Internals\Task\Template;
 
 use Bitrix\Tasks\Access\Role\RoleDictionary;
+use Bitrix\Main\Type\Contract\Arrayable;
+use Bitrix\Tasks\Internals\Log\LogFacade;
 use Bitrix\Tasks\Internals\MemberTrait;
 use Bitrix\Tasks\Internals\Task\EO_Template;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
-use Bitrix\Tasks\Member\MemberService;
+use Bitrix\Tasks\Member\AbstractMemberService;
 use Bitrix\Tasks\Member\Service\TemplateMemberService;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Main\ORM\Fields;
 use CTaskTemplates;
 
-class TemplateObject extends EO_Template
+class TemplateObject extends EO_Template implements Arrayable
 {
 	use MemberTrait;
 
 	public function toArray(): array
 	{
-		$fields = TemplateTable::getEntity()->getFields();
+		try
+		{
+			$fields = TemplateTable::getEntity()->getFields();
+		}
+		catch (SystemException $exception)
+		{
+			LogFacade::logThrowable($exception);
+			return [];
+		}
 
 		$data = [];
 		foreach ($fields as $fieldName => $field)
@@ -70,7 +80,7 @@ class TemplateObject extends EO_Template
 		return $this->getMembersIdsByRole(RoleDictionary::ROLE_RESPONSIBLE);
 	}
 
-	public function getMemberService(): MemberService
+	public function getMemberService(): AbstractMemberService
 	{
 		return new TemplateMemberService($this->getId());
 	}

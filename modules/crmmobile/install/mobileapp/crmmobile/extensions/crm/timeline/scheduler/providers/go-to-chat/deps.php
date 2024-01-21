@@ -6,11 +6,13 @@ return [
 		'crm:type',
 		'crm:communication/communication-selector',
 		'crm:multi-field-drawer',
+
 		'imconnector:connectors/telegram',
 		'imconnector:consents/notification-service',
 		'layout/ui/warning-block',
 		'alert',
 		'haptics',
+		'apptheme',
 		'type',
 		'notify-manager',
 		'utils/color',

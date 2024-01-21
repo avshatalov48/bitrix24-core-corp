@@ -235,7 +235,7 @@ class Delivery extends Activity
 									'ACTIVITY_ID' => $this->getActivityId(),
 								]
 							)
-							->setAnimation(Animation::showLoaderForBlock()->setForever())
+							->setAnimation(Animation::disableBlock()->setForever())
 					)
 			;
 		}
@@ -310,7 +310,7 @@ class Delivery extends Activity
 							],
 						]
 					)
-					->setAnimation(Animation::showLoaderForBlock())
+					->setAnimation(Animation::disableBlock())
 			;
 
 			$cancelDeliveryRequestButton = new Button(

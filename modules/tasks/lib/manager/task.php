@@ -21,6 +21,7 @@ use Bitrix\Tasks\Integration\Extranet;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Integration\Timeman;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
+use Bitrix\Tasks\Internals\Task\RegularParametersTable;
 use Bitrix\Tasks\Manager\Task\Accomplice;
 use Bitrix\Tasks\Manager\Task\Auditor;
 use Bitrix\Tasks\Manager\Task\Checklist;
@@ -39,6 +40,7 @@ use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\UserField\Task as UserField;
+use TasksException;
 
 final class Task extends \Bitrix\Tasks\Manager
 {
@@ -93,7 +95,7 @@ final class Task extends \Bitrix\Tasks\Manager
 						$data = $task->getData(false);
 						$data[ static::ACT_KEY ] = $can = static::translateAllowedActionNames($task->getAllowedActions(true));
 					}
-					catch (\TasksException $e)
+					catch (TasksException $e)
 					{
 
 					}
@@ -362,7 +364,7 @@ final class Task extends \Bitrix\Tasks\Manager
 						$data = $task->getData(false);
 						$data[ static::ACT_KEY ] = $can = static::translateAllowedActionNames($task->getAllowedActions(true));
 					}
-					catch (\TasksException $e)
+					catch (TasksException $e)
 					{
 
 					}
@@ -708,9 +710,9 @@ final class Task extends \Bitrix\Tasks\Manager
 
 			$data[ 'SE_PARAMETER' ] = $taskParameters;
 		}
-		catch (\TasksException $e) // todo: get rid of this annoying catch by making \Bitrix\Tasks\*Exception classes inherited from TasksException (dont forget about code)
+		catch (TasksException $e) // todo: get rid of this annoying catch by making \Bitrix\Tasks\*Exception classes inherited from TasksException (dont forget about code)
 		{
-			if ($e->checkOfType(\TasksException::TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE))
+			if ($e->checkOfType(TasksException::TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE))
 			{
 				$denied = true;
 			}
@@ -813,6 +815,9 @@ final class Task extends \Bitrix\Tasks\Manager
 		unset($task);
 	}
 
+	/**
+	 * @throws TasksException
+	 */
 	public static function getList($userId, array $listParameters = [], array $parameters = [])
 	{
 		$data = [];

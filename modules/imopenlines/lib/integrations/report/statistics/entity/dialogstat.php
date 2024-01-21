@@ -29,12 +29,12 @@ class DialogStatTable extends DataManager
 	/**
 	 * @return string
 	 */
-	public static function getTableName()
+	public static function getTableName(): string
 	{
 		return 'b_imopenlines_dialog_stat';
 	}
 
-	public static function getMap()
+	public static function getMap(): array
 	{
 		return array(
 			new DateField('DATE',  array('primary' => true)),
@@ -55,11 +55,8 @@ class DialogStatTable extends DataManager
 		);
 	}
 
-
-	public static function clean()
+	public static function clean(): void
 	{
-		$tableName = self::getTableName();
-		global $DB;
-		$DB->Query('TRUNCATE TABLE ' . $tableName . ';');
+		\Bitrix\Main\Application::getInstance()->getConnection()->truncateTable(self::getTableName());
 	}
 }

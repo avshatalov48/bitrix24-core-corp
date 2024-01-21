@@ -6,5 +6,6 @@ return [
 		'layout/ui/safe-image',
 		'utils/url',
 		'utils/object',
+		'apptheme',
 	],
 ];

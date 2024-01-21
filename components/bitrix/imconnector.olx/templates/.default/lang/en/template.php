@@ -10,12 +10,9 @@ $MESS["IMCONNECTOR_COMPONENT_OLX_CHANGE_ANY_TIME"] = "You can edit or disconnect
 $MESS["IMCONNECTOR_COMPONENT_OLX_CONNECTED"] = "OLX connected";
 $MESS["IMCONNECTOR_COMPONENT_OLX_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">I want to</div>
 				<div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">Connect</span> an OLX account</div>";
-$MESS["IMCONNECTOR_COMPONENT_OLX_CONNECT_STEP"] = "Before connection, you have to <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">create an OLX account</a>
- or connect an existing one. We can help you create an account with OLX and connect it to your Bitrix24";
 $MESS["IMCONNECTOR_COMPONENT_OLX_CONNECT_STEP_NEW"] = "You have to #LINK_START#create an account#LINK_END# or use the one you already have. If you don't have an account, we will help you create it and connect it to your Bitrix24.";
 $MESS["IMCONNECTOR_COMPONENT_OLX_CONNECT_TITLE"] = "Connect OLX to Open Channel";
 $MESS["IMCONNECTOR_COMPONENT_OLX_FINAL_FORM_DESCRIPTION"] = "OLX has been successfully connected to your Open Channel. From now on, all messages sent to your OLX account will be forwarded to your Bitrix24.";
-$MESS["IMCONNECTOR_COMPONENT_OLX_INDEX_ADDITIONAL_DESCRIPTION"] = "You have to <a href=\"#\" onclick=\"top.BX.Helper.show(\'#ID#\'); return false;\">create an OLX account</a> or use the one you already have. If you don't have an account, we will help you create one and connect it to your Bitrix24.";
 $MESS["IMCONNECTOR_COMPONENT_OLX_INDEX_ADDITIONAL_DESCRIPTION_NEW"] = "You have to #LINK_START#create an OLX account#LINK_END# or use the one you already have. If you don't have an account, we will help you create it in a few steps and connect it to your Bitrix24.";
 $MESS["IMCONNECTOR_COMPONENT_OLX_INDEX_SUBTITLE"] = "Merge customer communication channels into Bitrix24 to respond faster and improve conversion.";
 $MESS["IMCONNECTOR_COMPONENT_OLX_INDEX_TITLE"] = "Selling on OLX? Receive questions from your customers directly to Bitrix24.";

@@ -1,10 +1,13 @@
 <?php
+
 return [
 	'extensions' => [
-		'crm:stage-list/item/step',
-		'crm:assets/common',
+		'apptheme',
+		'layout/ui/stage-list/item',
+		'statemanager/redux/connect',
+
 		'crm:tunnel',
-		'utils',
-		'haptics',
-	]
+		'crm:statemanager/redux/slices/stage-settings',
+		'crm:statemanager/redux/slices/stage-counters',
+	],
 ];

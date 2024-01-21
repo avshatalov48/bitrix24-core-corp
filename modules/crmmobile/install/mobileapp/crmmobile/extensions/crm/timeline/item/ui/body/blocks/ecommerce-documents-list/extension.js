@@ -4,6 +4,7 @@
 jn.define('crm/timeline/item/ui/body/blocks/ecommerce-documents-list', (require, exports, module) => {
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @class TimelineItemBodyEcommerceDocumentsList
@@ -86,14 +87,14 @@ jn.define('crm/timeline/item/ui/body/blocks/ecommerce-documents-list', (require,
 				Text({
 					style: {
 						fontSize: 14,
-						color: '#6a737f',
+						color: AppTheme.colors.base3,
 					},
 					text: title,
 				}),
 				Text({
 					style: {
 						fontSize: 14,
-						color: '#333333',
+						color: AppTheme.colors.base1,
 						fontWeight: AmountFontWeight,
 					},
 					text: this.getFormattedMoneyWithCurrency(
@@ -109,7 +110,7 @@ jn.define('crm/timeline/item/ui/body/blocks/ecommerce-documents-list', (require,
 			return View({
 				style: {
 					width: '100%',
-					backgroundColor: '#dfe0e3',
+					backgroundColor: AppTheme.colors.base6,
 					height: 1,
 					marginTop,
 					marginBottom,
@@ -140,13 +141,13 @@ jn.define('crm/timeline/item/ui/body/blocks/ecommerce-documents-list', (require,
 							},
 							Text({
 								style: {
-									color: '#333333',
+									color: AppTheme.colors.base1,
 								},
 								text: order.TITLE,
 							}),
 							Text({
 								style: {
-									color: '#333333',
+									color: AppTheme.colors.base1,
 								},
 								text: jnComponent.convertHtmlEntities(order.PRICE_FORMAT),
 							}),
@@ -279,7 +280,7 @@ jn.define('crm/timeline/item/ui/body/blocks/ecommerce-documents-list', (require,
 							},
 							Text({
 								style: {
-									color: '#2066b0',
+									color: AppTheme.colors.accentMainLinks,
 									fontSize: 14,
 									lineHeight: 16,
 									width: '100%',
@@ -289,7 +290,7 @@ jn.define('crm/timeline/item/ui/body/blocks/ecommerce-documents-list', (require,
 							}),
 							Text({
 								style: {
-									color: '#2066b0',
+									color: AppTheme.colors.accentMainLinks,
 									fontSize: 14,
 									lineHeight: 16,
 									width: '100%',
@@ -301,7 +302,7 @@ jn.define('crm/timeline/item/ui/body/blocks/ecommerce-documents-list', (require,
 						View(
 							{
 								style: {
-									backgroundColor: '#eaf7d7',
+									backgroundColor: AppTheme.colors.accentSoftGreen3,
 									borderRadius: 50,
 									justifyContent: 'center',
 									alignItems: 'center',
@@ -312,7 +313,7 @@ jn.define('crm/timeline/item/ui/body/blocks/ecommerce-documents-list', (require,
 							},
 							Text({
 								style: {
-									color: '#719100',
+									color: AppTheme.colors.accentSoftElementGreen1,
 									fontSize: 9,
 									fontWeight: '700',
 								},

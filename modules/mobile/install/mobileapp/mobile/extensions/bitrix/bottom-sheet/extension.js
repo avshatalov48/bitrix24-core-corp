@@ -3,11 +3,12 @@
  */
 jn.define('bottom-sheet', (require, exports, module) => {
 	const { Type } = require('type');
+	const AppTheme = require('apptheme');
 	const { prepareHexColor } = require('utils/color');
 
 	const DEFAULT_TOP_HEIGHT_OFFSET = 70;
 	const DEFAULT_MEDIUM_POSITION_PERCENT = 70;
-	const DEFAULT_BACKGROUND_COLOR = '#eef2f4';
+	const DEFAULT_BACKGROUND_COLOR = AppTheme.colors.bgSecondary;
 
 	const DEFAULT_WIDGET_PARAMS = {
 		modal: true,
@@ -27,6 +28,7 @@ jn.define('bottom-sheet', (require, exports, module) => {
 			hideNavigationBar: true,
 			shouldResizeContent: true,
 			forceDismissOnSwipeDown: true,
+			adoptHeightByKeyboard: false,
 			helpUrl: undefined,
 		},
 	};
@@ -394,6 +396,28 @@ jn.define('bottom-sheet', (require, exports, module) => {
 		 * @public
 		 * @return {BottomSheet}
 		 */
+		enableAdoptHeightByKeyboard()
+		{
+			this.widgetOptions.backdrop.adoptHeightByKeyboard = true;
+
+			return this;
+		}
+
+		/**
+		 * @public
+		 * @return {BottomSheet}
+		 */
+		disableAdoptHeightByKeyboard()
+		{
+			this.widgetOptions.backdrop.adoptHeightByKeyboard = false;
+
+			return this;
+		}
+
+		/**
+		 * @public
+		 * @return {BottomSheet}
+		 */
 		enableResizeContent()
 		{
 			this.widgetOptions.backdrop.shouldResizeContent = true;
@@ -424,7 +448,7 @@ jn.define('bottom-sheet', (require, exports, module) => {
 				throw new TypeError('helpUrl must be a filled string');
 			}
 
-			this.widgetOptions.helpUrl = helpUrl;
+			this.widgetOptions.backdrop.helpUrl = helpUrl;
 
 			return this;
 		}

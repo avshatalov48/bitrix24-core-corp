@@ -2,10 +2,14 @@
  * @module crm/payment-system/creation/actions/oauth
  */
 jn.define('crm/payment-system/creation/actions/oauth', (require, exports, module) => {
-	const { BackdropHeader } = require('layout/ui/banners');
+	const AppTheme = require('apptheme');
+	const { Feature } = require('feature');
+	const { BackdropHeader, CreateBannerImage } = require('layout/ui/banners');
 	const { OAuthSession } = require('native/oauth');
 	const { AnalyticsLabel } = require('analytics-label');
-	const { Feature } = require('feature');
+	const { ContextMenu } = require('layout/ui/context-menu');
+
+	const EXTENSION_IMAGE_PATH = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/payment-system/creation/actions/oauth/images/`;
 
 	/**
 	 * @class Oauth
@@ -122,7 +126,7 @@ jn.define('crm/payment-system/creation/actions/oauth', (require, exports, module
 					menuProps.customSection = {
 						layout: BackdropHeader({
 							description: data.text,
-							image: this.getImagePath('payment-banner'),
+							image: Oauth.createBannerImage('payments'),
 						}),
 						height: 136,
 					};
@@ -167,9 +171,19 @@ jn.define('crm/payment-system/creation/actions/oauth', (require, exports, module
 			return this;
 		}
 
-		getImagePath(image)
+		/**
+		 * @param {string} imageName
+		 * @return {View}
+		 */
+		static createBannerImage(imageName)
 		{
-			return `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/payment-system/creation/actions/oauth/images/${image}.png`;
+			return CreateBannerImage({
+				image: {
+					svg: {
+						uri: `${EXTENSION_IMAGE_PATH}/${AppTheme.id}/${imageName}.svg`,
+					},
+				},
+			});
 		}
 	}
 

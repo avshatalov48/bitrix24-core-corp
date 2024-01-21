@@ -6,7 +6,8 @@
 jn.define('im/messenger/model/recent/search', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DateHelper } = require('im/messenger/lib/helper');
-	const { Logger } = require('im/messenger/lib/logger');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('model--messages-search');
 
 	const searchModel = {
 		namespaced: true,
@@ -45,7 +46,7 @@ jn.define('im/messenger/model/recent/search', (require, exports, module) => {
 						data: {
 							item: {
 								id: recentElement.id,
-								date_update: recentElement.date_update,
+								dateMessage: recentElement.dateMessage,
 							},
 						},
 					});
@@ -68,7 +69,7 @@ jn.define('im/messenger/model/recent/search', (require, exports, module) => {
 			 * @param {MutationPayload} payload
 			 */
 			set: (state, payload) => {
-				Logger.log('searchModel: set mutation', payload);
+				logger.log('searchModel: set mutation', payload);
 
 				const {
 					item,
@@ -82,7 +83,7 @@ jn.define('im/messenger/model/recent/search', (require, exports, module) => {
 			 * @param payload
 			 */
 			clear: (state, payload) => {
-				Logger.log('searchModel: clear mutation', payload);
+				logger.log('searchModel: clear mutation', payload);
 
 				state.collection = {};
 			},
@@ -107,14 +108,9 @@ jn.define('im/messenger/model/recent/search', (require, exports, module) => {
 			result.id = fields.id;
 		}
 
-		if (!Type.isUndefined(fields.dateUpdate))
+		if (Type.isStringFilled(fields.dateMessage))
 		{
-			fields.date_update = fields.dateUpdate;
-		}
-
-		if (Type.isStringFilled(fields.date_update))
-		{
-			result.date_update = DateHelper.cast(fields.date_update, null);
+			result.dateMessage = DateHelper.cast(fields.dateMessage, null);
 		}
 
 		return result;

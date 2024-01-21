@@ -2,7 +2,7 @@
  * @module layout/ui/fields/url
  */
 jn.define('layout/ui/fields/url', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { pen } = require('assets/common');
 	const { StringFieldClass } = require('layout/ui/fields/string');
 	const { URL, isValidLink, getHttpPath } = require('utils/url');
@@ -19,7 +19,7 @@ jn.define('layout/ui/fields/url', (require, exports, module) => {
 			const value = this.getValue();
 
 			const originUrl = URL(link).origin;
-			let field;
+			let field = null;
 
 			if (Application.getPlatform() === 'ios')
 			{
@@ -27,7 +27,7 @@ jn.define('layout/ui/fields/url', (require, exports, module) => {
 					...this.getReadOnlyRenderParams(),
 					style: {
 						...this.styles.value,
-						color: '#0b66c3',
+						color: AppTheme.colors.accentMainLinks,
 					},
 					enable: false,
 					value,
@@ -39,10 +39,10 @@ jn.define('layout/ui/fields/url', (require, exports, module) => {
 					...this.getReadOnlyRenderParams(),
 					style: {
 						...this.styles.value,
-						color: '#0b66c3',
+						color: AppTheme.colors.accentMainLinks,
 					},
 					text: value,
-				})
+				});
 			}
 
 			return View(
@@ -135,7 +135,7 @@ jn.define('layout/ui/fields/url', (require, exports, module) => {
 							height: 14,
 						},
 						svg: {
-							content: pen,
+							content: pen(),
 						},
 					},
 				),
@@ -152,5 +152,4 @@ jn.define('layout/ui/fields/url', (require, exports, module) => {
 		UrlType: 'url',
 		UrlField: (props) => new UrlField(props),
 	};
-
 });

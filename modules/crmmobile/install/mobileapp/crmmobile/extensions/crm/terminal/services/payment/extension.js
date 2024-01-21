@@ -9,13 +9,13 @@ jn.define('crm/terminal/services/payment', (require, exports, module) => {
 	{
 		/**
 		 * @param {TerminalCreatePaymentProps} props
-		 * @returns {Promise<TerminalPayment>}
+		 * @returns {Promise<Payment>}
 		 */
 		create(props)
 		{
 			return new Promise((resolve, reject) => {
 				BX.ajax.runAction(
-					'crmmobile.Terminal.createPayment',
+					'crmmobile.Terminal.App.createPayment',
 					{
 						data: {
 							sum: props.sum,
@@ -41,13 +41,45 @@ jn.define('crm/terminal/services/payment', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {TerminalEntityCreatePaymentProps} props
+		 * @returns {Promise<Payment>}
+		 */
+		createForEntity(props)
+		{
+			return new Promise((resolve, reject) => {
+				BX.ajax.runAction(
+						'crmmobile.Terminal.Entity.createPayment',
+						{
+							json: {
+								entityId: props.entityId,
+								entityTypeId: props.entityTypeId,
+								responsibleId: props.responsibleId,
+								products: props.products,
+							},
+						},
+					)
+					.then((response) => {
+						if (response.data.payment)
+						{
+							resolve(response.data.payment);
+
+							return;
+						}
+						reject();
+					}).catch(() => {
+						reject();
+					});
+			});
+		}
+
+		/**
 		 * @param {number} id
-		 * @returns {Promise<TerminalPayment>}
+		 * @returns {Promise<Payment>}
 		 */
 		get(id)
 		{
 			return new Promise((resolve) => {
-				BX.ajax.runAction('crmmobile.Terminal.getPayment', { data: { id } })
+				BX.ajax.runAction('crmmobile.Terminal.App.getPayment', { data: { id } })
 					.then((response) => resolve(response.data))
 					.catch(() => reject());
 			});
@@ -61,7 +93,7 @@ jn.define('crm/terminal/services/payment', (require, exports, module) => {
 		{
 			return new Promise((resolve, reject) => {
 				BX.ajax.runAction(
-					'crm.order.terminalpayment.delete',
+					'crm.order.payment.delete',
 					{
 						data: { id },
 					},
@@ -79,7 +111,7 @@ jn.define('crm/terminal/services/payment', (require, exports, module) => {
 		{
 			return new Promise((resolve, reject) => {
 				BX.ajax.runAction(
-					'crmmobile.Terminal.InitiatePay',
+					'crmmobile.Terminal.App.InitiatePay',
 					{
 						data: {
 							paymentId: props.paymentId,

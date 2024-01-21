@@ -13,9 +13,6 @@ if (!empty($arResult['ELEMENT']['BODY']) && \CCrmContentType::Html != $arResult[
 if ('Y' != $arResult['ELEMENT']['IS_ACTIVE'])
 	$arResult['ELEMENT']['IS_ACTIVE'] = 'N';
 
-if (\CCrmMailTemplateScope::Common != $arResult['ELEMENT']['SCOPE'])
-	$arResult['ELEMENT']['SCOPE'] = \CCrmMailTemplateScope::Personal;
-
 if ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
 {
 	$APPLICATION->restartBuffer();
@@ -47,10 +44,13 @@ else
 	$APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, 'pagetitle-toolbar-field-view')));
 }
 
-\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
+\Bitrix\Main\UI\Extension::load([
+		'ui.design-tokens',
+		'ui.entity-selector',
+	]);
 ?>
 
-<form id="<?=htmlspecialcharsbx($formId) ?>" action="<?=POST_FORM_ACTION_URI ?>" method="POST">
+<form id="<?=htmlspecialcharsbx($formId)?>">
 	<?=bitrix_sessid_post() ?>
 	<? $saveAction = isset($arResult['EXTERNAL_CONTEXT']) && $arResult['EXTERNAL_CONTEXT'] != '' ? 'save' : 'apply'; ?>
 	<input type="hidden" name="<?=$saveAction ?>" value="<?=$saveAction ?>">
@@ -68,19 +68,6 @@ else
 			<label class="crm-mail-template-edit-form-switch-label"
 				for="crm_mail_template_<?=intval($arResult['ELEMENT']['ID']) ?>_active"><?=getMessage('CRM_MAIL_TEMPLATE_IS_ACTIVE') ?></label>
 		</span>
-		<? if (\CCrmPerms::isAdmin() || \CCrmMailTemplateScope::Common == $arResult['ELEMENT']['SCOPE']): ?>
-			<span class="crm-mail-template-edit-form-switch">
-				<input type="hidden" name="SCOPE" value="<?=\CCrmMailTemplateScope::Personal ?>">
-				<input class="crm-mail-template-edit-form-switch-checkbox" form="<?=htmlspecialcharsbx($formId) ?>"
-					id="crm_mail_template_<?=intval($arResult['ELEMENT']['ID']) ?>_public"
-					name="SCOPE" value="<?=\CCrmMailTemplateScope::Common ?>" type="checkbox"
-					<? if (\CCrmMailTemplateScope::Common == $arResult['ELEMENT']['SCOPE']): ?> checked<? endif ?>
-					onchange="BX(this.id+'_alt').value = this.checked ? this.value : <?=\CCrmMailTemplateScope::Personal ?>;"
-					<? if (!\CCrmPerms::isAdmin()): ?> disabled<? endif ?>>
-				<label class="crm-mail-template-edit-form-switch-label"
-					for="crm_mail_template_<?=intval($arResult['ELEMENT']['ID']) ?>_public"><?=getMessage('CRM_MAIL_TEMPLATE_SCOPE_PUBLIC') ?></label>
-			</span>
-		<? endif ?>
 		<? if (false && $arResult['ELEMENT']['ID'] > 0 && (\CCrmPerms::isAdmin() || $arResult['USER_ID'] == $arResult['ELEMENT']['OWNER_ID'])): ?>
 			<? $deleteHref = \CHTTP::urlAddParams(
 				\CComponentEngine::makePathFromTemplate(
@@ -122,8 +109,9 @@ else
 
 	<input id="crm_mail_template_<?=intval($arResult['ELEMENT']['ID']) ?>_active_alt"
 		type="hidden" name="IS_ACTIVE" value="<?=htmlspecialcharsbx($arResult['ELEMENT']['IS_ACTIVE']) ?>">
-	<input id="crm_mail_template_<?=intval($arResult['ELEMENT']['ID']) ?>_public_alt"
-		type="hidden" name="SCOPE" value="<?=htmlspecialcharsbx($arResult['ELEMENT']['SCOPE']) ?>">
+	<input id="crm_mail_template_<?=intval($arResult['ELEMENT']['ID']) ?>_access_alt"
+		   type="hidden" name="ACCESS" value="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($arResult['ACCESS']))?>">
+	<div id="my_container"></div>
 
 	<? $APPLICATION->includeComponent(
 		'bitrix:main.mail.form', '',
@@ -132,6 +120,7 @@ else
 			'FORM_ID' => $formId,
 			'LAYOUT_ONLY' => true,
 			'EDITOR_TOOLBAR' => true,
+			'COPILOT_PARAMS' => $arResult['COPILOT_PARAMS'],
 			'FIELDS' => array(
 				array(
 					'name'        => 'TITLE',
@@ -148,6 +137,10 @@ else
 					'placeholder' => getMessage('CRM_MAIL_ENTITY_TYPE_UNI'),
 					'value'       => $arResult['ELEMENT']['ENTITY_TYPE_ID'],
 					'list'        => $arResult['OWNER_TYPES'],
+				),
+				array(
+					'name'        =>'ACCESS_SELECTOR',
+					'title'       => getMessage('CRM_MAIL_ACCESS_SELECTOR'),
 				),
 				array(
 					'type' => 'separator',
@@ -191,6 +184,12 @@ else
 <script type="text/javascript">
 BX.ready(function()
 {
+	BX.message(<?=\Bitrix\Main\Web\Json::encode(\Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__))?>);
+	BX.CrmEntityFieldSelector.prototype.setPreselectedItems(
+		'crm_mail_template_<?=intval($arResult['ELEMENT']['ID']) ?>_access_alt',
+		<?=CUtil::PhpToJSObject($arResult['ACCESS'])?>,
+		<?=(int)$arResult['ELEMENT']['OWNER_ID']?>);
+
 	var rawFieldsMap = <?=\CUtil::phpToJsObject(\CCrmTemplateManager::getAllMaps()) ?>;
 	var fieldsMap = {};
 
@@ -248,8 +247,8 @@ BX.ready(function()
 		return items;
 	};
 
-	var formNode = BX('<?=\CUtil::jsEscape($formId) ?>');
-	var mailForm = BXMainMailForm.getForm('<?=\CUtil::jsEscape($formId) ?>');
+	let formNode = BX('<?=\CUtil::jsEscape($formId) ?>');
+	let mailForm = BXMainMailForm.getForm('<?=\CUtil::jsEscape($formId) ?>');
 
 	BX.addCustomEvent(mailForm, 'MailForm:field:setMenuExt', function(form, field)
 	{
@@ -290,6 +289,8 @@ BX.ready(function()
 
 	<? endif ?>
 
+	const templateAccessSelector = document.getElementById('template-access-selector');
+
 	BX.addCustomEvent(mailForm, 'MailForm:footer:buttonClick', function(form, button)
 	{
 		if (BX.hasClass(button, 'main-mail-form-cancel-button'))
@@ -318,6 +319,35 @@ BX.ready(function()
 	});
 
 	mailForm.init();
+
+	BX.ready(function(){
+		const button = BX.findChildByClassName(formNode, 'main-mail-form-submit-button', true);
+		BX.bind(formNode, 'submit', BX.proxy(sendForm, formNode));
+
+		function sendForm(e){
+			BX.addClass(button, 'ui-btn-wait');
+			let data = new FormData(this);
+
+			BX.ajax({
+				url: '<?=CUtil::JSEscape(POST_FORM_ACTION_URI)?>',
+				data: data,
+				method: 'POST',
+				dataType: 'json',
+				processData: false,
+				preparePost: false,
+				onsuccess: function(){
+					BX.removeClass(button, 'ui-btn-wait');
+					window.top.BX.SidePanel.Instance.postMessage(window, 'CrmMailTemplateEdit:onSubmit');
+					const slider = top.BX.SidePanel.Instance.getSliderByWindow(window);
+					if (slider && slider.close)
+					{
+						slider.close();
+					}
+				},
+			});
+			return BX.PreventDefault(e);
+		};
+	})
 });
 </script>
 
@@ -328,7 +358,8 @@ if ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
 	?>
 			</div>
 		</body>
-	</html><?
+	</html>
+<?
 
 	require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');
 	die;

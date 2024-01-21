@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["MB_TASKS_BASE_SETTINGS"] = "Main task parameters";
 $MESS["MB_TASKS_BASE_SETTINGS_DESCRIPTION"] = "things to do";
 $MESS["MB_TASKS_BASE_SETTINGS_DESCRIPTION_PLACEHOLDER"] = "Task description";
@@ -15,6 +15,7 @@ $MESS["MB_TASKS_TASK_DELETE"] = "Delete";
 $MESS["MB_TASKS_TASK_DETAIL_BTN_ACCEPT_TASK"] = "Accept task";
 $MESS["MB_TASKS_TASK_DETAIL_BTN_ADD_FAVORITE_TASK"] = "Add to favorites";
 $MESS["MB_TASKS_TASK_DETAIL_BTN_APPROVE_TASK"] = "Approve";
+$MESS["MB_TASKS_TASK_DETAIL_BTN_APPROVE_TASK_MSGVER_1"] = "Approve";
 $MESS["MB_TASKS_TASK_DETAIL_BTN_CLOSE_TASK"] = "Complete";
 $MESS["MB_TASKS_TASK_DETAIL_BTN_DECLINE_TASK"] = "Decline";
 $MESS["MB_TASKS_TASK_DETAIL_BTN_DELEGATE_TASK"] = "Delegate";
@@ -86,4 +87,3 @@ $MESS["TASKS_TT_ERROR1_DESC"] = "You are currently tracking time for the task \"
 $MESS["TASKS_TT_ERROR1_TITLE"] = "Time tracker is now being used with another task.";
 $MESS["TASKS_TT_PAUSE"] = "Stop";
 $MESS["TASKS_TT_START"] = "Start time tracker";
-?>

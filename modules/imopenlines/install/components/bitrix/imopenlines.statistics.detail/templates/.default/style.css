@@ -44,3 +44,15 @@ div.bx-openlines-dialog-long-run-proc-popup {
 	margin: 0;
 	padding: 0;
 }
+
+.intranet-contact-center-extremist-organization-label {
+	color: #A8ADB4;
+	float: left;
+	margin-left: 15px;
+	margin-top: 6px;
+	margin-bottom: 16px;
+	display: flex;
+}
+.bitrix24-light-theme .no-background .intranet-contact-center-extremist-organization-label {
+	color: #fff;
+}

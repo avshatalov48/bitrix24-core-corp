@@ -5,7 +5,8 @@ jn.define('im/messenger/provider/pull/online', (require, exports, module) => {
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
 	const { PullHandler } = require('im/messenger/provider/pull/base');
-	const { Logger } = require('im/messenger/lib/logger');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('pull-handler--online');
 
 	/**
 	 * @class OnlinePullHandler
@@ -24,11 +25,21 @@ jn.define('im/messenger/provider/pull/online', (require, exports, module) => {
 
 		handleList(params, extra, command)
 		{
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
 			this.updateOnline(params, extra, command);
 		}
 
 		handleUserStatus(params, extra, command)
 		{
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
 			this.updateOnline(params, extra, command);
 		}
 
@@ -40,12 +51,17 @@ jn.define('im/messenger/provider/pull/online', (require, exports, module) => {
 		 */
 		updateOnline(params, extra, command)
 		{
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
 			if (extra.server_time_ago > 30)
 			{
 				return;
 			}
 
-			Logger.log('OnlinePullHandler.updateOnline', params);
+			logger.log('OnlinePullHandler.updateOnline', params);
 
 			const userCollection = params.users;
 

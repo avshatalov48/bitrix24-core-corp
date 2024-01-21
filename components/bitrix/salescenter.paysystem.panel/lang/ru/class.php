@@ -1,18 +1,8 @@
 <?php
-$MESS["SPP_SALESCENTER_MODULE_ERROR"] = "Модуль \"Продажи в чате\" не установлен";
+$MESS["SPP_SALESCENTER_MODULE_ERROR_MSGVER_1"] = "Модуль \"Продажи в чате\" не установлен";
 $MESS["SPP_SALE_MODULE_ERROR"] = "Модуль \"Интернет-магазин\" не установлен";
 $MESS["SPP_ACCESS_DENIED"] = "Доступ запрещен.";
-$MESS["SPP_PAYSYSTEM_SBERBANKONLINE_TITLE"] = "Оплата картой (Сбербанк)";
-$MESS["SPP_PAYSYSTEM_PAYPAL_TITLE"] = "Оплата PayPal";
-$MESS["SPP_PAYSYSTEM_WEBMONEY_TITLE"] = "Оплата WebMoney";
-$MESS["SPP_PAYSYSTEM_LIQPAY_TITLE"] = "Оплата LiqPay";
-$MESS["SPP_PAYSYSTEM_UAPAY_TITLE"] = "Оплата UAPAY";
-$MESS["SPP_PAYSYSTEM_CASHONDELIVERY_TITLE"] = "Наложенный платеж";
 $MESS["SPP_PAYSYSTEM_CASHONDELIVERYCALC_TITLE"] = "Наложенный платеж с расчетом стоимости почтового перевода";
-$MESS["SPP_PAYSYSTEM_PLATON_BANK_CARD_TITLE"] = "Оплата картой";
-$MESS["SPP_PAYSYSTEM_PLATON_PRIVAT24_TITLE"] = "Оплата Приват24";
-$MESS["SPP_PAYSYSTEM_PLATON_APPLE_PAY_TITLE"] = "Оплата Apple Pay";
-$MESS["SPP_PAYSYSTEM_PLATON_GOOGLE_PAY_TITLE"] = "Оплата Google Pay";
 $MESS["SPP_PAYSYSTEM_APP_TOTAL_APPLICATIONS"] = "Всего решений";
 $MESS["SPP_PAYSYSTEM_APP_SEE_ALL"] = "Посмотреть все";
 $MESS["SPP_PAYSYSTEM_APP_INTEGRATION_REQUIRED"] = "Нужна интеграция ?";

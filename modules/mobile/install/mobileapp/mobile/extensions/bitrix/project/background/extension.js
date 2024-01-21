@@ -1,11 +1,11 @@
 (function()
 {
 	const projectCache = new Map();
-	const projectKeys = [
+	const projectKeys = new Set([
 		'ID', 'NAME', 'OPENED', 'NUMBER_OF_MEMBERS',
 		'AVATAR', 'AVATAR_TYPE', 'AVATAR_TYPES',
 		'ADDITIONAL_DATA',
-	];
+	]);
 
 	class ProjectBackgroundAction
 	{
@@ -15,13 +15,13 @@
 				'projectbackground::project::action',
 				(data) => {
 					ProjectBackgroundAction.executeAction(data);
-				}
+				},
 			);
 		}
 
 		static executeAction(data)
 		{
-			const projectId = data.projectId ? parseInt(data.projectId) : 0;
+			const projectId = data.projectId ? parseInt(data.projectId, 10) : 0;
 			const action = data.action ? data.action : null;
 			const siteId = data.siteId ? data.siteId : null;
 			const siteDir = data.siteDir ? data.siteDir : null;
@@ -105,44 +105,75 @@
 			const subtitle = WorkgroupUtil.getSubtitle(item.params.membersCount);
 			const guid = WorkgroupUtil.createGuid();
 
-			const tabs = WorkgroupUtil.getTabsItems({
-				availableFeatures: item.params.features,
-				projectNewsPathTemplate: (params.newsPathTemplate || ''),
-				siteId: siteId,
-				siteDir: siteDir,
-				guid: guid,
-			}, item);
+			return ProjectBackgroundAction.getIsNewDashboardActive().then((isNewDashboardActive) => {
+				const tabs = WorkgroupUtil.getTabsItems(
+					{
+						siteId,
+						siteDir,
+						guid,
+						isNewDashboardActive,
+						availableFeatures: item.params.features,
+						projectNewsPathTemplate: (params.newsPathTemplate || ''),
+					},
+					item,
+				);
 
-			PageManager.openComponent('JSStackComponent', {
-				scriptPath: availableComponents['project.tabs'].publicUrl,
-				componentCode: 'project.tabs',
-				canOpenInDefault: true,
-				params: {
-					id: item.id,
-					subtitle: subtitle,
-					item: item,
-					calendarWebPathTemplate: (params.calendarWebPathTemplate || ''),
-					currentUserId: (params.currentUserId || env.userId),
-					siteId: siteId,
-					guid: guid,
-				},
-				title: item.title,
-				rootWidget: {
-					name: 'tabs',
-					settings: {
-						objectName: 'tabs',
-						titleParams: {
-							text: item.title,
-							detailText: subtitle,
-							imageUrl: item.params.avatar,
-							userLargeTitleMode: true,
-						},
-						grabTitle: false,
-						tabs: {
-							items: tabs,
+				PageManager.openComponent('JSStackComponent', {
+					scriptPath: availableComponents['project.tabs'].publicUrl,
+					componentCode: 'project.tabs',
+					canOpenInDefault: true,
+					params: {
+						id: item.id,
+						subtitle,
+						item,
+						calendarWebPathTemplate: (params.calendarWebPathTemplate || ''),
+						currentUserId: (params.currentUserId || env.userId),
+						siteId,
+						guid,
+					},
+					title: item.title,
+					rootWidget: {
+						name: 'tabs',
+						settings: {
+							objectName: 'tabs',
+							titleParams: {
+								text: item.title,
+								detailText: subtitle,
+								imageUrl: item.params.avatar,
+								userLargeTitleMode: true,
+							},
+							grabTitle: false,
+							tabs: {
+								items: tabs,
+							},
 						},
 					},
-				},
+				});
+			});
+		}
+
+		static getIsNewDashboardActive()
+		{
+			return new Promise((resolve) => {
+				const has = Object.prototype.hasOwnProperty;
+				const storage = Application.storageById('tasksmobile');
+				const cacheSettings = storage.getObject('settings');
+
+				if (has.call(cacheSettings, 'isNewDashboardActive'))
+				{
+					resolve(cacheSettings.isNewDashboardActive);
+				}
+				else
+				{
+					BX.ajax.runAction('tasksmobile.Settings.isNewDashboardActive')
+						.then((result) => {
+							cacheSettings.isNewDashboardActive = result.data;
+							storage.setObject('settings', cacheSettings);
+							resolve(result.data);
+						})
+						.catch(() => resolve(false))
+					;
+				}
 			});
 		}
 
@@ -155,7 +186,6 @@
 			} = params;
 
 			return new Promise((resolve, reject) => {
-
 				if (projectCache.has(projectId))
 				{
 					resolve({
@@ -169,20 +199,19 @@
 							params: {
 								groupId: projectId,
 								mode: 'mobile',
-								select: [ 'AVATAR', 'AVATAR_TYPES' ],
+								select: ['AVATAR', 'AVATAR_TYPES'],
 								features: [
 									'tasks',
 									'blog',
 									'files',
 									'calendar',
 								],
-								mandatoryFeatures: [ 'blog' ],
-								siteId: siteId,
-								siteDir: siteDir,
-							}
-						}
+								mandatoryFeatures: ['blog'],
+								siteId,
+								siteDir,
+							},
+						},
 					}).then((response) => {
-
 						if (!response.data)
 						{
 							response.data = {};
@@ -190,7 +219,7 @@
 
 						for (const key in response.data)
 						{
-							if (!projectKeys.includes(key))
+							if (!projectKeys.has(key))
 							{
 								delete response.data[key];
 							}
@@ -201,7 +230,6 @@
 						return {
 							data: response.data,
 						};
-
 					}).then((result) => {
 						const data = result.data;
 
@@ -212,10 +240,10 @@
 										'projectNewsPathTemplate',
 										'projectCalendarWebPathTemplate',
 									],
-									siteId: siteId,
-									siteDir: siteDir,
-								}
-							}
+									siteId,
+									siteDir,
+								},
+							},
 						}).then((result) => {
 							const optionData = result.data;
 							data.ADDITIONAL_DATA.projectNewsPathTemplate = optionData.projectNewsPathTemplate;

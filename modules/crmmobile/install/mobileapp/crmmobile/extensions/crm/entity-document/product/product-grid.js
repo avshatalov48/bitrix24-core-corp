@@ -2,10 +2,11 @@
  * @module crm/entity-document/product/product-grid
  */
 jn.define('crm/entity-document/product/product-grid', (require, exports, module) => {
-	const { ProductGrid } = require('layout/ui/product-grid');
-	const { EntityDocumentProductCard } = require('crm/entity-document/product/product-card');
-	const { ProductRow } = require('crm/product-grid/model');
+	const AppTheme = require('apptheme');
 	const { clone } = require('utils/object');
+	const { ProductGrid } = require('layout/ui/product-grid');
+	const { ProductRow } = require('crm/product-grid/model');
+	const { EntityDocumentProductCard } = require('crm/entity-document/product/product-card');
 
 	/**
 	 * @class EntityDocumentProductGrid
@@ -18,17 +19,16 @@ jn.define('crm/entity-document/product/product-grid', (require, exports, module)
 
 			this.productCardRef = null;
 			this.state = this.buildState(this.getProps());
+
+			this.additionalTopContent = props.additionalTopContent;
+			this.additionalBottomContent = props.additionalBottomContent;
 			this.additionalSummary = props.additionalSummary;
+			this.additionalSummaryBottom = props.additionalSummaryBottom;
 		}
 
 		getSummaryComponents()
 		{
-			return {
-				summary: true,
-				amount: false,
-				discount: true,
-				taxes: false,
-			};
+			return BX.prop.getObject(this.props, 'summaryComponents', {});
 		}
 
 		initServices()
@@ -43,16 +43,18 @@ jn.define('crm/entity-document/product/product-grid', (require, exports, module)
 
 		renderSingleItem(productRow, index)
 		{
-			const { catalog, measures, inventoryControl, entity, taxes, permissions } = this.getProps();
+			const { catalog, measures, entity, taxes, permissions } = this.getProps();
 
 			return View(
 				{
 					style: {
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgPrimary,
 					},
 				},
 				new EntityDocumentProductCard({
-					ref: (ref) => this.productCardRef = ref,
+					ref: (ref) => {
+						this.productCardRef = ref;
+					},
 					productRow,
 					name: productRow.getProductName(),
 					gallery: productRow.getPhotos(),
@@ -86,7 +88,14 @@ jn.define('crm/entity-document/product/product-grid', (require, exports, module)
 
 		getSummary()
 		{
-			return this.state.summary;
+			return {
+				...this.state.summary,
+				styles: {
+					container: {
+						marginBottom: 12,
+					},
+				},
+			};
 		}
 
 		isEditable()

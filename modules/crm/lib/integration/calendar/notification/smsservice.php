@@ -105,6 +105,19 @@ class SmsService extends AbstractService
 	}
 
 	/**
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	public function sendCrmSharingEdited(): bool
+	{
+		$message = Loc::getMessage('CRM_CALENDAR_SHARING_EVENT_EDITED', [
+			'#EVENT_URL#' => Sharing\Helper::getShortUrl($this->eventLink->getUrl()),
+		]);
+
+		return $this->sendMessage($message);
+	}
+
+	/**
 	 * @param ItemIdentifier $entity
 	 * @return MessageSender\Channel|null
 	 */

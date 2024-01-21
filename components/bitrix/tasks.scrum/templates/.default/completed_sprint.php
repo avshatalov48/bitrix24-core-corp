@@ -12,12 +12,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var string $filterId */
 
 use Bitrix\Main\Web\Json;
-use Bitrix\Tasks\Slider\Exception\SliderException;
-use Bitrix\Tasks\Slider\Factory\SliderFactory;
 
 $isKanban = true;
 
-require_once __DIR__.'/header.php';
+if ($arParams['CONTEXT'] === 'group')
+{
+	require_once __DIR__.'/header.php';
+}
+else
+{
+	require_once __DIR__.'/external_header.php';
+}
 
 $APPLICATION->IncludeComponent(
 	'bitrix:tasks.kanban',
@@ -83,8 +88,11 @@ $pathToBurnDown = str_replace('#group_id#', $arParams['GROUP_ID'], $arParams['PA
 			filterId: '<?= $filterId ?>',
 			sprints: <?= Json::encode($arResult['sprints']) ?>
 		});
-		BX.Tasks.Scrum.Entry.renderTabsTo(document.getElementById('tasks-scrum-switcher'));
-		BX.Tasks.Scrum.Entry.renderSprintStatsTo(document.getElementById('tasks-scrum-sprint-stats'));
-		BX.Tasks.Scrum.Entry.renderRightElementsTo(document.getElementById('tasks-scrum-right-container'));
+
+		<?php if ($arParams['CONTEXT'] === 'group'): ?>
+			BX.Tasks.Scrum.Entry.renderTabsTo(document.getElementById('tasks-scrum-switcher'));
+			BX.Tasks.Scrum.Entry.renderSprintStatsTo(document.getElementById('tasks-scrum-sprint-stats'));
+			BX.Tasks.Scrum.Entry.renderRightElementsTo(document.getElementById('tasks-scrum-right-container'));
+		<?php endif; ?>
 	});
 </script>

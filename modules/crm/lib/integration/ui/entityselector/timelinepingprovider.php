@@ -18,37 +18,7 @@ class TimelinePingProvider extends BaseProvider
 
 		$this->options = $options;
 	}
-
-	final public static function getValuesByOffsets(array $offsets): array
-	{
-		if (empty($offsets))
-		{
-			return [];
-		}
-
-		return array_values(
-			array_filter(
-				TodoPingSettingsProvider::getDefaultOffsetList(),
-				static fn($row) => in_array($row['offset'], $offsets, true)
-			)
-		);
-	}
-
-	final public static function getOffsetsByValues(array $values): array
-	{
-		if (empty($values))
-		{
-			return [];
-		}
-
-		$filtered = array_filter(
-			TodoPingSettingsProvider::getDefaultOffsetList(),
-			static fn($row) => in_array($row['id'], $values, true)
-		);
-
-		return array_column($filtered, 'offset');
-	}
-
+	
 	final public function isAvailable(): bool
 	{
 		return EntityAuthorization::isAuthorized();

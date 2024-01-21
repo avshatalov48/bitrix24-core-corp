@@ -10,4 +10,6 @@ export default class Options {
 	static isExtranet = false;
 	static isAdmin = false;
 	static isCustomPresetRestricted = false;
+
+	static availablePresetTools = null;
 }

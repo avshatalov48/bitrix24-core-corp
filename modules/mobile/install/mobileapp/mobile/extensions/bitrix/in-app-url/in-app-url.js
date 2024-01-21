@@ -2,7 +2,6 @@
  * @module in-app-url/in-app-url
  */
 jn.define('in-app-url/in-app-url', (require, exports, module) => {
-
 	const { Route } = require('in-app-url/route');
 	const { Url } = require('in-app-url/url');
 	const { getHttpPath } = require('utils/url');
@@ -80,7 +79,7 @@ jn.define('in-app-url/in-app-url', (require, exports, module) => {
 			{
 				PageManager.openPage({
 					url: url.toString(),
-				})
+				});
 
 				return false;
 			}
@@ -96,6 +95,7 @@ jn.define('in-app-url/in-app-url', (require, exports, module) => {
 					{
 						return fallbackFn(url);
 					}
+
 					return false;
 				}
 
@@ -145,5 +145,4 @@ jn.define('in-app-url/in-app-url', (require, exports, module) => {
 	}
 
 	module.exports = { InAppUrl };
-
 });

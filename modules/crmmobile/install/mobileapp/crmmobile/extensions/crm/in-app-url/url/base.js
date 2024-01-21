@@ -114,6 +114,11 @@ jn.define('crm/in-app-url/url/base', (require, exports, module) => {
 			const regExp = /\/crm\/(deal|lead|company|contact|type)\/(show|details)?/i;
 			const type = url.match(regExp);
 
+			if (!type)
+			{
+				return;
+			}
+
 			this.setEntityTypeName(type[1] || entityTypeName);
 			this.typePage = this.getTypePage(type[2]);
 		}

@@ -100,6 +100,13 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 	protected function prepareData(): bool
 	{
 		$this->initViewResult();
+		if (!$this->arResult['isToolEnabled'])
+		{
+			$this->includeComponentTemplate('tool-disabled');
+
+			return false;
+		}
+
 		if (!$this->currentUser)
 		{
 			showError(empty(Loc::getMessage('TM_WORKTIME_STATS_ACCESS_DENIED')) ?
@@ -581,7 +588,8 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 														  })
 													  );
 		$this->arResult['recordShowUtcOffset'] = TimeHelper::getInstance()->getUserUtcOffset($this->arResult['currentUserId']);
-		$this->arResult['TIMEMAN_WORKTIME_GRID_COLUMNS_DATE_FORMAT_DAY_FULL_MONTH'] = Loc::getMessage('TIMEMAN_WORKTIME_GRID_COLUMNS_DATE_FORMAT_DAY_FULL_MONTH');
+		$dayMonthFormat = \Bitrix\Main\Application::getInstance()->getContext()->getCulture()->getDayMonthFormat();
+		$this->arResult['TIMEMAN_WORKTIME_GRID_COLUMNS_DATE_FORMAT_DAY_FULL_MONTH'] = $dayMonthFormat;
 		if (empty($this->arResult['TIMEMAN_WORKTIME_GRID_COLUMNS_DATE_FORMAT_DAY_FULL_MONTH']))
 		{
 			$this->arResult['TIMEMAN_WORKTIME_GRID_COLUMNS_DATE_FORMAT_DAY_FULL_MONTH'] = 'j F';
@@ -617,6 +625,8 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 		$this->arResult['baseDepartmentId'] = $this->departmentRepository->getBaseDepartmentId();
 		$this->arResult['nowTime'] = time();
 		$this->scheduleCollection = new ScheduleCollection();
+		$toolId = Timeman\Integration\Intranet\Settings::TOOLS['worktime'];
+		$this->arResult['isToolEnabled'] = (new Timeman\Integration\Intranet\Settings())->isToolAvailable($toolId);
 		$this->initCookieOptions();
 	}
 
@@ -1360,7 +1370,7 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 		$usersOfCalendars = [];
 		foreach ($userIds as $userId)
 		{
-			$schedules = $this->activeSchedulesByUser[$userId];
+			$schedules = $this->activeSchedulesByUser[$userId] ?? null;
 			if ($schedules instanceof ScheduleCollection)
 			{
 				if ($schedules->count() === 0 || $schedules->hasShifted() || $schedules->hasFlextime())

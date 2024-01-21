@@ -18,7 +18,6 @@ $MESS['IMCONNECTOR_FAILED_TO_SAVE_SETTINGS_CONNECTOR'] = 'Не удалось с
 $MESS['IMCONNECTOR_FAILED_TO_TEST_CONNECTOR'] = 'Не удалось протестировать соединение коннектора';
 $MESS['IMCONNECTOR_FAILED_REGISTER_CONNECTOR'] = 'Не удалось зарегистрировать коннектор';
 $MESS['IMCONNECTOR_NOT_ACTIVE_LINE'] = 'Линия c таким ID неактивна или не существует';
-
 $MESS['IMCONNECTOR_REST_APPLICATION_REGISTRATION_ERROR'] = 'Ошибка регистрации приложения';
 $MESS['IMCONNECTOR_REST_APPLICATION_REGISTRATION_ERROR_POINT'] = 'Ошибка регистрации приложения. В идентификаторе коннектора недопустимо использовать точку.';
 $MESS['IMCONNECTOR_REST_APPLICATION_UNREGISTRATION_ERROR'] = 'Ошибка снятия регистрации приложения';
@@ -28,7 +27,6 @@ $MESS['IMCONNECTOR_REST_ICON_REQUIRED'] = 'Не указана иконка ко
 $MESS['IMCONNECTOR_REST_NO_APPLICATION_ID'] = 'Не удалось получить ID приложения';
 $MESS['IMCONNECTOR_REST_NO_PLACEMENT_HANDLER'] = 'Не удалось получить URL обработчика встраивания';
 $MESS['IMCONNECTOR_REST_GENERAL_CONNECTOR_REGISTRATION_ERROR'] = 'Общая ошибка регистрации коннектора';
-
 $MESS['IMCONNECTOR_ERROR_PROVIDER_NO_ACTIVE_CONNECTOR'] = 'Неактивный коннектор';
 $MESS['IMCONNECTOR_ERROR_PROVIDER_CONTROLLER_CONNECTOR_URL'] = 'Некорректный адрес контроллера коннекторов';
 $MESS['IMCONNECTOR_ERROR_PROVIDER_LICENCE_CODE_PORTAL'] = 'Некорректный лицензионный код портала';
@@ -43,9 +41,7 @@ $MESS['IMCONNECTOR_ERROR_PROVIDER_GENERAL_REQUEST_DYNAMIC_METHOD'] = 'Попыт
 $MESS['IMCONNECTOR_ERROR_COULD_NOT_GET_PROVIDER_OBJECT'] = 'Не удалось получить объект провайдера';
 $MESS['IMCONNECTOR_ERROR_PROVIDER_DOES_NOT_SUPPORT_THIS_METHOD_CALL'] = 'Данный провайдер не поддерживает подобный вариант вызова';
 $MESS['IMCONNECTOR_ERROR_PROVIDER_UNSUPPORTED_TYPE_INCOMING_MESSAGE'] = 'Неподдерживаемый тип входящего сообщения от серввера.';
-
 $MESS['IMCONNECTOR_ERROR_PUBLIC_URL_EMPTY'] = "В настройках модуля \"Коннекторы для внешних мессенджеров\" необходимо указать публичный адрес сайта";
-$MESS['IMCONNECTOR_ERROR_PUBLIC_URL_EMPTY_MSGVER_1'] = "В настройках модуля \"Коннекторы для внешних мессенджеров\" необходимо указать публичный адрес сайта";
 $MESS['IMCONNECTOR_ERROR_PUBLIC_URL_MALFORMED'] = "Указан некорректный публичный адрес сайта";
 $MESS['IMCONNECTOR_ERROR_PUBLIC_URL_LOCALHOST'] = "Публичный адрес сайта указывает на локальный хост: #HOST#";
 $MESS['IMCONNECTOR_ERROR_CONVERTING_PUNYCODE'] = "Ошибка преобразования имени хоста #HOST# в Punycode: #ERROR#";

@@ -10,10 +10,10 @@ return [
 	'rel' => [
 		'crm.category-list',
 		'crm.category-model',
+		'main.core.events',
+		'main.popup',
 		'ui.buttons',
 		'ui.dialogs.messagebox',
-		'main.popup',
-		'main.core.events',
 		'ui.forms',
 		'main.core',
 	],

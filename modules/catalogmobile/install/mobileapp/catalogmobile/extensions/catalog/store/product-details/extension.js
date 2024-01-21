@@ -3,6 +3,7 @@
  */
 jn.define('catalog/store/product-details', (require, exports, module) => {
 	const { Alert } = require('alert');
+	const AppTheme = require('apptheme');
 	const { BannerButton } = require('layout/ui/banners');
 	const { BarcodeField } = require('layout/ui/fields/barcode');
 	const { CombinedField } = require('layout/ui/fields/combined');
@@ -20,6 +21,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 	} = require('utils/object');
 	const { DocumentType } = require('catalog/store/document-type');
 	const { capitalize } = require('utils/string');
+	const { EntitySelectorFactory } = require('selector/widget/factory');
 
 	/**
 	 * @class CatalogStoreProductDetails
@@ -57,16 +59,16 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgSecondary,
 					},
 					resizableByKeyboard: true,
 				},
 				ScrollView(
 					{
 						style: {
-							backgroundColor: '#eef2f4',
 							flexDirection: 'column',
 							flexGrow: 1,
+							backgroundColor: AppTheme.colors.bgSecondary,
 						},
 					},
 					View(
@@ -86,14 +88,14 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 					style: {
 						paddingBottom: 16,
 						paddingTop: 0,
-						backgroundColor: '#ffffff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						borderRadius: 12,
 						marginBottom: 12,
 					},
 				},
 				Text({
 					style: {
-						color: '#333333',
+						color: AppTheme.colors.base1,
 						fontWeight: 'bold',
 						fontSize: 16,
 						width: '100%',
@@ -183,7 +185,9 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 					},
 				}),
 				FileField({
-					ref: (ref) => this.photoFieldRef = ref,
+					ref: (ref) => {
+						this.photoFieldRef = ref;
+					},
 					title: Loc.getMessage('CSPD_FIELDS_PHOTOS'),
 					multiple: true,
 					value: gallery,
@@ -255,7 +259,9 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 
 			fields.name = StringField({
 				testId: 'ProductGridProductDetailsNameField',
-				ref: (ref) => this.nameFieldRef = ref,
+				ref: (ref) => {
+					this.nameFieldRef = ref;
+				},
 				title: Loc.getMessage('CSPD_FIELDS_PRODUCT_NAME'),
 				value: this.state.product.name,
 				readOnly: this.isReadonly(),
@@ -267,7 +273,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 			fields.sections = EntitySelectorField({
 				testId: 'ProductGridProductDetailsSectionsField',
 				title: Loc.getMessage('CSPD_FIELDS_PRODUCT_SECTIONS'),
-				value: this.state.product.sections.map(section => section.id),
+				value: this.state.product.sections.map((section) => section.id),
 				readOnly: this.isReadonly(),
 				multiple: true,
 				showEditIcon: false,
@@ -279,7 +285,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 							iblockId: this.props.catalog.id,
 						},
 					},
-					entityList: this.state.product.sections.map(section => ({
+					entityList: this.state.product.sections.map((section) => ({
 						title: section.name,
 						id: section.id,
 						type: 'section',
@@ -287,7 +293,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 					parentWidget: this.layout,
 				},
 				onChange: (value, entityList) => {
-					const newVal = entityList.map(item => ({
+					const newVal = entityList.map((item) => ({
 						id: item.id,
 						name: item.title,
 					}));
@@ -305,7 +311,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 				...this.getAccessProps(true, hasProductEditAccess),
 				config: {
 					parentWidget: this.layout,
-				}
+				},
 			});
 
 			const gallery = clone(this.state.product.gallery);
@@ -313,7 +319,9 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 
 			fields.gallery = FileField({
 				testId: 'ProductGridProductDetailsGalleryField',
-				ref: (ref) => this.photoFieldRef = ref,
+				ref: (ref) => {
+					this.photoFieldRef = ref;
+				},
 				title: Loc.getMessage('CSPD_FIELDS_PHOTOS'),
 				multiple: true,
 				value: gallery,
@@ -365,17 +373,30 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 			const hasStoreFromAccess = this.state.product.hasStoreFromAccess !== false;
 
 			let amountAccess = true;
-			if (docType === DocumentType.Arrival || docType === DocumentType.StoreAdjustment)
+			switch (docType)
 			{
-				amountAccess = hasStoreToAccess;
-			}
-			else if (docType === DocumentType.Moving)
-			{
-				amountAccess = hasStoreFromAccess && hasStoreToAccess;
-			}
-			else if (docType === DocumentType.Deduct || docType === DocumentType.SalesOrders)
-			{
-				amountAccess = hasStoreFromAccess;
+				case DocumentType.Arrival:
+				case DocumentType.StoreAdjustment:
+				{
+					amountAccess = hasStoreToAccess;
+
+					break;
+				}
+
+				case DocumentType.Moving:
+				{
+					amountAccess = hasStoreFromAccess && hasStoreToAccess;
+
+					break;
+				}
+				case DocumentType.Deduct:
+				case DocumentType.SalesOrders:
+				{
+					amountAccess = hasStoreFromAccess;
+
+					break;
+				}
+				// No default
 			}
 
 			fields.amount = CombinedField({
@@ -388,7 +409,9 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 					this.updateFieldState('amount', amount);
 					this.updateFieldState('measure', this.props.measures[measure]);
 				},
-				ref: (ref) => this.amountFieldRef = ref,
+				ref: (ref) => {
+					this.amountFieldRef = ref;
+				},
 				config: {
 					primaryField: {
 						id: 'amount',
@@ -408,8 +431,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 						customValidation: (field) => {
 							return docType === 'W' && field.getValue() <= 0
 								? Loc.getMessage('CSPD_FIELDS_AMOUNT_POSITIVE_ERROR')
-								: null
-							;
+								: null;
 						},
 						...this.getAccessProps(amountAccess, true),
 					},
@@ -420,7 +442,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 						required: true,
 						showRequired: false,
 						config: {
-							items: Object.values(this.props.measures).map(item => {
+							items: Object.values(this.props.measures).map((item) => {
 								return {
 									name: item.name,
 									value: item.code,
@@ -440,7 +462,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 					? Loc.getMessage('CSPD_FIELDS_STORE_FROM')
 					: Loc.getMessage('CSPD_FIELDS_STORE'),
 				fieldCode: 'storeFrom',
-				storeInfo: this.state.product.storeFrom ? this.state.product.storeFrom : null,
+				storeInfo: this.state.product.storeFrom || null,
 				access: hasStoreFromAccess,
 				amount: this.state.product.storeFromAmount,
 				availableAmount: this.state.product.storeFromAvailableAmount,
@@ -452,7 +474,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 					? Loc.getMessage('CSPD_FIELDS_STORE_TO')
 					: Loc.getMessage('CSPD_FIELDS_STORE'),
 				fieldCode: 'storeTo',
-				storeInfo: this.state.product.storeTo ? this.state.product.storeTo : null,
+				storeInfo: this.state.product.storeTo || null,
 				access: hasStoreToAccess,
 				amount: this.state.product.storeToAmount,
 				availableAmount: this.state.product.storeToAvailableAmount,
@@ -518,7 +540,9 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 
 			return EntitySelectorField({
 				testId: `ProductGridProductDetails${testIdCode}Field`,
-				ref: (ref) => this[fieldCode + 'FieldRef'] = ref,
+				ref: (ref) => {
+					this[`${fieldCode}FieldRef`] = ref;
+				},
 				title: fieldTitle,
 				value: storeId,
 				readOnly: this.isReadonly(),
@@ -539,13 +563,15 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 						},
 					},
 					styles: {
-						externalWrapperBackgroundColor: this.isReadonly() ? '#fcfcfd' : '#f8fafb',
-						externalWrapperBorderColor: '#dfe0e3',
+						externalWrapperBackgroundColor: this.isReadonly()
+							? AppTheme.colors.bgContentSecondary
+							: AppTheme.colors.bgSecondary,
+						externalWrapperBorderColor: AppTheme.colors.base6,
 						emptyValue: {
 							flex: 0,
 							fontSize: 16,
 							fontWeight: '400',
-							color: '#a8adb4',
+							color: AppTheme.colors.base4,
 						},
 					},
 					parentWidget: this.layout,
@@ -708,7 +734,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 				{
 					name: this.isReadonly() ? Loc.getMessage('CSPD_CLOSE') : Loc.getMessage('CSPD_DONE'),
 					type: 'text',
-					color: '#0b66c3',
+					color: AppTheme.colors.accentMainLinks,
 					callback: this.close.bind(this),
 				},
 			]);
@@ -759,6 +785,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 		isReadonly()
 		{
 			const editable = Boolean(this.props.document.editable);
+
 			return !editable;
 		}
 
@@ -800,7 +827,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 
 		hasAccess(permission)
 		{
-			return !!this.props.permissions[permission];
+			return Boolean(this.props.permissions[permission]);
 		}
 	}
 

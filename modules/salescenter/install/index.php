@@ -30,7 +30,7 @@ class salescenter extends CModule
 			$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
 		}
 
-		$this->MODULE_NAME = GetMessage("SALESCENTER_MODULE_NAME");
+		$this->MODULE_NAME = GetMessage("SALESCENTER_MODULE_NAME_MSGVER_1");
 		$this->MODULE_DESCRIPTION = GetMessage("SALESCENTER_MODULE_DESCRIPTION");
 	}
 
@@ -52,14 +52,14 @@ class salescenter extends CModule
 			{
 				$APPLICATION->ThrowException(GetMessage('SALESCENTER_INSTALL_DEPENDENCIES_ERROR', ['#MODULES#' => implode(', ', $notInstalledRequiredModules)]));
 			}
-			$APPLICATION->IncludeAdminFile(GetMessage("SALESCENTER_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/step1.php");
+			$APPLICATION->IncludeAdminFile(GetMessage("SALESCENTER_INSTALL_TITLE_MSGVER_1"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/step1.php");
 		}
 		elseif($step == 2)
 		{
 			$this->InstallDB();
 			$this->InstallFiles();
 
-			$APPLICATION->IncludeAdminFile(GetMessage("SALESCENTER_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/step2.php");
+			$APPLICATION->IncludeAdminFile(GetMessage("SALESCENTER_INSTALL_TITLE_MSGVER_1"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/step2.php");
 		}
 		return true;
 	}
@@ -173,14 +173,14 @@ class salescenter extends CModule
 		$step = intval($step);
 		if($step < 2)
 		{
-			$APPLICATION->IncludeAdminFile(GetMessage("SALESCENTER_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/".$this->MODULE_ID."/install/unstep1.php");
+			$APPLICATION->IncludeAdminFile(GetMessage("SALESCENTER_UNINSTALL_TITLE_MSGVER_1"), $DOCUMENT_ROOT."/bitrix/modules/".$this->MODULE_ID."/install/unstep1.php");
 		}
 		elseif($step==2)
 		{
 			$this->UnInstallDB(["savedata" => $_REQUEST["savedata"]]);
 			$this->UnInstallFiles();
 
-			$APPLICATION->IncludeAdminFile(GetMessage("SALESCENTER_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/".$this->MODULE_ID."/install/unstep2.php");
+			$APPLICATION->IncludeAdminFile(GetMessage("SALESCENTER_UNINSTALL_TITLE_MSGVER_1"), $DOCUMENT_ROOT."/bitrix/modules/".$this->MODULE_ID."/install/unstep2.php");
 		}
 
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('sale', 'OnSaleOrderSaved', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'OnSaleOrderSaved');

@@ -41,7 +41,7 @@ $groupByProject =
 if ($groupByProject)
 {
 	$arOpenedProjects = CUserOptions::GetOption("tasks", "opened_projects", array());
-	$arGroupsIDs = $arResult['GROUP_IDS'];
+	$arGroupsIDs = $arResult['GROUP_IDS'] ?? null;
 
 	if (!empty($arGroupsIDs))
 	{

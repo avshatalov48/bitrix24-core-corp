@@ -21,8 +21,12 @@ if(!Loader::includeModule('documentgenerator'))
 	die('Module documentgenerator is not installed');
 }
 
+Loc::loadMessages(__FILE__);
+
 class CrmDocumentViewComponent extends ViewComponent
 {
+	private const TEMPLATE_CODE = 'CRM_DOCUMENT_SHARING';
+
 	public function executeComponent()
 	{
 		if (!$this->includeModules())
@@ -107,6 +111,9 @@ class CrmDocumentViewComponent extends ViewComponent
 				$this->arResult['ERRORS'] = $result->getErrorMessages();
 			}
 		}
+		$this->arResult['isDisplayTransformationErrors'] =
+			\Bitrix\Main\Config\Option::get('crm', 'display_transformation_errors_in_document_slider', 'N') === 'Y'
+		;
 		if ($isNewDocument)
 		{
 			$this->arResult['documentUrl'] = $this->getDocumentUrl();
@@ -137,7 +144,7 @@ class CrmDocumentViewComponent extends ViewComponent
 			{
 				[$requisiteData, ] = $myCompanyProvider->getClientRequisitesAndBankDetail();
 
-				$myCompanyId = \Bitrix\DocumentGenerator\DataProviderManager::getInstance()->getValueFromList($provider->getMyCompanyId());
+				$myCompanyId = $myCompanyProvider->getSource();
 				if (is_numeric($myCompanyId) && (int)$myCompanyId > 0)
 				{
 					$link = Container::getInstance()->getRouter()->getItemDetailUrl(\CCrmOwnerType::Company, (int)$myCompanyId);
@@ -183,7 +190,7 @@ class CrmDocumentViewComponent extends ViewComponent
 				{
 					$this->arResult['clientRequisites'] = [
 						'title' =>
-							$clientRequisiteData['RQ_COMPANY_NAME']
+							Format\Requisite::formatOrganizationName($clientRequisiteData)
 							?? $contactProvider->getValue('FORMATTED_NAME')
 							?: $this->arResult['clientRequisites']['title']
 						,
@@ -222,15 +229,22 @@ class CrmDocumentViewComponent extends ViewComponent
 
 		if ($this->getValue() > 0 && $this->document->FILE_ID > 0)
 		{
+			$link = $this->document->getPublicUrl();
 			$this->arResult['channelSelectorParameters'] = [
 				'id' => 'document-channel-selector',
 				'entityTypeId' => (int)$this->getCrmOwnerType(),
 				'entityId' => (int)$this->getValue(),
-				'body' => $this->document->getTitle(),
+				'documentTitle' => $this->document->getTitle(),
+				'body' => Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_BODY'),
+				'fullBody' => Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_FULL_BODY'),
 				'configureContext' => 'crm.document.view',
-				'link' => $this->document->getPublicUrl(true),
+				'link' => $link,
 				'isLinkObtainable' => true,
 				'isConfigurable' => true,
+				'templateCode' => self::TEMPLATE_CODE,
+				'templatePlaceholders' => [
+					'DOCUMENT_URL' => $link,
+				],
 			];
 			if (Driver::getInstance()->getDefaultStorage() instanceof \Bitrix\DocumentGenerator\Storage\Disk)
 			{

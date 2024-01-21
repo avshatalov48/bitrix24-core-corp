@@ -5,71 +5,54 @@ namespace Bitrix\Crm\Search;
 use Bitrix\Crm\Order\Order;
 use Bitrix\Crm\Order\OrderStatus;
 use Bitrix\Sale\Internals\OrderTable;
+use CCrmCurrency;
+use CCrmOwnerType;
 
 if (!\Bitrix\Main\Loader::includeModule('sale'))
 {
 	return;
 }
 
-class OrderSearchContentBuilder extends SearchContentBuilder
+final class OrderSearchContentBuilder extends SearchContentBuilder
 {
-	protected static function getStatusNameById($id)
+	public function getEntityTypeId(): int
 	{
-		static $statuses = null;
-
-		if ($statuses === null)
-		{
-			$statuses = [];
-			$res = OrderStatus::getList();
-			while ($status = $res->fetch())
-			{
-				$key = $status['STATUS_ID'] ?? null;
-				$statuses[$key] = $status['NAME'] ?? null;
-			}
-		}
-
-		return $statuses[$id] ?? '';
+		return CCrmOwnerType::Order;
 	}
 
-	public function getEntityTypeID()
-	{
-		return \CCrmOwnerType::Order;
-	}
-
-	protected function getUserFieldEntityID()
+	protected function getUserFieldEntityId(): string
 	{
 		return Order::getUfId();
 	}
 
-	public function isFullTextSearchEnabled()
+	protected function prepareEntityFields(int $entityId): ?array
 	{
-		return OrderTable::getEntity()->fullTextIndexEnabled('SEARCH_CONTENT');
-	}
-
-	protected function prepareEntityFields($entityID)
-	{
-		$order = Order::load($entityID);
+		$order = Order::load($entityId);
 		if (!$order)
 		{
-			return $order;
+			return null;
 		}
 
 		$fields = $order->getFieldValues();
-		foreach ($order->getContactCompanyCollection()->getContacts() as $contact)
+		
+		foreach ($order->getContactCompanyCollection()?->getContacts() as $contact)
 		{
 			$fields['CONTACT_IDS'][] = $contact->getField('ENTITY_ID');
 		}
 
-		$company = $order->getContactCompanyCollection()->getPrimaryCompany();
-		if($company)
+		$company = $order->getContactCompanyCollection()?->getPrimaryCompany();
+		if ($company)
 		{
 			$fields['COMPANY_ID'] = $company->getField('ENTITY_ID');
 		}
 
+		$allowedTypes = ['STRING', 'NUMBER', 'DATE'];
 		foreach ($order->getPropertyCollection() as $property)
 		{
-			$allowedTypes = ['STRING', 'NUMBER', 'DATE'];
-			if (in_array($property->getField('TYPE'), $allowedTypes) || empty($code))
+			if (
+				in_array($property->getField('TYPE'), $allowedTypes, true) 
+				|| empty($code)
+			)
 			{
 				continue;
 			}
@@ -86,44 +69,21 @@ class OrderSearchContentBuilder extends SearchContentBuilder
 		return is_array($fields) ? $fields : null;
 	}
 
-	public function prepareEntityFilter(array $params)
-	{
-		$value = $params['SEARCH_CONTENT'] ?? '';
-		if (!is_string($value) || $value === '')
-		{
-			return [];
-		}
-
-		$operation = $this->isFullTextSearchEnabled() ? '*' : '*%';
-
-		return array("{$operation}SEARCH_CONTENT" => SearchEnvironment::prepareToken($value));
-	}
-
-	/**
-	 * Prepare search map.
-	 * @param array $fields Entity Fields.
-	 * @param array|null $options Options.
-	 * @return SearchMap
-	 */
-	protected function prepareSearchMap(array $fields, array $options = null)
+	protected function prepareSearchMap(array $fields, array $options = null): SearchMap
 	{
 		$map = new SearchMap();
-
-		$entityID = (int)($fields['ID'] ?? 0);
-		if ($entityID <= 0)
+		$entityId = (int)($fields['ID'] ?? 0);
+		if ($entityId <= 0)
 		{
 			return $map;
 		}
 
-		$map->add($entityID);
+		$map->add($entityId);
 		$map->addField($fields, 'ACCOUNT_NUMBER');
 		$map->addField($fields, 'ORDER_TOPIC');
 
 		$map->addField($fields, 'PRICE');
-		$map->add(
-			\CCrmCurrency::GetCurrencyName($fields['CURRENCY_ID'] ?? '')
-		);
-
+		$map->add(CCrmCurrency::GetCurrencyName($fields['CURRENCY_ID'] ?? ''));
 		$map->addUserByID($fields['USER_ID']);
 
 		if (isset($fields['RESPONSIBLE_ID']))
@@ -132,44 +92,23 @@ class OrderSearchContentBuilder extends SearchContentBuilder
 		}
 
 		//region Company
-		$companyID = (int)($fields['COMPANY_ID'] ?? 0);
-		if ($companyID > 0)
+		$companyId = (int)($fields['COMPANY_ID'] ?? 0);
+		if ($companyId > 0)
 		{
-			$map->add(
-				\CCrmOwnerType::GetCaption(\CCrmOwnerType::Company, $companyID, false)
-			);
-
-			$map->addEntityMultiFields(
-				\CCrmOwnerType::Company,
-				$companyID,
-				array(\CCrmFieldMulti::PHONE, \CCrmFieldMulti::EMAIL)
-			);
+			$map->addCompany($companyId);
 		}
 		//endregion Company
 
 		//region Contact
-		$contactIDs = isset($fields['CONTACT_IDS']) && is_array($fields['CONTACT_IDS'])
+		$contactIds = isset($fields['CONTACT_IDS']) && is_array($fields['CONTACT_IDS'])
 			? $fields['CONTACT_IDS']
 			: [];
-		foreach ($contactIDs as $contactID)
-		{
-			$map->add(
-				\CCrmOwnerType::GetCaption(\CCrmOwnerType::Contact, $contactID, false)
-			);
-
-			$map->addEntityMultiFields(
-				\CCrmOwnerType::Contact,
-				$contactID,
-				array(\CCrmFieldMulti::PHONE, \CCrmFieldMulti::EMAIL)
-			);
-		}
+		$map->addContacts($contactIds);
 		//endregion Contact
 
 		if (isset($fields['STATUS_ID']))
 		{
-			$map->add(
-				self::getStatusNameById($fields['STATUS_ID'])
-			);
+			$map->add(self::getStatusNameById($fields['STATUS_ID']));
 		}
 
 		if (isset($fields['DATE_INSERT']))
@@ -196,7 +135,8 @@ class OrderSearchContentBuilder extends SearchContentBuilder
 		}
 
 		//region UserFields
-		foreach ($this->getUserFields($entityID) as $userField)
+		$userFields = SearchEnvironment::getUserFields($entityId, $this->getUserFieldEntityId());
+		foreach ($userFields as $userField)
 		{
 			$map->addUserField($userField);
 		}
@@ -205,30 +145,46 @@ class OrderSearchContentBuilder extends SearchContentBuilder
 		return $map;
 	}
 
-	/**
-	 * Prepare required data for bulk build.
-	 * @param array $entityIDs Entity IDs.
-	 */
-	protected function prepareForBulkBuild(array $entityIDs)
+	protected function prepareForBulkBuild(array $entityIds): void
 	{
 		$orderData = Order::getList([
-			'filter' => ['=ID' => $entityIDs],
+			'filter' => ['=ID' => $entityIds],
 			'select' => ['RESPONSIBLE_ID']
 		]);
 
 		while ($fields = $orderData->fetch())
 		{
-			$userIDs[] = (int)$fields['RESPONSIBLE_ID'];
+			$userIds[] = (int)$fields['RESPONSIBLE_ID'];
 		}
 
-		if (!empty($userIDs))
+		if (!empty($userIds))
 		{
-			SearchMap::cacheUsers($userIDs);
+			SearchMap::cacheUsers($userIds);
 		}
 	}
 
-	protected function save($entityID, SearchMap $map)
+	protected function save(int $entityId, SearchMap $map): void
 	{
-		OrderTable::update($entityID, array('SEARCH_CONTENT' => $map->getString()));
+		OrderTable::update(
+			$entityId,
+			$this->prepareUpdateData(OrderTable::getTableName(), $map->getString())
+		);
+	}
+
+	protected static function getStatusNameById($id): string
+	{
+		static $statuses = null;
+		if ($statuses === null)
+		{
+			$statuses = [];
+			$res = OrderStatus::getList();
+			while ($status = $res->fetch())
+			{
+				$key = $status['STATUS_ID'] ?? null;
+				$statuses[$key] = $status['NAME'] ?? null;
+			}
+		}
+
+		return $statuses[$id] ?? '';
 	}
 }

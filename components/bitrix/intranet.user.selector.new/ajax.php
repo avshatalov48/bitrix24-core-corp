@@ -79,7 +79,7 @@ else
 $showActiveUsers  = isset($_REQUEST['SHOW_INACTIVE_USERS']) && $_REQUEST['SHOW_INACTIVE_USERS'] == "Y"? '' : 'Y';
 $bSubordinateOnly = isset($_REQUEST["S_ONLY"]) && $_REQUEST["S_ONLY"] == "Y";
 $bUseLogin        = !(isset($_REQUEST["sl"]) && $_REQUEST["sl"] == "N");
-$sectionId        = $_REQUEST['SECTION_ID'];
+$sectionId        = $_REQUEST['SECTION_ID'] ?? null;
 $showUserProfileUrl = (isset($_REQUEST['SHOW_USER_PROFILE_URL']) && $_REQUEST['SHOW_USER_PROFILE_URL'] === 'Y');
 $userProfileUrlTemplate = '';
 if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
@@ -193,7 +193,6 @@ if (empty($_REQUEST['GROUP_ID']) && $_REQUEST['MODE'] == 'EMPLOYEES'
 					$arStructure['TREE'][$iblockSectionId][] = $item['ID'];
 				}
 			}
-			CIntranetUserSelectorHelper::drawEmployeeStructure($arStructure['TREE'], $arStructure['DATA'], $sectionId, $selectorName, !$showUsers);
 		}
 
 		$arFilter['UF_DEPARTMENT'] = $sectionId;

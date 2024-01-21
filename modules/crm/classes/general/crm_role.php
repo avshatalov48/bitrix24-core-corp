@@ -164,20 +164,26 @@ class CCrmRole
 	// BX_CRM_PERM_NONE  - not supported
 	static public function GetRoleByAttr($permEntity, $permAttr = CCrmPerms::PERM_SELF, $permType = 'READ')
 	{
-		global $DB;
-		$permEntity = $DB->ForSql($permEntity);
-		$permAttr = $DB->ForSql($permAttr);
-		$permType = $DB->ForSql($permType);
-		$sSql = "
-			SELECT ROLE_ID
-			FROM b_crm_role_perms
-			WHERE ENTITY = '$permEntity' AND PERM_TYPE = '$permType' AND ATTR >= '$permAttr'";
+		$dbRes = RolePermissionTable::getList([
+			'select' => [
+				'ROLE_ID',
+			],
+			'filter' => [
+				'=ENTITY' => (string)$permEntity,
+				'=PERM_TYPE' => (string)$permType,
+				'>=ATTR' => (string)$permAttr,
+			],
+			'cache' => [
+				'ttl' => 84600,
+			],
+		]);
+		$result = [];
+		while ($row = $dbRes->fetch())
+		{
+			$result[] = $row['ROLE_ID'];
+		}
 
-		$obRes = $DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-		$arResult = array();
-		while ($arRow = $obRes->Fetch())
-			$arResult[] = $arRow['ROLE_ID'];
-		return $arResult;
+		return $result;
 	}
 
 	static public function GetCalculateRolePermsByRelation($arRel)

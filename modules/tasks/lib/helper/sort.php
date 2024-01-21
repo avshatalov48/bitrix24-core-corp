@@ -8,14 +8,16 @@
 
 namespace Bitrix\Tasks\Helper;
 
+use Bitrix\Tasks\Internals\Task\SortingTable;
+
 class Sort
 {
+	private string $tableName;
 	private $db;
 
 	public function __construct()
 	{
-		global $DB;
-		$this->db = $DB;
+		$this->init();
 	}
 
 	/**
@@ -29,7 +31,7 @@ class Sort
 		$sql = "
 			SELECT 
 				SRT.TASK_ID 
-			FROM b_tasks_sorting SRT 
+			FROM {$this->tableName} SRT 
 			WHERE 
 				SRT.GROUP_ID = ".$groupId."
 			ORDER BY 
@@ -59,7 +61,7 @@ class Sort
 		$sql = "
 			SELECT 
 				SRT.TASK_ID 
-			FROM b_tasks_sorting SRT 
+			FROM {$this->tableName} SRT 
 			WHERE 
 				SRT.USER_ID = ".$userId."
 			ORDER BY 
@@ -110,7 +112,7 @@ class Sort
 			    CASE WHEN T.STATUS = '5' THEN '2' ELSE '1' END AS STATUS_COMPLETE
 			FROM
 				b_tasks T
-			LEFT JOIN b_tasks_sorting SRT 
+			LEFT JOIN {$this->tableName} SRT 
 				ON SRT.TASK_ID = T.ID
 			WHERE
 				T.ID IN (".implode(',', $taskIds).")
@@ -128,5 +130,12 @@ class Sort
 		}
 
 		return 0;
+	}
+
+	private function init(): void
+	{
+		global $DB;
+		$this->db = $DB;
+		$this->tableName = SortingTable::getTableName();
 	}
 }

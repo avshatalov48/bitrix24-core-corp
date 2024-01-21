@@ -252,18 +252,24 @@ class TimelineEntry
 		//endregion
 
 		//region Delete by entity associations
-		$connection->queryExecute(
-			"DELETE s.* FROM b_crm_timeline_search s INNER JOIN b_crm_timeline t ON s.OWNER_ID = t.ID AND t.ASSOCIATED_ENTITY_TYPE_ID = {$entityTypeID} AND t.ASSOCIATED_ENTITY_ID = {$entityID}"
-		);
-		$connection->queryExecute(
-			"DELETE b.* FROM b_crm_timeline_bind b INNER JOIN b_crm_timeline t ON b.OWNER_ID = t.ID AND t.ASSOCIATED_ENTITY_TYPE_ID = {$entityTypeID} AND t.ASSOCIATED_ENTITY_ID = {$entityID}"
-		);
-		$connection->queryExecute(
-			"DELETE FROM b_crm_timeline_note WHERE ITEM_ID IN (SELECT ID FROM b_crm_timeline WHERE ASSOCIATED_ENTITY_TYPE_ID = {$entityTypeID} AND ASSOCIATED_ENTITY_ID = {$entityID}) AND ITEM_TYPE=" . (int)\Bitrix\Crm\Timeline\Entity\NoteTable::NOTE_TYPE_HISTORY
-		);
-		$connection->queryExecute(
-			"DELETE FROM b_crm_timeline WHERE ASSOCIATED_ENTITY_TYPE_ID = {$entityTypeID} AND ASSOCIATED_ENTITY_ID = {$entityID}"
-		);
+		$hasItemsToDelete = (bool)($connection->query("SELECT ID FROM b_crm_timeline WHERE ASSOCIATED_ENTITY_TYPE_ID = {$entityTypeID} AND ASSOCIATED_ENTITY_ID = {$entityID} LIMIT 1")->fetch());
+		if ($hasItemsToDelete)
+		{
+			\Bitrix\Crm\DbHelper::queryByDbType(
+				"DELETE s.* FROM b_crm_timeline_search s INNER JOIN b_crm_timeline t ON s.OWNER_ID = t.ID AND t.ASSOCIATED_ENTITY_TYPE_ID = {$entityTypeID} AND t.ASSOCIATED_ENTITY_ID = {$entityID}",
+				"DELETE FROM b_crm_timeline_search s USING b_crm_timeline t WHERE s.OWNER_ID = t.ID AND t.ASSOCIATED_ENTITY_TYPE_ID = {$entityTypeID} AND t.ASSOCIATED_ENTITY_ID = {$entityID}",
+			);
+			\Bitrix\Crm\DbHelper::queryByDbType(
+				"DELETE b.* FROM b_crm_timeline_bind b INNER JOIN b_crm_timeline t ON b.OWNER_ID = t.ID AND t.ASSOCIATED_ENTITY_TYPE_ID = {$entityTypeID} AND t.ASSOCIATED_ENTITY_ID = {$entityID}",
+				"DELETE FROM b_crm_timeline_bind b USING b_crm_timeline t WHERE b.OWNER_ID = t.ID AND t.ASSOCIATED_ENTITY_TYPE_ID = {$entityTypeID} AND t.ASSOCIATED_ENTITY_ID = {$entityID}"
+			);
+			$connection->queryExecute(
+				"DELETE FROM b_crm_timeline_note WHERE ITEM_ID IN (SELECT ID FROM b_crm_timeline WHERE ASSOCIATED_ENTITY_TYPE_ID = {$entityTypeID} AND ASSOCIATED_ENTITY_ID = {$entityID}) AND ITEM_TYPE=" . (int)\Bitrix\Crm\Timeline\Entity\NoteTable::NOTE_TYPE_HISTORY
+			);
+			$connection->queryExecute(
+				"DELETE FROM b_crm_timeline WHERE ASSOCIATED_ENTITY_TYPE_ID = {$entityTypeID} AND ASSOCIATED_ENTITY_ID = {$entityID}"
+			);
+		}
 		//endregion
 
 		Entity\TimelineTable::cleanCache();

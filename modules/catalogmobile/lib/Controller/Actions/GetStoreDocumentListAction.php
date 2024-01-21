@@ -44,7 +44,7 @@ class GetStoreDocumentListAction extends GetBaseDocumentListAction
 		];
 
 		$filter = [
-			'DOC_TYPE' => $documentTypes,
+			'@DOC_TYPE' => $documentTypes,
 		];
 		if (!empty($extra['search']))
 		{

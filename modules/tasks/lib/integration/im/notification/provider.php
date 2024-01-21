@@ -2,6 +2,8 @@
 
 namespace Bitrix\Tasks\Integration\IM\Notification;
 
+use Bitrix\Main\Loader;
+use Bitrix\Tasks\Integration\IM;
 use Bitrix\Tasks\Integration\IM\Notification;
 use Bitrix\Tasks\Integration\IM\Notification\UseCase\TaskCreated;
 use Bitrix\Tasks\Integration\IM\Notification\UseCase\TaskUpdated;
@@ -11,6 +13,7 @@ use Bitrix\Tasks\Integration\IM\Notification\UseCase\TaskStatusChanged;
 use Bitrix\Tasks\Integration\IM\Notification\UseCase\TaskExpired;
 use Bitrix\Tasks\Integration\IM\Notification\UseCase\TaskExpiresSoon;
 use Bitrix\Tasks\Integration\IM\Notification\UseCase\CommentCreated;
+use Bitrix\Tasks\Integration\Mail\User;
 use Bitrix\Tasks\Internals\Notification\EntityCode;
 use Bitrix\Tasks\Internals\Notification\EntityOperation;
 use Bitrix\Tasks\Internals\Notification\Message;
@@ -29,14 +32,14 @@ class Provider implements ProviderInterface
 
 	public function pushMessages(): void
 	{
-		if (!\Bitrix\Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return;
 		}
 
 		foreach ($this->messages as $message)
 		{
-			if(true === \Bitrix\Tasks\Integration\Mail\User::isEmail($message->getRecepient()->toArray()))
+			if(true === User::isEmail($message->getRecepient()->toArray()))
 			{
 				continue;
 			}
@@ -52,6 +55,12 @@ class Provider implements ProviderInterface
 			{
 				case EntityCode::CODE_TASK . ':' . EntityOperation::ADD:
 					$this->pushNotification((new TaskCreated())->getNotification($message));
+					break;
+				case EntityCode::CODE_TASK . ':' . EntityOperation::REPLICATE_REGULAR:
+					$this->pushNotification((new Notification\UseCase\Regularity\RegularTaskReplicated())->getNotification($message));
+					break;
+				case EntityCode::CODE_TASK . ':' . EntityOperation::START_REGULAR:
+					$this->pushNotification((new Notification\UseCase\Regularity\RegularTaskStarted())->getNotification($message));
 					break;
 				case EntityCode::CODE_TASK . ':' . EntityOperation::UPDATE:
 					$this->pushNotification((new TaskUpdated())->getNotification($message));
@@ -104,7 +113,7 @@ class Provider implements ProviderInterface
 
 		$params = array_merge($params, $notification->getParams());
 
-		\Bitrix\Tasks\Integration\IM::notifyAdd($params);
+		IM::notifyAdd($params);
 	}
 
 	private function getNotificationTag(Notification $notification): Tag

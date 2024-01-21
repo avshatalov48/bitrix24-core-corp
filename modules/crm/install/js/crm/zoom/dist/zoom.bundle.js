@@ -3,15 +3,14 @@ this.BX = this.BX || {};
 	'use strict';
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13;
+
 	/**
 	 * @memberOf BX.Crm.Timeline.ToolBar
 	 * @mixes EventEmitter
 	 */
-
 	var Zoom = /*#__PURE__*/function () {
 	  function Zoom(params) {
 	    var _this = this;
-
 	    babelHelpers.classCallCheck(this, Zoom);
 	    babelHelpers.defineProperty(this, "TITLE", 'Zoom');
 	    babelHelpers.defineProperty(this, "error", false);
@@ -22,6 +21,8 @@ this.BX = this.BX || {};
 	    this.ownerId = params.ownerId;
 	    this.userId = +main_core.Loc.getMessage('USER_ID');
 	    this.onFinishEdit = params.onFinishEdit;
+	    this.onStartSave = params.onStartSave;
+	    this.onFinishSave = params.onFinishSave;
 	    main_core.Dom.append(this.getFormContainer(), this.container);
 	    main_core.Dom.append(this.renderButtons(), this.container);
 	    main_core.Event.bind(this.getDateContainer(), 'click', function (e) {
@@ -45,7 +46,6 @@ this.BX = this.BX || {};
 	    this.refreshStartTimeView();
 	    this.initPlanner();
 	  }
-
 	  babelHelpers.createClass(Zoom, [{
 	    key: "getTitle",
 	    value: function getTitle() {
@@ -62,13 +62,11 @@ this.BX = this.BX || {};
 	    value: function getEndDateTime() {
 	      var duration = +this.getDurationInputField().value;
 	      var durationType = this.getDurationTypeInputField().value;
-
 	      if (durationType === 'h') {
 	        duration *= 60 * 60 * 1000;
 	      } else {
 	        duration *= 60 * 1000;
 	      }
-
 	      var endDateTime = new Date();
 	      endDateTime.setTime(this.getStartDateTime().getTime() + duration);
 	      return endDateTime;
@@ -92,7 +90,6 @@ this.BX = this.BX || {};
 	    key: "onTimeSwitchClick",
 	    value: function onTimeSwitchClick(element) {
 	      var _this2 = this;
-
 	      if (!this.clockInstance) {
 	        this.clockInstance = new BX.CClockSelector({
 	          start_time: this.unFormatTime(element.textContent),
@@ -100,13 +97,11 @@ this.BX = this.BX || {};
 	          callback: BX.doNothing
 	        });
 	      }
-
 	      this.clockInstance.setNode(element);
 	      this.clockInstance.setTime(this.unFormatTime(element.textContent));
 	      this.clockInstance.setCallback(function (v) {
 	        element.textContent = v;
 	        BX.fireEvent(element, 'change');
-
 	        _this2.clockInstance.closeWnd();
 	      });
 	      this.clockInstance.Show();
@@ -115,29 +110,26 @@ this.BX = this.BX || {};
 	    key: "formatTime",
 	    value: function formatTime(date) {
 	      var dateFormat = BX.date.convertBitrixFormat(BX.message('FORMAT_DATE')).replace(/:?\s*s/, ''),
-	          timeFormat = BX.date.convertBitrixFormat(BX.message('FORMAT_DATETIME')).replace(/:?\s*s/, ''),
-	          str1 = BX.date.format(dateFormat, date),
-	          str2 = BX.date.format(timeFormat, date);
+	        timeFormat = BX.date.convertBitrixFormat(BX.message('FORMAT_DATETIME')).replace(/:?\s*s/, ''),
+	        str1 = BX.date.format(dateFormat, date),
+	        str2 = BX.date.format(timeFormat, date);
 	      return BX.util.trim(str2.replace(str1, ''));
 	    }
 	  }, {
 	    key: "unFormatTime",
 	    value: function unFormatTime(time) {
 	      var q = time.split(/[\s:]+/);
-
 	      if (q.length == 3) {
 	        var mt = q[2];
 	        if (mt == 'pm' && q[0] < 12) q[0] = parseInt(q[0], 10) + 12;
 	        if (mt == 'am' && q[0] == 12) q[0] = 0;
 	      }
-
 	      return parseInt(q[0], 10) * 3600 + parseInt(q[1], 10) * 60;
 	    }
 	  }, {
 	    key: "getDateContainer",
 	    value: function getDateContainer() {
 	      var _this3 = this;
-
 	      return this.cache.remember('startDateContainer', function () {
 	        return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-ctl ui-ctl-sm ui-ctl-after-icon ui-ctl-date\">\n\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-calendar\"></div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), _this3.getDateInputField());
 	      });
@@ -153,7 +145,6 @@ this.BX = this.BX || {};
 	    key: "getTimeContainer",
 	    value: function getTimeContainer() {
 	      var _this4 = this;
-
 	      return this.cache.remember('startTimeContainer', function () {
 	        return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-ctl ui-ctl-sm ui-ctl-after-icon ui-ctl-dropdown crm-entity-stream-content-new-zoom-field-sm\">\n\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), _this4.getTimeInputField());
 	      });
@@ -190,7 +181,6 @@ this.BX = this.BX || {};
 	    key: "getFormContainer",
 	    value: function getFormContainer() {
 	      var _this5 = this;
-
 	      return this.cache.remember('formContainer', function () {
 	        return main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-entity-stream-content-new-zoom\">\n\t\t\t\t\t<div class=\"crm-entity-stream-content-new-zoom-inner\">\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-new-zoom-field\">\n\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-new-zoom-field-inner\">\n\t\t\t\t\t\t\t\t<label for=\"\" class=\"crm-entity-stream-content-new-zoom-field-label\">", "</label>\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-sm ui-ctl-w100 ui-ctl-textbox\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-new-zoom-field\">\n\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-new-zoom-field-block\">\n\t\t\t\t\t\t\t\t<label for=\"\" class=\"crm-entity-stream-content-new-zoom-field-label\">", "</label>\n\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-new-zoom-field-control\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-new-zoom-field-block\">\n\t\t\t\t\t\t\t\t<label for=\"\" class=\"crm-entity-stream-content-new-zoom-field-label\">", "</label>\n\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-new-zoom-field-control\">\n\t\t\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-sm crm-entity-stream-content-new-zoom-field-xs\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-sm ui-ctl-after-icon ui-ctl-dropdown crm-entity-stream-content-new-zoom-field-sm\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<br>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('CRM_ZOOM_NEW_CONFERENCE_TITLE'), _this5.getTitleInputField(), main_core.Loc.getMessage('CRM_ZOOM_NEW_CONFERENCE_DATE_CAPTION'), _this5.getDateContainer(), _this5.getTimeContainer(), main_core.Loc.getMessage('CRM_ZOOM_NEW_CONFERENCE_DURATION_CAPTION'), _this5.getDurationInputField(), _this5.getDurationTypeInputField(), _this5.renderPlanner());
 	      });
@@ -206,7 +196,6 @@ this.BX = this.BX || {};
 	    key: "renderButtons",
 	    value: function renderButtons() {
 	      var _this6 = this;
-
 	      return this.cache.remember('buttonsContainer', function () {
 	        return main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-entity-stream-content-zoom-btn-container\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), _this6.renderSaveButton(), _this6.renderCancelButton());
 	      });
@@ -215,9 +204,8 @@ this.BX = this.BX || {};
 	    key: "renderSaveButton",
 	    value: function renderSaveButton() {
 	      var _this7 = this;
-
 	      return this.cache.remember('saveButton', function () {
-	        return main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<button onclick=\"", "\" class=\"ui-btn ui-btn-xs ui-btn-primary\">\n\t\t\t\t\t", "\n\t\t\t\t</button>\n\t\t\t"])), _this7.save.bind(_this7), main_core.Loc.getMessage('UI_BUTTONS_CREATE_BTN_TEXT'));
+	        return main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<button onclick=\"", "\" class=\"ui-btn ui-btn-xs ui-btn-primary ui-btn-round\">\n\t\t\t\t\t", "\n\t\t\t\t</button>\n\t\t\t"])), _this7.save.bind(_this7), main_core.Loc.getMessage('UI_BUTTONS_CREATE_BTN_TEXT'));
 	      });
 	    }
 	  }, {
@@ -227,13 +215,11 @@ this.BX = this.BX || {};
 	      var minutes = currentDateTime.getMinutes();
 	      var divisionRemainder = minutes % 5;
 	      var gap = 5;
-
 	      if (divisionRemainder > 0) {
 	        // We add 5 minutes gap to always show future time in the input.
 	        // Example: current time is 14:51. Then 51 - 1 + 5 => 14:55
 	        currentDateTime.setMinutes(minutes - divisionRemainder + gap);
 	      }
-
 	      this.getDateInputField().value = BX.formatDate(currentDateTime, BX.message('FORMAT_DATE'));
 	      this.getTimeInputField().innerHTML = this.formatTime(currentDateTime);
 	    }
@@ -241,9 +227,8 @@ this.BX = this.BX || {};
 	    key: "renderCancelButton",
 	    value: function renderCancelButton() {
 	      var _this8 = this;
-
 	      return this.cache.remember('cancelButton', function () {
-	        return main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span onclick=\"", "\" class=\"ui-btn ui-btn-xs ui-btn-light-border\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t"])), _this8.cancel.bind(_this8), main_core.Loc.getMessage('UI_TIMELINE_EDITOR_COMMENT_CANCEL'));
+	        return main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span onclick=\"", "\" class=\"ui-btn ui-btn-xs ui-btn-link\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t"])), _this8.cancel.bind(_this8), main_core.Loc.getMessage('UI_TIMELINE_EDITOR_COMMENT_CANCEL'));
 	      });
 	    }
 	  }, {
@@ -271,11 +256,9 @@ this.BX = this.BX || {};
 	        var data = event.getData();
 	        var startDateTime = data.dateFrom;
 	        var duration = (data.dateTo - data.dateFrom) / 1000 / 60; //duration in minutes
-
 	        var durationType = this.getDurationTypeInputField().value;
 	        this.getDateInputField().value = BX.formatDate(startDateTime, BX.message('FORMAT_DATE'));
 	        this.getTimeInputField().innerHTML = this.formatTime(startDateTime);
-
 	        if (durationType === 'h' && duration % 60 === 0) {
 	          this.getDurationInputField().value = duration / 60;
 	          this.getDurationTypeInputField().value = 'h';
@@ -289,7 +272,6 @@ this.BX = this.BX || {};
 	    key: "loadPlannerData",
 	    value: function loadPlannerData() {
 	      var _this9 = this;
-
 	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      this.planner.showLoader();
 	      BX.ajax.runAction('calendar.api.calendarajax.updatePlanner', {
@@ -300,7 +282,6 @@ this.BX = this.BX || {};
 	        }
 	      }).then(function (response) {
 	        _this9.planner.hideLoader();
-
 	        _this9.planner.update(response.data.entries, response.data.accessibility);
 	      }, function (response) {
 	        console.error(response.errors);
@@ -309,8 +290,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "save",
 	    value: function save() {
+	      var _this10 = this;
 	      this.cleanError();
-	      main_core.Dom.addClass(this.renderSaveButton(), "ui-btn-wait");
+	      if (main_core.Type.isFunction(this.onStartSave)) {
+	        this.onStartSave();
+	      }
 	      var entityId = this.ownerId;
 	      var entityType = BX.CrmEntityType.resolveName(this.ownerTypeId);
 	      var dateStart = this.getDateInputField().value;
@@ -320,22 +304,18 @@ this.BX = this.BX || {};
 	      var conferenceTitle = this.getTitleInputField().value;
 	      var duration = +this.getDurationInputField().value;
 	      var durationType = this.getDurationTypeInputField().value;
-
 	      if (!main_core.Type.isString(conferenceTitle) || conferenceTitle === '') {
 	        this.errorMessages.push("".concat(main_core.Loc.getMessage('CRM_ZOOM_ERROR_EMPTY_TITLE')));
 	        this.showError();
 	      }
-
 	      if (!main_core.Type.isInteger(timestampStart) || timestampStart < Date.now()) {
 	        this.errorMessages.push("".concat(main_core.Loc.getMessage('CRM_ZOOM_ERROR_INCORRECT_DATETIME')));
 	        this.showError();
 	      }
-
 	      if (!main_core.Type.isInteger(duration) || duration <= 0 || !['h', 'm'].includes(durationType)) {
 	        this.errorMessages.push("".concat(main_core.Loc.getMessage('CRM_ZOOM_ERROR_INCORRECT_DURATION')));
 	        this.showError();
 	      }
-
 	      if (!this.error) {
 	        BX.ajax.runAction('crm.api.zoomUser.createConference', {
 	          data: {
@@ -351,15 +331,19 @@ this.BX = this.BX || {};
 	          },
 	          analyticsLabel: {}
 	        }).then(function (response) {
-	          main_core.Dom.removeClass(this.renderSaveButton(), 'ui-btn-wait');
-	          this.cancel();
-	        }.bind(this), function (response) {
-	          main_core.Dom.removeClass(this.renderSaveButton(), 'ui-btn-wait');
-	          this.errorMessages.push("".concat(main_core.Loc.getMessage('CRM_ZOOM_CREATE_MEETING_SERVER_RETURNS_ERROR')));
-	          this.errorMessages.push(response.errors[0].message);
-	          this.showError();
+	          if (main_core.Type.isFunction(_this10.onFinishSave)) {
+	            _this10.onFinishSave();
+	          }
+	          _this10.cancel();
+	        }, function (response) {
+	          if (main_core.Type.isFunction(_this10.onFinishSave)) {
+	            _this10.onFinishSave();
+	          }
+	          _this10.errorMessages.push("".concat(main_core.Loc.getMessage('CRM_ZOOM_CREATE_MEETING_SERVER_RETURNS_ERROR')));
+	          _this10.errorMessages.push(response.errors[0].message);
+	          _this10.showError();
 	          console.error(response.errors);
-	        }.bind(this));
+	        });
 	      }
 	    }
 	  }, {
@@ -369,7 +353,6 @@ this.BX = this.BX || {};
 	      this.refreshStartTimeView();
 	      this.refreshDuration();
 	      this.planner.updateSelector(this.getStartDateTime(), this.getEndDateTime(), false);
-
 	      if (main_core.Type.isFunction(this.onFinishEdit)) {
 	        this.onFinishEdit();
 	      }
@@ -381,14 +364,14 @@ this.BX = this.BX || {};
 	      this.errorMessages.forEach(function (message) {
 	        errorText += message + "\n";
 	      });
-
 	      if (!this.error && errorText !== '') {
 	        this.errorElement = main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["<div class=\"zoom-error-message ui-alert ui-alert-danger ui-alert-icon-danger\">\n\t\t\t\t<span class=\"ui-alert-message\">", "</span>\n\t\t\t</div>"])), errorText);
 	        main_core.Dom.append(this.errorElement, this.container.firstElementChild);
 	        this.error = true;
 	      }
-
-	      main_core.Dom.removeClass(this.renderSaveButton(), 'ui-btn-wait');
+	      if (main_core.Type.isFunction(this.onFinishSave)) {
+	        this.onFinishSave();
+	      }
 	    }
 	  }, {
 	    key: "cleanError",
@@ -430,7 +413,6 @@ this.BX = this.BX || {};
 	    key: "onNotAvailableHandler",
 	    value: function onNotAvailableHandler() {
 	      var _BX$UI, _BX$UI$InfoHelper;
-
 	      (_BX$UI = BX.UI) === null || _BX$UI === void 0 ? void 0 : (_BX$UI$InfoHelper = _BX$UI.InfoHelper) === null || _BX$UI$InfoHelper === void 0 ? void 0 : _BX$UI$InfoHelper.show('limit_video_conference_zoom_crm');
 	    }
 	  }]);

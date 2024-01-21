@@ -1,17 +1,14 @@
 <?php
 namespace Bitrix\Imconnector\Update;
 
-use \Bitrix\Main\Loader,
-	\Bitrix\Main\UserTable,
-	\Bitrix\Main\FileTable,
-	\Bitrix\Main\Config\Option,
-	\Bitrix\Main\Update\Stepper,
-	\Bitrix\Main\Localization\Loc,
-	\Bitrix\Main\Entity\ExpressionField;
+use Bitrix\Main\Loader,
+	Bitrix\Main\UserTable,
+	Bitrix\Main\FileTable,
+	Bitrix\Main\Config\Option,
+	Bitrix\Main\Update\Stepper;
 
-use \Bitrix\Disk\Internals\VersionTable;
+use Bitrix\Disk\Internals\VersionTable;
 
-Loc::loadMessages(__FILE__);
 
 final class Update200650 extends Stepper
 {
@@ -22,12 +19,6 @@ final class Update200650 extends Stepper
 	/**
 	 * @param array $result
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function execute(array &$result): bool
 	{
@@ -37,9 +28,9 @@ final class Update200650 extends Stepper
 
 		if ($status['count'] > 0)
 		{
-			if(
-				!is_numeric($status['lastId']) ||
-				$status['lastId'] < 0
+			if (
+				!is_numeric($status['lastId'])
+				|| $status['lastId'] < 0
 			)
 			{
 				$status['lastId'] = 0;
@@ -51,7 +42,7 @@ final class Update200650 extends Stepper
 			$rawFile = FileTable::getList([
 				'select' => ['ID'],
 				'filter' => [
-					'MODULE_ID' => self::$moduleId,
+					'=MODULE_ID' => self::$moduleId,
 					'>ID' => $status['lastId']
 				],
 				'limit' => self::PORTION,
@@ -60,7 +51,7 @@ final class Update200650 extends Stepper
 
 			while ($rowFile = $rawFile->fetch())
 			{
-				if(!empty($rowFile['ID']))
+				if (!empty($rowFile['ID']))
 				{
 					$files[$rowFile['ID']] = $rowFile['ID'];
 				}
@@ -70,16 +61,15 @@ final class Update200650 extends Stepper
 				$found = true;
 			}
 
-			if(!empty($files))
+			if (!empty($files))
 			{
 				$rawUser = UserTable::getList([
 					'select' => ['PERSONAL_PHOTO'],
-					'filter' => ['PERSONAL_PHOTO' => $files],
+					'filter' => ['=PERSONAL_PHOTO' => $files],
 				]);
-
 				while ($rowUser = $rawUser->fetch())
 				{
-					if(!empty($files[$rowUser['PERSONAL_PHOTO']]))
+					if (!empty($files[$rowUser['PERSONAL_PHOTO']]))
 					{
 						unset($files[$rowUser['PERSONAL_PHOTO']]);
 					}
@@ -87,29 +77,28 @@ final class Update200650 extends Stepper
 			}
 
 			if(
-				!empty($files) &&
-				Loader::includeModule('disk')
+				!empty($files)
+				&& Loader::includeModule('disk')
 			)
 			{
 				$rawDisk = VersionTable::getList([
 					'select' => ['FILE_ID'],
-					'filter' => ['FILE_ID' => $files],
+					'filter' => ['=FILE_ID' => $files],
 				]);
-
 				while ($rowDisk = $rawDisk->fetch())
 				{
-					if(!empty($files[$rowDisk['FILE_ID']]))
+					if (!empty($files[$rowDisk['FILE_ID']]))
 					{
 						unset($files[$rowDisk['FILE_ID']]);
 					}
 				}
 			}
 
-			if(!empty($files))
+			if (!empty($files))
 			{
 				foreach ($files as $fileId)
 				{
-					\CFile::Delete($fileId);
+					\CFile::delete($fileId);
 				}
 			}
 
@@ -129,12 +118,7 @@ final class Update200650 extends Stepper
 	}
 
 	/**
-	 * @return array|mixed|string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @return array
 	 */
 	public function loadCurrentStatus()
 	{
@@ -144,28 +128,13 @@ final class Update200650 extends Stepper
 
 		if (empty($status))
 		{
-			$count = 0;
-
-			$rawFile = FileTable::getList([
-				'select' => ['CNT'],
-				'filter' => ['MODULE_ID' => self::$moduleId],
-				'runtime' => [new ExpressionField('CNT', 'COUNT(*)')]
-			]);
-
-			if(
-				($rowFile = $rawFile->fetch()) &&
-				!empty($rowFile['CNT'])
-			)
-			{
-				$count = $rowFile['CNT'];
-			}
-
 			$status = [
 				'lastId' => 0,
 				'number' => 0,
-				'count' => $count,
+				'count' => FileTable::getCount(['=MODULE_ID' => self::$moduleId]),
 			];
 		}
+
 		return $status;
 	}
 }

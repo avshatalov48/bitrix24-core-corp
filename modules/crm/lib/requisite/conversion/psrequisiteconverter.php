@@ -1176,21 +1176,7 @@ class PSRequisiteConverter
 		$row = $res->Fetch();
 		if (isset($row['IS_MY_COMPANY']) && $row['IS_MY_COMPANY'] !== 'Y')
 		{
-			$connection = Main\Application::getConnection();
-			$strSql = '';
-			if ($connection instanceof Main\DB\MysqlCommonConnection)
-			{
-				$strSql = "UPDATE b_crm_company SET IS_MY_COMPANY = 'Y' WHERE ID = $id";
-			}
-			elseif ($connection instanceof Main\DB\MssqlConnection
-				|| $connection instanceof Main\DB\OracleConnection)
-			{
-				$strSql = "UPDATE B_CRM_COMPANY SET IS_MY_COMPANY = 'Y' WHERE ID = $id";
-			}
-			if (!empty($strSql))
-			{
-				$connection->queryExecute($strSql);
-			}
+			Main\Application::getConnection()->queryExecute("UPDATE b_crm_company SET IS_MY_COMPANY = 'Y' WHERE ID = $id");
 		}
 
 

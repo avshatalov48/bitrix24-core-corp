@@ -19,6 +19,7 @@ if (IsModuleInstalled('bizproc'))
 }
 
 use Bitrix\Crm\Conversion\LeadConversionDispatcher;
+use Bitrix\Crm\Integrity\DuplicateControl;
 
 global $USER_FIELD_MANAGER, $DB, $USER, $APPLICATION;
 $CCrmLead = new CCrmLead();
@@ -847,12 +848,22 @@ $arResult['STATUS_LIST'] = array();
 $arResult['~STATUS_LIST'] = CCrmStatus::GetStatusList('STATUS');
 $arResult['DUPLICATE_CONTROL'] = array();
 $enableDupControl = $arResult['DUPLICATE_CONTROL']['ENABLED'] =
-	!$bEdit && \Bitrix\Crm\Integrity\DuplicateControl::isControlEnabledFor(CCrmOwnerType::Lead);
+	DuplicateControl::isControlEnabledFor(CCrmOwnerType::Lead)
+;
 
 foreach ($arResult['~STATUS_LIST'] as $sStatusId => $sStatusTitle)
 {
-	if ($userPermissions->GetPermType('LEAD', $bEdit ? 'WRITE' : 'ADD', array('STATUS_ID'.$sStatusId)) > BX_CRM_PERM_NONE)
+	if (
+		$userPermissions->GetPermType(
+			'LEAD', $bEdit
+				? 'WRITE'
+				: 'ADD', array('STATUS_ID'.$sStatusId)
+		)
+		> BX_CRM_PERM_NONE
+	)
+	{
 		$arResult['STATUS_LIST'][$sStatusId] = $sStatusTitle;
+	}
 }
 
 $arResult['SOURCE_LIST'] = CCrmStatus::GetStatusList('SOURCE');

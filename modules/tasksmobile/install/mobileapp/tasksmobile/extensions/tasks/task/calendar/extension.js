@@ -2,6 +2,7 @@
  * @module tasks/task/calendar
  */
 jn.define('tasks/task/calendar', (require, exports, module) => {
+	const { RequestExecutor } = require('rest');
 	const { Type } = require('type');
 
 	class Calendar
@@ -10,6 +11,7 @@ jn.define('tasks/task/calendar', (require, exports, module) => {
 		{
 			this.isSettingsLoading = false;
 			this.isSettingsLoaded = false;
+			this.settings = {};
 
 			this.workTime = [
 				{
@@ -28,42 +30,70 @@ jn.define('tasks/task/calendar', (require, exports, module) => {
 				6: true,
 			};
 			this.holidays = {};
+			this.serverOffset = -(new Date()).getTimezoneOffset() * 60;
+			this.clientOffset = -(new Date()).getTimezoneOffset() * 60;
 
 			void this.loadSettings();
 		}
 
 		loadSettings()
 		{
-			return new Promise((resolve) => {
-				if (this.isSettingsLoading || this.isSettingsLoaded)
+			return new Promise((resolve, reject) => {
+				if (this.isSettingsLoaded)
 				{
 					resolve();
 
 					return;
 				}
+
+				if (this.isSettingsLoading)
+				{
+					setTimeout(() => {
+						this.loadSettings()
+							.then(resolve)
+							.catch(reject);
+					}, 50);
+
+					return;
+				}
+
 				this.isSettingsLoading = true;
 
 				(new RequestExecutor('tasksmobile.Calendar.getSettings'))
-					.call()
-					.then((response) => {
-						this.setSettings(response.result);
+					.setCacheHandler((response) => {
+						this.setSettings(response);
+					})
+					.setHandler((response) => {
+						this.setSettings(response);
+
+						this.isSettingsLoading = false;
+						this.isSettingsLoaded = true;
+
 						resolve();
 					})
-					.catch(() => {})
-				;
+					.call(true)
+					.catch((e) => {
+						console.error(e);
+						reject();
+					});
 			});
 		}
 
 		setSettings(settings, adaptSettings = true)
 		{
+			this.settings = settings;
+
 			const adaptedSettings = (adaptSettings ? Calendar.adaptSettings(settings) : settings);
 
 			this.setWorkTime(adaptedSettings.workTime);
 			this.setWeekends(adaptedSettings.weekEnds);
 			this.setHolidays(adaptedSettings.holidays);
+			this.setServerOffset(adaptedSettings.serverOffset);
+		}
 
-			this.isSettingsLoading = false;
-			this.isSettingsLoaded = true;
+		getSettings()
+		{
+			return this.settings;
 		}
 
 		static adaptSettings(inputSettings)
@@ -77,6 +107,7 @@ jn.define('tasks/task/calendar', (require, exports, module) => {
 				workTime: Calendar.adaptWorkTime(inputSettings),
 				weekEnds: Calendar.adaptWeekends(inputSettings),
 				holidays: Calendar.adaptHolidays(inputSettings),
+				serverOffset: inputSettings.SERVER_OFFSET,
 			};
 		}
 
@@ -222,6 +253,11 @@ jn.define('tasks/task/calendar', (require, exports, module) => {
 					this.holidays[`${holiday.month}_${holiday.day}`] = true;
 				}
 			}
+		}
+
+		setServerOffset(serverOffset)
+		{
+			this.serverOffset = serverOffset;
 		}
 
 		calculateStartDate(endDate, duration)
@@ -409,12 +445,22 @@ jn.define('tasks/task/calendar', (require, exports, module) => {
 
 		isWeekend(date)
 		{
-			return !!this.weekends[date.getUTCDay()];
+			return Boolean(this.weekends[date.getUTCDay()]);
 		}
 
 		isHoliday(date)
 		{
-			return !!this.holidays[`${date.getUTCMonth()}_${date.getUTCDate()}`];
+			return Boolean(this.holidays[`${date.getUTCMonth()}_${date.getUTCDate()}`]);
+		}
+
+		isWeekendInLocal(date)
+		{
+			return Boolean(this.weekends[date.getDay()]);
+		}
+
+		isHolidayInLocal(date)
+		{
+			return Boolean(this.holidays[`${date.getMonth()}_${date.getDate()}`]);
 		}
 
 		isWorkTimeCorrect(times)

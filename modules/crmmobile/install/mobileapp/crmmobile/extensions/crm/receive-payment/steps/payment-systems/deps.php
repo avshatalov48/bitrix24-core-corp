@@ -2,13 +2,17 @@
 
 return [
 	'extensions' => [
+		'apptheme',
+		'utils/color',
+		'utils/random',
+		'assets/common',
 		'analytics-label',
 		'layout/ui/wizard/step',
 		'layout/ui/fields/boolean',
 		'layout/ui/banners',
 		'layout/pure-component',
 		'notify-manager',
-		'crm:receive-payment/progress-bar-number',
+		'crm:salescenter/progress-bar-number',
 		'crm:terminal/services/payment-system',
 		'crm:payment-system/creation/actions/oauth',
 		'crm:payment-system/creation/actions/before',

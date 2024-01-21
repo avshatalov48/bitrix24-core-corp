@@ -4,5 +4,6 @@ return [
 		'loc',
 		'utils/url',
 		'feature',
+		'apptheme',
 	],
 ];

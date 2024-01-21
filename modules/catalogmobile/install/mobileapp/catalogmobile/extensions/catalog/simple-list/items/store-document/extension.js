@@ -2,6 +2,7 @@
  * @module catalog/simple-list/items/store-document
  */
 jn.define('catalog/simple-list/items/store-document', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Extended } = require('layout/ui/simple-list/items/extended');
 	const { mergeImmutable } = require('utils/object');
 
@@ -18,7 +19,12 @@ jn.define('catalog/simple-list/items/store-document', (require, exports, module)
 	const styles = {
 		client: {
 			fontSize: 19,
-			color: '#333333',
+			color: AppTheme.colors.base1,
+		},
+		wrapper: {
+			paddingBottom: 0,
+			paddingTop: 12,
+			backgroundColor: AppTheme.colors.bgPrimary,
 		},
 	};
 

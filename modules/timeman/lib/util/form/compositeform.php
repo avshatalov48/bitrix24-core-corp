@@ -68,7 +68,7 @@ abstract class CompositeForm extends BaseForm
 			}
 			else
 			{
-				if (is_array($this->nestedForms[$formAlias]))
+				if (is_array($this->nestedForms[$formAlias] ?? null))
 				{
 					$filledForm = false;
 					foreach ($this->nestedForms[$formAlias] as $innerForm)

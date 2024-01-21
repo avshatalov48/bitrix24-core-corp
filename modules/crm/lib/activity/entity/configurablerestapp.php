@@ -8,12 +8,15 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Json;
 
 class ConfigurableRestApp
 {
+	protected const ERR_CANT_CHANGE_PROVIDER_TYPE_ID = 'CANT_CHANGE_PROVIDER_TYPE_ID';
+
 	protected ?int $id = null;
 	protected int $responsibleId;
 	protected ?bool $completed = null;
@@ -27,6 +30,8 @@ class ConfigurableRestApp
 	protected ?string $originatorId = null;
 	protected ?string $originId = null;
 
+	protected ?string $typeId = null;
+
 	protected ItemIdentifier $owner;
 
 	protected ?LayoutDto $layoutDto = null;
@@ -35,6 +40,11 @@ class ConfigurableRestApp
 	{
 		$this->owner = $owner;
 		$this->responsibleId = Container::getInstance()->getContext()->getUserId();
+	}
+
+	protected static function loadMessages(): void
+	{
+		Container::getInstance()->getLocalization()->loadMessages();
 	}
 
 	public static function load(int $id): ?self
@@ -54,6 +64,7 @@ class ConfigurableRestApp
 				'DESCRIPTION',
 				'RESPONSIBLE_ID',
 				'PROVIDER_ID',
+				'PROVIDER_TYPE_ID',
 				'PROVIDER_DATA',
 				'PROVIDER_PARAMS',
 				'OWNER_TYPE_ID',
@@ -91,6 +102,7 @@ class ConfigurableRestApp
 		$activity = new self(new ItemIdentifier($data['OWNER_TYPE_ID'], $data['OWNER_ID']));
 		$activity
 			->setId($id)
+			->setTypeId($data['PROVIDER_TYPE_ID'] ?? null)
 			->setCompleted($data['COMPLETED'] === 'Y')
 			->setDeadline(
 				($data['DEADLINE'] && !\CCrmDateTimeHelper::IsMaxDatabaseDate($data['DEADLINE']))
@@ -251,6 +263,18 @@ class ConfigurableRestApp
 		return $this;
 	}
 
+	public function setTypeId(?string $typeId): self
+	{
+		$this->typeId = $typeId;
+
+		return $this;
+	}
+
+	public function getTypeId(): ?string
+	{
+		return $this->typeId;
+	}
+
 	public function save(): Result
 	{
 		$result = new Result();
@@ -302,6 +326,7 @@ class ConfigurableRestApp
 					'ID',
 					'COMPLETED',
 					'PROVIDER_ID',
+					'PROVIDER_TYPE_ID',
 				]
 			)->Fetch();
 
@@ -314,6 +339,19 @@ class ConfigurableRestApp
 			if ($existedActivity['PROVIDER_ID'] !== \Bitrix\Crm\Activity\Provider\ConfigurableRestApp::getId())
 			{
 				$result->addError(\Bitrix\Crm\Controller\ErrorCode::getNotFoundError());
+
+				return $result;
+			}
+			if ($this->getTypeId() !== null && $this->getTypeId() !== $existedActivity['PROVIDER_TYPE_ID'])
+			{
+				static::loadMessages();
+
+				$result->addError(
+					new Error(
+						Loc::getMessage('CRM_ACT_ENT_CONF_CANT_CHANGE_PROVIDER_TYPE_ID'),
+						static::ERR_CANT_CHANGE_PROVIDER_TYPE_ID
+					)
+				);
 
 				return $result;
 			}
@@ -344,7 +382,11 @@ class ConfigurableRestApp
 			];
 
 			$provider = new \Bitrix\Crm\Activity\Provider\ConfigurableRestApp();
-			$result = $provider->createActivity($provider::PROVIDER_TYPE_ID_DEFAULT, $fields);
+			$result = $provider->createActivity(
+				$this->getTypeId() ?? $provider::PROVIDER_TYPE_ID_DEFAULT,
+				$fields,
+				['skipTypeCheck' => true]
+			);
 			if ($result->isSuccess())
 			{
 				$this->id = (int)$result->getData()['id'];

@@ -40,6 +40,7 @@ jn.define('im/messenger/cache/share-dialog', (require, exports, module) => {
 						title: item.title,
 						subTitle: '',
 						imageUrl: item.avatar ? item.avatar : '',
+						color: item.color,
 						lastMessageTimestamp,
 					};
 				});

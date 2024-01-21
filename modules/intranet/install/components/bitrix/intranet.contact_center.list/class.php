@@ -773,6 +773,7 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 			$this->arResult["JS_PARAMS"] = $this->getJsParams();
 			$this->arResult["ADDITIONAL_STYLES"] = $this->additionalStyles;
 			$this->arResult["RULE_LINK"] = $this->getRuleLink();
+			$this->arResult["META_RESTRICTION_LABEL"] = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion() === 'ru';
 
 			$this->includeComponentTemplate();
 		}

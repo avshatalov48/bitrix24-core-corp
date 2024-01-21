@@ -49,7 +49,7 @@ BX.namespace('Tasks.Component');
 
 			initSelectors: function()
 			{
-				var filter = this.vars.lastFilter;
+				const filter = this.vars.lastFilter;
 
 				this.subInstance('status-selector', new BX.Tasks.Util.SelectBox({
 					scope: this.control('status-selector'),
@@ -65,11 +65,11 @@ BX.namespace('Tasks.Component');
 					notSelectedLabel: BX.message('TASKS_COMMON_ALL')
 				})).bindEvent('change', BX.delegate(this.departmentChanged, this));
 
-				var us = this.subInstance('user-selector', new BX.Tasks.Util.ComboBox({
+				const us = this.subInstance('user-selector', new BX.Tasks.Util.ComboBox({
 					scope: this.control('user-selector'),
 					items: this.getDepartmentUsers(filter.MEMBER.DEPARTMENT[0]),
 					selected: filter.MEMBER.USER[0],
-					notSelectedLabel: BX.message('TASKS_COMMON_ALL')
+					notSelectedLabel: BX.message('TASKS_COMMON_ALL'),
 				}));
 				us.bindEvent('change', BX.delegate(this.userChanged, this));
 				us.setFilterHandlerFabric(function(value){
@@ -267,12 +267,12 @@ BX.namespace('Tasks.Component');
 				this.bindControlThis('search-more', 'click', this.onSearchMore);
 			},
 
-			showTaskPopup: function()
+			getOpenTaskPath: function(taskId)
 			{
-				if (top.BX.Tasks.Singletons.iframePopup)
-				{
-					top.BX.Tasks.Singletons.iframePopup.view(this.config.entityId);
-				}
+				return this.option('pathToUserTasks')
+					.replace('#action#', 'view')
+					.replace('#task_id#', taskId)
+				;
 			},
 
 			adaptGridData: function(data)
@@ -342,18 +342,18 @@ BX.namespace('Tasks.Component');
 
 			createTaskItem: function(task, resourceId)
 			{
-				var item = {
+				const item = {
 					id: resourceId + 'T' + task.ID,
 					resourceId: resourceId,
 					entityId: task.ID,
 					name: task.TITLE,
 					startDate: BX.parseDate(task.START_DATE_PLAN),
-					endDate: BX.parseDate(task.END_DATE_PLAN)
+					endDate: BX.parseDate(task.END_DATE_PLAN),
 				};
 
-				if(task.ACTION.READ)
+				if (task.ACTION.READ)
 				{
-					item.onclick = this.showTaskPopup;
+					item.pathToTask = this.getOpenTaskPath(task.ID);
 				}
 				else
 				{

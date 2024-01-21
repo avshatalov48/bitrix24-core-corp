@@ -2,6 +2,7 @@
 
 namespace Bitrix\Mobile\UI;
 
+use Bitrix\Main\Type\Collection;
 use Bitrix\Main\Web\MimeType;
 
 final class File implements \JsonSerializable
@@ -51,6 +52,43 @@ final class File implements \JsonSerializable
 			(int)$fileInfo['WIDTH'],
 			(int)$fileInfo['HEIGHT'],
 		);
+	}
+
+	/**
+	 * @param array $fileIds
+	 * @return array
+	 */
+	public static function loadBatch(array $fileIds): array
+	{
+		$files = [];
+
+		Collection::normalizeArrayValuesByInt($fileIds);
+		if (empty($fileIds))
+		{
+			return $files;
+		}
+
+		$fileIdsForQuery = implode(',', $fileIds);
+		$dbResult = \CFile::GetList([], ['@ID' => $fileIdsForQuery]);
+		while ($fileInfo = $dbResult->Fetch())
+		{
+			if (!isset($file['SRC']))
+			{
+				$fileInfo['SRC'] = \CFile::GetFileSRC($fileInfo);
+			}
+
+			$fileId = (int)$fileInfo['ID'];
+			$files[$fileId] = new self(
+				$fileId,
+				$fileInfo['FILE_NAME'],
+				MimeType::getByFilename($fileInfo['ORIGINAL_NAME']),
+				$fileInfo['SRC'],
+				(int)$fileInfo['WIDTH'],
+				(int)$fileInfo['HEIGHT'],
+			);
+		}
+
+		return $files;
 	}
 
 	public static function loadWithPreview(int $fileId, array $previewOptions = []): ?self

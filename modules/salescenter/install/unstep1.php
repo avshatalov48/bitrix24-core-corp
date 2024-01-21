@@ -8,7 +8,7 @@ IncludeModuleLangFile(__FILE__);
 	<input type="hidden" name="uninstall" value="Y">
 	<input type="hidden" name="step" value="2">
 
-	<?echo GetMessage("SALESCENTER_UNINSTALL_TITLE")?>
+	<?echo GetMessage("SALESCENTER_UNINSTALL_TITLE_MSGVER_1")?>
 	<div class="adm-info-message-wrap">
 		<div class="adm-info-message">
 			<div><?echo GetMessage("SALESCENTER_UNINSTALL_QUESTION")?></div>

@@ -20,7 +20,7 @@ export class TodoPingSettingsMenu
 {
 	#entityTypeId: number = null;
 	#settings: Object = null;
-	#selectedOffsets: ?Array = null;
+	#selectedOffsets: ?Array<number> = null;
 	#isLoadingMenuItem: Boolean = false;
 
 	constructor(params: TodoPingSettingsMenuParams)
@@ -29,20 +29,20 @@ export class TodoPingSettingsMenu
 		this.#settings = params.settings;
 		if (!Type.isStringFilled(this.#settings.optionName))
 		{
-			throw 'Option name are not defined.';
+			throw new Error('Option name are not defined.');
 		}
 
 		this.#selectedOffsets = this.#settings.currentOffsets || [];
+		this.#selectedOffsets = this.#selectedOffsets.map((element) => parseInt(element, 10));
 		if (!Type.isArrayFilled(this.#settings.currentOffsets))
 		{
-			throw 'Offsets are not defined.';
+			throw new Error('Offsets are not defined.');
 		}
-
 	}
 
 	setSelectedValues(values: Array): void
 	{
-		this.#selectedOffsets = values;
+		this.#selectedOffsets = values.map((element) => parseInt(element, 10));
 	}
 
 	getItems(): Array
@@ -52,7 +52,7 @@ export class TodoPingSettingsMenu
 			id: 'askForSetupTodoPing',
 			text: Loc.getMessage('CRM_ACTIVITY_TODO_PING_SETTINGS_MENU_ITEM'),
 			className: MENU_ITEM_CLASS_INACTIVE,
-			items: this.#getPintSettingsMenuItems()
+			items: this.#getPintSettingsMenuItems(),
 		});
 
 		return items;
@@ -74,16 +74,16 @@ export class TodoPingSettingsMenu
 			items.push({
 				id: item.id,
 				text: item.title,
-				className: this.#getMenuItemClass(item.offset),
+				className: this.#getMenuItemClass(parseInt(item.offset, 10)),
 				disabled: this.#isLoading(),
-				onclick: this.#onMenuItemClick.bind(this, item.offset),
+				onclick: this.#onMenuItemClick.bind(this, parseInt(item.offset, 10)),
 			});
 		});
 
 		return items;
 	}
 
-	#getMenuItemClass(offset: Number): string
+	#getMenuItemClass(offset: number): string
 	{
 		return this.#selectedOffsets.includes(offset)
 			? MENU_ITEM_CLASS_ACTIVE
@@ -95,7 +95,7 @@ export class TodoPingSettingsMenu
 		return this.#isLoadingMenuItem;
 	}
 
-	#onMenuItemClick(offset: Number, event: PointerEvent, item: MenuItem): void
+	#onMenuItemClick(offset: number, event: PointerEvent, item: MenuItem): void
 	{
 		this.#isLoadingMenuItem = true;
 
@@ -103,12 +103,17 @@ export class TodoPingSettingsMenu
 		{
 			if (this.#selectedOffsets.length === 1)
 			{
-				BX.UI.Hint.show(item.getContainer(), 'At least one item must be selected');
+				BX.UI.Hint.show(
+					item.getContainer(),
+					Loc.getMessage('CRM_ACTIVITY_TODO_PING_SETTINGS_MENU_ITEM_TOOLTIP'),
+				);
+
+				this.#isLoadingMenuItem = false;
 
 				return;
 			}
 
-			this.#selectedOffsets = this.#selectedOffsets.filter(value => value !== offset);
+			this.#selectedOffsets = this.#selectedOffsets.filter((value) => value !== offset);
 
 			Dom.removeClass(item.getContainer(), MENU_ITEM_CLASS_ACTIVE);
 			Dom.addClass(item.getContainer(), MENU_ITEM_CLASS_INACTIVE);
@@ -123,9 +128,7 @@ export class TodoPingSettingsMenu
 
 		if (this.#selectedOffsets.length === 0)
 		{
-			throw 'Offsets are not defined.';
-
-			return;
+			throw new Error('Offsets are not defined.');
 		}
 
 		setTimeout(() => {

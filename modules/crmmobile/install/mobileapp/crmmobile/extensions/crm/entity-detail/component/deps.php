@@ -4,13 +4,16 @@ return [
 	'extensions' => [
 		'analytics-label',
 		'alert',
-		'haptics',
 		'rest',
 		'loc',
+		'feature',
+		'haptics',
+		'layout/ui/stage-list',
 		'layout/ui/detail-card/action/check-for-changes',
 		'layout/ui/detail-card/tabs/factory/type',
 		'layout/ui/widget-header-button',
 		'layout/ui/plan-restriction',
+		'layout/ui/info-helper',
 		'native/contacts',
 		'notify',
 		'notify-manager',
@@ -23,7 +26,6 @@ return [
 		'pull/client/events',
 
 		'crm:assets/entity',
-		'crm:storage/category',
 		'crm:loc',
 		'crm:required-fields',
 		'crm:timeline/scheduler',
@@ -31,8 +33,6 @@ return [
 		'crm:entity-actions',
 		'crm:stage-list/item',
 		'crm:stage-list-view',
-		'crm:stage-list',
-
 		'crm:entity-detail/component/additional-button-provider',
 		'crm:entity-detail/component/floating-button-provider',
 		'crm:entity-detail/component/right-buttons-provider',
@@ -43,11 +43,16 @@ return [
 		'crm:entity-document',
 		'crm:entity-chat-opener',
 
+		'statemanager/redux/connect',
+		'statemanager/redux/store',
+		'crm:terminal/entity/payment-create',
+		'crm:terminal/entity/payment-pay-opener',
+		'crm:statemanager/redux/slices/kanban-settings',
+		'crm:statemanager/redux/slices/stage-settings',
+
 		'catalog:store/document-card/manager',
 
 		'imconnector:connectors/telegram',
-
-		'feature',
 	],
 	'bundle' => [
 		'./ajax-error-handler',

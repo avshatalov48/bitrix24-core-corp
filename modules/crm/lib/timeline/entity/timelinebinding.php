@@ -186,7 +186,7 @@ class TimelineBindingTable  extends Entity\DataManager
 				}
 
 				$connection->queryExecute(
-					"UPDATE b_crm_timeline_bind b SET b.ENTITY_TYPE_ID = {$newEntityTypeID}, b.ENTITY_ID = {$newEntityID} WHERE ENTITY_TYPE_ID = {$oldEntityTypeID} AND ENTITY_ID = {$oldEntityID} AND OWNER_ID IN ({$conditionSql})"
+					"UPDATE b_crm_timeline_bind SET ENTITY_TYPE_ID = {$newEntityTypeID}, ENTITY_ID = {$newEntityID} WHERE ENTITY_TYPE_ID = {$oldEntityTypeID} AND ENTITY_ID = {$oldEntityID} AND OWNER_ID IN ({$conditionSql})"
 				);
 			}
 		}
@@ -319,7 +319,7 @@ class TimelineBindingTable  extends Entity\DataManager
 				}
 
 				$connection->queryExecute(
-					"UPDATE b_crm_timeline_bind b SET b.ENTITY_ID = {$newEntityID} WHERE ENTITY_TYPE_ID = {$entityTypeID} AND ENTITY_ID = {$oldEntityID} AND OWNER_ID IN ({$conditionSql})"
+					"UPDATE b_crm_timeline_bind SET ENTITY_ID = {$newEntityID} WHERE ENTITY_TYPE_ID = {$entityTypeID} AND ENTITY_ID = {$oldEntityID} AND OWNER_ID IN ({$conditionSql})"
 				);
 			}
 		}

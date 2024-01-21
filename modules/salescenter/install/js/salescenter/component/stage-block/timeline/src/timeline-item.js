@@ -1,7 +1,7 @@
-import {TimeLineItemContentBlock} from "./timeline-item-content";
+import { TimeLineItemContentBlock } from './timeline-item-content';
 
 const TimeLineItemBlock = {
-	props:['item'],
+	props: ['item'],
 	components: {
 		'timeline-item-content-block': TimeLineItemContentBlock,
 	},
@@ -19,11 +19,11 @@ const TimeLineItemBlock = {
 			<component :is="'timeline-item-content-block'" 
 				:item="item">
 				<template v-slot:timeline-content-text>{{item.content}}</template>
-			</component>	
+			</component>
 		</div>
-	`
+	`,
 };
 
 export {
 	TimeLineItemBlock,
-}
+};

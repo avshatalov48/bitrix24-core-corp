@@ -1,8 +1,7 @@
-<?
+<?php
 
 namespace Bitrix\Transformer;
 
-use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Result;
@@ -111,13 +110,15 @@ class FileUploader
 	 */
 	private static function saveUploadedPartToCloud($fileName, $data, $fileSize, $isLastPart, $bucketId)
 	{
+		$errorPrefix = 'Upload to cloud storage: ';
+
 		$result = new Result();
 		if(\Bitrix\Main\Loader::includeModule('clouds'))
 		{
 			$bucket = new \CCloudStorageBucket($bucketId);
 			if(!$bucket->init())
 			{
-				$result->addError(new Error('Could not init bucket'));
+				$result->addError(new Error($errorPrefix . 'Could not init bucket'));
 				return $result;
 			}
 			$isStarted = true;
@@ -131,7 +132,7 @@ class FileUploader
 
 			if(!$isStarted)
 			{
-				$result->addError(new Error('Could not start upload'));
+				$result->addError(new Error($errorPrefix . 'Could not start upload'));
 			}
 
 			$success = false;
@@ -147,14 +148,14 @@ class FileUploader
 			}
 			if(!$success)
 			{
-				$result->addError(new Error('Could not upload part'));
+				$result->addError(new Error($errorPrefix . 'Could not upload part'));
 				return $result;
 			}
 			elseif($success && $isLastPart)
 			{
 				if(!$upload->finish())
 				{
-					$result->addError(new Error('Could not finish upload'));
+					$result->addError(new Error($errorPrefix . 'Could not finish upload'));
 					return $result;
 				}
 			}
@@ -162,7 +163,7 @@ class FileUploader
 		}
 		else
 		{
-			$result->addError(new Error('Module clouds is not installed'));
+			$result->addError(new Error($errorPrefix . 'Module clouds is not installed'));
 		}
 		return $result;
 	}
@@ -176,19 +177,21 @@ class FileUploader
 	 */
 	private static function saveUploadedPartLocal($fileName, $data)
 	{
+		$errorPrefix = 'Save to local filesystem: ';
+
 		$result = new Result();
 
 		$file = new \Bitrix\Main\IO\File($fileName);
 		if(!static::isCorrectFile($file))
 		{
-			$result->addError(new Error('Wrong fileName'));
+			$result->addError(new Error($errorPrefix . 'Wrong fileName'));
 		}
 		if(!$file->putContents($data, \Bitrix\Main\IO\File::APPEND))
 		{
-			$result->addError(new Error('Cant write local file'));
+			$result->addError(new Error($errorPrefix . 'Cant write local file'));
 		}
 
-		return $result;
+		return $result->setData(['result' => 'local']);
 	}
 
 	public static function isCorrectFile(\Bitrix\Main\IO\File $file): bool
@@ -205,8 +208,7 @@ class FileUploader
 	public static function getFullPath($fileName)
 	{
 		$uploadDirectory = \Bitrix\Main\Config\Option::get("main", "upload_dir", "upload");
-		$fileName = $_SERVER['DOCUMENT_ROOT'].'/'.$uploadDirectory.$fileName;
-		return $fileName;
+		return Path::combine($_SERVER['DOCUMENT_ROOT'], $uploadDirectory, $fileName);
 	}
 
 	/**
@@ -236,4 +238,3 @@ class FileUploader
 		return $res;
 	}
 }
-

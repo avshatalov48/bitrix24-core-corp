@@ -34,11 +34,13 @@ if (check_bitrix_sessid() && $USER->isAuthorized() && $request->getPost("templat
 
 	if ($theme && $request->getPost("action") === "save")
 	{
-		$success = $theme->setCurrentThemeId($request->getPost("themeId"));
-		if ($success && $request->getPost("setDefaultTheme") === "true" && ThemePicker::canSetDefaultTheme())
+		$themeId = $request->getPost("themeId");
+		if ($request->getPost("setDefaultTheme") === "true" && ThemePicker::canSetDefaultTheme())
 		{
-			$theme->setDefaultTheme($request->getPost("themeId"));
+			$success = $theme->setDefaultTheme($themeId);
 		}
+
+		$success = $theme->setCurrentThemeId($themeId);
 
 		$result = array("success" => $success);
 

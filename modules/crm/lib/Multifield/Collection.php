@@ -38,8 +38,6 @@ final class Collection implements Arrayable, \Iterator, \Countable
 			if ($value->isEqualTo($existingValue))
 			{
 				unset($this->values[$index]);
-
-				return $this;
 			}
 		}
 
@@ -72,6 +70,19 @@ final class Collection implements Arrayable, \Iterator, \Countable
 		}
 
 		return null;
+	}
+
+	public function has(Value $value): bool
+	{
+		foreach ($this->values as $existingValue)
+		{
+			if ($existingValue->isEqualTo($value))
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -132,6 +143,11 @@ final class Collection implements Arrayable, \Iterator, \Countable
 		sort($anotherHashes);
 
 		return ($thisHashes === $anotherHashes);
+	}
+
+	public function isEmpty(): bool
+	{
+		return count($this->values) <= 0;
 	}
 
 	public function toArray(): array

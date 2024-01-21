@@ -10,6 +10,8 @@ final class Category extends Dto
 	/** @var int|null */
 	public $id;
 
+	public int $categoryId;
+
 	/** @var string|null */
 	public $name;
 

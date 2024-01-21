@@ -411,6 +411,17 @@ class UrlManager implements IErrorable
 			->getBaseUrlFileDetail() . implode('/', $crumbs);
 	}
 
+	public function getPathFileHistory(File $file): ?string
+	{
+		$storage = $file->getStorage();
+		if (!$storage)
+		{
+			return null;
+		}
+
+		return $storage->getProxyType()->getBaseUrlFileHistory() . $file->getId();
+	}
+
 	/**
 	 * Gets path to detail page of file in trashcan.
 	 * @param File $file Target file.

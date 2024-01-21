@@ -175,7 +175,7 @@ class Output
 
 	/**
 	 * Sending a message.
-	 * @see \Bitrix\ImOpenLines\Connector::sendMessage
+	 * Call from @see \Bitrix\ImOpenLines\Connector::sendMessage
 	 *
 	 * @param array $data An array of data describing the message.
 	 * @return Result

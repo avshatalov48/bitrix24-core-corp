@@ -258,16 +258,14 @@
 
 /* region Popup Icons */
 
-.disk-fe-office-access-setting-popup-item.disk-fe-office-icon-docs .menu-popup-item-icon {
-	width: 15px;
-	height: 14px;
-	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='14'%3E%3Cpath fill='%23858C96' fill-rule='evenodd' d='M11.5 8.434c-.733 0-1.395.306-1.864.797L5.743 7.285a2.616 2.616 0 000-.842l3.893-1.946c.47.491 1.131.798 1.863.798a2.582 2.582 0 000-5.164 2.582 2.582 0 00-2.546 3.003L5.06 5.081a2.573 2.573 0 00-1.864-.798 2.582 2.582 0 000 5.164c.732 0 1.394-.307 1.864-.798l3.892 1.946A2.582 2.582 0 1011.5 8.434z'/%3E%3C/svg%3E") center no-repeat;
+.disk-fe-office-access-setting-popup-icon-box {
+	display: flex;
+	align-items: center;
 }
 
-.disk-fe-office-access-setting-popup-item.disk-fe-office-icon-link .menu-popup-item-icon {
-	width: 14px;
-	height: 14px;
-	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Cpath fill='%23858C96' fill-rule='evenodd' d='M12.912 6.343L10.284 8.97a3.715 3.715 0 01-5.255 0 3.712 3.712 0 01-.564-.749L5.686 7c.058-.059.13-.092.199-.132.084.289.231.562.458.789a1.86 1.86 0 002.627 0l2.628-2.627a1.86 1.86 0 000-2.628 1.86 1.86 0 00-2.628 0l-.934.935a4.662 4.662 0 00-2.37-.258l1.99-1.99a3.716 3.716 0 015.256 5.254zm-6.948 4.32l-.935.936a1.861 1.861 0 01-2.627 0 1.86 1.86 0 010-2.629l2.627-2.627a1.859 1.859 0 012.628 0c.226.227.374.5.459.788.069-.04.14-.073.197-.131l1.222-1.22a3.652 3.652 0 00-.565-.75 3.716 3.716 0 00-5.255 0L1.088 7.657a3.716 3.716 0 005.255 5.255l1.992-1.991a4.659 4.659 0 01-2.37-.258z'/%3E%3C/svg%3E") center no-repeat;
+.disk-fe-office-access-setting-popup-icon-box .ui-icon-set {
+	margin-right: 9px;
+	--ui-icon-set__icon-color: var(--ui-color-base-70);
 }
 
 .disk-fe-office-edit-popup-item.disk-fe-office-icon-onlyoffice .menu-popup-item-icon {

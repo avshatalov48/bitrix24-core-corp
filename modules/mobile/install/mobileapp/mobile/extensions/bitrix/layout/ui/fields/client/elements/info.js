@@ -2,7 +2,7 @@
  * @module layout/ui/fields/client/elements/info
  */
 jn.define('layout/ui/fields/client/elements/info', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { AddressView, AddressViewType } = require('layout/ui/address');
 	const { phoneUtils } = require('native/phonenumber');
 
@@ -45,9 +45,11 @@ jn.define('layout/ui/fields/client/elements/info', (require, exports, module) =>
 			let formattedNumbers = phones;
 			if (Array.isArray(formattedNumbers))
 			{
-				formattedNumbers = phones && phones.map(phone => phoneUtils.getFormattedNumber(phone, phoneUtils.getCountryCode(phone)));
+				formattedNumbers = phones && phones.map((phoneNumber) => phoneUtils.getFormattedNumber(
+					phoneNumber,
+					phoneUtils.getCountryCode(phoneNumber),
+				));
 			}
-
 
 			return View(
 				{
@@ -58,7 +60,6 @@ jn.define('layout/ui/fields/client/elements/info', (require, exports, module) =>
 				this.renderText(formattedNumbers),
 				this.renderText(emails),
 			);
-
 		}
 
 		renderText(value)
@@ -87,7 +88,7 @@ jn.define('layout/ui/fields/client/elements/info', (require, exports, module) =>
 		{
 			if (Array.isArray(value))
 			{
-				return value.map(this.getText);
+				return value.map((text) => this.getText(text));
 			}
 
 			return this.getText(value);
@@ -106,7 +107,7 @@ jn.define('layout/ui/fields/client/elements/info', (require, exports, module) =>
 
 	const style = {
 		text: {
-			color: '#a8adb4',
+			color: AppTheme.colors.base4,
 			fontSize: 14,
 			marginTop: 4,
 			flexShrink: 2,

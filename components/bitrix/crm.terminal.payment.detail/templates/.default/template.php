@@ -27,7 +27,10 @@ $APPLICATION->SetTitle(
 	)
 );
 
-Main\UI\Extension::load(['ui.label']);
+Main\UI\Extension::load([
+	'ui.label',
+	'crm.terminal-detail',
+]);
 
 if (!empty($arResult['ERROR_MESSAGES']))
 {
@@ -87,3 +90,14 @@ $APPLICATION->IncludeComponent(
 	],
 	$component
 );
+?>
+
+<script>
+	BX.ready(function () {
+		<?php if (isset($arResult['TOOLBAR_ID'])):?>
+			BX.Crm.Terminal.FeedbackButton.render(
+				document.getElementById('<?=CUtil::JSEscape($arResult['TOOLBAR_ID'])?>'),
+			);
+		<?php endif; ?>
+	});
+</script>

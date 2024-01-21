@@ -617,26 +617,6 @@ class Task implements \IBPWorkflowDocument
 
 		\Bitrix\Tasks\Util\User::setOccurAsId($prevOccurAsUserId);
 
-		$newUsers = [];
-		foreach (array('CREATED_BY', 'RESPONSIBLE_ID', 'AUDITORS', 'ACCOMPLICES') as $code)
-		{
-			if (isset($fields[$code]))
-			{
-				if (!is_array($fields[$code]))
-				{
-					$newUsers[] = $fields[$code];
-				}
-				else
-				{
-					$newUsers = array_merge($newUsers, $fields[$code]);
-				}
-			}
-		}
-		if (!empty($newUsers))
-		{
-			\Bitrix\Tasks\Kanban\StagesTable::pinInStage($documentId, $newUsers);
-		}
-
 		return $result;
 	}
 

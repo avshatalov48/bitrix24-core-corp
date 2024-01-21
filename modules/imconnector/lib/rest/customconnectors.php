@@ -1,28 +1,31 @@
 <?php
 namespace Bitrix\ImConnector\Rest;
 
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\ArgumentTypeException;
-use \Bitrix\Main\Loader,
-	\Bitrix\Main\Localization\Loc,
-	\Bitrix\Main\ArgumentNullException,
-	\Bitrix\Main\Engine\Response\Converter;
+use Bitrix\Main\Loader,
+	Bitrix\Main\Localization\Loc,
+	Bitrix\Main\Engine\Response\Converter
+;
 
-use \Bitrix\Rest\AppTable,
-	\Bitrix\Rest\OAuth\Auth,
-	\Bitrix\Rest\Sqs as RestSqs,
-	\Bitrix\Rest\AuthTypeException,
-	\Bitrix\Rest\RestException;
+use Bitrix\Rest\AppTable,
+	Bitrix\Rest\OAuth\Auth,
+	Bitrix\Rest\Sqs as RestSqs,
+	Bitrix\Rest\RestException,
+	Bitrix\Rest\AuthTypeException,
+	Bitrix\Rest\Exceptions\ArgumentException,
+	Bitrix\Rest\Exceptions\ArgumentTypeException,
+	Bitrix\Rest\Exceptions\ArgumentNullException
+;
+use Bitrix\ImConnector\Library,
+	Bitrix\ImConnector\CustomConnectors as CC,
+	Bitrix\ImConnector\Model\CustomConnectorsTable
+;
 
-use \Bitrix\ImConnector\Library,
-	\Bitrix\ImConnector\CustomConnectors as CC,
-	\Bitrix\ImConnector\Model\CustomConnectorsTable;
-
-Loc::loadMessages(__FILE__);
-Library::loadMessages();
 
 if (Loader::includeModule('rest'))
 {
+	Loc::loadMessages(__FILE__);
+	Library::loadMessages();
+
 	/**
 	 * Class CustomConnectors
 	 * @package Bitrix\ImConnector\Rest
@@ -32,105 +35,105 @@ if (Loader::includeModule('rest'))
 		/**
 		 * @return array
 		 */
-		public static function onRestServiceBuildDescription()
+		public static function onRestServiceBuildDescription(): array
 		{
-			return array(
-				Library::SCOPE_REST_IMCONNECTOR => array(
-					'imconnector.register' => array(
-						'callback' => array(__CLASS__, 'register'),
-						'options' => array()
-					),
-					'imconnector.unregister' => array(
-						'callback' => array(__CLASS__, 'unRegister'),
-						'options' => array()
-					),
-					'imconnector.send.messages' => array(
-						'callback' => array(__CLASS__, 'sendMessages'),
-						'options' => array()
-					),
-					'imconnector.update.messages' => array(
-						'callback' => array(__CLASS__, 'updateMessages'),
-						'options' => array()
-					),
-					'imconnector.delete.messages' => array(
-						'callback' => array(__CLASS__, 'deleteMessages'),
-						'options' => array()
-					),
-					'imconnector.send.status.delivery' => array(
-						'callback' => array(__CLASS__, 'sendStatusDelivery'),
-						'options' => array()
-					),
-					'imconnector.send.status.reading' => array(
-						'callback' => array(__CLASS__, 'sendStatusReading'),
-						'options' => array()
-					),
-					'imconnector.set.error' => array(
-						'callback' => array(__CLASS__, 'setErrorConnector'),
-						'options' => array()
-					),
-					\CRestUtil::EVENTS => array(
-						'OnImConnectorLineDelete' => array(
+			return [
+				Library::SCOPE_REST_IMCONNECTOR => [
+					'imconnector.register' => [
+						'callback' => [__CLASS__, 'register'],
+						'options' => []
+					],
+					'imconnector.unregister' => [
+						'callback' => [__CLASS__, 'unRegister'],
+						'options' => []
+					],
+					'imconnector.send.messages' => [
+						'callback' => [__CLASS__, 'sendMessages'],
+						'options' => []
+					],
+					'imconnector.update.messages' => [
+						'callback' => [__CLASS__, 'updateMessages'],
+						'options' => []
+					],
+					'imconnector.delete.messages' => [
+						'callback' => [__CLASS__, 'deleteMessages'],
+						'options' => []
+					],
+					'imconnector.send.status.delivery' => [
+						'callback' => [__CLASS__, 'sendStatusDelivery'],
+						'options' => []
+					],
+					'imconnector.send.status.reading' => [
+						'callback' => [__CLASS__, 'sendStatusReading'],
+						'options' => []
+					],
+					'imconnector.set.error' => [
+						'callback' => [__CLASS__, 'setErrorConnector'],
+						'options' => []
+					],
+					\CRestUtil::EVENTS => [
+						'OnImConnectorLineDelete' => [
 							'imconnector',
 							Library::EVENT_DELETE_LINE,
-							array(__CLASS__, 'OnDeleteLine'),
-							array(
+							[__CLASS__, 'OnDeleteLine'],
+							[
 								"category" => RestSqs::CATEGORY_DEFAULT,
-							)
-						),
-						'OnImConnectorMessageAdd' => array(
+							]
+						],
+						'OnImConnectorMessageAdd' => [
 							'imconnector',
 							Library::EVENT_SEND_MESSAGE_CUSTOM_CONNECTOR,
-							array(__CLASS__, 'OnSendMessageCustom'),
-							array(
+							[__CLASS__, 'OnSendMessageCustom'],
+							[
 								"category" => RestSqs::CATEGORY_DEFAULT,
-							)
-						),
-						'OnImConnectorMessageUpdate' => array(
+							]
+						],
+						'OnImConnectorMessageUpdate' => [
 							'imconnector',
 							Library::EVENT_UPDATE_MESSAGE_CUSTOM_CONNECTOR,
-							array(__CLASS__, 'OnUpdateMessageCustom'),
-							array(
+							[__CLASS__, 'OnUpdateMessageCustom'],
+							[
 								"category" => RestSqs::CATEGORY_DEFAULT,
-							)
-						),
-						'OnImConnectorMessageDelete' => array(
+							]
+						],
+						'OnImConnectorMessageDelete' => [
 							'imconnector',
 							Library::EVENT_DELETE_MESSAGE_CUSTOM_CONNECTOR,
-							array(__CLASS__, 'OnDeleteMessageCustom'),
-							array(
+							[__CLASS__, 'OnDeleteMessageCustom'],
+							[
 								"category" => RestSqs::CATEGORY_DEFAULT,
-							)
-						),
-						/*'OnImConnectorStatusAdd' => array(
+							]
+						],
+						/*'OnImConnectorStatusAdd' => [
 							'imconnector',
 							Library::EVENT_STATUS_ADD,
-							array(__CLASS__, 'OnStatusCustom'),
-							array(
+							[__CLASS__, 'OnStatusCustom'],
+							[
 								"category" => RestSqs::CATEGORY_DEFAULT,
-							)
-						),
-						'OnImConnectorStatusUpdate' => array(
+							]
+						],
+						'OnImConnectorStatusUpdate' => [
 							'imconnector',
 							Library::EVENT_STATUS_UPDATE,
-							array(__CLASS__, 'OnStatusCustom'),
-							array(
+							[__CLASS__, 'OnStatusCustom'],
+							[
 								"category" => RestSqs::CATEGORY_DEFAULT,
-							)
-						),*/
-						'OnImConnectorStatusDelete' => array(
+							]
+						],*/
+						'OnImConnectorStatusDelete' => [
 							'imconnector',
 							Library::EVENT_STATUS_DELETE,
-							array(__CLASS__, 'OnStatusCustom'),
-							array(
+							[__CLASS__, 'OnStatusCustom'],
+							[
 								"category" => RestSqs::CATEGORY_DEFAULT,
-							)
-						),
-					),
-					\CRestUtil::PLACEMENTS => array(
-						Helper::PLACEMENT_SETTING_CONNECTOR => array(),
-					),
-				),
-			);
+							]
+						],
+					],
+					\CRestUtil::PLACEMENTS => [
+						Helper::PLACEMENT_SETTING_CONNECTOR => [],
+					],
+				],
+			];
 		}
 
 		/**
@@ -275,16 +278,12 @@ if (Loader::includeModule('rest'))
 		 * @return array
 		 * @throws AuthTypeException
 		 */
-		public static function register($params, $n, \CRestServer $server)
+		public static function register($params, $n, \CRestServer $server): array
 		{
 			if ($server->getAuthType() !== Auth::AUTH_TYPE)
 			{
 				throw new AuthTypeException("Application context required");
 			}
-
-			$result = array(
-				'result' => false
-			);
 
 			$converter = new Converter(Converter::TO_UPPER | Converter::KEYS | Converter::RECURSIVE);
 			$params = $converter->process($params);
@@ -295,13 +294,13 @@ if (Loader::includeModule('rest'))
 
 			if (mb_strpos($params['ID'], '.') !== false)
 			{
-				$result = array(
+				$result = [
 					'result' => false,
 					'error' => Library::ERROR_IMCONNECTOR_REST_APPLICATION_REGISTRATION_ERROR_POINT,
 					'error_description' => Loc::getMessage('IMCONNECTOR_REST_APPLICATION_REGISTRATION_ERROR_POINT')
-				);
+				];
 			}
-			else if (
+			elseif (
 				!empty($params['ID'])
 				&& !empty($params['NAME'])
 				&& !empty($params['ICON']['DATA_IMAGE'])
@@ -309,14 +308,14 @@ if (Loader::includeModule('rest'))
 				&& !empty($params['PLACEMENT_HANDLER'])
 			)
 			{
-				$registerParams = array(
+				$registerParams = [
 					'ID' => mb_strtolower($params['ID']),
 					'NAME' => $params['NAME'],
 					'ICON' => $params['ICON'],
 					'COMPONENT' => Library::COMPONENT_NAME_REST,
 					'REST_APP_ID' => $appId,
 					'PLACEMENT_HANDLER' => $params['PLACEMENT_HANDLER']
-				);
+				];
 
 				if (isset($params['ICON_DISABLED']))
 				{
@@ -357,9 +356,9 @@ if (Loader::includeModule('rest'))
 
 				if (Helper::registerApp($registerParams))
 				{
-					$result = array(
+					$result = [
 						'result' => true
-					);
+					];
 
 					if ($row['CODE'])
 					{
@@ -382,60 +381,60 @@ if (Loader::includeModule('rest'))
 				}
 				else
 				{
-					$result = array(
+					$result = [
 						'result' => false,
 						'error' => Library::ERROR_IMCONNECTOR_REST_APPLICATION_REGISTRATION_ERROR,
 						'error_description' => Loc::getMessage('IMCONNECTOR_REST_APPLICATION_REGISTRATION_ERROR')
-					);
+					];
 				}
 			}
-			else if (empty($params['ID']))
+			elseif (empty($params['ID']))
 			{
-				$result = array(
+				$result = [
 					'result' => false,
 					'error' => Library::ERROR_IMCONNECTOR_REST_CONNECTOR_ID_REQUIRED,
 					'error_description' => Loc::getMessage('IMCONNECTOR_REST_CONNECTOR_ID_REQUIRED')
-				);
+				];
 			}
-			else if (empty($params['NAME']))
+			elseif (empty($params['NAME']))
 			{
-				$result = array(
+				$result = [
 					'result' => false,
 					'error' => Library::ERROR_IMCONNECTOR_REST_NAME_REQUIRED,
 					'error_description' => Loc::getMessage('IMCONNECTOR_REST_NAME_REQUIRED')
-				);
+				];
 			}
-			else if (empty($params['ICON']['DATA_IMAGE']))
+			elseif (empty($params['ICON']['DATA_IMAGE']))
 			{
-				$result = array(
+				$result = [
 					'result' => false,
 					'error' => Library::ERROR_IMCONNECTOR_REST_ICON_REQUIRED,
 					'error_description' => Loc::getMessage('IMCONNECTOR_REST_ICON_REQUIRED')
-				);
+				];
 			}
-			else if (empty($appId))
+			elseif (empty($appId))
 			{
-				$result = array(
+				$result = [
 					'result' => false,
 					'error' => Library::ERROR_IMCONNECTOR_REST_NO_APPLICATION_ID,
 					'error_description' => Loc::getMessage('IMCONNECTOR_REST_NO_APPLICATION_ID')
-				);
+				];
 			}
-			else if (empty($params['PLACEMENT_HANDLER']))
+			elseif (empty($params['PLACEMENT_HANDLER']))
 			{
-				$result = array(
+				$result = [
 					'result' => false,
 					'error' => Library::ERROR_IMCONNECTOR_REST_NO_PLACEMENT_HANDLER,
 					'error_description' => Loc::getMessage('IMCONNECTOR_REST_NO_PLACEMENT_HANDLER')
-				);
+				];
 			}
 			else
 			{
-				$result = array(
+				$result = [
 					'result' => false,
 					'error' => Library::ERROR_IMCONNECTOR_REST_GENERAL_CONNECTOR_REGISTRATION_ERROR,
 					'error_description' => Loc::getMessage('IMCONNECTOR_REST_GENERAL_CONNECTOR_REGISTRATION_ERROR')
-				);
+				];
 			}
 
 			return $result;
@@ -448,16 +447,12 @@ if (Loader::includeModule('rest'))
 		 * @return array
 		 * @throws AuthTypeException
 		 */
-		public static function unRegister($params, $n, \CRestServer $server)
+		public static function unRegister($params, $n, \CRestServer $server): array
 		{
 			if ($server->getAuthType() !== Auth::AUTH_TYPE)
 			{
 				throw new AuthTypeException("Application context required");
 			}
-
-			$result = array(
-				'result' => false
-			);
 
 			$params = array_change_key_case($params, CASE_UPPER);
 
@@ -467,31 +462,31 @@ if (Loader::includeModule('rest'))
 
 			if (!empty($appId))
 			{
-				if (!empty($params['ID']) && Helper::unRegisterApp(array(
+				if (!empty($params['ID']) && Helper::unRegisterApp([
 					'ID' => $params['ID'],
 					'REST_APP_ID' => $appId,
-				)))
+				]))
 				{
-					$result = array(
+					$result = [
 						'result' => true
-					);
+					];
 				}
 				else
 				{
-					$result = array(
+					$result = [
 						'result' => false,
 						'error' => Library::ERROR_IMCONNECTOR_REST_APPLICATION_UNREGISTRATION_ERROR,
 						'error_description' => Loc::getMessage('IMCONNECTOR_REST_APPLICATION_UNREGISTRATION_ERROR')
-					);
+					];
 				}
 			}
 			else
 			{
-				$result = array(
+				$result = [
 					'result' => false,
 					'error' => Library::ERROR_IMCONNECTOR_REST_NO_APPLICATION_ID,
 					'error_description' => Loc::getMessage('IMCONNECTOR_REST_NO_APPLICATION_ID')
-				);
+				];
 			}
 
 			return $result;
@@ -503,11 +498,13 @@ if (Loader::includeModule('rest'))
 		 * @param \CRestServer $server
 		 * @return array
 		 * @throws ArgumentNullException
+		 * @throws ArgumentTypeException
+		 * @throws ArgumentException
 		 * @throws AuthTypeException
 		 */
-		public static function sendMessages($params, $n, \CRestServer $server)
+		public static function sendMessages($params, $n, \CRestServer $server): array
 		{
-			$result = array();
+			$result = [];
 
 			$params = array_change_key_case($params, CASE_UPPER);
 
@@ -576,9 +573,9 @@ if (Loader::includeModule('rest'))
 		 * @throws ArgumentNullException
 		 * @throws AuthTypeException
 		 */
-		public static function updateMessages($params, $n, \CRestServer $server)
+		public static function updateMessages($params, $n, \CRestServer $server): array
 		{
-			$result = array();
+			$result = [];
 
 			$params = array_change_key_case($params, CASE_UPPER);
 
@@ -629,9 +626,9 @@ if (Loader::includeModule('rest'))
 		 * @throws ArgumentNullException
 		 * @throws AuthTypeException
 		 */
-		public static function deleteMessages($params, $n, \CRestServer $server)
+		public static function deleteMessages($params, $n, \CRestServer $server): array
 		{
-			$result = array();
+			$result = [];
 
 			$params = array_change_key_case($params, CASE_UPPER);
 
@@ -682,9 +679,9 @@ if (Loader::includeModule('rest'))
 		 * @throws ArgumentNullException
 		 * @throws AuthTypeException
 		 */
-		public static function sendStatusDelivery($params, $n, \CRestServer $server)
+		public static function sendStatusDelivery($params, $n, \CRestServer $server): array
 		{
-			$result = array();
+			$result = [];
 
 			$params = array_change_key_case($params, CASE_UPPER);
 
@@ -735,9 +732,9 @@ if (Loader::includeModule('rest'))
 		 * @throws ArgumentNullException
 		 * @throws AuthTypeException
 		 */
-		public static function sendStatusReading($params, $n, \CRestServer $server)
+		public static function sendStatusReading($params, $n, \CRestServer $server): array
 		{
-			$result = array();
+			$result = [];
 
 			$params = array_change_key_case($params, CASE_UPPER);
 
@@ -788,9 +785,9 @@ if (Loader::includeModule('rest'))
 		 * @throws ArgumentNullException
 		 * @throws AuthTypeException
 		 */
-		public static function setErrorConnector($params, $n, \CRestServer $server)
+		public static function setErrorConnector($params, $n, \CRestServer $server): array
 		{
-			$result = array();
+			$result = [];
 
 			$params = array_change_key_case($params, CASE_UPPER);
 
@@ -825,7 +822,34 @@ if (Loader::includeModule('rest'))
 			return $result;
 		}
 
-		public static function OnRestAppDelete($arParams): void
+		/**
+		 * Event handler for 'rest:OnRestAppUpdate'.
+		 * @param $arParams
+		 * @return void
+		 */
+		public static function onRestAppUpdate($arParams): void
+		{
+			if (!empty($arParams['APP_ID']))
+			{
+				$res = AppTable::getById($arParams['APP_ID']);
+				$app = $res->fetch();
+				if (
+					!$app
+					|| $app['ACTIVE'] != 'Y'
+					|| $app['INSTALLED'] != 'Y'
+				)
+				{
+					self::onRestAppDelete($arParams);
+				}
+			}
+		}
+
+		/**
+		 * Event handler for 'rest:OnRestAppDelete'.
+		 * @param $arParams
+		 * @return void
+		 */
+		public static function onRestAppDelete($arParams): void
 		{
 			if (!empty($arParams['APP_ID']))
 			{

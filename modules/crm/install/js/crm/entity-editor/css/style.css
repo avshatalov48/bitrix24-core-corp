@@ -1940,13 +1940,19 @@ a.crm-entity-widget-client-box-name:hover {
 .field-item,
 .crm-entity-widget-content-block-field-container {
 	position: relative;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-ms-flex-align: center;
 	margin-bottom: 16px;
-	-webkit-box-align: center;
 	align-items: center;
+}
+
+.ui-entity-editor-content-block .ui-entity-editor-content-block .field-item
+{
+	display: flex;
+}
+
+.ui-entity-editor-content-block .ui-entity-editor-content-block .field-item.boolean
+{
+	display: inherit;
 }
 
 .crm-entity-widget-content-block-field-container-block {

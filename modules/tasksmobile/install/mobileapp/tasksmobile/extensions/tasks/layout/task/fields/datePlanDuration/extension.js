@@ -27,6 +27,8 @@ jn.define('tasks/layout/task/fields/datePlanDuration', (require, exports, module
 				duration: props.datesResolver.durationByType,
 				durationType: props.datesResolver.durationType,
 			};
+
+			this.handleOnChange = this.handleOnChange.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -45,6 +47,26 @@ jn.define('tasks/layout/task/fields/datePlanDuration', (require, exports, module
 				duration: (newState.duration || ''),
 				durationType: newState.durationType,
 			});
+		}
+
+		handleOnChange({ duration, durationType })
+		{
+			if (Number(duration) !== this.state.duration)
+			{
+				if (this.timerId)
+				{
+					clearTimeout(this.timerId);
+					this.timerId = null;
+				}
+				this.timerId = setTimeout(() => {
+					this.props.datesResolver.updateDuration(Number(duration));
+				}, 1000);
+			}
+
+			if (durationType !== this.state.durationType)
+			{
+				this.props.datesResolver.updateDurationType(durationType);
+			}
 		}
 
 		render()
@@ -95,24 +117,7 @@ jn.define('tasks/layout/task/fields/datePlanDuration', (require, exports, module
 					},
 				},
 				testId: 'datePlanDuration',
-				onChange: ({ duration, durationType }) => {
-					if (Number(duration) !== this.state.duration)
-					{
-						if (this.timerId)
-						{
-							clearTimeout(this.timerId);
-							this.timerId = null;
-						}
-						this.timerId = setTimeout(() => {
-							this.props.datesResolver.updateDuration(Number(duration));
-						}, 1000);
-					}
-
-					if (durationType !== this.state.durationType)
-					{
-						this.props.datesResolver.updateDurationType(durationType);
-					}
-				},
+				onChange: this.handleOnChange,
 			});
 		}
 	}

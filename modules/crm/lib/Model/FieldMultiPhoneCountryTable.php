@@ -2,10 +2,14 @@
 
 namespace Bitrix\Crm\Model;
 
+use Bitrix\Crm\FieldMultiTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\Relations\CascadePolicy;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Main\ORM\Query\Join;
 
 /**
  * Class FieldMultiPhoneCountryTable
@@ -41,6 +45,10 @@ class FieldMultiPhoneCountryTable extends DataManager
 			(new StringField('COUNTRY_CODE'))
 				->configureRequired()
 				->configureSize(2),
+
+			(new Reference('FM', FieldMultiTable::class, Join::on('this.FM_ID', 'ref.ID')))
+				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW)
+			,
 		];
 	}
 

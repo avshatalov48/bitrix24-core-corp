@@ -1,9 +1,9 @@
 <?php
 namespace Bitrix\Transformer;
 
-use Bitrix\Main\Web\Uri;
 use Bitrix\Main\IO;
 use Bitrix\Main\IO\InvalidPathException;
+use Bitrix\Main\Web\Uri;
 
 class File
 {
@@ -41,7 +41,7 @@ class File
 		if(!$this->absolutePath)
 		{
 			$rootPath = $_SERVER['DOCUMENT_ROOT'];
-			$this->createByPath($rootPath.$file);
+			$this->createByPath(IO\Path::combine($rootPath, $file));
 		}
 
 		if(!$this->absolutePath)

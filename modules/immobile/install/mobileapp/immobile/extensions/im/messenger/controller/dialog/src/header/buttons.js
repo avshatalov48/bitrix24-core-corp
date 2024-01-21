@@ -2,11 +2,11 @@
  * @module im/messenger/controller/dialog/header/buttons
  */
 jn.define('im/messenger/controller/dialog/header/buttons', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 
 	const { Feature } = require('im/messenger/lib/feature');
 	const { Logger } = require('im/messenger/lib/logger');
-	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { ChatPermission, UserPermission } = require('im/messenger/lib/permission-manager');
@@ -95,14 +95,14 @@ jn.define('im/messenger/controller/dialog/header/buttons', (require, exports, mo
 					id: 'call_audio',
 					type: 'call_audio',
 					badgeCode: 'call_audio',
-					color: '#11A9D9',
+					color: AppTheme.colors.accentMainPrimaryalt,
 					testId: 'DIALOG_HEADER_AUDIO_CALL_BUTTON',
 				},
 				{
 					id: 'call_video',
 					type: 'call_video',
 					badgeCode: 'call_video',
-					color: '#11A9D9',
+					color: AppTheme.colors.accentMainPrimaryalt,
 					testId: 'DIALOG_HEADER_VIDEO_CALL_BUTTON',
 				},
 			];
@@ -119,29 +119,20 @@ jn.define('im/messenger/controller/dialog/header/buttons', (require, exports, mo
 				return [];
 			}
 
-			const maxParticipants = 24;
-			if (
-				dialogData.userCounter > maxParticipants
-				|| (dialogData.entityType === 'VIDEOCONF' && dialogData.entityData1 === 'BROADCAST')
-			)
-			{
-				return [];
-			}
-
 			return [
 				{
 					id: 'call_audio',
 					type: 'call_audio',
 					badgeCode: 'call_audio',
 					testId: 'DIALOG_HEADER_AUDIO_CALL_BUTTON',
-					color: '#11A9D9',
+					color: AppTheme.colors.accentMainPrimaryalt,
 				},
 				{
 					id: 'call_video',
 					type: 'call_video',
 					badgeCode: 'call_video',
 					testId: 'DIALOG_HEADER_VIDEO_CALL_BUTTON',
-					color: '#11A9D9',
+					color: AppTheme.colors.accentMainPrimaryalt,
 				},
 			];
 		}

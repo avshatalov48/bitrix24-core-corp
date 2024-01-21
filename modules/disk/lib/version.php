@@ -415,7 +415,10 @@ final class Version extends Internals\Model
 			return false;
 		}
 		\CFile::delete($this->fileId);
-		\CFile::delete($this->viewId);
+		if ($this->viewId)
+		{
+			\CFile::delete($this->viewId);
+		}
 
 		$file = $this->getObject();
 		if($file && $file->getCurrentState() !== $file::STATE_DELETE_PROCESS && $this->isHead())

@@ -1,5 +1,8 @@
 <?php
 
 return [
-	'layout/socialnetwork/project/fields/*',
+	'extensions' => [
+		'apptheme',
+		'layout/socialnetwork/project/fields/*',
+	],
 ];

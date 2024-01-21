@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Salescenter = this.BX.Salescenter || {};
 this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};

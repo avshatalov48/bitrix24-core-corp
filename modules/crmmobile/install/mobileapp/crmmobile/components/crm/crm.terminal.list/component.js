@@ -1,7 +1,9 @@
 (() => {
-	const { PaymentList } = jn.require('crm/terminal/payment-list');
-	const { PureComponent } = jn.require('layout/pure-component');
-	const { Loc } = jn.require('loc');
+	const require = (ext) => jn.require(ext);
+
+	const { Loc } = require('loc');
+	const { PureComponent } = require('layout/pure-component');
+	const { PaymentList } = require('crm/terminal/payment-list');
 
 	/**
 	 * @class CrmTerminalListComponent

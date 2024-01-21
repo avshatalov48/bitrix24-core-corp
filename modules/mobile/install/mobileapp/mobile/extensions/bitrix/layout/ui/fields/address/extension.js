@@ -126,7 +126,7 @@ jn.define('layout/ui/fields/address', (require, exports, module) => {
 					style: {
 						flexShrink: 2,
 						fontSize: 14,
-						color: '#2066B0',
+						color: AppTheme.colors.accentMainLinks,
 					},
 					text: jnComponent.convertHtmlEntities(
 						AddressValueConverter.convertFromValue(this.getValue()).text
@@ -296,3 +296,4 @@ jn.define('layout/ui/fields/address', (require, exports, module) => {
 	};
 
 });
+

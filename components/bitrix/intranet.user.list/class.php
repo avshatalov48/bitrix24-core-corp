@@ -892,6 +892,33 @@ class CIntranetUserListComponent extends UserList
 		}
 
 		if (
+			!empty($gridFilter['VISITOR'])
+			&& Filter\UserDataProvider::getVisitorAvailability()
+		)
+		{
+			$extranetGroupId = Loader::includeModule('extranet') ? \CExtranet::getExtranetUserGroupId() : 0;
+
+			if ($gridFilter['VISITOR'] === 'Y')
+			{
+				$result['UF_DEPARTMENT'] = false;
+
+				if ($extranetGroupId)
+				{
+					$result['!=GROUPS.GROUP_ID'] = $extranetGroupId;
+				}
+			}
+			elseif ($gridFilter['VISITOR'] === 'N')
+			{
+				$result['!UF_DEPARTMENT'] = false;
+
+				if ($extranetGroupId)
+				{
+					$result['=GROUPS.GROUP_ID'] = $extranetGroupId;
+				}
+			}
+		}
+
+		if (
 			!empty($gridFilter['INVITED'])
 			&& Filter\UserDataProvider::getInvitedAvailability()
 		)
@@ -1437,6 +1464,7 @@ class CIntranetUserListComponent extends UserList
 
 		if (
 			$result['EXCEL_EXPORT_LIMITED']
+			&& isset($this->arParams['EXPORT_TYPE'])
 			&& $this->arParams['EXPORT_TYPE'] === 'excel'
 		)
 		{

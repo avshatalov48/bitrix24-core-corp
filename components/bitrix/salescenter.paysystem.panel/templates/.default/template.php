@@ -28,6 +28,7 @@ Extension::load([
 	'applayout',
 	'ui.design-tokens',
 	'ui.fonts.opensans',
+	'ui.dialogs.messagebox',
 ]);
 
 \Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();

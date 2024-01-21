@@ -76,11 +76,19 @@ class TasksMailTaskComponent extends TasksTaskComponent
 		{
 			$taskData = CTaskItem::getInstance($taskId, $userId)->getData(false);
 
-			if ($this->replaceUser || $currentUserId !== (int)$taskData['CREATED_BY'])
+			if (
+				isset($taskData['CREATED_BY'])
+				&& (int)$taskData['CREATED_BY'] > 0
+				&&
+				(
+					$this->replaceUser
+					|| $currentUserId !== (int)$taskData['CREATED_BY']
+				)
+			)
 			{
 				$this->replaceUser = true;
 				$this->prevUser = $GLOBALS['USER'];
-				$GLOBALS['USER'] = $this->makeFakeCUserClass($taskData['CREATED_BY']);
+				$GLOBALS['USER'] = $this->makeFakeCUserClass((int) $taskData['CREATED_BY']);
 			}
 		}
 		catch (TasksException $e) // todo: get rid of catching TasksException when refactor exception mechanism

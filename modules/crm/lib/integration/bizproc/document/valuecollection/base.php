@@ -79,6 +79,10 @@ abstract class Base extends ValueCollection
 		{
 			$this->loadCreatedByPrintable();
 		}
+		elseif ($fieldId === 'TIME_CREATE')
+		{
+			$this->loadTimeCreateValues();
+		}
 		elseif (strpos($fieldId, 'ASSIGNED_BY') === 0)
 		{
 			$this->loadAssignedByValues();
@@ -658,6 +662,21 @@ abstract class Base extends ValueCollection
 		$source = Crm\Tracking\Internals\TraceTable::getTraceByEntity($this->typeId, $this->id);
 
 		$this->document['TRACKING_SOURCE_ID'] = ($source === null) ? 0 : $source['SOURCE_ID'];
+	}
+
+	protected function loadTimeCreateValues(): void
+	{
+		$this->loadEntityValues();
+
+		$culture = Application::getInstance()->getContext()->getCulture();
+
+		$dateCreate = $this->document['DATE_CREATE'];
+		$isCorrectDate = isset($dateCreate) && is_string($dateCreate) && DateTime::isCorrect($dateCreate);
+		if ($isCorrectDate && $culture)
+		{
+			$dateCreateObject = new DateTime($dateCreate);
+			$this->document['TIME_CREATE'] = $dateCreateObject->format($culture->getShortTimeFormat());
+		}
 	}
 
 	protected function appendDefaultUserPrefixes(): void

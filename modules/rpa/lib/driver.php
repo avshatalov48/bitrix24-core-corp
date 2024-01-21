@@ -6,6 +6,7 @@ use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\EventResult;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
 use Bitrix\Rpa\Controller\Comment;
 use Bitrix\Rpa\Integration\Bitrix24Manager;
@@ -53,6 +54,15 @@ final class Driver
 
 	public function isEnabled(): bool
 	{
+		if (
+			Loader::includeModule('intranet')
+			&& class_exists(\Bitrix\Intranet\Settings\Tools\ToolsManager::class)
+			&& !\Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByToolId('rpa')
+		)
+		{
+			return false;
+		}
+
 		return true;
 	}
 

@@ -2,13 +2,14 @@
 
 return [
 	'extensions' => [
-		'utils/object',
-		'alert',
 		'loc',
-		'notify-manager',
 		'type',
-		'in-app-url',
+		'alert',
 		'qrauth',
+		'apptheme',
+		'utils/object',
+		'notify-manager',
+		'in-app-url',
 		'utils/color',
 		'layout/ui/fields/user',
 		'imconnector:lib/ui/banner',
@@ -18,7 +19,7 @@ return [
 		'imconnector:lib/ui/buttons/copy',
 		'imconnector:lib/ui/buttons/qr',
 		'imconnector:lib/ui/setting-step',
-		'imconnector:lib/rest-manager/telegram'
+		'imconnector:lib/rest-manager/telegram',
 	],
 	'bundle' => [
 		'./src/view/registry',

@@ -2,9 +2,10 @@
  * @module crm/duplicates/content
  */
 jn.define('crm/duplicates/content', (require, exports, module) => {
-	const { DuplicatesPanel } = require('crm/duplicates/panel');
-	const { EventEmitter } = require('event-emitter');
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
+	const { EventEmitter } = require('event-emitter');
+	const { DuplicatesPanel } = require('crm/duplicates/panel');
 
 	/**
 	 * @class DuplicatesContent
@@ -89,7 +90,7 @@ jn.define('crm/duplicates/content', (require, exports, module) => {
 								...style,
 								marginLeft: 4,
 								backgroundColor: color,
-								color: '#ffe1a6',
+								color: AppTheme.colors.accentSoftOrange1,
 							},
 							text: Loc.getMessage('FIELDS_PHONE_DUPLICATE_WARNING_MORE'),
 						},
@@ -101,3 +102,4 @@ jn.define('crm/duplicates/content', (require, exports, module) => {
 
 	module.exports = { DuplicatesContent };
 });
+

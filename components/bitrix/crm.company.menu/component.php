@@ -67,7 +67,8 @@ $arParams['PATH_TO_CONTACT_EDIT'] = CrmCheckPath(
 	$arParams['PATH_TO_CONTACT_EDIT'] ?? '',
 	$APPLICATION->GetCurPage() . '?contact_id=#contact_id#&edit'
 );
-$arParams['PATH_TO_MIGRATION'] = SITE_DIR . "marketplace/category/migration/";
+$arParams['PATH_TO_MIGRATION'] = \Bitrix\Crm\Integration\Market\Router::getCategoryPath('migration');
+
 $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE'])
 	? CSite::GetNameFormat(false)
 	: str_replace(["#NOBR#", "#/NOBR#"], ["", ""], $arParams["NAME_TEMPLATE"]);

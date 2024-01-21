@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Terminal\EventsHandler;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Crm;
 
@@ -20,7 +21,13 @@ class Check
 		{
 			foreach ($entities as $entity)
 			{
-				if ($entity instanceof Crm\Order\Payment && Crm\Terminal\PaymentHelper::isTerminalPayment($entity))
+				if (
+					$entity instanceof Crm\Order\Payment
+					&& (
+						Container::getInstance()->getTerminalPaymentService()->isTerminalPayment($entity->getId())
+						&& !$entity->getOrder()->getEntityBinding()
+					)
+				)
 				{
 					return new Main\EventResult(Main\EventResult::ERROR);
 				}

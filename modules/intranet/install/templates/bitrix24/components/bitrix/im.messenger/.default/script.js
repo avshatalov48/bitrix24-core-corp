@@ -62,6 +62,10 @@ BX.namespace("BX.Intranet.Bitrix24.ImBar");
 			BX.Messenger.Public.openNotifications();
 		});
 
+		BX.bind(BX("bx-im-bar-copilot"), "click", function(){
+			BX.Messenger.Public.openCopilot();
+		});
+
 		BX.bind(BX("bx-im-bar-search"), "click", function(){
 			BX.Messenger.Public.openRecentSearch();
 		});

@@ -15,6 +15,8 @@ jn.define('tasks/layout/task/fields/crm', (require, exports, module) => {
 				readOnly: props.readOnly,
 				crm: (props.crm || {}),
 			};
+
+			this.handleOnChange = this.handleOnChange.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -31,6 +33,27 @@ jn.define('tasks/layout/task/fields/crm', (require, exports, module) => {
 				readOnly: newState.readOnly,
 				crm: (newState.crm || {}),
 			});
+		}
+
+		handleOnChange(crmIds, crmData)
+		{
+			const crm = Object.fromEntries(crmData.map((item) => [`${item.type}_${item.id}`, {
+				id: item.id,
+				title: item.title,
+				subtitle: item.subtitle,
+				type: item.type,
+			}]));
+			const newCrm = Object.keys(crm);
+			const oldCrm = Object.values(this.state.crm).map((item) => `${item.type}_${item.id}`);
+			const difference = [
+				...newCrm.filter((id) => !oldCrm.includes(id)),
+				...oldCrm.filter((id) => !newCrm.includes(id)),
+			];
+			if (difference.length > 0)
+			{
+				this.setState({ crm: crmData });
+				this.props.onChange(crm);
+			}
 		}
 
 		render()
@@ -64,25 +87,7 @@ jn.define('tasks/layout/task/fields/crm', (require, exports, module) => {
 						parentWidget: this.props.parentWidget,
 					},
 					testId: 'crm',
-					onChange: (crmIds, crmData) => {
-						const crm = Object.fromEntries(crmData.map((item) => [`${item.type}_${item.id}`, {
-							id: item.id,
-							title: item.title,
-							subtitle: item.subtitle,
-							type: item.type,
-						}]));
-						const newCrm = Object.keys(crm);
-						const oldCrm = values.map((item) => `${item.type}_${item.id}`);
-						const difference = [
-							...newCrm.filter((id) => !oldCrm.includes(id)),
-							...oldCrm.filter((id) => !newCrm.includes(id)),
-						];
-						if (difference.length > 0)
-						{
-							this.setState({ crm: crmData });
-							this.props.onChange(crm);
-						}
-					},
+					onChange: this.handleOnChange,
 				}),
 			);
 		}

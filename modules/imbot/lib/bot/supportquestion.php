@@ -22,22 +22,6 @@ interface SupportQuestion
 	public static function isEnabledQuestionFunctional(): bool;
 
 	/**
-	 * Permits adding new question.
-	 * @return bool
-	 */
-	public static function allowAdditionalQuestion(): bool;
-
-	/**
-	 * Returns the limit for additional questions.
-	 * @return int
-	 * -1 - Functional is disabled,
-	 * 0 - There is no limit,
-	 * 1 - Only one session allowed,
-	 * n - Max number for sessions allowed.
-	 */
-	public static function getQuestionLimit(): int;
-
-	/**
 	 * Returns configuration flags for client.
 	 * @return array
 	 */

@@ -2,6 +2,7 @@
  * @module layout/ui/detail-card/tabs/editor
  */
 jn.define('layout/ui/detail-card/tabs/editor', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Tab } = require('layout/ui/detail-card/tabs');
 	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
 	const { EntityManager } = require('layout/ui/entity-editor/manager');
@@ -19,7 +20,9 @@ jn.define('layout/ui/detail-card/tabs/editor', (require, exports, module) => {
 			/** @type {EntityEditor} */
 			this.editorRef = null;
 
-			this.refCallback = (ref) => this.editorRef = ref;
+			this.refCallback = (ref) => {
+				this.editorRef = ref;
+			};
 		}
 
 		componentDidMount()
@@ -27,8 +30,7 @@ jn.define('layout/ui/detail-card/tabs/editor', (require, exports, module) => {
 			this.customEventEmitter
 				.on('UI.EntityEditor::onSetEditMode', this.handleModeChange.bind(this, true))
 				.on('UI.EntityEditor::onSetViewMode', this.handleModeChange.bind(this, false))
-				.on('UI.EntityEditor.Field::onChangeState', this.handleFieldChange.bind(this))
-			;
+				.on('UI.EntityEditor.Field::onChangeState', this.handleFieldChange.bind(this));
 		}
 
 		handleFieldChange(...eventArgs)
@@ -54,7 +56,7 @@ jn.define('layout/ui/detail-card/tabs/editor', (require, exports, module) => {
 					this.editorRef
 						.getValuesToSave()
 						.then((fields) => resolve(fields))
-					;
+						.catch(console.error);
 				}
 				else
 				{
@@ -119,7 +121,7 @@ jn.define('layout/ui/detail-card/tabs/editor', (require, exports, module) => {
 				{
 					style: {
 						flex: 1,
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgPrimary,
 					},
 				},
 				this.getEntityEditor(editorResult, true),
@@ -127,7 +129,5 @@ jn.define('layout/ui/detail-card/tabs/editor', (require, exports, module) => {
 		}
 	}
 
-	module.exports = {
-		EditorTab,
-	};
+	module.exports = { EditorTab };
 });

@@ -3,9 +3,16 @@
 
 namespace Bitrix\BiConnector\Configuration;
 
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
+use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
+use Bitrix\BIConnector\Superset\MarketDashboardManager;
+use Bitrix\Bitrix24\Feature;
+use Bitrix\Main\EventResult;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\IO\File;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Context;
@@ -25,11 +32,13 @@ class Action
 	public const ENTITY_CODE = 'BUSINESS_INTELLIGENCE';
 	public const ENTITY_TYPE_POWER_BI = 'POWER_BI';
 	public const ENTITY_TYPE_DATA_STUDIO = 'DATA_STUDIO';
-	private static $entityList = [
+	public const ENTITY_TYPE_APACHE_SUPERSET = 'APACHE_SUPERSET';
+	public const ENTITY_TYPE_APACHE_SUPERSET_DATASET = 'APACHE_SUPERSET_DATASET';
+	private static array $entityList = [
 		self::ENTITY_CODE => 1000,
 	];
 
-	private static $accessManifest = [
+	private static array $accessManifest = [
 		'bi'
 	];
 
@@ -83,6 +92,168 @@ class Action
 			elseif ($content['DATA']['type'] === static::ENTITY_TYPE_DATA_STUDIO)
 			{
 				$result = static::importDataStudio($content, $event);
+			}
+			elseif ($content['DATA']['type'] === static::ENTITY_TYPE_APACHE_SUPERSET)
+			{
+				$result = static::importSupersetDashboard($content, $event);
+			}
+			elseif ($content['DATA']['type'] === static::ENTITY_TYPE_APACHE_SUPERSET_DATASET)
+			{
+				$result = static::importSupersetDataset($content, $event);
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * importSupersetDashboard
+	 *
+	 * @param array $content Event parameter CONTENT.
+	 * @param Event $event All event parameters.
+	 *
+	 * @return null|array
+	 */
+	private static function importSupersetDashboard($content, Event $event): ?array
+	{
+		$result = null;
+
+		if (Option::get('biconnector', 'release_bi_superset', 'N') !== 'Y')
+		{
+			return [
+				'ERROR_EXCEPTION' => [
+					'message' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_SUPERSET_UNAVAILABLE_ERROR'),
+				],
+			];
+		}
+
+		if (
+			!Loader::includeModule('bitrix24')
+			|| !Feature::isFeatureEnabled('bi_constructor')
+		)
+		{
+			return [
+				'ERROR_EXCEPTION' => [
+					'message' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_SUPERSET_TARIFF_ERROR'),
+				],
+			];
+		}
+
+		if (!SupersetInitializer::isSupersetActive())
+		{
+			return [
+				'ERROR_EXCEPTION' => [
+					'message' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_SUPERSET_NOT_READY_ERROR'),
+				],
+			];
+		}
+
+		if ((int)$content['DATA']['fileId'] > 0)
+		{
+			$contextUser = $event->getParameter('CONTEXT_USER');
+			$structure = new Structure($contextUser);
+			$fileInfo = $structure->getUnpackFile((int)$content['DATA']['fileId']);
+			if (!empty($fileInfo['PATH']))
+			{
+				$filePath = self::saveTempFile($fileInfo['NAME'], $fileInfo['PATH']);
+				$setting = new Setting($contextUser);
+				$setting->set(
+					Structure::CODE_CUSTOM_FILE . static::ENTITY_TYPE_APACHE_SUPERSET . time(),
+					['PATH' => $filePath],
+				);
+				if ($filePath)
+				{
+					$manager = MarketDashboardManager::getInstance();
+					$importResult = $manager->handleInstallMarketDashboard($filePath, $event);
+					if (!$importResult->isSuccess())
+					{
+						foreach ($importResult->getErrors() as $error)
+						{
+							$result['ERROR_EXCEPTION'] = [
+								'code' => $error->getCode(),
+								'message' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_DASHBOARD_IMPORT_ERROR'),
+							];
+						}
+					}
+					self::deleteTempFile($filePath);
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * importSupersetDataset
+	 *
+	 * @param array $content Event parameter CONTENT.
+	 * @param Event $event All event parameters.
+	 *
+	 * @return null|array
+	 */
+	private static function importSupersetDataset($content, Event $event)
+	{
+		$result = null;
+
+		if (Option::get('biconnector', 'release_bi_superset', 'N') !== 'Y')
+		{
+			return [
+				'ERROR_EXCEPTION' => [
+					'message' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_SUPERSET_UNAVAILABLE_ERROR'),
+				],
+			];
+		}
+
+		if (
+			!Loader::includeModule('bitrix24')
+			|| !Feature::isFeatureEnabled('bi_constructor')
+		)
+		{
+			return [
+				'ERROR_EXCEPTION' => [
+					'message' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_SUPERSET_TARIFF_ERROR'),
+				],
+			];
+		}
+
+		if (!SupersetInitializer::isSupersetActive())
+		{
+			return [
+				'ERROR_EXCEPTION' => [
+					'message' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_SUPERSET_NOT_READY_ERROR'),
+				],
+			];
+		}
+
+		if ((int)$content['DATA']['fileId'] > 0)
+		{
+			$contextUser = $event->getParameter('CONTEXT_USER');
+			$structure = new Structure($contextUser);
+			$fileInfo = $structure->getUnpackFile((int)$content['DATA']['fileId']);
+			if (!empty($fileInfo['PATH']))
+			{
+				$filePath = self::saveTempFile($fileInfo['NAME'], $fileInfo['PATH']);
+				$setting = new Setting($contextUser);
+				$setting->set(
+					Structure::CODE_CUSTOM_FILE . static::ENTITY_TYPE_APACHE_SUPERSET_DATASET . time(),
+					['PATH' => $filePath],
+				);
+				if ($filePath)
+				{
+					$manager = MarketDashboardManager::getInstance();
+					$importResult = $manager->handleInstallDatasets($filePath, $event);
+					if (!$importResult->isSuccess())
+					{
+						foreach ($importResult->getErrors() as $error)
+						{
+							$result['ERROR_EXCEPTION'] = [
+								'code' => $error->getCode(),
+								'message' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_DATASET_IMPORT_ERROR'),
+							];
+						}
+					}
+					self::deleteTempFile($filePath);
+				}
 			}
 		}
 
@@ -302,6 +473,28 @@ class Action
 			];
 		}
 
+		$manifestCode = $event->getParameter('MANIFEST_CODE');
+		if ($manifestCode === \Bitrix\BiConnector\Configuration\Manifest::MANIFEST_CODE_SUPERSET)
+		{
+			$appId = (int)$event->getParameter('APP_ID');
+			$dashboardId = (int)SupersetDashboardTable::getRow(['filter' => ['=APP.ID' => $appId]])['ID'];
+
+			if ($dashboardId > 0)
+			{
+				$result['CREATE_DOM_LIST'][] = [
+					'TAG' => 'a',
+					'DATA' => [
+						'attrs' => [
+							'class' => 'ui-btn ui-btn-lg ui-btn-success ui-btn-round',
+							'href' => "/bi/dashboard/detail/{$dashboardId}/",
+							'target' => '_blank',
+						],
+						'text' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_DASHBOARD_IMPORT_FINISH_BUTTON'),
+					],
+				];
+			}
+		}
+
 		return !empty($result['CREATE_DOM_LIST']) ? $result : [];
 	}
 
@@ -342,8 +535,36 @@ class Action
 					]
 				);
 			}
+
+			$deleteResult = MarketDashboardManager::getInstance()->handleDeleteApp($appId);
+			if (!$deleteResult->isSuccess())
+			{
+				$event->addResult(new EventResult(
+					type: EventResult::ERROR,
+					parameters: current($deleteResult->getErrors()),
+				));
+			}
 		}
 
 		return null;
+	}
+
+	private static function saveTempFile(string $name, string $path): string
+	{
+		$filePath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $name;
+		File::putFileContents($filePath, File::getFileContents($path));
+
+		return $filePath;
+	}
+
+	private static function deleteTempFile(string $path): void
+	{
+		if (
+			$path !== ''
+			&& File::isFileExists($path)
+		)
+		{
+			File::deleteFile($path);
+		}
 	}
 }

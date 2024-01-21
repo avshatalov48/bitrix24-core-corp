@@ -28,9 +28,11 @@ class LineOfTextBlocks extends ContentBlock
 	}
 
 	/**
-	 * @param string $id
-	 * @param Text|Link|Date $textContentBlock
+	 * @param string $id Block ID
+	 * @param ContentBlock $textContentBlock Block type [ConText|Link|Date|Money|ItemSelector allowed]
+	 *
 	 * @return $this
+	 *
 	 * @throws ArgumentTypeException
 	 */
 	public function addContentBlock(string $id, ContentBlock $textContentBlock): self
@@ -40,6 +42,7 @@ class LineOfTextBlocks extends ContentBlock
 			&& !($textContentBlock instanceof Link)
 			&& !($textContentBlock instanceof Date)
 			&& !($textContentBlock instanceof Money)
+			&& !($textContentBlock instanceof ItemSelector)
 		)
 		{
 			throw new ArgumentTypeException(
@@ -47,6 +50,7 @@ class LineOfTextBlocks extends ContentBlock
 				Text::class . '|' . Link::class . '|' . Date::class . '|' . Money::class
 			);
 		}
+
 		if (is_null($textContentBlock->getSort()))
 		{
 			$textContentBlock->setSort(count($this->blocks) + 1);
@@ -59,6 +63,10 @@ class LineOfTextBlocks extends ContentBlock
 
 	/**
 	 * @param Text[]|EditableDate[] $blocks
+	 *
+	 * @return $this
+	 *
+	 * @throws ArgumentTypeException
 	 */
 	public function setContentBlocks(array $blocks): self
 	{

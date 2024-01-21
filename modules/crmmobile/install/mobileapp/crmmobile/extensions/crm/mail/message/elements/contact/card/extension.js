@@ -2,6 +2,7 @@
  * @module crm/mail/message/elements/contact/card
  */
 jn.define('crm/mail/message/elements/contact/card', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
 	const { ProfileView } = require('user/profile');
 
@@ -21,11 +22,11 @@ jn.define('crm/mail/message/elements/contact/card', (require, exports, module) =
 		const styles = {
 			little: {
 				fontSize: 13,
-				color: '#525C69',
+				color: AppTheme.colors.base2,
 			},
 			big: {
 				fontSize: 15,
-				color: '#5b5b5b',
+				color: AppTheme.colors.base2,
 			},
 		};
 
@@ -56,7 +57,7 @@ jn.define('crm/mail/message/elements/contact/card', (require, exports, module) =
 			little: {
 				fontSize: 13,
 				fontWeight: '400',
-				color: '#525C69',
+				color: AppTheme.colors.base2,
 			},
 			big: {
 				fontSize: 15,

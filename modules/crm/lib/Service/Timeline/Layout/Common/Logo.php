@@ -45,6 +45,7 @@ class Logo
 	public const CALENDAR_SHARE = 'calendar-share';
 	public const UNREAD_COMMENT = 'unread-comment';
 	public const TASK_ACTIVITY = 'task-activity';
+	public const AI_COPILOT = 'ai-copilot';
 	//endregion
 
 	public static function getInstance(string $code): self
@@ -122,9 +123,10 @@ class Logo
 			case self::CALENDAR_SHARE:
 			case self::UNREAD_COMMENT:
 			case self::TASK_ACTIVITY:
+			case self::AI_COPILOT:
 				return (new Body\Logo($this->getCode()))
 					->setInCircle(true)
-					;
+				;
 		}
 
 		return null;

@@ -346,12 +346,15 @@ class SmartInvoice extends Dynamic
 			$fieldRepo->getComments()
 				->configureNullable(false)
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_COMMENTS'))
+				->configureDefaultValue('')
 			,
 			(new Fields\StringField(Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER))
 				->configureTitle(Loc::getMessage('CRM_TYPE_SMART_INVOICE_FIELD_ACCOUNT_NUMBER'))
+				->configureDefaultValue('')
 			,
 			$fieldRepo->getLocationId()
 				->configureNullable(false)
+				->configureDefaultValue('')
 			,
 		];
 	}

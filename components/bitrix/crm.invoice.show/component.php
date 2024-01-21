@@ -828,29 +828,8 @@ $arResult['FIELDS']['tab_event'][] = array(
 	'type' => 'section'
 );
 
-$mailTemplateResult = \CCrmMailTemplate::getList(
-	array('SORT' => 'ASC', 'ENTITY_TYPE_ID' => 'DESC', 'TITLE'=> 'ASC'),
-	array(
-		'IS_ACTIVE' => 'Y',
-		'__INNER_FILTER_TYPE' => array(
-			'LOGIC' => 'OR',
-			'__INNER_FILTER_TYPE_1' => array('ENTITY_TYPE_ID' => \CCrmOwnerType::Invoice),
-			'__INNER_FILTER_TYPE_2' => array('ENTITY_TYPE_ID' => 0),
-		),
-		'__INNER_FILTER_SCOPE' => array(
-			'LOGIC' => 'OR',
-			'__INNER_FILTER_PERSONAL' => array(
-				'OWNER_ID' => $currentUserID,
-				'SCOPE'    => \CCrmMailTemplateScope::Personal,
-			),
-			'__INNER_FILTER_COMMON' => array(
-				'SCOPE' => \CCrmMailTemplateScope::Common,
-			),
-		),
-	),
-	false, false,
-	array('TITLE', 'SCOPE', 'ENTITY_TYPE_ID', 'BODY_TYPE')
-);
+
+$mailTemplateResult = \CCrmMailTemplate::getUserAvailableTemplatesList(\CCrmOwnerType::Invoice);
 
 while($mailTemplateFields = $mailTemplateResult->Fetch())
 {

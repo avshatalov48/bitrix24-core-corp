@@ -2,10 +2,11 @@
  * @module crm/timeline/item/ui/body/blocks/base-editable-block
  */
 jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, exports, module) => {
+	const { largePen } = require('assets/common');
 	const { inAppUrl } = require('in-app-url');
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { TimelineTextEditor } = require('crm/timeline/ui/text-editor');
-	const { transparent } = require('utils/color');
+	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 
 	/**
@@ -46,7 +47,7 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 							paddingLeft: 16,
 							paddingRight: 30,
 							borderWidth: 1,
-							borderColor: transparent('#000000', 0.1),
+							borderColor: AppTheme.colors.bgSeparatorPrimary,
 							borderRadius: 12,
 						},
 						onClick: () => this.toggleExpanded(),
@@ -78,12 +79,13 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 					},
 				},
 				Image({
+					tintColor: AppTheme.colors.base3,
 					svg: {
-						content: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.32707 0.776367L11.24 2.70943L3.75675 10.1725L1.84382 8.23948L9.32707 0.776367ZM0.769358 11.0047C0.751269 11.0732 0.77065 11.1455 0.819749 11.1959C0.870141 11.2463 0.942497 11.2657 1.01098 11.2463L3.14937 10.6702L1.34563 8.86699L0.769358 11.0047Z" fill="black" fill-opacity="0.2"/></svg>',
+						content: largePen(),
 					},
 					style: {
-						width: 12,
-						height: 12,
+						width: 18,
+						height: 18,
 					},
 				}),
 			);
@@ -134,7 +136,8 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 				return text;
 			}
 
-			return `${text.slice(0, maxLettersCount).trim()}... [color=#828B95]${Loc.getMessage('M_CRM_TIMELINE_VIEW_MORE')}[/color]`;
+			return `${text.slice(0, maxLettersCount).trim()}... [color=${AppTheme.colors.base3}]${Loc.getMessage(
+				'M_CRM_TIMELINE_VIEW_MORE')}[/color]`;
 		}
 
 		getTextParams()
@@ -144,7 +147,7 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 				style: {
 					fontSize: 14,
 					fontWeight: '400',
-					color: '#333333',
+					color: AppTheme.colors.base1,
 				},
 			};
 		}

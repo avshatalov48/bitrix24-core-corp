@@ -132,7 +132,11 @@ class Shift extends EO_Shift
 
 	public function isForWeekDay($weekDay)
 	{
-		return in_array((int)$weekDay, array_map('intval', str_split($this->getWorkDays())), true);
+		return in_array(
+			(int) $weekDay,
+			array_map('intval', str_split($this->getWorkDays() ?? '')),
+			true
+		);
 	}
 
 	/**

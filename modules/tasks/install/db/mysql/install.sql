@@ -39,6 +39,7 @@ CREATE TABLE b_tasks (
 	PARENT_ID int(11) DEFAULT NULL,
 	FORUM_TOPIC_ID bigint(20) DEFAULT NULL,
 	MULTITASK char(1) NOT NULL DEFAULT 'N',
+	IS_REGULAR char(1) NOT NULL DEFAULT 'N',
 	SITE_ID char(2) NOT NULL,
 	DECLINE_REASON text,
 	FORKED_BY_TEMPLATE_ID int(11) DEFAULT NULL,
@@ -51,13 +52,14 @@ CREATE TABLE b_tasks (
 	KEY CREATED_BY (CREATED_BY),
 	KEY RESPONSIBLE_ID (RESPONSIBLE_ID),
 	KEY CHANGED_BY (CHANGED_BY),
-	UNIQUE KEY GUID (GUID)
+	UNIQUE KEY GUID (GUID),
+	INDEX ix_b_tasks_activity_created_date (ACTIVITY_DATE, CREATED_DATE),
+	INDEX ix_b_tasks_created_activity_date (CREATED_DATE, ACTIVITY_DATE),
+	INDEX b_tasks_deadline_ibuk (DEADLINE, DEADLINE_COUNTED),
+	INDEX ix_tasks_deadline_g (GROUP_ID),
+	INDEX ix_tasks_minimal_filter (DEADLINE, STATUS, ZOMBIE, GROUP_ID),
+	INDEX ix_b_tasks_status_is_regular(STATUS, IS_REGULAR)
 );
-
-CREATE INDEX b_tasks_deadline_ibuk ON b_tasks(DEADLINE, DEADLINE_COUNTED);
-CREATE INDEX ix_tasks_deadline_g ON b_tasks(GROUP_ID);
-ALTER TABLE b_tasks ADD INDEX ix_tasks_minimal_filter (DEADLINE, STATUS, ZOMBIE, GROUP_ID);
-
 
 CREATE TABLE b_tasks_files_temporary (
 	USER_ID int(11) NOT NULL,
@@ -760,4 +762,32 @@ CREATE TABLE IF NOT EXISTS b_tasks_template_scenario (
 	SCENARIO varchar(8) NOT NULL DEFAULT 'default',
 	PRIMARY KEY (TEMPLATE_ID),
 	INDEX idx_scenario (SCENARIO)
+);
+
+CREATE TABLE IF NOT EXISTS b_tasks_regular_parameters (
+	ID INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	TASK_ID INT(11) NOT NULL,
+	REGULAR_PARAMETERS TEXT NOT NULL,
+	START_TIME DATETIME DEFAULT NULL,
+	START_DAY DATE DEFAULT NULL,
+	NOTIFICATION_SENT char(1) NOT NULL DEFAULT 'N',
+	PRIMARY KEY (ID),
+	UNIQUE INDEX idx_b_tasks_regular_parameters_task_id (TASK_ID),
+	INDEX idx_b_tasks_regular_parameters_start_day_notification_sent (START_DAY, NOTIFICATION_SENT)
+);
+
+CREATE TABLE IF NOT EXISTS b_tasks_custom_sort
+(
+	ID           int(11)        NOT NULL AUTO_INCREMENT,
+	TASK_ID      int(11)        NOT NULL,
+	SORT         decimal(18, 7) NOT NULL,
+	USER_ID      int(11)        NOT NULL DEFAULT 0,
+	GROUP_ID     int(11)        NOT NULL DEFAULT 0,
+	PREV_TASK_ID int(11)        NOT NULL DEFAULT 0,
+	NEXT_TASK_ID int(11)        NOT NULL DEFAULT 0,
+	PRIMARY KEY (ID),
+	INDEX ix_tasks_custom_sort_user_id_sort_task_id (USER_ID, SORT, TASK_ID),
+	INDEX ix_tasks_custom_sort_group_id_sort_task_id (GROUP_ID, SORT, TASK_ID),
+	INDEX ix_b_tasks_custom_sort_task_id_group_id (TASK_ID, GROUP_ID),
+	UNIQUE INDEX ix_b_tasks_custom_sort_task_id_user_id_group_id (TASK_ID, USER_ID, GROUP_ID)
 );

@@ -1,5 +1,4 @@
 (() => {
-
 	const require = (ext) => jn.require(ext);
 
 	const { EntitySelectorWidget } = require('selector/widget');
@@ -71,7 +70,7 @@
 		{
 			provider = provider || {};
 
-			if (!provider['context'])
+			if (!provider.context)
 			{
 				provider.context = this.getContext();
 			}
@@ -88,7 +87,7 @@
 		{
 			widgetParams = widgetParams || {};
 
-			if (!widgetParams['title'])
+			if (!widgetParams.title)
 			{
 				widgetParams.title = this.getTitle();
 			}
@@ -100,32 +99,32 @@
 		{
 			searchOptions = searchOptions || {};
 
-			if (!searchOptions['startTypingText'])
+			if (!searchOptions.startTypingText)
 			{
 				searchOptions.startTypingText = this.getStartTypingText();
 			}
 
-			if (!searchOptions['startTypingWithCreationText'])
+			if (!searchOptions.startTypingWithCreationText)
 			{
 				searchOptions.startTypingWithCreationText = this.getStartTypingWithCreationText();
 			}
 
-			if (!searchOptions['searchPlaceholderWithCreation'])
+			if (!searchOptions.searchPlaceholderWithCreation)
 			{
 				searchOptions.searchPlaceholderWithCreation = this.getSearchPlaceholderWithCreation();
 			}
 
-			if (!searchOptions['searchPlaceholderWithoutCreation'])
+			if (!searchOptions.searchPlaceholderWithoutCreation)
 			{
 				searchOptions.searchPlaceholderWithoutCreation = this.getSearchPlaceholderWithoutCreation();
 			}
 
-			if (!searchOptions['searchFields'])
+			if (!searchOptions.searchFields)
 			{
 				searchOptions.searchFields = this.getSearchFields();
 			}
 
-			if (!searchOptions['entityWeight'])
+			if (!searchOptions.entityWeight)
 			{
 				searchOptions.entityWeight = this.getEntityWeight();
 			}
@@ -157,17 +156,17 @@
 				createOptions.canCreateWithEmptySearch = this.canCreateWithEmptySearch();
 			}
 
-			if (!createOptions['createText'])
+			if (!createOptions.createText)
 			{
 				createOptions.createText = this.getCreateText();
 			}
 
-			if (!createOptions['creatingText'])
+			if (!createOptions.creatingText)
 			{
 				createOptions.creatingText = this.getCreatingText();
 			}
 
-			if (createOptions.enableCreation && !createOptions['handler'])
+			if (createOptions.enableCreation && !createOptions.handler)
 			{
 				createOptions.handler = this.getCreateEntityHandler(
 					providerOptions.entities[0].options,

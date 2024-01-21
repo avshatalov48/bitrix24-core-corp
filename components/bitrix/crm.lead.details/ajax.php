@@ -549,6 +549,8 @@ elseif($action === 'SAVE')
 			}
 
 			$entity = new \CCrmLead(!CCrmPerms::IsAdmin());
+			$eventId = $_POST['EVENT_ID'] ?? null;
+
 			if($isNew)
 			{
 				/*
@@ -593,6 +595,7 @@ elseif($action === 'SAVE')
 						'VIEW_MODE' => $viewMode,
 						'STATUS_ID' => $fields['STATUS_ID'],
 					],
+					'eventId' => $eventId,
 				];
 
 				if(!$enableRequiredUserFieldCheck)
@@ -651,6 +654,7 @@ elseif($action === 'SAVE')
 				$options = [
 					'REGISTER_SONET_EVENT' => true,
 					'FIELD_CHECK_OPTIONS' => $fieldCheckOptions,
+					'eventId' => $eventId,
 				];
 				if(!$enableRequiredUserFieldCheck)
 				{
@@ -838,7 +842,7 @@ elseif($action === 'LOAD')
 	{
 		__CrmLeadDetailsEndJsonResponse(['ERROR'=>'ENTITY ID IS NOT FOUND!']);
 	}
-	if(!\CCrmDeal::CheckReadPermission($ID, $currentUserPermissions))
+	if (!\CCrmLead::CheckReadPermission($ID, $currentUserPermissions))
 	{
 		__CrmLeadDetailsEndJsonResponse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')]);
 	}

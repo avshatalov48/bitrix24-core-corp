@@ -177,6 +177,7 @@ class CBPCrmCreateToDoActivity extends CBPActivity
 				'Name' => GetMessage('CRM_BP_CREATE_TODO_DEADLINE'),
 				'FieldName' => 'deadline',
 				'Type' => 'datetime',
+				'Default' => \Bitrix\Bizproc\Automation\Helper::getDateTimeIntervalString(['inTime' => [12, 00]]),
 			],
 			'Responsible' => [
 				'Name' => GetMessage('CRM_BP_CREATE_TODO_RESPONSIBLE_ID'),
@@ -234,22 +235,6 @@ class CBPCrmCreateToDoActivity extends CBPActivity
 				$currentValues,
 				$errors
 			);
-		}
-
-		//convert special robot datetime interval
-		$startTimeFieldsPrefix = $fieldsMap['Deadline']['FieldName'];
-		if (
-			isset($currentValues[$startTimeFieldsPrefix . '_interval_d'])
-			&& isset($currentValues[$startTimeFieldsPrefix . '_interval_t'])
-		)
-		{
-			$interval = ['d' => $currentValues[$startTimeFieldsPrefix . '_interval_d']];
-			$time = \Bitrix\Crm\Automation\Helper::parseTimeString(
-				$currentValues[$startTimeFieldsPrefix . '_interval_t']
-			);
-			$interval['h'] = $time['h'];
-			$interval['i'] = $time['i'];
-			$properties['Deadline'] = \Bitrix\Crm\Automation\Helper::getDateTimeIntervalString($interval);
 		}
 
 		$errors = self::ValidateProperties(

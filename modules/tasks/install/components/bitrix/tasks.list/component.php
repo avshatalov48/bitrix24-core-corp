@@ -5,8 +5,9 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 global $APPLICATION;
 
 use \Bitrix\Main\Loader;
-use \Bitrix\Main\Config\Option;
 use Bitrix\Main\Text\Emoji;
+use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
+use Bitrix\Tasks\Internals\Counter\Role;
 
 if (!CBXFeatures::IsFeatureEnabled('Tasks'))
 {
@@ -360,6 +361,8 @@ $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameF
 
 $arParams["TASK_ID"] = isset($arParams["TASK_ID"]) ? intval($arParams["TASK_ID"]) : 0;
 
+$arResult["CONTEXT"] = $arParams["CONTEXT"] ?? Context::DEFAULT;
+
 $arResult["ACTION"] = ($arParams["TASK_ID"] > 0 ? "edit" : "create");
 
 $arParams["USER_ID"] = (int)($arParams["USER_ID"] ?? null) > 0 ? intval($arParams["USER_ID"]) : $loggedInUserId;
@@ -510,7 +513,7 @@ elseif ( ! (isset($_GET["F_CANCEL"]) || isset($_GET['F_FILTER_SWITCH_PRESET'])))
 	if($arResult['VIEW_STATE']['SECTION_SELECTED']['ID'] == CTaskListState::VIEW_SECTION_ROLES)
 	{
 		$currentRole = $oListState->getUserRole();
-		$arSwitchStateTo = array(intval($currentRole) ? 'sR'.base_convert($currentRole, 10, 32) : 'sR400');
+		$arSwitchStateTo = array(intval($currentRole) ? 'sR'.base_convert($currentRole, 10, 32) : Role::RESPONSIBLE_STATE);
 	}
 }
 
@@ -1308,7 +1311,7 @@ try
 
 	try
 	{
-		list($arTaskItems, $rsItems) = CTaskItem::fetchList($loggedInUserId, $arOrder, $arFilter, $arGetListParams, $arSelect);
+		[$arTaskItems, $rsItems] = CTaskItem::fetchList($loggedInUserId, $arOrder, $arFilter, $arGetListParams, $arSelect);
 	}
 	catch (TasksException $e)
 	{
@@ -1327,7 +1330,7 @@ try
 				$arResult['SELECTED_PRESET_ID']   = $oFilter->GetSelectedFilterPresetId();
 
 				// Try again to load data
-				list($arTaskItems, $rsItems) = CTaskItem::fetchList($loggedInUserId, $arOrder, $arFilter, $arGetListParams, $arSelect);
+				[$arTaskItems, $rsItems] = CTaskItem::fetchList($loggedInUserId, $arOrder, $arFilter, $arGetListParams, $arSelect);
 			}
 			else
 				throw new TasksException();
@@ -1549,7 +1552,7 @@ if(Loader::includeModule('calendar'))
 			foreach($holidays as $day)
 			{
 				$day = trim($day);
-				list($day, $month) = explode('.', $day);
+				[$day, $month] = explode('.', $day);
 				$day = intval($day);
 				$month = intval($month);
 

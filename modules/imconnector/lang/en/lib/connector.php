@@ -3,9 +3,13 @@ $MESS["IMCONNECTOR_ERROR_MAIN_MODULE_URL_SITE_USE"] = "Domain names specified in
 $MESS["IMCONNECTOR_ERROR_SERVER_NAME_USE"] = "The Kernel module's \"Site URL\" field is empty. The current domain name #DOMAIN# will be used for server response. To change domain name, <a href=\"/bitrix/admin/settings.php?lang=ru&mid=main&mid_menu=1\">modify the \"Site URL\" field.</a>";
 $MESS["IMCONNECTOR_NAME_CONNECTOR_AVITO"] = "Avito";
 $MESS["IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_COMMENTS_PAGE"] = "Facebook: Comments";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_COMMENTS_PAGE_RESTRICTION_RU"] = "Facebook*: Comments";
 $MESS["IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_PAGE"] = "Facebook";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_PAGE_RESTRICTION_RU"] = "Facebook*: Messages";
 $MESS["IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM"] = "Instagram Business";
 $MESS["IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAMDIRECT"] = 'Instagram Direct';
+$MESS["IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAMDIRECT_RESTRICTION_RU"] = "Instagram* Direct";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM_RESTRICTION_RU"] = "Instagram* for Business";
 $MESS["IMCONNECTOR_NAME_CONNECTOR_IMESSAGE_NEW"] = "Apple Messages for Business";
 $MESS["IMCONNECTOR_NAME_CONNECTOR_LIVECHAT"] = "Live chat";
 $MESS["IMCONNECTOR_NAME_CONNECTOR_NETWORK"] = "Bitrix24.Network";

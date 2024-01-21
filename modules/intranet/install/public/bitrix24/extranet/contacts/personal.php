@@ -1,11 +1,12 @@
-<?
+<?php
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/extranet/contacts/personal.php");
 $APPLICATION->SetTitle(GetMessage("TITLE"));
 ?>
 <?GetGlobalID();
 $componentDateTimeFormat = CIntranetUtils::getCurrentDateTimeFormat();
-
+\CModule::IncludeModule('intranet');
+use Bitrix\Intranet;
 $APPLICATION->IncludeComponent("bitrix:socialnetwork_user", ".default", array(
 	"ITEM_DETAIL_COUNT" => "32",
 	"ITEM_MAIN_COUNT" => "6",
@@ -122,8 +123,8 @@ $APPLICATION->IncludeComponent("bitrix:socialnetwork_user", ".default", array(
 	),
 	"SONET_USER_PROPERTY_SEARCHABLE" => array(
 	),
-	"BLOG_GROUP_ID" => $GLOBAL_BLOG_GROUP[SITE_ID],
-	"FORUM_ID" => $GLOBAL_FORUM_ID["USERS_AND_GROUPS"],//"#FORUM_ID#",
+	"BLOG_GROUP_ID" => Intranet\Integration\Wizards\Portal\Ids::getBlogId(),
+	"FORUM_ID" => Intranet\Integration\Wizards\Portal\Ids::getForumId('USERS_AND_GROUPS'),//"#FORUM_ID#",
 	"CALENDAR_ALLOW_SUPERPOSE" => "Y",
 	"CALENDAR_ALLOW_RES_MEETING" => "Y",
 	// "CALENDAR_IBLOCK_TYPE" => "events",
@@ -142,15 +143,15 @@ $APPLICATION->IncludeComponent("bitrix:socialnetwork_user", ".default", array(
 	// "CALENDAR_SUPERPOSE_GROUPS_IBLOCK_ID" => $GLOBAL_IBLOCK_ID["calendar_groups_extranet"],// "#CALENDAR_GROUPS_IBLOCK_ID#",
 	// "CALENDAR_ALLOW_RES_MEETING" => "N",
 	// "CALENDAR_ALLOW_VIDEO_MEETING" => "N",
-	"TASK_FORUM_ID" => $GLOBAL_FORUM_ID["GROUPS_AND_USERS_TASKS_COMMENTS_EXTRANET"],//"#TASKS_FORUM_ID#",
+	"TASK_FORUM_ID" => Intranet\Integration\Wizards\Portal\Ids::getForumId('GROUPS_AND_USERS_TASKS_COMMENTS_EXTRANET'),//"#TASKS_FORUM_ID#",
 	"FILES_USE_AUTH" => "Y",
 	"FILE_NAME_FILE_PROPERTY" => "FILE",
 	"FILES_UPLOAD_MAX_FILESIZE" => "1024",
 	"FILES_UPLOAD_MAX_FILE" => "4",
 	"FILES_USE_COMMENTS" => "Y",
-	"FILES_FORUM_ID" => $GLOBAL_FORUM_ID["GROUPS_AND_USERS_FILES_COMMENTS"],//"#FILES_FORUM_ID#",
+	"FILES_FORUM_ID" => Intranet\Integration\Wizards\Portal\Ids::getForumId('GROUPS_AND_USERS_FILES_COMMENTS'),//"#FILES_FORUM_ID#",
 	"FILES_USE_CAPTCHA" => "Y",
-	"FILES_USER_IBLOCK_ID" => $GLOBAL_IBLOCK_ID["user_files"],
+	"FILES_USER_IBLOCK_ID" => Intranet\Integration\Wizards\Portal\Ids::getIblockId('user_files'),
 	"PHOTO_UPLOAD_MAX_FILESIZE" => "64",
 	"PHOTO_UPLOAD_MAX_FILE" => "4",
 	"PHOTO_ALBUM_PHOTO_THUMBS_SIZE" => "100",
@@ -162,7 +163,7 @@ $APPLICATION->IncludeComponent("bitrix:socialnetwork_user", ".default", array(
 	"PHOTO_USE_RATING" => "Y",
 	"PHOTO_USE_COMMENTS" => "Y",
 	"PHOTO_UPLOADER_TYPE" => "form",
-	"PHOTO_FORUM_ID" => $GLOBAL_FORUM_ID["GROUPS_AND_USERS_PHOTOGALLERY_COMMENTS"],//"#PHOTOGALLERY_FORUM_ID#",
+	"PHOTO_FORUM_ID" => Intranet\Integration\Wizards\Portal\Ids::getForumId('GROUPS_AND_USERS_PHOTOGALLERY_COMMENTS'),//"#PHOTOGALLERY_FORUM_ID#",
 	"PHOTO_USE_CAPTCHA" => "N",
 	"AJAX_OPTION_ADDITIONAL" => "",
 	"SEF_URL_TEMPLATES" => array(

@@ -3,7 +3,6 @@
 namespace Bitrix\Crm\Activity\Settings;
 
 use Bitrix\Crm\Activity\Settings\Section\Calendar;
-use Bitrix\Crm\Activity\Settings\Section\Ping;
 
 class Manager
 {
@@ -97,7 +96,6 @@ class Manager
 	{
 		return [
 			['id' => Calendar::TYPE_NAME],
-			['id' => Ping::TYPE_NAME],
 		];
 	}
 

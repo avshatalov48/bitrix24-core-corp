@@ -4,8 +4,10 @@
  * @module im/messenger/model/application
  */
 jn.define('im/messenger/model/application', (require, exports, module) => {
+	const { AppStatus } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { Logger } = require('im/messenger/lib/logger');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('model--application');
 
 	const applicationModel = {
 		namespaced: true,
@@ -16,9 +18,44 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 			},
 			common: {
 				host: `${currentDomain}/`,
+				status: {
+					networkWaiting: false,
+					connection: false,
+					sync: false,
+					running: false,
+				},
 			},
 		}),
 		getters: {
+			/** @function applicationModel/getStatus */
+			getStatus: (state) => () => {
+				const statusData = state.common.status;
+
+				if (statusData.networkWaiting === true)
+				{
+					return AppStatus.networkWaiting;
+				}
+
+				if (statusData.connection === true)
+				{
+					return AppStatus.connection;
+				}
+
+				if (statusData.sync === true)
+				{
+					return AppStatus.sync;
+				}
+
+				return AppStatus.running;
+			},
+
+			/** @function applicationModel/getNetworkStatus */
+			getNetworkStatus: (state) => () => {
+				const statusData = state.common.status;
+
+				return !statusData.networkWaiting;
+			},
+
 			/** @function applicationModel/getDialogId */
 			getDialogId: (state) => {
 				const chatSettings = Application.storage.getObject('settings.chat', {
@@ -40,11 +77,26 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 			},
 
 			/** @function applicationModel/isDialogOpen */
-			isDialogOpen: (state, getters) => {
+			isDialogOpen: (state) => {
 				return state.dialog.idList.length > 0;
+			},
+
+			/** @function applicationModel/getOpenDialogs */
+			getOpenDialogs: (state) => () => {
+				return state.dialog.idList;
 			},
 		},
 		actions: {
+			/** @function applicationModel/setStatus */
+			setStatus: (store, status) => {
+				store.commit('setStatus', {
+					actionName: 'setStatus',
+					data: {
+						status,
+					},
+				});
+			},
+
 			/** @function applicationModel/openDialogId */
 			openDialogId: (store, payload) => {
 				let dialogId;
@@ -90,8 +142,21 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 			 * @param state
 			 * @param {MutationPayload} payload
 			 */
+			setStatus: (state, payload) => {
+				logger.log('applicationModel: setStatus mutation', payload);
+				const {
+					name,
+					value,
+				} = payload.data.status;
+
+				state.common.status[name] = value;
+			},
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			openDialogId: (state, payload) => {
-				Logger.warn('applicationModel: openDialogId mutation', payload);
+				logger.warn('applicationModel: openDialogId mutation', payload);
 
 				const { dialogId } = payload.data;
 				state.dialog.currentId = dialogId;
@@ -104,7 +169,7 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 			 * @param {MutationPayload} payload
 			 */
 			closeDialogId: (state, payload) => {
-				Logger.warn('applicationModel: closeDialogId mutation', payload);
+				logger.warn('applicationModel: closeDialogId mutation', payload);
 
 				const { dialogId } = payload.data;
 				const index = state.dialog.idList.lastIndexOf(dialogId);

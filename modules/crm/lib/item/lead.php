@@ -44,14 +44,4 @@ class Lead extends Item
 
 		return Loc::getMessage('CRM_LEAD_DEFAULT_TITLE_TEMPLATE', ['%NUMBER%' => $number]);
 	}
-
-	protected function getExternalizableFieldNames(): array
-	{
-		return array_merge(
-			parent::getExternalizableFieldNames(),
-			[
-				$this->getEntityFieldNameByMap(Item::FIELD_NAME_OBSERVERS),
-			],
-		);
-	}
 }

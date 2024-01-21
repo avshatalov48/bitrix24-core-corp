@@ -20,6 +20,7 @@ use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Access;
+use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Helper\Grid;
 use Bitrix\Tasks\Integration\CRM;
@@ -679,8 +680,11 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 	protected function loadGrid()
 	{
-		$this->grid = Grid::getInstance($this->arParams["USER_ID"], $this->arParams["GROUP_ID"]);
-		$this->filter = Filter::getInstance($this->arParams["USER_ID"], $this->arParams["GROUP_ID"]);
+		$this->grid = Grid::getInstance($this->arParams["USER_ID"], $this->arParams["GROUP_ID"])
+			->setScope($this->arParams['CONTEXT'] ?? '');
+
+		$this->filter = Filter::getInstance($this->arParams["USER_ID"], $this->arParams["GROUP_ID"])
+			->setGanttMode(static::class === TasksTaskGanttComponent::class);
 	}
 
 	protected function doPreAction()
@@ -704,14 +708,15 @@ class TasksTaskListComponent extends TasksBaseComponent
 		$this->arResult['USER_ID'] = $this->userId;
 		$this->arResult['OWNER_ID'] = $this->arParams['USER_ID'];
 
+		$this->arResult['CONTEXT'] = $this->arParams['CONTEXT'] ?? Context::DEFAULT;
+
 		$this->arParams['DEFAULT_ROLEID'] = $this->filter->getDefaultRoleId();
 
 		$order = $this->getOrder();
 		unset($order['GROUP_ID'], $order['IS_PINNED'], $order['IS_PINNED_IN_GROUP']);
 
-		reset($order);
-		$field = key($order);
-		$direction = current($order);
+		$field = array_key_first($order);
+		$direction = $order[$field] ?? false;
 		$direction = ($direction ? explode(',', $direction)[0] : 'asc');
 
 		$this->disableGrouping($field, $direction);

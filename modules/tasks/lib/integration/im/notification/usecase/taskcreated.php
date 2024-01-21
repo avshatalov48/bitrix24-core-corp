@@ -96,6 +96,6 @@ class TaskCreated
 			}
 		}
 
-		return implode(',', $users);
+		return implode(', ', $users);
 	}
 }

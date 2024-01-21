@@ -36,4 +36,3 @@ $MESS["CRM_DOCUMENT_VIEW_SIGN_POPUP_TITLE_MSGVER_2"] = "Использовать
 $MESS["CRM_DOCUMENT_VIEW_SIGN_DO_USE_PREVIOUS_MSG_MSGVER_3"] = "Шаблон с готовым текстом и настроенными полями уже использовался для сделки \"%TITLE%\", ответственный - \"%INITIATOR%\". Вы можете продолжить с этим шаблоном или создать новый.";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_OLD_BUTTON_MSGVER_2"] = "Использовать шаблон";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_NEW_BUTTON_MSGVER_3"] = "Создать новый";
-

@@ -4,4 +4,5 @@ module.exports = {
 	namespace: 'BX.Crm.MessageSender',
 	browserslist: true,
 	adjustConfigPhp: false,
+	minification: true,
 };

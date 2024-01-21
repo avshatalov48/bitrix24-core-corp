@@ -7,6 +7,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 	const { Item } = require('im/messenger/lib/ui/base/item');
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const { UserProfile } = require('im/messenger/controller/user-profile');
 	const { withPressed } = require('utils/color');
 	const { LoaderItem } = require('im/messenger/lib/ui/base/loader');
 	const { ParticipantManager } = require('im:messenger/controller/participant-manager');
@@ -15,6 +16,8 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 	const { ParticipantsService } = require('im/messenger/controller/sidebar/tabs/participants/participants-service');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { UserAdd } = require('im/messenger/controller/user-add');
+	const { ChatTitle } = require('im/messenger/lib/element');
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @class SidebarParticipantsView
@@ -27,12 +30,15 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 			super(props);
 			this.store = core.getStore();
 			this.storeManager = core.getStoreManager();
+			/** @type {ParticipantsService} */
+			this.participantsService = new ParticipantsService(this.props);
 
 			this.state = {
-				participants: [],
+				participants: this.participantsService.getParticipantsFromStore(),
 				permissions: {
 					isCanRemoveParticipants: ChatPermission.isCanRemoveParticipants(props.dialogId),
-					isCanAddParticipants: true,
+					isCanAddParticipants: ChatPermission.isCanAddParticipants(props.dialogId),
+					isCanLeave: ChatPermission.isCanLeaveFromChat(props.dialogId),
 				},
 			};
 
@@ -47,17 +53,6 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 			Logger.log('Participants.view.componentDidMount');
 			this.bindListener();
 			this.subscribeStoreEvents();
-			this.participantsService = new ParticipantsService(this.props);
-
-			if (this.state.participants.length === 0)
-			{
-				const participants = this.participantsService.getParticipants();
-
-				if (participants.length > 0)
-				{
-					this.updateState({ participants });
-				}
-			}
 		}
 
 		componentDidUpdate()
@@ -139,6 +134,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 					style: {
 						flexDirection: 'column',
 						flex: 1,
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 					},
 				},
 				this.renderListView(),
@@ -175,13 +171,13 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 						size: 'M',
 						isCustomStyle: true,
 						nextTo: false,
-						isEllipsis,
 						onLongClick: () => {
 							this.onLongClickItem(item.key, item.userId, item.isYou);
 						},
-						onEllipsisClick: () => {
-							this.onLongClickItem(item.key, item.userId, item.isYou);
+						onClick: () => {
+							this.onClickItem(item.userId);
 						},
+						additionalComponent: isEllipsis ? this.getEllipsisButton(item) : null,
 					});
 				},
 				onLoadMore: platform === 'ios' ? this.iosOnLoadMore.bind(this) : this.androidOnLoadMore.bind(this),
@@ -231,9 +227,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 
 				style: {
 					parentView: {
-						backgroundColor: Application.getPlatform() === 'ios'
-							? '#FFFFFF'
-							: withPressed('#FFFFFF'),
+						backgroundColor: withPressed(AppTheme.colors.bgContentPrimary),
 					},
 					itemContainer: {
 						flexDirection: 'row',
@@ -248,12 +242,12 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 						position: 'relative',
 						zIndex: 1,
 						flexDirection: 'column',
-						justifyContent: 'flex-end',
+						justifyContent: item.statusSvg.length > 1 ? 'flex-end' : 'flex-start',
 					},
 					itemInfoContainer: {
 						flexDirection: 'row',
 						borderBottomWidth: 1,
-						borderBottomColor: '#e9e9e9',
+						borderBottomColor: AppTheme.colors.bgSeparatorSecondary,
 						flex: 1,
 						alignItems: 'center',
 						marginBottom: 6,
@@ -270,16 +264,17 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 							marginBottom: 4,
 							fontSize: 16,
 							fontWeight: 500,
+							color: item.id ? ChatTitle.createFromDialogId(item.id).getTitleColor() : AppTheme.colors.base1,
 						},
 						isYouTitle: {
 							marginLeft: 4,
 							marginBottom: 4,
 							fontSize: 16,
-							color: '#959CA4',
+							color: AppTheme.colors.base4,
 							fontWeight: 400,
 						},
 						subtitle: {
-							color: '#959CA4',
+							color: AppTheme.colors.base3,
 							fontSize: 14,
 							fontWeight: 400,
 							textStyle: 'normal',
@@ -297,13 +292,15 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 		 */
 		getAddParticipantRow()
 		{
-			const text = Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_ROW');
+			const text = this.isGroupDialog()
+				? Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_ROW')
+				: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_ROW_GROUP');
 
 			return View(
 				{
 					style: {
 						flexDirection: 'column',
-						backgroundColor: '#FFFFFF',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 					},
 					clickable: false,
 				},
@@ -313,18 +310,15 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 							flexDirection: 'row',
 							alignItems: 'center',
 							marginHorizontal: 14,
+							borderBottomWidth: 1,
+							borderBottomColor: AppTheme.colors.bgSeparatorSecondary,
 						},
 						onClick: () => {
 							this.onClickBtnAdd();
 						},
 					},
 					View(
-						{
-							style: {
-								borderBottomWidth: 1,
-								borderBottomColor: '#e9e9e9',
-							},
-						},
+						{},
 						Image({
 							style: {
 								width: 44,
@@ -344,8 +338,6 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 						{
 							style: {
 								flexDirection: 'row',
-								borderBottomWidth: 1,
-								borderBottomColor: '#e9e9e9',
 								flexGrow: 2,
 								alignItems: 'center',
 								marginBottom: 6,
@@ -356,7 +348,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 						View(
 							{
 								style: {
-									marginLeft: 14,
+									marginLeft: 11,
 								},
 							},
 							View(
@@ -379,7 +371,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 											marginBottom: 2,
 											fontSize: 16,
 											fontWeight: '400',
-											color: '#525C69',
+											color: AppTheme.colors.base2,
 										},
 										text,
 										ellipsize: 'end',
@@ -405,13 +397,8 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 		 */
 		onLoadScrollItems()
 		{
-			const orderUsers = this.state.participants.sort((a, b) => a.id - b.id);
-			const lastUser = orderUsers[orderUsers.length - 1];
-			if (!Type.isUndefined(lastUser))
-			{
-				this.participantsService.sidebarRestService.getParticipantList(lastUser.id)
-					.catch((err) => Logger.error('SidebarParticipantsView.onLoadScrollItems', err));
-			}
+			this.participantsService.sidebarRestService.getParticipantList()
+				.catch((err) => Logger.error('SidebarParticipantsView.onLoadScrollItems', err));
 		}
 
 		/**
@@ -477,7 +464,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 		 */
 		removeParticipant(index, section)
 		{
-			const indexWithoutAddedRow = index - 1;
+			const indexWithoutAddedRow = this.state.permissions.isCanAddParticipants ? index - 1 : index;
 			const deletedUser = this.state.participants.find((el, i) => i === indexWithoutAddedRow);
 			const onComplete = () => {
 				this.state.participants = this.state.participants.filter((el, i) => i !== indexWithoutAddedRow);
@@ -520,17 +507,22 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 				{
 					actions.push('notes');
 					callbacks.notes = this.participantsService.onClickGetNotes;
-					actions.push('leave');
-					callbacks.leave = this.onClickLeaveChat.bind(this);
+
+					if (this.state.permissions.isCanLeave)
+					{
+						actions.push('leave');
+						callbacks.leave = this.onClickLeaveChat.bind(this);
+					}
 				}
 				else
 				{
-					// actions.push('mention');
-					// callbacks.mention = this.participantsService.onClickPingUser.bind(this, { key });
+					actions.push('mention');
+					callbacks.mention = this.participantsService.onClickPingUser.bind(this, userId);
 					actions.push('send');
 					callbacks.send = this.participantsService.onClickSendMessage.bind(this, userId);
 
-					if (this.state.permissions.isCanRemoveParticipants)
+					const isCanDelete = this.state.permissions.isCanRemoveParticipants;
+					if (isCanDelete && ChatPermission.isCanRemoveUserById(userId, this.props.dialogId))
 					{
 						actions.push('remove');
 						callbacks.remove = this.onClickRemoveParticipant.bind(this, { key });
@@ -552,6 +544,49 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 			}
 
 			return ParticipantManager.open({ actions, callbacks });
+		}
+
+		/**
+		 * @desc Handler click item
+		 * @param {number} userId
+		 * @private
+		 */
+		onClickItem(userId)
+		{
+			if (Type.isUndefined(userId))
+			{
+				return false;
+			}
+
+			const isBot = this.participantsService.isBotById(userId);
+			if (isBot)
+			{
+				return false;
+			}
+
+			return UserProfile.show(userId, { backdrop: true });
+		}
+
+		getEllipsisButton(item)
+		{
+			return View(
+				{
+					style: {
+						alignSelf: 'center',
+					},
+				},
+				ImageButton({
+					style: {
+						width: 24,
+						height: 24,
+					},
+					svg: { content: buttonIcons.ellipsis() },
+					onClick: () => {
+						this.onLongClickItem(item.key, item.userId, item.isYou);
+					},
+					testId: 'ITEM_ELLIPSIS_BUTTON',
+				}),
+			);
 		}
 
 		/**
@@ -590,19 +625,20 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 		}
 
 		iosOnLoadMore()
-		{}
-
-		iosRenderLoadMore()
 		{
-			if (this.state.participants.length > 0)
-			{
-				return null;
-			}
-
 			const participantsCount = this.participantsService.getUserCounter();
 			if (this.state.participants.length < participantsCount)
 			{
 				this.onLoadScrollItems();
+			}
+		}
+
+		iosRenderLoadMore()
+		{
+			const participantsCount = this.participantsService.getUserCounter();
+			if (this.state.participants.length >= participantsCount)
+			{
+				return null;
 			}
 
 			return this.loader;

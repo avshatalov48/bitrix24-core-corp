@@ -41,22 +41,26 @@ $canChangeOwner = $arResult['CAN_CHANGE_OWNER'];
 	</div>
 	<div class="crm_block_container blue_style_footer">
 		<div class="crm_card">
-			<table><tbody><tr>
-				<td class="tal">
-					<input type="checkbox" id="<?=$prefix?>_enable_notification" style="width: 22px;height: 22px;"<?=$enableNotification ? ' checked' : '' ?>/>
-				</td>
-				<td class="tal fwb" style="font-size: 13px; color: #75818b;"><?=htmlspecialcharsbx(GetMessage('M_CRM_ACTIVITY_EDIT_MEETING_FIELD_NOTIFY'))?></td>
-				<td class="tal fwb">
-					<input id="<?=$prefix?>_notify_value" type="text" class="crm_input_text" style="width: 35%;min-width:0;max-width: 35%;vertical-align: top;" value="<?= $entity['NOTIFY_VALUE'] > 0 ? $entity['NOTIFY_VALUE'] : 15 ?>" />
-					<select id="<?=$prefix?>_notify_type" style="width: 40%;min-width:0;max-width: 40%; vertical-align: top;" class="crm_input_select">
-						<?foreach($arResult['NOTIFY_TYPES'] as $notifyType):?>
-							<option value="<?=htmlspecialcharsbx($notifyType['value'])?>">
-								<?=htmlspecialcharsbx($notifyType['text'])?>
-							</option>
-						<?endforeach;?>
-					</select>
-				</td>
-			</tr></tbody></table>
+			<div class="flex-table">
+				<div class="flex-row">
+					<div class="flex-cell tal">
+						<input type="checkbox" id="<?=$prefix?>_enable_notification" style="width: 22px;height: 22px;"<?=$enableNotification ? ' checked' : '' ?>/>
+					</div>
+					<div class="flex-cell tal fwb" style="font-size: 13px; color: var(--base3)">
+						<?=htmlspecialcharsbx(GetMessage('M_CRM_ACTIVITY_EDIT_MEETING_FIELD_NOTIFY'))?>
+					</div>
+					<div class="flex-cell tal fwb">
+						<input id="<?=$prefix?>_notify_value" type="text" class="crm_input_text" style="width: 35%;min-width:0;max-width: 35%;" value="<?= $entity['NOTIFY_VALUE'] > 0 ? $entity['NOTIFY_VALUE'] : 15 ?>" />
+						<select id="<?=$prefix?>_notify_type" style="margin-left: 10px; width: 40%;min-width:0;max-width: 40%;" class="crm_input_select">
+							<?foreach($arResult['NOTIFY_TYPES'] as $notifyType):?>
+								<option value="<?=htmlspecialcharsbx($notifyType['value'])?>">
+									<?=htmlspecialcharsbx($notifyType['text'])?>
+								</option>
+							<?endforeach;?>
+						</select>
+					</div>
+				</div>
+			</div>
 		</div>
 		<div class="clearboth"></div>
 	</div>

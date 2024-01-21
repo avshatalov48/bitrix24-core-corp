@@ -2,14 +2,14 @@
 
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Crm;
+use Bitrix\Crm\Category\EntityTypeRelationsRepository;
+use Bitrix\Crm\Counter\EntityCounterType;
+use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm;
-use Bitrix\Crm\EntityAddress;
-use Bitrix\Crm\Counter\EntityCounterType;
-use Bitrix\Crm\Category\EntityTypeRelationsRepository;
 
 Loc::loadMessages(__FILE__);
 
@@ -266,6 +266,13 @@ class ContactDataProvider extends EntityDataProvider implements FactoryOptionabl
 					'partial' => true,
 				]
 			),
+			'OBSERVER_IDS' => $this->createField(
+				'OBSERVER_IDS',
+				[
+					'type' => 'entity_selector',
+					'partial' => true,
+				]
+			),
 		];
 
 		if ($this->isActivityResponsibleEnabled())
@@ -391,10 +398,10 @@ class ContactDataProvider extends EntityDataProvider implements FactoryOptionabl
 				'items' => \CCrmStatus::GetStatusList('CONTACT_TYPE')
 			);
 		}
-		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID', 'ACTIVITY_RESPONSIBLE_IDS'], true))
+		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID', 'ACTIVITY_RESPONSIBLE_IDS', 'OBSERVER_IDS'], true))
 		{
 			$referenceClass = ($this->factory ? $this->factory->getDataClass() : null);
-			if ($fieldID === 'ACTIVITY_RESPONSIBLE_IDS')
+			if (in_array($fieldID, ['ACTIVITY_RESPONSIBLE_IDS', 'OBSERVER_IDS'], true))
 			{
 				$referenceClass = null;
 			}

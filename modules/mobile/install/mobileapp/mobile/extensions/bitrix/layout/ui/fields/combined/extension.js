@@ -2,7 +2,7 @@
  * @module layout/ui/fields/combined
  */
 jn.define('layout/ui/fields/combined', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { BaseField } = require('layout/ui/fields/base');
 	const { useCallback } = require('utils/function');
 
@@ -207,9 +207,9 @@ jn.define('layout/ui/fields/combined', (require, exports, module) => {
 				primaryField.title = this.props.title;
 			}
 
-			primaryField.config = { ...config, ...(primaryField.config || {}) };
+			primaryField.config = { ...config, ...primaryField.config };
 			primaryField.config.deepMergeStyles = {
-				...(primaryField.config.deepMergeStyles || {}),
+				...primaryField.config.deepMergeStyles,
 				wrapper: { ...styles.primaryFieldWrapper },
 				readOnlyWrapper: { ...styles.primaryFieldWrapper },
 				title: { ...styles.primaryFieldTitle },
@@ -218,9 +218,9 @@ jn.define('layout/ui/fields/combined', (require, exports, module) => {
 				},
 			};
 
-			secondaryField.config = { ...config, ...(secondaryField.config || {}) };
+			secondaryField.config = { ...config, ...secondaryField.config };
 			secondaryField.config.deepMergeStyles = {
-				...(secondaryField.config.deepMergeStyles || {}),
+				...secondaryField.config.deepMergeStyles,
 				wrapper: { ...styles.secondaryFieldWrapper },
 				readOnlyWrapper: { ...styles.secondaryFieldWrapper },
 				title: { ...styles.secondaryFieldTitle },
@@ -322,7 +322,7 @@ jn.define('layout/ui/fields/combined', (require, exports, module) => {
 				secondaryFieldWrapper: {
 					flex: 0,
 					borderLeftWidth: 0.5,
-					borderLeftColor: '#dbdde0',
+					borderLeftColor: AppTheme.colors.bgSeparatorPrimary,
 					paddingTop: 0,
 					paddingBottom: 0,
 					paddingLeft: 14,
@@ -341,5 +341,4 @@ jn.define('layout/ui/fields/combined', (require, exports, module) => {
 		CombinedFieldClass: CombinedField,
 		CombinedField: (props) => new CombinedField(props),
 	};
-
 });

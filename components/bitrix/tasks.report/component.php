@@ -222,7 +222,7 @@ if (intval($arResult["FILTER"]["F_DEPARTMENT_ID"]) > 0)
 			'>LEFT_MARGIN' => $arSection['LEFT_MARGIN'],
 			'<RIGHT_MARGIN' => $arSection['RIGHT_MARGIN'],
 		);
-		$rsChildSections = CIBlockSection::GetList(array('left_margin' => asc), $arSubDepsFilter, false, array("ID"));
+		$rsChildSections = CIBlockSection::GetList(array('left_margin' => 'asc'), $arSubDepsFilter, false, array("ID"));
 		while ($arChildSection = $rsChildSections->GetNext())
 		{
 			$arDeps[] = $arChildSection["ID"];

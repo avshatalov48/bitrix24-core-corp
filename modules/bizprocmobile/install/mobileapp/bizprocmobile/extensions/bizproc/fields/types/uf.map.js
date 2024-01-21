@@ -1,0 +1,1 @@
+{"version":3,"file":"uf.map.js","names":["jn","define","require","exports","module","UfType","IBLOCK_ELEMENT","IBLOCK_SECTION","CRM_STATUS","CRM","MONEY","ADDRESS","URL"],"sources":["uf.js"],"mappings":"AAGAA,GAAGC,OAAO,2BAA2B,CAACC,EAASC,EAASC,KAEvD,MAAMC,EAAS,CACdC,eAAgB,oBAChBC,eAAgB,oBAChBC,WAAY,gBACZC,IAAK,SAELC,MAAO,WACPC,QAAS,aACTC,IAAK,UAGNR,EAAOD,QAAU,CAAEE,SAAQ"}

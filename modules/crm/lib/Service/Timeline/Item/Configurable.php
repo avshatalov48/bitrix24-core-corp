@@ -102,9 +102,10 @@ abstract class Configurable extends Item
 			'type' => $this->getType(),
 			'id' => $this->getModel()->getId(),
 			'payload' => $this->getPayload(),
-			'timestamp' => $this->getModel()->getDate() ? $this->getModel()->getDate()->getTimestamp() : null,
+			'timestamp' => $this->getModel()->getDate()?->getTimestamp(),
 			'sort' => $this->getSort(),
-			'languageId' => \Bitrix\Main\Context::getCurrent()->getLanguage(),
+			'languageId' => \Bitrix\Main\Context::getCurrent()?->getLanguage(),
+			'targetUsersList' => $this->getListOfTargetUsers(),
 			'canBeReloaded' => $this->canBeReloaded(),
 		];
 	}
@@ -216,7 +217,7 @@ abstract class Configurable extends Item
 	}
 
 	/**
-	 * By default item is pinnable if it has title
+	 * By default, item is pinnable if it has title
 	 *
 	 * @return bool
 	 */
@@ -454,7 +455,7 @@ abstract class Configurable extends Item
 				->setDetailsText(Loc::getMessage('CRM_TIMELINE_MARKET_PANEL_TEXT_DETAILS'))
 				->setDetailsTextAction(
 					$placementCode
-						? new Redirect(new Uri('/marketplace/?placement=' . $placementCode))
+						? new Redirect(new Uri(\Bitrix\Crm\Integration\Market\Router::getBasePath() . '?placement=' . $placementCode))
 						: null
 				)
 			;
@@ -487,7 +488,7 @@ abstract class Configurable extends Item
 
 	protected function buildClientBlock(int $options = 0, string $blockTitle = null): ?Layout\Body\ContentBlock
 	{
-		$communication = $this->getAssociatedEntityModel()->get('COMMUNICATION') ?? [];
+		$communication = $this->getAssociatedEntityModel()?->get('COMMUNICATION') ?? [];
 		if (empty($communication))
 		{
 			return null;
@@ -556,6 +557,26 @@ abstract class Configurable extends Item
 	public function getNoteItemId(): int
 	{
 		return $this->model->getId();
+	}
+
+	/**
+	 * Returns list of user ids that this item was built for
+	 *
+	 * @return int[]
+	 */
+	protected function getListOfTargetUsers(): array
+	{
+		if ($this->isBuiltOnlyForCurrentUser())
+		{
+			return [$this->getContext()->getUserId()];
+		}
+
+		return [];
+	}
+
+	protected function isBuiltOnlyForCurrentUser(): bool
+	{
+		return false;
 	}
 
 	/**

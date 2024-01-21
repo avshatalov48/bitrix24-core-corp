@@ -2,6 +2,7 @@
  * @module layout/ui/detail-card
  */
 jn.define('layout/ui/detail-card', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Alert } = require('alert');
 	const { AnalyticsLabel } = require('analytics-label');
 	const { EventEmitter } = require('event-emitter');
@@ -143,13 +144,6 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 		{
 			this.customEventEmitter.emit('DetailCard::didMount');
 			this.mounted = true;
-
-			const { backdropEnabled = false } = this.getComponentParams();
-			if (backdropEnabled && Feature.isPreventBottomSheetDismissSupported())
-			{
-				this.layout.preventBottomSheetDismiss(true);
-				this.layout.on('preventDismiss', () => this.handleExitFromEntity());
-			}
 
 			this.bindEvents();
 			this.checkToolbarPanel();
@@ -300,7 +294,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 						name: this.getSaveButtonTitle(),
 						type: 'text',
 						badgeCode: 'save_entity',
-						color: this.isLoading ? '#8ebad4' : '#2066b0',
+						color: this.isLoading ? AppTheme.colors.accentSoftBlue1 : AppTheme.colors.accentMainLinks,
 						callback: this.handleSave,
 					});
 				}
@@ -578,18 +572,20 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			return TabView({
 				style: {
 					height: TAB_HEADER_HEIGHT,
-					backgroundColor: '#f5f7f8',
+					backgroundColor: AppTheme.colors.bgNavigation,
 				},
 				params: {
 					styles: {
 						tabTitle: {
-							underlineColor: '#207ede',
+							underlineColor: AppTheme.colors.accentExtraDarkblue,
 						},
 					},
 					items: this.availableTabs.map((tab) => this.prepareTabViewItem(tab)),
 				},
 				onTabSelected: (tab, changed) => this.handleTabClick(tab, changed),
-				ref: (ref) => this.tabViewRef = ref,
+				ref: (ref) => {
+					this.tabViewRef = ref;
+				},
 			});
 		}
 
@@ -736,7 +732,9 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 					},
 					{
 						...this.getComponentParams(),
-						ref: (ref) => this.topToolbarRef = ref,
+						ref: (ref) => {
+							this.topToolbarRef = ref;
+						},
 						detailCard: this,
 						animation: {
 							duration,
@@ -778,7 +776,9 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 						flex: 1,
 					},
 					initPage: Math.max(0, initPage),
-					ref: (ref) => this.sliderRef = ref,
+					ref: (ref) => {
+						this.sliderRef = ref;
+					},
 					onPageWillChange: this.handleSliderPageWillChange.bind(this),
 					onPageChange: this.handleSliderPageChange.bind(this),
 					onLayout: (coords) => this.sliderViewCoords = coords,
@@ -790,7 +790,9 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 		renderTopPadding()
 		{
 			return new ToolbarPadding({
-				ref: (ref) => this.topPaddingRef = ref,
+				ref: (ref) => {
+					this.topPaddingRef = ref;
+				},
 				height: TOP_TOOLBAR_HEIGHT - 1,
 				animation: {
 					duration: DURATION,
@@ -809,7 +811,9 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			if (this.isFloatingButtonEnabled)
 			{
 				return new FloatingButton({
-					ref: (ref) => this.floatingButtonRef = ref,
+					ref: (ref) => {
+						this.floatingButtonRef = ref;
+					},
 					detailCard: this,
 					provider: this.floatingButtonProvider,
 				});
@@ -945,6 +949,11 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 				return Promise.resolve();
 			}
 
+			if (this.props.reloadWithDataHandler)
+			{
+				this.props.reloadWithDataHandler(tabsData);
+			}
+
 			const newTabs = this.getAvailableTabs();
 			if (!isEqual(this.availableTabs, newTabs))
 			{
@@ -1009,6 +1018,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 						},
 						result: hasTabsData ? tabData && tabData.result : undefined,
 						externalData: tabsExternalData && tabsExternalData[tabId],
+						onFetchHandler: tab.onFetchHandler ?? null,
 						onErrorHandler: this.ajaxErrorHandler,
 						onContentLoaded: this.handleTabContentLoaded.bind(this, tabId),
 						onScroll: (scrollParams) => this.handleTabScroll(scrollParams, tabId),
@@ -1836,7 +1846,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 				{
 					resizableByKeyboard: true,
 					style: {
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgPrimary,
 					},
 				},
 				this.renderTabHeader(),
@@ -2104,8 +2114,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 				})
 				.catch((response) => {
 					console.warn('Unable to load tab counters', response);
-				})
-			;
+				});
 		}
 
 		emitReloadEntityDocumentList()

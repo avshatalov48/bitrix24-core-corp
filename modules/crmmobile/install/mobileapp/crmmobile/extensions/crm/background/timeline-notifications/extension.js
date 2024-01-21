@@ -11,10 +11,7 @@
 	{
 		constructor()
 		{
-			if (Application.getApiVersion() >= 45)
-			{
-				PushListener.subscribe(PING_CREATED_MESSAGE_TYPE, this.handlePingCreatedMessage.bind(this));
-			}
+			PushListener.subscribe(PING_CREATED_MESSAGE_TYPE, this.handlePingCreatedMessage.bind(this));
 		}
 
 		async handlePingCreatedMessage(message)

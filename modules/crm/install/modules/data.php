@@ -1872,7 +1872,10 @@ foreach ($dynamicEntityTypeList as $type)
 
 if ($DB->TableExists("b_crm_shipment_realization") && $DB->TableExists("b_sale_order_delivery"))
 {
-	$DB->query("INSERT IGNORE INTO b_crm_shipment_realization (SHIPMENT_ID, IS_REALIZATION) SELECT ID, 'Y' FROM b_sale_order_delivery;");
+	$connection = \Bitrix\Main\Application::getConnection();
+	$helper = $connection->getSqlHelper();
+	$sql = $helper->getInsertIgnore("b_crm_shipment_realization", "(SHIPMENT_ID, IS_REALIZATION)", "SELECT ID, 'Y' FROM b_sale_order_delivery");
+	$DB->query($sql);
 }
 
 // catalog rights
@@ -1882,10 +1885,3 @@ if (!\Bitrix\Catalog\Access\Permission\PermissionTable::getCount())
 }
 
 \Bitrix\Main\Config\Option::set('crm', 'enable_entity_commodity_item_creation', 'N');
-
-$platformCode = \Bitrix\Crm\Order\TradingPlatform\Terminal::TRADING_PLATFORM_CODE;
-$platform = \Bitrix\Crm\Order\TradingPlatform\Terminal::getInstanceByCode($platformCode);
-if (!$platform->isInstalled())
-{
-	$platform->install();
-}

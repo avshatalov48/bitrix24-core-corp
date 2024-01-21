@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Component\EntityList;
 
+use Bitrix\Crm\Component\EntityList\UserField\GridHeaders;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Field;
 use Bitrix\Main\Localization\Loc;
@@ -275,6 +276,12 @@ abstract class ClientDataProvider
 			$sections[] = $contactsSection;
 		}
 
+		$sections[] = [
+			'id' => 'ACTIVITY_FASTSEARCH',
+			'name' =>  'ACTIVITY_FASTSEARCH',
+			'selected' => true,
+		];
+
 		return $sections;
 	}
 
@@ -438,7 +445,10 @@ abstract class ClientDataProvider
 	protected function getUfHeaders(): array
 	{
 		$result = [];
-		$this->ufManager->ListAddHeaders($result);
+		(new GridHeaders($this->ufManager))
+			->append($result)
+		;
+
 		foreach ($result as &$field)
 		{
 			if ($this->isExportMode)

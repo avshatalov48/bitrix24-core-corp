@@ -1777,6 +1777,11 @@ class UStat
 
 		foreach ($absenceData as $absence)
 		{
+			if (!isset($absence['DT_FROM_TS'], $absence['DT_TO_TS']))
+			{
+				continue;
+			}
+
 			if (
 				// today is one of absence day
 				($absence['DT_FROM_TS'] < $todayTimestamp && $absence['DT_TO_TS'] >= $tomorrowTimeStamp) ||

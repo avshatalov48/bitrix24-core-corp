@@ -17,9 +17,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Component\EntityList\ActionManager;
 use Bitrix\Crm\Conversion\EntityConverter;
 use Bitrix\Crm\Conversion\LeadConversionScheme;
 use Bitrix\Crm\Integration;
+use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
@@ -193,6 +195,10 @@ if ($arResult['NEED_ADD_ACTIVITY_BLOCK'] ?? false)
 	$arResult['LEAD'] = (new \Bitrix\Crm\Component\EntityList\NearestActivity\Manager(CCrmOwnerType::Lead))->appendNearestActivityBlock($arResult['LEAD']);
 }
 
+$toolsManager = Container::getInstance()->getIntranetToolsManager();
+$availabilityManager = AvailabilityManager::getInstance();
+$isQuoteAvailable = $toolsManager->checkEntityTypeAvailability(\CCrmOwnerType::Quote);
+
 foreach($arResult['LEAD'] as $sKey => $arLead)
 {
 	$arActivityMenuItems = [];
@@ -265,12 +271,24 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 
 			$arSchemeList = [];
 
+			$curPage = CUtil::JSEscape($APPLICATION->GetCurPage());
+
 			foreach($arSchemeDescriptions as $name => $description)
 			{
+				$entityTypeId = \CCrmOwnerType::ResolveID($name);
+				if ($toolsManager->checkEntityTypeAvailability($entityTypeId))
+				{
+					$onClick = "BX.CrmLeadConverter.getCurrent().convert({$arLead['ID']}, BX.CrmLeadConversionScheme.createConfig('{$name}'), '" . $curPage . "');";
+				}
+				else
+				{
+					$onClick = $availabilityManager->getEntityTypeAvailabilityLock($entityTypeId);
+				}
+
 				$arSchemeList[] = [
 					'TITLE' => $description,
 					'TEXT' => $description,
-					'ONCLICK' => "BX.CrmLeadConverter.getCurrent().convert({$arLead['ID']}, BX.CrmLeadConversionScheme.createConfig('{$name}'), '".CUtil::JSEscape($APPLICATION->GetCurPage())."');"
+					'ONCLICK' => $onClick,
 				];
 			}
 
@@ -314,14 +332,12 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 
 		if ($arLead['EDIT'])
 		{
-			if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled())
-			{
-				$currentUser = CUtil::PhpToJSObject(CCrmViewHelper::getUserInfo(true, false));
-				$arActivitySubMenuItems[] = [
-					'TEXT' => Loc::getMessage('CRM_LEAD_ADD_TODO'),
-					'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Lead . ", " . (int)$arLead['ID'] . ", " . $currentUser . ");"
-				];
-			}
+			$currentUser = CUtil::PhpToJSObject(CCrmViewHelper::getUserInfo(true, false));
+			$pingSettings = CUtil::PhpToJSObject((new TodoPingSettingsProvider(\CCrmOwnerType::Lead))->fetchForJsComponent());
+			$arActivitySubMenuItems[] = [
+				'TEXT' => Loc::getMessage('CRM_LEAD_ADD_TODO'),
+				'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Lead . ", " . (int)$arLead['ID'] . ", " . $currentUser . ", " . $pingSettings . ");"
+			];
 
 			if (IsModuleInstalled('subscribe'))
 			{
@@ -426,17 +442,26 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 
 			if (IsModuleInstalled('sale'))
 			{
+				if ($isQuoteAvailable)
+				{
+					$onClick = "jsUtils.Redirect([], '" . CUtil::JSEscape($arContact['PATH_TO_QUOTE_ADD']) . "');";
+				}
+				else
+				{
+					$onClick = $availabilityManager->getEntityTypeAvailabilityLock(\CCrmOwnerType::Quote);
+				}
+
 				$quoteAction = [
 					'TITLE' => Loc::getMessage('CRM_LEAD_ADD_QUOTE_TITLE_MSGVER_1'),
 					'TEXT' => Loc::getMessage('CRM_LEAD_ADD_QUOTE_MSGVER_1'),
-					'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arLead['PATH_TO_QUOTE_ADD'])."');",
+					'ONCLICK' => $onClick,
 				];
 
-				if (\Bitrix\Crm\Settings\QuoteSettings::getCurrent()->isFactoryEnabled())
+				if ($isQuoteAvailable && \Bitrix\Crm\Settings\QuoteSettings::getCurrent()->isFactoryEnabled())
 				{
 					unset($quoteAction['ONCLICK']);
 
-					$link = \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+					$link = Container::getInstance()->getRouter()->getItemDetailUrl(
 						\CCrmOwnerType::Quote,
 						0,
 						null
@@ -900,9 +925,11 @@ if (!$isInternal
 	if ($allowWrite)
 	{
 		//region Edit Button
-		$controlPanel['GROUPS'][0]['ITEMS'][] = $snippet->getEditButton();
-		$actionList[] = $snippet->getEditAction();
+		$actionManager = new ActionManager($gridManagerID);
+		$controlPanel['GROUPS'][0]['ITEMS'][] = $actionManager->getEditButton();
+		$actionList[] = $actionManager->getEditAction();
 		//endregion
+
 		//region Mark as Opened
 		$actionList[] = array(
 			'NAME' => Loc::getMessage('CRM_LEAD_MARK_AS_OPENED'),
@@ -1211,24 +1238,36 @@ $APPLICATION->IncludeComponent(
 <?php if (
 	!$isInternal
 	&& \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('IFRAME') !== 'Y'
-): ?>
+):
+	\Bitrix\Main\UI\Extension::load(['crm.settings-button-extender', 'crm.toolbar-component']);
+	?>
 <script type="text/javascript">
 	BX.ready(
 		function()
 		{
-			BX.Runtime.loadExtension(['crm.push-crm-settings', 'crm.toolbar-component']).then((exports) => {
-				/** @see BX.Crm.ToolbarComponent */
-				const settingsButton = exports.ToolbarComponent.Instance.getSettingsButton();
-
-				/** @see BX.Crm.PushCrmSettings */
-				new exports.PushCrmSettings({
+			const settingsButton = BX.Crm.ToolbarComponent.Instance.getSettingsButton();
+			const settingsMenu = settingsButton ? settingsButton.getMenuWindow() : undefined;
+			if (settingsMenu)
+			{
+				new BX.Crm.SettingsButtonExtender({
 					smartActivityNotificationSupported: <?= Container::getInstance()->getFactory(\CCrmOwnerType::Lead)->isSmartActivityNotificationSupported() ? 'true' : 'false' ?>,
 					entityTypeId: <?= \CCrmOwnerType::Lead ?>,
+					categoryId: <?= isset($arResult['CATEGORY_ID']) ? (int)$arResult['CATEGORY_ID'] : 'null' ?>,
 					pingSettings: <?= \CUtil::PhpToJSObject((new TodoPingSettingsProvider(\CCrmOwnerType::Lead))->fetchAll()) ?>,
-					rootMenu: settingsButton ? settingsButton.getMenuWindow() : undefined,
+					rootMenu: settingsMenu,
 					grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
+					<?php if (
+						\Bitrix\Crm\Integration\AI\AIManager::isAiCallAutomaticProcessingAllowed()
+						&& in_array(\CCrmOwnerType::Lead, \Bitrix\Crm\Integration\AI\AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
+						&& Container::getInstance()->getUserPermissions()->isAdmin()
+					): ?>
+					aiAutostartSettings: '<?= \Bitrix\Main\Web\Json::encode(\Bitrix\Crm\Integration\AI\Operation\AutostartSettings::get(
+						\CCrmOwnerType::Lead,
+						isset($arResult['CATEGORY_ID']) ? (int)$arResult['CATEGORY_ID'] : null,
+					)) ?>',
+					<?php endif; ?>
 				});
-			});
+			}
 		}
 	);
 </script>

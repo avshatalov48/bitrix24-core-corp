@@ -9,6 +9,7 @@ jn.define('im/messenger/controller/reaction-viewer/controller', (require, export
 	const { EventType } = require('im/messenger/const');
 	const { ChatAvatar, ChatTitle } = require('im/messenger/lib/element');
 	const { Haptics } = require('haptics');
+	const { Loc } = require('loc');
 
 	let isWidgetOpen = false;
 	class ReactionViewerController
@@ -42,15 +43,15 @@ jn.define('im/messenger/controller/reaction-viewer/controller', (require, export
 			/** @type {PageManager} */
 			this.parentLayout = parentLayout;
 			this.reactionService = new ReactionService(messageId);
-			/** @type {Map<ReactionType, boolean>} */
+			/** @type {Map<AllReactions, boolean>} */
 			this.hasNextPage = new Map();
 
-			/** @type {Map<ReactionType, ReactionViewerUser[]>} */
+			/** @type {Map<AllReactions, ReactionViewerUser[]>} */
 			this.users = new Map();
 
-			this.currentReaction = reactionType;
+			this.currentReaction = 'all';
 			this.messageId = messageId;
-			/** @type {Map<ReactionType, number>} */
+			/** @type {Map<AllReactions, number>} */
 			this.counters = new Map();
 		}
 
@@ -62,7 +63,7 @@ jn.define('im/messenger/controller/reaction-viewer/controller', (require, export
 			const layoutWidget = await this.parentLayout.openWidget('layout', {
 				backdrop: {
 					horizontalSwipeAllowed: false,
-					mediumPositionPercent: 45,
+					mediumPositionPercent: 50,
 					topPosition: 150,
 					onlyMediumPosition: false,
 					hideNavigationBar: true,
@@ -85,7 +86,6 @@ jn.define('im/messenger/controller/reaction-viewer/controller', (require, export
 					}));
 				},
 			});
-
 			layoutWidget.on('onViewRemoved', () => {
 				isWidgetOpen = false;
 			});
@@ -93,7 +93,7 @@ jn.define('im/messenger/controller/reaction-viewer/controller', (require, export
 
 		/**
 		 * @private
-		 * @param {ReactionType} reactionType
+		 * @param {AllReactions} reactionType
 		 * @return Promise<void>
 		 */
 		async initUserList(reactionType)
@@ -112,10 +112,14 @@ jn.define('im/messenger/controller/reaction-viewer/controller', (require, export
 		{
 			const reactionModelState = this.store.getters['messagesModel/reactionsModel/getByMessageId'](this.messageId);
 
+			let summary = 0;
 			for (const [reactionType, counter] of Object.entries(reactionModelState.reactionCounters))
 			{
+				summary += counter;
 				this.counters.set(reactionType, counter);
 			}
+
+			this.counters.set('all', summary);
 		}
 
 		/**
@@ -128,11 +132,13 @@ jn.define('im/messenger/controller/reaction-viewer/controller', (require, export
 		{
 			const { reactionViewerUsers, hasNextPage } = await this.reactionService.getReactions(reactionType, lastId);
 
-			this.users.set(reactionType, reactionViewerUsers);
+			/** @type {Array<ReactionViewerUser>} */
+			const users = [...(this.users.get(reactionType) ?? []), ...reactionViewerUsers];
+			this.users.set(reactionType, users);
 
 			this.hasNextPage.set(reactionType, hasNextPage);
 
-			return { reactionViewerUsers, hasNextPage };
+			return { users, hasNextPage };
 		}
 
 		/**

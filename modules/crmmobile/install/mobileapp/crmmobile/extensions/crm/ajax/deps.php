@@ -1,7 +1,7 @@
 <?php
 return [
 	'extensions' => [
-		'rest',
+		'rest/run-action-executor',
 	],
 	'bundle' => [
 		'./base',

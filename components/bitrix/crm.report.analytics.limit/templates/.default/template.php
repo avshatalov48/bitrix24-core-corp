@@ -5,8 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
-use Bitrix\Main\UI\Extension;
 use Bitrix\Bitrix24\Feature;
+use Bitrix\Main\UI\Extension;
 
 Extension::load(['ui.icons', 'ui.fonts.opensans']);
 
@@ -14,9 +14,16 @@ $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . ' no-background no-all-paddings pagetitle-toolbar-field-view ');
 $APPLICATION->IncludeComponent('bitrix:ui.info.helper', '');
 
-$sliderCode = Feature::isFeatureEnabled('crm_analytics_limit_reached')
-	? 'limit_crm_analytics_max_number'
-	: 'limit_crm_analytics_1000_number';
+$sliderCode = $arResult['SLIDER_CODE'] ?? null;
+
+if (!$sliderCode)
+{
+	$sliderCode = (
+		Feature::isFeatureEnabled('crm_analytics_limit_reached')
+			? 'limit_crm_analytics_max_number'
+			: 'limit_crm_analytics_1000_number'
+	);
+}
 
 $isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
 if ($isBitrix24Template)

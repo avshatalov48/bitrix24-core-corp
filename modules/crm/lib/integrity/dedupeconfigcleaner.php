@@ -14,7 +14,7 @@ class DedupeConfigCleaner
 		$helper = $connection->getSqlHelper();
 
 		$conditions = [];
-		$fieldNameSql = '`NAME`';
+		$fieldNameSql = $helper->quote('NAME');
 		foreach ($entityTypeIds as $entityTypeId)
 		{
 			$entityTypeNameSql = mb_strtolower(CCrmOwnerType::ResolveName($entityTypeId));
@@ -26,7 +26,7 @@ class DedupeConfigCleaner
 		$categorySql = $helper->forSql(DedupeConfig::OPTION_KEY);
 
 		return $connection->query(
-			"SELECT ID, USER_ID, `NAME` FROM b_user_option WHERE CATEGORY = '$categorySql'$nameConditionSql"
+			"SELECT ID, USER_ID, $fieldNameSql FROM b_user_option WHERE CATEGORY = '$categorySql'$nameConditionSql"
 		);
 	}
 

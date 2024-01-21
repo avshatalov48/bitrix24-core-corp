@@ -34,18 +34,6 @@
 	padding: 10px 0;
 }
 
-.new-from-email-dialog-hint-icon {
-	margin-left: 5px;
-	background: #bfc5ca;
-	color: #ffffff;
-	height: 16px;
-	width: 16px;
-	line-height: 17px;
-	text-align: center;
-	border-radius: 50%;
-	font-size: 12px;
-}
-
 .crm-task-list-mail-item-inner-body blockquote {
 	margin: 0 0 0 5px;
 	padding: 5px 5px 5px 8px;
@@ -55,4 +43,13 @@
 .crm-mail-message-wrapper
 {
 	overflow-x: auto;
+}
+
+.crm-task-list-mail-border-bottom .ui-alert {
+	margin-bottom: 0;
+	flex-direction: column;
+}
+.crm-mail-message-alert-progress {
+	width: 100%;
+	margin-top: 0.5em;
 }

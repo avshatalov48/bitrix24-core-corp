@@ -6,14 +6,16 @@ return [
 		'loc',
 		'notify',
 		'haptics',
+		'apptheme',
 		'utils/color',
 		'utils/string',
 		'notify-manager',
 		'layout/ui/wizard/backdrop',
+		'statemanager/redux/store',
 
 		'crm:type',
 		'crm:conversion/utils',
-		'crm:storage/category',
 		'crm:crm-mode/wizard/steps',
+		'crm:statemanager/redux/slices/kanban-settings',
 	],
 ];

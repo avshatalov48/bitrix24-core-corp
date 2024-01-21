@@ -744,9 +744,13 @@ final class OnlyOffice extends Engine\Controller
 		{
 			$tmpFile = $downloadResult->getData()['file'];
 			$tmpFileArray = \CFile::makeFileArray($tmpFile);
-			if ($tmpFileArray['type'] === 'application/encrypted')
+			if (\in_array($tmpFileArray['type'], [
+				'application/encrypted',
+				'application/zip',
+			], true))
 			{
-				$tmpFileArray['type'] = MimeType::getByFilename($documentSession->getObject()->getName());
+				$fileType = $payloadData['filetype'] ?? $documentSession->getObject()->getExtension();
+				$tmpFileArray['type'] = MimeType::getByFileExtension($fileType);
 			}
 
 			$payloadData['users'] = $payloadData['users'] ?? [$documentSession->getUserId()];

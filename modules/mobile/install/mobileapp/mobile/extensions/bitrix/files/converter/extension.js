@@ -1,13 +1,15 @@
-jn.define("files/converter", function (require, exports, module) {
+/**
+ * @module files/converter
+ */
+jn.define('files/converter', (require, exports, module) => {
+	include('MediaConverter');
 
-	include("MediaConverter");
-
-	class FileConverter {
+	class FileConverter
+	{
 		constructor()
 		{
 			this.promiseList = {};
-			MediaConverter.setListener((event, data) =>
-			{
+			MediaConverter.setListener((event, data) => {
 				if (this.promiseList[data.id])
 				{
 					this.promiseList[data.id](event, data);
@@ -17,15 +19,13 @@ jn.define("files/converter", function (require, exports, module) {
 		}
 
 		resize(taskId, params) {
-			return new Promise((resolve, reject) =>
-			{
-				this.promiseList[taskId] = (event, data) =>
-				{
-					if (event === "onSuccess")
+			return new Promise((resolve, reject) => {
+				this.promiseList[taskId] = (event, data) => {
+					if (event === 'onSuccess')
 					{
-						if (data.path.indexOf("file://") === -1)
+						if (!data.path.includes('file://'))
 						{
-							data.path = "file://" + data.path;
+							data.path = `file://${data.path}`;
 						}
 						resolve(data.path);
 					}
@@ -39,10 +39,10 @@ jn.define("files/converter", function (require, exports, module) {
 			});
 		}
 
-		cancel(id){
-			MediaConverter.cancel(id)
+		cancel(id) {
+			MediaConverter.cancel(id);
 		}
 	}
 
-	module.exports = { FileConverter }
+	module.exports = { FileConverter };
 });

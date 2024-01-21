@@ -34,7 +34,7 @@ jn.define('crm/entity-tab/type', (require, exports, module) => {
 
 		/**
 		 * @param {Object} params
-		 * @returns {null|Object}
+		 * @returns {null|Base}
 		 */
 		getEntity(params)
 		{

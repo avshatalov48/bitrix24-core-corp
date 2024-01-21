@@ -188,7 +188,7 @@ FROM
 	{
 		global $DB;
 
-		return '
+		return $DB->TopSql('
 SELECT
 	E.*,
 	'.$DB->DateToCharFunction("TIMESTAMP_X", "FULL").' TIMESTAMP_X,
@@ -197,8 +197,7 @@ SELECT
 FROM b_timeman_entries E
 WHERE USER_ID=\''.intval($USER_ID).'\'
 ORDER BY ID DESC
-LIMIT 0,1
-';
+', 1);
 	}
 
 }

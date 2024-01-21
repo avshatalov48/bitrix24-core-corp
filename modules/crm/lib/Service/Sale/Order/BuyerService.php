@@ -59,16 +59,17 @@ class BuyerService
 		}
 
 		// set external auth id
-		$userNotHasExternalAuth = UserTable::getRow([
+		$userTableObject = UserTable::getList([
 			'select' => [
 				'ID',
+				'GROUPS',
 			],
 			'filter' => [
 				'=ID' => $userId,
 				'=EXTERNAL_AUTH_ID' => null,
 			],
-		]) !== null;
-		if ($userNotHasExternalAuth)
+		])->fetchObject();
+		if ($userTableObject && !$userTableObject->getGroups()->getByPrimary(['USER_ID' => $userId, 'GROUP_ID' => 1]))
 		{
 			$user = new CUser();
 			$user->Update($userId, [

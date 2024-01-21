@@ -1,10 +1,11 @@
 (() => {
-	include("InAppNotifier");
+	include('InAppNotifier');
 
 	const require = (ext) => jn.require(ext);
 
 	const { md5 } = require('utils/hash');
 	const { stringify } = require('utils/string');
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @class Notify
@@ -24,15 +25,19 @@
 		 * @param {Boolean?} options.blur
 		 * @param {Object?} options.data
 		 */
-		static showMessage(message = "", title = "", options = {})
+		static showMessage(message = '', title = '', options = {})
 		{
 			message = stringify(message);
 			title = stringify(title);
 
-			if (typeof InAppNotifier !== "undefined")
+			if (typeof InAppNotifier === 'undefined')
+			{
+				navigator.notification.alert(message, () => {}, title, 'OK');
+			}
+			else
 			{
 				InAppNotifier.showNotification({
-					backgroundColor: "#004f69",
+					backgroundColor: AppTheme.colors.accentSoftElementBlue1,
 					time: 2,
 					blur: true,
 					...options,
@@ -40,14 +45,9 @@
 					title,
 				});
 			}
-			else
-			{
-				navigator.notification.alert(message, () => {
-				}, title, 'OK');
-			}
 		}
 
-		static showUniqueMessage(message = "", title = "", options = {})
+		static showUniqueMessage(message = '', title = '', options = {})
 		{
 			let { code } = options;
 			if (!code)
@@ -60,41 +60,45 @@
 
 		static showIndicatorSuccess(options = {}, delay = 0)
 		{
-			options.type = "success";
+			options.type = 'success';
 			Notify.showIndicatorWithFallback(options, delay);
 		}
 
 		static showIndicatorLoading(options = {}, delay = 0)
 		{
-			options.type = "loading";
+			options.type = 'loading';
+
 			return Notify.showIndicator(options, delay);
 		}
 
 		static showIndicatorError(options, delay = 0)
 		{
-			options.type = "error";
+			options.type = 'error';
 			Notify.showIndicatorWithFallback(options, delay);
 		}
 
 		static showIndicatorWithFallback(options = {}, delay = 0)
 		{
-			ifApi(29,
-				() => Notify.showIndicator(options, delay))
-				.elseIf(options["fallbackText"],
+			ifApi(
+				29,
+				() => Notify.showIndicator(options, delay),
+			)
+				.elseIf(
+					options.fallbackText,
 					() => {
 						this.hideCurrentIndicator();
-						Notify.showMessage(options["fallbackText"], options.title);
-					});
+						Notify.showMessage(options.fallbackText, options.title);
+					},
+				);
 		}
 
-		static showIndicator(options = { type: "loading" }, delay = 0)
+		static showIndicator(options = { type: 'loading' }, delay = 0)
 		{
 			const show = (resolve) => {
 				dialogs.showLoadingIndicator(options);
 				setTimeout(() => {
 					resolve();
 				}, 150);
-
 			};
 
 			return new Promise((resolve) => {
@@ -116,7 +120,7 @@
 			dialogs.hideLoadingIndicator();
 		}
 
-		static alert(message, title = "", buttonLabel = "OK", callback = () => {
+		static alert(message, title = '', buttonLabel = 'OK', callback = () => {
 		})
 		{
 			navigator.notification.alert(message, callback, title, buttonLabel);

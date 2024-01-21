@@ -15,6 +15,7 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 	const { TimeAgo } = require('layout/ui/friendly-date/time-ago');
 	const { Haptics } = require('haptics');
 	const { Alert } = require('alert');
+	const AppTheme = require('apptheme');
 	const {
 		makeCancelButton,
 		makeButton,
@@ -114,7 +115,7 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 						style: {
 							fontSize: 15,
 							fontWeight: '500',
-							color: '#333333',
+							color: AppTheme.colors.base1,
 							marginRight: 6,
 						},
 					}),
@@ -189,7 +190,7 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 			const moment = Moment.createFromTimestamp(this.props.date);
 			const dateFormat = moment.inThisYear ? dayMonth() : longDate();
 			const style = {
-				color: '#a8adb4',
+				color: AppTheme.colors.base4,
 				fontSize: 13,
 				fontWeight: '400',
 			};
@@ -330,3 +331,4 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 
 	module.exports = { TimelineItemHeader };
 });
+

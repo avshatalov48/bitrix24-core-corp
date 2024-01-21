@@ -16,7 +16,7 @@ abstract class Base
 		}
 
 		$stringConstants = [];
-		foreach ($reflection->getConstants() as $constant => $value)
+		foreach ($constants as $constant => $value)
 		{
 			$stringConstants[$constant] = (string)$value;
 		}

@@ -1,13 +1,13 @@
-<?
+<?php
 namespace Bitrix\Intranet;
 
 use Bitrix\Bitrix24\Sso;
 use Bitrix\Intranet\Internals\InvitationTable;
-use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main;
 use Bitrix\Socialservices\Network;
 
 class Invitation
@@ -156,7 +156,7 @@ class Invitation
 		return $canEdit;
 	}
 
-	private static function getRegisterSettings()
+	public static function getRegisterSettings(): ?array
 	{
 		static $result = null;
 
@@ -172,23 +172,43 @@ class Invitation
 		return $result;
 	}
 
-	public static function getRegisterUrl(): string
+	public static function getRegisterUri(): ?Main\Web\Uri
 	{
-		$result = '';
-
 		$registerSettings = self::getRegisterSettings();
-		if (
-			!empty($registerSettings)
-			&& isset($registerSettings['REGISTER'])
-			&& $registerSettings['REGISTER'] == 'Y'
-		)
+
+		if (!empty($registerSettings) && isset($registerSettings['REGISTER_SECRET']))
 		{
 			$secret = $registerSettings['REGISTER_SECRET'];
-			$result = (\Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? 'https://' : 'http://')
-				.(defined('BX24_HOST_NAME')? BX24_HOST_NAME: SITE_SERVER_NAME).'/?secret='.($secret <> '' ? urlencode($secret) : 'yes');
+			$serverName = Main\Config\Option::get('main', 'server_name');
+
+			if (defined('BX24_HOST_NAME') && !empty(BX24_HOST_NAME))
+			{
+				$serverName = BX24_HOST_NAME;
+			}
+			else if (defined('SITE_SERVER_NAME') && !empty(SITE_SERVER_NAME))
+			{
+				$serverName = SITE_SERVER_NAME;
+			}
+
+			$uri = new Main\Web\Uri((Main\Context::getCurrent()->getRequest()->isHttps() ? 'https://' : 'http://') . $serverName);
+			$uri->addParams(['secret' => ($secret <> '' ? urlencode($secret) : 'yes')]);
+
+			return $uri;
 		}
 
-		return $result;
+		return null;
+	}
+
+	public static function getRegisterUrl(): string
+	{
+		$registerSettings = self::getRegisterSettings();
+
+		if (!empty($registerSettings) && isset($registerSettings['REGISTER']) && $registerSettings['REGISTER'] == 'Y')
+		{
+			return self::getRegisterUri()?->getUri();
+		}
+
+		return '';
 	}
 
 	public static function getRegisterAdminConfirm(): bool

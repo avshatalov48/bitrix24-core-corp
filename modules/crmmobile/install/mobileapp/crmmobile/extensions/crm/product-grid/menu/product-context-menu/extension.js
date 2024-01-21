@@ -3,6 +3,7 @@
  */
 jn.define('crm/product-grid/menu/product-context-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	/**
 	 * @class ProductContextMenu

@@ -2,6 +2,8 @@
 
 namespace Bitrix\Tasks\Provider;
 
+use Exception;
+
 class TasksUFManager extends \CUserTypeManager
 {
 	public const ENTITY_TYPE = 'TASKS_TASK';
@@ -13,19 +15,19 @@ class TasksUFManager extends \CUserTypeManager
 
 	public static function getInstance(): self
 	{
-		if (is_null(self::$instance))
+		if (is_null(static::$instance))
 		{
-			self::$instance = new self();
+			static::$instance = new static();
 		}
 
-		return self::$instance;
+		return static::$instance;
 	}
 
 	protected function __construct()
 	{
 		if (empty(self::$userFields))
 		{
-			self::$userFields = $this->GetUserFields(self::ENTITY_TYPE);
+			static::$userFields = $this->GetUserFields(static::ENTITY_TYPE);
 		}
 	}
 
@@ -35,7 +37,7 @@ class TasksUFManager extends \CUserTypeManager
 
 		if ($withType)
 		{
-			foreach (self::$userFields as $field => $info)
+			foreach (static::$userFields as $field => $info)
 			{
 				$result[$field] = $info['USER_TYPE_ID'];
 			}
@@ -43,6 +45,19 @@ class TasksUFManager extends \CUserTypeManager
 			return $result;
 		}
 
-		return array_keys(self::$userFields);
+		return array_keys(static::$userFields);
+	}
+
+	public function get(string $fieldName): ?array
+	{
+		return static::$userFields[$fieldName] ?? null;
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function __unserialize($data)
+	{
+		throw new Exception('Cannot unserialize singleton');
 	}
 }

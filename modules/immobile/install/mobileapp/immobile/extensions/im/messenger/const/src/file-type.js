@@ -20,8 +20,21 @@ jn.define('im/messenger/const/file-type', (require, exports, module) => {
 		quote: 'quote;',
 	});
 
+	const FileImageType = Object.freeze({
+		jpeg: 'jpeg',
+		jpg: 'jpg',
+		png: 'png',
+		webp: 'webp',
+		bmp: 'bmp',
+		raw: 'raw',
+		heic: 'heic',
+		heif: 'heif',
+		gif: 'gif',
+	});
+
 	module.exports = {
 		FileType,
 		FileEmojiType,
+		FileImageType,
 	};
 });

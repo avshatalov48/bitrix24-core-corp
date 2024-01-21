@@ -1,6 +1,6 @@
 export type RecentSearchModelState = {
 	id: string| number,
-	date_update: Date,
+	dateMessage: Date,
 }
 
 export type RecentSearchModelActions =

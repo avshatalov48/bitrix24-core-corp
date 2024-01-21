@@ -7,15 +7,8 @@ use Bitrix\Main\ORM\Query\Result;
 
 class TaskList
 {
-	/**
-	 * @var TaskQuery
-	 */
-	private $query;
-
-	/**
-	 * @var \CDBResult
-	 */
-	private $dbResult;
+	private TaskQuery $query;
+	private ?Result $dbResult = null;
 
 	public function __construct()
 	{
@@ -80,9 +73,6 @@ class TaskList
 		return isset($result['COUNT']) ? (int) $result['COUNT'] : 0;
 	}
 
-	/**
-	 * @return \CDBResult|null
-	 */
 	public function getLastDbResult(): ?Result
 	{
 		return $this->dbResult;

@@ -24,6 +24,7 @@ export default class ReserveControl
 		this.deductedQuantityFieldName = options.deductedQuantityFieldName || ReserveControl.DEDUCTED_QUANTITY_NAME;
 		this.defaultDateReservation = options.defaultDateReservation || null;
 		this.isBlocked = options.isBlocked || false;
+		this.isInventoryManagementToolEnabled = options.isInventoryManagementToolEnabled || false;
 		this.measureName = options.measureName;
 
 		this.isReserveEqualProductQuantity =
@@ -152,7 +153,7 @@ export default class ReserveControl
 
 	isInputDisabled(): boolean
 	{
-		if (this.isBlocked)
+		if (this.isBlocked || !this.isInventoryManagementToolEnabled)
 		{
 			return true;
 		}
@@ -223,23 +224,24 @@ export default class ReserveControl
 	{
 		return this.#cache.remember('reserveInput', () => {
 			const tag = Tag.render`
-				<div>
+				<div ${this.isInputDisabled() ? 'class="crm-entity-product-list-locked-field-wrapper"' : ''}>
 					<input type="text"
 						data-name="${this.inputFieldName}"
 						name="${this.inputFieldName}"
-						class="ui-ctl-element ui-ctl-textbox ${this.isInputDisabled() ? "crm-entity-product-list-locked-field" : ""}"
+						class="ui-ctl-element ui-ctl-textbox ${this.isInputDisabled() ? 'crm-entity-product-list-locked-field' : ''}"
 						autoComplete="off"
 						value="${this.getReservedQuantity()}"
 						placeholder="0"
 						title="${this.getReservedQuantity()}"
-						${this.isInputDisabled() ? "disabled" : ""}
+						${this.isInputDisabled() ? 'disabled' : ''}
 					/>
 				</div>
 			`;
-			if (this.isBlocked)
+			if (this.isBlocked || !this.isInventoryManagementToolEnabled)
 			{
 				tag.onclick = () => EventEmitter.emit(this, 'onNodeClick');
 			}
+
 			return tag;
 		});
 	}

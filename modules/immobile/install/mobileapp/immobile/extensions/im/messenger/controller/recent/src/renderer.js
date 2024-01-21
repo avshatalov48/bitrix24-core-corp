@@ -5,9 +5,11 @@
  */
 jn.define('im/messenger/controller/recent/renderer', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Logger } = require('im/messenger/lib/logger');
+
 	const { RecentConverter } = require('im/messenger/lib/converter');
 	const { Worker } = require('im/messenger/lib/helper/worker');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('recent--renderer');
 
 	/**
 	 * @class RecentRenderer
@@ -56,7 +58,7 @@ jn.define('im/messenger/controller/recent/renderer', (require, exports, module) 
 		{
 			if (!this.isActionSupported(action))
 			{
-				Logger.error('RecentRenderer: Unsupported action', action);
+				logger.error('RecentRenderer: Unsupported action', action);
 
 				return false;
 			}
@@ -113,7 +115,7 @@ jn.define('im/messenger/controller/recent/renderer', (require, exports, module) 
 
 					this[action](itemList);
 
-					Logger.info(`RecentRenderer.${action} items:`, itemList);
+					logger.info(`RecentRenderer.${action} items:`, itemList);
 				}
 			});
 
@@ -124,7 +126,7 @@ jn.define('im/messenger/controller/recent/renderer', (require, exports, module) 
 
 				const renderFinish = Date.now();
 
-				Logger.info('RecentRenderer.render time:', `${renderFinish - renderStart}ms.`);
+				logger.info('RecentRenderer.render time:', `${renderFinish - renderStart}ms.`);
 			}
 		}
 

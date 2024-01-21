@@ -2,8 +2,9 @@
 
 return [
 	'extensions' => [
-		'animation',
 		'loc',
+		'apptheme',
+		'animation',
 		'layout/ui/product-grid/components/discount-price',
 	],
 ];

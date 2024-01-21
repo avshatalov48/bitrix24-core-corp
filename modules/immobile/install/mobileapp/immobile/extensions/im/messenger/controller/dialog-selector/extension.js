@@ -44,10 +44,28 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 			}
 			this.onRecentResult = options.onRecentResult;
 
-			this.view.on(EventType.recent.scopeSelected, this.view.onScopeSelected.bind(this.view));
-			this.view.on(EventType.recent.userTypeText, this.view.onUserTypeText.bind(this.view));
-			this.view.on(EventType.recent.searchItemSelected, this.view.onSearchItemSelected.bind(this.view));
-			this.view.on(EventType.recent.searchSectionButtonClick, this.view.searchSectionButtonClick.bind(this.view));
+			this.onScopeSelectedHandler = this.view.onScopeSelected.bind(this.view);
+			this.onUserTypeTextHandler = this.view.onUserTypeText.bind(this.view);
+			this.onSearchItemSelectedHandler = this.view.onSearchItemSelected.bind(this.view);
+			this.onSearchSectionButtonClickHandler = this.view.searchSectionButtonClick.bind(this.view);
+
+			this.subscribeEvents();
+		}
+
+		subscribeEvents()
+		{
+			this.view.on(EventType.recent.scopeSelected, this.onScopeSelectedHandler);
+			this.view.on(EventType.recent.userTypeText, this.onUserTypeTextHandler);
+			this.view.on(EventType.recent.searchItemSelected, this.onSearchItemSelectedHandler);
+			this.view.on(EventType.recent.searchSectionButtonClick, this.onSearchSectionButtonClickHandler);
+		}
+
+		unsubscribeEvents()
+		{
+			this.view.off(EventType.recent.scopeSelected, this.onScopeSelectedHandler);
+			this.view.off(EventType.recent.userTypeText, this.onUserTypeTextHandler);
+			this.view.off(EventType.recent.searchItemSelected, this.onSearchItemSelectedHandler);
+			this.view.off(EventType.recent.searchSectionButtonClick, this.onSearchSectionButtonClickHandler);
 		}
 
 		open()
@@ -172,6 +190,11 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 				childItems: userItems,
 				hideBottomLine: true,
 			};
+		}
+
+		close()
+		{
+			// stub for reverse dependence with RecentSelector;
 		}
 	}
 

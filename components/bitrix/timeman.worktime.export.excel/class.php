@@ -34,7 +34,7 @@ class TimemanWorktimeExportExcel extends TimemanWorktimeGridComponent
 		$this->includeComponentTemplate();
 
 		return [
-			'PROCESSED_ITEMS' => $this->getLimit($this->getCurrentPage()),
+			'PROCESSED_ITEMS' => $this->getProcessedItems($this->getCurrentPage()),
 			'TOTAL_ITEMS' => $this->arParams['STEXPORT_TOTAL_ITEMS']
 		];
 	}
@@ -51,10 +51,9 @@ class TimemanWorktimeExportExcel extends TimemanWorktimeGridComponent
 
 	protected function getNavigationData(): array
 	{
-		$currentPage = $this->getCurrentPage();
 		return [
-			$this->getLimit($currentPage),
-			$currentPage
+			$this->getLimit(),
+			$this->getCurrentPage(),
 		];
 	}
 
@@ -70,7 +69,18 @@ class TimemanWorktimeExportExcel extends TimemanWorktimeGridComponent
 		}
 	}
 
-	private function getLimit(int $currentPage): int
+	private function getLimit(): int
+	{
+		return $this->getPageSize();
+	}
+
+	private function getPageSize(): int
+	{
+		return !empty($this->arParams['STEXPORT_PAGE_SIZE']) ?
+			$this->arParams['STEXPORT_PAGE_SIZE'] : $this->getGrid()->getNavigation()->getPageSize();
+	}
+
+	private function getProcessedItems(int $currentPage): int
 	{
 		$pageSize = $this->getPageSize();
 		$total = (int) $this->arParams['STEXPORT_TOTAL_ITEMS'];
@@ -80,11 +90,5 @@ class TimemanWorktimeExportExcel extends TimemanWorktimeGridComponent
 			return $total - $processed;
 		}
 		return $pageSize;
-	}
-
-	private function getPageSize(): int
-	{
-		return !empty($this->arParams['STEXPORT_PAGE_SIZE']) ?
-			$this->arParams['STEXPORT_PAGE_SIZE'] : $this->getGrid()->getNavigation()->getPageSize();
 	}
 }

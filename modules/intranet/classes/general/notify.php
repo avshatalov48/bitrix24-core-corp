@@ -424,12 +424,12 @@ class CIntranetNotify
 					"NL2BR" => "Y", "VIDEO" => "Y",
 					"LOG_VIDEO" => "N", "SHORT_ANCHOR" => "Y",
 					"USERFIELDS" => $arFields["UF"],
-					"USER" => ($arParams["IM"] === "Y" ? "N" : "Y")
+					"USER" => (isset($arParams["IM"]) && $arParams["IM"] === "Y" ? "N" : "Y")
 				);
 
 				$parserLog->pathToUser = $parserLog->userPath = $arParams["PATH_TO_USER"];
 				$parserLog->arUserfields = $arFields["UF"];
-				$parserLog->bMobile = ($arParams["MOBILE"] === "Y");
+				$parserLog->bMobile = (isset($arParams["MOBILE"]) && $arParams["MOBILE"] === "Y");
 				$arResult["EVENT_FORMATTED"]["MESSAGE"] = htmlspecialcharsbx($parserLog->convert(htmlspecialcharsback($arResult["EVENT_FORMATTED"]["MESSAGE"]), $arAllow));
 				$arResult["EVENT_FORMATTED"]["MESSAGE"] = preg_replace("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, "\\2", $arResult["EVENT_FORMATTED"]["MESSAGE"]);
 			}
@@ -457,8 +457,8 @@ class CIntranetNotify
 			}
 
 			if (
-				$arParams["MOBILE"] !== "Y"
-				&& $arParams["NEW_TEMPLATE"] !== "Y"
+				(!isset($arParams["MOBILE"]) || $arParams["MOBILE"] !== "Y")
+				&& (!isset($arParams["NEW_TEMPLATE"]) || $arParams["NEW_TEMPLATE"] !== "Y")
 			)
 			{
 				if (CModule::IncludeModule("forum"))

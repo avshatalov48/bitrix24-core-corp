@@ -2,12 +2,12 @@
  * @module layout/ui/progress-bar
  */
 jn.define('layout/ui/progress-bar', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { ProgressBarCaption } = require('layout/ui/progress-bar/caption');
 
 	const COLORS = {
-		progress: '#2fc6f6',
-		backgroundColor: '#eeeff0',
+		progress: AppTheme.colors.accentBrandBlue,
+		backgroundColor: AppTheme.colors.base7,
 	};
 
 	const SIZE = {
@@ -63,21 +63,23 @@ jn.define('layout/ui/progress-bar', (require, exports, module) => {
 			if (!Number.isInteger(Number(maxValue)) || !Number.isInteger(Number(value)))
 			{
 				console.error(`value: ${value} or maxValue: ${maxValue} not a number`);
+
 				return false;
 			}
 
 			if (value > maxValue || maxValue === 0)
 			{
 				console.error(`value: ${value} greater than maxValue: ${maxValue}`);
+
 				return false;
 			}
 
 			return true;
 		}
 
-		setValue(value)
+		setValue(progressValue)
 		{
-			value = Number(value);
+			const value = Number(progressValue);
 			const { maxValue } = this.config;
 
 			if (!this.checkInitParams(value, maxValue))
@@ -101,9 +103,10 @@ jn.define('layout/ui/progress-bar', (require, exports, module) => {
 			{
 				this.inProgress = true;
 				const animate = this.stack.shift();
-				animate().then(() => this.animate(true));
+				animate()
+					.then(() => this.animate(true))
+					.catch(console.error);
 			}
-
 		}
 
 		getAnimate({ value, width })
@@ -120,10 +123,11 @@ jn.define('layout/ui/progress-bar', (require, exports, module) => {
 				}
 
 				return new Promise((resolve) => {
-
 					if (!this.progressRef)
 					{
-						return resolve();
+						resolve();
+
+						return;
 					}
 
 					this.progressRef.animate({
@@ -138,7 +142,6 @@ jn.define('layout/ui/progress-bar', (require, exports, module) => {
 						resolve();
 					});
 				});
-
 			};
 		}
 
@@ -170,7 +173,9 @@ jn.define('layout/ui/progress-bar', (require, exports, module) => {
 				this.renderTitle(),
 				this.renderProgressLine(),
 				showCaption && new ProgressBarCaption({
-					ref: ref => this.captionRef = ref,
+					ref: (ref) => {
+						this.captionRef = ref;
+					},
 					value,
 					maxValue,
 					style: this.getStyles('caption'),
@@ -184,7 +189,8 @@ jn.define('layout/ui/progress-bar', (require, exports, module) => {
 			const { progressWidth } = this.state;
 			const { value, color } = this.config;
 
-			return View({
+			return View(
+				{
 					style: {
 						width: SIZE.width,
 						height: SIZE.height,
@@ -200,7 +206,9 @@ jn.define('layout/ui/progress-bar', (require, exports, module) => {
 					},
 				},
 				View({
-					ref: (ref) => this.progressRef = ref,
+					ref: (ref) => {
+						this.progressRef = ref;
+					},
 					style: {
 						position: 'absolute',
 						height: SIZE.height,
@@ -250,7 +258,6 @@ jn.define('layout/ui/progress-bar', (require, exports, module) => {
 				text: description,
 			});
 		}
-
 	}
 
 	module.exports = { ProgressBar };

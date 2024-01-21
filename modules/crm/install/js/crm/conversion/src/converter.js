@@ -1,15 +1,15 @@
-import { Config } from "./config";
-import type { ConfigItemData } from "./config-item";
-import { ConfigItem } from "./config-item";
-import { SchemeItem } from "./scheme-item";
-import { CategoryList } from "crm.category-list";
-import { CategoryModel } from "crm.category-model";
-import { Button, ButtonColor } from 'ui.buttons';
-import { MessageBox } from 'ui.dialogs.messagebox';
-import { Popup } from "main.popup";
+import { CategoryList } from 'crm.category-list';
+import { CategoryModel } from 'crm.category-model';
 import { ajax as Ajax, Loc, Tag, Text, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+import { Popup } from 'main.popup';
+import { Button, ButtonColor } from 'ui.buttons';
+import { MessageBox } from 'ui.dialogs.messagebox';
 import 'ui.forms';
+import { Config } from './config';
+import type { ConfigItemData } from './config-item';
+import { ConfigItem } from './config-item';
+import { SchemeItem } from './scheme-item';
 
 declare type CategorySelectResult = {
 	isCanceled?: boolean,
@@ -119,6 +119,13 @@ export class Converter
 		if (!schemeItem)
 		{
 			console.error('Scheme is not found');
+			return;
+		}
+
+		if (Type.isStringFilled(schemeItem.getAvailabilityLock()))
+		{
+			eval(schemeItem.getAvailabilityLock());
+
 			return;
 		}
 

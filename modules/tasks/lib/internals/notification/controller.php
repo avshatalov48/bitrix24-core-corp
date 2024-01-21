@@ -56,6 +56,36 @@ class Controller
 		return $this;
 	}
 
+	public function onRegularTaskReplicated(TaskObject $task, array $params = []): self
+	{
+		(new Notification\UseCase\Regularity\RegularTaskReplicated(
+			$task,
+			$this->buffer,
+			$this->userRepository,
+			new ProviderCollection(...$this->getDefaultNotificationProviders([
+				new Mail\ExternalUserProvider(),
+				new SocialNetwork\NotificationProvider(),
+			])),
+		))->execute($params);
+
+		return $this;
+	}
+
+	public function onRegularTaskStarted(TaskObject $task, array $params = []): self
+	{
+		(new Notification\UseCase\Regularity\RegularTaskStarted(
+			$task,
+			$this->buffer,
+			$this->userRepository,
+			new ProviderCollection(...$this->getDefaultNotificationProviders([
+				new Mail\ExternalUserProvider(),
+				new SocialNetwork\NotificationProvider(),
+			])),
+		))->execute($params);
+
+		return $this;
+	}
+
 	public function onTaskUpdated(TaskObject $task, array $newFields, array $previousFields, array $params = []): self
 	{
 		(new Notification\UseCase\TaskUpdated(

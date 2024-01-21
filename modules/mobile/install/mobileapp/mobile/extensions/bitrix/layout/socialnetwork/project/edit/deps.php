@@ -2,11 +2,12 @@
 
 return [
 	'extensions' => [
-		'layout/socialnetwork/project/fields/*',
+		'notify',
+		'apptheme',
 		'layout/ui/buttons/primary',
 		'layout/ui/buttons/cancel',
 		'layout/ui/buttons-toolbar',
 		'layout/ui/fields-wrapper',
-		'notify',
+		'layout/socialnetwork/project/fields/*',
 	],
 ];

@@ -4,6 +4,7 @@
 jn.define('crm/document/details/pdf-view', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Alert } = require('alert');
+	const AppTheme = require('apptheme');
 	const { CrmDocumentDetailsErrorPanel } = require('crm/document/details/error-panel');
 	const isAndroid = Application.getPlatform() === 'android';
 	const isPdfViewSupported = typeof PDFView !== 'undefined';
@@ -12,7 +13,7 @@ jn.define('crm/document/details/pdf-view', (require, exports, module) => {
 		{
 			style: {
 				flex: 1,
-				backgroundColor: '#EEF2F4',
+				backgroundColor: AppTheme.colors.bgSecondary,
 				paddingHorizontal: isAndroid ? 12 : 0,
 				paddingTop: isAndroid ? 12 : 0,
 				paddingBottom: 3,

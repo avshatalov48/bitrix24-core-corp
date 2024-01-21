@@ -25,6 +25,9 @@ $input = $inputJSON ? Bitrix\Main\Web\Json::decode($inputJSON) : [];
 
 if (\Bitrix\Main\Loader::includeModule('biconnector'))
 {
+	$supersetKey = $input['superset_key'] ?? '';
+	unset($input['superset_key']);
+
 	if (isset($input['key']))
 	{
 		$accessKey = substr($input['key'], 0 ,32);
@@ -251,7 +254,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 								array_splice($output_row, -$extraCount);
 							}
 
-							$out = $comma . '{"values":' . Bitrix\Main\Web\Json::encode($output_row, JSON_UNESCAPED_UNICODE|JSON_INVALID_UTF8_IGNORE) . '}' . "\n";
+							$out = $comma . '{"values":' . Bitrix\Main\Web\Json::encode($output_row, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_IGNORE) . '}' . "\n";
 							echo $out;
 							$count++;
 							$size += strlen($out);
@@ -276,7 +279,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 							array_splice($row, -$extraCount);
 						}
 
-						$out = $comma . '{"values":' . Bitrix\Main\Web\Json::encode($row, JSON_UNESCAPED_UNICODE|JSON_INVALID_UTF8_IGNORE) . '}' . "\n";
+						$out = $comma . '{"values":' . Bitrix\Main\Web\Json::encode($row, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_IGNORE) . '}' . "\n";
 						echo $out;
 						$count++;
 						$size += strlen($out);
@@ -297,7 +300,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 						array_splice($output_row, -$extraCount);
 					}
 
-					$out = $comma . '{"values":' . Bitrix\Main\Web\Json::encode($output_row, JSON_UNESCAPED_UNICODE|JSON_INVALID_UTF8_IGNORE) . '}' . "\n";
+					$out = $comma . '{"values":' . Bitrix\Main\Web\Json::encode($output_row, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_IGNORE) . '}' . "\n";
 					echo $out;
 					$count++;
 					$size += strlen($out);
@@ -307,8 +310,8 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 				echo $out;
 				$size += strlen($out);
 
-				$manager->endQuery($logId, $count, $size);
-				\Bitrix\BIConnector\LimitManager::getInstance()->fixLimit($count);
+				$isOverLimit = \Bitrix\BIConnector\LimitManager::getInstance()->fixLimit($count, $supersetKey);
+				$manager->endQuery($logId, $count, $size, $isOverLimit);
 			}
 			else
 			{

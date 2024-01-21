@@ -1,9 +1,11 @@
 /**
  * @bxjs_lang_path extension.php
  */
+(() => {
+	const require = (ext) => jn.require(ext);
 
-(() =>
-{
+	const AppTheme = require('apptheme');
+
 	class WorkgroupList
 	{
 		/**
@@ -40,11 +42,10 @@
 			this.calendarWebPathTemplate = (params.calendarWebPathTemplate || '');
 			this.currentUserId = parseInt(params.currentUserId || 0);
 
-			BX.onViewLoaded(() =>
-			{
+			BX.onViewLoaded(() => {
 				this.list.setSections([
-					{id: 'list'},
-					{id: 'service'}
+					{ id: 'list' },
+					{ id: 'service' },
 				]);
 				this.showLoading();
 				this.load(true);
@@ -67,8 +68,7 @@
 					});
 				}
 
-				let listener = (event, item) =>
-				{
+				const listener = (event, item) => {
 					if (event === 'onItemSelected')
 					{
 						if (item.id === 'more')
@@ -76,29 +76,26 @@
 							this.showLoading();
 							this.request.callNext();
 						}
+						else if (Application.getApiVersion() >= 41)
+						{
+							const data = {
+								siteId: this.siteId,
+								siteDir: this.siteDir,
+								projectId: item.id,
+								action: 'view',
+								item,
+								newsPathTemplate: this.newsPathTemplate,
+								calendarWebPathTemplate: this.calendarWebPathTemplate,
+							};
+
+							BX.postComponentEvent('projectbackground::project::action', [data], 'background');
+						}
 						else
 						{
-							if (Application.getApiVersion() >= 41)
-							{
-								const data = {
-									siteId: this.siteId,
-									siteDir: this.siteDir,
-									projectId: item.id,
-									action: 'view',
-									item: item,
-									newsPathTemplate: this.newsPathTemplate,
-									calendarWebPathTemplate: this.calendarWebPathTemplate,
-								};
-
-								BX.postComponentEvent('projectbackground::project::action', [ data ], 'background');
-							}
-							else
-							{
-								PageManager.openPage({
-									cache: false,
-									url: this.newsPathTemplate.replace('#group_id#', item.id),
-								});
-							}
+							PageManager.openPage({
+								cache: false,
+								url: this.newsPathTemplate.replace('#group_id#', item.id),
+							});
 						}
 					}
 					else if (event === 'onRefresh')
@@ -108,7 +105,6 @@
 				};
 
 				this._list.setListener(listener);
-
 			}
 		}
 
@@ -120,8 +116,7 @@
 
 		load(useCache = false)
 		{
-			setTimeout(() =>
-			{
+			setTimeout(() => {
 				this.request.options = {
 					params: {
 						siteId: this.siteId,
@@ -130,7 +125,7 @@
 						mode: 'mobile',
 					},
 					filter: {
-						'ACTIVE': 'Y',
+						ACTIVE: 'Y',
 						'!CLOSED': 'Y',
 					},
 					select: [
@@ -142,8 +137,8 @@
 						'NUMBER_OF_MEMBERS',
 					],
 					order: {
-						'NAME': 'ASC',
-						'ID': 'ASC',
+						NAME: 'ASC',
+						ID: 'ASC',
 					},
 				};
 
@@ -167,16 +162,15 @@
 		{
 			if (typeof result === 'object')
 			{
-				let list = result.items;
+				const list = result.items;
 				if (list && list.length > 0)
 				{
-					this.items = list.map(item => WorkgroupList.prepareItem(item));
-					BX.onViewLoaded(() =>
-					{
-						if (result['name'])
+					this.items = list.map((item) => WorkgroupList.prepareItem(item));
+					BX.onViewLoaded(() => {
+						if (result.name)
 						{
 							this.list.setTitle({
-								text: result['name']
+								text: result.name,
 							});
 						}
 
@@ -195,11 +189,10 @@
 		onResult(result, more)
 		{
 			BX.onViewLoaded(
-				() =>
-				{
+				() => {
 					if (result)
 					{
-						let items = result.workgroups || [];
+						const items = result.workgroups || [];
 
 						if (this.request.hasNext())
 						{
@@ -210,14 +203,14 @@
 							this.list.setSectionItems([], 'service');
 						}
 
-						const workgroups = items.map(item => WorkgroupList.prepareItem(item));
+						const workgroups = items.map((item) => WorkgroupList.prepareItem(item));
 						const isEmptyList = this.items.length === 0;
 						this.items = more ? this.items.concat(workgroups) : workgroups;
 
 						if (result.name)
 						{
 							this.list.setTitle({
-								text: result.name
+								text: result.name,
 							});
 						}
 
@@ -225,22 +218,18 @@
 						{
 							this.showEmptyList();
 						}
+						else if (isEmptyList || this.firstLoad)
+						{
+							this.firstLoad = false;
+							this.setItems(this.items);
+						}
 						else
 						{
-							if (isEmptyList || this.firstLoad)
-							{
-								this.firstLoad = false;
-								this.setItems(this.items);
-							}
-							else
-							{
-								this.list.addItems(workgroups);
-							}
+							this.list.addItems(workgroups);
 						}
 					}
-				}
+				},
 			);
-
 		}
 
 		handler(result, more, error)
@@ -254,7 +243,7 @@
 
 			if (result && result.workgroups)
 			{
-				this.onResult(result, more)
+				this.onResult(result, more);
 			}
 		}
 
@@ -265,33 +254,33 @@
 
 		showLoading()
 		{
-			let loading = ListHolder.Loading;
+			const loading = ListHolder.Loading;
 			loading.id = 'loading';
 			loading.params = {};
-			this.list.setSectionItems([ loading ], 'service');
+			this.list.setSectionItems([loading], 'service');
 		}
 
 		showMore()
 		{
-			let more = ListHolder.MoreButton;
+			const more = ListHolder.MoreButton;
 			more.id = 'more';
 			more.params = {
-				id: 'more'
+				id: 'more',
 			};
-			this.list.setSectionItems([ more ], 'service');
+			this.list.setSectionItems([more], 'service');
 		}
 
 		showEmptyList()
 		{
 			this.showMessageButton({
-				title: BX.message('MOBILE_PROJECT_LIST_EMPTY')
+				title: BX.message('MOBILE_PROJECT_LIST_EMPTY'),
 			});
 		}
 
 		showError()
 		{
 			this.showMessageButton({
-				title: BX.message('MOBILE_PROJECT_LIST_ERROR')
+				title: BX.message('MOBILE_PROJECT_LIST_ERROR'),
 			});
 		}
 
@@ -309,12 +298,13 @@
 						title: {
 							font: {
 								size: 17,
-								fontStyle: 'medium'
-							}
-						}
+								fontStyle: 'medium',
+							},
+						},
 					},
-					unselectable: true
-				}], 'service');
+					unselectable: true,
+				},
+			], 'service');
 		}
 
 		destroy()
@@ -334,11 +324,11 @@
 				styles: {
 					title: {
 						font: {
-							color: '#333333',
+							color: AppTheme.colors.base1,
 							size: 17,
 							fontStyle: 'medium',
-						}
-					}
+						},
+					},
 				},
 				actions: [],
 				params: {
@@ -363,11 +353,11 @@
 					),
 					opened: (item.opened === 'Y'),
 					membersCount: (
-						typeof item.numberOfMembers !== 'undefined'
-							? parseInt(item.numberOfMembers)
-							: 0
-					)
-				}
+						typeof item.numberOfMembers === 'undefined'
+							? 0
+							: parseInt(item.numberOfMembers, 10)
+					),
+				},
 			};
 
 			if (item.avatar)

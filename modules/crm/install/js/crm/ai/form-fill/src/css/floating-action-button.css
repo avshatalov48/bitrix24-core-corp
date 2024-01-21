@@ -1,0 +1,37 @@
+.bx-crm-ai-merge-fields-fab {
+	position: absolute;
+	bottom: 24px;
+	width: 36px;
+	height: 36px;
+	border-radius: 24px;
+	background-color: #FFF;
+	box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.08);
+	margin-left: 12px;
+	cursor: pointer;
+}
+
+.bx-crm-ai-merge-fields-fab_icon {
+	display: block;
+	margin: 15%;
+	width: 26px;
+	height: 26px;
+	background-image: url("../images/ai-from-fill_swap-fab-shevron-down.svg");
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+.bx-crm-ai-merge-fields-fab_counter {
+	position: absolute;
+	top: -7px;
+	right: -3px;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background-color: #00ACE3;
+	color: #FFF;
+	text-align: center;
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 18px;
+}

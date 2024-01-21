@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Control\Handler;
 
 use Bitrix\Main\Entity\DatetimeField;
 use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\Text\Emoji;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
@@ -16,25 +17,25 @@ use Bitrix\Tasks\Internals\Task\Mark;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Internals\Task\ProjectDependenceTable;
+use Bitrix\Tasks\Internals\Task\RegularParametersObject;
 use Bitrix\Tasks\Internals\Task\Status;
+use Bitrix\Tasks\Internals\Task\Template\ReplicateParamsCorrector;
 use Bitrix\Tasks\Internals\Task\TimeUnitType;
+use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Internals\TaskTable;
+use Bitrix\Tasks\Replicator\Template\Regularity\Exception\RegularityException;
+use Bitrix\Tasks\Replicator\Template\Regularity\Time\Service\DeadlineRegularityService;
+use Bitrix\Tasks\Replicator\Template\Repository\TaskRepository;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Type\DateTime;
+use Bitrix\Tasks\Util\User;
 
 class TaskFieldHandler
 {
-	private $fields = [];
 	private $taskId;
-	private $taskData;
-	private $userId;
 
-	public function __construct(int $userId, array $fields, array $taskData = null)
+	public function __construct(private int $userId, private array $fields = [], private ?array $taskData = null)
 	{
-		$this->userId = $userId;
-		$this->fields = $fields;
-		$this->taskData = $taskData;
-
 		$this->setTaskId();
 	}
 
@@ -432,6 +433,7 @@ class TaskFieldHandler
 			'ADD_IN_REPORT',
 			'MATCH_WORK_TIME',
 			'REPLICATE',
+			'IS_REGULAR'
 		];
 
 		foreach ($flags as $flag)
@@ -446,7 +448,7 @@ class TaskFieldHandler
 
 			if (
 				!array_key_exists($flag, $this->fields)
-				|| $this->fields[$flag] !== 'Y'
+				|| ($this->fields[$flag] !== 'Y' && $this->fields[$flag] !== true)
 			)
 			{
 				$this->fields[$flag] = false;
@@ -457,11 +459,10 @@ class TaskFieldHandler
 			}
 		}
 
-		return $this;
+		return $this->prepareReplication();
 	}
 
 	/**
-	 * @return $this
 	 * @throws TaskFieldValidateException
 	 */
 	public function prepareParents(): self
@@ -480,12 +481,8 @@ class TaskFieldHandler
 		}
 		$this->fields['PARENT_ID'] = $parentId;
 
-		$parentTask = (TaskRegistry::getInstance())->getObject($parentId);
-		if (
-			!$parentTask
-			|| $parentTask->isDeleted()
-			|| !TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $parentId)
-		)
+		$parentTask = TaskRegistry::getInstance()->getObject($parentId);
+		if (is_null($parentTask) || $parentTask->isDeleted())
 		{
 			throw new TaskFieldValidateException(Loc::getMessage('TASKS_BAD_PARENT_ID'));
 		}
@@ -513,10 +510,11 @@ class TaskFieldHandler
 	/**
 	 * @return $this
 	 * @throws TaskFieldValidateException
-	 * @throws \Bitrix\Main\LoaderException
+	 * @throws LoaderException
 	 */
 	public function prepareDates(): self
 	{
+		$this->prepareDeadLine();
 		$this->checkDatesInProject();
 
 		$startDate = ($this->fields['START_DATE_PLAN'] ?? null);
@@ -941,7 +939,7 @@ class TaskFieldHandler
 	/**
 	 * @return void
 	 * @throws TaskFieldValidateException
-	 * @throws \Bitrix\Main\LoaderException
+	 * @throws LoaderException
 	 */
 	private function checkDatesInProject()
 	{
@@ -1082,5 +1080,92 @@ class TaskFieldHandler
 		{
 			$this->taskId = (int) $this->taskData['ID'];
 		}
+	}
+
+	/**
+	 * @throws TaskFieldValidateException
+	 */
+	private function prepareDeadLine(): void
+	{
+		if (
+			empty($this->taskData) // <- we got a new task
+			|| (
+				($this->taskData['IS_REGULAR'] ?? null) === 'Y'
+				&& isset($this->fields['REGULAR_PARAMS']) // <- we got an existing editing regular task
+			)
+		)
+		{
+			if (!($this->fields['IS_REGULAR'] ?? null))
+			{
+				return;
+			}
+
+			$regularParams = $this->fields['REGULAR_PARAMS'] ?? null;
+			if (is_null($regularParams))
+			{
+				return;
+			}
+
+			$regularity = RegularParametersObject::createFromParams($regularParams);
+
+			$task = TaskObject::createFromFields($this->fields);
+			$task->setRegular($regularity);
+
+			$repository = new TaskRepository(0);
+			$repository->inject($task);
+
+			$deadlineService = new DeadlineRegularityService($repository);
+			if (($deadlineService->getDeadlineOffsetInDays()) <= 0)
+			{
+				return;
+			}
+
+			try
+			{
+				$this->fields['DEADLINE'] = $deadlineService->getRecalculatedDeadline()->toString();
+			}
+			catch (RegularityException $exception)
+			{
+				throw new TaskFieldValidateException($exception->getMessage());
+			}
+		}
+	}
+
+	private function prepareReplication(): self
+	{
+		$isRegular = $this->fields['IS_REGULAR'] ?? false;
+		$isReplication = $this->fields['REPLICATE'] ?? false;
+		if ($isRegular && $isReplication)
+		{
+			$this->fields['REPLICATE'] = false;
+		}
+
+		return $this;
+	}
+
+	public function prepareRegularParams(): static
+	{
+		$isRegular = $this->fields['IS_REGULAR'] ?? false;
+		if (!$isRegular)
+		{
+			return $this;
+		}
+
+		$regularParams = $this->fields['REGULAR_PARAMS'] ?? null;
+		if (is_null($regularParams))
+		{
+			return $this;
+		}
+
+		$userTime = $regularParams['TIME'];
+		$userOffset = User::getTimeZoneOffset($this->userId);
+		$userStartDate = MakeTimeStamp($regularParams['START_DATE']);
+		$userEndDate = MakeTimeStamp($regularParams['END_DATE']);
+
+		$this->fields['REGULAR_PARAMS']['TIME'] = ReplicateParamsCorrector::correctTime($userTime, $userOffset);
+		$this->fields['REGULAR_PARAMS']['START_DATE'] = ReplicateParamsCorrector::correctStartDate($userTime, $userStartDate, $userOffset);
+		$this->fields['REGULAR_PARAMS']['END_DATE'] = ReplicateParamsCorrector::correctEndDate($userTime, $userEndDate, $userOffset);
+
+		return $this;
 	}
 }

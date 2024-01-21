@@ -2,10 +2,14 @@
  * @module im/messenger/controller/dialog/header/title
  */
 jn.define('im/messenger/controller/dialog/header/title', (require, exports, module) => {
+	const { Loc } = require('loc');
+	const { isEqual } = require('utils/object');
+
+	const { AppStatus } = require('im/messenger/const');
+	const { core } = require('im/messenger/core');
 	const { UserUtils } = require('im/messenger/lib/utils');
 	const { ChatAvatar, ChatTitle } = require('im/messenger/lib/element');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { isEqual } = require('utils/object');
 	const { Logger } = require('im/messenger/lib/logger');
 
 	/**
@@ -56,6 +60,25 @@ jn.define('im/messenger/controller/dialog/header/title', (require, exports, modu
 			if (DialogHelper.isChatId(dialogId) && !result.isWriting)
 			{
 				status = (new UserUtils()).getLastDateText(store.getters['usersModel/getById'](dialogId));
+			}
+
+			const appStatus = core.getAppStatus();
+			switch (appStatus)
+			{
+				case AppStatus.networkWaiting:
+					status = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HEADER_NETWORK_WAITING');
+					break;
+
+				case AppStatus.connection:
+					status = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HEADER_CONNECTION');
+					break;
+
+				case AppStatus.sync:
+					status = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HEADER_SYNC');
+					break;
+
+				default:
+					break;
 			}
 
 			if (status)

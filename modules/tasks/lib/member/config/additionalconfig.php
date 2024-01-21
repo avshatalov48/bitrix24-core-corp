@@ -2,7 +2,7 @@
 
 namespace Bitrix\Tasks\Member\Config;
 
-class AdditionalConfig implements Config
+class AdditionalConfig implements ConfigInterface
 {
 	public function getType(): string
 	{

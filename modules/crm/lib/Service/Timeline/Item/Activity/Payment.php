@@ -60,24 +60,41 @@ class Payment extends Activity
 			return null;
 		}
 
+		$fields = $this->getAssociatedEntityModelFields();
+
 		$result = [
 			'amountMoneyPill' =>
 				(new ContentBlock\MoneyPill())
-					->setOpportunity($payment->getField('SUM'))
-					->setCurrencyId($payment->getField('CURRENCY'))
+					->setOpportunity($this->getPaymentSum($payment, $fields))
+					->setCurrencyId($this->getPaymentCurrency($payment, $fields))
 			,
 			'paymentDetails' => $this->getPaymentDetailsContentBlock($payment),
 		];
 
-		$paymentSystem = $payment->getPaySystem();
-		if ($paymentSystem && $paymentSystem->getField('NAME'))
+		$paymentSystemName = $fields['PAY_SYSTEM_NAME'] ?? '';
+		if ($paymentSystemName)
 		{
+			$isTerminalPayment = ($fields['IS_TERMINAL_PAYMENT'] ?? 'N') === 'Y';
+
+			$paymentMethodValueLocPhrase =
+				$isTerminalPayment
+					? 'CRM_TIMELINE_ECOMMERCE_PAYMENT_METHOD_VALUE_VIA_TERMINAL'
+					: 'CRM_TIMELINE_ECOMMERCE_PAYMENT_METHOD_VALUE'
+			;
+
+			$paymentMethodValue = Loc::getMessage(
+				$paymentMethodValueLocPhrase,
+				[
+					'#PAYMENT_METHOD#' => (string)$paymentSystemName,
+				]
+			);
+
 			$result['paymentMethod'] = (new ContentBlockWithTitle())
 				->setInline()
 				->setTitle(Loc::getMessage('CRM_TIMELINE_ECOMMERCE_PAYMENT_METHOD'))
 				->setContentBlock(
 					(new ContentBlock\Text())
-						->setValue($paymentSystem->getField('NAME'))
+						->setValue((string)$paymentMethodValue)
 						->setColor(ContentBlock\Text::COLOR_BASE_90)
 				)
 			;
@@ -150,18 +167,21 @@ class Payment extends Activity
 
 	private function getPaymentDetailsContentBlock(Sale\Payment $payment): ContentBlock
 	{
+		$fields = $this->getAssociatedEntityModelFields();
+
 		$contentBlock = new LineOfTextBlocks();
 
-		$date = $payment->getField('DATE_BILL');
+		$dateBillTimestamp = $this->getPaymentDateBillTimestamp($payment, $fields);
+
 		$title = Loc::getMessage(
 			'CRM_TIMELINE_ECOMMERCE_PAYMENT_ENTITY_TITLE',
 			[
-				'#NUMBER#' => $payment->getField('ACCOUNT_NUMBER'),
+				'#NUMBER#' => $this->getPaymentAccountNumber($payment, $fields),
 				'#DATE#' =>
-					($date instanceof DateTime)
+					$dateBillTimestamp
 						? FormatDate(
 							Context::getCurrent()->getCulture()->getLongDateFormat(),
-							$date->getTimestamp()
+							$dateBillTimestamp
 						)
 						: ''
 				,
@@ -185,8 +205,8 @@ class Payment extends Activity
 		}
 		$contentBlock->addContentBlock('title', $titleBlock);
 
-		$sum = $payment->getField('SUM') ?? null;
-		$currency = $payment->getField('CURRENCY') ?? null;
+		$sum = $this->getPaymentSum($payment, $fields);
+		$currency = $this->getPaymentCurrency($payment, $fields);
 		if ($sum && $currency)
 		{
 			$amountBlocks = ContentBlockFactory::getBlocksFromTemplate(
@@ -224,6 +244,14 @@ class Payment extends Activity
 
 	private function getOpenPaymentAction(): ?Action
 	{
+		$payment = $this->getPayment();
+		if (!$payment)
+		{
+			return null;
+		}
+
+		$fields = $this->getAssociatedEntityModelFields();
+
 		$contextEntityTypeId = $this->getContext()->getEntityTypeId();
 
 		/**
@@ -240,18 +268,24 @@ class Payment extends Activity
 		{
 			$ownerTypeId = $this->getContext()->getEntityTypeId();
 
-			$payment = $this->getPayment();
-			$formattedDate = $payment ? ConvertTimeStamp($payment->getField('DATE_BILL')->getTimestamp()) : null;
-			$accountNumber = $payment ? $payment->getField('ACCOUNT_NUMBER') : null;
+			$paymentDateBillTimestamp = $this->getPaymentDateBillTimestamp($payment, $fields);
+
+			if (($fields['IS_TERMINAL_PAYMENT'] ?? 'N') === 'Y')
+			{
+				$mode = 'terminal_payment';
+			}
+			elseif ($ownerTypeId === \CCrmOwnerType::Deal)
+			{
+				$mode = 'payment_delivery';
+			}
+			else
+			{
+				$mode = 'payment';
+			}
 
 			return
 				(new JsEvent('SalescenterApp:Start'))
-					->addActionParamString(
-						'mode',
-						$ownerTypeId === \CCrmOwnerType::Deal
-							? 'payment_delivery'
-							: 'payment'
-					)
+					->addActionParamString('mode', $mode)
 					->addActionParamInt(
 						'orderId',
 						$this->getAssociatedEntityModel()->get('OWNER_ID')
@@ -270,17 +304,17 @@ class Payment extends Activity
 					)
 					->addActionParamString(
 						'formattedDate',
-						$formattedDate,
+						$paymentDateBillTimestamp ? ConvertTimeStamp($paymentDateBillTimestamp) : null,
 					)
 					->addActionParamString(
 						'accountNumber',
-						$accountNumber,
+						$this->getPaymentAccountNumber($payment, $fields),
 					)
 					->addActionParamString(
 						'analyticsLabel',
 						\CCrmOwnerType::isUseDynamicTypeBasedApproach($ownerTypeId)
-							? 'crmDealTimelineSmsResendPaymentSlider'
-							: 'crmDynamicTypeTimelineSmsResendPaymentSlider'
+							? 'crmDynamicTypeTimelineSmsResendPaymentSlider'
+							: 'crmDealTimelineSmsResendPaymentSlider'
 					)
 			;
 		}
@@ -323,5 +357,54 @@ class Payment extends Activity
 		$factory = Container::getInstance()->getFactory($this->getContext()->getEntityTypeId());
 
 		return $factory && $factory->isPaymentsEnabled();
+	}
+
+	private function getAssociatedEntityModelFields(): array
+	{
+		$settings = $this->getAssociatedEntityModel()->get('SETTINGS');
+		$settings = is_array($settings) ? $settings : [];
+
+		return isset($settings['FIELDS']) && is_array($settings['FIELDS']) ? $settings['FIELDS'] : [];
+	}
+
+	private function getPaymentSum(Sale\Payment $payment, array $fields): ?float
+	{
+		$result = $fields['SUM'] ?? $payment->getField('SUM');
+
+		return is_null($result) ? null : (float)$result;
+	}
+
+	private function getPaymentCurrency(Sale\Payment $payment, array $fields): ?string
+	{
+		$result = $fields['CURRENCY'] ?? $payment->getField('CURRENCY');
+
+		return is_null($result) ? null : (string)$result;
+	}
+
+	private function getPaymentAccountNumber(Sale\Payment $payment, array $fields): ?string
+	{
+		$result = $fields['ACCOUNT_NUMBER'] ?? $payment->getField('ACCOUNT_NUMBER');
+
+		return is_null($result) ? null : (string)$result;
+	}
+
+	private function getPaymentDateBillTimestamp(Sale\Payment $payment, array $fields): ?int
+	{
+		$timestamp = null;
+
+		if (isset($fields['DATE_BILL']))
+		{
+			$timestamp = $fields['DATE_BILL'];
+		}
+		else
+		{
+			$dateBill = $payment->getField('DATE_BILL');
+			if ($dateBill instanceof DateTime)
+			{
+				$timestamp = $dateBill->getTimestamp();
+			}
+		}
+
+		return is_null($timestamp) ? null : (int)$timestamp;
 	}
 }

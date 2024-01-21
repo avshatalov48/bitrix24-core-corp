@@ -99,7 +99,7 @@ jn.define('tasks/layout/task/fields/timeTracking', (require, exports, module) =>
 				View({
 					style: {
 						height: 0.5,
-						backgroundColor: '#e6e7e9',
+						backgroundColor: AppTheme.colors.bgSeparatorSecondary,
 					},
 				}),
 				field,
@@ -109,3 +109,4 @@ jn.define('tasks/layout/task/fields/timeTracking', (require, exports, module) =>
 
 	module.exports = { TimeTracking };
 });
+

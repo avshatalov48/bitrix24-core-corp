@@ -5,12 +5,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
+$filterId = $arParams["FILTER_ID"] ?? null;
 ?>
 
 <div class="tasks-interface-filter pagetitle-container<?php if (!$isBitrix24Template): ?> pagetitle-container-light<? endif ?> pagetitle-flexible-space">
 	<?php
 	$filterComponentData = [
-		"FILTER_ID" => $arParams["FILTER_ID"] ?? null,
+		"FILTER_ID" => $filterId,
 		"GRID_ID" => $arParams["GRID_ID"] ?? null,
 		"FILTER" => $arParams["FILTER"] ?? null,
 		"FILTER_PRESETS" => $arParams["PRESETS"] ?? null,

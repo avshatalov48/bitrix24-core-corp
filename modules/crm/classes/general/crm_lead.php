@@ -8,6 +8,8 @@ use Bitrix\Crm\CustomerType;
 use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\FieldContext\EntityFactory;
+use Bitrix\Crm\FieldContext\ValueFiller;
 use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\Integration\Channel\LeadChannelBinding;
 use Bitrix\Crm\Integration\PullManager;
@@ -992,7 +994,7 @@ class CAllCrmLead
 			$arSelect[] = 'ASSIGNED_BY_SECOND_NAME';
 			$sSqlJoin .= ' LEFT JOIN b_user U ON L.ASSIGNED_BY_ID = U.ID ';
 		}
-		if (in_array('CREATED_BY_LOGIN', $arFilterField) || in_array('CREATED_BY_LOGIN', $arFilterField))
+		if (in_array('CREATED_BY_LOGIN', $arFilterField))
 		{
 			$arSelect[] = 'CREATED_BY';
 			$arSelect[] = 'CREATED_BY_LOGIN';
@@ -1001,7 +1003,7 @@ class CAllCrmLead
 			$arSelect[] = 'CREATED_BY_SECOND_NAME';
 			$sSqlJoin .= ' LEFT JOIN b_user U2 ON L.CREATED_BY_ID = U2.ID ';
 		}
-		if (in_array('MODIFY_BY_LOGIN', $arFilterField) || in_array('MODIFY_BY_LOGIN', $arFilterField))
+		if (in_array('MODIFY_BY_LOGIN', $arFilterField))
 		{
 			$arSelect[] = 'MODIFY_BY';
 			$arSelect[] = 'MODIFY_BY_LOGIN';
@@ -3044,6 +3046,13 @@ class CAllCrmLead
 				]);
 			}
 
+			if ($bResult)
+			{
+				$scope = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getScope();
+				$filler = new ValueFiller(CCrmOwnerType::Lead, $ID, $scope);
+				$filler->fill($options['CURRENT_FIELDS'], $arFields);
+			}
+
 			if ($bResult && !$syncStatusSemantics)
 			{
 				$item = Crm\Kanban\Entity::getInstance(self::$TYPE_NAME)
@@ -3054,6 +3063,7 @@ class CAllCrmLead
 					[
 						'TYPE' => self::$TYPE_NAME,
 						'SKIP_CURRENT_USER' => ($iUserId !== 0),
+						'EVENT_ID' => ($options['eventId'] ?? null),
 					]
 				);
 			}
@@ -3333,6 +3343,12 @@ class CAllCrmLead
 			{
 				ExecuteModuleEventEx($arEvent, array($ID));
 			}
+		}
+
+		$fieldsContextEntity = EntityFactory::getInstance()->getEntity(CCrmOwnerType::Lead);
+		if ($fieldsContextEntity)
+		{
+			$fieldsContextEntity::deleteByItemId($ID);
 		}
 
 		$item = Crm\Kanban\Entity::getInstance(self::$TYPE_NAME)

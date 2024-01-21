@@ -1,4 +1,4 @@
-import {Base} from './base'
+import { Base } from './base';
 
 class Cash extends Base
 {
@@ -6,18 +6,19 @@ class Cash extends Base
 	{
 		return 'cash';
 	}
+
 	getType()
 	{
 		return Cash.type();
 	}
+
 	getIcon()
 	{
 		return 'cash';
 	}
-
 }
 
 export
 {
-	Cash
-}
+	Cash,
+};

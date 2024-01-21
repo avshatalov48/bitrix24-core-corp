@@ -967,24 +967,74 @@ div.disk-folder-list-search-progress {
 	}
 }
 
+.disk__sn-spaces_subtoolbar {
+	display: flex;
+	align-items: center;
+	padding: 5px 10px;
+	/*negative margin from action-panel*/
+	margin: -5px 0 12px;
+}
+
+.disk__sn-spaces_config {
+	display: flex;
+	align-items: center;
+}
+
+.disk__sn-spaces_subtoolbar-view {
+	display: flex;
+	align-items: center;
+	gap: 1px;
+}
+
+.disk__sn-spaces_subtoolbar-view-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 31px;
+	padding: 0 9px;
+	box-sizing: border-box;
+	background: rgba(var(--ui-color-background-primary-rgb), .15);
+	--ui-icon-set__icon-color: rgba(var(--ui-color-palette-white-base-rgb), var(--ui-opacity-20));
+	cursor: pointer;
+	transition: .2s;
+}
+
+.disk__sn-spaces_subtoolbar-view-btn .ui-icon-set {
+	pointer-events: none;
+}
 
 
+.disk__sn-spaces_subtoolbar-view-btn.disk-folder-list-view-item-active {
+	--ui-icon-set__icon-color: rgba(var(--ui-color-palette-white-base-rgb), var(--ui-opacity-80));
+}
+
+.disk__sn-spaces_subtoolbar-view-btn:first-of-type {
+	border-top-left-radius: var(--ui-border-radius-pill);
+	border-bottom-left-radius: var(--ui-border-radius-pill);
+}
+
+.disk__sn-spaces_subtoolbar-view-btn:last-of-type {
+	border-top-right-radius: var(--ui-border-radius-pill);
+	border-bottom-right-radius: var(--ui-border-radius-pill);
+}
+
+.disk__sn-spaces_subtoolbar-view-btn:hover {
+	background: rgba(var(--ui-color-background-primary-rgb), var(--ui-opacity-30));
+}
 
 
+.bitrix24-default-theme .disk__sn-spaces_subtoolbar-view-btn,
+.bitrix24-dark-theme .disk__sn-spaces_subtoolbar-view-btn {
+	background: rgba(var(--ui-color-base-solid-rgb), var(--ui-opacity-5));
+	--ui-icon-set__icon-color: rgba(var(--ui-color-base-90-rgb), var(--ui-opacity-60));
+}
 
+.bitrix24-default-theme .disk__sn-spaces_subtoolbar-view-btn:hover,
+.bitrix24-dark-theme .disk__sn-spaces_subtoolbar-view-btn:hover {
+	background:  rgba(var(--ui-color-base-solid-rgb), var(--ui-opacity-10));
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+.bitrix24-default-theme .disk__sn-spaces_subtoolbar-view-btn.disk-folder-list-view-item-active,
+.bitrix24-dark-theme .disk__sn-spaces_subtoolbar-view-btn.disk-folder-list-view-item-active {
+	--ui-icon-set__icon-color: rgba(var(--ui-color-base-90-rgb), var(--ui-opacity-80));
+}

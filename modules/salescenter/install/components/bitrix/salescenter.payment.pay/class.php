@@ -7,12 +7,11 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale;
 use Bitrix\Sale\Cashbox;
-use Bitrix\Sale\Payment;
+use Bitrix\Crm\Order\Payment;
 use Bitrix\Sale\PaySystem;
-use Bitrix\Crm;
-use Bitrix\Crm\Workflow\PaymentWorkflow;
-use Bitrix\Crm\Workflow\PaymentStage;
 use Bitrix\ImOpenLines\Model\SessionTable;
+use Bitrix\Crm\Order\Timeline\PaymentViewer;
+use Bitrix\Crm\Timeline\OrderPaymentController;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -45,9 +44,7 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 	 */
 	private $paymentId = null;
 
-	/**
-	 * @var Sale\Payment
-	 */
+	/** @var Payment */
 	private $payment = null;
 
 	/**
@@ -219,41 +216,12 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 						$this->prepareConsentSettings($order);
 						$this->prepareCheckFields($this->payment);
 
-						if (Main\Loader::includeModule('crm'))
+						if (Loader::includeModule('crm'))
 						{
-							$needEmitOrderViewedEvent = false;
-							$paymentWorkflow = PaymentWorkflow::createFrom($this->payment);
-
-							if ($paymentWorkflow->setStage(PaymentStage::VIEWED_NO_PAID))
-							{
-								$needEmitOrderViewedEvent = true;
-							}
-
-							if ($this->needAddTimelineEntityOnOpen($this->payment))
-							{
-								$needEmitOrderViewedEvent = true;
-								$this->addTimelineEntityOnView($this->payment);
-
-								if (!$this->payment->isPaid())
-								{
-									/** @var Crm\Order\EntityBinding $binding */
-									$binding = $order->getEntityBinding();
-									if (
-										$binding
-										&& $binding->getOwnerTypeId() == CCrmOwnerType::Deal
-									)
-									{
-										$this->changeOrderStageDealOnViewedNoPaid(
-											$binding->getOwnerId()
-										);
-									}
-								}
-							}
-
-							if ($needEmitOrderViewedEvent)
-							{
-								$this->emitOrderViewedEvent($this->payment);
-							}
+							(new PaymentViewer())->view(
+								$this->payment,
+								OrderPaymentController::VIEWED_WAY_CUSTOMER_PAYMENT_PAY
+							);
 						}
 					}
 					else
@@ -309,7 +277,6 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 			if ($order && $this->checkAuthorized($order, $params['ACCESS_CODE']))
 			{
 				$paymentCollection = $order->getPaymentCollection();
-				/** @var Sale\Payment $payment */
 				$this->payment = $paymentCollection->getItemById($this->paymentId);
 				$paySystemObject = PaySystem\Manager::getObjectById($paysystemId);
 
@@ -698,12 +665,7 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 		return $order;
 	}
 
-	/**
-	 * @param Payment $payment
-	 * @throws Main\ArgumentException
-	 * @throws Main\NotImplementedException
-	 */
-	private function prepareCheckFields(Sale\Payment $payment): void
+	private function prepareCheckFields(Payment $payment): void
 	{
 		$this->arResult['CHECK'] = [];
 
@@ -788,110 +750,5 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 			return false;
 		}
 		return true;
-	}
-
-	/**
-	 * @param Payment $payment
-	 * @return bool
-	 */
-	protected function needAddTimelineEntityOnOpen(Sale\Payment $payment): bool
-	{
-		$dbRes = Crm\Timeline\Entity\TimelineTable::getList([
-			'order' => ['ID' => 'ASC'],
-			'filter' => [
-				'TYPE_ID' => Crm\Timeline\TimelineType::ORDER,
-				'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::OrderPayment,
-				'ASSOCIATED_ENTITY_ID' => $payment->getId(),
-			]
-		]);
-
-		while ($item = $dbRes->fetch())
-		{
-			if (isset($item['SETTINGS']['FIELDS']['VIEWED']) && $item['SETTINGS']['FIELDS']['VIEWED'] === 'Y')
-			{
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	/**
-	 * @param Payment $payment
-	 */
-	protected function addTimelineEntityOnView(Sale\Payment $payment): void
-	{
-		/** @var Crm\Order\Order $order */
-		$order = $payment->getOrder();
-
-		$bindings = [
-			[
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
-				'ENTITY_ID' => $order->getId()
-			]
-		];
-
-		if ($order->getEntityBinding())
-		{
-			$bindings[] = [
-				'ENTITY_TYPE_ID' => $order->getEntityBinding()->getOwnerTypeId(),
-				'ENTITY_ID' => $order->getEntityBinding()->getOwnerId()
-			];
-		}
-
-		$params = [
-			'ORDER_FIELDS' => $order->getFieldValues(),
-			'SETTINGS' => [
-				'FIELDS' => [
-					'ORDER_ID' => $order->getId(),
-					'PAYMENT_ID' => $payment->getId(),
-				]
-			],
-			'BINDINGS' => $bindings,
-			'FIELDS' => $payment->getFieldValues(),
-		];
-
-		Crm\Timeline\OrderPaymentController::getInstance()->onView($payment->getId(), $params);
-	}
-
-	/**
-	 * @param Payment $payment
-	 */
-	protected function emitOrderViewedEvent(Sale\Payment $payment): void
-	{
-		if(!Main\Loader::includeModule('pull'))
-		{
-			return;
-		}
-
-		$orderId = $payment->getOrder()->getId();
-		if ($orderId <= 0)
-		{
-			return;
-		}
-
-		$tagName = "SALESCENTER_ORDER_PAYMENT_VIEWED_$orderId";
-		$params = [
-			'ORDER_ID' => $orderId,
-			'PAYMENT_ID' => $payment->getId(),
-		];
-		$message = [
-			'module_id' => 'salescenter',
-			'command' => 'onOrderPaymentViewed',
-			'params' => $params,
-		];
-
-		\CPullWatch::AddToStack($tagName, $message);
-	}
-
-	/**
-	 * @param $dealId
-	 */
-	private function changeOrderStageDealOnViewedNoPaid($dealId): void
-	{
-		$fields = ['ORDER_STAGE' => Crm\Order\OrderStage::VIEWED_NO_PAID];
-
-		$deal = new \CCrmDeal(false);
-		$deal->Update($dealId, $fields);
 	}
 }

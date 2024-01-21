@@ -98,18 +98,27 @@ abstract class AbstractFacebookBuilder implements CrmConversionEventBuilderInter
 	{
 		if ($contactId)
 		{
-			return array_filter(ContactTable::getRow([
-					'select' => [
-						'`first_name`' => 'NAME',
-						'`last_name`' => 'LAST_NAME',
-						'`phone`' => 'PHONE',
-						'`email`' => 'EMAIL',
-						'`date_of_birth`' => 'BIRTHDATE'
-					],
-					'filter' => [
-						'=ID' => $contactId
-					]
-				]) ?? []);
+			$fieldsMap = [
+				'NAME' => 'first_name',
+				'LAST_NAME' => 'last_name',
+				'PHONE' => 'phone',
+				'EMAIL' => 'email',
+				'BIRTHDATE' => 'date_of_birth',
+			];
+			$data = array_filter(ContactTable::getRow([
+				'select' => array_keys($fieldsMap),
+				'filter' => [
+					'=ID' => $contactId
+				]
+			]) ?? []);
+
+			$result = [];
+			foreach ($data as $fieldName => $fieldValue)
+			{
+				$result[$fieldsMap[$fieldName]] = $fieldValue;
+			}
+
+			return $result;
 		}
 
 		return null;
@@ -119,15 +128,23 @@ abstract class AbstractFacebookBuilder implements CrmConversionEventBuilderInter
 	{
 		if ($companyId)
 		{
-			return array_filter(CompanyTable::getRow([
-					'select' => [
-						'`phone`' => 'PHONE',
-						'`email`' => 'EMAIL'
-					],
-					'filter' => [
-						'=ID' => $companyId
-					]
-				]) ?? []);
+			$fieldsMap = [
+				'PHONE' => 'phone',
+				'EMAIL' => 'email',
+			];
+			$data = array_filter(CompanyTable::getRow([
+				'select' => array_keys($fieldsMap),
+				'filter' => [
+					'=ID' => $companyId
+				]
+			]) ?? []);
+			$result = [];
+			foreach ($data as $fieldName => $fieldValue)
+			{
+				$result[$fieldsMap[$fieldName]] = $fieldValue;
+			}
+
+			return $result;
 		}
 
 		return null;

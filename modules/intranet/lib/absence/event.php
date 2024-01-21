@@ -26,6 +26,11 @@ class Event
 	 */
 	public static function onAfterIblockElementAdd($fields)
 	{
+		if ($fields['RESULT'] === false)
+		{
+			return;
+		}
+
 		$iblockId = UserAbsence::getIblockId();
 		if ($iblockId > 0 && intval($fields['IBLOCK_ID']) == $iblockId)
 		{

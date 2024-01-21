@@ -1,12 +1,15 @@
-(() =>
-{
-	this.BackgroundSelectorComponent = class BackgroundSelectorComponent extends LayoutComponent {
+(() => {
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
 
-		constructor(props) {
+	this.BackgroundSelectorComponent = class BackgroundSelectorComponent extends LayoutComponent
+	{
+		constructor(props)
+		{
 			super(props);
 
 			this.state = {
-				selected: false
+				selected: false,
 			};
 
 			this.onSelectBackground = props.onSelectBackground;
@@ -14,17 +17,18 @@
 			this.heightRatio = props.heightRatio;
 		}
 
-		render() {
+		render()
+		{
 			const { selected } = this.state;
 
 			const onSelectBackground = this.onSelectBackground;
 			let backgroundImageUrlsList = [];
 
-			for (let [key, item] of Object.entries(this.backgroundImagesData['images']))
+			for (const [key, item] of Object.entries(this.backgroundImagesData.images))
 			{
 				backgroundImageUrlsList.push({
 					code: key,
-					imageData: item
+					imageData: item,
 				});
 			}
 
@@ -33,6 +37,7 @@
 				{
 					return -1;
 				}
+
 				if (a.code > b.code)
 				{
 					return 1;
@@ -41,35 +46,35 @@
 				return 0;
 			});
 
-			let backgroundImagesList = [];
+			const backgroundImagesList = [];
 			let counter = 1;
 
-			backgroundImageUrlsList.forEach(item => {
+			backgroundImageUrlsList.forEach((item) => {
 				backgroundImagesList.push(
 					View(
 						{
 							style: {
-								width: '50%'
-							}
+								width: '50%',
+							},
 						},
 						View(
 							{
 								testId: `backgroundSelectorItem_${item.code}`,
 								style: {
-									marginTop: parseInt(10 * this.heightRatio),
+									marginTop: parseInt(10 * this.heightRatio, 10),
 									marginLeft: (counter % 2 ? 10 : 5),
 									marginRight: (counter % 2 ? 5 : 10),
-									height: parseInt(59 * this.heightRatio),
-									borderRadius: parseInt(10 * this.heightRatio),
+									height: parseInt(59 * this.heightRatio, 10),
+									borderRadius: parseInt(10 * this.heightRatio, 10),
 									backgroundImage: currentDomain + item.imageData.resizedUrl,
-									backgroundResizeMode: 'cover'
+									backgroundResizeMode: 'cover',
 								},
 								onClick: () => {
-									onSelectBackground(item.code)
-								}
-							}
-						)
-					)
+									onSelectBackground(item.code);
+								},
+							},
+						),
+					),
 				);
 				counter++;
 			});
@@ -78,50 +83,50 @@
 				{
 					style: {
 						flexDirection: 'row',
-						flexWrap: 'wrap'
-					}
-				}
+						flexWrap: 'wrap',
+					},
+				},
 			];
 
-			imagesViewArgs = imagesViewArgs.concat(backgroundImagesList);
+			imagesViewArgs = [...imagesViewArgs, ...backgroundImagesList];
 
 			return ScrollView(
 				{
 					style: {
-						backgroundColor: '#ffffff'
-					}
-				},
-				View({
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 					},
+				},
+				View(
+					{},
 					View.apply(null, imagesViewArgs),
 					View(
 						{
 							style: {
 								width: '100%',
 								alignItems: 'center',
-								marginTop: parseInt(20 * this.heightRatio)
-							}
+								marginTop: parseInt(20 * this.heightRatio, 10),
+							},
 						},
 						Button({
 							style: {
 								align: 'center',
 								justifyContent: 'center',
 								width: '80%',
-								height: parseInt(46 * this.heightRatio),
-								fontSize: parseInt(17 * this.heightRatio),
-								color: '#000000',
+								height: parseInt(46 * this.heightRatio, 10),
+								fontSize: parseInt(17 * this.heightRatio, 10),
+								color: AppTheme.colors.base0,
 								borderWidth: 1,
-								borderColor: '#525C69',
-								borderRadius: parseInt(6 * this.heightRatio)
+								borderColor: AppTheme.colors.base2,
+								borderRadius: parseInt(6 * this.heightRatio, 10),
 							},
 							text: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_BACKGROUND_EMPTY'),
 							onClick: () => {
-								onSelectBackground(null)
-							}
-						})
-					)
-				)
+								onSelectBackground(null);
+							},
+						}),
+					),
+				),
 			);
 		}
-	}
+	};
 })();

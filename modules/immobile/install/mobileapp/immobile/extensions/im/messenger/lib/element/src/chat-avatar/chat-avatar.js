@@ -5,6 +5,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 	const { core } = require('im/messenger/core');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const { DialogType } = require('im/messenger/const');
 
 	/**
 	 * @class ChatAvatar
@@ -66,10 +67,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			}
 
 			this.avatar = dialog.avatar;
-			if (this.avatar === '')
-			{
-				this.color = dialog.color;
-			}
+			this.color = dialog.color;
 		}
 
 		createUserAvatar(userId)
@@ -80,11 +78,16 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 				return;
 			}
 
-			this.avatar = user.avatar;
-			if (this.avatar === '')
+			if (this.isUser(userId) && !user.lastActivityDate && !user.avatar)
 			{
+				this.avatar = `${ChatAvatar.getImagePath()}avatar_wait.png`;
 				this.color = user.color;
+
+				return;
 			}
+
+			this.avatar = user.avatar;
+			this.color = user.color;
 		}
 
 		/**
@@ -101,7 +104,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 				titleParams.imageUrl = this.avatar;
 			}
 
-			if (this.color)
+			if (this.color && this.avatar === '')
 			{
 				titleParams.imageColor = this.color;
 			}
@@ -116,6 +119,22 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		getAvatarUrl()
 		{
 			return this.avatar;
+		}
+
+		/**
+		 *
+		 * @return {string | null}
+		 */
+		getColor()
+		{
+			return this.color;
+		}
+
+		isUser(userId)
+		{
+			const user = this.store.getters['usersModel/getById'](userId);
+
+			return !user.bot && !user.network && !user.connector;
 		}
 	}
 

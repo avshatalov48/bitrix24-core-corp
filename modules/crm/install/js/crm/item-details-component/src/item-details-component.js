@@ -1,12 +1,12 @@
-import { ajax as Ajax, Dom, Loc, Reflection, Runtime, Tag, Text, Type, Uri } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
-import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
-import { StageFlow } from 'ui.stageflow';
+import { ReceiverRepository } from 'crm.messagesender';
 import type { StageModelData } from 'crm.stage-model';
 import { StageModel } from 'crm.stage-model';
+import { ajax as Ajax, Dom, Loc, Reflection, Runtime, Tag, Text, Type, Uri } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { PopupMenu } from 'main.popup';
-import { ReceiverRepository } from 'crm.messagesender';
+import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
+import { StageFlow } from 'ui.stageflow';
 
 export type ItemDetailsComponentParams = {
 	entityTypeId: number,
@@ -406,29 +406,34 @@ export class ItemDetailsComponent
 		if (!Pull)
 		{
 			console.error('pull is not initialized');
+
 			return;
 		}
+
 		if (!this.pullTag)
 		{
 			return;
 		}
+
 		Pull.subscribe({
 			moduleId: 'crm',
 			command: this.pullTag,
 			callback: (params) => {
-				if (params && params.item && params.item.data)
+				if (!params?.item?.data)
 				{
-					const columnId = params.item.data.columnId;
-					if (this.stageflowChart && this.stageflowChart.isActive)
+					return;
+				}
+
+				const columnId = params.item.data.columnId;
+				if (this.stageflowChart?.isActive)
+				{
+					const currentStage = this.getStageById(this.stageflowChart.currentStage);
+					if (currentStage?.statusId !== columnId)
 					{
-						const currentStage = this.getStageById(this.stageflowChart.currentStage);
-						if (currentStage && currentStage.statusId !== columnId)
+						const newStage = this.getStageByStatusId(columnId);
+						if (newStage)
 						{
-							const newStage = this.getStageByStatusId(columnId);
-							if (newStage)
-							{
-								this.updateStage(newStage);
-							}
+							this.updateStage(newStage);
 						}
 					}
 				}

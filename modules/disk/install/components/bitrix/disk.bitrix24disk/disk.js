@@ -1,3 +1,25 @@
+BX.ready(() => {
+	if (BX.Reflection.getClass('BX.Messenger.v2.Lib.DesktopApi'))
+	{
+		const loadDiskIntegration = () => {
+			BX.loadExt('disk.bitrix24disk-integration').then(() => {
+				BX.Disk.Bitrix24Disk.BxLinkHandler.init();
+			});
+		};
+
+		if (BX.Messenger.v2.Lib.DesktopApi.isDesktop())
+		{
+			loadDiskIntegration();
+		}
+		else
+		{
+			BX.Messenger.v2.Lib.DesktopApi.subscribe('onDesktopInit', () => {
+				loadDiskIntegration();
+			});
+		}
+	}
+});
+
 var disk_token = "";
 var disk_path = "";
 var isInstalledPull = true;
@@ -934,7 +956,11 @@ var BitrixDisk = {
 			}
 		});
 
-		this.setEvents();
+		if (!BX.Reflection.getClass('BX.Messenger.v2.Lib.DesktopApi'))
+		{
+			console.warn('BX.Messenger.v2.Lib.DesktopApi is not defined');
+			this.setEvents();
+		}
 
 		if (!BX.desktop.enableInVersion(42))
 		{

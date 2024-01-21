@@ -2,8 +2,10 @@
 
 return [
 	'extensions' => [
+		'apptheme',
 		'animation',
 		'haptics',
+		'utils/function',
 		'utils/object',
 	],
 	'bundle' => [

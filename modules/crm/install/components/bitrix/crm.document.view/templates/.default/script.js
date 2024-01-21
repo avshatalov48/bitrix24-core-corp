@@ -22,6 +22,7 @@
 		this.isTransformationError = false;
 		this.transformationErrorMessage = '';
 		this.transformationErrorCode = 0;
+		this.isDisplayTransformationErrors = true;
 		this.viewer = null;
 		this.publicUrl = null;
 		this.sendedToSign = false;
@@ -34,12 +35,22 @@
 		this.previewNode = document.getElementById('crm__document-view--node');
 		this.documentId = options.id;
 		this.publicUrl = options.publicUrl;
+
+		// set this prop only on init, dont allow override from options later
+		if (BX.type.isBoolean(options.isDisplayTransformationErrors))
+		{
+			this.isDisplayTransformationErrors = options.isDisplayTransformationErrors;
+		}
+		// eslint-disable-next-line no-param-reassign
+		delete options.isDisplayTransformationErrors;
+
 		options.previewNode = this.previewNode;
 		options.transformationErrorNode = this.transformationErrorNode;
 		options.onReady = BX.proxy(function(options)
 		{
-			this.applyOptions(options);
 			this.showError(false);
+			this.applyOptions(options);
+			// if transformation errors display enabled, will display error message if there is no pdfUrl
 			this.showPdf();
 		}, this);
 		this.preview = new BX.DocumentGenerator.DocumentPreview(options);
@@ -688,9 +699,19 @@
 				viewer.setScale(1.2).open(0);
 			}
 		}
-		else
+		else if (this.isDisplayTransformationErrors)
 		{
-			this.showError(BX.message('CRM_DOCUMENT_VIEW_COMPONENT_PROCESSED_NO_PDF_ERROR'));
+			let message;
+			if (this.transformationErrorMessage)
+			{
+				message = this.transformationErrorMessage;
+			}
+			else
+			{
+				message = BX.Loc.getMessage('CRM_DOCUMENT_VIEW_COMPONENT_PROCESSED_NO_PDF_ERROR');
+			}
+
+			this.showError(message);
 		}
 	};
 	BX.Crm.DocumentView.handleQrCodeInputClick = function(event)

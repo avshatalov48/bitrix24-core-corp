@@ -13,7 +13,7 @@ import { Utils } from 'im.v2.lib.utils';
 import 'ui.notification';
 
 import type { MenuItem } from 'im.v2.lib.menu';
-import type { ImModelMessage, ImModelDialog, ImModelFile } from 'im.v2.model';
+import type { ImModelMessage, ImModelChat, ImModelFile } from 'im.v2.model';
 
 export class MessageMenu extends BaseMenu
 {
@@ -163,7 +163,7 @@ export class MessageMenu extends BaseMenu
 	{
 		const canUnread = this.context.viewed && !this.#isOwnMessage();
 
-		const dialog: ImModelDialog = this.store.getters['dialogues/getByChatId'](this.context.chatId);
+		const dialog: ImModelChat = this.store.getters['chats/getByChatId'](this.context.chatId);
 		const isMarked = this.context.id === dialog.markedId;
 		if (!canUnread || isMarked)
 		{

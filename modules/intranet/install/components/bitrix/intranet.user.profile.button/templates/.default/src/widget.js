@@ -11,6 +11,7 @@ import Ustat from "./ustat";
 import UserLoginHistory from './user-login-history';
 import {QrAuthorization} from "ui.qrauthorization";
 import {Otp} from "./otp";
+import {DesktopApi} from 'im.v2.lib.desktop-api';
 
 const widgetMarker = Symbol('user.widget');
 export default class Widget extends EventEmitter
@@ -803,11 +804,22 @@ export default class Widget extends EventEmitter
 	#getLogoutContainer(): Element
 	{
 		return this.#cache.remember('getLogoutContainer', () => {
-			const backUrl = new Uri(window.location.pathname);
-			backUrl.removeQueryParam(['logout', 'login', 'back_url_pub', 'user_lang']);
-			const newUrl =  new Uri('/auth/?logout=yes');
-			newUrl.setQueryParam('sessid', BX.bitrix_sessid());
-			newUrl.setQueryParam('backurl', encodeURIComponent(backUrl.toString()));
+			const onclickLogout = () => {
+				if (DesktopApi.isDesktop())
+				{
+					DesktopApi.logout();
+				}
+				else
+				{
+					const backUrl = new Uri(window.location.pathname);
+					backUrl.removeQueryParam(['logout', 'login', 'back_url_pub', 'user_lang']);
+					const newUrl = new Uri('/auth/?logout=yes');
+					newUrl.setQueryParam('sessid', BX.bitrix_sessid());
+					newUrl.setQueryParam('backurl', encodeURIComponent(backUrl.toString()));
+					document.location.href = newUrl;
+				}
+			};
+
 			//TODO
 			return Tag.render`
 				<div class="system-auth-form__item system-auth-form__scope --padding-sm">
@@ -817,7 +829,7 @@ export default class Widget extends EventEmitter
 					<div class="system-auth-form__item-container --center">
 						<div class="system-auth-form__item-title --light">${Loc.getMessage('AUTH_LOGOUT')}</div>
 					</div>
-					<a href="${newUrl.toString()}" class="system-auth-form__item-link-all"></a>
+					<a onclick="${onclickLogout}" class="system-auth-form__item-link-all"></a>
 				</div>
 			`;
 		});

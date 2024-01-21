@@ -60,7 +60,7 @@ class Util
 	// see BX.util.hashCode()
 	public static function hashCode($str)
 	{
-		$str = (string) $str;
+		return base_convert(crc32($str), 16, 10);
 		if($str == '')
 		{
 			return 0;

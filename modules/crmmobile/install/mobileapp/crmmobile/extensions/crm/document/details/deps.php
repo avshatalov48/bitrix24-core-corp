@@ -4,8 +4,9 @@ return [
 	'extensions' => [
 		'rest',
 		'loc',
-		'notify',
 		'alert',
+		'notify',
+		'apptheme',
 		'utils/date',
 		'utils/url',
 		'utils/color',

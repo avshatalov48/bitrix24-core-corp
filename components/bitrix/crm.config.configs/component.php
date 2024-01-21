@@ -1,5 +1,9 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -17,7 +21,7 @@ if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 	return;
 }
 
-use \Bitrix\Crm\Settings;
+use Bitrix\Crm\Settings;
 use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -434,7 +438,10 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				);
 			}
 
-			if (isset($_POST['ENABLE_LIVEFEED_MERGE']))
+			if (
+				isset($_POST['ENABLE_LIVEFEED_MERGE'])
+				&& \Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper::isAvailable()
+			)
 			{
 				\Bitrix\Crm\Settings\LiveFeedSettings::getCurrent()->enableLiveFeedMerge(
 					mb_strtoupper($_POST['ENABLE_LIVEFEED_MERGE']) === 'Y'
@@ -473,6 +480,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			{
 				\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->enableUserNameSorting(
 					mb_strtoupper($_POST['ENABLE_USER_NAME_SORTING']) === 'Y'
+				);
+			}
+
+			if (isset($_POST['ENABLE_FILE_PREVIEWER_IN_KANBAN_AND_GRID']))
+			{
+				\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->enableFilePreviewerInKanbanAndGrid(
+					mb_strtoupper($_POST['ENABLE_FILE_PREVIEWER_IN_KANBAN_AND_GRID']) === 'Y'
 				);
 			}
 
@@ -523,7 +537,7 @@ $arResult['FIELDS']['tab_main'][] = array(
 	'type' => 'section'
 );
 
-if (!\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled())
+if (!\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled() || COption::GetOptionString('crm', 'allow_old_detail_page', 'N') === 'Y')
 {
 	$arResult['FIELDS']['tab_main'][] = [
 		'id' => 'ENABLE_SLIDER',
@@ -552,6 +566,24 @@ $arResult['FIELDS']['tab_main'][] = array(
 	'value' => \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isUserNameSortingEnabled(),
 	'required' => false
 );
+
+
+$isPortalCanDisableFilePreviewer = false;
+if (\COption::getOptionString('crm', 'allow_disable_file_previewer_in_kanban_and_grid', 'N') === 'Y')
+{
+	$isPortalCanDisableFilePreviewer = true;
+}
+
+if ($isPortalCanDisableFilePreviewer)
+{
+	$arResult['FIELDS']['tab_main'][] = [
+		'id' => 'ENABLE_FILE_PREVIEWER_IN_KANBAN_AND_GRID',
+		'name' => Loc::getMessage('CRM_FIELD_ENABLE_FILE_PREVIEWER_IN_KANBAN_AND_GRID'),
+		'type' => 'checkbox',
+		'value' => \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isFilePreviewerInKanbanAndGridEnabled(),
+		'required' => false
+	];
+}
 
 if (\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isCommonProductProcessingEnabled())
 {
@@ -1067,13 +1099,16 @@ $arResult['FIELDS']['tab_history'][] = array(
 	'required' => false
 );
 
-$arResult['FIELDS']['tab_livefeed'][] = array(
-	'id' => 'ENABLE_LIVEFEED_MERGE',
-	'name' => GetMessage('CRM_FIELD_ENABLE_LIVEFEED_MERGE2'),
-	'type' => 'checkbox',
-	'value' => \Bitrix\Crm\Settings\LiveFeedSettings::getCurrent()->isLiveFeedMergeEnabled(),
-	'required' => false
-);
+if (\Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper::isAvailable())
+{
+	$arResult['FIELDS']['tab_livefeed'][] = array(
+		'id' => 'ENABLE_LIVEFEED_MERGE',
+		'name' => GetMessage('CRM_FIELD_ENABLE_LIVEFEED_MERGE2'),
+		'type' => 'checkbox',
+		'value' => \Bitrix\Crm\Settings\LiveFeedSettings::getCurrent()->isLiveFeedMergeEnabled(),
+		'required' => false
+	);
+}
 
 $arResult['FIELDS']['tab_format'][] = array(
 	'id' => 'PERSON_NAME_FORMAT_ID',
@@ -1259,4 +1294,3 @@ if (!ModuleManager::isModuleInstalled('bitrix24'))
 $this->IncludeComponentTemplate();
 
 $APPLICATION->AddChainItem(GetMessage('CRM_SM_LIST'), $arParams['PATH_TO_SM_CONFIG']);
-?>

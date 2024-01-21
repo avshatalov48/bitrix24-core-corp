@@ -102,7 +102,7 @@
 			});
 
 			device.on('proximityChanged', this.onProximitySensorDebounced);
-			JNVIAudioManager.on('changed', this.onAudioDeviceChangedDebounced);
+			CallUtil.getSdkAudioManager().on('changed', this.onAudioDeviceChangedDebounced);
 		}
 
 		onCallInvite(e)
@@ -159,6 +159,7 @@
 
 		startCall(dialogId, video, associatedDialogData = {})
 		{
+			console.log('CallController.startCall', dialogId, video, associatedDialogData);
 			if (!CallUtil.isDeviceSupported())
 			{
 				CallUtil.error(BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'));
@@ -179,18 +180,70 @@
 				provider = BX.Call.Provider.Voximplant;
 			}
 
-			if (callEngine.isBitrixCallServerEnabled())
+			if (isGroupChat && callEngine.isBitrixCallServerEnabled())
 			{
-				provider = BX.Call.Provider.Bitrix;
+				provider = BX.Call.Provider.BitrixDev;
 
-				callEngine.createCall({
-					entityType: 'chat',
-					entityId: dialogId,
-					provider,
-					videoEnabled: !!video,
-					joinExisting: isGroupChat,
-				})
+				this.requestDeviceAccess(video).then(() => {
+					return this.openCallView({
+						status: 'outgoing',
+						isGroupCall: isGroupChat,
+						associatedEntityName: associatedDialogData.name,
+						associatedEntityAvatar: associatedDialogData.avatar,
+						associatedEntityAvatarColor: associatedDialogData.color,
+						cameraState: video,
+						chatCounter: this.chatCounter,
+					});
+				}).then(() => {
+					BX.postComponentEvent('CallEvents::viewOpened', []);
+					BX.postWebEvent('CallEvents::viewOpened', {});
+					this.bindViewEvents();
+					media.audioPlayer().playSound('call_start');
+
+					return this.maybeShowLocalVideo(video && !isGroupChat);
+				}).then(() => {
+					return callEngine.createCall({
+							entityType: 'chat',
+							entityId: dialogId,
+							provider,
+							videoEnabled: !!video,
+							joinExisting: isGroupChat,
+						});
+					})
+					.then((createResult) => {
+						console.log('startCall.BitrixDev.createCall.createResult', createResult);
+
+						this.currentCall = createResult.call;
+						this.bindCallEvents();
+						callInterface.indicator().setMode('outgoing');
+						device.setIdleTimerDisabled(true);
+						device.setProximitySensorEnabled(true);
+
+						this.callView.appendUsers(this.currentCall.getUsers());
+						CallUtil.getUsers(this.currentCall.id, this.getCallUsers(true)).then(
+							(userData) => this.callView.updateUserData(userData),
+						);
+
+						media.audioPlayer().playSound('call_outgoing', 10);
+
+						if (createResult.isNew)
+						{
+							this.currentCall.inviteUsers();
+						}
+						else
+						{
+							this.callView.setState({
+								status: 'call',
+							});
+
+							this.currentCall.answer({
+								useVideo: video,
+							});
+						}
+					})
 					.catch((error) => {
+						console.error('startCall.BitrixDev.createCall.createResult.catch', error);
+
 						CallUtil.error(error);
 						if (error instanceof DeviceAccessError)
 						{
@@ -358,7 +411,7 @@
 
 		onIncomingCall(e)
 		{
-			CallUtil.warn('incoming.call', e);
+			CallUtil.warn('CallController.onIncomingCall', e);
 
 			if (!CallUtil.isDeviceSupported())
 			{
@@ -367,7 +420,9 @@
 				return;
 			}
 
-			if (callEngine.isBitrixCallServerEnabled())
+			const provider = e.provider;
+			const isDevCallEnabled = provider === BX.Call.Provider.Bitrix && callEngine.isBitrixCallServerEnabled();
+			if (!isDevCallEnabled && provider !== BX.Call.Provider.Plain && provider !== BX.Call.Provider.Voximplant)
 			{
 				return;
 			}
@@ -990,7 +1045,7 @@
 				this.currentCall.log('onAppActive');
 				this.currentCall.setVideoPaused(false);
 
-				if (!this._hasHeadphones() && JNVIAudioManager.currentDevice == 'receiver')
+				if (!this._hasHeadphones() && CallUtil.getSdkAudioManager().currentDevice == 'receiver')
 				{
 					CallUtil.warn('switching audio output to speaker on application activation');
 					this._selectSpeaker();
@@ -1195,7 +1250,7 @@
 		onSelectAudioDevice(deviceName)
 		{
 			this.skipNextDeviceChangeEvent = true;
-			JNVIAudioManager.selectAudioDevice(deviceName);
+			CallUtil.getSdkAudioManager().selectAudioDevice(deviceName);
 		}
 
 		onCallUserInvited(e)
@@ -1362,7 +1417,7 @@
 			if (e.local)
 			{
 				CallUtil.warn('joined local call');
-				if (!this._hasHeadphones() && JNVIAudioManager.currentDevice == 'receiver' && !Application.isBackground())
+				if (!this._hasHeadphones() && CallUtil.getSdkAudioManager().currentDevice == 'receiver' && !Application.isBackground())
 				{
 					CallUtil.warn('no headphones');
 					this._selectSpeaker();
@@ -1522,13 +1577,13 @@
 
 		_hasHeadphones()
 		{
-			return JNVIAudioManager.availableAudioDevices.some((d) => d === 'wired' || d === 'bluetooth');
+			return CallUtil.getSdkAudioManager().availableAudioDevices.some((d) => d === 'wired' || d === 'bluetooth');
 		}
 
 		_selectSpeaker()
 		{
 			this.skipNextDeviceChangeEvent = true;
-			JNVIAudioManager.selectAudioDevice('speaker');
+			CallUtil.getSdkAudioManager().selectAudioDevice('speaker');
 		}
 
 		test(status = 'call', viewProps = {})
@@ -1608,16 +1663,16 @@
 
 		testDevices()
 		{
-			const menuItems = JNVIAudioManager.availableAudioDevices.map((deviceAlias) => {
+			const menuItems = CallUtil.getSdkAudioManager().availableAudioDevices.map((deviceAlias) => {
 				return {
 					text: deviceAlias,
-					selected: deviceAlias === JNVIAudioManager.currentDevice,
+					selected: deviceAlias === CallUtil.getSdkAudioManager().currentDevice,
 					onClick: () => {
 						if (this.menu)
 						{
 							this.menu.close();
 						}
-						JNVIAudioManager.selectAudioDevice(deviceAlias);
+						CallUtil.getSdkAudioManager().selectAudioDevice(deviceAlias);
 					},
 				};
 			});

@@ -90,8 +90,8 @@ abstract class Base extends Activity
 							->addActionParamString(
 								'analyticsLabel',
 								CCrmOwnerType::isUseDynamicTypeBasedApproach($ownerTypeId)
-									? 'crmDealTimelineSmsResendPaymentSlider'
-									: 'crmDynamicTypeTimelineSmsResendPaymentSlider'
+									? 'crmDynamicTypeTimelineSmsResendPaymentSlider'
+									: 'crmDealTimelineSmsResendPaymentSlider'
 							)
 					)
 			;

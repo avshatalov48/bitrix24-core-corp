@@ -2,7 +2,7 @@
  * @module layout/ui/address-editor-opener
  */
 jn.define('layout/ui/address-editor-opener', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { withCurrentDomain } = require('utils/url');
 	const { Feature } = require('feature');
@@ -28,17 +28,16 @@ jn.define('layout/ui/address-editor-opener', (require, exports, module) => {
 		 * @returns {Promise}
 		 */
 		async open({
-			 address = null,
-			 geoPoint = null,
-			 mode = AddressEditorModes.edit,
-			 uid = Random.getString(),
-			 onAddressSelected = null,
-		})
+					   address = null,
+					   geoPoint = null,
+					   mode = AddressEditorModes.edit,
+					   uid = Random.getString(),
+					   onAddressSelected = null,
+				   })
 		{
-			const deviceGeoPosition =
-				mode === AddressEditorModes.edit
-					? await this.requestDeviceGeoPosition()
-					: null
+			const deviceGeoPosition = mode === AddressEditorModes.edit
+				? await this.requestDeviceGeoPosition()
+				: null
 			;
 
 			BX.addCustomEvent('Location::MobileAddressEditor::AddressSelected', (event) => {
@@ -66,18 +65,20 @@ jn.define('layout/ui/address-editor-opener', (require, exports, module) => {
 				isEditable: mode === AddressEditorModes.edit ? 'Y' : 'N',
 				uid,
 			};
-			const editorUri = '/mobile/location/address.php?' +
+			const editorUri = `/mobile/location/address.php?${
 				Object.keys(editorUriParams)
 					.map((key) => {
 						const value = editorUriParams[key];
 
 						return `${key}=${value ? encodeURIComponent(editorUriParams[key]) : ''}`;
 					})
-					.join('&');
+					.join('&')}`;
 
 			return new Promise((resolve) => {
 				this.parentWidget.openWidget('web', {
-					page: {url: withCurrentDomain(editorUri),},
+					page: {
+						url: withCurrentDomain(editorUri),
+					},
 					modal: true,
 					titleParams: {
 						text: this.getTitle({
@@ -92,7 +93,7 @@ jn.define('layout/ui/address-editor-opener', (require, exports, module) => {
 						},
 						isCloseButton: true,
 					}],
-					backgroundColor: '#EEF2F4',
+					backgroundColor: AppTheme.colors.bgPrimary,
 					onReady: (widget) => {
 						this.editorWidget = widget;
 						widget.enableNavigationBarBorder(false);
@@ -110,9 +111,9 @@ jn.define('layout/ui/address-editor-opener', (require, exports, module) => {
 					resolve(null);
 				}
 
-				device.getLocation({accuracy: 'approximate'})
+				device.getLocation({ accuracy: 'approximate' })
 					.then((response) => resolve(response))
-					.catch(() => resolve(null))
+					.catch(() => resolve(null));
 			});
 		}
 
@@ -123,11 +124,7 @@ jn.define('layout/ui/address-editor-opener', (require, exports, module) => {
 		 * @param {boolean} isGeoPointValid
 		 * @returns {String}
 		 */
-		getTitle({
-			mode,
-			address,
-			isGeoPointValid,
-		})
+		getTitle({ mode, address, isGeoPointValid })
 		{
 			if (mode === AddressEditorModes.view)
 			{
@@ -161,5 +158,4 @@ jn.define('layout/ui/address-editor-opener', (require, exports, module) => {
 		AddressEditorOpener,
 		AddressEditorModes,
 	};
-
 });

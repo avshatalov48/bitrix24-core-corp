@@ -47,13 +47,13 @@ class BIConnector extends \CModule
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/components', true, true
 		);
 		CopyDirFiles(
-			$_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/biconnector/install/images',
-			$_SERVER["DOCUMENT_ROOT"] . '/bitrix/images',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/biconnector/install/images',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/images',
 			true, true
 		);
 		CopyDirFiles(
-			$_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/biconnector/install/js',
-			$_SERVER["DOCUMENT_ROOT"] . '/bitrix/js',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/biconnector/install/js',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/js',
 			true, true
 		);
 
@@ -130,6 +130,7 @@ class BIConnector extends \CModule
 			$this->InstallTasks();
 
 			\CAgent::AddAgent('\\Bitrix\\BIConnector\\LogTable::cleanUpAgent();', 'biconnector', 'N', 86400);
+			\CAgent::AddAgent('\\Bitrix\\BIConnector\\Integration\\Superset\\Agent::sendRestStatistic();', 'biconnector');
 
 			ModuleManager::registerModule($this->MODULE_ID);
 
@@ -216,14 +217,12 @@ class BIConnector extends \CModule
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/tools'
 		);
 		DeleteDirFiles(
-			$_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/' . $this->MODULE_ID . '/install/images',
-			$_SERVER["DOCUMENT_ROOT"] . '/bitrix/images',
-			true, true
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/images',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/images'
 		);
 		DeleteDirFiles(
-			$_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/' . $this->MODULE_ID . '/install/js',
-			$_SERVER["DOCUMENT_ROOT"] . '/bitrix/js',
-			true, true
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/js',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/js'
 		);
 
 		return true;

@@ -101,6 +101,19 @@ namespace.EntityEditor.prototype =
 					cb.apply(this, [eventName, ...arguments]);
 				});
 			});
+			BX.Event.EventEmitter.subscribe(
+				"BX.UI.EntityEditorFieldSelector:close",(event) => {
+					if (Array.isArray(event.data.items))
+					{
+						event.data.items.forEach((item) => {
+							if (item.sectionName === 'contact' && item.fieldName === 'UF_FACEBOOK')
+							{
+								document.querySelector('#show-ru-meta-notification').style.display = 'inherit';
+							}
+						});
+					}
+				},
+			);
 		}
 	},
 

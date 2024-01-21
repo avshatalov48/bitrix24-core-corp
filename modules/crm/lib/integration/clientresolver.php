@@ -660,22 +660,11 @@ class ClientResolver
 		return $result;
 	}
 
-	protected static function getAppInfo(string $appCode, bool $noCache = false): array
+	protected static function getAppTitle(string $appCode): string
 	{
-		static $appInfo = [];
-
-		if (!isset($appInfo[$appCode]))
-		{
-			if (static::isRestModuleIncluded())
-			{
-				$info = Marketplace\Client::getInstall($appCode);
-				$info = (is_array($info) && isset($info['ITEMS']) && is_array($info['ITEMS'])) ? $info['ITEMS'] : [];
-			}
-
-			$appInfo[$appCode] = (!empty($info) && CRestUtil::canInstallApplication($info)) ? $info : [];
-		}
-
-		return $appInfo[$appCode];
+		// APP_TITLE_INTEGRATIONS24_PORTAL_NALOG_GOV_BY
+		// APP_TITLE_INTEGRATIONS24_MNS_KAZAKHSTAN_POISK_PO_BIN
+		return (string)Loc::getMessage('APP_TITLE_'.mb_strtoupper(preg_replace('/[^0-9a-zA-Z_]/', '_',$appCode)));
 	}
 
 	protected static function getDefaultClientResolverApplicationCodeByCountryMap()
@@ -706,19 +695,15 @@ class ClientResolver
 
 		$appCode = $map[$countryId] ?? '';
 
-		if ($appCode !== '' && static::isRestModuleIncluded())
+		if ($appCode !== '' && static::isRestModuleIncluded() && CRestUtil::canInstallApplication())
 		{
-			$appInfo = static::getAppInfo($appCode);
+			$appTitle = static::getAppTitle($appCode);
 
-			if (
-				isset($appInfo['NAME'])
-				&& is_string($appInfo['NAME'])
-				&& $appInfo['NAME'] !== ''
-			)
+			if ($appTitle !== '')
 			{
 				$result['code'] = $appCode;
 				$result['isAvailable'] = 'Y';
-				$result['title'] = $appInfo['NAME'];
+				$result['title'] = $appTitle;
 			}
 		}
 

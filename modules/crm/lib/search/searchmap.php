@@ -1,114 +1,130 @@
 <?php
+
 namespace Bitrix\Crm\Search;
+
 use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
 use Bitrix\Main\NotSupportedException;
+use CCrmFieldMulti;
+use CCrmOwnerType;
+use CCrmStatus;
+use CUser;
 
 class SearchMap
 {
-	private static $users = array();
-	private $data = array();
+	private static array$users = [];
+	private array $data = [];
 
 	/**
 	 * Cache specified users.
-	 * @param array $userIDs User IDs.
+	 * @param array $userIds User IDs.
 	 * @return void
 	 */
-	public static function cacheUsers(array $userIDs)
+	public static function cacheUsers(array $userIds): void
 	{
-		if(empty($userIDs))
+		if (empty($userIds))
 		{
 			return;
 		}
 
-		$dbResult = \CUser::GetList(
+		$dbResult = CUser::GetList(
 			'ID',
 			'ASC',
-			array('ID' => implode('|', array_filter(array_map('intval', $userIDs)))),
-			array('FIELDS' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'TITLE'))
+			['ID' => implode('|', array_filter(array_map('intval', $userIds)))],
+			[
+				'FIELDS' => ['ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'TITLE'],
+			]
 		);
-		while($user = $dbResult->Fetch())
+
+		while ($user = $dbResult->Fetch())
 		{
 			self::$users[$user['ID']] = $user;
 		}
 	}
 
-	public function add($value)
+	public function add($value): void
 	{
-		if(!is_string($value))
+		if (!is_string($value))
 		{
 			$value = (string)$value;
 		}
 
 		$value = SearchEnvironment::prepareToken($value);
-		if($value !== '' && !isset($this->data[$value]))
+		if ($value !== '' && !isset($this->data[$value]))
 		{
 			$this->data[$value] = true;
 		}
 	}
-	public function addField(array $fields, $name)
+
+	public function addField(array $fields, string $name): void
 	{
-		$value = isset($fields[$name]) ? $fields[$name] : '';
-		if(!is_string($value))
+		$value = $fields[$name] ?? '';
+		if (!is_string($value))
 		{
 			$value = (string)$value;
 		}
 
 		$value = SearchEnvironment::prepareToken($value);
-		if($value !== '' && !isset($this->data[$value]))
+		if ($value !== '' && !isset($this->data[$value]))
 		{
 			$this->data[$value] = true;
 		}
 	}
-	public function addText($value, $length = null)
+
+	public function addText($value, int $length = null): void
 	{
-		if(!is_string($value))
+		if (!is_string($value))
 		{
 			$value = (string)$value;
 		}
 
-		if($length > 0)
+		if ($length > 0)
 		{
 			$value = mb_substr($value, 0, $length);
 		}
 
 		$value = SearchEnvironment::prepareToken($value);
-		if($value !== '' && !isset($this->data[$value]))
+		if ($value !== '' && !isset($this->data[$value]))
 		{
 			$this->data[$value] = true;
 		}
 	}
-	public function addHtml($value, $length = null)
+
+	public function addHtml($value, int $length = null): void
 	{
 		$this->addText(strip_tags(html_entity_decode($value)), $length);
 	}
-	public function addUserByID($userID)
+	
+	public function addUserByID($userId): void
 	{
-		if((int)$userID <= 0)
+		if ((int)$userId <= 0)
 		{
 			return;
 		}
 
-		if(isset(self::$users[(int)$userID]))
+		if (isset(self::$users[(int)$userId]))
 		{
-			$user = self::$users[(int)$userID];
+			$user = self::$users[(int)$userId];
 		}
 		else
 		{
-			$dbResult = \CUser::GetList(
+			$dbResult = CUser::GetList(
 				'ID',
 				'ASC',
-				array('ID'=> $userID),
-				array('FIELDS' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'TITLE'))
+				['ID'=> $userId],
+				[
+					'FIELDS' => ['ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'TITLE'],
+				]
 			);
-			$user = self::$users[$userID] = $dbResult->Fetch();
+
+			$user = self::$users[$userId] = $dbResult->Fetch();
 		}
 
-		if(!is_array($user))
+		if (!is_array($user))
 		{
 			return;
 		}
 
-		$value = \CUser::FormatName(
+		$value = CUser::FormatName(
 			\CSite::GetNameFormat(),
 			$user,
 			true,
@@ -116,20 +132,20 @@ class SearchMap
 		);
 
 		$value = SearchEnvironment::prepareToken($value);
-		if($value !== '' && !isset($this->data[$value]))
+		if ($value !== '' && !isset($this->data[$value]))
 		{
 			$this->data[$value] = true;
 		}
 	}
 
-	public function addTextFragments($value)
+	public function addTextFragments($value): void
 	{
-		if(!is_string($value))
+		if (!is_string($value))
 		{
 			$value = (string)$value;
 		}
 
-		if($value === '')
+		if ($value === '')
 		{
 			return;
 		}
@@ -138,12 +154,12 @@ class SearchMap
 
 		//Right bound. We will stop when 3 characters are left.
 		$bound = $length - 2;
-		if($bound > 0)
+		if ($bound > 0)
 		{
-			for($i = 0; $i < $bound; $i++)
+			for ($i = 0; $i < $bound; $i++)
 			{
 				$fragment = mb_substr($value, $i);
-				if(!isset($this->data[$fragment]))
+				if (!isset($this->data[$fragment]))
 				{
 					$this->addText($fragment);
 				}
@@ -151,10 +167,10 @@ class SearchMap
 		}
 	}
 
-	public function addPhone($phone)
+	public function addPhone($phone): void
 	{
 		$originalPhone = DuplicateCommunicationCriterion::sanitizePhone($phone);
-		if($originalPhone === '')
+		if ($originalPhone === '')
 		{
 			return;
 		}
@@ -163,16 +179,16 @@ class SearchMap
 		$this->data[$originalPhone] = true;
 
 		$phone = DuplicateCommunicationCriterion::normalizePhone($phone);
-		if($phone === '')
+		if ($phone === '')
 		{
 			return;
 		}
 
 		$length = mb_strlen($phone);
-		if($length >= 10 && mb_substr($phone, 0, 1) === '7')
+		if ($length >= 10 && mb_substr($phone, 0, 1) === '7')
 		{
 			$altPhone = '8'.mb_substr($phone, 1);
-			if(!isset($this->data[$altPhone]))
+			if (!isset($this->data[$altPhone]))
 			{
 				$this->data[$altPhone] = true;
 			}
@@ -180,101 +196,105 @@ class SearchMap
 
 		//Right bound. We will stop when 3 digits are left.
 		$bound = $length - 2;
-		if($bound > 0)
+		if ($bound > 0)
 		{
-			for($i = 0; $i < $bound; $i++)
+			for ($i = 0; $i < $bound; $i++)
 			{
 				$fragment = mb_substr($phone, $i);
-				if(!isset($this->data[$fragment]))
+				if (!isset($this->data[$fragment]))
 				{
 					$this->data[$fragment] = true;
 				}
 			}
 		}
 	}
-	public function addEmail($email)
+
+	public function addEmail($email): void
 	{
-		if($email === '')
+		if ($email === '')
 		{
 			return;
 		}
 
 		$keys = preg_split('/\W+/', $email, -1, PREG_SPLIT_NO_EMPTY);
-		foreach($keys as $key)
+		foreach ($keys as $key)
 		{
 			$key = SearchEnvironment::prepareToken($key);
-			if(!isset($this->data[$key]))
+			if (!isset($this->data[$key]))
 			{
 				$this->data[$key] = true;
 			}
 		}
 	}
-	public function addMultiFieldValue($typeID, $value)
+
+	public function addMultiFieldValue(string $typeId, $value): void
 	{
-		if($typeID === \CCrmFieldMulti::PHONE)
+		if ($typeId === CCrmFieldMulti::PHONE)
 		{
 			$this->addPhone($value);
 		}
-		elseif($typeID === \CCrmFieldMulti::EMAIL)
+		elseif ($typeId === CCrmFieldMulti::EMAIL)
 		{
 			$this->addEmail($value);
 		}
 		else
 		{
-			throw new NotSupportedException("Multifield type: '".$typeID."' is not supported in current context");
+			throw new NotSupportedException("Multifield type: '" . $typeId . "' is not supported in current context");
 		}
 	}
-	public function addEntityMultiFields($entityTypeID, $entityID, array $typeIDs)
-	{
-		if(!is_int($entityID))
-		{
-			$entityID = (int)$entityID;
-		}
 
-		if($entityID <= 0)
+	public function addEntityMultiFields(int $entityTypeId, int $entityId, array $typeIds): void
+	{
+		if ($entityId <= 0)
 		{
 			return;
 		}
 
-		$multiFields = DuplicateCommunicationCriterion::prepareEntityMultifieldValues($entityTypeID, $entityID);
-		foreach($typeIDs as $typeID)
+		$multiFields = DuplicateCommunicationCriterion::prepareEntityMultifieldValues(
+			$entityTypeId,
+			$entityId
+		);
+
+		foreach ($typeIds as $typeId)
 		{
-			if(!(\CCrmFieldMulti::IsSupportedType($typeID) && isset($multiFields[$typeID])))
+			if (!(CCrmFieldMulti::IsSupportedType($typeId) && isset($multiFields[$typeId])))
 			{
 				continue;
 			}
 
-			foreach($multiFields[$typeID] as $multiField)
+			foreach ($multiFields[$typeId] as $multiField)
 			{
-				if(isset($multiField['VALUE']))
+				if (isset($multiField['VALUE']))
 				{
-					$this->addMultiFieldValue($typeID, $multiField['VALUE']);
+					$this->addMultiFieldValue($typeId, $multiField['VALUE']);
 				}
 			}
 		}
-
 	}
-	public function addStatus($statusEntityID, $statusID)
+	
+	public function addStatus($statusEntityId, $statusId): void
 	{
-		$list = \CCrmStatus::GetStatusList($statusEntityID);
-		if(isset($list[$statusID]))
+		$list = CCrmStatus::GetStatusList($statusEntityId);
+		if (isset($list[$statusId]))
 		{
-			$value = SearchEnvironment::prepareToken($list[$statusID]);
-			if($value !== '' && !isset($this->data[$value]))
+			$value = SearchEnvironment::prepareToken($list[$statusId]);
+			if ($value !== '' && !isset($this->data[$value]))
 			{
 				$this->data[$value] = true;
 			}
 		}
 	}
-	public function addUserField(array $userField)
+
+	public function addUserField(array $userField): void
 	{
 		global $USER_FIELD_MANAGER;
 
-		$userTypeID = isset($userField['USER_TYPE_ID']) ? $userField['USER_TYPE_ID'] : '';
-		if($userTypeID === 'boolean')
+		$userTypeId = $userField['USER_TYPE_ID'] ?? '';
+		if ($userTypeId === 'boolean')
 		{
-			$values = array();
-			if(isset($userField['VALUE']) && (bool)$userField['VALUE'] && isset($userField['EDIT_FORM_LABEL']))
+			$values = [];
+
+			if (isset($userField['VALUE']) && (bool)$userField['VALUE'] && isset($userField['EDIT_FORM_LABEL']))
 			{
 				$values[] = $userField['EDIT_FORM_LABEL'];
 			}
@@ -285,12 +305,36 @@ class SearchMap
 		}
 		//$values = explode(',', $USER_FIELD_MANAGER->getPublicText($userField));
 
-		foreach($values as $value)
+		foreach ($values as $value)
 		{
 			$this->addText(trim($value), 1024);
 		}
 	}
-	public function getString()
+
+	public function addCompany(int $companyId): void
+	{
+		$this->add(CCrmOwnerType::GetCaption(CCrmOwnerType::Company, $companyId, false));
+		$this->addEntityMultiFields(
+			CCrmOwnerType::Company,
+			$companyId,
+			[CCrmFieldMulti::PHONE, CCrmFieldMulti::EMAIL]
+		);
+	}
+
+	public function addContacts(array $contactIds): void
+	{
+		foreach ($contactIds as $contactId)
+		{
+			$this->add(CCrmOwnerType::GetCaption(CCrmOwnerType::Contact, $contactId, false));
+			$this->addEntityMultiFields(
+				CCrmOwnerType::Contact,
+				$contactId,
+				[CCrmFieldMulti::PHONE, CCrmFieldMulti::EMAIL]
+			);
+		}
+	}
+
+	public function getString(): string
 	{
 		return implode(' ', array_keys($this->data));
 	}

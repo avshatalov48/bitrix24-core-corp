@@ -6,8 +6,11 @@ return [
 		'loc',
 		'notify',
 		'crm:type',
-		'crm:entity-chat-opener',
+		'apptheme',
+		'layout/ui/item-selector',
 		'layout/ui/menu',
+		'layout/ui/empty-screen',
+		'crm:entity-chat-opener',
 	],
 	'bundle' => [
 		'./entities/base',

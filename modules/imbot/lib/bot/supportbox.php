@@ -2,7 +2,7 @@
 
 namespace Bitrix\ImBot\Bot;
 
-use Bitrix\Main;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\IO\File;
@@ -14,7 +14,8 @@ use Bitrix\Im\Bot\Keyboard;
 use Bitrix\ImBot;
 use Bitrix\ImBot\Log;
 use Bitrix\ImBot\Bot\Mixin;
-use CSiteCheckerTest;
+use Bitrix\Imopenlines\MessageParameter;
+
 
 class SupportBox extends Network implements SupportBot, SupportQuestion
 {
@@ -52,7 +53,7 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 	 */
 	public static function register(array $params = []): int
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return -1;
 		}
@@ -173,7 +174,7 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 	 */
 	public static function unRegister($code = '', $notifyController = true): bool
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -319,7 +320,7 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 	 */
 	public static function onChatStart($dialogId, $joinFields)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -541,7 +542,7 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 			$modulesInfo[$key]['VERSION'] = ModuleManager::getVersion($key);
 		}
 
-		$siteCheckerTest = new CSiteCheckerTest();
+		$siteCheckerTest = new \CSiteCheckerTest();
 		$filePath = $_SERVER['DOCUMENT_ROOT'] . $siteCheckerTest->LogFile;
 		try
 		{
@@ -725,6 +726,8 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 			return false;
 		}
 
+		Loader::includeModule('imopenlines');
+
 		if ($messageFields['COMMAND'] == self::COMMAND_ACTIVATE)
 		{
 			Im\Bot::startWriting(['BOT_ID' => self::getBotId()], $messageFields['DIALOG_ID']);
@@ -755,7 +758,7 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 				$error = self::getError();
 
 				$helpDeskUrl = '';
-				if (Main\Loader::includeModule('ui'))
+				if (Loader::includeModule('ui'))
 				{
 					$helpDeskUrl = \Bitrix\UI\Util::getArticleUrlByCode(self::HELP_DESK_CODE);
 				}
@@ -840,13 +843,13 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 					}
 					if (
 						!$sessionId
-						&& isset($message['params'], $message['params'][self::MESSAGE_PARAM_SESSION_ID])
-						&& (int)$message['params'][self::MESSAGE_PARAM_SESSION_ID] > 0 //SESSION_ID
+						&& isset($message['params'], $message['params'][MessageParameter::IMOL_SID])
+						&& (int)$message['params'][MessageParameter::IMOL_SID] > 0 //SESSION_ID
 					)
 					{
-						$sessionId = (int)$message['params'][self::MESSAGE_PARAM_SESSION_ID];
+						$sessionId = (int)$message['params'][MessageParameter::IMOL_SID];
 					}
-					if (isset($message['params'], $message['params'][self::MESSAGE_PARAM_IMOL_VOTE]))
+					if (isset($message['params'], $message['params'][MessageParameter::IMOL_VOTE_SID]))
 					{
 						break;// it is previous session
 					}
@@ -1098,12 +1101,7 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 	/**
 	 * Loads bot settings from controller.
 	 *
-	 * @param array $params Command arguments.
-	 * <pre>
-	 * [
-	 * 	(int) BOT_ID
-	 * ]
-	 * </pre>
+	 * @param array{BOT_ID: int} $params Command arguments.
 	 *
 	 * @return array|null
 	 */
@@ -1264,7 +1262,6 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 		Option::set(self::MODULE_ID, self::OPTION_BOT_ACTIVE, $enable);
 	}
 
-
 	/**
 	 * Is bot enabled.
 	 *
@@ -1273,8 +1270,8 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 	public static function isEnabled(): bool
 	{
 		return
-			(self::getBotId() > 0) &&
-			((bool)Option::get(self::MODULE_ID, self::OPTION_BOT_ACTIVE, false) === true);
+			(static::getBotId() > 0)
+			&& ((bool)Option::get(self::MODULE_ID, self::OPTION_BOT_ACTIVE, false) === true);
 	}
 
 	/**
@@ -1569,7 +1566,7 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 		if ($error->error === true && $error->msg !== '')
 		{
 			$helpDeskUrl = '';
-			if (Main\Loader::includeModule('ui'))
+			if (Loader::includeModule('ui'))
 			{
 				$helpDeskUrl = \Bitrix\UI\Util::getArticleUrlByCode(self::HELP_DESK_CODE);
 			}
@@ -1579,7 +1576,7 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 				'#HELP_DESK#' => $helpDeskUrl,
 			]);
 
-			if (Main\Loader::includeModule('im'))
+			if (Loader::includeModule('im'))
 			{
 				\CIMNotify::deleteBySubTag("IMBOT|SUPPORT|ERR");
 
@@ -1601,7 +1598,7 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 		}
 		else
 		{
-			if (Main\Loader::includeModule('im'))
+			if (Loader::includeModule('im'))
 			{
 				\CIMNotify::deleteBySubTag("IMBOT|SUPPORT|ERR");
 			}

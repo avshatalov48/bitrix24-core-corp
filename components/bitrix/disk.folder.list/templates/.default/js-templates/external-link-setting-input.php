@@ -16,7 +16,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 						</div>
 					</div>
 					<div class="disk-public-link-input-copy" for="bx-disk-sidebar-shared-outlink-input" data-entity="copy-btn" title="<?= Loc::getMessage('DISK_JS_EL_INPUT_PUBLIC_LINK_COPY_HINT') ?>"></div>
-					<input class="disk-public-link-input" id="bx-disk-sidebar-shared-outlink-input" value="{{link}}" type="text" data-entity="external-link-input">
+					<input class="disk-public-link-input" id="bx-disk-sidebar-shared-outlink-input" value="{{link}}" type="text" data-entity="external-link-input" readonly="readonly">
 					<div class="disk-public-link-config" id="disk-detail-sidebar-public-link-config" data-entity="public-link-config"></div>
 				</div>
 				{{&placeholderDescription}}

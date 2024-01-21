@@ -59,9 +59,14 @@
 	display: none;
 }
 
+.crm-activity__todo-editor_left_tools {
+	width: 75%;
+}
+
 .crm-activity__todo-editor.--is-edit .crm-activity__todo-editor_tools {
 	margin-top: 20px;
 	display: flex;
+	align-items: flex-end;
 }
 
 .crm-activity__todo-editor_deadline {
@@ -74,14 +79,45 @@
 	cursor: pointer;
 }
 
-.crm-activity__todo-editor_deadline-text {
+.crm-activity__todo-editor_ping_selector_wrapper {
+	padding-left: 8px;
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: flex-start;
+	font-family: inherit;
+}
+
+.crm-activity__todo-editor_deadline-pill {
 	position: relative;
-	margin-top: 1px;
-	color: var(--ui-color-base-50, #a8adb4);
-	border-bottom: 1px dashed var(--ui-color-base-20, #dfe0e3);
-	transition-property: border-color;
-	transition-duration: 0.2s;
-	transition-timing-function: linear;
+	display: inline-flex;
+	flex-direction: row;
+	align-items: center;
+	min-height: 21px;
+	padding-left: 9px;
+	padding-right: 21px;
+	font-size: var(--ui-font-size-xs, 12px);
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+	line-height: var(--ui-font-line-height-xl, 1.62);
+	border-radius: 64px;
+	background-color: var(--ui-color-base-04, #F1F4F6);
+	color: var(--ui-color-text-subtle, #6A737F);
+	cursor: pointer;
+}
+
+.crm-timeline__date-pill_caret {
+	pointer-events: none;
+	position: absolute;
+	width: 14px;
+	height: 14px;
+	right: 5px;
+	top: 50%;
+	transform: translateY(-50%);
+	mask-image: url('./images/crm-activity__todo-editor_bottom-caret.svg');
+	mask-size: contain;
+	mask-position: center center;
+	--crm-timeline__date-pill_caret-color: 130, 139, 149;
+	background-color: rgba(var(--ui-color-text-subtle-rgb, var(--crm-timeline__date-pill_caret-color)), 0.54);
 }
 
 .crm-activity__todo-editor_deadline:hover .crm-activity__todo-editor_deadline-text {
@@ -96,6 +132,20 @@
 	mask-size: 22px;
 	mask-position: 0 -1px;
 	mask-repeat: no-repeat;
+	background-color: var(--ui-color-base-40, #bdc1c6);
+	transition-timing-function: inherit;
+	transition-duration: inherit;
+	transition-property: background-color;
+}
+
+.crm-activity__todo-editor_ping-selector-icon {
+	width: 26px;
+	height: 26px;
+	mask-image: url("./images/crm-activity__todo-editor_alarm-icon.svg");
+	mask-size: 22px;
+	mask-position: 0 -1px;
+	mask-repeat: no-repeat;
+	margin-top: 2px;
 	background-color: var(--ui-color-base-40, #bdc1c6);
 	transition-timing-function: inherit;
 	transition-duration: inherit;

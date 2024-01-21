@@ -46,6 +46,7 @@
 		Plain: 'Plain',
 		Voximplant: 'Voximplant',
 		Bitrix: 'Bitrix',
+		BitrixDev: 'BitrixDev',
 	};
 
 	BX.Call.StreamTag = {
@@ -256,7 +257,7 @@
 				return;
 			}
 
-			this._instantiateCall(nativeCall.params.call, nativeCall.params.users, nativeCall.params.logToken);
+			this._instantiateCall(nativeCall.params.call, nativeCall.params.connectionData, nativeCall.params.users, nativeCall.params.logToken);
 			BX.postComponentEvent('CallEvents::incomingCall', [{
 				callId,
 				video: isVideo,
@@ -280,7 +281,7 @@
 		{
 			return new Promise((resolve, reject) => {
 				const callType = config.type || BX.Call.Type.Instant;
-				const callProvider = config.provider || 'Plain';
+				const callProvider = config.provider === BX.Call.Provider.BitrixDev ? BX.Call.Provider.Bitrix : config.provider || 'Plain';
 
 				if (config.joinExisting)
 				{
@@ -310,7 +311,10 @@
 					joinExisting: !!config.joinExisting,
 					userIds: BX.type.isArray(config.userIds) ? config.userIds : [],
 				};
+
+				console.log(`CallEngine.createCall.rest.callMethod - '${ajaxActions.createCall}', callParameters:`, callParameters);
 				this.getRestClient().callMethod(ajaxActions.createCall, callParameters).then((response) => {
+					console.log(`CallEngine.createCall.rest.callMethod - '${ajaxActions.createCall}', verbose response:`, response);
 					if (response.error())
 					{
 						const error = response.error().getError();
@@ -352,6 +356,7 @@
 					const callFactory = this._getCallFactory(callFields.PROVIDER);
 					const call = callFactory.createCall({
 						id: parseInt(callFields.ID, 10),
+						roomId: callFields.UUID,
 						instanceId: this.getUuidv4(),
 						direction: BX.Call.Direction.Outgoing,
 						users: createCallResponse.users,
@@ -367,6 +372,7 @@
 						},
 						debug: config.debug === true,
 						logToken: createCallResponse.logToken,
+						connectionData: createCallResponse.connectionData,
 					});
 
 					this.calls[callFields.ID] = call;
@@ -380,7 +386,7 @@
 						this.log(call.id, 'Server returned existing call, attaching to it');
 					}
 
-					if (!callEngine.isBitrixCallServerEnabled())
+					if (callEngine._isCallSupported(call))
 					{
 						BX.postComponentEvent('CallEvents::active', [this._getCallFields(call), call.joinStatus], 'im.recent');
 						BX.postComponentEvent('CallEvents::active', [this._getCallFields(call), call.joinStatus], 'im.messenger');
@@ -391,6 +397,7 @@
 						isNew: createCallResponse.isNew,
 					});
 				}).catch((response) => {
+					console.warn(`CallEngine.createCall.rest.callMethod.catch - '${ajaxActions.createCall}', verbose error:`, response);
 					const error = response.answer || response;
 					reject({
 						code: error.error || 0,
@@ -423,7 +430,7 @@
 						});
 					}
 					resolve({
-						call: this._instantiateCall(data.call, data.users, data.logToken),
+						call: this._instantiateCall(data.call, data.connectionData, data.users, data.logToken),
 						isNew: false,
 					});
 				}).catch((error) => {
@@ -493,6 +500,17 @@
 			return BX.componentParameters.get('bitrixCallsEnabled');
 		}
 
+		// previous method to detect new call, kept in case of reverting
+		// use isBitrixCallServerEnabled instead
+		// isBitrixCallDevEnabled()
+		// {
+		// 	const chatSettings = Application.storage.getObject('settings.chat', {
+		// 		bitrixCallDevEnable: false,
+		// 	});
+		//
+		// 	return chatSettings.bitrixCallDevEnable;
+		// }
+
 		isNativeCall(callId)
 		{
 			if (!('callservice' in window))
@@ -505,6 +523,12 @@
 			return nativeCall && nativeCall.params.call.ID == callId;
 		}
 
+		_isCallSupported(call) {
+			return call instanceof PlainCall
+				|| call instanceof VoximplantCall
+				|| (call instanceof BitrixCallDev && callEngine.isBitrixCallServerEnabled());
+		}
+
 		_onPullEvent(command, params, extra)
 		{
 			const handlers = {
@@ -514,6 +538,7 @@
 			if (command.startsWith('Call::') && params.publicIds)
 			{
 				BX.PULL.setPublicIds(Object.values(params.publicIds));
+				console.warn('CallEngine._onPullEvent', command, params, extra);
 			}
 
 			if (handlers[command])
@@ -543,6 +568,7 @@
 		{
 			if (command.startsWith('Call::') && params.callId)
 			{
+				console.warn('CallEngine._onPullClientEvent', command, params, extra);
 				const callId = params.callId;
 				if (this.calls[callId])
 				{
@@ -587,6 +613,7 @@
 				const callFactory = this._getCallFactory(callFields.PROVIDER);
 				call = callFactory.createCall({
 					id: callId,
+					roomId: callFields.UUID,
 					instanceId: this.getUuidv4(),
 					parentId: callFields.PARENT_ID || null,
 					callFromMobile: params.isLegacyMobile === true,
@@ -604,11 +631,11 @@
 						[BX.Call.Event.onInactive]: this._onCallInactiveHandler,
 						[BX.Call.Event.onActive]: this._onCallActiveHandler,
 					},
+					connectionData: params.connectionData,
 				});
 
 				this.calls[callId] = call;
-
-				if (!callEngine.isBitrixCallServerEnabled())
+				if (callEngine._isCallSupported(call))
 				{
 					BX.postComponentEvent('CallEvents::active', [this._getCallFields(call), call.joinStatus], 'im.recent');
 					BX.postComponentEvent('CallEvents::active', [this._getCallFields(call), call.joinStatus], 'im.messenger');
@@ -624,6 +651,7 @@
 					isLegacyMobile: params.isLegacyMobile === true,
 					userData: params.userData || null,
 					autoAnswer: this.shouldCallBeAutoAnswered(callId),
+					provider: callFields.PROVIDER,
 				}], 'calls');
 				call.log(`Incoming call ${call.id}`);
 			}
@@ -662,7 +690,7 @@
 			});
 		}
 
-		_instantiateCall(callFields, users, logToken)
+		_instantiateCall(callFields, connectionData, users, logToken)
 		{
 			if (this.calls[callFields.ID])
 			{
@@ -674,6 +702,7 @@
 			const callFactory = this._getCallFactory(callFields.PROVIDER);
 			const call = callFactory.createCall({
 				id: parseInt(callFields.ID, 10),
+				roomId: callFields.UUID,
 				instanceId: this.getUuidv4(),
 				initiatorId: parseInt(callFields.INITIATOR_ID, 10),
 				parentId: callFields.PARENT_ID,
@@ -691,10 +720,11 @@
 					[BX.Call.Event.onInactive]: this._onCallInactiveHandler,
 					[BX.Call.Event.onActive]: this._onCallActiveHandler,
 				},
+				connectionData: connectionData,
 			});
 			this.calls[callFields.ID] = call;
 
-			if (!callEngine.isBitrixCallServerEnabled())
+			if (callEngine._isCallSupported(call))
 			{
 				BX.postComponentEvent('CallEvents::active', [this._getCallFields(call), call.joinStatus], 'im.recent');
 				BX.postComponentEvent('CallEvents::active', [this._getCallFields(call), call.joinStatus], 'im.messenger');
@@ -726,7 +756,13 @@
 
 			if (providerType === BX.Call.Provider.Bitrix)
 			{
-				return BitrixCallFactory;
+				// we need to process calls from web (with Bitrix provider) with new provider (BitrixDev) for dev builds
+				return BitrixCallDevFactory;
+			}
+
+			if (providerType === BX.Call.Provider.BitrixDev)
+			{
+				return BitrixCallDevFactory;
 			}
 
 			throw new Error(`Unknown call provider type ${providerType}`);
@@ -734,53 +770,41 @@
 
 		_onCallJoin(e)
 		{
+			console.warn('CallEngine.CallEvents::join', e);
 			const call = this.calls[e.callId];
-			if (call && !(call instanceof CallStub))
+			if (call && !(call instanceof CallStub) && callEngine._isCallSupported(call))
 			{
-				console.warn('CallEvents::active', e.callId, call.joinStatus);
-				if (!callEngine.isBitrixCallServerEnabled())
-				{
-					BX.postComponentEvent('CallEvents::active', [this._getCallFields(call), call.joinStatus], 'im.recent');
-					BX.postComponentEvent('CallEvents::active', [this._getCallFields(call), call.joinStatus], 'im.messenger');
-				}
+				BX.postComponentEvent('CallEvents::active', [this._getCallFields(call), call.joinStatus], 'im.recent');
+				BX.postComponentEvent('CallEvents::active', [this._getCallFields(call), call.joinStatus], 'im.messenger');
 			}
 		}
 
 		_onCallLeave(e)
 		{
+			console.warn('CallEngine.CallEvents::leave', e.callId);
 			const call = this.calls[e.callId];
-			if (call && !(call instanceof CallStub))
+			if (call && !(call instanceof CallStub) && callEngine._isCallSupported(call))
 			{
-				console.warn('CallEvents::active', e.callId, call.joinStatus);
-				if (!callEngine.isBitrixCallServerEnabled())
-				{
-					BX.postComponentEvent('CallEvents::active', [this._getCallFields(call), call.joinStatus], 'im.recent');
-					BX.postComponentEvent('CallEvents::active', [this._getCallFields(call), call.joinStatus], 'im.messenger');
-				}
+				BX.postComponentEvent('CallEvents::active', [this._getCallFields(call), call.joinStatus], 'im.recent');
+				BX.postComponentEvent('CallEvents::active', [this._getCallFields(call), call.joinStatus], 'im.messenger');
 			}
 		}
 
 		_onCallInactive(callId)
 		{
-			console.warn('CallEvents::inactive', callId);
+			console.warn('CallEngine.CallEvents::inactive', callId);
 			BX.postComponentEvent('CallEvents::inactive', [callId], 'im.recent');
 			BX.postComponentEvent('CallEvents::inactive', [callId], 'im.messenger');
 		}
 
 		_onCallActive(callId)
 		{
-			console.log('_onCallActive');
-			console.log(callId);
-			console.log(this.calls[callId]);
+			console.warn('CallEngine.CallEvents::active', callId, this.calls[callId]);
 			const call = this.calls[callId];
-			if (call && !(call instanceof CallStub))
+			if (call && !(call instanceof CallStub) && callEngine._isCallSupported(call))
 			{
-				console.warn('CallEvents::active', callId, call.joinStatus);
-				if (!callEngine.isBitrixCallServerEnabled())
-				{
-					BX.postComponentEvent('CallEvents::active', [this._getCallFields(call), call.joinStatus], 'im.recent');
-					BX.postComponentEvent('CallEvents::active', [this._getCallFields(call), call.joinStatus], 'im.messenger');
-				}
+				BX.postComponentEvent('CallEvents::active', [this._getCallFields(call), call.joinStatus], 'im.recent');
+				BX.postComponentEvent('CallEvents::active', [this._getCallFields(call), call.joinStatus], 'im.messenger');
 			}
 		}
 
@@ -838,6 +862,13 @@
 		createCall(config)
 		{
 			return new BitrixCall(config);
+		},
+	};
+
+	let BitrixCallDevFactory =		{
+		createCall(config)
+		{
+			return new BitrixCallDev(config);
 		},
 	};
 
@@ -1229,6 +1260,48 @@
 				);
 			});
 		}
+
+		// temporary methods for calls compatibility
+		// should be deleted after new calls are fully implemented
+		getSdk()
+		{
+			if (BX.componentParameters.get('bitrixCallsEnabled'))
+			{
+				return JNBXCall;
+			}
+
+			return JNVICall;
+		}
+
+		getSdkClient()
+		{
+			if (BX.componentParameters.get('bitrixCallsEnabled'))
+			{
+				return BXClient;
+			}
+
+			return VIClient;
+		}
+
+		getSdkClientWrapper()
+		{
+			if (BX.componentParameters.get('bitrixCallsEnabled'))
+			{
+				return BxClientWrapper;
+			}
+
+			return VIClientWrapper;
+		}
+
+		getSdkAudioManager()
+		{
+			if (BX.componentParameters.get('bitrixCallsEnabled'))
+			{
+				return JNBXAudioManager;
+			}
+
+			return JNVIAudioManager;
+		}
 	}
 
 	class DeviceAccessError extends Error
@@ -1257,3 +1330,4 @@
 	window.CallStub = CallStub;
 })
 ();
+

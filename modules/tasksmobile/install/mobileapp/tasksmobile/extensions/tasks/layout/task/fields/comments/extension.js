@@ -3,6 +3,8 @@
  */
 jn.define('tasks/layout/task/fields/comments', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { chevronRight } = require('assets/common');
+	const AppTheme = require('apptheme');
 
 	class Comments extends LayoutComponent
 	{
@@ -15,7 +17,10 @@ jn.define('tasks/layout/task/fields/comments', (require, exports, module) => {
 		{
 			super(props);
 
+			this.containerRef = null;
+
 			this.state = {
+				visible: true,
 				commentsCount: props.commentsCount,
 				newCommentsCounter: props.newCommentsCounter,
 			};
@@ -24,9 +29,31 @@ jn.define('tasks/layout/task/fields/comments', (require, exports, module) => {
 		componentWillReceiveProps(props)
 		{
 			this.state = {
+				...this.state,
 				commentsCount: props.commentsCount,
 				newCommentsCounter: props.newCommentsCounter,
 			};
+		}
+
+		componentDidMount()
+		{
+			Keyboard.on(Keyboard.Event.WillShow, () => {
+				if (this.state.visible === true && this.containerRef)
+				{
+					this.containerRef.animate({ opacity: 0, duration: 300 }, () => {
+						this.setState({ visible: false });
+					});
+				}
+			});
+
+			Keyboard.on(Keyboard.Event.WillHide, () => {
+				if (this.state.visible === false && this.containerRef)
+				{
+					this.containerRef.animate({ opacity: 1, duration: 100 }, () => {
+						this.setState({ visible: true });
+					});
+				}
+			});
 		}
 
 		updateState(newState)
@@ -39,9 +66,97 @@ jn.define('tasks/layout/task/fields/comments', (require, exports, module) => {
 
 		render()
 		{
+			return this.renderFloatingCommentButton();
+		}
+
+		renderFloatingCommentButton()
+		{
+			let commentsCount = (this.state.commentsCount > 0 ? this.state.commentsCount : '');
+			if (commentsCount > 99)
+			{
+				commentsCount = '99+';
+			}
+
+			let newCommentsCount = 0;
+			let newCommentsColor = AppTheme.colors.base6;
+
+			if (this.state.newCommentsCounter)
+			{
+				const { value, color } = this.state.newCommentsCounter;
+
+				newCommentsCount = value;
+				if (newCommentsCount > 0)
+				{
+					newCommentsColor = color;
+				}
+			}
+
+			return View(
+				{
+					style: {
+						flex: 1,
+						alignSelf: 'center',
+						position: 'absolute',
+						bottom: 30,
+					},
+					safeArea: {
+						bottom: true,
+					},
+				},
+				View(
+					{
+						style: {
+							display: this.state.visible ? 'flex' : 'none',
+							flexDirection: 'row',
+							backgroundColor: AppTheme.colors.accentExtraDarkblue,
+							paddingHorizontal: 24,
+							paddingVertical: 12,
+							borderRadius: 88,
+						},
+						testId: 'commentsField',
+						onClick: this.props.onClick,
+						ref: (ref) => {
+							this.containerRef = ref;
+						},
+					},
+					Text({
+						style: {
+							fontSize: 18,
+							fontWeight: '400',
+							color: AppTheme.colors.baseWhiteFixed,
+						},
+						text: `${Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_COMMENTS')} ${commentsCount}`,
+						testId: 'commentsFieldCounterAll',
+					}),
+					newCommentsCount > 0 && View(
+						{
+							style: {
+								marginLeft: 8,
+								backgroundColor: newCommentsColor,
+								paddingHorizontal: 7,
+								paddingVertical: 2,
+								borderRadius: 55,
+							},
+							testId: 'commentsFieldCounterNew',
+						},
+						Text({
+							style: {
+								fontSize: 15,
+								fontWeight: '500',
+								color: AppTheme.colors.baseWhiteFixed,
+							},
+							text: `+${newCommentsCount > 99 ? 99 : newCommentsCount}`,
+						}),
+					),
+				),
+			);
+		}
+
+		renderBottomToolbar()
+		{
 			return new UI.BottomToolbar({
 				style: {
-					backgroundColor: '#fdfae1',
+					backgroundColor: AppTheme.colors.bgContentPrimary,
 				},
 				renderContent: () => View(
 					{
@@ -70,7 +185,7 @@ jn.define('tasks/layout/task/fields/comments', (require, exports, module) => {
 							this.renderAllCommentsBlock(),
 							this.renderNewCommentsBlock(),
 						),
-						Comments.renderRightArrow(),
+						this.renderRightArrow(),
 					),
 				),
 			});
@@ -88,7 +203,7 @@ jn.define('tasks/layout/task/fields/comments', (require, exports, module) => {
 					style: {
 						fontSize: 16,
 						fontWeight: '400',
-						color: '#333333',
+						color: AppTheme.colors.base3,
 						marginLeft: 8,
 					},
 					text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_COMMENTS'),
@@ -110,7 +225,7 @@ jn.define('tasks/layout/task/fields/comments', (require, exports, module) => {
 					style: {
 						fontSize: 16,
 						fontWeight: '400',
-						color: '#333333',
+						color: AppTheme.colors.base3,
 						marginLeft: 8,
 					},
 					text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_NEW_COMMENTS'),
@@ -122,8 +237,8 @@ jn.define('tasks/layout/task/fields/comments', (require, exports, module) => {
 		renderCounter(counter = null)
 		{
 			let value = this.state.commentsCount;
-			let color = '#e2e5e9';
-			let fontColor = '#828b95';
+			let color = AppTheme.colors.base6;
+			let fontColor = AppTheme.colors.base3;
 
 			if (counter)
 			{
@@ -131,7 +246,7 @@ jn.define('tasks/layout/task/fields/comments', (require, exports, module) => {
 				if (value > 0)
 				{
 					color = counter.color;
-					fontColor = '#ffffff';
+					fontColor = AppTheme.colors.base8;
 				}
 			}
 
@@ -168,15 +283,16 @@ jn.define('tasks/layout/task/fields/comments', (require, exports, module) => {
 			);
 		}
 
-		static renderRightArrow()
+		renderRightArrow()
 		{
 			return Image({
 				style: {
 					width: 24,
 					height: 24,
 				},
+				tintColor: AppTheme.colors.base3,
 				svg: {
-					content: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.16016 6.34368L12.6872 10.8707L13.8598 12.0001L12.6872 13.1301L8.16016 17.6572L9.75762 19.2547L17.0118 12.0005L9.75762 4.74634L8.16016 6.34368Z" fill="#D5D7DB"/></svg>',
+					content: chevronRight(AppTheme.colors.base3),
 				},
 			});
 		}

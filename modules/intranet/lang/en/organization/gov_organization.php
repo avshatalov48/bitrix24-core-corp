@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["ABSENCE_FORM_2"] = "Choose an absent user
 ";
 $MESS["APP_RIGHTS"] = "User access permissions";
@@ -75,8 +75,8 @@ $MESS["CONFIG_ALLOW_NEW_USER_LF"] = "Post new employee notification to Activity 
 $MESS["CONFIG_CLIENT_LOGO"] = "Organization logo";
 $MESS["CONFIG_COMPANY_NAME"] = "Organization name";
 $MESS["CONFIG_COMPANY_TITLE_NAME"] = "Organization name to display in the header";
-$MESS["CONFIG_IM_GENERSL_CHAT_MESSAGE_JOIN"] = "Post new employee notification to public chat";
-$MESS["CONFIG_IM_GENERSL_CHAT_MESSAGE_LEAVE"] = "Post employee dismissal notification to public chat";
+$MESS["CONFIG_IM_GENERSL_CHAT_MESSAGE_JOIN"] = "Post new employee notification to the General chat";
+$MESS["CONFIG_IM_GENERSL_CHAT_MESSAGE_LEAVE"] = "Post employee dismissal notification to the General chat";
 $MESS["CONFIG_LOGO_24"] = "Add \"24\" to organization logo";
 $MESS["CONFIG_OTP_ADMIN_IS_REQUIRED_INFO"] = "Before you migrate your users to two-step authentication system, set it up for your account first.<br/><br/>Please proceed by enabling it on the Security page of your profile.";
 $MESS["CONFIG_OTP_IMPORTANT_TEXT"] = "Today, you use your login and password to sign on to your Bitrix24. Business and personal data are protected by data encryption technology. However, there are tools a malicious person can employ to get into your computer and steal your login credentials.
@@ -138,7 +138,7 @@ $MESS["IM_CL_STRUCTURE"] = "Department";
 $MESS["IM_CL_USER_B24"] = "Employee";
 $MESS["IM_CTL_CHAT_STRUCTURE"] = "Office structure";
 $MESS["IM_C_ABOUT_CHAT"] = "Private chat is visible only to invited persons. #BR##BR# Besides your colleagues and employees working in your office, you can invite clients, partners, suppliers - anyone having their own Bitrix24. To add a new person, enter their name, e-mail or nickname. #BR##BR##PROFILE_START#Edit your profile#PROFILE_END# to enable other people find you.";
-$MESS["IM_C_ABOUT_OPEN"] = "A public chat is open to all of your colleagues. #BR##BR# Use this chat to discuss topics that are of importance to anybody in your company.#BR##BR# Once a public chat is created, a notification is sent to #CHAT_START#Common chat#CHAT_END#. Your colleagues can then view chat messages and join the chat if they want to.#BR##BR# Your initial message is crucial to spark other's interest in your new chat.";
+$MESS["IM_C_ABOUT_OPEN"] = "The General chat is visible to everyone. #BR##BR# Use this chat to discuss topics that are of importance to anybody in your company.#BR##BR# When a new chat is created, a notification is sent to the #CHAT_START#General chat#CHAT_END#. Your colleagues can then view the new chat's history and join it.#BR##BR# Your initial message is crucial to spark their interest in your new chat.";
 $MESS["IM_C_ABOUT_PRIVATE"] = "A person-to-person chat is visible to only you and your contact. #BR##BR# Find a person you want to chat with by their name, position or department. #BR##BR# You can also chat with any of your clients, partners or other persons using Bitrix24. Find them by their name, e-mail or display name you think they use. #BR##BR# Complete #PROFILE_START#your profile#PROFILE_END# to help other people find you.";
 $MESS["IM_M_CALL_ST_TRANSFER"] = "Call redirect: waiting for answer";
 $MESS["IM_M_CALL_ST_TRANSFER_1"] = "Call redirect: user failed to answer";
@@ -254,16 +254,16 @@ $MESS["ISV_B24_INVITE"] = "Invite users";
 $MESS["ISV_EMPLOYEES"] = "EMPLOYEES";
 $MESS["ISV_EMP_COUNT_1"] = "#NUM# user";
 $MESS["ISV_EMP_COUNT_2"] = "#NUM# users";
+$MESS["ISV_EMP_COUNT_3"] = "#NUM# users";
+$MESS["ISV_EMP_COUNT_4"] = "#NUM# users";
 $MESS["ISV_EMP_COUNT_21"] = "#NUM# user";
 $MESS["ISV_EMP_COUNT_22"] = "#NUM# users";
 $MESS["ISV_EMP_COUNT_23"] = "#NUM# users";
 $MESS["ISV_EMP_COUNT_24"] = "#NUM# users";
-$MESS["ISV_EMP_COUNT_3"] = "#NUM# users";
 $MESS["ISV_EMP_COUNT_31"] = "#NUM# user";
 $MESS["ISV_EMP_COUNT_32"] = "#NUM# users";
 $MESS["ISV_EMP_COUNT_33"] = "#NUM# users";
 $MESS["ISV_EMP_COUNT_34"] = "#NUM# users";
-$MESS["ISV_EMP_COUNT_4"] = "#NUM# users";
 $MESS["ISV_EMP_COUNT_41"] = "#NUM# user";
 $MESS["ISV_EMP_COUNT_42"] = "#NUM# users";
 $MESS["ISV_EMP_COUNT_43"] = "#NUM# users";
@@ -349,4 +349,3 @@ $MESS["wiz_company_logo"] = "Organization Logo:";
 $MESS["wiz_company_name"] = "Organization Name:";
 $MESS["wiz_demo_structure"] = "Install Sample Organization Structure";
 $MESS["wiz_slogan"] = "My Organization";
-?>

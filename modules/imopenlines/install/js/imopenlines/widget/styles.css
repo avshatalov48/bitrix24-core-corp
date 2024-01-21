@@ -3,7 +3,7 @@
 /* file: /bitrix/js/ui/design-tokens/dist/ui.design-tokens.css */
 /**
  * Do not edit directly
- * Generated on Fri, 03 Mar 2023 14:13:38 GMT
+ * Generated on Wed, 18 Oct 2023 09:52:35 GMT
  */
 
 :root {
@@ -33,11 +33,17 @@
   --ui-space-inset-4xl: 36px;
   --ui-space-inset-3xl: 32px;
   --ui-space-inset-2xl: 28px;
+  --ui-space-inset-xl2: 26px;
   --ui-space-inset-xl: 24px;
+  --ui-space-inset-lg2: 22px;
   --ui-space-inset-lg: 20px;
+  --ui-space-inset-md2: 18px;
   --ui-space-inset-md: 16px;
+  --ui-space-inset-sm2: 14px;
   --ui-space-inset-sm: 12px;
+  --ui-space-inset-xs2: 10px;
   --ui-space-inset-xs: 8px;
+  --ui-space-inset-2xs2: 6px;
   --ui-space-inset-2xs: 4px;
   --ui-space-inset-3xs: 2px;
   --ui-space-inset-none: 0;
@@ -48,11 +54,17 @@
   --ui-space-inline-4xl-neg: -36px;
   --ui-space-inline-3xl-neg: -32px;
   --ui-space-inline-2xl-neg: -28px;
+  --ui-space-inline-xl2-neg: -26px;
   --ui-space-inline-xl-neg: -24px;
+  --ui-space-inline-lg2-neg: -22px;
   --ui-space-inline-lg-neg: -20px;
+  --ui-space-inline-md2-neg: -18px;
   --ui-space-inline-md-neg: -16px;
+  --ui-space-inline-sm2-neg: -14px;
   --ui-space-inline-sm-neg: -12px;
+  --ui-space-inline-xs2-neg: -10px;
   --ui-space-inline-xs-neg: -8px;
+  --ui-space-inline-2xs2-neg: -6px;
   --ui-space-inline-2xs-neg: -4px;
   --ui-space-inline-3xs-neg: -2px;
   --ui-space-inline-8xl: 72px;
@@ -62,11 +74,17 @@
   --ui-space-inline-4xl: 36px;
   --ui-space-inline-3xl: 32px;
   --ui-space-inline-2xl: 28px;
+  --ui-space-inline-xl2: 26px;
   --ui-space-inline-xl: 24px;
+  --ui-space-inline-lg2: 22px;
   --ui-space-inline-lg: 20px;
+  --ui-space-inline-md2: 18px;
   --ui-space-inline-md: 16px;
+  --ui-space-inline-sm2: 14px;
   --ui-space-inline-sm: 12px;
+  --ui-space-inline-xs2: 10px;
   --ui-space-inline-xs: 8px;
+  --ui-space-inline-2xs2: 6px;
   --ui-space-inline-2xs: 4px;
   --ui-space-inline-3xs: 2px;
   --ui-space-inline-none: 0;
@@ -77,11 +95,17 @@
   --ui-space-stack-4xl-neg: -36px;
   --ui-space-stack-3xl-neg: -32px;
   --ui-space-stack-2xl-neg: -28px;
+  --ui-space-stack-xl2-neg: -26px;
   --ui-space-stack-xl-neg: -24px;
+  --ui-space-stack-lg2-neg: -22px;
   --ui-space-stack-lg-neg: -20px;
+  --ui-space-stack-md2-neg: -18px;
   --ui-space-stack-md-neg: -16px;
+  --ui-space-stack-sm2-neg: -14px;
   --ui-space-stack-sm-neg: -12px;
+  --ui-space-stack-xs2-neg: -10px;
   --ui-space-stack-xs-neg: -8px;
+  --ui-space-stack-2xs2-neg: -6px;
   --ui-space-stack-2xs-neg: -4px;
   --ui-space-stack-3xs-neg: -2px;
   --ui-space-stack-8xl: 72px;
@@ -91,11 +115,17 @@
   --ui-space-stack-4xl: 36px;
   --ui-space-stack-3xl: 32px;
   --ui-space-stack-2xl: 28px;
+  --ui-space-stack-xl2: 26px;
   --ui-space-stack-xl: 24px;
+  --ui-space-stack-lg2: 22px;
   --ui-space-stack-lg: 20px;
+  --ui-space-stack-md2: 18px;
   --ui-space-stack-md: 16px;
+  --ui-space-stack-sm2: 14px;
   --ui-space-stack-sm: 12px;
+  --ui-space-stack-xs2: 10px;
   --ui-space-stack-xs: 8px;
+  --ui-space-stack-2xs2: 6px;
   --ui-space-stack-2xs: 4px;
   --ui-space-stack-3xs: 2px;
   --ui-space-stack-none: 0;
@@ -106,11 +136,17 @@
   --ui-size-4xl: 36px;
   --ui-size-3xl: 32px;
   --ui-size-2xl: 28px;
+  --ui-size-xl2: 26px;
   --ui-size-xl: 24px;
+  --ui-size-lg2: 22px;
   --ui-size-lg: 20px;
+  --ui-size-md2: 18px;
   --ui-size-md: 16px;
+  --ui-size-sm2: 14px;
   --ui-size-sm: 12px;
+  --ui-size-xs2: 10px;
   --ui-size-xs: 8px;
+  --ui-size-2xs2: 6px;
   --ui-size-2xs: 4px;
   --ui-size-3xs: 2px;
   --ui-size-none: 0;
@@ -255,6 +291,8 @@
   --ui-color-palette-red-25-rgb: 255, 220, 219;
   --ui-color-palette-red-20: #ffe8e8;
   --ui-color-palette-red-20-rgb: 255, 232, 232;
+  --ui-color-palette-red-15: #fff0f0;
+  --ui-color-palette-red-15-rgb: 255, 240, 240;
   --ui-color-palette-red-10: #fff8f8;
   --ui-color-palette-red-10-rgb: 255, 248, 248;
   --ui-color-palette-orange-95: #614000;
@@ -277,6 +315,8 @@
   --ui-color-palette-orange-25-rgb: 255, 233, 190;
   --ui-color-palette-orange-20: #fff1d6;
   --ui-color-palette-orange-20-rgb: 255, 241, 214;
+  --ui-color-palette-orange-15: #fff5e3;
+  --ui-color-palette-orange-15-rgb: 255, 245, 227;
   --ui-color-palette-orange-10: #fffaf0;
   --ui-color-palette-orange-10-rgb: 255, 250, 240;
   --ui-color-palette-green-95: #3d4f00;
@@ -303,6 +343,8 @@
   --ui-color-palette-green-25-rgb: 250, 246, 195;
   --ui-color-palette-green-20: #f1fbd0;
   --ui-color-palette-green-20-rgb: 241, 251, 208;
+  --ui-color-palette-green-15: #f5fcde;
+  --ui-color-palette-green-15-rgb: 245, 252, 222;
   --ui-color-palette-green-10: #fafded;
   --ui-color-palette-green-10-rgb: 250, 253, 237;
   --ui-color-palette-blue-95: #004f69;
@@ -673,12 +715,6 @@
 .bx-pull-status-online .bx-pull-status-button {
 	display: none;
 }
-.bx-ie .bx-pull-status {
-	position: absolute;
-}
-.bx-ie .bx-pull-status-wrap {
-	min-width: 533px;
-}
 
 @-webkit-keyframes pullStatusShow {
 	0% { opacity: 0; max-height: 0; }
@@ -701,6 +737,7 @@
 	75% { opacity: 1; }
 	100% { opacity: 0; max-height: 0; }
 }
+
 
 
 
@@ -1336,6 +1373,10 @@ button.ui-icon > i:active,
 	/*Todo: The temporary solution of ticket #148936.*/
 	/*--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-vk.svg);*/
 	--ui-icon-service-bg-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 42 42'%3E%3Cpath fill='%23FFF' d='M30.889 26.837a1.64 1.64 0 0 0-.072-.137c-.364-.657-1.06-1.463-2.088-2.42l-.022-.022-.01-.01-.011-.012h-.011c-.467-.445-.762-.744-.886-.898-.226-.292-.277-.587-.153-.887.087-.226.415-.704.984-1.434.299-.387.535-.697.71-.93 1.261-1.68 1.808-2.753 1.64-3.22l-.065-.11c-.043-.065-.156-.126-.338-.18-.183-.055-.416-.064-.7-.028l-3.15.022a.408.408 0 0 0-.218.006l-.142.033-.055.027-.044.033a.486.486 0 0 0-.12.115.752.752 0 0 0-.109.191 17.894 17.894 0 0 1-1.17 2.464c-.27.453-.517.845-.744 1.178a5.663 5.663 0 0 1-.568.733 3.968 3.968 0 0 1-.416.378c-.124.095-.218.135-.284.12a8.002 8.002 0 0 1-.186-.043.728.728 0 0 1-.246-.269 1.203 1.203 0 0 1-.125-.427 4.716 4.716 0 0 1-.039-.443 9.28 9.28 0 0 1 .006-.526c.007-.226.01-.38.01-.46 0-.277.006-.579.017-.903l.027-.772c.008-.19.011-.391.011-.603 0-.211-.013-.377-.038-.498a1.706 1.706 0 0 0-.114-.35.59.59 0 0 0-.225-.263 1.262 1.262 0 0 0-.366-.148c-.386-.088-.878-.135-1.476-.142-1.356-.015-2.227.073-2.613.262a1.47 1.47 0 0 0-.416.329c-.13.16-.15.248-.054.263.437.065.747.222.929.47l.066.132c.05.095.102.263.153.504.05.24.084.507.098.799.036.533.036.99 0 1.369-.036.38-.07.675-.104.887a1.778 1.778 0 0 1-.147.515 2.25 2.25 0 0 1-.132.24.188.188 0 0 1-.054.055.818.818 0 0 1-.296.055c-.102 0-.226-.051-.371-.153a2.625 2.625 0 0 1-.454-.422 5.636 5.636 0 0 1-.53-.75 13.01 13.01 0 0 1-.613-1.139l-.175-.318c-.109-.204-.258-.502-.448-.892s-.357-.769-.503-1.134a.722.722 0 0 0-.262-.35l-.055-.033a.748.748 0 0 0-.175-.093 1.159 1.159 0 0 0-.251-.071l-2.996.022c-.306 0-.514.07-.623.208l-.044.066a.355.355 0 0 0-.033.175c0 .08.022.179.066.295.437 1.03.913 2.023 1.426 2.98.514.955.96 1.726 1.34 2.31a27.08 27.08 0 0 0 1.159 1.653c.393.518.654.85.781.997.128.146.228.255.301.328l.274.263c.175.175.431.385.77.63.34.244.715.485 1.127.722.412.238.89.431 1.437.58.547.15 1.08.21 1.597.182h1.257c.255-.023.448-.103.58-.241l.043-.055a.727.727 0 0 0 .082-.203c.026-.09.038-.191.038-.3a3.614 3.614 0 0 1 .071-.85c.055-.251.117-.441.186-.569a1.4 1.4 0 0 1 .422-.482.713.713 0 0 1 .087-.038c.175-.058.38-.002.618.17.237.172.459.383.667.635.208.252.457.535.749.849.291.314.546.547.765.7l.219.132c.146.088.335.168.568.241.233.073.437.091.613.055l2.799-.044c.276 0 .492-.046.645-.137.153-.091.244-.192.273-.301a.85.85 0 0 0 .006-.373 1.376 1.376 0 0 0-.077-.29z'/%3E%3C/svg%3E");
+}
+
+.ui-icon-service-vkads {
+	--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-vkads.svg);
 }
 
 .ui-icon-service-light-vk,
@@ -2108,6 +2149,11 @@ button.ui-icon > i:active,
 	--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-blogger.svg);
 }
 
+.ui-icon-service-saml-azure {
+	--ui-icon-service-bg-color: #F6F7FA;
+	--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-saml-azure-2.svg);
+}
+
 .ui-icon-service-light-blogger {
 	--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-blogger.svg);
 }
@@ -2290,7 +2336,6 @@ button.ui-icon > i:active,
 .ui-icon.ui-icon-service-light-settings {
 	--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-settings.svg);
 }
-
 
 /*endregion*/
 

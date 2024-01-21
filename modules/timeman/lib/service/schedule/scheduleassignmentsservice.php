@@ -415,7 +415,7 @@ final class ScheduleAssignmentsService extends BaseService
 				foreach ($departmentAssignments[$depDatum['ID']] as $assignData)
 				{
 					$schId = (int)$assignData['SCHEDULE_ID'];
-					if ($stopOnFirstExcludedParent[$depId . '-' . $schId] === true)
+					if (($stopOnFirstExcludedParent[$depId . '-' . $schId] ?? null) === true)
 					{
 						continue;
 					}

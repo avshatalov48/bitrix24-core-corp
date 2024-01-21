@@ -2,7 +2,11 @@
  * @module layout/ui/audio-player/timings
  */
 jn.define('layout/ui/audio-player/timings', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 
+	/**
+	 * @class AudioPlayerTimings
+	 */
 	class AudioPlayerTimings extends LayoutComponent
 	{
 		constructor(props)
@@ -67,29 +71,29 @@ jn.define('layout/ui/audio-player/timings', (require, exports, module) => {
 					style: {
 						flexDirection: 'row',
 						alignItems: 'center',
-					}
+					},
 				},
 				Text({
 					text: this.friendlyTime(this.currentTime),
 					style: {
-						color: this.play ? '#525C69' : '#A8ADB4',
+						color: this.play ? AppTheme.colors.base2 : AppTheme.colors.base4,
 						fontSize: 11,
-					}
+					},
 				}),
 				Text({
 					text: '/',
 					style: {
-						color: '#D5D7DB',
+						color: AppTheme.colors.base6,
 						fontSize: 11,
 						marginHorizontal: 2,
-					}
+					},
 				}),
 				Text({
 					text: this.friendlyTime(this.duration),
 					style: {
-						color: '#A8ADB4',
+						color: AppTheme.colors.base4,
 						fontSize: 11,
-					}
+					},
 				}),
 			);
 		}

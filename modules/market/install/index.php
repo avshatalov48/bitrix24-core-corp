@@ -206,13 +206,6 @@ class Market extends \CModule
 			//Main integration
 			[
 				'main',
-				'OnAfterUserUpdate',
-				'market',
-				'\Bitrix\Market\Integration\Main\TagHandler',
-				'onAfterUserUpdate',
-			],
-			[
-				'main',
 				'OnAfterSetOption_~PARAM_CLIENT_LANG',
 				'market',
 				'\Bitrix\Market\Integration\Main\TagHandler',

@@ -19,6 +19,7 @@
 	 * @property {?Object} banner
 	 * @property {string[]} banner.featureItems
 	 * @property {string} banner.imagePath
+	 * @property {string} banner.imageSvg
 	 * @property {?string} banner.positioning
 	 * @property {?string} banner.title
 	 * @property {?boolean} banner.showSubtitle
@@ -48,14 +49,13 @@
 	 */
 
 	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
 	const { ContextMenuBanner, BannerPositioning } = require('layout/ui/context-menu/banner');
 	const { Type } = require('type');
 	const { ContextMenuItem } = require('layout/ui/context-menu/item');
 
 	const ACTION_DELETE = 'delete';
 	const ACTION_CANCEL = 'cancel';
-
-	const BACKGROUND_COLOR = '#eef2f4';
 
 	const DEFAULT_BANNER_HEIGHT = device.screen.width > 375 ? 258 : 300;
 	const DEFAULT_BANNER_TITLE_HEIGHT = 36;
@@ -64,6 +64,9 @@
 	const DEFAULT_BANNER_ITEM_HEIGHT_VERTICAL = 48;
 	const DEFAULT_BANNER_BUTTON_HEIGHT = 72;
 	const DEFAULT_BANNER_SUBTEXT_HEIGHT = 72;
+
+	const IS_IOS = Application.getPlatform() === 'ios';
+	const INDENT_AFTER_ACTION_BUTTON = 28 + (IS_IOS ? 0 : 26);
 
 	const INDENT_BETWEEN_SECTIONS = 10;
 	const ITEM_HEIGHT = 58;
@@ -110,6 +113,15 @@
 
 			this.actions = this.prepareActions(BX.prop.getArray(props, 'actions', []));
 			this.actionsBySections = this.getActionsBySections();
+
+			this.styles = {
+				view: {
+					backgroundColor: this.backgroundDisabled ? AppTheme.colors.bgContentPrimary : AppTheme.colors.bgSecondary,
+					safeArea: {
+						bottom: true,
+					},
+				},
+			};
 		}
 
 		componentDidUpdate(prevProps, prevState)
@@ -133,7 +145,7 @@
 
 		get showCancelButton()
 		{
-			return BX.prop.getBoolean(this.params, 'showCancelButton', true);
+			return false;
 		}
 
 		get showActionLoader()
@@ -260,11 +272,15 @@
 		{
 			return ScrollView(
 				{
-					style: styles.view,
+					style: this.styles.view,
 					testId: this.testId,
 				},
 				View(
-					{},
+					{
+						style: {
+							paddingBottom: Application.getPlatform() === 'ios' ? 100 : 0,
+						},
+					},
 					this.renderBanner(),
 					...this.renderSections(),
 				),
@@ -381,7 +397,8 @@
 		 * @public
 		 * @param {Function} callback
 		 */
-		close(callback = () => {})
+		close(callback = () => {
+		})
 		{
 			this.closedByApi = true;
 
@@ -467,6 +484,7 @@
 			this.height = mediumPositionHeight;
 
 			const widgetParams = {
+				backgroundColor: AppTheme.colors.bgSecondary,
 				backdrop: {
 					shouldResizeContent: this.shouldResizeContent,
 					swipeAllowed: true,
@@ -476,7 +494,7 @@
 					mediumPositionHeight,
 					horizontalSwipeAllowed: false,
 					hideNavigationBar: !Type.isStringFilled(this.title),
-					navigationBarColor: BACKGROUND_COLOR,
+					navigationBarColor: AppTheme.colors.bgSecondary,
 					helpUrl: this.helpUrl,
 				},
 			};
@@ -580,6 +598,21 @@
 			return height;
 		}
 
+		get isActionBanner()
+		{
+			return (this.banner.qrauth || this.banner.onButtonClick || this.banner.onCloseBanner);
+		}
+
+		get backgroundDisabled()
+		{
+			return (this.banner && !this.showCancelButton && this.isActionBanner);
+		}
+
+		get spaceRequiredForButton()
+		{
+			return (this.banner && this.showCancelButton && this.isActionBanner);
+		}
+
 		getBannerHeight()
 		{
 			if (this.banner)
@@ -606,9 +639,16 @@
 						: 0;
 				}
 
-				if (this.banner.qrauth || this.banner.onButtonClick)
+				if (this.isActionBanner)
 				{
-					itemsHeight += DEFAULT_BANNER_BUTTON_HEIGHT;
+					if (this.spaceRequiredForButton)
+					{
+						itemsHeight += DEFAULT_BANNER_BUTTON_HEIGHT;
+					}
+					else
+					{
+						itemsHeight += INDENT_AFTER_ACTION_BUTTON;
+					}
 				}
 
 				if (this.banner.subtext)
@@ -632,8 +672,13 @@
 			return 0;
 		}
 
+		/**
+		 * @private
+		 * @returns {number}
+		 */
 		calcTopPositionOffset()
 		{
+			// eslint-disable-next-line max-len
 			const topOffsetForExpandedMenu = this.getDeviceScreenHeight() - this.getTopSafeAreaHeight() - this.calcMediumHeight();
 
 			return Math.max(topOffsetForExpandedMenu, 70);
@@ -682,14 +727,12 @@
 		}
 	}
 
-	const styles = {
-		view: {
-			backgroundColor: BACKGROUND_COLOR,
-			safeArea: {
-				bottom: true,
-			},
-		},
-	};
-
 	this.ContextMenu = ContextMenu;
 })();
+
+/**
+ * @module layout/ui/context-menu
+ */
+jn.define('layout/ui/context-menu', (require, exports, module) => {
+	module.exports = { ContextMenu: this.ContextMenu };
+});

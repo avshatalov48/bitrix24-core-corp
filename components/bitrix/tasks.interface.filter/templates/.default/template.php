@@ -1,4 +1,8 @@
 <?php
+
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Update\Preset;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -94,4 +98,22 @@ if ($isBitrix24Template)
 }
 ?>
 
-<?php CJSCore::Init("spotlight"); ?>
+<?php CJSCore::Init("spotlight");
+if (!$arResult['isPresetAhaMomentViewed'] && Preset::isRolePresetsEnabled())
+{
+?>
+<script>
+	BX.ready(() => {
+		BX.message({
+			TASKS_INTERFACE_FILTER_PRESETS_MOVED_TITLE: '<?= Loc::getMessage('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TITLE') ?>',
+			TASKS_INTERFACE_FILTER_PRESETS_MOVED_TEXT: '<?= Loc::getMessage('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TEXT_V2') ?>',
+		});
+
+		BX.Tasks.Preset.Aha = new BX.Tasks.Preset({
+			filterId: '<?= $arParams["FILTER_ID"] ?>'
+		})
+		BX.Tasks.Preset.Aha.payAttention();
+	})
+</script>
+<?php
+}

@@ -1680,6 +1680,7 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 		$this->arResult["FILTER"] = $this->getFilterDefinition();
 		$this->arResult['GROUP_ACTIONS'] = $this->prepareGroupActions();
 		$this->arResult["HEADERS"] = $this->prepareHeaders();
+		$this->arResult["META_RESTRICTION_LABEL"] = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion() === 'ru';
 
 		$sorting = $this->gridOptions->getSorting(array("sort" => array("ID" => "DESC")));
 		$navParams = $this->gridOptions->getNavParams();

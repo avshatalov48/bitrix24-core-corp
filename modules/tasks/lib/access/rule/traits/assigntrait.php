@@ -13,6 +13,8 @@ use Bitrix\Tasks\Integration\SocialNetwork\Group;
 
 trait AssignTrait
 {
+	private static $assignCache = [];
+
 	/**
 	 * @param AccessibleTask $oldTask
 	 * @param string $role
@@ -162,6 +164,12 @@ trait AssignTrait
 			return false;
 		}
 
+		$key = $userId.'_'.$groupId.'_'.$responsibleId;
+		if (array_key_exists($key, self::$assignCache))
+		{
+			return self::$assignCache[$key];
+		}
+
 		global $DB;
 
 		$sql = '
@@ -181,6 +189,8 @@ trait AssignTrait
 			$count = (int) $row['cnt'];
 		}
 
-		return $count === 2;
+		self::$assignCache[$key] = $count === 2;
+
+		return self::$assignCache[$key];
 	}
 }

@@ -461,7 +461,9 @@ final class Driver
 						&& $template['IS_DELETED'] === 'Y'
 					)
 				)
-				$controller->installDefaultTemplate($template);
+				{
+					$controller->installDefaultTemplateIfNotExists($template);
+				}
 			}
 		}
 

@@ -43,7 +43,7 @@ BitrixVue.cloneComponent('bx-imopenlines-message', 'bx-im-view-message',
 			if (this.message.params.IMOL_FORM === FormType.like)
 			{
 				if (
-					parseInt(this.message.params.IMOL_VOTE) === this.widget.dialog.sessionId
+					parseInt(this.message.params.IMOL_VOTE_SID) === this.widget.dialog.sessionId
 					&& this.widget.dialog.userVote === VoteType.none
 				)
 				{

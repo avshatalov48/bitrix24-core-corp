@@ -13,5 +13,4 @@ $MESS["CRM_SETTINGS_POPUP_CANCEL"] = "Cancel (Esc)";
 $MESS["CRM_SETTINGS_POPUP_ERROR"] = "Cannot get activity parameters. Please try again later.";
 $MESS["CRM_SETTINGS_POPUP_SECTION_SWITCH"] = "Enable";
 $MESS["CRM_SETTINGS_POPUP_SECTION_SWITCH_CALENDAR"] = "Add to calendar";
-$MESS["CRM_SETTINGS_POPUP_SECTION_SWITCH_PING"] = "Notifications";
 $MESS["CRM_SETTINGS_POPUP_TITLE"] = "Tools";

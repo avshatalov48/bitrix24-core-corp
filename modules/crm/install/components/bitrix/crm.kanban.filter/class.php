@@ -5,6 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
+use Bitrix\Crm\Filter\HeaderSections;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 
 class CrmKanbanFilterComponent extends \CBitrixComponent
@@ -68,7 +70,7 @@ class CrmKanbanFilterComponent extends \CBitrixComponent
 		$filterParams['NAVIGATION_BAR'] = $this->arParams['NAVIGATION_BAR'] ?: [];
 		$filterParams['LAZY_LOAD'] = $entity->getFilterLazyLoadParams() ?: false;
 
-		$filterSections = $this->getFilterSections();
+		$filterSections = $this->getFilterSections($entityTypeID);
 		$filterParams['ENABLE_FIELDS_SEARCH'] = 'Y';
 		$filterParams['HEADERS_SECTIONS'] = $filterSections;
 		$filterParams['CONFIG'] = [
@@ -95,27 +97,25 @@ class CrmKanbanFilterComponent extends \CBitrixComponent
 		$this->IncludeComponentTemplate();
 	}
 
-	protected function getFilterSections(): array
+	protected function getFilterSections(int $entityTypeID): array
 	{
-		$result = [];
-
-		if ($this->arParams['ENTITY_TYPE'] === CCrmOwnerType::DealName)
+		$factory = Container::getInstance()->getFactory($entityTypeID);
+		if (!$factory)
 		{
-			return \Bitrix\Crm\Component\EntityList\ClientDataProvider\KanbanDataProvider::getHeadersSections();
+			Container::getInstance()->getLocalization()->loadMessages();
+
+			$entityName = Loc::getMessage('CRM_COMMON_' . $this->arParams['ENTITY_TYPE'] . '_MSGVER_1')
+				?? Loc::getMessage('CRM_COMMON_' . $this->arParams['ENTITY_TYPE']);
+
+			return [
+				[
+					'id' => $this->arParams['ENTITY_TYPE'],
+					'name' => $entityName,
+					'default' => true,
+					'selected' => true,
+				],
+			];
 		}
-
-		\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
-
-		$entityName = Loc::getMessage('CRM_COMMON_' . $this->arParams['ENTITY_TYPE'] . '_MSGVER_1')
-			?? Loc::getMessage('CRM_COMMON_' . $this->arParams['ENTITY_TYPE']);
-
-		return [
-			[
-				'id' => $this->arParams['ENTITY_TYPE'],
-				'name' => $entityName,
-				'default' => true,
-				'selected' => true,
-			],
-		];
+		return HeaderSections::getInstance()->sections($factory);
 	}
 }

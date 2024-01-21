@@ -15,8 +15,7 @@ jn.define('crm/timeline/item/ui/body/blocks/mail-contact-list', (require, export
 		{
 			return View(
 				{
-					style: {
-					},
+					style: {},
 				},
 				new ContactList({
 					maxWidthTextFiled,

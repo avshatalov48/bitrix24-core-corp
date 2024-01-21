@@ -660,3 +660,9 @@
 	this.FileUploadAgent = FileUploadAgent;
 })();
 
+/**
+ * @module uploader
+ */
+jn.define('uploader', (require, exports, module) => {
+	module.exports = { FileUploadAgent: this.FileUploadAgent };
+});

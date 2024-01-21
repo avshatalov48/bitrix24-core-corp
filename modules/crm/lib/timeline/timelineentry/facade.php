@@ -2,20 +2,21 @@
 
 namespace Bitrix\Crm\Timeline\TimelineEntry;
 
+use Bitrix\Crm\Timeline\AI;
+use Bitrix\Crm\Timeline\CalendarSharing;
 use Bitrix\Crm\Timeline\ConversionEntry;
 use Bitrix\Crm\Timeline\CreationEntry;
+use Bitrix\Crm\Timeline\FinalSummaryDocumentsEntry;
+use Bitrix\Crm\Timeline\FinalSummaryEntry;
 use Bitrix\Crm\Timeline\LinkEntry;
 use Bitrix\Crm\Timeline\LogMessageEntry;
 use Bitrix\Crm\Timeline\MarkEntry;
 use Bitrix\Crm\Timeline\ModificationEntry;
 use Bitrix\Crm\Timeline\RestorationEntry;
 use Bitrix\Crm\Timeline\SignDocument;
-use Bitrix\Crm\Timeline\CalendarSharing;
 use Bitrix\Crm\Timeline\Tasks;
 use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Crm\Timeline\UnlinkEntry;
-use Bitrix\Crm\Timeline\FinalSummaryEntry;
-use Bitrix\Crm\Timeline\FinalSummaryDocumentsEntry;
 use Bitrix\Main\ArgumentException;
 
 class Facade
@@ -34,6 +35,7 @@ class Facade
 	public const LOG_MESSAGE = LogMessageEntry::class;
 	public const CALENDAR_SHARING = CalendarSharing\Entry::class;
 	public const TASK = Tasks\Entry::class;
+	public const AI_CALL_PROCESSING = AI\Call\Entry::class;
 
 	/** @var TimelineEntry */
 	protected $timelineEntryClass = TimelineEntry::class;

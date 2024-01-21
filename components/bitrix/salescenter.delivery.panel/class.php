@@ -56,7 +56,7 @@ class SalesCenterDeliveryPanel extends CBitrixComponent implements Main\Engine\C
 	{
 		if(!Loader::includeModule('salescenter'))
 		{
-			$this->showError(Loc::getMessage('SDP_SALESCENTER_MODULE_ERROR'));
+			$this->showError(Loc::getMessage('SDP_SALESCENTER_MODULE_ERROR_MSGVER_1'));
 			return;
 		}
 		Loader::includeModule('sale');

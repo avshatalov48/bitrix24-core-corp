@@ -324,6 +324,10 @@ return function (RoutingConfigurator $routes) {
 	$routes->any('/conference/{any}', new PublicPageController('/conference/index.php'))
 		->where('any', '.*');
 
+	$routes
+		->any('/_analytics/', fn() => '42')
+	;
+
 //scim azure
 	$routes
 		->prefix('integration/scim/v2.0')

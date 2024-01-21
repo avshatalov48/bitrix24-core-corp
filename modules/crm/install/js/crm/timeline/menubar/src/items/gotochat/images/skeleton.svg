@@ -1,0 +1,49 @@
+
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100% 600"
+	 preserveAspectRatio="xMinYMin meet" style="width: 100%; height: 600" fill="none"
+>
+	<svg height="600">
+		<rect x="50%" y="101.5" width="530" height="45" rx="5.5" stroke="#ecedee" transform="translate(-262, 0)"/>
+		<rect x="50%" y="159.5" width="530" height="45" rx="5.5" stroke="#ecedee" transform="translate(-262, 0)"/>
+		<rect x="50%" y="217.5" width="530" height="45" rx="5.5" stroke="#ecedee" transform="translate(-262, 0)"/>
+	</svg>
+
+	<svg height="600" id="animated-elements">
+		<defs>
+			<g id="head">
+				<rect x="27" y="25" width="292" height="8" rx="2" fill="#ecedee"/>
+				<rect x="27" y="55" width="488" height="6" rx="2" fill="#ecedee"/>
+				<rect x="27" y="73" width="402" height="6" rx="2" fill="#ecedee"/>
+				<circle cx="582" cy="27" r="11" fill="#ecedee"/>
+				<circle cx="612" cy="27" r="11" fill="#ecedee"/>
+			</g>
+			<g id="item">
+				<rect x="282" y="178" width="120" height="8" rx="2" fill="#ecedee"/>
+				<path fill-rule="evenodd" clip-rule="evenodd" d="M259 169C266.18 169 272 174.82 272 182C272 189.18 266.18 195 259 195C251.82 195 246 189.18 246 182C246 174.82 251.82 169 259 169Z" fill="#ecedee"/>
+			</g>
+			<g id="item-lg">
+				<rect x="248" y="120" width="190" height="8" rx="2" fill="#ecedee"/>
+				<path fill-rule="evenodd" clip-rule="evenodd" d="M225 111C232.18 111 238 116.82 238 124C238 131.18 232.18 137 225 137C217.82 137 212 131.18 212 124C212 116.82 217.82 111 225 111Z" fill="#ecedee"/>
+			</g>
+		</defs>
+
+		<use xlink:href="#head" x="50%" transform="translate(-326, 0)"></use>
+		<use xlink:href="#item-lg" x="50%" transform="translate(-322, 0)"></use>
+		<use xlink:href="#item" x="50%" transform="translate(-322, 0)"></use>
+		<use xlink:href="#item" x="50%" y="58" transform="translate(-322, 0)"></use>
+	</svg>
+
+	<rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="600"/>
+
+	<mask id="headerMsk" fill="white">
+		<use xlink:href="#animated-elements"/>
+	</mask>
+
+	<linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+		<stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+		<stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+		<stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+	</linearGradient>
+
+	<animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+</svg>

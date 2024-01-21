@@ -5,6 +5,9 @@ return [
 		'type',
 	],
 	'bundle' => [
+		'./src/app-status',
+		'./src/bot',
+		'./src/connection-status',
 		'./src/event-type',
 		'./src/feature-flag',
 		'./src/recent',
@@ -13,6 +16,7 @@ return [
 		'./src/color',
 		'./src/message',
 		'./src/dialog-type',
+		'./src/dialog-action-type',
 		'./src/file-type',
 		'./src/file-status',
 		'./src/reaction-type',
@@ -20,5 +24,8 @@ return [
 		'./src/draft',
 		'./src/search',
 		'./src/error',
+		'./src/bb-code',
+		'./src/setting',
+		'./src/promo',
 	],
 ];

@@ -187,8 +187,8 @@ class EventHandler
 	{
 		return new BoardButton(
 			'<button class="ui-btn ui-btn-themes ui-btn-light-border" onclick="BX.UI.InfoHelper.show(\'info_implementation_request\');">'
-			.Loc::getMessage('BIC_CRM_BUTTON_ORDER').
-			'</button>'
+			. Loc::getMessage('BIC_CRM_BUTTON_ORDER')
+			. '</button>'
 		);
 	}
 }

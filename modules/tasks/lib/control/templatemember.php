@@ -19,16 +19,11 @@ class TemplateMember
 	private const FIELD_ACCOMPLICES = 'ACCOMPLICES';
 	private const FIELD_AUDITORS = 'AUDITORS';
 
-	private $userId;
-	private $templateId;
-
 	/* @var \Bitrix\Tasks\Internals\Task\Template\TemplateObject $template */
 	private $template;
 
-	public function __construct(int $userId, int $templateId)
+	public function __construct(private int $userId, private int $templateId)
 	{
-		$this->userId = $userId;
-		$this->templateId = $templateId;
 	}
 
 	/**

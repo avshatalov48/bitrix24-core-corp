@@ -1,0 +1,117 @@
+.crm-field-item-selector__scope {
+	--color-background: rgba(82,92,105,.08);
+	--color-hover: rgba(82,92,105,.1);
+	--color-text: var(--ui-color-text-subtle, #A8ADB4);
+	--font-size: var(--ui-font-size-xs, 12px);
+	--font-weight: var(--ui-font-weight-semi-bold, 600);
+}
+
+.crm-field-item-selector {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	width: 100%;
+}
+
+.crm-field-item-selector__values {
+	min-height: 21px;
+	line-height: var(--ui-font-line-height-xl, 1.62);
+}
+
+.crm-field-item-selector__value {
+	position: relative;
+	display: inline-flex;
+	flex-direction: row;
+	align-items: center;
+	padding-right: 10px;
+	text-transform: lowercase;
+	color: var(--color-text);
+	font-size: var(--font-size);
+	font-weight: var(--font-weight);
+}
+
+.crm-field-item-selector__value:first-child {
+	padding-left: 0;
+}
+
+.crm-field-item-selector__value.--hidden {
+	display: none;
+}
+
+.crm-field-item-selector__value.--adding {
+	animation: crm-field-item-selector__fade-in 450ms linear 0s 1 alternate both;
+}
+
+.crm-field-item-selector__value.--removing {
+	animation: crm-field-item-selector__fade-out 450ms linear 0s 1 alternate both;
+}
+
+.crm-field-item-selector__value-title {
+	padding-right: 4px;
+}
+
+.crm-field-item-selector__value-clear-icon {
+	position: relative;
+	width: 12px;
+	height: 12px;
+	padding-left: 1px;
+	mask-image: none;
+	background-color: transparent;
+	background-image: url('/bitrix/js/crm/images/crm-cross-gray.svg');
+	background-repeat: no-repeat;
+	cursor: pointer;
+}
+
+/* region Add button */
+.crm-field-item-selector__add-btn {
+	height: 21px;
+	line-height: var(--ui-font-line-height-xl, 1.62);
+	border-radius: 64px;
+	margin-top: 1px;
+	background-color: var(--ui-color-base-04, #F1F4F8);
+}
+
+.crm-field-item-selector__add-btn .ui-btn-text {
+	padding-left: 5px;
+	text-transform: lowercase;
+	color: var(--color-text);
+	font-size: var(--font-size);
+	font-weight: var(--font-weight);
+}
+
+.crm-field-item-selector__add-btn .ui-btn-counter {
+	margin: 0;
+	padding: 0 4px;
+	text-transform: lowercase;
+	background-color: transparent;
+	color: var(--color-text);
+	font-size: var(--font-size);
+	font-weight: var(--font-weight);
+}
+
+.crm-field-item-selector__add-btn.ui-btn.ui-btn-dropdown:before {
+	border-color: rgba(var(--ui-color-text-subtle-rgb, var(--crm-timeline__date-pill_caret-color)), 0.54)
+}
+/* endregion*/
+
+/* region Animations */
+@keyframes crm-field-item-selector__fade-out {
+	0% {
+		opacity: 1;
+	}
+
+	100% {
+		opacity: 0;
+	}
+}
+
+@keyframes crm-field-item-selector__fade-in {
+	0% {
+		opacity: 0;
+	}
+
+	100% {
+		opacity: 1;
+	}
+}
+/* endregion*/

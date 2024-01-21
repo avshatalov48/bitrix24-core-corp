@@ -20,6 +20,8 @@ jn.define('tasks/layout/task/fields/timeTrackingTime', (require, exports, module
 				hours,
 				minutes,
 			};
+
+			this.handleOnChange = this.handleOnChange.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -31,6 +33,25 @@ jn.define('tasks/layout/task/fields/timeTrackingTime', (require, exports, module
 				hours,
 				minutes,
 			};
+		}
+
+		handleOnChange({ hours, minutes })
+		{
+			const resultHours = (Type.isUndefined(hours) ? 0 : Number(hours));
+			const resultMinutes = (Type.isUndefined(minutes) ? 0 : Number(minutes));
+
+			const newStateData = {};
+			if (resultHours !== this.state.hours)
+			{
+				newStateData.hours = resultHours;
+			}
+
+			if (resultMinutes !== this.state.minutes)
+			{
+				newStateData.minutes = resultMinutes;
+			}
+			this.setState(newStateData);
+			this.props.onChange(this.state.hours * 3600 + this.state.minutes * 60);
 		}
 
 		render()
@@ -77,23 +98,7 @@ jn.define('tasks/layout/task/fields/timeTrackingTime', (require, exports, module
 					},
 				},
 				testId: 'timeTrackingTime',
-				onChange: ({ hours, minutes }) => {
-					const resultHours = (Type.isUndefined(hours) ? 0 : Number(hours));
-					const resultMinutes = (Type.isUndefined(minutes) ? 0 : Number(minutes));
-
-					const newStateData = {};
-					if (resultHours !== this.state.hours)
-					{
-						newStateData.hours = resultHours;
-					}
-
-					if (resultMinutes !== this.state.minutes)
-					{
-						newStateData.minutes = resultMinutes;
-					}
-					this.setState(newStateData);
-					this.props.onChange(this.state.hours * 3600 + this.state.minutes * 60);
-				},
+				onChange: this.handleOnChange,
 			});
 		}
 	}

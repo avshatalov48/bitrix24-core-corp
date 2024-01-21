@@ -17,40 +17,43 @@ export enum DialogType {
 }
 
 export type DialoguesModelState = {
-    dialogId: string,
-    chatId: number,
-    type: DialogType,
-    name: string,
-    description: string,
-    avatar: string,
-    color: string,
-    extranet: boolean,
-    counter: number,
-    userCounter: number,
-    participants: Array<any>,
-    lastReadId: number,
-    markedId: number,
-    lastMessageId: number,
-    lastMessageViews: LastMessageViews,
-    savedPositionMessageId: number,
-    managerList: Array<any>, //todo concrete type
-    readList: Array<any>, //todo concrete type
-    writingList: Array<WritingUserData>,
-    muteList: Array<any>, //todo concrete type
-    textareaMessage: string,
-    quoteId: number,
-    owner: number,
-    entityType: string,
-    entityId: string,
-    dateCreate: Date | null,
-    public: {
-        code: string,
-        link: string
-    },
-    inited: boolean,
-    loading: boolean,
-    hasPrevPage: boolean,
-    hasNextPage: boolean,
+	dialogId: string,
+	chatId: number,
+	type: DialogType,
+	name: string,
+	description: string,
+	avatar: string,
+	color: string,
+	extranet: boolean,
+	counter: number,
+	userCounter: number,
+	participants: Array<any>,
+    lastLoadParticipantId: number,
+	lastReadId: number,
+	markedId: number,
+	lastMessageId: number,
+	lastMessageViews: LastMessageViews,
+	savedPositionMessageId: number,
+	managerList: Array<any>, //todo concrete type
+	readList: Array<any>, //todo concrete type
+	writingList: Array<WritingUserData>,
+	muteList: Array<any>, //todo concrete type
+	textareaMessage: string,
+	quoteId: number,
+	owner: number,
+	entityType: string,
+	entityId: string,
+	dateCreate: Date | null,
+	public: {
+		code: string,
+		link: string
+	},
+	inited: boolean,
+	loading: boolean,
+	hasPrevPage: boolean,
+	hasNextPage: boolean,
+	role: string,
+	permissions: DialogPermissions,
 };
 
 export type LastMessageViews = {
@@ -63,7 +66,7 @@ export type LastMessageViews = {
 		} | null,
 		messageId: number,
 	}
-	isGroupDialog?:boolean,
+	isGroupDialog?: boolean,
 }
 
 export type WritingUserData = {
@@ -71,9 +74,18 @@ export type WritingUserData = {
 	userName: string
 }
 
+export type DialogPermissions = {
+	manageUsersAdd: string,
+	manageUsersDelete: string,
+	manageUi: string,
+	manageSettings: string,
+	canPost: string,
+}
+
 
 export type DialoguesModelActions =
-	'dialoguesModel/set'
+	'dialoguesModel/setState'
+	| 'dialoguesModel/set'
 	| 'dialoguesModel/add'
 	| 'dialoguesModel/update'
 	| 'dialoguesModel/delete'
@@ -82,9 +94,9 @@ export type DialoguesModelActions =
 	| 'dialoguesModel/incrementLastMessageViews'
 	| 'dialoguesModel/setLastMessageViews'
 	| 'dialoguesModel/decreaseCounter'
-    | 'dialoguesModel/clearAllCounters'
-    | 'dialoguesModel/addParticipants'
-    | 'dialoguesModel/removeParticipants'
+	| 'dialoguesModel/clearAllCounters'
+	| 'dialoguesModel/addParticipants'
+	| 'dialoguesModel/removeParticipants'
 
 export type DialoguesModelMutation =
 	'dialoguesModel/add'

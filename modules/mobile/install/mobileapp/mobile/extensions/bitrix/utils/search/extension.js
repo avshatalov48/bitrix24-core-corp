@@ -2,7 +2,6 @@
  * @module utils/search
  */
 jn.define('utils/search', (require, exports, module) => {
-
 	const { splitByWords, compareWords } = require('utils/string');
 	const { unique } = require('utils/array');
 
@@ -19,9 +18,9 @@ jn.define('utils/search', (require, exports, module) => {
 
 			return items.filter((item) => {
 				const matchedWords = [];
-				if (predicates.length && query)
+				if (predicates.length > 0 && query)
 				{
-					predicates.slice(0)
+					[...predicates]
 						.reverse()
 						.forEach((name) => {
 							if (excludeFields.includes(name))
@@ -64,6 +63,7 @@ jn.define('utils/search', (require, exports, module) => {
 		catch (e)
 		{
 			console.error(e);
+
 			return items;
 		}
 	}

@@ -1,9 +1,11 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Intranet\Site\Sections\TimemanSection;
 use Bitrix\Landing\Rights;
 use Bitrix\Main\Loader;
@@ -11,11 +13,12 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/public_bitrix24/company/.left.menu_ext.php');
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/public_bitrix24/.superleft.menu_ext.php');
-
 $GLOBALS['APPLICATION']->setPageProperty('topMenuSectionDir', '/company/');
+$aMenuLinks = [];
 
-$aMenuLinks = [
-	[
+if (ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_company'))
+{
+	$aMenuLinks[] = [
 		Loc::getMessage('MENU_STRUCTURE'),
 		'/company/vis_structure.php',
 		[],
@@ -23,8 +26,12 @@ $aMenuLinks = [
 			'menu_item_id' => 'menu_company',
 		],
 		'',
-	],
-	[
+	];
+}
+
+if (ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_employee'))
+{
+	$aMenuLinks[] = [
 		Loc::getMessage('MENU_EMPLOYEE'),
 		'/company/',
 		[],
@@ -32,8 +39,8 @@ $aMenuLinks = [
 			'menu_item_id' => 'menu_employee',
 		],
 		'',
-	],
-];
+	];
+}
 
 if (Loader::includeModule('intranet') && TimemanSection::isAvailable())
 {
@@ -41,7 +48,12 @@ if (Loader::includeModule('intranet') && TimemanSection::isAvailable())
 }
 
 $landingIncluded = Loader::includeModule('landing');
-if ($landingIncluded && Rights::hasAdditionalRight(Rights::ADDITIONAL_RIGHTS['menu24'], 'knowledge'))
+
+if (
+	$landingIncluded
+	&& Rights::hasAdditionalRight(Rights::ADDITIONAL_RIGHTS['menu24'], 'knowledge')
+	&& ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_knowledge')
+)
 {
 	$aMenuLinks[] = [
 		Loc::getMessage('MENU_KNOWLEDGE_BASE'),
@@ -54,7 +66,10 @@ if ($landingIncluded && Rights::hasAdditionalRight(Rights::ADDITIONAL_RIGHTS['me
 	];
 }
 
-if (\Bitrix\Main\ModuleManager::isModuleInstalled('im'))
+if (
+	\Bitrix\Main\ModuleManager::isModuleInstalled('im')
+	&& ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_conference')
+)
 {
 	$aMenuLinks[] = [
 		Loc::getMessage('MENU_CONFERENCE_SECTION'),
@@ -63,6 +78,6 @@ if (\Bitrix\Main\ModuleManager::isModuleInstalled('im'))
 		[
 			'menu_item_id' => 'menu_conference',
 		],
-		''
+		'',
 	];
 }

@@ -5,6 +5,7 @@
  * @var array $arResult
  */
 
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
@@ -33,6 +34,13 @@ $menuUser = new LeftMenu\User();
 $menu = new LeftMenu\Menu($defaultItems, $menuUser);
 $activePreset = LeftMenu\Preset\Manager::getPreset();
 $menu->applyPreset($activePreset);
+$visibleItems = $menu->getVisibleItems();
+$firstPageChanger = ToolsManager::getInstance()->getFirstPageChanger();
+
+if ($firstPageChanger->checkNeedChanges())
+{
+	$firstPageChanger->changeForCurrentUser($visibleItems);
+}
 
 $arResult = [
 	'IS_ADMIN' => $menuUser->isAdmin(),
@@ -40,12 +48,18 @@ $arResult = [
 	'SHOW_PRESET_POPUP' => \COption::GetOptionString("intranet", "show_menu_preset_popup", "N") == "Y",
 	'SHOW_SITEMAP_BUTTON' => false,
 	'ITEMS' => [
-		'show' => $menu->getVisibleItems(),
+		'show' => $visibleItems,
 		'hide' => $menu->getHiddenItems()
 	],
 	'IS_CUSTOM_PRESET_AVAILABLE' => LeftMenu\Preset\Custom::isAvailable(),
 	'CURRENT_PRESET_ID' => $activePreset->getCode(),
 	'WORKGROUP_COUNTER_DATA' => [],
+	'PRESET_TOOLS_AVAILABILITY' => [
+		'crm' => ToolsManager::getInstance()->checkAvailabilityByToolId('crm'),
+		'tasks' => ToolsManager::getInstance()->checkAvailabilityByToolId('tasks'),
+		'sites' => ToolsManager::getInstance()->checkAvailabilityByToolId('sites'),
+		'social' => ToolsManager::getInstance()->checkAvailabilityByToolId('team_work')
+	],
 ];
 
 if ($arResult["IS_EXTRANET"] === false && count($defaultItems) > 0)
@@ -158,32 +172,3 @@ if (
 		}
 	}
 }
-
-$shouldShowWhatsNew = function() {
-	if (Loader::includeModule('extranet') && \CExtranet::isExtranetSite())
-	{
-		return false;
-	}
-
-	if (\COption::getOptionString('intranet', 'new_portal_structure', 'N') === 'Y')
-	{
-		return false;
-	}
-
-	$option = \CUserOptions::getOption('intranet', 'left_menu_whats_new_dialog');
-	if (isset($option['closed']) && $option['closed'] === 'Y')
-	{
-		return false;
-	}
-
-	$spotlight = new Main\UI\Spotlight('left_menu_whats_new_dialog');
-	$spotlight->setUserTimeSpan(3600 * 24 * 7);
-	if (ModuleManager::isModuleInstalled('bitrix24'))
-	{
-		$spotlight->setEndDate(gmmktime(8, 30, 0, 5, 10, 2022));
-	}
-
-	return $spotlight->isAvailable();
-};
-
-$arResult["SHOW_WHATS_NEW"] = $shouldShowWhatsNew();

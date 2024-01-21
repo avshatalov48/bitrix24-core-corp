@@ -3,18 +3,13 @@
 return [
 	'extensions' => [
 		'type',
-		'im:messenger/const',
-		'im:messenger/lib/params',
-		'im:chat/utils',
 		'utils/function',
 		'utils/object',
+		'im:messenger/const',
 	],
 	'bundle' => [
 		'./src/shared-storage/base',
 		'./src/shared-storage/recent',
-		'./src/shared-storage/messages',
-		'./src/shared-storage/users',
-		'./src/shared-storage/files',
 		'./src/shared-storage/draft',
 		'./src/native/share-dialog',
 		'./src/simple-wrapper/map-cache',

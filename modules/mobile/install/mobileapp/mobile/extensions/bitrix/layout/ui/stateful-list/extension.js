@@ -2,20 +2,27 @@
  * @module layout/ui/stateful-list
  */
 jn.define('layout/ui/stateful-list', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { NavigationLoader } = require('navigation-loader');
 	const { debounce } = require('utils/function');
 	const { merge, mergeImmutable, get, set, clone, isEqual } = require('utils/object');
 	const { PureComponent } = require('layout/pure-component');
 	const { SimpleList } = require('layout/ui/simple-list');
+	const { Pull } = require('layout/ui/stateful-list/pull');
+	const { StatefulListCache } = require('layout/ui/stateful-list/src/cache');
+	const { TypeGenerator } = require('layout/ui/stateful-list/type-generator');
 	const { ListItemType, ListItemsFactory } = require('layout/ui/simple-list/items');
+	const { RunActionExecutor } = require('rest/run-action-executor');
+	const { Type } = require('type');
 
-	const ITEMS_LOAD_LIMIT = 20;
+	const isGetConnectionStatusSupported = Type.isFunction(device?.getConnectionStatus);
+
+	const DEFAULT_ITEMS_LOAD_LIMIT = 20;
+	// backend limitations
+	const MAX_ITEMS_LOAD_LIMIT = 50;
+
 	const DEFAULT_BLOCK_PAGE = 1;
 	const MINIMAL_SEARCH_LENGTH = 3;
-
-	const ACTION_DELETE = 'delete';
-	const ACTION_UPDATE = 'update';
 
 	const renderType = {
 		cache: 'cache',
@@ -31,33 +38,17 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 		{
 			super(props);
 
-			this.isLoading = false;
+			this.currentRequestUid = null;
 			this.stateBeforeSearch = null;
+			/** @type {SimpleList} */
 			this.simpleList = null;
 			this.searchBarIsInited = false;
-			this.isApiGreaterThen44 = (Application.getApiVersion() > 44);
-			this.nameOfClickEnterEvent = (this.isApiGreaterThen44 ? 'clickEnter' : 'clickSearch');
 			this.needAnimateIds = [];
 			this.layoutRightButtons = null;
 			this.menuProps = null;
 
-			this.actions = this.getValue(props, 'actions', {});
-			this.itemLayoutOptions = this.getValue(props, 'itemLayoutOptions', {});
 			this.menuButtons = this.getValue(props, 'menuButtons', []);
 			this.needInitMenu = this.getValue(props, 'needInitMenu', true);
-			this.canUseSearchObject = this.canUseSearchObjectHandler();
-
-			this.layout = this.getValue(props, 'layout', null, false);
-			this.layoutMenuActions = this.getValue(props, 'layoutMenuActions', []);
-			this.layoutOptions = this.getValue(props, 'layoutOptions', {});
-
-			this.loadItemsHandler = this.loadItems.bind(this);
-			this.reloadListHandler = this.reloadListHandler.bind(this);
-			this.updateItemHandler = this.updateItemHandler.bind(this);
-			this.deleteItemHandler = this.deleteItemHandler.bind(this);
-			this.addItemHandler = this.addItemHandler.bind(this);
-			this.menuShowHandler = this.menuShow.bind(this);
-			this.bindSimpleListRef = this.bindSimpleListRef.bind(this);
 
 			this.state = this.getInitialState();
 			this.state.itemType = this.getValue(props, 'itemType', ListItemType.BASE);
@@ -65,10 +56,39 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			this.state.actionParams = this.getValue(props, 'actionParams', {});
 			this.state.itemParams = this.getValue(props, 'itemParams', {});
 			this.state.itemActions = this.getValue(props, 'itemActions', []);
+			this.state.forcedShowSkeleton = this.getValue(props, 'forcedShowSkeleton', true);
 
-			this.pull = this.getValue(props, 'pull', null);
+			this.loadItemsHandler = this.loadItems.bind(this);
+			this.reloadList = this.reloadList.bind(this);
+			this.updateItemHandler = this.updateItemHandler.bind(this);
+			this.deleteItemHandler = this.deleteItemHandler.bind(this);
+			this.showMenuHandler = this.showMenu.bind(this);
+			this.bindRef = this.bindRef.bind(this);
 
-			this.getRuntimeParams = this.getValue(props, 'getRuntimeParams', null);
+			this.pull = new Pull({
+				...props.pull,
+				context: props.context,
+				eventCallbacks: {
+					[Pull.command.ADDED]: this.addItemsFromPull.bind(this),
+					[Pull.command.UPDATED]: this.updateItemsFromPull.bind(this),
+					[Pull.command.DELETED]: this.deleteItemsFromPull.bind(this),
+					[Pull.command.RELOAD]: this.reloadList.bind(this),
+				},
+			});
+
+			this.deviceConnectionStatus = 'online';
+
+			if (isGetConnectionStatusSupported)
+			{
+				this.deviceConnectionStatus = device.getConnectionStatus();
+				device.on('connectionStatusChanged', this.onConnectionStatusChanged.bind(this));
+			}
+
+			/** @type {StatefulListCache} */
+			this.cache = new StatefulListCache();
+
+			this.getNotificationText = this.pull.getNotificationText.bind(this.pull);
+
 			this.searchConfig = this.getPreparedSearchConfig();
 
 			this.onSearchTextChanged = this.onSearchTextChangedHandler.bind(this);
@@ -76,36 +96,89 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			this.onSearchCancel = this.onSearchCancelHandler.bind(this);
 			this.onViewShow = this.onViewShowHandler.bind(this);
 
-			this.debounceSearch = debounce((params, callback) => {
-				this.search(params, callback);
-			}, 500, this);
-
-			this.loadFirstItems();
+			this.debounceSearch = debounce((params, callback) => this.search(params, callback), 500, this);
 		}
 
-		getPreparedSearchConfig()
+		get layout()
 		{
-			const defaultConfig = {
-				mode: 'bar',
-				searchLayout: null,
-				searchLayoutCallback: null,
-			};
-			const config = this.getValue(this.props, 'search', {});
+			return this.props.layout;
+		}
 
-			return mergeImmutable(defaultConfig, config);
+		get layoutMenuActions()
+		{
+			return this.getValue(this.props, 'layoutMenuActions', []);
+		}
+
+		get layoutOptions()
+		{
+			return this.getValue(this.props, 'layoutOptions', {});
+		}
+
+		get itemsLoadLimit()
+		{
+			const loadLimit = this.props.itemsLoadLimit ?? DEFAULT_ITEMS_LOAD_LIMIT;
+
+			return Math.min(loadLimit, MAX_ITEMS_LOAD_LIMIT);
+		}
+
+		get ajaxCacheTtl()
+		{
+			// default 3 days
+			return this.getValue(this.props, 'ajaxCacheTtl', 3 * 86400);
+		}
+
+		get shouldReloadDynamically()
+		{
+			return this.getValue(this.props.pull, 'shouldReloadDynamically', false);
+		}
+
+		get sorting()
+		{
+			return this.getValue(this.props, 'sortingConfig', null);
+		}
+
+		get isCacheEnabled()
+		{
+			return Boolean(this.props.useCache ?? true);
 		}
 
 		componentDidMount()
 		{
+			this.loadFirstItems();
+
 			if (this.needInitMenu)
 			{
 				this.initMenu();
 				this.initSearchBar();
 			}
 
-			this.layout.on('onViewShown', () => {
-				this.onViewShow();
-			});
+			this.layout.on('onViewShown', () => this.onViewShow());
+
+			this.pull.subscribe();
+		}
+
+		componentWillUnmount()
+		{
+			this.removeSearchBarEventListeners();
+			this.layout.removeEventListener('onViewShown', this.onViewShow);
+
+			this.pull.unsubscribe();
+		}
+
+		onViewShowHandler()
+		{
+			if (this.searchBarIsInited && this.state.searchText)
+			{
+				this.showSearchBar();
+			}
+
+			if (this.needAnimateIds.length > 0 && this.simpleList)
+			{
+				this.simpleList.lastElementIdAddedWithAnimation = this.needAnimateIds[this.needAnimateIds.length - 1];
+				this.needAnimateIds.map((id) => this.blinkItem(id));
+			}
+
+			this.needAnimateIds = [];
 		}
 
 		componentWillReceiveProps(newProps)
@@ -113,11 +186,6 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			if (newProps.actionParams)
 			{
 				this.state.actionParams = this.getValue(newProps, 'actionParams');
-			}
-
-			if (newProps.actions)
-			{
-				this.actions = this.getValue(newProps, 'actions');
 			}
 
 			this.needInitMenu = this.getValue(newProps, 'needInitMenu', true);
@@ -133,115 +201,14 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				this.initMenu(newProps);
 			}
 
+			this.state.itemParams = this.getValue(newProps, 'itemParams', {});
 			this.state.itemActions = this.getValue(newProps, 'itemActions', []);
-		}
-
-		componentWillUnmount()
-		{
-			if (this.layoutOptions.useSearch)
-			{
-				this.removeSearchBarListeners();
-			}
-
-			this.layout.removeEventListener('onViewShown', this.onViewShow);
-		}
-
-		removeSearchBarListeners()
-		{
-			const search = this.getSearchObject();
-			if (!search)
-			{
-				return;
-			}
-
-			// search.removeAllListeners('cancel');
-			// search.removeAllListeners('clickSearch');
-			// search.removeAllListeners('textChanged');
-			// this.layout.removeAllListeners('onViewShown');
-
-			search.removeEventListener('cancel', this.onSearchCancel);
-			search.removeEventListener(this.nameOfClickEnterEvent, this.onSearchClick);
-			search.removeEventListener('textChanged', this.onSearchTextChanged);
-		}
-
-		getValue(object, property, defaultValue = null, isObjectClone = true)
-		{
-			if (object.hasOwnProperty(property) && isObjectClone)
-			{
-				return clone(object[property]);
-			}
-
-			return get(object, property, defaultValue);
-		}
-
-		initMenu(props = null, buttons = null)
-		{
-			if (!buttons)
-			{
-				buttons = this.getMenuButtons(props);
-			}
-
-			if (!isEqual(buttons, this.layoutRightButtons))
-			{
-				this.layoutRightButtons = buttons;
-				layout.setRightButtons(buttons);
-			}
-		}
-
-		setMenuButtons(buttons)
-		{
-			this.menuButtons = buttons;
-
-			return this;
-		}
-
-		getMenuButtons(props = null)
-		{
-			if (!props)
-			{
-				props = this.props;
-			}
-
-			const buttons = [];
-
-			if (this.layout && this.layoutOptions.useSearch)
-			{
-				buttons.push(this.getSearchBarButtonConfig());
-				//this.initSearchBar();
-			}
-
-			if (this.layout && Array.isArray(this.menuButtons))
-			{
-				this.menuButtons.forEach(button => {
-					buttons.push(button);
-				});
-			}
-
-			if (this.layoutMenuActions.length)
-			{
-				this.menuProps = props;
-				buttons.push({
-					type: 'more',
-					badgeCode: 'access_more',
-					callback: this.menuShowHandler,
-				});
-			}
-
-			return buttons;
-		}
-
-		menuShow()
-		{
-			if (this.menuProps.layoutMenuActions)
-			{
-				const menu = new UI.Menu(this.menuProps.layoutMenuActions);
-				menu.show();
-			}
 		}
 
 		loadFirstItems()
 		{
 			let useOnViewLoaded = true;
+
 			if (this.layoutOptions.useOnViewLoaded !== undefined)
 			{
 				useOnViewLoaded = this.layoutOptions.useOnViewLoaded;
@@ -255,64 +222,809 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			});
 		}
 
-		getSearchBarButtonConfig()
+		isLoading()
 		{
+			return this.currentRequestUid !== null;
+		}
+
+		loadItems(blockPage = DEFAULT_BLOCK_PAGE, append = true, params = {})
+		{
+			if (!this.props.actions?.loadItems)
+			{
+				throw new Error('StatefulList: loadItems action is not defined');
+			}
+
+			if (this.state.allItemsLoaded)
+			{
+				this.setState({
+					isRefreshing: false,
+				});
+
+				return;
+			}
+
+			const config = {
+				data: (this.state.actionParams.loadItems || {}),
+				navigation: {
+					page: blockPage,
+					size: this.itemsLoadLimit,
+				},
+			};
+
+			config.data.extra = config.data.extra || {};
+			if (params.extra)
+			{
+				config.data.extra = merge(
+					config.data.extra,
+					params.extra,
+				);
+			}
+			config.data.extra.subscribeUser = (params.subscribeUser || true);
+
+			const requestStartTime = Date.now();
+			const isDefaultBlockPage = (blockPage === DEFAULT_BLOCK_PAGE);
+			const cacheId = this.props.cacheName ?? null;
+			const appendItems = (isDefaultBlockPage ? false : append);
+			const useCache = (
+				isDefaultBlockPage
+				&& (Boolean(cacheId) || this.isCacheEnabled)
+				&& (params.useCache === undefined || params.useCache)
+			);
+
+			const runActionExecutor = (
+				new RunActionExecutor(
+					this.props.actions.loadItems,
+					config.data,
+					config.navigation,
+				)
+					.setCacheId(cacheId)
+					.setCacheTtl(this.ajaxCacheTtl)
+					.setCacheHandler((response, uid) => {
+						if (this.currentRequestUid !== uid)
+						{
+							return;
+						}
+
+						if (this.props.actionCallbacks && this.props.actionCallbacks.loadItems)
+						{
+							this.props.actionCallbacks.loadItems(response?.data, renderType.cache);
+						}
+
+						this.drawListFromCache(response, blockPage, appendItems);
+						this.hideTitleLoader(true);
+					})
+					.setHandler((response, uid) => {
+						if (this.currentRequestUid !== uid)
+						{
+							return;
+						}
+
+						const serverResponseTime = Date.now() - requestStartTime;
+						const remainingTime = useCache ? 0 : Math.max(300 - serverResponseTime, 0);
+
+						this.requestRenderTimeout = setTimeout(() => {
+							if (this.props.actionCallbacks && this.props.actionCallbacks.loadItems)
+							{
+								this.props.actionCallbacks.loadItems(response?.data, renderType.ajax);
+							}
+
+							this.drawListFromAjax(response, blockPage, appendItems);
+							this.hideTitleLoader(false);
+							this.currentRequestUid = null;
+						}, remainingTime);
+					})
+			);
+
+			const newRequestUid = runActionExecutor.getUid();
+
+			if (this.currentRequestUid === newRequestUid)
+			{
+				return;
+			}
+
+			this.currentRequestUid = newRequestUid;
+			clearTimeout(this.requestRenderTimeout);
+
+			this.showTitleLoader({ useCache, isDefaultBlockPage });
+
+			if (useCache)
+			{
+				this.cache.setRunActionExecutor(runActionExecutor);
+			}
+
+			runActionExecutor.call(useCache);
+		}
+
+		/**
+		 * @param {String[]|Number[]} ids
+		 * @param {boolean} useFilter
+		 * @returns {Promise}
+		 */
+		loadItemsByIds(ids = [], useFilter = true)
+		{
+			if (!this.props.actions?.loadItems)
+			{
+				throw new Error('StatefulList: loadItems action is not defined');
+			}
+
+			return new Promise((resolve, reject) => {
+				if (ids.length === 0)
+				{
+					resolve([]);
+
+					return;
+				}
+
+				const data = clone(this.state.actionParams.loadItems || {});
+				data.extra = data.extra || {};
+				const filterParams = data.extra.filterParams || {};
+				filterParams.ID = ids;
+
+				if (!useFilter)
+				{
+					filterParams.FILTER_PRESET_ID = '';
+					set(data.extra, 'filter.presetId', '');
+				}
+
+				merge(data.extra, { filterParams }, { subscribeUser: true, filter: {} });
+
+				BX.ajax.runAction(this.props.actions.loadItems, { data }).then(
+					(response) => {
+						if (response.errors.length > 0)
+						{
+							reject(response.errors);
+
+							return;
+						}
+
+						if (this.props.actionCallbacks && this.props.actionCallbacks.loadItems)
+						{
+							this.props.actionCallbacks.loadItems(response?.data, renderType.ajax);
+						}
+
+						resolve(response.data.items);
+					},
+					(response) => {
+						console.error(response.errors);
+						reject(response.errors);
+					},
+				);
+			});
+		}
+
+		getViewMode()
+		{
+			return this.simpleList?.getViewMode();
+		}
+
+		shouldShowReloadListNotification()
+		{
+			return this.simpleList?.shouldShowReloadListNotification();
+		}
+
+		scrollToTop(animated = true)
+		{
+			this.simpleList?.scrollToBegin(animated);
+		}
+
+		addItemsFromPull(items)
+		{
+			if (this.state.items.length === 0 || this.shouldReloadDynamically)
+			{
+				const ids = items.map((item) => item.id);
+
+				return this.updateItems(ids, false, true);
+			}
+			this.simpleList.showUpdateButton(items.length);
+
+			return Promise.resolve();
+		}
+
+		/**
+		 * @param {string[]} desiredItemIds
+		 * @param {Object[]} itemsFromServer
+		 * @return {{add: Object[], update: Object[], delete: string[]}}
+		 */
+		groupItemsByOperations(desiredItemIds, itemsFromServer)
+		{
+			const preparedDesiredItemsIds = desiredItemIds.map((id) => String(id));
+			const { items } = this.state;
+			const currentItemsMap = new Map();
+
+			items.forEach((item) => {
+				currentItemsMap.set(String(item.id), item);
+			});
+
+			const itemsFromServerState = this.prepareItemsState(itemsFromServer);
+			const itemsFromServerMap = new Map();
+
+			itemsFromServerState.forEach((item) => {
+				itemsFromServerMap.set(String(item.id), item);
+			});
+
+			const toAddItems = [];
+			const toUpdateItems = [];
+			const toDeleteIds = [];
+
+			preparedDesiredItemsIds.forEach((id) => {
+				if (itemsFromServerMap.has(id))
+				{
+					if (currentItemsMap.has(id))
+					{
+						toUpdateItems.push(itemsFromServerMap.get(id));
+					}
+					else
+					{
+						toAddItems.push(itemsFromServerMap.get(id));
+					}
+				}
+				else if (currentItemsMap.has(id))
+				{
+					toDeleteIds.push(id);
+				}
+			});
+
 			return {
-				type: 'search',
-				badgeCode: 'search',
-				callback: () => this.showSearchBar(),
+				add: this.prepareItems(toAddItems),
+				update: this.prepareItems(toUpdateItems),
+				delete: toDeleteIds,
 			};
 		}
 
-		showSearchBar()
+		/**
+		 * @param {Object} operations
+		 * @param {Object[]} [operations.add]
+		 * @param {Object[]} [operations.update]
+		 * @param {string[]} [operations.delete]
+		 * @param {boolean} [showAnimateOnView=false]
+		 * @param {boolean} [showAnimateImmediately=true]
+		 * @param {Object} [animationTypes]
+		 * @return {Promise}
+		 */
+		processItemsGroupsByData(
+			operations,
+			showAnimateOnView = false,
+			showAnimateImmediately = true,
+			animationTypes = null,
+		)
 		{
-			const search = this.getSearchObject();
-			if (!search)
+			const { add: addItems = [], update: updateItems = [], delete: deleteItems = [] } = operations;
+			const preparedAnimationTypes = this.prepareAnimationTypes(animationTypes);
+
+			return new Promise((resolve, reject) => {
+				let shouldUpdateSimpleList = false;
+
+				if (Type.isArrayFilled(addItems))
+				{
+					if (showAnimateOnView)
+					{
+						this.addToAnimateItems(addItems);
+					}
+					addItems.forEach((item, index) => {
+						if (this.hasItem(item.id))
+						{
+							return;
+						}
+
+						shouldUpdateSimpleList = true;
+
+						const position = this.findItemPosition(item, this.state.items);
+
+						this.state.items.splice(position, 0, item);
+
+						if (this.props.onItemAdded)
+						{
+							this.props.onItemAdded(item);
+						}
+					});
+				}
+
+				if (Type.isArrayFilled(deleteItems))
+				{
+					deleteItems.forEach((itemId) => {
+						if (this.hasItem(itemId))
+						{
+							shouldUpdateSimpleList = true;
+							const index = this.state.items.findIndex((item) => String(item.id) === String(itemId));
+							const itemToDelete = this.state.items.splice(index, 1)[0];
+
+							if (this.props.onItemDeleted)
+							{
+								this.props.onItemDeleted(itemToDelete);
+							}
+						}
+					});
+				}
+
+				if (Type.isArrayFilled(updateItems))
+				{
+					if (showAnimateOnView)
+					{
+						this.addToAnimateItems(updateItems);
+					}
+
+					updateItems.forEach((item) => {
+						if (!this.hasItem(item.id))
+						{
+							return;
+						}
+
+						shouldUpdateSimpleList = true;
+
+						const oldPosition = this.state.items.findIndex((elem) => item.id === elem.id);
+						this.state.items.splice(oldPosition, 1);
+
+						const newPosition = this.findItemPosition(item, this.state.items);
+
+						if (newPosition === this.state.items.length - 1)
+						{
+							item = this.getReloadedItemByIndex(this.state.items.length, item);
+						}
+
+						this.state.items.splice(newPosition, 0, item);
+
+						if (this.props.onItemUpdated)
+						{
+							this.props.onItemUpdated(item);
+						}
+					});
+				}
+
+				if (shouldUpdateSimpleList)
+				{
+					const preparedItems = this.prepareItemsForRender(this.state.items);
+
+					this.simpleList.changeItemsState(
+						preparedItems,
+						showAnimateImmediately
+							? preparedAnimationTypes
+							: {
+								insert: 'none',
+								delete: 'none',
+								update: 'none',
+								move: false,
+							},
+					)
+						.then(resolve)
+						.catch((error) => {
+							console.error(error);
+							reject();
+						});
+
+					this.modifyCache();
+				}
+				else
+				{
+					resolve();
+				}
+			});
+		}
+
+		updateItemsFromPull(items)
+		{
+			if (this.shouldReloadDynamically)
+			{
+				const ids = items.map((item) => item.id);
+
+				return this.updateItems(ids, false, true);
+			}
+
+			this.simpleList.showUpdateButton();
+
+			return Promise.resolve();
+		}
+
+		deleteItemsFromPull(items)
+		{
+			const ids = items.map((item) => item.id);
+
+			return this.processItemsGroupsByData({ delete: ids }, false, true);
+		}
+
+		drawListFromCache(response, blockPage, append)
+		{
+			const params = {
+				append,
+				renderType: renderType.cache,
+			};
+
+			BX.postComponentEvent('UI.StatefulList::onDrawList', [
+				{
+					renderType: renderType.cache,
+					items: response.data.items,
+					blockPage: this.state.blockPage,
+					params,
+				},
+			]);
+
+			this.drawList(response, blockPage, params);
+		}
+
+		drawListFromAjax(response, blockPage, append)
+		{
+			const { loadItems } = this.state.actionParams;
+
+			BX.postComponentEvent('UI.StatefulList::onDrawListFromAjax', [
+				{
+					renderType: renderType.ajax,
+					items: response.data.items,
+					blockPage: this.state.blockPage,
+					params: loadItems,
+				},
+			]);
+
+			const params = {
+				append,
+				renderType: renderType.ajax,
+			};
+
+			this.drawList(response, blockPage, params);
+		}
+
+		drawList(response, blockPage, params = {})
+		{
+			if (!response)
 			{
 				return;
 			}
 
-			search.show();
-			this.setSearchText();
-		}
-
-		/**
-		 * @returns {boolean}
-		 */
-		isSearchInLayoutMode()
-		{
-			return (this.getSearchMode() === 'layout');
-		}
-
-		/**
-		 * @returns {String}
-		 */
-		getSearchMode()
-		{
-			const search = this.getSearchObject();
-
-			return search.mode;
-		}
-
-		setSearchText()
-		{
-			const searchText = this.state.searchText;
-			if (!searchText)
+			if (response.errors && response.errors.length > 0 && response.data)
 			{
+				response.errors
+					.filter(({ code }) => code !== 'NETWORK_ERROR')
+					.forEach(({ message }) => this.showError(message));
+
 				return;
 			}
 
-			const search = this.getSearchObject();
+			const { data } = response;
+			let items = [];
 
-			if (this.canUseSearchObject)
+			if (data.items)
 			{
-				search.text = searchText;
+				items = this.prepareItems(data.items);
+			}
+
+			const newState = {
+				renderType: params.renderType,
+				isRefreshing: false,
+				allItemsLoaded: false,
+			};
+
+			if (items.length < this.itemsLoadLimit)
+			{
+				newState.allItemsLoaded = true;
+			}
+
+			if (items.length === 0)
+			{
+				this.setState(newState);
+
+				return;
+			}
+
+			if (blockPage === DEFAULT_BLOCK_PAGE)
+			{
+				newState.permissions = (newState.permissions || {});
+				newState.permissions.edit = (data.permissions && data.permissions.write);
+				newState.permissions.view = (data.permissions && data.permissions.read);
+				newState.permissions.add = (data.permissions && data.permissions.add);
+				newState.settingsIsLoaded = true;
+			}
+
+			if (params.append)
+			{
+				newState.items = [...this.state.items];
+				const notAdded = items.filter((item) => !newState.items.some((element) => element.id === item.id));
+				newState.items.push(...notAdded);
 			}
 			else
 			{
-				search.setText(searchText);
+				newState.items = items;
+			}
+
+			newState.items = this.prepareItemsState(newState.items);
+
+			const newStateKeys = Object.keys(newState);
+			const isEqualStateWithoutItems = (
+				(
+					!newStateKeys.includes('permissions')
+					|| isEqual(this.state.permissions, newState.permissions)
+				)
+				&& (
+					!newStateKeys.includes('isRefreshing')
+					|| isEqual(this.state.isRefreshing, newState.isRefreshing)
+				)
+				&& (
+					!newStateKeys.includes('settingsIsLoaded')
+					|| isEqual(this.state.settingsIsLoaded, newState.settingsIsLoaded))
+			);
+			if (!isEqualStateWithoutItems)
+			{
+				this.setState(newState);
+
+				return;
+			}
+
+			const isEqualItems = isEqual(this.state.items, newState.items);
+			if (isEqualItems)
+			{
+				return;
+			}
+
+			if (params.append)
+			{
+				this.state.items = newState.items;
+				this.state.allItemsLoaded = newState.allItemsLoaded;
+				this.state.isRefreshing = newState.isRefreshing;
+
+				const preparedItems = this.prepareItemsForRender(this.state.items);
+
+				this.simpleList.changeItemsState(preparedItems, {
+					insert: 'none',
+				})
+					.then(() => {
+						if (this.state.allItemsLoaded)
+						{
+							this.simpleList.setState({ allItemsLoaded: this.state.allItemsLoaded });
+						}
+					})
+					.catch((error) => {
+						console.error(error);
+					});
+			}
+			else
+			{
+				this.setState(newState);
 			}
 		}
+
+		prepareItems(items)
+		{
+			const generator = new TypeGenerator({
+				// groups can be set as, for example, ['data', 'data.action']
+				groupsList: this.props.typeGenerator?.groups,
+				properties: this.props.typeGenerator?.properties,
+				propertiesCallbacks: this.props.typeGenerator?.callbacks,
+			});
+
+			if (this.props.typeGenerator?.generator)
+			{
+				generator.setGenerator(this.props.typeGenerator?.generator);
+			}
+
+			return items.map((item) => ({
+				...item,
+				type: generator.generate(item),
+				key: String(item.id),
+			}));
+		}
+
+		reloadList()
+		{
+			const initialStateParams = {
+				skipItems: true,
+			};
+			const loadItemsParams = {
+				useCache: false,
+			};
+
+			this.reload(initialStateParams, loadItemsParams, this.props.reloadListCallbackHandler);
+		}
+
+		/**
+		 * @param {Object} initialStateParams
+		 * @param {Object} loadItemsParams
+		 * @param {Function|null} callback
+		 */
+		reload(initialStateParams = {}, loadItemsParams = {}, callback = () => {})
+		{
+			this.isRefreshing = false;
+
+			if (typeof callback !== 'function')
+			{
+				callback = () => {};
+			}
+
+			this.setState(this.getInitialState(initialStateParams), () => {
+				this.initSearchBar();
+				this.loadItems(DEFAULT_BLOCK_PAGE, false, loadItemsParams);
+
+				if (this.simpleList)
+				{
+					this.simpleList.dropShowReloadListNotification();
+				}
+
+				if (initialStateParams.menuButtons)
+				{
+					this.setMenuButtons(initialStateParams.menuButtons);
+					this.initMenu();
+				}
+
+				if (this.props.onListReloaded)
+				{
+					const isPullToReload = initialStateParams.skipItems ?? false;
+
+					this.props.onListReloaded(isPullToReload);
+				}
+
+				callback();
+			});
+		}
+
+		getInitialState(params = {})
+		{
+			const initialState = {
+				blockPage: DEFAULT_BLOCK_PAGE,
+				isRefreshing: true,
+				allItemsLoaded: false,
+				permissions: {
+					add: false,
+					edit: false,
+					view: false,
+				},
+				settingsIsLoaded: false,
+				searchText: null,
+				searchPresetId: null,
+				renderType: null,
+				forcedShowSkeleton: true,
+			};
+
+			if (!params.skipItems)
+			{
+				initialState.items = [];
+			}
+
+			if (params.itemParams)
+			{
+				initialState.itemParams = params.itemParams;
+			}
+
+			if (params.actionParams)
+			{
+				initialState.actionParams = params.actionParams;
+			}
+
+			if (Type.isBoolean(params.forcedShowSkeleton))
+			{
+				initialState.forcedShowSkeleton = params.forcedShowSkeleton;
+			}
+
+			return initialState;
+		}
+
+		prepareItemsState(items)
+		{
+			let preparedItems = clone(items);
+
+			if (this.props.onBeforeItemsSetState)
+			{
+				preparedItems = this.props.onBeforeItemsSetState(preparedItems);
+			}
+
+			return preparedItems;
+		}
+
+		prepareItemsForRender(items)
+		{
+			let preparedItems = clone(items);
+
+			if (this.props.onBeforeItemsRender)
+			{
+				const { allItemsLoaded } = this.state;
+
+				preparedItems = this.props.onBeforeItemsRender(preparedItems, {
+					allItemsLoaded,
+				});
+			}
+
+			return preparedItems;
+		}
+
+		render()
+		{
+			const testId = this.getValue(this.props, 'testId');
+			const title = this.getValue(this.props, 'title');
+
+			return View(
+				{
+					testId,
+					onPan: this.props.onPanListHandler || null,
+					style: {
+						backgroundColor: AppTheme.colors.bgPrimary,
+						flex: 1,
+					},
+				},
+				View(
+					{
+						style: {
+							flex: 1,
+							flexDirection: 'column',
+							backgroundColor: title
+								? AppTheme.colors.bgContentPrimary
+								: AppTheme.colors.bgPrimary,
+						},
+					},
+					title && Text({
+						style: {
+							fontSize: 13,
+							color: AppTheme.colors.base1,
+							marginVertical: 10,
+							marginLeft: 20,
+						},
+						text: title,
+					}),
+					new SimpleList({
+						...this.props,
+						testId,
+						permissions: this.state.permissions,
+						settingsIsLoaded: this.state.settingsIsLoaded,
+						renderType: this.state.renderType,
+						itemType: this.state.itemType,
+						itemFactory: this.state.itemFactory,
+						items: this.prepareItemsForRender(this.state.items),
+						itemParams: this.state.itemParams,
+						getItemCustomStyles: BX.prop.getFunction(this.props, 'getItemCustomStyles', null),
+						isSearchEnabled: this.stateBeforeSearch !== null,
+						blockPage: this.state.blockPage,
+						allItemsLoaded: this.state.allItemsLoaded,
+						forcedShowSkeleton: this.state.forcedShowSkeleton,
+						itemLayoutOptions: this.props.itemLayoutOptions,
+						itemActions: this.state.itemActions,
+						loadItemsHandler: this.loadItemsHandler,
+						reloadListHandler: this.reloadList,
+						updateItemHandler: this.updateItemHandler,
+						deleteItemHandler: this.deleteItemHandler,
+						showFloatingButton: BX.prop.getBoolean(this.props, 'isShowFloatingButton', true),
+						getNotificationText: this.getNotificationText,
+						itemsLoadLimit: this.itemsLoadLimit,
+						isRefreshing: this.state.isRefreshing,
+						ref: this.bindRef,
+						onDetailCardUpdateHandler: this.props.onDetailCardUpdateHandler,
+						onDetailCardCreateHandler: this.props.onDetailCardCreateHandler,
+						onNotViewableHandler: this.props.onNotViewableHandler,
+						changeItemsOperations: this.props.changeItemsOperations,
+					}),
+				),
+			);
+		}
+
+		bindRef(ref)
+		{
+			if (ref)
+			{
+				this.simpleList = ref;
+			}
+		}
+
+		/**
+		 * @public
+		 * @param {String|Number} id
+		 * @returns {Boolean}
+		 */
+		hasItem(id)
+		{
+			return this.state.items.some((item) => String(item.id) === String(id));
+		}
+
+		/**
+		 * @param {String|Number} id
+		 * @returns {Object}
+		 */
+		getItem(id)
+		{
+			return this.state.items.find((item) => String(item.id) === String(id));
+		}
+
+		/**
+		 * @returns {Object[]}
+		 */
+		getItems()
+		{
+			return this.state.items;
+		}
+
+		// search
 
 		initSearchBar()
 		{
@@ -322,64 +1034,61 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			}
 
 			const searchBar = this.getSearchObject(true);
-
 			if (!searchBar)
 			{
 				return;
 			}
 
+			this.addSearchBarEventListeners(searchBar);
+			searchBar.setReturnKey('done');
+
 			this.searchBarIsInited = true;
+		}
 
-			searchBar.on('cancel', () => {
-				this.onSearchCancel();
-			});
+		addSearchBarEventListeners(searchBar)
+		{
+			searchBar.on('cancel', () => this.onSearchCancel());
+			searchBar.on('clickEnter', (params) => this.onSearchClick(params));
+			searchBar.on('textChanged', (params) => this.onSearchTextChanged(params));
+		}
 
-			searchBar.on(this.nameOfClickEnterEvent, params => {
-				this.onSearchClick(params);
-			});
-
-			searchBar.on('textChanged', params => {
-				this.onSearchTextChanged(params);
-			});
-
-			if (this.isApiGreaterThen44)
+		removeSearchBarEventListeners()
+		{
+			if (!this.layoutOptions.useSearch)
 			{
-				searchBar.setReturnKey('done');
+				return;
 			}
+
+			const searchBar = this.getSearchObject();
+			if (!searchBar)
+			{
+				return;
+			}
+
+			searchBar.removeEventListener('cancel', this.onSearchCancel);
+			searchBar.removeEventListener('clickEnter', this.onSearchClick);
+			searchBar.removeEventListener('textChanged', this.onSearchTextChanged);
+		}
+
+		onSearchClickHandler(params)
+		{
+			this.debounceSearch({
+				...params,
+				eventName: 'clickEnter',
+			});
+		}
+
+		onSearchTextChangedHandler(params)
+		{
+			this.debounceSearch({
+				...params,
+				eventName: 'textChanged',
+			});
 		}
 
 		onSearchCancelHandler()
 		{
 			this.cancelSearch();
-		}
-
-		onSearchClickHandler(params)
-		{
-			params.eventName = this.nameOfClickEnterEvent;
-			this.debounceSearch(params);
-		}
-
-		onSearchTextChangedHandler(params)
-		{
-			params.eventName = 'textChanged';
-			this.debounceSearch(params);
-		}
-
-		onViewShowHandler()
-		{
-			if (this.searchBarIsInited && this.state.searchText)
-			{
-				this.showSearchBar();
-			}
-
-			const simpleList = this.getSimpleList();
-			if (this.needAnimateIds.length > 0 && simpleList)
-			{
-				simpleList.lastElementIdAddedWithAnimation = this.needAnimateIds[this.needAnimateIds.length - 1];
-				this.needAnimateIds.map(id => this.blinkItem(id));
-			}
-
-			this.needAnimateIds = [];
 		}
 
 		cancelSearch()
@@ -432,6 +1141,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			)
 			{
 				this.cancelSearch();
+
 				return;
 			}
 
@@ -490,18 +1200,6 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				subscribeUser: false,
 			});
 
-			/*
-			@todo check this
-			if (
-				!params.skipCallback
-				&& typeof this.searchConfig.callback === 'function'
-				&& this.searchConfig.params
-			)
-			{
-				this.searchConfig.callback(...Object.values(this.searchConfig.params));
-			}
-			*/
-
 			if (typeof params.callback === 'function')
 			{
 				params.callback();
@@ -543,15 +1241,11 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 		 */
 		isSearchCancelled(params)
 		{
-			params = (params || {});
-
-			if (typeof this.getRuntimeParams === 'function')
+			if (this.props.getRuntimeParams)
 			{
-				const { state } = this;
-
 				const runtimeParams = this.props.getRuntimeParams({
-					state,
-					params,
+					state: this.state,
+					params: params || {},
 				});
 
 				if (runtimeParams.cancelSearch)
@@ -561,812 +1255,6 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			}
 
 			return false;
-		}
-
-		updateItems(ids, showAnimateOnView = true, showAnimateImmediately = false, useFilter = true)
-		{
-			return new Promise((resolve) => {
-				this.loadItemsByIds(ids, useFilter).then((items) => {
-					this.prepareItems(items);
-					if (showAnimateOnView)
-					{
-						this.fillAnimateIds(items);
-					}
-
-					const simpleList = this.getSimpleList();
-					const animatePromises = showAnimateImmediately
-						? items.map(({ id }) => simpleList.setLoading(id))
-						: [];
-
-					Promise.all(animatePromises).then(() => {
-						const dropLoadingPromises = items.map(({ id }) => simpleList.dropLoading(id));
-
-						Promise.all(dropLoadingPromises).then(() => {
-							simpleList.listView.updateRows(items).then(() => {
-								items.forEach((item) => {
-									const { id } = item;
-
-									if (this.state.items.has(id))
-									{
-										this.state.items.set(id, item);
-									}
-								});
-
-								this.modifyCache(ACTION_UPDATE, { items });
-
-								resolve();
-							});
-						});
-					});
-				});
-			});
-		}
-
-		/**
-		 * @param {Number[]} ids
-		 * @param {boolean} useFilter
-		 * @returns {Promise}
-		 */
-		loadItemsByIds(ids = [], useFilter = true)
-		{
-			return new Promise((resolve, reject) => {
-				if (!ids.length)
-				{
-					resolve([]);
-					return;
-				}
-
-				const data = clone(this.state.actionParams.loadItems || {});
-				data.extra = data.extra || {};
-				const filterParams = data.extra.filterParams || {};
-				filterParams.ID = ids;
-
-				if (!useFilter)
-				{
-					filterParams.FILTER_PRESET_ID = '';
-					set(data.extra, 'filter.presetId', "");
-				}
-
-				merge(data.extra, { filterParams }, { subscribeUser: true, filter: {} });
-
-				BX.ajax.runAction(this.actions.loadItems, { data })
-					.then(response => {
-						if (response.errors.length)
-						{
-							reject(response.errors);
-						}
-						resolve(response.data.items);
-					}, response => {
-						console.error(response.errors);
-						reject(response.errors);
-					});
-			});
-		}
-
-		fillAnimateIds(items)
-		{
-			items.forEach((item) => this.addToAnimateIds(item.id));
-		}
-
-		addToAnimateIds(id)
-		{
-			if (!this.needAnimateIds.includes(id))
-			{
-				this.needAnimateIds.push(id);
-			}
-		}
-
-		loadItems(blockPage = DEFAULT_BLOCK_PAGE, append = true, params = {})
-		{
-			if (this.actions.loadItems === undefined)
-			{
-				return;
-			}
-
-			if (this.state.allItemsLoaded)
-			{
-				this.setState({
-					isRefreshing: false,
-				});
-				return;
-			}
-
-			if (this.isLoading)
-			{
-				return;
-			}
-
-			if (blockPage === DEFAULT_BLOCK_PAGE)
-			{
-				append = false;
-			}
-
-			this.isLoading = true;
-
-			this.showTitleLoader();
-
-			const config = {
-				data: (this.state.actionParams.loadItems || {}),
-				navigation: {
-					page: blockPage,
-					size: ITEMS_LOAD_LIMIT,
-				},
-			};
-
-			config.data.extra = config.data.extra || {};
-			if (params.extra)
-			{
-				config.data.extra = merge(
-					config.data.extra,
-					params.extra,
-				);
-			}
-			config.data.extra.subscribeUser = (params.subscribeUser || true);
-
-			const useCache = (
-				blockPage === DEFAULT_BLOCK_PAGE
-				&& (params.useCache === undefined || params.useCache)
-				&& this.props.cacheName !== undefined
-			);
-
-			const cacheId = (useCache ? this.props.cacheName : null);
-			const uid = this.getLoadItemsRequestUid();
-
-			new RunActionExecutor(this.actions.loadItems, config.data, config.navigation)
-				.setCacheId(cacheId)
-				.setUid(uid)
-				.setCacheHandler((response, requestUid) => this.drawListFromCache(response, blockPage, append, requestUid))
-				.setHandler((response, requestUid) => this.drawListFromAjax(response, blockPage, append, requestUid))
-				.call(useCache)
-			;
-		}
-
-		getLoadItemsRequestUid()
-		{
-			return (this.props.cacheName || Random.getString());
-		}
-
-		drawListFromCache(response, blockPage, append, requestUid)
-		{
-			if (!this.isActualRequest(requestUid))
-			{
-				return;
-			}
-
-			const params = {
-				append: append,
-				incBlockPage: false,
-				renderType: renderType.cache,
-			};
-
-			BX.postComponentEvent('UI.StatefulList::onDrawList', [{
-				renderType: renderType.cache,
-				items: response.data.items,
-				blockPage: this.state.blockPage,
-				params,
-			}]);
-
-			this.drawList(response, blockPage, params);
-		}
-
-		drawListFromAjax(response, blockPage, append, requestUid)
-		{
-			if (!this.isActualRequest(requestUid))
-			{
-				return;
-			}
-
-			const { loadItems } = this.state.actionParams;
-
-			BX.postComponentEvent('UI.StatefulList::onDrawListFromAjax', [{
-				renderType: renderType.ajax,
-				items: response.data.items,
-				blockPage: this.state.blockPage,
-				params: loadItems,
-			}]);
-
-			const params = {
-				append: append,
-				incBlockPage: true,
-				useLoader: true,
-				renderType: renderType.ajax,
-			};
-
-			this.drawList(response, blockPage, params);
-		}
-
-		isActualRequest(uid)
-		{
-			return (uid === this.getLoadItemsRequestUid());
-		}
-
-		drawList(response, blockPage, params = {})
-		{
-			if (!response)
-			{
-				return;
-			}
-
-			this.isLoading = false;
-
-			if (response.errors && response.errors.length && response.data)
-			{
-				response.errors.forEach((error) => {
-					this.showError(error.message);
-				});
-				this.setState({
-					allItemsLoaded: true,
-				});
-				return;
-			}
-
-			const { data } = response;
-
-			this.prepareItems(data.items);
-			const items = new Map();
-			data.items.forEach(element => items.set(element.id, element));
-
-			const newState = {
-				renderType: params.renderType,
-			};
-
-			if (items.size < ITEMS_LOAD_LIMIT)
-			{
-				newState.allItemsLoaded = true;
-			}
-
-			newState.isRefreshing = false;
-
-			if (blockPage === DEFAULT_BLOCK_PAGE)
-			{
-				newState.permissions = (newState.permissions || {});
-				newState.permissions.edit = (data.permissions && data.permissions.write);
-				newState.permissions.view = (data.permissions && data.permissions.read);
-				newState.permissions.add = (data.permissions && data.permissions.add);
-				newState.settingsIsLoaded = true;
-			}
-
-			if (params.append)
-			{
-				newState.items = this.state.items;
-				for (const item of items.values())
-				{
-					newState.items.set(item.id, item);
-				}
-			}
-			else
-			{
-				newState.items = items;
-			}
-
-			if (params.incBlockPage)
-			{
-				newState.blockPage = blockPage;
-			}
-
-			if (
-				isEqual(this.state.items, newState.items)
-				&& isEqual(this.state.permissions, newState.permissions)
-				&& isEqual(this.state.isRefreshing, newState.isRefreshing)
-				&& isEqual(this.state.settingsIsLoaded, newState.settingsIsLoaded)
-			)
-			{
-				if (params.useLoader)
-				{
-					this.hideTitleLoader();
-				}
-				return;
-			}
-
-			this.setState(newState, () => {
-				if (params.useLoader)
-				{
-					this.hideTitleLoader();
-				}
-			});
-		}
-
-		prepareItems(items)
-		{
-			items.map((item) => {
-				item.type = this.generateType(item);
-				item.key = String(item.id);
-			});
-		}
-
-		showTitleLoader()
-		{
-			NavigationLoader.show();
-		}
-
-		hideTitleLoader()
-		{
-			NavigationLoader.hide();
-		}
-
-		reloadListHandler()
-		{
-			const initialStateParams = {
-				skipItems: true,
-			};
-
-			const loadItemsParams = {
-				useCache: false,
-			};
-
-			this.reload(initialStateParams, loadItemsParams, this.props.reloadListCallbackHandler);
-		}
-
-		/**
-		 * @param {Object} initialStateParams
-		 * @param {Object} loadItemsParams
-		 * @param {Function|null} callback
-		 */
-		reload(initialStateParams = {}, loadItemsParams = {}, callback = () => {
-		})
-		{
-			this.isRefreshing = false;
-
-			if (typeof callback !== 'function')
-			{
-				callback = () => {
-				};
-			}
-
-			this.setState(this.getInitialState(initialStateParams), () => {
-				this.initSearchBar();
-				this.loadItems(DEFAULT_BLOCK_PAGE, false, loadItemsParams);
-
-				const simpleList = this.getSimpleList();
-				if (simpleList)
-				{
-					simpleList.dropShowReloadListNotification();
-				}
-
-				if (initialStateParams.menuButtons)
-				{
-					this
-						.setMenuButtons(initialStateParams.menuButtons)
-						.initMenu()
-					;
-				}
-
-				callback();
-			});
-		}
-
-		getInitialState(params = {})
-		{
-			const initialState = {
-				blockPage: DEFAULT_BLOCK_PAGE,
-				isRefreshing: true,
-				allItemsLoaded: false,
-				permissions: {
-					add: false,
-					edit: false,
-					view: false,
-				},
-				settingsIsLoaded: false,
-				searchText: null,
-				searchPresetId: null,
-				renderType: null,
-				forcedShowSkeleton: null,
-			};
-
-			if (!params.skipItems)
-			{
-				initialState.items = new Map();
-			}
-
-			if (params.itemParams)
-			{
-				initialState.itemParams = params.itemParams;
-			}
-
-			if (params.forcedShowSkeleton)
-			{
-				initialState.forcedShowSkeleton = params.forcedShowSkeleton;
-			}
-
-			return initialState;
-		}
-
-		updateItemHandler(itemId, params = {})
-		{
-			const showAnimate = BX.prop.getBoolean(params, 'showAnimate', true);
-			return this.updateItems([itemId], false, showAnimate);
-
-			/*
-			Remove later. There is a field check for changes to show the animation for each field,
-			but I have not yet found work with isShowAnimate in the code.
-			So I'll leave it commented out for now, maybe I'll get back to this code soon.
-
-			return new Promise((resolve, reject) => {
-				const items = this.state.items;
-				const item = items.get(itemId);
-
-				if (!item)
-				{
-					resolve();
-				}
-
-				this.setLoadingOfItem(item.id);
-
-				for (const name in params.data)
-				{
-					if (name !== 'fields')
-					{
-						item.data[name] = CommonUtils.objectClone(params.data[name]);
-					}
-				}
-
-				if (params.data.fields)
-				{
-					for (const paramsFieldIndex in params.data.fields)
-					{
-						const newField = params.data.fields[paramsFieldIndex];
-						const fieldName = newField.name;
-						let field = this.getFieldByName(item, fieldName);
-						if (field)
-						{
-							const isShowAnimate = (field.value !== newField.value);
-
-							field = Object.assign(
-								field,
-								newField,
-								{ isShowAnimate }
-							)
-						}
-						else
-						{
-							newField.isShowAnimate = true;
-							item.data.fields.push(newField);
-						}
-					}
-				}
-
-				item.type = this.generateType(item);
-				items.set(itemId, item);
-				this.modifyCache(ACTION_UPDATE, {
-					items: [item],
-				});
-
-				this.getItemComponent(item.id).dropLoading(() => {
-					this.setState({items}, () => {
-						resolve();
-					});
-				});
-			});*/
-		}
-
-		animateField()
-		{
-
-		}
-
-		/**
-		 * @param {Object} item
-		 * @param {String} fieldName
-		 */
-		getFieldByName(item, fieldName)
-		{
-			return item.data.fields.find(field => field.name === fieldName);
-		}
-
-		addItemHandler(itemId, params)
-		{
-			return new Promise(resolve => {
-				const stateItems = this.state.items;
-				const item = {
-					id: itemId,
-					...params,
-					key: String(itemId),
-				};
-				item.type = this.generateType(item);
-
-				const itemMap = new Map();
-				itemMap.set(itemId, item);
-
-				const items = new Map([...itemMap, ...stateItems]);
-
-				this.setState({ items }, () => {
-					resolve();
-				});
-			});
-		}
-
-		deleteItemHandler(itemId)
-		{
-			return this.deleteItem(itemId);
-		}
-
-		/**
-		 * @param {Number} itemId
-		 * @param {String} animationType
-		 * @returns {Promise}
-		 */
-		deleteItem(itemId, animationType = 'fade')
-		{
-			return new Promise((resolve, reject) => {
-				const simpleList = this.getSimpleList();
-				const item = simpleList.getItemComponent(itemId);
-
-				if (!item)
-				{
-					reject();
-					return;
-				}
-
-				this.deleteRowFromListView({ itemId, animationType, onDelete: resolve });
-			});
-		}
-
-		deleteRowFromListView({ itemId, animationType = 'fade', onDelete })
-		{
-			const { items } = this.state;
-			const { listView } = this.getSimpleList();
-			const { index, section } = listView.getElementPosition(itemId);
-
-			listView.deleteRow(section, index, animationType, () => {
-					this.modifyCache(ACTION_DELETE, { itemId });
-					this.setState((state) => {
-						const items = clone(state.items);
-						items.delete(itemId);
-
-						return { items };
-					}, () => {
-						if (typeof onDelete === 'function')
-						{
-							onDelete({ items });
-						}
-					});
-				},
-			);
-		}
-
-		blinkItem(itemId, showUpdated = true)
-		{
-			return this.getSimpleList().blinkItem(itemId, showUpdated);
-		}
-
-		/**
-		 * @param {Number} itemId
-		 * @returns {LayoutComponent}
-		 */
-		getItemComponent(itemId)
-		{
-			return this.getSimpleList().getItemComponent(itemId);
-		}
-
-		/**
-		 * @returns {SimpleList}
-		 */
-		getSimpleList()
-		{
-			return this.simpleList;
-		}
-
-		/*
-		 * @todo I think need create a separate class for work with list cache.
-		 * Also we depend on the RunActionExecutor and if the way of working with the cache changes there, then this code will stop working
-		 */
-		modifyCache(action, params = {})
-		{
-			const cacheName = this.props.cacheName;
-			const cache = Application.storage.getObject(cacheName, null);
-
-			if (!(cache && cache.data && cache.data.items))
-			{
-				return;
-			}
-
-			if (action === ACTION_DELETE && this.deleteItemFromCache(cache, params.itemId))
-			{
-				Application.storage.setObject(cacheName, cache);
-				return;
-			}
-
-			if (action === ACTION_UPDATE && this.updateItemsInCache(cache, params.items))
-			{
-				Application.storage.setObject(cacheName, cache);
-			}
-		}
-
-		deleteItemFromCache(cache, itemId)
-		{
-			return cache.data.items.some((item, index) => {
-				if (item.id === itemId)
-				{
-					cache.data.items.splice(index, 1);
-					return true;
-				}
-				return false;
-			});
-		}
-
-		updateItemsInCache(cache, items = [])
-		{
-			return items.every(item => this.updateItemInCache(cache, item));
-		}
-
-		updateItemInCache(cache, item)
-		{
-			return cache.data.items.some((current, index) => {
-				if (current.id === item.id)
-				{
-					cache.data.items[index].data = item.data;
-					return true;
-				}
-				return false;
-			});
-		}
-
-		/**
-		 * First generation of hash method. This method need for correct work of a ListView widget.
-		 * @param item
-		 * @returns {string}
-		 */
-		generateType(item)
-		{
-			let str = '';
-			let keyStatus;
-
-			const generateForGroup = group => {
-				if (!group)
-				{
-					return;
-				}
-
-				for (const key in group)
-				{
-					if (BX.type.isPlainObject(group[key]) && !Array.isArray(group[key]))
-					{
-						keyStatus = (group[key] ? Boolean(Object.keys(group[key]).length) : false);
-					}
-					else if (Array.isArray(group[key]))
-					{
-						keyStatus = Boolean(group[key].length);
-					}
-					else
-					{
-						keyStatus = Boolean(group[key]);
-					}
-
-					keyStatus = Number(keyStatus);
-					str += key + ':' + keyStatus + '-';
-				}
-			};
-
-			generateForGroup(item.data);
-			generateForGroup(item.data.fields);
-
-			const hashCode = (s => {
-				let h = 0;
-				for (let i = 0; i < s.length; i++)
-				{
-					h = Math.imul(31, h) + s.charCodeAt(i) | 0;
-				}
-
-				return String(h);
-			});
-
-			return hashCode(str);
-		}
-
-		render()
-		{
-			const testId = this.getValue(this.props, 'testId');
-			const title = this.getValue(this.props, 'title');
-			const { permissions } = this.state;
-
-			return View(
-				{
-					testId,
-					onPan: this.props.onPanListHandler || null,
-					style: {
-						backgroundColor: '#f0f2f5',
-						flex: 1,
-					},
-				},
-				View(
-					{
-						style: {
-							flex: 1,
-							flexDirection: 'column',
-							backgroundColor: title ? '#f4f7f8' : '#f0f2f5',
-						},
-					},
-					title && Text({
-						style: {
-							fontSize: 13,
-							color: '#525c69',
-							marginVertical: 10,
-							marginLeft: 20,
-						},
-						text: title,
-					}),
-					new SimpleList({
-						...this.props,
-						testId,
-						permissions,
-						settingsIsLoaded: this.state.settingsIsLoaded,
-						renderType: this.state.renderType,
-						itemType: this.state.itemType,
-						itemFactory: this.state.itemFactory,
-						items: this.state.items,
-						itemParams: this.state.itemParams,
-						getItemCustomStyles: BX.prop.getFunction(this.props, 'getItemCustomStyles', null),
-						isSearchEnabled: this.stateBeforeSearch !== null,
-						blockPage: this.state.blockPage,
-						allItemsLoaded: this.state.allItemsLoaded,
-						forcedShowSkeleton: this.state.forcedShowSkeleton,
-						itemLayoutOptions: this.itemLayoutOptions,
-						itemActions: this.state.itemActions,
-						loadItemsHandler: this.loadItemsHandler,
-						reloadListHandler: this.reloadListHandler,
-						addItemHandler: this.addItemHandler,
-						updateItemHandler: this.updateItemHandler,
-						deleteItemHandler: this.deleteItemHandler,
-						showFloatingButton: BX.prop.getBoolean(this.props, 'isShowFloatingButton', true),
-						itemsLoadLimit: ITEMS_LOAD_LIMIT,
-						isRefreshing: this.state.isRefreshing,
-						ref: this.bindSimpleListRef,
-						pull: this.pull,
-						onDetailCardUpdateHandler: this.props.onDetailCardUpdateHandler || null,
-						onDetailCardCreateHandler: this.props.onDetailCardCreateHandler || null,
-						onNotViewableHandler: this.props.onNotViewableHandler || null,
-					}),
-				),
-			);
-		}
-
-		bindSimpleListRef(ref)
-		{
-			this.simpleList = ref;
-		}
-
-		showError(errorText)
-		{
-			if (errorText.length)
-			{
-				navigator.notification.alert(errorText, null, '');
-			}
-		}
-
-		/**
-		 * @param {Number} id
-		 * @returns {Boolean}
-		 */
-		hasItem(id)
-		{
-			return Boolean(this.getItem(id));
-		}
-
-		/**
-		 * @param {Number} id
-		 * @returns {Object}
-		 */
-		getItem(id)
-		{
-			id = Number(id);
-			return this.state.items.get(id);
-		}
-
-		/**
-		 * @returns Map
-		 */
-		getItems()
-		{
-			return this.state.items;
-		}
-
-		/**
-		 * @param key: string
-		 * @returns {null|{section: number, index: number}}
-		 */
-		getItemPosition(key)
-		{
-			return this.getSimpleList().listView.getElementPosition(String(key));
 		}
 
 		/**
@@ -1381,12 +1269,13 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				return null;
 			}
 
-			if (this.canUseSearchObject && layout.search)
+			if (layout.search)
 			{
 				if (initSearch)
 				{
 					layout.search.mode = this.searchConfig.mode;
 				}
+
 				return layout.search;
 			}
 
@@ -1398,43 +1287,488 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			return null;
 		}
 
-		/**
-		 * @returns {boolean}
-		 */
-		canUseSearchObjectHandler()
+		getSearchBarButtonConfig()
 		{
-			return (Application.getApiVersion() >= 42);
+			return {
+				type: 'search',
+				badgeCode: 'search',
+				callback: () => this.showSearchBar(),
+			};
+		}
+
+		showSearchBar()
+		{
+			const search = this.getSearchObject();
+			if (search)
+			{
+				if (this.state.searchText)
+				{
+					search.text = this.state.searchText;
+				}
+				search.show();
+			}
+		}
+
+		getPreparedSearchConfig()
+		{
+			const defaultConfig = {
+				mode: 'bar',
+			};
+			const config = this.getValue(this.props, 'search', {});
+
+			return mergeImmutable(defaultConfig, config);
+		}
+
+		// item
+
+		/**
+		 * @param {String|Number} itemId
+		 * @returns {LayoutComponent}
+		 */
+		getItemComponent(itemId)
+		{
+			return this.simpleList.getItemComponent(itemId);
+		}
+
+		/**
+		 * @param {any} key
+		 * @returns {null|{section: number, index: number}}
+		 */
+		getItemPosition(key)
+		{
+			return this.simpleList.getItemPosition(key);
+		}
+
+		sortItems(items)
+		{
+			if (!this.sorting)
+			{
+				return;
+			}
+
+			items.sort((a, b) => {
+				const aSection = this.sorting.getSection(a) ?? 0;
+				const bSection = this.sorting.getSection(b) ?? 0;
+				if (aSection < bSection)
+				{
+					return -1;
+				}
+
+				if (aSection > bSection)
+				{
+					return 1;
+				}
+
+				const noProperty = this.sorting.noPropertyValue;
+				const aSortProperty = this.sorting
+					.getPropertyValue(a, this.sorting.sortByProperty) ?? noProperty;
+				const bSortProperty = this.sorting
+					.getPropertyValue(b, this.sorting.sortByProperty) ?? noProperty;
+
+				if (aSortProperty < bSortProperty)
+				{
+					return this.sorting.isASC ? -1 : 1;
+				}
+
+				if (aSortProperty > bSortProperty)
+				{
+					return this.sorting.isASC ? 1 : -1;
+				}
+
+				return 0;
+			});
+		}
+
+		/**
+		 * @param {obj} newItem
+		 * @param {array|null} sortedItems
+		 * @returns {number}
+		 */
+		// sortedItems must not contain newItem
+		findItemPosition(newItem, sortedItems = [])
+		{
+			if (!this.sorting)
+			{
+				return 0;
+			}
+
+			const noPropertyValue = this.sorting.noPropertyValue;
+
+			let newItemSection = 0;
+			if (typeof this.sorting.getSection === 'function')
+			{
+				newItemSection = this.sorting.getSection(newItem) ?? 0;
+			}
+
+			let newSortPropertyValue = noPropertyValue;
+			if (typeof this.sorting.getPropertyValue === 'function')
+			{
+				newSortPropertyValue = this.sorting
+					.getPropertyValue(newItem, this.sorting.sortByProperty) ?? noPropertyValue;
+			}
+
+			let found = false;
+			let index = -1;
+
+			for (const item of sortedItems)
+			{
+				index++;
+				let currentItemSection = 0;
+				if (typeof this.sorting.getSection === 'function')
+				{
+					currentItemSection = this.sorting.getSection(item) ?? 0;
+				}
+
+				if (currentItemSection < newItemSection)
+				{
+					continue;
+				}
+				else if (currentItemSection > newItemSection)
+				{
+					found = true;
+					break;
+				}
+
+				let currentSortPropertyValue = noPropertyValue;
+				if (typeof this.sorting.getPropertyValue === 'function')
+				{
+					currentSortPropertyValue = this.sorting
+						.getPropertyValue(item, this.sorting.sortByProperty) ?? noPropertyValue;
+				}
+
+				if ((this.sorting.isASC && currentSortPropertyValue >= newSortPropertyValue)
+					|| (!this.sorting.isASC && currentSortPropertyValue <= newSortPropertyValue))
+				{
+					found = true;
+					break;
+				}
+			}
+
+			return found ? index : index + 1;
+		}
+
+		getReloadedItemByIndex(index, fallback)
+		{
+			let item = fallback;
+
+			const config = {
+				data: (this.state.actionParams.loadItems || {}),
+				navigation: {
+					page: index + 1,
+					size: 1,
+				},
+			};
+
+			new RunActionExecutor(this.props.actions.loadItems, config.data, config.navigation)
+				.setHandler((response) => {
+					if (response.errors.length > 0)
+					{
+						return;
+					}
+					item = response.data.items[0];
+				})
+				.call(false);
+
+			return item;
+		}
+
+		updateItemHandler(itemId, params = {})
+		{
+			const showAnimate = BX.prop.getBoolean(params, 'showAnimate', true);
+
+			return this.updateItems([itemId], false, showAnimate);
+		}
+
+		deleteItemHandler(itemId)
+		{
+			return this.deleteItem(itemId);
+		}
+
+		/**
+		 * @param {String|Number} itemId
+		 * @param {String} [animationType]
+		 * @returns {Promise}
+		 */
+		addItem(itemId, animationType)
+		{
+			const animation = animationType || get(this.props, 'animationTypes.insertRows', 'fade');
+
+			return this.updateItems(
+				[itemId],
+				false,
+				true,
+				true,
+				{
+					insert: animation,
+				},
+			);
+		}
+
+		prepareAnimationTypes(animationTypes)
+		{
+			let types = {
+				insert: get(this.props, 'animationTypes.insertRows', 'fade'),
+				delete: get(this.props, 'animationTypes.deleteRow', 'fade'),
+				update: get(this.props, 'animationTypes.updateRows', 'fade'),
+				move: get(this.props, 'animationTypes.moveRow', true),
+			};
+			if (animationTypes)
+			{
+				types = {
+					...types,
+					...animationTypes,
+				};
+			}
+
+			return types;
+		}
+
+		/**
+		 * @public
+		 * @param {string[]|number[]} ids
+		 * @param {boolean} showAnimateOnView
+		 * @param {boolean} showAnimateImmediately
+		 * @param {boolean} useFilter
+		 * @param {object} [animationTypes]
+		 * @return {Promise}
+		 */
+		updateItems(
+			ids,
+			showAnimateOnView = true,
+			showAnimateImmediately = false,
+			useFilter = true,
+			animationTypes = null,
+		)
+		{
+			const preparedAnimationTypes = this.prepareAnimationTypes(animationTypes);
+
+			return new Promise((resolve, reject) => {
+				if (ids && ids.length === 0)
+				{
+					resolve();
+
+					return;
+				}
+				this.loadItemsByIds(ids, useFilter)
+					.then((loadedItems) => {
+						const operations = this.groupItemsByOperations(ids, loadedItems);
+
+						return this.processItemsGroupsByData(
+							operations,
+							showAnimateOnView,
+							showAnimateImmediately,
+							preparedAnimationTypes,
+						);
+					})
+					.then(() => {
+						resolve();
+					})
+					.catch((error) => {
+						console.error(error);
+						reject();
+					});
+			});
+		}
+
+		/**
+		 * @public
+		 * @param {string[]|number[]} entities
+		 * @param {boolean} [showAnimateOnView=false]
+		 * @param {boolean} [showAnimateImmediately=true]
+		 * @return {Promise}
+		 */
+		updateItemsData(
+			entities,
+			showAnimateOnView = false,
+			showAnimateImmediately = true,
+		)
+		{
+			const itemIds = entities.map((entity) => entity.id);
+			const operations = this.groupItemsByOperations(itemIds, entities);
+
+			return this.processItemsGroupsByData(
+				operations,
+				showAnimateOnView,
+				showAnimateImmediately,
+			);
+		}
+
+		/**
+		 * @param {string} itemId
+		 * @param {string} [animationType]
+		 * @returns {Promise}
+		 */
+		deleteItem(itemId, animationType)
+		{
+			const animation = animationType || get(this.props, 'animationTypes.deleteRow', 'fade');
+
+			return this.processItemsGroupsByData(
+				{ delete: [itemId] },
+				false,
+				true,
+				{
+					delete: animation,
+				},
+			);
+		}
+
+		removeItem(itemId, animationType)
+		{
+			return this.deleteItem(itemId, animationType);
+		}
+
+		blinkItem(itemId, showUpdated = true)
+		{
+			return this.simpleList.blinkItem(itemId, showUpdated);
 		}
 
 		setLoadingOfItem(itemId)
 		{
-			const item = this.getItemComponent(itemId);
-			if (!item)
-			{
-				return Promise.resolve();
-			}
-
-			return new Promise(resolve => item.setLoading(resolve));
+			return this.simpleList.setLoading(itemId);
 		}
 
 		unsetLoadingOfItem(itemId, blink = true)
 		{
-			const item = this.getItemComponent(itemId);
-			if (!item)
-			{
-				return Promise.resolve();
-			}
-
-			return new Promise(resolve => item.dropLoading(resolve, blink));
+			return this.simpleList.dropLoading(itemId, blink);
 		}
 
-		setShowReloadListNotification()
+		// menu
+
+		initMenu(props = null, buttons = null)
 		{
-			const simpleList = this.getSimpleList();
-			if (simpleList)
+			if (!buttons)
 			{
-				simpleList.setShowReloadListNotification();
+				buttons = this.getMenuButtons(props);
 			}
+
+			if (!isEqual(buttons, this.layoutRightButtons))
+			{
+				this.layoutRightButtons = buttons;
+				layout.setRightButtons(buttons);
+			}
+		}
+
+		getMenuButtons(props = null)
+		{
+			if (!props)
+			{
+				props = this.props;
+			}
+
+			const buttons = [];
+
+			if (this.layout)
+			{
+				if (this.layoutOptions.useSearch)
+				{
+					buttons.push(this.getSearchBarButtonConfig());
+				}
+
+				if (Array.isArray(this.menuButtons))
+				{
+					this.menuButtons.forEach((button) => buttons.push(button));
+				}
+			}
+
+			if (this.layoutMenuActions.length > 0)
+			{
+				this.menuProps = props;
+				buttons.push({
+					type: 'more',
+					badgeCode: 'access_more',
+					callback: this.showMenuHandler,
+				});
+			}
+
+			return buttons;
+		}
+
+		setMenuButtons(buttons)
+		{
+			this.menuButtons = buttons;
+		}
+
+		showMenu()
+		{
+			if (this.menuProps.layoutMenuActions)
+			{
+				const menu = new UI.Menu(this.menuProps.layoutMenuActions);
+				menu.show();
+			}
+		}
+
+		// title
+
+		showTitleLoader(params)
+		{
+			if (this.props.showTitleLoader)
+			{
+				this.props.showTitleLoader(params);
+			}
+			else
+			{
+				NavigationLoader.show();
+			}
+		}
+
+		hideTitleLoader(isCache)
+		{
+			if (this.props.hideTitleLoader)
+			{
+				this.props.hideTitleLoader(isCache);
+			}
+			else if (!isCache)
+			{
+				NavigationLoader.hide();
+			}
+		}
+
+		// other
+
+		modifyCache()
+		{
+			this.cache.modifyCache(this.state.items.slice(0, this.itemsLoadLimit));
+		}
+
+		showError(message)
+		{
+			if (message.length > 0)
+			{
+				navigator.notification.alert(message, null, '');
+			}
+		}
+
+		addToAnimateItems(items)
+		{
+			items.forEach((item) => this.addToAnimateIds(item.id));
+		}
+
+		addToAnimateIds(id)
+		{
+			if (!this.needAnimateIds.includes(id))
+			{
+				this.needAnimateIds.push(id);
+			}
+		}
+
+		getValue(object, property, defaultValue = null, isObjectClone = true)
+		{
+			if (isObjectClone && Object.prototype.hasOwnProperty.call(object, property))
+			{
+				return clone(object[property]);
+			}
+
+			return get(object, property, defaultValue);
+		}
+
+		onConnectionStatusChanged(status)
+		{
+			if (status === 'online' && this.deviceConnectionStatus !== status)
+			{
+				this.reloadList();
+			}
+
+			this.deviceConnectionStatus = status;
 		}
 	}
 

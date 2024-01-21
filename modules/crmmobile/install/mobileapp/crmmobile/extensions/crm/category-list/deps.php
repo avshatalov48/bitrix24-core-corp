@@ -1,6 +1,7 @@
 <?php
 return [
 	'extensions' => [
+		'apptheme',
 		'assets/common',
 		'utils/prop',
 		'utils/object',

@@ -23,7 +23,6 @@ jn.define('im/messenger/lib/ui/base/buttons/full-width-button', (require, export
 
 		render()
 		{
-			console.log(this.props.testId);
 			return View(
 				{
 					testId: this.props.testId,

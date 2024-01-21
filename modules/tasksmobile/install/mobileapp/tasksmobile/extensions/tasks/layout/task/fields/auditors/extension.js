@@ -16,7 +16,7 @@ jn.define('tasks/layout/task/fields/auditors', (require, exports, module) => {
 				readOnly: props.readOnly,
 				auditors: props.auditors,
 			};
-			props.checkList.on('auditorAdd', (user) => {
+			props.checkList?.on('auditorAdd', (user) => {
 				if (!Object.keys(this.state.auditors).includes(user.id.toString()))
 				{
 					const auditors = {
@@ -31,6 +31,8 @@ jn.define('tasks/layout/task/fields/auditors', (require, exports, module) => {
 					this.props.onChange(auditors);
 				}
 			});
+
+			this.handleOnChange = this.handleOnChange.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -49,6 +51,38 @@ jn.define('tasks/layout/task/fields/auditors', (require, exports, module) => {
 			});
 		}
 
+		handleOnChange(auditorsIds, auditorsData)
+		{
+			const auditors = auditorsData.reduce((accumulator, user) => {
+				const result = accumulator;
+				result[user.id] = {
+					id: user.id,
+					name: user.title,
+					icon: user.imageUrl,
+					workPosition: user.customData.position,
+				};
+
+				return result;
+			}, {});
+
+			const newAuditors = Object.keys(auditors);
+			const oldAuditors = Object.keys(this.state.auditors);
+			const difference = [
+				...newAuditors.filter((id) => !oldAuditors.includes(id)),
+				...oldAuditors.filter((id) => !newAuditors.includes(id)),
+			];
+			if (difference.length > 0)
+			{
+				this.setState({ auditors });
+				const { onChange } = this.props;
+
+				if (onChange)
+				{
+					onChange(auditors);
+				}
+			}
+		}
+
 		render()
 		{
 			return View(
@@ -63,6 +97,7 @@ jn.define('tasks/layout/task/fields/auditors', (require, exports, module) => {
 					value: Object.keys(this.state.auditors),
 					config: {
 						mode: UserFieldMode.ICONS,
+						useLettersForEmptyAvatar: true,
 						deepMergeStyles: this.props.deepMergeStyles,
 						provider: {
 							context: 'TASKS_MEMBER_SELECTOR_EDIT_auditor',
@@ -86,30 +121,7 @@ jn.define('tasks/layout/task/fields/auditors', (require, exports, module) => {
 						parentWidget: this.props.parentWidget,
 					},
 					testId: 'auditors',
-					onChange: (auditorsIds, auditorsData) => {
-						const auditors = auditorsData.reduce((accumulator, user) => {
-							const result = accumulator;
-							result[user.id] = {
-								id: user.id,
-								name: user.title,
-								icon: user.imageUrl,
-								workPosition: user.customData.position,
-							};
-
-							return result;
-						}, {});
-						const newAuditors = Object.keys(auditors);
-						const oldAuditors = Object.keys(this.state.auditors);
-						const difference = [
-							...newAuditors.filter((id) => !oldAuditors.includes(id)),
-							...oldAuditors.filter((id) => !newAuditors.includes(id)),
-						];
-						if (difference.length > 0)
-						{
-							this.setState({ auditors });
-							this.props.onChange(auditors);
-						}
-					},
+					onChange: this.handleOnChange,
 				}),
 			);
 		}

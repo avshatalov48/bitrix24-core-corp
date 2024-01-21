@@ -1,6 +1,5 @@
 <?php
-$MESS["IMOPENLINES_CHECK_CONNECTOR"] = "The \"External IM Connectors\" module is not installed.";
-$MESS["IMOPENLINES_CHECK_CONNECTOR_MSGVER_1"] = "The External Messenger Connectors module is not installed.";
+$MESS["IMOPENLINES_CHECK_CONNECTOR"] = "The External Messenger Connectors module is not installed.";
 $MESS["IMOPENLINES_CHECK_IM"] = "The \"Instant Messenger\" module is not installed.";
 $MESS["IMOPENLINES_CHECK_IM_VERSION"] = "Please update the \"Instant Messenger\" module to version 16.5.0";
 $MESS["IMOPENLINES_CHECK_PUBLIC_PATH"] = "No correct public address specified.";

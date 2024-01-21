@@ -1,8 +1,22 @@
 <?php
 
+use Bitrix\Main\UI\Extension;
+use Bitrix\Tasks\Helper\RestrictionUrl;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
+}
+
+/** intranet-settings-support */
+if (!$arResult['IS_TOOL_AVAILABLE'])
+{
+	$APPLICATION->IncludeComponent("bitrix:tasks.error", "limit", [
+		'LIMIT_CODE' => RestrictionUrl::TASK_LIMIT_OFF_SLIDER_URL,
+		'SOURCE' => 'report',
+	]);
+
+	return;
 }
 
 $APPLICATION->IncludeComponent(

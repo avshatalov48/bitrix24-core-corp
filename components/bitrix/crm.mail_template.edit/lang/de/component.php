@@ -1,0 +1,25 @@
+<?php
+$MESS["CRM_MAIL_ACCESS_SELECTOR"] = "Freigeben";
+$MESS["CRM_MAIL_ENTITY_TYPE"] = "Einheit";
+$MESS["CRM_MAIL_ENTITY_TYPE2"] = "Anbindung";
+$MESS["CRM_MAIL_ENTITY_TYPE_UNI"] = "Keine";
+$MESS["CRM_MAIL_TEMPLATE_ADD_UNKNOWN_ERROR"] = "Bei der Erstellung einer E-Mail-Vorlage ist ein Fehler aufgetreten.";
+$MESS["CRM_MAIL_TEMPLATE_BODY"] = "Vorlage";
+$MESS["CRM_MAIL_TEMPLATE_CANCEL_BTN"] = "Abbrechen";
+$MESS["CRM_MAIL_TEMPLATE_DELETE_BTN"] = "Vorlage löschen";
+$MESS["CRM_MAIL_TEMPLATE_DELETE_DLG_MESSAGE"] = "Möchten Sie diese E-Mail-Vorlage wirklich löschen?";
+$MESS["CRM_MAIL_TEMPLATE_DELETE_UNKNOWN_ERROR"] = "Beim Löschen einer E-Mail-Vorlage ist ein Fehler aufgetreten.";
+$MESS["CRM_MAIL_TEMPLATE_EMAIL_FROM"] = "Von";
+$MESS["CRM_MAIL_TEMPLATE_IS_ACTIVE"] = "Aktiv";
+$MESS["CRM_MAIL_TEMPLATE_NOT_FOUND"] = "Die E-Mail-Vorlage wurde nicht gefunden.";
+$MESS["CRM_MAIL_TEMPLATE_SAVE_BTN"] = "Speichern";
+$MESS["CRM_MAIL_TEMPLATE_SCOPE_MSGVER_1"] = "Zugriff";
+$MESS["CRM_MAIL_TEMPLATE_SENDER_MENU"] = "Absender";
+$MESS["CRM_MAIL_TEMPLATE_SORT"] = "Sortierungsindex";
+$MESS["CRM_MAIL_TEMPLATE_SUBJECT"] = "Betreff";
+$MESS["CRM_MAIL_TEMPLATE_SUBJECT_HINT"] = "Nachrichtenbetreff eingeben";
+$MESS["CRM_MAIL_TEMPLATE_TITLE"] = "Name";
+$MESS["CRM_MAIL_TEMPLATE_TITLE_HINT"] = "Namen eingeben";
+$MESS["CRM_MAIL_TEMPLATE_UPDATE_UNKNOWN_ERROR"] = "Bei der Aktualisierung einer E-Mail-Vorlage ist ein Fehler aufgetreten.";
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Das Modul CRM ist nicht installiert.";
+$MESS["CRM_PERMISSION_DENIED"] = "Zugriff verweigert";

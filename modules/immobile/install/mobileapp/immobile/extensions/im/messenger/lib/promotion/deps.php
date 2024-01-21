@@ -9,4 +9,7 @@ return [
 		'im:messenger/lib/params',
 		'im:messenger/provider/rest',
 	],
+	'bundle' => [
+		'./src/release-view',
+	],
 ];

@@ -2,7 +2,7 @@
  * @module layout/ui/product-grid/components/product-card
  */
 jn.define('layout/ui/product-grid/components/product-card', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { Styles } = require('layout/ui/product-grid/components/product-card/styles');
 	const { SvgIcons } = require('layout/ui/product-grid/components/product-card/icons');
 	const { FocusContext } = require('layout/ui/product-grid/services/focus-context');
@@ -19,13 +19,15 @@ jn.define('layout/ui/product-grid/components/product-card', (require, exports, m
 
 		render()
 		{
-			const { id } = this.props;
+			const { id, style } = this.props;
 
 			return this.wrap(View(
 				{
 					testId: `product-grid-item-card-${id}`,
-					ref: (ref) => this.containerRef = ref,
-					style: Styles.container(this.props.style),
+					ref: (ref) => {
+						this.containerRef = ref;
+					},
+					style: Styles.container(style),
 					onClick: () => this.onClick(),
 					onLongClick: () => this.onLongClick(),
 				},
@@ -57,18 +59,18 @@ jn.define('layout/ui/product-grid/components/product-card', (require, exports, m
 				return null;
 			}
 
-			const displayIndex = parseInt(this.props.index);
+			const displayIndex = parseInt(this.props.index, 10);
 			const fontSize = displayIndex < 100 ? 12 : 10;
 
 			return View(
 				{
-					style: Styles.index.wrapper
+					style: Styles.index.wrapper,
 				},
 				Text({
 					style: { ...Styles.index.text, fontSize },
-					text: String(displayIndex)
-				})
-			)
+					text: String(displayIndex),
+				}),
+			);
 		}
 
 		renderImageStack()
@@ -86,7 +88,7 @@ jn.define('layout/ui/product-grid/components/product-card', (require, exports, m
 				new ImageStack({
 					images: this.props.gallery,
 					style: Styles.image.inner,
-				})
+				}),
 			);
 		}
 
@@ -101,8 +103,9 @@ jn.define('layout/ui/product-grid/components/product-card', (require, exports, m
 					text: this.props.name,
 					style: {
 						fontSize: 18,
-					}
-				})
+						color: AppTheme.colors.base1,
+					},
+				}),
 			);
 		}
 
@@ -117,9 +120,10 @@ jn.define('layout/ui/product-grid/components/product-card', (require, exports, m
 						onClick: () => this.props.onContextMenuClick(this),
 					},
 					Image({
+						tintColor: AppTheme.colors.base3,
 						style: Styles.contextMenu.icon,
-						svg: SvgIcons.contextMenu
-					})
+						svg: SvgIcons.contextMenu,
+					}),
 				);
 			}
 
@@ -149,9 +153,10 @@ jn.define('layout/ui/product-grid/components/product-card', (require, exports, m
 					onClick: () => this.props.onRemove(this),
 				},
 				Image({
+					tintColor: AppTheme.colors.base3,
 					style: Styles.deleteButton.icon,
-					svg: SvgIcons.delete
-				})
+					svg: SvgIcons.delete,
+				}),
 			);
 		}
 
@@ -163,6 +168,8 @@ jn.define('layout/ui/product-grid/components/product-card', (require, exports, m
 			{
 				return this.props.onClick(this);
 			}
+
+			return null;
 		}
 
 		onImageClick()
@@ -173,6 +180,8 @@ jn.define('layout/ui/product-grid/components/product-card', (require, exports, m
 			{
 				return this.props.onImageClick(this);
 			}
+
+			return null;
 		}
 
 		onNameClick()
@@ -183,6 +192,8 @@ jn.define('layout/ui/product-grid/components/product-card', (require, exports, m
 			{
 				return this.props.onNameClick(this);
 			}
+
+			return null;
 		}
 
 		onLongClick()
@@ -191,6 +202,8 @@ jn.define('layout/ui/product-grid/components/product-card', (require, exports, m
 			{
 				return this.props.onLongClick(this);
 			}
+
+			return null;
 		}
 
 		/**
@@ -201,12 +214,12 @@ jn.define('layout/ui/product-grid/components/product-card', (require, exports, m
 		{
 			const toYellow = transition(this.containerRef, {
 				duration: 500,
-				backgroundColor: '#FFFCEE',
+				backgroundColor: AppTheme.colors.accentSoftOrange3,
 			});
 
 			const toWhite = transition(this.containerRef, {
 				duration: 500,
-				backgroundColor: '#FFFFFF',
+				backgroundColor: AppTheme.colors.bgContentPrimary,
 			});
 
 			chain(pause(100), toYellow, pause(3000), toWhite)();
@@ -214,5 +227,4 @@ jn.define('layout/ui/product-grid/components/product-card', (require, exports, m
 	}
 
 	module.exports = { ProductCard };
-
 });

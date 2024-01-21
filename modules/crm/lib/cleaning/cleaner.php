@@ -63,6 +63,9 @@ final class Cleaner
 		]);
 		Badge::deleteByEntity(new ItemIdentifier($this->getEntityTypeId(), $this->getEntityId()));
 		FieldContentTypeTable::deleteByItem(new ItemIdentifier($this->getEntityTypeId(), $this->getEntityId()));
+		\Bitrix\Crm\Integration\AI\EventHandler::onItemDelete(
+			new ItemIdentifier($this->getEntityTypeId(), $this->getEntityId()),
+		);
 
 		return $this->runJobs();
 	}

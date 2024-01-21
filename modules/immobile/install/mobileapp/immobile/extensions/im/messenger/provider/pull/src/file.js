@@ -3,16 +3,22 @@
  */
 jn.define('im/messenger/provider/pull/file', (require, exports, module) => {
 	const { PullHandler } = require('im/messenger/provider/pull/base');
-	const { Logger } = require('im/messenger/lib/logger');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('pull-handler--file');
 
 	/**
 	 * @class FilePullHandler
 	 */
 	class FilePullHandler extends PullHandler
 	{
-		handleFileAdd(params)
+		handleFileAdd(params, extra, command)
 		{
-			Logger.info('FilePullHandler.handleFileAdd: ', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('FilePullHandler.handleFileAdd: ', params);
 
 			this.store.dispatch('filesModel/set', params.files);
 		}

@@ -2,19 +2,42 @@
 
 namespace Bitrix\CrmMobile\Controller\ReceivePayment;
 
+use Bitrix\Crm\Binding\EntityBinding;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;
+use Bitrix\CrmMobile\Controller\Salescenter\Product2BasketItemConverter;
+use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Result;
 use Bitrix\SalesCenter\Controller\Order;
+use Bitrix\SalesCenter\Integration\CrmManager;
+
+Loader::requireModule('salescenter');
 
 class Payment extends Base
 {
-	use SalescenterControllerWrapper;
-
 	public function createPaymentAction(array $options): bool
 	{
-		$products = $this->prepareBasketItems($options['products']);
-		unset($options['products']);
 		$entity = Container::getInstance()->getFactory((int)$options['ownerTypeId'])->getItem((int)$options['ownerId']);
-		$options['orderId'] = $this->getOrderId($entity);
+
+		if (isset($options['selectedContact']))
+		{
+			$bindContactResult = $this->bindContactToEntity($options['selectedContact']['id'], $entity);
+			if (!$bindContactResult->isSuccess())
+			{
+				$this->errorCollection->clear();
+				$errors = [
+					new Error(Loc::getMessage('RECEIVE_PAYMENT_SAVE_CONTACT_ERROR')),
+				];
+				$errors = $this->markErrorsAsPublic($errors);
+				$this->addErrors($errors);
+			}
+		}
+
+		$products = Product2BasketItemConverter::convert($options['products']);
+		unset($options['products']);
+		$options['orderId'] = CrmManager::getOrderIdByEntity($entity);
 
 		$this->forward(
 			Order::class,
@@ -36,6 +59,15 @@ class Payment extends Base
 		return true;
 	}
 
+	private function bindContactToEntity(int $contactId, Item $entity): Result
+	{
+		$contactBinding = EntityBinding::prepareEntityBindings(\CCrmOwnerType::Contact, [$contactId]);
+		EntityBinding::markFirstAsPrimary($contactBinding);
+		$entity->bindContacts($contactBinding);
+
+		return $entity->save();
+	}
+
 	public function resendMessageAction(array $options): bool
 	{
 		$factory = Container::getInstance()->getFactory((int)$options['ownerTypeId']);
@@ -49,7 +81,7 @@ class Payment extends Base
 		{
 			return false;
 		}
-		$orderId = $this->getOrderId($entity);
+		$orderId = CrmManager::getOrderIdByEntity($entity);
 
 		$this->forward(
 			Order::class,

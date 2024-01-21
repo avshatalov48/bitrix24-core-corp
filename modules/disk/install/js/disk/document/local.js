@@ -201,6 +201,7 @@
 
 		goToBx: function (action, params)
 		{
+			console.log('waiting for GoToBx', action, params);
 			var link = 'bx://' + action;
 			params = BX.type.isPlainObject(params)? params : {};
 			params.uidRequest = BX.util.getRandomString(16);
@@ -220,19 +221,54 @@
 
 			if (typeof (BXFileStorage) == 'undefined')
 			{
-				top.BX.desktopUtils.runningCheck(function() {
-					top.BX.desktopUtils.goToBx(link);
-				}, function() {
-					this.registerFallback(params.uidRequest);
+				console.log('BXFileStorage is undefined');
+				if (BX.Reflection.getClass('top.BX.Messenger.v2.Lib.DesktopManager'))
+				{
+					console.log('v2.Lib.DesktopManager start checkStatusInDifferentContext');
+					const desktop = top.BX.Messenger.v2.Lib.DesktopManager.getInstance();
+					desktop.checkStatusInDifferentContext().then((result) => {
+						console.log('v2.Lib.DesktopManager checkStatusInDifferentContext result', result, link);
+						if (result)
+						{
+							desktop.openBxLink(link);
+						}
+						else
+						{
+							this.registerFallback(params.uidRequest);
 
-					top.BX.desktopUtils.goToBx(link);
-				}.bind(this));
+							desktop.openBxLink(link);
+						}
+					});
+				}
+				else if (BX.getClass('top.BX.desktopUtils'))
+				{
+					console.log('desktopUtils start runningCheck');
+					top.BX.desktopUtils.runningCheck(() => {
+						console.log('desktopUtils successful check', link);
+						top.BX.desktopUtils.goToBx(link);
+					}, () => {
+						console.log('desktopUtils failed check', link);
+						this.registerFallback(params.uidRequest);
+
+						top.BX.desktopUtils.goToBx(link);
+					});
+				}
 			}
 			else
 			{
-				top.BX.desktopUtils.goToBx(link);
+				console.log('BXFileStorage is defined; inside Desktop', link);
+				if (BX.Reflection.getClass('top.BX.Messenger.v2.Lib.DesktopManager'))
+				{
+					console.log('v2.Lib.DesktopManager openBxLink', link);
+					const desktop = top.BX.Messenger.v2.Lib.DesktopManager.getInstance();
+					desktop.openBxLink(link);
+				}
+				else if (BX.getClass('top.BX.desktopUtils'))
+				{
+					console.log('desktopUtils goToBx', link);
+					top.BX.desktopUtils.goToBx(link);
+				}
 			}
-
 		},
 
 		registerFallback: function(uidRequest)

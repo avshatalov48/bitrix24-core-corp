@@ -2,7 +2,9 @@
  * @module layout/ui/product-grid/components/sku-selector/elements/product-info
  */
 jn.define('layout/ui/product-grid/components/sku-selector/elements/product-info', (require, exports, module) => {
-	function ProductInfo({name, images})
+	const AppTheme = require('apptheme');
+
+	function ProductInfo({ name, images })
 	{
 		return View(
 			{
@@ -41,6 +43,7 @@ jn.define('layout/ui/product-grid/components/sku-selector/elements/product-info'
 					text: name,
 					style: {
 						fontSize: 18,
+						color: AppTheme.colors.base1,
 					},
 				}),
 			),

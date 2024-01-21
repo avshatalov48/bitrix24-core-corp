@@ -66,6 +66,11 @@ switch(mb_strtolower($langId))
 			BX.UI.Notification.Center.notify({
 				content: '<?= GetMessageJS('DISK_EXT_SESSION_EXPIRED') ?>',
 			});
+
+			let url = window.location.href;
+			url = url.replace(/\&session=expired/, '');
+			window.history.replaceState({}, '', url);
+
 		<?php endif; ?>
 	});
 </script>

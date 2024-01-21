@@ -188,7 +188,7 @@ class UserAbsence
 					$result[$userId][$index] = Array(
 						'ID' => $data['ID'],
 						'USER_ID' => $data['USER_ID'],
-						'ENTRY_TYPE' => $typesList[$data['PROPERTY_ABSENCE_TYPE_ENUM_ID']],
+						'ENTRY_TYPE' => $typesList[$data['PROPERTY_ABSENCE_TYPE_ENUM_ID']] ?? null,
 						'ENTRY_TYPE_ID' => $data['PROPERTY_ABSENCE_TYPE_ENUM_ID'],
 						'ENTRY_TYPE_VALUE' => $data['PROPERTY_ABSENCE_TYPE_VALUE'],
 						'IS_VACATION' => in_array($data['PROPERTY_ABSENCE_TYPE_ENUM_ID'], array_keys($vacationTypes)),

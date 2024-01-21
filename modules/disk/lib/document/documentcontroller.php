@@ -555,7 +555,9 @@ class DocumentController extends Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 		$this->checkUpdatePermissions();
-		if(!$this->file->rename($this->request->getPost('newName')))
+
+		$newName = $this->request->getPost('newName');
+		if(!$this->file->rename($newName, true))
 		{
 			$this->errorCollection->add($this->file->getErrors());
 			$this->sendJsonErrorResponse();
@@ -563,6 +565,8 @@ class DocumentController extends Internals\Controller
 		$this->sendJsonSuccessResponse([
 			'object' => [
 				'id' => $this->file->getId(),
+				'name' => $this->file->getName(),
+				'size' => (int)$this->file->getSize(),
 			],
 			'objectId' => $this->file->getId(),
 			'newName' => $this->file->getName(),

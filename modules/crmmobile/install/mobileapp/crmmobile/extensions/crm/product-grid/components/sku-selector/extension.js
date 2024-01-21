@@ -11,6 +11,7 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 		Price,
 	} = require('crm/product-grid/components/sku-selector/elements');
 	const BaseSkuSelector = require('layout/ui/product-grid/components/sku-selector').SkuSelector;
+	const AppTheme = require('apptheme');
 
 	class SkuSelector extends BaseSkuSelector
 	{
@@ -132,11 +133,11 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 				onlyMediumPosition: true,
 				swipeAllowed: true,
 				mediumPositionHeight: 250,
-				navigationBarColor: '#eef2f4',
+				navigationBarColor: AppTheme.colors.bgSecondary,
 			};
 			const widgetParams = {
 				modal: true,
-				backgroundColor: '#eef2f4',
+				backgroundColor: AppTheme.colors.bgSecondary,
 				backdrop,
 			};
 

@@ -15,9 +15,13 @@ class Difference
 		$this->currentValues = $currentValues;
 	}
 
+	// arrays and objects are not compared identically
 	public function isChanged(string $fieldName): bool
 	{
-		if (empty($this->getPreviousValue($fieldName)) && empty($this->getCurrentValue($fieldName)))
+		$previousValue = $this->getPreviousValue($fieldName);
+		$currentValue = $this->getCurrentValue($fieldName);
+
+		if (empty($previousValue) && empty($currentValue))
 		{
 			return false;
 		}
@@ -27,12 +31,20 @@ class Difference
 			return false;
 		}
 
-		if (is_numeric($this->getPreviousValue($fieldName)) && is_numeric($this->getCurrentValue($fieldName)))
+		if (is_numeric($previousValue) && is_numeric($currentValue))
 		{
-			return ((float)$this->getPreviousValue($fieldName) !== (float)$this->getCurrentValue($fieldName));
+			return ((float)$previousValue !== (float)$currentValue);
 		}
 
-		return ($this->getPreviousValue($fieldName) !== $this->getCurrentValue($fieldName));
+		if (
+			(is_object($previousValue) && is_object($currentValue))
+			|| (is_array($previousValue) && is_array($currentValue))
+		)
+		{
+			return ($previousValue != $currentValue);
+		}
+
+		return ($previousValue !== $currentValue);
 	}
 
 	/**

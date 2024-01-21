@@ -6,6 +6,7 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 	const { FullScreenShadow } = require('im/messenger/lib/ui/base/full-screen-shadow');
 	const { SearchInput } = require('im/messenger/lib/ui/search/input');
 	const { List } = require('im/messenger/lib/ui/base/list');
+	const AppTheme = require('apptheme');
 
 	class SingleSelector extends LayoutComponent
 	{
@@ -42,6 +43,7 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 			{
 				return View(
 					{
+						resizableByKeyboard: true,
 						clickable: false,
 					},
 					this.createSearchWrapper(),
@@ -54,6 +56,7 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 						flexDirection: 'column',
 						flex: 1,
 					},
+					resizableByKeyboard: true,
 					clickable: false,
 				},
 				this.createSearchInput(),
@@ -73,6 +76,7 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 		createList()
 		{
 			return new List({
+				recentText: this.props.recentText,
 				itemList: this.props.itemList,
 				onItemSelected: (itemData) => this.props.onItemSelected(itemData),
 				ref: (ref) => {
@@ -122,6 +126,7 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 			return View(
 				{
 					style: {
+						backgroundColor: AppTheme.colors.bgContentTertiary,
 						padding: 10,
 					},
 				},
@@ -135,6 +140,10 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 			);
 		}
 
+		/**
+		 *
+		 * @return {SearchInput}
+		 */
 		getSearchInput()
 		{
 			return this.searchInputRef;

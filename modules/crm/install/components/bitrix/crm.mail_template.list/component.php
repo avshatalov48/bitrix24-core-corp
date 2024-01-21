@@ -61,7 +61,7 @@ $arResult['HEADERS'] = array(
 	array('id' => 'TITLE', 'name' => GetMessage('CRM_COLUMN_MAIL_TEMPLATE_TITLE'), 'sort' => 'TITLE', 'default' => true, 'editable' => true, 'params' => array('size' => 60)),
 	array('id' => 'SORT', 'name' => GetMessage('CRM_COLUMN_MAIL_TEMPLATE_SORT'), 'sort' => 'SORT', 'default' => false, 'editable' => true),
 	array('id' => 'ENTITY_TYPE_NAME', 'name' => GetMessage('CRM_COLUMN_MAIL_TEMPLATE_ENTITY_TYPE'), 'default' => true, 'editable' => false),
-	array('id' => 'SCOPE_NAME', 'name' => GetMessage('CRM_COLUMN_MAIL_TEMPLATE_SCOPE'), 'default' => true, 'editable' => false),
+	array('id' => 'SCOPE_NAME', 'name' => GetMessage('CRM_COLUMN_MAIL_TEMPLATE_SCOPE_MSGVER_1'), 'default' => true, 'editable' => false),
 	array('id' => 'IS_ACTIVE', 'name' => GetMessage('CRM_COLUMN_MAIL_TEMPLATE_IS_ACTIVE'), 'sort' => 'IS_ACTIVE', 'default' => true, 'editable' => true, 'type'=>'checkbox'),
 	array('id' => 'OWNER_FORMATTED_NAME', 'name' => GetMessage('CRM_COLUMN_MAIL_TEMPLATE_OWNER'), 'default' => false, 'editable' => false),
 	array('id' => 'CREATED', 'name' => GetMessage('CRM_COLUMN_MAIL_TEMPLATE_CREATED'), 'sort' => 'CREATED', 'default' => false, 'editable' => false),
@@ -90,6 +90,7 @@ if(check_bitrix_sessid())
 						}
 						ShowError(implode("\n", $errors));
 					}
+
 				}
 			}
 			else
@@ -163,7 +164,7 @@ if(check_bitrix_sessid())
 			}
 		}
 
-		if(!isset($_POST['AJAX_CALL']))
+		if(!isset($_POST['AJAX_CALL']) && !isset($_GET['bxajaxid']))
 		{
 			if(!empty($errors))
 			{
@@ -197,7 +198,7 @@ if(check_bitrix_sessid())
 			unset($_GET['ID'], $_REQUEST['ID']); // otherwise the filter will work
 		}
 
-		if (!isset($_GET['AJAX_CALL']))
+		if(!isset($_POST['AJAX_CALL']) && !isset($_GET['bxajaxid']))
 		{
 			LocalRedirect($arParams['PATH_TO_MAIL_TEMPLATE_LIST']);
 		}
@@ -266,8 +267,31 @@ $gridSorting = $gridOptions->GetSorting(
 $sort = $arResult['SORT'] = $gridSorting['sort'];
 $arResult['SORT_VARS'] = $gridSorting['vars'];
 
+if(\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdmin())
+{
+	$filter = [
+		'LOGIC' => 'OR',
+		'=OWNER_ID' => $userID,
+		'__INNER_FILTER_SCOPE' => [
+			'LOGIC' => 'OR',
+			'__INNER_FILTER_COMMON' => ['=SCOPE'=> CCrmMailTemplateScope::Common],
+			'__INNER_FILTER_LIMITED' => ['=SCOPE'=> CCrmMailTemplateScope::Limited],
+		],
+	];
+}
+else
+{
+	$filter = [
+		'LOGIC' => 'OR',
+		'=OWNER_ID' => $userID,
+		'=SCOPE' => CCrmMailTemplateScope::Common,
+		'@ID' => \Bitrix\Crm\MailTemplate\MailTemplateAccess::getAllAvailableSharedTemplatesId((int)$userID),
+	];
+}
+
+$dbResult = CAllCrmMailTemplate::GetList($sort,$filter);
+
 $items = array();
-$dbResult = CAllCrmMailTemplate::GetList($sort, array('LOGIC'=>'OR', '=OWNER_ID' => $userID, 'SCOPE'=> CCrmMailTemplateScope::Common));
 $count = 0;
 while($fields = $dbResult->GetNext())
 {
@@ -288,16 +312,13 @@ while($fields = $dbResult->GetNext())
 	$fields['~SCOPE_NAME'] = isset($fields['~SCOPE']) ? CCrmMailTemplateScope::GetDescription($fields['~SCOPE']) : '';
 	$fields['SCOPE_NAME'] = htmlspecialcharsbx($fields['~SCOPE_NAME']);
 
-	$fields['CAN_EDIT'] = true;
+	$fields['CAN_EDIT'] = $checkIfCanEdit($fields['~OWNER_ID'], $fields['~SCOPE']);
 	$fields['CAN_DELETE'] = $checkIfCanDelete($fields['~OWNER_ID'], $fields['~SCOPE']);
 	$fields['PATH_TO_EDIT'] = $fields['PATH_TO_DELETE'] = '';
-	if($fields['CAN_EDIT'])
-	{
-		$fields['PATH_TO_EDIT'] = CComponentEngine::MakePathFromTemplate(
-				$arParams['PATH_TO_MAIL_TEMPLATE_EDIT'],
-				array('element_id' => $ID)
-			) ;
-	}
+	$fields['PATH_TO_EDIT'] = CComponentEngine::MakePathFromTemplate(
+		$arParams['PATH_TO_MAIL_TEMPLATE_EDIT'],
+		array('element_id' => $ID)
+	);
 
 	if($fields['CAN_DELETE'])
 	{

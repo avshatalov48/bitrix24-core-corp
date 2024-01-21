@@ -8,19 +8,26 @@ jn.define('im/messenger/lib/utils/object', (require, exports, module) => {
 		 * use for objects without cyclic references
 		 *
 		 * @param {Object} originalObject
+		 * @param {Boolean} recursively
+		 *
 		 * @return {Object}
 		 */
-		static convertKeysToCamelCase(originalObject)
+		static convertKeysToCamelCase(originalObject, recursively = true)
 		{
 			if (typeof originalObject !== 'object' || originalObject === null)
 			{
 				return originalObject;
 			}
 
+			if (BX.type.isArray(originalObject))
+			{
+				return originalObject.map((element) => ObjectUtils.convertKeysToCamelCase(element, recursively));
+			}
+
 			return Object.fromEntries(
 				Object.entries(originalObject)
 					.map(([key, value]) => {
-						if (BX.type.isPlainObject(originalObject[key]))
+						if (recursively && BX.type.isPlainObject(originalObject[key]))
 						{
 							if (!key.includes('_'))
 							{
@@ -32,6 +39,14 @@ jn.define('im/messenger/lib/utils/object', (require, exports, module) => {
 							return [
 								ObjectUtils.stringToCamelCase(key.toLowerCase()),
 								ObjectUtils.convertKeysToCamelCase(originalObject[key]),
+							];
+						}
+
+						if (recursively && BX.type.isArray(value))
+						{
+							return [
+								ObjectUtils.stringToCamelCase(key.toLowerCase()),
+								value.map((element) => ObjectUtils.convertKeysToCamelCase(element, recursively)),
 							];
 						}
 

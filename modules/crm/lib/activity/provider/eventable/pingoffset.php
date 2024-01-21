@@ -8,13 +8,7 @@ class PingOffset extends Base
 {
 	public function register(int $activityId, array $offsets = []): void
 	{
-		if (empty($offsets))
-		{
-			return;
-		}
-
 		$offsets = array_values(array_unique($offsets));
-
 		$existedIds = $this->getIdsByActivityId($activityId);
 		if (empty($existedIds))
 		{
@@ -39,10 +33,15 @@ class PingOffset extends Base
 
 	public function getOffsetsByActivityId(int $activityId): array
 	{
-		return array_unique(array_map('intval', ActivityPingOffsetsTable::getOffsetsByActivityId($activityId)));
+		return array_unique(
+			array_map(
+				'intval',
+				ActivityPingOffsetsTable::getOffsetsByActivityId($activityId)
+			)
+		);
 	}
 
-	protected function getEventNamePrefix(): string
+	final protected function getEventNamePrefix(): string
 	{
 		return ActivityPingOffsetsTable::getEntity()->getNamespace() . ActivityPingOffsetsTable::getEntity()->getName();
 	}
@@ -59,6 +58,11 @@ class PingOffset extends Base
 
 	private function addOffsets(int $activityId, array $offsets): void
 	{
+		if (empty($offsets))
+		{
+			return;
+		}
+
 		foreach ($offsets as $offset)
 		{
 			ActivityPingOffsetsTable::add([

@@ -2,7 +2,8 @@
  * @module layout/ui/entity-editor/control/opportunity/opportunity-button
  */
 jn.define('layout/ui/entity-editor/control/opportunity/opportunity-button', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
+	const { withPressed } = require('utils/color');
 	const { EventEmitter } = require('event-emitter');
 
 	class OpportunityButton extends LayoutComponent
@@ -30,30 +31,28 @@ jn.define('layout/ui/entity-editor/control/opportunity/opportunity-button', (req
 						style: {
 							flexShrink: 0,
 							height: 28,
-							borderColor: '#00a2e8',
+							borderColor: AppTheme.colors.accentMainPrimary,
 							borderRadius: 6,
 							borderWidth: 1,
 							paddingHorizontal: 24,
 							justifyContent: 'center',
-							backgroundColor: { default: '#ffffff', pressed: '#99c3f0ff' },
+							backgroundColor: withPressed(AppTheme.colors.bgContentPrimary),
 						},
 						onClick: () => this.customEventEmitter.emit('OpportunityButton::Click'),
 					},
 					Text({
-							style: {
-								color: '#333333',
-								fontSize: 14,
-							},
-							text: this.props.text ? this.props.text : BX.message('MOBILE_LAYOUT_UI_FIELDS_MONEY_OPPORTUNITY_BUTTON_DEFAULT_TEXT'),
+						style: {
+							color: AppTheme.colors.base1,
+							fontSize: 14,
 						},
-					),
+						text: this.props.text || BX.message(
+							'MOBILE_LAYOUT_UI_FIELDS_MONEY_OPPORTUNITY_BUTTON_DEFAULT_TEXT',
+						),
+					}),
 				),
 			);
 		}
 	}
 
-	module.exports = {
-		OpportunityButton,
-	};
-
+	module.exports = { OpportunityButton };
 });

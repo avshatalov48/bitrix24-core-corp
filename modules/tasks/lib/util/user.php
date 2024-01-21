@@ -405,14 +405,14 @@ final class User
 		);
 	}
 
-	public static function formatName($data, $siteId = false, $format = null)
+	public static function formatName($data, $siteId = false, $format = null, bool $allowEmpty = false)
 	{
 		if($format === null)
 		{
 			$format = Site::getUserNameFormat($siteId);
 		}
 
-		return \CUser::formatName($format, $data, true, false);
+		return \CUser::formatName($format, $data, true, false, !$allowEmpty);
 	}
 
 	public static function getTimeZoneOffsetCurrentUser()
@@ -787,20 +787,19 @@ final class User
 		return $realUserIds;
 	}
 
-	/**
-	 * @param array $userIds
-	 * @param null $siteId
-	 * @param null $nameTemplate
-	 * @return array
-	 */
-	public static function getUserName(array $userIds, $siteId = null, $nameTemplate = null): array
+	public static function getUserName(
+		array $userIds,
+		$siteId = null,
+		$nameTemplate = null,
+		bool $allowEmpty = false
+	): array
 	{
 		$data = [];
 		$usersData = self::getData($userIds);
 
 		foreach ($userIds as $userId)
 		{
-			$data[$userId] = self::formatName($usersData[$userId] ?? null, $nameTemplate);
+			$data[$userId] = self::formatName($usersData[$userId] ?? null, $nameTemplate, null, $allowEmpty);
 		}
 
 		return $data;

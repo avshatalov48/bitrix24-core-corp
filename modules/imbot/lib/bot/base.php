@@ -30,9 +30,19 @@ abstract class Base implements ChatBot
 	abstract public static function unRegister();
 
 	/**
+	 * Is bot enabled.
+	 *
+	 * @return bool
+	 */
+	public static function isEnabled(): bool
+	{
+		return static::getBotId() > 0;
+	}
+
+	/**
 	 * Returns registered bot Id.
 	 *
-	 * @return bool|int
+	 * @return int
 	 */
 	public static function getBotId(): int
 	{

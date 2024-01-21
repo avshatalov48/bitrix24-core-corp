@@ -1,4 +1,6 @@
-(function(){
+(function() {
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
 
 	this.ActionSheet = ({
 		attachmentPanel,
@@ -21,16 +23,15 @@
 		useImportant,
 		backgroundAvailable,
 		onHide,
-		animation
+		animation,
 	}) => {
-
 		const config = {
-			destinationPrefixColor: '#ababab',
-			fontColor: '#333333',
+			destinationPrefixColor: AppTheme.colors.base4,
+			fontColor: AppTheme.colors.base1,
 			fontSize: 16,
-			borderColor: '#DBDDE0',
+			borderColor: AppTheme.colors.base6,
 			borderWidth: 0.5,
-			backgroundColor: '#FFFFFF',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			iconSize: 30,
 			iconMarginLeft: 15,
 			iconMarginRight: 10,
@@ -52,113 +53,96 @@
 			},
 			attachmentPanel,
 			ActionSheetHandler(),
-			Shadow(
+			View(
 				{
-					radius: 3,
-					color: '#f2f7f9',
-					offset: {
-						x: 0,
-						y: 0
-					},
-					inset: {
-						left: 5,
-						right: 5,
-						bottom: 5,
+					safeArea: {
+						bottom: true,
 					},
 					style: {
-						borderRadius: 5,
-					}
-				},
-				View(
-					{
-						safeArea: {
-							bottom: true
-						},
-						style: {
-							borderTopColor: '#00000000',
-							borderTopWidth: 0,
-							borderRadius: 10,
-							backgroundColor: config.backgroundColor,
-						},
+						borderTopWidth: 0,
+						borderRadius: 10,
+						backgroundColor: config.backgroundColor,
 					},
-					ActionSheetItemDestinationSelector({
-						forAll,
-						title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_SELECTOR_TITLE2'),
-						value: recipientsString,
-						onClick: onClickDestinationMenuItem,
-						config,
-					}),
-					ActionSheetItemAttach({
-						iconName: 'post_attachment',
-						title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_ATTACH'),
-						attachmentsCount: (attachments ? attachments.length : 0),
-						onClick: onClickAttachmentMenuItem,
-						onOpenList: onOpenAttachmentList,
-						config,
-					}),
-					ActionSheetItem({
-						iconName: 'post_mention',
-						title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_MENTION'),
-						onClick: onClickMentionMenuItem,
-						config
-					}),
-					ActionSheetItem({
-						title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_BACKGROUND'),
-						onClick: onClickBackgroundMenuItem,
-						style: {
-							opacity: (backgroundAvailable ? 1.0 : 0.3),
-						},
-						iconUrl: currentDomain + postFormData.backgroundIcon,
-						config,
-					}),
-					(
-						useImportant
-							? ActionSheetItem({
-								iconName: 'post_important',
-								title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_IMPORTANT'),
-								onClick: onClickImportantMenuItem,
-								config,
-							})
-							: null
-					),
-					ActionSheetItem({
-						iconName: 'post_thanks',
-						title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_GRATITUDE'),
-						onClick: onClickGratitudeMenuItem,
-						config,
-					}),
-					ActionSheetItem({
-						title: (titleShown ? BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_TITLE_HIDE') : BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_TITLE_SHOW')),
-						onClick: () => {
-							onClickShowHideTitleItem({
-								show: !titleShown,
-							});
-						},
-						style: {
-							opacity: (!coloredMessage ? 1.0 : 0.3),
-						},
-						iconUrl: currentDomain + postFormData.titleIcon,
-						config,
-					}),
-					(
-						moduleVoteInstalled
-							? ActionSheetItem({
-								iconName: 'post_poll',
-								title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_VOTE'),
-								textStyle: {
-									borderBottomWidth: 0,
-								},
-								onClick: onClickVoteMenuItem,
-								config,
-							})
-							: null
-					)
-				)
+				},
+				ActionSheetItemDestinationSelector({
+					forAll,
+					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_SELECTOR_TITLE2'),
+					value: recipientsString,
+					onClick: onClickDestinationMenuItem,
+					config,
+				}),
+				ActionSheetItemAttach({
+					iconName: 'post_attachment',
+					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_ATTACH'),
+					attachmentsCount: (attachments ? attachments.length : 0),
+					onClick: onClickAttachmentMenuItem,
+					onOpenList: onOpenAttachmentList,
+					config,
+				}),
+				ActionSheetItem({
+					iconName: 'post_mention',
+					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_MENTION'),
+					onClick: onClickMentionMenuItem,
+					config,
+				}),
+				ActionSheetItem({
+					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_BACKGROUND'),
+					onClick: onClickBackgroundMenuItem,
+					style: {
+						opacity: (backgroundAvailable ? 1 : 0.3),
+					},
+					iconUrl: currentDomain + postFormData.backgroundIcon,
+					config,
+				}),
+				(
+					useImportant
+						? ActionSheetItem({
+							iconName: 'post_important',
+							title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_IMPORTANT'),
+							onClick: onClickImportantMenuItem,
+							config,
+						})
+						: null
+				),
+				ActionSheetItem({
+					iconName: 'post_thanks',
+					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_GRATITUDE'),
+					onClick: onClickGratitudeMenuItem,
+					config,
+				}),
+				ActionSheetItem({
+					title: (titleShown ? BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_TITLE_HIDE') : BX.message(
+						'MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_TITLE_SHOW',
+					)),
+					onClick: () => {
+						onClickShowHideTitleItem({
+							show: !titleShown,
+						});
+					},
+					style: {
+						opacity: (coloredMessage ? 0.3 : 1),
+					},
+					iconUrl: currentDomain + postFormData.titleIcon,
+					config,
+				}),
+				(
+					moduleVoteInstalled
+						? ActionSheetItem({
+							iconName: 'post_poll',
+							title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_VOTE'),
+							textStyle: {
+								borderBottomWidth: 0,
+							},
+							onClick: onClickVoteMenuItem,
+							config,
+						})
+						: null
+				),
 			),
 		);
 	};
 
-	this.ActionSheetItem = ({
+	const ActionSheetItem = ({
 		iconName,
 		iconUrl,
 		iconStyle,
@@ -168,7 +152,6 @@
 		onClick,
 		config,
 	}) => {
-
 		let imageStyle = {
 			marginLeft: config.iconMarginLeft,
 			marginRight: config.iconMarginRight,
@@ -193,22 +176,24 @@
 
 		return View(
 			{
-				style: Object.assign({
+				style: {
 					flexDirection: 'row',
 					backgroundColor: config.backgroundColor,
-				}, style),
+					...style,
+				},
 			},
 			Image(iconProps),
 			View(
 				{
-					style: Object.assign({
+					style: {
 						borderBottomWidth: config.borderWidth,
 						borderBottomColor: config.borderColor,
 						flexDirection: 'row',
 						alignItems: 'center',
-						flex: 1
-					}, textStyle),
-					onClick: onClick,
+						flex: 1,
+						...textStyle,
+					},
+					onClick,
 				},
 				Text({
 					text: title,
@@ -217,16 +202,15 @@
 						fontSize: config.fontSize,
 						flex: 1,
 					},
-				})
-			)
+				}),
+			),
 		);
 	};
 
-	this.ActionSheetHandler = () => {
+	const ActionSheetHandler = () => {
 		return View(
 			{
 				style: {
-					backgroundColor: '#00000000',
 					alignItems: 'center',
 				},
 			},
@@ -235,38 +219,36 @@
 					style: {
 						height: 5,
 						width: 52,
-						backgroundColor: '#525c6948',
+						backgroundColor: '#E6E7E9',
 						marginTop: 0,
 						marginBottom: 7,
 						borderRadius: 2.5,
 					},
-				}
-			)
+				},
+			),
 		);
 	};
 
-	this.ActionSheetItemDestinationSelector = ({
-		forAll,
+	const ActionSheetItemDestinationSelector = ({
 		title,
 		value,
 		onClick,
 		config,
 	}) => {
-
 		const BBCodeVersion = 38;
 
 		if (Application.getApiVersion() >= BBCodeVersion)
 		{
 			value = value
-				.replace(/&nbsp;/g, ' ')
+				.replaceAll('&nbsp;', ' ')
 				.replace('#ALL_BEGIN#', '[B]').replace('#ALL_END#', '[/B]');
 		}
 		else
 		{
 			value = value
-				.replace(/</g, '&lt;')
-				.replace(/>/g, '&gt;')
-				.replace('#ALL_BEGIN#', `<b>`).replace('#ALL_END#', '</b>');
+				.replaceAll('<', '&lt;')
+				.replaceAll('>', '&gt;')
+				.replace('#ALL_BEGIN#', '<b>').replace('#ALL_END#', '</b>');
 		}
 
 		return (
@@ -274,12 +256,11 @@
 				{
 					style: {
 						flexDirection: 'row',
-						backgroundColor: '#e2f7fe',
+						backgroundColor: AppTheme.colors.accentSoftBlue2,
 					},
 				},
 				View(
-					{
-					},
+					{},
 					Image({
 						named: 'post_visibility',
 						style: {
@@ -290,7 +271,7 @@
 							width: config.iconSize,
 							height: config.iconSize,
 						},
-					})
+					}),
 				),
 				View(
 					{
@@ -301,7 +282,7 @@
 							flex: 1,
 							flexDirection: 'row',
 						},
-						onClick: onClick,
+						onClick,
 					},
 					Text({
 						text: title,
@@ -316,7 +297,7 @@
 					(
 						Application.getApiVersion() >= BBCodeVersion
 							? BBCodeText({
-								value: value,
+								value,
 								style: {
 									marginTop: 5,
 									marginBottom: 5,
@@ -336,13 +317,13 @@
 								},
 							})
 
-					)
-					,
-					View({
+					),
+					View(
+						{
 							style: {
 								flex: 1,
-								flexDirection: 'row'
-							}
+								flexDirection: 'row',
+							},
 						},
 						Image({
 							named: 'icon_arrow_down',
@@ -351,15 +332,15 @@
 								height: 12,
 								flex: 0,
 								marginRight: 10,
-							}
-						})
-					)
-				)
+							},
+						}),
+					),
+				),
 			)
 		);
 	};
 
-	ActionSheetItemAttach = ({
+	const ActionSheetItemAttach = ({
 		iconName,
 		title,
 		attachmentsCount = 0,
@@ -369,14 +350,14 @@
 		onOpenList,
 		config,
 	}) => {
-
 		return (
 			View(
 				{
-					style: Object.assign({
+					style: {
 						flexDirection: 'row',
 						backgroundColor: config.backgroundColor,
-					}, style),
+						...style,
+					},
 				},
 				Image({
 					named: iconName,
@@ -387,18 +368,19 @@
 						marginBottom: config.iconMarginBottom,
 						width: config.iconSize,
 						height: config.iconSize,
-					}
+					},
 				}),
 				View(
 					{
-						style: Object.assign({
+						style: {
 							borderBottomWidth: config.borderWidth,
 							borderBottomColor: config.borderColor,
 							flexDirection: 'row',
 							flex: 1,
 							alignItems: 'center',
-						}, textStyle),
-						onClick: onClick,
+							...textStyle,
+						},
+						onClick,
 					},
 					Text({
 						text: title,
@@ -421,14 +403,16 @@
 						},
 						Text({
 							style: {
-								color: '#0B66C3'
+								color: AppTheme.colors.accentMainLinks,
 							},
-							text: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_ATTACH_COUNTER').replace('#NUM#', attachmentsCount),
-						})
-					)
-				)
+							text: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_ATTACH_COUNTER').replace(
+								'#NUM#',
+								attachmentsCount,
+							),
+						}),
+					),
+				),
 			)
 		);
-	}
-
+	};
 })();

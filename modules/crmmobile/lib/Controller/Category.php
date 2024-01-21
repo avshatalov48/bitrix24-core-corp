@@ -195,6 +195,7 @@ class Category extends Controller
 
 		return new Dto\Category([
 			'id' => 0,
+			'categoryId' => 0,
 			'name' => $factory->getEntityDescriptionInPlural(),
 			'isDefault' => true,
 			'editable' => $this->canUserEditCategory(),
@@ -547,10 +548,12 @@ class Category extends Controller
 
 			$categoryData = [
 				'id' => $categoryId,
+				'categoryId' => $categoryId,
 				'name' => $category->getName(),
 				'sort' => $category->getSort(),
 				'isDefault' => $category->getIsDefault(),
 				'tunnels' => $sortedTunnelsByCategory[$categoryId] ?? [],
+				'categoriesEnabled' => $factory->isCategoriesEnabled(),
 			];
 
 			if (Counter\EntityCounterFactory::isEntityTypeSupported($factory->getEntityTypeId()))
@@ -673,6 +676,7 @@ class Category extends Controller
 
 		return new Dto\Category([
 			'id' => $category->getId(),
+			'categoryId' => $category->getId(),
 			'name' => $categoriesEnabled ? $category->getName() : $factory->getEntityDescriptionInPlural(),
 			'isDefault' => $category->getIsDefault(),
 			'editable' => $this->canUserEditCategory(),

@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Tasks\Integration\Intranet\Settings;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 if (!CModule::IncludeModule('tasks'))
@@ -16,5 +18,7 @@ else
 {
 	$arResult['USER_ID'] = $USER->getId();
 }
+
+$arResult['IS_TOOL_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['report']);
 
 $this->IncludeComponentTemplate();

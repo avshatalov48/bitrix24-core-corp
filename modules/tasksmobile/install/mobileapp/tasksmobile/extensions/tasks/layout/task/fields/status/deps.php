@@ -2,8 +2,11 @@
 
 return [
 	'extensions' => [
-		'layout/ui/fields/base',
 		'loc',
+		'apptheme',
+		'assets/common',
+		'layout/ui/fields/base',
+
 		'tasks:layout/task/actionMenu',
 		'tasks:layout/task/fields/status/actionButton',
 	],

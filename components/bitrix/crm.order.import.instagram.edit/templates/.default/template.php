@@ -223,6 +223,6 @@ if (!empty($arResult['SHOW_ACTUAL_PAGE']) && $arParams['IFRAME'])
 
 <?php if ($arResult['NEED_RESTRICTION_NOTE']): ?>
 	<div class="crm-order-instagram-edit-restriction">
-		<?=$component->getLocalizationMessage("CRM_OUIE_META_RESTRICTION")?>
+		<?=$component->getLocalizationMessage("CRM_OUIE_META_RESTRICTION_MSGVER_1")?>
 	</div>
 <?php endif ?>

@@ -37,26 +37,7 @@ class Http
 
 	public function __construct()
 	{
-		if(defined('TRANSFORMER_CONTROLLER_URL'))
-		{
-			$this->controllerUrl = TRANSFORMER_CONTROLLER_URL;
-		}
-		else
-		{
-			$optionsControllerUrl = Option::get(
-				self::MODULE_ID,
-				'transformer_controller_url',
-				self::getDefaultCloudControllerUrl(),
-			);
-			if(!empty($optionsControllerUrl))
-			{
-				$uri = new Uri($optionsControllerUrl);
-				if($uri->getHost())
-				{
-					$this->controllerUrl = $uri->getLocator();
-				}
-			}
-		}
+		$this->controllerUrl = self::getControllerUrl();
 
 		if(defined('BX24_HOST_NAME'))
 		{
@@ -64,11 +45,34 @@ class Http
 		}
 		else
 		{
-			require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/classes/general/update_client.php');
-			$this->licenceCode = md5('BITRIX'.\CUpdateClient::GetLicenseKey().'LICENCE');
+			$this->licenceCode = Application::getInstance()->getLicense()->getPublicHashKey();
 		}
 		$this->type = self::getPortalType();
 		$this->domain = self::getServerAddress();
+	}
+
+	private static function getControllerUrl(): ?string
+	{
+		if(defined('TRANSFORMER_CONTROLLER_URL'))
+		{
+			return TRANSFORMER_CONTROLLER_URL;
+		}
+
+		$optionsControllerUrl = Option::get(
+			self::MODULE_ID,
+			'transformer_controller_url',
+			self::getDefaultCloudControllerUrl(),
+		);
+		if(!empty($optionsControllerUrl))
+		{
+			$uri = new Uri($optionsControllerUrl);
+			if($uri->getHost())
+			{
+				return $uri->getLocator();
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -113,6 +117,13 @@ class Http
 		};
 	}
 
+	/**
+	 * @internal
+	 */
+	final public static function isDefaultCloudControllerUsed(): bool
+	{
+		return self::getControllerUrl() === self::getDefaultCloudControllerUrl();
+	}
 
 	/**
 	 * Sign string with license or bx_sign.
@@ -156,8 +167,18 @@ class Http
 			throw new ArgumentTypeException('params', 'array');
 		}
 
+		$logContext = [
+			'guid' => $guid,
+			'controllerUrl' => $this->controllerUrl,
+		];
+
 		if(!$this->shouldWeSend())
 		{
+			Log::logger()->error(
+				'Error sending command: too many unsuccessful attempts, send aborted',
+				['errorCode' => Command::ERROR_CONNECTION_COUNT] + $logContext,
+			);
+
 			return [
 				'success' => false,
 				'result' => [
@@ -190,21 +211,38 @@ class Http
 		$post = \Bitrix\Main\Text\Encoding::convertEncoding($post, SITE_CHARSET, 'UTF-8');
 		$post['BX_HASH'] = self::requestSign($this->type, md5(implode('|', $post)));
 
-		Log::write('COMMAND: '.print_r($post, 1));
+		$socketTimeout = Option::get(self::MODULE_ID, 'connection_time', 8);
+		$streamTimeout = Option::get(self::MODULE_ID, 'stream_time', 8);
 
-		$httpClient = new \Bitrix\Main\Web\HttpClient(array(
-			'socketTimeout' => Option::get(self::MODULE_ID, 'connection_time', 8),
-			'streamTimeout' => Option::get(self::MODULE_ID, 'stream_time', 8),
+		$logContext += [
+			'request' => $post,
+			'socketTimeout' => $socketTimeout,
+			'streamTimeout' => $streamTimeout,
+		];
+		Log::logger()->debug('Sending command to server', $logContext);
+
+		$httpClient = new \Bitrix\Main\Web\HttpClient([
+			'socketTimeout' => $socketTimeout,
+			'streamTimeout' => $streamTimeout,
 			'waitResponse' => true,
-		));
+		]);
 		$httpClient->setHeader('User-Agent', 'Bitrix Transformer Client');
 		$httpClient->setHeader('Referer', $this->domain);
 		$response = $httpClient->post($this->controllerUrl, $post);
 
-		Log::write('RESPONSE: '.$response);
+		$logContext['response'] = $response;
+		Log::logger()->debug(
+			'Got response from server',
+			$logContext,
+		);
 
 		if($response === false)
 		{
+			Log::logger()->error(
+				'Error connecting to server',
+				['errorCode' => Command::ERROR_CONNECTION] + $logContext
+			);
+
 			return [
 				'success' => false,
 				'result' => [
@@ -218,6 +256,11 @@ class Http
 		}
 		catch(ArgumentException $e)
 		{
+			Log::logger()->error(
+				'Error decoding response from server',
+				['error' => $e->getMessage(), 'errorCode' => Command::ERROR_CONNECTION_RESPONSE] + $logContext,
+			);
+
 			return [
 				'success' => false,
 				'result' => [

@@ -15,7 +15,7 @@ jn.define('crm/terminal/services/finds-client', (require, exports, module) => {
 		{
 			return new Promise((resolve, reject) => {
 				BX.ajax.runAction(
-					'crmmobile.Terminal.findClient',
+					'crmmobile.Terminal.App.findClient',
 					{
 						data: {
 							phoneNumber,

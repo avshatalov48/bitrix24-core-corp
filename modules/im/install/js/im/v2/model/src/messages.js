@@ -85,9 +85,7 @@ export class MessagesModel extends BuilderModel
 
 				return [...state.chatCollection[chatId]].map((messageId: number | string) => {
 					return state.collection[messageId];
-				}).sort((a, b) => {
-					return a.id - b.id;
-				});
+				}).sort(this.#sortCollection);
 			},
 			/** @function messages/getById */
 			getById: (state: MessagesState) => (id: number): ?ImModelMessage => {
@@ -769,5 +767,25 @@ export class MessagesModel extends BuilderModel
 		}
 
 		return resultId;
+	}
+
+	#sortCollection(a: ImModelMessage, b: ImModelMessage): number
+	{
+		if (Utils.text.isUuidV4(a.id) && !Utils.text.isUuidV4(b.id))
+		{
+			return 1;
+		}
+
+		if (!Utils.text.isUuidV4(a.id) && Utils.text.isUuidV4(b.id))
+		{
+			return -1;
+		}
+
+		if (Utils.text.isUuidV4(a.id) && Utils.text.isUuidV4(b.id))
+		{
+			return a.date.getTime() - b.date.getTime();
+		}
+
+		return a.id - b.id;
 	}
 }

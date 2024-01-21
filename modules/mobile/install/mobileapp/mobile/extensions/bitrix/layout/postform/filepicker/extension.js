@@ -31,7 +31,7 @@
 									|| moduleWebdavInstalled
 										? {
 											id: 'disk',
-											name: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_FILEPICKER_ATTACH_BUTTON_DISK'),
+											name: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_FILEPICKER_ATTACH_BUTTON_DISK_MSGVER_1'),
 											dataSource: {
 												multiple: false,
 												url: fileAttachPath,

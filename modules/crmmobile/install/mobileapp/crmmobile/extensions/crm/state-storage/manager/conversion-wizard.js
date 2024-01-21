@@ -2,12 +2,12 @@
  * @module crm/state-storage/manager/conversion-wizard
  */
 jn.define('crm/state-storage/manager/conversion-wizard', (require, exports, module) => {
-	const { Base } = require('crm/state-storage/manager/base');
+	const { BaseManager } = require('storage/manager');
 
 	/**
 	 * @class ConversionWizardStoreManager
 	 */
-	class ConversionWizardStoreManager extends Base
+	class ConversionWizardStoreManager extends BaseManager
 	{
 		storeOptions()
 		{

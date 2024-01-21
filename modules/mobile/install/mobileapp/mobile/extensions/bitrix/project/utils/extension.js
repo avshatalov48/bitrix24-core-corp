@@ -24,37 +24,43 @@
 			const siteId = additionalData.siteId || env.siteId;
 			const siteDir = additionalData.siteDir || env.siteDir;
 			const guid = additionalData.guid || WorkgroupUtil.createGuid();
+			const isNewDashboardActive = additionalData.isNewDashboardActive || false;
 
 			const result = [];
 
 			if (availableFeatures.includes('tasks'))
 			{
-				result.push(WorkgroupUtil.getTasksTab({
-					currentUserId: env.userId,
-					siteId: siteId,
-					siteDir: siteDir,
-					guid: guid,
-					item: item,
-				}));
+				result.push(
+					WorkgroupUtil.getTasksTab({
+						siteId,
+						siteDir,
+						guid,
+						isNewDashboardActive,
+						item,
+						currentUserId: env.userId,
+					}),
+				);
 			}
 
 			if (availableFeatures.includes('blog'))
 			{
-				result.push(WorkgroupUtil.getNewsTab(projectNewsPathTemplate.replace('#group_id#', item.id)));
+				result.push(
+					WorkgroupUtil.getNewsTab(projectNewsPathTemplate.replace('#group_id#', item.id)),
+				);
 			}
 
 			if (availableFeatures.includes('files'))
 			{
-				result.push(WorkgroupUtil.getDiskTab({
-					item,
-				}));
+				result.push(
+					WorkgroupUtil.getDiskTab({ item }),
+				);
 			}
 
 			if (availableFeatures.includes('calendar'))
 			{
-				result.push(WorkgroupUtil.getCalendarTab({
-					item,
-				}));
+				result.push(
+					WorkgroupUtil.getCalendarTab({ item }),
+				);
 			}
 
 			return result;
@@ -91,29 +97,17 @@
 			const siteDir = params.siteDir || env.siteDir;
 			const currentUserId = params.currentUserId || env.userId;
 
-			const {languageId} = env;
-
 			return {
 				id: WorkgroupUtil.tabNames.tasks,
 				title: BX.message('MOBILE_PROJECT_TAB_TASKS'),
 				component: {
 					name: 'JSStackComponent',
-					componentCode: 'tasks.list',
+					componentCode: WorkgroupUtil.getTaskListComponentCode(params.isNewDashboardActive),
 					canOpenInDefault: true,
-					scriptPath: availableComponents['tasks:tasks.list'].publicUrl,
-					rootWidget: {
-						settings: {
-							...{
-								objectName: 'list',
-								useSearch: true,
-								useLargeTitleMode: true,
-								emptyListMode: true,
-							},
-						},
-						name: 'tasks.list',
-					},
+					scriptPath: WorkgroupUtil.getTaskListScriptPath(params.isNewDashboardActive),
+					rootWidget: WorkgroupUtil.getTaskListRootWidget(params.isNewDashboardActive),
 					params: {
-						COMPONENT_CODE: 'tasks.list',
+						COMPONENT_CODE: WorkgroupUtil.getTaskListComponentCode(params.isNewDashboardActive),
 						GROUP_ID: item.id,
 						USER_ID: currentUserId,
 						DATA: {
@@ -130,10 +124,47 @@
 						TABS_GUID: guid,
 						SITE_ID: siteId,
 						SITE_DIR: siteDir,
-						LANGUAGE_ID: languageId,
+						LANGUAGE_ID: env.languageId,
 						PATH_TO_TASK_ADD: `${siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`,
 					},
-				}
+				},
+			};
+		}
+
+		static getTaskListComponentCode(isNewDashboardActive)
+		{
+			return (isNewDashboardActive ? 'tasks.dashboard' : 'tasks.list');
+		}
+
+		static getTaskListScriptPath(isNewDashboardActive)
+		{
+			const componentName = (isNewDashboardActive ? 'tasks:tasks.dashboard' : 'tasks:tasks.list.legacy');
+
+			return availableComponents[componentName].publicUrl;
+		}
+
+		static getTaskListRootWidget(isNewDashboardActive)
+		{
+			if (isNewDashboardActive)
+			{
+				return {
+					name: 'layout',
+					settings: {
+						objectName: 'layout',
+						useSearch: true,
+						useLargeTitleMode: true,
+					},
+				};
+			}
+
+			return {
+				name: 'tasks.list',
+				settings: {
+					objectName: 'list',
+					useSearch: true,
+					useLargeTitleMode: true,
+					emptyListMode: true,
+				},
 			};
 		}
 
@@ -178,7 +209,7 @@
 		static createGuid()
 		{
 			const s4 = function() {
-				return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+				return Math.floor((1 + Math.random()) * 0x10000).toString(16).slice(1);
 			};
 
 			return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
@@ -189,6 +220,7 @@
 			if (membersCount > 0)
 			{
 				const pluralForm = CommonUtils.getPluralForm(membersCount);
+
 				return BX.message(`MOBILE_PROJECT_TAB_MEMBERS_${pluralForm}`).replace('#NUM#', membersCount);
 			}
 
@@ -227,8 +259,8 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response.result),
-						response => reject(response),
+						(response) => resolve(response.result),
+						(response) => reject(response),
 					)
 				;
 			});

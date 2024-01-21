@@ -138,6 +138,11 @@ if(!empty($arResult["ADDITIONAL_STYLES"]))
 			?>
 		</div>
 	</div>
+	<?php if ($arResult['META_RESTRICTION_LABEL']): ?>
+		<div class="intranet-contact-center-extremist-organization-label">
+			<span><?= Loc::getMessage("CONTACT_CENTER_RULES_META_RESTRICTION_RU") ?></span>
+		</div>
+	<?php endif ?>
 	<?php if ($arResult['RULE_LINK'] !== ''): ?>
 		<div class="intranet-contact-center-rules">
 			<a class="intranet-contact-center-rules-link" href="<?= $arResult['RULE_LINK'] ?>" target="_blank"><?= Loc::getMessage("CONTACT_CENTER_RULES") ?></a>

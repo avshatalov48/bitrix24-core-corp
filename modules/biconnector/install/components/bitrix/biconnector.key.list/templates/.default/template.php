@@ -57,7 +57,7 @@ $APPLICATION->IncludeComponent(
 			grid.showOnboarding();
 		});
 	<?php endif; ?>
-</script
+</script>
 <?php
 if (!\Bitrix\BIConnector\LimitManager::getInstance()->checkLimitWarning())
 {

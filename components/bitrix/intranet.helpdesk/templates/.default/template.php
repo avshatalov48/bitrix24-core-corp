@@ -37,7 +37,7 @@ $imBarExists = $arResult['IM_BAR_EXISTS'];
 $frame = $this->createFrame('b24_helper')->begin('');
 
 CJSCore::Init(['helper']);
-$helpUrl = \Bitrix\UI\InfoHelper::getUrl('/widget2/');
+$helpUrl = \Bitrix\UI\InfoHelper::getUrl('/widget2/', byLang: true);
 $imBotIncluded = Loader::includeModule('imbot');
 $frameOpenUrl = (new Main\Web\Uri($helpUrl))->addParams(['action' => 'open'])->getUri();
 $frameCloseUrl = (new Main\Web\Uri($helpUrl))->addParams(['action' => 'close'])->getUri();

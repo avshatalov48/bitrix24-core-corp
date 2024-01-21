@@ -2,8 +2,9 @@
  * @module crm/timeline/item/ui/body/blocks/date-block
  */
 jn.define('crm/timeline/item/ui/body/blocks/date-block', (require, exports, module) => {
-	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
+	const AppTheme = require('apptheme');
 	const { Moment } = require('utils/date');
+	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { dayShortMonth, shortTime, mediumDate } = require('utils/date/formats');
 
 	/**
@@ -24,7 +25,7 @@ jn.define('crm/timeline/item/ui/body/blocks/date-block', (require, exports, modu
 						: moment.format(dateFormat),
 					style: {
 						fontSize: 14,
-						color: '#525C69',
+						color: AppTheme.colors.base2,
 						marginLeft: 5,
 					},
 				}),
@@ -34,3 +35,4 @@ jn.define('crm/timeline/item/ui/body/blocks/date-block', (require, exports, modu
 
 	module.exports = { TimelineItemBodyDateBlock };
 });
+

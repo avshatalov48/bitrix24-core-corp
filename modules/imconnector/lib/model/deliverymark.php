@@ -3,6 +3,7 @@ namespace Bitrix\ImConnector\Model;
 
 use Bitrix\Main\Entity;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
 
 /**
  * Class DeliveryMarkTable
@@ -31,6 +32,8 @@ use Bitrix\Main\Type\DateTime;
 
 class DeliveryMarkTable extends Entity\DataManager
 {
+	use DeleteByFilterTrait;
+
 	/**
 	 * Returns DB table name for entity.
 	 *

@@ -1,4 +1,4 @@
-import {Loc, Tag, Dom, Type} from "main.core";
+import {Loc, Tag, Dom, Type, Runtime} from "main.core";
 import {EventEmitter, BaseEvent} from "main.core.events";
 import './fieldset.css';
 
@@ -30,8 +30,10 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 
 		this._addEmptyValue = this.getDataBooleanParam("addEmptyValue", false);
 
-		let nextIndex = BX.prop.getInteger(this.getSchemeElement().getData(), "nextIndex", 0);
+		const nextIndex = BX.prop.getInteger(this.getSchemeElement().getData(), "nextIndex", 0);
 		this._nextIndex = (nextIndex > 0) ? nextIndex : 0;
+
+		this._config = BX.prop.getObject(this.getSchemeElement().getData(), "config", {});
 	}
 
 	layout(options)
@@ -79,31 +81,45 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 		let entityEditorId = this._entityId + '_' + id;
 		let prefix = this.getName() + '[' + id + ']';
 		let section = {
-			'name': entityEditorId + '_SECTION',
+			'name': this._entityId + '_SECTION',
 			'type': 'section',
 			'enableToggling': false,
 			'transferable': false,
 			'data': {'isRemovable': false, 'enableTitle': false, 'enableToggling': false},
-			'elements': this.getFields(prefix)
+			'elements': this.prepareFieldsWithPrefix(this.getSchemeSectionElements(), prefix)
 		};
 
+		const configId =
+			(
+				Type.isPlainObject(this._config)
+				&& this._config.hasOwnProperty("GUID")
+				&& Type.isStringFilled(this._config["GUID"])
+			)
+				? this._config["GUID"]
+				: entityEditorId
+		;
 		let config = BX.UI.EntityConfig.create(
-			entityEditorId,
+			configId,
 			{
 				data: [section],
-				scope: "C",
+				scope: this._editor.getConfigScope(),
 				enableScopeToggle: false,
-				canUpdatePersonalConfiguration: false,
-				canUpdateCommonConfiguration: false,
-				options: []
+				canUpdatePersonalConfiguration: this._editor._config._canUpdatePersonalConfiguration,
+				canUpdateCommonConfiguration: this._editor.canChangeCommonConfiguration(),
+				options: {},
+				signedParams: BX.prop.getString(this._config, 'ENTITY_CONFIG_SIGNED_PARAMS', '')
 			}
 		);
 
+		const availableFields = this.prepareFieldsWithPrefix(
+			BX.clone(BX.prop.getArray(this._config, 'ENTITY_AVAILABLE_FIELDS', [])),
+			prefix
+		);
 		let scheme = BX.UI.EntityScheme.create(
 			entityEditorId,
 			{
 				current: [section],
-				available: []
+				available: availableFields
 			}
 		);
 
@@ -119,11 +135,11 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 					}
 				),
 				config: config,
+				userFieldManager: null,
 				scheme: scheme,
 				context: context,
 				containerId: containerId,
 				serviceUrl: this._editor.getServiceUrl(),
-
 				entityTypeName: "",
 				entityId: 0,
 				validators: [],
@@ -132,12 +148,13 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 				initialMode: BX.UI.EntityEditorMode.getName(this._mode),
 				enableModeToggle: true,
 				enableConfigControl: false,
+				enableShowAlwaysFeauture: this.getEditor().isShowAlwaysFeautureEnabled(),
 				enableVisibilityPolicy: true,
 				enableToolPanel: true,
 				enableBottomPanel: false,
 				enableFieldsContextMenu: true,
 				enablePageTitleControls: false,
-				readOnly: (this._mode == BX.UI.EntityEditorMode.view),
+				readOnly: (this._mode === BX.UI.EntityEditorMode.view),
 				enableAjaxForm: false,
 				enableRequiredUserFieldCheck: true,
 				enableSectionEdit: false,
@@ -155,13 +172,27 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 			}
 		);
 		entityEditor._enableCloseConfirmation = false;
-		EventEmitter.subscribe(entityEditor, 'onControlChanged', (event) =>
-		{
-			if (!this.isChanged())
-			{
-				this.markAsChanged();
+		EventEmitter.subscribe(
+			entityEditor,
+			'onControlChanged',
+			(event) => {
+				if (!this.isChanged())
+				{
+					this.markAsChanged();
+				}
 			}
-		});
+		);
+
+		this.subscribeEditorEvents(
+			entityEditor,
+			[
+				'onControlMove',
+				'onFieldModify',
+				'onControlAdd',
+				'onControlRemove',
+				'onSchemeSave',
+			]
+		);
 
 		let container = entityEditor.getContainer();
 		if (Type.isDomNode(container))
@@ -175,6 +206,198 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 		}
 
 		return entityEditor;
+	}
+
+	getCorrespondedControl(eventCode, controlId, editor)
+	{
+		return(
+			(eventCode === "add")
+				? editor.getAvailableControlByCombinedId(controlId)
+				: editor.getControlByCombinedIdRecursive(controlId)
+		);
+	}
+
+	getEditorSchemeSectionElements(editor)
+	{
+		let elements = [];
+
+		const schemeElements = editor.getScheme().getElements();
+		if (Type.isArray(schemeElements) && schemeElements.length > 0)
+		{
+			const section = schemeElements[0];
+			if (section && section instanceof BX.UI.EntitySchemeElement && section.getType() === "section")
+			{
+				elements = section.getElements();
+			}
+		}
+
+		return elements;
+	}
+
+	prepareSectionElementsBySchemeElements(schemeElements)
+	{
+		let elements = [];
+
+		if (Type.isArray(schemeElements))
+		{
+			for (let i = 0; i < schemeElements.length; i++)
+			{
+				const element = {
+					"name": schemeElements[i].getName(),
+					"title": schemeElements[i].getTitle(),
+					"type": schemeElements[i].getType(),
+					"required": schemeElements[i].isRequired(),
+					"optionFlags": schemeElements[i].getOptionFlags(),
+					"options": schemeElements[i].getOptions()
+				};
+				elements.push(element);
+			}
+		}
+
+		return elements;
+	}
+
+	syncEditorEvent(eventName, target, params)
+	{
+		const eventMap = {
+			"onControlAdd": "add",
+			"onControlMove": "move",
+			"onFieldModify": "modify",
+			"onControlRemove": "remove",
+			"onSchemeSave": "saveScheme",
+		};
+
+		if (
+			Type.isStringFilled(eventName)
+			&& eventMap.hasOwnProperty(eventName)
+			&& target instanceof BX.UI.EntityEditor
+		)
+		{
+			if (eventMap[eventName] === "saveScheme")
+			{
+				this.setSchemeSectionElements(
+					this.prepareFieldsWithoutPrefix(
+						this.prepareSectionElementsBySchemeElements(
+							this.getEditorSchemeSectionElements(target)
+						)
+					)
+				);
+				this.setSchemeAvailableElements(
+					this.prepareFieldsWithoutPrefix(
+						this.getEditorAvailableElements(target)
+					)
+				);
+			}
+			else if (
+				Type.isArray(params)
+				&& params.length > 1
+				&& Type.isPlainObject(params[1])
+			)
+			{
+				const eventParams = params[1];
+				for (let index in this._entityEditorList)
+				{
+					if (this._entityEditorList.hasOwnProperty(index))
+					{
+						const editor = this._entityEditorList[index];
+						if (editor instanceof BX.UI.EntityEditor && editor !== target)
+						{
+							if (eventMap[eventName] === "modify")
+							{
+								setTimeout(() => {
+									const field = BX.prop.get(eventParams, "field", null);
+									if (field && field instanceof BX.UI.EntityEditorField)
+									{
+										const control = this.getCorrespondedControl(
+											eventMap[eventName],
+											field.getId(),
+											editor
+										);
+										if (control)
+										{
+											const label = BX.prop.getString(eventParams, "label", "");
+											if (Type.isStringFilled(label))
+											{
+												control.getSchemeElement().setTitle(label);
+												control.refreshTitleLayout();
+											}
+										}
+									}
+								});
+							}
+							else if (
+								eventParams.hasOwnProperty("control")
+								&& Type.isObject(eventParams["control"])
+							)
+							{
+								const options = BX.prop.getObject(eventParams, "params", {});
+								const controlId = eventParams["control"].getId();
+								const control = this.getCorrespondedControl(eventMap[eventName], controlId, editor);
+								if (control)
+								{
+									if (eventMap[eventName] === "add")
+									{
+										setTimeout(() => {
+											editor.getControlByIndex(0).addChild(
+												control,
+												{
+													layout: { forceDisplay: true },
+													enableSaving: false,
+													skipEvents: true
+												}
+											);
+										});
+									}
+									else if (eventMap[eventName] === "move")
+									{
+										const index = BX.prop.getInteger(options, "index", -1);
+										if (index >= 0)
+										{
+											setTimeout(() => {
+												control.getParent().moveChild(
+													control,
+													index,
+													{ enableSaving: false, skipEvents: true }
+												);
+												editor.processSchemeChange();
+											});
+										}
+									}
+									else if (eventMap[eventName] === "remove")
+									{
+										setTimeout(() => {
+											control.hide(
+												{ enableSaving: false, skipEvents: true }
+											);
+											editor.processSchemeChange();
+										});
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	subscribeEditorEvents(editor, eventNames)
+	{
+		for (let i = 0; i < eventNames.length; i++)
+		{
+			EventEmitter.subscribe(
+				editor,
+				"BX.UI.EntityEditor:" + eventNames[i],
+				(event) => {
+					this.syncEditorEvent(eventNames[i], event.getTarget(), event.getData());
+				}
+			);
+		}
+	}
+
+	unsubscribeEditorEvents(editor)
+	{
+		EventEmitter.unsubscribeAll(editor);
 	}
 
 	layoutDeletedValue(entityEditor, id)
@@ -202,6 +425,8 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 	{
 		if (this._entityEditorList.hasOwnProperty(id))
 		{
+			this.unsubscribeEditorEvents(this._entityEditorList[id]);
+
 			this.layoutDeletedValue(this._entityEditorList[id], id);
 			this.markAsChanged();
 		}
@@ -235,15 +460,147 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 		return this._entityEditorList;
 	}
 
+	getSchemeSection()
+	{
+		let section = null;
+
+		const entityScheme = BX.prop.getArray(this._config, 'ENTITY_SCHEME', []);
+		if (Type.isArray(entityScheme) && entityScheme.length > 0)
+		{
+			const column = entityScheme[0];
+			if (
+				Type.isPlainObject(column)
+				&& column.hasOwnProperty("elements")
+				&& Type.isArray(column["elements"])
+				&& column["elements"].length > 0
+				&& Type.isPlainObject(column["elements"][0])
+			)
+			{
+				section = column["elements"][0];
+			}
+		}
+
+		return section;
+	}
+
+	getEditorAvailableElements(editor)
+	{
+		let elements = [];
+
+		if (editor && editor instanceof BX.UI.EntityEditor)
+		{
+			const schemeElements = editor.getAvailableSchemeElements();
+			for (let i = 0; i < schemeElements.length; i++)
+			{
+				const element = {
+					"name": schemeElements[i].getName(),
+					"title": schemeElements[i].getTitle(),
+					"type": schemeElements[i].getType(),
+					"required": schemeElements[i].isRequired(),
+				};
+				elements.push(element)
+			}
+
+		}
+
+		return elements;
+	}
+
+	setSchemeAvailableElements(availableElements)
+	{
+		this._config["ENTITY_AVAILABLE_FIELDS"] = availableElements;
+	}
+
+	setSchemeSectionElements(sectionElements)
+	{
+		let section = null;
+
+		if (!Type.isArray(sectionElements))
+		{
+			sectionElements = [];
+		}
+
+		const entityScheme = BX.prop.getArray(this._config, 'ENTITY_SCHEME', []);
+		if (Type.isArray(entityScheme) && entityScheme.length > 0)
+		{
+			const column = entityScheme[0];
+			if (
+				Type.isPlainObject(column)
+				&& column.hasOwnProperty("elements")
+				&& Type.isArray(column["elements"])
+				&& column["elements"].length > 0
+				&& Type.isPlainObject(column["elements"][0])
+			)
+			{
+				section = column["elements"][0];
+			}
+		}
+
+		if (Type.isPlainObject(section))
+		{
+			section["elements"] = sectionElements;
+		}
+	}
+
+	getSchemeSectionElements()
+	{
+		let elements = [];
+
+		const section = this.getSchemeSection();
+		if (
+			section
+			&& section.hasOwnProperty("elements")
+			&& Type.isArray(section["elements"])
+		)
+		{
+			elements = Runtime.clone(section["elements"]);
+		}
+
+		return elements;
+	}
+
+	setSchemeSectionElements(elements)
+	{
+		const section = this.getSchemeSection();
+		if (section)
+		{
+			section["elements"] = Runtime.clone(elements);
+		}
+	}
+
 	getFields(prefix)
 	{
-		let fields = BX.clone(BX.prop.getArray(this.getSchemeElement().getData(), 'fields', []));
+		const fields = BX.clone(BX.prop.getArray(this.getSchemeElement().getData(), 'fields', []));
+
+		return this.prepareFieldsWithPrefix(fields, prefix);
+	};
+
+	prepareFieldsWithPrefix(fields, prefix)
+	{
 		for (let index = 0; index < fields.length; index++)
 		{
 			fields[index].name = this.getFieldName(fields[index].name, prefix);
 		}
+
 		return fields;
-	};
+	}
+
+	prepareFieldsWithoutPrefix(fields)
+	{
+		for (let index = 0; index < fields.length; index++)
+		{
+			if (Type.isStringFilled(fields[index].name))
+			{
+				const matches = fields[index].name.match(/\[(\w+)]$/);
+				if (matches && matches.length > 1 && Type.isStringFilled(matches[1]))
+				{
+					fields[index].name = matches[1];
+				}
+			}
+		}
+
+		return fields;
+	}
 
 	getFieldsValues(prefix, values)
 	{

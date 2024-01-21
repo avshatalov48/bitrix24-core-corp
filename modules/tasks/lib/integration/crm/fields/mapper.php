@@ -39,7 +39,8 @@ class Mapper
 				$id,
 				$typeId,
 				$caption,
-				$url
+				$url,
+				$value
 			);
 		}
 

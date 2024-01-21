@@ -2,7 +2,9 @@
 
 namespace Bitrix\ImBot\Bot;
 
+use Bitrix\ImBot\Error;
 use Bitrix\Main;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\DI\ServiceLocator;
@@ -12,6 +14,8 @@ use Bitrix\Im\Bot\Keyboard;
 use Bitrix\ImBot;
 use Bitrix\ImBot\Log;
 use Bitrix\ImBot\DialogSession;
+use Bitrix\Imopenlines;
+use Bitrix\Imopenlines\MessageParameter;
 
 class Network extends Base implements NetworkBot
 {
@@ -25,6 +29,7 @@ class Network extends Base implements NetworkBot
 		COMMAND_OPERATOR_MESSAGE_RECEIVED = 'operatorMessageReceived',
 		COMMAND_OPERATOR_START_WRITING = 'operatorStartWriting',
 		COMMAND_OPERATOR_CHANGE_LINE = 'operatorChangeLine',
+		COMMAND_OPERATOR_OPEN_NEW_DIALOG = 'operatorOpenNewDialog',
 		COMMAND_START_DIALOG_SESSION = 'startDialogSession',
 		COMMAND_FINISH_DIALOG_SESSION = 'finishDialogSession',
 		COMMAND_CHECK_PUBLIC_URL = 'checkPublicUrl',
@@ -47,6 +52,10 @@ class Network extends Base implements NetworkBot
 		MESSAGE_PARAM_SENDING = 'SENDING',
 		MESSAGE_PARAM_SENDING_TIME = 'SENDING_TS',
 		MESSAGE_PARAM_DELIVERED = 'IS_DELIVERED',
+
+		CHAT_ENTITY_TYPE = 'NETWORK_DIALOG',
+		CHAT_NETWORK_SUPPORT_COUNTER = 'imbot_network_dialog_',
+		CHAT_NETWORK_SUPPORT_MAX_DIALOGS_OPTION = 'network_dialogs_max_count_',
 
 		PORTAL_PATH = '/pub/imbot.php',
 
@@ -101,7 +110,7 @@ class Network extends Base implements NetworkBot
 	 */
 	public static function register(array $params = [])
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -207,7 +216,7 @@ class Network extends Base implements NetworkBot
 	 */
 	public static function unRegister($code = '', $notifyController = true)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -304,7 +313,7 @@ class Network extends Base implements NetworkBot
 			return false;
 		}
 
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -371,7 +380,7 @@ class Network extends Base implements NetworkBot
 			return false;
 		}
 
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -613,7 +622,7 @@ class Network extends Base implements NetworkBot
 			$previousLicence = $params['PREVIOUS_LICENCE_TYPE'];
 			$previousLicenceName = $params['PREVIOUS_LICENCE_NAME'];
 		}
-		elseif (Main\Loader::includeModule('bitrix24'))
+		elseif (Loader::includeModule('bitrix24'))
 		{
 			$currentLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_CURRENT);
 			$currentLicenceName = \CBitrix24::getLicenseName($currentLicence);
@@ -677,7 +686,7 @@ class Network extends Base implements NetworkBot
 
 		(new DialogSession)->clearSessions(['BOT_ID' => static::getBotId()]);
 
-		if (Main\Loader::includeModule('bitrix24'))
+		if (Loader::includeModule('bitrix24'))
 		{
 			$currentLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_CURRENT);
 			$currentLicenceName = \CBitrix24::getLicenseName($currentLicence);
@@ -716,12 +725,7 @@ class Network extends Base implements NetworkBot
 	 * Loads bot settings from controller.
 	 * @see \Bitrix\Botcontroller\Bot\Network\Command\SettingsSupport
 	 *
-	 * @param array $params Command arguments.
-	 * <pre>
-	 * [
-	 * 	(int) BOT_ID
-	 * ]
-	 * </pre>
+	 * @param array{BOT_ID: int, PORTAL_TARIFF: string} $params Command arguments.
 	 *
 	 * @return array|null
 	 */
@@ -1118,6 +1122,30 @@ class Network extends Base implements NetworkBot
 			$result = ['PONG' => 'OK'];
 		}
 
+		else if ($command === self::COMMAND_OPERATOR_OPEN_NEW_DIALOG)
+		{
+			Log::write($params, "NETWORK: $command");
+
+			$chatId = static::operatorOpenNewDialog([
+				'DIALOG_ID' => $params['DIALOG_ID'],
+				'SESSION_ID' => $params['SESSION_ID'],
+				'MESSAGE_ID' => $params['MESSAGE_ID'],
+				'QUOTED_MESSAGE' => $params['QUOTED_MESSAGE'],
+				'OPERATOR_ID' => $params['OPERATOR_ID'],
+				'CHAT_ID' => $params['CHAT_ID'] ?? null,
+				'USER_ID' => $params['USER_ID'] ?? null,
+				'BOT_ID' => $params['BOT_ID'] ?? null,
+				'PORTAL_ID' => $params['PORTAL_ID'] ?? null,
+				'LINE_NAME' => $params['LINE_NAME'] ?? null,
+				//'ALLOWED_QUESTIONS' => $params['ALLOWED_QUESTIONS'] ?? 1,
+			]);
+
+			if (!$chatId)
+			{
+				return ['RESULT' => 'FAIL'];
+			}
+		}
+
 		else
 		{
 			$result = new ImBot\Error(__METHOD__, 'UNKNOWN_COMMAND', 'Command is not found');
@@ -1136,8 +1164,22 @@ class Network extends Base implements NetworkBot
 	 */
 	protected static function checkMembershipRestriction(array $messageFields): bool
 	{
-		// Allow only one-to-one conversation
-		return $messageFields['MESSAGE_TYPE'] === \IM_MESSAGE_PRIVATE;
+		return (
+			// Standard network one-to-one conversation
+			(
+				$messageFields['MESSAGE_TYPE'] === \IM_MESSAGE_PRIVATE
+			)
+			// allow conversation in specialized questioning chat
+			|| (
+				$messageFields['MESSAGE_TYPE'] === \IM_MESSAGE_CHAT
+				&& $messageFields['CHAT_ENTITY_TYPE'] === self::CHAT_ENTITY_TYPE
+			)
+			// allow support bot membership in the notification channel
+			|| (
+				$messageFields['MESSAGE_TYPE'] === \IM_MESSAGE_CHAT
+				&& $messageFields['CHAT_ENTITY_TYPE'] === \Bitrix\ImBot\Service\Notifier::CHAT_ENTITY_TYPE
+			)
+		);
 	}
 
 	/**
@@ -1152,8 +1194,14 @@ class Network extends Base implements NetworkBot
 			return false;
 		}
 
-		// Allow only this bot as recipient
-		return $messageFields['TO_USER_ID'] == $messageFields['BOT_ID'];
+		return
+			(
+				$messageFields['TO_USER_ID'] == $messageFields['BOT_ID']
+			)
+			|| (
+				$messageFields['MESSAGE_TYPE'] === \IM_MESSAGE_CHAT
+				&& $messageFields['CHAT_ENTITY_TYPE'] === static::CHAT_ENTITY_TYPE
+			);
 	}
 
 	/**
@@ -1197,7 +1245,7 @@ class Network extends Base implements NetworkBot
 		$demoStartTime = 0;
 		$botVersion = '';
 
-		if (Main\Loader::includeModule('bitrix24'))
+		if (Loader::includeModule('bitrix24'))
 		{
 			$portalTariff = \CBitrix24::getLicenseType();
 			$portalTariffName = \CBitrix24::getLicenseName();
@@ -1250,8 +1298,10 @@ class Network extends Base implements NetworkBot
 			'BOT_VERSION' => $botVersion,
 		]);
 
-		$messageId = is_array($fields['MESSAGE']) ? (int)$fields['MESSAGE']['ID'] : 0;
-		$messageText = is_array($fields['MESSAGE']) ? (string)$fields['MESSAGE']['TEXT'] : (string)$fields['MESSAGE'];
+		$messageId = is_array($fields['MESSAGE']) && isset($fields['MESSAGE']['ID'])
+			? (int)$fields['MESSAGE']['ID'] : 0;
+		$messageText = is_array($fields['MESSAGE']) && isset($fields['MESSAGE']['TEXT'])
+			? (string)$fields['MESSAGE']['TEXT'] : (string)$fields['MESSAGE'];
 
 		$http = self::instanceHttpClient();
 		$response = $http->query(
@@ -1519,7 +1569,7 @@ class Network extends Base implements NetworkBot
 	 */
 	protected static function operatorMessageAdd($messageId, $messageFields)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im') || !Loader::includeModule('imopenlines'))
 		{
 			return false;
 		}
@@ -1560,7 +1610,7 @@ class Network extends Base implements NetworkBot
 
 		if ($messageId > 0)
 		{
-			$message['PARAMS'][self::MESSAGE_PARAM_CONNECTOR_MID] = [$messageId];
+			$message['PARAMS'][MessageParameter::CONNECTOR_MID] = [$messageId];
 		}
 
 		if (!empty($messageFields['KEYBOARD']))
@@ -1609,26 +1659,68 @@ class Network extends Base implements NetworkBot
 
 		// system
 		if (
-			isset($messageFields['PARAMS'], $messageFields['PARAMS']['CLASS'])
-			&& $messageFields['PARAMS']['CLASS'] === 'bx-messenger-content-item-ol-output'
+			isset($message['PARAMS'], $message['PARAMS'][Im\V2\Message\Params::STYLE_CLASS])
+			&& $message['PARAMS'][Im\V2\Message\Params::STYLE_CLASS] === 'bx-messenger-content-item-ol-output'
 		)
 		{
 			$message['URL_PREVIEW'] = 'N';
 		}
 
+		// convert vote params into component
+		if (
+			isset($message['PARAMS'])
+			&& isset($message['PARAMS'][MessageParameter::IMOL_VOTE_SID])
+			&& isset($message['PARAMS'][MessageParameter::IMOL_VOTE_LIKE])
+			&& isset($message['PARAMS'][MessageParameter::IMOL_VOTE_DISLIKE])
+		)
+		{
+			$message['PARAMS'][Im\V2\Message\Params::COMPONENT_ID] = 'SupportVoteMessage';
+			if (!isset($message['PARAMS'][Im\V2\Message\Params::COMPONENT_PARAMS]))
+			{
+				$message['PARAMS'][Im\V2\Message\Params::COMPONENT_PARAMS] = [];
+			}
+			$voteParams = [
+				MessageParameter::IMOL_VOTE,
+				MessageParameter::IMOL_VOTE_SID,
+				MessageParameter::IMOL_VOTE_TEXT,
+				MessageParameter::IMOL_VOTE_LIKE,
+				MessageParameter::IMOL_VOTE_DISLIKE,
+				MessageParameter::IMOL_DATE_CLOSE_VOTE,
+				MessageParameter::IMOL_TIME_LIMIT_VOTE,
+			];
+			foreach ($voteParams as $paramName)
+			{
+				if (isset($message['PARAMS'][$paramName]))
+				{
+					if (
+						$paramName == MessageParameter::IMOL_VOTE
+						&& is_numeric($message['PARAMS'][$paramName])
+					)
+					{
+						//todo: For compatibility with old client. Remove it.
+						$message['PARAMS'][Im\V2\Message\Params::COMPONENT_PARAMS][$paramName] = 'none';
+					}
+					else
+					{
+						$message['PARAMS'][Im\V2\Message\Params::COMPONENT_PARAMS][$paramName] = $message['PARAMS'][$paramName];
+					}
+				}
+			}
+		}
+
 		if (!empty($messageFields['USER']))
 		{
-			$message['PARAMS']['USER_ID'] = $messageFields['USER']['ID'];
+			$message['PARAMS'][Im\V2\Message\Params::USER_ID] = $messageFields['USER']['ID'];
 			$nameTemplateSite = \CSite::getNameFormat(false);
 			$userName = \CUser::formatName($nameTemplateSite, $messageFields['USER'], true, false);
 			if ($userName)
 			{
-				$message['PARAMS']['NAME'] = $userName;
+				$message['PARAMS'][Im\V2\Message\Params::NAME] = $userName;
 			}
 			$userAvatar = Im\User::uploadAvatar($messageFields['USER']['PERSONAL_PHOTO'], $messageFields['BOT_ID']);
 			if ($userAvatar)
 			{
-				$message['PARAMS']['AVATAR'] = $userAvatar;
+				$message['PARAMS'][Im\V2\Message\Params::AVATAR] = $userAvatar;
 			}
 		}
 
@@ -1639,17 +1731,27 @@ class Network extends Base implements NetworkBot
 			$needUpdateBotAvatar = true;
 
 			$bot = Im\Bot::getCache($messageFields['BOT_ID']);
-			if ($bot['MODULE_ID'] && Main\Loader::includeModule($bot['MODULE_ID']) && class_exists($bot["CLASS"]))
+			$botClass = $bot['CLASS'];
+
+			if (
+				!empty($bot['MODULE_ID'])
+				&& Loader::includeModule($bot['MODULE_ID'])
+				&& class_exists($botClass)
+				&& is_subclass_of($botClass, Imbot\Bot\NetworkBot::class)
+			)
 			{
-				if (method_exists($bot["CLASS"], 'isNeedUpdateBotFieldsAfterNewMessage'))
+				$needUpdateBotFields = $botClass::isNeedUpdateBotFieldsAfterNewMessage();
+				$needUpdateBotAvatar = $botClass::isNeedUpdateBotAvatarAfterNewMessage();
+			}
+
+			if (isset($messageFields['LINE']['MAX_DIALOGS_COUNT']))
+			{
+				if ((int)$messageFields['LINE']['MAX_DIALOGS_COUNT'] != self::getQuestionLimit((int)$messageFields['BOT_ID']))
 				{
-					$needUpdateBotFields = call_user_func_array([$bot["CLASS"], 'isNeedUpdateBotFieldsAfterNewMessage'], []);
-				}
-				if (method_exists($bot["CLASS"], 'isNeedUpdateBotAvatarAfterNewMessage'))
-				{
-					$needUpdateBotAvatar = call_user_func_array([$bot["CLASS"], 'isNeedUpdateBotAvatarAfterNewMessage'], []);
+					self::setQuestionLimit((int)$messageFields['LINE']['MAX_DIALOGS_COUNT'], (int)$messageFields['BOT_ID']);
 				}
 			}
+
 			if ($needUpdateBotFields || $needUpdateBotAvatar)
 			{
 				$botData = Im\User::getInstance($messageFields['BOT_ID']);
@@ -1677,16 +1779,30 @@ class Network extends Base implements NetworkBot
 					}
 				}
 
-				if ($needUpdateBotAvatar && !empty($messageFields['LINE']['AVATAR']))
+				if ($needUpdateBotAvatar)
 				{
-					$botAvatar = Im\User::uploadAvatar($messageFields['LINE']['AVATAR'], $messageFields['BOT_ID']);
-					if ($botAvatar && $botData->getAvatarId() != $botAvatar)
+					if (!empty($messageFields['LINE']['AVATAR']))
 					{
-						$connection = Main\Application::getConnection();
-						$connection->query("UPDATE b_user SET PERSONAL_PHOTO = ".(int)$botAvatar." WHERE ID = ".(int)$messageFields['BOT_ID']);
+						$botAvatar = Im\User::uploadAvatar($messageFields['LINE']['AVATAR'], $messageFields['BOT_ID']);
+						if ($botAvatar && $botData->getAvatarId() != $botAvatar)
+						{
+							Im\Bot::update(
+								['BOT_ID' => $messageFields['BOT_ID']],
+								['PROPERTIES' => ['PERSONAL_PHOTO' => $botAvatar]]
+							);
+						}
+					}
+					elseif (isset($messageFields['LINE']['AVATAR']))
+					{
+						if ($botData->getAvatarId())
+						{
+							Im\Bot::update(
+								['BOT_ID' => $messageFields['BOT_ID']],
+								['PROPERTIES' => ['DELETE_PERSONAL_PHOTO' => 'Y']]
+							);
+						}
 					}
 				}
-
 			}
 		}
 
@@ -1703,6 +1819,98 @@ class Network extends Base implements NetworkBot
 		}
 
 		return true;
+	}
+
+	/**
+	 * Returns the limit for additional questions.
+	 *
+	 * @param int|null $botId
+	 * @return int
+	 * -1 - Functional is disabled,
+	 * 0 - There is no limit,
+	 * n - Max number for sessions allowed.
+	 */
+	public static function getQuestionLimit(?int $botId = null): int
+	{
+		if (is_null($botId))
+		{
+			$botId = static::getBotId();
+		}
+
+		if (!$botId)
+		{
+			return -1;
+		}
+
+		return (int)Option::get(
+			self::MODULE_ID,
+			self::CHAT_NETWORK_SUPPORT_MAX_DIALOGS_OPTION . $botId,
+			-1
+		);
+	}
+
+	/**
+	 * Returns the limit for additional questions.
+	 *
+	 * @param int $limit
+	 * -1 - Functional is disabled,
+	 * 0 - There is no limit,
+	 * n - Max number for sessions allowed.
+	 * @param int|null $botId
+	 * @return void
+	 */
+	public static function setQuestionLimit(int $limit, ?int $botId = null): void
+	{
+		if (is_null($botId))
+		{
+			$botId = static::getBotId();
+		}
+
+		if ($botId)
+		{
+			Option::set(
+				self::MODULE_ID,
+				self::CHAT_NETWORK_SUPPORT_MAX_DIALOGS_OPTION . $botId,
+				$limit
+			);
+		}
+	}
+
+	public static function allowAdditionalQuestion(?int $botId = null): bool
+	{
+		$questionLimit = self::getQuestionLimit($botId);
+		if ($questionLimit === 0)
+		{
+			return true;
+		}
+
+		if ($questionLimit > 0)
+		{
+			$dialogSession = new ImBot\DialogSession($botId);
+
+			$dialogs = [
+				static::getCurrentUser()->getId()// dialog one-to-one
+			];
+			foreach (static::getRecentDialogs($dialogSession::EXPIRES_DAYS * 24, $botId) as $dialog)
+			{
+				if (
+					$dialog['MESSAGE_TYPE'] == \IM_MESSAGE_CHAT
+					&& $dialog['USER_ID'] == static::getCurrentUser()->getId()
+				)
+				{
+					$dialogs[] = 'chat' . $dialog['CHAT_ID'];
+				}
+			}
+
+			$countActiveSessions = $dialogSession->countActiveSessions([
+				'=BOT_ID' => $botId ?: static::getBotId(),
+				'=DIALOG_ID' => $dialogs,
+			]);
+
+			return $countActiveSessions < $questionLimit;
+		}
+
+		return false;
 	}
 
 	/**
@@ -1725,7 +1933,7 @@ class Network extends Base implements NetworkBot
 	 */
 	protected static function operatorMessageUpdate($messageId, $messageFields)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -1789,7 +1997,7 @@ class Network extends Base implements NetworkBot
 	 */
 	protected static function operatorMessageDelete($messageId, $messageFields)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -1813,7 +2021,7 @@ class Network extends Base implements NetworkBot
 	 */
 	protected static function operatorStartWriting($params)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -1848,28 +2056,45 @@ class Network extends Base implements NetworkBot
 	 */
 	protected static function operatorMessageReceived($params)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im') || !Loader::includeModule('imopenlines'))
 		{
 			return false;
 		}
 
-		$messageData = Im\Model\MessageTable::getList([
-			'select' => ['CHAT_ID'],
-			'filter' => ['=ID' => $params['MESSAGE_ID']]
-		])->fetch();
-		if (!$messageData)
+		if (
+			(int)$params['CONNECTOR_MID'] === -1
+			&& (int)$params['SESSION_ID'] > 0
+			&& Im\Common::isChatId($params['DIALOG_ID'])
+		)
+		{
+			$chatId = (int)Im\Dialog::getChatId($params['DIALOG_ID']);
+			$firstMessage = Im\Model\MessageTable::query()
+				->setSelect(['ID'])
+				->where('CHAT_ID', $chatId)
+				->setOrder(['ID' => 'ASC'])
+				->setLimit(1)
+				->fetch()
+			;
+			if (is_array($firstMessage))
+			{
+				$params['MESSAGE_ID'] = $firstMessage['ID'];
+			}
+		}
+
+		$message = new Im\V2\Message($params['MESSAGE_ID']);
+		if ($message->getId() != $params['MESSAGE_ID'])
 		{
 			return false;
 		}
 
 		$chatId = -1;
-		if (\Bitrix\Im\Common::isChatId($params['DIALOG_ID']))
+		if (Im\Common::isChatId($params['DIALOG_ID']))
 		{
-			$chatCheckRes = \Bitrix\Im\Model\BotChatTable::getList([
+			$chatCheckRes = Im\Model\BotChatTable::getList([
 				'select' => ['CHAT_ID'],
 				'filter' => [
 					'=BOT_ID' => (int)$params['BOT_ID'],
-					'=CHAT_ID' => (int)\Bitrix\Im\Dialog::getChatId($params['DIALOG_ID']),
+					'=CHAT_ID' => (int)Im\Dialog::getChatId($params['DIALOG_ID']),
 				]
 			]);
 			if ($chatCheck = $chatCheckRes->fetch())
@@ -1886,38 +2111,59 @@ class Network extends Base implements NetworkBot
 			return false;
 		}
 
-		if ($messageData['CHAT_ID'] != $chatId)
+		if ($message->getChatId() != $chatId)
 		{
 			return false;
 		}
 
-		$messageParamData = Im\Model\MessageParamTable::getList([
-			'select' => ['PARAM_VALUE'],
-			'filter' => [
-				'=MESSAGE_ID' => $params['MESSAGE_ID'],
-				'=PARAM_NAME' => self::MESSAGE_PARAM_SENDING
-			]
-		])->fetch();
-		if (!$messageParamData || $messageParamData['PARAM_VALUE'] != 'Y')
+		$chat = Im\V2\Chat::getInstance($chatId);
+
+
+		// set read message
+		$messages = new Im\V2\MessageCollection();
+		$messages->add($message);
+		$chat
+			->withContextUser(static::getBotId())
+			->readMessages($messages, true)
+		;
+
+		$messageParams = $message->getParams();
+		if (!isset($firstMessage) && !$messageParams->get(Im\V2\Message\Params::SENDING)->getValue())
 		{
 			return false;
 		}
 
-		$messageParams = [
-			self::MESSAGE_PARAM_SENDING => 'N',
-			self::MESSAGE_PARAM_SENDING_TIME => 0,
+		$pullParams = [
+			Im\V2\Message\Params::SENDING,
+			Im\V2\Message\Params::SENDING_TS
 		];
-		if ($params['CONNECTOR_MID'])
+		$messageParams->fill([
+			Im\V2\Message\Params::SENDING => false,
+			Im\V2\Message\Params::SENDING_TS => 0
+		]);
+		if (!isset($firstMessage) && !empty($params['CONNECTOR_MID']))
 		{
-			$messageParams[self::MESSAGE_PARAM_CONNECTOR_MID] = $params['CONNECTOR_MID'];
+			$pullParams[] = Imopenlines\MessageParameter::CONNECTOR_MID;
+			$messageParams->get(Imopenlines\MessageParameter::CONNECTOR_MID)->setValue($params['CONNECTOR_MID']);
 		}
-		if ((int)$params['SESSION_ID'] > 0)
+		if (!empty($params['SESSION_ID']) && (int)$params['SESSION_ID'] > 0)
 		{
-			$messageParams[self::MESSAGE_PARAM_SESSION_ID] = $params['SESSION_ID'];
+			$pullParams = array_merge($pullParams, [
+				Imopenlines\MessageParameter::IMOL_SID,
+				Im\V2\Message\Params::COMPONENT_ID,
+				Im\V2\Message\Params::COMPONENT_PARAMS,
+			]);
+			$messageParams->fill([
+				Imopenlines\MessageParameter::IMOL_SID => (int)$params['SESSION_ID'],
+				Im\V2\Message\Params::COMPONENT_ID => 'SupportSessionNumberMessage',
+				Im\V2\Message\Params::COMPONENT_PARAMS => [
+					Imopenlines\MessageParameter::IMOL_SID => (int)$params['SESSION_ID']
+				]
+			]);
 		}
+		$messageParams->save();
 
-		\CIMMessageParam::set($params['MESSAGE_ID'], $messageParams);
-		\CIMMessageParam::sendPull($params['MESSAGE_ID'], array_keys($messageParams));
+		\CIMMessageParam::sendPull($params['MESSAGE_ID'], $pullParams);
 
 		if ((int)$params['SESSION_ID'] > 0)
 		{
@@ -2002,6 +2248,8 @@ class Network extends Base implements NetworkBot
 	 */
 	public static function onMessageAdd($messageId, $messageFields)
 	{
+		Loader::includeModule('imopenlines');
+
 		if (isset($messageFields['SYSTEM']) && $messageFields['SYSTEM'] === 'Y')
 		{
 			return false;
@@ -2011,6 +2259,25 @@ class Network extends Base implements NetworkBot
 		{
 			(new \CIMChat($messageFields['BOT_ID']))->deleteUser($messageFields['CHAT_ID'], $messageFields['BOT_ID']);
 			return false;
+		}
+
+		$botId = (int)($messageFields['BOT_ID'] ?? self::getBotId());
+		if (
+			self::getQuestionLimit($botId) >= 0
+			&& !(self::instanceDialogSession($botId, $messageFields['DIALOG_ID'])->getSessionId() != 0)
+			&& !self::allowAdditionalQuestion($botId)
+		)
+		{
+			self::markMessageUndelivered($messageId);
+
+			self::sendMessage([
+				'DIALOG_ID' => $messageFields['DIALOG_ID'],
+				'MESSAGE' => Loc::getMessage('IMBOT_NETWORK_ERROR_CANT_OPEN_NEW_DIALOG'),
+				'URL_PREVIEW' => 'N',
+				'SYSTEM' => 'Y',
+			]);
+
+			return true;
 		}
 
 		if (!static::checkMessageRestriction($messageFields))
@@ -2027,7 +2294,7 @@ class Network extends Base implements NetworkBot
 		}
 
 		$files = [];
-		if (isset($messageFields['FILES']) && Main\Loader::includeModule('disk'))
+		if (isset($messageFields['FILES']) && Loader::includeModule('disk'))
 		{
 			foreach ($messageFields['FILES'] as $file)
 			{
@@ -2273,10 +2540,10 @@ class Network extends Base implements NetworkBot
 			{
 				if (
 					isset($message['params'])
-					&& isset($message['params'][self::MESSAGE_PARAM_IMOL_VOTE])
-					&& isset($message['params'][self::MESSAGE_PARAM_IMOL_VOTE_LIKE])
-					&& isset($message['params'][self::MESSAGE_PARAM_IMOL_VOTE_DISLIKE])
-					&& (int)$message['params'][self::MESSAGE_PARAM_IMOL_VOTE] > 0 //SESSION_ID
+					&& isset($message['params'][MessageParameter::IMOL_VOTE_SID])
+					&& isset($message['params'][MessageParameter::IMOL_VOTE_LIKE])
+					&& isset($message['params'][MessageParameter::IMOL_VOTE_DISLIKE])
+					&& (int)$message['params'][MessageParameter::IMOL_VOTE_SID] > 0 //SESSION_ID
 				)
 				{
 					$voteMessage = $message;
@@ -2291,16 +2558,16 @@ class Network extends Base implements NetworkBot
 			if ($voteMessage)
 			{
 				$isActionLike = $messageFields['MESSAGE'] === '1';
-				$sessionId = (int)$voteMessage['params'][self::MESSAGE_PARAM_IMOL_VOTE];
+				$sessionId = (int)$voteMessage['params'][MessageParameter::IMOL_VOTE_SID];
 
-				\CIMMessageParam::set($voteMessage['id'], [self::MESSAGE_PARAM_IMOL_VOTE => ($isActionLike ? 'like' : 'dislike')]);
-				\CIMMessageParam::sendPull($voteMessage['id'], [self::MESSAGE_PARAM_IMOL_VOTE]);
+				\CIMMessageParam::set($voteMessage['id'], [MessageParameter::IMOL_VOTE => ($isActionLike ? 'like' : 'dislike')]);
+				\CIMMessageParam::sendPull($voteMessage['id'], [MessageParameter::IMOL_VOTE]);
 
 				self::sendMessage([
 					'DIALOG_ID' => $dialogId,
 					'MESSAGE' => $isActionLike
-						? $voteMessage['params'][self::MESSAGE_PARAM_IMOL_VOTE_LIKE]
-						: $voteMessage['params'][self::MESSAGE_PARAM_IMOL_VOTE_DISLIKE],
+						? $voteMessage['params'][MessageParameter::IMOL_VOTE_LIKE]
+						: $voteMessage['params'][MessageParameter::IMOL_VOTE_DISLIKE],
 					'SYSTEM' => 'N',
 					'URL_PREVIEW' => 'N',
 				]);
@@ -2444,7 +2711,7 @@ class Network extends Base implements NetworkBot
 	 *
 	 * @return bool
 	 */
-	public static function isUserIntegrator($userId)
+	public static function isUserIntegrator($userId): bool
 	{
 		if (!$userId)
 		{
@@ -2456,7 +2723,7 @@ class Network extends Base implements NetworkBot
 		if (!isset($isIntegrator[$userId]))
 		{
 			$result = false;
-			if (Main\Loader::includeModule('bitrix24'))
+			if (Loader::includeModule('bitrix24'))
 			{
 				$result = \CBitrix24::isIntegrator($userId);
 			}
@@ -2474,13 +2741,13 @@ class Network extends Base implements NetworkBot
 	 *
 	 * @return bool
 	 */
-	public static function isUserAdmin($userId)
+	public static function isUserAdmin($userId): bool
 	{
 		static $isAdmin = [];
 		if (!isset($isAdmin[$userId]))
 		{
 			$user = self::getCurrentUser();
-			if (Main\Loader::includeModule('bitrix24'))
+			if (Loader::includeModule('bitrix24'))
 			{
 				if (
 					$user->isAuthorized()
@@ -2538,7 +2805,7 @@ class Network extends Base implements NetworkBot
 		{
 			$portalType = 'PRODUCTION';
 
-			if (Main\Loader::includeModule('bitrix24'))
+			if (Loader::includeModule('bitrix24'))
 			{
 				// BX24_IS_STAGE && BX24_IS_ETALON
 				// true true - is an etalon
@@ -2579,16 +2846,20 @@ class Network extends Base implements NetworkBot
 	 *   ...
 	 * </pre>
 	 */
-	public static function getRecentDialogs(int $hoursDepth = 168): iterable
+	public static function getRecentDialogs(int $hoursDepth = 168, ?int $botId = null): iterable
 	{
-		$botId = static::getBotId();
+		if (!$botId)
+		{
+			$botId = static::getBotId();
+		}
+
 		$depth = $hoursDepth * 3600;
 		$query = "
 			SELECT
 				RU.USER_ID,
 				RU.CHAT_ID,
 				RU.MESSAGE_TYPE, 
-				IF(UNIX_TIMESTAMP(M.DATE_CREATE) > UNIX_TIMESTAMP() - {$depth}, 'Y', 'N') RECENTLY_TALK,
+				CASE WHEN UNIX_TIMESTAMP(M.DATE_CREATE) > UNIX_TIMESTAMP(NOW()) - {$depth} THEN 'Y' ELSE 'N' END AS RECENTLY_TALK,
 				M.ID AS MESSAGE_ID
 			FROM
 				b_im_relation RB
@@ -2643,6 +2914,75 @@ class Network extends Base implements NetworkBot
 		}
 
 		return $chatId;
+	}
+
+	/**
+	 * Returns the question dialog list and perfoms searching by question dialog title.
+	 * @param array $params Query parameters.
+	 * <pre>
+	 * [
+	 * 	(string) searchQuery - String to search by title.
+	 * 	(int) limit - Number rows to select.
+	 * 	(int) offset - Set starting offset.
+	 * ]
+	 * </pre>
+	 * @return array{id: int, title: string}
+	 */
+	public static function getQuestionList(array $params): array
+	{
+		if (!static::isUserAdmin(static::getCurrentUser()->getId()))
+		{
+			static::addError(new Error(
+				__METHOD__,
+				'ACCESS_DENIED',
+				'You do not have access to create specified dialog'
+			));
+		}
+
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		if (!isset($params['BOT_ID']) || !$params['BOT_ID'])
+		{
+			$params['BOT_ID'] = static::getBotId();
+		}
+
+		$filter = [
+			'=TYPE' => \IM_MESSAGE_CHAT,
+			'=ENTITY_TYPE' => static::CHAT_ENTITY_TYPE,
+			'=AUTHOR_ID' => (int)$params['BOT_ID'],
+		];
+
+		if (!empty($params['SEARCHQUERY']))
+		{
+			$filter['%TITLE'] = $params['SEARCHQUERY'];
+		}
+
+		$chatRes = Im\Model\ChatTable::getList([
+			'runtime' => [
+				new Main\ORM\Fields\Relations\Reference(
+					'RELATION',
+					Im\Model\RelationTable::class,
+					Main\ORM\Query\Join::on('ref.CHAT_ID', '=', 'this.ID')->where('ref.USER_ID', '=', static::getCurrentUser()->getId()),
+					['join_type' => 'INNER']
+				)
+			],
+			'select' => ['ID', 'TITLE'],
+			'filter' => $filter,
+			'order' => ['ID' => 'DESC'],
+			'limit' => $params['LIMIT'] ? (int)$params['LIMIT'] : 25,
+			'offset' => $params['OFFSET'] ? (int)$params['OFFSET'] : 0,
+		]);
+
+		$questions = [];
+		while ($chat = $chatRes->fetch())
+		{
+			$questions[] = [
+				'id' => (int)$chat['ID'],
+				'title' => $chat['TITLE'],
+			];
+		}
+
+		return $questions;
 	}
 
 	//endregion
@@ -2825,7 +3165,7 @@ class Network extends Base implements NetworkBot
 		{
 			$users = [];
 
-			if (Main\Loader::includeModule('bitrix24'))
+			if (Loader::includeModule('bitrix24'))
 			{
 				$users = \CBitrix24::getAllAdminId();
 			}
@@ -2863,7 +3203,7 @@ class Network extends Base implements NetworkBot
 	 */
 	public static function replacePlaceholders($message, $userId = 0): string
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return $message;
 		}
@@ -3027,7 +3367,7 @@ class Network extends Base implements NetworkBot
 	 */
 	public static function sendMessage($messageFields)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return [];
 		}
@@ -3096,7 +3436,7 @@ class Network extends Base implements NetworkBot
 	 */
 	protected static function markMessageUndelivered(int $messageId)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -3129,7 +3469,7 @@ class Network extends Base implements NetworkBot
 	 */
 	protected static function dropMessage(int $messageId)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -3164,7 +3504,7 @@ class Network extends Base implements NetworkBot
 	 */
 	protected static function updateMessage(int $messageId, array $messageFields)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -3289,7 +3629,7 @@ class Network extends Base implements NetworkBot
 	 */
 	private static function switchButtonsAvailability(bool $availability, int $messageId, bool $sendPullNotify = true)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -3387,7 +3727,7 @@ class Network extends Base implements NetworkBot
 		{
 			return false;
 		}
-		if (!Main\Loader::includeModule('imopenlines'))
+		if (!Loader::includeModule('imopenlines'))
 		{
 			return false;
 		}
@@ -3505,12 +3845,17 @@ class Network extends Base implements NetworkBot
 			$update['FIELDS']['FIRST_MESSAGE'] = trim($fields['FIRST_MESSAGE']);
 		}
 
+		if (isset($fields['AVATAR_DEL']))
+		{
+			$update['FIELDS']['AVATAR_DEL'] = 'Y';
+			$update['FIELDS']['AVATAR'] = '';
+		}
 		if (isset($fields['AVATAR']))
 		{
 			$update['FIELDS']['AVATAR'] = '';
 
 			$fields['AVATAR'] = (int)$fields['AVATAR'];
-			if ($fields['AVATAR'])
+			if ($fields['AVATAR'] > 0)
 			{
 				$fileTmp = \CFile::resizeImageGet(
 					$fields['AVATAR'],
@@ -3524,7 +3869,7 @@ class Network extends Base implements NetworkBot
 				{
 					$update['FIELDS']['AVATAR'] = mb_substr($fileTmp['src'], 0, 4) == 'http'
 						? $fileTmp['src']
-						: ImBot\Http::getServerAddress().$fileTmp['src'];
+						: ImBot\Http::getServerAddress(). $fileTmp['src'];
 				}
 			}
 		}
@@ -3537,6 +3882,16 @@ class Network extends Base implements NetworkBot
 		if (isset($fields['HIDDEN']))
 		{
 			$update['FIELDS']['HIDDEN'] = $fields['HIDDEN'] == 'Y'? 'Y': 'N';
+		}
+
+		if (isset($fields['MULTIDIALOG']))
+		{
+			$update['FIELDS']['MULTIDIALOG'] = $fields['MULTIDIALOG'] === 'Y' ? 'Y': 'N';
+		}
+
+		if (isset($fields['MAX_DIALOGS_COUNT']))
+		{
+			$update['FIELDS']['MAX_DIALOGS_COUNT'] = (int)$fields['MAX_DIALOGS_COUNT'];
 		}
 
 		$http = self::instanceHttpClient();
@@ -3666,6 +4021,215 @@ class Network extends Base implements NetworkBot
 		return false;
 	}
 
+	protected static function operatorOpenNewDialog($params): ?int
+	{
+		if (isset($params['USER_ID']) && $params['USER_ID'])
+		{
+			$userId = (int)$params['USER_ID'];
+		}
+		elseif (isset($params['CHAT_ID']) && $params['CHAT_ID'])
+		{
+			$chat = Im\V2\Chat\ChatFactory::getInstance()->getChatById((int)$params['CHAT_ID']);
+			foreach ($chat->getRelations() as $relation)
+			{
+				if (!$relation->getUser()->isBot())
+				{
+					$userId = $relation->getUserId();
+					break;
+				}
+			}
+		}
+		else
+		{
+			return null;
+		}
+
+		$classSupport = static::class;
+		if (is_subclass_of($classSupport, Imbot\Bot\SupportQuestion::class))
+		{
+			$chatId = $classSupport::addSupportQuestion($userId, false);
+		}
+		else
+		{
+			$chatId = static::addNetworkQuestion(
+				$userId,
+				(int)$params['BOT_ID'],
+				$params['LINE_NAME'],
+				false
+			);
+		}
+
+		if ($chatId <= 0)
+		{
+			return null;
+		}
+
+		$messageParams = [
+			self::MESSAGE_PARAM_ALLOW_QUOTE => 'Y',
+			'IMOL_FORCE_OPERATOR' => $params['OPERATOR_ID'],
+		];
+		if (is_subclass_of($classSupport, Imbot\Bot\MenuBot::class))
+		{
+			static::stopMenuTrack('chat' . $chatId);
+			$messageParams[Imbot\Bot\Mixin\MESSAGE_PARAM_MENU_ACTION] = 'SKIP:MENU';
+		}
+
+		\CIMMessenger::add([
+			'MESSAGE_TYPE' => \IM_MESSAGE_CHAT,
+			'DIALOG_ID' => 'chat' . $chatId,
+			'FROM_USER_ID' => $params['BOT_ID'],
+			'MESSAGE' => $params['QUOTED_MESSAGE'],
+			'SKIP_USER_CHECK' => 'Y',
+			'PUSH' => 'N',
+			'PARAMS' => $messageParams
+		]);
+
+		$messageParams = [
+			'CLASS' => 'bx-messenger-content-item-system',
+			self::MESSAGE_PARAM_ALLOW_QUOTE => 'Y',
+		];
+		if (is_subclass_of($classSupport, Imbot\Bot\MenuBot::class))
+		{
+			$messageParams[Imbot\Bot\Mixin\MESSAGE_PARAM_MENU_ACTION] = 'SKIP:MENU';
+		}
+		self::clientMessageAdd([
+			'BOT_ID' => $params['BOT_ID'],
+			'USER_ID' => $userId,
+			'DIALOG_ID' => 'chat' . $chatId,
+			'MESSAGE' => [
+				'TEXT' => $params['QUOTED_MESSAGE'],
+			],
+			'EXTRA_DATA' => [
+				'OPERATOR_ID' => $params['OPERATOR_ID'],
+				'MESSAGE_ID' => $params['MESSAGE_ID'],
+				'SESSION_ID' => $params['SESSION_ID'],
+				'CHAT_ID' => $params['CHAT_ID'],
+			],
+			'PARAMS' => $messageParams,
+		]);
+
+		$parentChatFields = [
+			'MESSAGE_TYPE' => \IM_MESSAGE_PRIVATE,
+			'FROM_USER_ID' => $params['BOT_ID'],
+			'TO_USER_ID' => $userId,
+			'MESSAGE' => Loc::getMessage('IMBOT_NETWORK_BOT_NEW_MULTIDIALOG', ['#LINK#' => $chatId])
+				. "\n"
+				. $params['QUOTED_MESSAGE'],
+			'SKIP_USER_CHECK' => 'Y',
+			'SKIP_COMMAND' => 'Y',
+			'SKIP_CONNECTOR' => 'Y',
+			'SYSTEM' => 'Y',
+			'PARAMS' => []
+		];
+
+		if (isset($params['DIALOG_ID']) && mb_substr($params['DIALOG_ID'], 0, 4) === 'chat')
+		{
+			$parentChatFields['DIALOG_ID'] = $params['DIALOG_ID'];
+			$parentChatFields['MESSAGE_TYPE'] = \IM_MESSAGE_CHAT;
+		}
+
+		\CIMMessenger::add($parentChatFields);
+
+		return $chatId;
+	}
+
+	public static function addNetworkQuestionByBotId(int $botId, ?int $userId = null): int
+	{
+		return static::addNetworkQuestion(
+			$userId ?: static::getCurrentUser()->getId(),
+			$botId,
+			Im\User::getInstance($botId)->getName(),
+			true
+		);
+	}
+
+	protected static function addNetworkQuestion(
+		int $userId,
+		int $botId,
+		string $lineName,
+		bool $checkDialogsCount = false
+	): int
+	{
+		if ($checkDialogsCount && !static::allowAdditionalQuestion($botId))
+		{
+			static::addError(new Error(
+				__METHOD__,
+				'QUESTION_LIMIT_EXCEEDED',
+				'The limit for amount questions has been reached'
+			));
+
+			return -1;
+		}
+
+		$counter = static::incrementGlobalDialogCounter($botId);
+		$title = Loc::getMessage('IMBOT_NETWORK_DIALOG_TITLE', [
+			'#LINE_NAME#' => $lineName,
+			'#NUMBER#' => $counter
+		]);
+
+		$botData = Im\User::getInstance($botId);
+
+		$chatParams = [
+			'TYPE' => \IM_MESSAGE_CHAT,
+			'ENTITY_TYPE' => static::CHAT_ENTITY_TYPE,
+			'ENTITY_ID' => "network|{$counter}",
+			'USERS' => [
+				$botId,
+				$userId ?: static::getCurrentUser()->getId(),
+			],
+			'OWNER_ID' => static::getBotId() ?: $botId,
+			'TITLE' => $title,
+			'MESSAGE' => Loc::getMessage('IMBOT_NETWORK_DIALOG_GREETING'),
+			'SKIP_ADD_MESSAGE' => 'Y',
+		];
+
+		if ($botData->getAvatarId())
+		{
+			$chatParams['AVATAR_ID'] = $botData->getAvatarId();
+		}
+
+		$chatId = (new \CIMChat($botId))->add($chatParams);
+		if (!$chatId)
+		{
+			$error = static::getApplication()->getException();
+			if ($error instanceof \CApplicationException)
+			{
+				static::addError(new Error(
+					__METHOD__,
+					'WRONG_REQUEST',
+					$error->getString()
+				));
+
+				return -1;
+			}
+
+			static::addError(new Error(
+				__METHOD__,
+				'WRONG_REQUEST',
+				"Chat can't be created"
+			));
+
+			return -1;
+		}
+
+		if (!$checkDialogsCount)
+		{
+			$dialogSession = new DialogSession($botId, 'chat' . $chatId);
+			$dialogSession->start([
+				'GREETING_SHOWN' => 'Y',
+				'SESSION_ID' => -1
+			]);
+		}
+
+		return $chatId;
+	}
+
+	public static function incrementGlobalDialogCounter(int $botId): int
+	{
+		\CGlobalCounter::increment(static::CHAT_NETWORK_SUPPORT_COUNTER . $botId, \CGlobalCounter::ALL_SITES, false);
+		return (int)\CGlobalCounter::getValue(static::CHAT_NETWORK_SUPPORT_COUNTER . $botId, \CGlobalCounter::ALL_SITES);
+	}
+
 	//endregion
 
 	//region Bot's parameters
@@ -3740,7 +4304,7 @@ class Network extends Base implements NetworkBot
 	}
 
 	/**
-	 * @return bool|int
+	 * @return int
 	 */
 	public static function getBotId(): int
 	{
@@ -3772,18 +4336,7 @@ class Network extends Base implements NetworkBot
 	/**
 	 * Adds agent.
 	 *
-	 * @param array $params
-	 * <pre>
-	 * [
-	 *    (string) agent
-	 *    (string) class
-	 *    (string) next_execution
-	 *    (int) delay
-	 *    (bool) regular
-	 *    (int) interval
-	 * ]
-	 * </pre>
-	 *
+	 * @param array{agent: string, class: string, next_execution: string, delay: int, regular: bool, interval: int} $params
 	 * @return bool
 	 * @throws Main\ArgumentException
 	 */
@@ -3826,15 +4379,7 @@ class Network extends Base implements NetworkBot
 	/**
 	 * Removes agents.
 	 *
-	 * @param array $params
-	 * <pre>
-	 * [
-	 *    (string) agent
-	 *    (string) mask
-	 *    (string) class
-	 * ]
-	 * </pre>
-	 *
+	 * @param array{agent: string, mask: string, class: string} $params
 	 * @return bool
 	 * @throws Main\ArgumentException
 	 */
@@ -3862,6 +4407,73 @@ class Network extends Base implements NetworkBot
 		}
 
 		return true;
+	}
+
+	/**
+	 * @param string $target
+	 * @param string $action
+	 * @param string $code
+	 * @param int $delayMinutes
+	 *
+	 * @return void
+	 */
+	public static function scheduleAction($target, $action, $code = '', $delayMinutes = 1): void
+	{
+		$agentName = "scheduledActionAgent('{$target}', '{$action}', '{$code}')";
+		self::deleteAgent(['agent' => $agentName]);
+		self::addAgent([
+			'class' => $params['class'] ?? static::class,
+			'agent' => $agentName,
+			'delay' => $delayMinutes * 60,
+		]);
+	}
+
+	/**
+	 * @param string $target
+	 * @param string $action
+	 * @param string $code
+	 * @return void
+	 */
+	public static function deleteScheduledAction($target = '', $action = '', $code = ''): void
+	{
+		$action = trim($action);
+		$code = trim($code);
+
+		$filter = [];
+		if (!$target)
+		{
+			$filter['mask'] = "scheduledActionAgent(";
+		}
+		else
+		{
+			if ($action && $code)
+			{
+				$filter['agent'] = "scheduledActionAgent('{$target}', '{$action}', '{$code}')";
+			}
+			else if ($action)
+			{
+				$filter['mask'] = "scheduledActionAgent('{$target}', '{$action}',";
+			}
+			else
+			{
+				$filter['mask'] = "scheduledActionAgent('{$target}',";
+			}
+		}
+
+		self::deleteAgent($filter);
+	}
+
+	/**
+	 * @param string $target
+	 * @param string $action
+	 * @param string $code
+	 * @return string
+	 */
+	public static function scheduledActionAgent($target, $action, $code = ''): string
+	{
+		static::execScheduleAction($target, $action, $code);
+
+		return '';
 	}
 
 	//endregion

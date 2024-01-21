@@ -1,10 +1,10 @@
-import { Dom, Loc, Reflection, Tag, Text, Type } from 'main.core';
-import { Menu, MenuItem, MenuManager } from 'main.popup';
-import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Router } from 'crm.router';
+import { Dom, Loc, Reflection, Tag, Text, Type } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
-import { Menu as MenuConfigurable } from 'ui.menu-configurable';
+import { Menu, MenuItem, MenuManager } from 'main.popup';
 import 'ui.icons.service';
+import { Menu as MenuConfigurable } from 'ui.menu-configurable';
 import 'ui.notification';
 
 const CrmActivityEditor = Reflection.namespace('BX.CrmActivityEditor');
@@ -16,12 +16,14 @@ const CHANNEL_TYPE_EMAIL = 'EMAIL';
 const CHANNEL_TYPE_IM = 'IM';
 
 const MAX_VISIBLE_ITEMS = 4;
-const MARKET_LINK = '/market/category/crm_robot_sms/';
+const MARKET_LINK = 'category/crm_robot_sms/';
 
 export type ChannelSelectorParameters = {
 	id: ?string,
 	title: ?string,
+	documentTitle: ?string,
 	body: ?string,
+	fullBody?: string,
 	entityTypeId: number,
 	entityId: number,
 	channels: Array<ChannelData>,
@@ -35,6 +37,7 @@ export type ChannelSelectorParameters = {
 	hasVisibleChannels: boolean,
 	channelIcons: Array<string>,
 	contactCenterUrl: ?string,
+	templateCode?: string,
 };
 
 export type ChannelData = {
@@ -44,6 +47,9 @@ export type ChannelData = {
 	isAvailable: boolean,
 	isHidden: ?boolean,
 	icon: ?string,
+	templateCode?: string,
+	templatePlaceholders?: Object<string, string>,
+	categoryTitle?: string,
 }
 
 export type CommunicationData = {
@@ -69,8 +75,11 @@ export class List extends EventEmitter
 		link: ?HTMLElement,
 		channels: Object<string,HTMLElement>,
 	};
+
 	title: string;
+	documentTitle: string;
 	body: string;
+	fullBody: string;
 	#link: string;
 	isLinkObtainable: boolean;
 	entityTypeId: number;
@@ -90,7 +99,9 @@ export class List extends EventEmitter
 	{
 		super();
 		this.title = Type.isStringFilled(parameters.title) ? parameters.title : Loc.getMessage('CRM_CHANNEL_SELECTOR_DEFAULT_TITLE');
+		this.documentTitle = String(parameters.documentTitle);
 		this.body = String(parameters.body);
+		this.fullBody = String(parameters.fullBody);
 		this.#link = String(parameters.link);
 		this.isLinkObtainable = Text.toBoolean(parameters.isLinkObtainable);
 		this.entityTypeId = Text.toInteger(parameters.entityTypeId);
@@ -100,6 +111,7 @@ export class List extends EventEmitter
 		this.files = Type.isArray(parameters.files) ? parameters.files : [];
 		this.activityEditorId = String(parameters.activityEditorId);
 		this.smsUrl = String(parameters.smsUrl);
+		this.templateCode = parameters.templateCode ?? null;
 		this.setChannels(parameters.channels);
 		this.communications = Type.isPlainObject(parameters.communications) ? parameters.communications : {};
 		this.hasVisibleChannels = Text.toBoolean(parameters.hasVisibleChannels);
@@ -159,9 +171,8 @@ export class List extends EventEmitter
 			this.layout.settings = Tag.render`<button class="ui-btn ui-btn-xs ui-btn-link ui-btn-icon-setting crm__channel-selector--setting-btn" onclick="${this.#handleSettingsClick.bind(this)}"></button>`;
 			this.layout.list = Tag.render`<div class="crm__channel-selector--list"></div>`;
 
-			this.channels.forEach((channel: ChannelData) =>
-			{
-				const channelNode = this.#renderChannel(channel);
+			this.channels.forEach((channel: ChannelData) => {
+				const channelNode = this.renderChannel(channel);
 				if (channelNode)
 				{
 					this.layout.channels[channel.id] = channelNode;
@@ -200,25 +211,43 @@ export class List extends EventEmitter
 		return this.layout.container;
 	}
 
-	#renderChannel(channel: ChannelData): HTMLElement
+	renderChannel(channel: ChannelData): HTMLElement
 	{
 		const channelHandler = (() => {
 			this.#handleChannelClick(channel);
 		});
 
-		let icon = this.getChannelIcon(channel);
+		const icon = List.getChannelIcon(channel);
 
 		return Tag.render`<div 
 			class="crm__channel-selector--channel"
 			onclick="${channelHandler}"
 		>
 			${(icon ? Tag.render`<div class="crm__channel-selector--channel-icon ${icon}"></div>` : '')}
-			<div class="crm__channel-selector--channel-text">
-				${Text.encode(channel.title)}
-			</div>
+			${this.renderChannelMainTitle(channel)}
+			${this.renderChannelTitle(channel)}
 			<div class="crm__channel-selector--channel-helper">
 				<span class="crm__channel-selector--channel-helper-text">${Loc.getMessage('CRM_CHANNEL_SELECTOR_SEND_BUTTON')}</span>
 			</div>
+		</div>`;
+	}
+
+	renderChannelMainTitle(channel: ChannelData): HTMLElement
+	{
+		return Tag.render`<div class="crm__channel-selector--channel-main-title">
+			${Text.encode(channel.categoryTitle ?? channel.title)}
+		</div>`;
+	}
+
+	renderChannelTitle(channel: ChannelData): ?HTMLElement
+	{
+		if (!channel.categoryTitle)
+		{
+			return null;
+		}
+
+		return Tag.render`<div class="crm__channel-selector--channel-title">
+			${Text.encode(channel.title)}
 		</div>`;
 	}
 
@@ -392,7 +421,7 @@ export class List extends EventEmitter
 		settingsItems.push({
 			text: Loc.getMessage('CRM_CHANNEL_SELECTOR_CHOOSE_FROM_MARKET'),
 			id: 'market',
-			href: MARKET_LINK,
+			href: Loc.getMessage('MARKET_BASE_PATH') + MARKET_LINK,
 			onclick: (event: PointerEvent, item: MenuItem) => {
 				const menu = item.getMenuWindow()?.getRootMenuWindow() || item.getMenuWindow();
 				menu?.close();
@@ -527,24 +556,31 @@ export class List extends EventEmitter
 		const event = new BaseEvent();
 		event.setData({channel, communications: this.communications[channel.type]});
 		this.emit('onChannelClick', event);
+
 		if (event.isDefaultPrevented())
 		{
 			return;
 		}
+
 		if (!this.#isChannelAvailable(channel))
 		{
 			return;
 		}
+
 		if (channel.type === CHANNEL_TYPE_EMAIL)
 		{
 			this.sendEmail(channel);
+
 			return;
 		}
+
 		if (channel.type === CHANNEL_TYPE_PHONE)
 		{
 			this.sendSms(channel);
+
 			return;
 		}
+
 		if (channel.type === CHANNEL_TYPE_IM)
 		{
 			this.openMessenger(channel);
@@ -576,9 +612,9 @@ export class List extends EventEmitter
 			const channelNode = this.layout.channels[channel.id];
 			this.#getLink().then((link) => {
 				CrmActivityEditor?.items[this.activityEditorId]?.addEmail({
-					'subject': this.body,
-					'body': Loc.getMessage('CRM_CHANNEL_SELECTOR_MESSAGE_WITH_LINK', {
-						'#MESSAGE#': this.body,
+					subject: this.documentTitle,
+					body: Loc.getMessage('CRM_CHANNEL_SELECTOR_MESSAGE_WITH_LINK', {
+						'#MESSAGE#': this.documentTitle,
 						'#LINK#': link,
 					}),
 				});
@@ -589,9 +625,9 @@ export class List extends EventEmitter
 		else
 		{
 			CrmActivityEditor?.items[this.activityEditorId]?.addEmail({
-				'subject': this.body,
-				'diskfiles': this.files,
-				'storageTypeID': this.storageTypeId,
+				subject: this.documentTitle,
+				diskfiles: this.files,
+				storageTypeID: this.storageTypeId,
 			});
 		}
 	}
@@ -602,22 +638,35 @@ export class List extends EventEmitter
 		if (!this.smsUrl)
 		{
 			this.#showGetLinkErrorNotification(channelNode, 'No sms url');
+
 			return;
 		}
+
 		this.#getLink().then((link) => {
+			const requestParams = {
+				entityTypeId: this.entityTypeId,
+				entityId: this.entityId,
+				text: Loc.getMessage('CRM_CHANNEL_SELECTOR_MESSAGE_WITH_LINK', {
+					'#MESSAGE#': (channel.id === 'bitrix24' && this.fullBody) ? this.fullBody : this.body,
+					'#LINK#': link,
+				}),
+				providerId: channel.id,
+				isProviderFixed: 'Y',
+				canUseBitrix24Provider: 'Y',
+			};
+
+			if (channel.templateCode)
+			{
+				requestParams.templateCode = channel.templateCode;
+				requestParams.templatePlaceholders = channel.templatePlaceholders;
+				requestParams.templatePlaceholders.DOCUMENT_URL = link;
+				requestParams.isEditable = 'N';
+			}
+
 			Router.openSlider(this.smsUrl, {
 				width: 443,
 				requestMethod: 'post',
-				requestParams: {
-					entityTypeId: this.entityTypeId,
-					entityId: this.entityId,
-					text: Loc.getMessage('CRM_CHANNEL_SELECTOR_MESSAGE_WITH_LINK', {
-						'#MESSAGE#': this.body,
-						'#LINK#': link,
-					}),
-					providerId: channel.id,
-					isProviderFixed: 'Y',
-				}
+				requestParams,
 			});
 		}).catch((reason) => {
 			this.#showGetLinkErrorNotification(channelNode, reason);
@@ -687,31 +736,33 @@ export class List extends EventEmitter
 		return this.#loader;
 	}
 
-	getChannelIcon(channel: ChannelData): ?string
+	static getChannelIcon(channel: ChannelData): ?string
 	{
-		let icon = channel.icon;
-		if (!icon)
-		{
-			icon = List.getIconByChannelId(channel.id);
-		}
-
-		return icon;
+		return (channel.icon || List.getIconByChannelId(channel.id));
 	}
 
 	static getIconByChannelId(id: string): ?string
 	{
+		if (id === 'bitrix24')
+		{
+			return '--service-bitrix24';
+		}
+
 		if (id === CHANNEL_TYPE_EMAIL)
 		{
 			return '--service-email';
 		}
+
 		if (id === CHANNEL_TYPE_IM)
 		{
 			return '--service-livechat';
 		}
+
 		if (id === 'twilio')
 		{
 			return '--service-whatsapp';
 		}
+
 		if (id === 'ednaru' || id === 'ednaruimhpx')
 		{
 			return '--service-edna';

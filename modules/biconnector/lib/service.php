@@ -283,32 +283,32 @@ abstract class Service
 					{
 						case 'EQUALS':
 						case 'IN_LIST':
-							$andFilter[$negate . '=' . $subFilter['fieldName']] = $subFilter['values'];
+							$andFilter[] = [$negate . '=' . $subFilter['fieldName'] => $subFilter['values']];
 							break;
 						case 'CONTAINS':
-							$andFilter[$negate . '%' . $subFilter['fieldName']] = $subFilter['values'];
+							$andFilter[] = [$negate . '%' . $subFilter['fieldName'] => $subFilter['values']];
 							break;
 						case 'REGEXP_PARTIAL_MATCH':
 						case 'REGEXP_EXACT_MATCH':
 							$canBeFiltered = false;
 							break;
 						case 'IS_NULL':
-							$andFilter[$negate . '=' . $subFilter['fieldName']] = false;
+							$andFilter[] = [$negate . '=' . $subFilter['fieldName'] => false];
 							break;
 						case 'BETWEEN':
-							$andFilter[$negate . '><' . $subFilter['fieldName']] = $subFilter['values'];
+							$andFilter[] = [$negate . '><' . $subFilter['fieldName'] => $subFilter['values']];
 							break;
 						case 'NUMERIC_GREATER_THAN':
-							$andFilter[$negate . '>' . $subFilter['fieldName']] = $subFilter['values'];
+							$andFilter[] = [$negate . '>' . $subFilter['fieldName'] => $subFilter['values']];
 							break;
 						case 'NUMERIC_GREATER_THAN_OR_EQUAL':
-							$andFilter[$negate . '>=' . $subFilter['fieldName']] = $subFilter['values'];
+							$andFilter[] = [$negate . '>=' . $subFilter['fieldName'] => $subFilter['values']];
 							break;
 						case 'NUMERIC_LESS_THAN':
-							$andFilter[$negate . '<' . $subFilter['fieldName']] = $subFilter['values'];
+							$andFilter[] = [$negate . '<' . $subFilter['fieldName'] => $subFilter['values']];
 							break;
 						case 'NUMERIC_LESS_THAN_OR_EQUAL':
-							$andFilter[$negate . '<=' . $subFilter['fieldName']] = $subFilter['values'];
+							$andFilter[] = [$negate . '<=' . $subFilter['fieldName'] => $subFilter['values']];
 							break;
 						default:
 							$canBeFiltered = false;

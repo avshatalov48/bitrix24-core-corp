@@ -182,7 +182,7 @@ class Disk extends \IRestService
 	{
 		global $USER;
 
-		$userId = ((int)$params['userId'] ?: (int)$USER->getId());
+		$userId = (isset($params['userId']) ? (int)$params['userId'] : (int)$USER->getId());
 
 		if (
 			!Loader::includeModule('disk')

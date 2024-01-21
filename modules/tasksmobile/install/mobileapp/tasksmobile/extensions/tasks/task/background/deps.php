@@ -2,6 +2,6 @@
 
 return [
 	'extensions' => [
-		'tasks:entry',
+		'require-lazy',
 	],
 ];

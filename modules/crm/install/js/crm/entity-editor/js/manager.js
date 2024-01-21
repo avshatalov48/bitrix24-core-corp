@@ -39,6 +39,7 @@ if(typeof BX.Crm.EntityEditorDupManager === "undefined")
 					{
 						serviceUrl: this._serviceUrl,
 						entityTypeName: this._entityTypeName,
+						isSingleMode: BX.prop.getBoolean(settings, "isSingleMode", false),
 						form: this._form,
 						clientSearchBox: BX.prop.get(this._settings, 'clientSearchBox', null),
 						enableEntitySelect: BX.prop.getBoolean(this._settings, 'enableEntitySelect', false),
@@ -50,6 +51,10 @@ if(typeof BX.Crm.EntityEditorDupManager === "undefined")
 			isEnabled: function()
 			{
 				return this._isEnabled;
+			},
+			isSingleMode: function ()
+			{
+				return this._controller.isSingleMode();
 			},
 			search: function()
 			{

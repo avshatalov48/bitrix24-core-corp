@@ -1,8 +1,20 @@
 <?php
+
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @global CMain $APPLICATION */
 /** @var array $arParams */
 /** @var array $arResult */
+
+use Bitrix\Crm\Restriction\AvailabilityManager;
+
+$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+$isAvailable = $toolsManager->checkRobotsAvailability();
+if (!$isAvailable)
+{
+	print AvailabilityManager::getInstance()->getRobotsInaccessibilityContent();
+
+	return;
+}
 
 $cmpParams = [
 	'ENTITY_TYPE_ID' => CCrmOwnerType::Order,

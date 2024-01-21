@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/image', (require, exports, module) => {
 	const { Type } = require('type');
+
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
 
 	/**
@@ -19,7 +20,25 @@ jn.define('im/messenger/lib/element/dialog/message/image', (require, exports, mo
 		{
 			super(modelMessage, options);
 
-			this.setImageUrl(file.urlPreview);
+			/* region deprecated properties */
+			this.imageUrl = null;
+			this.previewParams = {
+				height: 0,
+				width: 0,
+			};
+			/* end region */
+
+			this.image = {
+				id: 0,
+				url: null,
+				previewParams: {
+					height: 0,
+					width: 0,
+				},
+			};
+
+			this.setImageId(file.id);
+			this.setImageUrl(file.urlShow);
 			this.setShowUsername(modelMessage, false);
 
 			if (modelMessage.text)
@@ -28,6 +47,7 @@ jn.define('im/messenger/lib/element/dialog/message/image', (require, exports, mo
 			}
 
 			this.setPreviewParams(file.image);
+			this.setLoadText();
 		}
 
 		getType()
@@ -40,6 +60,16 @@ jn.define('im/messenger/lib/element/dialog/message/image', (require, exports, mo
 			return this;
 		}
 
+		setImageId(imageId)
+		{
+			if (!Type.isNumber(imageId))
+			{
+				return;
+			}
+
+			this.image.id = imageId.toString();
+		}
+
 		setImageUrl(imageUrl)
 		{
 			if (!Type.isStringFilled(imageUrl))
@@ -48,6 +78,7 @@ jn.define('im/messenger/lib/element/dialog/message/image', (require, exports, mo
 			}
 
 			this.imageUrl = imageUrl;
+			this.image.url = imageUrl;
 		}
 
 		setPreviewParams(param)
@@ -58,10 +89,20 @@ jn.define('im/messenger/lib/element/dialog/message/image', (require, exports, mo
 					height: param.height || 0,
 					width: param.width || 0,
 				};
+
+				this.image.previewParams = {
+					height: param.height || 0,
+					width: param.width || 0,
+				};
 			}
 			else
 			{
 				this.previewParams = {
+					height: 0,
+					width: 0,
+				};
+
+				this.image.previewParams = {
 					height: 0,
 					width: 0,
 				};

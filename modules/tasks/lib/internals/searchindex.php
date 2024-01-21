@@ -1,14 +1,13 @@
 <?php
 namespace Bitrix\Tasks\Internals;
 
-use Bitrix\Main\ArgumentNullException;
-use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Config\Option;
-use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\Loader;
-use Bitrix\Main\LoaderException;
 use Bitrix\Main\ORM\Query\Filter;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Tasks\Internals\Log\Log;
+use Bitrix\Tasks\Internals\Task\Search\Builder\IndexBuilder;
+use Bitrix\Tasks\Internals\Task\Search\Exception\SearchIndexException;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Item\Task;
 use Bitrix\Tasks\Item\Task\Collection\CheckList;
@@ -16,6 +15,12 @@ use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Update\FullTasksIndexer;
 use Bitrix\Tasks\Util\Collection;
 use Bitrix\Tasks\Util\User;
+use CAgent;
+use CCrmOwnerType;
+use CCrmOwnerTypeAbbr;
+use CSearch;
+use CTaskItem;
+use Exception;
 
 /**
  * Class SearchIndex
@@ -24,7 +29,7 @@ use Bitrix\Tasks\Util\User;
  */
 class SearchIndex
 {
-	private static $fields = [
+	private static array $fields = [
 		'ID',
 		'TITLE',
 		'DESCRIPTION',
@@ -38,42 +43,20 @@ class SearchIndex
 		'UF_CRM_TASK',
 	];
 
-	/**
-	 * @param $taskId
-	 * @param array $taskData
-	 * @param string $searchIndex
-	 * @throws LoaderException
-	 * @throws SqlQueryException
-	 */
-	public static function setTaskSearchIndex($taskId, $taskData = [], $searchIndex = '')
+	public static function setTaskSearchIndex(int $taskId): void
 	{
-		if (!$searchIndex)
+		try
 		{
-			if (empty($taskData))
-			{
-				$searchIndex = static::getTaskSearchIndex($taskId);
-			}
-			else
-			{
-				$searchIndex = static::buildTaskSearchIndex($taskData);
-			}
+			$searchIndex = (new IndexBuilder($taskId))->build();
+			SearchIndexTable::set($taskId, 0, $searchIndex);
 		}
-		else
+		catch (SearchIndexException $exception)
 		{
-			$searchIndex = static::prepareSearchIndex($searchIndex);
+			(new Log())->collect("Search index error: {$exception->getMessage()}");
 		}
-
-		SearchIndexTable::set($taskId, 0, $searchIndex);
 	}
 
-	/**
-	 * @param $taskId
-	 * @param $commentId
-	 * @param $commentText
-	 * @throws LoaderException
-	 * @throws SqlQueryException
-	 */
-	public static function setCommentSearchIndex($taskId, $commentId, $commentText)
+	public static function setCommentSearchIndex(int $taskId, int $commentId, string $commentText): void
 	{
 		$searchIndex = htmlspecialcharsback($commentText);
 		$searchIndex = static::prepareSearchIndex($searchIndex);
@@ -81,34 +64,23 @@ class SearchIndex
 		SearchIndexTable::set($taskId, $commentId, $searchIndex);
 	}
 
-	/**
-	 * Return task's search index
-	 *
-	 * @param $taskId
-	 * @return string
-	 * @throws LoaderException
-	 */
-	public static function getTaskSearchIndex($taskId)
+	public static function getTaskSearchIndex(int $taskId): string
 	{
-		$searchIndex = '';
-		if ((int)$taskId > 0)
-		{
-			$task = \CTaskItem::getInstanceFromPool($taskId, 1);
-			$searchIndex = static::buildTaskSearchIndex($task);
-		}
+		$query = SearchIndexTable::query();
+		$query
+			->setSelect(['ID', 'SEARCH_INDEX'])
+			->where('TASK_ID', $taskId)
+			->where('MESSAGE_ID', 0)
+		;
 
-		return $searchIndex;
+		return (string)$query->exec()->fetchObject()?->getSearchIndex();
 	}
 
 	/**
-	 * Build search index for task based on $fields.
-	 *
-	 * @param array|\CTaskItem|Task $task
-	 * @param array $fields
-	 * @return string
-	 * @throws LoaderException
+	 * @deprecated
+	 * @use IndexBuilder
 	 */
-	public static function buildTaskSearchIndex($task, array $fields = [])
+	public static function buildTaskSearchIndex($task, array $fields = []): string
 	{
 		$searchIndex = '';
 
@@ -156,18 +128,15 @@ class SearchIndex
 
 	/**
 	 * Run stepper for full task's indexing (includes indexes of tasks and their comments).
-	 *
-	 * @throws ArgumentNullException
-	 * @throws ArgumentOutOfRangeException
 	 */
-	public static function runFullTasksIndexing()
+	public static function runFullTasksIndexing(): void
 	{
 		if (Option::get("tasks", "needFullTasksIndexing") === 'N')
 		{
 			Option::set("tasks", "needFullTasksIndexing", "Y");
 		}
 
-		$agent = \CAgent::GetList([], [
+		$agent = CAgent::GetList([], [
 			'MODULE_ID' => 'tasks',
 			'NAME' => '%FullTasksIndexer::execAgent();'
 		])->Fetch();
@@ -179,17 +148,11 @@ class SearchIndex
 	}
 
 	/**
+	 * @deprecated
 	 * Transfer task's search index record to b_tasks_search_index.
 	 * Method is deprecated and only used for stepper purposes.
-	 *
-	 * @param $taskId
-	 * @param string $searchIndex
-	 * @throws LoaderException
-	 * @throws SqlQueryException
-	 *
-	 * @deprecated
 	 */
-	public static function transferTaskSearchIndex($taskId, $searchIndex = '')
+	public static function transferTaskSearchIndex(int $taskId, string $searchIndex = ''): void
 	{
 		if ($searchIndex)
 		{
@@ -197,35 +160,29 @@ class SearchIndex
 		}
 		else
 		{
-			$searchIndex = static::getTaskSearchIndex($taskId);
+			$searchIndex = (new IndexBuilder($taskId))->build();
 		}
 
 		SearchIndexTable::set($taskId, 0, $searchIndex);
 	}
 
-	/**
-	 * @param $string
-	 * @param $isFullTextIndexEnabled
-	 * @return string
-	 */
-	public static function prepareStringToSearch($string, $isFullTextIndexEnabled = true): string
+	public static function prepareStringToSearch(string $index, bool $isFullTextIndexEnabled = true): string
 	{
-		$string = trim($string);
-		$string = ToUpper($string);
-		$string = self::prepareToken($string);
+		$index = trim($index);
+		$index = mb_strtoupper($index);
+		$index = self::prepareToken($index);
 
 		if ($isFullTextIndexEnabled)
 		{
-			$string = Filter\Helper::matchAgainstWildcard($string, '*');
+			$index = Filter\Helper::matchAgainstWildcard($index);
 		}
 
-		return $string;
+		return $index;
 	}
 
 	/**
-	 * @param $task
-	 * @param $fields
-	 * @return array|bool|mixed|null
+	 * @deprecated
+	 * @use IndexBuilder
 	 */
 	private static function getTaskData($task, $fields)
 	{
@@ -233,26 +190,24 @@ class SearchIndex
 
 		if (!is_array($task) && is_object($task))
 		{
-			if (is_a($task, '\Bitrix\Tasks\Item\Task'))
+			if (is_a($task, Task::class))
 			{
 				try
 				{
-					/** @var Task $task */
 					$taskData = $task->getData($fields);
 				}
-				catch (\Exception $exception)
+				catch (Exception)
 				{
 					$taskData = false;
 				}
 			}
-			else if (is_a($task, '\CTaskItem'))
+			else if (is_a($task, CTaskItem::class))
 			{
 				try
 				{
-					/** @var \CTaskItem $task */
 					$taskData = $task->getData(false, [], false);
 				}
-				catch (\Exception $exception)
+				catch (Exception)
 				{
 					$taskData = false;
 				}
@@ -263,12 +218,10 @@ class SearchIndex
 	}
 
 	/**
-	 * @param $field
-	 * @param $taskData
-	 * @return array
-	 * @throws LoaderException
+	 * @deprecated
+	 * @use IndexBuilder
 	 */
-	private static function getFieldValue($field, $taskData)
+	private static function getFieldValue($field, $taskData): array
 	{
 		$fieldValue = [];
 
@@ -359,8 +312,8 @@ class SearchIndex
 						{
 							$crmElement = explode('_', $item);
 							$type = $crmElement[0];
-							$typeId = \CCrmOwnerType::ResolveID(\CCrmOwnerTypeAbbr::ResolveName($type));
-							$title = \CCrmOwnerType::GetCaption($typeId, $crmElement[1]);
+							$typeId = CCrmOwnerType::ResolveID(CCrmOwnerTypeAbbr::ResolveName($type));
+							$title = CCrmOwnerType::GetCaption($typeId, $crmElement[1]);
 
 							$fieldValue[] = $title;
 						}
@@ -380,31 +333,21 @@ class SearchIndex
 		return $fieldValue;
 	}
 
-	/**
-	 * @param $searchIndex
-	 * @return string
-	 * @throws LoaderException
-	 */
-	private static function prepareSearchIndex($searchIndex)
+	private static function prepareSearchIndex(string $searchIndex): string
 	{
 		$searchIndex = UI::convertBBCodeToHtmlSimple($searchIndex);
 		if (Loader::includeModule('search'))
 		{
-			$searchIndex = \CSearch::killTags($searchIndex);
+			$searchIndex = CSearch::killTags($searchIndex);
 		}
 		$searchIndex = trim(str_replace(["\r", "\n", "\t"], " ", $searchIndex));
-		$searchIndex = ToUpper($searchIndex);
-		$searchIndex = static::prepareToken($searchIndex);
+		$searchIndex = mb_strtoupper($searchIndex);
 
-		return $searchIndex;
+		return static::prepareToken($searchIndex);
 	}
 
-	/**
-	 * @param $string
-	 * @return string
-	 */
-	private static function prepareToken($string)
+	private static function prepareToken(string $index): string
 	{
-		return str_rot13($string);
+		return str_rot13($index);
 	}
 }

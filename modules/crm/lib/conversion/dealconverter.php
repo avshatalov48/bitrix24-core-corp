@@ -35,6 +35,8 @@ class DealConverter extends EntityConverter
 	 */
 	public function initialize()
 	{
+		parent::initialize();
+
 		$this->determineStartingPhase();
 
 		if(!\CCrmDeal::Exists($this->entityID))
@@ -581,8 +583,18 @@ class DealConverter extends EntityConverter
 	 * Get Supported Destination Types.
 	 * @return array
 	 */
-	public function getSupportedDestinationTypeIDs()
+	public function getSupportedDestinationTypeIDs(): array
 	{
 		return array(\CCrmOwnerType::Quote, \CCrmOwnerType::Invoice);
+	}
+
+	/**
+	 * Returns true if activities from Deal entity should be copied to destination entity
+	 *
+	 * @return bool
+	 */
+	public function isAttachingSourceActivitiesEnabled(): bool
+	{
+		return false;
 	}
 }

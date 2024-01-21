@@ -2,7 +2,7 @@
  * @module layout/ui/entity-editor/control/product-summary-section
  */
 jn.define('layout/ui/entity-editor/control/product-summary-section', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { isEqual } = require('utils/object');
 	const { EntityEditorBaseControl } = require('layout/ui/entity-editor/control/base');
 
@@ -17,7 +17,7 @@ jn.define('layout/ui/entity-editor/control/product-summary-section', (require, e
 
 			const { count = 0, totalRaw = {} } = this.getValueFromModel({});
 			this.state = {
-				count: count,
+				count,
 				total: totalRaw,
 			};
 
@@ -102,6 +102,7 @@ jn.define('layout/ui/entity-editor/control/product-summary-section', (require, e
 					},
 					Image(
 						{
+							tintColor: AppTheme.colors.base3,
 							style: this.styles.productIcon,
 							resizeMode: 'center',
 							svg: svgImages.cube,
@@ -110,7 +111,7 @@ jn.define('layout/ui/entity-editor/control/product-summary-section', (require, e
 					Text(
 						{
 							style: this.styles.productCountText,
-							text: BX.message('FIELDS_PRODUCT_COUNT') + ': ' + this.state.count,
+							text: `${BX.message('FIELDS_PRODUCT_COUNT')}: ${this.state.count}`,
 						},
 					),
 					View(
@@ -123,7 +124,7 @@ jn.define('layout/ui/entity-editor/control/product-summary-section', (require, e
 						style: {
 							fontSize: 16,
 							fontWeight: 'bold',
-							color: '#333333',
+							color: AppTheme.colors.base1,
 						},
 					}),
 				),
@@ -175,11 +176,11 @@ jn.define('layout/ui/entity-editor/control/product-summary-section', (require, e
 		{
 			if (!this.schemeElement)
 			{
-				return "";
+				return '';
 			}
 
 			let title = this.schemeElement.getTitle();
-			if (title === "")
+			if (title === '')
 			{
 				title = this.schemeElement.getName();
 			}
@@ -226,7 +227,7 @@ jn.define('layout/ui/entity-editor/control/product-summary-section', (require, e
 
 		getName()
 		{
-			return this.schemeElement ? this.schemeElement.getName() : "";
+			return this.schemeElement ? this.schemeElement.getName() : '';
 		}
 
 		buildStyles()
@@ -239,7 +240,7 @@ jn.define('layout/ui/entity-editor/control/product-summary-section', (require, e
 					paddingBottom: 11,
 					justifyContent: 'center',
 					alignItems: 'center',
-					borderColor: '#00a2e8',
+					borderColor: AppTheme.colors.accentMainPrimary,
 					borderWidth: 1,
 					borderRadius: 6,
 					flexDirection: 'row',
@@ -250,7 +251,7 @@ jn.define('layout/ui/entity-editor/control/product-summary-section', (require, e
 					marginRight: 10,
 				},
 				addButtonText: {
-					color: '#525c69',
+					color: AppTheme.colors.base2,
 					fontSize: 16,
 					fontWeight: '500',
 				},
@@ -266,11 +267,11 @@ jn.define('layout/ui/entity-editor/control/product-summary-section', (require, e
 					width: '100%',
 				},
 				productTitle: {
-					color: '#bdc1c6',
+					color: AppTheme.colors.base5,
 					fontSize: 10,
 				},
 				productPriceTitle: {
-					color: '#bdc1c6',
+					color: AppTheme.colors.base5,
 					fontSize: 10,
 				},
 				productContent: {
@@ -286,18 +287,18 @@ jn.define('layout/ui/entity-editor/control/product-summary-section', (require, e
 					marginRight: 7,
 				},
 				productCountText: {
-					color: '#0b66c3',
+					color: AppTheme.colors.accentMainLinks,
 					fontSize: 16,
 				},
 				separator: {
 					flex: 1,
 					// height: 1,
-					// backgroundColor: '#d5d7db',
+					// backgroundColor: AppTheme.colors.base6,
 					marginLeft: 6,
 					marginRight: 6,
 				},
 				productCurrency: {
-					color: '#a8adb4',
+					color: AppTheme.colors.base4,
 					fontSize: 16,
 				},
 			};
@@ -306,7 +307,7 @@ jn.define('layout/ui/entity-editor/control/product-summary-section', (require, e
 
 	const svgImages = {
 		cube: {
-			content: `<svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.93984 0.793431C6.92683 0.797378 6.91326 0.805271 6.89912 0.812375L0.80446 3.22473C0.651753 3.29656 0.596329 3.45206 0.591797 3.63518V11.4025C0.593494 11.5761 0.68455 11.7411 0.80446 11.7877L6.84033 14.1746C6.91499 14.2077 7.01283 14.203 7.09371 14.1809L13.1837 11.775C13.3036 11.726 13.393 11.5579 13.3919 11.3835V3.68569C13.3953 3.44888 13.3364 3.30995 13.1792 3.23733L7.05298 0.812446C7.01113 0.791134 6.9783 0.78238 6.93984 0.793431ZM6.97604 1.62068L12.0346 3.62878L6.97604 5.62425L1.91298 3.62248L6.97604 1.62068Z" fill="#bdc1c6"/></svg>`,
+			content: `<svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.93984 0.793431C6.92683 0.797378 6.91326 0.805271 6.89912 0.812375L0.80446 3.22473C0.651753 3.29656 0.596329 3.45206 0.591797 3.63518V11.4025C0.593494 11.5761 0.68455 11.7411 0.80446 11.7877L6.84033 14.1746C6.91499 14.2077 7.01283 14.203 7.09371 14.1809L13.1837 11.775C13.3036 11.726 13.393 11.5579 13.3919 11.3835V3.68569C13.3953 3.44888 13.3364 3.30995 13.1792 3.23733L7.05298 0.812446C7.01113 0.791134 6.9783 0.78238 6.93984 0.793431ZM6.97604 1.62068L12.0346 3.62878L6.97604 5.62425L1.91298 3.62248L6.97604 1.62068Z" fill="${AppTheme.colors.base5}"/></svg>`,
 		},
 	};
 

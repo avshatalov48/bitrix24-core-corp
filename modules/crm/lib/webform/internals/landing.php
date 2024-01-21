@@ -50,6 +50,7 @@ class LandingTable extends ORM\Data\DataManager
 		return array(
 			'ID' => array(
 				'data_type' => 'integer',
+				'autocomplete' => true,
 				'primary' => true,
 			),
 			'FORM_ID' => array(

@@ -281,6 +281,7 @@ class QuoteTable extends DataManager
 
 			(new OneToMany('ELEMENTS', QuoteElementTable::class, 'QUOTE'))
 				->configureJoinType(Join::TYPE_INNER)
+				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW)
 			,
 
 			(new DateField(Item\Quote::FIELD_NAME_ACTUAL_DATE))

@@ -9,6 +9,27 @@ CJSCore::Init("fx");
 	position: relative;
 	word-break: break-word;
 }
+
+.bx-messenger-attach-message {
+	color: var(--base0);
+}
+
+.bx-messenger-attach-user .bx-messenger-attach-user-name {
+	color: var(--base2)!important;
+}
+
+.bx-messenger-file-image-src {
+	border-color: var(--base6);
+}
+
+.bx-messenger-attach-delimiter {
+	background-color: var(--bg-separator-secondary);
+}
+
+.bx-messenger-attach-blocks {
+	color: var(--base1);
+}
+
 </style>
 <script type="text/javascript">
 	function urlValidation(el)
@@ -88,11 +109,11 @@ function decodeBbCode($text, $safe = true)
 	$text = str_replace(['[BR]', '[br]', '#br#'], '<br>', $text);
 
 	$text = preg_replace_callback("/\\[url\\s*=\\s*((?:[^\\[\\]]++|\\[ (?: (?>[^\\[\\]]+) | (?:\\1) )* \\])+)\\s*\\](.*?)\\[\\/url\\]/ixs", function($match) {
-		return '<span data-url="'.$match[1].'" onclick="urlValidation(this)" style="color: #2067b0;font-weight: bold;">'.$match[2].'</span>';
+		return '<span data-url="'.$match[1].'" onclick="urlValidation(this)" style="color: var(--accent-main-links);font-weight: bold;">'.$match[2].'</span>';
 	}, $text);
 
 	$text = preg_replace_callback('/\[url\](.*?)\[\/url\]/i', function($match) {
-		return '<span data-url="'.$match[1].'" onclick="urlValidation(this)" style="color: #2067b0;font-weight: bold;">'.$match[1].'</span>';
+		return '<span data-url="'.$match[1].'" onclick="urlValidation(this)" style="color: var(--accent-main-links);font-weight: bold;">'.$match[1].'</span>';
 	}, $text);
 
 	$text = preg_replace_callback('/\[([buis])\](.*?)\[(\/[buis])\]/i', function($match) {
@@ -279,7 +300,7 @@ function getNotifyParamsHtml($params)
 		}
 		if ($blockResult)
 		{
-			$color = $attachBlock['COLOR']? htmlspecialcharsbx($attachBlock['COLOR']): '#818181';
+			$color = $attachBlock['COLOR']? htmlspecialcharsbx($attachBlock['COLOR']): 'var(--base3)';
 			$result .= '<div class="bx-messenger-attach" style="border-color:'.$color.'">'.$blockResult.'</div>';
 		}
 	}

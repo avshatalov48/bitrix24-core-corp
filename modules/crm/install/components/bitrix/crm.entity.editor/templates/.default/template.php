@@ -337,7 +337,8 @@ if(!empty($htmlEditorConfigs))
 					canUpdatePersonalConfiguration: <?=$arResult['CAN_UPDATE_PERSONAL_CONFIGURATION'] ? 'true' : 'false'?>,
 					canUpdateCommonConfiguration: <?=$arResult['CAN_UPDATE_COMMON_CONFIGURATION'] ? 'true' : 'false'?>,
 					options: <?=CUtil::PhpToJSObject($arResult['ENTITY_CONFIG_OPTIONS'])?>,
-                    categoryName: "<?=CUtil::JSEscape($arResult['ENTITY_CONFIG_CATEGORY_NAME'])?>"
+					categoryName: "<?=CUtil::JSEscape($arResult['ENTITY_CONFIG_CATEGORY_NAME'])?>",
+					signedParams: "<?=CUtil::JSEscape($arResult['ENTITY_CONFIG_SIGNED_PARAMS'])?>"
 				}
 			);
 
@@ -437,8 +438,8 @@ if(!empty($htmlEditorConfigs))
 			{
 				popupItemTitle: "<?=GetMessageJS('CRM_ENTITY_EM_BUTTON_PAY_POPUP_ITEM_TITLE')?>",
 				payButtonLabel: "<?=GetMessageJS('CRM_ENTITY_EM_BUTTON_PAY')?>",
-				showPayButton: "<?=GetMessageJS('CRM_ENTITY_EM_SHOW_BUTTON_PAY')?>",
-				hidePayButton: "<?=GetMessageJS('CRM_ENTITY_EM_HIDE_BUTTON_PAY')?>",
+				showPayButton: "<?=GetMessageJS('CRM_ENTITY_EM_SHOW_BUTTON_PAY_MSGVER_1')?>",
+				hidePayButton: "<?=GetMessageJS('CRM_ENTITY_EM_HIDE_BUTTON_PAY_MSGVER_1')?>",
 			};
 
 			BX.UI.EntityEditorFieldConfigurator.messages =
@@ -527,7 +528,7 @@ if(!empty($htmlEditorConfigs))
 				diskAttachFiles: "<?=GetMessageJS('CRM_ENTITY_ED_DISK_ATTACH_FILE')?>",
 				diskAttachedFiles: "<?=GetMessageJS('CRM_ENTITY_ED_DISK_ATTACHED_FILES')?>",
 				diskSelectFile: "<?=GetMessageJS('CRM_ENTITY_ED_DISK_SELECT_FILE')?>",
-				diskSelectFileLegend: "<?=GetMessageJS('CRM_ENTITY_ED_DISK_SELECT_FILE_LEGEND')?>",
+				diskSelectFileLegend: "<?=GetMessageJS('CRM_ENTITY_ED_DISK_SELECT_FILE_LEGEND_MSGVER_1')?>",
 				diskUploadFile: "<?=GetMessageJS('CRM_ENTITY_ED_DISK_UPLOAD_FILE')?>",
 				diskUploadFileLegend: "<?=GetMessageJS('CRM_ENTITY_ED_DISK_UPLOAD_FILE_LEGEND')?>"
 			};
@@ -836,22 +837,23 @@ if(!empty($htmlEditorConfigs))
 				BX.Crm.EntityEditor.create(
 					"<?=CUtil::JSEscape($guid)?>",
 					{
+						model,
+						config,
+						scheme,
+						bizprocManager,
+						restPlacementTabManager,
+						userFieldManager,
 						entityTypeName: "<?=CUtil::JSEscape($arResult['ENTITY_TYPE_NAME'])?>",
 						entityTypeId: <?=$arResult['ENTITY_TYPE_ID']?>,
 						entityTypeTitle: "<?= CUtil::JSEscape($arResult['ENTITY_TYPE_TITLE']) ?>",
 						useFieldsSearch: true,
 						useForceFieldsAdd: true,
 						entityId: <?=$arResult['ENTITY_ID']?>,
-						model: model,
-						config: config,
 						moduleId: 'crm',
-						scheme: scheme,
 						validators: <?=CUtil::PhpToJSObject($arResult['ENTITY_VALIDATORS'])?>,
 						controllers: <?=CUtil::PhpToJSObject($arResult['ENTITY_CONTROLLERS'])?>,
 						detailManagerId: "<?=CUtil::JSEscape($arResult['DETAIL_MANAGER_ID'])?>",
-						userFieldManager: userFieldManager,
-						bizprocManager: bizprocManager,
-						restPlacementTabManager: restPlacementTabManager,
+						additionalFieldsData: <?= CUtil::PhpToJSObject($arResult['ADDITIONAL_FIELDS_DATA']) ?>,
 						canCreateContact: <?=CUtil::PhpToJSObject($arResult['CAN_CREATE_CONTACT'])?>,
 						canCreateCompany: <?=CUtil::PhpToJSObject($arResult['CAN_CREATE_COMPANY'])?>,
 						duplicateControl: <?=CUtil::PhpToJSObject($arResult['DUPLICATE_CONTROL'])?>,
@@ -899,7 +901,10 @@ if(!empty($htmlEditorConfigs))
 						isEmbedded: <?=$arResult['IS_EMBEDDED'] ? 'true' : 'false'?>,
 						customToolPanelButtons: <?=CUtil::PhpToJSObject($arResult['CUSTOM_TOOL_PANEL_BUTTONS'])?>,
 						toolPanelButtonsOrder: <?=CUtil::PhpToJSObject($arResult['TOOL_PANEL_BUTTONS_ORDER'])?>,
-						restrictions: <?=CUtil::PhpToJSObject($arResult['RESTRICTIONS'])?>
+						restrictions: <?=CUtil::PhpToJSObject($arResult['RESTRICTIONS'])?>,
+						canUsePull: <?= CUtil::PhpToJSObject(($arResult['CAN_USE_PULL'] ?? 'N') === 'Y') ?>,
+						pullTag: "<?= CUtil::JSEscape($arResult['PULL_TAG'] ?? '') ?>",
+						pullModuleId: "<?= CUtil::JSEscape($arResult['PULL_MODULE_ID'] ?? '') ?>",
 					}
 				)
 			);

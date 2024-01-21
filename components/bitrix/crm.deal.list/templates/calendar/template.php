@@ -526,7 +526,14 @@ $APPLICATION->IncludeComponent("bitrix:calendar.interface.grid", "", Array(
 				BX.SidePanel.Instance.open(params.entry.data.OPEN_URL,
 				{
 					cacheable: false,
-					loader: "crm-entity-details-loader"
+					loader: "crm-entity-details-loader",
+					label: {
+						text: "<?= Loc::getMessage('CRM_COMMON_DEAL')?>",
+						bgColor: "#9985DD",
+					},
+					width: window.innerWidth < 1500
+						? null
+						: 1500 + Math.floor((window.innerWidth - 1500) / 3)
 				});
 			}
 		});
@@ -552,7 +559,20 @@ $APPLICATION->IncludeComponent("bitrix:calendar.interface.grid", "", Array(
 						url = url.replace('#DATE_TO#', to);
 					}
 
-					BX.SidePanel.Instance.open(url, {cacheable: false, loader: "crm-entity-details-loader"});
+					BX.SidePanel.Instance.open(
+						url,
+						{
+							cacheable: false,
+							loader: "crm-entity-details-loader",
+							label: {
+								text: "<?= Loc::getMessage('CRM_COMMON_DEAL')?>",
+								bgColor: "#9985DD",
+							},
+							width: window.innerWidth < 1500
+								? null
+								: 1500 + Math.floor((window.innerWidth - 1500) / 3)
+						}
+					);
 				}
 			});
 		<?endif;?>

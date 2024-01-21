@@ -34,7 +34,7 @@ class Marta extends Base
 
 		$botId = \Bitrix\Im\Bot::register(Array(
 			'CODE' => self::BOT_CODE,
-			'TYPE' => \Bitrix\Im\Bot::TYPE_HUMAN,
+			'TYPE' => \Bitrix\Im\Bot::TYPE_BOT,
 			'MODULE_ID' => self::MODULE_ID,
 			'CLASS' => __CLASS__,
 			'LANG' => $language,
@@ -454,6 +454,8 @@ class Marta extends Base
 
 		if (\CBitrix24::isDomainChanged())
 			return "";
+
+		return '';
 
 		$language = null;
 		$botData = \Bitrix\Im\Bot::getCache(self::getBotId());

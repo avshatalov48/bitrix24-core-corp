@@ -12,12 +12,24 @@ class Role
 	public const AUDITOR = 'view_role_auditor';
 	public const ORIGINATOR = 'view_role_originator';
 
+	public const RESPONSIBLE_STATE = 'sR400';
+	public const ACCOMPLICE_STATE = 'sR800';
+	public const AUDITOR_STATE = 'sRc00';
+	public const ORIGINATOR_STATE = 'sRg00';
+
 	public const ROLE_MAP = [
 		self::ALL => null,
 		self::RESPONSIBLE => MemberTable::MEMBER_TYPE_RESPONSIBLE,
 		self::ACCOMPLICE => MemberTable::MEMBER_TYPE_ACCOMPLICE,
 		self::AUDITOR => MemberTable::MEMBER_TYPE_AUDITOR,
 		self::ORIGINATOR => MemberTable::MEMBER_TYPE_ORIGINATOR
+	];
+
+	public const STATE_MAP = [
+		self::RESPONSIBLE_STATE => self::RESPONSIBLE,
+		self::ACCOMPLICE_STATE => self::ACCOMPLICE,
+		self::AUDITOR_STATE => self::AUDITOR,
+		self::ORIGINATOR_STATE => self::ORIGINATOR,
 	];
 
 	public static function getRoles()
@@ -57,5 +69,10 @@ class Role
 	{
 		/** @noinspection PhpDeprecationInspection */
 		return \CTaskListState::getRoleNameById($roleId);
+	}
+
+	public static function getByState(string $state): string
+	{
+		return static::STATE_MAP[$state] ?? '';
 	}
 }

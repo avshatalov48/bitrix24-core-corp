@@ -7,7 +7,6 @@ use Bitrix\Main\Localization\Loc;
 
 class CreationDataProvider extends Grid\Column\DataProvider
 {
-
 	public function prepareColumns(): array
 	{
 		return [

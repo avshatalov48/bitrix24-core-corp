@@ -14,6 +14,7 @@ use Bitrix\Main\UI\Filter\DateType;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Report\VisualConstructor\IReportMultipleGroupedData;
 use Bitrix\Crm\Integration\Report\Handler;
+use Bitrix\Main\Application;
 
 /**
  * Class Deal
@@ -57,7 +58,8 @@ class BaseGraph extends Handler\Deal implements IReportMultipleGroupedData
 		$query->addSelect(Query::expr()->sum('OPPORTUNITY'), 'SUM');
 
 		$closedDateFormat = $this->getDateGrouping() === static::GROUP_MONTH ? '%%Y-%%m-01' : '%%Y-%%m-%%d';
-		$query->addSelect(new ExpressionField("CLOSED", "DATE_FORMAT(%s, '{$closedDateFormat}')", "CLOSEDATE"));
+		$helper = Application::getConnection()->getSqlHelper();
+		$query->addSelect(new ExpressionField('CLOSED', $helper->formatDate($closedDateFormat, '%s'), 'CLOSEDATE'));
 
 		$query->addSelect("CURRENCY_ID");
 

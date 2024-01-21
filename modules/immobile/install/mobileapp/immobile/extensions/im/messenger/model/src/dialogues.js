@@ -5,12 +5,13 @@
  */
 jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 	const { Type } = require('type');
-	const { DialogType } = require('im/messenger/const');
+	const { DialogType, UserRole } = require('im/messenger/const');
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { Color } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { Logger } = require('im/messenger/lib/logger');
 	const { clone } = require('utils/object');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('model--dialogues');
 
 	const dialogState = {
 		dialogId: '0',
@@ -24,6 +25,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		counter: 0,
 		userCounter: 0,
 		participants: [],
+		lastLoadParticipantId: 0,
 		lastReadId: 0,
 		markedId: 0,
 		lastMessageId: 0,
@@ -52,14 +54,20 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		hasPrevPage: false,
 		hasNextPage: false,
 		diskFolderId: 0,
+		role: UserRole.guest,
+		permissions: {
+			manageUsersAdd: UserRole.none,
+			manageUsersDelete: UserRole.none,
+			manageUi: UserRole.none,
+			manageSettings: UserRole.none,
+			canPost: UserRole.none,
+		},
 	};
 
 	const dialoguesModel = {
 		namespaced: true,
 		state: () => ({
 			collection: {},
-			saveDialogList: [],
-			saveChatList: [],
 		}),
 		getters: {
 			/**
@@ -68,6 +76,44 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			 */
 			getById: (state) => (id) => {
 				return state.collection[id];
+			},
+
+			/** @function dialoguesModel/getByIdList */
+			getByIdList: (state, getters) => (idList) => {
+				if (!Type.isArrayFilled(idList))
+				{
+					return [];
+				}
+
+				const dialogList = [];
+				idList.forEach((id) => {
+					const dialog = getters.getById(id);
+					if (dialog)
+					{
+						dialogList.push(dialog);
+					}
+				});
+
+				return dialogList;
+			},
+
+			/** @function dialoguesModel/getCollectionByIdList */
+			getCollectionByIdList: (state, getters) => (idList) => {
+				if (!Type.isArrayFilled(idList))
+				{
+					return [];
+				}
+
+				const collection = {};
+				idList.forEach((id) => {
+					const dialog = getters.getById(id);
+					if (dialog)
+					{
+						collection[id] = dialog;
+					}
+				});
+
+				return collection;
 			},
 
 			/**
@@ -117,6 +163,20 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			},
 		},
 		actions: {
+			/** @function dialoguesModel/setState */
+			setState: (store, payload) => {
+				Object.entries(payload.collection).forEach(([key, value]) => {
+					payload.collection[key].writingList = [];
+				});
+
+				store.commit('setState', {
+					actionName: 'setState',
+					data: {
+						collection: payload.collection,
+					},
+				});
+			},
+
 			/** @function dialoguesModel/set */
 			set: (store, payload) => {
 				if (!Array.isArray(payload) && Type.isPlainObject(payload))
@@ -242,12 +302,6 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 			/** @function dialoguesModel/delete */
 			delete: (store, payload) => {
-				const existingItem = store.state.collection[payload.dialogId];
-				if (!existingItem)
-				{
-					return false;
-				}
-
 				store.commit('delete', {
 					actionName: 'delete',
 					data: {
@@ -410,8 +464,11 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 					return false;
 				}
 
-				const validUsersId = validate(store, { participants: newParticipants });
-				const uniqId = validUsersId.participants.filter((userId) => !existingItem.participants.includes(userId));
+				const validData = validate(
+					store,
+					{ participants: newParticipants, lastLoadParticipantId: payload.lastLoadParticipantId },
+				);
+				const uniqId = validData.participants.filter((userId) => !existingItem.participants.includes(userId));
 				if (uniqId.length === 0)
 				{
 					return false;
@@ -419,11 +476,18 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 				const newState = [...existingItem.participants, ...uniqId];
 				const userCounter = payload.userCounter || existingItem.userCounter;
+
+				const fields = {
+					participants: newState,
+					userCounter,
+					lastLoadParticipantId: validData.lastLoadParticipantId || existingItem.lastLoadParticipantId,
+				};
+
 				store.commit('update', {
 					actionName: 'addParticipants',
 					data: {
 						dialogId: payload.dialogId,
-						fields: { participants: newState, userCounter },
+						fields,
 					},
 				});
 			},
@@ -511,6 +575,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 						userName,
 						date,
 						messageId,
+						countOfViewers = 1,
 					},
 				} = payload;
 				const existingItem = store.state.collection[dialogId];
@@ -520,7 +585,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				}
 
 				const newLastMessageViews = {
-					countOfViewers: 1,
+					countOfViewers,
 					messageId,
 					firstViewer: {
 						userId,
@@ -542,7 +607,6 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			/** @function dialoguesModel/clearAllCounters */
 			clearAllCounters: (store, payload) => {
 				Object.values(store.state.collection).forEach((dialogItem) => {
-
 					if (dialogItem.counter > 0)
 					{
 						store.commit('update', {
@@ -563,8 +627,22 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			 * @param state
 			 * @param {MutationPayload} payload
 			 */
+			setState: (state, payload) => {
+				logger.log('dialoguesModel: setState mutation', payload);
+
+				const {
+					collection,
+				} = payload.data;
+
+				state.collection = collection;
+			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload} payload
+			 */
 			add: (state, payload) => {
-				Logger.warn('dialoguesModel: add mutation', payload);
+				logger.log('dialoguesModel: add mutation', payload);
 
 				const {
 					dialogId,
@@ -579,7 +657,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			 * @param {MutationPayload} payload
 			 */
 			update: (state, payload) => {
-				Logger.warn('dialoguesModel: update mutation', payload, state.collection[payload.data.dialogId]);
+				logger.log('dialoguesModel: update mutation', payload);
 
 				const {
 					dialogId,
@@ -594,7 +672,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			 * @param {MutationPayload} payload
 			 */
 			delete: (state, payload) => {
-				Logger.warn('dialoguesModel: delete mutation', payload);
+				logger.log('dialoguesModel: delete mutation', payload);
 
 				const {
 					dialogId,
@@ -670,9 +748,14 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			fields.lastId = fields.last_id;
 		}
 
-		if (Type.isNumber(fields.lastId))
+		if (Type.isNumber(fields.lastId) || Type.isStringFilled(fields.lastId))
 		{
-			result.lastReadId = fields.lastId;
+			result.lastReadId = Number.parseInt(fields.lastId, 10);
+		}
+
+		if (Type.isNumber(fields.lastReadId) || Type.isStringFilled(fields.lastReadId))
+		{
+			result.lastReadId = Number.parseInt(fields.lastReadId, 10);
 		}
 
 		if (!Type.isUndefined(fields.marked_id))
@@ -690,6 +773,11 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			fields.lastMessageId = fields.last_message_id;
 		}
 
+		if (Type.isNumber(fields.lastLoadParticipantId))
+		{
+			result.lastLoadParticipantId = fields.lastLoadParticipantId;
+		}
+
 		if (Type.isNumber(fields.lastMessageId) || Type.isStringFilled(fields.lastMessageId))
 		{
 			result.lastMessageId = Number.parseInt(fields.lastMessageId, 10);
@@ -702,7 +790,17 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 		if (Type.isPlainObject(fields.lastMessageViews))
 		{
-			result.lastMessageViews = prepareLastMessageViews(fields.lastMessageViews);
+			if (
+				Type.isNumber(fields.lastMessageViews.messageId)
+				&& Type.isNumber(fields.lastMessageViews.countOfViewers)
+			)
+			{
+				result.lastMessageViews = fields.lastMessageViews;
+			}
+			else
+			{
+				result.lastMessageViews = prepareLastMessageViews(fields.lastMessageViews);
+			}
 		}
 
 		if (Type.isBoolean(fields.hasPrevPage))
@@ -871,6 +969,21 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			result.diskFolderId = fields.diskFolderId;
 		}
 
+		fields.role = fields.role?.toString().toLowerCase();
+		if (UserRole[fields.role])
+		{
+			result.role = fields.role;
+		}
+
+		if (fields.permissions)
+		{
+			const preparedPermissions = preparePermissions(fields.permissions);
+			if (Object.values(preparedPermissions).length > 0)
+			{
+				result.permissions = preparedPermissions;
+			}
+		}
+
 		return result;
 	}
 
@@ -883,10 +996,11 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		} = rawLastMessageViews;
 
 		let firstViewer;
-		rawFirstViewers.forEach((rawFirstViewer) => {
+		for (const rawFirstViewer of rawFirstViewers)
+		{
 			if (rawFirstViewer.user_id === MessengerParams.getUserId())
 			{
-				return;
+				continue;
 			}
 
 			firstViewer = {
@@ -894,7 +1008,8 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				userName: rawFirstViewer.user_name,
 				date: DateHelper.cast(rawFirstViewer.date),
 			};
-		});
+			break;
+		}
 
 		if (countOfViewers > 0 && !firstViewer)
 		{
@@ -983,6 +1098,42 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 			return true;
 		});
+
+		return result;
+	}
+
+	/**
+	 * @private
+	 * @param {object} fields
+	 * @return {object}
+	 */
+	function preparePermissions(fields)
+	{
+		const result = {};
+		if (Type.isStringFilled(fields.manage_users_add) || Type.isStringFilled(fields.manageUsersAdd))
+		{
+			result.manageUsersAdd = fields.manage_users_add || fields.manageUsersAdd;
+		}
+
+		if (Type.isStringFilled(fields.manage_users_delete) || Type.isStringFilled(fields.manageUsersDelete))
+		{
+			result.manageUsersDelete = fields.manage_users_delete || fields.manageUsersDelete;
+		}
+
+		if (Type.isStringFilled(fields.manage_ui) || Type.isStringFilled(fields.manageUi))
+		{
+			result.manageUi = fields.manage_ui || fields.manageUi;
+		}
+
+		if (Type.isStringFilled(fields.manage_settings) || Type.isStringFilled(fields.manageSettings))
+		{
+			result.manageSettings = fields.manage_settings || fields.manageSettings;
+		}
+
+		if (Type.isStringFilled(fields.can_post) || Type.isStringFilled(fields.canPost))
+		{
+			result.canPost = fields.can_post || fields.canPost;
+		}
 
 		return result;
 	}

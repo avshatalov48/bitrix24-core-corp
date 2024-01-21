@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Service\Display\Field;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Options;
+use Bitrix\Main\Loader;
 
 class IblockElementField extends BaseLinkedEntitiesField
 {
@@ -63,8 +64,25 @@ class IblockElementField extends BaseLinkedEntitiesField
 			return $formattedValue;
 		}
 
-		$detailUrl = $linkedEntitiesValues[$elementId]['DETAIL_PAGE_URL'];
-		if ($detailUrl !== '')
+		$linkedEntitiesValue = $linkedEntitiesValues[$elementId];
+		$detailUrl = $linkedEntitiesValue['DETAIL_PAGE_URL'] ?? null;
+		if (!$detailUrl && Loader::includeModule('lists'))
+		{
+			$urlTemplate = \CList::getUrlByIblockId($linkedEntitiesValue['IBLOCK_ID'] ?? 0);
+			if (!empty($urlTemplate) && is_string($urlTemplate))
+			{
+				$detailUrl = str_replace(
+					['#section_id#', '#element_id#'],
+					[
+						(int)$linkedEntitiesValue['IBLOCK_SECTION_ID'],
+						(int)$linkedEntitiesValue['ID']
+					],
+					$urlTemplate
+				);
+			}
+		}
+
+		if ($detailUrl)
 		{
 			$formattedValue = '<a href="' . $detailUrl . '">' . $formattedValue . '</a>';
 		}

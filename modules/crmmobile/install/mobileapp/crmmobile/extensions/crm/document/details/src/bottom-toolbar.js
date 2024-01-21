@@ -3,6 +3,7 @@
  */
 jn.define('crm/document/details/bottom-toolbar', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { withPressed } = require('utils/color');
 
 	const compactMode = device.screen.width < 400;
@@ -17,7 +18,7 @@ jn.define('crm/document/details/bottom-toolbar', (require, exports, module) => {
 					paddingLeft: 7,
 					paddingRight: 20,
 					borderRadius: 12,
-					backgroundColor: '#fff',
+					backgroundColor: AppTheme.colors.bgContentPrimary,
 				},
 				safeArea: { bottom: true },
 			},
@@ -52,7 +53,7 @@ jn.define('crm/document/details/bottom-toolbar', (require, exports, module) => {
 		{
 			onClick,
 			style: {
-				backgroundColor: withPressed('#00A2E8'),
+				backgroundColor: withPressed(AppTheme.colors.accentMainPrimary),
 				borderRadius: 128,
 				flexDirection: 'row',
 				paddingHorizontal: compactMode ? 16 : 23,
@@ -78,7 +79,7 @@ jn.define('crm/document/details/bottom-toolbar', (require, exports, module) => {
 			numberOfLines: 1,
 			ellipsize: 'end',
 			style: {
-				color: '#fff',
+				color: AppTheme.colors.baseWhiteFixed,
 				fontSize: 16,
 			},
 		}),
@@ -94,6 +95,7 @@ jn.define('crm/document/details/bottom-toolbar', (require, exports, module) => {
 			},
 		},
 		Image({
+			tintColor: AppTheme.colors.base3,
 			svg: {
 				content: icon,
 			},

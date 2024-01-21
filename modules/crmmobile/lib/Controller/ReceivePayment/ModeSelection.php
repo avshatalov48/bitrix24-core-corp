@@ -2,9 +2,8 @@
 
 namespace Bitrix\CrmMobile\Controller\ReceivePayment;
 
-use Bitrix\Crm\Integration\NotificationsManager;
-use Bitrix\Crm\Integration\SmsManager;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Terminal\AvailabilityManager;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use Bitrix\Main\Loader;
 use Bitrix\SalesCenter\Integration\Bitrix24Manager;
@@ -33,16 +32,15 @@ class ModeSelection extends Base
 		{
 			$contactHasPhone = $entity->getPrimaryContact()->getHasPhone();
 		}
-		$hasSmsProviders = SmsManager::isConnected() || NotificationsManager::isConnected();
 		$isPaymentLimitReached = Bitrix24Manager::getInstance()->isPaymentsLimitReached();
 		$isOrderLimitReached = CrmManager::getInstance()->isOrderLimitReached();
 
 		return [
 			'entityHasContact' => $entityHasContact,
 			'contactHasPhone' => $contactHasPhone,
-			'hasSmsProviders' => $hasSmsProviders,
 			'isPaymentLimitReached' => $isPaymentLimitReached,
 			'isOrderLimitReached' => $isOrderLimitReached,
+			'isTerminalAvailable' => AvailabilityManager::getInstance()->isAvailable(),
 		];
 	}
 }

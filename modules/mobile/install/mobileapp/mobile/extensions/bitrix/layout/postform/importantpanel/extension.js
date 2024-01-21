@@ -1,4 +1,6 @@
 (function() {
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
 
 	this.ImportantPanel = ({
 		importantUntil,
@@ -7,11 +9,10 @@
 		onLayout,
 		menuCancelTextColor,
 	}) => {
-
 		return View(
 			{
 				style: {
-					paddingBottom: 16
+					paddingBottom: 16,
 				},
 				onLayout: ({ height }) => {
 					onLayout({ height });
@@ -22,8 +23,8 @@
 					onImportantSeparatorClick({
 						onSetImportant,
 						menuCancelTextColor,
-					})
-				}
+					});
+				},
 			}),
 			View(
 				{
@@ -31,7 +32,7 @@
 						flexDirection: 'row',
 						alignItems: 'center',
 						paddingHorizontal: 14,
-					}
+					},
 				},
 				Image({
 					named: 'icon_important',
@@ -39,15 +40,14 @@
 						marginRight: 7,
 						width: 18,
 						height: 18,
-					}
+					},
 				}),
 				Text({
 					text: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_IMPORTANT_TITLE'),
 					style: {
 						fontSize: 13,
-						color: '#80000000',
-					}
-				})
+					},
+				}),
 			),
 			View(
 				{
@@ -57,14 +57,13 @@
 						paddingLeft: 38,
 					},
 					onClick: () => {
-
 						const dates = Utils.getImportantDatePeriods();
 
 						dialogs.showDatePicker(
 							{
 								title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_IMPORTANT_PERIOD_DIALOG_TITLE'),
 								type: 'date',
-								value: (importantUntil ? importantUntil : dates.oneWeek),
+								value: (importantUntil || dates.oneWeek),
 								items: [
 									{
 										value: dates.always,
@@ -85,18 +84,17 @@
 									{
 										value: dates.oneMonth,
 										name: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_IMPORTANT_PERIOD_ONE_MONTH'),
-									}
-								]
+									},
+								],
 							},
 							(eventName, newTs) => {
 								if (eventName === 'onPick')
 								{
 									onSetImportantUntil(newTs);
 								}
-							}
+							},
 						);
-
-					}
+					},
 				},
 				renderPeriod({ importantUntil }),
 				Image({
@@ -105,34 +103,33 @@
 						flex: 0,
 						width: 16,
 						height: 12,
-					}
-				})
-			)
+					},
+				}),
+			),
 		);
 	};
 
-	renderPeriod = ({ importantUntil }) => {
-
+	const renderPeriod = ({ importantUntil }) => {
 		return Text({
 			text: this.getValueTitle({ importantUntil }),
 			style: {
 				flex: 0,
 				fontSize: 16,
-				color: '#333333',
+				color: AppTheme.colors.base1,
 				marginRight: 6,
-			}
+			},
 		});
 	};
 
-	onImportantSeparatorClick = ({
+	const onImportantSeparatorClick = ({
 		onSetImportant,
-		menuCancelTextColor
+		menuCancelTextColor,
 	}) => {
-
-		let
+		const
 			menu = dialogs.createPopupMenu();
 
-		menu.setData([
+		menu.setData(
+			[
 				{
 					id: 'close',
 					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_IMPORTANT_MENU_DELETE'),
@@ -144,10 +141,10 @@
 					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_IMPORTANT_MENU_CANCEL'),
 					textColor: menuCancelTextColor,
 					sectionCode: '0',
-				}
+				},
 			],
 			[
-				{ id: '0' }
+				{ id: '0' },
 			],
 			(eventName, item) => {
 				if (
@@ -157,57 +154,55 @@
 				{
 					onSetImportant(false);
 				}
-			}
+			},
 		);
 
 		menu.setPosition('center');
 		menu.show();
 	};
 
-	getValueTitle = ({ importantUntil }) =>
-	{
+	getValueTitle = ({ importantUntil }) => {
 		if (!importantUntil)
 		{
 			return BX.message('MOBILE_EXT_LAYOUT_POSTFORM_IMPORTANT_PERIOD_ALWAYS');
 		}
-		else
+
+		const delta = importantUntil - Utils.getNowDate();
+		const aDay = 60 * 60 * 24 * 1000;
+
+		if (delta < aDay * 1.5)
 		{
-			const delta = importantUntil - Utils.getNowDate();
-			const aDay = 60 * 60 * 24 * 1000;
-
-			if (delta < aDay * 1.5)
-			{
-				return BX.message('MOBILE_EXT_LAYOUT_POSTFORM_IMPORTANT_PERIOD_ONE_DAY');
-			}
-			else if (delta < aDay * 2.5)
-			{
-				return BX.message('MOBILE_EXT_LAYOUT_POSTFORM_IMPORTANT_PERIOD_TWO_DAYS');
-			}
-			else if (
-				delta > aDay * 6.5
-				&& delta < aDay * 7.5
-			)
-			{
-				return BX.message('MOBILE_EXT_LAYOUT_POSTFORM_IMPORTANT_PERIOD_ONE_WEEK');
-			}
-			else if (
-				delta > aDay * 27.5
-				&& delta < aDay * 31.5
-			)
-			{
-				return BX.message('MOBILE_EXT_LAYOUT_POSTFORM_IMPORTANT_PERIOD_ONE_MONTH');
-			}
-			else if (
-				delta > aDay * 360 * 9.9
-			)
-			{
-				return BX.message('MOBILE_EXT_LAYOUT_POSTFORM_IMPORTANT_PERIOD_ALWAYS');
-			}
-			else
-			{
-				return BX.message('MOBILE_EXT_LAYOUT_POSTFORM_IMPORTANT_PERIOD_TO_DATE').replace('#DATE#', new Date(importantUntil).toLocaleDateString());
-			}
+			return BX.message('MOBILE_EXT_LAYOUT_POSTFORM_IMPORTANT_PERIOD_ONE_DAY');
 		}
-	}
 
+		if (delta < aDay * 2.5)
+		{
+			return BX.message('MOBILE_EXT_LAYOUT_POSTFORM_IMPORTANT_PERIOD_TWO_DAYS');
+		}
+
+		if (
+			delta > aDay * 6.5
+				&& delta < aDay * 7.5
+		)
+		{
+			return BX.message('MOBILE_EXT_LAYOUT_POSTFORM_IMPORTANT_PERIOD_ONE_WEEK');
+		}
+
+		if (
+			delta > aDay * 27.5
+				&& delta < aDay * 31.5
+		)
+		{
+			return BX.message('MOBILE_EXT_LAYOUT_POSTFORM_IMPORTANT_PERIOD_ONE_MONTH');
+		}
+
+		if (
+			delta > aDay * 360 * 9.9
+		)
+		{
+			return BX.message('MOBILE_EXT_LAYOUT_POSTFORM_IMPORTANT_PERIOD_ALWAYS');
+		}
+
+		return BX.message('MOBILE_EXT_LAYOUT_POSTFORM_IMPORTANT_PERIOD_TO_DATE').replace('#DATE#', new Date(importantUntil).toLocaleDateString());
+	};
 })();

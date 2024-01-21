@@ -93,7 +93,29 @@ final class Value implements Arrayable, \JsonSerializable
 
 	public function isEqualTo(self $anotherValue): bool
 	{
-		return $this->getHash() === $anotherValue->getHash();
+		if (
+			$this->typeId !== $anotherValue->typeId
+			|| $this->valueType !== $anotherValue->valueType
+			|| $this->value !== $anotherValue->value
+		)
+		{
+			return false;
+		}
+
+		if (!$this->valueExtra && !$anotherValue->valueExtra)
+		{
+			return true;
+		}
+
+		if (
+			$this->valueExtra && !$anotherValue->valueExtra
+			|| !$this->valueExtra && $anotherValue->valueExtra
+		)
+		{
+			return false;
+		}
+
+		return $this->valueExtra->isEqualTo($anotherValue->valueExtra);
 	}
 
 	/**
@@ -106,7 +128,11 @@ final class Value implements Arrayable, \JsonSerializable
 	 */
 	public function getHash(): string
 	{
-		return md5(serialize($this));
+		$valueToHash = clone $this;
+		// id doesn't matter in equality
+		$valueToHash->id = null;
+
+		return md5(serialize($valueToHash));
 	}
 
 	public function toArray(): array
@@ -123,5 +149,13 @@ final class Value implements Arrayable, \JsonSerializable
 			'value' => $this->getValue(),
 			'valueExtra' => $this->getValueExtra(),
 		];
+	}
+
+	public function __clone(): void
+	{
+		if (is_object($this->valueExtra))
+		{
+			$this->valueExtra = clone $this->valueExtra;
+		}
 	}
 }

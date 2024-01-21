@@ -10,6 +10,8 @@ use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\FieldContext\EntityFactory;
+use Bitrix\Crm\FieldContext\ValueFiller;
 use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\Integration\Catalog\Contractor;
 use Bitrix\Crm\Integrity\DuplicateBankDetailCriterion;
@@ -812,7 +814,7 @@ class CAllCrmContact
 			$arSelect[] = 'ASSIGNED_BY_SECOND_NAME';
 			$sSqlJoin .= ' LEFT JOIN b_user U ON L.ASSIGNED_BY_ID = U.ID ';
 		}
-		if (in_array('CREATED_BY_LOGIN', $arFilterField) || in_array('CREATED_BY_LOGIN', $arFilterField))
+		if (in_array('CREATED_BY_LOGIN', $arFilterField))
 		{
 			$arSelect[] = 'CREATED_BY';
 			$arSelect[] = 'CREATED_BY_LOGIN';
@@ -821,7 +823,7 @@ class CAllCrmContact
 			$arSelect[] = 'CREATED_BY_SECOND_NAME';
 			$sSqlJoin .= ' LEFT JOIN b_user U2 ON L.CREATED_BY_ID = U2.ID ';
 		}
-		if (in_array('MODIFY_BY_LOGIN', $arFilterField) || in_array('MODIFY_BY_LOGIN', $arFilterField))
+		if (in_array('MODIFY_BY_LOGIN', $arFilterField))
 		{
 			$arSelect[] = 'MODIFY_BY';
 			$arSelect[] = 'MODIFY_BY_LOGIN';
@@ -1281,6 +1283,20 @@ class CAllCrmContact
 			$sender->GetTableAlias()
 		);
 
+		if (isset($arFilter['OBSERVER_IDS']))
+		{
+			$observerIds = is_array($arFilter['OBSERVER_IDS']) ? $arFilter['OBSERVER_IDS'] : [];
+			$observersFilter = CCrmEntityHelper::prepareObserversFieldFilter(
+				CCrmOwnerType::Contact,
+				$sender->GetTableAlias(),
+				$observerIds
+			);
+			if (!empty($observersFilter))
+			{
+				$sqlData['WHERE'][] = $observersFilter;
+			}
+		}
+
 		$result = array();
 		if(!empty($sqlData['FROM']))
 		{
@@ -1393,9 +1409,19 @@ class CAllCrmContact
 				$arFields['BIRTHDAY_SORT'] = \Bitrix\Crm\BirthdayReminder::prepareSorting('');
 			}
 
+			$observerIDs = isset($arFields['OBSERVER_IDS']) && is_array($arFields['OBSERVER_IDS'])
+				? $arFields['OBSERVER_IDS']
+				: null
+			;
+			unset($arFields['OBSERVER_IDS']);
+
 			$arAttr = array();
 			if (!empty($arFields['OPENED']))
 				$arAttr['OPENED'] = $arFields['OPENED'];
+			if(!empty($observerIDs))
+			{
+				$arAttr['CONCERNED_USER_IDS'] = $observerIDs;
+			}
 
 			$permissionEntityType = (new PermissionEntityTypeHelper(CCrmOwnerType::Contact))
 				->getPermissionEntityTypeForCategory((int)$arFields['CATEGORY_ID'])
@@ -1648,6 +1674,13 @@ class CAllCrmContact
 
 			CCrmEntityHelper::NormalizeUserFields($arFields, self::$sUFEntityID, $GLOBALS['USER_FIELD_MANAGER'], array('IS_NEW' => true));
 			$GLOBALS['USER_FIELD_MANAGER']->Update(self::$sUFEntityID, $ID, $arFields);
+
+			//region Save Observers
+			if(!empty($observerIDs))
+			{
+				Crm\Observer\ObserverManager::registerBulk($observerIDs, \CCrmOwnerType::Contact, $ID);
+			}
+			//endregion
 
 			//region Duplicate communication data
 			if (isset($arFields['FM']) && is_array($arFields['FM']))
@@ -1921,7 +1954,7 @@ class CAllCrmContact
 			$arFilterTmp['CHECK_PERMISSIONS'] = 'N';
 		}
 
-		$obRes = self::GetListEx(array(), $arFilterTmp);
+		$obRes = self::GetListEx([], $arFilterTmp, false, false, ['*', 'UF_*']);
 		if (!($arRow = $obRes->Fetch()))
 		{
 			return false;
@@ -2005,6 +2038,21 @@ class CAllCrmContact
 
 			$arAttr = array();
 			$arAttr['OPENED'] = !empty($arFields['OPENED']) ? $arFields['OPENED'] : $arRow['OPENED'];
+
+			$originalObserverIDs = Crm\Observer\ObserverManager::getEntityObserverIDs(CCrmOwnerType::Contact, $ID);
+			$observerIDs = isset($arFields['OBSERVER_IDS']) && is_array($arFields['OBSERVER_IDS'])
+				? $arFields['OBSERVER_IDS']
+				: null
+			;
+			if ($observerIDs !== null && count($observerIDs) > 0)
+			{
+				$arAttr['CONCERNED_USER_IDS'] = $observerIDs;
+			}
+			elseif ($observerIDs === null && count($originalObserverIDs) > 0)
+			{
+				$arAttr['CONCERNED_USER_IDS'] = $originalObserverIDs;
+			}
+
 			$arEntityAttr = self::BuildEntityAttr($assignedByID, $arAttr);
 			if($this->bCheckPermission)
 			{
@@ -2296,6 +2344,16 @@ class CAllCrmContact
 				unset($arFields['HAS_IMOL']);
 			}
 
+			//region Observers
+			$addedObserverIDs = null;
+			$removedObserverIDs = null;
+			if(is_array($observerIDs))
+			{
+				$addedObserverIDs = array_diff($observerIDs, $originalObserverIDs);
+				$removedObserverIDs = array_diff($originalObserverIDs, $observerIDs);
+			}
+			//endregion
+
 			self::getLastActivityAdapter()->performUpdate((int)$ID, $arFields, $arOptions);
 			self::getCommentsAdapter()
 				->setPreviousFields((int)$ID, $arRow)
@@ -2312,6 +2370,28 @@ class CAllCrmContact
 				$bResult = true;
 				$DB->Query("UPDATE b_crm_contact SET {$sUpdate} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 			}
+
+			//region Save Observers
+			if (!empty($addedObserverIDs))
+			{
+				Crm\Observer\ObserverManager::registerBulk(
+					$addedObserverIDs,
+					\CCrmOwnerType::Contact,
+					$ID,
+					count($originalObserverIDs)
+				);
+			}
+
+			if (!empty($removedObserverIDs))
+			{
+				Crm\Observer\ObserverManager::unregisterBulk(
+					$removedObserverIDs,
+					\CCrmOwnerType::Contact,
+					$ID
+				);
+
+			}
+			//endregion
 
 			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
 				->setEntityAttributes($arEntityAttr)
@@ -2543,6 +2623,17 @@ class CAllCrmContact
 				]
 			]);
 
+			Bitrix\Crm\Integration\Im\Chat::onEntityModification(
+				CCrmOwnerType::Contact,
+				$ID,
+				[
+					'CURRENT_FIELDS' => $arFields,
+					'PREVIOUS_FIELDS' => $arRow,
+					'ADDED_OBSERVER_IDS' => $addedObserverIDs,
+					'REMOVED_OBSERVER_IDS' => $removedObserverIDs
+				]
+			);
+
 			if (isset($GLOBALS["USER"]) && isset($arFields['COMPANY_ID']) && intval($arFields['COMPANY_ID']) > 0)
 			{
 				CUserOptions::SetOption("crm", "crm_company_search", array('last_selected' => $arFields['COMPANY_ID']));
@@ -2675,6 +2766,10 @@ class CAllCrmContact
 				while ($arEvent = $afterEvents->Fetch())
 					ExecuteModuleEventEx($arEvent, array(&$arFields));
 
+				$scope = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getScope();
+				$filler = new ValueFiller(CCrmOwnerType::Contact, $ID, $scope);
+				$filler->fill($arOptions['CURRENT_FIELDS'], $arFields);
+
 				$item = $this->createPullItem(array_merge($arRow, $arFields));
 				Crm\Integration\PullManager::getInstance()->sendItemUpdatedEvent(
 					$item,
@@ -2682,6 +2777,7 @@ class CAllCrmContact
 						'TYPE' => self::$TYPE_NAME,
 						'SKIP_CURRENT_USER' => ($iUserId !== 0),
 						'CATEGORY_ID' => ($arFields['CATEGORY_ID'] ?? 0),
+						'EVENT_ID' => ($arOptions['eventId'] ?? null),
 					]
 				);
 			}
@@ -2876,6 +2972,7 @@ class CAllCrmContact
 
 				EntityAddress::unregister(CCrmOwnerType::Contact, $ID, EntityAddressType::Primary);
 				\Bitrix\Crm\Timeline\TimelineEntry::deleteByOwner(CCrmOwnerType::Contact, $ID);
+				\Bitrix\Crm\Observer\ObserverManager::deleteByOwner(CCrmOwnerType::Contact, $ID);
 
 				self::getCommentsAdapter()->performDelete((int)$ID, $arOptions);
 
@@ -2917,6 +3014,12 @@ class CAllCrmContact
 
 			$identifier = new Crm\ItemIdentifier(\CCrmOwnerType::Contact, (int)$ID);
 			CCrmLiveFeed::DeleteUserCrmConnection(\Bitrix\Crm\UserField\Types\ElementType::getValueByIdentifier($identifier));
+
+			$fieldsContextEntity = EntityFactory::getInstance()->getEntity(CCrmOwnerType::Contact);
+			if ($fieldsContextEntity)
+			{
+				$fieldsContextEntity::deleteByItemId($ID);
+			}
 		}
 
 		$item = $this->createPullItem($arFields);

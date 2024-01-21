@@ -1,5 +1,8 @@
 <?php
 
 return [
-	'layout/postform/utils',
+	'extensions' => [
+		'apptheme',
+		'layout/postform/utils',
+	],
 ];

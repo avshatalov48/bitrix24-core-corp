@@ -2,8 +2,9 @@
 
 return [
 	'extensions' => [
-		'selector/providers/common',
+		'apptheme',
 		'utils/array',
 		'utils/object',
+		'selector/providers/common',
 	],
 ];

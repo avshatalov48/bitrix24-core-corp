@@ -11,9 +11,12 @@ use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
+use Bitrix\Crm\FieldContext\ContextManager;
+use Bitrix\Crm\FieldContext\Repository;
 use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Spotlight;
@@ -64,6 +67,7 @@ class CCrmEntityEditorComponent extends UIFormComponent
 				'DUPLICATE_CONTROL' => [],
 				'USER_FIELD_PREFIX' => 'CRM',
 				'ENTITY_TYPE_TITLE' => '',
+				'ADDITIONAL_FIELDS_DATA' => [],
 				'CUSTOM_TOOL_PANEL_BUTTONS' => [],
 				'TOOL_PANEL_BUTTONS_ORDER' => [
 					'VIEW' => [],
@@ -470,6 +474,11 @@ class CCrmEntityEditorComponent extends UIFormComponent
 			);
 		}
 
+		if (empty($this->arResult['ADDITIONAL_FIELDS_DATA']))
+		{
+			$this->arResult['ADDITIONAL_FIELDS_DATA'] = $this->getAdditionalFieldsData();
+		}
+
 		$this->prepareConfig();
 
 		$this->arResult['ENABLE_SETTINGS_FOR_ALL'] = CCrmAuthorizationHelper::CanEditOtherSettings();
@@ -502,6 +511,10 @@ class CCrmEntityEditorComponent extends UIFormComponent
 			}
 		}
 		//endregion
+
+		$this->arResult['ENTITY_CONFIG_SIGNED_PARAMS'] = method_exists($this, 'getSignedConfigParameters') ? $this->getSignedConfigParameters() : '';
+
+		$this->initPull();
 
 		$this->arResult['PATH_TO_ENTITY_DETAILS'] = CCrmOwnerType::GetDetailsUrl(
 			$this->entityTypeID,
@@ -674,6 +687,20 @@ class CCrmEntityEditorComponent extends UIFormComponent
 		$this->prepareRestrictions();
 	}
 
+	protected function initPull(): void
+	{
+		if ($this->entityID > 0)
+		{
+			$pullManager = Container::getInstance()->getPullManager();
+			$this->arResult['PULL_TAG'] = $pullManager->subscribeOnItemUpdate(
+				$this->entityTypeID,
+				$this->entityID
+			);
+			$this->arResult['PULL_MODULE_ID'] = 'crm';
+			$this->arResult['CAN_USE_PULL'] = Main\Config\Option::get('crm', 'can_use_pull_in_entity_editor', 'Y');
+		}
+	}
+
 	protected function getDefaultFieldOptionFlags(int $entityTypeId, string $fieldName): int
 	{
 		if (CCrmOwnerType::IsDefined($entityTypeId))
@@ -835,6 +862,30 @@ class CCrmEntityEditorComponent extends UIFormComponent
 			'userFieldResourceBooking' => [
 				'isPermitted' => $isResourceBookingPermitted,
 				'restrictionCallback' => $isResourceBookingPermitted ? '' : $ufResourceBookingRestriction->prepareInfoHelperScript(),
+			],
+		];
+	}
+
+	private function getAdditionalFieldsData(): array
+	{
+		$entityId = $this->entityID;
+		if ($entityId <= 0)
+		{
+			return [];
+		}
+
+		$repository = Repository::createFromId($this->entityTypeID, $entityId);
+		if (!$repository)
+		{
+			return [];
+		}
+
+		$contextManager = new ContextManager();
+
+		return [
+			'context' => [
+				'data' => $contextManager->getData(),
+				'fields' => $repository->getFieldsData(),
 			],
 		];
 	}

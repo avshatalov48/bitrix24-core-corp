@@ -3,6 +3,7 @@
  */
 jn.define('crm/product-grid/components/sku-selector/elements/price', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 
 	const skip = () => {};
 
@@ -34,7 +35,7 @@ jn.define('crm/product-grid/components/sku-selector/elements/price', (require, e
 						text: formattedAmount,
 						style: {
 							fontSize: 20,
-							color: '#333333',
+							color: AppTheme.colors.base1,
 							fontWeight: 'bold',
 						},
 					}),
@@ -42,7 +43,7 @@ jn.define('crm/product-grid/components/sku-selector/elements/price', (require, e
 						text: formattedCurrency,
 						style: {
 							fontSize: 20,
-							color: '#828B95',
+							color: AppTheme.colors.base3,
 							fontWeight: 'bold',
 						},
 					}),
@@ -61,7 +62,7 @@ jn.define('crm/product-grid/components/sku-selector/elements/price', (require, e
 					text: Loc.getMessage('PRODUCT_GRID_CONTROL_SKU_SELECTOR_PRICE_EMPTY'),
 					style: {
 						fontSize: 16,
-						color: '#828B95',
+						color: AppTheme.colors.base3,
 					},
 				}),
 			),

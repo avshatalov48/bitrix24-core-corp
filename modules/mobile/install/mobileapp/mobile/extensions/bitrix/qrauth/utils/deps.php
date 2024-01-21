@@ -1,7 +1,9 @@
 <?php
 
 return [
-	'extensions' => [],
+	'extensions' => [
+		'apptheme',
+	],
 	'components' => [
 		'qrcodeauth',
 	],

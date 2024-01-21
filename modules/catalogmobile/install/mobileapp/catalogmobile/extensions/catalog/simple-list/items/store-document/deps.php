@@ -2,7 +2,8 @@
 
 return [
 	'extensions' => [
-		'layout/ui/simple-list/items/extended',
+		'apptheme',
 		'utils/object',
+		'layout/ui/simple-list/items/extended',
 	],
 ];

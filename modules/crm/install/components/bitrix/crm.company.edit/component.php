@@ -3,6 +3,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\EntityBankDetail;
+use Bitrix\Crm\Integrity\DuplicateControl;
+use Bitrix\Crm\Settings\CompanySettings;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -20,8 +22,6 @@ if (IsModuleInstalled('bizproc'))
 		return;
 	}
 }
-
-use Bitrix\Crm\Settings\CompanySettings;
 /**
  * Bitrix vars
  *
@@ -987,7 +987,8 @@ $arResult['EDIT'] = $isEditMode;
 $arResult['IS_COPY'] = $isCopyMode;
 $arResult['DUPLICATE_CONTROL'] = array();
 $enableDupControl = $arResult['DUPLICATE_CONTROL']['ENABLED'] =
-	!$isEditMode && \Bitrix\Crm\Integrity\DuplicateControl::isControlEnabledFor(CCrmOwnerType::Company);
+	DuplicateControl::isControlEnabledFor(CCrmOwnerType::Company)
+;
 
 // Fix for #26945. Suppress binding of contacts to new compnany. Contacts will be binded to source company.
 if($isEditMode)

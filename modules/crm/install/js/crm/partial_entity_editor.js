@@ -573,7 +573,7 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 				formInput = document.createElement('INPUT');
 				formInput.type = 'hidden';
 				formInput.name = inputName;
-				editor._ajaxForm._elementNode.appendChild(formInput);
+				editor._ajaxForm._elementNode.prepend(formInput);
 			}
 			formInput.value = inputValue;
 		},

@@ -174,7 +174,7 @@ this.BX = this.BX || {};
 							>
 								<div class="market-slider-item-inner">
 									<img class="market-slider-item-img-detail"
-										 :src="sliderItem.IMG"
+										 :src="sliderItem.PREVIEW"
 										 :data-src="sliderItem.IMG"
 										 :data-viewer-group-by="options.viewerGroupBy"
 										 data-viewer

@@ -4,6 +4,7 @@
 jn.define('tasks/layout/task/fields/project', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { ProjectField } = require('layout/ui/fields/project');
+	const { EntitySelectorFactory } = require('selector/widget/factory');
 
 	class Project extends LayoutComponent
 	{
@@ -32,8 +33,10 @@ jn.define('tasks/layout/task/fields/project', (require, exports, module) => {
 			this.state = {
 				readOnly: props.readOnly,
 				groupId: props.groupId,
-				groupData: props.groupData,
+				groupData: props.groupData || {},
 			};
+
+			this.handleOnChange = this.handleOnChange.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -52,6 +55,26 @@ jn.define('tasks/layout/task/fields/project', (require, exports, module) => {
 				groupId: newState.groupId,
 				groupData: newState.groupData,
 			});
+		}
+
+		handleOnChange(groupId, groupData)
+		{
+			const resultGroupId = Number(groupId || 0);
+			if (resultGroupId !== Number(this.state.groupId))
+			{
+				const resultGroupData = (
+					resultGroupId > 0 ? Project.convertGroupDataFromFieldToTask(groupData[0]) : null
+				);
+
+				this.setState({
+					groupId: resultGroupId,
+					groupData: resultGroupData,
+				});
+				if (this.props.onChange)
+				{
+					this.props.onChange(resultGroupId, resultGroupData);
+				}
+			}
 		}
 
 		render()
@@ -78,20 +101,7 @@ jn.define('tasks/layout/task/fields/project', (require, exports, module) => {
 						parentWidget: this.props.parentWidget,
 					},
 					testId: 'project',
-					onChange: (groupId, groupData) => {
-						const resultGroupId = Number(groupId || 0);
-						if (resultGroupId !== Number(this.state.groupId))
-						{
-							const resultGroupData = (
-								resultGroupId > 0 ? Project.convertGroupDataFromFieldToTask(groupData[0]) : null
-							);
-							this.setState({
-								groupId: resultGroupId,
-								groupData: resultGroupData,
-							});
-							this.props.onChange(resultGroupId, resultGroupData);
-						}
-					},
+					onChange: this.handleOnChange,
 				}),
 			);
 		}

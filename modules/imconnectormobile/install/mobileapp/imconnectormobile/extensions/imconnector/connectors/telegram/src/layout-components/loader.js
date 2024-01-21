@@ -3,6 +3,8 @@
  */
 jn.define('imconnector/connector/telegram/layout-components/loader', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
+
 	function Loader(props = {})
 	{
 		return View(
@@ -13,7 +15,7 @@ jn.define('imconnector/connector/telegram/layout-components/loader', (require, e
 					alignItems: 'center',
 					paddingRight: 18,
 					paddingLeft: 22,
-					backgroundColor: '#FFFFFF',
+					backgroundColor: AppTheme.colors.bgContentPrimary,
 				},
 			},
 			LottieView(
@@ -36,7 +38,7 @@ jn.define('imconnector/connector/telegram/layout-components/loader', (require, e
 				style: {
 					fontSize: 18,
 					fontWeight: '400',
-					color: '#333333',
+					color: AppTheme.colors.base1,
 					textAlign: 'center',
 					marginBottom: 8,
 				},
@@ -46,7 +48,7 @@ jn.define('imconnector/connector/telegram/layout-components/loader', (require, e
 				style: {
 					fontSize: 15,
 					fontWeight: '400',
-					color: '#333333',
+					color: AppTheme.colors.base1,
 					textAlign: 'center',
 					lineSpacing: 1.3,
 				},

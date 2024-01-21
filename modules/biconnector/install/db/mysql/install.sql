@@ -82,7 +82,28 @@ CREATE TABLE b_biconnector_log
 	ROW_NUM INT,
 	DATA_SIZE INT,
 	REAL_TIME DOUBLE,
+	IS_OVER_LIMIT CHAR(1) DEFAULT 'N',
 	INDEX ix_b_biconnector_log_time(TIMESTAMP_X, ROW_NUM),
 	INDEX ix_b_biconnector_log_key(KEY_ID, TIMESTAMP_X),
 	PRIMARY KEY pk_b_biconnector_log(ID)
+);
+
+CREATE TABLE b_biconnector_superset_dashboard
+(
+	ID INT AUTO_INCREMENT NOT NULL,
+	EXTERNAL_ID INT NULL,
+	STATUS CHAR(1) NOT NULL DEFAULT 'R',
+	TITLE VARCHAR(128) NULL,
+	DATE_FILTER_START DATE NULL,
+	DATE_FILTER_END DATE NULL,
+	TYPE VARCHAR(50) NOT NULL,
+	APP_ID VARCHAR(128) NULL,
+	SOURCE_ID INT NULL,
+	DATE_CREATE DATETIME NOT NULL,
+	FILTER_PERIOD TEXT NULL,
+	CREATED_BY_ID INT NULL,
+	PRIMARY KEY pk_b_biconnector_superset_dashboard(ID),
+	INDEX ix_b_biconnector_superset_dashboard_app_id(APP_ID),
+	INDEX ix_b_biconnector_superset_dashboard_external_id(EXTERNAL_ID),
+	INDEX ix_b_biconnector_superset_dashboard_source_id(SOURCE_ID)
 );

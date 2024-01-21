@@ -4,7 +4,8 @@
 jn.define('crm/entity-actions/change-stage', (require, exports, module) => {
 	const { Type } = require('crm/type');
 	const { NotifyManager } = require('notify-manager');
-	const { CategoryStorage } = require('crm/storage/category');
+	const store = require('statemanager/redux/store');
+	const { fetchCrmKanbanList } = require('crm/statemanager/redux/slices/kanban-settings');
 
 	/**
 	 * @function getActionToChangeStage
@@ -12,20 +13,16 @@ jn.define('crm/entity-actions/change-stage', (require, exports, module) => {
 	 */
 	const getActionToChangeStage = () => {
 		const loadCategoryList = (entityTypeId) => new Promise((resolve) => {
-			const categoryList = CategoryStorage.getCategoryList(entityTypeId);
-			if (categoryList)
-			{
-				resolve(categoryList);
-			}
-			else
-			{
-				NotifyManager.showLoadingIndicator();
-
-				CategoryStorage.subscribeOnChange(() => {
-					NotifyManager.hideLoadingIndicatorWithoutFallback();
-					resolve(CategoryStorage.getCategoryList(entityTypeId));
-				});
-			}
+			NotifyManager.showLoadingIndicator();
+			store.dispatch(fetchCrmKanbanList({
+				entityTypeId,
+			})).then((response) => {
+				resolve(response.payload.data);
+				NotifyManager.hideLoadingIndicatorWithoutFallback();
+			}).catch((error) => {
+				NotifyManager.hideLoadingIndicatorWithoutFallback();
+				NotifyManager.showDefaultError();
+			});
 		});
 
 		/**
@@ -55,7 +52,7 @@ jn.define('crm/entity-actions/change-stage', (require, exports, module) => {
 				return categories[0].id;
 			}
 
-			const { CategoryListView } = await requireLazy('crm:category-list-view');
+			const { CategoryListView } = await requireLazy('crm:category-list-view').catch(console.error);
 
 			const getSelectedCategoryId = () => new Promise((resolve) => {
 				CategoryListView.open(
@@ -67,20 +64,16 @@ jn.define('crm/entity-actions/change-stage', (require, exports, module) => {
 						showCounters: false,
 						showTunnels: false,
 						onSelectCategory: (category, categoryListLayout) => {
-							selectedCategoryId = category.id;
+							selectedCategoryId = category.categoryId;
 							categoryListLayout.close();
+						},
+						onViewHidden: () => {
+							resolve(selectedCategoryId);
 						},
 					},
 					{ title },
 					layoutWidget,
-				).then((layoutListView) => {
-					layoutListView.setListener((eventName) => {
-						if (eventName === 'onViewRemoved')
-						{
-							resolve(selectedCategoryId);
-						}
-					});
-				}).catch(console.error);
+				).catch(console.error);
 			});
 
 			selectedCategoryId = await getSelectedCategoryId();

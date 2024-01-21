@@ -18,12 +18,12 @@ jn.define('im/messenger/lib/ui/base/avatar', (require, exports, module) => {
 		constructor(props)
 		{
 			super(props);
-			this.state.showImageAvatar = !!props.uri || !!props.svg;
+			this.state.showImageAvatar = !!props.svg || (!!props.uri && props.uri !== '/bitrix/js/im/images/blank.gif');
 		}
 
 		componentWillReceiveProps(props)
 		{
-			this.state.showImageAvatar = !!props.uri || !!props.svg;
+			this.state.showImageAvatar = !!props.svg || (!!props.uri && props.uri !== '/bitrix/js/im/images/blank.gif');
 		}
 
 		/**
@@ -62,6 +62,7 @@ jn.define('im/messenger/lib/ui/base/avatar', (require, exports, module) => {
 		render()
 		{
 			const style = avatarStyle[this.props.size] || avatarStyle.M;
+			const uri = this.props.uri ? this.props.uri : null;
 
 			return View(
 				{
@@ -72,7 +73,7 @@ jn.define('im/messenger/lib/ui/base/avatar', (require, exports, module) => {
 				this.state.showImageAvatar
 					? Image({
 						style: style.icon,
-						uri: encodeURI(this.props.uri),
+						uri,
 						svg: this.props.svg,
 						onFailure: () => {
 							this.setState({ showImageAvatar: false });
@@ -81,7 +82,7 @@ jn.define('im/messenger/lib/ui/base/avatar', (require, exports, module) => {
 					: View(
 						{
 							style: {
-								backgroundColor: this.props.color,
+								backgroundColor: this.props.color || '#aa79dc',
 								width: style.defaultIcon.width,
 								height: style.defaultIcon.height,
 								borderRadius: style.defaultIcon.borderRadius,

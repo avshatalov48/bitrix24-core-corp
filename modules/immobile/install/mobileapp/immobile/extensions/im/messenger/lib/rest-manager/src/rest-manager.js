@@ -34,6 +34,8 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 				{
 					Logger.log('RestManager.callBatch: No registered methods');
 
+					resolve(true);
+
 					return;
 				}
 

@@ -57,6 +57,4 @@ $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_NEW_ROW_POSITION_TITLE"] = "Neues Produkt
 $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_SHOW_PRODUCT_IMAGES_TITLE"] = "Produktbilder anzeigen";
 $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_TAXES_DESC"] = "Steuerbeschreibung";
 $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_TAXES_TITLE"] = "Steuer anzeigen";
-$MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_WAREHOUSE_HINT"] = "Bestandsverwaltung ist aktiviert. Sie können sie in den Einstellungen deaktivieren.";
-$MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_WAREHOUSE_TITLE"] = "Bestandsverwaltung aktivieren";
 $MESS["HINT_CRM_ENTITY_PRODUCT_LIST_HEADER_SECTION_PRODUCT"] = "Benutzerdefinierte Feldtypen, die unterstützt werden: Zeile, Liste, Datum/Uhrzeit, Ja/Nein, Zahl, Verzeichnis, HTML/Text";

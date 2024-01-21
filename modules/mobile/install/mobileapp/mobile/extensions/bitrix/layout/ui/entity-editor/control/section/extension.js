@@ -2,7 +2,7 @@
  * @module layout/ui/entity-editor/control/section
  */
 jn.define('layout/ui/entity-editor/control/section', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { transition } = require('animation');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
 	const { ToggleButton } = require('layout/ui/entity-editor/control/section/toggle-button');
@@ -10,8 +10,8 @@ jn.define('layout/ui/entity-editor/control/section', (require, exports, module) 
 	const { EntityEditorField } = require('layout/ui/entity-editor/control/field');
 	const { EntityEditorMode } = require('layout/ui/entity-editor/editor-enum/mode');
 
-	const VIEW_MODE_SECTION_BACKGROUND_COLOR = '#ffffff';
-	const EDIT_MODE_SECTION_BACKGROUND_COLOR = '#f8fafb';
+	const VIEW_MODE_SECTION_BACKGROUND_COLOR = AppTheme.colors.bgContentPrimary;
+	const EDIT_MODE_SECTION_BACKGROUND_COLOR = AppTheme.colors.bgContentSecondary;
 
 	/**
 	 * @class EntityEditorSection
@@ -58,7 +58,7 @@ jn.define('layout/ui/entity-editor/control/section', (require, exports, module) 
 		 */
 		getControls()
 		{
-			return [...this.fields.values()].filter(field => field instanceof EntityEditorBaseControl);
+			return [...this.fields.values()].filter((field) => field instanceof EntityEditorBaseControl);
 		}
 
 		getTitle()
@@ -129,7 +129,7 @@ jn.define('layout/ui/entity-editor/control/section', (require, exports, module) 
 		renderToggleModeButton()
 		{
 			return new ToggleButton({
-				ref: ref => this.toggleButton = ref,
+				ref: (ref) => this.toggleButton = ref,
 				onToggleClick: this.onToggleButtonClick,
 				isShown: this.enableToggling && !((this.isChanged || this.editor.isNew) && this.isInEditMode()),
 				text: this.state.mode === EntityEditorMode.view
@@ -167,6 +167,7 @@ jn.define('layout/ui/entity-editor/control/section', (require, exports, module) 
 				.then(() => {
 					fadeOut();
 					this.fieldsContainerOpacity = 0;
+
 					return this.editor.switchControlMode(this, mode);
 				})
 				.then(() => {
@@ -204,11 +205,11 @@ jn.define('layout/ui/entity-editor/control/section', (require, exports, module) 
 
 			const reversedElements = elements.reverse();
 			const findPreviousElementToShow = (fields) => {
-				for (let i = 0; i < fields.length; i++)
+				for (const field of fields)
 				{
-					if (fields[i] && fields[i].isVisible())
+					if (field && field.isVisible())
 					{
-						return fields[i];
+						return field;
 					}
 				}
 			};
@@ -364,8 +365,8 @@ jn.define('layout/ui/entity-editor/control/section', (require, exports, module) 
 
 		openQrPopup()
 		{
-			const pathToExtension = currentDomain + '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/entity-editor/control/section/';
-			const imagePath = pathToExtension + 'images/settings.png';
+			const pathToExtension = `${currentDomain}/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/entity-editor/control/section/`;
+			const imagePath = `${pathToExtension}images/settings.png`;
 
 			this.settingsMenu = new ContextMenu({
 				banner: {
@@ -414,7 +415,7 @@ jn.define('layout/ui/entity-editor/control/section', (require, exports, module) 
 		titleBarContainer: {
 			flexDirection: 'row',
 			justifyContent: 'space-between',
-			borderBottomColor: '#dfe0e3',
+			borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
 			borderBottomWidth: 0.5,
 			marginHorizontal: 16,
 			marginBottom: 6,
@@ -427,7 +428,7 @@ jn.define('layout/ui/entity-editor/control/section', (require, exports, module) 
 			paddingBottom: 9.5,
 		},
 		titleText: {
-			color: '#525c69',
+			color: AppTheme.colors.base2,
 			fontSize: 11,
 			fontWeight: '600',
 		},
@@ -458,13 +459,13 @@ jn.define('layout/ui/entity-editor/control/section', (require, exports, module) 
 		},
 		sectionManagingTextWrapper: {
 			borderBottomWidth: 1,
-			borderBottomColor: '#d6d8db',
+			borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
 			borderStyle: 'dash',
 			borderDashSegmentLength: 3,
 			borderDashGapLength: 3,
 		},
 		sectionManagingText: {
-			color: '#a8adb4',
+			color: AppTheme.colors.base4,
 			fontSize: 13,
 		},
 		fieldDefaultWrapper: (visible, showBorder) => ({
@@ -473,7 +474,7 @@ jn.define('layout/ui/entity-editor/control/section', (require, exports, module) 
 			marginLeft: 16,
 			marginRight: 16,
 			borderBottomWidth: showBorder ? 0.5 : 0,
-			borderBottomColor: '#dbdde0',
+			borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
 		}),
 	};
 

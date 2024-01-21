@@ -586,7 +586,7 @@ function deleteRow(item_id, row, bShiftChildren, bSkipConfirm)
 
 	if (!!bSkipConfirm || bNew || confirm(row.BXINSTANCE.ORIGINAL_TYPE == '<?=CMeetingInstance::TYPE_AGENDA?>' ? '<?=CUtil::JSEscape(GetMessage('ME_AGENDA_CONFIRM_AGENDA'))?>' : '<?=CUtil::JSEscape(GetMessage('ME_AGENDA_CONFIRM_PROTO'))?>'))
 	{
-		if (row && item_id);
+		if (row && item_id)
 		{
 			hideComments(row);
 
@@ -637,7 +637,7 @@ function unDeleteRow(item_id, row)
 	row = row || BX('agenda_item_' + item_id);
 	item_id = item_id || row.BXINSTANCEKEY;
 
-	if (row && item_id);
+	if (row && item_id)
 	{
 		row.style.display = '';
 		row.BXDELETED = false;

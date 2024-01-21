@@ -7,6 +7,14 @@ class User
 	{
 	}
 
+	public static function isMobileInstalledForUser(int $userId): bool
+	{
+		$isIosInstalled = (bool)\CUserOptions::GetOption('mobile', 'iOsLastActivityDate', false, $userId);
+		$isAndroidInstalled = (bool)\CUserOptions::GetOption('mobile', 'AndroidLastActivityDate', false, $userId);
+
+		return $isIosInstalled || $isAndroidInstalled;
+	}
+
 	public static function checkOnline($userId = false)
 	{
 		$maxDate = 120;
@@ -57,10 +65,16 @@ class User
 
 		if ($cache && $userId == $USER->GetId())
 		{
-			if (isset($_SESSION['MOBILE_LAST_ONLINE_'.$userId]) && intval($_SESSION['MOBILE_LAST_ONLINE_'.$userId])+60 > time())
+			$key = 'MOBILE_LAST_ONLINE_' . $userId;
+			if (
+				isset(\Bitrix\Main\Application::getInstance()->getKernelSession()[$key])
+				&& (int)\Bitrix\Main\Application::getInstance()->getKernelSession()[$key] + 60 > time()
+			)
+			{
 				return false;
+			}
 
-			$_SESSION['MOBILE_LAST_ONLINE_'.$userId] = time();
+			\Bitrix\Main\Application::getInstance()->getKernelSession()[$key] = time();
 		}
 
 		$time = time();

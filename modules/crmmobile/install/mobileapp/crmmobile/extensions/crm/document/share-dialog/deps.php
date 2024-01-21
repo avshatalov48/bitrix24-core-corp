@@ -6,6 +6,7 @@ return [
 		'rest',
 		'loc',
 		'alert',
+		'apptheme',
 		'utils/copy',
 		'qrauth/utils',
 		'animation/components/fade-view',

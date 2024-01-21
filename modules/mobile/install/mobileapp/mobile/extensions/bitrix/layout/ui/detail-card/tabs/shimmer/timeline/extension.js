@@ -2,6 +2,7 @@
  * @module layout/ui/detail-card/tabs/shimmer/timeline
  */
 jn.define('layout/ui/detail-card/tabs/shimmer/timeline', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { ShimmerView } = require('layout/polyfill');
 	const { BaseShimmer } = require('layout/ui/detail-card/tabs/shimmer');
 
@@ -50,7 +51,7 @@ jn.define('layout/ui/detail-card/tabs/shimmer/timeline', (require, exports, modu
 				style: {
 					height: 1,
 					width: '100%',
-					backgroundColor: '#dfe0e3',
+					backgroundColor: AppTheme.colors.base6,
 					position: 'absolute',
 					top: 10,
 				},
@@ -62,7 +63,7 @@ jn.define('layout/ui/detail-card/tabs/shimmer/timeline', (require, exports, modu
 			return View(
 				{
 					style: {
-						backgroundColor: '#ffffff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						borderRadius: 100,
 						paddingHorizontal: 18,
 						height: 21,
@@ -80,7 +81,7 @@ jn.define('layout/ui/detail-card/tabs/shimmer/timeline', (require, exports, modu
 				{
 					style: {
 						borderRadius: 12,
-						backgroundColor: '#ffffff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						padding: 12,
 						marginBottom: 18,
 						flexDirection: 'row',
@@ -117,7 +118,7 @@ jn.define('layout/ui/detail-card/tabs/shimmer/timeline', (require, exports, modu
 						borderRadius: 12,
 						padding: 0,
 						marginBottom: 16,
-						backgroundColor: '#ffffff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 					},
 				},
 				View(
@@ -157,7 +158,7 @@ jn.define('layout/ui/detail-card/tabs/shimmer/timeline', (require, exports, modu
 								width: 80,
 								height: 80,
 								borderRadius: 12,
-								backgroundColor: '#dfe0e3',
+								backgroundColor: AppTheme.colors.base6,
 							},
 						},
 					),
@@ -243,7 +244,7 @@ jn.define('layout/ui/detail-card/tabs/shimmer/timeline', (require, exports, modu
 							width: 20,
 							height: 20,
 							borderRadius: 20,
-							backgroundColor: '#dfe0e3',
+							backgroundColor: AppTheme.colors.base6,
 						},
 					}),
 				),
@@ -326,7 +327,7 @@ jn.define('layout/ui/detail-card/tabs/shimmer/timeline', (require, exports, modu
 						borderRadius: 12,
 						padding: 0,
 						marginBottom: 16,
-						backgroundColor: '#ffffff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 					},
 				},
 				View(
@@ -413,7 +414,7 @@ jn.define('layout/ui/detail-card/tabs/shimmer/timeline', (require, exports, modu
 							width: 20,
 							height: 20,
 							borderRadius: 20,
-							backgroundColor: '#dfe0e3',
+							backgroundColor: AppTheme.colors.base6,
 						},
 					}),
 				),
@@ -423,3 +424,4 @@ jn.define('layout/ui/detail-card/tabs/shimmer/timeline', (require, exports, modu
 
 	module.exports = { TimelineTabShimmer };
 });
+

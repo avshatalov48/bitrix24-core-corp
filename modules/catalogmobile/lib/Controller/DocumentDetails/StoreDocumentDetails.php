@@ -18,9 +18,11 @@ use Bitrix\CatalogMobile\InventoryControl\Dto\DocumentProductRecord;
 use Bitrix\Mobile\UI\EntityEditor\FormWrapper;
 use Bitrix\Mobile\Helpers\ReadsApplicationErrors;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Mobile\Field\UserFieldDatabaseAdapter;
 use Bitrix\Catalog\StoreDocumentFileTable;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Catalog\StoreDocumentElementTable;
+use Bitrix\Catalog\Document\StoreDocumentTableManager;
 use Bitrix\Sale\PriceMaths;
 use Bitrix\UI\FileUploader\PendingFileCollection;
 use Bitrix\UI\FileUploader\Uploader;
@@ -37,6 +39,9 @@ Loader::requireModule('catalog');
 class StoreDocumentDetails extends BaseDocumentDetails
 {
 	use ReadsApplicationErrors;
+
+	private string $docType = '';
+
 	/**
 	 * @param int|null $entityId
 	 * @param string|null $docType
@@ -102,6 +107,8 @@ class StoreDocumentDetails extends BaseDocumentDetails
 
 			return null;
 		}
+
+		$this->docType = $docType;
 
 		if (!$this->validateBarcodes($data))
 		{
@@ -179,6 +186,20 @@ class StoreDocumentDetails extends BaseDocumentDetails
 		{
 			return null;
 		}
+
+		$docType = StoreDocumentTable::getRow([
+			'select' => ['DOC_TYPE'],
+			'filter' => ['=ID' => $entityId],
+		])['DOC_TYPE'] ?? 0;
+
+		if (!$docType)
+		{
+			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_DETAILS_ERROR_NOT_FOUND')));
+
+			return null;
+		}
+
+		$this->docType = $docType;
 
 		$fields = array_intersect_key(
 			$data,
@@ -525,6 +546,38 @@ class StoreDocumentDetails extends BaseDocumentDetails
 		\CCatalogDocs::update($documentId, ['TOTAL' => $documentTotal]);
 	}
 
+	private function prepareUserFieldsValues(array $values): array
+	{
+		global $USER_FIELD_MANAGER;
+		$tableClass = StoreDocumentTableManager::getTableClassByType($this->docType);
+
+		if (!$tableClass)
+		{
+			return $values;
+		}
+
+		$userFieldInfos = $USER_FIELD_MANAGER->GetUserFields($tableClass::getUfId(), 0, LANGUAGE_ID);
+		if (empty($userFieldInfos))
+		{
+			return $values;
+		}
+
+		$result = $values;
+
+		$userFieldAdapter = new UserFieldDatabaseAdapter();
+		$userFieldAdapter->setUploaderControllerClass(DocumentController::class);
+
+		foreach ($userFieldInfos as $userFieldName => $userFieldInfo)
+		{
+			if (isset($values[$userFieldName]))
+			{
+				$result[$userFieldName] = $userFieldAdapter->getAdaptedUserFieldValue($userFieldInfo, $values[$userFieldName]);
+			}
+		}
+
+		return $result;
+	}
+
 	private function getDocumentPendingFiles(array $tokens): PendingFileCollection
 	{
 		$fileController = new DocumentController([
@@ -626,6 +679,18 @@ class StoreDocumentDetails extends BaseDocumentDetails
 	 */
 	private function getAllowedForSaveFields(): array
 	{
+		$additionalFields = [];
+		if ($this->docType)
+		{
+			global $USER_FIELD_MANAGER;
+			$tableClass = StoreDocumentTableManager::getTableClassByType($this->docType);
+			if ($tableClass)
+			{
+				$userFieldInfos = $USER_FIELD_MANAGER->GetUserFields($tableClass::getUfId(), 0, LANGUAGE_ID);
+				$additionalFields += array_keys($userFieldInfos);
+			}
+		}
+
 		return [
 			'DOC_NUMBER',
 			'CONTRACTOR_ID',
@@ -636,6 +701,7 @@ class StoreDocumentDetails extends BaseDocumentDetails
 			'ITEMS_ORDER_DATE',
 			'ITEMS_RECEIVED_DATE',
 			'COMMENTARY',
+			...$additionalFields,
 		];
 	}
 
@@ -673,6 +739,8 @@ class StoreDocumentDetails extends BaseDocumentDetails
 		{
 			$result[$key] = $value ?? false;
 		}
+
+		$result = $this->prepareUserFieldsValues($result);
 
 		return $result;
 	}

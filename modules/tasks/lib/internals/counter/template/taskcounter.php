@@ -115,6 +115,8 @@ class TaskCounter
 				'new_comments' => 0,
 				'project_expired' => 0,
 				'project_new_comments' => 0,
+				'muted_expired' => 0,
+				'muted_new_comments' => 0,
 			];
 		}
 		else
@@ -124,6 +126,8 @@ class TaskCounter
 				'new_comments' => $counters[CounterDictionary::COUNTER_MY_NEW_COMMENTS],
 				'project_expired' => $counters[CounterDictionary::COUNTER_GROUP_EXPIRED],
 				'project_new_comments' => $counters[CounterDictionary::COUNTER_GROUP_COMMENTS],
+				'muted_expired' => $counters[CounterDictionary::COUNTER_MY_MUTED_EXPIRED],
+				'muted_new_comments' => $counters[CounterDictionary::COUNTER_MY_MUTED_NEW_COMMENTS],
 			];
 		}
 

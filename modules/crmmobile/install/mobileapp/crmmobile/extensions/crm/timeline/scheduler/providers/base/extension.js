@@ -2,8 +2,9 @@
  * @module crm/timeline/scheduler/providers/base
  */
 jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) => {
-	const { PureComponent } = require('layout/pure-component');
+	const AppTheme = require('apptheme');
 	const { Type } = require('type');
+	const { PureComponent } = require('layout/pure-component');
 
 	/**
 	 * @abstract
@@ -23,7 +24,8 @@ jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) =>
 		 * @return {string}
 		 */
 		static getTitle()
-		{}
+		{
+		}
 
 		/**
 		 * @abstract
@@ -130,13 +132,13 @@ jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) =>
 
 			parentWidget.openWidget('layout', {
 				modal: true,
-				backgroundColor: '#eef2f4',
+				backgroundColor: AppTheme.colors.bgSecondary,
 				backdrop: {
 					onlyMediumPosition: false,
 					showOnTop: true,
 					forceDismissOnSwipeDown: true,
 					mediumPositionPercent: 50,
-					navigationBarColor: '#EEF2F4',
+					navigationBarColor: AppTheme.colors.bgSecondary,
 					swipeAllowed: true,
 					swipeContentAllowed: false,
 					horizontalSwipeAllowed: false,
@@ -155,7 +157,7 @@ jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) =>
 					onSkip,
 					layout: widget,
 				}));
-			});
+			}).catch(console.error);
 		}
 
 		constructor(props)

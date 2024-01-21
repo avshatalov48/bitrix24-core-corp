@@ -53,6 +53,7 @@ foreach ($arResult["ITEMS"] as $index => $data)
 	$data['ID'] = (int)$data['ID'];
 
 
+	$entityCounters = '';
 	foreach ($data['ENTITY_COUNTERS']['counters'] as $counterIndex => $entityCounter)
 	{
 		$counterValue = (int)$entityCounter['VALUE'];

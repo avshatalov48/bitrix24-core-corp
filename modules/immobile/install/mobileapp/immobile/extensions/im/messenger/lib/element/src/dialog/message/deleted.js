@@ -23,6 +23,7 @@ jn.define('im/messenger/lib/element/dialog/message/deleted', (require, exports, 
 			this.setMessage(message);
 			this.setFontColor('#959CA4');
 			this.setShowTail(true);
+			this.forwardText = '';
 		}
 
 		getType()

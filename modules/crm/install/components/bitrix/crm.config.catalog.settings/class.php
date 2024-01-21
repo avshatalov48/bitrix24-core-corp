@@ -3,6 +3,8 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Config\State;
+use Bitrix\Catalog\Product\Store\CostPriceCalculator;
 use Bitrix\Crm\Integration\Sale\Reservation;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Loader;
@@ -117,6 +119,23 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 			}
 		}
 
+		if (
+			!empty($values['costPriceCalculationMethod'])
+			&& Feature::isStoreBatchEnabled()
+			&& !State::isProductBatchMethodSelected()
+		)
+		{
+			CostPriceCalculator::setMethod($values['costPriceCalculationMethod']);
+			if (!\Bitrix\Catalog\StoreBatchTable::getRow(['select' => ['ID']]))
+			{
+				\Bitrix\Main\Update\Stepper::bindClass(
+					'\Bitrix\Catalog\Update\ProductBatchConverter',
+					'catalog',
+					0
+				);
+			}
+		}
+
 		$catalogOptionSettings = [
 			'defaultQuantityTrace' => self::OPTION_DEFAULT_QUANTITY_TRACE,
 			'defaultCanBuyZero' => self::OPTION_DEFAULT_CAN_BUY_ZERO,
@@ -182,6 +201,7 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 
 		return [
 			'isStoreControlUsed' => \Bitrix\Catalog\Config\State::isEnabledInventoryManagement(),
+			'isStoreBatchUsed' => Feature::isStoreBatchEnabled(),
 			'isBitrix24' => static::isBitrix24(),
 			'productsCnt' => $this->getProductsCnt(),
 			'reservationEntities' => $this->getReservationEntities(),
@@ -197,6 +217,7 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 			'hasAccessToCatalogSettings' => $accessController->check(ActionDictionary::ACTION_CATALOG_SETTINGS_ACCESS),
 			'hasAccessToReservationSettings' => $accessController->check(ActionDictionary::ACTION_RESERVED_SETTINGS_ACCESS),
 			'hasAccessToInventoryManagmentSettings' => $accessController->check(ActionDictionary::ACTION_RESERVED_SETTINGS_ACCESS),
+			'costPriceCalculationMethod' => CostPriceCalculator::getMethod(),
 		];
 	}
 

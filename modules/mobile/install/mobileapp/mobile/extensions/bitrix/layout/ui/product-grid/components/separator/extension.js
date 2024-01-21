@@ -1,4 +1,8 @@
+/**
+ * @module layout/ui/product-grid/components/separator
+ */
 jn.define('layout/ui/product-grid/components/separator', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 
 	class Separator extends LayoutComponent
 	{
@@ -8,10 +12,10 @@ jn.define('layout/ui/product-grid/components/separator', (require, exports, modu
 				style: {
 					height: 1,
 					width: '100%',
-					backgroundColor: '#eef2f4',
+					backgroundColor: AppTheme.colors.bgContentPrimary,
 					marginTop: 4,
 					marginBottom: 6,
-				}
+				},
 			});
 		}
 	}

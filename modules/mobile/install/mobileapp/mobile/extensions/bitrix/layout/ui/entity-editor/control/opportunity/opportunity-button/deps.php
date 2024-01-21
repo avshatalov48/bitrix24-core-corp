@@ -2,5 +2,8 @@
 
 return [
 	'utils',
+	'apptheme',
+	'utils/color',
+	'utils/random',
 	'event-emitter',
 ];

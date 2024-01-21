@@ -10,6 +10,7 @@ jn.define('im/messenger/controller/search/experimental/selector', (require, expo
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { core } = require('im/messenger/core');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { formatDateByDialogId } = require('im/messenger/controller/search/experimental/helper/search-date-formatter');
 
 	const CAROUSEL_SECTION_CODE = 'custom';
 	const RECENT_SECTION_CODE = 'recent';
@@ -38,11 +39,16 @@ jn.define('im/messenger/controller/search/experimental/selector', (require, expo
 
 			this.showSearchItem = false;
 
+			this.processedQuery = '';
+
+			this.onScopeSelectedHandler = this.onScopeSelected.bind(this);
+			this.onUserTypeTextHandler = this.onUserTypeText.bind(this);
+			this.onSearchItemSelectedHandler = this.onSearchItemSelected.bind(this);
+			this.searchSectionButtonClickHandler = this.searchSectionButtonClick.bind(this);
+
 			this.initProvider();
 			this.subscribeEvents();
 			this.setSections();
-
-			this.processedQuery = '';
 		}
 
 		open()
@@ -57,10 +63,18 @@ jn.define('im/messenger/controller/search/experimental/selector', (require, expo
 		 */
 		subscribeEvents()
 		{
-			this.ui.on(EventType.recent.scopeSelected, this.onScopeSelected.bind(this));
-			this.ui.on(EventType.recent.userTypeText, this.onUserTypeText.bind(this));
-			this.ui.on(EventType.recent.searchItemSelected, this.onSearchItemSelected.bind(this));
-			this.ui.on(EventType.recent.searchSectionButtonClick, this.searchSectionButtonClick.bind(this));
+			this.ui.on(EventType.recent.scopeSelected, this.onScopeSelectedHandler);
+			this.ui.on(EventType.recent.userTypeText, this.onUserTypeTextHandler);
+			this.ui.on(EventType.recent.searchItemSelected, this.onSearchItemSelectedHandler);
+			this.ui.on(EventType.recent.searchSectionButtonClick, this.searchSectionButtonClickHandler);
+		}
+
+		unsubscribeEvents()
+		{
+			this.ui.off(EventType.recent.scopeSelected, this.onScopeSelectedHandler);
+			this.ui.off(EventType.recent.userTypeText, this.onUserTypeTextHandler);
+			this.ui.off(EventType.recent.searchItemSelected, this.onSearchItemSelectedHandler);
+			this.ui.off(EventType.recent.searchSectionButtonClick, this.searchSectionButtonClickHandler);
 		}
 
 		/**
@@ -144,6 +158,7 @@ jn.define('im/messenger/controller/search/experimental/selector', (require, expo
 				{
 					Logger.error('RecentSelector.drawSearch: unknown chat or user id', searchId);
 				}
+				item.displayedDate = formatDateByDialogId(searchId);
 
 				result.push(item);
 			});

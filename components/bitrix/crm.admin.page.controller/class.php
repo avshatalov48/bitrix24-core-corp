@@ -1,8 +1,20 @@
 <?php
 
-use Bitrix\Main\UI\Extension;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+use Bitrix\Catalog;
+use Bitrix\Crm;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\OrderSettings;
+use Bitrix\Iblock;
+use Bitrix\Landing;
+use Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 
 /**
  * Bitrix vars
@@ -11,19 +23,6 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
  * @var array $arResult
  * @global CMain $APPLICATION
  */
-
-use Bitrix\Main\Engine\Contract\Controllerable;
-use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Catalog;
-use Bitrix\Catalog\Access\AccessController;
-use Bitrix\Catalog\Access\ActionDictionary;
-use Bitrix\Crm;
-use Bitrix\Iblock;
-use Bitrix\Crm\Settings\OrderSettings;
-use Bitrix\Landing;
-use Bitrix\Main\ModuleManager;
-
 class CCrmAdminPageController extends \CBitrixComponent implements Controllerable
 {
 	private $pageList = array();
@@ -772,33 +771,36 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			],
 		];
 
-		$accessRightsButton = [
-			"parent_menu" => "menu_sale_settings",
-			"sort" => 740,
-			"text" => GetMessage("SHOP_MENU_CATALOG_RIGHTS_SETTINGS"),
-			"title" => GetMessage("SHOP_MENU_CATALOG_RIGHTS_SETTINGS"),
-			"additional" => "Y",
-			"url_constant" => true,
-			"items_id" => "menu_catalog_rights_settings",
-		];
+		if ($this->checkRequiredModules())
+		{
+			$accessRightsButton = [
+				"parent_menu" => "menu_sale_settings",
+				"sort" => 740,
+				"text" => GetMessage("SHOP_MENU_CATALOG_RIGHTS_SETTINGS"),
+				"title" => GetMessage("SHOP_MENU_CATALOG_RIGHTS_SETTINGS"),
+				"additional" => "Y",
+				"url_constant" => true,
+				"items_id" => "menu_catalog_rights_settings",
+			];
 
 
-		if (Catalog\Config\Feature::isAccessControllerCheckingEnabled())
-		{
-			$accessRightsButton['url'] = "/shop/settings/permissions/";
-			$accessRightsButton['url_constant'] = true;
-		}
-		else
-		{
-			$helpLink = Catalog\Config\Feature::getAccessControllerHelpLink();
-			if (!empty($helpLink))
+			if (Catalog\Config\Feature::isAccessControllerCheckingEnabled())
 			{
-				$accessRightsButton['is_locked'] = true;
-				$accessRightsButton['on_click'] = $helpLink['LINK'];
+				$accessRightsButton['url'] = "/shop/settings/permissions/";
+				$accessRightsButton['url_constant'] = true;
 			}
 			else
 			{
-				$accessRightsButton = null;
+				$helpLink = Catalog\Config\Feature::getAccessControllerHelpLink();
+				if (!empty($helpLink))
+				{
+					$accessRightsButton['is_locked'] = true;
+					$accessRightsButton['on_click'] = $helpLink['LINK'];
+				}
+				else
+				{
+					$accessRightsButton = null;
+				}
 			}
 		}
 
@@ -866,7 +868,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			];
 		}
 
-		$isAdmin = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdmin();
+		$isAdmin = Container::getInstance()->getUserPermissions()->isAdmin();
 		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 
 		$clientSubItems = [];
@@ -900,9 +902,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			);
 		}
 
-		$contactCenterUrl =
-			ModuleManager::isModuleInstalled('bitrix24') ? '/contact_center/' : SITE_DIR . 'services/contact_center/'
-		;
+		$contactCenterUrl = Container::getInstance()->getRouter()->getContactCenterUrl();
 		$clientSubItems[] = array(
 			'parent_menu' => 'crm_clients',
 			'sort' => 150,
@@ -945,7 +945,10 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			];
 		}
 
-		if (Crm\Terminal\AvailabilityManager::getInstance()->isAvailable())
+		if (
+			Crm\Terminal\AvailabilityManager::getInstance()->isAvailable()
+			&& Container::getInstance()->getIntranetToolsManager()->checkTerminalAvailability()
+		)
 		{
 			$result[] = [
 				'parent_menu' => 'global_menu_store',

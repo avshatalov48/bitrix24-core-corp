@@ -46,4 +46,4 @@ $MESS["CRM_KANBAN_TITLE_DEAL"] = "Kanban, deals";
 $MESS["CRM_KANBAN_TITLE_INVOICE"] = "Kanban, invoices";
 $MESS["CRM_KANBAN_TITLE_LEAD"] = "Kanban, leads";
 $MESS["CRM_KANBAN_TITLE_QUOTE_MSGVER_1"] = "Kanban, estimates";
-$MESS["CRM_KANBAN_TRACKING_SOURCE_ID"] = "Sales intelligence";
+$MESS["CRM_KANBAN_TRACKING_SOURCE_ID"] = "Sales Intelligence";

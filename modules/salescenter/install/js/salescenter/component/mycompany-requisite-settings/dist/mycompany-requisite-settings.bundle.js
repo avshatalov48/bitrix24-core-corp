@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Salescenter = this.BX.Salescenter || {};
 (function (exports,ui_vue,salescenter_manager) {
@@ -13,13 +14,11 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 	  methods: {
 	    openSlider: function openSlider() {
 	      var _this = this;
-
 	      if (this.isNewCompany) {
 	        var url = '/crm/configs/mycompany/';
 	        window.open(url);
 	      } else {
 	        var _url = '/crm/company/details/' + this.companyId + '/?init_mode=edit';
-
 	        salescenter_manager.Manager.openSlider(_url).then(function () {
 	          return _this.onSettings();
 	        });

@@ -2,7 +2,7 @@
  * @module layout/ui/product-grid/components/hint
  */
 jn.define('layout/ui/product-grid/components/hint', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	include('InAppNotifier');
 
 	/**
@@ -14,8 +14,8 @@ jn.define('layout/ui/product-grid/components/hint', (require, exports, module) =
 			title: message,
 			showCloseButton: true,
 			id: 'product-grid-hint',
-			backgroundColor: '#000000',
-			textColor: '#ffffff',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
+			textColor: AppTheme.colors.base1,
 			hideOnTap: true,
 			autoHide: true,
 		};
@@ -33,7 +33,7 @@ jn.define('layout/ui/product-grid/components/hint', (require, exports, module) =
 	 * @param {number} seconds
 	 * @returns {boolean}
 	 */
-	function notify({title, message, seconds})
+	function notify({ title, message, seconds })
 	{
 		if (notificationShown)
 		{
@@ -53,7 +53,7 @@ jn.define('layout/ui/product-grid/components/hint', (require, exports, module) =
 			title,
 			message,
 			time,
-			backgroundColor: '#004f69',
+			backgroundColor: AppTheme.colors.accentSoftElementBlue1,
 			blur: true,
 		});
 
@@ -61,5 +61,4 @@ jn.define('layout/ui/product-grid/components/hint', (require, exports, module) =
 	}
 
 	module.exports = { hint, notify };
-
 });

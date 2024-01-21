@@ -1,10 +1,21 @@
-<?
+<?php
+
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
+
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/bizproc/processes/index.php");
 $APPLICATION->SetTitle(GetMessage("TITLE"));
-?>
-<?
-$APPLICATION->IncludeComponent("bitrix:lists", ".default", array(
+
+if (
+	\Bitrix\Main\Loader::includeModule('bizproc')
+	&& class_exists(\Bitrix\Bizproc\Integration\Intranet\ToolsManager::class)
+	&& !\Bitrix\Bizproc\Integration\Intranet\ToolsManager::getInstance()->isBizprocAvailable()
+)
+{
+	echo \Bitrix\Bizproc\Integration\Intranet\ToolsManager::getInstance()->getBizprocUnavailableContent();
+}
+else
+{
+	$APPLICATION->IncludeComponent("bitrix:lists", ".default", array(
 		"IBLOCK_TYPE_ID" => "bitrix_processes",
 		"SEF_MODE" => "Y",
 		"SEF_FOLDER" => "/bizproc/processes/",
@@ -19,8 +30,8 @@ $APPLICATION->IncludeComponent("bitrix:lists", ".default", array(
 			"list_field_edit" => "#list_id#/field/#field_id#/",
 		)
 	),
-	false
-);
-?>
+		false
+	);
+}
 
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");

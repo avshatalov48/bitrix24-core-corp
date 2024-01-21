@@ -2,7 +2,7 @@
  * @module layout/ui/fields/datetime
  */
 jn.define('layout/ui/fields/datetime', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { dateTime, bigCross } = require('assets/common');
 	const { BaseField } = require('layout/ui/fields/base');
 	const { longDate, longTime } = require('utils/date/formats');
@@ -174,8 +174,7 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 					items: config.items,
 				},
 				(eventName, newTs) => {
-					this
-						.removeFocus()
+					this.removeFocus()
 						.then(() => {
 							if (Number.isInteger(newTs))
 							{
@@ -183,8 +182,7 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 								const timeWith00Seconds = timeInSeconds - (timeInSeconds % 60);
 								this.handleChange(timeWith00Seconds);
 							}
-						})
-					;
+						}).catch(console.error);
 				},
 			);
 
@@ -240,9 +238,10 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 					Image(
 						{
 							style: {
-								width: 16,
-								height: 16,
+								width: 24,
+								height: 24,
 							},
+							tintColor: AppTheme.colors.base3,
 							svg: {
 								content: dateTime(),
 							},
@@ -268,6 +267,7 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 							width: 33,
 							height: 33,
 						},
+						tintColor: AppTheme.colors.base3,
 						svg: {
 							content: bigCross(),
 						},
@@ -293,11 +293,12 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 					Image(
 						{
 							style: {
-								width: 16,
-								height: 16,
+								width: 24,
+								height: 24,
 							},
+							tintColor: AppTheme.colors.base3,
 							svg: {
-								content: dateTime(this.getTitleColor()),
+								content: dateTime(),
 							},
 						},
 					),

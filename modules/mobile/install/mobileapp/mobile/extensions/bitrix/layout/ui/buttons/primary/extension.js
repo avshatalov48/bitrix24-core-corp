@@ -1,4 +1,7 @@
 (() => {
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
+
 	/**
 	 * @class PrimaryButton
 	 */
@@ -10,12 +13,12 @@
 			{
 				return {
 					button: {
-						borderColor: '#00a2e8',
-						backgroundColor: '#00a2e8',
+						borderColor: AppTheme.colors.accentMainPrimary,
+						backgroundColor: AppTheme.colors.accentMainPrimary,
 					},
 					icon: {},
 					text: {
-						color: '#ffffff',
+						color: AppTheme.colors.baseWhiteFixed,
 					},
 				};
 			}
@@ -26,7 +29,7 @@
 				text: {
 					fontWeight: '500',
 					fontSize: 18,
-					color: '#0b66c3',
+					color: AppTheme.colors.accentMainLinks,
 				},
 			};
 		}

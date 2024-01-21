@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Controller\Activity;
 
+use Bitrix\Crm\Activity\Entity\AppTypeTable;
 use Bitrix\Crm\Activity\Entity\ConfigurableRestApp;
 use Bitrix\Crm\Controller\Base;
 use Bitrix\Crm\Controller\ErrorCode;
@@ -9,6 +10,7 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Rest\AppTable;
 
 class Configurable extends Base
 {
@@ -31,6 +33,7 @@ class Configurable extends Base
 				'ownerTypeId' => $activity->getOwner()->getEntityTypeId(),
 				'ownerId' => $activity->getOwner()->getEntityId(),
 				'fields' => [
+					'typeId' => $activity->getTypeId(),
 					'completed' => $activity->getCompleted(),
 					'deadline' => $activity->getDeadline(),
 					'pingOffsets' => $activity->getPingOffsets(),
@@ -117,6 +120,7 @@ class Configurable extends Base
 		elseif ($restAppClientId)
 		{
 			$activity->setRestClientId($restAppClientId);
+			$fields['restAppClientId'] = $restAppClientId;
 		}
 		else
 		{
@@ -183,6 +187,10 @@ class Configurable extends Base
 			{
 				$activity->setOriginId((string)$fields['originId']);
 			}
+			if (isset($fields['typeId']))
+			{
+				$activity->setTypeId($fields['typeId']);
+			}
 
 			if (empty($this->getErrors()))
 			{
@@ -191,6 +199,40 @@ class Configurable extends Base
 				{
 					$this->addErrors($saveResult->getErrors());
 				}
+			}
+		}
+	}
+
+	private function validateConfigurableType(?array $fields, Result $result)
+	{
+		if (!(isset($fields['restAppClientId']) && $fields['restAppClientId']))
+		{
+			$this->addWrongFieldValueError('typeId', $result);
+		}
+		else
+		{
+			$app = AppTable::getList(
+				[
+					'filter' => ['=CLIENT_ID' => $fields['restAppClientId']],
+					'select' => ['ID'],
+				]
+			)->fetch();
+
+			$row =  AppTypeTable::getList([
+				'filter' => [
+					'=APP_ID' => $app['ID'] ?? 0,
+					'=TYPE_ID' => $fields['typeId'],
+					'=IS_CONFIGURABLE_TYPE' => 'Y',
+				],
+				'select' => ['ID'],
+				'limit' => 1,
+			])->fetch();
+
+			$typeId = (int)($row['ID'] ?? 0);
+
+			if ($typeId <= 0)
+			{
+				$this->addWrongFieldValueError('typeId', $result);
 			}
 		}
 	}
@@ -255,6 +297,21 @@ class Configurable extends Base
 		)
 		{
 			$this->addWrongFieldValueError('badgeCode', $result);
+		}
+
+		if (isset($fields['typeId']))
+		{
+			if (
+				!is_string($fields['typeId'])
+				|| $fields['typeId'] === ''
+			)
+			{
+				$this->addWrongFieldValueError('typeId', $result);
+			}
+			else if ($fields['typeId'] !== \Bitrix\Crm\Activity\Provider\ConfigurableRestApp::PROVIDER_TYPE_ID_DEFAULT)
+			{
+				$this->validateConfigurableType($fields, $result);
+			}
 		}
 
 		return $result;

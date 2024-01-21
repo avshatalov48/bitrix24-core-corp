@@ -2,9 +2,12 @@
  * @module layout/ui/fields/project
  */
 jn.define('layout/ui/fields/project', (require, exports, module) => {
-
 	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
+	const { checkDisabledToolById } = require('settings/disabled-tools');
+	const { NotifyManager } = require('notify-manager');
+	const { InfoHelper } = require('layout/ui/info-helper');
 
+	const AppTheme = require('apptheme');
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/project/images/default-avatar.png';
 	const DEFAULT_SELECTOR_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/selector/providers/common/images/project.png';
 
@@ -95,8 +98,8 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 		{
 			if (imageUrl.indexOf(currentDomain) !== 0)
 			{
-				imageUrl = imageUrl.replace(`${currentDomain}`, '');
-				imageUrl = (imageUrl.indexOf('http') !== 0 ? `${currentDomain}${imageUrl}` : imageUrl);
+				imageUrl = imageUrl.replace(String(currentDomain), '');
+				imageUrl = (imageUrl.indexOf('http') === 0 ? imageUrl : `${currentDomain}${imageUrl}`);
 			}
 
 			if (imageUrl === (`${currentDomain}${DEFAULT_SELECTOR_AVATAR}`))
@@ -115,6 +118,35 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 		openEntity(projectId)
 		{
 			ProjectViewManager.open(env.userId, projectId, this.getParentWidget());
+		}
+
+		async handleAdditionalFocusActions()
+		{
+			NotifyManager.showLoadingIndicator();
+			const projectsDisabled = await checkDisabledToolById('projects');
+
+			if (projectsDisabled)
+			{
+				NotifyManager.hideLoadingIndicatorWithoutFallback();
+				InfoHelper.openByCode('limit_projects_off');
+				this.removeFocus();
+
+				return;
+			}
+
+			const scrumDisabled = await checkDisabledToolById('scrum');
+
+			if (scrumDisabled)
+			{
+				NotifyManager.hideLoadingIndicatorWithoutFallback();
+				InfoHelper.openByCode('limit_tasks_scrum_off');
+				this.removeFocus();
+
+				return;
+			}
+
+			NotifyManager.hideLoadingIndicatorWithoutFallback();
+			this.openSelector();
 		}
 
 		shouldShowEditIcon()
@@ -160,7 +192,7 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 					borderRadius: 12,
 				},
 				projectText: {
-					color: '#0b66c3',
+					color: AppTheme.colors.accentMainLinks,
 					fontSize: 16,
 					marginLeft: 5,
 					flexShrink: 2,
@@ -183,7 +215,7 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 		getSvgImages()
 		{
 			return {
-				defaultAvatar: (color = '#a8adb4') => {
+				defaultAvatar: (color = AppTheme.colors.base4) => {
 					return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 23.9989C18.6275 23.9989 24 18.6266 24 11.9995C24 5.37234 18.6275 0 12 0C5.37258 0 0 5.37234 0 11.9995C0 18.6266 5.37258 23.9989 12 23.9989Z" fill="${color}"/><path d="M12.8127 6.23779H5.44922V7.87416H14.4492L12.8127 6.23779Z" fill="white"/><path d="M18.5401 8.69234H5.44922V17.6923H18.5401V8.69234Z" fill="white"/></svg>`;
 				},
 			};
@@ -194,5 +226,4 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 		ProjectType: 'project',
 		ProjectField: (props) => new ProjectField(props),
 	};
-
 });

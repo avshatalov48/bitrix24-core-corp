@@ -12,7 +12,14 @@ $chosenEntityTypeId = (int)$dialog->getCurrentValue('dynamic_type_id', 0);
 $chosenEntityValues = $dialog->getCurrentValue('dynamic_entities_fields');
 
 $typeIdField = $dialog->getMap()['DynamicTypeId'];
-$entitiesFields = $dialog->getMap()['DynamicEntitiesFields']['Map'];
+$entitiesFields = [];
+foreach ($dialog->getMap()['DynamicEntitiesFields']['Map'] as $entityTypeId => $fieldsMap)
+{
+	$entitiesFields[$entityTypeId] = [
+		'documentType' => CCrmBizProcHelper::ResolveDocumentType($entityTypeId),
+		'fieldsMap' => $fieldsMap,
+	];
+}
 
 ?>
 <div class="bizproc-automation-popup-settings">
@@ -22,42 +29,7 @@ $entitiesFields = $dialog->getMap()['DynamicEntitiesFields']['Map'];
 	<?=$dialog->renderFieldControl($typeIdField, $dialog->getCurrentValue($typeIdField))?>
 </div>
 
-<?php foreach ($entitiesFields as $entityTypeId => $fields): ?>
-	<div id="ccda-fields-map-<?= $entityTypeId ?>" <?= $entityTypeId !== $chosenEntityTypeId ? 'hidden' : ''?>>
-		<?php $bindFieldId = "{$entityTypeId}_BindToCurrentElement"; ?>
-		<?php foreach ($fields as $fieldId => $field): ?>
-			<?php if ($fieldId === $bindFieldId): ?>
-				<?php
-				$bindField = $field;
-				$bindFieldValue = CBPHelper::getBool($chosenEntityValues[$bindFieldId] ?? true);
-				?>
-				<div class="bizproc-automation-popup-settings">
-					<div class="bizproc-automation-popup-checkbox-item">
-						<input type="hidden" name="<?= htmlspecialcharsbx($bindField['FieldName']) ?>" value="N">
-						<label class="bizproc-automation-popup-chk-label">
-							<input
-								type="checkbox"
-								name="<?= htmlspecialcharsbx($bindField['FieldName']) ?>"
-								value="Y"
-								class="bizproc-automation-popup-chk"
-								<?= $bindFieldValue ? 'checked' : '' ?>
-							>
-							<?= htmlspecialcharsbx($bindField['Name']) ?>
-						</label>
-					</div>
-				</div>
-				<?php unset($fields[$bindFieldId]); ?>
-			<?php else: ?>
-				<div class="bizproc-automation-popup-settings">
-				<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete">
-					<?=htmlspecialcharsbx($field['Name'])?>:
-				</span>
-					<?=$dialog->renderFieldControl($field, $chosenEntityValues[$fieldId])?>
-				</div>
-			<?php endif; ?>
-		<?php endforeach; ?>
-	</div>
-<?php endforeach; ?>
+<div id="fields-map-container"></div>
 
 <div hidden>
 	<?= $dialog->renderFieldControl($dialog->getMap()['OnlyDynamicEntities']) ?>
@@ -67,8 +39,10 @@ $entitiesFields = $dialog->getMap()['DynamicEntitiesFields']['Map'];
 	BX.ready(function()
 	{
 		var script = new BX.Crm.Activity.CrmCreateDynamicActivity({
+			isRobot: true,
 			formName: '<?=CUtil::JSEscape($dialog->getFormName())?>',
-			fieldsContainerIdPrefix: 'ccda-fields-map-',
+			entitiesFieldsMap: <?= \Bitrix\Main\Web\Json::encode($entitiesFields) ?>,
+			currentValues: <?= \Bitrix\Main\Web\Json::encode($chosenEntityValues) ?>,
 		});
 		script.init();
 	})

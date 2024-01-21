@@ -35,24 +35,24 @@ class Task extends Base
 	const DESC_FORMAT_PLAIN_TEXT = \CTaskItem::DESCR_FORMAT_PLAIN_TEXT;
 
 	/** @var ?TaskCopier */
-	private $taskCopier = null;
+	protected $taskCopier = null;
 
 	/** @var EntityCopier*/
-	private $paramsCopier = null;
+	protected $paramsCopier = null;
 
 	/** @var ?TemplateCopier*/
-	private $templateCopier = null;
+	protected $templateCopier = null;
 
 	/** @var ?EntityCopier*/
-	private $topicCopier = null;
+	protected $topicCopier = null;
 	/** @var ?EntityCopier*/
-	private $commentCopier = null;
+	protected $commentCopier = null;
 
-	private $targetGroupId;
+	protected $targetGroupId;
 
 	protected $executiveUserId;
 
-	private $projectTerm = [];
+	protected $projectTerm = [];
 
 	protected $ufEntityObject = "TASKS_TASK";
 	protected $ufDiskFileField = "UF_TASK_WEBDAV_FILES";
@@ -326,7 +326,7 @@ class Task extends Base
 		return $this->getResult($results);
 	}
 
-	private function copyChildTasks($taskId, $copiedTaskId)
+	protected function copyChildTasks($taskId, $copiedTaskId)
 	{
 		if (!$this->taskCopier)
 		{
@@ -380,7 +380,7 @@ class Task extends Base
 		}
 	}
 
-	private function cleanDataToCopy($fields)
+	protected function cleanDataToCopy($fields)
 	{
 		$fields = $this->cleanPrimary($fields);
 		$fields = $this->cleanDate($fields);
@@ -390,14 +390,14 @@ class Task extends Base
 		return $fields;
 	}
 
-	private function cleanPrimary($fields)
+	protected function cleanPrimary($fields)
 	{
 		unset($fields["ID"]);
 		unset($fields["GUID"]);
 		return $fields;
 	}
 
-	private function cleanDate($fields)
+	protected function cleanDate($fields)
 	{
 		unset($fields["CREATED_DATE"]);
 		unset($fields["CHANGED_DATE"]);
@@ -405,7 +405,7 @@ class Task extends Base
 		return $fields;
 	}
 
-	private function cleanStatus($fields)
+	protected function cleanStatus($fields)
 	{
 		unset($fields["STATUS"]);
 		unset($fields["STATUS_CHANGED_BY"]);
@@ -413,19 +413,19 @@ class Task extends Base
 		return $fields;
 	}
 
-	private function cleanForumData($fields)
+	protected function cleanForumData($fields)
 	{
 		unset($fields["FORUM_TOPIC_ID"]);
 		return $fields;
 	}
 
-	private function cleanSystemUfData(array $fields): array
+	protected function cleanSystemUfData(array $fields): array
 	{
 		unset($fields["UF_TASK_WEBDAV_FILES"]);
 		return $fields;
 	}
 
-	private function copyComments(Container $parentContainer, int $taskId, int $copiedTaskId)
+	protected function copyComments(Container $parentContainer, int $taskId, int $copiedTaskId)
 	{
 		if (!$this->commentCopier)
 		{
@@ -491,7 +491,7 @@ class Task extends Base
 		return $result;
 	}
 
-	private function copyReplica(Container $parentContainer, int $taskId, int $copiedTaskId)
+	protected function copyReplica(Container $parentContainer, int $taskId, int $copiedTaskId)
 	{
 		if (!$this->templateCopier)
 		{
@@ -537,7 +537,7 @@ class Task extends Base
 		return new Result();
 	}
 
-	private function copyParams(Container $parentContainer, int $taskId, int $copiedTaskId): Result
+	protected function copyParams(Container $parentContainer, int $taskId, int $copiedTaskId): Result
 	{
 		if (!$this->paramsCopier)
 		{
@@ -570,7 +570,7 @@ class Task extends Base
 		return new Result();
 	}
 
-	private function getProjectDeadline($currentDeadline, $taskCreatedDate)
+	protected function getProjectDeadline($currentDeadline, $taskCreatedDate)
 	{
 		$deadline = $this->getRecountedProjectDeadline($currentDeadline, $taskCreatedDate);
 
@@ -579,14 +579,14 @@ class Task extends Base
 		return $deadline;
 	}
 
-	private function getGroupDeadline($currentDeadline, $taskCreatedDate)
+	protected function getGroupDeadline($currentDeadline, $taskCreatedDate)
 	{
 		$deadline = $this->getRecountedGroupDeadline($currentDeadline, $taskCreatedDate);
 
 		return $deadline;
 	}
 
-	private function getProjectDatePlan($currentDatePlan, $taskCreatedDate)
+	protected function getProjectDatePlan($currentDatePlan, $taskCreatedDate)
 	{
 		try
 		{
@@ -645,12 +645,12 @@ class Task extends Base
 		}
 	}
 
-	private function getGroupDatePlan($currentDatePlan, $taskCreatedDate)
+	protected function getGroupDatePlan($currentDatePlan, $taskCreatedDate)
 	{
 		return $this->getRecountedGroupDeadline($currentDatePlan, $taskCreatedDate);
 	}
 
-	private function getRecountedProjectDeadline($currentFieldDate, $taskCreatedDate)
+	protected function getRecountedProjectDeadline($currentFieldDate, $taskCreatedDate)
 	{
 		try
 		{
@@ -720,7 +720,7 @@ class Task extends Base
 		}
 	}
 
-	private function isCorrectProjectDeadline($deadline)
+	protected function isCorrectProjectDeadline($deadline)
 	{
 		try
 		{
@@ -742,7 +742,7 @@ class Task extends Base
 		}
 	}
 
-	private function getRecountedGroupDeadline($currentDeadline, $taskCreatedDate)
+	protected function getRecountedGroupDeadline($currentDeadline, $taskCreatedDate)
 	{
 		try
 		{
@@ -770,7 +770,7 @@ class Task extends Base
 		}
 	}
 
-	private function getGroupIdByTaskId($taskId)
+	protected function getGroupIdByTaskId($taskId)
 	{
 		$queryObject = $this->getList([], ["ID" => $taskId], ["GROUP_ID"]);
 		if ($task = $queryObject->fetch())
@@ -781,7 +781,7 @@ class Task extends Base
 		return null;
 	}
 
-	private function addSocnetLog($copiedTaskId, $copiedTopicId, array $mapIdsCopiedComments): void
+	protected function addSocnetLog($copiedTaskId, $copiedTopicId, array $mapIdsCopiedComments): void
 	{
 		if (!Loader::includeModule('forum'))
 		{

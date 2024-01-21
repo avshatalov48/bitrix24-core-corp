@@ -2,7 +2,7 @@
  * @module layout/ui/entity-editor/control/opportunity
  */
 jn.define('layout/ui/entity-editor/control/opportunity', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { EntityEditorField } = require('layout/ui/entity-editor/control/field');
 	const { EntityEditorMode } = require('layout/ui/entity-editor/editor-enum/mode');
 
@@ -29,9 +29,7 @@ jn.define('layout/ui/entity-editor/control/opportunity', (require, exports, modu
 
 		initialize(id, uid, type, settings)
 		{
-			type = 'money';
-
-			super.initialize(id, uid, type, settings);
+			super.initialize(id, uid, 'money', settings);
 		}
 
 		initializeStateFromModel()
@@ -82,6 +80,7 @@ jn.define('layout/ui/entity-editor/control/opportunity', (require, exports, modu
 				isUsedInventoryManagement: this.model.getField('IS_USED_INVENTORY_MANAGEMENT', false),
 				modeWithOrders: this.model.getField('MODE_WITH_ORDERS', false),
 				salesOrderRights: this.model.getField('SALES_ORDERS_RIGHTS', {}),
+				isTerminalAvailable: this.model.getField('IS_TERMINAL_AVAILABLE', false),
 			};
 
 			return new DocumentList(data);
@@ -103,7 +102,7 @@ jn.define('layout/ui/entity-editor/control/opportunity', (require, exports, modu
 				{
 					style: {
 						marginBottom: this.marginBottom,
-					}
+					},
 				},
 				View(
 					{
@@ -147,12 +146,12 @@ jn.define('layout/ui/entity-editor/control/opportunity', (require, exports, modu
 					: View(
 						{
 							style: {
-								borderBottomColor: this.isInEditMode() ? '#e4e6e7' : '#edeef0',
+								borderBottomColor: this.isInEditMode() ? AppTheme.colors.bgSeparatorPrimary : AppTheme.colors.base7,
 								borderBottomWidth: this.showBorder ? 1 : 0,
 								marginHorizontal: 16,
 							},
-						}
-				)
+						},
+					),
 			);
 		}
 
@@ -276,8 +275,7 @@ jn.define('layout/ui/entity-editor/control/opportunity', (require, exports, modu
 
 			return this.schemeElement.data.isReceivePaymentAvailable
 				&& entityTypeId === TypeId.Deal
-				&& !this.isInEditMode()
-			;
+				&& !this.isInEditMode();
 		}
 
 		lockAmount()

@@ -4,6 +4,10 @@
 jn.define('im/messenger/provider/service/reaction', (require, exports, module) => {
 	const { core } = require('im/messenger/core');
 	const { RestMethod } = require('im/messenger/const');
+	const { Logger } = require('im/messenger/lib/logger');
+	const { runAction } = require('im/messenger/lib/rest');
+
+	const { DateHelper } = require('im/messenger/lib/helper');
 	class ReactionService
 	{
 		static getReactionRequestLimit()
@@ -17,7 +21,7 @@ jn.define('im/messenger/provider/service/reaction', (require, exports, module) =
 		}
 
 		/**
-		 * @param {ReactionType} reactionType
+		 * @param {AllReactions} reactionType
 		 * @param {number || null} [lastId = null]
 		 * @return Promise<ReactionServiceGetData>
 		 */
@@ -38,6 +42,7 @@ jn.define('im/messenger/provider/service/reaction', (require, exports, module) =
 					name: user.name,
 					color: user.color,
 					reaction: reactionData.reaction.toLowerCase(),
+					dateCreate: reactionData.dateCreate,
 				};
 			}).sort((a, b) => {
 				return a.reactionId - b.reactionId;
@@ -52,38 +57,29 @@ jn.define('im/messenger/provider/service/reaction', (require, exports, module) =
 
 		/**
 		 * @private
-		 * @param {ReactionType} reactionType
+		 * @param {AllReactions} reactionType
 		 * @param {number} lastId
 		 * @return {Promise<ReactionServiceLoadData>}
 		 */
 		async loadReactions(reactionType, lastId)
 		{
-			return new Promise((resolve, reject) => {
-				BX.rest.callMethod(
-					RestMethod.imV2ChatMessageReactionTail,
-					{
-						messageId: this.messageId,
-						filter: {
-							reaction: reactionType,
-							lastId,
-						},
-						limit: ReactionService.getReactionRequestLimit(),
-						order: {
-							id: 'ASC',
-						},
-					},
-					(result) => {
-						if (result.error())
-						{
-							reject(result.error());
+			const reactionTailData = {
+				messageId: this.messageId,
+				filter: {
+					reaction: reactionType === 'all' ? null : reactionType,
+					lastId,
+				},
+				limit: ReactionService.getReactionRequestLimit(),
+				order: {
+					id: 'ASC',
+				},
+			};
 
-							return;
-						}
-
-						resolve(result.data());
-					},
-				);
-			});
+			return runAction(RestMethod.imV2ChatMessageReactionTail, { data: reactionTailData })
+				.catch((errors) => {
+					Logger.error('ReactionService.loadReactions error: ', errors);
+				})
+			;
 		}
 	}
 

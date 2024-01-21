@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true){
 
 use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\MenuIdResolver;
 use Bitrix\Crm\Integration;
+use Bitrix\Crm\Integration\AI\AIManager;
 
 /**
  * Bitrix vars
@@ -83,6 +84,17 @@ if (!$arResult['READ_ONLY'])
 }
 
 CJSCore::Init($jsLibraries);
+
+if (
+	AIManager::isAiCallProcessingEnabled()
+	&& in_array((int)($arResult['ENTITY_TYPE_ID'] ?? 0), AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
+)
+{
+	echo (\Bitrix\Crm\Tour\CopilotInCall::getInstance())
+		->setEntityTypeId($arResult['ENTITY_TYPE_ID'])
+		->build()
+	;
+}
 
 $guid = $arResult['GUID'];
 $prefix = mb_strtolower($guid);
@@ -441,6 +453,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					userId: <?=$arResult['USER_ID']?>,
 					readOnly: <?=$arResult['READ_ONLY'] ? 'true' : 'false'?>,
 					currentUser: <?=\Bitrix\Main\Web\Json::encode($arResult['LAYOUT_CURRENT_USER'])?>,
+					pingSettings: <?=\Bitrix\Main\Web\Json::encode($arResult['PING_SETTINGS'])?>,
 					pullTagName: "<?=CUtil::JSEscape($arResult['PULL_TAG_NAME'])?>",
 					progressSemantics: "<?=CUtil::JSEscape($arResult['PROGRESS_SEMANTICS'])?>",
 					containerId: "<?=CUtil::JSEscape($listContainerID)?>",

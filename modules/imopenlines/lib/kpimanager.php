@@ -562,9 +562,9 @@ class KpiManager
 	 *
 	 * @param $lineId
 	 *
-	 * @return bool
+	 * @return string
 	 */
-	protected static function startLineSessionsTimers($lineId)
+	protected static function startLineSessionsTimers($lineId): string
 	{
 		$sessionList = SessionKpiMessagesTable::getList(
 			array(
@@ -584,7 +584,7 @@ class KpiManager
 			$kpi->startTimer();
 		}
 
-		return true;
+		return '';
 	}
 
 	/**
@@ -592,9 +592,9 @@ class KpiManager
 	 *
 	 * @param $lineId
 	 *
-	 * @return bool
+	 * @return string
 	 */
-	protected static function stopLineSessionsTimers($lineId)
+	protected static function stopLineSessionsTimers($lineId): string
 	{
 		$sessionList = SessionKpiMessagesTable::getList(
 			array(
@@ -615,7 +615,7 @@ class KpiManager
 			$kpi->stopTimer();
 		}
 
-		return true;
+		return '';
 	}
 
 	/**
@@ -770,8 +770,10 @@ class KpiManager
 
 		foreach ($lineList as $line)
 		{
-			\CAgent::AddAgent('\\Bitrix\\ImOpenLines\\KpiManager::startLineSessionsTimers('.$line['ID'].')', "imopenlines", "N", 0, "", "Y", \ConvertTimeStamp($line['WORKTIME_FROM'], "FULL"));
-			\CAgent::AddAgent('\\Bitrix\\ImOpenLines\\KpiManager::stopLineSessionsTimers('.$line['ID'].')', "imopenlines", "N", 0, "", "Y", \ConvertTimeStamp($line['WORKTIME_TO'], "FULL"));
+			/** @see \Bitrix\ImOpenLines\KpiManager::startLineSessionsTimers */
+			\CAgent::AddAgent('Bitrix\ImOpenLines\KpiManager::startLineSessionsTimers('.$line['ID'].');', "imopenlines", "N", 0, "", "Y", \ConvertTimeStamp($line['WORKTIME_FROM'], "FULL"));
+			/** @see \Bitrix\ImOpenLines\KpiManager::stopLineSessionsTimers */
+			\CAgent::AddAgent('Bitrix\ImOpenLines\KpiManager::stopLineSessionsTimers('.$line['ID'].');', "imopenlines", "N", 0, "", "Y", \ConvertTimeStamp($line['WORKTIME_TO'], "FULL"));
 		}
 	}
 
@@ -780,7 +782,7 @@ class KpiManager
 	 *
 	 * @return string
 	 */
-	public static function checkWorkTimeAgent()
+	public static function checkWorkTimeAgent(): string
 	{
 		self::checkWorkTime();
 
@@ -790,9 +792,9 @@ class KpiManager
 	/**
 	 * Agent for sending expired notification messages for all lines, taking account of line settings
 	 *
-	 * @return bool
+	 * @return string
 	 */
-	public static function setExpiredMessagesAgent()
+	public static function setExpiredMessagesAgent(): string
 	{
 		$lines = self::getLinesWithExpiredMessages(false);
 		$search = self::getKpiMessageSearchFields();

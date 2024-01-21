@@ -10,6 +10,9 @@ abstract class PathMaker
 	public const DEFAULT_ACTION = 'view';
 	public const EDIT_ACTION = 'edit';
 
+	public const AND = '&';
+	public const START = '?';
+
 	public static array $allowedActions = ['view', 'edit'];
 
 	public string $queryParams = '';
@@ -25,19 +28,37 @@ abstract class PathMaker
 		{
 			return $this;
 		}
-		if ($queryParams[0] === '?')
-		{
-			$this->queryParams = $queryParams;
-		}
-		else
-		{
-			$this->queryParams = '?' . $queryParams;
-		}
+
+		$this->queryParams = $queryParams[0] === static::START
+			? $queryParams
+			: static::START . $queryParams;
 
 		return $this;
 	}
 
-	public function __construct(int $entityId, string $action, int $ownerId, string $context)
+	public function addQueryParam(string $key, string $value): self
+	{
+		$this->queryParams = empty($this->queryParams)
+			? static::START
+			: $this->queryParams . static::AND;
+
+		$this->queryParams .= http_build_query([$key => $value]);
+
+		return $this;
+	}
+
+	public function setOwnerId(int $ownerId): static
+	{
+		$this->ownerId = $ownerId;
+		return $this;
+	}
+
+	public function __construct(
+		int $entityId = 0,
+		string $action = self::DEFAULT_ACTION,
+		int $ownerId = 0,
+		string $context = self::PERSONAL_CONTEXT
+	)
 	{
 		$this->entityId = $entityId;
 		$this->action = in_array($action, static::$allowedActions, true) ? $action : static::DEFAULT_ACTION;
@@ -46,5 +67,6 @@ abstract class PathMaker
 	}
 
 	abstract public function makeEntityPath(): string;
+
 	abstract public function makeEntitiesListPath(): string;
 }

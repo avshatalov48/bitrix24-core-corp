@@ -16,4 +16,10 @@ abstract class RouteDictionary
 	public const PATH_TO_USER_TAGS = '/company/personal/user/#user_id#/tasks/tags/';
 
 	public const PATH_TO_USER = '/company/personal/user/#user_id#/';
+
+	public const PATH_TO_PERMISSIONS = '/tasks/config/permissions/';
+
+	public const PATH_TO_RECYCLEBIN = '/company/personal/user/#user_id#/tasks/recyclebin/';
+
+	public const RECYCLEBIN_SUFFIX = 'recyclebin/';
 }

@@ -282,6 +282,11 @@ class ActionViewMode
 		}
 
 		this.tourPromise.then((exports) => {
+			if (PopupManager && PopupManager.isAnyPopupShown())
+			{
+				return;
+			}
+
 			const { Guide } = exports;
 			const guide = this.createGuideInstance(Guide, steps, (this.steps.length <= 1));
 

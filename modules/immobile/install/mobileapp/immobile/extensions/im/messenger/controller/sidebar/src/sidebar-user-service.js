@@ -3,7 +3,6 @@
  */
 jn.define('im/messenger/controller/sidebar/sidebar-user-service', (require, exports, module) => {
 	const { Type } = require('type');
-	// const { Logger } = require('im/messenger/lib/logger');
 	const { Loc } = require('loc');
 	const { core } = require('im/messenger/core');
 	const { ChatTitle, ChatAvatar, UserStatus } = require('im/messenger/lib/element');
@@ -76,17 +75,9 @@ jn.define('im/messenger/controller/sidebar/sidebar-user-service', (require, expo
 		 */
 		getUserStatus(id = this.dialogId)
 		{
-			let status = '';
-			const userData = this.store.getters['usersModel/getById'](id);
-			const isOnline = this.isUserOnline(userData.lastActivityDate);
-			const statusUrl = this.getUserStatusUrlById(id);
-
-			if (isOnline)
-			{
-				status = statusUrl;
-			}
-
-			return status;
+			// const userData = this.store.getters['usersModel/getById'](id);
+			// const isOnline = this.isUserOnline(userData.lastActivityDate); // TODO this experimental solution, may be disabled
+			return this.getUserStatusUrlById(id);
 		}
 
 		/**
@@ -111,12 +102,23 @@ jn.define('im/messenger/controller/sidebar/sidebar-user-service', (require, expo
 		 */
 		getUserStatusUrlById(id = this.dialogId)
 		{
-			return UserStatus.getStatusByUserId(id);
+			return UserStatus.getStatusByUserId(id, false);
 		}
 
 		getStatusCrown()
 		{
 			return UserStatus.getStatusCrown();
+		}
+
+		isBotById(userId)
+		{
+			const userModelState = this.store.getters['usersModel/getById'](userId);
+			if (!userModelState)
+			{
+				return false;
+			}
+
+			return userModelState.bot;
 		}
 	}
 

@@ -154,6 +154,7 @@ class Installed extends BaseTemplate
 		if (empty($appCodes)) {
 			$response = Transport::instance()->call(Transport::METHOD_TOTAL_APPS);
 			$this->result['TOTAL_APPS'] = NumberApps::get($response);
+			$this->result['SHOW_MARKET_ICON'] = $response[Transport::METHOD_TOTAL_APPS]['SHOW_MARKET_ICON'];
 		}
 
 		$unpublishedApps = array_diff($appCodes, $publishedApps);

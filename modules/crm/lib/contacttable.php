@@ -7,7 +7,6 @@
  */
 namespace Bitrix\Crm;
 
-use Bitrix\Crm\Multifield;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\ContactSettings;
 use Bitrix\Main\DI\ServiceLocator;
@@ -22,8 +21,8 @@ use Bitrix\Main\ORM\Fields\Relations\CascadePolicy;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Fields\StringField;
-use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Objectify\State;
+use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\UserTable;
 
 Loc::loadMessages(Path::combine(__DIR__, 'contact.php'));
@@ -229,6 +228,8 @@ class ContactTable extends ORM\Data\DataManager
 			))
 				->configureTitle(Loc::getMessage('CRM_CONTACT_ENTITY_EVENT_RELATION_FIELD'))
 			,
+
+			$fieldRepository->getObservers('CONTACT', 'OBSERVER_IDS'),
 
 			$fieldRepository->getMultifieldValue(
 				'EMAIL_HOME',

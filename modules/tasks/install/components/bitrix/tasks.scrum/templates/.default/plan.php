@@ -14,11 +14,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\Filter;
-use Bitrix\Tasks\Slider\Exception\SliderException;
 use Bitrix\Tasks\Update\TagConverter;
-use Bitrix\Tasks\Slider\Factory\SliderFactory;
 
-require_once __DIR__.'/header.php';
+if ($arParams['CONTEXT'] === 'group')
+{
+	require_once __DIR__.'/header.php';
+}
+else
+{
+	require_once __DIR__.'/external_header.php';
+}
 
 $pathToTask = str_replace('#action#', 'view', $arParams['PATH_TO_GROUP_TASKS_TASK']);
 $pathToTask = str_replace('#group_id#', $arParams['GROUP_ID'], $pathToTask);
@@ -64,8 +69,12 @@ $tagsAreConverting = TagConverter::isProceed();
 			isExactSearchApplied: '<?= $arResult['isExactSearchApplied'] ?>',
 			displayPriority: '<?= $arResult['displayPriority'] ?>'
 		});
-		BX.Tasks.Scrum.Entry.renderTabsTo(document.getElementById('tasks-scrum-switcher'));
-		BX.Tasks.Scrum.Entry.renderRightElementsTo(document.getElementById('tasks-scrum-right-container'));
+
+		<?php if ($arParams['CONTEXT'] === 'group'): ?>
+			BX.Tasks.Scrum.Entry.renderTabsTo(document.getElementById('tasks-scrum-switcher'));
+			BX.Tasks.Scrum.Entry.renderRightElementsTo(document.getElementById('tasks-scrum-right-container'));
+		<?php endif; ?>
+
 		BX.Tasks.Scrum.Entry.renderTo(document.getElementById('tasks-scrum-container'));
 	});
 </script>

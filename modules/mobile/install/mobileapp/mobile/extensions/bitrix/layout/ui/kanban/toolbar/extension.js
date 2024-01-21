@@ -2,15 +2,17 @@
  * @module layout/ui/kanban/toolbar
  */
 jn.define('layout/ui/kanban/toolbar', (require, exports, module) => {
+	const { AppTheme } = require('apptheme/extended');
 	const { mergeImmutable } = require('utils/object');
 	const { Filler } = require('layout/ui/kanban/toolbar/filler');
 	const { StageSummary } = require('layout/ui/kanban/toolbar/stage-summary');
-	const { StageDropdown } = require('layout/ui/kanban/toolbar/stage-dropdown');
+	const { StageDropdown, StageDropdownClass } = require('layout/ui/kanban/toolbar/stage-dropdown');
+	const { PureComponent } = require('layout/pure-component');
 
 	/**
 	 * @abstract
 	 */
-	class KanbanToolbar extends LayoutComponent
+	class KanbanToolbar extends PureComponent
 	{
 		constructor(props)
 		{
@@ -20,6 +22,13 @@ jn.define('layout/ui/kanban/toolbar', (require, exports, module) => {
 				loading: true,
 				activeStageId: null,
 			};
+
+			this.onToolbarClick = this.onToolbarClick.bind(this);
+		}
+
+		get layout()
+		{
+			return this.props.layout || {};
 		}
 
 		/**
@@ -48,56 +57,6 @@ jn.define('layout/ui/kanban/toolbar', (require, exports, module) => {
 		getTestId()
 		{
 			return 'KanbanToolbar';
-		}
-
-		/**
-		 * @protected
-		 * @abstract
-		 * @return {KanbanStage[]}
-		 */
-		getStages()
-		{
-			return [];
-		}
-
-		/**
-		 * @protected
-		 * @param {number} id
-		 * @return {KanbanStage|undefined}
-		 */
-		getStageById(id)
-		{
-			const stages = this.getStages();
-
-			return stages.find((stage) => stage.id === id);
-		}
-
-		/**
-		 * @protected
-		 * @param {string} statusId
-		 * @return {KanbanStage|undefined}
-		 */
-		getStageByStatusId(statusId)
-		{
-			const stages = this.getStages();
-
-			return stages.find((stage) => stage.statusId === statusId);
-		}
-
-		/**
-		 * @protected
-		 * @returns {null|KanbanStage}
-		 */
-		getActiveStage()
-		{
-			const stages = this.getStages();
-
-			if (stages.length === 0 || !this.getActiveStageId())
-			{
-				return null;
-			}
-
-			return this.getStageById(this.getActiveStageId());
 		}
 
 		/**
@@ -134,25 +93,11 @@ jn.define('layout/ui/kanban/toolbar', (require, exports, module) => {
 		}
 
 		/**
-		 * @public
-		 * @return {Map<string, KanbanStage>}
-		 */
-		getColumns()
-		{
-			const columns = new Map();
-
-			this.getStages().forEach((stage) => {
-				columns.set(stage.statusId, stage);
-			});
-
-			return columns;
-		}
-
-		/**
 		 * @protected
 		 * @abstract
 		 */
-		onToolbarClick() {}
+		onToolbarClick()
+		{}
 
 		/**
 		 * @protected
@@ -190,7 +135,17 @@ jn.define('layout/ui/kanban/toolbar', (require, exports, module) => {
 					onClick: () => this.onToolbarClick(),
 				},
 				Shadow(
-					styles.shadow,
+					{
+						color: AppTheme.colors.shadowPrimary,
+						radius: 3,
+						offset: {
+							y: 3,
+						},
+						inset: {
+							left: 3,
+							right: 3,
+						},
+					},
 					View(
 						{
 							style: styles.mainWrapper,
@@ -224,28 +179,12 @@ jn.define('layout/ui/kanban/toolbar', (require, exports, module) => {
 			right: 0,
 			top: 0,
 		},
-		shadow: {
-			color: '#0f000000',
-			radius: 2,
-			offset: {
-				y: 2,
-			},
-			inset: {
-				left: 2,
-				right: 2,
-			},
-			style: {
-				borderBottomLeftRadius: 12,
-				borderBottomRightRadius: 12,
-				marginBottom: 2,
-			},
-		},
 		mainWrapper: {
 			flexDirection: 'row',
 			height: 60,
 			paddingHorizontal: 10,
 			paddingTop: 9,
-			backgroundColor: '#ffffff',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			borderBottomLeftRadius: 12,
 			borderBottomRightRadius: 12,
 			justifyContent: 'space-between',
@@ -260,18 +199,18 @@ jn.define('layout/ui/kanban/toolbar', (require, exports, module) => {
 			paddingRight: 10,
 		},
 		columnTitle: {
-			color: '#a8adb4',
+			color: AppTheme.colors.base4,
 			fontSize: 14,
 			fontWeight: '500',
 			marginBottom: Application.getPlatform() === 'android' ? 0 : 2,
 		},
 		columnContent: {
-			color: '#525c69',
+			color: AppTheme.colors.base2,
 			fontSize: 14,
 			fontWeight: '500',
 			marginTop: Application.getPlatform() === 'android' ? 1 : 3,
 		},
 	};
 
-	module.exports = { KanbanToolbar, Filler, StageSummary, StageDropdown, defaultStyles };
+	module.exports = { KanbanToolbar, Filler, StageSummary, StageDropdown, defaultStyles, StageDropdownClass };
 });

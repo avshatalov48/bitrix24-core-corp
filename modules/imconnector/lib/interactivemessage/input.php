@@ -313,8 +313,9 @@ class Input
 			if ($sessionData = $rawSession->fetch())
 			{
 				if (
-					$sessionData['CLOSED'] === 'Y' ||
-					$sessionData['STATUS'] >= Session::STATUS_CLOSE
+					$sessionData['CLOSED'] === 'Y'
+					|| $sessionData['STATUS'] >= Session::STATUS_CLOSE
+					|| $sessionData['STATUS'] < Session::STATUS_OPERATOR
 				)
 				{
 					$result->addError(new Error(

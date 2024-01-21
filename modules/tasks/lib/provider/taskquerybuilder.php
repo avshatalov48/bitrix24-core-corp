@@ -27,6 +27,7 @@ use Bitrix\Tasks\Internals\Counter\Deadline;
 use Bitrix\Tasks\Internals\Task\ElapsedTimeTable;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
+use Bitrix\Tasks\Internals\Task\RegularParametersTable;
 use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\SortingTable;
 use Bitrix\Tasks\Internals\Task\Status;
@@ -45,7 +46,7 @@ use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
 use CUserTypeEntity;
 
-class TaskQueryBuilder
+class TaskQueryBuilder implements QueryBuilderInterface
 {
 	public const ALIAS_TASK = 'T';
 	public const ALIAS_TASK_VIEW = 'TV';
@@ -78,42 +79,19 @@ class TaskQueryBuilder
 	public const ALIAS_SCRUM_ITEM_D = 'TSIE';
 	public const ALIAS_SCRUM_ENTITY_D = 'TSEE';
 	public const ALIAS_TASK_SCENARIO = 'SCR';
+	public const ALIAS_TASK_REGULAR = 'REG';
 
 	private const DEFAULT_LIMIT = 50;
+	private TaskQuery $taskQuery;
+	private ?UserModel $user;
+	private Query $query;
+	private TaskFilterBuilder $filterBuilder;
 
-	/**
-	 * @var UserModel $user
-	 */
-	private $user;
-	private $departmentMembers;
-
-	/**
-	 * @var Query $query
-	 */
-	private $query;
-
-	/**
-	 * @var TaskQuery $taskQuery
-	 */
-	private $taskQuery;
-
-	/**
-	 * @var TaskFilterBuilder $filterBuilder
-	 */
-	private $filterBuilder;
-
-	/**
-	 * @var array
-	 */
-	private $runtimeFields = [];
-
-	private $roles;
-	private $permissions;
-
-	/**
-	 * @var
-	 */
-	private static $lastBuildedSql;
+	private ?array $departmentMembers;
+	private array $runtimeFields = [];
+	private ?array $roles;
+	private ?array $permissions;
+	private static string $lastBuiltSql;
 
 	/**
 	 * @param string $alias
@@ -155,7 +133,7 @@ class TaskQueryBuilder
 	 * @throws ArgumentException
 	 * @throws SystemException
 	 */
-	public static function build(TaskQuery $taskQuery): Query
+	public static function build(TaskQueryInterface $taskQuery): Query
 	{
 		$query = (new self($taskQuery))
 			->buildOrder()
@@ -167,7 +145,7 @@ class TaskQueryBuilder
 			->addAccessCheck()
 			->getQuery();
 
-		self::$lastBuildedSql = $query->getQuery();
+		self::$lastBuiltSql = $query->getQuery();
 
 		return $query;
 	}
@@ -177,7 +155,7 @@ class TaskQueryBuilder
 	 */
 	public static function getLastQuery(): ?string
 	{
-		return self::$lastBuildedSql;
+		return self::$lastBuiltSql;
 	}
 
 	/**
@@ -415,7 +393,7 @@ class TaskQueryBuilder
 	 */
 	private function buildOrder(): self
 	{
-		foreach ($this->taskQuery->getOrder() as $column => $order)
+		foreach ($this->taskQuery->getOrderBy() as $column => $order)
 		{
 			$this->addOrder($column, $order);
 		}
@@ -423,7 +401,7 @@ class TaskQueryBuilder
 		$queryOrder = $this->query->getOrder();
 		if (!array_key_exists('ID', $queryOrder) && !empty($queryOrder))
 		{
-			$this->query->addOrder('ID', TaskQuery::SORT_ASC);
+			$this->query->addOrder('ID', TaskQueryInterface::SORT_ASC);
 		}
 
 		return $this;
@@ -966,6 +944,17 @@ class TaskQueryBuilder
 				);
 				break;
 
+			case self::ALIAS_TASK_REGULAR:
+				$this->query->registerRuntimeField(
+					$alias,
+					(new ReferenceField(
+						$alias,
+						RegularParametersTable::getEntity(),
+						Join::on('this.ID', 'ref.TASK_ID')
+					))->configureJoinType('left')
+				);
+				break;
+
 			case self::ALIAS_CHAT_TASK:
 				if (!Loader::includeModule('im'))
 				{
@@ -1123,6 +1112,7 @@ class TaskQueryBuilder
 			"REAL_STATUS" => "STATUS",
 			"MULTITASK" => "MULTITASK",
 			"STAGE_ID" => "STAGE_ID",
+			"STAGES_ID" => self::ALIAS_TASK_STAGES.".STAGE_ID",
 			"RESPONSIBLE_ID" => "RESPONSIBLE_ID",
 			"RESPONSIBLE_NAME" => self::ALIAS_USER_RESPONSIBLE.".NAME",
 			"RESPONSIBLE_LAST_NAME" => self::ALIAS_USER_RESPONSIBLE.".LAST_NAME",
@@ -1281,6 +1271,7 @@ class TaskQueryBuilder
 				["DEADLINE"]
 			),
 			"SCENARIO_NAME" => self::ALIAS_TASK_SCENARIO.".SCENARIO",
+			'IS_REGULAR' => 'IS_REGULAR',
 		];
 	}
 

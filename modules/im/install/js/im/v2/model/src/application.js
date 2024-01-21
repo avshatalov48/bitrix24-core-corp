@@ -41,7 +41,8 @@ export class ApplicationModel extends BuilderModel
 			},
 			/** @function application/isChatOpen */
 			isChatOpen: (state) => (dialogId: string): boolean => {
-				if (state.layout.name !== Layout.chat.name)
+				const allowedLayouts = [Layout.chat.name, Layout.copilot.name];
+				if (!allowedLayouts.includes(state.layout.name))
 				{
 					return false;
 				}

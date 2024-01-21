@@ -1,3 +1,20 @@
 <?php
 $MESS["CRM_TOOLBAR_TELEPHONY_NOT_SUPPORTED"] = "Телефонные звонки не поддерживаются в данном контексте";
 $MESS["CRM_TOOLBAR_BIZPROC_STARTER_LABEL"] = "Запустить Бизнес-процесс";
+$MESS["CRM_TOOLBAR_INSTALL_CALENDAR_FOR_CALL"] = "Установите модуль «Календарь» для совершения звонков";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL"] = "Добавьте клиента с номером телефона для совершения вызова";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_DEAL"] = "Добавьте клиента с номером телефона в сделку для совершения звонка";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_LEAD"] = "Добавьте клиента с номером телефона в лид для совершения звонка";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_CONTACT"] = "Добавьте номер телефона в контакт для совершения звонка";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_COMPANY"] = "Добавьте клиента с номером телефона в компанию для совершения звонка";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_INVOICE"] = "Добавьте клиента с номером телефона в счёт для совершения звонка";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_SMART_INVOICE"] = "Добавьте клиента с номером телефона в счёт для совершения звонка";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_QUOTE"] = "Добавьте клиента с номером телефона в предложение для совершения звонка";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND"] = "Добавьте клиента c e-mail, чтобы отправить письмо";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_DEAL"] = "Добавьте клиента c e-mail в сделку, чтобы отправить письмо";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_LEAD"] = "Добавьте клиента c e-mail в лид, чтобы отправить письмо";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_CONTACT"] = "Добавьте e-mail в контакт, чтобы отправить письмо";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_COMPANY"] = "Добавьте клиента c e-mail в компанию, чтобы отправить письмо";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_INVOICE"] = "Добавьте клиента c e-mail в счёт, чтобы отправить письмо";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_SMART_INVOICE"] = "Добавьте клиента c e-mail в счёт, чтобы отправить письмо";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_QUOTE"] = "Добавьте клиента c e-mail в предложение, чтобы отправить письмо";

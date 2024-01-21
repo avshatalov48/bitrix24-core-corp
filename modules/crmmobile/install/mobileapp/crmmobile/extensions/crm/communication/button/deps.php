@@ -2,14 +2,16 @@
 
 return [
 	'extensions' => [
+		'loc',
 		'alert',
+		'apptheme',
 		'assets/communication',
 		'communication/connection',
 		'communication/menu',
 		'haptics',
-		'loc',
 		'utils/object',
-		'crm:type',
 		'imconnector:connectors/telegram',
+
+		'crm:type',
 	],
 ];

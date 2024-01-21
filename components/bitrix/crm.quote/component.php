@@ -1,18 +1,31 @@
-<?php 
+<?php
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+use Bitrix\Crm;
+use Bitrix\Crm\Restriction\AvailabilityManager;
+use Bitrix\Crm\Service\Container;
+
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
-	
+
 	return;
 }
 
-if (!CAllCrmInvoice::installExternalEntities()) 
+$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+$isAvailable = $toolsManager->checkCrmAvailability();
+if (!$isAvailable)
+{
+	print AvailabilityManager::getInstance()->getCrmInaccessibilityContent();
+
+	return;
+}
+
+if (!CAllCrmInvoice::installExternalEntities())
 {
 	return;
 }
@@ -25,26 +38,23 @@ if (!CCrmQuote::LocalComponentCausedUpdater())
 if (!CModule::IncludeModule('currency'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED_CURRENCY'));
-	
+
 	return;
 }
 
 if (!CModule::IncludeModule('catalog'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED_CATALOG'));
-	
+
 	return;
 }
 
 if (!CModule::IncludeModule('sale'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED_SALE'));
-	
+
 	return;
 }
-
-use Bitrix\Crm;
-use Bitrix\Crm\Service\Container;
 
 global $APPLICATION;
 
@@ -73,18 +83,18 @@ if ($arParams['SEF_MODE'] === 'Y')
 {
 	$arVariables = [];
 	$arUrlTemplates = CComponentEngine::MakeComponentUrlTemplates(
-		$arDefaultUrlTemplates404, 
+		$arDefaultUrlTemplates404,
 		$arParams['SEF_URL_TEMPLATES'] ?? []
 	);
-	
+
 	$arVariableAliases = CComponentEngine::MakeComponentVariableAliases(
-		$arDefaultVariableAliases404, 
+		$arDefaultVariableAliases404,
 		$arParams['VARIABLE_ALIASES'] ?? []
 	);
-	
+
 	$componentPage = CComponentEngine::ParseComponentPath(
-		$arParams['SEF_FOLDER'], 
-		$arUrlTemplates, 
+		$arParams['SEF_FOLDER'],
+		$arUrlTemplates,
 		$arVariables
 	);
 
@@ -95,8 +105,8 @@ if ($arParams['SEF_MODE'] === 'Y')
 
 	CComponentEngine::InitComponentVariables(
 		$componentPage,
-		$arComponentVariables, 
-		$arVariableAliases, 
+		$arComponentVariables,
+		$arVariableAliases,
 		$arVariables
 	);
 
@@ -229,11 +239,18 @@ if (
 }
 
 if (
-	!Crm\Restriction\RestrictionManager::getQuotesRestriction()->hasPermission()
-	&& ($componentPage !== 'details')
+	$componentPage !== 'details'
+	&& !Crm\Restriction\RestrictionManager::getQuotesRestriction()->hasPermission()
 )
 {
 	$componentPage = 'restrictions';
+}
+
+$toolsManager = Crm\Service\Container::getInstance()->getIntranetToolsManager();
+$isAvailable = $toolsManager->checkEntityTypeAvailability(\CCrmOwnerType::Quote);
+if (!$isAvailable)
+{
+	$componentPage = 'disabled';
 }
 
 $this->IncludeComponentTemplate($componentPage);

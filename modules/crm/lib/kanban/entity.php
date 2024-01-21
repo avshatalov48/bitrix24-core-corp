@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Kanban;
 
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Automation\Starter;
 use Bitrix\Crm\Component\EntityDetails\BaseComponent;
@@ -2515,6 +2516,7 @@ abstract class Entity
 			$provider->applyActivityResponsibleFilter($this->getTypeId(), $filter);
 		}
 
+		$provider->applyActivityFastSearchFilter($this->getTypeId(), $filter);
 	}
 
 	public function applyCountersFilter(array &$filter, DataProvider $provider): void
@@ -2719,6 +2721,31 @@ abstract class Entity
 					];
 				}
 			}
+		}
+
+		return $result;
+	}
+
+	final public function prepareMultipleItemsPingSettings(int $entityTypeId): array
+	{
+		if ($entityTypeId <= 0)
+		{
+			return [];
+		}
+
+		$categories = $this->getCategories(\CCrmPerms::getCurrentUserPermissions());
+		if (empty($categories))
+		{
+			return [];
+		}
+
+		$result = [];
+		$categoryIds = array_column($categories, 'ID');
+		foreach ($categoryIds as $categoryId)
+		{
+			$result[$categoryId] = (new TodoPingSettingsProvider($entityTypeId, $categoryId))
+				->fetchForJsComponent()
+			;
 		}
 
 		return $result;

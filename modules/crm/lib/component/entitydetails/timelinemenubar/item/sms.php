@@ -72,6 +72,10 @@ class Sms extends Item
 		]) && \Bitrix\Crm\Integration\SalesCenterManager::getInstance()->isShowApplicationInSmsEditor();
 
 		$settings['smsConfig']['isSalescenterEnabled'] = $isSalescenterEnabled;
+		$settings['smsConfig']['isSalescenterToolEnabled'] =
+			$isSalescenterEnabled
+			&& \Bitrix\Salescenter\Restriction\ToolAvailabilityManager::getInstance()->checkSalescenterAvailability()
+		;
 
 		$documentGeneratorManager = \Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance();
 		$isDocumentsEnabled = $documentGeneratorManager->isDocumentButtonAvailable();

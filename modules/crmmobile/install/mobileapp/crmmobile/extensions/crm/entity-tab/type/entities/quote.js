@@ -30,8 +30,20 @@ jn.define('crm/entity-tab/type/entities/quote', (require, exports, module) => {
 		getEmptyEntityScreenDescriptionText()
 		{
 			return Loc.getMessage('M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_SEND_TO_CLIENTS', {
-					'#MANY_ENTITY_TYPE_TITLE#': this.getManyEntityTypeTitle()
-				});
+				'#MANY_ENTITY_TYPE_TITLE#': this.getManyEntityTypeTitle(),
+			});
+		}
+
+		getMenuActions()
+		{
+			return [
+				{
+					type: UI.Menu.Types.HELPDESK,
+					data: {
+						articleCode: '17614096',
+					},
+				},
+			];
 		}
 	}
 

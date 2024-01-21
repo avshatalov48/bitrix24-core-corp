@@ -7,9 +7,8 @@ use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\ImBot;
-use Bitrix\ImOpenLines\Im;
-use Bitrix\ImOpenlines\Session;
 use Bitrix\Imopenlines\Model\SessionTable;
+use Bitrix\Imopenlines\MessageParameter;
 use Bitrix\ImConnector;
 use Bitrix\ImConnector\Error;
 use Bitrix\ImConnector\Result;
@@ -166,12 +165,7 @@ class Input extends Base\Input
 					if (
 						!$messageData
 						|| $messageData['CHAT_ENTITY_TYPE'] != 'LINES'
-						|| mb_strpos(
-							$messageData['CHAT_ENTITY_ID'], 'network|'
-							. $params['LINE_ID']
-							. '|'
-							. $params['GUID']
-						) !== 0
+						|| mb_strpos($messageData['CHAT_ENTITY_ID'], 'network|'. $params['LINE_ID']. '|'. $params['GUID']) !== 0
 					)
 					{
 						$resultStatus->addError(new Error(
@@ -322,7 +316,7 @@ class Input extends Base\Input
 			$sessionManager = ServiceLocator::getInstance()->get('ImOpenLines.Services.SessionManager');
 			if ($sessionManager instanceof \Bitrix\ImOpenLines\Services\SessionManager)
 			{
-				$resultVote = $sessionManager->voteAsUser((int)$messageParams['IMOL_VOTE'], $params['ACTION']);
+				$resultVote = $sessionManager->voteAsUser((int)$messageParams[MessageParameter::IMOL_VOTE_SID], $params['ACTION']);
 			}
 
 			if ($resultVote)
@@ -330,7 +324,7 @@ class Input extends Base\Input
 				$messageParamService = ServiceLocator::getInstance()->get('Im.Services.MessageParam');
 				if ($messageParamService instanceof \Bitrix\Im\Services\MessageParam)
 				{
-					$messageParamService->setParam((int)$params['MESSAGE_ID'], 'IMOL_VOTE', $params['ACTION'], true);
+					$messageParamService->setParam((int)$params['MESSAGE_ID'], MessageParameter::IMOL_VOTE, $params['ACTION'], true);
 
 					global $USER_FIELD_MANAGER;
 					if (

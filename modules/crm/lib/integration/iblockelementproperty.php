@@ -298,7 +298,7 @@ class IBlockElementProperty
 	 */
 	public static function prepareSettings($property)
 	{
-		if(!is_array($property['USER_TYPE_SETTINGS']))
+		if(!is_array($property['USER_TYPE_SETTINGS'] ?? ''))
 			$property['USER_TYPE_SETTINGS'] = array();
 
 		foreach(static::$listDefaultEntity as $entity => $entityMark)
@@ -322,7 +322,7 @@ class IBlockElementProperty
 	{
 		$html = '';
 
-		if (!is_array($property['USER_TYPE_SETTINGS']))
+		if (!is_array($property['USER_TYPE_SETTINGS'] ?? ''))
 		{
 			$property['USER_TYPE_SETTINGS'] = array_merge(
 				\Bitrix\Crm\Integration\BizProc\FieldType\Crm::getDefaultFieldSettings(),

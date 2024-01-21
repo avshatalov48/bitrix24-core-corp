@@ -88,7 +88,7 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 	{
 		if(!Loader::includeModule('salescenter'))
 		{
-			$this->showError(Loc::getMessage('SP_SALESCENTER_MODULE_ERROR'));
+			$this->showError(Loc::getMessage('SP_SALESCENTER_MODULE_ERROR_MSGVER_1'));
 			return;
 		}
 
@@ -364,6 +364,7 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 			'NAME' => '',
 			'MODE_NAME' => '',
 			'DESCRIPTION' => '',
+			'PUBLIC_DESCRIPTION' => '',
 			'LOGO' => '',
 		];
 
@@ -392,22 +393,29 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 			}
 		}
 
+		$paySystemDescription['DESCRIPTION'] = $data['DESCRIPTION'] ?? '';
+		$paySystemDescription['PUBLIC_DESCRIPTION'] = $data['PUBLIC_DESCRIPTION'] ?? '';
+
 		if ($psMode)
 		{
+			$paySystemDescription['DESCRIPTION'] = $data['HANDLER_MODE_DESCRIPTION_LIST'][$psMode]['MAIN'] ?? '';
+			$paySystemDescription['PUBLIC_DESCRIPTION'] = $data['HANDLER_MODE_DESCRIPTION_LIST'][$psMode]['PUBLIC'] ?? '';
+
 			$psModeName = $this->getHandlerModeName($handler, $psMode);
 			if ($psModeName)
 			{
 				$paySystemDescription['MODE_NAME'] = $psModeName;
-				$paySystemDescription["FULL_NAME"] = $paySystemDescription["NAME"].' '.Loc::getMessage(
-					'SP_PAYMENT_SUB_TITLE',
+				$paySystemDescription["FULL_NAME"] = Loc::getMessage(
+					'SALESCENTER_SP_PAYSYSTEM_NAME_TEMPLATE',
 					[
-						'#SUB_TITLE#' => $psModeName
+						'#PAYSYSTEMS_NAME#' => $psModeName,
+						'#HANDLERS_NAME#' => $paySystemDescription["NAME"],
 					]
 				);
 			}
 		}
 
-		if (isset($description))
+		if (isset($description) && !$paySystemDescription['DESCRIPTION'])
 		{
 			if (is_array($description))
 			{

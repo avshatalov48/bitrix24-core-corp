@@ -3,10 +3,11 @@
  */
 jn.define('crm/receive-payment/steps/payment-systems', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { SkipSwitcher } = require('crm/receive-payment/steps/payment-systems/skip-switcher');
 	const { PaySystemSettings } = require('crm/receive-payment/steps/payment-systems/paysystem-settings');
 	const { WizardStep } = require('layout/ui/wizard/step');
-	const { ProgressBarNumber } = require('crm/receive-payment/progress-bar-number');
+	const { ProgressBarNumber } = require('crm/salescenter/progress-bar-number');
 	const { AnalyticsLabel } = require('analytics-label');
 	const { MainBlockLayout } = require('crm/receive-payment/steps/payment-systems/main-block-layout');
 	const { EventEmitter } = require('event-emitter');
@@ -89,7 +90,7 @@ jn.define('crm/receive-payment/steps/payment-systems', (require, exports, module
 		renderNumberBlock()
 		{
 			return new ProgressBarNumber({
-				number: '2',
+				number: this.getProgressBarSettings().number.toString(),
 				isCompleted: (this.isCashboxEnabled && this.hasCashboxes()) || this.hasPaymentSystems(),
 				ref: (ref) => this.progressBarNumberRef = ref,
 			});
@@ -103,8 +104,6 @@ jn.define('crm/receive-payment/steps/payment-systems', (require, exports, module
 				title: {
 					text: Loc.getMessage('M_RP_PS_PROGRESS_BAR_TITLE'),
 				},
-				number: 2,
-				count: 3,
 			};
 		}
 
@@ -131,7 +130,7 @@ jn.define('crm/receive-payment/steps/payment-systems', (require, exports, module
 				View(
 					{
 						style: {
-							backgroundColor: '#eef2f4',
+							backgroundColor: AppTheme.colors.bgPrimary,
 						},
 					},
 					this.renderPaySystemLayout(),
@@ -264,3 +263,4 @@ jn.define('crm/receive-payment/steps/payment-systems', (require, exports, module
 
 	module.exports = { PaymentSystemsStep };
 });
+

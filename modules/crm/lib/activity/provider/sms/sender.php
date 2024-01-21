@@ -2,11 +2,19 @@
 
 namespace Bitrix\Crm\Activity\Provider\Sms;
 
+use Bitrix\Crm\Integration\NotificationsManager;
+use Bitrix\Crm\Integration\SmsManager;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\MessageSender\Channel;
+use Bitrix\Crm\MessageSender\Channel\ChannelRepository;
+use Bitrix\Crm\MessageSender\SendFacilitator;
+use Bitrix\Crm\MessageSender\SendFacilitator\Notifications;
+use Bitrix\Crm\MessageSender\SendFacilitator\Sms;
 use Bitrix\Crm\Order\BindingsMaker\ActivityBindingsMaker;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Sale\Repository\PaymentRepository;
 use Bitrix\Sale\Repository\ShipmentRepository;
@@ -26,40 +34,73 @@ final class Sender
 	{
 		$this->owner = $owner;
 		$this->message = $message;
-		$this->responsibleId = Container::getInstance()->getContext()->getUserId(); // @todo check user id
+		$this->responsibleId = Container::getInstance()->getContext()->getUserId();
 	}
 
 	public function send(): Result
 	{
-		$result = new Result();
-
 		$ownerTypeId = $this->owner->getEntityTypeId();
 		$ownerId = $this->owner->getEntityId();
+		$message = $this->message;
 
-		if(!Container::getInstance()->getUserPermissions()->checkUpdatePermissions($ownerTypeId, $ownerId))
+		$senderCode = ($message->senderId === NotificationsManager::getSenderCode()
+			? NotificationsManager::getSenderCode()
+			: SmsManager::getSenderCode()
+		);
+		$senderChannelId = $message->senderId;
+		$channel =
+			ChannelRepository::create(new ItemIdentifier($ownerTypeId, $ownerId))
+				->getById($senderCode, $senderChannelId)
+		;
+
+		$result = new Result();
+
+		if (!$channel)
+		{
+			$result->addError(new Error(Loc::getMessage('CRM_ACTIVITY_PROVIDER_SMS_CHANNEL_NOT_FOUND')));
+
+			return $result;
+		}
+
+		if (!Container::getInstance()->getUserPermissions()->checkUpdatePermissions($ownerTypeId, $ownerId))
 		{
 			$result->addError(new Error('CRM_PERMISSION_DENIED'));
 
 			return $result;
 		}
 
-		$bindings = $this->getBindings();
-		$additionalFields = $this->getAdditionalFields($bindings);
+		$fromCorrespondent = $this->getFromCorrespondent($channel, $message);
+		if (!$fromCorrespondent)
+		{
+			$result->addError(new Error(Loc::getMessage('CRM_ACTIVITY_PROVIDER_SMS_WRONG_FROM')));
 
-		$message = $this->message;
-		$sendResult = \Bitrix\Crm\Integration\SmsManager::sendMessage([
-			'SENDER_ID' => $message->senderId,
-			'AUTHOR_ID' => $this->responsibleId,
-			'MESSAGE_FROM' => $message->from,
-			'MESSAGE_TO' => $message->to,
-			'MESSAGE_BODY' => $message->body,
-			'MESSAGE_TEMPLATE' => $message->template,
-			'MESSAGE_HEADERS' => [
-				'module_id' => 'crm',
-				'bindings' => $bindings,
-			],
-			'ADDITIONAL_FIELDS' => $additionalFields
-		]);
+			return $result;
+		}
+
+		$additionalFields = $this->getAdditionalFields();
+		$toCorrespondent = $this->getToCorrespondent($channel, $message, $additionalFields);
+		if (!$toCorrespondent)
+		{
+			$result->addError(new Error(Loc::getMessage('CRM_ACTIVITY_PROVIDER_SMS_WRONG_TO')));
+
+			return $result;
+		}
+
+		$facilitator = $this->createFacilitator($channel, $message);
+
+		if (!$facilitator)
+		{
+			$result->addError(new Error(Loc::getMessage('CRM_ACTIVITY_PROVIDER_SMS_WRONG_CHANNEL')));
+
+			return $result;
+		}
+
+		$sendResult = $facilitator
+			->setFrom($fromCorrespondent)
+			->setTo($toCorrespondent)
+			->setAdditionalFields($additionalFields)
+			->send()
+		;
 
 		if (!$sendResult->isSuccess())
 		{
@@ -67,6 +108,74 @@ final class Sender
 		}
 
 		return $result;
+	}
+
+	private function getFromCorrespondent(Channel $channel, MessageDto $message): ?Channel\Correspondents\From
+	{
+		foreach ($channel->getFromList() as $fromListItem)
+		{
+			if ($fromListItem->getId() === $message->from)
+			{
+				return $fromListItem;
+			}
+		}
+
+		return null;
+	}
+
+	private function getToCorrespondent(
+		Channel $channel,
+		MessageDto $message,
+		array $additionalFields
+	): ?Channel\Correspondents\To
+	{
+		foreach ($channel->getToList() as $toListItem)
+		{
+			$addressSource = $toListItem->getAddressSource();
+			if (
+				$addressSource->getEntityTypeId() !== $additionalFields['ENTITY_TYPE_ID']
+				|| $addressSource->getEntityId() !== $additionalFields['ENTITY_ID']
+			)
+			{
+				continue;
+			}
+
+			if ($toListItem->getAddress()->getValue() === $message->to)
+			{
+				return $toListItem;
+			}
+		}
+
+		return null;
+	}
+
+	private function createFacilitator(Channel $channel, MessageDto $message): ?SendFacilitator
+	{
+		$senderCode = $channel->getSender()::getSenderCode();
+
+		if ($senderCode === SmsManager::getSenderCode())
+		{
+			return (new Sms($channel))->setMessageBody($message->body);
+		}
+
+		if ($senderCode === NotificationsManager::getSenderCode())
+		{
+			$facilitator = (new Notifications($channel))->setTemplateCode($message->template);
+
+			if (!empty($message->placeholders))
+			{
+				$placeholders = [];
+				foreach($message->placeholders as $placeholder)
+				{
+					$placeholders[$placeholder->name] = $placeholder->value;
+				}
+				$facilitator->setPlaceholders($placeholders);
+			}
+
+			return $facilitator;
+		}
+
+		return null;
 	}
 
 	private function getBindings(): array
@@ -95,12 +204,14 @@ final class Sender
 		return $bindings;
 	}
 
-	private function getAdditionalFields(array &$bindings): array
+	private function getAdditionalFields(): array
 	{
 		$message = $this->message;
 
 		$comEntityId = $this->getComEntityItemIdentifier()->getEntityId();
 		$comEntityTypeId = $this->getComEntityItemIdentifier()->getEntityTypeId();
+
+		$bindings = $this->getBindings();
 
 		$additionalFields = [
 			'ACTIVITY_PROVIDER_TYPE_ID' => \Bitrix\Crm\Activity\Provider\Sms::PROVIDER_TYPE_SMS,

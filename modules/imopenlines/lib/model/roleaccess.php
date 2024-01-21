@@ -63,14 +63,9 @@ class RoleAccessTable extends Entity\DataManager
 	 */
 	public static function truncate()
 	{
-		$connection = Application::getConnection();
-		$entity = self::getEntity();
+		Application::getConnection()->truncateTable(self::getTableName());
 
-		$sql = "TRUNCATE TABLE ".$entity->getDBTableName();
-		$connection->queryExecute($sql);
-
-		$result = new Entity\DeleteResult();
-		return $result;
+		return new Entity\DeleteResult;
 	}
 
 	/**
@@ -83,15 +78,13 @@ class RoleAccessTable extends Entity\DataManager
 	{
 		$roleId = (int)$roleId;
 		if($roleId <= 0)
+		{
 			throw new ArgumentException('Role id should be greater than zero', 'roleId');
+		}
 
 		$connection = Application::getConnection();
-		$entity = self::getEntity();
+		$connection->queryExecute("DELETE FROM ".self::getTableName()." WHERE ROLE_ID = ".$roleId);
 
-		$sql = "DELETE FROM ".$entity->getDBTableName()." WHERE ROLE_ID = ".$roleId;
-		$connection->queryExecute($sql);
-
-		$result = new Entity\DeleteResult();
-		return $result;
+		return new Entity\DeleteResult;
 	}
 }

@@ -59,7 +59,7 @@ jn.define('im/messenger/controller/search/experimental/store-updater', (require,
 
 				result.recentItems.push({
 					id: item.dialogId,
-					date_update: item.dateUpdate,
+					dateMessage: item.dateMessage,
 				});
 
 				if (item.isUser)

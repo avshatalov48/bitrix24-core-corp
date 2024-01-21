@@ -56,6 +56,32 @@ class EntityService implements Errorable
 	}
 
 	/**
+	 * Returns the ids of the backlog and all sprints of the group.
+	 *
+	 * @param int $groupId Group id.
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function getEntityIds(int $groupId): array
+	{
+		$entityIds = [];
+
+		$queryObject = EntityTable::getList([
+			'select' => ['ID'],
+			'filter' => ['GROUP_ID' => $groupId],
+			'order' => ['ID' => 'DESC'],
+		]);
+		while ($entityData = $queryObject->fetch())
+		{
+			$entityIds[] = (int) $entityData['ID'];
+		}
+
+		return $entityIds;
+	}
+
+	/**
 	 * @param array $select
 	 * @param array $filter
 	 * @param array $order

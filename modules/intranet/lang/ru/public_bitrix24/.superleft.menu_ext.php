@@ -10,7 +10,7 @@ $MESS["MENU_PHOTO"] = "Фотографии";
 $MESS["MENU_MAIL"] = "Почта";
 $MESS["MENU_GROUP_SECTION"] = "Группы";
 $MESS["MENU_CRM"] = "CRM";
-$MESS["MENU_SHOP"] = "Магазин";
+$MESS["MENU_SHOP"] = "Магазины";
 $MESS["MENU_CRM_WEBFORM"] = "CRM-формы";
 $MESS["MENU_CRM_MARKETING"] = "CRM-Маркетинг";
 $MESS["MENU_MARKETING"] = "Маркетинг";
@@ -48,4 +48,4 @@ $MESS["MENU_AUTOMATION_SECTION"] = "Автоматизация";
 $MESS["MENU_LISTS_SECTION"] = "Списки";
 $MESS["MENU_SITES_AND_STORES"] = "Сайты и Магазины";
 $MESS["MENU_SIGN"] = "Подпись";
-?>
+$MESS["MENU_GROUP_SPACES"] = "Пространства";

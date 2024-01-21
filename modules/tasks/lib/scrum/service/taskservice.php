@@ -353,7 +353,10 @@ class TaskService implements Errorable
 			$getListParams = [
 				'select' => ['ID'],
 				'legacyFilter' => $filter,
-				'order' => ['SCRUM_ITEMS_SORT' => 'ASC'],
+				'order' => [
+					'SCRUM_ITEMS_SORT' => 'ASC',
+					'ID' => 'DESC',
+				],
 				'group' => [],
 				'NAV_PARAMS' => $navParams,
 			];
@@ -1070,10 +1073,13 @@ class TaskService implements Errorable
 			return;
 		}
 
-		$newGroupId = (int) ($fields['GROUP_ID'] ?? null);
-		$previousGroupId = (int) ($previousFields['GROUP_ID'] ?? null);
+		$newGroupId = (isset($fields['GROUP_ID']) ? (int) $fields['GROUP_ID'] : null);
+		$previousGroupId = (isset($previousFields['GROUP_ID']) ? (int) $previousFields['GROUP_ID'] : null);
 
-		$isGroupUpdateAction = ($newGroupId > 0 && $newGroupId !== $previousGroupId);
+		$isGroupUpdateAction = (
+			($newGroupId && $newGroupId !== $previousGroupId)
+			|| ($newGroupId === 0 && $previousGroupId > 0)
+		);
 
 		if ($isGroupUpdateAction)
 		{

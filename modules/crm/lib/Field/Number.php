@@ -11,6 +11,7 @@ use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\Numerator;
 use Bitrix\Main\Result;
+use Bitrix\Main\DB\SqlExpression;
 
 class Number extends Field
 {
@@ -169,6 +170,8 @@ class Number extends Field
 
 	protected function getByMaxNumber(): ?string
 	{
+		global $DB;
+
 		$tableClassName = $this->settings['tableClassName'] ?? null;
 		if (!$tableClassName || !is_a($tableClassName, DataManager::class, true))
 		{
@@ -182,7 +185,7 @@ class Number extends Field
 			$tries++;
 			$record = $tableClassName::getList([
 				'select' => [
-					new ExpressionField('LAST_NUMBER', 'MAX(CAST(%s AS UNSIGNED))', [$this->getName()]),
+					new ExpressionField('LAST_NUMBER', 'MAX('.$DB->toNumber(new SqlExpression('?#', $this->getName())).')'),
 				],
 			])->fetch();
 			if ($record && !empty($record['LAST_NUMBER']))

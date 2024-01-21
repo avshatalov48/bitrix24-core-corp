@@ -2,11 +2,12 @@
 
 return [
 	'extensions' => [
+		'loc',
 		'alert',
+		'haptics',
+		'apptheme',
 		'layout/ui/product-grid',
 		'crm:product-calculator',
-		'haptics',
 		'utils/object',
-		'loc',
 	]
 ];

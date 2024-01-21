@@ -48,6 +48,8 @@ export default class Zoom extends Item
 			ownerId: this.getEntityId(),
 			container: this.getContainer(),
 			onFinishEdit: this.#onFinishEdit.bind(this),
+			onStartSave: () => this.setLocked(true),
+			onFinishSave: () => this.setLocked(false),
 		});
 	}
 

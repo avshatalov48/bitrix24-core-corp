@@ -292,7 +292,7 @@ jn.define('im/chat/selector/chat', (require, exports, module) => {
 		{
 			return {
 				id: 'show-network',
-				title: BX.message("MOBILE_EXT_CHAT_SELECTOR_BUTTON_SEARCH_NETWORK"),
+				title: BX.message("MOBILE_EXT_CHAT_SELECTOR_BUTTON_SEARCH_NETWORK_MSGVER_1"),
 				type: 'button',
 				sectionCode: 'network',
 				styles: {

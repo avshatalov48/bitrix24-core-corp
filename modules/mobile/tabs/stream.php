@@ -2,6 +2,7 @@
 
 namespace Bitrix\Mobile\AppTabs;
 
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -16,7 +17,14 @@ class Stream implements Tabable
 
 	public function isAvailable()
 	{
-		return true;
+		$result = true;
+
+		if (Loader::includeModule('intranet'))
+		{
+			$result = ToolsManager::getInstance()->checkAvailabilityByToolId('news');
+		}
+
+		return $result;
 	}
 
 	public function getData()
@@ -29,7 +37,7 @@ class Stream implements Tabable
 	 */
 	public function shouldShowInMenu()
 	{
-		return true;
+		return $this->isAvailable();
 	}
 
 	/**
@@ -62,7 +70,6 @@ class Stream implements Tabable
 	private function getDataInternal(): array
 	{
 		$newsWebPath = $this->context->siteDir . 'mobile/index.php?version=' . $this->context->version;
-		$bpWebPath = $this->context->siteDir . 'mobile/bp/?USER_STATUS=0';
 
 		if (\Bitrix\MobileApp\Mobile::getApiVersion() < 41)
 		{
@@ -156,28 +163,7 @@ class Stream implements Tabable
 			&& ModuleManager::isModuleInstalled('bizproc')
 		)
 		{
-			$tabs[] = [
-				'id' => 'bp',
-				'title' => Loc::getMessage('TAB_STREAM_NAVIGATION_TAB_BP'),
-				'component' => [
-					'name' => 'JSStackComponent',
-					'componentCode' => 'web: ' . $bpWebPath,
-					'rootWidget' => [
-						'name' => 'web',
-						'settings' => [
-							'titleParams' => [
-								'useLargeTitleMode' => true,
-								'text' => Loc::getMessage('TAB_STREAM_NAVIGATION_TAB_BP'),
-							],
-							'page' => [
-								'preload' => false,
-								'url' => $bpWebPath,
-								'useSearchBar' => false,
-							],
-						],
-					],
-				],
-			];
+			$this->pushBizprocTab($tabs);
 		}
 
 /*
@@ -343,5 +329,59 @@ class Stream implements Tabable
 	{
 		return 'stream';
 	}
-}
 
+	private function pushBizprocTab(array &$tabs): void
+	{
+		$manager = new \Bitrix\Mobile\Tab\Manager();
+		$activeTabs = $manager->getActiveTabs();
+
+		if (isset($activeTabs['bizproc']))
+		{
+			return;
+		}
+
+		$bizprocTab = $manager->getTabInstance('bizproc');
+		if ($bizprocTab)
+		{
+			$bizprocTabData = $bizprocTab->getData();
+			if ($bizprocTabData)
+			{
+				$component = $bizprocTabData['component'];
+				unset($component['params']);
+
+				$tabs[] = [
+					'id' => 'bp2',
+					'title' => Loc::getMessage('TAB_STREAM_NAVIGATION_TAB_BP'),
+					'component' => $component,
+				];
+
+				return;
+			}
+		}
+
+		$bpWebPath = $this->context->siteDir . 'mobile/bp/?USER_STATUS=0';
+
+		$tabs[] = [
+			'id' => 'bp',
+			'title' => Loc::getMessage('TAB_STREAM_NAVIGATION_TAB_BP'),
+			'component' => [
+				'name' => 'JSStackComponent',
+				'componentCode' => 'web: ' . $bpWebPath,
+				'rootWidget' => [
+					'name' => 'web',
+					'settings' => [
+						'titleParams' => [
+							'useLargeTitleMode' => true,
+							'text' => Loc::getMessage('TAB_STREAM_NAVIGATION_TAB_BP'),
+						],
+						'page' => [
+							'preload' => false,
+							'url' => $bpWebPath,
+							'useSearchBar' => false,
+						],
+					],
+				],
+			],
+		];
+	}
+}

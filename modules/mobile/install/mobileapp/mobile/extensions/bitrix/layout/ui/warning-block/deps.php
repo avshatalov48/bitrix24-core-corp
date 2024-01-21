@@ -2,6 +2,6 @@
 
 return [
 	'extensions' => [
-		// @todo later
+		'apptheme',
 	],
 ];

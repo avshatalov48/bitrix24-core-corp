@@ -75,15 +75,15 @@ class TagRegistry
 		return $this;
 	}
 
-	public function drop(int $tagId = null)
+	public function invalidate(?int $tagId = null): void
 	{
-		if ($tagId)
+		if (is_null($tagId))
 		{
-			unset($this->storage[$tagId]);
+			$this->storage = [];
 		}
 		else
 		{
-			$this->storage = [];
+			unset($this->storage[$tagId]);
 		}
 	}
 }

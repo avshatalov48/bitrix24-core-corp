@@ -816,9 +816,7 @@ export class Selector extends EventEmitter
 							});
 					},
 					events: {
-						onClose: () => {
-							this.#setSelectedFields([]);
-						},
+						onCloseComplete: () => this.#onSliderCloseComplete(),
 					},
 				},
 			);
@@ -827,5 +825,11 @@ export class Selector extends EventEmitter
 		return new Promise((resolve) => {
 			this.#setPromiseResolver(resolve);
 		});
+	}
+
+	#onSliderCloseComplete(): void
+	{
+		this.emit('onSliderCloseComplete');
+		this.#setSelectedFields([]);
 	}
 }

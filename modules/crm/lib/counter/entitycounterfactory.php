@@ -3,7 +3,6 @@ namespace Bitrix\Crm\Counter;
 use Bitrix\Crm\Integration\Intranet\CustomSectionProvider;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
-use Bitrix\Crm\Service\Factory\Dynamic;
 use Bitrix\Main;
 
 class EntityCounterFactory
@@ -156,7 +155,7 @@ class EntityCounterFactory
 
 	private static function withoutCustomSectionsFilter(Factory $factory): bool
 	{
-		return !($factory instanceof Dynamic && CustomSectionProvider::hasCustomSection($factory));
+		return !($factory->isInCustomSection());
 	}
 
 	private static function getEnabledFactories(): array

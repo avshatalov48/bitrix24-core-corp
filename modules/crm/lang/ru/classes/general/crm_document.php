@@ -91,6 +91,7 @@ $MESS["CRM_DOCUMENT_FIELD_CONTACT_IDS"] = "Контакты";
 $MESS["CRM_DOCUMENT_FIELD_CRM_ID"] = "ID элемента CRM";
 $MESS["CRM_DOCUMENT_FIELD_URL"] = "Ссылка на элемент";
 $MESS["CRM_DOCUMENT_FIELD_URL_BB"] = "Ссылка на элемент (BBcode)";
+$MESS['CRM_DOCUMENT_FIELD_TIME_CREATE'] = 'Время создания';
 $MESS["CRM_DOCUMENT_FIELD_PRODUCT_IDS"] = "Товарные позиции";
 $MESS["CRM_DOCUMENT_FIELD_PRODUCT_NAME"] = "Товар";
 $MESS["CRM_DOCUMENT_FIELD_PRODUCT_SUM"] = "Сумма";

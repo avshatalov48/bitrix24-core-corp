@@ -122,7 +122,15 @@ $cur_date_m = date('n'); $cur_date_y = date('Y');
 				<div class="webform-content tm-filter">
 					<span class="tm-filter-item filter-date tm-filter-item-first" id="tm-filter-date">
 						<a href="javascript:void(0)" onclick="this.blur();window.BXTMREPORT.changeMonth(-1)" class="filter-date-link filter-date-link-left"></a>
-						<span class="fiter-date-text" id="tm_datefilter_title" onclick="BX.calendar({node: this, field: 'bx_goto_date', bTime: false, callback: jsCalendarInsertDate});"><?=GetMessage('TMR_MONTH_'.$cur_date_m)?> <?=$cur_date_y?></span>
+						<span class="fiter-date-text" id="tm_datefilter_title" onclick="BX.calendar({node: this, field: 'bx_goto_date', bTime: false, callback: jsCalendarInsertDate});"><?=
+							\Bitrix\Main\Localization\Loc::getMessage(
+								'TMR_REPORT_DATE_FILTER_TITLE',
+								[
+									'#MONTH#' => GetMessage('TMR_MONTH_'.$cur_date_m),
+									'#YEAR#' => $cur_date_y
+								]
+							)
+						?></span>
 						<input type="hidden" name="bx_goto_date" id="bx_goto_date" value="<?=ConvertTimeStamp()?>" />
 <?
 $APPLICATION->IncludeComponent('bitrix:main.calendar', '', array('SHOW_INPUT' => 'Y', 'SHOW_TIME' => 'N', 'HIDE_TIMEBAR' => 'Y', 'INPUT_NAME' => 'bx_goto_date', 'SILENT'=>'Y'), null, array('HIDE_ICONS' => 'Y'));

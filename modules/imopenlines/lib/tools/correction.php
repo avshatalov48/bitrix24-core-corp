@@ -187,7 +187,7 @@ class Correction
 	 * @param int $limit
 	 * @return array
 	 */
-	public static function setSessionsThatNotShown(int $limit = 0): array
+	public static function getSessionsThatNotShown(int $limit = 0): array
 	{
 		$result = [];
 
@@ -272,7 +272,7 @@ class Correction
 			$oldCloseTime->add('-' . $closeDay . ' DAY');
 		}
 
-		$sessions = self::setSessionsThatNotShown($limit);
+		$sessions = self::getSessionsThatNotShown($limit);
 
 		foreach ($sessions as $session)
 		{

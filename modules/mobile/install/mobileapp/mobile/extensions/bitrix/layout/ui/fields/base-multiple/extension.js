@@ -120,7 +120,9 @@ jn.define('layout/ui/fields/base-multiple', (require, exports, module) => {
 
 			return {
 				...passThroughProps,
-				ref: useCallback((ref) => this.fieldsRef[index] = ref, [index]),
+				ref: useCallback((ref) => {
+					this.fieldsRef[index] = ref;
+				}, [index]),
 				id,
 				value,
 				focus,
@@ -139,7 +141,10 @@ jn.define('layout/ui/fields/base-multiple', (require, exports, module) => {
 				config: this.getInnerFieldConfig(),
 				readOnly: this.isReadOnly() || !this.isEnableToEdit(),
 				hasHiddenEmptyView: false,
-				renderAdditionalContent: useCallback(() => this.renderAddOrDeleteFieldButton(index, isNew), [index, isNew]),
+				renderAdditionalContent: useCallback(
+					() => this.renderAddOrDeleteFieldButton(index, isNew),
+					[index, isNew],
+				),
 			};
 		}
 
@@ -177,8 +182,7 @@ jn.define('layout/ui/fields/base-multiple', (require, exports, module) => {
 
 			FocusManager
 				.blurFocusedFieldIfHas(this)
-				.then(() => this.handleChange(value))
-			;
+				.then(() => this.handleChange(value));
 		}
 
 		onAddField()

@@ -10,8 +10,11 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__DIR__ . '/../Ecommerce.php');
 
-class CustomerSelectedPaymentMethod extends LogMessage implements Interfaces\HasPaymentMethodContentBlock
+class CustomerSelectedPaymentMethod extends LogMessage implements
+	Interfaces\HasPaymentDetailsContentBlock,
+	Interfaces\HasPaymentMethodContentBlock
 {
+	use Mixin\HasPaymentDetailsContentBlock;
 	use Mixin\HasPaymentMethodContentBlock;
 
 	public function getType(): string
@@ -32,6 +35,7 @@ class CustomerSelectedPaymentMethod extends LogMessage implements Interfaces\Has
 	public function getContentBlocks(): ?array
 	{
 		return [
+			'details' => $this->getPaymentDetailsContentBlock(),
 			'paymentMethod' => $this->getPaymentMethodContentBlock(),
 		];
 	}

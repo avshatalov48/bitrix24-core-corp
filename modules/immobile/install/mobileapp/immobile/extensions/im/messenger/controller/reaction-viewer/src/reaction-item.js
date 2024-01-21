@@ -2,6 +2,10 @@
  * @module im/messenger/controller/reaction-viewer/reaction-item
  */
 jn.define('im/messenger/controller/reaction-viewer/reaction-item', (require, exports, module) => {
+	const AppTheme = require('apptheme');
+	const { Loc } = require('loc');
+
+	const sharedEmitter = new JNEventEmitter();
 	/**
 	 * @class ReactionItem
 	 * @typedef {LayoutComponent<ReactionItemProps, ReactionItemState>} ReactionItem
@@ -21,12 +25,12 @@ jn.define('im/messenger/controller/reaction-viewer/reaction-item', (require, exp
 
 		componentDidMount()
 		{
-			this.props.eventEmitter.on('canselSelection', this.canselSelectionHandler);
+			sharedEmitter.on('canselSelection', this.canselSelectionHandler);
 		}
 
 		componentWillUnmount()
 		{
-			this.props.eventEmitter.off('canselSelection', this.canselSelectionHandler);
+			sharedEmitter.off('canselSelection', this.canselSelectionHandler);
 		}
 
 		render()
@@ -34,7 +38,7 @@ jn.define('im/messenger/controller/reaction-viewer/reaction-item', (require, exp
 			return View(
 				{
 					style: {
-						minHeight: 55,
+						minHeight: 46,
 						minWidth: 70,
 						marginRight: 20,
 						// backgroundColor: '#a9b',
@@ -48,41 +52,82 @@ jn.define('im/messenger/controller/reaction-viewer/reaction-item', (require, exp
 							return;
 						}
 
-						this.props.eventEmitter.emit('canselSelection', [{ enableReaction: this.props.reactionType }]);
+						sharedEmitter.emit('canselSelection', [{ enableReaction: this.props.reactionType }]);
 						this.setState({ isCurrent: true });
 						this.props.onClick(this.props.reactionType);
 					},
 				},
-				View(
-					{
-						style: {
-							justifyContent: 'center',
-							alignItems: 'center',
-							flexDirection: 'row',
-							alignSelf: 'center',
-							flex: 1,
-							borderBottomColor: '#0163c6',
-							borderBottomWidth: this.state.isCurrent ? 2 : 0,
-						},
+				this.props.reactionType === 'all'
+					? this.renderSummary()
+					: this.renderReaction()
+			);
+		}
+
+		renderReaction()
+		{
+			return View(
+				{
+					style: {
+						justifyContent: 'center',
+						alignItems: 'center',
+						flexDirection: 'row',
+						alignSelf: 'center',
+						flex: 1,
+						borderBottomColor: this.state.isCurrent ? AppTheme.colors.accentMainPrimary : AppTheme.colors.bgNavigation,
+						borderBottomWidth: 2,
 					},
-					Image({
-						style: {
-							height: 28,
-							width: 28,
-							marginRight: 3,
-						},
-						resizeMode: 'stretch',
-						uri: this.props.imageUrl,
-					}),
-					Text({
-						style: {
-							color: '#A8ADB4',
-							fontSize: 14,
-							fontWeight: '500',
-						},
-						text: this.props.counter.toString(),
-					}),
-				),
+				},
+				Image({
+					style: {
+						height: 24,
+						width: 24,
+						marginRight: 6,
+					},
+					resizeMode: 'contain',
+					uri: this.props.imageUrl,
+				}),
+				Text({
+					style: {
+						color: this.state.isCurrent ? AppTheme.colors.base1 : AppTheme.colors.base4,
+						fontSize: 14,
+						fontWeight: '500',
+					},
+					text: this.props.counter.toString(),
+				}),
+			);
+		}
+
+		renderSummary()
+		{
+			return View(
+				{
+					style: {
+						justifyContent: 'center',
+						alignItems: 'center',
+						flexDirection: 'row',
+						alignSelf: 'center',
+						flex: 1,
+						borderBottomColor: this.state.isCurrent ? AppTheme.colors.accentMainPrimary : AppTheme.colors.bgNavigation,
+						borderBottomWidth: 2,
+					},
+				},
+				Text({
+					style: {
+						color: this.state.isCurrent ? AppTheme.colors.base1 : AppTheme.colors.base4,
+						fontSize: 14,
+						fontWeight: '500',
+						marginRight: 6,
+					},
+					text: Loc.getMessage('IMMOBILE_REACTION_VIEWER_TAB_ALL'),
+				}),
+				Text({
+					style: {
+						color: this.state.isCurrent ? AppTheme.colors.base1 : AppTheme.colors.base4,
+						fontSize: 14,
+						fontWeight: '500',
+					},
+					text: this.props.counter.toString(),
+				}),
 			);
 		}
 

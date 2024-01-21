@@ -4,6 +4,7 @@ $MESS['TASKS_TASK_DEAL_DEADLINE'] = 'Крайний срок';
 $MESS['TASKS_TASK_DEAL_EMPTY_DEADLINE'] = 'Не указан';
 $MESS['TASKS_TASK_DEAL_TASK_TITLE'] = 'Название';
 $MESS['TASKS_TASK_DEAL_RESPONSIBLE'] = 'Ответственный';
+$MESS['TASKS_TASK_DEAL_ASSIGNEE'] = 'Исполнитель';
 $MESS['TASKS_TASK_DEAL_FILES'] = 'Файлы';
 $MESS['TASKS_TASK_DEAL_CHECKLIST'] = 'Чек-лист';
 $MESS['TASKS_TASK_DEAL_BUTTON_OPEN'] = 'Открыть';

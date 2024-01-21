@@ -49,6 +49,8 @@ class TypeDetail
 	childRelationsController: RelationsController;
 	customSectionController: ?CustomSectionsController;
 	isRestricted: boolean = false;
+	isExternal: boolean = false;
+	isSaveFromTypeDetail: boolean = true;
 
     constructor(params: {
         form: Element,
@@ -72,6 +74,7 @@ class TypeDetail
             this.presets = params.presets;
             this.relations = params.relations;
             this.isRestricted = Boolean(params.isRestricted);
+			this.isExternal = Boolean(params.isExternal);
         }
 
         this.buttonsPanel = document.getElementById('ui-button-panel');
@@ -168,10 +171,12 @@ class TypeDetail
 	disablePresetsView()
 	{
 		Dom.removeClass(document.querySelector('body'), 'crm-type-settings-presets');
-		const commonTab = document.querySelector('[data-role="tab-common"]');
-		if (commonTab)
+
+		const initTabDataRole = (this.isExternal) ? 'tab-custom-section' : 'tab-common';
+		const initialTab = document.querySelector(`[data-role=${initTabDataRole}]`);
+		if (initialTab)
 		{
-			commonTab.click();
+			initialTab.click();
 		}
 		const presetSelectorContainer = document.querySelector('[data-role="preset-selector-container"]');
 		if (presetSelectorContainer)
@@ -292,6 +297,8 @@ class TypeDetail
 			const customSectionData = this.customSectionController.getData();
 			this.type.setCustomSectionId(customSectionData.customSectionId);
 			this.type.setCustomSections(customSectionData.customSecions);
+			this.type.setIsExternalDynamicalType(this.isExternal);
+			this.type.setIsSaveFromTypeDetail(this.isSaveFromTypeDetail);
 		}
 
 		this.type.save().then((response) => {
@@ -913,7 +920,7 @@ class CustomSectionsController
 		this.initSelector();
 
 		this.settingsContainer = Tag.render`<div class="crm-type-hidden crm-type-custom-sections-settings-container">
-			<div class="crm-type-relation-subtitle">${Loc.getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_LIST')}</div>
+			<div class="crm-type-relation-subtitle">${Loc.getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_LIST_MSGVER_1')}</div>
 		</div>`;
 		this.container.append(this.settingsContainer);
 

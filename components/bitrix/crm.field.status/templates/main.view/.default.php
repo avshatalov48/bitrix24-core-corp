@@ -1,14 +1,20 @@
 <?php
 
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Text\HtmlFilter;
 
 $result = [];
+$statusList = CCrmStatus::GetStatusList($arResult['userField']['SETTINGS']['ENTITY_TYPE']);
 foreach($arResult['value'] as $value)
 {
-	$ar = CCrmStatus::GetStatusList($arResult['userField']['SETTINGS']['ENTITY_TYPE']);
-	$result[] = (isset($ar[$value]) ? HtmlFilter::encode($ar[$value]) : '&nbsp;');
+	$str = (isset($statusList[$value]) ? HtmlFilter::encode($statusList[$value]) : '&nbsp;');
+	$result[] = '<span class="field-item" data-id="' . HtmlFilter::encode($value) . '">' . $str . '</span>';
 }
-
-print implode('<br>', $result);
+?>
+<span class="fields field-wrap">
+	<?= implode('', $result) ?>
+</span>

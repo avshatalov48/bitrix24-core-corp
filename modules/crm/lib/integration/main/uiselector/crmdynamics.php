@@ -16,7 +16,7 @@ class CrmDynamics extends CrmEntity
 	public const PREFIX_FULL = 'CRMDYNAMIC-';
 	public const LIMIT_SEARCH = 50;
 
-	protected static function getHandlerType()
+	protected static function getHandlerType(): string
 	{
 		return Handler::ENTITY_TYPE_CRMDYNAMICS;
 	}
@@ -34,7 +34,7 @@ class CrmDynamics extends CrmEntity
 		return $prefix . '_';
 	}
 
-	protected static function prepareEntity(Dynamic $item, ?array $options = [])
+	protected static function prepareEntity(Dynamic $item, ?array $options = []): array
 	{
 		$prefix = static::getPrefix($options);
 		$result = [
@@ -58,7 +58,7 @@ class CrmDynamics extends CrmEntity
 		return $result;
 	}
 
-	public function getData($params = [])
+	public function getData($params = []): array
 	{
 		if (empty($params['options']['title']))
 		{
@@ -161,7 +161,7 @@ class CrmDynamics extends CrmEntity
 		return $result;
 	}
 
-	public function getTabList($params = [])
+	public function getTabList($params = []): array
 	{
 		$result = [];
 
@@ -186,7 +186,7 @@ class CrmDynamics extends CrmEntity
 		return $result;
 	}
 
-	public function search($params = [])
+	public function search($params = []): array
 	{
 		$result = [
 			'ITEMS' => [],

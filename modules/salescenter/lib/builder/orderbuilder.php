@@ -76,7 +76,10 @@ class OrderBuilder extends OrderBuilderCrm
 		{
 			foreach ($this->formData["PAYMENT"] as &$item)
 			{
-				if (!isset($item['PAY_SYSTEM_ID']))
+				if (
+					empty($item['ID'])
+					&& !isset($item['PAY_SYSTEM_ID'])
+				)
 				{
 					$paySystem = $this->getDefaultPaySystem();
 					if ($paySystem)

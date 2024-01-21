@@ -77,6 +77,11 @@ class TimelineManager
 			return Tasks\Controller::getInstance();
 		}
 
+		if ($typeID === TimelineType::AI_CALL_PROCESSING)
+		{
+			return AI\Call\Controller::getInstance();
+		}
+
 		if($assocEntityTypeID === \CCrmOwnerType::Activity)
 		{
 			if($typeID === TimelineType::MODIFICATION)

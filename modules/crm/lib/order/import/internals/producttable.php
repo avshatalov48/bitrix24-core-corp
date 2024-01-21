@@ -37,6 +37,7 @@ class ProductTable extends Entity\DataManager
 			'ID' => [
 				'data_type' => 'integer',
 				'primary' => true,
+				'autocomplete' => true,
 			],
 			'PRODUCT_ID' => [
 				'data_type' => 'integer',

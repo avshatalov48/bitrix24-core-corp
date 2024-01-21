@@ -1,2 +1,10 @@
 <?php
-return ["db", "files", "uploader/const", "uploader/sender"];
+return [
+	'extensions' => [
+		'db',
+		'files',
+		'rest',
+		"uploader/const",
+		"uploader/sender",
+	],
+];

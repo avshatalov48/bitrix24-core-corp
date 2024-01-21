@@ -23,6 +23,7 @@ use Bitrix\Main\Filter\DataProvider;
 use Bitrix\Main\Result;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Crm\Kanban\Entity;
 
 final class ListStrategy extends Base
 {
@@ -256,7 +257,8 @@ final class ListStrategy extends Base
 			$results[$displayFieldName] =
 				$this
 					->createField($displayFieldName, $fieldsCollection)
-					->setContext(Field::MOBILE_CONTEXT); // @todo need more flexible just like in kanban
+					->setContext(Field::MOBILE_CONTEXT) // @todo need more flexible just like in kanban
+			;
 		}
 
 		return $results;
@@ -316,6 +318,7 @@ final class ListStrategy extends Base
 	protected function getCurrentOptions(): array
 	{
 		$options = $this->getOptions();
+
 		return ($options ? $options['views'][$options['current_view']] : []);
 	}
 
@@ -478,9 +481,9 @@ final class ListStrategy extends Base
 
 	protected function prepareActivityFilter(&$filter): void
 	{
-		if(isset($filter['=ACTIVITY_COUNTER']))
+		if (isset($filter['=ACTIVITY_COUNTER']))
 		{
-			if(is_array($filter['=ACTIVITY_COUNTER']))
+			if (is_array($filter['=ACTIVITY_COUNTER']))
 			{
 				$counterTypeId = EntityCounterType::joinType(
 					array_filter($filter['=ACTIVITY_COUNTER'], 'is_numeric')
@@ -491,16 +494,16 @@ final class ListStrategy extends Base
 				$counterTypeId = (int)$filter['=ACTIVITY_COUNTER'];
 			}
 
-			if($counterTypeId > 0)
+			if ($counterTypeId > 0)
 			{
 				$counterUserIds = [];
-				if(isset($filter['=ASSIGNED_BY_ID']))
+				if (isset($filter['=ASSIGNED_BY_ID']))
 				{
-					if(is_array($filter['=ASSIGNED_BY_ID']))
+					if (is_array($filter['=ASSIGNED_BY_ID']))
 					{
 						$counterUserIds = array_filter($filter['=ASSIGNED_BY_ID'], 'is_numeric');
 					}
-					elseif($filter['=ASSIGNED_BY_ID'] > 0)
+					elseif ($filter['=ASSIGNED_BY_ID'] > 0)
 					{
 						$counterUserIds[] = (int)$filter['=ASSIGNED_BY_ID'];
 					}
@@ -528,7 +531,7 @@ final class ListStrategy extends Base
 	{
 		if (isset($requestFilter['CATEGORY_ID']))
 		{
-			$category = $this->initCategory((int) $requestFilter['CATEGORY_ID']);
+			$category = $this->initCategory((int)$requestFilter['CATEGORY_ID']);
 			if ($category)
 			{
 				$filter = $category->getItemsFilter($filter);
@@ -567,22 +570,61 @@ final class ListStrategy extends Base
 
 	protected function appendRelatedEntitiesValues(array &$items): void
 	{
-		if ($this->entityTypeId !== \CCrmOwnerType::Contact)
+		if ($this->entityTypeId !== \CCrmOwnerType::Company && $this->entityTypeId !== \CCrmOwnerType::Contact)
 		{
 			return;
 		}
 
-		$companies = $this->getAccessibleCompanies($items);
-		$clientType = \CCrmOwnerType::CompanyName;
-
-		foreach ($items as &$item)
+		if ($this->entityTypeId === \CCrmOwnerType::Company)
 		{
-			if (!empty($item['COMPANY_ID']))
+			$clientType = \CCrmOwnerType::ContactName;
+			$companyFactory = $this->getFactory(\CCrmOwnerType::Company);
+
+			$companyIdsMap = [];
+
+			foreach ($items as $item)
 			{
-				$companyId = $item['COMPANY_ID'];
-				if (isset($companies[$companyId]))
+				$contactItems = $companyFactory->getItem($item['ID'])->getContacts();
+				foreach ($contactItems as $contactItem)
 				{
-					$company = $companies[$companyId];
+					$companyIdsMap[$contactItem->getId()] = $item['ID'];
+				}
+			}
+
+			$contacts = $this->getAccessibleClients(array_keys($companyIdsMap), \CCrmOwnerType::Contact);
+			foreach ($contacts as $contact)
+			{
+				$itemId = $companyIdsMap[$contact['ID']];
+				$contactInfo = Client\Info::get($contact, $clientType, $contact['TITLE'], false);
+				$items[$itemId][$clientType][] = array_merge(...$contactInfo[mb_strtolower($clientType)]);
+			}
+		}
+
+		if ($this->entityTypeId === \CCrmOwnerType::Contact)
+		{
+			$companiesIds = [];
+			foreach ($items as $item)
+			{
+				if (!empty($item['COMPANY_ID']))
+				{
+					$companiesIds[] = $item['COMPANY_ID'];
+				}
+			}
+
+			$contacts = $this->getAccessibleClients($companiesIds, \CCrmOwnerType::Company);
+			$clientType = \CCrmOwnerType::CompanyName;
+
+			foreach ($items as &$item)
+			{
+				if (empty($item['COMPANY_ID']))
+				{
+					continue;
+				}
+
+				$companyId = $item['COMPANY_ID'];
+				if (isset($contacts[$companyId]))
+				{
+					$company = $contacts[$companyId];
 					$company['ID'] = $companyId;
 
 					$companyInfo = Client\Info::get($company, $clientType, $company['TITLE'], false);
@@ -590,57 +632,51 @@ final class ListStrategy extends Base
 				}
 			}
 		}
+
 		unset($item);
 	}
 
-	protected function getAccessibleCompanies(array $items): array
+	protected function getAccessibleClients(array $ids, int $entityTypeId): array
 	{
-		if ($this->entityTypeId !== \CCrmOwnerType::Contact)
+		if (empty($ids))
 		{
 			return [];
 		}
 
-		$companiesIds = [];
-		foreach ($items as $item)
-		{
-			if (!empty($item['COMPANY_ID']))
-			{
-				$companiesIds[] = $item['COMPANY_ID'];
-			}
-		}
-
-		if (empty($companiesIds))
-		{
-			return [];
-		}
-
+		$isCompany = $entityTypeId === \CCrmOwnerType::Company;
 		$parameters = [
 			'filter' => [
-				'@ID' => $companiesIds,
-			],
-			'select' => [
-				'ID',
-				'TITLE',
+				'@ID' => $ids,
 			],
 		];
 
-		$companies = Container::getInstance()
-			->getFactory(\CCrmOwnerType::Company)
-			->getItemsFilteredByPermissions($parameters);
-
-		$accessibleCompanies = [];
-		foreach ($companies as $company)
+		if ($isCompany)
 		{
-			$accessibleCompanies[$company->getId()] = [
-				'TITLE' => $company->getTitle(),
-				'FM' => $company->getFm(),
+			$parameters['select'] = [
+				'ID',
+				'TITLE',
 			];
 		}
 
-		return $accessibleCompanies;
+		$clients = Container::getInstance()
+			->getFactory($entityTypeId)
+			->getItemsFilteredByPermissions($parameters)
+		;
+
+		$accessibleEntities = [];
+		foreach ($clients as $client)
+		{
+			$accessibleEntities[$client->getId()] = [
+				'ID' => $client->getId(),
+				'TITLE' => $isCompany ? $client->getTitle() : $client->getFormattedName(),
+				'FM' => $client->getFm(),
+			];
+		}
+
+		return $accessibleEntities;
 	}
 
-	public function prepareFilterPresets(\Bitrix\Crm\Kanban\Entity $entity, array $presets, ?string $defaultPresetName): array
+	public function prepareFilterPresets(Entity $entity, array $presets, ?string $defaultPresetName): array
 	{
 		$preparedPresets = parent::prepareFilterPresets($entity, $presets, $defaultPresetName);
 		$availableFields = array_keys(array_merge($entity->getBaseFields(), $entity->getUserFields()));
@@ -650,7 +686,11 @@ final class ListStrategy extends Base
 		return $preparedPresets;
 	}
 
-	private function markUnsupportedPresetsAsDisabled(array &$preparedPresets, array $presets, array $availableFields): void
+	private function markUnsupportedPresetsAsDisabled(
+		array &$preparedPresets,
+		array $presets,
+		array $availableFields
+	): void
 	{
 		$preparedPresetIds = array_column($preparedPresets, 'id');
 

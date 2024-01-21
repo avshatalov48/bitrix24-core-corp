@@ -66,6 +66,12 @@ BX.Bitrix24.SlidingPanel.prototype = {
 
 		BX.ZIndexManager.bringToFront(this.overlay);
 
+		const toolbar = BX.SidePanel.Instance.getToolbar();
+		if (toolbar !== null)
+		{
+			toolbar.mute();
+		}
+
 		if (!this.container.parentNode)
 		{
 			this.setContent();
@@ -75,6 +81,7 @@ BX.Bitrix24.SlidingPanel.prototype = {
 
 		var scrollSize = window.innerWidth - document.documentElement.clientWidth;
 		document.body.style.paddingRight = scrollSize + "px";
+		BX.Dom.style(document.body, '--scroll-shift-width', `${scrollSize}px`);
 
 		if (this.imBar)
 		{
@@ -137,6 +144,12 @@ BX.Bitrix24.SlidingPanel.prototype = {
 		this.header.removeEventListener("click", BX.proxy(this.onHeaderClick, this), true);
 
 		this.container.classList.remove(this.containerClassName + "-open");
+
+		const toolbar = BX.SidePanel.Instance.getToolbar();
+		if (toolbar !== null)
+		{
+			toolbar.unmute();
+		}
 
 		if (this.animation)
 		{
@@ -219,6 +232,7 @@ BX.Bitrix24.SlidingPanel.prototype = {
 			this.container.style.cssText = "";
 			this.header.style.cssText = "";
 			this.overlay.style.cssText = "";
+			BX.Dom.style(document.body, '--scroll-shift-width', null);
 		}
 	},
 

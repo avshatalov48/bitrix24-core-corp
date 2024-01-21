@@ -2,11 +2,12 @@
  * @module crm/timeline/ui/banner
  */
 jn.define('crm/timeline/ui/banner', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { mergeImmutable } = require('utils/object');
 
 	function Banner({ title, description, onClick, style = {} })
 	{
-		style.backgroundColor = BX.prop.getString(style, 'backgroundColor', '#ffffff');
+		style.backgroundColor = BX.prop.getString(style, 'backgroundColor', AppTheme.colors.bgContentPrimary);
 		style.marginBottom = BX.prop.getNumber(style, 'marginBottom', 0);
 		style.opacity = BX.prop.getNumber(style, 'opacity', 1);
 		style.innerOpacity = BX.prop.getNumber(style, 'innerOpacity', 1);
@@ -37,7 +38,7 @@ jn.define('crm/timeline/ui/banner', (require, exports, module) => {
 					style: {
 						fontSize: 15,
 						fontWeight: '400',
-						color: '#000000',
+						color: AppTheme.colors.base0,
 						opacity: 0.94,
 						marginBottom: description ? 4 : 0,
 					},
@@ -47,7 +48,7 @@ jn.define('crm/timeline/ui/banner', (require, exports, module) => {
 					style: {
 						fontSize: 13,
 						fontWeight: '400',
-						color: '#828B95',
+						color: AppTheme.colors.base3,
 					},
 				}),
 			),
@@ -58,7 +59,7 @@ jn.define('crm/timeline/ui/banner', (require, exports, module) => {
 	{
 		const style = props.style || {};
 		const marginBottom = BX.prop.getNumber(style, 'marginBottom', 0);
-		const backgroundColor = BX.prop.getString(style, 'backgroundColor', '#ffffff');
+		const backgroundColor = BX.prop.getString(style, 'backgroundColor', AppTheme.colors.bgContentPrimary);
 
 		return View(
 			{
@@ -82,7 +83,7 @@ jn.define('crm/timeline/ui/banner', (require, exports, module) => {
 						style: {
 							backgroundColor,
 							borderWidth: 1,
-							borderColor: '#dfe0e3',
+							borderColor: AppTheme.colors.base6,
 							borderRadius: 12,
 							opacity: 0.8,
 							padding: 16,
@@ -90,28 +91,12 @@ jn.define('crm/timeline/ui/banner', (require, exports, module) => {
 					},
 				),
 			),
-			Shadow(
-				{
-					color: '#e6e7e9',
-					radius: 3,
-					offset: {
-						y: 3,
-					},
-					inset: {
-						left: 3,
-						right: 3,
-					},
-					style: {
-						borderRadius: 12,
-					},
+			Banner(mergeImmutable(props, {
+				style: {
+					opacity: 1,
+					marginBottom: 0,
 				},
-				Banner(mergeImmutable(props, {
-					style: {
-						opacity: 1,
-						marginBottom: 0,
-					},
-				})),
-			),
+			})),
 		);
 	}
 

@@ -1,3 +1,6 @@
+/**
+ * @module tasks/project
+ */
 jn.define('tasks/project', (require, exports, module) => {
 	const { ErrorLogger } = require('utils/logger/error-logger');
 

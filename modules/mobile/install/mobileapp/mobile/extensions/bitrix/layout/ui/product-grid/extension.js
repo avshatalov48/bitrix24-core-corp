@@ -2,13 +2,13 @@
  * @module layout/ui/product-grid
  */
 jn.define('layout/ui/product-grid', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { EventEmitter } = require('event-emitter');
 	const { ProductGridSummary } = require('layout/ui/product-grid/components/summary');
 	const { FocusContext } = require('layout/ui/product-grid/services/focus-context');
 	const { FadeView } = require('animation/components/fade-view');
 	const { EmptyScreen } = require('layout/ui/empty-screen');
+	const { Random } = require('utils/random');
 
 	/**
 	 * Class provides basic implementation of product grid and must be inherited to concrete use case.
@@ -30,7 +30,16 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 			this.listViewRef = null;
 
 			/** @type {{function():LayoutComponent}} */
+			this.additionalTopContent = null;
+
+			/** @type {{function():LayoutComponent}} */
+			this.additionalBottomContent = null;
+
+			/** @type {{function():LayoutComponent}} */
 			this.additionalSummary = null;
+
+			/** @type {{function():LayoutComponent}} */
+			this.additionalSummaryBottom = null;
 
 			/** @type {ProductGridSummary|null} */
 			this.summaryRef = null;
@@ -55,7 +64,8 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 		 * Method invokes after component receiving new props and new state was built.
 		 * You can re-init some internal services here.
 		 */
-		initServices() {}
+		initServices()
+		{}
 
 		componentWillReceiveProps(props)
 		{
@@ -83,7 +93,6 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 					style: {
 						flexDirection: 'column',
 						flexGrow: 1,
-						backgroundColor: '#eef2f4',
 					},
 					onClick: () => FocusContext.blur(),
 				},
@@ -94,8 +103,15 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 					style: {
 						flexGrow: 1,
 					},
-					slot: () => this.getItems().length ? this.renderListScreen() : this.renderEmptyScreen(),
-				})
+					slot: () => {
+						return (
+							this.getItems().length > 0
+							|| this.showEmptyScreen === false
+						)
+							? this.renderListScreen()
+							: this.renderEmptyScreen();
+					},
+				}),
 			);
 		}
 
@@ -119,9 +135,27 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 				data: this.getSummary(),
 			});
 
+			if (this.additionalTopContent)
+			{
+				items.unshift({
+					key: 'top',
+					type: 'top',
+				});
+			}
+
+			if (this.additionalBottomContent)
+			{
+				items.push({
+					key: 'bottom',
+					type: 'bottom',
+				});
+			}
+
 			return FullScreen(
 				ListView({
-					ref: (ref) => this.listViewRef = ref,
+					ref: (ref) => {
+						this.listViewRef = ref;
+					},
 					style: {
 						flexDirection: 'column',
 						flexGrow: 1,
@@ -139,6 +173,16 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 					scrollEventThrottle: 15,
 					data: [{ items }],
 					renderItem: (props) => {
+						if (props.type === 'top')
+						{
+							return this.additionalTopContent;
+						}
+
+						if (props.type === 'bottom')
+						{
+							return this.additionalBottomContent;
+						}
+
 						if (props.type === 'summary')
 						{
 							return this.renderSummary(this.getSummary());
@@ -153,7 +197,7 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 						return null;
 					},
 				}),
-				this.renderAddItemButton()
+				this.renderAddItemButton(),
 			);
 		}
 
@@ -190,6 +234,7 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 				},
 				...props,
 				additionalSummary: this.additionalSummary,
+				additionalSummaryBottom: this.additionalSummaryBottom,
 				componentsForDisplay: this.getSummaryComponents(),
 				discountCaption: this.discountCaption,
 				totalSumCaption: this.totalSumCaption,
@@ -218,18 +263,31 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 		{
 			return FullScreen(
 				new EmptyScreen({
-					image: {
-						uri: EmptyScreen.makeLibraryImagePath('products.png'),
-						style: {
-							width: 218,
-							height: 178,
-						}
-					},
+					image: this.getEmptyScreenImage(),
 					title: () => this.getEmptyScreenTitle(),
 					description: () => this.getEmptyScreenDescription(),
+					styles: this.getEmptyScreenStyles(),
+					backgroundColor: this.getEmptyScreenBackgroundColor(),
 				}),
-				this.renderAddItemButton()
+				this.renderAddItemButton(),
 			);
+		}
+
+		/**
+		 * @protected
+		 * @return {ImageProps}
+		 */
+		getEmptyScreenImage()
+		{
+			return {
+				svg: {
+					uri: EmptyScreen.makeLibraryImagePath('products.svg'),
+				},
+				style: {
+					width: 218,
+					height: 178,
+				},
+			};
 		}
 
 		/**
@@ -248,6 +306,32 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 		getEmptyScreenDescription()
 		{
 			return null;
+		}
+
+		/**
+		 * @protected
+		 * @return {object}
+		 */
+		getEmptyScreenStyles()
+		{
+			return {};
+		}
+
+		/**
+		 * @protected
+		 * @return {string|null}
+		 */
+		getEmptyScreenBackgroundColor()
+		{
+			return null;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get showEmptyScreen()
+		{
+			return BX.prop.getBoolean(this.props, 'showEmptyScreen', true);
 		}
 
 		/**
@@ -296,13 +380,15 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 		 * Method invokes when user taps to "create product" floating button.
 		 * @abstract
 		 */
-		onAddItemButtonClick() {}
+		onAddItemButtonClick()
+		{}
 
 		/**
 		 * Method invokes when user performs long press to "create product" floating button.
 		 * @abstract
 		 */
-		onAddItemButtonLongClick() {}
+		onAddItemButtonLongClick()
+		{}
 
 		/**
 		 * Adds new row to the grid.
@@ -340,7 +426,7 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 		 */
 		getItem(id)
 		{
-			return this.getItems().find(item => item.getId() === id);
+			return this.getItems().find((item) => item.getId() === id);
 		}
 
 		/**
@@ -364,6 +450,7 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 				// We need this hack because ref of summary block is async
 				// and may not exist in that moment
 				this.delayedSummaryUpdater = fetcher;
+
 				return;
 			}
 
@@ -374,11 +461,10 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 			this.summaryRef
 				.fadeOut()
 				.then(() => fetcher())
-				.then(data => {
+				.then((data) => {
 					this.summaryRef.fadeIn(data);
 					this.customEventEmitter.emit('StoreEvents.ProductList.FinishUpdateSummary');
-				})
-			;
+				}).catch(console.error);
 		}
 
 		/**
@@ -449,7 +535,8 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 		/**
 		 * You can trigger some events here, to notify other components that product grid state was changed.
 		 */
-		notifyGridChanged() {}
+		notifyGridChanged()
+		{}
 	}
 
 	function FullScreen(...content)
@@ -459,13 +546,11 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 				style: {
 					flexDirection: 'column',
 					flexGrow: 1,
-					backgroundColor: '#eef2f4',
 				},
 			},
-			...content
+			...content,
 		);
 	}
 
 	module.exports = { ProductGrid };
-
 });

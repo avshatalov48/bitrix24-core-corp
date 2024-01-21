@@ -7,6 +7,6 @@ use Bitrix\Tasks\Integration\AI\Event\Message\MessageCollection;
 
 interface EventControllerInterface
 {
-	public function getMainMessage(): Message;
+	public function getOriginalMessage(): Message;
 	public function getAdditionalMessages(): MessageCollection;
 }

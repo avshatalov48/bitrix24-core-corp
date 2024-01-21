@@ -630,8 +630,8 @@ function tasksGetItemMenu($task, $arPaths, $site_id = SITE_ID, $bGantt = false, 
 		if ($arAllowedTaskActions['ACTION_DISAPPROVE'])
 		{
 			?>{
-				text : "<?=GetMessage("TASKS_REDO_TASK")?>",
-				title : "<?=GetMessage("TASKS_REDO_TASK")?>",
+				text : "<?=GetMessage("TASKS_REDO_TASK_MSGVER_1")?>",
+				title : "<?=GetMessage("TASKS_REDO_TASK_MSGVER_1")?>",
 				className : "menu-popup-item-remake",
 				onclick : BX.CJSTask.fixWindow(function(window, top, event) {
 					var fn = (window && window.tasksListNS) || (top && top.tasksListNS) || BX.DoNothing;

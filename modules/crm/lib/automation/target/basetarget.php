@@ -115,7 +115,7 @@ abstract class BaseTarget extends \Bitrix\Bizproc\Automation\Target\BaseTarget
 				'ID' => $row['ID'],
 				'NAME' => $row['NAME'],
 				'CODE' => $row['CODE'],
-				'APPLY_RULES' => $row['APPLY_RULES'],
+				'APPLY_RULES' => is_array($row['APPLY_RULES']) ? $row['APPLY_RULES'] : [],
 			];
 		}
 

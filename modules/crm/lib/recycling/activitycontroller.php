@@ -6,6 +6,8 @@ use Bitrix\Crm\Badge\Badge;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Timeline\Monitor;
 use Bitrix\Crm\Timeline\Entity\NoteTable;
+use Bitrix\Crm\Timeline\Entity\TimelineTable;
+use Bitrix\Crm\Timeline\TimelineType;
 use Bitrix\Main;
 use Bitrix\Recyclebin;
 
@@ -230,9 +232,14 @@ class ActivityController extends BaseController
 		//endregion
 
 		$this->suspendTimeline($entityID, $recyclingEntityID);
+		$this->suspendTimelineBindings((int)$recyclingEntityID);
 		$this->suspendLiveFeed($entityID, $recyclingEntityID);
 		$this->suspendBadges((int)$entityID, (int)$recyclingEntityID);
 		$this->suspendNotes((int)$entityID, (int)$recyclingEntityID);
+		\Bitrix\Crm\Integration\AI\EventHandler::onItemMoveToBin(
+			new Crm\ItemIdentifier($this->getEntityTypeID(), $entityID),
+			new Crm\ItemIdentifier($this->getSuspendedEntityTypeID(), $recyclingEntityID),
+		);
 
 		\CCrmActivity::DoDeleteElementIDs($entityID);
 
@@ -448,6 +455,10 @@ class ActivityController extends BaseController
 		$this->recoverLiveFeed($recyclingEntityID, $newEntityID);
 		$this->recoverBadges((int)$recyclingEntityID, (int)$newEntityID);
 		$this->recoverNotes((int)$recyclingEntityID, (int)$newEntityID);
+		\Bitrix\Crm\Integration\AI\EventHandler::onItemRestoreFromRecycleBin(
+			new Crm\ItemIdentifier($this->getEntityTypeID(), $newEntityID),
+			new Crm\ItemIdentifier($this->getSuspendedEntityTypeID(), $recyclingEntityID),
+		);
 
 		//region Relations
 		Relation::unregisterRecycleBin($recyclingEntityID);
@@ -481,6 +492,9 @@ class ActivityController extends BaseController
 		$this->eraseSuspendedUserFields($recyclingEntityID);
 		$this->eraseSuspendedBadges($recyclingEntityID);
 		$this->eraseSuspendedNotes($recyclingEntityID);
+		\Bitrix\Crm\Integration\AI\EventHandler::onItemDelete(
+			new Crm\ItemIdentifier($this->getSuspendedEntityTypeID(), $recyclingEntityID),
+		);
 
 		//region Files
 		$files = isset($params['FILES']) ? $params['FILES'] : null;
@@ -528,6 +542,35 @@ class ActivityController extends BaseController
 		Crm\Timeline\TimelineManager::transferAssociation(
 			$this->getEntityTypeID(), $entityID,
 			$this->getSuspendedEntityTypeID(), $recyclingEntityID
+		);
+	}
+
+	protected function suspendTimelineBindings(int $recyclingEntityId): void
+	{
+		$row = TimelineTable::getRow([
+			'select' => ['ID'],
+			'filter' => [
+				'=TYPE_ID' => TimelineType::ACTIVITY,
+				'=ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::SuspendedActivity,
+				'=ASSOCIATED_ENTITY_ID' => $recyclingEntityId,
+			],
+			'order' => ['ID' => 'DESC']
+		]);
+
+		if (empty($row))
+		{
+			return;
+		}
+
+		$ownerId = (int)($row['ID'] ?? 0);
+		if ($ownerId <= 0)
+		{
+			return;
+		}
+
+		$connection = Main\Application::getConnection();
+		$connection->queryExecute(
+			"UPDATE b_crm_timeline_bind SET IS_FIXED = 'N' WHERE OWNER_ID = {$ownerId}"
 		);
 	}
 

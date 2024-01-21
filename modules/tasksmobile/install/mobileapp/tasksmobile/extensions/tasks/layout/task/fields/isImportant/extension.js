@@ -15,6 +15,8 @@ jn.define('tasks/layout/task/fields/isImportant', (require, exports, module) => 
 				readOnly: props.readOnly,
 				isImportant: props.isImportant,
 			};
+
+			this.handleOnChange = this.handleOnChange.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -33,6 +35,12 @@ jn.define('tasks/layout/task/fields/isImportant', (require, exports, module) => 
 			});
 		}
 
+		handleOnChange(value)
+		{
+			this.setState({ isImportant: value });
+			this.props.onChange(value);
+		}
+
 		render()
 		{
 			return View(
@@ -45,17 +53,22 @@ jn.define('tasks/layout/task/fields/isImportant', (require, exports, module) => 
 					showTitle: false,
 					value: this.state.isImportant,
 					config: {
-						deepMergeStyles: this.props.deepMergeStyles,
+						deepMergeStyles: {
+							...this.props.deepMergeStyles,
+							booleanIcon: {
+								width: 24,
+								height: 24,
+							},
+						},
 						mode: BooleanMode.ICON,
 						descriptionYes: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_IS_IMPORTANT_YES_MSGVER_1'),
 						descriptionNo: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_IS_IMPORTANT_NO_MSGVER_1'),
-						iconUri: `${this.props.pathToImages}/tasksmobile-layout-task-is-important.png`,
+						svg: {
+							uri: `${this.props.pathToImages}/fire.svg`,
+						},
 					},
 					testId: 'isImportant',
-					onChange: (value) => {
-						this.setState({ isImportant: value });
-						this.props.onChange(value);
-					},
+					onChange: this.handleOnChange,
 				}),
 			);
 		}

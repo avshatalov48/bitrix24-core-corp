@@ -5,7 +5,6 @@ import { UI } from 'ui.notification';
 import { Wrapper as SettingsPopupWrapper } from './components/wrapper/wrapper';
 import { BitrixVue } from 'ui.vue3';
 import { Calendar } from './components/calendar/calendar';
-import { Ping } from './components/ping/ping';
 
 import type { SettingsPopupOptions } from './settings-popup-options';
 
@@ -265,7 +264,6 @@ class SettingsPopup
 
 export {
 	Calendar,
-	Ping,
 	SettingsPopup,
 	Events,
 };

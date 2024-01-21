@@ -6,17 +6,23 @@
 jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { clone } = require('utils/object');
+
 	const { PullHandler } = require('im/messenger/provider/pull/base');
+	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 	const { DialogConverter } = require('im/messenger/lib/converter');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { Logger } = require('im/messenger/lib/logger');
 	const { Counters } = require('im/messenger/lib/counters');
 	const { RecentConverter } = require('im/messenger/lib/converter');
 	const { Notifier } = require('im/messenger/lib/notifier');
 	const { ShareDialogCache } = require('im/messenger/cache/share-dialog');
-	const { UuidManager } = require('im/messenger/lib/uuid');
-	const { DialogType } = require('im/messenger/const');
+	const { UuidManager } = require('im/messenger/lib/uuid-manager');
+	const {
+		DialogType,
+		EventType,
+	} = require('im/messenger/const');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('pull-handler--message');
 
 	/**
 	 * @class MessagePullHandler
@@ -25,7 +31,11 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 	{
 		handleMessage(params, extra, command)
 		{
-			Logger.info('MessagePullHandler.handleMessage ', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+			logger.info('MessagePullHandler.handleMessage ', params, extra);
 
 			const dialogId = params.message.recipientId;
 			const userId = MessengerParams.getUserId();
@@ -42,11 +52,11 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				user: userData,
 				message: recentParams.message,
 				counter: recentParams.counter,
-				writing: false,
-				date_update: new Date(),
 			});
 
-			this.store.dispatch('usersModel/set', Object.values(params.users));
+			recentItem.message.status = recentParams.message.senderId === userId ? 'received' : '';
+
+			const userPromise = this.setUsers(params);
 
 			if (!recentItem)
 			{
@@ -55,21 +65,24 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 			this.updateDialog(params)
 				.then(() => this.store.dispatch('recentModel/set', [recentItem]))
 				.then(() => {
+					if (extra && extra.server_time_ago <= 5 && params.message.senderId !== userId)
+					{
+						const userName = ChatTitle.createFromDialogId(params.message.senderId).getTitle();
+						const userAvatar = ChatAvatar.createFromDialogId(params.message.senderId).getAvatarUrl();
+
+						Notifier.notify({
+							dialogId: recipientId,
+							title: userName,
+							text: recentItem.message.text,
+							avatar: userAvatar,
+						});
+					}
+
 					Counters.updateDelayed();
 
 					this.saveShareDialogCache();
 				})
 			;
-
-			if (extra && extra.server_time_ago <= 5 && params.message.senderId !== userId)
-			{
-				Notifier.notify({
-					dialogId: recipientId,
-					title: recentItem.user.name,
-					text: recentItem.message.text,
-					avatar: recentItem.user.avatar,
-				});
-			}
 
 			const dialog = this.getDialog(dialogId);
 			if (!dialog || dialog.hasNextPage)
@@ -83,9 +96,11 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				return;
 			}
 
-			this.setFiles(params).then(() => {
-				this.setMessage(params);
-				this.checkWritingTimer(params.dialogId, userData);
+			userPromise.then(() => {
+				this.setFiles(params).then(() => {
+					this.setMessage(params);
+					this.checkWritingTimer(params.dialogId, userData);
+				});
 			});
 		}
 
@@ -107,14 +122,13 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 			if (params.message.id > dialog.lastMessageId)
 			{
 				dialogFieldsToUpdate.lastMessageId = params.message.id;
+				dialogFieldsToUpdate.counter = params.counter;
 			}
 
 			if (params.message.senderId === MessengerParams.getUserId() && params.message.id > dialog.lastReadId)
 			{
 				dialogFieldsToUpdate.lastId = params.message.id;
 			}
-
-			dialogFieldsToUpdate.counter = params.counter;
 
 			if (Object.keys(dialogFieldsToUpdate).length > 0)
 			{
@@ -169,7 +183,17 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 		handleMessageChat(params, extra, command)
 		{
-			Logger.info('MessagePullHandler.handleMessageChat ', params, extra);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			if (params.chat && params.chat[params.chatId].type === DialogType.copilot)
+			{
+				return;
+			}
+
+			logger.info('MessagePullHandler.handleMessageChat ', params, extra);
 
 			const dialogId = params.message.recipientId;
 			const userId = MessengerParams.getUserId();
@@ -202,32 +226,35 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				message: recentParams.message,
 				counter: recentParams.counter,
 				liked: false,
-				writing: false,
-				date_update: new Date(),
 			});
 
 			this.updateDialog(params)
 				.then(() => this.store.dispatch('recentModel/set', [recentItem]))
 				.then(() => {
+					const dialog = this.getDialog(dialogId);
+					if (
+						extra && extra.server_time_ago <= 5
+						&& params.message.senderId !== userId
+						&& dialog && !dialog.muteList.includes(userId)
+					)
+					{
+						const dialogTitle = ChatTitle.createFromDialogId(dialogId).getTitle();
+						const userName = ChatTitle.createFromDialogId(userData.id).getTitle();
+						const avatar = ChatAvatar.createFromDialogId(dialogId).getAvatarUrl();
+
+						Notifier.notify({
+							dialogId: dialog.dialogId,
+							title: dialogTitle,
+							text: (userName ? `${userName}: ` : '') + recentItem.message.text,
+							avatar,
+						});
+					}
+
 					Counters.updateDelayed();
 
 					this.saveShareDialogCache();
 				})
 			;
-
-			if (
-				extra && extra.server_time_ago <= 5
-				&& params.message.senderId !== userId
-				&& !recentItem.chat.mute_list[userId]
-			)
-			{
-				Notifier.notify({
-					dialogId: recentItem.id,
-					title: recentItem.chat.name,
-					text: (recentItem.user.name ? `${recentItem.user.name}: ` : '') + recentItem.message.text,
-					avatar: recentItem.chat.avatar,
-				});
-			}
 
 			const dialog = this.getDialog(dialogId);
 			if (!dialog || dialog.hasNextPage)
@@ -241,22 +268,45 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				return;
 			}
 
-			this.setFiles(params).then(() => {
-				this.setMessage(params);
-				this.checkWritingTimer(dialogId, userData);
+			this.setUsers(params).then(() => {
+				this.setFiles(params).then(() => {
+					this.setMessage(params);
+					this.checkWritingTimer(dialogId, userData);
+				});
 			});
 		}
 
 		handleMessageUpdate(params, extra, command)
 		{
-			Logger.info('MessagePullHandler.handleMessageUpdate: ', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('MessagePullHandler.handleMessageUpdate: ', params);
 
 			this.updateMessage(params);
 		}
 
+		handleMessageParamsUpdate(params, extra, command)
+		{
+			logger.info('MessagePullHandler: handleMessageParamsUpdate', params);
+
+			this.store.dispatch('messagesModel/update', {
+				id: params.id,
+				chatId: params.chatId,
+				fields: { params: params.params },
+			});
+		}
+
 		handleMessageDelete(params, extra, command)
 		{
-			Logger.info('MessagePullHandler.handleMessageDelete: ', params, extra);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('MessagePullHandler.handleMessageDelete: ', params, extra);
 
 			// eslint-disable-next-line no-param-reassign
 			params.text = Loc.getMessage('IMMOBILE_PULL_HANDLER_MESSAGE_DELETED');
@@ -271,7 +321,12 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 		 */
 		handleMessageDeleteComplete(params, extra, command)
 		{
-			Logger.info('MessagePullHandler.handleMessageDeleteComplete: ', params, extra);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('MessagePullHandler.handleMessageDeleteComplete: ', params, extra);
 
 			this.fullDeleteMessage(params);
 		}
@@ -283,10 +338,11 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 		 */
 		handleAddReaction(params, extra, command)
 		{
-			Logger.info('MessagePullHandler.handleAddReaction: ', params);
-			if (UuidManager.hasActionUuid(extra.action_uuid))
+			logger.info('MessagePullHandler.handleAddReaction: ', params);
+			if (UuidManager.getInstance().hasActionUuid(extra.action_uuid))
 			{
-				Logger.info('MessagePullHandler.handleAddReaction: we already locally processed this action');
+				logger.info('MessagePullHandler.handleAddReaction: we already locally processed this action');
+				UuidManager.getInstance().removeActionUuid(extra.action_uuid);
 
 				return;
 			}
@@ -306,9 +362,11 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				actualReactionsState.ownReactions = [reaction];
 			}
 
-			this.store.dispatch('messagesModel/reactionsModel/setFromPullEvent', {
-				usersShort,
-				reactions: [actualReactionsState],
+			this.store.dispatch('usersModel/addShort', usersShort).then(() => {
+				this.store.dispatch('messagesModel/reactionsModel/setFromPullEvent', {
+					usersShort,
+					reactions: [actualReactionsState],
+				});
 			});
 		}
 
@@ -319,10 +377,11 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 		 */
 		handleDeleteReaction(params, extra, command)
 		{
-			Logger.info('MessagePullHandler.handleDeleteReaction: ', params);
-			if (UuidManager.hasActionUuid(extra.action_uuid))
+			logger.info('MessagePullHandler.handleDeleteReaction: ', params);
+			if (UuidManager.getInstance().hasActionUuid(extra.action_uuid))
 			{
-				Logger.info('MessagePullHandler.handleDeleteReaction: we already locally processed this action');
+				logger.info('MessagePullHandler.handleDeleteReaction: we already locally processed this action');
+				UuidManager.getInstance().removeActionUuid(extra.action_uuid);
 
 				return;
 			}
@@ -342,27 +401,44 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 		async handleStartWriting(params, extra, command)
 		{
-			const isHasRecent = this.setRecentItemWriting(params, true);
-			const isHasDialog = await this.setDialogItemWriting(params, true);
-			if (isHasRecent || isHasDialog)
+			if (this.interceptEvent(params, extra, command))
 			{
-				ChatTimer.start('writing', `${params.dialogId} ${params.userName}`, 25000, () => {
-					if (isHasRecent)
-					{
-						this.setRecentItemWriting(params, false);
-					}
+				return;
+			}
 
-					if (isHasDialog)
-					{
-						this.setDialogItemWriting(params, false);
-					}
+			const {
+				dialogId,
+				userId,
+				userName,
+			} = params;
+
+			this.updateUserOnline(userId);
+
+			const isHasDialog = await this.setDialogItemWriting(params, true);
+			if (isHasDialog)
+			{
+				ChatTimer.start('writing', `${dialogId} ${userName}`, 25000, () => {
+					this.setDialogItemWriting(params, false);
 				}, params);
 			}
 		}
 
 		handleReadMessage(params, extra, command)
 		{
-			Logger.info('MessagePullHandler.handleReadMessage: ', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('MessagePullHandler.handleReadMessage: ', params);
+
+			if (UuidManager.getInstance().hasActionUuid(extra.action_uuid))
+			{
+				logger.info('MessagePullHandler.handleReadMessage: we already locally processed this action');
+				UuidManager.getInstance().removeActionUuid(extra.action_uuid);
+
+				return;
+			}
 
 			this.readMessage(params);
 			this.updateCounters(params);
@@ -370,7 +446,20 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 		handleReadMessageChat(params, extra, command)
 		{
-			Logger.info('MessagePullHandler.handleReadMessageChat: ', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('MessagePullHandler.handleReadMessageChat: ', params);
+
+			if (UuidManager.getInstance().hasActionUuid(extra.action_uuid))
+			{
+				logger.info('MessagePullHandler.handleReadMessageChat: we already locally processed this action');
+				UuidManager.getInstance().removeActionUuid(extra.action_uuid);
+
+				return;
+			}
 
 			this.readMessage(params);
 			this.updateCounters(params);
@@ -378,7 +467,12 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 		handleUnreadMessage(params, extra, command)
 		{
-			Logger.info('MessagePullHandler.handleUnreadMessage: ', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('MessagePullHandler.handleUnreadMessage: ', params);
 
 			this.unreadMessage(params);
 			this.updateCounters(params);
@@ -386,7 +480,12 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 		handleUnreadMessageChat(params, extra, command)
 		{
-			Logger.info('MessagePullHandler.handleUnreadMessageChat: ', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('MessagePullHandler.handleUnreadMessageChat: ', params);
 
 			this.unreadMessage(params);
 			this.updateCounters(params);
@@ -453,11 +552,8 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 					...recentItem.message,
 					...message,
 				};
-
-				recentItem.date_update = new Date();
 			}
 
-			recentItem.writing = false;
 			this.store.dispatch('recentModel/set', [recentItem]);
 		}
 
@@ -470,31 +566,40 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 			const messageId = params.id;
 
 			this.store.dispatch('messagesModel/delete', { id: messageId })
-				.catch((err) => Logger.error(err));
+				.catch((err) => logger.error(err));
 
 			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
-			if (!recentItem)
+			const dialogItem = this.store.getters['dialoguesModel/getById'](dialogId);
+			if (!recentItem && !dialogItem)
 			{
 				return;
 			}
 
 			let isNeedUpdateRecentItem = false;
-			const dialogItem = this.store.getters['dialoguesModel/getById'](dialogId);
-
-			if (params.counter !== dialogItem.counter)
+			if (params.lastMessageViews.countOfViewers !== dialogItem.lastMessageViews.countOfViewers)
 			{
-				recentItem.counter = params.counter;
-
-				await this.updateDialog({
-					dialogId,
-					message: {
-						senderId: params.senderId,
-						id: messageId,
-					},
+				const fieldsCount = {
+					lastMessageId: params.newLastMessage.id,
+					lastId: dialogItem.lastReadId === dialogItem.lastMessageId
+						? params.newLastMessage.id : dialogItem.lastReadId,
 					counter: params.counter,
+				};
+
+				const fieldsViews = {
+					...params.lastMessageViews.firstViewers[0],
+					messageId: params.lastMessageViews.messageId,
+					countOfViewers: params.lastMessageViews.countOfViewers,
+				};
+
+				await this.store.dispatch('dialoguesModel/update', {
+					dialogId,
+					fields: fieldsCount,
 				});
 
-				isNeedUpdateRecentItem = true;
+				await this.store.dispatch('dialoguesModel/setLastMessageViews', {
+					dialogId,
+					fields: fieldsViews,
+				});
 			}
 
 			const newLastMessage = params.newLastMessage;
@@ -508,8 +613,6 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 					file: newLastMessage.files ? (newLastMessage.files.length > 0) : false,
 				};
 
-				recentItem.date_update = new Date();
-
 				isNeedUpdateRecentItem = true;
 			}
 
@@ -521,14 +624,19 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 						this.saveShareDialogCache();
 					})
-					.catch((err) => Logger.error(err))
+					.catch((err) => logger.error(err))
 				;
 			}
 		}
 
 		handleReadMessageOpponent(params, extra, command)
 		{
-			Logger.info('MessagePullHandler.handleReadMessageOpponent: ', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('MessagePullHandler.handleReadMessageOpponent: ', params);
 
 			this.updateMessageViewedByOthers(params);
 			this.updateMessageStatus(params);
@@ -537,7 +645,12 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 		handleReadMessageChatOpponent(params, extra, command)
 		{
-			Logger.info('MessagePullHandler.handleReadMessageChatOpponent: ', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('MessagePullHandler.handleReadMessageChatOpponent: ', params);
 
 			this.updateMessageViewedByOthers(params);
 			this.updateMessageStatus(params);
@@ -546,14 +659,24 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 		handleUnreadMessageOpponent(params, extra, command)
 		{
-			Logger.info('MessagePullHandler.handleUnreadMessageOpponent: ', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('MessagePullHandler.handleUnreadMessageOpponent: ', params);
 
 			this.updateMessageStatus(params);
 		}
 
 		handleUnreadMessageChatOpponent(params, extra, command)
 		{
-			Logger.info('MessagePullHandler.handleUnreadMessageChatOpponent: ', params);
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.info('MessagePullHandler.handleUnreadMessageChatOpponent: ', params);
 
 			this.updateMessageStatus(params);
 		}
@@ -576,18 +699,17 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				this.store.dispatch('recentModel/set', [recentItem]);
 			}
 
-			const recentUserItem = clone(this.store.getters['recentModel/getById'](userId));
-			if (!recentUserItem)
+			const user = clone(this.store.getters['usersModel/getById'](userId));
+			if (!user)
 			{
 				return;
 			}
 
-			recentUserItem.user.idle = false;
-			recentUserItem.user.last_activity_date = new Date(params.date);
-
-			this.store.dispatch('recentModel/set', [recentUserItem]);
-
-			// TODO: also change data in user model
+			this.store.dispatch('usersModel/update', [{
+				id: userId,
+				idle: false,
+				lastActivityDate: new Date(params.date),
+			}]);
 		}
 
 		/**
@@ -674,30 +796,12 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				dialogId,
 				fields: {
 					counter: params.counter,
-					lastReadId: params.lastId,
+					lastId: params.lastId,
 				},
 			})
 				.then(() => this.store.dispatch('recentModel/set', [recentItem]))
 				.then(() => Counters.update())
 			;
-		}
-
-		setRecentItemWriting(params, isWriting)
-		{
-			const { dialogId } = params;
-			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
-			if (!recentItem)
-			{
-				return false;
-			}
-
-			Logger.info('MessagePullHandler.handleStartWriting: ', dialogId);
-
-			recentItem.writing = isWriting;
-
-			this.store.dispatch('recentModel/set', [recentItem]);
-
-			return true;
 		}
 
 		/**
@@ -719,7 +823,7 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				return false;
 			}
 
-			Logger.info('MessagePullHandler.handleStartWriting.setDialogItemWriting ', params);
+			logger.info('MessagePullHandler.handleStartWriting.setDialogItemWriting ', params);
 
 			return this.store.dispatch('dialoguesModel/updateWritingList', {
 				dialogId,
@@ -732,14 +836,17 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 		saveShareDialogCache()
 		{
 			const firstPage = this.store.getters['recentModel/getRecentPage'](1, 50);
-			ShareDialogCache.saveRecentItemList(firstPage)
-				.then((cache) => {
-					Logger.log('MessagePullHandler: Saving recent items for the share dialog is successful.', cache);
-				})
-				.catch((cache) => {
-					Logger.log('MessagePullHandler: Saving recent items for share dialog failed.', firstPage, cache);
-				})
-			;
+			ShareDialogCache.saveRecentItemList(firstPage);
+		}
+
+		setUsers(params)
+		{
+			if (!params.users)
+			{
+				return Promise.resolve();
+			}
+
+			return this.store.dispatch('usersModel/set', Object.values(params.users));
 		}
 
 		setFiles(params)
@@ -789,7 +896,7 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 			if (messageWithRealId)
 			{
-				Logger.warn('New message pull handler: we already have this message', params.message);
+				logger.warn('New message pull handler: we already have this message', params.message);
 				this.store.dispatch('messagesModel/update', {
 					id: params.message.id,
 					fields: params.message,
@@ -797,7 +904,7 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 			}
 			else if (!messageWithRealId && messageWithTemplateId)
 			{
-				Logger.warn('New message pull handler: we already have the TEMPORARY message', params.message);
+				logger.warn('New message pull handler: we already have the TEMPORARY message', params.message);
 				this.store.dispatch('messagesModel/updateWithId', {
 					id: params.message.templateId,
 					fields: params.message,
@@ -806,10 +913,33 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 			// it's an opponent message or our own message from somewhere else
 			else if (!messageWithRealId && !messageWithTemplateId)
 			{
-				Logger.warn('New message pull handler: we dont have this message', params.message);
+				logger.warn('New message pull handler: we dont have this message', params.message);
 
-				this.store.dispatch('messagesModel/add', message);
+				const prevMessageId = this.store.getters['messagesModel/getLastId'](message.chatId);
+
+				this.store.dispatch('messagesModel/add', message).then(() => {
+					/** @type {ScrollToBottomEvent} */
+					const scrollToBottomEventData = {
+						dialogId: message.dialogId,
+						messageId: message.id,
+						withAnimation: true,
+						prevMessageId,
+					};
+
+					BX.postComponentEvent(EventType.dialog.external.scrollToBottom, [scrollToBottomEventData]);
+				});
 			}
+		}
+
+		updateUserOnline(userId)
+		{
+			return this.store.dispatch('usersModel/update', [{
+				id: userId,
+				fields: {
+					id: userId,
+					lastActivityDate: new Date(),
+				},
+			}]);
 		}
 
 		/**
@@ -852,6 +982,9 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 			return ChatTimer.stop('writing', timerId);
 		}
 
+		/**
+		 * @return {?DialoguesModelState}
+		 */
 		getDialog(dialogId)
 		{
 			return this.store.getters['dialoguesModel/getById'](dialogId);

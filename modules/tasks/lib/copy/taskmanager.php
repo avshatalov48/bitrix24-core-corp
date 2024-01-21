@@ -16,8 +16,8 @@ use Bitrix\Tasks\Copy\CheckList as CheckListCopier;
 use Bitrix\Tasks\Copy\Implement\Robots;
 use Bitrix\Tasks\Copy\Implement\Stage as StageImplementer;
 use Bitrix\Tasks\Copy\Implement\TaskCheckList as CheckListImplementer;
-use Bitrix\Tasks\Copy\Implement\Task as TaskImplementer;
 use Bitrix\Tasks\Copy\Implement\TaskParams;
+use Bitrix\Tasks\Copy\Implement;
 use Bitrix\Tasks\Copy\Implement\Template as TemplateImplementer;
 use Bitrix\Tasks\Copy\Stage as StageCopier;
 use Bitrix\Tasks\Copy\Task as TaskCopier;
@@ -26,22 +26,22 @@ use Bitrix\Tasks\Kanban\StagesTable;
 
 class TaskManager
 {
-	private $executiveUserId;
-	private $taskIdsToCopy = [];
-	private $targetGroupId = 0;
+	protected $executiveUserId;
+	protected $taskIdsToCopy = [];
+	protected $targetGroupId = 0;
 
-	private $mapIdsCopiedStages = [];
+	protected $mapIdsCopiedStages = [];
 
-	private $projectTerm = [];
+	protected $projectTerm = [];
 
-	private $markerChecklist = true;
-	private $markerComment = true;
+	protected $markerChecklist = true;
+	protected $markerComment = true;
 
 	/**
 	 * @var Result
 	 */
-	private $result;
-	private $mapIdsCopiedTasks = [];
+	protected $result;
+	protected $mapIdsCopiedTasks = [];
 
 	public function __construct($executiveUserId, array $taskIdsToCopy)
 	{
@@ -144,7 +144,7 @@ class TaskManager
 		return $this->mapIdsCopiedTasks;
 	}
 
-	private function getContainerCollection(array $idsToCopy)
+	protected function getContainerCollection(array $idsToCopy)
 	{
 		$containerCollection = new ContainerCollection();
 
@@ -156,10 +156,11 @@ class TaskManager
 		return $containerCollection;
 	}
 
-	private function getTaskImplementer()
+	protected function getTaskImplementer()
 	{
 		global $USER_FIELD_MANAGER;
-		$taskImplementer = new TaskImplementer($this->executiveUserId);
+		$class = $this->getImplementerClass();
+		$taskImplementer = new $class($this->executiveUserId);
 		$taskImplementer->setUserFieldManager($USER_FIELD_MANAGER);
 		$taskImplementer->setExecutiveUserId($this->executiveUserId);
 		$taskImplementer->setTargetGroupId($this->targetGroupId);
@@ -175,42 +176,42 @@ class TaskManager
 		return $taskImplementer;
 	}
 
-	private function getStageCopier($taskImplementer)
+	protected function getStageCopier($taskImplementer)
 	{
 		return new StageCopier(new StageImplementer($taskImplementer, $this->mapIdsCopiedStages));
 	}
 
-	private function getChecklistImplementer()
+	protected function getChecklistImplementer()
 	{
 		return new CheckListImplementer();
 	}
 
-	private function getTaskCopier(TaskImplementer $taskImplementer)
+	protected function getTaskCopier(Implement\Task $taskImplementer)
 	{
 		return new TaskCopier($taskImplementer);
 	}
 
-	private function getChecklistCopier($checklistImplementer)
+	protected function getChecklistCopier($checklistImplementer)
 	{
 		return new CheckListCopier($checklistImplementer, $this->executiveUserId);
 	}
 
-	private function getCommentCopier()
+	protected function getCommentCopier()
 	{
 		return new EntityCopier($this->getCommentImplementer());
 	}
 
-	private function getTemplateCopier(): Template
+	protected function getTemplateCopier(): Template
 	{
 		return new Template($this->getTemplateImplementer());
 	}
 
-	private function getParamsCopier(): EntityCopier
+	protected function getParamsCopier(): EntityCopier
 	{
 		return new EntityCopier(new TaskParams());
 	}
 
-	private function getCommentImplementer()
+	protected function getCommentImplementer()
 	{
 		global $USER_FIELD_MANAGER;
 		$commentImplementer = new CommentImplementer();
@@ -220,7 +221,7 @@ class TaskManager
 		return $commentImplementer;
 	}
 
-	private function getTemplateImplementer(): TemplateImplementer
+	protected function getTemplateImplementer(): TemplateImplementer
 	{
 		global $USER_FIELD_MANAGER;
 
@@ -232,23 +233,28 @@ class TaskManager
 		return $templateImplementer;
 	}
 
-	private function getRobotsImplementer(array $documentType, array $mapIdsCopiedStages)
+	protected function getRobotsImplementer(array $documentType, array $mapIdsCopiedStages)
 	{
 		return new Robots($documentType, $mapIdsCopiedStages);
 	}
 
-	private function getRobotsCopier($robotsImplementer)
+	protected function getRobotsCopier($robotsImplementer)
 	{
 		return new RobotsCopier($robotsImplementer);
 	}
 
-	private function getTriggerImplementer(array $documentType, array $mapIdsCopiedStages)
+	protected function getTriggerImplementer(array $documentType, array $mapIdsCopiedStages)
 	{
 		return new TriggerImplementer($documentType, $mapIdsCopiedStages);
 	}
 
-	private function getTriggerCopier($triggerImplementer)
+	protected function getTriggerCopier($triggerImplementer)
 	{
 		return new TriggerCopier($triggerImplementer);
+	}
+
+	public function getImplementerClass(): string
+	{
+		return Implement\Task::class;
 	}
 }

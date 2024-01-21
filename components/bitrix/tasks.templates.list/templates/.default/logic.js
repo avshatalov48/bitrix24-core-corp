@@ -141,7 +141,11 @@ function DeleteTemplate(templateId)
 			},
 
 			bindEvents: function() {
-				// this.sliderInit();
+				BX.addCustomEvent(window, 'onTasksTemplateDeleted', BX.delegate(this.onTasksTemplateDeleted, this));
+			},
+
+			onTasksTemplateDeleted: function(control) {
+				this.reloadGrid();
 			},
 
 			sliderInit: function() {
@@ -184,6 +188,10 @@ function DeleteTemplate(templateId)
 						{
 							return;
 						}
+
+						BX.UI.Notification.Center.notify({
+							content: BX.message('TEMPLATE_MOVED_TO_RECYCLEBIN')
+						});
 
 						self.reloadGrid();
 					}.bind(this),

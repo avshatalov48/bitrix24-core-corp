@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Salescenter = this.BX.Salescenter || {};
 (function (exports,salescenter_marketplace) {

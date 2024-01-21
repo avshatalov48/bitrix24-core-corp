@@ -2,7 +2,6 @@
  * @module layout/ui/fields/file/file-preview
  */
 jn.define('layout/ui/fields/file/file-preview', (require, exports, module) => {
-
 	/**
 	 * @function filePreview
 	 */
@@ -35,5 +34,4 @@ jn.define('layout/ui/fields/file/file-preview', (require, exports, module) => {
 	};
 
 	module.exports = { filePreview };
-
 });

@@ -3,7 +3,7 @@
 namespace Bitrix\CrmMobile\Integration\Sale\PaymentSystem\Creation\ActionProvider\Before;
 
 use Bitrix\CrmMobile\Integration\Sale\PaymentSystem\Creation\ActionProvider\ActionProvider;
-use Bitrix\CrmMobile\Terminal\LocHelper;
+use Bitrix\CrmMobile\Integration\Sale\Payment\LocHelper;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 

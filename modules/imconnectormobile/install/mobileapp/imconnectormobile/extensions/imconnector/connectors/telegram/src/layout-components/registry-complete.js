@@ -3,6 +3,8 @@
  */
 jn.define('imconnector/connectors/telegram/layout-components/registry-complete', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
+
 	function Complete(props = {})
 	{
 		return View(
@@ -13,7 +15,7 @@ jn.define('imconnector/connectors/telegram/layout-components/registry-complete',
 					alignItems: 'center',
 					paddingRight: 18,
 					paddingLeft: 22,
-					backgroundColor: '#FAFDED',
+					backgroundColor: AppTheme.colors.accentSoftOrange3,
 				},
 			},
 			Image({
@@ -31,7 +33,7 @@ jn.define('imconnector/connectors/telegram/layout-components/registry-complete',
 				style: {
 					fontSize: 18,
 					fontWeight: '400',
-					color: '#333333',
+					color: AppTheme.colors.base1,
 					textAlign: 'center',
 					marginBottom: 8,
 					lineHeightMultiple: 1.2,
@@ -42,7 +44,7 @@ jn.define('imconnector/connectors/telegram/layout-components/registry-complete',
 				style: {
 					fontSize: 15,
 					fontWeight: '400',
-					color: '#333333',
+					color: AppTheme.colors.base1,
 					textAlign: 'center',
 					lineSpacing: 1.3,
 				},

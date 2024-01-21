@@ -60,6 +60,7 @@ $MESS["CRM_COMMON_ACTION_PRINT"] = "Печать";
 $MESS["CRM_COMMON_ACTION_COPY_LINK"] = "Скопировать ссылку";
 $MESS["CRM_COMMON_ACTION_DOWNLOAD"] = "Скачать";
 $MESS["CRM_COMMON_ACTION_DOWNLOAD_FORMAT"] = "Скачать #FORMAT#";
+$MESS["CRM_COMMON_ACTION_ADD_OBSERVER"] = "Добавить наблюдателя";
 $MESS["CRM_COMMON_CONTINUE"] = "Продолжить";
 $MESS["CRM_COMMON_CANCEL"] = "Отмена";
 $MESS["CRM_COMMON_ASSIGNED_NOT_SET"] = "Не задан ответственный";
@@ -83,7 +84,9 @@ $MESS["CRM_COMMON_CALENDAR"] = "Календарь";
 $MESS["CRM_COMMON_CATEGORY"] = "Воронка";
 $MESS["CRM_COMMON_DEADLINES"] = "Сроки";
 $MESS["CRM_COMMON_CLIENT_CATEGORY"] = "Категория";
+$MESS["CRM_COMMON_CREATED_TIME"] = "Дата создания";
 $MESS["CRM_COMMON_MODIFY_DATE"] = "Дата изменения";
+$MESS["CRM_COMMON_UPDATED_BY"] = "Кем изменён";
 $MESS["CRM_COMMON_DETAIL"] = "Подробнее";
 $MESS["CRM_COMMON_ROBOTS"] = "Роботы";
 $MESS["CRM_COMMON_EMPTY_VALUE"] = "Не заполнено";
@@ -95,13 +98,14 @@ $MESS["CRM_COMMON_READ_ACCESS_DENIED"] = "У Вас нет прав на про�
 $MESS["CRM_COMMON_ADD_ACCESS_DENIED"] = "У вас нет прав на добавление нового элемента сущности #ENTITY_DESCRIPTION#";
 
 $MESS["CRM_COMMON_UNTITLED"] = "Без названия";
+$MESS["CRM_COMMON_COPILOT"] = "CoPilot";
 
 $MESS["CRM_TYPE_TYPE_SETTINGS"] = "Настройки смарт-процесса";
 $MESS["CRM_TYPE_TYPE_FIELDS_SETTINGS"] = "Настройки полей";
 $MESS["CRM_TYPE_ITEM_EXPORT_CSV"] = "Экспорт в CSV";
 $MESS["CRM_TYPE_ITEM_EXPORT_EXCEL"] = "Экспорт в Excel";
 $MESS["CRM_TYPE_TOOLBAR_ALL_ITEMS"] = "Все элементы";
-$MESS["CRM_TYPE_ENTITY_TYPE_ID_TITLE"] = "Идентификатор типа смарт-процесса";
+$MESS["CRM_TYPE_ENTITY_TYPE_ID_TITLE_MSGVER_1"] = "Идентификатор типа";
 $MESS["CRM_TYPE_ITEM_TITLE"] = "Элемент";
 $MESS["CRM_TYPE_ITEM_DELETE"] = "Удалить элемент";
 $MESS["CRM_TYPE_ITEM_DELETE_CONFIRMATION_TITLE"] = "Удаление элемента";
@@ -215,3 +219,5 @@ $MESS["CRM_SMART_INVOICE_ADD_HINT"] = "У вас недостаточно пра
 $MESS["CRM_TYPE_ITEM_ADD_HINT"] = "У вас недостаточно прав на создание элементов. Обратитесь к администратору вашего Битрикс24 или сотруднику, который отвечает за Смарт-процессы";
 
 $MESS["CRM_LOCALIZATION_FIELD_VALUE_WITH_TITLE"] = "#TITLE# #VALUE#";
+
+$MESS["CRM_LOCALIZATION_DB_TYPE_NOT_SUPPORTED"] = "Это действие не поддерживается используемой базой данных";

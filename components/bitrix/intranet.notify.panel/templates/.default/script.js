@@ -110,7 +110,10 @@ this.BX = this.BX || {};
 	  });
 	}
 	function _getButtons2() {
-	  return [_classPrivateMethodGet(this, _getRenewalButton, _getRenewalButton2).call(this), this.getOptions().isAdmin ? _classPrivateMethodGet(this, _getPartnerButton, _getPartnerButton2).call(this) : null, _classPrivateMethodGet(this, _getMoreInformationButton, _getMoreInformationButton2).call(this)];
+	  if (this.getOptions().isCIS) {
+	    return [_classPrivateMethodGet(this, _getRenewalButton, _getRenewalButton2).call(this), this.getOptions().isAdmin ? _classPrivateMethodGet(this, _getPartnerButton, _getPartnerButton2).call(this) : null, _classPrivateMethodGet(this, _getMoreInformationButton, _getMoreInformationButton2).call(this)];
+	  }
+	  return [this.getOptions().isAdmin ? _classPrivateMethodGet(this, _getPartnerButton, _getPartnerButton2).call(this) : null, _classPrivateMethodGet(this, _getRenewalButton, _getRenewalButton2).call(this), _classPrivateMethodGet(this, _getMoreInformationButton, _getMoreInformationButton2).call(this)];
 	}
 	function _getPartnerButton2() {
 	  var _this4 = this;
@@ -119,7 +122,7 @@ this.BX = this.BX || {};
 	      return null;
 	    }
 	    return new ui_buttons.Button({
-	      color: ui_buttons.Button.Color.LIGHT_BORDER,
+	      color: _this4.getOptions().isCIS ? ui_buttons.Button.Color.LIGHT_BORDER : ui_buttons.Button.Color.SUCCESS,
 	      text: main_core.Loc.getMessage('INTRANET_NOTIFY_PANEL_LICENSE_NOTIFICATION_BUTTON_PARTNER'),
 	      round: true,
 	      onclick: function onclick() {
@@ -132,7 +135,7 @@ this.BX = this.BX || {};
 	  var _this5 = this;
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('renewal-button', function () {
 	    return new ui_buttons.Button({
-	      color: ui_buttons.Button.Color.SUCCESS,
+	      color: _this5.getOptions().isCIS ? ui_buttons.Button.Color.SUCCESS : ui_buttons.Button.Color.LIGHT_BORDER,
 	      text: main_core.Loc.getMessage('INTRANET_NOTIFY_PANEL_LICENSE_NOTIFICATION_BUTTON_RENEW_LICENSE'),
 	      round: true,
 	      onclick: function onclick() {

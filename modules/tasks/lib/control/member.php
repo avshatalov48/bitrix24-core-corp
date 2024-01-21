@@ -3,9 +3,12 @@
 namespace Bitrix\Tasks\Control;
 
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Control\Exception\TaskNotFoundException;
 use Bitrix\Tasks\Internals\Task\MemberTable;
-use Bitrix\Tasks\Internals\TaskTable;
 
 class Member
 {
@@ -16,88 +19,17 @@ class Member
 	private const FIELD_ACCOMPLICES = 'ACCOMPLICES';
 	private const FIELD_AUDITORS = 'AUDITORS';
 
-
-	private function setToOwner(int $fromUser, Tag $userTagRepository)
-	{
-		$userTagRepository->changeTagsOwner($this->taskId, $fromUser);
-	}
-	private function transferTags(array $users)
-	{
-		$userTagRepository = new Tag($this->userId);
-		foreach ($users as $fromUser)
-		{
-			$this->setToOwner((int)$fromUser, $userTagRepository);
-		}
-	}
-
-	private function getMembersIds(array $curMembers)
-	{
-		$members = [];
-
-		foreach ($curMembers  as $role => $roleMembers)
-		{
-			foreach ($roleMembers as $roleMember)
-			{
-				$members[] = $roleMember['USER_ID'];
-			}
-		}
-		return array_unique($members);
-	}
-
-	private function getDataMembersIds(array $data)
-	{
-		$members = [];
-
-		if (!empty($data[self::FIELD_CREATED_BY]))
-		{
-			$members[] = $data[self::FIELD_CREATED_BY];
-		}
-		else
-		{
-			$members[] = (int)TaskTable::getById($this->taskId)->fetch()['CREATED_BY'];
-		}
-		if (!empty($data[self::FIELD_RESPONSIBLE_ID]))
-		{
-			$members[] = $data[self::FIELD_RESPONSIBLE_ID];
-		}
-		if (!empty($data[self::FIELD_ACCOMPLICES]))
-		{
-			foreach ($data[self::FIELD_ACCOMPLICES] as $key => $id)
-			{
-				$members[] = $id;
-			}
-		}
-
-		if (!empty($data[self::FIELD_AUDITORS]))
-		{
-			foreach ($data[self::FIELD_AUDITORS] as $key => $id)
-			{
-				$members[] = $id;
-			}
-		}
-		return array_unique($members);
-	}
 	/**
-	 * @param array $data
-	 * @return void
 	 * @throws TaskNotFoundException
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\DB\SqlQueryException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
 	 */
-	public function set(array $data)
+	public function set(array $data): void
 	{
 		$this->loadTask();
 		$members = $this->getCurrentMembers();
-
-		$curMembersIds = $this->getMembersIds($members);
-
-		// $membersToRemove = array_diff($curMembersIds, $newMembersIds);
-
-
-		// $this->transferTags($membersToRemove);
-
 		$this->deleteByTask();
 
 		if (
@@ -162,11 +94,6 @@ class Member
 		{
 			return;
 		}
-		$newMembersIds = $this->getMembersIds($members);
-		$membersToRemove = array_diff($curMembersIds, $newMembersIds);
-
-		// $this->transferTags($membersToRemove);
-
 
 		$connection = Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
@@ -196,21 +123,17 @@ class Member
 	}
 
 	/**
-	 * @return void
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\DB\SqlQueryException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws SystemException
 	 */
-	public function deleteByTask()
+	public function deleteByTask(): void
 	{
 		MemberTable::deleteList([
 			'TASK_ID' => $this->taskId,
 		]);
 	}
 
-	/**
-	 * @return array
-	 */
 	private function getCurrentMembers(): array
 	{
 		$members = [];

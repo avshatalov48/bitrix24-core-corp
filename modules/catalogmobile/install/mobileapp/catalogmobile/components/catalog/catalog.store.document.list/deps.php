@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'alert',
+		'apptheme',
 		'alert/confirm',
 		'analytics-label',
 		'helpers/component',

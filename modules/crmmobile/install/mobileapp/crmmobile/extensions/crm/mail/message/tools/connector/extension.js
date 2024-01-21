@@ -18,49 +18,102 @@ jn.define('crm/mail/message/tools/connector', (require, exports, module) => {
 		return `${name} <${email}>`;
 	}
 
-	function buildContactData(contact, bindingsData = {})
+	function buildContactData(contact = {}, ownerType = '')
 	{
 		return contact.fields.map((item) => {
-			if (item.value)
+			const {
+				email = [
+					{
+						value: '',
+					},
+				],
+				type = '',
+				id = 0,
+				title = '',
+				customData = {},
+				selectedEmailId,
+			} = item;
+
+			let emailValue = '';
+
+			if (email.length > 0)
 			{
-				let augmentedContact = {};
-
-				if (bindingsData[item.value])
+				if (email[selectedEmailId] && email[selectedEmailId].value)
 				{
-					const {
-						typeName,
-						id,
-						name,
-					} = bindingsData[item.value];
-
-					augmentedContact = {
-						email: item.value,
-						entityType: typeName,
-						entityId: id,
-						name,
-					};
+					emailValue = email[selectedEmailId].value;
 				}
-				else
+				else if (email[0].value)
 				{
-					augmentedContact = {
-						email: item.value,
-						entityType: 'contacts',
-					};
+					emailValue = email[0].value;
 				}
-
-				return JSON.stringify(augmentedContact);
 			}
+
+			if (!emailValue && customData && customData.email)
+			{
+				emailValue = customData.email;
+			}
+
+			return JSON.stringify({
+				email: emailValue,
+				entityId: id,
+				name: title,
+				...fieldToEntity(type, id, ownerType),
+			});
 		}).filter(Boolean);
 	}
 
 	function buildFieldValue(data)
 	{
-		if (data && data.fields[0] && data.fields[0].value)
+		if (data)
 		{
-			return data.fields[0].value;
+			if (data.fields[0] && data.fields[0].value)
+			{
+				return data.fields[0].value;
+			}
+
+			if (typeof data.fields === 'string')
+			{
+				return data.fields;
+			}
+
+			if (typeof data === 'string')
+			{
+				return data;
+			}
 		}
 
 		return '';
+	}
+
+	function fieldToEntity(type, id, ownerType)
+	{
+		const entity = {
+			entityType: 'contacts',
+		};
+
+		switch (type)
+		{
+			case 'contact':
+				entity.entityType = 'contacts';
+				break;
+			case 'company':
+				entity.entityType = 'companies';
+				break;
+			case 'user':
+				entity.entityType = 'contacts';
+				entity.entityId = 0;
+				break;
+			default:
+				entity.entityType = ownerType;
+				break;
+		}
+
+		if (id === 0)
+		{
+			entity.entityType = 'contacts';
+		}
+
+		return entity;
 	}
 
 	/**
@@ -70,7 +123,6 @@ jn.define('crm/mail/message/tools/connector', (require, exports, module) => {
 	{
 		const {
 			senders,
-			bindingsData,
 			fileTokens,
 			message,
 			from,
@@ -88,11 +140,10 @@ jn.define('crm/mail/message/tools/connector', (require, exports, module) => {
 		const data = {
 			fileTokens,
 			from: buildSender(buildFieldValue(from), senders),
-			to: buildContactData(to, bindingsData),
+			to: buildContactData(to, ownerType),
 			subject,
 			ownerType,
 			ownerId,
-			ownerRcpt: 'Y',
 			storageTypeID: CRM_ACTIVITY_STORAGE_TYPE,
 			message: buildFieldValue(message),
 			content_type: HTML_CONTENT_TYPE,
@@ -102,8 +153,8 @@ jn.define('crm/mail/message/tools/connector', (require, exports, module) => {
 			}],
 		};
 
-		const cc = buildContactData(props.cc, bindingsData);
-		const bcc = buildContactData(props.bcc, bindingsData);
+		const cc = buildContactData(props.cc, ownerType);
+		const bcc = buildContactData(props.bcc, ownerType);
 
 		if (cc)
 		{
@@ -229,6 +280,20 @@ jn.define('crm/mail/message/tools/connector', (require, exports, module) => {
 	}
 
 	/**
+	 * @function getMessageNeighbors
+	 */
+	function getMessageNeighbors(ownerId, ownerTypeId, elementId)
+	{
+		return BX.ajax.runAction('crm.api.mail.message.getNeighbors', {
+			data: {
+				ownerId,
+				ownerTypeId,
+				elementId,
+			},
+		});
+	}
+
+	/**
 	 * @function getBodyPromise
 	 */
 	function getBodyPromise(id)
@@ -245,6 +310,7 @@ jn.define('crm/mail/message/tools/connector', (require, exports, module) => {
 		getBodyPromise,
 		getFilesDataPromise,
 		getChainPromise,
+		getMessageNeighbors,
 		sendMessage,
 		deleteMessage,
 		fetchCanUseMail,

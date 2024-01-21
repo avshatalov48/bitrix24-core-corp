@@ -155,11 +155,7 @@ class EntityEditorConfig
 				}
 			case \CCrmOwnerType::Deal:
 				{
-					$optionName = Crm\Category\DealCategory::prepareFormID(
-						isset($this->extras['DEAL_CATEGORY_ID']) ? (int)$this->extras['DEAL_CATEGORY_ID'] : 0,
-						'deal_details',
-						false
-					);
+					$optionName = 'deal_details';
 					break;
 				}
 			case \CCrmOwnerType::Contact:
@@ -207,7 +203,7 @@ class EntityEditorConfig
 					$params = [
 						'ENTITY_TYPE_ID' => $this->entityTypeID,
 					];
-					$categoryId = $this->extras['CATEGORY_ID'] ?? null;
+					$categoryId = $this->extras['CATEGORY_ID'] ?? $this->extras['DEAL_CATEGORY_ID'] ?? null;
 					if ($categoryId > 0)
 					{
 						$params['categoryId'] = $categoryId;
@@ -224,7 +220,7 @@ class EntityEditorConfig
 		{
 			$optionName = mb_strtolower(\CCrmOwnerType::ResolveName($this->entityTypeID)) . '_details';
 		}
-		$categoryId = $this->extras['CATEGORY_ID'] ?? 0;
+		$categoryId = $this->extras['CATEGORY_ID'] ?? $this->extras['DEAL_CATEGORY_ID'] ?? 0;
 
 		$useUppercase = in_array($this->entityTypeID, [
 			\CCrmOwnerType::Contact,
@@ -534,7 +530,14 @@ class EntityEditorConfig
 	public function isFormFieldVisible(string $fieldName): bool
 	{
 		static $data = [];
-		$cacheKey = (string)$this->userID . '_' . (string)$this->scope . '_' . (string)$this->userScopeId;
+		$cacheKey = serialize([
+			$this->entityTypeID,
+			(string)$this->userID,
+			(string)$this->scope,
+			(string)$this->userScopeId,
+			$this->extras
+		]);
+
 		if (!array_key_exists($cacheKey, $data))
 		{
 			$data[$cacheKey] = [];
@@ -552,5 +555,26 @@ class EntityEditorConfig
 		}
 
 		return in_array($fieldName, $data[$cacheKey], true);
+	}
+
+	public function getFormField(string $fieldName): ?array
+	{
+		$config = $this->get();
+
+		if (is_array($config))
+		{
+			foreach ($config as $section)
+			{
+				foreach ($section['elements'] as $element)
+				{
+					if ($element['name'] === $fieldName)
+					{
+						return $element;
+					}
+				}
+			}
+		}
+
+		return null;
 	}
 }

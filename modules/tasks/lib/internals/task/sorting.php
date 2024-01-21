@@ -1,12 +1,23 @@
 <?php
+
 namespace Bitrix\Tasks\Internals\Task;
 
 use Bitrix\Main\Application;
-use Bitrix\Main\Entity;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\HttpApplication;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
+use Bitrix\Tasks\Internals\DataBase\Helper;
+use Bitrix\Tasks\Internals\Log\LogFacade;
 use Bitrix\Tasks\Internals\TaskDataManager;
+use CDBResult;
 use CTaskFilterCtrl;
+use CTaskFilterCtrlInterface;
+use CTasks;
+use Exception;
+use TasksException;
 
 Loc::loadMessages(__FILE__);
 
@@ -36,15 +47,12 @@ class SortingTable extends TaskDataManager
 	/**
 	 * @inheritdoc
 	 */
-	public static function getTableName()
+	public static function getTableName(): string
 	{
-		return "b_tasks_sorting";
+		return 'b_tasks_custom_sort';
 	}
 
-	/**
-	 * @return static
-	 */
-	public static function getClass()
+	public static function getClass(): string
 	{
 		return get_called_class();
 	}
@@ -52,73 +60,92 @@ class SortingTable extends TaskDataManager
 	/**
 	 * @inheritdoc
 	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
-		return array(
-			"ID" => array(
+		return [
+			"ID" => [
 				"data_type" => "integer",
 				"primary" => true,
 				"autocomplete" => true,
-			),
+			],
 
-			"TASK_ID" => array(
+			"TASK_ID" => [
 				"data_type" => "integer",
 				"required" => true,
 				"title" => Loc::getMessage("TASKS_TASK_SORTING_ENTITY_TASK_ID_FIELD"),
-			),
+			],
 
-			"SORT" => array(
+			"SORT" => [
 				"data_type" => "float",
 				"required" => true,
 				"title" => Loc::getMessage("TASKS_TASK_SORTING_ENTITY_INDEX_FIELD"),
-			),
+			],
 
-			"USER_ID" => array(
+			"USER_ID" => [
 				"data_type" => "integer",
 				"default_value" => 0,
 				"title" => Loc::getMessage("TASKS_TASK_SORTING_ENTITY_USER_ID_FIELD"),
-			),
+			],
 
-			"GROUP_ID" => array(
+			"GROUP_ID" => [
 				"data_type" => "integer",
 				"default_value" => 0,
 				"title" => Loc::getMessage("TASKS_TASK_SORTING_ENTITY_GROUP_ID_FIELD"),
-			),
+			],
 
-			"PREV_TASK_ID" => array(
+			"PREV_TASK_ID" => [
 				"data_type" => "integer",
 				"default_value" => 0,
 				"title" => Loc::getMessage("TASKS_TASK_SORTING_ENTITY_PREV_TASK_ID_FIELD"),
-			),
+			],
 
-			"NEXT_TASK_ID" => array(
+			"NEXT_TASK_ID" => [
 				"data_type" => "integer",
 				"default_value" => 0,
 				"title" => Loc::getMessage("TASKS_TASK_SORTING_ENTITY_NEXT_TASK_ID_FIELD"),
-			),
-		);
+			],
+		];
 	}
 
 	/**
 	 * Adds rows to the table.
+	 *
 	 * @param array $items Items.
 	 * @return void
 	 */
-	public static function insertBatch(array $items)
+	public static function insertBatch(array $items): void
 	{
 		$tableName = static::getTableName();
+		Helper::insertBatch($tableName, $items);
+	}
 
-		\Bitrix\Tasks\Internals\DataBase\Helper::insertBatch($tableName, $items);
+	public static function insertIgnore(array $fields): void
+	{
+		$taskId = (int)$fields['TASK_ID'];
+		$sort = (double)$fields['SORT'];
+		$userId = (int)($fields['USER_ID'] ?? null);
+		$groupId = (int)($fields['GROUP_ID'] ?? null);
+		$prevTaskId = (int)$fields['PREV_TASK_ID'];
+		$nextTaskId = (int)$fields['NEXT_TASK_ID'];
+
+		$connection = Application::getConnection();
+		$query = $connection->getSqlHelper()->getInsertIgnore(
+			static::getTableName(),
+			'(TASK_ID, SORT, USER_ID, GROUP_ID, PREV_TASK_ID, NEXT_TASK_ID)',
+			"VALUES ({$taskId}, {$sort}, {$userId}, {$groupId}, {$prevTaskId}, {$nextTaskId})"
+		);
+
+		$connection->query($query);
 	}
 
 	/**
 	 * Deletes the task from the sorting tree
 	 *
 	 * @param $taskId
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\Db\SqlQueryException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
 	 */
 	public static function deleteByTaskId($taskId)
 	{
@@ -128,27 +155,30 @@ class SortingTable extends TaskDataManager
 			return;
 		}
 
-		$rows = self::getList(array(
-			"filter" => array(
-				"TASK_ID" => $taskId
-			)
-		));
+		$rows = self::getList([
+			"filter" => [
+				"TASK_ID" => $taskId,
+			],
+		]);
 
 		while ($row = $rows->fetch())
 		{
 			static::fixSiblings($row);
 		}
 
-		HttpApplication::getConnection()->query("delete from ".static::getTableName()." where TASK_ID = ".$taskId);
+		HttpApplication::getConnection()->query("delete from "
+			. static::getTableName()
+			. " where TASK_ID = "
+			. $taskId);
 	}
 
 	/**
 	 * The same as deleteByTaskId but without deletion itself
 	 *
 	 * @param $taskId
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
 	 */
 	public static function fixSiblingsEx($taskId)
 	{
@@ -160,8 +190,8 @@ class SortingTable extends TaskDataManager
 
 		$rows = self::getList([
 			"filter" => [
-				"TASK_ID" => $taskId
-			]
+				"TASK_ID" => $taskId,
+			],
 		]);
 
 		while ($row = $rows->fetch())
@@ -173,11 +203,11 @@ class SortingTable extends TaskDataManager
 	/**
 	 * Sets sorting for the task.
 	 *
-	 * @param integer $userId
-	 * @param integer $groupId
-	 * @param integer $sourceId
-	 * @param integer $targetId
-	 * @param boolean $before
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws TasksException
+	 * @throws ArgumentException
+	 * @throws SystemException
 	 */
 	public static function setSorting($userId, $groupId, $sourceId, $targetId, $before)
 	{
@@ -196,18 +226,25 @@ class SortingTable extends TaskDataManager
 		static::moveTaskToTarget($userId, $groupId, $sourceId, $targetTask, $before);
 	}
 
-	private static function setTargetSorting($userId, $groupId, $sourceId, $targetId)
+	/**
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws TasksException
+	 * @throws Exception
+	 */
+	private static function setTargetSorting(int $userId, int $groupId, int $sourceId, int $targetId)
 	{
 		$filterCtrl = CTaskFilterCtrl::getInstance($userId, $groupId > 0);
-		$filter = $filterCtrl->getFilterPresetConditionById(CTaskFilterCtrl::STD_PRESET_ALL_MY_TASKS);
+		$filter = $filterCtrl->getFilterPresetConditionById(CTaskFilterCtrlInterface::STD_PRESET_ALL_MY_TASKS);
 		$filter["CHECK_PERMISSIONS"] = "Y";
 		$filter["SORTING"] = "N";
 
-		$params = array(
+		$params = [
 			"USER_ID" => $userId,
 			"bIgnoreErrors" => true,
-			"nPageTop" => static::MAX_PAGE_TOP
-		);
+			"nPageTop" => static::MAX_PAGE_TOP,
+		];
 
 		if ($groupId > 0)
 		{
@@ -216,10 +253,10 @@ class SortingTable extends TaskDataManager
 		}
 
 		//try to avoid a recursion
-		$result = \CTasks::getList(
-			array(),
-			array_merge($filter, array("ID" => $targetId)),
-			array("ID", "SORTING"),
+		$result = CTasks::getList(
+			[],
+			array_merge($filter, ["ID" => $targetId]),
+			["ID", "SORTING"],
 			$params
 		);
 
@@ -228,26 +265,34 @@ class SortingTable extends TaskDataManager
 			return;
 		}
 
-		$order = array (
+		$order = [
 			"SORTING" => "ASC",
 			"STATUS_COMPLETE" => "ASC",
 			"DEADLINE" => "ASC,NULLS",
 			"ID" => "ASC",
-		);
+		];
 
-		$result = \CTasks::getList($order, $filter, array("ID", "SORTING"), $params);
+		$result = CTasks::getList($order, $filter, ["ID", "SORTING"], $params);
 		$lastSortedItem = static::getMaxSort($userId, $groupId);
 		$prevTaskSort = $lastSortedItem ? intval($lastSortedItem["SORT"]) : 0;
 		$prevTaskId = $lastSortedItem && $lastSortedItem["TASK_ID"] ? $lastSortedItem["TASK_ID"] : 0;
 
-		[$items, $targetFound] = static::getSortedItems($result, $userId, $groupId, $prevTaskSort, $prevTaskId, $sourceId, $targetId);
+		[$items, $targetFound] = static::getSortedItems($result, $userId, $groupId, $prevTaskSort, $prevTaskId,
+			$sourceId, $targetId);
 		static::insertBatch($items);
 
 		if (count($items) > 0)
 		{
 			if ($lastSortedItem)
 			{
-				static::update($lastSortedItem["ID"], array("NEXT_TASK_ID" => $items[0]["TASK_ID"]));
+				try
+				{
+					static::update($lastSortedItem["ID"], ["NEXT_TASK_ID" => $items[0]["TASK_ID"]]);
+				}
+				catch (Exception $exception)
+				{
+					LogFacade::logThrowable($exception);
+				}
 			}
 
 			if (!$targetFound)
@@ -257,50 +302,62 @@ class SortingTable extends TaskDataManager
 		}
 	}
 
-	private static function getTask($taskId, $userId, $groupId)
+	/**
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	private static function getTask($taskId, $userId, $groupId): ?array
 	{
 		if ($groupId)
 		{
-			return static::getRow(array(
-				"filter" => array(
+			return static::getRow([
+				"filter" => [
 					"=TASK_ID" => $taskId,
-					"=GROUP_ID" => $groupId
-				)
-			));
+					"=GROUP_ID" => $groupId,
+				],
+			]);
 		}
 		elseif ($userId)
 		{
-			return static::getRow(array(
-				"filter" => array(
+			return static::getRow([
+				"filter" => [
 					"=TASK_ID" => $taskId,
-					"=USER_ID" => $userId
-				)
-			));
+					"=USER_ID" => $userId,
+				],
+			]);
 		}
-
 
 		return null;
 	}
 
-	private static function moveTaskToTarget($userId, $groupId, $sourceId, $targetTask, $before)
+	/**
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws Exception
+	 */
+	private static function moveTaskToTarget($userId, $groupId, $sourceId, $targetTask, $before): bool
 	{
 		if (!$targetTask)
 		{
 			return false;
 		}
 
-		if (($before && $targetTask["PREV_TASK_ID"] == $sourceId) ||
-			(!$before && $targetTask["NEXT_TASK_ID"] == $sourceId))
+		if (
+			($before && $targetTask["PREV_TASK_ID"] == $sourceId)
+			|| (!$before && $targetTask["NEXT_TASK_ID"] == $sourceId)
+		)
 		{
 			return true;
 		}
 
+		$connection = Application::getConnection();
 		$prevTask = null;
-		$prevTaskId = 0;
 		$prevTaskSort = 0;
 
 		$nextTask = null;
-		$nextTaskId = 0;
 		$nextTaskSort = 0;
 		if ($before)
 		{
@@ -311,12 +368,12 @@ class SortingTable extends TaskDataManager
 				if (!$prevTask || $prevTask["SORT"] > $targetTask["SORT"])
 				{
 					//try to correct wrong prev_task_id
-					$filter = $groupId ? array("=GROUP_ID" => $groupId) : array("=USER_ID" => $userId);
+					$filter = $groupId ? ["=GROUP_ID" => $groupId] : ["=USER_ID" => $userId];
 					$filter["<SORT"] = $targetTask["SORT"];
-					$prevTask = static::getRow(array(
+					$prevTask = static::getRow([
 						"filter" => $filter,
-						"order" => array("SORT" => "DESC")
-					));
+						"order" => ["SORT" => "DESC"],
+					]);
 				}
 
 				$prevTaskId = $prevTask ? $prevTask["TASK_ID"] : 0;
@@ -336,12 +393,12 @@ class SortingTable extends TaskDataManager
 				if (!$nextTask || $nextTask["SORT"] < $targetTask["SORT"])
 				{
 					//try to correct wrong next_task_id
-					$filter = $groupId ? array("=GROUP_ID" => $groupId) : array("=USER_ID" => $userId);
+					$filter = $groupId ? ["=GROUP_ID" => $groupId] : ["=USER_ID" => $userId];
 					$filter[">SORT"] = $targetTask["SORT"];
-					$nextTask = static::getRow(array(
+					$nextTask = static::getRow([
 						"filter" => $filter,
-						"order" => array("SORT" => "ASC")
-					));
+						"order" => ["SORT" => "ASC"],
+					]);
 				}
 
 				$nextTaskId = $nextTask ? $nextTask["TASK_ID"] : 0;
@@ -353,25 +410,32 @@ class SortingTable extends TaskDataManager
 			$prevTaskSort = $targetTask["SORT"];
 		}
 
-		if ($nextTask !== null  && $prevTask !== null && ($nextTaskSort - $prevTaskSort) < static::MIN_SORT_DELTA)
+		if ($nextTask !== null && $prevTask !== null && ($nextTaskSort - $prevTaskSort) < static::MIN_SORT_DELTA)
 		{
-			$connection = Application::getConnection();
 			$filter = $groupId > 0 ? "GROUP_ID = {$groupId}" : "USER_ID = {$userId}";
 			$increment = static::SORT_INDEX_INCREMENT;
-			$connection->queryExecute(
-				"UPDATE b_tasks_sorting SET SORT = SORT + {$increment} WHERE SORT >= {$nextTaskSort} AND {$filter}"
-			);
+			$tableName = static::getTableName();
+			try
+			{
+				$connection->query(
+					"UPDATE {$tableName} SET SORT = SORT + {$increment} WHERE SORT >= {$nextTaskSort} AND {$filter}"
+				);
+			}
+			catch (SqlQueryException $exception)
+			{
+				LogFacade::logThrowable($exception);
+			}
+
 
 			$nextTask = static::getTask($nextTaskId, $userId, $groupId);
 			$nextTaskSort = $nextTask["SORT"];
 		}
 
-		$sourceTaskSort = 0;
 		if ($prevTaskId === 0)
 		{
 			$sourceTaskSort = $nextTaskSort - static::SORT_INDEX_INCREMENT;
 		}
-		else if ($nextTaskId === 0)
+		elseif ($nextTaskId === 0)
 		{
 			$sourceTaskSort = $prevTaskSort + static::SORT_INDEX_INCREMENT;
 		}
@@ -380,79 +444,111 @@ class SortingTable extends TaskDataManager
 			$sourceTaskSort = ($nextTaskSort + $prevTaskSort) / 2;
 		}
 
-//		$sourceTaskSort =
-//			$nextTaskSort > $prevTaskSort
-//				? ($nextTaskSort + $prevTaskSort) / 2
-//				: $prevTaskSort + static::SORT_INDEX_INCREMENT
-//		;
-
 		$sourceTask = static::getTask($sourceId, $userId, $groupId);
-		if ($sourceTask)
-		{
-			$result = static::update($sourceTask["ID"], array(
-				"PREV_TASK_ID" => $prevTaskId,
-				"NEXT_TASK_ID" => $nextTaskId,
-				"SORT" => $sourceTaskSort
-			));
 
-			static::fixSiblings($sourceTask);
-		}
-		else
+		try
 		{
-			$fields = array(
-				"TASK_ID" => $sourceId,
-				"PREV_TASK_ID" => $prevTaskId,
-				"NEXT_TASK_ID" => $nextTaskId,
-				"SORT" => $sourceTaskSort
-			);
-
-			if ($groupId)
+			if ($sourceTask)
 			{
-				$fields["GROUP_ID"] = $groupId;
+				static::update($sourceTask["ID"], [
+					"PREV_TASK_ID" => $prevTaskId,
+					"NEXT_TASK_ID" => $nextTaskId,
+					"SORT" => $sourceTaskSort,
+				]);
+
+				static::fixSiblings($sourceTask);
 			}
 			else
 			{
-				$fields["USER_ID"] = $userId;
+				$fields = [
+					"TASK_ID" => $sourceId,
+					"PREV_TASK_ID" => $prevTaskId,
+					"NEXT_TASK_ID" => $nextTaskId,
+					"SORT" => $sourceTaskSort,
+				];
+
+				if ($groupId)
+				{
+					$fields["GROUP_ID"] = $groupId;
+				}
+				else
+				{
+					$fields["USER_ID"] = $userId;
+				}
+
+				static::insertIgnore($fields);
 			}
 
-			$result = static::add($fields);
-		}
+			if ($prevTask)
+			{
+				static::update($prevTask["ID"], ["NEXT_TASK_ID" => $sourceId]);
+			}
 
-		if ($prevTask)
-		{
-			static::update($prevTask["ID"], array("NEXT_TASK_ID" => $sourceId));
+			if ($nextTask)
+			{
+				static::update($nextTask["ID"], ["PREV_TASK_ID" => $sourceId]);
+			}
 		}
-
-		if ($nextTask)
+		catch (Exception $exception)
 		{
-			static::update($nextTask["ID"], array("PREV_TASK_ID" => $sourceId));
+			LogFacade::logThrowable($exception);
 		}
 
 		return true;
 	}
 
-	private static function fixSiblings($sourceTask)
+	/**
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws Exception
+	 */
+	private static function fixSiblings(?array $sourceTask)
 	{
-		$oldPrevTaskId = $sourceTask["PREV_TASK_ID"];
-		$oldPrevTask = $oldPrevTaskId ? static::getTask($oldPrevTaskId, $sourceTask["USER_ID"], $sourceTask["GROUP_ID"]) : null;
+		$userId = (int)$sourceTask['USER_ID'];
+		$groupId = (int)$sourceTask['GROUP_ID'];
 
-		$oldNextTaskId = $sourceTask["NEXT_TASK_ID"];
-		$oldNextTask = $oldNextTaskId ? static::getTask($oldNextTaskId, $sourceTask["USER_ID"], $sourceTask["GROUP_ID"]) : null;
+		$oldPrevTaskId = $sourceTask['PREV_TASK_ID'];
+		$oldPrevTask =
+			$oldPrevTaskId
+				? static::getTask($oldPrevTaskId, $userId, $groupId)
+				: null;
 
-		if ($oldPrevTask)
+		$oldNextTaskId = $sourceTask['NEXT_TASK_ID'];
+		$oldNextTask =
+			$oldNextTaskId
+				? static::getTask($oldNextTaskId, $userId, $groupId)
+				: null;
+
+		try
 		{
-			static::update($oldPrevTask["ID"], array("NEXT_TASK_ID" => $oldNextTaskId));
+			if ($oldPrevTask)
+			{
+				static::update($oldPrevTask['ID'], ['NEXT_TASK_ID' => $oldNextTaskId]);
+			}
+
+			if ($oldNextTask)
+			{
+				static::update($oldNextTask['ID'], ['PREV_TASK_ID' => $oldPrevTaskId]);
+			}
 		}
-
-		if ($oldNextTask)
+		catch (Exception $exception)
 		{
-			static::update($oldNextTask["ID"], array("PREV_TASK_ID" => $oldPrevTaskId));
+			LogFacade::logThrowable($exception);
 		}
 	}
 
-	private static function getSortedItems(\CDBResult $result, $userId, $groupId, $prevTaskSort, $prevTaskId, $sourceId, $targetId)
+	private static function getSortedItems(
+		CDBResult $result,
+		int $userId,
+		int $groupId,
+		int $prevTaskSort,
+		int $prevTaskId,
+		int $sourceId,
+		int $targetId
+	): array
 	{
-		$items = array();
+		$items = [];
 		$itemIndex = -1;
 		$prevTaskIndex = null;
 		$targetFound = false;
@@ -470,12 +566,12 @@ class SortingTable extends TaskDataManager
 			}
 
 			$prevTaskSort += static::SORT_INDEX_INCREMENT;
-			$fields = array(
+			$fields = [
 				"TASK_ID" => $row["ID"],
 				"SORT" => $prevTaskSort,
 				"PREV_TASK_ID" => $prevTaskId,
-				"NEXT_TASK_ID" => 0
-			);
+				"NEXT_TASK_ID" => 0,
+			];
 
 			if ($groupId)
 			{
@@ -498,15 +594,19 @@ class SortingTable extends TaskDataManager
 			}
 		}
 
-		return array($items, $targetFound);
+		return [$items, $targetFound];
 	}
 
-	private static function getMaxSort($userId, $groupId)
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
+	private static function getMaxSort($userId, $groupId): ?array
 	{
-		$filter = $groupId ? array("=GROUP_ID" => $groupId) : array("=USER_ID" => $userId);
-		return static::getRow(array(
-			"filter" => $filter,
-			"order" => array("SORT" => "DESC")
-		));
+		return static::getRow([
+			'filter' => $groupId ? ['=GROUP_ID' => $groupId] : ['=USER_ID' => $userId],
+			'order' => ['SORT' => 'DESC'],
+		]);
 	}
 }

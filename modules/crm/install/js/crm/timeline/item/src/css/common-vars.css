@@ -4,7 +4,6 @@
 
 	--crm-timeline__card-color-background: #fff;
 	/*settings*/
-	--crm-timeline__card-border-radius:  var(--ui-border-radius-md, 2px);
 	--crm-timeline__transition-hover: .2s;
 	--crm-timeline__icon-size: 80px;
 	--crm-timeline__logo-background: var(--ui-color-palette-blue-20, rgba(47, 198, 246, .2));

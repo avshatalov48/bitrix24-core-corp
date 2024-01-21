@@ -83,7 +83,8 @@
 .crm-box-layout.crm-single-column .crm-block-cont-left{ padding:0 4px 0 4px;}
 table.field_crm { margin-bottom: 3px }
 table.field_crm td.field_crm_entity_type {	vertical-align: top; border-left: 1px solid #c7c7c7; padding-left: 11px;	padding-right: 7px;	text-align: right;	font-weight: var(--ui-font-weight-bold);	background: none; padding-bottom: 2px;	word-break: initial;}
-table.field_crm td.field_crm_entity {	background: none; padding-bottom: 2px}
+table.field_crm td.field_crm_entity {background: none; padding-bottom: 2px; display:flex; flex-wrap: wrap; margin-left: -3px;}
+table.field_crm td.field_crm_entity .field-item{margin-bottom: 0; margin-left: 3px;}
 .crm-button-open a { border-bottom: 1px dashed #0069C4; outline: medium none; text-decoration: none;}
 .crm-button-open a:hover { border-bottom: 1px dashed #E00000;}
 .crm-element-item-delete  { background: url(/bitrix/js/main/core/images/controls-sprite.png) no-repeat scroll -10px -129px transparent; cursor: pointer; display: inline-block; height: 15px; margin: 0 8px 0 3px; vertical-align: middle; width: 13px; opacity: .3}

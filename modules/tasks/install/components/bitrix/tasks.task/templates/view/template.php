@@ -2,6 +2,8 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI;
+use Bitrix\Tasks\Helper\RestrictionUrl;
+use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Util;
@@ -18,13 +20,24 @@ UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans', 'tasks.comment-acti
 
 $templateData = $arResult["TEMPLATE_DATA"];
 
+/** intranet-settings-support */
+if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
+{
+	$APPLICATION->IncludeComponent("bitrix:tasks.error", "limit", [
+		'LIMIT_CODE' => RestrictionUrl::TASK_LIMIT_OFF_SLIDER_URL,
+		'SOURCE' => 'task',
+	]);
+
+	return;
+}
+
 if (isset($templateData["ERROR"]))
 {
 	$APPLICATION->IncludeComponent("bitrix:tasks.error", "", []);
 	return;
 }
 
-if ($arResult["LIKE_TEMPLATE"] == 'like_react')
+if ($arResult["LIKE_TEMPLATE"] === 'like_react')
 {
 	UI\Extension::load("main.rating");
 }
@@ -34,7 +47,7 @@ $can = $arResult["CAN"]["TASK"]["ACTION"] ?? [];
 $userFields = $arResult["AUX_DATA"]["USER_FIELDS"] ?? [];
 $diskUfCode = \Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode();
 $mailUfCode = \Bitrix\Tasks\Integration\Mail\UserField::getMainSysUFCode();
-$isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
+$isBitrix24Template = (SITE_TEMPLATE_ID === "bitrix24");
 $taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];
 $taskRecurrentRestrict = $arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'];
 
@@ -528,7 +541,7 @@ if (
 
 	<?php
 		$hasRestPlacement = false;
-		// получить список встроенных приложений
+		// get list of built-in applications
 		if(\Bitrix\Main\Loader::includeModule('rest'))
 		{
 			$restPlacementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList(\CTaskRestService::PLACEMENT_TASK_VIEW_TAB);
@@ -622,7 +635,7 @@ if (
 			</div>
 
 			<div class="task-switcher-block task-comments-block task-switcher-block-selected" id="task-comments-block"><?
-				if (intval($taskData["FORUM_ID"]))
+				if ((int)$taskData["FORUM_ID"])
 				{
 					$APPLICATION->IncludeComponent(
 						"bitrix:forum.comments",
@@ -667,23 +680,28 @@ if (
 							],
 							"USER_FIELDS_SETTINGS" =>
 								$arParams["PUBLIC_MODE"]
-								? array(
-									"UF_FORUM_MESSAGE_DOC" => array(
+								? [
+									"UF_FORUM_MESSAGE_DOC" => [
 										"DISABLE_CREATING_FILE_BY_CLOUD" => true,
 										"DISABLE_LOCAL_EDIT" => true
-									)
-								)
-								: array(),
+									]
+								]
+								: [],
 							'LHE' => [
 								'copilotParams' => [
 									'moduleId' => 'tasks',
 									'contextId' => 'comments_' . $taskData['ID'],
 									'category' => 'tasks_comments',
 								],
-							]
+								'isCopilotImageEnabledBySettings' => \Bitrix\Tasks\Integration\AI\Settings::isImageCommentAvailable(),
+								'isCopilotTextEnabledBySettings' => \Bitrix\Tasks\Integration\AI\Settings::isTextCommentAvailable(),
+							],
+							'MAIN_POST_FORM_BUTTONS' => [
+								'Copilot',
+							],
 						),
-						($component->__parent ? $component->__parent : $component),
-						array("HIDE_ICONS" => "Y")
+						($component->__parent ?: $component),
+						["HIDE_ICONS" => "Y"]
 					);
 				}
 				?>
@@ -693,7 +711,7 @@ if (
 				$APPLICATION->IncludeComponent(
 					"bitrix:tasks.task.detail.parts",
 					"flat",
-					array(
+					[
 						"MODE" => "VIEW TASK",
 						"BLOCKS" => array("log"),
 						"PATH_TO_TASKS_TASK" => $arParams["PATH_TO_TASKS_TASK"],
@@ -704,9 +722,9 @@ if (
 						"TEMPLATE_DATA" => array(
 							"DATA" => $arResult["DATA"],
 						)
-					),
+					],
 					false,
-					array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
+					["HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y"]
 				);?>
 			</div>
 
@@ -714,22 +732,22 @@ if (
 				$APPLICATION->IncludeComponent(
 					"bitrix:tasks.task.detail.parts",
 					"flat",
-					array(
+					[
 						"MODE" => "VIEW TASK",
-						"BLOCKS" => array("time"),
+						"BLOCKS" => ["time"],
 						"PATH_TO_TASKS_TASK" => $arParams["PATH_TO_TASKS_TASK"],
 						"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER_PROFILE"],
 						"PATH_TO_GROUP" => $arParams["PATH_TO_GROUP"],
 						"NAME_TEMPLATE" => $templateData["NAME_TEMPLATE"],
 						"TASK_ID" => $taskData["ID"],
 						"PUBLIC_MODE" => $arParams["PUBLIC_MODE"],
-						"TEMPLATE_DATA" => array(
+						"TEMPLATE_DATA" => [
 							"DATA" => $arResult["DATA"],
 							"CAN" => $arResult["CAN"],
-						)
-					),
+						],
+					],
 					false,
-					array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
+					["HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y"]
 				);?>
 			</div>
 
@@ -839,6 +857,7 @@ $APPLICATION->IncludeComponent(
 );
 
 $this->EndViewTarget();
+$isTemplatesAvailable = (new Settings())->isToolAvailable(Settings::TOOLS['templates']);
 ?>
 
 <script>
@@ -921,7 +940,8 @@ $this->EndViewTarget();
 				minutes: <?= (int)$arResult['WORK_TIME']['END']['M'] ?>
 			}
 		},
-		workSettings: <?= CUtil::PhpToJSObject($arResult['WORK_SETTINGS']) ?>
+		workSettings: <?= CUtil::PhpToJSObject($arResult['WORK_SETTINGS']) ?>,
+		isTemplatesAvailable: <?=CUtil::PhpToJSObject($isTemplatesAvailable)?>,
 	});
 
 	if (window.B24) {

@@ -11,6 +11,10 @@ namespace Bitrix\Tasks\Access\Rule;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Main\Access\AccessibleItem;
 
+/**
+ * @deprecated
+ */
+
 class TaskResultEditRule extends \Bitrix\Main\Access\Rule\AbstractRule
 {
 	public function execute(AccessibleItem $task = null, $params = null): bool

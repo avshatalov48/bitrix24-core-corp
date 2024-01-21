@@ -304,6 +304,12 @@
 	mask-image: url('../../../images/timeline-card-logos/calendar/crm-timeline__calendar-share.svg');
 }
 
+.crm-timeline__card-logo_icon.--ai-copilot > i {
+	mask-image: none;
+	background-color: #eee6fa;;
+	background-image: url('../../../images/timeline-card-logos/ai/crm-timeline__ai-copilot.svg');
+}
+
 .crm-timeline__card-logo_add-icon {
 	--add-icon-size: var(--ui-size-3xl, 34px);
 	display: block;
@@ -341,6 +347,10 @@
 	background-color: var(--ui-color-primary-alt, #9dcf00);
 }
 
+.crm-timeline__card-logo_add-icon.--type-purple > i {
+	background-color: var(--ui-color-accent-purple, #a77bde);
+}
+
 .crm-timeline__card-logo_add-icon.--icon-alert > i {
 	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__alert.svg');
 }
@@ -374,6 +384,18 @@
 .crm-timeline__card-logo_add-icon.--icon-sign > i {
 	background-color: var(--ui-color-palette-blue-60, #1aa9d6);
 	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__sign.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-a-letter > i {
+	mask-image: url('../../../images/timeline-card-logos/ai/additions/crm-timeline__a-letter.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-shape > i {
+	mask-image: url('../../../images/timeline-card-logos/ai/additions/crm-timeline__shape.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-circle-check > i {
+	mask-image: url('../../../images/timeline-card-logos/ai/additions/crm-timeline__circle-check.svg');
 }
 
 .crm-timeline__card-logo_add-icon.--type-failure > i {

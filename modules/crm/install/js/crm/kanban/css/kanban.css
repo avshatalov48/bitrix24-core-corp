@@ -229,9 +229,8 @@
 	padding: 0 4px !important;
 }
 
-.crm-kanban-item-activity-all-counters:after,
-.crm-kanban-item-activity-all-counters:before{
-	content: '';
+.crm-kanban-item-activity-all-counters .item-activity-counter__before,
+.crm-kanban-item-activity-all-counters .item-activity-counter__after{
 	display: block;
 	position: absolute;
 	transform: translateZ(-1px);
@@ -240,13 +239,13 @@
 	border-radius: 30px;
 }
 
-.crm-kanban-item-activity-all-counters:after{
+.crm-kanban-item-activity-all-counters .item-activity-counter__after{
 	background: #fff;
 	left: 2px;
 	top: 0;
 }
 
-.crm-kanban-item-activity-all-counters:before{
+.crm-kanban-item-activity-all-counters .item-activity-counter__before{
 	background: #9dcf00;
 	left: 5px;
 }
@@ -1339,23 +1338,6 @@ a.crm-kanban-sidepanel:hover {
 
 .crm-kanban-item-fields-item-value.--normal-weight{
 	font-weight: var(--ui-font-weight-normal);
-}
-
-.bx-firefox .crm-kanban-item-fields-item-value {
-	max-height: 51px;
-	position: relative;
-}
-
-.bx-firefox .crm-kanban-item-ficrm-entity-card-widget-editelds-item-value:after {
-	content: "\02026";
-	position: absolute;
-	float: right;
-	top: 34px;
-	right: 0;
-	width: 30px;
-	text-align: right;
-	background-size: 100% 100%;
-	background: linear-gradient(to right, rgba(255, 255, 255, 0), white 50%, white);
 }
 
 .crm-kanban-quick-form .crm-entity-widget-content-block-field-half-width { width: 100%; }

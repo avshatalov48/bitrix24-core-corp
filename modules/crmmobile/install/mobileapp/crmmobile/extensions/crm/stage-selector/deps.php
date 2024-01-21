@@ -2,21 +2,17 @@
 
 return [
 	'extensions' => [
-		'require-lazy',
-		'utils',
-		'utils/color',
-		'utils/function',
-		'utils/object',
-		'utils/random',
-		'haptics',
-		'notify',
-		'navigation-loader',
-		'layout/ui/context-menu',
+		'utils/prop',
+		'layout/ui/fields/stage-selector',
 
-		'crm:loc',
-		'crm:type',
-		'crm:assets/stage',
-		'crm:storage/category',
+		'crm/loc',
+		'crm:type/id',
 		'crm:entity-actions/check-change-stage',
+
+		'statemanager/redux/connect',
+
+		'crm:statemanager/redux/slices/kanban-settings',
+		'crm:statemanager/redux/slices/stage-settings',
+		'crm:stage-selector/item',
 	],
 ];

@@ -51,7 +51,9 @@ $this->SetViewTarget('below_pagetitle');
 <div class="crm-type-head-control" data-role="preset-selector-container">
 	<div class="crm-type-head-control-logo"></div>
 	<div class="crm-type-head-control-content">
-		<div class="crm-type-head-control-caption"><?=Loc::getMessage('CRM_TYPE_DETAIL_TITLE_PRESET')?></div>
+		<div class="crm-type-head-control-caption">
+			<?= htmlspecialcharsbx(Loc::getMessage('CRM_TYPE_DETAIL_TITLE_PRESET')) ?>
+		</div>
 		<a
 			data-role="crm-type-preset-selector"
 			class="crm-type-head-control-link"
@@ -63,22 +65,34 @@ $this->SetViewTarget('below_pagetitle');
 $this->EndViewTarget();
 $component->addToolbar($this);
 $type = $component->getType();
+$isNew = $type->getId() <= 0;
+
 $menuItems = [];
+if ($arResult['isCustomSectionsAvailable'])
+{
+	$menuItems[] = [
+		'NAME' => Loc::getMessage('CRM_TYPE_DETAIL_TAB_CUSTOM_SECTION_MSGVER_1'),
+		'ATTRIBUTES' => [
+			'onclick' => "BX.Crm.Component.TypeDetail.handleLeftMenuClick('custom-section');",
+			'data-role' => 'tab-custom-section',
+		],
+	];
+}
 $menuItems[] = [
 	'NAME' => Loc::getMessage('CRM_TYPE_DETAIL_TAB_COMMON'),
 	'ATTRIBUTES' => [
 		'onclick' => "BX.Crm.Component.TypeDetail.handleLeftMenuClick('common');",
 		'data-role' => 'tab-common',
 	],
-	'ACTIVE' => ($type->getId() > 0),
+	'ACTIVE' => !$isNew,
 ];
 $menuItems[] = [
-	'NAME' => Loc::getMessage('CRM_TYPE_DETAIL_TAB_FIELDS'),
+	'NAME' => Loc::getMessage('CRM_TYPE_DETAIL_TAB_FIELDS_MSGVER_1'),
 	'ATTRIBUTES' => [
 		'onclick' => "BX.Crm.Component.TypeDetail.handleLeftMenuClick('fields');",
 		'data-role' => 'tab-fields',
 	],
-	'ACTIVE' => ($type->getId() > 0),
+	'ACTIVE' => !$isNew,
 ];
 $menuItems[] = [
 	'NAME' => Loc::getMessage('CRM_TYPE_DETAIL_TAB_RELATIONS'),
@@ -102,22 +116,11 @@ $menuItems[] = [
 //	],
 //];
 
-if ($arResult['isCustomSectionsAvailable'])
-{
-	$menuItems[] = [
-		'NAME' => Loc::getMessage('CRM_TYPE_DETAIL_TAB_CUSTOM_SECTION'),
-		'ATTRIBUTES' => [
-			'onclick' => "BX.Crm.Component.TypeDetail.handleLeftMenuClick('custom-section');",
-			'data-role' => 'tab-custom-section',
-		],
-	];
-}
-
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrappermenu',
 	'',
 	[
-		'TITLE' => Loc::getMessage('CRM_COMMON_SETTINGS'),
+		'TITLE' => Loc::getMessage('CRM_TYPE_DETAIL_TITLE'),
 		'ITEMS' => $menuItems,
 	],
 	$this->getComponent()
@@ -197,7 +200,7 @@ $renderCardMessage = static function(?string $title, ?string $description, strin
 			</div>
 			<div 
 				class="crm-type-ui-card-message-close-button" 
-				title="' . Loc::getMessage('CRM_TYPE_DETAIL_HIDE_DESCRIPTION') . '"
+				title="' . htmlspecialcharsbx(Loc::getMessage('CRM_TYPE_DETAIL_HIDE_DESCRIPTION')) . '"
 				onclick="BX.Crm.Component.TypeDetail.handleHideDescriptionClick(this);"
 			></div>
 		</div>
@@ -221,11 +224,13 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 }
 ?>
 <div class="crm-type">
-	<div class="ui-alert ui-alert-danger" style="display: none;">
-		<span class="ui-alert-message" id="crm-type-errors"></span>
-		<span class="ui-alert-close-btn" onclick="this.parentNode.style.display = 'none';"></span>
+	<div class="crm-type-error-container">
+		<div class="ui-alert ui-alert-danger" style="display: none;">
+			<span class="ui-alert-message" id="crm-type-errors"></span>
+			<span class="ui-alert-close-btn" onclick="this.parentNode.style.display = 'none';"></span>
+		</div>
 	</div>
-	<div class="crm-type-tab<?php ($type->getId() <= 0 ? ' crm-type-tab-current' : '')?>" data-tab="presets">
+	<div class="crm-type-tab<?= ($isNew ? ' crm-type-tab-current' : '')?>" data-tab="presets">
 		<div class="crm-type-presets">
 			<?php foreach ($arResult['presetCategories'] as $code => $category):?>
 				<div class="crm-type-presets-category">
@@ -268,10 +273,10 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 	</div>
 	<form id="crm-type-form" class="ui-form">
 		<div class="crm-type-tab" data-tab="common">
-			<div class="ui-title-3"><?= Loc::getMessage('CRM_TYPE_DETAIL_TAB_COMMON') ?></div>
+			<div class="ui-title-3"><?= htmlspecialcharsbx(Loc::getMessage('CRM_TYPE_DETAIL_TAB_COMMON')) ?></div>
 			<div class="ui-form-row crm-type-form-label-xs">
 				<div class="ui-form-label">
-					<div class="ui-ctl-label-text"><?= Loc::getMessage('CRM_TYPE_DETAIL_FIELD_TITLE') ?></div>
+					<div class="ui-ctl-label-text"><?= htmlspecialcharsbx(Loc::getMessage('CRM_TYPE_DETAIL_FIELD_TITLE')) ?></div>
 				</div>
 				<div class="ui-form-content">
 					<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
@@ -279,7 +284,7 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 							type="text"
 							name="title"
 							class="ui-ctl-element"
-							placeholder="<?= Loc::getMessage('CRM_COMMON_TITLE') ?>"
+							placeholder="<?= htmlspecialcharsbx(Loc::getMessage('CRM_COMMON_TITLE')) ?>"
 							value="<?= htmlspecialcharsbx($type->getTitle()) ?>"
 						/>
 					</div>
@@ -353,7 +358,7 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 			?>
 		</div>
 		<div class="crm-type-tab" data-tab="fields">
-			<div class="ui-title-3"><?= Loc::getMessage('CRM_TYPE_DETAIL_FIELDS_SECTION_TITLE') ?></div>
+			<div class="ui-title-3"><?= htmlspecialcharsbx(Loc::getMessage('CRM_TYPE_DETAIL_FIELDS_SECTION_TITLE')) ?></div>
 			<div class="crm-type-field-button-layout">
 				<?php
 				echo $renderFieldSelector(
@@ -388,7 +393,9 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 				);
 				?>
 			</div>
-			<div class="ui-title-3"><?= Loc::getMessage('CRM_TYPE_DETAIL_ADDITIONAL_SECTION_TITLE') ?></div>
+			<div class="ui-title-3">
+				<?= htmlspecialcharsbx(Loc::getMessage('CRM_TYPE_DETAIL_ADDITIONAL_SECTION_TITLE')) ?>
+			</div>
 			<?php
 			/*
 			echo $renderCheckbox(
@@ -425,25 +432,29 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 			?>
 		</div>
 		<div class="crm-type-tab" data-tab="relation">
-			<div class="ui-title-3"><?= Loc::getMessage('CRM_TYPE_DETAIL_TAB_RELATIONS') ?></div>
+			<div class="ui-title-3">
+				<?= htmlspecialcharsbx(Loc::getMessage('CRM_TYPE_DETAIL_TAB_RELATIONS')) ?>
+			</div>
 			<?php
 			echo $renderCardMessage(
 				Loc::getMessage('CRM_TYPE_DETAIL_RELATION_CARD_TITLE'),
-				Loc::getMessage('CRM_TYPE_DETAIL_RELATION_CARD_DESCRIPTION_MSGVER_1')
+				Loc::getMessage('CRM_TYPE_DETAIL_RELATION_CARD_DESCRIPTION_MSGVER_2')
 			);
 			?>
 			<div class="crm-type-relation-switch-btn">
 				<span data-switcher="<?= htmlspecialcharsbx(Json::encode([
 					'id' => 'crm-type-relation-parent-switcher',
 				])) ?>" class="ui-switcher"></span>
-				<?= Loc::getMessage('CRM_TYPE_DETAIL_RELATION_PARENT') ?>
+				<?= htmlspecialcharsbx(Loc::getMessage('CRM_TYPE_DETAIL_RELATION_PARENT')) ?>
 			</div>
 			<div
 				data-role="crm-type-relation-parent-items"
 				class="crm-type-relation-items"
 			>
 				<div class="crm-type-relation-items-section">
-					<div class="crm-type-relation-subtitle"><?= Loc::getMessage('CRM_TYPE_DETAIL_RELATION_PARENT_ITEMS') ?></div>
+					<div class="crm-type-relation-subtitle">
+						<?= htmlspecialcharsbx(Loc::getMessage('CRM_TYPE_DETAIL_RELATION_PARENT_ITEMS')) ?>
+					</div>
 					<div data-role="crm-type-relation-parent-items-selector"></div>
 					<div data-role="crm-type-relation-parent-items-tabs">
 						<?= $renderCheckbox(
@@ -468,7 +479,9 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 					class="crm-type-relation-items"
 			>
 				<div class="crm-type-relation-items-section">
-					<div class="crm-type-relation-subtitle"><?= Loc::getMessage('CRM_TYPE_DETAIL_RELATION_CHILD_ITEMS') ?></div>
+					<div class="crm-type-relation-subtitle">
+						<?= htmlspecialcharsbx(Loc::getMessage('CRM_TYPE_DETAIL_RELATION_CHILD_ITEMS_MSGVER_1')) ?>
+					</div>
 					<div data-role="crm-type-relation-child-items-selector"></div>
 					<div data-role="crm-type-relation-child-items-tabs">
 						<?= $renderCheckbox(
@@ -484,7 +497,9 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 			</div>
 		</div>
 		<div class="crm-type-tab" data-tab="user-fields">
-			<div class="ui-title-3"><?= Loc::getMessage('CRM_TYPE_DETAIL_TAB_USER_FIELDS_TITLE') ?></div>
+			<div class="ui-title-3">
+				<?= htmlspecialcharsbx(Loc::getMessage('CRM_TYPE_DETAIL_TAB_USER_FIELDS_TITLE')) ?>
+			</div>
 			<?php
 			echo $renderCardMessage(
 				Loc::getMessage('CRM_TYPE_DETAIL_TAB_USER_FIELDS_CARD_TITLE'),
@@ -511,23 +526,34 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 			}?>
 		</div>
 		<?php if ($arResult['isCustomSectionsAvailable']): ?>
+			<?php $customSectionSwitcherID = 'crm-type-custom-section-switcher'; ?>
 			<div class="crm-type-tab" data-tab="custom-section">
-				<div class="ui-title-3"><?= Loc::getMessage('CRM_TYPE_DETAIL_TAB_CUSTOM_SECTION') ?></div>
+				<div class="ui-title-3">
+					<?= htmlspecialcharsbx(Loc::getMessage('CRM_TYPE_DETAIL_TAB_CUSTOM_SECTION_MSGVER_1')) ?>
+				</div>
 				<?php echo $renderCardMessage(
 					Loc::getMessage('CRM_TYPE_DETAIL_TAB_CUSTOM_SECTION_CARD_TITLE'),
-					Loc::getMessage('CRM_TYPE_DETAIL_TAB_CUSTOM_SECTION_CARD_DESCRIPTION')
+					Loc::getMessage('CRM_TYPE_DETAIL_TAB_CUSTOM_SECTION_CARD_DESCRIPTION_MSGVER_1')
 				);?>
 				<div class="crm-type-relation-switch-btn">
-				<span data-switcher="<?= htmlspecialcharsbx(Json::encode([
-					'id' => 'crm-type-custom-section-switcher',
-				])) ?>" class="ui-switcher"></span>
-					<?= Loc::getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_SWITCHER') ?>
+					<span
+						data-switcher="<?= htmlspecialcharsbx(Json::encode([
+							'id' => $customSectionSwitcherID,
+							'checked' => $isNew && $arResult['isExternal'],
+						])) ?>"
+						class="ui-switcher"
+						id = '<?= $customSectionSwitcherID ?>'
+					></span>
+					<?= htmlspecialcharsbx(Loc::getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_SWITCHER_MSGVER_1')) ?>
+					<?php if (!$arResult['isExternal'] && $isNew): ?>
+						<span data-hint="<?= htmlspecialcharsbx(Loc::getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_HINT_ABOUT_CUSTOM_SECTIONS_IN_CRM')) ?>"></span>
+					<?php endif; ?>
 				</div>
 				<div
 					data-role="crm-type-custom-section-container"
 					class="crm-type-custom-section-container"
 				>
-					<div class="crm-type-relation-subtitle"><?= Loc::getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_LABEL') ?></div>
+					<div class="crm-type-relation-subtitle"><?= htmlspecialcharsbx(Loc::getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_LABEL_MSGVER_1')) ?></div>
 					<div data-role="crm-type-custom-section-selector"></div>
 				</div>
 			</div>
@@ -557,7 +583,7 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 			],
 			'cancel' => $arResult['listUrl'],
 		];
-		if($type->getId() > 0)
+		if(!$isNew)
 		{
 			$buttons[] = [
 				'TYPE' => 'remove',
@@ -597,10 +623,23 @@ BX.ready(function()
 				$arResult['presets']
 		)) ?>,
 		relations: <?= CUtil::PhpToJSObject($arResult['relations']) ?>,
-		isRestricted: <?=$arResult['isRestricted'] ? 'true' : 'false'?>
+		isRestricted: <?=$arResult['isRestricted'] ? 'true' : 'false'?>,
+		isExternal: <?= $arResult['isExternal'] ? 'true' : 'false' ?>
 	});
 	component.init();
 	BX.UI.Hint.init(form);
 	BX.UI.Switcher.initByClassName();
+
+	<?php if (isset($customSectionSwitcherID) && $isNew) :?>
+		const customSectionSwitcher = BX.UI.Switcher.getById('<?= $customSectionSwitcherID ?>');
+		const customSectionSwitcherNode = document.getElementById('<?= $customSectionSwitcherID ?>');
+		if (customSectionSwitcherNode)
+		{
+			customSectionSwitcher.init({
+				node: customSectionSwitcherNode,
+				disabled: true,
+			});
+		}
+	<?php endif; ?>
 });
 </script>

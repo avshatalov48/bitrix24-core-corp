@@ -5,9 +5,10 @@
 jn.define('im/messenger/model/messages/reactions', (require, exports, module) => {
 	const { Type } = require('type');
 	const { ReactionType } = require('im/messenger/const');
-	const { Logger } = require('im/messenger/lib/logger');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { clone } = require('utils/object');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('model--messages-reactions');
 
 	/** @type{ReactionsModelState} */
 	const reactionState = {
@@ -121,7 +122,7 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 			 * @param {ReactionsModelRemoveReactionPayload} payload
 			 */
 			removeReaction: (store, payload) => {
-				const { messageId, user, reaction } = payload;
+				const { messageId, userId, reaction } = payload;
 
 				const message = store.rootGetters['messagesModel/getById'](messageId);
 				if (!message)
@@ -132,13 +133,13 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 				/** @type {ReactionsModelState} */
 				const result = { ...store.state.collection[messageId] };
 
-				if (MessengerParams.getUserId().toString() === user.id.toString())
+				if (MessengerParams.getUserId().toString() === userId.toString())
 				{
 					result.ownReactions.delete(reaction);
 				}
 
 				const newUsers = (result.reactionUsers.get(reaction) ?? [])
-					.filter((removingUser) => removingUser.id.toString() !== user.id.toString())
+					.filter((removingUserId) => removingUserId.toString() !== userId.toString())
 				;
 				result.reactionUsers.set(reaction, newUsers);
 
@@ -165,7 +166,7 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 			 * @param {ReactionsModelState[]} payload.data
 			 */
 			store: (state, payload) => {
-				Logger.warn('reactionsModel: store mutation', payload);
+				logger.log('reactionsModel: store mutation', payload);
 
 				const {
 					reactionList,
@@ -182,7 +183,7 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 			 * @param {ReactionsModelState[]} payload.data
 			 */
 			set: (state, payload) => {
-				Logger.warn('reactionsModel: set mutation', payload);
+				logger.log('reactionsModel: set mutation', payload);
 
 				const {
 					reactionList,
@@ -217,7 +218,7 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 			 * @param {ReactionsModelState} payload.data.reaction
 			 */
 			add: (state, payload) => {
-				Logger.warn('reactionsModel: add mutation', payload);
+				logger.log('reactionsModel: add mutation', payload);
 
 				const {
 					messageId,
@@ -232,7 +233,7 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 			 * @param {ReactionsModelState} payload.data.reaction
 			 */
 			updateWithId: (state, payload) => {
-				Logger.warn('reactionsModel: updateWithId mutation', payload);
+				logger.log('reactionsModel: updateWithId mutation', payload);
 
 				const {
 					messageId,
@@ -262,6 +263,11 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 				result.ownReactions = new Set(reactionPayload.ownReactions);
 			}
 
+			if (reactionPayload.reactionUsers instanceof Map)
+			{
+				reactionPayload.reactionUsers = Object.fromEntries(reactionPayload.reactionUsers);
+			}
+
 			Object.entries(reactionPayload.reactionUsers).forEach(([reactionType, users]) => {
 				const reactionUsers = users.map((userId) => {
 
@@ -274,15 +280,7 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 						result.ownReactions.add(reactionType);
 					}
 
-					const foundUser = payload.usersShort.find((user) => {
-						return user.id.toString() === userId.toString();
-					});
-
-					return {
-						id: userId,
-						name: foundUser.name,
-						avatar: encodeURI(foundUser.avatar),
-					};
+					return userId;
 				});
 
 				result.reactionUsers.set(reactionType, reactionUsers);
@@ -303,7 +301,7 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 		result.messageId = payload.messageId;
 		result.ownReactions.add(payload.reaction);
 		result.reactionCounters[payload.reaction] = 1;
-		result.reactionUsers.set(payload.reaction, [payload.user]);
+		result.reactionUsers.set(payload.reaction, [payload.userId]);
 
 		return result;
 	}
@@ -316,9 +314,9 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 	 */
 	function prepareUpdatePayload(payload, elementState)
 	{
-		const { reaction, user } = payload;
+		const { reaction, userId } = payload;
 		const result = clone(elementState);
-		if (user.id.toString() === MessengerParams.getUserId().toString())
+		if (userId.toString() === MessengerParams.getUserId().toString())
 		{
 			removeAllCurrentUserReactions(result);
 			result.ownReactions.add(reaction);
@@ -339,7 +337,7 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 			{
 				result.reactionUsers.set(reaction, []);
 			}
-			result.reactionUsers.get(reaction).push(user);
+			result.reactionUsers.get(reaction).push(userId);
 		}
 
 		result.reactionCounters[reaction]++;
@@ -360,7 +358,7 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 			}
 
 			const newUsers = reactions.reactionUsers.get(reaction)
-				.filter((user) => user.id.toString() !== MessengerParams.getUserId().toString())
+				.filter((userId) => userId.toString() !== MessengerParams.getUserId().toString())
 			;
 
 			reactions.reactionUsers.set(reaction, newUsers);

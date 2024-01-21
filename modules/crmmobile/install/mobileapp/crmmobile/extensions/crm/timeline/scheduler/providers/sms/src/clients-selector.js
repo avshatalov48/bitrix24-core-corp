@@ -4,6 +4,7 @@
 jn.define('crm/timeline/scheduler/providers/sms/clients-selector', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @class ClientsSelector
@@ -92,7 +93,7 @@ jn.define('crm/timeline/scheduler/providers/sms/clients-selector', (require, exp
 				width,
 				height,
 				borderRadius: height / 2,
-				backgroundColor: '#DFE0E3',
+				backgroundColor: AppTheme.colors.base6,
 			};
 
 			return View(
@@ -157,7 +158,7 @@ jn.define('crm/timeline/scheduler/providers/sms/clients-selector', (require, exp
 					},
 					BBCodeText({
 						style: styles.addPhone,
-						value: `[COLOR="#C48300"][URL="#"]${Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_SMS_ADD_PHONE_TO_CLIENT')}[/URL][/COLOR]`,
+						value: `[COLOR=${AppTheme.colors.accentMainWarning}][URL="#"]${Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_SMS_ADD_PHONE_TO_CLIENT')}[/URL][/COLOR]`,
 						onLinkClick: this.props.onAddPhone,
 						linksUnderline: false,
 					}),
@@ -182,13 +183,13 @@ jn.define('crm/timeline/scheduler/providers/sms/clients-selector', (require, exp
 	}
 
 	const icons = {
-		chevron: '<svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.3065 0.753906L5.66572 3.39469L5.00042 4.04969L4.34773 3.39469L1.70695 0.753906L0.775096 1.68576L5.00669 5.91735L9.23828 1.68576L8.3065 0.753906Z" fill="#2066B0"/></svg>',
+		chevron: `<svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.3065 0.753906L5.66572 3.39469L5.00042 4.04969L4.34773 3.39469L1.70695 0.753906L0.775096 1.68576L5.00669 5.91735L9.23828 1.68576L8.3065 0.753906Z" fill="${AppTheme.colors.accentMainLinks}"/></svg>`,
 	};
 
 	const styles = {
 		label: {
 			fontSize: 14,
-			color: '#828B95',
+			color: AppTheme.colors.base3,
 			marginBottom: 4,
 		},
 		client: {
@@ -198,7 +199,7 @@ jn.define('crm/timeline/scheduler/providers/sms/clients-selector', (require, exp
 		},
 		data: {
 			fontSize: 16,
-			color: '#0065A3',
+			color: AppTheme.colors.accentMainLinks,
 		},
 		clientWithEmptyPhone: {
 			flexDirection: 'row',
@@ -219,27 +220,28 @@ jn.define('crm/timeline/scheduler/providers/sms/clients-selector', (require, exp
 			};
 		},
 		empty: {
-			color: '#BDC1C6',
+			color: AppTheme.colors.base5,
 			fontSize: 16,
 			marginLeft: 2,
 		},
 		emptyPhoneData: {
 			fontSize: 16,
-			color: '#0065A3',
+			color: AppTheme.colors.accentMainLinks,
 			marginRight: 10,
 		},
 		addPhoneContainer: {
 			borderBottomWidth: 1,
-			borderBottomColor: '#C48300',
+			borderBottomColor: AppTheme.colors.accentMainWarning,
 			borderStyle: 'dash',
 			borderDashSegmentLength: 3,
 			borderDashGapLength: 3,
 		},
 		addPhone: {
 			fontSize: 16,
-			color: '#C48300',
+			color: AppTheme.colors.accentMainWarning,
 		},
 	};
 
 	module.exports = { ClientsSelector };
 });
+

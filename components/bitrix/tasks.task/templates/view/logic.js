@@ -45,6 +45,7 @@ BX.namespace('Tasks.Component');
 
 		this.checkListChanged = false;
 		this.showCloseConfirmation = false;
+		this.isTemplatesAvailable = parameters.isTemplatesAvailable;
 
 		BX.addCustomEvent(window, 'tasksTaskEvent', this.onTaskEvent.bind(this));
 		BX.addCustomEvent('SidePanel.Slider:onClose', this.onSliderClose.bind(this, false));
@@ -310,93 +311,105 @@ BX.namespace('Tasks.Component');
 
 		this.createButtonMenu = [
 			{
-				text : messages.addTask,
-				className : 'menu-popup-item menu-popup-no-icon',
-				href: paths.newTask
+				text: messages.addTask,
+				className: 'menu-popup-item menu-popup-no-icon',
+				href: paths.newTask,
 			},
-			{
-				text : messages.addTaskByTemplate,
-				className : 'menu-popup-item menu-popup-no-icon menu-popup-item-submenu',
+		];
+		if (this.isTemplatesAvailable)
+		{
+			this.createButtonMenu.push({
+				text: messages.addTaskByTemplate,
+				className: 'menu-popup-item menu-popup-no-icon menu-popup-item-submenu',
 				cacheable: true,
 				items: [
 					{
 						id: 'loading',
-						text: messages.tasksAjaxLoadTemplates
-					}
+						text: messages.tasksAjaxLoadTemplates,
+					},
 				],
 				events:
-				{
-					onSubMenuShow: function()
 					{
-						if (this.isSubMenuLoaded)
+						onSubMenuShow: function()
 						{
-							return;
-						}
-
-						BX.ajax.runComponentAction('bitrix:tasks.templates.list', 'getList', {
-							mode: 'class',
-							data: {
-								select: ['ID', 'TITLE'],
-								order: {ID: 'DESC'},
-								filter: {ZOMBIE: 'N'}
+							if (this.isSubMenuLoaded)
+							{
+								return;
 							}
-						}).then(
-							function(response)
-							{
-								this.isSubMenuLoaded = true;
-								this.getSubMenu().removeMenuItem('loading');
-								var subMenu = [];
-								if (response.data.length > 0)
+
+							BX.ajax.runComponentAction('bitrix:tasks.templates.list', 'getList', {
+								mode: 'class',
+								data: {
+									select: ['ID', 'TITLE'],
+									order: {ID: 'DESC'},
+									filter: {ZOMBIE: 'N'}
+								}
+							}).then(
+								function(response)
 								{
-									var tasksTemplateUrlTemplate =
-										paths.newTask
-										+ (paths.newTask.indexOf('?') !== -1 ? '&' : '?')
-										+ (groupId > 0 ? 'GROUP_ID=' + groupId + '&' : '')
-										+ 'TEMPLATE='
-									;
-									BX.Tasks.each(response.data, function(item, k) {
-										subMenu.push({
-											text: BX.util.htmlspecialchars(item.TITLE),
-											href: tasksTemplateUrlTemplate + item.ID
+									this.isSubMenuLoaded = true;
+									this.getSubMenu().removeMenuItem('loading');
+									var subMenu = [];
+									if (response.data.length > 0)
+									{
+										var tasksTemplateUrlTemplate =
+											paths.newTask
+											+ (paths.newTask.indexOf('?') !== -1 ? '&' : '?')
+											+ (groupId > 0 ? 'GROUP_ID=' + groupId + '&' : '')
+											+ 'TEMPLATE='
+										;
+										BX.Tasks.each(response.data, function(item, k) {
+											subMenu.push({
+												text: BX.util.htmlspecialchars(item.TITLE),
+												href: tasksTemplateUrlTemplate + item.ID
+											});
 										});
-									});
-								}
-								else
+									}
+									else
+									{
+										subMenu.push({text: messages.tasksAjaxEmpty});
+									}
+									this.addSubMenu(subMenu);
+									this.showSubMenu();
+								}.bind(this),
+								function()
 								{
-									subMenu.push({text: messages.tasksAjaxEmpty});
-								}
-								this.addSubMenu(subMenu);
-								this.showSubMenu();
-							}.bind(this),
-							function()
-							{
-								this.isSubMenuLoaded = true;
-								this.getSubMenu().removeMenuItem('loading');
-								this.addSubMenu([{text: messages.tasksAjaxErrorLoad}]);
-								this.showSubMenu();
-							}.bind(this)
-						);
+									this.isSubMenuLoaded = true;
+									this.getSubMenu().removeMenuItem('loading');
+									this.addSubMenu([{text: messages.tasksAjaxErrorLoad}]);
+									this.showSubMenu();
+								}.bind(this)
+							);
+						}
 					}
-				}
+			});
+		}
+
+		this.createButtonMenu.push(
+			{
+				delimiter: true,
 			},
 			{
-				delimiter:true
+				text: messages.addSubTask,
+				className: 'menu-popup-item menu-popup-no-icon',
+				href: paths.newSubTask,
 			},
-			{
-				text : messages.addSubTask,
-				className : 'menu-popup-item menu-popup-no-icon',
-				href: paths.newSubTask
-			},
-			{
-				delimiter:true
-			},
-			{
-				text : messages.listTaskTemplates,
-				className : 'menu-popup-item menu-popup-no-icon',
-				href: paths.taskTemplates,
-				target: '_top'
-			}
-		];
+		);
+
+		if (this.isTemplatesAvailable)
+		{
+			this.createButtonMenu.push(
+				{
+					delimiter: true,
+				},
+				{
+					text: messages.listTaskTemplates,
+					className: 'menu-popup-item menu-popup-no-icon',
+					href: paths.taskTemplates,
+					target: '_top',
+				},
+			);
+		}
 	};
 
 	BX.Tasks.Component.TaskView.prototype.initFooterButtons = function()

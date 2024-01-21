@@ -54,7 +54,8 @@
 	cursor: pointer;
 }
 
-.bx-im-informer-ol {
+.bx-im-informer-ol,
+.bx-im-informer-copilot {
 	cursor: pointer;
 }
 
@@ -92,10 +93,29 @@
 	border-radius: 50%;
 }
 
+.bx-im-informer-copilot-icon {
+	position: relative;
+	height: 34px;
+	width: 34px;
+	border-radius: 50%;
+}
+
 .bitrix24-light-theme .bx-im-informer-ol-icon {
 	position: relative;
 	background: rgba(255, 255, 255, 0.2);
 	opacity: .9;
+}
+
+.bitrix24-light-theme .bx-im-informer-copilot-icon {
+	opacity: .9;
+	background: rgba(255, 255, 255, 0.2) url('images/im-messenger--icon-copilot-white.svg') center center no-repeat;
+}
+
+.bitrix24-dark-theme .bx-im-informer-copilot-icon,
+.bitrix24-default-theme .bx-im-informer-copilot-icon,
+.bx-im-bar-default .bx-im-informer-copilot-icon {
+	opacity: .9;
+	background: rgba(82, 92, 105, .11) url('images/im-messenger--icon-copilot-dark.svg') center center no-repeat;
 }
 
 .bitrix24-light-theme .bx-im-informer-ol-icon:before,
@@ -190,13 +210,14 @@
 }
 
 .bx-im-users-wrap {
-	bottom: 0;
+	bottom: calc(80px * var(--side-panel-toolbar-shifted, 0));
 	right: 0;
 	position: absolute;
 	top: 164px;
 	overflow: hidden;
 	width: 100%;
 	padding-top: 0;
+	transition: bottom 150ms;
 }
 
 .bx-im-bar .bx-im-users-wrap-without-phone {
@@ -209,6 +230,10 @@
 
 .bx-im-bar-with-ol .bx-im-users-wrap {
 	top: 219px;
+}
+
+.bx-im-bar-with-ol.bx-im-bar-with-copilot .bx-im-users-wrap {
+	top: 265px;
 }
 
 .bx-im-border-b {

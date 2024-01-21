@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { Action } from "../../action";
 import { Browser, Runtime } from "main.core";
 import { Button } from '../layout/button';
@@ -112,14 +113,18 @@ export const EditableDescription = {
 		saveTextButtonState()
 		{
 			const trimValue = this.value.trim();
-			if (trimValue.length === 0) {
+
+			if (trimValue.length === 0)
+			{
 				return ButtonState.DISABLED;
-			} else if (this.isSaving) {
-				return ButtonState.LOADING;
-			} else {
-				return ButtonState.DEFAULT;
 			}
 
+			if (this.isSaving)
+			{
+				return ButtonState.DISABLED;
+			}
+
+			return ButtonState.DEFAULT;
 		},
 
 		expandButtonText()

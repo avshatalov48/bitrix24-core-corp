@@ -1,8 +1,10 @@
 <?php
 
 return [
-	'reload/listeners',
-	'tasks:task/checklist/storage',
-	'tasks:task/checklist/uploader/constants',
-	'uploader',
+	'extensions' => [
+		'reload/listeners',
+		'tasks:task/checklist/storage',
+		'tasks:task/checklist/uploader/constants',
+		'uploader',
+	],
 ];

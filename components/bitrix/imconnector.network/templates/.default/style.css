@@ -152,3 +152,12 @@
 	max-width: 60%;
 	text-overflow: ellipsis;
 }
+
+.invisible {
+	height: 0;
+	opacity: 0;
+	overflow: hidden;
+	margin: 0;
+	padding: 0;
+	position: absolute;
+}

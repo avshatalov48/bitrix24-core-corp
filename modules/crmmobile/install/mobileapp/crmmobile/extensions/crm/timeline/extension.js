@@ -22,6 +22,7 @@ jn.define('crm/timeline', (require, exports, module) => {
 	const { Moment } = require('utils/date');
 	const { EventEmitter } = require('event-emitter');
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @class Timeline
@@ -35,7 +36,6 @@ jn.define('crm/timeline', (require, exports, module) => {
 
 		constructor(props)
 		{
-
 			super(props);
 
 			this.uid = props.uid || Random.getString();
@@ -194,7 +194,7 @@ jn.define('crm/timeline', (require, exports, module) => {
 					return View(
 						{
 							style: {
-								backgroundColor: '#eef2f4',
+								backgroundColor: AppTheme.colors.bgPrimary,
 							},
 						},
 						this.renderItemContent(props),
@@ -214,6 +214,7 @@ jn.define('crm/timeline', (require, exports, module) => {
 
 		renderItemContent({ type, props, index })
 		{
+			// eslint-disable-next-line default-case
 			switch (type)
 			{
 				case 'Divider':
@@ -309,11 +310,13 @@ jn.define('crm/timeline', (require, exports, module) => {
 					this.scheduledStream.getAttentionableItems().length,
 				]);
 
-				this.timelineScopeEventBus.emit('Crm.Timeline::onCounterChange', [{
-					needsAttention: this.scheduledStream.getNeedsAttentionItems().length,
-					incomingChannel: this.scheduledStream.getIncomingChannelItems().length,
-					total: this.scheduledStream.getItems().length,
-				}]);
+				this.timelineScopeEventBus.emit('Crm.Timeline::onCounterChange', [
+					{
+						needsAttention: this.scheduledStream.getNeedsAttentionItems().length,
+						incomingChannel: this.scheduledStream.getIncomingChannelItems().length,
+						total: this.scheduledStream.getItems().length,
+					},
+				]);
 			}
 		}
 
@@ -344,9 +347,10 @@ jn.define('crm/timeline', (require, exports, module) => {
 		fullscreenContainer: {
 			flexDirection: 'column',
 			flexGrow: 1,
-			backgroundColor: '#eef2f4',
+			backgroundColor: AppTheme.colors.bgPrimary,
 		},
 		listView: {
+			backgroundColor: AppTheme.colors.bgPrimary,
 			flexDirection: 'column',
 			flexGrow: 1,
 			position: 'absolute',

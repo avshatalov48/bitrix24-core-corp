@@ -1,6 +1,6 @@
-<?
-$MESS["CRM_MAIL_TEMPLATE_TAB_1"] = "E-mail template";
-$MESS["CRM_MAIL_TEMPLATE_TAB_1_TITLE"] = "E-mail template parameters";
+<?php
 $MESS["CRM_MAIL_TEMPLATE_ENTITY_FIELD_SELECTOR"] = "Select fields";
 $MESS["CRM_MAIL_TEMPLATE_ENTITY_FIELD_SELECTOR_ADD_BTN"] = "Add";
-?>
+$MESS["CRM_MAIL_TEMPLATE_ENTITY_FIELD_SELECTOR_OWNER_ADD_ERROR"] = "Cannot share template with its owner.";
+$MESS["CRM_MAIL_TEMPLATE_TAB_1"] = "E-mail template";
+$MESS["CRM_MAIL_TEMPLATE_TAB_1_TITLE"] = "E-mail template parameters";

@@ -3,10 +3,10 @@
 namespace Bitrix\Crm\Security\Controller\QueryBuilder;
 
 use Bitrix\Crm\Security\AccessAttribute\Collection;
-use Bitrix\Main\Application;
-use Bitrix\Main\UserTable;
 use Bitrix\Crm\Security\Controller\QueryBuilder;
 use Bitrix\Crm\Security\QueryBuilder\Options;
+use Bitrix\Main\Application;
+use Bitrix\Main\UserTable;
 
 class ControllerBased extends QueryBuilder
 {
@@ -108,6 +108,15 @@ class ControllerBased extends QueryBuilder
 					$finalSqlConditions[] = "({$categoryIdSqlConditionWithAnd}{$progressSqlCondition})";
 				}
 			}
+
+			if ($options->isReadAllAllowed() && !$hasOnlyCategoryCondition && $categoryIdSqlCondition !== '')
+			{
+				$condition = "({$categoryIdSqlConditionWithAnd}{$prefix}P.IS_ALWAYS_READABLE = 'Y')";
+				if (!in_array($condition, $finalSqlConditions, true))
+				{
+					$finalSqlConditions[] = $condition;
+				}
+			}
 		}
 
 		// / Leave for the backward compatibility. Observer access logic moved to the access_attrs table.
@@ -128,11 +137,6 @@ class ControllerBased extends QueryBuilder
 		if (empty($finalSqlConditions))
 		{
 			return '';
-		}
-
-		if ($options->isReadAllAllowed() && !$hasOnlyCategoryCondition)
-		{
-			$finalSqlConditions[] = "({$categoryIdSqlConditionWithAnd}{$prefix}P.IS_ALWAYS_READABLE = 'Y')";
 		}
 
 		$querySqlCondition = implode(' OR ', $finalSqlConditions);

@@ -943,10 +943,6 @@ class CAllCrmProductRow
 			{
 				$safeRow['XML_ID'] = $arRow['XML_ID'];
 			}
-			else
-			{
-				$safeRow['XML_ID'] = $products[$rowID]['XML_ID'] ?? false;
-			}
 
 			if(isset($prices['PRICE_ACCOUNT']))
 			{
@@ -1198,7 +1194,8 @@ class CAllCrmProductRow
 			isset($modified['CUSTOMIZED']) && $modified['CUSTOMIZED'] != $original['CUSTOMIZED'] ||
 			isset($modified['MEASURE_CODE']) && $modified['MEASURE_CODE'] != $original['MEASURE_CODE'] ||
 			isset($modified['MEASURE_NAME']) && $modified['MEASURE_NAME'] != $original['MEASURE_NAME'] ||
-			isset($modified['SORT']) && $modified['SORT'] != $original['SORT']
+			isset($modified['SORT']) && $modified['SORT'] != $original['SORT'] ||
+			isset($modified['XML_ID']) && $modified['XML_ID'] != $original['XML_ID']
 		);
 	}
 

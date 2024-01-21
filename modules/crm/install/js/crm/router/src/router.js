@@ -156,11 +156,6 @@ class Router
 		return null;
 	}
 
-	openTypeHelpPage()
-	{
-		Router.openHelper(null, 13315798);
-	}
-
 	static openHelper(event: Event = null, code: number = null)
 	{
 		if (event && Type.isFunction(event.preventDefault))

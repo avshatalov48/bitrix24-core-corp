@@ -21,6 +21,7 @@ use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\UI\PageNavigation;
+use \Bitrix\Crm\Model\Dynamic;
 
 class Type extends Base
 {
@@ -53,7 +54,7 @@ class Type extends Base
 		$params = parent::getAutoWiredParameters();
 
 		$params[] = new ExactParameter(
-			\Bitrix\Crm\Model\Dynamic\Type::class,
+			Dynamic\Type::class,
 			'type',
 			function($className, $id)
 			{
@@ -82,7 +83,7 @@ class Type extends Base
 		];
 	}
 
-	public function getAction(\Bitrix\Crm\Model\Dynamic\Type $type): ?array
+	public function getAction(Dynamic\Type $type): ?array
 	{
 		return [
 			'type' => $type->jsonSerialize(),
@@ -110,7 +111,7 @@ class Type extends Base
 		$types = [];
 		$typeTable = Container::getInstance()->getDynamicTypeDataClass();
 		$list = $typeTable::getList($parameters);
-		/** @var \Bitrix\Crm\Model\Dynamic\Type $type */
+		/** @var Dynamic\Type $type */
 		while($type = $list->fetchObject())
 		{
 			$types[] = $type->jsonSerialize(false);
@@ -142,10 +143,16 @@ class Type extends Base
 		return $this->updateAction($type, $fields);
 	}
 
-	public function updateAction(\Bitrix\Crm\Model\Dynamic\Type $type, array $fields): ?array
+	public function updateAction(?Dynamic\Type $type = null, array $fields): ?array
 	{
+		if($type === null)
+		{
+			return null;
+		}
 		$originalFields = $fields;
 		$fields = $this->convertKeysToUpper($fields);
+		$fieldKeysToUnset = ['ID', 'IS_EXTERNAL', 'CREATED_TIME', 'CREATED_BY', 'UPDATED_TIME', 'UPDATED_BY', 'IS_SAVE_FROM_TYPE_DETAIL'];
+
 		$isNew = $type->getId() <= 0;
 		$restriction = RestrictionManager::getDynamicTypesLimitRestriction();
 		if ($isNew && $restriction->isCreateTypeRestricted())
@@ -153,20 +160,71 @@ class Type extends Base
 			$this->addError($restriction->getCreateTypeRestrictedError());
 			return null;
 		}
+
 		if (!$isNew && $restriction->isTypeSettingsRestricted($type->getEntityTypeId()))
 		{
 			$this->addError($restriction->getUpdateTypeRestrictedError());
 			return null;
 		}
-		unset($fields['ID']);
+
+		$isExternal = isset($fields['IS_EXTERNAL']) && $fields['IS_EXTERNAL'] === 'true';
+		$isCustomSectionSelected = isset($fields['CUSTOM_SECTION_ID']) && $fields['CUSTOM_SECTION_ID'] !== '0';
+		if ($isExternal && $isNew && !$isCustomSectionSelected)
+		{
+			$this->addError(new Error(Loc::getMessage('CRM_CONTROLLER_TYPE_EXTERNAL_TYPE_WITHOUT_CUSTOM_SECTION_ERROR')));
+
+			return null;
+		}
+
+		$customSectionsArrays = (isset($fields['CUSTOM_SECTIONS']) && is_array($fields['CUSTOM_SECTIONS']))
+			? $fields['CUSTOM_SECTIONS']
+			: []
+		;
+
+		$customSections = [];
+		foreach ($customSectionsArrays as $customSectionsArray)
+		{
+			$customSections[$customSectionsArray['ID']] = CustomSection\Assembler::constructCustomSection($customSectionsArray);
+		}
+
+		$existingCustomSections = $this->moveIdToKey(Integration\IntranetManager::getCustomSections() ?? []);
+
+		// disable deletion of smart processes if saving occurs not due to crm.type.detail
+		$isSaveFromTypeDetail = isset($fields['IS_SAVE_FROM_TYPE_DETAIL']) && $fields['IS_SAVE_FROM_TYPE_DETAIL'] === 'true';
+		if (!$isSaveFromTypeDetail)
+		{
+			$customSections = $this->getAugmentedCustomSections($customSections, $existingCustomSections);
+			$fields['CUSTOM_SECTIONS'] = $this->getCustomSectionsArray($customSections);
+		}
+
+		foreach ($existingCustomSections as $id => $section)
+		{
+			if (!isset($customSections[$id]) && !empty($section->getPages()))
+			{
+				$this->addError(new Error(Loc::getMessage('CRM_CONTROLLER_TYPE_DELETE_CUSTOM_SECTION_WITH_PAGES_ERROR')));
+
+				return null;
+			}
+		}
+
 		if (isset($fields['TITLE']))
 		{
 			$fields['TITLE'] = trim($fields['TITLE']);
 		}
-		if(!$isNew)
+
+		if (!$isNew)
 		{
-			unset($fields['ENTITY_TYPE_ID'], $fields['NAME']);
+			$fieldKeysToUnset = array_merge(['ENTITY_TYPE_ID', 'NAME'], $fieldKeysToUnset);
 		}
+
+		foreach ($fieldKeysToUnset as $fieldKeyToUnset)
+		{
+			if (isset($fields[$fieldKeyToUnset]))
+			{
+				unset($fields[$fieldKeyToUnset]);
+			}
+		}
+
 		foreach($fields as $name => $value)
 		{
 			if($type->entity->hasField($name))
@@ -209,11 +267,69 @@ class Type extends Base
 		return null;
 	}
 
-	public function deleteAction(?\Bitrix\Crm\Model\Dynamic\Type $type): ?array
+	/**
+	 * $customSections items must be with id in key
+	 *
+	 * @param CustomSection[] $customSections
+	 * @param CustomSection[] $customSectionsToAdd
+	 * @return CustomSection[]
+	 */
+	protected function getAugmentedCustomSections(array $customSections, array $customSectionsToAdd): array
+	{
+		foreach ($customSectionsToAdd as $id => $customSectionToAdd)
+		{
+			if (!isset($customSections[$id]))
+			{
+				$customSections[$id] = $customSectionToAdd;
+			}
+		}
+
+		return $customSections;
+	}
+
+	protected function getCustomSectionsArray(array $customSections): array
+	{
+		$customSectionsArray = [];
+
+		foreach ($customSections as $customSection)
+		{
+			if (is_array($customSection))
+			{
+				$customSectionsArray[] = $customSection;
+			}
+
+			if ($customSection instanceof CustomSection)
+			{
+				$pages = [];
+
+				foreach ($customSection->getPages() as $page)
+				{
+					$pages[] = [
+						'ID' => $page->getId(),
+						'CUSTOM_SECTION_ID' => $page->getCustomSectionId(),
+						'CODE' => $page->getCode(),
+						'TITLE' => $page->getTitle(),
+						'SORT' => $page->getSort(),
+						'SETTINGS' => $page->getSettings(),
+					];
+				}
+
+				$customSectionsArray[] = [
+					'ID' => $customSection->getId(),
+					'TITLE' => $customSection->getTitle(),
+					'CODE' => $customSection->getCode(),
+					'PAGES' => $pages,
+				];
+			}
+		}
+
+		return $customSectionsArray;
+	}
+
+	public function deleteAction(?Dynamic\Type $type = null): ?array
 	{
 		if($type === null)
 		{
-			$this->addError(new Error(Loc::getMessage('CRM_TYPE_TYPE_NOT_FOUND')));
 			return null;
 		}
 
@@ -420,12 +536,12 @@ class Type extends Base
 	 * - if page exists and there is not sectionId - delete record
 	 * - if page does not exist - add record.
 	 *
-	 * @param \Bitrix\Crm\Model\Dynamic\Type $type
+	 * @param Dynamic\Type $type
 	 * @param array $fields
 	 * @return Result
 	 * @todo refactor it!
 	 */
-	protected function saveCustomSections(\Bitrix\Crm\Model\Dynamic\Type $type, array $fields): Result
+	protected function saveCustomSections(Dynamic\Type $type, array $fields): Result
 	{
 		$result = new Result();
 		$result->setData(['isCustomSectionChanged' => false]);

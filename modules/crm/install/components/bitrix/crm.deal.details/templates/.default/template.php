@@ -138,6 +138,10 @@ $APPLICATION->IncludeComponent(
 if ($arResult['IS_EDIT_MODE'] ?? false)
 {
 	echo \Bitrix\Crm\Tour\Sign\CreateDocumentFromDeal::getInstance()->build();
+	echo \Bitrix\Crm\Tour\Salescenter\CrmTerminalInDeal::getInstance()
+		->setCategoryId((int)$arResult['CATEGORY_ID'])
+		->build()
+	;
 }
 
 /** @var \Bitrix\Crm\Conversion\EntityConversionConfig|null $conversionConfig */

@@ -2,6 +2,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die(); 
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Integration\Intranet\Settings;
 
 Loc::loadMessages(__FILE__);
 
@@ -9,6 +10,10 @@ $templateId = $arResult['TEMPLATE_DATA']['ID'];
 $templates = $arResult['TEMPLATE_DATA']['DATA']['TEMPLATES'];
 
 CJSCore::Init('tasks_style_legacy');
+if (!(new Settings())->isToolAvailable(Settings::TOOLS['templates']))
+{
+	return;
+}
 ?>
 
 <div id="bx-component-scope-<?=$templateId?>" class="task-template-selector">

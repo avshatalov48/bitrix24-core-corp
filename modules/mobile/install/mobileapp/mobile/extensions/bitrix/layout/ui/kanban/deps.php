@@ -2,21 +2,17 @@
 
 return [
 	'extensions' => [
-		'require-lazy',
 		'layout/ui/kanban/counter',
 		'layout/ui/kanban/toolbar',
 		'layout/ui/pure-component',
-		'layout/ui/loading-screen',
 		'layout/ui/stateful-list',
 		'layout/ui/simple-list/items',
 		'loc',
 		'type',
 		'utils',
-		'utils/error-notifier',
-		'utils/function',
+		'alert',
 		'utils/object',
-
-		'crm:storage/category',
+		'utils/validation',
 	],
 	'bundle' => [
 		'./refs-container',

@@ -16,6 +16,9 @@ jn.define('tasks/layout/task/fields/files', (require, exports, module) => {
 				files: props.files,
 				showAddButton: props.showAddButton,
 			};
+
+			this.handleOnChange = this.handleOnChange.bind(this);
+			this.handleOnInnerRef = this.handleOnInnerRef.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -36,45 +39,80 @@ jn.define('tasks/layout/task/fields/files', (require, exports, module) => {
 			});
 		}
 
+		handleOnChange(files)
+		{
+			const { onChange } = this.props;
+
+			this.setState({ files });
+
+			if (onChange)
+			{
+				onChange(files);
+			}
+		}
+
+		handleOnInnerRef(ref)
+		{
+			const { onInnerRef } = this.props;
+
+			if (onInnerRef)
+			{
+				onInnerRef(ref);
+			}
+		}
+
 		render()
 		{
+			const { readOnly, files, showAddButton } = this.state;
+			const {
+				userId,
+				taskId,
+				onViewRef,
+				isAlwaysShowed,
+				parentWidget,
+				style = {},
+				deepMergeStyles = {},
+			} = this.props;
+
 			return View(
 				{
-					style: {
-						...this.props.style,
-						height: (this.props.isAlwaysShowed ? undefined : 0),
+					ref: (ref) => {
+						if (onViewRef)
+						{
+							onViewRef(ref);
+						}
 					},
-					ref: (ref) => (this.props.onViewRef && this.props.onViewRef(ref)),
+					style: {
+						...style,
+						height: isAlwaysShowed ? undefined : 0,
+					},
 				},
 				FileField({
-					ref: (ref) => this.props.onInnerRef(ref),
-					readOnly: this.state.readOnly,
+					ref: this.handleOnInnerRef,
+					readOnly,
+					showAddButton,
 					showEditIcon: true,
 					hasHiddenEmptyView: true,
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_FILES'),
-					showAddButton: this.state.showAddButton,
 					multiple: true,
-					value: this.state.files,
+					value: files,
 					config: {
-						deepMergeStyles: this.props.deepMergeStyles,
+						parentWidget,
+						deepMergeStyles,
 						controller: {
 							endpoint: 'tasks.FileUploader.TaskController',
 							options: {
-								taskId: this.props.taskId,
+								taskId,
 							},
 						},
 						disk: {
 							isDiskModuleInstalled: true,
 							isWebDavModuleInstalled: true,
-							fileAttachPath: `/mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${this.props.userId}`,
+							fileAttachPath: `/mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${userId}`,
 						},
-						parentWidget: this.props.parentWidget,
 					},
 					testId: 'files',
-					onChange: (files) => {
-						this.setState({ files });
-						this.props.onChange(files);
-					},
+					onChange: this.handleOnChange,
 				}),
 			);
 		}

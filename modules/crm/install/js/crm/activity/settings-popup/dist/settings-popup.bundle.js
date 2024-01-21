@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_popup,ui_buttons,ui_notification,main_date,calendar_planner,crm_datetime,main_core,crm_timeline_tools,crm_activity_settingsPopup,crm_entitySelector,ui_vue3) {
+(function (exports,main_popup,ui_buttons,ui_notification,main_date,calendar_planner,crm_datetime,crm_activity_settingsPopup,main_core,crm_timeline_tools,ui_vue3) {
 	'use strict';
 
 	const Section = {
@@ -565,89 +565,10 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	const Ping = {
-	  props: {
-	    params: {
-	      type: Object,
-	      default: {}
-	    }
-	  },
-	  data() {
-	    const selectedItems = this.params.selectedItems || [];
-	    return {
-	      id: this.getId(),
-	      selectedItems
-	    };
-	  },
-	  mounted() {
-	    const preselectedItems = [];
-	    this.selectedItems.forEach(item => preselectedItems.push(['timeline_ping', item]));
-	    this.pingSelector = new crm_entitySelector.TagSelector({
-	      textBoxWidth: '100%',
-	      dialogOptions: {
-	        height: 330,
-	        dropdownMode: true,
-	        showAvatars: false,
-	        enableSearch: false,
-	        preselectedItems: preselectedItems,
-	        entities: [{
-	          id: 'timeline_ping'
-	        }],
-	        events: {
-	          'Item:onSelect': () => {
-	            this.onChangeSelectorData();
-	          },
-	          'Item:onDeselect': () => {
-	            this.onChangeSelectorData();
-	          }
-	        }
-	      }
-	    });
-	    this.pingSelector.renderTo(this.$refs.pingSel);
-	    this.emitSettingsChange();
-	  },
-	  unmounted() {
-	    this.emitSettingsChange(false);
-	  },
-	  watch: {
-	    selectedItems() {
-	      this.emitSettingsChange();
-	    }
-	  },
-	  methods: {
-	    getId() {
-	      return 'ping';
-	    },
-	    onChangeSelectorData() {
-	      if (this.pingSelector) {
-	        this.selectedItems = this.pingSelector.getDialog().getSelectedItems().map(item => item.id);
-	      }
-	    },
-	    emitSettingsChange(active = true) {
-	      this.$Bitrix.eventEmitter.emit(crm_activity_settingsPopup.Events.EVENT_SETTINGS_CHANGE, this.exportParams(active));
-	    },
-	    exportParams(active = true) {
-	      this.pingSelector.getDialog().getSelectedItems().map(item => item.id);
-	      return {
-	        id: this.id,
-	        selectedItems: this.selectedItems,
-	        active
-	      };
-	    },
-	    updateSettings(data) {}
-	  },
-	  template: `
-		<div class="ui-form">
-			<div ref="pingSel" class="crm-activity__settings_popup__ping-selector-container"></div>
-		</div>
-	`
-	};
-
 	const Wrapper = {
 	  components: {
 	    WrapperSection: Section,
-	    SettingsPopupCalendar: Calendar,
-	    SettingsPopupPing: Ping
+	    SettingsPopupCalendar: Calendar
 	  },
 	  props: {
 	    onSettingsChangeCallback: {
@@ -1030,9 +951,8 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	exports.Calendar = Calendar;
-	exports.Ping = Ping;
 	exports.SettingsPopup = SettingsPopup;
 	exports.Events = Events;
 
-}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Main,BX.UI,BX,BX.Main,BX.Calendar,BX.Crm.DateTime,BX,BX.Crm.Timeline,BX.Crm.Activity,BX.Crm.EntitySelectorEx,BX.Vue3));
+}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Main,BX.UI,BX,BX.Main,BX.Calendar,BX.Crm.DateTime,BX.Crm.Activity,BX,BX.Crm.Timeline,BX.Vue3));
 //# sourceMappingURL=settings-popup.bundle.js.map

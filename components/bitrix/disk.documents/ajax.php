@@ -12,8 +12,28 @@ Main\Loader::requireModule('disk');
 
 final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 {
+	public function showFileHistoryAction(Disk\Document\TrackedObject $trackedObject): Main\Engine\Response\AjaxJson
+	{
+		if (!$trackedObject->canRead($this->getCurrentUser()->getId()))
+		{
+			$trackedObject->delete();
+
+			return Main\Engine\Response\AjaxJson::createDenied()->setStatus('403 Forbidden');
+		}
+
+		return new Main\Engine\Response\Component(
+			'bitrix:disk.file.history',
+			'',
+			[
+				'STORAGE' => $trackedObject->getFile()->getStorage(),
+				'FILE' => $trackedObject->getFile(),
+			]
+		);
+	}
+
 	public function getMenuActionsAction(Disk\Document\TrackedObject $trackedObject)
 	{
+		$urlManager = Disk\Driver::getInstance()->getUrlManager();
 		if (!$trackedObject->canRead($this->getCurrentUser()->getId()))
 		{
 			$trackedObject->delete();
@@ -48,9 +68,9 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 			];
 		}
 
-		if ($this->belongsToDiskStorages($file))
+		$belongsToDiskStorages = $this->belongsToDiskStorages($file);
+		if ($belongsToDiskStorages)
 		{
-			$urlManager = Disk\Driver::getInstance()->getUrlManager();
 			$internalLink = $urlManager->getUrlFocusController('showObjectInGrid', [
 					'objectId' => $file->getId(),
 					'cmd' => 'show',
@@ -94,6 +114,21 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 				'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_rename.svg'
 			];
 		}
+
+		if ($belongsToDiskStorages)
+		{
+			$actions[] = [
+				'id' => 'history',
+				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_SHOW_HISTORY'),
+				'dataset' => [
+					'objectId' => $trackedObject->getFileId(),
+					'objectName' => $trackedObject->getFile()->getName(),
+					'fileHistoryUrl' => $urlManager->getPathFileHistory($file),
+					'blockedByFeature' => !Bitrix24Manager::isFeatureEnabled('disk_file_history')
+				],
+			];
+		}
+
 		if ($trackedObject->canMarkDeleted($this->getCurrentUser()->getId()))
 		{
 			$actions[] = [

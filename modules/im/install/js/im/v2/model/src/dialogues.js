@@ -8,7 +8,10 @@ import { Utils } from 'im.v2.lib.utils';
 import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
 import type { Dialog as ImModelDialog } from './type/dialog';
 
-const WRITING_STATUS_TIME = 35000;
+const writingStatusTimeByChatType = {
+	[DialogType.copilot]: 60000,
+	default: 35000,
+};
 
 type DialogState = {
 	collection: {[dialogId: string]: ImModelDialog},
@@ -471,14 +474,23 @@ export class DialoguesModel extends BuilderModel
 		};
 	}
 
-	setWritingStatusTimeout(payload: {dialogId: string, userId: number})
+	setWritingStatusTimeout(payload: {dialogId: string, userId: number}): number
 	{
+		const writingStatusTime = this.getWritingStatusTime(payload.dialogId);
+
 		return setTimeout(() => {
 			this.store.dispatch('dialogues/stopWriting', {
 				dialogId: payload.dialogId,
 				userId: payload.userId,
 			});
-		}, WRITING_STATUS_TIME);
+		}, writingStatusTime);
+	}
+
+	getWritingStatusTime(dialogId): number
+	{
+		const dialog: ImModelDialog = Core.getStore().getters['dialogues/get'](dialogId, true);
+
+		return writingStatusTimeByChatType[dialog.type] ?? writingStatusTimeByChatType.default;
 	}
 
 	validate(fields)

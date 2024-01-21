@@ -7,8 +7,10 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\Filter;
 use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Internals\Effective;
 use Bitrix\Tasks\Internals\Counter\EffectiveTable;
+use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\KpiLimit;
@@ -33,7 +35,7 @@ class TasksReportEffectiveDetailComponent extends TasksBaseComponent
 	protected $defaultPageSize = 50;
 
 	protected static function checkPermissions(array &$arParams, array &$arResult,
-											   \Bitrix\Tasks\Util\Error\Collection $errors, array $auxParams = array())
+											   Collection $errors, array $auxParams = array())
 	{
 		$currentUser = User::getId();
 		$viewedUser = $arParams['USER_ID'];
@@ -49,6 +51,18 @@ class TasksReportEffectiveDetailComponent extends TasksBaseComponent
 		}
 
 		return $errors->checkNoFatals();
+	}
+
+	protected static function checkIfToolAvailable(array &$arParams, array &$arResult, Collection $errors, array $auxParams): void
+	{
+		parent::checkIfToolAvailable($arParams, $arResult, $errors, $auxParams);
+
+		if (!$arResult['IS_TOOL_AVAILABLE'])
+		{
+			return;
+		}
+
+		$arResult['IS_TOOL_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['effective']);
 	}
 
 	protected function checkParameters()

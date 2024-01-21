@@ -1,4 +1,5 @@
-"use strict";
+'use strict';
+
 /**
  * @bxjs_lang_path extension.php
  */
@@ -11,80 +12,78 @@ var ChatDataConverter = {};
 
 ChatDataConverter.init = function(config)
 {
-	this.userId = parseInt(config.userId)? parseInt(config.userId): 0;
-	this.generalChatId = parseInt(config.generalChatId)? parseInt(config.generalChatId): 0;
+	this.userId = parseInt(config.userId) ? parseInt(config.userId) : 0;
+	this.generalChatId = parseInt(config.generalChatId) ? parseInt(config.generalChatId) : 0;
 	this.isIntranetInvitationAdmin = config.isIntranetInvitationAdmin === true;
-	this.listType = config.listType === 'lines'? 'lines': 'recent';
-	this.updateRuntimeData = typeof config.updateRuntimeDataFunction == 'function'? config.updateRuntimeDataFunction: (element) => {};
-	this.imagePath = component.path+'images';
+	this.listType = config.listType === 'lines' ? 'lines' : 'recent';
+	this.updateRuntimeData = typeof config.updateRuntimeDataFunction === 'function' ? config.updateRuntimeDataFunction : (element) => {};
+	this.imagePath = `${component.path}images`;
 };
 
 ChatDataConverter.getElementFormat = function(element)
 {
-	let item = {};
+	const item = {};
 	// item.useEstimatedHeight = true;
 	item.id = element.id;
 	item.date = ChatUtils.getTimestamp(element.message.date);
 
 	item.params = {
-		id : element.id,
-		type : element.type,
-		useLetterImage : true,
+		id: element.id,
+		type: element.type,
+		useLetterImage: true,
 	};
 
 	item.sortValues = {
-		order : item.date
+		order: item.date,
 	};
 
 	if (element.type == 'user')
 	{
-		item.title = element.user.name+(element.user.id == this.userId? ' ('+BX.message("IM_YOU")+')': '');
+		item.title = element.user.name + (element.user.id == this.userId ? ` (${BX.message('IM_YOU')})` : '');
 		item.imageUrl = ChatUtils.getAvatar(element.user.avatar);
 		if (!item.imageUrl && !element.user.last_activity_date)
 		{
-			item.imageUrl = this.imagePath + '/avatar_wait_x3.png';
+			item.imageUrl = `${this.imagePath}/avatar_wait_x3.png`;
 		}
 		item.color = element.user.color;
-		item.sectionCode = element.pinned? 'pinned': 'general';
+		item.sectionCode = element.pinned ? 'pinned' : 'general';
 		item.subtitle = element.message.text;
 
-		if (item.subtitle && element.message.id > 0)
+		if (item.subtitle && (element.message.id > 0 || element.message.id.length > 10))
 		{
 			if (element.invited && !element.user.last_activity_date)
 			{
-				item.color = "#6b6b6b";
+				item.color = '#6b6b6b';
 			}
 		}
 		else
+		if (element.invited && !element.user.last_activity_date)
 		{
-			if (element.invited && !element.user.last_activity_date)
-			{
-				item.color = "#6b6b6b";
-				item.subtitle = BX.message("USER_INVITED_2");
-			}
-			else if (element.user.work_position)
-			{
-				item.subtitle = element.user.work_position;
-			}
-			else if (element.user.extranet)
-			{
-				item.subtitle = BX.message("IM_LIST_EXTRANET");
-			}
-			else
-			{
-				item.subtitle = BX.message("IM_LIST_EMPLOYEE");
-			}
+			item.color = '#6b6b6b';
+			item.subtitle = BX.message('USER_INVITED_2');
+		}
+		else if (element.user.work_position)
+		{
+			item.subtitle = element.user.work_position;
+		}
+		else if (element.user.extranet)
+		{
+			item.subtitle = BX.message('IM_LIST_EXTRANET');
+		}
+		else
+		{
+			item.subtitle = BX.message('IM_LIST_EMPLOYEE');
 		}
 	}
 	else if (element.type == 'notification')
 	{
-		item.title = BX.message("NOTIFICATION_TITLE");
-		item.imageUrl = this.imagePath + '/avatar_notify_x3.png';
-		item.sectionCode = element.pinned? 'pinned': 'general';
-		let messageText = ChatMessengerCommon.purifyText(element.message.text, element.message.params);
-		item.subtitle = element.user.first_name && element.user.last_name ?
-			element.user.first_name + ' ' + element.user.last_name.charAt(0) + ': ' + messageText :
-			messageText;
+		item.title = BX.message('NOTIFICATION_TITLE');
+		item.imageUrl = `${this.imagePath}/avatar_notify_x3.png`;
+		item.sectionCode = element.pinned ? 'pinned' : 'general';
+		const messageText = ChatMessengerCommon.purifyText(element.message.text, element.message.params);
+		item.subtitle = element.user.first_name && element.user.last_name
+			? `${element.user.first_name} ${element.user.last_name.charAt(0)}: ${messageText}`
+			: messageText;
 	}
 	else
 	{
@@ -95,15 +94,15 @@ ChatDataConverter.getElementFormat = function(element)
 		{
 			if (element.chat.id == this.generalChatId)
 			{
-				item.imageUrl = this.imagePath+'/avatar_general_x3.png';
+				item.imageUrl = `${this.imagePath}/avatar_general_x3.png`;
 			}
 			else if (element.chat.type == 'support24Notifier')
 			{
-				item.imageUrl = this.imagePath+'/avatar_24_x3.png';
+				item.imageUrl = `${this.imagePath}/avatar_24_x3.png`;
 			}
 			else if (element.chat.type == 'support24Question')
 			{
-				item.imageUrl = this.imagePath+'/avatar_24_question_x3.png';
+				item.imageUrl = `${this.imagePath}/avatar_24_question_x3.png`;
 			}
 		}
 
@@ -113,7 +112,7 @@ ChatDataConverter.getElementFormat = function(element)
 			if (!element.lines || element.lines.status < 10)
 			{
 				item.sectionCode = 'new';
-				let session = ChatMessengerCommon.linesGetSession(element.chat);
+				const session = ChatMessengerCommon.linesGetSession(element.chat);
 				if (session && session.dateCreate)
 				{
 					item.sortValues.order = session.dateCreate;
@@ -123,7 +122,7 @@ ChatDataConverter.getElementFormat = function(element)
 			else if (element.lines.status < 40)
 			{
 				item.sectionCode = 'work';
-				let session = ChatMessengerCommon.linesGetSession(element.chat);
+				const session = ChatMessengerCommon.linesGetSession(element.chat);
 				if (session && session.dateCreate)
 				{
 					item.sortValues.order = session.dateCreate;
@@ -142,7 +141,7 @@ ChatDataConverter.getElementFormat = function(element)
 		}
 		else
 		{
-			item.sectionCode = element.pinned? 'pinned': 'general';
+			item.sectionCode = element.pinned ? 'pinned' : 'general';
 		}
 
 		let prefix = '';
@@ -152,17 +151,17 @@ ChatDataConverter.getElementFormat = function(element)
 		}
 		else if (element.message.author_id)
 		{
-			if (!element.user.first_name)
+			if (element.user.first_name)
 			{
-				prefix = element.user.name+': ';
+				prefix = `${element.user.first_name + (element.user.last_name ? ` ${element.user.last_name.slice(0, 1)}.` : '')}: `;
 			}
 			else
 			{
-				prefix = element.user.first_name+(element.user.last_name? ' '+element.user.last_name.substr(0, 1)+'.': '')+': ';
+				prefix = `${element.user.name}: `;
 			}
 		}
 
-		item.subtitle = prefix+element.message.text;
+		item.subtitle = prefix + element.message.text;
 	}
 
 	item.messageCount = element.counter;
@@ -179,7 +178,7 @@ ChatDataConverter.getElementFormat = function(element)
 		item.unread = !element.counter && element.unread;
 	}
 
-	item.backgroundColor = element.pinned? '#f6f6f6': '#ffffff';
+	item.backgroundColor = element.pinned ? '#f6f6f6' : '#ffffff';
 
 	item.styles = {};
 	item.styles.avatar = this.getAvatarFormat(element);
@@ -199,42 +198,42 @@ ChatDataConverter.getElementFormat = function(element)
 
 ChatDataConverter.getElementByEntity = function(type, entity)
 {
-	let result = {
+	const result = {
 		id: parseInt(entity.id),
-		type: type,
+		type,
 		counter: 0,
 		invited: false,
 		pinned: false,
-		title: "",
+		title: '',
 		avatar: {
-			url: "",
-			color: ""
+			url: '',
+			color: '',
 		},
 		message: {
 			id: 0,
-			text: "",
+			text: '',
 			file: false,
 			author_id: 0,
 			attach: false,
 			date: new Date(),
-			status: "received"
+			status: 'received',
 		},
 	};
 
 	if (type == 'user')
 	{
 		result.user = entity;
-		result.avatar.color =  entity.color;
-		result.avatar.url =  entity.avatar;
-		result.title =  entity.name;
+		result.avatar.color = entity.color;
+		result.avatar.url = entity.avatar;
+		result.title = entity.name;
 	}
 	else
 	{
 		result.user = {};
 		result.chat = entity;
-		result.avatar.color =  entity.color;
-		result.avatar.url =  entity.avatar;
-		result.title =  entity.name;
+		result.avatar.color = entity.color;
+		result.avatar.url = entity.avatar;
+		result.title = entity.name;
 	}
 
 	return result;
@@ -246,12 +245,10 @@ ChatDataConverter.getAvatarFormat = function(element)
 	if (element.type == 'user')
 	{
 		if (element.user.network && element.user.external_auth_id === 'support24')
-		{
-
-		}
+		{}
 		else
 		{
-			let status = this.getUserImageCode(element);
+			const status = this.getUserImageCode(element);
 			if (
 				status === 'idle'
 				|| status === 'break-idle'
@@ -260,33 +257,31 @@ ChatDataConverter.getAvatarFormat = function(element)
 			)
 			{
 				result = {
-					image : {
-						url: this.imagePath+'/status_user_'+status+'_x3.png'
-					}
-				}
+					image: {
+						url: `${this.imagePath}/status_user_${status}_x3.png`,
+					},
+				};
 			}
 			else if (status)
 			{
-				result = {image: {name: 'status_'+status}};
+				result = { image: { name: `status_${status}` } };
 			}
+			// TODO this solution is experimental and will be removed
+			result = { image: { name: '' } };
 		}
 	}
 	else if (element.type == 'notification')
-	{
-
-	}
+	{}
 	else
+	if (element.chat.type == 'lines')
 	{
-		if (element.chat.type == 'lines')
-		{
-			let status = this.getLinesImageCode(element);
-			result = {image: {name: 'status_'+status}};
+		const status = this.getLinesImageCode(element);
+		result = { image: { name: `status_${status}` } };
 
-			let session = ChatMessengerCommon.linesGetSession(element.chat);
-			if (session.crm == 'Y')
-			{
-				result.additionalImage = {name: 'special_status_crm'};
-			}
+		const session = ChatMessengerCommon.linesGetSession(element.chat);
+		if (session.crm == 'Y')
+		{
+			result.additionalImage = { name: 'special_status_crm' };
 		}
 	}
 
@@ -301,7 +296,7 @@ ChatDataConverter.getTitleFormat = function(element)
 		if (element.user.id == this.userId)
 		{
 			result = {
-				image: {name: 'name_status_owner'}
+				image: { name: 'name_status_owner' },
 			};
 		}
 		else if (element.user.network && element.user.external_auth_id === 'support24')
@@ -309,9 +304,9 @@ ChatDataConverter.getTitleFormat = function(element)
 			if (ChatUtils.getAvatar(element.user.avatar))
 			{
 				result = {
-					image : {
-						url: this.imagePath + '/status_24.png'
-					}
+					image: {
+						url: `${this.imagePath}/status_24.png`,
+					},
 				};
 			}
 		}
@@ -319,43 +314,43 @@ ChatDataConverter.getTitleFormat = function(element)
 		{
 			result = {
 				color: '#0a962f',
-				image: {name: 'name_status_network'}
+				image: { name: 'name_status_network' },
 			};
 		}
 		else if (element.user.bot)
 		{
 			result = {
 				color: '#725acc',
-				image: {name: 'name_status_bot'}
+				image: { name: 'name_status_bot' },
 			};
 		}
 		else if (element.user.extranet)
 		{
 			result = {
 				color: '#ca7b00',
-				image: {name: 'name_status_extranet'}
+				image: { name: 'name_status_extranet' },
 			};
 		}
 		else if (element.user.connector)
 		{
 			result = {
 				color: '#0a962f',
-				image: {name: 'name_status_network'}
+				image: { name: 'name_status_network' },
 			};
 		}
 		else
 		{
-			let status = ChatMessengerCommon.getUserStatus(element.user);
+			const status = ChatMessengerCommon.getUserStatus(element.user);
 			if (status == 'vacation')
 			{
 				result = {
-					image: {name: 'name_status_vacation'}
+					image: { name: 'name_status_vacation' },
 				};
 			}
 			else if (status == 'birthday')
 			{
 				result = {
-					image: {name: 'name_status_birthday'}
+					image: { name: 'name_status_birthday' },
 				};
 			}
 		}
@@ -368,19 +363,19 @@ ChatDataConverter.getTitleFormat = function(element)
 			{
 				result = {
 					color: '#16938b',
-					image: {name: 'name_status_lines'},
+					image: { name: 'name_status_lines' },
 				};
 			}
 			else if (element.chat.owner == this.userId)
 			{
 				result = {
-					image: {name: 'name_status_owner'},
+					image: { name: 'name_status_owner' },
 				};
 			}
 			else if (element.chat.owner == 0)
 			{
 				result = {
-					image: {name: 'name_status_new'},
+					image: { name: 'name_status_new' },
 					color: '#e66467',
 				};
 			}
@@ -389,14 +384,14 @@ ChatDataConverter.getTitleFormat = function(element)
 		{
 			result = {
 				image: {
-					url: this.imagePath + '/status_dialog_open.png',
-				}
+					url: `${this.imagePath}/status_dialog_open.png`,
+				},
 			};
 		}
 		else if (element.chat.type == 'call')
 		{
 			result = {
-				image: {name: 'name_status_call'},
+				image: { name: 'name_status_call' },
 			};
 		}
 		else if (element.chat.type == 'support24Notifier' || element.chat.type == 'support24Question')
@@ -408,7 +403,7 @@ ChatDataConverter.getTitleFormat = function(element)
 			if (ChatUtils.getAvatar(element.chat.avatar))
 			{
 				result.image = {
-					url: this.imagePath + '/status_24.png',
+					url: `${this.imagePath}/status_24.png`,
 				};
 			}
 		}
@@ -418,21 +413,21 @@ ChatDataConverter.getTitleFormat = function(element)
 			{
 				result = {
 					color: '#ca7b00',
-					image: {name: 'name_status_extranet'}
+					image: { name: 'name_status_extranet' },
 				};
 			}
 
-			//move from the condition when the native bug with 2 icons not displayed at the same time is fixed.
-			if (element.chat.mute_list[this.userId])
+			// move from the condition when the native bug with 2 icons not displayed at the same time is fixed.
+			if (element.chat.mute_list && element.chat.mute_list[this.userId])
 			{
-				result.additionalImage = {name: 'name_status_mute'};
+				result.additionalImage = { name: 'name_status_mute' };
 			}
 		}
 	}
 
 	result.font = {
-		fontStyle: "semibold",
-		color: typeof result.color != "undefined"? result.color: '#333333'
+		fontStyle: 'semibold',
+		color: typeof result.color === 'undefined' ? '#333333' : result.color,
 	};
 
 	return result;
@@ -440,18 +435,15 @@ ChatDataConverter.getTitleFormat = function(element)
 
 ChatDataConverter.getCounterFormat = function(element)
 {
-	let result = {backgroundColor: '#47AADE'};
+	let result = { backgroundColor: '#47AADE' };
 	if (element.type != 'chat')
 	{
 		return result;
 	}
 
-	if (!(element.chat.type == 'lines' || element.chat.type == 'call'))
+	if (!(element.chat.type == 'lines' || element.chat.type == 'call') && element.chat.mute_list && element.chat.mute_list[this.userId])
 	{
-		if (element.chat.mute_list[this.userId])
-		{
-			result = {backgroundColor: '#B8BBC1'};
-		}
+		result = { backgroundColor: '#B8BBC1' };
 	}
 
 	return result;
@@ -471,7 +463,7 @@ ChatDataConverter.getDateFormat = function(element)
 		}
 		else if (element.liked)
 		{
-			url = this.imagePath + '/status_reaction.png';
+			url = `${this.imagePath}/status_reaction.png`;
 			sizeMultiplier = 1.2;
 		}
 		else if (element.message.status == 'received')
@@ -493,23 +485,21 @@ ChatDataConverter.getDateFormat = function(element)
 		}
 	}
 	else
+	if (element.pinned)
 	{
-		if (element.pinned)
-		{
-			name = 'message_pin';
-			sizeMultiplier = 0.9;
-		}
-		else
-		{
-			return {};
-		}
+		name = 'message_pin';
+		sizeMultiplier = 0.9;
+	}
+	else
+	{
+		return {};
 	}
 
 	const date = {
 		image: {
 			sizeMultiplier,
 			url,
-		}
+		},
 	};
 
 	if (name !== '')
@@ -525,11 +515,16 @@ ChatDataConverter.getTextFormat = function(element)
 	let result = {};
 	if (element.writing)
 	{
-		result = {animation:{color:"#777777", type:"bubbles"}};
+		result = { animation: { color: '#777777', type: 'bubbles' } };
 	}
 	else if (element.message.author_id == this.userId)
 	{
-		result = {image: {name : 'reply', sizeMultiplier: 0.7}};
+		result = { image: { name: 'reply', sizeMultiplier: 0.7 } };
+
+		if (element.message && element.message.subTitleIcon && element.message.subTitleIcon !== '')
+		{
+			result = { image: { name: element.message.subTitleIcon, sizeMultiplier: 0.7 } };
+		}
 	}
 	else if (
 		element.type === 'user'
@@ -544,14 +539,14 @@ ChatDataConverter.getTextFormat = function(element)
 				fontStyle: 'medium',
 			},
 			cornerRadius: 12,
-			backgroundColor: "#D9F5FD",
+			backgroundColor: '#D9F5FD',
 			padding: {
-				top:3.5,
-				right:12,
-				bottom:3.5,
-				left:12
-			}
-		}
+				top: 3.5,
+				right: 12,
+				bottom: 3.5,
+				left: 12,
+			},
+		};
 	}
 
 	return result;
@@ -565,7 +560,7 @@ ChatDataConverter.getUserImageCode = function(element)
 		return '';
 	}
 
-	let data = ChatMessengerCommon.getUserStatus(element.user, false);
+	const data = ChatMessengerCommon.getUserStatus(element.user, false);
 	if (data.status == 'vacation' && (element.user.extranet || element.user.bot || element.user.network))
 	{
 		icon = data.status;
@@ -600,7 +595,7 @@ ChatDataConverter.getLinesImageCode = function(element)
 	}
 
 	let result = 'world';
-	let source = (element.chat.entity_id.split('|'))[0];
+	const source = (element.chat.entity_id.split('|'))[0];
 
 	if (source == 'livechat')
 	{
@@ -691,33 +686,33 @@ ChatDataConverter.getActionList = function(element)
 				if (element.invited && element.invited.can_resend)
 				{
 					result.push({
-						title : BX.message("ELEMENT_MENU_INVITE_RESEND"),
-						identifier : "inviteResend",
-						color : "#aac337"
+						title: BX.message('ELEMENT_MENU_INVITE_RESEND'),
+						identifier: 'inviteResend',
+						color: '#aac337',
 					});
 				}
 				result.push({
-					title : BX.message("ELEMENT_MENU_INVITE_CANCEL"),
-					color : "#df532d",
-					identifier : "inviteCancel",
+					title: BX.message('ELEMENT_MENU_INVITE_CANCEL'),
+					color: '#df532d',
+					identifier: 'inviteCancel',
 				});
 			}
 		}
 		else
 		{
 			result.push({
-				title : element.pinned? BX.message("ELEMENT_MENU_UNPIN"): BX.message("ELEMENT_MENU_PIN"),
-				identifier : element.pinned? "unpin": "pin",
-				color : "#3e99ce",
-				iconName : "action_"+(element.pinned? "unpin": "pin"),
-				direction: 'leftToRight'
+				title: element.pinned ? BX.message('ELEMENT_MENU_UNPIN') : BX.message('ELEMENT_MENU_PIN'),
+				identifier: element.pinned ? 'unpin' : 'pin',
+				color: '#3e99ce',
+				iconName: `action_${element.pinned ? 'unpin' : 'pin'}`,
+				direction: 'leftToRight',
 			});
 
 			result.push({
-				title : element.unread || element.counter? BX.message("ELEMENT_MENU_READ"): BX.message("ELEMENT_MENU_UNREAD"),
-				iconName : "action_"+(element.unread || element.counter? "read": "unread"),
-				identifier : element.unread || element.counter? "read": "unread",
-				color : "#23ce2c",
+				title: element.unread || element.counter ? BX.message('ELEMENT_MENU_READ') : BX.message('ELEMENT_MENU_UNREAD'),
+				iconName: `action_${element.unread || element.counter ? 'read' : 'unread'}`,
+				identifier: element.unread || element.counter ? 'read' : 'unread',
+				color: '#23ce2c',
 				direction: 'leftToRight',
 				fillOnSwipe: true,
 			});
@@ -725,10 +720,10 @@ ChatDataConverter.getActionList = function(element)
 			if (!element.user.bot)
 			{
 				result.push({
-					title : BX.message("ELEMENT_MENU_PROFILE"),
-					identifier : "profile",
-					color : "#3e99ce",
-					iconName : "action_userlist",
+					title: BX.message('ELEMENT_MENU_PROFILE'),
+					identifier: 'profile',
+					color: '#3e99ce',
+					iconName: 'action_userlist',
 				});
 			}
 
@@ -738,159 +733,155 @@ ChatDataConverter.getActionList = function(element)
 			)
 			{
 				result.push({
-					title : BX.message("ELEMENT_MENU_HIDE"),
-					iconName : "action_delete",
-					identifier : "hide",
-					color : "#df532d"
+					title: BX.message('ELEMENT_MENU_HIDE'),
+					iconName: 'action_delete',
+					identifier: 'hide',
+					color: '#df532d',
 				});
 			}
 		}
-
 	}
 	else if (element.type == 'notification')
 	{
 		result = [];
 		result.push({
-			title : element.pinned? BX.message("ELEMENT_MENU_UNPIN"): BX.message("ELEMENT_MENU_PIN"),
-			identifier : element.pinned? "unpin": "pin",
-			color : "#3e99ce",
-			iconName : "action_"+(element.pinned? "unpin": "pin"),
-			direction: 'leftToRight'
+			title: element.pinned ? BX.message('ELEMENT_MENU_UNPIN') : BX.message('ELEMENT_MENU_PIN'),
+			identifier: element.pinned ? 'unpin' : 'pin',
+			color: '#3e99ce',
+			iconName: `action_${element.pinned ? 'unpin' : 'pin'}`,
+			direction: 'leftToRight',
 		});
 		result.push({
-			title : element.unread || element.counter? BX.message("ELEMENT_MENU_READ"): BX.message("ELEMENT_MENU_UNREAD"),
-			iconName : "action_"+(element.unread || element.counter? "read": "unread"),
-			identifier : element.unread || element.counter? "read": "unread",
-			color : "#23ce2c",
+			title: element.unread || element.counter ? BX.message('ELEMENT_MENU_READ') : BX.message('ELEMENT_MENU_UNREAD'),
+			iconName: `action_${element.unread || element.counter ? 'read' : 'unread'}`,
+			identifier: element.unread || element.counter ? 'read' : 'unread',
+			color: '#23ce2c',
 			direction: 'leftToRight',
 			fillOnSwipe: true,
 		});
 		result.push({
-			title : BX.message("ELEMENT_MENU_DELETE"),
-			identifier : "hide",
-			iconName : "action_delete",
-			color : "#df532d",
+			title: BX.message('ELEMENT_MENU_DELETE'),
+			identifier: 'hide',
+			iconName: 'action_delete',
+			color: '#df532d',
 		});
 	}
 	else
+	if (element.chat.type == 'lines')
 	{
-		if (element.chat.type == 'lines')
+		if (element.chat.owner == 0)
 		{
-			if (element.chat.owner == 0)
-			{
-				result = [
-					{
-						title : BX.message("ELEMENT_MENU_ANSWER"),
-						identifier : "operatorAnswer",
-						iconName : "action_answer",
-						color : "#aac337"
-					},
-					{
-						title : BX.message("ELEMENT_MENU_SKIP"),
-						color : "#df532d",
-						iconName : "action_skip",
-						identifier : "operatorSkip",
-					},
-					{
-						title : BX.message("ELEMENT_MENU_SPAM"),
-						color : "#e89d2a",
-						iconName : "action_spam",
-						identifier : "operatorSpam",
-					},
-				];
-			}
-			else if (element.chat.owner == this.userId)
-			{
-				result = [
-					{
-						title : BX.message("ELEMENT_MENU_FINISH"),
-						iconName : "action_finish",
-						identifier : "operatorFinish",
-						color : "#aac337",
-					},
-					{
-						title : element.pinned? BX.message("ELEMENT_MENU_UNPIN"): BX.message("ELEMENT_MENU_PIN"),
-						identifier : element.pinned? "unpin": "pin",
-						iconName : "action_"+(element.pinned? "unpin": "pin"),
-						color : "#3e99ce",
-						direction: 'leftToRight'
-					},
-					{
-						title : BX.message("ELEMENT_MENU_SPAM"),
-						color : "#e8a441",
-						identifier : "operatorSpam",
-						iconName : "action_spam",
-					},
-				];
-			}
-			else
-			{
-				result = [
-					{
-						title : element.pinned? BX.message("ELEMENT_MENU_UNPIN"): BX.message("ELEMENT_MENU_PIN"),
-						identifier : element.pinned? "unpin": "pin",
-						iconName : "action_"+(element.pinned? "unpin": "pin"),
-						color : "#3e99ce",
-						direction: 'leftToRight'
-					},
-					{
-						title : BX.message("ELEMENT_MENU_LEAVE"),
-						identifier : "leave",
-						iconName : "action_delete",
-						color : "#df532d",
-					},
-				];
-			}
+			result = [
+				{
+					title: BX.message('ELEMENT_MENU_ANSWER'),
+					identifier: 'operatorAnswer',
+					iconName: 'action_answer',
+					color: '#aac337',
+				},
+				{
+					title: BX.message('ELEMENT_MENU_SKIP'),
+					color: '#df532d',
+					iconName: 'action_skip',
+					identifier: 'operatorSkip',
+				},
+				{
+					title: BX.message('ELEMENT_MENU_SPAM'),
+					color: '#e89d2a',
+					iconName: 'action_spam',
+					identifier: 'operatorSpam',
+				},
+			];
+		}
+		else if (element.chat.owner == this.userId)
+		{
+			result = [
+				{
+					title: BX.message('ELEMENT_MENU_FINISH'),
+					iconName: 'action_finish',
+					identifier: 'operatorFinish',
+					color: '#aac337',
+				},
+				{
+					title: element.pinned ? BX.message('ELEMENT_MENU_UNPIN') : BX.message('ELEMENT_MENU_PIN'),
+					identifier: element.pinned ? 'unpin' : 'pin',
+					iconName: `action_${element.pinned ? 'unpin' : 'pin'}`,
+					color: '#3e99ce',
+					direction: 'leftToRight',
+				},
+				{
+					title: BX.message('ELEMENT_MENU_SPAM'),
+					color: '#e8a441',
+					identifier: 'operatorSpam',
+					iconName: 'action_spam',
+				},
+			];
 		}
 		else
 		{
-			result = [];
-			if (element.chat.type !== 'announcement' && element.chat.type !== 'support24Question')
-			{
-				result.push({
-					title : element.chat.mute_list[this.userId]? BX.message("ELEMENT_MENU_UNMUTE"): BX.message("ELEMENT_MENU_MUTE"),
-					identifier : element.chat.mute_list[this.userId]? "unmute": "mute",
-					iconName : "action_"+(element.chat.mute_list[this.userId]? "unmute": "mute"),
-					color : "#aaabac"
-				});
-			}
-
+			result = [
+				{
+					title: element.pinned ? BX.message('ELEMENT_MENU_UNPIN') : BX.message('ELEMENT_MENU_PIN'),
+					identifier: element.pinned ? 'unpin' : 'pin',
+					iconName: `action_${element.pinned ? 'unpin' : 'pin'}`,
+					color: '#3e99ce',
+					direction: 'leftToRight',
+				},
+				{
+					title: BX.message('ELEMENT_MENU_LEAVE'),
+					identifier: 'leave',
+					iconName: 'action_delete',
+					color: '#df532d',
+				},
+			];
+		}
+	}
+	else
+	{
+		result = [];
+		if (element.chat.type !== 'announcement' && element.chat.type !== 'support24Question')
+		{
 			result.push({
-				title : BX.message("ELEMENT_MENU_HIDE"),
-				iconName : "action_delete",
-				identifier : "hide",
-				color : "#df532d"
-			});
-
-			result.push({
-				title : element.pinned? BX.message("ELEMENT_MENU_UNPIN"): BX.message("ELEMENT_MENU_PIN"),
-				iconName : "action_"+(element.pinned? "unpin": "pin"),
-				identifier : element.pinned? "unpin": "pin",
-				color : "#3e99ce",
-				direction: 'leftToRight'
-			});
-
-			result.push({
-				title : element.unread || element.counter? BX.message("ELEMENT_MENU_READ"): BX.message("ELEMENT_MENU_UNREAD"),
-				iconName : "action_"+(element.unread || element.counter? "read": "unread"),
-				identifier : element.unread || element.counter? "read": "unread",
-				color : "#23ce2c",
-				direction: 'leftToRight',
-				fillOnSwipe: true,
+				title: element.chat.mute_list && element.chat.mute_list[this.userId] ? BX.message('ELEMENT_MENU_UNMUTE') : BX.message('ELEMENT_MENU_MUTE'),
+				identifier: element.chat.mute_list && element.chat.mute_list[this.userId] ? 'unmute' : 'mute',
+				iconName: `action_${element.chat.mute_list && element.chat.mute_list[this.userId] ? 'unmute' : 'mute'}`,
+				color: '#aaabac',
 			});
 		}
+
+		result.push({
+			title: BX.message('ELEMENT_MENU_HIDE'),
+			iconName: 'action_delete',
+			identifier: 'hide',
+			color: '#df532d',
+		});
+
+		result.push({
+			title: element.pinned ? BX.message('ELEMENT_MENU_UNPIN') : BX.message('ELEMENT_MENU_PIN'),
+			iconName: `action_${element.pinned ? 'unpin' : 'pin'}`,
+			identifier: element.pinned ? 'unpin' : 'pin',
+			color: '#3e99ce',
+			direction: 'leftToRight',
+		});
+
+		result.push({
+			title: element.unread || element.counter ? BX.message('ELEMENT_MENU_READ') : BX.message('ELEMENT_MENU_UNREAD'),
+			iconName: `action_${element.unread || element.counter ? 'read' : 'unread'}`,
+			identifier: element.unread || element.counter ? 'read' : 'unread',
+			color: '#23ce2c',
+			direction: 'leftToRight',
+			fillOnSwipe: true,
+		});
 	}
 
 	return result;
 };
 
-ChatDataConverter.getListFormat = function (list)
+ChatDataConverter.getListFormat = function(list)
 {
-	let result = [];
-	let resultIndex = {};
+	const result = [];
+	const resultIndex = {};
 
-	list.forEach((element) =>
-	{
+	list.forEach((element) => {
 		if (!element)
 		{
 			return;
@@ -898,7 +889,12 @@ ChatDataConverter.getListFormat = function (list)
 
 		element = this.getListElement(element);
 
-		if (resultIndex[element.id] !== undefined)
+		if (resultIndex[element.id] === undefined)
+		{
+			const newLength = result.push(element);
+			resultIndex[element.id] = newLength - 1;
+		}
+		else
 		{
 			if (element.options && element.options.default_user_record)
 			{
@@ -906,22 +902,20 @@ ChatDataConverter.getListFormat = function (list)
 			}
 			result[resultIndex[element.id]] = element;
 		}
-		else
-		{
-			let newLength = result.push(element);
-			resultIndex[element.id] = newLength - 1;
-		}
 	});
 
 	return result;
 };
 
-ChatDataConverter.getUserListFormat = function (list)
+ChatDataConverter.getUserListFormat = function(list)
 {
-	let result = [];
+	const result = [];
 
 	list.forEach((element) => {
-		if (!element) return;
+		if (!element)
+		{
+			return;
+		}
 
 		element = this.getUserDataFormat(element);
 
@@ -931,19 +925,20 @@ ChatDataConverter.getUserListFormat = function (list)
 	return result;
 };
 
-ChatDataConverter.getUserDataFormat = function (user, options = {})
+ChatDataConverter.getUserDataFormat = function(user, options = {})
 {
-	let {dateAtom = false} = options;
+	const { dateAtom = false } = options;
 
 	if (!user)
 	{
-		user = {id: 0};
+		user = { id: 0 };
 	}
+
 	if (user.id > 0)
 	{
 		if (user.last_activity_date)
 		{
-			user.last_activity_date = !dateAtom? new Date(user.last_activity_date): user.last_activity_date.toString();
+			user.last_activity_date = dateAtom ? user.last_activity_date.toString() : new Date(user.last_activity_date);
 		}
 		else
 		{
@@ -952,7 +947,7 @@ ChatDataConverter.getUserDataFormat = function (user, options = {})
 
 		if (user.mobile_last_date)
 		{
-			user.mobile_last_date = !dateAtom? new Date(user.mobile_last_date): user.mobile_last_date.toString();
+			user.mobile_last_date = dateAtom ? user.mobile_last_date.toString() : new Date(user.mobile_last_date);
 		}
 		else
 		{
@@ -961,7 +956,7 @@ ChatDataConverter.getUserDataFormat = function (user, options = {})
 
 		if (user.idle)
 		{
-			user.idle = !dateAtom? new Date(user.idle): user.idle.toString();
+			user.idle = dateAtom ? user.idle.toString() : new Date(user.idle);
 		}
 		else
 		{
@@ -970,7 +965,7 @@ ChatDataConverter.getUserDataFormat = function (user, options = {})
 
 		if (user.absent)
 		{
-			user.absent = !dateAtom? new Date(user.absent): user.absent.toString();
+			user.absent = dateAtom ? user.absent.toString() : new Date(user.absent);
 		}
 		else
 		{
@@ -995,18 +990,18 @@ ChatDataConverter.getSearchElementFormat = function(element, recent)
 		item.useLetterImage = true;
 
 		item.actions = [{
-			title : BX.message("ELEMENT_MENU_DELETE"),
-			identifier : "delete",
+			title: BX.message('ELEMENT_MENU_DELETE'),
+			identifier: 'delete',
 			destruct: true,
-			color : "#df532d"
+			color: '#df532d',
 		}];
 	}
 	else
 	{
-		type = typeof element.owner == 'undefined'? 'user': 'chat';
-		let elementClone = ChatUtils.objectClone(element);
+		type = typeof element.owner === 'undefined' ? 'user' : 'chat';
+		const elementClone = ChatUtils.objectClone(element);
 
-		element = {type: type};
+		element = { type };
 		element[type] = elementClone;
 
 		item.sectionCode = type;
@@ -1014,7 +1009,7 @@ ChatDataConverter.getSearchElementFormat = function(element, recent)
 	}
 
 	item.params = {
-		action: 'item'
+		action: 'item',
 	};
 
 	if (type == 'user')
@@ -1023,44 +1018,42 @@ ChatDataConverter.getSearchElementFormat = function(element, recent)
 		item.params.id = element.user.id;
 		item.params.external_auth_id = element.user.external_auth_id;
 
-		item.title = element.user.name+(element.user.id == this.userId? ' ('+BX.message("IM_YOU")+')': '');
+		item.title = element.user.name + (element.user.id == this.userId ? ` (${BX.message('IM_YOU')})` : '');
 
 		item.imageUrl = ChatUtils.getAvatar(element.user.avatar);
 		if (!item.imageUrl && !element.user.last_activity_date)
 		{
-			item.imageUrl = this.imagePath + '/avatar_wait_x3.png';
+			item.imageUrl = `${this.imagePath}/avatar_wait_x3.png`;
 		}
 
 		item.color = element.user.color;
-		item.shortTitle = element.user.first_name? element.user.first_name: element.user.name;
-		item.subtitle = element.user.work_position? element.user.work_position: '';
+		item.shortTitle = element.user.first_name ? element.user.first_name : element.user.name;
+		item.subtitle = element.user.work_position ? element.user.work_position : '';
 		if (!element.user.work_position)
 		{
-			item.subtitle = element.user.extranet? BX.message("IM_LIST_EXTRANET"): BX.message("IM_LIST_EMPLOYEE");
+			item.subtitle = element.user.extranet ? BX.message('IM_LIST_EXTRANET') : BX.message('IM_LIST_EMPLOYEE');
 		}
 	}
 	else if (type == 'notification')
-	{
-
-	}
+	{}
 	else
 	{
-		item.id = 'chat'+element.chat.id;
-		item.params.id = 'chat'+element.chat.id;
+		item.id = `chat${element.chat.id}`;
+		item.params.id = `chat${element.chat.id}`;
 
 		item.title = element.chat.name;
 		item.shortTitle = element.chat.name;
-		item.subtitle = element.chat.type == "open"? BX.message('IM_LIST_CHAT_OPEN_NEW'): BX.message('IM_LIST_CHAT_NEW');
+		item.subtitle = element.chat.type == 'open' ? BX.message('IM_LIST_CHAT_OPEN_NEW') : BX.message('IM_LIST_CHAT_NEW');
 		item.imageUrl = ChatUtils.getAvatar(element.chat.avatar);
 		if (!item.imageUrl)
 		{
 			if (element.chat.id == this.generalChatId)
 			{
-				item.imageUrl = this.imagePath + '/avatar_general_x3.png';
+				item.imageUrl = `${this.imagePath}/avatar_general_x3.png`;
 			}
 			else if (element.chat.type == 'support24Notifier')
 			{
-				item.imageUrl = this.imagePath+'/avatar_24_x3.png';
+				item.imageUrl = `${this.imagePath}/avatar_24_x3.png`;
 			}
 		}
 		item.color = element.chat.color;
@@ -1072,8 +1065,6 @@ ChatDataConverter.getSearchElementFormat = function(element, recent)
 	return item;
 };
 
-
-
 ChatDataConverter.getListElement = function(element)
 {
 	if (!element)
@@ -1083,45 +1074,45 @@ ChatDataConverter.getListElement = function(element)
 
 	element.user = this.getUserDataFormat(element.user);
 
-	if (typeof element.message != 'undefined')
+	if (typeof element.message !== 'undefined')
 	{
 		element.message.date = new Date(element.message.date);
 		element.message.text = ChatMessengerCommon.purifyText(element.message.text, element.message.params);
 	}
 
-	if (typeof element.chat != 'undefined')
+	if (typeof element.chat !== 'undefined')
 	{
 		element.chat.date_create = new Date(element.chat.date_create);
 	}
 
 	return element;
-}
+};
 
 ChatDataConverter.getListElementByUser = function(element)
 {
-	let item = {};
+	const item = {};
 
 	item.source = ChatUtils.objectClone(element);
 	item.id = parseInt(item.source.id);
 	item.params = {
 		id: item.id,
-		action: 'item'
+		action: 'item',
 	};
 
 	item.useLetterImage = true;
 	item.sectionCode = 'user';
-	item.title = item.source.name+(item.source.id == this.userId? ' ('+BX.message("IM_YOU")+')': '');
+	item.title = item.source.name + (item.source.id == this.userId ? ` (${BX.message('IM_YOU')})` : '');
 	item.imageUrl = ChatUtils.getAvatar(item.source.avatar);
 	if (!item.imageUrl && !item.source.last_activity_date)
 	{
-		item.imageUrl = this.imagePath + '/avatar_wait_x3.png';
+		item.imageUrl = `${this.imagePath}/avatar_wait_x3.png`;
 	}
 	item.color = item.source.color;
-	item.shortTitle = item.source.first_name? item.source.first_name: item.source.name;
-	item.subtitle = item.source.work_position? item.source.work_position: '';
+	item.shortTitle = item.source.first_name ? item.source.first_name : item.source.name;
+	item.subtitle = item.source.work_position ? item.source.work_position : '';
 	if (!item.subtitle)
 	{
-		item.subtitle = item.source.extranet? BX.message("IM_LIST_EXTRANET"): BX.message("IM_LIST_EMPLOYEE");
+		item.subtitle = item.source.extranet ? BX.message('IM_LIST_EXTRANET') : BX.message('IM_LIST_EMPLOYEE');
 	}
 
 	item.styles = {};
@@ -1132,13 +1123,13 @@ ChatDataConverter.getListElementByUser = function(element)
 
 ChatDataConverter.getListElementByChat = function(element)
 {
-	let item = {};
+	const item = {};
 
 	item.source = ChatUtils.objectClone(element);
-	item.id = 'chat'+parseInt(item.source.id);
+	item.id = `chat${parseInt(item.source.id)}`;
 	item.params = {
 		id: item.id,
-		action: 'item'
+		action: 'item',
 	};
 
 	item.sectionCode = 'chat';
@@ -1149,22 +1140,22 @@ ChatDataConverter.getListElementByChat = function(element)
 	{
 		if (item.source.id == this.generalChatId)
 		{
-			item.imageUrl = this.imagePath + '/avatar_general_x3.png';
+			item.imageUrl = `${this.imagePath}/avatar_general_x3.png`;
 		}
 		else if (item.source.type == 'support24Notifier')
 		{
-			item.imageUrl = this.imagePath+'/avatar_24_x3.png';
+			item.imageUrl = `${this.imagePath}/avatar_24_x3.png`;
 		}
 	}
 
 	item.color = item.source.color;
 	item.shortTitle = item.source.name;
 
-	if (item.source.type == "chat")
+	if (item.source.type == 'chat')
 	{
 		item.subtitle = BX.message('IM_LIST_CHAT_NEW');
 	}
-	else if (item.source.type == "open")
+	else if (item.source.type == 'open')
 	{
 		item.subtitle = BX.message('IM_LIST_OPEN');
 	}
@@ -1177,13 +1168,13 @@ ChatDataConverter.getListElementByChat = function(element)
 
 ChatDataConverter.getListElementByLine = function(element)
 {
-	let item = {};
+	const item = {};
 
 	item.source = ChatUtils.objectClone(element);
-	item.id = 'queue'+parseInt(item.source.id);
+	item.id = `queue${parseInt(item.source.id)}`;
 	item.params = {
 		id: item.id,
-		action: 'item'
+		action: 'item',
 	};
 
 	item.sectionCode = 'line';
@@ -1200,20 +1191,20 @@ ChatDataConverter.getListElementByLine = function(element)
 
 ChatDataConverter.getListElementByDepartment = function(element)
 {
-	let item = {};
+	const item = {};
 
 	item.source = ChatUtils.objectClone(element);
-	item.id = 'department'+parseInt(item.source.id);
+	item.id = `department${parseInt(item.source.id)}`;
 	item.params = {
 		id: item.id,
-		action: 'item'
+		action: 'item',
 	};
 
 	let subtitle = '';
-	if (item.source.full_name.indexOf(item.source.name+' / ') === 0)
+	if (item.source.full_name.indexOf(`${item.source.name} / `) === 0)
 	{
-		let length = (item.source.name+' / ').length;
-		subtitle = item.source.full_name.substr(length)
+		const length = (`${item.source.name} / `).length;
+		subtitle = item.source.full_name.slice(length);
 	}
 
 	item.sectionCode = 'department';
@@ -1229,72 +1220,72 @@ ChatDataConverter.getListElementByDepartment = function(element)
 	return item;
 };
 
-ChatDataConverter.getCallListElement = function (callStatus, call)
+ChatDataConverter.getCallListElement = function(callStatus, call)
 {
 	let elementConfig = {};
 	if (callStatus === 'local')
 	{
 		elementConfig = {
 			text: BX.message('CALL_STATUS_OPEN'),
-			color: "#EEF2F4",
-			background: "#47AADE",
+			color: '#EEF2F4',
+			background: '#47AADE',
 			canJoin: true,
-		}
+		};
 	}
 	else if (callStatus === 'none')
 	{
 		elementConfig = {
 			text: BX.message('CALL_STATUS_JOIN'),
-			color: "#EEF2F4",
-			background: "#91C000",
+			color: '#EEF2F4',
+			background: '#91C000',
 			canJoin: true,
-		}
+		};
 	}
 	else
 	{
 		elementConfig = {
 			text: BX.message('CALL_STATUS_REMOTE'),
-			color: "#525C69",
-			background: "#EEF2F4",
-			canJoin: false
-		}
+			color: '#525C69',
+			background: '#EEF2F4',
+			canJoin: false,
+		};
 	}
 
 	return {
-		id: 'call'+call.id,
+		id: `call${call.id}`,
 		title: call.associatedEntity.name,
 		subtitle: elementConfig.text,
 		imageUrl: ChatUtils.getAvatar(call.associatedEntity.avatar),
 		useLetterImage: true,
 		unselectable: true,
-		color: "#368c00",
+		color: '#368c00',
 		sectionCode: 'call',
 		params: {
-			call: {id: call.id, provider: call.provider, associatedEntity: call.associatedEntity},
+			call: { id: call.id, provider: call.provider, associatedEntity: call.associatedEntity },
 			isLocal: callStatus === 'local',
 			canJoin: elementConfig.canJoin,
 			type: 'call',
 		},
 		styles: {
 			title: {
-				image: { name: "status_call", sizeMultiplier: 1.4},
-				font: { fontStyle: "semibold" }
+				image: { name: 'status_call', sizeMultiplier: 1.4 },
+				font: { fontStyle: 'semibold' },
 			},
 			subtitle: {
 				font: { size: '13', fontStyle: 'medium', color: elementConfig.color },
 				cornerRadius: 12,
 				backgroundColor: elementConfig.background,
-				padding: {top:3.5, right:12, bottom:3.5, left:12}
-			}
+				padding: { top: 3.5, right: 12, bottom: 3.5, left: 12 },
+			},
 		},
-	}
-}
+	};
+};
 
 ChatDataConverter.getPushFormat = function(push)
 {
 	if (typeof (push) !== 'object' || typeof (push.params) === 'undefined')
 	{
-		return {'ACTION' : 'NONE'};
+		return { ACTION: 'NONE' };
 	}
 
 	let result = {};
@@ -1302,9 +1293,9 @@ ChatDataConverter.getPushFormat = function(push)
 	{
 		result = JSON.parse(push.params);
 	}
-	catch (e)
+	catch
 	{
-		result = {'ACTION' : push.params};
+		result = { ACTION: push.params };
 	}
 
 	if (result.TAG)
@@ -1318,63 +1309,62 @@ ChatDataConverter.getPushFormat = function(push)
 
 ChatDataConverter.preparePushFormat = function(element)
 {
-	let indexToNameMap =
-	{
-		1: "chat",
-		2: "chatId",
-		3: "counter",
-		4: "dialogId",
-		5: "files",
-		6: "message",
-		8: "users",
-		9: "name",
-		10: "avatar",
-		11: "color",
-		12: "notify",
-		13: "type",
-		14: "extranet",
+	const indexToNameMap =	{
+		1: 'chat',
+		2: 'chatId',
+		3: 'counter',
+		4: 'dialogId',
+		5: 'files',
+		6: 'message',
+		8: 'users',
+		9: 'name',
+		10: 'avatar',
+		11: 'color',
+		12: 'notify',
+		13: 'type',
+		14: 'extranet',
 
-		20: "date_create",
-		21: "owner",
-		23: "entity_id",
-		24: "entity_type",
-		203: "entity_data_1",
-		204: "entity_data_2",
-		205: "entity_data_3",
-		201: "call",
-		202: "call_number",
+		20: 'date_create',
+		21: 'owner',
+		23: 'entity_id',
+		24: 'entity_type',
+		203: 'entity_data_1',
+		204: 'entity_data_2',
+		205: 'entity_data_3',
+		201: 'call',
+		202: 'call_number',
 
-		40: "first_name",
-		41: "last_name",
-		42: "gender",
-		43: "work_position",
-		400: "active",
-		401: "birthday",
-		402: "bot",
-		403: "connector",
-		404: "external_auth_id",
-		406: "network",
+		40: 'first_name',
+		41: 'last_name',
+		42: 'gender',
+		43: 'work_position',
+		400: 'active',
+		401: 'birthday',
+		402: 'bot',
+		403: 'connector',
+		404: 'external_auth_id',
+		406: 'network',
 
-		65: "textLegacy",
-		61: "date",
-		62: "prevId",
-		63: "params",
-		64: "senderId",
-		601: "system",
+		65: 'textLegacy',
+		61: 'date',
+		62: 'prevId',
+		63: 'params',
+		64: 'senderId',
+		601: 'system',
 
-		80: "extension",
-		81: "image",
-		82: "progress",
-		83: "size",
-		84: "status",
-		85: "urlDownload",
-		86: "urlPreview",
-		87: "urlShow",
-		88: "width",
-		89: "height",
+		80: 'extension',
+		81: 'image',
+		82: 'progress',
+		83: 'size',
+		84: 'status',
+		85: 'urlDownload',
+		86: 'urlPreview',
+		87: 'urlShow',
+		88: 'width',
+		89: 'height',
 	};
 
-	let result = ChatDataConverter.changeKeysRecursive(element, indexToNameMap);
+	const result = ChatDataConverter.changeKeysRecursive(element, indexToNameMap);
 
 	if (
 		result.chat
@@ -1382,7 +1372,7 @@ ChatDataConverter.preparePushFormat = function(element)
 		&& typeof result.chat.id !== 'undefined'
 	)
 	{
-		let chat = {};
+		const chat = {};
 		chat.id = result.chat.id;
 		chat.avatar = result.chat.avatar || '';
 		chat.call = result.chat.call || '0';
@@ -1401,7 +1391,7 @@ ChatDataConverter.preparePushFormat = function(element)
 		chat.owner = result.chat.owner;
 		chat.type = result.chat.type;
 
-		result.chat = {[chat.id]: chat};
+		result.chat = { [chat.id]: chat };
 	}
 	else
 	{
@@ -1423,7 +1413,7 @@ ChatDataConverter.preparePushFormat = function(element)
 			lastActivityDate = result.message.date;
 		}
 
-		let user = {};
+		const user = {};
 		user.id = result.users.id;
 		user.color = result.users.color;
 		user.first_name = result.users.first_name;
@@ -1441,13 +1431,13 @@ ChatDataConverter.preparePushFormat = function(element)
 		user.extranet = result.users.extranet || false;
 		user.external_auth_id = result.users.external_auth_id || 'default';
 		user.work_position = result.users.work_position || '';
-		user.gender = result.users.gender === 'F'? 'F': 'M';
+		user.gender = result.users.gender === 'F' ? 'F' : 'M';
 		user.last_activity_date = lastActivityDate;
 
 		userId = user.id;
 		userName = user.name;
 
-		result.users = {[user.id]: user};
+		result.users = { [user.id]: user };
 	}
 	else
 	{
@@ -1456,15 +1446,15 @@ ChatDataConverter.preparePushFormat = function(element)
 
 	if (result.files && typeof result.files === 'object')
 	{
-		let files = {};
-		for (let fileId in result.files)
+		const files = {};
+		for (const fileId in result.files)
 		{
 			if (!result.files.hasOwnProperty(fileId))
 			{
 				continue;
 			}
 
-			let file = {};
+			const file = {};
 
 			file.id = result.files[fileId].id;
 			file.authorId = userId;
@@ -1499,7 +1489,7 @@ ChatDataConverter.preparePushFormat = function(element)
 		&& typeof result.message.id !== 'undefined'
 	)
 	{
-		let message = {};
+		const message = {};
 		message.id = result.message.id;
 		message.chatId = result.chatId;
 		message.date = result.message.date;
@@ -1527,20 +1517,20 @@ ChatDataConverter.changeKeysRecursive = function(object, indexToNameMap)
 		return object;
 	}
 
-	if (object instanceof Array)
+	if (Array.isArray(object))
 	{
-		return object.map(element => ChatDataConverter.changeKeysRecursive(element, indexToNameMap));
+		return object.map((element) => ChatDataConverter.changeKeysRecursive(element, indexToNameMap));
 	}
 
-	let result = {};
-	for (let index in object)
+	const result = {};
+	for (const index in object)
 	{
 		if (!object.hasOwnProperty(index))
 		{
 			continue;
 		}
 
-		let key = indexToNameMap[index]? indexToNameMap[index]: index;
+		const key = indexToNameMap[index] ? indexToNameMap[index] : index;
 		result[key] = ChatDataConverter.changeKeysRecursive(object[index], indexToNameMap);
 	}
 
@@ -1550,43 +1540,43 @@ ChatDataConverter.changeKeysRecursive = function(object, indexToNameMap)
 ChatDataConverter.prepareNotificationPushFormat = function(element)
 {
 	const indexToNameMap = {
-		1: "id",
-		2: "type",
-		3: "date",
-		4: "text",
-		6: "tag",
-		7: "onlyFlash",
-		8: "originalTag",
-		9: "settingName",
-		10: "counter",
-		11: "userId",
-		12: "userName",
-		13: "userColor",
-		14: "userAvatar",
-		15: "userLink",
-		16: "params",
-		17: "buttons",
+		1: 'id',
+		2: 'type',
+		3: 'date',
+		4: 'text',
+		6: 'tag',
+		7: 'onlyFlash',
+		8: 'originalTag',
+		9: 'settingName',
+		10: 'counter',
+		11: 'userId',
+		12: 'userName',
+		13: 'userColor',
+		14: 'userAvatar',
+		15: 'userLink',
+		16: 'params',
+		17: 'buttons',
 	};
 
-	let convertedParams = ChatDataConverter.changeKeysRecursive(element, indexToNameMap);
+	const convertedParams = ChatDataConverter.changeKeysRecursive(element, indexToNameMap);
 
 	return {
-		id: convertedParams['id'],
-		counter: convertedParams['counter'],
-		date: convertedParams['date'],
-		type: convertedParams['type'],
-		text: convertedParams['text'],
-		text_converted: convertedParams['text'],
-		tag: convertedParams['tag'],
-		onlyFlash: convertedParams['onlyFlash'],
-		originalTag: convertedParams['originalTag'],
-		settingName: convertedParams['settingName'],
-		userId: convertedParams['userId'],
-		userName: convertedParams['userName'],
-		userColor: convertedParams['userColor'],
-		userAvatar: convertedParams['userAvatar'],
-		userLink: convertedParams['userLink'],
-		params: convertedParams['params'],
-		buttons: convertedParams['buttons'],
-	}
+		id: convertedParams.id,
+		counter: convertedParams.counter,
+		date: convertedParams.date,
+		type: convertedParams.type,
+		text: convertedParams.text,
+		text_converted: convertedParams.text,
+		tag: convertedParams.tag,
+		onlyFlash: convertedParams.onlyFlash,
+		originalTag: convertedParams.originalTag,
+		settingName: convertedParams.settingName,
+		userId: convertedParams.userId,
+		userName: convertedParams.userName,
+		userColor: convertedParams.userColor,
+		userAvatar: convertedParams.userAvatar,
+		userLink: convertedParams.userLink,
+		params: convertedParams.params,
+		buttons: convertedParams.buttons,
+	};
 };

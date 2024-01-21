@@ -16,9 +16,10 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 	const { Type } = require('type');
 	const { Haptics } = require('haptics');
 	const { NotifyManager } = require('notify-manager');
+	const AppTheme = require('apptheme');
 
-	let TelegramConnectorManager;
-	let NotificationServiceConsent;
+	let TelegramConnectorManager = null;
+	let NotificationServiceConsent = null;
 
 	try
 	{
@@ -32,7 +33,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 		return null;
 	}
 
-	const pathToExtension = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/timeline/scheduler/providers/go-to-chat/`;
+	const PATH_TO_EXTENSION = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/timeline/scheduler/providers/go-to-chat`;
 
 	const senderTypes = {
 		bitrix24: 'bitrix24',
@@ -66,7 +67,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 
 		static getMenuIcon()
 		{
-			return '<svg width="31" height="31" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.75631 7.79004C6.32956 7.79004 5.17296 8.94665 5.17297 10.3734L5.17306 20.6003C5.17307 22.0271 6.32967 23.1837 7.75639 23.1837H9.93154V25.9041C9.93154 26.3726 10.505 26.5992 10.8253 26.2573L13.704 23.1837H23.3895C24.8162 23.1837 25.9728 22.027 25.9728 20.6003L25.9727 10.3734C25.9727 8.94662 24.8161 7.79004 23.3894 7.79004H7.75631ZM16.7683 11.4191L20.751 15.4018L16.7683 19.3845V17.0515H10.63V13.9792H16.7683V11.4191Z" fill="#767C87"/></svg>';
+			return `<svg width="31" height="31" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.75631 7.79004C6.32956 7.79004 5.17296 8.94665 5.17297 10.3734L5.17306 20.6003C5.17307 22.0271 6.32967 23.1837 7.75639 23.1837H9.93154V25.9041C9.93154 26.3726 10.505 26.5992 10.8253 26.2573L13.704 23.1837H23.3895C24.8162 23.1837 25.9728 22.027 25.9728 20.6003L25.9727 10.3734C25.9727 8.94662 24.8161 7.79004 23.3894 7.79004H7.75631ZM16.7683 11.4191L20.751 15.4018L16.7683 19.3845V17.0515H10.63V13.9792H16.7683V11.4191Z" fill="${AppTheme.colors.base3}"/></svg>`;
 		}
 
 		static getDefaultPosition()
@@ -127,11 +128,13 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 				return [];
 			}
 
-			return [{
-				title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_BADGE_NEW_TITLE'),
-				backgroundColor: '#2fc6f6',
-				color: '#ffffff',
-			}];
+			return [
+				{
+					title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_BADGE_NEW_TITLE'),
+					backgroundColor: AppTheme.colors.accentBrandBlue,
+					color: AppTheme.colors.baseWhiteFixed,
+				},
+			];
 		}
 
 		constructor(props)
@@ -308,14 +311,14 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 					{
 						style: styles.heroScreenIconsContainer,
 					},
-					this.renderIcon('icon1'),
+					this.renderIcon('messenger'),
 					Image({
 						style: styles.heroScreenArrow,
 						svg: {
 							content: icons.arrow,
 						},
 					}),
-					this.renderIcon('icon2'),
+					this.renderIcon('bitrix24'),
 				),
 				shouldShowHeroScreenImages && View(
 					{
@@ -377,13 +380,17 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 			return false;
 		}
 
+		/**
+		 * @param imageName
+		 * @return {View}
+		 */
 		renderIcon(imageName)
 		{
-			const imagePath = this.getImagePath();
-
 			return Image({
 				style: styles.heroScreenIcon,
-				uri: `${imagePath}${imageName}.png`,
+				svg: {
+					uri: this.getImagePath(imageName),
+				},
 			});
 		}
 
@@ -395,9 +402,13 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 			});
 		}
 
-		getImagePath()
+		/**
+		 * @param imageName
+		 * @return {string}
+		 */
+		getImagePath(imageName)
 		{
-			return `${pathToExtension}images/`;
+			return `${PATH_TO_EXTENSION}/images/${AppTheme.id}/${imageName}.svg`;
 		}
 
 		renderMessengersSlider()
@@ -609,7 +620,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 								{ time: 5 },
 							);
 						}
-					});
+					}).catch(console.error);
 				})
 				.catch((response) => this.handleError(response))
 			;
@@ -744,22 +755,21 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 	}
 
 	const icons = {
-		arrow: '<svg width="79" height="40" viewBox="0 0 79 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M78.4419 17.4419C78.686 17.1979 78.686 16.8021 78.4419 16.5581L74.4645 12.5806C74.2204 12.3365 73.8247 12.3365 73.5806 12.5806C73.3365 12.8247 73.3365 13.2204 73.5806 13.4645L77.1161 17L73.5806 20.5355C73.3365 20.7796 73.3365 21.1753 73.5806 21.4194C73.8247 21.6635 74.2204 21.6635 74.4645 21.4194L78.4419 17.4419ZM0 17.625H78V16.375H0V17.625Z" fill="#A8ADB4"/><circle cx="38.5" cy="16.5" r="16.5" fill="#E5F9FF"/><g filter="url(#filter0_d_903_264448)"><path d="M32.4248 15.3508L41.6501 16.1936V16.7298L32.4248 17.496L31 26L49 16.7298L31 7L32.4248 15.3508Z" fill="#55D0E0"/></g><defs><filter id="filter0_d_903_264448" x="22.3077" y="2.65385" width="35.3846" height="36.3846" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="4.34615"/><feGaussianBlur stdDeviation="4.34615"/><feComposite in2="hardAlpha" operator="out"/><feColorMatrix type="matrix" values="0 0 0 0 0.184314 0 0 0 0 0.776471 0 0 0 0 0.964706 0 0 0 0.28 0"/><feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_903_264448"/><feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_903_264448" result="shape"/></filter></defs></svg>',
-		buttonIcon: '<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.4449 13.9895L9.50309 13.2563C9.05148 13.2146 8.68447 12.8742 8.60897 12.427L7.69491 7.01327C7.5559 6.18991 8.42753 5.56889 9.16034 5.96918L23.2061 13.6415C23.9082 14.025 23.8981 15.0368 23.1884 15.4062L9.12742 22.7239C8.39617 23.1045 7.5444 22.4865 7.67923 21.6733L8.60974 16.061C8.6846 15.6094 9.05651 15.2663 9.51264 15.2281L17.4425 14.5626C17.5915 14.5501 17.7061 14.4255 17.7061 14.2759C17.7061 14.1273 17.5929 14.0031 17.4449 13.9895Z" fill="white"/></svg>',
+		arrow: `<svg width="79" height="40" viewBox="0 0 79 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M78.4419 17.4419C78.686 17.1979 78.686 16.8021 78.4419 16.5581L74.4645 12.5806C74.2204 12.3365 73.8247 12.3365 73.5806 12.5806C73.3365 12.8247 73.3365 13.2204 73.5806 13.4645L77.1161 17L73.5806 20.5355C73.3365 20.7796 73.3365 21.1753 73.5806 21.4194C73.8247 21.6635 74.2204 21.6635 74.4645 21.4194L78.4419 17.4419ZM0 17.625H78V16.375H0V17.625Z" fill="${AppTheme.colors.base4}"/><circle cx="38.5" cy="16.5" r="16.5" fill="${AppTheme.colors.accentSoftBlue2}"/><g filter="url(#filter0_d_903_264448)"><path d="M32.4248 15.3508L41.6501 16.1936V16.7298L32.4248 17.496L31 26L49 16.7298L31 7L32.4248 15.3508Z" fill="${AppTheme.colors.accentExtraAqua}"/></g><defs><filter id="filter0_d_903_264448" x="22.3077" y="2.65385" width="35.3846" height="36.3846" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="4.34615"/><feGaussianBlur stdDeviation="4.34615"/><feComposite in2="hardAlpha" operator="out"/><feColorMatrix type="matrix" values="0 0 0 0 0.184314 0 0 0 0 0.776471 0 0 0 0 0.964706 0 0 0 0.28 0"/><feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_903_264448"/><feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_903_264448" result="shape"/></filter></defs></svg>`,
+		buttonIcon: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.4449 13.9895L9.50309 13.2563C9.05148 13.2146 8.68447 12.8742 8.60897 12.427L7.69491 7.01327C7.5559 6.18991 8.42753 5.56889 9.16034 5.96918L23.2061 13.6415C23.9082 14.025 23.8981 15.0368 23.1884 15.4062L9.12742 22.7239C8.39617 23.1045 7.5444 22.4865 7.67923 21.6733L8.60974 16.061C8.6846 15.6094 9.05651 15.2663 9.51264 15.2281L17.4425 14.5626C17.5915 14.5501 17.7061 14.4255 17.7061 14.2759C17.7061 14.1273 17.5929 14.0031 17.4449 13.9895Z" fill="${AppTheme.colors.baseWhiteFixed}"/></svg>`,
 	};
 
 	const styles = {
 		container: {
 			flexDirection: 'column',
 			flex: 1,
-			backgroundColor: '#eef2f4',
 		},
 		containerInner: {
 			flex: 1,
 			borderRadius: 12,
 		},
 		heroScreenContainer: {
-			backgroundColor: '#e5f9ff',
+			backgroundColor: AppTheme.colors.accentSoftBlue2,
 			borderRadius: 12,
 			paddingVertical: 28,
 			paddingHorizontal: 10,
@@ -767,12 +777,12 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 		heroScreenTitle: {
 			textAlign: 'center',
 			fontSize: 19,
-			color: '#333333',
+			color: AppTheme.colors.base1,
 		},
 		heroScreenDescription: {
 			textAlign: 'center',
 			fontSize: 14,
-			color: '#525c69',
+			color: AppTheme.colors.base2,
 			marginTop: 11,
 			lineHeightMultiple: 1.2,
 		},
@@ -784,7 +794,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 			height: 260,
 			borderRadius: 130,
 			borderWidth: 45,
-			borderColor: '#ffffff',
+			borderColor: AppTheme.colors.baseWhiteFixed,
 			opacity: 0.4,
 		},
 		heroScreenTopRightCircle: {
@@ -795,7 +805,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 			height: 198,
 			borderRadius: 99,
 			borderWidth: 26,
-			borderColor: '#ffffff',
+			borderColor: AppTheme.colors.bgSeparatorPrimary,
 			opacity: 0.4,
 		},
 		heroScreenIconsContainer: {
@@ -821,7 +831,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 		},
 		heroScreenIconText: {
 			fontSize: 12,
-			color: '#828b95',
+			color: AppTheme.colors.base3,
 			flex: 1,
 			textAlign: 'center',
 		},
@@ -837,7 +847,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 		sendButtonContainer: (active) => {
 			return {
 				borderRadius: 24,
-				backgroundColor: (active ? withPressed('#9dcf00') : '#bdc1c6'),
+				backgroundColor: (active ? withPressed(AppTheme.colors.accentMainSuccess) : AppTheme.colors.base5),
 				paddingVertical: 11,
 				paddingHorizontal: 37,
 				justifyContent: 'center',
@@ -846,7 +856,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 			};
 		},
 		sendButtonText: {
-			color: '#ffffff',
+			color: AppTheme.colors.baseWhiteFixed,
 			fontWeight: '500',
 			fontSize: 17,
 			textAlign: 'center',

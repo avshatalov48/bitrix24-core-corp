@@ -20,6 +20,11 @@ jn.define('crm/ajax/category', (require, exports, module) => {
 			return 'crmmobile.Category';
 		}
 
+		getTtl()
+		{
+			return 7 * 24 * 3600; // 7 days
+		}
+
 		/**
 		 * @param {Number} entityTypeId
 		 * @param {Object} fields

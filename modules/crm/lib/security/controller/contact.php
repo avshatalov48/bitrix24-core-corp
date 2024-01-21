@@ -32,6 +32,13 @@ class Contact extends Base
 		];
 	}
 
+	//region Observable
+	public function isObservable(): bool
+	{
+		return true;
+	}
+	//endregion
+
 	protected static function getEnabledFlagOptionName(): string
 	{
 		return '~CRM_SECURITY_CONTACT_CONTROLLER_ENABLED';

@@ -5,10 +5,22 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\Tasks\Helper\RestrictionUrl;
 
 Extension::load(array("ui.graph.circle", "ui.buttons.icons", "ui.design-tokens", "ui.fonts.opensans"));
 
 $isIFrame = (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y');
+
+/** intranet-settings-support */
+if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
+{
+	$APPLICATION->IncludeComponent("bitrix:tasks.error", "limit", [
+		'LIMIT_CODE' => RestrictionUrl::TASK_LIMIT_OFF_SLIDER_URL,
+		'SOURCE' => 'effective',
+	]);
+
+	return;
+}
 
 if (isset($arResult["ERROR"]) && !empty($arResult["ERROR"]))
 {

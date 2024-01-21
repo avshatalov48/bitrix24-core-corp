@@ -1,4 +1,3 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,main_core,main_popup) {
@@ -48,15 +47,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId] = params.entityTypeId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings] = params.settings;
 	    if (!main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings].optionName)) {
-	      throw 'Option name are not defined.';
+	      throw new Error('Option name are not defined.');
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _selectedOffsets)[_selectedOffsets] = babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings].currentOffsets || [];
+	    babelHelpers.classPrivateFieldLooseBase(this, _selectedOffsets)[_selectedOffsets] = babelHelpers.classPrivateFieldLooseBase(this, _selectedOffsets)[_selectedOffsets].map(element => parseInt(element, 10));
 	    if (!main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings].currentOffsets)) {
-	      throw 'Offsets are not defined.';
+	      throw new Error('Offsets are not defined.');
 	    }
 	  }
 	  setSelectedValues(values) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _selectedOffsets)[_selectedOffsets] = values;
+	    babelHelpers.classPrivateFieldLooseBase(this, _selectedOffsets)[_selectedOffsets] = values.map(element => parseInt(element, 10));
 	  }
 	  getItems() {
 	    const items = [];
@@ -78,9 +78,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    items.push({
 	      id: item.id,
 	      text: item.title,
-	      className: babelHelpers.classPrivateFieldLooseBase(this, _getMenuItemClass)[_getMenuItemClass](item.offset),
+	      className: babelHelpers.classPrivateFieldLooseBase(this, _getMenuItemClass)[_getMenuItemClass](parseInt(item.offset, 10)),
 	      disabled: babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading](),
-	      onclick: babelHelpers.classPrivateFieldLooseBase(this, _onMenuItemClick)[_onMenuItemClick].bind(this, item.offset)
+	      onclick: babelHelpers.classPrivateFieldLooseBase(this, _onMenuItemClick)[_onMenuItemClick].bind(this, parseInt(item.offset, 10))
 	    });
 	  });
 	  return items;
@@ -95,7 +95,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _isLoadingMenuItem)[_isLoadingMenuItem] = true;
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _selectedOffsets)[_selectedOffsets].includes(offset)) {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _selectedOffsets)[_selectedOffsets].length === 1) {
-	      BX.UI.Hint.show(item.getContainer(), 'At least one item must be selected');
+	      BX.UI.Hint.show(item.getContainer(), main_core.Loc.getMessage('CRM_ACTIVITY_TODO_PING_SETTINGS_MENU_ITEM_TOOLTIP'));
+	      babelHelpers.classPrivateFieldLooseBase(this, _isLoadingMenuItem)[_isLoadingMenuItem] = false;
 	      return;
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _selectedOffsets)[_selectedOffsets] = babelHelpers.classPrivateFieldLooseBase(this, _selectedOffsets)[_selectedOffsets].filter(value => value !== offset);
@@ -107,8 +108,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    main_core.Dom.addClass(item.getContainer(), MENU_ITEM_CLASS_ACTIVE);
 	  }
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _selectedOffsets)[_selectedOffsets].length === 0) {
-	    throw 'Offsets are not defined.';
-	    return;
+	    throw new Error('Offsets are not defined.');
 	  }
 	  setTimeout(() => {
 	    BX.userOptions.save('crm', babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings].optionName, 'offsets', babelHelpers.classPrivateFieldLooseBase(this, _selectedOffsets)[_selectedOffsets].join(','));

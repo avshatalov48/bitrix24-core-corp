@@ -1,0 +1,11 @@
+.crm-ai-form-fill__close-confirm {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+}
+
+.crm-ai-form-fill__close-confirm .popup-window-overlay {
+	border-radius: var(--layout-border-radius);
+}

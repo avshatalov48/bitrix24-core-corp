@@ -2,6 +2,7 @@
  * @module layout/ui/range-slider
  */
 jn.define('layout/ui/range-slider', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { EventEmitter } = require('event-emitter');
 	const { throttle, debounce } = require('utils/function');
 	const nothing = () => {};
@@ -30,19 +31,19 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 						},
 						clickable: this.enabled,
 						onPan: () => {},
-						onTouchesBegan: ({x}) => {
+						onTouchesBegan: ({ x }) => {
 							this.wrapperRef.onTouchesBegan(x);
 						},
-						onTouchesMoved: ({ x}) => {
+						onTouchesMoved: ({ x }) => {
 							this.wrapperRef.onTouchesMoved(x);
 						},
-						onTouchesEnded: ({ x}) => {
-							this.wrapperRef.onTouchesEnded(x)
+						onTouchesEnded: ({ x }) => {
+							this.wrapperRef.onTouchesEnded(x);
 						},
 					},
 					new RangeSliderWrapper({
 						...this.props,
-						ref: ref => this.wrapperRef = ref,
+						ref: (ref) => this.wrapperRef = ref,
 					}),
 				),
 			);
@@ -62,7 +63,7 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 				currentValue: 0,
 			};
 
-			this.updatePosition = throttle(({position, callback}) => {
+			this.updatePosition = throttle(({ position, callback }) => {
 				this.setState({
 					position,
 				}, callback);
@@ -89,7 +90,7 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 		{
 			if (props.player)
 			{
-				props.player.on('timeupdate', ({currentTime}) => {
+				props.player.on('timeupdate', ({ currentTime }) => {
 					if (this.isTouchEnd)
 					{
 						this.setState({
@@ -174,7 +175,7 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						backgroundColor: '#E0F7FE',
+						backgroundColor: AppTheme.colors.accentSoftBlue2,
 						maxHeight: 6,
 						flex: 1,
 						flexDirection: 'column',
@@ -187,7 +188,7 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 						marginLeft: 10,
 						marginRight: 10,
 					},
-					onLayout: ({width}) => {
+					onLayout: ({ width }) => {
 						this.rangeSliderWidth = width;
 					},
 					clickable: false,
@@ -201,7 +202,7 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						backgroundColor: '#2FC6F6',
+						backgroundColor: AppTheme.colors.accentBrandBlue,
 						height: 6,
 						width: this.state.position,
 						borderRadius: 3,
@@ -221,16 +222,16 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 
 			const minutes = this.getMinutes(this.maximumValue);
 
-			const divisions = Array.from({length: minutes}).map((division, index) => (
+			const divisions = Array.from({ length: minutes }).map((division, index) => (
 				View(
 					{
 						style: {
 							height: 4,
 							width: 1,
-							backgroundColor: '#2FC6F6',
+							backgroundColor: AppTheme.colors.accentBrandBlue,
 							position: 'absolute',
 							top: 1,
-							left: this.getPositionByValue((index + 1) * SECONDS_COUNT)
+							left: this.getPositionByValue((index + 1) * SECONDS_COUNT),
 						},
 						clickable: false,
 					},
@@ -254,8 +255,8 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 						height: 20,
 						borderRadius: 10,
 						borderWidth: 1,
-						borderColor: '#d5d7db',
-						backgroundColor: '#FFFFFF',
+						borderColor: AppTheme.colors.bgSeparatorPrimary,
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						marginLeft: -10,
 					},
 					clickable: false,
@@ -287,7 +288,7 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 				Text(
 					{
 						style: {
-							color: '#A8ADB4',
+							color: AppTheme.colors.base4,
 							fontSize: 10,
 							minWidth: 50,
 							textAlign: 'right',
@@ -324,7 +325,7 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 				Text(
 					{
 						style: {
-							color: this.active ? '#2FC6F6' :'#A8ADB4',
+							color: this.active ? AppTheme.colors.accentBrandBlue : AppTheme.colors.base4,
 							fontSize: 10,
 							minWidth: 50,
 						},
@@ -335,7 +336,7 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 				Text(
 					{
 						style: {
-							color: '#A8ADB4',
+							color: AppTheme.colors.base4,
 							fontSize: 10,
 							minWidth: 50,
 							textAlign: 'right',
@@ -371,7 +372,7 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 				this.freezeTouchEnd(true);
 
 				this.setState({
-					position: this.getPosition(x, this.rangeSliderWidth)
+					position: this.getPosition(x, this.rangeSliderWidth),
 				}, () => {
 					this.onSlidingComplete();
 				});
@@ -388,7 +389,7 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 				return;
 			}
 
-			this.updatePosition({position, callback});
+			this.updatePosition({ position, callback });
 		}
 
 		getPosition(position, rangeSliderWidth)

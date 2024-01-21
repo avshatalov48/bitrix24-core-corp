@@ -2,12 +2,13 @@
  * @module catalog/store/product-list/services/product-details-adapter
  */
 jn.define('catalog/store/product-list/services/product-details-adapter', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	/**
 	 * @class StoreProductDetailsAdapter
 	 */
 	class StoreProductDetailsAdapter
 	{
-		constructor({root, measures, catalog, document, onUpdate})
+		constructor({ root, measures, catalog, document, onUpdate })
 		{
 			/** @type StoreProductList */
 			this.root = root;
@@ -24,7 +25,7 @@ jn.define('catalog/store/product-list/services/product-details-adapter', (requir
 		{
 			if (this.root.isMounted())
 			{
-				const updatedItems = this.root.getItems().map(item => {
+				const updatedItems = this.root.getItems().map((item) => {
 					return item.id === productData.id ? productData : item;
 				});
 
@@ -36,7 +37,7 @@ jn.define('catalog/store/product-list/services/product-details-adapter', (requir
 		{
 			const state = this.root.getState();
 
-			const product = state.items.find(item => item.id === recordId);
+			const product = state.items.find((item) => item.id === recordId);
 			const measures = this.measures;
 			const permissions = state.permissions;
 			const catalog = this.catalog;
@@ -58,16 +59,17 @@ jn.define('catalog/store/product-list/services/product-details-adapter', (requir
 					backdrop: {
 						onlyMediumPosition: false,
 						mediumPositionPercent: 80,
-						navigationBarColor: '#EEF2F4',
+						navigationBarColor: AppTheme.colors.bgSecondary,
 						horizontalSwipeAllowed: false,
 					},
-				}
+				},
 			});
 		}
 
 		on(eventName, callback)
 		{
 			BX.addCustomEvent(eventName, callback);
+
 			return this;
 		}
 	}

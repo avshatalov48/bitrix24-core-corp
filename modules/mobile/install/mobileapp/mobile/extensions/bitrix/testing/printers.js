@@ -3,6 +3,8 @@
  */
 jn.define('testing/printers', (require, exports, module) => {
 
+	const AppTheme = require('apptheme');
+
 	/**
 	 * @abstract
 	 */
@@ -28,7 +30,7 @@ jn.define('testing/printers', (require, exports, module) => {
 
 			const nothing = () => {};
 
-			report.log.forEach(record => {
+			report.log.forEach((record) => {
 				const handler = recordHandlers[record.type] || nothing;
 				handler(record);
 			});
@@ -52,8 +54,8 @@ jn.define('testing/printers', (require, exports, module) => {
 		printFail({ message, expected, actual })
 		{
 			console.group(`🛑 [fail] ${message}`);
-			console.log('expected: ', expected);
-			console.log('actual: ', actual);
+			console.log('expected:', expected);
+			console.log('actual:', actual);
 			console.groupEnd();
 		}
 	}
@@ -75,10 +77,11 @@ jn.define('testing/printers', (require, exports, module) => {
 					style: {
 						paddingHorizontal: 12,
 						marginBottom: 24,
-					}
+					},
 				},
-				...report.log.map(record => {
+				...report.log.map((record) => {
 					const handler = recordHandlers[record.type] || nothing;
+
 					return handler(record);
 				}),
 			);
@@ -91,16 +94,15 @@ jn.define('testing/printers', (require, exports, module) => {
 					style: {
 						marginTop: 24,
 						marginBottom: 12,
-					}
+					},
 				},
 				Text({
 					text: title,
 					style: {
 						fontWeight: 'bold',
 						fontSize: 18,
-						color: '#333333',
-					}
-				})
+					},
+				}),
 			);
 		}
 
@@ -110,13 +112,12 @@ jn.define('testing/printers', (require, exports, module) => {
 				{
 					style: {
 						marginBottom: 6,
-					}
+					},
 				},
 				Text({
 					text: `✅ [ok] ${message}`,
 					fontSize: 16,
-					color: '#333333',
-				})
+				}),
 			);
 		}
 
@@ -126,15 +127,15 @@ jn.define('testing/printers', (require, exports, module) => {
 				{
 					style: {
 						marginBottom: 12,
-					}
+					},
 				},
 				Text({
 					text: `🛑 [fail] ${message}`,
 					style: {
 						fontSize: 16,
 						fontWeight: 'bold',
-						color: '#ff0000'
-					}
+						color: AppTheme.colors.accentMainAlert,
+					},
 				}),
 				View(
 					{
@@ -144,18 +145,16 @@ jn.define('testing/printers', (require, exports, module) => {
 						},
 					},
 					Text({
-						text: 'expected: ' + JSON.stringify(expected),
+						text: `expected: ${JSON.stringify(expected)}`,
 						style: {
-							color: '#333333',
 							fontSize: 14,
-						}
+						},
 					}),
 					Text({
-						text: 'actual: ' + JSON.stringify(actual),
+						text: `actual: ${JSON.stringify(actual)}`,
 						style: {
-							color: '#333333',
 							fontSize: 14,
-						}
+						},
 					}),
 				),
 			);
@@ -166,5 +165,4 @@ jn.define('testing/printers', (require, exports, module) => {
 		ConsolePrinter,
 		JnLayoutPrinter,
 	};
-
 });

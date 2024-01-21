@@ -10,7 +10,6 @@ use CUtil;
 
 class OpenAction extends BaseAction
 {
-
 	public function __construct(protected string $viewUrl, protected int $width = 1100, protected string $loader = 'default-loader')
 	{
 	}

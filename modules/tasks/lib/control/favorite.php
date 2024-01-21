@@ -6,11 +6,8 @@ use Bitrix\Tasks\Internals\Task\FavoriteTable;
 
 class Favorite
 {
-	private $userId;
-
-	public function __construct(int $userId)
+	public function __construct(private int $userId)
 	{
-		$this->userId = $userId;
 	}
 
 	/**

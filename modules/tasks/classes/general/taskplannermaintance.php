@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Internals\TaskTable;
 
 class CTaskPlannerMaintance
@@ -104,9 +105,10 @@ class CTaskPlannerMaintance
 		$taskAddUrl = \Bitrix\Tasks\UI\Task::makeActionUrl($pathTemplate, 0, 'edit', self::$USER_ID);
 		$taskAddUrl .= '?'.http_build_query(['ADD_TO_TIMEMAN' => 'Y']);
 
+		$isTasksEnabled = (new Settings())->isToolAvailable(Settings::TOOLS['base_tasks']);
 		$arResult = [
 			'DATA' => [
-				'TASKS_ENABLED' => true,
+				'TASKS_ENABLED' => $isTasksEnabled,
 				'TASKS' => $tasks,
 				'TASKS_COUNT' => $tasksCount,
 				'TASKS_TIMER' => $lastTimer,

@@ -1,10 +1,11 @@
-import { Type } from "main.core";
+import { Type } from 'main.core';
 
 export type SchemeItemData = {
 	id: string,
 	name: string,
 	entityTypeIds: number[],
 	phrase: string,
+	availabilityLock?: string,
 };
 
 /**
@@ -16,12 +17,14 @@ export class SchemeItem
 	#name: string;
 	#entityTypeIds: number[];
 	#phrase: string;
+	#availabilityLock: string;
 
 	constructor(params: SchemeItemData)
 	{
 		this.#id = String(params.id);
 		this.#name = String(params.name);
 		this.#phrase = String(params.phrase);
+		this.#availabilityLock = String(params.availabilityLock);
 
 		this.#entityTypeIds = [];
 		if (Type.isArray(params.entityTypeIds))
@@ -50,5 +53,10 @@ export class SchemeItem
 	getPhrase(): string
 	{
 		return this.#phrase;
+	}
+
+	getAvailabilityLock(): string
+	{
+		return this.#availabilityLock;
 	}
 }

@@ -168,7 +168,6 @@ function showText()
 }
 
 <?php if (!$arResult['FORM_DATA']['APP_ID']): ?>
-
 const tagSelector = new BX.UI.EntitySelector.TagSelector({
 	id: 'user-selector',
 	textBoxAutoHide: true,

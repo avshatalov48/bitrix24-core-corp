@@ -7,6 +7,7 @@ return [
 		'require-lazy',
 		'qrauth/utils',
 		'utils/prop',
+		'apptheme',
 		'crm:loc',
 		'crm:type',
 	],

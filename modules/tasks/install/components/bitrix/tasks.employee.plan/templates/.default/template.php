@@ -7,9 +7,21 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\UI;
 
 Extension::load(['ui.design-tokens', 'ui.buttons']);
+
+/** intranet-settings-support */
+if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
+{
+	$APPLICATION->IncludeComponent("bitrix:tasks.error", "limit", [
+		'LIMIT_CODE' => RestrictionUrl::TASK_LIMIT_OFF_SLIDER_URL,
+		'SOURCE' => 'employee_plan',
+	]);
+
+	return;
+}
 
 $APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.topmenu',

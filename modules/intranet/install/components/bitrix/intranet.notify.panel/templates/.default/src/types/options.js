@@ -20,6 +20,7 @@ export type LicenseNotificationPopupOptions = {
 	expireDate: number,
 	blockDate: number,
 	isExpired: boolean,
+	isCIS: boolean,
 	type: 'almost-expired' | 'expired',
 }
 

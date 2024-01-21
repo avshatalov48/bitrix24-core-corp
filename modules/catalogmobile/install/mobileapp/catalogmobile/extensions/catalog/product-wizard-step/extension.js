@@ -1,6 +1,8 @@
-(() =>
-{
-	const { FieldEditorStep } = jn.require('layout/ui/wizard/step/field-editor');
+(() => {
+	const require = (ext) => jn.require(ext);
+
+	const { FieldEditorStep } = require('layout/ui/wizard/step/field-editor');
+	const AppTheme = require('apptheme');
 
 	const styles = {
 		footer: {
@@ -11,14 +13,14 @@
 			},
 			text: {
 				fontSize: 14,
-				color: '#A8ADB4',
+				color: AppTheme.colors.base4,
 			},
 			link: {
 				fontSize: 14,
-				color: '#A8ADB4',
+				color: AppTheme.colors.base4,
 				textDecorationLine: 'underline',
 				textDecorationUnderlineStyle: 'dot',
-			}
+			},
 		},
 	};
 
@@ -62,12 +64,12 @@
 
 		notifyAboutDataChanges()
 		{
-			BX.postComponentEvent("onCatalogProductWizardProgress", [this.entity.getFields()]);
+			BX.postComponentEvent('onCatalogProductWizardProgress', [this.entity.getFields()]);
 		}
 
 		setDefaultValues(defaultValues)
 		{
-			Object.keys(defaultValues).forEach(fieldId => {
+			Object.keys(defaultValues).forEach((fieldId) => {
 				if (this.entity.get(fieldId, null) === null)
 				{
 					this.entity.set(fieldId, defaultValues[fieldId]);

@@ -1,15 +1,14 @@
 (() => {
-
 	this.renderDestinationList = ({
 		recipients,
 		useContainer,
 		limit,
 	}) => {
+		const result = [];
 
-		let result = [];
-
-		for (let [type, items] of Object.entries(recipients)) {
-			items.forEach(element => {
+		for (const [type, items] of Object.entries(recipients))
+		{
+			items.forEach((element) => {
 				if (
 					type === 'users'
 					&& element.id === 'A'
@@ -21,7 +20,7 @@
 				{
 					result.push(element.title);
 				}
-			})
+			});
 		}
 
 		let value = '';
@@ -33,7 +32,7 @@
 		}
 		else
 		{
-			limit = (limit ? limit : 3);
+			limit = (limit || 3);
 
 			value = (
 				listCount > limit
@@ -48,6 +47,5 @@
 				? BX.message('MOBILE_EXT_LAYOUT_POSTFORM_DESTINATION_CONTAINER2').replace('#DESTINATIONS#', value)
 				: value
 		);
-	}
-
+	};
 })();

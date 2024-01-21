@@ -2,48 +2,67 @@
  * @module crm/category-list-view
  */
 jn.define('crm/category-list-view', (require, exports, module) => {
-	const { mergeImmutable, isEqual } = require('utils/object');
-	const { NotifyManager } = require('notify-manager');
-	const { CategoryStorage } = require('crm/storage/category');
-	const { CategoryList } = require('crm/category-list');
-	const { StageSelectActions } = require('crm/stage-list/actions');
-	const { NavigationLoader } = require('navigation-loader');
-	const { StageListView } = require('crm/stage-list-view');
-	const { PlanRestriction } = require('layout/ui/plan-restriction');
+	const AppTheme = require('apptheme');
 	const { throttle } = require('utils/function');
+	const { NotifyManager } = require('notify-manager');
+	const { NavigationLoader } = require('navigation-loader');
+	const { PureComponent } = require('layout/pure-component');
+	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
+
+	const { StageSelectActions } = require('layout/ui/stage-list/actions');
+	const { PlanRestriction } = require('layout/ui/plan-restriction');
+
 	const { TypeId } = require('crm/type/id');
+	const { CategoryList } = require('crm/category-list');
+
+	const {
+		getCrmKanbanUniqId,
+		fetchCrmKanbanList,
+		selectRestrictions,
+		selectByEntityTypeId,
+		selectCanUserEditCategory,
+		createCrmKanban,
+		selectIsFetchedList,
+	} = require('crm/statemanager/redux/slices/kanban-settings');
+	const { connect } = require('statemanager/redux/connect');
 
 	const DEAL_CATEGORY_LIMIT_RESTRICTION_NAME = 'crm_clr_cfg_deal_category';
 
 	/**
 	 * @class CategoryListView
 	 */
-	class CategoryListView extends LayoutComponent
+	class CategoryListView extends PureComponent
 	{
+		static getWidgetParams(selectAction)
+		{
+			return {
+				modal: true,
+				title: CategoryListView.getNavigationTitle(selectAction),
+				backgroundColor: AppTheme.colors.bgSecondary,
+				backdrop: {
+					showOnTop: true,
+					forceDismissOnSwipeDown: true,
+					horizontalSwipeAllowed: false,
+					swipeContentAllowed: false,
+					navigationBarColor: AppTheme.colors.bgSecondary,
+				},
+			};
+		}
+
 		static open(props, widgetParams = {}, parentWidget = PageManager)
 		{
 			return new Promise((resolve) => {
 				const { selectAction } = props;
-				const params = {
-					modal: true,
-					title: this.getNavigationTitle(selectAction),
-					backgroundColor: '#eef2f4',
-					backdrop: {
-						showOnTop: true,
-						forceDismissOnSwipeDown: true,
-						horizontalSwipeAllowed: false,
-						swipeContentAllowed: false,
-						navigationBarColor: '#eef2f4',
-					},
-				};
-
 				parentWidget
-					.openWidget('layout', mergeImmutable(params, widgetParams))
+					.openWidget('layout', CategoryListView.getWidgetParams(selectAction))
 					.then((layout) => {
-						layout.showComponent(new this({ ...props, layout }));
+						layout.enableNavigationBarBorder(false);
+						layout.showComponent(connect(mapStateToProps, mapDispatchToProps)(this)({ layout, ...props }));
 						resolve(layout);
 					})
-				;
+					.catch((error) => {
+						console.error(error);
+					});
 			});
 		}
 
@@ -63,88 +82,73 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 		constructor(props)
 		{
 			super(props);
-
-			this.layout = props.layout || layout;
-
-			CategoryStorage
-				.subscribeOnChange(() => this.reloadCategoryList())
-				.subscribeOnLoading(({ status }) => NavigationLoader.setLoading(status, this.layout))
-				.markReady()
-			;
-
-			this.state = {
-				categoryList: this.getCategoryListFromStorage(props.entityTypeId),
-			};
+			this.navigationLoader = NavigationLoader.getInstance(this.layout);
 
 			this.createCategoryHandler = throttle(this.createCategory, 500, this);
 			this.editCategoryHandler = throttle(this.openEditCategory, 500, this);
 			this.openStageListHandler = throttle(this.openStageList, 500, this);
 		}
 
-		componentWillReceiveProps(newProps)
+		get layout()
 		{
-			this.state.categoryList = this.getCategoryListFromStorage(newProps.entityTypeId);
+			return BX.prop.get(this.props, 'layout', null);
+		}
+
+		get entityTypeId()
+		{
+			return BX.prop.getNumber(this.props, 'entityTypeId', null);
+		}
+
+		get kanbanSettingsList()
+		{
+			return BX.prop.getArray(this.props, 'kanbanSettingsList', []);
+		}
+
+		get restrictions()
+		{
+			return BX.prop.getArray(this.props, 'restrictions', []);
+		}
+
+		get canUserEditCategory()
+		{
+			return BX.prop.getBoolean(this.props, 'canUserEditCategory', false);
+		}
+
+		get isFetchedList()
+		{
+			return BX.prop.getBoolean(this.props, 'isFetchedList', false);
 		}
 
 		componentDidMount()
 		{
-			BX.addCustomEvent('Crm.CategoryDetail::onDeleteCategory', () => this.getCategoryListFromStorage(this.props.entityTypeId));
-			BX.addCustomEvent('Crm.CategoryDetail::onClose', () => this.getCategoryListFromStorage(this.props.entityTypeId));
+			this.layout.setListener((eventName) => {
+				if (eventName === 'onViewHidden' || eventName === 'onViewRemoved')
+				{
+					this.handleOnViewHidden();
+				}
+			});
 
-			this.layout.enableNavigationBarBorder(false);
-		}
-
-		getCategoryListFromStorage(entityTypeId)
-		{
-			return CategoryStorage.getCategoryList(entityTypeId);
-		}
-
-		reloadCategoryList()
-		{
-			const categoryList = this.getCategoryListFromStorage(this.props.entityTypeId);
-			if (!isEqual(this.state.categoryList, categoryList))
+			if (!this.isFetchedList)
 			{
-				this.setState({ categoryList });
+				this.props.fetchCrmKanbanList({ entityTypeId: this.entityTypeId })
+					.unwrap()
+					.catch(() => {
+						NavigationLoader.showDefaultError();
+					});
 			}
 		}
 
-		/**
-		 * @return {*[]}
-		 */
-		getCategories()
+		handleOnViewHidden()
 		{
-			if (!this.state.categoryList)
+			const { onViewHidden } = this.props;
+
+			if (typeof onViewHidden === 'function')
 			{
-				return [];
+				onViewHidden({
+					selectedStage: this.selectedStage,
+					selectedKanbanSettings: this.selectedKanbanSettings,
+				});
 			}
-
-			return this.state.categoryList.categories;
-		}
-
-		/**
-		 * @return {*[]}
-		 */
-		getRestrictions()
-		{
-			if (!this.state.categoryList || !Array.isArray(this.state.categoryList.restrictions))
-			{
-				return [];
-			}
-
-			return this.state.categoryList.restrictions;
-		}
-
-		/**
-		 * @return {Boolean}
-		 */
-		canUserEditCategory()
-		{
-			if (!this.state.categoryList)
-			{
-				return false;
-			}
-
-			return this.state.categoryList.canUserEditCategory;
 		}
 
 		render()
@@ -153,23 +157,22 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 				{
 					style: {
 						flexDirection: 'column',
-						backgroundColor: '#eef2f4',
 					},
 				},
-				this.state.categoryList === null ? this.renderLoader() : this.renderContent(),
+				this.isFetchedList ? this.renderContent() : this.renderLoader(),
 			);
 		}
 
 		renderLoader()
 		{
-			return new LoadingScreenComponent({ backgroundColor: '#eef2f4' });
+			return new LoadingScreenComponent({ backgroundColor: AppTheme.colors.bgPrimary });
 		}
 
 		renderContent()
 		{
 			const showCounters = BX.prop.getBoolean(this.props, 'showCounters', true);
 			const showTunnels = BX.prop.getBoolean(this.props, 'showTunnels', true);
-			const categories = this.getCategories();
+
 			const {
 				currentCategoryId,
 				entityTypeId,
@@ -180,20 +183,21 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 				enableSelect, disabledCategoryIds, uid,
 			} = this.props;
 
-			let currentCategory = categories.find((category) => category.id === currentCategoryId);
+			let currentCategory = this.kanbanSettingsList.find((category) => category.categoryId === currentCategoryId);
+
 			if (!currentCategory && currentCategoryId !== null)
 			{
-				currentCategory = categories[0];
+				currentCategory = this.kanbanSettingsList[0];
 			}
 
 			return new CategoryList({
 				entityTypeId,
-				currentCategoryId: currentCategory && currentCategory.id,
+				currentCategoryId: currentCategory && currentCategory.categoryId,
 				needSaveCurrentCategoryId,
-				categories,
+				categories: this.kanbanSettingsList,
 				onCreateCategory: this.createCategoryHandler,
 				onEditCategory: this.editCategoryHandler,
-				canUserEditCategory: this.canUserEditCategory(),
+				canUserEditCategory: this.canUserEditCategory,
 				canUserAddCategory: !this.hasCategoryLimitRestriction(),
 				readOnly,
 				selectAction,
@@ -208,37 +212,29 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 			});
 		}
 
-		openEditCategory(categoryId, categories = null)
+		async openEditCategory(kanbanSettingsId)
 		{
-			categories = categories || this.getCategories();
+			const { CrmKanbanSettings } = await requireLazy('crm:kanban/settings') || {};
 
-			ComponentHelper.openLayout({
-				name: 'crm:crm.category.detail',
-				componentParams: {
-					entityTypeId: this.props.entityTypeId,
-					categoryId,
-					categories,
-				},
-				widgetParams: {
-					modal: true,
-					backgroundColor: '#eef2f4',
-					backdrop: {
-						showOnTop: true,
-						forceDismissOnSwipeDown: true,
-						swipeContentAllowed: false,
-						horizontalSwipeAllowed: false,
-						navigationBarColor: '#eef2f4',
+			if (CrmKanbanSettings)
+			{
+				CrmKanbanSettings.open(
+					{
+						entityTypeId: this.entityTypeId,
+						kanbanSettingsId,
 					},
-				},
-			}, this.layout);
+					this.layout,
+				);
+			}
 		}
 
-		openStageList(category)
+		openStageList(kanbanSettings)
 		{
-			StageListView.open(
-				{
-					entityTypeId: this.props.entityTypeId,
-					categoryId: category.id,
+			void requireLazy('crm:stage-list-view').then(({ CrmStageListView }) => {
+				const props = {
+					entityTypeId: this.entityTypeId,
+					kanbanSettingsId: kanbanSettings.id,
+					categoryId: kanbanSettings.categoryId,
 					activeStageId: this.props.activeStageId,
 					selectAction: this.props.selectAction,
 					uid: this.props.uid,
@@ -247,19 +243,21 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 					stageParams: {
 						showTunnels: true,
 					},
-					onViewHidden: ({ stageAction }) => {
+					onViewHidden: (params) => {
+						this.selectedStage = params.selectedStage;
+						this.selectedKanbanSettings = kanbanSettings;
 						if (
-							stageAction === StageSelectActions.SelectTunnelDestination
-							|| stageAction === StageSelectActions.CreateTunnel
+							params.stageAction === StageSelectActions.SelectTunnelDestination
+							|| params.stageAction === StageSelectActions.CreateTunnel
 						)
 						{
 							this.layout.close();
 						}
 					},
-				},
-				{},
-				this.layout,
-			);
+				};
+
+				void CrmStageListView.open(props, this.layout);
+			});
 		}
 
 		createCategory(categories)
@@ -277,35 +275,50 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 			}
 			else
 			{
-				const { entityTypeId } = this.props;
-
 				NotifyManager.showLoadingIndicator();
 
-				CategoryStorage
-					.createCategory(entityTypeId, {
-						name: BX.message('M_CRM_CATEGORY_LIST_DEFAULT_CATEGORY_NAME2'),
-						sort,
+				this.props.createCrmKanban(
+					{
+						entityTypeId: this.entityTypeId,
+						fields: {
+							name: BX.message('M_CRM_CATEGORY_LIST_DEFAULT_CATEGORY_NAME2'),
+							sort,
+						},
+					},
+				).unwrap()
+					.then((response) => {
+						NotifyManager.hideLoadingIndicator(
+							true,
+							BX.message('M_CRM_CATEGORY_LIST_SUCCESS_CREATION2'),
+							1000,
+						);
+						const {
+							data: categoryId,
+						} = response || {};
+
+						setTimeout(
+							() => this.openEditCategory(getCrmKanbanUniqId(this.entityTypeId, categoryId)),
+							1300,
+						);
 					})
-					.then((id) => {
-						NotifyManager.hideLoadingIndicator(true, BX.message('M_CRM_CATEGORY_LIST_SUCCESS_CREATION2'), 1000);
-						setTimeout(() => this.openEditCategory(id), 1300);
-					})
-					.catch((response) => NotifyManager.showErrors(response.errors))
-				;
+					.catch(() => {
+						NotifyManager.hideLoadingIndicator(false);
+						NotifyManager.showDefaultError();
+					});
 			}
 		}
 
 		getDealCategoryLimitRestriction()
 		{
 			return (
-				this.getRestrictions()
+				this.restrictions
 					.find((restriction) => restriction.name === DEAL_CATEGORY_LIMIT_RESTRICTION_NAME)
 			);
 		}
 
 		hasCategoryLimitRestriction()
 		{
-			if (this.props.entityTypeId !== TypeId.Deal)
+			if (this.entityTypeId !== TypeId.Deal)
 			{
 				return false;
 			}
@@ -315,6 +328,22 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 			return !categoryLimitRestriction || categoryLimitRestriction.isExceeded;
 		}
 	}
+
+	const mapStateToProps = (state, ownProps) => {
+		const { entityTypeId } = ownProps;
+
+		return {
+			kanbanSettingsList: selectByEntityTypeId(state, entityTypeId),
+			restrictions: selectRestrictions(state),
+			canUserEditCategory: selectCanUserEditCategory(state),
+			isFetchedList: selectIsFetchedList(state, entityTypeId),
+		};
+	};
+
+	const mapDispatchToProps = ({
+		fetchCrmKanbanList,
+		createCrmKanban,
+	});
 
 	module.exports = { CategoryListView };
 });

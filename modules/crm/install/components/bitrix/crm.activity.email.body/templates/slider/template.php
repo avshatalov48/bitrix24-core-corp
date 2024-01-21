@@ -3,11 +3,15 @@
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Viewer;
+use Bitrix\Crm\Activity\Provider\Email;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 global $APPLICATION;
 
-\Bitrix\Main\UI\Extension::load('ui.viewer');
+\Bitrix\Main\UI\Extension::load([
+	'ui.viewer',
+	'ui.progressbar',
+]);
 
 if (IsModuleInstalled('disk'))
 {
@@ -139,6 +143,19 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 		\CTimeZone::getOffset()
 	) : null;
 
+$isAjaxBody = $activity['IS_AJAX_EMAIL_BODY'] ?? false;
+$activityId = (int)$activity['ID'];
+$bodyElementId = "activity_{$activityId}_body";
+$controlElementId = "activity_{$activityId}_controls";
+$replyElementId = "activity_{$activityId}_reply";
+$formQuoteFieldName = 'DATA[message]';
+$bodyLoaderElementId = "crm-mail-msg-body-loader-$activityId";
+$bodyDownloadLink = UrlManager::getInstance()
+	->create('bitrix:crm.mail.message.downloadHtmlBody', ['id' => $activityId]);
+$warningWaitElementId = "crm-mail-msg-warning-top-wait-$activityId";
+$warningFailElementId = "crm-mail-msg-warning-top-fail-$activityId";
+$bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
+
 ?>
 
 <div class="crm-task-list-mail-border-bottom">
@@ -218,7 +235,9 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 				</span>
 			</span>
 		</div>
-		<div class="crm-task-list-mail-item-control-block">
+		<div class="crm-task-list-mail-item-control-block"
+			id="<?= htmlspecialcharsbx($controlElementId) ?>"
+			<?php if($isAjaxBody): ?> style="display:none" <?php endif; ?>>
 			<div class="crm-task-list-mail-item-control-inner">
 				<input type="hidden" name="OWNER_TYPE" value="<?=\CCrmOwnerType::resolveName($activity['OWNER_TYPE_ID']) ?>">
 				<input type="hidden" name="OWNER_ID" value="<?=$activity['OWNER_ID'] ?>">
@@ -235,7 +254,30 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 			</div>
 		</div>
 	</div>
-	<div id="activity_<?=$activity['ID'] ?>_body" class="crm-task-list-mail-item-inner-body crm-task-list-mail-item-inner-body-slider crm-mail-message-wrapper"></div>
+	<?php if ($isAjaxBody): ?>
+		<div class="ui-alert ui-alert-warning" id="<?= htmlspecialcharsbx($warningWaitElementId) ?>">
+			<div class="ui-alert-message">
+				<?= Loc::getMessage('CRM_MAIL_MESSAGE_BODY_LOAD_WAIT', [
+					'[download_link]' => "<a href=\"$bodyDownloadLink\" target=\"_blank\">",
+					'[/download_link]' => '</a>',
+				]) ?>
+			</div>
+			<div class="crm-mail-message-alert-progress" id="<?= htmlspecialcharsbx($bodyLoaderElementId) ?>"></div>
+		</div>
+		<div class="ui-alert ui-alert-default"
+			id="<?= htmlspecialcharsbx($warningFailElementId) ?>"
+			style="display:none">
+			<span class="ui-alert-message">
+				<?= Loc::getMessage('CRM_MAIL_MESSAGE_BODY_LOAD_FAIL', [
+					'[download_link]' => "<a href=\"$bodyDownloadLink\" target=\"_blank\">",
+					'[/download_link]' => '</a>',
+				]) ?>
+			</span>
+			<span class="ui-alert-close-btn"></span>
+		</div>
+	<?php endif; ?>
+
+	<div id="<?= htmlspecialcharsbx($bodyElementId) ?>" class="crm-task-list-mail-item-inner-body crm-task-list-mail-item-inner-body-slider crm-mail-message-wrapper"></div>
 </div>
 <? if (!empty($activity['__files'])):
 
@@ -252,7 +294,7 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 		{
 			$attributes->addAction(array(
 				'type' => 'copyToMe',
-				'text' => Loc::getMessage('CRM_ACT_EMAIL_DISK_ACTION_SAVE_TO_OWN_FILES'),
+				'text' => Loc::getMessage('CRM_ACT_EMAIL_DISK_ACTION_SAVE_TO_OWN_FILES_MSGVER_1'),
 				'action' => 'BX.Disk.Viewer.Actions.runActionCopyToMe',
 				'params' => array(
 					'objectId' => $item['objectId'],
@@ -315,7 +357,9 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 		</div>
 	</div>
 <? endif ?>
-<div class="crm-task-list-mail-message-panel crm-task-list-mail-border-bottom">
+<div class="crm-task-list-mail-message-panel crm-task-list-mail-border-bottom"
+	id="<?= htmlspecialcharsbx($replyElementId) ?>"
+	<?php if($isAjaxBody): ?> style="display:none" <?php endif; ?>>
 	<div class="crm-task-list-mail-item-user" <? if (!empty($arParams['USER_IMAGE'])): ?> style="background: url('<?=htmlspecialcharsbx($arParams['USER_IMAGE']) ?>'); background-size: 23px 23px; "<? endif ?>></div>
 	<div class="crm-task-list-mail-message-panel-text"><?=getMessage('CRM_ACT_EMAIL_REPLY') ?></div>
 </div>
@@ -338,7 +382,13 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 	<?
 
 	$inlineFiles = array();
-	$quote = preg_replace_callback(
+	$quote = '';
+	if (isset($activity['DESCRIPTION_HTML']) && $activity['DESCRIPTION_HTML'] && !$isAjaxBody)
+	{
+		$quote = Email::getMessageQuote($activity, $activity['DESCRIPTION_HTML'], true, true);
+	}
+
+	 preg_replace_callback(
 		'#/bitrix/tools/crm_show_file\.php\?fileId=(\d+)#i',
 		function ($matches) use (&$inlineFiles)
 		{
@@ -396,6 +446,8 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 			'FOLD_QUOTE' => true,
 			'FOLD_FILES' => true,
 			'USE_SIGNATURES' => true,
+			'USE_CALENDAR_SHARING' => true,
+			'COPILOT_PARAMS' => $arParams['COPILOT_PARAMS'],
 			'FIELDS' => array(
 				array(
 					'name'     => 'DATA[from]',
@@ -450,9 +502,9 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 					'folded'      => true,
 				),
 				array(
-					'name'   => 'DATA[message]',
+					'name'   => $formQuoteFieldName,
 					'type'   => 'editor',
-					'value'  => $activity['MESSAGE_QUOTE'],
+					'value'  => $quote,
 					'height' => 100,
 				),
 				array(
@@ -486,7 +538,7 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 
 <script type="text/javascript">
 
-document.getElementById('activity_<?=$activity['ID'] ?>_body').innerHTML = '<?=CUtil::jsEscape($arParams['~ACTIVITY']['DESCRIPTION_HTML']) ?>';
+document.getElementById('<?=\CUtil::jsEscape($bodyElementId)?>').innerHTML = '<?=CUtil::jsEscape($arParams['~ACTIVITY']['DESCRIPTION_HTML']) ?>';
 
 try
 {
@@ -502,7 +554,16 @@ BX.ready(function()
 		rcptSelected: <?=\Bitrix\Main\Web\Json::encode($rcptSelected) ?>,
 		rcptAllSelected: <?=\Bitrix\Main\Web\Json::encode($rcptAllSelected) ?>,
 		rcptCcSelected: <?=\Bitrix\Main\Web\Json::encode($rcptCcSelected) ?>,
-		templates: <?=\Bitrix\Main\Web\Json::encode($arParams['TEMPLATES']) ?>
+		templates: <?= \Bitrix\Main\Web\Json::encode($arParams['TEMPLATES']) ?>,
+		bodyElementId: '<?= \CUtil::jsEscape($bodyElementId) ?>',
+		controlElementId: '<?= \CUtil::jsEscape($controlElementId) ?>',
+		replyElementId: '<?= \CUtil::jsEscape($replyElementId) ?>',
+		formQuoteFieldName: '<?= \CUtil::jsEscape($formQuoteFieldName) ?>',
+		warningWaitElementId: '<?= CUtil::JSescape($warningWaitElementId) ?>',
+		warningFailElementId: '<?= CUtil::JSescape($warningFailElementId) ?>',
+		bodyLoaderElementId: '<?= CUtil::JSescape($bodyLoaderElementId) ?>',
+		bodyLoaderMaxTime: <?= (int)$bodyLoaderMaxTime ?>,
+		isAjaxBody: <?= (int)$isAjaxBody ?>,
 	});
 
 	setTimeout(function ()

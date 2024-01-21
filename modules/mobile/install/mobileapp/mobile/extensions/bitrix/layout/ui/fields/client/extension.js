@@ -3,6 +3,7 @@
  */
 jn.define('layout/ui/fields/client', (require, exports, module) => {
 	const { Alert } = require('alert');
+	const AppTheme = require('apptheme');
 	const { magnifier } = require('assets/common');
 	const { EventEmitter } = require('event-emitter');
 	const { AddButton } = require('layout/ui/buttons/add-button');
@@ -115,6 +116,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 
 				categoryParams: BX.prop.getObject(config, 'categoryParams', {}),
 				showClientInfo: BX.prop.getBoolean(config, 'showClientInfo', false),
+				showClientType: BX.prop.getBoolean(config, 'showClientType', true),
 				showClientAdd: BX.prop.getBoolean(config, 'showClientAdd', false),
 				enableMyCompanyOnly: BX.prop.getBoolean(config, 'enableMyCompanyOnly', false),
 				compound: BX.prop.getArray(config, 'compound', []),
@@ -136,6 +138,11 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 		isShowClientInfo()
 		{
 			return this.getConfig().showClientInfo;
+		}
+
+		isShowClientType()
+		{
+			return this.getConfig().showClientType;
 		}
 
 		isMyCompany()
@@ -298,6 +305,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 							onEdit: this.onEditClient,
 							readOnly: this.isReadOnly(),
 							showClientInfo: this.isShowClientInfo(),
+							showClientType: this.isShowClientType(),
 							onOpenBackdrop: () => {
 								this.handleOnOpenBackDrop(contact);
 							},
@@ -305,6 +313,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 								show: !index,
 								onClick: this.onEditClient,
 							},
+							styles: BX.prop.getObject(this.styles, 'element', {}),
 						}),
 					);
 				}),
@@ -633,7 +642,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 			}
 
 			return AddButton({
-				svg: magnifier('#828b95'),
+				svg: magnifier(AppTheme.colors.base3),
 				text: BX.message(`FIELDS_CLIENT_PLACEHOLDER_${selectorType.toUpperCase()}`),
 				deepMergeStyles: {
 					view: {
@@ -644,7 +653,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 					},
 					text: {
 						...this.styles.emptyValue,
-						color: '#525c69',
+						color: AppTheme.colors.base2,
 						fontSize: 15,
 						marginLeft: 7,
 					},
@@ -762,7 +771,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 				.then(({ ENTITY_INFOS }) => {
 					const { [CRM_CONTACT]: prevContacts } = this.getValue();
 					const contacts = ENTITY_INFOS.length > 0
-						? ENTITY_INFOS.map(SelectorProcessing.prepareContact)
+						? ENTITY_INFOS.map((entityInfo) => SelectorProcessing.prepareContact(entityInfo))
 						: [];
 
 					const clientData = {

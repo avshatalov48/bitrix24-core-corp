@@ -34,7 +34,7 @@ export class Otp
 			:
 			Tag.render`<div class="ui-qr-popupcomponentmaker__btn" style="margin-top: auto" onclick="${onclick}">${Loc.getMessage('INTRANET_USER_PROFILE_TURN_ON')}</div>`;
 		const onclickHelp = () => {
-			top.BX.Helper.show('redirect=detail&code=6641271');
+			top.BX.Helper.show('redirect=detail&code=17728602');
 			EventEmitter.emit(EventEmitter.GLOBAL_TARGET, Options.eventNameSpace + ':onOpen');
 		};
 		if (this.isSingle !== true)

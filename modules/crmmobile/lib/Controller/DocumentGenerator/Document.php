@@ -141,9 +141,12 @@ final class Document extends JsonController
 						if ($emailDiskFileId > 0)
 						{
 							$diskFile = \Bitrix\Disk\File::getById($emailDiskFileId);
-							$emailFileDto = \Bitrix\Mobile\UI\File::load($diskFile->getFileId());
-							$channelSelectorComponentParams['storageTypeId'] = \Bitrix\Crm\Integration\StorageType::Disk;
-							$channelSelectorComponentParams['files'] = [$emailDiskFileId];
+							if ($diskFile)
+							{
+								$emailFileDto = \Bitrix\Mobile\UI\File::load($diskFile->getFileId());
+								$channelSelectorComponentParams['storageTypeId'] = \Bitrix\Crm\Integration\StorageType::Disk;
+								$channelSelectorComponentParams['files'] = [$emailDiskFileId];
+							}
 						}
 					}
 					global $APPLICATION;

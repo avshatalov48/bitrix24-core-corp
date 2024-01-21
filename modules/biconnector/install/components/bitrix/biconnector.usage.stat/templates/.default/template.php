@@ -36,11 +36,11 @@ $limitManager = \Bitrix\BIConnector\LimitManager::getInstance();
 $frame = isset($_GET['IFRAME']) && $_GET['IFRAME'] === 'Y' ? '&IFRAME=Y' : '';
 
 $this->SetViewTarget('inside_pagetitle');
-if (isset($_GET['rownum']) && $_GET['rownum'] > 0)
+if (isset($_GET['over_limit']) && $_GET['over_limit'] === 'Y')
 {
 	?>
 	<div class="pagetitle-container pagetitle-align-right-container">
-		<a href="?rownum=<?php echo '0' . $frame;?>" class="ui-btn ui-btn-light-border ui-btn-themes"><?=Loc::getMessage('CT_BBSU_SHOW_ALL')?></a>
+		<a href="?over_limit=<?php echo 'N' . $frame;?>" class="ui-btn ui-btn-light-border ui-btn-themes"><?=Loc::getMessage('CT_BBSU_SHOW_ALL')?></a>
 		<a href="javascript:void(0)" onclick="BX.Main.gridManager.getInstanceById('<?php echo $arResult['GRID_ID']?>').reloadTable('POST')" class="ui-btn ui-btn-primary" title="<?=Loc::getMessage('CT_BBSU_REFRESH')?>"><i class="fa fa-refresh"></i></a>
 	</div>
 	<?php
@@ -49,7 +49,7 @@ elseif ($limitManager->getLimit() > 0)
 {
 	?>
 	<div class="pagetitle-container pagetitle-align-right-container">
-		<a href="?rownum=<?php echo $limitManager->getLimit() . $frame;?>" class="ui-btn ui-btn-light-border ui-btn-themes"><?=Loc::getMessage('CT_BBSU_SHOW_OVERLIMIT')?></a>
+		<a href="?over_limit=<?php echo 'Y' . $frame;?>" class="ui-btn ui-btn-light-border ui-btn-themes"><?=Loc::getMessage('CT_BBSU_SHOW_OVERLIMIT')?></a>
 		<a href="javascript:void(0)" onclick="BX.Main.gridManager.getInstanceById('<?php echo $arResult['GRID_ID']?>').reloadTable('POST')" class="ui-btn ui-btn-primary" title="<?=Loc::getMessage('CT_BBSU_REFRESH')?>"><i class="fa fa-refresh"></i></a>
 	</div>
 	<?php

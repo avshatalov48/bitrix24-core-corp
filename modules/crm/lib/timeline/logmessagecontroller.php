@@ -84,14 +84,17 @@ class LogMessageController extends Controller
 			'SOURCE_ID' => $sourceId,
 			'BINDINGS' => $bindings,
 		];
-		if ($input['ASSOCIATED_ENTITY_TYPE_ID'])
+
+		if (!empty($input['ASSOCIATED_ENTITY_TYPE_ID']))
 		{
 			$params['ASSOCIATED_ENTITY_TYPE_ID'] = $input['ASSOCIATED_ENTITY_TYPE_ID'];
 		}
-		if ($input['ASSOCIATED_ENTITY_ID'])
+
+		if (!empty($input['ASSOCIATED_ENTITY_ID']))
 		{
 			$params['ASSOCIATED_ENTITY_ID'] = $input['ASSOCIATED_ENTITY_ID'];
 		}
+		
 		if (isset($input['CREATED']) && $input['CREATED'])
 		{
 			$params['CREATED'] = $input['CREATED'];

@@ -1,0 +1,12 @@
+.bx-crm-ai-merge-fields-loading {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	/*background-color: #fff;*/
+	/*backdrop-filter: blur(16px); rgba(255, 255, 255, 0.40)*/
+	background-image: url("../images/preloader.svg");
+	background-repeat: no-repeat;
+	background-size: cover;
+}

@@ -5,6 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Service\Container;
+
 CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/activity.js');
 
 \Bitrix\Main\UI\Extension::load([
@@ -50,7 +52,7 @@ else
 		'instagram',
 	];
 }
-$arResult['contactCenterUrl'] = \Bitrix\Main\Loader::includeModule('bitrix24') ? '/contact_center/' : '/services/contact_center/';
+$arResult['contactCenterUrl'] = Container::getInstance()->getRouter()->getContactCenterUrl();
 ?>
 	<div id="channel-selector-container"></div>
 

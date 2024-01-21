@@ -6,6 +6,7 @@ use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\FileTable;
 use Bitrix\Disk\Internals\FolderTable;
+use Bitrix\Disk\Internals\ObjectNameService;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\RightTable;
 use Bitrix\Disk\Internals\SharingTable;
@@ -180,7 +181,7 @@ class Folder extends BaseObject
 		}
 
 		$fileArray['type'] = TypeFile::normalizeMimeType($fileArray['type'], $data['NAME']);
-
+		$fileArray['name'] = $data['NAME'];
 
 		$fileId = CFile::saveFile($fileArray, Driver::INTERNAL_MODULE_ID, true, true);
 		if(!$fileId)
@@ -270,17 +271,21 @@ class Folder extends BaseObject
 			'NAME'
 		));
 
-		if($generateUniqueName)
+		$nameService = new ObjectNameService($data['NAME'], $this->id, ObjectTable::TYPE_FILE);
+		if ($generateUniqueName)
 		{
-			$data['NAME'] = static::generateUniqueName($data['NAME'], $this->id);
+			$nameService->requireUniqueName();
 		}
 
-		if(!static::isUniqueName($data['NAME'], $this->id))
+		$result = $nameService->prepareName();
+		if (!$result->isSuccess())
 		{
-			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_FOLDER_MODEL_ERROR_NON_UNIQUE_NAME'), self::ERROR_NON_UNIQUE_NAME)));
+			$this->errorCollection->add($result->getErrors());
+
 			return null;
 		}
 
+		$data['NAME'] = $result->getName();
 		$data['PARENT_ID'] = $this->id;
 		$data['STORAGE_ID'] = $this->storageId;
 		$data['PARENT'] = $this;
@@ -300,12 +305,12 @@ class Folder extends BaseObject
 		return mb_strpos($exception->getDatabaseMessage(), '(1062)') !== false;
 	}
 
-	private function processAdd(array $data, ErrorCollection $errorCollection, $generateUniqueName = false, $countStepsToGenerateName = 0)
+	private function processAdd(array $data, ErrorCollection $errorCollection, bool $generateUniqueName = false, int $countStepsToGenerateName = 0): File|null
 	{
 		try
 		{
 			$fileModel = File::add($data, $errorCollection);
-			if(!$fileModel)
+			if (!$fileModel)
 			{
 				return null;
 			}
@@ -322,7 +327,14 @@ class Folder extends BaseObject
 					);
 				}
 
-				$data['NAME'] = static::generateUniqueName($data['NAME'], $this->id);
+				$nameService = new ObjectNameService($data['NAME'], $this->id, ObjectTable::TYPE_FILE);
+				$nameService->requireUniqueName();
+
+				$result = $nameService->prepareName();
+				if ($result->isSuccess())
+				{
+					$data['NAME'] = $result->getName();
+				}
 
 				return $this->processAdd(
 					$data,
@@ -472,7 +484,7 @@ class Folder extends BaseObject
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @return null|static|Folder
 	 */
-	public function addSubFolder(array $data, array $rights = array(), $generateUniqueName = false)
+	public function addSubFolder(array $data, array $rights = array(), bool $generateUniqueName = false)
 	{
 		$this->errorCollection->clear();
 
@@ -480,17 +492,21 @@ class Folder extends BaseObject
 			'NAME'
 		));
 
-		if($generateUniqueName)
+		$nameService = new ObjectNameService($data['NAME'], $this->id, ObjectTable::TYPE_FOLDER);
+		if ($generateUniqueName)
 		{
-			$data['NAME'] = static::generateUniqueName($data['NAME'], $this->id);
+			$nameService->requireUniqueName();
 		}
 
-		if(!static::isUniqueName($data['NAME'], $this->id))
+		$result = $nameService->prepareName();
+		if (!$result->isSuccess())
 		{
-			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_FOLDER_MODEL_ERROR_NON_UNIQUE_NAME'), self::ERROR_NON_UNIQUE_NAME)));
+			$this->errorCollection->add($result->getErrors());
+
 			return null;
 		}
 
+		$data['NAME'] = $result->getName();
 		$data['PARENT_ID'] = $this->id;
 		$data['STORAGE_ID'] = $this->storageId;
 
@@ -538,7 +554,7 @@ class Folder extends BaseObject
 
 	private function prepareDataForAddLink(BaseObject $object, array $data, $generateUniqueName = false)
 	{
-		if(empty($data['NAME']))
+		if (empty($data['NAME']))
 		{
 			$data['NAME'] = $object->getName();
 		}
@@ -547,21 +563,33 @@ class Folder extends BaseObject
 			'NAME'
 		));
 
-		if($generateUniqueName)
+		$nameService = new ObjectNameService($data['NAME'], $this->id, $object->getType());
+		if ($generateUniqueName)
 		{
-			$data['NAME'] = static::generateUniqueName($data['NAME'], $this->id);
+			$nameService->requireUniqueName();
 		}
+
+		$result = $nameService->prepareName();
+		if (!$result->isSuccess())
+		{
+			$this->errorCollection->add($result->getErrors());
+
+			return null;
+		}
+
+		$data['NAME'] = $result->getName();
 
 		if (isset($data['DELETED_TYPE']) && $data['DELETED_TYPE'] == ObjectTable::DELETED_TYPE_ROOT)
 		{
 			$data['NAME'] = Ui\Text::appendTrashCanSuffix($data['NAME']);
+			if (!static::isUniqueName($data['NAME'], $this->id))
+			{
+				$this->errorCollection[] = new Error(Loc::getMessage('DISK_FOLDER_MODEL_ERROR_NON_UNIQUE_NAME'), self::ERROR_NON_UNIQUE_NAME);
+
+				return null;
+			}
 		}
 
-		if(!static::isUniqueName($data['NAME'], $this->id))
-		{
-			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_FOLDER_MODEL_ERROR_NON_UNIQUE_NAME'), self::ERROR_NON_UNIQUE_NAME)));
-			return null;
-		}
 
 		$data['PARENT_ID'] = $this->id;
 		$data['STORAGE_ID'] = $this->storageId;

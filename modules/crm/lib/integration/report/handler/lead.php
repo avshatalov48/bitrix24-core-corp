@@ -179,7 +179,8 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		switch ($groupingValue)
 		{
 			case self::GROUPING_BY_DATE:
-				$query->registerRuntimeField(new ExpressionField('DATE_CREATE_DAY', "DATE_FORMAT(%s, '%%Y-%%m-%%d 00:00')", 'DATE_CREATE'));
+				$helper = Application::getConnection()->getSqlHelper();
+				$query->registerRuntimeField(new ExpressionField('DATE_CREATE_DAY', $helper->formatDate('%%Y-%%m-%%d 00:00', '%s'), 'DATE_CREATE'));
 				$query->addSelect('DATE_CREATE_DAY');
 				$query->addGroup('DATE_CREATE_DAY');
 				break;

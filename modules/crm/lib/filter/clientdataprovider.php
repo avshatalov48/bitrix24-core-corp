@@ -48,11 +48,12 @@ class ClientDataProvider extends Main\Filter\EntityDataProvider
 		{
 			return $name;
 		}
-		$name = Loc::getMessage("CRM_DEAL_FILTER_{$fieldId}");
-		if ($name === null)
-		{
-			$name = \CCrmDeal::GetFieldCaption($fieldId);
-		}
+
+		$name =
+			Loc::getMessage("CRM_DEAL_FILTER_{$fieldId}")
+			?? Loc::getMessage("CRM_DEAL_FILTER_{$fieldId}_MSGVER_1")
+			?? \CCrmDeal::GetFieldCaption($fieldId)
+		;
 
 		return (string)$name;
 	}

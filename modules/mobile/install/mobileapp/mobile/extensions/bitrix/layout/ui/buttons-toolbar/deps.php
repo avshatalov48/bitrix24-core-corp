@@ -1,5 +1,8 @@
 <?php
 
 return [
-	'layout/ui/bottom-toolbar',
+	'extensions' => [
+		'apptheme',
+		'layout/ui/bottom-toolbar',
+	],
 ];

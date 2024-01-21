@@ -3,7 +3,6 @@
 namespace Bitrix\Crm;
 
 use Bitrix\Crm\Color\PhaseColorScheme;
-use Bitrix\Crm\Filter\Activity\FilterByActivityResponsible;
 use Bitrix\Crm\Filter\FieldsTransform\UserBasedField;
 use Bitrix\Crm\Format\PersonNameFormatter;
 use Bitrix\Crm\Kanban\Entity;
@@ -743,6 +742,12 @@ abstract class Kanban
 			}
 			foreach($gridFilter as $key => $item)
 			{
+				// skip ActivityFastSearch fields, it will be processed later.
+				if (str_starts_with($key, 'ACTIVITY_FASTSEARCH_'))
+				{
+					continue;
+				}
+
 				//fill filter by type
 				$fromFieldName = $key . '_from';
 				$toFieldName = $key . '_to';
@@ -936,6 +941,15 @@ abstract class Kanban
 		/** @var UserBasedField $userFieldPrepare */
 		$userFieldPrepare = ServiceLocator::getInstance()->get('crm.filter.fieldsTransform.userBasedField');
 		$userFieldPrepare->transformAll($filter, $userFieldsToTransform, $this->currentUserId);
+
+		// add ACTIVITY_FASTSEARCH fields to filter set before subquery processing.
+		foreach ($search as $key => $item)
+		{
+			if (str_starts_with($key, 'ACTIVITY_FASTSEARCH_'))
+			{
+				$filter[$key] = $item;
+			}
+		}
 
 		$entity->applySubQueryBasedFilters($filter, $this->viewMode);
 
@@ -1321,6 +1335,7 @@ abstract class Kanban
 		$result = [];
 
 		$lastActivityInfo = $this->getEntity()->prepareMultipleItemsLastActivity($rows);
+		$pingSettingsInfo = $this->getEntity()->prepareMultipleItemsPingSettings($this->entity->getTypeId());
 
 		$activeAutomationDebugEntityIds = \CCrmBizProcHelper::getActiveDebugEntityIds($this->entity->getTypeId());
 
@@ -1470,6 +1485,7 @@ abstract class Kanban
 				'required_fm' => $requiredFm,
 				'sort' => $this->getEntity()->prepareItemSort($rows[$rowId]),
 				'lastActivity' => $lastActivityInfo[$row['ID']] ?? null,
+				'pingSettings' => isset($row['CATEGORY_ID']) ? $pingSettingsInfo[$row['CATEGORY_ID']] : null,
 			];
 			$result[$rowId] = array_merge($result[$rowId], $this->prepareAdditionalFields($row));
 			$isRestricted = (!empty($restrictedItemIds) && in_array($row['ID'], $restrictedItemIds));

@@ -1,28 +1,30 @@
 import LocMixin from './loc';
 import Reservation from './reservation';
-import {Loc, ajax, Tag, Extension, Event} from 'main.core';
-import {Menu, Popup} from 'main.popup';
-import {Button} from 'ui.buttons';
-import {Slider} from 'catalog.store-use'
-import {Vue} from 'ui.vue';
+import { Type, Loc, ajax, Tag, Extension, Event, Dom, Runtime, userOptions as UserOptions } from 'main.core';
+import { Popup } from 'main.popup';
+import { Button, ButtonColor } from 'ui.buttons';
+import { StoreSlider } from 'catalog.store-use'
+import { Vue } from 'ui.vue';
 import ProductUpdater from './product-updater/template';
-import {Const} from './const';
+import { Const } from './const';
 import 'ui.notification';
 import 'ui.design-tokens';
+import 'ui.alerts';
 import '../css/app.css';
 
-const HELP_ARTICLE_ID = 15706692;
+const HELP_ARTICLE_ID = 15_706_692;
+const HELP_COST_CALCULATION_MODE_ARTICLE_ID = 17_858_278;
 
 export default Vue.extend({
-	mixins: [LocMixin],
 	components: {
-		'reservation': Reservation,
+		reservation: Reservation,
 	},
+	mixins: [LocMixin],
 	props: {
 		initData: {
 			type: Object,
-			required: true
-		}
+			required: true,
+		},
 	},
 	data() {
 		return {
@@ -36,7 +38,12 @@ export default Vue.extend({
 			 *
 			 */
 			isStoreControlUsed: null,
+			isStoreBatchUsed: false,
 			productsCnt: null,
+			initCostPriceCalculationMethod: null,
+			costPriceCalculationMethod: null,
+			isEmptyCostPriceCalculationMethod: true,
+			isHiddenCostPriceCalculationMethodChangeWarning: true,
 			/**
 			 * Reservation settings
 			 */
@@ -62,19 +69,6 @@ export default Vue.extend({
 			defaultProductVatIncluded: null,
 		};
 	},
-	created()
-	{
-		this.initialize(this.initData);
-		this.productUpdaterPopup = null;
-		this.settingsMenu = null;
-
-		let sliderUrl = Const.url;
-		if (this.configCatalogSource)
-		{
-			sliderUrl += '?configCatalogSource=' + this.configCatalogSource;
-		}
-		this.slider = BX.SidePanel.Instance.getSlider(sliderUrl);
-	},
 	computed: {
 		hasAccessToReservationSettings()
 		{
@@ -98,6 +92,25 @@ export default Vue.extend({
 		{
 			return Extension.getSettings('crm.config.catalog')?.isCanChangeOptionCanByZero === true;
 		},
+		costPriceCalculationMethods(): []
+		{
+			return Extension.getSettings('crm.config.catalog')?.costPriceCalculationMethods ?? [];
+		},
+		showNegativeStoreAmountPopup(): boolean
+		{
+			return Extension.getSettings('crm.config.catalog')?.showNegativeStoreAmountPopup === true;
+		},
+		storeBalancePopupLink(): string
+		{
+			return Extension.getSettings('crm.config.catalog')?.storeBalancePopupLink;
+		},
+		shouldShowBatchMethodSpotlight(): boolean
+		{
+			return (
+				Extension.getSettings('crm.config.catalog')?.shouldShowBatchMethodSpotlight === true
+				&& this.isEmptyCostPriceCalculationMethod
+			);
+		},
 		isReservationUsed()
 		{
 			return (
@@ -107,7 +120,7 @@ export default Vue.extend({
 		},
 		isCanBuyZeroInDocsVisible()
 		{
-			return this.isStoreControlUsed;
+			return this.isStoreControlUsed && this.isEmptyCostPriceCalculationMethod;
 		},
 		isDefaultQuantityTraceVisible()
 		{
@@ -127,6 +140,7 @@ export default Vue.extend({
 				&& this.initDefaultCanBuyZero === this.defaultCanBuyZero
 				&& this.initDefaultSubscribe === this.defaultSubscribe
 				&& this.initCheckRightsOnDecreaseStoreAmount === this.checkRightsOnDecreaseStoreAmount
+				&& this.initCostPriceCalculationMethod === this.costPriceCalculationMethod
 			);
 		},
 		needProgressBarOnProductsUpdating()
@@ -156,7 +170,7 @@ export default Vue.extend({
 			return this.isStoreControlUsed
 				? Loc.getMessage('CRM_CFG_C_SETTINGS_STORE_CONTROL_ACTIVE')
 				: Loc.getMessage('CRM_CFG_C_SETTINGS_STORE_CONTROL_NOT_ACTIVE');
-		}
+		},
 	},
 	watch: {
 		defaultQuantityTrace(newVal, oldVal)
@@ -169,7 +183,7 @@ export default Vue.extend({
 
 			const warnPopup = new Popup(null, null, {
 				events: {
-					onPopupClose: () => warnPopup.destroy()
+					onPopupClose: () => warnPopup.destroy(),
 				},
 				content: Tag.render`
 					<div class="catalog-settings-popup-content">
@@ -185,14 +199,27 @@ export default Vue.extend({
 				overlay: true,
 				buttons: [
 					new Button({
-						text : Loc.getMessage('CRM_CFG_C_SETTINGS_CLOSE'),
+						text: Loc.getMessage('CRM_CFG_C_SETTINGS_CLOSE'),
 						color: Button.Color.PRIMARY,
-						onclick: () => warnPopup.close()
-					})
-				]
+						onclick: () => warnPopup.close(),
+					}),
+				],
 			});
 			warnPopup.show();
 		},
+	},
+	created()
+	{
+		this.initialize(this.initData);
+		this.productUpdaterPopup = null;
+		this.settingsMenu = null;
+
+		let sliderUrl = Const.url;
+		if (this.configCatalogSource)
+		{
+			sliderUrl += `?configCatalogSource=${this.configCatalogSource}`;
+		}
+		this.slider = BX.SidePanel.Instance.getSlider(sliderUrl);
 	},
 	methods: {
 		markAsChanged()
@@ -210,10 +237,9 @@ export default Vue.extend({
 		},
 		askToEnableProductCardSlider()
 		{
-			const askPopup =
-				this.isBitrix24
-					? this.createWarningProductCardPopupForBitrix24()
-					: this.createWarningProductCardPopupForBUS();
+			const askPopup =				this.isBitrix24
+				? this.createWarningProductCardPopupForBitrix24()
+				: this.createWarningProductCardPopupForBUS();
 
 			askPopup.show();
 		},
@@ -223,7 +249,7 @@ export default Vue.extend({
 				Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_TEXT'),
 				[
 					new Button({
-						text : Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_DISAGREE'),
+						text: Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_DISAGREE'),
 						color: Button.Color.PRIMARY,
 						onclick: () => {
 							this.productCardSliderEnabled = false;
@@ -231,7 +257,7 @@ export default Vue.extend({
 						},
 					}),
 					new Button({
-						text : Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_AGREE'),
+						text: Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_AGREE'),
 						onclick: () => askPopup.close(),
 					}),
 				],
@@ -254,12 +280,12 @@ export default Vue.extend({
 				Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_BUS_TEXT').replace('#HELP_LINK#', this.busProductCardHelpLink),
 				[
 					new Button({
-						text : Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_AGREE'),
+						text: Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_AGREE'),
 						color: Button.Color.SUCCESS,
 						onclick: () => askPopup.close(),
 					}),
 					new Button({
-						text : Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_BUS_DISAGREE'),
+						text: Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_BUS_DISAGREE'),
 						color: Button.Color.LINK,
 						onclick: () => {
 							this.productCardSliderEnabled = false;
@@ -294,16 +320,16 @@ export default Vue.extend({
 
 			return askPopup;
 		},
-		openStoreControlMaster(mode = '')
+		openStoreControlMaster()
 		{
-			let sliderUrl = '/bitrix/components/bitrix/catalog.warehouse.master.clear/slider.php?mode=' + mode;
+			let sliderUrl = '/bitrix/components/bitrix/catalog.warehouse.master.clear/slider.php';
 			if (this.configCatalogSource)
 			{
-				sliderUrl += '&inventoryManagementSource=' + this.configCatalogSource;
+				sliderUrl += `?inventoryManagementSource=${this.configCatalogSource}`;
 			}
-			new Slider().open(
+			new StoreSlider().open(
 				sliderUrl,
-				{}
+				{},
 			)
 				.then((slider) => {
 					ajax.runAction('catalog.config.isUsedInventoryManagement', {})
@@ -319,6 +345,7 @@ export default Vue.extend({
 									this.refresh();
 								}
 							}
+
 							if (slider?.getData().get('isPresetApplied'))
 							{
 								this.showMessage(Loc.getMessage('CRM_CFG_C_SETTINGS_SAVED_SUCCESSFULLY'));
@@ -331,7 +358,7 @@ export default Vue.extend({
 			return new Promise((resolve, reject) => {
 				ajax.runComponentAction('bitrix:crm.config.catalog.settings', 'initialize', {
 					mode: 'class',
-					json: {}
+					json: {},
 				}).then((response) => {
 					this.initialize(response.data);
 					resolve();
@@ -352,25 +379,27 @@ export default Vue.extend({
 		showResponseErrors(response)
 		{
 			this.showMessage(
-				response.errors.map(error => error.message).join(', ')
+				response.errors.map((error) => error.message).join(', '),
 			);
 		},
 		showMessage(message)
 		{
-			top.BX.loadExt("ui.notification").then(() => {
-				top.BX.UI.Notification.Center.notify({content: message,});
+			top.BX.loadExt('ui.notification').then(() => {
+				top.BX.UI.Notification.Center.notify({ content: message });
 			});
 		},
 		initialize(data)
 		{
 			this.isStoreControlUsed = data.isStoreControlUsed;
+			this.isStoreBatchUsed = data.isStoreControlUsed && data.isStoreBatchUsed;
 			this.productsCnt = data.productsCnt;
 
 			/**
 			 * Reservation settings
 			 */
 			this.reservationEntities = data.reservationEntities;
-			if (this.reservationEntities.length > 0) {
+			if (this.reservationEntities.length > 0)
+			{
 				this.currentReservationEntityCode = this.reservationEntities[0].code;
 			}
 
@@ -381,12 +410,15 @@ export default Vue.extend({
 			this.initDefaultCanBuyZero = this.defaultCanBuyZero = data.defaultCanBuyZero;
 			this.initDefaultSubscribe = this.defaultSubscribe = data.defaultSubscribe;
 			this.initCheckRightsOnDecreaseStoreAmount = this.checkRightsOnDecreaseStoreAmount = data.checkRightsOnDecreaseStoreAmount;
+			this.initCostPriceCalculationMethod = this.costPriceCalculationMethod = data.costPriceCalculationMethod;
 
 			/**
 			 * Other settings
 			 */
 			this.defaultProductVatIncluded = data.defaultProductVatIncluded;
 			this.productCardSliderEnabled = data.productCardSliderEnabled;
+			this.costPriceCalculationMethod = data.costPriceCalculationMethod;
+			this.isEmptyCostPriceCalculationMethod = !Type.isStringFilled(this.costPriceCalculationMethod);
 			this.isCanEnableProductCardSlider = data.isCanEnableProductCardSlider;
 			this.isBitrix24 = data.isBitrix24;
 			this.busProductCardHelpLink = data.busProductCardHelpLink;
@@ -406,6 +438,62 @@ export default Vue.extend({
 				return;
 			}
 
+			if (Type.isStringFilled(this.costPriceCalculationMethod) && this.showNegativeStoreAmountPopup)
+			{
+				const text = Loc.getMessage(
+					'CRM_CFG_C_SETTINGS_NEGATIVE_STORE_BALANCE_POPUP_TEXT',
+					{
+						'#STORE_BALANCE_LIST_LINK#': '<help-link></help-link>',
+					},
+				);
+
+				const content = Tag.render`
+					<div class="catalog-settings-popup-content">
+						<div class="catalog-settings-popup-text">
+							${text}
+						</div>
+					</div>
+				`;
+
+				if (!Type.isUndefined(top.BX.SidePanel.Instance) && Type.isStringFilled(this.storeBalancePopupLink))
+				{
+					const balanceInfoLink = Tag.render`
+						<a href="#" class="ui-form-link">
+							${Loc.getMessage('CRM_CFG_C_SETTINGS_NEGATIVE_STORE_BALANCE_POPUP_LINK')}
+						</a>
+					`;
+
+					Event.bind(balanceInfoLink, 'click', () => {
+						top.BX.SidePanel.Instance.open(
+							`${this.storeBalancePopupLink}`,
+							{
+								requestMethod: 'post',
+								cacheable: false,
+							},
+						);
+					});
+
+					Dom.replace(content.querySelector('help-link'), balanceInfoLink);
+				}
+
+				const popup = new Popup({
+					id: 'catalog_settings_document_negative_balance_popup',
+					content,
+					buttons: [
+						new Button({
+							text: Loc.getMessage('CRM_CFG_C_SETTINGS_RETURN'),
+							color: ButtonColor.DANGER,
+							onclick: (button, event) => {
+								popup.destroy();
+							},
+						}),
+					],
+				});
+				popup.show();
+
+				return;
+			}
+
 			this.isSaving = true;
 
 			this.saveProductSettings().then(() => {
@@ -417,8 +505,9 @@ export default Vue.extend({
 							productCardSliderEnabled: this.productCardSliderEnabled,
 							defaultProductVatIncluded: this.defaultProductVatIncluded,
 							checkRightsOnDecreaseStoreAmount: this.checkRightsOnDecreaseStoreAmount,
-						}
-					}
+							costPriceCalculationMethod: this.costPriceCalculationMethod,
+						},
+					},
 				}).then((response) => {
 					this.isChanged = false;
 					this.isSaving = false;
@@ -427,7 +516,7 @@ export default Vue.extend({
 						.then(() => this.wait(700))
 						.then(() => this.close());
 
-					BX.SidePanel.Instance.postMessage(window, "BX.Crm.Config.Catalog:onAfterSaveSettings");
+					BX.SidePanel.Instance.postMessage(window, 'BX.Crm.Config.Catalog:onAfterSaveSettings');
 				}).catch((response) => {
 					this.isChanged = false;
 					this.isSaving = false;
@@ -448,8 +537,8 @@ export default Vue.extend({
 						default_quantity_trace: this.defaultQuantityTrace ? 'Y' : 'N',
 						default_can_buy_zero: this.defaultCanBuyZero ? 'Y' : 'N',
 						default_subscribe: this.defaultSubscribe ? 'Y' : 'N',
-					}
-				}
+					},
+				},
 			};
 
 			return new Promise((resolve) => {
@@ -479,9 +568,9 @@ export default Vue.extend({
 		},
 		makeReservationSettings()
 		{
-			let result = {};
+			const result = {};
 
-			for (let reservationEntity of this.reservationEntities)
+			for (const reservationEntity of this.reservationEntities)
 			{
 				result[reservationEntity.code] = reservationEntity.settings.values;
 			}
@@ -501,7 +590,7 @@ export default Vue.extend({
 			return this.getHintContentWrapped(
 				Loc.getMessage('CRM_CFG_C_SETTINGS_RESERVATION_SETTINGS_HINT'),
 				HELP_ARTICLE_ID,
-				'reservation'
+				'reservation',
 			);
 		},
 		getProductsSettingsHint()
@@ -509,7 +598,14 @@ export default Vue.extend({
 			return this.getHintContent(
 				Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_HINT'),
 				HELP_ARTICLE_ID,
-				'products'
+				'products',
+			);
+		},
+		getCostPriceCalculationHint()
+		{
+			return this.getHintContent(
+				Loc.getMessage('CRM_CFG_C_SETTINGS_COST_PRICE_CALCULATION_MODE_HINT'),
+				HELP_COST_CALCULATION_MODE_ARTICLE_ID,
 			);
 		},
 		getCanBuyZeroHint()
@@ -517,7 +613,7 @@ export default Vue.extend({
 			return this.getHintContent(
 				Loc.getMessage('CRM_CFG_C_SETTINGS_CAN_BUY_ZERO_HINT'),
 				HELP_ARTICLE_ID,
-				'products'
+				'products',
 			);
 		},
 		getCanBuyZeroInDocsHint()
@@ -530,7 +626,7 @@ export default Vue.extend({
 					<br/>
 				`,
 				HELP_ARTICLE_ID,
-				'products'
+				'products',
 			);
 		},
 		getHintContent(content, article, anchor)
@@ -547,32 +643,59 @@ export default Vue.extend({
 		},
 		getDocumentationLink(text, article, anchor)
 		{
+			let link = `redirect=detail&code=${article}`;
+			if (!Type.isNil(anchor))
+			{
+				link += `#${anchor}`;
+			}
+
 			return `
-				<a href="javascript:void(0);" onclick="if (top.BX.Helper){top.BX.Helper.show('redirect=detail&code=${article}#${anchor}');}" class="catalog-settings-helper-link">
+				<a href="javascript:void(0);" onclick="if (top.BX.Helper){top.BX.Helper.show('${link}');}" class="catalog-settings-helper-link">
 					${text}
 				</a>
 			`;
 		},
-		showSettingsMenu(e)
+		getDocumentationProductBatchLink(): string
 		{
-			this.settingsMenu = new Menu({
-				bindElement: e.target,
-				angle: true,
-				offsetLeft: 20,
-				items: [{
-					text: Loc.getMessage('CRM_CFG_C_SETTINGS_TURN_INVENTORY_CONTROL_OFF'),
-					onclick: () => {
-						this.settingsMenu.destroy();
-						this.openStoreControlMaster('disable');
-					}
-				}],
-			});
-			this.settingsMenu.show();
+			return this.getDocumentationLink(Loc.getMessage('CRM_CFG_C_SETTINGS_DETAILS'), HELP_COST_CALCULATION_MODE_ARTICLE_ID);
+		},
+		changeCalculationMode()
+		{
+			if (!this.isEmptyCostPriceCalculationMethod)
+			{
+				return;
+			}
+
+			this.isHiddenCostPriceCalculationMethodChangeWarning = false;
+			this.markAsChanged();
 		},
 	},
 	mounted()
 	{
 		BX.UI.Hint.init(this.$el);
+
+		if (this.shouldShowBatchMethodSpotlight)
+		{
+			const methodSelector = document.querySelector('.catalog-settings-cost-price-method-selector');
+			Runtime.loadExtension('spotlight').then((exports) => {
+				const spotlight = new BX.SpotLight(
+					{
+						id: 'batch-method-tour-spotlight',
+						targetElement: methodSelector,
+						autoSave: true,
+						targetVertex: 'middle-center',
+						zIndex: 200,
+						left: -420,
+					},
+				);
+				spotlight.show();
+				spotlight.container.style.pointerEvents = "none";
+				UserOptions.save('crm.catalog-settings', 'tour', 'batch_spotlight_shown', 'Y');
+				Event.bind(methodSelector, 'click', () => {
+					spotlight.close();
+				});
+			});
+		}
 	},
 	template: `
 		<div class="catalog-settings-wrapper">
@@ -584,14 +707,6 @@ export default Vue.extend({
 							class="ui-slider-heading-4"
 						>
 							{{loc.CRM_CFG_C_SETTINGS_TITLE}}
-							<div v-if="isStoreControlUsed && hasAccessToCatalogSettings" class="catalog-settings-main-header-feedback-container">
-								<div
-									@click.prevent="showSettingsMenu"
-									class="ui-toolbar-right-buttons"
-								>
-									<button class="ui-btn ui-btn-light-border ui-btn-icon-setting ui-btn-themes"></button>
-								</div>
-							</div>
 						</div>
 						<div class="ui-slider-inner-box">
 							<p class="ui-slider-paragraph-2">
@@ -601,10 +716,10 @@ export default Vue.extend({
 						<div v-if="hasAccessToCatalogSettings" class="catalog-settings-button-container">
 							<template v-if="isStoreControlUsed">
 								<a
-									@click="openStoreControlMaster('edit')"
+									@click="openStoreControlMaster()"
 									class="ui-btn ui-btn-md ui-btn-light-border ui-btn-width"
 								>
-									{{loc.CRM_CFG_C_SETTINGS_OPEN_SETTINGS}}
+									{{loc.CRM_CFG_C_SETTINGS_INVENTORY_MANAGEMENT_DISABLE}}
 								</a>
 							</template>
 							<template v-else>
@@ -661,6 +776,75 @@ export default Vue.extend({
 							:settings="reservationEntity.settings"
 							@change="onReservationSettingsValuesChanged($event, index)"
 						></reservation>
+					</div>
+					<div v-if="isStoreBatchUsed && hasAccessToCatalogSettings" class="ui-slider-section">
+						<div class="ui-slider-content-box">
+							<div
+								style="display: flex; align-items: center"
+								class="ui-slider-heading-4"
+							>
+								{{loc.CRM_CFG_C_SETTINGS_COST_PRICE_TITLE}}
+							</div>
+							<div class="catalog-settings-editor-content-block">
+								<div class="ui-ctl-label-text">
+									<label>{{loc.CRM_CFG_C_SETTINGS_COST_PRICE_CALCULATION_MODE}}</label>
+									<span
+										class="ui-hint"
+										data-hint-html=""
+										data-hint-interactivity=""
+										:data-hint="getCostPriceCalculationHint()"
+									>
+										<span class="ui-hint-icon"></span>
+									</span>
+								</div>
+								<div v-if="!isEmptyCostPriceCalculationMethod" class="ui-alert ui-alert-primary ui-alert-icon-info">
+									<span class="ui-alert-message">
+										{{loc.CRM_CFG_C_SETTINGS_COST_PRICE_CHANGE_MODE_INFO}}
+										<span v-html='getDocumentationProductBatchLink()'></span>
+									</span>									
+								</div>
+								<div v-if="!isHiddenCostPriceCalculationMethodChangeWarning" class="ui-alert ui-alert-warning ui-alert-icon-warning">
+									<span class="ui-alert-message">
+										{{loc.CRM_CFG_C_SETTINGS_COST_PRICE_CHANGE_MODE_WARNING}}
+										<span v-html='getDocumentationProductBatchLink()'></span>
+									</span>
+								</div>
+								<div 
+									class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100" 
+									:class='{"ui-ctl-disabled": !isEmptyCostPriceCalculationMethod}'
+								>
+									<div 
+										v-if='isEmptyCostPriceCalculationMethod' 
+										class="ui-ctl-after ui-ctl-icon-angle"
+									>									
+									</div>
+									<select
+										v-model="costPriceCalculationMethod"
+										:disabled="!isEmptyCostPriceCalculationMethod"
+										@change="changeCalculationMode"
+										required
+										class="ui-ctl-element catalog-settings-cost-price-method-selector"
+									>
+										<option 
+											v-if="isEmptyCostPriceCalculationMethod" 
+											value=''
+											disabled 
+											selected
+											hidden
+										>
+											{{loc.CRM_CFG_C_SETTINGS_COST_PRICE_CHANGE_PLACEHOLDER}}
+										</option>
+										<option
+											v-for="method in costPriceCalculationMethods"
+											:value="method.code"
+											:selected="method.code === costPriceCalculationMethod"
+										>
+											{{method.title}}
+										</option>
+									</select>
+								</div>
+							</div>
+						</div>
 					</div>
 					<div v-if="hasAccessToCatalogSettings" class="ui-slider-section">
 						<div class="ui-slider-heading-4">
@@ -806,5 +990,5 @@ export default Vue.extend({
 			</div>
 			<div style="height: 65px;"></div>
 		</div>
-	`
-})
+	`,
+});

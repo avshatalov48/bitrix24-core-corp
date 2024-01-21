@@ -250,7 +250,9 @@ class WorktimeNotificationService
 			case WorktimeViolation::TYPE_EDITED_ENDING:
 			case WorktimeViolation::TYPE_EDITED_START:
 			case WorktimeViolation::TYPE_EDITED_BREAK_LENGTH:
-				$date = $this->timeHelper->formatDateTime($worktimeRecord->getRecordedStartTimestamp(), 'j F');
+				$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
+				$dayMonthFormat = $culture->getDayMonthFormat();
+				$date = $this->timeHelper->formatDateTime($worktimeRecord->getRecordedStartTimestamp(), $dayMonthFormat);
 				$href = $this->urlManager->getUriTo('recordReport', ['RECORD_ID' => $worktimeRecord->getId()]);
 				$notifyMessage = Loc::getMessage(
 					'TM_VIOLATION_WORKTIME_MANAGER_EDIT_WITH_URL' . $gender,

@@ -1,16 +1,14 @@
 <?php
 namespace Bitrix\Imconnector\Update;
 
-use Bitrix\Main\Loader,
-	Bitrix\Main\Config\Option,
-	Bitrix\Main\Update\Stepper,
-	Bitrix\Main\Entity\ReferenceField,
-	Bitrix\Rest\AppTable,
-	Bitrix\ImConnector\Rest\Helper,
-	Bitrix\ImConnector\Model\CustomConnectorsTable;
+use Bitrix\Main;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\ORM;
+use Bitrix\Rest;
+use Bitrix\ImConnector;
 
-
-final class Update2000 extends Stepper
+final class Update2000 extends Main\Update\Stepper
 {
 	private const PORTION = 30;
 	private const OPTION_NAME = 'imconnector_check_custom_connectors';
@@ -30,36 +28,42 @@ final class Update2000 extends Stepper
 				$option['steps'] = '';
 				$option['count'] = $status['count'];
 
-				$runtime = [new ReferenceField(
-					'REST_APP',
-					AppTable::class,
-					['=ref.ID' => 'this.REST_APP_ID'],
-					['join_type' => 'LEFT']
-				)];
-
 				$found = false;
-				$cursor = CustomConnectorsTable::getList([
+				$cursor = ImConnector\Model\CustomConnectorsTable::getList([
 					'select' => [
 						'ID',
 						'ID_CONNECTOR',
 						'REST_APP_ID',
-						'REST_APP.ID'
+						'REST_APP_ACTIVE' => 'REST_APP.ACTIVE',
+						'REST_APP_INSTALLED' => 'REST_APP.INSTALLED',
 					],
-					'runtime' => $runtime,
+					'runtime' => [
+						new ORM\Fields\Relations\Reference(
+							'REST_APP',
+							Rest\AppTable::class,
+							['=ref.ID' => 'this.REST_APP_ID'],
+							['join_type' => 'LEFT']
+						)
+					],
 					'filter' => [
-						'REST_APP.ID' => null,
 						'>ID' => $status['lastId'],
 					],
-					'offset' => 0,
 					'limit' => self::PORTION,
 					'order' => ['ID' => 'ASC'],
 				]);
 				while ($row = $cursor->fetch())
 				{
-					Helper::unRegisterApp([
-						'ID' => $row['ID_CONNECTOR'],
-						'REST_APP_ID' => $row['REST_APP_ID'],
-					]);
+					if (
+						empty($row['REST_APP_ID'])
+						|| $row['REST_APP_ACTIVE'] != 'Y'
+						|| $row['REST_APP_INSTALLED'] != 'Y'
+					)
+					{
+						ImConnector\Rest\Helper::unRegisterApp([
+							'ID' => $row['ID_CONNECTOR'],
+							'REST_APP_ID' => $row['REST_APP_ID'],
+						]);
+					}
 
 					$status['lastId'] = $row['ID'];
 					$status['number']++;
@@ -95,7 +99,7 @@ final class Update2000 extends Stepper
 			$status = [
 				'lastId' => 0,
 				'number' => 0,
-				'count' => CustomConnectorsTable::getCount(),
+				'count' => ImConnector\Model\CustomConnectorsTable::getCount(),
 			];
 		}
 		return $status;

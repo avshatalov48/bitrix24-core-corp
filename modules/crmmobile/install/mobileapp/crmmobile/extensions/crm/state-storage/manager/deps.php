@@ -1,7 +1,7 @@
 <?php
 return [
 	'extensions' => [
-		'statemanager/vuex-manager',
+		'storage/manager',
 	],
 	'bundle' => [
 		'./base',

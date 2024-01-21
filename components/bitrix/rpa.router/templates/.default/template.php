@@ -1,11 +1,28 @@
 <?php
 
+use Bitrix\Rpa\Driver;
+
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
 if ($errors = $this->getComponent()->getErrors()):
+
+	if (!Driver::getInstance()->isEnabled())
+	{
+		global $APPLICATION;
+		$APPLICATION->IncludeComponent(
+			'bitrix:intranet.tool.inaccessibility',
+			'',
+			[
+				'SLIDER_CODE' => 'limit_automation_off',
+			],
+		);
+
+		return;
+	}
+
 	ShowError(reset($errors)->getMessage());
 	return;
 endif;

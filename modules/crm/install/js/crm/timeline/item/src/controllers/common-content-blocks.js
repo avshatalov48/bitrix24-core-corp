@@ -21,6 +21,7 @@ import { InfoGroup } from '../components/content-blocks/info-group';
 import { FileList } from '../components/content-blocks/file-list';
 import { SmsMessage } from '../components/content-blocks/sms-message';
 import CommentContent from '../components/content-blocks/comment-content';
+import ItemSelector from '../components/content-blocks/item-selector';
 
 export class CommonContentBlocks extends Base
 {
@@ -46,6 +47,7 @@ export class CommonContentBlocks extends Base
 			MoneyPill,
 			SmsMessage,
 			CommentContent,
+			ItemSelector,
 		};
 	}
 

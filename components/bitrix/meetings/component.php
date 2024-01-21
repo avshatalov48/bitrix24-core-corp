@@ -1,4 +1,8 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?
+use Bitrix\Meeting\Integration\Intranet\Settings;
+use Bitrix\Main\Loader;
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 if (!CModule::IncludeModule("meeting"))
 {
@@ -91,6 +95,11 @@ if ($componentPage != 'list' && ($arParams['SET_NAVCHAIN'] ?? null) !== 'N')
 {
 	\Bitrix\Main\Localization\Loc::loadLanguageFile(__DIR__."/.description.php");
 	$APPLICATION->AddChainItem(GetMessage('MEETINGS_NAME'), $arParams['LIST_URL']);
+}
+
+if (!(new Settings())->isMeetingsAvailable())
+{
+	$componentPage = 'tool_disabled';
 }
 
 $this->IncludeComponentTemplate($componentPage);

@@ -21,6 +21,6 @@ $MESS["CRM_DEAL_FILTER_STAGE_ID_FROM_HISTORY"] = "Стадия по истори
 $MESS["CRM_DEAL_FILTER_STAGE_ID_FROM_SUPPOSED_HISTORY"] = "Стадия по истории(с предполагаемыми переходами)";
 $MESS["CRM_DEAL_FILTER_STAGE_SEMANTIC_ID_FROM_HISTORY"] = "Группа стадий по истории";
 $MESS["CRM_DEAL_FILTER_ORDER_SOURCE"] = "Источник заказа";
-$MESS['CRM_DEAL_FILTER_ROBOT_DEBUGGER'] = 'Сделки в режиме отладки';
+$MESS['CRM_DEAL_FILTER_ROBOT_DEBUGGER_MSGVER_1'] = 'Сделки в режиме отладки';
 $MESS['CRM_DEAL_FILTER_ACTIVITY_RESPONSIBLE_IDS'] = "Ответственный за дело";
 $MESS['CRM_DEAL_FILTER_LAST_ACTIVITY_TIME'] = "Последняя активность";

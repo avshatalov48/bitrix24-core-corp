@@ -287,6 +287,13 @@ if (CBXFeatures::IsFeatureEnabled('tasks') && IsModuleInstalled('tasks')):
 ?>
 <div id="task_selector" style="display: none;">
 <?
+	$taskCreatePath = (new \Bitrix\Tasks\Slider\Path\TaskPathMaker(
+		0,
+		\Bitrix\Tasks\Slider\Path\PathMaker::EDIT_ACTION,
+		$USER->GetID(),
+		\Bitrix\Tasks\Slider\Path\PathMaker::PERSONAL_CONTEXT)
+	)->makeEntityPath();
+
 	$APPLICATION->IncludeComponent(
 		"bitrix:tasks.task.selector",
 		".default",
@@ -310,7 +317,7 @@ if (CBXFeatures::IsFeatureEnabled('tasks') && IsModuleInstalled('tasks')):
 <div class="meeting-question-tasks-wrap">
 	<div class="meeting-question-tasks-top">
 		<span class="meeting-ques-title"><?=GetMessage("MI_TASKS")?></span>
-		<span class="meeting-link" onclick="AddQuickPopupTask(event)"><?=GetMessage('MI_TASK_ADD')?></span><span class="meeting-link" onclick="showTaskSelector(this)"><?=GetMessage('MI_TASK_ATTACH')?></span>
+		<a class="meeting-link" href="<?= $taskCreatePath ?>"><?=GetMessage('MI_TASK_ADD')?></a><span class="meeting-link" onclick="showTaskSelector(this)"><?=GetMessage('MI_TASK_ATTACH')?></span>
 	</div>
 </div>
 <div id="meeting_item_tasks" style="clear: both">

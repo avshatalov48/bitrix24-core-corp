@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'type',
 		'loc',
+		'apptheme',
 		'utils/object',
 		'utils/date',
 		'utils/date/formats',

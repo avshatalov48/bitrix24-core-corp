@@ -4,9 +4,12 @@ namespace Bitrix\Crm\Service\Integration;
 
 use Bitrix\Crm\Activity\Provider\SignDocument;
 use Bitrix\Crm\Service\Operation\ConversionResult;
+use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\DocumentGenerator\Document;
 use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\Result;
@@ -76,6 +79,20 @@ class Sign
 			return new Result();
 		}
 
+		$currentUserId = CurrentUser::get()->getId();
+		if (!$this->checkUserPermissionToDealDocumentByDocument($documentId, $currentUserId))
+		{
+			return (new Result())->addError(
+				new Error("User doesnt has access to deal")
+			);
+		}
+		if (!$this->checkUserPermissionToCreateSmartDocument($currentUserId))
+		{
+			return (new Result())->addError(
+				new Error("User doesnt has access to smart document")
+			);
+		}
+
 		$document = Document::loadById($documentId);
 
 		if (!$document)
@@ -107,7 +124,8 @@ class Sign
 				$data = $result->getData();
 				try
 				{
-					ServiceLocator::getInstance()
+					/** @var \Bitrix\Main\Result $createDocResult */
+					$createDocResult = ServiceLocator::getInstance()
 						->get('sign.service.integration.crm.document')
 						->createSignDocumentFromDealDocument(
 							$fileId,
@@ -115,6 +133,11 @@ class Sign
 							$data['SMART_DOCUMENT'],
 							true
 						);
+
+					if ($createDocResult && !$createDocResult->isSuccess())
+					{
+						return $result->addErrors($createDocResult->getErrors());
+					}
 
 					$item = \Bitrix\Crm\Service\Container::getInstance()
 						->getFactory(\CCrmOwnerType::SmartDocument)
@@ -220,7 +243,101 @@ class Sign
 		$operation = $factory->getConversionOperation($deal, $config);
 		$operation->disableAllChecks();
 
-		return $operation->launch();
+		$result = $operation->launch();
+		$data = $result->getData();
+		if ($result->isSuccess() && $result->isConversionFinished() && isset($data[\CCrmOwnerType::SmartDocumentName]))
+		{
+			$documentFactory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::SmartDocument);
+			if ($documentFactory)
+			{
+				$document = $documentFactory->getItem((int)$data[\CCrmOwnerType::SmartDocumentName]);
+				$userId = CurrentUser::get()?->getId();
+				if ($document && $userId)
+				{
+					$document->setAssignedById($userId);
+
+					$changeAssignedResult =
+						$documentFactory
+							->getUpdateOperation($document)
+							->disableAllChecks()
+							->launch()
+					;
+
+					if (!$changeAssignedResult->isSuccess())
+					{
+						$result->addErrors($changeAssignedResult->getErrors());
+					}
+				}
+			}
+
+		}
+
+		return $result;
 	}
 
+	final public function checkUserPermissionToCreateSmartDocument(int $userId): bool
+	{
+		$defaultSmartDocumentCategory = \Bitrix\Crm\Service\Container::getInstance()
+			->getFactory(\CCrmOwnerType::SmartDocument)
+			?->getDefaultCategory()
+			?->getId()
+		;
+
+		return (new UserPermissions($userId))->checkAddPermissions(
+			\CCrmOwnerType::SmartDocument,
+			$defaultSmartDocumentCategory
+		);
+	}
+
+	final public function checkUserPermissionToDealDocumentByDocument(int $documentId, int $userId): bool
+	{
+		if (!Loader::includeModule('documentgenerator'))
+		{
+			return false;
+		}
+
+		$documentGeneratorDriver = \Bitrix\DocumentGenerator\Driver::getInstance();
+		if (!$documentGeneratorDriver->getUserPermissions()->canViewDocuments())
+		{
+			return false;
+		}
+		$userPermission = new UserPermissions($userId);
+
+		$dealId = $this->getDealIdByDocument($documentId);
+		if ($dealId === null)
+		{
+			return false;
+		}
+
+		return $userPermission->checkUpdatePermissions(
+			\CCrmOwnerType::Deal,
+			$dealId,
+		);
+	}
+
+	private function getDealIdByDocument(int $documentId): ?int
+	{
+		$document = Document::loadById($documentId);
+		if (!$document)
+		{
+			return null;
+		}
+
+		$fileId = $document->PDF_ID;
+		if ($fileId === null || $fileId === 0)
+		{
+			$fileId = $document->FILE_ID;
+		}
+
+		$provider = $document->getProvider();
+
+		if (!$fileId || !$provider instanceof \Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Deal)
+		{
+			return null;
+		}
+
+		$dealId = $document->getFields(['SOURCE'])['SOURCE']['VALUE'] ?? null;
+
+		return $dealId === null ? null : (int)$dealId;
+	}
 }

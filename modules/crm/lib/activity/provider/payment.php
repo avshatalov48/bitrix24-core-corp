@@ -4,8 +4,10 @@ namespace Bitrix\Crm\Activity\Provider;
 
 use Bitrix\Crm\Activity;
 use Bitrix\Crm\Order\BindingsMaker\ActivityBindingsMaker;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Order;
+use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
@@ -79,6 +81,8 @@ class Payment extends Activity\Provider\Base
 			? (int)$payment->getField('RESPONSIBLE_ID')
 			: (int)$payment->getField('EMP_RESPONSIBLE_ID');
 
+		$dateBill = $payment->getField('DATE_BILL');
+
 		$fields = [
 			'TYPE_ID' => \CCrmActivityType::Provider,
 			'PROVIDER_ID' => self::getId(),
@@ -93,6 +97,21 @@ class Payment extends Activity\Provider\Base
 			'PRIORITY' => \CCrmActivityPriority::Medium,
 			'AUTHOR_ID' => $authorId,
 			'BINDINGS' => ActivityBindingsMaker::makeByPayment($payment),
+			'SETTINGS' => [
+				'FIELDS' => [
+					'PAY_SYSTEM_ID' => $payment->getPaymentSystemId(),
+					'PAY_SYSTEM_NAME' => $payment->getPaymentSystemName(),
+					'SUM' => $payment->getField('SUM'),
+					'CURRENCY' => $payment->getField('CURRENCY'),
+					'ACCOUNT_NUMBER' => $payment->getField('ACCOUNT_NUMBER'),
+					'DATE_BILL' => $dateBill instanceof DateTime ? $dateBill->getTimestamp() : null,
+					'IS_TERMINAL_PAYMENT' =>
+						Container::getInstance()->getTerminalPaymentService()->isTerminalPayment($payment->getId())
+							? 'Y'
+							: 'N'
+					,
+				],
+			],
 		];
 
 		$activityId = (int)\CCrmActivity::add($fields, false);

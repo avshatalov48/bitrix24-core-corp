@@ -2,10 +2,10 @@
  * @module layout/ui/fields/requisite
  */
 jn.define('layout/ui/fields/requisite', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
+	const { get } = require('utils/object');
 	const { BaseField } = require('layout/ui/fields/base');
 	const { RequisiteDetails } = require('layout/ui/fields/requisite/requisite-details');
-	const { get } = require('utils/object');
 
 	/**
 	 * @class RequisiteField
@@ -62,7 +62,7 @@ jn.define('layout/ui/fields/requisite', (require, exports, module) => {
 				{
 					style: {
 						borderBottomWidth: 1,
-						borderBottomColor: '#a8adb4',
+						borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
 						borderStyle: 'dash',
 						borderDashSegmentLength: 3,
 						borderDashGapLength: 3,
@@ -72,7 +72,7 @@ jn.define('layout/ui/fields/requisite', (require, exports, module) => {
 				Text({
 					style: {
 						fontSize: 14,
-						color: '#a8adb4',
+						color: AppTheme.colors.base4,
 					},
 					text: this.getSelectedRequisiteTitle(),
 				}),
@@ -99,7 +99,7 @@ jn.define('layout/ui/fields/requisite', (require, exports, module) => {
 						layout: layoutWidget,
 						items: this.getValue(),
 					}));
-				});
+				}).catch(console.error);
 		}
 	}
 
@@ -107,5 +107,4 @@ jn.define('layout/ui/fields/requisite', (require, exports, module) => {
 		RequisiteType: 'requisite',
 		RequisiteField: (props) => new RequisiteField(props),
 	};
-
 });

@@ -2,12 +2,16 @@
  * @module im/messenger/provider/service/classes/chat/read
  */
 jn.define('im/messenger/provider/service/classes/chat/read', (require, exports, module) => {
-	const { Logger } = require('im/messenger/lib/logger');
+	const { core } = require('im/messenger/core');
+	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { RestMethod } = require('im/messenger/const/rest');
 	const { Counters } = require('im/messenger/lib/counters');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EventType } = require('im/messenger/const');
+	const { runAction } = require('im/messenger/lib/rest');
+	const { UuidManager } = require('im/messenger/lib/uuid-manager');
 
+	const logger = LoggerManager.getInstance().getLogger('read-service--chat');
 	const READ_TIMEOUT = 300;
 
 	/**
@@ -15,13 +19,14 @@ jn.define('im/messenger/provider/service/classes/chat/read', (require, exports, 
 	 */
 	class ReadService
 	{
-		constructor(store)
+		constructor()
 		{
 			/**
 			 * @private
 			 * @type{MessengerCoreStore}
 			 */
-			this.store = store;
+			this.store = core.getStore();
+
 			/** @private */
 			this.messagesToRead = {};
 		}
@@ -39,7 +44,7 @@ jn.define('im/messenger/provider/service/classes/chat/read', (require, exports, 
 				Object.entries(this.messagesToRead).forEach(([queueChatId, messageIds]) => {
 					// eslint-disable-next-line no-param-reassign
 					queueChatId = Number(queueChatId);
-					Logger.warn('ReadService: readMessages', messageIds);
+					logger.warn('ReadService: readMessages', messageIds);
 					if (messageIds.size === 0)
 					{
 						return;
@@ -49,16 +54,17 @@ jn.define('im/messenger/provider/service/classes/chat/read', (require, exports, 
 					delete this.messagesToRead[queueChatId];
 
 					this.readMessagesOnClient(queueChatId, copiedMessageIds)
-						.then((readMessagesCount) => {
-							Logger.warn('ReadService: readMessage, need to reduce counter by', readMessagesCount);
-
-							return this.decreaseChatCounter(queueChatId, readMessagesCount);
-						})
-						.then(() => {
-							return this.updateMessengerCounters();
-						})
+						// TODO local counters
+						// .then((readMessagesCount) => {
+						// 	logger.warn('ReadService: readMessage, need to reduce counter by', readMessagesCount);
+						//
+						// 	return this.decreaseChatCounter(queueChatId, readMessagesCount);
+						// })
+						// .then(() => {
+						// 	return this.updateMessengerCounters();
+						// })
 						.catch((error) => {
-							Logger.error('ReadService: error reading message', error);
+							logger.error('ReadService: error reading message', error);
 						})
 					;
 
@@ -116,37 +122,59 @@ jn.define('im/messenger/provider/service/classes/chat/read', (require, exports, 
 			return isDecreaseComplete;
 		}
 
-		async updateMessengerCounters()
-		{
-			Counters.update();
-		}
-
 		/**
 		 * @private
 		 */
 		readMessageOnServer(chatId, messageIds)
 		{
-			Logger.warn('ReadService: readMessages on server', messageIds);
+			logger.warn('ReadService.readMessageOnServer: ', messageIds);
 
-			BX.rest.callMethod(
-				RestMethod.imV2ChatMessageRead,
-				{
-					chatId,
-					ids: messageIds,
-				},
-				(data) => {
-					const { counter, lastId } = data.data();
+			const messageReadData = {
+				chatId,
+				ids: messageIds,
+				actionUuid: UuidManager.getInstance().getActionUuid(),
+			};
 
-					this.decreaseChatCounter(chatId, counter, lastId)
-						.then((needUpdateCounters) => {
-							if (needUpdateCounters)
-							{
-								this.updateMessengerCounters();
-							}
-						})
+			return runAction(RestMethod.imV2ChatMessageRead, { data: messageReadData })
+				.then((/** @type {{counter: number, chatId: number, lastId: number, viewedMessages: Array<number>}} */ data) => {
+					const dialogId = this.getDialogIdByChatId(data.chatId);
+					this.updateDialogCounters(dialogId, data.counter)
+						.then(() => this.updateRecentCounters(dialogId, data.counter))
+						.then(() => this.updateMessengerCounters())
+						.catch((error) => logger.error('ReadService.readMessageOnServer: error when updating models', error))
 					;
+				})
+				.catch((errors) => {
+					logger.error('ReadService.readMessageOnServer error:', errors);
+				})
+			;
+		}
+
+		async updateDialogCounters(dialogId, counter)
+		{
+			return this.store.dispatch('dialoguesModel/update', {
+				dialogId,
+				fields: {
+					counter,
 				},
-			);
+			});
+		}
+
+		async updateRecentCounters(dialogId, counter)
+		{
+			const recentItem = this.store.getters['recentModel/getById'](dialogId);
+
+			await this.store.dispatch('recentModel/set', [{
+				...recentItem,
+				counter,
+			}]);
+
+			MessengerEmitter.emit(EventType.messenger.renderRecent);
+		}
+
+		async updateMessengerCounters()
+		{
+			Counters.update();
 		}
 
 		/**

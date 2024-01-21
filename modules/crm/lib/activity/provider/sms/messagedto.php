@@ -9,4 +9,5 @@ final class MessageDto extends \Bitrix\Crm\Dto\Dto
 	public ?string $to = null;
 	public ?string $body = null;
 	public ?string $template = null;
+	public ?array $placeholders = null;
 }

@@ -1,6 +1,7 @@
 <?
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 
 $avatarId = "lenta-task-avatar-".randString(5);
@@ -8,7 +9,7 @@ $avatarId = "lenta-task-avatar-".randString(5);
 
 <div class="lenta-info-block lenta-info-block-task info-block-blue">
 	<div class="lenta-info-block-l">
-		<div class="lenta-info-block-l-text"><?=GetMessage("TASKS_SONET_LOG_RESPONSIBLE_ID")?>:</div>
+		<div class="lenta-info-block-l-text"><?= Loc::getMessage('TASKS_SONET_LOG_RESPONSIBLE_ID') ?>:</div>
 	</div>
 	<div class="lenta-info-block-r">
 		<div class="lenta-info-block-data">

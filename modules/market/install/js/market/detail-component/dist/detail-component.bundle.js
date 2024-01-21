@@ -182,7 +182,8 @@ this.BX = this.BX || {};
 	          appCode: this.result.APP.CODE
 	        },
 	        analyticsLabel: {
-	          viewMode: 'detail'
+	          viewMode: 'detail',
+	          appCode: this.result.APP.CODE
 	        }
 	      }).then(response => {
 	        if (response.data && typeof response.data.total !== 'undefined' && BX.type.isString(response.data.currentValue)) {

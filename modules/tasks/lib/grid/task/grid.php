@@ -1,10 +1,11 @@
 <?php
+
 namespace Bitrix\Tasks\Grid\Task;
 
 use Bitrix\Main\Grid\Column;
 use Bitrix\Main\Loader;
-use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
+use CCrmOwnerType;
 
 /**
  * Class Grid
@@ -13,13 +14,45 @@ use Bitrix\Main\Localization\Loc;
  */
 class Grid extends \Bitrix\Tasks\Grid
 {
-	/**
-	 * @return array[]
-	 * @throws LoaderException
-	 */
 	public function prepareHeaders(): array
 	{
-		$headers = [
+		$this
+			->fillWithDefaultHeaders()
+			->fillWithCrmHeaders()
+			->fillWithUfHeaders()
+			->markDefaultHeaders()
+			->colorize()
+			->applyScope();
+
+		return $this->headers;
+	}
+
+	public function prepareRows(): array
+	{
+		$preparedRows = [];
+
+		foreach ($this->getRows() as $key => $data)
+		{
+			$row = new Row($data, $this->getParameters());
+			$preparedRows[$key] = [
+				'actions' => $row->prepareActions(),
+				'content' => $row->prepareContent(),
+				'cellActions' => $row->prepareCellActions(),
+				'counters' => $row->prepareCounters(),
+			];
+		}
+
+		return $preparedRows;
+	}
+
+	public function prepareGroupActions(): array
+	{
+		return [];
+	}
+
+	private function fillWithDefaultHeaders(): static
+	{
+		$this->headers = [
 			'ID' => [
 				'id' => 'ID',
 				'name' => Loc::getMessage('TASKS_GRID_TASK_GRID_HEADER_ID'),
@@ -45,7 +78,7 @@ class Grid extends \Bitrix\Tasks\Grid
 				'first_order' => 'desc',
 				'editable' => false,
 				'default' => true,
-				'width' => 250
+				'width' => 250,
 			],
 			'DEADLINE' => [
 				'id' => 'DEADLINE',
@@ -165,35 +198,40 @@ class Grid extends \Bitrix\Tasks\Grid
 			],
 		];
 
+		return $this;
+	}
+
+	private function fillWithCrmHeaders(): static
+	{
 		if (Loader::includeModule('crm'))
 		{
-			$headers['UF_CRM_TASK_LEAD'] = [
+			$this->headers['UF_CRM_TASK_LEAD'] = [
 				'id' => 'UF_CRM_TASK_LEAD',
-				'name' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Lead),
+				'name' => CCrmOwnerType::GetDescription(CCrmOwnerType::Lead),
 				'sort' => false,
 				'first_order' => 'desc',
 				'editable' => false,
 				'default' => false,
 			];
-			$headers['UF_CRM_TASK_CONTACT'] = [
+			$this->headers['UF_CRM_TASK_CONTACT'] = [
 				'id' => 'UF_CRM_TASK_CONTACT',
-				'name' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Contact),
+				'name' => CCrmOwnerType::GetDescription(CCrmOwnerType::Contact),
 				'sort' => false,
 				'first_order' => 'desc',
 				'editable' => false,
 				'default' => false,
 			];
-			$headers['UF_CRM_TASK_COMPANY'] = [
+			$this->headers['UF_CRM_TASK_COMPANY'] = [
 				'id' => 'UF_CRM_TASK_COMPANY',
-				'name' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Company),
+				'name' => CCrmOwnerType::GetDescription(CCrmOwnerType::Company),
 				'sort' => false,
 				'first_order' => 'desc',
 				'editable' => false,
 				'default' => false,
 			];
-			$headers['UF_CRM_TASK_DEAL'] = [
+			$this->headers['UF_CRM_TASK_DEAL'] = [
 				'id' => 'UF_CRM_TASK_DEAL',
-				'name' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Deal),
+				'name' => CCrmOwnerType::GetDescription(CCrmOwnerType::Deal),
 				'sort' => false,
 				'first_order' => 'desc',
 				'editable' => false,
@@ -201,11 +239,16 @@ class Grid extends \Bitrix\Tasks\Grid
 			];
 		}
 
+		return $this;
+	}
+
+	private function fillWithUfHeaders(): static
+	{
 		$parameters = $this->getParameters();
 
 		foreach ($parameters['UF'] as $ufName => $ufItem)
 		{
-			$headers[$ufName] = [
+			$this->headers[$ufName] = [
 				'id' => $ufName,
 				'name' => $ufItem['EDIT_FORM_LABEL'],
 				'sort' => false,
@@ -215,49 +258,47 @@ class Grid extends \Bitrix\Tasks\Grid
 			];
 		}
 
+		return $this;
+	}
+
+	private function markDefaultHeaders(): static
+	{
+		$parameters = $this->getParameters();
+
 		// if key 'default' is present, don't change it
 		foreach ($parameters['COLUMNS'] as $columnId)
 		{
-			if (array_key_exists($columnId, $headers) && !array_key_exists('default', $headers[$columnId]))
+			if (array_key_exists($columnId, $this->headers) && !array_key_exists('default', $this->headers[$columnId]))
 			{
-				$headers[$columnId]['default'] = true;
+				$this->headers[$columnId]['default'] = true;
 			}
 		}
 
+		return $this;
+	}
+
+	private function colorize(): static
+	{
+		$parameters = $this->getParameters();
+
 		if (
 			array_key_exists('SORT', $parameters)
-			&& array_key_exists(($key = key($parameters['SORT'])), $headers)
+			&& array_key_exists(($key = key($parameters['SORT'])), $this->headers)
 		)
 		{
-			$headers[$key]['color'] = Column\Color::BLUE;
+			$this->headers[$key]['color'] = Column\Color::BLUE;
 		}
 
-		return $headers;
+		return $this;
 	}
 
-	/**
-	 * @return array
-	 */
-	public function prepareRows(): array
+	private function applyScope(): static
 	{
-		$preparedRows = [];
-
-		foreach ($this->getRows() as $key => $data)
+		if ($this->isInScope())
 		{
-			$row = new Row($data, $this->getParameters());
-			$preparedRows[$key] = [
-				'actions' => $row->prepareActions(),
-				'content' => $row->prepareContent(),
-				'cellActions' => $row->prepareCellActions(),
-				'counters' => $row->prepareCounters(),
-			];
+			$this->headers = $this->scope->apply();
 		}
 
-		return $preparedRows;
-	}
-
-	public function prepareGroupActions(): array
-	{
-		return [];
+		return $this;
 	}
 }

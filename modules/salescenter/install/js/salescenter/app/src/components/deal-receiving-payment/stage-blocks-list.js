@@ -1,4 +1,4 @@
-import {Loc} from 'main.core';
+import { ajax as Ajax, Loc } from 'main.core';
 import {StatusTypes as Status} from 'salescenter.component.stage-block';
 import * as TimeLineItem from 'salescenter.timeline';
 import {UI} from 'ui.notification';
@@ -205,7 +205,7 @@ export default {
 		},
 		stageRefresh(e, type)
 		{
-			BX.ajax.runComponentAction(
+			Ajax.runComponentAction(
 				"bitrix:salescenter.app",
 				"getAjaxData",
 				{
@@ -236,6 +236,7 @@ export default {
 				this.stages.paysystem.tiles = this.getTileCollection(data.items);
 				this.stages.paysystem.groups = this.getTileGroupsCollection(data.groups, this.stages.paysystem.tiles);
 				this.stages.paysystem.installed = data.isSet;
+				this.stages.paysystem.titleItems = this.getTitleItems(data.items);
 			}
 			else if(type === 'CASHBOX')
 			{

@@ -16,6 +16,8 @@ use Bitrix\ImOpenlines\Security\Permissions;
 
 use Bitrix\Im;
 
+use Bitrix\Rest\AccessException;
+use Bitrix\Rest\Exceptions\ArgumentNullException;
 use Bitrix\Rest\SessionAuth;
 use Bitrix\Rest\RestException;
 
@@ -49,6 +51,7 @@ class Rest extends \IRestService
 				'imopenlines.dialog.get' => [__CLASS__, 'dialogGet'],
 				'imopenlines.dialog.user.depersonalization' => ['callback' => [__CLASS__, 'dialogUserDepersonalization'], 'options' => ['private' => true]],
 				'imopenlines.dialog.form.send' => [__CLASS__, 'dialogFormSend'],
+				'imopenlines.dialog.multi.get' => [__CLASS__, 'getMultiDialogs'],
 
 				'imopenlines.operator.answer' => [__CLASS__, 'operatorAnswer'],
 				'imopenlines.operator.skip' => [__CLASS__, 'operatorSkip'],
@@ -82,6 +85,7 @@ class Rest extends \IRestService
 				'imopenlines.bot.session.message.send' => [__CLASS__, 'botSessionSendAutoMessage'],
 				'imopenlines.bot.session.transfer' => [__CLASS__, 'botSessionTransfer'],
 				'imopenlines.bot.session.finish' => [__CLASS__, 'botSessionFinish'],
+				'imopenlines.bot.session.dialog.new' => [__CLASS__, 'botSessionNew'],
 
 				'imopenlines.network.join' => [__CLASS__, 'networkJoin'],
 				'imopenlines.network.message.add' => [__CLASS__, 'networkMessageAdd'],
@@ -106,7 +110,10 @@ class Rest extends \IRestService
 				'imopenlines.config.delete' => [__CLASS__, 'configDelete'],
 
 				'imopenlines.crm.chat.user.add' => [__CLASS__, 'crmChatUserAdd'],
+				'imopenlines.crm.chat.user.delete' => [__CLASS__, 'crmChatUserDelete'],
 				'imopenlines.crm.chat.getLastId' => [__CLASS__, 'crmLastChatIdGet'],
+				'imopenlines.crm.chat.get' => [__CLASS__, 'getCrmChats'],
+				'imopenlines.crm.message.add' => [__CLASS__, 'crmChatMessageAdd'],
 				'imopenlines.crm.lead.create' => [__CLASS__, 'crmCreateLead'],
 			],
 		];
@@ -239,6 +246,30 @@ class Rest extends \IRestService
 		]);
 	}
 
+	public static function getMultiDialogs($params, $n, \CRestServer $server)
+	{
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		if (!Loader::includeModule('im'))
+		{
+			throw new RestException('Messenger is not installed.', 'IM_NOT_INSTALLED', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$chatId = self::getChatId($params);
+		if (!$chatId)
+		{
+			throw new RestException('You do not have access to the specified dialog', 'ACCESS_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		if (!\Bitrix\ImOpenLines\Chat::hasAccess($chatId))
+		{
+			throw new RestException('You do not have access to the specified dialog', 'ACCESS_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$control = new Operator($chatId);
+		return $control->getMultiDialogs();
+	}
+
 	public static function dialogUserDepersonalization($params, $n, \CRestServer $server)
 	{
 		$params = array_change_key_case($params, CASE_UPPER);
@@ -305,7 +336,6 @@ class Rest extends \IRestService
 		{
 			throw new RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
 		}
-
 
 		return true;
 	}
@@ -813,6 +843,27 @@ class Rest extends \IRestService
 		$chat->finish();
 
 		return true;
+	}
+
+	public static function botSessionNew($arParams, $n, \CRestServer $server)
+	{
+		if (!isset($arParams['CHAT_ID']))
+		{
+			throw new RestException('Param CHAT_ID is empty', 'EMPTY_CHAT_ID', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		if (!isset($arParams['OPERATOR_ID']))
+		{
+			throw new RestException('Param OPERATOR_ID is empty', 'EMPTY_OPERATOR_ID', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		if (!isset($arParams['MESSAGE_ID']))
+		{
+			throw new RestException('Param MESSAGE_ID is empty', 'EMPTY_MESSAGE_ID', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID'], $arParams['OPERATOR_ID']);
+		return $control->openNewDialogByMessage($arParams['MESSAGE_ID']);
 	}
 
 	/**
@@ -1710,9 +1761,108 @@ class Rest extends \IRestService
 
 	/**
 	 * Add user to chat by connected crm entity data
+	 *
+	 * @param $arParams
+	 * @param $n
+	 * @param \CRestServer $server
+	 * @return int
+	 * @throws AccessException
+	 * @throws ArgumentNullException
+	 * @throws RestException
 	 */
 	public static function crmChatUserAdd($arParams, $n, \CRestServer $server)
 	{
+		if (empty($arParams['CRM_ENTITY_TYPE']))
+		{
+			throw new ArgumentNullException('CRM_ENTITY_TYPE');
+		}
+
+		if (empty($arParams['CRM_ENTITY']))
+		{
+			throw new ArgumentNullException('CRM_ENTITY');
+		}
+
+		if (!Loader::includeModule('im'))
+		{
+			throw new RestException('Messenger is not installed.', 'IM_NOT_INSTALLED', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		if (!Crm\Common::hasAccessToEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']))
+		{
+			throw new AccessException('You don\'t have access to join user to chat');
+		}
+
+		if (empty($arParams['CHAT_ID']))
+		{
+			$chatId = Crm\Common::getLastChatIdByCrmEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']);
+		}
+		else
+		{
+			$chatId = (int)$arParams['CHAT_ID'];
+		}
+
+		if ($chatId > 0)
+		{
+			if (!Crm\Common::checkChatOfCrmEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY'], $chatId))
+			{
+				throw new RestException('Chat does not belong to the CRM entity being checked', 'CHAT_NOT_IN_CRM', \CRestServer::STATUS_WRONG_REQUEST);
+			}
+
+			$chat = Im\Model\ChatTable::getByPrimary($chatId, ['select' => ['ENTITY_ID']])->fetch();
+			$parsedUserCode = Session\Common::parseUserCode($chat['ENTITY_ID']);
+			$lineId = $parsedUserCode['CONFIG_ID'];
+
+			if (!$lineId || !Config::canJoin($lineId, $arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']))
+			{
+				throw new AccessException('You don\'t have access to join user to chat');
+			}
+
+			$arParams['USER_ID'] = (int)$arParams['USER_ID'];
+			if ($arParams['USER_ID'] <= 0)
+			{
+				throw new ArgumentNullException('Empty USER_ID');
+			}
+
+			$user = Im\User::getInstance($arParams['USER_ID']);
+
+			if (!$user->isExists() || !$user->isActive())
+			{
+				throw new RestException('User not active', 'CRM_CHAT_USER_NOT_ACTIVE', \CRestServer::STATUS_WRONG_REQUEST);
+			}
+
+			if (!Crm\Common::hasAccessToEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY'], $arParams['USER_ID']))
+			{
+				throw new AccessException('This user does not have access to the chat because he does not have access to this CRM entity');
+			}
+
+			if (!Config::canViewHistory($lineId, $arParams['USER_ID']))
+			{
+				throw new AccessException('This user does not have access to the chat because he does not have access to this view chat history');
+			}
+
+			$CIMChat = new \CIMChat(0);
+			$result = $CIMChat->AddUser($chatId, $arParams['USER_ID']);
+
+			if (!$result)
+			{
+				throw new RestException('You don\'t have access or user already member in chat', 'WRONG_REQUEST', \CRestServer::STATUS_WRONG_REQUEST);
+			}
+		}
+
+		return $chatId;
+	}
+
+	/**
+	 * Remove user from chat by connected crm entity data
+	 */
+	public static function crmChatUserDelete($arParams, $n, \CRestServer $server)
+	{
+		$arParams['USER_ID'] = (int)$arParams['USER_ID'];
+		if ($arParams['USER_ID'] <= 0)
+		{
+			throw new RestException('Empty User ID', 'CRM_CHAT_EMPTY_USER', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
 		if (empty($arParams['CRM_ENTITY_TYPE']) || empty($arParams['CRM_ENTITY']))
 		{
 			throw new RestException('Empty CRM data', 'CRM_CHAT_EMPTY_CRM_DATA', \CRestServer::STATUS_WRONG_REQUEST);
@@ -1723,23 +1873,34 @@ class Rest extends \IRestService
 			throw new RestException('Messenger is not installed.', 'IM_NOT_INSTALLED', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$chatId = Crm\Common::getLastChatIdByCrmEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']);
+		if (!Crm\Common::hasAccessToEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']))
+		{
+			throw new AccessException('You don\'t have access to join user to chat');
+		}
+
+		if (empty($arParams['CHAT_ID']))
+		{
+			$chatId = Crm\Common::getLastChatIdByCrmEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']);
+		}
+		else
+		{
+			$chatId = (int)$arParams['CHAT_ID'];
+		}
 
 		if ($chatId > 0)
 		{
+			if (!Crm\Common::checkChatOfCrmEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY'], $chatId))
+			{
+				throw new RestException('Chat does not belong to the CRM entity being checked', 'CHAT_NOT_IN_CRM', \CRestServer::STATUS_WRONG_REQUEST);
+			}
+
 			$chat = Im\Model\ChatTable::getByPrimary($chatId, ['select' => ['ENTITY_ID']])->fetch();
 			$parsedUserCode = Session\Common::parseUserCode($chat['ENTITY_ID']);
 			$lineId = $parsedUserCode['CONFIG_ID'];
 
 			if (!Config::canJoin($lineId, $arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']))
 			{
-				throw new RestException('You don\'t have access to join user to chat', 'CHAT_JOIN_PERMISSION_DENIED', \CRestServer::STATUS_FORBIDDEN);
-			}
-
-			$arParams['USER_ID'] = (int)$arParams['USER_ID'];
-			if ($arParams['USER_ID'] <= 0)
-			{
-				throw new RestException('Empty User ID', 'CRM_CHAT_EMPTY_USER', \CRestServer::STATUS_WRONG_REQUEST);
+				throw new RestException('You don\'t have access to delete a user from this chat', 'CHAT_DELETE_USER_PERMISSION_DENIED', \CRestServer::STATUS_FORBIDDEN);
 			}
 
 			$user = Im\User::getInstance($arParams['USER_ID']);
@@ -1750,11 +1911,11 @@ class Rest extends \IRestService
 			}
 
 			$CIMChat = new \CIMChat(0);
-			$result = $CIMChat->AddUser($chatId, $arParams['USER_ID']);
+			$result = $CIMChat->DeleteUser($chatId, $arParams['USER_ID'], false);
 
 			if (!$result)
 			{
-				throw new RestException('You don\'t have access or user already member in chat', 'WRONG_REQUEST', \CRestServer::STATUS_WRONG_REQUEST);
+				throw new RestException('You don\'t have access or user already not in chat', 'WRONG_REQUEST', \CRestServer::STATUS_WRONG_REQUEST);
 			}
 		}
 
@@ -1779,6 +1940,98 @@ class Rest extends \IRestService
 		}
 
 		return $chatId;
+	}
+
+	/**
+	 * Get active chats for CRM entity
+	 *
+	 * @param $arParams
+	 * @param $n
+	 * @param \CRestServer $server
+	 * @return array
+	 * @throws AccessException
+	 * @throws ArgumentNullException
+	 */
+	public static function getCrmChats($arParams, $n, \CRestServer $server)
+	{
+		if (empty($arParams['CRM_ENTITY_TYPE']))
+		{
+			throw new ArgumentNullException('CRM_ENTITY_TYPE');
+		}
+
+		if (empty($arParams['CRM_ENTITY']))
+		{
+			throw new ArgumentNullException('CRM_ENTITY');
+		}
+
+		if (!Crm\Common::hasAccessToEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']))
+		{
+			throw new AccessException('You dont have access to this action');
+		}
+
+		return Crm\Common::getChatsByCrmEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']);
+	}
+
+	/**
+	 * Send a message to the CRM chat from a user who has access to this chat
+	 *
+	 * @param $arParams
+	 * @param $n
+	 * @param \CRestServer $server
+	 * @return int
+	 * @throws ArgumentNullException
+	 * @throws AccessException
+	 * @throws RestException
+	 */
+	public static function crmChatMessageAdd($arParams, $n, \CRestServer $server)
+	{
+		if (empty($arParams['CRM_ENTITY_TYPE']))
+		{
+			throw new ArgumentNullException('CRM_ENTITY_TYPE');
+		}
+
+		if (empty($arParams['CRM_ENTITY']))
+		{
+			throw new ArgumentNullException('CRM_ENTITY');
+		}
+
+		if (empty($arParams['USER_ID']))
+		{
+			throw new ArgumentNullException('USER_ID');
+		}
+
+		if (empty($arParams['CHAT_ID']))
+		{
+			throw new ArgumentNullException('CHAT_ID');
+		}
+
+		if (empty($arParams['MESSAGE']))
+		{
+			throw new ArgumentNullException('MESSAGE');
+		}
+
+		if (!Crm\Common::hasAccessToEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']))
+		{
+			throw new AccessException('You dont have access to this action');
+		}
+
+		if (!Crm\Common::hasAccessToEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY'], (int)$arParams['USER_ID']))
+		{
+			throw new AccessException('User dont have access to this entity');
+		}
+
+		if (!Crm\Common::checkChatOfCrmEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY'], (int)$arParams['CHAT_ID']))
+		{
+			throw new RestException('Chat does not belong to the CRM entity being checked', 'CHAT_NOT_IN_CRM', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$messageId = Chat::sendMessageFromUser($arParams['MESSAGE'], (int)$arParams['CHAT_ID'], (int)$arParams['USER_ID']);
+		if (!$messageId)
+		{
+			throw new RestException('Message isn\'t added', 'MESSAGE_ADD_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return $messageId;
 	}
 
 	public static function crmCreateLead($arParams, $n, \CRestServer $server): bool

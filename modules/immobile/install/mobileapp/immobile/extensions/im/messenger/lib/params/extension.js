@@ -58,6 +58,21 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		{
 			return this.get('IS_BETA_AVAILABLE', false);
 		}
+
+		isChatM1Enabled()
+		{
+			return this.get('IS_CHAT_M1_ENABLED', false);
+		}
+
+		isChatLocalStorageAvailable()
+		{
+			return this.get('IS_CHAT_LOCAL_STORAGE_AVAILABLE', false);
+		}
+
+		shouldShowChatV2UpdateHint()
+		{
+			return this.get('SHOULD_SHOW_CHAT_V2_UPDATE_HINT', false);
+		}
 	}
 
 	module.exports = {

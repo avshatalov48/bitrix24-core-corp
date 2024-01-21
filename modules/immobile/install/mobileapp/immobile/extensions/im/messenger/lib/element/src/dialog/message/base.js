@@ -49,6 +49,8 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			this.canBeQuoted = true;
 			this.align = null;
 			this.statusText = '';
+			this.forwardText = '';
+			this.loadText = '';
 			this.isBackgroundWide = false;
 			this.style = {
 				textAlign: MessageTextAlign.left,
@@ -57,7 +59,10 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			};
 			this.reactions = [];
 			/** @deprecated */
-			this.ownReactions = []; //TODO delete after the new format is supported on iOS
+			this.ownReactions = []; // TODO delete after the new format is supported on iOS
+
+			/** @type {MessageRichLink || null} */
+			this.richLink = null;
 
 			this.showUsername = true;
 			// TODO change user color for message
@@ -73,9 +78,9 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setUserColor(modelMessage.authorId)
 				.setMe(modelMessage.authorId)
 				.setTime(modelMessage.date)
-				.setWasSent(!modelMessage.error)
 				.setStatus(modelMessage)
 				.setStatusText(modelMessage)
+				.setForwardText(modelMessage)
 				.setLikes(modelMessage.reactions)
 				.setReactions(modelMessage.reactions)
 				.setShowUsername(modelMessage, options.showUsername)
@@ -87,6 +92,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setRoundedCorners(true)
 				.setMarginTop(options.marginTop)
 				.setMarginBottom(options.marginBottom)
+				.setRichLink(modelMessage)
 			;
 		}
 
@@ -182,16 +188,6 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			return this;
 		}
 
-		setWasSent(wasSent)
-		{
-			if (Type.isBoolean(wasSent))
-			{
-				this.wasSent = wasSent;
-			}
-
-			return this;
-		}
-
 		setRead(isRead)
 		{
 			if (!Type.isBoolean(isRead))
@@ -204,25 +200,27 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			return this;
 		}
 
-		setMessage(text = '')
+		setMessage(text = '', options = {})
 		{
 			let messageText = text;
 
 			// TODO: remove after native support for attachments
 			const modelMessage = core.store.getters['messagesModel/getById'](this.id);
-			const isMessageWithAttach = modelMessage
-				&& modelMessage.params
-				&& modelMessage.params.ATTACH
-				&& modelMessage.params.ATTACH[0]
-			;
-			if (isMessageWithAttach)
+
+			const attach = modelMessage?.params?.ATTACH ? modelMessage.params.ATTACH[0] : null;
+
+			const attachWithOnlyRichLink = Boolean(
+				attach?.BLOCKS.length === 1
+				&& attach.BLOCKS[0].RICH_LINK,
+			);
+
+			if (attach && !attachWithOnlyRichLink)
 			{
 				if (Type.isStringFilled(text))
 				{
 					messageText += '\n\n';
 				}
 
-				const attach = modelMessage.params.ATTACH[0];
 				if (Type.isStringFilled(attach.DESCRIPTION) && attach.DESCRIPTION !== 'SKIP_MESSAGE')
 				{
 					messageText += `${attach.DESCRIPTION}\n`;
@@ -235,7 +233,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				messageText += `${attachIcon} [b][url=${openAttachUrl}]${openAttachText}[/url][/b]`;
 			}
 
-			const message = parser.decodeMessageFromText(messageText);
+			const message = parser.decodeMessageFromText(messageText, options);
 			if (Type.isArrayFilled(message))
 			{
 				this.message = message;
@@ -321,16 +319,21 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 					{
 						reaction.users = reactionsList.reactionUsers
 							.get(reactionType)
-							.map((user) => {
-								const userModel = core.getStore().getters['usersModel/getById'](user.id);
+							.map((userId) => {
+								const userModel = core.getStore().getters['usersModel/getById'](userId);
 
 								const result = {
-									isCurrentUser: user.id === MessengerParams.getUserId(),
+									isCurrentUser: userId === MessengerParams.getUserId(),
 								};
 
-								if (user.avatar !== '')
+								if (!userModel)
 								{
-									result.imageUrl = user.avatar;
+									return result;
+								}
+
+								if (userModel.avatar !== '')
+								{
+									result.imageUrl = userModel.avatar;
 
 									return result;
 								}
@@ -338,7 +341,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 								result.defaultIconSvg = defaultUserIcon(
 									userModel
 										? userModel.color
-										: colorUtils.getColorByNumber(user.id),
+										: colorUtils.getColorByNumber(userModel.id),
 								);
 
 								return result;
@@ -350,6 +353,64 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				})
 			;
 			this.reactions = reactions;
+
+			return this;
+		}
+
+		/**
+		 *
+		 * @param {MessagesModelState} messageModel
+		 * @return {Message}
+		 */
+		setRichLink(messageModel)
+		{
+			const urlId = messageModel.richLinkId;
+
+			if (!urlId)
+			{
+				return this;
+			}
+
+			/** @type {AttachConfig || undefined} */
+			const attach = messageModel.attach.find((attachConfig) => {
+				return Number(attachConfig.id) === urlId;
+			});
+
+			if (!attach)
+			{
+				return this;
+			}
+
+			/** @type {AttachRichItem || null} */
+			let richLink = null;
+			const blockWithRich = attach.blocks.find((attachBlock) => attachBlock.richLink);
+
+			if (blockWithRich?.richLink.length > 0)
+			{
+				richLink = blockWithRich.richLink[0];
+			}
+
+			if (richLink)
+			{
+				let previewUrl = richLink.preview ?? null;
+
+				if (Type.isString(previewUrl) && !previewUrl.startsWith('http'))
+				{
+					previewUrl = currentDomain + previewUrl;
+				}
+
+				this.richLink = {
+					link: richLink.link ?? '',
+					description: richLink.desc ?? '',
+					name: richLink.name ?? '',
+					attachId: attach.id,
+					previewUrl,
+					previewSize: {
+						height: richLink?.previewSize?.height ?? 0,
+						width: richLink?.previewSize?.width ?? 0,
+					},
+				};
+			}
 
 			return this;
 		}
@@ -555,6 +616,19 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 			if (modelMessage.sending)
 			{
+				if (Type.isBoolean(modelMessage.error) && modelMessage.error && modelMessage.sending)
+				{
+					const dateSend = Type.isDate(modelMessage.date) ? modelMessage.date : new Date();
+					const dateThreeDayAgo = new Date();
+					dateThreeDayAgo.setDate(dateThreeDayAgo.getDate() - 3);
+
+					const isWaitExpired = dateSend.getTime() < dateThreeDayAgo.getTime();
+					const isServerError = modelMessage.errorReason === 0 || modelMessage.errorReason === 500;
+					this.status = (isWaitExpired || isServerError) ? OwnMessageStatus.error : OwnMessageStatus.sending;
+
+					return this;
+				}
+
 				this.status = OwnMessageStatus.sending;
 			}
 			else if (modelMessage.viewedByOthers)
@@ -582,6 +656,40 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			}
 
 			return this;
+		}
+
+		setForwardText(modelMessage)
+		{
+			const { forward } = modelMessage;
+			if (forward && forward.id)
+			{
+				if (forward.userId)
+				{
+					const authorId = forward.userId;
+					const user = core.getStore().getters['usersModel/getById'](authorId);
+					if (user)
+					{
+						this.forwardText = `${Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD')} ${user.name || user.lastName || user.firstName}`;
+					}
+				}
+				else
+				{
+					this.forwardText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_SYSTEM');
+				}
+			}
+
+			return this;
+		}
+
+		/**
+		 * @desc Set load message text ( before progress )
+		 */
+		setLoadText()
+		{
+			if (!Type.isStringFilled(this.loadText) && this.status === OwnMessageStatus.sending)
+			{
+				this.loadText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_PROCESSING');
+			}
 		}
 
 		/**

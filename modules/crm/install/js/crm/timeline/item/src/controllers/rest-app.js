@@ -1,16 +1,18 @@
-import {Base} from './base';
+import { Type } from 'main.core';
+import { Base } from './base';
 import ConfigurableItem from '../configurable-item';
-import { ActionType } from "../action";
+import { ActionType } from '../action';
 
 export class RestApp extends Base
 {
 	onItemAction(item: ConfigurableItem, actionParams: ActionParams): void
 	{
-		const {action, actionType, actionData} = actionParams;
+		const { action, actionType, actionData } = actionParams;
 		if (!ActionType.isJsEvent(actionType))
 		{
 			return;
 		}
+
 		if (action === 'Activity:ConfigurableRestApp:OpenApp')
 		{
 			this.#openRestAppSlider(actionData);
@@ -19,11 +21,17 @@ export class RestApp extends Base
 
 	#openRestAppSlider(params: Object): void
 	{
-		const appId = params.restAppId;
-		delete params.restAppId;
+		const openAppParams = { ...params };
+		const appId = openAppParams.restAppId;
+		delete openAppParams.restAppId;
+
 		if (BX.rest && BX.rest.AppLayout)
 		{
-			BX.rest.AppLayout.openApplication(appId, params);
+			if (Type.isStringFilled(openAppParams.bx24_label))
+			{
+				openAppParams.bx24_label = JSON.parse(openAppParams.bx24_label);
+			}
+			BX.rest.AppLayout.openApplication(appId, openAppParams);
 		}
 	}
 

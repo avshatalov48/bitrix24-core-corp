@@ -14,7 +14,6 @@ use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\Order;
 use Bitrix\Crm\Product\Url;
 use Bitrix\Crm\Service;
-use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Tracking;
 use Bitrix\Iblock\Url\AdminPage\BuilderManager;
 use Bitrix\Main;
@@ -643,6 +642,11 @@ class CCrmOrderListComponent extends \CBitrixComponent
 				$effectiveFilterFieldIDs[] = 'ACTIVITY_RESPONSIBLE_IDS';
 			}
 
+			if(!in_array('ACTIVITY_FASTSEARCH_CREATED', $effectiveFilterFieldIDs, true))
+			{
+				$effectiveFilterFieldIDs[] = 'ACTIVITY_FASTSEARCH_CREATED';
+			}
+
 			Tracking\UI\Filter::appendEffectiveFields($effectiveFilterFieldIDs);
 
 			foreach($effectiveFilterFieldIDs as $filterFieldID)
@@ -1250,23 +1254,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 		$this->arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
 
-		if (LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
-		{
-			$this->arResult['TIME_FORMAT'] = array(
-				'tommorow' => 'tommorow',
-				's' => 'sago',
-				'i' => 'iago',
-				'H3' => 'Hago',
-				'today' => 'today',
-				'yesterday' => 'yesterday',
-				//'d7' => 'dago',
-				'-' => Main\Type\DateTime::convertFormatToPhp(FORMAT_DATE)
-			);
-		}
-		else
-		{
-			$this->arResult['TIME_FORMAT'] = preg_replace('/:s$/', '', Main\Type\DateTime::convertFormatToPhp(FORMAT_DATETIME));
-		}
+		$this->arResult['TIME_FORMAT'] = CCrmDateTimeHelper::getDefaultDateTimeFormat();
 
 		$this->arResult['SALESCENTER_MODE'] = isset($this->arParams['SALESCENTER_MODE'])
 			&& $this->arParams['SALESCENTER_MODE'] === true;

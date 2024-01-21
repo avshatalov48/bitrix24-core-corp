@@ -1,61 +1,74 @@
-// todo cleanup, remove temp comments
-
 type KanbanProps = {
-	id: string, // unique id of current kanban instance
-	initItemController: (KanbanInstance) => KanbanItemController,
+	// unique id of current kanban instance
+	id: string,
+	stagesProvider: () => KanbanStage[],
 	toolbar: {
 		enabled: boolean,
 		componentClass: KanbanToolbar,
 		props: object,
 	},
-	entityTypeName: string, // no need this in abstract kanban? -> must remove it
-	entityTypeId: number, // no need this in abstract kanban? -> must remove it
-	actions: Record<string, string>, // maybe rename, or replace with Providers
-	actionParams: Record<string, object>, // actions and actionParams are related, so - Providers?
-	filterParams: object,
 
-	// should Kanban know about layout and it's menu? maybe it's a separate object?
+	// routes to interact with backend, can consist other domain-specific routes
+	actions: {
+		loadItems: string,
+		deleteItem: string,
+		updateItemStage: string,
+	},
+
+	// some base params sending to backend when call related action
+	actionParams: {
+		loadItems: object,
+		deleteItem: object,
+		updateItemStage: object,
+	},
+
+	selectItemStageId?: (item: object) => KanbanStage,
+	mutateItemStage?: (item: object, stage: KanbanStage) => void,
+	onMoveItemError?: (err: object) => {},
+
 	layout: object,
 	layoutMenuActions: LayoutWidgetMenuAction[],
 	layoutOptions: {
 		useSearch: boolean,
 		useOnViewLoaded: boolean,
 	},
-	menuButtons: object, // is this layout widget header buttons?
-	getMenuButtons: Function, // looks like this fn returns same as menuButtons option
 
-	itemDetailOpenHandler: Function, // rename to onItemOpen?
-	itemCounterLongClickHandler: Function, // rename to onItemCounterLongClick? what is item counter?
+	// layout widget header buttons
+	menuButtons: object,
+
+	itemDetailOpenHandler: Function,
+	itemCounterLongClickHandler: Function,
 
 	isShowFloatingButton: boolean,
-	floatingButtonClickHandler: Function, // rename to onFloatingButtonClick?
-	floatingButtonLongClickHandler: Function, // rename to onFloatingButtonLongClick?
+	onFloatingButtonClick: Function,
+	onFloatingButtonLongClick: Function,
 
-	onDetailCardUpdateHandler: Function, // when it's called? strong coupling with detail card?
-	onDetailCardCreateHandler: Function, // when it's called? strong coupling with detail card?
-	onNotViewableHandler: Function, // what is this?
-	onPanListHandler: Function | null, // what is this?
-	initCountersHandler: Function, // what is this?
-	itemActions: KanbanItemContextMenuAction[],
-	itemParams: object, // how it's used?
-	pull: { // how it's used? do we need this in abstract kanban?
+	onDetailCardUpdateHandler: Function,
+	onDetailCardCreateHandler: Function,
+	onNotViewableHandler?: Function,
+	onPanListHandler?: Function,
+	initCountersHandler?: Function,
+	itemActions?: KanbanItemContextMenuAction[],
+	itemParams: object,
+	onPrepareItemParams?: (params: object) => object,
+	pull?: {
 		moduleId: string,
 		callback: Function,
 	},
-	itemLayoutOptions: object, // are they universal, or crm specific?
+	itemLayoutOptions: object,
 
-	cacheName: string, // extract work with cache to separate service?
-	getEmptyListComponent: () => object,
-	onBeforeReload: Function,
+	cacheName: string,
+	getEmptyListComponent?: () => object,
 
-	// some external config? how it's used?
-	config: {
-		forbidden?: boolean,
-	},
+	// layout right buttons
+	needInitMenu: boolean,
 
-	needInitMenu: boolean, // what exact menu?
 	ref: Function,
-	analyticsLabel: object, // any data, just passed everywhere?
+	analyticsLabel: object,
+};
+
+type KanbanState = {
+	activeStageId: number | null,
 };
 
 type LayoutWidgetMenuAction = {
@@ -69,7 +82,7 @@ type LayoutWidgetMenuAction = {
 
 type KanbanItemContextMenuAction = {
 	id: string,
-	type?: string, // what is this?
+	type?: string,
 	title: string,
 	sort: number,
 	sectionCode?: string,
@@ -77,17 +90,10 @@ type KanbanItemContextMenuAction = {
 	showArrow: boolean,
 	showActionLoader?: boolean,
 	onClickCallback: Function,
-	onDisableClick?: Function, // when it's called? click on disabled item?
+	onDisableClick?: Function,
 	data: {
 		svgIcon?: string,
 	},
-};
-
-type KanbanInstance = {};
-
-type KanbanItemController = {
-	setStage: (itemId: number, stageId: number) => Promise<any>,
-	deleteItem: (itemId: number) => Promise<any>,
 };
 
 type KanbanToolbar = {};
@@ -100,4 +106,12 @@ type KanbanStage = {
 	id: number,
 	statusId: string, // code or slug
 	name: string,
+};
+
+type KanbanBackendError = {
+	code: string,
+	message: string,
+	customData: {
+		public: boolean,
+	},
 };

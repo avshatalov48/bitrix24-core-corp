@@ -1,0 +1,3 @@
+<?php
+$MESS["SETTINGS_MAPS_PROVIDER_GOOGLE"] = "Google Maps";
+$MESS["SETTINGS_MAPS_PROVIDER_YANDEX"] = "Yandex.Maps";

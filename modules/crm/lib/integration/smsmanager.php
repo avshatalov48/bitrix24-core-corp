@@ -525,7 +525,6 @@ class SmsManager implements ICanSendMessage
 
 		if (
 			$entityTypeId === \CCrmOwnerType::Lead
-			&& empty($communications)
 			&& \CCrmLead::GetCustomerType($entityId) === CustomerType::RETURNING
 		)
 		{

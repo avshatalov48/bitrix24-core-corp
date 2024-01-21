@@ -6,9 +6,9 @@ use Bitrix\Main\Application;
 use Bitrix\Tasks\Integration\Forum\Task\Comment;
 use Bitrix\Tasks\Internals\Counter\CounterController;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
-use Bitrix\Tasks\Internals\Counter\CounterState;
 use Bitrix\Tasks\Internals\Counter\CounterTable;
 use Bitrix\Tasks\Internals\Counter\Push\PushSender;
+use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Util\Type\DateTime;
 
 class GarbageCollector
@@ -89,7 +89,7 @@ class GarbageCollector
 		";
 		Application::getConnection()->query($sql);
 
-		CounterState::getInstance($userId)->resetCache();
+		Counter\State\Factory::getState($userId)->resetCache();
 	}
 
 	/**

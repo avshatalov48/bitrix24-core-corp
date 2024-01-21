@@ -1,6 +1,9 @@
 <?php
 
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
 
@@ -19,7 +22,7 @@ use Bitrix\Main\Localization\Loc;
 			$style = 'style="background-image:url(\'' . htmlspecialcharsbx($item['personalPhoto']) . '\'); background-size: 30px;"';
 		}
 		?>
-		<span class="fields employee field-item">
+		<span class="fields employee field-item" data-id="<?= (int)$item['userId'] ?>">
 			<?php
 			if (empty($item['disabled']))
 			{

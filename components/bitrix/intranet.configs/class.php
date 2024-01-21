@@ -1,4 +1,4 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\CultureTable;
 use Bitrix\Main\Localization\Loc;
@@ -9,6 +9,7 @@ use Bitrix\Location\Repository\SourceRepository;
 use Bitrix\Location;
 use Bitrix\Main\Config\Option;
 use Bitrix\Intranet\Integration\Main\Culture;
+use Bitrix\Intranet;
 
 final class IntranetConfigsComponent extends CBitrixComponent
 {
@@ -294,14 +295,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 
 		if (isset($_REQUEST["site_title"]))
 		{
-			if ($this->arResult["IS_BITRIX24"])
-			{
-				COption::SetOptionString("bitrix24", "site_title", $_REQUEST["site_title"]);
-			}
-			else
-			{
-				COption::SetOptionString("bitrix24", "site_title", $_REQUEST["site_title"], false, SITE_ID);
-			}
+			Intranet\Portal::getInstance()->getSettings()->setTitle($_REQUEST["site_title"]);
 		}
 
 		if ($this->arResult["IS_BITRIX24"])
@@ -310,7 +304,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 
 			if (isset($_REQUEST["logo_name"]) && $_REQUEST["logo_name"] <> '')
 			{
-				COption::SetOptionString("main", "site_name", $_REQUEST["logo_name"]);
+				Intranet\Portal::getInstance()->getSettings()->setName($_REQUEST["logo_name"]);
 				$iblockID = COption::GetOptionInt("intranet", "iblock_structure");
 				$db_up_department = CIBlockSection::GetList(Array(), Array("SECTION_ID"=>0, "IBLOCK_ID"=>$iblockID));
 				if ($ar_up_department = $db_up_department->Fetch())

@@ -18,6 +18,7 @@ class Tasks extends Social
 				'menu_files',
 				'menu_external_mail',
 				'menu_all_groups',
+				'menu_all_spaces',
 			],
 			'menu_crm_favorite',
 			'menu_crm_store',

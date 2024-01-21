@@ -70,7 +70,7 @@ jn.define('layout/ui/entity-editor/tooltip/duplicate', (require, exports, module
 
 		getColor()
 		{
-			return '#E89B06';
+			return AppTheme.colors.accentMainWarning;
 		}
 
 		getValue(fieldValue)

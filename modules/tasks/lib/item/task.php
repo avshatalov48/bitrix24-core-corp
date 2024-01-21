@@ -26,7 +26,8 @@ use Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\LogTable;
 use Bitrix\Tasks\Internals\Helper\Task\Dependence;
 use Bitrix\Tasks\Kanban\StagesTable;
-use Bitrix\Tasks\Member\MemberService;
+use Bitrix\Tasks\Member\AbstractMemberService;
+use Bitrix\Tasks\Member\Service\TaskMemberService;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\User;
@@ -89,7 +90,7 @@ final class Task extends \Bitrix\Tasks\Item
 				ScenarioTable::insertIgnore($id, $scenarios);
 			}
 			TaskAccessController::dropItemCache($id);
-			MemberService::invalidate();
+			TaskMemberService::invalidate();
 
 			(new TimeLineManager($id, $this->userId))->onTaskCreated()->save();
 		}
@@ -373,7 +374,7 @@ final class Task extends \Bitrix\Tasks\Item
 			], $result);
 
 			Search\Task::index($data); // todo: move this into a special processor
-			SearchIndex::setTaskSearchIndex($taskId, $fullTaskData);
+			SearchIndex::setTaskSearchIndex($taskId);
 
 			\CTaskSync::addItem($data); // MS Exchange
 

@@ -842,48 +842,6 @@ class DealCategory
 	}
 
 	/**
-	 * Issue new stage ID.
-	 * @param $entityID
-	 * @return int
-	 * @throws Main\NotSupportedException
-	 */
-	public static function issueStageID($entityID)
-	{
-		$ID = self::convertFromStatusEntityID($entityID);
-		if($ID <= 0)
-		{
-			return '';
-		}
-
-		$connection = Main\Application::getConnection();
-		$entityID = $connection->getSqlHelper()->forSql($entityID);
-		//Offset for namespace (for example "C15:")
-		$offset = mb_strlen($ID) + 3;
-		if($connection instanceof Main\DB\MysqlCommonConnection)
-		{
-			$sql = "SELECT SUBSTRING(STATUS_ID, {$offset}) AS MAX_STATUS_ID FROM b_crm_status WHERE ENTITY_ID = '{$entityID}' AND CAST(SUBSTRING(STATUS_ID, {$offset}) AS UNSIGNED) > 0 ORDER BY CAST(SUBSTRING(STATUS_ID, {$offset}) AS UNSIGNED) DESC LIMIT 1";
-		}
-		elseif($connection instanceof Main\DB\MssqlConnection)
-		{
-			$sql = "SELECT TOP 1 SUBSTRING(STATUS_ID, {$offset}, LEN(STATUS_ID)) AS MAX_STATUS_ID FROM B_CRM_STATUS WHERE ENTITY_ID = '{$entityID}' AND CAST((CASE WHEN ISNUMERIC(SUBSTRING(STATUS_ID, {$offset}, LEN(STATUS_ID))) > 0 THEN SUBSTRING(STATUS_ID, {$offset}, LEN(STATUS_ID)) ELSE '0' END) AS INT) > 0 ORDER BY CAST((CASE WHEN ISNUMERIC(SUBSTRING(STATUS_ID, {$offset}, LEN(STATUS_ID))) > 0 THEN STATUS_ID ELSE '0' END) AS INT) DESC";
-		}
-		elseif($connection instanceof Main\DB\OracleConnection)
-		{
-			$sql = "SELECT SUBSTR(STATUS_ID, {$offset}) AS MAX_STATUS_ID FROM (SELECT STATUS_ID FROM B_CRM_STATUS WHERE ENTITY_ID = '{$entityID}' AND COALESCE(TO_NUMBER(REGEXP_SUBSTR(STATUS_ID, '^\d+(\.\d+)?', {$offset})), 0) > 0 ORDER BY COALESCE(TO_NUMBER(REGEXP_SUBSTR(STATUS_ID, '^\d+(\.\d+)?', {$offset})), 0) DESC) WHERE ROWNUM <= 1";
-		}
-		else
-		{
-			$dbType = $connection->getType();
-			throw new Main\NotSupportedException("The '{$dbType}' is not supported in current context");
-		}
-
-		$dbResult = $connection->query($sql);
-		$ary = $dbResult->fetch();
-		$num = (is_array($ary) && isset($ary['MAX_STATUS_ID']) ? (int)$ary['MAX_STATUS_ID'] : 0) + 1;
-		return self::prepareStageID($ID, (string)$num);
-	}
-
-	/**
 	 * Resolve category entry ID from stage ID.
 	 * If stage ID contains namespace ID.
 	 * For example if stageID is "C15:NEW", then "C15" is namespace ID and category entry ID is 15.
@@ -1299,48 +1257,45 @@ class DealCategory
 			$stageSql = $sqlHelper->forSql($stageID, 50);
 			$newStageSql = $sqlHelper->forSql($newStageID, 50);
 
-			if($connection instanceof Main\DB\MysqlCommonConnection)
+			try
 			{
-				try
-				{
-					$connection->startTransaction();
+				$connection->startTransaction();
 
-					$connection->queryExecute("
-						UPDATE b_crm_status SET STATUS_ID = '{$newStageSql}'
-							WHERE STATUS_ID = '{$stageSql}' AND ENTITY_ID = '{$entitySql}'"
-					);
+				$connection->queryExecute("
+					UPDATE b_crm_status SET STATUS_ID = '{$newStageSql}'
+						WHERE STATUS_ID = '{$stageSql}' AND ENTITY_ID = '{$entitySql}'"
+				);
 
-					$connection->queryExecute("
-						UPDATE b_crm_deal SET STAGE_ID = '{$newStageSql}'
-							WHERE STAGE_ID = '{$stageSql}' AND CATEGORY_ID = {$categoryID}"
-					);
+				$connection->queryExecute("
+					UPDATE b_crm_deal SET STAGE_ID = '{$newStageSql}'
+						WHERE STAGE_ID = '{$stageSql}' AND CATEGORY_ID = {$categoryID}"
+				);
 
-					$connection->queryExecute("
-						UPDATE b_crm_deal_stage_history SET STAGE_ID = '{$newStageSql}'
-							WHERE STAGE_ID = '{$stageSql}' AND CATEGORY_ID = {$categoryID}"
-					);
+				$connection->queryExecute("
+					UPDATE b_crm_deal_stage_history SET STAGE_ID = '{$newStageSql}'
+						WHERE STAGE_ID = '{$stageSql}' AND CATEGORY_ID = {$categoryID}"
+				);
 
-					$connection->queryExecute("
-						UPDATE b_crm_deal_sum_stat SET STAGE_ID = '{$newStageSql}'
-							WHERE STAGE_ID = '{$stageSql}' AND CATEGORY_ID = {$categoryID}"
-					);
+				$connection->queryExecute("
+					UPDATE b_crm_deal_sum_stat SET STAGE_ID = '{$newStageSql}'
+						WHERE STAGE_ID = '{$stageSql}' AND CATEGORY_ID = {$categoryID}"
+				);
 
-					$connection->queryExecute("
-						UPDATE b_crm_deal_inv_stat SET STAGE_ID = '{$newStageSql}'
-							WHERE STAGE_ID = '{$stageSql}' AND CATEGORY_ID = {$categoryID}"
-					);
+				$connection->queryExecute("
+					UPDATE b_crm_deal_inv_stat SET STAGE_ID = '{$newStageSql}'
+						WHERE STAGE_ID = '{$stageSql}' AND CATEGORY_ID = {$categoryID}"
+				);
 
-					$connection->queryExecute("
-						UPDATE b_crm_deal_act_stat SET STAGE_ID = '{$newStageSql}'
-							WHERE STAGE_ID = '{$stageSql}' AND CATEGORY_ID = {$categoryID}"
-					);
+				$connection->queryExecute("
+					UPDATE b_crm_deal_act_stat SET STAGE_ID = '{$newStageSql}'
+						WHERE STAGE_ID = '{$stageSql}' AND CATEGORY_ID = {$categoryID}"
+				);
 
-					$connection->commitTransaction();
-				}
-				catch(Main\Db\SqlException $e)
-				{
-					$connection->rollbackTransaction();
-				}
+				$connection->commitTransaction();
+			}
+			catch(Main\Db\SqlException $e)
+			{
+				$connection->rollbackTransaction();
 			}
 		}
 	}

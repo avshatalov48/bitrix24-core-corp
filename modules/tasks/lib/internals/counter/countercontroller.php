@@ -9,14 +9,13 @@
 namespace Bitrix\Tasks\Internals\Counter;
 
 use Bitrix\Main;
-use Bitrix\Tasks\Integration\Forum\Task\UserTopic;
+use Bitrix\Tasks\Integration\Socialnetwork\SpaceService;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Counter\Processor\CommandTrait;
 use Bitrix\Tasks\Internals\Counter\Processor\ProjectProcessor;
 use Bitrix\Tasks\Internals\Counter\Processor\UserProcessor;
 use Bitrix\Tasks\Internals\Counter\Push\PushSender;
 use Bitrix\Tasks\Internals\Registry\UserRegistry;
-use Bitrix\Tasks\Internals\Task\ViewedTable;
 
 class CounterController
 {
@@ -160,7 +159,7 @@ class CounterController
 
 		foreach ($memberIds as $memberId)
 		{
-			CounterState::reload($memberId);
+			Counter\State\Factory::reloadState($memberId);
 		}
 	}
 
@@ -175,6 +174,13 @@ class CounterController
 		$value = Counter::getInstance($this->userId)->get(CounterDictionary::COUNTER_MEMBER_TOTAL);
 		if (!$this->isSameValueCached($value))
 		{
+			(new SpaceService())->addEvent(
+				Counter\Event\EventDictionary::EVENT_TOTAL_COUNTER_UPDATED,
+				[
+					'USER_ID' => $this->userId,
+				]
+			);
+
 			\CUserCounter::Set(
 				$this->userId,
 				CounterDictionary::LEFT_MENU_TASKS,

@@ -2,9 +2,9 @@
 
 return [
 	'extensions' => [
+		'apptheme',
 		'assets/common',
 		'layout/ui/file',
-		'utils/color',
 		'utils/function',
 		'utils/object',
 		'loc',

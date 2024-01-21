@@ -305,9 +305,9 @@ class Sprint extends Controller
 		$culture = Context::getCurrent()->getCulture();
 
 		$sprintData['culture'] = [
-			'dayMonthFormat' => $culture->getDayMonthFormat(),
-			'longDateFormat' => $culture->getLongDateFormat(),
-			'shortTimeFormat' => $culture->getShortTimeFormat(),
+			'dayMonthFormat' => stripslashes($culture->getDayMonthFormat()),
+			'longDateFormat' => stripslashes($culture->getLongDateFormat()),
+			'shortTimeFormat' => stripslashes($culture->getShortTimeFormat()),
 		];
 
 		return $sprintData;

@@ -21,7 +21,7 @@
 						parentWidget: this.props.parentWidget,
 					},
 					onChange: (ownerId, ownerData) => this.props.onChange(ownerId, ownerData[0]),
-				})
+				}),
 			);
 		}
 	}

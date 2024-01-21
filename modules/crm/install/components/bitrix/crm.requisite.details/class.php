@@ -5,7 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Crm\Integration\ClientResolver;
+use Bitrix\Crm\Integrity\DuplicateControl;
+use Bitrix\Crm\Component\EntityDetails\Config\Scope;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
@@ -23,7 +24,6 @@ use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\EntityBankDetail;
 use Bitrix\Crm\RequisiteAddress;
-use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Location\Entity\Address;
 
 Loc::loadMessages(__FILE__);
@@ -530,7 +530,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 							$this->rawRequisiteData = $externalData['fields'];
 							EntityRequisite::internalizeAddresses($this->rawRequisiteData);
 
-							if (is_array($externalData['deletedBankDetailList']))
+							if (isset($externalData['deletedBankDetailList']) && is_array($externalData['deletedBankDetailList']))
 							{
 								$this->deletedBankDetailMap = array_fill_keys(
 									$externalData['deletedBankDetailList'],
@@ -815,10 +815,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 
 		$this->externalContextId = $this->arParams['~EXTERNAL_CONTEXT_ID'] ?? '';
 
-		$this->enableDupControl = (
-			!$this->isReadOnly
-			&& Bitrix\Crm\Integrity\DuplicateControl::isControlEnabledFor($this->entityTypeId)
-		);
+		$this->enableDupControl = (DuplicateControl::isControlEnabledFor($this->entityTypeId));
 
 		return true;
 	}
@@ -834,7 +831,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 			}
 		}
 
-		if (is_array($this->presetChangeData['BANK_DETAILS']))
+		if (isset($this->presetChangeData['BANK_DETAILS']) && is_array($this->presetChangeData['BANK_DETAILS']))
 		{
 			$bankDetailFields = null;
 			foreach ($this->presetChangeData['BANK_DETAILS'] as $pseudoId => $bankDetailData)
@@ -1495,6 +1492,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 		}
 
 		// Bank details
+		$bankDetailFields = $this->prepareBankDetailsFields();
 		$fields[] = [
 			'name' => 'BANK_DETAILS',
 			'type' => 'bankDetails',
@@ -1502,12 +1500,44 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 			'enabledMenu' => false,
 			'transferable' => false,
 			'data' => [
-				'fields' => $this->prepareBankDetailsFields(),
-				'nextIndex' => $this->getNextBankDetailIndex()
+				'fields' => $bankDetailFields,
+				'nextIndex' => $this->getNextBankDetailIndex(),
+				'config' => $this->prepareBankDetailsFormConfig($bankDetailFields)
 			]
 		];
 
 		return $fields;
+	}
+
+	protected function prepareBankDetailsFormConfig(array $fields): array
+	{
+		$configId = $this->getFormConfigId() . '_BANK_DETAILS';
+		$scope = new Scope();
+		$configScope = $scope->getByConfigId($this->getFormConfigId(), 'ui.form.editor');
+		$formComponent = new CCrmRequisiteUIFormComponent();
+		$formComponent->arParams = [
+			'~GUID' => $configId,
+			'~CONFIG_ID' => $configId,
+			'~SCOPE' => $configScope,
+			'~ENTITY_CONFIG' => [
+				[
+					'name' => $configId . '_SECTION',
+					'type' => 'section',
+					'enableToggling' => false,
+					'transferable' => false,
+					'data' => [
+						'isRemovable' => false,
+						'enableTitle' => false,
+						'enableToggling' => false
+					],
+					'elements' => $fields,
+				],
+			],
+			'~ENTITY_FIELDS' => $fields,
+			'~FORCE_DEFAULT_SECTION_NAME' => true,
+		];
+
+		return $formComponent->prepareResult();
 	}
 
 	protected function prepareSingleUserFieldValue($value)
@@ -1533,7 +1563,6 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 		if (!empty($this->rawBankDetailList))
 		{
 			$bankDetailFields = null;
-			$n = 0;
 			foreach ($this->rawBankDetailList as $pseudoId => $rawBankDetail)
 			{
 				if ($bankDetailFields === null)
@@ -1607,10 +1636,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 				{
 					if ($fieldInfo['isUF'])
 					{
-						$fieldValue = (
-							isset($this->rawRequisiteData[$fieldName]) ?
-								$this->rawRequisiteData[$fieldName] : null
-						);
+						$fieldValue = $this->rawRequisiteData[$fieldName] ?? null;
 
 						if(is_array($fieldValue))
 						{
@@ -1702,21 +1728,12 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 						}
 						else
 						{
-							switch ($fieldInfo['type'])
+							$rawValue = $this->rawRequisiteData[$fieldName] ?? '';
+							$data[$fieldName] = match ($fieldInfo['type'])
 							{
-								case 'boolean':
-								case 'checkbox':
-									$data[$fieldName] = (
-										(isset($this->rawRequisiteData[$fieldName])
-											&& $this->rawRequisiteData[$fieldName] === 'Y') ? 'Y' : 'N'
-									);
-									break;
-								default:
-									$data[$fieldName] = (
-										isset($this->rawRequisiteData[$fieldName]) ?
-											$this->rawRequisiteData[$fieldName] : ''
-									);
-							}
+								'boolean', 'checkbox' => (($rawValue === 'Y') ? 'Y' : 'N'),
+								default => $rawValue,
+							};
 						}
 					}
 				}
@@ -2113,5 +2130,44 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 		}
 
 		return \Bitrix\Crm\Security\PermissionToken::canEditRequisites($this->permissionToken, $entityTypeId, $entityId);
+	}
+}
+
+CBitrixComponent::includeComponentClass("bitrix:ui.form");
+
+class CCrmRequisiteUIFormComponent extends UIFormComponent
+{
+	public function prepareResult(): array
+	{
+		parent::initialize();
+
+		return [
+			'GUID' => $this->arResult['GUID'],
+			'CONFIG_ID' => $this->arResult['CONFIG_ID'],
+			'ENTITY_SCHEME' => $this->arResult['ENTITY_SCHEME'],
+			'ENTITY_AVAILABLE_FIELDS' => $this->arResult['ENTITY_AVAILABLE_FIELDS'],
+			'ENTITY_CONFIG_SIGNED_PARAMS' =>  $this->arResult['ENTITY_CONFIG_SIGNED_PARAMS'] ?? '',
+		];
+	}
+
+	protected function getFilteredConfig(array $configItems, array $defaultConfigMap, ?string $parent = null)
+	{
+		$result = parent::getFilteredConfig($configItems, $defaultConfigMap, $parent);
+
+		foreach ($result as &$item)
+		{
+			$matches = [];
+			if (
+				isset($item['name'])
+				&& is_string($item['name'])
+				&& $item['name'] !== ''
+				&& preg_match('/BANK_DETAILS\[n?\d+]\[([^]]+)]/', $item['name'], $matches)
+			)
+			{
+				$item['name'] = $matches[1];
+			}
+		}
+
+		return $result;
 	}
 }

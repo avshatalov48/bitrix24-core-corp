@@ -1,6 +1,7 @@
 (() => {
 	const require = (ext) => jn.require(ext);
 
+	const AppTheme = require('apptheme');
 	const { CatalogStoreActivationWizard } = require('catalog/store/activation-wizard');
 	const { StatefulList } = require('layout/ui/stateful-list');
 	const { ListItemType, ListItemsFactory } = require('catalog/simple-list/items');
@@ -130,7 +131,7 @@
 					useSearch: true,
 					useOnViewLoaded: false,
 				},
-				floatingButtonClickHandler: this.floatingButtonClickHandler.bind(this),
+				onFloatingButtonClick: this.floatingButtonClickHandler.bind(this),
 				cacheName: `store.docs.${env.userId}.${this.state.activeTab}`,
 				pull: {
 					moduleId: PULL_MODULE_ID,
@@ -156,51 +157,43 @@
 						this.statefulList.updateItems([params.entityId]);
 					}
 				},
-				ref: (ref) => this.statefulList = ref,
+				ref: (ref) => {
+					this.statefulList = ref;
+				},
 			});
 		}
 
 		renderEmptyListComponent(customTitle = '', customDescription = '')
 		{
-			const params = {
+			let title = Loc.getMessage(`M_CSDL_EMPTY_LIST_STORE_${this.state.activeTab}_TITLE`.toUpperCase());
+			let description = Loc.getMessage(`M_CSDL_EMPTY_LIST_STORE_${this.state.activeTab}_DESCRIPTION`.toUpperCase());
+			if (customTitle && typeof customTitle === 'string')
+			{
+				title = customTitle;
+			}
+
+			if (customDescription && typeof customDescription === 'string')
+			{
+				description = customDescription;
+			}
+
+			if (this.layout?.search?.text)
+			{
+				title = Loc.getMessage('M_CSDL_EMPTY_LIST_STORE_SEARCH_TITLE_MSGVER_1');
+				description = Loc.getMessage('M_CSDL_EMPTY_LIST_STORE_SEARCH_DESCRIPTION_MSGVER_1');
+			}
+
+			return new EmptyScreen({
+				title,
+				description,
 				styles: styles.emptyScreen.container,
 				image: {
 					style: styles.emptyScreen.image,
 					svg: {
-						content: emptyStateIcons.list,
+						uri: EmptyScreen.makeLibraryImagePath('inventory-management.svg', 'catalog'),
 					},
 				},
-			};
-
-			let title = customTitle;
-			if (title === '')
-			{
-				if (this.layout.search.text === '')
-				{
-					title = Loc.getMessage(`M_CSDL_EMPTY_LIST_STORE_${this.state.activeTab}_TITLE`.toUpperCase());
-				}
-				else
-				{
-					title = Loc.getMessage('M_CSDL_EMPTY_LIST_STORE_SEARCH_TITLE');
-				}
-			}
-
-			let description = customDescription;
-			if (description === '')
-			{
-				if (this.layout.search.text === '')
-				{
-					description = Loc.getMessage(`M_CSDL_EMPTY_LIST_STORE_${this.state.activeTab}_DESCRIPTION`.toUpperCase());
-				}
-				else
-				{
-					description = Loc.getMessage('M_CSDL_EMPTY_LIST_STORE_SEARCH_DESCRIPTION');
-				}
-			}
-			params.title = title;
-			params.description = description;
-
-			return new EmptyScreen(params);
+			});
 		}
 
 		getMenuActions()
@@ -258,12 +251,12 @@
 					testId: `${COMPONENT_ID}_TAB`,
 					style: {
 						height: 44,
-						backgroundColor: '#f5f7f8',
+						backgroundColor: AppTheme.colors.bgNavigation,
 					},
 					params: {
 						styles: {
 							tabTitle: {
-								underlineColor: '#2899f0',
+								underlineColor: AppTheme.colors.accentExtraDarkblue,
 							},
 						},
 						items: this.documentTabs,
@@ -402,15 +395,17 @@
 					payload: componentParams,
 				},
 				widgetParams: {
-					titleParams: titleParams,
+					titleParams,
 					modal: true,
-					leftButtons: [{
-						// type: 'cross',
-						svg: {
-							content: '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.722 6.79175L10.9495 10.5643L9.99907 11.5L9.06666 10.5643L5.29411 6.79175L3.96289 8.12297L10.008 14.1681L16.0532 8.12297L14.722 6.79175Z" fill="#A8ADB4"/></svg>',
+					leftButtons: [
+						{
+							// type: 'cross',
+							svg: {
+								content: '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.722 6.79175L10.9495 10.5643L9.99907 11.5L9.06666 10.5643L5.29411 6.79175L3.96289 8.12297L10.008 14.1681L16.0532 8.12297L14.722 6.79175Z" fill="#A8ADB4"/></svg>',
+							},
+							isCloseButton: true,
 						},
-						isCloseButton: true,
-					}],
+					],
 				},
 			});
 		}
@@ -453,7 +448,7 @@
 
 			return new ContextMenu({
 				testId: COMPONENT_ID,
-				actions: actions,
+				actions,
 				params: {
 					showCancelButton: true,
 					showActionLoader: false,
@@ -486,7 +481,7 @@
 					id: item.id,
 					title: item.title,
 					data: {
-						svgIcon: (floatingButtonSvgIcons[item.id] ? floatingButtonSvgIcons[item.id] : null),
+						svgIcon: floatingButtonSvgIcons[item.id] || null,
 					},
 					onClickCallback: this.clickFloatingButtonMenuItemHandler,
 				}));
@@ -524,14 +519,14 @@
 		{
 			return new Promise((resolve, reject) => {
 				BX.ajax.runAction(
-					'catalogmobile.StoreDocument.conduct',
-					{
-						data: {
-							id: itemId,
-							docType: options.parent.data.docType,
+						'catalogmobile.StoreDocument.conduct',
+						{
+							data: {
+								id: itemId,
+								docType: options.parent.data.docType,
+							},
 						},
-					},
-				)
+					)
 					.then((response) => {
 						resolve({
 							action: 'update',
@@ -551,7 +546,7 @@
 
 		canEditDocumentHandler(actionItemId, itemId, item = {})
 		{
-			if (result.permissions.document[item.data.docType]['catalog_store_document_modify'] !== true)
+			if (result.permissions.document[item.data.docType].catalog_store_document_modify !== true)
 			{
 				return false;
 			}
@@ -573,14 +568,14 @@
 		{
 			return new Promise((resolve, reject) => {
 				BX.ajax.runAction(
-					'catalogmobile.StoreDocument.cancellation',
-					{
-						data: {
-							id: itemId,
-							docType: options.parent.data.docType,
+						'catalogmobile.StoreDocument.cancellation',
+						{
+							data: {
+								id: itemId,
+								docType: options.parent.data.docType,
+							},
 						},
-					},
-				)
+					)
 					.then((response) => {
 						resolve({
 							action: 'update',
@@ -614,8 +609,8 @@
 			const showErrors = !CatalogStoreActivationWizard.hasStoreControlDisabledError(errors);
 
 			return {
-				errors: errors,
-				showErrors: showErrors,
+				errors,
+				showErrors,
 				callback: () => {
 					if (!showErrors)
 					{
@@ -657,14 +652,14 @@
 							type: ButtonType.DESTRUCTIVE,
 							onPress: () => {
 								BX.ajax.runAction(
-									'catalogmobile.StoreDocument.delete',
-									{
-										data: {
-											id: itemId,
-											docType: options.parent.data.docType,
+										'catalogmobile.StoreDocument.delete',
+										{
+											data: {
+												id: itemId,
+												docType: options.parent.data.docType,
+											},
 										},
-									},
-								)
+									)
 									.then((response) => {
 										if (response.errors.length > 0)
 										{
@@ -716,11 +711,6 @@
 		edit: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.0242 3.54235C17.2203 3.34691 17.5378 3.34801 17.7326 3.54479L20.6219 6.46453C20.8156 6.66031 20.8145 6.97592 20.6195 7.17036L9.43665 18.3165L5.84393 14.686L17.0242 3.54235ZM4.1756 19.5286C4.14163 19.6572 4.17803 19.7931 4.27024 19.8877C4.36488 19.9823 4.50078 20.0187 4.62939 19.9823L8.64557 18.9003L5.25791 15.5137L4.1756 19.5286Z" fill="#6a737f"/></svg>',
 		conduct: '<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.72093 4.32587C7.34022 4.32587 6.22093 5.44515 6.22093 6.82587V23.1741C6.22093 24.5549 7.34022 25.6741 8.72093 25.6741H21.279C22.6598 25.6741 23.779 24.5549 23.779 23.1741V11.5174C23.779 10.8452 23.5083 10.2012 23.0279 9.73096L18.2355 5.03941C17.7683 4.58202 17.1405 4.32587 16.4867 4.32587H8.72093ZM8.72093 23.1741V6.82587H16.4867L21.279 11.5174V23.1741H8.72093ZM13.8534 19.5488C13.6581 19.7441 13.3415 19.7441 13.1463 19.5488L12.2914 18.694C12.2742 18.6767 12.2584 18.6585 12.2442 18.6395L10.6421 17.0374C10.4468 16.8421 10.4468 16.5255 10.6421 16.3302L11.4969 15.4754C11.6922 15.2802 12.0088 15.2802 12.204 15.4754L13.5035 16.7749L17.9005 12.3778C18.0957 12.1826 18.4123 12.1826 18.6076 12.3778L19.4624 13.2327C19.6577 13.4279 19.6577 13.7445 19.4624 13.9398L13.8534 19.5488Z" fill="#525C69"/></svg>',
 		cancel: '<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.72095 4.32587C7.34024 4.32587 6.22095 5.44515 6.22095 6.82587V23.1741C6.22095 24.5549 7.34024 25.6741 8.72095 25.6741H21.2791C22.6598 25.6741 23.7791 24.5549 23.7791 23.1741V11.5174C23.7791 10.8452 23.5083 10.2012 23.0279 9.73096L18.2356 5.03941C17.7683 4.58202 17.1405 4.32587 16.4867 4.32587H8.72095ZM8.72095 23.1741V6.82587H16.4867L21.2791 11.5174V23.1741H8.72095ZM11.6038 13.9398C11.4085 13.7445 11.4085 13.4279 11.6038 13.2327L12.4586 12.3778C12.6539 12.1826 12.9705 12.1826 13.1657 12.3778L15.1891 14.4012L17.2124 12.3779C17.4077 12.1826 17.7242 12.1826 17.9195 12.3779L18.7743 13.2327C18.9696 13.428 18.9696 13.7445 18.7743 13.9398L16.751 15.9631L18.7747 17.9869C18.97 18.1821 18.97 18.4987 18.7747 18.694L17.9199 19.5488C17.7246 19.7441 17.4081 19.7441 17.2128 19.5488L15.1891 17.5251L13.1653 19.5488C12.9701 19.7441 12.6535 19.7441 12.4582 19.5488L11.6034 18.694C11.4081 18.4987 11.4081 18.1821 11.6034 17.9869L13.6271 15.9631L11.6038 13.9398Z" fill="#525C69"/></svg>',
-	};
-
-	const emptyStateIcons = {
-		list: '<svg width="163" height="133" viewBox="0 0 163 133" fill="none" xmlns="http://www.w3.org/2000/svg">\n<path fill-rule="evenodd" clip-rule="evenodd" d="M116.909 4.31682C117.898 4.31682 118.699 3.51531 118.699 2.5266C118.699 1.53788 117.898 0.736374 116.909 0.736374C115.92 0.736374 115.119 1.53788 115.119 2.5266C115.119 3.51531 115.92 4.31682 116.909 4.31682ZM28.5703 19.7815C30.7137 19.7815 32.4513 18.0439 32.4513 15.9006C32.4513 13.7572 30.7137 12.0196 28.5703 12.0196C26.427 12.0196 24.6894 13.7572 24.6894 15.9006C24.6894 18.0439 26.427 19.7815 28.5703 19.7815ZM28.5703 17.6176C29.5186 17.6176 30.2874 16.8489 30.2874 15.9006C30.2874 14.9522 29.5186 14.1835 28.5703 14.1835C27.622 14.1835 26.8532 14.9522 26.8532 15.9006C26.8532 16.8489 27.622 17.6176 28.5703 17.6176ZM8.85409 57.6687C11.7409 57.6687 14.0812 55.3284 14.0812 52.4416C14.0812 49.5547 11.7409 47.2145 8.85409 47.2145C5.96725 47.2145 3.627 49.5547 3.627 52.4416C3.627 55.3284 5.96725 57.6687 8.85409 57.6687ZM8.85409 54.9406C10.2343 54.9406 11.3532 53.8218 11.3532 52.4416C11.3532 51.0614 10.2343 49.9425 8.85409 49.9425C7.4739 49.9425 6.35502 51.0614 6.35502 52.4416C6.35502 53.8218 7.4739 54.9406 8.85409 54.9406ZM141.564 123.441C143.62 123.441 145.286 121.775 145.286 119.72C145.286 117.664 143.62 115.998 141.564 115.998C139.509 115.998 137.843 117.664 137.843 119.72C137.843 121.775 139.509 123.441 141.564 123.441ZM141.564 121.504C142.55 121.504 143.349 120.705 143.349 119.72C143.349 118.734 142.55 117.935 141.564 117.935C140.579 117.935 139.779 118.734 139.779 119.72C139.779 120.705 140.579 121.504 141.564 121.504ZM82 133C117.346 133 146 104.346 146 69C146 33.6538 117.346 5 82 5C46.6538 5 18 33.6538 18 69C18 104.346 46.6538 133 82 133ZM17.9693 128.526H5.5276C5.42114 128.526 5.3156 128.522 5.21111 128.514C2.39924 128.449 0.139676 126.086 0.139534 123.18C0.140351 121.764 0.688502 120.407 1.6634 119.406C2.16312 118.893 2.75398 118.495 3.39683 118.23C3.38607 118.086 3.3806 117.94 3.3806 117.793C3.38148 116.299 3.95988 114.866 4.98855 113.81C6.01723 112.755 7.41191 112.162 8.86579 112.163C10.7282 112.165 12.3724 113.122 13.3606 114.583C13.8299 114.412 14.335 114.319 14.8613 114.32C17.186 114.322 19.0954 116.144 19.3168 118.473C21.5443 118.972 23.2113 121.011 23.2093 123.45C23.207 126.26 20.9892 128.536 18.255 128.535C18.1591 128.535 18.0639 128.532 17.9693 128.526ZM149.824 29.5524H158.653C158.72 29.5562 158.788 29.5581 158.856 29.5581C160.797 29.5589 162.37 28.0068 162.372 26.0909C162.373 24.4284 161.19 23.0379 159.61 22.6976C159.453 21.1096 158.098 19.8679 156.448 19.8659C156.074 19.8657 155.716 19.929 155.383 20.0455C154.681 19.0495 153.515 18.3969 152.193 18.3953C151.161 18.3947 150.171 18.7988 149.441 19.5187C148.711 20.2386 148.301 21.2154 148.3 22.2341C148.3 22.3343 148.304 22.4336 148.312 22.5318C147.855 22.713 147.436 22.9841 147.081 23.3338C146.39 24.0161 146.001 24.9418 146 25.9073C146 27.8882 147.604 29.4994 149.599 29.5442C149.673 29.5496 149.748 29.5524 149.824 29.5524Z" fill="#E5F9FF"/>\n<g filter="url(#filter0_d_1_63)">\n<path d="M120.841 56.743C120.841 53.6628 119.44 50.7499 117.033 48.8272L84.9249 23.1717C83.0659 21.6863 80.4236 21.6949 78.5743 23.1924L46.9153 48.828C44.5394 50.7518 43.1592 53.6454 43.1592 56.7025V103.376C43.1592 106.174 45.4274 108.442 48.2254 108.442H115.775C118.573 108.442 120.841 106.174 120.841 103.376V56.743Z" fill="white"/>\n</g>\n<path fill-rule="evenodd" clip-rule="evenodd" d="M116.506 49.4868L84.3978 23.8314C82.8486 22.5935 80.6467 22.6007 79.1056 23.8486L47.4466 49.4842C45.2687 51.2477 44.0035 53.9002 44.0035 56.7025V103.376C44.0035 105.707 45.8937 107.597 48.2253 107.597H115.775C118.106 107.597 119.996 105.707 119.996 103.376V56.743C119.996 53.9195 118.712 51.2493 116.506 49.4868ZM117.033 48.8272C119.44 50.7499 120.841 53.6628 120.841 56.743V103.376C120.841 106.174 118.573 108.442 115.775 108.442H48.2253C45.4274 108.442 43.1592 106.174 43.1592 103.376V56.7025C43.1592 53.6454 44.5394 50.7518 46.9152 48.828L78.5742 23.1924C80.4235 21.6949 83.0658 21.6863 84.9249 23.1717L117.033 48.8272Z" fill="#2FC6F6"/>\n<g opacity="0.4" filter="url(#filter1_d_1_63)">\n<path d="M54.136 65.3792C54.136 62.5813 56.4042 60.3131 59.2022 60.3131H104.798C107.596 60.3131 109.864 62.5813 109.864 65.3792V102.531C109.864 105.329 107.596 107.597 104.798 107.597H59.2022C56.4042 107.597 54.136 105.329 54.136 102.531V65.3792Z" fill="#97E3FB"/>\n</g>\n<g filter="url(#filter2_d_1_63)">\n<path d="M54.136 65.3792C54.136 62.5813 56.4042 60.3131 59.2022 60.3131H104.798C107.596 60.3131 109.864 62.5813 109.864 65.3792V74.6673H54.136V65.3792Z" fill="#E5F9FF"/>\n</g>\n<path fill-rule="evenodd" clip-rule="evenodd" d="M104.798 61.1574H59.2023C56.8706 61.1574 54.9804 63.0476 54.9804 65.3792V73.8229H109.02V65.3792C109.02 63.0476 107.13 61.1574 104.798 61.1574ZM59.2023 60.313C56.4043 60.313 54.1361 62.5813 54.1361 65.3792V74.6672H109.864V65.3792C109.864 62.5813 107.596 60.313 104.798 60.313H59.2023Z" fill="#B8BFC9" fill-opacity="0.6"/>\n<path d="M54.9804 67.068H109.02V67.9123H54.9804V67.068Z" fill="#CDD1D8"/>\n<g filter="url(#filter3_d_1_63)">\n<path d="M87.2093 80.3631C87.2093 79.4305 87.9654 78.6744 88.898 78.6744H98.186C99.1187 78.6744 99.8748 79.4305 99.8748 80.3631V89.6512C99.8748 90.5838 99.1187 91.3399 98.186 91.3399H88.898C87.9654 91.3399 87.2093 90.5838 87.2093 89.6512V80.3631Z" fill="#2FC6F6"/>\n</g>\n<g filter="url(#filter4_d_1_63)">\n<path d="M87.9106 45.1145C87.9106 48.3788 85.2644 51.025 82 51.025C78.7357 51.025 76.0895 48.3788 76.0895 45.1145C76.0895 41.8502 78.7357 39.2039 82 39.2039C85.2644 39.2039 87.9106 41.8502 87.9106 45.1145Z" fill="#97E3FB"/>\n</g>\n<g filter="url(#filter5_d_1_63)">\n<path d="M94.9661 94.3882C94.9661 93.4556 95.7221 92.6995 96.6548 92.6995H105.943C106.875 92.6995 107.632 93.4556 107.632 94.3882V103.676C107.632 104.609 106.875 105.365 105.943 105.365H96.6548C95.7221 105.365 94.9661 104.609 94.9661 103.676V94.3882Z" fill="#2FC6F6"/>\n</g>\n<g filter="url(#filter6_d_1_63)">\n<path d="M79.7674 94.3882C79.7674 93.4556 80.5235 92.6995 81.4562 92.6995H90.7442C91.6768 92.6995 92.4329 93.4556 92.4329 94.3882V103.676C92.4329 104.609 91.6768 105.365 90.7442 105.365H81.4562C80.5235 105.365 79.7674 104.609 79.7674 103.676V94.3882Z" fill="#2FC6F6"/>\n</g>\n<defs>\n<filter id="filter0_d_1_63" x="30.0657" y="11.5455" width="103.868" height="112.565" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">\n<feFlood flood-opacity="0" result="BackgroundImageFix"/>\n<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>\n<feOffset dy="2.57558"/>\n<feGaussianBlur stdDeviation="6.54673"/>\n<feComposite in2="hardAlpha" operator="out"/>\n<feColorMatrix type="matrix" values="0 0 0 0 0.392157 0 0 0 0 0.427451 0 0 0 0 0.482353 0 0 0 0.16 0"/>\n<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_63"/>\n<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_63" result="shape"/>\n</filter>\n<filter id="filter1_d_1_63" x="46.7187" y="56.6044" width="70.5627" height="62.1191" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">\n<feFlood flood-opacity="0" result="BackgroundImageFix"/>\n<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>\n<feOffset dy="3.70866"/>\n<feGaussianBlur stdDeviation="3.70866"/>\n<feComposite in2="hardAlpha" operator="out"/>\n<feColorMatrix type="matrix" values="0 0 0 0 0.392157 0 0 0 0 0.427451 0 0 0 0 0.482353 0 0 0 0.1 0"/>\n<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_63"/>\n<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_63" result="shape"/>\n</filter>\n<filter id="filter2_d_1_63" x="51.136" y="58.3131" width="61.7281" height="20.3542" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">\n<feFlood flood-opacity="0" result="BackgroundImageFix"/>\n<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>\n<feOffset dy="1"/>\n<feGaussianBlur stdDeviation="1.5"/>\n<feComposite in2="hardAlpha" operator="out"/>\n<feColorMatrix type="matrix" values="0 0 0 0 0.392157 0 0 0 0 0.427451 0 0 0 0 0.482353 0 0 0 0.1 0"/>\n<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_63"/>\n<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_63" result="shape"/>\n</filter>\n<filter id="filter3_d_1_63" x="79.792" y="74.9658" width="27.5001" height="27.5001" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">\n<feFlood flood-opacity="0" result="BackgroundImageFix"/>\n<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>\n<feOffset dy="3.70866"/>\n<feGaussianBlur stdDeviation="3.70866"/>\n<feComposite in2="hardAlpha" operator="out"/>\n<feColorMatrix type="matrix" values="0 0 0 0 0.392157 0 0 0 0 0.427451 0 0 0 0 0.482353 0 0 0 0.1 0"/>\n<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_63"/>\n<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_63" result="shape"/>\n</filter>\n<filter id="filter4_d_1_63" x="68.6722" y="35.4953" width="26.6558" height="26.6558" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">\n<feFlood flood-opacity="0" result="BackgroundImageFix"/>\n<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>\n<feOffset dy="3.70866"/>\n<feGaussianBlur stdDeviation="3.70866"/>\n<feComposite in2="hardAlpha" operator="out"/>\n<feColorMatrix type="matrix" values="0 0 0 0 0.392157 0 0 0 0 0.427451 0 0 0 0 0.482353 0 0 0 0.1 0"/>\n<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_63"/>\n<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_63" result="shape"/>\n</filter>\n<filter id="filter5_d_1_63" x="87.5487" y="88.9908" width="27.5001" height="27.5001" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">\n<feFlood flood-opacity="0" result="BackgroundImageFix"/>\n<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>\n<feOffset dy="3.70866"/>\n<feGaussianBlur stdDeviation="3.70866"/>\n<feComposite in2="hardAlpha" operator="out"/>\n<feColorMatrix type="matrix" values="0 0 0 0 0.392157 0 0 0 0 0.427451 0 0 0 0 0.482353 0 0 0 0.1 0"/>\n<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_63"/>\n<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_63" result="shape"/>\n</filter>\n<filter id="filter6_d_1_63" x="72.3501" y="88.9908" width="27.5001" height="27.5001" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">\n<feFlood flood-opacity="0" result="BackgroundImageFix"/>\n<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>\n<feOffset dy="3.70866"/>\n<feGaussianBlur stdDeviation="3.70866"/>\n<feComposite in2="hardAlpha" operator="out"/>\n<feColorMatrix type="matrix" values="0 0 0 0 0.392157 0 0 0 0 0.427451 0 0 0 0 0.482353 0 0 0 0.1 0"/>\n<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_63"/>\n<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_63" result="shape"/>\n</filter>\n</defs>\n</svg>\n',
-		filter: '',
 	};
 
 	const styles = {

@@ -7,6 +7,7 @@ import { Utils } from 'im.v2.lib.utils';
 type SearchRecentItem = {
 	dialogId: string,
 	dateUpdate: ?Date,
+	foundByUser: boolean,
 }
 
 type SearchState = {
@@ -28,6 +29,7 @@ export class RecentSearchModel extends BuilderModel
 	{
 		return {
 			dialogId: '0',
+			foundByUser: false,
 			dateUpdate: null,
 		};
 	}
@@ -35,8 +37,24 @@ export class RecentSearchModel extends BuilderModel
 	getGetters(): GetterTree
 	{
 		return {
+			/** @function recent/search/getCollection */
 			getCollection: (state: SearchState): SearchRecentItem[] => {
 				return Object.values(state.collection);
+			},
+			/** @function recent/search/get */
+			get: (state: SearchState) => (rawDialogId: string): SearchRecentItem | null => {
+				let dialogId = rawDialogId;
+				if (Type.isNumber(dialogId))
+				{
+					dialogId = dialogId.toString();
+				}
+
+				if (state.collection[dialogId])
+				{
+					return state.collection[dialogId];
+				}
+
+				return null;
 			},
 		};
 	}
@@ -44,6 +62,7 @@ export class RecentSearchModel extends BuilderModel
 	getActions(): ActionTree
 	{
 		return {
+			/** @function recent/search/set */
 			set: (store, payload) => {
 				payload.forEach((item) => {
 					const recentElement = this.validate(item);
@@ -51,9 +70,11 @@ export class RecentSearchModel extends BuilderModel
 					store.commit('set', {
 						dialogId: recentElement.dialogId,
 						dateUpdate: recentElement.dateUpdate,
+						foundByUser: recentElement.foundByUser,
 					});
 				});
 			},
+			/** @function recent/search/clear */
 			clear: (store, payload) => {
 				store.commit('clear');
 			},
@@ -84,6 +105,11 @@ export class RecentSearchModel extends BuilderModel
 		if (Type.isStringFilled(fields.date_update))
 		{
 			result.dateUpdate = Utils.date.cast(fields.date_update);
+		}
+
+		if (Type.isBoolean(fields.byUser))
+		{
+			result.foundByUser = fields.byUser;
 		}
 
 		return result;

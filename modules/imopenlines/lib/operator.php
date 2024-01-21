@@ -1,6 +1,10 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
+use Bitrix\Im\Bot\Keyboard;
+use Bitrix\Im\Model\ChatTable;
+use Bitrix\ImConnector\Output;
+use Bitrix\ImOpenLines\Model\SessionTable;
 use Bitrix\ImOpenlines\QuickAnswers\ListsDataManager;
 use Bitrix\ImOpenlines\QuickAnswers\QuickAnswer;
 use Bitrix\Main,
@@ -106,17 +110,38 @@ class Operator
 		}
 		else
 		{
-			$ormChat = \Bitrix\Im\Model\ChatTable::getById($this->chatId);
-			if($chat = $ormChat->fetch())
+			$recentCount = \Bitrix\ImOpenLines\Model\RecentTable::getCount([
+				'=CHAT_ID' => $this->chatId,
+				'=USER_ID' => $this->userId,
+			]);
+
+			if (!$recentCount)
 			{
-				if($chat['TYPE'] == IM_MESSAGE_OPEN_LINE)
+				$ormChat = \Bitrix\Im\Model\ChatTable::getById($this->chatId);
+				if ($chat = $ormChat->fetch())
 				{
-					$parsedUserCode = Session\Common::parseUserCode($chat['ENTITY_ID']);
-					$lineId = $parsedUserCode['CONFIG_ID'];
-					$fieldData = explode("|", $chat['ENTITY_DATA_1']);
-					if(!\Bitrix\ImOpenLines\Config::canJoin($lineId, ($fieldData[0] == 'Y'? $fieldData[1]: null), ($fieldData[0] == 'Y'? $fieldData[2]: null)))
+					if ($chat['TYPE'] == IM_MESSAGE_OPEN_LINE)
 					{
-						$this->error = new BasicError(__METHOD__, 'ACCESS_DENIED', Loc::getMessage('IMOL_OPERATOR_ERROR_ACCESS_DENIED'));
+						$parsedUserCode = Session\Common::parseUserCode($chat['ENTITY_ID']);
+						$lineId = $parsedUserCode['CONFIG_ID'];
+						$fieldData = explode("|", $chat['ENTITY_DATA_1']);
+						if (
+							!\Bitrix\ImOpenLines\Config::canJoin($lineId, ($fieldData[0] == 'Y' ? $fieldData[1] : null),
+								($fieldData[0] == 'Y' ? $fieldData[2] : null))
+						)
+						{
+							$this->error = new BasicError(__METHOD__, 'ACCESS_DENIED',
+								Loc::getMessage('IMOL_OPERATOR_ERROR_ACCESS_DENIED'));
+
+							return [
+								'RESULT' => false
+							];
+						}
+					}
+					else
+					{
+						$this->error = new BasicError(__METHOD__, 'CHAT_TYPE',
+							Loc::getMessage('IMOL_OPERATOR_ERROR_CHAT_TYPE'));
 
 						return [
 							'RESULT' => false
@@ -125,20 +150,12 @@ class Operator
 				}
 				else
 				{
-					$this->error = new BasicError(__METHOD__, 'CHAT_TYPE', Loc::getMessage('IMOL_OPERATOR_ERROR_CHAT_TYPE'));
+					$this->error = new BasicError(__METHOD__, 'CHAT_ID', Loc::getMessage('IMOL_OPERATOR_ERROR_CHAT_ID'));
 
 					return [
 						'RESULT' => false
 					];
 				}
-			}
-			else
-			{
-				$this->error = new BasicError(__METHOD__, 'CHAT_ID', Loc::getMessage('IMOL_OPERATOR_ERROR_CHAT_ID'));
-
-				return [
-					'RESULT' => false
-				];
 			}
 		}
 
@@ -275,7 +292,7 @@ class Operator
 			'filter' => [
 				'OPERATOR_ID' => $this->userId,
 				'PAUSE' => !$active ? 'Y' : 'N',
-				'<STATUS' => Session::STATUS_CLOSE,
+				'<STATUS' => Session::STATUS_WAIT_CLIENT,
 				'>=STATUS' => Session::STATUS_ANSWER,
 			]
 		]);
@@ -540,6 +557,174 @@ class Operator
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param $messageId
+	 * @return bool
+	 */
+	public function openNewDialogByMessage($messageId): bool
+	{
+		if (!Loader::includeModule('imconnector'))
+		{
+			return false;
+		}
+
+		$access = $this->checkAccess();
+		if (!$access['RESULT'])
+		{
+			return false;
+		}
+
+		$message = new \Bitrix\Im\V2\Message((int)$messageId);
+
+		$session = SessionTable::getRow([
+			'filter' => [
+				'=CHAT_ID' => $message->getChatId()
+			],
+		]);
+
+		if (!$session)
+		{
+			return false;
+		}
+
+		$userCode = explode('|', $session['USER_CODE']);
+		$connectorStatusParent = \Bitrix\ImConnector\Status::getInstance(\Bitrix\ImOpenLines\Connector::TYPE_NETWORK, (int)$userCode[1]);
+		if (!$connectorStatusParent->isStatus())
+		{
+			return false;
+		}
+
+		$forceMultidialog = false;
+		if ((int)$userCode[1] !== (int)$session['CONFIG_ID'])
+		{
+			$connectorStatusCurrent = \Bitrix\ImConnector\Status::getInstance(\Bitrix\ImOpenLines\Connector::TYPE_NETWORK, (int)$session['CONFIG_ID']);
+			if ($connectorStatusCurrent->isStatus())
+			{
+				$connectorDataCurrent = $connectorStatusCurrent->getData();
+				if (!isset($connectorDataCurrent['MULTIDIALOG']) || $connectorDataCurrent['MULTIDIALOG'] === 'N')
+				{
+					return false;
+				}
+				else
+				{
+					$forceMultidialog = true;
+				}
+			}
+		}
+
+		$connectorDataParent = $connectorStatusParent->getData();
+		if (!isset($connectorDataParent['MULTIDIALOG']))
+		{
+			return false;
+		}
+
+		if ($connectorDataParent['MULTIDIALOG'] === 'N' && !$forceMultidialog)
+		{
+			return false;
+		}
+
+		$userId = (int)($this->userId ?: $session['OPERATOR_ID']);
+
+		$quotedMessageParts = explode("\n", $message->getQuotedMessage());
+		unset($quotedMessageParts[1]);
+		$connectorOutput = new Output('network', $userCode[1]);
+		$result = $connectorOutput->operatorOpenNewDialog([
+			'LINE_ID' => $userCode[1],
+			'GUID' => $userCode[2],
+			'CHAT_ID' => $session['CHAT_ID'],
+			'OPERATOR_ID' => $userId,
+			'MESSAGE_ID' => $message->getMessageId(),
+			'QUOTED_MESSAGE' => implode("\n", $quotedMessageParts),
+			'SESSION_ID' => $session['ID'],
+		]);
+
+		$error = \Bitrix\ImBot\Bot\Network::getError();
+		if ($error->code === 'VERSION_LOWER_THEN_REQUIRED')
+		{
+			$keyboard = new Keyboard();
+			$keyboard->addButton([
+				'TEXT' => Loc::getMessage('IMOL_OPERATOR_ERROR_VERSION_LOWER_THAN_REQUIRED_BUTTON_CLOSE_AND_NEW'),
+				'FUNCTION' => 'BX.MessengerCommon.linesStartSessionByMessage(' . (int)$messageId . ');this.style.display = "none"',
+				'BG_COLOR' => '#29619b',
+				'TEXT_COLOR' => '#fff',
+				'BLOCK' => 'Y',
+				'DISPLAY' => 'LINE',
+			]);
+
+			\CIMMessenger::Add([
+				'DIALOG_ID' => 'chat' . $session['CHAT_ID'],
+				'TO_USER_ID' => $userId,
+				'MESSAGE' => Loc::getMessage('IMOL_OPERATOR_ERROR_CANT_OPEN_NEW_DIALOG_VERSION_LOWER_THAN_REQUIRED'),
+				'SYSTEM' => 'Y',
+				'KEYBOARD' => $keyboard,
+				'NO_SESSION_OL' => 'Y',
+				'URL_PREVIEW' => 'N',
+			]);
+		}
+		elseif (!empty($error->code))
+		{
+			Log::write(['code' => $error->code, 'session' => $session], 'MULTIDIALOG CREATE ERROR');
+
+			\CIMMessenger::Add([
+				'DIALOG_ID' => 'chat' . $session['CHAT_ID'],
+				'TO_USER_ID' => $userId,
+				'MESSAGE' => Loc::getMessage('IMOL_OPERATOR_ERROR_CANT_OPEN_NEW_DIALOG'),
+				'SYSTEM' => 'Y',
+				'NO_SESSION_OL' => 'Y',
+				'URL_PREVIEW' => 'N',
+			]);
+		}
+
+		return $result->isSuccess();
+	}
+
+	public function getMultiDialogs(): array
+	{
+		$parentSession = SessionTable::getRow([
+			'filter' => [
+				'=CHAT_ID' => $this->chatId
+			],
+		]);
+
+		if (!$parentSession)
+		{
+			return [];
+		}
+
+		$sessionList = SessionTable::getList([
+			'select' => [
+				'CHAT_ID'
+			],
+			'filter' => [
+				'=CONFIG_ID' => $parentSession['CONFIG_ID'],
+				'=USER_ID' => $parentSession['USER_ID'],
+				'<STATUS' => Session::STATUS_WAIT_CLIENT,
+				'!=CHAT_ID' => $this->chatId,
+			],
+		]);
+
+		$sessions = [];
+		while($session = $sessionList->fetch())
+		{
+			$sessions[] = $session['CHAT_ID'];
+		}
+
+		if (!count($sessions))
+		{
+			return [];
+		}
+
+		return ChatTable::getList([
+			'select' => [
+				'ID',
+				'TITLE',
+			],
+			'filter' => [
+				'=ID' => $sessions
+			]
+		])->fetchAll();
 	}
 
 	/**

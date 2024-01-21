@@ -2,6 +2,7 @@
  * @module crm/ui/loading-progress
  */
 jn.define('crm/ui/loading-progress', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { isNil } = require('utils/type');
 	const { transparent } = require('utils/color');
 	const { NotifyManager } = require('notify-manager');
@@ -81,10 +82,10 @@ jn.define('crm/ui/loading-progress', (require, exports, module) => {
 				showCaption: true,
 				styles: {
 					description: {
-						color: '#7d858f',
+						color: AppTheme.colors.base4,
 					},
 					caption: {
-						color: '#6a737f',
+						color: AppTheme.colors.base4,
 					},
 				},
 			});
@@ -106,7 +107,7 @@ jn.define('crm/ui/loading-progress', (require, exports, module) => {
 				style: {
 					position: 'relative',
 					borderWidth: 1,
-					borderColor: '#dfe0e3',
+					borderColor: AppTheme.colors.base6,
 					borderRadius: 6,
 					...style,
 				},
@@ -141,7 +142,7 @@ jn.define('crm/ui/loading-progress', (require, exports, module) => {
 						justifyContent: 'center',
 						alignItems: 'center',
 						paddingHorizontal: 36,
-						backgroundColor: transparent('#ffffff', 0.95),
+						backgroundColor: transparent(AppTheme.colors.bgContentPrimary, 0.95),
 					},
 					clickable: true,
 				},

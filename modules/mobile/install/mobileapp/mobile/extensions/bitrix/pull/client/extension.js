@@ -7,6 +7,7 @@
 		CHANNEL_EXPIRED: 3001,
 		SERVER_RESTARTED: 3002,
 		CONFIG_EXPIRED: 3003,
+		WRONG_CHANNEL_ID: 4010,
 		SERVER_DIE: 1001,
 		CODE_1000: 1000
 	};
@@ -69,6 +70,7 @@
 	const RpcMethod = {
 		Publish: "publish",
 		Subscribe: "subscribe",
+		GetUsersLastSeen: "getUsersLastSeen",
 	}
 
 	const InternalChannel = {
@@ -478,6 +480,7 @@
 				},
 				clientId: null,
 				jwt: null,
+				exp: 0,
 				actual: false,
 			};
 			this.session = {
@@ -576,6 +579,7 @@
 			}
 
 			this.config.jwt = config.jwt || '';
+			this.config.exp = config.exp || 0;
 			if (!isUpdated)
 			{
 				console.warn("Connection.setConfig: nothing to update\n", this.config);
@@ -609,19 +613,26 @@
 			return this.config.channels[type];
 		}
 
-		isChannelsExpired()
+		isConfigExpired()
 		{
 			let result = false;
+			const now = new Date().getTime();
+			if ((this.config.exp > 0) && (this.config.exp < now / 1000))
+			{
+				this.config.actual = false;
+				console.info("Connection.isConfigExpired: jwt token is expired");
+				return true;
+			}
 			for (let type in this.config.channels)
 			{
 				if (!this.config.channels.hasOwnProperty(type))
 				{
 					continue;
 				}
-				if (new Date(this.config.channels[type].end).getTime() <= new Date().getTime())
+				if (new Date(this.config.channels[type].end).getTime() <= now)
 				{
 					this.config.actual = false;
-					console.info("Connection.isChannelsExpired: " + type + " channel was expired.");
+					console.info("Connection.isConfigExpired: " + type + " channel was expired.");
 					result = true;
 					break;
 				}
@@ -634,7 +645,7 @@
 		{
 			clearTimeout(this.expireCheckTimeoutId);
 			this.expireCheckTimeoutId = setTimeout(this.checkChannelExpire.bind(this), this.expireCheckInterval);
-			if (this.isChannelsExpired())
+			if (this.isConfigExpired())
 			{
 				this.connector.disconnect(CloseReasons.CONFIG_EXPIRED, "channel was expired");
 			}
@@ -1301,9 +1312,39 @@
 		 */
 		getUsersLastSeen(userList)
 		{
-			return this.jsonRpcAdapter.executeOutgoingRpcCommand("getUsersLastSeen", {
-				userList: userList
-			});
+			return new Promise((resolve, reject) => {
+				this.jsonRpcAdapter.executeOutgoingRpcCommand(RpcMethod.GetUsersLastSeen, {
+					userList: userList
+				}).then(result => {
+					let unresolved = [];
+					for (let i = 0; i < userList.length; i++)
+					{
+						if (!result.hasOwnProperty(userList[i]))
+						{
+							unresolved.push(userList[i])
+						}
+					}
+					if (unresolved.length === 0)
+					{
+						return resolve(result)
+					}
+
+					const params = {
+						userIds: unresolved,
+						sendToQueueSever: true
+					}
+					BX.rest.callMethod('pull.api.user.getLastSeen', params).then(response => {
+						let data = response.data();
+						for (let userId in data)
+						{
+							result[userId] = data[userId];
+						}
+						return resolve(result);
+					}).catch(error => {
+						console.error(error)
+					})
+				})
+			})
 		};
 
 		encodeMessageBatch(messageBatch, publicIds)
@@ -1391,18 +1432,20 @@
 				case CloseReasons.CHANNEL_EXPIRED:
 				case CloseReasons.CONFIG_EXPIRED:
 				case CloseReasons.SERVER_RESTARTED:
+				case CloseReasons.SERVER_DIE:
 				{
 					this.updateConfig();
+					break;
+				}
+				case CloseReasons.WRONG_CHANNEL_ID:
+				{
+					clearTimeout(this.updateConfigTimeout);
+					this.updateConfigTimeout = setTimeout(() => this.updateConfig(), this.configRequestAfterErrorInterval);
 					break;
 				}
 				case CloseReasons.CONFIG_REPLACED:
 				{
 					this.connect();
-					break;
-				}
-				case CloseReasons.SERVER_DIE:
-				{
-					this.updateConfig();
 					break;
 				}
 				case CloseReasons.CODE_1000:

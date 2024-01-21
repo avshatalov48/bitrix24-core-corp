@@ -6,6 +6,7 @@ return [
 		'loc',
 		'files/entry',
 		'files/converter',
+		'utils/color',
 		'im:chat/selector/chat',
 		'im:messenger/core',
 		'im:messenger/assets/common',
@@ -31,6 +32,6 @@ return [
 		'./src/view/navigation-selector',
 		'./src/view/recipient-selector',
 		'./src/view/dialog-info',
-
+		'./src/view/navigation-button',
 	],
 ];

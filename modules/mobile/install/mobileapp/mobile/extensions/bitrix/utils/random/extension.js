@@ -1,5 +1,4 @@
 (() => {
-
 	/**
 	 * @class Random
 	 */
@@ -12,7 +11,7 @@
 		 */
 		static getString(length = 8)
 		{
-			return [...Array(length)].map(() => (~~(Math.random() * 36)).toString(36)).join('');
+			return [...new Array(length)].map(() => (Math.trunc(Math.random() * 36)).toString(36)).join('');
 		}
 
 		/**
@@ -25,6 +24,7 @@
 		{
 			min = Math.ceil(min);
 			max = Math.floor(max);
+
 			return Math.floor(Math.random() * (max - min + 1)) + min;
 		}
 
@@ -39,5 +39,11 @@
 	}
 
 	jnexport(Random);
-
 })();
+
+/**
+ * @module utils/random
+ */
+jn.define('utils/random', (require, exports, module) => {
+	module.exports = { Random: this.Random };
+});

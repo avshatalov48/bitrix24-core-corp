@@ -2,6 +2,7 @@
  * @module crm/terminal/payment-pay/components/payment-result/success
  */
 jn.define('crm/terminal/payment-pay/components/payment-result/success', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { PaymentResult } = require('crm/terminal/payment-pay/components/payment-result');
 	const { withPressed } = require('utils/color');
 
@@ -22,7 +23,7 @@ jn.define('crm/terminal/payment-pay/components/payment-result/success', (require
 
 		getBackgroundColor()
 		{
-			return '#9DCF00';
+			return AppTheme.colors.accentMainSuccess;
 		}
 
 		getImage()
@@ -34,7 +35,7 @@ jn.define('crm/terminal/payment-pay/components/payment-result/success', (require
 		{
 			return {
 				button: {
-					borderColor: '#99FFFFFF',
+					borderColor: AppTheme.colors.accentSoftBlue1,
 					backgroundColor: withPressed(
 						this.getBackgroundColor(),
 					),
@@ -50,3 +51,4 @@ jn.define('crm/terminal/payment-pay/components/payment-result/success', (require
 
 	module.exports = { PaymentResultSuccess };
 });
+

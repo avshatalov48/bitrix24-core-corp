@@ -152,7 +152,7 @@ final class CompleteStores implements EnricherContract
 			$storeInfo
 				? (float)$storeInfo['AMOUNT'] - (float)$storeInfo['QUANTITY_RESERVED']
 				: 0
-		;
+			;
 	}
 
 	private function getRowReserved(ProductRowViewModel $productRow): float
@@ -227,8 +227,10 @@ final class CompleteStores implements EnricherContract
 
 		$source = $productRow->source->toArray();
 
+		$reserveQuantity = isset($source['RESERVE_QUANTITY']) ? (float)$source['RESERVE_QUANTITY'] : 0;
+
 		return (
-			$source['QUANTITY'] === $source['RESERVE_QUANTITY']
+			$source['QUANTITY'] === $reserveQuantity
 			&& ReservationService::getInstance()->isReserveEqualProductQuantity()
 		);
 	}

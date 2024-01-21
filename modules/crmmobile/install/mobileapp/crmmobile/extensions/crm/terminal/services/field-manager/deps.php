@@ -2,7 +2,8 @@
 
 return [
 	'extensions' => [
-		'layout/ui/fields',
 		'utils/object',
+		'layout/ui/fields',
+		'crm:terminal/services/field-manager/fields',
 	],
 ];

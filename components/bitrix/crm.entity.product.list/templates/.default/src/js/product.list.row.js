@@ -466,6 +466,10 @@ export class Row
 				{
 					this.#applyStoreSelectorRestrictionTweaks();
 				}
+				else if (!this.isInventoryManagementToolEnabled())
+				{
+					this.#applyStoreSelectorToolAvailabilityTweaks();
+				}
 			}
 		}
 	}
@@ -498,7 +502,30 @@ export class Row
 		Dom.addClass(storeSearchInput.getNameInput(), 'crm-entity-product-list-locked-field');
 		if (this.storeSelector.getWrapper())
 		{
-			this.storeSelector.getWrapper().onclick = () => this.editor.openIntegrationLimitSlider();
+			Dom.addClass(this.storeSelector.getWrapper(), 'crm-entity-product-list-locked-field-wrapper');
+			Event.bind(this.storeSelector.getWrapper(), 'click', () => {
+				this.editor.openIntegrationLimitSlider();
+			});
+		}
+	}
+
+	#applyStoreSelectorToolAvailabilityTweaks()
+	{
+		const storeSearchInput = this.storeSelector.searchInput;
+		if (!storeSearchInput || !storeSearchInput.getNameInput())
+		{
+			return;
+		}
+
+		storeSearchInput.toggleIcon(this.storeSelector.searchInput.getSearchIcon(), 'none');
+		storeSearchInput.getNameInput().disabled = true;
+		Dom.addClass(storeSearchInput.getNameInput(), 'crm-entity-product-list-locked-field');
+		if (this.storeSelector.getWrapper())
+		{
+			Dom.addClass(this.storeSelector.getWrapper(), 'crm-entity-product-list-locked-field-wrapper');
+			Event.bind(this.storeSelector.getWrapper(), 'click', () => {
+				this.editor.openInventoryManagementToolDisabledSlider();
+			});
 		}
 	}
 
@@ -511,6 +538,7 @@ export class Row
 				row: this,
 				isReserveEqualProductQuantity: this.#isReserveEqualProductQuantity(),
 				defaultDateReservation: this.editor.getSettingValue('defaultDateReservation'),
+				isInventoryManagementToolEnabled: this.isInventoryManagementToolEnabled(),
 				isBlocked: this.isReserveBlocked(),
 				measureName: this.#getMeasureName(),
 			});
@@ -519,7 +547,14 @@ export class Row
 				this.reserveControl,
 				'onNodeClick',
 				() => {
-					this.editor.openIntegrationLimitSlider();
+					if (this.isReserveBlocked())
+					{
+						this.editor.openIntegrationLimitSlider();
+					}
+					else if (!this.isInventoryManagementToolEnabled())
+					{
+						this.editor.openInventoryManagementToolDisabledSlider();
+					}
 				}
 			);
 
@@ -2140,6 +2175,11 @@ export class Row
 	isReserveBlocked(): boolean
 	{
 		return this.getSettingValue('isReserveBlocked', false);
+	}
+
+	isInventoryManagementToolEnabled(): boolean
+	{
+		return this.getSettingValue('isInventoryManagementToolEnabled', true);
 	}
 
 	isRestrictedStoreInfo(): boolean

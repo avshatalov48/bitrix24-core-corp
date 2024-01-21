@@ -1,7 +1,8 @@
+import { Router } from 'crm.router';
+import { SettingsButtonExtender } from 'crm.settings-button-extender';
 import { ajax as Ajax, Event, Loc, Reflection, Runtime, Text, Type, Uri } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
-import { Router } from 'crm.router';
 import 'ui.notification';
 
 const namespace = Reflection.namespace('BX.Crm');
@@ -21,6 +22,7 @@ class ItemListComponent
 	// is the list is embedded in another entity detail tab
 	#isEmbedded: boolean = false;
 	#pingSettings: Object;
+	#aiAutostartSettings: ?string;
 
 	constructor(params): void
 	{
@@ -76,6 +78,7 @@ class ItemListComponent
 			{
 				this.#pingSettings = params.pingSettings;
 			}
+			this.#aiAutostartSettings = Type.isString(params.aiAutostartSettings) ? params.aiAutostartSettings : null;
 		}
 
 		this.reloadGridTimeoutId = 0;
@@ -85,7 +88,7 @@ class ItemListComponent
 	{
 		this.bindEvents();
 
-		this.#initPushCrmSettings();
+		this.#initSettingsButtonExtender();
 	}
 
 	bindEvents(): void
@@ -186,7 +189,7 @@ class ItemListComponent
 		return component ? component.Instance : null;
 	}
 
-	#initPushCrmSettings(): void
+	#initSettingsButtonExtender(): void
 	{
 		if (this.#isIframe || this.#isEmbedded)
 		{
@@ -201,16 +204,20 @@ class ItemListComponent
 			return;
 		}
 
-		Runtime.loadExtension('crm.push-crm-settings').then(({PushCrmSettings}) => {
-			/** @see BX.Crm.PushCrmSettings */
-			new PushCrmSettings({
+		const settingsMenu = toolbar.getSettingsButton()?.getMenuWindow();
+		if (settingsMenu)
+		{
+			/** @see BX.Crm.SettingsButtonExtender */
+			new SettingsButtonExtender({
 				smartActivityNotificationSupported: this.#smartActivityNotificationSupported,
 				entityTypeId: this.entityTypeId,
+				categoryId: this.categoryId,
+				aiAutostartSettings: this.#aiAutostartSettings,
 				pingSettings: this.#pingSettings,
-				rootMenu: toolbar.getSettingsButton()?.getMenuWindow(),
+				rootMenu: settingsMenu,
 				grid: this.grid,
 			});
-		});
+		}
 	}
 
 	reloadGridAfterTimeout()

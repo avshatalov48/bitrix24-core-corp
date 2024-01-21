@@ -174,6 +174,7 @@
 						iconUrl: action.iconUrl || '',
 						showTopSeparator: action.showTopSeparator || false,
 						checked: action.checked || false,
+						showCheckedIcon: action.showCheckedIcon,
 						sectionCode: action.sectionCode || DEFAULT_MENU_SECTION_NAME,
 						disable,
 						counterValue: action.counterValue || null,

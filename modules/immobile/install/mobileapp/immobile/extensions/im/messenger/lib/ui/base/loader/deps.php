@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'loc',
-		'type'
+		'type',
+		'apptheme'
 	],
 ];

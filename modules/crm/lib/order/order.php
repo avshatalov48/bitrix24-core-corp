@@ -83,6 +83,11 @@ class Order extends Sale\Order
 
 	protected function enableAutomaticDealCreation()
 	{
+		if (!Configuration::isEnabledEntitySynchronization())
+		{
+			return false;
+		}
+
 		if ($this->isSetNotAvailableTradePlatformForDeal())
 		{
 			return false;
@@ -113,7 +118,6 @@ class Order extends Sale\Order
 	{
 		$notAvailableTradePlatform = [
 			TradingPlatform\RealizationDocument::TRADING_PLATFORM_CODE,
-			TradingPlatform\Terminal::TRADING_PLATFORM_CODE,
 		];
 
 		$setTradePlatform = [];

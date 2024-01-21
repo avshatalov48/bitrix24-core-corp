@@ -210,6 +210,7 @@ class ProductManager
 			'PRODUCT_ID' => $basketItem->getField('PRODUCT_ID'),
 			'OFFER_ID' => $basketItem->getField('PRODUCT_ID'),
 			'QUANTITY' => (float)$basketItem->getField('QUANTITY'),
+			'CURRENCY' => $basketItem->getCurrency(),
 			'TYPE' => (int)$basketItem->getField('TYPE'),
 		];
 	}

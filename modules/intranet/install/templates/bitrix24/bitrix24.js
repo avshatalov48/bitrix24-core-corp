@@ -168,6 +168,17 @@
 		B24.updateInformer(BX("b24network-informer-events", true), counter);
 	});
 
+	BX.addCustomEvent("openLicenseAllSlider", () => {
+		BX.SidePanel.Instance.open(
+			'/bitrix/components/bitrix/bitrix24.license.all/index.php',
+			{
+				cacheable: false,
+				allowChangeHistory: false,
+				width: 1250,
+			}
+		);
+	});
+
 	BX.addCustomEvent("Kanban.Grid:onFixedModeStart", function() {
 		BX.ready(function() {
 			BX("footer").style.visibility = "hidden";

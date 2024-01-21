@@ -3,16 +3,17 @@
  */
 jn.define('crm/entity-tab/type/traits/exclude-item', (require, exports, module) => {
 	const { Alert } = require('alert');
+	const { Loc } = require('loc');
 
 	function excludeItem(action, itemId)
 	{
 		return new Promise((resolve, reject) => {
 			Alert.confirm(
-				BX.message('M_CRM_ENTITY_TAB_ACTION_EXCLUDE'),
-				BX.message('M_CRM_ENTITY_TAB_ACTION_EXCLUDE_CONFIRMATION'),
+				Loc.getMessage('M_CRM_ENTITY_TAB_ACTION_EXCLUDE'),
+				Loc.getMessage('M_CRM_ENTITY_TAB_ACTION_EXCLUDE_CONFIRMATION'),
 				[
 					{
-						text: BX.message('M_CRM_ENTITY_TAB_ACTION_EXCLUDE_CONFIRMATION_OK'),
+						text: Loc.getMessage('M_CRM_ENTITY_TAB_ACTION_EXCLUDE_CONFIRMATION_OK'),
 						type: 'destructive',
 						onPress: () => {
 							BX.ajax.runComponentAction('bitrix:crm.kanban', 'excludeEntity', {

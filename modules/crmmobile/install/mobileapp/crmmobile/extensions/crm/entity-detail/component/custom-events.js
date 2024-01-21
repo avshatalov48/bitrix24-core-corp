@@ -4,11 +4,13 @@
 jn.define('crm/entity-detail/component/custom-events', (require, exports, module) => {
 	const { checkForChanges } = require('layout/ui/detail-card/action/check-for-changes');
 	const { ModeSelectionMenu } = require('crm/receive-payment/mode-selection');
-	const { PaymentDocument, DeliveryDocument } = require('crm/entity-document');
+	const { PaymentDocument } = require('crm/entity-document');
 	const { AnalyticsLabel } = require('analytics-label');
 	const { Feature } = require('feature');
+	const { PaymentCreate } = require('crm/terminal/entity/payment-create');
+	const { PaymentPayOpener } = require('crm/terminal/entity/payment-pay-opener');
 	const { DocumentCardManager } = require('catalog/store/document-card/manager');
-	const { Loc } = require('loc');
+	const { InfoHelper } = require('layout/ui/info-helper');
 
 	/**
 	 * @type {(string, function(DetailCardComponent, ...*): void)[][]}
@@ -45,6 +47,13 @@ jn.define('crm/entity-detail/component/custom-events', (require, exports, module
 					return;
 				}
 
+				if (!detailCard.entityModel.IS_SALESCENTER_TOOL_ENABLED)
+				{
+					InfoHelper.openByCode('limit_crm_sales_center_off', detailCard.layout);
+
+					return;
+				}
+
 				checkForChanges(detailCard)
 					.then(() => {
 						AnalyticsLabel.send({
@@ -55,6 +64,31 @@ jn.define('crm/entity-detail/component/custom-events', (require, exports, module
 							uid: detailCard.uid,
 						});
 						menu.open();
+					});
+			},
+		],
+		[
+			'TerminalCreatePayment::Click',
+			/**
+			 * @param {DetailCardComponent} detailCard
+			 */
+			(detailCard) => {
+				if (!detailCard.entityModel.IS_TERMINAL_TOOL_ENABLED)
+				{
+					InfoHelper.openByCode('limit_crm_terminal_off', detailCard.layout);
+
+					return;
+				}
+
+				checkForChanges(detailCard)
+					.then(() => {
+						PaymentCreate.open({
+							componentParams: {
+								entityId: detailCard.entityModel.ID,
+								entityTypeId: detailCard.entityModel.ENTITY_TYPE_ID,
+								uid: detailCard.uid,
+							},
+						});
 					});
 			},
 		],
@@ -72,31 +106,59 @@ jn.define('crm/entity-detail/component/custom-events', (require, exports, module
 			},
 		],
 		[
+			'TerminalEntityCreatePayment.FinishStepButton::Click',
+			/**
+			 * @param {DetailCardComponent} detailCard
+			 */
+			(detailCard) => {
+				const timelineTabExists = detailCard.availableTabs.some((tab) => tab.id === 'timeline' && tab.selectable);
+				if (timelineTabExists)
+				{
+					detailCard.setActiveTab('timeline');
+				}
+			},
+		],
+		[
+			'TerminalEntityCreatePayment.OpenPaymentPay::Click',
+			/**
+			 * @param {DetailCardComponent} detailCard
+			 * @param id
+			 */
+			(detailCard, id) => {
+				if (!detailCard.entityModel.IS_TERMINAL_TOOL_ENABLED)
+				{
+					InfoHelper.openByCode('limit_crm_terminal_off', detailCard.layout);
+
+					return;
+				}
+
+				const timelineTabExists = detailCard.availableTabs.some((tab) => tab.id === 'timeline' && tab.selectable);
+				if (timelineTabExists)
+				{
+					detailCard.setActiveTab('timeline');
+				}
+
+				PaymentPayOpener.open({
+					id,
+					uid: detailCard.uid,
+					isStatusVisible: false,
+				}, detailCard.layout);
+			},
+		],
+		[
 			'EntityPaymentDocument::Click',
 			/**
 			 * @param {DetailCardComponent} detailCard
 			 * @param document
 			 */
 			(detailCard, document) => {
+				const isTerminalToolEnabled = detailCard.entityModel.IS_TERMINAL_TOOL_ENABLED;
+
 				PaymentDocument.open({
-					document,
-					entityModel: detailCard.entityModel,
+					id: document.ID,
 					uid: detailCard.uid,
-				});
-			},
-		],
-		[
-			'EntityDeliveryDocument::Click',
-			/**
-			 * @param {DetailCardComponent} detailCard
-			 * @param document
-			 */
-			(detailCard, document) => {
-				DeliveryDocument.open({
-					document,
-					entityModel: detailCard.entityModel,
-					uid: detailCard.uid,
-				});
+					isTerminalToolEnabled,
+				}, detailCard.layout);
 			},
 		],
 		[
@@ -106,6 +168,13 @@ jn.define('crm/entity-detail/component/custom-events', (require, exports, module
 			 * @param document
 			 */
 			(detailCard, document) => {
+				if (!detailCard.entityModel.IS_INVENTORY_MANAGEMENT_TOOL_ENABLED)
+				{
+					InfoHelper.openByCode('limit_store_inventory_management_off', detailCard.layout);
+
+					return;
+				}
+
 				DocumentCardManager.open(document);
 			},
 		],

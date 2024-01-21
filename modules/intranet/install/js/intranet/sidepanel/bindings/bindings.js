@@ -13,13 +13,26 @@
 		return;
 	}
 
-	const siteDir = ('/' + (BX.message.SITE_DIR || '/').replace(/[\\*+?.()|[\]{}]/g, '\\$&') + '/').replace(/\/+/g, '/');
+	const siteDir = ('/' + (BX.message.SITE_DIR || '/')
+		.replace(/[\\*+?.()|[\]{}]/g, '\\$&') + '/')
+		.replace(/\/+/g, '/')
+	;
 
 	this.mailLoader = BX.create("div", {
 		props: {
 			className: 'mail-loader-node'
 		},
-	})
+	});
+
+	const detectCrmSliderWidth = function()
+	{
+		if (window.innerWidth < 1500)
+		{
+			return null; // default slider width
+		}
+
+		return 1500 + Math.floor((window.innerWidth - 1500) / 3);
+	};
 
 	BX.SidePanel.Instance.bindAnchors({
 		rules: [
@@ -70,10 +83,18 @@
 			},
 			{
 				condition: [
-					'/company/personal/user/(\\d+)/tasks/task/view/(\\d+)/',
-					'/workgroups/group/(\\d+)/tasks/task/view/(\\d+)/',
-					'/extranet/contacts/personal/user/(\\d+)/tasks/task/view/(\\d+)/',
+					'(?<url>/company/personal/user/(\\d+)/tasks/task/view/(?<taskId>\\d+)/)',
+					'(?<url>/workgroups/group/(\\d+)/tasks/task/view/(?<taskId>\\d+)/)',
+					'(?<url>/extranet/contacts/personal/user/(\\d+)/tasks/task/view/(?<taskId>\\d+)/)',
 				],
+				minimizeOptions: (link) => {
+					return {
+						entityType: 'tasks:task',
+						entityId: link.matches.groups.taskId,
+						entityName: BX.message('INTRANET_BINDINGS_TASK'),
+						url: link.matches.groups.url,
+					};
+				},
 				loader: 'intranet:task-detail',
 				stopParameters: [
 					'PAGEN_(\\d+)',
@@ -320,7 +341,7 @@
 			},
 			{
 				condition: [
-					/\?(IM_DIALOG|IM_HISTORY)=([^&]+)/i
+					/\?(IM_DIALOG|IM_HISTORY|IM_LINES)=([^&]+)/i
 				],
 				handler: function(event, link)
 				{
@@ -330,15 +351,19 @@
 					}
 
 					var type = link.matches[1];
-					var id = decodeURI(link.matches[2]);
+					var dialogId = decodeURI(link.matches[2]);
 
 					if (type === "IM_HISTORY")
 					{
-						BXIM.openHistory(id);
+						BXIM.openHistory(dialogId);
+					}
+					else if (type === "IM_LINES")
+					{
+						BX.Messenger.Public.openLines(dialogId);
 					}
 					else
 					{
-						BXIM.openMessenger(id);
+						BX.Messenger.Public.openChat(dialogId);
 					}
 
 					event.preventDefault();
@@ -417,8 +442,9 @@
 					cacheable: false,
 					label: {
 						text: BX.message("INTRANET_BINDINGS_ORDER"),
-					}
-				}
+					},
+					width: detectCrmSliderWidth(),
+				},
 			},
 			{
 				condition: [
@@ -429,7 +455,7 @@
 					loader: "intranet:crm-entity-details-loader",
 					cacheable: false,
 					customLeftBoundary: 0,
-				}
+				},
 			},
 			{
 				condition: [
@@ -478,44 +504,81 @@
 				}
 			},
 			{
-				condition: [ new RegExp("/crm/lead/details/[0-9]+/", "i") ],
+				condition: [new RegExp('(?<url>/crm/lead/details/(?<id>\\d+)/)', 'i')],
+				minimizeOptions: (link) => {
+					return {
+						entityType: 'crm:lead',
+						entityId: link.matches.groups.id,
+						entityName: BX.message('INTRANET_BINDINGS_LEAD'),
+						url: link.matches.groups.url,
+					};
+				},
 				loader: "intranet:crm-entity-details-loader",
 				options: {
 					cacheable: false,
 					label: {
 						text: BX.message("INTRANET_BINDINGS_LEAD"),
-						bgColor: "#55D0E0"
-					}
-				}
+						bgColor: "#55D0E0",
+					},
+					width: detectCrmSliderWidth(),
+				},
 			},
 			{
-				condition: [ new RegExp("/crm/contact/details/[0-9]+/", "i") ],
+				condition: [new RegExp('(?<url>/crm/contact/details/(?<id>[0-9]+)/)', 'i')],
+				minimizeOptions: (link) => {
+					return {
+						entityType: 'crm:contact',
+						entityId: link.matches.groups.id,
+						entityName: BX.message('INTRANET_BINDINGS_CONTACT'),
+						url: link.matches.groups.url,
+					};
+				},
 				loader: "intranet:crm-entity-details-loader",
 				options: {
 					cacheable: false,
 					label: {
 						text: BX.message("INTRANET_BINDINGS_CONTACT"),
-						bgColor: "#7BD500"
-					}
-				}
+						bgColor: "#7BD500",
+					},
+					width: detectCrmSliderWidth(),
+				},
 			},
 			{
-				condition: [ new RegExp("/crm/company/details/[0-9]+/", "i") ],
+				condition: [new RegExp('(?<url>/crm/company/details/(?<id>[0-9]+)/)', 'i')],
+				minimizeOptions: (link) => {
+					return {
+						entityType: 'crm:company',
+						entityId: link.matches.groups.id,
+						entityName: BX.message('INTRANET_BINDINGS_COMPANY'),
+						url: link.matches.groups.url,
+					};
+				},
 				loader: "intranet:crm-entity-details-loader",
 				options: {
+					cacheable: false,
 					label: {
-						bgColor: "#F7A700"
-					}
-				}
+						bgColor: "#F7A700",
+						text: BX.message("INTRANET_BINDINGS_COMPANY"),
+					},
+					width: detectCrmSliderWidth(),
+				},
 			},
 			{
-				condition: [ new RegExp("/crm/deal/details/[0-9]+/", "i") ],
+				condition: [new RegExp('(?<url>/crm/deal/details/(?<id>[0-9]+)/)', 'i')],
+				minimizeOptions: (link) => {
+					return {
+						entityType: 'crm:deal',
+						entityId: link.matches.groups.id,
+						entityName: BX.message('INTRANET_BINDINGS_DEAL'),
+						url: link.matches.groups.url,
+					};
+				},
 				loader: "intranet:crm-entity-details-loader",
 				options: {
 					cacheable: false,
 					label: {
 						text: BX.message("INTRANET_BINDINGS_DEAL"),
-						bgColor: "#9985DD"
+						bgColor: "#9985DD",
 					},
 					events: {
 						onCloseComplete: function() {
@@ -528,44 +591,100 @@
 							});
 						},
 					},
-				}
+					width: detectCrmSliderWidth(),
+				},
 			},
 			{
-				condition: [ new RegExp(`/crm/type/${CMR_SMART_INVOICE_TYPE_ID}/details/[0-9]+`, "i") ],
-				loader: "intranet:crm-entity-details-loader",
-				options: {
-					label: {
-						text: BX.message("INTRANET_BINDINGS_SMART_INVOICE"),
-						bgColor: "#1E6EC2"
-					}
-				}
-			},
-			{
-				condition: [ new RegExp(`/crm/type/${CMR_QUOTE_TYPE_ID}/details/[0-9]+`, "i") ],
-				loader: "intranet:crm-entity-details-loader",
-				options: {
-					label: {
-						text: BX.message("INTRANET_BINDINGS_QUOTE_MSGVER_1"),
-						bgColor: "#00B4AC"
-					}
-				}
-			},
-			{
-				condition: [ new RegExp(`/crm/type/${CMR_SMART_DOCUMENT_TYPE_ID}/details/[0-9]+`, "i") ],
-				loader: "intranet:crm-entity-details-loader",
-				options: {
-					label: {
-						text: BX.message("INTRANET_BINDINGS_SMART_DOCUMENT_MSGVER_1"),
-						bgColor: "#C48300"
-					}
-				}
-			},
-			{
-				condition: [ new RegExp("/type/[0-9]+/details/[0-9]+/", "i") ],
+				condition: [new RegExp(`(?<url>/crm/type/${CMR_SMART_INVOICE_TYPE_ID}/details/(?<id>[0-9]+)/)`, 'i')],
+				minimizeOptions: (link) => {
+					return {
+						entityType: 'crm:smart-invoice',
+						entityId: link.matches.groups.id,
+						entityName: BX.message('INTRANET_BINDINGS_SMART_INVOICE'),
+						url: link.matches.groups.url,
+					};
+				},
 				loader: "intranet:crm-entity-details-loader",
 				options: {
 					cacheable: false,
-				}
+					label: {
+						text: BX.message("INTRANET_BINDINGS_SMART_INVOICE"),
+						bgColor: "#1E6EC2",
+					},
+					width: detectCrmSliderWidth(),
+				},
+			},
+			{
+				condition: [new RegExp(`(?<url>/crm/type/${CMR_QUOTE_TYPE_ID}/details/(?<id>[0-9]+/))`, 'i')],
+				minimizeOptions: (link) => {
+					return {
+						entityType: 'crm:quote',
+						entityId: link.matches.groups.id,
+						entityName: BX.message('INTRANET_BINDINGS_QUOTE_MSGVER_1'),
+						url: link.matches.groups.url,
+					};
+				},
+				loader: "intranet:crm-entity-details-loader",
+				options: {
+					cacheable: false,
+					label: {
+						text: BX.message("INTRANET_BINDINGS_QUOTE_MSGVER_1"),
+						bgColor: "#00B4AC",
+					},
+					width: detectCrmSliderWidth(),
+				},
+			},
+			{
+				condition: [new RegExp(`(?<url>/crm/type/${CMR_SMART_DOCUMENT_TYPE_ID}/details/(?<id>[0-9]+)/)`, 'i')],
+				minimizeOptions: (link) => {
+					return {
+						entityType: 'crm:smart-document',
+						entityId: link.matches.groups.id,
+						entityName: BX.message('INTRANET_BINDINGS_SMART_DOCUMENT_MSGVER_1'),
+						url: link.matches.groups.url,
+					};
+				},
+				loader: "intranet:crm-entity-details-loader",
+				options: {
+					cacheable: false,
+					label: {
+						text: BX.message("INTRANET_BINDINGS_SMART_DOCUMENT_MSGVER_1"),
+						bgColor: "#C48300",
+					},
+					width: detectCrmSliderWidth(),
+				},
+			},
+			{
+				condition: [new RegExp('(?<url>^/.*/type/(?<type>[0-9]+)/details/(?<id>[0-9]+)/)', 'i')],
+				loader: "intranet:crm-entity-details-loader",
+				minimizeOptions: (link) => {
+					return {
+						entityType: 'crm:smart-process',
+						entityId: `${link.matches.groups.type}:${link.matches.groups.id}`,
+						url: link.matches.groups.url,
+					};
+				},
+				options: {
+					cacheable: false,
+					width: detectCrmSliderWidth(),
+				},
+			},
+			{
+				condition: [new RegExp('(?<url>/crm/(company|contact)/requisite/([0-9]+)/)', 'i')],
+				options: {
+					cacheable: false,
+					width: 950,
+				},
+			},
+			{
+				condition: [
+					new RegExp('/bi/dashboard/detail/(\\w+)/'),
+				],
+				options: {
+					cacheable: false,
+					customLeftBoundary: 0,
+					loader: 'report:analytics',
+				},
 			},
 			{
 				condition: [
@@ -585,54 +704,22 @@
 			},
 			{
 				condition: [
-					new RegExp(siteDir + "company/personal/user/[0-9]+/($|\\?)", "i"),
-					new RegExp(siteDir + "contacts/personal/user/[0-9]+/($|\\?)", "i")
+					new RegExp(`(?<url>${siteDir}company/personal/user/(?<userId>[0-9]+)/)($|\\?)`, 'i'),
+					new RegExp(`(?<url>${siteDir}contacts/personal/user/(?<userId>[0-9]+)/)($|\\?)`, 'i'),
 				],
+				minimizeOptions: (link) => {
+					return {
+						entityType: 'socialnetwork:user',
+						entityName: BX.message('INTRANET_BINDINGS_EMPLOYEE'),
+						entityId: link.matches.groups.userId,
+						url: link.matches.groups.url,
+					};
+				},
 				options: {
 					contentClassName: "bitrix24-profile-slider-content",
 					loader: "intranet:slider-profile",
 					width: 1100
 				}
-			},
-			{
-				condition: [
-					new RegExp(siteDir + "workgroups/group/[0-9]+/$", "i")
-				],
-				options: {
-					contentClassName: "bitrix24-group-slider-content",
-					loader: "intranet:slider-livefeed",
-					cacheable: false,
-					customLeftBoundary: 0,
-					newWindowLabel: true,
-					copyLinkLabel: true,
-				}
-			},
-			{
-				condition: [
-					new RegExp(siteDir + "workgroups/group/[0-9]+/tasks/$", "i")
-				],
-				options: {
-					contentClassName: "bitrix24-group-slider-content",
-					loader: "intranet:slider-projects-tasklist",
-					cacheable: false,
-					customLeftBoundary: 0,
-					newWindowLabel: true,
-					copyLinkLabel: true,
-				}
-			},
-			{
-				condition: [
-					new RegExp(siteDir + "workgroups/group/[0-9]+/\\?scrum=Y$", "i"),
-					new RegExp(siteDir + "workgroups/group/[0-9]+/tasks/\\?scrum=Y$", "i")
-				],
-				options: {
-					contentClassName: "bitrix24-group-slider-content",
-					loader: "intranet:slider-scrum",
-					cacheable: false,
-					customLeftBoundary: 0,
-					newWindowLabel: true,
-					copyLinkLabel: true,
-				},
 			},
 			{
 				condition: [
@@ -690,8 +777,16 @@
 			},
 			{
 				condition: [
-					new RegExp(siteDir + 'mail/message/\\d+'),
+					new RegExp(`(?<url>${siteDir}mail/message/(?<id>\\d+))`),
 				],
+				minimizeOptions: (link) => {
+					return {
+						entityType: 'mail:message',
+						entityId: link.matches.groups.id,
+						entityName: BX.message('INTRANET_BINDINGS_MAIL_MESSAGE'),
+						url: link.matches.groups.url,
+					};
+				},
 				options: {
 					width: 1080,
 					loader: 'intranet:view-mail-loader'
@@ -860,8 +955,9 @@
 					cacheable: false,
 					label: {
 						text: BX.message("INTRANET_BINDINGS_PAYMENT"),
-					}
-				}
+					},
+					width: detectCrmSliderWidth(),
+				},
 			},
 			{
 				condition: [ new RegExp("/shop/orders/shipment/details/[0-9]+/", "i") ],
@@ -870,8 +966,9 @@
 					cacheable: false,
 					label: {
 						text: BX.message("INTRANET_BINDINGS_SHIPMENT"),
-					}
-				}
+					},
+					width: detectCrmSliderWidth(),
+				},
 			},
 			{
 				condition: [/\/contact_center\/lines_edit\/\?(.+)SIDE=Y/i,],
@@ -896,6 +993,17 @@
 					cacheable: false,
 					allowChangeHistory: false,
 					width: 1195,
+				}
+			},
+			{
+				condition: [
+					new RegExp("/settings/configs/\\?analyticContext=[a-z]+", 'i'),
+					'/settings/configs/index.php',
+					new RegExp("/settings/configs/\\?page=[a-z]+", 'i'),
+				],
+				options: {
+					loader: 'intranet:settings',
+					width: 1034
 				}
 			},
 		]

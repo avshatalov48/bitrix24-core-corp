@@ -1,6 +1,6 @@
 import Item from './item';
 import Backend from '../backend';
-import {Dom} from "main.core";
+import { Dom, Text } from 'main.core';
 
 export default class ItemGroup extends Item
 {
@@ -173,7 +173,7 @@ export default class ItemGroup extends Item
 			.querySelector(`[data-group-id="${this.getId()}"]`)
 			.querySelectorAll('[data-role="counter"]')]
 			.forEach((node) => {
-				counterValue += parseInt(node.dataset.counterValue);
+				counterValue += Text.toNumber(node.dataset.counterValue);
 			});
 		const node = this.container.querySelector('[data-role="counter"]');
 

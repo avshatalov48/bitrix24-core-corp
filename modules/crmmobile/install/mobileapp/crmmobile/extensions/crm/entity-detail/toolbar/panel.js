@@ -64,13 +64,17 @@ jn.define('crm/entity-detail/toolbar/panel', (require, exports, module) => {
 				},
 				children && new children({
 					...props,
-					ref: (ref) => this.toolbar = ref,
+					ref: (ref) => {
+						this.toolbar = ref;
+					},
 				}),
 			);
 
 			return View(
 				{
-					ref: (ref) => this.ref = ref,
+					ref: (ref) => {
+						this.ref = ref;
+					},
 					style: {
 						...styles.rootWrapper,
 					},

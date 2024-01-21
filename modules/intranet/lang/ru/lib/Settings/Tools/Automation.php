@@ -1,0 +1,3 @@
+<?php
+$MESS['INTRANET_SETTINGS_TOOLS_AUTOMATION_MAIN'] = 'Автоматизация';
+$MESS['INTRANET_SETTINGS_AUTOMATION_TASKS_SUBGROUP_BIZPROC'] = 'Автоматизация бизнес-процессов';

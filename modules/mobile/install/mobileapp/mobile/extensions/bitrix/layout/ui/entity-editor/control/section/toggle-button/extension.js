@@ -2,6 +2,7 @@
  * @module layout/ui/entity-editor/control/section/toggle-button
  */
 jn.define('layout/ui/entity-editor/control/section/toggle-button', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	/**
 	 * @class ToggleButton
 	 */
@@ -57,6 +58,7 @@ jn.define('layout/ui/entity-editor/control/section/toggle-button', (require, exp
 				this.props.onToggleClick();
 			}
 		}
+
 		hide()
 		{
 			this.setState({
@@ -73,13 +75,13 @@ jn.define('layout/ui/entity-editor/control/section/toggle-button', (require, exp
 		},
 		toggleModeButtonWrapper: {
 			borderBottomWidth: 1,
-			borderBottomColor: '#d6d8db',
+			borderBottomColor: AppTheme.colors.base6,
 			borderStyle: 'dash',
 			borderDashSegmentLength: 3,
 			borderDashGapLength: 3,
 		},
 		toggleModeButtonText: {
-			color: '#A8ADB4',
+			color: AppTheme.colors.base4,
 			fontSize: 12,
 		},
 	};

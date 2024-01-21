@@ -3,8 +3,9 @@
  */
 
 jn.define('layout/ui/timeline/components/divider', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 
-	function Divider({ text, color, textColor = '#ffffff', counter = {}, showLine = true, onLayout })
+	function Divider({ text, color, textColor = AppTheme.colors.baseWhiteFixed, counter = {}, showLine = true, onLayout })
 	{
 		return View(
 			{
@@ -32,7 +33,7 @@ jn.define('layout/ui/timeline/components/divider', (require, exports, module) =>
 				style: {
 					height: 1,
 					width: '100%',
-					backgroundColor: '#DFE0E3',
+					backgroundColor: AppTheme.colors.base6,
 					position: 'absolute',
 					top: 10,
 				},
@@ -73,7 +74,7 @@ jn.define('layout/ui/timeline/components/divider', (require, exports, module) =>
 			return null;
 		}
 
-		backgroundColor = backgroundColor || '#f0371b';
+		backgroundColor = backgroundColor || AppTheme.colors.accentSoftElementRed1;
 		borderColor = borderColor || backgroundColor;
 
 		return View(
@@ -94,7 +95,7 @@ jn.define('layout/ui/timeline/components/divider', (require, exports, module) =>
 			Text({
 				text: String(value),
 				style: {
-					color: '#ffffff',
+					color: AppTheme.colors.baseWhiteFixed,
 					fontSize: 10,
 					fontWeight: 'bold',
 				},

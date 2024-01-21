@@ -28,7 +28,7 @@ class TreatmentByHourStatTable extends DataManager
 	/**
 	 * @return string
 	 */
-	public static function getTableName()
+	public static function getTableName(): string
 	{
 		return 'b_imopenlines_treatment_by_hour_stat';
 	}
@@ -36,7 +36,7 @@ class TreatmentByHourStatTable extends DataManager
 	/**
 	 * @return array
 	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
 		return array(
 			new DatetimeField('DATE', array('primary' => true)),
@@ -47,10 +47,8 @@ class TreatmentByHourStatTable extends DataManager
 		);
 	}
 
-	public static function clean()
+	public static function clean(): void
 	{
-		$tableName = self::getTableName();
-		global $DB;
-		$DB->Query('TRUNCATE TABLE ' . $tableName . ';');
+		\Bitrix\Main\Application::getInstance()->getConnection()->truncateTable(self::getTableName());
 	}
 }

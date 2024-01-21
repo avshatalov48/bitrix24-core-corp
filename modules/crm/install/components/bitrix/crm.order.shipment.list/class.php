@@ -374,24 +374,7 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 
 		$this->arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
 		$this->arResult['PATH_TO_ORDER_SHIPMENT_DELETE'] =  CHTTP::urlAddParams($this->arParams['PATH_TO_ORDER_SHIPMENT_LIST'], array('sessid' => bitrix_sessid()));
-
-		if (LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
-		{
-			$this->arResult['TIME_FORMAT'] = array(
-				'tommorow' => 'tommorow',
-				's' => 'sago',
-				'i' => 'iago',
-				'H3' => 'Hago',
-				'today' => 'today',
-				'yesterday' => 'yesterday',
-				//'d7' => 'dago',
-				'-' => Main\Type\DateTime::convertFormatToPhp(FORMAT_DATE)
-			);
-		}
-		else
-		{
-			$this->arResult['TIME_FORMAT'] = preg_replace('/:s$/', '', Main\Type\DateTime::convertFormatToPhp(FORMAT_DATETIME));
-		}
+		$this->arResult['TIME_FORMAT'] = CCrmDateTimeHelper::getDefaultDateTimeFormat();
 
 		$this->arResult['CALL_LIST_UPDATE_MODE'] = isset($_REQUEST['call_list_context']) && isset($_REQUEST['call_list_id']) && IsModuleInstalled('voximplant');
 		$this->arResult['CALL_LIST_CONTEXT'] = (string)($_REQUEST['call_list_context'] ?? '');

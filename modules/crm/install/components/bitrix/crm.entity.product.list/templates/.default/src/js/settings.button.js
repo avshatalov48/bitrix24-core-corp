@@ -2,7 +2,7 @@ import {Popup} from 'main.popup';
 import {ajax, Cache, Event, Loc, Tag, Type} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 import {Editor} from './product.list.editor';
-import {DialogDisable, Slider, EventType} from 'catalog.store-use'
+import { StoreSlider } from 'catalog.store-use';
 
 export default class SettingsPopup
 {
@@ -101,7 +101,7 @@ export default class SettingsPopup
 		{
 			Event.bind(setting, 'change', (event) =>
 			{
-				new Slider().open(item.url, {})
+				new StoreSlider().open(item.url, {})
 					.then(() => this.#editor.reloadGrid(false));
 			})
 		}

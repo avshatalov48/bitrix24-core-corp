@@ -2,7 +2,6 @@
  * @module layout/ui/friendly-date/autoupdating-datetime
  */
 jn.define('layout/ui/friendly-date/autoupdating-datetime', (require, exports, module) => {
-
 	const { Moment } = require('utils/date');
 
 	/**
@@ -15,31 +14,38 @@ jn.define('layout/ui/friendly-date/autoupdating-datetime', (require, exports, mo
 		{
 			super(props);
 
-			const { moment, timestamp } = props;
-
-			if (!moment && !timestamp)
-			{
-				throw new Error('You must specify "moment" or "timestamp" property');
-			}
-
-			if (moment && !(moment instanceof Moment))
-			{
-				throw new Error('Property "moment" must be instance of Moment class');
-			}
-
+			this.timeoutId = null;
 			this.intervalId = null;
+
+			/** @var {Moment} */
+			this.moment = this.initMoment(props);
 
 			this.state = {
 				text: this.makeText(this.moment),
 			};
 		}
 
-		/**
-		 * @return {Moment}
-		 */
-		get moment()
+		componentWillReceiveProps(newProps)
 		{
-			return this.props.moment || Moment.createFromTimestamp(this.props.timestamp);
+			this.moment = this.initMoment(newProps);
+			this.state.text = this.makeText(this.moment);
+		}
+
+		initMoment(props)
+		{
+			const { moment, timestamp } = props;
+
+			if (!moment && !timestamp)
+			{
+				throw new TypeError('You must specify "moment" or "timestamp" property');
+			}
+
+			if (moment && !(moment instanceof Moment))
+			{
+				throw new TypeError('Property "moment" must be instance of Moment class');
+			}
+
+			return moment || Moment.createFromTimestamp(timestamp);
 		}
 
 		get style()
@@ -50,33 +56,38 @@ jn.define('layout/ui/friendly-date/autoupdating-datetime', (require, exports, mo
 		get refreshTimeout()
 		{
 			const seconds = BX.prop.getNumber(this.props, 'refreshTimeout', 60);
+
 			return seconds * 1000;
 		}
 
 		componentDidMount()
 		{
-			this.intervalId = setInterval(() => {
+			const refreshText = () => {
 				const text = this.makeText(this.moment);
 				if (text !== this.state.text)
 				{
-					this.setState({text});
+					this.setState({ text }, () => {
+						if (this.props.onTextChange)
+						{
+							this.props.onTextChange();
+						}
+					});
 				}
-			}, this.refreshTimeout);
+			};
+
+			// we need to wait until the next second to start updating because Moment works in seconds, not ms.
+			const timeoutUntilNextTick = this.refreshTimeout - (Date.now() % this.refreshTimeout) + 1000;
+
+			this.timeoutId = setTimeout(() => {
+				refreshText();
+				this.intervalId = setInterval(refreshText, this.refreshTimeout);
+			}, timeoutUntilNextTick);
 		}
 
 		componentWillUnmount()
 		{
+			clearTimeout(this.timeoutId);
 			clearTimeout(this.intervalId);
-		}
-
-		componentWillReceiveProps(props)
-		{
-			const moment = props.moment || Moment.createFromTimestamp(props.timestamp);
-			const text = this.makeText(moment);
-			if (text !== this.state.text)
-			{
-				this.state.text = text;
-			}
 		}
 
 		/**
@@ -94,6 +105,7 @@ jn.define('layout/ui/friendly-date/autoupdating-datetime', (require, exports, mo
 			if (typeof this.props.renderContent === 'function')
 			{
 				const { state, props } = this;
+
 				return this.props.renderContent({ state, props });
 			}
 
@@ -105,5 +117,4 @@ jn.define('layout/ui/friendly-date/autoupdating-datetime', (require, exports, mo
 	}
 
 	module.exports = { AutoupdatingDatetime };
-
 });

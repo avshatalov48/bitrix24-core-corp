@@ -10,7 +10,7 @@ jn.define('imconnector/lib/ui/banner', (require, exports, module) => {
 	 */
 	function Banner(props)
 	{
-		const backgroundColor = BX.prop.getString(props.style, 'borderRadius', '#e5f9ff');
+		const backgroundColor = BX.prop.getString(props.style, 'borderRadius', AppTheme.colors.accentSoftBlue2);
 
 		return View(
 			{
@@ -33,7 +33,7 @@ jn.define('imconnector/lib/ui/banner', (require, exports, module) => {
 						height: 260,
 						borderRadius: 130,
 						borderWidth: 37,
-						borderColor: '#ffffff',
+						borderColor: AppTheme.colors.bgContentPrimary,
 						opacity: 0.5,
 					},
 				},
@@ -48,7 +48,7 @@ jn.define('imconnector/lib/ui/banner', (require, exports, module) => {
 						height: 198,
 						borderRadius: 99,
 						borderWidth: 26,
-						borderColor: '#ffffff',
+						borderColor: AppTheme.colors.bgContentPrimary,
 						opacity: 0.4,
 					},
 				},
@@ -88,7 +88,7 @@ jn.define('imconnector/lib/ui/banner', (require, exports, module) => {
 				},
 				Text({
 					style: {
-						color: '#333333',
+						color: AppTheme.colors.base1,
 						fontSize: 16,
 						fontWeight: '400',
 						numberOfLines: 1,
@@ -99,7 +99,7 @@ jn.define('imconnector/lib/ui/banner', (require, exports, module) => {
 				}),
 				BBCodeText({
 					style: {
-						color: '#525C69',
+						color: AppTheme.colors.base2,
 						fontSize: 14,
 						fontWeight: '400',
 						numberOfLines: 0,
@@ -120,3 +120,4 @@ jn.define('imconnector/lib/ui/banner', (require, exports, module) => {
 
 	module.exports = { Banner };
 });
+

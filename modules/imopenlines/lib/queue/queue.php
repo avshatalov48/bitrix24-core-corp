@@ -37,6 +37,11 @@ abstract class Queue
 
 	protected $cacheRemoveSession = [];
 
+	protected bool $isEnableGroupByChat = false;
+
+	/** @var ImOpenLines\Crm */
+	protected $crmManager = null;
+
 	/**
 	 * @param $parameters
 	 * @return array
@@ -188,6 +193,12 @@ abstract class Queue
 			$this->config = $session->getConfig();
 			$this->chat = $session->getChat();
 		}
+	}
+
+	public function setCrmManager(ImOpenLines\Crm $crmManager): self
+	{
+		$this->crmManager = $crmManager;
+		return $this;
 	}
 
 	/**
@@ -386,13 +397,17 @@ abstract class Queue
 		return $queueTime;
 	}
 
+	public function enableGroupChat(bool $flag): self
+	{
+		$this->isEnableGroupByChat = $flag;
+		return $this;
+	}
+
 	/**
 	 * @param int $operatorId
-	 * @param \Bitrix\ImOpenLines\Crm $crmManager
-	 * @param bool $isGroupByChat
 	 * @return array
 	 */
-	public function createSession($operatorId = 0, $crmManager = null, $isGroupByChat = false)
+	public function createSession($operatorId = 0): array
 	{
 		$defaultQueueTime = $this->getQueueTime();
 
@@ -400,6 +415,7 @@ abstract class Queue
 			'OPERATOR_ID' => 0,
 			'QUEUE_HISTORY' => [],
 			'OPERATOR_LIST' => [],
+			'OPERATOR_FULL_LIST' => [],
 			'DATE_OPERATOR' => null,
 			'DATE_QUEUE' => null,
 			'DATE_NO_ANSWER' => null,
@@ -445,16 +461,16 @@ abstract class Queue
 
 				//CRM
 				if (
-					$crmManager
-					&& $isGroupByChat == false
-					&& $this->config['CRM'] == 'Y'
-					&& $crmManager->isLoaded()
+					$this->config['CRM'] == 'Y'
 					&& $this->config['CRM_FORWARD'] == 'Y'
+					&& !$this->isEnableGroupByChat
+					&& ($this->crmManager instanceof ImOpenLines\Crm)
+					&& $this->crmManager->isLoaded()
 				)
 				{
-					$crmManager->search();
+					$this->crmManager->search();
 
-					$crmOperatorId = $crmManager->getOperatorId();
+					$crmOperatorId = $this->crmManager->getOperatorId();
 
 					if (
 						$crmOperatorId !== null &&
@@ -475,6 +491,11 @@ abstract class Queue
 				if (empty($operatorId) && !$undistributedSession)
 				{
 					$resultOperatorQueue = $this->getOperatorsQueue();
+
+					if (count($resultOperatorQueue['OPERATOR_LIST']) === 1)
+					{
+						$result['OPERATOR_FULL_LIST'] = $this->getAllOperatorsQueue()['OPERATOR_LIST'];
+					}
 
 					if ($resultOperatorQueue['RESULT'])
 					{
@@ -553,6 +574,11 @@ abstract class Queue
 				];
 
 				$reasonReturn = SessionCheckTable::getById($this->session['ID'])->fetch()['REASON_RETURN'];
+
+				if ($this->session['STATUS'] > Session::STATUS_SKIP)
+				{
+					$this->prepareToQueue();
+				}
 
 				//Event
 				$resultOperatorQueue = self::sendEventOnBeforeSessionTransfer(
@@ -646,6 +672,30 @@ abstract class Queue
 		ImOpenLines\Debug::addQueue($this->config['ID'], $this->session['ID'], 'stop' . __METHOD__);
 
 		return $result;
+	}
+
+	protected function prepareToQueue(): void
+	{
+		$this->sessionManager->update([
+			'STATUS' => Session::STATUS_SKIP
+		]);
+
+		$removeOperator = true;
+		if (
+			(int)$this->session['OPERATOR_ID'] > 0
+			&& Im\User::getInstance($this->session['OPERATOR_ID'])->isBot()
+			&& (int)$this->session['OPERATOR_ID'] === (int)$this->config['WELCOME_BOT_ID']
+			&& (string)$this->config['WELCOME_BOT_LEFT'] === Config::BOT_LEFT_CLOSE
+		)
+		{
+			$removeOperator = false;
+		}
+
+		if ($removeOperator)
+		{
+			$relations = \Bitrix\Im\V2\Chat::getInstance((int)$this->session['CHAT_ID']);
+			$relations->deleteUser((int)$this->session['OPERATOR_ID'], false, false, false);
+		}
 	}
 
 	/**
@@ -762,5 +812,61 @@ abstract class Queue
 			'SYSTEM' => 'Y',
 			'SKIP_COMMAND' => 'Y'
 		]);
+	}
+
+	public function getAllOperatorsQueue($currentOperator = 0): array
+	{
+		$queueTime = $this->getQueueTime();
+
+		$result = [
+			'RESULT' => false,
+			'OPERATOR_ID' => 0,
+			'OPERATOR_LIST' => [],
+			'DATE_QUEUE' => (new DateTime())->add($queueTime . ' SECONDS'),
+			'QUEUE_HISTORY' => [],
+		];
+
+		$operatorList = [];
+		$queueHistory = [];
+		$fullCountOperators = 0;
+
+		$res = ImOpenLines\Queue::getList([
+			'select' => [
+				'ID',
+				'USER_ID'
+			],
+			'filter' => [
+				'=CONFIG_ID' => $this->config['ID']
+			],
+			'order' => [
+				'SORT' => 'ASC',
+				'ID' => 'ASC'
+			],
+		]);
+
+		while($queueUser = $res->fetch())
+		{
+			$fullCountOperators++;
+			if($this->isOperatorAvailable($queueUser['USER_ID'], $currentOperator))
+			{
+				$operatorList[] = $queueUser['USER_ID'];
+				$queueHistory[$queueUser['USER_ID']] = true;
+			}
+		}
+
+		$this->processingEmptyQueue($this->config['ID'], $fullCountOperators);
+
+		if(!empty($operatorList))
+		{
+			$result = [
+				'RESULT' => true,
+				'OPERATOR_ID' => 0,
+				'OPERATOR_LIST' => $operatorList,
+				'DATE_QUEUE' => (new DateTime())->add($queueTime . ' SECONDS'),
+				'QUEUE_HISTORY' => $queueHistory,
+			];
+		}
+
+		return $result;
 	}
 }

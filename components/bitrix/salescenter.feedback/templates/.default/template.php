@@ -48,7 +48,7 @@ if(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 					var h=d.getElementsByTagName('script')[0];h.parentNode.insertBefore(s,h);
 				})(window,document,'<?= $arResult['domain'] ?>/bitrix/js/crm/form_loader.js','B24SalesCenterFeedback');
 			</script>
-			<?$APPLICATION->ShowHead(); ?>
+			<?php $APPLICATION->ShowHead(); ?>
 		</head>
 		<body class="document-limit-slider">
 			<div class="pagetitle-wrap">
@@ -59,7 +59,8 @@ if(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 				</div>
 			</div>
 			<div class="document-limit-container">
-<?}
+<?php
+}
 else
 {
 	$APPLICATION->SetTitle($pageTitle);
@@ -72,7 +73,7 @@ else
 			var h=d.getElementsByTagName('script')[0];h.parentNode.insertBefore(s,h);
 		})(window,document,'<?= $arResult['domain'] ?>/bitrix/js/crm/form_loader.js','B24SalesCenterFeedback');
 	</script>
-	<div class="document-limit-container"><?
+	<div class="document-limit-container"><?php
 }
 
 unset($arResult['domain']);
@@ -88,9 +89,9 @@ unset($arResult['domain']);
 				</script>
 			</div>
 		</div>
-<?if(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
+<?php if(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 {?>
 		</body>
-	</html><?
+	</html><?php
 	\Bitrix\Main\Application::getInstance()->terminate();
 }

@@ -1,15 +1,38 @@
 <?php
+
 namespace Bitrix\Tasks\Kanban;
 
-use Bitrix\Main\Entity;
+use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Data\DeleteResult;
+use Bitrix\Main\ORM\Data\Result;
+use Bitrix\Main\ORM\Event;
+use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Helper\Sort;
+use Bitrix\Tasks\Internals\Log\LogFacade;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\SortingTable;
 use Bitrix\Tasks\Internals\TaskTable as Task;
-use Bitrix\Tasks\MemberTable;
 use Bitrix\Tasks\ProjectsTable;
 use Bitrix\Main\ORM\Fields\ArrayField;
+use Bitrix\Tasks\Provider\Exception\InvalidGroupByException;
+use Bitrix\Tasks\Provider\TaskList;
+use Bitrix\Tasks\Provider\TaskQuery;
+use Bitrix\Tasks\Provider\TaskQueryBuilder;
+use Bitrix\Tasks\Util\User;
+use CTaskMembers;
+use CTasks;
+use CUserOptions;
+use Exception;
+use TasksException;
 
 Loc::loadMessages(__FILE__);
 
@@ -24,131 +47,90 @@ Loc::loadMessages(__FILE__);
  * @method static EO_Stages_Result getById($id)
  * @method static EO_Stages_Result getList(array $parameters = [])
  * @method static EO_Stages_Entity getEntity()
- * @method static \Bitrix\Tasks\Kanban\EO_Stages createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Kanban\Stage createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Kanban\EO_Stages_Collection createCollection()
- * @method static \Bitrix\Tasks\Kanban\EO_Stages wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Kanban\Stage wakeUpObject($row)
  * @method static \Bitrix\Tasks\Kanban\EO_Stages_Collection wakeUpCollection($rows)
  */
-class StagesTable extends Entity\DataManager
+class StagesTable extends DataManager
 {
-	const MY_PLAN_VERSION = '6';
+	public const MY_PLAN_VERSION = '6';
 
 	/**
 	 * System type of stages (new, in progress, etc.).
 	 * Separated from other stages - timeline's stages, sprint's stages.
+	 *
 	 * @see TimeLineTable::getStages()
 	 */
-	const SYS_TYPE_NEW = 'NEW';
-	const SYS_TYPE_PROGRESS = 'WORK';
-	const SYS_TYPE_FINISH = 'FINISH';
-	const SYS_TYPE_DEFAULT = 'NEW';
-	const SYS_TYPE_TL1 = 'PERIOD1';
-	const SYS_TYPE_TL2 = 'PERIOD2';
-	const SYS_TYPE_TL3 = 'PERIOD3';
-	const SYS_TYPE_TL4 = 'PERIOD4';
-	const SYS_TYPE_TL5 = 'PERIOD5';
+	public const SYS_TYPE_NEW = 'NEW';
+	public const SYS_TYPE_PROGRESS = 'WORK';
+	public const SYS_TYPE_FINISH = 'FINISH';
+	public const SYS_TYPE_DEFAULT = 'NEW';
 
 	/**
 	 * Default colors.
 	 */
-	const DEF_COLOR_STAGE = '47D1E2';
-
-	/**
-	 * Disable pin for this users.
-	 * @var array
-	 */
-	private static $disablePin = array();
-
-	/**
-	 * Disable linked for this users.
-	 * @var array
-	 */
-	private static $disableLink = array();
-
-	/**
-	 * Work mode.
-	 * @var string
-	 */
-	private static $mode = 'G';
+	public const DEF_COLOR_STAGE = '47D1E2';
 
 	/**
 	 * Allowed work modes.
 	 */
-	const WORK_MODE_GROUP = 'G';
-	const WORK_MODE_USER = 'U';
-	const WORK_MODE_TIMELINE = 'P';
-	const WORK_MODE_ACTIVE_SPRINT = 'A';
+	public const WORK_MODE_GROUP = 'G';
+	public const WORK_MODE_USER = 'U';
+	public const WORK_MODE_TIMELINE = 'P';
+	public const WORK_MODE_ACTIVE_SPRINT = 'A';
+
+	private static array $systemStages = [];
 
 	/**
-	 * Returns DB table name for entity.
-	 * @return string
+	 * Disable linked for these users.
 	 */
-	public static function getTableName()
+	private static array $disableLink = [];
+
+	/**
+	 * Disable pin for these users.
+	 */
+	private static array $disablePin = [];
+
+	/**
+	 * Disable pin for these users.
+	 */
+	private static string $mode = 'G';
+
+	public static function getTableName(): string
 	{
 		return 'b_tasks_stages';
 	}
 
-	/**
-	 * Returns entity map definition.
-	 * @return array
-	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
-		return array(
-			'ID' => new Entity\IntegerField('ID', array(
-				'primary' => true,
-				'autocomplete' => true
-			)),
-			'TITLE' => new Entity\StringField('TITLE', array(
-				//
-			)),
-			'SORT' => new Entity\IntegerField('SORT', array(
-				//
-			)),
-			'COLOR' => new Entity\StringField('COLOR', array(
-				//
-			)),
-			'SYSTEM_TYPE' => new Entity\StringField('SYSTEM_TYPE', array(
-				//
-			)),
-			'ENTITY_ID' => new Entity\IntegerField('ENTITY_ID', array(
-				//
-			)),
-			'ENTITY_TYPE' => new Entity\StringField('ENTITY_TYPE', array(
-				//
-			)),
-			'ADDITIONAL_FILTER' => (new ArrayField('ADDITIONAL_FILTER', array(
-				//
-			)))->configureSerializationPhp(),
-			'TO_UPDATE' => (new ArrayField('TO_UPDATE', array(
-				//
-			)))->configureSerializationPhp(),
-			'TO_UPDATE_ACCESS' => new Entity\StringField('TO_UPDATE_ACCESS', array(
-				//
-			)),
-		);
+		return [
+			(new IntegerField('ID'))
+				->configurePrimary()
+				->configureAutocomplete(),
+			(new StringField('TITLE')),
+			(new IntegerField('SORT')),
+			(new StringField('COLOR')),
+			(new StringField('SYSTEM_TYPE')),
+			(new IntegerField('ENTITY_ID')),
+			(new StringField('ENTITY_TYPE')),
+			(new ArrayField('ADDITIONAL_FILTER'))
+				->configureSerializationPhp(),
+			(new ArrayField('TO_UPDATE'))
+				->configureSerializationPhp(),
+			(new StringField('TO_UPDATE_ACCESS')),
+		];
 	}
 
-
-	/**
-	 * Check work mode.
-	 * @param string $mode Mode.
-	 * @return boolean
-	 */
-	public static function checkWorkMode($mode)
+	public static function checkWorkMode(string $mode): bool
 	{
-		return  $mode == self::WORK_MODE_GROUP ||
-				$mode == self::WORK_MODE_USER ||
-				$mode == self::WORK_MODE_TIMELINE ||
-				$mode == self::WORK_MODE_ACTIVE_SPRINT;
+		return $mode == self::WORK_MODE_GROUP
+			|| $mode == self::WORK_MODE_USER
+			|| $mode == self::WORK_MODE_TIMELINE
+			|| $mode == self::WORK_MODE_ACTIVE_SPRINT;
 	}
 
-	/**
-	 * Set work mode.
-	 * @param string $mode New mode.
-	 * @return void
-	 */
-	public static function setWorkMode($mode)
+	public static function setWorkMode(string $mode): void
 	{
 		if (self::checkWorkMode($mode))
 		{
@@ -156,43 +138,38 @@ class StagesTable extends Entity\DataManager
 		}
 	}
 
-	/**
-	 * Get work mode.
-	 * @return string
-	 */
-	public static function getWorkMode()
+	public static function getWorkMode(): string
 	{
 		return self::$mode;
 	}
 
 	/**
-	 * Just delete by parent delete method.
-	 * @param int $id Stage id.
-	 * @return \Bitrix\Main\ORM\Data\DeleteResult
+	 * @throws Exception
 	 */
-	public static function systemDelete($id)
+	public static function systemDelete(int $id): DeleteResult
 	{
 		return parent::delete($id);
 	}
 
 	/**
 	 * Base delete-method, first check that column is not system.
-	 * @param mixed $key Row key.
-	 * @param int $entityId Id of entity.
-	 * @return Entity\DeleteResult|false
+	 *
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws Exception
 	 */
-	public static function delete($key, $entityId = 0)
+	public static function delete($primary, int $entityId = 0): DeleteResult|bool|null
 	{
 		$entityType = self::getWorkMode();
 
-		$res = self::getList(array(
-			'filter' => array(
-				'ID' => $key,
+		$res = self::getList([
+			'filter' => [
+				'ID' => $primary,
 				'ENTITY_ID' => $entityId,
 				'=ENTITY_TYPE' => $entityType,
-				//'=SYSTEM_TYPE' => false
-			)
-		));
+			],
+		]);
 		if ($stage = $res->fetch())
 		{
 			// user can't delete first stage
@@ -201,8 +178,8 @@ class StagesTable extends Entity\DataManager
 				&& $entityType !== self::WORK_MODE_ACTIVE_SPRINT
 			)
 			{
-				$result = new Entity\DeleteResult();
-				$result->addError(new Entity\EntityError(
+				$result = new DeleteResult();
+				$result->addError(new Error(
 					Loc::getMessage('TASKS_STAGE_ERROR_CANT_DELETE_FIRST'),
 					'CANT_DELETE_FIRST'
 				));
@@ -214,17 +191,17 @@ class StagesTable extends Entity\DataManager
 			{
 				if ($entityType == self::WORK_MODE_GROUP)
 				{
-					$resT = Task::getList(array(
-						'select' => array('ID'),
-						'filter' => array(
-							'STAGE_ID' => $stage['ID']
-						)
-					));
+					$resT = Task::getList([
+						'select' => ['ID'],
+						'filter' => [
+							'STAGE_ID' => $stage['ID'],
+						],
+					]);
 					while ($row = $resT->fetch())
 					{
-						Task::update($row['ID'], array(
-							'STAGE_ID' => 0
-						));
+						Task::update($row['ID'], [
+							'STAGE_ID' => 0,
+						]);
 					}
 				}
 				elseif (
@@ -232,11 +209,11 @@ class StagesTable extends Entity\DataManager
 					|| $entityType === self::WORK_MODE_ACTIVE_SPRINT
 				)
 				{
-					$resT = TaskStageTable::getList(array(
-						'filter' => array(
-							'STAGE_ID' => $stage['ID']
-						)
-					));
+					$resT = TaskStageTable::getList([
+						'filter' => [
+							'STAGE_ID' => $stage['ID'],
+						],
+					]);
 					while ($row = $resT->fetch())
 					{
 						TaskStageTable::delete($row['ID']);
@@ -251,38 +228,40 @@ class StagesTable extends Entity\DataManager
 
 	/**
 	 * Get stages and create default.
-	 * @param int $entityId Id of entity.
-	 * @param bool $disableCreate Return stages as is without create defaults.
-	 * @return array
+	 *
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws Exception
 	 */
-	public static function getStages($entityId = 0, $disableCreate = false)
+	public static function getStages(int|string $entityId = 0, bool $disableCreate = false): array
 	{
-		static $stages = array();
+		static $stages = [];
 
 		$entityType = self::getWorkMode();
 
 		if (
-			isset($stages[$entityType.$entityId]) &&
-			!empty($stages[$entityType.$entityId])
+			isset($stages[$entityType . $entityId])
+			&& !empty($stages[$entityType . $entityId])
 		)
 		{
-			return $stages[$entityType.$entityId];
+			return $stages[$entityType . $entityId];
 		}
 
-		$stages[$entityType.$entityId] = array();
+		$stages[$entityType . $entityId] = [];
 		$predefinedStages = ($entityType == self::WORK_MODE_TIMELINE)
 			? TimeLineTable::getStages()
 			: [];
 
-		$res = self::getList(array(
-			'filter' => array(
+		$res = self::getList([
+			'filter' => [
 				'ENTITY_ID' => $entityId,
-				'=ENTITY_TYPE' => $entityType
-			),
-			'order' => array(
-				'SORT' => 'ASC'
-			),
-		));
+				'=ENTITY_TYPE' => $entityType,
+			],
+			'order' => [
+				'SORT' => 'ASC',
+			],
+		]);
 		while ($row = $res->fetch())
 		{
 			// set default color
@@ -305,8 +284,8 @@ class StagesTable extends Entity\DataManager
 			if ($row['SYSTEM_TYPE'])
 			{
 				if (
-					!$row['ADDITIONAL_FILTER'] &&
-					isset($predefinedStages[$row['SYSTEM_TYPE']]['FILTER'])
+					!$row['ADDITIONAL_FILTER']
+					&& isset($predefinedStages[$row['SYSTEM_TYPE']]['FILTER'])
 				)
 				{
 					$row['ADDITIONAL_FILTER'] = $predefinedStages[$row['SYSTEM_TYPE']]['FILTER'];
@@ -316,7 +295,7 @@ class StagesTable extends Entity\DataManager
 				{
 					foreach ($row['ADDITIONAL_FILTER_TEST'] as &$date)
 					{
-						if ($date instanceof \Bitrix\Main\Type\DateTime)
+						if ($date instanceof DateTime)
 						{
 							$date = clone $date;
 							$date = (string)$date;
@@ -325,15 +304,15 @@ class StagesTable extends Entity\DataManager
 					unset($date);
 				}
 				if (
-					!$row['TO_UPDATE'] &&
-					isset($predefinedStages[$row['SYSTEM_TYPE']]['UPDATE'])
+					!$row['TO_UPDATE']
+					&& isset($predefinedStages[$row['SYSTEM_TYPE']]['UPDATE'])
 				)
 				{
 					$row['TO_UPDATE'] = $predefinedStages[$row['SYSTEM_TYPE']]['UPDATE'];
 				}
 				if (
-					!$row['TO_UPDATE_ACCESS'] &&
-					isset($predefinedStages[$row['SYSTEM_TYPE']]['UPDATE_ACCESS'])
+					!$row['TO_UPDATE_ACCESS']
+					&& isset($predefinedStages[$row['SYSTEM_TYPE']]['UPDATE_ACCESS'])
 				)
 				{
 					$row['TO_UPDATE_ACCESS'] = $predefinedStages[$row['SYSTEM_TYPE']]['UPDATE_ACCESS'];
@@ -341,63 +320,63 @@ class StagesTable extends Entity\DataManager
 			}
 			$row['TO_UPDATE'] = (array)$row['TO_UPDATE'];
 			$row['ADDITIONAL_FILTER'] = (array)$row['ADDITIONAL_FILTER'];
-			$stages[$entityType.$entityId][$row['ID']] = $row;
+			$stages[$entityType . $entityId][$row['ID']] = $row;
 		}
 		if ($disableCreate)
 		{
-			return $stages[$entityType.$entityId];
+			return $stages[$entityType . $entityId];
 		}
 		// if empty, create default stages
-		if (empty($stages[$entityType.$entityId]))
+		if (empty($stages[$entityType . $entityId]))
 		{
 			if ($entityType == self::WORK_MODE_USER)
 			{
-				self::add(array(
+				self::add([
 					'SYSTEM_TYPE' => self::SYS_TYPE_NEW,
 					'TITLE' => Loc::getMessage('TASKS_STAGE_MP_1'),
 					'SORT' => 100,
 					'ENTITY_ID' => $entityId,
 					'ENTITY_TYPE' => $entityType,
-					'COLOR' => '00C4FB'
-				));
-				self::add(array(
+					'COLOR' => '00C4FB',
+				]);
+				self::add([
 					'TITLE' => Loc::getMessage('TASKS_STAGE_MP_2'),
 					'SORT' => 200,
 					'ENTITY_ID' => $entityId,
 					'ENTITY_TYPE' => $entityType,
-					'COLOR' => '47D1E2'
-				));
+					'COLOR' => '47D1E2',
+				]);
 			}
-			else if ($entityType == self::WORK_MODE_GROUP)
+			elseif ($entityType == self::WORK_MODE_GROUP)
 			{
 				if ($entityId > 0)
 				{
-					self::getStages(0);
+					self::getStages();
 					self::copyView(0, $entityId);
 				}
 				else
 				{
-					self::add(array(
+					self::add([
 						'SYSTEM_TYPE' => self::SYS_TYPE_NEW,
 						'SORT' => 100,
 						'ENTITY_ID' => $entityId,
 						'ENTITY_TYPE' => $entityType,
-						'COLOR' => '00C4FB'
-					));
-					self::add(array(
+						'COLOR' => '00C4FB',
+					]);
+					self::add([
 						'SYSTEM_TYPE' => self::SYS_TYPE_PROGRESS,
 						'SORT' => 200,
 						'ENTITY_ID' => $entityId,
 						'ENTITY_TYPE' => $entityType,
-						'COLOR' => '47D1E2'
-					));
-					self::add(array(
+						'COLOR' => '47D1E2',
+					]);
+					self::add([
 						'SYSTEM_TYPE' => self::SYS_TYPE_FINISH,
 						'SORT' => 300,
 						'ENTITY_ID' => $entityId,
 						'ENTITY_TYPE' => $entityType,
-						'COLOR' => '75D900'
-					));
+						'COLOR' => '75D900',
+					]);
 				}
 			}
 			else
@@ -417,15 +396,15 @@ class StagesTable extends Entity\DataManager
 				{
 					self::add([
 						'SYSTEM_TYPE' => array_key_exists('SYSTEM_TYPE', $stageItem)
-										? $stageItem['SYSTEM_TYPE']
-										: $stageCode,
+							? $stageItem['SYSTEM_TYPE']
+							: $stageCode,
 						'TITLE' => array_key_exists('TITLE', $stageItem)
-										? $stageItem['TITLE']
-										: '',
+							? $stageItem['TITLE']
+							: '',
 						'SORT' => ++$i * 100,
 						'ENTITY_ID' => $entityId,
 						'ENTITY_TYPE' => $entityType,
-						'COLOR' => $stageItem['COLOR']
+						'COLOR' => $stageItem['COLOR'],
 					]);
 				}
 			}
@@ -433,16 +412,19 @@ class StagesTable extends Entity\DataManager
 			return self::getStages($entityId);
 		}
 
-		return $stages[$entityType.$entityId];
+		return $stages[$entityType . $entityId];
 	}
 
 	/**
 	 * Add or update stages by code/id.
-	 * @param int $id Stage id.
-	 * @param array $fields Data array.
-	 * @return res Database result.
+	 *
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws Exception
 	 */
-	public static function updateByCode($id, $fields)
+	public static function updateByCode($id, $fields): ?Result
 	{
 		$id = intval($id);
 		$afterId = isset($fields['AFTER_ID']) ? intval($fields['AFTER_ID']) : 0;
@@ -454,16 +436,16 @@ class StagesTable extends Entity\DataManager
 		}
 		// get stages
 		$newStageId = 0;
-		$stages = array();
-		$res = self::getList(array(
-			'filter' => array(
+		$stages = [];
+		$res = self::getList([
+			'filter' => [
 				'ENTITY_ID' => $entityId,
-				'=ENTITY_TYPE' => $entityType
-			),
-			'order' => array(
-				'SORT' => 'ASC'
-			)
-		));
+				'=ENTITY_TYPE' => $entityType,
+			],
+			'order' => [
+				'SORT' => 'ASC',
+			],
+		]);
 		while ($row = $res->fetch())
 		{
 			if ($row['SYSTEM_TYPE'] == self::SYS_TYPE_NEW)
@@ -474,21 +456,21 @@ class StagesTable extends Entity\DataManager
 		}
 		// if move first - update tasks for fix in this stage
 		if (
-			isset($fields['AFTER_ID']) &&
-			isset($stages[$id]) &&
-			$entityType == self::WORK_MODE_GROUP
+			isset($fields['AFTER_ID'])
+			&& isset($stages[$id])
+			&& $entityType == self::WORK_MODE_GROUP
 		)
 		{
 			if (
-				$fields['AFTER_ID'] == 0 ||
-				$stages[$id]['SYSTEM_TYPE'] == self::SYS_TYPE_NEW
+				$fields['AFTER_ID'] == 0
+				|| $stages[$id]['SYSTEM_TYPE'] == self::SYS_TYPE_NEW
 			)
 			{
-				$connection = \Bitrix\Main\Application::getConnection();
+				$connection = Application::getConnection();
 				$sql = 'UPDATE '
-						. '`' . Task::getTableName() . '` '
-						. 'SET `STAGE_ID`=' . ($newStageId) . ' '
-						. 'WHERE `STAGE_ID`=0 AND `GROUP_ID`=' . $entityId . ';';
+					. '`' . Task::getTableName() . '` '
+					. 'SET `STAGE_ID`=' . ($newStageId) . ' '
+					. 'WHERE `STAGE_ID`=0 AND `GROUP_ID`=' . $entityId . ';';
 				$connection->query($sql);
 			}
 		}
@@ -498,9 +480,9 @@ class StagesTable extends Entity\DataManager
 			$id = 0;
 		}
 		$stages[$id] = array_merge(
-						isset($stages[$id]) ? $stages[$id] : array(),
-						$fields
-					);
+			$stages[$id] ?? [],
+			$fields
+		);
 		// set sort
 		if (array_key_exists('AFTER_ID', $fields))
 		{
@@ -517,8 +499,7 @@ class StagesTable extends Entity\DataManager
 				$stages[$id]['SORT'] = count($stages) * 100 + 10;
 			}
 		}
-		uasort($stages, function($a, $b)
-		{
+		uasort($stages, function ($a, $b) {
 			if ($a['SORT'] == $b['SORT'])
 			{
 				return 0;
@@ -537,8 +518,8 @@ class StagesTable extends Entity\DataManager
 			else
 			{
 				if (
-					$stage['TITLE'] ||
-					$stage['SYSTEM_TYPE'] == self::SYS_TYPE_NEW
+					$stage['TITLE']
+					|| $stage['SYSTEM_TYPE'] == self::SYS_TYPE_NEW
 				)
 				{
 					$stage['SYSTEM_TYPE'] = '';
@@ -546,14 +527,14 @@ class StagesTable extends Entity\DataManager
 				$systemType = ($sort == 100 ? self::SYS_TYPE_NEW : $stage['SYSTEM_TYPE']);
 			}
 
-			$fields = array(
+			$fields = [
 				'TITLE' => $stage['TITLE'],
 				'COLOR' => $stage['COLOR'],
 				'ENTITY_ID' => $stage['ENTITY_ID'],
 				'ENTITY_TYPE' => $entityType,
 				'SORT' => $sort,
-				'SYSTEM_TYPE' => $systemType
-			);
+				'SYSTEM_TYPE' => $systemType,
+			];
 
 			$sort += 100;
 			if ($i > 0)
@@ -575,11 +556,13 @@ class StagesTable extends Entity\DataManager
 
 	/**
 	 * Get stages id by stage code.
-	 * @param int $id Id of stage.
-	 * @param int $entityId Id of entity.
-	 * @return int|array
+	 *
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws Exception
 	 */
-	public static function getStageIdByCode($id, $entityId = 0)
+	public static function getStageIdByCode(int $id, int $entityId = 0): int|array
 	{
 		if (self::getWorkMode() == self::WORK_MODE_USER)
 		{
@@ -591,13 +574,11 @@ class StagesTable extends Entity\DataManager
 		if (isset($stages[$id]))
 		{
 			$stage = $stages[$id];
-			switch ($stage['SYSTEM_TYPE'])
+			return match ($stage['SYSTEM_TYPE'])
 			{
-				case self::SYS_TYPE_NEW:
-					return array($stage['ID'], 0);
-				default:
-					return $stage['ID'];
-			}
+				self::SYS_TYPE_NEW => [$stage['ID'], 0],
+				default => $stage['ID'],
+			};
 		}
 
 		return -1;
@@ -605,10 +586,13 @@ class StagesTable extends Entity\DataManager
 
 	/**
 	 * Get default stage id.
-	 * @param int $id Entity id.
-	 * @return int
+	 *
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws Exception
 	 */
-	public static function getDefaultStageId($id = 0)
+	public static function getDefaultStageId($id = 0): int
 	{
 		foreach (self::getStages($id) as $stage)
 		{
@@ -622,136 +606,118 @@ class StagesTable extends Entity\DataManager
 	}
 
 	/**
-	 * Group tasks by filter and return counts for each stage.
-	 * @param array $filter Filter for tasks.
-	 * @param boolean $userId Context user id.
-	 * @return \DatabaseResult
+	 * @throws InvalidGroupByException
 	 */
-	public static function getStagesCount(array $filter = array(), $userId = false)
+	public static function getStagesCount(array $stageList, array $filter = [], mixed $userId = false): array
 	{
 		if ($userId === false)
 		{
-			$userId = \Bitrix\Tasks\Util\User::getId();
+			$userId = User::getId();
 		}
 		$userId = intval($userId);
 
-		// related joins
-		$relatedJoins = \CTasks::getRelatedJoins([], $filter, [], ['USER_ID' => $userId]);
+		$stageList = array_map('intval', array_keys($stageList));
 
-		$filterKeys = \CTasks::GetFilteredKeys($filter);
-		$joinTaskMember = in_array('MEMBER', $filterKeys);
-
-		if ($joinTaskMember)
-		{
-			unset($filter['::SUBFILTER-ROLEID']['MEMBER']);
-
-			$relatedJoins['MEMBER'] = "INNER JOIN (
-				SELECT TMM.TASK_ID, TMM.USER_ID
-				FROM " . MemberTable::getTableName() . " TMM WHERE TMM.USER_ID = {$userId}
-				GROUP BY TMM.TASK_ID
-			) TM ON TM.TASK_ID = STG.TASK_ID";
-		}
-
-		// common
-		$sqlSearch = \CTasks::GetFilter($filter, "", array('TASK_MEMBER_JOINED' => $joinTaskMember));
-
-		// uf fields
-		$userFieldsSql = new \CUserTypeSQL();
-		$userFieldsSql->setEntity('TASKS_TASK', 'T.ID');
-		$userFieldsSql->setFilter($filter);
-		$ufFilterSql = $userFieldsSql->getFilter();
-
-		if ($ufFilterSql != '')
-		{
-			$sqlSearch[] = '(' . $ufFilterSql . ')';
-		}
-
-		$sql = "
-			SELECT STG.STAGE_ID, COUNT(STG.STAGE_ID) AS CNT
-			FROM (";
-
-		// if personal - search in another table
 		if (
-			self::getWorkMode() == self::WORK_MODE_USER ||
-			self::getWorkMode() == self::WORK_MODE_ACTIVE_SPRINT
+			self::getWorkMode() == self::WORK_MODE_USER
+			|| self::getWorkMode() == self::WORK_MODE_ACTIVE_SPRINT
 		)
 		{
-			$sql .= "
-				SELECT STG.STAGE_ID
-				FROM " . TaskStageTable::getTableName() . " STG
-				LEFT JOIN " . Task::getTableName() . " T ON T.ID = STG.TASK_ID
-				" . implode("\n", $relatedJoins) . "
-				" . $userFieldsSql->GetJoin("T.ID") . "
-				" . "WHERE " . implode(' AND ', $sqlSearch) . "
-				" . "GROUP BY T.ID, STG.STAGE_ID
-			";
+			$filter = [
+				'STAGES_ID' => $stageList,
+				'::SUBFILTER-1' => $filter,
+			];
+			$select = [
+				'STAGES_ID',
+				'COUNT',
+			];
+			$groupBy = [
+				'STAGES_ID',
+			];
 		}
-		// else tasks table
 		else
 		{
-			if (array_key_exists('MEMBER', $relatedJoins))
-			{
-				unset($relatedJoins['MEMBER']);
-			}
-
-			$sql .= "
-				SELECT T.STAGE_ID
-				FROM " . Task::getTableName() . " T
-				" . implode("\n", $relatedJoins) . "
-				" . $userFieldsSql->GetJoin("T.ID") . "
-				" . "WHERE " . implode(' AND ', $sqlSearch) . "
-				" . "GROUP BY T.ID, T.STAGE_ID
-			";
+			$filter = [
+				'STAGE_ID' => $stageList,
+				'::SUBFILTER-1' => $filter,
+			];
+			$select = [
+				'STAGE_ID',
+				'COUNT',
+			];
+			$groupBy = [
+				'STAGE_ID',
+			];
 		}
 
-		$sql .= ") STG
-			GROUP BY STG.STAGE_ID
-		";
+		$query = new TaskQuery($userId);
+		$query
+			->setSelect($select)
+			->setGroupBy($groupBy)
+			->setWhere($filter);
 
-		return \Bitrix\Main\Application::getConnection()->query($sql);
+		$counts = [];
+		try
+		{
+			$list = new TaskList();
+			$counts = $list->getList($query);
+
+			$sql = TaskQueryBuilder::getLastQuery();
+		}
+		catch (Exception $e)
+		{
+			LogFacade::logThrowable($e);
+		}
+
+		$res = [];
+		foreach ($counts as $row)
+		{
+			$stageId = $row['STAGES_ID'] ?? $row['STAGE_ID'];
+			$res[$stageId] = $row['COUNT'];
+		}
+
+		return $res;
 	}
 
 	/**
 	 * Copy view from one entity to another.
-	 * @param int $fromEntityId From entity Id.
-	 * @param int $toEntityId To entity Id.
-	 * @param string $entityType Entity type.
-	 * @return array|bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 *
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws Exception
 	 */
-	public static function copyView($fromEntityId, $toEntityId, $entityType = self::WORK_MODE_GROUP)
+	public static function copyView(int $fromEntityId, int $toEntityId, string $entityType = self::WORK_MODE_GROUP): array|bool
 	{
 		if (
-			$fromEntityId != $toEntityId &&
-			(
-				$entityType == self::WORK_MODE_USER ||
-				$entityType == self::WORK_MODE_GROUP ||
-				$entityType == self::WORK_MODE_ACTIVE_SPRINT
+			$fromEntityId != $toEntityId
+			&& (
+				$entityType == self::WORK_MODE_USER
+				|| $entityType == self::WORK_MODE_GROUP
+				|| $entityType == self::WORK_MODE_ACTIVE_SPRINT
 			)
 		)
 		{
 			$result = [];
-			$res = self::getList(array(
-				'filter' => array(
+			$res = self::getList([
+				'filter' => [
 					'ENTITY_ID' => $fromEntityId,
-					'=ENTITY_TYPE' => $entityType
-				),
-				'order' => array(
-					'ID' => 'ASC'
-				)
-			));
+					'=ENTITY_TYPE' => $entityType,
+				],
+				'order' => [
+					'ID' => 'ASC',
+				],
+			]);
 			while ($row = $res->fetch())
 			{
 				$oldStageId = $row['ID'];
 				if (!$row['TITLE'])
 				{
-					$row['TITLE'] = $row['TITLE'] = Loc::getMessage('TASKS_STAGE_' . $row['SYSTEM_TYPE']);
+					$row['TITLE'] = Loc::getMessage('TASKS_STAGE_' . $row['SYSTEM_TYPE']);
 				}
 				if (
-					$row['SYSTEM_TYPE'] &&
-					($row['SYSTEM_TYPE'] != self::SYS_TYPE_NEW)
+					$row['SYSTEM_TYPE']
+					&& ($row['SYSTEM_TYPE'] != self::SYS_TYPE_NEW)
 				)
 				{
 					unset($row['SYSTEM_TYPE']);
@@ -769,49 +735,46 @@ class StagesTable extends Entity\DataManager
 
 	/**
 	 * Disable pin in stage for user.
-	 * @param int|array $userIds User id.
-	 * @return void
 	 */
-	public static function disablePinForUser($userIds)
+	public static function disablePinForUser(array|int $userIds): void
 	{
 		if (!is_array($userIds))
 		{
-			$userIds = array($userIds);
+			$userIds = [$userIds];
 		}
 		self::$disablePin = array_merge(self::$disablePin, $userIds);
 	}
 
 	/**
 	 * Disable link in stage for user.
-	 * @param int|array $userIds User id.
-	 * @return void
 	 */
-	public static function disableLinkForUser($userIds)
+	public static function disableLinkForUser(array|int $userIds): void
 	{
 		if (!is_array($userIds))
 		{
-			$userIds = array($userIds);
+			$userIds = [$userIds];
 		}
 		self::$disableLink = array_merge(self::$disableLink, $userIds);
 	}
 
 	/**
 	 * Pin the task in the DEFAULT stage for users/group.
-	 * @param int $taskId Task id.
-	 * @param int|array $users Pin for users.
-	 * @param boolean $refreshGroup Refresh sorting in group.
-	 * @return void
+	 *
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws Exception
 	 */
-	public static function pinInStage($taskId, $users = [], $refreshGroup = false)
+	public static function pinInStage(int $taskId, int|array $users = [], bool $refreshGroup = false): void
 	{
 		if (!is_array($users))
 		{
-			$users = array($users);
+			$users = [$users];
 		}
 		$newTask = empty($users);
 
 		// get additional data
-		$currentUsers = array();
+		$currentUsers = [];
 		$task = TaskRegistry::getInstance()->get($taskId);
 		if (!$task)
 		{
@@ -822,9 +785,9 @@ class StagesTable extends Entity\DataManager
 		$currentUsers[] = $task['CREATED_BY'];
 
 		// get current other members
-		$res = \CTaskMembers::GetList(
-			array(),
-			array('TASK_ID' => $taskId)
+		$res = CTaskMembers::GetList(
+			[],
+			['TASK_ID' => $taskId]
 		);
 		while ($row = $res->fetch())
 		{
@@ -834,44 +797,49 @@ class StagesTable extends Entity\DataManager
 		if ($newTask)
 		{
 			$users = $currentUsers;
-			$currentUsers = array();
+			$currentUsers = [];
 		}
 
 		$users = array_unique($users);
 
 		// pin in personal default stage (if already Kanban exist)
-		$personaleDefStages = array();
+		$personalDefStages = [];
 		self::setWorkMode(self::WORK_MODE_USER);
 		foreach ($users as $userId)
 		{
 			$checkStages = self::getStages($userId, true);
 			if (!empty($checkStages))
 			{
-				$personaleDefStages[$userId] = self::getDefaultStageId($userId);
+				$personalDefStages[$userId] = self::getDefaultStageId($userId);
 				if (!in_array($userId, self::$disableLink))
 				{
-					$resStg = TaskStageTable::getList(array(
-						'filter' => array(
+					$resStg = TaskStageTable::getList([
+						'filter' => [
 							'TASK_ID' => $taskId,
-							'STAGE_ID' => array_keys($checkStages)
-						)
-					));
+							'STAGE_ID' => array_keys($checkStages),
+						],
+					]);
 					if (!$resStg->fetch())
 					{
-						$fields = array(
+						$fields = [
 							'TASK_ID' => $taskId,
-							'STAGE_ID' => self::getDefaultStageId($userId)
-						);
-						if (!TaskStageTable::getList(array(
-								'filter' => $fields
-							)
-						)->fetch())
+							'STAGE_ID' => self::getDefaultStageId($userId),
+						];
+						if (
+							!TaskStageTable::getList([
+									'filter' => $fields,
+								]
+							)->fetch()
+						)
 						{
 							try
 							{
 								TaskStageTable::add($fields);
 							}
-							catch (\Exception $e){}
+							catch (Exception $exception)
+							{
+								LogFacade::logThrowable($exception);
+							}
 						}
 					}
 				}
@@ -881,8 +849,8 @@ class StagesTable extends Entity\DataManager
 		// work mode
 		self::setWorkMode(
 			$task['GROUP_ID'] > 0
-			? self::WORK_MODE_GROUP
-			: self::WORK_MODE_USER
+				? self::WORK_MODE_GROUP
+				: self::WORK_MODE_USER
 		);
 
 		if ($task['GROUP_ID'] > 0 && ($newTask || $refreshGroup))
@@ -891,7 +859,7 @@ class StagesTable extends Entity\DataManager
 		}
 		else
 		{
-			$checkStages = array();
+			$checkStages = [];
 		}
 
 		// one sort for project
@@ -900,7 +868,7 @@ class StagesTable extends Entity\DataManager
 			// get order
 			if (($project = ProjectsTable::getById($task['GROUP_ID'])->fetch()))
 			{
-				$order = $project['ORDER_NEW_TASK'] ? $project['ORDER_NEW_TASK'] : 'desc';
+				$order = $project['ORDER_NEW_TASK'] ?: 'desc';
 			}
 			else
 			{
@@ -908,15 +876,15 @@ class StagesTable extends Entity\DataManager
 			}
 
 			// set sorting
-			$targetId = (new Sort())->getPositionForGroup((int) $taskId, $order, (int) $task['GROUP_ID']);
+			$targetId = (new Sort())->getPositionForGroup($taskId, $order, (int)$task['GROUP_ID']);
 			if ($targetId)
 			{
 				SortingTable::setSorting(
-					\Bitrix\Tasks\Util\User::getId() > 0 ? \Bitrix\Tasks\Util\User::getId() : $task['CREATED_BY'],
+					User::getId() > 0 ? User::getId() : $task['CREATED_BY'],
 					$task['GROUP_ID'],
 					$taskId,
 					$targetId,
-					$order == 'asc' ? false : true
+					!($order == 'asc')
 				);
 			}
 		}
@@ -928,18 +896,18 @@ class StagesTable extends Entity\DataManager
 				$userId
 				&& !in_array($userId, self::$disablePin)
 				&& !in_array($userId, $currentUsers)
-				&& isset($personaleDefStages[$userId])
+				&& isset($personalDefStages[$userId])
 			)
 			{
 				// get order
-				$order = \CUserOptions::getOption(
+				$order = CUserOptions::getOption(
 					'tasks',
 					'order_new_task',
 					'desc',
 					$userId
 				);
 
-				$targetId = (new Sort())->getPositionForUser((int)$taskId, $order, (int)$userId);
+				$targetId = (new Sort())->getPositionForUser($taskId, $order, (int)$userId);
 				if ($targetId)
 				{
 					SortingTable::setSorting(
@@ -947,7 +915,7 @@ class StagesTable extends Entity\DataManager
 						0,
 						$taskId,
 						$targetId,
-						($order == 'asc' ? false : true)
+						!($order == 'asc')
 					);
 				}
 			}
@@ -956,11 +924,14 @@ class StagesTable extends Entity\DataManager
 
 	/**
 	 * Pin the task in the stage for user/group.
-	 * @param int $taskId Task id.
-	 * @param int $stageId Stage id.
-	 * @return void
+	 *
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws TasksException
+	 * @throws ArgumentException
+	 * @throws SystemException
 	 */
-	public static function pinInTheStage($taskId, $stageId)
+	public static function pinInTheStage(int $taskId, int $stageId): void
 	{
 		if (($stage = StagesTable::getById($stageId)->fetch()))
 		{
@@ -970,12 +941,12 @@ class StagesTable extends Entity\DataManager
 			{
 				if (($project = ProjectsTable::getById($stage['ENTITY_ID'])->fetch()))
 				{
-					$order = $project['ORDER_NEW_TASK'] ? $project['ORDER_NEW_TASK'] : 'desc';
+					$order = $project['ORDER_NEW_TASK'] ?: 'desc';
 				}
 			}
 			else
 			{
-				$order = \CUserOptions::getOption(
+				$order = CUserOptions::getOption(
 					'tasks',
 					'order_new_task',
 					'desc',
@@ -985,28 +956,28 @@ class StagesTable extends Entity\DataManager
 			// set order
 			if ($order == 'desc')
 			{
-				$sort = array(
+				$sort = [
 					'SORTING' => 'ASC',
 					'STATUS_COMPLETE' => 'ASC',
 					'DEADLINE' => 'ASC,NULLS',
-					'ID' => 'ASC'
-				);
+					'ID' => 'ASC',
+				];
 			}
 			else
 			{
-				$sort = array(
+				$sort = [
 					'SORTING' => 'DESC',
 					'STATUS_COMPLETE' => 'DESC',
 					'DEADLINE' => 'DESC',
-					'ID' => 'DESC'
-				);
+					'ID' => 'DESC',
+				];
 			}
 			// set filter
-			$filter = array(
+			$filter = [
 				'CHECK_PERMISSIONS' => 'N',
 				'ONLY_ROOT_TASKS' => 'N',
-				'!ID' => $taskId
-			);
+				'!ID' => $taskId,
+			];
 			if ($stage['ENTITY_TYPE'] == self::WORK_MODE_GROUP)
 			{
 				$filter['GROUP_ID'] = $stage['ENTITY_ID'];
@@ -1016,11 +987,11 @@ class StagesTable extends Entity\DataManager
 				$filter['MEMBER'] = $stage['ENTITY_ID'];
 			}
 			// set params
-			$params = array(
-				'NAV_PARAMS' => array(
-					'nTopCount' => 1
-				)
-			);
+			$params = [
+				'NAV_PARAMS' => [
+					'nTopCount' => 1,
+				],
+			];
 			if ($stage['ENTITY_TYPE'] == self::WORK_MODE_GROUP)
 			{
 				$params['SORTING_GROUP_ID'] = $stage['ENTITY_ID'];
@@ -1030,17 +1001,17 @@ class StagesTable extends Entity\DataManager
 				$params['USER_ID'] = $stage['ENTITY_ID'];
 			}
 			// set sorting
-			$res = \CTasks::getList(
+			$res = CTasks::getList(
 				$sort,
 				$filter,
-				array('ID'),
+				['ID'],
 				$params
 			);
 			if ($row = $res->fetch())
 			{
 				if ($stage['ENTITY_TYPE'] == self::WORK_MODE_GROUP)
 				{
-					$userId = \Bitrix\Tasks\Util\User::getId();
+					$userId = User::getId();
 					$groupId = $stage['ENTITY_ID'];
 				}
 				else
@@ -1053,7 +1024,7 @@ class StagesTable extends Entity\DataManager
 					$groupId,
 					$taskId,
 					$row['ID'],
-					$order == 'asc' ? false : true
+					!($order == 'asc')
 				);
 			}
 		}
@@ -1061,17 +1032,20 @@ class StagesTable extends Entity\DataManager
 
 	/**
 	 * Delete all stages and sprints of group after group delete.
-	 * @param int $groupId Group id.
-	 * @return void
+	 *
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 * @throws Exception
 	 */
-	public static function onSocNetGroupDelete($groupId)
+	public static function onSocNetGroupDelete(int $groupId): void
 	{
-		$res = self::getList(array(
-			'filter' => array(
+		$res = self::getList([
+			'filter' => [
 				'ENTITY_ID' => $groupId,
-				'=ENTITY_TYPE' => self::WORK_MODE_GROUP
-			)
-		));
+				'=ENTITY_TYPE' => self::WORK_MODE_GROUP,
+			],
+		]);
 		while ($row = $res->fetch())
 		{
 			parent::delete($row['ID']);
@@ -1080,34 +1054,56 @@ class StagesTable extends Entity\DataManager
 
 	/**
 	 * Delete all stages of user after user delete.
-	 * @param int $userId User id.
-	 * @return void
+	 *
+	 * @throws Exception
 	 */
-	public static function onUserDelete($userId)
+	public static function onUserDelete(int $userId): void
 	{
-		$res = self::getList(array(
-			'filter' => array(
+		$res = self::getList([
+			'filter' => [
 				'ENTITY_ID' => $userId,
 				'=ENTITY_TYPE' => [
 					self::WORK_MODE_USER,
-					self::WORK_MODE_TIMELINE
-				]
-			)
-		));
+					self::WORK_MODE_TIMELINE,
+				],
+			],
+		]);
 		while ($row = $res->fetch())
 		{
 			parent::delete($row['ID']);
 		}
 	}
 
-	/**
-	 * On stage delete.
-	 * @param Entity\Event $event Event.
-	 * @return void
-	 */
-	public static function onDelete(Entity\Event $event)
+	public static function onDelete(Event $event): void
 	{
 		$primary = $event->getParameter('id');
 		TaskStageTable::clearStage($primary['ID']);
+	}
+
+	/**
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public static function getSystemStage(int $groupId, bool $force = false): ?Stage
+	{
+		if (isset(static::$systemStages[$groupId]) && !$force)
+		{
+			return static::$systemStages[$groupId];
+		}
+
+		$query = static::query()
+			->where('ENTITY_ID', $groupId)
+			->where('ENTITY_TYPE', static::WORK_MODE_GROUP)
+			->where('SYSTEM_TYPE', static::SYS_TYPE_NEW);
+
+		static::$systemStages[$groupId] = $query->exec()->fetchObject();
+
+		return static::$systemStages[$groupId];
+	}
+
+	public static function getObjectClass(): string
+	{
+		return Stage::class;
 	}
 }

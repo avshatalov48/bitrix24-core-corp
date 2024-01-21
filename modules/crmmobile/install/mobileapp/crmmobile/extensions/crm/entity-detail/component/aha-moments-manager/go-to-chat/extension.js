@@ -3,6 +3,7 @@
  */
 jn.define('crm/entity-detail/component/aha-moments-manager/go-to-chat', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { cross } = require('assets/common');
 	const { getEntityMessage } = require('crm/loc');
 
@@ -106,12 +107,14 @@ jn.define('crm/entity-detail/component/aha-moments-manager/go-to-chat', (require
 						right: 0,
 						opacity: 0,
 					},
-					ref: (ref) => this.nodeRef = ref,
+					ref: (ref) => {
+						this.nodeRef = ref;
+					},
 				},
 				View(
 					{
 						style: {
-							backgroundColor: '#000000',
+							backgroundColor: AppTheme.colors.base0,
 							opacity: 0.4,
 							flex: 1,
 							position: 'absolute',
@@ -136,23 +139,25 @@ jn.define('crm/entity-detail/component/aha-moments-manager/go-to-chat', (require
 							bottom: ahaMomentPosition,
 							flexDirection: 'column',
 						},
-						ref: (ref) => this.popupRef = ref,
+						ref: (ref) => {
+							this.popupRef = ref;
+						},
 						onClick: isVisible && (() => {}),
 					},
 					View(
 						{
 							style: {
+								backgroundColor: AppTheme.colors.base8,
 								flexDirection: 'row',
 								borderRadius: 12,
 								padding: 12,
 								width: '100%',
-								backgroundColor: '#fff',
 							},
 						},
 						View(
 							{
 								style: {
-									backgroundColor: '#e5f9ff',
+									backgroundColor: AppTheme.colors.accentSoftBlue2,
 									borderRadius: 6,
 									width: 94,
 									alignItems: 'center',
@@ -183,7 +188,7 @@ jn.define('crm/entity-detail/component/aha-moments-manager/go-to-chat', (require
 								style: {
 									fontSize: 16,
 									fontWeight: '500',
-									color: '#333333',
+									color: AppTheme.colors.base1,
 									paddingBottom: 5,
 								},
 								text: Loc.getMessage('M_CRM_DETAIL_AHA_GO2CHAT_TITLE'),
@@ -191,7 +196,7 @@ jn.define('crm/entity-detail/component/aha-moments-manager/go-to-chat', (require
 							Text({
 								style: {
 									fontSize: 14,
-									color: '#525c69',
+									color: AppTheme.colors.base2,
 									lineHeightMultiple: 1.2,
 								},
 								text: getEntityMessage(
@@ -209,7 +214,7 @@ jn.define('crm/entity-detail/component/aha-moments-manager/go-to-chat', (require
 								top: 4,
 							},
 							svg: {
-								content: cross('#cccccc'),
+								content: cross(AppTheme.colors.base5),
 							},
 							onClick: isVisible && this.close,
 						}),
@@ -222,7 +227,7 @@ jn.define('crm/entity-detail/component/aha-moments-manager/go-to-chat', (require
 							right: bottomTriangleRightPosition,
 						},
 						svg: {
-							content: '<svg width="22" height="12" viewBox="0 0 22 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 0L12.1057 10.7937C11.5112 11.4423 10.4888 11.4423 9.89427 10.7937L0 0H22Z" fill="white"/></svg>',
+							content: `<svg width="22" height="12" viewBox="0 0 22 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 0L12.1057 10.7937C11.5112 11.4423 10.4888 11.4423 9.89427 10.7937L0 0H22Z" fill="${AppTheme.colors.base8}"/></svg>`,
 						},
 					}),
 				),
@@ -235,8 +240,7 @@ jn.define('crm/entity-detail/component/aha-moments-manager/go-to-chat', (require
 				data: {
 					name: 'GoToChat',
 				},
-			})
-				.catch(console.error);
+			}).catch(console.error);
 
 			this.nodeRef.animate({
 				duration: 0,

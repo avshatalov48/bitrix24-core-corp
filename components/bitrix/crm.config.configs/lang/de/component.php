@@ -30,6 +30,7 @@ $MESS["CRM_FIELD_ENABLE_ENTITY_CATALOG_PRICE_EDIT"] = "Bearbeitung des Produktpr
 $MESS["CRM_FIELD_ENABLE_ENTITY_CATALOG_PRICE_EDIT_2"] = "Nutzern erlauben, Produktpreis innerhalb der CRM-Elemente zu bearbeiten";
 $MESS["CRM_FIELD_ENABLE_ENTITY_CATALOG_PRICE_SAVE"] = "Neuen Produktpreis aus den CRM-Elementen im Katalog speichern";
 $MESS["CRM_FIELD_ENABLE_EXPORT_EVENT"] = "Exportereignisse protokollieren";
+$MESS["CRM_FIELD_ENABLE_FILE_PREVIEWER_IN_KANBAN_AND_GRID"] = "Datei-Viewer aktivieren";
 $MESS["CRM_FIELD_ENABLE_FULL_CATALOG"] = "Neue Grid-Ansicht und neues Produktprofil im CRM aktivieren";
 $MESS["CRM_FIELD_ENABLE_LEAD_DELETION_EVENT2"] = "Löschereignisse für Leads protokollieren";
 $MESS["CRM_FIELD_ENABLE_LEAD_DUP_CONTROL"] = "Dublettenkontrolle für Leads aktivieren";

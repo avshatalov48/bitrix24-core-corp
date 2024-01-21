@@ -88,7 +88,7 @@ final class KanbanStrategy extends Base
 		$filterParams = $this->params['filterParams'];
 		$statusId = ($filterParams['stageId'] ?? null);
 
-		if($statusId)
+		if ($statusId)
 		{
 			$filter[$stageFieldName] = $statusId;
 		}
@@ -160,6 +160,7 @@ final class KanbanStrategy extends Base
 			}
 
 			$data = [
+				'id' => $item['id'],
 				'title' => $item['name'],
 				'type' => strtolower($kanban->getEntity()->getTypeName()),
 				'hidden' => false,
@@ -180,9 +181,9 @@ final class KanbanStrategy extends Base
 					foreach ($item[$contactType] as $contactItem)
 					{
 						$title = (
-							OpenLineManager::isImOpenLinesValue($contactItem['value'])
-								? OpenLineManager::getOpenLineTitle($contactItem['value'])
-								: ''
+						OpenLineManager::isImOpenLinesValue($contactItem['value'])
+							? OpenLineManager::getOpenLineTitle($contactItem['value'])
+							: ''
 						);
 						$data[$contactType][] = [
 							'value' => $contactItem['value'],

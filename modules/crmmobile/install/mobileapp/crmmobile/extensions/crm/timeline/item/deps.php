@@ -14,8 +14,9 @@ return [
 		'crm:timeline/item/ui/market-banner',
 		'crm:timeline/item/ui/styles',
 		'crm:timeline/item/ui/user-avatar',
-
 		'crm:type',
+
+		'apptheme',
 		'animation',
 		'loc',
 		'in-app-url',

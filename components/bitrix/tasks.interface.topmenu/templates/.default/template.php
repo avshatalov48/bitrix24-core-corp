@@ -1,10 +1,18 @@
 <?php
+/** @var array $arParams */
+/** @var array $arResult */
+/** @var CMain $APPLICATION */
+/** @var CBitrixComponent $component */
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+use Bitrix\Main\UI\Extension;
+use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Integration\Bitrix24;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ScrumLimit;
+use Bitrix\Tasks\Util\User;
 
 if ($arParams['MENU_MODE'])
 {
@@ -13,9 +21,9 @@ if ($arParams['MENU_MODE'])
 
 $defaultMenuTarget =  "above_pagetitle";
 
-\CJSCore::init("spotlight");
+CJSCore::init("spotlight");
 
-\Bitrix\Main\UI\Extension::load('ui.info-helper');
+Extension::load('ui.info-helper');
 
 if(SITE_TEMPLATE_ID === "bitrix24")
 {
@@ -35,22 +43,23 @@ if(
 			margin-top: 18px;
 		}
 	</style>
-	<? endif ?>
+	<?php
+	endif ?>
 
 	<div class="" id="<?=$arResult['HELPER']->getScopeId()?>">
-	<?
+	<?php
 	$APPLICATION->IncludeComponent(
 		'bitrix:main.interface.buttons',
 		'',
 		array(
 			'ID' => $menuId,
 			'ITEMS' => $arResult['ITEMS'],
-			'DISABLE_SETTINGS' => $arParams["USER_ID"] !== \Bitrix\Tasks\Util\User::getId()
+			'DISABLE_SETTINGS' => $arParams["USER_ID"] !== User::getId(),
 		),
 		$component,
 		array('HIDE_ICONS' => true)
 	);
-	?></div><?
+	?></div><?php
 }
 
 if(SITE_TEMPLATE_ID === "bitrix24")
@@ -59,6 +68,7 @@ if(SITE_TEMPLATE_ID === "bitrix24")
 }
 
 $arResult['HELPER']->initializeExtension([
-	'isScrumLimitExceeded' => \Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ScrumLimit::isLimitExceeded(),
+	'isScrumLimitExceeded' => ScrumLimit::isLimitExceeded(),
 	'isTaskAccessPermissionsLimit' => !(Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASKS_PERMISSIONS)),
+	'isRoleControlDisabled' => Filter::isRolesEnabled(),
 ]);

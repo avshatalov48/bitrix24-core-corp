@@ -7,6 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\Tasks\Helper\RestrictionUrl;
 
 Extension::load(['ui.alerts']);
 
@@ -14,6 +15,17 @@ Loc::loadMessages(__FILE__);
 
 $isIFrame = (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y');
 $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
+
+/** intranet-settings-support */
+if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
+{
+	$APPLICATION->IncludeComponent("bitrix:tasks.error", "limit", [
+		'LIMIT_CODE' => RestrictionUrl::TASK_LIMIT_OFF_SLIDER_URL,
+		'SOURCE' => 'effective',
+	]);
+
+	return;
+}
 
 if (isset($_REQUEST["IFRAME"]) && $isIFrame)
 {

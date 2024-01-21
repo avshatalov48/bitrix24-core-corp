@@ -6,8 +6,10 @@ use Bitrix\Crm\Binding\EntityContactTable;
 use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Category\Entity\ItemCategory;
 use Bitrix\Crm\Field;
+use Bitrix\Crm\Integration\Intranet\CustomSectionProvider;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Model\Dynamic\PrototypeItem;
+use Bitrix\Crm\Model\Dynamic\PrototypeItemFieldsContext;
 use Bitrix\Crm\Model\Dynamic\PrototypeItemIndex;
 use Bitrix\Crm\Model\Dynamic\Type;
 use Bitrix\Crm\Model\Dynamic\TypeTable;
@@ -81,6 +83,14 @@ class Dynamic extends Service\Factory
 	public function getFulltextDataClass(): string
 	{
 		return $this->getDataClass()::getFullTextDataClass();
+	}
+
+	/**
+	 * @return PrototypeItemFieldsContext|string
+	 */
+	public function getFieldsContextDataClass(): string
+	{
+		return $this->getDataClass()::getFieldsContextDataClass();
 	}
 
 	public function getEntityTypeId(): int
@@ -257,6 +267,7 @@ class Dynamic extends Service\Factory
 				],
 				'CLASS' => Field\CurrencyId::class,
 			];
+			// dynamic items don't have EXCH_RATE field
 			$info[Item::FIELD_NAME_ACCOUNT_CURRENCY_ID] = [
 				'TYPE' => Field::TYPE_CRM_CURRENCY,
 				'ATTRIBUTES' => [
@@ -273,6 +284,7 @@ class Dynamic extends Service\Factory
 			$info[Item::FIELD_NAME_PRODUCTS] = [
 				'TYPE' => Field::TYPE_CRM_PRODUCT_ROW,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Multiple, \CCrmFieldInfoAttr::Hidden, \CCrmFieldInfoAttr::NotDisplayed],
+				'CLASS' => Field\ProductRows::class,
 			];
 			$info[Item::FIELD_NAME_OPPORTUNITY] = [
 				'TYPE' => Field::TYPE_DOUBLE,
@@ -513,6 +525,12 @@ class Dynamic extends Service\Factory
 					$this->getEntityTypeId()
 				))
 			)
+			->addAction(
+				OPERATION::ACTION_AFTER_SAVE,
+				new Action\ClearCache(
+					"crm_dynamic_type_{$this->getEntityTypeId()}",
+				),
+			)
 		;
 	}
 
@@ -534,6 +552,16 @@ class Dynamic extends Service\Factory
 					$this->getEntityTypeId()
 				))
 			)
+			->addAction(
+				OPERATION::ACTION_AFTER_SAVE,
+				new Action\ClearCache(
+					"crm_dynamic_type_{$this->getEntityTypeId()}",
+				),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\FillEntityFieldsContext()
+			)
 		;
 	}
 
@@ -547,12 +575,23 @@ class Dynamic extends Service\Factory
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Action\SendEvent($eventManager::EVENT_DYNAMIC_ITEM_DELETE)
-			)->addAction(
+			)
+			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Action\SendEvent($eventManager->getItemEventNameWithEntityTypeId(
 					$eventManager::EVENT_DYNAMIC_ITEM_DELETE,
 					$this->getEntityTypeId()
 				))
+			)
+			->addAction(
+				OPERATION::ACTION_AFTER_SAVE,
+				new Action\ClearCache(
+					"crm_dynamic_type_{$this->getEntityTypeId()}",
+				),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\DeleteEntityFieldsContext()
 			)
 		;
 	}
@@ -578,5 +617,10 @@ class Dynamic extends Service\Factory
 		}
 
 		return $this->type->getIsCountersEnabled() ?? false;
+	}
+
+	public function isInCustomSection(): bool
+	{
+		return CustomSectionProvider::hasCustomSection($this);
 	}
 }

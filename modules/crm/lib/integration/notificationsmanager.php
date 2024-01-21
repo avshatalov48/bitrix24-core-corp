@@ -226,7 +226,7 @@ class NotificationsManager implements ICanSendMessage
 		$templateCode = $messageFields['TEMPLATE_CODE'] ?? null;
 
 		$canSendMessage = (
-			$templateCode === GoToChat::NOTIFICATIONS_MESSAGE_CODE
+			is_string($templateCode) && self::checkTemplateCode($templateCode)
 				? static::canUse()
 				: static::canSendMessage()
 		);
@@ -522,5 +522,19 @@ class NotificationsManager implements ICanSendMessage
 			Loader::includeModule('notifications')
 			&&  Settings::getScenarioAvailability(Settings::SCENARIO_CRM_PAYMENT) === FeatureStatus::AVAILABLE
 		;
+	}
+
+	private static function checkTemplateCode(string $templateCode): bool
+	{
+		$availableTemplates = [
+			GoToChat::NOTIFICATIONS_MESSAGE_CODE,
+			Calendar\Notification\NotificationService::TEMPLATE_SHARING_EVENT_INVITATION,
+			Calendar\Notification\NotificationService::TEMPLATE_SHARING_EVENT_AUTO_ACCEPTED,
+			Calendar\Notification\NotificationService::TEMPLATE_SHARING_EVENT_CANCELLED_LINK_ACTIVE,
+			Calendar\Notification\NotificationService::TEMPLATE_SHARING_EVENT_CANCELLED,
+			Calendar\Notification\NotificationService::TEMPLATE_SHARING_EVENT_EDITED,
+		];
+
+		return in_array($templateCode, $availableTemplates, true);
 	}
 }

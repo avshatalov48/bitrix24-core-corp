@@ -3,7 +3,6 @@
 namespace Bitrix\Crm\Activity\Settings;
 
 use Bitrix\Crm\Activity\Settings\Section\Calendar;
-use Bitrix\Crm\Activity\Settings\Section\Ping;
 
 final class Factory
 {
@@ -16,11 +15,6 @@ final class Factory
 		if ($name === Calendar::TYPE_NAME)
 		{
 			return new Calendar($data, $activityData);
-		}
-
-		if ($name === Ping::TYPE_NAME)
-		{
-			return new Ping($data, $activityData);
 		}
 
 		throw new UnknownSettingsSectionException('Activity settings class: ' . $name . ' is not known');

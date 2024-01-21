@@ -9,6 +9,7 @@ use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Report\VisualConstructor\IReportMultipleData;
 use Bitrix\Report\VisualConstructor\IReportMultipleGroupedData;
 use Bitrix\Report\VisualConstructor\IReportSingleData;
+use Bitrix\Main\Application;
 
 class Contact extends Base implements IReportSingleData, IReportMultipleData, IReportMultipleGroupedData
 {
@@ -52,7 +53,8 @@ class Contact extends Base implements IReportSingleData, IReportMultipleData, IR
 		switch ($groupingValue)
 		{
 			case self::GROUPING_BY_DATE:
-				$query->registerRuntimeField(new ExpressionField('DATE_CREATE_DAY', "DATE_FORMAT(%s, '%%Y-%%m-%%d 00:00')", 'DATE_CREATE'));
+				$helper = Application::getConnection()->getSqlHelper();
+				$query->registerRuntimeField(new ExpressionField('DATE_CREATE_DAY', $helper->formatDate('%%Y-%%m-%%d 00:00', '%s'), 'DATE_CREATE'));
 				$query->addSelect('DATE_CREATE_DAY');
 				break;
 		}

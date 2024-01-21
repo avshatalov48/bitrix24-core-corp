@@ -1,7 +1,10 @@
-<?
+<?php
+
 return [
-	"utils",
-	"user/list",
-	"group/list",
-	"departments/list"
+	"extensions" => [
+		"utils",
+		"user/list",
+		"group/list",
+		"departments/list",
+	],
 ];

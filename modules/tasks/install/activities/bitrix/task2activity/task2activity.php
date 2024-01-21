@@ -565,7 +565,14 @@ class CBPTask2Activity extends CBPActivity implements
 			return;
 		}
 
-		[$documentType, $documentId] = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2]);
+		$splitDocumentId = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2]);
+
+		if (!is_array($splitDocumentId) || count($splitDocumentId) < 2)
+		{
+			return;
+		}
+
+		[$documentType, $documentId] = $splitDocumentId;
 
 		$documentStage = $this->getDocumentStage($documentType);
 
@@ -739,9 +746,49 @@ class CBPTask2Activity extends CBPActivity implements
 				$this->ClosedDate = $arEventParameters[1]["CLOSED_DATE"];
 
 				$this->WriteToTrackingService(str_replace("#DATE#", $arEventParameters[1]["CLOSED_DATE"], Loc::getMessage("BPSA_TRACK_CLOSED")));
+
+				return !$this->isAutoCompleted($arEventParameters);
+			}
+		}
+	}
+
+	private function isAutoCompleted(array $params): bool
+	{
+		if ($this->getRootActivity()->getDocumentEventType() !== \CBPDocumentEventType::Automation)
+		{
+			return false; //skip none-automation
+		}
+
+		if(!CModule::IncludeModule('crm'))
+		{
+			return false;
+		}
+
+		[$typeId, $id] = \CCrmBizProcHelper::resolveEntityId($this->getDocumentId());
+
+		if ($typeId)
+		{
+			$activity = CCrmActivity::GetList(
+				[],
+				[
+					'OWNER_ID' => $id,
+					'OWNER_TYPE_ID' => $typeId,
+					'@PROVIDER_ID' => [Task::getId(), \Bitrix\Crm\Activity\Provider\Tasks\Task::getProviderTypeId()],
+					'ASSOCIATED_ENTITY_ID' => $params[0],
+					'STATUS' => CCrmActivityStatus::AutoCompleted,
+				],
+				false,
+				false,
+				['ID']
+			)->fetch();
+
+			if ($activity)
+			{
 				return true;
 			}
 		}
+
+		return false;
 	}
 
 	public static function getPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = "", $popupWindow = null, $currentSiteId = null)

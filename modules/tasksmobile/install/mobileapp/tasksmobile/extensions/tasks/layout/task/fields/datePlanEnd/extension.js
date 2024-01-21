@@ -15,6 +15,8 @@ jn.define('tasks/layout/task/fields/datePlanEnd', (require, exports, module) => 
 				readOnly: props.readOnly,
 				endDatePlan: props.endDatePlan,
 			};
+
+			this.handleOnChange = this.handleOnChange.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -33,6 +35,11 @@ jn.define('tasks/layout/task/fields/datePlanEnd', (require, exports, module) => 
 			});
 		}
 
+		handleOnChange(date)
+		{
+			this.props.datesResolver.updateEndDate(date);
+		}
+
 		render()
 		{
 			return DateTimeField({
@@ -46,7 +53,7 @@ jn.define('tasks/layout/task/fields/datePlanEnd', (require, exports, module) => 
 					dateFormat: 'd MMMM, HH:mm',
 				},
 				testId: 'datePlanEnd',
-				onChange: (date) => this.props.datesResolver.updateEndDate(date),
+				onChange: this.handleOnChange,
 			});
 		}
 	}

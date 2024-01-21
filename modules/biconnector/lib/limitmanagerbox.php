@@ -14,11 +14,13 @@ class LimitManagerBox extends LimitManager
 	 * Called on data export end.
 	 *
 	 * @param int $rowsCount How many data rows was exported.
+	 * @param string $supersetKey Check for alternate limits.
 	 *
-	 * @return void
+	 * @return bool
 	 */
-	public function fixLimit($rowsCount)
+	public function fixLimit($rowsCount, $supersetKey = '')
 	{
+		return false;
 	}
 
 	/**

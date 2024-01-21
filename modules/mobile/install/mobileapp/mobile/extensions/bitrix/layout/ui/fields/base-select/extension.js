@@ -2,7 +2,6 @@
  * @module layout/ui/fields/base-select
  */
 jn.define('layout/ui/fields/base-select', (require, exports, module) => {
-
 	const { BaseField } = require('layout/ui/fields/base');
 
 	/**
@@ -71,9 +70,7 @@ jn.define('layout/ui/fields/base-select', (require, exports, module) => {
 		{
 			return !this.isMultiple() && this.isRequired() && !this.showRequired();
 		}
-
 	}
 
 	module.exports = { BaseSelectField };
-
 });

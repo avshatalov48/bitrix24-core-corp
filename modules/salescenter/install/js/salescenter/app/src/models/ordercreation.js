@@ -36,7 +36,10 @@ export class OrderCreationModel extends VuexBuilderModel
 			 * ID of selected pay systems available for order payment
 			 */
 			availablePaySystemsIds: [],
-		}
+			paymentResponsibleId: null,
+			isMobileInstalledForResponsible: false,
+			responsiblePhoneNumbers: [],
+		};
 	}
 
 	getActions()
@@ -74,6 +77,18 @@ export class OrderCreationModel extends VuexBuilderModel
 			setDeliveryResponsibleId: ({ commit }, payload) =>
 			{
 				commit('setDeliveryResponsibleId', payload);
+			},
+			setPaymentResponsibleId: ({ commit }, payload) =>
+			{
+				commit('setPaymentResponsibleId', payload);
+			},
+			setMobileInstalledForResponsible: ({ commit }, payload) =>
+			{
+				commit('setMobileInstalledForResponsible', payload);
+			},
+			setResponsiblePhoneNumbers: ({ commit }, payload) =>
+			{
+				commit('setResponsiblePhoneNumbers', payload);
 			},
 			setPersonTypeId: ({ commit }, payload) =>
 			{
@@ -129,6 +144,18 @@ export class OrderCreationModel extends VuexBuilderModel
 			{
 				return state.deliveryResponsibleId;
 			},
+			getPaymentResponsibleId: state =>
+			{
+				return state.paymentResponsibleId;
+			},
+			isMobileInstalledForResponsible: state =>
+			{
+				return state.isMobileInstalledForResponsible;
+			},
+			getResponsiblePhoneNumbers: state =>
+			{
+				return state.responsiblePhoneNumbers;
+			},
 			getPersonTypeId: state =>
 			{
 				return state.personTypeId;
@@ -183,6 +210,18 @@ export class OrderCreationModel extends VuexBuilderModel
 			setDeliveryResponsibleId: (state, deliveryResponsibleId) =>
 			{
 				state.deliveryResponsibleId = deliveryResponsibleId;
+			},
+			setPaymentResponsibleId: (state, paymentResponsibleId) =>
+			{
+				state.paymentResponsibleId = paymentResponsibleId;
+			},
+			setMobileInstalledForResponsible: (state, isMobileInstalledForResponsible) =>
+			{
+				state.isMobileInstalledForResponsible = isMobileInstalledForResponsible;
+			},
+			setResponsiblePhoneNumbers: (state, responsiblePhoneNumbers) =>
+			{
+				state.responsiblePhoneNumbers = responsiblePhoneNumbers;
 			},
 			clearErrors: (state) =>
 			{

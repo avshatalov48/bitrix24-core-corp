@@ -11,6 +11,7 @@
 			layout.showComponent(new MessageChain({
 				threadId: id,
 				chain: response.data,
+				widget: this.layout,
 			}));
 		});
 	});

@@ -7,6 +7,7 @@ jn.define('catalog/store/document-card/component', (require, exports, module) =>
 	const { CatalogStoreActivationWizard } = require('catalog/store/activation-wizard');
 	const { DetailCardComponent } = require('layout/ui/detail-card');
 	const { DocumentType } = require('catalog/store/document-type');
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @class DocumentCardComponent
@@ -19,7 +20,29 @@ jn.define('catalog/store/document-card/component', (require, exports, module) =>
 			if (mainTab)
 			{
 				mainTab.desktopUrl = params.desktopUrl;
+				mainTab.onFetchHandler = (result) => {
+					if (result.editor)
+					{
+						const colors = DocumentCardComponent.getColorsForDocumentStatus(result.editor.ENTITY_DATA);
+						result.editor.ENTITY_DATA.DOC_STATUS[0] = {
+							...result.editor.ENTITY_DATA.DOC_STATUS[0],
+							...colors,
+						};
+					}
+				};
 			}
+
+			params.card.reloadWithDataHandler = (tabsData) => {
+				const reloadedMainTab = tabsData.find((tab) => tab.id === 'main');
+				if (reloadedMainTab)
+				{
+					const colors = DocumentCardComponent.getColorsForDocumentStatus(reloadedMainTab.result.editor.ENTITY_DATA);
+					reloadedMainTab.result.editor.ENTITY_DATA.DOC_STATUS[0] = {
+						...reloadedMainTab.result.editor.ENTITY_DATA.DOC_STATUS[0],
+						...colors,
+					};
+				}
+			};
 
 			DetailCardComponent
 				.create(params.card)
@@ -134,6 +157,36 @@ jn.define('catalog/store/document-card/component', (require, exports, module) =>
 
 					return result;
 				});
+		}
+
+		static getColorsForDocumentStatus(document)
+		{
+			const status = document.STATUS;
+			if (status === 'Y')
+			{
+				return {
+					backgroundColor: AppTheme.colors.accentSoftGreen1,
+					color: AppTheme.colors.accentSoftElementGreen1,
+				};
+			}
+
+			if (status === 'N')
+			{
+				if (document.WAS_CANCELLED === 'Y')
+				{
+					return {
+						backgroundColor: AppTheme.colors.accentSoftOrange1,
+						color: AppTheme.colors.accentExtraBrown,
+					};
+				}
+
+				return {
+					backgroundColor: AppTheme.colors.bgSeparatorSecondary,
+					color: AppTheme.colors.base3,
+				};
+			}
+
+			return null;
 		}
 
 		static getArticleCodeByType(type)

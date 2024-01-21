@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 (function() {
 
 "use strict";
@@ -295,65 +297,7 @@ BX.CRM.Kanban.Item.prototype = {
 			}
 		}
 
-		BX.Dom.clean(this.lastActivityTime);
-		BX.Dom.clean(this.lastActivityBy);
-		const lastActivity = data.lastActivity;
-		if (BX.Type.isPlainObject(lastActivity) && BX.CRM.Kanban.Restriction.Instance.isLastActivityInfoInKanbanItemAvailable())
-		{
-			const timestamp = BX.Text.toInteger(lastActivity.timestamp);
-			if (timestamp > 0)
-			{
-				const userNow = BX.Crm.DateTime.Factory.getUserNow();
-				const userNowTimestamp = Math.round(userNow.getTime() / 1000);
-
-				const ago = (
-					userNowTimestamp - timestamp <= 60
-						? BX.Text.encode(BX.Loc.getMessage('CRM_KANBAN_JUST_NOW'))
-						: this.getFormattedLastActiveDateTime(timestamp, userNowTimestamp)
-				);
-
-				BX.Dom.append(
-					BX.Tag.render`<span class="crm-kanban-item-last-activity-time-ago">${ago}</span>`,
-					this.lastActivityTime,
-				);
-			}
-
-			const lastActivityBy = lastActivity.user;
-			if (BX.Type.isPlainObject(lastActivityBy))
-			{
-				let pictureStyle = '';
-				if (BX.Type.isStringFilled(lastActivityBy.picture))
-				{
-					const currentUrl = new BX.Uri(window.location.href);
-					const pictureUrl = new BX.Uri(lastActivityBy.picture);
-
-					if (
-						//relative url
-						pictureUrl.getHost() === ''
-						|| currentUrl.getHost() === pictureUrl.getHost()
-					)
-					{
-						pictureStyle = `style="background-image: url(${encodeURI(BX.Text.encode(pictureUrl.toString()))})"`;
-					}
-				}
-
-				let href = '#';
-				if (BX.Type.isStringFilled(lastActivityBy.link) && lastActivityBy.link.startsWith('/'))
-				{
-					href = lastActivityBy.link;
-				}
-
-				BX.Dom.append(
-					BX.Tag.render`<a
- 						class="crm-kanban-item-last-activity-by-userpic"
- 						href="${BX.Text.encode(href)}"
- 						bx-tooltip-user-id="${BX.Text.toInteger(lastActivityBy.id)}"
-						${pictureStyle}></a>`
-					,
-					this.lastActivityBy
-				);
-			}
-		}
+		this.appendLastActivity(data);
 
 		if (this.needRenderFields())
 		{
@@ -367,6 +311,87 @@ BX.CRM.Kanban.Item.prototype = {
 		layout = this.container;
 
 		return layout;
+	},
+
+	appendLastActivity: function(data)
+	{
+		BX.Dom.clean(this.lastActivityTime);
+		BX.Dom.clean(this.lastActivityBy);
+
+		const lastActivity = data.lastActivity;
+		if (
+			!BX.Type.isPlainObject(lastActivity)
+			|| !BX.CRM.Kanban.Restriction.Instance.isLastActivityInfoInKanbanItemAvailable()
+		)
+		{
+			return;
+		}
+
+		this.appendLastActivityTime(lastActivity);
+		this.appendLastActivityUser(lastActivity);
+	},
+
+	appendLastActivityTime: function(lastActivity)
+	{
+		const timestamp = BX.Text.toInteger(lastActivity.timestamp);
+		if (timestamp <= 0)
+		{
+			return;
+		}
+
+		const serverNow = BX.Crm.DateTime.Factory.getServerNow();
+		const serverNowTimestamp = Math.round(serverNow.getTime() / 1000);
+
+		const timestampInServerTimeZone = Math.round(
+			BX.Crm.DateTime.Factory.createFromTimestampInServerTimezone(timestamp).getTime() / 1000
+		);
+
+		const ago = (
+			serverNowTimestamp - timestampInServerTimeZone <= 60
+				? BX.Text.encode(BX.Loc.getMessage('CRM_KANBAN_JUST_NOW'))
+				: this.getFormattedLastActiveDateTime(timestampInServerTimeZone, serverNowTimestamp)
+		);
+
+		const timeAgo = BX.Tag.render`
+			<span class="crm-kanban-item-last-activity-time-ago">${ago}</span>
+		`;
+
+		BX.Dom.append(timeAgo, this.lastActivityTime);
+	},
+
+	appendLastActivityUser: function(lastActivity)
+	{
+		const lastActivityBy = lastActivity.user;
+		if (!BX.Type.isPlainObject(lastActivityBy))
+		{
+			return;
+		}
+
+		let pictureStyle = '';
+		if (BX.Type.isStringFilled(lastActivityBy.picture))
+		{
+			const pictureUrl = new BX.Uri(lastActivityBy.picture);
+			const backgroundUrl = encodeURI(BX.Text.encode(pictureUrl.toString()));
+
+			pictureStyle = `style="background-image: url(${backgroundUrl})"`;
+		}
+
+		const hasLink = (
+			BX.Type.isStringFilled(lastActivityBy.link)
+			&& lastActivityBy.link.startsWith('/')
+		);
+		const href = (hasLink ? lastActivityBy.link : '#');
+
+		const userPic = BX.Tag.render`
+			<a
+				class="crm-kanban-item-last-activity-by-userpic"
+				href="${BX.Text.encode(href)}"
+			 	bx-tooltip-user-id="${BX.Text.toInteger(lastActivityBy.id)}"
+				${pictureStyle}
+			></a>
+		`;
+
+		BX.Dom.append(userPic, this.lastActivityBy);
 	},
 
 	getFormattedLastActiveDateTime: function(timestamp, userNow)
@@ -385,8 +410,8 @@ BX.CRM.Kanban.Item.prototype = {
 		const formattedDateTime = BX.Main.DateTimeFormat.format(
 			[
 				['i', 'idiff'],
-				['yesterday', 'yesterday, ' + shortTimeFormat],
-				['today', 'today, ' + shortTimeFormat],
+				['yesterday', `yesterday, ${shortTimeFormat}`],
+				['today', `today ${shortTimeFormat}`],
 				['-', defaultFormat],
 			],
 			timestamp,
@@ -395,7 +420,7 @@ BX.CRM.Kanban.Item.prototype = {
 
 		return formattedDateTime
 			.replaceAll('\\', '')
-			.replace(/(^|\s)(.)/g, firstLetter => firstLetter.toLocaleUpperCase())
+			.replaceAll(/(^|\s)(.)/g, (firstLetter) => firstLetter.toLocaleUpperCase())
 		;
 	},
 
@@ -1555,14 +1580,26 @@ BX.CRM.Kanban.Item.prototype = {
 		}
 		else if (item.type === "task")
 		{
-			if (typeof window["taskIFramePopup"] !== "undefined")
+			const taskData = {
+				UF_CRM_TASK: [BX.CrmOwnerTypeAbbr.resolve(gridData.entityType) + "_" + this.getId()],
+				TITLE: "CRM: ",
+				TAGS: "crm"
+			};
+
+			let taskCreatePath = BX.message("CRM_TASK_CREATION_PATH");
+			taskCreatePath = taskCreatePath.replace("#user_id#", BX.message("USER_ID"));
+			taskCreatePath = BX.util.add_url_param(
+				taskCreatePath,
+				taskData
+			);
+
+			if (BX.SidePanel)
 			{
-				var taskData = {
-					UF_CRM_TASK: [BX.CrmOwnerTypeAbbr.resolve(gridData.entityType) + "_" + this.getId()],
-					TITLE: "CRM: ",
-					TAGS: "crm"
-				};
-				window["taskIFramePopup"].add(taskData);
+				BX.SidePanel.Instance.open(taskCreatePath);
+			}
+			else
+			{
+				window.top.location.href = taskCreatePath;
 			}
 		}
 		else if (item.type === "visit")
@@ -1637,12 +1674,15 @@ BX.CRM.Kanban.Item.prototype = {
 				this.disabledItem();
 			}
 
+			const pingSettings = this.getData().pingSettings || this.getGridData().pingSettings;
+
 			if (!this.activityAddingPopup)
 			{
 				this.activityAddingPopup = new BX.Crm.Activity.AddingPopup(
 					this.getGridData().entityTypeInt,
 					id,
 					this.getCurrentUser(),
+					pingSettings,
 					{
 						events: {
 							onSave: function() {
@@ -1924,7 +1964,9 @@ BX.CRM.Kanban.Item.prototype = {
 
 		return `
 			<span class="crm-kanban-item-activity-counter ${additionalClass}">
+				<span class="item-activity-counter__before"></span>
 				${value}
+				<span class="item-activity-counter__after"></span>
 			</span>
 		`;
 	},

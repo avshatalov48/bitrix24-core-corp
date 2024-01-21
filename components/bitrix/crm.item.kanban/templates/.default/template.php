@@ -41,6 +41,15 @@ $this->getComponent()->addToolbar($this);
 
 <?php
 
+$headerSections = [
+	[
+		'id'=> $arResult['entityTypeName'],
+		'name' => $arResult['entityTypeDescription'],
+		'default' => true,
+		'selected' => true,
+	]
+];
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.kanban',
 	'',
@@ -51,14 +60,7 @@ $APPLICATION->IncludeComponent(
 			'CATEGORY_ID' => $arResult['categoryId'],
 			'ADD_ITEM_PERMITTED_BY_TARIFF' => $arResult['addItemPermittedByTariff']
 		],
-		'HEADERS_SECTIONS' => [
-			[
-				'id'=> $arResult['entityTypeName'],
-				'name' => $arResult['entityTypeDescription'],
-				'default' => true,
-				'selected' => true,
-			],
-		],
+		'HEADERS_SECTIONS' => $headerSections,
 	],
 	$component
 );

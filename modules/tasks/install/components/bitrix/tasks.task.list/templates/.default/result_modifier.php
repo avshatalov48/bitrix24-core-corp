@@ -119,7 +119,8 @@ if (!function_exists('formatDateFieldsForOutput'))
 	}
 }
 
-$grid = new Bitrix\Tasks\Grid\Task\Grid($arResult['LIST'], $arParams);
+$grid = (new Bitrix\Tasks\Grid\Task\Grid($arResult['LIST'], $arParams))
+	->setScope($arParams['CONTEXT'] ?? null);
 
 $arResult['HEADERS'] = $grid->prepareHeaders();
 $arResult['TEMPLATE_DATA'] = [

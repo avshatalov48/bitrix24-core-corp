@@ -471,9 +471,10 @@ class Common
 	/**
 	 * @param string $entityType
 	 * @param int $entityId
+	 * @param ?int $userId
 	 * @return bool
 	 */
-	public static function hasAccessToEntity($entityType, $entityId): bool
+	public static function hasAccessToEntity($entityType, $entityId, ?int $userId = null): bool
 	{
 		if (
 			!Loader::includeModule('crm')
@@ -486,7 +487,7 @@ class Common
 		}
 
 		$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
-		$userPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+		$userPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions($userId);
 
 		return $userPermissions->checkReadPermissions($entityTypeId, $entityId);
 	}
@@ -715,6 +716,61 @@ class Common
 		}
 
 		return $result;
+	}
+
+	public static function getChatsByCrmEntity($crmEntityType, $crmEntityId): array
+	{
+		$crmEntityIdByTypeCode = self::getCrmEntityIdByTypeCode($crmEntityType);
+
+		$query = "
+			SELECT session.CHAT_ID, act.RESULT_SOURCE_ID
+			FROM b_crm_act act
+			LEFT JOIN b_crm_act_bind bind ON act.ID = bind.ACTIVITY_ID
+			LEFT JOIN b_imopenlines_session session ON session.ID = act.ASSOCIATED_ENTITY_ID
+			WHERE
+				act.PROVIDER_ID = '" . \Bitrix\Crm\Activity\Provider\OpenLine::ACTIVITY_PROVIDER_ID . "'
+				AND session.STATUS >= " . Session::STATUS_ANSWER . "
+				AND session.STATUS < " . Session::STATUS_WAIT_CLIENT . "
+				AND bind.OWNER_TYPE_ID = " . $crmEntityIdByTypeCode . "
+				AND bind.OWNER_ID = " . $crmEntityId . "
+			ORDER BY
+				session.DATE_MODIFY DESC
+		";
+
+		$actions = \Bitrix\Main\Application::getInstance()->getConnection()->query($query)->fetchAll();
+
+		$connectors = Connector::getListActiveConnectorReal();
+
+		$result = [];
+		foreach ($actions as $action)
+		{
+			if (!isset($connectors[$action['RESULT_SOURCE_ID']]))
+			{
+				continue;
+			}
+
+			$result[] = [
+				'CHAT_ID' => $action['CHAT_ID'],
+				'CONNECTOR_ID' => $action['RESULT_SOURCE_ID'],
+				'CONNECTOR_TITLE' => $connectors[$action['RESULT_SOURCE_ID']]
+			];
+		}
+
+		return $result;
+	}
+
+	public static function checkChatOfCrmEntity($crmEntityType, $crmEntityId, int $chatId): bool
+	{
+		$chats = self::getChatsByCrmEntity($crmEntityType, $crmEntityId);
+		foreach ($chats as $chat)
+		{
+			if ((int)$chat['CHAT_ID'] === $chatId)
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

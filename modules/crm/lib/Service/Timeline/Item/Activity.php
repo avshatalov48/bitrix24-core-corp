@@ -8,6 +8,8 @@ use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
 use Bitrix\Crm\Timeline\Entity\NoteTable;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
+use CCrmActivity;
+use CCrmDateTimeHelper;
 use CCrmOwnerType;
 
 abstract class Activity extends Configurable
@@ -22,6 +24,11 @@ abstract class Activity extends Configurable
 	public function getType(): string
 	{
 		return sprintf('Activity:%s', $this->getActivityTypeId());
+	}
+
+	protected function isBuiltOnlyForCurrentUser(): bool
+	{
+		return true;
 	}
 
 	public function getSort(): array
@@ -144,12 +151,12 @@ abstract class Activity extends Configurable
 
 	protected function isIncomingChannel(): bool
 	{
-		return $this->getAssociatedEntityModel()->get('IS_INCOMING_CHANNEL') === 'Y';
+		return $this->getAssociatedEntityModel()?->get('IS_INCOMING_CHANNEL') === 'Y';
 	}
 
 	protected function isPlanned(): bool
 	{
-		return is_null($this->getAssociatedEntityModel()->get('ORIGIN_ID'));
+		return is_null($this->getAssociatedEntityModel()?->get('ORIGIN_ID'));
 	}
 
 	protected function getCompleteButton(): ?Layout\Header\ChangeStreamButton
@@ -172,7 +179,7 @@ abstract class Activity extends Configurable
 			->addActionParamInt('activityId', $this->getActivityId())
 			->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 			->addActionParamInt('ownerId', $this->getContext()->getEntityId())
-			->setAnimation(Layout\Action\Animation::showLoaderForItem()->setForever())
+			->setAnimation(Layout\Action\Animation::disableItem()->setForever())
 		;
 	}
 
@@ -192,8 +199,9 @@ abstract class Activity extends Configurable
 
 	protected function getDeadline(): ?DateTime
 	{
-		$deadline = $this->getAssociatedEntityModel()->get('DEADLINE');
-		return ($deadline && !\CCrmDateTimeHelper::IsMaxDatabaseDate($deadline))
+		$deadline = $this->getAssociatedEntityModel()?->get('DEADLINE');
+
+		return ($deadline && !CCrmDateTimeHelper::IsMaxDatabaseDate($deadline))
 			? DateTime::createFromUserTime($deadline)
 			: null
 		;
@@ -201,8 +209,9 @@ abstract class Activity extends Configurable
 
 	protected function getLightCounterAt(): ?DateTime
 	{
-		$lightCounterAt = $this->getAssociatedEntityModel()->get('LIGHT_COUNTER_AT');
-		return ($lightCounterAt && !\CCrmDateTimeHelper::IsMaxDatabaseDate($lightCounterAt))
+		$lightCounterAt = $this->getAssociatedEntityModel()?->get('LIGHT_COUNTER_AT');
+
+		return ($lightCounterAt && !CCrmDateTimeHelper::IsMaxDatabaseDate($lightCounterAt))
 			? $lightCounterAt
 			: null;
 	}
@@ -267,7 +276,7 @@ abstract class Activity extends Configurable
 							->addActionParamInt('offset', $offset)
 							->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 							->addActionParamInt('ownerId', $this->getContext()->getEntityId())
-							->setAnimation(Layout\Action\Animation::showLoaderForBlock()->setForever())
+							->setAnimation(Layout\Action\Animation::disableBlock()->setForever())
 					)
 			);
 		}
@@ -292,9 +301,9 @@ abstract class Activity extends Configurable
 
 	private function canEdit(): bool
 	{
-		$provider = \CCrmActivity::GetActivityProvider($this->getAssociatedEntityModel()->toArray());
-		$providerTypeId = $this->getAssociatedEntityModel()->get('PROVIDER_TYPE_ID');
-		$direction = $this->getAssociatedEntityModel()->get('DIRECTION');
+		$provider = CCrmActivity::GetActivityProvider($this->getAssociatedEntityModel()?->toArray());
+		$providerTypeId = $this->getAssociatedEntityModel()?->get('PROVIDER_TYPE_ID');
+		$direction = $this->getAssociatedEntityModel()?->get('DIRECTION');
 
 		if ($provider && !$provider::isTypeEditable($providerTypeId, $direction))
 		{
@@ -306,8 +315,8 @@ abstract class Activity extends Configurable
 
 	protected function hasUpdatePermission(): bool
 	{
-		return \CCrmActivity::CheckItemUpdatePermission(
-			$this->getAssociatedEntityModel()->toArray(),
+		return CCrmActivity::CheckItemUpdatePermission(
+			$this->getAssociatedEntityModel()?->toArray(),
 			$this->getContext()->getUserPermissions()->getCrmPermissions(),
 		);
 	}
@@ -319,21 +328,21 @@ abstract class Activity extends Configurable
 			return false;
 		}
 
-		return \CCrmActivity::CheckItemPostponePermission(
-			$this->getAssociatedEntityModel()->toArray(),
+		return CCrmActivity::CheckItemPostponePermission(
+			$this->getAssociatedEntityModel()?->toArray(),
 			$this->getContext()->getUserPermissions()->getCrmPermissions()
 		);
 	}
 
 	protected function fetchStorageFiles(): array
 	{
-		$storageTypeId = $this->getAssociatedEntityModel()->get('STORAGE_TYPE_ID');
+		$storageTypeId = $this->getAssociatedEntityModel()?->get('STORAGE_TYPE_ID');
 		if (empty($storageTypeId))
 		{
 			return [];
 		}
 
-		$storageElementIds = $this->getAssociatedEntityModel()->get('STORAGE_ELEMENT_IDS');
+		$storageElementIds = $this->getAssociatedEntityModel()?->get('STORAGE_ELEMENT_IDS');
 		if (empty($storageElementIds))
 		{
 			return [];

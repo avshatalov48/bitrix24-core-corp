@@ -1,18 +1,12 @@
-<?
-$MESS["TRANSFORMER_COMMAND_ERROR_BANNED"] = "Error: commands from your Bitrix24 are not allowed";
-$MESS["TRANSFORMER_COMMAND_ERROR_CALLBACK"] = "Error processing conversion result";
-$MESS["TRANSFORMER_COMMAND_ERROR_COMMAND_ERROR"] = "Server error: incorrect command parameters";
-$MESS["TRANSFORMER_COMMAND_ERROR_COMMAND_NOT_FOUND"] = "Server error: command was not found";
-$MESS["TRANSFORMER_COMMAND_ERROR_CONNECTION"] = "Could not establish server connection";
-$MESS["TRANSFORMER_COMMAND_ERROR_CONNECTION_COUNT"] = "Exceeded maximum possible server connection attempts";
-$MESS["TRANSFORMER_COMMAND_ERROR_CONNECTION_RESPONSE"] = "Invalid server response";
-$MESS["TRANSFORMER_COMMAND_ERROR_DOWNLOAD"] = "Server error: cannot download file";
-$MESS["TRANSFORMER_COMMAND_ERROR_DOWNLOAD_SIZE"] = "Server error: file size exceeded";
-$MESS["TRANSFORMER_COMMAND_ERROR_DOWNLOAD_STATUS"] = "Server error: incorrect HTTP status when downloading file";
-$MESS["TRANSFORMER_COMMAND_ERROR_DOWNLOAD_TYPE"] = "Server error: incorrect MIME type when downloading file";
-$MESS["TRANSFORMER_COMMAND_ERROR_QUEUE_ADD_FAIL"] = "Server error: cannot enqueue command";
-$MESS["TRANSFORMER_COMMAND_ERROR_QUEUE_CANCELED_BY_EVENT"] = "Server error: enqueued operation was canceled by user event";
-$MESS["TRANSFORMER_COMMAND_ERROR_TRANSFORMATION"] = "Server error: conversion failed";
-$MESS["TRANSFORMER_COMMAND_ERROR_UNKNOWN"] = "Unknown error";
-$MESS["TRANSFORMER_COMMAND_ERROR_UPLOAD"] = "Error uploading file to client";
-?>
+<?php
+$MESS["TRANSFORMER_COMMAND_ADD_TO_ALLOWED_LIST"] = "Cannot complete action. Please add this Bitrix24 to the file converter server whitelist.";
+$MESS["TRANSFORMER_COMMAND_ASK_ADMIN"] = "Cannot complete action. Please contact your Bitrix24 administrator or partner.";
+$MESS["TRANSFORMER_COMMAND_ASK_SUPPORT"] = "Cannot complete action. Please contact the Helpdesk.";
+$MESS["TRANSFORMER_COMMAND_CANT_DOWNLOAD_FILE"] = "Cannot download file. Please try again later.";
+$MESS["TRANSFORMER_COMMAND_CHECK_LICENSE"] = "Cannot complete action. Please check the license is valid and try again.";
+$MESS["TRANSFORMER_COMMAND_CHECK_SERVER_SETTINGS"] = "Cannot complete action. Please check the file converter server settings, or contact your Bitrix24 administrator.";
+$MESS["TRANSFORMER_COMMAND_FILE_CORRUPTED"] = "Cannot convert file because it is corrupted.";
+$MESS["TRANSFORMER_COMMAND_FILE_TOO_BIG"] = "Maximum file size exceeded.";
+$MESS["TRANSFORMER_COMMAND_INSTALL_TRANSFORMERCONTROLLER"] = "Please install the Transformercontroller module to proceed.";
+$MESS["TRANSFORMER_COMMAND_REFRESH_AND_TRY_LATER"] = "Cannot complete action. Please refresh the page and try again.";
+$MESS["TRANSFORMER_COMMAND_TRY_LATER"] = "Cannot complete action. Please try again later.";

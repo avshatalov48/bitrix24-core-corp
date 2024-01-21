@@ -1,0 +1,42 @@
+<?php
+
+return [
+	'extensions' => [
+		'loc',
+		'rest',
+		'haptics',
+		'apptheme',
+		'animation',
+		'user/profile',
+		'assets/icons',
+		'assets/common',
+		'utils/url',
+		'utils/object',
+		'utils/random',
+		'utils/function',
+		'layout/ui/checkbox',
+		'layout/ui/button-list',
+		'layout/pure-component',
+		'layout/ui/fields/file',
+		'layout/ui/context-menu',
+		'selector/widget/factory',
+		'layout/ui/user-selection-manager',
+
+		'tasks:checklist',
+		'tasks:checklist/flat-tree',
+		'tasks:layout/checklist/list',
+		'tasks:checklist/flat-tree/item',
+	],
+	'bundle' => [
+		'./src/button-add-checklist',
+		'./src/item',
+		'./src/list-item/menu',
+		'./src/menu',
+		'./src/checkbox-counter',
+		'./src/depth-dots',
+		'./src/text-field',
+		'./src/add-button',
+		'./src/attachments',
+		'./src/constants',
+	],
+];

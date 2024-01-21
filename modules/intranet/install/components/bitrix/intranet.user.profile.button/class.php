@@ -14,6 +14,7 @@ use Bitrix\Main\Engine\Response\Component;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Intranet;
+use Bitrix\Main;
 use Bitrix\Security\Mfa\Otp;
 use Bitrix\Intranet\Binding;
 
@@ -96,58 +97,23 @@ class IntranetUserProfileButton extends \CBitrixComponent implements Controllera
 
 	protected function getUserPhotoSrc(?int $userPhotoId): string
 	{
-		$ttl = defined('BX_COMP_MANAGED_CACHE') ? 2592000 : 600;
-		$cacheId = 'user_avatar_' . $this->userId;
-		$cacheDir = '/bx/user_avatar';
-		$obCache = new CPHPCache;
 		$userPersonalPhotoSrc = '';
 
-		if ($obCache->InitCache($ttl, $cacheId, $cacheDir))
+		if ($userPhotoId > 0
+			&& $this->currentUser->isAuthorized()
+			&& ($imageConfig = CFile::ResizeImageGet(
+				$userPhotoId,
+				[
+					'width' => $this->arParams['THUMBNAIL_SIZE'],
+					'height' => $this->arParams['THUMBNAIL_SIZE'],
+				],
+				BX_RESIZE_IMAGE_EXACT,
+			))
+			&& is_array($imageConfig)
+			&& !empty($imageConfig['src'])
+		)
 		{
-			$userPersonalPhotoSrc = $obCache->GetVars();
-		}
-		else
-		{
-			if ($this->currentUser->isAuthorized())
-			{
-				if (defined('BX_COMP_MANAGED_CACHE'))
-				{
-					global $CACHE_MANAGER;
-					$CACHE_MANAGER->StartTagCache($cacheDir);
-				}
-
-				$personalPhotoId = $userPhotoId;
-
-				if ($personalPhotoId)
-				{
-					$imageFile = CFile::GetFileArray($personalPhotoId);
-
-					if ($imageFile !== false)
-					{
-						$imageConfig = CFile::ResizeImageGet(
-							$imageFile,
-							[
-								'width' => $this->arParams['THUMBNAIL_SIZE'],
-								'height' => $this->arParams['THUMBNAIL_SIZE'],
-							],
-							BX_RESIZE_IMAGE_EXACT,
-							false
-						);
-						$userPersonalPhotoSrc = $imageConfig['src'];
-					}
-				}
-
-				if (defined('BX_COMP_MANAGED_CACHE'))
-				{
-					$CACHE_MANAGER->RegisterTag('USER_CARD_' . (int)($this->userId / TAGGED_user_card_size));
-					$CACHE_MANAGER->EndTagCache();
-				}
-			}
-
-			if ($obCache->StartDataCache())
-			{
-				$obCache->EndDataCache($userPersonalPhotoSrc ?? null);
-			}
+			$userPersonalPhotoSrc = $imageConfig['src'];
 		}
 
 		return (string)$userPersonalPhotoSrc;

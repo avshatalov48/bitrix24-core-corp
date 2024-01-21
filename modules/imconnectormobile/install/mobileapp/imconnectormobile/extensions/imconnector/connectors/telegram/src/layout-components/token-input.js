@@ -32,7 +32,7 @@ jn.define('imconnector/connector/telegram/layout-components/token-input', (requi
 						maxWidth: this.state.maxWidth,
 					},
 					placeholder: Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_REGISTRY_TOKEN_INPUT_PLACEHOLDER'),
-					placeholderTextColor: '#A8ADB4',
+					placeholderTextColor: AppTheme.colors.base4,
 					onFocus: () => {
 						this.setState({ borderColor: colors.focused });
 					},
@@ -60,10 +60,11 @@ jn.define('imconnector/connector/telegram/layout-components/token-input', (requi
 	}
 
 	const colors = {
-		default: '#2FC6F6',
-		focused: '#009ACB',
-		error: '#FF1B1B',
+		default: AppTheme.colors.accentBrandBlue,
+		focused: AppTheme.colors.accentMainPrimaryalt,
+		error: AppTheme.colors.accentSoftElementRed1,
 	};
 
 	module.exports = { TokenInput: (props) => new TokenInput(props), TokenInputColor: colors };
 });
+

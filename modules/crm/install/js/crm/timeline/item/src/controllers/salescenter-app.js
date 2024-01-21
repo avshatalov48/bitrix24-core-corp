@@ -16,7 +16,9 @@ export class SalescenterApp extends Base
 			'PaymentPaid',
 			'PaymentNotPaid',
 			'PaymentError',
+			'PaymentSentToTerminal',
 			'Activity:Delivery',
+			'CustomerSelectedPaymentMethod',
 		];
 
 		return supportedItemTypes.includes(item.getType());

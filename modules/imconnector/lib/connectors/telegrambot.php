@@ -156,20 +156,14 @@ class TelegramBot extends Base implements MessengerUrl
 			$session = new ImOpenLines\Session();
 			$session->setChat($chat);
 
-			$hasSession = $session->load([
+			$session->load([
 				'USER_CODE' => $fullUserCode,
 				'CONFIG_ID' => $line,
 				'USER_ID' => $userId,
 				'SOURCE' => self::TELEGRAM_BOT,
 				'MODE' => ImOpenLines\Session::MODE_INPUT,
-				'SKIP_CRM' => 'Y',// do not create crm objects
+				'CRM_TRACKER_REF' => $message['ref']['source'] ?? '',
 			]);
-			if ($hasSession)
-			{
-				/** @var ImOpenLines\Tracker $tracker */
-				$tracker = ServiceLocator::getInstance()->get('ImOpenLines.Services.Tracker');
-				$tracker->bindExpectationToChat($message['ref']['source'], $chat, $session);
-			}
 		}
 
 		$connectorOutput = new Output(self::TELEGRAM_BOT, $line);

@@ -577,37 +577,17 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 					return;
 				}
 
-				if(typeof(top.window['taskIFramePopup']) === 'object' && typeof(top.window['taskIFramePopup'].view) === 'function')
-				{
-					if (typeof(window['tasksIFrameList']) === 'undefined')
-					{
-						top.window['tasksIFrameList'] = [];
-					}
+				let taskOpenPath = BX.message(mode === BX.CrmDialogMode.edit ? "CRM_TASK_EDIT_PATH" : "CRM_TASK_VIEW_PATH");
+				taskOpenPath = taskOpenPath.replace("#user_id#", BX.message("USER_ID"));
+				taskOpenPath = taskOpenPath.replace("#task_id#", taskId);
 
-					if (mode === BX.CrmDialogMode.edit)
-					{
-						top.window['taskIFramePopup'].edit(taskId, top.window['tasksIFrameList']);
-					}
-					else
-					{
-						top.window['taskIFramePopup'].view(taskId, top.window['tasksIFrameList']);
-					}
+				if(BX.SidePanel)
+				{
+					BX.SidePanel.Instance.open(taskOpenPath);
 				}
 				else
 				{
-					var taskOpenPath = BX.message(mode === BX.CrmDialogMode.edit ? "CRM_TASK_EDIT_PATH" : "CRM_TASK_VIEW_PATH");
-					taskOpenPath = taskOpenPath.replace("#user_id#", BX.message("USER_ID"));
-					taskOpenPath = taskOpenPath.replace("#task_id#", taskId);
-					taskOpenPath = BX.util.add_url_param(taskOpenPath, { "IFRAME": "Y", "IFRAME_TYPE": "SIDE_SLIDER" });
-
-					if(BX.SidePanel)
-					{
-						BX.SidePanel.Instance.open(taskOpenPath);
-					}
-					else
-					{
-						window.top.location.href = taskOpenPath;
-					}
+					window.top.location.href = taskOpenPath;
 				}
 			}
 			else if(typeID === BX.CrmActivityType.provider && BX.CrmActivityProvider)
@@ -658,37 +638,17 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 						return;
 					}
 
-					if(typeof(top.window['taskIFramePopup']) === 'object' && typeof(top.window['taskIFramePopup'].view) === 'function')
-					{
-						if (typeof(window['tasksIFrameList']) === 'undefined')
-						{
-							top.window['tasksIFrameList'] = [];
-						}
+					let providerTaskOpenPath = BX.message(mode === BX.CrmDialogMode.edit ? "CRM_TASK_EDIT_PATH" : "CRM_TASK_VIEW_PATH");
+					providerTaskOpenPath = providerTaskOpenPath.replace("#user_id#", BX.message("USER_ID"));
+					providerTaskOpenPath = providerTaskOpenPath.replace("#task_id#", providerTaskId);
 
-						if (mode === BX.CrmDialogMode.edit)
-						{
-							top.window['taskIFramePopup'].edit(providerTaskId, top.window['tasksIFrameList']);
-						}
-						else
-						{
-							top.window['taskIFramePopup'].view(providerTaskId, top.window['tasksIFrameList']);
-						}
+					if(BX.SidePanel)
+					{
+						BX.SidePanel.Instance.open(providerTaskOpenPath);
 					}
 					else
 					{
-						var providerTaskOpenPath = BX.message(mode === BX.CrmDialogMode.edit ? "CRM_TASK_EDIT_PATH" : "CRM_TASK_VIEW_PATH");
-						providerTaskOpenPath = providerTaskOpenPath.replace("#user_id#", BX.message("USER_ID"));
-						providerTaskOpenPath = providerTaskOpenPath.replace("#task_id#", providerTaskId);
-						providerTaskOpenPath = BX.util.add_url_param(providerTaskOpenPath, { "IFRAME": "Y", "IFRAME_TYPE": "SIDE_SLIDER" });
-
-						if(BX.SidePanel)
-						{
-							BX.SidePanel.Instance.open(providerTaskOpenPath);
-						}
-						else
-						{
-							window.top.location.href = providerTaskOpenPath;
-						}
+						window.top.location.href = providerTaskOpenPath;
 					}
 					return;
 				}
@@ -1270,43 +1230,30 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 				settings['ownerID'] = this.getSetting('ownerID', '');
 			}
 
-			BX.ajax.runAction('tasks.analytics.hit', {
-				data: {},
-				analyticsLabel: {
-					scenario: 'task_add',
-				}
-			});
-
-			var taskData =
-			{
+			const taskData = {
 				UF_CRM_TASK: [BX.CrmOwnerTypeAbbr.resolve(settings['ownerType']) + '_' + settings['ownerID']],
 				TITLE: "CRM: ",
 				TAGS: "crm",
 				SCENARIO: "crm",
+				ta_sec: 'crm',
+				ta_sub: settings['ownerType'].toLowerCase(),
+				ta_el: settings['fromTimeline'] ? 'create_button' : 'context_menu',
 			};
 
-			if(typeof(window.top['taskIFramePopup']) === 'object'
-				&& typeof(window.top['taskIFramePopup'].add) === 'function')
+			let taskCreatePath = BX.message("CRM_TASK_CREATION_PATH");
+			taskCreatePath = taskCreatePath.replace("#user_id#", BX.message("USER_ID"));
+			taskCreatePath = BX.util.add_url_param(
+				taskCreatePath,
+				taskData
+			);
+
+			if (BX.SidePanel)
 			{
-				window.top['taskIFramePopup'].add(taskData);
+				BX.SidePanel.Instance.open(taskCreatePath);
 			}
 			else
 			{
-				var taskCreatePath = BX.message("CRM_TASK_CREATION_PATH");
-				taskCreatePath = taskCreatePath.replace("#user_id#", BX.message("USER_ID"));
-				taskCreatePath = BX.util.add_url_param(
-					taskCreatePath,
-					BX.mergeEx(taskData, { "IFRAME": "Y", "IFRAME_TYPE": "SIDE_SLIDER" })
-				);
-
-				if(BX.SidePanel)
-				{
-					BX.SidePanel.Instance.open(taskCreatePath);
-				}
-				else
-				{
-					window.top.location.href = taskCreatePath;
-				}
+				window.top.location.href = taskCreatePath;
 			}
 		},
 		handleAddTaskClick: function(e)

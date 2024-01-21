@@ -1354,7 +1354,7 @@ BX.namespace('BX.Crm.Activity');
 					'diskAttachFiles' : BX.message('CRM_ACTIVITY_PLANNER_DISK_ATTACH_FILE'),
 					'diskAttachedFiles' : BX.message('CRM_ACTIVITY_PLANNER_DISK_ATTACHED_FILES'),
 					'diskSelectFile' : BX.message('CRM_ACTIVITY_PLANNER_DISK_SELECT_FILE'),
-					'diskSelectFileLegend' : BX.message('CRM_ACTIVITY_PLANNER_DISK_SELECT_FILE_LEGEND'),
+					'diskSelectFileLegend' : BX.message('CRM_ACTIVITY_PLANNER_DISK_SELECT_FILE_LEGEND_MSGVER_1'),
 					'diskUploadFile' : BX.message('CRM_ACTIVITY_PLANNER_DISK_UPLOAD_FILE'),
 					'diskUploadFileLegend' : BX.message('CRM_ACTIVITY_PLANNER_DISK_UPLOAD_FILE_LEGEND')
 				}
@@ -2223,6 +2223,7 @@ BX.namespace('BX.Crm.Activity');
 						params.MESSAGE_TYPE     = self.getMessageType();
 						params.SUBJECT = self.getSetting('subject', '');
 						params.BODY = self.getSetting('body', '');
+						params.COMMUNICATIONS = self.getSetting('mailDefaultCommunications', []);
 
 						var postData = {
 							COMMUNICATIONS: {}

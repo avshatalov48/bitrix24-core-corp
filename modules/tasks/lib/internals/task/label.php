@@ -16,9 +16,11 @@ namespace Bitrix\Tasks\Internals\Task;
 
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Main\Error;
 use Bitrix\Main\ORM\Fields\Relations\ManyToMany;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UserTable;
 use Bitrix\Socialnetwork\WorkgroupTable;
@@ -28,7 +30,7 @@ use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
 use Bitrix\Tasks\Internals\TaskTable;
-
+use Exception;
 
 /**
  * Class TagTable
@@ -41,14 +43,14 @@ use Bitrix\Tasks\Internals\TaskTable;
  * @method static EO_Label_Result getById($id)
  * @method static EO_Label_Result getList(array $parameters = [])
  * @method static EO_Label_Entity getEntity()
- * @method static \Bitrix\Tasks\Internals\Task\EO_Label createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\TagObject createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Internals\Task\TagCollection createCollection()
- * @method static \Bitrix\Tasks\Internals\Task\EO_Label wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\TagObject wakeUpObject($row)
  * @method static \Bitrix\Tasks\Internals\Task\TagCollection wakeUpCollection($rows)
  */
 class LabelTable extends TaskDataManager
 {
-	public static function getTableName()
+	public static function getTableName(): string
 	{
 		return 'b_tasks_label';
 	}
@@ -152,5 +154,38 @@ class LabelTable extends TaskDataManager
 	public static function getCollectionClass(): string
 	{
 		return TagCollection::class;
+	}
+
+	public static function getObjectClass(): string
+	{
+		return TagObject::class;
+	}
+
+	public static function deleteByFilter(array $filter): Result
+	{
+		$result = new Result();
+		try
+		{
+			$tagsQuery = static::query();
+			$tagsQuery
+				->setSelect(['ID'])
+				->setFilter($filter);
+			$tags = $tagsQuery->exec()->fetchCollection();
+			if ($tags->isEmpty())
+			{
+				return $result;
+			}
+
+			foreach ($tags as $tag)
+			{
+				$tag->delete();
+			}
+		}
+		catch (Exception $exception)
+		{
+			$result->addError(Error::createFromThrowable($exception));
+		}
+
+		return $result;
 	}
 }

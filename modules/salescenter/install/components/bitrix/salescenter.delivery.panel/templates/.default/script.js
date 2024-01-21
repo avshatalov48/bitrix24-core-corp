@@ -1,3 +1,4 @@
+/* eslint-disable */
 (function (exports) {
 	'use strict';
 
@@ -19,13 +20,13 @@
 	      }
 	    }
 	  };
+
 	  /**
 	   *
 	   * @param options
 	   * @extends {BX.TileGrid.Item}
 	   * @constructor
 	   */
-
 	  BX.SaleCenterDelivery.TileGrid = function (options) {
 	    BX.TileGrid.Item.apply(this, arguments);
 	    this.title = options.title;
@@ -46,7 +47,6 @@
 	    };
 	    this.data = options.data || {};
 	  };
-
 	  BX.SaleCenterDelivery.TileGrid.prototype = {
 	    __proto__: BX.TileGrid.Item.prototype,
 	    constructor: BX.TileGrid.Item,
@@ -69,11 +69,9 @@
 	          }
 	        });
 	      }
-
 	      if (this.itemSelected || this.data.type === 'actionbox') {
 	        this.setSelected();
 	      }
-
 	      return this.layout.wrapper;
 	    },
 	    getImage: function getImage() {
@@ -90,7 +88,6 @@
 	        });
 	        this.layout.image = logo;
 	      }
-
 	      return this.layout.image;
 	    },
 	    getStatus: function getStatus() {
@@ -104,11 +101,9 @@
 	    },
 	    setSelected: function setSelected() {
 	      BX.addClass(this.layout.wrapper, 'salescenter-delivery-item-selected');
-
 	      if (this.itemSelectedImage) {
 	        this.layout.image.style.backgroundImage = 'url(' + this.itemSelectedImage + ')';
 	      }
-
 	      if (this.itemSelectedColor) {
 	        this.layout.wrapper.style.backgroundColor = this.itemSelectedColor;
 	      }
@@ -117,16 +112,12 @@
 	      if (this.itemSelected) {
 	        return;
 	      }
-
 	      BX.removeClass(this.layout.wrapper, 'salescenter-delivery-item-selected');
-
 	      if (this.image) {
 	        this.layout.image.style.backgroundImage = 'url(' + this.image + ')';
 	      }
-
 	      this.layout.wrapper.style.backgroundColor = '';
 	      var itemSelected = content.querySelector('.salescenter-delivery-item-status-selected');
-
 	      if (itemSelected) {
 	        itemSelected.parentNode.removeChild(itemSelected);
 	      }
@@ -140,7 +131,6 @@
 	          text: this.title
 	        });
 	      }
-
 	      return this.layout.title;
 	    },
 	    openRestAppLayout: function openRestAppLayout(applicationId, appCode) {
@@ -150,7 +140,6 @@
 	        }
 	      }).then(function (response) {
 	        var app = response.data;
-
 	        if (app.TYPE === "A") {
 	          this.showRestApplication(appCode);
 	        } else {
@@ -161,51 +150,23 @@
 	      }.bind(this));
 	    },
 	    restAppErrorPopup: function restAppErrorPopup(title, text) {
-	      var popup = new BX.PopupWindow('rest-app-error-alert', null, {
-	        closeIcon: true,
-	        closeByEsc: true,
-	        autoHide: false,
-	        titleBar: title,
-	        content: text,
-	        zIndex: 16000,
-	        overlay: {
-	          color: 'gray',
-	          opacity: 30
-	        },
-	        buttons: [new BX.PopupWindowButton({
-	          'id': 'close',
-	          'text': BX.message('SDP_SALESCENTER_JS_POPUP_CLOSE'),
-	          'events': {
-	            'click': function click() {
-	              popup.close();
-	            }
-	          }
-	        })],
-	        events: {
-	          onPopupClose: function onPopupClose() {
-	            this.destroy();
-	          },
-	          onPopupDestroy: function onPopupDestroy() {
-	            popup = null;
-	          }
-	        }
-	      });
-	      popup.show();
+	      BX.UI.Dialogs.MessageBox.alert(text, title, function (messageBox) {
+	        return messageBox.close();
+	      }, BX.Loc.getMessage('SDP_SALESCENTER_JS_POPUP_CLOSE'));
 	    },
 	    onClick: function onClick() {
 	      var _this = this;
-
 	      if (this.data.type === "delivery") {
 	        var sliderOptions = {
 	          allowChangeHistory: false,
 	          events: {
 	            onLoad: function (e) {
 	              var slider = e.getSlider();
-
 	              if (slider.isOpen() && slider.url.indexOf('CREATE') > -1) {
 	                this.prepareDeliveryForm(slider);
 	              } else {
-	                var url = this.data.connectPath; //this.setDeliveryListAddButton(slider, url);
+	                var url = this.data.connectPath;
+	                //this.setDeliveryListAddButton(slider, url);
 	              }
 	            }.bind(this),
 	            onClose: function (e) {
@@ -218,7 +179,6 @@
 	            }.bind(this)
 	          }
 	        };
-
 	        if (!this.itemSelected && !this.data.showMenu) {
 	          BX.Salescenter.Manager.openSlider(this.data.connectPath, {
 	            width: 835
@@ -259,18 +219,15 @@
 	    },
 	    showItemMenu: function showItemMenu(item, options) {
 	      var _this2 = this;
-
 	      var menu = [],
-	          menuItemIndex,
-	          itemNode = item.layout.container,
-	          menuitemId = 'salescenter-item-menu-' + BX.util.getRandomString(),
-	          filter;
+	        menuItemIndex,
+	        itemNode = item.layout.container,
+	        menuitemId = 'salescenter-item-menu-' + BX.util.getRandomString(),
+	        filter;
 	      item.sliderOptions = {};
-
 	      if (options.sliderOptions) {
 	        item.sliderOptions = options.sliderOptions;
 	      }
-
 	      for (menuItemIndex in item.data.menuItems) {
 	        if (item.data.menuItems.hasOwnProperty(menuItemIndex)) {
 	          if (item.data.menuItems[menuItemIndex].DELIMITER) {
@@ -310,7 +267,6 @@
 	          }
 	        }
 	      }
-
 	      item.moreTabsMenu = BX.PopupMenu.create(menuitemId, itemNode, menu, {
 	        autoHide: true,
 	        offsetLeft: 0,
@@ -333,14 +289,11 @@
 	      sliderIframe = slider.iframe;
 	      innerDoc = sliderIframe.contentDocument || sliderIframe.contentWindow.document;
 	      deliveryName = innerDoc.getElementsByName('NAME')[0];
-
 	      if (deliveryName) {
 	        deliveryName.value = this.title;
 	      }
-
 	      if (this.id === 'pickup') {
 	        deliveryStores = innerDoc.getElementsByName('STORES_SHOW')[0];
-
 	        if (deliveryStores) {
 	          deliveryStores.checked = true;
 	          var eventChange = new Event('change');
@@ -353,10 +306,8 @@
 	      sliderIframe = slider.iframe;
 	      innerDoc = sliderIframe.contentDocument || sliderIframe.contentWindow.document;
 	      addButtonWrapper = innerDoc.getElementsByClassName('ui-btn-split ui-btn-primary');
-
 	      if (addButtonWrapper) {
 	        addButtonMenu = addButtonWrapper[0].getElementsByClassName('ui-btn-main')[0];
-
 	        if (addButtonMenu) {
 	          addButtonText = addButtonMenu.innerText;
 	          addButton = BX.create('a', {
@@ -390,13 +341,11 @@
 	      }).then(function (response) {
 	        if (response.data.menuItems && response.data.menuItems.length > 0) {
 	          self.itemSelected = response.data.itemSelected;
-
 	          if (self.itemSelected) {
 	            self.setSelected();
 	          } else {
 	            self.setUnselected();
 	          }
-
 	          self.data.menuItems = response.data.menuItems;
 	          self.data.showMenu = response.data.showMenu;
 	        }

@@ -24,7 +24,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\BIConnector
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_KeyUser_Query query()
+ * @method static EO_KeyUser_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_KeyUser_Result getById($id)
+ * @method static EO_KeyUser_Result getList(array $parameters = [])
+ * @method static EO_KeyUser_Entity getEntity()
+ * @method static \Bitrix\BIConnector\EO_KeyUser createObject($setDefaultValues = true)
+ * @method static \Bitrix\BIConnector\EO_KeyUser_Collection createCollection()
+ * @method static \Bitrix\BIConnector\EO_KeyUser wakeUpObject($row)
+ * @method static \Bitrix\BIConnector\EO_KeyUser_Collection wakeUpCollection($rows)
+ */
 
 class KeyUserTable extends DataManager
 {

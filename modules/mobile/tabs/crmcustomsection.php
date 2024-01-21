@@ -44,6 +44,11 @@ final class CrmCustomSection implements Tabable
 			return false;
 		}
 
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager()->checkExternalDynamicAvailability())
+		{
+			return false;
+		}
+
 		if (Mobile::getApiVersion() < self::MINIMAL_API_VERSION)
 		{
 			return false;
@@ -149,7 +154,6 @@ final class CrmCustomSection implements Tabable
 				'settings' => [
 					'objectName' => 'layout',
 					'useLargeTitleMode' => true,
-					'backgroundColor' => '#f5f7f8',
 				],
 			],
 			'params' => [

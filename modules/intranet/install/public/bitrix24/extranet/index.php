@@ -7,9 +7,25 @@
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 
+\CModule::IncludeModule('intranet');
+use Bitrix\Intranet;
+
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/extranet/index.php");
 
 $APPLICATION->SetTitle(GetMessage("TITLE"));
+
+if (!\Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByToolId('news'))
+{
+	$APPLICATION->IncludeComponent('bitrix:intranet.settings.tool.stub', '.default',
+		[
+			'LIMIT_CODE' => 'limit_office_feed_off',
+			'MODULE' => 'intranet',
+			'SOURCE' => 'feed'
+		]
+	);
+
+	return;
+}
 
 GetGlobalID();
 
@@ -54,14 +70,14 @@ $APPLICATION->IncludeComponent(
 		"SET_LOG_CACHE" => "Y",
 		"USE_COMMENTS" => "Y",
 		"BLOG_ALLOW_POST_CODE" => "Y",
-		"BLOG_GROUP_ID" => $GLOBAL_BLOG_GROUP[SITE_ID],
+		"BLOG_GROUP_ID" => Intranet\Integration\Wizards\Portal\Ids::getBlogId(),
 		"PHOTO_USER_IBLOCK_TYPE" => "photos",
-		"PHOTO_USER_IBLOCK_ID" => $GLOBAL_IBLOCK_ID["user_photogallery"],
+		"PHOTO_USER_IBLOCK_ID" => Intranet\Integration\Wizards\Portal\Ids::getIblockId('user_photogallery'),
 		"PHOTO_USE_COMMENTS" => "Y",
 		"PHOTO_COMMENTS_TYPE" => "FORUM",
-		"PHOTO_FORUM_ID" => $GLOBAL_FORUM_ID["PHOTOGALLERY_COMMENTS"],
+		"PHOTO_FORUM_ID" => Intranet\Integration\Wizards\Portal\Ids::getForumId('PHOTOGALLERY_COMMENTS'),
 		"PHOTO_USE_CAPTCHA" => "N",
-		"FORUM_ID" => $GLOBAL_FORUM_ID["USERS_AND_GROUPS"],
+		"FORUM_ID" => Intranet\Integration\Wizards\Portal\Ids::getForumId('USERS_AND_GROUPS'),
 		"PAGER_DESC_NUMBERING" => "N",
 		"AJAX_MODE" => "N",
 		"AJAX_OPTION_SHADOW" => "N",

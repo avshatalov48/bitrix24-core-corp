@@ -33,7 +33,7 @@ final class Deal extends Base
 				])
 			],
 			self::ID_ROBOT_DEBUGGER => [
-				'name' => Loc::getMessage('CRM_PRESET_DEALS_IN_ROBOT_DEBUGGER'),
+				'name' => Loc::getMessage('CRM_PRESET_DEALS_IN_ROBOT_DEBUGGER_MSGVER_1'),
 				'fields' => [
 					'ROBOT_DEBUGGER' => 'SHOW'
 				],

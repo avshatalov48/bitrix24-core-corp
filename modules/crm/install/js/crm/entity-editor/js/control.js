@@ -1,3 +1,4 @@
+/* eslint-disable */
 BX.namespace("BX.Crm");
 
 if(typeof BX.Crm.EntityEditorControl === "undefined")
@@ -514,9 +515,14 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 				OWNER_ID: this._model.getField('ID') ? parseInt(this._model.getField('ID')) : 0,
 				CONTEXT: this.getModel().getOwnerInfo().ownerType.toLowerCase(),
 				IS_DELIVERY_AVAILABLE: this._schemeElement.getDataBooleanParam('isDeliveryAvailable', false),
+				IS_TERMINAL_AVAILABLE: this._schemeElement.getDataBooleanParam('isTerminalAvailable', false),
+				IS_INVENTORY_MANAGEMENT_TOOL_ENABLED: this._schemeElement.getDataBooleanParam('isInventoryManagementToolEnabled', false),
+				IS_SALESCENTER_TOOL_ENABLED: this._schemeElement.getDataBooleanParam('isSalescenterToolEnabled', false),
+				IS_TERMINAL_TOOL_ENABLED: this._schemeElement.getDataBooleanParam('isTerminalToolEnabled', false),
 				PARENT_CONTEXT: this,
 				PHRASES: this._schemeElement.getDataObjectParam('paymentDocumentsPhrases', {}),
-				IS_WITH_ORDERS_MODE: this._schemeElement.getDataBooleanParam('isWithOrdersMode', false)
+				IS_WITH_ORDERS_MODE: this._schemeElement.getDataBooleanParam('isWithOrdersMode', false),
+				SHOULD_SHOW_CASHBOX_CHECKS: this._schemeElement.getDataBooleanParam('shouldShowCashboxChecks', false),
 			};
 			this._paymentDocumentsControl = new BX.Crm.EntityEditorPaymentDocuments(paymentDocumentsOptions);
 
@@ -576,8 +582,16 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 
 		BX.bind(a, 'click', BX.delegate(function()
 		{
-			var orderId = this.getLatestOrderId();
-			this.startSalescenterApplication(orderId);
+			const isSalescenterToolEnabled = this._model.getField('IS_SALESCENTER_TOOL_ENABLED', true);
+			if (isSalescenterToolEnabled)
+			{
+				var orderId = this.getLatestOrderId();
+				this.startSalescenterApplication(orderId);
+
+				return;
+			}
+
+			this.openSalescenterToolStub();
 		}, this));
 
 		BX.bind(a, "mousedown", function(event)
@@ -618,6 +632,14 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 			}
 		}
 	};
+
+	BX.Crm.EntityEditorMoneyPay.prototype.openSalescenterToolStub = function()
+	{
+		BX.loadExt('salescenter.tool-availability-manager').then(() =>
+		{
+			BX.Salescenter.ToolAvailabilityManager.openSalescenterToolDisabledSlider();
+		});
+	}
 
 	BX.Crm.EntityEditorMoneyPay.prototype.startSalescenterApplication = function(orderId, options)
 	{
@@ -1516,6 +1538,44 @@ if(typeof BX.Crm.EntityEditorMultifieldItem === "undefined")
 
 				this._hasLayout = true;
 			},
+			prepareDupControlFieldConfig: function (fieldId)
+			{
+				if(this._editor.isDuplicateControlEnabled())
+				{
+					const dupControlConfig = this._parent.getDuplicateControlConfig();
+					if(dupControlConfig)
+					{
+						if(!BX.type.isPlainObject(dupControlConfig["field"]))
+						{
+							dupControlConfig["field"] = {};
+						}
+						dupControlConfig["field"]["id"] = fieldId;
+
+						return dupControlConfig;
+					}
+				}
+
+				return null;
+			},
+			unregisterDupControlField: function ()
+			{
+				const dupControlConfig = this.prepareDupControlFieldConfig(this.getValueId());
+				if (dupControlConfig)
+				{
+					const duplicateManager = this._editor.getDuplicateManager();
+					duplicateManager.unregisterField(dupControlConfig);
+					if (dupControlConfig.hasOwnProperty("groupId"))
+					{
+						const groupId = dupControlConfig["groupId"];
+						const group = duplicateManager.getGroup(groupId);
+						if (group)
+						{
+							const defaultSearchSummaryField = group.getField(group.getDefaultSearchSummaryFieldId());
+							group.getController()._closeSearchSummary();
+						}
+					}
+				}
+			},
 			clearLayout: function()
 			{
 				if(!this._hasLayout)
@@ -1523,19 +1583,7 @@ if(typeof BX.Crm.EntityEditorMultifieldItem === "undefined")
 					return;
 				}
 
-				if(this._editor.isDuplicateControlEnabled())
-				{
-					var dupControlConfig = this._parent.getDuplicateControlConfig();
-					if(dupControlConfig)
-					{
-						if(!BX.type.isPlainObject(dupControlConfig["field"]))
-						{
-							dupControlConfig["field"] = {};
-						}
-						dupControlConfig["field"]["id"] = this.getValueId();
-						this._editor.getDuplicateManager().unregisterField(dupControlConfig);
-					}
-				}
+				this.unregisterDupControlField();
 
 				this._wrapper = BX.remove(this._wrapper);
 				this._hasLayout = false;
@@ -1608,6 +1656,7 @@ if(typeof BX.Crm.EntityEditorMultifieldItem === "undefined")
 					if(this._isJunked)
 					{
 						this._valueInput.value = "";
+						this.unregisterDupControlField();
 					}
 					this.adjust();
 				}
@@ -2100,9 +2149,9 @@ if(typeof BX.Crm.EntityEditorMultifield === "undefined")
 	};
 	BX.Crm.EntityEditorMultifield.prototype.doClearLayout = function(options)
 	{
-		for(var i = 0, length = this._items.length; i < length; i++)
+		for (let i = 0, length = this._items.length; i < length; i++)
 		{
-			var item = this._items[i];
+			const item = this._items[i];
 			item.clearLayout();
 			item.setContainer(null);
 		}
@@ -7641,14 +7690,20 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 			}
 		}
 	};
-	BX.Crm.EntityEditorClientLight.prototype.createCompanySearchBox = function(params)
+
+	BX.Crm.EntityEditorClientLight.prototype.getEntityInfo = function(params)
 	{
-		var entityInfo = BX.prop.get(params, "entityInfo", null);
+		let entityInfo = BX.prop.get(params, "entityInfo", null);
 		if(entityInfo !== null && !(entityInfo instanceof BX.CrmEntityInfo))
 		{
 			entityInfo = null;
 		}
 
+		return entityInfo;
+	}
+
+	BX.Crm.EntityEditorClientLight.prototype.createCompanySearchBox = function(params)
+	{
 		var enableCreation = this._schemeElement.getDataBooleanParam('enableCreation', this._editor.canCreateCompany());
 		if(enableCreation)
 		{
@@ -7674,7 +7729,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					entityTypeName: BX.CrmEntityType.names.company,
 					categoryId: BX.prop.getInteger(categoryParams, 'categoryId', 0),
 					extraCategoryIds: BX.prop.getArray(categoryParams, 'extraCategoryIds', []),
-					entityInfo: entityInfo,
+					entityInfo: this.getEntityInfo(params),
 					enableCreation: enableCreation,
 					creationLegend: this._schemeElement.getDataStringParam('creationLegend', ''),
 					enableDeletion: false,
@@ -7692,9 +7747,15 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					requisiteBinding: this._model.getField("REQUISITE_BINDING", {}),
 					isRequired: (this.isRequired() || this.isRequiredByAttribute()),
 					enableMyCompanyOnly: this._schemeElement.getDataBooleanParam('enableMyCompanyOnly', false),
-					enableRequisiteSelection: this._schemeElement.getDataBooleanParam('enableRequisiteSelection', false),
+					enableRequisiteSelection: this._schemeElement.getDataBooleanParam(
+						'enableRequisiteSelection',
+						false
+					),
 					permissionToken: this._schemeElement.getDataStringParam('permissionToken', null),
-					duplicateControl: this.getDuplicateControlConfig(BX.CrmEntityType.enumeration.company)
+					duplicateControl: this.getDuplicateControlConfig(
+						BX.CrmEntityType.enumeration.company,
+						this.getEntityInfo(params)
+					)
 				}
 			)
 		);
@@ -7765,7 +7826,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 		}
 		return -1;
 	};
-	BX.Crm.EntityEditorClientLight.prototype.getDuplicateControlConfig = function(entityTypeId)
+	BX.Crm.EntityEditorClientLight.prototype.getDuplicateControlConfig = function(entityTypeId, entityInfo)
 	{
 		let result = {};
 
@@ -7782,16 +7843,37 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 			}
 		}
 
+		if(result.hasOwnProperty("enabled") && result["enabled"] && (entityInfo instanceof BX.CrmEntityInfo))
+		{
+			result["isSingleMode"] = true;
+
+			const entityId = entityInfo.getId();
+			if (entityId > 0)
+			{
+				const item = {
+					ENTITY_TYPE_ID: entityInfo.getTypeId(),
+					ENTITY_ID: entityInfo.getId()
+				};
+
+				if (
+					result.hasOwnProperty("ignoredItems")
+					&& BX.Type.isArray(result["ignoredItems"])
+					&& !result["ignoredItems"].includes(entityId)
+				)
+				{
+					result["ignoredItems"].push(item);
+				}
+				else
+				{
+					result["ignoredItems"] = [item];
+				}
+			}
+		}
+
 		return result;
 	};
 	BX.Crm.EntityEditorClientLight.prototype.createContactSearchBox = function(params)
 	{
-		var entityInfo = BX.prop.get(params, "entityInfo", null);
-		if(entityInfo !== null && !(entityInfo instanceof BX.CrmEntityInfo))
-		{
-			entityInfo = null;
-		}
-
 		var enableCreation = this._schemeElement.getDataBooleanParam('enableCreation', this._editor.canCreateContact());
 		if(enableCreation)
 		{
@@ -7826,7 +7908,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					entityTypeName: BX.CrmEntityType.names.contact,
 					categoryId: BX.prop.getInteger(categoryParams, 'categoryId', 0),
 					extraCategoryIds: BX.prop.getArray(categoryParams, 'extraCategoryIds', []),
-					entityInfo: entityInfo,
+					entityInfo: this.getEntityInfo(params),
 					enableCreation: enableCreation,
 					creationLegend: this._schemeElement.getDataStringParam('creationLegend', ''),
 					enableDeletion: BX.prop.getBoolean(params, "enableDeletion", true),
@@ -7845,7 +7927,10 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					isRequired: (this.isRequired() || this.isRequiredByAttribute()),
 					enableRequisiteSelection: enableRequisiteSelection,
 					permissionToken: this._schemeElement.getDataStringParam('permissionToken', null),
-					duplicateControl: this.getDuplicateControlConfig(BX.CrmEntityType.enumeration.contact)
+					duplicateControl: this.getDuplicateControlConfig(
+						BX.CrmEntityType.enumeration.contact,
+						this.getEntityInfo(params)
+					),
 				}
 			)
 		);

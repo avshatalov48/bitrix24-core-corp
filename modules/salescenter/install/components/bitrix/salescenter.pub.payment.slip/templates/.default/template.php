@@ -21,14 +21,14 @@ use \Bitrix\Main\Localization\Loc;
 		<div class="check-container__tail"></div>
 		<div class="check-container__data">
 			<div class="check-container-center">
-				<b class="check-container-title" data-check-field="company_name"><?=$arResult['COMPANY_DATA']['COMPANY_TITLE']?></b>
+				<b class="check-container-title" data-check-field="company_name"><?=htmlspecialcharsbx($arResult['COMPANY_DATA']['COMPANY_TITLE'])?></b>
 
 				<?php if (!empty($arResult['COMPANY_DATA']['COMPANY_ADDRESS'])): ?>
-					<span data-check-field="company_address"><?=$arResult['COMPANY_DATA']['COMPANY_ADDRESS']?></span>
+					<span data-check-field="company_address"><?=htmlspecialcharsbx($arResult['COMPANY_DATA']['COMPANY_ADDRESS'])?></span>
 				<?php endif; ?>
 
 				<?php if (!empty($arResult['COMPANY_DATA']['COMPANY_NUMBER'])): ?>
-					<span data-check-field="company_number"><?=Loc::getMessage('SALE_PS_SLIP_NUMBER', ['#NUMBER#' => $arResult['COMPANY_DATA']['COMPANY_NUMBER']])?></span>
+					<span data-check-field="company_number"><?=Loc::getMessage('SALE_PS_SLIP_NUMBER', ['#NUMBER#' => htmlspecialcharsbx($arResult['COMPANY_DATA']['COMPANY_NUMBER'])])?></span>
 				<?php endif; ?>
 			</div>
 			<div class="check-container-separator"></div>
@@ -44,22 +44,22 @@ use \Bitrix\Main\Localization\Loc;
 				</div>
 				<div class="check-container-field" data-check-field="ps_name">
 					<span><?=Loc::getMessage('SALE_PS_SLIP_FIELD_METHOD')?>:</span>
-					<span><?=$arResult['PAYMENT_DATA']['PS_NAME']?></span>
+					<span><?=htmlspecialcharsbx($arResult['PAYMENT_DATA']['PS_NAME'])?></span>
 				</div>
 				<div class="check-container-field" data-check-field="transaction_id">
 					<span><?=Loc::getMessage('SALE_PS_SLIP_FIELD_TRANSACTION_ID')?>:</span>
-					<span><?=$arResult['PAYMENT_DATA']['TRANSACTION_ID']?></span>
+					<span><?=htmlspecialcharsbx($arResult['PAYMENT_DATA']['TRANSACTION_ID'])?></span>
 				</div>
 				<div class="check-container-field" data-check-field="ps_date">
 					<span><?=Loc::getMessage('SALE_PS_SLIP_FIELD_TERMINAL_DATE')?>:</span>
-					<span><?=$arResult['PAYMENT_DATA']['DATE']?></span>
+					<span><?=htmlspecialcharsbx($arResult['PAYMENT_DATA']['DATE'])?></span>
 				</div>
 			</div>
 			<?php if (isset($arResult['PAYMENT_SLIP_WARNING'])): ?>
 				<div class="check-container-separator"></div>
 				<div class="check-container-center" data-check-field="slip_warning">
-					<span><?=$arResult['PAYMENT_SLIP_WARNING']['TITLE']?></span>
-					<b><?=$arResult['PAYMENT_SLIP_WARNING']['SUBTITLE']?></b>
+					<span><?=htmlspecialcharsbx($arResult['PAYMENT_SLIP_WARNING']['TITLE'])?></span>
+					<b><?=htmlspecialcharsbx($arResult['PAYMENT_SLIP_WARNING']['SUBTITLE'])?></b>
 				</div>
 			<?php endif; ?>
 		</div>

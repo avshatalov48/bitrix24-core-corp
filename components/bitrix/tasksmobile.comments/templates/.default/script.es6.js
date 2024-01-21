@@ -1,6 +1,6 @@
-import {Dom, GetWindowInnerSize, GetWindowScrollPos, Reflection} from 'main.core';
-import {EventEmitter} from 'main.core.events';
-import {ResultManager} from 'tasks.result';
+import { Dom, Event, GetWindowInnerSize, GetWindowScrollPos, Reflection } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { ResultManager } from 'tasks.result';
 
 const namespace = Reflection.namespace('BX.TasksMobile');
 
@@ -19,6 +19,7 @@ export default class Comments
 		this.userId = options.userId;
 		this.taskId = options.taskId;
 		this.guid = options.guid;
+		this.isTabsMode = options.isTabsMode;
 
 		this.canReadCommentsOnInit = true;
 
@@ -46,7 +47,7 @@ export default class Comments
 		{
 			EventEmitter.subscribe(
 				BX.MobileUI.events.MOBILE_UI_TEXT_FIELD_SET_PARAMS,
-				() => window.BX.MobileUI.TextField.show()
+				() => window.BX.MobileUI.TextField.show(),
 			);
 		}
 	}
@@ -70,6 +71,7 @@ export default class Comments
 			{
 				Dom.removeClass(this.stub, hiddenClass);
 			}
+
 			if (!Dom.hasClass(this.commentsBlock, hiddenClass))
 			{
 				Dom.addClass(this.commentsBlock, hiddenClass);
@@ -81,6 +83,7 @@ export default class Comments
 			{
 				Dom.removeClass(this.commentsBlock, hiddenClass);
 			}
+
 			if (!Dom.hasClass(this.stub, hiddenClass))
 			{
 				Dom.addClass(this.stub, hiddenClass);
@@ -88,7 +91,7 @@ export default class Comments
 		}
 	}
 
-	initTaskResultManager({resultComments, isClosed})
+	initTaskResultManager({ resultComments, isClosed })
 	{
 		ResultManager.getInstance().initResult({
 			context: 'task',
@@ -118,7 +121,7 @@ export default class Comments
 			if (xmlId === `TASK_${this.taskId}`)
 			{
 				this.commentsList = list;
-				this.commentsList.canCheckVisibleComments = false;
+				this.commentsList.canCheckVisibleComments = !this.isTabsMode;
 				this.unreadComments = new Map(this.commentsList.unreadComments);
 			}
 		});
@@ -130,7 +133,7 @@ export default class Comments
 			if (id[0] === `TASK_${this.taskId}`)
 			{
 				const author = data.messageFields.AUTHOR;
-				if (Number(author['ID']) !== Number(this.userId))
+				if (Number(author.ID) !== Number(this.userId))
 				{
 					this.unreadComments.set(id[1], new Date());
 				}
@@ -170,32 +173,55 @@ export default class Comments
 
 		BXMobileApp.addCustomEvent('onPull-tasks', () => {});
 
-		BXMobileApp.addCustomEvent('tasks.task.tabs:onTabSelected', (event) => {
-			if (event.guid === this.guid && this.commentsList)
-			{
-				const isCommentsTab = (event.tab === 'tasks.task.comments');
-
-				this.commentsList.canCheckVisibleComments = isCommentsTab;
-
-				if (isCommentsTab)
+		if (this.isTabsMode)
+		{
+			BXMobileApp.addCustomEvent('tasks.task.tabs:onTabSelected', (event) => {
+				if (event.guid === this.guid && this.commentsList)
 				{
-					const scroll = GetWindowScrollPos();
-					const position = {
-						top: scroll.scrollTop,
-						bottom: scroll.scrollTop + GetWindowInnerSize().innerHeight,
-					};
-					this.commentsList.checkVisibleComments(position);
-
-					if (this.canReadCommentsOnInit)
-					{
-						this.canReadCommentsOnInit = false;
-						this.readComments();
-					}
+					this.setCanCheckVisibleComments(event.tab === 'tasks.task.comments');
 				}
-			}
-		});
+			});
+		}
+		else
+		{
+			Event.bind(document, 'visibilitychange', () => this.setCanCheckVisibleComments(!document.hidden));
+			Event.bind(window, 'pagehide', () => this.setCanCheckVisibleComments(false));
+			Event.bind(window, 'pageshow', () => this.setCanCheckVisibleComments(true));
+		}
 
 		BX.MobileUI.addLivefeedLongTapHandler(this.commentsBlock, { likeNodeClass: 'post-comment-control-item-like' });
+	}
+
+	setCanCheckVisibleComments(canCheck: boolean): void
+	{
+		if (!this.isTabsMode && canCheck && this.canReadCommentsOnInit)
+		{
+			this.canReadCommentsOnInit = false;
+			this.readComments();
+		}
+
+		if (!this.commentsList)
+		{
+			return;
+		}
+
+		this.commentsList.canCheckVisibleComments = canCheck;
+
+		if (canCheck)
+		{
+			const scroll = GetWindowScrollPos();
+			const position = {
+				top: scroll.scrollTop,
+				bottom: scroll.scrollTop + GetWindowInnerSize().innerHeight,
+			};
+			this.commentsList.checkVisibleComments(position);
+
+			if (this.canReadCommentsOnInit)
+			{
+				this.canReadCommentsOnInit = false;
+				this.readComments();
+			}
+		}
 	}
 
 	sendOnCommentsReadEvent(newCommentsCount: number = 0): void
@@ -216,7 +242,9 @@ export default class Comments
 		void BX.ajax.runAction('tasks.task.view.update', {
 			data: {
 				taskId: this.taskId,
-				parameters: { IS_REAL_VIEW: 'Y' },
+				parameters: {
+					IS_REAL_VIEW: 'Y',
+				},
 			},
 		});
 	}

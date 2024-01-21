@@ -1,13 +1,13 @@
 import {Text} from 'main.core';
 
-import {DialogType} from 'im.v2.const';
+import {ChatType} from 'im.v2.const';
 import {DateFormatter, DateTemplate} from 'im.v2.lib.date-formatter';
 
 import {AdditionalUsers} from './additional-users';
 
 import '../css/dialog-status.css';
 
-import type {ImModelDialog} from 'im.v2.model';
+import type {ImModelChat} from 'im.v2.model';
 
 const TYPING_USERS_COUNT = 3;
 const MORE_USERS_CSS_CLASS = 'bx-im-dialog-chat-status__user-count';
@@ -30,13 +30,13 @@ export const DialogStatus = {
 	},
 	computed:
 	{
-		dialog(): ImModelDialog
+		dialog(): ImModelChat
 		{
-			return this.$store.getters['dialogues/get'](this.dialogId, true);
+			return this.$store.getters['chats/get'](this.dialogId, true);
 		},
 		isUser(): boolean
 		{
-			return this.dialog.type === DialogType.user;
+			return this.dialog.type === ChatType.user;
 		},
 		isChat(): boolean
 		{

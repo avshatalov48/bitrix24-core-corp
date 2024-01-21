@@ -2,12 +2,13 @@
  * @module layout/ui/switcher
  */
 jn.define('layout/ui/switcher', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { transition, parallel } = require('animation');
 
 	const COLORS = {
-		THUMB_DEFAULT: '#ffffff',
-		TRACK_DEFAULT: '#d5d7db',
-		TRACK_ACTIVE: '#2fc6f6',
+		THUMB_DEFAULT: AppTheme.colors.bgContentPrimary,
+		TRACK_DEFAULT: AppTheme.colors.base6,
+		TRACK_ACTIVE: AppTheme.colors.accentBrandBlue,
 	};
 
 	class Switcher extends LayoutComponent
@@ -147,3 +148,4 @@ jn.define('layout/ui/switcher', (require, exports, module) => {
 
 	module.exports = { Switcher };
 });
+

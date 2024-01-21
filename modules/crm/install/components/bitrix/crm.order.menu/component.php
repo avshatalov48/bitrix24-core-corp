@@ -49,7 +49,7 @@ $arParams['PATH_TO_ORDER_IMPORT'] = CrmCheckPath(
 	$APPLICATION->GetCurPage() . '?import'
 );
 
-$arParams['PATH_TO_MIGRATION'] = SITE_DIR . "marketplace/category/migration/";
+$arParams['PATH_TO_MIGRATION'] = \Bitrix\Crm\Integration\Market\Router::getCategoryPath('migration');
 
 $arParams['PATH_TO_ORDER_FORM'] = CrmCheckPath(
 	'PATH_TO_ORDER_FORM',

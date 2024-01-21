@@ -65,6 +65,12 @@ foreach($result as $key =>$notify)
 $arResult['NOTIFY'] = $result;
 $arResult['UNREAD_NOTIFY_ID'] = $unreadNotifyId;
 
+$culture = \Bitrix\Main\Context::getCurrent()->getCulture();
+$arResult['DATE_FORMATS'] = [
+	'shortTimeFormat' => $culture->getShortTimeFormat(),
+	'longDateFormat' => $culture->getLongDateFormat(),
+];
+
 if (!(isset($arParams['TEMPLATE_HIDE']) && $arParams['TEMPLATE_HIDE'] == 'Y'))
 	$this->IncludeComponentTemplate();
 

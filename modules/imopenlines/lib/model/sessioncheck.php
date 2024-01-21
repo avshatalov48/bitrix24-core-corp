@@ -87,6 +87,7 @@ class SessionCheckTable extends DataManager
 				'values' => [
 					'VACATION',
 					'NONWORKING',
+					'NONWORKING_SILENT',
 					'REMOVING',
 					'DISMISSAL',
 					'NOT_AVAILABLE',

@@ -1,7 +1,12 @@
 <?php
 
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
+use Bitrix\Crm\Restriction\AvailabilityManager;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\EventHistory;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -14,7 +19,7 @@ final class CrmEventViewComponent extends \Bitrix\Crm\Component\Base
 {
 	protected const FILTER_VALUE_RELATIONS = 'relations';
 
-	protected function compileEventDesc(array $event): string
+	protected function compileEventDesc(array $event, bool $useNl2br = true): string
 	{
 		if (mb_strlen($event['EVENT_TEXT_1']) > 255 || mb_strlen($event['EVENT_TEXT_2']) > 255)
 		{
@@ -45,12 +50,16 @@ final class CrmEventViewComponent extends \Bitrix\Crm\Component\Base
 		{
 			$desc = ($event['EVENT_TEXT_1']) . ' <span>&rarr;</span> ' . ($event['EVENT_TEXT_2']);
 		}
+		elseif(empty($event['EVENT_TEXT_1']) && !empty($event['EVENT_TEXT_2']))
+		{
+			$desc = $event['EVENT_TEXT_2'];
+		}
 		else
 		{
 			$desc = !empty($event['EVENT_TEXT_1']) ? ($event['EVENT_TEXT_1']) : '';
 		}
 
-		return nl2br($desc);
+		return $useNl2br ? nl2br($desc) : $desc;
 	}
 
 	protected function enrichRelationEvents(array $events): array
@@ -161,6 +170,10 @@ final class CrmEventViewComponent extends \Bitrix\Crm\Component\Base
 		foreach ($eventRelationIdToBoundItem as $eventRelationId => [$boundEntityTypeId, $boundItemId])
 		{
 			$result[$eventRelationId] = $infos[$boundEntityTypeId][$boundItemId] ?? null;
+			if ($result[$eventRelationId])
+			{
+				$result[$eventRelationId]['ENTITY_TYPE_ID'] = $boundEntityTypeId;
+			}
 		}
 
 		return $result;
@@ -171,8 +184,21 @@ final class CrmEventViewComponent extends \Bitrix\Crm\Component\Base
 		$singleEvent['EVENT_TEXT_1'] = '';
 		$singleEvent['EVENT_TEXT_2'] = '';
 
+		$onClick = null;
+
 		if ($boundItemInfo)
 		{
+			$entityTypeId = (int)($boundItemInfo['ENTITY_TYPE_ID'] ?? 0);
+			if (\CCrmOwnerType::isCorrectEntityTypeId($entityTypeId))
+			{
+				$toolsManager = Container::getInstance()->getIntranetToolsManager();
+				$availabilityManager = AvailabilityManager::getInstance();
+				if (!$toolsManager->checkEntityTypeAvailability($entityTypeId))
+				{
+					$onClick = $availabilityManager->getEntityTypeAvailabilityLock($entityTypeId);
+				}
+			}
+
 			$singleEvent['EVENT_TEXT_1'] = $boundItemInfo['ENTITY_TYPE_CAPTION'] ?? '';
 			$isMyCompany = $boundItemInfo['IS_MY_COMPANY'] ?? false;
 			if ($isMyCompany)
@@ -180,7 +206,15 @@ final class CrmEventViewComponent extends \Bitrix\Crm\Component\Base
 				$singleEvent['EVENT_TEXT_1'] = Loc::getMessage('CRM_TYPE_ITEM_FIELD_MYCOMPANY_ID');
 			}
 
-			if (!empty($boundItemInfo['SHOW_URL']) && !empty($boundItemInfo['TITLE']))
+			if ($onClick && !empty($boundItemInfo['TITLE']))
+			{
+				$singleEvent['EVENT_TEXT_1'] .=
+					" <a href='#more' onclick='" . $onClick . "'>"
+					. htmlspecialcharsbx($boundItemInfo['TITLE'])
+					. "</a>"
+				;
+			}
+			elseif (!empty($boundItemInfo['SHOW_URL']) && !empty($boundItemInfo['TITLE']))
 			{
 				$singleEvent['EVENT_TEXT_1'] .=
 					' <a href="' . htmlspecialcharsbx($boundItemInfo['SHOW_URL']) . '">'
@@ -190,7 +224,7 @@ final class CrmEventViewComponent extends \Bitrix\Crm\Component\Base
 			}
 		}
 
-		$singleEvent['EVENT_DESC'] = $this->compileEventDesc($singleEvent);
+		$singleEvent['EVENT_DESC'] = $this->compileEventDesc($singleEvent, $onClick === null);
 
 		return $singleEvent;
 	}

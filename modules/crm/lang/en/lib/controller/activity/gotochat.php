@@ -1,6 +1,5 @@
 <?php
-$MESS["CRM_INVITATION_CHANNEL_NOT_FOUND"] = "Communication channel was not found.";
+$MESS["CRM_INVITATION_CLIENT_BIND_ERROR"] = "Cannot select customer. Refresh the page and try again.";
 $MESS["CRM_INVITATION_ERROR"] = "Sending error";
-$MESS["CRM_INVITATION_WRONG_FROM"] = "Incorrect sender.";
-$MESS["CRM_INVITATION_WRONG_LINE"] = "Open Channel not found or not configured.";
-$MESS["CRM_INVITATION_WRONG_TO"] = "Incorrect recipient.";
+$MESS["CRM_INVITATION_WRONG_COMPANY"] = "Cannot perform action. Refresh the page and try again.";
+$MESS["CRM_INVITATION_WRONG_CONTACT"] = "Cannot perform action. Refresh the page and try again.";

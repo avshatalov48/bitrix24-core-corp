@@ -32,7 +32,7 @@ return [
 		'layout/ui/fields/multiple-combined',
 		'layout/ui/fields/crm-element',
 		'layout/ui/fields/client',
-		'layout/ui/fields/crm-stage',
 		'layout/ui/fields/shipment-extra-services',
+		'crm:stage-selector',
 	],
 ];

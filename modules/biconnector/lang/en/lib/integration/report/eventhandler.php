@@ -10,3 +10,4 @@ $MESS["BIC_CRM_MENU_MICROSOFT"] = "Microsoft Power BI";
 $MESS["BIC_CRM_MENU_REPORT_TEMPLATES"] = "Ready-to-use report templates";
 $MESS["BIC_CRM_MENU_USAGE_STAT"] = "Usage";
 $MESS["BIC_CRM_MENU_YANDEX"] = "Yandex DataLens";
+

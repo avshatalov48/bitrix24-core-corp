@@ -10,6 +10,7 @@ use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\ExternalLinkTable;
 use Bitrix\Disk\Internals\FileTable;
+use Bitrix\Disk\Internals\ObjectNameService;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\RightTable;
 use Bitrix\Disk\Internals\SharingTable;
@@ -433,7 +434,37 @@ class File extends BaseObject
 			return null;
 		}
 
+		$this->clonePreviewData($this->getFileId(), $forkFileId);
+
 		return $fileModel;
+	}
+
+	private function clonePreviewData(int $originalFileId, int $clonedFileId)
+	{
+		$previewManager = new Main\UI\Viewer\PreviewManager();
+		$originalPreviewFileData = $previewManager->getFilePreviewEntryByFileId($originalFileId);
+		if (empty($originalPreviewFileData['ID']))
+		{
+			return;
+		}
+
+		$forkedPreviewImageFileId = null;
+		$forkedPreviewFileId = null;
+		if (!empty($originalPreviewFileData['PREVIEW_IMAGE_ID']))
+		{
+			$forkedPreviewImageFileId = \CFile::CloneFile($originalPreviewFileData['PREVIEW_IMAGE_ID']);
+		}
+		if (!empty($originalPreviewFileData['PREVIEW_ID']))
+		{
+			$forkedPreviewFileId = \CFile::CloneFile($originalPreviewFileData['PREVIEW_ID']);
+		}
+
+		$resultPreview = $previewManager->attachPreviewToFileId($clonedFileId, $forkedPreviewFileId, $forkedPreviewImageFileId);
+		if (!$resultPreview->isSuccess())
+		{
+			\CFile::delete($forkedPreviewImageFileId);
+			\CFile::delete($forkedPreviewFileId);
+		}
 	}
 
 	/**
@@ -1200,18 +1231,23 @@ class File extends BaseObject
 			return true;
 		}
 
-		$possibleNewName = $this->name;
-		if($generateUniqueName)
+		$nameService = new ObjectNameService($this->name, $realFolderId, $this->getType());
+		if ($generateUniqueName)
 		{
-			$possibleNewName = static::generateUniqueName($this->name, $realFolderId);
+			$nameService->requireUniqueName();
 		}
-		$needToRename = $possibleNewName != $this->name;
 
-		if(!static::isUniqueName($possibleNewName, $realFolderId))
+		$result = $nameService->prepareName();
+		if (!$result->isSuccess())
 		{
-			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_OBJECT_MODEL_ERROR_NON_UNIQUE_NAME'), self::ERROR_NON_UNIQUE_NAME)));
+			$this->errorCollection->add($result->getErrors());
+
 			return false;
 		}
+
+		$possibleNewName = $result->getName();
+		$needToRename = $possibleNewName != $this->name;
+
 		$this->name = $possibleNewName;
 
 		if($needToRename)

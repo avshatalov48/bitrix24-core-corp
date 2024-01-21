@@ -87,26 +87,14 @@ export const DocumentPanel: BitrixVueComponentProps = {
 							return;
 						}
 
-						if (fileData && fileData.object)
+						if (response.object)
 						{
 							this.uploader.addFile(
-								`n${fileData.object.id}`,
+								`n${response.object.id}`,
 								{
-									name: fileData.object.name,
-									size: fileData.object.sizeInt,
-									preload: true
-								}
-							);
-
-							this.userFieldControl.showUploaderPanel();
-						}
-						else if (response.objectId)
-						{
-							this.uploader.addFile(
-								`n${response.objectId}`,
-								{
-									name: Type.isStringFilled(response.newName) ? response.newName : '',
-									preload: true
+									name: response.object.name,
+									size: response.object.size,
+									preload: true,
 								}
 							);
 

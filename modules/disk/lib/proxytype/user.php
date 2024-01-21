@@ -15,6 +15,8 @@ class User extends Disk
 	/** @var \Bitrix\Disk\User */
 	private $user;
 
+	private string $entityUrl = '';
+
 	/**
 	 * Potential opportunity to attach object to external entity
 	 * @return bool
@@ -25,12 +27,28 @@ class User extends Disk
 	}
 
 	/**
+	 * Sets the entity url for building url to listing folders, trashcan, etc.
+	 *
+	 * @param string $sefUrl Root url.
+	 * @return void
+	 */
+	public function setEntityUrl(string $entityUrl): void
+	{
+		$this->entityUrl = $entityUrl;
+	}
+
+	/**
 	 * Get url to view entity of storage (ex. user profile, group profile, etc)
 	 * By default: folder list
 	 * @return string
 	 */
 	public function getEntityUrl()
 	{
+		if ($this->entityUrl)
+		{
+			return $this->entityUrl;
+		}
+
 		return $this->getUser()->getDetailUrl();
 	}
 

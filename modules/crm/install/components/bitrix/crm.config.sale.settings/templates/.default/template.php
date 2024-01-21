@@ -584,7 +584,7 @@ $unSuccessFields = $settings["SORTED_FIELDS"]["UNSUCCESS_FIELDS"];
 			BX['<?=$jsClass?>'].fixFooter(this);" title="<?=$pageSettings["TITLE_FOOTER_PIN"]?>"></span>
 		<input type="submit" value="<?=GetMessage("CRM_STATUS_BUTTONS_SAVE");?>" class="
 			webform-small-button webform-small-button-accept">
-		<? $cancelOnclick = ($isSidePanel ? "BX['".$jsClass."'].statusReset();" : "BX['".$jsClass."'].statusReset();"); ?>
+		<? $cancelOnclick = "BX['".$jsClass."'].statusReset();"; ?>
 		<input type="button" value="<?=GetMessage("CRM_STATUS_BUTTONS_CANCEL");?>" class="
 			webform-small-button webform-small-button-cancel" onclick="<?=$cancelOnclick?>">
 	</div>

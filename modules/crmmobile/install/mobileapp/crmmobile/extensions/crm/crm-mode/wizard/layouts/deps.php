@@ -4,9 +4,11 @@ return [
 	'extensions' => [
 		'loc',
 		'alert',
+		'apptheme',
 		'utils/color',
 		'assets/common',
 		'layout/ui/banners',
+		'layout/ui/scroll-view',
 		'layout/ui/fields/boolean',
 
 		'crm:type',
@@ -19,7 +21,8 @@ return [
 
 	],
 	'bundle' => [
-		'./constants',
+		'./src/images',
+		'./src/constants',
 		'./mode/label',
 		'./mode/block',
 		'./mode/layout',

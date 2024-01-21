@@ -46,6 +46,20 @@ if(CModule::IncludeModule("socialnetwork"))
 {
 	$bCurrentUserIsAdmin = CSocNetUser::IsCurrentUserModuleAdmin();
 
+	$currentUserId = 0;
+	$currentUserExternalAuthId = '';
+	$bCurrentUserUserAuthorized = $GLOBALS["USER"]->IsAuthorized();
+
+	if ($bCurrentUserUserAuthorized)
+	{
+		$currentUserId = (int) $GLOBALS["USER"]->GetId();
+		$rsCurrentUser = CUser::GetByID($currentUserId);
+		if ($arCurrentUser = $rsCurrentUser->Fetch())
+		{
+			$currentUserExternalAuthId = $arCurrentUser['EXTERNAL_AUTH_ID'];
+		}
+	}
+
 	// write and close session to prevent lock;
 	session_write_close();
 
@@ -121,7 +135,7 @@ if(CModule::IncludeModule("socialnetwork"))
 	}
 */
 
-	if (!$GLOBALS["USER"]->IsAuthorized())
+	if (!$bCurrentUserUserAuthorized)
 		$arResult[0] = "*";
 	elseif (!check_bitrix_sessid())
 		$arResult[0] = "*";
@@ -232,83 +246,120 @@ if(CModule::IncludeModule("socialnetwork"))
 
 		if ($arComment = CSocNetLogComments::GetByID($comment_id))
 		{
-			$arParams["DATE_TIME_FORMAT"] = $_REQUEST["dtf"];
-
-			$dateFormated = FormatDate(
-				$GLOBALS['DB']->DateFormatToPHP(FORMAT_DATE),
-				MakeTimeStamp($arComment["LOG_DATE"])
-			);
-			$timeFormated = FormatDateFromDB($arComment["LOG_DATE"], (mb_stripos($arParams["DATE_TIME_FORMAT"], 'a') || ($arParams["DATE_TIME_FORMAT"] == 'FULL' && IsAmPmMode()) !== false ? 'H:MI T' : 'HH:MI'));
-			$dateTimeFormated = FormatDate(
-				(!empty($arParams['DATE_TIME_FORMAT']) ? ($arParams['DATE_TIME_FORMAT'] == 'FULL' ? $GLOBALS['DB']->DateFormatToPHP(str_replace(':SS', '', FORMAT_DATETIME)) : $arParams['DATE_TIME_FORMAT']) : $GLOBALS['DB']->DateFormatToPHP(FORMAT_DATETIME)),
-				MakeTimeStamp($arComment["LOG_DATE"])
-			);
-			if (strcasecmp(LANGUAGE_ID, 'EN') !== 0 && strcasecmp(LANGUAGE_ID, 'DE') !== 0)
-			{
-				$dateFormated = ToLower($dateFormated);
-				$dateTimeFormated = ToLower($dateTimeFormated);
-			}
-			// strip current year
-			if (!empty($arParams['DATE_TIME_FORMAT']) && ($arParams['DATE_TIME_FORMAT'] == 'j F Y G:i' || $arParams['DATE_TIME_FORMAT'] == 'j F Y g:i a'))
-			{
-				$dateTimeFormated = ltrim($dateTimeFormated, '0');
-				$curYear = date('Y');
-				$dateTimeFormated = str_replace(array('-'.$curYear, '/'.$curYear, ' '.$curYear, '.'.$curYear), '', $dateTimeFormated);
-			}
-
-			if (intval($arComment["USER_ID"]) > 0)
-			{
-				$arParams = array(
-					"PATH_TO_USER" => $_REQUEST["p_user"],
-					"NAME_TEMPLATE" => $_REQUEST["nt"],
-					"SHOW_LOGIN" => $_REQUEST["sl"],
-					"AVATAR_SIZE" => $as,
-					"PATH_TO_SMILE" => $_REQUEST["p_smile"]
-				);
-
-				$arUser = array(
-					"ID" => $arComment["USER_ID"],
-					"NAME" => $arComment["~CREATED_BY_NAME"],
-					"LAST_NAME" => $arComment["~CREATED_BY_LAST_NAME"],
-					"SECOND_NAME" => $arComment["~CREATED_BY_SECOND_NAME"],
-					"LOGIN" => $arComment["~CREATED_BY_LOGIN"],
-					"PERSONAL_PHOTO" => $arComment["~CREATED_BY_PERSONAL_PHOTO"],
-					"PERSONAL_GENDER" => $arComment["~CREATED_BY_PERSONAL_GENDER"],
-				);
-				$bUseLogin = $arParams["SHOW_LOGIN"] != "N" ? true : false;
-				$arCreatedBy = array(
-					"FORMATTED" => CUser::FormatName($arParams["NAME_TEMPLATE"], $arUser, $bUseLogin),
-					"URL" => CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER"], array("user_id" => $arComment["USER_ID"], "id" => $arComment["USER_ID"]))
-				);
-
-			}
-			else
-				$arCreatedBy = array("FORMATTED" => GetMessage("SONET_LOG_CREATED_BY_ANONYMOUS"));
-
-			$arTmpCommentEvent = array(
-				"LOG_DATE" => $arComment["LOG_DATE"],
-				"LOG_DATE_FORMAT" => $arComment["LOG_DATE_FORMAT"],
-				"LOG_DATE_DAY" => ConvertTimeStamp(MakeTimeStamp($arComment["LOG_DATE"]), "SHORT"),
-				"LOG_TIME_FORMAT" => $timeFormated,
-				"MESSAGE" => $arComment["MESSAGE"],
-				"MESSAGE_FORMAT" => $arComment["~MESSAGE"],
-				"CREATED_BY" => $arCreatedBy,
-				"AVATAR_SRC" => CSocNetLogTools::FormatEvent_CreateAvatar($arUser, $arParams, ""),
-				"USER_ID" => $arComment["USER_ID"]
-			);
-
-			$arEventTmp = CSocNetLogTools::FindLogCommentEventByID($arComment["EVENT_ID"]);
 			if (
-				$arEventTmp
-				&& array_key_exists("CLASS_FORMAT", $arEventTmp)
-				&& array_key_exists("METHOD_FORMAT", $arEventTmp)
+				mb_strpos($arComment["ENTITY_TYPE"], "CRM") === 0
+				&& $currentUserExternalAuthId !== 'email'
+				&& IsModuleInstalled("crm")
 			)
 			{
-				$arFIELDS_FORMATTED = call_user_func(array($arEventTmp["CLASS_FORMAT"], $arEventTmp["METHOD_FORMAT"]), $arComment, $arParams);
-				$arTmpCommentEvent["MESSAGE_FORMAT"] = htmlspecialcharsback($arFIELDS_FORMATTED["EVENT_FORMATTED"]["MESSAGE"]);
+				$arListParams = array("IS_CRM" => "Y", "CHECK_CRM_RIGHTS" => "Y");
+			}
+			else
+			{
+				$arListParams = array("CHECK_RIGHTS" => "Y", "USE_SUBSCRIBE" => "N");
 			}
 
-			$arResult["arCommentFormatted"] = $arTmpCommentEvent;
+			if (
+				(int)$arComment["LOG_ID"] > 0
+				&& (
+					$rsLog = CSocNetLog::GetList(
+						array(),
+						array("ID" => $arComment["LOG_ID"]),
+						false,
+						false,
+						array("ID", "EVENT_ID"),
+						$arListParams
+					)
+				)
+				&& ($arLog = $rsLog->Fetch())
+			)
+			{
+				$arParams["DATE_TIME_FORMAT"] = $_REQUEST["dtf"];
+
+				$dateFormated = FormatDate(
+					$GLOBALS['DB']->DateFormatToPHP(FORMAT_DATE),
+					MakeTimeStamp($arComment["LOG_DATE"])
+				);
+				$timeFormated = FormatDateFromDB($arComment["LOG_DATE"], (mb_stripos($arParams["DATE_TIME_FORMAT"], 'a') || ($arParams["DATE_TIME_FORMAT"] == 'FULL' && IsAmPmMode()) !== false ? 'H:MI T' : 'HH:MI'));
+				$dateTimeFormated = FormatDate(
+					(!empty($arParams['DATE_TIME_FORMAT']) ? ($arParams['DATE_TIME_FORMAT'] == 'FULL' ? $GLOBALS['DB']->DateFormatToPHP(str_replace(':SS', '', FORMAT_DATETIME)) : $arParams['DATE_TIME_FORMAT']) : $GLOBALS['DB']->DateFormatToPHP(FORMAT_DATETIME)),
+					MakeTimeStamp($arComment["LOG_DATE"])
+				);
+				if (strcasecmp(LANGUAGE_ID, 'EN') !== 0 && strcasecmp(LANGUAGE_ID, 'DE') !== 0)
+				{
+					$dateFormated = ToLower($dateFormated);
+					$dateTimeFormated = ToLower($dateTimeFormated);
+				}
+				// strip current year
+				if (!empty($arParams['DATE_TIME_FORMAT']) && ($arParams['DATE_TIME_FORMAT'] == 'j F Y G:i' || $arParams['DATE_TIME_FORMAT'] == 'j F Y g:i a'))
+				{
+					$dateTimeFormated = ltrim($dateTimeFormated, '0');
+					$curYear = date('Y');
+					$dateTimeFormated = str_replace(array('-'.$curYear, '/'.$curYear, ' '.$curYear, '.'.$curYear), '', $dateTimeFormated);
+				}
+
+				if (intval($arComment["USER_ID"]) > 0)
+				{
+					$arParams = array(
+						"PATH_TO_USER" => $_REQUEST["p_user"],
+						"NAME_TEMPLATE" => $_REQUEST["nt"],
+						"SHOW_LOGIN" => $_REQUEST["sl"],
+						"AVATAR_SIZE" => $as,
+						"PATH_TO_SMILE" => $_REQUEST["p_smile"]
+					);
+
+					$arUser = array(
+						"ID" => $arComment["USER_ID"],
+						"NAME" => $arComment["~CREATED_BY_NAME"],
+						"LAST_NAME" => $arComment["~CREATED_BY_LAST_NAME"],
+						"SECOND_NAME" => $arComment["~CREATED_BY_SECOND_NAME"],
+						"LOGIN" => $arComment["~CREATED_BY_LOGIN"],
+						"PERSONAL_PHOTO" => $arComment["~CREATED_BY_PERSONAL_PHOTO"],
+						"PERSONAL_GENDER" => $arComment["~CREATED_BY_PERSONAL_GENDER"],
+					);
+					$bUseLogin = $arParams["SHOW_LOGIN"] != "N" ? true : false;
+					$arCreatedBy = array(
+						"FORMATTED" => CUser::FormatName($arParams["NAME_TEMPLATE"], $arUser, $bUseLogin),
+						"URL" => CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER"], array("user_id" => $arComment["USER_ID"], "id" => $arComment["USER_ID"]))
+					);
+
+				}
+				else
+				{
+					$arCreatedBy = array("FORMATTED" => GetMessage("SONET_LOG_CREATED_BY_ANONYMOUS"));
+				}
+
+				$arTmpCommentEvent = array(
+					"LOG_DATE" => $arComment["LOG_DATE"],
+					"LOG_DATE_FORMAT" => $arComment["LOG_DATE_FORMAT"],
+					"LOG_DATE_DAY" => ConvertTimeStamp(MakeTimeStamp($arComment["LOG_DATE"]), "SHORT"),
+					"LOG_TIME_FORMAT" => $timeFormated,
+					"MESSAGE" => $arComment["MESSAGE"],
+					"MESSAGE_FORMAT" => $arComment["~MESSAGE"],
+					"CREATED_BY" => $arCreatedBy,
+					"AVATAR_SRC" => CSocNetLogTools::FormatEvent_CreateAvatar($arUser, $arParams, ""),
+					"USER_ID" => $arComment["USER_ID"]
+				);
+
+				$arEventTmp = CSocNetLogTools::FindLogCommentEventByID($arComment["EVENT_ID"]);
+				if (
+					$arEventTmp
+					&& array_key_exists("CLASS_FORMAT", $arEventTmp)
+					&& array_key_exists("METHOD_FORMAT", $arEventTmp)
+				)
+				{
+					$arFIELDS_FORMATTED = call_user_func(
+						array($arEventTmp["CLASS_FORMAT"], $arEventTmp["METHOD_FORMAT"]),
+						$arComment,
+						$arParams
+					);
+					$arTmpCommentEvent["MESSAGE_FORMAT"] = htmlspecialcharsback(
+						$arFIELDS_FORMATTED["EVENT_FORMATTED"]["MESSAGE"]
+					);
+				}
+
+				$arResult["arCommentFormatted"] = $arTmpCommentEvent;
+			}
 		}
 	}
 	elseif ($action == "get_comments")

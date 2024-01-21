@@ -67,7 +67,7 @@ jn.define('catalog/store/product-list', (require, exports, module) => {
 				restrictedProductTypes: this.state.catalog.restricted_product_types,
 				basePriceId: this.state.catalog.base_price_id,
 				currency: this.state.catalog.currency_id,
-				enableCreation: !!this.props.permissions.catalog_product_add,
+				enableCreation: Boolean(this.props.permissions.catalog_product_add),
 				onCreate: (productName) => this.wizardAdapter.openWizard(productName),
 				onSelect: (productId) => {
 					this.addProductById(productId);
@@ -250,8 +250,8 @@ jn.define('catalog/store/product-list', (require, exports, module) => {
 						handler(ref);
 					}
 				},
-				productRow: productRow,
-				index: index,
+				productRow,
+				index,
 				document: this.state.document,
 				catalog: this.state.catalog,
 				permissions: this.props.permissions,

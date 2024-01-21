@@ -1,5 +1,4 @@
 (() => {
-
 	/**
 	 * @class UI.ColorMenu.Colors
 	 */
@@ -35,6 +34,8 @@
 		'#84a4d5',
 		'#000000',
 	];
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @class UI.ColorMenu
@@ -50,6 +51,36 @@
 			};
 		}
 
+		static open(params, parentWidget)
+		{
+			return new Promise((resolve, reject) => {
+				parentWidget
+					.openWidget('layout', this.getWidgetParams())
+					.then((layout) => {
+						layout.enableNavigationBarBorder(false);
+						layout.showComponent(new this({ layoutWidget: layout, ...params }));
+						resolve(layout);
+					})
+					.catch((error) => {
+						console.error(error);
+						reject(error);
+					});
+			});
+		}
+
+		static getWidgetParams()
+		{
+			return {
+				modal: true,
+				backgroundColor: AppTheme.colors.bgSecondary,
+				backdrop: {
+					navigationBarColor: AppTheme.colors.bgSecondary,
+					mediumPositionPercent: 65,
+					horizontalSwipeAllowed: false,
+				},
+			};
+		}
+
 		componentDidMount()
 		{
 			if (this.props.layoutWidget)
@@ -60,11 +91,11 @@
 					{
 						name: BX.message('COLOR_MENU_NAVIGATION_BUTTON'),
 						type: 'text',
-						color: '#2066b0',
+						color: AppTheme.colors.accentMainLinks,
 						callback: () => {
 							this.onChangeColor().then(() => {
 								this.props.layoutWidget.close();
-							});
+							}).catch(console.error);
 						},
 					},
 				]);
@@ -99,7 +130,7 @@
 				{
 					style: styles.colorList,
 				},
-				...Colors.map(color => this.renderColorPalette(color)),
+				...Colors.map((color) => this.renderColorPalette(color)),
 			);
 		}
 
@@ -159,7 +190,7 @@
 			paddingTop: 14,
 			paddingBottom: 18,
 			borderRadius: 12,
-			backgroundColor: '#ffffff',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 		},
 		colorList: {
 			marginBottom: 24,
@@ -169,9 +200,9 @@
 		},
 		colorPaletteWrapper: (currentColor, color) => ({
 			marginRight: 4,
-			backgroundColor: '#ffffff',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			borderWidth: 3,
-			borderColor: currentColor === color ? '#2fc6f6' : '#ffffff',
+			borderColor: currentColor === color ? AppTheme.colors.accentBrandBlue : AppTheme.colors.bgContentPrimary,
 			borderRadius: 27,
 			justifyContent: 'center',
 			alignItems: 'center',
@@ -189,12 +220,12 @@
 			paddingRight: 18,
 		},
 		colorDetailTitle: {
-			color: '#525c69',
+			color: AppTheme.colors.base2,
 			fontSize: 13,
 			marginBottom: 6,
 		},
 		colorDetailContainer: {
-			backgroundColor: '#eeeef0',
+			backgroundColor: AppTheme.colors.base7,
 			borderRadius: 4,
 			padding: 6,
 			flexDirection: 'row',
@@ -207,12 +238,12 @@
 			marginRight: 9,
 		}),
 		colorDetailGrid: {
-			color: '#3333334d',
+			color: AppTheme.colors.base1,
 			fontSize: 18,
 			marginRight: 6,
 		},
 		colorDetailText: {
-			color: '#333333',
+			color: AppTheme.colors.base1,
 			fontSize: 18,
 		},
 	};

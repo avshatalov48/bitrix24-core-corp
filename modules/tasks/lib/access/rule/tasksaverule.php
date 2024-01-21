@@ -179,7 +179,7 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		{
 			$auditors = $this->newTask->getMembers(RoleDictionary::ROLE_AUDITOR);
 
-			return $this->controller->check(ActionDictionary::ACTION_TASK_AUDITORS_ADD, $this->newTask, $auditors);
+			return $this->controller->check(ActionDictionary::ACTION_TASK_ADD_AUDITORS, $this->newTask, $auditors);
 		}
 
 		$auditors = array_diff(
@@ -187,6 +187,6 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			$this->oldTask->getMembers(RoleDictionary::ROLE_AUDITOR),
 		);
 
-		return $this->controller->check(ActionDictionary::ACTION_TASK_AUDITORS_ADD, $this->oldTask, $auditors);
+		return $this->controller->check(ActionDictionary::ACTION_TASK_ADD_AUDITORS, $this->oldTask, $auditors);
 	}
 }

@@ -1,6 +1,7 @@
 (() => {
-
-	const { ButtonsToolbar } = jn.require('layout/ui/buttons-toolbar');
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
+	const { ButtonsToolbar } = require('layout/ui/buttons-toolbar');
 
 	class ProjectEdit extends LayoutComponent
 	{
@@ -20,7 +21,7 @@
 			let avatarPreview = null;
 			if (props.avatar)
 			{
-				avatarPreview = (props.avatar.indexOf('http') !== 0 ? `${currentDomain}${props.avatar}` : props.avatar);
+				avatarPreview = (props.avatar.indexOf('http') === 0 ? props.avatar : `${currentDomain}${props.avatar}`);
 			}
 
 			this.layoutWidget = null;
@@ -33,7 +34,7 @@
 				description: props.description,
 				avatarId: props.avatarId,
 				avatarFileId: null,
-				avatarPreview: avatarPreview,
+				avatarPreview,
 				avatarSelected: (props.avatar ? 'loaded' : (props.avatarType || 'folder')),
 				avatarIsLoading: false,
 				avatarDefaultTypes: props.avatarTypes,
@@ -58,7 +59,7 @@
 		getGuid()
 		{
 			const s4 = function() {
-				return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+				return Math.floor((1 + Math.random()) * 0x10000).toString(16).slice(1);
 			};
 
 			return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
@@ -71,12 +72,12 @@
 					resizableByKeyboard: true,
 					style: {
 						flex: 1,
-						backgroundColor: '#eef2f4',
+						backgroundColor: AppTheme.colors.bgPrimary,
 					},
 				},
 				Text({
 					style: {
-						color: '#333333',
+						color: AppTheme.colors.base1,
 						fontSize: 18,
 						fontWeight: '500',
 						marginLeft: 17,
@@ -97,7 +98,7 @@
 					View(
 						{
 							style: {
-								backgroundColor: '#ffffff',
+								backgroundColor: AppTheme.colors.bgContentPrimary,
 								borderRadius: 12,
 								paddingVertical: 5,
 								paddingHorizontal: 15,
@@ -108,7 +109,7 @@
 							fields: [
 								new ProjectNameField({
 									value: this.state.name,
-									onChange: text => this.setState({name: text}),
+									onChange: (text) => this.setState({ name: text }),
 								}),
 								new ProjectAvatarField({
 									userId: this.state.userId,
@@ -129,14 +130,14 @@
 								}),
 								new ProjectDescriptionField({
 									value: this.state.description,
-									onChange: text => this.setState({description: text}),
+									onChange: (text) => this.setState({ description: text }),
 								}),
 								(this.state.subjects.length > 1 && new ProjectSubjectField({
 									readOnly: false,
 									value: this.state.subject,
 									parentWidget: this.layoutWidget,
 									subjects: this.state.subjects,
-									onChange: (id, title) => this.setState({subject: id}),
+									onChange: (id, title) => this.setState({ subject: id }),
 								})),
 								new ProjectOwnerField({
 									readOnly: false,
@@ -158,42 +159,42 @@
 								}),
 								new ProjectModeratorsField({
 									readOnly: false,
-									value: this.state.moderatorsData.map(item => item.id),
+									value: this.state.moderatorsData.map((item) => item.id),
 									moderatorsData: this.state.moderatorsData,
 									parentWidget: this.layoutWidget,
 									onChange: (moderatorsIds, moderatorsData) => {
 										if (moderatorsIds)
 										{
-											this.setState({moderatorsData});
+											this.setState({ moderatorsData });
 										}
 									},
 								}),
 								new ProjectTypeField({
 									value: this.state.type,
 									parentWidget: this.layoutWidget,
-									onChange: (id, title) => this.setState({type: id}),
+									onChange: (id, title) => this.setState({ type: id }),
 								}),
 								new ProjectDateStartField({
 									readOnly: false,
 									value: this.state.dateStart,
-									onChange: date => this.setState({dateStart: date}),
+									onChange: (date) => this.setState({ dateStart: date }),
 								}),
 								new ProjectDateFinishField({
 									readOnly: false,
 									value: this.state.dateFinish,
-									onChange: date => this.setState({dateFinish: date}),
+									onChange: (date) => this.setState({ dateFinish: date }),
 								}),
 								new ProjectTagsField({
 									readOnly: false,
 									value: this.state.tags,
 									projectId: this.state.id,
 									parentWidget: this.layoutWidget,
-									onChange: tags => this.setState({tags}),
+									onChange: (tags) => this.setState({ tags }),
 								}),
 								new ProjectInitiatePermsField({
 									value: this.state.initiatePerms,
 									parentWidget: this.layoutWidget,
-									onChange: (id, title) => this.setState({initiatePerms: id}),
+									onChange: (id, title) => this.setState({ initiatePerms: id }),
 								}),
 							],
 						}),
@@ -224,37 +225,37 @@
 					text: BX.message('MOBILE_LAYOUT_PROJECT_EDIT_ERROR_NO_TITLE'),
 					hideAfter: 3000,
 				});
+
 				return;
 			}
+
 			if (this.state.avatarSelected === 'loaded' && this.state.avatarIsLoading)
 			{
 				Notify.showIndicatorError({
 					text: BX.message('MOBILE_LAYOUT_PROJECT_EDIT_ERROR_AVATAR_IS_UPLOADING'),
 					hideAfter: 3000,
 				});
+
 				return;
 			}
 
 			Notify.showIndicatorLoading();
 			Action.save(this.state, this.ownerId)
 				.then(
-					(response) => this.close(),
+					() => this.close(),
 					(response) => {
 						Notify.showIndicatorError({
 							text: response.error.description,
 							hideAfter: 3000,
 						});
-					}
+					},
 				)
-				.catch((response) => {
-					console.log(response);
-
+				.catch(() => {
 					Notify.showIndicatorError({
 						text: 'Something goes wrong',
 						hideAfter: 3000,
 					});
-				})
-			;
+				});
 		}
 
 		onCancelClick()
@@ -262,12 +263,13 @@
 			this.close();
 		}
 
-		close(callback = () => {})
+		close(callback = () => {
+		})
 		{
 			const resultCallback = () => {
 				callback();
-				BX.onCustomEvent('ProjectEdit:close', [{id: this.state.id}]);
-			}
+				BX.onCustomEvent('ProjectEdit:close', [{ id: this.state.id }]);
+			};
 
 			if (this.layoutWidget)
 			{
@@ -327,16 +329,16 @@
 				Action.saveProjectFields(fields).then(
 					(response) => {
 						Action.saveModerators(fields).then(
-							(response) => {
+							() => {
 								Action.saveOwner(fields, ownerId).then(
-									response => resolve(),
-									response => reject(response)
-								);
+									() => resolve(),
+									(response) => reject(response),
+								).catch(console.error);
 							},
-							response => reject(response)
+							() => reject(response),
 						);
 					},
-					response => reject(response)
+					(response) => reject(response),
 				);
 			});
 		}
@@ -345,8 +347,8 @@
 		{
 			return new Promise((resolve, reject) => {
 				const isCustomAvatarSelected = (fields.avatarSelected === 'loaded');
-				const isCustomAvatarLoaded = !!fields.avatarFileId;
-				const isCustomAvatarExisted = !!fields.avatarId;
+				const isCustomAvatarLoaded = Boolean(fields.avatarFileId);
+				const isCustomAvatarExisted = Boolean(fields.avatarId);
 				let imageFileId = null;
 
 				if (isCustomAvatarSelected)
@@ -362,33 +364,31 @@
 				}
 
 				(new RequestExecutor('sonet_group.update', {
-					...{
-						GROUP_ID: fields.id,
-						NAME: fields.name,
-						DESCRIPTION: fields.description,
-						IMAGE_FILE_ID: imageFileId,
-						AVATAR_TYPE: (isCustomAvatarSelected ? null : fields.avatarSelected),
-						SUBJECT_ID: fields.subject,
-						PROJECT_DATE_START: (fields.dateStart ? new Date(fields.dateStart * 1000).toISOString() : null),
-						PROJECT_DATE_FINISH: (fields.dateFinish ? new Date(fields.dateFinish * 1000).toISOString(): null),
-						INITIATE_PERMS: fields.initiatePerms,
-						KEYWORDS: fields.tags.join(','),
-					},
+
+					GROUP_ID: fields.id,
+					NAME: fields.name,
+					DESCRIPTION: fields.description,
+					IMAGE_FILE_ID: imageFileId,
+					AVATAR_TYPE: (isCustomAvatarSelected ? null : fields.avatarSelected),
+					SUBJECT_ID: fields.subject,
+					PROJECT_DATE_START: (fields.dateStart ? new Date(fields.dateStart * 1000).toISOString() : null),
+					PROJECT_DATE_FINISH: (fields.dateFinish ? new Date(fields.dateFinish * 1000).toISOString() : null),
+					INITIATE_PERMS: fields.initiatePerms,
+					KEYWORDS: fields.tags.join(','),
 					...Action.typeToFields(fields.type),
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response)
-					)
-				;
+						(response) => resolve(response),
+						(response) => reject(response),
+					).catch(console.error);
 			});
 		}
 
 		static saveModerators(fields)
 		{
 			return new Promise((resolve, reject) => {
-				const moderatorsIds = fields.moderatorsData.map(item => item.id);
+				const moderatorsIds = fields.moderatorsData.map((item) => item.id);
 
 				(new RequestExecutor('socialnetwork.api.usertogroup.setModerators', {
 					groupId: fields.id,
@@ -396,10 +396,9 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response)
-					)
-				;
+						(response) => resolve(response),
+						(response) => reject(response),
+					).catch(console.error);
 			});
 		}
 
@@ -409,6 +408,7 @@
 				if (ownerId === fields.ownerData.id)
 				{
 					resolve();
+
 					return;
 				}
 
@@ -418,10 +418,9 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response)
-					)
-				;
+						(response) => resolve(response),
+						(response) => reject(response),
+					).catch(console.error);
 			});
 		}
 
@@ -469,7 +468,7 @@
 					projectEdit.layoutWidget = layoutWidget;
 					layoutWidget.showComponent(projectEdit);
 				},
-				onError: error => console.log(error),
+				onError: console.error,
 			};
 
 			if (parentWidget)

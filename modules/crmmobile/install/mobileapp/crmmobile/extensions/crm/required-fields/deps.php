@@ -1,8 +1,9 @@
 <?php
 return [
 	'extensions' => [
-		'haptics',
 		'loc',
+		'haptics',
+		'apptheme',
 		'layout/ui/entity-editor/manager',
 		'crm:required-fields/required-backdrop'
 	],

@@ -2,6 +2,7 @@
  * @module catalog/store/product-list/services/wizard-adapter
  */
 jn.define('catalog/store/product-list/services/wizard-adapter', (require, exports, module) => {
+	const { Random } = require('utils/random');
 	const { StoreProductRow } = require('catalog/store/product-list/model');
 
 	/**
@@ -9,7 +10,7 @@ jn.define('catalog/store/product-list/services/wizard-adapter', (require, export
 	 */
 	class StoreProductListWizardAdapter
 	{
-		constructor({root, onUpdate})
+		constructor({ root, onUpdate })
 		{
 			/** @type StoreProductList */
 			this.root = root;
@@ -43,7 +44,7 @@ jn.define('catalog/store/product-list/services/wizard-adapter', (require, export
 			};
 
 			BX.ajax.runAction(action, queryConfig)
-				.then(response => {
+				.then((response) => {
 					const item = response.data;
 					item.justAdded = true;
 					item.wizardId = wizardId;
@@ -68,7 +69,7 @@ jn.define('catalog/store/product-list/services/wizard-adapter', (require, export
 
 					this.isFirstStep = false;
 				})
-				.catch(err => {
+				.catch((err) => {
 					this.isFirstStep = false;
 					console.error(err);
 					ErrorNotifier.showError(BX.message('CSPL_UPDATE_TAB_ERROR'));
@@ -82,13 +83,13 @@ jn.define('catalog/store/product-list/services/wizard-adapter', (require, export
 			ComponentHelper.openLayout({
 				name: 'catalog:catalog.product.wizard',
 				componentParams: {
-					mode: 'new',  // mode: new|existed
-					type: 'store',  // type: store|crm
+					mode: 'new', // mode: new|existed
+					type: 'store', // type: store|crm
 					entityData: { // some initial product data
-						'DOCUMENT_CURRENCY': this.root.getDocumentCurrency(),
-						'DOCUMENT_TYPE': this.root.state.document ? this.root.state.document.type : '',
-						'NAME': defaultProductName,
-						'WIZARD_UNIQID': Random.getString(),
+						DOCUMENT_CURRENCY: this.root.getDocumentCurrency(),
+						DOCUMENT_TYPE: this.root.state.document ? this.root.state.document.type : '',
+						NAME: defaultProductName,
+						WIZARD_UNIQID: Random.getString(),
 					},
 				},
 				widgetParams: {
@@ -98,15 +99,16 @@ jn.define('catalog/store/product-list/services/wizard-adapter', (require, export
 					backdrop: {
 						horizontalSwipeAllowed: false,
 						bounceEnable: true,
-						showOnTop: true
+						showOnTop: true,
 					},
-				}
+				},
 			});
 		}
 
 		on(eventName, callback)
 		{
 			BX.addCustomEvent(eventName, callback);
+
 			return this;
 		}
 	}

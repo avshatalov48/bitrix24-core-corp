@@ -1,4 +1,8 @@
-<?
+<?php
 return [
-	"recipient"
+	'extensions' => [
+		'apptheme',
+		'recipient',
+		'utils/color',
+	],
 ];

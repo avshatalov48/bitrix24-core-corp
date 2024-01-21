@@ -226,6 +226,7 @@ class TaskProvider
 
 		$navNum = null;
 		$cnt = null;
+
 		// this is a query for subtasks on the task view page
 		if ($this->isLimitQuery())
 		{
@@ -252,21 +253,33 @@ class TaskProvider
 			$query->setOffset(($page - 1) * $pageSize);
 		}
 
-		try
+		if (
+			!is_null($cnt)
+			&& (int)$cnt === 0
+		)
 		{
-			$list = new TaskList();
-			$tasks = $list->getList($query);
-			$dbResult = $list->getLastDbResult();
+			$tasks = [];
+			$dbResult = null;
 		}
-		catch (\Exception $e)
+		else
 		{
-			throw new \TasksException($e->getMessage(), \TasksException::TE_SQL_ERROR);
+			try
+			{
+				$list = new TaskList();
+				$tasks = $list->getList($query);
+				$dbResult = $list->getLastDbResult();
+			}
+			catch (\Exception $e)
+			{
+				throw new \TasksException($e->getMessage(), \TasksException::TE_SQL_ERROR);
+			}
 		}
 
 		$tasks = $this->prepareOrmData($tasks);
 
 		$result = new CDBResult($dbResult);
 		$result->InitFromArray($tasks);
+		$result->InitNavStartVars($pageSize, false, $page);
 		$result->NavPageNomer = $page;
 		$result->PAGEN = $page;
 		$result->NavRecordCount = $cnt;
@@ -1161,6 +1174,7 @@ class TaskProvider
 				end
 			",
 			"SCENARIO_NAME" => "SCR.SCENARIO",
+			'IS_REGULAR' => 'IS_REGULAR',
 		];
 
 		if ($this->userId)
@@ -1381,6 +1395,14 @@ class TaskProvider
 			&& is_array($this->arParams['NAV_PARAMS'])
 		)
 		{
+			if (
+				array_key_exists('__calculateTotalCount', $this->arParams['NAV_PARAMS'])
+				&& $this->arParams['NAV_PARAMS']['__calculateTotalCount'] === false
+			)
+			{
+				return false;
+			}
+
 			if ((int)($this->arParams['NAV_PARAMS']['nTopCount'] ?? 0)> 0)
 			{
 				return false;

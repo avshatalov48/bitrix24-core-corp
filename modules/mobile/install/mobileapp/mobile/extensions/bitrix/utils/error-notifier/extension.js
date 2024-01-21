@@ -1,5 +1,4 @@
-(() =>
-{
+(() => {
 	/**
 	 * @class ErrorNotifier
 	 */
@@ -13,18 +12,18 @@
 				textBefore,
 				addDefaultIfEmpty,
 				defaultErrorText,
-				title
+				title,
 			} = options;
 
-			if (!errors.length && addDefaultIfEmpty === true)
+			if (errors.length === 0 && addDefaultIfEmpty === true)
 			{
 				errors.push({
-					message: (defaultErrorText || BX.message('UTILS_ERROR_NOTIFIER_DEFAULT_ERROR'))
+					message: (defaultErrorText || BX.message('UTILS_ERROR_NOTIFIER_DEFAULT_ERROR')),
 				});
 			}
 
 			return this.showError(
-				(textBefore ? textBefore + '\n' : '')
+				(textBefore ? `${textBefore}\n` : '')
 				+ ErrorNotifier.joinErrors(errors),
 				title || '',
 			);
@@ -41,7 +40,7 @@
 				navigator.notification.alert(
 					text,
 					() => resolve(),
-					title
+					title,
 				);
 			});
 		}

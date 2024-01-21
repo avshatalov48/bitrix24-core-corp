@@ -2,8 +2,10 @@
 
 return [
 	'extensions' => [
-		'catalog:barcode-scanner',
+		'apptheme',
 		'helpers/component',
 		'layout/ui/overlay',
+
+		'catalog:barcode-scanner',
 	],
 ];

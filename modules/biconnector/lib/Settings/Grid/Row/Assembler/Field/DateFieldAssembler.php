@@ -8,7 +8,6 @@ use Bitrix\Main\Type;
 
 class DateFieldAssembler extends FieldAssembler
 {
-
 	protected function prepareColumn($value)
 	{
 		if ($value instanceof Type\DateTime)

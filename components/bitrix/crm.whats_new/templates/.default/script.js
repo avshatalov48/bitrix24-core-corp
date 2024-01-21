@@ -1,3 +1,4 @@
+/* eslint-disable */
 (function (exports,main_core,main_popup,ui_buttons,main_core_events) {
 	'use strict';
 
@@ -201,6 +202,9 @@
 	        return;
 	      }
 	      this.tourPromise.then(function (exports) {
+	        if (main_popup.PopupManager && main_popup.PopupManager.isAnyPopupShown()) {
+	          return;
+	        }
 	        var Guide = exports.Guide;
 	        var guide = _this6.createGuideInstance(Guide, steps, _this6.steps.length <= 1);
 	        if (ActionViewMode.tourInstances.find(function (existedGuide) {

@@ -33,8 +33,9 @@ class Manager
 		foreach ($items as $k => $item)
 		{
 			$entityId = (int)$item['ID'];
+			$categoryId = isset($item['CATEGORY_ID']) ? (int)$item['CATEGORY_ID'] : null;
 			$block = new Block(
-				new ItemIdentifier($this->entityTypeId, $entityId),
+				new ItemIdentifier($this->entityTypeId, $entityId, $categoryId),
 				$activitiesData[$entityId] ?? null,
 				$item['EDIT'] ?? false
 			);

@@ -17,7 +17,8 @@ body.ui-action-panel-shown .pagetitle-below {
 
 .crm-activity-todo-items {
     max-height: 300px;
-    overflow: auto;
+    overflow-x: hidden;
+	padding-right: 20px;
 }
 
 .crm-kanban-popup-border {

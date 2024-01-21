@@ -324,8 +324,16 @@ export default class Marker extends Event.EventEmitter
 
 	getMarkerRootMousePosition(): {x: number, y: number}
 	{
+		if (Type.isFunction(d3.pointer))
+		{
+			const [x, y] = d3.pointer(this.getMarkerRootMouseMoveEvent(), this.getMarkerRoot().node());
+
+			return { x, y };
+		}
+
 		const [x, y] = d3.mouse(this.getMarkerRoot().node());
-		return {x, y};
+
+		return { x, y };
 	}
 
 	/** @private */
@@ -367,9 +375,20 @@ export default class Marker extends Event.EventEmitter
 		this.emit('Marker:dragStart');
 	}
 
-	/** @private */
-	onMarkerRootMouseMove()
+	setMarkerRootMouseMoveEvent(event)
 	{
+		this.cache.set('markerRootMouseMoveEvent', event);
+	}
+
+	getMarkerRootMouseMoveEvent()
+	{
+		return this.cache.get('markerRootMouseMoveEvent');
+	}
+
+	/** @private */
+	onMarkerRootMouseMove(event)
+	{
+		this.setMarkerRootMouseMoveEvent(event);
 		const {x, y} = this.getMarkerRootMousePosition();
 
 		this.getMarkerLine()

@@ -1,5 +1,6 @@
 /* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-pseudo-private */
+/* eslint-disable no-underscore-dangle */
+/* eslint-disable @bitrix24/bitrix24-rules/no-pseudo-private */
 
 /**
  * @module statemanager/vuex-manager/vuex-manager

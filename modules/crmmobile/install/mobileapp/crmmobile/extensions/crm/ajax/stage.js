@@ -20,6 +20,11 @@ jn.define('crm/ajax/stage', (require, exports, module) => {
 			return 'crmmobile.Stage';
 		}
 
+		getTtl()
+		{
+			return 7 * 24 * 3600; // 7 days
+		}
+
 		/**
 		 * @param {Number} entityTypeId
 		 * @param {Number} categoryId

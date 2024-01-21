@@ -45,7 +45,7 @@
 						],
 						parentWidget: this.props.parentWidget,
 					},
-				})
+				}),
 			);
 		}
 	}

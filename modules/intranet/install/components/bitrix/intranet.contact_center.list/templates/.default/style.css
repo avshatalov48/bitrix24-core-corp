@@ -414,3 +414,15 @@
 	color: #A8ADB4;
 	border-bottom: dashed 1px;
 }
+
+.intranet-contact-center-extremist-organization-label {
+	color: #A8ADB4;
+	width: 50%;
+	float: left;
+	margin-top: 29px;
+	margin-bottom: 19px;
+	display: flex;
+}
+.bitrix24-light-theme .no-background .intranet-contact-center-extremist-organization-label {
+	color: #fff;
+}

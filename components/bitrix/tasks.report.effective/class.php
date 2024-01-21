@@ -7,6 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\UI\Filter;
+use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Internals\Effective;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
@@ -129,6 +130,18 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 		}
 
 		return $errors->checkNoFatals();
+	}
+
+	protected static function checkIfToolAvailable(array &$arParams, array &$arResult, Collection $errors, array $auxParams): void
+	{
+		parent::checkIfToolAvailable($arParams, $arResult, $errors, $auxParams);
+
+		if (!$arResult['IS_TOOL_AVAILABLE'])
+		{
+			return;
+		}
+
+		$arResult['IS_TOOL_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['effective']);
 	}
 
 	protected function checkParameters()

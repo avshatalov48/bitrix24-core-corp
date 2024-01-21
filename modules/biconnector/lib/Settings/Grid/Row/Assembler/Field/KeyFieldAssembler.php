@@ -37,12 +37,12 @@ class KeyFieldAssembler extends FieldAssembler
 				$key .= LANGUAGE_ID;
 			}
 
-			$result = "
-				<a onclick='BX.BIConnector.KeysGrid.copyKey(this)' style='text-decoration: none' class='ui-btn ui-btn-xs ui-btn-light-border ui-btn-round'>
-					{$text}
-					<input data-key-id='' type='hidden' value='{$key}'/>
+			$result = '
+				<a onclick="BX.BIConnector.KeysGrid.copyKey(this)" style="text-decoration: none" class="ui-btn ui-btn-xs ui-btn-light-border ui-btn-round">
+					' . $text . '
+					<input data-key-id="" type="hidden" value="' . $key . '"/>
 				</a>
-			";
+			';
 
 			$row['columns'][$columnId] = $result;
 		}

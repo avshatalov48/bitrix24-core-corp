@@ -26,6 +26,13 @@ interface ChatBot
 	public static function unRegister();
 
 	/**
+	 * Is bot enabled.
+	 *
+	 * @return bool
+	 */
+	public static function isEnabled(): bool;
+
+	/**
 	 * Returns registered bot Id.
 	 *
 	 * @return int

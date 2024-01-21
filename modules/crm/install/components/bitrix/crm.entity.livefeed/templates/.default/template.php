@@ -1,6 +1,10 @@
 <?php
+
+use Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 global $APPLICATION;
+\Bitrix\Main\UI\Extension::load('crm.livefeed.disable-alert');
 $canEdit = $arResult['CAN_EDIT'];
 $entityTypeID = $arResult['ENTITY_TYPE_ID'];
 $entityID = $arResult['ENTITY_ID'];
@@ -36,7 +40,11 @@ if($arResult['ENABLE_ACTIVITY_ADD'] || $arResult['SHOW_ACTIVITIES']):
 	);
 endif;
 
-?><div class="crm-feed-wrap">
+if (AvailabilityHelper::isShowAlert()): ?>
+	<div class="<?=AvailabilityHelper::ALERT_SELECTOR_CLASS?>"></div>
+<?php endif; ?>
+
+<div class="crm-feed-wrap">
 <div class="crm-feed-right-side"><?
 if($arResult['SHOW_ACTIVITIES']):
 	$APPLICATION->IncludeComponent(
@@ -161,25 +169,46 @@ $APPLICATION->IncludeComponent(
 	null,
 	array('HIDE_ICONS' => 'Y')
 );
-?></div></div><?
-if($arResult['ENABLE_ACTIVITY_ADD']):
-?><script type="text/javascript">
-	BX.ready(
-		function()
-		{
-			var uid = "<?=CUtil::JSEscape($UID)?>";
-			BX.CrmEntityLiveFeed.create(
-				uid,
-				{
-					"prefix": "<?=CUtil::JSEscape($prefix)?>",
-					"eventEditorId": "<?=CUtil::JSEscape($arResult['SL_EVENT_EDITOR_UID'])?>",
-					"activityEditorId": "<?=CUtil::JSEscape($activityEditorID)?>",
-					"formName": "bxForm_<?=$arResult['FORM_ID']?>",
-					"clientTemplate": "<?=GetMessageJS('CRM_ENTITY_LF_ACTIVITY_CLIENT_INFO')?>",
-					"referenceTemplate": "<?=GetMessageJS('CRM_ENTITY_LF_ACTIVITY_REFERENCE_INFO')?>"
-				}
-			);
-		}
-	);
-</script><?
-endif;
+?></div></div>
+
+<?php if (AvailabilityHelper::isShowAlert()): ?>
+	<script>
+		BX.ready(
+			function ()
+			{
+				const alertContainer = document.querySelector('.<?= AvailabilityHelper::ALERT_SELECTOR_CLASS ?>');
+				const alert = new BX.Crm.Livefeed.DisableAlert({
+					alertContainer: alertContainer,
+					daysUntilDisable: <?= AvailabilityHelper::getDaysUntilDisable() ?>,
+					closeBtnCallback: () => {
+						BX.userOptions.save('crm', '<?= AvailabilityHelper::SHOW_ALERT_OPTION ?>', 'show', 'N');
+					},
+				});
+
+				alert.render();
+			}
+		);
+	</script>
+<?php endif;
+
+if($arResult['ENABLE_ACTIVITY_ADD']): ?>
+	<script type="text/javascript">
+		BX.ready(
+			function()
+			{
+				var uid = "<?=CUtil::JSEscape($UID)?>";
+				BX.CrmEntityLiveFeed.create(
+					uid,
+					{
+						"prefix": "<?=CUtil::JSEscape($prefix)?>",
+						"eventEditorId": "<?=CUtil::JSEscape($arResult['SL_EVENT_EDITOR_UID'])?>",
+						"activityEditorId": "<?=CUtil::JSEscape($activityEditorID)?>",
+						"formName": "bxForm_<?=$arResult['FORM_ID']?>",
+						"clientTemplate": "<?=GetMessageJS('CRM_ENTITY_LF_ACTIVITY_CLIENT_INFO')?>",
+						"referenceTemplate": "<?=GetMessageJS('CRM_ENTITY_LF_ACTIVITY_REFERENCE_INFO')?>"
+					}
+				);
+			}
+		);
+	</script>
+<?php endif;

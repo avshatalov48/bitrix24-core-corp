@@ -54,9 +54,9 @@ jn.define('im/messenger/controller/search/experimental/search-item', (require, e
 			return this.itemOptions.customData;
 		}
 
-		get dateUpdate()
+		get dateMessage()
 		{
-			return this.itemOptions.customData.dateUpdate;
+			return this.itemOptions.customData.dateMessage;
 		}
 	}
 

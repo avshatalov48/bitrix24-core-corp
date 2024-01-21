@@ -8,6 +8,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Restriction\AvailabilityManager;
 
 Main\Loader::includeModule('crm');
 
@@ -34,6 +35,15 @@ class CrmItemAutomation extends \Bitrix\Crm\Component\Base
 		parent::init();
 		if ($this->getErrors())
 		{
+			return;
+		}
+
+		$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+		$isAvailable = $toolsManager->checkRobotsAvailability();
+		if (!$isAvailable)
+		{
+			print AvailabilityManager::getInstance()->getRobotsInaccessibilityContent();
+
 			return;
 		}
 

@@ -2,8 +2,14 @@
  * @module im/messenger/lib/element/chat-title
  */
 jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Type } = require('type');
 	const { Loc } = require('loc');
+
+	const {
+		DialogType,
+		BotType,
+	} = require('im/messenger/const');
 	const { core } = require('im/messenger/core');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
@@ -46,6 +52,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			this.store = core.getStore();
 			this.dialogId = dialogId;
 			this.name = null;
+			this.nameColor = AppTheme.colors.base1;
 			this.description = null;
 			this.userCounter = 0;
 			this.writingList = [];
@@ -64,6 +71,10 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			this.setWritingList();
 		}
 
+		/**
+		 * @private
+		 * @param {ChatTitleOptions?} options
+		 */
 		createDialogTitle(options = {})
 		{
 			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
@@ -84,6 +95,8 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			{
 				this.description = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_GROUP');
 			}
+
+			this.createDialogNameColor(dialog);
 		}
 
 		/**
@@ -120,19 +133,98 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			{
 				this.description = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_EMPLOYEE');
 			}
+
+			this.createUserNameColor(user);
+		}
+
+		/**
+		 * @private
+		 * @param {DialoguesModelState} dialog
+		 */
+		createDialogNameColor(dialog)
+		{
+			if (dialog.extranet === true)
+			{
+				this.nameColor = AppTheme.colors.accentSoftElementOrange1;
+
+				return;
+			}
+
+			if (dialog.type === DialogType.support24Notifier)
+			{
+				this.nameColor = AppTheme.colors.accentMainLinks;
+
+				return;
+			}
+
+			if (dialog.type === DialogType.support24Question)
+			{
+				this.nameColor = AppTheme.colors.accentMainLinks;
+			}
+		}
+
+		/**
+		 * @private
+		 * @param {UsersModelState} user
+		 */
+		createUserNameColor(user)
+		{
+			if (user.extranet === true)
+			{
+				this.nameColor = AppTheme.colors.accentSoftElementOrange1;
+
+				return;
+			}
+
+			if (user.botData.type === BotType.support24)
+			{
+				this.nameColor = AppTheme.colors.accentMainLinks;
+
+				return;
+			}
+
+			if (user.network === true)
+			{
+				this.nameColor = AppTheme.colors.accentSoftElementGreen1;
+
+				return;
+			}
+
+			if (user.connector === true)
+			{
+				this.nameColor = AppTheme.colors.accentSoftElementGreen1;
+
+				return;
+			}
+
+			if (user.bot === true)
+			{
+				this.nameColor = AppTheme.colors.accentExtraPurple;
+			}
 		}
 
 		/**
 		 *
 		 * @return {ChatTitleTileParams}
 		 */
-		getTitleParams()
+		getTitleParams(options = {})
 		{
-			const titleParams = {};
+			const {
+				useTextColor = true,
+			} = options;
+
+			const titleParams = {
+				detailTextColor: AppTheme.colors.base3,
+			};
 
 			if (this.name)
 			{
 				titleParams.text = this.name;
+			}
+
+			if (useTextColor)
+			{
+				titleParams.textColor = this.getTitleColor();
 			}
 
 			if (this.type === ChatType.user && this.description)
@@ -155,6 +247,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			{
 				titleParams.detailText = this.buildWritingListText();
 				titleParams.isWriting = true;
+				titleParams.detailTextColor = AppTheme.colors.accentMainPrimaryalt;
 			}
 
 			return titleParams;
@@ -167,6 +260,11 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		getTitle()
 		{
 			return this.name;
+		}
+
+		getTitleColor()
+		{
+			return this.nameColor;
 		}
 
 		/**
@@ -217,7 +315,16 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				return text;
 			}
 
-			const firstUserName = firstUser.firstName ? firstUser.firstName : firstUser.lastName;
+			let firstUserName = firstUser.firstName ? firstUser.firstName : firstUser.lastName;
+			if (firstUserName.length < 2) // TODO this if need remove after find bug empty name
+			{
+				const indexSpace = this.writingList[0].userName.indexOf(' ');
+				if (indexSpace !== -1)
+				{
+					firstUserName = this.writingList[0].userName.slice(0, indexSpace);
+				}
+			}
+
 			if (countName === 1)
 			{
 				text = Loc.getMessage(

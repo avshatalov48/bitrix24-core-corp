@@ -1,21 +1,24 @@
-import { Vue } from 'ui.vue';
-import { VuexBuilder } from 'ui.vue.vuex';
+import { ajax as Ajax, Event, Loc, Tag, Text, Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { Loader } from 'main.loader';
+import { MenuManager, Popup } from 'main.popup';
 import { rest as Rest } from 'rest.client';
 import { Manager } from 'salescenter.manager';
-import { Loader } from 'main.loader';
-import { Type, Text, Loc, ajax as Ajax, Event, Tag } from 'main.core';
-import { EventEmitter } from 'main.core.events';
-import { MenuManager, Popup } from 'main.popup';
-import 'ui.notification';
+import { Button } from 'ui.buttons';
 import 'ui.design-tokens';
 import 'ui.fonts.opensans';
-import { ApplicationModel } from './models/application';
-import { OrderCreationModel } from './models/ordercreation';
-import { DocumentSelectorModel } from './models/document-selector';
-import { ContextDictionary } from './const/context-dictionary';
+import 'ui.notification';
+import { Vue } from 'ui.vue';
+import { VuexBuilder } from 'ui.vue.vuex';
 import Chat from './chat';
-import Deal from './deal';
+import { ContextDictionary } from './const/context-dictionary';
 import './css/component.css';
+import Deal from './deal';
+import { ApplicationModel } from './models/application';
+import { DocumentSelectorModel } from './models/document-selector';
+import { OrderCreationModel } from './models/ordercreation';
+import 'ui.icon-set.actions';
+import { MobileAppInstallPopup } from './components/deal-terminal-payment/mobile-app-install-popup'
 
 const instances = new Map();
 
@@ -329,7 +332,7 @@ export class App
 					{
 						this.$root.$app.getLoader().show(document.body);
 
-						BX.ajax.runComponentAction(
+						Ajax.runComponentAction(
 							'bitrix:salescenter.app',
 							'getComponentResult',
 							{
@@ -681,7 +684,7 @@ export class App
 
 	sendCompilationToFacebook(buttonEvent, options)
 	{
-		BX.ajax.runComponentAction(
+		Ajax.runComponentAction(
 			'bitrix:salescenter.app',
 			'getFacebookSettingsPath',
 			{
@@ -699,7 +702,7 @@ export class App
 			}
 			else
 			{
-				BX.ajax.runAction('salescenter.compilation.sendFacebookModerationWaitingNotification', {
+				Ajax.runAction('salescenter.compilation.sendFacebookModerationWaitingNotification', {
 					data: {
 						options,
 					},
@@ -782,7 +785,7 @@ export class App
 		const productIds = basketItems.map((basketItem) => {
 			return basketItem.skuId;
 		});
-		BX.ajax.runAction('salescenter.compilation.sendCompilation', {
+		Ajax.runAction('salescenter.compilation.sendCompilation', {
 			data: {
 				productIds,
 				options,
@@ -842,7 +845,7 @@ export class App
 			data.stageOnDeliveryFinished = this.stageOnDeliveryFinished;
 		}
 
-		BX.ajax.runAction('salescenter.order.createShipment', {
+		Ajax.runAction('salescenter.order.createShipment', {
 			data: {
 				basketItems: this.store.getters['orderCreation/getBasket'](),
 				options: data,
@@ -932,7 +935,7 @@ export class App
 			data.stageOnDeliveryFinished = this.stageOnDeliveryFinished;
 		}
 
-		BX.ajax.runAction('salescenter.order.createPayment', {
+		Ajax.runAction('salescenter.order.createPayment', {
 			data: {
 				basketItems: this.store.getters['orderCreation/getBasket'](),
 				options: data,
@@ -1005,6 +1008,223 @@ export class App
 		});
 	}
 
+	sendTerminalPayment(buttonEvent)
+	{
+		if (!this.isPaymentCreationAvailable)
+		{
+			this.closeApplication();
+
+			return null;
+		}
+
+		if (!this.store.getters['orderCreation/isAllowedSubmit'] || this.isProgress)
+		{
+			return null;
+		}
+
+		this.startProgress(buttonEvent);
+
+		const data = {
+			ownerTypeId: this.ownerTypeId,
+			ownerId: this.ownerId,
+			orderId: this.orderId,
+			paymentResponsibleId: this.store.getters['orderCreation/getPaymentResponsibleId'],
+			context: this.context,
+			currency: this.currencyCode,
+			assignedById: this.assignedById,
+		};
+
+		if (this.stageOnOrderPaid !== null)
+		{
+			data.stageOnOrderPaid = this.stageOnOrderPaid;
+		}
+
+		const isMobileInstalledForResponsible = this.store.getters['orderCreation/isMobileInstalledForResponsible'];
+
+		Ajax.runAction('salescenter.order.createTerminalPayment', {
+			data: {
+				basketItems: this.store.getters['orderCreation/getBasket'](),
+				options: data,
+			},
+			analyticsLabel: 'salescenterCreateTerminalPayment',
+			getParameters: {
+				context: this.context,
+			},
+		}).then((result) => {
+			this.store.dispatch('orderCreation/resetBasket');
+			this.stopProgress(buttonEvent);
+			this.slider.data.set('action', 'sendPayment');
+			this.slider.data.set('order', result.data.order);
+
+			if (result.data.deal)
+			{
+				this.slider.data.set('deal', result.data.deal);
+			}
+
+			if (result.data.entity)
+			{
+				this.slider.data.set('entity', result.data.entity);
+			}
+
+			if (isMobileInstalledForResponsible)
+			{
+				this.closeApplication();
+			}
+			else
+			{
+				this.showMobileAppInstallLinkPopup();
+			}
+
+			this.emitGlobalEvent('salescenter.app:onterminalpaymentcreated');
+		}).catch((data) => {
+			data.errors.forEach((error) => {
+				top.BX.UI.Notification.Center.notify({
+					content: Text.encode(error.message),
+				});
+			});
+			this.stopProgress(buttonEvent);
+			App.showError(data);
+
+			if (this.needCloseApplication(data.errors))
+			{
+				this.closeApplication();
+			}
+		});
+	}
+
+	showMobileAppInstallLinkPopup()
+	{
+		const responsiblePhoneNumbers = this.store.getters['orderCreation/getResponsiblePhoneNumbers'];
+
+		(new MobileAppInstallPopup({
+			sendersConfig: this.options.senders,
+			phoneNumbers: responsiblePhoneNumbers,
+			userId: this.store.getters['orderCreation/getPaymentResponsibleId'],
+			root: this,
+		})).render();
+	}
+
+	updateTerminalPayment(buttonEvent)
+	{
+		if (!this.store.getters['orderCreation/isAllowedSubmit'] || this.isProgress)
+		{
+			return null;
+		}
+
+		this.startProgress(buttonEvent);
+
+		const data = {
+			paymentResponsibleId: this.store.getters['orderCreation/getPaymentResponsibleId'],
+		};
+
+		Ajax.runAction('salescenter.order.updateTerminalPayment', {
+			data: {
+				paymentId: this.options.paymentId,
+				options: data,
+			},
+			analyticsLabel: 'salescenterUpdateTerminalPayment',
+			getParameters: {
+				context: this.context,
+			},
+		}).then((result) => {
+			this.store.dispatch('orderCreation/resetBasket');
+			this.stopProgress(buttonEvent);
+			this.slider.data.set('action', 'sendPayment');
+			this.slider.data.set('order', result.data.order);
+
+			if (result.data.deal)
+			{
+				this.slider.data.set('deal', result.data.deal);
+			}
+
+			if (result.data.entity)
+			{
+				this.slider.data.set('entity', result.data.entity);
+			}
+
+			this.closeApplication();
+			this.emitGlobalEvent('salescenter.app:onterminalpaymentupdated');
+		}).catch((data) => {
+			data.errors.forEach((error) => {
+				top.BX.UI.Notification.Center.notify({
+					content: Text.encode(error.message),
+				});
+			});
+			this.stopProgress(buttonEvent);
+			App.showError(data);
+
+			if (this.needCloseApplication(data.errors))
+			{
+				this.closeApplication();
+			}
+		});
+	}
+
+	openMobileAppPopup()
+	{
+		const popupIconClass = this.options.currentLanguage === 'ru' ? 'salescenter-popup-qr__icon --ru' : 'salescenter-popup-qr__icon';
+
+		// the mobile app popup goes here
+		const popupContent = Tag.render`
+			<div class="salescenter-popup-qr__box">
+				<div class="salescenter-popup-qr__title">${Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_TITLE')}</div>
+				<div class="salescenter-popup-qr__desc">${Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_DESC')}</div>
+				<div class="salescenter-popup-qr__content">
+					<div class="salescenter-popup-qr__code"></div>
+					<ul class="salescenter-popup-qr__list">
+						<li class="salescenter-popup-qr__list_item">${Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_LIST_ITEM_1')}</li>
+						<li class="salescenter-popup-qr__list_item">${Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_LIST_ITEM_2')}</li>
+						<li class="salescenter-popup-qr__list_item">${Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_LIST_ITEM_3')}</li>
+						<li class="salescenter-popup-qr__list_item">${Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_LIST_ITEM_4')}</li>
+					</ul>
+					<div class="salescenter-popup-qr__icon_box">
+						<div class="${popupIconClass}"></div>
+					</div>
+				</div>
+			</div>		
+		`;
+
+		const mobilePopup = new Popup({
+			className: 'salescenter-popup-qr__wrap',
+			content: popupContent,
+			overlay: true,
+			closeIcon: true,
+			maxWidth: 725,
+			autoHide: true,
+			cacheable: false,
+			buttons: [
+				new Button({
+					color: Button.Color.PRIMARY,
+					text: Loc.getMessage('SALESCENTER_JS_POPUP_CLOSE'),
+					onclick: () => {
+						mobilePopup.close();
+					},
+				}),
+				new Button({
+					color: Button.Color.LINK,
+					text: Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_BUTTON_ABOUT'),
+					onclick: () => {
+						Manager.openHowTerminalWorks();
+					},
+				}),
+			],
+		});
+
+		mobilePopup.show();
+		this.getQRCode();
+	}
+
+	getQRCode()
+	{
+		const qrNode = document.querySelector('.salescenter-popup-qr__code');
+
+		return new QRCode(qrNode, {
+			text: this.options.mobileAppLink,
+			width: 143,
+			height: 143,
+		});
+	}
+
 	needCloseApplication(errors)
 	{
 		let alwaysOpen = errors.filter(error => {
@@ -1041,7 +1261,7 @@ export class App
 			options.boundDocumentId = this.store.getters['documentSelector/getBoundDocumentId'];
 			options.selectedTemplateId = this.store.getters['documentSelector/getSelectedTemplateId'];
 		}
-		BX.ajax.runAction('salescenter.order.resendPayment', {
+		Ajax.runAction('salescenter.order.resendPayment', {
 			data: {
 				orderId: this.orderId,
 				paymentId: this.options.paymentId,
@@ -1120,7 +1340,7 @@ export class App
 
 	isPaymentMode(): boolean
 	{
-		return this.context === ContextDictionary.deal || this.context === ContextDictionary.smartInvoice;
+		return this.context === ContextDictionary.deal || this.context === ContextDictionary.smartInvoice || this.context === ContextDictionary.terminalList;
 	}
 }
 

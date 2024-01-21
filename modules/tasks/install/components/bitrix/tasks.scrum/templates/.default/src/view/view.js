@@ -117,7 +117,20 @@ export class View extends EventEmitter
 
 		if (!availableValues.has(value))
 		{
-			throw Error('Invalid parameter to set display priority');
+			throw new Error('Invalid parameter to set display priority');
+		}
+	}
+
+	changeShortView(isShortView: 'Y' | 'N')
+	{
+		const availableValues = new Set([
+			'Y',
+			'N',
+		]);
+
+		if (!availableValues.has(isShortView))
+		{
+			throw new Error('Invalid parameter to set short view');
 		}
 	}
 

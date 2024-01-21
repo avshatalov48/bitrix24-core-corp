@@ -2,26 +2,19 @@
 
 return [
 	'extensions' => [
+		'notify-manager',
 		'alert',
 		'loc',
-		'utils/array',
-		'utils/object',
-		'utils/error-notifier',
-		'utils/function',
+		'apptheme',
+		'layout/ui/stage-list-view',
 		'utils/string',
-		'layout/ui/loading-screen',
+		'require-lazy',
 
-		'crm:type',
-		'crm:assets/common',
-		'crm:assets/category',
-		'crm:loc',
 		'crm:stage-list',
-		'crm:stage-list/actions',
-		'crm:storage/category',
-		'navigation-loader',
-	],
-	'components' => [
-		'crm:crm.category.detail',
-		'crm:crm.stage.detail',
+		'crm:type',
+		'crm:loc',
+
+		'statemanager/redux/connect',
+		'crm:statemanager/redux/slices/kanban-settings',
 	],
 ];

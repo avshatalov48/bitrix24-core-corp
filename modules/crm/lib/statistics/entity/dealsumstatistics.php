@@ -67,135 +67,92 @@ class DealSumStatisticsTable  extends Entity\DataManager
 	{
 		return array('UF_SUM_1', 'UF_SUM_2', 'UF_SUM_3', 'UF_SUM_4', 'UF_SUM_5');
 	}
+
 	/**
-	* @return void
-	*/
+	 * @return void
+	 */
 	public static function upsert(array $data)
 	{
 		$connection = Main\Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
 
-		$ownerID = isset($data['OWNER_ID']) ? (int)$data['OWNER_ID'] : 0;
+		$ownerID = (int)($data['OWNER_ID'] ?? 0);
 
-		$dateField = new DatetimeField('D');
-		$created = $sqlHelper->convertToDb(isset($data['CREATED_DATE']) ? $data['CREATED_DATE'] : null, $dateField);
-		$start = $sqlHelper->convertToDb(isset($data['START_DATE']) ? $data['START_DATE'] : null, $dateField);
-		$end = $sqlHelper->convertToDb(isset($data['END_DATE']) ? $data['END_DATE'] : null, $dateField);
+		$created = $data['CREATED_DATE'] ?? null;
+		$start = $data['START_DATE'] ?? null;
+		$end = $data['END_DATE'] ?? null;
 
-		$year = isset($data['PERIOD_YEAR']) ? (int)$data['PERIOD_YEAR'] : 0;
-		$quarter = isset($data['PERIOD_QUARTER']) ? (int)$data['PERIOD_QUARTER'] : 0;
-		$month = isset($data['PERIOD_MONTH']) ? (int)$data['PERIOD_MONTH'] : 0;
-		$day = isset($data['PERIOD_DAY']) ? (int)$data['PERIOD_DAY'] : 0;
+		$year = (int)($data['PERIOD_YEAR'] ?? 0);
+		$quarter = (int)($data['PERIOD_QUARTER'] ?? 0);
+		$month = (int)($data['PERIOD_MONTH'] ?? 0);
+		$day = (int)($data['PERIOD_DAY'] ?? 0);
 
-		$categoryID = isset($data['CATEGORY_ID']) ? (int)$data['CATEGORY_ID'] : 0;
-		$userID = isset($data['RESPONSIBLE_ID']) ? (int)$data['RESPONSIBLE_ID'] : 0;
-		$isLost = isset($data['IS_LOST']) ? $sqlHelper->forSql($data['IS_LOST'], 1) : '';
-		$semanticID = isset($data['STAGE_SEMANTIC_ID']) ? $sqlHelper->forSql($data['STAGE_SEMANTIC_ID'], 3) : '';
-		$stageID = isset($data['STAGE_ID']) ? $sqlHelper->forSql($data['STAGE_ID'], 50) : '';
-		$currencyID = isset($data['CURRENCY_ID']) ? $sqlHelper->forSql($data['CURRENCY_ID'], 3) : '';
-		$sumTotal = isset($data['SUM_TOTAL']) ? (double)$data['SUM_TOTAL'] : 0.0;
-		$sum1 = isset($data['UF_SUM_1']) ? (double)$data['UF_SUM_1'] : 0.0;
-		$sum2 = isset($data['UF_SUM_2']) ? (double)$data['UF_SUM_2'] : 0.0;
-		$sum3 = isset($data['UF_SUM_3']) ? (double)$data['UF_SUM_3'] : 0.0;
-		$sum4 = isset($data['UF_SUM_4']) ? (double)$data['UF_SUM_4'] : 0.0;
-		$sum5 = isset($data['UF_SUM_5']) ? (double)$data['UF_SUM_5'] : 0.0;
-		$attr1 = isset($data['UF_ATTR_1']) ? (int)$data['UF_ATTR_1'] : 0;
+		$categoryID = (int)($data['CATEGORY_ID'] ?? 0);
+		$userID = (int)($data['RESPONSIBLE_ID'] ?? 0);
+		$isLost = mb_substr($data['IS_LOST'] ?? '', 0, 1);
+		$semanticID = mb_substr($data['STAGE_SEMANTIC_ID'] ?? '', 0, 3);
+		$stageID = mb_substr($data['STAGE_ID'] ?? '', 0, 50);
+		$currencyID = mb_substr($data['CURRENCY_ID'] ?? '', 0, 3);
 
-		if($connection instanceof Main\DB\MysqlCommonConnection)
-		{
-			$connection->queryExecute(
-				"INSERT INTO b_crm_deal_sum_stat(
-						OWNER_ID, CREATED_DATE, PERIOD_YEAR, PERIOD_QUARTER, PERIOD_MONTH, PERIOD_DAY,
-						START_DATE, END_DATE, RESPONSIBLE_ID, CATEGORY_ID, STAGE_SEMANTIC_ID, STAGE_ID, IS_LOST,
-						CURRENCY_ID, SUM_TOTAL, UF_SUM_1, UF_SUM_2, UF_SUM_3, UF_SUM_4, UF_SUM_5,
-						UF_ATTR_1)
-					VALUES(
-						{$ownerID}, {$created}, {$year}, {$quarter}, {$month}, {$day},
-						{$start}, {$end}, {$userID}, {$categoryID}, '{$semanticID}', '{$stageID}', '{$isLost}',
-						'{$currencyID}', {$sumTotal}, {$sum1}, {$sum2}, {$sum3}, {$sum4}, {$sum5},
-						{$attr1})
-					ON DUPLICATE KEY UPDATE
-						START_DATE = {$start}, END_DATE = {$end}, RESPONSIBLE_ID = {$userID},
-						CATEGORY_ID = {$categoryID}, STAGE_SEMANTIC_ID = '{$semanticID}', STAGE_ID = '{$stageID}', IS_LOST = '{$isLost}',
-						CURRENCY_ID = '{$currencyID}', SUM_TOTAL = {$sumTotal},
-						UF_SUM_1 = {$sum1}, UF_SUM_2 = {$sum2}, UF_SUM_3 = {$sum3}, UF_SUM_4 = {$sum4}, UF_SUM_5 = {$sum5},
-						UF_ATTR_1 = {$attr1}"
-			);
-		}
-		elseif($connection instanceof Main\DB\MssqlConnection)
-		{
-			$dbResult = $connection->query(
-				"SELECT 'X' FROM b_crm_deal_sum_stat WHERE OWNER_ID = {$ownerID} AND CREATED_DATE = {$created}"
-			);
+		$sumTotal = (double)($data['SUM_TOTAL'] ?? 0.0);
+		$sum1 = (double)($data['UF_SUM_1'] ?? 0.0);
+		$sum2 = (double)($data['UF_SUM_2'] ?? 0.0);
+		$sum3 = (double)($data['UF_SUM_3'] ?? 0.0);
+		$sum4 = (double)($data['UF_SUM_4'] ?? 0.0);
+		$sum5 = (double)($data['UF_SUM_5'] ?? 0.0);
+		$attr1 = (int)($data['UF_ATTR_1'] ?? 0);
 
-			if(is_array($dbResult->fetch()))
-			{
-				$connection->queryExecute(
-					"UPDATE b_crm_deal_sum_stat SET START_DATE = {$start}, END_DATE = {$end}, RESPONSIBLE_ID = {$userID},
-						CATEGORY_ID = {$categoryID}, STAGE_SEMANTIC_ID = '{$semanticID}', STAGE_ID = '{$stageID}', IS_LOST = '{$isLost}',
-						CURRENCY_ID = '{$currencyID}', SUM_TOTAL = {$sumTotal},
-						UF_SUM_1 = {$sum1}, UF_SUM_2 = {$sum2}, UF_SUM_3 = {$sum3}, UF_SUM_4 = {$sum4}, UF_SUM_5 = {$sum5},
-						UF_ATTR_1 = {$attr1}
-					WHERE OWNER_ID = {$ownerID} AND CREATED_DATE = {$created}"
-				);
-			}
-			else
-			{
-				$connection->queryExecute(
-					"INSERT INTO b_crm_deal_sum_stat(
-						OWNER_ID, CREATED_DATE, PERIOD_YEAR, PERIOD_QUARTER, PERIOD_MONTH, PERIOD_DAY,
-						START_DATE, END_DATE, RESPONSIBLE_ID, CATEGORY_ID, STAGE_SEMANTIC_ID, STAGE_ID, IS_LOST,
-						CURRENCY_ID, SUM_TOTAL, UF_SUM_1, UF_SUM_2, UF_SUM_3, UF_SUM_4, UF_SUM_5,
-						UF_ATTR_1)
-					VALUES({$ownerID}, {$created}, {$year}, {$quarter}, {$month}, {$day},
-							{$start}, {$end}, {$userID}, {$categoryID}, '{$semanticID}', '{$stageID}', '{$isLost}',
-							'{$currencyID}', {$sumTotal}, {$sum1}, {$sum2}, {$sum3}, {$sum4}, {$sum5},
-							{$attr1})"
-				);
-			}
-		}
-		elseif($connection instanceof Main\DB\OracleConnection)
-		{
-			$connection->queryExecute("MERGE INTO b_crm_deal_sum_stat USING (SELECT {$ownerID} OWNER_ID, {$created} CREATED_DATE FROM dual)
-				source ON
-				(
-					source.OWNER_ID = b_crm_deal_sum_stat.OWNER_ID
-					AND source.CREATED_DATE = b_crm_deal_sum_stat.CREATED_DATE
-				)
-				WHEN MATCHED THEN
-					UPDATE SET b_crm_deal_sum_stat.START_DATE = {$start},
-						b_crm_deal_sum_stat.END_DATE = {$end},
-						b_crm_deal_sum_stat.RESPONSIBLE_ID = {$userID},
-						b_crm_deal_sum_stat.CATEGORY_ID = {$categoryID},
-						b_crm_deal_sum_stat.STAGE_SEMANTIC_ID = '{$semanticID}',
-						b_crm_deal_sum_stat.STAGE_ID = '{$stageID}',
-						b_crm_deal_sum_stat.IS_LOST = '{$isLost}',
-						b_crm_deal_sum_stat.CURRENCY_ID = '{$currencyID}',
-						b_crm_deal_sum_stat.SUM_TOTAL = {$sumTotal},
-						b_crm_deal_sum_stat.UF_SUM_1 = {$sum1},
-						b_crm_deal_sum_stat.UF_SUM_2 = {$sum2},
-						b_crm_deal_sum_stat.UF_SUM_3 = {$sum3},
-						b_crm_deal_sum_stat.UF_SUM_4 = {$sum4},
-						b_crm_deal_sum_stat.UF_SUM_5 = {$sum5},
-						b_crm_deal_sum_stat.UF_ATTR_1 = {$attr1}
-						WHERE OWNER_ID = {$ownerID} AND CREATED_DATE = {$created}
-				WHEN NOT MATCHED THEN
-					INSERT (OWNER_ID, CREATED_DATE, PERIOD_YEAR, PERIOD_QUARTER, PERIOD_MONTH, PERIOD_DAY,
-						START_DATE, END_DATE, RESPONSIBLE_ID, CATEGORY_ID, STAGE_SEMANTIC_ID, STAGE_ID, IS_LOST,
-						CURRENCY_ID, SUM_TOTAL, UF_SUM_1, UF_SUM_2, UF_SUM_3, UF_SUM_4, UF_SUM_5,
-						UF_ATTR_1)
-					VALUES({$ownerID}, {$created}, {$year}, {$quarter}, {$month}, {$day},
-						{$start}, {$end}, {$userID}, {$categoryID}, '{$semanticID}', '{$stageID}', '{$isLost}',
-						'{$currencyID}', {$sumTotal}, {$sum1}, {$sum2}, {$sum3}, {$sum4}, {$sum5},
-						{$attr1})"
-			);
-		}
-		else
-		{
-			$dbType = $connection->getType();
-			throw new Main\NotSupportedException("The '{$dbType}' is not supported in current context");
-		}
+		$sql = $sqlHelper->prepareMerge(
+			'b_crm_deal_sum_stat',
+			[
+				'OWNER_ID',
+				'CREATED_DATE',
+			],
+			[
+				'OWNER_ID' => $ownerID,
+				'CREATED_DATE' => $created,
+				'PERIOD_YEAR' => $year,
+				'PERIOD_QUARTER' => $quarter,
+				'PERIOD_MONTH' => $month,
+				'PERIOD_DAY' => $day,
+				'START_DATE' => $start,
+				'END_DATE' => $end,
+				'RESPONSIBLE_ID' => $userID,
+				'CATEGORY_ID' => $categoryID,
+				'STAGE_SEMANTIC_ID' => $semanticID,
+				'STAGE_ID' => $stageID,
+				'IS_LOST' => $isLost,
+				'CURRENCY_ID' => $currencyID,
+				'SUM_TOTAL' => $sumTotal,
+				'UF_SUM_1' => $sum1,
+				'UF_SUM_2' => $sum2,
+				'UF_SUM_3' => $sum3,
+				'UF_SUM_4' => $sum4,
+				'UF_SUM_5' => $sum5,
+				'UF_ATTR_1' => $attr1,
+			],
+			[
+				'START_DATE' => $start,
+				'END_DATE' => $end,
+				'RESPONSIBLE_ID' => $userID,
+				'CATEGORY_ID' => $categoryID,
+				'STAGE_SEMANTIC_ID' => $semanticID,
+				'STAGE_ID' => $stageID,
+				'IS_LOST' => $isLost,
+				'CURRENCY_ID' => $currencyID,
+				'SUM_TOTAL' => $sumTotal,
+				'UF_SUM_1' => $sum1,
+				'UF_SUM_2' => $sum2,
+				'UF_SUM_3' => $sum3,
+				'UF_SUM_4' => $sum4,
+				'UF_SUM_5' => $sum5,
+				'UF_ATTR_1' => $attr1,
+			],
+		);
+
+		$connection->queryExecute($sql[0]);
 	}
+
 	/**
 	* @return void
 	*/

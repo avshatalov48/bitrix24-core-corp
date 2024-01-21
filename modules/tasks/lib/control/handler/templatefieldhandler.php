@@ -9,17 +9,12 @@ use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Replicator\Template\Option\Options;
 
 class TemplateFieldHandler
 {
-	private $fields;
-	private $templateData;
 	private $templateId;
-	private $userId;
 
-	/**
-	 *
-	 */
 	public const DEPRECATED_FIELDS = [
 		'ACCOMPLICES',
 		'AUDITORS',
@@ -28,12 +23,8 @@ class TemplateFieldHandler
 		'DEPENDS_ON',
 	];
 
-	public function __construct(int $userId, array $fields, array $templateData = null)
+	public function __construct(private int $userId, private array $fields, private ?array $templateData = null)
 	{
-		$this->userId = $userId;
-		$this->fields = $fields;
-		$this->templateData = $templateData;
-
 		$this->setTemplateId();
 	}
 
@@ -333,7 +324,7 @@ class TemplateFieldHandler
 			$this->fields['REPLICATE_PARAMS'] = \Bitrix\Tasks\Util\Type::unSerializeArray($this->fields['REPLICATE_PARAMS']);
 		}
 
-		$this->fields['REPLICATE_PARAMS'] = \CTaskTemplates::parseReplicationParams($this->fields['REPLICATE_PARAMS']);
+		$this->fields['REPLICATE_PARAMS'] = Options::validate($this->fields['REPLICATE_PARAMS']);
 
 		return $this;
 	}

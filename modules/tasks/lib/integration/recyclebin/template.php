@@ -1,193 +1,159 @@
 <?php
+
 namespace Bitrix\Tasks\Integration\Recyclebin;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Result;
 use Bitrix\Main\Localization\Loc;
 
+use Bitrix\Main\SystemException;
+use Bitrix\Tasks\Integration\Bitrix24;
+use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
+use Bitrix\Tasks\Internals\Routes\RouteDictionary;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
 
 use Bitrix\Recyclebin\Internals\Entity;
 use Bitrix\Recyclebin\Internals\Contracts\Recyclebinable;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
+use CAgent;
+use CTasks;
+use CTaskTemplates;
+use Exception;
 
-if (Loader::includeModule('recyclebin'))
+/**
+ * Class Template
+ *
+ * @package Bitrix\Tasks\Integration\Recyclebin
+ */
+
+if (!Loader::includeModule('recyclebin'))
 {
-	/**
-	 * Class Template
-	 * @package Bitrix\Tasks\Integration\Recyclebin
-	 */
-	class Template implements Recyclebinable
+	return;
+}
+
+class Template implements Recyclebinable
+{
+	public static function OnBeforeDelete($templateId, array $template = []): Result
 	{
-		/**
-		 * @param $templateId
-		 * @param array $template
-		 * @return Result
-		 */
-		public static function OnBeforeDelete($templateId, array $template = [])
-		{
-			$recyclebin = new Entity($templateId, Manager::TASKS_TEMPLATE_RECYCLEBIN_ENTITY, Manager::MODULE_ID);
-			$recyclebin->setTitle($template['TITLE']);
+		$recyclebin = new Entity($templateId, Manager::TASKS_TEMPLATE_RECYCLEBIN_ENTITY, Manager::MODULE_ID);
+		$recyclebin->setTitle($template['TITLE']);
+		$result = $recyclebin->save();
 
-			$additionalData = self::collectAdditionalData($templateId);
-			if ($additionalData)
+		return $result;
+	}
+
+	public static function moveFromRecyclebin(Entity $entity): Result
+	{
+		$result = new Result();
+
+		$templateId = $entity->getEntityId();
+		$connection = Application::getConnection();
+
+		try
+		{
+			$connection->queryExecute('UPDATE '
+				. TemplateTable::getTableName()
+				. ' SET ZOMBIE = \'N\' WHERE ID = '
+				. $templateId);
+		}
+		catch (Exception $e)
+		{
+			$result->addError(new Error($e->getMessage(), $e->getCode()));
+		}
+
+		try
+		{
+			$select = ['ID', 'CREATED_BY', 'REPLICATE', 'REPLICATE_PARAMS', 'TPARAM_REPLICATION_COUNT'];
+			$template = CTaskTemplates::getList([], ['ID' => $templateId], [], [], $select)->fetch();
+
+			if ($template && $template["REPLICATE"] == "Y")
 			{
-				foreach ($additionalData as $action => $data)
+				$name = 'CTasks::RepeatTaskByTemplateId(' . $templateId . ');';
+
+				$nextTime = CTasks::getNextTime(unserialize($template['REPLICATE_PARAMS'],
+					['allowed_classes' => false]), $template); // localtime
+				if ($nextTime)
 				{
-					$recyclebin->add($action, $data);
+					CAgent::AddAgent($name, 'tasks', 'N', 86400, $nextTime, 'Y', $nextTime);
 				}
 			}
-
-			$result = $recyclebin->save();
-
-			return $result;
+		}
+		catch (Exception $e)
+		{
+			$result->addError(new Error($e->getMessage(), $e->getCode()));
 		}
 
-		/**
-		 * @param $templateId
-		 * @return array
-		 */
-		private static function collectAdditionalData($templateId)
+		return $result;
+	}
+
+	/**
+	 * Removes entity from recycle bin
+	 */
+	public static function removeFromRecyclebin(Entity $entity, array $params = []): Result
+	{
+		$result = new Result;
+
+		try
 		{
-			$data = [];
-
-			return $data;
-		}
-
-		/**
-		 * @param Entity $entity
-		 *
-		 * @return Result
-		 */
-		public static function moveFromRecyclebin(Entity $entity)
-		{
-			$result = new Result();
-
 			$templateId = $entity->getEntityId();
-			$connection = Application::getConnection();
+			$params = ['UNSAFE_DELETE_ONLY' => true];
 
-			try
-			{
-				$connection->queryExecute('UPDATE ' . TemplateTable::getTableName() . ' SET ZOMBIE = \'N\' WHERE ID = ' . $templateId);
-			}
-			catch (\Exception $e)
-			{
-				$result->addError(new Error($e->getMessage(), $e->getCode()));
-			}
-
-			try
-			{
-				$select = ['ID', 'CREATED_BY', 'REPLICATE', 'REPLICATE_PARAMS', 'TPARAM_REPLICATION_COUNT'];
-				$template = \CTaskTemplates::getList([], ['ID' => $templateId], [], [], $select)->fetch();
-
-				if ($template && $template["REPLICATE"] == "Y")
-				{
-					$name = 'CTasks::RepeatTaskByTemplateId(' . $templateId . ');';
-
-					$nextTime = \CTasks::getNextTime(unserialize($template['REPLICATE_PARAMS'], ['allowed_classes' => false]), $template); // localtime
-					if ($nextTime)
-					{
-
-						\CAgent::AddAgent($name,'tasks','N',86400, $nextTime,'Y', $nextTime);
-					}
-				}
-			}
-			catch (\Exception $e)
-			{
-				$result->addError(new Error($e->getMessage(), $e->getCode()));
-			}
-
-			return $result;
+			CTaskTemplates::Delete($templateId, $params);
+		}
+		catch (Exception $e)
+		{
+			$result->addError(new Error($e->getMessage(), $e->getCode()));
 		}
 
-		private static function restoreAdditionalData($templateId, $action, array $data = [])
-		{
-			$result = new Result();
+		return $result;
+	}
 
-			try
-			{
+	/**
+	 * @throws NotImplementedException
+	 */
+	public static function previewFromRecyclebin(Entity $entity): void
+	{
+		throw new NotImplementedException("Coming soon...");
+	}
 
-			}
-			catch (\Exception $e)
-			{
-				$result->addError(new Error($e->getMessage(), $e->getCode()));
-			}
+	public static function getNotifyMessages(): array
+	{
+		return [
+			'NOTIFY' => [
+				'RESTORE' => Loc::getMessage('TASKS_TEMPLATE_RECYCLEBIN_RESTORE_MESSAGE'),
+				'REMOVE' => Loc::getMessage('TASKS_TEMPLATE_RECYCLEBIN_REMOVE_MESSAGE'),
+			],
+			'CONFIRM' => [
+				'RESTORE' => Loc::getMessage('TASKS_TEMPLATE_RECYCLEBIN_RESTORE_CONFIRM'),
+				'REMOVE' => Loc::getMessage('TASKS_TEMPLATE_RECYCLEBIN_REMOVE_CONFIRM'),
+			],
+		];
+	}
 
-			return $result;
-		}
-
-		/**
-		 * Removes entity from recycle bin
-		 *
-		 * @param Entity $entity
-		 * @param array $params
-		 *
-		 * @return Result
-		 */
-		public static function removeFromRecyclebin(Entity $entity, array $params = [])
-		{
-			$result = new Result;
-
-			try
-			{
-				$templateId = $entity->getEntityId();
-				$params = ['UNSAFE_DELETE_ONLY' => true];
-
-				\CTaskTemplates::Delete($templateId, $params);
-			}
-			catch (\Exception $e)
-			{
-				$result->addError(new Error($e->getMessage(), $e->getCode()));
-			}
-
-			return $result;
-		}
-
-		/**
-		 * @param Entity $entity
-		 * @return bool|void
-		 * @throws NotImplementedException
-		 */
-		public static function previewFromRecyclebin(Entity $entity)
-		{
-			throw new NotImplementedException("Coming soon...");
-		}
-
-		/**
-		 * @return array
-		 */
-		public static function getNotifyMessages()
-		{
-			return [
-				'NOTIFY' => [
-					'RESTORE' => Loc::getMessage('TASKS_TEMPLATE_RECYCLEBIN_RESTORE_MESSAGE'),
-					'REMOVE' => Loc::getMessage('TASKS_TEMPLATE_RECYCLEBIN_REMOVE_MESSAGE'),
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public static function getAdditionalData(): array
+	{
+		return [
+			'LIMIT_DATA' => [
+				'RESTORE' => [
+					'DISABLE' => TaskLimit::isLimitExceeded() || !Bitrix24::checkFeatureEnabled(FeatureDictionary::TASKS_RECYCLEBIN),
+					'SLIDER_CODE' => 'limit_tasks_recycle_bin_restore',
 				],
-				'CONFIRM' => [
-					'RESTORE' => Loc::getMessage('TASKS_TEMPLATE_RECYCLEBIN_RESTORE_CONFIRM'),
-					'REMOVE' => Loc::getMessage('TASKS_TEMPLATE_RECYCLEBIN_REMOVE_CONFIRM')
-				]
-			];
-		}
+			],
+		];
+	}
 
-		/**
-		 * @return array
-		 * @throws \Bitrix\Main\ObjectPropertyException
-		 * @throws \Bitrix\Main\SystemException
-		 */
-		public static function getAdditionalData(): array
-		{
-			return [
-				'LIMIT_DATA' => [
-					'RESTORE' => [
-						'DISABLE' => TaskLimit::isLimitExceeded() || !\Bitrix\Tasks\Integration\Bitrix24::checkFeatureEnabled(\Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary::TASKS_RECYCLEBIN),
-						'SLIDER_CODE' => 'limit_tasks_recycle_bin_restore',
-					],
-				],
-			];
-		}
+	public static function getDeleteMessage(int $userId = 0): string
+	{
+		return Loc::getMessage('TASKS_RECYCLEBIN_TEMPLATE_MOVED_TO_RECYCLEBIN', [
+			'#RECYCLEBIN_URL#' => str_replace('#user_id#', $userId, RouteDictionary::PATH_TO_RECYCLEBIN),
+		]);
 	}
 }

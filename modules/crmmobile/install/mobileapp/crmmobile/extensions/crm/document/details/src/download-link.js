@@ -2,6 +2,7 @@
  * @module crm/document/details/download-link
  */
 jn.define('crm/document/details/download-link', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	class CrmDocumentDownloadLink extends LayoutComponent
 	{
 		constructor(props)
@@ -37,7 +38,7 @@ jn.define('crm/document/details/download-link', (require, exports, module) => {
 				Text({
 					text: this.state.text,
 					style: {
-						color: '#828B95',
+						color: AppTheme.colors.base3,
 						fontSize: 16,
 					},
 				}),

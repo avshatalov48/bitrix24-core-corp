@@ -2,23 +2,27 @@
  * @module layout/ui/friendly-date
  */
 jn.define('layout/ui/friendly-date', (require, exports, module) => {
-
-	const { Loc } = require('loc');
-	const { Moment } = require('utils/date');
-	const { date, shortTime } = require('utils/date/formats');
-	const { TimeAgoFormat } = require('layout/ui/friendly-date/time-ago-format');
 	const { AutoupdatingDatetime } = require('layout/ui/friendly-date/autoupdating-datetime');
+	const { Loc } = require('loc');
+	const { TimeAgoFormat } = require('layout/ui/friendly-date/time-ago-format');
+	const { date, shortTime } = require('utils/date/formats');
 
 	/**
 	 * @class FriendlyDate
 	 */
 	class FriendlyDate extends AutoupdatingDatetime
 	{
+		constructor(props)
+		{
+			super(props);
+		}
+
 		get timeAgoTextBuilder()
 		{
 			return new TimeAgoFormat({
 				defaultFormat: this.defaultTimeFormat,
 				futureAllowed: this.futureAllowed,
+				context: this.props.context,
 			});
 		}
 
@@ -27,6 +31,7 @@ jn.define('layout/ui/friendly-date', (require, exports, module) => {
 			const defaultFormat = (moment) => {
 				return moment.format(shortTime).toLocaleLowerCase(env.languageId);
 			};
+
 			return this.props.defaultTimeFormat || defaultFormat;
 		}
 
@@ -91,14 +96,7 @@ jn.define('layout/ui/friendly-date', (require, exports, module) => {
 		 */
 		getMessage(code, moment)
 		{
-			let message = Loc.getMessage(code);
-
-			if (this.showTime)
-			{
-				message += `${this.timeSeparator}${this.formatTime(moment)}`;
-			}
-
-			return message;
+			return Loc.getMessage(code) + this.formatTime(moment);
 		}
 
 		/**
@@ -107,11 +105,26 @@ jn.define('layout/ui/friendly-date', (require, exports, module) => {
 		 */
 		formatTime(moment)
 		{
-			if (typeof this.defaultTimeFormat === 'function')
+			if (this.showTime)
 			{
-				return this.defaultTimeFormat(moment);
+				let time = '';
+
+				if (typeof this.defaultTimeFormat === 'function')
+				{
+					time = this.defaultTimeFormat(moment);
+				}
+				else
+				{
+					time = moment.format(this.defaultTimeFormat).toLocaleLowerCase(env.languageId);
+				}
+
+				if (time)
+				{
+					return `${this.timeSeparator}${time}`;
+				}
 			}
-			return moment.format(this.defaultTimeFormat).toLocaleLowerCase(env.languageId);
+
+			return '';
 		}
 
 		/**
@@ -122,20 +135,22 @@ jn.define('layout/ui/friendly-date', (require, exports, module) => {
 		{
 			if (typeof this.props.defaultFormat === 'function')
 			{
-				return this.props.defaultFormat(moment);
+				const context = this.props.context ?? this;
+
+				return this.props.defaultFormat(moment, context);
 			}
-			else if (this.props.defaultFormat)
+
+			if (this.props.defaultFormat)
 			{
 				return moment.format(this.props.defaultFormat);
 			}
 
 			const day = moment.format(date);
-			const time = moment.format(shortTime).toLocaleLowerCase(env.languageId);
+			const time = this.formatTime(moment);
 
-			return `${day}${this.timeSeparator}${time}`;
+			return `${day}${time}`;
 		}
 	}
 
 	module.exports = { FriendlyDate };
-
 });

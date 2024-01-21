@@ -5,37 +5,33 @@ namespace Bitrix\Disk\ZipNginx;
 use Bitrix\Disk\AttachedObject;
 use Bitrix\Disk\File;
 use Bitrix\Main\Engine\Response\Zip;
+use Bitrix\Main\Engine\Response\Zip\FileEntry;
+use Bitrix\Main\NotImplementedException;
 
 class ArchiveEntry extends Zip\ArchiveEntry
 {
-	/**
-	 * Creates Entry from File.
-	 *
-	 * @param File $file File.
-	 * @param null|string $name Name.
-	 * @return ArchiveEntry
-	 */
-	public static function createFromFileModel(File $file, $name = null)
+	public static function createFromFileModel(File $file, string $path = null): Zip\FileEntry
 	{
-		return static::createFromFile($file->getFile(), $name?: $file->getName());
+		return (new Zip\EntryBuilder())->createFromFileArray($file->getFile(), $path ? : $file->getName());
 	}
 
 	/**
 	 * Creates Entry from attached object.
 	 *
 	 * @param AttachedObject $attachedObject Attached object.
-	 * @param null|string $name Name.
-	 * @return ArchiveEntry
+	 *
+	 * @return FileEntry
+	 * @throws NotImplementedException
 	 */
-	public static function createFromAttachedObject(AttachedObject $attachedObject, $name = null)
+	public static function createFromAttachedObject(AttachedObject $attachedObject): Zip\FileEntry
 	{
-		if($attachedObject->isSpecificVersion())
+		if ($attachedObject->isSpecificVersion())
 		{
 			$version = $attachedObject->getVersion();
 
-			return static::createFromFile($version->getFile(), $name?: $version->getName());
+			return (new Zip\EntryBuilder())->createFromFileArray($version->getFile(), $version->getName());
 		}
 
-		return static::createFromFileModel($attachedObject->getFile(), $name);
+		return static::createFromFileModel($attachedObject->getFile());
 	}
 }

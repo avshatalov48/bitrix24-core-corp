@@ -36,7 +36,14 @@ function GetInput_<?=$name_x; ?>(doc)
 	<? if ($arParams['FORM_NAME']) { ?>
 	return doc.forms['<?=$arParams['FORM_NAME']; ?>']['<?=$arParams['INPUT_NAME']; ?>'];
 	<? } else { ?>
-	return doc.getElementById('<?=$arParams['INPUT_NAME']; ?>');
+		const input = doc.getElementById('<?= $arParams['INPUT_NAME'] ?>');
+
+		if (input || doc === document)
+		{
+			return input;
+		}
+
+		return document.getElementById('<?= $arParams['INPUT_NAME'] ?>');
 	<? } ?>
 }
 

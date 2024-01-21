@@ -75,34 +75,22 @@ class Statistic extends Stepper
 
 	/**
 	 * @param $session
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	private function repairIsChatCreatedNew(&$session)
 	{
 		Loader::includeModule('im');
-		$query = new Query(MessageTable::getEntity());
-		$query->addSelect(new ExpressionField('COUNT', 'COUNT("x")'));
-		$query->where('ID', '<', $session['START_ID']);
-		$query->where('CHAT_ID', $session['CHAT_ID']);
-		$res = $query->exec()->fetchRaw();
-		if ($res['COUNT'] === "0")
-		{
-			$session['IS_CHAT_CREATED_NEW'] = true;
-		}
-		else
-		{
-			$session['IS_CHAT_CREATED_NEW'] = false;
-		}
+
+		$cnt = MessageTable::getCount([
+			'<ID' => $session['START_ID'],
+			'=CHAT_ID' => $session['CHAT_ID']
+		]);
+
+		$session['IS_CHAT_CREATED_NEW'] = ($cnt == 0);
 	}
 
 	/**
 	 * @param $lastId
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	private function getSessionsFrom($lastId)
 	{
@@ -160,21 +148,11 @@ class Statistic extends Stepper
 	}
 
 	/**
-	 * @return mixed
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @return int
 	 */
 	private function getSessionsCount()
 	{
-
-
-		$query = new Query(SessionTable::getEntity());
-//		$query->where('DATE_CREATE', '>', $this->getStatisticStartTime());
-		$query->addSelect(new ExpressionField('CNT', 'COUNT(ID)'));
-
-		$result = $query->exec()->fetchRaw();
-		return $result['CNT'];
+		return SessionTable::getCount();
 	}
 
 	private function cleanStatisticTables()

@@ -95,7 +95,9 @@ $APPLICATION->IncludeComponent(
 		'USER_FIELD_ENTITY_ID' => $formParams['USER_FIELD_ENTITY_ID'],
 		'READ_ONLY' => $formParams['READ_ONLY'],
 		'CONTEXT' => $formParams['CONTEXT'],
-		'SERVICE_URL' => '/bitrix/components/bitrix/crm.requisite.details/slider.ajax.php'
+		'SERVICE_URL' => '/bitrix/components/bitrix/crm.requisite.details/slider.ajax.php',
+		'ENABLE_FIELDS_CONTEXT_MENU' => true,
+		'ENABLE_SHOW_ALWAYS_FEAUTURE' => false,
 	]
 );
 ?>

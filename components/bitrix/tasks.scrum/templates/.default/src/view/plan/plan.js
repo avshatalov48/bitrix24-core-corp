@@ -267,6 +267,54 @@ export class Plan extends View
 		;
 	}
 
+	changeShortView(isShortView: 'Y' | 'N')
+	{
+		super.changeShortView(isShortView);
+
+		this.planBuilder.setShortView(isShortView);
+
+		this.destroyActionPanel();
+
+		const entities = this.entityStorage.getAllEntities();
+
+		entities
+			.forEach((entity: Entity) => {
+				if (!entity.isCompleted())
+				{
+					entity.deactivateGroupMode();
+					entity.fadeOut();
+				}
+			})
+		;
+
+		this.requestSender.saveShortView({
+			isShortView: isShortView,
+		})
+			.then((response) => {
+				entities
+					.forEach((entity: Entity) => {
+						if (!entity.isCompleted())
+						{
+							entity.setShortView(isShortView);
+							entity.adjustListItemsWidth();
+							entity.fadeIn();
+						}
+					})
+				;
+			})
+			.catch((response) => {
+				entities
+					.forEach((entity: Entity) => {
+						if (!entity.isCompleted())
+						{
+							entity.fadeIn();
+						}
+					})
+				;
+				this.requestSender.showErrorAlert(response);
+			});
+	}
+
 	subscribeToPull()
 	{
 		Pull.subscribe(this.pullSprint);
@@ -1025,48 +1073,7 @@ export class Plan extends View
 	{
 		const isShortView = baseEvent.getData();
 
-		this.planBuilder.setShortView(isShortView);
-
-		this.destroyActionPanel();
-
-		const entities = this.entityStorage.getAllEntities();
-
-		entities
-			.forEach((entity: Entity) => {
-				if (!entity.isCompleted())
-				{
-					entity.deactivateGroupMode();
-					entity.fadeOut();
-				}
-			})
-		;
-
-		this.requestSender.saveShortView({
-			isShortView: isShortView
-		})
-		.then((response) => {
-			entities
-				.forEach((entity: Entity) => {
-					if (!entity.isCompleted())
-					{
-						entity.setShortView(isShortView);
-						entity.adjustListItemsWidth();
-						entity.fadeIn();
-					}
-				})
-			;
-		})
-		.catch((response) => {
-			entities
-				.forEach((entity: Entity) => {
-					if (!entity.isCompleted())
-					{
-						entity.fadeIn();
-					}
-				})
-			;
-			this.requestSender.showErrorAlert(response);
-		});
+		this.changeShortView(isShortView);
 	}
 
 	onToggleActionPanel(baseEvent: BaseEvent)

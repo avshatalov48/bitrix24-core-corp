@@ -5,6 +5,8 @@ use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
+use Bitrix\Main\Page\Asset;
+use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Dispatcher;
 use Bitrix\Tasks\Util\Calendar;
@@ -62,6 +64,11 @@ abstract class TasksBaseComponent extends CBitrixComponent
 
 			if($this->errors->checkNoFatals())
 			{
+				static::checkIfToolAvailable($this->arParams, $arResult, $this->errors, $this->auxParams);
+			}
+
+			if($this->errors->checkNoFatals())
+			{
 				static::checkBasicParameters($this->arParams, $arResult, $this->errors, $this->auxParams);
 			}
 
@@ -78,29 +85,29 @@ abstract class TasksBaseComponent extends CBitrixComponent
 				$this->checkParameters();
 			}
 
-            $this->doPreAction();
+			$this->doPreAction();
 
 			if($this->errors->checkNoFatals())
 			{
-                if(
-	                isset($this->arParams['USE_DISPATCHER'])
-	                &&
-	                Dispatcher::isGloballyEnabled()
-	                &&
-	                ($todo = static::checkExecuteDispatcher($request, $this->errors, $this->auxParams)) !== false)
-                {
-                    $todo = $this->processBeforeAction($todo);
+				if(
+					isset($this->arParams['USE_DISPATCHER'])
+					&&
+					Dispatcher::isGloballyEnabled()
+					&&
+					($todo = static::checkExecuteDispatcher($request, $this->errors, $this->auxParams)) !== false)
+				{
+					$todo = $this->processBeforeAction($todo);
 
-	                $plan = new Dispatcher\ToDo\Plan();
-	                $plan->import($todo);
-	                $this->setDispatcherTrigger($plan);
+					$plan = new Dispatcher\ToDo\Plan();
+					$plan->import($todo);
+					$this->setDispatcherTrigger($plan);
 
-                    $this->auxParams['REQUEST'] = $request;
-	                $this->auxParams['DISPATCHER'] = $this->getDispatcher();
-                    $this->arResult['ACTION_RESULT'] = static::dispatch($plan, $this->errors, $this->auxParams, $this->arParams);
-                    $this->processAfterAction();
-                }
-            }
+					$this->auxParams['REQUEST'] = $request;
+					$this->auxParams['DISPATCHER'] = $this->getDispatcher();
+					$this->arResult['ACTION_RESULT'] = static::dispatch($plan, $this->errors, $this->auxParams, $this->arParams);
+					$this->processAfterAction();
+				}
+			}
 
 			if($this->errors->checkNoFatals())
 			{
@@ -232,6 +239,10 @@ abstract class TasksBaseComponent extends CBitrixComponent
 			{
 				static::checkPermissions($arParams, $arResult, $errors, $auxParams);
 			}
+			if($errors->checkNoFatals())
+			{
+				static::checkIfToolAvailable($arParams, $arResult, $errors, $auxParams);
+			}
 
 			$auxParams['ORIGIN_ARRESULT'] = $arResult;
 
@@ -259,7 +270,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 
 					if($errors->checkNoFatals())
 					{
-						$assetHtml = static::getApplicationResources(); // fetch asset list, to see new items appeared
+						$assetHtml = static::legacyGetApplicationResources(); // fetch asset list, to see new items appeared
 					}
 				}
 			}
@@ -598,6 +609,11 @@ abstract class TasksBaseComponent extends CBitrixComponent
 	protected static function checkRights(array $arParams, array $arResult, array $auxParams): ?Util\Error
 	{
 		return null;
+	}
+
+	protected static function checkIfToolAvailable(array &$arParams, array &$arResult, Collection $errors, array $auxParams): void
+	{
+		$arResult['IS_TOOL_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['base_tasks']);
 	}
 
 	protected static function getEffectiveUserId($arParams)
@@ -997,7 +1013,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 	 *
 	 * @return array
 	 */
-	public static function getApplicationResources()
+	public static function legacyGetApplicationResources()
 	{
 		global $APPLICATION;
 
@@ -1006,6 +1022,23 @@ abstract class TasksBaseComponent extends CBitrixComponent
 		$result = array_merge($result, static::parseResourceString($APPLICATION->getHeadScripts()));
 
 		return array_unique($result);
+	}
+
+	public static function getApplicationResources(): array
+	{
+		$result = static::getApplicationScripts();
+		$result = array_merge($result, static::parseResourceString(Asset::getInstance()->getCss()));
+
+		return array_unique($result);
+	}
+
+	private static function getApplicationScripts(): array
+	{
+		$scripts = Asset::getInstance()->getJs();
+		$pattern = '/<script[^>]*>(.*?)<\/script>/s';
+		preg_match_all($pattern, $scripts, $matches);
+
+		return array_unique($matches[0]);
 	}
 
 	/**

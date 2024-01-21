@@ -1,79 +1,124 @@
+import { Dom, Tag, bindOnce } from 'main.core';
+
+type ExpandOptions = {
+	startHeight: number;
+}
+
 /** @memberof BX.Crm.Timeline.Animation */
 export default class Expand
 {
+	#overlay: HTMLElement | null;
+	#startHeight: number;
+	#node: HTMLElement | null;
+	#callback: Function | null;
+
 	constructor()
 	{
-		this._node = null;
-		this._callback = null;
+		this.#node = null;
+		this.#callback = null;
+		this.#overlay = null;
+		this.#startHeight = 0;
 	}
 
-	initialize(node, callback)
+	initialize(node, callback, options: ExpandOptions)
 	{
-		this._node = node;
-		this._callback = BX.type.isFunction(callback) ? callback : null;
+		this.#node = node;
+		this.#callback = BX.type.isFunction(callback) ? callback : null;
+		this.#startHeight = options?.startHeight || 0;
 	}
 
 	run()
 	{
-		const position = BX.pos(this._node);
+		if (this.#isNodeVisible(this.#node) === false)
+		{
+			if (this.#callback)
+			{
+				this.#callback();
+			}
 
-		this._node.style.height = 0;
-		this._node.style.opacity = 0;
-		this._node.style.overflow = "hidden";
+			return;
+		}
 
-		(new BX.easing(
-				{
-					duration : 150,
-					start : { height: 0 },
-					finish: { height: position.height },
-					transition : BX.easing.makeEaseOut(BX.easing.transitions.quart),
-					step: BX.delegate(this.onNodeHeightStep, this),
-					complete: BX.delegate(this.onNodeHeightComplete, this)
-				}
-			)
-		).animate();
+		requestAnimationFrame(() => {
+			const position = Dom.getPosition(this.#node);
+
+			const elemStyle = getComputedStyle(this.#node);
+			const paddingTop = parseInt(elemStyle.getPropertyValue('padding-top'), 10);
+			const paddingBottom = parseInt(elemStyle.getPropertyValue('padding-bottom'), 10);
+			const marginBottom = parseInt(elemStyle.getPropertyValue('margin-bottom'), 10);
+
+			const startHeight = this.#startHeight;
+			Dom.style(this.#node, {
+				height: `${startHeight}px`,
+				overflowY: 'clip',
+				position: 'relative',
+				padding: 0,
+				marginBottom: 0,
+			});
+
+			requestAnimationFrame(() => {
+				Dom.style(this.#node, 'transition', 'transition: height 220ms ease, opacity 220ms ease, background-color 220ms ease');
+
+				this.#overlay = Tag.render`<div class="crm-timeline__card_overlay crm-timeline__card-scope"></div>`;
+
+				Dom.append(this.#overlay, this.#node);
+				setTimeout(() => {
+					// eslint-disable-next-line new-cap
+					(new BX.easing(
+						{
+							duration: 400,
+							start: { height: startHeight, overlayOpacity: 0, paddingTop: 0, paddingBottom: 0, marginBottom: 0 },
+							finish: { height: position.height, overlayOpacity: 50, paddingTop, paddingBottom, marginBottom },
+							transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
+							step: this.onNodeHeightStep.bind(this),
+							complete: this.onNodeHeightComplete.bind(this),
+						},
+					)
+					).animate();
+				}, 200);
+			});
+		});
 	}
 
 	onNodeHeightStep(state)
 	{
-		this._node.style.height = state.height + "px";
+		Dom.style(this.#overlay, 'opacity', 1 - (state.overlayOpacity / 100));
+		Dom.style(this.#node, {
+			height: `${state.height}px`,
+			paddingTop: `${state.paddingTop}px`,
+			paddingBottom: `${state.paddingBottom}px`,
+			marginBottom: `${state.marginBottom}px`,
+		});
 	}
 
 	onNodeHeightComplete()
 	{
-		this._node.style.overflow = "";
-		(new BX.easing(
-				{
-					duration : 150,
-					start : { opacity: 0 },
-					finish: { opacity: 100 },
-					transition : BX.easing.makeEaseOut(BX.easing.transitions.quart),
-					step: BX.delegate(this.onNodeOpacityStep, this),
-					complete: BX.delegate(this.onNodeOpacityComplete, this)
-				}
-			)
-		).animate();
+		setTimeout(() => {
+			bindOnce(this.#overlay, 'transitionend', () => {
+				Dom.remove(this.#overlay);
+				this.#overlay = null;
+				Dom.style(this.#node, null);
+			});
+			Dom.style(this.#overlay, 'opacity', 0);
+			if (this.#callback)
+			{
+				this.#callback();
+			}
+		}, 400);
 	}
 
-	onNodeOpacityStep(state)
+	#isNodeVisible(node: HTMLElement): boolean
 	{
-		this._node.style.opacity = state.opacity / 100;
+		const position = Dom.getPosition(this.#node);
+
+		return position.width !== 0 && position.height !== 0;
 	}
 
-	onNodeOpacityComplete()
-	{
-		this._node.style.height = "";
-		this._node.style.opacity = "";
-		if(this._callback)
-		{
-			this._callback();
-		}
-	}
-
-	static create(node, callback)
+	static create(node, callback, options: ExpandOptions): Expand
 	{
 		const self = new Expand();
-		self.initialize(node, callback);
+		self.initialize(node, callback, options);
+
 		return self;
 	}
 }

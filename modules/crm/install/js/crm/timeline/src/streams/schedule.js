@@ -1,3 +1,4 @@
+import { bindOnce, Dom, Tag } from 'main.core';
 import Stream from "../stream";
 import Activity from "../items/scheduled/activity";
 import Email from "../items/scheduled/email";
@@ -15,6 +16,7 @@ import ItemNew from "../animations/item-new";
 import {ConfigurableItem} from "crm.timeline.item";
 import {StreamType} from 'crm.timeline.item';
 import {DatetimeConverter} from "crm.timeline.tools";
+import Expand from '../animations/expand';
 
 /** @memberof BX.Crm.Timeline.Streams */
 export default class Schedule extends Stream
@@ -451,7 +453,7 @@ export default class Schedule extends Stream
 		return StreamType.scheduled;
 	}
 
-	addItem(item, index)
+	async addItem(item, index)
 	{
 		if(!BX.type.isNumber(index) || index < 0)
 		{
@@ -467,8 +469,7 @@ export default class Schedule extends Stream
 			this._items.push(item);
 		}
 
-		this.removeStub();
-
+		await this.removeStub();
 		this.refreshLayout();
 		this._manager.processSheduleLayoutChange();
 	}
@@ -559,73 +560,38 @@ export default class Schedule extends Stream
 	{
 		if(!this._stub)
 		{
-			let stubClassName = "crm-entity-stream-section crm-entity-stream-section-planned crm-entity-stream-section-notTask";
-			let stubIconClassName = "crm-entity-stream-section-icon crm-entity-stream-section-icon-info";
 			const canAddTodo = !!BX.Crm.Timeline?.MenuBar?.getDefault()?.getItemById('todo');
-			if (canAddTodo && !this.isReadOnly())
-			{
-				stubClassName += ' --active';
-			}
 
-			let stubMessage = this.getMessage("stub");
-
-			const ownerTypeId = this._manager.getOwnerTypeId();
-			if(ownerTypeId === BX.CrmEntityType.enumeration.lead)
-			{
-				stubMessage = this.getMessage("leadStub");
-			}
-			else if(ownerTypeId === BX.CrmEntityType.enumeration.deal)
-			{
-				stubMessage = this.getMessage("dealStub");
-			}
-
-			if(this._manager.isStubCounterEnabled())
-			{
-				stubIconClassName += " crm-entity-stream-section-counter";
-			}
-
-			this._stub = BX.create("DIV",
-				{
-					attrs: { className: stubClassName },
-					children:
-						[
-							BX.create("DIV", { attrs: { className: stubIconClassName } }),
-							BX.create("DIV",
-								{
-									attrs: { className: "crm-entity-stream-section-content" },
-									children:
-										[
-											BX.create("DIV",
-												{
-													attrs: { className: "crm-entity-stream-content-event" },
-													children:
-														[
-															BX.create("DIV",
-																{
-																	attrs: { className: "crm-entity-stream-content-title" },
-																	text: this.getMessage("stubTitle"),
-																}
-															),
-															BX.create("DIV",
-																{
-																	attrs: { className: "crm-entity-stream-content-detail" },
-																	text: stubMessage
-																}
-															)
-														]
-												}
-											)
-										]
-								}
-							)
-						]
-				}
-			);
+			this.createStub();
 			if (canAddTodo && !this.isReadOnly())
 			{
 				BX.bind(this._stub, "click", BX.delegate(this.focusOnTodoEditor, this));
 			}
-			this._wrapper.appendChild(this._stub);
+
+			const label = this._wrapper.querySelector('.crm-entity-stream-section.crm-entity-stream-section-planned-label');
+
+			Dom.style(this._stub, {
+				opacity: 0,
+				overflow: 'hidden',
+			});
+
+			Dom.insertAfter(this._stub, label);
+
+			const height = Dom.getPosition(this._stub).height;
+
+			Dom.style(this._stub, {
+				height: 0,
+				marginBottom: 0,
+			});
+
+			requestAnimationFrame(() => {
+				Dom.style(this._stub, {
+					opacity: 1,
+					height: height ? `${height}px` : null,
+					marginBottom: '15px',
+					overflow: null,
+				});
+			});
 		}
 
 		if(this._history && this._history.getItemCount() > 0)
@@ -638,13 +604,107 @@ export default class Schedule extends Stream
 		}
 	}
 
-	removeStub()
+	createStub(): HTMLELement
 	{
-		if(this._stub)
+		let stubClassName = "crm-entity-stream-section crm-entity-stream-section-planned crm-entity-stream-section-notTask";
+		let stubIconClassName = "crm-entity-stream-section-icon crm-entity-stream-section-icon-info";
+		const canAddTodo = !!BX.Crm.Timeline?.MenuBar?.getDefault()?.getItemById('todo');
+		if (canAddTodo && !this.isReadOnly())
 		{
-			this._stub = BX.remove(this._stub);
+			stubClassName += ' --active';
 		}
 
+		let stubMessage = this.getMessage("stub");
+
+		const ownerTypeId = this._manager.getOwnerTypeId();
+		if(ownerTypeId === BX.CrmEntityType.enumeration.lead)
+		{
+			stubMessage = this.getMessage("leadStub");
+		}
+		else if(ownerTypeId === BX.CrmEntityType.enumeration.deal)
+		{
+			stubMessage = this.getMessage("dealStub");
+		}
+
+		if(this._manager.isStubCounterEnabled())
+		{
+			stubIconClassName += " crm-entity-stream-section-counter";
+		}
+
+		this._stub = BX.create("DIV",
+			{
+				attrs: { className: stubClassName },
+				children:
+					[
+						BX.create("DIV", { attrs: { className: stubIconClassName } }),
+						BX.create("DIV",
+							{
+								attrs: { className: "crm-entity-stream-section-content" },
+								children:
+									[
+										BX.create("DIV",
+											{
+												attrs: { className: "crm-entity-stream-content-event" },
+												children:
+													[
+														BX.create("DIV",
+															{
+																attrs: { className: "crm-entity-stream-content-title" },
+																text: this.getMessage("stubTitle"),
+															}
+														),
+														BX.create("DIV",
+															{
+																attrs: { className: "crm-entity-stream-content-detail" },
+																text: stubMessage
+															}
+														)
+													]
+											}
+										)
+									]
+							}
+						)
+					]
+			}
+		);
+	}
+
+	removeStub(): Promise
+	{
+		return new Promise((resolve, reject) => {
+			const isStubVisible = Dom.getPosition(this._stub).height !== 0;
+
+			if (this._stub && isStubVisible)
+			{
+				const overlay = Tag.render`<div class="crm-entity-stream-section-content-overlay"></div>`;
+
+				Dom.style(overlay, 'opacity', 0);
+
+				bindOnce(overlay, 'transitionend', () => {
+					Dom.style(this._stub, 'position', 'absolute');
+					setTimeout(() => {
+						Dom.remove(this._stub);
+						this._stub = null;
+					}, 200);
+					resolve(true);
+				});
+
+				const stubContent = this._stub.querySelector('.crm-entity-stream-section-content');
+
+				Dom.append(overlay, stubContent);
+
+				setTimeout(() => {
+					Dom.style(overlay, 'opacity', 1);
+				}, 50);
+			}
+			else
+			{
+				Dom.remove(this._stub);
+				this._stub = null;
+				resolve(true);
+			}
+		});
 	}
 
 	focusOnTodoEditor()
@@ -667,8 +727,26 @@ export default class Schedule extends Stream
 
 	animateItemAdding(item): Promise
 	{
-		item.addWrapperClass('crm-entity-stream-section-updated', 1000);
-		return Promise.resolve();
+		if (this._stub)
+		{
+			const newBLockStartHeight = this._stub ? this._stub.offsetHeight : 73;
+
+			const wrapper = item instanceof ConfigurableItem
+				? item.getLayoutComponent().$refs.timelineCard
+				: item.getWrapper();
+
+			return new Promise((resolve) => {
+				Expand.create(
+					wrapper,
+					resolve,
+					{ startHeight: newBLockStartHeight },
+				).run();
+			});
+		}
+
+		return new Promise((resolve) => {
+			Expand.create(item.getWrapper(), resolve, {}).run();
+		});
 	}
 
 	static create(id, settings)

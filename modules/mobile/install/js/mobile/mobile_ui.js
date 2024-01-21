@@ -45,7 +45,7 @@
 						items: [
 							{
 								"id": "disk",
-								"name": BX.message("MUI_B24DISK"),
+								"name": BX.message("MUI_B24DISK_MSGVER_1"),
 								"dataSource": {
 									"multiple": "NO",
 									"url": "/mobile/?mobile_action=disk_folder_list&type=user&path=/&entityId=" + userId,

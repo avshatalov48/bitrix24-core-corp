@@ -6,6 +6,7 @@ use Bitrix\Crm\Relation\RelationType;
 use Bitrix\Main\Application;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\DB\SqlQueryException;
 
 /**
  * Class StoreDocumentContractorTable
@@ -107,18 +108,43 @@ class StoreDocumentContractorTable extends DataManager
 	{
 		$sqlHelper = Application::getConnection()->getSqlHelper();
 
-		Application::getConnection()->query(sprintf(
-			'
-			UPDATE IGNORE b_crm_store_document_contractor
+		try
+		{
+			Application::getConnection()->query(sprintf(
+				'
+			UPDATE b_crm_store_document_contractor
 			SET ENTITY_ID = %d
 			WHERE
 				ENTITY_TYPE_ID = %d
 			  	AND ENTITY_ID = %d
 			',
-			$sqlHelper->convertToDbInteger($newEntityId),
-			$sqlHelper->convertToDbInteger($entityTypeId),
-			$sqlHelper->convertToDbInteger($oldEntityId)
-		));
+				$sqlHelper->convertToDbInteger($newEntityId),
+				$sqlHelper->convertToDbInteger($entityTypeId),
+				$sqlHelper->convertToDbInteger($oldEntityId)
+			));
+		}
+		catch (SqlQueryException $e) // most likely there is a duplication of unique keys, so try to update every item separately
+		{
+			$items = self::query()
+				->setSelect(['ID'])
+				->where('ENTITY_TYPE_ID', $entityTypeId)
+				->where('ENTITY_ID', $oldEntityId)
+				->fetchAll()
+			;
+
+			foreach ($items as $item)
+			{
+				try
+				{
+					self::update($item['ID'], ['ENTITY_ID' => $newEntityId]);
+				}
+				catch (SqlQueryException $e)
+				{
+					// unique keys have been duplicated, so delete this duplicate:
+					self::delete($item['ID']);
+				}
+			}
+		}
 	}
 
 	/**
@@ -169,15 +195,16 @@ class StoreDocumentContractorTable extends DataManager
 				$sqlHelper->convertToDbInteger($documentId)
 			);
 		}
+		$sql = $sqlHelper->getInsertIgnore(
+			'b_crm_store_document_contractor',
+			'(
+				ENTITY_TYPE_ID,
+				ENTITY_ID,
+				DOCUMENT_ID
+			)',
+			'VALUES ' . implode(', ', $sqlValues)
+		);
 
-		Application::getConnection()->query(sprintf(
-			'INSERT INTO b_crm_store_document_contractor (
-					ENTITY_TYPE_ID,
-					ENTITY_ID,
-					DOCUMENT_ID
-				) VALUES %s
-				ON DUPLICATE KEY UPDATE ID = ID',
-			implode(', ', $sqlValues)
-		));
+		Application::getConnection()->query($sql);
 	}
 }

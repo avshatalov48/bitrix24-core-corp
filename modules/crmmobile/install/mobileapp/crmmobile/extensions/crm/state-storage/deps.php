@@ -6,6 +6,6 @@ return [
 		'crm:state-storage/manager',
 
 		'utils/object',
-		'statemanager/vuex',
+		'storage/state-storage',
 	],
 ];

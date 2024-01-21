@@ -1,11 +1,15 @@
 <?php
 
+use Bitrix\Tasks\Control\Tag;
 use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\Task\TaskTagTable;
+use Bitrix\Tasks\Provider\Tag\TagList;
+use Bitrix\Tasks\Provider\Tag\TagQuery;
 
 /**
- * @deprecated since tasks 22.1400.0
- * use Control\Tag(...) instead
+ * @deprecated
+ * @use Tag
+ * @use LabelTable
  * Bitrix Framework
  *
  * @package bitrix
@@ -79,7 +83,7 @@ class CTaskTags
 		return true;
 	}
 
-	function Add($arFields, $effectiveUserId = null)
+	public function Add($arFields, $effectiveUserId = null)
 	{
 		if ($this->CheckFields($arFields, false, $effectiveUserId))
 		{
@@ -160,78 +164,16 @@ class CTaskTags
 
 	public static function GetList($arOrder, $arFilter)
 	{
-		global $DB;
+		$query = new TagQuery();
+		$query
+			->setWhere($arFilter)
+			->setOrderBy($arOrder)
+		;
 
-		$arSqlSearch = array_filter(CTaskTags::GetFilter($arFilter));
-		$strSql = "SELECT BTT.*, TT.TASK_ID FROM "
-			. LabelTable::getTableName()
-			. " BTT INNER JOIN "
-			. LabelTable::getRelationTable()
-			. " TT ON BTT.ID = TT.TAG_ID "
-			. (sizeof($arSqlSearch) ? " WHERE " . implode(" AND ", $arSqlSearch) : "");
-
-		if (!is_array($arOrder))
-		{
-			$arOrder = [];
-		}
-
-		$arSqlOrder = [];
-		foreach ($arOrder as $by => $order)
-		{
-			$by = mb_strtolower($by);
-			$order = mb_strtolower($order);
-			if ($order != "asc")
-			{
-				$order = "desc";
-			}
-
-			if ($by == "task")
-			{
-				$arSqlOrder[] = " TT.TASK_ID " . $order . " ";
-			}
-			elseif ($by == "user")
-			{
-				$arSqlOrder[] = " BTT.USER_ID " . $order . " ";
-			}
-			elseif ($by == "name")
-			{
-				$arSqlOrder[] = " BTT.NAME " . $order . " ";
-			}
-			elseif ($by == "rand")
-			{
-				$arSqlOrder[] = CTasksTools::getRandFunction();
-			}
-			else
-			{
-				$arSqlOrder[] = " TT.TASK_ID " . $order . " ";
-			}
-		}
-
-		$strSqlOrder = "";
-		DelDuplicateSort($arSqlOrder);
-		$arSqlOrderCnt = count($arSqlOrder);
-		for ($i = 0; $i < $arSqlOrderCnt; $i++)
-		{
-			if ($i == 0)
-			{
-				$strSqlOrder = " ORDER BY ";
-			}
-			else
-			{
-				$strSqlOrder .= ",";
-			}
-
-			$strSqlOrder .= $arSqlOrder[$i];
-		}
-
-		$strSql .= $strSqlOrder;
-
-		//echo $strSql;
-
-		return $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+		return (new TagList())->getList($query);
 	}
 
-	function DeleteByName($NAME)
+	public function DeleteByName($NAME)
 	{
 		return self::Delete(["=NAME" => $NAME]);
 	}
@@ -241,7 +183,7 @@ class CTaskTags
 		return self::Delete(["=TASK_ID" => (int)$TASK_ID]);
 	}
 
-	function DeleteByUserID($USER_ID)
+	public function DeleteByUserID($USER_ID)
 	{
 		return self::Delete(["=USER_ID" => (int)$USER_ID]);
 	}
@@ -274,38 +216,8 @@ class CTaskTags
 		return $result->isSuccess();
 	}
 
-	public static function Delete($arFilter)
+	public static function Delete(array $filter): bool
 	{
-		$result = false;
-		if ($arFilter)
-		{
-			$list = LabelTable::getList([
-				'select' => [
-					'*',
-					'TASK_' => 'TASKS',
-				],
-				"filter" => $arFilter,
-			]);
-			$idList = [];
-			while ($item = $list->fetch())
-			{
-				$idList[] = $item['ID'];
-			}
-			$idList = [];
-			while ($item = $list->fetch())
-			{
-				$idList[] = $item['ID'];
-			}
-			$relsResult = TaskTagTable::deleteList([
-				'TAG_ID' => $idList,
-			]);
-
-			$tagsResult = LabelTable::deleteList([
-				'ID' => $idList,
-			]);
-
-			return $relsResult && $tagsResult;
-		}
+		return LabelTable::deleteByFilter($filter)->isSuccess();
 	}
-
 }

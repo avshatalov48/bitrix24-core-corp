@@ -706,20 +706,12 @@ JS;
 
 	public static function available()
 	{
-		if (!is_null(static::$availableCount))
+		if (is_null(static::$availableCount))
 		{
-			return static::$availableCount > 0;
+			static::$availableCount = \Bitrix\ImOpenLines\Model\LivechatTable::getCount();
 		}
-		$orm = \Bitrix\ImOpenLines\Model\LivechatTable::getList(Array(
-			'select' => Array('CNT'),
-			'runtime' => array(
-				new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)')
-			),
-		));
-		$row = $orm->fetch();
-		static::$availableCount = $row['CNT'];
 
-		return ($row['CNT'] > 0);
+		return (static::$availableCount > 0);
 	}
 
 	public static function availableCount()

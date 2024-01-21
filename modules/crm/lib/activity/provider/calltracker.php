@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Activity\Provider;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Crm\Settings\LayoutSettings;
+use CCrmDateTimeHelper;
 
 Loc::loadMessages(__FILE__);
 
@@ -309,22 +310,7 @@ class CallTracker extends Base
 
 	private function formatDate(DateTime $date)
 	{
-		if (LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
-		{
-			$format = [
-				'tommorow' => 'tommorow',
-				's' => 'x',
-				'i' => 'x',
-				'H3' => 'x',
-				'today' => 'x',
-				'yesterday' => 'x',
-				'-' => DateTime::convertFormatToPhp(FORMAT_DATETIME),
-			];
-		}
-		else
-		{
-			$format = preg_replace('/:s$/', '', DateTime::convertFormatToPhp(FORMAT_DATETIME));
-		}
+		$format = CCrmDateTimeHelper::getDefaultDateTimeFormat();
 		$now = new DateTime();
 		$now->toUserTime();
 

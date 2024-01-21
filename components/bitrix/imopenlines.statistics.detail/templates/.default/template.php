@@ -77,6 +77,8 @@ if ($isBitrix24Template)
 	if($isAdmin)
 	{
 		echo Bitrix\Imopenlines\Ui\Helper::getStatisticStepper();
+		echo Bitrix\Imopenlines\Ui\Helper::getMigrateQueueStepper();
+		echo Bitrix\Imopenlines\Ui\Helper::getFixRecentDuplicatesStepper();
 	}
 }
 
@@ -206,3 +208,9 @@ UI\Extension::load([
 		}
 	);
 </script>
+
+<?php if ($arResult['META_RESTRICTION_LABEL']): ?>
+	<div class="intranet-contact-center-extremist-organization-label">
+		<span><?= Loc::getMessage("OL_STAT_META_RESTRICTION_RU") ?></span>
+	</div>
+<?php endif ?>

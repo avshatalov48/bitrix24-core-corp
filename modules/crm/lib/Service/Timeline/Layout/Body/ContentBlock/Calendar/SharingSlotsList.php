@@ -3,7 +3,6 @@
 namespace Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Calendar;
 
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
-use Bitrix\Main\Type\DateTime;
 
 class SharingSlotsList extends ContentBlock
 {

@@ -17,7 +17,7 @@
 			this.providerTitle = BX.message('SE_CHAT_TITLE');
 			this.providerSubtitle = '';
 
-			this.isBetaAvailablePromise = this.checkIsBetaAvailable();
+			this.loadSettingsPromise = this.loadSettings();
 		}
 
 		getProviderId()
@@ -35,17 +35,17 @@
 			return this.providerSubtitle;
 		}
 
-		checkIsBetaAvailable()
+		loadSettings()
 		{
 			return new Promise((resolve) => {
-				BX.ajax.runAction('immobile.api.Settings.isBetaAvailable')
+				BX.ajax.runAction('immobile.api.Settings.get')
 					.then((result) => {
 						resolve(result.data);
 					})
 					.catch((error) => {
-						console.error('immobile.isBetaAvailable error', error);
+						console.error('immobile.api.Settings.get', error);
 
-						resolve(false);
+						resolve({});
 					})
 				;
 			});
@@ -57,59 +57,95 @@
 				quoteEnable: true,
 				quoteFromRight: Application.getApiVersion() < 31,
 				historyShow: true,
-				autoplayVideo: ChatPerformance.isAutoPlayVideoSupported(),
+				autoplayVideo: true,
 				backgroundType: SettingsChat.BackgroundType.lightGray,
 				chatBetaEnable: false,
+				localStorageEnable: true,
 			});
 
-			const backgroundItems = [];
-			for (let type in SettingsChat.BackgroundType)
-			{
-				if (SettingsChat.BackgroundType.hasOwnProperty(type))
-				{
-					backgroundItems.push({value: SettingsChat.BackgroundType[type], name: BX.message('SE_CHAT_BACKGROUND_COLOR_'+SettingsChat.BackgroundType[type]) || type});
-				}
-			}
-
-			let gestureQuoteOption = null;
-			if (ChatPerformance.isGestureQuoteSupported())
-			{
-				gestureQuoteOption = FormSection.create("quote", BX.message("SE_CHAT_QUOTE_TITLE")).addItems([
-					FormItem.create("quoteEnable", FormItemType.SWITCH, BX.message("SE_CHAT_QUOTE_ENABLE_TITLE")).setValue(this.values.quoteEnable),
-					FormItem.create("quoteFromRight", FormItemType.SWITCH, BX.message("SE_CHAT_QUOTE_FROM_RIGHT_TITLE")).setValue(this.values.quoteFromRight).setEnabled(!this.values.quoteFromRight || Application.getApiVersion() >= 31),
-				])
-			}
-
-			const isBetaAvailable = await this.isBetaAvailablePromise;
+			const settings = await this.loadSettingsPromise;
+			const isBetaAvailable = settings.IS_BETA_AVAILABLE === true;
+			const isChatM1Enabled = settings.IS_CHAT_M1_ENABLED === true;
 
 			let chatBetaOption = null;
-			if (Application.getApiVersion() >= 43 && isBetaAvailable)
+			if (isBetaAvailable)
 			{
-				const chatBetaEnableSwitch =
-					FormItem.create('chatBetaEnable', FormItemType.SWITCH, BX.message('SE_CHAT_BETA_ENABLE_TITLE'))
-						.setValue(this.values.chatBetaEnable)
+				const chatBetaEnableSwitch = FormItem
+					.create('chatBetaEnable', FormItemType.SWITCH, BX.message('SE_CHAT_BETA_ENABLE_TITLE_V2'))
+					.setValue(this.values.chatBetaEnable)
 				;
 
 				if (typeof chatBetaEnableSwitch.setTestId === 'function')
 				{
 					chatBetaEnableSwitch.setTestId('CHAT_SETTINGS_CHAT_BETA_ENABLE');
 				}
+				// // TODO this setting may need to be reverted
+				// const bitrixCallDevEnableSwitch = FormItem.create(
+				// 	'bitrixCallDevEnable',
+				// 	FormItemType.SWITCH,
+				// 	BX.message('SE_CHAT_BETA_CALL_ENABLE_TITLE_V2'),
+				// )
+				// 	.setValue(this.values.bitrixCallDevEnable)
+				// ;
+				//
+				// if (typeof bitrixCallDevEnableSwitch.setTestId === 'function')
+				// {
+				// 	bitrixCallDevEnableSwitch.setTestId('CHAT_SETTINGS_CALL_DEV_ENABLE');
+				// }
 
-				chatBetaOption =
-					FormSection
-						.create('chatBeta', BX.message('SE_CHAT_BETA_TITLE'))
-						.addItems([ chatBetaEnableSwitch ])
+				chatBetaOption = FormSection
+					.create('chatBeta', BX.message('SE_CHAT_BETA_TITLE_V2'))
+					.addItems([chatBetaEnableSwitch])
 				;
 			}
 
+			const localStorageEnableSwitch = FormItem.create('localStorageEnable', FormItemType.SWITCH, BX.message('SE_CHAT_LOCAL_STORAGE_ENABLE_TITLE'))
+				.setValue(this.values.localStorageEnable)
+			;
+
+			if (typeof localStorageEnableSwitch.setTestId === 'function')
+			{
+				localStorageEnableSwitch.setTestId('CHAT_SETTINGS_LOCAL_STORAGE_ENABLE');
+			}
+
+			let localStorageSection = null;
+			const isSupportedAndroid = (
+				Application.getPlatform() === 'android'
+				&& parseInt(Application.getBuildVersion(), 10) >= 2443
+			);
+			const isSupportedIos = device.platform === 'iOS'
+				&& parseInt(device.version, 10) >= 15
+			;
+			const isLocalStorageSupported = isSupportedAndroid || isSupportedIos;
+
+			if (
+				Application.getApiVersion() >= 52
+				&& isChatM1Enabled
+				&& isLocalStorageSupported
+				&& settings.IS_CHAT_LOCAL_STORAGE_AVAILABLE === true
+			)
+			{
+				localStorageSection = FormSection
+					.create('localStorage', '', BX.message('SE_CHAT_LOCAL_STORAGE_ENABLE_DESCRIPTION'))
+					.addItems([localStorageEnableSwitch])
+				;
+			}
+
+			const autoplayVideoSection = FormSection
+				.create('autoplay', BX.message('SE_CHAT_AUTOPLAY_TITLE_V2'))
+				.addItems([
+					FormItem
+						.create('autoplayVideo', FormItemType.SWITCH, BX.message('SE_CHAT_AUTOPLAY_VIDEO_TITLE_V2'))
+						.setValue(this.values.autoplayVideo),
+				])
+			;
+
 			return Form.create(this.providerId, this.providerTitle).addSections([
-				FormSection.create("history", BX.message("SE_CHAT_HISTORY_TITLE")).addItems([
-					FormItem.create("historyShow", FormItemType.SWITCH, BX.message("SE_CHAT_HISTORY_SHOW_TITLE")).setValue(this.values.historyShow),
+				FormSection.create('history', BX.message('SE_CHAT_HISTORY_TITLE')).addItems([
+					FormItem.create('historyShow', FormItemType.SWITCH, BX.message('SE_CHAT_HISTORY_SHOW_TITLE_V2')).setValue(this.values.historyShow),
 				]),
-				gestureQuoteOption,
-				FormSection.create("autoplay", BX.message("SE_CHAT_AUTOPLAY_TITLE")).addItems([
-					FormItem.create("autoplayVideo", FormItemType.SWITCH, BX.message("SE_CHAT_AUTOPLAY_VIDEO_TITLE")).setValue(this.values.autoplayVideo),
-				]),
+				localStorageSection,
+				autoplayVideoSection,
 				chatBetaOption,
 			]);
 		}
@@ -120,7 +156,7 @@
 
 			this.provider.openForm(
 				form.compile(),
-				form.getId()
+				form.getId(),
 			);
 		}
 
@@ -130,7 +166,7 @@
 		 */
 		setFormItemValue(params)
 		{
-			let {id, value} = params;
+			const { id, value } = params;
 
 			this.values[id] = value;
 
@@ -149,6 +185,7 @@
 		onSettingsProviderButtonTap(item)
 		{
 			this.drawForm();
+
 			return true;
 		}
 
@@ -157,8 +194,18 @@
 			this.setFormItemValue({
 				sectionId: item.sectionCode,
 				id: item.id,
-				value: item.value
+				value: item.value,
 			});
+
+			if (item && item.id === 'localStorageEnable')
+			{
+				Application.relogin();
+			}
+
+			if (item && item.id === 'chatBetaEnable')
+			{
+				BX.postComponentEvent('ImMobile.Messenger.Settings.Chat:change', [{ id: item.id, value: item.value }]);
+			}
 
 			return true;
 		}
@@ -173,13 +220,11 @@
 
 	this.SettingsChatManager = new SettingsChat();
 
-
 	/**
 	 * Subscribe to settings draw event
 	 */
 
-	BX.addCustomEvent("onRegisterProvider", (provider) =>
-	{
+	BX.addCustomEvent('onRegisterProvider', (provider) => {
 		if (
 			Application.getApiVersion() < 29
 			|| !Application.isWebComponentSupported()
@@ -207,8 +252,7 @@
 		provider(new SettingsNotifyProvider(
 			SettingsChatManager.getProviderId(),
 			SettingsChatManager.getProviderTitle(),
-			SettingsChatManager.getProviderSubtitle()
+			SettingsChatManager.getProviderSubtitle(),
 		));
 	});
-
 })();

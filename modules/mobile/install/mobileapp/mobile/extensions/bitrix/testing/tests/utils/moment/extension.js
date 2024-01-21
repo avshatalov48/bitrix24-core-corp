@@ -1,5 +1,5 @@
 (() => {
-	const require = ext => jn.require(ext);
+	const require = (ext) => jn.require(ext);
 
 	const { describe, test, expect } = require('testing');
 	const { Moment } = require('utils/date');
@@ -71,8 +71,35 @@
 			expect(today.isTomorrow).toBe(false);
 		});
 
+		test('inThisWeek should return true if the moment is in this week', () => {
+			const thisWeek = new Moment('2023-10-25T10:00:00');
+
+			thisWeek.setNow(new Moment('2023-10-25T10:00:00'));
+			expect(thisWeek.inThisWeek).toBe(true);
+
+			thisWeek.setNow(new Moment('2023-10-23T10:00:00'));
+			expect(thisWeek.inThisWeek).toBe(true);
+
+			thisWeek.setNow(new Moment('2023-10-29T10:00:00'));
+			expect(thisWeek.inThisWeek).toBe(true);
+		});
+
+		test('inThisWeek should return false if the moment is outside of this week', () => {
+			const thisWeek = new Moment('2023-10-25T10:00:00');
+
+			thisWeek.setNow(new Moment('2023-10-22T10:00:00'));
+			expect(thisWeek.inThisWeek).toBe(false);
+
+			thisWeek.setNow(new Moment('2022-10-30T10:00:00'));
+			expect(thisWeek.inThisWeek).toBe(false);
+
+			thisWeek.setNow(new Moment('2022-10-26T10:00:00'));
+			expect(thisWeek.inThisWeek).toBe(false);
+		});
+
 		test('inThisYear should return true if the moment is in this year', () => {
 			const thisYear = new Moment('2023-06-03T10:00:00');
+			thisYear.setNow(new Moment('2023-01-03T10:00:00'));
 
 			expect(thisYear.inThisYear).toBe(true);
 
@@ -256,6 +283,22 @@
 			const format = 'YYYY-MM-DD HH:mm:ss';
 
 			expect(moment.format(format)).toBe('2023-06-03 11:00:00');
+		});
+
+		test('format of exact MMM should return a formatted string representation of the moment', () => {
+			const moment = new Moment('2023-02-03T11:00:00');
+			const format = 'MMM';
+
+			expect(moment.format(format, 'ru')).toBe('февр');
+			expect(moment.format(format, 'en')).toBe('Feb');
+		});
+
+		test('format of MMM inclusion should return a formatted string representation of the moment', () => {
+			const moment = new Moment('2023-02-03T11:00:00');
+			const format = 'DD MMM YYYY';
+
+			expect(moment.format(format, 'ru')).toBe('03 февр 2023');
+			expect(moment.format(format, 'en')).toBe('03 Feb 2023');
 		});
 
 		test('equals should return true if the moment is the same as the other moment', () => {

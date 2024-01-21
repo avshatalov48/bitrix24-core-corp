@@ -390,7 +390,7 @@ abstract class Factory
 			unset($parameters['select'][$fmIndex]);
 		}
 
-		$isFmInSelect = $fmIndex !== false || in_array('*', $parameters['select'] ?? [], true);
+		$isFmInSelect = $fmIndex !== false;
 
 		$parameters = $this->prepareGetListParameters($parameters);
 
@@ -469,7 +469,7 @@ abstract class Factory
 		return $this->getItems($parameters);
 	}
 
-	protected function collectEntityTypesForPermissions(array $filter, ?int $userId = null): array
+	protected function collectEntityTypesForPermissions(array &$filter, ?int $userId = null): array
 	{
 		$userPermissions = Container::getInstance()->getUserPermissions($userId);
 		$entityTypes = [$userPermissions::getPermissionEntityType($this->getEntityTypeId())];
@@ -504,12 +504,37 @@ abstract class Factory
 			else
 			{
 				$categories = $this->getCategories();
+				$shouldStrictByCategories = false;
+				$availableCategoriesIds = [];
 				foreach ($categories as $category)
 				{
+					if (!$userPermissions->canReadTypeInCategory($this->getEntityTypeId(), $category->getId()))
+					{
+						$shouldStrictByCategories = true;
+					}
+					else
+					{
+						$availableCategoriesIds[] = $category->getId();
+					}
 					$entityTypes[] = $userPermissions::getPermissionEntityType(
 						$this->getEntityTypeId(),
 						$category->getId()
 					);
+				}
+
+				if ($shouldStrictByCategories && !empty($availableCategoriesIds))
+				{
+					if (mb_strtoupper($filter['LOGIC'] ?? '') === 'OR')
+					{
+						$filter = [
+							0 => $filter,
+							'@CATEGORY_ID' => $availableCategoriesIds
+						];
+					}
+					else
+					{
+						$filter['@CATEGORY_ID'] = $availableCategoriesIds;
+					}
 				}
 			}
 		}
@@ -1976,5 +2001,10 @@ abstract class Factory
 		{
 			unset($this->itemsCategoryCache[$id]);
 		}
+	}
+
+	public function isInCustomSection(): bool
+	{
+		return false;
 	}
 }

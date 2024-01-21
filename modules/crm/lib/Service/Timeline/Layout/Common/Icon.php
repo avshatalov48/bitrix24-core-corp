@@ -48,6 +48,7 @@ class Icon
 	public const TASK_NEW_COMMENT = 'task-new-comment';
 	public const TASK_VIEWED_COMMENT = 'task-viewed-comment';
 	public const TASK_ACTIVITY = 'task-activity';
+	public const AI_COPILOT = 'ai-copilot';
 
 	//endregion
 

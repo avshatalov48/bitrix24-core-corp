@@ -4,6 +4,15 @@ import { SmileManager } from 'im.v2.lib.smile-manager';
 
 import type { ImModelMessage } from 'im.v2.model';
 
+const serverComponentList = new Set([
+	MessageComponent.unsupported,
+	MessageComponent.chatCreation,
+	MessageComponent.conferenceCreation,
+	MessageComponent.callInvite,
+	MessageComponent.copilotCreation,
+	MessageComponent.copilotMessage,
+]);
+
 export class MessageComponentManager
 {
 	#message: ImModelMessage;
@@ -20,24 +29,9 @@ export class MessageComponentManager
 			return MessageComponent.deleted;
 		}
 
-		if (this.#isCallInviteMessage())
+		if (this.#isServerComponent())
 		{
-			return MessageComponent.callInvite;
-		}
-
-		if (this.#isUnsupportedMessage())
-		{
-			return MessageComponent.unsupported;
-		}
-
-		if (this.#isChatCreationMessage())
-		{
-			return MessageComponent.chatCreation;
-		}
-
-		if (this.#isConferenceCreationMessage())
-		{
-			return MessageComponent.conferenceCreation;
+			return this.#message.componentId;
 		}
 
 		if (this.#isSystemMessage())
@@ -56,6 +50,11 @@ export class MessageComponentManager
 		}
 
 		return MessageComponent.default;
+	}
+
+	#isServerComponent(): boolean
+	{
+		return serverComponentList.has(this.#message.componentId);
 	}
 
 	#hasFiles(): boolean
@@ -86,26 +85,6 @@ export class MessageComponentManager
 	#isSystemMessage(): boolean
 	{
 		return this.#message.authorId === 0;
-	}
-
-	#isUnsupportedMessage(): boolean
-	{
-		return this.#message.componentId === MessageComponent.unsupported;
-	}
-
-	#isChatCreationMessage(): boolean
-	{
-		return this.#message.componentId === MessageComponent.chatCreation;
-	}
-
-	#isConferenceCreationMessage(): boolean
-	{
-		return this.#message.componentId === MessageComponent.conferenceCreation;
-	}
-
-	#isCallInviteMessage(): boolean
-	{
-		return this.#message.componentId === MessageComponent.callInvite;
 	}
 
 	#isEmojiOnly(): boolean

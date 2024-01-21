@@ -134,6 +134,25 @@ final class Assembler
 	public static function arrayByCollection(Collection $collection): array
 	{
 		$array = [];
+		foreach (self::mapOfCompatibleShapeByCollection($collection) as $typeId => $valuesOfSameType)
+		{
+			foreach ($valuesOfSameType as $id => $value)
+			{
+				$array[$typeId][$id] = self::arrayByValue($value);
+			}
+		}
+
+		return $array;
+	}
+
+	/**
+	 * @param Collection $collection
+	 *
+	 * @return Array<string,Array<int|string, Value>> - [typeId => [id => value]]
+	 */
+	private static function mapOfCompatibleShapeByCollection(Collection $collection): array
+	{
+		$map = [];
 
 		$newValuesCountByType = [];
 		foreach ($collection as $value)
@@ -149,14 +168,16 @@ final class Assembler
 				$newValuesCountByType[$value->getTypeId()] = $count;
 			}
 
-			$array[$value->getTypeId()][$valueId] = self::arrayByValue($value);
+			$map[$value->getTypeId()][$valueId] = $value;
 		}
 
-		return $array;
+		return $map;
 	}
 
 	public static function updateCollectionByArray(Collection $collection, array $compatibleArray): void
 	{
+		$map = self::mapOfCompatibleShapeByCollection($collection);
+
 		foreach ($compatibleArray as $typeId => $valuesOfSameType)
 		{
 			foreach ($valuesOfSameType as $id => $compatibleValue)
@@ -176,10 +197,19 @@ final class Assembler
 				{
 					$value = $collection->getById((int)$id);
 				}
-
-				if (!$value)
+				elseif (is_string($id) && str_starts_with($id, 'n'))
 				{
-					if (mb_strpos($id, 'n') === 0)
+					// maybe there is a yet unsaved value with the given id
+					$value = $map[$typeId][$id] ?? null;
+				}
+
+				if ($value)
+				{
+					self::updateValueByArray($value, $compatibleValue);
+				}
+				else
+				{
+					if (str_starts_with($id, 'n'))
 					{
 						// Key is like 'n0', it's an entirely new value, ignore ID. For compatibility reasons.
 						unset($compatibleValue['ID']);
@@ -189,49 +219,55 @@ final class Assembler
 					$newValue->setTypeId((string)$typeId);
 
 					$collection->add($newValue);
-					continue;
-				}
-
-				if ($value->getValue() !== $compatibleValue['VALUE'])
-				{
-					$value->setValue((string)$compatibleValue['VALUE']);
-				}
-
-				$compatibleValueCountryCode = null;
-				if (isset($compatibleValue['VALUE_EXTRA']['COUNTRY_CODE']))
-				{
-					$compatibleValueCountryCode = (string)$compatibleValue['VALUE_EXTRA']['COUNTRY_CODE'];
-				}
-				elseif (isset($compatibleValue['VALUE_COUNTRY_CODE']))
-				{
-					$compatibleValueCountryCode = (string)$compatibleValue['VALUE_COUNTRY_CODE'];
-				}
-
-				if ($compatibleValueCountryCode === null && $value->getValueExtra())
-				{
-					$value->getValueExtra()->setCountryCode(null);
-				}
-				elseif ($compatibleValueCountryCode !== null)
-				{
-					if ($value->getValueExtra() && $value->getValueExtra()->getCountryCode() !== $compatibleValueCountryCode)
-					{
-						$value->getValueExtra()->setCountryCode($compatibleValueCountryCode);
-					}
-					elseif ($value->getValueExtra() === null)
-					{
-						$value->setValueExtra((new ValueExtra())->setCountryCode($compatibleValueCountryCode));
-					}
-				}
-
-				$isValueTypeChanged =
-					isset($compatibleValue['VALUE_TYPE'])
-					&& ($value->getValueType() !== $compatibleValue['VALUE_TYPE'])
-				;
-				if ($isValueTypeChanged)
-				{
-					$value->setValueType((string)$compatibleValue['VALUE_TYPE']);
 				}
 			}
+		}
+	}
+
+	private static function updateValueByArray(Value $value, array $compatibleValue): void
+	{
+		if ($value->getValue() !== $compatibleValue['VALUE'])
+		{
+			$value->setValue((string)$compatibleValue['VALUE']);
+		}
+
+		$compatibleValueCountryCode = null;
+		if (isset($compatibleValue['VALUE_EXTRA']['VALUE_COUNTRY_CODE']))
+		{
+			$compatibleValueCountryCode = (string)$compatibleValue['VALUE_EXTRA']['VALUE_COUNTRY_CODE'];
+		}
+		elseif (isset($compatibleValue['VALUE_EXTRA']['COUNTRY_CODE']))
+		{
+			$compatibleValueCountryCode = (string)$compatibleValue['VALUE_EXTRA']['COUNTRY_CODE'];
+		}
+		elseif (isset($compatibleValue['VALUE_COUNTRY_CODE']))
+		{
+			$compatibleValueCountryCode = (string)$compatibleValue['VALUE_COUNTRY_CODE'];
+		}
+
+		if ($compatibleValueCountryCode === null && $value->getValueExtra())
+		{
+			$value->getValueExtra()->setCountryCode(null);
+		}
+		elseif ($compatibleValueCountryCode !== null)
+		{
+			if ($value->getValueExtra() && $value->getValueExtra()->getCountryCode() !== $compatibleValueCountryCode)
+			{
+				$value->getValueExtra()->setCountryCode($compatibleValueCountryCode);
+			}
+			elseif ($value->getValueExtra() === null)
+			{
+				$value->setValueExtra((new ValueExtra())->setCountryCode($compatibleValueCountryCode));
+			}
+		}
+
+		$isValueTypeChanged =
+			isset($compatibleValue['VALUE_TYPE'])
+			&& ($value->getValueType() !== $compatibleValue['VALUE_TYPE'])
+		;
+		if ($isValueTypeChanged)
+		{
+			$value->setValueType((string)$compatibleValue['VALUE_TYPE']);
 		}
 	}
 }

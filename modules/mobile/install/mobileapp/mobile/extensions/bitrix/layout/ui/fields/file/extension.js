@@ -3,6 +3,7 @@
  */
 jn.define('layout/ui/fields/file', (require, exports, module) => {
 	const { Alert } = require('alert');
+	const AppTheme = require('apptheme');
 	const { clip, pen } = require('assets/common');
 	const { Haptics } = require('haptics');
 	const { BaseField } = require('layout/ui/fields/base');
@@ -97,7 +98,11 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 		showFilesName()
 		{
-			return BX.prop.getBoolean(this.props, 'showFilesName', this.getMediaTypeId(this.getConfig().mediaType) !== 0);
+			return BX.prop.getBoolean(
+				this.props,
+				'showFilesName',
+				this.getMediaTypeId(this.getConfig().mediaType) !== 0,
+			);
 		}
 
 		checkLoadingFilesResolvers()
@@ -126,7 +131,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 		getConfig()
 		{
 			const config = super.getConfig();
-			const controller = BX.prop.getObject(config, 'controller', {});
+			const controller = clone(BX.prop.getObject(config, 'controller', {}));
 
 			if (!this.isReadOnly())
 			{
@@ -161,6 +166,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 		resolveControllerEndPoint(entityId)
 		{
+			// eslint-disable-next-line default-case
 			switch (entityId)
 			{
 				case 'crm-entity':
@@ -278,8 +284,9 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 								width: 14,
 								height: 15,
 							},
+							tintColor: AppTheme.colors.base3,
 							svg: {
-								content: pen,
+								content: pen(),
 							},
 						},
 					),
@@ -357,8 +364,9 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 						},
 						clickable: false,
 						resizeMode: 'center',
+						tintColor: emptyEditableButtonStyle.iconColor,
 						svg: {
-							content: svgImages.file.content.replace(/%color%/g, emptyEditableButtonStyle.iconColor),
+							content: svgImages.file,
 						},
 					},
 				),
@@ -398,12 +406,14 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 		getFilePath(url)
 		{
+			let filePath = url;
+
 			if (url && url.indexOf('file://') !== 0)
 			{
-				url = currentDomain + url;
+				filePath = currentDomain + url;
 			}
 
-			return url;
+			return filePath;
 		}
 
 		getFilesView()
@@ -489,7 +499,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 				Text(
 					{
 						style: {
-							color: '#a8adb4',
+							color: AppTheme.colors.base4,
 							fontSize: 15,
 						},
 						text: this.getAddButtonText(),
@@ -559,7 +569,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			{
 				items.push({
 					id: 'disk',
-					name: BX.message('FIELDS_FILE_B24_DISK'),
+					name: BX.message('FIELDS_FILE_B24_DISK_MSGVER_1'),
 					dataSource: {
 						multiple: this.isMultiple(),
 						url: this.getConfig().disk.fileAttachPath,
@@ -586,7 +596,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 						attachButton: { items },
 					},
 				},
-				data => this.removeFocus().then(() => this.onAddFile(data)),
+				(data) => this.removeFocus().then(() => this.onAddFile(data)),
 				() => this.removeFocus(),
 			);
 		}
@@ -670,15 +680,11 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			const fileUploadTasks = this.prepareFileUploadTasks(addedFilesWithFilter);
 			this.uploadFiles(fileUploadTasks);
 
-			let files;
+			let files = [...addedFilesWithFilter];
 
 			if (this.isMultiple())
 			{
 				files = [...this.getValue(), ...addedFilesWithFilter];
-			}
-			else
-			{
-				files = [...addedFilesWithFilter];
 			}
 
 			Haptics.impactLight();
@@ -691,7 +697,12 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 		 */
 		renderHiddenFilesCounter(hiddenFilesCount)
 		{
-			const text = hiddenFilesCount > 99 ? '99+' : `+${hiddenFilesCount}`;
+			let text = hiddenFilesCount > 99 ? '99+' : `+${hiddenFilesCount}`;
+
+			if (this.props.onPrepareHiddenFilesCounterText)
+			{
+				text = this.props.onPrepareHiddenFilesCounterText(hiddenFilesCount, this);
+			}
 
 			return View(
 				{
@@ -705,7 +716,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 						width: 18,
 						height: 18,
 					},
-					tintColor: '#dee2e5',
+					tintColor: AppTheme.colors.base6,
 					animating: true,
 					size: 'small',
 				}) : Text(
@@ -722,17 +733,23 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			void this.getPageManager().openWidget(
 				'layout',
 				{
-					title: BX.message('FIELDS_FILE_ATTACHMENTS_NAVIGATION_TITLE').replace('#NUM#', this.getFilesCount()),
+					title: BX.message('FIELDS_FILE_ATTACHMENTS_NAVIGATION_TITLE').replace(
+						'#NUM#',
+						this.getFilesCount(),
+					),
 					modal: false,
 					backdrop: {
 						mediumPositionPercent: 75,
 						horizontalSwipeAllowed: false,
 						swipeContentAllowed: false,
-						navigationBarColor: '#eef2f4',
+						navigationBarColor: AppTheme.colors.bgSecondary,
 					},
 					onReady: (layoutWidget) => {
 						this.fileAttachmentWidget = layoutWidget;
-						const imageSize = device.screen.width > 375 ? FILE_PREVIEW_MEASURE : device.screen.width * FILE_PREVIEW_MEASURE / 375;
+						const imageSize = device.screen.width > 375
+							? FILE_PREVIEW_MEASURE
+							: device.screen.width * FILE_PREVIEW_MEASURE / 375;
+
 						layoutWidget.enableNavigationBarBorder(false);
 
 						layoutWidget.showComponent(
@@ -762,8 +779,8 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 										position: 'absolute',
 										top: 8,
 										right: 9,
-										borderColor: hasError ? '#ff5752' : '#333333',
-										backgroundColor: hasError ? '#ff615c' : null,
+										borderColor: hasError ? AppTheme.colors.accentMainAlert : AppTheme.colors.base1,
+										backgroundColor: hasError ? AppTheme.colors.accentMainAlert : null,
 										borderWidth: 1,
 										opacity: hasError ? 0.5 : 0.08,
 										borderRadius: 6,
@@ -781,7 +798,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 							}),
 						);
 					},
-					onError: error => reject(error),
+					onError: (error) => console.error(error),
 				},
 			);
 		}
@@ -855,11 +872,11 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 				filesListWrapper: {
 					flexDirection: 'row',
 					alignItems: 'flex-start',
-					borderColor: '#ffffff',
+					borderColor: AppTheme.colors.bgContentPrimary,
 					flexGrow: 2,
 				},
 				hiddenFilesCounterWrapper: {
-					borderColor: '#dee2e5',
+					borderColor: AppTheme.colors.base6,
 					borderWidth: 0.5,
 					borderRadius: 18,
 					width: HIDDEN_FILES_COUNTER_WIDTH,
@@ -872,13 +889,13 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 				},
 				hiddenFilesCounterText: {
 					fontSize: 17,
-					color: '#828b95',
+					color: AppTheme.colors.base3,
 				},
 				emptyEditableButtonStyle: {
-					borderColor: '#00a2e8',
-					backgroundColor: '#00a2e8',
-					iconColor: '#ffffff',
-					textColor: '#ffffff',
+					borderColor: AppTheme.colors.accentMainPrimary,
+					backgroundColor: AppTheme.colors.accentMainPrimary,
+					iconColor: AppTheme.colors.baseWhiteFixed,
+					textColor: AppTheme.colors.baseWhiteFixed,
 					...this.getConfig().emptyEditableButtonStyle,
 				},
 			};
@@ -917,7 +934,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 				return files;
 			}
 
-			return files.filter(file => getNativeViewerMediaType(getMimeType(file.type)) === mediaType);
+			return files.filter((file) => getNativeViewerMediaType(getMimeType(file.type)) === mediaType);
 		}
 
 		prepareDiskFiles(files)
@@ -927,6 +944,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 				{
 					return file;
 				}
+
 				return {
 					id: file.dataAttributes.VALUE,
 					name: file.name,
@@ -951,7 +969,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 			return (
 				files
-					.filter(file => !file.isDiskFile)
+					.filter((file) => !file.isDiskFile)
 					.map((file) => {
 						const uuid = Uuid.getV4();
 						const taskId = FILE_TASK_ID_PREFIX + uuid;
@@ -960,7 +978,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 						let fileName = file.name;
 						if (extension === 'heic')
 						{
-							fileName = fileName.substring(0, fileName.length - extension.length) + 'jpg';
+							fileName = `${fileName.slice(0, Math.max(0, fileName.length - extension.length))}jpg`;
 						}
 
 						file.id = taskId;
@@ -1053,12 +1071,20 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			}
 
 			const files = clone(this.getValue());
-			const uploadedFile = files.find((file) => file.id === currentFile.params.id);
+			const uploadedFile = files.find((file) => file.id === currentFile?.params?.id);
 
 			if (uploadedFile)
 			{
 				uploadedFile.isUploading = false;
 				uploadedFile.token = result.data.token;
+
+				const fileInfo = result.data?.file;
+				if (fileInfo)
+				{
+					uploadedFile.fileId = fileInfo.customData?.fileId;
+					uploadedFile.serverFileId = fileInfo.serverFileId;
+				}
+
 				this.handleChange(files);
 			}
 		}
@@ -1099,8 +1125,12 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 		showUploaderErrorAlert(result)
 		{
 			const firstNonSystemError = this.getFirstNonSystemError(result.errors);
-			const title = firstNonSystemError && firstNonSystemError.message || BX.message('FIELDS_FILE_UPLOAD_ALERT_TITLE');
-			const text = firstNonSystemError && firstNonSystemError.description || BX.message('FIELDS_FILE_UPLOAD_ALERT_DESCR');
+			const title = firstNonSystemError && firstNonSystemError.message || BX.message(
+				'FIELDS_FILE_UPLOAD_ALERT_TITLE',
+			);
+			const text = firstNonSystemError && firstNonSystemError.description || BX.message(
+				'FIELDS_FILE_UPLOAD_ALERT_DESCR',
+			);
 			const hash = title + text;
 
 			if (this.displayedAlertsSet.has(hash))
@@ -1167,12 +1197,13 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 					},
 					Image(
 						{
+							tintColor: AppTheme.colors.base3,
 							style: {
 								width: 15,
 								height: 17,
 							},
 							svg: {
-								content: svgImages.fileIcon(this.getTitleColor()),
+								content: clip,
 							},
 						},
 					),
@@ -1201,12 +1232,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 	}
 
 	const svgImages = {
-		file: {
-			content: `<svg width="19" height="18" viewBox="0 0 19 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.659 0.783569H0.15918V3.1169H12.9925L10.659 0.783569Z" fill="%color%"/><path d="M18.8258 4.28357H0.15918V17.1169H18.8258V4.28357Z" fill="%color%"/></svg>`,
-		},
-		fileIcon: (color = '#a8adb4') => {
-			return `<svg width="15" height="17" viewBox="0 0 15 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.1125 6.70259C14.2311 6.82119 14.2311 7.01346 14.1125 7.13205L13.3167 7.92786C13.1981 8.04645 13.0059 8.04645 12.8873 7.92786L8.20094 3.24153C6.85315 1.89374 4.64767 1.89374 3.29988 3.24153C1.95209 4.58932 1.95209 6.7948 3.29988 8.14259L9.04885 13.8916C9.89408 14.7368 11.2668 14.7368 12.112 13.8916C12.9572 13.0463 12.9572 11.6736 12.112 10.8284L6.97567 5.69206C6.6325 5.34889 6.09358 5.34889 5.75041 5.69206C5.40724 6.03523 5.40724 6.57415 5.75041 6.91732L9.82411 10.991C9.9427 11.1096 9.9427 11.3019 9.82411 11.4205L9.0283 12.2163C8.90971 12.3349 8.71743 12.3349 8.59884 12.2163L4.52514 8.14259C3.50808 7.12552 3.50808 5.48386 4.52514 4.46679C5.54221 3.44973 7.18387 3.44973 8.20094 4.46679L13.3373 9.60313C14.8564 11.1222 14.8564 13.5977 13.3373 15.1168C11.8182 16.6359 9.34266 16.6359 7.82358 15.1168L2.07461 9.36785C0.052928 7.34616 0.052928 4.03795 2.07461 2.01626C4.0963 -0.00542164 7.40451 -0.00542164 9.4262 2.01626L14.1125 6.70259Z" fill="${color}"/></svg>`;
-		},
+		file: '<svg width="19" height="18" viewBox="0 0 19 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.659 0.783569H0.15918V3.1169H12.9925L10.659 0.783569Z" fill="#828B95" /><path d="M18.8258 4.28357H0.15918V17.1169H18.8258V4.28357Z" fill="#828B95" /></svg>',
 	};
 
 	module.exports = {
@@ -1214,5 +1240,4 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 		FileField: (props) => new FileField(props),
 		MediaType: NativeViewerMediaTypes,
 	};
-
 });

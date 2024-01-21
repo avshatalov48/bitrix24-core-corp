@@ -142,24 +142,7 @@ if($arResult['CALL_LIST_UPDATE_MODE'])
 	AddEventHandler('crm', 'onCrmInvoiceListItemBuildMenu', array('\Bitrix\Crm\CallList\CallList', 'handleOnCrmInvoiceListItemBuildMenu'));
 }
 
-if(LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
-{
-	$arResult['TIME_FORMAT'] = array(
-		'tommorow' => 'tommorow',
-		's' => 'sago',
-		'i' => 'iago',
-		'H3' => 'Hago',
-		'today' => 'today',
-		'yesterday' => 'yesterday',
-		//'d7' => 'dago',
-		'-' => Main\Type\DateTime::convertFormatToPhp(FORMAT_DATE)
-	);
-}
-else
-{
-	$arResult['TIME_FORMAT'] = preg_replace('/:s$/', '', Main\Type\DateTime::convertFormatToPhp(FORMAT_DATETIME));
-}
-
+$arResult['TIME_FORMAT'] = CCrmDateTimeHelper::getDefaultDateTimeFormat();
 CUtil::InitJSCore(array('ajax', 'tooltip'));
 
 $arResult['GADGET'] = 'N';

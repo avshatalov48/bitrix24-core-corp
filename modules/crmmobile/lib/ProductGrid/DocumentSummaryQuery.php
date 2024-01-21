@@ -75,7 +75,7 @@ final class DocumentSummaryQuery extends BaseSummaryQuery
 			'totalTax' => $totalTax,
 			'totalDiscount' => $totalDiscount,
 			'totalWithoutDiscount' => $totalBrutto + $deliveryCost,
-			'currency' => Catalog::getBaseCurrency(),
+			'currency' => $this->currencyId,
 		];
 	}
 }

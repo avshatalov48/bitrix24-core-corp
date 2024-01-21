@@ -5,6 +5,7 @@ IncludeModuleLangFile(__FILE__);
 use Bitrix\Crm\Activity\Provider\Tasks\Task;
 use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\Entity\MessageBuilder;
+use Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
@@ -537,6 +538,18 @@ class CCrmLiveFeed
 			), null, array('HIDE_ICONS' => 'Y'));
 		}
 
+		if (AvailabilityHelper::isShowAlert())
+		{
+			$APPLICATION->IncludeComponent(
+				'bitrix:crm.livefeed',
+				'disable-alert',
+				[
+					'FIELDS' => $arFields,
+					'PARAMS' => $arParams
+				],
+			);
+		}
+
 		$html_message = ob_get_clean();
 
 		$arRights = array();
@@ -722,6 +735,14 @@ class CCrmLiveFeed
 				"/bitrix/js/crm/activity.js",
 				"/bitrix/js/crm/common.js"
 			);
+
+			if (AvailabilityHelper::isShowAlert())
+			{
+				Bitrix\Main\UI\Extension::load(['crm.livefeed.disable-alert.render-helper']);
+				$arResult['CACHED_JS_PATH'][] =
+					'/bitrix/js/crm/livefeed/disable-alert/render-helper/dist/render-helper.bundle.js'
+				;
+			}
 
 			if (IsModuleInstalled("tasks"))
 			{
@@ -4844,7 +4865,7 @@ class CCrmLiveFeed
 		{
 			$params['LOGO_ID'] = $item->get(Item\Company::FIELD_NAME_LOGO);
 		}
-		
+
 		$liveFeedFields = [
 			'USER_ID' => $item->getCreatedBy(),
 			'ENTITY_TYPE_ID' => $item->getEntityTypeId(),
@@ -5289,7 +5310,7 @@ class CCrmLiveFeed
 					'#URL#' => '#URL#',
 				])
 			;
-			
+
 			$url = Container::getInstance()->getRouter()->getItemDetailUrl($item->getEntityTypeId(), $item->getId());
 
 			\CIMNotify::Add([

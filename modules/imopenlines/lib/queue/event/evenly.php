@@ -20,16 +20,18 @@ class Evenly extends Queue
 	 */
 	public function returnUserToQueue(array $userIds): void
 	{
-		$sessionList = SessionCheckTable::getList(
-			[
-				'select' => ['SESSION_ID', 'UNDISTRIBUTED'],
-				'filter' => [
-					'=SESSION.CONFIG_ID' => $this->configLine['ID'],
-					'<SESSION.STATUS' => Session::STATUS_ANSWER,
-					'!=SESSION.OPERATOR_FROM_CRM' => 'Y'
-				]
-			]
-		)->fetchAll();
+		$sessionList = SessionCheckTable::getList([
+			'select' => ['SESSION_ID', 'UNDISTRIBUTED'],
+			'filter' => [
+				'=SESSION.CONFIG_ID' => $this->configLine['ID'],
+				'<SESSION.STATUS' => Session::STATUS_ANSWER,
+				'!=SESSION.OPERATOR_FROM_CRM' => 'Y'
+			],
+			'order' => [
+				'DATE_QUEUE' => 'ASC',
+				'SESSION_ID' => 'ASC',
+			],
+		])->fetchAll();
 
 		$undistributedSessions = array();
 		foreach ($sessionList as $session)

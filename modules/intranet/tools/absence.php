@@ -17,12 +17,12 @@ IncludeModuleLangFile(__FILE__);
 Asset::getInstance()->addCSS(
 	'/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/style.css'
 );
-$arParams = $_REQUEST['arParams'];
+$arParams = $_REQUEST['arParams'] ?? [];
 
 $iblockID = isset($_REQUEST['IBLOCK_ID'])
 	? intval($_REQUEST['IBLOCK_ID'])
 	: (is_array($arParams)
-		? intval($arParams['IBLOCK_ID'])
+		? intval($arParams['IBLOCK_ID'] ?? 0)
 		: 0
 	);
 if ($iblockID <= 0)

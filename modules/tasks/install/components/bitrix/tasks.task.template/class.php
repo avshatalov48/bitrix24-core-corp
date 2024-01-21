@@ -6,6 +6,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListConverterHelper;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
+use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Provider\TemplateProvider;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Item\Task\Template;
@@ -266,6 +267,16 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		}
 
 		return $errors->checkNoFatals();
+	}
+
+	protected static function checkIfToolAvailable(array &$arParams, array &$arResult, \Bitrix\Tasks\Util\Error\Collection $errors, array $auxParams): void
+	{
+		parent::checkIfToolAvailable($arParams, $arResult, $errors, $auxParams);
+
+		if ($arResult['IS_TOOL_AVAILABLE'])
+		{
+			$arResult['IS_TOOL_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['templates']);
+		}
 	}
 
 	/**

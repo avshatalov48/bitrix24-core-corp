@@ -436,7 +436,7 @@ final class Monitor
 
 		$assignedByFieldName = $factory->getEntityFieldNameByMap(\Bitrix\Crm\Item::FIELD_NAME_ASSIGNED);
 
-		return $factory->getDataClass()::getList([
+		$result = $factory->getDataClass()::getList([
 				'filter' => [
 					'=ID' => $timelineOwner->getEntityId(),
 				],
@@ -446,5 +446,7 @@ final class Monitor
 				'limit' => 1,
 			])->fetch()[$assignedByFieldName] ?? 0
 		;
+
+		return (int)$result;
 	}
 }

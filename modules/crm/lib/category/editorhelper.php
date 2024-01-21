@@ -11,9 +11,9 @@ class EditorHelper
 		$this->entityTypeId = $entityTypeId;
 	}
 
-	public function getEditorConfigId(int $categoryId, string $sourceFormId, $useUpperCase = true): string
+	public function getEditorConfigId(?int $categoryId, string $sourceFormId, $useUpperCase = true): string
 	{
-		if ($categoryId <= 0)
+		if ($categoryId <= 0 || is_null($categoryId))
 		{
 			return $sourceFormId;
 		}

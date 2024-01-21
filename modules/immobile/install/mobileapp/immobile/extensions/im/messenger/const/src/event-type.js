@@ -14,12 +14,9 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			close: 'onViewRemoved',
 			show: 'onViewShown',
 			hidden: 'onViewHidden',
-			titleClick: 'titleClick ',
+			titleClick: 'titleClick',
 			barButtonTap: 'barButtonTap',
 			barButtonLongTap: 'barButtonLongTap',
-			statusField: {
-				tap: 'tap',
-			},
 		},
 		/** Messenger component events */
 		messenger: {
@@ -37,7 +34,6 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			refresh: 'ImMobile.Messenger:refresh',
 			afterRefreshSuccess: 'ImMobile.Messenger:afterRefreshSuccess',
 			renderRecent: 'ImMobile.Messenger:renderRecent',
-			closeDialog: 'ImMobile.Messenger:closeDialog',
 			destroyDialog: 'ImMobile.Messenger:destroyDialog',
 			uploadFiles: 'ImMobile.Messenger:uploadFiles',
 			uploadFileError: 'ImMobile.Messenger:uploadFileError',
@@ -63,15 +59,12 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			loadNextPage: 'custom:loadNextPage',
 		},
 		dialog: {
-			submit: 'submit',
 			attachTap: 'attachTap',
 			topReached: 'topReached',
 			bottomReached: 'bottomReached',
 			resend: 'resend',
 			reply: 'reply',
-			quoteTap: 'quoteTap',
 			readyToReply: 'readyToReply',
-			cancelReply: 'cancelInputQuote',
 			viewAreaMessagesChanged: 'viewableMessagesChanged',
 			scrollToNewMessages: 'scrollToNewMessages',
 			playAudioButtonTap: 'playTap',
@@ -82,8 +75,8 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			scrollBegin: 'scrollBegin',
 			scrollEnd: 'scrollEnd',
 			messageTap: 'messageTap',
-			messageSystemTap: 'messageSystemTap',
 			messageAvatarTap: 'avatarTap',
+			messageAvatarLongTap: 'avatarLongTap',
 			messageDoubleTap: 'messageDoubleTap',
 			messageLongTap: 'messageLongTap',
 			messageQuoteTap: 'messageQuoteTap',
@@ -91,24 +84,49 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			messageMenuActionTap: 'messageMenuActionTap',
 			messageFileDownloadTap: 'messageFileDownloadTap',
 			messageFileUploadCancelTap: 'messageFileUploadCancelTap',
-			quoteRemoveAnimationEnd: 'quoteRemoveAnimationEnd',
 			urlTap: 'urlTap',
+			imageTap: 'imageTap',
+			audioTap: 'audioTap',
+			videoTap: 'videoTap',
+			fileTap: 'fileTap',
 			statusFieldTap: 'statusFieldTap',
+			chatJoinButtonTap: 'chatJoinButtonTap',
 			mentionTap: 'mentionTap',
 			visibleMessagesChanged: 'custom:visibleMessagesChanged',
 			loadTopPage: 'custom:loadTopPage',
 			loadBottomPage: 'custom:loadBottomPage',
 			messageRead: 'custom:messageRead',
-			changeText: 'changeText',
 			input: 'input',
 			reactionTap: 'reactionTap',
 			reactionLongTap: 'reactionLongTap',
+			richNameTap: 'richNameTap',
+			richPreviewTap: 'richPreviewTap',
+			richCancelTap: 'richCancelTap',
 			updateUploadProgressByMessageId: 'updateUploadProgressByMessageId',
 			external: {
 				scrollToBottom: 'ImMobile.Messenger.Dialog:scrollToBottom',
+				scrollToFirstUnread: 'ImMobile.Messenger.Dialog:scrollToFirstUnread',
+				disableScrollToBottom: 'ImMobile.Messenger.Dialog:disableScrollToBottom',
+				mention: 'ImMobile.Messenger.Dialog:mention',
+				close: 'ImMobile.Messenger.Dialog:close',
 			},
 			/** @deprecated */
 			like: 'like',
+
+			textField: {
+				submit: 'submit',
+				cancelQuote: 'cancelQuote',
+				quoteRemoveAnimationEnd: 'quoteRemoveAnimationEnd',
+				quoteTap: 'quoteTap',
+				changeText: 'changeText',
+				changeState: 'changeState',
+			},
+			statusField: {
+				tap: 'tap',
+			},
+			chatJoinButton: {
+				tap: 'tap',
+			},
 		},
 		/** Integration (other components events) */
 		chatDialog: {
@@ -125,6 +143,11 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		notification: {
 			open: 'onNotificationsOpen',
 			reload: 'ImMobile.Messenger.Notification:reload',
+		},
+		setting: {
+			chat: {
+				change: 'ImMobile.Messenger.Settings.Chat:change',
+			},
 		},
 	});
 

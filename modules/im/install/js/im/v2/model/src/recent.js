@@ -11,14 +11,12 @@ import { RecentSearchModel } from './recent/search';
 import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
 
 import type { RecentItem as ImModelRecentItem } from './type/recent-item';
-import type { Dialog as ImModelDialog } from './type/dialog';
 
 type RecentState = {
 	collection: {[dialogId: string]: ImModelRecentItem},
 	recentCollection: Set<string>,
 	unreadCollection: Set<string>,
-	unloadedChatCounters: {[chatId: string]: number},
-	unloadedLinesCounters: {[chatId: string]: number}
+	copilotCollection: Set<string>,
 };
 
 export class RecentModel extends BuilderModel
@@ -42,8 +40,7 @@ export class RecentModel extends BuilderModel
 			collection: {},
 			recentCollection: new Set(),
 			unreadCollection: new Set(),
-			unloadedChatCounters: {},
-			unloadedLinesCounters: {},
+			copilotCollection: new Set(),
 		};
 	}
 
@@ -97,6 +94,12 @@ export class RecentModel extends BuilderModel
 			/** @function recent/getUnreadCollection */
 			getUnreadCollection: (state: RecentState): ImModelRecentItem[] => {
 				return [...state.unreadCollection].map((id) => {
+					return state.collection[id];
+				});
+			},
+			/** @function recent/getCopilotCollection */
+			getCopilotCollection: (state: RecentState): ImModelRecentItem[] => {
+				return [...state.copilotCollection].map((id) => {
 					return state.collection[id];
 				});
 			},
@@ -199,53 +202,6 @@ export class RecentModel extends BuilderModel
 
 				return currentItem.message.date;
 			},
-			/** @function recent/getTotalChatCounter */
-			getTotalChatCounter: (state: RecentState): number => {
-				let loadedChatsCounter = 0;
-				[...state.recentCollection].forEach((dialogId) => {
-					const dialog: ImModelDialog = this.store.getters['dialogues/get'](dialogId, true);
-					const recentItem: ImModelRecentItem = state.collection[dialogId];
-
-					const isMuted = dialog.muteList.includes(Core.getUserId());
-					if (isMuted)
-					{
-						return;
-					}
-					const isMarked = recentItem.unread;
-					if (dialog.counter === 0 && isMarked)
-					{
-						loadedChatsCounter++;
-
-						return;
-					}
-					loadedChatsCounter += dialog.counter;
-				});
-
-				let unloadedChatsCounter = 0;
-				Object.values(state.unloadedChatCounters).forEach((counter) => {
-					unloadedChatsCounter += counter;
-				});
-
-				return loadedChatsCounter + unloadedChatsCounter;
-			},
-			/** @function recent/getTotalLinesCounter */
-			getTotalLinesCounter: (state: RecentState): number => {
-				let unloadedLinesCounter = 0;
-				Object.values(state.unloadedLinesCounters).forEach((counter) => {
-					unloadedLinesCounter += counter;
-				});
-
-				return unloadedLinesCounter;
-			},
-			/** @function recent/getSpecificLinesCounter */
-			getSpecificLinesCounter: (state: RecentState) => (chatId: number): number => {
-				if (!state.unloadedLinesCounters[chatId])
-				{
-					return 0;
-				}
-
-				return state.unloadedLinesCounters[chatId];
-			},
 		};
 	}
 
@@ -256,23 +212,22 @@ export class RecentModel extends BuilderModel
 		return {
 			/** @function recent/setRecent */
 			setRecent: async (store, payload: Array | Object) => {
-				const itemIds = await this.store.dispatch('recent/store', payload);
+				const itemIds = await Core.getStore().dispatch('recent/store', payload);
 				store.commit('setRecentCollection', itemIds);
 
-				if (!Array.isArray(payload) && Type.isPlainObject(payload))
-				{
-					payload = [payload];
-				}
-				const zeroedCountersForNewItems = {};
-				payload.forEach((item) => {
-					zeroedCountersForNewItems[item.chat_id] = 0;
-				});
-				this.store.dispatch('recent/setUnloadedChatCounters', zeroedCountersForNewItems);
+				this.updateUnloadedRecentCounters(payload);
 			},
 			/** @function recent/setUnread */
 			setUnread: async (store, payload: Array | Object) => {
 				const itemIds = await this.store.dispatch('recent/store', payload);
 				store.commit('setUnreadCollection', itemIds);
+			},
+			/** @function recent/setCopilot */
+			setCopilot: async (store, payload: Array | Object) => {
+				const itemIds = await this.store.dispatch('recent/store', payload);
+				store.commit('setCopilotCollection', itemIds);
+
+				this.updateUnloadedCopilotCounters(payload);
 			},
 			/** @function recent/store */
 			store: (store, payload: Array | Object) => {
@@ -378,8 +333,28 @@ export class RecentModel extends BuilderModel
 					fields: { liked: payload.liked === true },
 				});
 			},
-			/** @function recent/draft */
-			draft: (store, payload: {id: string | number, text: string}) => {
+			/** @function recent/setRecentDraft */
+			setRecentDraft: (store, payload: {id: string | number, text: string}) => {
+				Core.getStore().dispatch('recent/setDraft', {
+					id: payload.id,
+					text: payload.text,
+					collectionName: 'recentCollection',
+					addMethodName: 'setRecentCollection',
+				});
+			},
+			/** @function recent/setCopilotDraft */
+			setCopilotDraft: (store, payload: {id: string | number, text: string}) => {
+				Core.getStore().dispatch('recent/setDraft', {
+					id: payload.id,
+					text: payload.text,
+					collectionName: 'copilotCollection',
+					addMethodName: 'setCopilotCollection',
+				});
+			},
+			/** @function recent/setDraft */
+			setDraft: (store, payload: {
+				id: string | number, text: string, collectionName: string, addMethodName: string
+			}) => {
 				let existingItem = store.state.collection[payload.id];
 				if (!existingItem)
 				{
@@ -394,14 +369,14 @@ export class RecentModel extends BuilderModel
 					existingItem = store.state.collection[payload.id];
 				}
 
-				const existingRecentCollectionItem = store.state.recentCollection.has(payload.id);
-				if (!existingRecentCollectionItem)
+				const existingCollectionItem = store.state[payload.collectionName].has(payload.id);
+				if (!existingCollectionItem)
 				{
 					if (payload.text === '')
 					{
 						return;
 					}
-					store.commit('setRecentCollection', [payload.id.toString()]);
+					store.commit(payload.addMethodName, [payload.id.toString()]);
 				}
 
 				const fields = this.validate({ draft: { text: payload.text.toString() } });
@@ -427,28 +402,11 @@ export class RecentModel extends BuilderModel
 					id: existingItem.dialogId,
 				});
 				store.commit('deleteFromRecentCollection', existingItem.dialogId);
+				store.commit('deleteFromCopilotCollection', existingItem.dialogId);
 			},
 			/** @function recent/clearUnread */
 			clearUnread: (store) => {
 				store.commit('clearUnread');
-			},
-			/** @function recent/setUnloadedChatCounters */
-			setUnloadedChatCounters: (store, payload: {[chatId: string]: number}) => {
-				if (!Type.isPlainObject(payload))
-				{
-					return;
-				}
-
-				store.commit('setUnloadedChatCounters', payload);
-			},
-			/** @function recent/setUnloadedLinesCounters */
-			setUnloadedLinesCounters: (store, payload: {[chatId: string]: number}) => {
-				if (!Type.isPlainObject(payload))
-				{
-					return;
-				}
-
-				store.commit('setUnloadedLinesCounters', payload);
 			},
 		};
 	}
@@ -468,6 +426,14 @@ export class RecentModel extends BuilderModel
 				payload.forEach((dialogId) => {
 					state.unreadCollection.add(dialogId);
 				});
+			},
+			setCopilotCollection: (state: RecentState, payload: string[]) => {
+				payload.forEach((dialogId) => {
+					state.copilotCollection.add(dialogId);
+				});
+			},
+			deleteFromCopilotCollection: (state: RecentState, payload: string) => {
+				state.copilotCollection.delete(payload);
 			},
 			add: (state: RecentState, payload: Object[] | Object) => {
 				if (!Array.isArray(payload) && Type.isPlainObject(payload))
@@ -511,30 +477,6 @@ export class RecentModel extends BuilderModel
 			clearUnread: (state: RecentState) => {
 				Object.keys(state.collection).forEach((key) => {
 					state.collection[key].unread = false;
-				});
-			},
-
-			setUnloadedChatCounters: (state: RecentState, payload: {[chatId: string]: number}) => {
-				Object.entries(payload).forEach(([chatId, counter]) => {
-					if (counter === 0)
-					{
-						delete state.unloadedChatCounters[chatId];
-
-						return;
-					}
-					state.unloadedChatCounters[chatId] = counter;
-				});
-			},
-
-			setUnloadedLinesCounters: (state: RecentState, payload: {[chatId: string]: number}) => {
-				Object.entries(payload).forEach(([chatId, counter]) => {
-					if (counter === 0)
-					{
-						delete state.unloadedLinesCounters[chatId];
-
-						return;
-					}
-					state.unloadedLinesCounters[chatId] = counter;
 				});
 			},
 		};
@@ -746,5 +688,28 @@ export class RecentModel extends BuilderModel
 		}
 
 		return draft;
+	}
+
+	updateUnloadedRecentCounters(payload: Array | Object)
+	{
+		this.updateUnloadedCounters(payload, 'counters/setUnloadedChatCounters');
+	}
+
+	updateUnloadedCopilotCounters(payload: Array | Object)
+	{
+		this.updateUnloadedCounters(payload, 'counters/setUnloadedCopilotCounters');
+	}
+
+	updateUnloadedCounters(payload: Array | Object, updateMethod: string)
+	{
+		if (!Array.isArray(payload) && Type.isPlainObject(payload))
+		{
+			payload = [payload];
+		}
+		const zeroedCountersForNewItems = {};
+		payload.forEach((item) => {
+			zeroedCountersForNewItems[item.chat_id] = 0;
+		});
+		void Core.getStore().dispatch(updateMethod, zeroedCountersForNewItems);
 	}
 }

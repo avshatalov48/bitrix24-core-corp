@@ -2,6 +2,7 @@
  * @module crm/mail/chain
  */
 jn.define('crm/mail/chain', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { FriendlyDate } = require('layout/ui/friendly-date');
 	const { Moment } = require('utils/date');
 	const { dayShortMonth, shortTime } = require('utils/date/formats');
@@ -11,9 +12,10 @@ jn.define('crm/mail/chain', (require, exports, module) => {
 	const { Avatar } = require('crm/mail/message/elements/avatar');
 	const { Icon, MoreButton } = require('crm/mail/message/elements/icon');
 	const { ContactList } = require('crm/mail/message/elements/contact/list');
-	const { getBodyPromise, getFilesDataPromise, deleteMessage } = require('crm/mail/message/tools/connector');
+	const { getChainPromise, getBodyPromise, getFilesDataPromise, deleteMessage, getMessageNeighbors } = require('crm/mail/message/tools/connector');
 	const { MessageBody } = require('crm/mail/message/tools/messagebody');
 	const { MailOpener } = require('crm/mail/opener');
+	const { NotifyManager } = require('notify-manager');
 
 	const titles = {
 		fields: {
@@ -110,7 +112,7 @@ jn.define('crm/mail/chain', (require, exports, module) => {
 		return View(
 			{
 				style: {
-					backgroundColor: '#ffffff',
+					backgroundColor: AppTheme.colors.bgContentPrimary,
 					marginBottom: 4,
 					marginTop: 4,
 					borderRadius: 12,
@@ -239,7 +241,7 @@ jn.define('crm/mail/chain', (require, exports, module) => {
 					marginTop: 2,
 					fontWeight: '500',
 					fontSize: 14,
-					color: '#525c69',
+					color: AppTheme.colors.base2,
 				},
 				text: subject,
 			}));
@@ -266,7 +268,7 @@ jn.define('crm/mail/chain', (require, exports, module) => {
 					textAlign: 'center',
 					fontWeight: '400',
 					fontSize: 13,
-					color: '#959ca4',
+					color: AppTheme.colors.base4,
 				},
 			});
 		}
@@ -309,7 +311,7 @@ jn.define('crm/mail/chain', (require, exports, module) => {
 					paddingLeft: paddingLeftHeader,
 					paddingRight: paddingRightHeader,
 					width: '100%',
-					backgroundColor: '#fff',
+					backgroundColor: AppTheme.colors.bgContentPrimary,
 				},
 			},
 			View(
@@ -343,13 +345,12 @@ jn.define('crm/mail/chain', (require, exports, module) => {
 			const {
 				threadId,
 				chain,
+				widget,
 			} = props;
 
 			super();
 
-			this.state = {
-				threadId,
-			};
+			this.layout = widget;
 
 			this.actions = {
 				replyButton: this.replyMessageAction.bind(this),
@@ -358,12 +359,122 @@ jn.define('crm/mail/chain', (require, exports, module) => {
 				moreButton: this.showContextMenu.bind(this),
 			};
 
-			this.messageCount = 0;
-			this.properties = chain.properties;
-			this.setChain(threadId, chain.list, false);
+			this.setChain(threadId, chain.list, chain.properties, false);
 		}
 
-		showContextMenu(id = this.lastIncomingCardId, messageId = this.lastIncomingId, title = this.lastIncomingTitle, format = 'little')
+		getNeighbors()
+		{
+			return this.neighborChains;
+		}
+
+		setNeighbors(props = {})
+		{
+			const {
+				PREV = null,
+				NEXT = null,
+				needButtonsUpdate = false,
+			} = props;
+
+			if (PREV && PREV.ID)
+			{
+				this.neighborChains.prevId = Number(PREV.ID);
+			}
+			else
+			{
+				this.neighborChains.prevId = false;
+			}
+
+			if (NEXT && NEXT.ID)
+			{
+				this.neighborChains.nextId = Number(NEXT.ID);
+			}
+			else
+			{
+				this.neighborChains.nextId = false;
+			}
+
+			if (needButtonsUpdate)
+			{
+				this.layout.setRightButtons(this.getRightButtons());
+			}
+		}
+
+		flippingChain(id)
+		{
+			this.layout.setRightButtons(this.getRightButtons(true));
+
+			NotifyManager.showLoadingIndicator();
+			this.uploadChain(id).then(() => {
+				NotifyManager.hideLoadingIndicator(true, '', 1);
+			});
+		}
+
+		getRightButtons(disabledButtons = false)
+		{
+			const {
+				nextId = false,
+				prevId = false,
+			} = this.getNeighbors();
+
+			const buttons = [];
+
+			if (nextId)
+			{
+				buttons.push(
+					{
+						id: 'flipping-up',
+						svg: {
+							content: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.6676 7.15039L13.1405 11.6774L12 12.8003L10.8811 11.6774L6.35404 7.15039L4.75657 8.74786L12.0107 16.002L19.2649 8.74786L17.6676 7.15039Z" fill="${AppTheme.colors.base4}"/></svg>`,
+						},
+						callback: disabledButtons ? undefined : this.flippingChain.bind(this, nextId),
+					},
+				);
+			}
+			else
+			{
+				buttons.push(
+					{
+						id: 'flipping-up',
+						svg: {
+							content: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.6676 7.15039L13.1405 11.6774L12 12.8003L10.8811 11.6774L6.35404 7.15039L4.75657 8.74786L12.0107 16.002L19.2649 8.74786L17.6676 7.15039Z" fill="${AppTheme.colors.base6}"/></svg>`,
+						},
+					},
+				);
+			}
+
+			if (prevId)
+			{
+				buttons.push(
+					{
+						id: 'flipping-down',
+						svg: {
+							content: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.34319 15.9915L10.8702 11.4644L11.9893 10.3407L13.1296 11.4644L17.6567 15.9915L19.2542 14.394L12 7.13983L4.74585 14.394L6.34319 15.9915Z" fill="${AppTheme.colors.base4}"/></svg>`,
+						},
+						callback: disabledButtons ? undefined : this.flippingChain.bind(this, prevId),
+					},
+				);
+			}
+			else
+			{
+				buttons.push(
+					{
+						id: 'flipping-down',
+						svg: {
+							content: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.34319 15.9915L10.8702 11.4644L11.9893 10.3407L13.1296 11.4644L17.6567 15.9915L19.2542 14.394L12 7.13983L4.74585 14.394L6.34319 15.9915Z" fill="${AppTheme.colors.base6}"/></svg>`,
+						},
+					},
+				);
+			}
+
+			return buttons;
+		}
+
+		showContextMenu(
+			id = this.lastIncomingCardId,
+			messageId = this.lastIncomingId,
+			title = this.lastIncomingTitle,
+			format = 'little',
+		)
 		{
 			if (title === undefined)
 			{
@@ -482,12 +593,12 @@ jn.define('crm/mail/chain', (require, exports, module) => {
 			menu.show();
 		}
 
-		getOwnerEntity(cardId, inResponseToMessage)
+		getOwnerEntity(cardId)
 		{
 			return {
-				inResponseToMessage,
-				ownerId: this.state.chain[cardId].OWNER_ID,
+				ownerId: Number(this.state.chain[cardId].OWNER_ID),
 				ownerType: this.state.chain[cardId].OWNER_TYPE,
+				ownerTypeId: Number(this.state.chain[cardId].OWNER_TYPE_ID),
 			};
 		}
 
@@ -505,7 +616,10 @@ jn.define('crm/mail/chain', (require, exports, module) => {
 		getHeader(cardId)
 		{
 			return {
-				owner: this.getOwnerEntity(cardId, this.state.chain[cardId].ID),
+				owner: {
+					...this.getOwnerEntity(cardId),
+					inResponseToMessage: this.state.chain[cardId].ID,
+				},
 				...this.state.chain[cardId].HEADER,
 			};
 		}
@@ -726,10 +840,34 @@ jn.define('crm/mail/chain', (require, exports, module) => {
 			}
 		}
 
-		setChain(threadId, chain, withRender = true)
+		uploadChain(threadId)
 		{
-			this.messageCount = chain.length;
+			return getChainPromise(threadId).then(({ data }) => {
+				this.setChain(threadId, data.list, data.properties, true);
+			});
+		}
 
+		uploadNeighbors(threadId)
+		{
+			const { ownerId, ownerTypeId } = this.getOwnerEntity(0);
+
+			getMessageNeighbors(ownerId, ownerTypeId, Number(threadId))
+				.then((response) => {
+					this.setNeighbors({
+						needButtonsUpdate: true,
+						...response.data,
+					});
+				});
+		}
+
+		setChain(threadId, chain, properties, withRender = true)
+		{
+			this.neighborChains = {};
+			this.setNeighbors({
+				needButtonsUpdate: !withRender,
+			});
+			this.messageCount = chain.length;
+			this.properties = properties;
 			this.lastIncomingCardId = null;
 			this.lastIncomingTitle = '';
 			this.lastIncomingId = this.properties.lastIncomingId;
@@ -751,7 +889,6 @@ jn.define('crm/mail/chain', (require, exports, module) => {
 				if (withRender)
 				{
 					this.setState({
-						id: threadId,
 						chain,
 					});
 				}
@@ -759,6 +896,8 @@ jn.define('crm/mail/chain', (require, exports, module) => {
 				{
 					this.state.chain = chain;
 				}
+
+				this.uploadNeighbors(threadId);
 			}
 		}
 
@@ -813,7 +952,7 @@ jn.define('crm/mail/chain', (require, exports, module) => {
 					{
 						style: {
 							height: '100%',
-							backgroundColor: '#f5f5f5',
+							backgroundColor: AppTheme.colors.bgContentPrimary,
 						},
 					},
 					View(
@@ -833,7 +972,5 @@ jn.define('crm/mail/chain', (require, exports, module) => {
 		}
 	}
 
-	module.exports = {
-		MessageChain,
-	};
+	module.exports = { MessageChain };
 });

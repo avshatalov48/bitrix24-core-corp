@@ -46,11 +46,23 @@ if (
 	{
 		$arResult['ERRORS']['NAME'] = Loc::getMessage('CC_BBDE_ERROR_EMPTY_FIELD');
 	}
+	elseif (mb_strlen($name) > \Bitrix\BIConnector\DashboardTable::MAX_NAME_LENGTH)
+	{
+		$arResult['ERRORS']['NAME'] = Loc::getMessage('CC_BBDE_ERROR_LONG_FIELD', [
+			'#MAX_LENGTH#' => \Bitrix\BIConnector\DashboardTable::MAX_NAME_LENGTH,
+		]);
+	}
 
 	$url = trim($_POST['URL'], " \t\n\r");
 	if (!$url)
 	{
 		$arResult['ERRORS']['LINK_FORMAT'] = Loc::getMessage('CC_BBDE_ERROR_EMPTY_FIELD');
+	}
+	elseif (mb_strlen($url) > \Bitrix\BIConnector\DashboardTable::MAX_URL_LENGTH)
+	{
+		$arResult['ERRORS']['LINK_FORMAT'] = Loc::getMessage('CC_BBDE_ERROR_LONG_FIELD', [
+			'#MAX_LENGTH#' => \Bitrix\BIConnector\DashboardTable::MAX_URL_LENGTH,
+		]);
 	}
 	else
 	{

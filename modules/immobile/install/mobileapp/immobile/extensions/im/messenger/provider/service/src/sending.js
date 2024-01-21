@@ -223,8 +223,12 @@ jn.define('im/messenger/provider/service/sending', (require, exports, module) =>
 		sendScrollEvent(options = {})
 		{
 			const { dialogId } = options;
+
+			/** @type {ScrollToBottomEvent} */
 			const scrollToBottomEventData = {
-				chatId: this.getDialog(dialogId).chatId,
+				dialogId,
+				withAnimation: true,
+				force: true,
 			};
 
 			BX.postComponentEvent(EventType.dialog.external.scrollToBottom, [scrollToBottomEventData]);

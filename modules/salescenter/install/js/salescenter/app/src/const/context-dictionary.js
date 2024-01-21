@@ -4,4 +4,5 @@ export const ContextDictionary = Object.freeze({
 	chat: 'chat',
 	sms: 'sms',
 	imOpenlines: 'imopenlines_app',
+	terminalList: 'terminal_list',
 });

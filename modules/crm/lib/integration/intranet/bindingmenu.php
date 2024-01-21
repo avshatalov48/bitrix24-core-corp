@@ -174,6 +174,12 @@ class BindingMenu
 			return $items;
 		}
 
+		$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+		if (!$toolsManager->checkBizprocScriptAvailability())
+		{
+			return $items;
+		}
+
 		$marketUrl = null;
 		$manifestCode = 'crm_smart_robots';
 		if (Loader::includeModule('rest'))

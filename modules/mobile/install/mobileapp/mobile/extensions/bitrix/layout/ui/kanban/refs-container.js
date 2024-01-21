@@ -2,7 +2,6 @@
  * @module layout/ui/kanban/refs-container
  */
 jn.define('layout/ui/kanban/refs-container', (require, exports, module) => {
-
 	/**
 	 * @class RefsContainer
 	 */
@@ -10,56 +9,39 @@ jn.define('layout/ui/kanban/refs-container', (require, exports, module) => {
 	{
 		constructor()
 		{
-			this.statefulLists = new Map();
-			this.slider = null;
 			this.toolbar = null;
+			this.currentStage = null;
 		}
 
 		/**
-		 * @param {String} columnName
-		 * @param {StatefulList} statefulList
+		 * @public
 		 */
-		setColumn(columnName, statefulList)
+		reset()
 		{
-			this.statefulLists.set(columnName, statefulList);
+			this.toolbar = null;
+			this.currentStage = null;
 		}
 
 		/**
-		 * @param {String} columnName
-		 * @returns {StatefulList|null}
+		 * @public
+		 * @param {object} currentStage
 		 */
-		getColumn(columnName)
+		setCurrentStage(currentStage)
 		{
-			return this.statefulLists.get(columnName);
+			this.currentStage = currentStage;
 		}
 
 		/**
-		 * @param {String} columnName
-		 * @returns {boolean}
+		 * @public
+		 * @return {StatefulList|null}
 		 */
-		hasColumn(columnName)
+		getCurrentStage()
 		{
-			return this.statefulLists.has(columnName);
+			return this.currentStage;
 		}
 
 		/**
-		 * @param {Slider} slider
-		 */
-		setSlider(slider)
-		{
-			this.slider = slider;
-		}
-
-		/**
-		 * @returns {Slider|null}
-		 */
-		getSlider()
-		{
-			return this.slider;
-		}
-
-		/**
-		 * @param {DealToolbar|LeadToolbar} toolbar
+		 * @param {KanbanToolbar} toolbar
 		 */
 		setToolbar(toolbar)
 		{
@@ -67,21 +49,13 @@ jn.define('layout/ui/kanban/refs-container', (require, exports, module) => {
 		}
 
 		/**
-		 * @returns {DealToolbar|null}
+		 * @returns {KanbanToolbar|null}
 		 */
 		getToolbar()
 		{
 			return this.toolbar;
 		}
-
-		/**
-		 * @returns {boolean}
-		 */
-		hasToolbar()
-		{
-			return (this.toolbar !== null);
-		}
 	}
 
-	module.exports = { RefsContainer }
+	module.exports = { RefsContainer };
 });

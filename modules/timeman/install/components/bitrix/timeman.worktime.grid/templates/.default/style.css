@@ -717,6 +717,10 @@
 	border-bottom: none;
 }
 
+.timeman-report-container.timeman-report-container-plan .main-grid-cell-head .main-grid-cell-inner {
+	height: 100%;
+}
+
 .timeman-report-container.timeman-report-container-plan .main-grid-cell:first-child {
 	border-right: 2px solid #edeef0;
 	height: 100%;

@@ -53,7 +53,7 @@ if (!empty($arResult['NEED_META_RESTRICTION_NOTE']) && !$arResult['ACTIVE_STATUS
 	$this->SetViewTarget('fb_meta_restriction_note');
 	?>
 	<div class="imconnector-restriction-note">
-		<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_RESTRICTIONS_META_RU')?>
+		<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_RESTRICTIONS_META_RU_MSGVER_1')?>
 	</div>
 	<?php
 	$this->EndViewTarget();

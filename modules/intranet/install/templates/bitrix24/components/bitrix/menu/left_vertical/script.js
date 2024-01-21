@@ -20,6 +20,7 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(Options, "isExtranet", false);
 	babelHelpers.defineProperty(Options, "isAdmin", false);
 	babelHelpers.defineProperty(Options, "isCustomPresetRestricted", false);
+	babelHelpers.defineProperty(Options, "availablePresetTools", null);
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -289,6 +290,9 @@ this.BX = this.BX || {};
 	  value: null
 	};
 
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _unavailableToolPopup = /*#__PURE__*/new WeakMap();
 	var PresetDefaultController = /*#__PURE__*/function (_DefaultController) {
 	  babelHelpers.inherits(PresetDefaultController, _DefaultController);
 	  function PresetDefaultController() {
@@ -300,6 +304,10 @@ this.BX = this.BX || {};
 	    }
 	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(PresetDefaultController)).call.apply(_babelHelpers$getProt, [this].concat(args)));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "isReady", true);
+	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _unavailableToolPopup, {
+	      writable: true,
+	      value: void 0
+	    });
 	    return _this;
 	  }
 	  babelHelpers.createClass(PresetDefaultController, [{
@@ -348,6 +356,11 @@ this.BX = this.BX || {};
 	                }
 	              });
 	            }
+	            if (!Options.isAdmin && Options.availablePresetTools && Options.availablePresetTools[currentPreset] === false) {
+	              button.setWaiting(false);
+	              _this2.showUnavailableToolPopup();
+	              return;
+	            }
 	            main_core_events.EventEmitter.emit(_this2, Options.eventName('onPresetIsSet'), {
 	              presetId: currentPreset,
 	              mode: mode
@@ -373,6 +386,17 @@ this.BX = this.BX || {};
 	          }
 	        })]
 	      });
+	    }
+	  }, {
+	    key: "showUnavailableToolPopup",
+	    value: function showUnavailableToolPopup() {
+	      if (!(babelHelpers.classPrivateFieldGet(this, _unavailableToolPopup) instanceof ui_dialogs_messagebox.MessageBox)) {
+	        babelHelpers.classPrivateFieldSet(this, _unavailableToolPopup, ui_dialogs_messagebox.MessageBox.create({
+	          message: main_core.Loc.getMessage('MENU_UNAVAILABLE_TOOL_POPUP_DESCRIPTION'),
+	          buttons: ui_dialogs_messagebox.MessageBoxButtons.OK
+	        }));
+	      }
+	      babelHelpers.classPrivateFieldGet(this, _unavailableToolPopup).show();
 	    }
 	  }]);
 	  return PresetDefaultController;
@@ -785,7 +809,9 @@ this.BX = this.BX || {};
 	      }
 	      var linkNode = this.container.querySelector('a');
 	      if (linkNode) {
-	        linkNode.setAttribute('href', main_core.Text.encode(link));
+	        if (main_core.Type.isString(link)) {
+	          linkNode.setAttribute('href', main_core.Text.encode(link));
+	        }
 	        linkNode.setAttribute('target', openInNewPage === 'Y' ? '_blank' : '_self');
 	      }
 	      this.container.querySelector("[data-role='item-text']").innerHTML = main_core.Text.encode(text);
@@ -1654,8 +1680,8 @@ this.BX = this.BX || {};
 	}(Item);
 	babelHelpers.defineProperty(ItemSystem, "code", 'default');
 
-	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _collapsingAnimation = /*#__PURE__*/new WeakMap();
 	var ItemGroup = /*#__PURE__*/function (_Item) {
 	  babelHelpers.inherits(ItemGroup, _Item);
@@ -1663,7 +1689,7 @@ this.BX = this.BX || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, ItemGroup);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ItemGroup).apply(this, arguments));
-	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _collapsingAnimation, {
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _collapsingAnimation, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1817,7 +1843,7 @@ this.BX = this.BX || {};
 	    value: function updateCounter() {
 	      var counterValue = 0;
 	      babelHelpers.toConsumableArray(this.container.parentNode.querySelector("[data-group-id=\"".concat(this.getId(), "\"]")).querySelectorAll('[data-role="counter"]')).forEach(function (node) {
-	        counterValue += parseInt(node.dataset.counterValue);
+	        counterValue += main_core.Text.toNumber(node.dataset.counterValue);
 	      });
 	      var node = this.container.querySelector('[data-role="counter"]');
 	      if (counterValue > 0) {
@@ -1879,22 +1905,21 @@ this.BX = this.BX || {};
 	  return itemClassName;
 	}
 
-	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _link = /*#__PURE__*/new WeakMap();
 	var _actualLink = /*#__PURE__*/new WeakMap();
 	var ItemActive = /*#__PURE__*/function () {
 	  function ItemActive() {
 	    babelHelpers.classCallCheck(this, ItemActive);
-	    _classPrivateFieldInitSpec$2(this, _link, {
+	    _classPrivateFieldInitSpec$3(this, _link, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$2(this, _actualLink, {
+	    _classPrivateFieldInitSpec$3(this, _actualLink, {
 	      writable: true,
 	      value: void 0
 	    });
-	    this.highlight = main_core.Runtime.debounce(this.highlight, 200, this);
 	    babelHelpers.classPrivateFieldSet(this, _actualLink, new main_core.Uri(window.location.href));
 	  }
 	  babelHelpers.createClass(ItemActive, [{
@@ -2019,9 +2044,9 @@ this.BX = this.BX || {};
 	  return ItemActive;
 	}();
 
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$3(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$4(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _activeItem = /*#__PURE__*/new WeakMap();
 	var _isEditMode = /*#__PURE__*/new WeakMap();
@@ -2071,19 +2096,19 @@ this.BX = this.BX || {};
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _hideHiddenContainer);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _showHiddenContainer);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "items", new Map());
-	    _classPrivateFieldInitSpec$3(babelHelpers.assertThisInitialized(_this), _activeItem, {
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _activeItem, {
 	      writable: true,
 	      value: new ItemActive()
 	    });
-	    _classPrivateFieldInitSpec$3(babelHelpers.assertThisInitialized(_this), _isEditMode, {
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _isEditMode, {
 	      writable: true,
 	      value: false
 	    });
-	    _classPrivateFieldInitSpec$3(babelHelpers.assertThisInitialized(_this), _updateCountersLastValue, {
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _updateCountersLastValue, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$3(babelHelpers.assertThisInitialized(_this), _openItemMenuPopup, {
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _openItemMenuPopup, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -2093,7 +2118,7 @@ this.BX = this.BX || {};
 	    container.querySelectorAll('li.menu-item-block').forEach(_this.registerItem.bind(babelHelpers.assertThisInitialized(_this)));
 	    container.querySelector('#left-menu-hidden-separator').addEventListener('click', _this.toggleHiddenContainer.bind(babelHelpers.assertThisInitialized(_this)));
 	    if (_this.getActiveItem() && _this.getActiveItem().container.getAttribute('data-status') === 'hide') {
-	      _classPrivateMethodGet(babelHelpers.assertThisInitialized(_this), _showHiddenContainer, _showHiddenContainer2).call(babelHelpers.assertThisInitialized(_this), true);
+	      _classPrivateMethodGet(babelHelpers.assertThisInitialized(_this), _showHiddenContainer, _showHiddenContainer2).call(babelHelpers.assertThisInitialized(_this), false);
 	    }
 	    return _this;
 	  }
@@ -2345,15 +2370,23 @@ this.BX = this.BX || {};
 	          im_v2_lib_desktopApi.DesktopApi.setBrowserIconBadge(visibleValue);
 	        }
 	      }
+	      babelHelpers.toConsumableArray(this.items.entries()).forEach(function (_ref8) {
+	        var _ref9 = babelHelpers.slicedToArray(_ref8, 2),
+	          id = _ref9[0],
+	          itemGroup = _ref9[1];
+	        if (itemGroup instanceof ItemGroup) {
+	          itemGroup.updateCounter();
+	        }
+	      });
 	    }
 	  }, {
 	    key: "decrementCounter",
 	    value: function decrementCounter(counters) {
 	      var _this5 = this;
-	      babelHelpers.toConsumableArray(Object.entries(counters)).forEach(function (_ref8) {
-	        var _ref9 = babelHelpers.slicedToArray(_ref8, 2),
-	          counterId = _ref9[0],
-	          counterValue = _ref9[1];
+	      babelHelpers.toConsumableArray(Object.entries(counters)).forEach(function (_ref10) {
+	        var _ref11 = babelHelpers.slicedToArray(_ref10, 2),
+	          counterId = _ref11[0],
+	          counterValue = _ref11[1];
 	        var item = _classPrivateMethodGet(_this5, _getItemsByCounterId, _getItemsByCounterId2).call(_this5, counterId).shift();
 	        if (item) {
 	          var value = item.getCounterValue();
@@ -2366,9 +2399,9 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "addItem",
-	    value: function addItem(_ref10) {
-	      var node = _ref10.node,
-	        animateFromPoint = _ref10.animateFromPoint;
+	    value: function addItem(_ref12) {
+	      var node = _ref12.node,
+	        animateFromPoint = _ref12.animateFromPoint;
 	      if (!(node instanceof Element)) {
 	        return;
 	      }
@@ -2403,9 +2436,9 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "deleteItem",
-	    value: function deleteItem(item, _ref11) {
+	    value: function deleteItem(item, _ref13) {
 	      var _this6 = this;
-	      var animate = _ref11.animate;
+	      var animate = _ref13.animate;
 	      this.items["delete"](item.getId());
 	      babelHelpers.classPrivateFieldGet(this, _activeItem).checkAndUnset(item);
 	      if (item instanceof ItemUserFavorites || animate) {
@@ -2572,10 +2605,10 @@ this.BX = this.BX || {};
 	  if (counterValue <= 0) {
 	    return;
 	  }
-	  babelHelpers.toConsumableArray(this.items.entries()).forEach(function (_ref12) {
-	    var _ref13 = babelHelpers.slicedToArray(_ref12, 2),
-	      id = _ref13[0],
-	      itemGroup = _ref13[1];
+	  babelHelpers.toConsumableArray(this.items.entries()).forEach(function (_ref14) {
+	    var _ref15 = babelHelpers.slicedToArray(_ref14, 2),
+	      id = _ref15[0],
+	      itemGroup = _ref15[1];
 	    if (itemGroup instanceof ItemGroup) {
 	      itemGroup.updateCounter();
 	    }
@@ -3043,9 +3076,9 @@ this.BX = this.BX || {};
 	  return ItemDirector;
 	}(DefaultController);
 
-	function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
-	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$4(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$5(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _getLeftMenuItemByTopMenuItem = /*#__PURE__*/new WeakSet();
 	var _isLogoMaskNeeded = /*#__PURE__*/new WeakSet();
@@ -3075,7 +3108,7 @@ this.BX = this.BX || {};
 	    babelHelpers.defineProperty(this, "isMenuMouseLeaveBlocked", []);
 	    babelHelpers.defineProperty(this, "isCollapsedMode", false);
 	    babelHelpers.defineProperty(this, "workgroupsCounterData", {});
-	    _classPrivateFieldInitSpec$4(this, _specialLiveFeedDecrement, {
+	    _classPrivateFieldInitSpec$5(this, _specialLiveFeedDecrement, {
 	      writable: true,
 	      value: 0
 	    });
@@ -3088,6 +3121,7 @@ this.BX = this.BX || {};
 	    Options.isExtranet = params.isExtranet === 'Y';
 	    Options.isAdmin = params.isAdmin;
 	    Options.isCustomPresetRestricted = params.isCustomPresetAvailable !== 'Y';
+	    Options.availablePresetTools = params.availablePresetTools;
 	    this.isCollapsedMode = params.isCollapsedMode;
 	    this.workgroupsCounterData = params.workgroupsCounterData;
 	    this.initAndBindNodes();
@@ -3546,6 +3580,15 @@ this.BX = this.BX || {};
 	            } else {
 	              _this8.getCustomPresetController().show();
 	            }
+	          }
+	        });
+	        menuItems.push({
+	          html: main_core.Loc.getMessage('MENU_EDIT_TOOLS'),
+	          onclick: function onclick() {
+	            BX.SidePanel.Instance.open('/settings/configs/', {
+	              allowChangeHistory: false,
+	              width: 1034
+	            });
 	          }
 	        });
 	      }

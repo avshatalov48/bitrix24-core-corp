@@ -2,34 +2,28 @@
  * @module layout/ui/fields/client/elements
  */
 jn.define('layout/ui/fields/client/elements', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { ClientItemTitle } = require('layout/ui/fields/client/elements/title');
 	const { ClientItemInfo } = require('layout/ui/fields/client/elements/info');
 	const { ClientItemAction } = require('layout/ui/fields/client/elements/action');
 	const { EntitySvg } = require('crm/assets/entity');
 	const { SafeImage } = require('layout/ui/safe-image');
 	const { withCurrentDomain } = require('utils/url');
+
 	/**
+	 * @param {String} props.title
+	 * @param {String} props.subtitle
+	 * @param {String | String[]} props.phone
+	 * @param {String | String[]} props.email
+	 * @param {String | String[]} props.addresses
+	 * @param {Function} props.onOpenBackdrop
+	 * @param {Boolean} props.readOnly
+	 * @param {Boolean} props.hidden
+	 * @param {Object} props.actionParams
 	 * @class ClientItem
 	 */
 	class ClientItem extends LayoutComponent
 	{
-		/**
-		 * @param {String} props.title
-		 * @param {String} props.subtitle
-		 * @param {String | String[]} props.phone
-		 * @param {String | String[]} props.email
-		 * @param {String | String[]} props.addresses
-		 * @param {Function} props.onOpenBackdrop
-		 * @param {Boolean} props.readOnly
-		 * @param {Boolean} props.hidden
-		 * @param {Object} props.actionParams
-		 * @return ClientItem
-		 */
-		constructor(props)
-		{
-			super(props);
-		}
-
 		renderTitle()
 		{
 			const { title } = this.props;
@@ -142,10 +136,12 @@ jn.define('layout/ui/fields/client/elements', (require, exports, module) => {
 					height: 20,
 					resizeMode: 'contain',
 					borderRadius: 10,
-					borderColor: '#ddd',
+					borderColor: AppTheme.colors.bgSeparatorPrimary,
 					borderWidth: 0.4,
 				},
-				placeholder: { content: EntitySvg.contactInverted('#525C68') },
+				placeholder: {
+					content: EntitySvg.contactInverted(AppTheme.colors.base2),
+				},
 				uri: encodeURI(withCurrentDomain(responsiblePhotoUrl)),
 			});
 		}

@@ -17,6 +17,7 @@ class Manager
 
 		$thisFile = new Main\IO\File(__FILE__);
 		$thisDir = $thisFile->getDirectory();
+		$childNames = [];
 		foreach ($thisDir->getChildren() as $child)
 		{
 			if (!($child instanceof Main\IO\File) || $child->getExtension() !== 'php')
@@ -29,8 +30,10 @@ class Manager
 			{
 				$res = include_once $child->getPhysicalPath();
 			}
+
+			$childNames[] = $name;
 		}
-		$classes = array_slice(get_declared_classes(), 0 - sizeof($thisDir->getChildren()));
+		$classes = array_intersect(get_declared_classes(), $childNames);
 		$result = [];
 		foreach ($classes as $class)
 		{
@@ -74,5 +77,12 @@ class Manager
 
 		$presets = self::getAllPresets($siteId);
 		return $presetId && array_key_exists($presetId, $presets) ? $presets[$presetId] : $presets['social'];
+	}
+
+	public static function hasOwnPreset(): bool
+	{
+		$siteId = defined('SITE_ID') ? SITE_ID : LeftMenu\Menu::getDefaultSiteId();
+
+		 return \CUserOptions::GetOption('intranet', 'left_menu_preset_' . $siteId, 'N') !== 'N';
 	}
 }

@@ -94,6 +94,9 @@ class CalendarSharingTimeline
 			case EventData::SHARING_ON_LINK_COPIED:
 				$controller->onLinkCopied($itemIdentifier, $eventData);
 				break;
+			case EventData::SHARING_ON_RULE_UPDATED:
+				$controller->onRuleUpdated($itemIdentifier, $eventData);
+				break;
 		}
 	}
 

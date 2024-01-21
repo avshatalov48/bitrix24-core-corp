@@ -22,7 +22,8 @@ export default class HintPopup
 				{
 					darkMode: true,
 					closeIcon: true,
-					animation: 'fading-slide'
+					animation: 'fading-slide',
+					autoHide: true,
 				}
 			);
 		}

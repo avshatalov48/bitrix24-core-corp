@@ -1,5 +1,10 @@
 <?php
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 /**
  * @global \CMain $APPLICATION
  * @global \CUser $USER
@@ -13,6 +18,20 @@ use Bitrix\Main\Localization\Loc;
 \Bitrix\Main\UI\Extension::load(['ui.dialogs.messagebox', 'ui.notification', 'main.core', 'ui.hint']);
 
 $APPLICATION->SetTitle(Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_TITLE'));
+
+if (!$arParams['TOOL_AVAILABLE'])
+{
+	$APPLICATION->IncludeComponent('bitrix:intranet.settings.tool.stub', '.default',
+		[
+			'LIMIT_CODE' => 'limit_office_absence_off',
+			'MODULE' => 'intranet',
+			'SOURCE' => 'login-history'
+		]
+	);
+
+	return;
+}
+
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').' no-background no-all-paddings pagetitle-toolbar-field-view ');
 
@@ -67,9 +86,9 @@ $APPLICATION->IncludeComponent(
 	{
 		BX.UI.Dialogs.MessageBox.show({
 			message: '<?= $arParams['USER_ID'] === (int)\Bitrix\Main\Engine\CurrentUser::get()->getId()
-				? Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_BUTTON_WARNING_MESSAGE_THIS')
-				: Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_BUTTON_WARNING_MESSAGE_FOR_USER') ?>',
-			title: '<?= Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_BUTTON_WARNING_TITLE') ?>',
+				? \CUtil::JSEscape(Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_BUTTON_WARNING_MESSAGE_THIS'))
+				: \CUtil::JSEscape(Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_BUTTON_WARNING_MESSAGE_FOR_USER')) ?>',
+			title: '<?= \CUtil::JSEscape(Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_BUTTON_WARNING_TITLE')) ?>',
 			overlay: true,
 			buttons: BX.UI.Dialogs.MessageBoxButtons.YES_CANCEL,
 			minWidth: 400,
@@ -90,14 +109,14 @@ $APPLICATION->IncludeComponent(
 					messageBox.close();
 					BX.UI.Notification.Center.notify({
 						content: '<?= $arParams['USER_ID'] === (int)\Bitrix\Main\Engine\CurrentUser::get()->getId()
-							? Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_BUTTON_NOTIFICATION_LOGOUT_ALL_WITHOUT_THIS')
-							: Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_BUTTON_NOTIFICATION_LOGOUT_ALL_USER') ?>',
+							? \CUtil::JSEscape(Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_BUTTON_NOTIFICATION_LOGOUT_ALL_WITHOUT_THIS'))
+							: \CUtil::JSEscape(Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_BUTTON_NOTIFICATION_LOGOUT_ALL_USER')) ?>',
 						autoHideDelay: 1800,
 					});
 				}).catch(() => {
 					messageBox.close();
 					BX.UI.Notification.Center.notify({
-						content: '<?= Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_BUTTON_NOTIFICATION_LOGOUT_ERROR') ?>',
+						content: '<?= \CUtil::JSEscape(Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_BUTTON_NOTIFICATION_LOGOUT_ERROR')) ?>',
 						autoHideDelay: 3600,
 					});
 				});

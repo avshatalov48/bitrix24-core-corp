@@ -22,7 +22,7 @@ class CIntranetStructureListComponent extends CBitrixComponent
 
 	public function __construct($component = null)
 	{
-		$this->bExcel = $_GET['excel'] == 'yes';
+		$this->bExcel = isset($_GET['excel']) && $_GET['excel'] === 'yes';
 
 		parent::__construct($component);
 	}
@@ -308,7 +308,7 @@ class CIntranetStructureListComponent extends CBitrixComponent
 			'UF_DEPARTMENT',
 		));
 
-		if($this->arFilter['LAST_NAME_RANGE'])
+		if(!empty($this->arFilter['LAST_NAME_RANGE']))
 		{
 			//input format: a-z (letter - letter)
 			$letterRange      = explode('-', $this->arFilter['LAST_NAME_RANGE'], 2);
@@ -613,7 +613,7 @@ class CIntranetStructureListComponent extends CBitrixComponent
 				{
 					$arUser["ACTIVITY_STATUS"] = 'inactive';
 				}
-				$arUser['SHOW_USER']   = $this->arParams["SHOW_USER"];
+				$arUser['SHOW_USER']   = $this->arParams["SHOW_USER"] ?? null;
 				$arUser['IS_FEATURED'] = CIntranetUtils::IsUserHonoured($arUser['ID']);
 
 				$arDep = array();
@@ -749,9 +749,9 @@ class CIntranetStructureListComponent extends CBitrixComponent
 		//photo for current user not resized. Do it!
 		if(empty($arUser['PERSONAL_PHOTO_RESIZED']))
 		{
-			if (!$arUser['PERSONAL_PHOTO'])
+			if (empty($arUser['PERSONAL_PHOTO']))
 			{
-				$arUser['PERSONAL_PHOTO'] = $this->getDefaultPictureSonet($arUser['PERSONAL_GENDER']);
+				$arUser['PERSONAL_PHOTO'] = $this->getDefaultPictureSonet($arUser['PERSONAL_GENDER'] ?? null);
 			}
 
 			if(empty($arUser['PERSONAL_PHOTO_SOURCE']))
@@ -822,7 +822,7 @@ class CIntranetStructureListComponent extends CBitrixComponent
 			{
 				$buildResizedPhoto = $this->resizePersonalPhoto($arUser) || $buildResizedPhoto;
 			}
-			$arUser['IS_BIRTHDAY'] = CIntranetUtils::IsToday($arUser['PERSONAL_BIRTHDAY']);
+			$arUser['IS_BIRTHDAY'] = CIntranetUtils::IsToday($arUser['PERSONAL_BIRTHDAY'] ?? null);
 			$arUser['IS_ABSENT']   = CIntranetUtils::IsUserAbsent($arUser['ID']);
 		}
 

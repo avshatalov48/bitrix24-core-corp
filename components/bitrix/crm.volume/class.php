@@ -154,6 +154,13 @@ class CrmVolumeComponent extends \CBitrixComponent
 			return;
 		}
 
+		if (Main\Application::getConnection() instanceof \Bitrix\Main\DB\PgsqlConnection)
+		{
+			Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+			\ShowError(Loc::getMessage('CRM_LOCALIZATION_DB_TYPE_NOT_SUPPORTED'));
+
+			return;
+		}
 
 		$action = $this->getAction();
 
@@ -1436,14 +1443,14 @@ class CrmVolumeComponent extends \CBitrixComponent
 
 			array(
 				'id' => 'disk',
-				'name' => Loc::getMessage('CRM_VOLUME_REPORT_DISK_SIZE'),
+				'name' => Loc::getMessage('CRM_VOLUME_REPORT_DISK_SIZE_MSGVER_1'),
 				'align' => 'right',
 				'sort' => 'disk',
 				'first_order' => 'desc',
 			),
 			array(
 				'id' => 'disk_cnt',
-				'name' => Loc::getMessage('CRM_VOLUME_REPORT_DISK_COUNT'),
+				'name' => Loc::getMessage('CRM_VOLUME_REPORT_DISK_COUNT_MSGVER_1'),
 				'align' => 'right',
 				'sort' => 'disk_cnt',
 				'first_order' => 'desc',

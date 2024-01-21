@@ -6,6 +6,7 @@ use Bitrix\Crm\Automation;
 use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
+use Bitrix\Crm\Filter\HeaderSections;
 use Bitrix\Crm\Filter\Filter;
 use Bitrix\Crm\Filter\ItemDataProvider;
 use Bitrix\Crm\Filter\ItemUfDataProvider;
@@ -134,8 +135,11 @@ abstract class ItemList extends Base
 			]
 		);
 		$this->provider = $filterFactory->getDataProvider($settings);
+
 		$this->ufProvider = $filterFactory->getUserFieldDataProvider($settings);
-		$this->filter = $filterFactory->createFilter($settings->getID(), $this->provider, [$this->ufProvider]);
+		$additionalProviders = HeaderSections::getInstance()->additionalProviders($settings, $filterFactory);
+
+		$this->filter = $filterFactory->createFilter($settings->getID(), $this->provider, $additionalProviders);
 
 		EntityRelationTable::initiateClearingDuplicateSourceElementsWithInterval($this->factory->getEntityTypeId());
 	}
@@ -398,14 +402,7 @@ abstract class ItemList extends Base
 
 	protected function getHeaderSections(): array
 	{
-		return [
-			[
-				'id' => $this->factory->getEntityName(),
-				'name' => $this->factory->getEntityDescription(),
-				'default' => true,
-				'selected' => true,
-			],
-		];
+		return HeaderSections::getInstance()->sections($this->factory);
 	}
 
 	protected function getToolbarViews(): array
@@ -446,7 +443,7 @@ abstract class ItemList extends Base
 
 		}
 
-		if (Automation\Factory::isSupported($this->entityTypeId))
+		if (Automation\Factory::isAutomationAvailable($this->entityTypeId))
 		{
 			$categoryId = $this->getCategoryId();
 			if (is_null($categoryId) && $this->factory->isCategoriesSupported())

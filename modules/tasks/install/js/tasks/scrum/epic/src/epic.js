@@ -649,11 +649,14 @@ export class Epic extends EventEmitter
 
 		const listContainer = this.sidePanel.getContainer().querySelector('.tasks-scrum-epic-tasks-list');
 
-		Runtime.html(listContainer, this.listData.html)
-			.then(() => {
-				EventEmitter.subscribe('Grid::beforeRequest', this.onBeforeGridRequest.bind(this));
-			})
-		;
+		if (this.listData)
+		{
+			Runtime.html(listContainer, this.listData.html)
+				.then(() => {
+					EventEmitter.subscribe('Grid::beforeRequest', this.onBeforeGridRequest.bind(this));
+				})
+			;
+		}
 	}
 
 	onLoadViewForm(event)

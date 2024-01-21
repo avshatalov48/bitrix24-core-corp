@@ -8,9 +8,14 @@ class CompanySettings extends EntitySettings implements ISettingsSupportsCategor
 	/** @var int */
 	protected $categoryId;
 
+	/** @var string[]  */
+	private array $unsupportedFields = [];
+
 	function __construct(array $params)
 	{
 		parent::__construct($params);
+
+		$this->unsupportedFields = $params['UNSUPPORTED_FIELDS'] ?? [];
 
 		$this->categoryId = isset($params['categoryID'])
 			? (int)$params['categoryID'] : null;
@@ -40,5 +45,13 @@ class CompanySettings extends EntitySettings implements ISettingsSupportsCategor
 	public function getCategoryId(): ?int
 	{
 		return $this->categoryId;
+	}
+
+	/**
+	 * @return string[]
+	 */
+	public function unsupportedFields(): array
+	{
+		return $this->unsupportedFields;
 	}
 }

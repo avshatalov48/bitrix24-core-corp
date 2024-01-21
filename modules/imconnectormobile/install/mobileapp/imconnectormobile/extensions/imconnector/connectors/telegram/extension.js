@@ -19,10 +19,10 @@ jn.define('imconnector/connectors/telegram', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {number} userId
+		 * @param {number|null} userId
 		 * @return {Promise<boolean>}
 		 */
-		hasAccess(userId)
+		hasAccess(userId = null)
 		{
 			return this.restManager.hasAccess(userId);
 		}

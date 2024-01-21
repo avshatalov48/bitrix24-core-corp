@@ -2,7 +2,7 @@
  * @module layout/ui/fields/image-select
  */
 jn.define('layout/ui/fields/image-select', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { BaseField } = require('layout/ui/fields/base');
 
 	/**
@@ -20,8 +20,9 @@ jn.define('layout/ui/fields/image-select', (require, exports, module) => {
 
 		constructor(props)
 		{
-			props.readOnly = false;
 			super(props);
+
+			props.readOnly = false;
 		}
 
 		canFocusTitle()
@@ -33,7 +34,7 @@ jn.define('layout/ui/fields/image-select', (require, exports, module) => {
 		{
 			const images = [];
 
-			Object.keys(this.props.images.default).forEach(id => images.push(this.renderImage(id)));
+			Object.keys(this.props.images.default).forEach((id) => images.push(this.renderImage(id)));
 
 			if (this.props.images.loaded)
 			{
@@ -74,7 +75,7 @@ jn.define('layout/ui/fields/image-select', (require, exports, module) => {
 						alignSelf: 'center',
 					},
 					svg: {
-						content: '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M20 40C31.0457 40 40 31.0457 40 20C40 8.95431 31.0457 0 20 0C8.95431 0 0 8.95431 0 20C0 31.0457 8.95431 40 20 40Z" fill="#6a737f" fill-opacity="0.12"/><path fill-rule="evenodd" clip-rule="evenodd" d="M21.3805 13.3687H18.6203V18.6198H13.3691V21.3801H18.6203V26.6313H21.3805V21.3801H26.6318V18.6198H21.3805V13.3687Z" fill="#A8ADB4"/></svg>',
+						content: `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M20 40C31.0457 40 40 31.0457 40 20C40 8.95431 31.0457 0 20 0C8.95431 0 0 8.95431 0 20C0 31.0457 8.95431 40 20 40Z" fill="${AppTheme.colors.base2}" fill-opacity="0.12"/><path fill-rule="evenodd" clip-rule="evenodd" d="M21.3805 13.3687H18.6203V18.6198H13.3691V21.3801H18.6203V26.6313H21.3805V21.3801H26.6318V18.6198H21.3805V13.3687Z" fill="${AppTheme.colors.base4}"/></svg>`,
 					},
 					onClick: () => this.showImagePicker(),
 				}),
@@ -108,7 +109,7 @@ jn.define('layout/ui/fields/image-select', (require, exports, module) => {
 								top: 0,
 								width: '100%',
 								height: '100%',
-								backgroundColor: '#ffffff',
+								backgroundColor: AppTheme.colors.bgContentPrimary,
 								opacity: 0.5,
 							},
 							onClick: () => this.handleChange(id, null, null),
@@ -118,7 +119,7 @@ jn.define('layout/ui/fields/image-select', (require, exports, module) => {
 								width: 48,
 								height: 48,
 							},
-							tintColor: '#000000',
+							tintColor: AppTheme.colors.base0,
 							animating: true,
 							size: 'small',
 						}),
@@ -145,7 +146,7 @@ jn.define('layout/ui/fields/image-select', (require, exports, module) => {
 			{
 				items.push({
 					id: 'disk',
-					name: BX.message('MOBILE_LAYOUT_UI_FIELDS_IMAGE_SELECT_B24_DISK'),
+					name: BX.message('MOBILE_LAYOUT_UI_FIELDS_IMAGE_SELECT_B24_DISK_MSGVER_1'),
 					dataSource: {
 						multiple: false,
 						url: config.fileAttachPath,
@@ -172,7 +173,7 @@ jn.define('layout/ui/fields/image-select', (require, exports, module) => {
 						attachButton: { items },
 					},
 				},
-				data => this.onImageSelectFielded(data),
+				(data) => this.onImageSelectFielded(data),
 			);
 		}
 
@@ -198,17 +199,17 @@ jn.define('layout/ui/fields/image-select', (require, exports, module) => {
 					const style = {
 						width: 48,
 						height: 48,
-						backgroundColor: '#ffffff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						justifyContent: 'center',
 						borderWidth: 0,
 					};
 					const styleSelected = {
 						borderWidth: 2,
-						borderColor: '#2fc6f6',
+						borderColor: AppTheme.colors.accentBrandBlue,
 						borderRadius: 24,
 					};
 
-					return (!isSelected ? style : { ...style, ...styleSelected });
+					return (isSelected ? { ...style, ...styleSelected } : style);
 				},
 			};
 		}
@@ -218,5 +219,4 @@ jn.define('layout/ui/fields/image-select', (require, exports, module) => {
 		ImageSelectType: 'image-select',
 		ImageSelectField: (props) => new ImageSelectField(props),
 	};
-
 });

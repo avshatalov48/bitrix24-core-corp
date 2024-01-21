@@ -68,7 +68,7 @@ class TaskUpdated
 			}
 
 			$actionMessage = Loc::getMessage('TASKS_MESSAGE_' . $key, null, $recepient->getLang());
-			if($actionMessage == '' && isset($trackedFields[$key]) && ($trackedFields[$key]['TITLE'] ?? null) != '')
+			if(empty($actionMessage) && isset($trackedFields[$key]) && !empty($trackedFields[$key]['TITLE']))
 			{
 				$actionMessage = $trackedFields[$key]['TITLE'];
 			}
@@ -231,7 +231,7 @@ class TaskUpdated
 						break;
 
 					case 'ADD_IN_REPORT':
-						$tmpStr .= ($value['FROM_VALUE'] == 'Y'? Loc::getMessage("TASKS_MESSAGE_IN_REPORT_YES", null, $recepient->getLang()) : Loc::getMessage("TASKS_MESSAGE_IN_REPORT_NO", null, $recepient->getLang()))." -> ".($value["TO_VALUE"] == "Y"? Loc::getMessage("TASKS_MESSAGE_IN_REPORT_YES", null, $recepient->getLang()) : Loc::getMessage("TASKS_MESSAGE_IN_REPORT_NO", null, $recepient->getLang()));
+						$tmpStr .= ($value['FROM_VALUE'] === 'Y'? Loc::getMessage("TASKS_MESSAGE_IN_REPORT_YES", null, $recepient->getLang()) : Loc::getMessage("TASKS_MESSAGE_IN_REPORT_NO", null, $recepient->getLang()))." -> ".($value["TO_VALUE"] == "Y"? Loc::getMessage("TASKS_MESSAGE_IN_REPORT_YES", null, $recepient->getLang()) : Loc::getMessage("TASKS_MESSAGE_IN_REPORT_NO", null, $recepient->getLang()));
 						break;
 
 					case 'DELETED_FILES':
@@ -292,7 +292,7 @@ class TaskUpdated
 			}
 		}
 
-		return implode(',', $users);
+		return implode(', ', $users);
 	}
 
 	private function getUniqueExcludedUsers(array $from, array $to): array
@@ -300,15 +300,16 @@ class TaskUpdated
 		$users = array_unique(array_diff($from, $to));
 		return array_filter(
 			$users,
-			function ($id) {
+			static function ($id) {
 				return (int)$id > 0;
 			}
 		);
 	}
 
 	/**
-	 * @param $in
-	 * @param $bDataInSeconds
+	 * @param int|null $in
+	 * @param User $recepient
+	 * @param bool $bDataInSeconds
 	 * @return string
 	 */
 	private function formatTimeHHMM(?int $in, User $recepient, bool $bDataInSeconds = false): string
@@ -360,19 +361,16 @@ class TaskUpdated
 				);
 		}
 
-		if ($bDataInSeconds && ($in < 3600))
+		if ($bDataInSeconds && ($in < 3600) && $secondsInResid = $in % 60)
 		{
-			if ($secondsInResid = $in % 60)
-			{
-				$duration .= ' ' . $secondsInResid
-					. ' '
-					. Loc::getMessagePlural(
-						'TASKS_TASK_DURATION_SECONDS',
-						$secondsInResid,
-						null,
-						$recepient->getLang()
-					);
-			}
+			$duration .= ' ' . $secondsInResid
+				. ' '
+				. Loc::getMessagePlural(
+					'TASKS_TASK_DURATION_SECONDS',
+					$secondsInResid,
+					null,
+					$recepient->getLang()
+				);
 		}
 
 		return ($duration);

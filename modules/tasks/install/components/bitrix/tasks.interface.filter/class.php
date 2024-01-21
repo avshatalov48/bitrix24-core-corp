@@ -4,12 +4,14 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Socialnetwork\WorkgroupTable;
+use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Scrum\Service\SprintService;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\FilterLimit;
 
-\Bitrix\Main\Loader::includeModule('socialnetwork');
+Loader::includeModule('socialnetwork');
 
 Loc::loadMessages(__FILE__);
 
@@ -18,11 +20,12 @@ CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 class TasksInterfaceFilterComponent extends TasksBaseComponent
 	implements \Bitrix\Main\Errorable, \Bitrix\Main\Engine\Contract\Controllerable
 {
+	private const PRESET_AHA_MOMENT_VIEWED_KEY = 'preset_aha_moment_viewed';
 	protected $errorCollection;
 
 	public function configureActions()
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return [];
 		}
@@ -47,9 +50,15 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 		$this->init();
 	}
 
+	public function executeComponent()
+	{
+		$this->arResult['isPresetAhaMomentViewed'] = $this->isPresetAhaMomentViewed();
+		return parent::executeComponent();
+	}
+
 	protected function init()
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -79,18 +88,12 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 
 	public function toggleGroupByTasksAction($userId = null)
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
 
-		if (is_null($userId))
-		{
-			$userId = $this->userId;
-		}
-		$userId = (int) $userId;
-
-		$instance = \CTaskListState::getInstance($userId);
+		$instance = \CTaskListState::getInstance($this->userId);
 		$state = $instance->getState();
 		$submodes = $state['SUBMODES'];
 		$groupBySubTasks = $submodes['VIEW_SUBMODE_WITH_SUBTASKS']['SELECTED'] == 'Y';
@@ -110,18 +113,12 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 
 	public function toggleGroupByGroupsAction($userId = null)
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
 
-		if (is_null($userId))
-		{
-			$userId = $this->userId;
-		}
-		$userId = (int) $userId;
-
-		$instance = \CTaskListState::getInstance($userId);
+		$instance = \CTaskListState::getInstance($this->userId);
 		$state = $instance->getState();
 		$submodes = $state['SUBMODES'];
 		$groupByGroups = $submodes['VIEW_SUBMODE_WITH_GROUPS']['SELECTED'] == 'Y';
@@ -137,6 +134,21 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 		$instance->saveState();
 
 		return [];
+	}
+
+	public function markPresetAhaMomentViewedAction(): array
+	{
+		$result = CUserOptions::SetOption(
+			'tasks',
+			static::PRESET_AHA_MOMENT_VIEWED_KEY,
+			'Y',
+			false,
+			$this->userId
+		);
+
+		return [
+			'result' => $result,
+		];
 	}
 
 	/**
@@ -214,6 +226,7 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 		$group = Bitrix\Socialnetwork\Item\Workgroup::getById($this->arParams['GROUP_ID']);
 		$this->arResult['IS_SCRUM_PROJECT'] = ($group && $group->isScrumProject());
 		$this->arResult['SPRINT'] = $this->getSprint();
+		$this->arResult['IS_TEMPLATES_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['templates']);
 	}
 
 	protected function canCreateGroupTasks($groupId)
@@ -258,7 +271,7 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 
 			$currentGroup = $this->arParams['GROUP_ID'];
 
-			if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
+			if (Loader::includeModule('socialnetwork'))
 			{
 				// show last viewed groups
 				$res = \Bitrix\Socialnetwork\WorkgroupViewTable::getList(
@@ -438,5 +451,15 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 	private function addForbiddenError()
 	{
 		$this->errorCollection->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
+	}
+
+	private function isPresetAhaMomentViewed(): bool
+	{
+		return CUserOptions::GetOption(
+			'tasks',
+			static::PRESET_AHA_MOMENT_VIEWED_KEY,
+			'N',
+			$this->userId
+		) === 'Y';
 	}
 }

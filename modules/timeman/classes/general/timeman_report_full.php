@@ -1408,14 +1408,18 @@ class CUserReportFull
 
 	private function getReportDateText(int $reportDateFrom, int $reportDateTo): string
 	{
+		$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
+		$dayMonthFormat = $culture->getDayMonthFormat();
 		if ($reportDateFrom != $reportDateTo)
 		{
-			return FormatDate('j F', $reportDateFrom)." - ".FormatDate('j F', $reportDateTo);
+			$result = FormatDate($dayMonthFormat, $reportDateFrom)." - ".FormatDate($dayMonthFormat, $reportDateTo);
 		}
 		else
 		{
-			return FormatDate('j F', $reportDateTo);
+			$result = FormatDate($dayMonthFormat, $reportDateTo);
 		}
+
+		return $result;
 	}
 
 	static function GetEntityID($XML_ID = false,$entity_id = false)
@@ -1653,8 +1657,10 @@ class CReportNotifications
 			&& ($arReport = $dbReport->Fetch())
 		)
 		{
-			$date_from = FormatDate("j F", MakeTimeStamp($arReport["DATE_FROM"],CSite::GetDateFormat("FULL", SITE_ID)));
-			$date_to = FormatDate("j F", MakeTimeStamp($arReport["DATE_TO"],CSite::GetDateFormat("FULL", SITE_ID)));
+			$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
+			$dayMonthFormat = $culture->getDayMonthFormat();
+			$date_from = FormatDate($dayMonthFormat, MakeTimeStamp($arReport["DATE_FROM"],CSite::GetDateFormat("FULL", SITE_ID)));
+			$date_to = FormatDate($dayMonthFormat, MakeTimeStamp($arReport["DATE_TO"],CSite::GetDateFormat("FULL", SITE_ID)));
 			if ($date_from == $date_to)
 				$date_text = $date_to;
 			else
@@ -1826,8 +1832,10 @@ class CReportNotifications
 				&& $arReport["USER_ID"] != $curUser
 			)
 			{
-				$date_from = FormatDate("j F", MakeTimeStamp($arReport["DATE_FROM"], CSite::GetDateFormat("FULL", SITE_ID)));
-				$date_to = FormatDate("j F", MakeTimeStamp($arReport["DATE_TO"], CSite::GetDateFormat("FULL", SITE_ID)));
+				$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
+				$dayMonthFormat = $culture->getDayMonthFormat();
+				$date_from = FormatDate($dayMonthFormat, MakeTimeStamp($arReport["DATE_FROM"], CSite::GetDateFormat("FULL", SITE_ID)));
+				$date_to = FormatDate($dayMonthFormat, MakeTimeStamp($arReport["DATE_TO"], CSite::GetDateFormat("FULL", SITE_ID)));
 				if ($date_from == $date_to)
 					$date_text = $date_to;
 				else
@@ -2295,8 +2303,10 @@ class CReportNotifications
 			$dbReport = CTimeManReportFull::GetByID($arFields["REPORT_ID"]);
 			if ($arReport = $dbReport->Fetch())
 			{
-				$date_from = FormatDate("j F", MakeTimeStamp($arReport["DATE_FROM"], CSite::GetDateFormat("FULL", SITE_ID)));
-				$date_to = FormatDate("j F", MakeTimeStamp($arReport["DATE_TO"], CSite::GetDateFormat("FULL", SITE_ID)));
+				$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
+				$dayMonthFormat = $culture->getDayMonthFormat();
+				$date_from = FormatDate($dayMonthFormat, MakeTimeStamp($arReport["DATE_FROM"], CSite::GetDateFormat("FULL", SITE_ID)));
+				$date_to = FormatDate($dayMonthFormat, MakeTimeStamp($arReport["DATE_TO"], CSite::GetDateFormat("FULL", SITE_ID)));
 				if ($date_from == $date_to)
 					$date_text = $date_to;
 				else

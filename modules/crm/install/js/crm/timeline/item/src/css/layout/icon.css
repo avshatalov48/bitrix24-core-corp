@@ -302,3 +302,11 @@
 	mask-size: contain;
 	mask-position: center;
 }
+
+.crm-timeline__card_icon.--code-ai-copilot i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__ai-copilot-icon.svg');
+	width: 24px;
+	height: 24px;
+	mask-size: contain;
+	mask-position: center;
+}

@@ -46,9 +46,9 @@ foreach($arResult['ITEMS'] as &$item)
 		'id' => $item['~ID'],
 		'actions' => $arActions,
 		'data' => $item,
-		'editable' => $arResult['CAN_EDIT'] ? true : $arColumns,
+		'editable' => $item['CAN_EDIT'] ?? false,
 		'columns' => array(
-			'TITLE' => $item['CAN_EDIT'] ? '<a target="_self" href="'.htmlspecialcharsbx($item['PATH_TO_EDIT']).'">'.$item['TITLE'].'</a>' : $item['TITLE'],
+			'TITLE' => $arResult['CAN_EDIT'] ? '<a target="_self" href="'.htmlspecialcharsbx($item['PATH_TO_EDIT']).'">'.$item['TITLE'].'</a>' : $item['TITLE'],
 			'CREATED' => FormatDate('SHORT', MakeTimeStamp($item['~CREATED'])),
 			'LAST_UPDATED' => FormatDate('SHORT', MakeTimeStamp($item['~LAST_UPDATED']))
 		)
@@ -78,6 +78,7 @@ $APPLICATION->IncludeComponent(
 		'GRID_ID' => $arResult['GRID_ID'],
 
 		'AJAX_MODE' => 'Y',
+		'AJAX_OPTION_JUMP' => 'N',
 		'AJAX_OPTION_HISTORY' => 'N',
 
 		'HEADERS' => $arResult['HEADERS'],
@@ -140,7 +141,15 @@ $APPLICATION->IncludeComponent(
 					click: function ()
 					{
 						BX.addClass(this.buttonNode, 'popup-window-button-wait');
-						window.location.href = path;
+						BX.ajax({
+							url: path,
+							method: 'GET',
+							processData: false,
+							onsuccess: () => {
+								this.popupWindow.destroy();
+								BX.Main.gridManager.reload('<?=CUtil::JSEscape((string)$arResult['GRID_ID'])?>');
+							},
+						});
 					}
 				}
 			}),
@@ -160,4 +169,11 @@ $APPLICATION->IncludeComponent(
 		d.setButtons(_BTN);
 		d.show();
 	}
+
+	BX.addCustomEvent('SidePanel.Slider:onMessage', BX.delegate(function(event) {
+		if(event.getEventId() === 'CrmMailTemplateEdit:onSubmit')
+		{
+			BX.Main.gridManager.reload('<?=CUtil::JSEscape((string)$arResult['GRID_ID'])?>');
+		}
+	}));
 </script><?

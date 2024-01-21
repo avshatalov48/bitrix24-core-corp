@@ -1008,7 +1008,7 @@ abstract class CheckListFacade
 	 * Checks if action is allowed for user and entity.
 	 *
 	 * @param int $entityId
-	 * @param CheckList $checkList
+	 * @param ?CheckList $checkList
 	 * @param int $userId
 	 * @param $actionId
 	 * @return bool

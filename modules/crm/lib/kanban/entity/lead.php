@@ -248,4 +248,18 @@ class Lead extends Entity
 	{
 		return true;
 	}
+
+	public function getPopupFields(string $viewType): array
+	{
+		$fields = parent::getPopupFields($viewType);
+		foreach ($fields as $i => $field)
+		{
+			if (mb_strpos($field['NAME'], 'ACTIVITY_FASTSEARCH_') === 0)
+			{
+				unset($fields[$i]);
+			}
+		}
+
+		return $fields;
+	}
 }

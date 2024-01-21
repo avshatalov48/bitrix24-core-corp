@@ -1,12 +1,11 @@
 <?php
 namespace Bitrix\Crm\Merger;
-use Bitrix\Main;
 use Bitrix\Crm;
-use Bitrix\Crm\Integrity;
-use Bitrix\Crm\Recovery;
-use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Binding;
+use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\Recovery;
 use Bitrix\Crm\Timeline;
+use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/crm/lib/webform/entity.php');
@@ -319,6 +318,7 @@ class CompanyMerger extends EntityMerger
 		Timeline\MarkEntry::rebind(\CCrmOwnerType::Company, $seedID, $targID);
 		Timeline\CommentEntry::rebind(\CCrmOwnerType::Company, $seedID, $targID);
 		Timeline\LogMessageEntry::rebind(\CCrmOwnerType::Company, $seedID, $targID);
+		Timeline\AI\Call\Entry::rebind(\CCrmOwnerType::Company, $seedID, $targID);
 
 		Crm\Tracking\Entity::rebindTrace(
 			\CCrmOwnerType::Company, $seedID,

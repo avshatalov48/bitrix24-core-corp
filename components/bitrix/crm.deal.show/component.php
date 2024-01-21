@@ -1002,7 +1002,7 @@ $arResult['FIELDS'][$arResult['PRODUCT_ROW_TAB_ID']][] = array(
 );
 // <-- PRODUCT ROW SECTION
 
-if ($arParams['IS_RECURRING'] !== 'Y')
+if ($arParams['IS_RECURRING'] !== 'Y' && \Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper::isAvailable())
 {
 	// LIVE FEED SECTION -->
 

@@ -1,0 +1,2 @@
+<?php
+$MESS['MOBILE_UI_ITEM_SELECTOR_VIEW_MORE'] = 'ещё #COUNT#';

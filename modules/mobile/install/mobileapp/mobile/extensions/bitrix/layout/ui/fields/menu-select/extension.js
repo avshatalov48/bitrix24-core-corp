@@ -2,6 +2,7 @@
  * @module layout/ui/fields/menu-select
  */
 jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { BaseSelectField } = require('layout/ui/fields/base-select');
 	const { chevronDown } = require('assets/common');
 
@@ -29,13 +30,12 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 		{
 			let items = BX.prop.getArray(config, 'menuItems', []);
 
-			if (!items.length)
+			if (items.length === 0)
 			{
 				items = BX.prop.getArray(config, 'items', []);
 			}
 
 			return items;
-
 		}
 
 		shouldShowIcon()
@@ -131,9 +131,10 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 						width: 7,
 						height: 5,
 					},
+					tintColor: AppTheme.colors.base3,
 					resizeMode: 'center',
 					svg: {
-						content: `<svg width="7" height="5" viewBox="0 0 7 5" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.09722 0.235352L4.02232 2.31025L3.49959 2.8249L2.98676 2.31025L0.91186 0.235352L0.179688 0.967524L3.50451 4.29235L6.82933 0.967524L6.09722 0.235352Z" fill="#A8ADB4"/></svg>`,
+						content: chevronDown(),
 					},
 				}),
 			);
@@ -158,7 +159,8 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 					super.renderEmptyContent(),
 				);
 			}
-			else if (this.props.emptyValue)
+
+			if (this.props.emptyValue)
 			{
 				return View(
 					{
@@ -183,7 +185,7 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 						},
 						resizeMode: 'center',
 						svg: {
-							content: `<svg width="7" height="5" viewBox="0 0 7 5" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.09722 0.235352L4.02232 2.31025L3.49959 2.8249L2.98676 2.31025L0.91186 0.235352L0.179688 0.967524L3.50451 4.29235L6.82933 0.967524L6.09722 0.235352Z" fill="#A8ADB4"/></svg>`,
+							content: '<svg width="7" height="5" viewBox="0 0 7 5" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.09722 0.235352L4.02232 2.31025L3.49959 2.8249L2.98676 2.31025L0.91186 0.235352L0.179688 0.967524L3.50451 4.29235L6.82933 0.967524L6.09722 0.235352Z" fill="#A8ADB4"/></svg>',
 						},
 					}),
 				);
@@ -201,11 +203,17 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 
 		handleAdditionalFocusActions()
 		{
-			const { menuTitle, defaultSectionCode, shouldResizeContent, isCustomIconColor } = this.getConfig();
+			const {
+				menuTitle,
+				defaultSectionCode,
+				shouldResizeContent,
+				isCustomIconColor,
+				showCancelButton = false,
+			} = this.getConfig();
 
 			const contextMenu = new ContextMenu({
 				params: {
-					showCancelButton: false,
+					showCancelButton,
 					showActionLoader: false,
 					title: menuTitle,
 					showPartiallyHidden: this.shouldShowPartiallyHidden(),
@@ -344,7 +352,7 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 					marginLeft: (this.getConfig().emptyValueIcon ? 6 : undefined),
 				},
 				value: {
-					color: '#333333',
+					color: AppTheme.colors.base1,
 					fontSize: 16,
 					marginRight: 4,
 					marginLeft: (this.getSelectedItemIcon() ? 6 : undefined),
@@ -402,5 +410,4 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 		MenuSelectType: 'menu-select',
 		MenuSelectField: (props) => new MenuSelectField(props),
 	};
-
 });

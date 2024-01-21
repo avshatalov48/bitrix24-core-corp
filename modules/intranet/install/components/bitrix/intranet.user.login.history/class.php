@@ -51,8 +51,13 @@ class IntranetUserLoginHistoryComponent extends CBitrixComponent implements Cont
 	 */
 	public function executeComponent()
 	{
-		$this->prepareToolbar();
-		$this->prepareResult();
+		$this->arParams['TOOL_AVAILABLE'] = \Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByToolId('login_history');
+
+		if ($this->arParams['TOOL_AVAILABLE'])
+		{
+			$this->prepareToolbar();
+			$this->prepareResult();
+		}
 		$this->includeComponentTemplate();
 	}
 
@@ -254,7 +259,7 @@ class IntranetUserLoginHistoryComponent extends CBitrixComponent implements Cont
 				],
 				[
 					'id' => 'DEVICE_TYPE',
-					'name' =>  Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_GRID_COLUMN_NAME_DEVICE_TYPE'),
+					'name' => Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_GRID_COLUMN_NAME_DEVICE_TYPE'),
 					'type' => 'list',
 					'default' => true,
 					'params' => [
@@ -265,17 +270,17 @@ class IntranetUserLoginHistoryComponent extends CBitrixComponent implements Cont
 				[
 					'id' => 'DEVICE_PLATFORM',
 					'default' => true,
-					'name' =>  Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_GRID_COLUMN_NAME_DEVICE_PLATFORM'),
+					'name' => Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_GRID_COLUMN_NAME_DEVICE_PLATFORM'),
 				],
 				[
 					'id' => 'BROWSER',
 					'default' => true,
-					'name' => Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_GRID_COLUMN_NAME_BROWSER')
+					'name' => Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_GRID_COLUMN_NAME_BROWSER'),
 				],
 				[
 					'id' => 'IP',
 					'default' => true,
-					'name' => Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_GRID_COLUMN_NAME_IP')
+					'name' => Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_GRID_COLUMN_NAME_IP'),
 				],
 			],
 			'FILTER_PRESETS' => $this->getFilterPresets(),
@@ -310,7 +315,7 @@ class IntranetUserLoginHistoryComponent extends CBitrixComponent implements Cont
 	{
 		return CreateButton::create([
 			'text' => Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_SECURITY_BUTTON'),
-			"icon" => Icon::SETTINGS,
+			'icon' => Icon::SETTINGS,
 			'color' => Color::LIGHT_BORDER,
 			'dataset' => [
 				'toolbar-collapsed-icon' => Icon::REMOVE,
@@ -599,11 +604,6 @@ class IntranetUserLoginHistoryComponent extends CBitrixComponent implements Cont
 		return $this->getPreparedHistoryListForWidget($list);
 	}
 
-	/**
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
-	 * @throws ArgumentException
-	 */
 	private function getPreparedHistoryListForWidget(array $list): array
 	{
 		$preparedList = [];
@@ -627,7 +627,7 @@ class IntranetUserLoginHistoryComponent extends CBitrixComponent implements Cont
 	{
 		if(!$dateTime)
 		{
-			return Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_UNDEFINED');
+			return \CUtil::JSEscape(Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_UNDEFINED'));
 		}
 
 		return FormatDate($this->getCultureUser()->getLongDateFormat(), $dateTime->getTimestamp());
@@ -651,7 +651,7 @@ class IntranetUserLoginHistoryComponent extends CBitrixComponent implements Cont
 	{
 		if(!$dateTime)
 		{
-			return Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_UNDEFINED');
+			return \CUtil::JSEscape(Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_UNDEFINED'));
 		}
 
 		return $dateTime->format($this->getCultureUser()->getLongTimeFormat());
@@ -713,7 +713,7 @@ class IntranetUserLoginHistoryComponent extends CBitrixComponent implements Cont
 
 		if (!$result)
 		{
-			return Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_UNDEFINED');
+			return \CUtil::JSEscape(Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_UNDEFINED'));
 		}
 
 		return implode('/', $result);

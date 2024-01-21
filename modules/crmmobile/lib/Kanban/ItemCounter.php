@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Bitrix\CrmMobile\Kanban;
-
 
 use Bitrix\Crm\Traits\Singleton;
 use Bitrix\Main\ArgumentException;
@@ -46,15 +44,12 @@ final class ItemCounter
 		return [
 			self::ERROR_TYPE => [
 				'id' => self::ERROR_TYPE,
-				'color' => '#ff5752',
 			],
 			self::INCOMING_TYPE => [
 				'id' => self::INCOMING_TYPE,
-				'color' => '#9dcf00',
 			],
 			self::EMPTY_TYPE => [
 				'id' => self::EMPTY_TYPE,
-				'color' => '#bdc1c6',
 			],
 		];
 	}

@@ -1,0 +1,51 @@
+/* root container */
+.crm-copilot-wrapper{
+	background: url('./images/copilot-slider-bg.png') fixed 0 0 no-repeat;
+	background-size: cover;
+	font-family: var(--ui-font-family-open-sans);
+
+	--copilot-icon-width: 32px;
+	--copilot-icon-height: 32px;
+	--copilot-icon-to-left: calc(-1 * (var(--copilot-icon-width)));
+	--copilot-icon-title-distance: 5px;
+}
+
+/* header */
+.crm-copilot-wrapper .ui-sidepanel-layout-header{
+	margin-bottom: 10px;
+}
+
+.crm-copilot-wrapper .ui-sidepanel-layout-title{
+	color: white;
+	position: relative;
+	overflow: visible;
+	margin-left: calc(-1 * var(--copilot-icon-to-left));
+	padding-left: var(--copilot-icon-title-distance) !important;
+	font-family: var(--ui-font-family-open-sans);
+	font-size: var(--ui-font-size-5xl);
+	font-weight: var(--ui-font-weight-light);
+	font-style: normal;
+	line-height: normal;
+	letter-spacing: -0.267px;
+}
+
+/* copilot icon */
+.crm-copilot-wrapper .ui-sidepanel-layout-title::before{
+	position: absolute;
+	/* I don't know how else to align it in the middle :( */
+	top: calc(50% + -0.5 * var(--copilot-icon-height) + 5px);
+	left: var(--copilot-icon-to-left);
+	width: var(--copilot-icon-width);
+	height: var(--copilot-icon-height);
+	content: url('./images/copilot-icon.svg');
+}
+
+.crm-copilot-wrapper ~ .side-panel-loader{
+	background: transparent !important;
+}
+
+@media (max-width: 1360px) {
+	.crm-copilot-wrapper .ui-sidepanel-layout-title {
+		margin: 0 15px 0 calc(-1 * var(--copilot-icon-to-left)) !important;
+	}
+}

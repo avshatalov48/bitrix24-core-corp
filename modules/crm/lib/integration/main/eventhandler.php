@@ -3,9 +3,17 @@ namespace Bitrix\Crm\Integration\Main;
 
 use Bitrix\Crm\Activity\Provider\Email;
 use Bitrix\Crm\ActivityTable;
+use Bitrix\Crm\Badge;
+use Bitrix\Crm\Badge\Type\MailMessageDeliveryStatus;
 use Bitrix\Crm\Category\ItemCategoryUserField;
+use Bitrix\Crm\FieldContext\EntityFactory;
+use Bitrix\Crm\FieldContext\Repository;
 use Bitrix\Crm\Integration\MailManager;
 use Bitrix\Crm\Integrity;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Timeline\Monitor;
+use Bitrix\Crm\Timeline;
 use Bitrix\Crm\WebForm;
 use Bitrix\Main\Application;
 use Bitrix\Main\DI\ServiceLocator;
@@ -54,12 +62,28 @@ class EventHandler
 	public static function onAfterUserTypeDelete(array $field, $id)
 	{
 		$crmEntityPrefix = ServiceLocator::getInstance()->get('crm.type.factory')->getUserFieldEntityPrefix();
-		if(strpos($field['ENTITY_ID'], $crmEntityPrefix) === 0)
+		if (str_starts_with($field['ENTITY_ID'], $crmEntityPrefix))
 		{
 			$entityTypeId = \CCrmOwnerType::ResolveIDByUFEntityID($field['ENTITY_ID']);
-			if(isset($field['FIELD_NAME']))
+			$fieldName = $field['FIELD_NAME'] ?? null;
+
+			if ($fieldName)
 			{
-				(new ItemCategoryUserField($entityTypeId))->deleteByName($field['FIELD_NAME']);
+				(new ItemCategoryUserField($entityTypeId))->deleteByName($fieldName);
+
+				$fieldContextEntity = EntityFactory::getInstance()->getEntity($entityTypeId);
+				if ($fieldContextEntity)
+				{
+					$canDeleteByFieldName = (
+						!\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId)
+						|| Repository::hasFieldsContextTables()
+					);
+
+					if ($canDeleteByFieldName)
+					{
+						$fieldContextEntity::deleteByFieldName($fieldName);
+					}
+				}
 			}
 		}
 
@@ -130,6 +154,7 @@ class EventHandler
 						{
 							$settings = ["SETTINGS" => ["SENT_ERROR" => $status] + $activity["SETTINGS"]];
 							ActivityTable::update($id, $settings);
+							self::addTimelineDeliveryErrorLogMessage($id);
 						}
 					}
 				}
@@ -217,5 +242,41 @@ class EventHandler
 
 		$notificationRegistry[$id] = $notificationRegistry[$id] ?? [];
 		$notificationRegistry[$id][] = $result->getEmail();
+	}
+
+	private static function addTimelineDeliveryErrorLogMessage(int $activityId): void
+	{
+		$bindings = \CCrmActivity::GetBindings($activityId);
+		$logMessageController = Timeline\LogMessageController::getInstance();
+		foreach ($bindings as $binding)
+		{
+			$logMessageController->onCreate([
+					'ENTITY_TYPE_ID' => $binding['OWNER_TYPE_ID'],
+					'ENTITY_ID' => $binding['OWNER_ID'],
+					'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
+					'ASSOCIATED_ENTITY_ID' => $activityId,
+				],
+				Timeline\LogMessageType::EMAIL_NON_DELIVERED,
+			);
+			self::addErrorBadge($activityId, (int)$binding['OWNER_TYPE_ID'], (int)$binding['OWNER_ID']);
+		}
+	}
+
+	private static function addErrorBadge(int $activityId, int $ownerTypeId, int $ownerId): void
+	{
+		$badge = Container::getInstance()->getBadge(
+			Badge\Badge::MAIL_MESSAGE_DELIVERY_STATUS_TYPE,
+			MailMessageDeliveryStatus::MAIL_MESSAGE_DELIVERY_ERROR_VALUE,
+		);
+
+		$itemIdentifier = new ItemIdentifier($ownerTypeId, $ownerId);
+
+		$sourceIdentifier = new Badge\SourceIdentifier(
+			Badge\SourceIdentifier::CRM_OWNER_TYPE_PROVIDER,
+			\CCrmOwnerType::Activity,
+			$activityId,
+		);
+		$badge->bind($itemIdentifier, $sourceIdentifier);
+		Monitor::getInstance()->onBadgesSync($itemIdentifier);
 	}
 }

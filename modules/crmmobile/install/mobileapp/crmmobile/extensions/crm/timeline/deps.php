@@ -50,5 +50,6 @@ return [
 		'animation/components/fade-view',
 		'pull/client/events',
 		'feature',
+		'apptheme',
 	],
 ];

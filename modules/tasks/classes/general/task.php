@@ -28,6 +28,7 @@ use Bitrix\Tasks\Control\Task;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Internals\CacheConfig;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Log\LogFacade;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\Task\Mark;
@@ -44,7 +45,7 @@ use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Kanban\TaskStageTable;
 use Bitrix\Tasks\Provider\TaskList;
 use Bitrix\Tasks\Provider\TaskProvider;
-use Bitrix\Tasks\Replicator\Template\Replicators\RegularTaskReplicator;
+use Bitrix\Tasks\Replicator\Template\Replicators\RegularTemplateTaskReplicator;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
@@ -197,6 +198,16 @@ class CTasks
 			unset($arFields['META::EVENT_GUID']);
 		}
 
+		if (array_key_exists('DISABLE_BIZPROC_RUN', $arParams))
+		{
+			$handler->skipBP();
+		}
+		$withImmediatelyCrmEvents = $arParams['IMMEDIATELY_CRM_EVENTS'] ?? false;
+		if ($withImmediatelyCrmEvents)
+		{
+			$handler->withImmediatelyCrmEvents();
+		}
+
 		try
 		{
 			$task = $handler->add($arFields);
@@ -299,7 +310,7 @@ class CTasks
 			|| $arParams['AUTO_CLOSE'] !== false
 		)
 		{
-			$handler->withAutoclose();
+			$handler->withAutoClose();
 		}
 		if (
 			isset($arParams['SKIP_NOTIFICATION'])
@@ -320,6 +331,12 @@ class CTasks
 			$handler->withSkipPush();
 		}
 
+		$withImmediatelyCrmEvents = $arParams['IMMEDIATELY_CRM_EVENTS'] ?? false;
+		if ($withImmediatelyCrmEvents)
+		{
+			$handler->withImmediatelyCrmEvents();
+		}
+
 		try
 		{
 			$handler->update($taskId, $arFields);
@@ -336,6 +353,7 @@ class CTasks
 		}
 		catch (\Exception $e)
 		{
+			LogFacade::logThrowable($e);
 			$this->_errors[] = [
 				"text" => GetMessage("TASKS_UNKNOWN_UPDATE_ERROR"),
 				"id" => "ERROR_UNKNOWN_UPDATE_TASK_ERROR",
@@ -439,6 +457,12 @@ class CTasks
 		)
 		{
 			$handler->withSkipExchangeSync();
+		}
+
+		$withImmediatelyCrmEvents = $parameters['IMMEDIATELY_CRM_EVENTS'] ?? false;
+		if ($withImmediatelyCrmEvents)
+		{
+			$handler->withImmediatelyCrmEvents();
 		}
 
 		return $handler->delete((int)$taskId);
@@ -5458,10 +5482,10 @@ class CTasks
 			return 'CTasks::RepeatTaskByTemplateId(' . $templateId . ');';
 		}
 
-		if (RegularTaskReplicator::isEnabled())
+		if (RegularTemplateTaskReplicator::isEnabled())
 		{
-			$replicator = new RegularTaskReplicator(0);
-			return $replicator->replicate($templateId);
+			$replicator = new RegularTemplateTaskReplicator();
+			return (string)$replicator->replicate($templateId)->getPayload();
 		}
 
 		return Replicator\Task\FromTemplate::repeatTask(
@@ -6481,6 +6505,8 @@ class CTasks
 			'EPIC' => [1, 1, 0, 1, 0],
 			'ONLY_ROOT_TASKS' => [0, 0, 0, 1, 0],
 			'SCENARIO_NAME' => [1, 1, 0, 1, 0],
+			'IS_REGULAR' => [1, 1, 0, 1, 0],
+			'REGULAR_PARAMS' => [1, 1, 0, 1, 0],
 		];
 	}
 

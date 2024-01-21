@@ -32,9 +32,9 @@ Loc::loadMessages(__FILE__);
  * @method static EO_Task_Result getList(array $parameters = [])
  * @method static EO_Task_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\TaskObject createObject($setDefaultValues = true)
- * @method static \Bitrix\Tasks\Integration\Report\Internals\EO_Task_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\TaskCollection createCollection()
  * @method static \Bitrix\Tasks\Internals\TaskObject wakeUpObject($row)
- * @method static \Bitrix\Tasks\Integration\Report\Internals\EO_Task_Collection wakeUpCollection($rows)
+ * @method static \Bitrix\Tasks\Internals\TaskCollection wakeUpCollection($rows)
  */
 class TaskTable extends \Bitrix\Tasks\Internals\TaskTable
 {

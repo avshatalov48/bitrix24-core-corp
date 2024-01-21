@@ -60,9 +60,19 @@ class LandingManager extends Base
 			{
 				if(static::getInstance()->isConnectionAvailable())
 				{
+					// todo: tmp hack! remove after add correctly verification
+					$skipPhoneOption = Option::get('landing', 'allow_skip_phone_verification', 'N');
+					$skipEmailOption = Option::get('landing', 'allow_skip_email_verification', 'N');
+					Option::set('landing', 'allow_skip_phone_verification', 'Y');
+					Option::set('landing', 'allow_skip_email_verification', 'Y');
+
 					Landing\Rights::setGlobalOff();
 					Landing\PublicAction\Site::publication($landingId, true);
 					Landing\Rights::setGlobalOn();
+
+					// todo: tmp hack! remove after add correctly verification
+					Option::set('landing', 'allow_skip_phone_verification', $skipPhoneOption);
+					Option::set('landing', 'allow_skip_email_verification', $skipEmailOption);
 				}
 
 				static::getInstance()->createWebFormPages();

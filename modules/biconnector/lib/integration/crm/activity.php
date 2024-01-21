@@ -327,10 +327,7 @@ class Activity
 			}
 			else
 			{
-				array_push(
-					$dictionaryForSql,
-					'when #FIELD_NAME# is null or #FIELD_NAME# = \'\' then \'' . $helper->forSql($value) . '\''
-				);
+				$dictionaryForSql[] = 'when #FIELD_NAME# is null or #FIELD_NAME# = \'\' then \'' . $helper->forSql($value) . '\'';
 			}
 		}
 		$dictionarySql = 'case ' . implode("\n", $dictionaryForSql) . ' else null end';

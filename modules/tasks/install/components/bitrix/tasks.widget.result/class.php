@@ -2,6 +2,7 @@
 
 /**
  * Bitrix Framework
+ *
  * @package bitrix
  * @subpackage tasks
  * @copyright 2001-2021 Bitrix
@@ -12,33 +13,48 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Forum\MessageTable;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Errorable;
+use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Access\ResultAccessController;
 use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\Action\Filter\BooleanFilter;
+use Bitrix\Tasks\Internals\Marketing\OneOff\ResultTutorial;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
 use Bitrix\Tasks\Internals\Task\Result\ResultTable;
 use Bitrix\Tasks\Util\User;
 
-class TasksWidgetResult extends \CBitrixComponent
-	implements \Bitrix\Main\Errorable, \Bitrix\Main\Engine\Contract\Controllerable
+class TasksWidgetResult extends CBitrixComponent implements Errorable, Controllerable
 {
 	private const AVATAR_SIZE = 100;
 
-	private $errorCollection;
+	private ErrorCollection $errorCollection;
+	private int $userId;
 
-	/**
-	 * @param null $component
-	 */
 	public function __construct($component = null)
 	{
 		parent::__construct($component);
 
-		$this->errorCollection = new \Bitrix\Main\ErrorCollection();
+		$this->errorCollection = new ErrorCollection();
+		$this->userId = CurrentUser::get()->getId();
 	}
 
-	public function configureActions()
+	/**
+	 * @throws LoaderException
+	 */
+	public function configureActions(): array
 	{
 		if (!Loader::includeModule('tasks'))
 		{
@@ -48,37 +64,35 @@ class TasksWidgetResult extends \CBitrixComponent
 		return [
 			'createFromComment' => [
 				'+prefilters' => [
-					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+					new BooleanFilter(),
 				],
 			],
 			'deleteFromComment' => [
 				'+prefilters' => [
-					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+					new BooleanFilter(),
 				],
 			],
 			'getResults' => [
 				'+prefilters' => [
-					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+					new BooleanFilter(),
 				],
 			],
 			'disableTutorial' => [
 				'+prefilters' => [
-					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+					new BooleanFilter(),
 				],
-			]
+			],
 		];
 	}
 
-	/**
-	 * @return mixed|void|null
-	 */
 	public function executeComponent()
 	{
 		try
 		{
 			$this->init();
 
-			$access = TaskAccessController::can($this->arParams['USER_ID'], ActionDictionary::ACTION_TASK_READ, $this->arParams['TASK_ID']);
+			$access = TaskAccessController::can($this->arParams['USER_ID'], ActionDictionary::ACTION_TASK_READ,
+				$this->arParams['TASK_ID']);
 			if (!$access)
 			{
 				return;
@@ -87,24 +101,21 @@ class TasksWidgetResult extends \CBitrixComponent
 			$this->loadData();
 			$this->includeComponentTemplate();
 		}
-		catch (\Bitrix\Main\SystemException $exception)
+		catch (SystemException)
 		{
-
 		}
 	}
 
 	/**
-	 * @param $commentId
-	 * @return null
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentTypeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws ObjectPropertyException
+	 * @throws ArgumentTypeException
+	 * @throws LoaderException
+	 * @throws ArgumentException
+	 * @throws SystemException
 	 */
 	public function createFromCommentAction($commentId)
 	{
-		$commentId = (int) $commentId;
+		$commentId = (int)$commentId;
 		if (!$commentId)
 		{
 			return null;
@@ -118,78 +129,73 @@ class TasksWidgetResult extends \CBitrixComponent
 			return null;
 		}
 
-		$userId = User::getId();
-
 		$comment = MessageTable::getById($commentId)->fetchObject();
 		if (!$comment)
 		{
 			return null;
 		}
 
-		$taskId = (int) str_replace('TASK_', '', $comment->getXmlId());
+		$taskId = (int)str_replace('TASK_', '', $comment->getXmlId());
 
 		if (
 			(
-				!\Bitrix\Tasks\Access\Model\UserModel::createFromId($userId)->isAdmin()
-				&& $comment->getAuthorId() !== $userId
+				!UserModel::createFromId($this->userId)->isAdmin()
+				&& $comment->getAuthorId() !== $this->userId
 			)
-			|| !TaskAccessController::can($userId, ActionDictionary::ACTION_TASK_READ, $taskId)
+			|| !TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskId)
 		)
 		{
 			return null;
 		}
 
-		$result = (new ResultManager($userId))->createFromComment($commentId, false);
-		return null;
-	}
-
-	public function deleteFromCommentAction($commentId)
-	{
-		$commentId = (int) $commentId;
-		if (!$commentId)
-		{
-			return null;
-		}
-
-		if (
-			!Loader::includeModule('tasks')
-			|| !Loader::includeModule('forum')
-		)
-		{
-			return null;
-		}
-
-		$userId = User::getId();
-
-		$comment = MessageTable::getById($commentId)->fetchObject();
-		if (!$comment)
-		{
-			return null;
-		}
-
-		$taskId = (int) str_replace('TASK_', '', $comment->getXmlId());
-		$result = ResultTable::getByCommentId($commentId);
-		if (
-			!TaskAccessController::can($userId, ActionDictionary::ACTION_TASK_READ, $taskId)
-			|| !ResultAccessController::can($userId, ActionDictionary::ACTION_TASK_REMOVE_RESULT, $result->getId())
-		)
-		{
-			return null;
-		}
-
-		(new ResultManager($userId))->deleteByComment($commentId);
+		$result = (new ResultManager($this->userId))->createFromComment($commentId, false);
 		return null;
 	}
 
 	/**
-	 * @param $taskId
-	 * @param null $mode
-	 * @return false|string|null
-	 * @throws \Bitrix\Main\LoaderException
+	 * @throws LoaderException
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
 	 */
+	public function deleteFromCommentAction(int $commentId)
+	{
+		if ($commentId <= 0)
+		{
+			return null;
+		}
+
+		if (
+			!Loader::includeModule('tasks')
+			|| !Loader::includeModule('forum')
+		)
+		{
+			return null;
+		}
+
+		$result = ResultTable::getByCommentId($commentId);
+		if (is_null($result))
+		{
+			return null;
+		}
+
+		if (
+			!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $result->getTaskId())
+			|| !ResultAccessController::can($this->userId, ActionDictionary::ACTION_TASK_REMOVE_RESULT,
+				$result->getId())
+		)
+		{
+			return null;
+		}
+
+		(new ResultManager($this->userId))->deleteByComment($commentId);
+		return null;
+	}
+
 	public function getResultsAction($taskId, $mode = null)
 	{
-		$taskId = (int) $taskId;
+		$taskId = (int)$taskId;
 		if (!$taskId)
 		{
 			return null;
@@ -224,12 +230,15 @@ class TasksWidgetResult extends \CBitrixComponent
 
 			return $html;
 		}
-		catch (\Bitrix\Main\SystemException $exception)
+		catch (SystemException)
 		{
 			return null;
 		}
 	}
 
+	/**
+	 * @throws LoaderException
+	 */
 	public function disableTutorialAction()
 	{
 		if (!Loader::includeModule('tasks'))
@@ -237,29 +246,21 @@ class TasksWidgetResult extends \CBitrixComponent
 			return null;
 		}
 
-		$userId = User::getId();
-		(new \Bitrix\Tasks\Internals\Marketing\OneOff\ResultTutorial($userId))->disable();
+		(new ResultTutorial($this->userId))->disable();
 	}
 
-	/**
-	 * @return array|\Bitrix\Main\Error[]
-	 */
 	public function getErrors()
 	{
 		return $this->errorCollection->toArray();
 	}
 
-	/**
-	 * @param string $code
-	 * @return \Bitrix\Main\Error|null
-	 */
 	public function getErrorByCode($code)
 	{
 		return $this->errorCollection->getErrorByCode($code);
 	}
 
 	/**
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws SystemException
 	 */
 	private function init(): void
 	{
@@ -268,16 +269,13 @@ class TasksWidgetResult extends \CBitrixComponent
 		$this->arParams['TASK_ID'] = (int)$this->arParams['TASK_ID'];
 		if (!$this->arParams['TASK_ID'])
 		{
-			throw new \Bitrix\Main\SystemException(Loc::getMessage('TASKS_RESULTS_SYSTEM_ERROR'));
+			throw new SystemException(Loc::getMessage('TASKS_RESULTS_SYSTEM_ERROR'));
 		}
 
-		$this->arParams['RESPONSIBLE'] = $this->arParams['RESPONSIBLE'] ? (int) $this->arParams['RESPONSIBLE'] : 0;
-		$this->arParams['ACCOMPLICES'] = isset($this->arParams['ACCOMPLICES']) ? $this->arParams['ACCOMPLICES'] : [];
+		$this->arParams['RESPONSIBLE'] = $this->arParams['RESPONSIBLE'] ? (int)$this->arParams['RESPONSIBLE'] : 0;
+		$this->arParams['ACCOMPLICES'] = $this->arParams['ACCOMPLICES'] ?? [];
 	}
 
-	/**
-	 *
-	 */
 	private function loadData(): void
 	{
 		$this->arResult['RESULT_LIST'] = (new ResultManager($this->arParams['USER_ID']))->getTaskResults($this->arParams['TASK_ID']);
@@ -293,26 +291,17 @@ class TasksWidgetResult extends \CBitrixComponent
 		$this->loadUfInfo();
 	}
 
-	/**
-	 * @param int $taskId
-	 */
 	private function loadTask(int $taskId)
 	{
-		$this->arResult['TASK_DATA'] = \Bitrix\Tasks\Internals\Registry\TaskRegistry::getInstance()->get($taskId);
+		$this->arResult['TASK_DATA'] = TaskRegistry::getInstance()->get($taskId);
 	}
 
-	/**
-	 *
-	 */
 	private function loadUfInfo()
 	{
 		global $USER_FIELD_MANAGER;
 		$this->arResult['UF'] = $USER_FIELD_MANAGER->getUserFields(ResultTable::getUfId());
 	}
 
-	/**
-	 * @param array $userIds
-	 */
 	private function loadUsers(array $userIds): void
 	{
 		$this->arResult['USERS'] = [];
@@ -325,9 +314,9 @@ class TasksWidgetResult extends \CBitrixComponent
 
 		foreach ($this->arResult['USERS'] as $userId => $user)
 		{
-			$fileFields = \CFile::resizeImageGet(
+			$fileFields = CFile::resizeImageGet(
 				$user['PERSONAL_PHOTO'],
-				[ 'width' => self::AVATAR_SIZE, 'height' => self::AVATAR_SIZE ],
+				['width' => self::AVATAR_SIZE, 'height' => self::AVATAR_SIZE],
 				BX_RESIZE_IMAGE_EXACT,
 				false,
 				false,

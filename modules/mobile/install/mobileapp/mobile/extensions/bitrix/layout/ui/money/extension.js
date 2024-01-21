@@ -1,5 +1,4 @@
 (() => {
-
 	/**
 	 * @function MoneyView
 	 * @param {Object} props
@@ -10,7 +9,7 @@
 	 * @param {Object} props.options
 	 * @returns {View}
 	 */
-	function MoneyView({money, renderAmount, renderCurrency, renderContainer, ...options})
+	function MoneyView({ money, renderAmount, renderCurrency, renderContainer, ...options })
 	{
 		options = options || {};
 		const template = money.template || {};
@@ -23,6 +22,7 @@
 				return renderAmount(money.formattedAmount);
 			}
 			part = options.trim && part.trim ? part.trim() : part;
+
 			return renderCurrency(jnComponent.convertHtmlEntities(part));
 		});
 
@@ -36,11 +36,10 @@
 		};
 
 		return View(
-			{style},
-			...nodes
+			{ style },
+			...nodes,
 		);
 	}
 
 	jnexport(MoneyView);
-
 })();

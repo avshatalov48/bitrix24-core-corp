@@ -1,9 +1,14 @@
 <?php
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Crm\Integration\Intranet\ToolsManager;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Router;
 use Bitrix\Main\Loader;
-
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 if(!Loader::includeModule('crm'))
 {
@@ -40,7 +45,7 @@ class CrmRouterComponent extends Bitrix\Crm\Component\Base
 			$isSefMode = false;
 		}
 
-		$this->router = \Bitrix\Crm\Service\Container::getInstance()->getRouter();
+		$this->router = Container::getInstance()->getRouter();
 		$this->router->setSefMode($isSefMode);
 		$root = $this->arParams['root'];
 		if(is_string($root) && !empty($root))
@@ -59,18 +64,9 @@ class CrmRouterComponent extends Bitrix\Crm\Component\Base
 			return;
 		}
 
-		$parseResult = $this->router->parseRequest();
-
-		if(!$parseResult->isFound())
-		{
-			$componentName = $this->router->getDefaultComponent();
-			$componentParameters = $this->router->getDefaultComponentParameters();
-		}
-		else
-		{
-			$componentName = $parseResult->getComponentName();
-			$componentParameters = $parseResult->getComponentParameters();
-		}
+		$parseResult = $this->getComponentData();
+		$componentName = $parseResult->getComponentName();
+		$componentParameters = $parseResult->getComponentParameters();
 
 		$this->arResult['componentName'] = $componentName;
 		$this->arResult['componentParameters'] = $componentParameters;
@@ -85,6 +81,12 @@ class CrmRouterComponent extends Bitrix\Crm\Component\Base
 
 		$templateName = '';
 		$entityTypeId = $parseResult->getEntityTypeId();
+
+		if (CCrmOwnerType::IsDefined($entityTypeId))
+		{
+			$this->arResult['entityTypeId'] = $entityTypeId;
+		}
+
 		if (
 			!$this->arResult['isIframe']
 			&& $this->arResult['isPlainView']
@@ -92,10 +94,80 @@ class CrmRouterComponent extends Bitrix\Crm\Component\Base
 		)
 		{
 			$templateName = 'details';
-			$this->arResult['entityTypeId'] = $entityTypeId;
+		}
+
+		$entityTypeId = $componentParameters['entityTypeId'] ?? $entityTypeId;
+
+		$toolsManager = Container::getInstance()->getIntranetToolsManager();
+
+		$isAvailable = false;
+		$sliderCode = ToolsManager::CRM_SLIDER_CODE;
+
+		if ($entityTypeId)
+		{
+			$factory = Container::getInstance()->getFactory($entityTypeId);
+			if ($factory && $factory->isInCustomSection())
+			{
+				$isAvailable = $toolsManager->checkExternalDynamicAvailability();
+				$sliderCode = $toolsManager->getSliderCodeByEntityTypeId($entityTypeId);
+			}
+			elseif ($toolsManager->checkCrmAvailability())
+			{
+				$isAvailable = $toolsManager->checkEntityTypeAvailability($entityTypeId);
+				$sliderCode = $toolsManager->getSliderCodeByEntityTypeId($entityTypeId);
+			}
+		}
+		else
+		{
+			$isExternal = $componentParameters['isExternal'] ?? false;
+			if ($isExternal)
+			{
+				$isAvailable = $toolsManager->checkExternalDynamicAvailability();
+				$sliderCode = ToolsManager::EXTERNAL_DYNAMIC_SLIDER_CODE;
+			}
+			elseif ($toolsManager->checkCrmAvailability())
+			{
+				$isAvailable = $toolsManager->checkDynamicAvailability();
+				$sliderCode = ToolsManager::DYNAMIC_SLIDER_CODE;
+			}
+		}
+
+		if (!$isAvailable)
+		{
+			$this->arResult['sliderCode'] = $sliderCode;
+			$templateName = 'disabled';
 		}
 
 		$this->includeComponentTemplate($templateName);
+	}
+
+	protected function getComponentData(): Router\ParseResult
+	{
+		$useUrlParsing = $this->arParams['useUrlParsing'] ?? true;
+
+		$defaultComponentName = $this->router->getDefaultComponent();
+		$defaultComponentParameters = $this->router->getDefaultComponentParameters();
+
+		if (!$useUrlParsing)
+		{
+			return new Router\ParseResult(
+				$this->arParams['componentName'] ?? $defaultComponentName,
+				$this->arParams['componentParameters'] ?? $defaultComponentParameters,
+				$this->arParams['componentTemplate'] ?? null,
+				$this->arParams['entityTypeId'] ?? \CCrmOwnerType::Undefined
+			);
+		}
+
+		$parseResult = $this->router->parseRequest();
+		if(!$parseResult->isFound())
+		{
+			return new Router\ParseResult(
+				$defaultComponentName,
+				$defaultComponentParameters,
+			);
+		}
+
+		return $parseResult;
 	}
 
 	protected function isUsePadding(string $componentName): bool

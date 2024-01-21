@@ -36,11 +36,18 @@ class TagAccessController extends BaseAccessController implements AccessErrorabl
 		return static::$cache[$key];
 	}
 
-	public static function dropItemCache(int $itemId): void
+	public static function invalidate(?int $tagId = null): void
 	{
-		$key = 'TAG_' . $itemId;
-		unset(static::$cache[$key]);
+		if (is_null($tagId))
+		{
+			static::$cache = [];
+		}
+		else
+		{
+			$key = 'TAG_' . $tagId;
+			unset(static::$cache[$key]);
+		}
 
-		TagModel::invalidateCache($itemId);
+		TagModel::invalidate($tagId);
 	}
 }

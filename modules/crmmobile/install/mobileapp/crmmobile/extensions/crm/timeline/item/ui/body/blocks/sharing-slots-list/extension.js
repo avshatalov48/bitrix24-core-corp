@@ -5,6 +5,7 @@ jn.define('crm/timeline/item/ui/body/blocks/sharing-slots-list', (require, expor
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { Loc } = require('loc');
 	const { Moment } = require('utils/date');
+	const AppTheme = require('apptheme');
 	const { shortTime } = require('utils/date/formats');
 
 	/**
@@ -39,7 +40,7 @@ jn.define('crm/timeline/item/ui/body/blocks/sharing-slots-list', (require, expor
 					testId: 'TimelineItemBodySharingSlotsListItemBlockContainer',
 					style: {
 						marginBottom: 5,
-						backgroundColor: '#F1F4F6',
+						backgroundColor: AppTheme.colors.bgPrimary,
 						borderRadius: 64,
 						paddingHorizontal: 8,
 						paddingVertical: 4,
@@ -53,7 +54,7 @@ jn.define('crm/timeline/item/ui/body/blocks/sharing-slots-list', (require, expor
 					style: {
 						fontSize: 12,
 						fontWeight: '600',
-						color: '#6A737F',
+						color: AppTheme.colors.base3,
 					},
 				}),
 			);
@@ -65,6 +66,7 @@ jn.define('crm/timeline/item/ui/body/blocks/sharing-slots-list', (require, expor
 			date.setHours(0, 0, 0, 0);
 
 			const moment = Moment.createFromTimestamp(date.getTime() / 1000 + minutes * 60);
+
 			return moment.format(shortTime);
 		}
 	}

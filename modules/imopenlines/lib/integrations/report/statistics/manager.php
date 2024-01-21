@@ -99,7 +99,7 @@ abstract class Manager
 	/**
 	 * @return string
 	 */
-	public static function calculateStatisticsInQueue()
+	public static function calculateStatisticsInQueue(): string
 	{
 		$pageSize = 100000;
 
@@ -132,7 +132,6 @@ abstract class Manager
 		}
 		while ($hasResultData);
 
-		$className = get_called_class();
-		return $className  . '::calculateStatisticsInQueue();';
+		return __METHOD__. '();';
 	}
 }

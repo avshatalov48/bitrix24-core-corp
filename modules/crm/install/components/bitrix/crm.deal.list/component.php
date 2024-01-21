@@ -334,24 +334,7 @@ $arResult['ENTITY_CREATE_URLS'] = [
 		\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Invoice, 0)
 ];
 
-if (LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
-{
-	$arResult['TIME_FORMAT'] = array(
-		'tommorow' => 'tommorow',
-		's' => 'sago',
-		'i' => 'iago',
-		'H3' => 'Hago',
-		'today' => 'today',
-		'yesterday' => 'yesterday',
-		//'d7' => 'dago',
-		'-' => Main\Type\DateTime::convertFormatToPhp(FORMAT_DATE)
-	);
-}
-else
-{
-	$arResult['TIME_FORMAT'] = preg_replace('/:s$/', '', Main\Type\DateTime::convertFormatToPhp(FORMAT_DATETIME));
-}
-
+$arResult['TIME_FORMAT'] = CCrmDateTimeHelper::getDefaultDateTimeFormat();
 $arResult['CALL_LIST_UPDATE_MODE'] = isset($_REQUEST['call_list_context'], $_REQUEST['call_list_id']) && IsModuleInstalled('voximplant');
 $arResult['CALL_LIST_CONTEXT'] = (string)($_REQUEST['call_list_context'] ?? '');
 $arResult['CALL_LIST_ID'] = isset($_REQUEST['call_list_id']) ? (int)$_REQUEST['call_list_id'] : null;
@@ -730,6 +713,11 @@ if (!$bInternal)
 	if(!in_array('ACTIVITY_RESPONSIBLE_IDS', $effectiveFilterFieldIDs, true))
 	{
 		$effectiveFilterFieldIDs[] = 'ACTIVITY_RESPONSIBLE_IDS';
+	}
+
+	if(!in_array('ACTIVITY_FASTSEARCH_CREATED', $effectiveFilterFieldIDs, true))
+	{
+		$effectiveFilterFieldIDs[] = 'ACTIVITY_FASTSEARCH_CREATED';
 	}
 
 	if (!in_array('WEBFORM_ID', $effectiveFilterFieldIDs, true))
@@ -1266,7 +1254,6 @@ if (
 {
 	$arResult['HEADERS'][] = ['id' => Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME, 'name' => $factory->getFieldCaption(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'sort' => mb_strtolower(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'first_order' => 'desc', 'class' => 'datetime'];
 }
-unset($factory);
 
 if ($bInternal)
 {
@@ -1281,8 +1268,11 @@ if ($bInternal)
 }
 else
 {
-	$arResult['HEADERS_SECTIONS'] = \Bitrix\Crm\Component\EntityList\ClientDataProvider\GridDataProvider::getHeadersSections();
+	$arResult['HEADERS_SECTIONS'] = \Bitrix\Crm\Filter\HeaderSections::getInstance()
+		->sections($factory);
 }
+
+unset($factory);
 
 $arBPData = [];
 if ($isBizProcInstalled)
@@ -1614,7 +1604,7 @@ $arImmutableFilters = array(
 	'SEARCH_CONTENT',
 	'PRODUCT_ID', 'TYPE_ID', 'SOURCE_ID', 'STAGE_ID', 'COMPANY_ID', 'CONTACT_ID',
 	'FILTER_ID', 'FILTER_APPLIED', 'PRESET_ID', 'PAYMENT_STAGE', 'ORDER_SOURCE',
-	'DELIVERY_STAGE', 'OBSERVER_IDS',
+	'DELIVERY_STAGE', 'OBSERVER_IDS', 'COMPANY_TYPE'
 );
 
 foreach ($arFilter as $k => $v)
@@ -2879,28 +2869,34 @@ if ($isInExportMode && $isStExport)
 }
 elseif(!isset($arSort['nearest_activity']))
 {
+	$parameters = [
+		'select' => $arSelect,
+		'filter' => $arFilter,
+		'order' => $arSort,
+		'options' => [
+			'FIELD_OPTIONS' => $arOptions['FIELD_OPTIONS'] ?? [],
+			'IS_EXTERNAL_CONTEXT' => $arOptions['IS_EXTERNAL_CONTEXT'] ?? false,
+		],
+	];
+
 	if ($isInGadgetMode && isset($arNavParams['nTopCount']))
 	{
-		$navListOptions = array_merge($arOptions, array('QUERY_OPTIONS' => array('LIMIT' => $arNavParams['nTopCount'])));
+		$parameters['limit'] = $arNavParams['nTopCount'];
+		$parameters['offset'] = null;
+	}
+	elseif ($isInExportMode && !$isStExport)
+	{
+		$parameters['limit'] = null;
+		$parameters['offset'] = null;
 	}
 	else
 	{
-		$navListOptions = ($isInExportMode && !$isStExport)
-			? $arExportOptions
-			: array_merge(
-				$arOptions,
-				array('QUERY_OPTIONS' => array('LIMIT' => $limit, 'OFFSET' => $pageSize * ($pageNum - 1)))
-			);
+		$parameters['limit'] = $limit;
+		$parameters['offset'] = $pageSize * ($pageNum - 1);
 	}
 
-	$dbResult = CCrmDeal::GetListEx(
-		$arSort,
-		$arFilter,
-		false,
-		false,
-		$arSelect,
-		$navListOptions
-	);
+	$listEntity = \Bitrix\Crm\ListEntity\Entity::getInstance(\CCrmOwnerType::DealName);
+	$dbResult = $listEntity->getItems($parameters);
 
 	$qty = 0;
 	while($arDeal = $dbResult->GetNext())

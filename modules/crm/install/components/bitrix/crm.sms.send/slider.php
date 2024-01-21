@@ -17,6 +17,10 @@ $APPLICATION->IncludeComponent(
 			'TEXT' => $request->getPost('text'),
 			'PROVIDER_ID' => $request->getPost('providerId'),
 			'IS_PROVIDER_FIXED' => $request->getPost('isProviderFixed'),
+			'CAN_USE_BITRIX24_PROVIDER' => $request->getPost('canUseBitrix24Provider'),
+			'IS_EDITABLE' => $request->getPost('isEditable'),
+			'TEMPLATE_CODE' => $request->getPost('templateCode'),
+			'TEMPLATE_PLACEHOLDERS' => $request->getPost('templatePlaceholders'),
 		],
 	]
 );

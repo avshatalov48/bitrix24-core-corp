@@ -100,8 +100,8 @@ class NetworkSessionTable extends Main\Entity\DataManager
 			'CLOSED' => [
 				'data_type' => 'boolean',
 				'expression' => [
-					"CASE WHEN %s IS NULL THEN 0 WHEN %s = '0000-00-00' THEN 0 ELSE %s < NOW() END",
-					'DATE_FINISH', 'DATE_FINISH', 'DATE_FINISH',
+					'CASE WHEN %1$s IS NULL THEN 0 WHEN %1$s < NOW() THEN 1 ELSE 0 END',
+					'DATE_FINISH',
 				]
 			],
 			'TELEMETRY_SENT' => [

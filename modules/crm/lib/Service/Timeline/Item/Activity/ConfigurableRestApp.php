@@ -112,10 +112,15 @@ class ConfigurableRestApp extends Activity
 			return null;
 		}
 
-		return Layout\Common\Logo::getInstance($logoCode)
+		$logo = Layout\Common\Logo::getInstance($logoCode)
 			->createLogo()
-			->setAction($this->createAction($body->logo->action))
 		;
+		if (!$logo)
+		{
+			return null;
+		}
+
+		return $logo->setAction($this->createAction($body->logo->action));
 	}
 
 	public function getContentBlocks(): array
@@ -489,6 +494,38 @@ class ConfigurableRestApp extends Activity
 				foreach ($actionParams as $actionParamName => $actionParamValue)
 				{
 					$action->addActionParamString((string)$actionParamName, (string)$actionParamValue);
+				}
+				if ($actionDto->sliderParams)
+				{
+					if ($actionDto->sliderParams->title)
+					{
+						$action->addActionParamString('bx24_title', $actionDto->sliderParams->title);
+					}
+					if ($actionDto->sliderParams->width)
+					{
+						$action->addActionParamInt('bx24_width', $actionDto->sliderParams->width);
+					}
+					if ($actionDto->sliderParams->leftBoundary)
+					{
+						$action->addActionParamInt('bx24_leftBoundary', $actionDto->sliderParams->leftBoundary);
+					}
+					$labelParams = [];
+					if ($actionDto->sliderParams->labelText)
+					{
+						$labelParams['text'] = $actionDto->sliderParams->labelText;
+					}
+					if ($actionDto->sliderParams->labelColor)
+					{
+						$labelParams['color'] = $actionDto->sliderParams->labelColor;
+					}
+					if ($actionDto->sliderParams->labelBgColor)
+					{
+						$labelParams['bgColor'] = $actionDto->sliderParams->labelBgColor;
+					}
+					if (!empty($labelParams))
+					{
+						$action->addActionParamString('bx24_label', Json::encode($labelParams));
+					}
 				}
 
 				return $action;

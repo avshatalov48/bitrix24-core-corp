@@ -988,7 +988,7 @@ if (!$isMyCompanyMode)
 }
 
 // LIVE FEED SECTION -->
-if (!$isMyCompanyMode)
+if (!$isMyCompanyMode && \Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper::isAvailable())
 {
 	$arResult['FIELDS']['tab_live_feed'][] = array(
 		'id' => 'section_live_feed',

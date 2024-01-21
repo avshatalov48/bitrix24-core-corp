@@ -1,14 +1,19 @@
 <?php
-/** @var \CrmControlPanel $this */
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
+use Bitrix\Catalog;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\v2\Contractor;
-use Bitrix\Crm\Component\ControlPanel\ControlPanelMenuMapper;
-
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
-
 use Bitrix\Crm;
+use Bitrix\Crm\Component\ControlPanel\ControlPanelMenuMapper;
 use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
+use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\ActivitySettings;
 use Bitrix\Crm\Settings\CompanySettings;
 use Bitrix\Crm\Settings\ContactSettings;
@@ -17,16 +22,15 @@ use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Crm\Settings\OrderSettings;
 use Bitrix\Crm\Settings\QuoteSettings;
+use Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
-use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\SalesCenter;
 use Bitrix\SalesCenter\Integration\SaleManager;
-use Bitrix\Catalog;
-use Bitrix\Catalog\Access\AccessController;
-use Bitrix\Catalog\Access\ActionDictionary;
+
+/** @var CrmControlPanel $this */
 
 $isMenuMode = isset($arParams['MENU_MODE']) && $arParams['MENU_MODE'] === 'Y';
 $isGetResult = isset($arParams['GET_RESULT']) && $arParams['GET_RESULT'] === 'Y';
@@ -53,7 +57,7 @@ if (!CCrmPerms::IsAccessEnabled())
 }
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
-$userPerms = Crm\Service\Container::getInstance()->getUserPermissions();
+$userPerms = Container::getInstance()->getUserPermissions();
 
 /** @global CMain $APPLICATION */
 global $APPLICATION;
@@ -228,7 +232,7 @@ $arParams['PATH_TO_SEARCH_PAGE'] = (isset($arParams['PATH_TO_SEARCH_PAGE']) && $
 	? $arParams['PATH_TO_SEARCH_PAGE'] : '#SITE_DIR#search/index.php?where=crm';
 
 $arParams['PATH_TO_PRODUCT_MARKETPLACE'] = (isset($arParams['PATH_TO_PRODUCT_MARKETPLACE']) && $arParams['PATH_TO_PRODUCT_MARKETPLACE'] !== '')
-	? $arParams['PATH_TO_PRODUCT_MARKETPLACE'] : '#SITE_DIR#marketplace/category/crm/';
+	? $arParams['PATH_TO_PRODUCT_MARKETPLACE'] : \Bitrix\Crm\Integration\Market\Router::getCategoryPath('crm');
 
 $arParams['PATH_TO_WEBFORM'] = (isset($arParams['PATH_TO_WEBFORM']) && $arParams['PATH_TO_WEBFORM'] !== '')
 	? $arParams['PATH_TO_WEBFORM'] : '#SITE_DIR#crm/webform/';
@@ -569,12 +573,9 @@ if (InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
 	$invoiceEntityTypeId = \CCrmOwnerType::Invoice;
 }
 
-if (
-	$isAdmin
-	|| Crm\Service\Container::getInstance()->getUserPermissions()->canReadType($invoiceEntityTypeId)
-)
+if ($isAdmin || Container::getInstance()->getUserPermissions()->canReadType($invoiceEntityTypeId))
 {
-	$router = Crm\Service\Container::getInstance()->getRouter();
+	$router = Container::getInstance()->getRouter();
 
 	$actions = [];
 	if (Crm\Security\EntityAuthorization::checkCreatePermission($invoiceEntityTypeId))
@@ -714,7 +715,9 @@ if (\CCrmSaleHelper::isWithOrdersMode())
 }
 
 if (
-	\Bitrix\Main\Loader::includeModule('catalog')
+	Loader::includeModule('catalog')
+	&& AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
+	&& AccessController::getCurrent()->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
 )
 {
 	\Bitrix\Main\UI\Extension::load([
@@ -761,6 +764,8 @@ if (
 if (
 	isset($this->counterPartyCategories[\CCrmOwnerType::Contact])
 	&& \Bitrix\Crm\Settings\Crm::isDocumentSigningEnabled()
+	&& \Bitrix\Main\Loader::includeModule('sign')
+	&& \Bitrix\Sign\Config\Storage::instance()->isAvailable()
 	&& $userPerms->canReadTypeInCategory(\CCrmOwnerType::Contact, $this->counterPartyCategories[\CCrmOwnerType::Contact])
 )
 {
@@ -1010,17 +1015,20 @@ if ($this->isOldPortal())
 		'IS_DISABLED' => true
 	);
 
-	$stdItems['STREAM'] = array(
-		'ID' => 'STREAM',
-		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('STREAM'), // 'menu_crm_stream',
-		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_STREAM'),
-		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_STREAM_TITLE'),
-		'URL' =>  CComponentEngine::MakePathFromTemplate(
-			isset($arParams['PATH_TO_STREAM']) ? $arParams['PATH_TO_STREAM'] : '#SITE_DIR#crm/stream/'
-		),
-		'ICON' => 'feed',
-		'IS_DISABLED' => true
-	);
+	if (AvailabilityHelper::isAvailable())
+	{
+		$stdItems['STREAM'] = array(
+			'ID' => 'STREAM',
+			'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('STREAM'), // 'menu_crm_stream',
+			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_STREAM'),
+			'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_STREAM_TITLE'),
+			'URL' =>  CComponentEngine::MakePathFromTemplate(
+				isset($arParams['PATH_TO_STREAM']) ? $arParams['PATH_TO_STREAM'] : '#SITE_DIR#crm/stream/'
+			),
+			'ICON' => 'feed',
+			'IS_DISABLED' => true
+		);
+	}
 }
 
 $stdItems['MY_ACTIVITY'] = array(
@@ -1106,7 +1114,7 @@ if (Loader::includeModule('salescenter'))
 	$paymentPath = getLocalPath('components'.$paymentPath.'/slider.php');
 	$stdItems['SALES_CENTER_PAYMENT'] = [
 		'ID' => 'SALES_CENTER_PAYMENT',
-		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SALES_CENTER_PAYMENT'),
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SALES_CENTER_PAYMENT_MSGVER_1'),
 		'URL' => $paymentPath,
 		'SLIDER_ONLY' => true,
 	];
@@ -1135,7 +1143,7 @@ if (Loader::includeModule('voximplant') && \Bitrix\Voximplant\Security\Helper::i
 $stdItems['CONTACT_CENTER'] = [
 	'ID' => 'CONTACT_CENTER',
 	'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CONTACT_CENTER'),
-	'URL' => ModuleManager::isModuleInstalled('bitrix24') ? '/contact_center/' : SITE_DIR . 'services/contact_center/',
+	'URL' => Container::getInstance()->getRouter()->getContactCenterUrl(),
 	'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('CONTACT_CENTER'), // 'menu_contact_center',
 ];
 
@@ -1157,6 +1165,22 @@ if (\Bitrix\Crm\Tracking\Manager::isAccessible())
 		'URL' => '/crm/tracking/',
 		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('CRM_TRACKING'), // 'menu_crm_tracking',
 	];
+}
+
+if (
+	Loader::includeModule('biconnector')
+	&& class_exists('\Bitrix\BIConnector\Integration\Crm\MenuItemsHelper')
+	&& Option::get('biconnector', 'release_bi_superset', 'N') === 'Y'
+)
+{
+	$stdItems['BI']['ID'] = 'BI';
+	$stdItems['BI']['NAME'] = Loc::getMessage('CRM_CTRL_PANEL_ITEM_BI');
+
+	$menuItems = \Bitrix\BIConnector\Integration\Crm\MenuItemsHelper::prepareBiMenu();
+	foreach ($menuItems as $index => $menuItem)
+	{
+		$stdItems[$index] = $menuItem;
+	}
 }
 
 if (Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\Analytic::isEnable())
@@ -1192,11 +1216,7 @@ if (Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\A
 		$stdItems['ANALYTICS_DIALOGS'] = [
 			'ID' => 'ANALYTICS_DIALOGS',
 			'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS_DIALOGS'),
-			'URL' =>
-				ModuleManager::isModuleInstalled('bitrix24')
-					? '/contact_center/dialog_statistics/'
-					: SITE_DIR . 'services/contact_center/dialog_statistics/'
-			,
+			'URL' => Container::getInstance()->getRouter()->getContactCenterUrl() . 'dialog_statistics/',
 		];
 	}
 
@@ -1205,7 +1225,7 @@ if (Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\A
 		$stdItems['ANALYTICS_BI']['ID'] = 'ANALYTICS_BI';
 		$stdItems['ANALYTICS_BI']['NAME'] = Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS_BI');
 
-		if (\Bitrix\Main\Loader::includeModule('bitrix24') && !\Bitrix\Bitrix24\Feature::isFeatureEnabled('biconnector'))
+		if (Loader::includeModule('bitrix24') && !\Bitrix\Bitrix24\Feature::isFeatureEnabled('biconnector'))
 		{
 			$stdItems['ANALYTICS_BI']['IS_LOCKED'] = true;
 			$stdItems['ANALYTICS_BI']['ON_CLICK'] = 'top.BX.UI.InfoHelper.show("limit_crm_BI_analytics")';
@@ -1243,7 +1263,7 @@ if (Loader::includeModule('intranet') && CIntranetUtils::IsExternalMailAvailable
 $stdItems['MESSENGERS'] = [
 	'ID' => 'MESSENGERS',
 	'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_MESSENGERS'),
-	'URL' => ModuleManager::isModuleInstalled('bitrix24') ? '/contact_center/' : SITE_DIR . 'services/contact_center/',
+	'URL' => Container::getInstance()->getRouter()->getContactCenterUrl(),
 ];
 
 
@@ -1265,30 +1285,14 @@ if ($show1cSection)
 	];
 }
 
-if ($isAdmin || $userPerms->canWriteConfig())
-{
-	$stdItems['DYNAMIC_LIST'] =  [
-		'ID' => 'DYNAMIC_LIST',
-		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SMART_ENTITY_LIST_MSGVER_1'),
-		'URL' => Crm\Service\Container::getInstance()->getRouter()->getTypeListUrl(),
-	];
-}
+$dynamicTypesMap = Container::getInstance()->getDynamicTypesMap();
+$dynamicSubItems = [];
 
-$dynamicTypesMap = Crm\Service\Container::getInstance()->getDynamicTypesMap();
-$dymamicSubItems = [];
-try
-{
-	$dynamicTypesMap->load([
-		'isLoadStages' => false,
-		'isLoadCategories' => true,
-	]);
-}
-catch (Exception $exception)
-{
-}
-catch (Error $error)
-{
-}
+$dynamicTypesMap->load([
+	'isLoadStages' => false,
+	'isLoadCategories' => true,
+]);
+
 foreach($dynamicTypesMap->getTypes() as $type)
 {
 	if (Crm\Integration\IntranetManager::isEntityTypeInCustomSection($type->getEntityTypeId()))
@@ -1306,7 +1310,7 @@ foreach($dynamicTypesMap->getTypes() as $type)
 			$defaultCategory = $dynamicTypesMap->getDefaultCategory($type->getEntityTypeId());
 			if ($defaultCategory)
 			{
-				$isCanAdd = Crm\Service\Container::getInstance()->getUserPermissions()->checkAddPermissions(
+				$isCanAdd = Container::getInstance()->getUserPermissions()->checkAddPermissions(
 					$type->getEntityTypeId(),
 					$defaultCategory->getId()
 				);
@@ -1316,7 +1320,7 @@ foreach($dynamicTypesMap->getTypes() as $type)
 		{
 			$actions[] = [
 				'ID' => 'CREATE',
-				'URL' => Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+				'URL' => Container::getInstance()->getRouter()->getItemDetailUrl(
 					$type->getEntityTypeId(),
 					0
 				),
@@ -1329,11 +1333,11 @@ foreach($dynamicTypesMap->getTypes() as $type)
 		$stdItems[$id] = [
 			'ID' => $id,
 			'NAME' => $type->getTitle(),
-			'URL' => Crm\Service\Container::getInstance()->getRouter()->getItemListUrlInCurrentView($type->getEntityTypeId()),
+			'URL' => Container::getInstance()->getRouter()->getItemListUrlInCurrentView($type->getEntityTypeId()),
 			'ACTIONS' => !empty($actions) ? $actions : null,
 		];
 
-		$factory = Crm\Service\Container::getInstance()->getFactory($type->getEntityTypeId());
+		$factory = Container::getInstance()->getFactory($type->getEntityTypeId());
 
 		if($factory->getCountersSettings()->isCounterTypeEnabled(EntityCounterType::ALL)) {
 			$counter = EntityCounterFactory::create(
@@ -1346,18 +1350,43 @@ foreach($dynamicTypesMap->getTypes() as $type)
 			$stdItems[$id]['COUNTER_ID'] = $counter->getCode();
 		}
 
-		$dymamicSubItems[] = ['ID' => $id];
+		$dynamicSubItems[] = ['ID' => $id];
 	}
 }
 
-if (!empty($dymamicSubItems))
+$defaultDynamicItems = [];
+if ($userPerms->canWriteConfig())
 {
-	$stdItems['DYNAMIC_ADD'] = [
+	if (!empty($dynamicSubItems))
+	{
+		$defaultDynamicItems[] = [
+			'IS_DELIMITER' => true,
+		];
+	}
+
+	$defaultDynamicItems[] = [
 		'ID' => 'DYNAMIC_LIST',
-		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('DYNAMIC_LIST'), //'dynamic_menu',
-		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_DYNAMIC_LIST'),
+	];
+
+	$stdItems['DYNAMIC_LIST'] = [
+		'ID' => 'DYNAMIC_LIST',
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SMART_ENTITY_LIST_MSGVER_1'),
 		'URL' => Crm\Service\Container::getInstance()->getRouter()->getTypeListUrl(),
-		'SUB_ITEMS' => $dymamicSubItems,
+	];
+}
+
+$dynamicStdSubItems = array_merge($dynamicSubItems, $defaultDynamicItems);
+if (empty($dynamicStdSubItems))
+{
+	$stdItems['DYNAMIC_ITEMS'] = [];
+}
+else
+{
+	$stdItems['DYNAMIC_ITEMS'] = [
+		'ID' => 'DYNAMIC_ITEMS',
+		'MENU_ID' => 'menu_dynamic_list',
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_DYNAMIC_LIST'),
+		'SUB_ITEMS' => $dynamicStdSubItems,
 	];
 }
 

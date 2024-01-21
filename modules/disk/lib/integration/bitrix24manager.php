@@ -142,17 +142,7 @@ class Bitrix24Manager
 
 	public static function filterJsAction($feature, $jsAction, $skip = false)
 	{
-		$map = [
-			'disk_manual_external_link' => 'limit_office_share_file',
-			'disk_manual_external_folder' => 'limit_office_share_link',
-			'disk_file_sharing' => 'limit_office_files_access_permissions',
-			'disk_folder_sharing' => 'limit_office_folders_access_permissions',
-			'disk_folder_rights' => 'limit_office_disk_folders_access_rights',
-			'disk_file_rights' => 'limit_office_disk_files_access_rights',
-			'disk_common_storage' => 'limit_company_common_disk',
-		];
-
-		$helpdeskId = $map[$feature];
+		$helpdeskId = self::getFeatureRestrictionMap()[$feature];
 
 		if ($feature === 'disk_manual_external_folder')
 		{
@@ -174,5 +164,18 @@ class Bitrix24Manager
 
 
 		return "BX.UI.InfoHelper.show('{$helpdeskId}')";
+	}
+
+	public static function getFeatureRestrictionMap(): array
+	{
+		return [
+			'disk_manual_external_link' => 'limit_office_share_file',
+			'disk_manual_external_folder' => 'limit_office_share_link',
+			'disk_file_sharing' => 'limit_office_files_access_permissions',
+			'disk_folder_sharing' => 'limit_office_folders_access_permissions',
+			'disk_folder_rights' => 'limit_office_disk_folders_access_rights',
+			'disk_file_rights' => 'limit_office_disk_files_access_rights',
+			'disk_common_storage' => 'limit_company_common_disk',
+		];
 	}
 }

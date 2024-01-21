@@ -16,10 +16,12 @@ use Bitrix\UI\EntitySelector\Dialog;
 use Bitrix\UI\EntitySelector\Item;
 use Bitrix\UI\EntitySelector\RecentItem;
 use Bitrix\UI\EntitySelector\SearchQuery;
+use Bitrix\UI\EntitySelector\Tab;
 
 abstract class EntityProvider extends BaseProvider
 {
 	protected $withRequisites = false;
+	protected bool $showTab = false;
 
 	public function __construct(array $options = [])
 	{
@@ -29,6 +31,10 @@ abstract class EntityProvider extends BaseProvider
 
 		$this->withRequisites = (bool)($options['withRequisites'] ?? $this->withRequisites);
 		$this->options['withRequisites'] = $this->withRequisites;
+
+		// tabs are currently supported in contacts and companies, for other providers you need to add icons first
+		$this->showTab = (bool)($options['showTab'] ?? $this->showTab);
+		$this->options['showTab'] = $this->showTab;
 	}
 
 	abstract protected function getEntityTypeId(): int;
@@ -97,7 +103,29 @@ abstract class EntityProvider extends BaseProvider
 	{
 		$canReadItem = EntityAuthorization::checkReadPermission($this->getEntityTypeId(), $entityId);
 
-		$entityInfo = \CCrmEntitySelectorHelper::PrepareEntityInfo(
+		$entityInfo = $this->getEntityInfo($entityId, $canReadItem);
+		$this->prepareItemAvatar($entityInfo);
+
+		return new Item([
+			'id' => $entityId,
+			'entityId' => $this->getItemEntityId(),
+			'title' => (string)$entityInfo['title'],
+			'subtitle' => $entityInfo['desc'],
+			'link' => $entityInfo['url'],
+			'linkTitle' => Loc::getMessage('CRM_COMMON_DETAIL'),
+			'avatar' => $entityInfo['image'],
+			'searchable' => true,
+			'hidden' => !$canReadItem,
+			'tabs' => $this->getTabsNames(),
+			'customData' => [
+				'entityInfo' => $entityInfo,
+			],
+		]);
+	}
+
+	protected function getEntityInfo(int $entityId, bool $canReadItem): array
+	{
+		return \CCrmEntitySelectorHelper::PrepareEntityInfo(
 			$this->getEntityTypeNameForMakeItemMethod(),
 			$entityId,
 			[
@@ -110,21 +138,19 @@ abstract class EntityProvider extends BaseProvider
 				'LARGE_IMAGES' => true,
 			]
 		);
+	}
 
-		return new Item([
-			'id' => $entityId,
-			'entityId' => $this->getItemEntityId(),
-			'title' => (string)$entityInfo['title'],
-			'subtitle' => $entityInfo['desc'],
-			'link' => $entityInfo['url'],
-			'linkTitle' => Loc::getMessage('CRM_COMMON_DETAIL'),
-			'avatar' => $entityInfo['image'],
-			'searchable' => true,
-			'hidden' => !$canReadItem,
-			'customData' => [
-				'entityInfo' => $entityInfo
-			],
-		]);
+	protected function prepareItemAvatar(array &$entityInfo): void
+	{
+		if (empty($entityInfo['image']))
+		{
+			$entityInfo['image'] = $this->getDefaultItemAvatar();
+		}
+	}
+
+	protected function getDefaultItemAvatar(): ?string
+	{
+		return null;
 	}
 
 	protected function getEntityTypeNameForMakeItemMethod()
@@ -135,6 +161,11 @@ abstract class EntityProvider extends BaseProvider
 	protected function getItemEntityId(): string
 	{
 		return mb_strtolower($this->getEntityTypeName());
+	}
+
+	private function getTabsNames(): array
+	{
+		return [$this->getEntityTypeName()];
 	}
 
 	public function fillDialog(Dialog $dialog): void
@@ -185,6 +216,40 @@ abstract class EntityProvider extends BaseProvider
 				}
 			}
 		}
+
+		$this->addTab($dialog);
+	}
+
+	private function addTab(Dialog $dialog): void
+	{
+		if (!$this->showTab)
+		{
+			return;
+		}
+
+		$icon = $this->getTabIcon();
+
+		if (!$icon)
+		{
+			return;
+		}
+
+		$tab = new Tab([
+			'id' => $this->getEntityTypeName(),
+			'title' => \CCrmOwnerType::GetCategoryCaption($this->getEntityTypeId()),
+			'stub' => true,
+			'icon' => [
+				'default' => $icon,
+				'selected' => str_replace('ABB1B8', 'FFF', $icon),
+			],
+		]);
+
+		$dialog->addTab($tab);
+	}
+
+	protected function getTabIcon(): ?string
+	{
+		return null;
 	}
 
 	public function doSearch(SearchQuery $searchQuery, Dialog $dialog): void

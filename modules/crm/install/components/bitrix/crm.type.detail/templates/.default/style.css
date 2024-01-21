@@ -650,3 +650,7 @@ body.crm-type-settings-presets #workarea-content {
 	border-bottom-color: #80868e;
 	color: #3e3e3e;
 }
+
+.crm-type-error-container{
+	padding: 0 20px;
+}

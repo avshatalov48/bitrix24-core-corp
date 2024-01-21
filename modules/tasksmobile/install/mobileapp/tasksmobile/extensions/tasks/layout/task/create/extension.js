@@ -2,7 +2,7 @@
  * @module tasks/layout/task/create
  */
 jn.define('tasks/layout/task/create', (require, exports, module) => {
-	const { CheckList } = require('tasks/layout/task/fields/checkList');
+	const { FieldChecklist } = require('tasks/layout/task/fields/checklist');
 	const { Responsible } = require('tasks/layout/task/fields/responsible');
 	const { Accomplices } = require('tasks/layout/task/fields/accomplices');
 	const { Auditors } = require('tasks/layout/task/fields/auditors');
@@ -27,11 +27,15 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 	const { DatesResolver } = require('tasks/task/datesResolver');
 	const { CheckListTree } = require('tasks/checklist');
 
+	const AppTheme = require('apptheme');
+	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
+	const { chevronDown, chevronUp } = require('assets/common');
 	const { Alert } = require('alert');
 	const { Haptics } = require('haptics');
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { AnalyticsLabel } = require('analytics-label');
+	const { RequestExecutor } = require('rest');
 
 	const fieldHeight = 66;
 
@@ -87,7 +91,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 
 			if (result.indexOf(currentDomain) !== 0)
 			{
-				result = result.replace(`${currentDomain}`, '');
+				result = result.replace(currentDomain, '');
 				result = (result.indexOf('http') === 0 ? result : `${currentDomain}${result}`);
 			}
 
@@ -131,7 +135,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 			{
 				style.marginHorizontal = 6;
 				style.borderWidth = 1;
-				style.borderColor = '#e6e7e9';
+				style.borderColor = AppTheme.colors.bgSeparatorSecondary;
 				style.borderRadius = 7;
 			}
 
@@ -175,7 +179,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 			}).then((layoutWidget) => {
 				layoutWidget.showComponent(taskCreate);
 				taskCreate.layoutWidget = layoutWidget;
-			}).catch(() => {});
+			}).catch(console.error);
 		}
 
 		constructor(props)
@@ -185,7 +189,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 			this.currentUser = (props.currentUser || {});
 			this.diskFolderId = Number(props.diskFolderId);
 
-			this.pathToImages = '/bitrix/mobileapp/tasksmobile/extensions/tasks/layout/task/images';
+			this.pathToImages = `${currentDomain}/bitrix/mobileapp/tasksmobile/extensions/tasks/layout/task/images`;
 			this.layoutWidget = null;
 			this.scrollY = 0;
 
@@ -216,17 +220,18 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 				CalendarSettings.loadSettings(),
 			])
 				.then(() => this.doFinalInitAction())
-				.catch(() => {})
+				.catch(console.error)
 			;
 		}
 
 		doFinalInitAction()
 		{
+			// eslint-disable-next-line no-undef
 			this.task = new Task(this.currentUser);
 			this.task.updateData({
 				creator: this.currentUser,
 				responsible: this.currentUser,
-				deadline: new Date((new Date()).setSeconds(0, 0) + 86400 * 7 * 1000),
+				deadline: this.getPredefinedDeadline(),
 				...this.initialTaskData,
 			});
 
@@ -244,6 +249,19 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 			setTimeout(() => this.setState({ focus: null }));
 		}
 
+		getPredefinedDeadline()
+		{
+			const { workTime, serverOffset, clientOffset } = CalendarSettings;
+			const { hours, minutes } = workTime[0].end;
+
+			const deadline = new Date();
+			deadline.setSeconds(serverOffset - clientOffset, 0);
+			deadline.setHours(hours, minutes, clientOffset - serverOffset);
+			deadline.setDate(deadline.getDate() + 7);
+
+			return deadline;
+		}
+
 		getCurrentUserData()
 		{
 			return new Promise((resolve) => {
@@ -259,8 +277,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 						this.currentUser = response.result[env.userId];
 						resolve();
 					})
-					.catch(() => {})
-				;
+					.catch(console.error);
 			});
 		}
 
@@ -288,8 +305,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 						});
 						resolve();
 					})
-					.catch(() => {})
-				;
+					.catch(console.error);
 			});
 		}
 
@@ -325,8 +341,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 						this.diskFolderId = Number(response.result);
 						resolve();
 					})
-					.catch(() => {})
-				;
+					.catch(console.error);
 			});
 		}
 
@@ -383,13 +398,15 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 
 		renderTaskCreateScreen()
 		{
+			const { isFullForm } = this.state;
+
 			return View(
 				{
 					resizableByKeyboard: true,
 					style: {
 						flex: 1,
-						backgroundColor: '#eef2f4',
-						paddingBottom: (this.state.isFullForm ? 5 : BottomPanel.getPanelHeight()),
+						backgroundColor: AppTheme.colors.bgSecondary,
+						paddingBottom: isFullForm ? 5 : BottomPanel.getPanelHeight() + (Application.getPlatform() === 'android' ? 0 : 10),
 					},
 					safeArea: {
 						bottom: true,
@@ -412,7 +429,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					},
 					View({}, ...this.renderSections()),
 				),
-				(!this.state.isFullForm && new BottomPanel({
+				!isFullForm && new BottomPanel({
 					ref: (ref) => {
 						this.bottomPanelRef = ref;
 					},
@@ -420,7 +437,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					onCreateButtonClick: () => this.save(),
 					onExpandButtonClick: () => this.expandToFullForm(),
 					onAttachmentButtonClick: () => this.filesInnerRef.focus(),
-				})),
+				}),
 			);
 		}
 
@@ -475,7 +492,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 				return View(
 					{
 						style: {
-							backgroundColor: '#ffffff',
+							backgroundColor: AppTheme.colors.bgContentPrimary,
 							borderRadius: 12,
 							paddingTop: (name === TaskCreate.section.main ? 0 : 6),
 							paddingBottom: (name === TaskCreate.section.main ? 0 : 6),
@@ -519,7 +536,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					style: {
 						...TaskCreate.getStyleForField(),
 						height: 0.5,
-						backgroundColor: '#e6e7e9',
+						backgroundColor: AppTheme.colors.bgSeparatorSecondary,
 					},
 				}),
 				content,
@@ -528,8 +545,8 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 
 		getSectionMoreHeader()
 		{
-			const arrowDirection = (this.state.isMoreExpanded ? 'up' : 'down');
-			const arrowUri = `${this.pathToImages}/tasksmobile-layout-task-section-more-arrow-${arrowDirection}.png`;
+			const { isMoreExpanded } = this.state;
+			const chevronSvg = isMoreExpanded ? chevronUp : chevronDown;
 
 			return View(
 				{
@@ -541,15 +558,15 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 						flexDirection: 'row',
 						height: 54,
 						justifyContent: 'space-between',
-						marginBottom: (this.state.isMoreExpanded ? 6 : 0),
+						marginBottom: (isMoreExpanded ? 6 : 0),
 					},
 					testId: `taskCreateSection_${TaskCreate.section.more}_header`,
 					onClick: () => {
 						this.setState(
-							{ isMoreExpanded: !this.state.isMoreExpanded },
+							{ isMoreExpanded: !isMoreExpanded },
 							() => {
 								if (
-									this.state.isMoreExpanded
+									isMoreExpanded
 									&& this.scrollViewRef
 									&& this.sectionMoreRef
 								)
@@ -577,13 +594,15 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 							height: 24,
 							marginRight: 8,
 						},
-						uri: TaskCreate.getImageUrl(`${this.pathToImages}/tasksmobile-layout-task-section-more-icon.png`),
+						svg: {
+							content: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="14" cy="14" r="14" fill="${AppTheme.colors.base3}"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8 7C7.44772 7 7 7.44772 7 8V12C7 12.5523 7.44772 13 8 13H12C12.5523 13 13 12.5523 13 12V8C13 7.44772 12.5523 7 12 7H8ZM16 7C15.4477 7 15 7.44772 15 8V12C15 12.5523 15.4477 13 16 13H20C20.5523 13 21 12.5523 21 12V8C21 7.44772 20.5523 7 20 7H16ZM7 16C7 15.4477 7.44772 15 8 15H12C12.5523 15 13 15.4477 13 16V20C13 20.5523 12.5523 21 12 21H8C7.44772 21 7 20.5523 7 20V16ZM16 15C15.4477 15 15 15.4477 15 16V20C15 20.5523 15.4477 21 16 21H20C20.5523 21 21 20.5523 21 20V16C21 15.4477 20.5523 15 20 15H16Z" fill="${AppTheme.colors.baseWhiteFixed}"/></svg>`,
+						},
 					}),
 					Text({
 						style: {
 							fontSize: 16,
 							fontWeight: '400',
-							color: '#a8adb4',
+							color: AppTheme.colors.base4,
 						},
 						text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_CREATE_SECTION_MORE'),
 					}),
@@ -594,7 +613,10 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 						width: 24,
 						height: 24,
 					},
-					uri: TaskCreate.getImageUrl(arrowUri),
+					tintColor: AppTheme.colors.base3,
+					svg: {
+						content: chevronSvg(AppTheme.colors.base3, { box: true }),
+					},
 				}),
 			);
 		}
@@ -635,7 +657,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 						this.deadlineRef = ref;
 					},
 				}),
-				[TaskCreate.field.checklist]: new CheckList({
+				[TaskCreate.field.checklist]: new FieldChecklist({
 					checkList: this.checkList,
 					taskId: 0,
 					taskGuid: this.task.guid,
@@ -647,7 +669,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					style: {
 						marginHorizontal: 6,
 					},
-					onFieldFocus: (ref) => {
+					onFocus: (ref) => {
 						if (this.scrollViewRef && ref)
 						{
 							const { y } = this.scrollViewRef.getPosition(ref);
@@ -811,7 +833,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					readOnly: this.state.readOnly,
 					tags: this.task.tags,
 					taskId: 0,
-					groupId: this.task.groupId,
+					groupId: (this.task.groupId || 0),
 					parentWidget: this.layoutWidget,
 					style: TaskCreate.getStyleForField(TaskCreate.field.tags),
 					deepMergeStyles: TaskCreate.getDeepMergeStylesForField(true),
@@ -877,7 +899,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					{
 						type: 'text',
 						name: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_CREATE_BUTTON_CREATE'),
-						color: '#2066b0',
+						color: AppTheme.colors.accentMainPrimary,
 						callback: () => this.save(),
 					},
 				]);

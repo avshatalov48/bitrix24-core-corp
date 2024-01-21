@@ -89,7 +89,7 @@ $arResult['PATH_TO_DEAL_CATEGORY_EDIT'] = CrmCheckPath(
 	$arParams['PATH_TO_DEAL_CATEGORY_EDIT'] ?? '',
 	COption::GetOptionString('crm', 'path_to_deal_category_edit')
 );
-$arParams['PATH_TO_MIGRATION'] = SITE_DIR . "marketplace/category/migration/";
+$arParams['PATH_TO_MIGRATION'] = \Bitrix\Crm\Integration\Market\Router::getCategoryPath('migration');
 $arParams['PATH_TO_DEAL_WIDGET'] = CrmCheckPath(
 	'PATH_TO_DEAL_WIDGET',
 	$arParams['PATH_TO_DEAL_WIDGET'] ?? '',

@@ -2,8 +2,15 @@
 
 return [
 	'components'=> [
-		'tasks:tasks.list',
+		'tasks:tasks.dashboard',
+		'tasks:tasks.list.legacy',
 		'tasks:tasks.task.tabs',
-		'tasks:tasks.view',
+		'tasks:tasks.task.view',
+	],
+	'extensions' => [
+		'apptheme',
+		'feature',
+		'settings/disabled-tools',
+		'layout/ui/info-helper',
 	],
 ];

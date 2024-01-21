@@ -23,7 +23,8 @@ use CCrmActivityDirection;
 
 class Email extends Activity
 {
-	private const BLOCK_DELIMITER = '&bull;';
+	const TIMELINE_SHORT_LIMIT_LENGTH = 57;
+	const TIMELINE_LONG_LIMIT_LENGTH = 155;
 
 	final protected function getActivityTypeId(): string
 	{
@@ -244,6 +245,12 @@ class Email extends Activity
 			$result['senderMob'] = $senderBlock->setScopeMobile();
 		}
 
+		$shortBodyBlock = $this->buildShortBodyBlock();
+		if (isset($shortBodyBlock))
+		{
+			$result['shortBody'] = $shortBodyBlock;
+		}
+
 		return $result;
 	}
 
@@ -305,5 +312,107 @@ class Email extends Activity
 	public function needShowNotes(): bool
 	{
 		return true;
+	}
+
+	private function getBody()
+	{
+		$activityId = $this->getAssociatedEntityModel()->get('ID');
+
+		static $associatedActivityId;
+		static $messageBody;
+
+		if (is_null($messageBody) || $activityId !== $associatedActivityId)
+		{
+			$associatedActivityId = $activityId;
+			return Message::getMessageBody($this->getAssociatedEntityModel()->get('ID'))->getData();
+		}
+
+		return $messageBody;
+	}
+
+	private function buildShortBodyBlock(): ?ContentBlock
+	{
+		$body = $this->getBody();
+		$height = ContentBlock\EditableDescription::HEIGHT_SHORT;
+		$sanitizer = new \CBXSanitizer();
+		$sanitizer->AddTags(['b' => [],]);
+
+		$sanitizer->setDelTagsWithContent(['blockquote', 'style']);
+		$sanitizedBody = $sanitizer->SanitizeHtml($body['HTML']);
+		$sanitizedBody = strip_tags($sanitizedBody);
+
+		$sanitizedBody = htmlspecialchars_decode($sanitizedBody, ENT_QUOTES);
+		$sanitizedBody = trim(str_replace("\r\n", ' ', $sanitizedBody));
+
+		$sanitizedBody = $this->extractImageAboutReading($sanitizedBody);
+
+		if (mb_strlen($sanitizedBody) === 0)
+		{
+			return null;
+		}
+
+		$messageExploded = explode("\r\n", $sanitizedBody);
+		$hasManyLines = count($messageExploded) > 1;
+
+		if (!$hasManyLines)
+		{
+			$messageExploded = explode("\n", $sanitizedBody);
+			$hasManyLines = count($messageExploded) > 1;
+		}
+
+		if ($hasManyLines)
+		{
+
+			$height = ContentBlock\EditableDescription::HEIGHT_LONG;
+			$sanitizedBody = '';
+			foreach ($messageExploded as $item)
+			{
+				$item = trim($item);
+				if (empty($item))
+				{
+					continue;
+				}
+
+				if (mb_strlen($sanitizedBody) > self::TIMELINE_LONG_LIMIT_LENGTH)
+				{
+					$sanitizedBody = mb_substr($sanitizedBody, 0, self::TIMELINE_LONG_LIMIT_LENGTH);
+					$sanitizedBody = $this->handlePunctuation($sanitizedBody);
+					$sanitizedBody .= '...';
+					break;
+				}
+
+				$sanitizedBody .= $this->handlePunctuation($item);
+			}
+		}
+		elseif (mb_strlen($sanitizedBody) > self::TIMELINE_SHORT_LIMIT_LENGTH)
+		{
+			$height = ContentBlock\EditableDescription::HEIGHT_LONG;
+			if (mb_strlen($sanitizedBody) > self::TIMELINE_LONG_LIMIT_LENGTH)
+			{
+				$sanitizedBody = $this->handlePunctuation($sanitizedBody);
+				$sanitizedBody = mb_substr($sanitizedBody, 0, self::TIMELINE_LONG_LIMIT_LENGTH);
+				if (mb_strlen($sanitizedBody) >= self::TIMELINE_LONG_LIMIT_LENGTH)
+				{
+					$sanitizedBody .= '...';
+				}
+			}
+		}
+
+		return (new ContentBlock\EditableDescription())
+			->setText($sanitizedBody)
+			->setEditable(false)
+			->setHeight($height)
+		;
+	}
+
+	private function extractImageAboutReading(string $sanitizedBody): string
+	{
+		return (string)preg_replace('/\[.*\/pub\/mail\/read\.php.*\]/i','', $sanitizedBody);
+	}
+
+	public function handlePunctuation(string $item): string
+	{
+		$result = trim(str_replace(['.', '!', '?', '&nbsp;', "\t"], ['. ', '! ', '? ', '', ' '], $item));
+		return preg_replace("/\h{2,}/u", " ", $result);
 	}
 }

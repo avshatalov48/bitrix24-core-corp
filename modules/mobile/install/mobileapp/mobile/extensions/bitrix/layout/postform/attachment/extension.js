@@ -1,72 +1,80 @@
-(() =>
-{
-	this.AttachmentComponent = class AttachmentComponent extends LayoutComponent {
+(() => {
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
 
-		constructor(props) {
+	this.AttachmentComponent = class AttachmentComponent extends LayoutComponent
+	{
+		constructor(props)
+		{
 			super(props);
 
 			const {
-				attachments
+				attachments,
+				onDeleteAttachmentItem,
+				postFormData,
+				serverName,
 			} = props;
 
 			this.state = {
-				attachments: attachments
+				attachments,
 			};
 
-			this.onDeleteAttachmentItem = props.onDeleteAttachmentItem;
-			this.postFormData = props.postFormData;
-			this.serverName =  props.serverName;
+			this.onDeleteAttachmentItem = onDeleteAttachmentItem;
+			this.postFormData = postFormData;
+			this.serverName = serverName;
 		}
 
-		render() {
-
+		render()
+		{
 			const { attachments } = this.state;
 
 			const
-				onDeleteAttachmentItem = this.onDeleteAttachmentItem,
-				postFormData = this.postFormData,
-				serverName = this.serverName;
+				onDeleteAttachmentItem = this.onDeleteAttachmentItem;
+			const postFormData = this.postFormData;
+			const serverName = this.serverName;
 
 			return ScrollView(
 				{
 					style: {
-						backgroundColor: '#ffffff'
-					}
-				},
-				View({
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 					},
+				},
+				View(
+					{},
 					View(
 						{
 							style: {
 								padding: 16,
 								flexDirection: 'row',
 								flexWrap: 'wrap',
-							}
+							},
 						},
-						...attachments.map((item, index) =>
-						{
+						...attachments.map((item, index) => {
 							let uri = '';
 							if (item.previewUrl)
 							{
 								uri = item.previewUrl;
-							} else if (item.dataAttributes && item.dataAttributes.IMAGE)
+							}
+							else if (item.dataAttributes && item.dataAttributes.IMAGE)
 							{
 								uri = serverName + item.dataAttributes.IMAGE;
 							}
 
 							return Utils.drawFile({
-								url: (!!item.url ? item.url : null),
+								url: item.url || null,
 								imageUri: uri,
-								type: (!!item.type ? item.type : null),
-								name: (!!item.name ? item.name : ''),
+								type: item.type || null,
+								name: item.name || '',
 								attachmentCloseIcon: currentDomain + postFormData.attachmentCloseIcon,
 								attachmentFileIconFolder: currentDomain + postFormData.attachmentFileIconFolder,
-								onDeleteAttachmentItem: () => { onDeleteAttachmentItem(index); }
+								onDeleteAttachmentItem: () => {
+									onDeleteAttachmentItem(index);
+								},
 							});
-						})
-					)
-				)
-			)
+						}),
+					),
+				),
+			);
 		}
-	}
+	};
 })();

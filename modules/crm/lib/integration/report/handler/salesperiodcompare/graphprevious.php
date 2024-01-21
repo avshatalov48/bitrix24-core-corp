@@ -10,6 +10,7 @@ use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Application;
 
 class GraphPrevious extends BaseGraph
 {
@@ -24,7 +25,8 @@ class GraphPrevious extends BaseGraph
 		$query->addSelect(Query::expr()->sum('OPPORTUNITY'), 'SUM');
 
 		$closedDateFormat = $this->getDateGrouping() === static::GROUP_MONTH ? '%%Y-%%m-01' : '%%Y-%%m-%%d';
-		$query->addSelect(new ExpressionField("CLOSED", "DATE_FORMAT(%s, '{$closedDateFormat}')", "CLOSEDATE"));
+		$helper = Application::getConnection()->getSqlHelper();
+		$query->addSelect(new ExpressionField("CLOSED", $helper->formatDate($closedDateFormat, '%s'), "CLOSEDATE"));
 		$query->addSelect("CURRENCY_ID");
 
 		$query->where("STAGE_SEMANTIC_ID", PhaseSemantics::SUCCESS);

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["TOP_MENU_FAVORITE"] = "Избранное";
 $MESS["TOP_MENU_GROUPS"] = "Группы";
 $MESS["TOP_MENU_GROUPS_EXTRANET"] = "Группы экстранет";
@@ -18,7 +18,7 @@ $MESS["TOP_MENU_PHOTO"] = "Фотографии";
 $MESS["TOP_MENU_BLOG"] = "Сообщения";
 $MESS["TOP_MENU_MAIL"] = "Почта";
 $MESS["TOP_MENU_CRM"] = "CRM";
-$MESS["TOP_MENU_SHOP"] = "Магазин";
+$MESS["TOP_MENU_SHOP"] = "Магазины";
 $MESS["TOP_MENU_BIZPROC"] = "Бизнес-процессы";
 $MESS["TOP_MENU_TIMEMAN"] = "Время и отчеты";
 $MESS["TOP_MENU_IM_MESSENGER"] = "Чат и звонки";
@@ -42,5 +42,4 @@ $MESS["MENU_STORE_ACCOUNTING_SECTION"] = "Складской учёт";
 $MESS["TOP_MENU_SITES_AND_STORES"] = "Сайты и Магазины";
 $MESS["TOP_MENU_COMPANY_SECTION"] = "Компания";
 $MESS["TOP_MENU_SIGN"] = "Подпись";
-
-?>
+$MESS["TOP_MENU_SPACES"] = "Пространства";

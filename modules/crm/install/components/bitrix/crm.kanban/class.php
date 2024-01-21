@@ -1,9 +1,11 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Kanban;
 use Bitrix\Crm\Kanban\EntityActivityCounter;
@@ -143,6 +145,10 @@ class CrmKanbanComponent extends \CBitrixComponent
 
 		$this->arParams['USER_ID'] = $this->currentUserID;
 		$this->arParams['LAYOUT_CURRENT_USER'] = Timeline\Layout\User::current()->toArray();
+		$this->arParams['PING_SETTINGS'] = (new TodoPingSettingsProvider(
+			$this->getEntityTypeId(),
+			$categoryId
+		))->fetchForJsComponent();
 		$this->arParams['CURRENCY'] = $this->componentParams['CURRENCY'];
 		$this->arParams['PATH_TO_IMPORT'] = $this->componentParams['PATH_TO_IMPORT'];
 

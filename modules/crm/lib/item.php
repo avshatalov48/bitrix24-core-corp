@@ -5,7 +5,6 @@ namespace Bitrix\Crm;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Item\DisabledField;
 use Bitrix\Crm\Item\FieldImplementation;
-use Bitrix\Crm\Multifield;
 use Bitrix\Crm\Observer\Entity\EO_Observer;
 use Bitrix\Crm\Observer\Entity\EO_Observer_Collection;
 use Bitrix\Crm\Observer\Entity\ObserverTable;
@@ -85,6 +84,8 @@ use Bitrix\Main\Type\DateTime;
  * @method Item setTaxValue(float $taxValue)
  * @method string|null getCurrencyId()
  * @method Item setCurrencyId(string $currencyId)
+ * @method float|null getExchRate()
+ * @method Item setExchRate(float $exchRate)
  * @method float|null getOpportunityAccount()
  * @method Item setOpportunityAccount(float $opportunityAccount)
  * @method float|null getTaxValueAccount()
@@ -175,12 +176,14 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	public const FIELD_NAME_IS_MANUAL_OPPORTUNITY = 'IS_MANUAL_OPPORTUNITY';
 	public const FIELD_NAME_TAX_VALUE = 'TAX_VALUE';
 	public const FIELD_NAME_CURRENCY_ID = 'CURRENCY_ID';
+	public const FIELD_NAME_EXCH_RATE = 'EXCH_RATE';
 	public const FIELD_NAME_OPPORTUNITY_ACCOUNT = 'OPPORTUNITY_ACCOUNT';
 	public const FIELD_NAME_TAX_VALUE_ACCOUNT = 'TAX_VALUE_ACCOUNT';
 	public const FIELD_NAME_ACCOUNT_CURRENCY_ID = 'ACCOUNT_CURRENCY_ID';
 	public const FIELD_NAME_MYCOMPANY_ID = 'MYCOMPANY_ID';
 	public const FIELD_NAME_MYCOMPANY = 'MYCOMPANY';
 	public const FIELD_NAME_PRODUCTS = 'PRODUCT_ROWS';
+	public const FIELD_NAME_PRODUCT_RESERVATION = 'PRODUCT_ROW_RESERVATION';
 	public const FIELD_NAME_CLOSED = 'CLOSED';
 	public const FIELD_NAME_SOURCE_ID = 'SOURCE_ID';
 	public const FIELD_NAME_SOURCE_DESCRIPTION = 'SOURCE_DESCRIPTION';
@@ -1292,12 +1295,31 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		return $this->mergeResults($results);
 	}
 
+	/**
+	 * Normalize all product rows bound to this item.
+	 *
+	 * @internal
+	 */
+	final public function normalizeProductRows(): Result
+	{
+		$results = [];
+		foreach ($this->getProductRows() as $product)
+		{
+			$results[] = $this->normalizeProduct($product);
+		}
+
+		return $this->mergeResults($results);
+	}
+
 	protected function normalizeProduct(ProductRow $product): Result
 	{
 		$product->set($this->getItemReferenceFieldNameInProduct(), $this->entityObject);
 		$product->setOwnerType(\CCrmOwnerTypeAbbr::ResolveByTypeID($this->getEntityTypeId()));
 
-		return $product->normalize($this->getCurrencyId());
+		return $product->normalize(
+			$this->getCurrencyId(),
+			$this->hasField(Item::FIELD_NAME_EXCH_RATE) ? $this->getExchRate() : null,
+		);
 	}
 
 	protected function getItemReferenceFieldNameInProduct(): ?string
@@ -1720,10 +1742,11 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 			$isFieldInstanceOf = fn(string $type) => ($entityField instanceof $type) || ($baseField instanceof $type);
 
-			if($isFieldInstanceOf(BooleanField::class) && !is_bool($value))
+			if ($field && ($isFieldInstanceOf(BooleanField::class) || $field->getType() === Field::TYPE_BOOLEAN) && !is_null($value))
 			{
-				$value = ($value === 'Y');
+				$value = $this->prepareExternalBooleanValue($value, $field);
 			}
+
 			if ($isFieldInstanceOf(DateField::class) && is_string($value) && !DateTime::isCorrect($value))
 			{
 				$value = null;
@@ -1746,6 +1769,30 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		}
 
 		return $this;
+	}
+
+	private function prepareExternalBooleanValue(mixed $value, Field $field): array|bool
+	{
+		$castSingleValue = static function ($singleValue): bool {
+			if ($singleValue === 'Y' || $singleValue === 'N')
+			{
+				return $singleValue === 'Y';
+			}
+
+			return (bool)$singleValue;
+		};
+
+		if ($field->isMultiple())
+		{
+			if (!is_array($value))
+			{
+				$value = [$value];
+			}
+
+			return array_map($castSingleValue, $value);
+		}
+
+		return $castSingleValue($value);
 	}
 
 	private function prepareExternalDateTimeValue($value, Field $field)
@@ -1806,9 +1853,16 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	 */
 	protected function getExternalizableFieldNames(): array
 	{
-		$names = [
-			static::FIELD_NAME_PRODUCTS,
-		];
+		$names = [];
+
+		if ($this->hasField(static::FIELD_NAME_PRODUCTS))
+		{
+			$names[] = $this->getEntityFieldNameByMap(static::FIELD_NAME_PRODUCTS);
+		}
+		if ($this->hasField(static::FIELD_NAME_OBSERVERS))
+		{
+			$names[] = $this->getEntityFieldNameByMap(static::FIELD_NAME_OBSERVERS);
+		}
 
 		$namesFromImplementations = array_map(
 			[$this, 'getEntityFieldNameByMap'],

@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'apptheme',
         'type',
 		'loc',
 		'im:messenger/core',
@@ -12,7 +13,8 @@ return [
 		'im:messenger/lib/helper/dialog',
 		'im:messenger/lib/params',
 		'im:messenger/lib/ui/selector',
-		'im/messenger/lib/logger',
+		'im:messenger/lib/logger',
+		'im:messenger/lib/rest',
 		'layout/ui/widget-header-button',
 	],
 	'bundle' => [

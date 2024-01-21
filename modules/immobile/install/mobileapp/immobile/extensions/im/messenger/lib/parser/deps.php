@@ -9,6 +9,7 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',
 		'im:messenger/const',
+		'im:messenger/lib/smile-manager',
 	],
 	'bundle' => [
 		'./src/parser',
@@ -24,6 +25,7 @@ return [
 		'./src/functions/disk',
 		'./src/functions/font',
 		'./src/functions/image',
+		'./src/functions/smile',
 		'./src/utils/parsed-elements',
 		'./src/utils/utils',
 		'./src/elements/dialog/message/quote-active',

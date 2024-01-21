@@ -18,7 +18,7 @@ class Agent
 	{
 		$moduleId = 'imopenlines';
 
-		$agentName = '\Bitrix\ImOpenLines\Crm\ReplacementUserCode::bind(0, [\'' . $oldUserCode . '\',\'' . $newUserCode . '\']);';
+		$agentName = 'Bitrix\ImOpenLines\Crm\ReplacementUserCode::bind(0, [\'' . $oldUserCode . '\',\'' . $newUserCode . '\']);';
 
 		$isAgent = \CAgent::getList([], [
 			'MODULE_ID' => $moduleId,

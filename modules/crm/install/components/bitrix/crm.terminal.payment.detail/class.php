@@ -376,7 +376,10 @@ class CrmTerminalPaymentDetail extends \CBitrixComponent
 
 	private function getPaySystemName(): string
 	{
-		if ($this->payment->getPaymentSystemId() === (int)Sale\PaySystem\Manager::getInnerPaySystemId())
+		if (
+			$this->payment->getPaymentSystemId() === (int)Sale\PaySystem\Manager::getInnerPaySystemId()
+			|| $this->payment->getPaySystem()?->getField('ACTION_FILE') === 'cash'
+		)
 		{
 			return '';
 		}
@@ -554,6 +557,8 @@ class CrmTerminalPaymentDetail extends \CBitrixComponent
 	public function executeComponent()
 	{
 		$this->initResult();
+
+		$this->arResult['TOOLBAR_ID'] = 'uiToolbarContainer';
 
 		$this->loadPayment();
 		if ($this->payment)

@@ -17,7 +17,11 @@ use Bitrix\Main;
 global $APPLICATION;
 $APPLICATION->SetTitle(Main\Localization\Loc::getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_TEMPLATE_TITLE'));
 
-Main\UI\Extension::load(['crm.terminal']);
+Main\UI\Extension::load([
+	'crm.terminal',
+	'salescenter.manager',
+	'ui.dialogs.messagebox',
+]);
 
 if (!empty($arResult['ERROR_MESSAGES']))
 {

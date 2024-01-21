@@ -2,9 +2,10 @@
  * @module crm/terminal/payment-pay/components/payment-button/factory
  */
 jn.define('crm/terminal/payment-pay/components/payment-button/factory', (require, exports, module) => {
-	const { PaymentButton } = require('crm/terminal/payment-pay/components/payment-button/button');
-	const { withPressed } = require('utils/color');
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
+	const { withPressed } = require('utils/color');
+	const { PaymentButton } = require('crm/terminal/payment-pay/components/payment-button/button');
 
 	/**
 	 * @class PaymentButtonFactory
@@ -39,12 +40,12 @@ jn.define('crm/terminal/payment-pay/components/payment-button/factory', (require
 					props.iconUri = PaymentButtonFactory.getImagePath('sbp');
 					props.styles = {
 						container: {
-							backgroundColor: withPressed('#00A2E8'),
+							backgroundColor: withPressed(AppTheme.colors.accentMainPrimary),
 						},
 						iconContainer: {
 							padding: 1,
 							marginRight: 4,
-							backgroundColor: '#FFFFFF',
+							backgroundColor: AppTheme.colors.bgContentPrimary,
 							borderRadius: 3,
 						},
 						icon: {
@@ -52,7 +53,7 @@ jn.define('crm/terminal/payment-pay/components/payment-button/factory', (require
 							height: 26,
 						},
 						text: {
-							color: '#FFFFFF',
+							color: AppTheme.colors.bgContentPrimary,
 						},
 					};
 				}

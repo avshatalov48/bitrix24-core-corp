@@ -98,7 +98,7 @@ export default class StoreAvailablePopup
 				<table class="main-grid-table">
 					<thead class="main-grid-header">
 						<tr class="main-grid-row-head">
-							${renderHead(Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_COMMON'))}
+							${renderHead(Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_COMMON_MSGVER_1'))}
 							${renderHead(Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_RESERVED'))}
 							${renderHead(Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_AVAILABLE'))}
 						</tr>

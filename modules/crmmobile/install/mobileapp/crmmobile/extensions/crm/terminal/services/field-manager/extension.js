@@ -4,6 +4,7 @@
 jn.define('crm/terminal/services/field-manager', (require, exports, module) => {
 	const { FieldFactory } = require('layout/ui/fields');
 	const { mergeImmutable } = require('utils/object');
+	const { FIELD_NAMES, getTerminalField } = require('crm/terminal/services/field-manager/fields');
 
 	/**
 	 * @class FieldManagerService
@@ -34,7 +35,10 @@ jn.define('crm/terminal/services/field-manager', (require, exports, module) => {
 
 			const field = FieldFactory.create(
 				fieldData.type,
-				mergeImmutable(fieldData, data),
+				mergeImmutable(
+					FieldManagerService.prepareFieldData(fieldData),
+					data,
+				),
 			);
 
 			return field.isEmpty() && !this.renderIfEmpty ? null : field;
@@ -50,17 +54,22 @@ jn.define('crm/terminal/services/field-manager', (require, exports, module) => {
 
 			return foundFieldData || null;
 		}
+
+		static prepareFieldsData(fields)
+		{
+			return fields.map((fieldData) => FieldManagerService.prepareFieldData(fieldData));
+		}
+
+		static prepareFieldData(fieldData)
+		{
+			const field = getTerminalField(fieldData.name);
+
+			return field && typeof field.prepareData === 'function' ? field.prepareData(fieldData) : fieldData;
+		}
 	}
 
 	module.exports = {
 		FieldManagerService,
-		FieldNameSum: 'SUM',
-		FieldNamePhone: 'PHONE',
-		FieldNameClient: 'CLIENT',
-		FieldNameClientName: 'CLIENT_NAME',
-		FieldNameDatePaid: 'DATE_PAID',
-		FieldNameStatus: 'STATUS',
-		FieldNamePaymentSystem: 'PAYMENT_SYSTEM',
-		FieldNameSlipLink: 'SLIP_LINK',
+		...FIELD_NAMES,
 	};
 });

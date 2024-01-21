@@ -10,10 +10,10 @@ define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
 
 use Bitrix\Crm\Service\Container;
-use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Tasks\Provider\TasksUFManager;
 use Bitrix\Tasks\Util\User;
 
 Loc::loadMessages(__DIR__.'/template.php');
@@ -92,13 +92,14 @@ if ($arResult['EXPORT_ALL'])
 				}
 
 				$prefix = '';
-				$columnValue = $task[$field];
+				$rawColumnValue = $task[$field] ?? null;
+				$columnValue = $rawColumnValue;
 
 				switch ($field)
 				{
 					case 'DESCRIPTION':
 						$columnValue = CTextParser::clearAllTags(
-							htmlspecialchars_decode($task[$field], ENT_QUOTES)
+							htmlspecialchars_decode($rawColumnValue, ENT_QUOTES)
 						);
 						break;
 
@@ -111,12 +112,12 @@ if ($arResult['EXPORT_ALL'])
 						else if (preg_match('/^[0-9 \t]*$/', $columnValue))
 						{
 							// due to http://jabber.bx/view.php?id=39850
-							$columnValue = $task[$field].' ';
+							$columnValue = $rawColumnValue .' ';
 						}
 						break;
 
 					case 'PARENT_ID':
-						$columnValue = (int)$task[$field] === 0 ? '' : $task[$field];
+						$columnValue = (int)$rawColumnValue === 0 ? '' : $rawColumnValue;
 						break;
 
 					case 'ORIGINATOR_NAME':
@@ -155,13 +156,13 @@ if ($arResult['EXPORT_ALL'])
 
 					case 'A':
 					case 'U':
-						if (!$task[$field])
+						if (!$rawColumnValue)
 						{
 							$columnValue = '';
 							break;
 						}
 
-						$columnValue = implode(', ', $task[$field]);
+						$columnValue = implode(', ', $rawColumnValue);
 						break;
 
 					case 'GROUP_NAME':
@@ -289,64 +290,65 @@ if ($arResult['EXPORT_ALL'])
 						break;
 
 					default:
-						if (mb_strpos($field, 'UF_CRM_TASK_') === 0 && Loader::includeModule('crm'))
+						if (str_contains($field, 'UF_'))
 						{
-							$titles = [];
-							$values = $task['UF_CRM_TASK'];
-							$allNames = CCrmOwnerType::GetAllNames();
-							$currentName = str_replace('UF_CRM_TASK_', '', $field);
-
-							if (!is_array($values) || empty($values) || !in_array($currentName, $allNames, true))
+							if (mb_strpos($field, 'UF_CRM_TASK_') === 0 && Loader::includeModule('crm'))
 							{
-								break;
-							}
+								$titles = [];
+								$values = $task['UF_CRM_TASK'];
+								$allNames = CCrmOwnerType::GetAllNames();
+								$currentName = str_replace('UF_CRM_TASK_', '', $field);
 
-							sort($values);
-
-							foreach ($values as $value)
-							{
-								[$type, $id] = explode('_', $value);
-								$name = CCrmOwnerTypeAbbr::ResolveName($type);
-
-								if ($name === $currentName)
+								if (!is_array($values) || empty($values) || !in_array($currentName, $allNames, true))
 								{
-									$typeId = CCrmOwnerType::ResolveID($name);
-									$titles[] = CCrmOwnerType::GetCaption($typeId, $id);
+									break;
 								}
-							}
 
-							$columnValue = implode(', ', $titles);
-						}
-						else if (is_array($columnValue))
-						{
-							if (!empty($columnValue))
-							{
-								$columnValue = implode(', ', $columnValue);
+								sort($values);
+
+								foreach ($values as $value)
+								{
+									[$type, $id] = explode('_', $value);
+									$name = CCrmOwnerTypeAbbr::ResolveName($type);
+
+									if ($name === $currentName)
+									{
+										$typeId = CCrmOwnerType::ResolveID($name);
+										$titles[] = CCrmOwnerType::GetCaption($typeId, $id);
+									}
+								}
+
+								$columnValue = implode(', ', $titles);
 							}
 							else
 							{
-								$columnValue = '';
+								$uf = TasksUFManager::getInstance()->get($field);
+								if ($uf['USER_TYPE_ID'] === 'boolean')
+								{
+									$map = [
+										'1' => 'Y',
+										'0' => 'N',
+									];
+
+									$columnValue = Loc::getMessage('TASKS_EXCEL_COLUMN_'.$map[$columnValue]);
+								}
+								elseif (is_array($columnValue))
+								{
+									if (!empty($columnValue))
+									{
+										$columnValue = implode(', ', $columnValue);
+									}
+									else
+									{
+										$columnValue = '';
+									}
+								}
+								elseif (in_array(strtoupper($columnValue), ['Y', 'N']))
+								{
+									$columnValue = Loc::getMessage('TASKS_EXCEL_COLUMN_'.$columnValue);
+								}
 							}
-						}
-						else if (in_array(strtoupper($columnValue), ['Y', 'N']))
-						{
-							$columnValue = Loc::getMessage('TASKS_EXCEL_COLUMN_'.$columnValue);
-						}
-						$UFTypeQuery = "SELECT USER_TYPE_ID FROM b_user_field WHERE FIELD_NAME = '{$field}'";
-						$UFType = Application::getConnection()->query($UFTypeQuery)->fetch();
 
-						if ($UFType['USER_TYPE_ID'] === 'boolean')
-						{
-							$map = [
-								'1' => 'Y',
-								'0' => 'N',
-							];
-
-							$columnValue = Loc::getMessage('TASKS_EXCEL_COLUMN_'.$map[$columnValue]);
-						}
-						else if (trim($columnValue) === '')
-						{
-							$columnValue = '';
 						}
 						break;
 				}

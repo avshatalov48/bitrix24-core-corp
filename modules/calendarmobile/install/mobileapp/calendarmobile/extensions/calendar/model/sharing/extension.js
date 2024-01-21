@@ -2,96 +2,142 @@
  * @module calendar/model/sharing
  */
 jn.define('calendar/model/sharing', (require, exports, module) => {
-
 	const { withCurrentDomain } = require('utils/url');
+	const { Settings } = require('calendar/model/sharing/settings');
 
-	const RestrictionStatus = {
+	const Context = {
+		CRM: 'crm',
+		CALENDAR: 'calendar',
+	};
+
+	const ModelRestrictionStatus = {
 		ENABLE: 'enable',
 		DISABLE: 'disable',
 	};
 
-	const Status = {
+	const ModelSharingStatus = {
 		ENABLE: 'enable',
 		DISABLE: 'disable',
 		UNDEFINED: 'undefined',
 	};
 
 	const state = {
-		status: Status.UNDEFINED,
+		status: ModelSharingStatus.UNDEFINED,
 		publicShortUrl: withCurrentDomain(),
-		restrictionStatus: RestrictionStatus.DISABLE,
+		restrictionStatus: ModelRestrictionStatus.DISABLE,
+		context: Context.CALENDAR,
 	};
 
 	/**
-	 * @class Sharing
+	 * @class ModelSharing
 	 */
-	class Sharing
+	class ModelSharing
 	{
+		/**
+		 * @param context {string}
+		 */
+		constructor(context)
+		{
+			this.setContext(context);
+		}
+
 		setFields(props)
 		{
-			const status = BX.prop.getString(props, 'status', null);
-			const publicShortUrl = BX.prop.getString(props, 'publicShortUrl', null);
-			const restrictionStatus = BX.prop.getString(props, 'restrictionStatus', null);
+			const { isEnabled, isRestriction, shortUrl, settings } = props;
 
-			const fields = this.validate({status, publicShortUrl, restrictionStatus});
+			const status = (isEnabled === true)
+				? ModelSharingStatus.ENABLE
+				: ModelSharingStatus.DISABLE;
 
-			this.setStatus(fields.status);
-			this.setPublicShortUrl(fields.publicShortUrl);
-			this.setRestrictionStatus(fields.restrictionStatus);
+			const restrictionStatus = (isRestriction === true)
+				? ModelRestrictionStatus.ENABLE
+				: ModelRestrictionStatus.DISABLE;
+
+			this.setStatus(status);
+			this.setPublicShortUrl(shortUrl);
+			this.setRestrictionStatus(restrictionStatus);
+			this.setSettings(new Settings(settings));
 		}
 
 		getFieldsValues()
 		{
 			return {
 				status: this.status,
+				context: this.context,
 				publicShortUrl: this.publicShortUrl,
 				restrictionStatus: this.restrictionStatus,
-			}
-		}
-
-		validate(props)
-		{
-			const result = {}
-			result.status = props.status && Object.values(Status).includes(props.status)
-				? props.status
-				: state.status;
-
-			result.restrictionStatus = props.restrictionStatus && Object.values(RestrictionStatus).includes(props.restrictionStatus)
-				? props.restrictionStatus
-				: state.restrictionStatus;
-
-			result.publicShortUrl = props.publicShortUrl && props.publicShortUrl.length > 0
-				? props.publicShortUrl
-				: state.publicShortUrl;
-
-			return result;
+				settings: this.settings,
+			};
 		}
 
 		setStatus(value)
 		{
-			this.status = value.toString();
+			this.status = value && Object.values(ModelSharingStatus).includes(value)
+				? value.toString()
+				: state.status;
+		}
+
+		setContext(value)
+		{
+			this.context = value && Object.values(Context).includes(value)
+				? value.toString()
+				: state.context;
 		}
 
 		setRestrictionStatus(value)
 		{
-			this.restrictionStatus = value.toString();
+			this.restrictionStatus = value && Object.values(ModelRestrictionStatus).includes(value)
+				? value.toString()
+				: state.restrictionStatus;
 		}
 
 		setPublicShortUrl(value)
 		{
-			this.publicShortUrl = value.toString();
+			this.publicShortUrl = value && value.length > 0
+				? value.toString()
+				: state.publicShortUrl;
 		}
 
+		setSettings(settings)
+		{
+			this.settings = settings;
+		}
+
+		/**
+		 * @returns {string}
+		 */
 		getStatus()
 		{
 			return this.status;
 		}
 
+		/**
+		 * @returns {string}
+		 */
+		getContext()
+		{
+			return this.context;
+		}
+
+		/**
+		 * @returns {Settings}
+		 */
+		getSettings()
+		{
+			return this.settings;
+		}
+
+		/**
+		 * @returns {string}
+		 */
 		getRestrictionStatus()
 		{
 			return this.restrictionStatus;
 		}
 
+		/**
+		 * @returns {string}
+		 */
 		getPublicShortUrl()
 		{
 			return this.publicShortUrl;
@@ -99,9 +145,9 @@ jn.define('calendar/model/sharing', (require, exports, module) => {
 	}
 
 	module.exports = {
-		ModelSharing: Sharing,
-		ModelSharingStatus: Status,
-		ModelRestrictionStatus: RestrictionStatus,
+		ModelSharing,
+		ModelSharingStatus,
+		ModelRestrictionStatus,
+		SharingContext: Context,
 	};
 });
-

@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Intranet\UI\LeftMenu;
 
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Intranet\UI\LeftMenu\MenuItem;
 
 class Menu
@@ -22,8 +23,10 @@ class Menu
 			$params = $itemData['PARAMS'] ?? [];
 			$params = array_change_key_case($params, CASE_LOWER);
 
-			if ($itemData['DEPTH_LEVEL'] !== 1
-				|| (isset($params['hidden']) && $params['hidden'] === true))
+			if (
+				$itemData['DEPTH_LEVEL'] !== 1
+				|| (isset($params['hidden']) && $params['hidden'] === true)
+			)
 			{
 				continue;
 			}
@@ -89,20 +92,27 @@ class Menu
 	{
 		if ($item->isSuccess())
 		{
-			if (!array_key_exists($item->getId(), $this->items)
+			$id = $item->getId();
+
+			if (!ToolsManager::getInstance()->checkAvailabilityByMenuId($id))
+			{
+				return;
+			}
+
+			if (!array_key_exists($id, $this->items)
 				|| $item instanceof MenuItem\Group)
 			{
-				$this->items[$item->getId()] = $item;
+				$this->items[$id] = $item;
 			}
 			else
 			{
-				if ($this->items[$item->getId()] instanceof MenuItem\ItemUserFavorites)
+				if ($this->items[$id] instanceof MenuItem\ItemUserFavorites)
 				{
 					$buffItem = $this->items[$item->getId()];
-					$this->items[$item->getId()] = $item;
+					$this->items[$id] = $item;
 					$item = $buffItem;
 				}
-				$this->items[$item->getId()]->addStorage($item);
+				$this->items[$id]->addStorage($item);
 			}
 		}
 	}
@@ -164,12 +174,21 @@ class Menu
 
 				$item->setParent($parent);
 
-				$item->setSort(
-					$preset->getSortForItem(
+				$sort = null;
+
+				if ($parentId && isset($this->items[$parentId]))
+				{
+					$sort = $preset->getSortForItem(
 						$item->getId(),
 						$item->getParent()->getId()
-					)
-				);
+					);
+				}
+				else if ($item->getLink() === \CIntranetUtils::getB24FirstPageLink())
+				{
+					$sort = 1;
+				}
+
+				$item->setSort($sort);
 
 			} while ($item = next($this->items));
 		}

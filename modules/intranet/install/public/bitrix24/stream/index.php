@@ -6,6 +6,7 @@
  */
 
 use Bitrix\Intranet\Integration\Wizards\Portal\Ids;
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Loader;
 
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');
@@ -15,6 +16,19 @@ IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/publ
 $APPLICATION->SetPageProperty('NOT_SHOW_NAV_CHAIN', 'Y');
 $APPLICATION->SetPageProperty('title', htmlspecialcharsbx(COption::GetOptionString('main', 'site_name', 'Bitrix24')));
 Loader::includeModule('intranet');
+
+if (!ToolsManager::getInstance()->checkAvailabilityByToolId('news'))
+{
+	$APPLICATION->IncludeComponent('bitrix:intranet.settings.tool.stub', '.default',
+		[
+			'LIMIT_CODE' => 'limit_office_feed_off',
+			'MODULE' => 'intranet',
+			'SOURCE' => 'feed'
+		]
+	);
+
+	return;
+}
 
 GetGlobalID();
 
@@ -94,21 +108,24 @@ if (Loader::includeModule('intranet'))
 	$APPLICATION->IncludeComponent('bitrix:intranet.ustat.status', '', ['CREATE_FRAME' => 'N'], false);
 }
 
-$APPLICATION->IncludeComponent(
-	"bitrix:calendar.events.list",
-	"widget",
-	array(
-		"CALENDAR_TYPE" => "user",
-		"B_CUR_USER_LIST" => "Y",
-		"INIT_DATE" => "",
-		"FUTURE_MONTH_COUNT" => "1",
-		"DETAIL_URL" => "/company/personal/user/#user_id#/calendar/",
-		"EVENTS_COUNT" => "5",
-		"CACHE_TYPE" => "N",
-		"CACHE_TIME" => "3600"
-	),
-	false
-);
+if (ToolsManager::getInstance()->checkAvailabilityByToolId('calendar'))
+{
+	$APPLICATION->IncludeComponent(
+		"bitrix:calendar.events.list",
+		"widget",
+		array(
+			"CALENDAR_TYPE" => "user",
+			"B_CUR_USER_LIST" => "Y",
+			"INIT_DATE" => "",
+			"FUTURE_MONTH_COUNT" => "1",
+			"DETAIL_URL" => "/company/personal/user/#user_id#/calendar/",
+			"EVENTS_COUNT" => "5",
+			"CACHE_TYPE" => "N",
+			"CACHE_TIME" => "3600"
+		),
+		false
+	);
+}
 
 $APPLICATION->IncludeComponent(
 	"bitrix:tasks.widget.rolesfilter",

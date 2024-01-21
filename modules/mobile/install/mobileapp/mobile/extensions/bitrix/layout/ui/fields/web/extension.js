@@ -2,15 +2,15 @@
  * @module layout/ui/fields/web
  */
 jn.define('layout/ui/fields/web', (require, exports, module) => {
-
 	const { StringFieldClass } = require('layout/ui/fields/string');
 	const { SafeImage } = require('layout/ui/safe-image');
 	const { isValidLink, URL } = require('utils/url');
 	const { set } = require('utils/object');
+	const AppTheme = require('apptheme');
 
 	const DEFAULT = 'default';
-	const SUPPORTED = ['work', 'home', 'facebook', 'livejournal', 'twitter', 'vk'];
-	const SUPPORTED_ICO = ['work', 'home', 'other'];
+	const SUPPORTED = new Set(['work', 'home', 'facebook', 'livejournal', 'twitter', 'vk']);
+	const SUPPORTED_ICO = new Set(['work', 'home', 'other']);
 
 	/**
 	 * @class WebField
@@ -41,7 +41,7 @@ jn.define('layout/ui/fields/web', (require, exports, module) => {
 
 		getImageUri({ valueLink, valueType })
 		{
-			if (isValidLink(valueLink) && SUPPORTED_ICO.includes(valueType))
+			if (isValidLink(valueLink) && SUPPORTED_ICO.has(valueType))
 			{
 				return `${URL(valueLink).origin}/favicon.ico`;
 			}
@@ -51,7 +51,7 @@ jn.define('layout/ui/fields/web', (require, exports, module) => {
 
 		static getImage({ valueType })
 		{
-			if (valueType && SUPPORTED.includes(valueType))
+			if (valueType && SUPPORTED.has(valueType))
 			{
 				return `${this.getExtensionPath()}/web/images/${valueType}.png`;
 			}
@@ -84,7 +84,7 @@ jn.define('layout/ui/fields/web', (require, exports, module) => {
 
 			if (!this.isValidUrl())
 			{
-				set(styles, ['value', 'color'], '#333333');
+				set(styles, ['value', 'color'], AppTheme.colors.base1);
 			}
 
 			return styles;
@@ -96,5 +96,4 @@ jn.define('layout/ui/fields/web', (require, exports, module) => {
 		WebFieldClass: WebField,
 		WebField: (props) => new WebField(props),
 	};
-
 });

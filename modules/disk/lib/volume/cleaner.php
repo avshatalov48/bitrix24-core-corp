@@ -1205,6 +1205,19 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			'limit' => self::MAX_FOLDER_PER_INTERACTION,
 		]);
 
+		if ($objectList->getSelectedRowsCount() == 0 && $isRootFolder)
+		{
+			$objectList = Disk\Internals\ObjectTable::getList([
+				'filter' => [
+					'=PARENT_ID' => $folder->getId(),
+				],
+				'order' => [
+					'ID' => 'ASC'
+				],
+				'limit' => self::MAX_FOLDER_PER_INTERACTION,
+			]);
+		}
+
 		$task = $this->instanceTask();
 
 		$task->setIterationFileCount($objectList->getSelectedRowsCount());

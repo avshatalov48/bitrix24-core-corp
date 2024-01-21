@@ -3,12 +3,13 @@
  */
 jn.define('crm/conversion/wizard/layouts/fields', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { sortBy } = require('utils/array');
 	const { getEntityMessage } = require('crm/loc');
-	const { BackdropHeader } = require('layout/ui/banners');
+	const { BackdropHeader, CreateBannerImage } = require('layout/ui/banners');
 	const { WizardFields } = require('crm/conversion/wizard/fields');
 
-	const EXTENSION_PATH = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/conversion/wizard/images/`;
+	const EXTENSION_IMAGE_PATH = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/conversion/wizard/images/`;
 
 	/**
 	 * @class ConversionWizardFieldsLayout
@@ -36,7 +37,7 @@ jn.define('crm/conversion/wizard/layouts/fields', (require, exports, module) => 
 				return View(
 					{
 						style: {
-							backgroundColor: '#ffffff',
+							backgroundColor: AppTheme.colors.bgContentPrimary,
 							borderRadius: 12,
 							marginBottom: 12,
 						},
@@ -51,7 +52,7 @@ jn.define('crm/conversion/wizard/layouts/fields', (require, exports, module) => 
 						},
 						Text({
 							style: {
-								color: '#525c69',
+								color: AppTheme.colors.base2,
 								fontSize: 14,
 							},
 							text: Loc.getMessage(
@@ -88,7 +89,6 @@ jn.define('crm/conversion/wizard/layouts/fields', (require, exports, module) => 
 				{
 					style: {
 						height: '100%',
-						backgroundColor: '#eef2f4',
 					},
 				},
 				View(
@@ -106,7 +106,13 @@ jn.define('crm/conversion/wizard/layouts/fields', (require, exports, module) => 
 								'MCRM_CONVERSION_WIZARD_LAYOUT_FIELDS_HEADER_DESCRIPTION',
 								entityTypeId,
 							),
-							image: `${EXTENSION_PATH}/step_fields.png`,
+							image: CreateBannerImage({
+								image: {
+									svg: {
+										uri: `${EXTENSION_IMAGE_PATH}/${AppTheme.id}/fields.svg`,
+									},
+								},
+							}),
 							position: 'flex-start',
 						}),
 					),

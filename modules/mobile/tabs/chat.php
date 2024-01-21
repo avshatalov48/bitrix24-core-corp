@@ -220,6 +220,7 @@ class Chat implements Tabable
 			"rootWidget" => [
 				"name" => "tabs",
 				"settings" => [
+					"code" => "im.tabs",
 					"objectName" => "tabs",
 					"titleParams"=> [
 						"text" => Loc::getMessage("TAB_NAME_IM_RECENT_FULL"),

@@ -17,8 +17,5 @@ $MESS['CRM_SETTINGS_POPUP_CALENDAR_DURATION_DAYS'] = 'дней';
 
 $MESS['CRM_SETTINGS_POPUP_SECTION_SWITCH'] = 'Включить';
 $MESS['CRM_SETTINGS_POPUP_SECTION_SWITCH_CALENDAR'] = 'Добавить в календарь';
-$MESS['CRM_SETTINGS_POPUP_SECTION_SWITCH_PING'] = 'Уведомления';
 
 $MESS['CRM_SETTINGS_POPUP_ERROR'] = 'Не удалось загрузить настройки дела, попробуйте ещё раз чуть позже';
-
-

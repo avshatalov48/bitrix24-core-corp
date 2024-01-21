@@ -7,6 +7,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Mail\Internal;
 use Bitrix\Main\Event;
+use Bitrix\Main\Mail\SenderSendCounter;
 use CIMNotify;
 
 class EventHandler
@@ -40,7 +41,10 @@ class EventHandler
 					"NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
 					"NOTIFY_MODULE" => "im",
 					"NOTIFY_TAG" => "IM_CONFIG_NOTICE",
-					"NOTIFY_MESSAGE" => Loc::getMessage('MAIN_MAIL_CALLBACK_LIMIT_NOTIFICATION'),
+					"NOTIFY_MESSAGE" => Loc::getMessage('MAIN_MAIL_CALLBACK_LIMIT_NOTIFICATION_MSGVER1', [
+						'#EMAIL#' => $email,
+						'#LIMIT#' => SenderSendCounter::DEFAULT_LIMIT,
+					]),
 				];
 				CIMNotify::Add($messageFields);
 			}

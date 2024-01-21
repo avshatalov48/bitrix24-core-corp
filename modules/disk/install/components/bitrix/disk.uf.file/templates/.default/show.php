@@ -213,7 +213,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 							}},
 							<? } ?>
 							<? if(!$arParams['DISABLE_LOCAL_EDIT']){ ?>
-							{text : BX.message('JS_CORE_VIEWER_SAVE_TO_OWN_FILES'), className : "bx-viewer-popup-item item-b24", href : "#", onclick: function(e){
+							{text : BX.message('JS_CORE_VIEWER_SAVE_TO_OWN_FILES_MSGVER_1'), className : "bx-viewer-popup-item item-b24", href : "#", onclick: function(e){
 								top.BX.UI.Viewer.Instance.runActionByNode(BX("disk-attach-<?=$file['ID']?>"), 'copyToMe');
 								BX.PopupMenu.currentItem.popupWindow.close();
 								return e.preventDefault();

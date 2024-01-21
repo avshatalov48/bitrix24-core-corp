@@ -133,7 +133,7 @@ final class FullTasksIndexer extends Stepper
 		{
 			$taskId = $task['ID'];
 
-			SearchIndex::setTaskSearchIndex($taskId, []);
+			SearchIndex::setTaskSearchIndex($taskId);
 
 			$params["number"]++;
 			$params["last_task_id"] = (int)$taskId;

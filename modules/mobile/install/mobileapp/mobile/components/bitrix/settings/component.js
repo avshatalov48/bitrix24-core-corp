@@ -143,6 +143,7 @@
 		},
 		init:function()
 		{
+			this.providers = [];
 			settings.setListener((event, item) => this.listener(event, item));
 
 			BX.onCustomEvent("onRegisterProvider", [ provider => this.addProvider(provider)]);
@@ -167,6 +168,6 @@
 		},
 	};
 
-	AppSettingsManager.init()
-
+	AppSettingsManager.init();
+	BX.addCustomEvent('onAppSettingsShouldRedraw', () => AppSettingsManager.init());
 })();

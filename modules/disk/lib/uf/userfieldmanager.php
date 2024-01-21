@@ -321,7 +321,12 @@ final class UserFieldManager implements IErrorable
 	private function getShowTemplate($params, $possibleTemplates)
 	{
 		$upperParams = array_change_key_case($params, CASE_UPPER);
-		$templateType = FileUserType::getTemplateType($upperParams);
+
+		$templateType = '';
+		if ($params['arUserField']['USER_TYPE_ID'] === FileUserType::USER_TYPE_ID)
+		{
+			$templateType = FileUserType::getTemplateType($upperParams);
+		}
 
 		if (($upperParams['MOBILE'] ?? null) === 'Y')
 		{

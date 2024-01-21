@@ -21,12 +21,20 @@ class Crm implements Tabable
 
 	public function isAvailable(): bool
 	{
-		if (!Loader::includeModule('crm') || !Loader::includeModule('crmmobile'))
+		if (
+			!Loader::includeModule('crm')
+			|| !Loader::includeModule('crmmobile')
+		)
 		{
 			return false;
 		}
 
 		if (Mobile::getApiVersion() < self::MINIMAL_API_VERSION)
+		{
+			return false;
+		}
+
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager()->checkCrmAvailability())
 		{
 			return false;
 		}
@@ -62,7 +70,6 @@ class Crm implements Tabable
 				'settings' => [
 					'objectName' => 'layout',
 					'useLargeTitleMode' => true,
-					'backgroundColor' => '#f5f7f8',
 				],
 			],
 			'params' => [],

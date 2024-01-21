@@ -20,18 +20,23 @@ jn.define('im/messenger/controller/sidebar/sidebar-rest-service', (require, expo
 
 		/**
 		 * @desc Rest call all participants ( by fulfilled state are updating store user model )
-		 * @param {number} [lastId=0]
 		 * @return {Promise<object>}
 		 */
-		getParticipantList(lastId = 0)
+		getParticipantList()
 		{
+			const dialogModel = this.store.getters['dialoguesModel/getById'](this.dialogId);
+			if (!dialogModel)
+			{
+				return new Promise().resolve(false);
+			}
+
 			return new Promise((resolve, reject) => {
 				BX.rest.callMethod(
 					RestMethod.imDialogUsersList,
 					{
 						DIALOG_ID: this.dialogId,
 						LIMIT: 50,
-						LAST_ID: lastId,
+						LAST_ID: dialogModel.lastLoadParticipantId,
 					},
 					(result) => {
 						if (result.error() || result.status !== 200)
@@ -45,12 +50,17 @@ jn.define('im/messenger/controller/sidebar/sidebar-rest-service', (require, expo
 						const data = result.data();
 						Logger.info('SidebarServices.getParticipantList:', result);
 
-						this.store.dispatch('usersModel/merge', data);
+						if (Array.isArray(data) && data.length > 0)
+						{
+							this.store.dispatch('usersModel/merge', data);
 
-						this.store.dispatch('dialoguesModel/addParticipants', {
-							dialogId: this.dialogId,
-							participants: data.map((user) => user.id),
-						});
+							this.store.dispatch('dialoguesModel/addParticipants', {
+								dialogId: this.dialogId,
+								participants: data.map((user) => user.id),
+								lastLoadParticipantId: data[data.length - 1].id,
+							});
+						}
+
 						resolve(data);
 					},
 				);
@@ -67,10 +77,10 @@ jn.define('im/messenger/controller/sidebar/sidebar-rest-service', (require, expo
 			const chatId = Type.isString(this.dialogId) ? Number(this.dialogId.slice(4)) : this.dialogId;
 
 			return BX.rest.callMethod(
-				RestMethod.imChatUserDelete,
+				RestMethod.imV2ChatDeleteUser,
 				{
-					user_id: userId,
-					chat_id: chatId,
+					id: chatId,
+					userId,
 				},
 			).then(
 				(result) => {
@@ -154,6 +164,11 @@ jn.define('im/messenger/controller/sidebar/sidebar-rest-service', (require, expo
 					if (result.error())
 					{
 						Logger.error(result.error());
+					}
+
+					if (Type.isNull(result.answer.result))
+					{
+						return '   ';
 					}
 
 					const data = result.data();

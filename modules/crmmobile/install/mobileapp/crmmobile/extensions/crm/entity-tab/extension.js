@@ -3,6 +3,7 @@
  */
 jn.define('crm/entity-tab', (require, exports, module) => {
 	const { Alert } = require('alert');
+	const AppTheme = require('apptheme');
 	const { magnifierWithMenuAndDot } = require('assets/common');
 	const { EmptyScreen } = require('layout/ui/empty-screen');
 	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
@@ -23,13 +24,13 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		getActionToShare,
 		getActionToConversion,
 	} = require('crm/entity-actions');
-	const { Filter } = require('crm/entity-tab/filter');
+	const { Filter } = require('layout/ui/kanban/filter');
 	const { PullManager } = require('crm/entity-tab/pull-manager');
 	const { TypeSort, ItemsSortManager } = require('crm/entity-tab/sort');
 	const { TypeFactory } = require('crm/entity-tab/type');
 	const { getEntityMessage } = require('crm/loc');
 	const { ActivityCountersStoreManager } = require('crm/state-storage');
-	const { Type, TypeId } = require('crm/type');
+	const { Type } = require('crm/type');
 
 	const PULL_MODULE_ID = 'crm';
 	const PULL_EVENT_NAME_ITEM_UPDATED = 'ITEMUPDATED';
@@ -81,7 +82,6 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			const currentCategoryId = this.getCurrentCategoryId();
 
 			this.category = currentCategoryId === null ? null : this.getCategoryFromCategoryStorage(currentCategoryId);
-			this.isEmptyAvailableCategories = false;
 			this.needReloadTab = !this.category;
 			this.categoryChangeAttempts = 0;
 			this.categoryChangeTimeoutId = null;
@@ -103,6 +103,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				isLoading: !this.category && currentCategoryId !== null,
 				searchButtonBackgroundColor: null,
 				forceRenderSwitcher: false,
+				isEmptyAvailableCategories: false,
 			};
 
 			/** @type {Filter} */
@@ -113,7 +114,6 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			this.deleteItemConfirm = this.deleteItemConfirmHandler.bind(this);
 			this.onSearchHandler = this.onSearch.bind(this);
 			this.onSearchHideHandler = this.onSearchHide.bind(this);
-			this.checkIsEmptyHandler = this.checkIsEmpty.bind(this);
 			this.showSearchBarHandler = this.showSearchBar.bind(this);
 			this.updateEntityTypesHandler = this.updateEntityTypes.bind(this);
 			this.onSetSortTypeHandler = this.onSetSortType.bind(this);
@@ -122,6 +122,14 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			this.onCategoryClose = this.onCategoryCloseHandler.bind(this);
 			this.showCategorySelector = this.showCategorySelector.bind(this);
 			this.onNotViewable = this.onNotViewableHandler.bind(this);
+			this.getEmptyListComponent = this.getEmptyListComponent.bind(this);
+			this.onEmptyScreenRefresh = this.onEmptyScreenRefresh.bind(this);
+			this.bindRef = this.bindRef.bind(this);
+			this.itemDetailOpenHandler = this.handleItemDetailOpen.bind(this);
+			this.onFloatingButtonClickHandler = this.handleFloatingButtonClick.bind(this);
+			this.onFloatingButtonLongClickHandler = this.handleFloatingButtonLongClick.bind(this);
+			this.onDetailCardUpdateHandler = this.onDetailCardUpdate.bind(this);
+			this.onDetailCardCreateHandler = this.onDetailCardCreate.bind(this);
 		}
 
 		componentWillReceiveProps(nextProps)
@@ -165,7 +173,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 					),
 				);
 			}).catch((err) => {
-				console.log(err);
+				console.error(err);
 				NotifyManager.showDefaultError();
 			});
 		}
@@ -181,17 +189,14 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 		componentDidMount()
 		{
-			BX.addCustomEvent('UI.StatefulList::onDrawList', this.checkIsEmptyHandler);
-			BX.addCustomEvent('UI.StatefulList::onDrawListFromAjax', this.checkIsEmptyHandler);
-			BX.addCustomEvent('Crm.EntityTab::onSearch', this.onSearchHandler);
-			BX.addCustomEvent('Crm.EntityTab::onSearchHide', this.onSearchHideHandler);
+			BX.addCustomEvent('UI.SearchBar::onSearch', this.onSearchHandler);
+			BX.addCustomEvent('UI.SearchBar::onSearchHide', this.onSearchHideHandler);
 			BX.addCustomEvent('Crm.CategoryList::onSelectedCategory', this.onSelectedCategory);
 			BX.addCustomEvent('Crm.CategoryDetail::onDeleteCategory', this.onCategoryDelete);
 			BX.addCustomEvent('Crm.CategoryDetail::onClose', this.onCategoryClose);
 
 			ActivityCountersStoreManager
-				.subscribe('activityCountersModel/setCounters', this.updateEntityTypesHandler)
-			;
+				.subscribe('activityCountersModel/setCounters', this.updateEntityTypesHandler);
 
 			CategoryStorage
 				.subscribeOnChange(() => this.applyCategoryStorageChanges())
@@ -208,18 +213,15 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 		componentWillUnmount()
 		{
-			BX.removeCustomEvent('UI.StatefulList::onDrawList', this.checkIsEmptyHandler);
-			BX.removeCustomEvent('UI.StatefulList::onDrawListFromAjax', this.checkIsEmptyHandler);
-			BX.removeCustomEvent('Crm.EntityTab::onSearch', this.onSearchHandler);
-			BX.removeCustomEvent('Crm.EntityTab::onSearchHide', this.onSearchHideHandler);
+			BX.removeCustomEvent('UI.SearchBar::onSearch', this.onSearchHandler);
+			BX.removeCustomEvent('UI.SearchBar::onSearchHide', this.onSearchHideHandler);
 
 			BX.removeCustomEvent('Crm.CategoryList::onSelectedCategory', this.onSelectedCategory);
 			BX.removeCustomEvent('Crm.CategoryDetail::onDeleteCategory', this.onCategoryDelete);
 			BX.removeCustomEvent('Crm.CategoryDetail::onClose', this.onCategoryClose);
 
 			ActivityCountersStoreManager
-				.unsubscribe('activityCountersModel/setCounters', this.updateEntityTypesHandler)
-			;
+				.unsubscribe('activityCountersModel/setCounters', this.updateEntityTypesHandler);
 		}
 
 		onSetSortType(sortType)
@@ -277,10 +279,8 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 			if (needChangeSearchIcon)
 			{
-				this.getCurrentStatefulList()
-					.setMenuButtons(this.getMenuButtons())
-					.initMenu()
-				;
+				this.getCurrentStatefulList().setMenuButtons(this.getMenuButtons());
+				this.getCurrentStatefulList().initMenu();
 			}
 		}
 
@@ -291,19 +291,27 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 		deleteRowFromListView(itemId)
 		{
-			this.getCurrentStatefulList().deleteRowFromListView({ itemId });
+			this.getCurrentStatefulList().deleteItem(itemId);
+		}
+
+		bindRef(ref)
+		{
+			if (ref)
+			{
+				this.viewComponent = ref;
+			}
 		}
 
 		onSearch(params)
 		{
-			const { entityTypeId, data, isCancel, counter } = params;
+			const { searchBarId, data, isCancel, counter } = params;
 
-			if (entityTypeId !== this.getCurrentEntityType().id)
+			if (searchBarId !== this.props.searchBarId)
 			{
 				return;
 			}
 
-			this.state.searchButtonBackgroundColor = data && data.background ? data.background : null;
+			this.state.searchButtonBackgroundColor = data?.background || null;
 
 			if (isCancel)
 			{
@@ -320,14 +328,14 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			this.setPresetFilter(params);
 		}
 
-		onSearchHide({ entityTypeId })
+		onSearchHide({ searchBarId })
 		{
-			if (entityTypeId !== this.getCurrentEntityType().id)
+			if (searchBarId !== this.props.searchBarId)
 			{
 				return;
 			}
 
-			if (this.getCurrentStatefulList().getSimpleList().getViewMode() === ViewMode.empty)
+			if (this.getCurrentStatefulList().getViewMode() === ViewMode.empty)
 			{
 				this.filter.unsetWasShown();
 				this.setState({
@@ -352,11 +360,10 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		{
 			const { id, code, excludeUsers } = params.counter;
 			const { text } = params;
-			const { filter } = this;
 
-			if (filter.currentFilterId === code && filter.search === text)
+			if (this.filter.isChecked(code) && this.filter.getSearchString() === text)
 			{
-				filter.clear();
+				this.filter.clear();
 			}
 
 			// @todo remove after creating view mode Activity in the mobile
@@ -364,7 +371,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			{
 				const assignedById = excludeUsers ? ASSIGNED_WITH_OTHER_USERS : env.userId;
 
-				filter.set({
+				this.filter.set({
 					counterId: code,
 					presetId: 'tmp_filter',
 					currentFilterId: code,
@@ -379,7 +386,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			{
 				const assignedById = excludeUsers ? ASSIGNED_WITH_OTHER_USERS : env.userId;
 
-				filter.set({
+				this.filter.set({
 					counterId: code,
 					presetId: 'tmp_filter',
 					currentFilterId: code,
@@ -391,13 +398,14 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				});
 			}
 
-			this.reload(this.getReloadParamsByFilter());
+			this.reload(this.getReloadParamsByFilter(params));
 		}
 
 		setPresetFilter(params)
 		{
 			const { preset, text } = params;
 			const presetId = preset ? preset.id : 'tmp_filter';
+
 			this.filter.set({
 				presetId,
 				search: text,
@@ -406,32 +414,17 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				tmpFields: {},
 			});
 
-			this.reload(this.getReloadParamsByFilter());
+			this.reload(this.getReloadParamsByFilter(params));
 		}
 
-		getReloadParamsByFilter()
+		getReloadParamsByFilter({ isCancel = false } = {})
 		{
 			return {
 				skipFillSlides: true,
 				menuButtons: this.getMenuButtons(),
 				force: true,
-				forcedShowSkeleton: true,
+				filterCancelled: isCancel,
 			};
-		}
-
-		checkIsEmpty(data)
-		{
-			const { blockPage, items, params } = data;
-
-			if (
-				blockPage !== 1
-				|| (params.extra && params.extra.filterParams && params.extra.filterParams.stageId)
-			)
-			{
-				return;
-			}
-
-			this.isEmpty = items.length === 0;
 		}
 
 		reload(params = {})
@@ -444,7 +437,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			return {
 				resizableByKeyboard: true,
 				style: {
-					backgroundColor: '#f5f7f8',
+					backgroundColor: AppTheme.colors.bgNavigation,
 					flex: 1,
 				},
 			};
@@ -502,14 +495,13 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			const counters = this.getCounters();
 			const hasCounter = counters
 				.filter((counter) => !counter.excludeUsers)
-				.some((counter) => counter.value > 0)
-			;
+				.some((counter) => counter.value > 0);
 
 			return {
 				content: magnifierWithMenuAndDot(
-					'#a8adb4',
+					AppTheme.colors.base4,
 					this.state.searchButtonBackgroundColor,
-					hasCounter ? '#ff5752' : null,
+					hasCounter ? AppTheme.colors.accentMainAlert : null,
 				),
 			};
 		}
@@ -518,13 +510,13 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		{
 			const entityType = this.getCurrentEntityType();
 
-			let presetId = this.filter.presetId;
-			if (!presetId && !this.filter.wasShown)
+			let presetId = this.filter.getPresetId();
+			if (!presetId && !this.filter.isActive())
 			{
 				presetId = entityType.data.presetId;
 			}
 
-			const counterId = this.filter.counterId;
+			const counterId = this.filter.getCounterId();
 			if (counterId)
 			{
 				presetId = null;
@@ -533,22 +525,17 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			this.filter.set({
 				presetId,
 				counterId,
-				search: this.filter.search,
+				search: this.filter.getSearchString(),
 			}).setWasShown();
 
-			BX.postComponentEvent('Crm.EntityTab::onSearchShow', [
+			BX.postComponentEvent('UI.SearchBar::show', [
 				{
 					presetId,
 					counterId,
-					search: this.filter.search,
-					entityTypeId: entityType.id,
+					search: this.filter.getSearchString(),
+					searchBarId: this.props.searchBarId,
 				},
 			]);
-		}
-
-		getAdditionalParamsForItem()
-		{
-			return {};
 		}
 
 		/**
@@ -558,51 +545,89 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		{
 			const actionParams = clone(this.props.actionParams);
 			actionParams.loadItems.extra = actionParams.loadItems.extra || {};
+			actionParams.loadItems.extra.filterParams = actionParams.loadItems.extra.filterParams || {};
 
 			const categoryId = this.getCategoryId();
 			if (Number.isInteger(categoryId))
 			{
-				actionParams.loadItems.extra.filterParams = actionParams.loadItems.extra.filterParams || {};
 				actionParams.loadItems.extra.filterParams.CATEGORY_ID = categoryId;
 			}
 
 			const entityType = this.getCurrentEntityType();
 			const { presetId } = entityType.data;
 
-			this.filter.prepareActionParams(actionParams, presetId);
+			if (this.filter.hasSearchText())
+			{
+				actionParams.loadItems.extra.search = this.filter.getSearchString();
+			}
+
+			if (this.filter.getPresetId())
+			{
+				actionParams.loadItems.extra.filterParams.FILTER_PRESET_ID = this.filter.getPresetId();
+				actionParams.loadItems.extra.filter = this.filter.getData();
+			}
+			else if (this.filter.isActive())
+			{
+				actionParams.loadItems.extra.filterParams.FILTER_PRESET_ID = this.filter.getEmptyFilterPresetId();
+			}
+			else
+			{
+				actionParams.loadItems.extra.filterParams.FILTER_PRESET_ID = (
+					presetId || this.filter.getEmptyFilterPresetId()
+				);
+			}
 
 			return actionParams;
 		}
 
-		getEmptyListComponent(params = null)
+		/**
+		 * @return {boolean}
+		 */
+		isActiveSearch()
 		{
-			if (params === null)
-			{
-				const model = this.getEntityTypeModel();
-				const { searchRef } = this.props;
+			const { searchRef } = this.props;
 
-				if (
-					this.filter.isActive()
-					|| this.filter.hasSearchText()
-					|| this.filter.hasSelectedNotDefaultPreset(searchRef)
-				)
-				{
-					params = model.getEmptySearchScreenConfig();
-				}
-				else
-				{
-					params = this.isEmpty
-						? model.getEmptyEntityScreenConfig()
-						: this.getEmptyColumnScreenConfig(model)
-					;
-				}
+			return Boolean(this.filter.isActive()
+				|| this.filter.hasSearchText()
+				|| this.filter.hasSelectedNotDefaultPreset(searchRef));
+		}
+
+		/**
+		 * @return {EmptyScreen}
+		 */
+		getEmptyListComponent()
+		{
+			return new EmptyScreen({
+				...this.getEmptyScreenProps(),
+				onRefresh: this.onEmptyScreenRefresh,
+			});
+		}
+
+		onEmptyScreenRefresh()
+		{
+			this.getCurrentStatefulList().reloadList();
+		}
+
+		/**
+		 * @return {EmptyScreen}
+		 */
+		getEmptyScreenProps()
+		{
+			let emptyScreenParams = {};
+			const model = this.getEntityTypeModel();
+
+			if (this.isActiveSearch())
+			{
+				emptyScreenParams = model.getEmptySearchScreenConfig();
+			}
+			else
+			{
+				emptyScreenParams = this.isAllStagesDisplayed()
+					? model.getEmptyEntityScreenConfig()
+					: this.getEmptyColumnScreenConfig(model);
 			}
 
-			params.onRefresh = () => {
-				this.getCurrentStatefulList().getSimpleList().reloadList();
-			};
-
-			return new EmptyScreen(params);
+			return emptyScreenParams;
 		}
 
 		getEmptyColumnScreenConfig(model)
@@ -643,34 +668,26 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			return {
 				moduleId: PULL_MODULE_ID,
 				callback: (data, context) => {
-					if (
-						this.isWrongPullContext(context)
-						// currently eventId support only in deleted events
-						// || (data.params.eventName === PULL_EVENT_NAME_ITEM_DELETED && !data.params.eventId)
-					)
-					{
-						return Promise.reject();
-					}
+					console.log('handle pull', data, context);
 
 					return new Promise((resolve, reject) => {
 						if (this.isNeedProcessPull(data, context))
 						{
 							const { item, eventName } = data.params;
 							const oldItem = this.getCurrentStatefulList().getItemComponent(item.id);
-							const viewComponent = this.getViewComponent();
 
 							// update item column
 							if (
 								eventName === PULL_EVENT_NAME_ITEM_UPDATED
 								&& this.hasColumnChangesInItem(item, oldItem)
 								&& this.hasItemInCurrentColumn(item.data.id)
-								&& !this.isCurrentSlideName(item.data.columnId, context.slideName)
+								&& !this.isCurrentStage(item.data.columnId)
 							)
 							{
 								let action;
 
 								// update columnId in AllStages column
-								if (viewComponent.getSlideName() === context.slideName)
+								if (this.isAllStagesDisplayed())
 								{
 									action = 'update';
 									this.updateItemColumn(item.id, item.data.columnId);
@@ -679,7 +696,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 								else
 								{
 									action = 'delete';
-									viewComponent.deleteItemFromStatefulList(item.id);
+									this.getViewComponent().deleteItemFromStatefulList(item.id);
 								}
 
 								BX.postComponentEvent('UI.Kanban::onItemMoved', [
@@ -720,11 +737,6 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			};
 		}
 
-		isWrongPullContext(context = {})
-		{
-			return false;
-		}
-
 		/**
 		 * @param {Object} data
 		 * @param {Object} context
@@ -737,13 +749,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 		hasColumnChangesInItem(item, oldItem)
 		{
-			const viewComponent = this.getViewComponent();
-
-			return (
-				oldItem
-				&& oldItem.state.columnId
-				&& oldItem.state.columnId !== viewComponent.getColumnIdByName(item.data.columnId)
-			);
+			this.abstract();
 		}
 
 		/**
@@ -752,10 +758,15 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		 */
 		getPullCommand(prefix)
 		{
-			const { entityTypeName } = this.props;
-			const categoryId = this.getCategoryId();
+			const { entityTypeId, entityTypeName } = this.props;
+			const entityType = this.getEntityType(entityTypeId);
 
-			return `${prefix}_${entityTypeName}_${categoryId}`;
+			const isCategoriesSupported = entityType && entityType.isCategoriesSupported;
+			const isContact = entityTypeName && entityTypeName === 'CONTACT';
+
+			return (isCategoriesSupported || isContact)
+				? `${prefix}_${entityTypeName}_${this.getCategoryId()}`
+				: `${prefix}_${entityTypeName}`;
 		}
 
 		/**
@@ -772,7 +783,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			this.abstract();
 		}
 
-		isCurrentSlideName(itemColumnId, slideName)
+		isCurrentStage(stageCode)
 		{
 			this.abstract();
 		}
@@ -1091,8 +1102,8 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		{
 			const actions = this.entityTypes.map((item) => {
 				const entityName = Type.getCamelizedEntityTypeName(item.typeName);
-				const svgIcon = EntitySvg[entityName] ? EntitySvg[entityName]('#6a737f') : null;
-				let svgIconAfter;
+				const svgIcon = EntitySvg[entityName] ? EntitySvg[entityName](AppTheme.colors.base3) : null;
+				let svgIconAfter = null;
 
 				if (!item.selectable)
 				{
@@ -1364,9 +1375,8 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		}
 
 		/**
-		 *
-		 * @param {Object} params
-		 * @returns {null|Object}
+		 * @param {Object} [params]
+		 * @returns {null|Base}
 		 */
 		getEntityTypeModel(params = {})
 		{
@@ -1374,6 +1384,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			params.categoriesCount = this.getCurrentEntityType().data.categoriesCount || 0;
 			params.userInfo = this.props.userInfo;
 			params.isChatSupported = this.getCurrentEntityType().isChatSupported;
+			params.reminders = this.getCurrentEntityType().data.reminders;
 
 			return TypeFactory.getEntityByType(this.entityTypeName, params);
 		}
@@ -1464,19 +1475,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 		scrollToTop()
 		{
-			this.abstract();
-		}
-
-		scrollSimpleListToTop(simpleList)
-		{
-			if (simpleList)
-			{
-				const listView = simpleList.listView;
-				if (listView)
-				{
-					listView.scrollToBegin(true);
-				}
-			}
+			this.getCurrentStatefulList().scrollToTop();
 		}
 
 		getDefaultPresetId()
@@ -1494,7 +1493,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 		onSelectedCategoryHandler(category, entityTypeId)
 		{
-			if (this.state.categoryId !== category.id && this.props.entityTypeId === entityTypeId)
+			if (this.state.categoryId !== category.categoryId && this.props.entityTypeId === entityTypeId)
 			{
 				this.changeCategory(category);
 			}
@@ -1515,7 +1514,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				clearTimeout(this.categoryChangeTimeoutId);
 			}
 
-			const desiredCategoryId = category ? category.id : null;
+			const desiredCategoryId = category ? category.categoryId : null;
 
 			const promise = this.category ? new Promise((resolve) => {
 				this.setIsLoading().then(resolve);
@@ -1530,7 +1529,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		{
 			return new Promise((resolve) => {
 				const entityType = this.getCurrentEntityType();
-				const categoryId = category ? category.id : -1;
+				const categoryId = category ? category.categoryId : -1;
 
 				if (entityType.needSaveCurrentCategoryId)
 				{
@@ -1650,7 +1649,6 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		{
 			this.filter = new Filter(this.getDefaultPresetId());
 			this.category = category;
-			this.isEmpty = true;
 			this.floatingButtonMenu = null;
 			let needInitMenu = true;
 
@@ -1759,12 +1757,16 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		{
 			const { CategoryListView } = await requireLazy('crm:category-list-view');
 
-			CategoryListView.open({
-				entityTypeId: entityType.id,
-				currentCategoryId: categoryId,
-				selectAction: CategorySelectActions.SelectCurrentCategory,
-				needSaveCurrentCategoryId: entityType.needSaveCurrentCategoryId,
-			});
+			CategoryListView.open(
+				{
+					entityTypeId: entityType.id,
+					currentCategoryId: categoryId,
+					selectAction: CategorySelectActions.SelectCurrentCategory,
+					needSaveCurrentCategoryId: entityType.needSaveCurrentCategoryId,
+				},
+				{},
+				this.props.layout,
+			);
 		}
 
 		onNotViewableHandler()
@@ -1883,6 +1885,13 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 			return true;
 		}
+
+		/**
+		 * @abstract
+		 * @return {boolean}
+		 */
+		isAllStagesDisplayed()
+		{}
 	}
 
 	const openEntitySvg = '<svg width="17" height="21" viewBox="0 0 17 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.4234 17.7238C14.4234 17.8825 14.2934 18.01 14.1346 18.01H2.56338C2.40338 18.01 2.27463 17.8825 2.27463 17.7238V2.2875C2.27463 2.13 2.40338 2.00125 2.56338 2.00125H8.05963C8.21963 2.00125 8.34838 2.13 8.34838 2.2875V7.72C8.34838 7.8775 8.47838 8.005 8.63838 8.005H14.1346C14.2934 8.005 14.4234 8.13375 14.4234 8.29125V17.7238ZM10.3734 3.09C10.3734 3.0325 10.4221 2.98375 10.4821 2.98375C10.5109 2.98375 10.5384 2.995 10.5584 3.015L13.3984 5.82125C13.4409 5.8625 13.4409 5.93 13.3984 5.9725C13.3771 5.9925 13.3509 6.00375 13.3209 6.00375H10.4821C10.4221 6.00375 10.3734 5.955 10.3734 5.89625V3.09ZM16.0234 5.585L10.6909 0.31375C10.4884 0.11375 10.2121 0 9.92338 0H1.33463C0.734634 0 0.249634 0.48 0.249634 1.0725V18.94C0.249634 19.5313 0.734634 20.0113 1.33463 20.0113H15.3634C15.9609 20.0113 16.4471 19.5313 16.4471 18.94V6.59625C16.4471 6.21625 16.2946 5.8525 16.0234 5.585ZM12.0359 10.0063H4.65963C4.46088 10.0063 4.29838 10.1663 4.29838 10.3638V11.65C4.29838 11.8463 4.46088 12.0075 4.65963 12.0075H12.0359C12.2359 12.0075 12.3984 11.8463 12.3984 11.65V10.3638C12.3984 10.1663 12.2359 10.0063 12.0359 10.0063ZM4.73338 8.005H5.88963C6.12963 8.005 6.32338 7.8125 6.32338 7.575V6.4325C6.32338 6.195 6.12963 6.00375 5.88963 6.00375H4.73338C4.49338 6.00375 4.29838 6.195 4.29838 6.4325V7.575C4.29838 7.8125 4.49338 8.005 4.73338 8.005ZM12.0359 14.0087H4.65963C4.46088 14.0087 4.29838 14.1675 4.29838 14.365V15.6525C4.29838 15.8488 4.46088 16.01 4.65963 16.01H12.0359C12.2359 16.01 12.3984 15.8488 12.3984 15.6525V14.365C12.3984 14.1675 12.2359 14.0087 12.0359 14.0087Z" fill="#6a737f"/></svg>';

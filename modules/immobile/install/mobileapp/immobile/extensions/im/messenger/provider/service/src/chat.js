@@ -6,6 +6,7 @@ jn.define('im/messenger/provider/service/chat', (require, exports, module) => {
 	const { LoadService } = require('im/messenger/provider/service/classes/chat/load');
 	const { ReadService } = require('im/messenger/provider/service/classes/chat/read');
 	const { MuteService } = require('im/messenger/provider/service/classes/chat/mute');
+	const { ParticipantService } = require('im/messenger/provider/service/classes/chat/participant');
 
 	/**
 	 * @class ChatService
@@ -39,13 +40,22 @@ jn.define('im/messenger/provider/service/chat', (require, exports, module) => {
 		}
 
 		/**
+		 * @return {Promise}
+		 */
+		joinChat(dialogId)
+		{
+			return this.participantService.joinChat(dialogId);
+		}
+
+		/**
 		 * @private
 		 */
 		initServices()
 		{
-			this.loadService = new LoadService(this.store);
-			this.readService = new ReadService(this.store);
-			this.muteService = new MuteService(this.store);
+			this.loadService = new LoadService();
+			this.readService = new ReadService();
+			this.muteService = new MuteService();
+			this.participantService = new ParticipantService()
 		}
 	}
 

@@ -23,6 +23,8 @@ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Crm\Activity\FastSearch;
+use Bitrix\Crm\Activity\Provider;
 
 class CAllCrmActivity
 {
@@ -157,6 +159,10 @@ class CAllCrmActivity
 		}
 
 		self::getInstance()->normalizeEntityFields($arFields);
+
+		$arFields['OWNER_ID'] = (int)$arFields['OWNER_ID'];
+		$arFields['OWNER_TYPE_ID'] = (int)$arFields['OWNER_TYPE_ID'];
+
 		$ID = $DB->Add(
 			CCrmActivity::TABLE_NAME,
 			$arFields,
@@ -337,6 +343,10 @@ class CAllCrmActivity
 			}
 		}
 		\Bitrix\Crm\Counter\Monitor::getInstance()->onActivityAdd($arFields, $arBindings, $lightTimeDate);
+
+		FastSearch\Sync\Monitor::getInstance()->onActivityAdd(
+			FastSearch\Sync\ActivityChangeSet::build(null, $arFields)
+		);
 		// <-- Synchronize user activity
 
 		$provider = self::GetActivityProvider($arFields);
@@ -876,6 +886,10 @@ class CAllCrmActivity
 			$lightTimeDate
 		);
 
+		FastSearch\Sync\Monitor::getInstance()->onActivityUpdate(
+			FastSearch\Sync\ActivityChangeSet::build($arPrevEntity, $arCurEntity)
+		);
+
 		if($regEvent)
 		{
 			foreach($arBindings as $arBinding)
@@ -1275,6 +1289,8 @@ class CAllCrmActivity
 		{
 			\Bitrix\Crm\Counter\Monitor::getInstance()->onActivityDelete($ary, $arBindings, $oldLightTimeDate);
 		}
+
+		FastSearch\Sync\Monitor::getInstance()->onActivityDelete($ID, $ary);
 
 		\Bitrix\Crm\Ml\Scoring::onActivityDelete($ID);
 
@@ -2210,13 +2226,46 @@ class CAllCrmActivity
 
 	/**
 	 * @param array $activity - Activity fields.
-	 * @return null|\Bitrix\Crm\Activity\Provider\Base
+	 * @return null|Provider\Base
 	 */
 	public static function GetActivityProvider(array $activity)
 	{
-		$provider = !empty($activity['PROVIDER_ID']) ? self::GetProviderById($activity['PROVIDER_ID']) : null;
+		return self::activityProvider($activity);
+	}
+
+	/**
+	 * return activity provider even if is disabled
+	 * @param array $activity
+	 * @return Provider\Base|null
+	 */
+	public static function GetActivityProviderSafelyByDisabled(array $activity)
+	{
+		return self::activityProvider($activity, true);
+	}
+
+	/**
+	 * @param array $activity
+	 * @param bool $withInactiveProviders
+	 * @return Provider\Base|null
+	 */
+	private static function activityProvider(array $activity, bool $withInactiveProviders = false)
+	{
+		$providerId = $activity['PROVIDER_ID'] ?? null;
+
+		if ($withInactiveProviders)
+		{
+			$provider = $providerId ? self::GetProviderByIdSafelyByDisabled($providerId) : null;
+		}
+		else
+		{
+			$provider = $providerId ? self::GetProviderById($providerId) : null;
+		}
+
 		if ($provider === null && !empty($activity['TYPE_ID']))
+		{
 			$provider = self::GetProviderByType($activity['TYPE_ID']);
+		}
+
 		return $provider;
 	}
 
@@ -2228,6 +2277,18 @@ class CAllCrmActivity
 	{
 		$providerId = (string) $providerId;
 		$providers = static::GetProviders();
+
+		return array_key_exists($providerId, $providers) ? $providers[$providerId] : null;
+	}
+
+	/**
+	 * return activity provider even if is disabled
+	 * @param string $providerId Provider id.
+	 * @return null|\Bitrix\Crm\Activity\Provider\Base
+	 */
+	public static function GetProviderByIdSafelyByDisabled(string $providerId)
+	{
+		$providers = Provider\ProviderManager::getAllProviders();
 
 		return array_key_exists($providerId, $providers) ? $providers[$providerId] : null;
 	}
@@ -4944,14 +5005,20 @@ class CAllCrmActivity
 				break;
 			}
 
-			$connection->queryExecute(/** @lang MySQL */
-				"UPDATE b_crm_act a1 INNER JOIN (SELECT ACTIVITY_ID, OWNER_ID, OWNER_TYPE_ID FROM b_crm_act_bind b1
+			$connection->queryExecute($connection->getSqlHelper()->prepareCorrelatedUpdate(
+				'b_crm_act',
+				'a1',
+				[
+					'OWNER_ID' => 'a2.OWNER_ID',
+					'OWNER_TYPE_ID' => 'a2.OWNER_TYPE_ID',
+				],
+				"(SELECT ACTIVITY_ID, OWNER_ID, OWNER_TYPE_ID FROM b_crm_act_bind b1
 					INNER JOIN (SELECT MIN(ID) ID FROM b_crm_act_bind
 						WHERE ACTIVITY_ID IN ({$conditionSql}) GROUP BY ACTIVITY_ID
 					) b2 ON b1.ID = b2.ID
-				) a2 ON a1.ID = a2.ACTIVITY_ID
-				SET a1.OWNER_ID = a2.OWNER_ID, a1.OWNER_TYPE_ID = a2.OWNER_TYPE_ID"
-			);
+				) a2",
+				'a1.ID = a2.ACTIVITY_ID'
+			));
 
 			foreach ($existedActivityIds as $existedActivityId)
 			{

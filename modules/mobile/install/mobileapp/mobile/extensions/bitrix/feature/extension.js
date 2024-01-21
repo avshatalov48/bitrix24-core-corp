@@ -20,11 +20,6 @@ jn.define('feature', (require, exports, module) => {
 			return minApiVersion(47, 'isGridViewSupported');
 		}
 
-		static isImageSupportsSuccessCallback()
-		{
-			return minApiVersion(47, 'isImageSupportsSuccessCallback');
-		}
-
 		static isKeyboardEventsSupported()
 		{
 			return minApiVersion(48, 'isKeyboardEventsSupported');
@@ -64,7 +59,7 @@ jn.define('feature', (require, exports, module) => {
 
 		static isPreventBottomSheetDismissSupported()
 		{
-			return Application.getApiVersion() >= 50;
+			return minApiVersion(52, 'isPreventBottomSheetDismissSupported');
 		}
 
 		static showDefaultUnsupportedWidget(props = {}, parentWidget = PageManager)
@@ -75,6 +70,11 @@ jn.define('feature', (require, exports, module) => {
 		static canChangeAudioDevice()
 		{
 			return minApiVersion(52, 'canChangeAudioDevice');
+		}
+
+		static isToastSupported()
+		{
+			return minApiVersion(52, 'isToastSupported') && Boolean(require('native/notify'));
 		}
 	}
 

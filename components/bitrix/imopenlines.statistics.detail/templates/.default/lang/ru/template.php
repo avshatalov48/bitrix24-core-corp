@@ -13,4 +13,5 @@ $MESS['OL_STAT_EXCEL_EXPORT_POPUP_BTN_STOP'] = 'Остановить';
 $MESS['OL_STAT_EXCEL_EXPORT_POPUP_BTN_CLOSE'] = 'Закрыть';
 $MESS['OL_STAT_EXCEL_EXPORT_POPUP_WAIT'] = 'Пожалуйста, подождите...';
 $MESS['OL_STAT_EXCEL_EXPORT_POPUP_REQUEST_ERR'] = 'При выполнении запроса произошла ошибка.';
+$MESS['OL_STAT_META_RESTRICTION_RU'] = "* Принадлежит компании Meta, признанной экстремистской организацией и запрещённой на территории РФ";
 ?>

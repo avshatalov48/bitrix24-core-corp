@@ -56,9 +56,9 @@ export default class Menu
 		Options.isExtranet = params.isExtranet === 'Y';
 		Options.isAdmin = params.isAdmin;
 		Options.isCustomPresetRestricted = params.isCustomPresetAvailable !== 'Y';
+		Options.availablePresetTools = params.availablePresetTools;
 
 		this.isCollapsedMode = params.isCollapsedMode;
-
 		this.workgroupsCounterData = params.workgroupsCounterData;
 
 		this.initAndBindNodes();
@@ -587,7 +587,18 @@ export default class Menu
 					}
 				}
 			});
+
+			menuItems.push({
+				html: Loc.getMessage('MENU_EDIT_TOOLS'),
+				onclick: () => {
+					BX.SidePanel.Instance.open('/settings/configs/', {
+						allowChangeHistory: false,
+						width: 1034,
+					});
+				},
+			});
 		}
+
 		return menuItems.filter((value) => {return value !== null;})
 	}
 

@@ -3,7 +3,6 @@
 return [
 	'extensions' => [
 		'event-emitter',
-
 		'layout/ui/product-grid/components/discount-price',
 		'layout/ui/product-grid/components/hint',
 		'layout/ui/product-grid/components/inline-sku-tree',
@@ -26,6 +25,7 @@ return [
 		'layout/ui/floating-button',
 		'loc',
 		'utils/prop',
+		'utils/random',
 		'animation/components/fade-view',
 	],
 ];

@@ -1,4 +1,7 @@
 (() => {
+	const require = (ext) => jn.require(ext);
+	const AppTheme = require('apptheme');
+
 	class BaseButton extends LayoutComponent
 	{
 		animate(options)
@@ -21,47 +24,64 @@
 			return View(
 				{
 					style: {
-						...{
-							flexDirection: 'row',
-							justifyContent: 'center',
-							height: rounded ? 48 : 52,
-							borderRadius: rounded ? 24 : 0,
-						},
+						flexDirection: 'row',
+						justifyContent: 'center',
+						height: rounded ? 48 : 52,
+						borderRadius: rounded ? 24 : 0,
 						...this.getStyle().button,
-						...(style.button || {}),
+						...style.button,
 					},
 					testId,
-					ref: (ref) => this.buttonRef = ref,
-					onClick: onClick,
+					ref: (ref) => {
+						this.buttonRef = ref;
+					},
+					onClick,
 				},
-				(icon && Image({
-					style: {
-						...{
-							width: 28,
-							height: 28,
-							alignSelf: 'center',
-						},
-						...this.getStyle().icon,
-						...(style.icon || {}),
-					},
-					svg: {
-						content: icon,
-					},
-				})),
+				this.renderIcon(),
 				Text({
 					style: {
-						...{
-							fontWeight: 'bold',
-							fontSize: 15,
-							ellipsize: 'end',
-							numberOfLines: 1,
-						},
+						fontWeight: 'bold',
+						fontSize: 15,
+						ellipsize: 'end',
+						numberOfLines: 1,
 						...this.getStyle().text,
-						...(style.text || {}),
+						...style.text,
 					},
 					text,
 				}),
 			);
+		}
+
+		renderIcon()
+		{
+			const { icon, style } = this.props;
+
+			if (!icon)
+			{
+				return null;
+			}
+
+			const iconStyle = style.icon || {};
+			const { tintColor, ...restStyle } = iconStyle;
+			const imageProps = {
+				style: {
+					width: 28,
+					height: 28,
+					alignSelf: 'center',
+					...this.getStyle().icon,
+					...restStyle,
+				},
+				svg: {
+					content: icon,
+				},
+			};
+
+			if (tintColor)
+			{
+				imageProps.tintColor = tintColor;
+			}
+
+			return Image(imageProps);
 		}
 
 		isRounded()

@@ -1,16 +1,17 @@
+import { Type, ajax as Ajax, type JsonObject } from 'main.core';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
+
 import ReleaseSlider from './release-slider';
 import ReleaseEar from './release-ear';
-import { Type, ajax as Ajax } from 'main.core';
-import type { BaseEvent } from 'main.core.events';
 
 export default class Release
 {
 	#deactivated = false;
 	#id: string = '';
 
-	constructor(options)
+	constructor(releaseOptions: JsonObject)
 	{
-		options = Type.isPlainObject(options) ? options : {};
+		const options = Type.isPlainObject(releaseOptions) ? releaseOptions : {};
 
 		if (!Type.isStringFilled(options.url))
 		{
@@ -34,6 +35,20 @@ export default class Release
 				onClick: this.#handleEarClick.bind(this),
 			},
 		});
+
+		EventEmitter.subscribe('SidePanel.Slider:onOpen', () => {
+			this.getEar().hide();
+		});
+
+		const onClose = () => {
+			if (BX.SidePanel.Instance.getOpenSlidersCount() === 0)
+			{
+				this.getEar().show(true);
+			}
+		};
+
+		EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', onClose);
+		EventEmitter.subscribe('SidePanel.Slider:onDestroy', onClose);
 	}
 
 	show(mode = 'ear'): void
@@ -45,7 +60,10 @@ export default class Release
 		}
 		else
 		{
-			this.getEar().show();
+			if (BX.SidePanel.Instance.getOpenSlidersCount() === 0)
+			{
+				this.getEar().show();
+			}
 		}
 	}
 
@@ -64,25 +82,30 @@ export default class Release
 		return Ajax.runComponentAction('bitrix:intranet.bitrix24.release', action, {
 			mode: 'class',
 			data,
-			analyticsLabel: Object.assign({
+			analyticsLabel: {
 				module: 'intranet',
 				service: this.#id,
-				action: action,
-			}, labels),
-		})
+				action,
+				...labels,
+			},
+		});
 	}
 
 	#handleSliderClose(): void
 	{
-		this.getEar().show(true);
-		this.#runAction('close');
+		if (BX.SidePanel.Instance.getOpenSlidersCount() === 0)
+		{
+			this.getEar().show(true);
+		}
+
+		void this.#runAction('close');
 	}
 
 	#handleEarClick(): void
 	{
 		this.getEar().hide();
 		this.getSlider().show();
-		this.#runAction('show', { context: 'ear-click' });
+		void this.#runAction('show', { context: 'ear-click' });
 	}
 
 	#handleFrameMessage(event: BaseEvent): void
@@ -101,12 +124,9 @@ export default class Release
 			});
 		}
 
-		if (message.command === 'openHelper')
+		if (message.command === 'openHelper' && BX.Helper)
 		{
-			if (BX.Helper)
-			{
-				BX.Helper.show(message.options);
-			}
+			BX.Helper.show(message.options);
 		}
 	}
 }

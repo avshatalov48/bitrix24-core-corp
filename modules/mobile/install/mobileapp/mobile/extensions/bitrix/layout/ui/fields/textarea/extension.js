@@ -64,18 +64,12 @@ jn.define('layout/ui/fields/textarea', (require, exports, module) => {
 						flexDirection: 'column',
 						minHeight: this.state.height ? 20 : 1,
 						height: 'auto',
-					}
-				},
-				View(
-					{
-						style: {
-							flexDirection: 'row',
-							flexGrow: 2,
-						},
-						interactable: Application.getPlatform() !== 'ios' && this.state.focus && !this.state.showAll
 					},
-					TextInput(this.getFieldInputProps()),
-				),
+				},
+				new TextInputHeightFixer({
+					interactable: Application.getPlatform() !== 'ios' && this.state.focus && !this.state.showAll,
+					textInput: this.getFieldInputProps(),
+				}),
 				this.renderShowAllButton(1),
 				this.renderHideButton(),
 			);
@@ -89,6 +83,57 @@ jn.define('layout/ui/fields/textarea', (require, exports, module) => {
 				multiline: (this.props.multiline || true),
 				onSubmitEditing: this.getConfig().onSubmitEditing,
 			};
+		}
+	}
+
+	// todo We use this hack because of bug with native TextInput height calculation
+	class TextInputHeightFixer extends LayoutComponent
+	{
+		constructor(props)
+		{
+			super(props);
+
+			this.state = {
+				height: undefined,
+			};
+
+			this.initialRender = true;
+
+			this.onLayout = this.onLayout.bind(this);
+		}
+
+		render()
+		{
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+						flexGrow: 2,
+						height: Application.getPlatform() === 'ios' ? this.state.height : 'auto',
+					},
+					interactable: this.props.interactable,
+				},
+				TextInput({
+					...this.props.textInput,
+					onLayout: this.onLayout,
+				}),
+			);
+		}
+
+		onLayout({ height })
+		{
+			if (this.initialRender)
+			{
+				this.initialRender = false;
+				this.setState({ height });
+
+				return;
+			}
+
+			if (this.state.height !== 'auto')
+			{
+				this.setState({ height: 'auto' });
+			}
 		}
 	}
 

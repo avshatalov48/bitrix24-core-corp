@@ -1,6 +1,7 @@
 import {Tag, Loc, Type, Dom, ajax} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import Options from './options';
+
 type ThemePickerData = {
 	id: string,
 	lightning: ?string,

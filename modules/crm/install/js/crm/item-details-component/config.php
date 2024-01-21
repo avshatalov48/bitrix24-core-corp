@@ -8,14 +8,14 @@ return [
 	'css' => 'src/item-details-component.css',
 	'js' => 'dist/item-details-component.bundle.js',
 	'rel' => [
+		'crm.messagesender',
+		'crm.stage-model',
 		'main.core',
 		'main.core.events',
-		'ui.dialogs.messagebox',
-		'ui.stageflow',
-		'crm.stage-model',
 		'main.loader',
 		'main.popup',
-		'crm.messagesender',
+		'ui.dialogs.messagebox',
+		'ui.stageflow',
 	],
 	'skip_core' => false,
 ];

@@ -157,6 +157,17 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			'isEmbedded' => ($this->arParams['isEmbedded'] ?? false) === true,
 			'pingSettings' => (new TodoPingSettingsProvider($this->entityTypeId, $categoryId))->fetchAll(),
 		];
+		if (
+			\Bitrix\Crm\Integration\AI\AIManager::isAiCallAutomaticProcessingAllowed()
+			&& in_array($this->entityTypeId, \Bitrix\Crm\Integration\AI\AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
+			&& $this->userPermissions->isAdmin()
+			&& $this->category !== null
+		)
+		{
+			$this->arResult['jsParams']['aiAutostartSettings'] = \Bitrix\Main\Web\Json::encode(
+				\Bitrix\Crm\Integration\AI\Operation\AutostartSettings::get($this->entityTypeId, $this->category->getId())
+			);
+		}
 		$this->arResult['entityTypeName'] = $entityTypeName;
 		$this->arResult['categoryId'] = $this->category ? $this->category->getId() : 0;
 		$this->arResult['entityTypeDescription'] = $this->factory->getEntityDescription();
@@ -387,6 +398,15 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$filter = [];
 		$this->provider->prepareListFilter($filter, $requestFilter);
 		$this->ufProvider->prepareListFilter($filter, $filterFields, $requestFilter);
+
+		foreach ($requestFilter as $key => $item)
+		{
+			if (str_starts_with($key, 'ACTIVITY_FASTSEARCH_'))
+			{
+				$filter[$key] = $item;
+			}
+		}
+
 		if($this->category)
 		{
 			$filter = $this->category->getItemsFilter($filter);

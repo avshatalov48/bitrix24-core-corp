@@ -5,14 +5,14 @@ import { CallManager } from 'im.v2.lib.call';
 
 import { CallTypes } from '../call-button/call-types';
 
-import type { ImModelDialog } from 'im.v2.model';
+import type { ImModelChat } from 'im.v2.model';
 import type { MenuItem } from 'im.v2.lib.menu';
 
 import type { PopupOptions } from 'main.popup';
 
 export class CallMenu extends BaseMenu
 {
-	context: ImModelDialog;
+	context: ImModelChat;
 
 	static events = {
 		onMenuItemClick: 'onMenuItemClick',
@@ -47,7 +47,9 @@ export class CallMenu extends BaseMenu
 
 	#getVideoCallItem(): MenuItem
 	{
-		const isAvailable = CallManager.getInstance().chatCanBeCalled(this.context.dialogId);
+		// TODO temporary disable active option
+		// const isAvailable = CallManager.getInstance().chatCanBeCalled(this.context.dialogId);
+		const isAvailable = true;
 
 		return {
 			text: Loc.getMessage('IM_CONTENT_CHAT_HEADER_VIDEOCALL'),
@@ -66,7 +68,9 @@ export class CallMenu extends BaseMenu
 
 	#getAudioCallItem(): MenuItem
 	{
-		const isAvailable = CallManager.getInstance().chatCanBeCalled(this.context.dialogId);
+		// TODO temporary disable active option
+		// const isAvailable = CallManager.getInstance().chatCanBeCalled(this.context.dialogId);
+		const isAvailable = true;
 
 		return {
 			text: Loc.getMessage('IM_CONTENT_CHAT_HEADER_CALL_MENU_AUDIO'),
@@ -108,8 +112,10 @@ export class CallMenu extends BaseMenu
 
 	#isCallBetaAvailable(): boolean
 	{
-		const settings = Extension.getSettings('im.v2.component.content.chat');
+		// TODO remove this after release call beta
+		// const settings = Extension.getSettings('im.v2.component.content.chat');
+		// return settings.get('isCallBetaAvailable');
 
-		return settings.get('isCallBetaAvailable');
+		return false;
 	}
 }

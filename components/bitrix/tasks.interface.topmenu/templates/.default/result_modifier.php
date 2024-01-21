@@ -1,18 +1,26 @@
 <?php
+/** @var array $arParams */
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Integration\Bitrix24;
+use Bitrix\Tasks\Integration\Extranet\User;
+use Bitrix\Tasks\Integration\Socialnetwork\Space\SpaceService;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Routes\RouteDictionary;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ScrumLimit;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\KpiLimit;
-
-$arResult['BX24_RU_ZONE'] = \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') &&
+$isMenu = isset($arParams['MENU_MODE']) && $arParams['MENU_MODE'] === true;
+$arResult['BX24_RU_ZONE'] = ModuleManager::isModuleInstalled('bitrix24') &&
 							preg_match("/^(ru)_/", COption::GetOptionString("main", "~controller_group_name", ""));
 
 // create template controller with js-dependency injections
@@ -23,8 +31,8 @@ $strIframe = '';
 $strIframe2 = '';
 if(isset($_REQUEST['IFRAME']) && !$arParams['MENU_MODE'])
 {
-	$strIframe = '?IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
-	$strIframe2 = '&IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
+	$strIframe = '?IFRAME='.($_REQUEST['IFRAME'] === 'Y' ? 'Y' : 'N');
+	$strIframe2 = '&IFRAME='.($_REQUEST['IFRAME'] === 'Y' ? 'Y' : 'N');
 }
 
 if ($helper->checkHasFatals())
@@ -41,15 +49,15 @@ $arResult['JS_DATA'] = array(
 	'filterId' => $arParams['FILTER_ID'] ?? null,
 	'use_ajax_filter' => isset($arParams['USE_AJAX_ROLE_FILTER']) && $arParams['USE_AJAX_ROLE_FILTER'] === 'Y',
 	'text_sl_effective'=>GetMessage('TASKS_PANEL_TEXT_EFFECTIVE'),
-	'show_sl_effective'=> !CUserOptions::GetOption('spotlight', 'view_date_tasks_sl_effective', false)
+	'show_sl_effective'=> !CUserOptions::GetOption('spotlight', 'view_date_tasks_sl_effective')
 );
 
 $arResult['ITEMS'] = array();
 
 $urlRoleTemplate = (
 	$arParams['GROUP_ID'] <= 0 || $arParams['PROJECT_VIEW'] === 'Y'
-		? $arParams['PATH_TO_USER_TASKS']
-		: $arParams['PATH_TO_GROUP_TASKS']
+		? RouteDictionary::PATH_TO_USER_TASKS_LIST
+		: RouteDictionary::PATH_TO_GROUP_TASKS_LIST
 );
 $tasksLink = CComponentEngine::makePathFromTemplate(
 	$urlRoleTemplate,
@@ -76,17 +84,17 @@ $arResult['ITEMS'][] = array(
 			)
 		)
 	),
-	"IS_ACTIVE" => (isset($arParams["MARK_TEMPLATES"]) && $arParams["MARK_TEMPLATES"] != "Y" &&
-					isset($arParams["MARK_SECTION_EFFECTIVE"]) && $arParams["MARK_SECTION_EFFECTIVE"] != "Y" &&
-					isset($arParams["MARK_SECTION_PROJECTS"]) && $arParams["MARK_SECTION_PROJECTS"] != "Y" &&
-					isset($arParams["MARK_SECTION_PROJECTS_LIST"]) && $arParams["MARK_SECTION_PROJECTS_LIST"] != "Y" &&
-					isset($arParams["MARK_SECTION_SCRUM_LIST"]) && $arParams["MARK_SECTION_SCRUM_LIST"] != "Y" &&
-					isset($arParams["MARK_SECTION_MANAGE"]) && $arParams["MARK_SECTION_MANAGE"] != "Y" &&
-					isset($arParams["MARK_SECTION_EMPLOYEE_PLAN"]) && $arParams["MARK_SECTION_EMPLOYEE_PLAN"] != "Y" &&
-					isset($arParams["MARK_RECYCLEBIN"]) && $arParams["MARK_RECYCLEBIN"] != "Y" &&
-					isset($arParams["MARK_SECTION_REPORTS"]) && $arParams["MARK_SECTION_REPORTS"] != "Y") &&
+	"IS_ACTIVE" => (isset($arParams["MARK_TEMPLATES"]) && $arParams["MARK_TEMPLATES"] !== "Y" &&
+					isset($arParams["MARK_SECTION_PROJECTS"]) && $arParams["MARK_SECTION_PROJECTS"] !== "Y" &&
+					isset($arParams["MARK_SECTION_PROJECTS_LIST"]) && $arParams["MARK_SECTION_PROJECTS_LIST"] !== "Y" &&
+					isset($arParams["MARK_SECTION_SCRUM_LIST"]) && $arParams["MARK_SECTION_SCRUM_LIST"] !== "Y" &&
+					isset($arParams["MARK_SECTION_MANAGE"]) && $arParams["MARK_SECTION_MANAGE"] !== "Y" &&
+					isset($arParams["MARK_SECTION_EMPLOYEE_PLAN"]) && $arParams["MARK_SECTION_EMPLOYEE_PLAN"] !== "Y" &&
+					isset($arParams["MARK_SECTION_REPORTS"]) && $arParams["MARK_SECTION_REPORTS"] !== "Y") &&
 					isset($arParams['DEFAULT_ROLEID']) &&
-					($arParams['DEFAULT_ROLEID'] == 'view_all' || $arParams['DEFAULT_ROLEID'] == ''), // need refactoring
+					($arParams["MARK_RECYCLEBIN"] ?? 'N') !== "Y" &&
+					($arParams["MARK_SECTION_EFFECTIVE"] ?? 'N') !== "Y" &&
+					($arParams['DEFAULT_ROLEID'] === 'view_all' || $arParams['DEFAULT_ROLEID'] === ''), // need refactoring,
 	'COUNTER' => $arResult['TOTAL'],
 	'COUNTER_ID' => Counter\CounterDictionary::COUNTER_MEMBER_TOTAL,
 	'COUNTER_ACTIVE' => 'Y'
@@ -114,7 +122,7 @@ foreach ($arResult['ROLES'] as $roleId => $role)
 			||
 			(
 				isset($arParams['DEFAULT_ROLEID'])
-				&& $arParams['DEFAULT_ROLEID'] == mb_strtolower($roleId)
+				&& $arParams['DEFAULT_ROLEID'] === mb_strtolower($roleId)
 			),
 		'COUNTER' => $role['COUNTER'],
 		'COUNTER_ID' => $role['COUNTER_ID'],
@@ -127,9 +135,13 @@ $createGroupLink = CComponentEngine::makePathFromTemplate(
 	['user_id' => $arParams['LOGGED_USER_ID']]
 );
 
+$isSpacesAvailable = SpaceService::isAvailable(true);
+
+$projectsUrl = $isSpacesAvailable ? '/spaces/' : $tasksLink.'projects/'.$strIframe;
+
 $arResult['ITEMS'][] = [
-	"TEXT" => GetMessage("TASKS_PANEL_TAB_PROJECTS"),
-	"URL" => $tasksLink.'projects/'.$strIframe,
+	"TEXT" => $isSpacesAvailable ? GetMessage("TASKS_PANEL_TAB_SPACE") : GetMessage("TASKS_PANEL_TAB_PROJECTS"),
+	"URL" => $projectsUrl,
 	"ID" => "view_projects",
 	"IS_ACTIVE" => ($arParams["MARK_SECTION_PROJECTS_LIST"] === "Y"),
 	'SUB_LINK' => ['CLASS' => '', 'URL' => $createGroupLink],
@@ -142,7 +154,7 @@ $createScrumLink = CComponentEngine::makePathFromTemplate(
 	['user_id' => $arParams['LOGGED_USER_ID']]
 );
 
-$scrumUri = new \Bitrix\Main\Web\Uri($createScrumLink);
+$scrumUri = new Uri($createScrumLink);
 $scrumUri->addParams([
 	'PROJECT_OPTIONS' => [
 		'scrum' => true,
@@ -165,7 +177,7 @@ $arResult['ITEMS'][] = [
 	'IS_NEW' => true,
 ];
 
-if ($arParams["SHOW_SECTION_MANAGE"] != "N")
+if ($arParams["SHOW_SECTION_MANAGE"] !== "N")
 {
 	$counter = intval($arResult["SECTION_MANAGE_COUNTER"]);
 	$arResult['ITEMS'][] = array(
@@ -183,7 +195,7 @@ $efficiencyItem = [
 	"URL" => $tasksLink."effective/".$strIframe,
 	"ID" => "view_effective",
 	"MAX_COUNTER_SIZE" => 100,
-	"IS_ACTIVE" => (isset($arParams["MARK_SECTION_EFFECTIVE"]) && $arParams["MARK_SECTION_EFFECTIVE"] == "Y"),
+	"IS_ACTIVE" => (isset($arParams["MARK_SECTION_EFFECTIVE"]) && $arParams["MARK_SECTION_EFFECTIVE"] === "Y"),
 	"COUNTER" => (int)$arResult['EFFECTIVE_COUNTER'],
 ];
 if (
@@ -195,20 +207,20 @@ if (
 }
 $arResult['ITEMS'][] = $efficiencyItem;
 
-if (!\Bitrix\Tasks\Integration\Extranet\User::isExtranet() && !$arParams['GROUP_ID'])
+if (!$arParams['GROUP_ID'] && !User::isExtranet())
 {
 	$arResult['ITEMS'][] = array(
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_EMPLOYEE_PLAN"),
 		"URL" => $tasksLink.'employee/plan/'.$strIframe,
 		"ID" => "view_employee_plan",
-		"IS_ACTIVE" => $arParams["MARK_SECTION_EMPLOYEE_PLAN"] == "Y",
+		"IS_ACTIVE" => $arParams["MARK_SECTION_EMPLOYEE_PLAN"] === "Y",
 		'IS_DISABLED' => true
 	);
 }
 
 if (
 	isset($arParams["SHOW_SECTION_REPORTS"])
-	&& $arParams["SHOW_SECTION_REPORTS"] == "Y"
+	&& $arParams["SHOW_SECTION_REPORTS"] === "Y"
 	&& (
 		!isset($_REQUEST['IFRAME'])
 		|| !$_REQUEST['IFRAME']
@@ -231,29 +243,30 @@ if ($arResult["BX24_RU_ZONE"])
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_APPLICATIONS_2"),
 		"URL" => "/marketplace/category/tasks/",
 		"ID" => "view_apps",
+		'IS_DISABLED' => true,
 	);
 }
 
-if ($arParams["SHOW_SECTION_TEMPLATES"] == "Y")
+if ($arParams["SHOW_SECTION_TEMPLATES"] === "Y")
 {
 	$arResult['ITEMS'][] = array(
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_TEMPLATES"),
 		"URL" => $tasksLink.'templates/'.$strIframe,
 		"ID" => "view_templates",
-		"IS_ACTIVE" => $arParams["MARK_TEMPLATES"] == "Y",
+		"IS_ACTIVE" => $arParams["MARK_TEMPLATES"] === "Y",
 		'IS_DISABLED' => true
 	);
 }
-$hideRecycleBin = $arParams["SHOW_SECTION_RECYCLEBIN"] ?? 'Y';
-if ($hideRecycleBin !== 'N' && CModule::includeModule('recyclebin'))
+$hideRecycleBin = $arParams['SHOW_SECTION_RECYCLEBIN'] ?? 'Y';
+if ($hideRecycleBin !== 'N' && Loader::includeModule('recyclebin'))
 {
-	$arResult['ITEMS'][] = array(
-		"TEXT"      => GetMessage("TASKS_PANEL_TAB_RECYCLEBIN"),
-		"URL"       => $tasksLink.'recyclebin/'.$strIframe,
-		"ID"        => "view_recyclebin",
+	$arResult['ITEMS'][] = [
+		"TEXT" => Loc::getMessage('TASKS_PANEL_TAB_RECYCLEBIN'),
+		"URL" => $tasksLink . RouteDictionary::RECYCLEBIN_SUFFIX . $strIframe,
+		"ID" => 'view_recyclebin',
 		"IS_ACTIVE" => isset($arParams['MARK_RECYCLEBIN']) && $arParams['MARK_RECYCLEBIN'] === 'Y',
-		'IS_DISABLED' => true
-	);
+		'IS_DISABLED' => false,
+	];
 }
 
 if (TaskAccessController::can($arParams['LOGGED_USER_ID'], ActionDictionary::ACTION_TASK_ADMIN))
@@ -263,12 +276,30 @@ if (TaskAccessController::can($arParams['LOGGED_USER_ID'], ActionDictionary::ACT
 		'ID' => 'config_permissions',
 		'IS_ACTIVE' => false,
 		'IS_DISABLED' => true,
-		'ON_CLICK' => 'BX.Tasks.Component.TopMenu.getInstance("topmenu").showConfigPermissions();',
 	];
+	if ($isMenu)
+	{
+		$rightsButton['URL'] = RouteDictionary::PATH_TO_PERMISSIONS;
+	}
+	else
+	{
+		$rightsButton['ON_CLICK'] = 'BX.Tasks.Component.TopMenu.getInstance("topmenu").showConfigPermissions();';
+	}
 	if (!Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASKS_PERMISSIONS))
 	{
 		$rightsButton['IS_LOCKED'] = true;
 	}
 
 	$arResult['ITEMS'][] = $rightsButton;
+}
+
+if (class_exists('\Bitrix\Intranet\Settings\Tools\ToolsManager'))
+{
+	foreach ($arResult['ITEMS'] as $key => $item)
+	{
+		if (!\Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByMenuId($item['ID']))
+		{
+			unset($arResult['ITEMS'][$key]);
+		}
+	}
 }

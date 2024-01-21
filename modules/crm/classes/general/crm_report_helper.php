@@ -368,11 +368,11 @@ abstract class CCrmReportHelperBase extends CReportHelper
 							'def' => array(
 								'data_type' => 'float',
 								'expression' => array(
-									"(IFNULL(IF(".
-									"LOCATE('|', %s) > 0, ".
-									"CAST(SUBSTR(%s, 1, LOCATE('|', %s) - 1) AS DECIMAL(18,2)), ".
-									"CAST(%s AS DECIMAL(18,2))".
-									"), 0))", $fieldName, $fieldName, $fieldName, $fieldName
+									"(COALESCE(CASE WHEN ".
+									"POSITION('|' IN %s) > 0 THEN ".
+									"CAST(SUBSTR(%s, 1, POSITION('|' IN %s) - 1) AS DECIMAL(18,2)) ELSE ".
+									"CAST(%s AS DECIMAL(18,2)) END".
+									", 0))", $fieldName, $fieldName, $fieldName, $fieldName
 								)
 							),
 							'name' => $fieldName.self::UF_MONEY_NUMBER_POSTFIX
@@ -381,7 +381,7 @@ abstract class CCrmReportHelperBase extends CReportHelper
 							'def' => array(
 								'data_type' => 'string',
 								'expression' => array(
-									"(IFNULL(IF(LOCATE('|', %s) > 0, SUBSTR(%s, LOCATE('|', %s) + 1), NULL), ''))",
+									"(COALESCE(CASE WHEN POSITION('|' IN %s) > 0 THEN SUBSTR(%s, POSITION('|' IN %s) + 1) ELSE NULL END, ''))",
 									$fieldName, $fieldName, $fieldName
 								)
 							),
@@ -1393,13 +1393,19 @@ class CCrmReportHelper extends CCrmReportHelperBase
 
 	public static function setRuntimeFields(\Bitrix\Main\Entity\Base $entity, $sqlTimeInterval)
 	{
-		$entity->addField(array(
+		$helper = Main\Application::getConnection()->getSqlHelper();
+		$entity->addField([
 			'data_type' => 'string',
-			'expression' => array(
-				'CONCAT(\'DEAL_STAGE\', CASE WHEN %s = 0 THEN \'\' ELSE CONCAT(\'_\',%s) END)',
-				'CATEGORY_ID', 'CATEGORY_ID'
-			)
-		), '_STAGE_ENTITY_ID');
+			'expression' => [
+				$helper->getConcatFunction(
+					"'DEAL_STAGE'", 'CASE WHEN %s = 0 THEN \'\' ELSE '
+					. $helper->getConcatFunction("'_'", '%s')
+					. ' END'
+				),
+				'CATEGORY_ID',
+				'CATEGORY_ID',
+			],
+		], '_STAGE_ENTITY_ID');
 
 		$entity->addField(array(
 			'data_type' => 'Status',
@@ -1993,12 +1999,6 @@ class CCrmReportHelper extends CCrmReportHelperBase
 			)
 		);
 
-//		global $DB;
-//		$dbType = strtoupper($DB->type);
-//		if($dbType === 'MSSQL')
-//		{
-//			unset($reports['11.0.6'][1]); //PRODUCTS_PROFIT is not supported in MSSQL
-//		}
 		unset($reports['11.0.6'][1]); //PRODUCTS_PROFIT defined in other helper
 
 		foreach ($reports as &$vreports)
@@ -4053,7 +4053,7 @@ class CCrmProductReportHelper extends CCrmReportHelperBase
 		{
 			global $DB;
 			// HACK: add escape chars for ORM
-			$addClause = str_replace('crm_product_row_deal_owner.ID', '`crm_product_row`.`OWNER_ID`', $addClause);
+			$addClause = str_replace('crm_product_row_deal_owner.ID', $DB->quote('crm_product_row').'.'.$DB->quote('OWNER_ID'), $addClause);
 
 			$filter = array($filter,
 				'=IS_ALLOWED' => '1'

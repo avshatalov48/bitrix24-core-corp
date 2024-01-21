@@ -10,7 +10,7 @@ $MESS['M_CRM_CATEGORY_PERMISSION_ALL_FOR_ALL_COMPANY'] = 'Все компани�
 $MESS['M_CRM_CATEGORY_PERMISSION_ALL_FOR_ALL_QUOTE_MSGVER_1'] = 'Все предложения';
 $MESS['M_CRM_CATEGORY_PERMISSION_ALL_FOR_ALL_SMART_INVOICE'] = 'Все счета';
 
-$MESS['M_CRM_CATEGORY_PERMISSION_NONE_FOR_ALL'] = 'Доступ закрыт';
+$MESS['M_CRM_CATEGORY_PERMISSION_NONE_FOR_ALL_MSGVER_1'] = 'Доступ закрыт';
 
 $MESS['M_CRM_CATEGORY_PERMISSION_OWN_FOR_ALL'] = 'Только свои элементы';
 $MESS['M_CRM_CATEGORY_PERMISSION_OWN_FOR_ALL_LEAD'] = 'Только свои лиды';
@@ -20,7 +20,7 @@ $MESS['M_CRM_CATEGORY_PERMISSION_OWN_FOR_ALL_COMPANY'] = 'Только свои 
 $MESS['M_CRM_CATEGORY_PERMISSION_OWN_FOR_ALL_QUOTE_MSGVER_1'] = 'Только свои предложения';
 $MESS['M_CRM_CATEGORY_PERMISSION_OWN_FOR_ALL_SMART_INVOICE'] = 'Только свои счета';
 
-$MESS['M_CRM_CATEGORY_PERMISSION_MENU_COPY_FROM_TUNNELS2'] = 'Копировать права из воронки';
+$MESS['M_CRM_CATEGORY_PERMISSION_MENU_COPY_FROM_TUNNELS2_MSGVER_1'] = 'Копировать права из воронки';
 
 $MESS['M_CRM_CATEGORY_PERMISSION_MENU_CUSTOM'] = 'Экспертная настройка';
 

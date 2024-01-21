@@ -11,6 +11,7 @@ use Bitrix\Tasks\Integration\CRM\Fields\Emulator;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Internals\Task\TimeUnitType;
 use Bitrix\Tasks\Manager;
+use Bitrix\Tasks\Replicator\Template\Replicators\RegularTaskReplicator;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Component\Task\TasksTaskFormState;
@@ -18,13 +19,25 @@ use Bitrix\Tasks\Component\Task\TasksTaskFormState;
 Loc::loadMessages(__FILE__);
 
 Extension::load([
+	'main.core',
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'ui.alerts',
-	'ai.picker'
+	'ai.picker',
 ]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+
+/** intranet-settings-support */
+if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
+{
+	$APPLICATION->IncludeComponent("bitrix:tasks.error", "limit", [
+		'LIMIT_CODE' => RestrictionUrl::TASK_LIMIT_OFF_SLIDER_URL,
+		'SOURCE' => 'task',
+	]);
+
+	return;
+}
 
 if (!empty($arResult['ERROR']))
 {
@@ -738,7 +751,35 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 									);?>
 								</div>
 							</div>
+						<?php elseif($blockName === 'REGULAR' && RegularTaskReplicator::isEnabled()):?>
+							<?php
+							$isRegular = $taskData['IS_REGULAR'] === 'Y';
+							$checked = $isRegular ? 'checked' : '';
+							?>
 
+							<div data-bx-id="task-edit-regular-block" class="task-options-item-open-inner">
+								<label class="task-field-label task-field-label-repeat-regular <?= $taskLimitExceeded || $taskRecurrentRestrict ? 'tasks-btn-restricted' : ''?>">
+									<input data-bx-id="task-edit-flag task-edit-flag-regular" data-target="regular" data-flag-name="REGULAR" class="task-options-checkbox" type="checkbox" <?= $checked?>><?= '(NEW) ' . Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_MAKE_REPLICABLE')?>
+									<input data-bx-id="task-edit-regular" type="hidden" name="<?=htmlspecialcharsbx($inputPrefix)?>[IS_REGULAR]" value="<?= $taskData['IS_REGULAR']?>" />
+								</label>
+								<div data-bx-id="task-edit-regular-panel" class="task-options-repeat-regular task-openable-block<?=($isRegular ? '' : ' invisible')?>">
+
+									<?php
+									$APPLICATION->IncludeComponent(
+										'bitrix:tasks.widget.replication',
+										'regular',
+										[
+											'TEMPLATE_CONTROLLER_ID' => 'regular-' . $templateId,
+											'INPUT_PREFIX' => $inputPrefix . '[REGULAR_PARAMS]',
+											'COMPANY_WORKTIME' => $arResult['AUX_DATA']['COMPANY_WORKTIME'],
+											'DATA' => ($arResult['DATA']['TASK'][$blockName]['REGULAR_PARAMS'] ?? null),
+											'TEMPLATE_CREATED_BY' => null,
+										],
+										false,
+										["HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y"]
+									); ?>
+								</div>
+							</div>
 						<?php elseif($blockName == Manager\Task::SE_PREFIX.'TEMPLATE'):?>
 
 							<?php
@@ -751,7 +792,7 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 							$replicationOn = ($taskData['REPLICATE'] === 'Y');
 							?>
 
-							<div data-bx-id="task-edit-replication-block" class="task-options-item-open-inner <?/*=($replicationOn ? '' : 'mode-replication-off')*/?>">
+							<div data-bx-id="task-edit-replication-block" class="task-options-item-open-inner">
 								<label class="task-field-label task-field-label-repeat <?= $taskLimitExceeded || $taskRecurrentRestrict ? 'tasks-btn-restricted' : ''?>">
 									<input data-bx-id="task-edit-flag task-edit-flag-replication" data-target="replication" data-flag-name="REPLICATE" class="task-options-checkbox" type="checkbox" <?=($taskData['REPLICATE'] == 'Y' ? 'checked' : '')?>><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_MAKE_REPLICABLE')?>
 									<input data-bx-id="task-edit-replication" type="hidden" name="<?=htmlspecialcharsbx($inputPrefix)?>[REPLICATE]" value="<?=htmlspecialcharsbx($taskData['REPLICATE'])?>" />
@@ -1183,9 +1224,8 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 		),
 		'componentId' => $arResult['COMPONENT_DATA']['ID'],
 		'doInit' => !$arResult['TEMPLATE_DATA']['SHOW_SUCCESS_MESSAGE'],
-		'cancelActionIsEvent' => !!$arParams['CANCEL_ACTION_IS_EVENT'],
-		'canShowAITextButton' => $arResult['CAN_SHOW_AI_TEXT_BUTTON'],
-		'canShowAIImageButton' => $arResult['CAN_SHOW_AI_IMAGE_BUTTON'],
+		'cancelActionIsEvent' => (bool)$arParams['CANCEL_ACTION_IS_EVENT'],
+		'canUseAIChecklistButton' => $arResult['CAN_USE_AI_CHECKLIST_BUTTON'] ?? true,
 	))?>;
 
 	<?php /*

@@ -2,9 +2,11 @@
  * @module layout/ui/simple-list/items/base
  */
 jn.define('layout/ui/simple-list/items/base', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { chain, transition } = require('animation');
 	const { Haptics } = require('haptics');
 	const { ItemLayoutBlockManager } = require('layout/ui/simple-list/items/base/item-layout-block-manager');
+	const { debounce } = require('utils/function');
 	const { mergeImmutable } = require('utils/object');
 
 	/**
@@ -19,6 +21,23 @@ jn.define('layout/ui/simple-list/items/base', (require, exports, module) => {
 			this.blockManager = new ItemLayoutBlockManager(this.props.itemLayoutOptions);
 			this.showMenuHandler = props.showMenuHandler;
 			this.styles = styles;
+
+			this.onItemClick = debounce((itemId, itemData, params) => {
+				this.props.itemDetailOpenHandler(itemId, itemData, params);
+			}, 100);
+
+			this.onItemLongClick = (itemId, itemData, params) => {
+				if (this.props.onItemLongClick)
+				{
+					this.props.onItemLongClick(itemId, itemData, params);
+				}
+
+				if (this.isMenuEnabled())
+				{
+					Haptics.impactLight();
+					this.showMenuHandler(itemData.id);
+				}
+			};
 		}
 
 		get testId()
@@ -29,6 +48,11 @@ jn.define('layout/ui/simple-list/items/base', (require, exports, module) => {
 		get params()
 		{
 			return this.props.params || {};
+		}
+
+		get layout()
+		{
+			return this.props.layout || {};
 		}
 
 		getCustomStyles()
@@ -46,17 +70,14 @@ jn.define('layout/ui/simple-list/items/base', (require, exports, module) => {
 			let wrapperStyle = BX.prop.getObject(customStyles, 'wrapper', {});
 			wrapperStyle = mergeImmutable(this.styles.wrapper, wrapperStyle);
 
-			const { item } = this.props;
+			const item = this.prepareItem(this.props.item);
 
 			return View(
 				{
 					style: wrapperStyle,
 					testId: `${this.testId}_ITEM_${item.id}`,
-					onClick: () => this.props.itemDetailOpenHandler(item.id, item.data, this.params),
-					onLongClick: this.isMenuEnabled() && (() => {
-						Haptics.impactLight();
-						this.showMenuHandler(item.data.id);
-					}),
+					onClick: () => this.onItemClick(item.id, item.data, this.params),
+					onLongClick: () => this.onItemLongClick(item.id, item.data, this.params),
 				},
 				View(
 					{
@@ -101,6 +122,17 @@ jn.define('layout/ui/simple-list/items/base', (require, exports, module) => {
 		 */
 		prepareActions(actions)
 		{}
+
+		/**
+		 * Implement this method in child class if you need to process item before showing
+		 *
+		 * @public
+		 * @param item
+		 */
+		prepareItem(item)
+		{
+			return item;
+		}
 
 		/**
 		 * @protected
@@ -169,12 +201,12 @@ jn.define('layout/ui/simple-list/items/base', (require, exports, module) => {
 
 			const transitionToBeige = transition(this.elementRef, {
 				duration: 300,
-				backgroundColor: '#ffe9be',
+				backgroundColor: AppTheme.colors.accentSoftOrange1,
 				opacity: 1,
 			});
 			const transitionToWhite = transition(this.elementRef, {
 				duration: 300,
-				backgroundColor: '#ffffff',
+				backgroundColor: AppTheme.colors.base8,
 				opacity: 1,
 			});
 			const animate = (
@@ -188,18 +220,18 @@ jn.define('layout/ui/simple-list/items/base', (require, exports, module) => {
 					)
 			);
 
-			animate().then(callback).catch(() => {});
+			animate().then(callback).catch(console.error);
 		}
 	}
 
 	const styles = {
 		wrapper: {
 			paddingBottom: 1,
-			backgroundColor: '#e3e3e3',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 		},
 		item: {
 			position: 'relative',
-			backgroundColor: '#ffffff',
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 		},
 		itemContent: {
 			paddingTop: 17,

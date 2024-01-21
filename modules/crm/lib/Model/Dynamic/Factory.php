@@ -11,6 +11,7 @@ use Bitrix\Main\UserField\Internal\TypeFactory;
 class Factory extends TypeFactory
 {
 	protected $itemIndexEntities = [];
+	protected $itemFieldsContextEntities = [];
 
 	/**
 	 * @return TypeTable
@@ -33,6 +34,11 @@ class Factory extends TypeFactory
 	public function getItemParentClass(): string
 	{
 		return Item::class;
+	}
+
+	public function getItemFieldsContextPrototypeDataClass(): string
+	{
+		return PrototypeItemFieldsContext::class;
 	}
 
 	public function getItemIndexPrototypeDataClass(): string
@@ -62,6 +68,31 @@ class Factory extends TypeFactory
 		{
 			$this->itemIndexEntities[$typeData['ID']] = $entity;
 		}
+
+		return $entity;
+	}
+
+	/**
+	 * @param $type
+	 * @return PrototypeItemFieldsContext
+	 */
+	public function getItemFieldsContextDataClass($type): string
+	{
+		return $this->getItemFieldsContextEntity($type)->getDataClass();
+	}
+
+	public function getItemFieldsContextEntity($type): Entity
+	{
+		$typeData = $this->getTypeDataClass()::resolveType($type);
+
+		if (!empty($typeData) && isset($this->itemFieldsContextEntities[$typeData['ID']]))
+		{
+			return $this->itemFieldsContextEntities[$typeData['ID']];
+		}
+
+		$entity = $this->getTypeDataClass()::compileItemFieldsContextEntity($type);
+		
+		$this->itemFieldsContextEntities[$typeData['ID']] = $entity;
 
 		return $entity;
 	}

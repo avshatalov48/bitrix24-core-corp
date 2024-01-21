@@ -98,7 +98,7 @@ class Footer extends Base
 	public function toArray(): array
 	{
 		return [
-			'buttons' => $this->getButtons(),
+			'buttons' => array_filter($this->getButtons() ?? []),
 			'additionalButtons' => $this->getAdditionalButtons(),
 			'menu' => $this->getMenu(),
 		];

@@ -2,6 +2,8 @@
  * @module crm/timeline/item/ui/loading-overlay
  */
 jn.define('crm/timeline/item/ui/loading-overlay', (require, exports, module) => {
+	const AppTheme = require('apptheme');
+
 	/**
 	 * @class TimelineItemLoadingOverlay
 	 */
@@ -37,20 +39,22 @@ jn.define('crm/timeline/item/ui/loading-overlay', (require, exports, module) => 
 						left: 0,
 						right: 0,
 						bottom: 0,
-						backgroundColor: '#ffffff',
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 						flexDirection: 'column',
 						justifyContent: 'center',
 						alignItems: 'center',
 					},
 					clickable: true,
-					ref: (ref) => this.nodeRef = ref,
+					ref: (ref) => {
+						this.nodeRef = ref;
+					},
 				},
 				Loader({
 					style: {
 						width: 50,
 						height: 50,
 					},
-					tintColor: '#828b95',
+					tintColor: AppTheme.colors.base3,
 					animating: true,
 					size: 'large',
 				}),

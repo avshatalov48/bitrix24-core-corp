@@ -2,6 +2,8 @@
  * @module layout/ui/buttons-toolbar
  */
 jn.define('layout/ui/buttons-toolbar', (require, exports, module) => {
+	const AppTheme = require('apptheme');
+
 	/**
 	 * @function ButtonsToolbar
 	 */
@@ -9,10 +11,10 @@ jn.define('layout/ui/buttons-toolbar', (require, exports, module) => {
 	{
 		const { buttons, ...passThroughProps } = props;
 
-		const separatorStyle = (index) => index ? {
+		const separatorStyle = (index) => (index ? {
 			borderLeftWidth: 1,
-			borderLeftColor: '#eef2f4',
-		} : {};
+			borderLeftColor: AppTheme.colors.bgSeparatorPrimary,
+		} : {});
 
 		return new UI.BottomToolbar({
 			...passThroughProps,

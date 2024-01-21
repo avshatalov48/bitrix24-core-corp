@@ -83,7 +83,6 @@ class SearchIndexTable extends TaskDataManager
 	 */
 	public static function set(int $taskId, int $messageId, string $searchIndex): bool
 	{
-		$messageId = ($messageId ?: 0);
 		$searchIndex = trim($searchIndex);
 
 		if ($taskId <= 0 || empty($searchIndex))

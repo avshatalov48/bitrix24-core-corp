@@ -2,12 +2,12 @@
  * @module layout/ui/product-grid/components/product-card/styles
  */
 jn.define('layout/ui/product-grid/components/product-card/styles', (require, exports, module) => {
-
+	const AppTheme = require('apptheme');
 	const { get } = require('utils/object');
 
 	const Styles = {
 		container: (componentStyle = {}) => ({
-			backgroundColor: get(componentStyle, 'backgroundColor', '#ffffff'),
+			backgroundColor: get(componentStyle, 'backgroundColor', AppTheme.colors.bgContentPrimary),
 			borderRadius: 12,
 			padding: 16,
 			marginTop: get(componentStyle, 'marginTop', 0),
@@ -22,7 +22,7 @@ jn.define('layout/ui/product-grid/components/product-card/styles', (require, exp
 				height: 16,
 				left: 0,
 				top: 0,
-				backgroundColor: '#bdc1c6',
+				backgroundColor: AppTheme.colors.base5,
 				borderTopLeftRadius: 12,
 				borderBottomRightRadius: 12,
 				alignItems: 'center',
@@ -30,9 +30,9 @@ jn.define('layout/ui/product-grid/components/product-card/styles', (require, exp
 				justifyContent: 'center',
 			},
 			text: {
-				color: '#ffffff',
+				color: AppTheme.colors.baseWhiteFixed,
 				fontSize: 10,
-			}
+			},
 		},
 
 		image: {
@@ -41,12 +41,12 @@ jn.define('layout/ui/product-grid/components/product-card/styles', (require, exp
 				height: 62,
 				marginRight: 11,
 				justifyContent: 'center',
-				alignItems: 'center'
+				alignItems: 'center',
 			},
 			inner: {
 				width: 62,
 				height: 62,
-			}
+			},
 		},
 
 		content: {
@@ -73,7 +73,7 @@ jn.define('layout/ui/product-grid/components/product-card/styles', (require, exp
 			icon: {
 				width: 16,
 				height: 4,
-			}
+			},
 		},
 
 		deleteButton: {
@@ -86,10 +86,9 @@ jn.define('layout/ui/product-grid/components/product-card/styles', (require, exp
 			icon: {
 				width: 12,
 				height: 15,
-			}
-		}
+			},
+		},
 	};
 
 	module.exports = { Styles };
-
 });

@@ -1,5 +1,8 @@
 <?php
 
+use Bitrix\Main\UI\Extension;
+use Bitrix\Tasks\Helper\RestrictionUrl;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -9,6 +12,17 @@ $APPLICATION->ShowViewContent('task_menu');
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $bodyClass = ($bodyClass ? "{$bodyClass} page-one-column" : 'page-one-column');
 $APPLICATION->SetPageProperty('BodyClass', $bodyClass);
+
+/** intranet-settings-support */
+if (!$arResult['IS_TOOL_AVAILABLE'])
+{
+	$APPLICATION->IncludeComponent("bitrix:tasks.error", "limit", [
+		'LIMIT_CODE' => RestrictionUrl::TASK_LIMIT_OFF_SLIDER_URL,
+		'SOURCE' => 'report',
+	]);
+
+	return;
+}
 
 $APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.topmenu',

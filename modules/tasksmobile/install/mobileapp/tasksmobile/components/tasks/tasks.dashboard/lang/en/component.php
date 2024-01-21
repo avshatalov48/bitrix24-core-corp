@@ -1,0 +1,21 @@
+<?php
+$MESS["M_TASKS_VIEW_ROUTER_ALL_STAGES_DESCRIPTION"] = "Create tasks and watch their progress";
+$MESS["M_TASKS_VIEW_ROUTER_ALL_STAGES_TITLE_MSGVER_1"] = "You don't have any tasks in progress";
+$MESS["M_TASKS_VIEW_ROUTER_COMMENTS_READ"] = "Comments read";
+$MESS["M_TASKS_VIEW_ROUTER_DEADLINE_STAGE_PERIOD1"] = "This screen will show your\noverdue tasks, if there are any";
+$MESS["M_TASKS_VIEW_ROUTER_DEADLINE_STAGE_PERIOD2"] = "This screen will show your tasks\nthat are due today";
+$MESS["M_TASKS_VIEW_ROUTER_DEADLINE_STAGE_PERIOD3"] = "This screen will show your tasks\nthat are due by the end of the week";
+$MESS["M_TASKS_VIEW_ROUTER_DEADLINE_STAGE_PERIOD4"] = "This screen will show your tasks\nthat are due by the end of the next week";
+$MESS["M_TASKS_VIEW_ROUTER_DEADLINE_STAGE_PERIOD5"] = "This screen will show your tasks without deadline";
+$MESS["M_TASKS_VIEW_ROUTER_DEADLINE_STAGE_PERIOD6"] = "This screen will show your tasks\nthat are due later than two weeks";
+$MESS["M_TASKS_VIEW_ROUTER_EMPTY_IN_PROGRESS"] = "You don't have any tasks in progress";
+$MESS["M_TASKS_VIEW_ROUTER_EMPTY_LIST_SEARCH_DESCRIPTION_MSGVER_1"] = "Change search query or try different filters";
+$MESS["M_TASKS_VIEW_ROUTER_EMPTY_LIST_SEARCH_TITLE_MSGVER_1"] = "No tasks found";
+$MESS["M_TASKS_VIEW_ROUTER_KANBAN_FILTER_DESCRIPTION"] = "Move tasks here or tap +\nto add a new task";
+$MESS["M_TASKS_VIEW_ROUTER_KANBAN_FILTER_TITLE"] = "There are no tasks here";
+$MESS["M_TASKS_VIEW_ROUTER_MENU_TITLE"] = "Task view";
+$MESS["M_TASKS_VIEW_ROUTER_MENU_TITLE_DEADLINE"] = "Deadline";
+$MESS["M_TASKS_VIEW_ROUTER_MENU_TITLE_KANBAN"] = "Kanban";
+$MESS["M_TASKS_VIEW_ROUTER_MENU_TITLE_LIST"] = "List";
+$MESS["M_TASKS_VIEW_ROUTER_MENU_TITLE_PLANNER"] = "Planner";
+$MESS["M_TASKS_VIEW_ROUTER_SELECTED_FILTER_TITLE"] = "There are no tasks\nmatching filter [b]#FILTER_NAME#[/b]";

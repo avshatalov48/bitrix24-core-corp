@@ -2,7 +2,7 @@ import { Extension } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 
 import { Messenger } from 'im.public';
-import { ChatActionType, LocalStorageKey, DialogType } from 'im.v2.const';
+import { ChatActionType, LocalStorageKey, ChatType } from 'im.v2.const';
 import { CallManager } from 'im.v2.lib.call';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
@@ -12,7 +12,7 @@ import { CallTypes } from './call-types';
 
 import '../../../css/call-button.css';
 
-import type { ImModelDialog } from 'im.v2.model';
+import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
 export const CallButton = {
@@ -32,20 +32,35 @@ export const CallButton = {
 	},
 	computed:
 	{
-		dialog(): ImModelDialog
+		dialog(): ImModelChat
 		{
-			return this.$store.getters['dialogues/get'](this.dialogId, true);
+			return this.$store.getters['chats/get'](this.dialogId, true);
 		},
 		isActive(): boolean
 		{
-			const chatCanBeCalled = CallManager.getInstance().chatCanBeCalled(this.dialogId);
-			const chatIsAllowedToCall = PermissionManager.getInstance().canPerformAction(ChatActionType.call, this.dialogId);
+			// TODO temporary disable active option
+			// const chatCanBeCalled = CallManager.getInstance().chatCanBeCalled(this.dialogId);
+			// const chatIsAllowedToCall = PermissionManager.getInstance().canPerformAction(ChatActionType.call, this.dialogId);
+			// return chatCanBeCalled && chatIsAllowedToCall;
 
-			return chatCanBeCalled && chatIsAllowedToCall;
+			if (
+				this.$store.getters['recent/calls/hasActiveCall'](this.dialogId)
+				&& CallManager.getInstance().getCurrentCallDialogId() === this.dialogId
+			)
+			{
+				return true;
+			}
+
+			if (this.$store.getters['recent/calls/hasActiveCall']())
+			{
+				return false;
+			}
+
+			return true;
 		},
 		isConference(): boolean
 		{
-			return this.dialog.type === DialogType.videoconf;
+			return this.dialog.type === ChatType.videoconf;
 		},
 		callButtonText(): string
 		{
@@ -112,7 +127,13 @@ export const CallButton = {
 		},
 		getLastCallChoice(): string
 		{
-			return LocalStorageManager.getInstance().get(LocalStorageKey.lastCallType, CallTypes.video.id);
+			const result = LocalStorageManager.getInstance().get(LocalStorageKey.lastCallType, CallTypes.video.id);
+			if (result === CallTypes.beta.id && !this.isCallBetaAvailable())
+			{
+				return CallTypes.video.id;
+			}
+
+			return result;
 		},
 		saveLastCallChoice(callTypeId: string)
 		{
@@ -125,9 +146,11 @@ export const CallButton = {
 		},
 		isCallBetaAvailable(): boolean
 		{
-			const settings = Extension.getSettings('im.v2.component.content.chat');
+			// TODO remove this after release call beta
+			// const settings = Extension.getSettings('im.v2.component.content.chat');
+			// return settings.get('isCallBetaAvailable');
 
-			return settings.get('isCallBetaAvailable');
+			return false;
 		},
 		loc(phraseCode: string): string
 		{

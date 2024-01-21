@@ -1,9 +1,11 @@
-(function (exports,main_core,main_popup,ui_buttons,crm_terminal,main_core_events) {
+/* eslint-disable */
+(function (exports,main_core,crm_terminal,main_core_events,ui_dialogs_messagebox) {
 	'use strict';
 
 	var namespace = main_core.Reflection.namespace('BX.Crm.Component');
 	var TerminalPaymentList = /*#__PURE__*/function () {
 	  function TerminalPaymentList() {
+	    var _this = this;
 	    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, TerminalPaymentList);
 	    babelHelpers.defineProperty(this, "grid", null);
@@ -14,57 +16,70 @@
 	    }
 	    this.settingsSliderUrl = options.settingsSliderUrl;
 	    main_core_events.EventEmitter.subscribe('Grid::updated', this.onGridUpdatedHandler.bind(this));
+	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onMessage', function (event) {
+	      var eventId = event.getData()[0].eventId;
+	      if (eventId === 'salescenter.app:onterminalpaymentupdated') {
+	        _this.grid.reload();
+	      }
+	    });
 	  }
 	  babelHelpers.createClass(TerminalPaymentList, [{
+	    key: "setPaidStatus",
+	    value: function setPaidStatus(id, value) {
+	      var _this2 = this;
+	      this.grid.tableFade();
+	      main_core.ajax.runAction('crm.order.payment.setPaid', {
+	        data: {
+	          id: id,
+	          value: value
+	        }
+	      }).then(function (response) {
+	        _this2.grid.reload();
+	      }, function (response) {
+	        _this2.grid.tableUnfade();
+	        response.errors.forEach(function (error) {
+	          BX.UI.Notification.Center.notify({
+	            content: main_core.Text.encode(error.message)
+	          });
+	        });
+	      });
+	    }
+	  }, {
 	    key: "deletePayment",
 	    value: function deletePayment(id) {
-	      var _this = this;
-	      var popup = new main_popup.Popup({
-	        id: 'crm_terminal_payment_list_delete_popup',
-	        titleBar: main_core.Loc.getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_TEMPLATE_TITLE_DELETE_TITLE'),
-	        content: main_core.Loc.getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_TEMPLATE_TITLE_DELETE_CONTENT'),
-	        buttons: [new ui_buttons.Button({
-	          text: main_core.Loc.getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_TEMPLATE_BUTTON_CONTINUE'),
-	          color: ui_buttons.ButtonColor.SUCCESS,
-	          onclick: function onclick(button, event) {
-	            button.setDisabled();
-	            main_core.ajax.runAction('crm.order.terminalpayment.delete', {
-	              data: {
-	                id: id
-	              }
-	            }).then(function (response) {
-	              popup.destroy();
-	              _this.grid.reload();
-	            })["catch"](function (response) {
-	              if (response.errors) {
-	                BX.UI.Notification.Center.notify({
-	                  content: BX.util.htmlspecialchars(response.errors[0].message)
-	                });
-	              }
-	              popup.destroy();
+	      var _this3 = this;
+	      ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_TEMPLATE_TITLE_DELETE_CONTENT'), function (messageBox, button) {
+	        button.setWaiting();
+	        main_core.ajax.runAction('crm.order.payment.delete', {
+	          data: {
+	            id: id
+	          }
+	        }).then(function (response) {
+	          messageBox.close();
+	          _this3.grid.reload();
+	        })["catch"](function (response) {
+	          if (response.errors) {
+	            BX.UI.Notification.Center.notify({
+	              content: main_core.Text.encode(response.errors[0].message)
 	            });
 	          }
-	        }), new ui_buttons.Button({
-	          text: main_core.Loc.getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_TEMPLATE_BUTTON_CANCEL'),
-	          color: ui_buttons.ButtonColor.DANGER,
-	          onclick: function onclick(button, event) {
-	            popup.destroy();
-	          }
-	        })]
-	      });
-	      popup.show();
+	          messageBox.close();
+	        });
+	      }, main_core.Loc.getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_TEMPLATE_BUTTON_CONFIRM'), function (messageBox) {
+	        return messageBox.close();
+	      }, main_core.Loc.getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_TEMPLATE_BUTTON_BACK'));
 	    }
 	  }, {
 	    key: "deletePayments",
 	    value: function deletePayments() {
-	      var _this2 = this;
+	      var _this4 = this;
 	      var paymentIds = this.grid.getRows().getSelectedIds();
-	      main_core.ajax.runAction('crm.order.terminalpayment.deleteList', {
+	      main_core.ajax.runAction('crm.order.payment.deleteList', {
 	        data: {
 	          ids: paymentIds
 	        }
 	      }).then(function (response) {
-	        _this2.grid.reload();
+	        _this4.grid.reload();
 	      })["catch"](function (response) {
 	        if (response.errors) {
 	          response.errors.forEach(function (error) {
@@ -75,7 +90,7 @@
 	            }
 	          });
 	        }
-	        _this2.grid.reload();
+	        _this4.grid.reload();
 	      });
 	    }
 	  }, {
@@ -120,10 +135,23 @@
 	        });
 	      }
 	    }
+	  }, {
+	    key: "openPaymentInSalescenter",
+	    value: function openPaymentInSalescenter(params) {
+	      var options = {
+	        context: 'terminal_list',
+	        mode: 'terminal_payment',
+	        analyticsLabel: 'terminal_payment_list_view_payment',
+	        templateMode: 'view',
+	        orderId: params.orderId,
+	        paymentId: params.paymentId
+	      };
+	      BX.Salescenter.Manager.openApplication(options);
+	    }
 	  }]);
 	  return TerminalPaymentList;
 	}();
 	namespace.TerminalPaymentList = TerminalPaymentList;
 
-}((this.window = this.window || {}),BX,BX.Main,BX.UI,BX.Crm,BX.Event));
+}((this.window = this.window || {}),BX,BX.Crm,BX.Event,BX.UI.Dialogs));
 //# sourceMappingURL=script.js.map
